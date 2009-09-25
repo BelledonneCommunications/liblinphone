@@ -379,6 +379,18 @@ changequote([, ])dnl
 AC_SUBST([ORTP_VERSION])
 AC_SUBST([MS2_VERSION])
 
+AC_ARG_ENABLE(iphone,
+      [  --enable-iphone    enable build for iphone],
+      [case "${enableval}" in
+        yes) iphone=true ;;
+        no)  iphone=false ;;
+        *) AC_MSG_ERROR(bad value ${enableval} for --enable-iphone) ;;
+      esac],[iphone=false])
+
+if test x$iphone = xtrue ; then
+        echo "* Iphone build enabled"
+fi
+
 AC_OUTPUT([ 
 Makefile 
 m4/Makefile

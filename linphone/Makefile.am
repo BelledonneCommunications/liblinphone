@@ -142,5 +142,7 @@ PortFile:	$(top_srcdir)/scripts/PortFile.tmpl dist
 	sed -e 's/\@VERSION\@/$(LINPHONE_VERSION)/g' \
 	  -e 's/\@LINPHONE_MD5\@/$(shell md5sum linphone-$(VERSION).tar.gz | awk {'print $$1'})/' < $< > PortFile
 
-
-
+get-dependencies: 
+	wget http://downloads.xiph.org/releases/speex/speex-1.2rc1.tar.gz && tar xvzf speex-1.2rc1.tar.gz && rm -f speex-1.2rc1.tar.gz
+	wget http://ftp.gnu.org/gnu/osip/libosip2-3.3.0.tar.gz && tar xvzf libosip2-3.3.0.tar.gz && rm -rf libosip2-3.3.0.tar.gz
+	wget http://nongnu.askapache.com/exosip/libeXosip2-3.3.0.tar.gz && tar xvzf libeXosip2-3.3.0.tar.gz && rm -rf libeXosip2-3.3.0.tar.gz

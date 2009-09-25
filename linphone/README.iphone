@@ -1,0 +1,14 @@
+					LIBLINPHONE ON IPHONE
+					******************************************
+
+* You need the lastest xcode sdk
+	
+
+export CONFIG_SITE=iphone/iphonesdk-config.site
+
+
+configure make make install speex,libosip, libexosip
+./configure --enable-iphone --prefix=/Users/jehanmonnier/iphonesdk --disable-shared --disable-video --with-readline=none  --enable-gtk_ui=no
+make make install
+
+jehan
