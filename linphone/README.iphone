@@ -8,7 +8,7 @@ export CONFIG_SITE=iphone/iphonesdk-config.site
 
 
 configure make make install speex,libosip, libexosip
-./configure --enable-iphone --prefix=/Users/jehanmonnier/iphonesdk --disable-shared --disable-video --with-readline=none  --enable-gtk_ui=no
+./configure --enable-iphone --prefix=/Users/jehanmonnier/iphonesdk --disable-shared --disable-video --with-readline=none  --enable-gtk_ui=no --enable-ssl-hmac=no 
 make make install
 
 jehan
