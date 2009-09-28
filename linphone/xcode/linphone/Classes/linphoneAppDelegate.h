@@ -9,12 +9,15 @@
 #import <UIKit/UIKit.h>
 
 
+@class PhoneViewController;
 
 @interface linphoneAppDelegate : NSObject <UIApplicationDelegate> {
     UIWindow *window;
+	PhoneViewController *myViewController;
 }
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;
+@property (nonatomic, retain) IBOutlet PhoneViewController *myViewController;
 
 @end
 
