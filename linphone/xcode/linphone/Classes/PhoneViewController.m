@@ -10,6 +10,15 @@
 
 
 @implementation PhoneViewController
+@synthesize  address ;
+@synthesize  call;
+@synthesize  cancel;
+@synthesize status;
+
+-(IBAction) doAction:(id)sender {
+
+}
+
 
 /*
  // The designated initializer.  Override if you create the controller programmatically and want to perform customization that is not appropriate for viewDidLoad.
@@ -50,7 +59,11 @@
 
 
 - (void)dealloc {
-    [super dealloc];
+    [address dealloc];
+	[call dealloc];
+	[cancel dealloc];
+	[status dealloc];
+	[super dealloc];
 }
 
 

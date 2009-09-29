@@ -8,6 +8,7 @@
 
 #import "PhoneViewController.h"
 #import "linphoneAppDelegate.h"
+#import "linphone.h"
 
 
 @implementation linphoneAppDelegate
@@ -24,11 +25,10 @@
 
 	[window addSubview:[myViewController view]];
 
-//	mainView *lView = [[mainView alloc] initWithFrame:[window frame]];
-//	[window addSubview:lView];
-//	[lView release];	
-    // Override point for customization after application launch
+	[[linphone alloc] init:aViewController];
+
     [window makeKeyAndVisible];
+	
 }
 
 

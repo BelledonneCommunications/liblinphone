@@ -11,7 +11,6 @@
 		1D60589B0D05DD56006BFB54 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		1DF5F4E00D08C38300B7A737 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF5F4DF0D08C38300B7A737 /* UIKit.framework */; };
-		227424E3106EA965006EC466 /* mainView.m in Sources */ = {isa = PBXBuildFile; fileRef = 227424E2106EA965006EC466 /* mainView.m */; };
 		22744004106F305F006EC466 /* libeXosip2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 22743FFC106F305F006EC466 /* libeXosip2.a */; };
 		22744005106F305F006EC466 /* liblinphone.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 22743FFD106F305F006EC466 /* liblinphone.a */; };
 		22744006106F305F006EC466 /* libmediastreamer.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 22743FFE106F305F006EC466 /* libmediastreamer.a */; };
@@ -36,8 +35,6 @@
 		1D3623250D0F684500981E51 /* linphoneAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = linphoneAppDelegate.m; sourceTree = "<group>"; };
 		1D6058910D05DD3D006BFB54 /* linphone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = linphone.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DF5F4DF0D08C38300B7A737 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
-		227424E1106EA965006EC466 /* mainView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mainView.h; path = ../mainView.h; sourceTree = "<group>"; };
-		227424E2106EA965006EC466 /* mainView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = mainView.m; path = ../mainView.m; sourceTree = "<group>"; };
 		22742512106EAC79006EC466 /* eX_call.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = eX_call.h; sourceTree = "<group>"; };
 		22742513106EAC79006EC466 /* eX_message.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = eX_message.h; sourceTree = "<group>"; };
 		22742514106EAC79006EC466 /* eX_options.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = eX_options.h; sourceTree = "<group>"; };
@@ -196,8 +193,6 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				227424E2106EA965006EC466 /* mainView.m */,
-				227424E1106EA965006EC466 /* mainView.h */,
 				1D3623240D0F684500981E51 /* linphoneAppDelegate.h */,
 				1D3623250D0F684500981E51 /* linphoneAppDelegate.m */,
 				22745464106FE757006EC466 /* linphone.h */,
@@ -515,7 +510,6 @@
 			files = (
 				1D60589B0D05DD56006BFB54 /* main.m in Sources */,
 				1D3623260D0F684500981E51 /* linphoneAppDelegate.m in Sources */,
-				227424E3106EA965006EC466 /* mainView.m in Sources */,
 				22745466106FE757006EC466 /* linphone.m in Sources */,
 				22F2508E107141E100AC9B3F /* PhoneViewController.m in Sources */,
 			);

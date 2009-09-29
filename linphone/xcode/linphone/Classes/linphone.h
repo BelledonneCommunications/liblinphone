@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "linphonecore.h"
+#import "PhoneViewController.h"
 
 /*
  * Maximum number of pending authentications
@@ -20,12 +21,11 @@ typedef struct {
 
 
 @interface linphone : NSObject {
-
 @private
 	/*
 	 * lib linphone main context
 	 */
-	LinphoneCore mCore;
+	LinphoneCore* mCore;
 	FILE *mylogfile;
 	int trace_level ;
 	char *logfile_name;
@@ -33,19 +33,24 @@ typedef struct {
 	
 	LPC_AUTH_STACK auth_stack;
 	
+	PhoneViewController* viewController;
+	
+	
+	
 }
+
+@property (nonatomic, retain) PhoneViewController* viewController;
 
 
 /*
  * liblinphone initialization method
  */
--(void) init;
+-(void) init:(PhoneViewController*) aViewController;
 
 /*
  * liblinphone schedulin method;
  */
 -(void) iterate;
-
 
 
 @end

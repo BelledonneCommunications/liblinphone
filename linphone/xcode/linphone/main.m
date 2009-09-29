@@ -14,11 +14,8 @@
 int main(int argc, char *argv[]) {
     
 	
-	//linphone* phone = [[linphone alloc] init];
-	
     NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
     int retVal = UIApplicationMain(argc, argv, nil, nil);
-    //[phone release];
 	[pool release];
     return retVal;
 }

@@ -10,7 +10,14 @@
 
 
 
+void linphone_iphone_log(struct _LinphoneCore * lc, const char * message) {
+	NSLog([NSString stringWithCString:message length:strlen(message)]);
+}
 
+void linphone_iphone_display_status(struct _LinphoneCore * lc, const char * message) {
+	linphone* lPhone = linphone_core_get_user_data(lc);
+	[lPhone.viewController.status setText:[NSString stringWithCString:message length:strlen(message)]];
+}
 LinphoneCoreVTable linphonec_vtable = {
 .show =(ShowInterfaceCb) NULL,
 .inv_recv = NULL,
@@ -18,9 +25,9 @@ LinphoneCoreVTable linphonec_vtable = {
 .notify_recv = NULL,
 .new_unknown_subscriber = NULL,
 .auth_info_requested = NULL,
-.display_status = NULL,
-.display_message=NULL,
-.display_warning=NULL,
+.display_status = linphone_iphone_display_status,
+.display_message=linphone_iphone_log,
+.display_warning=linphone_iphone_log,
 .display_url=NULL,
 .display_question=(DisplayQuestionCb)NULL,
 .text_received=NULL,
@@ -29,10 +36,17 @@ LinphoneCoreVTable linphonec_vtable = {
 };
 
 
-@implementation linphone
 
--(void)init {
+
+
+@implementation linphone
 	
+	@synthesize viewController;
+	
+	
+	-(void)init:(PhoneViewController*) aViewController  {
+	
+	viewController = aViewController;
 	/*
 	 * Set initial values for global variables
 	 */
@@ -64,9 +78,10 @@ LinphoneCoreVTable linphonec_vtable = {
 	/*
 	 * Initialize linphone core
 	 */
-	linphone_core_init (&mCore, &linphonec_vtable, configfile_name,
-						NULL);
+	mCore = linphone_core_new (&linphonec_vtable, configfile_name,self);
+		
 	
+	//start liblinphone scheduler
 	[NSTimer scheduledTimerWithTimeInterval:0.1 
 									 target:self 
 								   selector:@selector(iterate) 
@@ -77,6 +92,6 @@ LinphoneCoreVTable linphonec_vtable = {
 }
 
 -(void) iterate {
-	linphone_core_iterate(&mCore);
+	linphone_core_iterate(mCore);
 }
 @end
