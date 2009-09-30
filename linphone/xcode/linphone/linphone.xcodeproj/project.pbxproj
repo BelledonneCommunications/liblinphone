@@ -21,12 +21,21 @@
 		2274400B106F305F006EC466 /* libspeexdsp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 22744003106F305F006EC466 /* libspeexdsp.a */; };
 		2274401A106F31BD006EC466 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22744019106F31BD006EC466 /* CoreAudio.framework */; };
 		2274402F106F335E006EC466 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2274402E106F335E006EC466 /* AudioToolbox.framework */; };
-		22745466106FE757006EC466 /* linphone.m in Sources */ = {isa = PBXBuildFile; fileRef = 22745465106FE757006EC466 /* linphone.m */; };
 		2274550810700509006EC466 /* linphonerc in Resources */ = {isa = PBXBuildFile; fileRef = 2274550710700509006EC466 /* linphonerc */; };
 		22F2508E107141E100AC9B3F /* PhoneViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */; };
 		22F2508F107141E100AC9B3F /* PhoneViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 22F2508D107141E100AC9B3F /* PhoneViewController.xib */; };
+		22F254781073D95B00AC9B3F /* bigben.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254701073D95B00AC9B3F /* bigben.wav */; };
+		22F254791073D95B00AC9B3F /* oldphone.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254711073D95B00AC9B3F /* oldphone.wav */; };
+		22F2547A1073D95B00AC9B3F /* orig.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254721073D95B00AC9B3F /* orig.wav */; };
+		22F2547B1073D95B00AC9B3F /* rock.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254731073D95B00AC9B3F /* rock.wav */; };
+		22F2547C1073D95B00AC9B3F /* sweet.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254741073D95B00AC9B3F /* sweet.wav */; };
+		22F2547D1073D95B00AC9B3F /* synth.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254751073D95B00AC9B3F /* synth.wav */; };
+		22F2547E1073D95B00AC9B3F /* tapping.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254761073D95B00AC9B3F /* tapping.wav */; };
+		22F2547F1073D95B00AC9B3F /* toy.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254771073D95B00AC9B3F /* toy.wav */; };
+		22F254811073D99800AC9B3F /* ringback.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254801073D99800AC9B3F /* ringback.wav */; };
+		22F255151073EEE600AC9B3F /* green.png in Resources */ = {isa = PBXBuildFile; fileRef = 22F255131073EEE600AC9B3F /* green.png */; };
+		22F255161073EEE600AC9B3F /* red.png in Resources */ = {isa = PBXBuildFile; fileRef = 22F255141073EEE600AC9B3F /* red.png */; };
 		288765FD0DF74451002DB57D /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 288765FC0DF74451002DB57D /* CoreGraphics.framework */; };
-		28AD733F0D9D9553002E5188 /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 28AD733E0D9D9553002E5188 /* MainWindow.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -153,14 +162,22 @@
 		2274402E106F335E006EC466 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		22744043106F33FC006EC466 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		22744056106F9BC9006EC466 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
-		22745464106FE757006EC466 /* linphone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = linphone.h; sourceTree = "<group>"; };
-		22745465106FE757006EC466 /* linphone.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = linphone.m; sourceTree = "<group>"; };
 		2274550710700509006EC466 /* linphonerc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = linphonerc; sourceTree = "<group>"; };
 		22F2508B107141E100AC9B3F /* PhoneViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PhoneViewController.h; sourceTree = "<group>"; };
 		22F2508C107141E100AC9B3F /* PhoneViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PhoneViewController.m; sourceTree = "<group>"; };
-		22F2508D107141E100AC9B3F /* PhoneViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = PhoneViewController.xib; sourceTree = "<group>"; };
+		22F2508D107141E100AC9B3F /* PhoneViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = PhoneViewController.xib; path = Classes/PhoneViewController.xib; sourceTree = "<group>"; };
+		22F254701073D95B00AC9B3F /* bigben.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = bigben.wav; sourceTree = "<group>"; };
+		22F254711073D95B00AC9B3F /* oldphone.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = oldphone.wav; sourceTree = "<group>"; };
+		22F254721073D95B00AC9B3F /* orig.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = orig.wav; sourceTree = "<group>"; };
+		22F254731073D95B00AC9B3F /* rock.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = rock.wav; sourceTree = "<group>"; };
+		22F254741073D95B00AC9B3F /* sweet.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = sweet.wav; sourceTree = "<group>"; };
+		22F254751073D95B00AC9B3F /* synth.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = synth.wav; sourceTree = "<group>"; };
+		22F254761073D95B00AC9B3F /* tapping.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = tapping.wav; sourceTree = "<group>"; };
+		22F254771073D95B00AC9B3F /* toy.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = toy.wav; sourceTree = "<group>"; };
+		22F254801073D99800AC9B3F /* ringback.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = ringback.wav; path = ../../share/ringback.wav; sourceTree = SOURCE_ROOT; };
+		22F255131073EEE600AC9B3F /* green.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = green.png; path = ../../pixmaps/green.png; sourceTree = SOURCE_ROOT; };
+		22F255141073EEE600AC9B3F /* red.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = red.png; path = ../../pixmaps/red.png; sourceTree = SOURCE_ROOT; };
 		288765FC0DF74451002DB57D /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
-		28AD733E0D9D9553002E5188 /* MainWindow.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MainWindow.xib; sourceTree = "<group>"; };
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		32CA4F630368D1EE00C91783 /* linphone_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = linphone_Prefix.pch; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* linphone-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "linphone-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
@@ -195,11 +212,8 @@
 			children = (
 				1D3623240D0F684500981E51 /* linphoneAppDelegate.h */,
 				1D3623250D0F684500981E51 /* linphoneAppDelegate.m */,
-				22745464106FE757006EC466 /* linphone.h */,
-				22745465106FE757006EC466 /* linphone.m */,
 				22F2508B107141E100AC9B3F /* PhoneViewController.h */,
 				22F2508C107141E100AC9B3F /* PhoneViewController.m */,
-				22F2508D107141E100AC9B3F /* PhoneViewController.xib */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -406,6 +420,22 @@
 			path = ../../../../../iphonesdk/lib;
 			sourceTree = SOURCE_ROOT;
 		};
+		22F2546F1073D95B00AC9B3F /* rings */ = {
+			isa = PBXGroup;
+			children = (
+				22F254701073D95B00AC9B3F /* bigben.wav */,
+				22F254711073D95B00AC9B3F /* oldphone.wav */,
+				22F254721073D95B00AC9B3F /* orig.wav */,
+				22F254731073D95B00AC9B3F /* rock.wav */,
+				22F254741073D95B00AC9B3F /* sweet.wav */,
+				22F254751073D95B00AC9B3F /* synth.wav */,
+				22F254761073D95B00AC9B3F /* tapping.wav */,
+				22F254771073D95B00AC9B3F /* toy.wav */,
+			);
+			name = rings;
+			path = ../../share/rings;
+			sourceTree = SOURCE_ROOT;
+		};
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
@@ -436,7 +466,11 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				28AD733E0D9D9553002E5188 /* MainWindow.xib */,
+				22F255131073EEE600AC9B3F /* green.png */,
+				22F255141073EEE600AC9B3F /* red.png */,
+				22F254801073D99800AC9B3F /* ringback.wav */,
+				22F2546F1073D95B00AC9B3F /* rings */,
+				22F2508D107141E100AC9B3F /* PhoneViewController.xib */,
 				8D1107310486CEB800E47090 /* linphone-Info.plist */,
 				2274550710700509006EC466 /* linphonerc */,
 			);
@@ -495,9 +529,19 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				28AD733F0D9D9553002E5188 /* MainWindow.xib in Resources */,
 				2274550810700509006EC466 /* linphonerc in Resources */,
 				22F2508F107141E100AC9B3F /* PhoneViewController.xib in Resources */,
+				22F254781073D95B00AC9B3F /* bigben.wav in Resources */,
+				22F254791073D95B00AC9B3F /* oldphone.wav in Resources */,
+				22F2547A1073D95B00AC9B3F /* orig.wav in Resources */,
+				22F2547B1073D95B00AC9B3F /* rock.wav in Resources */,
+				22F2547C1073D95B00AC9B3F /* sweet.wav in Resources */,
+				22F2547D1073D95B00AC9B3F /* synth.wav in Resources */,
+				22F2547E1073D95B00AC9B3F /* tapping.wav in Resources */,
+				22F2547F1073D95B00AC9B3F /* toy.wav in Resources */,
+				22F254811073D99800AC9B3F /* ringback.wav in Resources */,
+				22F255151073EEE600AC9B3F /* green.png in Resources */,
+				22F255161073EEE600AC9B3F /* red.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -510,7 +554,6 @@
 			files = (
 				1D60589B0D05DD56006BFB54 /* main.m in Sources */,
 				1D3623260D0F684500981E51 /* linphoneAppDelegate.m in Sources */,
-				22745466106FE757006EC466 /* linphone.m in Sources */,
 				22F2508E107141E100AC9B3F /* PhoneViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -7,8 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "linphone.h"
-
 
 
 int main(int argc, char *argv[]) {

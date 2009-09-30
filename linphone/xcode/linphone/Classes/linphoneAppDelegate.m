@@ -8,7 +8,7 @@
 
 #import "PhoneViewController.h"
 #import "linphoneAppDelegate.h"
-#import "linphone.h"
+
 
 
 @implementation linphoneAppDelegate
@@ -20,12 +20,15 @@
 	
 	PhoneViewController *aViewController = [[PhoneViewController alloc]
 										 initWithNibName:@"PhoneViewController" bundle:[NSBundle mainBundle]];
+	
+	
 	[self  setMyViewController:aViewController];
 	[aViewController release];
 
 	[window addSubview:[myViewController view]];
 
-	[[linphone alloc] init:aViewController];
+	//init lib linphone
+	[aViewController startlibLinphone] ;
 
     [window makeKeyAndVisible];
 	
