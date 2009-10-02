@@ -155,6 +155,9 @@ LinphoneCoreVTable linphonec_vtable = {
 	const char*  lRingBack = [[myBundle pathForResource:@"ringback"ofType:@"wav"] cStringUsingEncoding:[NSString defaultCStringEncoding]];
 	linphone_core_set_ringback(mCore, lRingBack);
 	
+	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+	
+	//configure proxy
 	//start liblinphone scheduler
 	[NSTimer scheduledTimerWithTimeInterval:0.1 
 									 target:self 

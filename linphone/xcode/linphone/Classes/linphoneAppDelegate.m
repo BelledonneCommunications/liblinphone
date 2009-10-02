@@ -21,8 +21,6 @@
 	PhoneViewController *aViewController = [[PhoneViewController alloc]
 										 initWithNibName:@"PhoneViewController" bundle:[NSBundle mainBundle]];
 	
-	//window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
-	
 	[self  setMyViewController:aViewController];
 	[aViewController release];
 
