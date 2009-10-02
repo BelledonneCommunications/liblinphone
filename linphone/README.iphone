@@ -17,4 +17,7 @@ To build liblinphone for Iphone OS:
 
 Libraries are available in liblinphone-sdk/
 
+xcode build:
+	cd xcode/linphone
+	xcodebuild -sdk iphonesimulator3.1 -configuration Debug  -target linphone
 jehan
