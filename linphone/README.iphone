@@ -1,14 +1,20 @@
 					LIBLINPHONE ON IPHONE
 					******************************************
 
-* You need the lastest xcode sdk
+* You need the xcode sdk 3.1
 	
 
-export CONFIG_SITE=iphone/iphonesdk-config.site
+To retrieve linphone dependencies, you may use the following commands:
+	cd scripts
+	make -f  builder-iphone-os.mk  get_dependencies
+
+To build liblinphone for Iphone simulator:
+	make -f  builder-iphone-simulator.mk  clean clean-makefile all	
+
+To build liblinphone for Iphone OS:
+	make -f  builder-iphone-os.mk  clean clean-makefile all	
 
 
-configure make make install speex,libosip, libexosip
-./configure --enable-iphone --prefix=/Users/jehanmonnier/iphonesdk --disable-shared --disable-video --with-readline=none  --enable-gtk_ui=no --enable-ssl-hmac=no 
-make make install
+libraries are available in $(HOME)/liblinphone-sdk
 
 jehan

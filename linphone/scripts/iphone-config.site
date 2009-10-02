@@ -1,0 +1,28 @@
+# -*- shell-script -*-
+
+GCC_VERSION=4.2
+SDK_VERSION=3.1
+
+if test "${host_alias}" = "i386-apple-darwin" ; then 
+	PLATFORM=Simulator
+	ARCH=i386
+elif test "${host_alias}" = "armv6-apple-darwin" ; then 
+	ARCH=armv6
+	PLATFORM=OS
+else 
+	echo "bad host ${host_alias} must be either i386-apple-darwin or armv6-apple-darwin"
+	exit
+fi
+echo "Loading config.site for iPhone platform=${PLATFORM} version=${SDK_VERSION}"
+
+SDK_BIN_PATH=/Developer/Platforms/iPhone${PLATFORM}.platform/Developer/usr/bin     
+#SYSROOT_PATH=/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS3.1.sdk
+SYSROOT_PATH=/Developer/Platforms/iPhone${PLATFORM}.platform/Developer/SDKs/iPhone${PLATFORM}${SDK_VERSION}.sdk
+
+CC="${SDK_BIN_PATH}/gcc-${GCC_VERSION} -arch ${ARCH} --sysroot=${SYSROOT_PATH}"
+CXX="${SDK_BIN_PATH}/g++-${GCC_VERSION} -arch ${ARCH} --sysroot=${SYSROOT_PATH}"
+LD="${SDK_BIN_PATH}/ld-${GCC_VERSION} -arch ${ARCH}"
+AR=${SDK_BIN_PATH}/ar
+RANLIB=${SDK_BIN_PATH}/ranlib
+
+LDFLAGS="-Wl,-syslibroot ${SYSROOT_PATH}" 

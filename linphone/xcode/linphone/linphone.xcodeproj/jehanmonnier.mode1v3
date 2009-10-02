@@ -264,6 +264,7 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateExpansionKey</key>
 							<array>
 								<string>29B97314FDCFA39411CA2CEA</string>
+								<string>22743FFB106F305F006EC466</string>
 								<string>080E96DDFE201D6D7F000001</string>
 								<string>29B97315FDCFA39411CA2CEA</string>
 								<string>29B97317FDCFA39411CA2CEA</string>
@@ -277,8 +278,8 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>5</integer>
-									<integer>3</integer>
+									<integer>2</integer>
+									<integer>1</integer>
 									<integer>0</integer>
 								</array>
 							</array>
@@ -313,14 +314,12 @@
 					<key>Dock</key>
 					<array>
 						<dict>
-							<key>BecomeActive</key>
-							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>linphoneAppDelegate.m</string>
+								<string>linphone-Info.plist</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -328,11 +327,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>linphoneAppDelegate.m</string>
+										<string>linphone-Info.plist</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>22F2554C1073F93300AC9B3F</string>
+										<string>22F2555F1075370F00AC9B3F</string>
 										<key>history</key>
 										<array>
 											<string>22F253B51073BDA900AC9B3F</string>
@@ -344,9 +343,10 @@
 											<string>22F255321073F6A400AC9B3F</string>
 											<string>22F255331073F6A400AC9B3F</string>
 											<string>22F255341073F6A400AC9B3F</string>
-											<string>22F255351073F6A400AC9B3F</string>
 											<string>22F255361073F6A400AC9B3F</string>
-											<string>22F255491073F6C200AC9B3F</string>
+											<string>22F255591075328F00AC9B3F</string>
+											<string>22F2555A1075328F00AC9B3F</string>
+											<string>22F2555B1075328F00AC9B3F</string>
 										</array>
 										<key>prevStack</key>
 										<array>
@@ -397,6 +397,8 @@
 											<string>22F255441073F6A400AC9B3F</string>
 											<string>22F255451073F6A400AC9B3F</string>
 											<string>22F255461073F6A400AC9B3F</string>
+											<string>22F2555C1075328F00AC9B3F</string>
+											<string>22F2555D1075328F00AC9B3F</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -418,6 +420,8 @@
 							<string>660pt</string>
 						</dict>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
@@ -590,7 +594,6 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>22F2554D1073F93300AC9B3F</string>
 		<string>22F254661073D7AF00AC9B3F</string>
 		<string>22F254671073D7AF00AC9B3F</string>
 		<string>22F2545D1073D64C00AC9B3F</string>
@@ -616,8 +619,6 @@
 					<key>Dock</key>
 					<array>
 						<dict>
-							<key>BecomeActive</key>
-							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
@@ -640,6 +641,8 @@
 							<string>331pt</string>
 						</dict>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
