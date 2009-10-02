@@ -1,10 +1,10 @@
 target_arch?=armv6
-prefix=$$(HOME)/liblinphone-sdk/$(target_arch)-apple-darwin
 libosip2_version=3.3.0
 libeXosip2_version=3.3.0
 libspeex_version=1.2rc1
 
 LINPHONE_SRC_DIR=$(shell pwd)/../
+prefix=$(LINPHONE_SRC_DIR)/liblinphone-sdk/$(target_arch)-apple-darwin
 
 all: build-linphone
 clean-makefile: clean-makefile-linphone

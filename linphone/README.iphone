@@ -15,6 +15,6 @@ To build liblinphone for Iphone OS:
 	make -f  builder-iphone-os.mk  clean clean-makefile all	
 
 
-libraries are available in $(HOME)/liblinphone-sdk
+Libraries are available in liblinphone-sdk/
 
 jehan
