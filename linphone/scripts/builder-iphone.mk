@@ -23,7 +23,7 @@ $(LINPHONE_SRC_DIR)/Makefile: $(LINPHONE_SRC_DIR)/configure
 	SPEEX_CFLAGS="-I$(prefix)/include" \
         SPEEX_LIBS="-L$(prefix)/lib -lspeex "
 
-build-linphone:	build-osip2 build-eXosip2 build-speex $(LINPHONE_SRC_DIR)/Makefile 
+build-linphone:	build-osip2 build-eXosip2 build-speex build-libgsm $(LINPHONE_SRC_DIR)/Makefile 
 	 cd $(LINPHONE_SRC_DIR) && make newdate && make  && make install 
 
 clean-linphone: clean-osip2 clean-eXosip2 clean-speex clean-libgsm clean-libgsm

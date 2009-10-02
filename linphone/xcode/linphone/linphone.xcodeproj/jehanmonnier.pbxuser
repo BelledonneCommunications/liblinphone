@@ -2,7 +2,7 @@
 {
 	1D3623240D0F684500981E51 /* linphoneAppDelegate.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {946, 605}}";
+			sepNavIntBoundsRect = "{{0, 0}, {691, 407}}";
 			sepNavSelRange = "{359, 20}";
 			sepNavVisRange = "{0, 492}";
 			sepNavWindowFrame = "{{337, 201}, {750, 558}}";
@@ -10,9 +10,9 @@
 	};
 	1D3623250D0F684500981E51 /* linphoneAppDelegate.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {946, 644}}";
-			sepNavSelRange = "{602, 0}";
-			sepNavVisRange = "{3, 842}";
+			sepNavIntBoundsRect = "{{0, 0}, {672, 658}}";
+			sepNavSelRange = "{441, 0}";
+			sepNavVisRange = "{207, 648}";
 			sepNavWindowFrame = "{{383, 268}, {750, 558}}";
 		};
 	};
@@ -22,13 +22,769 @@
 			229A5391106D59B400BC6FF1 /* linphone */,
 		);
 	};
-	2274251D106EAC79006EC466 /* linphonecore.h */ = {
+	220FAC86107654FC0068D98F /* linphonecore.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {946, 11480}}";
-			sepNavSelRange = "{14531, 22}";
-			sepNavVisRange = "{14809, 1385}";
-			sepNavWindowFrame = "{{34, 166}, {750, 558}}";
+			sepNavIntBoundsRect = "{{0, 0}, {783, 11270}}";
+			sepNavSelRange = "{803, 38}";
+			sepNavVisRange = "{442, 612}";
 		};
+	};
+	220FAD4110765B710068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+			CFBundleGetInfoString,
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAD6110765FF30068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 22F2508B107141E100AC9B3F /* PhoneViewController.h */;
+		name = "PhoneViewController.h: 11";
+		rLen = 25;
+		rLoc = 197;
+		rType = 0;
+		vrLen = 870;
+		vrLoc = 0;
+	};
+	220FAD6210765FF30068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 28";
+		rLen = 0;
+		rLoc = 693;
+		rType = 0;
+		vrLen = 845;
+		vrLoc = 0;
+	};
+	220FADA01076644A0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
+		name = "main.m: 9";
+		rLen = 0;
+		rLoc = 150;
+		rType = 0;
+		vrLen = 357;
+		vrLoc = 0;
+	};
+	220FADA11076644A0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 22F2508B107141E100AC9B3F /* PhoneViewController.h */;
+		name = "PhoneViewController.h: 11";
+		rLen = 25;
+		rLoc = 197;
+		rType = 0;
+		vrLen = 520;
+		vrLoc = 0;
+	};
+	220FADA31076644A0068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FADA41076644A0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */;
+		name = "PhoneViewController.m: 25";
+		rLen = 415;
+		rLoc = 659;
+		rType = 0;
+		vrLen = 726;
+		vrLoc = 764;
+	};
+	220FADA51076644A0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 29";
+		rLen = 0;
+		rLoc = 693;
+		rType = 0;
+		vrLen = 695;
+		vrLoc = 138;
+	};
+	220FADA61076644A0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
+		name = "main.m: 9";
+		rLen = 0;
+		rLoc = 150;
+		rType = 0;
+		vrLen = 357;
+		vrLoc = 0;
+	};
+	220FADA71076644A0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 22F2508B107141E100AC9B3F /* PhoneViewController.h */;
+		name = "PhoneViewController.h: 11";
+		rLen = 25;
+		rLoc = 197;
+		rType = 0;
+		vrLen = 520;
+		vrLoc = 0;
+	};
+	220FADBB107669200068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */;
+		name = "PhoneViewController.m: 25";
+		rLen = 415;
+		rLoc = 659;
+		rType = 0;
+		vrLen = 710;
+		vrLoc = 951;
+	};
+	220FADBC107669200068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+			NSMainNibFile,
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FADBD107669200068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */;
+		name = "PhoneViewController.m: 25";
+		rLen = 415;
+		rLoc = 659;
+		rType = 0;
+		vrLen = 710;
+		vrLoc = 951;
+	};
+	220FADDD107673090068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FADDF107673090068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 32";
+		rLen = 0;
+		rLoc = 761;
+		rType = 0;
+		vrLen = 663;
+		vrLoc = 174;
+	};
+	220FADE0107673090068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FADEA107673BB0068D98F /* PBXBookmark */ = {
+		isa = PBXBookmark;
+		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
+	};
+	220FADF2107674560068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		rLen = 0;
+		rLoc = 21;
+		rType = 1;
+	};
+	220FADF3107674560068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 32";
+		rLen = 0;
+		rLoc = 761;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE071076754E0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 681;
+		vrLoc = 174;
+	};
+	220FAE081076754E0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
+		name = "linphoneAppDelegate.h: 22";
+		rLen = 20;
+		rLoc = 359;
+		rType = 0;
+		vrLen = 492;
+		vrLoc = 0;
+	};
+	220FAE121076756C0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 681;
+		vrLoc = 174;
+	};
+	220FAE151076756C0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
+		name = "linphoneAppDelegate.h: 22";
+		rLen = 20;
+		rLoc = 359;
+		rType = 0;
+		vrLen = 492;
+		vrLoc = 0;
+	};
+	220FAE1A107678DD0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE1B107678DD0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
+		name = "linphoneAppDelegate.h: 22";
+		rLen = 20;
+		rLoc = 359;
+		rType = 0;
+		vrLen = 492;
+		vrLoc = 0;
+	};
+	220FAE28107678E60068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE29107678E60068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
+		name = "linphoneAppDelegate.h: 22";
+		rLen = 20;
+		rLoc = 359;
+		rType = 0;
+		vrLen = 492;
+		vrLoc = 0;
+	};
+	220FAE2B107679160068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE2C107679160068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
+		name = "linphoneAppDelegate.h: 22";
+		rLen = 20;
+		rLoc = 359;
+		rType = 0;
+		vrLen = 492;
+		vrLoc = 0;
+	};
+	220FAE2F107679470068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE30107679470068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
+		name = "linphoneAppDelegate.h: 22";
+		rLen = 20;
+		rLoc = 359;
+		rType = 0;
+		vrLen = 492;
+		vrLoc = 0;
+	};
+	220FAE351076796C0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE361076796C0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
+		name = "linphoneAppDelegate.h: 22";
+		rLen = 20;
+		rLoc = 359;
+		rType = 0;
+		vrLen = 492;
+		vrLoc = 0;
+	};
+	220FAE391076797A0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE3B1076799E0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE3E107679E70068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE4110767A000068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE4410767A4C0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE4610767A560068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE4E10767A900068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE4F10767A900068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 662;
+		vrLoc = 174;
+	};
+	220FAE5410767C350068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 692;
+		vrLoc = 0;
+	};
+	220FAE5510767C350068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 692;
+		vrLoc = 0;
+	};
+	220FAE5810767C3F0068D98F /* linphoneAppDelegate.m:21 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		countType = 0;
+		delayBeforeContinue = 0;
+		fileReference = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		functionName = "-applicationDidFinishLaunching:";
+		hitCount = 1;
+		ignoreCount = 0;
+		lineNumber = 21;
+		location = linphone;
+		modificationTime = 276201845.756174;
+		state = 1;
+	};
+	220FAE5A10767C420068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 692;
+		vrLoc = 0;
+	};
+	220FAE6010767D030068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 692;
+		vrLoc = 0;
+	};
+	220FAE6110767D030068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+			NSMainNibFile,
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE6210767D030068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 692;
+		vrLoc = 0;
+	};
+	220FAE6310767D030068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+			NSMainNibFile,
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE6610767D1B0068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE6910767DE30068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE6C10767E560068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE7310767E700068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE7410767E700068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 670;
+		vrLoc = 207;
+	};
+	220FAE7510767E700068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE7610767E700068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 670;
+		vrLoc = 207;
+	};
+	220FAE7710767E700068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
+		name = "main.m: 9";
+		rLen = 0;
+		rLoc = 150;
+		rType = 0;
+		vrLen = 357;
+		vrLoc = 0;
+	};
+	220FAE7B10767EE50068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
+		name = "main.m: 9";
+		rLen = 0;
+		rLoc = 150;
+		rType = 0;
+		vrLen = 357;
+		vrLoc = 0;
+	};
+	220FAE7C10767EE50068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
+		name = "main.m: 9";
+		rLen = 0;
+		rLoc = 150;
+		rType = 0;
+		vrLen = 357;
+		vrLoc = 0;
+	};
+	220FAE7D10767EE50068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 648;
+		vrLoc = 207;
+	};
+	220FAE861076804A0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 648;
+		vrLoc = 207;
+	};
+	220FAE871076804A0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
+		name = "main.m: 15";
+		rLen = 0;
+		rLoc = 195;
+		rType = 0;
+		vrLen = 357;
+		vrLoc = 0;
+	};
+	220FAE881076804A0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 21";
+		rLen = 0;
+		rLoc = 397;
+		rType = 0;
+		vrLen = 648;
+		vrLoc = 207;
+	};
+	220FAE891076804A0068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
+		name = "main.m: 15";
+		rLen = 0;
+		rLoc = 195;
+		rType = 0;
+		vrLen = 357;
+		vrLoc = 0;
+	};
+	220FAE8A1076804A0068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE8D107680550068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE8E107680550068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE92107681180068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+			CFBundleSignature,
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE95107681710068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE97107681910068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE98107681910068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		rLen = 0;
+		rLoc = 21;
+		rType = 1;
+	};
+	220FAE99107681910068D98F /* PlistBookmark */ = {
+		isa = PlistBookmark;
+		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
+		fallbackIsa = PBXBookmark;
+		isK = 0;
+		kPath = (
+		);
+		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
+		rLen = 0;
+		rLoc = 2147483647;
+	};
+	220FAE9A107681910068D98F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
+		name = "linphoneAppDelegate.m: 22";
+		rLen = 0;
+		rLoc = 441;
+		rType = 0;
+		vrLen = 648;
+		vrLoc = 207;
+	};
+	2274251D106EAC79006EC466 /* linphonecore.h */ = {
+		isa = PBXFileReference;
+		fileEncoding = 4;
+		lastKnownFileType = sourcecode.c.h;
+		name = linphonecore.h;
+		path = /Users/jehanmonnier/iphonesdk/include/linphone/linphonecore.h;
+		sourceTree = "<absolute>";
 	};
 	2274544E106FE28B006EC466 /* linphonecore.h:517 */ = {
 		isa = PBXFileBreakpoint;
@@ -42,8 +798,8 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 517;
-		modificationTime = 276115969.610378;
-		state = 1;
+		modificationTime = 276201844.486382;
+		state = 0;
 	};
 	22745465106FE757006EC466 /* linphone.m */ = {
 		isa = PBXFileReference;
@@ -102,9 +858,9 @@
 	};
 	22F2508B107141E100AC9B3F /* PhoneViewController.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {946, 882}}";
-			sepNavSelRange = "{206, 12}";
-			sepNavVisRange = "{42, 942}";
+			sepNavIntBoundsRect = "{{0, 0}, {592, 938}}";
+			sepNavSelRange = "{197, 25}";
+			sepNavVisRange = "{0, 520}";
 			sepNavWindowFrame = "{{38, 233}, {1034, 799}}";
 		};
 	};
@@ -112,7 +868,7 @@
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {984, 2590}}";
 			sepNavSelRange = "{1358, 53}";
-			sepNavVisRange = "{1180, 641}";
+			sepNavVisRange = "{764, 1261}";
 			sepNavWindowFrame = "{{61, 212}, {1034, 799}}";
 		};
 	};
@@ -154,7 +910,7 @@
 		ignoreCount = 0;
 		lineNumber = 54;
 		location = linphone;
-		modificationTime = 276092051.509434;
+		modificationTime = 276201844.458278;
 		state = 2;
 	};
 	22F2539B10739EB300AC9B3F /* linphonecore.c */ = {
@@ -163,11 +919,6 @@
 		name = linphonecore.c;
 		path = "/Users/jehanmonnier/workspace/linphone-private/linphone/coreapi/linphonecore.c";
 		sourceTree = "<absolute>";
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {946, 37394}}";
-			sepNavSelRange = "{61327, 0}";
-			sepNavVisRange = "{61443, 1263}";
-		};
 	};
 	22F253A910739F5F00AC9B3F /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
@@ -226,7 +977,7 @@
 		rLen = 0;
 		rLoc = 318;
 		rType = 0;
-		vrLen = 379;
+		vrLen = 357;
 		vrLoc = 0;
 	};
 	22F254371073D1F800AC9B3F /* PBXTextBookmark */ = {
@@ -265,11 +1016,6 @@
 		name = NSError.h;
 		path = /Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator3.1.sdk/System/Library/Frameworks/Foundation.framework/Headers/NSError.h;
 		sourceTree = "<absolute>";
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {3390, 1512}}";
-			sepNavSelRange = "{2230, 54}";
-			sepNavVisRange = "{269, 3181}";
-		};
 	};
 	22F2544B1073D64C00AC9B3F /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
@@ -291,16 +1037,6 @@
 		vrLen = 3181;
 		vrLoc = 269;
 	};
-	22F2544F1073D64C00AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
-		name = "linphoneAppDelegate.m: 32";
-		rLen = 0;
-		rLoc = 707;
-		rType = 0;
-		vrLen = 845;
-		vrLoc = 0;
-	};
 	22F2548A1073DDBD00AC9B3F /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 2274550710700509006EC466 /* linphonerc */;
@@ -311,107 +1047,7 @@
 		vrLen = 628;
 		vrLoc = 51;
 	};
-	22F2548E1073DDBD00AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 2274550710700509006EC466 /* linphonerc */;
-		name = "linphonerc: 31";
-		rLen = 0;
-		rLoc = 383;
-		rType = 0;
-		vrLen = 628;
-		vrLoc = 51;
-	};
-	22F2548F1073DDBD00AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 2274251D106EAC79006EC466 /* linphonecore.h */;
-		name = "linphonecore.h: 670";
-		rLen = 258;
-		rLoc = 23018;
-		rType = 0;
-		vrLen = 2389;
-		vrLoc = 21135;
-	};
-	22F2549C1073DE4600AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2539B10739EB300AC9B3F /* linphonecore.c */;
-		name = "linphonecore.c: 2020";
-		rLen = 0;
-		rLoc = 61591;
-		rType = 0;
-		vrLen = 1156;
-		vrLoc = 60921;
-	};
-	22F254B21073DFA500AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2539B10739EB300AC9B3F /* linphonecore.c */;
-		name = "linphonecore.c: 2020";
-		rLen = 0;
-		rLoc = 61591;
-		rType = 0;
-		vrLen = 1156;
-		vrLoc = 60921;
-	};
-	22F254BE1073E06000AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2539B10739EB300AC9B3F /* linphonecore.c */;
-		name = "linphonecore.c: 2020";
-		rLen = 0;
-		rLoc = 61591;
-		rType = 0;
-		vrLen = 1158;
-		vrLoc = 60921;
-	};
-	22F254C61073E0E300AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2539B10739EB300AC9B3F /* linphonecore.c */;
-		name = "linphonecore.c: 2019";
-		rLen = 0;
-		rLoc = 61587;
-		rType = 0;
-		vrLen = 1156;
-		vrLoc = 60921;
-	};
-	22F254CF1073E12B00AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2539B10739EB300AC9B3F /* linphonecore.c */;
-		name = "linphonecore.c: 2020";
-		rLen = 0;
-		rLoc = 61591;
-		rType = 0;
-		vrLen = 1156;
-		vrLoc = 60921;
-	};
-	22F254D01073E12B00AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2508B107141E100AC9B3F /* PhoneViewController.h */;
-		name = "PhoneViewController.h: 11";
-		rLen = 12;
-		rLoc = 206;
-		rType = 0;
-		vrLen = 815;
-		vrLoc = 0;
-	};
-	22F254D61073E17D00AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2539B10739EB300AC9B3F /* linphonecore.c */;
-		name = "linphonecore.c: 2020";
-		rLen = 0;
-		rLoc = 61591;
-		rType = 0;
-		vrLen = 1156;
-		vrLoc = 60921;
-	};
 	22F254DA1073E1C600AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2539B10739EB300AC9B3F /* linphonecore.c */;
-		name = "linphonecore.c: 2006";
-		rLen = 0;
-		rLoc = 61327;
-		rType = 0;
-		vrLen = 1263;
-		vrLoc = 61443;
-	};
-	22F254DD1073E1C600AC9B3F /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 22F2539B10739EB300AC9B3F /* linphonecore.c */;
 		name = "linphonecore.c: 2006";
@@ -431,56 +1067,6 @@
 		vrLen = 1058;
 		vrLoc = 721;
 	};
-	22F254F21073E5D300AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 2274251D106EAC79006EC466 /* linphonecore.h */;
-		name = "linphonecore.h: 541";
-		rLen = 28;
-		rLoc = 17680;
-		rType = 0;
-		vrLen = 1403;
-		vrLoc = 16547;
-	};
-	22F254F31073E5D300AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */;
-		name = "PhoneViewController.m: 51";
-		rLen = 28;
-		rLoc = 1445;
-		rType = 0;
-		vrLen = 1111;
-		vrLoc = 689;
-	};
-	22F254F41073E5D300AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 2274251D106EAC79006EC466 /* linphonecore.h */;
-		name = "linphonecore.h: 469";
-		rLen = 13;
-		rLoc = 15575;
-		rType = 0;
-		vrLen = 1346;
-		vrLoc = 14919;
-	};
-	22F254F51073E5D300AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */;
-		name = "PhoneViewController.m: 21";
-		rLen = 15;
-		rLoc = 667;
-		rType = 0;
-		vrLen = 1126;
-		vrLoc = 0;
-	};
-	22F254F61073E5D300AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 2274251D106EAC79006EC466 /* linphonecore.h */;
-		name = "linphonecore.h: 388";
-		rLen = 15;
-		rLoc = 12467;
-		rType = 0;
-		vrLen = 2206;
-		vrLoc = 11668;
-	};
 	22F255061073EABA00AC9B3F /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 2274251D106EAC79006EC466 /* linphonecore.h */;
@@ -491,57 +1077,7 @@
 		vrLen = 1385;
 		vrLoc = 14809;
 	};
-	22F255071073EABA00AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */;
-		name = "PhoneViewController.m: 24";
-		rLen = 18;
-		rLoc = 619;
-		rType = 0;
-		vrLen = 1081;
-		vrLoc = 408;
-	};
-	22F255081073EABA00AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 2274251D106EAC79006EC466 /* linphonecore.h */;
-		name = "linphonecore.h: 427";
-		rLen = 22;
-		rLoc = 14531;
-		rType = 0;
-		vrLen = 1385;
-		vrLoc = 14809;
-	};
-	22F255221073F33000AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */;
-		name = "PhoneViewController.m: 55";
-		rLen = 0;
-		rLoc = 1486;
-		rType = 0;
-		vrLen = 1197;
-		vrLoc = 659;
-	};
 	22F255231073F33000AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
-		name = "linphoneAppDelegate.h: 22";
-		rLen = 20;
-		rLoc = 359;
-		rType = 0;
-		vrLen = 492;
-		vrLoc = 0;
-	};
-	22F255291073F43500AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
-		name = "linphoneAppDelegate.m: 32";
-		rLen = 0;
-		rLoc = 707;
-		rType = 0;
-		vrLen = 840;
-		vrLoc = 0;
-	};
-	22F2552A1073F43500AC9B3F /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
 		name = "linphoneAppDelegate.h: 22";
@@ -561,26 +1097,6 @@
 		vrLen = 1612;
 		vrLoc = 11176;
 	};
-	22F255331073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2508B107141E100AC9B3F /* PhoneViewController.h */;
-		name = "PhoneViewController.h: 11";
-		rLen = 12;
-		rLoc = 206;
-		rType = 0;
-		vrLen = 942;
-		vrLoc = 42;
-	};
-	22F255341073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
-		name = "main.m: 9";
-		rLen = 0;
-		rLoc = 150;
-		rType = 0;
-		vrLen = 357;
-		vrLoc = 0;
-	};
 	22F255361073F6A400AC9B3F /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
@@ -590,46 +1106,6 @@
 		rType = 0;
 		vrLen = 492;
 		vrLoc = 0;
-	};
-	22F255381073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
-		name = "linphoneAppDelegate.m: 28";
-		rLen = 0;
-		rLoc = 602;
-		rType = 0;
-		vrLen = 816;
-		vrLoc = 29;
-	};
-	22F255391073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
-		name = "main.m: 19";
-		rLen = 0;
-		rLoc = 318;
-		rType = 0;
-		vrLen = 379;
-		vrLoc = 0;
-	};
-	22F2553A1073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
-		name = "linphoneAppDelegate.h: 22";
-		rLen = 20;
-		rLoc = 359;
-		rType = 0;
-		vrLen = 492;
-		vrLoc = 0;
-	};
-	22F2553B1073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
-		name = "linphoneAppDelegate.m: 28";
-		rLen = 6;
-		rLoc = 603;
-		rType = 0;
-		vrLen = 842;
-		vrLoc = 3;
 	};
 	22F2553C1073F6A400AC9B3F /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
@@ -641,172 +1117,10 @@
 		vrLen = 1612;
 		vrLoc = 11176;
 	};
-	22F2553D1073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2508B107141E100AC9B3F /* PhoneViewController.h */;
-		name = "PhoneViewController.h: 11";
-		rLen = 12;
-		rLoc = 206;
-		rType = 0;
-		vrLen = 815;
-		vrLoc = 0;
-	};
-	22F2553E1073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
-		name = "linphoneAppDelegate.m: 16";
-		rLen = 20;
-		rLoc = 246;
-		rType = 0;
-		vrLen = 842;
-		vrLoc = 3;
-	};
-	22F2553F1073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2508B107141E100AC9B3F /* PhoneViewController.h */;
-		name = "PhoneViewController.h: 11";
-		rLen = 12;
-		rLoc = 206;
-		rType = 0;
-		vrLen = 942;
-		vrLoc = 42;
-	};
-	22F255401073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */;
-		name = "PhoneViewController.m: 55";
-		rLen = 0;
-		rLoc = 1486;
-		rType = 0;
-		vrLen = 988;
-		vrLoc = 3801;
-	};
-	22F255411073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 29B97316FDCFA39411CA2CEA /* main.m */;
-		name = "main.m: 9";
-		rLen = 0;
-		rLoc = 150;
-		rType = 0;
-		vrLen = 357;
-		vrLoc = 0;
-	};
-	22F255421073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */;
-		name = "PhoneViewController.m: 55";
-		rLen = 0;
-		rLoc = 1486;
-		rType = 0;
-		vrLen = 991;
-		vrLoc = 3798;
-	};
-	22F255431073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
-		name = "linphoneAppDelegate.h: 22";
-		rLen = 20;
-		rLoc = 359;
-		rType = 0;
-		vrLen = 492;
-		vrLoc = 0;
-	};
-	22F255441073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */;
-		name = "PhoneViewController.m: 55";
-		rLen = 0;
-		rLoc = 1486;
-		rType = 0;
-		vrLen = 991;
-		vrLoc = 3798;
-	};
-	22F255451073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
-		name = "linphoneAppDelegate.m: 28";
-		rLen = 0;
-		rLoc = 614;
-		rType = 0;
-		vrLen = 842;
-		vrLoc = 3;
-	};
-	22F255461073F6A400AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 1D3623240D0F684500981E51 /* linphoneAppDelegate.h */;
-		name = "linphoneAppDelegate.h: 22";
-		rLen = 20;
-		rLoc = 359;
-		rType = 0;
-		vrLen = 492;
-		vrLoc = 0;
-	};
-	22F255591075328F00AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
-		name = "linphoneAppDelegate.m: 28";
-		rLen = 0;
-		rLoc = 602;
-		rType = 0;
-		vrLen = 842;
-		vrLoc = 3;
-	};
-	22F2555A1075328F00AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */;
-		name = "PhoneViewController.m: 25";
-		rLen = 415;
-		rLoc = 659;
-		rType = 0;
-		vrLen = 1170;
-		vrLoc = 321;
-	};
-	22F2555B1075328F00AC9B3F /* PlistBookmark */ = {
-		isa = PlistBookmark;
-		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
-		fallbackIsa = PBXBookmark;
-		isK = 0;
-		kPath = (
-		);
-		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
-		rLen = 0;
-		rLoc = 2147483647;
-	};
-	22F2555C1075328F00AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 1D3623250D0F684500981E51 /* linphoneAppDelegate.m */;
-		name = "linphoneAppDelegate.m: 28";
-		rLen = 0;
-		rLoc = 602;
-		rType = 0;
-		vrLen = 842;
-		vrLoc = 3;
-	};
-	22F2555D1075328F00AC9B3F /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */;
-		name = "PhoneViewController.m: 25";
-		rLen = 415;
-		rLoc = 659;
-		rType = 0;
-		vrLen = 1170;
-		vrLoc = 321;
-	};
-	22F2555F1075370F00AC9B3F /* PlistBookmark */ = {
-		isa = PlistBookmark;
-		fRef = 8D1107310486CEB800E47090 /* linphone-Info.plist */;
-		fallbackIsa = PBXBookmark;
-		isK = 0;
-		kPath = (
-			CFBundleShortVersionString,
-		);
-		name = "/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone-Info.plist";
-		rLen = 0;
-		rLoc = 2147483647;
-	};
 	29B97313FDCFA39411CA2CEA /* Project object */ = {
 		activeBuildConfigurationName = Debug;
 		activeExecutable = 229A5391106D59B400BC6FF1 /* linphone */;
+		activeSDKPreference = iphonesimulator3.1;
 		activeTarget = 1D6058900D05DD3D006BFB54 /* linphone */;
 		addToTargets = (
 			1D6058900D05DD3D006BFB54 /* linphone */,
@@ -814,6 +1128,7 @@
 		breakpoints = (
 			2274544E106FE28B006EC466 /* linphonecore.h:517 */,
 			22F2537D10739BDF00AC9B3F /* linphone.m:54 */,
+			220FAE5810767C3F0068D98F /* linphoneAppDelegate.m:21 */,
 		);
 		codeSenseManager = 229A53AA106D59C300BC6FF1 /* Code sense */;
 		executables = (
@@ -848,7 +1163,7 @@
 				PBXFileTableDataSourceColumnWidthsKey = (
 					22,
 					300,
-					653,
+					690,
 				);
 				PBXFileTableDataSourceColumnsKey = (
 					PBXExecutablesDataSource_ActiveFlagID,
@@ -861,7 +1176,7 @@
 				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
 				PBXFileTableDataSourceColumnWidthsKey = (
 					20,
-					768,
+					414,
 					20,
 					48,
 					43,
@@ -911,7 +1226,7 @@
 				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
 				PBXFileTableDataSourceColumnWidthsKey = (
 					20,
-					728,
+					762,
 					60,
 					20,
 					48,
@@ -928,73 +1243,102 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 276026014;
-			PBXWorkspaceStateSaveDate = 276026014;
+			PBXPerProjectTemplateStateSaveDate = 276198760;
+			PBXWorkspaceStateSaveDate = 276198760;
 		};
 		perUserProjectItems = {
-			22F2537210739BAD00AC9B3F /* PBXTextBookmark */ = 22F2537210739BAD00AC9B3F /* PBXTextBookmark */;
-			22F253A910739F5F00AC9B3F /* PBXTextBookmark */ = 22F253A910739F5F00AC9B3F /* PBXTextBookmark */;
-			22F253B51073BDA900AC9B3F /* PBXTextBookmark */ = 22F253B51073BDA900AC9B3F /* PBXTextBookmark */;
-			22F253D01073C2D100AC9B3F /* PBXTextBookmark */ = 22F253D01073C2D100AC9B3F /* PBXTextBookmark */;
-			22F253D21073C2D100AC9B3F /* PBXTextBookmark */ = 22F253D21073C2D100AC9B3F /* PBXTextBookmark */;
-			22F253D41073C2D100AC9B3F /* PBXTextBookmark */ = 22F253D41073C2D100AC9B3F /* PBXTextBookmark */;
-			22F254101073C7C100AC9B3F /* PBXTextBookmark */ = 22F254101073C7C100AC9B3F /* PBXTextBookmark */;
-			22F254371073D1F800AC9B3F /* PBXTextBookmark */ = 22F254371073D1F800AC9B3F /* PBXTextBookmark */;
-			22F2543A1073D1F800AC9B3F /* PBXTextBookmark */ = 22F2543A1073D1F800AC9B3F /* PBXTextBookmark */;
-			22F2543C1073D1F800AC9B3F /* PBXTextBookmark */ = 22F2543C1073D1F800AC9B3F /* PBXTextBookmark */;
-			22F2544B1073D64C00AC9B3F /* PBXTextBookmark */ = 22F2544B1073D64C00AC9B3F /* PBXTextBookmark */;
-			22F2544E1073D64C00AC9B3F /* PBXTextBookmark */ = 22F2544E1073D64C00AC9B3F /* PBXTextBookmark */;
-			22F2544F1073D64C00AC9B3F /* PBXTextBookmark */ = 22F2544F1073D64C00AC9B3F /* PBXTextBookmark */;
-			22F2548A1073DDBD00AC9B3F /* PBXTextBookmark */ = 22F2548A1073DDBD00AC9B3F /* PBXTextBookmark */;
-			22F2548E1073DDBD00AC9B3F /* PBXTextBookmark */ = 22F2548E1073DDBD00AC9B3F /* PBXTextBookmark */;
-			22F2548F1073DDBD00AC9B3F /* PBXTextBookmark */ = 22F2548F1073DDBD00AC9B3F /* PBXTextBookmark */;
-			22F2549C1073DE4600AC9B3F /* PBXTextBookmark */ = 22F2549C1073DE4600AC9B3F /* PBXTextBookmark */;
-			22F254B21073DFA500AC9B3F /* PBXTextBookmark */ = 22F254B21073DFA500AC9B3F /* PBXTextBookmark */;
-			22F254BE1073E06000AC9B3F /* PBXTextBookmark */ = 22F254BE1073E06000AC9B3F /* PBXTextBookmark */;
-			22F254C61073E0E300AC9B3F /* PBXTextBookmark */ = 22F254C61073E0E300AC9B3F /* PBXTextBookmark */;
-			22F254CF1073E12B00AC9B3F /* PBXTextBookmark */ = 22F254CF1073E12B00AC9B3F /* PBXTextBookmark */;
-			22F254D01073E12B00AC9B3F /* PBXTextBookmark */ = 22F254D01073E12B00AC9B3F /* PBXTextBookmark */;
-			22F254D61073E17D00AC9B3F /* PBXTextBookmark */ = 22F254D61073E17D00AC9B3F /* PBXTextBookmark */;
-			22F254DA1073E1C600AC9B3F /* PBXTextBookmark */ = 22F254DA1073E1C600AC9B3F /* PBXTextBookmark */;
-			22F254DD1073E1C600AC9B3F /* PBXTextBookmark */ = 22F254DD1073E1C600AC9B3F /* PBXTextBookmark */;
-			22F254F11073E5D300AC9B3F /* PBXTextBookmark */ = 22F254F11073E5D300AC9B3F /* PBXTextBookmark */;
-			22F254F21073E5D300AC9B3F /* PBXTextBookmark */ = 22F254F21073E5D300AC9B3F /* PBXTextBookmark */;
-			22F254F31073E5D300AC9B3F /* PBXTextBookmark */ = 22F254F31073E5D300AC9B3F /* PBXTextBookmark */;
-			22F254F41073E5D300AC9B3F /* PBXTextBookmark */ = 22F254F41073E5D300AC9B3F /* PBXTextBookmark */;
-			22F254F51073E5D300AC9B3F /* PBXTextBookmark */ = 22F254F51073E5D300AC9B3F /* PBXTextBookmark */;
-			22F254F61073E5D300AC9B3F /* PBXTextBookmark */ = 22F254F61073E5D300AC9B3F /* PBXTextBookmark */;
-			22F255061073EABA00AC9B3F /* PBXTextBookmark */ = 22F255061073EABA00AC9B3F /* PBXTextBookmark */;
-			22F255071073EABA00AC9B3F /* PBXTextBookmark */ = 22F255071073EABA00AC9B3F /* PBXTextBookmark */;
-			22F255081073EABA00AC9B3F /* PBXTextBookmark */ = 22F255081073EABA00AC9B3F /* PBXTextBookmark */;
-			22F255221073F33000AC9B3F /* PBXTextBookmark */ = 22F255221073F33000AC9B3F /* PBXTextBookmark */;
-			22F255231073F33000AC9B3F /* PBXTextBookmark */ = 22F255231073F33000AC9B3F /* PBXTextBookmark */;
-			22F255291073F43500AC9B3F /* PBXTextBookmark */ = 22F255291073F43500AC9B3F /* PBXTextBookmark */;
-			22F2552A1073F43500AC9B3F /* PBXTextBookmark */ = 22F2552A1073F43500AC9B3F /* PBXTextBookmark */;
-			22F255321073F6A400AC9B3F /* PBXTextBookmark */ = 22F255321073F6A400AC9B3F /* PBXTextBookmark */;
-			22F255331073F6A400AC9B3F /* PBXTextBookmark */ = 22F255331073F6A400AC9B3F /* PBXTextBookmark */;
-			22F255341073F6A400AC9B3F /* PBXTextBookmark */ = 22F255341073F6A400AC9B3F /* PBXTextBookmark */;
-			22F255361073F6A400AC9B3F /* PBXTextBookmark */ = 22F255361073F6A400AC9B3F /* PBXTextBookmark */;
-			22F255381073F6A400AC9B3F /* PBXTextBookmark */ = 22F255381073F6A400AC9B3F /* PBXTextBookmark */;
-			22F255391073F6A400AC9B3F /* PBXTextBookmark */ = 22F255391073F6A400AC9B3F /* PBXTextBookmark */;
-			22F2553A1073F6A400AC9B3F /* PBXTextBookmark */ = 22F2553A1073F6A400AC9B3F /* PBXTextBookmark */;
-			22F2553B1073F6A400AC9B3F /* PBXTextBookmark */ = 22F2553B1073F6A400AC9B3F /* PBXTextBookmark */;
-			22F2553C1073F6A400AC9B3F /* PBXTextBookmark */ = 22F2553C1073F6A400AC9B3F /* PBXTextBookmark */;
-			22F2553D1073F6A400AC9B3F /* PBXTextBookmark */ = 22F2553D1073F6A400AC9B3F /* PBXTextBookmark */;
-			22F2553E1073F6A400AC9B3F /* PBXTextBookmark */ = 22F2553E1073F6A400AC9B3F /* PBXTextBookmark */;
-			22F2553F1073F6A400AC9B3F /* PBXTextBookmark */ = 22F2553F1073F6A400AC9B3F /* PBXTextBookmark */;
-			22F255401073F6A400AC9B3F /* PBXTextBookmark */ = 22F255401073F6A400AC9B3F /* PBXTextBookmark */;
-			22F255411073F6A400AC9B3F /* PBXTextBookmark */ = 22F255411073F6A400AC9B3F /* PBXTextBookmark */;
-			22F255421073F6A400AC9B3F /* PBXTextBookmark */ = 22F255421073F6A400AC9B3F /* PBXTextBookmark */;
-			22F255431073F6A400AC9B3F /* PBXTextBookmark */ = 22F255431073F6A400AC9B3F /* PBXTextBookmark */;
-			22F255441073F6A400AC9B3F /* PBXTextBookmark */ = 22F255441073F6A400AC9B3F /* PBXTextBookmark */;
-			22F255451073F6A400AC9B3F /* PBXTextBookmark */ = 22F255451073F6A400AC9B3F /* PBXTextBookmark */;
-			22F255461073F6A400AC9B3F /* PBXTextBookmark */ = 22F255461073F6A400AC9B3F /* PBXTextBookmark */;
-			22F255591075328F00AC9B3F /* PBXTextBookmark */ = 22F255591075328F00AC9B3F /* PBXTextBookmark */;
-			22F2555A1075328F00AC9B3F /* PBXTextBookmark */ = 22F2555A1075328F00AC9B3F /* PBXTextBookmark */;
-			22F2555B1075328F00AC9B3F /* PlistBookmark */ = 22F2555B1075328F00AC9B3F /* PlistBookmark */;
-			22F2555C1075328F00AC9B3F /* PBXTextBookmark */ = 22F2555C1075328F00AC9B3F /* PBXTextBookmark */;
-			22F2555D1075328F00AC9B3F /* PBXTextBookmark */ = 22F2555D1075328F00AC9B3F /* PBXTextBookmark */;
-			22F2555F1075370F00AC9B3F /* PlistBookmark */ = 22F2555F1075370F00AC9B3F /* PlistBookmark */;
+			220FAD4110765B710068D98F = 220FAD4110765B710068D98F /* PlistBookmark */;
+			220FAD6110765FF30068D98F = 220FAD6110765FF30068D98F /* PBXTextBookmark */;
+			220FAD6210765FF30068D98F = 220FAD6210765FF30068D98F /* PBXTextBookmark */;
+			220FADA01076644A0068D98F = 220FADA01076644A0068D98F /* PBXTextBookmark */;
+			220FADA11076644A0068D98F = 220FADA11076644A0068D98F /* PBXTextBookmark */;
+			220FADA31076644A0068D98F = 220FADA31076644A0068D98F /* PlistBookmark */;
+			220FADA41076644A0068D98F = 220FADA41076644A0068D98F /* PBXTextBookmark */;
+			220FADA51076644A0068D98F = 220FADA51076644A0068D98F /* PBXTextBookmark */;
+			220FADA61076644A0068D98F = 220FADA61076644A0068D98F /* PBXTextBookmark */;
+			220FADA71076644A0068D98F = 220FADA71076644A0068D98F /* PBXTextBookmark */;
+			220FADBB107669200068D98F = 220FADBB107669200068D98F /* PBXTextBookmark */;
+			220FADBC107669200068D98F = 220FADBC107669200068D98F /* PlistBookmark */;
+			220FADBD107669200068D98F = 220FADBD107669200068D98F /* PBXTextBookmark */;
+			220FADDD107673090068D98F = 220FADDD107673090068D98F /* PlistBookmark */;
+			220FADDF107673090068D98F = 220FADDF107673090068D98F /* PBXTextBookmark */;
+			220FADE0107673090068D98F = 220FADE0107673090068D98F /* PlistBookmark */;
+			220FADEA107673BB0068D98F = 220FADEA107673BB0068D98F /* PBXBookmark */;
+			220FADF2107674560068D98F = 220FADF2107674560068D98F /* PBXTextBookmark */;
+			220FADF3107674560068D98F = 220FADF3107674560068D98F /* PBXTextBookmark */;
+			220FAE071076754E0068D98F = 220FAE071076754E0068D98F /* PBXTextBookmark */;
+			220FAE081076754E0068D98F = 220FAE081076754E0068D98F /* PBXTextBookmark */;
+			220FAE121076756C0068D98F /* PBXTextBookmark */ = 220FAE121076756C0068D98F /* PBXTextBookmark */;
+			220FAE151076756C0068D98F /* PBXTextBookmark */ = 220FAE151076756C0068D98F /* PBXTextBookmark */;
+			220FAE1A107678DD0068D98F /* PBXTextBookmark */ = 220FAE1A107678DD0068D98F /* PBXTextBookmark */;
+			220FAE1B107678DD0068D98F /* PBXTextBookmark */ = 220FAE1B107678DD0068D98F /* PBXTextBookmark */;
+			220FAE28107678E60068D98F /* PBXTextBookmark */ = 220FAE28107678E60068D98F /* PBXTextBookmark */;
+			220FAE29107678E60068D98F /* PBXTextBookmark */ = 220FAE29107678E60068D98F /* PBXTextBookmark */;
+			220FAE2B107679160068D98F /* PBXTextBookmark */ = 220FAE2B107679160068D98F /* PBXTextBookmark */;
+			220FAE2C107679160068D98F /* PBXTextBookmark */ = 220FAE2C107679160068D98F /* PBXTextBookmark */;
+			220FAE2F107679470068D98F /* PBXTextBookmark */ = 220FAE2F107679470068D98F /* PBXTextBookmark */;
+			220FAE30107679470068D98F /* PBXTextBookmark */ = 220FAE30107679470068D98F /* PBXTextBookmark */;
+			220FAE351076796C0068D98F /* PBXTextBookmark */ = 220FAE351076796C0068D98F /* PBXTextBookmark */;
+			220FAE361076796C0068D98F /* PBXTextBookmark */ = 220FAE361076796C0068D98F /* PBXTextBookmark */;
+			220FAE391076797A0068D98F /* PBXTextBookmark */ = 220FAE391076797A0068D98F /* PBXTextBookmark */;
+			220FAE3B1076799E0068D98F /* PBXTextBookmark */ = 220FAE3B1076799E0068D98F /* PBXTextBookmark */;
+			220FAE3E107679E70068D98F /* PBXTextBookmark */ = 220FAE3E107679E70068D98F /* PBXTextBookmark */;
+			220FAE4110767A000068D98F /* PBXTextBookmark */ = 220FAE4110767A000068D98F /* PBXTextBookmark */;
+			220FAE4410767A4C0068D98F /* PBXTextBookmark */ = 220FAE4410767A4C0068D98F /* PBXTextBookmark */;
+			220FAE4610767A560068D98F /* PBXTextBookmark */ = 220FAE4610767A560068D98F /* PBXTextBookmark */;
+			220FAE4E10767A900068D98F /* PBXTextBookmark */ = 220FAE4E10767A900068D98F /* PBXTextBookmark */;
+			220FAE4F10767A900068D98F /* PBXTextBookmark */ = 220FAE4F10767A900068D98F /* PBXTextBookmark */;
+			220FAE5410767C350068D98F /* PBXTextBookmark */ = 220FAE5410767C350068D98F /* PBXTextBookmark */;
+			220FAE5510767C350068D98F /* PBXTextBookmark */ = 220FAE5510767C350068D98F /* PBXTextBookmark */;
+			220FAE5A10767C420068D98F /* PBXTextBookmark */ = 220FAE5A10767C420068D98F /* PBXTextBookmark */;
+			220FAE6010767D030068D98F /* PBXTextBookmark */ = 220FAE6010767D030068D98F /* PBXTextBookmark */;
+			220FAE6110767D030068D98F /* PlistBookmark */ = 220FAE6110767D030068D98F /* PlistBookmark */;
+			220FAE6210767D030068D98F /* PBXTextBookmark */ = 220FAE6210767D030068D98F /* PBXTextBookmark */;
+			220FAE6310767D030068D98F /* PlistBookmark */ = 220FAE6310767D030068D98F /* PlistBookmark */;
+			220FAE6610767D1B0068D98F /* PlistBookmark */ = 220FAE6610767D1B0068D98F /* PlistBookmark */;
+			220FAE6910767DE30068D98F /* PlistBookmark */ = 220FAE6910767DE30068D98F /* PlistBookmark */;
+			220FAE6C10767E560068D98F /* PlistBookmark */ = 220FAE6C10767E560068D98F /* PlistBookmark */;
+			220FAE7310767E700068D98F /* PlistBookmark */ = 220FAE7310767E700068D98F /* PlistBookmark */;
+			220FAE7410767E700068D98F /* PBXTextBookmark */ = 220FAE7410767E700068D98F /* PBXTextBookmark */;
+			220FAE7510767E700068D98F /* PlistBookmark */ = 220FAE7510767E700068D98F /* PlistBookmark */;
+			220FAE7610767E700068D98F /* PBXTextBookmark */ = 220FAE7610767E700068D98F /* PBXTextBookmark */;
+			220FAE7710767E700068D98F /* PBXTextBookmark */ = 220FAE7710767E700068D98F /* PBXTextBookmark */;
+			220FAE7B10767EE50068D98F /* PBXTextBookmark */ = 220FAE7B10767EE50068D98F /* PBXTextBookmark */;
+			220FAE7C10767EE50068D98F /* PBXTextBookmark */ = 220FAE7C10767EE50068D98F /* PBXTextBookmark */;
+			220FAE7D10767EE50068D98F /* PBXTextBookmark */ = 220FAE7D10767EE50068D98F /* PBXTextBookmark */;
+			220FAE861076804A0068D98F /* PBXTextBookmark */ = 220FAE861076804A0068D98F /* PBXTextBookmark */;
+			220FAE871076804A0068D98F /* PBXTextBookmark */ = 220FAE871076804A0068D98F /* PBXTextBookmark */;
+			220FAE881076804A0068D98F /* PBXTextBookmark */ = 220FAE881076804A0068D98F /* PBXTextBookmark */;
+			220FAE891076804A0068D98F /* PBXTextBookmark */ = 220FAE891076804A0068D98F /* PBXTextBookmark */;
+			220FAE8A1076804A0068D98F /* PlistBookmark */ = 220FAE8A1076804A0068D98F /* PlistBookmark */;
+			220FAE8D107680550068D98F /* PlistBookmark */ = 220FAE8D107680550068D98F /* PlistBookmark */;
+			220FAE8E107680550068D98F /* PlistBookmark */ = 220FAE8E107680550068D98F /* PlistBookmark */;
+			220FAE92107681180068D98F /* PlistBookmark */ = 220FAE92107681180068D98F /* PlistBookmark */;
+			220FAE95107681710068D98F /* PlistBookmark */ = 220FAE95107681710068D98F /* PlistBookmark */;
+			220FAE97107681910068D98F /* PlistBookmark */ = 220FAE97107681910068D98F /* PlistBookmark */;
+			220FAE98107681910068D98F /* PBXTextBookmark */ = 220FAE98107681910068D98F /* PBXTextBookmark */;
+			220FAE99107681910068D98F /* PlistBookmark */ = 220FAE99107681910068D98F /* PlistBookmark */;
+			220FAE9A107681910068D98F /* PBXTextBookmark */ = 220FAE9A107681910068D98F /* PBXTextBookmark */;
+			22F2537210739BAD00AC9B3F = 22F2537210739BAD00AC9B3F /* PBXTextBookmark */;
+			22F253A910739F5F00AC9B3F = 22F253A910739F5F00AC9B3F /* PBXTextBookmark */;
+			22F253B51073BDA900AC9B3F = 22F253B51073BDA900AC9B3F /* PBXTextBookmark */;
+			22F253D01073C2D100AC9B3F = 22F253D01073C2D100AC9B3F /* PBXTextBookmark */;
+			22F253D21073C2D100AC9B3F = 22F253D21073C2D100AC9B3F /* PBXTextBookmark */;
+			22F253D41073C2D100AC9B3F = 22F253D41073C2D100AC9B3F /* PBXTextBookmark */;
+			22F254101073C7C100AC9B3F = 22F254101073C7C100AC9B3F /* PBXTextBookmark */;
+			22F254371073D1F800AC9B3F = 22F254371073D1F800AC9B3F /* PBXTextBookmark */;
+			22F2543A1073D1F800AC9B3F = 22F2543A1073D1F800AC9B3F /* PBXTextBookmark */;
+			22F2543C1073D1F800AC9B3F = 22F2543C1073D1F800AC9B3F /* PBXTextBookmark */;
+			22F2544B1073D64C00AC9B3F = 22F2544B1073D64C00AC9B3F /* PBXTextBookmark */;
+			22F2544E1073D64C00AC9B3F = 22F2544E1073D64C00AC9B3F /* PBXTextBookmark */;
+			22F2548A1073DDBD00AC9B3F = 22F2548A1073DDBD00AC9B3F /* PBXTextBookmark */;
+			22F254DA1073E1C600AC9B3F = 22F254DA1073E1C600AC9B3F /* PBXTextBookmark */;
+			22F254F11073E5D300AC9B3F = 22F254F11073E5D300AC9B3F /* PBXTextBookmark */;
+			22F255061073EABA00AC9B3F = 22F255061073EABA00AC9B3F /* PBXTextBookmark */;
+			22F255231073F33000AC9B3F = 22F255231073F33000AC9B3F /* PBXTextBookmark */;
+			22F255321073F6A400AC9B3F = 22F255321073F6A400AC9B3F /* PBXTextBookmark */;
+			22F255361073F6A400AC9B3F = 22F255361073F6A400AC9B3F /* PBXTextBookmark */;
+			22F2553C1073F6A400AC9B3F = 22F2553C1073F6A400AC9B3F /* PBXTextBookmark */;
 		};
 		sourceControlManager = 229A53A9106D59C300BC6FF1 /* Source Control */;
 		userBuildSettings = {
@@ -1002,8 +1346,8 @@
 	};
 	29B97316FDCFA39411CA2CEA /* main.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {946, 605}}";
-			sepNavSelRange = "{150, 0}";
+			sepNavIntBoundsRect = "{{0, 0}, {592, 389}}";
+			sepNavSelRange = "{195, 0}";
 			sepNavVisRange = "{0, 357}";
 			sepNavWindowFrame = "{{560, 301}, {750, 558}}";
 		};
