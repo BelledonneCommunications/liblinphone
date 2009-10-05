@@ -10,17 +10,6 @@
 #import <Foundation/Foundation.h>
 #import "linphonecore.h"
 
-
-/*
- * Maximum number of pending authentications
- */
-#define MAX_PENDING_AUTH 8
-typedef struct {
-	LinphoneAuthInfo *elem[MAX_PENDING_AUTH];
-	int nitems;
-} LPC_AUTH_STACK;
-
-
 @interface PhoneViewController : UIViewController <UITextFieldDelegate> {
 
 @private
@@ -30,6 +19,20 @@ typedef struct {
 	UIButton* cancel;
 	UILabel* status;
 
+	//key pad
+	UIButton* one;
+	UIButton* two;
+	UIButton* three;
+	UIButton* four;
+	UIButton* five;
+	UIButton* six;
+	UIButton* seven;
+	UIButton* eight;
+	UIButton* nine;
+	UIButton* star;
+	UIButton* zero;
+	UIButton* hash;
+
 	/*
 	 * lib linphone main context
 	 */
@@ -38,13 +41,25 @@ typedef struct {
 	int traceLevel;
 	NSString* confiFileName;
 	NSString* logFileName;
-	LPC_AUTH_STACK auth_stack;	
 	
 }
 @property (nonatomic, retain) IBOutlet UITextField* address;
 @property (nonatomic, retain) IBOutlet UIButton* call;
 @property (nonatomic, retain) IBOutlet UIButton* cancel;
 @property (nonatomic, retain) IBOutlet UILabel* status;
+
+@property (nonatomic, retain) IBOutlet UIButton* one;
+@property (nonatomic, retain) IBOutlet UIButton* two;
+@property (nonatomic, retain) IBOutlet UIButton* three;
+@property (nonatomic, retain) IBOutlet UIButton* four;
+@property (nonatomic, retain) IBOutlet UIButton* five;
+@property (nonatomic, retain) IBOutlet UIButton* six;
+@property (nonatomic, retain) IBOutlet UIButton* seven;
+@property (nonatomic, retain) IBOutlet UIButton* eight;
+@property (nonatomic, retain) IBOutlet UIButton* nine;
+@property (nonatomic, retain) IBOutlet UIButton* star;
+@property (nonatomic, retain) IBOutlet UIButton* zero;
+@property (nonatomic, retain) IBOutlet UIButton* hash;
 
 /**********************************
  * liblinphone initialization method
@@ -59,5 +74,10 @@ typedef struct {
 /********************
  * UI method handlers
  ********************/
+
+//method to handle cal/hangup events
 - (IBAction)doAction:(id)sender;
+
+// method to handle keypad event
+- (IBAction)doKeyPad:(id)sender;
 @end

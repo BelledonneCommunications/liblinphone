@@ -7,7 +7,7 @@
 //
 
 #import "PhoneViewController.h"
-
+#import "osip2/osip.h"
 
 void linphone_iphone_log(struct _LinphoneCore * lc, const char * message) {
 	NSLog([NSString stringWithCString:message length:strlen(message)]);
@@ -46,15 +46,95 @@ LinphoneCoreVTable linphonec_vtable = {
 @synthesize  cancel;
 @synthesize status;
 
+@synthesize one;
+@synthesize two;
+@synthesize three;
+@synthesize four;
+@synthesize five;
+@synthesize six;
+@synthesize seven;
+@synthesize eight;
+@synthesize nine;
+@synthesize star;
+@synthesize zero;
+@synthesize hash;
+
 -(IBAction) doAction:(id)sender {
 	
 	if (sender == call) {
+	if (!linphone_core_in_call(mCore)) {
 		const char* lCallee = [[address text]  cStringUsingEncoding:[NSString defaultCStringEncoding]];
-		int err = linphone_core_invite(mCore,lCallee ) ;		
+		linphone_core_invite(mCore,lCallee ) ;		
+	}
 	} else if (sender == cancel) {
 		linphone_core_terminate_call(mCore,NULL);
-	}
+	} 
 
+}
+
+-(IBAction) doKeyPad:(id)sender {
+	if (linphone_core_in_call(mCore)) {
+	//incall behavior
+		if (sender == one) {
+			linphone_core_send_dtmf(mCore,"1");	
+		} else if (sender == two) {
+			linphone_core_send_dtmf(mCore,"2");	
+		} else if (sender == three) {
+			linphone_core_send_dtmf(mCore,"3");	
+		} else if (sender == four) {
+			linphone_core_send_dtmf(mCore,"4");	
+		} else if (sender == five) {
+			linphone_core_send_dtmf(mCore,"5");	
+		} else if (sender == six) {
+			linphone_core_send_dtmf(mCore,"6");	
+		} else if (sender == seven) {
+			linphone_core_send_dtmf(mCore,"7");	
+		} else if (sender == eight) {
+			linphone_core_send_dtmf(mCore,"8");	
+		} else if (sender == nine) {
+			linphone_core_send_dtmf(mCore,"9");	
+		} else if (sender == star) {
+			linphone_core_send_dtmf(mCore,"*");	
+		} else if (sender == zero) {
+			linphone_core_send_dtmf(mCore,"0");	
+		} else if (sender == hash) {
+			linphone_core_send_dtmf(mCore,"#");	
+		} else  {
+			NSLog(@"unknown event from dial pad");	
+		}
+	} else {
+		//outcall behavior	
+		NSString* newAddress = nil;
+		if (sender == one) {
+			newAddress = [address.text stringByAppendingString:@"1"];
+		} else if (sender == two) {
+			newAddress = [address.text stringByAppendingString:@"2"];
+		} else if (sender == three) {
+			newAddress = [address.text stringByAppendingString:@"3"];
+		} else if (sender == four) {
+			newAddress = [address.text stringByAppendingString:@"4"];
+		} else if (sender == five) {
+			newAddress = [address.text stringByAppendingString:@"5"];
+		} else if (sender == six) {
+			newAddress = [address.text stringByAppendingString:@"6"];
+		} else if (sender == seven) {
+			newAddress = [address.text stringByAppendingString:@"7"];
+		} else if (sender == eight) {
+			newAddress = [address.text stringByAppendingString:@"8"];
+		} else if (sender == nine) {
+			newAddress = [address.text stringByAppendingString:@"9"];
+		} else if (sender == star) {
+			newAddress = [address.text stringByAppendingString:@"*"];
+		} else if (sender == zero) {
+			newAddress = [address.text stringByAppendingString:@"0"];
+		} else if (sender == hash) {
+			newAddress = [address.text stringByAppendingString:@"#"];
+		} else  {
+			NSLog(@"unknown event from diad pad");	
+		}
+		[address setText:newAddress];	
+		if (newAddress != nil) [newAddress release];
+	}
 }
 
 
@@ -135,29 +215,69 @@ LinphoneCoreVTable linphonec_vtable = {
 		}
 		linphone_core_enable_logs(mylogfile);
 	}
-	else
-	{
+	else {
 		linphone_core_disable_logs();
 	}
-	/*
-	 * Initialize auth stack
-	 */
-	auth_stack.nitems=0;
-
+	
 	/*
 	 * Initialize linphone core
 	 */
 	
 	mCore = linphone_core_new (&linphonec_vtable, [confiFileName cStringUsingEncoding:[NSString defaultCStringEncoding]],self);
 	
+	// Set audio assets
 	const char*  lRing = [[myBundle pathForResource:@"oldphone"ofType:@"wav"] cStringUsingEncoding:[NSString defaultCStringEncoding]];
 	linphone_core_set_ring(mCore, lRing );
 	const char*  lRingBack = [[myBundle pathForResource:@"ringback"ofType:@"wav"] cStringUsingEncoding:[NSString defaultCStringEncoding]];
 	linphone_core_set_ringback(mCore, lRingBack);
 	
-	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 	
-	//configure proxy
+	//configure sip proxy
+	//get data from Settings bundle
+	NSString* accountNameUri = [[NSUserDefaults standardUserDefaults] stringForKey:@"account_preference"];
+	const char* identity = [accountNameUri cStringUsingEncoding:[NSString defaultCStringEncoding]];
+	
+	NSString* accountPassword = [[NSUserDefaults standardUserDefaults] stringForKey:@"password_preference"];
+	const char* password = [accountPassword cStringUsingEncoding:[NSString defaultCStringEncoding]];
+	
+	NSString* proxyUri = [[NSUserDefaults standardUserDefaults] stringForKey:@"proxy_preference"];
+	const char* proxy = [proxyUri cStringUsingEncoding:[NSString defaultCStringEncoding]];
+	
+	if (([accountNameUri length] + [proxyUri length]) >6 ) {
+		//possible valid config detected
+		LinphoneProxyConfig* proxyCfg;	
+		//clear auth info list
+		linphone_core_clear_all_auth_info(mCore);
+		//get default proxy
+		linphone_core_get_default_proxy(mCore,&proxyCfg);
+		if (proxyCfg == NULL) {
+			//create new proxy	
+			proxyCfg = linphone_proxy_config_new();
+			linphone_core_add_proxy_config(mCore,proxyCfg);
+        		//set to default proxy
+			linphone_core_set_default_proxy(mCore,proxyCfg);
+		}
+		
+		// add username password
+		osip_from_t *from;
+                LinphoneAuthInfo *info;
+                osip_from_init(&from);
+                if (osip_from_parse(from,identity)==0){
+                        char realm[128];
+                        snprintf(realm,sizeof(realm)-1,"\"%s\"",from->url->host);
+                        info=linphone_auth_info_new(from->url->username,NULL,password,NULL,realm);
+                        linphone_core_add_auth_info(mCore,info);
+                }
+                osip_from_free(from);
+
+	        // configure proxy entries
+		linphone_proxy_config_edit(proxyCfg);
+		linphone_proxy_config_set_identity(proxyCfg,identity);
+        	linphone_proxy_config_set_server_addr(proxyCfg,proxy);
+        	linphone_proxy_config_enable_register(proxyCfg,TRUE);
+		linphone_proxy_config_done(proxyCfg);
+	}
+	
 	//start liblinphone scheduler
 	[NSTimer scheduledTimerWithTimeInterval:0.1 
 									 target:self 
