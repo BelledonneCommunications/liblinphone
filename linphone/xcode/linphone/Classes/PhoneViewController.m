@@ -76,34 +76,38 @@ LinphoneCoreVTable linphonec_vtable = {
 	if (linphone_core_in_call(mCore)) {
 	//incall behavior
 		if (sender == one) {
-			linphone_core_send_dtmf(mCore,"1");	
+			linphone_core_send_dtmf(mCore,'1');	
 		} else if (sender == two) {
-			linphone_core_send_dtmf(mCore,"2");	
+			linphone_core_send_dtmf(mCore,'2');	
 		} else if (sender == three) {
-			linphone_core_send_dtmf(mCore,"3");	
+			linphone_core_send_dtmf(mCore,'3');	
 		} else if (sender == four) {
-			linphone_core_send_dtmf(mCore,"4");	
+			linphone_core_send_dtmf(mCore,'4');	
 		} else if (sender == five) {
-			linphone_core_send_dtmf(mCore,"5");	
+			linphone_core_send_dtmf(mCore,'5');	
 		} else if (sender == six) {
-			linphone_core_send_dtmf(mCore,"6");	
+			linphone_core_send_dtmf(mCore,'6');	
 		} else if (sender == seven) {
-			linphone_core_send_dtmf(mCore,"7");	
+			linphone_core_send_dtmf(mCore,'7');	
 		} else if (sender == eight) {
-			linphone_core_send_dtmf(mCore,"8");	
+			linphone_core_send_dtmf(mCore,'8');	
 		} else if (sender == nine) {
-			linphone_core_send_dtmf(mCore,"9");	
+			linphone_core_send_dtmf(mCore,'9');	
 		} else if (sender == star) {
-			linphone_core_send_dtmf(mCore,"*");	
+			linphone_core_send_dtmf(mCore,'*');	
 		} else if (sender == zero) {
-			linphone_core_send_dtmf(mCore,"0");	
+			linphone_core_send_dtmf(mCore,'0');	
 		} else if (sender == hash) {
-			linphone_core_send_dtmf(mCore,"#");	
+			linphone_core_send_dtmf(mCore,'#');	
 		} else  {
 			NSLog(@"unknown event from dial pad");	
 		}
 	} else {
 		//outcall behavior	
+		//remove sip: if first digits
+		if ([address.text isEqualToString:@"sip:"]) {
+			[address setText:@""];
+		}
 		NSString* newAddress = nil;
 		if (sender == one) {
 			newAddress = [address.text stringByAppendingString:@"1"];
@@ -133,7 +137,6 @@ LinphoneCoreVTable linphonec_vtable = {
 			NSLog(@"unknown event from diad pad");	
 		}
 		[address setText:newAddress];	
-		if (newAddress != nil) [newAddress release];
 	}
 }
 
@@ -250,12 +253,13 @@ LinphoneCoreVTable linphonec_vtable = {
 		linphone_core_clear_all_auth_info(mCore);
 		//get default proxy
 		linphone_core_get_default_proxy(mCore,&proxyCfg);
+		boolean_t addProxy=false;
 		if (proxyCfg == NULL) {
 			//create new proxy	
 			proxyCfg = linphone_proxy_config_new();
-			linphone_core_add_proxy_config(mCore,proxyCfg);
-        		//set to default proxy
-			linphone_core_set_default_proxy(mCore,proxyCfg);
+			addProxy = true;
+		} else {
+			linphone_proxy_config_edit(proxyCfg);
 		}
 		
 		// add username password
@@ -271,11 +275,17 @@ LinphoneCoreVTable linphonec_vtable = {
                 osip_from_free(from);
 
 	        // configure proxy entries
-		linphone_proxy_config_edit(proxyCfg);
 		linphone_proxy_config_set_identity(proxyCfg,identity);
-        	linphone_proxy_config_set_server_addr(proxyCfg,proxy);
-        	linphone_proxy_config_enable_register(proxyCfg,TRUE);
-		linphone_proxy_config_done(proxyCfg);
+        linphone_proxy_config_set_server_addr(proxyCfg,proxy);
+        linphone_proxy_config_enable_register(proxyCfg,TRUE);
+		if (addProxy) {
+			linphone_core_add_proxy_config(mCore,proxyCfg);
+			//set to default proxy
+			linphone_core_set_default_proxy(mCore,proxyCfg);
+		} else {
+			linphone_proxy_config_done(proxyCfg);
+		}
+
 	}
 	
 	//start liblinphone scheduler
