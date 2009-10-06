@@ -29,14 +29,7 @@
 		2274550810700509006EC466 /* linphonerc in Resources */ = {isa = PBXBuildFile; fileRef = 2274550710700509006EC466 /* linphonerc */; };
 		22F2508E107141E100AC9B3F /* PhoneViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */; };
 		22F2508F107141E100AC9B3F /* PhoneViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 22F2508D107141E100AC9B3F /* PhoneViewController.xib */; };
-		22F254781073D95B00AC9B3F /* bigben.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254701073D95B00AC9B3F /* bigben.wav */; };
 		22F254791073D95B00AC9B3F /* oldphone.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254711073D95B00AC9B3F /* oldphone.wav */; };
-		22F2547A1073D95B00AC9B3F /* orig.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254721073D95B00AC9B3F /* orig.wav */; };
-		22F2547B1073D95B00AC9B3F /* rock.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254731073D95B00AC9B3F /* rock.wav */; };
-		22F2547C1073D95B00AC9B3F /* sweet.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254741073D95B00AC9B3F /* sweet.wav */; };
-		22F2547D1073D95B00AC9B3F /* synth.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254751073D95B00AC9B3F /* synth.wav */; };
-		22F2547E1073D95B00AC9B3F /* tapping.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254761073D95B00AC9B3F /* tapping.wav */; };
-		22F2547F1073D95B00AC9B3F /* toy.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254771073D95B00AC9B3F /* toy.wav */; };
 		22F254811073D99800AC9B3F /* ringback.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254801073D99800AC9B3F /* ringback.wav */; };
 		22F255151073EEE600AC9B3F /* green.png in Resources */ = {isa = PBXBuildFile; fileRef = 22F255131073EEE600AC9B3F /* green.png */; };
 		22F255161073EEE600AC9B3F /* red.png in Resources */ = {isa = PBXBuildFile; fileRef = 22F255141073EEE600AC9B3F /* red.png */; };
@@ -187,14 +180,7 @@
 		22F2508B107141E100AC9B3F /* PhoneViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PhoneViewController.h; sourceTree = "<group>"; };
 		22F2508C107141E100AC9B3F /* PhoneViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PhoneViewController.m; sourceTree = "<group>"; };
 		22F2508D107141E100AC9B3F /* PhoneViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = PhoneViewController.xib; path = Classes/PhoneViewController.xib; sourceTree = "<group>"; };
-		22F254701073D95B00AC9B3F /* bigben.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = bigben.wav; sourceTree = "<group>"; };
 		22F254711073D95B00AC9B3F /* oldphone.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = oldphone.wav; sourceTree = "<group>"; };
-		22F254721073D95B00AC9B3F /* orig.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = orig.wav; sourceTree = "<group>"; };
-		22F254731073D95B00AC9B3F /* rock.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = rock.wav; sourceTree = "<group>"; };
-		22F254741073D95B00AC9B3F /* sweet.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = sweet.wav; sourceTree = "<group>"; };
-		22F254751073D95B00AC9B3F /* synth.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = synth.wav; sourceTree = "<group>"; };
-		22F254761073D95B00AC9B3F /* tapping.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = tapping.wav; sourceTree = "<group>"; };
-		22F254771073D95B00AC9B3F /* toy.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = toy.wav; sourceTree = "<group>"; };
 		22F254801073D99800AC9B3F /* ringback.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = ringback.wav; path = ../../share/ringback.wav; sourceTree = SOURCE_ROOT; };
 		22F255131073EEE600AC9B3F /* green.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = green.png; path = ../../pixmaps/green.png; sourceTree = SOURCE_ROOT; };
 		22F255141073EEE600AC9B3F /* red.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = red.png; path = ../../pixmaps/red.png; sourceTree = SOURCE_ROOT; };
@@ -438,14 +424,7 @@
 		22F2546F1073D95B00AC9B3F /* rings */ = {
 			isa = PBXGroup;
 			children = (
-				22F254701073D95B00AC9B3F /* bigben.wav */,
 				22F254711073D95B00AC9B3F /* oldphone.wav */,
-				22F254721073D95B00AC9B3F /* orig.wav */,
-				22F254731073D95B00AC9B3F /* rock.wav */,
-				22F254741073D95B00AC9B3F /* sweet.wav */,
-				22F254751073D95B00AC9B3F /* synth.wav */,
-				22F254761073D95B00AC9B3F /* tapping.wav */,
-				22F254771073D95B00AC9B3F /* toy.wav */,
 			);
 			name = rings;
 			path = ../../share/rings;
@@ -568,14 +547,7 @@
 			files = (
 				2274550810700509006EC466 /* linphonerc in Resources */,
 				22F2508F107141E100AC9B3F /* PhoneViewController.xib in Resources */,
-				22F254781073D95B00AC9B3F /* bigben.wav in Resources */,
 				22F254791073D95B00AC9B3F /* oldphone.wav in Resources */,
-				22F2547A1073D95B00AC9B3F /* orig.wav in Resources */,
-				22F2547B1073D95B00AC9B3F /* rock.wav in Resources */,
-				22F2547C1073D95B00AC9B3F /* sweet.wav in Resources */,
-				22F2547D1073D95B00AC9B3F /* synth.wav in Resources */,
-				22F2547E1073D95B00AC9B3F /* tapping.wav in Resources */,
-				22F2547F1073D95B00AC9B3F /* toy.wav in Resources */,
 				22F254811073D99800AC9B3F /* ringback.wav in Resources */,
 				22F255151073EEE600AC9B3F /* green.png in Resources */,
 				22F255161073EEE600AC9B3F /* red.png in Resources */,

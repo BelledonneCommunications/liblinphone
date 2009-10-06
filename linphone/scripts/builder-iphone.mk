@@ -3,6 +3,9 @@ libosip2_version=3.3.0
 libeXosip2_version=3.3.0
 libspeex_version=1.2rc1
 libgsm_version=1.0.13
+ifeq ($(target_arch),armv6) 
+	SPEEX_CONFIGURE_OPTION := --enable-arm5e-asm --enable-fixed-point
+endif
 
 LINPHONE_SRC_DIR=$(shell pwd)/../
 prefix=$(LINPHONE_SRC_DIR)/liblinphone-sdk/$(target_arch)-apple-darwin
@@ -106,7 +109,7 @@ get_speex_src:
 $(LINPHONE_SRC_DIR)/speex-$(libspeex_version)/Makefile: 
 	 cd $(LINPHONE_SRC_DIR)/speex-$(libspeex_version)/\
 	&& CONFIG_SITE=$(LINPHONE_SRC_DIR)/scripts/iphone-config.site \
-	./configure -prefix=$(prefix) --host=$(target_arch)-apple-darwin --disable-shared --disable-oggtest
+	./configure -prefix=$(prefix) --host=$(target_arch)-apple-darwin --disable-shared --disable-oggtest $(SPEEX_CONFIGURE_OPTION)
 
 build-speex: $(LINPHONE_SRC_DIR)/speex-$(libspeex_version)/Makefile
 	 cd $(LINPHONE_SRC_DIR)/speex-$(libspeex_version)/libspeex  && make  && make install

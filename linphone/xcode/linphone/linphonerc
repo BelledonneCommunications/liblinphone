@@ -1,9 +1,3 @@
-[video]
-display=0
-capture=0
-show_local=0
-size=cif
-
 [net]
 download_bw=0
 upload_bw=0
@@ -11,7 +5,7 @@ firewall_policy=0
 mtu=0
 
 [sip]
-sip_port=5062
+sip_port=5060
 guess_hostname=1
 contact=sip:jehanmonnier@unknown-host
 inc_timeout=15
@@ -21,8 +15,8 @@ register_only_when_network_is_up=0
 default_proxy=-1
 
 [rtp]
-audio_rtp_port=7080
-video_rtp_port=9082
+audio_rtp_port=7076
+video_rtp_port=9078
 audio_jitt_comp=60
 video_jitt_comp=60
 nortp_timeout=30
@@ -43,11 +37,16 @@ rate=8000
 enabled=1
 
 [audio_codec_2]
-mime=PCMU
+mime=gsm
 rate=8000
 enabled=1
 
 [audio_codec_3]
+mime=PCMU
+rate=8000
+enabled=1
+
+[audio_codec_4]
 mime=PCMA
 rate=8000
 enabled=1

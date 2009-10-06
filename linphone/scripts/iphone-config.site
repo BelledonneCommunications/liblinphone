@@ -9,6 +9,7 @@ if test "${host_alias}" = "i386-apple-darwin" ; then
 elif test "${host_alias}" = "armv6-apple-darwin" ; then 
 	ARCH=armv6
 	PLATFORM=OS
+	#CFLAGS="-mthumb -mthumb-interwork"
 else 
 	echo "bad host ${host_alias} must be either i386-apple-darwin or armv6-apple-darwin"
 	exit
