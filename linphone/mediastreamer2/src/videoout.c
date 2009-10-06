@@ -254,6 +254,9 @@ typedef struct _WinDisplay{
 	MSPicture fb;
 	MSDisplayEvent last_rsz;
 	uint8_t *rgb;
+	uint8_t *black;
+	int last_rect_w;
+	int last_rect_h;
 	int rgb_len;
 	struct SwsContext *sws;
 	bool_t new_ev;
@@ -346,10 +349,14 @@ static bool_t win_display_init(MSDisplay *obj, MSPicture *fbuf){
 		wd->fb.planes[2]=NULL;
 		wd->fb.planes[3]=NULL;
 		if (wd->rgb) ms_free(wd->rgb);
+		if (wd->black) ms_free(wd->black);
 		wd->rgb=NULL;
+		wd->black=NULL;
 		wd->rgb_len=0;
 		sws_freeContext(wd->sws);
 		wd->sws=NULL;
+		wd->last_rect_w=0;
+		wd->last_rect_h=0;
 	}
 	else
 		wd=(WinDisplay*)ms_new0(WinDisplay,1);
@@ -389,6 +396,7 @@ static bool_t win_display_init(MSDisplay *obj, MSPicture *fbuf){
 	/*allocate yuv and rgb buffers*/
 	if (wd->fb.planes[0]) ms_free(wd->fb.planes[0]);
 	if (wd->rgb) ms_free(wd->rgb);
+	if (wd->black) ms_free(wd->black);
 	ysize=wd->fb.w*wd->fb.h;
 	usize=ysize/4;
 	fbuf->planes[0]=wd->fb.planes[0]=(uint8_t*)ms_malloc0(ysize+2*usize);
@@ -402,6 +410,9 @@ static bool_t win_display_init(MSDisplay *obj, MSPicture *fbuf){
 
 	wd->rgb_len=ysize*3;
 	wd->rgb=(uint8_t*)ms_malloc0(wd->rgb_len);
+	wd->black = (uint8_t*)ms_malloc0(wd->rgb_len);
+	wd->last_rect_w=0;
+	wd->last_rect_h=0;
 	return TRUE;
 }
 
@@ -415,7 +426,7 @@ typedef struct yuv{
 
 
 
-void yuv420p_to_rgb(WinDisplay *wd, MSPicture *src, uint8_t *rgb){
+static void yuv420p_to_rgb(WinDisplay *wd, MSPicture *src, uint8_t *rgb){
 	int rgb_stride=-src->w*3;
 	uint8_t *p;
 
@@ -431,12 +442,32 @@ void yuv420p_to_rgb(WinDisplay *wd, MSPicture *src, uint8_t *rgb){
 	}
 }
 
+static int gcd(int m, int n)
+{
+   if(n == 0)
+     return m;
+   else
+     return gcd(n, m % n);
+}
+   
+static void reduce(int *num, int *denom)
+{
+   int divisor = gcd(*num, *denom);
+   *num /= divisor;
+   *denom /= divisor;
+}
+
 static void win_display_update(MSDisplay *obj){
 	WinDisplay *wd=(WinDisplay*)obj->data;
 	HDC hdc;
 	BITMAPINFOHEADER bi;
 	RECT rect;
 	bool_t ret;
+	int ratiow;
+	int ratioh;
+	int w;
+	int h;
+
 	if (wd->window==NULL) return;
 	hdc=GetDC(wd->window);
 	if (hdc==NULL) {
@@ -447,14 +478,7 @@ static void win_display_update(MSDisplay *obj){
 	memset(&bi,0,sizeof(bi));
 	bi.biSize=sizeof(bi);
 	GetClientRect(wd->window,&rect);
-	/*
-	bi.biWidth=wd->fb.w;
-	bi.biHeight=wd->fb.h;
-	bi.biPlanes=3;
-	bi.biBitCount=12;
-	bi.biCompression=MAKEFOURCC('I','4','2','0');
-	bi.biSizeImage=(wd->fb.w*wd->fb.h*3)/2;
-	*/
+
 	bi.biWidth=wd->fb.w;
 	bi.biHeight=wd->fb.h;
 	bi.biPlanes=1;
@@ -462,16 +486,60 @@ static void win_display_update(MSDisplay *obj){
 	bi.biCompression=BI_RGB;
 	bi.biSizeImage=wd->rgb_len;
 
-	//if (bi.biHeight>rect.bottom)
-	//	bi.biHeight=rect.bottom;
-	//bi.biSizeImage=(bi.biWidth*bi.biHeight)*3;
+	ratiow=wd->fb.w;
+	ratioh=wd->fb.h;
+	reduce(&ratiow, &ratioh);
+	w = rect.right/ratiow*ratiow;
+	h = rect.bottom/ratioh*ratioh;
 
-	ret=DrawDibDraw(wd->ddh,hdc,0,0,
-		//bi.biWidth,bi.biHeight,
-		rect.right,rect.bottom,
+	if (h*ratiow>w*ratioh)
+	{
+		w = w;
+		h = w*ratioh/ratiow;
+	}
+	else
+	{
+		h = h;
+		w = h*ratiow/ratioh;
+	}
+
+	if (h*wd->fb.w!=w*wd->fb.h)
+		ms_error("wrong ratio");
+
+	//if (wd->last_rect_w!=rect.right || wd->last_rect_h!=rect.bottom)
+	{
+		ret=DrawDibDraw(wd->ddh,hdc,0,0,
+			(rect.right-w)/2,rect.bottom,
+			&bi,wd->black,
+			0,0,bi.biWidth,bi.biHeight,0);
+
+		ret=DrawDibDraw(wd->ddh,hdc,0,0,
+			rect.right,(rect.bottom-h)/2,
+			&bi,wd->black,
+			0,0,bi.biWidth,bi.biHeight,0);
+
+		ret=DrawDibDraw(wd->ddh,hdc,0,(rect.bottom)-((rect.bottom-h+1)&~0x1)/2,
+			rect.right,((rect.bottom-h+1)&~0x1)/2,
+			&bi,wd->black,
+			0,0,bi.biWidth,bi.biHeight,0);
+
+		ret=DrawDibDraw(wd->ddh,hdc,(rect.right)-((rect.right-w+1)&~0x1)/2,0,
+			((rect.right-w+1)&~0x1)/2,rect.bottom,
+			&bi,wd->black,
+			0,0,bi.biWidth,bi.biHeight,0);
+
+		wd->last_rect_w=rect.right;
+		wd->last_rect_h=rect.bottom;
+	}
+
+	ret=DrawDibDraw(wd->ddh,hdc,
+		(rect.right-w)/2,
+		(rect.bottom-h)/2,
+		w,
+		h,
 		&bi,wd->rgb,
-		//0,0,rect.right,rect.bottom,0);
 		0,0,bi.biWidth,bi.biHeight,0);
+
 	
   	if (!ret) ms_error("DrawDibDraw failed.");
 	ReleaseDC(NULL,hdc);
@@ -485,6 +553,7 @@ static void win_display_uninit(MSDisplay *obj){
 	if (wd->ddh) DrawDibClose(wd->ddh);
 	if (wd->fb.planes[0]) ms_free(wd->fb.planes[0]);
 	if (wd->rgb) ms_free(wd->rgb);
+	if (wd->black) ms_free(wd->black);
 	if (wd->sws) sws_freeContext(wd->sws);
 	ms_free(wd);
 }

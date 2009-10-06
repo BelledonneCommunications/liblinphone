@@ -16,10 +16,10 @@
   <kdevcustomproject>
     <run>
       <directoryradio>executable</directoryradio>
-      <mainprogram>/home/smorlat/sources/git/linphone/linphone</mainprogram>
+      <mainprogram>gtk-glade/linphone-3</mainprogram>
       <programargs/>
       <globaldebugarguments/>
-      <globalcwd>/home/smorlat/sources/git/linphone/linphone</globalcwd>
+      <globalcwd/>
       <useglobalprogram>false</useglobalprogram>
       <terminal>false</terminal>
       <autocompile>false</autocompile>

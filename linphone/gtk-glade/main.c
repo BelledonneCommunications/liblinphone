@@ -521,6 +521,7 @@ void linphone_gtk_call_terminated(const char *error){
 	gtk_widget_set_sensitive(linphone_gtk_get_widget(mw,"terminate_call"),FALSE);
 	gtk_widget_set_sensitive(linphone_gtk_get_widget(mw,"start_call"),TRUE);
 	gtk_widget_hide_all(linphone_gtk_get_widget(mw,"go_to_call_view_box"));
+	linphone_gtk_enable_mute_button(GTK_TOGGLE_BUTTON(linphone_gtk_get_widget(mw,"main_mute")),FALSE);
 	if (linphone_gtk_use_in_call_view())
 		linphone_gtk_in_call_view_terminate(error);
 	update_video_title();
@@ -558,9 +559,32 @@ static gboolean linphone_gtk_start_call_do(GtkWidget *uri_bar){
 	return FALSE;
 }
 
+static void _linphone_gtk_accept_call(){
+	LinphoneCore *lc=linphone_gtk_get_core();
+	GtkWidget *mw=linphone_gtk_get_main_window();
+	GtkWidget *icw=GTK_WIDGET(g_object_get_data(G_OBJECT(mw),"incoming_call"));
+	if (icw!=NULL){
+		g_object_set_data(G_OBJECT(mw),"incoming_call",NULL);
+		gtk_widget_destroy(icw);
+	}
+
+	linphone_core_accept_call(lc,NULL);
+	linphone_gtk_call_started(linphone_gtk_get_main_window());
+	if (linphone_gtk_use_in_call_view()){
+		linphone_gtk_in_call_view_set_in_call();
+		linphone_gtk_show_in_call_view();
+	}
+	linphone_gtk_enable_mute_button(
+		GTK_TOGGLE_BUTTON(linphone_gtk_get_widget(linphone_gtk_get_main_window(),"main_mute"))
+		,TRUE);
+}
+
 void linphone_gtk_start_call(GtkWidget *w){
 	LinphoneCore *lc=linphone_gtk_get_core();
-	if (linphone_core_inc_invite_pending(lc) || linphone_core_in_call(lc)) {
+	if (linphone_core_inc_invite_pending(lc)){
+		/*accept the call*/
+		_linphone_gtk_accept_call();
+	}else if (linphone_core_in_call(lc)) {
 		/*already in call */
 	}else{
 		/*change into in-call mode, then do the work later as it might block a bit */
@@ -594,15 +618,7 @@ void linphone_gtk_decline_call(GtkWidget *button){
 }
 
 void linphone_gtk_accept_call(GtkWidget *button){
-	LinphoneCore *lc=linphone_gtk_get_core();
-	linphone_core_accept_call(lc,NULL);
-	g_object_set_data(G_OBJECT(linphone_gtk_get_main_window()),"incoming_call",NULL);
-	gtk_widget_destroy(gtk_widget_get_toplevel(button));
-	linphone_gtk_call_started(linphone_gtk_get_main_window());
-	if (linphone_gtk_use_in_call_view()){
-		linphone_gtk_in_call_view_set_in_call();
-		linphone_gtk_show_in_call_view();
-	}
+	_linphone_gtk_accept_call();
 }
 
 static gboolean linphone_gtk_auto_answer(GtkWidget *incall_window){
@@ -810,6 +826,9 @@ static void linphone_gtk_general_state(LinphoneCore *lc, LinphoneGeneralState *g
 		case GSTATE_CALL_IN_CONNECTED:
 			if (linphone_gtk_use_in_call_view())
 				linphone_gtk_in_call_view_set_in_call();
+			linphone_gtk_enable_mute_button(
+				GTK_TOGGLE_BUTTON(linphone_gtk_get_widget(linphone_gtk_get_main_window(),"main_mute")),
+			TRUE);
 		break;
 		case GSTATE_CALL_ERROR:
 			linphone_gtk_call_terminated(gstate->message);
@@ -852,7 +871,7 @@ static GtkWidget *create_icon_menu(){
 	const gchar *homesite;
 	
 	homesite=linphone_gtk_get_ui_config("home","http://www.linphone.org");
-	menu_item=gtk_image_menu_item_new_with_label(homesite);
+	menu_item=gtk_image_menu_item_new_with_label(_("Website link"));
 	tmp=g_strdup(homesite);
 	g_object_set_data(G_OBJECT(menu_item),"home",tmp);
 	g_object_weak_ref(G_OBJECT(menu_item),(GWeakNotify)g_free,tmp);
@@ -1025,6 +1044,10 @@ static void linphone_gtk_init_main_window(){
 	linphone_gtk_show_friends();
 	linphone_gtk_connect_digits();
 	linphone_gtk_check_menu_items();
+	linphone_gtk_enable_mute_button(GTK_TOGGLE_BUTTON(linphone_gtk_get_widget(linphone_gtk_get_main_window(),
+					"main_mute")),FALSE);
+	linphone_gtk_enable_mute_button(GTK_TOGGLE_BUTTON(linphone_gtk_get_widget(linphone_gtk_get_main_window(),
+					"incall_mute")),FALSE);
 	if (linphone_core_in_call(linphone_gtk_get_core())) linphone_gtk_call_started(
 		linphone_gtk_get_main_window());/*hide the call button, show terminate button*/
 }
