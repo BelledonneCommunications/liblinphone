@@ -24,6 +24,7 @@
 		2245667810768B7300F10948 /* linphone2.png in Resources */ = {isa = PBXBuildFile; fileRef = 2245667710768B7300F10948 /* linphone2.png */; };
 		2245667A10768B9000F10948 /* linphone.png in Resources */ = {isa = PBXBuildFile; fileRef = 2245667910768B9000F10948 /* linphone.png */; };
 		2245671D107699F700F10948 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2245671C107699F700F10948 /* Settings.bundle */; };
+		224567C2107B968500F10948 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 224567C1107B968500F10948 /* AVFoundation.framework */; };
 		2274401A106F31BD006EC466 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22744019106F31BD006EC466 /* CoreAudio.framework */; };
 		2274402F106F335E006EC466 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2274402E106F335E006EC466 /* AudioToolbox.framework */; };
 		2274550810700509006EC466 /* linphonerc in Resources */ = {isa = PBXBuildFile; fileRef = 2274550710700509006EC466 /* linphonerc */; };
@@ -172,6 +173,7 @@
 		2245667710768B7300F10948 /* linphone2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = linphone2.png; path = ../../pixmaps/linphone2.png; sourceTree = SOURCE_ROOT; };
 		2245667910768B9000F10948 /* linphone.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = linphone.png; path = ../../pixmaps/linphone.png; sourceTree = SOURCE_ROOT; };
 		2245671C107699F700F10948 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
+		224567C1107B968500F10948 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		22744019106F31BD006EC466 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		2274402E106F335E006EC466 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		22744043106F33FC006EC466 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
@@ -209,6 +211,7 @@
 				220FAD3710765B400068D98F /* libosipparser2.a in Frameworks */,
 				220FAD3810765B400068D98F /* libspeex.a in Frameworks */,
 				220FAD3910765B400068D98F /* libspeexdsp.a in Frameworks */,
+				224567C2107B968500F10948 /* AVFoundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -463,6 +466,7 @@
 				22744043106F33FC006EC466 /* Security.framework */,
 				22744056106F9BC9006EC466 /* CoreFoundation.framework */,
 				2245671C107699F700F10948 /* Settings.bundle */,
+				224567C1107B968500F10948 /* AVFoundation.framework */,
 			);
 			name = CustomTemplate;
 			sourceTree = "<group>";

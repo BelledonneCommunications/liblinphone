@@ -11,7 +11,7 @@
 	<key>CFBundleIconFile</key>
 	<string>linphone2.png</string>
 	<key>CFBundleIdentifier</key>
-	<string>XE39DG9M7C.org.linphone.phone</string>
+	<string>org.linphone.phone</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

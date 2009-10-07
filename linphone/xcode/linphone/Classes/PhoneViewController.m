@@ -8,6 +8,7 @@
 
 #import "PhoneViewController.h"
 #import "osip2/osip.h"
+#import <AVFoundation/AVAudioSession.h>
 
 void linphone_iphone_log(struct _LinphoneCore * lc, const char * message) {
 	NSLog([NSString stringWithCString:message length:strlen(message)]);
@@ -226,7 +227,7 @@ LinphoneCoreVTable linphonec_vtable = {
 	 * Initialize linphone core
 	 */
 	
-	mCore = linphone_core_new (&linphonec_vtable, [confiFileName cStringUsingEncoding:[NSString defaultCStringEncoding]],self);
+	mCore = linphone_core_new (&linphonec_vtable, [defaultConfigFile cStringUsingEncoding:[NSString defaultCStringEncoding]],self);
 	
 	// Set audio assets
 	const char*  lRing = [[myBundle pathForResource:@"oldphone"ofType:@"wav"] cStringUsingEncoding:[NSString defaultCStringEncoding]];
@@ -245,6 +246,9 @@ LinphoneCoreVTable linphonec_vtable = {
 	
 	NSString* proxyUri = [[NSUserDefaults standardUserDefaults] stringForKey:@"proxy_preference"];
 	const char* proxy = [proxyUri cStringUsingEncoding:[NSString defaultCStringEncoding]];
+
+	NSString* routeUri = [[NSUserDefaults standardUserDefaults] stringForKey:@"route_preference"];
+	const char* route = [routeUri cStringUsingEncoding:[NSString defaultCStringEncoding]];
 	
 	if (([accountNameUri length] + [proxyUri length]) >6 ) {
 		//possible valid config detected
@@ -267,9 +271,7 @@ LinphoneCoreVTable linphonec_vtable = {
                 LinphoneAuthInfo *info;
                 osip_from_init(&from);
                 if (osip_from_parse(from,identity)==0){
-                        char realm[128];
-                        snprintf(realm,sizeof(realm)-1,"\"%s\"",from->url->host);
-                        info=linphone_auth_info_new(from->url->username,NULL,password,NULL,realm);
+                        info=linphone_auth_info_new(from->url->username,NULL,password,NULL,NULL);
                         linphone_core_add_auth_info(mCore,info);
                 }
                 osip_from_free(from);
@@ -277,6 +279,9 @@ LinphoneCoreVTable linphonec_vtable = {
 	        // configure proxy entries
 		linphone_proxy_config_set_identity(proxyCfg,identity);
         linphone_proxy_config_set_server_addr(proxyCfg,proxy);
+		if ([routeUri length] > 4) {
+			linphone_proxy_config_set_route(proxyCfg,route);
+		}
         linphone_proxy_config_enable_register(proxyCfg,TRUE);
 		if (addProxy) {
 			linphone_core_add_proxy_config(mCore,proxyCfg);
@@ -294,6 +299,9 @@ LinphoneCoreVTable linphonec_vtable = {
 								   selector:@selector(iterate) 
 								   userInfo:nil 
 									repeats:YES];
+	//init audio session
+	NSError *setCategoryError = nil;
+	[[AVAudioSession sharedInstance] setCategory: AVAudioSessionCategoryPlayAndRecord error: &setCategoryError];
 	
 	
 }

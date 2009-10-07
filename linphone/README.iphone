@@ -9,10 +9,10 @@ To retrieve linphone dependencies, you may use the following commands:
 	make -f  builder-iphone-os.mk  get_dependencies
 
 To build liblinphone for Iphone simulator:
-	make -f  builder-iphone-simulator.mk  clean clean-makefile all	
+	make -f  builder-iphone-simulator.mk  clean && make -f  builder-iphone-simulator.mk clean-makefile && make -f  builder-iphone-simulator.mk  all	
 
 To build liblinphone for Iphone OS:
-	make -f  builder-iphone-os.mk  clean clean-makefile all	
+	make -f  builder-iphone-os.mk  clean && make -f  builder-iphone-os.mk clean-makefile && make -f  builder-iphone-os.mk all	
 
 
 Libraries are available in liblinphone-sdk/

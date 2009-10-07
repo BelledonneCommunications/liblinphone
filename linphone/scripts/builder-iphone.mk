@@ -4,7 +4,7 @@ libeXosip2_version=3.3.0
 libspeex_version=1.2rc1
 libgsm_version=1.0.13
 ifeq ($(target_arch),armv6) 
-	SPEEX_CONFIGURE_OPTION := --enable-arm5e-asm --enable-fixed-point
+	SPEEX_CONFIGURE_OPTION := --enable-arm4-asm --enable-fixed-point
 endif
 
 LINPHONE_SRC_DIR=$(shell pwd)/../
@@ -37,7 +37,7 @@ veryclean-linphone: clean-linphone veryclean-osip2 veryclean-eXosip2 veryclean-s
 	 cd $(LINPHONE_SRC_DIR) && rm configure
 
 clean-makefile-linphone: clean-makefile-osip2 clean-makefile-eXosip2 clean-makefile-speex 
-	 cd $(LINPHONE_SRC_DIR) && rm Makefile
+	 cd $(LINPHONE_SRC_DIR) && rm Makefile && rm oRTP/Makefile && rm mediastreamer2/Makefile
 	
 
 get_dependencies: get_osip2_src get_eXosip2_src get_speex_src get_libgsm_src
@@ -49,7 +49,9 @@ get_osip2_src:
 	&& rm -f libosip2-$(libosip2_version).tar.gz \
 	&& wget http://ftp.gnu.org/gnu/osip/libosip2-$(libosip2_version).tar.gz \
 	&& tar xvzf libosip2-$(libosip2_version).tar.gz \
-	&& rm -rf libosip2-$(libosip2_version).tar.gz
+	&& rm -rf libosip2-$(libosip2_version).tar.gz \
+	&& cd  libosip2-$(libosip2_version) \
+	&& patch -p1 <  $(LINPHONE_SRC_DIR)/patches/libosip2-iphone.patch
 
 $(LINPHONE_SRC_DIR)/libosip2-$(libosip2_version)/configure:
 	 cd $(LINPHONE_SRC_DIR)/libosip2-$(libosip2_version) && ./autogen.sh
@@ -57,10 +59,10 @@ $(LINPHONE_SRC_DIR)/libosip2-$(libosip2_version)/configure:
 $(LINPHONE_SRC_DIR)/libosip2-$(libosip2_version)/Makefile: $(LINPHONE_SRC_DIR)/libosip2-$(libosip2_version)/configure
 	 cd $(LINPHONE_SRC_DIR)/libosip2-$(libosip2_version)/ \
 	&& CONFIG_SITE=$(LINPHONE_SRC_DIR)/scripts/iphone-config.site \
-	./configure -prefix=$(prefix) --host=$(target_arch)-apple-darwin --disable-shared
+	./configure -prefix=$(prefix) --host=$(target_arch)-apple-darwin --disable-shared  --enable-pthread=yes
 
 build-osip2: $(LINPHONE_SRC_DIR)/libosip2-$(libosip2_version)/Makefile
-	 cd $(LINPHONE_SRC_DIR)/libosip2-$(libosip2_version)  && make  && make install
+	 cd $(LINPHONE_SRC_DIR)/libosip2-$(libosip2_version) && make && make install
 
 clean-osip2:
 	 cd  $(LINPHONE_SRC_DIR)/libosip2-$(libosip2_version) && make clean
@@ -83,7 +85,7 @@ get_eXosip2_src:
 $(LINPHONE_SRC_DIR)/libeXosip2-$(libeXosip2_version)/Makefile: 
 	 cd $(LINPHONE_SRC_DIR)/libeXosip2-$(libeXosip2_version)/\
 	&& CONFIG_SITE=$(LINPHONE_SRC_DIR)/scripts/iphone-config.site \
-	./configure -prefix=$(prefix) --host=$(target_arch)-apple-darwin --disable-shared
+	./configure -prefix=$(prefix) --host=$(target_arch)-apple-darwin --disable-shared --enable-pthread
 
 build-eXosip2: $(LINPHONE_SRC_DIR)/libeXosip2-$(libeXosip2_version)/Makefile
 	 cd $(LINPHONE_SRC_DIR)/libeXosip2-$(libeXosip2_version)  && make  && make install
@@ -112,7 +114,7 @@ $(LINPHONE_SRC_DIR)/speex-$(libspeex_version)/Makefile:
 	./configure -prefix=$(prefix) --host=$(target_arch)-apple-darwin --disable-shared --disable-oggtest $(SPEEX_CONFIGURE_OPTION)
 
 build-speex: $(LINPHONE_SRC_DIR)/speex-$(libspeex_version)/Makefile
-	 cd $(LINPHONE_SRC_DIR)/speex-$(libspeex_version)/libspeex  && make  && make install
+	 cd $(LINPHONE_SRC_DIR)/speex-$(libspeex_version)/libspeex && make  && make install
 	 cd $(LINPHONE_SRC_DIR)/speex-$(libspeex_version)/include  && make &&  make install
 
 clean-speex:

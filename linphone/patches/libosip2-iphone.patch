@@ -1,0 +1,24 @@
+diff -Naur libosip2-3.3.0.ori/include/osip2/internal.h libosip2-3.3.0/include/osip2/internal.h
+--- libosip2-3.3.0.ori/include/osip2/internal.h	2009-01-24 17:22:50.000000000 +0100
++++ libosip2-3.3.0/include/osip2/internal.h	2009-10-07 17:12:05.000000000 +0200
+@@ -189,7 +189,7 @@
+  */
+ typedef sem_t osip_sem_t;
+ 
+-#elif defined(HAVE_SYS_SEM_H)
++#elif defined(HAVE_SYS_SEM_H) && !defined(__APPLE_CC__)
+ #include <sys/types.h>
+ #include <sys/ipc.h>
+ #include <sys/sem.h>
+diff -Naur libosip2-3.3.0.ori/src/osip2/port_sema.c libosip2-3.3.0/src/osip2/port_sema.c
+--- libosip2-3.3.0.ori/src/osip2/port_sema.c	2009-01-24 17:22:50.000000000 +0100
++++ libosip2-3.3.0/src/osip2/port_sema.c	2009-10-07 17:10:53.000000000 +0200
+@@ -228,7 +228,7 @@
+   return sem_trywait (sem);
+ }
+ 
+-#elif defined (HAVE_SYS_SEM_H)
++#elif defined (HAVE_SYS_SEM_H) && !defined(__APPLE_CC__)
+ /* support for semctl, semop, semget */
+ 
+ #define SEM_PERM 0600

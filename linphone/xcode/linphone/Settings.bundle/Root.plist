@@ -16,7 +16,7 @@
 			<key>Type</key>
 			<string>PSTextFieldSpecifier</string>
 			<key>Title</key>
-			<string>user account</string>
+			<string>sip identity</string>
 			<key>Key</key>
 			<string>account_preference</string>
 			<key>DefaultValue</key>
@@ -55,6 +55,24 @@
 			<string>proxy</string>
 			<key>Key</key>
 			<string>proxy_preference</string>
+			<key>DefaultValue</key>
+			<string>sip:</string>
+			<key>IsSecure</key>
+			<false/>
+			<key>KeyboardType</key>
+			<string>Alphabet</string>
+			<key>AutocapitalizationType</key>
+			<string>None</string>
+			<key>AutocorrectionType</key>
+			<string>No</string>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSTextFieldSpecifier</string>
+			<key>Title</key>
+			<string>route</string>
+			<key>Key</key>
+			<string>route_preference</string>
 			<key>DefaultValue</key>
 			<string>sip:</string>
 			<key>IsSecure</key>
