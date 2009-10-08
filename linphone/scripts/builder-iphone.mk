@@ -4,7 +4,8 @@ libeXosip2_version=3.3.0
 libspeex_version=1.2rc1
 libgsm_version=1.0.13
 ifeq ($(target_arch),armv6) 
-	SPEEX_CONFIGURE_OPTION := --enable-arm4-asm --enable-fixed-point
+	SPEEX_CONFIGURE_OPTION := --enable-fixed-point
+	#SPEEX_CONFIGURE_OPTION := --enable-arm5e-asm --enable-fixed-point
 endif
 
 LINPHONE_SRC_DIR=$(shell pwd)/../
