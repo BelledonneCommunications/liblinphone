@@ -19,7 +19,7 @@ $(LINPHONE_SRC_DIR)/configure:
 	 cd $(LINPHONE_SRC_DIR) && ./autogen.sh
 
 $(LINPHONE_SRC_DIR)/Makefile: $(LINPHONE_SRC_DIR)/configure
-	- cd $(LINPHONE_SRC_DIR) && \
+	 cd $(LINPHONE_SRC_DIR) && \
 	 PKG_CONFIG_PATH=$(prefix)/ CONFIG_SITE=$(LINPHONE_SRC_DIR)/scripts/iphone-config.site \
 	./configure -prefix=$(prefix) --host=$(target_arch)-apple-darwin --disable-shared \
 	--disable-video --with-readline=none  --enable-gtk_ui=no --enable-ssl-hmac=no --with-osip=$(prefix) \
