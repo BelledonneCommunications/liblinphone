@@ -598,6 +598,7 @@
 				"LIBRARY_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = "\"$(SRCROOT)/../../liblinphone-sdk/armv6-apple-darwin/lib\"";
 				"LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*][arch=*]" = "\"$(SRCROOT)/../../liblinphone-sdk/i386-apple-darwin/lib\"";
 				PRODUCT_NAME = linphone;
+				SDKROOT = iphoneos3.0;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = dynamic;
 			};
 			name = Debug;

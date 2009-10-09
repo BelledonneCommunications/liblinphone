@@ -9,7 +9,6 @@ if test "${host_alias}" = "i386-apple-darwin" ; then
 elif test "${host_alias}" = "armv6-apple-darwin" ; then 
 	ARCH=armv6
 	PLATFORM=OS
-	CPPFLAGS="-Dasm=__asm"
 else 
 	echo "bad host ${host_alias} must be either i386-apple-darwin or armv6-apple-darwin"
 	exit
@@ -26,4 +25,5 @@ LD="${SDK_BIN_PATH}/ld-${GCC_VERSION} -arch ${ARCH}"
 AR=${SDK_BIN_PATH}/ar
 RANLIB=${SDK_BIN_PATH}/ranlib
 
+CPPFLAGS="-Dasm=__asm"
 LDFLAGS="-Wl,-syslibroot ${SYSROOT_PATH}" 

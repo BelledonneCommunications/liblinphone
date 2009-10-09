@@ -15,6 +15,14 @@ all: build-linphone
 clean-makefile: clean-makefile-linphone
 clean: clean-linphone
 
+delivery:
+	cd $(LINPHONE_SRC_DIR) \
+	&& zip  -r   linphone-iphone.zip \
+		liblinphone-sdk xcode/linphone/ pixmaps/red.png \
+		pixmaps/green.png share/ringback.wav \
+		share/rings/oldphone.wav -x xcode/linphone/build/linphone.build/\*
+
+
 $(LINPHONE_SRC_DIR)/configure:
 	 cd $(LINPHONE_SRC_DIR) && ./autogen.sh
 
