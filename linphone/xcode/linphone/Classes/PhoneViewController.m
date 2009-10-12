@@ -21,21 +21,33 @@
 #import "osip2/osip.h"
 #import <AVFoundation/AVAudioSession.h>
 
+//generic log handler for debug version
+void linphone_iphone_log_handler(OrtpLogLevel lev, const char *fmt, va_list args){
+	NSString* format = [[NSString alloc] initWithCString:fmt encoding:[NSString defaultCStringEncoding]];
+	NSLogv(format,args);
+	[format release];
+}
+
+//Error/warning log handler 
 void linphone_iphone_log(struct _LinphoneCore * lc, const char * message) {
 	NSLog([NSString stringWithCString:message length:strlen(message)]);
 }
-
+//status 
 void linphone_iphone_display_status(struct _LinphoneCore * lc, const char * message) {
 	PhoneViewController* lPhone = linphone_core_get_user_data(lc);
 	[lPhone.status setText:[NSString stringWithCString:message length:strlen(message)]];
 }
 
 void linphone_iphone_show(struct _LinphoneCore * lc) {
-
+	//nop
 }
+void linphone_iphone_call_received(LinphoneCore *lc, const char *from){
+	//nop
+};
+
 LinphoneCoreVTable linphonec_vtable = {
 .show =(ShowInterfaceCb) linphone_iphone_show,
-.inv_recv = NULL,
+.inv_recv = linphone_iphone_call_received,
 .bye_recv = NULL, 
 .notify_recv = NULL,
 .new_unknown_subscriber = NULL,
@@ -71,19 +83,25 @@ LinphoneCoreVTable linphonec_vtable = {
 @synthesize zero;
 @synthesize hash;
 
+
+//implements call/cancel button behavior 
 -(IBAction) doAction:(id)sender {
 	
 	if (sender == call) {
-	if (!linphone_core_in_call(mCore)) {
-		const char* lCallee = [[address text]  cStringUsingEncoding:[NSString defaultCStringEncoding]];
-		linphone_core_invite(mCore,lCallee ) ;		
-	}
+		if (!linphone_core_in_call(mCore)) {
+			const char* lCallee = [[address text]  cStringUsingEncoding:[NSString defaultCStringEncoding]];
+			linphone_core_invite(mCore,lCallee) ;		
+		} 
+		if (linphone_core_inc_invite_pending(mCore)) {
+			linphone_core_accept_call(mCore,NULL);	
+		}
 	} else if (sender == cancel) {
 		linphone_core_terminate_call(mCore,NULL);
 	} 
 
 }
 
+//implements keypad behavior 
 -(IBAction) doKeyPad:(id)sender {
 	if (linphone_core_in_call(mCore)) {
 	//incall behavior
@@ -157,7 +175,6 @@ LinphoneCoreVTable linphonec_vtable = {
  // The designated initializer.  Override if you create the controller programmatically and want to perform customization that is not appropriate for viewDidLoad.
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
     if (self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil]) {
-        // init lib linphone
     }
     
 	return self;
@@ -201,29 +218,19 @@ LinphoneCoreVTable linphonec_vtable = {
 
 
 /*************
- *lib linphone methods
+ *lib linphone init method
  */
 -(void)startlibLinphone  {
 	
-	traceLevel = 9;
-	//copy linphonerc from bundle
+	//get default config from bundle
 	NSBundle* myBundle = [NSBundle mainBundle];
 	NSString* defaultConfigFile = [myBundle pathForResource:@"linphonerc"ofType:nil] ;
 	
-	logFileName = [NSHomeDirectory() stringByAppendingString:@"/linphone.log"]; 	
-	
-	/* Set initial values for global variables
-	 */
-	mylogfile = NULL;
+	//log management	
+	traceLevel = 9;	 
 	if (traceLevel > 0) {
-		mylogfile = fopen ([logFileName cStringUsingEncoding:[NSString defaultCStringEncoding]], "w+");
-		
-		if (mylogfile == NULL)
-		{
-			mylogfile = stdout;
-			fprintf (stderr,"INFO: no logfile, logging to stdout\n");
-		}
-		linphone_core_enable_logs(mylogfile);
+		//redirect all traces to the iphone log framework
+		linphone_core_enable_logs_with_cb(linphone_iphone_log_handler);
 	}
 	else {
 		linphone_core_disable_logs();
@@ -242,7 +249,7 @@ LinphoneCoreVTable linphonec_vtable = {
 	linphone_core_set_ringback(mCore, lRingBack);
 	
 	
-	//configure sip proxy
+	//configure sip account
 	//get data from Settings bundle
 	NSString* accountNameUri = [[NSUserDefaults standardUserDefaults] stringForKey:@"account_preference"];
 	const char* identity = [accountNameUri cStringUsingEncoding:[NSString defaultCStringEncoding]];
@@ -256,7 +263,7 @@ LinphoneCoreVTable linphonec_vtable = {
 	NSString* routeUri = [[NSUserDefaults standardUserDefaults] stringForKey:@"route_preference"];
 	const char* route = [routeUri cStringUsingEncoding:[NSString defaultCStringEncoding]];
 	
-	if (([accountNameUri length] + [proxyUri length]) >6 ) {
+	if (([accountNameUri length] + [proxyUri length]) >8 ) {
 		//possible valid config detected
 		LinphoneProxyConfig* proxyCfg;	
 		//clear auth info list
@@ -284,11 +291,11 @@ LinphoneCoreVTable linphonec_vtable = {
 
 	        // configure proxy entries
 		linphone_proxy_config_set_identity(proxyCfg,identity);
-        linphone_proxy_config_set_server_addr(proxyCfg,proxy);
+        	linphone_proxy_config_set_server_addr(proxyCfg,proxy);
 		if ([routeUri length] > 4) {
 			linphone_proxy_config_set_route(proxyCfg,route);
 		}
-        linphone_proxy_config_enable_register(proxyCfg,TRUE);
+        	linphone_proxy_config_enable_register(proxyCfg,TRUE);
 		if (addProxy) {
 			linphone_core_add_proxy_config(mCore,proxyCfg);
 			//set to default proxy
@@ -298,8 +305,57 @@ LinphoneCoreVTable linphonec_vtable = {
 		}
 
 	}
+
+	//Configure Codecs
+
+	PayloadType *pt;
+	//get codecs from linphonerc	
+	const MSList *audioCodecs=linphone_core_get_audio_codecs(mCore);
 	
-	//start liblinphone scheduler
+	//read from setting  bundle
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"speex_32k_preference"]) { 		
+		if(pt = [self findPayload:@"speex"withRate:32000 from:audioCodecs]) {
+			payload_type_set_enable(pt,TRUE);
+		}
+	} 
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"speex_16k_preference"]) { 		
+		if(pt = [self findPayload:@"speex"withRate:16000 from:audioCodecs]) {
+			payload_type_set_enable(pt,TRUE);
+		}
+	} 
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"speex_8k_preference"]) { 
+		if(pt = [self findPayload:@"speex"withRate:8000 from:audioCodecs]) {
+			payload_type_set_enable(pt,TRUE);
+		}
+	}
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"gsm_22k_preference"]) { 
+		if(pt = [self findPayload:@"GSM"withRate:22050 from:audioCodecs]) {
+			payload_type_set_enable(pt,TRUE);
+		}
+	}
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"gsm_11k_preference"]) { 
+		if(pt = [self findPayload:@"GSM"withRate:11025 from:audioCodecs]) {
+			payload_type_set_enable(pt,TRUE);
+		}
+    }
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"gsm_8k_preference"]) {
+		if(pt = [self findPayload:@"GSM"withRate:8000 from:audioCodecs]) {
+			payload_type_set_enable(pt,TRUE);
+		}
+	}
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"pcmu_preference"]) {
+		if(pt = [self findPayload:@"PCMU"withRate:8000 from:audioCodecs]) {
+			payload_type_set_enable(pt,TRUE);
+		}
+	}
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"pcma_preference"]) {
+		if(pt = [self findPayload:@"PCMA"withRate:8000 from:audioCodecs]) {
+			payload_type_set_enable(pt,TRUE);
+		}
+	}
+			   
+			   
+	// start scheduler
 	[NSTimer scheduledTimerWithTimeInterval:0.1 
 									 target:self 
 								   selector:@selector(iterate) 
@@ -311,7 +367,7 @@ LinphoneCoreVTable linphonec_vtable = {
 	
 	
 }
-
+//scheduling loop
 -(void) iterate {
 	linphone_core_iterate(mCore);
 }
@@ -325,5 +381,16 @@ LinphoneCoreVTable linphonec_vtable = {
 	[super dealloc];
 }
 
+-(PayloadType*) findPayload:(NSString*)type withRate:(int)rate from:(const MSList*)list {
+	const MSList *elem;
+	for(elem=list;elem!=NULL;elem=elem->next){
+		PayloadType *pt=(PayloadType*)elem->data;
+		if ([type isEqualToString:[NSString stringWithCString:payload_type_get_mime(pt) length:strlen(payload_type_get_mime(pt))]] && rate==pt->clock_rate) {
+			return pt;
+		}
+	}
+	return nil;
+	
+}
 
 @end

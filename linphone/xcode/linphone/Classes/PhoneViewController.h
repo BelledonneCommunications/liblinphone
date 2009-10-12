@@ -20,6 +20,7 @@
 #import <Foundation/Foundation.h>
 #import "linphonecore.h"
 
+
 @interface PhoneViewController : UIViewController <UITextFieldDelegate> {
 
 @private
@@ -47,9 +48,7 @@
 	 * lib linphone main context
 	 */
 	LinphoneCore* mCore;
-	FILE *mylogfile;
 	int traceLevel;
-	NSString* logFileName;
 	
 }
 @property (nonatomic, retain) IBOutlet UITextField* address;
@@ -89,4 +88,7 @@
 
 // method to handle keypad event
 - (IBAction)doKeyPad:(id)sender;
+
+
+-(PayloadType*) findPayload:(NSString*)type withRate:(int)rate from:(const MSList*)list;
 @end

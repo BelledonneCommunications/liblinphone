@@ -26,33 +26,43 @@ playback_dev_id=AQ: Audio Queue
 ringer_dev_id=AQ: Audio Queue
 capture_dev_id=AQ: Audio Queue
 
-[audio_codec_1]
+[audio_codec_0]
 mime=speex
 rate=32000
-enabled=1
+enabled=0
+
+[audio_codec_1]
+mime=speex
+rate=16000
+enabled=0
 
 [audio_codec_2]
 mime=speex
-rate=16000
-enabled=1
+rate=8000
+enabled=0
 
 [audio_codec_3]
-mime=speex
-rate=8000
-enabled=1
+mime=GSM
+rate=22050
+enabled=0
 
 [audio_codec_4]
-mime=gsm
-rate=8000
-enabled=1
+mime=GSM
+rate=11025
+enabled=0
 
 [audio_codec_5]
-mime=PCMA
+mime=GSM
 rate=8000
-enabled=1
+enabled=0
 
 [audio_codec_6]
 mime=PCMU
 rate=8000
-enabled=1
+enabled=0
+
+[audio_codec_7]
+mime=PCMA
+rate=8000
+enabled=0
 
