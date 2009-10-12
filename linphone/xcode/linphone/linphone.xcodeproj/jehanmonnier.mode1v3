@@ -216,7 +216,7 @@
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>2237D3E01083B00A001383EE</string>
+						<string>2237D3FD1083B7BA001383EE</string>
 						<key>history</key>
 						<array>
 							<string>2237D26910836E37001383EE</string>
@@ -256,7 +256,7 @@
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>2237D3E11083B00A001383EE</string>
+						<string>2237D3FE1083B7BA001383EE</string>
 						<key>history</key>
 						<array>
 							<string>22F51F261080B85F00F98953</string>
@@ -309,6 +309,8 @@
 			<key>Layout</key>
 			<array>
 				<dict>
+					<key>BecomeActive</key>
+					<true/>
 					<key>ContentConfiguration</key>
 					<dict>
 						<key>PBXBottomSmartGroupGIDs</key>
@@ -362,13 +364,13 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>25</integer>
-									<integer>21</integer>
+									<integer>46</integer>
+									<integer>45</integer>
 									<integer>0</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 301}, {251, 794}}</string>
+							<string>{{0, 341}, {251, 794}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -398,8 +400,6 @@
 					<key>Dock</key>
 					<array>
 						<dict>
-							<key>BecomeActive</key>
-							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
@@ -417,7 +417,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>2237D3DF1083B00A001383EE</string>
+										<string>2237D3FC1083B7BA001383EE</string>
 										<key>history</key>
 										<array>
 											<string>224567101076998900F10948</string>
@@ -695,15 +695,16 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>2237D3F31083B702001383EE</string>
 		<string>2237D35F1083A864001383EE</string>
 		<string>2237D26510836A2C001383EE</string>
+		<string>1C78EAAD065D492600B07095</string>
 		<string>22F51E71107E6F9500F98953</string>
 		<string>2237D27210836E6C001383EE</string>
 		<string>229A53A0106D59C300BC6FF1</string>
 		<string>2237D26410836A2C001383EE</string>
 		<string>1CD10A99069EF8BA00B06720</string>
 		<string>/Users/jehanmonnier/workspace/linphone-private/linphone/xcode/linphone/linphone.xcodeproj</string>
-		<string>1C78EAAD065D492600B07095</string>
 	</array>
 	<key>WindowString</key>
 	<string>289 205 1508 853 0 0 1920 1058 </string>
@@ -1087,7 +1088,7 @@
 			<key>WindowToolGUID</key>
 			<string>1C78EAAD065D492600B07095</string>
 			<key>WindowToolIsVisible</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>Identifier</key>

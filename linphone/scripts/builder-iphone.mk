@@ -31,7 +31,7 @@ $(LINPHONE_SRC_DIR)/Makefile: $(LINPHONE_SRC_DIR)/configure
 	 PKG_CONFIG_PATH=$(prefix)/ CONFIG_SITE=$(LINPHONE_SRC_DIR)/scripts/iphone-config.site \
 	./configure -prefix=$(prefix) --host=$(target_arch)-apple-darwin --disable-shared \
 	--disable-video --with-readline=none  --enable-gtk_ui=no --enable-ssl-hmac=no --with-osip=$(prefix) \
-	--with-gsm=$(prefix) \
+	--enable-nonstandard-gsm --with-gsm=$(prefix) \
 	SPEEX_CFLAGS="-I$(prefix)/include" \
         SPEEX_LIBS="-L$(prefix)/lib -lspeex "
 

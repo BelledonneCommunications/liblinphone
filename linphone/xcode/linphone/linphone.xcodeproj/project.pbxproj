@@ -595,10 +595,7 @@
 				"HEADER_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = "\"$(SRCROOT)/../../liblinphone-sdk/armv6-apple-darwin/include\"";
 				"HEADER_SEARCH_PATHS[sdk=iphonesimulator*]" = "\"$(SRCROOT)/../../liblinphone-sdk/i386-apple-darwin/include\"";
 				INFOPLIST_FILE = "linphone-Info.plist";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"\"$(SRCROOT)/../../liblinphone-sdk/armv6-apple-darwin/lib\"",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				"LIBRARY_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = "\"$(SRCROOT)/../../liblinphone-sdk/armv6-apple-darwin/lib\"";
 				"LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*][arch=*]" = "\"$(SRCROOT)/../../liblinphone-sdk/i386-apple-darwin/lib\"";
 				PRODUCT_NAME = linphone;
@@ -614,22 +611,12 @@
 				COPY_PHASE_STRIP = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = linphone_Prefix.pch;
+				"HEADER_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = "\"$(SRCROOT)/../../liblinphone-sdk/armv6-apple-darwin/include\"";
+				"HEADER_SEARCH_PATHS[sdk=iphonesimulator*]" = "\"$(SRCROOT)/../../liblinphone-sdk/i386-apple-darwin/include\"";
 				INFOPLIST_FILE = "linphone-Info.plist";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"\"$(SRCROOT)/../../coreapi/.libs\"",
-					"\"$(SRCROOT)/../../libeXosip2-3.3.0/src/.libs\"",
-					"\"$(SRCROOT)/../../mediastreamer2/src/.libs\"",
-					"\"$(SRCROOT)/../../oRTP/src/.libs\"",
-					"\"$(SRCROOT)/../../ports/net/linphone/work/linphone-3.1.99.1/mediastreamer2/src/.libs\"",
-					"\"$(SRCROOT)/../../ports/net/linphone/work/linphone-3.1.99.1/oRTP/src/.libs\"",
-					"\"$(SRCROOT)/../../speex-1.2rc1/libosip2-3.3.0/src/osip2/.libs\"",
-					"\"$(SRCROOT)/../../speex-1.2rc1/libosip2-3.3.0/src/osipparser2/.libs\"",
-					"\"$(SRCROOT)/../../speex-1.2rc1/libspeex/.libs\"",
-					"\"$(SRCROOT)/../../../../../iphonesdk/lib\"",
-					"\"$(SRCROOT)/../../liblinphone-sdk/i386-apple-darwin/lib\"",
-					"\"$(SRCROOT)/../../liblinphone-sdk/armv6-apple-darwin/lib\"",
-				);
+				LIBRARY_SEARCH_PATHS = "";
+				"LIBRARY_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = "\"$(SRCROOT)/../../liblinphone-sdk/armv6-apple-darwin/lib\"";
+				"LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*][arch=*]" = "\"$(SRCROOT)/../../liblinphone-sdk/i386-apple-darwin/lib\"";
 				PRODUCT_NAME = linphone;
 			};
 			name = Release;
@@ -665,10 +652,7 @@
 				"HEADER_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = "\"$(SRCROOT)/../../liblinphone-sdk/armv6-apple-darwin/include\"";
 				"HEADER_SEARCH_PATHS[sdk=iphonesimulator*]" = "\"$(SRCROOT)/../../liblinphone-sdk/i386-apple-darwin/include\"";
 				INFOPLIST_FILE = "linphone-Info.plist";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"\"$(SRCROOT)/../../liblinphone-sdk/armv6-apple-darwin/lib\"",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				"LIBRARY_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = "\"$(SRCROOT)/../../liblinphone-sdk/armv6-apple-darwin/lib\"";
 				"LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*][arch=*]" = "\"$(SRCROOT)/../../liblinphone-sdk/i386-apple-darwin/lib\"";
 				PRODUCT_NAME = linphone;
