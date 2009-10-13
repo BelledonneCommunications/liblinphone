@@ -20,6 +20,7 @@
 #import "PhoneViewController.h"
 #import "osip2/osip.h"
 #import <AVFoundation/AVAudioSession.h>
+#import <AudioToolbox/AudioToolbox.h>
 
 //generic log handler for debug version
 void linphone_iphone_log_handler(OrtpLogLevel lev, const char *fmt, va_list args){
@@ -42,7 +43,12 @@ void linphone_iphone_show(struct _LinphoneCore * lc) {
 	//nop
 }
 void linphone_iphone_call_received(LinphoneCore *lc, const char *from){
-	//nop
+	//redirect audio to speaker
+	UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_Speaker;  
+	
+	AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute
+				, sizeof (audioRouteOverride)
+				, &audioRouteOverride);
 };
 
 LinphoneCoreVTable linphonec_vtable = {
@@ -95,6 +101,12 @@ LinphoneCoreVTable linphonec_vtable = {
 		if (linphone_core_inc_invite_pending(mCore)) {
 			linphone_core_accept_call(mCore,NULL);	
 		}
+		//Cancel audio route redirection
+		UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_None;  
+		
+		AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute
+					, sizeof (audioRouteOverride)
+					, &audioRouteOverride);
 	} else if (sender == cancel) {
 		linphone_core_terminate_call(mCore,NULL);
 	} 
@@ -243,7 +255,7 @@ LinphoneCoreVTable linphonec_vtable = {
 	mCore = linphone_core_new (&linphonec_vtable, [defaultConfigFile cStringUsingEncoding:[NSString defaultCStringEncoding]],self);
 	
 	// Set audio assets
-	const char*  lRing = [[myBundle pathForResource:@"oldphone"ofType:@"wav"] cStringUsingEncoding:[NSString defaultCStringEncoding]];
+	const char*  lRing = [[myBundle pathForResource:@"oldphone-mono"ofType:@"wav"] cStringUsingEncoding:[NSString defaultCStringEncoding]];
 	linphone_core_set_ring(mCore, lRing );
 	const char*  lRingBack = [[myBundle pathForResource:@"ringback"ofType:@"wav"] cStringUsingEncoding:[NSString defaultCStringEncoding]];
 	linphone_core_set_ringback(mCore, lRingBack);
