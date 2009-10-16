@@ -20,7 +20,12 @@ delivery:
 	&& zip  -r   linphone-iphone.zip \
 		liblinphone-sdk xcode/linphone/ pixmaps/red.png \
 		pixmaps/green.png share/ringback.wav \
-		share/rings/oldphone.wav -x xcode/linphone/build/linphone.build/\*
+		share/rings/oldphone-mono.wav \
+		-x xcode/linphone/build/Debug-iphoneos/\* \
+		 xcode/linphone/build/Debug-iphonesimulator/\* \
+		 xcode/linphone/build/Release-iphoneos/\* \
+		 xcode/linphone/build/Release-iphonesimulator/\* \
+		 xcode/linphone/build/linphone.build/\*
 
 
 $(LINPHONE_SRC_DIR)/configure:
