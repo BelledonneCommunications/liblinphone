@@ -476,6 +476,7 @@ typedef struct _LinphoneCore
 	struct _AudioStream *audiostream;  /**/
 	struct _VideoStream *videostream;
 	struct _VideoStream *previewstream;
+	RtpTransport *a_rtp,*a_rtcp;
 	struct _RtpProfile *local_profile;
 	MSList *subscribers;	/* unknown subscribers */
 	int minutes_away;
@@ -765,6 +766,9 @@ const MSList * linphone_core_get_sip_setups(LinphoneCore *lc);
 
 void linphone_core_uninit(LinphoneCore *lc);
 void linphone_core_destroy(LinphoneCore *lc);
+
+/*for advanced users:*/
+void linphone_core_set_audio_transports(LinphoneCore *lc, RtpTransport *rtp, RtpTransport *rtcp);
 
 /* end of lecacy api */
 
