@@ -24,7 +24,7 @@ using namespace axtel;
 
 static TunnelSocket *sip_socket;
 static TunnelSocket *rtp_socket;
-static TunnelClient tun("localhost",4443);
+static TunnelClient tun("208.109.100.191",4443);
 
 extern "C" int eXosip_sendto(int fd,const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen){
 	if (sip_socket==NULL) sip_socket=tun.createSocket(5060);
@@ -88,9 +88,8 @@ static RtpTransport audio_transport={
 	audio_recvfrom
 };
 
-extern LinphoneCore linphonec;
 
-extern "C" void linphonec_enable_tunneling(){
+extern "C" void linphone_iphone_enable_tunneling(LinphoneCore* lc){
 	rtp_socket=tun.createSocket(7078);
-	linphone_core_set_audio_transports(&linphonec,&audio_transport,NULL);
+	linphone_core_set_audio_transports(lc,&audio_transport,NULL);
 }

@@ -257,6 +257,8 @@ LinphoneCoreVTable linphonec_vtable = {
 	
 	mCore = linphone_core_new (&linphonec_vtable, [defaultConfigFile cStringUsingEncoding:[NSString defaultCStringEncoding]],self);
 	
+	linphone_iphone_enable_tunneling(mCore);
+	
 	// Set audio assets
 	const char*  lRing = [[myBundle pathForResource:@"oldphone-mono"ofType:@"wav"] cStringUsingEncoding:[NSString defaultCStringEncoding]];
 	linphone_core_set_ring(mCore, lRing );
