@@ -237,7 +237,10 @@ LinphoneCoreVTable linphonec_vtable = {
 	//get default config from bundle
 	NSBundle* myBundle = [NSBundle mainBundle];
 	NSString* defaultConfigFile = [myBundle pathForResource:@"linphonerc"ofType:nil] ;
-	
+#if TARGET_IPHONE_SIMULATOR
+	NSDictionary *dictionary = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:NSFileImmutable];
+	[[NSFileManager defaultManager] setAttributes:dictionary ofItemAtPath:defaultConfigFile error:nil];
+#endif
 	//log management	
 	traceLevel = 9;	 
 	if (traceLevel > 0) {
