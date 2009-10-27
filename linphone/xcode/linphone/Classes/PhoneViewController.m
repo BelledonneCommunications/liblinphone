@@ -251,13 +251,31 @@ LinphoneCoreVTable linphonec_vtable = {
 		linphone_core_disable_logs();
 	}
 	
+	//tunneling config
+	isTunnel = [[NSUserDefaults standardUserDefaults] boolForKey:@"tunnelenable_preference"]; 
+	
+	NSString* tunnelIp = [[NSUserDefaults standardUserDefaults] stringForKey:@"tunnelip_preference"];
+	const char* tunnelIpChars = [tunnelIp cStringUsingEncoding:[NSString defaultCStringEncoding]];
+	
+	NSInteger tunnelPort  = [[NSUserDefaults standardUserDefaults] integerForKey:@"tunnelport_preference"];
+	
+	if (isTunnel && [tunnelIp length] != 0 ) {
+		linphone_iphone_tunneling_init(tunnelIpChars,tunnelPort!=0?(unsigned int)tunnelPort:4443); 
+		
+	} else {
+		//no ip de-activating
+		isTunnel = false;
+	}
 	/*
 	 * Initialize linphone core
 	 */
 	
 	mCore = linphone_core_new (&linphonec_vtable, [defaultConfigFile cStringUsingEncoding:[NSString defaultCStringEncoding]],self);
 	
-	linphone_iphone_enable_tunneling(mCore);
+	if (isTunnel) {
+		linphone_iphone_enable_tunneling(mCore); 
+	}
+	
 	
 	// Set audio assets
 	const char*  lRing = [[myBundle pathForResource:@"oldphone-mono"ofType:@"wav"] cStringUsingEncoding:[NSString defaultCStringEncoding]];
@@ -312,7 +330,7 @@ LinphoneCoreVTable linphonec_vtable = {
 		if ([routeUri length] > 4) {
 			linphone_proxy_config_set_route(proxyCfg,route);
 		}
-        	linphone_proxy_config_enable_register(proxyCfg,TRUE);
+        	linphone_proxy_config_enable_register(proxyCfg,true);
 		if (addProxy) {
 			linphone_core_add_proxy_config(mCore,proxyCfg);
 			//set to default proxy
@@ -370,8 +388,7 @@ LinphoneCoreVTable linphonec_vtable = {
 			payload_type_set_enable(pt,TRUE);
 		}
 	}
-			   
-			   
+
 	// start scheduler
 	[NSTimer scheduledTimerWithTimeInterval:0.1 
 									 target:self 
@@ -389,7 +406,14 @@ LinphoneCoreVTable linphonec_vtable = {
 }
 //scheduling loop
 -(void) iterate {
-	linphone_core_iterate(mCore);
+	
+	if (isTunnel==true) {
+		if (linphone_iphone_tunneling_isready()  ) {
+			linphone_core_iterate(mCore);
+		}
+	}else {
+		linphone_core_iterate(mCore);
+	}
 }
 
 

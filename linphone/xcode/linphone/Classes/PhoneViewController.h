@@ -49,6 +49,7 @@
 	 */
 	LinphoneCore* mCore;
 	int traceLevel;
+	bool isTunnel;
 	
 }
 @property (nonatomic, retain) IBOutlet UITextField* address;
@@ -68,6 +69,8 @@
 @property (nonatomic, retain) IBOutlet UIButton* star;
 @property (nonatomic, retain) IBOutlet UIButton* zero;
 @property (nonatomic, retain) IBOutlet UIButton* hash;
+
+
 
 /**********************************
  * liblinphone initialization method

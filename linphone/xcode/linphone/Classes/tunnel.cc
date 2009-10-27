@@ -24,47 +24,59 @@ using namespace axtel;
 
 static TunnelSocket *sip_socket;
 static TunnelSocket *rtp_socket;
-static TunnelClient tun("208.109.100.191",4443);
+static TunnelClient* linphone_iphone_tun=0; 
 
 extern "C" int eXosip_sendto(int fd,const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen){
-	if (sip_socket==NULL) sip_socket=tun.createSocket(5060);
-	return sip_socket->sendto(buf,len,to,tolen);
+	if(linphone_iphone_tun == 0) {
+		return sendto(fd, buf, len, flags, to, tolen);
+	} else {
+		if (sip_socket==NULL) sip_socket=linphone_iphone_tun->createSocket(5060);
+		return sip_socket->sendto(buf,len,to,tolen);
+	}
 }
 
 extern "C" int eXosip_recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr *from, socklen_t *fromlen){
-	if (sip_socket==NULL) sip_socket=tun.createSocket(5060);
-	return sip_socket->recvfrom(buf,len,from,*fromlen);
+	if(linphone_iphone_tun == 0) {
+		return recvfrom(fd,buf,len,flags,from,fromlen);
+	} else {
+		if (sip_socket==NULL) sip_socket=linphone_iphone_tun->createSocket(5060);
+		return sip_socket->recvfrom(buf,len,from,*fromlen);
+	}
 }
 
 extern "C" int eXosip_select(int nfds, fd_set *s1, fd_set *s2, fd_set *s3, struct timeval *tv){
-	struct timeval begin,cur;
-	if (sip_socket==NULL) sip_socket=tun.createSocket(5060);
-	if (tv!=0 && tv->tv_sec){
-		unsigned int i;
-		fd_set tmp;
-		
-		for(i=0;i<sizeof(*s1)*8;++i){
-			/*hack for the wakeup fd of eXosip: we don't know its number but the important
-			is that it does not block*/
-			if (FD_ISSET(i,s1)){
-				fcntl(i,F_SETFL,O_NONBLOCK);
+	if(linphone_iphone_tun == 0) {
+		return select(nfds,s1,s2,s3,tv); 
+	} else {
+		struct timeval begin,cur;
+		if (sip_socket==NULL) sip_socket=linphone_iphone_tun->createSocket(5060);
+		if (tv!=0 && tv->tv_sec){
+			unsigned int i;
+			fd_set tmp;
+			
+			for(i=0;i<sizeof(*s1)*8;++i){
+				/*hack for the wakeup fd of eXosip: we don't know its number but the important
+				 is that it does not block*/
+				if (FD_ISSET(i,s1)){
+					fcntl(i,F_SETFL,O_NONBLOCK);
+				}
 			}
+			/*this is the select from udp.c, the one that is interesting to us*/
+			gettimeofday(&begin,NULL);
+			do{
+				struct timeval abit;
+				abit.tv_sec=0;
+				abit.tv_usec=20000;
+				if (sip_socket->hasData()) return 1;
+				gettimeofday(&cur,NULL);
+				if (cur.tv_sec-begin.tv_sec>tv->tv_sec) return 0;
+				memcpy(&tmp,s1,sizeof(tmp));
+				if (select(nfds,&tmp,s2,s3,&abit)==1) return 2;
+			}while(1);
+			
+		}else{
+			return select(nfds,s1,s2,s3,tv);
 		}
-		/*this is the select from udp.c, the one that is interesting to us*/
-		gettimeofday(&begin,NULL);
-		do{
-			struct timeval abit;
-			abit.tv_sec=0;
-			abit.tv_usec=20000;
-			if (sip_socket->hasData()) return 1;
-			gettimeofday(&cur,NULL);
-			if (cur.tv_sec-begin.tv_sec>tv->tv_sec) return 0;
-			memcpy(&tmp,s1,sizeof(tmp));
-			if (select(nfds,&tmp,s2,s3,&abit)==1) return 1;
-		}while(1);
-		
-	}else{
-		return select(nfds,s1,s2,s3,tv);
 	}
 }
 
@@ -89,7 +101,15 @@ static RtpTransport audio_transport={
 };
 
 
+extern "C" void linphone_iphone_tunneling_init(const char* ip,unsigned int port){
+	linphone_iphone_tun = new TunnelClient(ip,port); //new tun("208.109.100.191",4443);
+}
+
 extern "C" void linphone_iphone_enable_tunneling(LinphoneCore* lc){
-	rtp_socket=tun.createSocket(7078);
+	rtp_socket=linphone_iphone_tun->createSocket(7078);
 	linphone_core_set_audio_transports(lc,&audio_transport,NULL);
+}
+
+extern "C" int linphone_iphone_tunneling_isready(){
+	return (linphone_iphone_tun!=0) && linphone_iphone_tun->isReady();
 }
