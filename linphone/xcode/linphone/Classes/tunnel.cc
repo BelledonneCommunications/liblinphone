@@ -89,7 +89,9 @@ static int audio_sendto(struct _RtpTransport *t, mblk_t *msg , int flags, const 
 }
 
 static int audio_recvfrom(struct _RtpTransport *t, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen){
-	return rtp_socket->recvfrom(msg->b_wptr,msg->b_datap->db_lim-msg->b_datap->db_base,from,*fromlen);
+	int err=rtp_socket->recvfrom(msg->b_wptr,msg->b_datap->db_lim-msg->b_datap->db_base,from,*fromlen);
+	if (err>0) return err;
+	return 0;
 }
 
 
