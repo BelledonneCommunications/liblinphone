@@ -32,7 +32,8 @@ MSFilter *ms_au_write_new(MSSndCard *card);
 #define kNumberAudioDataBuffers	4
 
 typedef struct AUData_t{
-	AudioUnit                    	io_unit;
+	AudioUnit                    	io_write;
+	AudioUnit                    	io_read;
 	int								rate;
 	int								bits;
 	bool_t							stereo;
@@ -94,11 +95,15 @@ static void readCallback (
  Audio Queue play callback
  */
 
-static void writeCallback (
-		void								*aqData,
-		AudioQueueRef						inAQ,
-		AudioQueueBufferRef					inBuffer
+OSStatus writeCallback (
+   void                        *inRefCon,
+   AudioUnitRenderActionFlags  *ioActionFlags,
+   const AudioTimeStamp        *inTimeStamp,
+   UInt32                      inBusNumber,
+   UInt32                      inNumberFrames,
+   AudioBufferList             *ioData
 ) {
+
 	ms_debug("writeCallback");
 	AUData *d=(AUData*)aqData;
 	OSStatus err;
@@ -237,8 +242,9 @@ static void au_init(MSSndCard *card){
                                         NULL,
                                         &au_description
                                     );
-    AudioComponentInstanceNew (foundComponent, &d->io_unit);
 
+    AudioComponentInstanceNew (foundComponent, &d->io_read);
+    AudioComponentInstanceNew (foundComponent, &d->io_write);
 
 
 	d->bits=16;
@@ -293,87 +299,6 @@ static MSSndCard *au_card_new(){
 
 static void au_detect(MSSndCardManager *m){
 	ms_debug("au_detect");
-
-#if defined(__AudioHardware_h__)
-	OSStatus    err;
-	UInt32    count;
-	AudioDeviceID	inDevice, outDevice;
-	char name[255];
-
-	count = sizeof(inDevice);
-	err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice,
-								   &count,
-								   &inDevice);
-	if (err) {
-		ms_error("get kAudioHardwarePropertyDefaultInputDevice error %x", err);
-		return;
-	}
-
-	count = sizeof(char) * 255;
-	AudioDeviceGetProperty(inDevice, 0, false, kAudioDevicePropertyDeviceName, &count, &name);
-	ms_debug("InputDevice name = %s",name);
-
-	count = sizeof(outDevice);
-	err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice,
-								   &count,
-								   &outDevice);
-
-	if (err) {
-		ms_error("get kAudioHardwarePropertyDefaultOutputDevice error %d", err);
-		return;
-	}
-
-	count = sizeof(char) * 255;
-	AudioDeviceGetProperty(outDevice, 0, false, kAudioDevicePropertyDeviceName, &count, &name);
-	ms_debug("OutputDevice name = %s", name);
-
-	UInt32 deviceBufferSize;
-	AudioStreamBasicDescription deviceFormat;
-	count = sizeof(deviceBufferSize);
-	err = AudioDeviceGetProperty(outDevice,
-								 0,
-								 false,
-								 kAudioDevicePropertyBufferSize,
-								 &count,
-								 &deviceBufferSize);
-	if (err != kAudioHardwareNoError) {
-		ms_error("get kAudioDevicePropertyBufferSize error %ld", err);
-		return;
-	}
-	ms_debug("deviceBufferSize = %d", deviceBufferSize);
-	count = sizeof(deviceFormat);
-	err = AudioDeviceGetProperty(outDevice,
-								 0,
-								 false,
-								 kAudioDevicePropertyStreamFormat,
-								 &count,
-								 &deviceFormat);
-	if (err != kAudioHardwareNoError) {
-		ms_error("get kAudioDevicePropertyStreamFormat error %ld", err);
-		return;
-	}
-	ms_debug("mSampleRate = %g", deviceFormat.mSampleRate);
-	ms_debug("mFormatFlags = %08lX", deviceFormat.mFormatFlags);
-	ms_debug("mBytesPerPacket = %ld", deviceFormat.mBytesPerPacket);
-	ms_debug("mFramesPerPacket = %ld", deviceFormat.mFramesPerPacket);
-	ms_debug("mChannelsPerFrame = %ld", deviceFormat.mChannelsPerFrame);
-	ms_debug("mBytesPerFrame = %ld", deviceFormat.mBytesPerFrame);
-	ms_debug("mBitsPerChannel = %ld", deviceFormat.mBitsPerChannel);
-
-	count = sizeof(deviceBufferSize);
-	err = AudioDeviceGetProperty(outDevice,
-								 0,
-								 false,
-								 kAudioDevicePropertyBufferSize,
-								 &count,
-								 &deviceBufferSize);
-	if (err != kAudioHardwareNoError) {
-		ms_error("get kAudioDevicePropertyBufferSize error %ld", err);
-		return;
-	}
-	ms_debug("deviceBufferSize = %d", deviceBufferSize);
-#endif
-
 	MSSndCard *card=au_card_new();
 	ms_snd_card_manager_add_card(m,card);
 }
@@ -385,7 +310,7 @@ static void au_start_r(MSSndCard *card){
 		UInt32 doSetProperty       = 1;
 		AudioUnitElement inputBus = 1;
 		AudioUnitSetProperty (
-		    d->io_unit,
+		    d->io_read,
 		    kAudioOutputUnitProperty_EnableIO,
 		    kAudioUnitScope_Input ,
 		    outputBus,
@@ -414,17 +339,37 @@ static void au_start_r(MSSndCard *card){
 		    sizeof (d->readAudioFormat)
 		    );
 
-		aqresult = AudioQueueNewInput (
-									   &d->readAudioFormat,
-									   readCallback,
-									   d,								// userData
-									   NULL,							// run loop
-									   NULL,							// run loop mode
-									   0,								// flags
-									   &d->readQueue
-									   );
+		// register read call back
+		AURenderCallbackStruct renderCallbackStruct;
+		renderCallbackStruct.inputProc       = renderCallback;
+		renderCallbackStruct.inputProcRefCon = card;
+		AudioUnitSetProperty (
+			d->io_read,
+		    kAudioUnitProperty_SetRenderCallback,
+		    kAudioUnitScope_Input,
+		    inputBus,
+		    &readCallback,
+		    sizeof (readCallback)
+		);
 
-		ms_debug("AudioQueueNewInput = %d", aqresult);
+		//disable unit buffer allocation
+		UInt32 doNotSetProperty    = 0;
+		AudioUnitSetProperty (
+			d->io_read,
+		    kAudioUnitProperty_ShouldAllocateBuffer,
+		    kAudioUnitScope_Output,
+		    inputBus,
+		    &doNotSetProperty,
+		    sizeof (doNotSetProperty)
+		);
+
+
+		setupWrite(card);
+		d->curWriteBuffer = 0;
+
+		//start io unit
+		AudioUnitInitialize (d->io_read);
+
 
 		setupRead(card);
 		AudioQueueStart (
@@ -439,11 +384,7 @@ static void au_stop_r(MSSndCard *card){
 	AUData *d=(AUData*)card->data;
 
 	if(d->read_started == TRUE) {
-		AudioQueueStop (
-						d->readQueue,
-						true
-						);
-		AudioQueueDispose(d->readQueue,true);
+		AudioComponentInstanceDispose (d->io_read);
 		d->read_started=FALSE;
 	}
 }
@@ -452,11 +393,11 @@ static void au_start_w(MSSndCard *card){
 	ms_debug("au_start_w");
 	AUData *d=(AUData*)card->data;
 	if(d->write_started == FALSE) {
-
+		//enable output bus
 		UInt32 doSetProperty       = 1;
 		AudioUnitElement outputBus = 0;
 		AudioUnitSetProperty (
-		    d->io_unit,
+		    d->io_write,
 		    kAudioOutputUnitProperty_EnableIO,
 		    kAudioUnitScope_Output ,
 		    outputBus,
@@ -476,8 +417,9 @@ static void au_start_w(MSSndCard *card){
 		d->writeAudioFormat.mBytesPerPacket		= d->bits / 8;
 		d->writeAudioFormat.mBytesPerFrame		= d->bits / 8;
 
+		//setup stream format
 		AudioUnitSetProperty (
-			d->io_unit,
+			d->io_write,
 		    kAudioUnitProperty_StreamFormat,
 		    kAudioUnitScope_Output,
 		    outputBus,
@@ -485,39 +427,44 @@ static void au_start_w(MSSndCard *card){
 		    sizeof (d->writeAudioFormat)
 		    );
 
-		// create the playback audio queue object
-		aqresult = AudioQueueNewOutput (
-							 &d->writeAudioFormat,
-							 writeCallback,
-							 d,
-							 NULL,/*CFRunLoopGetCurrent ()*/
-							 NULL,/*kCFRunLoopCommonModes*/
-							 0,								// run loop flags
-							 &d->writeQueue
-							 );
-		ms_debug("AudioQueueNewOutput = %d", aqresult);
+		// register write call back
+		AURenderCallbackStruct renderCallbackStruct;
+		renderCallbackStruct.inputProc       = renderCallback;
+		renderCallbackStruct.inputProcRefCon = card;
+		AudioUnitSetProperty (
+			d->io_write,
+		    kAudioUnitProperty_SetRenderCallback,
+		    kAudioUnitScope_Input,
+		    outputBus,
+		    &writeCallback,
+		    sizeof (writeCallback)
+		);
+
+		//disable unit buffer allocation
+		UInt32 doNotSetProperty    = 0;
+		AudioUnitSetProperty (
+			d->io_write,
+		    kAudioUnitProperty_ShouldAllocateBuffer,
+		    kAudioUnitScope_Output,
+		    outputBus,
+		    &doNotSetProperty,
+		    sizeof (doNotSetProperty)
+		);
+
 
 		setupWrite(card);
-#if 0
-		AudioQueueStart (
-					 d->writeQueue,
-					 NULL			// start time. NULL means ASAP.
-					 );
-		d->write_started = TRUE;
-#endif
 		d->curWriteBuffer = 0;
+
+		//start io unit
+		AudioUnitInitialize (d->io_write);
+
 	}
 }
 
 static void au_stop_w(MSSndCard *card){
 	AUData *d=(AUData*)card->data;
 	if(d->write_started == TRUE) {
-			AudioQueueStop (
-						d->writeQueue,
-						true
-						);
-
-		AudioQueueDispose(d->writeQueue,true);
+		AudioComponentInstanceDispose (d->io_write);
 		d->write_started=FALSE;
 	}
 }
