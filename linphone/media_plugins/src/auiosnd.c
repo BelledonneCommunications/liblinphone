@@ -28,12 +28,8 @@
 MSFilter *ms_au_read_new(MSSndCard *card);
 MSFilter *ms_au_write_new(MSSndCard *card);
 
-#define kSecondsPerBuffer		0.02
-#define kNumberAudioDataBuffers	4
-
 typedef struct AUData_t{
-	AudioUnit                    	io_write;
-	AudioUnit                    	io_read;
+	AudioUnit                    	io_unit;
 	int								rate;
 	int								bits;
 	bool_t							stereo;
@@ -43,15 +39,12 @@ typedef struct AUData_t{
 	bool_t							read_started;
 	bool_t							write_started;
 
-	AudioQueueRef					readQueue;
 	AudioStreamBasicDescription		readAudioFormat;
-	UInt32							readBufferByteSize;
-	AudioQueueRef					writeQueue;
 	AudioStreamBasicDescription		writeAudioFormat;
-	UInt32							writeBufferByteSize;
-	AudioQueueBufferRef				writeBuffers[kNumberAudioDataBuffers];
-	int								curWriteBuffer;
+
 	MSBufferizer					*bufferizer;
+	AudioBufferList					*readAudioBufferList;
+	UInt32							pendingNumberOfInFrame;
 } AUData;
 
 /*
@@ -59,36 +52,40 @@ typedef struct AUData_t{
  */
 
 static void readCallback (
-		void								*aqData,
-		AudioQueueRef						inAQ,
-		AudioQueueBufferRef					inBuffer,
-		const AudioTimeStamp				*inStartTime,
-		UInt32								inNumPackets,
-		const AudioStreamPacketDescription	*inPacketDesc
+		   void                        *inRefCon,
+		   AudioUnitRenderActionFlags  *ioActionFlags,
+		   const AudioTimeStamp        *inTimeStamp,
+		   UInt32                      inBusNumber,
+		   UInt32                      inNumberFrames,
+		   AudioBufferList             *ioData
 ) {
 	ms_debug("readCallback");
 	AUData *d=(AUData*)aqData;
-	OSStatus err;
-
-//	ms_debug("readCallback inNumPackets %d %d", inNumPackets, inBuffer->mAudioDataByteSize);
-	mblk_t *rm=NULL;
-	rm=allocb(inNumPackets*2,0);
-	memcpy(rm->b_wptr, inBuffer->mAudioData, inNumPackets*2);
-	rm->b_wptr += inNumPackets*2;
 	ms_mutex_lock(&d->mutex);
-	putq(&d->rq,rm);
+	d->	pendingNumberOfInFrame = inNumberFrames;
 	ms_mutex_unlock(&d->mutex);
-	rm=NULL;
 
-	err = AudioQueueEnqueueBuffer (
-							 d->readQueue,
-							 inBuffer,
-							 0,
-							 NULL
-							 );
-	if(err != noErr) {
-		ms_error("readCallback:AudioQueueEnqueueBuffer %d", err);
-	}
+	//	OSStatus err;
+//
+////	ms_debug("readCallback inNumPackets %d %d", inNumPackets, inBuffer->mAudioDataByteSize);
+//	mblk_t *rm=NULL;
+//	rm=allocb(inNumPackets*2,0);
+//	memcpy(rm->b_wptr, inBuffer->mAudioData, inNumPackets*2);
+//	rm->b_wptr += inNumPackets*2;
+//
+//	putq(&d->rq,rm);
+//
+//	rm=NULL;
+//
+//	err = AudioQueueEnqueueBuffer (
+//							 d->readQueue,
+//							 inBuffer,
+//							 0,
+//							 NULL
+//							 );
+//	if(err != noErr) {
+//		ms_error("readCallback:AudioQueueEnqueueBuffer %d", err);
+//	}
 }
 
 /*
@@ -103,107 +100,31 @@ OSStatus writeCallback (
    UInt32                      inNumberFrames,
    AudioBufferList             *ioData
 ) {
-
-	ms_debug("writeCallback");
-	AUData *d=(AUData*)aqData;
-	OSStatus err;
-	if(d->bufferizer->size >= d->writeBufferByteSize) {
-		ms_mutex_lock(&d->mutex);
-		ms_bufferizer_read(d->bufferizer, inBuffer->mAudioData, d->writeBufferByteSize);
-		ms_mutex_unlock(&d->mutex);
-
-	} else {
-		memset(inBuffer->mAudioData, 0, d->writeBufferByteSize);
-	}
-	inBuffer->mAudioDataByteSize = d->writeBufferByteSize;
-	err = AudioQueueEnqueueBuffer (
-								   d->writeQueue,
-								   inBuffer,
-								   0,
-								   NULL
-								   );
-	if(err != noErr) {
-		ms_error("AudioQueueEnqueueBuffer %d", err);
-	}
+//
+//	ms_debug("writeCallback");
+//	AUData *d=(AUData*)aqData;
+//	OSStatus err;
+//	if(d->bufferizer->size >= d->writeBufferByteSize) {
+//		ms_mutex_lock(&d->mutex);
+//		ms_bufferizer_read(d->bufferizer, inBuffer->mAudioData, d->writeBufferByteSize);
+//		ms_mutex_unlock(&d->mutex);
+//
+//	} else {
+//		memset(inBuffer->mAudioData, 0, d->writeBufferByteSize);
+//	}
+//	inBuffer->mAudioDataByteSize = d->writeBufferByteSize;
+//	err = AudioQueueEnqueueBuffer (
+//								   d->writeQueue,
+//								   inBuffer,
+//								   0,
+//								   NULL
+//								   );
+//	if(err != noErr) {
+//		ms_error("AudioQueueEnqueueBuffer %d", err);
+//	}
 }
 
-void putWriteAQ(void *aqData,
-				int queuenum)
-{
-	ms_debug("putWriteAQ");
-	AUData *d=(AUData*)aqData;
-	OSStatus err;
-	err = AudioQueueEnqueueBuffer (
-								   d->writeQueue,
-								   d->writeBuffers[queuenum],
-								   0,
-								   NULL
-								   );
-	if(err != noErr) {
-		ms_error("AudioQueueEnqueueBuffer %d", err);
-	}
-}
 
-/*
- play buffer setup function
- */
-
-void setupWrite(MSSndCard *card) {
-	ms_debug("setupWrite");
-	AUData *d=(AUData*)card->data;
-	OSStatus err;
-
-	int bufferIndex;
-
-	for (bufferIndex = 0; bufferIndex < kNumberAudioDataBuffers; ++bufferIndex) {
-
-		err = AudioQueueAllocateBuffer (
-								  d->writeQueue,
-								  d->writeBufferByteSize,
-								  &d->writeBuffers[bufferIndex]
-		);
-		if(err != noErr) {
-			ms_error("setupWrite:AudioQueueAllocateBuffer %d", err);
-		}
-	}
-}
-
-/*
- recode buffer setup function
- */
-
-void setupRead(MSSndCard *card) {
-	ms_debug("setupRead");
-	AUData *d=(AUData*)card->data;
-	OSStatus err;
-
-	// allocate and enqueue buffers
-	int bufferIndex;
-
-	for (bufferIndex = 0; bufferIndex < kNumberAudioDataBuffers; ++bufferIndex) {
-
-		AudioQueueBufferRef buffer;
-
-		err = AudioQueueAllocateBuffer (
-								  d->readQueue,
-								  d->readBufferByteSize,
-								  &buffer
-								  );
-		if(err != noErr) {
-			ms_error("setupRead:AudioQueueAllocateBuffer %d", err);
-		}
-
-		err = AudioQueueEnqueueBuffer (
-								 d->readQueue,
-								 buffer,
-								 0,
-								 NULL
-								 );
-		if(err != noErr) {
-			ms_error("AudioQueueEnqueueBuffer %d", err);
-		}
-	}
-}
 
 /*
  mediastreamer2 function
@@ -224,7 +145,7 @@ static void au_set_source(MSSndCard *card, MSSndCardCapture source)
 
 static void au_init(MSSndCard *card){
 	ms_debug("au_init");
-	audata *d=ms_new(audata,1);
+	AUData *d=ms_new(AUData,1);
 
 	Float32 preferredBufferSize = .005;
 	AudioSessionSetProperty(kAudioSessionProperty_PreferredHardwareIOBufferDuration
@@ -243,17 +164,14 @@ static void au_init(MSSndCard *card){
                                         &au_description
                                     );
 
-    AudioComponentInstanceNew (foundComponent, &d->io_read);
-    AudioComponentInstanceNew (foundComponent, &d->io_write);
-
-
+    AudioComponentInstanceNew (foundComponent, &d->io_unit);
 	d->bits=16;
 	d->rate=8000;
 	d->stereo=FALSE;
 
 	d->read_started=FALSE;
 	d->write_started=FALSE;
-	qinit(&d->rq);
+	d->pendingNumberOfInFrame=0;
 	d->bufferizer=ms_bufferizer_new();
 	ms_mutex_init(&d->mutex,NULL);
 	card->data=d;
@@ -264,6 +182,7 @@ static void au_uninit(MSSndCard *card){
 	flushq(&d->rq,0);
 	ms_bufferizer_destroy(d->bufferizer);
 	ms_mutex_destroy(&d->mutex);
+	AudioComponentInstanceDispose (d->io_unit);
 	ms_free(d);
 }
 
@@ -355,7 +274,7 @@ static void au_start_r(MSSndCard *card){
 		//disable unit buffer allocation
 		UInt32 doNotSetProperty    = 0;
 		AudioUnitSetProperty (
-			d->io_read,
+			d->io_unit,
 		    kAudioUnitProperty_ShouldAllocateBuffer,
 		    kAudioUnitScope_Output,
 		    inputBus,
@@ -368,14 +287,17 @@ static void au_start_r(MSSndCard *card){
 		d->curWriteBuffer = 0;
 
 		//start io unit
-		AudioUnitInitialize (d->io_read);
+		AudioUnitInitialize (d->io_unit);
 
 
-		setupRead(card);
 		AudioQueueStart (
 					 d->readQueue,
 					 NULL			// start time. NULL means ASAP.
 					 );
+
+		d->readAudioBufferList=AllocateAudioBufferList(d->readAudioFormat.mChannelsPerFrame
+														, d->readAudioFormat.mBytesPerFrame);
+
 		d->read_started = TRUE;
 	}
 }
@@ -384,7 +306,6 @@ static void au_stop_r(MSSndCard *card){
 	AUData *d=(AUData*)card->data;
 
 	if(d->read_started == TRUE) {
-		AudioComponentInstanceDispose (d->io_read);
 		d->read_started=FALSE;
 	}
 }
@@ -397,7 +318,7 @@ static void au_start_w(MSSndCard *card){
 		UInt32 doSetProperty       = 1;
 		AudioUnitElement outputBus = 0;
 		AudioUnitSetProperty (
-		    d->io_write,
+		    d->io_unit,
 		    kAudioOutputUnitProperty_EnableIO,
 		    kAudioUnitScope_Output ,
 		    outputBus,
@@ -419,7 +340,7 @@ static void au_start_w(MSSndCard *card){
 
 		//setup stream format
 		AudioUnitSetProperty (
-			d->io_write,
+			d->io_unit,
 		    kAudioUnitProperty_StreamFormat,
 		    kAudioUnitScope_Output,
 		    outputBus,
@@ -431,19 +352,19 @@ static void au_start_w(MSSndCard *card){
 		AURenderCallbackStruct renderCallbackStruct;
 		renderCallbackStruct.inputProc       = renderCallback;
 		renderCallbackStruct.inputProcRefCon = card;
-		AudioUnitSetProperty (
-			d->io_write,
-		    kAudioUnitProperty_SetRenderCallback,
-		    kAudioUnitScope_Input,
-		    outputBus,
-		    &writeCallback,
-		    sizeof (writeCallback)
-		);
+//		AudioUnitSetProperty (
+//			d->io_unit,
+//		    kAudioUnitProperty_SetRenderCallback,
+//		    kAudioUnitScope_Input,
+//		    outputBus,
+//		    &writeCallback,
+//		    sizeof (writeCallback)
+//		);
 
 		//disable unit buffer allocation
 		UInt32 doNotSetProperty    = 0;
 		AudioUnitSetProperty (
-			d->io_write,
+			d->io_unit,
 		    kAudioUnitProperty_ShouldAllocateBuffer,
 		    kAudioUnitScope_Output,
 		    outputBus,
@@ -456,7 +377,7 @@ static void au_start_w(MSSndCard *card){
 		d->curWriteBuffer = 0;
 
 		//start io unit
-		AudioUnitInitialize (d->io_write);
+		AudioUnitInitialize (d->io_unit);
 
 	}
 }
@@ -464,7 +385,6 @@ static void au_start_w(MSSndCard *card){
 static void au_stop_w(MSSndCard *card){
 	AUData *d=(AUData*)card->data;
 	if(d->write_started == TRUE) {
-		AudioComponentInstanceDispose (d->io_write);
 		d->write_started=FALSE;
 	}
 }
@@ -479,29 +399,32 @@ static mblk_t *au_get(MSSndCard *card){
 }
 
 static void au_put(MSSndCard *card, mblk_t *m){
-	ms_debug("au_put");
-	AUData *d=(AUData*)card->data;
-	ms_mutex_lock(&d->mutex);
-	ms_bufferizer_put(d->bufferizer,m);
-	ms_mutex_unlock(&d->mutex);
-
-	if(d->write_started == FALSE && d->bufferizer->size >= d->writeBufferByteSize) {
-		AudioQueueBufferRef curbuf = d->writeBuffers[d->curWriteBuffer];
-		if(ms_bufferizer_read(d->bufferizer, curbuf->mAudioData, d->writeBufferByteSize)) {
-			curbuf->mAudioDataByteSize = d->writeBufferByteSize;
-			putWriteAQ(d, d->curWriteBuffer);
-			++d->curWriteBuffer;
-		}
-	}
-	if(d->write_started == FALSE && d->curWriteBuffer == kNumberAudioDataBuffers-1) {
-		OSStatus err;
-		err = AudioQueueStart (
-					 d->writeQueue,
-					 NULL			// start time. NULL means ASAP.
-					 );
-		ms_debug("AudioQueueStart %d", err);
-		d->write_started = TRUE;
-	}
+//	ms_debug("au_put");
+//	AUData *d=(AUData*)card->data;
+//	ms_mutex_lock(&d->mutex);
+//	ms_bufferizer_put(d->bufferizer,m);
+//	ms_mutex_unlock(&d->mutex);
+//
+//	if(d->write_started == FALSE && d->bufferizer->size >= d->writeBufferByteSize) {
+//
+//	}
+//	if(d->write_started == FALSE && d->bufferizer->size >= d->writeBufferByteSize) {
+//		AudioQueueBufferRef curbuf = d->writeBuffers[d->curWriteBuffer];
+//		if(ms_bufferizer_read(d->bufferizer, curbuf->mAudioData, d->writeBufferByteSize)) {
+//			curbuf->mAudioDataByteSize = d->writeBufferByteSize;
+//			putWriteAQ(d, d->curWriteBuffer);
+//			++d->curWriteBuffer;
+//		}
+//	}
+//	if(d->write_started == FALSE && d->curWriteBuffer == kNumberAudioDataBuffers-1) {
+//		OSStatus err;
+//		err = AudioQueueStart (
+//					 d->writeQueue,
+//					 NULL			// start time. NULL means ASAP.
+//					 );
+//		ms_debug("AudioQueueStart %d", err);
+//		d->write_started = TRUE;
+//	}
 }
 
 static void au_read_preprocess(MSFilter *f){
@@ -515,8 +438,27 @@ static void au_read_postprocess(MSFilter *f){
 }
 
 static void au_read_process(MSFilter *f){
-	MSSndCard *card=(MSSndCard*)f->data;
+	AUData *d=(AUData*)((MSSndCard*)f->data)->data;
 	mblk_t *m;
+	AudioUnitRenderActionFlags  ioActionFlags=0;
+	const AudioTimeStamp        inTimeStamp;
+	//test if IO are avialable from au
+	UInt32 doGetProperty       = 0;
+	AudioUnitElement inputBus = 1;
+
+	if (d->pendingNumberOfInFrame >0) {
+	d->readAudioBufferList->
+	//1 call rendering
+	OSStatus lresult = 	AudioUnitRender (d->io_unit,
+										&ioActionFlags,
+										&inTimeStamp,
+										1,
+										1,
+										&(d->readAudioBufferList)
+	);
+	}
+	} while(doGetProperty == 1);
+
 	while((m=au_get(card))!=NULL){
 		ms_queue_put(f->outputs[0],m);
 	}
@@ -535,7 +477,7 @@ static void au_write_postprocess(MSFilter *f){
 }
 
 static void au_write_process(MSFilter *f){
-//	ms_debug("au_write_process");
+	ms_debug("au_write_process");
 	MSSndCard *card=(MSSndCard*)f->data;
 	mblk_t *m;
 	while((m=ms_queue_get(f->inputs[0]))!=NULL){
