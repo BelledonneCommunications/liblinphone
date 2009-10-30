@@ -23,7 +23,7 @@ nortp_timeout=30
 
 [sound]
 playback_dev_id=AQ: Audio Queue
-ringer_dev_id=AQ: Audio Queue
+ringer_dev_id=AU: Audio Unit
 capture_dev_id=AQ: Audio Queue
 
 [audio_codec_0]

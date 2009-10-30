@@ -22,6 +22,7 @@
 #import <AVFoundation/AVAudioSession.h>
 #import <AudioToolbox/AudioToolbox.h>
 
+
 //generic log handler for debug version
 void linphone_iphone_log_handler(OrtpLogLevel lev, const char *fmt, va_list args){
 	NSString* format = [[NSString alloc] initWithCString:fmt encoding:[NSString defaultCStringEncoding]];
@@ -250,6 +251,9 @@ LinphoneCoreVTable linphonec_vtable = {
 	else {
 		linphone_core_disable_logs();
 	}
+	
+	//register audio queue sound card
+	ms_au_register_card();
 	
 	/*
 	 * Initialize linphone core
