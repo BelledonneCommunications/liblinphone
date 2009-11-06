@@ -262,7 +262,7 @@ LinphoneCoreVTable linphonec_vtable = {
 	mCore = linphone_core_new (&linphonec_vtable, [defaultConfigFile cStringUsingEncoding:[NSString defaultCStringEncoding]],self);
 	
 	// Set audio assets
-	const char*  lRing = [[myBundle pathForResource:@"oldphone-mono"ofType:@"wav"] cStringUsingEncoding:[NSString defaultCStringEncoding]];
+	const char*  lRing = [[myBundle pathForResource:@"oldphone"ofType:@"wav"] cStringUsingEncoding:[NSString defaultCStringEncoding]];
 	linphone_core_set_ring(mCore, lRing );
 	const char*  lRingBack = [[myBundle pathForResource:@"ringback"ofType:@"wav"] cStringUsingEncoding:[NSString defaultCStringEncoding]];
 	linphone_core_set_ringback(mCore, lRingBack);
@@ -383,11 +383,6 @@ LinphoneCoreVTable linphonec_vtable = {
 	//init audio session
 	NSError *setError = nil;
 	[[AVAudioSession sharedInstance] setCategory: AVAudioSessionCategoryPlayAndRecord error: &setError];
-	Float32 preferredBufferSize = .01; // I'd like a 10ms buffer duration
-	AudioSessionSetProperty(kAudioSessionProperty_PreferredHardwareIOBufferDuration
-							, sizeof(preferredBufferSize)
-							, &preferredBufferSize);
-		
 }
 //scheduling loop
 -(void) iterate {
