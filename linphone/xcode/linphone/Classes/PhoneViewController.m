@@ -260,7 +260,7 @@ LinphoneCoreVTable linphonec_vtable = {
 	NSInteger tunnelPort  = [[NSUserDefaults standardUserDefaults] integerForKey:@"tunnelport_preference"];
 	
 	if (isTunnel && [tunnelIp length] != 0 ) {
-		linphone_iphone_tunneling_init(tunnelIpChars,tunnelPort!=0?(unsigned int)tunnelPort:4443); 
+		linphone_iphone_tunneling_init(tunnelIpChars,tunnelPort!=0?(unsigned int)tunnelPort:443); 
 		
 	} else {
 		//no ip de-activating
