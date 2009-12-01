@@ -383,11 +383,6 @@ LinphoneCoreVTable linphonec_vtable = {
 	//init audio session
 	NSError *setError = nil;
 	[[AVAudioSession sharedInstance] setCategory: AVAudioSessionCategoryPlayAndRecord error: &setError];
-	Float32 preferredBufferSize = .01; // I'd like a 10ms buffer duration
-	AudioSessionSetProperty(kAudioSessionProperty_PreferredHardwareIOBufferDuration
-							, sizeof(preferredBufferSize)
-							, &preferredBufferSize);
-		
 }
 //scheduling loop
 -(void) iterate {
