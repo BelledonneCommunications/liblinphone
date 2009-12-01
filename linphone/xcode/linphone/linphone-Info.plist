@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleIconFile</key>
-	<string>linphone2.png</string>
+	<string>logo_axtel_99x99.jpg</string>
 	<key>CFBundleIdentifier</key>
 	<string>org.linphone.phone</string>
 	<key>CFBundleInfoDictionaryVersion</key>
