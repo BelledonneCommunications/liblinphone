@@ -235,6 +235,10 @@ LinphoneCoreVTable linphonec_vtable = {
  */
 -(void)startlibLinphone  {
 	
+	//init audio session
+	NSError *setError = nil;
+	[[AVAudioSession sharedInstance] setCategory: AVAudioSessionCategoryPlayAndRecord error: &setError]; //must be call before linphone_core_init
+	
 	//get default config from bundle
 	NSBundle* myBundle = [NSBundle mainBundle];
 	NSString* defaultConfigFile = [myBundle pathForResource:@"linphonerc"ofType:nil] ;
@@ -380,9 +384,7 @@ LinphoneCoreVTable linphonec_vtable = {
 								   selector:@selector(iterate) 
 								   userInfo:nil 
 									repeats:YES];
-	//init audio session
-	NSError *setError = nil;
-	[[AVAudioSession sharedInstance] setCategory: AVAudioSessionCategoryPlayAndRecord error: &setError];
+
 }
 //scheduling loop
 -(void) iterate {
