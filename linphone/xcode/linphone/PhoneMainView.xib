@@ -8,7 +8,7 @@
 		<string key="IBDocument.HIToolboxVersion">353.00</string>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="11"/>
+			<integer value="38"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -48,25 +48,29 @@
 			<object class="IBUITabBarController" id="952473143">
 				<object class="IBUISimulatedTabBarMetrics" key="IBUISimulatedBottomBarMetrics"/>
 				<object class="IBUISimulatedStatusBarMetrics" key="IBUISimulatedStatusBarMetrics"/>
-				<object class="IBUIViewController" key="IBUISelectedViewController" id="383050823">
-					<object class="IBUITabBarItem" key="IBUITabBarItem" id="672878446">
-						<string key="IBUITitle">Contacts</string>
+				<object class="IBUIViewController" key="IBUISelectedViewController" id="258574391">
+					<object class="IBUITabBarItem" key="IBUITabBarItem" id="64474689">
+						<string key="IBUITitle">Dialer</string>
+						<object class="NSCustomResource" key="IBUIImage">
+							<string key="NSClassName">NSImage</string>
+							<string key="NSResourceName">linphone2.png</string>
+						</object>
 						<reference key="IBUITabBar"/>
 					</object>
 					<reference key="IBUIParentViewController" ref="952473143"/>
+					<string key="IBUINibName">PhoneViewController</string>
+					<object class="IBUISimulatedStatusBarMetrics" key="IBUISimulatedStatusBarMetrics"/>
 				</object>
 				<object class="NSMutableArray" key="IBUIViewControllers">
 					<bool key="EncodedWithXMLCoder">YES</bool>
-					<object class="IBUIViewController" id="258574391">
-						<object class="IBUITabBarItem" key="IBUITabBarItem" id="64474689">
-							<string key="IBUITitle">PAD</string>
+					<reference ref="258574391"/>
+					<object class="IBUIViewController" id="383050823">
+						<object class="IBUITabBarItem" key="IBUITabBarItem" id="672878446">
 							<reference key="IBUITabBar"/>
+							<int key="IBUISystemItemIdentifier">5</int>
 						</object>
 						<reference key="IBUIParentViewController" ref="952473143"/>
-						<string key="IBUINibName">PhoneViewController</string>
-						<object class="IBUISimulatedStatusBarMetrics" key="IBUISimulatedStatusBarMetrics"/>
 					</object>
-					<reference ref="383050823"/>
 				</object>
 				<object class="IBUITabBar" key="IBUITabBar" id="995238651">
 					<nil key="NSNextResponder"/>
@@ -282,6 +286,7 @@
 						<object class="NSMutableArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>address</string>
+							<string>back</string>
 							<string>call</string>
 							<string>cancel</string>
 							<string>eight</string>
@@ -301,6 +306,7 @@
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>UITextField</string>
+							<string>UIButton</string>
 							<string>UIButton</string>
 							<string>UIButton</string>
 							<string>UIButton</string>

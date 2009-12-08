@@ -91,12 +91,16 @@
 /********************
  * UI method handlers
  ********************/
+-(void)doKeyZeroLongPress;
 
 //method to handle cal/hangup events
 - (IBAction)doAction:(id)sender;
 
 // method to handle keypad event
 - (IBAction)doKeyPad:(id)sender;
+
+- (IBAction)doKeyPadUp:(id)sender;
+
 
 
 -(PayloadType*) findPayload:(NSString*)type withRate:(int)rate from:(const MSList*)list;

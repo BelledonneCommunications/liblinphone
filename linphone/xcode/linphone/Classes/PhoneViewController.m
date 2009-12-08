@@ -179,18 +179,37 @@ LinphoneCoreVTable linphonec_vtable = {
 			newAddress = [address.text stringByAppendingString:@"*"];
 		} else if (sender == zero) {
 			newAddress = [address.text stringByAppendingString:@"0"];
+			//start timer for +
+			[self performSelector:@selector(doKeyZeroLongPress) withObject:nil afterDelay:0.5];
 		} else if (sender == hash) {
 			newAddress = [address.text stringByAppendingString:@"#"];
 		} else if (sender == back) {
 			newAddress = [address.text substringToIndex: [address.text length]-1];
 		} else  {
-			NSLog(@"unknown event from diad pad");	
+			NSLog(@"unknown event from diad pad");
+			return;
 		}
 		[address setText:newAddress];	
 	}
 }
 
+//implements keypad up  
+-(IBAction) doKeyPadUp:(id)sender {
+	if (sender == zero) {
+		//cancel timer for +
+		[NSObject cancelPreviousPerformRequestsWithTarget:self 
+												 selector:@selector(doKeyZeroLongPress)
+												   object:nil];
+	} else  {
+		NSLog(@"unknown up event from dial pad");	
+	}
+}
 
+-(void)doKeyZeroLongPress {
+		NSString* newAddress = [[address.text substringToIndex: [address.text length]-1]  stringByAppendingString:@"+"];
+		[address setText:newAddress];
+
+}
 /*
  // The designated initializer.  Override if you create the controller programmatically and want to perform customization that is not appropriate for viewDidLoad.
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
