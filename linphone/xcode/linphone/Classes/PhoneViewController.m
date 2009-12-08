@@ -90,6 +90,11 @@ LinphoneCoreVTable linphonec_vtable = {
 @synthesize zero;
 @synthesize hash;
 
+@synthesize back;
+
+-(void)setPhoneNumber:(NSString*)number {
+	[address setText:number];
+}
 
 //implements call/cancel button behavior 
 -(IBAction) doAction:(id)sender {
@@ -176,6 +181,8 @@ LinphoneCoreVTable linphonec_vtable = {
 			newAddress = [address.text stringByAppendingString:@"0"];
 		} else if (sender == hash) {
 			newAddress = [address.text stringByAppendingString:@"#"];
+		} else if (sender == back) {
+			newAddress = [address.text substringToIndex: [address.text length]-1];
 		} else  {
 			NSLog(@"unknown event from diad pad");	
 		}
@@ -194,12 +201,14 @@ LinphoneCoreVTable linphonec_vtable = {
 }
 */
 
-/*
+
 // Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
 - (void)viewDidLoad {
     [super viewDidLoad];
+	[self startlibLinphone];
+	
 }
-*/
+
 
 /*
 // Override to allow orientations other than the default portrait orientation.

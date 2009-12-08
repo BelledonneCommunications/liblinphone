@@ -19,41 +19,47 @@
 
 #import "PhoneViewController.h"
 #import "linphoneAppDelegate.h"
+#import "ContactPickerDelegate.h"
 
 
 
 @implementation linphoneAppDelegate
 
 @synthesize window;
-@synthesize myViewController;
+@synthesize myTabBarController;
+@synthesize myPeoplePickerController;
+
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application {    
 	
-	PhoneViewController *aViewController = [[PhoneViewController alloc]
-										 initWithNibName:@"PhoneViewController" bundle:[NSBundle mainBundle]];
+	myPeoplePickerController = [[[ABPeoplePickerNavigationController alloc] init] autorelease];
+	myContactPickerDelegate = [[ContactPickerDelegate alloc] init];
+	myContactPickerDelegate.phoneControllerDelegate=(PhoneViewController*)[myTabBarController.viewControllers objectAtIndex:0];
+	myContactPickerDelegate.linphoneDelegate=self;
 	
-	[self  setMyViewController:aViewController];
-	[aViewController release];
-
-	//offset the status bar
-	CGRect rect = myViewController.view.frame;
-	rect = CGRectOffset(rect, 0.0, 20.0);
-	myViewController.view.frame = rect;
+	[myPeoplePickerController setPeoplePickerDelegate:myContactPickerDelegate];
+	//copy tab bar item
+	myPeoplePickerController.tabBarItem = [(UIViewController*)[myTabBarController.viewControllers objectAtIndex:1] tabBarItem]; 
+	//insert contact controller
+	NSMutableArray* newArray = [NSMutableArray arrayWithArray:self.myTabBarController.viewControllers];
+	[newArray replaceObjectAtIndex:1 withObject:myPeoplePickerController];
 	
-	[window addSubview:[myViewController view]];
-
-	//init lib linphone
-	[aViewController startlibLinphone] ;
+	[myTabBarController setViewControllers:newArray animated:NO];
+	
+	[window addSubview:myTabBarController.view];
 
     [window makeKeyAndVisible];
 
 	
 }
+-(void)selectDialerTab {
+	[myTabBarController setSelectedIndex:0];
+}
 
 
 - (void)dealloc {
     [window release];
-	[myViewController release];
+	[myPeoplePickerController release];
     [super dealloc];
 }
 

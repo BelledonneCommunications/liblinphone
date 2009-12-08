@@ -1,4 +1,4 @@
-/* linphoneAppDelegate.h
+/* ContactPickerDelegate.h
  *
  * Copyright (C) 2009  Belledonne Comunications, Grenoble, France
  *
@@ -15,32 +15,19 @@
  *  You should have received a copy of the GNU General Public License   
  *  along with this program; if not, write to the Free Software         
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- */                                                                           
-
-
-#import <UIKit/UIKit.h>
+ */                       
+#import <Foundation/Foundation.h>
 #import <AddressBookUI/ABPeoplePickerNavigationController.h>
+#import "PhoneViewController.h"
+#import "linphoneAppDelegate.h"
 
 
-@protocol LinphoneTabManagerDelegate
-
--(void)selectDialerTab;
-
-@end
-
-@class ContactPickerDelegate;
-
-@interface linphoneAppDelegate : NSObject <UIApplicationDelegate,LinphoneTabManagerDelegate> {
-    UIWindow *window;
-	IBOutlet UITabBarController*  myTabBarController;
-	IBOutlet ABPeoplePickerNavigationController* myPeoplePickerController;
-	ContactPickerDelegate* myContactPickerDelegate;
-	
+@interface ContactPickerDelegate : NSObject<ABPeoplePickerNavigationControllerDelegate> {
+	id<PhoneViewControllerDelegate> phoneControllerDelegate;
+	id<LinphoneTabManagerDelegate> linphoneDelegate;
 }
 
-@property (nonatomic, retain) IBOutlet UIWindow *window;
-@property (nonatomic, retain) IBOutlet UITabBarController*  myTabBarController;
-@property (nonatomic, retain) IBOutlet ABPeoplePickerNavigationController* myPeoplePickerController;
+@property (nonatomic, retain) id<PhoneViewControllerDelegate> phoneControllerDelegate;
+@property (nonatomic, retain) id<LinphoneTabManagerDelegate> linphoneDelegate;
 
 @end
-

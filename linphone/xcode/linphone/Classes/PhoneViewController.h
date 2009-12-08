@@ -20,9 +20,14 @@
 #import <Foundation/Foundation.h>
 #import "linphonecore.h"
 
+@protocol PhoneViewControllerDelegate
+
+-(void)setPhoneNumber:(NSString*)number;
+
+@end
 
 
-@interface PhoneViewController : UIViewController <UITextFieldDelegate> {
+@interface PhoneViewController : UIViewController <UITextFieldDelegate,PhoneViewControllerDelegate> {
 
 @private
 	//UI definition
@@ -45,6 +50,7 @@
 	UIButton* zero;
 	UIButton* hash;
 
+	UIButton* back;
 	/*
 	 * lib linphone main context
 	 */
@@ -69,6 +75,8 @@
 @property (nonatomic, retain) IBOutlet UIButton* star;
 @property (nonatomic, retain) IBOutlet UIButton* zero;
 @property (nonatomic, retain) IBOutlet UIButton* hash;
+
+@property (nonatomic, retain) IBOutlet UIButton* back;
 
 /**********************************
  * liblinphone initialization method
