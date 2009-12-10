@@ -29,11 +29,13 @@
 @end
 
 @class ContactPickerDelegate;
+@class IncallViewController;
 
 @interface linphoneAppDelegate : NSObject <UIApplicationDelegate,LinphoneTabManagerDelegate> {
     UIWindow *window;
 	IBOutlet UITabBarController*  myTabBarController;
 	IBOutlet ABPeoplePickerNavigationController* myPeoplePickerController;
+	
 	ContactPickerDelegate* myContactPickerDelegate;
 	
 }
@@ -41,6 +43,7 @@
 @property (nonatomic, retain) IBOutlet UIWindow *window;
 @property (nonatomic, retain) IBOutlet UITabBarController*  myTabBarController;
 @property (nonatomic, retain) IBOutlet ABPeoplePickerNavigationController* myPeoplePickerController;
+
 
 @end
 

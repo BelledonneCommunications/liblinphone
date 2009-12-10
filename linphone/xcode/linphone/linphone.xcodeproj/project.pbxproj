@@ -34,6 +34,8 @@
 		22B5EFA310CE50BD00777D97 /* AddressBookUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B5EFA210CE50BD00777D97 /* AddressBookUI.framework */; };
 		22B5EFE510CE5E5800777D97 /* ContactPickerDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 22B5EFE410CE5E5800777D97 /* ContactPickerDelegate.m */; };
 		22B5F03510CE6B2F00777D97 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B5F03410CE6B2F00777D97 /* AddressBook.framework */; };
+		22B5F1E110CFA3C700777D97 /* IncallViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 22B5F1E010CFA3C700777D97 /* IncallViewController.xib */; };
+		22B5F1EA10CFD55A00777D97 /* IncallViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 22B5F1E810CFD55A00777D97 /* IncallViewController.m */; };
 		22F2508E107141E100AC9B3F /* PhoneViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */; };
 		22F2508F107141E100AC9B3F /* PhoneViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 22F2508D107141E100AC9B3F /* PhoneViewController.xib */; };
 		22F254811073D99800AC9B3F /* ringback.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254801073D99800AC9B3F /* ringback.wav */; };
@@ -192,9 +194,12 @@
 		22B5EFE310CE5E5800777D97 /* ContactPickerDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContactPickerDelegate.h; sourceTree = "<group>"; };
 		22B5EFE410CE5E5800777D97 /* ContactPickerDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ContactPickerDelegate.m; sourceTree = "<group>"; };
 		22B5F03410CE6B2F00777D97 /* AddressBook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBook.framework; path = System/Library/Frameworks/AddressBook.framework; sourceTree = SDKROOT; };
+		22B5F1E010CFA3C700777D97 /* IncallViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = IncallViewController.xib; sourceTree = "<group>"; };
+		22B5F1E710CFD55A00777D97 /* IncallViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IncallViewController.h; sourceTree = "<group>"; };
+		22B5F1E810CFD55A00777D97 /* IncallViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IncallViewController.m; sourceTree = "<group>"; };
 		22F2508B107141E100AC9B3F /* PhoneViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PhoneViewController.h; sourceTree = "<group>"; };
 		22F2508C107141E100AC9B3F /* PhoneViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PhoneViewController.m; sourceTree = "<group>"; };
-		22F2508D107141E100AC9B3F /* PhoneViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = PhoneViewController.xib; path = Classes/PhoneViewController.xib; sourceTree = "<group>"; };
+		22F2508D107141E100AC9B3F /* PhoneViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = PhoneViewController.xib; sourceTree = "<group>"; };
 		22F254801073D99800AC9B3F /* ringback.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = ringback.wav; path = ../../share/ringback.wav; sourceTree = SOURCE_ROOT; };
 		22F255131073EEE600AC9B3F /* green.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = green.png; path = ../../pixmaps/green.png; sourceTree = SOURCE_ROOT; };
 		22F255141073EEE600AC9B3F /* red.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = red.png; path = ../../pixmaps/red.png; sourceTree = SOURCE_ROOT; };
@@ -241,8 +246,12 @@
 				1D3623250D0F684500981E51 /* linphoneAppDelegate.m */,
 				22F2508B107141E100AC9B3F /* PhoneViewController.h */,
 				22F2508C107141E100AC9B3F /* PhoneViewController.m */,
+				22F2508D107141E100AC9B3F /* PhoneViewController.xib */,
 				22B5EFE310CE5E5800777D97 /* ContactPickerDelegate.h */,
 				22B5EFE410CE5E5800777D97 /* ContactPickerDelegate.m */,
+				22B5F1E710CFD55A00777D97 /* IncallViewController.h */,
+				22B5F1E810CFD55A00777D97 /* IncallViewController.m */,
+				22B5F1E010CFA3C700777D97 /* IncallViewController.xib */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -512,7 +521,6 @@
 				22F255141073EEE600AC9B3F /* red.png */,
 				22F254801073D99800AC9B3F /* ringback.wav */,
 				22F2546F1073D95B00AC9B3F /* rings */,
-				22F2508D107141E100AC9B3F /* PhoneViewController.xib */,
 				8D1107310486CEB800E47090 /* linphone-Info.plist */,
 				2274550710700509006EC466 /* linphonerc */,
 				220FAE4A10767A6A0068D98F /* PhoneMainView.xib */,
@@ -584,6 +592,7 @@
 				22F51EF6107FA66500F98953 /* untitled.plist in Resources */,
 				2237D4091084D7A9001383EE /* oldphone-mono.wav in Resources */,
 				2273798810A48EF000526073 /* oldphone.wav in Resources */,
+				22B5F1E110CFA3C700777D97 /* IncallViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -598,6 +607,7 @@
 				1D3623260D0F684500981E51 /* linphoneAppDelegate.m in Sources */,
 				22F2508E107141E100AC9B3F /* PhoneViewController.m in Sources */,
 				22B5EFE510CE5E5800777D97 /* ContactPickerDelegate.m in Sources */,
+				22B5F1EA10CFD55A00777D97 /* IncallViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

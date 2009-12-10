@@ -50,7 +50,12 @@ void linphone_iphone_call_received(LinphoneCore *lc, const char *from){
 	AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute
 				, sizeof (audioRouteOverride)
 				, &audioRouteOverride);
+	
 };
+void linphone_iphone_general_state(LinphoneCore *lc, LinphoneGeneralState *gstate) {
+	PhoneViewController* lPhone = linphone_core_get_user_data(lc);
+	[lPhone callStateChange:gstate];
+}
 
 LinphoneCoreVTable linphonec_vtable = {
 .show =(ShowInterfaceCb) linphone_iphone_show,
@@ -65,7 +70,7 @@ LinphoneCoreVTable linphonec_vtable = {
 .display_url=NULL,
 .display_question=(DisplayQuestionCb)NULL,
 .text_received=NULL,
-.general_state=NULL,
+.general_state=(GeneralStateChange)linphone_iphone_general_state,
 .dtmf_received=NULL
 };
 
@@ -91,9 +96,14 @@ LinphoneCoreVTable linphonec_vtable = {
 @synthesize hash;
 
 @synthesize back;
+@synthesize myIncallViewController;
 
 -(void)setPhoneNumber:(NSString*)number {
 	[address setText:number];
+}
+
+-(void)dismissIncallView {
+	[self dismissModalViewControllerAnimated:true];
 }
 
 //implements call/cancel button behavior 
@@ -113,6 +123,8 @@ LinphoneCoreVTable linphonec_vtable = {
 		AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute
 					, sizeof (audioRouteOverride)
 					, &audioRouteOverride);
+		
+	
 	} else if (sender == cancel) {
 		linphone_core_terminate_call(mCore,NULL);
 	} 
@@ -225,6 +237,10 @@ LinphoneCoreVTable linphonec_vtable = {
 - (void)viewDidLoad {
     [super viewDidLoad];
 	[self startlibLinphone];
+	myIncallViewController = [[IncallViewController alloc] 
+							  initWithNibName:@"IncallViewController" bundle:[NSBundle mainBundle]];
+	[myIncallViewController setPhoneviewDelegate:self];
+	[myIncallViewController setLinphoneCore:mCore];
 	
 }
 
@@ -419,6 +435,66 @@ LinphoneCoreVTable linphonec_vtable = {
 	linphone_core_iterate(mCore);
 }
 
+			
+-(void) callStateChange:(LinphoneGeneralState*) state {
+//	/* states for GSTATE_GROUP_POWER */
+//	GSTATE_POWER_OFF = 0,        /* initial state */
+//	GSTATE_POWER_STARTUP,
+//	GSTATE_POWER_ON,
+//	GSTATE_POWER_SHUTDOWN,
+//	/* states for GSTATE_GROUP_REG */
+//	GSTATE_REG_NONE = 10,       /* initial state */
+//	GSTATE_REG_OK,
+//	GSTATE_REG_FAILED,
+//	/* states for GSTATE_GROUP_CALL */
+//	GSTATE_CALL_IDLE = 20,      /* initial state */
+//	GSTATE_CALL_OUT_INVITE,
+//	GSTATE_CALL_OUT_CONNECTED,
+//	GSTATE_CALL_IN_INVITE,
+//	GSTATE_CALL_IN_CONNECTED,
+//	GSTATE_CALL_END,
+//	GSTATE_CALL_ERROR,
+//	GSTATE_INVALID
+	switch (state->new_state) {
+		case GSTATE_CALL_IN_INVITE:
+		case GSTATE_CALL_OUT_INVITE: {
+			//[myIncallViewController startCall];
+			[self presentModalViewController: myIncallViewController animated:true];
+			break;
+		}
+			
+		case GSTATE_CALL_ERROR: {
+			NSString* lTitle= state->message!=nil?[NSString stringWithCString:state->message length:strlen(state->message)]: @"Error";
+			NSString* lMessage=lTitle;
+			
+			
+			UIAlertView* error = [[UIAlertView alloc] initWithTitle:lTitle
+															message:lMessage 
+														   delegate:nil 
+												  cancelButtonTitle:nil 
+												  otherButtonTitles:nil];
+			[error show];
+			[self performSelector:@selector(dismissAlertDialog:) withObject:error afterDelay:1];
+			[self performSelector:@selector(dismissIncallView) withObject:nil afterDelay:1];
+			
+			}
+			break;
+			
+		case GSTATE_CALL_END: {
+				//end off call, just dismiss Incall view
+				[self dismissIncallView];
+				
+				break;
+			}
+		default:
+			break;
+			}
+			
+}
+
+-(void) dismissAlertDialog:(UIAlertView*) alertView{
+	[alertView dismissWithClickedButtonIndex:0 animated:TRUE];
+}
 
 - (void)dealloc {
     [address dealloc];

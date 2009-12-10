@@ -20,7 +20,7 @@
 #import "PhoneViewController.h"
 #import "linphoneAppDelegate.h"
 #import "ContactPickerDelegate.h"
-
+#import "IncallViewController.h"
 
 
 @implementation linphoneAppDelegate
@@ -30,16 +30,23 @@
 @synthesize myPeoplePickerController;
 
 
+
 - (void)applicationDidFinishLaunching:(UIApplication *)application {    
+	
+#define DIALER_TAB_INDEX 0
+#define CONTACTS_TAB_INDEX 1  
+	
+	
 	
 	myPeoplePickerController = [[[ABPeoplePickerNavigationController alloc] init] autorelease];
 	myContactPickerDelegate = [[ContactPickerDelegate alloc] init];
-	myContactPickerDelegate.phoneControllerDelegate=(PhoneViewController*)[myTabBarController.viewControllers objectAtIndex:0];
+	
+	myContactPickerDelegate.phoneControllerDelegate=(PhoneViewController*)[myTabBarController.viewControllers objectAtIndex: DIALER_TAB_INDEX];
 	myContactPickerDelegate.linphoneDelegate=self;
 	
 	[myPeoplePickerController setPeoplePickerDelegate:myContactPickerDelegate];
 	//copy tab bar item
-	myPeoplePickerController.tabBarItem = [(UIViewController*)[myTabBarController.viewControllers objectAtIndex:1] tabBarItem]; 
+	myPeoplePickerController.tabBarItem = [(UIViewController*)[myTabBarController.viewControllers objectAtIndex:CONTACTS_TAB_INDEX] tabBarItem]; 
 	//insert contact controller
 	NSMutableArray* newArray = [NSMutableArray arrayWithArray:self.myTabBarController.viewControllers];
 	[newArray replaceObjectAtIndex:1 withObject:myPeoplePickerController];
