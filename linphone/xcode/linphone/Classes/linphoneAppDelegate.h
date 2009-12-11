@@ -42,7 +42,7 @@
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;
 @property (nonatomic, retain) IBOutlet UITabBarController*  myTabBarController;
-@property (nonatomic, retain) IBOutlet ABPeoplePickerNavigationController* myPeoplePickerController;
+@property (nonatomic, retain)  ABPeoplePickerNavigationController* myPeoplePickerController;
 
 
 @end

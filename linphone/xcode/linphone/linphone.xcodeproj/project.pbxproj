@@ -31,6 +31,8 @@
 		2274401A106F31BD006EC466 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22744019106F31BD006EC466 /* CoreAudio.framework */; };
 		2274402F106F335E006EC466 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2274402E106F335E006EC466 /* AudioToolbox.framework */; };
 		2274550810700509006EC466 /* linphonerc in Resources */ = {isa = PBXBuildFile; fileRef = 2274550710700509006EC466 /* linphonerc */; };
+		227BC9B610D0FA9200FBFD76 /* mic_active.png in Resources */ = {isa = PBXBuildFile; fileRef = 227BC9B410D0FA9200FBFD76 /* mic_active.png */; };
+		227BC9B710D0FA9200FBFD76 /* mic_muted.png in Resources */ = {isa = PBXBuildFile; fileRef = 227BC9B510D0FA9200FBFD76 /* mic_muted.png */; };
 		22B5EFA310CE50BD00777D97 /* AddressBookUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B5EFA210CE50BD00777D97 /* AddressBookUI.framework */; };
 		22B5EFE510CE5E5800777D97 /* ContactPickerDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 22B5EFE410CE5E5800777D97 /* ContactPickerDelegate.m */; };
 		22B5F03510CE6B2F00777D97 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B5F03410CE6B2F00777D97 /* AddressBook.framework */; };
@@ -190,6 +192,8 @@
 		22744043106F33FC006EC466 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		22744056106F9BC9006EC466 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		2274550710700509006EC466 /* linphonerc */ = {isa = PBXFileReference; explicitFileType = text; fileEncoding = 4; path = linphonerc; sourceTree = "<group>"; };
+		227BC9B410D0FA9200FBFD76 /* mic_active.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = mic_active.png; sourceTree = "<group>"; };
+		227BC9B510D0FA9200FBFD76 /* mic_muted.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = mic_muted.png; sourceTree = "<group>"; };
 		22B5EFA210CE50BD00777D97 /* AddressBookUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBookUI.framework; path = System/Library/Frameworks/AddressBookUI.framework; sourceTree = SDKROOT; };
 		22B5EFE310CE5E5800777D97 /* ContactPickerDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContactPickerDelegate.h; sourceTree = "<group>"; };
 		22B5EFE410CE5E5800777D97 /* ContactPickerDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ContactPickerDelegate.m; sourceTree = "<group>"; };
@@ -515,6 +519,8 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				227BC9B410D0FA9200FBFD76 /* mic_active.png */,
+				227BC9B510D0FA9200FBFD76 /* mic_muted.png */,
 				2245667910768B9000F10948 /* linphone.png */,
 				2245667710768B7300F10948 /* linphone2.png */,
 				22F255131073EEE600AC9B3F /* green.png */,
@@ -593,6 +599,8 @@
 				2237D4091084D7A9001383EE /* oldphone-mono.wav in Resources */,
 				2273798810A48EF000526073 /* oldphone.wav in Resources */,
 				22B5F1E110CFA3C700777D97 /* IncallViewController.xib in Resources */,
+				227BC9B610D0FA9200FBFD76 /* mic_active.png in Resources */,
+				227BC9B710D0FA9200FBFD76 /* mic_muted.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

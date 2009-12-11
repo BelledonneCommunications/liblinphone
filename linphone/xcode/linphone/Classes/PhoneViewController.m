@@ -133,36 +133,7 @@ LinphoneCoreVTable linphonec_vtable = {
 
 //implements keypad behavior 
 -(IBAction) doKeyPad:(id)sender {
-	if (linphone_core_in_call(mCore)) {
-	//incall behavior
-		if (sender == one) {
-			linphone_core_send_dtmf(mCore,'1');	
-		} else if (sender == two) {
-			linphone_core_send_dtmf(mCore,'2');	
-		} else if (sender == three) {
-			linphone_core_send_dtmf(mCore,'3');	
-		} else if (sender == four) {
-			linphone_core_send_dtmf(mCore,'4');	
-		} else if (sender == five) {
-			linphone_core_send_dtmf(mCore,'5');	
-		} else if (sender == six) {
-			linphone_core_send_dtmf(mCore,'6');	
-		} else if (sender == seven) {
-			linphone_core_send_dtmf(mCore,'7');	
-		} else if (sender == eight) {
-			linphone_core_send_dtmf(mCore,'8');	
-		} else if (sender == nine) {
-			linphone_core_send_dtmf(mCore,'9');	
-		} else if (sender == star) {
-			linphone_core_send_dtmf(mCore,'*');	
-		} else if (sender == zero) {
-			linphone_core_send_dtmf(mCore,'0');	
-		} else if (sender == hash) {
-			linphone_core_send_dtmf(mCore,'#');	
-		} else  {
-			NSLog(@"unknown event from dial pad");	
-		}
-	} else {
+	if (!linphone_core_in_call(mCore)) {
 		//outcall behavior	
 		//remove sip: if first digits
 		if ([address.text isEqualToString:@"sip:"]) {
@@ -196,12 +167,16 @@ LinphoneCoreVTable linphonec_vtable = {
 		} else if (sender == hash) {
 			newAddress = [address.text stringByAppendingString:@"#"];
 		} else if (sender == back) {
-			newAddress = [address.text substringToIndex: [address.text length]-1];
+			if ([address.text length] >0) {
+				newAddress = [address.text substringToIndex: [address.text length]-1];
+			} 
 		} else  {
 			NSLog(@"unknown event from diad pad");
 			return;
 		}
-		[address setText:newAddress];	
+		if (newAddress != nil) {
+			[address setText:newAddress];	
+		}
 	}
 }
 
