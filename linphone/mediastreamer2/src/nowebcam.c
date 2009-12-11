@@ -1696,7 +1696,9 @@ void static_image_init(MSFilter *f){
 }
 
 void static_image_uninit(MSFilter *f){
-	ms_free(f->data);
+	SIData *d=(SIData*)f->data;
+	ms_free(d->nowebcamimage);
+	ms_free(d);
 }
 
 void static_image_preprocess(MSFilter *f){
@@ -1755,7 +1757,7 @@ static int static_image_set_image(MSFilter *f, void *arg){
 	if (image!=NULL && image[0]!='\0')
 		d->nowebcamimage=ms_strdup(image);
 	else
-		d->nowebcamimage = def_image;
+		d->nowebcamimage = ms_strdup(def_image);
 
 	if (d->pic!=NULL){
 		freemsg(d->pic);

@@ -318,7 +318,7 @@ int rtp_session_set_multicast_ttl(RtpSession *session, int ttl)
 					 (SOCKET_OPTION_VALUE)	   &session->multicast_ttl, sizeof(session->multicast_ttl));
 
  		} break;
-
+#ifdef ORTP_INET6
         case AF_INET6: {
 
 			retval= setsockopt(session->rtp.socket, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, 
@@ -330,7 +330,7 @@ int rtp_session_set_multicast_ttl(RtpSession *session, int ttl)
 					 (SOCKET_OPTION_VALUE) &session->multicast_ttl, sizeof(session->multicast_ttl));
 
         } break;
-
+#endif
         default:
             retval=-1;
     }
@@ -394,7 +394,7 @@ int rtp_session_set_multicast_loopback(RtpSession *session, int yesno)
 						 (SOCKET_OPTION_VALUE)   &session->multicast_loopback, sizeof(session->multicast_loopback));
 
  		} break;
-
+#ifdef ORTP_INET6
         case AF_INET6: {
 
 			retval= setsockopt(session->rtp.socket, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, 
@@ -406,7 +406,7 @@ int rtp_session_set_multicast_loopback(RtpSession *session, int yesno)
 				 (SOCKET_OPTION_VALUE)	&session->multicast_loopback, sizeof(session->multicast_loopback));
 
         } break;
-
+#endif
         default:
             retval=-1;
     }
@@ -925,11 +925,11 @@ rtp_session_rtp_recv (RtpSession * session, uint32_t user_ts)
 		else
 		{
 		 	int errnum=getSocketErrorCode();
-
-			if (error == 0)
-			{
-				ortp_warning
-					("rtp_recv: strange... recv() returned zero.");
+			if (error == 0){
+				/*0 can be returned by RtpTransport functions in case of EWOULDBLOCK*/
+				/*we ignore it*/
+				/*ortp_warning
+					("rtp_recv: strange... recv() returned zero.");*/
 			}
 			else if (!is_would_block_error(errnum))
 			{

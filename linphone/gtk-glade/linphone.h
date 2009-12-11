@@ -43,6 +43,9 @@ GdkPixbuf * create_pixbuf(const gchar *filename);
 GdkPixbufAnimation *create_pixbuf_animation(const gchar *filename);
 void add_pixmap_directory(const gchar *directory);
 GtkWidget*create_pixmap(const gchar     *filename);
+GtkWidget *_gtk_image_new_from_memory_at_scale(const void *data, gint len, gint w, gint h, gboolean preserve_ratio);
+GdkPixbuf *_gdk_pixbuf_new_from_memory_at_scale(const void *data, gint len, gint w, gint h, gboolean preserve_ratio);
+
 GtkWidget *linphone_gtk_create_window(const char *window_name);
 GtkWidget *linphone_gtk_get_widget(GtkWidget *window, const char *name);
 LinphoneCore *linphone_gtk_get_core(void);
@@ -63,6 +66,7 @@ void linphone_gtk_log_show(void);
 void linphone_gtk_log_push(OrtpLogLevel lev, const char *fmt, va_list args);
 void linphone_gtk_destroy_log_window(void);
 gboolean linphone_gtk_check_logs();
+void linphone_gtk_buddy_info_updated(LinphoneCore *lc, LinphoneFriend *lf);
 const gchar *linphone_gtk_get_ui_config(const char *key, const char *def);
 int linphone_gtk_get_ui_config_int(const char *key, int def);
 void linphone_gtk_set_ui_config_int(const char *key , int val);
@@ -75,7 +79,6 @@ SipSetupContext* linphone_gtk_get_default_sip_setup_context(void);
 GtkWidget * linphone_gtk_show_buddy_lookup_window(SipSetupContext *ctx);
 void linphone_gtk_buddy_lookup_set_keyword(GtkWidget *w, const char *kw);
 void * linphone_gtk_wait(LinphoneCore *lc, void *ctx, LinphoneWaitingState ws, const char *purpose, float progress);
-gchar *linphone_gtk_get_display_name(const char *sip_uri);
 
 void linphone_gtk_show_directory_search(void);
 

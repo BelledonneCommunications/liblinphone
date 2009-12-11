@@ -214,6 +214,12 @@ void
 rtp_session_init (RtpSession * session, int mode)
 {
 	JBParameters jbp;
+	if (session == NULL) 
+	{
+	    ortp_debug("rtp_session_init: Invalid paramter (session=NULL)");
+	    return;
+	}
+	
 	memset (session, 0, sizeof (RtpSession));
 	session->mode = (RtpSessionMode) mode;
 	if ((mode == RTP_SESSION_RECVONLY) || (mode == RTP_SESSION_SENDRECV))
@@ -293,7 +299,12 @@ rtp_session_new (int mode)
 {
 	RtpSession *session;
 	session = (RtpSession *) ortp_malloc (sizeof (RtpSession));
-	rtp_session_init (session, mode);
+	if (session == NULL)
+	{
+	    ortp_error("rtp_session_new: Memory allocation failed");
+	    return NULL;
+	}
+      rtp_session_init (session, mode);
 	return session;
 }
 
@@ -584,8 +595,8 @@ rtp_session_set_ssrc (RtpSession * session, uint32_t ssrc)
 void rtp_session_update_payload_type(RtpSession *session, int paytype){
 	/* check if we support this payload type */
 	PayloadType *pt=rtp_profile_get_payload(session->rcv.profile,paytype);
-	session->hw_recv_pt=paytype;
 	if (pt!=0){
+		session->hw_recv_pt=paytype;
 		ortp_message ("payload type changed to %i(%s) !",
 				 paytype,pt->mime_type);
 		payload_type_changed(session,pt);
@@ -910,8 +921,11 @@ extern void rtcp_parse(RtpSession *session, mblk_t *mp);
 
 
 static void payload_type_changed_notify(RtpSession *session, int paytype){
-	session->rcv.pt = paytype;
-	rtp_signal_table_emit (&session->on_payload_type_changed);	
+	PayloadType *pt = rtp_profile_get_payload(session->rcv.profile,paytype);
+	if (pt) {
+		session->rcv.pt = paytype;
+		rtp_signal_table_emit (&session->on_payload_type_changed);
+	}
 }
 
 
@@ -1255,10 +1269,7 @@ void rtp_session_release_sockets(RtpSession *session){
 	if (session->rtcp.socket>=0) close_socket (session->rtcp.socket);
 	session->rtp.socket=-1;
 	session->rtcp.socket=-1;
-	if (session->rtp.tr!=NULL)
-	  ortp_free(session->rtp.tr);
-	if (session->rtcp.tr!=NULL)
-	  ortp_free(session->rtcp.tr);
+	
 	session->rtp.tr = 0;
 	session->rtcp.tr = 0;
 

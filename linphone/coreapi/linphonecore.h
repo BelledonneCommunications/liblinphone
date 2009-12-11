@@ -19,8 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef LINPHONECORE_H
 #define LINPHONECORE_H
 
-
-#include <osipparser2/osip_message.h>
 #include "ortp/ortp.h"
 #include "ortp/payloadtype.h"
 #include "mediastreamer2/mscommon.h"
@@ -61,6 +59,7 @@ typedef struct sip_config
 	MSList *deleted_proxies;
 	int inc_timeout;	/*timeout after an un-answered incoming call is rejected*/
 	bool_t use_info;
+	bool_t use_rfc2833;	/*force RFC2833 to be sent*/
 	bool_t guess_hostname;
 	bool_t loopback_only;
 	bool_t ipv6_enabled;
@@ -146,6 +145,26 @@ typedef struct autoreplier_config
 	const char *message;		/* the path of the file to be played */
 }autoreplier_config_t;
 
+struct osip_from;
+
+typedef struct osip_from LinphoneAddress;
+
+LinphoneAddress * linphone_address_new(const char *uri);
+LinphoneAddress * linphone_address_clone(const LinphoneAddress *uri);
+const char *linphone_address_get_scheme(const LinphoneAddress *u);
+const char *linphone_address_get_display_name(const LinphoneAddress* u);
+const char *linphone_address_get_username(const LinphoneAddress *u);
+const char *linphone_address_get_domain(const LinphoneAddress *u);
+void linphone_address_set_display_name(LinphoneAddress *u, const char *display_name);
+void linphone_address_set_username(LinphoneAddress *uri, const char *username);
+void linphone_address_set_domain(LinphoneAddress *uri, const char *host);
+void linphone_address_set_port(LinphoneAddress *uri, const char *port);
+void linphone_address_set_port_int(LinphoneAddress *uri, int port);
+/*remove tags, params etc... so that it is displayable to the user*/
+void linphone_address_clean(LinphoneAddress *uri);
+char *linphone_address_as_string(const LinphoneAddress *u);
+char *linphone_address_as_string_uri_only(const LinphoneAddress *u);
+void linphone_address_destroy(LinphoneAddress *u);
 
 struct _LinphoneCore;
 struct _sdp_context;
@@ -165,16 +184,18 @@ typedef enum _LinphoneCallStatus {
 typedef struct _LinphoneCallLog{
 	LinphoneCallDir dir;
 	LinphoneCallStatus status;
-	char *from;
-	char *to;
+	LinphoneAddress *from;
+	LinphoneAddress *to;
 	char start_date[128];
 	int duration;
-	
+	void *user_pointer;
 } LinphoneCallLog;
 
 
 
 /*public: */
+void linphone_call_log_set_user_pointer(LinphoneCallLog *cl, void *up);
+void *linphone_call_log_get_user_pointer(const LinphoneCallLog *cl);
 char * linphone_call_log_to_str(LinphoneCallLog *cl);
 
 typedef enum{
@@ -203,7 +224,7 @@ typedef enum _LinphoneOnlineStatus{
 const char *linphone_online_status_to_string(LinphoneOnlineStatus ss);
 
 typedef struct _LinphoneFriend{
-	osip_from_t *url;
+	LinphoneAddress *uri;
 	int in_did;
 	int out_did;
 	int sid;
@@ -212,6 +233,7 @@ typedef struct _LinphoneFriend{
 	LinphoneOnlineStatus status;
 	struct _LinphoneProxyConfig *proxy;
 	struct _LinphoneCore *lc;
+	BuddyInfo *info;
 	bool_t subscribe;
 	bool_t inc_subscribe_pending;
 }LinphoneFriend;	
@@ -226,13 +248,11 @@ int linphone_friend_set_proxy(LinphoneFriend *fr, struct _LinphoneProxyConfig *c
 void linphone_friend_edit(LinphoneFriend *fr);
 void linphone_friend_done(LinphoneFriend *fr);
 void linphone_friend_destroy(LinphoneFriend *lf);
-/* memory returned by those 3 functions must be freed */
-char *linphone_friend_get_name(LinphoneFriend *lf);
-char *linphone_friend_get_addr(LinphoneFriend *lf);
-char *linphone_friend_get_url(LinphoneFriend *lf);	/* name <sip address> */
+const LinphoneAddress *linphone_friend_get_uri(const LinphoneFriend *lf);
 bool_t linphone_friend_get_send_subscribe(const LinphoneFriend *lf);
 LinphoneSubscribePolicy linphone_friend_get_inc_subscribe_policy(const LinphoneFriend *lf);
 LinphoneOnlineStatus linphone_friend_get_status(const LinphoneFriend *lf);
+BuddyInfo * linphone_friend_get_info(const LinphoneFriend *lf);
 #define linphone_friend_in_list(lf)	((lf)->lc!=NULL)
 
 #define linphone_friend_url(lf) ((lf)->url)
@@ -333,7 +353,7 @@ struct _LinphoneChatRoom{
 	struct _LinphoneCore *lc;
 	char  *peer;
 	char *route;
-	osip_from_t *peer_url;
+	LinphoneAddress *peer_url;
 	void * user_data;
 };
 typedef struct _LinphoneChatRoom LinphoneChatRoom;
@@ -401,6 +421,7 @@ typedef void (*TextMessageReceived)(struct _LinphoneCore *lc, LinphoneChatRoom *
 typedef void (*GeneralStateChange)(struct _LinphoneCore *lc, LinphoneGeneralState *gstate);
 typedef void (*DtmfReceived)(struct _LinphoneCore* lc, int dtmf);
 typedef void (*ReferReceived)(struct _LinphoneCore *lc, const char *refer_to);
+typedef void (*BuddyInfoUpdated)(struct _LinphoneCore *lc, LinphoneFriend *lf);
 
 typedef struct _LinphoneVTable
 {
@@ -424,6 +445,7 @@ typedef struct _LinphoneVTable
 	GeneralStateChange general_state;
 	DtmfReceived dtmf_received;
 	ReferReceived refer_received;
+	BuddyInfoUpdated buddy_info_updated;
 } LinphoneCoreVTable;
 
 typedef struct _LCCallbackObj
@@ -476,7 +498,9 @@ typedef struct _LinphoneCore
 	struct _AudioStream *audiostream;  /**/
 	struct _VideoStream *videostream;
 	struct _VideoStream *previewstream;
+	RtpTransport *a_rtp,*a_rtcp;
 	struct _RtpProfile *local_profile;
+	MSList *bl_reqs;
 	MSList *subscribers;	/* unknown subscribers */
 	int minutes_away;
 	LinphoneOnlineStatus presence_mode;
@@ -501,6 +525,7 @@ typedef struct _LinphoneCore
 	bool_t use_files;
 	bool_t apply_nat_settings;
 	bool_t ready;
+	bool_t bl_refresh;
 #ifdef VINCENT_MAURY_RSVP
 	/* QoS parameters*/
 	int rsvp_enable;
@@ -552,7 +577,7 @@ bool_t linphone_core_get_guess_hostname(LinphoneCore *lc);
 bool_t linphone_core_ipv6_enabled(LinphoneCore *lc);
 void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val);
 
-osip_from_t *linphone_core_get_primary_contact_parsed(LinphoneCore *lc);
+LinphoneAddress *linphone_core_get_primary_contact_parsed(LinphoneCore *lc);
 
 /*0= no bandwidth limit*/
 void linphone_core_set_download_bandwidth(LinphoneCore *lc, int bw);
@@ -624,6 +649,10 @@ void linphone_core_set_use_info_for_dtmf(LinphoneCore *lc, bool_t use_info);
 
 bool_t linphone_core_get_use_info_for_dtmf(LinphoneCore *lc);
 
+void linphone_core_set_use_rfc2833_for_dtmf(LinphoneCore *lc,bool_t use_rfc2833);
+
+bool_t linphone_core_get_use_rfc2833_for_dtmf(LinphoneCore *lc);
+
 int linphone_core_get_sip_port(LinphoneCore *lc);
 
 void linphone_core_set_sip_port(LinphoneCore *lc,int port);
@@ -672,8 +701,8 @@ const char *linphone_core_get_ring(const LinphoneCore *lc);
 void linphone_core_set_ringback(LinphoneCore *lc, const char *path);
 const char * linphone_core_get_ringback(const LinphoneCore *lc);
 int linphone_core_preview_ring(LinphoneCore *lc, const char *ring,LinphoneCoreCbFunc func,void * userdata);
-void linphone_core_enable_echo_cancelation(LinphoneCore *lc, bool_t val);
-bool_t linphone_core_echo_cancelation_enabled(LinphoneCore *lc);
+void linphone_core_enable_echo_cancellation(LinphoneCore *lc, bool_t val);
+bool_t linphone_core_echo_cancellation_enabled(LinphoneCore *lc);
 
 void linphone_core_enable_echo_limiter(LinphoneCore *lc, bool_t val);
 bool_t linphone_core_echo_limiter_enabled(const LinphoneCore *lc);
@@ -695,9 +724,10 @@ void linphone_core_reject_subscriber(LinphoneCore *lc, LinphoneFriend *lf);
 const MSList * linphone_core_get_friend_list(LinphoneCore *lc);
 /* notify all friends that have subscribed */
 void linphone_core_notify_all_friends(LinphoneCore *lc, LinphoneOnlineStatus os);
+LinphoneFriend *linphone_core_get_friend_by_uri(const LinphoneCore *lc, const char *uri);
 
 /* returns a list of LinphoneCallLog */
-MSList * linphone_core_get_call_logs(LinphoneCore *lc);
+const MSList * linphone_core_get_call_logs(LinphoneCore *lc);
 
 /* video support */
 void linphone_core_enable_video(LinphoneCore *lc, bool_t vcap_enabled, bool_t display_enabled);
@@ -736,7 +766,7 @@ void linphone_core_set_record_file(LinphoneCore *lc, const char *file);
 
 gstate_t linphone_core_get_state(const LinphoneCore *lc, gstate_group_t group);
 int linphone_core_get_current_call_duration(const LinphoneCore *lc);
-const char *linphone_core_get_remote_uri(LinphoneCore *lc);
+const LinphoneAddress *linphone_core_get_remote_uri(LinphoneCore *lc);
 
 int linphone_core_get_mtu(const LinphoneCore *lc);
 void linphone_core_set_mtu(LinphoneCore *lc, int mtu);
@@ -766,6 +796,9 @@ const MSList * linphone_core_get_sip_setups(LinphoneCore *lc);
 void linphone_core_uninit(LinphoneCore *lc);
 void linphone_core_destroy(LinphoneCore *lc);
 
+/*for advanced users:*/
+void linphone_core_set_audio_transports(LinphoneCore *lc, RtpTransport *rtp, RtpTransport *rtcp);
+
 /* end of lecacy api */
 
 /*internal use only */
@@ -775,7 +808,7 @@ void linphone_core_start_media_streams(LinphoneCore *lc, struct _LinphoneCall *c
 void linphone_core_stop_media_streams(LinphoneCore *lc);
 const char * linphone_core_get_identity(LinphoneCore *lc);
 const char * linphone_core_get_route(LinphoneCore *lc);
-bool_t linphone_core_interpret_url(LinphoneCore *lc, const char *url, char **real_url, osip_to_t **real_parsed_url, char **route);
+bool_t linphone_core_interpret_url(LinphoneCore *lc, const char *url, LinphoneAddress **real_parsed_url, char **route);
 void linphone_core_start_waiting(LinphoneCore *lc, const char *purpose);
 void linphone_core_update_progress(LinphoneCore *lc, const char *purpose, float progresses);
 void linphone_core_stop_waiting(LinphoneCore *lc);

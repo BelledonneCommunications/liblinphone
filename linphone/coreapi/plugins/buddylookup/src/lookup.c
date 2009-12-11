@@ -7,20 +7,19 @@
 #endif
 #include <libsoup/soup.h>
 
+#define SERIALIZE_HTTPS 0
+
 static bool_t buddy_lookup_init(void){
 	return TRUE;
-}
+};
 
-typedef struct _BuddyLookupState{
-	SoupSession *session;
-	BuddyLookupStatus status;
+typedef struct _BLReq{
+	BuddyLookupRequest base;
 	SoupMessage *msg;
+	SoupSession *session;
 	ortp_thread_t th;
-	MSList *results;
-	bool_t processing;
-}BuddyLookupState;
+}BLReq;
 
-#define get_buddy_lookup_state(ctx)	((BuddyLookupState*)((ctx)->data))
 
 void set_proxy(SoupSession *session, const char *proxy){
 	SoupURI *uri=soup_uri_new(proxy);
@@ -29,21 +28,12 @@ void set_proxy(SoupSession *session, const char *proxy){
 }
 
 static void buddy_lookup_instance_init(SipSetupContext *ctx){
-	BuddyLookupState *s=ms_new0(BuddyLookupState,1);
-	const char *proxy=NULL;
-	s->session=soup_session_sync_new();
-	proxy=getenv("http_proxy");
-	if (proxy && strlen(proxy)>0) set_proxy(s->session,proxy);
-	ctx->data=s;
 }
 
 static void buddy_lookup_instance_uninit(SipSetupContext *ctx){
-	BuddyLookupState *s=get_buddy_lookup_state(ctx);
-	g_object_unref(G_OBJECT(s->session));
-	ms_free(s);
 }
 
-static SoupMessage * build_xmlrpc_request(const char *identity, const char *password, const char *key, const char *domain, const char *url){
+static SoupMessage * build_xmlrpc_request(const char *identity, const char *password, const char *key, const char *domain, const char *url, int max_results){
 	SoupMessage * msg;
 
 	msg=soup_xmlrpc_request_new(url,
@@ -51,7 +41,7 @@ static SoupMessage * build_xmlrpc_request(const char *identity, const char *pass
 				G_TYPE_STRING, identity,
 				G_TYPE_STRING, password ? password : "",
 				G_TYPE_STRING, key,
-				G_TYPE_INT , 100,
+				G_TYPE_INT , max_results,
 				G_TYPE_INT , 0,
 				G_TYPE_STRING, domain,
 				G_TYPE_INVALID);
@@ -65,10 +55,9 @@ static SoupMessage * build_xmlrpc_request(const char *identity, const char *pass
 	return msg;
 }
 
-static void got_headers(SipSetupContext *ctx, SoupMessage*msg){
-	BuddyLookupState *s=get_buddy_lookup_state(ctx);
+static void got_headers(BLReq *blreq, SoupMessage*msg){
 	ms_message("Got headers !");
-	s->status=BuddyLookupConnected;
+	blreq->base.status=BuddyLookupConnected;
 }
 
 static void fill_item(GHashTable *ht , const char *name, char *dest, size_t dest_size){
@@ -81,8 +70,8 @@ static void fill_item(GHashTable *ht , const char *name, char *dest, size_t dest
 	}else ms_warning("no field named '%s'", name);
 }
 
-static void fill_buddy_info(BuddyInfo *bi, GHashTable *ht){
-	char tmp[128];
+static void fill_buddy_info(BLReq *blreq, BuddyInfo *bi, GHashTable *ht){
+	char tmp[256];
 	fill_item(ht,"first_name",bi->firstname,sizeof(bi->firstname));
 	fill_item(ht,"last_name",bi->lastname,sizeof(bi->lastname));
 	fill_item(ht,"display_name",bi->displayname,sizeof(bi->displayname));
@@ -98,9 +87,28 @@ static void fill_buddy_info(BuddyInfo *bi, GHashTable *ht){
 	fill_item(ht,"city",bi->address.town,sizeof(bi->address.town));
 	fill_item(ht,"country",bi->address.country,sizeof(bi->address.country));
 	fill_item(ht,"email",bi->email,sizeof(bi->email));
+	tmp[0]='\0';
+	fill_item(ht,"image",tmp,sizeof(tmp));
+	if (tmp[0]!='\0'){
+		SoupMessage *msg;
+		guint status;
+		ms_message("This buddy has an image, let's download it: %s",tmp);
+		msg=soup_message_new("GET",tmp);
+		if ((status=soup_session_send_message(blreq->session,msg))==200){
+			SoupMessageBody *body=msg->response_body;
+			ms_message("Received %i bytes",body->length);
+			strncpy(bi->image_type,"png",sizeof(bi->image_type));
+			bi->image_length=body->length;
+			bi->image_data=ms_malloc(body->length+4); /*add padding bytes*/
+			memcpy(bi->image_data,body->data,bi->image_length);
+		}else{
+			ms_error("Fail to fetch the image %i",status);
+		}
+	}
+	
 }
 
-static MSList * make_buddy_list(GValue *retval){
+static MSList * make_buddy_list(BLReq *blreq, GValue *retval){
 	MSList *ret=NULL;
 	if (G_VALUE_TYPE(retval)==G_TYPE_VALUE_ARRAY){
 		GValueArray *array=(GValueArray*)g_value_get_boxed(retval);
@@ -110,8 +118,8 @@ static MSList * make_buddy_list(GValue *retval){
 			gelem=g_value_array_get_nth(array,i);
 			if (G_VALUE_TYPE(gelem)==G_TYPE_HASH_TABLE){
 				GHashTable *ht=(GHashTable*)g_value_get_boxed(gelem);
-				BuddyInfo *bi=ms_new0(BuddyInfo,1);
-				fill_buddy_info(bi,ht);
+				BuddyInfo *bi=buddy_info_new();
+				fill_buddy_info(blreq,bi,ht);
 				ret=ms_list_append(ret,bi);
 			}else{
 				ms_error("Element is not a hash table");
@@ -122,8 +130,7 @@ static MSList * make_buddy_list(GValue *retval){
 }
 
 
-static int xml_rpc_parse_response(SipSetupContext *ctx, SoupMessage *sm){
-	BuddyLookupState *s=get_buddy_lookup_state(ctx);
+static int xml_rpc_parse_response(BLReq *blreq, SoupMessage *sm){
 	SoupBuffer *sb;
 	GValue retval;
 	GError *error=NULL;
@@ -136,38 +143,51 @@ static int xml_rpc_parse_response(SipSetupContext *ctx, SoupMessage *sm){
 		}else{
 			ms_error("Could not parse xml-rpc response !");
 		}
-		s->status=BuddyLookupFailure;
+		blreq->base.status=BuddyLookupFailure;
 	}else{
 		ms_message("Extracting values from return type...");
-		s->results=make_buddy_list(&retval);
+		blreq->base.results=make_buddy_list(blreq,&retval);
 		g_value_unset(&retval);
-		s->status=BuddyLookupDone;
+		blreq->base.status=BuddyLookupDone;
 	}
 	soup_buffer_free(sb);
-	return s->status==BuddyLookupDone ? 0 : -1;
+	return blreq->base.status==BuddyLookupDone ? 0 : -1;
 }
 
+#if SERIALIZE_HTTPS
+/*on windows libsoup support for threads with gnutls is not yet functionnal (only in git)
+This will come in next release of libsoup, probably. 
+In the meantime, we are forced to serialize all soup https processing with a big
+ugly global mutex...*/
+
+static GStaticMutex big_mutex = G_STATIC_MUTEX_INIT;
+
+#endif
+
 static void * process_xml_rpc_request(void *up){
-	SipSetupContext *ctx=(SipSetupContext*)up;
-	BuddyLookupState *s=get_buddy_lookup_state(ctx);
-	SoupMessage *sm=s->msg;
+	BLReq *blreq=(BLReq*)up;
+	SoupMessage *sm=blreq->msg;
 	int code;
-	g_signal_connect_swapped(G_OBJECT(sm),"got-headers",(GCallback)got_headers,ctx);
-	s->status=BuddyLookupConnecting;
-	code=soup_session_send_message(s->session,sm);
+	g_signal_connect_swapped(G_OBJECT(sm),"got-headers",(GCallback)got_headers,blreq);
+	blreq->base.status=BuddyLookupConnecting;
+#if SERIALIZE_HTTPS
+	g_static_mutex_lock(&big_mutex);
+#endif
+	code=soup_session_send_message(blreq->session,sm);
 	if (code==200){
 		ms_message("Got a response from server, yeah !");
-		xml_rpc_parse_response(ctx,sm);
+		xml_rpc_parse_response(blreq,sm);
 	}else{
 		ms_error("request failed, error-code=%i (%s)",code,soup_status_get_phrase(code));
-		s->status=BuddyLookupFailure;
+		blreq->base.status=BuddyLookupFailure;
 	}
-	s->processing=FALSE;
+#if SERIALIZE_HTTPS
+	g_static_mutex_unlock(&big_mutex);
+#endif
 	return NULL;
 }
 
-static int lookup_buddy(SipSetupContext *ctx, const char *key){
-	BuddyLookupState *s=get_buddy_lookup_state(ctx);
+static int lookup_buddy(SipSetupContext *ctx, BLReq *req){
 	LinphoneProxyConfig *cfg=sip_setup_context_get_proxy_config(ctx);
 	LinphoneCore *lc=linphone_proxy_config_get_core(cfg);
 	LpConfig *config=linphone_core_get_config(lc);
@@ -180,15 +200,6 @@ static int lookup_buddy(SipSetupContext *ctx, const char *key){
 		ms_error("No url defined for BuddyLookup in config file, aborting search.");
 		return -1;
 	}
-	if (s->th!=0){
-		if (s->processing){
-			ms_message("Canceling previous request...");
-			soup_session_cancel_message(s->session,s->msg, SOUP_STATUS_CANCELLED);
-		}
-		ortp_thread_join(s->th,NULL);
-		s->th=0;
-		g_object_unref(G_OBJECT(s->msg));
-	}
 
 	osip_from_t *from;
 	osip_from_init(&from);
@@ -200,42 +211,61 @@ static int lookup_buddy(SipSetupContext *ctx, const char *key){
 	aa=linphone_core_find_auth_info(lc,from->url->host,from->url->username);
 	if (aa) ms_message("There is a password: %s",aa->passwd);
 	else ms_message("No password for %s on %s",from->url->username,from->url->host);
-	sm=build_xmlrpc_request(identity, aa ? aa->passwd : NULL, key, from->url->host, url);
+	sm=build_xmlrpc_request(identity, aa ? aa->passwd : NULL, req->base.key, from->url->host, url, req->base.max_results);
 	osip_from_free(from);
-	s->msg=sm;
-	s->processing=TRUE;
-	ortp_thread_create(&s->th,NULL,process_xml_rpc_request,ctx);
+	req->msg=sm;
+	ortp_thread_create(&req->th,NULL,process_xml_rpc_request,req);
 	if (!sm) return -1;
 	return 0;
 }
 
-static BuddyLookupStatus get_buddy_lookup_status(SipSetupContext *ctx){
-	BuddyLookupState *s=get_buddy_lookup_state(ctx);
-	return s->status;
+static BuddyLookupRequest * create_request(SipSetupContext *ctx){
+	BLReq *req=ms_new0(BLReq,1);
+	const char *proxy=NULL;
+	req->session=soup_session_sync_new();
+	proxy=getenv("http_proxy");
+	if (proxy && strlen(proxy)>0) set_proxy(req->session,proxy);
+	return (BuddyLookupRequest*)req;
 }
 
-static int get_buddy_lookup_results(SipSetupContext *ctx, MSList **results){
-	BuddyLookupState *s=get_buddy_lookup_state(ctx);
-	if (s->results){
-		*results=s->results;
-		s->results=NULL;
+static int submit_request(SipSetupContext *ctx, BuddyLookupRequest *req){
+	BLReq *blreq=(BLReq*)req;
+	return lookup_buddy(ctx,blreq);
+}
+
+static int free_request(SipSetupContext *ctx, BuddyLookupRequest *req){
+	BLReq *blreq=(BLReq*)req;
+	if (blreq->th!=0){
+		soup_session_cancel_message(blreq->session,blreq->msg, SOUP_STATUS_CANCELLED);
+		ortp_thread_join(blreq->th,NULL);
+		blreq->th=0;
+		g_object_unref(G_OBJECT(blreq->msg));
 	}
+	if (blreq->session)
+		g_object_unref(G_OBJECT(blreq->session));
+	buddy_lookup_request_free(req);
 	return 0;
 }
 
 static void buddy_lookup_exit(void){
 }
 
+static BuddyLookupFuncs bl_funcs={
+	.request_create=create_request,
+	.request_submit=submit_request,
+	.request_free=free_request
+};
+
+
+
 static SipSetup buddy_lookup_funcs={
 	.name="BuddyLookup",
 	.capabilities=SIP_SETUP_CAP_BUDDY_LOOKUP,
 	.init=buddy_lookup_init,
 	.init_instance=buddy_lookup_instance_init,
-	.lookup_buddy=lookup_buddy,
-	.get_buddy_lookup_status=get_buddy_lookup_status,
-	.get_buddy_lookup_results=get_buddy_lookup_results,
 	.uninit_instance=buddy_lookup_instance_uninit,
-	.exit=buddy_lookup_exit
+	.exit=buddy_lookup_exit,
+	.buddy_lookup_funcs=&bl_funcs,
 };
 
 void libbuddylookup_init(){
