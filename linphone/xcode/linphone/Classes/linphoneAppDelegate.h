@@ -20,6 +20,7 @@
 
 #import <UIKit/UIKit.h>
 #import <AddressBookUI/ABPeoplePickerNavigationController.h>
+#include"linphonecore.h"
 
 
 @protocol LinphoneTabManagerDelegate
@@ -30,19 +31,41 @@
 
 @class ContactPickerDelegate;
 @class IncallViewController;
+@class PhoneViewController;
+@class CallHistoryTableViewController;
 
 @interface linphoneAppDelegate : NSObject <UIApplicationDelegate,LinphoneTabManagerDelegate> {
     UIWindow *window;
 	IBOutlet UITabBarController*  myTabBarController;
 	IBOutlet ABPeoplePickerNavigationController* myPeoplePickerController;
-	
+	IBOutlet PhoneViewController* myPhoneViewController;
+	CallHistoryTableViewController* myCallHistoryTableViewController;
 	ContactPickerDelegate* myContactPickerDelegate;
 	
+	int traceLevel;
+	LinphoneCore* myLinphoneCore;
+	
+	
 }
+/**********************************
+ * liblinphone initialization method
+ **********************************/
+-(void) startlibLinphone;
+
+/*
+ * liblinphone scheduling method;
+ */
+-(void) iterate;
+
+
+
+-(PayloadType*) findPayload:(NSString*)type withRate:(int)rate from:(const MSList*)list;
+
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;
 @property (nonatomic, retain) IBOutlet UITabBarController*  myTabBarController;
 @property (nonatomic, retain)  ABPeoplePickerNavigationController* myPeoplePickerController;
+@property (nonatomic, retain) IBOutlet PhoneViewController* myPhoneViewController;
 
 
 @end

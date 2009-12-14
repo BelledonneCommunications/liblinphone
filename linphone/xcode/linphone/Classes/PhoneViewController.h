@@ -24,6 +24,7 @@
 
 -(void)setPhoneNumber:(NSString*)number;
 -(void)dismissIncallView;
+-(void)displayStatus:(NSString*) message;
 @end
 @class IncallViewController;
 
@@ -55,7 +56,6 @@
 	 * lib linphone main context
 	 */
 	LinphoneCore* mCore;
-	int traceLevel;
 	IncallViewController *myIncallViewController;
 	
 }
@@ -78,24 +78,15 @@
 @property (nonatomic, retain) IBOutlet UIButton* hash;
 
 @property (nonatomic, retain) IBOutlet UIButton* back;
-@property (nonatomic, retain) IBOutlet IncallViewController* myIncallViewController;
 
 
-
-/**********************************
- * liblinphone initialization method
- **********************************/
--(void) startlibLinphone;
-
-/*
- * liblinphone scheduling method;
- */
--(void) iterate;
 
 /*
  * Handle call state change from linphone
  */
 -(void) callStateChange:(LinphoneGeneralState*) state;
+
+-(void) setLinphoneCore:(LinphoneCore*) lc;
 
 /********************
  * UI method handlers
@@ -112,5 +103,5 @@
 
 -(void) dismissAlertDialog:(UIAlertView*)alertView;
 
--(PayloadType*) findPayload:(NSString*)type withRate:(int)rate from:(const MSList*)list;
+
 @end

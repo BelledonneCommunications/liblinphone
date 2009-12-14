@@ -8,7 +8,6 @@
 		<string key="IBDocument.HIToolboxVersion">353.00</string>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="104"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -33,7 +32,7 @@
 			</object>
 			<object class="IBUIViewController" id="627403670">
 				<object class="IBUIView" key="IBUIView" id="191373211">
-					<reference key="NSNextResponder"/>
+					<nil key="NSNextResponder"/>
 					<int key="NSvFlags">292</int>
 					<object class="NSMutableArray" key="NSSubviews">
 						<bool key="EncodedWithXMLCoder">YES</bool>
@@ -408,7 +407,6 @@
 						</object>
 					</object>
 					<string key="NSFrameSize">{320, 460}</string>
-					<reference key="NSSuperview"/>
 					<object class="NSColor" key="IBUIBackgroundColor">
 						<int key="NSColorSpace">1</int>
 						<bytes key="NSRGB">MCAwLjUwMTk2MDgxIDEAA</bytes>
@@ -989,7 +987,7 @@
 							<string>nine</string>
 							<string>one</string>
 							<string>padSubView</string>
-							<string>peerNumber</string>
+							<string>peerName</string>
 							<string>phoneviewDelegate</string>
 							<string>seven</string>
 							<string>six</string>

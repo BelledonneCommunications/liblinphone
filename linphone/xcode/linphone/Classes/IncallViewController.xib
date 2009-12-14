@@ -8,7 +8,7 @@
 		<string key="IBDocument.HIToolboxVersion">353.00</string>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="26"/>
+			<integer value="2"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -37,6 +37,17 @@
 					<int key="NSvFlags">274</int>
 					<object class="NSMutableArray" key="NSSubviews">
 						<bool key="EncodedWithXMLCoder">YES</bool>
+						<object class="IBUIActivityIndicatorView" id="275734970">
+							<reference key="NSNextResponder" ref="858247959"/>
+							<int key="NSvFlags">292</int>
+							<string key="NSFrame">{{150, 220}, {20, 20}}</string>
+							<reference key="NSSuperview" ref="858247959"/>
+							<bool key="IBUIOpaque">NO</bool>
+							<bool key="IBUIClearsContextBeforeDrawing">NO</bool>
+							<bool key="IBUIUserInteractionEnabled">NO</bool>
+							<bool key="IBUIHidesWhenStopped">NO</bool>
+							<int key="IBUIStyle">2</int>
+						</object>
 						<object class="IBUILabel" id="357639611">
 							<reference key="NSNextResponder" ref="858247959"/>
 							<int key="NSvFlags">292</int>
@@ -531,14 +542,6 @@
 					<int key="connectionID">23</int>
 				</object>
 				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchOutletConnection" key="connection">
-						<string key="label">peerNumber</string>
-						<reference key="source" ref="841351856"/>
-						<reference key="destination" ref="671407802"/>
-					</object>
-					<int key="connectionID">24</int>
-				</object>
-				<object class="IBConnectionRecord">
 					<object class="IBCocoaTouchEventConnection" key="connection">
 						<string key="label">doAction:</string>
 						<reference key="source" ref="846404401"/>
@@ -860,6 +863,30 @@
 					</object>
 					<int key="connectionID">85</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBCocoaTouchOutletConnection" key="connection">
+						<string key="label">peerName</string>
+						<reference key="source" ref="841351856"/>
+						<reference key="destination" ref="357639611"/>
+					</object>
+					<int key="connectionID">89</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBCocoaTouchOutletConnection" key="connection">
+						<string key="label">peerNumber</string>
+						<reference key="source" ref="841351856"/>
+						<reference key="destination" ref="671407802"/>
+					</object>
+					<int key="connectionID">90</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBCocoaTouchOutletConnection" key="connection">
+						<string key="label">callDuration</string>
+						<reference key="source" ref="841351856"/>
+						<reference key="destination" ref="983423469"/>
+					</object>
+					<int key="connectionID">91</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -902,6 +929,7 @@
 							<reference ref="357639611"/>
 							<reference ref="671407802"/>
 							<reference ref="983423469"/>
+							<reference ref="275734970"/>
 						</object>
 						<reference key="parent" ref="981679694"/>
 					</object>
@@ -915,7 +943,7 @@
 						<int key="objectID">11</int>
 						<reference key="object" ref="671407802"/>
 						<reference key="parent" ref="858247959"/>
-						<string key="objectName">number</string>
+						<string key="objectName">peerNumber</string>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">12</int>
@@ -1074,6 +1102,11 @@
 						<reference key="parent" ref="759087764"/>
 						<string key="objectName">0</string>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">92</int>
+						<reference key="object" ref="275734970"/>
+						<reference key="parent" ref="858247959"/>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -1109,6 +1142,7 @@
 					<string>40.IBPluginDependency</string>
 					<string>41.IBPluginDependency</string>
 					<string>9.IBPluginDependency</string>
+					<string>92.IBPluginDependency</string>
 				</object>
 				<object class="NSMutableArray" key="dict.values">
 					<bool key="EncodedWithXMLCoder">YES</bool>
@@ -1122,7 +1156,8 @@
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-					<string>{{592, 218}, {320, 480}}</string>
+					<string>{{528, 218}, {320, 480}}</string>
+					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
@@ -1163,7 +1198,7 @@
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">85</int>
+			<int key="maxID">92</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -1179,6 +1214,7 @@
 						<bool key="EncodedWithXMLCoder">YES</bool>
 						<object class="NSMutableArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>callDuration</string>
 							<string>close</string>
 							<string>contacts</string>
 							<string>controlSubView</string>
@@ -1192,6 +1228,7 @@
 							<string>nine</string>
 							<string>one</string>
 							<string>padSubView</string>
+							<string>peerName</string>
 							<string>peerNumber</string>
 							<string>phoneviewDelegate</string>
 							<string>seven</string>
@@ -1204,6 +1241,7 @@
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>UILabel</string>
 							<string>UIButton</string>
 							<string>UIButton</string>
 							<string>UIView</string>
@@ -1217,6 +1255,7 @@
 							<string>UIButton</string>
 							<string>UIButton</string>
 							<string>UIView</string>
+							<string>UILabel</string>
 							<string>UILabel</string>
 							<string>id</string>
 							<string>UIButton</string>

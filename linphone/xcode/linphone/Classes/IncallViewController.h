@@ -25,13 +25,15 @@
 @interface IncallViewController : UIViewController <ABPeoplePickerNavigationControllerDelegate> {
 	LinphoneCore* myLinphoneCore;
 	id<PhoneViewControllerDelegate> phoneviewDelegate;
-	
+	NSTimer *durationRefreasher;
 	
 	
 	UIView* controlSubView;
 	UIView* padSubView;
 	
+	UILabel* peerName;
 	UILabel* peerNumber;
+	UILabel* callDuration;
 	UIButton* end;
 	UIButton* dialer;
 	UIButton* mute;
@@ -68,7 +70,9 @@
 @property (nonatomic, retain) IBOutlet UIView* controlSubView;
 @property (nonatomic, retain) IBOutlet UIView* padSubView;
 
+@property (nonatomic, retain) IBOutlet UILabel* peerName;
 @property (nonatomic, retain) IBOutlet UILabel* peerNumber;
+@property (nonatomic, retain) IBOutlet UILabel* callDuration;
 @property (nonatomic, retain) IBOutlet UIButton* end;
 @property (nonatomic, retain) IBOutlet UIButton* dialer;
 @property (nonatomic, retain) IBOutlet UIButton* mute;

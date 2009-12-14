@@ -28,7 +28,9 @@
 @synthesize controlSubView;
 @synthesize padSubView;
 
+@synthesize peerName;
 @synthesize peerNumber;
+@synthesize callDuration;
 @synthesize end;
 @synthesize close;
 @synthesize mute;
@@ -50,24 +52,24 @@
 @synthesize hash;
 
 
-
+/*
 // The designated initializer.  Override if you create the controller programmatically and want to perform customization that is not appropriate for viewDidLoad.
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
     if (self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil]) {
         // Custom initialization
-		isMuted = false;
-		isSpeaker = false;
+
     }
     return self;
 }
-
+*/
 
 
 // Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
 - (void)viewDidLoad {
     [super viewDidLoad];
-
-
+	isMuted = false;
+	isSpeaker = false;
+	
 }
 
 
@@ -89,6 +91,10 @@
 - (void)viewDidUnload {
 	// Release any retained subviews of the main view.
 	// e.g. self.myOutlet = nil;
+	if (durationRefreasher != nil) {
+		[ durationRefreasher invalidate];
+	}
+	
 }
 
 -(void) setLinphoneCore:(LinphoneCore*) lc {
@@ -96,7 +102,28 @@
 }
 
 -(void) startCall {
+	const LinphoneAddress* address = linphone_core_get_remote_uri(myLinphoneCore);
+	const char* displayName =  linphone_address_get_display_name(address)?linphone_address_get_display_name(address):"";
+	[peerName setText:[NSString stringWithCString:displayName length:strlen(displayName)]];
 	
+	const char* username = linphone_address_get_username(address)!=0?linphone_address_get_username(address):"";
+	[peerNumber setText:[NSString stringWithCString:username length:strlen(username)]];
+	// start scheduler
+	durationRefreasher = [NSTimer scheduledTimerWithTimeInterval:1 
+									 target:self 
+								   selector:@selector(updateCallDuration) 
+								   userInfo:nil 
+									repeats:YES];
+	
+}
+
+-(void)updateCallDuration {
+	int lDuration = linphone_core_get_current_call_duration(myLinphoneCore); 
+	if (lDuration < 60) {
+		[callDuration setText:[NSString stringWithFormat: @"%i s", lDuration]];
+	} else {
+		[callDuration setText:[NSString stringWithFormat: @"%i:%i", lDuration/60,lDuration - 60 *(lDuration/60)]];
+	}
 }
 
 - (IBAction)doAction:(id)sender {
