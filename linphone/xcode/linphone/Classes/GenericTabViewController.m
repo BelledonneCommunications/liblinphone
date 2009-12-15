@@ -1,4 +1,4 @@
-/* CallHistoryTableViewController.h
+/* GenericTabViewController.c
  *
  * Copyright (C) 2009  Belledonne Comunications, Grenoble, France
  *
@@ -16,12 +16,34 @@
  *  along with this program; if not, write to the Free Software         
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */     
-#import <UIKit/UIKit.h>
+
 #import "GenericTabViewController.h"
 
 
-@interface CallHistoryTableViewController : GenericTabViewController {
+@implementation GenericTabViewController
+@synthesize phoneControllerDelegate;
+@synthesize linphoneDelegate;
+@synthesize header;
+
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+	self.tableView.tableHeaderView=header;
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+	[self.tableView reloadData];
+}
+
+-(void) setLinphoneCore:(LinphoneCore*) lc {
+	myLinphoneCore = lc;
+}
+
+- (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath {
 	
+	[self tableView:tableView didSelectRowAtIndexPath:indexPath];
 }
 
 @end
+

@@ -34,7 +34,7 @@
 	//UI definition
 	UITextField* address;
 	UIButton* call;
-	UIButton* cancel;
+
 	UILabel* status;
 
 	//key pad
@@ -61,7 +61,6 @@
 }
 @property (nonatomic, retain) IBOutlet UITextField* address;
 @property (nonatomic, retain) IBOutlet UIButton* call;
-@property (nonatomic, retain) IBOutlet UIButton* cancel;
 @property (nonatomic, retain) IBOutlet UILabel* status;
 
 @property (nonatomic, retain) IBOutlet UIButton* one;

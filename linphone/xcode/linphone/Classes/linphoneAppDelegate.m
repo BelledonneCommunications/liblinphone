@@ -25,7 +25,7 @@
 #import <AVFoundation/AVAudioSession.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import "osip2/osip.h"
-
+#import "FavoriteTableViewController.h"
 extern void ms_au_register_card();
 //generic log handler for debug version
 void linphone_iphone_log_handler(OrtpLogLevel lev, const char *fmt, va_list args){
@@ -48,12 +48,8 @@ void linphone_iphone_show(struct _LinphoneCore * lc) {
 	//nop
 }
 void linphone_iphone_call_received(LinphoneCore *lc, const char *from){
-	//redirect audio to speaker
-	UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_Speaker;  
-	
-	AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute
-							 , sizeof (audioRouteOverride)
-							 , &audioRouteOverride);
+	[((linphoneAppDelegate*) linphone_core_get_user_data(lc)) newIncomingCall:[[NSString alloc] initWithCString:from encoding:[NSString defaultCStringEncoding]]];
+
 	
 };
 void linphone_iphone_general_state(LinphoneCore *lc, LinphoneGeneralState *gstate) {
@@ -93,10 +89,11 @@ LinphoneCoreVTable linphonec_vtable = {
 - (void)applicationDidFinishLaunching:(UIApplication *)application {    
 	
 	//as defined in PhoneMainView.xib		
-#define DIALER_TAB_INDEX 0
-#define CONTACTS_TAB_INDEX 1
-#define HISTORY_TAB_INDEX 2
-#define MORE_TAB_INDEX 3
+#define DIALER_TAB_INDEX 2
+#define CONTACTS_TAB_INDEX 3
+#define HISTORY_TAB_INDEX 1
+#define FAVORITE_TAB_INDEX 0	
+#define MORE_TAB_INDEX 4
 	
 	
 	myPhoneViewController = (PhoneViewController*) [myTabBarController.viewControllers objectAtIndex: DIALER_TAB_INDEX];
@@ -105,6 +102,10 @@ LinphoneCoreVTable linphonec_vtable = {
 	[myCallHistoryTableViewController setPhoneControllerDelegate:myPhoneViewController];
 	[myCallHistoryTableViewController setLinphoneDelegate:self];
 	
+	myFavoriteTableViewController = (FavoriteTableViewController*)[myTabBarController.viewControllers objectAtIndex: FAVORITE_TAB_INDEX];
+	[myFavoriteTableViewController setPhoneControllerDelegate:myPhoneViewController];
+	[myFavoriteTableViewController setLinphoneDelegate:self];
+
 	//people picker delegates
 	myContactPickerDelegate = [[ContactPickerDelegate alloc] init];
 	myContactPickerDelegate.phoneControllerDelegate=myPhoneViewController;
@@ -117,9 +118,9 @@ LinphoneCoreVTable linphonec_vtable = {
 	myPeoplePickerController.tabBarItem = [(UIViewController*)[myTabBarController.viewControllers objectAtIndex:CONTACTS_TAB_INDEX] tabBarItem]; 
 	//insert contact controller
 	NSMutableArray* newArray = [NSMutableArray arrayWithArray:self.myTabBarController.viewControllers];
-	[newArray replaceObjectAtIndex:1 withObject:myPeoplePickerController];
+	[newArray replaceObjectAtIndex:CONTACTS_TAB_INDEX withObject:myPeoplePickerController];
 	
-	
+	[myTabBarController setSelectedIndex:DIALER_TAB_INDEX];
 	[myTabBarController setViewControllers:newArray animated:NO];
 	
 	[window addSubview:myTabBarController.view];
@@ -129,14 +130,18 @@ LinphoneCoreVTable linphonec_vtable = {
 	[self	startlibLinphone];
 	
 	[myCallHistoryTableViewController setLinphoneCore: myLinphoneCore];
+	[myFavoriteTableViewController setLinphoneCore: myLinphoneCore];
 	[myPhoneViewController setLinphoneCore: myLinphoneCore];
 	
 	
 }
 -(void)selectDialerTab {
-	[myTabBarController setSelectedIndex:0];
+	[myTabBarController setSelectedIndex:DIALER_TAB_INDEX];
 }
 
+- (void)applicationWillTerminate:(UIApplication *)application {
+	linphone_core_destroy(myLinphoneCore);
+}
 
 - (void)dealloc {
 	[window release];
@@ -299,6 +304,30 @@ LinphoneCoreVTable linphonec_vtable = {
 								   userInfo:nil 
 									repeats:YES];
 	
+}
+
+-(void) newIncomingCall:(NSString*) from {
+		//redirect audio to speaker
+	UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_Speaker;  
+		
+	AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute
+								 , sizeof (audioRouteOverride)
+								 , &audioRouteOverride);
+    
+	UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:[NSString  stringWithFormat:@" %@ is calling you",from]
+															 delegate:self cancelButtonTitle:@"Decline" destructiveButtonTitle:@"Answer" otherButtonTitles:nil];
+    actionSheet.actionSheetStyle = UIActionSheetStyleDefault;
+    [actionSheet showFromTabBar:myTabBarController.tabBar];
+    [actionSheet release];
+		
+}
+
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
+	if (buttonIndex == 0 ) {
+		linphone_core_accept_call(myLinphoneCore,NULL);	
+	} else {
+		linphone_core_terminate_call (myLinphoneCore,NULL);
+	}
 }
 //scheduling loop
 -(void) iterate {

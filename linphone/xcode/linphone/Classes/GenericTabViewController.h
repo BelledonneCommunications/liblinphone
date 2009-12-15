@@ -1,4 +1,4 @@
-/* CallHistoryTableViewController.h
+/* GenericTabViewController.h
  *
  * Copyright (C) 2009  Belledonne Comunications, Grenoble, France
  *
@@ -16,12 +16,21 @@
  *  along with this program; if not, write to the Free Software         
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */     
+
 #import <UIKit/UIKit.h>
-#import "GenericTabViewController.h"
+#include "linphonecore.h"
+#import "PhoneViewController.h"
+#import "linphoneAppDelegate.h"
 
-
-@interface CallHistoryTableViewController : GenericTabViewController {
-	
+@interface GenericTabViewController : UITableViewController {
+	LinphoneCore* myLinphoneCore;
+	id<PhoneViewControllerDelegate> phoneControllerDelegate;
+	id<LinphoneTabManagerDelegate> linphoneDelegate;
+	IBOutlet UIView* header; 
 }
-
+-(void) setLinphoneCore:(LinphoneCore*) lc;
+@property (nonatomic, retain) id<PhoneViewControllerDelegate> phoneControllerDelegate;
+@property (nonatomic, retain) id<LinphoneTabManagerDelegate> linphoneDelegate;
+@property (nonatomic, retain) IBOutlet UIView* header;
 @end
+

@@ -1,4 +1,4 @@
-/* CallHistoryTableViewController.m
+/* FavoriteTableViewController.h
  *
  * Copyright (C) 2009  Belledonne Comunications, Grenoble, France
  *
@@ -17,13 +17,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */     
 
-#import "CallHistoryTableViewController.h"
-
-
-@implementation CallHistoryTableViewController
+#import "FavoriteTableViewController.h"
 
 
 
+@implementation FavoriteTableViewController
+@synthesize add;
+@synthesize edit;
 /*
 - (id)initWithStyle:(UITableViewStyle)style {
     // Override initWithStyle: if you create the controller programmatically and want to perform customization that is not appropriate for viewDidLoad.
@@ -36,8 +36,7 @@
 /*
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
-	
+
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
 }
@@ -51,7 +50,6 @@
 /*
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-	
 }
 */
 /*
@@ -86,18 +84,35 @@
 }
 
 
-
+- (IBAction)doAddFavorite:(id)sender {
+	ABPeoplePickerNavigationController* peoplePickerController = [[[ABPeoplePickerNavigationController alloc] init] autorelease];
+	[peoplePickerController setPeoplePickerDelegate:self];
+	
+	[self presentModalViewController: peoplePickerController animated:true];
+}
+- (IBAction)doEditFavorite:(id)sender {
+	if ([ self tableView:self.tableView numberOfRowsInSection:0] <= 0) {
+		return;
+	}
+	if (self.tableView.editing) {
+		[self.tableView setEditing:false animated:true];
+		[self.edit setTitle:@"Edit" forState: UIControlStateNormal];
+	} else {
+		[self.tableView setEditing:true animated:true];
+		[self.edit setTitle:@"Ok" forState: UIControlStateNormal];
+	}
+}
 #pragma mark Table view methods
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-	return 1;
+    return 1;
 }
 
 
 // Customize the number of rows in the table view.
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-	const MSList * logs = linphone_core_get_call_logs(myLinphoneCore);
-	return ms_list_size(logs);
+    const MSList * friends =linphone_core_get_friend_list(myLinphoneCore);
+	return ms_list_size(friends);
 }
 
 
@@ -109,43 +124,35 @@
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier] autorelease];
-		
     }
-    
-    // Set up the cell...
-	LinphoneCallLog*  callLogs = ms_list_nth_data(linphone_core_get_call_logs(myLinphoneCore), indexPath.row) ;
-	const char* username = linphone_address_get_username(callLogs->to)!=0?linphone_address_get_username(callLogs->to):"";
+    LinphoneFriend* friend = ms_list_nth_data(linphone_core_get_friend_list(myLinphoneCore), indexPath.row);
+    const char* name = linphone_address_get_username(linphone_friend_get_uri(friend));
 	
-	[cell.textLabel setText:[[NSString alloc] initWithCString:username encoding:[NSString defaultCStringEncoding]]];
-
-	
-	NSString *path;
-	
-	if (callLogs->dir == LinphoneCallIncoming) {
-		path = [[NSBundle mainBundle] pathForResource:@"in_call" ofType:@"png"];
-	
-	} else {
-		path = [[NSBundle mainBundle] pathForResource:@"out_call" ofType:@"png"];
-		 
-	}
-	UIImage *image = [UIImage imageWithContentsOfFile:path];
-	cell.imageView.image = image;
+	[cell.textLabel setText:[[NSString alloc] initWithCString:name encoding:[NSString defaultCStringEncoding]]];
 	cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
+	
     return cell;
 }
-
-
+/*
+- (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath {
+	if (isEditing) {
+	} else {
+		[super tableView:tableView accessoryButtonTappedForRowWithIndexPath:indexPath];
+	}
+	
+}
+*/
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     // Navigation logic may go here. Create and push another view controller.
 	// AnotherViewController *anotherViewController = [[AnotherViewController alloc] initWithNibName:@"AnotherView" bundle:nil];
 	// [self.navigationController pushViewController:anotherViewController];
 	// [anotherViewController release];
-	[tableView deselectRowAtIndexPath:indexPath animated:NO];
+    LinphoneFriend* friend = ms_list_nth_data(linphone_core_get_friend_list(myLinphoneCore), indexPath.row);
+    const char* name = linphone_address_get_username(linphone_friend_get_uri(friend));
+	[phoneControllerDelegate setPhoneNumber:[[NSString alloc] initWithCString:name encoding:[NSString defaultCStringEncoding]]];
+	[linphoneDelegate selectDialerTab];
 	
-	LinphoneCallLog*  callLogs = ms_list_nth_data(linphone_core_get_call_logs(myLinphoneCore), indexPath.row) ;
-	const char* username = linphone_address_get_username(callLogs->to)!=0?linphone_address_get_username(callLogs->to):"";
-	[self.phoneControllerDelegate setPhoneNumber:[[NSString alloc] initWithCString:username encoding:[NSString defaultCStringEncoding]]];
-	[self.linphoneDelegate selectDialerTab];
+	
 }
 
 
@@ -158,19 +165,25 @@
 */
 
 
-/*
+
 // Override to support editing the table view.
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
     
     if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
+		LinphoneFriend* friend = ms_list_nth_data(linphone_core_get_friend_list(myLinphoneCore), indexPath.row);
+		linphone_core_remove_friend(myLinphoneCore, friend);
+		// Delete the row from the data source
         [tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:YES];
+		if ([ self tableView:self.tableView numberOfRowsInSection:0] <= 0) {
+			[self.tableView setEditing:false animated:true];
+			[self.edit setTitle:@"Edit" forState: UIControlStateNormal];
+		}
     }   
     else if (editingStyle == UITableViewCellEditingStyleInsert) {
         // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
     }   
 }
-*/
+
 
 
 /*
@@ -188,6 +201,37 @@
 }
 */
 
+
+- (BOOL)peoplePickerNavigationController:(ABPeoplePickerNavigationController *)peoplePicker 
+	  shouldContinueAfterSelectingPerson:(ABRecordRef)person {
+	return true;
+	
+}
+
+- (BOOL)peoplePickerNavigationController:(ABPeoplePickerNavigationController *)peoplePicker 
+	  shouldContinueAfterSelectingPerson:(ABRecordRef)person 
+								property:(ABPropertyID)property 
+							  identifier:(ABMultiValueIdentifier)identifier {
+	
+ 	CFTypeRef multiValue = ABRecordCopyValue(person, property);
+	CFIndex valueIdx = ABMultiValueGetIndexForIdentifier(multiValue,identifier);
+	NSString *phone = (NSString *)ABMultiValueCopyValueAtIndex(multiValue, valueIdx);
+	NSString *phoneUri = [NSString stringWithFormat:@"sip:%s@dummy.net",[phone cStringUsingEncoding:[NSString defaultCStringEncoding]]];
+	NSString* compositeName = ABRecordCopyCompositeName(person);
+	
+	LinphoneFriend * newFriend = linphone_friend_new_with_addr([phoneUri cStringUsingEncoding:[NSString defaultCStringEncoding]]);
+	
+	linphone_friend_set_name(newFriend,[compositeName cStringUsingEncoding:[NSString defaultCStringEncoding]]);
+	linphone_friend_send_subscribe(newFriend, false);
+	//linphone_friend_set_sip_addr(newFriend, const char *uri);
+	linphone_core_add_friend(myLinphoneCore, newFriend);
+	[self dismissModalViewControllerAnimated:true];
+	return false;
+}
+
+- (void)peoplePickerNavigationControllerDidCancel:(ABPeoplePickerNavigationController *)peoplePicker {
+	[self dismissModalViewControllerAnimated:true];
+}
 
 - (void)dealloc {
     [super dealloc];

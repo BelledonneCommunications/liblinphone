@@ -33,13 +33,16 @@
 @class IncallViewController;
 @class PhoneViewController;
 @class CallHistoryTableViewController;
+@class FavoriteTableViewController;
 
-@interface linphoneAppDelegate : NSObject <UIApplicationDelegate,LinphoneTabManagerDelegate> {
+@interface linphoneAppDelegate : NSObject <UIApplicationDelegate,LinphoneTabManagerDelegate,UIActionSheetDelegate> {
     UIWindow *window;
 	IBOutlet UITabBarController*  myTabBarController;
 	IBOutlet ABPeoplePickerNavigationController* myPeoplePickerController;
 	IBOutlet PhoneViewController* myPhoneViewController;
 	CallHistoryTableViewController* myCallHistoryTableViewController;
+	FavoriteTableViewController* myFavoriteTableViewController;
+	
 	ContactPickerDelegate* myContactPickerDelegate;
 	
 	int traceLevel;
@@ -57,6 +60,7 @@
  */
 -(void) iterate;
 
+-(void) newIncomingCall:(NSString*) from;
 
 
 -(PayloadType*) findPayload:(NSString*)type withRate:(int)rate from:(const MSList*)list;
@@ -64,7 +68,7 @@
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;
 @property (nonatomic, retain) IBOutlet UITabBarController*  myTabBarController;
-@property (nonatomic, retain)  ABPeoplePickerNavigationController* myPeoplePickerController;
+@property (nonatomic, retain) ABPeoplePickerNavigationController* myPeoplePickerController;
 @property (nonatomic, retain) IBOutlet PhoneViewController* myPhoneViewController;
 
 

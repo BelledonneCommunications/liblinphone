@@ -31,6 +31,7 @@
 @synthesize peerName;
 @synthesize peerNumber;
 @synthesize callDuration;
+@synthesize status;
 @synthesize end;
 @synthesize close;
 @synthesize mute;
@@ -99,6 +100,10 @@
 
 -(void) setLinphoneCore:(LinphoneCore*) lc {
 	myLinphoneCore = lc;
+}
+
+-(void)displayStatus:(NSString*) message {
+	[status setText:message];
 }
 
 -(void) startCall {

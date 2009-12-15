@@ -34,6 +34,7 @@
 	UILabel* peerName;
 	UILabel* peerNumber;
 	UILabel* callDuration;
+	UILabel* status;
 	UIButton* end;
 	UIButton* dialer;
 	UIButton* mute;
@@ -65,6 +66,8 @@
 -(void) setLinphoneCore:(LinphoneCore*) lc;
 -(void) startCall;
 
+-(void)displayStatus:(NSString*) message;
+
 - (IBAction)doAction:(id)sender;
 
 @property (nonatomic, retain) IBOutlet UIView* controlSubView;
@@ -73,6 +76,7 @@
 @property (nonatomic, retain) IBOutlet UILabel* peerName;
 @property (nonatomic, retain) IBOutlet UILabel* peerNumber;
 @property (nonatomic, retain) IBOutlet UILabel* callDuration;
+@property (nonatomic, retain) IBOutlet UILabel* status;
 @property (nonatomic, retain) IBOutlet UIButton* end;
 @property (nonatomic, retain) IBOutlet UIButton* dialer;
 @property (nonatomic, retain) IBOutlet UIButton* mute;

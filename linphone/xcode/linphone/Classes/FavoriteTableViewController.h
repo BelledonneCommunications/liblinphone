@@ -1,4 +1,4 @@
-/* CallHistoryTableViewController.h
+/* FavoriteTableViewController.h
  *
  * Copyright (C) 2009  Belledonne Comunications, Grenoble, France
  *
@@ -16,12 +16,21 @@
  *  along with this program; if not, write to the Free Software         
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */     
+
+
 #import <UIKit/UIKit.h>
 #import "GenericTabViewController.h"
 
-
-@interface CallHistoryTableViewController : GenericTabViewController {
+@interface FavoriteTableViewController : GenericTabViewController<ABPeoplePickerNavigationControllerDelegate> {
+	UIButton* add;
+	UIButton* edit;
 	
-}
 
+}
+- (IBAction)doAddFavorite:(id)sender;
+- (IBAction)doEditFavorite:(id)sender;
+
+@property (nonatomic, retain) IBOutlet UIButton* add;
+@property (nonatomic, retain) IBOutlet UIButton* edit;
 @end
+

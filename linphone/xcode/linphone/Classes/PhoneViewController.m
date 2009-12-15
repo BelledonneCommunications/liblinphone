@@ -28,7 +28,6 @@
 @implementation PhoneViewController
 @synthesize  address ;
 @synthesize  call;
-@synthesize  cancel;
 @synthesize status;
 
 @synthesize one;
@@ -73,8 +72,6 @@
 					, &audioRouteOverride);
 		
 	
-	} else if (sender == cancel) {
-		linphone_core_terminate_call(mCore,NULL);
 	} 
 
 }
@@ -148,9 +145,13 @@
 
 -(void) setLinphoneCore:(LinphoneCore*) lc {
 	mCore = lc;
+	[myIncallViewController setLinphoneCore:mCore];
 }
 -(void)displayStatus:(NSString*) message {
 	[status setText:message];
+	if (myIncallViewController != nil) {
+		[myIncallViewController displayStatus:message];
+	}
 }
 
 /*
@@ -170,7 +171,7 @@
 	if (myIncallViewController == nil) {
 		myIncallViewController = [[IncallViewController alloc] initWithNibName:@"IncallViewController" bundle:[NSBundle mainBundle]];
 		[myIncallViewController setPhoneviewDelegate:self];
-		[myIncallViewController setLinphoneCore:mCore];
+		
 	}
 	
 	
@@ -215,7 +216,6 @@
 - (void)dealloc {
     [address dealloc];
 	[call dealloc];
-	[cancel dealloc];
 	[status dealloc];
 	[super dealloc];
 }
