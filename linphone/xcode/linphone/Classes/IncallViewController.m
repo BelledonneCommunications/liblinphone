@@ -89,6 +89,10 @@
 	// Release any cached data, images, etc that aren't in use.
 }
 
+- (void)viewWillAppear:(BOOL)animated {
+
+}
+
 - (void)viewWillDisappear:(BOOL)animated {
 	
 	if (durationRefreasher != nil) {

@@ -47,6 +47,14 @@
 
 -(void)setPhoneNumber:(NSString*)number {
 	[address setText:number];
+	if (displayName) {
+		[displayName release];
+		displayName=nil;
+	}
+}
+-(void)setPhoneNumber:(NSString*)number withDisplayName:(NSString*) name {
+	[self setPhoneNumber:number];
+	displayName = name;
 }
 
 -(void)dismissIncallView {
@@ -58,8 +66,19 @@
 	
 	if (sender == call) {
 		if (!linphone_core_in_call(mCore)) {
-			const char* lCallee = [[address text]  cStringUsingEncoding:[NSString defaultCStringEncoding]];
-			linphone_core_invite(mCore,lCallee) ;		
+			NSString* toUserName = [NSString stringWithString:[address text]];
+			toUserName = [toUserName stringByReplacingOccurrencesOfString:@"(" withString:@""];
+			toUserName = [toUserName stringByReplacingOccurrencesOfString:@")" withString:@""];
+			toUserName = [toUserName stringByReplacingOccurrencesOfString:@"-" withString:@""];
+			toUserName = [toUserName stringByReplacingOccurrencesOfString:@"." withString:@""];
+			toUserName = [toUserName stringByReplacingOccurrencesOfString:@"/" withString:@""];
+			toUserName = [toUserName stringByReplacingOccurrencesOfString:@" " withString:@""];
+			
+			LinphoneAddress* tmpAddress = linphone_address_new(linphone_core_get_identity(mCore));
+			linphone_address_set_username(tmpAddress,[toUserName cStringUsingEncoding:[NSString defaultCStringEncoding]]);
+			linphone_address_set_display_name(tmpAddress,displayName?[displayName cStringUsingEncoding:[NSString defaultCStringEncoding]]:nil);
+			linphone_core_invite(mCore,linphone_address_as_string(tmpAddress)) ;
+			linphone_address_destroy(tmpAddress);
 		} 
 		if (linphone_core_inc_invite_pending(mCore)) {
 			linphone_core_accept_call(mCore,NULL);	
@@ -146,6 +165,7 @@
 -(void) setLinphoneCore:(LinphoneCore*) lc {
 	mCore = lc;
 	[myIncallViewController setLinphoneCore:mCore];
+	
 }
 -(void)displayStatus:(NSString*) message {
 	[status setText:message];

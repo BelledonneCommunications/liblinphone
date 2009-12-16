@@ -23,6 +23,8 @@
 @protocol PhoneViewControllerDelegate
 
 -(void)setPhoneNumber:(NSString*)number;
+-(void)setPhoneNumber:(NSString*)number withDisplayName:(NSString*) name;
+
 -(void)dismissIncallView;
 -(void)displayStatus:(NSString*) message;
 @end
@@ -56,6 +58,7 @@
 	 * lib linphone main context
 	 */
 	LinphoneCore* mCore;
+	NSString* displayName;
 	IncallViewController *myIncallViewController;
 	
 	
