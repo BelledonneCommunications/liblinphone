@@ -35,7 +35,8 @@
 	UILabel* peerNumber;
 	UILabel* callDuration;
 	UILabel* status;
-	UIButton* end;
+	UIButton* endCtrl;
+	UIButton* endPad;
 	UIButton* dialer;
 	UIButton* mute;
 	UIButton* speaker;
@@ -81,7 +82,8 @@
 @property (nonatomic, retain) IBOutlet UILabel* peerNumber;
 @property (nonatomic, retain) IBOutlet UILabel* callDuration;
 @property (nonatomic, retain) IBOutlet UILabel* status;
-@property (nonatomic, retain) IBOutlet UIButton* end;
+@property (nonatomic, retain) IBOutlet UIButton* endCtrl;
+@property (nonatomic, retain) IBOutlet UIButton* endPad;
 @property (nonatomic, retain) IBOutlet UIButton* dialer;
 @property (nonatomic, retain) IBOutlet UIButton* mute;
 @property (nonatomic, retain) IBOutlet UIButton* speaker;

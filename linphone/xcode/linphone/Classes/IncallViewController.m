@@ -32,7 +32,8 @@
 @synthesize peerNumber;
 @synthesize callDuration;
 @synthesize status;
-@synthesize end;
+@synthesize endCtrl;
+@synthesize endPad;
 @synthesize close;
 @synthesize mute;
 @synthesize dialer;
@@ -217,7 +218,7 @@
 	}
 	
 	
-	if (sender == end) {
+	if (sender == endCtrl || sender == endPad) {
 		linphone_core_terminate_call(myLinphoneCore,NULL);
 	} else if (sender == dialer) {
 		[controlSubView setHidden:true];
