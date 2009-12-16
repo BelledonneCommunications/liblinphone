@@ -89,15 +89,22 @@
 	// Release any cached data, images, etc that aren't in use.
 }
 
-- (void)viewDidUnload {
-	// Release any retained subviews of the main view.
-	// e.g. self.myOutlet = nil;
+- (void)viewWillDisappear:(BOOL)animated {
+	
 	if (durationRefreasher != nil) {
 		[ durationRefreasher invalidate];
 	}
+	[peerNumber setText:@""];
+	[callDuration setText:@""];
 	
 }
-
+/*
+- (void)viewDidUnload {
+	// Release any retained subviews of the main view.
+	// e.g. self.myOutlet = nil;
+	
+}
+*/
 -(void) setLinphoneCore:(LinphoneCore*) lc {
 	myLinphoneCore = lc;
 }
@@ -107,6 +114,7 @@
 }
 
 -(void) startCall {
+	[status setText:@""];
 	const LinphoneAddress* address = linphone_core_get_remote_uri(myLinphoneCore);
 	const char* displayName =  linphone_address_get_display_name(address)?linphone_address_get_display_name(address):"";
 	[peerName setText:[NSString stringWithCString:displayName length:strlen(displayName)]];

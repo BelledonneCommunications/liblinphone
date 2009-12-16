@@ -149,9 +149,6 @@
 }
 -(void)displayStatus:(NSString*) message {
 	[status setText:message];
-	if (myIncallViewController != nil) {
-		[myIncallViewController displayStatus:message];
-	}
 }
 
 /*
@@ -200,14 +197,6 @@
 }
 
 
-- (BOOL)textFieldShouldReturn:(UITextField *)theTextField {
-    if (theTextField == address) {
-        [address resignFirstResponder];
-    }
-    return YES;
-}
-
-
 -(void) dismissAlertDialog:(UIAlertView*) alertView{
 	[alertView dismissWithClickedButtonIndex:0 animated:TRUE];
 }
@@ -243,6 +232,8 @@
 		case GSTATE_CALL_OUT_INVITE: {
 			//[myIncallViewController startCall];
 			[self presentModalViewController: myIncallViewController animated:true];
+			[myIncallViewController displayStatus:@"Llamando"];
+			
 			break;
 		}
 			
