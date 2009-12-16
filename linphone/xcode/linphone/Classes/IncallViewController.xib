@@ -83,7 +83,7 @@
 						<object class="IBUILabel" id="671407802">
 							<reference key="NSNextResponder" ref="858247959"/>
 							<int key="NSvFlags">292</int>
-							<string key="NSFrame">{{31, 63}, {61, 21}}</string>
+							<string key="NSFrame">{{31, 63}, {173, 21}}</string>
 							<reference key="NSSuperview" ref="858247959"/>
 							<bool key="IBUIOpaque">NO</bool>
 							<bool key="IBUIClipsSubviews">YES</bool>
@@ -204,10 +204,6 @@
 										<bytes key="NSRGB">MC4xOTYwNzg0MyAwLjMwOTgwMzkzIDAuNTIxNTY4NjYAA</bytes>
 									</object>
 									<reference key="IBUINormalTitleShadowColor" ref="785445938"/>
-									<object class="NSCustomResource" key="IBUIHighlightedImage">
-										<string key="NSClassName">NSImage</string>
-										<string key="NSResourceName">boton_contactos_1.png</string>
-									</object>
 									<object class="NSCustomResource" key="IBUINormalImage">
 										<string key="NSClassName">NSImage</string>
 										<string key="NSResourceName">boton_colgar.png</string>
@@ -1339,7 +1335,7 @@
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-					<string>{{136, 297}, {320, 480}}</string>
+					<string>{{195, 363}, {320, 480}}</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
