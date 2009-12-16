@@ -32,6 +32,7 @@ OS=`uname|sed -e 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/'`
 AC_MSG_RESULT([Building Package on ${OS}])
 
 AM_INIT_AUTOMAKE([tar-ustar])
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])],)
 AC_CONFIG_HEADERS(mediastreamer-config.h)
 AC_DEFINE_UNQUOTED(MEDIASTREAMER_MAJOR_VERSION,$MEDIASTREAMER_MAJOR_VERSION, [major version])
 AC_DEFINE_UNQUOTED(MEDIASTREAMER_MINOR_VERSION,$MEDIASTREAMER_MINOR_VERSION, [minor version])
@@ -395,7 +396,7 @@ AC_SUBST(JACK_LIBS)
 fi
 
 if test "$found_sound" = "no"; then
-	AC_MSG_ERROR([Could not find a support sound driver API])
+	AC_MSG_WARN([Could not find a support sound driver API])
 fi
 
 
@@ -544,8 +545,14 @@ fi
 
 AM_CONDITIONAL(BUILD_V4L, test x$found_v4l = xyes )
 
-PKG_CHECK_MODULES(LIBV4L2, libv4l2,[echo "libv4l2 found"],[echo "libv4l2 not found])
-PKG_CHECK_MODULES(LIBV4L1, libv4l1,[echo "libv4l1 found"],[echo "libv4l1 not found])
+PKG_CHECK_MODULES(LIBV4L2, libv4l2,
+	[AC_DEFINE(HAVE_LIBV4L2,1,[Defined if we have libv4l2])]
+	,[echo "No libv4l2 found."]
+)
+PKG_CHECK_MODULES(LIBV4L1, libv4l1,
+	[AC_DEFINE(HAVE_LIBV4L1,1,[Defined if we have libv4l1])]
+	,[echo "No libv4l1 found."]
+)
 
 dnl ##################################################
 dnl # Check for doxygen

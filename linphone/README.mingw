@@ -16,6 +16,7 @@ Download from mingw download page (http://www.mingw.org, click download):
 	- MSYS libtool>=2.2.7 
 	- MSYS libcrypt*-bin
 	- MSYS perl
+	- MSYS gettext-*bin* and gettext-*dev*
 	===> Uncompress all these packages in /
 	- from gcc-4.4 directory
 		Download: 
@@ -25,15 +26,12 @@ Download from mingw download page (http://www.mingw.org, click download):
 			- gcc-c++*-dll
 			- gmp*-dll
 			- mpfr*-dll
-	- w32api-dev
+	- w32api*-dev
 	- mingwrt-dev and mingwrt-dll (mingw run time)
 	- gnu binutils 2.19
 	===> Uncompress all these packages in /mingw
 
 note: lzma files can be uncompressed using tar --lzma -xvf <file>
-
-* Move out libstdc++.la in order to workaround a gcc-4.4.0 bug (or packaging bug):
-	mv /mingw/lib/gcc/mingw32/4.4.0/libstdc++.la /mingw/lib/gcc/mingw32/4.4.0/libstdc++.la.bak
 
 * Download intltool (quicklink: 
 	http://ftp.acc.umu.se/pub/GNOME/binaries/win32/intltool/0.40/intltool_0.40.4-1_win32.zip
@@ -52,8 +50,12 @@ note: lzma files can be uncompressed using tar --lzma -xvf <file>
     http://download.savannah.gnu.org/releases-noredirect/linphone/misc/)
     uncompress in /
 * Download and install Inno Setup Compiler in its default path (required only if you run 'make setup.exe').
-* HACK: move out /lib/libintl.la : it confuses libtool
-	mv /lib/libintl.la /lib/libintl.la.bak
+
+* HACKS:
+	Move out /lib/libintl.la : it confuses libtool
+		mv /lib/libintl.la /lib/libintl.la.bak
+	Move out libstdc++.la in order to workaround a gcc-4.4.0 bug (or packaging bug):
+		mv /mingw/lib/gcc/mingw32/4.4.0/libstdc++.la /mingw/lib/gcc/mingw32/4.4.0/libstdc++.la.bak
 
 Get Linphone source code
 ************************
@@ -99,8 +101,7 @@ make setup.exe
 #build plugins
 cd mediastreamer2/plugins/msx264
 ./autogen.sh
-PKG_CONFIG_PATH=/opt/linphone/lib/pkgconfig ./configure --prefix=/opt/linphone --enable-shared --disable-static --enable-hacked-x264
-make
+PKG_CONFIG_PATH=/opt/linphone/lib/pkgconfig ./configure --prefix=/opt/linphone --enable-shared --disable-static
 #make a binary zip of this plugin
 make zip
 #or make an installer
@@ -153,17 +154,11 @@ When running "make install DESTDIR=<somepath>", somepath must be absolute and sh
   copy ~/libxml2-install/usr/local/* into linphone-deps/.
 
 - building x264:
-  
-  * Download lastest snapshot the linphone fork of x264 from
-  http://download.savannah.gnu.org/releases/linphone/plugins/sources/
-  This fork just brings the H264 Nalu size control feature, necessary to make video packet that fits into the network mtu.
-  It will be no longer necessary as soon as x264 official project will accept this patch or a similar one.
-
+ 
   * download yasm normal version windows executable from yasm project page:
   http://www.tortall.net/projects/yasm/wiki/Download
   copy it as /usr/local/bin/yasm.exe
 
-  uncompress the x264 tarball
   cd into x264/ dir then run:
   ./configure --enable-pic
   make

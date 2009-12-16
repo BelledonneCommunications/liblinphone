@@ -20,14 +20,21 @@
 #import <Foundation/Foundation.h>
 #import "linphonecore.h"
 
+@protocol PhoneViewControllerDelegate
 
-@interface PhoneViewController : UIViewController <UITextFieldDelegate> {
+-(void)setPhoneNumber:(NSString*)number;
+-(void)dismissIncallView;
+-(void)displayStatus:(NSString*) message;
+@end
+@class IncallViewController;
+
+@interface PhoneViewController : UIViewController <UITextFieldDelegate,PhoneViewControllerDelegate> {
 
 @private
 	//UI definition
-	UITextField* address;
+	UILabel* address;
 	UIButton* call;
-	UIButton* cancel;
+
 	UILabel* status;
 
 	//key pad
@@ -44,17 +51,17 @@
 	UIButton* zero;
 	UIButton* hash;
 
+	UIButton* back;
 	/*
 	 * lib linphone main context
 	 */
 	LinphoneCore* mCore;
-	int traceLevel;
-	bool isTunnel;
+	IncallViewController *myIncallViewController;
+	
 	
 }
-@property (nonatomic, retain) IBOutlet UITextField* address;
+@property (nonatomic, retain) IBOutlet UILabel* address;
 @property (nonatomic, retain) IBOutlet UIButton* call;
-@property (nonatomic, retain) IBOutlet UIButton* cancel;
 @property (nonatomic, retain) IBOutlet UILabel* status;
 
 @property (nonatomic, retain) IBOutlet UIButton* one;
@@ -70,21 +77,21 @@
 @property (nonatomic, retain) IBOutlet UIButton* zero;
 @property (nonatomic, retain) IBOutlet UIButton* hash;
 
+@property (nonatomic, retain) IBOutlet UIButton* back;
 
 
-/**********************************
- * liblinphone initialization method
- **********************************/
--(void) startlibLinphone;
 
 /*
- * liblinphone scheduling method;
+ * Handle call state change from linphone
  */
--(void) iterate;
+-(void) callStateChange:(LinphoneGeneralState*) state;
+
+-(void) setLinphoneCore:(LinphoneCore*) lc;
 
 /********************
  * UI method handlers
  ********************/
+-(void)doKeyZeroLongPress;
 
 //method to handle cal/hangup events
 - (IBAction)doAction:(id)sender;
@@ -92,6 +99,9 @@
 // method to handle keypad event
 - (IBAction)doKeyPad:(id)sender;
 
+- (IBAction)doKeyPadUp:(id)sender;
 
--(PayloadType*) findPayload:(NSString*)type withRate:(int)rate from:(const MSList*)list;
+-(void) dismissAlertDialog:(UIAlertView*)alertView;
+
+
 @end

@@ -48,7 +48,8 @@ struct _AudioStream
 	MSFilter *dtmfgen;
 	MSFilter *ec;/*echo canceler*/
 	MSFilter *volsend,*volrecv; /*MSVolumes*/
-	MSFilter *resampler;
+	MSFilter *read_resampler;
+	MSFilter *write_resampler;
 	MSFilter *equalizer;
 	uint64_t last_packet_count;
 	time_t last_packet_time;
@@ -99,7 +100,7 @@ void audio_stream_set_rtcp_information(AudioStream *st, const char *cname, const
 void audio_stream_play_received_dtmfs(AudioStream *st, bool_t yesno);
 
 /* those two function do the same as audio_stream_start() but in two steps
-this is useful to make sure that sockets are open before sending an invite; 
+this is useful to make sure that sockets are open before sending an invite;
 or to start to stream only after receiving an ack.*/
 AudioStream *audio_stream_new(int locport, bool_t ipv6);
 int audio_stream_start_now(AudioStream * stream, RtpProfile * prof,  const char *remip, int remport, int rem_rtcp_port, int payload_type, int jitt_comp,MSSndCard *playcard, MSSndCard *captcard, bool_t echo_cancel);
@@ -117,7 +118,7 @@ void audio_stream_enable_gain_control(AudioStream *stream, bool_t val);
 void audio_stream_enable_automatic_gain_control(AudioStream *stream, bool_t val);
 
 /*to be done before start */
-void audio_stream_set_echo_canceler_params(AudioStream *st, int tail_len_ms, int delay_ms, int framesize);
+void audio_stream_set_echo_canceller_params(AudioStream *st, int tail_len_ms, int delay_ms, int framesize);
 
 void audio_stream_set_mic_gain(AudioStream *stream, float gain);
 

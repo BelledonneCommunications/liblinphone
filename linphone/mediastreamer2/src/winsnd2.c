@@ -901,7 +901,8 @@ static void winsndcard_unload(MSSndCardManager *m){
 
 static void winsndcard_detect(MSSndCardManager *m){
 	_winsndcard_detect(m);
-	ms_thread_create(&poller_thread,NULL,new_device_polling_thread,NULL);
+	if (poller_thread==NULL)
+		ms_thread_create(&poller_thread,NULL,new_device_polling_thread,NULL);
 }
 
 typedef struct WinSnd{
@@ -913,7 +914,7 @@ typedef struct WinSnd{
 	WAVEHDR hdrs_write[WINSND_OUT_NBUFS];
 	queue_t rq;
 	ms_mutex_t mutex;
-	unsigned int bytes_read;
+	uint64_t bytes_read;
 	unsigned int nbufs_playing;
 	bool_t running;
 
@@ -942,7 +943,7 @@ static void winsnd_apply_settings(WinSnd *d){
 #ifndef _TRUE_TIME
 static uint64_t winsnd_get_cur_time( void *data){
 	WinSnd *d=(WinSnd*)data;
-	uint64_t curtime=((uint64_t)d->bytes_read*1000)/(uint64_t)d->wfx.nAvgBytesPerSec;
+	uint64_t curtime=(d->bytes_read*1000)/(uint64_t)d->wfx.nAvgBytesPerSec;
 	/* ms_debug("winsnd_get_cur_time: bytes_read=%u return %lu\n",d->bytes_read,(unsigned long)curtime); */
 	return curtime;
 }
@@ -1105,6 +1106,12 @@ static void winsnd_read_preprocess(MSFilter *f){
 			return ;
 		}
 	}
+#ifndef _TRUE_TIME
+	ms_mutex_lock(&f->ticker->lock);
+	ms_ticker_set_time_func(f->ticker,winsnd_get_cur_time,d);
+	ms_mutex_unlock(&f->ticker->lock);
+#endif
+
 	bsize=WINSND_NSAMPLES*d->wfx.nAvgBytesPerSec/8000;
 	ms_debug("Using input buffers of %i bytes",bsize);
 	for(i=0;i<WINSND_NBUFS;++i){
@@ -1115,11 +1122,13 @@ static void winsnd_read_preprocess(MSFilter *f){
 	mr=waveInStart(d->indev);
 	if (mr != MMSYSERR_NOERROR){
 		ms_error("waveInStart() error");
+#ifndef _TRUE_TIME
+		ms_mutex_lock(&f->ticker->lock);
+		ms_ticker_set_time_func(f->ticker,NULL,NULL);
+		ms_mutex_unlock(&f->ticker->lock);
+#endif
 		return ;
 	}
-#ifndef _TRUE_TIME
-	ms_ticker_set_time_func(f->ticker,winsnd_get_cur_time,d);
-#endif
 }
 
 static void winsnd_read_postprocess(MSFilter *f){
@@ -1127,7 +1136,9 @@ static void winsnd_read_postprocess(MSFilter *f){
 	MMRESULT mr;
 	int i;
 #ifndef _TRUE_TIME
+	ms_mutex_lock(&f->ticker->lock);
 	ms_ticker_set_time_func(f->ticker,NULL,NULL);
+	ms_mutex_unlock(&f->ticker->lock);
 #endif
 	d->running=FALSE;
 	mr=waveInStop(d->indev);

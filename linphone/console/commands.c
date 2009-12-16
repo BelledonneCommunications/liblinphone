@@ -32,6 +32,8 @@
 #include <unistd.h>
 #include <linphonecore.h>
 #include "linphonec.h"
+#include "private.h"
+#include "lpconfig.h"
 
 #ifndef WIN32
 #include <sys/wait.h>
@@ -69,6 +71,8 @@ static int lpc_cmd_duration(LinphoneCore *lc, char *args);
 static int lpc_cmd_status(LinphoneCore *lc, char *args);
 static int lpc_cmd_ports(LinphoneCore *lc, char *args);
 static int lpc_cmd_speak(LinphoneCore *lc, char *args);
+static int lpc_cmd_codec(LinphoneCore *lc, char *args);
+static int lpc_cmd_echocancellation(LinphoneCore *lc, char *args);
 
 /* Command handler helpers */
 static void linphonec_proxy_add(LinphoneCore *lc);
@@ -85,6 +89,10 @@ static int linphonec_friend_call(LinphoneCore *lc, unsigned int num);
 static int linphonec_friend_add(LinphoneCore *lc, const char *name, const char *addr);
 #endif
 static int linphonec_friend_delete(LinphoneCore *lc, int num);
+static int linphonec_friend_delete(LinphoneCore *lc, int num);
+static void linphonec_codec_list(LinphoneCore *lc);
+static void linphonec_codec_enable(LinphoneCore *lc, int index);
+static void linphonec_codec_disable(LinphoneCore *lc, int index);
 
 
 
@@ -107,7 +115,7 @@ void linphonec_out(const char *fmt,...);
 LPC_COMMAND commands[] = {
 	{ "help", lpc_cmd_help, "Print commands help", NULL },
 	{ "call", lpc_cmd_call, "Call a SIP uri",
-		"'call <sip-url>' or 'c <sip-url>' "
+		"'call <sip-url>' "
 		": initiate a call to the specified destination."
 		},
 	{ "terminate", lpc_cmd_terminate, "Terminate the current call",
@@ -191,6 +199,14 @@ LPC_COMMAND commands[] = {
 			"'speak <voice name> <sentence>'	: speak a text using the specified espeak voice.\n"
 			"Example for english voice: 'speak default Hello my friend !'"
 	},
+    { "codec", lpc_cmd_codec, "Codec configuration",
+            "'codec list' : list codecs\n"  
+            "'codec enable <index>' : enable available codec\n"  
+            "'codec disable <index>' : disable codecs" }, 
+    { "ec", lpc_cmd_echocancellation, "Echo cancellation",
+            "'ec on [<delay>] [<tail>] [<framesize>]' : turn EC on with given delay, tail length and framesize\n"
+            "'ec off' : turn echo cancellation (EC) off\n"
+            "'ec show' : show EC status" },
 	{ (char *)NULL, (lpc_cmd_handler)NULL, (char *)NULL, (char *)NULL }
 };
 
@@ -748,7 +764,7 @@ lpc_cmd_proxy(LinphoneCore *lc, char *args)
 static int
 lpc_cmd_call_logs(LinphoneCore *lc, char *args)
 {
-	MSList *elem=linphone_core_get_call_logs(lc);
+	const MSList *elem=linphone_core_get_call_logs(lc);
 	for (;elem!=NULL;elem=ms_list_next(elem))
 	{
 		LinphoneCallLog *cl=(LinphoneCallLog*)elem->data;
@@ -1233,12 +1249,13 @@ linphonec_proxy_use(LinphoneCore *lc, int index)
 static void
 linphonec_friend_display(LinphoneFriend *fr)
 {
-	char *name = linphone_friend_get_name(fr);
-	char *addr = linphone_friend_get_addr(fr);
-	//char *url = linphone_friend_get_url(fr);
-
-	linphonec_out("name: %s\n", name);
-	linphonec_out("address: %s\n", addr);
+	LinphoneAddress *uri=linphone_address_clone(linphone_friend_get_uri(fr));
+	char *str;
+	
+	linphonec_out("name: %s\n", linphone_address_get_display_name(uri));
+	linphone_address_set_display_name(uri,NULL);
+	str=linphone_address_as_string(uri);
+	linphonec_out("address: %s\n", str);
 }
 
 static int
@@ -1256,8 +1273,9 @@ linphonec_friend_list(LinphoneCore *lc, char *pat)
 	for(n=0; friend!=NULL; friend=ms_list_next(friend), ++n )
 	{
 		if ( pat ) {
-			char *name = linphone_friend_get_name(friend->data);
-			if ( ! strstr(name, pat) ) continue;
+			const char *name = linphone_address_get_display_name(
+			    linphone_friend_get_uri((LinphoneFriend*)friend->data));
+			if (name && ! strstr(name, pat) ) continue;
 		}
 		linphonec_out("****** Friend %i *******\n",n);
 		linphonec_friend_display((LinphoneFriend*)friend->data);
@@ -1277,8 +1295,11 @@ linphonec_friend_call(LinphoneCore *lc, unsigned int num)
 	{
 		if ( n == num )
 		{
-			addr = linphone_friend_get_addr(friend->data);
-			return lpc_cmd_call(lc, addr);
+			int ret;
+			addr = linphone_address_as_string(linphone_friend_get_uri((LinphoneFriend*)friend->data));
+			ret=lpc_cmd_call(lc, addr);
+			ms_free(addr);
+			return ret;
 		}
 	}
 	linphonec_out("No such friend %u\n", num);
@@ -1341,6 +1362,7 @@ static int lpc_cmd_register(LinphoneCore *lc, char *args){
 	char passwd[512];
 	LinphoneProxyConfig *cfg;
 	const MSList *elem;
+    if (!args) return 0;
 	passwd[0]=proxy[0]=identity[0]='\0';
 	sscanf(args,"%s %s %s",identity,proxy,passwd);
 	if (proxy[0]=='\0' || identity[0]=='\0'){
@@ -1354,7 +1376,7 @@ static int lpc_cmd_register(LinphoneCore *lc, char *args){
 		if (osip_from_parse(from,identity)==0){
 			char realm[128];
 			snprintf(realm,sizeof(realm)-1,"\"%s\"",from->url->host);
-			info=linphone_auth_info_new(from->url->username,NULL,passwd,NULL,realm);
+			info=linphone_auth_info_new(from->url->username,NULL,passwd,NULL,NULL);
 			linphone_core_add_auth_info(lc,info);
 		}
 		osip_from_free(from);
@@ -1488,6 +1510,7 @@ static int lpc_cmd_speak(LinphoneCore *lc, char *args){
 	char *wavfile;
 	int status;
 	FILE *file;
+    if (!args) return 0;
 	memset(voice,0,sizeof(voice));
 	sscanf(args,"%s63",voice);
 	sentence=args+strlen(voice);
@@ -1509,6 +1532,148 @@ static int lpc_cmd_speak(LinphoneCore *lc, char *args){
 	linphonec_out("Sorry, this command is not implemented in windows version.");
 #endif
 	return 1;
+}
+
+static int lpc_cmd_codec(LinphoneCore *lc, char *args){
+	char *arg1 = args;
+	char *arg2 = NULL;
+	char *ptr = args;
+
+	if (!args) return 0;
+
+	/* Isolate first and second arg */
+	while(*ptr && !isspace(*ptr)) ++ptr;
+	if ( *ptr )
+	{
+		*ptr='\0';
+		arg2=ptr+1;
+		while(*arg2 && isspace(*arg2)) ++arg2;
+	}
+
+	if (strcmp(arg1,"enable")==0)
+	{
+#ifdef HAVE_READLINE
+		rl_inhibit_completion=1;
+#endif
+        if (!strcmp(arg2,"all")) linphonec_codec_enable(lc,-1);
+        else linphonec_codec_enable(lc,atoi(arg2));
+#ifdef HAVE_READLINE
+		rl_inhibit_completion=0;
+#endif
+	}
+	else if (strcmp(arg1,"list")==0)
+	{
+		linphonec_codec_list(lc);
+	}
+	else if (strcmp(arg1,"disable")==0)
+	{
+        if (!strcmp(arg2,"all")) linphonec_codec_disable(lc,-1);
+        else linphonec_codec_disable(lc,atoi(arg2));
+	}
+	else
+	{
+		return 0; /* syntax error */
+	}
+
+	return 1;
+}
+
+static void linphonec_codec_list(LinphoneCore *lc){
+	PayloadType *pt;
+    codecs_config_t *config=&lc->codecs_conf;
+	int index=0;
+	MSList *node;
+	for(node=config->audio_codecs;node!=NULL;node=ms_list_next(node)){
+		pt=(PayloadType*)(node->data);
+        linphonec_out("%2d: %s (%d) %s\n", index, pt->mime_type, pt->clock_rate, payload_type_enabled(pt) ? "enabled" : "disabled");
+		index++;
+	}
+}
+
+static void linphonec_codec_enable(LinphoneCore *lc, int sel_index){
+	PayloadType *pt;
+    codecs_config_t *config=&lc->codecs_conf;
+	int index=0;
+	MSList *node;
+    for(node=config->audio_codecs;node!=NULL;node=ms_list_next(node)){
+        if (index == sel_index || sel_index == -1) {
+		    pt=(PayloadType*)(node->data);
+            pt->flags|=PAYLOAD_TYPE_ENABLED;
+            linphonec_out("%2d: %s (%d) %s\n", index, pt->mime_type, pt->clock_rate, "enabled");
+        }
+		index++;
+	}
+}
+
+static void linphonec_codec_disable(LinphoneCore *lc, int sel_index){
+	PayloadType *pt;
+    codecs_config_t *config=&lc->codecs_conf;
+	int index=0;
+	MSList *node;
+	for(node=config->audio_codecs;node!=NULL;node=ms_list_next(node)){
+        if (index == sel_index || sel_index == -1) {
+    		pt=(PayloadType*)(node->data);
+            pt->flags&=~PAYLOAD_TYPE_ENABLED;
+            linphonec_out("%2d: %s (%d) %s\n", index, pt->mime_type, pt->clock_rate, "disabled");
+        }
+		index++;
+	}
+}
+
+static int lpc_cmd_echocancellation(LinphoneCore *lc, char *args){
+	char *arg1 = args;
+	char *arg2 = NULL;
+	char *ptr = args;
+
+	if (!args) return 0;
+
+	/* Isolate first and second arg */
+	while(*ptr && !isspace(*ptr)) ++ptr;
+	if ( *ptr )
+	{
+		*ptr='\0';
+		arg2=ptr+1;
+		while(*arg2 && isspace(*arg2)) ++arg2;
+	}
+
+	if (strcmp(arg1,"on")==0){
+        int delay, tail_len, frame_size;
+        int n;
+
+        linphone_core_enable_echo_cancellation(lc,1);
+
+        if (arg2 != 0) {
+            n = sscanf(arg2, "%d %d %d", &delay, &tail_len, &frame_size);
+
+            if (n == 1) {   
+                lp_config_set_int(lc->config,"sound","ec_delay",delay);
+            }
+            else if (n == 2) {
+                lp_config_set_int(lc->config,"sound","ec_delay",delay);
+                lp_config_set_int(lc->config,"sound","ec_tail_len",tail_len);
+            }
+            else if (n == 3) {
+                lp_config_set_int(lc->config,"sound","ec_delay",delay);
+                lp_config_set_int(lc->config,"sound","ec_tail_len",tail_len);
+                lp_config_set_int(lc->config,"sound","ec_framesize",frame_size);
+            }
+        }
+    }
+    else if (strcmp(arg1,"off")==0){
+        linphone_core_enable_echo_cancellation(lc,0);
+    }
+    else if (strcmp(arg1,"show")==0){
+        linphonec_out("echo cancellation is %s; delay %d, tail length %d, frame size %d\n", 
+            linphone_core_echo_cancellation_enabled(lc) ? "on" : "off",
+            lp_config_get_int(lc->config,"sound","ec_delay",0),
+            lp_config_get_int(lc->config,"sound","ec_tail_len",0),
+            lp_config_get_int(lc->config,"sound","ec_framesize",0));        
+    }
+    else {
+        return 0;
+    }
+
+    return 1;
 }
 
 /***************************************************************************

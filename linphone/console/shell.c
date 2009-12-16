@@ -142,7 +142,7 @@ static void spawn_linphonec(int argc, char *argv[]){
 	}
 	args[j++]=NULL;
 
-	pid = fork();
+	pid = vfork();
 	if (pid < 0){
 		fprintf(stderr,"Could not fork\n");
 		exit(-1);

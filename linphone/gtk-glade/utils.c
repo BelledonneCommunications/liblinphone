@@ -76,19 +76,24 @@ void *linphone_gtk_wait(LinphoneCore *lc, void *ctx, LinphoneWaitingState ws, co
 	return NULL;
 }
 
-gchar *linphone_gtk_get_display_name(const char *sip_uri){
-	osip_from_t *from;
-	gchar *ret=NULL;
-	if (strchr(sip_uri,'@')){
-		osip_from_init(&from);
-		if (osip_from_parse(from,sip_uri)==0){
-			if (from->displayname!=NULL && strlen(from->displayname)>0){
-				ret=g_strdup(from->displayname);
-			}
-		}
-		osip_from_free(from);
+GdkPixbuf *_gdk_pixbuf_new_from_memory_at_scale(const void *data, gint len, gint w, gint h, gboolean preserve_ratio){
+	GInputStream *stream=g_memory_input_stream_new_from_data (data,len,NULL);
+	GError *error=NULL;
+	
+	GdkPixbuf *pbuf=gdk_pixbuf_new_from_stream_at_scale (stream,w,h,preserve_ratio,NULL,&error);
+	g_input_stream_close(stream,NULL,NULL);
+	g_object_unref(G_OBJECT(stream));
+	if (pbuf==NULL){
+		g_warning("Could not open image from memory");
 	}
-	if (ret==NULL) ret=g_strdup(sip_uri);
-	return ret;
+	return pbuf;
 }
 
+GtkWidget * _gtk_image_new_from_memory_at_scale(const void *data, gint len, gint w, gint h, gboolean preserve_ratio){
+	GtkWidget *image;
+	GdkPixbuf *pbuf=_gdk_pixbuf_new_from_memory_at_scale(data,len,w,h,preserve_ratio);
+	if (pbuf==NULL) return NULL;
+	image=gtk_image_new_from_pixbuf(pbuf);
+	g_object_unref(G_OBJECT(pbuf));
+	return image;
+}

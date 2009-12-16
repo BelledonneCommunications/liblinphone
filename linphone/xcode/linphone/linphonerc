@@ -22,9 +22,9 @@ video_jitt_comp=60
 nortp_timeout=30
 
 [sound]
-playback_dev_id=AQ: Audio Queue
-ringer_dev_id=AQ: Audio Queue
-capture_dev_id=AQ: Audio Queue
+playback_dev_id=AU: Audio Unit
+ringer_dev_id=AU: Audio Unit
+capture_dev_id=AU: Audio Unit
 
 [audio_codec_0]
 mime=speex

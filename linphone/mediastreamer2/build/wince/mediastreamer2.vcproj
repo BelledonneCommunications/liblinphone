@@ -76,7 +76,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions=" /SUBSYSTEM:WINDOWSCE,5.01 /MACHINE:THUMB"
-				AdditionalDependencies=" ws2.lib iphlpapi.lib mmtimer.lib libcmtd.lib dmoguids.lib strmiids.lib strmbase.lib atlsd.lib d3dmx.lib"
+				AdditionalDependencies=" ws2.lib iphlpapi.lib mmtimer.lib libcmtd.lib "
 				IgnoreAllDefaultLibraries="true"
 				ModuleDefinitionFile="mediastreamer2.def"
 				GenerateDebugInformation="true"
@@ -98,7 +98,7 @@
 			/>
 			<DeploymentTool
 				ForceDirty="-1"
-				RemoteDirectory="%CSIDL_PROGRAM_FILES%\vbamsipua"
+				RemoteDirectory="%CSIDL_PROGRAM_FILES%\amsipua"
 				RegisterOutput="0"
 				AdditionalFiles=""
 			/>
@@ -181,7 +181,7 @@
 			/>
 			<DeploymentTool
 				ForceDirty="-1"
-				RemoteDirectory="%CSIDL_PROGRAM_FILES%\vbamsipua"
+				RemoteDirectory="%CSIDL_PROGRAM_FILES%\amsipua"
 				RegisterOutput="0"
 				AdditionalFiles=""
 			/>
@@ -311,7 +311,7 @@
 				UsePrecompiledHeader="0"
 				ProgramDataBaseFileName="$(IntDir)/mediastreamer2.pdb"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 				CompileAs="2"
 			/>
 			<Tool
@@ -329,7 +329,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions=" /SUBSYSTEM:WINDOWSCE,5.01 /MACHINE:THUMB"
-				AdditionalDependencies="ws2.lib iphlpapi.lib mmtimer.lib libcmt.lib dmoguids.lib strmiids.lib strmbase.lib atls.lib"
+				AdditionalDependencies="ws2.lib iphlpapi.lib mmtimer.lib libcmt.lib"
 				IgnoreAllDefaultLibraries="true"
 				ModuleDefinitionFile="mediastreamer2.def"
 			/>
@@ -350,7 +350,7 @@
 			/>
 			<DeploymentTool
 				ForceDirty="-1"
-				RemoteDirectory="\amsip"
+				RemoteDirectory="%CSIDL_PROGRAM_FILES%\amsipua"
 				RegisterOutput="0"
 				AdditionalFiles=""
 			/>
@@ -392,7 +392,7 @@
 				UsePrecompiledHeader="0"
 				ProgramDataBaseFileName="$(IntDir)/mediastreamer2.pdb"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 				CompileAs="2"
 			/>
 			<Tool
@@ -431,7 +431,7 @@
 			/>
 			<DeploymentTool
 				ForceDirty="-1"
-				RemoteDirectory="%CSIDL_PROGRAM_FILES%\vbamsipua"
+				RemoteDirectory="%CSIDL_PROGRAM_FILES%\amsipua"
 				RegisterOutput="0"
 				AdditionalFiles=""
 			/>
@@ -474,7 +474,7 @@
 				UsePrecompiledHeader="0"
 				ProgramDataBaseFileName="$(IntDir)/mediastreamer2.pdb"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 				CompileAs="2"
 			/>
 			<Tool
@@ -579,6 +579,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\msresample.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\msrtp.c"
 				>
 			</File>
@@ -608,6 +612,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\ulaw.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\void.c"
 				>
 			</File>
 			<File

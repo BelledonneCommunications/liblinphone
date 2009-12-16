@@ -2,7 +2,7 @@
  *            friend.c
  *
  *  Sat May 15 15:25:16 2004
- *  Copyright  2004  Simon Morlat
+ *  Copyright  2004-2009  Simon Morlat
  *  Email
  ****************************************************************************/
 
@@ -77,19 +77,19 @@ const char *linphone_online_status_to_string(LinphoneOnlineStatus ss){
 }
 
 static int friend_data_compare(const void * a, const void * b, void * data){
-	osip_from_t *fa=((LinphoneFriend*)a)->url;
-	osip_from_t *fb=((LinphoneFriend*)b)->url;
-	char *ua,*ub;
-	ua=fa->url->username;
-	ub=fb->url->username;
+	LinphoneAddress *fa=((LinphoneFriend*)a)->uri;
+	LinphoneAddress *fb=((LinphoneFriend*)b)->uri;
+	const char *ua,*ub;
+	ua=linphone_address_get_username(fa);
+	ub=linphone_address_get_username(fb);
 	if (ua!=NULL && ub!=NULL) {
 		//printf("Comparing usernames %s,%s\n",ua,ub);
 		return strcasecmp(ua,ub);
 	}
 	else {
 		/* compare hosts*/
-		ua=fa->url->host;
-		ub=fb->url->host;
+		ua=linphone_address_get_domain(fa);
+		ub=linphone_address_get_domain(fb);
 		if (ua!=NULL && ub!=NULL){
 			int ret=strcasecmp(ua,ub);
 			//printf("Comparing hostnames %s,%s,res=%i\n",ua,ub,ret);
@@ -104,11 +104,11 @@ static int friend_compare(const void * a, const void * b){
 }
 
 
-MSList *find_friend(MSList *fl, const osip_from_t *friend, LinphoneFriend **lf){
+MSList *linphone_find_friend(MSList *fl, const LinphoneAddress *friend, LinphoneFriend **lf){
 	MSList *res=NULL;
 	LinphoneFriend dummy;
 	if (lf!=NULL) *lf=NULL;
-	dummy.url=(osip_from_t*)friend;
+	dummy.uri=(LinphoneAddress*)friend;
 	res=ms_list_find_custom(fl,friend_compare,&dummy);
 	if (lf!=NULL && res!=NULL) *lf=(LinphoneFriend*)res->data;
 	return res;
@@ -137,7 +137,7 @@ void __linphone_friend_do_subscribe(LinphoneFriend *fr){
 	const char *route=NULL;
 	const char *from=NULL;
 	osip_message_t *msg=NULL;
-	osip_from_to_str(fr->url,&friend);
+	friend=linphone_address_as_string(fr->uri);
 	if (fr->proxy!=NULL){
 		route=fr->proxy->reg_route;
 		from=fr->proxy->reg_identity;
@@ -150,7 +150,7 @@ void __linphone_friend_do_subscribe(LinphoneFriend *fr){
 	eXosip_subscribe_build_initial_request(&msg,friend,from,route,"presence",600);
 	eXosip_subscribe_send_initial_request(msg);
 	eXosip_unlock();
-	osip_free(friend);
+	ms_free(friend);
 }
 
 
@@ -176,63 +176,56 @@ LinphoneFriend *linphone_friend_new_with_addr(const char *addr){
 }
 
 void linphone_core_interpret_friend_uri(LinphoneCore *lc, const char *uri, char **result){
-	int err;
-	osip_from_t *fr=NULL;
-	osip_from_init(&fr);
-	err=osip_from_parse(fr,uri);
-	if (err<0){
+	LinphoneAddress *fr=NULL;
+	*result=NULL;
+	fr=linphone_address_new(uri);
+	if (fr==NULL){
 		char *tmp=NULL;
 		if (strchr(uri,'@')!=NULL){
+			LinphoneAddress *u;
 			/*try adding sip:*/
 			tmp=ms_strdup_printf("sip:%s",uri);
+			u=linphone_address_new(tmp);
+			if (u!=NULL){
+				*result=tmp;
+			}
 		}else if (lc->default_proxy!=NULL){
 			/*try adding domain part from default current proxy*/
-			osip_from_t *id=NULL;
-			osip_from_init(&id);
-			if (osip_from_parse(id,linphone_core_get_identity(lc))==0){
-				if (id->url->port!=NULL && strlen(id->url->port)>0)
-					tmp=ms_strdup_printf("sip:%s@%s:%s",uri,id->url->host,id->url->port);
-				else tmp=ms_strdup_printf("sip:%s@%s",uri,id->url->host);
+			LinphoneAddress * id=linphone_address_new(linphone_core_get_identity(lc));
+			if (id!=NULL){
+				linphone_address_set_username(id,uri);
+				*result=linphone_address_as_string(id);
+				linphone_address_destroy(id);
 			}
-			osip_from_free(id);
 		}
-		if (osip_from_parse(fr,tmp)==0){
+		if (*result){
 			/*looks good */
-			ms_message("%s interpreted as %s",uri,tmp);
-			*result=tmp;
-		}else *result=NULL;
-	}else *result=ms_strdup(uri);
-	osip_from_free(fr);
+			ms_message("%s interpreted as %s",uri,*result);
+		}else{
+			ms_warning("Fail to interpret friend uri %s",uri);
+		}
+	}else *result=linphone_address_as_string(fr);
+	linphone_address_destroy(fr);
 }
 
 int linphone_friend_set_sip_addr(LinphoneFriend *lf, const char *addr){
-	int err;
-	osip_from_t *fr=NULL;
-	osip_from_init(&fr);
-	err=osip_from_parse(fr,addr);
-	if (err<0) {
+	LinphoneAddress *fr=linphone_address_new(addr);
+	if (fr==NULL) {
 		ms_warning("Invalid friend sip uri: %s",addr);
-		osip_from_free(fr);
 		return -1;
 	}
-	if (lf->url!=NULL) osip_from_free(lf->url);	
-	lf->url=fr;
+	if (lf->uri!=NULL) linphone_address_destroy(lf->uri);	
+	lf->uri=fr;
 	return 0;
 }
 
 int linphone_friend_set_name(LinphoneFriend *lf, const char *name){
-	osip_from_t *fr=lf->url;
+	LinphoneAddress *fr=lf->uri;
 	if (fr==NULL){
 		ms_error("linphone_friend_set_sip_addr() must be called before linphone_friend_set_name().");
 		return -1;
 	}
-	if (fr->displayname!=NULL){
-		osip_free(fr->displayname);
-		fr->displayname=NULL;
-	}
-	if (name && name[0]!='\0'){
-		fr->displayname=osip_strdup(name);
-	}
+	linphone_address_set_display_name(fr,name);
 	return 0;
 }
 
@@ -560,7 +553,8 @@ static void linphone_friend_unsubscribe(LinphoneFriend *lf){
 void linphone_friend_destroy(LinphoneFriend *lf){
 	linphone_friend_notify(lf,EXOSIP_SUBCRSTATE_TERMINATED,LINPHONE_STATUS_CLOSED);
 	linphone_friend_unsubscribe(lf);
-	if (lf->url!=NULL) osip_from_free(lf->url);
+	if (lf->uri!=NULL) linphone_address_destroy(lf->uri);
+	if (lf->info!=NULL) buddy_info_free(lf->info);
 	ms_free(lf);
 }
 
@@ -570,29 +564,10 @@ void linphone_friend_check_for_removed_proxy(LinphoneFriend *lf, LinphoneProxyCo
 	}
 }
 
-char *linphone_friend_get_addr(LinphoneFriend *lf){
-	char *ret,*tmp;
-	if (lf->url==NULL) return NULL;
-	osip_uri_to_str(lf->url->url,&tmp);
-	ret=ms_strdup(tmp);
-	osip_free(tmp);
-	return ret;
+const LinphoneAddress *linphone_friend_get_uri(const LinphoneFriend *lf){
+	return lf->uri;
 }
 
-char *linphone_friend_get_name(LinphoneFriend *lf){
-	if (lf->url==NULL) return NULL;
-	if (lf->url->displayname==NULL) return NULL;
-	return ms_strdup(lf->url->displayname);
-}
-
-char * linphone_friend_get_url(LinphoneFriend *lf){
-	char *tmp,*ret;
-	if (lf->url==NULL) return NULL;
-	osip_from_to_str(lf->url,&tmp);
-	ret=ms_strdup(tmp);
-	ms_free(tmp);
-	return ret;
-}
 
 bool_t linphone_friend_get_send_subscribe(const LinphoneFriend *lf){
 	return lf->subscribe;
@@ -606,9 +581,12 @@ LinphoneOnlineStatus linphone_friend_get_status(const LinphoneFriend *lf){
 	return lf->status;
 }
 
+BuddyInfo * linphone_friend_get_info(const LinphoneFriend *lf){
+	return lf->info;
+}
 
 void linphone_friend_apply(LinphoneFriend *fr, LinphoneCore *lc){
-	if (fr->url==NULL) {
+	if (fr->uri==NULL) {
 		ms_warning("No sip url defined.");
 		return;
 	}
@@ -638,6 +616,7 @@ void linphone_friend_apply(LinphoneFriend *fr, LinphoneCore *lc){
 		__linphone_friend_do_subscribe(fr);
 	}
 	ms_message("linphone_friend_apply() done.");
+	lc->bl_refresh=TRUE;
 }
 
 void linphone_friend_edit(LinphoneFriend *fr){
@@ -652,7 +631,7 @@ void linphone_friend_done(LinphoneFriend *fr){
 void linphone_core_add_friend(LinphoneCore *lc, LinphoneFriend *lf)
 {
 	ms_return_if_fail(lf->lc==NULL);
-	ms_return_if_fail(lf->url!=NULL);
+	ms_return_if_fail(lf->uri!=NULL);
 	lc->friends=ms_list_append(lc->friends,lf);
 	linphone_friend_apply(lf,lc);
 	return ;
@@ -665,6 +644,35 @@ void linphone_core_remove_friend(LinphoneCore *lc, LinphoneFriend* fl){
 		linphone_friend_destroy((LinphoneFriend*)el->data);
 		linphone_core_write_friends_config(lc);
 	}
+}
+
+static bool_t username_match(const char *u1, const char *u2){
+	if (u1==NULL && u2==NULL) return TRUE;
+	if (u1 && u2 && strcasecmp(u1,u2)==0) return TRUE;
+	return FALSE;
+}
+
+LinphoneFriend *linphone_core_get_friend_by_uri(const LinphoneCore *lc, const char *uri){
+	LinphoneAddress *puri=linphone_address_new(uri);
+	const MSList *elem;
+	const char *username=linphone_address_get_username(puri);
+	const char *domain=linphone_address_get_domain(puri);
+	LinphoneFriend *lf=NULL;
+		
+	if (puri==NULL){
+		return NULL;
+	}
+	for(elem=lc->friends;elem!=NULL;elem=ms_list_next(elem)){
+		lf=(LinphoneFriend*)elem->data;
+		const char *it_username=linphone_address_get_username(lf->uri);
+		const char *it_host=linphone_address_get_domain(lf->uri);;
+		if (strcasecmp(domain,it_host)==0 && username_match(username,it_username)){
+			break;
+		}
+		lf=NULL;
+	}
+	linphone_address_destroy(puri);
+	return lf;
 }
 
 #define key_compare(key, word) strncasecmp((key),(word),strlen(key))
@@ -751,8 +759,8 @@ void linphone_friend_write_to_config_file(LpConfig *config, LinphoneFriend *lf, 
 		lp_config_clean_section(config,key);
 		return;
 	}
-	if (lf->url!=NULL){
-		osip_from_to_str(lf->url,&tmp);
+	if (lf->uri!=NULL){
+		tmp=linphone_address_as_string(lf->uri);
 		if (tmp==NULL) {
 			return;
 		}

@@ -70,7 +70,8 @@ static LinphoneCoreVTable vtable={
 	.call_log_updated=linphone_gtk_call_log_updated,
 	.text_received=linphone_gtk_text_received,
 	.general_state=linphone_gtk_general_state,
-	.refer_received=linphone_gtk_refer_received
+	.refer_received=linphone_gtk_refer_received,
+	.buddy_info_updated=linphone_gtk_buddy_info_updated
 };
 
 static gboolean verbose=0;
@@ -370,10 +371,15 @@ static void set_video_window_decorations(GdkWindow *w){
 	if (!linphone_core_in_call(linphone_gtk_get_core())){
 		snprintf(video_title,sizeof(video_title),"%s video",title);	
 	}else{
-		const char *uri=linphone_core_get_remote_uri(linphone_gtk_get_core());
-		gchar *display_name=linphone_gtk_get_display_name(uri);
-		snprintf(video_title,sizeof(video_title),"Call with %s",display_name);
-		g_free(display_name);
+		const LinphoneAddress *uri=linphone_core_get_remote_uri(linphone_gtk_get_core());
+		char *display_name;
+		if (linphone_address_get_display_name(uri)!=NULL)
+			display_name=ms_strdup(linphone_address_get_display_name(uri));
+		else{
+			display_name=linphone_address_as_string(uri);
+		}
+		snprintf(video_title,sizeof(video_title),_("Call with %s"),display_name);
+		ms_free(display_name);
 	}
 	gdk_window_set_title(w,video_title);
 	/*gdk_window_set_urgency_hint(w,TRUE);*/
@@ -611,9 +617,6 @@ void linphone_gtk_terminate_call(GtkWidget *button){
 
 void linphone_gtk_decline_call(GtkWidget *button){
 	linphone_core_terminate_call(linphone_gtk_get_core(),NULL);
-	/* zsd note: there was a big here in 3.0.0 which caused an abort if
-	 * someone clicked "decline"... the following line of code looks
-	 * like a fix for that. */
 	gtk_widget_destroy(gtk_widget_get_toplevel(button));
 }
 
@@ -648,6 +651,7 @@ void linphone_gtk_used_identity_changed(GtkWidget *w){
 		linphone_core_set_default_proxy_index(linphone_gtk_get_core(),(active==0) ? -1 : (active-1));
 		linphone_gtk_show_directory_search();
 	}
+	if (sel) g_free(sel);
 }
 
 static void linphone_gtk_show_main_window(){
@@ -707,6 +711,12 @@ static void linphone_gtk_new_subscriber_response(GtkWidget *dialog, guint respon
 
 static void linphone_gtk_new_unknown_subscriber(LinphoneCore *lc, LinphoneFriend *lf, const char *url){
 	GtkWidget *dialog;
+
+	if (linphone_gtk_get_ui_config_int("subscribe_deny_all",0)){
+		linphone_core_reject_subscriber(linphone_gtk_get_core(),lf);
+		return;
+	}
+
 	gchar *message=g_strdup_printf(_("%s would like to add you to his contact list.\nWould you allow him to see your presence status or add him to your contact list ?\nIf you answer no, this person will be temporarily blacklisted."),url);
 	dialog = gtk_message_dialog_new (
 				GTK_WINDOW(linphone_gtk_get_main_window()),
@@ -777,6 +787,14 @@ static void linphone_gtk_auth_info_requested(LinphoneCore *lc, const char *realm
 	GtkWidget *label=linphone_gtk_get_widget(w,"message");
 	LinphoneAuthInfo *info;
 	gchar *msg;
+	GtkWidget *mw=linphone_gtk_get_main_window();
+	
+	if (mw && GTK_WIDGET_VISIBLE(linphone_gtk_get_widget(mw,"login_frame"))){
+		/*don't prompt for authentication when login frame is visible*/
+		linphone_core_abort_authentication(lc,NULL);
+		return;
+	}
+
 	msg=g_strdup_printf(_("Please enter your password for username <i>%s</i>\n at domain <i>%s</i>:"),
 		username,realm);
 	gtk_label_set_markup(GTK_LABEL(label),msg);
@@ -848,13 +866,16 @@ static void icon_popup_menu(GtkStatusIcon *status_icon, guint button, guint acti
 
 void linphone_gtk_open_browser(const char *url){
 	/*in gtk 2.16, gtk_show_uri does not work...*/
-	/*gtk_show_uri(NULL,url,GDK_CURRENT_TIME,NULL);*/
-#ifdef WIN32
-	ShellExecute(0,"open",url,NULL,NULL,1);
+#ifndef WIN32
+#if GTK_CHECK_VERSION(2,18,3)
+	gtk_show_uri(NULL,url,GDK_CURRENT_TIME,NULL);
 #else
 	char cl[255];
 	snprintf(cl,sizeof(cl),"/usr/bin/x-www-browser %s",url);
 	g_spawn_command_line_async(cl,NULL);
+#endif
+#else /*WIN32*/
+	ShellExecute(0,"open",url,NULL,NULL,1);
 #endif
 }
 
@@ -987,12 +1008,14 @@ static void linphone_gtk_configure_main_window(){
 	static const char *home;
 	static const char *start_call_icon;
 	static const char *stop_call_icon;
+	static gboolean update_check_menu;
 	GtkWidget *w=linphone_gtk_get_main_window();
 	if (!config_loaded){
 		title=linphone_gtk_get_ui_config("title","Linphone");
 		home=linphone_gtk_get_ui_config("home","http://www.linphone.org");
 		start_call_icon=linphone_gtk_get_ui_config("start_call_icon","green.png");
 		stop_call_icon=linphone_gtk_get_ui_config("stop_call_icon","red.png");
+		update_check_menu=linphone_gtk_get_ui_config_int("update_check_menu",0);
 		config_loaded=TRUE;
 	}
 	linphone_gtk_configure_window(w,"main_window");
@@ -1021,6 +1044,9 @@ static void linphone_gtk_configure_main_window(){
 	}
 	if (!linphone_gtk_can_manage_accounts())
 		gtk_widget_hide(linphone_gtk_get_widget(w,"run_assistant"));
+	if (update_check_menu){
+		gtk_widget_show(linphone_gtk_get_widget(w,"versioncheck"));
+	}
 }
 
 void linphone_gtk_manage_login(void){
@@ -1127,9 +1153,6 @@ int main(int argc, char *argv[]){
 	config_file=linphone_gtk_get_config_file();
 
 #ifdef WIN32
-	if (workingdir!=NULL)
-		_chdir(workingdir);
-
 	/*workaround for windows: sometimes LANG is defined to an integer value, not understood by gtk */
 	if ((lang=getenv("LANG"))!=NULL){
 		if (atoi(lang)!=0){
@@ -1139,7 +1162,7 @@ int main(int argc, char *argv[]){
 		}
 	}
 #endif
-	
+
 	if ((lang=linphone_gtk_get_lang(config_file))!=NULL && lang[0]!='\0'){
 #ifdef WIN32
 		char tmp[128];
@@ -1168,6 +1191,11 @@ int main(int argc, char *argv[]){
 		gdk_threads_leave();
 		return -1;
 	}
+#ifdef WIN32
+	if (workingdir!=NULL)
+		_chdir(workingdir);
+#endif
+
 	if (linphone_core_wake_up_possible_already_running_instance(
 		config_file, addr_to_call) == 0){
 		g_message("addr_to_call=%s",addr_to_call);
@@ -1193,7 +1221,8 @@ int main(int argc, char *argv[]){
 	linphone_gtk_init_status_icon();
 	if (!iconified)
 		linphone_gtk_show_main_window();
-	linphone_gtk_check_for_new_version();
+	if (linphone_gtk_get_ui_config_int("update_check_menu",0)==0)
+		linphone_gtk_check_for_new_version();
 
 	gtk_main();
 	gdk_threads_leave();
