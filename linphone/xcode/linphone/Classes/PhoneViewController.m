@@ -250,7 +250,7 @@
 	switch (state->new_state) {
 		case GSTATE_CALL_IN_INVITE:
 		case GSTATE_CALL_OUT_INVITE: {
-			//[myIncallViewController startCall];
+			[myIncallViewController resetView];
 			[self presentModalViewController: myIncallViewController animated:true];
 			[myIncallViewController displayStatus:@"Llamando"];
 			

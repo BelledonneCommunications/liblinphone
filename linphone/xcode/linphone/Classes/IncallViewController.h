@@ -65,6 +65,10 @@
 
 -(void) setLinphoneCore:(LinphoneCore*) lc;
 -(void) startCall;
+-(void) resetView;
+
+-(void) mute:(bool) value;
+-(void) speaker:(bool) value;
 
 -(void)displayStatus:(NSString*) message;
 

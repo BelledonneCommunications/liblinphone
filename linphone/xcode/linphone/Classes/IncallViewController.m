@@ -68,8 +68,6 @@
 // Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
 - (void)viewDidLoad {
     [super viewDidLoad];
-	isMuted = false;
-	isSpeaker = false;
 	
 }
 
@@ -89,19 +87,30 @@
 	// Release any cached data, images, etc that aren't in use.
 }
 
-- (void)viewWillAppear:(BOOL)animated {
-
-}
-
-- (void)viewWillDisappear:(BOOL)animated {
+-(void) resetView {
+	
+	[self mute:false];
+	[self speaker:false];
 	
 	if (durationRefreasher != nil) {
 		[ durationRefreasher invalidate];
+		durationRefreasher=nil;
 	}
 	[peerNumber setText:@""];
 	[callDuration setText:@""];
 	
 }
+/*
+- (void)viewWillAppear:(BOOL)animated {
+		
+}
+*/
+/*
+- (void)viewWillDisappear:(BOOL)animated {
+	
+}
+ */
+
 /*
 - (void)viewDidUnload {
 	// Release any retained subviews of the main view.
@@ -109,6 +118,39 @@
 	
 }
 */
+
+-(void) mute:(bool) value {
+	linphone_core_mute_mic(myLinphoneCore,value);
+	if (value) {
+		[mute setImage:[UIImage imageNamed:@"icono_silencio_2.png"] forState:UIControlStateNormal];
+	} else {
+		[mute setImage:[UIImage imageNamed:@"icono_silencio_1.png"] forState:UIControlStateNormal];
+	}
+	isMuted=value;
+	// swithc buttun state
+};
+
+-(void) speaker:(bool) value {
+	if (value) {
+		//redirect audio to speaker
+		UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_Speaker;  
+		AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute
+								 , sizeof (audioRouteOverride)
+								 , &audioRouteOverride);
+		[speaker setImage:[UIImage imageNamed:@"icono_altavoz_2.png"] forState:UIControlStateNormal];
+	} else {
+		//Cancel audio route redirection
+		UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_None;  
+		AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute
+								 , sizeof (audioRouteOverride)
+								 , &audioRouteOverride);
+		[speaker setImage:[UIImage imageNamed:@"icono_altavoz_1.png"] forState:UIControlStateNormal];
+	}
+	isSpeaker=value;
+	
+};
+
+
 -(void) setLinphoneCore:(LinphoneCore*) lc {
 	myLinphoneCore = lc;
 }
@@ -191,33 +233,10 @@
 		[controlSubView setHidden:false];
 		[padSubView setHidden:true];
 	} else if (sender == mute) {
-		isMuted = isMuted?false:true;
-		linphone_core_mute_mic(myLinphoneCore,isMuted);
-		// swithc buttun state
-		UIImage * tmpImage = [mute backgroundImageForState: UIControlStateNormal];
-		[mute setBackgroundImage:[mute backgroundImageForState: UIControlStateHighlighted] forState:UIControlStateNormal];
-		[mute setBackgroundImage:tmpImage forState:UIControlStateHighlighted];
+		[self mute:!isMuted]; 
 		
 	} else if (sender == speaker) {
-		isSpeaker = isSpeaker?false:true;
-		if (isSpeaker) {
-			//redirect audio to speaker
-			UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_Speaker;  
-			AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute
-									 , sizeof (audioRouteOverride)
-									 , &audioRouteOverride);
-		} else {
-			//Cancel audio route redirection
-			UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_None;  
-			AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute
-									 , sizeof (audioRouteOverride)
-									 , &audioRouteOverride);
-		}
-		// switch button state
-		UIImage * tmpImage = [speaker backgroundImageForState: UIControlStateNormal];
-		[speaker setBackgroundImage:[speaker backgroundImageForState: UIControlStateHighlighted] forState:UIControlStateNormal];
-		[speaker setBackgroundImage:tmpImage forState:UIControlStateHighlighted];
-		
+		[self speaker:!isSpeaker];		
 	}else  {
 		NSLog(@"unknown event from incall view");	
 	}
