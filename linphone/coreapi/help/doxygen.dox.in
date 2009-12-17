@@ -33,9 +33,42 @@
 **/
 
 /**
+ * @defgroup call_control Call control
+ *
+ * The application can initiate outgoing calls with linphone_core_invite().
+ * It is notified of incoming call thanks to the inv_recv callback of the LinphoneCoreVTable
+ * structure that is passed at creation of the LinphoneCore object.
+ * It can then answer calls with linphone_core_accept_call().
+ * Calls can be terminated or declined with linphone_core_terminate_call().
+ * The application is notified when the remote party hangups thanks to 
+ * bye_recv callback of the #LinphoneCoreVTable.
+**/
+
+/**
  * @defgroup media_parameters Controlling media parameters
 **/
 
 /**
- * @defgroup misc Miscenalleous: logs, version strings
+ * @defgroup proxies Managing proxies
+**/
+
+/**
+ * @defgroup network_parameters Controlling network parameters (ports, mtu...)
+**/
+
+/**
+ * @defgroup authentication Managing authentication: userid and passwords
+**/
+
+/**
+ * @defgroup call_logs Managing call logs
+**/
+
+/**
+ * @defgroup linphone_address SIP address parser API.
+ * This api is useful for manipulating SIP addresses ('from' or 'to' headers).
+**/
+
+/**
+ * @defgroup misc Miscenalleous: logs, version strings, config storage
 **/
