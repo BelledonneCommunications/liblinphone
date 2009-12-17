@@ -188,7 +188,9 @@ typedef struct _LinphoneCallLog{
 	LinphoneAddress *to;
 	char start_date[128];
 	int duration;
+	char *refkey;
 	void *user_pointer;
+	struct _LinphoneCore *lc;
 } LinphoneCallLog;
 
 
@@ -196,6 +198,8 @@ typedef struct _LinphoneCallLog{
 /*public: */
 void linphone_call_log_set_user_pointer(LinphoneCallLog *cl, void *up);
 void *linphone_call_log_get_user_pointer(const LinphoneCallLog *cl);
+void linphone_call_log_set_ref_key(LinphoneCallLog *cl, const char *refkey);
+const char *linphone_call_log_get_ref_key(const LinphoneCallLog *cl);
 char * linphone_call_log_to_str(LinphoneCallLog *cl);
 
 typedef enum{
@@ -234,6 +238,7 @@ typedef struct _LinphoneFriend{
 	struct _LinphoneProxyConfig *proxy;
 	struct _LinphoneCore *lc;
 	BuddyInfo *info;
+	char *refkey;
 	bool_t subscribe;
 	bool_t inc_subscribe_pending;
 }LinphoneFriend;	
@@ -253,6 +258,8 @@ bool_t linphone_friend_get_send_subscribe(const LinphoneFriend *lf);
 LinphoneSubscribePolicy linphone_friend_get_inc_subscribe_policy(const LinphoneFriend *lf);
 LinphoneOnlineStatus linphone_friend_get_status(const LinphoneFriend *lf);
 BuddyInfo * linphone_friend_get_info(const LinphoneFriend *lf);
+void linphone_friend_set_ref_key(LinphoneFriend *lf, const char *key);
+const char *linphone_friend_get_ref_key(const LinphoneFriend *lf);
 #define linphone_friend_in_list(lf)	((lf)->lc!=NULL)
 
 #define linphone_friend_url(lf) ((lf)->url)
@@ -545,10 +552,7 @@ void linphone_core_set_user_agent(const char *ua_name, const char *version);
 const char *linphone_core_get_version(void);
 
 LinphoneCore *linphone_core_new(const LinphoneCoreVTable *vtable,
-						const char *config_path, void* userdata);
-
-void linphone_core_init(LinphoneCore *lc, const LinphoneCoreVTable *vtable,
-						const char *config_path, void * userdata);
+						const char *config_path, const char *factory_config, void* userdata);
 
 /* function to be periodically called in a main loop */
 void linphone_core_iterate(LinphoneCore *lc);
@@ -721,13 +725,15 @@ void linphone_core_add_friend(LinphoneCore *lc, LinphoneFriend *fr);
 void linphone_core_remove_friend(LinphoneCore *lc, LinphoneFriend *fr);
 void linphone_core_reject_subscriber(LinphoneCore *lc, LinphoneFriend *lf);
 /* a list of LinphoneFriend */
-const MSList * linphone_core_get_friend_list(LinphoneCore *lc);
+const MSList * linphone_core_get_friend_list(const LinphoneCore *lc);
 /* notify all friends that have subscribed */
 void linphone_core_notify_all_friends(LinphoneCore *lc, LinphoneOnlineStatus os);
 LinphoneFriend *linphone_core_get_friend_by_uri(const LinphoneCore *lc, const char *uri);
+LinphoneFriend *linphone_core_get_friend_by_ref_key(const LinphoneCore *lc, const char *key);
 
 /* returns a list of LinphoneCallLog */
 const MSList * linphone_core_get_call_logs(LinphoneCore *lc);
+void linphone_core_clear_call_logs(LinphoneCore *lc);
 
 /* video support */
 void linphone_core_enable_video(LinphoneCore *lc, bool_t vcap_enabled, bool_t display_enabled);
@@ -793,7 +799,6 @@ void linphone_core_set_waiting_callback(LinphoneCore *lc, LinphoneWaitingCallbac
 /*returns the list of registered SipSetup (linphonecore plugins) */
 const MSList * linphone_core_get_sip_setups(LinphoneCore *lc);
 
-void linphone_core_uninit(LinphoneCore *lc);
 void linphone_core_destroy(LinphoneCore *lc);
 
 /*for advanced users:*/
