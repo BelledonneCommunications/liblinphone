@@ -106,7 +106,9 @@
 
 - (IBAction)doKeyPadUp:(id)sender;
 
+
 -(void) dismissAlertDialog:(UIAlertView*)alertView;
 
 
+-(void) displayNetworkErrorAlert; 
 @end

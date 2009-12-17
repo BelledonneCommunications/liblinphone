@@ -101,11 +101,16 @@
 	[callDuration setText:@""];
 	
 }
-/*
+
 - (void)viewWillAppear:(BOOL)animated {
-		
+	const LinphoneAddress* address = linphone_core_get_remote_uri(myLinphoneCore);
+	const char* displayName =  linphone_address_get_display_name(address)?linphone_address_get_display_name(address):"";
+	[peerName setText:[NSString stringWithCString:displayName length:strlen(displayName)]];
+	
+	const char* username = linphone_address_get_username(address)!=0?linphone_address_get_username(address):"";
+	[peerNumber setText:[NSString stringWithCString:username length:strlen(username)]];
 }
-*/
+
 /*
 - (void)viewWillDisappear:(BOOL)animated {
 	
@@ -162,12 +167,6 @@
 
 -(void) startCall {
 	[status setText:@""];
-	const LinphoneAddress* address = linphone_core_get_remote_uri(myLinphoneCore);
-	const char* displayName =  linphone_address_get_display_name(address)?linphone_address_get_display_name(address):"";
-	[peerName setText:[NSString stringWithCString:displayName length:strlen(displayName)]];
-	
-	const char* username = linphone_address_get_username(address)!=0?linphone_address_get_username(address):"";
-	[peerNumber setText:[NSString stringWithCString:username length:strlen(username)]];
 	// start scheduler
 	durationRefreasher = [NSTimer scheduledTimerWithTimeInterval:1 
 									 target:self 

@@ -75,6 +75,15 @@
 	toUserName = [toUserName stringByReplacingOccurrencesOfString:@" " withString:@""];
 	
 	if (sender == call) {
+		// check if ready to place a call
+		LinphoneProxyConfig* proxyCfg;	
+		//get default proxy
+		linphone_core_get_default_proxy(mCore,&proxyCfg);
+		if (!linphone_proxy_config_is_registered(proxyCfg)) {
+			[self displayNetworkErrorAlert];
+			return;
+		}
+		
 		if (!linphone_core_in_call(mCore)) {
 			LinphoneAddress* tmpAddress = linphone_address_new(linphone_core_get_identity(mCore));
 			linphone_address_set_username(tmpAddress,[toUserName cStringUsingEncoding:[NSString defaultCStringEncoding]]);
@@ -174,6 +183,15 @@
 	[status setText:message];
 }
 
+-(void) displayNetworkErrorAlert {
+	UIAlertView* error = [[UIAlertView alloc] initWithTitle:@"Network error"
+													message:@"No wifi access or wrong user account settings" 
+												   delegate:nil 
+										  cancelButtonTitle:@"Ok" 
+										  otherButtonTitles:nil];
+	[error show];
+	
+}
 /*
  // The designated initializer.  Override if you create the controller programmatically and want to perform customization that is not appropriate for viewDidLoad.
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -251,6 +269,10 @@
 	//	GSTATE_CALL_ERROR,
 	//	GSTATE_INVALID
 	switch (state->new_state) {
+		case GSTATE_REG_FAILED: {
+			[self displayNetworkErrorAlert];
+			break;
+		}
 		case GSTATE_CALL_IN_INVITE:
 		case GSTATE_CALL_OUT_INVITE: {
 			[myIncallViewController resetView];
@@ -261,8 +283,8 @@
 		}
 			
 		case GSTATE_CALL_ERROR: {
-			NSString* lTitle= state->message!=nil?[NSString stringWithCString:state->message length:strlen(state->message)]: @"Error";
-			NSString* lMessage=lTitle;
+			NSString* lTitle= @"Error";
+			NSString* lMessage=state->message!=nil?[NSString stringWithCString:state->message length:strlen(state->message)]: @"";
 			
 			
 			UIAlertView* error = [[UIAlertView alloc] initWithTitle:lTitle
