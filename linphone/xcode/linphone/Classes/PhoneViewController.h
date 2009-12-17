@@ -24,17 +24,18 @@
 
 -(void)setPhoneNumber:(NSString*)number;
 -(void)setPhoneNumber:(NSString*)number withDisplayName:(NSString*) name;
+//-(void)setContact:(ABRecordID) recordId withProperty;
 
 -(void)dismissIncallView;
 -(void)displayStatus:(NSString*) message;
 @end
 @class IncallViewController;
 
+
 @interface PhoneViewController : UIViewController <UITextFieldDelegate,PhoneViewControllerDelegate> {
 
 @private
 	//UI definition
-	UILabel* address;
 	UIButton* call;
 	UIButton* gsmCall;
 
@@ -59,7 +60,12 @@
 	 * lib linphone main context
 	 */
 	LinphoneCore* mCore;
+	// to params, might be put in a separated object
+	UILabel* address;
 	NSString* displayName;
+	//ABRecordID contactRecordId:-1;
+	
+	
 	IncallViewController *myIncallViewController;
 	
 	
@@ -90,6 +96,7 @@
  * Handle call state change from linphone
  */
 -(void) callStateChange:(LinphoneGeneralState*) state;
+-(void) callLogUpdated:(LinphoneCallLog*) log;
 
 -(void) setLinphoneCore:(LinphoneCore*) lc;
 

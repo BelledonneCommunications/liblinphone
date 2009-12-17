@@ -56,6 +56,11 @@ void linphone_iphone_general_state(LinphoneCore *lc, LinphoneGeneralState *gstat
 	PhoneViewController* lPhone = ((linphoneAppDelegate*) linphone_core_get_user_data(lc)).myPhoneViewController;
 	[lPhone callStateChange:gstate];
 }
+void linphone_iphone_calllog_updated(LinphoneCore *lc, LinphoneCallLog *newcl) {
+	PhoneViewController* lPhone = ((linphoneAppDelegate*) linphone_core_get_user_data(lc)).myPhoneViewController;
+	[lPhone  callLogUpdated:newcl];
+
+}
 
 LinphoneCoreVTable linphonec_vtable = {
 .show =(ShowInterfaceCb) linphone_iphone_show,

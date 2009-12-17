@@ -52,10 +52,28 @@
 		[displayName release];
 		displayName=nil;
 	}
+	//contactRecordId=-1;
 }
 -(void)setPhoneNumber:(NSString*)number withDisplayName:(NSString*) name {
 	[self setPhoneNumber:number];
 	displayName = name;
+}
+/*
+-(void)setContact:(ABRecordID) recordId {
+	
+	ABAddressBookRef addressBook = ABAddressBookCreate ();
+	ABRecordRef  recordRef = ABAddressBookGetPersonWithRecordID(addressBook,recordId);
+	if (!recordRef) {
+		NSLog("wrong record id");
+		return;
+	}
+	
+	contactRecordId = recordId;
+}
+*/
+
+-(void) callLogUpdated:(LinphoneCallLog*) log {
+	//nop
 }
 
 -(void)dismissIncallView {
