@@ -160,13 +160,15 @@ LinphoneCoreVTable linphonec_vtable = {
 	
 	//get default config from bundle
 	NSBundle* myBundle = [NSBundle mainBundle];
-	NSString* defaultConfigFile = [myBundle pathForResource:@"linphonerc"ofType:nil] ;
+	NSString* factoryConfigFile = [myBundle pathForResource:@"linphonerc"ofType:nil] ;
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	NSString *confiFileName = [[paths objectAtIndex:0] stringByAppendingString:@"/.linphonerc"];
 #if TARGET_IPHONE_SIMULATOR
 	NSDictionary *dictionary = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:NSFileImmutable];
-	[[NSFileManager defaultManager] setAttributes:dictionary ofItemAtPath:defaultConfigFile error:nil];
+	[[NSFileManager defaultManager] setAttributes:dictionary ofItemAtPath:factoryConfigFile error:nil];
 #endif
 	//log management	
-	traceLevel = 9;	 
+	traceLevel = 6;	 
 	if (traceLevel > 0) {
 		//redirect all traces to the iphone log framework
 		linphone_core_enable_logs_with_cb(linphone_iphone_log_handler);
@@ -182,7 +184,10 @@ LinphoneCoreVTable linphonec_vtable = {
 	 * Initialize linphone core
 	 */
 	
-	myLinphoneCore = linphone_core_new (&linphonec_vtable, [defaultConfigFile cStringUsingEncoding:[NSString defaultCStringEncoding]],self);
+	myLinphoneCore = linphone_core_new (&linphonec_vtable, 
+										[confiFileName cStringUsingEncoding:[NSString defaultCStringEncoding]],
+										[factoryConfigFile cStringUsingEncoding:[NSString defaultCStringEncoding]],
+										self);
 
 	//tunneling config
 	isTunnel = [[NSUserDefaults standardUserDefaults] boolForKey:@"tunnelenable_preference"]; 
