@@ -114,15 +114,21 @@
     
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
-        cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier] autorelease];
+        cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier] autorelease];
 		
     }
     
     // Set up the cell...
 	LinphoneCallLog*  callLogs = ms_list_nth_data(linphone_core_get_call_logs(myLinphoneCore), indexPath.row) ;
 	const char* username = linphone_address_get_username(callLogs->to)!=0?linphone_address_get_username(callLogs->to):"";
+	const char* displayName = linphone_address_get_display_name(callLogs->to);
+	if (displayName) {
+		[cell.textLabel setText:[[NSString alloc] initWithCString:displayName encoding:[NSString defaultCStringEncoding]]];
+		[cell.detailTextLabel setText:[NSString stringWithFormat:@"%s"/* [%s]"*/,username/*,callLogs->start_date*/]];
+	} else {
+		[cell.textLabel setText:[[NSString alloc] initWithCString:username encoding:[NSString defaultCStringEncoding]]];
+	}
 	
-	[cell.textLabel setText:[[NSString alloc] initWithCString:username encoding:[NSString defaultCStringEncoding]]];
 
 	
 	NSString *path;
@@ -150,7 +156,11 @@
 	
 	LinphoneCallLog*  callLogs = ms_list_nth_data(linphone_core_get_call_logs(myLinphoneCore), indexPath.row) ;
 	const char* username = linphone_address_get_username(callLogs->to)!=0?linphone_address_get_username(callLogs->to):"";
-	[self.phoneControllerDelegate setPhoneNumber:[[NSString alloc] initWithCString:username encoding:[NSString defaultCStringEncoding]]];
+	const char* displayName = linphone_address_get_display_name(callLogs->to)!=0?linphone_address_get_display_name(callLogs->to):"";
+	[self.phoneControllerDelegate 
+									setPhoneNumber:[[NSString alloc] initWithCString:username encoding:[NSString defaultCStringEncoding]] 
+									withDisplayName:[[NSString alloc] initWithCString:displayName encoding:[NSString defaultCStringEncoding]]];
+	
 	[self.linphoneDelegate selectDialerTab];
 }
 

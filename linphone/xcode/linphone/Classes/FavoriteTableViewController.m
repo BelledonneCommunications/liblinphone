@@ -123,12 +123,18 @@
     
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
-        cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier] autorelease];
+        cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier] autorelease];
     }
     LinphoneFriend* friend = ms_list_nth_data(linphone_core_get_friend_list(myLinphoneCore), indexPath.row);
     const char* name = linphone_address_get_username(linphone_friend_get_uri(friend));
+	const char* displayName = linphone_address_get_display_name(linphone_friend_get_uri(friend));
 	
-	[cell.textLabel setText:[[NSString alloc] initWithCString:name encoding:[NSString defaultCStringEncoding]]];
+	if (displayName) {
+		[cell.textLabel setText:[[NSString alloc] initWithCString:displayName encoding:[NSString defaultCStringEncoding]]];
+		[cell.detailTextLabel setText:[NSString stringWithFormat:@"%s",name]];
+	} else {
+		[cell.textLabel setText:[NSString stringWithFormat:@"%s",name]];
+	}
 	cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
 	
     return cell;
@@ -149,7 +155,13 @@
 	// [anotherViewController release];
     LinphoneFriend* friend = ms_list_nth_data(linphone_core_get_friend_list(myLinphoneCore), indexPath.row);
     const char* name = linphone_address_get_username(linphone_friend_get_uri(friend));
-	[phoneControllerDelegate setPhoneNumber:[[NSString alloc] initWithCString:name encoding:[NSString defaultCStringEncoding]]];
+	const char* displayName = linphone_address_get_display_name(linphone_friend_get_uri(friend))!=0
+								?linphone_address_get_display_name(linphone_friend_get_uri(friend))
+								:"";
+	
+	[phoneControllerDelegate 
+							setPhoneNumber:[[NSString alloc] initWithCString:name encoding:[NSString defaultCStringEncoding]] 
+							withDisplayName:[[NSString alloc] initWithCString:displayName encoding:[NSString defaultCStringEncoding]]];
 	[linphoneDelegate selectDialerTab];
 	
 	
@@ -221,9 +233,8 @@
 	
 	LinphoneFriend * newFriend = linphone_friend_new_with_addr([phoneUri cStringUsingEncoding:[NSString defaultCStringEncoding]]);
 	
-	linphone_friend_set_name(newFriend,[compositeName cStringUsingEncoding:[NSString defaultCStringEncoding]]);
+	linphone_address_set_display_name(linphone_friend_get_uri(newFriend),[compositeName cStringUsingEncoding:[NSString defaultCStringEncoding]]);
 	linphone_friend_send_subscribe(newFriend, false);
-	//linphone_friend_set_sip_addr(newFriend, const char *uri);
 	linphone_core_add_friend(myLinphoneCore, newFriend);
 	[self dismissModalViewControllerAnimated:true];
 	return false;
