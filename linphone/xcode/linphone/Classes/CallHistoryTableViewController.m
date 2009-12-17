@@ -22,7 +22,7 @@
 
 @implementation CallHistoryTableViewController
 
-
+@synthesize clear;
 
 /*
 - (id)initWithStyle:(UITableViewStyle)style {
@@ -86,6 +86,12 @@
 }
 
 
+-(void) doAction:(id)sender {
+	if (sender==clear) {
+		linphone_core_clear_call_logs(myLinphoneCore);
+		[self.tableView reloadData];
+	}
+}
 
 #pragma mark Table view methods
 
