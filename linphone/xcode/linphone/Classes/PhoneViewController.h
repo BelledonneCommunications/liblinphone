@@ -36,6 +36,7 @@
 	//UI definition
 	UILabel* address;
 	UIButton* call;
+	UIButton* gsmCall;
 
 	UILabel* status;
 
@@ -65,6 +66,7 @@
 }
 @property (nonatomic, retain) IBOutlet UILabel* address;
 @property (nonatomic, retain) IBOutlet UIButton* call;
+@property (nonatomic, retain) IBOutlet UIButton* gsmCall;
 @property (nonatomic, retain) IBOutlet UILabel* status;
 
 @property (nonatomic, retain) IBOutlet UIButton* one;

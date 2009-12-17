@@ -28,6 +28,7 @@
 @implementation PhoneViewController
 @synthesize  address ;
 @synthesize  call;
+@synthesize  gsmCall;
 @synthesize status;
 
 @synthesize one;
@@ -63,17 +64,18 @@
 
 //implements call/cancel button behavior 
 -(IBAction) doAction:(id)sender {
+	//1 normalize phone number
+	
+	NSString* toUserName = [NSString stringWithString:[address text]];
+	toUserName = [toUserName stringByReplacingOccurrencesOfString:@"(" withString:@""];
+	toUserName = [toUserName stringByReplacingOccurrencesOfString:@")" withString:@""];
+	toUserName = [toUserName stringByReplacingOccurrencesOfString:@"-" withString:@""];
+	toUserName = [toUserName stringByReplacingOccurrencesOfString:@"." withString:@""];
+	toUserName = [toUserName stringByReplacingOccurrencesOfString:@"/" withString:@""];
+	toUserName = [toUserName stringByReplacingOccurrencesOfString:@" " withString:@""];
 	
 	if (sender == call) {
 		if (!linphone_core_in_call(mCore)) {
-			NSString* toUserName = [NSString stringWithString:[address text]];
-			toUserName = [toUserName stringByReplacingOccurrencesOfString:@"(" withString:@""];
-			toUserName = [toUserName stringByReplacingOccurrencesOfString:@")" withString:@""];
-			toUserName = [toUserName stringByReplacingOccurrencesOfString:@"-" withString:@""];
-			toUserName = [toUserName stringByReplacingOccurrencesOfString:@"." withString:@""];
-			toUserName = [toUserName stringByReplacingOccurrencesOfString:@"/" withString:@""];
-			toUserName = [toUserName stringByReplacingOccurrencesOfString:@" " withString:@""];
-			
 			LinphoneAddress* tmpAddress = linphone_address_new(linphone_core_get_identity(mCore));
 			linphone_address_set_username(tmpAddress,[toUserName cStringUsingEncoding:[NSString defaultCStringEncoding]]);
 			linphone_address_set_display_name(tmpAddress,displayName?[displayName cStringUsingEncoding:[NSString defaultCStringEncoding]]:nil);
@@ -89,9 +91,10 @@
 		AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute
 					, sizeof (audioRouteOverride)
 					, &audioRouteOverride);
-		
-	
-	} 
+	} else if (sender == gsmCall) {
+		NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"tel:%@", toUserName]];
+		[[UIApplication sharedApplication] openURL:url];
+	}
 
 }
 
