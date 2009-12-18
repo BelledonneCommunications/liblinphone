@@ -26,7 +26,7 @@
 @synthesize logs;
 @synthesize clear;
 @synthesize logsView;
-NSString* MoreViewController_logs;
+NSMutableString* MoreViewController_logs;
 
 /*
  // The designated initializer.  Override if you create the controller programmatically and want to perform customization that is not appropriate for viewDidLoad.
@@ -82,11 +82,13 @@ NSString* MoreViewController_logs;
 +(void) addLog:(NSString*) log {
 	@synchronized(self) {
 		if (!MoreViewController_logs) {
-			MoreViewController_logs = [[NSString alloc] init];
+			MoreViewController_logs = [[NSMutableString alloc] init];
 		}
-		NSString* newlog = [[NSString  alloc] initWithFormat:@"%@\n%@",MoreViewController_logs,log];
-		[MoreViewController_logs release];
-		MoreViewController_logs= newlog;
+		[MoreViewController_logs appendString:log];
+		if (MoreViewController_logs.length > 10000) {
+			NSRange range = {0,log.length};
+			[MoreViewController_logs deleteCharactersInRange:range];
+		}
 	}
 }
 -(void) doAction:(id) sender{
