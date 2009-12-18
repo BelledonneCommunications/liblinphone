@@ -26,17 +26,24 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import "osip2/osip.h"
 #import "FavoriteTableViewController.h"
+#import "MoreViewController.h"
+
 extern void ms_au_register_card();
 //generic log handler for debug version
 void linphone_iphone_log_handler(OrtpLogLevel lev, const char *fmt, va_list args){
 	NSString* format = [[NSString alloc] initWithCString:fmt encoding:[NSString defaultCStringEncoding]];
 	NSLogv(format,args);
+	NSString* formatedString = [[NSString alloc] initWithFormat:format arguments:args];
+	[MoreViewController addLog:formatedString];
 	[format release];
+	[formatedString release];
 }
 
 //Error/warning log handler 
 void linphone_iphone_log(struct _LinphoneCore * lc, const char * message) {
-	NSLog([NSString stringWithCString:message length:strlen(message)]);
+	NSString* log = [NSString stringWithCString:message length:strlen(message)]; 
+	NSLog(log);
+	[MoreViewController addLog:log];
 }
 //status 
 void linphone_iphone_display_status(struct _LinphoneCore * lc, const char * message) {
@@ -93,13 +100,17 @@ LinphoneCoreVTable linphonec_vtable = {
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application {    
 	
+	isDebug = [[NSUserDefaults standardUserDefaults] boolForKey:@"debugenable_preference"]; 
 	//as defined in PhoneMainView.xib		
-#define DIALER_TAB_INDEX 2
-#define CONTACTS_TAB_INDEX 3
-#define HISTORY_TAB_INDEX 1
-#define FAVORITE_TAB_INDEX 0	
-#define MORE_TAB_INDEX 4
+	#define DIALER_TAB_INDEX 2
+	#define CONTACTS_TAB_INDEX 3
+	#define HISTORY_TAB_INDEX 1
+	#define FAVORITE_TAB_INDEX 0	
+	#define MORE_TAB_INDEX 4
 	
+	if (isDebug) {
+		[ (MoreViewController*)[myTabBarController.viewControllers objectAtIndex: MORE_TAB_INDEX] enableLogView];
+	}
 	
 	myPhoneViewController = (PhoneViewController*) [myTabBarController.viewControllers objectAtIndex: DIALER_TAB_INDEX];
 	
@@ -172,7 +183,7 @@ LinphoneCoreVTable linphonec_vtable = {
 	NSDictionary *dictionary = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:NSFileImmutable];
 	[[NSFileManager defaultManager] setAttributes:dictionary ofItemAtPath:factoryConfigFile error:nil];
 #endif
-	isDebug = [[NSUserDefaults standardUserDefaults] boolForKey:@"debugenable_preference"]; 
+	
 	//log management	
 	if (isDebug) {
 		//redirect all traces to the iphone log framework

@@ -141,6 +141,8 @@
 		22B5F03510CE6B2F00777D97 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B5F03410CE6B2F00777D97 /* AddressBook.framework */; };
 		22B5F1E110CFA3C700777D97 /* IncallViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 22B5F1E010CFA3C700777D97 /* IncallViewController.xib */; };
 		22B5F1EA10CFD55A00777D97 /* IncallViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 22B5F1E810CFD55A00777D97 /* IncallViewController.m */; };
+		22D0FD3010DB627B00671BCD /* MoreViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 22D0FD2E10DB627B00671BCD /* MoreViewController.m */; };
+		22D0FD3110DB627B00671BCD /* MoreViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 22D0FD2F10DB627B00671BCD /* MoreViewController.xib */; };
 		22F2508E107141E100AC9B3F /* PhoneViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 22F2508C107141E100AC9B3F /* PhoneViewController.m */; };
 		22F2508F107141E100AC9B3F /* PhoneViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 22F2508D107141E100AC9B3F /* PhoneViewController.xib */; };
 		22F254811073D99800AC9B3F /* ringback.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22F254801073D99800AC9B3F /* ringback.wav */; };
@@ -410,6 +412,9 @@
 		22B5F1E010CFA3C700777D97 /* IncallViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = IncallViewController.xib; sourceTree = "<group>"; };
 		22B5F1E710CFD55A00777D97 /* IncallViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IncallViewController.h; sourceTree = "<group>"; };
 		22B5F1E810CFD55A00777D97 /* IncallViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IncallViewController.m; sourceTree = "<group>"; };
+		22D0FD2D10DB627B00671BCD /* MoreViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MoreViewController.h; sourceTree = "<group>"; };
+		22D0FD2E10DB627B00671BCD /* MoreViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MoreViewController.m; sourceTree = "<group>"; };
+		22D0FD2F10DB627B00671BCD /* MoreViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MoreViewController.xib; sourceTree = "<group>"; };
 		22F2508B107141E100AC9B3F /* PhoneViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PhoneViewController.h; sourceTree = "<group>"; };
 		22F2508C107141E100AC9B3F /* PhoneViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PhoneViewController.m; sourceTree = "<group>"; };
 		22F2508D107141E100AC9B3F /* PhoneViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = PhoneViewController.xib; sourceTree = "<group>"; };
@@ -476,6 +481,9 @@
 				2242D9C210D68DFD00E9963F /* FavoriteTableViewController.xib */,
 				2242D9C710D691F900E9963F /* GenericTabViewController.h */,
 				2242D9C810D691F900E9963F /* GenericTabViewController.m */,
+				22D0FD2D10DB627B00671BCD /* MoreViewController.h */,
+				22D0FD2E10DB627B00671BCD /* MoreViewController.m */,
+				22D0FD2F10DB627B00671BCD /* MoreViewController.xib */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -1064,6 +1072,7 @@
 				2206488B10D8CCF700632606 /* favoritosgris.jpg in Resources */,
 				2206488C10D8CCF700632606 /* llamadasrecientes_gris.jpg in Resources */,
 				220648C510D8D0B700632606 /* logo_axtel_99x99.jpg in Resources */,
+				22D0FD3110DB627B00671BCD /* MoreViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1083,6 +1092,7 @@
 				2242D9C310D68DFD00E9963F /* FavoriteTableViewController.m in Sources */,
 				2242D9C910D691F900E9963F /* GenericTabViewController.m in Sources */,
 				220646AB10D7B90300632606 /* tunnel.cc in Sources */,
+				22D0FD3010DB627B00671BCD /* MoreViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
