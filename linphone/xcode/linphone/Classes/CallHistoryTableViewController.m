@@ -119,7 +119,8 @@
     }
     
     // Set up the cell...
-	LinphoneCallLog*  callLogs = ms_list_nth_data(linphone_core_get_call_logs(myLinphoneCore), indexPath.row) ;
+	const MSList * logs = linphone_core_get_call_logs(myLinphoneCore);
+	LinphoneCallLog*  callLogs = ms_list_nth_data(logs,  ms_list_size(logs)-indexPath.row-1) ;
 	const char* username = linphone_address_get_username(callLogs->to)!=0?linphone_address_get_username(callLogs->to):"";
 	const char* displayName = linphone_address_get_display_name(callLogs->to);
 	if (displayName) {

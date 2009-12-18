@@ -179,9 +179,9 @@
 -(void)updateCallDuration {
 	int lDuration = linphone_core_get_current_call_duration(myLinphoneCore); 
 	if (lDuration < 60) {
-		[callDuration setText:[NSString stringWithFormat: @"%i s", lDuration]];
+		[callDuration setText:[NSString stringWithFormat: @"%02i s", lDuration]];
 	} else {
-		[callDuration setText:[NSString stringWithFormat: @"%i:%i", lDuration/60,lDuration - 60 *(lDuration/60)]];
+		[callDuration setText:[NSString stringWithFormat: @"%02i:%02i", lDuration/60,lDuration - 60 *(lDuration/60)]];
 	}
 }
 
