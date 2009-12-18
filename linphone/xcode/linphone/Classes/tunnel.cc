@@ -25,6 +25,7 @@ using namespace axtel;
 static TunnelSocket *sip_socket;
 static TunnelSocket *rtp_socket;
 static TunnelClient* linphone_iphone_tun=0; 
+extern "C" void linphone_iphone_log_handler(int lev, const char *fmt, va_list args);
 
 extern "C" int eXosip_sendto(int fd,const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen){
 	if(linphone_iphone_tun == 0) {
@@ -103,8 +104,14 @@ static RtpTransport audio_transport={
 };
 
 
-extern "C" void linphone_iphone_tunneling_init(const char* ip,unsigned int port){
-	linphone_iphone_tun = new TunnelClient(ip,port); //new tun("208.109.100.191",4443);
+extern "C" void linphone_iphone_tunneling_init(const char* ip,unsigned int port,bool isDebug){
+	if (isDebug) {
+		axtel::SetLogHandler(&linphone_iphone_log_handler);
+		axtel::SetLogLevel(AXTUNNEL_ERROR|AXTUNNEL_WARN);
+	} else {
+		axtel::SetLogLevel(0);
+	}
+	linphone_iphone_tun = new TunnelClient(ip,port); 
 }
 
 extern "C" void linphone_iphone_enable_tunneling(LinphoneCore* lc){
@@ -115,3 +122,4 @@ extern "C" void linphone_iphone_enable_tunneling(LinphoneCore* lc){
 extern "C" int linphone_iphone_tunneling_isready(){
 	return (linphone_iphone_tun!=0) && linphone_iphone_tun->isReady();
 }
+

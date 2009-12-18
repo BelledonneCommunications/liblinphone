@@ -30,7 +30,7 @@
 
 extern void ms_au_register_card();
 //generic log handler for debug version
-void linphone_iphone_log_handler(OrtpLogLevel lev, const char *fmt, va_list args){
+void linphone_iphone_log_handler(int lev, const char *fmt, va_list args){
 	NSString* format = [[NSString alloc] initWithCString:fmt encoding:[NSString defaultCStringEncoding]];
 	NSLogv(format,args);
 	NSString* formatedString = [[NSString alloc] initWithFormat:format arguments:args];
@@ -214,7 +214,7 @@ LinphoneCoreVTable linphonec_vtable = {
 	NSInteger tunnelPort  = [[NSUserDefaults standardUserDefaults] integerForKey:@"tunnelport_preference"];
 	
 	if (isTunnel && [tunnelIp length] != 0 ) {
-		linphone_iphone_tunneling_init(tunnelIpChars,tunnelPort!=0?(unsigned int)tunnelPort:443); 
+		linphone_iphone_tunneling_init(tunnelIpChars,tunnelPort!=0?(unsigned int)tunnelPort:443,isDebug); 
 		
 	} else {
 		//no ip de-activating
