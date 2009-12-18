@@ -172,9 +172,9 @@ LinphoneCoreVTable linphonec_vtable = {
 	NSDictionary *dictionary = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:NSFileImmutable];
 	[[NSFileManager defaultManager] setAttributes:dictionary ofItemAtPath:factoryConfigFile error:nil];
 #endif
+	isDebug = [[NSUserDefaults standardUserDefaults] boolForKey:@"debugenable_preference"]; 
 	//log management	
-	traceLevel = 6;	 
-	if (traceLevel > 0) {
+	if (isDebug) {
 		//redirect all traces to the iphone log framework
 		linphone_core_enable_logs_with_cb(linphone_iphone_log_handler);
 	}

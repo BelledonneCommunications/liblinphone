@@ -45,8 +45,8 @@
 	
 	ContactPickerDelegate* myContactPickerDelegate;
 	
-	int traceLevel:6;
 	bool isTunnel;
+	bool isDebug;
 	LinphoneCore* myLinphoneCore;
 	
 	
