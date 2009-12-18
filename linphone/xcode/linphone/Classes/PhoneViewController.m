@@ -295,7 +295,7 @@
 		case GSTATE_CALL_OUT_INVITE: {
 			[myIncallViewController resetView];
 			[self presentModalViewController: myIncallViewController animated:true];
-			[myIncallViewController displayStatus:@"Llamando"];
+			[myIncallViewController displayStatus:@"Llamando..."];
 			
 			break;
 		}

@@ -18,7 +18,7 @@
  */     
 
 #import "FavoriteTableViewController.h"
-
+#import "AddressBook/AddressBook.h"
 
 
 @implementation FavoriteTableViewController
@@ -87,7 +87,7 @@
 - (IBAction)doAddFavorite:(id)sender {
 	ABPeoplePickerNavigationController* peoplePickerController = [[[ABPeoplePickerNavigationController alloc] init] autorelease];
 	[peoplePickerController setPeoplePickerDelegate:self];
-	
+	[peoplePickerController setDisplayedProperties:[NSArray arrayWithObject:[NSNumber numberWithInt:kABPersonPhoneProperty]]];
 	[self presentModalViewController: peoplePickerController animated:true];
 }
 - (IBAction)doEditFavorite:(id)sender {
