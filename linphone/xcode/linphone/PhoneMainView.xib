@@ -58,6 +58,7 @@
 						<reference key="IBUITabBar"/>
 					</object>
 					<reference key="IBUIParentViewController" ref="952473143"/>
+					<string key="IBUINibName">MoreViewController</string>
 					<object class="IBUISimulatedStatusBarMetrics" key="IBUISimulatedStatusBarMetrics"/>
 				</object>
 				<object class="NSMutableArray" key="IBUIViewControllers">
@@ -302,6 +303,7 @@
 					<string>4.IBPluginDependency</string>
 					<string>41.CustomClassName</string>
 					<string>41.IBPluginDependency</string>
+					<string>43.CustomClassName</string>
 					<string>43.IBPluginDependency</string>
 					<string>46.CustomClassName</string>
 					<string>46.IBPluginDependency</string>
@@ -334,10 +336,11 @@
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>CallHistoryTableViewController</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
+					<string>MoreViewController</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>FavoriteTableViewController</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-					<string>{{11, 205}, {320, 480}}</string>
+					<string>{{11, 449}, {320, 480}}</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 				</object>
@@ -370,6 +373,14 @@
 				<object class="IBPartialClassDescription">
 					<string key="className">CallHistoryTableViewController</string>
 					<string key="superclassName">GenericTabViewController</string>
+					<object class="NSMutableDictionary" key="actions">
+						<string key="NS.key.0">doAction:</string>
+						<string key="NS.object.0">id</string>
+					</object>
+					<object class="NSMutableDictionary" key="outlets">
+						<string key="NS.key.0">clear</string>
+						<string key="NS.object.0">UIButton</string>
+					</object>
 					<object class="IBClassDescriptionSource" key="sourceIdentifier">
 						<string key="majorKey">IBProjectSource</string>
 						<string key="minorKey">Classes/CallHistoryTableViewController.h</string>
@@ -433,6 +444,18 @@
 					</object>
 				</object>
 				<object class="IBPartialClassDescription">
+					<string key="className">MoreViewController</string>
+					<string key="superclassName">UIViewController</string>
+					<object class="NSMutableDictionary" key="outlets">
+						<string key="NS.key.0">logs</string>
+						<string key="NS.object.0">UITextView</string>
+					</object>
+					<object class="IBClassDescriptionSource" key="sourceIdentifier">
+						<string key="majorKey">IBProjectSource</string>
+						<string key="minorKey">Classes/MoreViewController.h</string>
+					</object>
+				</object>
+				<object class="IBPartialClassDescription">
 					<string key="className">PhoneViewController</string>
 					<string key="superclassName">UIViewController</string>
 					<object class="NSMutableDictionary" key="actions">
@@ -460,6 +483,7 @@
 							<string>eight</string>
 							<string>five</string>
 							<string>four</string>
+							<string>gsmCall</string>
 							<string>hash</string>
 							<string>nine</string>
 							<string>one</string>
@@ -473,7 +497,8 @@
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>UITextField</string>
+							<string>UILabel</string>
+							<string>UIButton</string>
 							<string>UIButton</string>
 							<string>UIButton</string>
 							<string>UIButton</string>
