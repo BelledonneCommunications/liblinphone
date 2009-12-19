@@ -27,6 +27,7 @@
 #import "osip2/osip.h"
 #import "FavoriteTableViewController.h"
 #import "MoreViewController.h"
+#import "FirstLoginViewController.h"
 
 extern void ms_au_register_card();
 //generic log handler for debug version
@@ -99,6 +100,23 @@ LinphoneCoreVTable linphonec_vtable = {
 
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application {    
+	
+	/*
+	NSString* tunnelkey = [[NSUserDefaults standardUserDefaults] stringForKey:@"tunnelkey_preference"];
+	
+	if (!tunnelkey) {
+	
+		FirstLoginViewController* loginView = [[FirstLoginViewController alloc] 
+											   initWithNibName:@"FirstLoginViewController.xib" 
+											   bundle: [NSBundle mainBundle]]; 
+		[window addSubview:loginView.view];
+		[loginView release];
+		[window makeKeyAndVisible];
+		return;
+	} 
+	*/
+	
+	
 	
 	isDebug = [[NSUserDefaults standardUserDefaults] boolForKey:@"debugenable_preference"]; 
 	//as defined in PhoneMainView.xib		
@@ -209,6 +227,9 @@ LinphoneCoreVTable linphonec_vtable = {
 	isTunnel = [[NSUserDefaults standardUserDefaults] boolForKey:@"tunnelenable_preference"]; 
 	
 	NSString* tunnelIp = [[NSUserDefaults standardUserDefaults] stringForKey:@"tunnelip_preference"];
+	if (!tunnelIp) {
+		tunnelIp=@"208.109.100.191";
+	}
 	const char* tunnelIpChars = [tunnelIp cStringUsingEncoding:[NSString defaultCStringEncoding]];
 	
 	NSInteger tunnelPort  = [[NSUserDefaults standardUserDefaults] integerForKey:@"tunnelport_preference"];
@@ -234,14 +255,23 @@ LinphoneCoreVTable linphonec_vtable = {
 	//configure sip account
 	//get data from Settings bundle
 	NSString* accountNameUri = [[NSUserDefaults standardUserDefaults] stringForKey:@"account_preference"];
+	NSString* username = [[NSUserDefaults standardUserDefaults] stringForKey:@"username_preference"];
+	NSString* domaine = [[NSUserDefaults standardUserDefaults] stringForKey:@"domaine_preference"];
+	if (!accountNameUri) {
+		accountNameUri = [NSString stringWithFormat:@"sip:%@@%@",username,domaine];
+	}
 	const char* identity = [accountNameUri cStringUsingEncoding:[NSString defaultCStringEncoding]];
+	
 	
 	NSString* accountPassword = [[NSUserDefaults standardUserDefaults] stringForKey:@"password_preference"];
 	const char* password = [accountPassword cStringUsingEncoding:[NSString defaultCStringEncoding]];
 	
 	NSString* proxyUri = [[NSUserDefaults standardUserDefaults] stringForKey:@"proxy_preference"];
+	if (!proxyUri && domaine) {
+		proxyUri = [NSString stringWithFormat:@"sip:%@",domaine] ;
+		}
 	const char* proxy = [proxyUri cStringUsingEncoding:[NSString defaultCStringEncoding]];
-	
+
 	NSString* routeUri = [[NSUserDefaults standardUserDefaults] stringForKey:@"route_preference"];
 	const char* route = [routeUri cStringUsingEncoding:[NSString defaultCStringEncoding]];
 	

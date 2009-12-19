@@ -129,6 +129,8 @@
 		2245667A10768B9000F10948 /* linphone.png in Resources */ = {isa = PBXBuildFile; fileRef = 2245667910768B9000F10948 /* linphone.png */; };
 		2245671D107699F700F10948 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2245671C107699F700F10948 /* Settings.bundle */; };
 		224567C2107B968500F10948 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 224567C1107B968500F10948 /* AVFoundation.framework */; };
+		22527EF410DBB82C00E9915B /* FirstLoginViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 22527EF210DBB82C00E9915B /* FirstLoginViewController.m */; };
+		22527EF510DBB82C00E9915B /* FirstLoginViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 22527EF310DBB82C00E9915B /* FirstLoginViewController.xib */; };
 		2273785E10A3703300526073 /* libmsiounit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2273785D10A3703300526073 /* libmsiounit.a */; };
 		2273798810A48EF000526073 /* oldphone.wav in Resources */ = {isa = PBXBuildFile; fileRef = 2273798710A48EF000526073 /* oldphone.wav */; };
 		2274401A106F31BD006EC466 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22744019106F31BD006EC466 /* CoreAudio.framework */; };
@@ -158,7 +160,7 @@
 		1D3623250D0F684500981E51 /* linphoneAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = linphoneAppDelegate.m; sourceTree = "<group>"; };
 		1D6058910D05DD3D006BFB54 /* linphone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = linphone.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DF5F4DF0D08C38300B7A737 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
-		220646AA10D7B90300632606 /* tunnel.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tunnel.cc; path = Classes/tunnel.cc; sourceTree = "<group>"; };
+		220646AA10D7B90300632606 /* tunnel.cc */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = tunnel.cc; path = Classes/tunnel.cc; sourceTree = "<group>"; };
 		220646E010D7C3EC00632606 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
 		220646EC10D7C5E300632606 /* libaxtunnel.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libaxtunnel.a; path = "../../liblinphone-sdk/armv6-apple-darwin/lib/libaxtunnel.a"; sourceTree = SOURCE_ROOT; };
 		220646F110D7C62600632606 /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = "../../liblinphone-sdk/armv6-apple-darwin/lib/libssl.a"; sourceTree = SOURCE_ROOT; };
@@ -395,6 +397,9 @@
 		2245667910768B9000F10948 /* linphone.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = linphone.png; path = ../../pixmaps/linphone.png; sourceTree = SOURCE_ROOT; };
 		2245671C107699F700F10948 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		224567C1107B968500F10948 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		22527EF110DBB82C00E9915B /* FirstLoginViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FirstLoginViewController.h; sourceTree = "<group>"; };
+		22527EF210DBB82C00E9915B /* FirstLoginViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FirstLoginViewController.m; sourceTree = "<group>"; };
+		22527EF310DBB82C00E9915B /* FirstLoginViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = FirstLoginViewController.xib; sourceTree = "<group>"; };
 		2273785D10A3703300526073 /* libmsiounit.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmsiounit.a; path = "../../liblinphone-sdk/armv6-apple-darwin/lib/mediastreamer/plugins/libmsiounit.a"; sourceTree = SOURCE_ROOT; };
 		2273798710A48EF000526073 /* oldphone.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = oldphone.wav; sourceTree = "<group>"; };
 		22744019106F31BD006EC466 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
@@ -486,6 +491,9 @@
 				22D0FD2D10DB627B00671BCD /* MoreViewController.h */,
 				22D0FD2E10DB627B00671BCD /* MoreViewController.m */,
 				22D0FD2F10DB627B00671BCD /* MoreViewController.xib */,
+				22527EF110DBB82C00E9915B /* FirstLoginViewController.h */,
+				22527EF210DBB82C00E9915B /* FirstLoginViewController.m */,
+				22527EF310DBB82C00E9915B /* FirstLoginViewController.xib */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -1085,6 +1093,7 @@
 				2206488C10D8CCF700632606 /* llamadasrecientes_gris.jpg in Resources */,
 				220648C510D8D0B700632606 /* logo_axtel_99x99.jpg in Resources */,
 				22D0FD3110DB627B00671BCD /* MoreViewController.xib in Resources */,
+				22527EF510DBB82C00E9915B /* FirstLoginViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1105,6 +1114,7 @@
 				2242D9C910D691F900E9963F /* GenericTabViewController.m in Sources */,
 				220646AB10D7B90300632606 /* tunnel.cc in Sources */,
 				22D0FD3010DB627B00671BCD /* MoreViewController.m in Sources */,
+				22527EF410DBB82C00E9915B /* FirstLoginViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -106,10 +106,10 @@ static RtpTransport audio_transport={
 
 extern "C" void linphone_iphone_tunneling_init(const char* ip,unsigned int port,bool isDebug){
 	if (isDebug) {
-		axtel::SetLogHandler(&linphone_iphone_log_handler);
-		axtel::SetLogLevel(AXTUNNEL_ERROR|AXTUNNEL_WARN);
+		SetLogHandler(&linphone_iphone_log_handler);
+		SetLogLevel(AXTUNNEL_ERROR|AXTUNNEL_WARN);
 	} else {
-		axtel::SetLogLevel(0);
+		SetLogLevel(0);
 	}
 	linphone_iphone_tun = new TunnelClient(ip,port); 
 }
