@@ -52,6 +52,8 @@ option(ENABLE_UNIT_TESTS "Enable compilation of unit tests." YES)
 option(ENABLE_UPNP "Build with uPnP support." YES)
 option(ENABLE_VIDEO "Build with video support." YES)
 option(ENABLE_NLS "Build with internationalisation support" YES)
+cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
+option(ENABLE_DEBUG_LOGS "Turn on or off debug level logs." NO)
 
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -124,7 +126,20 @@ if(ENABLE_NLS)
 	find_package(Gettext REQUIRED)
 	find_package(Intl REQUIRED)
 endif()
-
+if(ENABLE_GTK_UI)
+	if(WIN32)
+		set(GTK2_ADDITIONAL_SUFFIXES "../lib/glib-2.0/include" "../lib/gtk-2.0/include")
+	endif()
+	find_package(GTK2 2.18 REQUIRED gtk)
+	find_package(Intl REQUIRED)
+	if(ENABLE_ASSISTANT AND GTK2_VERSION VERSION_LESS 2.22)
+		message(WARNING "You need at least GTK 2.22 to enable the assistant")
+		set(ENABLE_ASSISTANT OFF CACHE BOOL "Turn on assistant compiling." FORCE)
+	endif()
+endif()
+if(ENABLE_ASSISTANT)
+	set(BUILD_WIZARD 1)
+endif()
 
 include_directories(
 	include/
