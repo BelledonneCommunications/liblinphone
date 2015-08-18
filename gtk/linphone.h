@@ -263,6 +263,8 @@ LINPHONE_PUBLIC void linphone_gtk_contact_cancel(GtkWidget *button);
 LINPHONE_PUBLIC void linphone_gtk_contact_ok(GtkWidget *button);
 LINPHONE_PUBLIC void linphone_gtk_dscp_edit(void);
 LINPHONE_PUBLIC void linphone_gtk_dscp_edit_response(GtkWidget *dialog, guint response_id);
+LINPHONE_PUBLIC void linphone_gtk_enable_auto_answer(GtkToggleButton *checkbox, gpointer user_data);
+LINPHONE_PUBLIC void linphone_gtk_auto_answer_delay_changed(GtkSpinButton *spinbutton, gpointer user_data);
 LINPHONE_PUBLIC void linphone_gtk_keypad_key_released(GtkWidget *w, GdkEvent *event, gpointer userdata);
 LINPHONE_PUBLIC void linphone_gtk_keypad_key_pressed(GtkWidget *w, GdkEvent *event, gpointer userdata);
 LINPHONE_PUBLIC void linphone_gtk_ldap_save(GtkWidget *button);
