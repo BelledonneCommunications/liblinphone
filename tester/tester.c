@@ -28,10 +28,14 @@
 #ifdef HAVE_GTK
 #include <gtk/gtk.h>
 #endif
+#if _WIN32
+#define unlink _unlink
+#endif
 
- static bool_t liblinphone_tester_ipv6_enabled=FALSE;
- static int liblinphone_tester_keep_accounts_flag = 0;
- static int manager_count = 0;
+static bool_t liblinphone_tester_ipv6_enabled=FALSE;
+static int liblinphone_tester_keep_accounts_flag = 0;
+static int liblinphone_tester_keep_record_files = FALSE;
+int manager_count = 0;
 
 const char* test_domain="sipopen.example.org";
 const char* auth_domain="sip.example.org";
@@ -40,7 +44,7 @@ const char* test_password="secret";
 const char* test_route="sip2.linphone.org";
 const char *userhostsfile = "tester_hosts";
 
- static void network_reachable(LinphoneCore *lc, bool_t reachable) {
+static void network_reachable(LinphoneCore *lc, bool_t reachable) {
 	stats* counters;
 	ms_message("Network reachable [%s]",reachable?"TRUE":"FALSE");
 	counters = get_stats(lc);
@@ -67,15 +71,15 @@ void liblinphone_tester_enable_ipv6(bool_t enabled){
 
 LinphoneAddress * create_linphone_address(const char * domain) {
 	LinphoneAddress *addr = linphone_address_new(NULL);
-	CU_ASSERT_PTR_NOT_NULL_FATAL(addr);
+	BC_ASSERT_PTR_NOT_NULL_FATAL(addr);
 	linphone_address_set_username(addr,test_username);
-	CU_ASSERT_STRING_EQUAL(test_username,linphone_address_get_username(addr));
+	BC_ASSERT_STRING_EQUAL(test_username,linphone_address_get_username(addr));
 	if (!domain) domain= test_route;
 	linphone_address_set_domain(addr,domain);
-	CU_ASSERT_STRING_EQUAL(domain,linphone_address_get_domain(addr));
+	BC_ASSERT_STRING_EQUAL(domain,linphone_address_get_domain(addr));
 	linphone_address_set_display_name(addr, NULL);
 	linphone_address_set_display_name(addr, "Mr Tester");
-	CU_ASSERT_STRING_EQUAL("Mr Tester",linphone_address_get_display_name(addr));
+	BC_ASSERT_STRING_EQUAL("Mr Tester",linphone_address_get_display_name(addr));
 	return addr;
 }
 
@@ -107,7 +111,7 @@ LinphoneCore* configure_lc_from(LinphoneCoreVTable* v_table, const char* path, c
 
 	if (file){
 		filepath = ms_strdup_printf("%s/%s", path, file);
-		CU_ASSERT_TRUE_FATAL(ortp_file_exist(filepath)==0);
+		BC_ASSERT_EQUAL_FATAL(ortp_file_exist(filepath),0,int, "%d");
 		config = lp_config_new_with_factory(NULL,filepath);
 	}
 
@@ -183,7 +187,7 @@ bool_t wait_for_list(MSList* lcs,int* counter,int value,int timeout_ms) {
 #endif
 			linphone_core_iterate((LinphoneCore*)(iterator->data));
 		}
-#ifdef WIN32
+#ifdef LINPHONE_WINDOWS_DESKTOP
 		{
 			MSG msg;
 			while (PeekMessage(&msg, NULL, 0, 0,1)){
@@ -224,9 +228,19 @@ LinphoneCoreManager *get_manager(LinphoneCore *lc){
 	return manager;
 }
 
+bool_t transport_supported(LinphoneTransportType transport) {
+	Sal *sal = sal_init();
+	bool_t supported = sal_transport_available(sal,(SalTransport)transport);
+	if (!supported) ms_message("TLS transport not supported, falling back to TCP if possible otherwise skipping test.");
+	sal_uninit(sal);
+	return supported;
+}
+
+
 LinphoneCoreManager* linphone_core_manager_init(const char* rc_file) {
 	LinphoneCoreManager* mgr= ms_new0(LinphoneCoreManager,1);
 	char *rc_path = NULL;
+	char *hellopath = bc_tester_res("sounds/hello8000.wav");
 	mgr->number_of_cunit_error_at_creation = CU_get_number_of_failures();
 	mgr->v_table.registration_state_changed=registration_state_changed;
 	mgr->v_table.auth_info_requested=auth_info_requested;
@@ -249,7 +263,7 @@ LinphoneCoreManager* linphone_core_manager_init(const char* rc_file) {
 
 	reset_counters(&mgr->stat);
 	if (rc_file) rc_path = ms_strdup_printf("rcfiles/%s", rc_file);
-	mgr->lc=configure_lc_from(&mgr->v_table, bc_tester_read_dir_prefix, rc_path, mgr);
+	mgr->lc=configure_lc_from(&mgr->v_table, bc_tester_get_resource_dir_prefix(), rc_path, mgr);
 	linphone_core_manager_check_accounts(mgr);
 
 	manager_count++;
@@ -276,17 +290,18 @@ LinphoneCoreManager* linphone_core_manager_init(const char* rc_file) {
 #endif
 
 
+	linphone_core_set_play_file(mgr->lc,hellopath); /*is also used when in pause*/
+	ms_free(hellopath);
+
 	if( manager_count >= 2){
-		char hellopath[512];
-		char *recordpath = ms_strdup_printf("%s/record_for_lc_%p.wav",bc_tester_writable_dir_prefix,mgr->lc);
+		char *recordpath = ms_strdup_printf("%s/record_for_lc_%p.wav",bc_tester_get_writable_dir_prefix(),mgr->lc);
 		ms_message("Manager for '%s' using files", rc_file ? rc_file : "--");
-		linphone_core_use_files(mgr->lc, TRUE);
-		snprintf(hellopath,sizeof(hellopath), "%s/sounds/hello8000.wav", bc_tester_read_dir_prefix);
-		linphone_core_set_play_file(mgr->lc,hellopath);
+		linphone_core_set_use_files(mgr->lc, TRUE);
 		linphone_core_set_record_file(mgr->lc,recordpath);
 		ms_free(recordpath);
 	}
-	linphone_core_set_user_certificates_path(mgr->lc,bc_tester_writable_dir_prefix);
+
+	linphone_core_set_user_certificates_path(mgr->lc,bc_tester_get_writable_dir_prefix());
 
 	if (rc_path) ms_free(rc_path);
 
@@ -297,7 +312,7 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, const char* rc_file, 
 	LinphoneProxyConfig* proxy;
 	int proxy_count;
 
-	/*CU_ASSERT_EQUAL(ms_list_size(linphone_core_get_proxy_config_list(lc)),proxy_count);*/
+	/*BC_ASSERT_EQUAL(ms_list_size(linphone_core_get_proxy_config_list(lc)),proxy_count, int, "%d");*/
 	if (check_for_proxies && rc_file) /**/
 		proxy_count=ms_list_size(linphone_core_get_proxy_config_list(mgr->lc));
 	else
@@ -311,12 +326,12 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, const char* rc_file, 
 			ms_error("Did not register after %d seconds for %d proxies", REGISTER_TIMEOUT, proxy_count);
 		}
 	}
-	CU_ASSERT_EQUAL(mgr->stat.number_of_LinphoneRegistrationOk,proxy_count);
+	BC_ASSERT_EQUAL(mgr->stat.number_of_LinphoneRegistrationOk,proxy_count, int, "%d");
 	enable_codec(mgr->lc,"PCMU",8000);
 
 	linphone_core_get_default_proxy(mgr->lc,&proxy);
 	if (proxy) {
-		mgr->identity = linphone_address_new(linphone_proxy_config_get_identity(proxy));
+		mgr->identity = linphone_address_clone(linphone_proxy_config_get_identity_address(proxy));
 		linphone_address_clean(mgr->identity);
 	}
 }
@@ -343,7 +358,7 @@ void linphone_core_manager_stop(LinphoneCoreManager *mgr){
 void linphone_core_manager_destroy(LinphoneCoreManager* mgr) {
 	if (mgr->lc){
 		const char *record_file=linphone_core_get_record_file(mgr->lc);
-		if (record_file){
+		if (!liblinphone_tester_keep_record_files && record_file){
 			if ((CU_get_number_of_failures()-mgr->number_of_cunit_error_at_creation)>0) {
 				ms_message ("Test has failed, keeping recorded file [%s]",record_file);
 			} else {
@@ -381,6 +396,10 @@ void liblinphone_tester_keep_accounts( int keep ){
 	liblinphone_tester_keep_accounts_flag = keep;
 }
 
+void liblinphone_tester_keep_recorded_files(int keep){
+	liblinphone_tester_keep_record_files = keep;
+}
+
 void liblinphone_tester_clear_accounts(void){
 	account_manager_destroy();
 }
@@ -402,11 +421,56 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&remote_provisioning_test_suite);
 	bc_tester_add_suite(&quality_reporting_test_suite);
 	bc_tester_add_suite(&log_collection_test_suite);
-	bc_tester_add_suite(&transport_test_suite);
+	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&player_test_suite);
 	bc_tester_add_suite(&dtmf_test_suite);
 #if defined(VIDEO_ENABLED) && defined(HAVE_GTK)
 	bc_tester_add_suite(&video_test_suite);
 #endif
 	bc_tester_add_suite(&multicast_call_test_suite);
+	bc_tester_add_suite(&proxy_config_test_suite);
+}
+
+static int linphone_core_manager_get_max_audio_bw_base(const int array[],int array_size) {
+	int i,result=0;
+	for (i=0; i<array_size; i++) {
+		result = MAX(result,array[i]);
+	}
+	return result;
+}
+
+static int linphone_core_manager_get_mean_audio_bw_base(const int array[],int array_size) {
+	int i,result=0;
+	for (i=0; i<array_size; i++) {
+		result += array[i];
+	}
+	return result/array_size;
+}
+
+int linphone_core_manager_get_max_audio_down_bw(const LinphoneCoreManager *mgr) {
+	return linphone_core_manager_get_max_audio_bw_base(mgr->stat.audio_download_bandwidth
+			, sizeof(mgr->stat.audio_download_bandwidth)/sizeof(int));
+}
+int linphone_core_manager_get_max_audio_up_bw(const LinphoneCoreManager *mgr) {
+	return linphone_core_manager_get_max_audio_bw_base(mgr->stat.audio_upload_bandwidth
+			, sizeof(mgr->stat.audio_upload_bandwidth)/sizeof(int));
+}
+
+int linphone_core_manager_get_mean_audio_down_bw(const LinphoneCoreManager *mgr) {
+	return linphone_core_manager_get_mean_audio_bw_base(mgr->stat.audio_download_bandwidth
+			, sizeof(mgr->stat.audio_download_bandwidth)/sizeof(int));
+}
+int linphone_core_manager_get_mean_audio_up_bw(const LinphoneCoreManager *mgr) {
+	return linphone_core_manager_get_mean_audio_bw_base(mgr->stat.audio_upload_bandwidth
+			, sizeof(mgr->stat.audio_upload_bandwidth)/sizeof(int));
+}
+
+int liblinphone_tester_setup() {
+	if (manager_count != 0) {
+		// crash in some linphone core have not been destroyed because if we continue
+		// it will crash in CUnit AND we should NEVER keep a manager alive
+		ms_fatal("%d linphone core manager still alive!", manager_count);
+		return 1;
+	}
+	return 0;
 }

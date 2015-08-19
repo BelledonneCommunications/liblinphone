@@ -16,8 +16,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
-#include "CUnit/Basic.h"
+
 #include "linphonecore.h"
 #include "private.h"
 #include "liblinphone_tester.h"
@@ -38,66 +37,68 @@ void linphone_configuration_status(LinphoneCore *lc, LinphoneConfiguringState st
 
 static void remote_provisioning_skipped(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_rc", FALSE);
-	CU_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSkipped,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSkipped,1));
 	linphone_core_manager_destroy(marie);
 }
 
 static void remote_provisioning_http(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_rc", FALSE);
-	CU_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
-	CU_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
 	linphone_core_manager_destroy(marie);
 }
 
 static void remote_provisioning_transient(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_transient_remote_rc", FALSE);
-	CU_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
-	CU_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
-	CU_ASSERT_TRUE(linphone_core_is_provisioning_transient(marie->lc) == TRUE);
-	CU_ASSERT_TRUE(linphone_core_get_provisioning_uri(marie->lc) == NULL);
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
+	BC_ASSERT_TRUE(linphone_core_is_provisioning_transient(marie->lc));
+	BC_ASSERT_PTR_NULL(linphone_core_get_provisioning_uri(marie->lc));
 	linphone_core_manager_destroy(marie);
 }
 
 static void remote_provisioning_https(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_https_rc", FALSE);
-	CU_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
-	CU_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
-	linphone_core_manager_destroy(marie);
+	if (transport_supported(LinphoneTransportTls)) {
+		LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_https_rc", FALSE);
+		BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
+		BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
+		linphone_core_manager_destroy(marie);
+	}
 }
 
 static void remote_provisioning_not_found(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_404_rc", FALSE);
-	CU_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringFailed,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringFailed,1));
 	linphone_core_manager_destroy(marie);
 }
 
 static void remote_provisioning_invalid(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_invalid_rc", FALSE);
-	CU_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringFailed,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringFailed,1));
 	linphone_core_manager_destroy(marie);
 }
 
 static void remote_provisioning_invalid_uri(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_invalid_uri_rc", FALSE);
-	CU_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringFailed,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringFailed,1));
 	linphone_core_manager_destroy(marie);
 }
 
 static void remote_provisioning_default_values(void) {
 	LinphoneProxyConfig *lpc;
 	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_default_values_rc", FALSE);
-	CU_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
 	lpc = linphone_core_create_proxy_config(marie->lc);
-	CU_ASSERT_TRUE(lpc->reg_sendregister == TRUE);
-	CU_ASSERT_TRUE(lpc->expires == 604800);
-	CU_ASSERT_STRING_EQUAL(lpc->reg_proxy, "<sip:sip.linphone.org:5223;transport=tls>");
-	CU_ASSERT_STRING_EQUAL(lpc->reg_route, "<sip:sip.linphone.org:5223;transport=tls>");
-	CU_ASSERT_STRING_EQUAL(lpc->reg_identity, "sip:?@sip.linphone.org");
+	BC_ASSERT_TRUE(lpc->reg_sendregister);
+	BC_ASSERT_EQUAL(lpc->expires, 604800, int, "%d");
+	BC_ASSERT_STRING_EQUAL(lpc->reg_proxy, "<sip:sip.linphone.org:5223;transport=tls>");
+	BC_ASSERT_STRING_EQUAL(lpc->reg_route, "<sip:sip.linphone.org:5223;transport=tls>");
+	BC_ASSERT_STRING_EQUAL(lpc->reg_identity, "sip:?@sip.linphone.org");
 	{
 		LpConfig* lp = linphone_core_get_config(marie->lc);
-		CU_ASSERT_STRING_EQUAL(lp_config_get_string(lp,"app","toto","empty"),"titi");
+		BC_ASSERT_STRING_EQUAL(lp_config_get_string(lp,"app","toto","empty"),"titi");
 	}
-
+	linphone_proxy_config_destroy(lpc);
 	linphone_core_manager_destroy(marie);
 }
 
@@ -112,10 +113,10 @@ static void remote_provisioning_file(void) {
 #else
 	marie = linphone_core_manager_new2("marie_remote_localfile_rc", FALSE);
 #endif
-	CU_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
 
 	conf = linphone_core_get_config( marie->lc );
-	CU_ASSERT_EQUAL( lp_config_get_int(conf,"misc","tester_file_ok", 0), 1 );
+	BC_ASSERT_EQUAL( lp_config_get_int(conf,"misc","tester_file_ok", 0), 1 , int, "%d");
 
 	linphone_core_manager_destroy(marie);
 }

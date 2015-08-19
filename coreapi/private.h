@@ -65,8 +65,21 @@ extern "C" {
 #define PACKAGE_DATA_DIR "."
 #endif
 
-#ifdef HAVE_GETTEXT
+#ifdef ENABLE_NLS
+
+#ifdef _MSC_VER
+// prevent libintl.h from re-defining fprintf and vfprintf
+#ifndef fprintf
+#define fprintf fprintf
+#endif
+#ifndef vfprintf
+#define vfprintf vfprintf
+#endif
+#define _GL_STDIO_H
+#endif
+
 #include <libintl.h>
+	
 #ifndef _
 #define _(String) dgettext(GETTEXT_PACKAGE,String)
 #endif
@@ -80,6 +93,20 @@ extern "C" {
 #endif
 #ifdef ANDROID
 #include <jni.h>
+#endif
+
+#ifdef _WIN32
+#if defined(__MINGW32__) || !defined(WINAPI_FAMILY_PARTITION) || !defined(WINAPI_PARTITION_DESKTOP)
+#define LINPHONE_WINDOWS_DESKTOP 1
+#elif defined(WINAPI_FAMILY_PARTITION)
+#if defined(WINAPI_PARTITION_DESKTOP) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#define LINPHONE_WINDOWS_DESKTOP 1
+#elif defined(WINAPI_PARTITION_PHONE_APP) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PHONE_APP)
+#define LINPHONE_WINDOWS_PHONE 1
+#elif defined(WINAPI_PARTITION_APP) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
+#define LINPHONE_WINDOWS_UNIVERSAL 1
+#endif
+#endif
 #endif
 
 struct _LinphoneCallParams{
@@ -112,7 +139,8 @@ struct _LinphoneCallParams{
 	LinphoneMediaDirection video_dir;
 	bool_t video_declined; /*use to keep  traces of declined video to avoid to re-offer video in case of automatic RE-INVITE*/
 	bool_t internal_call_update; /*use mark that call update was requested internally (might be by ice)*/
-
+	bool_t video_multicast_enabled;
+	bool_t audio_multicast_enabled;
 };
 
 BELLE_SIP_DECLARE_VPTR(LinphoneCallParams);
@@ -205,8 +233,6 @@ typedef struct StunCandidate{
 
 typedef struct _PortConfig{
 	char multicast_ip[LINPHONE_IPADDR_SIZE];
-	int mcast_rtp_port;
-	int mcast_rtcp_port;
 	int rtp_port;
 	int rtcp_port;
 }PortConfig;
@@ -223,6 +249,8 @@ struct _LinphoneCall{
 	SalMediaDescription *resultdesc;
 	struct _RtpProfile *audio_profile;
 	struct _RtpProfile *video_profile;
+	struct _RtpProfile *rtp_io_audio_profile;
+	struct _RtpProfile *rtp_io_video_profile;
 	struct _LinphoneCallLog *log;
 	LinphoneAddress *me; /*Either from or to based on call dir*/
 	SalOp *op;
@@ -237,7 +265,7 @@ struct _LinphoneCall{
 	StunCandidate ac,vc; /*audio video ip/port discovered by STUN*/
 	struct _AudioStream *audiostream;  /**/
 	struct _VideoStream *videostream;
-	unsigned long video_window_id;
+	void *video_window_id;
 	MSAudioEndpoint *endpoint; /*used for conferencing*/
 	char *refer_to;
 	LinphoneCallParams *params;
@@ -267,6 +295,7 @@ struct _LinphoneCall{
 	belle_sip_source_t *dtmfs_timer; /*DTMF timer needed to send a DTMF sequence*/
 
 	char *dtls_certificate_fingerprint; /**> This fingerprint is computed during stream init and is stored in call to be used when making local media description */
+	MSWebCam *cam; /*webcam use for this call*/
 	bool_t refer_pending;
 	bool_t expect_media_in_ack;
 	bool_t audio_muted;
@@ -283,8 +312,6 @@ struct _LinphoneCall{
 	bool_t record_active;
 
 	bool_t paused_by_app;
-
-	MSWebCam *cam; /*webcam use for this call*/
 };
 
 BELLE_SIP_DECLARE_VPTR(LinphoneCall);
@@ -325,7 +352,6 @@ void _linphone_proxy_config_release(LinphoneProxyConfig *cfg);
  * Can be NULL
  * */
 const LinphoneAddress* linphone_proxy_config_get_service_route(const LinphoneProxyConfig* cfg);
-LINPHONE_PUBLIC char* linphone_proxy_config_get_contact(const LinphoneProxyConfig *cfg);
 
 void linphone_friend_close_subscriptions(LinphoneFriend *lf);
 void linphone_friend_update_subscribes(LinphoneFriend *fr, LinphoneProxyConfig *cfg, bool_t only_when_registered);
@@ -348,14 +374,15 @@ static MS2_INLINE int get_min_bandwidth(int dbw, int ubw){
 }
 
 static MS2_INLINE bool_t bandwidth_is_greater(int bw1, int bw2){
-	if (bw1<0) return TRUE;
-	else if (bw2<0) return FALSE;
+	if (bw1<=0) return TRUE;
+	else if (bw2<=0) return FALSE;
 	else return bw1>=bw2;
 }
 
 static MS2_INLINE int get_remaining_bandwidth_for_video(int total, int audio){
-	if (total<=0) return 0;
-	return total-audio-10;
+	int ret = total-audio-10;
+	if (ret < 0) ret = 0;
+	return ret;
 }
 
 static MS2_INLINE void set_string(char **dest, const char *src){
@@ -390,7 +417,7 @@ void linphone_core_update_allocated_audio_bandwidth_in_call(LinphoneCall *call, 
 
 LINPHONE_PUBLIC int linphone_core_run_stun_tests(LinphoneCore *lc, LinphoneCall *call);
 void linphone_core_resolve_stun_server(LinphoneCore *lc);
-const struct addrinfo *linphone_core_get_stun_server_addrinfo(LinphoneCore *lc);
+LINPHONE_PUBLIC const struct addrinfo *linphone_core_get_stun_server_addrinfo(LinphoneCore *lc);
 void linphone_core_adapt_to_network(LinphoneCore *lc, int ping_time_ms, LinphoneCallParams *params);
 int linphone_core_gather_ice_candidates(LinphoneCore *lc, LinphoneCall *call);
 void linphone_core_update_ice_state_in_call_stats(LinphoneCall *call);
@@ -462,6 +489,9 @@ typedef enum _LinphoneProxyConfigAddressComparisonResult{
 
 LINPHONE_PUBLIC LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_address_equal(const LinphoneAddress *a, const LinphoneAddress *b);
 LINPHONE_PUBLIC LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_is_server_config_changed(const LinphoneProxyConfig* obj);
+/**
+ * unregister without moving the register_enable flag
+ */
 void _linphone_proxy_config_unregister(LinphoneProxyConfig *obj);
 void _linphone_proxy_config_release_ops(LinphoneProxyConfig *obj);
 
@@ -478,9 +508,9 @@ struct _LinphoneProxyConfig
 	struct _LinphoneCore *lc;
 	char *reg_proxy;
 	char *reg_identity;
+	LinphoneAddress* identity_address;
 	char *reg_route;
 	char *quality_reporting_collector;
-	char *domain;
 	char *realm;
 	char *contact_params;
 	char *contact_uri_params;
@@ -512,6 +542,7 @@ struct _LinphoneProxyConfig
 	LinphoneAddress *saved_proxy;
 	LinphoneAddress *saved_identity;
 	/*---*/
+	LinphoneAddress *pending_contact; /*use to store previous contact in case of network failure*/
 
 };
 
@@ -540,6 +571,7 @@ struct _LinphoneChatRoom{
 	LinphoneAddress *peer_url;
 	MSList *messages_hist;
 	MSList *transient_messages;
+	int unread_count;
 	LinphoneIsComposingState remote_is_composing;
 	LinphoneIsComposingState is_composing;
 	belle_sip_source_t *remote_composing_refresh_timer;
@@ -768,8 +800,8 @@ struct _LinphoneCore
 	int audio_bw; /*IP bw consumed by audio codec, set as soon as used codec is known, its purpose is to know the remaining bw for video*/
 	LinphoneCoreWaitingCallback wait_cb;
 	void *wait_ctx;
-	unsigned long video_window_id;
-	unsigned long preview_window_id;
+	void *video_window_id;
+	void *preview_window_id;
 	time_t netup_time; /*time when network went reachable */
 	struct _EcCalibrator *ecc;
 	MSList *hooks;
@@ -859,6 +891,7 @@ void linphone_core_set_state(LinphoneCore *lc, LinphoneGlobalState gstate, const
 void linphone_call_make_local_media_description(LinphoneCore *lc, LinphoneCall *call);
 void linphone_call_make_local_media_description_with_params(LinphoneCore *lc, LinphoneCall *call, LinphoneCallParams *params);
 void linphone_call_increment_local_media_description(LinphoneCall *call);
+void linphone_call_fill_media_multicast_addr(LinphoneCall *call);
 void linphone_core_update_streams(LinphoneCore *lc, LinphoneCall *call, SalMediaDescription *new_md);
 
 bool_t linphone_core_is_payload_type_usable_for_bandwidth(LinphoneCore *lc, const PayloadType *pt,  int bandwidth_limit);
@@ -980,6 +1013,82 @@ BELLE_SIP_DECLARE_VPTR(LinphoneBuffer);
 
 
 /*****************************************************************************
+ * XML-RPC interface                                                         *
+ ****************************************************************************/
+
+typedef struct _LinphoneXmlRpcArg {
+	LinphoneXmlRpcArgType type;
+	union {
+		int i;
+		char *s;
+	} data;
+} LinphoneXmlRpcArg;
+
+struct _LinphoneXmlRpcRequestCbs {
+	belle_sip_object_t base;
+	void *user_data;
+	LinphoneXmlRpcRequestCbsResponseCb response;
+};
+
+BELLE_SIP_DECLARE_VPTR(LinphoneXmlRpcRequestCbs);
+
+struct _LinphoneXmlRpcRequest {
+	belle_sip_object_t base;
+	void *user_data;
+	LinphoneXmlRpcRequestCbs *callbacks;
+	belle_sip_list_t *arg_list;
+	char *content;	/**< The string representation of the XML-RPC request */
+	char *method;
+	LinphoneXmlRpcStatus status;
+	LinphoneXmlRpcArg response;
+};
+
+BELLE_SIP_DECLARE_VPTR(LinphoneXmlRpcRequest);
+
+struct _LinphoneXmlRpcSession {
+	belle_sip_object_t base;
+	void *user_data;
+	LinphoneCore *core;
+	char *url;
+};
+
+BELLE_SIP_DECLARE_VPTR(LinphoneXmlRpcSession);
+
+
+/*****************************************************************************
+ * Account creator interface                                                 *
+ ****************************************************************************/
+
+struct _LinphoneAccountCreatorCbs {
+	belle_sip_object_t base;
+	void *user_data;
+	LinphoneAccountCreatorCbsExistenceTestedCb existence_tested;
+	LinphoneAccountCreatorCbsValidationTestedCb validation_tested;
+	LinphoneAccountCreatorCbsValidatedCb validated;
+};
+
+BELLE_SIP_DECLARE_VPTR(LinphoneAccountCreatorCbs);
+
+struct _LinphoneAccountCreator {
+	belle_sip_object_t base;
+	void *user_data;
+	LinphoneAccountCreatorCbs *callbacks;
+	LinphoneXmlRpcSession *xmlrpc_session;
+	LinphoneCore *core;
+	char *xmlrpc_url;
+	char *username;
+	char *password;
+	char *domain;
+	char *route;
+	char *email;
+	bool_t subscribe_to_newsletter;
+	char *display_name;
+};
+
+BELLE_SIP_DECLARE_VPTR(LinphoneAccountCreator);
+
+
+/*****************************************************************************
  * REMOTE PROVISIONING FUNCTIONS                                                     *
  ****************************************************************************/
 
@@ -1070,6 +1179,8 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_sas_suites(LinphoneCore *lc, MSZrt
   */
 
 BELLE_SIP_DECLARE_TYPES_BEGIN(linphone,10000)
+BELLE_SIP_TYPE_ID(LinphoneAccountCreator),
+BELLE_SIP_TYPE_ID(LinphoneAccountCreatorCbs),
 BELLE_SIP_TYPE_ID(LinphoneBuffer),
 BELLE_SIP_TYPE_ID(LinphoneContactProvider),
 BELLE_SIP_TYPE_ID(LinphoneContactSearch),
@@ -1083,7 +1194,10 @@ BELLE_SIP_TYPE_ID(LinphoneContent),
 BELLE_SIP_TYPE_ID(LinphoneLDAPContactProvider),
 BELLE_SIP_TYPE_ID(LinphoneLDAPContactSearch),
 BELLE_SIP_TYPE_ID(LinphoneProxyConfig),
-BELLE_SIP_TYPE_ID(LinphoneFriend)
+BELLE_SIP_TYPE_ID(LinphoneFriend),
+BELLE_SIP_TYPE_ID(LinphoneXmlRpcRequest),
+BELLE_SIP_TYPE_ID(LinphoneXmlRpcRequestCbs),
+BELLE_SIP_TYPE_ID(LinphoneXmlRpcSession)
 BELLE_SIP_DECLARE_TYPES_END
 
 
@@ -1181,9 +1295,11 @@ void v_table_reference_destroy(VTableReference *ref);
 
 void _linphone_core_add_listener(LinphoneCore *lc, LinphoneCoreVTable *vtable, bool_t autorelease);
 #ifdef VIDEO_ENABLED
-MSWebCam *linphone_call_get_video_device(const LinphoneCall *call);
+LINPHONE_PUBLIC MSWebCam *linphone_call_get_video_device(const LinphoneCall *call);
 MSWebCam *get_nowebcam_device();
 #endif
+bool_t linphone_core_lime_for_file_sharing_enabled(const LinphoneCore *lc);
+
 #ifdef __cplusplus
 }
 #endif

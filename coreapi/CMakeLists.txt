@@ -31,6 +31,7 @@ endif()
 
 
 set(SOURCE_FILES
+	account_creator.c
 	address.c
 	authentication.c
 	bellesip_sal/sal_address_impl.c
@@ -59,18 +60,13 @@ set(SOURCE_FILES
 	enum.c
 	enum.h
 	event.c
-	event.h
 	friend.c
 	info.c
 	ldap/ldapprovider.c
 	lime.c
 	linphonecall.c
 	linphonecore.c
-	linphonecore.h
-	linphonecore_utils.h
-	linphonefriend.h
 	linphone_tunnel_config.c
-	linphone_tunnel.h
 	localplayer.c
 	lpconfig.c
 	lpconfig.h
@@ -88,11 +84,30 @@ set(SOURCE_FILES
 	sal.c
 	siplogin.c
 	sipsetup.c
-	sipsetup.h
 	xml2lpc.c
-	xml2lpc.h
 	xml.c
+	xmlrpc.c
 	vtables.c
+)
+
+set(HEADER_FILES
+	account_creator.h
+	buffer.h
+	call_log.h
+	call_params.h
+	content.h
+	event.h
+	linphonecore.h
+	linphonecore_utils.h
+	linphonefriend.h
+	linphonepresence.h
+	linphone_proxy_config.h
+	linphone_tunnel.h
+	lpc2xml.h
+	lpconfig.h
+	sipsetup.h
+	xml2lpc.h
+	xmlrpc.h
 )
 if(ENABLE_TUNNEL)
 	list(APPEND SOURCE_FILES
@@ -102,9 +117,6 @@ if(ENABLE_TUNNEL)
 	add_definitions(-DTUNNEL_ENABLED)
 else()
 	list(APPEND SOURCE_FILES linphone_tunnel_stubs.c)
-endif()
-if(ENABLE_ASSISTANT)
-	list(APPEND SOURCE_FILES sipwizard.c)
 endif()
 
 set(GENERATED_SOURCE_FILES
@@ -137,14 +149,14 @@ endif()
 if(ENABLE_TUNNEL)
 	list(APPEND LIBS ${TUNNEL_LIBRARIES})
 endif()
-if(ENABLE_ASSISTANT)
-	list(APPEND LIBS ${SOUP_LIBRARIES})
-endif()
 if(MSVC AND NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsPhone")
 	list(APPEND LIBS ${LIBGCC} ${LIBMINGWEX})
 endif()
 if(WIN32 AND NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "WindowsPhone")
 	list(APPEND LIBS shlwapi)
+endif()
+if(INTL_FOUND)
+	list(APPEND LIBS ${INTL_LIBRARIES})
 endif()
 
 if(ENABLE_STATIC)
@@ -180,24 +192,6 @@ install(TARGETS linphone EXPORT LinphoneTargets
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib
 	PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-)
-
-
-set(HEADER_FILES
-	buffer.h
-	call_log.h
-	call_params.h
-	content.h
-	event.h
-	linphonecore.h
-	linphonecore_utils.h
-	linphonefriend.h
-	linphonepresence.h
-	linphone_tunnel.h
-	lpc2xml.h
-	lpconfig.h
-	sipsetup.h
-	xml2lpc.h
 )
 
 install(FILES ${HEADER_FILES}

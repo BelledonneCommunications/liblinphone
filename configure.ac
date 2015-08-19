@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([linphone],[3.8.2],[linphone-developers@nongnu.org])
+AC_INIT([linphone],[3.8.5],[linphone-developers@nongnu.org])
 AC_CANONICAL_SYSTEM
 AC_CONFIG_SRCDIR([coreapi/linphonecore.c])
 
@@ -147,8 +147,7 @@ if test "$mingw_found" != "yes" ; then
 	LIBS="$LIBS $LIBINTL"
 else
 	if test "$USE_NLS" = "yes" ; then
-		AC_DEFINE(ENABLE_NLS,1,[Tells whether localisation is possible])
-		AC_DEFINE(HAVE_GETTEXT,1,[Tells wheter localisation is possible])
+		AC_DEFINE(HAVE_INTL,1,[Tells wheter localisation is possible])
 		LIBS="$LIBS -lintl"
 	fi
 fi
@@ -633,7 +632,7 @@ AC_ARG_ENABLE(zrtp,
 
 dnl this options are just for passing to mediastreamer2 subproject
 AC_ARG_ENABLE(dtls,
-	[AS_HELP_STRING([--enable-dtls], [Turn on dtls support - requires polarssl > 1.4])],
+	[AS_HELP_STRING([--enable-dtls], [Turn on srtp-dtls support - requires polarssl > 1.4])],
 	[case "${enableval}" in
 		yes)	dtls=true ;;
 		no)	dtls=false ;;
@@ -739,16 +738,6 @@ AC_ARG_ENABLE(assistant,
 	[build_wizard=check]
 )
 
-dnl check libsoup (needed for wizard)
-if test "$build_wizard" != "false" ; then
-	PKG_CHECK_MODULES(LIBSOUP, [libsoup-2.4 >= 2.26],[],
-		[if test "$build_wizard" = "true" ; then
-			AC_MSG_ERROR([Could not found libsoup, assistant cannot be compiled.])
-		else
-			build_wizard=false
-		fi]
-	)
-fi
 if test "$build_wizard" != "false" ; then
 	PKG_CHECK_MODULES(LIBGTKWIZARD, [gtk+-2.0 >= 2.22.0],[],
 		[if test "$build_wizard" = "true" ; then
@@ -758,8 +747,6 @@ if test "$build_wizard" != "false" ; then
 		fi]
 	)
 fi
-AC_SUBST(LIBSOUP_CFLAGS)
-AC_SUBST(LIBSOUP_LIBS)
 AM_CONDITIONAL(BUILD_WIZARD, test x$build_wizard != xfalse)
 if test "$build_wizard" != "false" ; then
 	build_wizard=true
@@ -1019,12 +1006,12 @@ dnl ##################################################
 dnl # Check for doxygen
 dnl ##################################################
 
-AC_ARG_ENABLE(doxygen,
-	[AS_HELP_STRING([--disable-documentation], [Disable documentation generation using doxygen (default=no)])],
+AC_ARG_ENABLE(documentation,
+	[AS_HELP_STRING([--enable-documentation], [Documentation generation using doxygen (default=yes)])],
 	[case "${enableval}" in
 		yes)	documentation_enabled=yes;;
 		no)		documentation_enabled=no;;
-		*)		AC_MSG_ERROR("Bad value for --disable-documentation");;
+		*)		AC_MSG_ERROR("Bad value for --enable-documentation");;
 	esac],
 	[documentation_enabled=yes]
 )
@@ -1076,12 +1063,13 @@ printf "* %-30s %s\n" "Video support"		$video
 printf "* %-30s %s\n" "GTK interface"		$gtk_ui
 printf "* %-30s %s\n" "Account assistant"	$build_wizard
 printf "* %-30s %s\n" "Console interface"	$console_ui
-printf "* %-30s %s\n" "Tools"			$build_tools
+printf "* %-30s %s\n" "Tools"				$build_tools
 printf "* %-30s %s\n" "Message storage"		$enable_msg_storage
 printf "* %-30s %s\n" "IM encryption"		$lime
 printf "* %-30s %s\n" "uPnP support" 		$build_upnp
 printf "* %-30s %s\n" "LDAP support" 		$enable_ldap
 printf "* %-30s %s\n" "ZLIB support" 		$found_zlib
+printf "* %-30s %s\n" "Documentation" 		$documentation_enabled
 
 if test "$enable_tunnel" = "true" ; then
 	printf "* %-30s %s\n" "Tunnel support" "true"

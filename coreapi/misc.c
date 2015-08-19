@@ -224,20 +224,20 @@ void linphone_core_update_allocated_audio_bandwidth(LinphoneCore *lc){
 	}
 }
 
-bool_t linphone_core_is_payload_type_usable_for_bandwidth(LinphoneCore *lc, const PayloadType *pt,  int bandwidth_limit)
-{
+bool_t linphone_core_is_payload_type_usable_for_bandwidth(LinphoneCore *lc, const PayloadType *pt, int bandwidth_limit){
 	double codec_band;
+	const int video_enablement_limit = 99;
 	bool_t ret=FALSE;
 
 	switch (pt->type){
 		case PAYLOAD_AUDIO_CONTINUOUS:
 		case PAYLOAD_AUDIO_PACKETIZED:
 			codec_band=get_audio_payload_bandwidth(lc,pt,bandwidth_limit);
-			ret=bandwidth_is_greater(bandwidth_limit*1000,codec_band);
-			//ms_message("Payload %s: %g",pt->mime_type,codec_band);
+			ret=bandwidth_is_greater(bandwidth_limit,codec_band);
+			/*ms_message("Payload %s: codec_bandwidth=%g, bandwidth_limit=%i",pt->mime_type,codec_band,bandwidth_limit);*/
 			break;
 		case PAYLOAD_VIDEO:
-			if (bandwidth_limit!=0) {/* infinite (-1) or strictly positive*/
+			if (bandwidth_limit<=0 || bandwidth_limit >= video_enablement_limit) {/* infinite or greater than video_enablement_limit*/
 				ret=TRUE;
 			}
 			else ret=FALSE;
@@ -248,9 +248,11 @@ bool_t linphone_core_is_payload_type_usable_for_bandwidth(LinphoneCore *lc, cons
 
 /* return TRUE if codec can be used with bandwidth, FALSE else*/
 bool_t linphone_core_check_payload_type_usability(LinphoneCore *lc, const PayloadType *pt){
-	bool_t ret=linphone_core_is_payload_type_usable_for_bandwidth(lc, pt, linphone_core_get_payload_type_bitrate(lc,pt));
+	int maxbw=get_min_bandwidth(linphone_core_get_download_bandwidth(lc),
+					linphone_core_get_upload_bandwidth(lc));
+	bool_t ret=linphone_core_is_payload_type_usable_for_bandwidth(lc, pt, maxbw);
 	if ((pt->type==PAYLOAD_AUDIO_CONTINUOUS || pt->type==PAYLOAD_AUDIO_PACKETIZED)
-		&& lc->sound_conf.capt_sndcard 
+		&& lc->sound_conf.capt_sndcard
 		&& !(ms_snd_card_get_capabilities(lc->sound_conf.capt_sndcard) & MS_SND_CARD_CAP_BUILTIN_ECHO_CANCELLER)
 		&& linphone_core_echo_cancellation_enabled(lc)
 		&& (pt->clock_rate!=16000 && pt->clock_rate!=8000)
@@ -264,7 +266,7 @@ bool_t linphone_core_check_payload_type_usability(LinphoneCore *lc, const Payloa
 }
 
 bool_t lp_spawn_command_line_sync(const char *command, char **result,int *command_ret){
-#if !defined(_WIN32_WCE)
+#if !defined(_WIN32_WCE) && !defined(LINPHONE_WINDOWS_UNIVERSAL)
 	FILE *f=popen(command,"r");
 	if (f!=NULL){
 		int err;
@@ -713,7 +715,7 @@ void linphone_core_update_ice_state_in_call_stats(LinphoneCall *call)
 			call->stats[LINPHONE_CALL_STATS_VIDEO].ice_state = LinphoneIceStateFailed;
 		}
 	}
-	ms_message("Call [%p] New ICE state: audio: [%s]    video: [%s]", call, 
+	ms_message("Call [%p] New ICE state: audio: [%s]    video: [%s]", call,
 		   linphone_ice_state_to_string(call->stats[LINPHONE_CALL_STATS_AUDIO].ice_state), linphone_ice_state_to_string(call->stats[LINPHONE_CALL_STATS_VIDEO].ice_state));
 }
 
@@ -721,7 +723,7 @@ void linphone_call_stop_ice_for_inactive_streams(LinphoneCall *call) {
 	int i;
 	IceSession *session = call->ice_session;
 	SalMediaDescription *desc = call->localdesc;
-	
+
 	if (session == NULL) return;
 	if (ice_session_state(session) == IS_Completed) return;
 
@@ -1272,6 +1274,7 @@ LinphoneReason linphone_reason_from_sal(SalReason r){
 			ret=LinphoneReasonIOError;
 			break;
 		case SalReasonUnknown:
+		case SalReasonInternalError:
 			ret=LinphoneReasonUnknown;
 			break;
 		case SalReasonBusy:
@@ -1302,7 +1305,7 @@ LinphoneReason linphone_reason_from_sal(SalReason r){
 			ret=LinphoneReasonIOError;
 			break;
 		case SalReasonRequestPending:
-			ret=LinphoneReasonNone;
+			ret=LinphoneReasonTemporarilyUnavailable; /*might not be exactly the perfect matching, but better than LinphoneReasonNone*/
 			break;
 		case SalReasonUnauthorized:
 			ret=LinphoneReasonUnauthorized;
@@ -1625,8 +1628,8 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_key_agreement_suites(LinphoneCore 
 	if (zrtpConfig == NULL) {
 	        return 0;
 	}
-    
-	origPtr = strdup(zrtpConfig);
+
+	origPtr = ms_strdup(zrtpConfig);
 	zrtpConfig = origPtr;
 	while ((entry = seperate_string_list(&zrtpConfig))) {
 		const MSZrtpKeyAgreement agreement = ms_zrtp_key_agreement_from_string(entry);
@@ -1636,7 +1639,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_key_agreement_suites(LinphoneCore 
 		}
 	}
 
-	free(origPtr);
+	ms_free(origPtr);
 	return key_agreements_count;
 }
 
@@ -1647,8 +1650,8 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_cipher_suites(LinphoneCore *lc, MS
 	if (zrtpConfig == NULL) {
 	        return 0;
 	}
-    
-	origPtr = strdup(zrtpConfig);
+
+	origPtr = ms_strdup(zrtpConfig);
 	zrtpConfig = origPtr;
 	while ((entry = seperate_string_list(&zrtpConfig))) {
 		const MSZrtpCipher cipher = ms_zrtp_cipher_from_string(entry);
@@ -1658,7 +1661,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_cipher_suites(LinphoneCore *lc, MS
 		}
 	}
 
-	free(origPtr);
+	ms_free(origPtr);
 	return cipher_count;
 }
 
@@ -1670,7 +1673,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_hash_suites(LinphoneCore *lc, MSZr
         	return 0;
 	}
 
-	origPtr = strdup(zrtpConfig);
+	origPtr = ms_strdup(zrtpConfig);
 	zrtpConfig = origPtr;
 	while ((entry = seperate_string_list(&zrtpConfig))) {
 		const MSZrtpHash hash = ms_zrtp_hash_from_string(entry);
@@ -1680,7 +1683,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_hash_suites(LinphoneCore *lc, MSZr
 		}
 	}
 
-	free(origPtr);
+	ms_free(origPtr);
 	return hash_count;
 }
 
@@ -1692,7 +1695,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_auth_suites(LinphoneCore *lc, MSZr
 		return 0;
 	}
 
-	origPtr = strdup(zrtpConfig);
+	origPtr = ms_strdup(zrtpConfig);
 	zrtpConfig = origPtr;
 	while ((entry = seperate_string_list(&zrtpConfig))) {
 		const MSZrtpAuthTag authTag = ms_zrtp_auth_tag_from_string(entry);
@@ -1702,7 +1705,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_auth_suites(LinphoneCore *lc, MSZr
 		}
 	}
 
-	free(origPtr);
+	ms_free(origPtr);
 	return auth_tag_count;
 }
 
@@ -1714,7 +1717,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_sas_suites(LinphoneCore *lc, MSZrt
 	        return 0;
 	}
 
-	origPtr = strdup(zrtpConfig);
+	origPtr = ms_strdup(zrtpConfig);
 	zrtpConfig = origPtr;
 	while ((entry = seperate_string_list(&zrtpConfig))) {
 		const MSZrtpSasType type = ms_zrtp_sas_type_from_string(entry);
@@ -1724,7 +1727,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_sas_suites(LinphoneCore *lc, MSZrt
 		}
 	}
 
-	free(origPtr);
+	ms_free(origPtr);
 	return sas_count;
 }
 

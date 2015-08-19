@@ -24,14 +24,14 @@ In order to enable generation of bundle for older MacOS version, it is recommend
 ##### Linphone library (liblinphone)
 
         sudo port install automake autoconf libtool pkgconfig intltool wget cunit \
-        antlr3 speex libvpx readline sqlite3 openldap libupnp \
+        antlr3 speex readline sqlite3 openldap libupnp \
         ffmpeg-devel -gpl2
 
 ##### Linphone UI (GTK version)
 
 Install `GTK`. It is recommended to use the `quartz` backend for better integration.
 
-        sudo port install gtk2 +quartz +no_x11 libsoup
+        sudo port install gtk2 +quartz +no_x11
         sudo port install gtk-osx-application +no_python
         sudo port install hicolor-icon-theme
 
@@ -39,19 +39,18 @@ Install `GTK`. It is recommended to use the `quartz` backend for better integrat
 
 ##### Linphone library (liblinphone)
 
-        brew tap Gui13/linphone
         brew install intltool libtool wget pkg-config automake libantlr3.4c \
-                antlr3.2 gettext speex ffmpeg readline libvpx opus
+                homebrew/versions/antlr3 gettext speex ffmpeg readline libvpx opus
         ln -s /usr/local/bin/glibtoolize /usr/local/bin/libtoolize
         brew link --force gettext
+        #readline is required from linphonec.c otherwise compilation will fail
+        brew link readline --force
 
 ##### Linphone UI (GTK version)
 
-	brew install cairo --without-x11
+        brew install cairo --without-x11
         brew install gtk+ --without-x11
-        brew install gettext gtk-mac-integration libsoup hicolor-icon-theme
-        #readline is required from linphonec.c otherwise compilation will fail
-        brew link readline --force
+        brew install gtk-mac-integration hicolor-icon-theme
 
 ### Building Linphone
 
@@ -76,6 +75,27 @@ The next pieces need to be compiled manually.
         cd polarssl
         ./autogen.sh && ./configure --prefix=/opt/local && make
         sudo make install
+
+* Install libvpx (Must be manualy build because the macport recipe does not support 'macosx_deployment_target')
+
+	git clone https://chromium.googlesource.com/webm/libvpx -b v1.3.0
+	cd libvpx
+	./configure --prefix=/opt/local \
+		--target=x86_64-darwin10-gcc \
+	        --enable-error-concealment \
+	        --enable-multithread \
+	        --enable-realtime-only \
+	        --enable-spatial-resampling \
+	        --enable-vp8 \
+	        --disable-vp9 \
+	        --enable-libs \
+	        --disable-install-docs \
+	        --disable-debug-libs \
+	        --disable-examples \
+	        --disable-unit-tests \
+	        --as=yasm
+	make
+	sudo make install
 
 * Install belle-sip (sip stack)
 

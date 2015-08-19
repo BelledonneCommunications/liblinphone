@@ -18,21 +18,23 @@ liblinphonetester_la_SOURCES = \
 				flexisip_tester.c \
 				log_collection_tester.c \
 				message_tester.c \
-				multi_call.c \
+				multi_call_tester.c \
 				multicast_call_tester.c \
 				offeranswer_tester.c \
 				player_tester.c \
 				presence_tester.c \
+				proxy_config_tester.c \
 				quality_reporting_tester.c \
 				register_tester.c \
 				remote_provisioning_tester.c \
 				setup_tester.c \
 				stun_tester.c \
-				transport_tester.c \
+				tunnel_tester.c \
 				tester.c \
 				upnp_tester.c \
 				video_tester.c \
 				common/bc_tester_utils.c
+
 liblinphonetester_ladir = $(includedir)/linphone
 liblinphonetester_la_HEADERS = common/bc_tester_utils.h
 
@@ -40,7 +42,9 @@ liblinphonetester_la_LDFLAGS= -no-undefined
 liblinphonetester_la_LIBADD= ../coreapi/liblinphone.la $(CUNIT_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/coreapi -I$(top_srcdir)/tester/common
-AM_CFLAGS    = -DBC_CONFIG_FILE=\"config.h\" $(STRICT_OPTIONS) $(STRICT_OPTIONS_CC) -DIN_LINPHONE $(ORTP_CFLAGS) $(MEDIASTREAMER_CFLAGS) $(CUNIT_CFLAGS) $(BELLESIP_CFLAGS) $(LIBXML2_CFLAGS) $(SQLITE3_CFLAGS)
+AM_CFLAGS    = -DBC_CONFIG_FILE=\"config.h\" $(STRICT_OPTIONS) $(STRICT_OPTIONS_CC) \
+		-DIN_LINPHONE $(ORTP_CFLAGS) $(MEDIASTREAMER_CFLAGS) $(CUNIT_CFLAGS) \
+		$(BELLESIP_CFLAGS) $(LIBXML2_CFLAGS) $(SQLITE3_CFLAGS)
 
 if BUILD_GTK_UI
 

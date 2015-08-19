@@ -20,12 +20,6 @@
 #
 ############################################################################
 
-if(WIN32)
-	set(GTK2_ADDITIONAL_SUFFIXES "../lib/glib-2.0/include" "../lib/gtk-2.0/include")
-endif()
-find_package(GTK2 2.18 REQUIRED gtk)
-find_package(Intl REQUIRED)
-
 set(UI_FILES
 	about.ui
 	audio_assistant.ui
@@ -45,6 +39,11 @@ set(UI_FILES
 	sip_account.ui
 	tunnel_config.ui
 	waiting.ui
+	chatroom_frame.ui
+	in_call_frame.ui
+	conf_frame.ui
+	callee_frame.ui
+	login_frame.ui
 )
 
 set(PIXMAPS stock_people.png)
@@ -71,16 +70,11 @@ set(SOURCE_FILES
 	utils.c
 	videowindow.c
 )
-if(WIN32)
-	list(APPEND SOURCE_FILES linphone.rc)
-endif()
-
 if(ENABLE_ASSISTANT)
 	list(APPEND SOURCE_FILES setupwizard.c)
 endif()
-
-if(GETTEXT_FOUND)
-	add_definitions("-DENABLE_NLS")
+if(WIN32)
+	list(APPEND SOURCE_FILES linphone.rc)
 endif()
 
 if(WIN32)
@@ -91,18 +85,16 @@ endif()
 set_target_properties(linphone-gtk PROPERTIES OUTPUT_NAME linphone LINKER_LANGUAGE CXX)
 target_include_directories(linphone-gtk PUBLIC ${GTK2_INCLUDE_DIRS} ${INTL_INCLUDE_DIRS})
 target_link_libraries(linphone-gtk linphone ${GTK2_LIBRARIES})
-if(INTL_LIBRARIES)
+if(INTL_FOUND)
 	target_link_libraries(linphone-gtk ${INTL_LIBRARIES})
 endif()
+
 if(WIN32)
 	target_link_libraries(linphone-gtk Wininet)
 endif()
 if(ENABLE_NOTIFY)
 	target_include_directories(linphone-gtk PUBLIC ${NOTIFY_INCLUDE_DIRS})
 	target_link_libraries(linphone-gtk ${NOTIFY_LIBRARIES})
-endif()
-if(ENABLE_ASSISTANT)
-	target_link_libraries(linphone-gtk ${SOUP_LIBRARIES})
 endif()
 
 install(TARGETS linphone-gtk

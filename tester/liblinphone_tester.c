@@ -16,8 +16,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include "CUnit/Basic.h"
+
 #include "linphonecore.h"
 #include "private.h"
 #include "liblinphone_tester.h"
@@ -27,7 +26,6 @@
 #ifdef HAVE_GTK
 #include <gtk/gtk.h>
 #endif
-
 
 static FILE * log_file = NULL;
 
@@ -131,7 +129,7 @@ static void liblinphone_tester_qnx_log_handler(OrtpLogLevel lev, const char *fmt
 #endif /* __QNX__ */
 
 static void log_handler(int lev, const char *fmt, va_list args) {
-#ifdef WIN32
+#ifdef _WIN32
 	vfprintf(lev == ORTP_ERROR ? stderr : stdout, fmt, args);
 	fprintf(lev == ORTP_ERROR ? stderr : stdout, "\n");
 #else
@@ -152,7 +150,7 @@ static void log_handler(int lev, const char *fmt, va_list args) {
 	}
 }
 
-void liblinphone_tester_init(void) {
+void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, va_list args)) {
 	if (! log_file) {
 #if defined(ANDROID)
 		linphone_core_set_log_handler(liblinphone_android_ortp_log_handler);
@@ -161,7 +159,8 @@ void liblinphone_tester_init(void) {
 #endif
 	}
 
-	bc_tester_init(log_handler, ORTP_MESSAGE, ORTP_ERROR);
+	if (ftester_printf == NULL) ftester_printf = log_handler;
+	bc_tester_init(ftester_printf, ORTP_MESSAGE, ORTP_ERROR);
 	liblinphone_tester_add_suites();
 }
 
@@ -170,6 +169,8 @@ void liblinphone_tester_uninit(void) {
 }
 
 
+#if !__ios && !(defined(LINPHONE_WINDOWS_PHONE) || defined(LINPHONE_WINDOWS_UNIVERSAL))
+
 static const char* liblinphone_helper =
 		"\t\t\t--verbose\n"
 		"\t\t\t--silent\n"
@@ -177,9 +178,9 @@ static const char* liblinphone_helper =
 		"\t\t\t--config <config path>\n"
 		"\t\t\t--domain <test sip domain>\n"
 		"\t\t\t--auth-domain <test auth domain>\n"
-		"\t\t\t--dns-hosts </etc/hosts -like file to used to override DNS names (default: tester_hosts)>\n";
+		"\t\t\t--dns-hosts </etc/hosts -like file to used to override DNS names (default: tester_hosts)>\n"
+		"\t\t\t--keep-recorded-files\n";
 
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 int main (int argc, char *argv[])
 {
 	int i;
@@ -193,7 +194,15 @@ int main (int argc, char *argv[])
 	gdk_threads_init();
 #endif
 
-	liblinphone_tester_init();
+	liblinphone_tester_init(NULL);
+
+	if (strstr(argv[0], ".libs")) {
+		char res_dir[128] = {0};
+		// this allows to launch liblinphone_tester from outside of tester directory
+		strncpy(res_dir, argv[0], strstr(argv[0], ".libs")-argv[0]);
+		bc_tester_set_resource_dir_prefix(res_dir);
+		bc_tester_set_writable_dir_prefix(res_dir);
+	}
 
 	for(i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "--verbose") == 0) {
@@ -218,19 +227,21 @@ int main (int argc, char *argv[])
 			auth_domain=argv[i];
 		} else if (strcmp(argv[i],"--config")==0){
 			CHECK_ARG("--config", ++i, argc);
-			bc_tester_read_dir_prefix=argv[i];
+			bc_tester_set_resource_dir_prefix(argv[i]);
 		}else if (strcmp(argv[i],"--dns-hosts")==0){
 			CHECK_ARG("--dns-hosts", ++i, argc);
 			userhostsfile=argv[i];
+		} else if (strcmp(argv[i],"--keep-recorded-files")==0){
+			liblinphone_tester_keep_recorded_files(TRUE);
 		} else {
-			int ret = bc_tester_parse_args(argc, argv, i);
-			if (ret>0) {
-				i += ret - 1;
+			int bret = bc_tester_parse_args(argc, argv, i);
+			if (bret>0) {
+				i += bret - 1;
 				continue;
-			} else if (ret<0) {
+			} else if (bret<0) {
 				bc_tester_helper(argv[0], liblinphone_helper);
 			}
-			return ret;
+			return bret;
 		}
 	}
 

@@ -68,15 +68,16 @@ typedef enum {
 	SalTransportDTLS, /*DTLS*/
 }SalTransport;
 
-#define SAL_MEDIA_DESCRIPTION_UNCHANGED			0x00
-#define SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED		(1)
-#define SAL_MEDIA_DESCRIPTION_CODEC_CHANGED		(1<<1)
-#define SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED	(1<<2)
-#define SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED	(1<<3)
-#define SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED		(1<<4)
+#define SAL_MEDIA_DESCRIPTION_UNCHANGED						0x00
+#define SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED				(1)
+#define SAL_MEDIA_DESCRIPTION_CODEC_CHANGED					(1<<1)
+#define SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED			(1<<2)
+#define SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED			(1<<3)
+#define SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED				(1<<4)
+#define SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED		(1<<5) /* use to notify when switching from multicast to unicast*/
+#define SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION	(1<<6) /* use force graph reconstruction*/
 
-#define SAL_MEDIA_DESCRIPTION_CHANGED		(SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED | SAL_MEDIA_DESCRIPTION_CODEC_CHANGED |\
-						SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED |SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED | SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED)
+
 
 const char* sal_transport_to_string(SalTransport transport);
 SalTransport sal_transport_parse(const char*);
@@ -116,8 +117,8 @@ void sal_address_set_password(SalAddress *addr, const char *passwd);
 const char *sal_address_get_password(const SalAddress *addr);
 void sal_address_set_header(SalAddress *addr, const char *header_name, const char *header_value);
 
-Sal * sal_init();
-void sal_uninit(Sal* sal);
+LINPHONE_PUBLIC Sal * sal_init();
+LINPHONE_PUBLIC void sal_uninit(Sal* sal);
 void sal_set_user_pointer(Sal *sal, void *user_data);
 void *sal_get_user_pointer(const Sal *sal);
 
@@ -229,6 +230,7 @@ typedef struct SalStreamDescription{
 	SalSrtpCryptoAlgo crypto[SAL_CRYPTO_ALGO_MAX];
 	unsigned int crypto_local_tag;
 	int max_rate;
+	OrtpRtcpFbConfiguration rtcp_fb;
 	OrtpRtcpXrConfiguration rtcp_xr;
 	SalIceCandidate ice_candidates[SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES];
 	SalIceRemoteCandidate ice_remote_candidates[SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES];
@@ -289,8 +291,7 @@ void sal_media_description_unref(SalMediaDescription *md);
 bool_t sal_media_description_empty(const SalMediaDescription *md);
 int sal_media_description_equals(const SalMediaDescription *md1, const SalMediaDescription *md2);
 bool_t sal_media_description_has_dir(const SalMediaDescription *md, SalStreamDir dir);
-SalStreamDescription *sal_media_description_find_stream(SalMediaDescription *md,
-    SalMediaProto proto, SalStreamType type);
+LINPHONE_PUBLIC SalStreamDescription *sal_media_description_find_stream(SalMediaDescription *md, SalMediaProto proto, SalStreamType type);
 unsigned int sal_media_description_nb_active_streams_of_type(SalMediaDescription *md, SalStreamType type);
 SalStreamDescription * sal_media_description_get_active_stream_of_type(SalMediaDescription *md, SalStreamType type, unsigned int idx);
 SalStreamDescription * sal_media_description_find_secure_stream_of_type(SalMediaDescription *md, SalStreamType type);
@@ -355,7 +356,8 @@ typedef enum SalReason{
 	SalReasonNotImplemented,
 	SalReasonBadGateway,
 	SalReasonServerTimeout,
-	SalReasonIOError
+	SalReasonIOError,
+	SalReasonInternalError
 }SalReason;
 
 const char* sal_reason_to_string(const SalReason reason);
@@ -567,7 +569,7 @@ void sal_set_callbacks(Sal *ctx, const SalCallbacks *cbs);
 int sal_listen_port(Sal *ctx, const char *addr, int port, SalTransport tr, int is_tunneled);
 int sal_get_listening_port(Sal *ctx, SalTransport tr);
 int sal_unlisten_ports(Sal *ctx);
-int sal_transport_available(Sal *ctx, SalTransport t);
+LINPHONE_PUBLIC int sal_transport_available(Sal *ctx, SalTransport t);
 void sal_set_dscp(Sal *ctx, int dscp);
 void sal_set_supported_tags(Sal *ctx, const char* tags);
 void sal_add_supported_tag(Sal *ctx, const char* tag);
@@ -703,7 +705,7 @@ LINPHONE_PUBLIC void sal_default_set_sdp_handling(Sal* h, SalOpSDPHandling handl
 LINPHONE_PUBLIC void sal_call_set_sdp_handling(SalOp *h, SalOpSDPHandling handling) ;
 
 /*Registration*/
-int sal_register(SalOp *op, const char *proxy, const char *from, int expires);
+int sal_register(SalOp *op, const char *proxy, const char *from, int expires,SalAddress* old_contact);
 /*refresh a register, -1 mean use the last known value*/
 int sal_register_refresh(SalOp *op, int expires);
 int sal_unregister(SalOp *h);
@@ -777,8 +779,11 @@ const SalCustomHeader *sal_op_get_recv_custom_header(SalOp *op);
 
 void sal_op_set_sent_custom_header(SalOp *op, SalCustomHeader* ch);
 
-void sal_enable_logs();
-void sal_disable_logs();
+/** deprecated. use sal_set_log_level instead **/
+void sal_enable_log();
+/** deprecated. use sal_set_log_level instead **/
+void sal_disable_log();
+void sal_set_log_level(OrtpLogLevel level);
 
 /*internal API */
 void __sal_op_init(SalOp *b, Sal *sal);
@@ -795,6 +800,11 @@ LINPHONE_PUBLIC	void sal_set_recv_error(Sal *sal,int value);
 
 /*always answer 480 if value=true*/
 LINPHONE_PUBLIC	void sal_enable_unconditional_answer(Sal *sal,int value);
+
+LINPHONE_PUBLIC bool_t sal_pending_trans_checking_enabled(const Sal *sal) ;
+LINPHONE_PUBLIC int sal_enable_pending_trans_checking(Sal *sal, bool_t value) ;
+
+
 
 /*refresher retry after value in ms*/
 LINPHONE_PUBLIC	void sal_set_refresher_retry_after(Sal *sal,int value);

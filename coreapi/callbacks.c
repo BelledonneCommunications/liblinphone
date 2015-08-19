@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "lpconfig.h"
 
 // stat
-#ifndef WIN32
+#ifndef _WIN32
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -35,10 +35,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static void register_failure(SalOp *op);
 
 static int media_parameters_changed(LinphoneCall *call, SalMediaDescription *oldmd, SalMediaDescription *newmd) {
-	if (call->params->in_conference != call->current_params->in_conference) return SAL_MEDIA_DESCRIPTION_CHANGED;
-	if (call->up_bw != linphone_core_get_upload_bandwidth(call->core)) return SAL_MEDIA_DESCRIPTION_CHANGED;
+	int result=0;
+	if (call->params->in_conference != call->current_params->in_conference) return SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION;
+	if (call->up_bw != linphone_core_get_upload_bandwidth(call->core)) return SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION;
 	if (call->localdesc_changed) ms_message("Local description has changed: %i", call->localdesc_changed);
-	return call->localdesc_changed | sal_media_description_equals(oldmd, newmd);
+	result = call->localdesc_changed | sal_media_description_equals(oldmd, newmd);
+	return result;
 }
 
 void linphone_core_update_streams_destinations(LinphoneCore *lc, LinphoneCall *call, SalMediaDescription *old_md, SalMediaDescription *new_md) {
@@ -109,7 +111,7 @@ void linphone_call_update_frozen_payloads(LinphoneCall *call, SalMediaDescriptio
 				/*new codec, needs to be added to the list*/
 				local->streams[i].already_assigned_payloads=ms_list_append(local->streams[i].already_assigned_payloads, payload_type_clone(pt));
 				ms_message("LinphoneCall[%p] : payload type %i %s/%i fmtp=%s added to frozen list.",
-					   call, payload_type_get_number(pt), pt->mime_type, pt->clock_rate, pt->recv_fmtp ? pt->recv_fmtp : NULL);
+					   call, payload_type_get_number(pt), pt->mime_type, pt->clock_rate, pt->recv_fmtp ? pt->recv_fmtp : "");
 			}
 		}
 	}
@@ -119,6 +121,8 @@ void linphone_core_update_streams(LinphoneCore *lc, LinphoneCall *call, SalMedia
 	SalMediaDescription *oldmd=call->resultdesc;
 	bool_t all_muted=FALSE;
 	bool_t send_ringbacktone=FALSE;
+	int md_changed=0;
+
 
 	if (!((call->state == LinphoneCallIncomingEarlyMedia) && (linphone_core_get_ring_during_incoming_early_media(lc)))) {
 		linphone_core_stop_ringing(lc);
@@ -144,10 +148,14 @@ void linphone_core_update_streams(LinphoneCore *lc, LinphoneCall *call, SalMedia
 	call->resultdesc=new_md;
 	if ((call->audiostream && call->audiostream->ms.state==MSStreamStarted) || (call->videostream && call->videostream->ms.state==MSStreamStarted)){
 		clear_early_media_destinations(call);
+
 		/* we already started media: check if we really need to restart it*/
 		if (oldmd){
-			int md_changed = media_parameters_changed(call, oldmd, new_md);
-			if ((md_changed & (SAL_MEDIA_DESCRIPTION_CODEC_CHANGED|SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED))){
+			md_changed = media_parameters_changed(call, oldmd, new_md);
+			if ((md_changed & (	SAL_MEDIA_DESCRIPTION_CODEC_CHANGED
+								|SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED
+								|SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED
+								|SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION ))){
 				ms_message("Media descriptions are different, need to restart the streams.");
 			} else if ( call->playing_ringbacktone) {
 				ms_message("Playing ringback tone, will restart the streams.");
@@ -181,6 +189,11 @@ void linphone_core_update_streams(LinphoneCore *lc, LinphoneCall *call, SalMedia
 			}
 		}
 		linphone_call_stop_media_streams (call);
+		if (md_changed & SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED){
+			ms_message("Media ip type has changed, destroying sessions context on call [%p]",call);
+			ms_media_stream_sessions_uninit(&call->sessions[0]);
+			ms_media_stream_sessions_uninit(&call->sessions[1]);
+		}
 		linphone_call_init_media_streams (call);
 	}
 
@@ -349,7 +362,7 @@ static void call_received(SalOp *h){
 	linphone_call_ref(call); /*prevent the call from being destroyed while we are notifying, if the user declines within the state callback */
 
 	call->bg_task_id=sal_begin_background_task("liblinphone call notification", NULL, NULL);
-	
+
 	if ((linphone_core_get_firewall_policy(lc) == LinphonePolicyUseIce) && (call->ice_session != NULL)) {
 		/* Defer ringing until the end of the ICE candidates gathering process. */
 		ms_message("Defer ringing to gather ICE candidates");
@@ -675,6 +688,7 @@ static void call_updated_by_remote(LinphoneCore *lc, LinphoneCall *call, bool_t 
 		}
 
 	} else if( call->state == LinphoneCallPausedByRemote ){
+		/* FIXME: the comment below is meaningless. */
 		/* Case where no SDP is present and we were paused by remote.
 		 * We send back an ACK with our SDP and expect the remote to send its own.
 		 * No state change here until an answer is received. */
@@ -734,7 +748,7 @@ static void call_updating(SalOp *op, bool_t is_update){
 		case LinphoneCallPausing:
 		case LinphoneCallResuming:
 		case LinphoneCallUpdatedByRemote:
-			sal_call_decline(call->op,SalReasonNotImplemented,NULL);
+			sal_call_decline(call->op,SalReasonInternalError,NULL);
 			/*no break*/
 		case LinphoneCallIdle:
 		case LinphoneCallOutgoingInit:
@@ -760,7 +774,7 @@ static void call_terminated(SalOp *op, const char *from){
 	switch(linphone_call_get_state(call)){
 		case LinphoneCallEnd:
 		case LinphoneCallError:
-			ms_warning("call_terminated: ignoring.");
+			ms_warning("call_terminated: already terminated, ignoring.");
 			return;
 		break;
 		case LinphoneCallIncomingReceived:
@@ -1147,27 +1161,27 @@ static void ping_reply(SalOp *op){
 }
 
 static bool_t fill_auth_info_with_client_certificate(LinphoneCore *lc, SalAuthInfo* sai) {
-		const char *chain_file = lp_config_get_string(lc->config,"sip","client_cert_chain", 0);
-		const char *key_file = lp_config_get_string(lc->config,"sip","client_cert_key", 0);;
+	const char *chain_file = lp_config_get_string(lc->config,"sip","client_cert_chain", 0);
+	const char *key_file = lp_config_get_string(lc->config,"sip","client_cert_key", 0);;
 
-#ifndef WIN32
-		{
-		// optinal check for files
-		struct stat st;
-		if (stat(key_file,&st)) {
-			ms_warning("No client certificate key found in %s", key_file);
-			return FALSE;
-		}
-		if (stat(chain_file,&st)) {
-			ms_warning("No client certificate chain found in %s", chain_file);
-			return FALSE;
-		}
-		}
+#ifndef _WIN32
+	{
+	// optinal check for files
+	struct stat st;
+	if (stat(key_file,&st)) {
+		ms_warning("No client certificate key found in %s", key_file);
+		return FALSE;
+	}
+	if (stat(chain_file,&st)) {
+		ms_warning("No client certificate chain found in %s", chain_file);
+		return FALSE;
+	}
+	}
 #endif
 
-		sal_certificates_chain_parse_file(sai, chain_file, SAL_CERTIFICATE_RAW_FORMAT_PEM );
-		sal_signing_key_parse_file(sai, key_file, "");
-		return sai->certificates && sai->key;
+	sal_certificates_chain_parse_file(sai, chain_file, SAL_CERTIFICATE_RAW_FORMAT_PEM );
+	sal_signing_key_parse_file(sai, key_file, "");
+	return sai->certificates && sai->key;
 }
 
 static bool_t fill_auth_info(LinphoneCore *lc, SalAuthInfo* sai) {
@@ -1254,7 +1268,7 @@ static void text_delivery_update(SalOp *op, SalTextDeliveryStatus status){
 	linphone_chat_message_update_state(chat_msg);
 
 	if (chat_msg && (chat_msg->cb || (chat_msg->callbacks && linphone_chat_message_cbs_get_msg_state_changed(chat_msg->callbacks)))) {
-		ms_message("Notifying text delivery with status %i",chat_msg->state);
+		ms_message("Notifying text delivery with status %s",linphone_chat_message_state_to_string(chat_msg->state));
 		if (chat_msg->callbacks && linphone_chat_message_cbs_get_msg_state_changed(chat_msg->callbacks)) {
 			linphone_chat_message_cbs_get_msg_state_changed(chat_msg->callbacks)(chat_msg, chat_msg->state);
 		} else {

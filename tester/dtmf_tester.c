@@ -19,10 +19,6 @@
 #include "liblinphone_tester.h"
 #include "private.h"
 
-LinphoneCoreManager* marie;
-LinphoneCoreManager* pauline;
-LinphoneCall *marie_call;
-
 void dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf) {
 	stats* counters = get_stats(lc);
 	char** dst = &counters->dtmf_list_received;
@@ -32,23 +28,33 @@ void dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf) {
 	counters->dtmf_count++;
 }
 
-void send_dtmf_base(bool_t use_rfc2833, bool_t use_sipinfo, char dtmf, char* dtmf_seq) {
+void send_dtmf_base(LinphoneCoreManager **pmarie, LinphoneCoreManager **ppauline, bool_t use_rfc2833, bool_t use_sipinfo, char dtmf, char* dtmf_seq, bool_t use_opus) {
 	char* expected = NULL;
 	int dtmf_count_prev;
-	marie = linphone_core_manager_new( "marie_rc");
-	pauline = linphone_core_manager_new( "pauline_rc");
+	LinphoneCoreManager *marie = *pmarie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager *pauline = *ppauline = linphone_core_manager_new( "pauline_tcp_rc");
+	LinphoneCall *marie_call = NULL;
+
+	if (use_opus) {
+		if (!ms_filter_codec_supported("opus")) {
+			ms_warning("Opus not supported, skipping test.");
+			return;
+		}
+		disable_all_audio_codecs_except_one(marie->lc, "opus", 48000);
+		disable_all_audio_codecs_except_one(pauline->lc, "opus", 48000);
+	}
 
 	linphone_core_set_use_rfc2833_for_dtmf(marie->lc, use_rfc2833);
 	linphone_core_set_use_info_for_dtmf(marie->lc, use_sipinfo);
 	linphone_core_set_use_rfc2833_for_dtmf(pauline->lc, use_rfc2833);
 	linphone_core_set_use_info_for_dtmf(pauline->lc, use_sipinfo);
 
-	CU_ASSERT_TRUE(call(pauline,marie));
+	BC_ASSERT_TRUE(call(pauline,marie));
 
 	marie_call = linphone_core_get_current_call(marie->lc);
-	
-	CU_ASSERT_PTR_NOT_NULL(marie_call);
-	
+
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+
 	if (!marie_call) return;
 
 	if (dtmf != '\0') {
@@ -56,7 +62,7 @@ void send_dtmf_base(bool_t use_rfc2833, bool_t use_sipinfo, char dtmf, char* dtm
 		linphone_call_send_dtmf(marie_call, dtmf);
 
 		/*wait for the DTMF to be received from pauline*/
-		CU_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev+1, 10000));
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev+1, 10000));
 		expected = ms_strdup_printf("%c", dtmf);
 	}
 
@@ -66,76 +72,93 @@ void send_dtmf_base(bool_t use_rfc2833, bool_t use_sipinfo, char dtmf, char* dtm
 		linphone_call_send_dtmfs(marie_call, dtmf_seq);
 
 		/*wait for the DTMF sequence to be received from pauline*/
-		CU_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev + strlen(dtmf_seq), 10000 + dtmf_delay_ms * strlen(dtmf_seq)));
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.dtmf_count, dtmf_count_prev + strlen(dtmf_seq), 10000 + dtmf_delay_ms * strlen(dtmf_seq)));
 		expected = (dtmf!='\0')?ms_strdup_printf("%c%s",dtmf,dtmf_seq):ms_strdup(dtmf_seq);
 	}
 
 	if (expected != NULL) {
-		CU_ASSERT_PTR_NOT_NULL(pauline->stat.dtmf_list_received);
+		BC_ASSERT_PTR_NOT_NULL(pauline->stat.dtmf_list_received);
 		if (pauline->stat.dtmf_list_received) {
-			CU_ASSERT_STRING_EQUAL(pauline->stat.dtmf_list_received, expected);
+			BC_ASSERT_STRING_EQUAL(pauline->stat.dtmf_list_received, expected);
 		}
 		ms_free(expected);
 	} else {
-		CU_ASSERT_PTR_NULL(pauline->stat.dtmf_list_received);
+		BC_ASSERT_PTR_NULL(pauline->stat.dtmf_list_received);
 	}
 }
 
-void send_dtmf_cleanup() {
-	CU_ASSERT_PTR_NULL(marie_call->dtmfs_timer);
-	CU_ASSERT_PTR_NULL(marie_call->dtmf_sequence);
+void send_dtmf_cleanup(LinphoneCoreManager *marie, LinphoneCoreManager *pauline) {
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	if (marie_call) {
+		BC_ASSERT_PTR_NULL(marie_call->dtmfs_timer);
+		BC_ASSERT_PTR_NULL(marie_call->dtmf_sequence);
 
-	/*just to sleep*/
-	linphone_core_terminate_all_calls(pauline->lc);
-	CU_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallEnd,1));
-	CU_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1));
-
+		/*just to sleep*/
+		linphone_core_terminate_all_calls(pauline->lc);
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallEnd,1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1));
+	}
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 static void send_dtmf_rfc2833() {
-	send_dtmf_base(TRUE,FALSE,'1',NULL);
-	send_dtmf_cleanup();
+	LinphoneCoreManager *marie, *pauline;
+	send_dtmf_base(&marie, &pauline, TRUE,FALSE,'1',NULL,FALSE);
+	send_dtmf_cleanup(marie, pauline);
 }
 
 static void send_dtmf_sip_info() {
-	send_dtmf_base(FALSE,TRUE,'#',NULL);
-	send_dtmf_cleanup();
+	LinphoneCoreManager *marie, *pauline;
+	send_dtmf_base(&marie, &pauline, FALSE,TRUE,'#',NULL,FALSE);
+	send_dtmf_cleanup(marie, pauline);
 }
 
 static void send_dtmfs_sequence_rfc2833() {
-	send_dtmf_base(TRUE,FALSE,'\0',"1230#");
-	send_dtmf_cleanup();
+	LinphoneCoreManager *marie, *pauline;
+	send_dtmf_base(&marie, &pauline, TRUE,FALSE,'\0',"1230#",FALSE);
+	send_dtmf_cleanup(marie, pauline);
 }
 
 static void send_dtmfs_sequence_sip_info() {
-	send_dtmf_base(FALSE,TRUE,'\0',"1230#");
-	send_dtmf_cleanup();
+	LinphoneCoreManager *marie, *pauline;
+	send_dtmf_base(&marie, &pauline, FALSE,TRUE,'\0',"1230#",FALSE);
+	send_dtmf_cleanup(marie, pauline);
 }
 
 static void send_dtmfs_sequence_not_ready() {
+	LinphoneCoreManager *marie;
 	marie = linphone_core_manager_new( "marie_rc");
-	CU_ASSERT_EQUAL(linphone_call_send_dtmfs(linphone_core_get_current_call(marie->lc), "123"), -1);
+	BC_ASSERT_EQUAL(linphone_call_send_dtmfs(linphone_core_get_current_call(marie->lc), "123"), -1, int, "%d");
 	linphone_core_manager_destroy(marie);
 }
 
 static void send_dtmfs_sequence_call_state_changed() {
-	send_dtmf_base(FALSE,TRUE,'\0',NULL);
+	LinphoneCoreManager *marie, *pauline;
+	LinphoneCall *marie_call = NULL;
+	send_dtmf_base(&marie, &pauline, FALSE,TRUE,'\0',NULL,FALSE);
 
-	/*very long DTMF(around 4 sec to be sent)*/
-	linphone_call_send_dtmfs(marie_call, "123456789123456789");
-	/*just after, change call state, and expect DTMF to be canceled*/
-	linphone_core_pause_call(marie_call->core,marie_call);
-	CU_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallPausing,1));
-	CU_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallPaused,1));
+	marie_call = linphone_core_get_current_call(marie->lc);
+	if (marie_call) {
+		/*very long DTMF(around 4 sec to be sent)*/
+		linphone_call_send_dtmfs(marie_call, "123456789123456789");
+		/*just after, change call state, and expect DTMF to be canceled*/
+		linphone_core_pause_call(marie_call->core,marie_call);
+		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallPausing,1));
+		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallPaused,1));
 
-	/*wait a few time to ensure that no DTMF are received*/
-	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
+		/*wait a few time to ensure that no DTMF are received*/
+		wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
 
-	CU_ASSERT_PTR_NULL(pauline->stat.dtmf_list_received);
+		BC_ASSERT_PTR_NULL(pauline->stat.dtmf_list_received);
+	}
+	send_dtmf_cleanup(marie, pauline);
+}
 
-	send_dtmf_cleanup();
+static void send_dtmf_rfc2833_opus() {
+	LinphoneCoreManager *marie, *pauline;
+	send_dtmf_base(&marie, &pauline, TRUE,FALSE,'1',NULL,TRUE);
+	send_dtmf_cleanup(marie, pauline);
 }
 
 test_t dtmf_tests[] = {
@@ -145,11 +168,12 @@ test_t dtmf_tests[] = {
 	{ "Send DTMF sequence using SIP INFO",send_dtmfs_sequence_sip_info},
 	{ "DTMF sequence not sent if invalid call",send_dtmfs_sequence_not_ready},
 	{ "DTMF sequence canceled if call state changed",send_dtmfs_sequence_call_state_changed},
+	{ "Send DTMF using RFC2833 using Opus",send_dtmf_rfc2833_opus},
 };
 
 test_suite_t dtmf_test_suite = {
 	"DTMF",
-	NULL,
+	liblinphone_tester_setup,
 	NULL,
 	sizeof(dtmf_tests) / sizeof(dtmf_tests[0]),
 	dtmf_tests

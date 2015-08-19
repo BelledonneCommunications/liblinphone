@@ -39,11 +39,11 @@ static void play_file(const char *filename, bool_t unsupported_format, const cha
 	bool_t eof = FALSE;
 
 	lc_manager = linphone_core_manager_new("marie_rc");
-	CU_ASSERT_PTR_NOT_NULL(lc_manager);
+	BC_ASSERT_PTR_NOT_NULL(lc_manager);
 	if(lc_manager == NULL) return;
 
 	player = linphone_core_create_local_player(lc_manager->lc, ms_snd_card_manager_get_default_card(ms_snd_card_manager_get()), video_stream_get_default_video_renderer(), 0);
-	CU_ASSERT_PTR_NOT_NULL(player);
+	BC_ASSERT_PTR_NOT_NULL(player);
 	if(player == NULL) goto fail;
 
 	res = linphone_player_open(player, filename, eof_callback, &eof);
@@ -51,17 +51,17 @@ static void play_file(const char *filename, bool_t unsupported_format, const cha
 			|| (audio_mime == NULL && video_mime == NULL)
 			|| (video_mime == NULL && audio_mime && !ms_filter_codec_supported(audio_mime))
 			|| (audio_mime == NULL && video_mime && !ms_filter_codec_supported(video_mime))) {
-		CU_ASSERT_EQUAL(res, -1);
+		BC_ASSERT_EQUAL(res, -1, int, "%d");
 	} else {
-		CU_ASSERT_EQUAL(res, 0);
+		BC_ASSERT_EQUAL(res, 0, int, "%d");
 	}
 	if(res == -1) goto fail;
 
 	res = linphone_player_start(player);
-	CU_ASSERT_EQUAL(res, 0);
+	BC_ASSERT_EQUAL(res, 0, int, "%d");
 	if(res == -1) goto fail;
 
-	CU_ASSERT_TRUE(wait_for_eof(&eof, &time, 100, 13000));
+	BC_ASSERT_TRUE(wait_for_eof(&eof, &time, 100, 13000));
 
 	linphone_player_close(player);
 
@@ -71,7 +71,7 @@ static void play_file(const char *filename, bool_t unsupported_format, const cha
 }
 
 static void playing_test(void) {
-	char *filename = ms_strdup_printf("%s/sounds/hello_opus_h264.mkv", bc_tester_read_dir_prefix);
+	char *filename = bc_tester_res("sounds/hello_opus_h264.mkv");
 	const char *audio_mime = "opus";
 	const char *video_mime = "h264";
 	play_file(filename, !linphone_local_player_matroska_supported(), audio_mime, video_mime);
@@ -84,7 +84,7 @@ test_t player_tests[] = {
 
 test_suite_t player_test_suite = {
 	"Player",
-	NULL,
+	liblinphone_tester_setup,
 	NULL,
 	sizeof(player_tests) / sizeof(test_t),
 	player_tests

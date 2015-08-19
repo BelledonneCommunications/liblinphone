@@ -70,6 +70,7 @@ void linphone_gtk_call_log_chat_selected(GtkWidget *w){
 }
 
 void linphone_gtk_call_log_add_contact(GtkWidget *w){
+	GtkWidget *main_window = gtk_widget_get_toplevel(w);
 	GtkTreeSelection *select;
 	GtkTreeIter iter;
 
@@ -87,7 +88,7 @@ void linphone_gtk_call_log_add_contact(GtkWidget *w){
 			if (la != NULL){
 				char *uri=linphone_address_as_string(la);
 				lf=linphone_friend_new_with_address(uri);
-				linphone_gtk_show_contact(lf);
+				linphone_gtk_show_contact(lf, main_window);
 				ms_free(uri);
 			}
 		}
@@ -147,7 +148,7 @@ static GtkWidget *linphone_gtk_create_call_log_menu(GtkWidget *call_log){
 			name=linphone_address_as_string(la);
 			call_label=g_strdup_printf(_("Call %s"),name);
 			text_label=g_strdup_printf(_("Send text to %s"),name);
-			g_free(name);
+			ms_free(name);
 		}
 	}
 	if (call_label){
@@ -398,18 +399,18 @@ void linphone_gtk_call_log_response(GtkWidget *w, guint response_id){
 	gtk_widget_destroy(w);
 }
 
-GtkWidget * linphone_gtk_show_call_logs(void){
-	GtkWidget *mw=linphone_gtk_get_main_window();
-
-	GtkWidget *w=(GtkWidget*)g_object_get_data(G_OBJECT(linphone_gtk_get_main_window()),"call_logs");
-	if (w==NULL){
-		w=linphone_gtk_create_window("call_logs");
-//		gtk_button_set_image(GTK_BUTTON(linphone_gtk_get_widget(w,"call_back_button")),
-//		                     create_pixmap (linphone_gtk_get_ui_config("callback_button","status-green.png")));
-		g_object_set_data(G_OBJECT(mw),"call_logs",w);
-		g_signal_connect(G_OBJECT(w),"response",(GCallback)linphone_gtk_call_log_response,NULL);
-		gtk_widget_show(w);
-		linphone_gtk_call_log_update(w);
-	}else gtk_window_present(GTK_WINDOW(w));
-	return w;
-}
+// GtkWidget * linphone_gtk_show_call_logs(void){
+// 	GtkWidget *mw=linphone_gtk_get_main_window();
+// 
+// 	GtkWidget *w=(GtkWidget*)g_object_get_data(G_OBJECT(linphone_gtk_get_main_window()),"call_logs");
+// 	if (w==NULL){
+// 		w=linphone_gtk_create_window("call_logs");
+// //		gtk_button_set_image(GTK_BUTTON(linphone_gtk_get_widget(w,"call_back_button")),
+// //		                     create_pixmap (linphone_gtk_get_ui_config("callback_button","status-green.png")));
+// 		g_object_set_data(G_OBJECT(mw),"call_logs",w);
+// 		g_signal_connect(G_OBJECT(w),"response",(GCallback)linphone_gtk_call_log_response,NULL);
+// 		gtk_widget_show(w);
+// 		linphone_gtk_call_log_update(w);
+// 	}else gtk_window_present(GTK_WINDOW(w));
+// 	return w;
+// }

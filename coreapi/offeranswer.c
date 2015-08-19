@@ -170,7 +170,9 @@ static MSList *match_payloads(const MSList *local, const MSList *remote, bool_t 
 			newp->flags|=PAYLOAD_TYPE_FLAG_CAN_RECV|PAYLOAD_TYPE_FLAG_CAN_SEND;
 			if (p2->flags & PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED) {
 				newp->flags |= PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED;
-				newp->avpf = payload_type_get_avpf_params(p2); /* Take remote AVPF features */
+				/* Negotiation of AVPF features (keep common features) */
+				newp->avpf.features &= p2->avpf.features;
+				newp->avpf.rpsi_compatibility = p2->avpf.rpsi_compatibility;
 				/* Take bigger AVPF trr interval */
 				if (p2->avpf.trr_interval < matched->avpf.trr_interval) {
 					newp->avpf.trr_interval = matched->avpf.trr_interval;
@@ -501,6 +503,8 @@ int offer_answer_initiate_outgoing(const SalMediaDescription *local_offer,
 			if ((ls->rtcp_xr.enabled == TRUE) && (rs->rtcp_xr.enabled == FALSE)) {
 				result->streams[i].rtcp_xr.enabled = FALSE;
 			}
+			result->streams[i].rtcp_fb.generic_nack_enabled = ls->rtcp_fb.generic_nack_enabled & rs->rtcp_fb.generic_nack_enabled;
+			result->streams[i].rtcp_fb.tmmbr_enabled = ls->rtcp_fb.tmmbr_enabled & rs->rtcp_fb.tmmbr_enabled;
 			++j;
 		}
 		else ms_warning("No matching stream for %i",i);
@@ -567,6 +571,9 @@ int offer_answer_initiate_incoming(const SalMediaDescription *local_capabilities
 		}else ms_warning("Unknown protocol for mline %i, declining",i);
 		if (ls){
 			initiate_incoming(ls,rs,&result->streams[i],one_matching_codec);
+			// Handle global RTCP FB attributes
+			result->streams[i].rtcp_fb.generic_nack_enabled = rs->rtcp_fb.generic_nack_enabled;
+			result->streams[i].rtcp_fb.tmmbr_enabled = rs->rtcp_fb.tmmbr_enabled;
 			// Handle media RTCP XR attribute
 			memset(&result->streams[i].rtcp_xr, 0, sizeof(result->streams[i].rtcp_xr));
 			if (rs->rtcp_xr.enabled == TRUE) {

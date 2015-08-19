@@ -87,12 +87,31 @@ void _belle_sip_log(belle_sip_log_level lev, const char *fmt, va_list args) {
 	}
 }
 
-void sal_enable_logs(){
-	belle_sip_set_log_level(BELLE_SIP_LOG_MESSAGE);
+void sal_enable_log(){
+	sal_set_log_level(ORTP_MESSAGE);
 }
 
-void sal_disable_logs() {
-	belle_sip_set_log_level(BELLE_SIP_LOG_ERROR);
+void sal_disable_log() {
+	sal_set_log_level(ORTP_ERROR);
+}
+
+void sal_set_log_level(OrtpLogLevel level) {
+	belle_sip_log_level belle_sip_level;
+	if ((level&ORTP_FATAL) != 0) {
+		belle_sip_level = BELLE_SIP_LOG_FATAL;
+	} else if ((level&ORTP_ERROR) != 0) {
+		belle_sip_level = BELLE_SIP_LOG_ERROR;
+	} else if ((level&ORTP_WARNING) != 0) {
+		belle_sip_level = BELLE_SIP_LOG_WARNING;
+	} else if ((level&ORTP_MESSAGE) != 0) {
+		belle_sip_level = BELLE_SIP_LOG_MESSAGE;
+	} else if (((level&ORTP_DEBUG) != 0) || ((level&ORTP_TRACE) != 0)) {
+		belle_sip_level = BELLE_SIP_LOG_DEBUG;
+	} else {
+		//well, this should never occurs but...
+		belle_sip_level = BELLE_SIP_LOG_MESSAGE;
+	}
+	belle_sip_set_log_level(belle_sip_level);
 }
 
 void sal_add_pending_auth(Sal *sal, SalOp *op){
@@ -471,6 +490,7 @@ Sal * sal_init(){
 	sal->tls_verify_cn=TRUE;
 	sal->refresher_retry_after=60000; /*default value in ms*/
 	sal->enable_sip_update=TRUE;
+	sal->pending_trans_checking=TRUE;
 	return sal;
 }
 
@@ -1152,4 +1172,13 @@ void sal_enable_sip_update_method(Sal *ctx,bool_t value) {
 void sal_default_set_sdp_handling(Sal *sal, SalOpSDPHandling sdp_handling_method)  {
 	if (sdp_handling_method != SalOpSDPNormal ) ms_message("Enabling special SDP handling for all new SalOp in Sal[%p]!", sal);
 	sal->default_sdp_handling = sdp_handling_method;
+}
+
+bool_t sal_pending_trans_checking_enabled(const Sal *sal) {
+	return sal->pending_trans_checking;
+}
+
+int sal_enable_pending_trans_checking(Sal *sal, bool_t value) {
+	sal->pending_trans_checking = value;
+	return 0;
 }

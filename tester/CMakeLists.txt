@@ -20,14 +20,8 @@
 #
 ############################################################################
 
-if(WIN32)
-	set(GTK2_ADDITIONAL_SUFFIXES "../lib/glib-2.0/include" "../lib/gtk-2.0/include")
-endif()
-find_package(GTK2 2.18 COMPONENTS gtk)
-
 set(SOURCE_FILES
 	common/bc_tester_utils.c
-	common/bc_tester_utils.h
 	accountmanager.c
 	call_tester.c
 	dtmf_tester.c
@@ -36,23 +30,42 @@ set(SOURCE_FILES
 	liblinphone_tester.c
 	log_collection_tester.c
 	message_tester.c
-	multi_call.c
+	multi_call_tester.c
 	multicast_call_tester.c
 	offeranswer_tester.c
 	player_tester.c
 	presence_tester.c
+	proxy_config_tester.c
 	quality_reporting_tester.c
 	register_tester.c
 	remote_provisioning_tester.c
 	setup_tester.c
 	stun_tester.c
 	tester.c
-	transport_tester.c
+	tunnel_tester.c
 	upnp_tester.c
 	video_tester.c
 )
 
 add_definitions(-DBC_CONFIG_FILE="config.h")
+
+if(IOS)
+
+add_library(linphonetester STATIC ${SOURCE_FILES})
+target_include_directories(linphonetester PUBLIC ${CUNIT_INCLUDE_DIRS} PRIVATE common)
+target_link_libraries(linphonetester linphone ${CUNIT_LIBRARIES})
+install(TARGETS linphonetester
+	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib
+	PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+)
+install(FILES "liblinphone_tester.h" "common/bc_tester_utils.h"
+	DESTINATION include/linphone
+	PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+)
+
+else()
 
 add_executable(liblinphone_tester ${SOURCE_FILES})
 set_target_properties(liblinphone_tester PROPERTIES LINKER_LANGUAGE CXX)
@@ -63,3 +76,6 @@ if (GTK2_FOUND)
 	target_include_directories(liblinphone_tester PUBLIC ${GTK2_INCLUDE_DIRS})
 	target_link_libraries(liblinphone_tester linphone ${GTK2_LIBRARIES})
 endif()
+
+endif()
+

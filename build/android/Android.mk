@@ -26,6 +26,7 @@ include $(CLEAR_VARS)
 LOCAL_CPP_EXTENSION := .cc
 
 LOCAL_SRC_FILES := \
+	account_creator.c \
 	address.c \
 	authentication.c \
 	bellesip_sal/sal_address_impl.c \
@@ -73,6 +74,7 @@ LOCAL_SRC_FILES := \
 	sipsetup.c \
 	xml2lpc.c \
 	xml.c \
+	xmlrpc.c \
 	vtables.c
 
 ifndef LIBLINPHONE_VERSION
@@ -116,6 +118,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../build/android \
 	$(LOCAL_PATH)/../oRTP/include \
 	$(LOCAL_PATH)/../mediastreamer2/include \
+	$(LOCAL_PATH)/../mediastreamer2/src/audiofilters/ \
 	$(LOCAL_PATH)/../../belle-sip/include \
 	$(LOCAL_PATH)/../../../gen \
 	$(LOCAL_PATH)/../../externals/libxml2/include \
