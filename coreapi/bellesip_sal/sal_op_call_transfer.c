@@ -88,14 +88,10 @@ int sal_call_refer_with_replaces(SalOp *op, SalOp *other_call_op){
 
 	refer_to=belle_sip_header_refer_to_create(belle_sip_dialog_get_remote_party(other_call_op->dialog));
 	belle_sip_parameters_clean(BELLE_SIP_PARAMETERS(refer_to));
-	if (belle_sip_dialog_is_server(other_call_op->dialog)) {
-		to_tag=belle_sip_dialog_get_local_tag(other_call_op->dialog);
-		from_tag=belle_sip_dialog_get_remote_tag(other_call_op->dialog);;
 
-	} else {
-		from_tag=belle_sip_dialog_get_local_tag(other_call_op->dialog);
-		to_tag=belle_sip_dialog_get_remote_tag(other_call_op->dialog);;
-	}
+	from_tag=belle_sip_dialog_get_local_tag(other_call_op->dialog);
+	to_tag=belle_sip_dialog_get_remote_tag(other_call_op->dialog);
+
 	replaces=belle_sip_header_replaces_create(belle_sip_header_call_id_get_call_id(belle_sip_dialog_get_call_id(other_call_op->dialog))
 											,from_tag,to_tag);
 	escaped_replaces=belle_sip_header_replaces_value_to_escaped_string(replaces);
