@@ -252,6 +252,7 @@ static LPC_COMMAND commands[] = {
 		"'soundcard show' : show current sound devices configuration.\n"
 		"'soundcard use <index>' : select a sound device.\n"
 		"'soundcard use files' : use .wav files instead of soundcard\n"
+		"'soundcard use soundcard' : use soundcard instead of .wav files\n"
 	},
 	{ "stun", lpc_cmd_stun, "Set stun server address",
 		"'stun'        : show stun settings.\n"
@@ -1258,6 +1259,13 @@ static int lpc_cmd_soundcard(LinphoneCore *lc, char *args)
 		{
 			linphonec_out("Using wav files instead of soundcard.\n");
 			linphone_core_use_files(lc,TRUE);
+			return 1;
+		}
+
+		if (strcmp(arg2, "soundcard")==0)
+		{
+			linphonec_out("Using soundcard instead of wav files.\n");
+			linphone_core_use_files(lc,FALSE);
 			return 1;
 		}
 
