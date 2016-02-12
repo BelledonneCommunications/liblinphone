@@ -5884,6 +5884,10 @@ void linphone_core_set_use_files(LinphoneCore *lc, bool_t yesno){
 	lc->use_files=yesno;
 }
 
+bool_t linphone_core_get_use_files(LinphoneCore *lc) {
+    return lc->use_files;
+}
+
 const char * linphone_core_get_play_file(const LinphoneCore *lc) {
 	return lc->play_file;
 }
