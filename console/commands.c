@@ -745,13 +745,13 @@ lpc_cmd_redirect(LinphoneCore *lc, char *args){
 		if (linphone_call_get_state(call)==LinphoneCallIncomingReceived){
 			if (linphone_core_redirect_call(lc,call,args) != 0) {
 				linphonec_out("Could not redirect call.\n");
-                elem=elem->next;
+				elem=elem->next;
 			}
-            else {
-                didit=1;
-                /*as the redirection closes the call, we need to re-check the call list that is invalidated.*/
-                elem=linphone_core_get_calls(lc);
-            }
+			else {
+				didit=1;
+				/*as the redirection closes the call, we need to re-check the call list that is invalidated.*/
+				elem=linphone_core_get_calls(lc);
+			}
 		}else elem=elem->next;
 	}
 	if (didit==0){
