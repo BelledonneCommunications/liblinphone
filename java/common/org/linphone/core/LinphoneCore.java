@@ -2302,4 +2302,8 @@ public interface LinphoneCore {
 	 * Set user certificates directory path (used by SRTP-DTLS).
 	 */
 	public void setUserCertificatesPath(String path);
+
+	public void verifyServerCn(boolean yesno);
+
+	public void verifyServerCertificates(boolean yesno);
 }

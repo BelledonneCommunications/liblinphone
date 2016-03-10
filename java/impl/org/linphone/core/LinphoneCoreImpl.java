@@ -1653,4 +1653,16 @@ class LinphoneCoreImpl implements LinphoneCore {
 	public void setUserCertificatesPath(String path) {
 		setUserCertificatesPath(nativePtr, path);
 	}
+
+	private native void verifyServerCertificates(long nativePtr, boolean yesno);
+	@Override
+	public void verifyServerCertificates(boolean yesno) {
+		verifyServerCertificates(nativePtr, yesno);
+	}
+
+	private native void verifyServerCn(long nativePtr, boolean yesno);
+	@Override
+	public void verifyServerCn(boolean yesno) {
+		verifyServerCn(nativePtr, yesno);
+	}
 }

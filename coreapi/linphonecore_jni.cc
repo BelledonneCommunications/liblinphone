@@ -7213,3 +7213,12 @@ JNIEXPORT void JNICALL Java_org_linphone_core_LinphoneCoreImpl_setUserCertificat
 	if (path) env->ReleaseStringUTFChars(jpath, path);
 }
 
+
+JNIEXPORT void JNICALL Java_org_linphone_core_LinphoneCoreImpl_verifyServerCertificates(JNIEnv *env, jobject thiz, jlong lc, jboolean yesno) {
+	linphone_core_verify_server_certificates((LinphoneCore *)lc, yesno);
+}
+
+JNIEXPORT void JNICALL Java_org_linphone_core_LinphoneCoreImpl_verifyServerCn(JNIEnv *env, jobject thiz, jlong lc, jboolean yesno) {
+	linphone_core_verify_server_cn((LinphoneCore *)lc, yesno);
+}
+
