@@ -20,12 +20,20 @@
 #include "linphonecore.h"
 #include "private.h"
 #include "liblinphone_tester.h"
-#if HAVE_CU_CURSES
-#include "CUnit/CUCurses.h"
+
+#if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
+#pragma GCC diagnostic push
 #endif
+#pragma GCC diagnostic ignored "-Wstrict-prototypes"
+
 #ifdef HAVE_GTK
 #include <gtk/gtk.h>
 #endif
+
+#if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
+#pragma GCC diagnostic pop
+#endif
+
 
 static FILE * log_file = NULL;
 
@@ -33,7 +41,6 @@ static FILE * log_file = NULL;
 
 #include <android/log.h>
 #include <jni.h>
-#include <CUnit/Util.h>
 #define CALLBACK_BUFFER_SIZE  1024
 
 static JNIEnv *current_env = NULL;
@@ -62,7 +69,7 @@ void liblinphone_android_log_handler(int prio, const char *fmt, va_list args) {
 	}
 }
 
-static void liblinphone_android_ortp_log_handler(OrtpLogLevel lev, const char *fmt, va_list args) {
+static void liblinphone_android_ortp_log_handler(const char *domain, OrtpLogLevel lev, const char *fmt, va_list args) {
 	int prio;
 	switch(lev){
 		case ORTP_DEBUG:	prio = ANDROID_LOG_DEBUG;	break;
@@ -77,13 +84,16 @@ static void liblinphone_android_ortp_log_handler(OrtpLogLevel lev, const char *f
 
 void cunit_android_trace_handler(int level, const char *fmt, va_list args) {
 	char buffer[CALLBACK_BUFFER_SIZE];
+	jstring javaString;
+	jclass cls;
+	jmethodID method;
+	jint javaLevel = level;
 	JNIEnv *env = current_env;
 	if(env == NULL) return;
 	vsnprintf(buffer, CALLBACK_BUFFER_SIZE, fmt, args);
-	jstring javaString = (*env)->NewStringUTF(env, buffer);
-	jint javaLevel = level;
-	jclass cls = (*env)->GetObjectClass(env, current_obj);
-	jmethodID method = (*env)->GetMethodID(env, cls, "printLog", "(ILjava/lang/String;)V");
+	javaString = (*env)->NewStringUTF(env, buffer);
+	cls = (*env)->GetObjectClass(env, current_obj);
+	method = (*env)->GetMethodID(env, cls, "printLog", "(ILjava/lang/String;)V");
 	(*env)->CallVoidMethod(env, current_obj, method, javaLevel, javaString);
 	(*env)->DeleteLocalRef(env,javaString);
 	(*env)->DeleteLocalRef(env,cls);
@@ -102,10 +112,10 @@ JNIEXPORT jint JNICALL Java_org_linphone_tester_Tester_run(JNIEnv *env, jobject 
 	}
 	current_env = env;
 	current_obj = obj;
-	CU_set_trace_handler(cunit_android_trace_handler);
+	bc_set_trace_handler(cunit_android_trace_handler);
 	ret = main(argc, argv);
 	current_env = NULL;
-	CU_set_trace_handler(NULL);
+	bc_set_trace_handler(NULL);
 	for (i=0; i<argc; i++) {
 		free(argv[i]);
 	}
@@ -121,12 +131,6 @@ JNIEXPORT void JNICALL Java_org_linphone_tester_Tester_clearAccounts(JNIEnv *env
 	liblinphone_tester_clear_accounts();
 }
 #endif /* ANDROID */
-
-#ifdef __QNX__
-static void liblinphone_tester_qnx_log_handler(OrtpLogLevel lev, const char *fmt, va_list args) {
-	ortp_qnx_log_handler("liblinphone_tester", lev, fmt, args);
-}
-#endif /* __QNX__ */
 
 static void log_handler(int lev, const char *fmt, va_list args) {
 #ifdef _WIN32
@@ -146,7 +150,7 @@ static void log_handler(int lev, const char *fmt, va_list args) {
 	va_end(cap);
 #endif
 	if (log_file){
-		ortp_logv_out(lev, fmt, args);
+		ortp_logv_out(ORTP_LOG_DOMAIN, lev, fmt, args);
 	}
 }
 
@@ -154,32 +158,40 @@ void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, v
 	if (! log_file) {
 #if defined(ANDROID)
 		linphone_core_set_log_handler(liblinphone_android_ortp_log_handler);
-#elif defined(__QNX__)
-		linphone_core_set_log_handler(liblinphone_tester_qnx_log_handler);
 #endif
 	}
 
 	if (ftester_printf == NULL) ftester_printf = log_handler;
-	bc_tester_init(ftester_printf, ORTP_MESSAGE, ORTP_ERROR);
+	bc_tester_init(ftester_printf, ORTP_MESSAGE, ORTP_ERROR, "rcfiles");
 	liblinphone_tester_add_suites();
 }
 
-void liblinphone_tester_uninit(void) {
-	bc_tester_uninit();
+int liblinphone_tester_set_log_file(const char *filename) {
+	if (log_file) {
+		fclose(log_file);
+	}
+	log_file = fopen(filename, "w");
+	if (!log_file) {
+		ms_error("Cannot open file [%s] for writing logs because [%s]", filename, strerror(errno));
+		return -1;
+	}
+	ms_message("Redirecting traces to file [%s]", filename);
+	ortp_set_log_file(log_file);
+	return 0;
 }
 
 
-#if !__ios && !(defined(LINPHONE_WINDOWS_PHONE) || defined(LINPHONE_WINDOWS_UNIVERSAL))
+#if !TARGET_OS_IPHONE && !(defined(LINPHONE_WINDOWS_PHONE) || defined(LINPHONE_WINDOWS_UNIVERSAL))
 
 static const char* liblinphone_helper =
 		"\t\t\t--verbose\n"
 		"\t\t\t--silent\n"
 		"\t\t\t--log-file <output log file path>\n"
-		"\t\t\t--config <config path>\n"
 		"\t\t\t--domain <test sip domain>\n"
 		"\t\t\t--auth-domain <test auth domain>\n"
 		"\t\t\t--dns-hosts </etc/hosts -like file to used to override DNS names (default: tester_hosts)>\n"
-		"\t\t\t--keep-recorded-files\n";
+		"\t\t\t--keep-recorded-files\n"
+		"\t\t\t--disable-leak-detector\n";
 
 int main (int argc, char *argv[])
 {
@@ -196,43 +208,27 @@ int main (int argc, char *argv[])
 
 	liblinphone_tester_init(NULL);
 
-	if (strstr(argv[0], ".libs")) {
-		char res_dir[128] = {0};
-		// this allows to launch liblinphone_tester from outside of tester directory
-		strncpy(res_dir, argv[0], strstr(argv[0], ".libs")-argv[0]);
-		bc_tester_set_resource_dir_prefix(res_dir);
-		bc_tester_set_writable_dir_prefix(res_dir);
-	}
-
 	for(i = 1; i < argc; ++i) {
 		if (strcmp(argv[i], "--verbose") == 0) {
-			linphone_core_set_log_level_mask(ORTP_MESSAGE|ORTP_WARNING|ORTP_ERROR|ORTP_FATAL);
+			linphone_core_set_log_level(ORTP_MESSAGE);
 		} else if (strcmp(argv[i], "--silent") == 0) {
-			linphone_core_set_log_level_mask(ORTP_FATAL);
+			linphone_core_set_log_level(ORTP_FATAL);
 		} else if (strcmp(argv[i],"--log-file")==0){
 			CHECK_ARG("--log-file", ++i, argc);
-			log_file=fopen(argv[i],"w");
-			if (!log_file) {
-				ms_error("Cannot open file [%s] for writing logs because [%s]",argv[i],strerror(errno));
-				return -2;
-			} else {
-				ms_message("Redirecting traces to file [%s]",argv[i]);
-				ortp_set_log_file(log_file);
-			}
+			if (liblinphone_tester_set_log_file(argv[i]) < 0) return -2;
 		} else if (strcmp(argv[i],"--domain")==0){
 			CHECK_ARG("--domain", ++i, argc);
 			test_domain=argv[i];
 		} else if (strcmp(argv[i],"--auth-domain")==0){
 			CHECK_ARG("--auth-domain", ++i, argc);
 			auth_domain=argv[i];
-		} else if (strcmp(argv[i],"--config")==0){
-			CHECK_ARG("--config", ++i, argc);
-			bc_tester_set_resource_dir_prefix(argv[i]);
 		}else if (strcmp(argv[i],"--dns-hosts")==0){
 			CHECK_ARG("--dns-hosts", ++i, argc);
 			userhostsfile=argv[i];
 		} else if (strcmp(argv[i],"--keep-recorded-files")==0){
 			liblinphone_tester_keep_recorded_files(TRUE);
+		} else if (strcmp(argv[i],"--disable-leak-detector")==0){
+			liblinphone_tester_disable_leak_detector(TRUE);
 		} else {
 			int bret = bc_tester_parse_args(argc, argv, i);
 			if (bret>0) {
@@ -245,8 +241,10 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	ret = bc_tester_start();
+	ret = bc_tester_start(argv[0]);
 	liblinphone_tester_uninit();
 	return ret;
 }
+
+
 #endif

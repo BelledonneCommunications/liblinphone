@@ -22,10 +22,17 @@
 
 
 
-#include "bc_tester_utils.h"
+#include <bctoolbox/tester.h>
 #include "linphonecore.h"
+#include <mediastreamer2/msutils.h>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
+
+#ifdef _MSC_VER
+#define popen _popen
+#define pclose _pclose
 #endif
 
 #ifdef __cplusplus
@@ -52,6 +59,10 @@ extern test_suite_t video_test_suite;
 extern test_suite_t multicast_call_test_suite;
 extern test_suite_t multi_call_test_suite;
 extern test_suite_t proxy_config_test_suite;
+extern test_suite_t vcard_test_suite;
+#if HAVE_SIPP
+extern test_suite_t complex_sip_call_test_suite;
+#endif
 extern int manager_count;
 
 extern int liblinphone_tester_ipv6_available(void);
@@ -74,6 +85,12 @@ extern void liblinphone_tester_keep_accounts( int keep );
  * @details By default recorded files are erased after the test, unless the test is failed.
 **/
 void liblinphone_tester_keep_recorded_files(int keep);
+
+/**
+ * @brief Disable the automatic object leak detection. This is useful because the object leak detector prevents valgrind from seeing the leaks.
+ * @details By default object leak detector is enabled.
+**/
+void liblinphone_tester_disable_leak_detector(int disabled);
 
 /**
  * @brief Clears the created accounts during the testing session.
@@ -143,6 +160,7 @@ typedef struct _stats {
 
 	int number_of_NewSubscriptionRequest;
 	int number_of_NotifyReceived;
+	int number_of_NotifyPresenceReceived;
 	int number_of_LinphonePresenceActivityOffline;
 	int number_of_LinphonePresenceActivityOnline;
 	int number_of_LinphonePresenceActivityAppointment;
@@ -207,7 +225,8 @@ typedef struct _stats {
 
 	int number_of_LinphoneCallStatsUpdated;
 	int number_of_rtcp_sent;
-	int number_of_rtcp_received;
+	int number_of_rtcp_received; /*total number of rtcp packet received */
+	int number_of_rtcp_received_via_mux;/*number of rtcp packet received in rtcp-mux mode*/
 
 	int number_of_video_windows_created;
 
@@ -216,13 +235,11 @@ typedef struct _stats {
 	int number_of_LinphoneCoreLogCollectionUploadStateNotDelivered;
 	int number_of_LinphoneCoreLogCollectionUploadStateInProgress;
 	int audio_download_bandwidth[3];
-	int *current_audio_download_bandwidth;
 	int audio_upload_bandwidth[3];
-	int *current_audio_upload_bandwidth;
 
 	int video_download_bandwidth[3];
 	int video_upload_bandwidth[3];
-	int current_bandwidth_index;
+	int current_bandwidth_index[2] /*audio and video only*/;
 
 	int number_of_rtcp_generic_nack;
 }stats;
@@ -238,6 +255,13 @@ typedef struct _LinphoneCoreManager {
 	int number_of_cunit_error_at_creation;
 } LinphoneCoreManager;
 
+typedef struct _LinphoneConferenceServer {
+	LinphoneCoreManager base;
+	LinphoneCall *first_call;
+	LinphoneCoreVTable *vtable;
+	LinphoneRegistrationState reg_state;
+} LinphoneConferenceServer;
+
 typedef struct _LinphoneCallTestParams {
 	LinphoneCallParams *base;
 	bool_t sdp_removal;
@@ -245,13 +269,14 @@ typedef struct _LinphoneCallTestParams {
 } LinphoneCallTestParams;
 
 
-void liblinphone_tester_add_suites();
+void liblinphone_tester_add_suites(void);
 
-LinphoneCoreManager* linphone_core_manager_init(const char* rc_file);
-void linphone_core_manager_start(LinphoneCoreManager *mgr, const char* rc_file, int check_for_proxies);
+void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file);
+void linphone_core_manager_start(LinphoneCoreManager *mgr, int check_for_proxies);
 LinphoneCoreManager* linphone_core_manager_new2(const char* rc_file, int check_for_proxies);
 LinphoneCoreManager* linphone_core_manager_new(const char* rc_file);
 void linphone_core_manager_stop(LinphoneCoreManager *mgr);
+void linphone_core_manager_uninit(LinphoneCoreManager *mgr);
 void linphone_core_manager_destroy(LinphoneCoreManager* mgr);
 
 void reset_counters( stats* counters);
@@ -310,17 +335,17 @@ void linphone_core_manager_check_accounts(LinphoneCoreManager *m);
 void account_manager_destroy(void);
 LinphoneCore* configure_lc_from(LinphoneCoreVTable* v_table, const char* path, const char* file, void* user_data);
 void liblinphone_tester_enable_ipv6(bool_t enabled);
-void linphone_call_cb(LinphoneCall *call,void * user_data);
+void linphone_call_iframe_decoded_cb(LinphoneCall *call,void * user_data);
 void call_paused_resumed_base(bool_t multicast);
 void simple_call_base(bool_t enable_multicast_recv_side);
 void call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enable_video,bool_t enable_relay,LinphoneFirewallPolicy policy,bool_t enable_tunnel, const char *marie_rc, const char *pauline_rc);
 void call_base(LinphoneMediaEncryption mode, bool_t enable_video,bool_t enable_relay,LinphoneFirewallPolicy policy,bool_t enable_tunnel);
 bool_t call_with_caller_params(LinphoneCoreManager* caller_mgr,LinphoneCoreManager* callee_mgr, const LinphoneCallParams *params);
 bool_t pause_call_1(LinphoneCoreManager* mgr_1,LinphoneCall* call_1,LinphoneCoreManager* mgr_2,LinphoneCall* call_2);
-bool_t compare_files(const char *path1, const char *path2);
+void compare_files(const char *path1, const char *path2);
 void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, MSList* lcs,LinphoneMediaDirection audio_dir, LinphoneMediaDirection video_dir);
 
-static const int audio_cmp_max_shift=10;
+extern const MSAudioDiffParams audio_cmp_params;
 
 /*
  * this function return max value in the last 3 seconds*/
@@ -331,9 +356,22 @@ int linphone_core_manager_get_mean_audio_up_bw(const LinphoneCoreManager *mgr);
 
 void video_call_base_2(LinphoneCoreManager* pauline,LinphoneCoreManager* marie, bool_t using_policy,LinphoneMediaEncryption mode, bool_t callee_video_enabled, bool_t caller_video_enabled);
 
-int liblinphone_tester_setup();
+void liblinphone_tester_before_each(void);
+int liblinphone_tester_after_each(void);
 void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, va_list args));
 void liblinphone_tester_uninit(void);
+int liblinphone_tester_set_log_file(const char *filename);
+bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, LinphoneIceState state);
+
+LinphoneConferenceServer* linphone_conference_server_new(const char *rc_file, bool_t do_registration);
+void linphone_conference_server_destroy(LinphoneConferenceServer *conf_srv);
+
+extern const char *liblinphone_tester_mire_id;
+	
+LinphoneAddress * linphone_core_manager_resolve(LinphoneCoreManager *mgr, const LinphoneAddress *source);
+FILE *sip_start(const char *senario, const char* dest_username, const char *passwd, LinphoneAddress* dest_addres);
+
+void wait_core(LinphoneCore *core) ;
 
 
 #ifdef __cplusplus

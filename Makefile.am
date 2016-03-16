@@ -226,11 +226,7 @@ Linphone.app:
 	MS2_PLUGINS_INSTALL_PREFIX=$(prefix) \
 	LINPHONE_ADDITIONAL_DEPENDENCIES_PREFIX=$(LINPHONE_ADDITIONAL_DEPENDENCIES_PREFIX) \
 	gtk-mac-bundler $(PACKAGE_BUNDLE_FILE)
-	printf "[Pango]\nModuleFiles=./etc/pango/pango.modules\n" \
-	> $(BUNDLEDIR)/Contents/Resources/etc/pango/pangorc
-	cp -f $(BUNDLEDIR)/Contents/Resources/etc/pango/pango.modules $(BUNDLEDIR)/Contents/Resources/etc/pango/pango.modules.orig
-	sed -e 's:@executable_path.*/::g' $(BUNDLEDIR)/Contents/Resources/etc/pango/pango.modules.orig  > $(BUNDLEDIR)/Contents/Resources/etc/pango/pango.modules
-	patch -R ${BUNDLEDIR}/Contents/Resources/share/themes/Quartz/gtk-2.0/gtkrc ${srcdir}/build/macos/quartz-theme-gtkrc.patch
+	patch ${BUNDLEDIR}/Contents/Resources/share/themes/Quartz/gtk-2.0/gtkrc ${srcdir}/build/macos/quartz-theme-gtkrc.patch
 	rm -f ${BUNDLEDIR}/Contents/Resources/lib/libopenh264*
 
 bundle: $(MACAPPNAME)
@@ -248,7 +244,7 @@ pkg: $(MACAPPNAME)
 	cp ${srcdir}/pixmaps/linphone.png ./packaging
 	pkgbuild --install-location /Applications --scripts ${srcdir}/build/macos/pkg-scripts --component $(MACAPPNAME) ./packaging/linphone.pkg
 	productbuild --resources . --distribution ${srcdir}/build/macos/pkg-distribution.xml --package-path ./packaging $(MACAPPPKG)
-	
+
 signed-pkg: pkg
 	mv $(MACAPPPKG) $(MACAPPPKG).tmp
 	productsign --sign "$(BUNDLE_SIGNING_ID)" $(MACAPPPKG).tmp $(MACAPPPKG)
@@ -263,7 +259,7 @@ clean-local:
 discovery:
 	touch specs.c
 	$(CC) --include $(top_builddir)/config.h \
-        $(TUNNEL_CFLAGS) $(CFLAGS) $(MEDIASTREAMER2_CFLAGS) $(ORTP_CFLAGS)  $(SIPSTACK_CFLAGS) $(CUNIT_CFLAGS) -E -P -v -dD specs.c
+        $(TUNNEL_CFLAGS) $(CFLAGS) $(MEDIASTREAMER2_CFLAGS) $(ORTP_CFLAGS)  $(SIPSTACK_CFLAGS) $(BCTOOLBOXTESTER_CFLAGS) -E -P -v -dD specs.c
 
 .PHONY: $(MACAPPNAME) pkg
 

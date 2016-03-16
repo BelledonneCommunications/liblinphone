@@ -46,14 +46,13 @@ public class LinphoneCoreFactoryImpl extends LinphoneCoreFactory {
 		Throwable firstException=null;
 		for (String abi : cpuabis){
 			Log.i("LinphoneCoreFactoryImpl","Trying to load liblinphone for " + abi);
-			ffmpegAbi=abi;
-			// FFMPEG (audio/video)
-			if (abi.startsWith("armeabi")) {
-				ffmpegAbi="arm";
-			}
-			loadOptionalLibrary("ffmpeg-linphone-"+ffmpegAbi);
+			loadOptionalLibrary("ffmpeg-linphone-" + abi);
 			//Main library
 			try {
+				System.loadLibrary("bctoolbox-" + abi);
+				System.loadLibrary("ortp-" + abi);
+				System.loadLibrary("mediastreamer_base-" + abi);
+				System.loadLibrary("mediastreamer_voip-" + abi);
 				System.loadLibrary("linphone-" + abi);
 				Log.i("LinphoneCoreFactoryImpl","Loading done with " + abi);
 				libLoaded=true;
@@ -192,5 +191,11 @@ public class LinphoneCoreFactoryImpl extends LinphoneCoreFactory {
 	@Override
 	public PresenceModel createPresenceModel(PresenceActivityType type, String description, String note, String lang) {
 		return new PresenceModelImpl(type, description, note, lang);
+	}
+
+	private native Object _createTunnelConfig();
+	@Override
+	public TunnelConfig createTunnelConfig() {
+		return (TunnelConfig)_createTunnelConfig();
 	}
 }

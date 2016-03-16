@@ -89,7 +89,7 @@ bool_t linphone_core_upnp_hook(void *data);
 void linphone_upnp_update(UpnpContext *ctx);
 bool_t linphone_upnp_is_blacklisted(UpnpContext *ctx);
 
-UpnpPortBinding *linphone_upnp_port_binding_new();
+UpnpPortBinding *linphone_upnp_port_binding_new(void);
 UpnpPortBinding *linphone_upnp_port_binding_new_with_parameters(upnp_igd_ip_protocol protocol, int local_port, int external_port);
 UpnpPortBinding *linphone_upnp_port_binding_new_or_collect(MSList *list, upnp_igd_ip_protocol protocol, int local_port, int external_port);
 UpnpPortBinding *linphone_upnp_port_binding_copy(const UpnpPortBinding *port);
@@ -189,7 +189,7 @@ void linphone_upnp_igd_print(void *cookie, upnp_igd_print_level level, const cha
 	default:
 		break;
 	}
-	ortp_logv(ortp_level, fmt, list);
+	ortp_logv(ORTP_LOG_DOMAIN, ortp_level, fmt, list);
 }
 
 void linphone_upnp_igd_callback(void *cookie, upnp_igd_event event, void *arg) {
@@ -367,7 +367,7 @@ void linphone_upnp_context_destroy(UpnpContext *lupnp) {
 
 	ms_mutex_lock(&lupnp->mutex);
 
-	if(lupnp->lc->network_reachable) {
+	if(lupnp->lc->sip_network_reachable) {
 		/* Send port binding removes */
 		if(lupnp->sip_udp != NULL) {
 			linphone_upnp_context_send_remove_port_binding(lupnp, lupnp->sip_udp, TRUE);
@@ -698,19 +698,19 @@ int linphone_core_update_upnp_audio_video(LinphoneCall *call, bool_t audio, bool
 		 * Audio part
 		 */
 		linphone_upnp_update_port_binding(lupnp, &call->upnp_session->audio->rtp,
-			UPNP_IGD_IP_PROTOCOL_UDP, (audio)? call->media_ports[0].rtp_port:0, UPNP_CALL_RETRY_DELAY);
+			UPNP_IGD_IP_PROTOCOL_UDP, (audio)? call->media_ports[call->main_audio_stream_index].rtp_port:0, UPNP_CALL_RETRY_DELAY);
 
 		linphone_upnp_update_port_binding(lupnp, &call->upnp_session->audio->rtcp,
-			UPNP_IGD_IP_PROTOCOL_UDP, (audio)? call->media_ports[0].rtcp_port:0, UPNP_CALL_RETRY_DELAY);
+			UPNP_IGD_IP_PROTOCOL_UDP, (audio)? call->media_ports[call->main_audio_stream_index].rtcp_port:0, UPNP_CALL_RETRY_DELAY);
 
 		/*
 		 * Video part
 		 */
 		linphone_upnp_update_port_binding(lupnp, &call->upnp_session->video->rtp,
-			UPNP_IGD_IP_PROTOCOL_UDP, (video)? call->media_ports[1].rtp_port:0, UPNP_CALL_RETRY_DELAY);
+			UPNP_IGD_IP_PROTOCOL_UDP, (video)? call->media_ports[call->main_video_stream_index].rtp_port:0, UPNP_CALL_RETRY_DELAY);
 
 		linphone_upnp_update_port_binding(lupnp, &call->upnp_session->video->rtcp,
-			UPNP_IGD_IP_PROTOCOL_UDP, (video)? call->media_ports[1].rtcp_port:0, UPNP_CALL_RETRY_DELAY);
+			UPNP_IGD_IP_PROTOCOL_UDP, (video)? call->media_ports[call->main_video_stream_index].rtcp_port:0, UPNP_CALL_RETRY_DELAY);
 	}
 
 	ms_mutex_unlock(&lupnp->mutex);
@@ -731,8 +731,9 @@ int linphone_core_update_upnp_from_remote_media_description(LinphoneCall *call, 
 	int i;
 	const SalStreamDescription *stream;
 
-	for (i = 0; i < md->nb_streams; i++) {
+	for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
 		stream = &md->streams[i];
+		if (!sal_stream_description_active(stream)) continue;
 		if(stream->type == SalAudio) {
 			audio = TRUE;
 		} else if(stream->type == SalVideo) {
@@ -1060,7 +1061,7 @@ int linphone_core_update_local_media_description_from_upnp(SalMediaDescription *
 	SalStreamDescription *stream;
 	UpnpStream *upnpStream;
 
-	for (i = 0; i < desc->nb_streams; i++) {
+	for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
 		stream = &desc->streams[i];
 		if (!sal_stream_description_active(stream)) continue;
 		upnpStream = NULL;
@@ -1088,7 +1089,7 @@ int linphone_core_update_local_media_description_from_upnp(SalMediaDescription *
  * uPnP Port Binding
  */
 
-UpnpPortBinding *linphone_upnp_port_binding_new() {
+UpnpPortBinding *linphone_upnp_port_binding_new(void) {
 	UpnpPortBinding *port = NULL;
 	port = ms_new0(UpnpPortBinding,1);
 	ms_mutex_init(&port->mutex, NULL);
@@ -1220,7 +1221,7 @@ void linphone_upnp_port_binding_release(UpnpPortBinding *port) {
  * uPnP Stream
  */
 
-UpnpStream* linphone_upnp_stream_new() {
+UpnpStream* linphone_upnp_stream_new(void) {
 	UpnpStream *stream = ms_new0(UpnpStream,1);
 	stream->state = LinphoneUpnpStateIdle;
 	stream->rtp = NULL;

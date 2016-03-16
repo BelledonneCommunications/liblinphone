@@ -24,12 +24,8 @@
 
 static void call_multicast_base(bool_t video) {
 	LinphoneCoreManager *marie, *pauline;
-	int begin;
-	int leaked_objects;
 	LinphoneVideoPolicy marie_policy, pauline_policy;
 
-	belle_sip_object_enable_leak_detector(TRUE);
-	begin=belle_sip_object_get_object_count();
 	marie = linphone_core_manager_new( "marie_rc");
 	pauline = linphone_core_manager_new( "pauline_tcp_rc");
 
@@ -58,7 +54,7 @@ static void call_multicast_base(bool_t video) {
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(marie),70,int,"%d");
 		if (video) {
 			/*check video path*/
-			linphone_call_set_next_video_frame_decoded_callback(linphone_core_get_current_call(marie->lc),linphone_call_cb,marie->lc);
+			linphone_call_set_next_video_frame_decoded_callback(linphone_core_get_current_call(marie->lc),linphone_call_iframe_decoded_cb,marie->lc);
 			linphone_call_send_vfu_request(linphone_core_get_current_call(marie->lc));
 			BC_ASSERT_TRUE( wait_for(marie->lc,pauline->lc,&marie->stat.number_of_IframeDecoded,1));
 		}
@@ -67,20 +63,12 @@ static void call_multicast_base(bool_t video) {
 	}
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-
-	leaked_objects=belle_sip_object_get_object_count()-begin;
-	BC_ASSERT_EQUAL(leaked_objects, 0, int, "%d");
-	if (leaked_objects>0){
-		belle_sip_object_dump_active_objects();
-	}
-	belle_sip_object_enable_leak_detector(FALSE);
-
 }
 
 static void call_multicast(void)  {
 	call_multicast_base(FALSE);
 }
-static void multicast_audio_with_pause_resume() {
+static void multicast_audio_with_pause_resume(void) {
 	call_paused_resumed_base(TRUE);
 }
 #ifdef VIDEO_ENABLED
@@ -92,14 +80,10 @@ static void early_media_with_multicast_base(bool_t video) {
 	LinphoneCoreManager *marie, *pauline, *pauline2;
 	MSList* lcs = NULL;
 	int dummy=0;
-	int leaked_objects;
-	int begin;
 	LinphoneVideoPolicy marie_policy, pauline_policy;
 	LpConfig *marie_lp;
 	LinphoneCallParams *params;
 
-	belle_sip_object_enable_leak_detector(TRUE);
-	begin=belle_sip_object_get_object_count();
 	marie   = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_tcp_rc");
 	pauline2 = linphone_core_manager_new("pauline_tcp_rc");
@@ -114,6 +98,14 @@ static void early_media_with_multicast_base(bool_t video) {
 		linphone_core_enable_video_display(pauline2->lc, TRUE);
 		linphone_core_enable_video_capture(marie->lc, TRUE);
 		linphone_core_enable_video_display(marie->lc, FALSE);
+		
+		linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+		linphone_core_set_video_device(pauline2->lc, liblinphone_tester_mire_id);
+		linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+		
+		linphone_core_set_avpf_mode(pauline->lc, LinphoneAVPFEnabled);
+		linphone_core_set_avpf_mode(pauline2->lc, LinphoneAVPFEnabled);
+		linphone_core_set_avpf_mode(marie->lc, LinphoneAVPFEnabled);
 
 		marie_policy.automatically_initiate=TRUE;
 		marie_policy.automatically_accept=TRUE;
@@ -147,7 +139,7 @@ static void early_media_with_multicast_base(bool_t video) {
 		/* send a 183 to initiate the early media */
 		if (video) {
 			/*check video path*/
-			linphone_call_set_next_video_frame_decoded_callback(linphone_core_get_current_call(pauline->lc),linphone_call_cb,pauline->lc);
+			linphone_call_set_next_video_frame_decoded_callback(linphone_core_get_current_call(pauline->lc),linphone_call_iframe_decoded_cb,pauline->lc);
 		}
 		linphone_core_accept_early_media(pauline->lc, linphone_core_get_current_call(pauline->lc));
 
@@ -158,7 +150,7 @@ static void early_media_with_multicast_base(bool_t video) {
 				/* send a 183 to initiate the early media */
 				if (video) {
 					/*check video path*/
-					linphone_call_set_next_video_frame_decoded_callback(linphone_core_get_current_call(pauline2->lc),linphone_call_cb,pauline2->lc);
+					linphone_call_set_next_video_frame_decoded_callback(linphone_core_get_current_call(pauline2->lc),linphone_call_iframe_decoded_cb,pauline2->lc);
 				}
 				linphone_core_accept_early_media(pauline2->lc, linphone_core_get_current_call(pauline2->lc));
 
@@ -197,7 +189,7 @@ static void early_media_with_multicast_base(bool_t video) {
 			BC_ASSERT_TRUE(linphone_call_params_video_multicast_enabled(linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc))));
 			BC_ASSERT_TRUE(linphone_call_params_video_multicast_enabled(linphone_call_get_current_params(linphone_core_get_current_call(marie->lc))));
 		}
-		params=linphone_call_params_copy(linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc)));
+		params = linphone_core_create_call_params(pauline->lc, linphone_core_get_current_call(pauline->lc));
 
 		linphone_call_params_enable_audio_multicast(params,FALSE);
 		linphone_call_params_enable_video_multicast(params,FALSE);
@@ -237,42 +229,31 @@ static void early_media_with_multicast_base(bool_t video) {
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(pauline2);
-
-	leaked_objects=belle_sip_object_get_object_count()-begin;
-	BC_ASSERT_EQUAL(leaked_objects,0, int, "%d");
-	if (leaked_objects>0){
-		belle_sip_object_dump_active_objects();
-	}
-	belle_sip_object_enable_leak_detector(FALSE);
 }
 
-static void early_media_with_multicast_audio() {
+static void early_media_with_multicast_audio(void) {
 	early_media_with_multicast_base(FALSE);
 }
-static void unicast_incoming_with_multicast_audio_on() {
+static void unicast_incoming_with_multicast_audio_on(void) {
 	simple_call_base(TRUE);
 }
 #ifdef VIDEO_ENABLED
-static void early_media_with_multicast_video() {
+static void early_media_with_multicast_video(void) {
 	early_media_with_multicast_base(TRUE);
 }
 #endif
 
 test_t multicast_call_tests[] = {
-	{ "Multicast audio call",call_multicast},
-	{ "Multicast call with pause/resume",multicast_audio_with_pause_resume},
-	{ "Early media multicast audio call",early_media_with_multicast_audio},
-	{ "Unicast incoming call with multicast activated",unicast_incoming_with_multicast_audio_on},
+	TEST_NO_TAG("Multicast audio call",call_multicast),
+	TEST_NO_TAG("Multicast call with pause/resume",multicast_audio_with_pause_resume),
+	TEST_NO_TAG("Early media multicast audio call",early_media_with_multicast_audio),
+	TEST_NO_TAG("Unicast incoming call with multicast activated",unicast_incoming_with_multicast_audio_on),
 #ifdef VIDEO_ENABLED
-	{ "Multicast video call",call_multicast_video},
-	{ "Early media multicast video call",early_media_with_multicast_video},
+	TEST_NO_TAG("Multicast video call",call_multicast_video),
+	TEST_NO_TAG("Early media multicast video call",early_media_with_multicast_video),
 #endif
 };
 
-test_suite_t multicast_call_test_suite = {
-	"Multicast Call",
-	liblinphone_tester_setup,
-	NULL,
-	sizeof(multicast_call_tests) / sizeof(multicast_call_tests[0]),
-	multicast_call_tests
-};
+test_suite_t multicast_call_test_suite = {"Multicast Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+										  sizeof(multicast_call_tests) / sizeof(multicast_call_tests[0]),
+										  multicast_call_tests};

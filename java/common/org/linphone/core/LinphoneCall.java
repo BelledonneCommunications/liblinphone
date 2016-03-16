@@ -27,6 +27,13 @@ import java.util.Vector;
 
 public interface LinphoneCall {
 	/**
+	 * LinphoneCall listener
+	 */
+	interface LinphoneCallListener {
+		void onNextVideoFrameDecoded(LinphoneCall call);
+	}
+
+	/**
 	 * Linphone call states
 	 *
 	 */
@@ -266,8 +273,18 @@ public interface LinphoneCall {
 	 * @param verified true when displayed SAS is correct
 	 */
 	void setAuthenticationTokenVerified(boolean verified);
-
+	
+	/**
+	 * Checks wether the call is part of a conferece.
+	 * @return A boolean
+	 */
 	boolean isInConference();
+	/**
+	 * Get the conference instance which the call is part of.
+	 * @return An instance of #LinphoneConference if the call is part
+	 * of a conference. null instead.
+	 */
+	LinphoneConference getConference();
 
 	/**
 	 * Indicates whether an operation is in progress at the media side.
@@ -359,5 +376,15 @@ public interface LinphoneCall {
 	 * @return A player
 	 */
 	public LinphonePlayer getPlayer();
+	
+	/**
+	 * Create a new chat room for messaging from a call if not already existing, else return existing one
+	 * @return LinphoneChatRoom where messaging can take place.
+	 */
+	public LinphoneChatRoom getChatRoom() ;
 
+	/**
+	 * Set the callbacks associated with the LinphoneCall.
+	 */
+	void setListener(LinphoneCall.LinphoneCallListener listener);
 }

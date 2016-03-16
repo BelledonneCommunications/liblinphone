@@ -38,7 +38,7 @@
 
 #include "linphonec.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <ws2tcpip.h>
 #include <ctype.h>
 #ifndef _WIN32_WCE
@@ -102,7 +102,7 @@ static int linphonec_main_loop (LinphoneCore * opm);
 static int linphonec_idle_call (void);
 #ifdef HAVE_READLINE
 static int linphonec_initialize_readline(void);
-static int linphonec_finish_readline();
+static int linphonec_finish_readline(void);
 static char **linephonec_readline_completion(const char *text,
 	int start, int end);
 #endif
@@ -359,7 +359,7 @@ static void linphonec_call_state_changed(LinphoneCore *lc, LinphoneCall *call, L
 			if ( auto_answer)  {
 				answer_call=TRUE;
 			} else if (real_early_media_sending) {
-				LinphoneCallParams* callparams = linphone_core_create_default_call_parameters(lc);
+				LinphoneCallParams* callparams = linphone_core_create_call_params(lc, call);
 				linphonec_out("Sending early media using real hardware\n");
 				linphone_call_params_enable_early_media_sending(callparams, TRUE);
 				if (vcap_enabled) linphone_call_params_enable_video(callparams, TRUE);
@@ -439,7 +439,7 @@ static void start_prompt_reader(void){
 #if !defined(_WIN32_WCE)
 static ortp_pipe_t create_server_socket(void){
 	char path[128];
-#ifndef WIN32
+#ifndef _WIN32
 	snprintf(path,sizeof(path)-1,"linphonec-%i",getuid());
 #else
 	{
@@ -459,7 +459,7 @@ static void *pipe_thread(void*p){
 	if (server_sock==ORTP_PIPE_INVALID) return NULL;
 	while(pipe_reader_run){
 		while(client_sock!=ORTP_PIPE_INVALID){ /*sleep until the last command is finished*/
-#ifndef WIN32
+#ifndef _WIN32
 			usleep(20000);
 #else
 			Sleep(20);
@@ -537,7 +537,7 @@ char *linphonec_readline(char *prompt){
 			}
 			ms_mutex_unlock(&prompt_mutex);
 			linphonec_idle_call();
-#ifdef WIN32
+#ifdef _WIN32
 			{
 				MSG msg;
 				Sleep(20);
@@ -593,7 +593,7 @@ void linphonec_set_autoanswer(bool_t enabled){
 	auto_answer=enabled;
 }
 
-bool_t linphonec_get_autoanswer(){
+bool_t linphonec_get_autoanswer(void){
 	return auto_answer;
 }
 
@@ -965,7 +965,7 @@ static void x11_apply_video_params(VideoParams *params, Window window){
 #endif
 
 
-static void lpc_apply_video_params(){
+static void lpc_apply_video_params(void){
 	static void *old_wid=NULL;
 	static void *old_pwid=NULL;
 	void *wid=linphone_core_get_native_video_window_id(linphonec);

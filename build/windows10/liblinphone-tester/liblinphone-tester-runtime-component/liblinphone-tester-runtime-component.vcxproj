@@ -45,6 +45,9 @@
     <ProjectReference Include="..\..\..\..\..\msilbc\build\windows10\libmsilbc\libmsilbc.vcxproj">
       <Project>{6a18bbb9-08d1-41a8-be57-17fc992cc36f}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\..\..\msopenh264\build\windows10\libmsopenh264\libmsopenh264.vcxproj">
+      <Project>{bb8ebb21-f22c-4a68-99cb-67fa36c495e3}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\..\..\mssilk\build\windows10\libmssilk\libmssilk.vcxproj">
       <Project>{b84d5c3b-6de5-49c8-b3dd-5eb67b01a527}</Project>
     </ProjectReference>
@@ -54,8 +57,14 @@
     <ProjectReference Include="..\..\..\..\..\mswebrtc\build\windows10\libmswebrtc\libmswebrtc.vcxproj">
       <Project>{878cf9d3-9761-479e-a715-a1de9f99cb78}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\..\..\mswinrtvid\windows10\libmswinrtvid\libmswinrtvid.vcxproj">
+      <Project>{2d0e44c4-e51d-4911-b876-345d1e5e5209}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\..\..\zlib\build\windows10\zlib\zlib.vcxproj">
       <Project>{a34f450d-392d-4660-9618-810bd695b3b0}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\mediastreamer2\build\windows10\mswinrtjpeg2yuv\mswinrtjpeg2yuv.vcxproj">
+      <Project>{545f846d-7f19-4d6d-a50b-172a7c9b61e7}</Project>
     </ProjectReference>
     <ProjectReference Include="..\liblinphone-tester-static\liblinphone-tester-static.vcxproj">
       <Project>{9eb3fe8d-2d91-4d29-a3bb-98ddb51d45b7}</Project>
@@ -97,6 +106,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <GenerateManifest>false</GenerateManifest>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>

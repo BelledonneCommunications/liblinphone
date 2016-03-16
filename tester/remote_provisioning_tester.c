@@ -110,6 +110,8 @@ static void remote_provisioning_file(void) {
 	return;
 #elif defined(ANDROID)
 	marie = linphone_core_manager_new2("marie_remote_localfile_android_rc", FALSE);
+#elif defined(LINPHONE_WINDOWS_UNIVERSAL)
+	marie = linphone_core_manager_new2("marie_remote_localfile_win10_rc", FALSE);
 #else
 	marie = linphone_core_manager_new2("marie_remote_localfile_rc", FALSE);
 #endif
@@ -123,21 +125,17 @@ static void remote_provisioning_file(void) {
 
 
 test_t remote_provisioning_tests[] = {
-	{ "Remote provisioning skipped", remote_provisioning_skipped },
-	{ "Remote provisioning successful behind http", remote_provisioning_http },
-	{ "Remote provisioning successful behind https", remote_provisioning_https },
-	{ "Remote provisioning 404 not found", remote_provisioning_not_found },
-	{ "Remote provisioning invalid", remote_provisioning_invalid },
-	{ "Remote provisioning transient successful", remote_provisioning_transient },
-	{ "Remote provisioning default values", remote_provisioning_default_values },
-	{ "Remote provisioning from file", remote_provisioning_file },
-	{ "Remote provisioning invalid URI", remote_provisioning_invalid_uri }
+	TEST_NO_TAG("Remote provisioning skipped", remote_provisioning_skipped),
+	TEST_NO_TAG("Remote provisioning successful behind http", remote_provisioning_http),
+	TEST_NO_TAG("Remote provisioning successful behind https", remote_provisioning_https),
+	TEST_NO_TAG("Remote provisioning 404 not found", remote_provisioning_not_found),
+	TEST_NO_TAG("Remote provisioning invalid", remote_provisioning_invalid),
+	TEST_NO_TAG("Remote provisioning transient successful", remote_provisioning_transient),
+	TEST_NO_TAG("Remote provisioning default values", remote_provisioning_default_values),
+	TEST_NO_TAG("Remote provisioning from file", remote_provisioning_file),
+	TEST_NO_TAG("Remote provisioning invalid URI", remote_provisioning_invalid_uri)
 };
 
-test_suite_t remote_provisioning_test_suite = {
-	"RemoteProvisioning",
-	NULL,
-	NULL,
-	sizeof(remote_provisioning_tests) / sizeof(remote_provisioning_tests[0]),
-	remote_provisioning_tests
-};
+test_suite_t remote_provisioning_test_suite = {"RemoteProvisioning", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+											   sizeof(remote_provisioning_tests) / sizeof(remote_provisioning_tests[0]),
+											   remote_provisioning_tests};

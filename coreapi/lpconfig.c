@@ -56,12 +56,13 @@
 #define lp_new0(type,n)	(type*)calloc(sizeof(type),n)
 
 #include "lpconfig.h"
-
+#include "lpc2xml.h"
 
 typedef struct _LpItem{
 	char *key;
 	char *value;
 	int is_comment;
+	bool_t overwrite; // If set to true, will add overwrite=true when converted to xml
 } LpItem;
 
 typedef struct _LpSectionParam{
@@ -73,6 +74,7 @@ typedef struct _LpSection{
 	char *name;
 	MSList *items;
 	MSList *params;
+	bool_t overwrite; // If set to true, will add overwrite=true to all items of this section when converted to xml
 } LpSection;
 
 struct _LpConfig{
@@ -171,6 +173,11 @@ void lp_config_remove_section(LpConfig *lpconfig, LpSection *section){
 	lp_section_destroy(section);
 }
 
+void lp_section_remove_item(LpSection *sec, LpItem *item){
+	sec->items=ms_list_remove(sec->items,(void *)item);
+	lp_item_destroy(item);
+}
+
 static bool_t is_first_char(const char *start, const char *pos){
 	const char *p;
 	for(p=start;p<pos;p++){
@@ -213,6 +220,20 @@ LpSectionParam *lp_section_find_param(const LpSection *sec, const char *key){
 	return NULL;
 }
 
+LpItem *lp_section_find_comment(const LpSection *sec, const char *comment){
+	MSList *elem;
+	LpItem *item;
+	/*printf("Looking for item %s\n",name);*/
+	for (elem=sec->items;elem!=NULL;elem=ms_list_next(elem)){
+		item=(LpItem*)elem->data;
+		if (item->is_comment && strcmp(item->value,comment)==0) {
+			/*printf("Item %s found\n",name);*/
+			return item;
+		}
+	}
+	return NULL;
+}
+
 LpItem *lp_section_find_item(const LpSection *sec, const char *name){
 	MSList *elem;
 	LpItem *item;
@@ -231,7 +252,7 @@ static LpSection* lp_config_parse_line(LpConfig* lpconfig, const char* line, LpS
 	LpSectionParam *params = NULL;
 	char *pos1,*pos2;
 	int nbs;
-	int size=strlen(line)+1;
+	size_t size=strlen(line)+1;
 	char *secname=ms_malloc(size);
 	char *key=ms_malloc(size);
 	char *value=ms_malloc(size);
@@ -283,6 +304,10 @@ static LpSection* lp_config_parse_line(LpConfig* lpconfig, const char* line, LpS
 		if (is_a_comment(line)){
 			if (cur){
 				LpItem *comment=lp_comment_new(line);
+				item=lp_section_find_comment(cur,comment->value);
+				if (item!=NULL) {
+					lp_section_remove_item(cur, item);
+				}
 				lp_section_add_item(cur,comment);
 			}
 		}else{
@@ -416,7 +441,7 @@ LpConfig *lp_config_new_with_factory(const char *config_filename, const char *fa
 		lp_config_read_file(lpconfig, factory_config_filename);
 	}
 	return lpconfig;
-	
+
 fail:
 	ms_free(lpconfig);
 	return NULL;
@@ -429,6 +454,7 @@ int lp_config_read_file(LpConfig *lpconfig, const char *filename){
 		ms_message("Reading config information from %s", path);
 		lp_config_parse(lpconfig,f);
 		fclose(f);
+		ms_free(path);
 		return 0;
 	}
 	ms_warning("Fail to open file %s",path);
@@ -464,11 +490,6 @@ void lp_config_unref(LpConfig *lpconfig){
 
 void lp_config_destroy(LpConfig *lpconfig){
 	lp_config_unref(lpconfig);
-}
-
-void lp_section_remove_item(LpSection *sec, LpItem *item){
-	sec->items=ms_list_remove(sec->items,(void *)item);
-	lp_item_destroy(item);
 }
 
 const char *lp_config_get_section_param_string(const LpConfig *lpconfig, const char *section, const char *key, const char *default_value){
@@ -547,6 +568,26 @@ float lp_config_get_float(const LpConfig *lpconfig,const char *section, const ch
 	return ret;
 }
 
+bool_t lp_config_get_overwrite_flag_for_entry(const LpConfig *lpconfig, const char *section, const char *key) {
+	LpSection *sec;
+	LpItem *item;
+	sec = lp_config_find_section(lpconfig, section);
+	if (sec != NULL){
+		item = lp_section_find_item(sec, key);
+		if (item != NULL) return item->overwrite;
+	}
+	return 0;
+}
+
+bool_t lp_config_get_overwrite_flag_for_section(const LpConfig *lpconfig, const char *section) {
+	LpSection *sec;
+	sec = lp_config_find_section(lpconfig, section);
+	if (sec != NULL){
+		return sec->overwrite;
+	}
+	return 0;
+}
+
 void lp_config_set_string(LpConfig *lpconfig,const char *section, const char *key, const char *value){
 	LpItem *item;
 	LpSection *sec=lp_config_find_section(lpconfig,section);
@@ -597,6 +638,24 @@ void lp_config_set_float(LpConfig *lpconfig,const char *section, const char *key
 	char tmp[30];
 	snprintf(tmp,sizeof(tmp),"%f",value);
 	lp_config_set_string(lpconfig,section,key,tmp);
+}
+
+void lp_config_set_overwrite_flag_for_entry(LpConfig *lpconfig, const char *section, const char *key, bool_t value) {
+	LpSection *sec;
+	LpItem *item;
+	sec = lp_config_find_section(lpconfig, section);
+	if (sec != NULL) {
+		item = lp_section_find_item(sec, key);
+		if (item != NULL) item->overwrite = value;
+	}
+}
+
+void lp_config_set_overwrite_flag_for_section(LpConfig *lpconfig, const char *section, bool_t value) {
+	LpSection *sec;
+	sec = lp_config_find_section(lpconfig, section);
+	if (sec != NULL) {
+		sec->overwrite = value;
+	}
 }
 
 void lp_item_write(LpItem *item, FILE *file){
@@ -759,17 +818,17 @@ bool_t lp_config_relative_file_exists(const LpConfig *lpconfig, const char *file
 	if (lpconfig->filename == NULL) {
 		return FALSE;
 	} else {
-		char *filename = ms_strdup(lpconfig->filename);
-		const char *dir = _lp_config_dirname(filename);
+		char *conf_path = ms_strdup(lpconfig->filename);
+		const char *dir = _lp_config_dirname(conf_path);
 		char *filepath = ms_strdup_printf("%s/%s", dir, filename);
 		char *realfilepath = lp_realpath(filepath, NULL);
 		FILE *file;
-		
-		ms_free(filename);
+
+		ms_free(conf_path);
 		ms_free(filepath);
-		
+
 		if(realfilepath == NULL) return FALSE;
-		
+
 		file = fopen(realfilepath, "r");
 		ms_free(realfilepath);
 		if (file) {
@@ -785,14 +844,14 @@ void lp_config_write_relative_file(const LpConfig *lpconfig, const char *filenam
 	char *filepath = NULL;
 	char *realfilepath = NULL;
 	FILE *file;
-	
+
 	if (lpconfig->filename == NULL) return;
-	
+
 	if(strlen(data) == 0) {
 		ms_warning("%s has not been created because there is no data to write", filename);
 		return;
 	}
-	
+
 	dup_config_file = ms_strdup(lpconfig->filename);
 	dir = _lp_config_dirname(dup_config_file);
 	filepath = ms_strdup_printf("%s/%s", dir, filename);
@@ -801,16 +860,16 @@ void lp_config_write_relative_file(const LpConfig *lpconfig, const char *filenam
 		ms_error("Could not resolv %s: %s", filepath, strerror(errno));
 		goto end;
 	}
-	
+
 	file = fopen(realfilepath, "w");
 	if(file == NULL) {
 		ms_error("Could not open %s for write", realfilepath);
 		goto end;
 	}
-	
+
 	fprintf(file, "%s", data);
 	fclose(file);
-	
+
 end:
 	ms_free(dup_config_file);
 	ms_free(filepath);
@@ -823,9 +882,9 @@ int lp_config_read_relative_file(const LpConfig *lpconfig, const char *filename,
 	char *filepath = NULL;
 	FILE *file = NULL;
 	char* realfilepath = NULL;
-	
+
 	if (lpconfig->filename == NULL) return -1;
-	
+
 	dup_config_file = ms_strdup(lpconfig->filename);
 	dir = _lp_config_dirname(dup_config_file);
 	filepath = ms_strdup_printf("%s/%s", dir, filename);
@@ -834,27 +893,56 @@ int lp_config_read_relative_file(const LpConfig *lpconfig, const char *filename,
 		ms_error("Could not resolv %s: %s", filepath, strerror(errno));
 		goto err;
 	}
-	
+
 	file = fopen(realfilepath, "r");
 	if(file == NULL) {
 		ms_error("Could not open %s for read. %s", realfilepath, strerror(errno));
 		goto err;
 	}
-	
+
 	if(fread(data, 1, max_length, file)<=0) {
 		ms_error("%s could not be loaded. %s", realfilepath, strerror(errno));
 		goto err;
 	}
 	fclose(file);
-	
+
 	ms_free(dup_config_file);
 	ms_free(filepath);
 	ms_free(realfilepath);
 	return 0;
 
 err:
-	ms_free(filepath);
+	ms_free(dup_config_file);
 	ms_free(filepath);
 	if(realfilepath) ms_free(realfilepath);
 	return -1;
+}
+
+const char** lp_config_get_sections_names(LpConfig *lpconfig) {
+	const char **sections_names;
+	const MSList *sections = lpconfig->sections;
+	int ndev;
+	int i;
+	
+	ndev = ms_list_size(sections);
+	sections_names = ms_malloc((ndev + 1) * sizeof(const char *));
+	
+	for (i = 0; sections != NULL; sections = sections->next, i++) {
+		LpSection *section = (LpSection *)sections->data;
+		sections_names[i] = ms_strdup(section->name);
+	}
+	
+	sections_names[ndev] = NULL;
+	return sections_names;
+}
+
+char* lp_config_dump_as_xml(const LpConfig *lpconfig) {
+	char *buffer;
+	
+	lpc2xml_context *ctx = lpc2xml_context_new(NULL, NULL);
+	lpc2xml_set_lpc(ctx, lpconfig);
+	lpc2xml_convert_string(ctx, &buffer);
+	lpc2xml_context_destroy(ctx);
+	
+	return buffer;
 }

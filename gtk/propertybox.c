@@ -267,6 +267,7 @@ void linphone_gtk_fill_video_sizes(GtkWidget *combo){
 void linphone_gtk_parameters_closed(GtkWidget *button){
 	GtkWidget *pb=gtk_widget_get_toplevel(button);
 	gtk_widget_destroy(pb);
+	linphone_gtk_update_status_bar_icons();
 }
 
 void linphone_gtk_update_my_contact(GtkWidget *w){
@@ -496,7 +497,7 @@ void linphone_gtk_video_preset_changed(GtkWidget *w) {
 		gtk_widget_set_sensitive(GTK_WIDGET(framerate), FALSE);
 	} else if (g_strcmp0(sel, "high-fps") == 0) {
 		linphone_core_set_video_preset(lc, "high-fps");
-		gtk_spin_button_set_value(framerate, 0);
+		gtk_spin_button_set_value(framerate, 30);
 		gtk_widget_set_sensitive(GTK_WIDGET(framerate), FALSE);
 	} else if (g_strcmp0(sel, "custom") == 0) {
 		linphone_core_set_video_preset(lc, "custom");
@@ -557,9 +558,9 @@ static void bitrate_edited(GtkCellRendererText *renderer, gchar *path, gchar *ne
 	GtkListStore *store=(GtkListStore*)userdata;
 	GtkTreeIter iter;
 	float newbitrate=0;
-	
+
 	if (!new_text) return;
-	
+
 	if (sscanf(new_text, "%f", &newbitrate)!=1) return;
 
 	if (gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(store),&iter,path)){
@@ -606,10 +607,10 @@ static void linphone_gtk_init_codec_list(GtkTreeView *listview){
 						"foreground",CODEC_COLOR,
                                                    NULL);
 	gtk_tree_view_append_column (listview, column);
-	
+
 	g_value_init(&editable, G_TYPE_BOOLEAN);
 	g_value_set_boolean(&editable, TRUE);
-	
+
 	renderer = gtk_cell_renderer_text_new ();
 	g_object_set_property(G_OBJECT(renderer), "editable", &editable);
 	column = gtk_tree_view_column_new_with_attributes (
@@ -620,7 +621,7 @@ static void linphone_gtk_init_codec_list(GtkTreeView *listview){
 		NULL);
 	g_signal_connect(G_OBJECT(renderer),"edited",G_CALLBACK(bitrate_edited),store);
 	gtk_tree_view_append_column (listview, column);
-	
+
 	renderer = gtk_cell_renderer_text_new ();
 	g_object_set_property(G_OBJECT(renderer), "editable", &editable);
 	column = gtk_tree_view_column_new_with_attributes (
@@ -785,13 +786,13 @@ static void linphone_gtk_codec_move(GtkWidget *button, int dir, int type){ /* 0=
 	if (gtk_tree_selection_count_selected_rows(sel) == 1){
 		MSList *sel_elem,*before;
 		MSList *codec_list;
-		
+
 		GList *selected_rows = gtk_tree_selection_get_selected_rows(sel, &mod);
 		gtk_tree_model_get_iter(mod, &iter, (GtkTreePath *)g_list_nth_data(selected_rows, 0));
 		gtk_tree_model_get(mod,&iter,CODEC_PRIVDATA,&pt,-1);
 		g_list_foreach(selected_rows, _g_list_func_destroy_tree_path, NULL);
 		g_list_free(selected_rows);
-		
+
 		if (pt->type==PAYLOAD_VIDEO)
 			codec_list=ms_list_copy(linphone_core_get_video_codecs(lc));
 		else codec_list=ms_list_copy(linphone_core_get_audio_codecs(lc));
@@ -887,7 +888,7 @@ void linphone_gtk_show_sip_accounts(GtkWidget *w){
 	GtkTreeSelection *select;
 	const LinphoneProxyConfig *default_pc = linphone_core_get_default_proxy_config(linphone_gtk_get_core());
 	GtkTreePath *default_pc_path = NULL;
-	
+
 	const MSList *elem;
 	if (!model){
 		GtkCellRenderer *renderer;
@@ -1276,7 +1277,7 @@ void linphone_gtk_ui_level_toggled(GtkWidget *w) {
 }
 
 static void linphone_gtk_set_media_encryption_mandatory_sensitive(GtkWidget *propbox, gboolean val){
-	GtkWidget *w=linphone_gtk_get_widget(propbox,"media_encryption_mandatory");
+	GtkWidget *w=linphone_gtk_get_widget(propbox,"media_encryption_mandatory_checkbox");
 	gtk_widget_set_sensitive(w,val);
 }
 
@@ -1284,19 +1285,21 @@ static void linphone_gtk_media_encryption_changed(GtkWidget *combo){
 	char *selected=gtk_combo_box_get_active_text(GTK_COMBO_BOX(combo));
 	LinphoneCore *lc=linphone_gtk_get_core();
 	GtkWidget *toplevel=gtk_widget_get_toplevel(combo);
+	GtkWidget *mandatory_box = linphone_gtk_get_widget(toplevel,"media_encryption_mandatory_checkbox");
 	if (selected!=NULL){
 		if (strcasecmp(selected,"SRTP")==0){
 			linphone_core_set_media_encryption(lc,LinphoneMediaEncryptionSRTP);
-			linphone_gtk_set_media_encryption_mandatory_sensitive(toplevel,TRUE);
+			gtk_widget_set_sensitive(mandatory_box,TRUE);
 		}else if (strcasecmp(selected,"DTLS")==0){
 			linphone_core_set_media_encryption(lc,LinphoneMediaEncryptionDTLS);
-			linphone_gtk_set_media_encryption_mandatory_sensitive(toplevel,FALSE);
+			gtk_widget_set_sensitive(mandatory_box,FALSE);
 		}else if (strcasecmp(selected,"ZRTP")==0){
 			linphone_core_set_media_encryption(lc,LinphoneMediaEncryptionZRTP);
-			linphone_gtk_set_media_encryption_mandatory_sensitive(toplevel,FALSE);
+			gtk_widget_set_sensitive(mandatory_box,FALSE);
 		} else {
 			linphone_core_set_media_encryption(lc,LinphoneMediaEncryptionNone);
-			linphone_gtk_set_media_encryption_mandatory_sensitive(toplevel,FALSE);
+			gtk_widget_set_sensitive(mandatory_box,FALSE);
+			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mandatory_box), FALSE);
 		}
 		g_free(selected);
 	}else g_warning("gtk_combo_box_get_active_text() returned NULL");
@@ -1304,6 +1307,10 @@ static void linphone_gtk_media_encryption_changed(GtkWidget *combo){
 
 void linphone_gtk_set_media_encryption_mandatory(GtkWidget *button){
 	linphone_core_set_media_encryption_mandatory(linphone_gtk_get_core(),gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button)));
+}
+
+void linphone_gtk_lime_changed(GtkComboBoxText *combotext) {
+	linphone_core_enable_lime(linphone_gtk_get_core(), gtk_combo_box_get_active(GTK_COMBO_BOX(combotext)));
 }
 
 static void linphone_gtk_show_media_encryption(GtkWidget *pb){
@@ -1353,11 +1360,13 @@ static void linphone_gtk_show_media_encryption(GtkWidget *pb){
 	}
 	if (no_enc){
 		/*hide this setting*/
-		gtk_widget_hide(combo);
-		gtk_widget_hide(linphone_gtk_get_widget(pb,"media_encryption_label"));
-		gtk_widget_hide(linphone_gtk_get_widget(pb,"media_encryption_mandatory"));
+		gtk_widget_hide(linphone_gtk_get_widget(pb,"encryption_label"));
+		gtk_widget_hide(linphone_gtk_get_widget(pb,"encryption_table"));
 	}else{
 		LinphoneMediaEncryption menc=linphone_core_get_media_encryption(lc);
+		gtk_widget_show(linphone_gtk_get_widget(pb,"encryption_label"));
+		gtk_widget_show(linphone_gtk_get_widget(pb,"encryption_table"));
+
 		switch(menc){
 			case LinphoneMediaEncryptionNone:
 				gtk_combo_box_set_active(GTK_COMBO_BOX(combo),0);
@@ -1384,8 +1393,12 @@ static void linphone_gtk_show_media_encryption(GtkWidget *pb){
 		}
 		g_signal_connect(G_OBJECT(combo),"changed",(GCallback)linphone_gtk_media_encryption_changed,NULL);
 	}
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(linphone_gtk_get_widget(pb,"media_encryption_mandatory")),
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(linphone_gtk_get_widget(pb,"media_encryption_mandatory_checkbox")),
 				     linphone_core_is_media_encryption_mandatory(lc));
+
+	gtk_combo_box_set_active(GTK_COMBO_BOX(linphone_gtk_get_widget(pb,"chat_lime_combo")), linphone_core_lime_enabled(lc));
+	gtk_widget_set_sensitive(linphone_gtk_get_widget(pb,"chat_lime_combo"), linphone_core_lime_available(lc));
+
 	g_object_unref(G_OBJECT(model));
 }
 
@@ -1414,8 +1427,9 @@ void linphone_gtk_fill_webcams(GtkWidget *pb){
 void linphone_gtk_fill_video_renderers(GtkWidget *pb){
 #ifdef VIDEO_ENABLED /* video_stream_get_default_video_renderer requires video enabled */
 	LinphoneCore *lc=linphone_gtk_get_core();
+	MSFactory *factory = linphone_core_get_ms_factory(lc);
 	GtkWidget *combo=linphone_gtk_get_widget(pb,"renderers");
-	MSList *l=ms_filter_lookup_by_interface(MSFilterVideoDisplayInterface);
+	MSList *l=ms_factory_lookup_filter_by_interface(factory, MSFilterVideoDisplayInterface);
 	MSList *elem;
 	int i;
 	int active=-1;
@@ -1495,7 +1509,7 @@ static gboolean apply_transports(PortConfigCtx *ctx){
 	return FALSE;
 }
 
-static PortConfigCtx* get_port_config() {
+static PortConfigCtx* get_port_config(void) {
 	GtkWidget *mw=linphone_gtk_get_main_window();
 	PortConfigCtx *cfg=(PortConfigCtx*)g_object_get_data(G_OBJECT(mw),"port_config");
 	if (cfg==NULL){
@@ -1701,7 +1715,7 @@ void linphone_gtk_show_parameters(void){
 				linphone_core_get_upload_bandwidth(lc));
 
 	/* CALL PARAMS CONFIG */
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(linphone_gtk_get_widget(pb, "auto_answer_checkbox")), linphone_gtk_get_ui_config_int("auto_answer", 0));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(linphone_gtk_get_widget(pb, "auto_answer_checkbox")), linphone_gtk_auto_answer_enabled());
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(linphone_gtk_get_widget(pb, "auto_answer_delay_spinbutton")), linphone_gtk_get_ui_config_int("auto_answer_delay", 2000));
 
 	/* UI CONFIG */
@@ -1897,7 +1911,23 @@ void linphone_gtk_enable_auto_answer(GtkToggleButton *checkbox, gpointer user_da
 	linphone_gtk_set_ui_config_int("auto_answer", auto_answer_enabled ? 1 : 0);
 }
 
+gboolean linphone_gtk_auto_answer_enabled(void) {
+	return (gboolean)linphone_gtk_get_ui_config_int("auto_answer", 0);
+}
+
 void linphone_gtk_auto_answer_delay_changed(GtkSpinButton *spinbutton, gpointer user_data) {
 	int delay = gtk_spin_button_get_value(spinbutton);
 	linphone_gtk_set_ui_config_int("auto_answer_delay", delay);
+}
+
+void linphone_gtk_notebook_current_page_changed	(GtkNotebook *notebook, GtkWidget *page, guint page_num, gpointer user_data) {
+#ifndef HAVE_LIBUDEV_H
+	if (page_num == 1) {
+		// Multimedia settings - we reload audio and video devices to detect
+		// hot-plugged devices
+		g_message("Opened multimedia page... reloading audio and video devices!");
+		linphone_gtk_reload_sound_devices();
+		linphone_gtk_reload_video_devices();
+	}
+#endif
 }

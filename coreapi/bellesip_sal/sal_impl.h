@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "belle-sip/belle-sdp.h"
 
 struct Sal{
+	MSFactory *factory;
 	SalCallbacks callbacks;
 	MSList *pending_auths;/*MSList of SalOp */
 	belle_sip_stack_t* stack;
@@ -93,7 +94,6 @@ struct SalOp{
 	belle_sip_header_referred_by_t *referred_by;
 	SalMediaDescription *result;
 	belle_sdp_session_description_t *sdp_answer;
-	bool_t supports_session_timers;
 	SalOpState state;
 	SalOpDir dir;
 	belle_sip_refresher_t* refresher;
@@ -101,14 +101,16 @@ struct SalOp{
 	SalOpType type;
 	SalPrivacyMask privacy;
 	belle_sip_header_t *event; /*used by SalOpSubscribe kinds*/
+	SalOpSDPHandling sdp_handling;
+	int auth_requests; /*number of auth requested for this op*/
+	bool_t cnx_ip_to_0000_if_sendonly_enabled;
 	bool_t auto_answer_asked;
 	bool_t sdp_offering;
 	bool_t call_released;
 	bool_t manual_refresher;
 	bool_t has_auth_pending;
-	SalOpSDPHandling sdp_handling;
-	int auth_requests; /*number of auth requested for this op*/
-	bool_t cnx_ip_to_0000_if_sendonly_enabled; /*for */
+	bool_t supports_session_timers;
+	bool_t op_released;
 };
 
 
@@ -165,10 +167,9 @@ belle_sip_response_t *sal_create_response_from_request(Sal *sal, belle_sip_reque
 
 void sal_op_assign_recv_headers(SalOp *op, belle_sip_message_t *incoming);
 
-void sal_op_add_body(SalOp *op, belle_sip_message_t *req, const SalBody *body);
-bool_t sal_op_get_body(SalOp *op, belle_sip_message_t *msg, SalBody *salbody);
+SalBodyHandler * sal_op_get_body_handler(SalOp *op, belle_sip_message_t *msg);
 
-SalReason sal_reason_to_sip_code(SalReason r);
+int sal_reason_to_sip_code(SalReason r);
 
 void _sal_op_add_custom_headers(SalOp *op, belle_sip_message_t *msg);
 

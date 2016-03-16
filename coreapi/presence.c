@@ -67,6 +67,7 @@ struct _LinphonePresencePerson {
  * This model is not complete. For example, it does not handle devices.
  */
 struct _LinphonePresenceModel {
+	LinphoneAddress *presentity; /* "The model seeks to describe the presentity, identified by a presentity URI.*/
 	void *user_data;
 	int refcnt;
 	MSList *services;	/**< A list of _LinphonePresenceService structures. Also named tuples in the RFC. */
@@ -157,7 +158,7 @@ static void presence_activity_delete(LinphonePresenceActivity *activity) {
 static time_t parse_timestamp(const char *timestamp) {
 	struct tm ret;
 	time_t seconds;
-#ifdef LINPHONE_WINDOWS_UNIVERSAL
+#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
 	long adjust_timezone;
 #else
 	time_t adjust_timezone;
@@ -174,7 +175,7 @@ static time_t parse_timestamp(const char *timestamp) {
 		ms_error("mktime() failed: %s", strerror(errno));
 		return (time_t)-1;
 	}
-#ifdef LINPHONE_WINDOWS_UNIVERSAL
+#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
 	_get_timezone(&adjust_timezone);
 #else
 	adjust_timezone = timezone;
@@ -246,7 +247,8 @@ static void presence_model_find_open_basic_status(LinphonePresenceService *servi
 
 static void presence_model_delete(LinphonePresenceModel *model) {
 	if (model == NULL) return;
-
+	if (model->presentity)
+		linphone_address_unref(model->presentity);
 	ms_list_for_each(model->services, (MSIterateFunc)linphone_presence_service_unref);
 	ms_list_free(model->services);
 	ms_list_for_each(model->persons, (MSIterateFunc)linphone_presence_person_unref);
@@ -671,7 +673,22 @@ int linphone_presence_model_clear_persons(LinphonePresenceModel *model) {
 	return 0;
 }
 
+int linphone_presence_model_set_presentity(LinphonePresenceModel *model, const LinphoneAddress *presentity) {
+	
+	if (model->presentity) {
+		linphone_address_unref(model->presentity);
+		model->presentity = NULL;
+	}
+	if (presentity) {
+		model->presentity=linphone_address_clone(presentity);
+		linphone_address_clean(model->presentity);
+	}
+	return 0;
+}
 
+const LinphoneAddress * linphone_presence_model_get_presentity(const LinphonePresenceModel *model) {
+	return model->presentity;
+}
 
 /*****************************************************************************
  * PRESENCE SERVICE FUNCTIONS TO GET ACCESS TO ALL FUNCTIONALITIES           *
@@ -1443,17 +1460,21 @@ static LinphonePresenceModel * process_pidf_xml_presence_notification(xmlparsing
 
 
 void linphone_core_add_subscriber(LinphoneCore *lc, const char *subscriber, SalOp *op){
-	LinphoneFriend *fl=linphone_friend_new_with_address(subscriber);
+	LinphoneFriend *fl=linphone_core_create_friend_with_address(lc,subscriber);
+	char *tmp;
+	
 	if (fl==NULL) return ;
-	fl->insub=op;
+	fl->lc = lc;
+	linphone_friend_add_incoming_subscription(fl, op);
 	linphone_friend_set_inc_subscribe_policy(fl,LinphoneSPAccept);
 	fl->inc_subscribe_pending=TRUE;
-	lc->subscribers=ms_list_append(lc->subscribers,(void *)fl);
-	{
-		char *tmp=linphone_address_as_string(fl->uri);
-		linphone_core_notify_new_subscription_requested(lc,fl,tmp);
-		ms_free(tmp);
-	}
+	/* the newly created "not yet" friend ownership is transfered to the lc->subscribers list*/
+	lc->subscribers=ms_list_append(lc->subscribers,fl);
+	
+	tmp = linphone_address_as_string(fl->uri);
+	linphone_core_notify_new_subscription_requested(lc,fl,tmp);
+	ms_free(tmp);
+	
 }
 
 void linphone_core_reject_subscriber(LinphoneCore *lc, LinphoneFriend *lf){
@@ -1461,43 +1482,29 @@ void linphone_core_reject_subscriber(LinphoneCore *lc, LinphoneFriend *lf){
 }
 
 void linphone_core_notify_all_friends(LinphoneCore *lc, LinphonePresenceModel *presence){
-	MSList *elem;
 	LinphonePresenceActivity *activity = linphone_presence_model_get_activity(presence);
 	char *activity_str = linphone_presence_activity_to_string(activity);
 	ms_message("Notifying all friends that we are [%s]", activity_str);
 	if (activity_str != NULL) ms_free(activity_str);
-	for(elem=lc->friends;elem!=NULL;elem=elem->next){
-		LinphoneFriend *lf=(LinphoneFriend *)elem->data;
-		if (lf->insub){
-			linphone_friend_notify(lf,presence);
-		}
-	}
+	linphone_friend_list_notify_presence(linphone_core_get_default_friend_list(lc), presence);
 }
 
 void linphone_subscription_new(LinphoneCore *lc, SalOp *op, const char *from){
 	LinphoneFriend *lf=NULL;
 	char *tmp;
 	LinphoneAddress *uri;
-	LinphoneProxyConfig *cfg;
 
 	uri=linphone_address_new(from);
 	linphone_address_clean(uri);
 	tmp=linphone_address_as_string(uri);
 	ms_message("Receiving new subscription from %s.",from);
 
-	cfg=linphone_core_lookup_known_proxy(lc,uri);
-	if (cfg!=NULL){
-		if (cfg->op){
-			if (sal_op_get_contact_address(cfg->op)) {
-				sal_op_set_contact_address (op,sal_op_get_contact_address(cfg->op));
-				ms_message("Contact for next subscribe answer has been fixed using proxy "/*to %s",fixed_contact*/);
-			}
-		}
-	}
-
 	/* check if we answer to this subscription */
-	if (linphone_find_friend_by_address(lc->friends,uri,&lf)!=NULL){
-		lf->insub=op;
+	if (linphone_core_get_default_friend_list(lc) != NULL) {
+		lf = linphone_friend_list_find_friend_by_address(linphone_core_get_default_friend_list(lc), uri);
+	}
+	if (lf!=NULL){
+		linphone_friend_add_incoming_subscription(lf, op);
 		lf->inc_subscribe_pending=TRUE;
 		sal_subscribe_accept(op);
 		linphone_friend_done(lf);	/*this will do all necessary actions */
@@ -1510,7 +1517,7 @@ void linphone_subscription_new(LinphoneCore *lc, SalOp *op, const char *from){
 			}
 			else {
 				/* else it is in wait for approval state, because otherwise it is in the friend list.*/
-				ms_message("New subscriber found in friend list, in %s state.",__policy_enum_to_str(lf->pol));
+				ms_message("New subscriber found in subscriber list, in %s state.",__policy_enum_to_str(lf->pol));
 			}
 		}else {
 			sal_subscribe_accept(op);
@@ -1521,7 +1528,7 @@ void linphone_subscription_new(LinphoneCore *lc, SalOp *op, const char *from){
 	ms_free(tmp);
 }
 
-void linphone_notify_parse_presence(SalOp *op, const char *content_type, const char *content_subtype, const char *body, SalPresenceModel **result) {
+void linphone_notify_parse_presence(const char *content_type, const char *content_subtype, const char *body, SalPresenceModel **result) {
 	xmlparsing_context_t *xml_ctx;
 	LinphonePresenceModel *model = NULL;
 
@@ -1782,24 +1789,28 @@ static void write_xml_presence_person_obj(LinphonePresencePerson *person, struct
 	if (err < 0) *st->err = err;
 }
 
-void linphone_notify_convert_presence_to_xml(SalOp *op, SalPresenceModel *presence, const char *contact, char **content) {
-	LinphonePresenceModel *model;
-	xmlBufferPtr buf;
-	xmlTextWriterPtr writer;
+char *linphone_presence_model_to_xml(LinphonePresenceModel *model) {
+	xmlBufferPtr buf = NULL;
+	xmlTextWriterPtr writer = NULL;
 	int err;
-
-	if ((contact == NULL) || (content == NULL)) return;
-
-	model = (LinphonePresenceModel *)presence;
+	char *contact = NULL;
+	char * content = NULL;
+	
+	if (model->presentity) {
+		contact = linphone_address_as_string_uri_only(model->presentity);
+	} else {
+		ms_error("Cannot convert presence model [%p] to xml because no presentity set", model);
+		goto  end;
+	}
 	buf = xmlBufferCreate();
 	if (buf == NULL) {
 		ms_error("Error creating the XML buffer");
-		return;
+		goto end;
 	}
 	writer = xmlNewTextWriterMemory(buf, 0);
 	if (writer == NULL) {
 		ms_error("Error creating the XML writer");
-		return;
+		goto end;
 	}
 
 	xmlTextWriterSetIndent(writer,1);
@@ -1825,7 +1836,7 @@ void linphone_notify_convert_presence_to_xml(SalOp *op, SalPresenceModel *presen
 		} else {
 			struct _presence_service_obj_st st={0};
 			st.writer = writer;
-			st.contact = contact;
+			st.contact = contact; /*default value*/
 			st.err = &err;
 			ms_list_for_each2(model->services, (MSIterate2Func)write_xml_presence_service_obj, &st);
 		}
@@ -1852,23 +1863,27 @@ void linphone_notify_convert_presence_to_xml(SalOp *op, SalPresenceModel *presen
 	}
 	if (err > 0) {
 		/* xmlTextWriterEndDocument returns the size of the content. */
-		*content = ms_strdup((char *)buf->content);
+		content =  ms_strdup((char *)buf->content);
 	}
-	xmlFreeTextWriter(writer);
-	xmlBufferFree(buf);
+
+end:
+	if (contact) ms_free(contact);
+	if (writer) xmlFreeTextWriter(writer);
+	if (buf) xmlBufferFree(buf);
+	return content;
 }
 
 void linphone_notify_recv(LinphoneCore *lc, SalOp *op, SalSubscribeStatus ss, SalPresenceModel *model){
 	char *tmp;
-	LinphoneFriend *lf;
+	LinphoneFriend *lf = NULL;
 	LinphoneAddress *friend=NULL;
 	LinphonePresenceModel *presence = model ? (LinphonePresenceModel *)model:linphone_presence_model_new_with_activity(LinphonePresenceActivityOffline, NULL);
 
-	lf=linphone_find_friend_by_out_subscribe(lc->friends,op);
+	if (linphone_core_get_default_friend_list(lc) != NULL)
+		lf=linphone_friend_list_find_friend_by_out_subscribe(linphone_core_get_default_friend_list(lc), op);
 	if (lf==NULL && lp_config_get_int(lc->config,"sip","allow_out_of_subscribe_presence",0)){
 		const SalAddress *addr=sal_op_get_from_address(op);
-		lf=NULL;
-		linphone_find_friend_by_address(lc->friends,(LinphoneAddress*)addr,&lf);
+		lf = linphone_friend_list_find_friend_by_address(linphone_core_get_default_friend_list(lc), (LinphoneAddress *)addr);
 	}
 	if (lf!=NULL){
 		LinphonePresenceActivity *activity = NULL;
@@ -1879,34 +1894,50 @@ void linphone_notify_recv(LinphoneCore *lc, SalOp *op, SalSubscribeStatus ss, Sa
 		activity_str = linphone_presence_activity_to_string(activity);
 		ms_message("We are notified that [%s] has presence [%s]", tmp, activity_str);
 		if (activity_str != NULL) ms_free(activity_str);
-		if (lf->presence != NULL) {
-			linphone_presence_model_unref(lf->presence);
-		}
-		lf->presence = presence;
+		linphone_friend_set_presence_model(lf, presence);
 		lf->subscribe_active=TRUE;
+		lf->presence_received = TRUE;
 		linphone_core_notify_notify_presence_received(lc,(LinphoneFriend*)lf);
 		ms_free(tmp);
+		if (op != lf->outsub){
+			/*case of a NOTIFY received out of any dialog*/
+			sal_op_release(op);
+			return;
+		}
 	}else{
 		ms_message("But this person is not part of our friend list, so we don't care.");
 		linphone_presence_model_unref(presence);
+		sal_op_release(op);
+		return ;
 	}
 	if (ss==SalSubscribeTerminated){
-		sal_op_release(op);
 		if (lf){
-			lf->outsub=NULL;
+			if (lf->outsub != op){
+				sal_op_release(op);
+			}
+			if (lf->outsub){
+				sal_op_release(lf->outsub);
+				lf->outsub=NULL;
+			}
 			lf->subscribe_active=FALSE;
+		}else{
+			sal_op_release(op);
 		}
 	}
 }
 
 void linphone_subscription_closed(LinphoneCore *lc, SalOp *op){
-	LinphoneFriend *lf;
-	lf=linphone_find_friend_by_inc_subscribe(lc->friends,op);
-	sal_op_release(op);
+	LinphoneFriend *lf = NULL;
+
+	if (linphone_core_get_default_friend_list(lc) != NULL)
+		lf = linphone_friend_list_find_friend_by_inc_subscribe(linphone_core_get_default_friend_list(lc), op);
+
 	if (lf!=NULL){
-		lf->insub=NULL;
+		/*this will release the op*/
+		linphone_friend_remove_incoming_subscription(lf, op);
 	}else{
-		ms_warning("Receiving unsuscribe for unknown in-subscribtion from %s", sal_op_get_from(op));
+		/*case of an op that we already released because the friend was destroyed*/
+		ms_message("Receiving unsuscribe for unknown in-subscribtion from %s", sal_op_get_from(op));
 	}
 }
 

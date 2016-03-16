@@ -37,9 +37,15 @@ namespace liblinphone_tester
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            LibLinphoneTester.Instance.setWritableDirectory(ApplicationData.Current.LocalFolder);
-            _suites = UnitTestDataSource.GetSuites(LibLinphoneTester.Instance);
-            TryAutoLaunch();
+            if ((e.Parameter is Uri) && (e.Parameter.ToString().Equals("liblinphone-tester:autolaunch")))
+            {
+                AutoLaunch();
+            }
+            else
+            {
+                LibLinphoneTester.Instance.initialize(ApplicationData.Current.LocalFolder, true);
+                _suites = UnitTestDataSource.GetSuites(LibLinphoneTester.Instance);
+            }
         }
 
         public IEnumerable<UnitTestSuite> Suites
@@ -173,23 +179,19 @@ namespace liblinphone_tester
             });
         }
 
-        private async void TryAutoLaunch()
+        private void AutoLaunch()
         {
-            try
+            CommandBar.IsEnabled = false;
+            ProgressIndicator.IsIndeterminate = true;
+            ProgressIndicator.IsEnabled = true;
+            LibLinphoneTester.Instance.initialize(ApplicationData.Current.LocalFolder, false);
+            LibLinphoneTester.Instance.runAllToXml();
+            if (LibLinphoneTester.Instance.AsyncAction != null)
             {
-                await ApplicationData.Current.LocalFolder.GetFileAsync("autolaunch");
-                CommandBar.IsEnabled = false;
-                ProgressIndicator.IsIndeterminate = true;
-                ProgressIndicator.IsEnabled = true;
-                LibLinphoneTester.Instance.runAllToXml();
-                if (LibLinphoneTester.Instance.AsyncAction != null)
-                {
-                    LibLinphoneTester.Instance.AsyncAction.Completed += (asyncInfo, asyncStatus) => {
-                        App.Current.Exit();
-                    };
-                }
+                LibLinphoneTester.Instance.AsyncAction.Completed += (asyncInfo, asyncStatus) => {
+                    App.Current.Exit();
+                };
             }
-            catch (Exception) { }
         }
 
         private UnitTestCase RunningTestCase;

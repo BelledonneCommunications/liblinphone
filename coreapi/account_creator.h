@@ -20,11 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef LINPHONE_ACCOUNT_CREATOR_H_
 #define LINPHONE_ACCOUNT_CREATOR_H_
 
+#include "linphonecore.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /**
  * @addtogroup misc
@@ -35,8 +35,29 @@ extern "C" {
 * Enum describing the status of a LinphoneAccountCreator operation.
 **/
 typedef enum _LinphoneAccountCreatorStatus {
-	LinphoneAccountCreatorOk,
-	LinphoneAccountCreatorFailed
+	LinphoneAccountCreatorOK,
+	LinphoneAccountCreatorReqFailed,
+
+	LinphoneAccountCreatorAccountCreated,
+	LinphoneAccountCreatorAccountNotCreated,
+
+	LinphoneAccountCreatorAccountExist,
+	LinphoneAccountCreatorAccountNotExist,
+
+	LinphoneAccountCreatorAccountValidated,
+	LinphoneAccountCreatorAccountNotValidated,
+
+	LinphoneAccountCreatorEmailInvalid,
+	LinphoneAccountCreatorUsernameInvalid,
+	LinphoneAccountCreatorUsernameTooShort,
+	LinphoneAccountCreatorUsernameTooLong,
+	LinphoneAccountCreatorUsernameInvalidSize,
+	LinphoneAccountCreatorPasswordTooShort,
+	LinphoneAccountCreatorPasswordTooLong,
+	LinphoneAccountCreatorDomainInvalid,
+	LinphoneAccountCreatorRouteInvalid,
+	LinphoneAccountCreatorDisplayNameInvalid,
+	LinphoneAccountCreatorTransportNotSupported,
 } LinphoneAccountCreatorStatus;
 
 /**
@@ -68,12 +89,12 @@ typedef void (*LinphoneAccountCreatorCbsValidationTestedCb)(LinphoneAccountCreat
  * @param[in] creator LinphoneAccountCreator object
  * @param[in] status The status of the LinphoneAccountCreator validate operation that has just finished
 **/
-typedef void (*LinphoneAccountCreatorCbsValidatedCb)(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status);
+typedef void (*LinphoneAccountCreatorCbsCreateAccountCb)(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status);
 
 /**
  * Create a LinphoneAccountCreator.
  * @param[in] core The LinphoneCore used for the XML-RPC communication
- * @param[in] xmlrpc_url The URL to the XML-RPC server
+ * @param[in] xmlrpc_url The URL to the XML-RPC server. Must be NON NULL.
  * @return The new LinphoneAccountCreator object
 **/
 LINPHONE_PUBLIC LinphoneAccountCreator * linphone_account_creator_new(LinphoneCore *core, const char *xmlrpc_url);
@@ -109,8 +130,9 @@ LINPHONE_PUBLIC void linphone_account_creator_set_user_data(LinphoneAccountCreat
  * Set the username.
  * @param[in] creator LinphoneAccountCreator object
  * @param[in] username The username to set
+ * @return LinphoneAccountCreatorOk if everything is OK, or a specific error otherwise.
 **/
-LINPHONE_PUBLIC void linphone_account_creator_set_username(LinphoneAccountCreator *creator, const char *username);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_set_username(LinphoneAccountCreator *creator, const char *username);
 
 /**
  * Get the username.
@@ -123,8 +145,9 @@ LINPHONE_PUBLIC const char * linphone_account_creator_get_username(const Linphon
  * Set the password.
  * @param[in] creator LinphoneAccountCreator object
  * @param[in] password The password to set
+ * @return LinphoneAccountCreatorOk if everything is OK, or a specific error otherwise.
 **/
-LINPHONE_PUBLIC void linphone_account_creator_set_password(LinphoneAccountCreator *creator, const char *password);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_set_password(LinphoneAccountCreator *creator, const char *password);
 
 /**
  * Get the password.
@@ -134,11 +157,27 @@ LINPHONE_PUBLIC void linphone_account_creator_set_password(LinphoneAccountCreato
 LINPHONE_PUBLIC const char * linphone_account_creator_get_password(const LinphoneAccountCreator *creator);
 
 /**
+ * Set the transport.
+ * @param[in] creator LinphoneAccountCreator object
+ * @param[in] transport The transport to set
+ * @return LinphoneAccountCreatorOk if everything is OK, or a specific error if given transport is not supported by linphone core.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_set_transport(LinphoneAccountCreator *creator, LinphoneTransportType transport);
+
+/**
+ * Get the transport.
+ * @param[in] creator LinphoneAccountCreator object
+ * @return The transport of the LinphoneAccountCreator
+**/
+LINPHONE_PUBLIC LinphoneTransportType linphone_account_creator_get_transport(const LinphoneAccountCreator *creator);
+
+/**
  * Set the domain.
  * @param[in] creator LinphoneAccountCreator object
  * @param[in] domain The domain to set
+ * @return LinphoneAccountCreatorOk if everything is OK, or a specific error otherwise.
 **/
-LINPHONE_PUBLIC void linphone_account_creator_set_domain(LinphoneAccountCreator *creator, const char *domain);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_set_domain(LinphoneAccountCreator *creator, const char *domain);
 
 /**
  * Get the domain.
@@ -151,8 +190,9 @@ LINPHONE_PUBLIC const char * linphone_account_creator_get_domain(const LinphoneA
  * Set the route.
  * @param[in] creator LinphoneAccountCreator object
  * @param[in] route The route to set
+ * @return LinphoneAccountCreatorOk if everything is OK, or a specific error otherwise.
 **/
-LINPHONE_PUBLIC void linphone_account_creator_set_route(LinphoneAccountCreator *creator, const char *route);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_set_route(LinphoneAccountCreator *creator, const char *route);
 
 /**
  * Get the route.
@@ -165,8 +205,9 @@ LINPHONE_PUBLIC const char * linphone_account_creator_get_route(const LinphoneAc
  * Set the email.
  * @param[in] creator LinphoneAccountCreator object
  * @param[in] display_name The display name to set
+ * @return LinphoneAccountCreatorOk if everything is OK, or a specific error otherwise.
 **/
-LINPHONE_PUBLIC void linphone_account_creator_set_display_name(LinphoneAccountCreator *creator, const char *display_name);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_set_display_name(LinphoneAccountCreator *creator, const char *display_name);
 
 /**
  * Get the email.
@@ -179,8 +220,9 @@ LINPHONE_PUBLIC const char * linphone_account_creator_get_display_name(const Lin
  * Set the email.
  * @param[in] creator LinphoneAccountCreator object
  * @param[in] email The email to set
+ * @return LinphoneAccountCreatorOk if everything is OK, or a specific error otherwise.
 **/
-LINPHONE_PUBLIC void linphone_account_creator_set_email(LinphoneAccountCreator *creator, const char *email);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_set_email(LinphoneAccountCreator *creator, const char *email);
 
 /**
  * Get the email.
@@ -213,23 +255,23 @@ LINPHONE_PUBLIC LinphoneAccountCreatorCbs * linphone_account_creator_get_callbac
 /**
  * Send an XML-RPC request to test the existence of a Linphone account.
  * @param[in] creator LinphoneAccountCreator object
- * @return LinphoneAccountCreatorOk if the request has been sent, LinphoneAccountCreatorFailed otherwise
+ * @return LinphoneAccountCreatorOk if the request has been sent, LinphoneAccountCreatorReqFailed otherwise
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_test_existence(LinphoneAccountCreator *creator);
 
 /**
  * Send an XML-RPC request to test the validation of a Linphone account.
  * @param[in] creator LinphoneAccountCreator object
- * @return LinphoneAccountCreatorOk if the request has been sent, LinphoneAccountCreatorFailed otherwise
+ * @return LinphoneAccountCreatorOk if the request has been sent, LinphoneAccountCreatorReqFailed otherwise
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_test_validation(LinphoneAccountCreator *creator);
 
 /**
  * Send an XML-RPC request to create a Linphone account.
  * @param[in] creator LinphoneAccountCreator object
- * @return LinphoneAccountCreatorOk if the request has been sent, LinphoneAccountCreatorFailed otherwise
+ * @return LinphoneAccountCreatorOk if the request has been sent, LinphoneAccountCreatorReqFailed otherwise
 **/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_validate(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_account(LinphoneAccountCreator *creator);
 
 /**
  * Configure an account (create a proxy config and authentication info for it).
@@ -295,18 +337,18 @@ LINPHONE_PUBLIC LinphoneAccountCreatorCbsValidationTestedCb linphone_account_cre
 LINPHONE_PUBLIC void linphone_account_creator_cbs_set_validation_tested(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsValidationTestedCb cb);
 
 /**
- * Get the validated callback.
+ * Get the create account callback.
  * @param[in] cbs LinphoneAccountCreatorCbs object.
- * @return The current validated callback.
+ * @return The current create account callback.
 **/
-LINPHONE_PUBLIC LinphoneAccountCreatorCbsValidatedCb linphone_account_creator_cbs_get_validated(const LinphoneAccountCreatorCbs *cbs);
+LINPHONE_PUBLIC LinphoneAccountCreatorCbsCreateAccountCb linphone_account_creator_cbs_get_create_account(const LinphoneAccountCreatorCbs *cbs);
 
 /**
- * Set the validated callback.
+ * Set the create account callback.
  * @param[in] cbs LinphoneAccountCreatorCbs object.
- * @param[in] cb The validated callback to be used.
+ * @param[in] cb The create account callback to be used.
 **/
-LINPHONE_PUBLIC void linphone_account_creator_cbs_set_validated(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsValidatedCb cb);
+LINPHONE_PUBLIC void linphone_account_creator_cbs_set_create_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsCreateAccountCb cb);
 
 /**
  * @}

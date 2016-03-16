@@ -35,9 +35,10 @@ void sip_setup_register(SipSetup *ss){
 	registered_sip_setups=ms_list_append(registered_sip_setups,ss);
 }
 
-void sip_setup_register_all(void){
+void sip_setup_register_all(MSFactory *factory){
 	SipSetup **p=all_sip_setups;
-	ms_load_plugins(LINPHONE_PLUGINS_DIR);
+	ms_factory_load_plugins(factory, LINPHONE_PLUGINS_DIR);
+	//ms_load_plugins(LINPHONE_PLUGINS_DIR);
 	while(*p!=NULL){
 		sip_setup_register(*p);
 		p++;
@@ -76,6 +77,7 @@ void sip_setup_unregister_all(void){
 			ss->initialized=FALSE;
 		}
 	}
+	registered_sip_setups = ms_list_free(registered_sip_setups);
 }
 
 void buddy_lookup_request_set_key(BuddyLookupRequest *req, const char *key){
