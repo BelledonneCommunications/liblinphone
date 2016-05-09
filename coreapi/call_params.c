@@ -174,6 +174,10 @@ void linphone_call_params_enable_video(LinphoneCallParams *cp, bool_t enabled){
 		cp->video_dir=LinphoneMediaDirectionSendRecv;
 }
 
+void linphone_call_params_enable_screensharing(LinphoneCallParams *cp, bool_t enabled){
+	cp->screensharing_enabled=enabled;
+}
+
 const char *linphone_call_params_get_custom_header(const LinphoneCallParams *params, const char *header_name){
 	return sal_custom_header_find(params->custom_headers,header_name);
 }
@@ -238,7 +242,6 @@ const LinphonePayloadType* linphone_call_params_get_used_text_codec(const Linpho
 	return cp->text_codec;
 }
 
-
 bool_t linphone_call_params_low_bandwidth_enabled(const LinphoneCallParams *cp) {
 	return cp->low_bandwidth;
 }
@@ -281,6 +284,10 @@ bool_t linphone_call_params_realtime_text_enabled(const LinphoneCallParams *para
 
 bool_t linphone_call_params_video_enabled(const LinphoneCallParams *cp){
 	return cp->has_video;
+}
+
+bool_t linphone_call_params_screensharing_enabled(const LinphoneCallParams *cp){
+	return cp->screensharing_enabled;
 }
 
 LinphoneMediaDirection linphone_call_params_get_audio_direction(const LinphoneCallParams *cp) {
@@ -355,8 +362,10 @@ LinphoneCallParams * linphone_call_params_new(void) {
 	LinphoneCallParams *cp=belle_sip_object_new(LinphoneCallParams);
 	cp->audio_dir=LinphoneMediaDirectionSendRecv;
 	cp->video_dir=LinphoneMediaDirectionSendRecv;
+	cp->screensharing_dir=LinphoneMediaDirectionInactive;
 	cp->has_audio=TRUE;
-	cp->realtimetext_enabled = FALSE;
+	cp->realtimetext_enabled=FALSE;
+	cp->screensharing_enabled=FALSE;
 	return cp;
 }
 

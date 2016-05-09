@@ -134,6 +134,7 @@ SalStreamDescription * sal_media_description_find_best_stream(SalMediaDescriptio
 	if (desc == NULL) desc = sal_media_description_find_stream(md, SalProtoRtpSavp, type);
 	if (desc == NULL) desc = sal_media_description_find_stream(md, SalProtoRtpAvpf, type);
 	if (desc == NULL) desc = sal_media_description_find_stream(md, SalProtoRtpAvp, type);
+	if (desc == NULL) desc = sal_media_description_find_stream(md, SalProtoTcpRdp, type);//TODO
 	return desc;
 }
 
@@ -213,6 +214,7 @@ bool_t sal_stream_description_has_avpf(const SalStreamDescription *sd) {
 		case SalProtoRtpAvp:
 		case SalProtoRtpSavp:
 		case SalProtoUdpTlsRtpSavp:
+		case SalProtoTcpRdp:
 		case SalProtoOther:
 			return FALSE;
 	}
@@ -235,6 +237,7 @@ bool_t sal_stream_description_has_srtp(const SalStreamDescription *sd) {
 		case SalProtoRtpAvpf:
 		case SalProtoUdpTlsRtpSavpf:
 		case SalProtoUdpTlsRtpSavp:
+		case SalProtoTcpRdp:
 		case SalProtoOther:
 			return FALSE;
 	}
@@ -250,6 +253,7 @@ bool_t sal_stream_description_has_dtls(const SalStreamDescription *sd) {
 		case SalProtoRtpSavpf:
 		case SalProtoRtpAvp:
 		case SalProtoRtpAvpf:
+		case SalProtoTcpRdp:
 		case SalProtoOther:
 			return FALSE;
 	}
@@ -730,6 +734,7 @@ const char* sal_stream_type_to_string(SalStreamType type) {
 	case SalAudio: return "audio";
 	case SalVideo: return "video";
 	case SalText: return "text";
+	case SalApplication: return "application";
 	default: return "other";
 	}
 }
@@ -747,6 +752,7 @@ const char* sal_media_proto_to_string(SalMediaProto type) {
 	case SalProtoRtpAvpf:return "RTP/AVPF";
 	case SalProtoRtpSavpf:return "RTP/SAVPF";
 	case SalProtoUdpTlsRtpSavpf:return "UDP/TLS/RTP/SAVPF";
+	case SalProtoTcpRdp:return "TCP/RDP";
 	default: return "unknown";
 	}
 }

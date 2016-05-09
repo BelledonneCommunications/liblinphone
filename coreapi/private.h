@@ -150,6 +150,7 @@ struct _LinphoneCallParams{
 	LinphonePrivacyMask privacy;
 	LinphoneMediaDirection audio_dir;
 	LinphoneMediaDirection video_dir;
+	LinphoneMediaDirection screensharing_dir;
 	bool_t has_audio;
 	bool_t has_video;
 	bool_t avpf_enabled; /* RTCP feedback messages are enabled */
@@ -166,6 +167,7 @@ struct _LinphoneCallParams{
 
 	bool_t audio_multicast_enabled;
 	bool_t realtimetext_enabled;
+	bool_t screensharing_enabled;
 	bool_t update_call_when_ice_completed;
 	bool_t encryption_mandatory;
 };
@@ -299,13 +301,14 @@ struct _LinphoneCall{
 	LinphoneCallState prevstate;
 	LinphoneCallState transfer_state; /*idle if no transfer*/
 	LinphoneProxyConfig *dest_proxy;
-	int main_audio_stream_index, main_video_stream_index, main_text_stream_index;
+	int main_audio_stream_index, main_video_stream_index, main_text_stream_index,main_screensharing_stream_index;;
 	PortConfig media_ports[SAL_MEDIA_DESCRIPTION_MAX_STREAMS];
 	MSMediaStreamSessions sessions[SAL_MEDIA_DESCRIPTION_MAX_STREAMS]; /*the rtp, srtp, zrtp contexts for each stream*/
-	StunCandidate ac, vc, tc; /*audio video text ip/port discovered by STUN*/
+	StunCandidate ac, vc, tc, sc; /*audio video text ip/port discovered by STUN*///TODO
 	struct _AudioStream *audiostream;  /**/
 	struct _VideoStream *videostream;
 	struct _TextStream *textstream;
+	struct _ScreenStream *screenstream; // TODO
 	void *video_window_id;
 	MSAudioEndpoint *endpoint; /*used for conferencing*/
 	char *refer_to;
@@ -529,6 +532,7 @@ void linphone_call_fix_call_parameters(LinphoneCall *call, SalMediaDescription *
 void linphone_call_init_audio_stream(LinphoneCall *call);
 void linphone_call_init_video_stream(LinphoneCall *call);
 void linphone_call_init_text_stream(LinphoneCall *call);
+void linphone_call_init_screen_stream(LinphoneCall *call);
 void linphone_call_init_media_streams(LinphoneCall *call);
 void linphone_call_start_media_streams(LinphoneCall *call, LinphoneCallState target_state);
 void linphone_call_start_media_streams_for_ice_gathering(LinphoneCall *call);
@@ -783,9 +787,15 @@ typedef struct rtp_config
 	bool_t video_multicast_enabled;
 	int text_rtp_min_port;
 	int text_rtp_max_port;
+	int screensharing_rtp_min_port;
+	int screensharing_rtp_max_port;
 }rtp_config_t;
 
-
+typedef struct tcp_config
+{
+	int screensharing_tcp_min_port;
+	int screensharing_tcp_max_port;
+}tcp_config_t;
 
 typedef struct net_config
 {
@@ -829,6 +839,7 @@ typedef struct codecs_config
 	MSList *audio_codecs;  /* list of audio codecs in order of preference*/
 	MSList *video_codecs;
 	MSList *text_codecs;
+	MSList *screensharing_codecs;
 	int dyn_pt;
 	int telephone_event_pt;
 }codecs_config_t;
@@ -849,6 +860,11 @@ typedef struct video_config{
 typedef struct text_config{
 	bool_t enabled;
 }text_config_t;
+
+typedef struct screen_config{
+	bool_t enabled;
+	LinphoneMediaDirection role;
+}screen_config_t;
 
 typedef struct ui_config
 {
@@ -904,12 +920,15 @@ struct _LinphoneCore
 	MSList *default_audio_codecs;
 	MSList *default_video_codecs;
 	MSList *default_text_codecs;
+	MSList *default_screensharing_codecs;
 	net_config_t net_conf;
 	sip_config_t sip_conf;
 	rtp_config_t rtp_conf;
+	tcp_config_t tcp_conf;
 	sound_config_t sound_conf;
 	video_config_t video_conf;
 	text_config_t text_conf;
+	screen_config_t screen_conf;
 	codecs_config_t codecs_conf;
 	ui_config_t ui_conf;
 	autoreplier_config_t autoreplier_conf;

@@ -1079,6 +1079,15 @@ static void rtp_config_read(LinphoneCore *lc)
 		min_port = lp_config_get_int(lc->config, "rtp", "text_rtp_port", 11078);
 		linphone_core_set_text_port(lc, min_port);
 	}
+	
+	if (lp_config_get_range(lc->config, "rtp", "screensharing_rtp_port", &min_port, &max_port, 13078, 13078) == TRUE) {
+		if (min_port <= 0) min_port = 1;
+		if (max_port > 65535) max_port = 65535;
+		linphone_core_set_screensharing_port_range(lc, min_port, max_port);
+	} else {
+		min_port = lp_config_get_int(lc->config, "rtp", "screensharing_rtp_port", 13078);
+		linphone_core_set_screensharing_port(lc, min_port);
+	}
 
 	jitt_comp=lp_config_get_int(lc->config,"rtp","audio_jitt_comp",60);
 	linphone_core_set_audio_jittcomp(lc,jitt_comp);
@@ -1176,7 +1185,7 @@ static bool_t get_codec(LinphoneCore *lc, SalStreamType type, int index, Payload
 	LpConfig *config=lc->config;
 
 	*ret=NULL;
-	snprintf(codeckey,50,"%s_codec_%i",type == SalAudio ? "audio" : type == SalVideo ? "video" : "text", index);
+	snprintf(codeckey,50,"%s_codec_%i",type == SalAudio ? "audio" : type == SalVideo ? "video" : type == SalApplication ? "screensharing" : "text", index);
 	mime=lp_config_get_string(config,codeckey,"mime",NULL);
 	if (mime==NULL || strlen(mime)==0 ) return FALSE;
 
@@ -1188,9 +1197,9 @@ static bool_t get_codec(LinphoneCore *lc, SalStreamType type, int index, Payload
 		ms_warning("Codec %s/%i read from conf is not supported by mediastreamer2, ignored.",mime,rate);
 		return TRUE;
 	}
-	pt = find_payload(type == SalAudio ? lc->default_audio_codecs : type == SalVideo ? lc->default_video_codecs : lc->default_text_codecs ,mime,rate,channels,fmtp);
+	pt = find_payload(type == SalAudio ? lc->default_audio_codecs : type == SalVideo ? lc->default_video_codecs : type == SalText ? lc->default_text_codecs : lc->default_screensharing_codecs ,mime,rate,channels,fmtp);
 	if (!pt){
-		MSList **default_list = (type==SalAudio) ? &lc->default_audio_codecs : type == SalVideo ? &lc->default_video_codecs : &lc->default_text_codecs;
+		MSList **default_list = (type==SalAudio) ? &lc->default_audio_codecs : type == SalVideo ? &lc->default_video_codecs : type == SalText ? &lc->default_text_codecs : &lc->default_screensharing_codecs;
 		if (type == SalAudio)
 			ms_warning("Codec %s/%i/%i read from conf is not in the default list.",mime,rate,channels);
 		else if (type == SalVideo)
@@ -1198,7 +1207,7 @@ static bool_t get_codec(LinphoneCore *lc, SalStreamType type, int index, Payload
 		else
 			ms_warning("Codec %s read from conf is not in the default list.",mime);
 		pt=payload_type_new();
-		pt->type=(type==SalAudio) ? PAYLOAD_AUDIO_PACKETIZED : type == SalVideo ? PAYLOAD_VIDEO : PAYLOAD_TEXT;
+		pt->type=(type==SalAudio) ? PAYLOAD_AUDIO_PACKETIZED : type == SalVideo ? PAYLOAD_VIDEO : type == SalText ? PAYLOAD_TEXT : PAYLOAD_SCREEN;
 		pt->mime_type=ortp_strdup(mime);
 		pt->clock_rate=rate;
 		pt->channels=channels;
@@ -1217,13 +1226,16 @@ static SalStreamType payload_type_get_stream_type(const PayloadType *pt){
 		case PAYLOAD_AUDIO_PACKETIZED:
 		case PAYLOAD_AUDIO_CONTINUOUS:
 			return SalAudio;
-		break;
+			break;
 		case PAYLOAD_VIDEO:
 			return SalVideo;
-		break;
+			break;
 		case PAYLOAD_TEXT:
 			return SalText;
-		break;
+			break;
+		case PAYLOAD_SCREEN:
+			return SalApplication;
+			break;
 	}
 	return SalOther;
 }
@@ -1277,6 +1289,7 @@ static void codecs_config_read(LinphoneCore *lc)
 	MSList *audio_codecs=NULL;
 	MSList *video_codecs=NULL;
 	MSList *text_codecs=NULL;
+	MSList *screensharing_codecs=NULL;
 
 	lc->codecs_conf.dyn_pt=96;
 	lc->codecs_conf.telephone_event_pt=lp_config_get_int(lc->config,"misc","telephone_event_pt",101);
@@ -1306,9 +1319,17 @@ static void codecs_config_read(LinphoneCore *lc)
 	}
 	text_codecs = add_missing_supported_codecs(lc, lc->default_text_codecs, text_codecs);
 
+	for (i=0;get_codec(lc,SalApplication,i,&pt);i++){
+		if (pt){
+			screensharing_codecs=codec_append_if_new(screensharing_codecs, pt);
+		}
+	}
+	screensharing_codecs=add_missing_supported_codecs(lc, lc->default_screensharing_codecs,screensharing_codecs);
+
 	linphone_core_set_audio_codecs(lc,audio_codecs);
 	linphone_core_set_video_codecs(lc,video_codecs);
 	linphone_core_set_text_codecs(lc, text_codecs);
+	linphone_core_set_screensharing_codecs(lc,screensharing_codecs);
 	linphone_core_update_allocated_audio_bandwidth(lc);
 }
 
@@ -1501,7 +1522,7 @@ const char * linphone_core_get_version(void){
 }
 
 static void linphone_core_register_payload_type(LinphoneCore *lc, const PayloadType *const_pt, const char *recv_fmtp, bool_t enabled){
-	MSList **codec_list = const_pt->type==PAYLOAD_VIDEO ? &lc->default_video_codecs : const_pt->type==PAYLOAD_TEXT ? &lc->default_text_codecs : &lc->default_audio_codecs;
+	MSList **codec_list = const_pt->type==PAYLOAD_VIDEO ? &lc->default_video_codecs : const_pt->type==PAYLOAD_TEXT ? &lc->default_text_codecs : const_pt->type==PAYLOAD_SCREEN ? &lc->default_screensharing_codecs : &lc->default_audio_codecs;
 	PayloadType *pt=payload_type_clone(const_pt);
 	int number=-1;
 	payload_type_set_enable(pt,enabled);
@@ -1952,6 +1973,23 @@ int linphone_core_set_text_codecs(LinphoneCore *lc, MSList *codecs) {
 	return 0;
 }
 
+/** Sets the list of screen sharing codecs.
+ * @param[in] lc The LinphoneCore object
+ * @param[in] codecs \mslist{PayloadType}
+ * @return 0
+  *
+ * @ingroup media_parameters
+ * The list is taken by the LinphoneCore thus the application should not free it.
+ * This list is made of struct PayloadType describing the codec parameters.
+**/
+int linphone_core_set_screensharing_codecs(LinphoneCore *lc, MSList *codecs){
+	if (lc->codecs_conf.screensharing_codecs!=NULL)
+	ms_list_free(lc->codecs_conf.screensharing_codecs);
+	lc->codecs_conf.screensharing_codecs=codecs;
+	_linphone_core_codec_config_write(lc);
+	return 0;
+}
+
 /**
  * Enable RFC3389 generic confort noise algorithm (CN payload type).
  * It is disabled by default, because this algorithm is only relevant for legacy codecs (PCMU, PCMA, G722).
@@ -2128,6 +2166,25 @@ void linphone_core_get_text_port_range(const LinphoneCore *lc, int *min_port, in
 }
 
 /**
+ * Returns the TCP port used for screen sharing.
+ *
+ * @ingroup network_parameters
+**/
+int linphone_core_get_screensharing_port(const LinphoneCore *lc) {
+	return lc->rtp_conf.screensharing_rtp_min_port;
+}
+
+/**
+ * Get the video port range from which is randomly chosen the TCP port used for screen sharing.
+ *
+ * @ingroup network_parameters
+ */
+void linphone_core_get_screensharing_port_range(const LinphoneCore *lc, int *min_port, int *max_port) {
+	*min_port = lc->rtp_conf.screensharing_rtp_min_port;
+	*max_port = lc->rtp_conf.screensharing_rtp_max_port;
+}
+
+/**
  * Returns the value in seconds of the no-rtp timeout.
  *
  * @ingroup media_parameters
@@ -2244,6 +2301,26 @@ void linphone_core_set_text_port(LinphoneCore *lc, int port) {
 void linphone_core_set_text_port_range(LinphoneCore *lc, int min_port, int max_port) {
 	lc->rtp_conf.text_rtp_min_port = min_port;
 	lc->rtp_conf.text_rtp_max_port = max_port;
+}
+
+/**
+ * Sets the TCP port used for screen sharing.
+ * A value if -1 will request the system to allocate the local port randomly.
+ * This is recommended in order to avoid firewall warnings.
+ *
+ * @ingroup network_parameters
+**/
+void linphone_core_set_screensharing_port(LinphoneCore *lc, int port) {
+	lc->rtp_conf.screensharing_rtp_min_port = lc->rtp_conf.screensharing_rtp_max_port = port;
+}
+
+/**
+ * Sets the TCP port range from which to randomly select the port used for screen sharing.
+ * @ingroup media_parameters
+ */
+void linphone_core_set_screensharing_port_range(LinphoneCore *lc, int min_port, int max_port) {
+	lc->rtp_conf.screensharing_rtp_min_port = min_port;
+	lc->rtp_conf.screensharing_rtp_max_port = max_port;
 }
 
 /**
@@ -7244,15 +7321,21 @@ void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 
 void linphone_core_init_default_params(LinphoneCore*lc, LinphoneCallParams *params) {
 	params->has_audio = TRUE;
-	params->has_video=linphone_core_video_enabled(lc) && lc->video_policy.automatically_initiate;
+	params->has_video=FALSE;//linphone_core_video_enabled(lc) && lc->video_policy.automatically_initiate;
 	params->media_encryption=linphone_core_get_media_encryption(lc);
 	params->in_conference=FALSE;
 	params->realtimetext_enabled = linphone_core_realtime_text_enabled(lc);
+	////TODO add option in ui
+	//linphone_core_enable_screensharing(lc,TRUE);
+	//linphone_core_set_screensharing_role(lc,LinphoneMediaDirectionSendRecv);
+	////
+	params->screensharing_enabled=linphone_core_screensharing_enabled(lc);
 	params->privacy=LinphonePrivacyDefault;
 	params->avpf_enabled=linphone_core_get_avpf_mode(lc);
 	params->implicit_rtcp_fb = lp_config_get_int(lc->config,"rtp","rtcp_fb_implicit_rtcp_fb",TRUE);
 	params->audio_dir=LinphoneMediaDirectionSendRecv;
 	params->video_dir=LinphoneMediaDirectionSendRecv;
+	params->screensharing_dir=lc->screen_conf.role;
 	params->real_early_media=lp_config_get_int(lc->config,"misc","real_early_media",FALSE);
 	params->audio_multicast_enabled=linphone_core_audio_multicast_enabled(lc);
 	params->video_multicast_enabled=linphone_core_video_multicast_enabled(lc);
@@ -7589,6 +7672,19 @@ LINPHONE_PUBLIC const char *linphone_core_log_collection_upload_state_to_string(
 bool_t linphone_core_realtime_text_enabled(LinphoneCore *lc) {
 	return lc->text_conf.enabled;
 }
+
+bool_t linphone_core_screensharing_enabled(LinphoneCore *lc) {
+	return lc->screen_conf.enabled;
+}
+
+void linphone_core_enable_screensharing(LinphoneCore *lc, bool_t yesno) {
+	lc->screen_conf.enabled=yesno;
+}
+
+void linphone_core_set_screensharing_role(LinphoneCore *lc, LinphoneMediaDirection dir) {
+	lc->screen_conf.role=dir;
+}
+
 void linphone_core_set_http_proxy_host(LinphoneCore *lc, const char *host) {
 	lp_config_set_string(lc->config,"sip","http_proxy_host",host);
 	if (lc->sal) {
@@ -7623,6 +7719,7 @@ const char *linphone_stream_type_to_string(const LinphoneStreamType type) {
 		case LinphoneStreamTypeAudio: return "LinphoneStreamTypeAudio";
 		case LinphoneStreamTypeVideo: return "LinphoneStreamTypeVideo";
 		case LinphoneStreamTypeText: return "LinphoneStreamTypeText";
+		case LinphoneStreamTypeScreenSharing: return "LinphoneStreamScreenSharing";
 		case LinphoneStreamTypeUnknown: return "LinphoneStreamTypeUnknown";
 	}
 	return "INVALID";

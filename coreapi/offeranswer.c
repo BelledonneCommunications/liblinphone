@@ -325,9 +325,29 @@ static SalStreamDir compute_dir_incoming(SalStreamDir local, SalStreamDir offere
 	return res;
 }
 
+static void compute_screensharing(const SalStreamDescription *local,
+						const SalStreamDescription *remote,
+						SalStreamDescription *result,
+						bool_t incoming
+ 				){
+	if (remote->screensharing)
+		if (local->screensharing) {
+			result->screensharing_role=(incoming)?
+			compute_dir_incoming(local->screensharing_role,remote->screensharing_role):
+			compute_dir_outgoing(local->screensharing_role,remote->screensharing_role);
+			result->screensharing=(result->screensharing_role!=SalStreamInactive);
+			return;
+		}
+
+	result->screensharing=FALSE;
+	result->screensharing_role=SalStreamInactive;
+}
+
 static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *local_offer,
 						const SalStreamDescription *remote_answer,
 						SalStreamDescription *result){
+	
+	compute_screensharing(local_offer,remote_answer,result,FALSE);
 	if (remote_answer->rtp_port!=0)
 		result->payloads=match_payloads(factory, local_offer->payloads,remote_answer->payloads,TRUE,FALSE);
 	else {
@@ -335,6 +355,7 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		result->rtp_port=0;
 		return;
 	}
+	
 	result->proto=remote_answer->proto;
 	result->type=local_offer->type;
 
@@ -449,6 +470,9 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 	result->proto=remote_offer->proto;
 	result->type=local_cap->type;
 	result->dir=compute_dir_incoming(local_cap->dir,remote_offer->dir);
+	
+	compute_screensharing(local_cap,remote_offer,result,TRUE);
+	
 	if (!result->payloads || only_telephone_event(result->payloads) || remote_offer->rtp_port==0){
 		result->rtp_port=0;
 		return;
@@ -509,7 +533,7 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		result->dtls_role = SalDtlsRoleInvalid;
 	}
 	result->rtcp_mux = remote_offer->rtcp_mux && local_cap->rtcp_mux;
-    result->implicit_rtcp_fb = local_cap->implicit_rtcp_fb && remote_offer->implicit_rtcp_fb;
+	result->implicit_rtcp_fb = local_cap->implicit_rtcp_fb && remote_offer->implicit_rtcp_fb;
 }
 
 

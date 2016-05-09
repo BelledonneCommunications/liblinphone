@@ -143,6 +143,7 @@ typedef enum {
 	SalAudio,
 	SalVideo,
 	SalText,
+	SalApplication,
 	SalOther
 } SalStreamType;
 const char* sal_stream_type_to_string(SalStreamType type);
@@ -154,6 +155,7 @@ typedef enum{
 	SalProtoRtpSavpf,
 	SalProtoUdpTlsRtpSavp,
 	SalProtoUdpTlsRtpSavpf,
+	SalProtoTcpRdp,
 	SalProtoOther
 }SalMediaProto;
 const char* sal_media_proto_to_string(SalMediaProto type);
@@ -227,6 +229,12 @@ typedef enum {
 	SalOpSDPSimulateRemove /** Will simulate no SDP in the op */
 } SalOpSDPHandling;
 
+typedef enum {
+	SalScreenSharingInactive=0,
+	SalScreenSharingWaiting,
+	SalScreenSharingConnected
+} SalScreenSharingStep;
+
 typedef struct SalStreamDescription{
 	char name[16]; /*unique name of stream, in order to ease offer/answer model algorithm*/
 	SalMediaProto proto;
@@ -256,6 +264,7 @@ typedef struct SalStreamDescription{
 	char ice_ufrag[SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN];
 	char ice_pwd[SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN];
 	bool_t ice_mismatch;
+	SalScreenSharingStep screensharing_step;
 	bool_t set_nortpproxy; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 	bool_t rtcp_mux;
 	bool_t pad[1];
@@ -263,6 +272,8 @@ typedef struct SalStreamDescription{
 	SalDtlsRole dtls_role;
 	int ttl; /*for multicast -1 to disable*/
 	SalMulticastRole multicast_role;
+	SalStreamDir screensharing_role;//TODO
+	bool_t screensharing;
 } SalStreamDescription;
 
 const char *sal_stream_description_get_type_as_string(const SalStreamDescription *desc);

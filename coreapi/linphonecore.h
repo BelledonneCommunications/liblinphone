@@ -127,6 +127,7 @@ enum _LinphoneStreamType {
 	LinphoneStreamTypeAudio,
 	LinphoneStreamTypeVideo,
 	LinphoneStreamTypeText,
+	LinphoneStreamTypeScreenSharing,
 	LinphoneStreamTypeUnknown /* WARNING: Make sure this value remains the last one in the list */
 };
 
@@ -503,6 +504,7 @@ typedef struct _LinphoneVideoPolicy LinphoneVideoPolicy;
 #define LINPHONE_CALL_STATS_AUDIO ((int)LinphoneStreamTypeAudio)
 #define LINPHONE_CALL_STATS_VIDEO ((int)LinphoneStreamTypeVideo)
 #define LINPHONE_CALL_STATS_TEXT  ((int)LinphoneStreamTypeText)
+#define LINPHONE_CALL_STATS_SCREENSHARING  ((int)LinphoneStreamTypeScreenSharing)
 
 /**
  * Enum describing ICE states.
@@ -2801,6 +2803,8 @@ LINPHONE_PUBLIC const MSList *linphone_core_get_text_codecs(const LinphoneCore *
 
 LINPHONE_PUBLIC int linphone_core_set_text_codecs(LinphoneCore *lc, MSList *codecs);
 
+LINPHONE_PUBLIC int linphone_core_set_screensharing_codecs(LinphoneCore *lc, MSList *codecs);
+
 LINPHONE_PUBLIC void linphone_core_enable_generic_confort_noise(LinphoneCore *lc, bool_t enabled);
 
 LINPHONE_PUBLIC bool_t linphone_core_generic_confort_noise_enabled(const LinphoneCore *lc);
@@ -3062,6 +3066,10 @@ LINPHONE_PUBLIC	int linphone_core_get_text_port(const LinphoneCore *lc);
 
 LINPHONE_PUBLIC	void linphone_core_get_text_port_range(const LinphoneCore *lc, int *min_port, int *max_port);
 
+LINPHONE_PUBLIC int linphone_core_get_screensharing_port(const LinphoneCore *lc);
+
+LINPHONE_PUBLIC void linphone_core_get_screensharing_port_range(const LinphoneCore *lc, int *min_port, int *max_port);
+
 LINPHONE_PUBLIC	int linphone_core_get_nortp_timeout(const LinphoneCore *lc);
 
 LINPHONE_PUBLIC	void linphone_core_set_audio_port(LinphoneCore *lc, int port);
@@ -3075,6 +3083,10 @@ LINPHONE_PUBLIC	void linphone_core_set_video_port_range(LinphoneCore *lc, int mi
 LINPHONE_PUBLIC	void linphone_core_set_text_port(LinphoneCore *lc, int port);
 
 LINPHONE_PUBLIC	void linphone_core_set_text_port_range(LinphoneCore *lc, int min_port, int max_port);
+
+LINPHONE_PUBLIC	void linphone_core_set_screensharing_port(LinphoneCore *lc, int port);
+
+LINPHONE_PUBLIC	void linphone_core_set_screensharing_port_range(LinphoneCore *lc, int min_port, int max_port);
 
 LINPHONE_PUBLIC	void linphone_core_set_nortp_timeout(LinphoneCore *lc, int seconds);
 
@@ -4408,6 +4420,25 @@ LINPHONE_PUBLIC const char * linphone_core_get_video_preset(const LinphoneCore *
 LINPHONE_PUBLIC bool_t linphone_core_realtime_text_enabled(LinphoneCore *lc);
 
 /**
+ * Gets if screen sharing is enabled
+ * @param[in] lc LinphoneCore object
+ * @return true if screen sharing is enabled, false otherwise
+ */
+LINPHONE_PUBLIC bool_t linphone_core_screensharing_enabled(LinphoneCore *lc);
+
+/**
+ * Set screensharing to yesno value
+ * @param[in] lc LinphoneCore object
+ */
+LINPHONE_PUBLIC void linphone_core_enable_screensharing(LinphoneCore *lc, bool_t yesno);
+
+/**
+ * Set screensharing role for remote desktop.
+ * @param[in] lc LinphoneCore object
+ */
+LINPHONE_PUBLIC void linphone_core_set_screensharing_role(LinphoneCore *lc, LinphoneMediaDirection dir);
+
+/**
  * Set http proxy address to be used for signaling during next channel connection. Use #linphone_core_set_network_reachable FASLE/TRUE to force channel restart.
  * @param[in] lc LinphoneCore object
  * @param[in] hostname of IP adress of the http proxy (can be NULL to disable).
@@ -4419,7 +4450,7 @@ LINPHONE_PUBLIC	void linphone_core_set_http_proxy_host(LinphoneCore *lc, const c
  * @param[in] lc LinphoneCore object
  * @param[in] port of the http proxy.
  */
-LINPHONE_PUBLIC void linphone_core_set_http_proxy_port(LinphoneCore *lc, int port) ;
+LINPHONE_PUBLIC void linphone_core_set_http_proxy_port(LinphoneCore *lc, int port);
 
 /**
  * Get http proxy address to be used for signaling.

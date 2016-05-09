@@ -128,13 +128,14 @@ liblinphonetester_la_SOURCES = \
 				quality_reporting_tester.c \
 				register_tester.c \
 				remote_provisioning_tester.c \
+				screensharing_tester.c \
 				setup_tester.c \
 				stun_tester.c \
 				tunnel_tester.c \
 				tester.c \
 				upnp_tester.c \
 				video_tester.c \
-				vcard_tester.c
+				vcard_tester.c 
 
 liblinphonetester_ladir = $(includedir)/linphone
 

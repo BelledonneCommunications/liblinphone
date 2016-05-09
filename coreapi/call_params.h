@@ -116,6 +116,13 @@ LINPHONE_PUBLIC void linphone_call_params_enable_audio(LinphoneCallParams *cp, b
 LINPHONE_PUBLIC void linphone_call_params_enable_video(LinphoneCallParams *cp, bool_t enabled);
 
 /**
+ * Enable screen sharing stream.
+ * @param[in] cp LinphoneCallParams object
+ * @param[in] enabled A boolean value telling whether to enable screen sharing or not.
+**/
+LINPHONE_PUBLIC void linphone_call_params_enable_screensharing(LinphoneCallParams *cp, bool_t enabled);
+
+/**
  * Get a custom SIP header.
  * @param[in] cp The #LinphoneCallParams to get the custom SIP header from.
  * @param[in] header_name The name of the header to get.
@@ -285,6 +292,13 @@ LINPHONE_PUBLIC bool_t linphone_call_params_audio_enabled(const LinphoneCallPara
  * @return A boolean value telling whether video is enabled or not.
 **/
 LINPHONE_PUBLIC bool_t linphone_call_params_video_enabled(const LinphoneCallParams *cp);
+
+/**
+ * Tell whether screen sharing is enabled or not.
+ * @param[in] cp LinphoneCallParams object
+ * @return A boolean value telling whether screen sharing is enabled or not.
+**/
+LINPHONE_PUBLIC bool_t linphone_call_params_screensharing_enabled(const LinphoneCallParams *cp);
 
 /**
  * Get the audio stream direction.

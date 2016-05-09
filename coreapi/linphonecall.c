@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "lpconfig.h"
 #include "private.h"
 #include "conference_private.h"
+#include <mediastreamer2/ms_srtp.h>
 #include <ortp/event.h>
 #include <ortp/b64.h>
 #include <math.h>
@@ -86,6 +87,26 @@ static bool_t generate_b64_crypto_key(size_t key_length, char* key_out, size_t k
 	key_out[b64_size] = '\0';
 	ms_free(tmp);
 	return TRUE;
+}
+
+static LinphoneMediaDirection linphone_call_salmedia_to_linphonemedia(SalStreamDir dir) {
+	switch(dir) {
+		case SalStreamSendRecv: return LinphoneMediaDirectionSendRecv;
+		case SalStreamSendOnly: return LinphoneMediaDirectionSendOnly;
+		case SalStreamRecvOnly: return LinphoneMediaDirectionRecvOnly;
+		case SalStreamInactive:
+		default:return LinphoneMediaDirectionInactive;
+	}
+}
+
+static SalStreamDir linphone_call_linphonemedia_to_salmedia(LinphoneMediaDirection dir) {
+	switch(dir) {
+		case LinphoneMediaDirectionSendRecv: return SalStreamSendRecv;
+		case LinphoneMediaDirectionSendOnly: return SalStreamSendOnly;
+		case LinphoneMediaDirectionRecvOnly: return SalStreamRecvOnly;
+		case LinphoneMediaDirectionInactive:
+		default:return SalStreamInactive;
+	}
 }
 
 LinphoneCore *linphone_call_get_core(const LinphoneCall *call){
@@ -401,39 +422,48 @@ static MSList *make_codec_list(LinphoneCore *lc, CodecConstraints * hints, SalSt
 	const MSList *it;
 	int nb = 0;
 
-	for(it=codecs;it!=NULL;it=it->next){
-		PayloadType *pt=(PayloadType*)it->data;
-		int num;
+	//TODO Change
+	if(stype != SalApplication) {
+		for(it=codecs;it!=NULL;it=it->next){
+			PayloadType *pt=(PayloadType*)it->data;
+			int num;
 
-		if (!payload_type_enabled(pt)) {
-			continue;
-		}
-		if (hints->bandwidth_limit>0 && !linphone_core_is_payload_type_usable_for_bandwidth(lc,pt,hints->bandwidth_limit)){
-			ms_message("Codec %s/%i eliminated because of audio bandwidth constraint of %i kbit/s",
-					pt->mime_type,pt->clock_rate,hints->bandwidth_limit);
-			continue;
-		}
-		if (!linphone_core_check_payload_type_usability(lc,pt)){
-			continue;
-		}
-		pt=payload_type_clone(pt);
+			if (!payload_type_enabled(pt)) {
+				continue;
+			}
+			if (hints->bandwidth_limit>0 && !linphone_core_is_payload_type_usable_for_bandwidth(lc,pt,hints->bandwidth_limit)){
+				ms_message("Codec %s/%i eliminated because of audio bandwidth constraint of %i kbit/s",
+						pt->mime_type,pt->clock_rate,hints->bandwidth_limit);
+				continue;
+			}
+			if (!linphone_core_check_payload_type_usability(lc,pt)){
+				continue;
+			}
+			pt=payload_type_clone(pt);
 
-		/*look for a previously assigned number for this codec*/
-		num=find_payload_type_number(hints->previously_used, pt);
-		if (num!=-1){
-			payload_type_set_number(pt,num);
-			payload_type_set_flag(pt, PAYLOAD_TYPE_FROZEN_NUMBER);
-		}
+			/*look for a previously assigned number for this codec*/
+			num=find_payload_type_number(hints->previously_used, pt);
+			if (num!=-1){
+				payload_type_set_number(pt,num);
+				payload_type_set_flag(pt, PAYLOAD_TYPE_FROZEN_NUMBER);
+			}
 
+			l=ms_list_append(l, pt);
+			nb++;
+			if ((hints->max_codecs > 0) && (nb >= hints->max_codecs)) break;
+		}
+		if (stype==SalAudio){
+			MSList *specials=create_special_payload_types(lc,l);
+			l=ms_list_concat(l,specials);
+		}
+		linphone_core_assign_payload_type_numbers(lc, l);
+	} else {
+		PayloadType *pt=payload_type_new();
+		payload_type_set_number(pt,1);
+		payload_type_set_flag(pt, PAYLOAD_TYPE_FROZEN_NUMBER);
+		payload_type_set_enable(pt, TRUE);
 		l=ms_list_append(l, pt);
-		nb++;
-		if ((hints->max_codecs > 0) && (nb >= hints->max_codecs)) break;
 	}
-	if (stype==SalAudio){
-		MSList *specials=create_special_payload_types(lc,l);
-		l=ms_list_concat(l,specials);
-	}
-	linphone_core_assign_payload_type_numbers(lc, l);
 	return l;
 }
 
@@ -453,6 +483,8 @@ static void update_media_description_from_stun(SalMediaDescription *md, const St
 		} else if ((md->streams[i].type == SalText) && (tc->port != 0)) {
 			strcpy(md->streams[i].rtp_addr,tc->addr);
 			md->streams[i].rtp_port=tc->port;
+		} else if ((md->streams[i].type == SalApplication)) {
+			//TODO screensharing
 		}
 	}
 }
@@ -717,10 +749,10 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 
 	/*set audio capabilities */
 
-    codec_hints.bandwidth_limit=params->audio_bw;
-    codec_hints.max_codecs=-1;
-    codec_hints.previously_used=old_md ? old_md->streams[call->main_audio_stream_index].already_assigned_payloads : NULL;
-    l=make_codec_list(lc, &codec_hints, SalAudio, lc->codecs_conf.audio_codecs);
+	codec_hints.bandwidth_limit=params->audio_bw;
+	codec_hints.max_codecs=-1;
+	codec_hints.previously_used=old_md ? old_md->streams[call->main_audio_stream_index].already_assigned_payloads : NULL;
+	l=make_codec_list(lc, &codec_hints, SalAudio, lc->codecs_conf.audio_codecs);
 
 	if (params->has_audio && l != NULL) {
 		strncpy(md->streams[call->main_audio_stream_index].rtp_addr,linphone_call_get_public_ip_for_stream(call,call->main_audio_stream_index),sizeof(md->streams[call->main_audio_stream_index].rtp_addr));
@@ -825,8 +857,39 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 	if (params->custom_sdp_media_attributes[LinphoneStreamTypeText])
 		md->streams[call->main_text_stream_index].custom_sdp_attributes = sal_custom_sdp_attribute_clone(params->custom_sdp_media_attributes[LinphoneStreamTypeText]);
 
-	md->nb_streams = MAX(md->nb_streams,max_index+1);
+	// TODO screensharing
+	
+	md->streams[call->main_screensharing_stream_index].proto=SalProtoTcpRdp;
+	md->streams[call->main_screensharing_stream_index].dir=SalStreamSendRecv;
+	md->streams[call->main_screensharing_stream_index].type=SalApplication;
+	md->streams[call->main_screensharing_stream_index].rtcp_mux = rtcp_mux;
+	
+	strncpy(md->streams[call->main_screensharing_stream_index].name,"Application",sizeof(md->streams[call->main_screensharing_stream_index].name)-1);
+	if (params->screensharing_enabled) {
+		md->streams[call->main_screensharing_stream_index].screensharing = TRUE;
 
+		strncpy(md->streams[call->main_screensharing_stream_index].rtp_addr,linphone_call_get_public_ip_for_stream(call,call->main_screensharing_stream_index),sizeof(md->streams[call->main_text_stream_index].rtp_addr));
+		strncpy(md->streams[call->main_screensharing_stream_index].rtcp_addr,linphone_call_get_public_ip_for_stream(call,call->main_screensharing_stream_index),sizeof(md->streams[call->main_text_stream_index].rtcp_addr));
+ 
+		codec_hints.previously_used=NULL;
+		codec_hints.max_codecs=1;
+		l=make_codec_list(lc, &codec_hints, SalVideo, lc->codecs_conf.video_codecs);
+		
+		md->streams[call->main_screensharing_stream_index].rtp_port=call->media_ports[call->main_screensharing_stream_index].rtp_port;
+		md->streams[call->main_screensharing_stream_index].rtcp_port=call->media_ports[call->main_screensharing_stream_index].rtcp_port;
+		md->streams[call->main_screensharing_stream_index].screensharing_role=linphone_call_linphonemedia_to_salmedia(params->screensharing_dir);
+		md->streams[call->main_screensharing_stream_index].payloads=l;
+		
+		if (call->main_screensharing_stream_index > max_index)
+			max_index = call->main_screensharing_stream_index;
+	} else {
+		ms_message("Don't put screen sharing stream on local offer for call [%p]",call);
+		md->streams[call->main_screensharing_stream_index].dir = SalStreamInactive;
+	}
+	if (params->custom_sdp_media_attributes[LinphoneStreamTypeScreenSharing])
+		md->streams[call->main_screensharing_stream_index].custom_sdp_attributes = sal_custom_sdp_attribute_clone(params->custom_sdp_media_attributes[LinphoneStreamTypeScreenSharing]);
+	
+	md->nb_streams = MAX(md->nb_streams,max_index+1);
 	/* Deactivate unused streams. */
 	for (i = md->nb_streams; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
 		if (md->streams[i].rtp_port == 0) {
@@ -940,6 +1003,7 @@ static void linphone_call_init_common(LinphoneCall *call, LinphoneAddress *from,
 	call->main_audio_stream_index = LINPHONE_CALL_STATS_AUDIO;
 	call->main_video_stream_index = LINPHONE_CALL_STATS_VIDEO;
 	call->main_text_stream_index = LINPHONE_CALL_STATS_TEXT;
+	call->main_screensharing_stream_index = LINPHONE_CALL_STATS_SCREENSHARING;
 	call->state=LinphoneCallIdle;
 	call->transfer_state = LinphoneCallIdle;
 	call->log=linphone_call_log_new(call->dir, from, to);
@@ -961,10 +1025,15 @@ static void linphone_call_init_common(LinphoneCall *call, LinphoneAddress *from,
 
 	linphone_core_get_text_port_range(call->core, &min_port, &max_port);
 	port_config_set(call,call->main_text_stream_index,min_port,max_port);
+	
+	linphone_core_get_screensharing_port_range(call->core, &min_port, &max_port);
+	port_config_set(call,call->main_screensharing_stream_index,min_port,max_port);
 
 	linphone_call_init_stats(&call->stats[LINPHONE_CALL_STATS_AUDIO], LINPHONE_CALL_STATS_AUDIO);
 	linphone_call_init_stats(&call->stats[LINPHONE_CALL_STATS_VIDEO], LINPHONE_CALL_STATS_VIDEO);
 	linphone_call_init_stats(&call->stats[LINPHONE_CALL_STATS_TEXT], LINPHONE_CALL_STATS_TEXT);
+	//TODO create stats for screensharing ?
+	//linphone_call_init_stats(&call->stats[LINPHONE_CALL_STATS_SCREENSHARING], LINPHONE_CALL_STATS_SCREENSHARING);
 }
 
 void linphone_call_init_stats(LinphoneCallStats *stats, int type) {
@@ -1117,7 +1186,7 @@ LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, LinphoneAddr
 	linphone_call_get_local_ip(call, to);
 	call->params = linphone_call_params_copy(params);
 	linphone_call_init_common(call, from, to);
-
+	
 	call->current_params->update_call_when_ice_completed = call->params->update_call_when_ice_completed; /*copy param*/
 
 	linphone_call_fill_media_multicast_addr(call);
@@ -1176,7 +1245,7 @@ void linphone_call_set_compatible_incoming_call_parameters(LinphoneCall *call, S
 
 static void linphone_call_compute_streams_indexes(LinphoneCall *call, const SalMediaDescription *md) {
 	int i, j;
-	bool_t audio_found = FALSE, video_found = FALSE, text_found = FALSE;
+	bool_t audio_found = FALSE, video_found = FALSE, text_found = FALSE, screensharing_found = FALSE;
 
 	for (i = 0; i < md->nb_streams; i++) {
 		if (md->streams[i].type == SalAudio) {
@@ -1269,6 +1338,36 @@ static void linphone_call_compute_streams_indexes(LinphoneCall *call, const SalM
 					}
 				}
 			}
+		} else if (md->streams[i].type == SalApplication) {
+			if (!screensharing_found) {
+				call->main_screensharing_stream_index = i;
+				screensharing_found = TRUE;
+				ms_message("screen sharing stream index found: %i, updating main screen sharing stream index", i);
+			} else {
+				ms_message("screen sharing stream index found: %i, but main screen sharing stream already set to %i", i, call->main_text_stream_index);
+			}
+ 
+			// Check that the default value of a another stream doesn't match the new one
+			if (i == call->main_audio_stream_index) {
+				for (j = 0; j < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; j++) {
+					if (sal_stream_description_active(&md->streams[j])) continue;
+					if (j != call->main_video_stream_index && j != call->main_audio_stream_index) {
+						ms_message("%i was used for audio stream ; now using %i", i, j);
+						call->main_audio_stream_index = j;
+						break;
+					}
+				}
+			}
+			if (i == call->main_text_stream_index) {
+				for (j = 0; j < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; j++) {
+					if (sal_stream_description_active(&md->streams[j])) continue;
+					if (j != call->main_audio_stream_index && j != call->main_text_stream_index) {
+						ms_message("%i was used for text stream ; now using %i", i, j);
+						call->main_text_stream_index = j;
+						break;
+					}
+				}
+			}
 		}
 	}
 }
@@ -1314,6 +1413,7 @@ LinphoneCall * linphone_call_new_incoming(LinphoneCore *lc, LinphoneAddress *fro
 	linphone_call_get_local_ip(call, from);
 	call->params = linphone_call_params_new();
 	linphone_call_init_common(call, from, to);
+	
 	call->log->call_id=ms_strdup(sal_op_get_call_id(op)); /*must be known at that time*/
 	call->dest_proxy = linphone_core_lookup_known_proxy(call->core, to);
 	linphone_core_init_default_params(lc, call->params);
@@ -1822,7 +1922,7 @@ const LinphoneCallParams * linphone_call_get_current_params(LinphoneCall *call){
 			call->current_params->audio_multicast_enabled = FALSE;
 
 		sd=sal_media_description_find_best_stream(md,SalVideo);
-        call->current_params->implicit_rtcp_fb = sd ? sal_stream_description_has_implicit_avpf(sd): FALSE;
+		call->current_params->implicit_rtcp_fb = sd ? sal_stream_description_has_implicit_avpf(sd): FALSE;
 		call->current_params->video_dir=sd ? media_direction_from_sal_stream_dir(sd->dir) : LinphoneMediaDirectionInactive;
 		if (call->current_params->video_dir != LinphoneMediaDirectionInactive) {
 			rtp_addr = sd->rtp_addr[0]!='\0' ? sd->rtp_addr : call->resultdesc->addr;
@@ -1830,8 +1930,8 @@ const LinphoneCallParams * linphone_call_get_current_params(LinphoneCall *call){
 		} else
 			call->current_params->video_multicast_enabled = FALSE;
 
-
-
+		//sd=sal_media_description_find_best_stream(md,SalApplication);
+		//call->current_params->screensharing_enabled = call->resultdesc->streams[call->main_screensharing_stream_index].screensharing;
 	}
 
 	return call->current_params;
@@ -2565,12 +2665,20 @@ void linphone_call_init_text_stream(LinphoneCall *call){
 	_linphone_call_prepare_ice_for_stream(call, call->main_text_stream_index, FALSE);
 }
 
+void linphone_call_init_screensharing_stream(LinphoneCall *call){
+	LinphoneCore *lc=call->core;
+
+	if(call->screenstream != NULL) return;
+	call->screenstream = screensharing_stream_new(0,FALSE);
+	lc->screen_conf.enabled=TRUE;
+}
+
 void linphone_call_init_media_streams(LinphoneCall *call){
 	linphone_call_init_audio_stream(call);
 	linphone_call_init_video_stream(call);
 	linphone_call_init_text_stream(call);
+	linphone_call_init_screensharing_stream(call);
 }
-
 
 static int dtmf_tab[16]={'0','1','2','3','4','5','6','7','8','9','*','#','A','B','C','D'};
 
@@ -3370,6 +3478,24 @@ static void linphone_call_start_text_stream(LinphoneCall *call) {
 	}
 }
 
+static void linphone_call_start_screensharing_stream(LinphoneCall *call) {
+	const SalStreamDescription *scstream;
+
+	scstream = sal_media_description_find_best_stream(call->resultdesc, SalApplication);
+	if (scstream != NULL && scstream->dir!=SalStreamInactive && scstream->screensharing) {
+		call->current_params->screensharing_enabled=TRUE;
+		call->current_params->screensharing_dir=linphone_call_salmedia_to_linphonemedia(scstream->screensharing_role);
+		call->screenstream->is_server=(call->current_params->screensharing_dir==LinphoneMediaDirectionRecvOnly);
+		strcpy(call->screenstream->addr_ip,call->biggestdesc->addr);
+		call->screenstream->tcp_port=call->resultdesc->streams[call->main_screensharing_stream_index].rtcp_port;
+		screensharing_stream_start(call->screenstream);
+	} else {
+		call->current_params->screensharing_enabled=FALSE;
+		call->current_params->screensharing_dir=LinphoneMediaDirectionInactive;
+		ms_message("No valid screensharing stream defined.");
+	}
+}
+
 static void setZrtpCryptoTypesParameters(MSZrtpParams *params, LinphoneCore *lc)
 {
 	int i;
@@ -3530,6 +3656,10 @@ void linphone_call_start_media_streams(LinphoneCall *call, LinphoneCallState nex
 
 	if (call->params->realtimetext_enabled) {
 		linphone_call_start_text_stream(call);
+	}
+	
+	if (call->params->screensharing_enabled) {
+		linphone_call_start_screensharing_stream(call);
 	}
 
 	set_dtls_fingerprint_on_all_streams(call);
@@ -3730,6 +3860,14 @@ static void linphone_call_stop_text_stream(LinphoneCall *call) {
 	}
 }
 
+static void linphone_call_stop_screensharing_stream(LinphoneCall *call) {
+	if (call->screenstream != NULL) {
+		screensharing_stream_stop(call->screenstream);
+		call->screenstream = NULL;
+		linphone_call_handle_stream_events(call, call->main_screensharing_stream_index);
+	}
+}
+
 void linphone_call_stop_media_streams(LinphoneCall *call){
 	if (call->audiostream || call->videostream || call->textstream) {
 		if (call->audiostream && call->videostream)
@@ -3737,6 +3875,7 @@ void linphone_call_stop_media_streams(LinphoneCall *call){
 		linphone_call_stop_audio_stream(call);
 		linphone_call_stop_video_stream(call);
 		linphone_call_stop_text_stream(call);
+		linphone_call_stop_screensharing_stream(call);
 
 		if (call->core->msevq != NULL) {
 			ms_event_queue_skip(call->core->msevq);
@@ -4397,6 +4536,8 @@ static MediaStream * linphone_call_get_media_stream(LinphoneCall *call, int stre
 		return (MediaStream*)call->videostream;
 	if (stream_index == call->main_text_stream_index)
 		return (MediaStream*)call->textstream;
+	if (stream_index == call->main_screensharing_stream_index)
+		return (MediaStream*)call->screenstream;
 	ms_error("linphone_call_get_media_stream(): no stream index %i", stream_index);
 	return NULL;
 }
@@ -4408,12 +4549,14 @@ static OrtpEvQueue *linphone_call_get_event_queue(LinphoneCall *call, int stream
 		return call->videostream_app_evq;
 	if (stream_index == call->main_text_stream_index)
 		return call->textstream_app_evq;
+	if (stream_index == call->main_screensharing_stream_index)
+		return NULL;
 	ms_error("linphone_call_get_event_queue(): no stream index %i", stream_index);
 	return NULL;
 }
 
 void linphone_call_handle_stream_events(LinphoneCall *call, int stream_index){
-	MediaStream *ms = stream_index == call->main_audio_stream_index ? (MediaStream *)call->audiostream : (stream_index == call->main_video_stream_index ? (MediaStream *)call->videostream : (MediaStream *)call->textstream);
+	MediaStream *ms = stream_index == call->main_audio_stream_index ? (MediaStream *)call->audiostream : (stream_index == call->main_video_stream_index ? (MediaStream *)call->videostream :(stream_index == call->main_video_stream_index ? (MediaStream *)call->textstream:NULL));
 	OrtpEvQueue *evq;
 	OrtpEvent *ev;
 
@@ -4435,6 +4578,9 @@ void linphone_call_handle_stream_events(LinphoneCall *call, int stream_index){
 			case MSText:
 				text_stream_iterate((TextStream*)ms);
 			break;
+			case MSScreensharing:
+				screensharing_stream_iterate((ScreenStream*)ms);
+			break;
 			default:
 				ms_error("linphone_call_handle_stream_events(): unsupported stream type.");
 				return;
@@ -4446,11 +4592,11 @@ void linphone_call_handle_stream_events(LinphoneCall *call, int stream_index){
 		OrtpEventType evt=ortp_event_get_type(ev);
 		OrtpEventData *evd=ortp_event_get_data(ev);
 		int stats_index = stream_index == call->main_audio_stream_index ? LINPHONE_CALL_STATS_AUDIO : (stream_index == call->main_video_stream_index ? LINPHONE_CALL_STATS_VIDEO : LINPHONE_CALL_STATS_TEXT);
-		
+
 		/*and yes the MediaStream must be taken at each iteration, because it may have changed due to the handling of events
 		 * in this loop*/
 		ms = linphone_call_get_media_stream(call, stream_index);
-		
+
 		if (ms) linphone_call_stats_fill(&call->stats[stats_index],ms,ev);
 		linphone_call_notify_stats_updated(call,stats_index);
 
@@ -4518,6 +4664,7 @@ void linphone_call_background_tasks(LinphoneCall *call, bool_t one_second_elapse
 	linphone_call_handle_stream_events(call, call->main_audio_stream_index);
 	linphone_call_handle_stream_events(call, call->main_video_stream_index);
 	linphone_call_handle_stream_events(call, call->main_text_stream_index);
+	linphone_call_handle_stream_events(call, call->main_screensharing_stream_index);//TODO
 	if ((call->state == LinphoneCallStreamsRunning ||
 		call->state == LinphoneCallPausedByRemote) && one_second_elapsed && call->audiostream!=NULL
 		&& call->audiostream->ms.state==MSStreamStarted && disconnect_timeout>0 )

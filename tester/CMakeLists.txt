@@ -39,6 +39,7 @@ set(SOURCE_FILES
 	quality_reporting_tester.c
 	register_tester.c
 	remote_provisioning_tester.c
+	screensharing_tester.c
 	setup_tester.c
 	stun_tester.c
 	tester.c

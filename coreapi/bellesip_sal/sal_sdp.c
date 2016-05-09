@@ -287,6 +287,28 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("ssrc",ssrc_attribute));
 		ms_free(ssrc_attribute);
 	}
+	
+	/* insert screensharing attribute */
+	if (stream->screensharing) {
+		char role[16];
+		switch ( stream->screensharing_role) {
+			case SalStreamSendRecv:
+				strcpy(role,"actpass");
+				break;
+			case SalStreamRecvOnly:
+				strcpy(role,"passive");
+				break;
+			case SalStreamSendOnly:
+				strcpy(role,"active");
+				break;
+			case SalStreamInactive:
+			default:
+				strcpy(role,"holdconn");
+		}
+		belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create("setup",role));
+		if (strcmp(role,"holdconn") != 0)
+			belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create("connection","new"));
+	}
 
 	switch ( stream->dir ) {
 		case SalStreamSendRecv:
@@ -335,6 +357,7 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 			add_ice_remote_candidates(media_desc,stream);
 		}
 	}
+	
 
 	if ((rtp_port != 0) && (sal_stream_description_has_avpf(stream) || sal_stream_description_has_implicit_avpf(stream))) {
 		add_rtcp_fb_attributes(media_desc, md, stream);
@@ -438,7 +461,7 @@ belle_sdp_session_description_t * media_description_to_sdp ( const SalMediaDescr
 			belle_sdp_session_description_add_attribute(session_desc, (belle_sdp_attribute_t *)elem->data);
 		}
 	}
-
+	
 	for ( i=0; i<desc->nb_streams; i++ ) {
 		stream_description_to_sdp(session_desc, desc, &desc->streams[i]);
 	}
@@ -471,6 +494,37 @@ static void sdp_parse_payload_types(belle_sdp_media_description_t *media_desc, S
 						pt->send_fmtp ? pt->send_fmtp : "" );
 	}
 	if ( mime_params ) belle_sip_list_free_with_data ( mime_params,belle_sip_object_unref );
+}
+
+static void sdp_parse_media_screensharing_parameters(belle_sdp_media_description_t *media_desc, SalStreamDescription *stream) {
+	belle_sdp_attribute_t *attribute;
+	const char *value;
+	
+	attribute=belle_sdp_media_description_get_attribute(media_desc,"setup");
+	
+	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
+		if (strncmp(value, "actpass", 7) == 0)
+			stream->screensharing_role = SalStreamSendRecv;
+		else if (strncmp(value, "active", 6) == 0)
+			stream->screensharing_role = SalStreamSendOnly;
+		else if (strncmp(value, "passive", 7) == 0)
+			stream->screensharing_role = SalStreamRecvOnly;
+		else
+			stream->screensharing_role = SalStreamInactive;
+		
+		stream->screensharing=(stream->screensharing_role!=SalStreamInactive);
+	} else stream->screensharing=FALSE;
+
+	attribute=belle_sdp_media_description_get_attribute(media_desc,"connection");
+	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
+		//TODO suite concernant la connexion
+		if (strncmp(value, "new", 3) == 0)
+			stream->screensharing_step = SalScreenSharingWaiting;
+		else if (strncmp(value, "existing", 8) == 0)
+			stream->screensharing_step = SalScreenSharingWaiting;
+		else
+			stream->screensharing_step = SalScreenSharingInactive;
+	} else stream->screensharing_step = SalScreenSharingInactive;
 }
 
 static void sdp_parse_media_crypto_parameters(belle_sdp_media_description_t *media_desc, SalStreamDescription *stream) {
@@ -732,7 +786,7 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	belle_sip_list_t *custom_attribute_it;
 	const char* value;
 	const char *mtype,*proto;
-    bool_t has_avpf_attributes;
+	bool_t has_avpf_attributes;
 
 	stream=&md->streams[md->nb_streams];
 	media=belle_sdp_media_description_get_media ( media_desc );
@@ -752,6 +806,8 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 			stream->proto = SalProtoUdpTlsRtpSavp;
 		} else if (strcasecmp(proto, "UDP/TLS/RTP/SAVPF") == 0) {
 			stream->proto = SalProtoUdpTlsRtpSavpf;
+		} else if (strcasecmp(proto, "TCP/RDP") == 0) {//TODO
+			stream->proto = SalProtoTcpRdp;
 		} else {
 			strncpy(stream->proto_other,proto,sizeof(stream->proto_other)-1);
 		}
@@ -770,6 +826,8 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 		stream->type=SalVideo;
 	} else if ( strcasecmp ( "text", mtype ) == 0 ) {
 		stream->type=SalText;
+	} else if ( strcasecmp ( "application", mtype ) == 0 ) {//TODO
+		stream->type=SalApplication;
 	} else {
 		stream->type=SalOther;
 		strncpy ( stream->typeother,mtype,sizeof ( stream->typeother )-1 );
@@ -828,6 +886,11 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 			strncpy(stream->dtls_fingerprint, belle_sdp_attribute_get_value(attribute),sizeof(stream->dtls_fingerprint));
 		}
 	}
+	
+	/* Read ScreenSharing specific attributes */
+	if (stream->proto == SalProtoTcpRdp) {
+		sdp_parse_media_screensharing_parameters(media_desc, stream);
+	}
 
 	/* Read crypto lines if any */
 	if (sal_stream_description_has_srtp(stream)) {
@@ -837,7 +900,7 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	/* Get ICE candidate attributes if any */
 	sdp_parse_media_ice_parameters(media_desc, stream);
     
-    has_avpf_attributes = sdp_parse_rtcp_fb_parameters(media_desc, stream);
+	has_avpf_attributes = sdp_parse_rtcp_fb_parameters(media_desc, stream);
     
 	/* Get RTCP-FB attributes if any */
 	if (sal_stream_description_has_avpf(stream)) {
