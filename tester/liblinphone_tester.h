@@ -44,6 +44,7 @@ extern test_suite_t register_test_suite;
 extern test_suite_t call_test_suite;
 extern test_suite_t message_test_suite;
 extern test_suite_t presence_test_suite;
+extern test_suite_t presence_server_test_suite;
 extern test_suite_t upnp_test_suite;
 extern test_suite_t event_test_suite;
 extern test_suite_t flexisip_test_suite;
@@ -61,6 +62,8 @@ extern test_suite_t multi_call_test_suite;
 extern test_suite_t proxy_config_test_suite;
 extern test_suite_t vcard_test_suite;
 extern test_suite_t screensharing_test_suite;
+extern test_suite_t audio_bypass_suite;
+
 #if HAVE_SIPP
 extern test_suite_t complex_sip_call_test_suite;
 #endif
@@ -192,6 +195,9 @@ typedef struct _stats {
 	int number_of_LinphonePresenceActivityWorking;
 	int number_of_LinphonePresenceActivityWorship;
 	const LinphonePresenceModel *last_received_presence;
+	
+	int number_of_LinphonePresenceBasicStatusOpen;
+	int number_of_LinphonePresenceBasicStatusClosed;
 
 	int number_of_inforeceived;
 	LinphoneInfoMessage* last_received_info_message;
@@ -337,7 +343,7 @@ void account_manager_destroy(void);
 LinphoneCore* configure_lc_from(LinphoneCoreVTable* v_table, const char* path, const char* file, void* user_data);
 void liblinphone_tester_enable_ipv6(bool_t enabled);
 void linphone_call_iframe_decoded_cb(LinphoneCall *call,void * user_data);
-void call_paused_resumed_base(bool_t multicast);
+void call_paused_resumed_base(bool_t multicast,bool_t with_losses);
 void simple_call_base(bool_t enable_multicast_recv_side);
 void call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enable_video,bool_t enable_relay,LinphoneFirewallPolicy policy,bool_t enable_tunnel, const char *marie_rc, const char *pauline_rc);
 void call_base(LinphoneMediaEncryption mode, bool_t enable_video,bool_t enable_relay,LinphoneFirewallPolicy policy,bool_t enable_tunnel);
@@ -368,11 +374,10 @@ LinphoneConferenceServer* linphone_conference_server_new(const char *rc_file, bo
 void linphone_conference_server_destroy(LinphoneConferenceServer *conf_srv);
 
 extern const char *liblinphone_tester_mire_id;
-	
+
 LinphoneAddress * linphone_core_manager_resolve(LinphoneCoreManager *mgr, const LinphoneAddress *source);
 FILE *sip_start(const char *senario, const char* dest_username, const char *passwd, LinphoneAddress* dest_addres);
 
-void wait_core(LinphoneCore *core) ;
 
 
 #ifdef __cplusplus

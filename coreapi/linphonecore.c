@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mediastreamer2/msvolume.h"
 #include "mediastreamer2/msequalizer.h"
 #include "mediastreamer2/dtmfgen.h"
+#include "mediastreamer2/msjpegwriter.h"
 
 #ifdef INET6
 #ifndef _WIN32
@@ -1591,6 +1592,8 @@ void linphone_core_reload_ms_plugins(LinphoneCore *lc, const char *path){
 }
 
 static void linphone_core_start(LinphoneCore * lc) {
+	linphone_core_add_friend_list(lc, NULL);
+
 	sip_setup_register_all(lc->factory);
 	sound_config_read(lc);
 	net_config_read(lc);
@@ -1607,6 +1610,7 @@ static void linphone_core_start(LinphoneCore * lc) {
 		linphone_tunnel_configure(lc->tunnel);
 	}
 #endif
+
 
 	linphone_core_notify_display_status(lc,_("Ready"));
 	lc->auto_net_state_mon=lc->sip_conf.auto_net_state_mon;
@@ -1722,7 +1726,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 		const MSList* friendLists = linphone_core_get_friends_lists(lc);
 		while( friendLists != NULL ){
 			LinphoneFriendList* list = friendLists->data;
-			ms_warning("notify presence for list %p", list);
+			ms_message("notify presence for list %p", list);
 			linphone_friend_list_notify_presence_received(list, lev, body);
 			friendLists = friendLists->next;
 		}
@@ -1745,9 +1749,7 @@ static void linphone_core_init(LinphoneCore * lc, const LinphoneCoreVTable *vtab
 	lc->config=lp_config_ref(config);
 	lc->data=userdata;
 	lc->ringstream_autorelease=TRUE;
-	
-	linphone_core_add_friend_list(lc, NULL);
-	
+
 	linphone_task_list_init(&lc->hooks);
 
 	internal_vtable->notify_received = linphone_core_internal_notify_received;
@@ -2857,7 +2859,7 @@ void linphone_core_iterate(LinphoneCore *lc){
 			if (elapsed>lc->sip_conf.inc_timeout){
 				LinphoneReason decline_reason;
 				ms_message("incoming call timeout (%i)",lc->sip_conf.inc_timeout);
-				decline_reason=lc->current_call ? LinphoneReasonBusy : LinphoneReasonDeclined;
+				decline_reason = (lc->current_call != call) ? LinphoneReasonBusy : LinphoneReasonDeclined;
 				call->log->status=LinphoneCallMissed;
 				sal_error_info_set(&call->non_op_error,SalReasonRequestTimeout,408,"Not answered",NULL);
 				linphone_core_decline_call(lc,call,decline_reason);
@@ -3302,7 +3304,7 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 		linphone_core_notify_display_warning(lc,_("Sorry, we have reached the maximum number of simultaneous calls"));
 		return NULL;
 	}
-	
+
 	cp = linphone_call_params_copy(params);
 
 	real_url=linphone_address_as_string(addr);
@@ -5433,6 +5435,43 @@ void linphone_core_migrate_logs_from_rc_to_db(LinphoneCore *lc) {
  * Video related functions                                                  *
  ******************************************************************************/
 
+#ifdef VIDEO_ENABLED
+static void snapshot_taken(void *userdata, struct _MSFilter *f, unsigned int id, void *arg) {
+	if (id == MS_JPEG_WRITER_SNAPSHOT_TAKEN) {
+		LinphoneCore *lc = (LinphoneCore *)userdata;
+		linphone_core_enable_video_preview(lc, FALSE);
+	}
+}
+#endif
+
+int linphone_core_take_preview_snapshot(LinphoneCore *lc, const char *file) {
+	LinphoneCall *call = linphone_core_get_current_call(lc);
+
+	if (!file) return -1;
+	if (call) {
+		return linphone_call_take_preview_snapshot(call, file);
+	} else {
+#ifdef VIDEO_ENABLED
+		if (lc->previewstream == NULL) {
+			MSVideoSize vsize=lc->video_conf.preview_vsize.width != 0 ? lc->video_conf.preview_vsize : lc->video_conf.vsize;
+			lc->previewstream = video_preview_new(lc->factory);
+			video_preview_set_size(lc->previewstream, vsize);
+			video_preview_set_display_filter_name(lc->previewstream, NULL);
+			video_preview_set_fps(lc->previewstream,linphone_core_get_preferred_framerate(lc));
+			video_preview_start(lc->previewstream, lc->video_conf.device);
+			lc->previewstream->ms.factory = lc->factory;
+			linphone_core_enable_video_preview(lc, TRUE);
+
+			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter, snapshot_taken, lc, TRUE);
+			ms_filter_call_method(lc->previewstream->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void*)file);
+		} else {
+			ms_filter_call_method(lc->previewstream->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void*)file);
+		}
+		return 0;
+#endif
+	}
+	return -1;
+}
 
 static void toggle_video_preview(LinphoneCore *lc, bool_t val){
 #ifdef VIDEO_ENABLED
@@ -6551,7 +6590,7 @@ static void codecs_config_uninit(LinphoneCore *lc)
 	ms_list_free_with_data(lc->codecs_conf.text_codecs, (void (*)(void*))payload_type_destroy);
 }
 
-void ui_config_uninit(LinphoneCore* lc)
+void friends_config_uninit(LinphoneCore* lc)
 {
 	ms_message("Destroying friends.");
 	lc->friends_lists = ms_list_free_with_data(lc->friends_lists, (void (*)(void*))_linphone_friend_list_release);
@@ -6593,21 +6632,21 @@ static void linphone_core_uninit(LinphoneCore *lc)
 		LinphoneCall *the_call = lc->calls->data;
 		linphone_core_terminate_call(lc,the_call);
 		linphone_core_iterate(lc);
-		ms_usleep(50000);
+		ms_usleep(10000);
 	}
 
 	for (elem = lc->friends_lists; elem != NULL; elem = ms_list_next(elem)) {
 		LinphoneFriendList *list = (LinphoneFriendList *)elem->data;
-		linphone_friend_list_close_subscriptions(list);
+		linphone_friend_list_enable_subscriptions(list,FALSE);
 		if (list->event)
 			wait_until_unsubscribe =  TRUE;
 	}
 	/*give a chance to unsubscribe, might be optimized*/
-	for (i=0; wait_until_unsubscribe && i<20; i++) {
+	for (i=0; wait_until_unsubscribe && i<50; i++) {
 		linphone_core_iterate(lc);
-		ms_usleep(50000);
+		ms_usleep(10000);
 	}
-	
+
 	lc->chatrooms = ms_list_free_with_data(lc->chatrooms, (MSIterateFunc)linphone_chat_room_release);
 
 	linphone_core_set_state(lc,LinphoneGlobalShutdown,"Shutting down");
@@ -6620,7 +6659,7 @@ static void linphone_core_uninit(LinphoneCore *lc)
 
 	lc->msevq=NULL;
 	/* save all config */
-	ui_config_uninit(lc);
+	friends_config_uninit(lc);
 	sip_config_uninit(lc);
 	net_config_uninit(lc);
 	rtp_config_uninit(lc);
@@ -6672,13 +6711,13 @@ static void linphone_core_uninit(LinphoneCore *lc)
 	if (lc->ringtoneplayer) {
 		linphone_ringtoneplayer_destroy(lc->ringtoneplayer);
 	}
-	
+
 	linphone_core_free_payload_types(lc);
 	if (lc->supported_formats) ms_free(lc->supported_formats);
 	linphone_core_message_storage_close(lc);
 	linphone_core_call_log_storage_close(lc);
 	linphone_core_friends_storage_close(lc);
-	
+
 	linphone_core_set_state(lc,LinphoneGlobalOff,"Off");
 	linphone_core_deactivate_log_serialization_if_needed();
 	ms_list_free_with_data(lc->vtable_refs,(void (*)(void *))v_table_reference_destroy);
@@ -6931,6 +6970,11 @@ LinphonePayloadType* linphone_core_find_payload_type(LinphoneCore* lc, const cha
 		result = find_payload_type_from_list(type, rate, 0, linphone_core_get_video_codecs(lc));
 		if (result) {
 			return result;
+		} else {
+			result = find_payload_type_from_list(type, rate, 0, linphone_core_get_text_codecs(lc));
+			if (result) {
+				return result;
+			}
 		}
 	}
 	/*not found*/
@@ -7181,7 +7225,7 @@ LinphoneCall* linphone_core_find_call_from_uri(const LinphoneCore *lc, const cha
 
 
 /**
- * Check if a call will need the sound resources in near future (typically an outgoing call that is awaiting 
+ * Check if a call will need the sound resources in near future (typically an outgoing call that is awaiting
  * response).
  * In liblinphone, it is not possible to have two independant calls using sound device or camera at the same time.
  * In order to prevent this situation, an application can use linphone_core_sound_resources_locked() to know whether

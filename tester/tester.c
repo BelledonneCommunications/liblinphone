@@ -83,7 +83,7 @@ void liblinphone_tester_enable_ipv6(bool_t enabled){
 
 LinphoneAddress * create_linphone_address(const char * domain) {
 	LinphoneAddress *addr = linphone_address_new(NULL);
-	BC_ASSERT_PTR_NOT_NULL_FATAL(addr);
+	if (!BC_ASSERT_PTR_NOT_NULL(addr)) return NULL;
 	linphone_address_set_username(addr,test_username);
 	BC_ASSERT_STRING_EQUAL(test_username,linphone_address_get_username(addr));
 	if (!domain) domain= test_route;
@@ -263,6 +263,10 @@ bool_t transport_supported(LinphoneTransportType transport) {
 	return supported;
 }
 
+#if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
+#pragma GCC diagnostic push
+#endif
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file) {
 	char *rc_path = NULL;
 	char *hellopath = bc_tester_res("sounds/hello8000.wav");
@@ -334,6 +338,9 @@ void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file) {
 
 	if (rc_path) ms_free(rc_path);
 }
+#if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
+#pragma GCC diagnostic pop
+#endif
 
 void linphone_core_manager_start(LinphoneCoreManager *mgr, int check_for_proxies) {
 	LinphoneProxyConfig* proxy;
@@ -385,7 +392,7 @@ LinphoneCoreManager* linphone_core_manager_new( const char* rc_file) {
 	return manager;
 }
 
-LinphoneCoreManager* linphone_core_manager_new2( const char* rc_file, int check_for_proxies) {
+LinphoneCoreManager* linphone_core_manager_new2(const char* rc_file, int check_for_proxies) {
 	LinphoneCoreManager *manager = ms_new0(LinphoneCoreManager, 1);
 	linphone_core_manager_init(manager, rc_file);
 	linphone_core_manager_start(manager, check_for_proxies);
@@ -473,9 +480,11 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
 	bc_tester_add_suite(&call_test_suite);
+	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);
 	bc_tester_add_suite(&presence_test_suite);
+	bc_tester_add_suite(&presence_server_test_suite);
 #ifdef UPNP
 	bc_tester_add_suite(&upnp_test_suite);
 #endif

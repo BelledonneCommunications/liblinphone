@@ -161,8 +161,10 @@ void linphone_core_register_offer_answer_providers(LinphoneCore *lc){
 static PayloadType * find_payload_type_best_match(MSFactory *factory, const MSList *local_payloads, const PayloadType *refpt,
 						  const MSList *remote_payloads, bool_t reading_response){
 	PayloadType *ret = NULL;
-	MSOfferAnswerContext *ctx = ms_factory_create_offer_answer_context(factory, refpt->mime_type);
-	if (ctx){
+	MSOfferAnswerContext *ctx = NULL;
+
+	// When a stream is inactive, refpt->mime_type might be null
+	if (refpt->mime_type && (ctx = ms_factory_create_offer_answer_context(factory, refpt->mime_type))) {
 		ms_message("Doing offer/answer processing with specific provider for codec [%s]", refpt->mime_type); 
 		ret = ms_offer_answer_context_match_payload(ctx, local_payloads, refpt, remote_payloads, reading_response);
 		ms_offer_answer_context_destroy(ctx);
@@ -196,9 +198,9 @@ static MSList *match_payloads(MSFactory *factory, const MSList *local, const MSL
 			if (p2->send_fmtp){
 				payload_type_append_send_fmtp(matched,p2->send_fmtp);
 			}
-			matched->flags|=PAYLOAD_TYPE_FLAG_CAN_RECV|PAYLOAD_TYPE_FLAG_CAN_SEND;
+			payload_type_set_flag(matched, PAYLOAD_TYPE_FLAG_CAN_RECV|PAYLOAD_TYPE_FLAG_CAN_SEND);
 			if (p2->flags & PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED) {
-				matched->flags |= PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED;
+				payload_type_set_flag(matched, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
 				/* Negotiation of AVPF features (keep common features) */
 				matched->avpf.features &= p2->avpf.features;
 				matched->avpf.rpsi_compatibility = p2->avpf.rpsi_compatibility;
@@ -206,6 +208,8 @@ static MSList *match_payloads(MSFactory *factory, const MSList *local, const MSL
 				if (p2->avpf.trr_interval < matched->avpf.trr_interval) {
 					matched->avpf.trr_interval = matched->avpf.trr_interval;
 				}
+			}else{
+				payload_type_unset_flag(matched, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
 			}
 			res=ms_list_append(res,matched);
 			/* we should use the remote numbering even when parsing a response */
@@ -221,6 +225,7 @@ static MSList *match_payloads(MSFactory *factory, const MSList *local, const MSL
 				*/
 				matched=payload_type_clone(matched);
 				payload_type_set_number(matched,local_number);
+				payload_type_set_flag(matched, PAYLOAD_TYPE_FLAG_CAN_RECV);
 				payload_type_set_flag(matched, PAYLOAD_TYPE_FROZEN_NUMBER);
 				res=ms_list_append(res,matched);
 			}
@@ -501,6 +506,7 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		result->bandwidth=local_cap->bandwidth;
 		result->ptime=local_cap->ptime;
 	}
+
 	if (sal_stream_description_has_srtp(result) == TRUE) {
 		/* select crypto algo */
 		memset(result->crypto, 0, sizeof(result->crypto));
@@ -510,6 +516,14 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		}
 
 	}
+
+	if (remote_offer->haveZrtpHash == 1) {
+		if (ms_zrtp_available()) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
+			strncpy((char *)(result->zrtphash), (char *)(local_cap->zrtphash), sizeof(local_cap->zrtphash));
+			result->haveZrtpHash =  1;
+		}
+	}
+
 	strcpy(result->ice_pwd, local_cap->ice_pwd);
 	strcpy(result->ice_ufrag, local_cap->ice_ufrag);
 	result->ice_mismatch = local_cap->ice_mismatch;

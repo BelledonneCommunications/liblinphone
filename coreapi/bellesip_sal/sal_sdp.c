@@ -126,7 +126,7 @@ static void add_rtcp_fb_attributes(belle_sdp_media_description_t *media_desc, co
 	uint16_t trr_int = 0;
 
 	general_trr_int = is_rtcp_fb_trr_int_the_same_for_all_payloads(stream, &trr_int);
-    if (general_trr_int == TRUE && trr_int != 0) {
+	if (general_trr_int == TRUE && trr_int != 0) {
 		add_rtcp_fb_trr_int_attribute(media_desc, -1, trr_int);
 	}
 	if (stream->rtcp_fb.generic_nack_enabled == TRUE) {
@@ -308,6 +308,11 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 		belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create("setup",role));
 		if (strcmp(role,"holdconn") != 0)
 			belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create("connection","new"));
+	}
+
+	/* insert zrtp-hash attribute if needed */
+	if (stream->haveZrtpHash == 1) {
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("zrtp-hash", (const char *)(stream->zrtphash)));
 	}
 
 	switch ( stream->dir ) {
@@ -897,6 +902,14 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 		sdp_parse_media_crypto_parameters(media_desc, stream);
 	}
 
+	/* Read zrtp-hash attribute */
+	if ((attribute=belle_sdp_media_description_get_attribute(media_desc,"zrtp-hash"))!=NULL) {
+		if ((value=belle_sdp_attribute_get_value(attribute))!=NULL) {
+			strncpy((char *)(stream->zrtphash), belle_sdp_attribute_get_value(attribute),sizeof(stream->zrtphash));
+			stream->haveZrtpHash = 1;
+		}
+	}
+
 	/* Get ICE candidate attributes if any */
 	sdp_parse_media_ice_parameters(media_desc, stream);
     
@@ -905,11 +918,10 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	/* Get RTCP-FB attributes if any */
 	if (sal_stream_description_has_avpf(stream)) {
 		enable_avpf_for_stream(stream);
+	}else if (has_avpf_attributes ){
+		enable_avpf_for_stream(stream);
+		stream->implicit_rtcp_fb = TRUE;
 	}
-    else if (has_avpf_attributes ){
-        
-        stream->implicit_rtcp_fb = TRUE;
-    }
 
 	/* Get RTCP-XR attributes if any */
 	stream->rtcp_xr = md->rtcp_xr;	// Use session parameters if no stream parameters are defined

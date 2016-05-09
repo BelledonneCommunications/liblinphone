@@ -452,7 +452,7 @@ jobject getProxy(JNIEnv *env, LinphoneProxyConfig *proxy, jobject core){
 			linphone_proxy_config_set_user_data(proxy,(void*)env->NewWeakGlobalRef(jobj));
 			linphone_proxy_config_ref(proxy);
 		}else{
-			//promote the weak ref to local ref
+ 			//promote the weak ref to local ref
 			jobj=env->NewLocalRef((jobject)up);
 			if (jobj == NULL){
 				//the weak ref was dead
@@ -496,11 +496,17 @@ jobject getChatMessage(JNIEnv *env, LinphoneChatMessage *msg){
 		void *up = linphone_chat_message_get_user_data(msg);
 
 		if (up == NULL) {
-			jobj = env->NewObject(ljb->chatMessageClass, ljb->chatMessageCtrId, (jlong)linphone_chat_message_ref(msg));
-			jobj = env->NewGlobalRef(jobj);
-			linphone_chat_message_set_user_data(msg,(void*)jobj);
+			jobj = env->NewObject(ljb->chatMessageClass, ljb->chatMessageCtrId, (jlong)msg);
+			void *userdata = (void*)env->NewWeakGlobalRef(jobj);
+			linphone_chat_message_set_user_data(msg, userdata);
+			linphone_chat_message_ref(msg);
 		} else {
-			jobj = (jobject)up;
+			jobj = env->NewLocalRef((jobject)up);
+			if (jobj == NULL) {
+				// takes implicit local ref
+				jobj = env->NewObject(ljb->chatMessageClass, ljb->chatMessageCtrId, (jlong)msg);
+				linphone_chat_message_set_user_data(msg, (void*)env->NewWeakGlobalRef(jobj));
+			}
 		}
 	}
 	return jobj;
@@ -523,7 +529,7 @@ jobject getChatRoom(JNIEnv *env, LinphoneChatRoom *room) {
 			jobj = env->NewLocalRef((jobject)up);
 			if (jobj == NULL) {
 				// takes implicit local ref
-				jobj=env->NewObject(ljb->chatRoomClass, ljb->chatRoomCtrId, (jlong)room);
+				jobj = env->NewObject(ljb->chatRoomClass, ljb->chatRoomCtrId, (jlong)room);
 				linphone_chat_room_set_user_data(room, (void*)env->NewWeakGlobalRef(jobj));
 			}
 		}
@@ -1643,6 +1649,14 @@ extern "C" jboolean Java_org_linphone_core_LinphoneCoreImpl_isInCall(JNIEnv* env
 
 	return (jboolean)linphone_core_in_call((LinphoneCore*)lc);
 }
+
+extern "C" jboolean Java_org_linphone_core_LinphoneFriendImpl_isPresenceReceived(JNIEnv* env
+		,jobject  thiz
+		,jlong lf) {
+
+	return (jboolean)linphone_friend_is_presence_received((LinphoneFriend*)lf);
+}
+
 extern "C" jboolean Java_org_linphone_core_LinphoneCoreImpl_isInComingInvitePending(JNIEnv* env
 		,jobject  thiz
 		,jlong lc) {
@@ -2053,6 +2067,10 @@ extern "C" void Java_org_linphone_core_LinphoneFriendListImpl_exportFriendsToVCa
 	const char* path = env->GetStringUTFChars(jpath, NULL);
 	linphone_friend_list_export_friends_as_vcard4_file((LinphoneFriendList*)list, path);
 	env->ReleaseStringUTFChars(jpath, path);
+}
+
+extern "C" void Java_org_linphone_core_LinphoneFriendListImpl_enableSubscriptions(JNIEnv* env, jobject thiz, jlong list, jboolean enable) {
+	linphone_friend_list_enable_subscriptions((LinphoneFriendList*)list, enable);
 }
 
 extern "C" void Java_org_linphone_core_LinphoneCoreImpl_addFriendList(JNIEnv*  env
@@ -3460,6 +3478,7 @@ extern "C" jlongArray Java_org_linphone_core_LinphoneFriendImpl_getAddresses(JNI
 																		,jobject  thiz
 																		,jlong ptr) {
 	MSList *addresses = linphone_friend_get_addresses((LinphoneFriend*)ptr);
+	MSList *list = addresses;
 	int size = ms_list_size(addresses);
 	jlongArray jaddresses = env->NewLongArray(size);
 	jlong *jInternalArray = env->GetLongArrayElements(jaddresses, NULL);
@@ -3467,7 +3486,7 @@ extern "C" jlongArray Java_org_linphone_core_LinphoneFriendImpl_getAddresses(JNI
 		jInternalArray[i] = (unsigned long) (addresses->data);
 		addresses = ms_list_next(addresses);
 	}
-	ms_list_free(addresses);
+	ms_list_free(list);
 	env->ReleaseLongArrayElements(jaddresses, jInternalArray, 0);
 	return jaddresses;
 }
@@ -3490,6 +3509,7 @@ extern "C" jobjectArray Java_org_linphone_core_LinphoneFriendImpl_getPhoneNumber
 																		,jobject  thiz
 																		,jlong ptr) {
 	MSList *phone_numbers = linphone_friend_get_phone_numbers((LinphoneFriend*)ptr);
+	MSList *list = phone_numbers;
 	int size = ms_list_size(phone_numbers);
 	jobjectArray jphonenumbers = env->NewObjectArray(size, env->FindClass("java/lang/String"), env->NewStringUTF(""));
 	for (int i = 0; i < size; i++) {
@@ -3497,7 +3517,7 @@ extern "C" jobjectArray Java_org_linphone_core_LinphoneFriendImpl_getPhoneNumber
 		env->SetObjectArrayElement(jphonenumbers, i, env->NewStringUTF(phone));
 		phone_numbers = ms_list_next(phone_numbers);
 	}
-	ms_list_free(phone_numbers);
+	ms_list_free(list);
 	return jphonenumbers;
 }
 
@@ -3635,12 +3655,18 @@ extern "C" void  Java_org_linphone_core_LinphoneFriendImpl_finalize(JNIEnv*  env
 	linphone_friend_unref(lfriend);
 }
 
-extern "C" void  Java_org_linphone_core_LinphoneFriendListImpl_finalize(JNIEnv*  env
+extern "C" void Java_org_linphone_core_LinphoneFriendListImpl_finalize(JNIEnv*  env
 																		,jobject  thiz
 																		,jlong ptr) {
 	LinphoneFriendList *lfriendList=(LinphoneFriendList*)ptr;
 	linphone_friend_list_set_user_data(lfriendList,NULL);
 	linphone_friend_list_unref(lfriendList);
+}
+
+extern "C" void Java_org_linphone_core_LinphoneFriendImpl_setPresenceModel(JNIEnv *env, jobject jobj, jlong ptr, jlong modelPtr) {
+	LinphoneFriend *lf = (LinphoneFriend *)ptr;
+	LinphonePresenceModel *model = (LinphonePresenceModel *)modelPtr;
+	linphone_friend_set_presence_model(lf, model);
 }
 
 /*
@@ -3686,26 +3712,28 @@ extern "C" jobject Java_org_linphone_core_LinphoneCoreImpl_getFriendByAddress(JN
 	}
 }
 
-extern "C" jlongArray _LinphoneChatRoomImpl_getHistory(JNIEnv*  env
-																		,jobject  thiz
-																		,jlong ptr
-																		,MSList* history) {
+extern "C" jobjectArray _LinphoneChatRoomImpl_getHistory(JNIEnv* env, jobject thiz, jlong ptr, MSList* history) {
+	LinphoneChatRoom *room = (LinphoneChatRoom *)ptr;
+	LinphoneCore *lc = linphone_chat_room_get_core(room);
+	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_core_get_user_data(lc);
+	MSList *list = history;
 	int historySize = ms_list_size(history);
-	jlongArray jHistory = env->NewLongArray(historySize);
-	jlong *jInternalArray = env->GetLongArrayElements(jHistory, NULL);
-
+	jobjectArray jHistory = env->NewObjectArray(historySize, ljb->chatMessageClass, NULL);
+	
 	for (int i = 0; i < historySize; i++) {
-		jInternalArray[i] = (unsigned long) (history->data);
+		LinphoneChatMessage *msg = (LinphoneChatMessage *)history->data;
+		jobject jmsg = getChatMessage(env, msg);
+		if (jmsg != NULL) {
+			env->SetObjectArrayElement(jHistory, i, jmsg);
+			env->DeleteLocalRef(jmsg);
+		}
 		history = history->next;
 	}
 
-	ms_list_free(history);
-
-	env->ReleaseLongArrayElements(jHistory, jInternalArray, 0);
-
+	ms_list_free(list);
 	return jHistory;
 }
-extern "C" jlongArray Java_org_linphone_core_LinphoneChatRoomImpl_getHistoryRange(JNIEnv*  env
+extern "C" jobjectArray Java_org_linphone_core_LinphoneChatRoomImpl_getHistoryRange(JNIEnv*  env
 																		,jobject  thiz
 																		,jlong ptr
 																		,jint start
@@ -3713,7 +3741,7 @@ extern "C" jlongArray Java_org_linphone_core_LinphoneChatRoomImpl_getHistoryRang
 	MSList* history = linphone_chat_room_get_history_range((LinphoneChatRoom*)ptr, start, end);
 	return _LinphoneChatRoomImpl_getHistory(env, thiz, ptr, history);
 }
-extern "C" jlongArray Java_org_linphone_core_LinphoneChatRoomImpl_getHistory(JNIEnv*  env
+extern "C" jobjectArray Java_org_linphone_core_LinphoneChatRoomImpl_getHistory(JNIEnv*  env
 																		,jobject  thiz
 																		,jlong ptr
 																		,jint limit) {

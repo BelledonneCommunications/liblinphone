@@ -270,6 +270,8 @@ typedef struct SalStreamDescription{
 	bool_t pad[1];
 	char dtls_fingerprint[256];
 	SalDtlsRole dtls_role;
+	uint8_t zrtphash[128];
+	uint8_t haveZrtpHash; /**< flag for zrtp hash presence */
 	int ttl; /*for multicast -1 to disable*/
 	SalMulticastRole multicast_role;
 	SalStreamDir screensharing_role;//TODO
@@ -339,6 +341,7 @@ bool_t sal_media_description_has_avpf(const SalMediaDescription *md);
 bool_t sal_media_description_has_implicit_avpf(const SalMediaDescription *md);
 bool_t sal_media_description_has_srtp(const SalMediaDescription *md);
 bool_t sal_media_description_has_dtls(const SalMediaDescription *md);
+bool_t sal_media_description_has_zrtp(const SalMediaDescription *md);
 int sal_media_description_get_nb_active_streams(const SalMediaDescription *md);
 
 struct SalOpBase;
@@ -699,7 +702,7 @@ bool_t sal_op_is_ipv6(SalOp *op);
 bool_t sal_op_is_idle(SalOp *op);
 
 const SalErrorInfo *sal_error_info_none(void);
-const SalErrorInfo *sal_op_get_error_info(const SalOp *op);
+LINPHONE_PUBLIC const SalErrorInfo *sal_op_get_error_info(const SalOp *op);
 void sal_error_info_reset(SalErrorInfo *ei);
 void sal_error_info_set(SalErrorInfo *ei, SalReason reason, int code, const char *status_string, const char *warning);
 

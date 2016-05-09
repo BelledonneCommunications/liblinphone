@@ -22,6 +22,7 @@
 
 set(SOURCE_FILES
 	accountmanager.c
+	audio_bypass_tester.c
 	call_tester.c
 	complex_sip_call_tester.c
 	dtmf_tester.c
@@ -35,6 +36,7 @@ set(SOURCE_FILES
 	offeranswer_tester.c
 	player_tester.c
 	presence_tester.c
+	presence_server_tester.c
 	proxy_config_tester.c
 	quality_reporting_tester.c
 	register_tester.c

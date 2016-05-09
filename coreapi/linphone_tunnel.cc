@@ -198,6 +198,7 @@ static void linphone_tunnel_refresh_config(LinphoneTunnel *tunnel) {
 	while(old_list != NULL) {
 		LinphoneTunnelConfig *tunnel_config = (LinphoneTunnelConfig *)old_list->data;
 		linphone_tunnel_add_server_intern(tunnel, tunnel_config);
+		linphone_tunnel_config_unref(tunnel_config);
 		old_list = old_list->next;
 	}
 }
@@ -332,7 +333,7 @@ bool_t linphone_tunnel_sip_enabled(const LinphoneTunnel *tunnel) {
 
 void linphone_tunnel_verify_server_certificate(LinphoneTunnel *tunnel, bool_t enable) {
 	bcTunnel(tunnel)->verifyServerCertificate(enable);
-	lp_config_set_int(config(tunnel), "tunnel", "verifyCert", (enable ? TRUE : FALSE));
+	lp_config_set_int(config(tunnel), "tunnel", "verify_cert", (enable ? TRUE : FALSE));
 }
 
 bool_t linphone_tunnel_verify_server_certificate_enabled(const LinphoneTunnel *tunnel) {
@@ -351,7 +352,7 @@ static void my_ortp_logv(const char *domain, OrtpLogLevel level, const char *fmt
 void linphone_tunnel_configure(LinphoneTunnel *tunnel){
 	LinphoneTunnelMode mode = linphone_tunnel_mode_from_string(lp_config_get_string(config(tunnel), "tunnel", "mode", NULL));
 	bool_t tunnelizeSIPPackets = (bool_t)lp_config_get_int(config(tunnel), "tunnel", "sip", TRUE);
-	bool_t tunnelVerifyServerCertificate = (bool_t)lp_config_get_int(config(tunnel), "tunnel", "verifyCert", FALSE);
+	bool_t tunnelVerifyServerCertificate = (bool_t)lp_config_get_int(config(tunnel), "tunnel", "verify_cert", FALSE);
 	linphone_tunnel_enable_logs_with_handler(tunnel,TRUE,my_ortp_logv);
 	linphone_tunnel_load_config(tunnel);
 	linphone_tunnel_enable_sip(tunnel, tunnelizeSIPPackets);
@@ -361,6 +362,7 @@ void linphone_tunnel_configure(LinphoneTunnel *tunnel){
 
 /* Deprecated functions */
 void linphone_tunnel_enable(LinphoneTunnel *tunnel, bool_t enabled) {
+	ms_warning("linphone_tunnel_enable is deprecated - please use linphone_tunnel_set_mode instead.");
 	if(enabled) linphone_tunnel_set_mode(tunnel, LinphoneTunnelModeEnable);
 	else linphone_tunnel_set_mode(tunnel, LinphoneTunnelModeDisable);
 }
@@ -375,4 +377,8 @@ void linphone_tunnel_auto_detect(LinphoneTunnel *tunnel) {
 
 bool_t linphone_tunnel_auto_detect_enabled(LinphoneTunnel *tunnel) {
 	return linphone_tunnel_get_mode(tunnel) == LinphoneTunnelModeAuto;
+}
+
+void linphone_tunnel_simulate_udp_loss(LinphoneTunnel *tunnel, bool_t enabled) {
+	bcTunnel(tunnel)->simulateUdpLoss(enabled);
 }

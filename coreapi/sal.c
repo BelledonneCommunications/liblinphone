@@ -61,6 +61,7 @@ SalMediaDescription *sal_media_description_new(){
 		md->streams[i].dir=SalStreamInactive;
 		md->streams[i].rtp_port = 0;
 		md->streams[i].rtcp_port = 0;
+		md->streams[i].haveZrtpHash = 0;
 	}
 	return md;
 }
@@ -222,10 +223,7 @@ bool_t sal_stream_description_has_avpf(const SalStreamDescription *sd) {
 }
 
 bool_t sal_stream_description_has_implicit_avpf(const SalStreamDescription *sd){
-    if (sd->implicit_rtcp_fb){
-        return TRUE;
-    }
-    return FALSE;
+	return sd->implicit_rtcp_fb;
 }
 /*these are switch case, so that when a new proto is added we can't forget to modify this function*/
 bool_t sal_stream_description_has_srtp(const SalStreamDescription *sd) {
@@ -257,6 +255,11 @@ bool_t sal_stream_description_has_dtls(const SalStreamDescription *sd) {
 		case SalProtoOther:
 			return FALSE;
 	}
+	return FALSE;
+}
+
+bool_t sal_stream_description_has_zrtp(const SalStreamDescription *sd) {
+	if (sd->haveZrtpHash==1) return TRUE;
 	return FALSE;
 }
 
@@ -296,6 +299,16 @@ bool_t sal_media_description_has_dtls(const SalMediaDescription *md) {
 	for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
 		if (!sal_stream_description_active(&md->streams[i])) continue;
 		if (sal_stream_description_has_dtls(&md->streams[i]) != TRUE) return FALSE;
+	}
+	return TRUE;
+}
+
+bool_t sal_media_description_has_zrtp(const SalMediaDescription *md) {
+	int i;
+	if (md->nb_streams == 0) return FALSE;
+	for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
+		if (!sal_stream_description_active(&md->streams[i])) continue;
+		if (sal_stream_description_has_zrtp(&md->streams[i]) != TRUE) return FALSE;
 	}
 	return TRUE;
 }

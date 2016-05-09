@@ -848,6 +848,7 @@ LINPHONE_PUBLIC bool_t linphone_call_media_in_progress(LinphoneCall *call);
  * @param call The LinphoneCall object
  * @param dtmf The dtmf name specified as a char, such as '0', '#' etc...
  * @return 0 if successful, -1 on error.
+ * @ingroup call_control
 **/
 LINPHONE_PUBLIC	int linphone_call_send_dtmf(LinphoneCall *lc,char dtmf);
 
@@ -859,6 +860,7 @@ LINPHONE_PUBLIC	int linphone_call_send_dtmf(LinphoneCall *lc,char dtmf);
  * @param call The LinphoneCall object
  * @param dtmfs A dtmf sequence such as '123#123123'
  * @return -2 if there is already a DTMF sequence, -1 if call is not ready, 0 otherwise.
+ * @ingroup call_control
 **/
 LINPHONE_PUBLIC	int linphone_call_send_dtmfs(LinphoneCall *call,char *dtmfs);
 
@@ -870,6 +872,7 @@ LINPHONE_PUBLIC	int linphone_call_send_dtmfs(LinphoneCall *call,char *dtmfs);
  * function will be automatically called if call state change to anything but LinphoneCallStreamsRunning.
  *
  * @param call The LinphoneCall object
+ * @ingroup call_control
 **/
 LINPHONE_PUBLIC	void linphone_call_cancel_dtmfs(LinphoneCall *call);
 
@@ -3621,6 +3624,15 @@ LINPHONE_PUBLIC void linphone_core_set_preferred_framerate(LinphoneCore *lc, flo
 **/
 LINPHONE_PUBLIC float linphone_core_get_preferred_framerate(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_enable_video_preview(LinphoneCore *lc, bool_t val);
+/**
+ * Take a photo of currently from capture device and write it into a jpeg file.
+ * Note that the snapshot is asynchronous, an application shall not assume that the file is created when the function returns.
+ * @ingroup misc
+ * @param lc the linphone core
+ * @param file a path where to write the jpeg content.
+ * @return 0 if successfull, -1 otherwise (typically if jpeg format is not supported).
+**/
+LINPHONE_PUBLIC int linphone_core_take_preview_snapshot(LinphoneCore *lc, const char *file);
 LINPHONE_PUBLIC bool_t linphone_core_video_preview_enabled(const LinphoneCore *lc);
 
 LINPHONE_PUBLIC void linphone_core_enable_self_view(LinphoneCore *lc, bool_t val);

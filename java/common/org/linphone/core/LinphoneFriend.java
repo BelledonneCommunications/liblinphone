@@ -102,6 +102,12 @@ public interface LinphoneFriend {
 	 * @return true is subscription is activated for this friend.
 	 */
 	boolean isSubscribesEnabled();
+
+	/**
+	 * get presence received status if already setted
+	 * @return true if presence is received from this friend.
+	 */
+	boolean isPresenceReceived();
 	/**
 	 * @brief Get the status of a friend
 	 * @return OnlineStatus
@@ -113,6 +119,11 @@ public interface LinphoneFriend {
 	 * @return A #PresenceModel object, or null if the friend do not have presence information (in which case he is considered offline)
 	 */
 	PresenceModel getPresenceModel();
+	/**
+	 * @brief Set the presence information of a friend
+	 * @param presenceModel A #PresenceModel object
+	 */
+	void setPresenceModel(PresenceModel presenceModel);
 	/**
 	 * Starts editing a friend configuration.
 	 *<br> Because friend configuration must be consistent, applications MUST call {@link #edit()} before doing any attempts to modify friend configuration (such as address or subscription policy and so on). 
