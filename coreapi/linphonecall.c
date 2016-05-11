@@ -420,48 +420,41 @@ static MSList *make_codec_list(LinphoneCore *lc, CodecConstraints * hints, SalSt
 	const MSList *it;
 	int nb = 0;
 
-	//TODO Change
-	if(stype != SalApplication) {
-		for(it=codecs;it!=NULL;it=it->next){
-			PayloadType *pt=(PayloadType*)it->data;
-			int num;
+	for (it = codecs; it != NULL; it = it->next) {
+		PayloadType *pt = (PayloadType *)it->data;
+		int num;
 
-			if (!payload_type_enabled(pt)) {
-				continue;
-			}
-			if (hints->bandwidth_limit>0 && !linphone_core_is_payload_type_usable_for_bandwidth(lc,pt,hints->bandwidth_limit)){
-				ms_message("Codec %s/%i eliminated because of audio bandwidth constraint of %i kbit/s",
-						pt->mime_type,pt->clock_rate,hints->bandwidth_limit);
-				continue;
-			}
-			if (!linphone_core_check_payload_type_usability(lc,pt)){
-				continue;
-			}
-			pt=payload_type_clone(pt);
-
-			/*look for a previously assigned number for this codec*/
-			num=find_payload_type_number(hints->previously_used, pt);
-			if (num!=-1){
-				payload_type_set_number(pt,num);
-				payload_type_set_flag(pt, PAYLOAD_TYPE_FROZEN_NUMBER);
-			}
-
-			l=ms_list_append(l, pt);
-			nb++;
-			if ((hints->max_codecs > 0) && (nb >= hints->max_codecs)) break;
+		if (!payload_type_enabled(pt)) {
+			continue;
 		}
-		if (stype==SalAudio){
-			MSList *specials=create_special_payload_types(lc,l);
-			l=ms_list_concat(l,specials);
+		if (hints->bandwidth_limit > 0 &&
+			!linphone_core_is_payload_type_usable_for_bandwidth(lc, pt, hints->bandwidth_limit)) {
+			ms_message("Codec %s/%i eliminated because of audio bandwidth constraint of %i kbit/s", pt->mime_type,
+					   pt->clock_rate, hints->bandwidth_limit);
+			continue;
 		}
-		linphone_core_assign_payload_type_numbers(lc, l);
-	} else {
-		PayloadType *pt=payload_type_new();
-		payload_type_set_number(pt,1);
-		payload_type_set_flag(pt, PAYLOAD_TYPE_FROZEN_NUMBER);
-		payload_type_set_enable(pt, TRUE);
-		l=ms_list_append(l, pt);
+		if (!linphone_core_check_payload_type_usability(lc, pt)) {
+			continue;
+		}
+		pt = payload_type_clone(pt);
+
+		/*look for a previously assigned number for this codec*/
+		num = find_payload_type_number(hints->previously_used, pt);
+		if (num != -1) {
+			payload_type_set_number(pt, num);
+			payload_type_set_flag(pt, PAYLOAD_TYPE_FROZEN_NUMBER);
+		}
+
+		l = ms_list_append(l, pt);
+		nb++;
+		if ((hints->max_codecs > 0) && (nb >= hints->max_codecs))
+			break;
 	}
+	if (stype == SalAudio) {
+		MSList *specials = create_special_payload_types(lc, l);
+		l = ms_list_concat(l, specials);
+	}
+	linphone_core_assign_payload_type_numbers(lc, l);
 	return l;
 }
 
@@ -886,18 +879,26 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 	if (params->screensharing_enabled) {
 		md->streams[call->main_screensharing_stream_index].screensharing = TRUE;
 
-		strncpy(md->streams[call->main_screensharing_stream_index].rtp_addr,linphone_call_get_public_ip_for_stream(call,call->main_screensharing_stream_index),sizeof(md->streams[call->main_text_stream_index].rtp_addr));
-		strncpy(md->streams[call->main_screensharing_stream_index].rtcp_addr,linphone_call_get_public_ip_for_stream(call,call->main_screensharing_stream_index),sizeof(md->streams[call->main_text_stream_index].rtcp_addr));
- 
-		codec_hints.previously_used=NULL;
-		codec_hints.max_codecs=1;
-		l=make_codec_list(lc, &codec_hints, SalVideo, lc->codecs_conf.video_codecs);
-		
-		md->streams[call->main_screensharing_stream_index].rtp_port=call->media_ports[call->main_screensharing_stream_index].rtp_port;
-		md->streams[call->main_screensharing_stream_index].rtcp_port=call->media_ports[call->main_screensharing_stream_index].rtcp_port;
-		md->streams[call->main_screensharing_stream_index].screensharing_role=linphone_call_linphonemedia_to_salmedia(params->screensharing_dir);
-		md->streams[call->main_screensharing_stream_index].payloads=l;
-		
+		strncpy(md->streams[call->main_screensharing_stream_index].rtp_addr,
+				linphone_call_get_public_ip_for_stream(call, call->main_screensharing_stream_index),
+				sizeof(md->streams[call->main_text_stream_index].rtp_addr));
+		strncpy(md->streams[call->main_screensharing_stream_index].rtcp_addr,
+				linphone_call_get_public_ip_for_stream(call, call->main_screensharing_stream_index),
+				sizeof(md->streams[call->main_text_stream_index].rtcp_addr));
+
+		codec_hints.bandwidth_limit = 0;
+		codec_hints.max_codecs = 1;
+		codec_hints.previously_used = NULL;
+		l = make_codec_list(lc, &codec_hints, SalAudio, lc->codecs_conf.audio_codecs);
+
+		md->streams[call->main_screensharing_stream_index].rtp_port =
+			call->media_ports[call->main_screensharing_stream_index].rtp_port;
+		md->streams[call->main_screensharing_stream_index].rtcp_port =
+			call->media_ports[call->main_screensharing_stream_index].rtcp_port;
+		md->streams[call->main_screensharing_stream_index].screensharing_role =
+			linphone_call_linphonemedia_to_salmedia(params->screensharing_dir);
+		md->streams[call->main_screensharing_stream_index].payloads = l;
+
 		if (call->main_screensharing_stream_index > max_index)
 			max_index = call->main_screensharing_stream_index;
 	} else {
