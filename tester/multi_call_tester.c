@@ -209,20 +209,18 @@ static void incoming_call_accepted_when_outgoing_call_in_state(LinphoneCallState
 		return;
 	}
 
-	BC_ASSERT_TRUE(call_with_caller_params(laure,marie,laure_params));
+	BC_ASSERT_TRUE(call_with_caller_params(laure, marie, laure_params));
 
-
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
-
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 10000));
 
 	linphone_core_terminate_all_calls(marie->lc);
-	
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,2,10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,1,10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,2,10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallReleased,1,10000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallEnd, 2, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallEnd, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallReleased, 2, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallReleased, 1, 10000));
 
 	linphone_call_params_unref(laure_params);
 	linphone_call_params_unref(marie_params);
@@ -288,12 +286,18 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 			BC_ASSERT_EQUAL(linphone_core_terminate_conference(marie->lc), -1, int, "%d");
 			linphone_core_terminate_call(marie->lc, marie_call_pauline);
 			linphone_core_terminate_call(marie->lc, marie_call_laure);
-			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallEnd, initial_marie_stat.number_of_LinphoneCallEnd+2, 10000));
-			BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, initial_pauline_stat.number_of_LinphoneCallEnd+1, 5000));
-			BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallEnd, initial_laure_stat.number_of_LinphoneCallEnd+1, 5000));
-			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallReleased, initial_marie_stat.number_of_LinphoneCallReleased+3, 10000));
-			BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased, initial_pauline_stat.number_of_LinphoneCallReleased+1, 5000));
-			BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallReleased, initial_laure_stat.number_of_LinphoneCallReleased+1, 5000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallEnd,
+										 initial_marie_stat.number_of_LinphoneCallEnd + 2, 10000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd,
+										 initial_pauline_stat.number_of_LinphoneCallEnd + 1, 5000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallEnd,
+										 initial_laure_stat.number_of_LinphoneCallEnd + 1, 5000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallReleased,
+										 initial_marie_stat.number_of_LinphoneCallReleased + 3, 10000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased,
+										 initial_pauline_stat.number_of_LinphoneCallReleased + 1, 5000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallReleased,
+										 initial_laure_stat.number_of_LinphoneCallReleased + 1, 5000));
 			goto end;
 		}
 	}
@@ -796,35 +800,37 @@ static void eject_from_4_participants_conference(void) {
 
 	linphone_core_remove_from_conference(marie->lc, marie_call_pauline);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallPausedByRemote,1,10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,initial_laure_stat.number_of_LinphoneCallStreamsRunning+1,10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneCallStreamsRunning,initial_michelle_stat.number_of_LinphoneCallStreamsRunning+1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallStreamsRunning,
+								 initial_laure_stat.number_of_LinphoneCallStreamsRunning + 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &michelle->stat.number_of_LinphoneCallStreamsRunning,
+								 initial_michelle_stat.number_of_LinphoneCallStreamsRunning + 1, 10000));
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,5,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 5, 10000));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(marie->lc));
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
-	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc), 3, int, "%d");
 	BC_ASSERT_EQUAL(ms_list_size(linphone_core_get_calls(marie->lc)), 3, int, "%d");
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(michelle->lc));
-	
+
 	linphone_core_terminate_all_calls(laure->lc);
 	linphone_core_terminate_all_calls(pauline->lc);
 	linphone_core_terminate_all_calls(michelle->lc);
-	
+
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallEnd, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &michelle->stat.number_of_LinphoneCallEnd, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallEnd, 3, 10000));
-	
+
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
-	
+
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallReleased, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &michelle->stat.number_of_LinphoneCallReleased, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallEnd, 3, 10000));
-	
+
 end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -832,7 +838,6 @@ end:
 	linphone_core_manager_destroy(michelle);
 	ms_list_free(lcs);
 }
-
 
 void simple_remote_conference(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
@@ -932,9 +937,12 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Call waiting indication with privacy", call_waiting_indication_with_privacy),
 	TEST_NO_TAG("Second call rejected if first one in progress", second_call_rejected_if_first_one_in_progress),
 	TEST_NO_TAG("Second call allowed if not using audio", second_call_allowed_if_not_using_audio),
-	TEST_NO_TAG("Incoming call accepted when outgoing call in progress", incoming_call_accepted_when_outgoing_call_in_progress),
-	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing", incoming_call_accepted_when_outgoing_call_in_outgoing_ringing),
-	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing early media", incoming_call_accepted_when_outgoing_call_in_outgoing_ringing_early_media),
+	TEST_NO_TAG("Incoming call accepted when outgoing call in progress",
+				incoming_call_accepted_when_outgoing_call_in_progress),
+	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing",
+				incoming_call_accepted_when_outgoing_call_in_outgoing_ringing),
+	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing early media",
+				incoming_call_accepted_when_outgoing_call_in_outgoing_ringing_early_media),
 	TEST_NO_TAG("Simple conference", simple_conference),
 	TEST_ONE_TAG("Simple conference with ICE", simple_conference_with_ice, "ICE"),
 	TEST_ONE_TAG("Simple ZRTP conference with ICE", simple_zrtp_conference_with_ice, "ICE"),

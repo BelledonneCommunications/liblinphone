@@ -65,12 +65,12 @@ void TunnelManager::reconnect(){
 		mTunnelClient->reconnect();
 }
 
-static void sCloseRtpTransport(RtpTransport *t){
-	TunnelSocket *s=(TunnelSocket*)t->data;
-	TunnelManager *manager=(TunnelManager*)s->getUserPointer();
+static void sCloseRtpTransport(RtpTransport *t) {
+	TunnelSocket *s = (TunnelSocket *)t->data;
+	TunnelManager *manager = (TunnelManager *)s->getUserPointer();
 	manager->closeRtpTransport(t, s);
 }
-void TunnelManager::closeRtpTransport(RtpTransport *t, TunnelSocket *s){
+void TunnelManager::closeRtpTransport(RtpTransport *t, TunnelSocket *s) {
 	mTunnelClient->closeSocket(s);
 }
 

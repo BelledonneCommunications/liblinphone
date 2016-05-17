@@ -157,65 +157,61 @@ static void video_window_set_fullscreen(GtkWidget *w, gboolean val){
 #define GDK_KEY_f GDK_f
 #endif
 
-static void on_video_window_key_press(GtkWidget *w, GdkEvent *ev, gpointer up){
+static void on_video_window_key_press(GtkWidget *w, GdkEvent *ev, gpointer up) {
 	g_message("Key press event");
-	switch(ev->key.keyval){
-		case GDK_KEY_f:
-		case GDK_KEY_F:
-			video_window_set_fullscreen(w,TRUE);
+	switch (ev->key.keyval) {
+	case GDK_KEY_f:
+	case GDK_KEY_F:
+		video_window_set_fullscreen(w, TRUE);
 		break;
-		case GDK_KEY_Escape:
-			video_window_set_fullscreen(w,FALSE);
+	case GDK_KEY_Escape:
+		video_window_set_fullscreen(w, FALSE);
 		break;
 	}
 }
 
-static void on_controls_response(GtkWidget *dialog, int response_id, GtkWidget *video_window){
+static void on_controls_response(GtkWidget *dialog, int response_id, GtkWidget *video_window) {
 
 	gtk_widget_destroy(dialog);
-	switch(response_id){
-		case GTK_RESPONSE_YES:
-			video_window_set_fullscreen(video_window,TRUE);
+	switch (response_id) {
+	case GTK_RESPONSE_YES:
+		video_window_set_fullscreen(video_window, TRUE);
 		break;
-		case GTK_RESPONSE_NO:
-			video_window_set_fullscreen(video_window,FALSE);
+	case GTK_RESPONSE_NO:
+		video_window_set_fullscreen(video_window, FALSE);
 		break;
-		case GTK_RESPONSE_REJECT:
-		{
-			LinphoneCall *call=(LinphoneCall*)g_object_get_data(G_OBJECT(video_window),"call");
-			linphone_core_terminate_call(linphone_gtk_get_core(),call);
-		}
-		break;
-		case GTK_RESPONSE_APPLY:
-		{
-			LinphoneCall *call=(LinphoneCall*)g_object_get_data(G_OBJECT(video_window),"call");
-			char *path = (char *)linphone_gtk_get_snapshot_path();
-			linphone_call_take_video_snapshot(call, path);
-		}
+	case GTK_RESPONSE_REJECT: {
+		LinphoneCall *call = (LinphoneCall *)g_object_get_data(G_OBJECT(video_window), "call");
+		linphone_core_terminate_call(linphone_gtk_get_core(), call);
+	} break;
+	case GTK_RESPONSE_APPLY: {
+		LinphoneCall *call = (LinphoneCall *)g_object_get_data(G_OBJECT(video_window), "call");
+		char *path = (char *)linphone_gtk_get_snapshot_path();
+		linphone_call_take_video_snapshot(call, path);
 	}
-
+	}
 }
 
-static void on_controls_destroy(GtkWidget *w){
-	GtkWidget *video_window=(GtkWidget*)g_object_get_data(G_OBJECT(w),"video_window");
-	gint timeout=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w),"timeout"));
-	if (timeout!=0){
+static void on_controls_destroy(GtkWidget *w) {
+	GtkWidget *video_window = (GtkWidget *)g_object_get_data(G_OBJECT(w), "video_window");
+	gint timeout = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "timeout"));
+	if (timeout != 0) {
 		g_source_remove(timeout);
-		g_object_set_data(G_OBJECT(w),"timeout",GINT_TO_POINTER(0));
+		g_object_set_data(G_OBJECT(w), "timeout", GINT_TO_POINTER(0));
 	}
-	g_object_set_data(G_OBJECT(video_window),"controls",NULL);
+	g_object_set_data(G_OBJECT(video_window), "controls", NULL);
 }
 
-static gboolean _set_video_controls_position(GtkWidget *video_window){
-	GtkWidget *w=(GtkWidget*)g_object_get_data(G_OBJECT(video_window),"controls");
-	if (w){
-		gint vw,vh;
-		gint cw,ch;
-		gint x,y;
-		gtk_window_get_size(GTK_WINDOW(video_window),&vw,&vh);
-		gtk_window_get_position(GTK_WINDOW(video_window),&x,&y);
-		gtk_window_get_size(GTK_WINDOW(w),&cw,&ch);
-		gtk_window_move(GTK_WINDOW(w),x+vw/2 - cw/2, y + vh - ch);
+static gboolean _set_video_controls_position(GtkWidget *video_window) {
+	GtkWidget *w = (GtkWidget *)g_object_get_data(G_OBJECT(video_window), "controls");
+	if (w) {
+		gint vw, vh;
+		gint cw, ch;
+		gint x, y;
+		gtk_window_get_size(GTK_WINDOW(video_window), &vw, &vh);
+		gtk_window_get_position(GTK_WINDOW(video_window), &x, &y);
+		gtk_window_get_size(GTK_WINDOW(w), &cw, &ch);
+		gtk_window_move(GTK_WINDOW(w), x + vw / 2 - cw / 2, y + vh - ch);
 	}
 	return FALSE;
 }
@@ -232,41 +228,43 @@ static gboolean video_window_moved(GtkWidget *widget, GdkEvent  *event, gpointer
 	return FALSE;
 }
 
-static GtkWidget *show_video_controls(GtkWidget *video_window){
+static GtkWidget *show_video_controls(GtkWidget *video_window) {
 	GtkWidget *w;
-	w=(GtkWidget*)g_object_get_data(G_OBJECT(video_window),"controls");
-	if (!w){
-		gboolean isfullscreen=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(video_window),"fullscreen"));
-		const char *stock_button=isfullscreen ? GTK_STOCK_LEAVE_FULLSCREEN : GTK_STOCK_FULLSCREEN;
-		gint response_id=isfullscreen ? GTK_RESPONSE_NO : GTK_RESPONSE_YES ;
-		GtkWidget *image = gtk_image_new_from_icon_name(linphone_gtk_get_ui_config("stop_call_icon_name","linphone-stop-call"), GTK_ICON_SIZE_BUTTON);
+	w = (GtkWidget *)g_object_get_data(G_OBJECT(video_window), "controls");
+	if (!w) {
+		gboolean isfullscreen = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(video_window), "fullscreen"));
+		const char *stock_button = isfullscreen ? GTK_STOCK_LEAVE_FULLSCREEN : GTK_STOCK_FULLSCREEN;
+		gint response_id = isfullscreen ? GTK_RESPONSE_NO : GTK_RESPONSE_YES;
+		GtkWidget *image = gtk_image_new_from_icon_name(
+			linphone_gtk_get_ui_config("stop_call_icon_name", "linphone-stop-call"), GTK_ICON_SIZE_BUTTON);
 		gint timeout;
 		GtkWidget *button;
-		w=gtk_dialog_new_with_buttons("",GTK_WINDOW(video_window),GTK_DIALOG_DESTROY_WITH_PARENT,stock_button,response_id,NULL);
-		gtk_window_set_opacity(GTK_WINDOW(w),0.5);
-		gtk_window_set_decorated(GTK_WINDOW(w),FALSE);
-		button=gtk_button_new_with_label(_("Hang up"));
+		w = gtk_dialog_new_with_buttons("", GTK_WINDOW(video_window), GTK_DIALOG_DESTROY_WITH_PARENT, stock_button,
+										response_id, NULL);
+		gtk_window_set_opacity(GTK_WINDOW(w), 0.5);
+		gtk_window_set_decorated(GTK_WINDOW(w), FALSE);
+		button = gtk_button_new_with_label(_("Hang up"));
 		gtk_button_set_image(GTK_BUTTON(button), image);
 		gtk_widget_show(button);
-		gtk_dialog_add_action_widget(GTK_DIALOG(w),button,GTK_RESPONSE_REJECT);
-		button=gtk_button_new_with_label(_("Take screenshot"));
+		gtk_dialog_add_action_widget(GTK_DIALOG(w), button, GTK_RESPONSE_REJECT);
+		button = gtk_button_new_with_label(_("Take screenshot"));
 		image = gtk_image_new_from_icon_name("linphone-take-screenshot", GTK_ICON_SIZE_BUTTON);
 		gtk_button_set_image(GTK_BUTTON(button), image);
 		gtk_widget_show(button);
-		gtk_dialog_add_action_widget(GTK_DIALOG(w),button,GTK_RESPONSE_APPLY);
-		g_signal_connect(w,"response",(GCallback)on_controls_response,video_window);
-		timeout=g_timeout_add(3000,(GSourceFunc)gtk_widget_destroy,w);
-		g_object_set_data(G_OBJECT(w),"timeout",GINT_TO_POINTER(timeout));
-		g_signal_connect(w,"destroy",(GCallback)on_controls_destroy,NULL);
-		g_object_set_data(G_OBJECT(w),"video_window",video_window);
-		g_object_set_data(G_OBJECT(video_window),"controls",w);
+		gtk_dialog_add_action_widget(GTK_DIALOG(w), button, GTK_RESPONSE_APPLY);
+		g_signal_connect(w, "response", (GCallback)on_controls_response, video_window);
+		timeout = g_timeout_add(3000, (GSourceFunc)gtk_widget_destroy, w);
+		g_object_set_data(G_OBJECT(w), "timeout", GINT_TO_POINTER(timeout));
+		g_signal_connect(w, "destroy", (GCallback)on_controls_destroy, NULL);
+		g_object_set_data(G_OBJECT(w), "video_window", video_window);
+		g_object_set_data(G_OBJECT(video_window), "controls", w);
 		set_video_controls_position(video_window);
 		gtk_widget_show(w);
-	}else{
-		gint timeout=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w),"timeout"));
+	} else {
+		gint timeout = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "timeout"));
 		g_source_remove(timeout);
-		timeout=g_timeout_add(3000,(GSourceFunc)gtk_widget_destroy,w);
-		g_object_set_data(G_OBJECT(w),"timeout",GINT_TO_POINTER(timeout));
+		timeout = g_timeout_add(3000, (GSourceFunc)gtk_widget_destroy, w);
+		g_object_set_data(G_OBJECT(w), "timeout", GINT_TO_POINTER(timeout));
 	}
 	return w;
 }

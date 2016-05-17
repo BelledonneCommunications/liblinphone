@@ -1503,35 +1503,34 @@ void linphone_subscription_new(LinphoneCore *lc, SalOp *op, const char *from){
 	char *tmp;
 	LinphoneAddress *uri;
 
-	uri=linphone_address_new(from);
+	uri = linphone_address_new(from);
 	linphone_address_clean(uri);
-	tmp=linphone_address_as_string(uri);
-	ms_message("Receiving new subscription from %s.",from);
+	tmp = linphone_address_as_string(uri);
+	ms_message("Receiving new subscription from %s.", from);
 
 	/* check if we answer to this subscription */
 	lf = linphone_core_find_friend(lc, uri);
-	if (lf!=NULL){
+	if (lf != NULL) {
 		linphone_friend_add_incoming_subscription(lf, op);
-		lf->inc_subscribe_pending=TRUE;
-		if (lp_config_get_int(lc->config,"sip","notify_pending_state",0)) {
+		lf->inc_subscribe_pending = TRUE;
+		if (lp_config_get_int(lc->config, "sip", "notify_pending_state", 0)) {
 			sal_notify_pending_state(op);
 		}
 		sal_subscribe_accept(op);
-		linphone_friend_done(lf);	/*this will do all necessary actions */
-	}else{
+		linphone_friend_done(lf); /*this will do all necessary actions */
+	} else {
 		/* check if this subscriber is in our black list */
-		if (linphone_find_friend_by_address(lc->subscribers,uri,&lf)){
-			if (lf->pol==LinphoneSPDeny){
-				ms_message("Rejecting %s because we already rejected it once.",from);
-				sal_subscribe_decline(op,SalReasonDeclined);
-			}
-			else {
+		if (linphone_find_friend_by_address(lc->subscribers, uri, &lf)) {
+			if (lf->pol == LinphoneSPDeny) {
+				ms_message("Rejecting %s because we already rejected it once.", from);
+				sal_subscribe_decline(op, SalReasonDeclined);
+			} else {
 				/* else it is in wait for approval state, because otherwise it is in the friend list.*/
-				ms_message("New subscriber found in subscriber list, in %s state.",__policy_enum_to_str(lf->pol));
+				ms_message("New subscriber found in subscriber list, in %s state.", __policy_enum_to_str(lf->pol));
 			}
-		}else {
+		} else {
 			sal_subscribe_accept(op);
-			linphone_core_add_subscriber(lc,tmp,op);
+			linphone_core_add_subscriber(lc, tmp, op);
 		}
 	}
 	linphone_address_destroy(uri);
@@ -1883,34 +1882,37 @@ end:
 	return content;
 }
 
-void linphone_notify_recv(LinphoneCore *lc, SalOp *op, SalSubscribeStatus ss, SalPresenceModel *model){
+void linphone_notify_recv(LinphoneCore *lc, SalOp *op, SalSubscribeStatus ss, SalPresenceModel *model) {
 	char *tmp;
 	LinphoneFriend *lf = NULL;
-	LinphoneAddress *friend=NULL;
-	LinphonePresenceModel *presence = model ? (LinphonePresenceModel *)model:linphone_presence_model_new_with_activity(LinphonePresenceActivityOffline, NULL);
+	LinphoneAddress *friend = NULL;
+	LinphonePresenceModel *presence =
+		model ? (LinphonePresenceModel *)model
+			  : linphone_presence_model_new_with_activity(LinphonePresenceActivityOffline, NULL);
 
 	if (linphone_core_get_default_friend_list(lc) != NULL)
-		lf=linphone_core_find_friend_by_out_subscribe(lc, op);
-	if (lf==NULL && lp_config_get_int(lc->config,"sip","allow_out_of_subscribe_presence",0)){
-		const SalAddress *addr=sal_op_get_from_address(op);
+		lf = linphone_core_find_friend_by_out_subscribe(lc, op);
+	if (lf == NULL && lp_config_get_int(lc->config, "sip", "allow_out_of_subscribe_presence", 0)) {
+		const SalAddress *addr = sal_op_get_from_address(op);
 		lf = linphone_core_find_friend(lc, (LinphoneAddress *)addr);
 	}
-	if (lf!=NULL){
+	if (lf != NULL) {
 		LinphonePresenceActivity *activity = NULL;
 		char *activity_str;
-		friend=lf->uri;
-		tmp=linphone_address_as_string(friend);
+		friend = lf->uri;
+		tmp = linphone_address_as_string(friend);
 		activity = linphone_presence_model_get_activity(presence);
 		activity_str = linphone_presence_activity_to_string(activity);
 		ms_message("We are notified that [%s] has presence [%s]", tmp, activity_str);
-		if (activity_str != NULL) ms_free(activity_str);
+		if (activity_str != NULL)
+			ms_free(activity_str);
 		linphone_friend_set_presence_model(lf, presence);
-		lf->subscribe_active=TRUE;
+		lf->subscribe_active = TRUE;
 		lf->presence_received = TRUE;
 		lf->out_sub_state = linphone_subscription_state_from_sal(ss);
-		linphone_core_notify_notify_presence_received(lc,(LinphoneFriend*)lf);
+		linphone_core_notify_notify_presence_received(lc, (LinphoneFriend *)lf);
 		ms_free(tmp);
-		if (op != lf->outsub){
+		if (op != lf->outsub) {
 			/*case of a NOTIFY received out of any dialog*/
 			sal_op_release(op);
 			return;
@@ -1937,15 +1939,15 @@ void linphone_notify_recv(LinphoneCore *lc, SalOp *op, SalSubscribeStatus ss, Sa
 	}
 }
 
-void linphone_subscription_closed(LinphoneCore *lc, SalOp *op){
+void linphone_subscription_closed(LinphoneCore *lc, SalOp *op) {
 	LinphoneFriend *lf = NULL;
 
 	lf = linphone_core_find_friend_by_inc_subscribe(lc, op);
 
-	if (lf!=NULL){
+	if (lf != NULL) {
 		/*this will release the op*/
 		linphone_friend_remove_incoming_subscription(lf, op);
-	}else{
+	} else {
 		/*case of an op that we already released because the friend was destroyed*/
 		ms_message("Receiving unsuscribe for unknown in-subscribtion from %s", sal_op_get_from(op));
 	}

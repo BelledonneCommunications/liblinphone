@@ -696,7 +696,7 @@ static bool_t sdp_parse_rtcp_fb_parameters(belle_sdp_media_description_t *media_
 	PayloadType *pt;
 	int8_t pt_num;
 	bool_t retval = FALSE;
-    
+
 	/* Handle rtcp-fb attributes that concern all payload types. */
 	for (it = belle_sdp_media_description_get_attributes(media_desc); it != NULL; it = it->next) {
 		attribute = BELLE_SDP_ATTRIBUTE(it->data);
@@ -911,7 +911,7 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 
 	/* Get ICE candidate attributes if any */
 	sdp_parse_media_ice_parameters(media_desc, stream);
-    
+
 	has_avpf_attributes = sdp_parse_rtcp_fb_parameters(media_desc, stream);
 
 	/* Get RTCP-FB attributes if any */

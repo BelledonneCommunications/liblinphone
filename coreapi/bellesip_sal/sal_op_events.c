@@ -18,16 +18,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "sal_impl.h"
 
-SalSubscribeStatus belle_sip_message_get_subscription_state(const belle_sip_message_t *msg){
-	belle_sip_header_subscription_state_t* subscription_state_header=belle_sip_message_get_header_by_type(msg,belle_sip_header_subscription_state_t);
-	SalSubscribeStatus sss=SalSubscribeNone;
-	if (subscription_state_header){
-		if (strcmp(belle_sip_header_subscription_state_get_state(subscription_state_header),BELLE_SIP_SUBSCRIPTION_STATE_TERMINATED)==0)
-			sss=SalSubscribeTerminated;
-		else if (strcmp(belle_sip_header_subscription_state_get_state(subscription_state_header),BELLE_SIP_SUBSCRIPTION_STATE_PENDING)==0)
-			sss=SalSubscribePending;
-		else if (strcmp(belle_sip_header_subscription_state_get_state(subscription_state_header),BELLE_SIP_SUBSCRIPTION_STATE_ACTIVE)==0)
-			sss=SalSubscribeActive;
+SalSubscribeStatus belle_sip_message_get_subscription_state(const belle_sip_message_t *msg) {
+	belle_sip_header_subscription_state_t *subscription_state_header =
+		belle_sip_message_get_header_by_type(msg, belle_sip_header_subscription_state_t);
+	SalSubscribeStatus sss = SalSubscribeNone;
+	if (subscription_state_header) {
+		if (strcmp(belle_sip_header_subscription_state_get_state(subscription_state_header),
+				   BELLE_SIP_SUBSCRIPTION_STATE_TERMINATED) == 0)
+			sss = SalSubscribeTerminated;
+		else if (strcmp(belle_sip_header_subscription_state_get_state(subscription_state_header),
+						BELLE_SIP_SUBSCRIPTION_STATE_PENDING) == 0)
+			sss = SalSubscribePending;
+		else if (strcmp(belle_sip_header_subscription_state_get_state(subscription_state_header),
+						BELLE_SIP_SUBSCRIPTION_STATE_ACTIVE) == 0)
+			sss = SalSubscribeActive;
 	}
 	return sss;
 }
@@ -66,13 +70,13 @@ static void subscribe_process_io_error(void *user_ctx, const belle_sip_io_error_
 
 static void subscribe_process_dialog_terminated(void *ctx, const belle_sip_dialog_terminated_event_t *event) {
 	belle_sip_dialog_t *dialog = belle_sip_dialog_terminated_event_get_dialog(event);
-	SalOp* op= (SalOp*)ctx;
+	SalOp *op = (SalOp *)ctx;
 	if (op->dialog) {
-		op->dialog=NULL;
-		if (!belle_sip_dialog_is_server(dialog) && belle_sip_dialog_terminated_event_is_expired(event)){
+		op->dialog = NULL;
+		if (!belle_sip_dialog_is_server(dialog) && belle_sip_dialog_terminated_event_is_expired(event)) {
 			/*notify the app that our subscription is dead*/
 			const char *eventname = NULL;
-			if (op->event){
+			if (op->event) {
 				eventname = belle_sip_header_event_get_package_name(op->event);
 			}
 			op->base.root->callbacks.notify(op, SalSubscribeTerminated, eventname, NULL);
@@ -110,43 +114,47 @@ static void handle_notify(SalOp *op, belle_sip_request_t *req, const char *event
 }
 
 static void subscribe_process_request_event(void *op_base, const belle_sip_request_event_t *event) {
-	SalOp* op = (SalOp*)op_base;
-	belle_sip_server_transaction_t* server_transaction = belle_sip_provider_create_server_transaction(op->base.root->prov,belle_sip_request_event_get_request(event));
-	belle_sip_request_t* req = belle_sip_request_event_get_request(event);
+	SalOp *op = (SalOp *)op_base;
+	belle_sip_server_transaction_t *server_transaction =
+		belle_sip_provider_create_server_transaction(op->base.root->prov, belle_sip_request_event_get_request(event));
+	belle_sip_request_t *req = belle_sip_request_event_get_request(event);
 	belle_sip_dialog_state_t dialog_state;
-	belle_sip_header_expires_t* expires = belle_sip_message_get_header_by_type(req,belle_sip_header_expires_t);
+	belle_sip_header_expires_t *expires = belle_sip_message_get_header_by_type(req, belle_sip_header_expires_t);
 	belle_sip_header_event_t *event_header;
 	belle_sip_body_handler_t *body_handler;
-	belle_sip_response_t* resp;
-	const char *eventname=NULL;
-	const char *method=belle_sip_request_get_method(req);
-	
-	belle_sip_object_ref(server_transaction);
-	if (op->pending_server_trans)  belle_sip_object_unref(op->pending_server_trans);
-	op->pending_server_trans=server_transaction;
+	belle_sip_response_t *resp;
+	const char *eventname = NULL;
+	const char *method = belle_sip_request_get_method(req);
 
-	event_header=belle_sip_message_get_header_by_type(req,belle_sip_header_event_t);
+	belle_sip_object_ref(server_transaction);
+	if (op->pending_server_trans)
+		belle_sip_object_unref(op->pending_server_trans);
+	op->pending_server_trans = server_transaction;
+
+	event_header = belle_sip_message_get_header_by_type(req, belle_sip_header_event_t);
 	body_handler = BELLE_SIP_BODY_HANDLER(sal_op_get_body_handler(op, BELLE_SIP_MESSAGE(req)));
-	
-	if (event_header==NULL){
+
+	if (event_header == NULL) {
 		ms_warning("No event header in incoming SUBSCRIBE.");
-		resp=sal_op_create_response_from_request(op,req,400);
-		belle_sip_server_transaction_send_response(server_transaction,resp);
-		if (!op->dialog) sal_op_release(op);
+		resp = sal_op_create_response_from_request(op, req, 400);
+		belle_sip_server_transaction_send_response(server_transaction, resp);
+		if (!op->dialog)
+			sal_op_release(op);
 		return;
 	}
-	if (op->event==NULL) {
-		op->event=event_header;
+	if (op->event == NULL) {
+		op->event = event_header;
 		belle_sip_object_ref(op->event);
 	}
-	eventname=belle_sip_header_event_get_package_name(event_header);
-	
+	eventname = belle_sip_header_event_get_package_name(event_header);
+
 	if (!op->dialog) {
-		if (strcmp(method,"SUBSCRIBE")==0){
-			op->dialog = belle_sip_provider_create_dialog(op->base.root->prov,BELLE_SIP_TRANSACTION(server_transaction));
-			if (!op->dialog){
-				resp=sal_op_create_response_from_request(op,req,481);
-				belle_sip_server_transaction_send_response(server_transaction,resp);
+		if (strcmp(method, "SUBSCRIBE") == 0) {
+			op->dialog =
+				belle_sip_provider_create_dialog(op->base.root->prov, BELLE_SIP_TRANSACTION(server_transaction));
+			if (!op->dialog) {
+				resp = sal_op_create_response_from_request(op, req, 481);
+				belle_sip_server_transaction_send_response(server_transaction, resp);
 				sal_op_release(op);
 				return;
 			}
@@ -187,70 +195,71 @@ static void subscribe_process_request_event(void *op_base, const belle_sip_reque
 			}
 		}
 		break;
-		default: {
-			ms_error("unexpected dialog state [%s]",belle_sip_dialog_state_to_string(dialog_state));
-		}
+	default: { ms_error("unexpected dialog state [%s]", belle_sip_dialog_state_to_string(dialog_state)); }
 	}
 }
 
-static belle_sip_listener_callbacks_t op_subscribe_callbacks={ 0 };
+static belle_sip_listener_callbacks_t op_subscribe_callbacks = {0};
 
 /*Invoke when sal_op_release is called by upper layer*/
-static void sal_op_release_cb(struct SalOpBase* op_base) {
-	SalOp *op =(SalOp*)op_base;
-	if(op->refresher) {
+static void sal_op_release_cb(struct SalOpBase *op_base) {
+	SalOp *op = (SalOp *)op_base;
+	if (op->refresher) {
 		belle_sip_refresher_stop(op->refresher);
 		belle_sip_object_unref(op->refresher);
-		op->refresher=NULL;
-		set_or_update_dialog(op,NULL); /*only if we have refresher. else dialog terminated event will remove association*/
+		op->refresher = NULL;
+		set_or_update_dialog(op,
+							 NULL); /*only if we have refresher. else dialog terminated event will remove association*/
 	}
-	
 }
 
-void sal_op_subscribe_fill_cbs(SalOp*op) {
-	if (op_subscribe_callbacks.process_io_error==NULL){
-		op_subscribe_callbacks.process_io_error=subscribe_process_io_error;
-		op_subscribe_callbacks.process_response_event=subscribe_response_event;
-		op_subscribe_callbacks.process_timeout=subscribe_process_timeout;
-		op_subscribe_callbacks.process_transaction_terminated=subscribe_process_transaction_terminated;
-		op_subscribe_callbacks.process_request_event=subscribe_process_request_event;
-		op_subscribe_callbacks.process_dialog_terminated=subscribe_process_dialog_terminated;
+void sal_op_subscribe_fill_cbs(SalOp *op) {
+	if (op_subscribe_callbacks.process_io_error == NULL) {
+		op_subscribe_callbacks.process_io_error = subscribe_process_io_error;
+		op_subscribe_callbacks.process_response_event = subscribe_response_event;
+		op_subscribe_callbacks.process_timeout = subscribe_process_timeout;
+		op_subscribe_callbacks.process_transaction_terminated = subscribe_process_transaction_terminated;
+		op_subscribe_callbacks.process_request_event = subscribe_process_request_event;
+		op_subscribe_callbacks.process_dialog_terminated = subscribe_process_dialog_terminated;
 	}
-	op->callbacks=&op_subscribe_callbacks;
-	op->type=SalOpSubscribe;
-	op->base.release_cb=sal_op_release_cb;
+	op->callbacks = &op_subscribe_callbacks;
+	op->type = SalOpSubscribe;
+	op->base.release_cb = sal_op_release_cb;
 }
 
+int sal_subscribe(SalOp *op, const char *from, const char *to, const char *eventname, int expires,
+				  const SalBodyHandler *body_handler) {
+	belle_sip_request_t *req = NULL;
 
-int sal_subscribe(SalOp *op, const char *from, const char *to, const char *eventname, int expires, const SalBodyHandler *body_handler){
-	belle_sip_request_t *req=NULL;
-	
 	if (from)
-		sal_op_set_from(op,from);
+		sal_op_set_from(op, from);
 	if (to)
-		sal_op_set_to(op,to);
-	
-	if (!op->dialog){
+		sal_op_set_to(op, to);
+
+	if (!op->dialog) {
 		sal_op_subscribe_fill_cbs(op);
-		req=sal_op_build_request(op,"SUBSCRIBE");
-		if( req == NULL ) {
+		req = sal_op_build_request(op, "SUBSCRIBE");
+		if (req == NULL) {
 			return -1;
 		}
-		if (eventname){
-			if (op->event) belle_sip_object_unref(op->event);
-			op->event=belle_sip_header_event_create(eventname);
+		if (eventname) {
+			if (op->event)
+				belle_sip_object_unref(op->event);
+			op->event = belle_sip_header_event_create(eventname);
 			belle_sip_object_ref(op->event);
 		}
-		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),BELLE_SIP_HEADER(op->event));
-		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),BELLE_SIP_HEADER(belle_sip_header_expires_create(expires)));
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), BELLE_SIP_HEADER(op->event));
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),
+									 BELLE_SIP_HEADER(belle_sip_header_expires_create(expires)));
 		belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(req), BELLE_SIP_BODY_HANDLER(body_handler));
-		return sal_op_send_and_create_refresher(op,req,expires,subscribe_refresher_listener);
-	}else if (op->refresher){
-		const belle_sip_transaction_t *tr=(const belle_sip_transaction_t*) belle_sip_refresher_get_transaction(op->refresher);
-		belle_sip_request_t *last_req=belle_sip_transaction_get_request(tr);
+		return sal_op_send_and_create_refresher(op, req, expires, subscribe_refresher_listener);
+	} else if (op->refresher) {
+		const belle_sip_transaction_t *tr =
+			(const belle_sip_transaction_t *)belle_sip_refresher_get_transaction(op->refresher);
+		belle_sip_request_t *last_req = belle_sip_transaction_get_request(tr);
 		/* modify last request to update body*/
 		belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(last_req), BELLE_SIP_BODY_HANDLER(body_handler));
-		return belle_sip_refresher_refresh(op->refresher,expires);
+		return belle_sip_refresher_refresh(op->refresher, expires);
 	}
 	ms_warning("sal_subscribe(): no dialog and no refresher ?");
 	return -1;
@@ -267,67 +276,75 @@ int sal_unsubscribe(SalOp *op){
 	return -1;
 }
 
-int sal_subscribe_accept(SalOp *op){
-	belle_sip_request_t* req=belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(op->pending_server_trans));
-	belle_sip_header_expires_t* expires = belle_sip_message_get_header_by_type(req,belle_sip_header_expires_t);
-	belle_sip_response_t* resp = sal_op_create_response_from_request(op,req,200);
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(resp),BELLE_SIP_HEADER(expires));
-	belle_sip_server_transaction_send_response(op->pending_server_trans,resp);
+int sal_subscribe_accept(SalOp *op) {
+	belle_sip_request_t *req = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(op->pending_server_trans));
+	belle_sip_header_expires_t *expires = belle_sip_message_get_header_by_type(req, belle_sip_header_expires_t);
+	belle_sip_response_t *resp = sal_op_create_response_from_request(op, req, 200);
+	belle_sip_message_add_header(BELLE_SIP_MESSAGE(resp), BELLE_SIP_HEADER(expires));
+	belle_sip_server_transaction_send_response(op->pending_server_trans, resp);
 	return 0;
 }
 
-int sal_notify_pending_state(SalOp *op){
-	
+int sal_notify_pending_state(SalOp *op) {
+
 	if (op->dialog != NULL && op->pending_server_trans) {
-		belle_sip_request_t* notify;
-		belle_sip_header_subscription_state_t* sub_state;
-		ms_message("Sending NOTIFY with subscription state pending for op [%p]",op);
-		if (!(notify=belle_sip_dialog_create_request(op->dialog,"NOTIFY"))) {
-			ms_error("Cannot create NOTIFY on op [%p]",op);
+		belle_sip_request_t *notify;
+		belle_sip_header_subscription_state_t *sub_state;
+		ms_message("Sending NOTIFY with subscription state pending for op [%p]", op);
+		if (!(notify = belle_sip_dialog_create_request(op->dialog, "NOTIFY"))) {
+			ms_error("Cannot create NOTIFY on op [%p]", op);
 			return -1;
 		}
-		if (op->event) belle_sip_message_add_header(BELLE_SIP_MESSAGE(notify),BELLE_SIP_HEADER(op->event));
-		sub_state=belle_sip_header_subscription_state_new();
-		belle_sip_header_subscription_state_set_state(sub_state,BELLE_SIP_SUBSCRIPTION_STATE_PENDING);
+		if (op->event)
+			belle_sip_message_add_header(BELLE_SIP_MESSAGE(notify), BELLE_SIP_HEADER(op->event));
+		sub_state = belle_sip_header_subscription_state_new();
+		belle_sip_header_subscription_state_set_state(sub_state, BELLE_SIP_SUBSCRIPTION_STATE_PENDING);
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(notify), BELLE_SIP_HEADER(sub_state));
-		return sal_op_send_request(op,notify);
+		return sal_op_send_request(op, notify);
 	} else {
-		ms_warning("NOTIFY with subscription state pending for op [%p] not implemented in this case (either dialog pending trans does not exist",op);
+		ms_warning("NOTIFY with subscription state pending for op [%p] not implemented in this case (either dialog "
+				   "pending trans does not exist",
+				   op);
 	}
-	
+
 	return 0;
 }
 
-
-int sal_subscribe_decline(SalOp *op, SalReason reason){
-	belle_sip_response_t*  resp = belle_sip_response_create_from_request(belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(op->pending_server_trans)),
-									   sal_reason_to_sip_code(reason));
-	belle_sip_server_transaction_send_response(op->pending_server_trans,resp);
+int sal_subscribe_decline(SalOp *op, SalReason reason) {
+	belle_sip_response_t *resp = belle_sip_response_create_from_request(
+		belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(op->pending_server_trans)),
+		sal_reason_to_sip_code(reason));
+	belle_sip_server_transaction_send_response(op->pending_server_trans, resp);
 	return 0;
 }
 
-int sal_notify(SalOp *op, const SalBodyHandler *body_handler){
-	belle_sip_request_t* notify;
-	
-	if (!op->dialog) return -1;
-	
-	if (!(notify=belle_sip_dialog_create_queued_request(op->dialog,"NOTIFY"))) return -1;
+int sal_notify(SalOp *op, const SalBodyHandler *body_handler) {
+	belle_sip_request_t *notify;
 
-	if (op->event) belle_sip_message_add_header(BELLE_SIP_MESSAGE(notify),BELLE_SIP_HEADER(op->event));
+	if (!op->dialog)
+		return -1;
 
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(notify)
-			,BELLE_SIP_HEADER(belle_sip_header_subscription_state_create(BELLE_SIP_SUBSCRIPTION_STATE_ACTIVE,600)));
+	if (!(notify = belle_sip_dialog_create_queued_request(op->dialog, "NOTIFY")))
+		return -1;
+
+	if (op->event)
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(notify), BELLE_SIP_HEADER(op->event));
+
+	belle_sip_message_add_header(BELLE_SIP_MESSAGE(notify), BELLE_SIP_HEADER(belle_sip_header_subscription_state_create(
+																BELLE_SIP_SUBSCRIPTION_STATE_ACTIVE, 600)));
 	belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(notify), BELLE_SIP_BODY_HANDLER(body_handler));
-	return sal_op_send_request(op,notify);
+	return sal_op_send_request(op, notify);
 }
 
-int sal_notify_close(SalOp *op){
-	belle_sip_request_t* notify;
-	if (!op->dialog) return -1;
-	if (!(notify=belle_sip_dialog_create_queued_request(op->dialog,"NOTIFY"))) return -1;
-	if (op->event) belle_sip_message_add_header(BELLE_SIP_MESSAGE(notify),BELLE_SIP_HEADER(op->event));
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(notify)
-		,BELLE_SIP_HEADER(belle_sip_header_subscription_state_create(BELLE_SIP_SUBSCRIPTION_STATE_TERMINATED,-1)));
-	return sal_op_send_request(op,notify);
+int sal_notify_close(SalOp *op) {
+	belle_sip_request_t *notify;
+	if (!op->dialog)
+		return -1;
+	if (!(notify = belle_sip_dialog_create_queued_request(op->dialog, "NOTIFY")))
+		return -1;
+	if (op->event)
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(notify), BELLE_SIP_HEADER(op->event));
+	belle_sip_message_add_header(BELLE_SIP_MESSAGE(notify), BELLE_SIP_HEADER(belle_sip_header_subscription_state_create(
+																BELLE_SIP_SUBSCRIPTION_STATE_TERMINATED, -1)));
+	return sal_op_send_request(op, notify);
 }
-

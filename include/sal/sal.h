@@ -775,7 +775,8 @@ int sal_subscribe_decline(SalOp *op, SalReason reason);
 int sal_notify_pending_state(SalOp *op);
 int sal_notify(SalOp *op, const SalBodyHandler *body);
 int sal_notify_close(SalOp *op);
-int sal_publish(SalOp *op, const char *from, const char *to, const char*event_name, int expires, const SalBodyHandler *body);
+int sal_publish(SalOp *op, const char *from, const char *to, const char *event_name, int expires,
+				const SalBodyHandler *body);
 int sal_op_unpublish(SalOp *op);
 
 /*privacy, must be in sync with LinphonePrivacyMask*/

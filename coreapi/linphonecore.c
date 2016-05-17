@@ -1788,7 +1788,7 @@ static void linphone_core_init(LinphoneCore * lc, const LinphoneCoreVTable *vtab
 	 */
 	lc->http_provider = belle_sip_stack_create_http_provider(sal_get_belle_sip_stack(lc->sal), "::0");
 	lc->http_crypto_config = belle_tls_crypto_config_new();
-	belle_http_provider_set_tls_crypto_config(lc->http_provider,lc->http_crypto_config);
+	belle_http_provider_set_tls_crypto_config(lc->http_provider, lc->http_crypto_config);
 
 	certificates_config_read(lc);
 
@@ -7364,28 +7364,29 @@ void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 	lp_config_set_int(lc->config, "sip", "media_encryption_mandatory", (int)m);
 }
 
-void linphone_core_init_default_params(LinphoneCore*lc, LinphoneCallParams *params) {
+void linphone_core_init_default_params(LinphoneCore *lc, LinphoneCallParams *params) {
 	params->has_audio = TRUE;
-	params->has_video=FALSE;//linphone_core_video_enabled(lc) && lc->video_policy.automatically_initiate;
-	params->media_encryption=linphone_core_get_media_encryption(lc);
-	params->in_conference=FALSE;
+	params->has_video = FALSE; // linphone_core_video_enabled(lc) && lc->video_policy.automatically_initiate;
+	params->media_encryption = linphone_core_get_media_encryption(lc);
+	params->in_conference = FALSE;
 	params->realtimetext_enabled = linphone_core_realtime_text_enabled(lc);
 	////TODO add option in ui
-	//linphone_core_enable_screensharing(lc,TRUE);
-	//linphone_core_set_screensharing_role(lc,LinphoneMediaDirectionSendRecv);
+	// linphone_core_enable_screensharing(lc,TRUE);
+	// linphone_core_set_screensharing_role(lc,LinphoneMediaDirectionSendRecv);
 	////
-	params->screensharing_enabled=linphone_core_screensharing_enabled(lc);
-	params->privacy=LinphonePrivacyDefault;
-	params->avpf_enabled=linphone_core_get_avpf_mode(lc);
-	params->implicit_rtcp_fb = lp_config_get_int(lc->config,"rtp","rtcp_fb_implicit_rtcp_fb",TRUE);
+	params->screensharing_enabled = linphone_core_screensharing_enabled(lc);
+	params->privacy = LinphonePrivacyDefault;
+	params->avpf_enabled = linphone_core_get_avpf_mode(lc);
+	params->implicit_rtcp_fb = lp_config_get_int(lc->config, "rtp", "rtcp_fb_implicit_rtcp_fb", TRUE);
 	params->avpf_rr_interval = linphone_core_get_avpf_rr_interval(lc);
-	params->audio_dir=LinphoneMediaDirectionSendRecv;
-	params->video_dir=LinphoneMediaDirectionSendRecv;
-	params->screensharing_dir=lc->screen_conf.role;
-	params->real_early_media=lp_config_get_int(lc->config,"misc","real_early_media",FALSE);
-	params->audio_multicast_enabled=linphone_core_audio_multicast_enabled(lc);
-	params->video_multicast_enabled=linphone_core_video_multicast_enabled(lc);
-	params->update_call_when_ice_completed = lp_config_get_int(lc->config, "sip", "update_call_when_ice_completed", TRUE);
+	params->audio_dir = LinphoneMediaDirectionSendRecv;
+	params->video_dir = LinphoneMediaDirectionSendRecv;
+	params->screensharing_dir = lc->screen_conf.role;
+	params->real_early_media = lp_config_get_int(lc->config, "misc", "real_early_media", FALSE);
+	params->audio_multicast_enabled = linphone_core_audio_multicast_enabled(lc);
+	params->video_multicast_enabled = linphone_core_video_multicast_enabled(lc);
+	params->update_call_when_ice_completed =
+		lp_config_get_int(lc->config, "sip", "update_call_when_ice_completed", TRUE);
 	params->encryption_mandatory = linphone_core_is_media_encryption_mandatory(lc);
 }
 
@@ -7781,23 +7782,26 @@ static int _linphone_core_delayed_conference_destriction_cb(void *user_data, uns
 	return 0;
 }
 
-static void _linphone_core_conference_state_changed(LinphoneConference *conf, LinphoneConferenceState cstate, void *user_data) {
+static void _linphone_core_conference_state_changed(LinphoneConference *conf, LinphoneConferenceState cstate,
+													void *user_data) {
 	LinphoneCore *lc = (LinphoneCore *)user_data;
-	if(cstate == LinphoneConferenceStartingFailed || cstate == LinphoneConferenceStopped) {
-		linphone_core_queue_task(lc, _linphone_core_delayed_conference_destriction_cb, conf, "Conference destruction task");
+	if (cstate == LinphoneConferenceStartingFailed || cstate == LinphoneConferenceStopped) {
+		linphone_core_queue_task(lc, _linphone_core_delayed_conference_destriction_cb, conf,
+								 "Conference destruction task");
 		lc->conf_ctx = NULL;
 	}
 }
 
-LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc, const LinphoneConferenceParams *params) {
+LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc,
+																const LinphoneConferenceParams *params) {
 	const char *conf_method_name;
-	if(lc->conf_ctx == NULL) {
+	if (lc->conf_ctx == NULL) {
 		LinphoneConferenceParams *params2 = linphone_conference_params_clone(params);
 		linphone_conference_params_set_state_changed_callback(params2, _linphone_core_conference_state_changed, lc);
 		conf_method_name = lp_config_get_string(lc->config, "misc", "conference_type", "local");
-		if(strcasecmp(conf_method_name, "local") == 0) {
+		if (strcasecmp(conf_method_name, "local") == 0) {
 			lc->conf_ctx = linphone_local_conference_new_with_params(lc, params2);
-		} else if(strcasecmp(conf_method_name, "remote") == 0) {
+		} else if (strcasecmp(conf_method_name, "remote") == 0) {
 			lc->conf_ctx = linphone_remote_conference_new_with_params(lc, params2);
 		} else {
 			ms_error("'%s' is not a valid conference method", conf_method_name);
@@ -7814,7 +7818,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 
 int linphone_core_add_to_conference(LinphoneCore *lc, LinphoneCall *call) {
 	LinphoneConference *conference = linphone_core_get_conference(lc);
-	if(conference == NULL) {
+	if (conference == NULL) {
 		LinphoneConferenceParams *params = linphone_conference_params_new(lc);
 		conference = linphone_core_create_conference_with_params(lc, params);
 		linphone_conference_params_free(params);

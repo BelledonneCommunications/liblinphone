@@ -570,21 +570,21 @@ void linphone_core_adapt_to_network(LinphoneCore *lc, int ping_time_ms, Linphone
 	}
 }
 
-static void stun_server_resolved(LinphoneCore *lc, const char *name, struct addrinfo *addrinfo){
-	if (lc->net_conf.stun_addrinfo){
+static void stun_server_resolved(LinphoneCore *lc, const char *name, struct addrinfo *addrinfo) {
+	if (lc->net_conf.stun_addrinfo) {
 		bctbx_freeaddrinfo(lc->net_conf.stun_addrinfo);
-		lc->net_conf.stun_addrinfo=NULL;
+		lc->net_conf.stun_addrinfo = NULL;
 	}
-	if (addrinfo){
+	if (addrinfo) {
 		ms_message("Stun server resolution successful.");
-	}else{
+	} else {
 		ms_warning("Stun server resolution failed.");
 	}
-	lc->net_conf.stun_addrinfo=addrinfo;
-	lc->net_conf.stun_res=NULL;
+	lc->net_conf.stun_addrinfo = addrinfo;
+	lc->net_conf.stun_res = NULL;
 }
 
-void linphone_core_resolve_stun_server(LinphoneCore *lc){
+void linphone_core_resolve_stun_server(LinphoneCore *lc) {
 	/*
 	 * WARNING: stun server resolution only done in IPv4.
 	 * TODO: use IPv6 resolution if linphone_core_ipv6_enabled()==TRUE and use V4Mapped addresses for ICE gathering.

@@ -388,7 +388,8 @@ void linphone_friend_list_set_rls_uri(LinphoneFriendList *list, const char *rls_
 	}
 }
 
-static LinphoneFriendListStatus _linphone_friend_list_add_friend(LinphoneFriendList *list, LinphoneFriend *lf, bool_t synchronize) {
+static LinphoneFriendListStatus _linphone_friend_list_add_friend(LinphoneFriendList *list, LinphoneFriend *lf,
+																 bool_t synchronize) {
 	LinphoneFriendListStatus status = LinphoneFriendListInvalidFriend;
 
 	if (!list || !lf->uri || lf->friend_list) {
@@ -403,9 +404,11 @@ static LinphoneFriendListStatus _linphone_friend_list_add_friend(LinphoneFriendL
 	if (ms_list_find(list->friends, lf) != NULL) {
 		char *tmp = NULL;
 		const LinphoneAddress *addr = linphone_friend_get_address(lf);
-		if (addr) tmp = linphone_address_as_string(addr);
+		if (addr)
+			tmp = linphone_address_as_string(addr);
 		ms_warning("Friend %s already in list [%s], ignored.", tmp ? tmp : "unknown", list->display_name);
-		if (tmp) ms_free(tmp);
+		if (tmp)
+			ms_free(tmp);
 	} else {
 		status = linphone_friend_list_import_friend(list, lf, synchronize);
 		linphone_friend_save(lf, lf->lc);
@@ -665,8 +668,10 @@ void linphone_friend_list_update_subscriptions(LinphoneFriendList *list, Linphon
 					linphone_event_set_user_data(list->event, list);
 				}
 			}
-			if (address != NULL) linphone_address_unref(address);
-			if (xml_content != NULL) ms_free(xml_content);
+			if (address != NULL)
+				linphone_address_unref(address);
+			if (xml_content != NULL)
+				ms_free(xml_content);
 		} else {
 			ms_message("Friends list [%p] subscription update skipped since subscriptions not enabled yet", list);
 		}

@@ -615,31 +615,32 @@ void linphone_friend_save(LinphoneFriend *fr, LinphoneCore *lc) {
 
 void linphone_friend_apply(LinphoneFriend *fr, LinphoneCore *lc) {
 	LinphonePresenceModel *model;
-	
+
 	if (!fr->uri) {
 		ms_warning("No sip url defined.");
 		return;
 	}
 	if (!linphone_core_ready(lc)) {
 		/* lc not ready, deffering subscription */
-		fr->commit=TRUE;
+		fr->commit = TRUE;
 		return;
 	}
 
 	if (fr->inc_subscribe_pending) {
-		switch(fr->pol) {
-			case LinphoneSPWait:
-				model = linphone_presence_model_new_with_activity(LinphonePresenceActivityOther, "Waiting for user acceptance");
-				linphone_friend_notify(fr, model);
-				linphone_presence_model_unref(model);
-				break;
-			case LinphoneSPAccept:
-				if (fr->lc)
-					linphone_friend_notify(fr, fr->lc->presence_model);
-				break;
-			case LinphoneSPDeny:
-				linphone_friend_notify(fr, NULL);
-				break;
+		switch (fr->pol) {
+		case LinphoneSPWait:
+			model =
+				linphone_presence_model_new_with_activity(LinphonePresenceActivityOther, "Waiting for user acceptance");
+			linphone_friend_notify(fr, model);
+			linphone_presence_model_unref(model);
+			break;
+		case LinphoneSPAccept:
+			if (fr->lc)
+				linphone_friend_notify(fr, fr->lc->presence_model);
+			break;
+		case LinphoneSPDeny:
+			linphone_friend_notify(fr, NULL);
+			break;
 		}
 		fr->inc_subscribe_pending = FALSE;
 	}
@@ -839,19 +840,19 @@ LinphoneFriend *linphone_core_find_friend_by_inc_subscribe(const LinphoneCore *l
 	return lf;
 }
 
-#define key_compare(s1,s2)	strcmp(s1,s2)
+#define key_compare(s1, s2) strcmp(s1, s2)
 
-LinphoneSubscribePolicy __policy_str_to_enum(const char* pol){
-	if (key_compare("accept",pol)==0){
+LinphoneSubscribePolicy __policy_str_to_enum(const char *pol) {
+	if (key_compare("accept", pol) == 0) {
 		return LinphoneSPAccept;
 	}
-	if (key_compare("deny",pol)==0){
+	if (key_compare("deny", pol) == 0) {
 		return LinphoneSPDeny;
 	}
-	if (key_compare("wait",pol)==0){
+	if (key_compare("wait", pol) == 0) {
 		return LinphoneSPWait;
 	}
-	ms_warning("Unrecognized subscribe policy: %s",pol);
+	ms_warning("Unrecognized subscribe policy: %s", pol);
 	return LinphoneSPWait;
 }
 

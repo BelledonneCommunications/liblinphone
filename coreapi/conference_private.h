@@ -41,19 +41,21 @@ typedef enum {
  * List of states used by #LinphoneConference
  */
 typedef enum {
-	LinphoneConferenceStopped, /*< Initial state */
-	LinphoneConferenceStarting, /*< A participant has been added but the conference is not running yet */
-	LinphoneConferenceRunning, /*< The conference is running */
-	LinphoneConferenceStartingFailed /*< A participant has been added but the initialization of the conference has failed */
+	LinphoneConferenceStopped,		 /*< Initial state */
+	LinphoneConferenceStarting,		 /*< A participant has been added but the conference is not running yet */
+	LinphoneConferenceRunning,		 /*< The conference is running */
+	LinphoneConferenceStartingFailed /*< A participant has been added but the initialization of the conference has
+										failed */
 } LinphoneConferenceState;
 /**
  * Type of the funtion to pass as callback to linphone_conference_params_set_state_changed_callback()
  * @param conference The conference instance which the state has changed
  * @param new_state The new state of the conferenece
- * @param user_data Pointer pass to user_data while linphone_conference_params_set_state_changed_callback() was being called
+ * @param user_data Pointer pass to user_data while linphone_conference_params_set_state_changed_callback() was being
+ * called
  */
-typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference, LinphoneConferenceState new_state, void *user_data);
-
+typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference, LinphoneConferenceState new_state,
+												 void *user_data);
 
 /**
  * A function to converte a #LinphoneConferenceState into a string

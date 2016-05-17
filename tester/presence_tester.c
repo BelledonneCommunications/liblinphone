@@ -58,72 +58,104 @@ void notify_presence_received(LinphoneCore *lc, LinphoneFriend * lf) {
 	counters->last_received_presence = linphone_friend_get_presence_model(lf);
 	if (linphone_presence_model_get_basic_status(counters->last_received_presence) == LinphonePresenceBasicStatusOpen) {
 		counters->number_of_LinphonePresenceBasicStatusOpen++;
-	} else if (linphone_presence_model_get_basic_status(counters->last_received_presence) == LinphonePresenceBasicStatusClosed) {
+	} else if (linphone_presence_model_get_basic_status(counters->last_received_presence) ==
+			   LinphonePresenceBasicStatusClosed) {
 		counters->number_of_LinphonePresenceBasicStatusClosed++;
 	} else {
-		ms_error("Unexpected basic status [%i]",linphone_presence_model_get_basic_status(counters->last_received_presence));
+		ms_error("Unexpected basic status [%i]",
+				 linphone_presence_model_get_basic_status(counters->last_received_presence));
 	}
-	for (i=0;i<linphone_presence_model_get_nb_activities(counters->last_received_presence); i++) {
-		LinphonePresenceActivity *activity = linphone_presence_model_get_nth_activity(counters->last_received_presence, i);
+	for (i = 0; i < linphone_presence_model_get_nb_activities(counters->last_received_presence); i++) {
+		LinphonePresenceActivity *activity =
+			linphone_presence_model_get_nth_activity(counters->last_received_presence, i);
 		switch (linphone_presence_activity_get_type(activity)) {
-			case LinphonePresenceActivityOffline:
-				counters->number_of_LinphonePresenceActivityOffline++; break;
-			case LinphonePresenceActivityOnline:
-				counters->number_of_LinphonePresenceActivityOnline++; break;
-			case LinphonePresenceActivityAppointment:
-				counters->number_of_LinphonePresenceActivityAppointment++; break;
-			case LinphonePresenceActivityAway:
-				counters->number_of_LinphonePresenceActivityAway++; break;
-			case LinphonePresenceActivityBreakfast:
-				counters->number_of_LinphonePresenceActivityBreakfast++; break;
-			case LinphonePresenceActivityBusy:
-				counters->number_of_LinphonePresenceActivityBusy++; break;
-			case LinphonePresenceActivityDinner:
-				counters->number_of_LinphonePresenceActivityDinner++; break;
-			case LinphonePresenceActivityHoliday:
-				counters->number_of_LinphonePresenceActivityHoliday++; break;
-			case LinphonePresenceActivityInTransit:
-				counters->number_of_LinphonePresenceActivityInTransit++; break;
-			case LinphonePresenceActivityLookingForWork:
-				counters->number_of_LinphonePresenceActivityLookingForWork++; break;
-			case LinphonePresenceActivityLunch:
-				counters->number_of_LinphonePresenceActivityLunch++; break;
-			case LinphonePresenceActivityMeal:
-				counters->number_of_LinphonePresenceActivityMeal++; break;
-			case LinphonePresenceActivityMeeting:
-				counters->number_of_LinphonePresenceActivityMeeting++; break;
-			case LinphonePresenceActivityOnThePhone:
-				counters->number_of_LinphonePresenceActivityOnThePhone++; break;
-			case LinphonePresenceActivityOther:
-				counters->number_of_LinphonePresenceActivityOther++; break;
-			case LinphonePresenceActivityPerformance:
-				counters->number_of_LinphonePresenceActivityPerformance++; break;
-			case LinphonePresenceActivityPermanentAbsence:
-				counters->number_of_LinphonePresenceActivityPermanentAbsence++; break;
-			case LinphonePresenceActivityPlaying:
-				counters->number_of_LinphonePresenceActivityPlaying++; break;
-			case LinphonePresenceActivityPresentation:
-				counters->number_of_LinphonePresenceActivityPresentation++; break;
-			case LinphonePresenceActivityShopping:
-				counters->number_of_LinphonePresenceActivityShopping++; break;
-			case LinphonePresenceActivitySleeping:
-				counters->number_of_LinphonePresenceActivitySleeping++; break;
-			case LinphonePresenceActivitySpectator:
-				counters->number_of_LinphonePresenceActivitySpectator++; break;
-			case LinphonePresenceActivitySteering:
-				counters->number_of_LinphonePresenceActivitySteering++; break;
-			case LinphonePresenceActivityTravel:
-				counters->number_of_LinphonePresenceActivityTravel++; break;
-			case LinphonePresenceActivityTV:
-				counters->number_of_LinphonePresenceActivityTV++; break;
-			case LinphonePresenceActivityUnknown:
-				counters->number_of_LinphonePresenceActivityUnknown++; break;
-			case LinphonePresenceActivityVacation:
-				counters->number_of_LinphonePresenceActivityVacation++; break;
-			case LinphonePresenceActivityWorking:
-				counters->number_of_LinphonePresenceActivityWorking++; break;
-			case LinphonePresenceActivityWorship:
-				counters->number_of_LinphonePresenceActivityWorship++; break;
+		case LinphonePresenceActivityOffline:
+			counters->number_of_LinphonePresenceActivityOffline++;
+			break;
+		case LinphonePresenceActivityOnline:
+			counters->number_of_LinphonePresenceActivityOnline++;
+			break;
+		case LinphonePresenceActivityAppointment:
+			counters->number_of_LinphonePresenceActivityAppointment++;
+			break;
+		case LinphonePresenceActivityAway:
+			counters->number_of_LinphonePresenceActivityAway++;
+			break;
+		case LinphonePresenceActivityBreakfast:
+			counters->number_of_LinphonePresenceActivityBreakfast++;
+			break;
+		case LinphonePresenceActivityBusy:
+			counters->number_of_LinphonePresenceActivityBusy++;
+			break;
+		case LinphonePresenceActivityDinner:
+			counters->number_of_LinphonePresenceActivityDinner++;
+			break;
+		case LinphonePresenceActivityHoliday:
+			counters->number_of_LinphonePresenceActivityHoliday++;
+			break;
+		case LinphonePresenceActivityInTransit:
+			counters->number_of_LinphonePresenceActivityInTransit++;
+			break;
+		case LinphonePresenceActivityLookingForWork:
+			counters->number_of_LinphonePresenceActivityLookingForWork++;
+			break;
+		case LinphonePresenceActivityLunch:
+			counters->number_of_LinphonePresenceActivityLunch++;
+			break;
+		case LinphonePresenceActivityMeal:
+			counters->number_of_LinphonePresenceActivityMeal++;
+			break;
+		case LinphonePresenceActivityMeeting:
+			counters->number_of_LinphonePresenceActivityMeeting++;
+			break;
+		case LinphonePresenceActivityOnThePhone:
+			counters->number_of_LinphonePresenceActivityOnThePhone++;
+			break;
+		case LinphonePresenceActivityOther:
+			counters->number_of_LinphonePresenceActivityOther++;
+			break;
+		case LinphonePresenceActivityPerformance:
+			counters->number_of_LinphonePresenceActivityPerformance++;
+			break;
+		case LinphonePresenceActivityPermanentAbsence:
+			counters->number_of_LinphonePresenceActivityPermanentAbsence++;
+			break;
+		case LinphonePresenceActivityPlaying:
+			counters->number_of_LinphonePresenceActivityPlaying++;
+			break;
+		case LinphonePresenceActivityPresentation:
+			counters->number_of_LinphonePresenceActivityPresentation++;
+			break;
+		case LinphonePresenceActivityShopping:
+			counters->number_of_LinphonePresenceActivityShopping++;
+			break;
+		case LinphonePresenceActivitySleeping:
+			counters->number_of_LinphonePresenceActivitySleeping++;
+			break;
+		case LinphonePresenceActivitySpectator:
+			counters->number_of_LinphonePresenceActivitySpectator++;
+			break;
+		case LinphonePresenceActivitySteering:
+			counters->number_of_LinphonePresenceActivitySteering++;
+			break;
+		case LinphonePresenceActivityTravel:
+			counters->number_of_LinphonePresenceActivityTravel++;
+			break;
+		case LinphonePresenceActivityTV:
+			counters->number_of_LinphonePresenceActivityTV++;
+			break;
+		case LinphonePresenceActivityUnknown:
+			counters->number_of_LinphonePresenceActivityUnknown++;
+			break;
+		case LinphonePresenceActivityVacation:
+			counters->number_of_LinphonePresenceActivityVacation++;
+			break;
+		case LinphonePresenceActivityWorking:
+			counters->number_of_LinphonePresenceActivityWorking++;
+			break;
+		case LinphonePresenceActivityWorship:
+			counters->number_of_LinphonePresenceActivityWorship++;
+			break;
 		}
 	}
 }
@@ -260,73 +292,73 @@ static void subscribe_failure_handle_by_app(void) {
 }
 
 static void simple_subscribe(void) {
-	LinphoneCoreManager* marie = presence_linphone_core_manager_new("marie");
-	LinphoneCoreManager* pauline = presence_linphone_core_manager_new("pauline");
+	LinphoneCoreManager *marie = presence_linphone_core_manager_new("marie");
+	LinphoneCoreManager *pauline = presence_linphone_core_manager_new("pauline");
 
-	BC_ASSERT_TRUE(subscribe_to_callee_presence(marie,pauline));
-
+	BC_ASSERT_TRUE(subscribe_to_callee_presence(marie, pauline));
 
 	linphone_core_manager_destroy(marie);
 	/*unsubscribe is not reported ?*/
-	BC_ASSERT_FALSE(wait_for(NULL,pauline->lc,&pauline->stat.number_of_NewSubscriptionRequest,2)); /*just to wait for unsubscription even if not notified*/
+	BC_ASSERT_FALSE(wait_for(NULL, pauline->lc, &pauline->stat.number_of_NewSubscriptionRequest,
+							 2)); /*just to wait for unsubscription even if not notified*/
 
 	linphone_core_manager_destroy(pauline);
 }
 static void simple_subscribe_with_early_notify(void) {
-	
-	LinphoneCoreManager* marie = presence_linphone_core_manager_new("marie");
-	LinphoneCoreManager* pauline = presence_linphone_core_manager_new("pauline");
+
+	LinphoneCoreManager *marie = presence_linphone_core_manager_new("marie");
+	LinphoneCoreManager *pauline = presence_linphone_core_manager_new("pauline");
 	LinphoneAddress *marie_identity_addr = linphone_address_clone(marie->identity);
 	LpConfig *pauline_lp;
-	
-	char* pauline_identity=linphone_address_as_string_uri_only(pauline->identity);
-	char* marie_identity;
-	
-	LinphoneFriend* pauline_s_friend;
-	LinphoneFriend* marie_s_friend=linphone_core_create_friend_with_address(marie->lc,pauline_identity);
-	
+
+	char *pauline_identity = linphone_address_as_string_uri_only(pauline->identity);
+	char *marie_identity;
+
+	LinphoneFriend *pauline_s_friend;
+	LinphoneFriend *marie_s_friend = linphone_core_create_friend_with_address(marie->lc, pauline_identity);
+
 	pauline_lp = linphone_core_get_config(pauline->lc);
-	lp_config_set_int(pauline_lp,"sip","notify_pending_state",1);
-	
+	lp_config_set_int(pauline_lp, "sip", "notify_pending_state", 1);
+
 	linphone_friend_edit(marie_s_friend);
-	linphone_friend_enable_subscribes(marie_s_friend,TRUE);
+	linphone_friend_enable_subscribes(marie_s_friend, TRUE);
 	linphone_friend_done(marie_s_friend);
-	linphone_core_add_friend(marie->lc,marie_s_friend);
+	linphone_core_add_friend(marie->lc, marie_s_friend);
 	ms_free(pauline_identity);
-	
-	
+
 	/*to simulate pending state.*/
 
-	linphone_address_set_port(marie_identity_addr,0);
-	marie_identity=linphone_address_as_string_uri_only(marie_identity_addr);
-	pauline_s_friend=linphone_core_create_friend_with_address(pauline->lc,marie_identity);
-	linphone_core_add_friend(pauline->lc,pauline_s_friend);
-	
+	linphone_address_set_port(marie_identity_addr, 0);
+	marie_identity = linphone_address_as_string_uri_only(marie_identity_addr);
+	pauline_s_friend = linphone_core_create_friend_with_address(pauline->lc, marie_identity);
+	linphone_core_add_friend(pauline->lc, pauline_s_friend);
+
 	ms_free(marie_identity);
 
-	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_NotifyPresenceReceived,1));
-	BC_ASSERT_EQUAL(linphone_friend_get_subscription_state(marie_s_friend), LinphoneSubscriptionPending,int, "%d");
-	
-	wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphonePresenceActivityOnline,marie->stat.number_of_LinphonePresenceActivityOnline+1);
-	
-	BC_ASSERT_EQUAL(marie->stat.number_of_NotifyPresenceReceived,2, int, "%d");
-	
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_NotifyPresenceReceived, 1));
+	BC_ASSERT_EQUAL(linphone_friend_get_subscription_state(marie_s_friend), LinphoneSubscriptionPending, int, "%d");
+
+	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePresenceActivityOnline,
+			 marie->stat.number_of_LinphonePresenceActivityOnline + 1);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_NotifyPresenceReceived, 2, int, "%d");
+
 	linphone_friend_unref(marie_s_friend);
 	linphone_friend_unref(pauline_s_friend);
 	linphone_address_unref(marie_identity_addr);
 	linphone_core_manager_destroy(marie);
-	
+
 	linphone_core_manager_destroy(pauline);
 }
 
-
 static void unsubscribe_while_subscribing(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneFriend* friend = linphone_core_create_friend_with_address(marie->lc, "sip:toto@git.linphone.org"); /*any unexisting address*/
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneFriend *friend =
+		linphone_core_create_friend_with_address(marie->lc, "sip:toto@git.linphone.org"); /*any unexisting address*/
 	linphone_friend_edit(friend);
-	linphone_friend_enable_subscribes(friend,TRUE);
+	linphone_friend_enable_subscribes(friend, TRUE);
 	linphone_friend_done(friend);
-	linphone_core_add_friend(marie->lc,friend);
+	linphone_core_add_friend(marie->lc, friend);
 	linphone_friend_unref(friend);
 	linphone_core_iterate(marie->lc);
 	linphone_core_manager_destroy(marie);
@@ -443,11 +475,12 @@ static void presence_information(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-
-static void subscribe_presence_forked(void){
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline1 = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_tcp_rc" : "pauline_tcp_rc");
-	LinphoneCoreManager* pauline2 = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_tcp_rc" : "pauline_tcp_rc");
+static void subscribe_presence_forked(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline1 =
+		linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_tcp_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager *pauline2 =
+		linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_tcp_rc" : "pauline_tcp_rc");
 	LinphoneFriend *lf;
 	MSList *lcs = NULL;
 
@@ -462,12 +495,12 @@ static void subscribe_presence_forked(void){
 	linphone_core_add_friend(marie->lc, lf);
 	linphone_friend_unref(lf);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline1->stat.number_of_NewSubscriptionRequest,1, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline2->stat.number_of_NewSubscriptionRequest,1, 2000));
-	
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline1->stat.number_of_NewSubscriptionRequest, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline2->stat.number_of_NewSubscriptionRequest, 1, 2000));
+
 	/*we should get only one notify*/
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphonePresenceActivityOnline,1, 10000));
-	BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphonePresenceActivityOnline,2, 2000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePresenceActivityOnline, 1, 10000));
+	BC_ASSERT_FALSE(wait_for_list(lcs, &marie->stat.number_of_LinphonePresenceActivityOnline, 2, 2000));
 
 	/*marie also shall receive two SUBSCRIBEs from the two paulines, but won't be notified to the app since
 	 Marie set Pauline as a friend.*/
@@ -549,8 +582,8 @@ static void simple_subscribe_with_friend_from_rc(void) {
 }
 
 test_t presence_tests[] = {
-	TEST_ONE_TAG("Simple Subscribe", simple_subscribe,"presence"),
-	TEST_ONE_TAG("Simple Subscribe with early NOTIFY", simple_subscribe_with_early_notify,"presence"),
+	TEST_ONE_TAG("Simple Subscribe", simple_subscribe, "presence"),
+	TEST_ONE_TAG("Simple Subscribe with early NOTIFY", simple_subscribe_with_early_notify, "presence"),
 	TEST_NO_TAG("Simple Subscribe with friend from rc", simple_subscribe_with_friend_from_rc),
 	TEST_ONE_TAG("Simple Publish", simple_publish, "LeaksMemory"),
 	TEST_ONE_TAG("Simple Publish with expires", publish_with_expires, "LeaksMemory"),

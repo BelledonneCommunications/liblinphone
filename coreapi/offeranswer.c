@@ -195,10 +195,10 @@ static MSList *match_payloads(MSFactory *factory, const MSList *local, const MSL
 				}
 			}
 
-			if (p2->send_fmtp){
-				payload_type_append_send_fmtp(matched,p2->send_fmtp);
+			if (p2->send_fmtp) {
+				payload_type_append_send_fmtp(matched, p2->send_fmtp);
 			}
-			payload_type_set_flag(matched, PAYLOAD_TYPE_FLAG_CAN_RECV|PAYLOAD_TYPE_FLAG_CAN_SEND);
+			payload_type_set_flag(matched, PAYLOAD_TYPE_FLAG_CAN_RECV | PAYLOAD_TYPE_FLAG_CAN_SEND);
 			if (matched->flags & PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED && p2->flags & PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED) {
 				payload_type_set_flag(matched, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
 				/* Negotiation of AVPF features (keep common features) */
@@ -208,16 +208,16 @@ static MSList *match_payloads(MSFactory *factory, const MSList *local, const MSL
 				if (p2->avpf.trr_interval > matched->avpf.trr_interval) {
 					matched->avpf.trr_interval = p2->avpf.trr_interval;
 				}
-			}else{
+			} else {
 				payload_type_unset_flag(matched, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
 			}
-			res=ms_list_append(res,matched);
+			res = ms_list_append(res, matched);
 			/* we should use the remote numbering even when parsing a response */
-			payload_type_set_number(matched,remote_number);
+			payload_type_set_number(matched, remote_number);
 			payload_type_set_flag(matched, PAYLOAD_TYPE_FROZEN_NUMBER);
-			if (reading_response && remote_number!=local_number){
+			if (reading_response && remote_number != local_number) {
 				ms_warning("For payload type %s, proposed number was %i but the remote phone answered %i",
-						  matched->mime_type, local_number, remote_number);
+						   matched->mime_type, local_number, remote_number);
 				/*
 				 We must add this payload type with our local numbering in order to be able to receive it.
 				 Indeed despite we must sent with the remote numbering, we must be able to receive with

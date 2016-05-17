@@ -851,60 +851,58 @@ gchar *linphone_gtk_get_record_path(const LinphoneAddress *address, gboolean is_
 		}
 	}
 
-	if (address){
-		id=linphone_address_get_username(address);
-		if (id==NULL) id=linphone_address_get_domain(address);
+	if (address) {
+		id = linphone_address_get_username(address);
+		if (id == NULL)
+			id = linphone_address_get_domain(address);
 	}
-	if (is_conference){
-		snprintf(filename,sizeof(filename)-1,"%s-conference-%s.%s",
-			linphone_gtk_get_ui_config("title","Linphone"),
-			date,ext);
-	}else{
-		snprintf(filename,sizeof(filename)-1,"%s-call-%s-%s.%s",
-			linphone_gtk_get_ui_config("title","Linphone"),
-			date,
-			id,ext);
+	if (is_conference) {
+		snprintf(filename, sizeof(filename) - 1, "%s-conference-%s.%s", linphone_gtk_get_ui_config("title", "Linphone"),
+				 date, ext);
+	} else {
+		snprintf(filename, sizeof(filename) - 1, "%s-call-%s-%s.%s", linphone_gtk_get_ui_config("title", "Linphone"),
+				 date, id, ext);
 	}
 	if (!dir) {
-		ms_message ("No directory for music, using [%s] instead",dir=getenv("HOME"));
+		ms_message("No directory for music, using [%s] instead", dir = getenv("HOME"));
 	}
-	return g_build_filename(dir,filename,NULL);
+	return g_build_filename(dir, filename, NULL);
 }
 
 gchar *linphone_gtk_get_snapshot_path(void) {
-	const char *dir=g_get_user_special_dir(G_USER_DIRECTORY_PICTURES);
-	char filename[256]={0};
-	char date[64]={0};
-	time_t curtime=time(NULL);
+	const char *dir = g_get_user_special_dir(G_USER_DIRECTORY_PICTURES);
+	char filename[256] = {0};
+	char date[64] = {0};
+	time_t curtime = time(NULL);
 	struct tm loctime;
-	const char *ext="jpg";
+	const char *ext = "jpg";
 
 #ifdef _WIN32
-	loctime=*localtime(&curtime);
+	loctime = *localtime(&curtime);
 #else
-	localtime_r(&curtime,&loctime);
+	localtime_r(&curtime, &loctime);
 #endif
-	snprintf(date,sizeof(date)-1,"%i%02i%02i-%02i%02i%02i",loctime.tm_year+1900,loctime.tm_mon+1,loctime.tm_mday, loctime.tm_hour, loctime.tm_min, loctime.tm_sec);
-	snprintf(filename,sizeof(filename)-1,"%s-snapshot-%s.%s",
-			linphone_gtk_get_ui_config("title","Linphone"),
-			date, ext);
+	snprintf(date, sizeof(date) - 1, "%i%02i%02i-%02i%02i%02i", loctime.tm_year + 1900, loctime.tm_mon + 1,
+			 loctime.tm_mday, loctime.tm_hour, loctime.tm_min, loctime.tm_sec);
+	snprintf(filename, sizeof(filename) - 1, "%s-snapshot-%s.%s", linphone_gtk_get_ui_config("title", "Linphone"), date,
+			 ext);
 	if (!dir) {
-		ms_message ("No directory for pictures, using [%s] instead",dir=getenv("HOME"));
+		ms_message("No directory for pictures, using [%s] instead", dir = getenv("HOME"));
 	}
-	return g_build_filename(dir,filename,NULL);
+	return g_build_filename(dir, filename, NULL);
 }
 
-static gboolean linphone_gtk_start_call_do(GtkWidget *uri_bar){
-	const char *entered=gtk_entry_get_text(GTK_ENTRY(uri_bar));
-	LinphoneCore *lc=linphone_gtk_get_core();
-	LinphoneAddress *addr=linphone_core_interpret_url(lc,entered);
+static gboolean linphone_gtk_start_call_do(GtkWidget *uri_bar) {
+	const char *entered = gtk_entry_get_text(GTK_ENTRY(uri_bar));
+	LinphoneCore *lc = linphone_gtk_get_core();
+	LinphoneAddress *addr = linphone_core_interpret_url(lc, entered);
 
-	if (addr!=NULL){
-		LinphoneCallParams *params=linphone_core_create_call_params(lc, NULL);
-		gchar *record_file=linphone_gtk_get_record_path(addr,FALSE);
-		linphone_call_params_set_record_file(params,record_file);
-		linphone_core_invite_address_with_params(lc,addr,params);
-		completion_add_text(GTK_ENTRY(uri_bar),entered);
+	if (addr != NULL) {
+		LinphoneCallParams *params = linphone_core_create_call_params(lc, NULL);
+		gchar *record_file = linphone_gtk_get_record_path(addr, FALSE);
+		linphone_call_params_set_record_file(params, record_file);
+		linphone_core_invite_address_with_params(lc, addr, params);
+		completion_add_text(GTK_ENTRY(uri_bar), entered);
 		linphone_address_destroy(addr);
 		linphone_call_params_destroy(params);
 		g_free(record_file);
@@ -914,12 +912,12 @@ static gboolean linphone_gtk_start_call_do(GtkWidget *uri_bar){
 	return FALSE;
 }
 
-static void accept_incoming_call(LinphoneCall *call){
-	LinphoneCore *lc=linphone_gtk_get_core();
+static void accept_incoming_call(LinphoneCall *call) {
+	LinphoneCore *lc = linphone_gtk_get_core();
 	LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
-	gchar *record_file=linphone_gtk_get_record_path(linphone_call_get_remote_address(call),FALSE);
-	linphone_call_params_set_record_file(params,record_file);
-	linphone_core_accept_call_with_params(lc,call,params);
+	gchar *record_file = linphone_gtk_get_record_path(linphone_call_get_remote_address(call), FALSE);
+	linphone_call_params_set_record_file(params, record_file);
+	linphone_core_accept_call_with_params(lc, call, params);
 	linphone_call_params_destroy(params);
 }
 

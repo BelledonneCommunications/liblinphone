@@ -429,7 +429,8 @@ LinphoneFriend *linphone_core_find_friend_by_out_subscribe(const LinphoneCore *l
 LinphoneFriend *linphone_core_find_friend_by_inc_subscribe(const LinphoneCore *lc, SalOp *op);
 MSList *linphone_find_friend_by_address(MSList *fl, const LinphoneAddress *addr, LinphoneFriend **lf);
 bool_t linphone_core_should_subscribe_friends_only_when_registered(const LinphoneCore *lc);
-void linphone_core_update_friends_subscriptions(LinphoneCore *lc, LinphoneProxyConfig *cfg, bool_t only_when_registered);
+void linphone_core_update_friends_subscriptions(LinphoneCore *lc, LinphoneProxyConfig *cfg,
+												bool_t only_when_registered);
 void linphone_core_friends_storage_init(LinphoneCore *lc);
 void linphone_core_friends_storage_close(LinphoneCore *lc);
 void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf);
