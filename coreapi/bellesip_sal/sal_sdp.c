@@ -473,41 +473,39 @@ belle_sdp_session_description_t * media_description_to_sdp ( const SalMediaDescr
 	return session_desc;
 }
 
-
 static void sdp_parse_payload_types(belle_sdp_media_description_t *media_desc, SalStreamDescription *stream) {
 	PayloadType *pt;
 	PayloadTypeAvpfParams avpf_params;
-	belle_sip_list_t* mime_param_it=NULL;
-	belle_sdp_mime_parameter_t* mime_param;
-	belle_sip_list_t* mime_params=belle_sdp_media_description_build_mime_parameters ( media_desc );
+	belle_sip_list_t *mime_param_it = NULL;
+	belle_sdp_mime_parameter_t *mime_param;
+	belle_sip_list_t *mime_params = belle_sdp_media_description_build_mime_parameters(media_desc);
 	memset(&avpf_params, 0, sizeof(avpf_params));
-	for ( mime_param_it=mime_params
-						; mime_param_it!=NULL
-			; mime_param_it=mime_param_it->next ) {
-		mime_param=BELLE_SDP_MIME_PARAMETER ( mime_param_it->data );
+	for (mime_param_it = mime_params; mime_param_it != NULL; mime_param_it = mime_param_it->next) {
+		mime_param = BELLE_SDP_MIME_PARAMETER(mime_param_it->data);
 
-		pt=payload_type_new();
-		payload_type_set_number ( pt,belle_sdp_mime_parameter_get_media_format ( mime_param ) );
-		pt->clock_rate=belle_sdp_mime_parameter_get_rate ( mime_param );
-		pt->mime_type=ms_strdup ( belle_sdp_mime_parameter_get_type ( mime_param ) );
-		pt->channels=belle_sdp_mime_parameter_get_channel_count ( mime_param );
-		payload_type_set_send_fmtp ( pt,belle_sdp_mime_parameter_get_parameters ( mime_param ) );
+		pt = payload_type_new();
+		payload_type_set_number(pt, belle_sdp_mime_parameter_get_media_format(mime_param));
+		pt->clock_rate = belle_sdp_mime_parameter_get_rate(mime_param);
+		pt->mime_type = ms_strdup(belle_sdp_mime_parameter_get_type(mime_param));
+		pt->channels = belle_sdp_mime_parameter_get_channel_count(mime_param);
+		payload_type_set_send_fmtp(pt, belle_sdp_mime_parameter_get_parameters(mime_param));
 		payload_type_set_avpf_params(pt, avpf_params);
-		stream->payloads=ms_list_append ( stream->payloads,pt );
-		stream->ptime=belle_sdp_mime_parameter_get_ptime ( mime_param );
-		ms_message ( "Found payload %s/%i fmtp=%s",pt->mime_type,pt->clock_rate,
-						pt->send_fmtp ? pt->send_fmtp : "" );
+		stream->payloads = ms_list_append(stream->payloads, pt);
+		stream->ptime = belle_sdp_mime_parameter_get_ptime(mime_param);
+		ms_message("Found payload %s/%i fmtp=%s", pt->mime_type, pt->clock_rate, pt->send_fmtp ? pt->send_fmtp : "");
 	}
-	if ( mime_params ) belle_sip_list_free_with_data ( mime_params,belle_sip_object_unref );
+	if (mime_params)
+		belle_sip_list_free_with_data(mime_params, belle_sip_object_unref);
 }
 
-static void sdp_parse_media_screensharing_parameters(belle_sdp_media_description_t *media_desc, SalStreamDescription *stream) {
+static void sdp_parse_media_screensharing_parameters(belle_sdp_media_description_t *media_desc,
+													 SalStreamDescription *stream) {
 	belle_sdp_attribute_t *attribute;
 	const char *value;
-	
-	attribute=belle_sdp_media_description_get_attribute(media_desc,"setup");
-	
-	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
+
+	attribute = belle_sdp_media_description_get_attribute(media_desc, "setup");
+
+	if (attribute && (value = belle_sdp_attribute_get_value(attribute)) != NULL) {
 		if (strncmp(value, "actpass", 7) == 0)
 			stream->screensharing_role = SalStreamSendRecv;
 		else if (strncmp(value, "active", 6) == 0)
@@ -516,20 +514,21 @@ static void sdp_parse_media_screensharing_parameters(belle_sdp_media_description
 			stream->screensharing_role = SalStreamRecvOnly;
 		else
 			stream->screensharing_role = SalStreamInactive;
-		
-		stream->screensharing=(stream->screensharing_role!=SalStreamInactive);
-	} else stream->screensharing=FALSE;
 
-	attribute=belle_sdp_media_description_get_attribute(media_desc,"connection");
-	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
-		//TODO suite concernant la connexion
+		stream->screensharing = (stream->screensharing_role != SalStreamInactive);
+	} else
+		stream->screensharing = FALSE;
+
+	attribute = belle_sdp_media_description_get_attribute(media_desc, "connection");
+	if (attribute && (value = belle_sdp_attribute_get_value(attribute)) != NULL) {
 		if (strncmp(value, "new", 3) == 0)
-			stream->screensharing_step = SalScreenSharingWaiting;
+			stream->screensharing_state = MSScreenSharingWaiting;
 		else if (strncmp(value, "existing", 8) == 0)
-			stream->screensharing_step = SalScreenSharingWaiting;
+			stream->screensharing_state = MSScreenSharingWaiting;
 		else
-			stream->screensharing_step = SalScreenSharingInactive;
-	} else stream->screensharing_step = SalScreenSharingInactive;
+			stream->screensharing_state = MSScreenSharingInactive;
+	} else
+		stream->screensharing_state = MSScreenSharingInactive;
 }
 
 static void sdp_parse_media_crypto_parameters(belle_sdp_media_description_t *media_desc, SalStreamDescription *stream) {

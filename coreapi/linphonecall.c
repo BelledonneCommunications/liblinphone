@@ -1024,17 +1024,17 @@ static void linphone_call_init_common(LinphoneCall *call, LinphoneAddress *from,
 	call->main_video_stream_index = LINPHONE_CALL_STATS_VIDEO;
 	call->main_text_stream_index = LINPHONE_CALL_STATS_TEXT;
 	call->main_screensharing_stream_index = LINPHONE_CALL_STATS_SCREENSHARING;
-	call->state=LinphoneCallIdle;
+	call->state = LinphoneCallIdle;
 	call->transfer_state = LinphoneCallIdle;
-	call->log=linphone_call_log_new(call->dir, from, to);
-	call->camera_enabled=TRUE;
+	call->log = linphone_call_log_new(call->dir, from, to);
+	call->camera_enabled = TRUE;
 	call->current_params = linphone_call_params_new();
-	call->current_params->media_encryption=LinphoneMediaEncryptionNone;
+	call->current_params->media_encryption = LinphoneMediaEncryptionNone;
 	call->dtls_certificate_fingerprint = NULL;
 	if (call->dir == LinphoneCallIncoming)
-		call->me=to;
-	 else
-		call->me=from;
+		call->me = to;
+	else
+		call->me = from;
 	linphone_address_ref(call->me);
 
 	linphone_core_get_audio_port_range(call->core, &min_port, &max_port);
@@ -3639,16 +3639,21 @@ static void linphone_call_start_screensharing_stream(LinphoneCall *call) {
 	const SalStreamDescription *scstream;
 
 	scstream = sal_media_description_find_best_stream(call->resultdesc, SalApplication);
-	if (scstream != NULL && scstream->dir!=SalStreamInactive && scstream->screensharing) {
-		call->current_params->screensharing_enabled=TRUE;
-		call->current_params->screensharing_dir=linphone_call_salmedia_to_linphonemedia(scstream->screensharing_role);
-		call->screenstream->is_server=(call->current_params->screensharing_dir==LinphoneMediaDirectionRecvOnly);
-		strcpy(call->screenstream->addr_ip,call->biggestdesc->addr);
-		call->screenstream->tcp_port=call->resultdesc->streams[call->main_screensharing_stream_index].rtcp_port;
-		screensharing_stream_start(call->screenstream);
+	if (scstream != NULL && scstream->dir != SalStreamInactive && scstream->screensharing) {
+		call->current_params->screensharing_enabled = TRUE;
+		call->current_params->screensharing_dir = linphone_call_salmedia_to_linphonemedia(scstream->screensharing_role);
+		call->screenstream->is_server = (call->current_params->screensharing_dir == LinphoneMediaDirectionRecvOnly);
+		strcpy(call->screenstream->addr_ip, call->biggestdesc->addr);
+		call->screenstream->tcp_port = call->resultdesc->streams[call->main_screensharing_stream_index].rtcp_port;
+		call->screenstream->state =
+			call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_state =
+				(call->screenstream->is_server) ? MSScreenSharingListening : MSScreenSharingConnecting;
 	} else {
-		call->current_params->screensharing_enabled=FALSE;
-		call->current_params->screensharing_dir=LinphoneMediaDirectionInactive;
+		call->current_params->screensharing_enabled = FALSE;
+		call->current_params->screensharing_dir = LinphoneMediaDirectionInactive;
+		call->screenstream->state =
+			call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_state =
+				MSScreenSharingInactive;
 		ms_message("No valid screensharing stream defined.");
 	}
 }
@@ -4636,12 +4641,20 @@ static OrtpEvQueue *linphone_call_get_event_queue(LinphoneCall *call, int stream
 	return NULL;
 }
 
-void linphone_call_handle_stream_events(LinphoneCall *call, int stream_index){
-	MediaStream *ms = stream_index == call->main_audio_stream_index ? (MediaStream *)call->audiostream : (stream_index == call->main_video_stream_index ? (MediaStream *)call->videostream :(stream_index == call->main_video_stream_index ? (MediaStream *)call->textstream:NULL));
+void linphone_call_handle_stream_events(LinphoneCall *call, int stream_index) {
+	MediaStream *ms =
+		stream_index == call->main_audio_stream_index
+			? (MediaStream *)call->audiostream
+			: (stream_index == call->main_video_stream_index
+				   ? (MediaStream *)call->videostream
+				   : (stream_index == call->main_video_stream_index
+						  ? (MediaStream *)call->textstream
+						  : (stream_index == call->main_screensharing_stream_index ? (MediaStream *)call->screenstream
+																				   : NULL)));
 	OrtpEvQueue *evq;
 	OrtpEvent *ev;
 
-	if (ms){
+	if (ms) {
 		/* Ensure there is no dangling ICE check list. */
 		if (call->ice_session == NULL) {
 			media_stream_set_ice_check_list(ms, NULL);

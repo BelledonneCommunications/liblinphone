@@ -209,33 +209,22 @@ typedef struct SalSrtpCryptoAlgo {
 
 #define SAL_CRYPTO_ALGO_MAX 4
 
-typedef enum {
-	SalDtlsRoleInvalid,
-	SalDtlsRoleIsServer,
-	SalDtlsRoleIsClient,
-	SalDtlsRoleUnset
-} SalDtlsRole;
+typedef enum { SalDtlsRoleInvalid, SalDtlsRoleIsServer, SalDtlsRoleIsClient, SalDtlsRoleUnset } SalDtlsRole;
 
 typedef enum {
-	SalMulticastInactive=0,
+	SalMulticastInactive = 0,
 	SalMulticastSender,
 	SalMulticastReceiver,
 	SalMulticastSenderReceiver
 } SalMulticastRole;
 
 typedef enum {
-	SalOpSDPNormal = 0, /** No special handling for SDP */
+	SalOpSDPNormal = 0,	/** No special handling for SDP */
 	SalOpSDPSimulateError, /** Will simulate an SDP parsing error */
 	SalOpSDPSimulateRemove /** Will simulate no SDP in the op */
 } SalOpSDPHandling;
 
-typedef enum {
-	SalScreenSharingInactive=0,
-	SalScreenSharingWaiting,
-	SalScreenSharingConnected
-} SalScreenSharingStep;
-
-typedef struct SalStreamDescription{
+typedef struct SalStreamDescription {
 	char name[16]; /*unique name of stream, in order to ease offer/answer model algorithm*/
 	SalMediaProto proto;
 	SalStreamType type;
@@ -264,7 +253,7 @@ typedef struct SalStreamDescription{
 	char ice_ufrag[SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN];
 	char ice_pwd[SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN];
 	bool_t ice_mismatch;
-	SalScreenSharingStep screensharing_step;
+	MSScreenSharingState screensharing_state;
 	bool_t set_nortpproxy; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 	bool_t rtcp_mux;
 	bool_t pad[1];
