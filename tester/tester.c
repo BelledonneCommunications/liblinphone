@@ -39,7 +39,7 @@
 #define unlink _unlink
 #endif
 
-static bool_t liblinphone_tester_ipv6_enabled=FALSE;
+
 static int liblinphone_tester_keep_accounts_flag = 0;
 static int liblinphone_tester_keep_record_files = FALSE;
 static int liblinphone_tester_leak_detector_disabled = FALSE;
@@ -77,9 +77,6 @@ bool_t liblinphone_tester_clock_elapsed(const MSTimeSpec *start, int value_ms){
 	return FALSE;
 }
 
-void liblinphone_tester_enable_ipv6(bool_t enabled){
-	liblinphone_tester_ipv6_enabled=enabled;
-}
 
 LinphoneAddress * create_linphone_address(const char * domain) {
 	LinphoneAddress *addr = linphone_address_new(NULL);
@@ -155,8 +152,6 @@ LinphoneCore* configure_lc_from(LinphoneCoreVTable* v_table, const char* path, c
 	sal_enable_test_features(lc->sal,TRUE);
 	sal_set_dns_user_hosts_file(lc->sal, dnsuserhostspath);
 	linphone_core_set_static_picture(lc,nowebcampath);
-
-	linphone_core_enable_ipv6(lc, liblinphone_tester_ipv6_enabled);
 
 	ms_free(ringpath);
 	ms_free(ringbackpath);
@@ -413,7 +408,6 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 	if (mgr->stat.last_received_info_message) linphone_info_message_destroy(mgr->stat.last_received_info_message);
 	if (mgr->lc){
 		const char *record_file=linphone_core_get_record_file(mgr->lc);
-		int unterminated_calls;
 
 		if (!liblinphone_tester_keep_record_files && record_file){
 			if ((bc_get_number_of_failures()-mgr->number_of_cunit_error_at_creation)>0) {
@@ -421,10 +415,6 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 			} else {
 				unlink(record_file);
 			}
-		}
-		BC_ASSERT_EQUAL((unterminated_calls=ms_list_size(mgr->lc->calls)), 0, int, "%i");
-		if (unterminated_calls != 0) {
-			ms_error("There are still %d calls pending, please terminates them before invoking linphone_core_manager_destroy().", unterminated_calls);
 		}
 		linphone_core_destroy(mgr->lc);
 	}
@@ -441,7 +431,7 @@ void linphone_core_manager_destroy(LinphoneCoreManager* mgr) {
 }
 
 int liblinphone_tester_ipv6_available(void){
-	struct addrinfo *ai=belle_sip_ip_address_to_addrinfo(AF_INET6,"2a01:e00::2",53);
+	struct addrinfo *ai=bctbx_ip_address_to_addrinfo(AF_INET6,SOCK_STREAM,"2a01:e00::2",53);
 	if (ai){
 		struct sockaddr_storage ss;
 		struct addrinfo src;
@@ -451,7 +441,7 @@ int liblinphone_tester_ipv6_available(void){
 		belle_sip_get_src_addr_for(ai->ai_addr,(socklen_t)ai->ai_addrlen,(struct sockaddr*) &ss,&slen,4444);
 		src.ai_addr=(struct sockaddr*) &ss;
 		src.ai_addrlen=slen;
-		belle_sip_addrinfo_to_ip(&src,localip, sizeof(localip),&port);
+		bctbx_addrinfo_to_ip_address(&src,localip, sizeof(localip),&port);
 		freeaddrinfo(ai);
 		return strcmp(localip,"::1")!=0;
 	}
@@ -738,7 +728,9 @@ static void linphone_conference_server_call_state_changed(LinphoneCore *lc, Linp
 
 		case LinphoneCallEnd:
 			if(call == conf_srv->first_call) {
-				linphone_core_terminate_conference(lc);
+				if(linphone_core_get_conference(lc)) {
+					linphone_core_terminate_conference(lc);
+				}
 				conf_srv->first_call = NULL;
 			}
 			break;

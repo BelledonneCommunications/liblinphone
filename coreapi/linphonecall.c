@@ -650,7 +650,8 @@ static void transfer_already_assigned_payload_types(SalMediaDescription *old, Sa
 }
 
 static const char *linphone_call_get_bind_ip_for_stream(LinphoneCall *call, int stream_index){
-	const char *bind_ip = lp_config_get_string(call->core->config,"rtp","bind_address",call->af==AF_INET6 ? "::0" : "0.0.0.0");
+	const char *bind_ip = lp_config_get_string(call->core->config,"rtp","bind_address",
+				linphone_core_ipv6_enabled(call->core) ? "::0" : "0.0.0.0");
 
 	if (stream_index<2 && call->media_ports[stream_index].multicast_ip[0]!='\0'){
 		if (call->dir==LinphoneCallOutgoing){
@@ -1095,7 +1096,7 @@ void linphone_call_create_op(LinphoneCall *call){
 }
 
 /*
- * Choose IP version we are going to use for RTP socket.
+ * Choose IP version we are going to use for RTP streams IP address advertised in SDP.
  * The algorithm is as follows:
  * - if ipv6 is disabled at the core level, it is always AF_INET
  * - Otherwise, if the destination address for the call is an IPv6 address, use IPv6.
@@ -1234,9 +1235,19 @@ LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, LinphoneAddr
 	return call;
 }
 
-static void linphone_call_incoming_select_ip_version(LinphoneCall *call){
+/*Select IP version to use for advertising local addresses of RTP streams, for an incoming call.
+ *If the call is received through a know proxy that is IPv6, use IPv6.
+ *Otherwise check the remote contact address.
+ *If later the resulting media description tells that we have to send IPv4, it won't be a problem because the RTP sockets
+ * are dual stack.
+ */
+static void linphone_call_incoming_select_ip_version(LinphoneCall *call, LinphoneProxyConfig *cfg){
 	if (linphone_core_ipv6_enabled(call->core)){
-		call->af=sal_op_is_ipv6(call->op) ? AF_INET6 : AF_INET;
+		if (cfg && cfg->op){
+			call->af=sal_op_is_ipv6(cfg->op) ? AF_INET6 : AF_INET;
+		}else{
+			call->af=sal_op_is_ipv6(call->op) ? AF_INET6 : AF_INET;
+		}
 	}else call->af=AF_INET;
 }
 
@@ -1246,13 +1257,12 @@ static void linphone_call_incoming_select_ip_version(LinphoneCall *call){
 void linphone_call_set_compatible_incoming_call_parameters(LinphoneCall *call, SalMediaDescription *md) {
 	/* Handle AVPF, SRTP and DTLS. */
 	call->params->avpf_enabled = sal_media_description_has_avpf(md);
-	if (call->params->avpf_enabled == TRUE) {
-		if (call->dest_proxy != NULL) {
-			call->params->avpf_rr_interval = linphone_proxy_config_get_avpf_rr_interval(call->dest_proxy) * 1000;
-		} else {
-			call->params->avpf_rr_interval = linphone_core_get_avpf_rr_interval(call->core)*1000;
-		}
+	if (call->dest_proxy != NULL) {
+		call->params->avpf_rr_interval = linphone_proxy_config_get_avpf_rr_interval(call->dest_proxy) * 1000;
+	} else {
+		call->params->avpf_rr_interval = linphone_core_get_avpf_rr_interval(call->core)*1000;
 	}
+	
 	if ((sal_media_description_has_zrtp(md) == TRUE) && (ms_zrtp_available() == TRUE)) {
 		call->params->media_encryption = LinphoneMediaEncryptionZRTP;
 	}else if ((sal_media_description_has_dtls(md) == TRUE) && (media_stream_dtls_supported() == TRUE)) {
@@ -1261,6 +1271,10 @@ void linphone_call_set_compatible_incoming_call_parameters(LinphoneCall *call, S
 		call->params->media_encryption = LinphoneMediaEncryptionSRTP;
 	}else if (call->params->media_encryption != LinphoneMediaEncryptionZRTP){
 		call->params->media_encryption = LinphoneMediaEncryptionNone;
+	}
+	if (!sal_media_description_has_ipv6(md)){
+		ms_message("The remote SDP doesn't seem to offer any IPv6 connectivity, so disabling IPv6 for this call.");
+		call->af = AF_INET;
 	}
 	linphone_call_fix_call_parameters(call, md);
 }
@@ -1405,7 +1419,11 @@ LinphoneCall * linphone_call_new_incoming(LinphoneCore *lc, LinphoneAddress *fro
 	call->op=op;
 	call->core=lc;
 
-	linphone_call_incoming_select_ip_version(call);
+	call->dest_proxy = linphone_core_lookup_known_proxy(call->core, to);
+	linphone_call_incoming_select_ip_version(call, call->dest_proxy);
+	/*note that the choice of IP version for streams is later refined by 
+	 * linphone_call_set_compatible_incoming_call_parameters() when examining the remote offer, if any.
+	 * If the remote offer contains IPv4 addresses, we should propose IPv4 as well*/
 
 	sal_op_cnx_ip_to_0000_if_sendonly_enable(op,lp_config_get_default_int(lc->config,"sip","cnx_ip_to_0000_if_sendonly_enabled",0));
 
@@ -1437,7 +1455,6 @@ LinphoneCall * linphone_call_new_incoming(LinphoneCore *lc, LinphoneAddress *fro
 	linphone_call_init_common(call, from, to);
 	
 	call->log->call_id=ms_strdup(sal_op_get_call_id(op)); /*must be known at that time*/
-	call->dest_proxy = linphone_core_lookup_known_proxy(call->core, to);
 	linphone_core_init_default_params(lc, call->params);
 
 	/*

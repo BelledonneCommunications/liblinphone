@@ -233,6 +233,17 @@ static void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCor
 	}
 }
 
+/*
+ * CAUTION this function is error prone. you should not use it anymore in new tests.
+ * Creating callee call params before the call is actually received is not the good way
+ * to use the Liblinphone API. Indeed, call params used for receiving calls shall be created by linphone_core_create_call_params() by passing
+ * the call object for which params are to be created.
+ * This function should be used only in test case where the programmer exactly knows the caller params, and then can deduce how
+ * callee params will be set by linphone_core_create_call_params().
+ * This function was developped at a time where the use of the API about incoming params was not yet clarified.
+ * Tests relying on this function are then not testing the correct way to use the api (through linphone_core_create_call_params()), and so 
+ * it is not a so good idea to build new tests based on this function.
+**/
 bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 						,LinphoneCoreManager* callee_mgr
 						, const LinphoneCallTestParams *caller_test_params
@@ -382,6 +393,17 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	return result;
 }
 
+/*
+ * CAUTION this function is error prone. you should not use it anymore in new tests.
+ * Creating callee call params before the call is actually received is not the good way
+ * to use the Liblinphone API. Indeed, call params used for receiving calls shall be created by linphone_core_create_call_params() by passing
+ * the call object for which params are to be created.
+ * This function should be used only in test case where the programmer exactly knows the caller params, and then can deduce how
+ * callee params will be set by linphone_core_create_call_params().
+ * This function was developped at a time where the use of the API about incoming params was not yet clarified.
+ * Tests relying on this function are then not testing the correct way to use the api (through linphone_core_create_call_params()), and so 
+ * it is not a so good idea to build new tests based on this function.
+**/
 bool_t call_with_params(LinphoneCoreManager* caller_mgr
 						,LinphoneCoreManager* callee_mgr
 						,const LinphoneCallParams *caller_params
@@ -392,6 +414,17 @@ bool_t call_with_params(LinphoneCoreManager* caller_mgr
 	return call_with_params2(caller_mgr,callee_mgr,&caller_test_params,&callee_test_params,FALSE);
 }
 
+/*
+ * CAUTION this function is error prone. you should not use it anymore in new tests.
+ * Creating callee call params before the call is actually received is not the good way
+ * to use the Liblinphone API. Indeed, call params used for receiving calls shall be created by linphone_core_create_call_params() by passing
+ * the call object for which params are to be created.
+ * This function should be used only in test case where the programmer exactly knows the caller params, and then can deduce how
+ * callee params will be set by linphone_core_create_call_params().
+ * This function was developped at a time where the use of the API about incoming params was not yet clarified.
+ * Tests relying on this function are then not testing the correct way to use the api (through linphone_core_create_call_params()), and so 
+ * it is not a so good idea to build new tests based on this function.
+**/
 bool_t call_with_test_params(LinphoneCoreManager* caller_mgr
 				,LinphoneCoreManager* callee_mgr
 				,const LinphoneCallTestParams *caller_test_params
@@ -2380,96 +2413,98 @@ static void video_call_without_rtcp(void) {
 }
 
 static void video_call_disable_implicit_AVPF_on_callee(void) {
-    LinphoneCoreManager* callee = linphone_core_manager_new("marie_rc");
-    LinphoneCoreManager* caller = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
-    LpConfig   *callee_lp;
-    const LinphoneCallParams *params, *params2;
+	LinphoneCoreManager* callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* caller = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+	LpConfig   *callee_lp;
+	const LinphoneCallParams *params, *params2;
 
-    callee_lp = linphone_core_get_config(callee->lc);
-    lp_config_set_int(callee_lp,"rtp","rtcp_fb_implicit_rtcp_fb",0);
+	callee_lp = linphone_core_get_config(callee->lc);
+	lp_config_set_int(callee_lp,"rtp","rtcp_fb_implicit_rtcp_fb",0);
 
-    video_call_base_3(caller,callee,TRUE,LinphoneMediaEncryptionNone,TRUE,TRUE);
-    params = linphone_call_get_current_params(linphone_core_get_current_call(callee->lc));
-    BC_ASSERT_STRING_EQUAL(linphone_call_params_get_rtp_profile(params), "RTP/AVP");
-    params2 =linphone_call_get_current_params(linphone_core_get_current_call(caller->lc));
-    BC_ASSERT_STRING_EQUAL(linphone_call_params_get_rtp_profile(params2), "RTP/AVP");
-    end_call(caller, callee);
-    linphone_core_manager_destroy(callee);
-    linphone_core_manager_destroy(caller);
-
+	video_call_base_3(caller,callee,TRUE,LinphoneMediaEncryptionNone,TRUE,TRUE);
+	if(BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(callee->lc))) {
+		params = linphone_call_get_current_params(linphone_core_get_current_call(callee->lc));
+		BC_ASSERT_STRING_EQUAL(linphone_call_params_get_rtp_profile(params), "RTP/AVP");
+	}
+	if(BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(caller->lc))) {
+		params2 =linphone_call_get_current_params(linphone_core_get_current_call(caller->lc));
+		BC_ASSERT_STRING_EQUAL(linphone_call_params_get_rtp_profile(params2), "RTP/AVP");
+	}
+	end_call(caller, callee);
+	linphone_core_manager_destroy(callee);
+	linphone_core_manager_destroy(caller);
 }
 
 
 static void video_call_disable_implicit_AVPF_on_caller(void) {
-    LinphoneCoreManager* callee = linphone_core_manager_new("marie_rc");
-    LinphoneCoreManager* caller = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
-    LpConfig   *caller_lp;
-    const LinphoneCallParams *params, *params2;
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *caller = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+	LpConfig   *caller_lp;
+	const LinphoneCallParams *params, *params2;
 
-    caller_lp = linphone_core_get_config(caller->lc);
-    lp_config_set_int(caller_lp,"rtp","rtcp_fb_implicit_rtcp_fb",0);
+	caller_lp = linphone_core_get_config(caller->lc);
+	lp_config_set_int(caller_lp, "rtp", "rtcp_fb_implicit_rtcp_fb", 0);
 
-    video_call_base_3(caller,callee,TRUE,LinphoneMediaEncryptionNone,TRUE,TRUE);
-    params = linphone_call_get_current_params(linphone_core_get_current_call(callee->lc));
-    BC_ASSERT_STRING_EQUAL(linphone_call_params_get_rtp_profile(params), "RTP/AVP");
-    params2 =linphone_call_get_current_params(linphone_core_get_current_call(caller->lc));
-    BC_ASSERT_STRING_EQUAL(linphone_call_params_get_rtp_profile(params2), "RTP/AVP");
-    end_call(caller, callee);
-    linphone_core_manager_destroy(callee);
-    linphone_core_manager_destroy(caller);
-
-}
-
-static void video_call_AVPF_to_implicit_AVPF(void)
-{
-    LinphoneCoreManager* callee = linphone_core_manager_new("marie_rc");
-    LinphoneCoreManager* caller = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
-
-    linphone_core_set_avpf_mode(caller->lc,LinphoneAVPFEnabled);
-    video_call_base_3(caller,callee,TRUE,LinphoneMediaEncryptionNone,TRUE,TRUE);
-    end_call(caller,callee);
-
-    linphone_core_manager_destroy(callee);
-    linphone_core_manager_destroy(caller);
+	video_call_base_3(caller, callee, TRUE, LinphoneMediaEncryptionNone, TRUE, TRUE);
+	params = linphone_call_get_current_params(linphone_core_get_current_call(callee->lc));
+	BC_ASSERT_STRING_EQUAL(linphone_call_params_get_rtp_profile(params), "RTP/AVP");
+	params2 = linphone_call_get_current_params(linphone_core_get_current_call(caller->lc));
+	BC_ASSERT_STRING_EQUAL(linphone_call_params_get_rtp_profile(params2), "RTP/AVP");
+	end_call(caller, callee);
+	linphone_core_manager_destroy(callee);
+	linphone_core_manager_destroy(caller);
 
 }
 
-static void video_call_implicit_AVPF_to_AVPF(void)
-{
-    LinphoneCoreManager* callee = linphone_core_manager_new("marie_rc");
-    LinphoneCoreManager* caller = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+static void video_call_AVPF_to_implicit_AVPF(void) {
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *caller = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 
-    linphone_core_set_avpf_mode(callee->lc,LinphoneAVPFEnabled);
-    video_call_base_3(caller,callee,TRUE,LinphoneMediaEncryptionNone,TRUE,TRUE);
-    end_call(caller,callee);
+	linphone_core_set_avpf_mode(caller->lc, LinphoneAVPFEnabled);
+	video_call_base_3(caller, callee, TRUE, LinphoneMediaEncryptionNone, TRUE, TRUE);
+	end_call(caller, callee);
 
-    linphone_core_manager_destroy(callee);
-    linphone_core_manager_destroy(caller);
+	linphone_core_manager_destroy(callee);
+	linphone_core_manager_destroy(caller);
+
+}
+
+static void video_call_implicit_AVPF_to_AVPF(void) {
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *caller = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+
+	linphone_core_set_avpf_mode(callee->lc, LinphoneAVPFEnabled);
+	video_call_base_3(caller, callee, TRUE, LinphoneMediaEncryptionNone, TRUE, TRUE);
+	end_call(caller, callee);
+
+	linphone_core_manager_destroy(callee);
+	linphone_core_manager_destroy(caller);
 
 }
 
 static void video_call_using_policy_AVPF_implicit_caller_and_callee(void) {
-    LinphoneCoreManager* callee = linphone_core_manager_new("marie_rc");
-    LinphoneCoreManager* caller = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
-    video_call_base_3(caller,callee,FALSE,LinphoneMediaEncryptionNone,TRUE,TRUE);
-    end_call(caller, callee);
-    linphone_core_manager_destroy(callee);
-    linphone_core_manager_destroy(caller);
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *caller = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+	video_call_base_3(caller, callee, FALSE, LinphoneMediaEncryptionNone, TRUE, TRUE);
+	end_call(caller, callee);
+	linphone_core_manager_destroy(callee);
+	linphone_core_manager_destroy(caller);
 }
-static void video_call_base_avpf(LinphoneCoreManager* caller,LinphoneCoreManager* callee, bool_t using_policy,LinphoneMediaEncryption mode, bool_t callee_video_enabled, bool_t caller_video_enabled) {
-    linphone_core_set_avpf_mode(caller->lc,LinphoneAVPFEnabled);
-    linphone_core_set_avpf_mode(callee->lc,LinphoneAVPFEnabled);
-    video_call_base_3(caller,callee,using_policy,mode,callee_video_enabled,caller_video_enabled);
-    end_call(caller, callee);
+
+static void video_call_base_avpf(LinphoneCoreManager *caller, LinphoneCoreManager *callee, bool_t using_policy, LinphoneMediaEncryption mode, bool_t callee_video_enabled, bool_t caller_video_enabled) {
+	linphone_core_set_avpf_mode(caller->lc, LinphoneAVPFEnabled);
+	linphone_core_set_avpf_mode(callee->lc, LinphoneAVPFEnabled);
+	video_call_base_3(caller, callee, using_policy, mode, callee_video_enabled, caller_video_enabled);
+	end_call(caller, callee);
 }
 
 static void video_call_avpf(void) {
-    LinphoneCoreManager* callee = linphone_core_manager_new("marie_rc");
-    LinphoneCoreManager* caller = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager *callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *caller = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
-    video_call_base_avpf(caller,callee,FALSE,LinphoneMediaEncryptionNone,TRUE,TRUE);
-    linphone_core_manager_destroy(callee);
-    linphone_core_manager_destroy(caller);
+	video_call_base_avpf(caller, callee, FALSE, LinphoneMediaEncryptionNone, TRUE, TRUE);
+	linphone_core_manager_destroy(callee);
+	linphone_core_manager_destroy(caller);
 
 }
 
@@ -4286,10 +4321,12 @@ static void call_with_very_early_call_update(void) {
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,1));
 	}
 
+	if(linphone_core_get_current_call(pauline->lc)) {
+		params=linphone_core_create_call_params(pauline->lc,linphone_core_get_current_call(pauline->lc));
+		linphone_core_update_call(pauline->lc,linphone_core_get_current_call(pauline->lc),params);
+		linphone_call_params_destroy(params);
+	}
 	
-	params=linphone_core_create_call_params(pauline->lc,linphone_core_get_current_call(pauline->lc));
-	linphone_core_update_call(pauline->lc,linphone_core_get_current_call(pauline->lc),params);
-	linphone_call_params_destroy(params);
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallUpdating,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2));

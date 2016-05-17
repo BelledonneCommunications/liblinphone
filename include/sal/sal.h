@@ -326,11 +326,13 @@ bool_t sal_stream_description_has_avpf(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_implicit_avpf(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_srtp(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_dtls(const SalStreamDescription *sd);
+bool_t sal_stream_description_has_ipv6(const SalStreamDescription *md);
 bool_t sal_media_description_has_avpf(const SalMediaDescription *md);
 bool_t sal_media_description_has_implicit_avpf(const SalMediaDescription *md);
 bool_t sal_media_description_has_srtp(const SalMediaDescription *md);
 bool_t sal_media_description_has_dtls(const SalMediaDescription *md);
 bool_t sal_media_description_has_zrtp(const SalMediaDescription *md);
+bool_t sal_media_description_has_ipv6(const SalMediaDescription *md);
 int sal_media_description_get_nb_active_streams(const SalMediaDescription *md);
 
 struct SalOpBase;
@@ -770,6 +772,7 @@ int sal_subscribe(SalOp *op, const char *from, const char *to, const char *event
 int sal_unsubscribe(SalOp *op);
 int sal_subscribe_accept(SalOp *op);
 int sal_subscribe_decline(SalOp *op, SalReason reason);
+int sal_notify_pending_state(SalOp *op);
 int sal_notify(SalOp *op, const SalBodyHandler *body);
 int sal_notify_close(SalOp *op);
 int sal_publish(SalOp *op, const char *from, const char *to, const char*event_name, int expires, const SalBodyHandler *body);

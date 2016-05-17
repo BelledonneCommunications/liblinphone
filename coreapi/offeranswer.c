@@ -199,14 +199,14 @@ static MSList *match_payloads(MSFactory *factory, const MSList *local, const MSL
 				payload_type_append_send_fmtp(matched,p2->send_fmtp);
 			}
 			payload_type_set_flag(matched, PAYLOAD_TYPE_FLAG_CAN_RECV|PAYLOAD_TYPE_FLAG_CAN_SEND);
-			if (p2->flags & PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED) {
+			if (matched->flags & PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED && p2->flags & PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED) {
 				payload_type_set_flag(matched, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
 				/* Negotiation of AVPF features (keep common features) */
 				matched->avpf.features &= p2->avpf.features;
 				matched->avpf.rpsi_compatibility = p2->avpf.rpsi_compatibility;
 				/* Take bigger AVPF trr interval */
-				if (p2->avpf.trr_interval < matched->avpf.trr_interval) {
-					matched->avpf.trr_interval = matched->avpf.trr_interval;
+				if (p2->avpf.trr_interval > matched->avpf.trr_interval) {
+					matched->avpf.trr_interval = p2->avpf.trr_interval;
 				}
 			}else{
 				payload_type_unset_flag(matched, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);

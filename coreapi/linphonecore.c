@@ -1783,7 +1783,10 @@ static void linphone_core_init(LinphoneCore * lc, const LinphoneCoreVTable *vtab
 	lc->network_last_check = 0;
 	lc->network_last_status = FALSE;
 
-	lc->http_provider = belle_sip_stack_create_http_provider(sal_get_belle_sip_stack(lc->sal), "0.0.0.0");
+	/* Create the http provider in dual stack mode (ipv4 and ipv6.
+	 * If this creates problem, we may need to implement parallel ipv6/ ipv4 http requests in belle-sip.
+	 */
+	lc->http_provider = belle_sip_stack_create_http_provider(sal_get_belle_sip_stack(lc->sal), "::0");
 	lc->http_crypto_config = belle_tls_crypto_config_new();
 	belle_http_provider_set_tls_crypto_config(lc->http_provider,lc->http_crypto_config);
 
@@ -2752,10 +2755,8 @@ void linphone_core_iterate(LinphoneCore *lc){
 	}
 	if (linphone_core_get_global_state(lc) == LinphoneGlobalStartup) {
 		if (sal_get_root_ca(lc->sal)) {
-			belle_tls_crypto_config_t *crypto_config = belle_tls_crypto_config_new();
-			belle_tls_crypto_config_set_root_ca(crypto_config, sal_get_root_ca(lc->sal));
-			belle_http_provider_set_tls_crypto_config(lc->http_provider, crypto_config);
-			belle_sip_object_unref(crypto_config);
+			belle_tls_crypto_config_set_root_ca(lc->http_crypto_config, sal_get_root_ca(lc->sal));
+			belle_http_provider_set_tls_crypto_config(lc->http_provider, lc->http_crypto_config);
 		}
 
 		linphone_core_notify_display_status(lc, _("Configuring"));
@@ -7377,6 +7378,7 @@ void linphone_core_init_default_params(LinphoneCore*lc, LinphoneCallParams *para
 	params->privacy=LinphonePrivacyDefault;
 	params->avpf_enabled=linphone_core_get_avpf_mode(lc);
 	params->implicit_rtcp_fb = lp_config_get_int(lc->config,"rtp","rtcp_fb_implicit_rtcp_fb",TRUE);
+	params->avpf_rr_interval = linphone_core_get_avpf_rr_interval(lc);
 	params->audio_dir=LinphoneMediaDirectionSendRecv;
 	params->video_dir=LinphoneMediaDirectionSendRecv;
 	params->screensharing_dir=lc->screen_conf.role;
@@ -7773,10 +7775,16 @@ LinphoneRingtonePlayer *linphone_core_get_ringtoneplayer(LinphoneCore *lc) {
 	return lc->ringtoneplayer;
 }
 
-static void linphone_core_conference_state_changed(LinphoneConference *conf, LinphoneConferenceState cstate, void *user_data) {
+static int _linphone_core_delayed_conference_destriction_cb(void *user_data, unsigned int event) {
+	LinphoneConference *conf = (LinphoneConference *)user_data;
+	linphone_conference_free(conf);
+	return 0;
+}
+
+static void _linphone_core_conference_state_changed(LinphoneConference *conf, LinphoneConferenceState cstate, void *user_data) {
 	LinphoneCore *lc = (LinphoneCore *)user_data;
 	if(cstate == LinphoneConferenceStartingFailed || cstate == LinphoneConferenceStopped) {
-		linphone_conference_free(lc->conf_ctx);
+		linphone_core_queue_task(lc, _linphone_core_delayed_conference_destriction_cb, conf, "Conference destruction task");
 		lc->conf_ctx = NULL;
 	}
 }
@@ -7785,7 +7793,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	const char *conf_method_name;
 	if(lc->conf_ctx == NULL) {
 		LinphoneConferenceParams *params2 = linphone_conference_params_clone(params);
-		linphone_conference_params_set_state_changed_callback(params2, linphone_core_conference_state_changed, lc);
+		linphone_conference_params_set_state_changed_callback(params2, _linphone_core_conference_state_changed, lc);
 		conf_method_name = lp_config_get_string(lc->config, "misc", "conference_type", "local");
 		if(strcasecmp(conf_method_name, "local") == 0) {
 			lc->conf_ctx = linphone_local_conference_new_with_params(lc, params2);
@@ -7808,7 +7816,6 @@ int linphone_core_add_to_conference(LinphoneCore *lc, LinphoneCall *call) {
 	LinphoneConference *conference = linphone_core_get_conference(lc);
 	if(conference == NULL) {
 		LinphoneConferenceParams *params = linphone_conference_params_new(lc);
-		linphone_conference_params_set_state_changed_callback(params, linphone_core_conference_state_changed, lc);
 		conference = linphone_core_create_conference_with_params(lc, params);
 		linphone_conference_params_free(params);
 	}

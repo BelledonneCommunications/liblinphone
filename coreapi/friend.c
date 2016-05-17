@@ -615,9 +615,14 @@ void linphone_friend_save(LinphoneFriend *fr, LinphoneCore *lc) {
 
 void linphone_friend_apply(LinphoneFriend *fr, LinphoneCore *lc) {
 	LinphonePresenceModel *model;
-
+	
 	if (!fr->uri) {
 		ms_warning("No sip url defined.");
+		return;
+	}
+	if (!linphone_core_ready(lc)) {
+		/* lc not ready, deffering subscription */
+		fr->commit=TRUE;
 		return;
 	}
 
@@ -693,8 +698,6 @@ void linphone_core_add_friend(LinphoneCore *lc, LinphoneFriend *lf) {
 		lc->subscribers = ms_list_remove(lc->subscribers, lf);
 		linphone_friend_unref(lf);
 	}
-	if (linphone_core_ready(lc)) linphone_friend_apply(lf, lc);
-	else lf->commit = TRUE;
 }
 
 void linphone_core_remove_friend(LinphoneCore *lc, LinphoneFriend *lf) {
@@ -809,6 +812,28 @@ LinphoneFriend *linphone_core_get_friend_by_ref_key(const LinphoneCore *lc, cons
 	while (lists && !lf) {
 		LinphoneFriendList *list = (LinphoneFriendList *)lists->data;
 		lf = linphone_friend_list_find_friend_by_ref_key(list, key);
+		lists = ms_list_next(lists);
+	}
+	return lf;
+}
+
+LinphoneFriend *linphone_core_find_friend_by_out_subscribe(const LinphoneCore *lc, SalOp *op) {
+	MSList *lists = lc->friends_lists;
+	LinphoneFriend *lf = NULL;
+	while (lists && !lf) {
+		LinphoneFriendList *list = (LinphoneFriendList *)lists->data;
+		lf = linphone_friend_list_find_friend_by_out_subscribe(list, op);
+		lists = ms_list_next(lists);
+	}
+	return lf;
+}
+
+LinphoneFriend *linphone_core_find_friend_by_inc_subscribe(const LinphoneCore *lc, SalOp *op) {
+	MSList *lists = lc->friends_lists;
+	LinphoneFriend *lf = NULL;
+	while (lists && !lf) {
+		LinphoneFriendList *list = (LinphoneFriendList *)lists->data;
+		lf = linphone_friend_list_find_friend_by_inc_subscribe(list, op);
 		lists = ms_list_next(lists);
 	}
 	return lf;
@@ -1529,4 +1554,7 @@ void linphone_core_migrate_friends_from_rc_to_db(LinphoneCore *lc) {
 
 	ms_debug("friends migration successful: %i friends migrated", i);
 	lp_config_set_int(lpc, "misc", "friends_migration_done", 1);
+}
+LinphoneSubscriptionState linphone_friend_get_subscription_state(const LinphoneFriend *lf) {
+	return lf->out_sub_state;
 }
