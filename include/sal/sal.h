@@ -261,10 +261,9 @@ typedef struct SalStreamDescription {
 	SalDtlsRole dtls_role;
 	uint8_t zrtphash[128];
 	uint8_t haveZrtpHash; /**< flag for zrtp hash presence */
-	int ttl; /*for multicast -1 to disable*/
+	int ttl;			  /*for multicast -1 to disable*/
 	SalMulticastRole multicast_role;
-	SalStreamDir screensharing_role;//TODO
-	bool_t screensharing;
+	SalStreamDir screensharing_role;
 } SalStreamDescription;
 
 const char *sal_stream_description_get_type_as_string(const SalStreamDescription *desc);

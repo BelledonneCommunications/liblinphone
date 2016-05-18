@@ -458,25 +458,28 @@ static MSList *make_codec_list(LinphoneCore *lc, CodecConstraints * hints, SalSt
 	return l;
 }
 
-static void update_media_description_from_stun(SalMediaDescription *md, const StunCandidate *ac, const StunCandidate *vc, const StunCandidate *tc){
+static void update_media_description_from_stun(SalMediaDescription *md, const StunCandidate *ac,
+											   const StunCandidate *vc, const StunCandidate *tc) {
 	int i;
 	for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
-		if (!sal_stream_description_active(&md->streams[i])) continue;
+		if (!sal_stream_description_active(&md->streams[i]))
+			continue;
 		if ((md->streams[i].type == SalAudio) && (ac->port != 0)) {
-			strcpy(md->streams[i].rtp_addr,ac->addr);
-			md->streams[i].rtp_port=ac->port;
-			if ((ac->addr[0]!='\0' && vc->addr[0]!='\0' && strcmp(ac->addr,vc->addr)==0) || sal_media_description_get_nb_active_streams(md)==1){
-				strcpy(md->addr,ac->addr);
+			strcpy(md->streams[i].rtp_addr, ac->addr);
+			md->streams[i].rtp_port = ac->port;
+			if ((ac->addr[0] != '\0' && vc->addr[0] != '\0' && strcmp(ac->addr, vc->addr) == 0) ||
+				sal_media_description_get_nb_active_streams(md) == 1) {
+				strcpy(md->addr, ac->addr);
 			}
 		} else if ((md->streams[i].type == SalVideo) && (vc->port != 0)) {
-			strcpy(md->streams[i].rtp_addr,vc->addr);
-			md->streams[i].rtp_port=vc->port;
+			strcpy(md->streams[i].rtp_addr, vc->addr);
+			md->streams[i].rtp_port = vc->port;
 		} else if ((md->streams[i].type == SalText) && (tc->port != 0)) {
-			strcpy(md->streams[i].rtp_addr,tc->addr);
-			md->streams[i].rtp_port=tc->port;
-		} else if ((md->streams[i].type == SalApplication)) {
-			//TODO screensharing
-		}
+			strcpy(md->streams[i].rtp_addr, tc->addr);
+			md->streams[i].rtp_port = tc->port;
+		} /* else if ((md->streams[i].type == SalApplication)) {
+			 //TODO screensharing
+		 }*/
 	}
 }
 
@@ -867,18 +870,17 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 		md->streams[call->main_text_stream_index].dir = SalStreamInactive;
 	}
 	if (params->custom_sdp_media_attributes[LinphoneStreamTypeText])
-		md->streams[call->main_text_stream_index].custom_sdp_attributes = sal_custom_sdp_attribute_clone(params->custom_sdp_media_attributes[LinphoneStreamTypeText]);
+		md->streams[call->main_text_stream_index].custom_sdp_attributes =
+			sal_custom_sdp_attribute_clone(params->custom_sdp_media_attributes[LinphoneStreamTypeText]);
 
-	// TODO screensharing
-	
-	md->streams[call->main_screensharing_stream_index].proto=SalProtoTcpRdp;
-	md->streams[call->main_screensharing_stream_index].dir=SalStreamSendRecv;
-	md->streams[call->main_screensharing_stream_index].type=SalApplication;
+	md->streams[call->main_screensharing_stream_index].proto = SalProtoTcpRdp;
+	md->streams[call->main_screensharing_stream_index].type = SalApplication;
 	md->streams[call->main_screensharing_stream_index].rtcp_mux = rtcp_mux;
-	
-	strncpy(md->streams[call->main_screensharing_stream_index].name,"Application",sizeof(md->streams[call->main_screensharing_stream_index].name)-1);
+	strncpy(md->streams[call->main_screensharing_stream_index].name, "Application",
+			sizeof(md->streams[call->main_screensharing_stream_index].name) - 1);
+
 	if (params->screensharing_enabled) {
-		md->streams[call->main_screensharing_stream_index].screensharing = TRUE;
+		md->streams[call->main_screensharing_stream_index].dir = SalStreamSendRecv;
 
 		strncpy(md->streams[call->main_screensharing_stream_index].rtp_addr,
 				linphone_call_get_public_ip_for_stream(call, call->main_screensharing_stream_index),
@@ -887,29 +889,22 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 				linphone_call_get_public_ip_for_stream(call, call->main_screensharing_stream_index),
 				sizeof(md->streams[call->main_text_stream_index].rtcp_addr));
 
-		codec_hints.bandwidth_limit = 0;
-		codec_hints.max_codecs = 1;
-		codec_hints.previously_used = NULL;
-		l = make_codec_list(lc, &codec_hints, SalAudio, lc->codecs_conf.audio_codecs);
-
 		md->streams[call->main_screensharing_stream_index].rtp_port =
 			call->media_ports[call->main_screensharing_stream_index].rtp_port;
 		md->streams[call->main_screensharing_stream_index].rtcp_port =
 			call->media_ports[call->main_screensharing_stream_index].rtcp_port;
 		md->streams[call->main_screensharing_stream_index].screensharing_role =
-			linphone_call_linphonemedia_to_salmedia(params->screensharing_dir);
-		md->streams[call->main_screensharing_stream_index].payloads = l;
+			linphone_call_linphonemedia_to_salmedia(params->screensharing_dir); // Improve ?
+		md->streams[call->main_screensharing_stream_index].payloads = NULL;
 
 		if (call->main_screensharing_stream_index > max_index)
 			max_index = call->main_screensharing_stream_index;
 	} else {
-		ms_message("Don't put screen sharing stream on local offer for call [%p]",call);
+		ms_message("Don't put screen sharing stream on local offer for call [%p]", call);
 		md->streams[call->main_screensharing_stream_index].dir = SalStreamInactive;
 	}
-	if (params->custom_sdp_media_attributes[LinphoneStreamTypeScreenSharing])
-		md->streams[call->main_screensharing_stream_index].custom_sdp_attributes = sal_custom_sdp_attribute_clone(params->custom_sdp_media_attributes[LinphoneStreamTypeScreenSharing]);
-	
-	md->nb_streams = MAX(md->nb_streams,max_index+1);
+
+	md->nb_streams = MAX(md->nb_streams, max_index + 1);
 	/* Deactivate unused streams. */
 	for (i = md->nb_streams; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
 		if (md->streams[i].rtp_port == 0) {
@@ -3661,7 +3656,7 @@ static void linphone_call_start_screensharing_stream(LinphoneCall *call) {
 	const SalStreamDescription *scstream;
 
 	scstream = sal_media_description_find_best_stream(call->resultdesc, SalApplication);
-	if (scstream != NULL && scstream->dir != SalStreamInactive && scstream->screensharing) {
+	if (scstream != NULL && scstream->dir != SalStreamInactive) {
 		call->current_params->screensharing_enabled = TRUE;
 		call->current_params->screensharing_dir = linphone_call_salmedia_to_linphonemedia(scstream->screensharing_role);
 		call->screenstream->is_server = (call->current_params->screensharing_dir == LinphoneMediaDirectionRecvOnly);
@@ -3671,7 +3666,6 @@ static void linphone_call_start_screensharing_stream(LinphoneCall *call) {
 			call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_state =
 				(call->screenstream->is_server) ? MSScreenSharingListening : MSScreenSharingConnecting;
 	} else {
-		call->current_params->screensharing_enabled = FALSE;
 		call->current_params->screensharing_dir = LinphoneMediaDirectionInactive;
 		call->screenstream->state =
 			call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_state =

@@ -1177,48 +1177,59 @@ static bool_t linphone_core_codec_supported(LinphoneCore *lc, SalStreamType type
 	return ms_factory_codec_supported(lc->factory, mime);
 }
 
-
-static bool_t get_codec(LinphoneCore *lc, SalStreamType type, int index, PayloadType **ret){
+static bool_t get_codec(LinphoneCore *lc, SalStreamType type, int index, PayloadType **ret) {
 	char codeckey[50];
-	const char *mime,*fmtp;
-	int rate,channels,enabled;
+	const char *mime, *fmtp;
+	int rate, channels, enabled;
 	PayloadType *pt;
-	LpConfig *config=lc->config;
+	LpConfig *config = lc->config;
 
-	*ret=NULL;
-	snprintf(codeckey,50,"%s_codec_%i",type == SalAudio ? "audio" : type == SalVideo ? "video" : type == SalApplication ? "screensharing" : "text", index);
-	mime=lp_config_get_string(config,codeckey,"mime",NULL);
-	if (mime==NULL || strlen(mime)==0 ) return FALSE;
+	*ret = NULL;
+	snprintf(codeckey, 50, "%s_codec_%i",
+			 type == SalAudio ? "audio" : type == SalVideo ? "video" : type == SalApplication ? "screensharing"
+																							  : "text",
+			 index);
+	mime = lp_config_get_string(config, codeckey, "mime", NULL);
+	if (mime == NULL || strlen(mime) == 0)
+		return FALSE;
 
-	rate=lp_config_get_int(config,codeckey,"rate",8000);
-	fmtp=lp_config_get_string(config,codeckey,"recv_fmtp",NULL);
-	channels=lp_config_get_int(config,codeckey,"channels",0);
-	enabled=lp_config_get_int(config,codeckey,"enabled",1);
-	if (!linphone_core_codec_supported(lc, type, mime)){
-		ms_warning("Codec %s/%i read from conf is not supported by mediastreamer2, ignored.",mime,rate);
+	rate = lp_config_get_int(config, codeckey, "rate", 8000);
+	fmtp = lp_config_get_string(config, codeckey, "recv_fmtp", NULL);
+	channels = lp_config_get_int(config, codeckey, "channels", 0);
+	enabled = lp_config_get_int(config, codeckey, "enabled", 1);
+	if (!linphone_core_codec_supported(lc, type, mime)) {
+		ms_warning("Codec %s/%i read from conf is not supported by mediastreamer2, ignored.", mime, rate);
 		return TRUE;
 	}
-	pt = find_payload(type == SalAudio ? lc->default_audio_codecs : type == SalVideo ? lc->default_video_codecs : type == SalText ? lc->default_text_codecs : lc->default_screensharing_codecs ,mime,rate,channels,fmtp);
-	if (!pt){
-		MSList **default_list = (type==SalAudio) ? &lc->default_audio_codecs : type == SalVideo ? &lc->default_video_codecs : type == SalText ? &lc->default_text_codecs : &lc->default_screensharing_codecs;
+	pt = find_payload(type == SalAudio ? lc->default_audio_codecs : type == SalVideo ? lc->default_video_codecs
+																					 : lc->default_text_codecs,
+					  mime, rate, channels, fmtp);
+	if (!pt) {
+		MSList **default_list = (type == SalAudio) ? &lc->default_audio_codecs : type == SalVideo
+																					 ? &lc->default_video_codecs
+																					 : &lc->default_text_codecs;
 		if (type == SalAudio)
-			ms_warning("Codec %s/%i/%i read from conf is not in the default list.",mime,rate,channels);
+			ms_warning("Codec %s/%i/%i read from conf is not in the default list.", mime, rate, channels);
 		else if (type == SalVideo)
-			ms_warning("Codec %s/%i read from conf is not in the default list.",mime,rate);
+			ms_warning("Codec %s/%i read from conf is not in the default list.", mime, rate);
 		else
-			ms_warning("Codec %s read from conf is not in the default list.",mime);
-		pt=payload_type_new();
-		pt->type=(type==SalAudio) ? PAYLOAD_AUDIO_PACKETIZED : type == SalVideo ? PAYLOAD_VIDEO : type == SalText ? PAYLOAD_TEXT : PAYLOAD_SCREEN;
-		pt->mime_type=ortp_strdup(mime);
-		pt->clock_rate=rate;
-		pt->channels=channels;
-		payload_type_set_number(pt,-1); /*dynamic assignment*/
-		payload_type_set_recv_fmtp(pt,fmtp);
-		*default_list=ms_list_append(*default_list, pt);
+			ms_warning("Codec %s read from conf is not in the default list.", mime);
+		pt = payload_type_new();
+		pt->type = (type == SalAudio)
+					   ? PAYLOAD_AUDIO_PACKETIZED
+					   : type == SalVideo ? PAYLOAD_VIDEO : type == SalText ? PAYLOAD_TEXT : PAYLOAD_SCREEN;
+		pt->mime_type = ortp_strdup(mime);
+		pt->clock_rate = rate;
+		pt->channels = channels;
+		payload_type_set_number(pt, -1); /*dynamic assignment*/
+		payload_type_set_recv_fmtp(pt, fmtp);
+		*default_list = ms_list_append(*default_list, pt);
 	}
-	if (enabled ) pt->flags|=PAYLOAD_TYPE_ENABLED;
-	else pt->flags&=~PAYLOAD_TYPE_ENABLED;
-	*ret=pt;
+	if (enabled)
+		pt->flags |= PAYLOAD_TYPE_ENABLED;
+	else
+		pt->flags &= ~PAYLOAD_TYPE_ENABLED;
+	*ret = pt;
 	return TRUE;
 }
 
@@ -1283,54 +1294,44 @@ static MSList *codec_append_if_new(MSList *l, PayloadType *pt){
 	return l;
 }
 
-static void codecs_config_read(LinphoneCore *lc)
-{
+static void codecs_config_read(LinphoneCore *lc) {
 	int i;
 	PayloadType *pt;
-	MSList *audio_codecs=NULL;
-	MSList *video_codecs=NULL;
-	MSList *text_codecs=NULL;
-	MSList *screensharing_codecs=NULL;
+	MSList *audio_codecs = NULL;
+	MSList *video_codecs = NULL;
+	MSList *text_codecs = NULL;
 
-	lc->codecs_conf.dyn_pt=96;
-	lc->codecs_conf.telephone_event_pt=lp_config_get_int(lc->config,"misc","telephone_event_pt",101);
+	lc->codecs_conf.dyn_pt = 96;
+	lc->codecs_conf.telephone_event_pt = lp_config_get_int(lc->config, "misc", "telephone_event_pt", 101);
 
-	for (i=0;get_codec(lc,SalAudio,i,&pt);i++){
-		if (pt){
-			audio_codecs=codec_append_if_new(audio_codecs, pt);
+	for (i = 0; get_codec(lc, SalAudio, i, &pt); i++) {
+		if (pt) {
+			audio_codecs = codec_append_if_new(audio_codecs, pt);
 		}
 	}
-	if( lp_config_get_int(lc->config, "misc", "add_missing_audio_codecs", 1) == 1 ){
-		audio_codecs=add_missing_supported_codecs(lc, lc->default_audio_codecs,audio_codecs);
+	if (lp_config_get_int(lc->config, "misc", "add_missing_audio_codecs", 1) == 1) {
+		audio_codecs = add_missing_supported_codecs(lc, lc->default_audio_codecs, audio_codecs);
 	}
 
-	for (i=0;get_codec(lc,SalVideo,i,&pt);i++){
-		if (pt){
-			video_codecs=codec_append_if_new(video_codecs, pt);
+	for (i = 0; get_codec(lc, SalVideo, i, &pt); i++) {
+		if (pt) {
+			video_codecs = codec_append_if_new(video_codecs, pt);
 		}
 	}
-	if( lp_config_get_int(lc->config, "misc", "add_missing_video_codecs", 1) == 1 ){
-		video_codecs=add_missing_supported_codecs(lc, lc->default_video_codecs,video_codecs);
+	if (lp_config_get_int(lc->config, "misc", "add_missing_video_codecs", 1) == 1) {
+		video_codecs = add_missing_supported_codecs(lc, lc->default_video_codecs, video_codecs);
 	}
 
-	for (i=0;get_codec(lc,SalText,i,&pt);i++){
-		if (pt){
-			text_codecs=codec_append_if_new(text_codecs, pt);
+	for (i = 0; get_codec(lc, SalText, i, &pt); i++) {
+		if (pt) {
+			text_codecs = codec_append_if_new(text_codecs, pt);
 		}
 	}
 	text_codecs = add_missing_supported_codecs(lc, lc->default_text_codecs, text_codecs);
 
-	for (i=0;get_codec(lc,SalApplication,i,&pt);i++){
-		if (pt){
-			screensharing_codecs=codec_append_if_new(screensharing_codecs, pt);
-		}
-	}
-	screensharing_codecs=add_missing_supported_codecs(lc, lc->default_screensharing_codecs,screensharing_codecs);
-
-	linphone_core_set_audio_codecs(lc,audio_codecs);
-	linphone_core_set_video_codecs(lc,video_codecs);
+	linphone_core_set_audio_codecs(lc, audio_codecs);
+	linphone_core_set_video_codecs(lc, video_codecs);
 	linphone_core_set_text_codecs(lc, text_codecs);
-	linphone_core_set_screensharing_codecs(lc,screensharing_codecs);
 	linphone_core_update_allocated_audio_bandwidth(lc);
 }
 
@@ -1522,35 +1523,43 @@ const char * linphone_core_get_version(void){
 	return liblinphone_version;
 }
 
-static void linphone_core_register_payload_type(LinphoneCore *lc, const PayloadType *const_pt, const char *recv_fmtp, bool_t enabled){
-	MSList **codec_list = const_pt->type==PAYLOAD_VIDEO ? &lc->default_video_codecs : const_pt->type==PAYLOAD_TEXT ? &lc->default_text_codecs : const_pt->type==PAYLOAD_SCREEN ? &lc->default_screensharing_codecs : &lc->default_audio_codecs;
-	PayloadType *pt=payload_type_clone(const_pt);
-	int number=-1;
-	payload_type_set_enable(pt,enabled);
-	if (recv_fmtp!=NULL) payload_type_set_recv_fmtp(pt,recv_fmtp);
+static void linphone_core_register_payload_type(LinphoneCore *lc, const PayloadType *const_pt, const char *recv_fmtp,
+												bool_t enabled) {
+	MSList **codec_list = const_pt->type == PAYLOAD_VIDEO ? &lc->default_video_codecs : const_pt->type == PAYLOAD_TEXT
+																							? &lc->default_text_codecs
+																							: &lc->default_audio_codecs;
+	PayloadType *pt = payload_type_clone(const_pt);
+	int number = -1;
+	payload_type_set_enable(pt, enabled);
+	if (recv_fmtp != NULL)
+		payload_type_set_recv_fmtp(pt, recv_fmtp);
 	/*Set a number to the payload type from the statically defined (RFC3551) profile, if not static, -1 is returned
 		and the payload type number will be determined dynamically later, at call time.*/
-	payload_type_set_number(pt,
-		(number=rtp_profile_find_payload_number(&av_profile, pt->mime_type, pt->clock_rate, pt->channels))
-	);
-	ms_message("Codec %s/%i fmtp=[%s] number=%i, enabled=%i) added to the list of possible codecs.", pt->mime_type, pt->clock_rate,
-			pt->recv_fmtp ? pt->recv_fmtp : "", number, (int)payload_type_enabled(pt));
-	*codec_list=ms_list_append(*codec_list,pt);
+	payload_type_set_number(
+		pt, (number = rtp_profile_find_payload_number(&av_profile, pt->mime_type, pt->clock_rate, pt->channels)));
+	ms_message("Codec %s/%i fmtp=[%s] number=%i, enabled=%i) added to the list of possible codecs.", pt->mime_type,
+			   pt->clock_rate, pt->recv_fmtp ? pt->recv_fmtp : "", number, (int)payload_type_enabled(pt));
+	*codec_list = ms_list_append(*codec_list, pt);
 }
 
-static void linphone_core_register_static_payloads(LinphoneCore *lc){
-	RtpProfile *prof=&av_profile;
+static void linphone_core_register_static_payloads(LinphoneCore *lc) {
+	RtpProfile *prof = &av_profile;
 	int i;
-	for(i=0;i<RTP_PROFILE_MAX_PAYLOADS;++i){
-		PayloadType *pt=rtp_profile_get_payload(prof,i);
-		if (pt){
+	for (i = 0; i < RTP_PROFILE_MAX_PAYLOADS; ++i) {
+		PayloadType *pt = rtp_profile_get_payload(prof, i);
+		if (pt) {
 #ifndef VIDEO_ENABLED
-			if (pt->type==PAYLOAD_VIDEO) continue;
+			if (pt->type == PAYLOAD_VIDEO)
+				continue;
 #endif
 			if (find_payload_type_from_list(
-				pt->mime_type, pt->clock_rate, pt->type == PAYLOAD_VIDEO || pt->type == PAYLOAD_TEXT ? LINPHONE_FIND_PAYLOAD_IGNORE_CHANNELS : pt->channels,
-				pt->type == PAYLOAD_VIDEO ? lc->default_video_codecs : pt->type == PAYLOAD_TEXT ? lc->default_text_codecs : lc->default_audio_codecs)==NULL){
-				linphone_core_register_payload_type(lc,pt,NULL,FALSE);
+					pt->mime_type, pt->clock_rate,
+					pt->type == PAYLOAD_VIDEO || pt->type == PAYLOAD_TEXT ? LINPHONE_FIND_PAYLOAD_IGNORE_CHANNELS
+																		  : pt->channels,
+					pt->type == PAYLOAD_VIDEO ? lc->default_video_codecs : pt->type == PAYLOAD_TEXT
+																			   ? lc->default_text_codecs
+																			   : lc->default_audio_codecs) == NULL) {
+				linphone_core_register_payload_type(lc, pt, NULL, FALSE);
 			}
 		}
 	}
@@ -1978,23 +1987,6 @@ int linphone_core_set_text_codecs(LinphoneCore *lc, MSList *codecs) {
 	return 0;
 }
 
-/** Sets the list of screen sharing codecs.
- * @param[in] lc The LinphoneCore object
- * @param[in] codecs \mslist{PayloadType}
- * @return 0
-  *
- * @ingroup media_parameters
- * The list is taken by the LinphoneCore thus the application should not free it.
- * This list is made of struct PayloadType describing the codec parameters.
-**/
-int linphone_core_set_screensharing_codecs(LinphoneCore *lc, MSList *codecs){
-	if (lc->codecs_conf.screensharing_codecs!=NULL)
-	ms_list_free(lc->codecs_conf.screensharing_codecs);
-	lc->codecs_conf.screensharing_codecs=codecs;
-	_linphone_core_codec_config_write(lc);
-	return 0;
-}
-
 /**
  * Enable RFC3389 generic confort noise algorithm (CN payload type).
  * It is disabled by default, because this algorithm is only relevant for legacy codecs (PCMU, PCMA, G722).
@@ -2176,17 +2168,17 @@ void linphone_core_get_text_port_range(const LinphoneCore *lc, int *min_port, in
  * @ingroup network_parameters
 **/
 int linphone_core_get_screensharing_port(const LinphoneCore *lc) {
-	return lc->rtp_conf.screensharing_rtp_min_port;
+	return lc->tcp_conf.screensharing_tcp_min_port;
 }
 
 /**
- * Get the video port range from which is randomly chosen the TCP port used for screen sharing.
+ * Get the screensharing port range from which is randomly chosen the TCP port used for screen sharing.
  *
  * @ingroup network_parameters
  */
 void linphone_core_get_screensharing_port_range(const LinphoneCore *lc, int *min_port, int *max_port) {
-	*min_port = lc->rtp_conf.screensharing_rtp_min_port;
-	*max_port = lc->rtp_conf.screensharing_rtp_max_port;
+	*min_port = lc->tcp_conf.screensharing_tcp_min_port;
+	*max_port = lc->tcp_conf.screensharing_tcp_max_port;
 }
 
 /**
@@ -2316,7 +2308,7 @@ void linphone_core_set_text_port_range(LinphoneCore *lc, int min_port, int max_p
  * @ingroup network_parameters
 **/
 void linphone_core_set_screensharing_port(LinphoneCore *lc, int port) {
-	lc->rtp_conf.screensharing_rtp_min_port = lc->rtp_conf.screensharing_rtp_max_port = port;
+	lc->tcp_conf.screensharing_tcp_min_port = lc->tcp_conf.screensharing_tcp_max_port = port;
 }
 
 /**
@@ -2324,8 +2316,8 @@ void linphone_core_set_screensharing_port(LinphoneCore *lc, int port) {
  * @ingroup media_parameters
  */
 void linphone_core_set_screensharing_port_range(LinphoneCore *lc, int min_port, int max_port) {
-	lc->rtp_conf.screensharing_rtp_min_port = min_port;
-	lc->rtp_conf.screensharing_rtp_max_port = max_port;
+	lc->tcp_conf.screensharing_tcp_min_port = min_port;
+	lc->tcp_conf.screensharing_tcp_max_port = max_port;
 }
 
 /**
@@ -7371,8 +7363,8 @@ void linphone_core_init_default_params(LinphoneCore *lc, LinphoneCallParams *par
 	params->in_conference = FALSE;
 	params->realtimetext_enabled = linphone_core_realtime_text_enabled(lc);
 	////TODO add option in ui
-	// linphone_core_enable_screensharing(lc,TRUE);
-	// linphone_core_set_screensharing_role(lc,LinphoneMediaDirectionSendRecv);
+	linphone_core_enable_screensharing(lc, TRUE);
+	linphone_core_set_screensharing_role(lc, LinphoneMediaDirectionSendRecv);
 	////
 	params->screensharing_enabled = linphone_core_screensharing_enabled(lc);
 	params->privacy = LinphonePrivacyDefault;

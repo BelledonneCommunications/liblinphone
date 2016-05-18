@@ -795,19 +795,15 @@ typedef struct rtp_config
 	bool_t video_multicast_enabled;
 	int text_rtp_min_port;
 	int text_rtp_max_port;
-	int screensharing_rtp_min_port;
-	int screensharing_rtp_max_port;
-}rtp_config_t;
+} rtp_config_t;
 
-typedef struct tcp_config
-{
+typedef struct tcp_config {
 	int screensharing_tcp_min_port;
 	int screensharing_tcp_max_port;
-}tcp_config_t;
+} tcp_config_t;
 
-typedef struct net_config
-{
-	char *nat_address; /* may be IP or host name */
+typedef struct net_config {
+	char *nat_address;	/* may be IP or host name */
 	char *nat_address_ip; /* ip translated from nat_address */
 	char *stun_server;
 	struct addrinfo *stun_addrinfo;
@@ -842,17 +838,15 @@ typedef struct sound_config
 	bool_t agc;
 } sound_config_t;
 
-typedef struct codecs_config
-{
-	MSList *audio_codecs;  /* list of audio codecs in order of preference*/
+typedef struct codecs_config {
+	MSList *audio_codecs; /* list of audio codecs in order of preference*/
 	MSList *video_codecs;
 	MSList *text_codecs;
-	MSList *screensharing_codecs;
 	int dyn_pt;
 	int telephone_event_pt;
-}codecs_config_t;
+} codecs_config_t;
 
-typedef struct video_config{
+typedef struct video_config {
 	struct _MSWebCam *device;
 	const char **cams;
 	MSVideoSize vsize;
@@ -928,7 +922,6 @@ struct _LinphoneCore
 	MSList *default_audio_codecs;
 	MSList *default_video_codecs;
 	MSList *default_text_codecs;
-	MSList *default_screensharing_codecs;
 	net_config_t net_conf;
 	sip_config_t sip_conf;
 	rtp_config_t rtp_conf;

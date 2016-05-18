@@ -2803,10 +2803,7 @@ LINPHONE_PUBLIC int linphone_core_set_video_codecs(LinphoneCore *lc, MSList *cod
 **/
 LINPHONE_PUBLIC const MSList *linphone_core_get_text_codecs(const LinphoneCore *lc);
 
-
 LINPHONE_PUBLIC int linphone_core_set_text_codecs(LinphoneCore *lc, MSList *codecs);
-
-LINPHONE_PUBLIC int linphone_core_set_screensharing_codecs(LinphoneCore *lc, MSList *codecs);
 
 LINPHONE_PUBLIC void linphone_core_enable_generic_confort_noise(LinphoneCore *lc, bool_t enabled);
 

@@ -279,35 +279,37 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 					break;
 				case SalDtlsRoleUnset:
 				default:
-					belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("setup","actpass"));
+					belle_sdp_media_description_add_attribute(media_desc,
+															  belle_sdp_attribute_create("setup", "actpass"));
 					break;
-			}
-			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("fingerprint",stream->dtls_fingerprint));
+				}
+				belle_sdp_media_description_add_attribute(
+					media_desc, belle_sdp_attribute_create("fingerprint", stream->dtls_fingerprint));
 		}
-		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("ssrc",ssrc_attribute));
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("ssrc", ssrc_attribute));
 		ms_free(ssrc_attribute);
 	}
-	
+
 	/* insert screensharing attribute */
-	if (stream->screensharing) {
+	if (stream->type == SalApplication) {
 		char role[16];
-		switch ( stream->screensharing_role) {
-			case SalStreamSendRecv:
-				strcpy(role,"actpass");
-				break;
-			case SalStreamRecvOnly:
-				strcpy(role,"passive");
-				break;
-			case SalStreamSendOnly:
-				strcpy(role,"active");
-				break;
-			case SalStreamInactive:
-			default:
-				strcpy(role,"holdconn");
+		switch (stream->screensharing_role) {
+		case SalStreamSendRecv:
+			strcpy(role, "actpass");
+			break;
+		case SalStreamRecvOnly:
+			strcpy(role, "passive");
+			break;
+		case SalStreamSendOnly:
+			strcpy(role, "active");
+			break;
+		case SalStreamInactive:
+		default:
+			strcpy(role, "holdconn");
 		}
-		belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create("setup",role));
-		if (strcmp(role,"holdconn") != 0)
-			belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create("connection","new"));
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("setup", role));
+		if (strcmp(role, "holdconn") != 0)
+			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("connection", "new"));
 	}
 
 	/* insert zrtp-hash attribute if needed */
@@ -405,55 +407,52 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 	 * source being described, interpreted as a 32-bit unsigned integer in
 	 * network byte order and represented in decimal.*/
 
-
 	belle_sdp_session_description_add_media_description(session_desc, media_desc);
 }
 
-belle_sdp_session_description_t * media_description_to_sdp ( const SalMediaDescription *desc ) {
-	belle_sdp_session_description_t* session_desc=belle_sdp_session_description_new();
+belle_sdp_session_description_t *media_description_to_sdp(const SalMediaDescription *desc) {
+	belle_sdp_session_description_t *session_desc = belle_sdp_session_description_new();
 	bool_t inet6;
-	belle_sdp_origin_t* origin;
+	belle_sdp_origin_t *origin;
 	int i;
 
-	if ( strchr ( desc->addr,':' ) !=NULL ) {
-		inet6=1;
-	} else inet6=0;
-	belle_sdp_session_description_set_version ( session_desc,belle_sdp_version_create ( 0 ) );
+	if (strchr(desc->addr, ':') != NULL) {
+		inet6 = 1;
+	} else
+		inet6 = 0;
+	belle_sdp_session_description_set_version(session_desc, belle_sdp_version_create(0));
 
-	origin = belle_sdp_origin_create ( desc->username
-									  ,desc->session_id
-									  ,desc->session_ver
-									  ,"IN"
-									  , inet6 ? "IP6" :"IP4"
-									  ,desc->addr );
+	origin = belle_sdp_origin_create(desc->username, desc->session_id, desc->session_ver, "IN", inet6 ? "IP6" : "IP4",
+									 desc->addr);
 
-	belle_sdp_session_description_set_origin ( session_desc,origin );
+	belle_sdp_session_description_set_origin(session_desc, origin);
 
-	belle_sdp_session_description_set_session_name ( session_desc,
-		belle_sdp_session_name_create ( desc->name[0]!='\0' ? desc->name : "Talk" ) );
+	belle_sdp_session_description_set_session_name(
+		session_desc, belle_sdp_session_name_create(desc->name[0] != '\0' ? desc->name : "Talk"));
 
-	if ( !sal_media_description_has_dir ( desc,SalStreamInactive ) || desc->ice_ufrag[0] != '\0' ) {
+	if (!sal_media_description_has_dir(desc, SalStreamInactive) || desc->ice_ufrag[0] != '\0') {
 		/*in case of sendonly, setting of the IP on cnx we give a chance to receive stun packets*/
-		belle_sdp_session_description_set_connection ( session_desc
-				,belle_sdp_connection_create ( "IN",inet6 ? "IP6" :"IP4",desc->addr ) );
+		belle_sdp_session_description_set_connection(
+			session_desc, belle_sdp_connection_create("IN", inet6 ? "IP6" : "IP4", desc->addr));
 
-	} else 	{
-		belle_sdp_session_description_set_connection ( session_desc
-				,belle_sdp_connection_create ( "IN"
-								,inet6 ? "IP6" :"IP4"
-								,inet6 ? "::0" :"0.0.0.0" ) );
-
+	} else {
+		belle_sdp_session_description_set_connection(
+			session_desc, belle_sdp_connection_create("IN", inet6 ? "IP6" : "IP4", inet6 ? "::0" : "0.0.0.0"));
 	}
 
-	belle_sdp_session_description_set_time_description ( session_desc,belle_sdp_time_description_create ( 0,0 ) );
+	belle_sdp_session_description_set_time_description(session_desc, belle_sdp_time_description_create(0, 0));
 
-	if ( desc->bandwidth>0 ) {
-		belle_sdp_session_description_set_bandwidth ( session_desc,"AS",desc->bandwidth );
+	if (desc->bandwidth > 0) {
+		belle_sdp_session_description_set_bandwidth(session_desc, "AS", desc->bandwidth);
 	}
-	
-	if (desc->set_nortpproxy == TRUE) belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("nortpproxy","yes"));
-	if (desc->ice_pwd[0] != '\0') belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("ice-pwd",desc->ice_pwd));
-	if (desc->ice_ufrag[0] != '\0') belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("ice-ufrag",desc->ice_ufrag));
+
+	if (desc->set_nortpproxy == TRUE)
+		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("nortpproxy", "yes"));
+	if (desc->ice_pwd[0] != '\0')
+		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("ice-pwd", desc->ice_pwd));
+	if (desc->ice_ufrag[0] != '\0')
+		belle_sdp_session_description_add_attribute(session_desc,
+													belle_sdp_attribute_create("ice-ufrag", desc->ice_ufrag));
 
 	if (desc->rtcp_xr.enabled == TRUE) {
 		belle_sdp_session_description_add_attribute(session_desc, create_rtcp_xr_attribute(&desc->rtcp_xr));
@@ -514,10 +513,7 @@ static void sdp_parse_media_screensharing_parameters(belle_sdp_media_description
 			stream->screensharing_role = SalStreamRecvOnly;
 		else
 			stream->screensharing_role = SalStreamInactive;
-
-		stream->screensharing = (stream->screensharing_role != SalStreamInactive);
-	} else
-		stream->screensharing = FALSE;
+	}
 
 	attribute = belle_sdp_media_description_get_attribute(media_desc, "connection");
 	if (attribute && (value = belle_sdp_attribute_get_value(attribute)) != NULL) {
@@ -538,42 +534,40 @@ static void sdp_parse_media_crypto_parameters(belle_sdp_media_description_t *med
 	int valid_count = 0;
 	int nb;
 
-	memset ( &stream->crypto, 0, sizeof ( stream->crypto ) );
-	for ( attribute_it=belle_sdp_media_description_get_attributes ( media_desc )
-						; valid_count < SAL_CRYPTO_ALGO_MAX && attribute_it!=NULL;
-			attribute_it=attribute_it->next ) {
-		attribute=BELLE_SDP_ATTRIBUTE ( attribute_it->data );
+	memset(&stream->crypto, 0, sizeof(stream->crypto));
+	for (attribute_it = belle_sdp_media_description_get_attributes(media_desc);
+		 valid_count < SAL_CRYPTO_ALGO_MAX && attribute_it != NULL; attribute_it = attribute_it->next) {
+		attribute = BELLE_SDP_ATTRIBUTE(attribute_it->data);
 
-		if ( keywordcmp ( "crypto",belle_sdp_attribute_get_name ( attribute ) ) ==0 && belle_sdp_attribute_get_value ( attribute ) !=NULL ) {
-			nb = sscanf ( belle_sdp_attribute_get_value ( attribute ), "%d %256s inline:%256s %256s",
-							&stream->crypto[valid_count].tag,
-							tmp,
-							tmp2, parameters );
-			
-			if ( nb >= 3 ) {
+		if (keywordcmp("crypto", belle_sdp_attribute_get_name(attribute)) == 0 &&
+			belle_sdp_attribute_get_value(attribute) != NULL) {
+			nb = sscanf(belle_sdp_attribute_get_value(attribute), "%d %256s inline:%256s %256s",
+						&stream->crypto[valid_count].tag, tmp, tmp2, parameters);
+
+			if (nb >= 3) {
 				MSCryptoSuite cs;
 				MSCryptoSuiteNameParams np;
 
-				np.name=tmp;
-				np.params=parameters[0]!='\0' ? parameters : NULL;
-				cs=ms_crypto_suite_build_from_name_params(&np);
-				if (cs==MS_CRYPTO_SUITE_INVALID){
-					ms_warning ( "Failed to parse crypto-algo: '%s'", tmp );
+				np.name = tmp;
+				np.params = parameters[0] != '\0' ? parameters : NULL;
+				cs = ms_crypto_suite_build_from_name_params(&np);
+				if (cs == MS_CRYPTO_SUITE_INVALID) {
+					ms_warning("Failed to parse crypto-algo: '%s'", tmp);
 					stream->crypto[valid_count].algo = 0;
-				}else{
+				} else {
 					char *sep;
-					strncpy ( stream->crypto[valid_count].master_key, tmp2, sizeof(stream->crypto[valid_count].master_key)-1 );
-					sep=strchr(stream->crypto[valid_count].master_key,'|');
-					if (sep) *sep='\0';
+					strncpy(stream->crypto[valid_count].master_key, tmp2,
+							sizeof(stream->crypto[valid_count].master_key) - 1);
+					sep = strchr(stream->crypto[valid_count].master_key, '|');
+					if (sep)
+						*sep = '\0';
 					stream->crypto[valid_count].algo = cs;
-					ms_message ( "Found valid crypto line (tag:%d algo:'%s' key:'%s'",
-									stream->crypto[valid_count].tag,
-									tmp,
-									stream->crypto[valid_count].master_key );
+					ms_message("Found valid crypto line (tag:%d algo:'%s' key:'%s'", stream->crypto[valid_count].tag,
+							   tmp, stream->crypto[valid_count].master_key);
 					valid_count++;
 				}
-			}else{
-				ms_warning ( "sdp has a strange a= line (%s) nb=%i",belle_sdp_attribute_get_value ( attribute ),nb );
+			} else {
+				ms_warning("sdp has a strange a= line (%s) nb=%i", belle_sdp_attribute_get_value(attribute), nb);
 			}
 		}
 	}
@@ -592,16 +586,17 @@ static void sdp_parse_media_ice_parameters(belle_sdp_media_description_t *media_
 		att_name = belle_sdp_attribute_get_name(attribute);
 		value = belle_sdp_attribute_get_value(attribute);
 
-		if (	(nb_ice_candidates < sizeof (stream->ice_candidates)/sizeof(SalIceCandidate))
-				&& (keywordcmp("candidate", att_name) == 0)
-				&& (value != NULL)) {
+		if ((nb_ice_candidates < sizeof(stream->ice_candidates) / sizeof(SalIceCandidate)) &&
+			(keywordcmp("candidate", att_name) == 0) && (value != NULL)) {
 			SalIceCandidate *candidate = &stream->ice_candidates[nb_ice_candidates];
 			char proto[4];
-			int nb = sscanf(value, "%s %u %3s %u %s %d typ %s raddr %s rport %d",
-				candidate->foundation, &candidate->componentID, proto, &candidate->priority, candidate->addr, &candidate->port,
-				candidate->type, candidate->raddr, &candidate->rport);
-			if (strcasecmp("udp",proto)==0 && ((nb == 7) || (nb == 9))) nb_ice_candidates++;
-			else memset(candidate, 0, sizeof(*candidate));
+			int nb = sscanf(value, "%s %u %3s %u %s %d typ %s raddr %s rport %d", candidate->foundation,
+							&candidate->componentID, proto, &candidate->priority, candidate->addr, &candidate->port,
+							candidate->type, candidate->raddr, &candidate->rport);
+			if (strcasecmp("udp", proto) == 0 && ((nb == 7) || (nb == 9)))
+				nb_ice_candidates++;
+			else
+				memset(candidate, 0, sizeof(*candidate));
 		} else if ((keywordcmp("remote-candidates", att_name) == 0) && (value != NULL)) {
 			SalIceRemoteCandidate candidate;
 			unsigned int componentID;
@@ -810,59 +805,60 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 			stream->proto = SalProtoUdpTlsRtpSavp;
 		} else if (strcasecmp(proto, "UDP/TLS/RTP/SAVPF") == 0) {
 			stream->proto = SalProtoUdpTlsRtpSavpf;
-		} else if (strcasecmp(proto, "TCP/RDP") == 0) {//TODO
+		} else if (strcasecmp(proto, "TCP/RDP") == 0) { // TODO
 			stream->proto = SalProtoTcpRdp;
 		} else {
-			strncpy(stream->proto_other,proto,sizeof(stream->proto_other)-1);
+			strncpy(stream->proto_other, proto, sizeof(stream->proto_other) - 1);
 		}
 	}
-	if ( ( cnx=belle_sdp_media_description_get_connection ( media_desc ) ) && belle_sdp_connection_get_address ( cnx ) ) {
-		strncpy ( stream->rtp_addr,belle_sdp_connection_get_address ( cnx ), sizeof ( stream->rtp_addr ) -1 );
-		stream->ttl=belle_sdp_connection_get_ttl(cnx);
+	if ((cnx = belle_sdp_media_description_get_connection(media_desc)) && belle_sdp_connection_get_address(cnx)) {
+		strncpy(stream->rtp_addr, belle_sdp_connection_get_address(cnx), sizeof(stream->rtp_addr) - 1);
+		stream->ttl = belle_sdp_connection_get_ttl(cnx);
 	}
 
-	stream->rtp_port=belle_sdp_media_get_media_port ( media );
+	stream->rtp_port = belle_sdp_media_get_media_port(media);
 
-	mtype = belle_sdp_media_get_media_type ( media );
-	if ( strcasecmp ( "audio", mtype ) == 0 ) {
-		stream->type=SalAudio;
-	} else if ( strcasecmp ( "video", mtype ) == 0 ) {
-		stream->type=SalVideo;
-	} else if ( strcasecmp ( "text", mtype ) == 0 ) {
-		stream->type=SalText;
-	} else if ( strcasecmp ( "application", mtype ) == 0 ) {//TODO
-		stream->type=SalApplication;
+	mtype = belle_sdp_media_get_media_type(media);
+	if (strcasecmp("audio", mtype) == 0) {
+		stream->type = SalAudio;
+	} else if (strcasecmp("video", mtype) == 0) {
+		stream->type = SalVideo;
+	} else if (strcasecmp("text", mtype) == 0) {
+		stream->type = SalText;
+	} else if (strcasecmp("application", mtype) == 0) { // TODO
+		stream->type = SalApplication;
 	} else {
-		stream->type=SalOther;
-		strncpy ( stream->typeother,mtype,sizeof ( stream->typeother )-1 );
+		stream->type = SalOther;
+		strncpy(stream->typeother, mtype, sizeof(stream->typeother) - 1);
 	}
 
-	if ( belle_sdp_media_description_get_bandwidth ( media_desc,"AS" ) >0 ) {
-		stream->bandwidth=belle_sdp_media_description_get_bandwidth ( media_desc,"AS" );
+	if (belle_sdp_media_description_get_bandwidth(media_desc, "AS") > 0) {
+		stream->bandwidth = belle_sdp_media_description_get_bandwidth(media_desc, "AS");
 	}
 
-	if ( belle_sdp_media_description_get_attribute ( media_desc,"sendrecv" ) ) {
-		stream->dir=SalStreamSendRecv;
-	} else if ( belle_sdp_media_description_get_attribute ( media_desc,"sendonly" ) ) {
-		stream->dir=SalStreamSendOnly;
-	} else if ( belle_sdp_media_description_get_attribute ( media_desc,"recvonly" ) ) {
-		stream->dir=SalStreamRecvOnly;
-	} else if ( belle_sdp_media_description_get_attribute ( media_desc,"inactive" ) ) {
-		stream->dir=SalStreamInactive;
+	if (belle_sdp_media_description_get_attribute(media_desc, "sendrecv")) {
+		stream->dir = SalStreamSendRecv;
+		stream->dir = SalStreamRecvOnly;
+	} else if (belle_sdp_media_description_get_attribute(media_desc, "sendonly")) {
+		stream->dir = SalStreamSendOnly;
+	} else if (belle_sdp_media_description_get_attribute(media_desc, "recvonly")) {
+		stream->dir = SalStreamRecvOnly;
+	} else if (belle_sdp_media_description_get_attribute(media_desc, "inactive")) {
+		stream->dir = SalStreamInactive;
 	} else {
-		stream->dir=md->dir; /*takes default value if not present*/
+		stream->dir = md->dir; /*takes default value if not present*/
 	}
 
 	stream->rtcp_mux = belle_sdp_media_description_get_attribute(media_desc, "rtcp-mux") != NULL;
-	
+
 	/* Get media payload types */
 	sdp_parse_payload_types(media_desc, stream);
 
 	/* Get media specific RTCP attribute */
 	stream->rtcp_port = stream->rtp_port + 1;
 	snprintf(stream->rtcp_addr, sizeof(stream->rtcp_addr), "%s", stream->rtp_addr);
-	attribute=belle_sdp_media_description_get_attribute(media_desc,"rtcp");
-	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
+	attribute = belle_sdp_media_description_get_attribute(media_desc, "rtcp");
+	if (attribute && (value = belle_sdp_attribute_get_value(attribute)) != NULL) {
 		char tmp[256];
 		int nb = sscanf(value, "%d IN IP4 %s", &stream->rtcp_port, tmp);
 		if (nb == 1) {
@@ -874,10 +870,11 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 		}
 	}
 
-	/* Read DTLS specific attributes : check is some are found in the stream description otherwise copy the session description one(which are at least set to Invalid) */
+	/* Read DTLS specific attributes : check is some are found in the stream description otherwise copy the session
+	 * description one(which are at least set to Invalid) */
 	if (((stream->proto == SalProtoUdpTlsRtpSavpf) || (stream->proto == SalProtoUdpTlsRtpSavp))) {
-		attribute=belle_sdp_media_description_get_attribute(media_desc,"setup");
-		if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
+		attribute = belle_sdp_media_description_get_attribute(media_desc, "setup");
+		if (attribute && (value = belle_sdp_attribute_get_value(attribute)) != NULL) {
 			if (strncmp(value, "actpass", 7) == 0) {
 				stream->dtls_role = SalDtlsRoleUnset;
 			} else if (strncmp(value, "active", 6) == 0) {
@@ -902,9 +899,9 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	}
 
 	/* Read zrtp-hash attribute */
-	if ((attribute=belle_sdp_media_description_get_attribute(media_desc,"zrtp-hash"))!=NULL) {
-		if ((value=belle_sdp_attribute_get_value(attribute))!=NULL) {
-			strncpy((char *)(stream->zrtphash), belle_sdp_attribute_get_value(attribute),sizeof(stream->zrtphash));
+	if ((attribute = belle_sdp_media_description_get_attribute(media_desc, "zrtp-hash")) != NULL) {
+		if ((value = belle_sdp_attribute_get_value(attribute)) != NULL) {
+			strncpy((char *)(stream->zrtphash), belle_sdp_attribute_get_value(attribute), sizeof(stream->zrtphash));
 			stream->haveZrtpHash = 1;
 		}
 	}
@@ -936,45 +933,45 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	return stream;
 }
 
-
-int sdp_to_media_description ( belle_sdp_session_description_t  *session_desc, SalMediaDescription *desc ) {
-	belle_sdp_connection_t* cnx;
-	belle_sip_list_t* media_desc_it;
-	belle_sdp_media_description_t* media_desc;
+int sdp_to_media_description(belle_sdp_session_description_t *session_desc, SalMediaDescription *desc) {
+	belle_sdp_connection_t *cnx;
+	belle_sip_list_t *media_desc_it;
+	belle_sdp_media_description_t *media_desc;
 	belle_sdp_session_name_t *sname;
 	belle_sip_list_t *custom_attribute_it;
-	const char* value;
-	SalDtlsRole session_role=SalDtlsRoleInvalid;
+	const char *value;
+	SalDtlsRole session_role = SalDtlsRoleInvalid;
 	int i;
-	
+
 	desc->nb_streams = 0;
 	desc->dir = SalStreamSendRecv;
 
-	if ( ( cnx=belle_sdp_session_description_get_connection ( session_desc ) ) && belle_sdp_connection_get_address ( cnx ) ) {
-		strncpy ( desc->addr,belle_sdp_connection_get_address ( cnx ),sizeof ( desc->addr ) -1  );
+	if ((cnx = belle_sdp_session_description_get_connection(session_desc)) && belle_sdp_connection_get_address(cnx)) {
+		strncpy(desc->addr, belle_sdp_connection_get_address(cnx), sizeof(desc->addr) - 1);
 	}
-	if ( (sname=belle_sdp_session_description_get_session_name(session_desc)) && belle_sdp_session_name_get_value(sname) ){
-		strncpy(desc->name,belle_sdp_session_name_get_value(sname),sizeof(desc->name) - 1);
+	if ((sname = belle_sdp_session_description_get_session_name(session_desc)) &&
+		belle_sdp_session_name_get_value(sname)) {
+		strncpy(desc->name, belle_sdp_session_name_get_value(sname), sizeof(desc->name) - 1);
 	}
-	
-	if ( belle_sdp_session_description_get_bandwidth ( session_desc,"AS" ) >0 ) {
-		desc->bandwidth=belle_sdp_session_description_get_bandwidth ( session_desc,"AS" );
+
+	if (belle_sdp_session_description_get_bandwidth(session_desc, "AS") > 0) {
+		desc->bandwidth = belle_sdp_session_description_get_bandwidth(session_desc, "AS");
 	}
-	
+
 	/*in some very rare case, session attribute may set stream dir*/
-	if ( belle_sdp_session_description_get_attribute ( session_desc,"sendrecv" ) ) {
-		desc->dir=SalStreamSendRecv;
-	} else if ( belle_sdp_session_description_get_attribute ( session_desc,"sendonly" ) ) {
-		desc->dir=SalStreamSendOnly;
-	} else if ( belle_sdp_session_description_get_attribute ( session_desc,"recvonly" ) ) {
-		desc->dir=SalStreamRecvOnly;
-	} else if ( belle_sdp_session_description_get_attribute ( session_desc,"inactive" ) ) {
-		desc->dir=SalStreamInactive;
+	if (belle_sdp_session_description_get_attribute(session_desc, "sendrecv")) {
+		desc->dir = SalStreamSendRecv;
+	} else if (belle_sdp_session_description_get_attribute(session_desc, "sendonly")) {
+		desc->dir = SalStreamSendOnly;
+	} else if (belle_sdp_session_description_get_attribute(session_desc, "recvonly")) {
+		desc->dir = SalStreamRecvOnly;
+	} else if (belle_sdp_session_description_get_attribute(session_desc, "inactive")) {
+		desc->dir = SalStreamInactive;
 	}
 
 	/*DTLS attributes can be defined at session level.*/
-	value=belle_sdp_session_description_get_attribute_value(session_desc,"setup");
-	if (value){
+	value = belle_sdp_session_description_get_attribute_value(session_desc, "setup");
+	if (value) {
 		if (strncmp(value, "actpass", 7) == 0) {
 			session_role = SalDtlsRoleUnset;
 		} else if (strncmp(value, "active", 6) == 0) {
@@ -983,41 +980,45 @@ int sdp_to_media_description ( belle_sdp_session_description_t  *session_desc, S
 			session_role = SalDtlsRoleIsServer;
 		}
 	}
-	value=belle_sdp_session_description_get_attribute_value(session_desc,"fingerprint");
+	value = belle_sdp_session_description_get_attribute_value(session_desc, "fingerprint");
 	/*copy dtls attributes to every streams, might be overwritten stream by stream*/
-	for (i=0;i<SAL_MEDIA_DESCRIPTION_MAX_STREAMS;i++) {
+	for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
 		if (value)
 			strncpy(desc->streams[i].dtls_fingerprint, value, sizeof(desc->streams[i].dtls_fingerprint));
-		desc->streams[i].dtls_role=session_role; /*set or reset value*/
+		desc->streams[i].dtls_role = session_role; /*set or reset value*/
 	}
 
 	/* Get ICE remote ufrag and remote pwd, and ice_lite flag */
-	value=belle_sdp_session_description_get_attribute_value(session_desc,"ice-ufrag");
-	if (value) strncpy(desc->ice_ufrag, value, sizeof(desc->ice_ufrag) - 1);
-	
-	value=belle_sdp_session_description_get_attribute_value(session_desc,"ice-pwd");
-	if (value) strncpy(desc->ice_pwd, value, sizeof(desc->ice_pwd)-1);
-	
-	value=belle_sdp_session_description_get_attribute_value(session_desc,"ice-lite");
-	if (value) desc->ice_lite = TRUE;
+	value = belle_sdp_session_description_get_attribute_value(session_desc, "ice-ufrag");
+	if (value)
+		strncpy(desc->ice_ufrag, value, sizeof(desc->ice_ufrag) - 1);
+
+	value = belle_sdp_session_description_get_attribute_value(session_desc, "ice-pwd");
+	if (value)
+		strncpy(desc->ice_pwd, value, sizeof(desc->ice_pwd) - 1);
+
+	value = belle_sdp_session_description_get_attribute_value(session_desc, "ice-lite");
+	if (value)
+		desc->ice_lite = TRUE;
 
 	/* Get session RTCP-XR attributes if any */
 	sdp_parse_session_rtcp_xr_parameters(session_desc, &desc->rtcp_xr);
 
 	/* Get the custom attributes */
-	for (custom_attribute_it = belle_sdp_session_description_get_attributes(session_desc); custom_attribute_it != NULL; custom_attribute_it = custom_attribute_it->next) {
+	for (custom_attribute_it = belle_sdp_session_description_get_attributes(session_desc); custom_attribute_it != NULL;
+		 custom_attribute_it = custom_attribute_it->next) {
 		belle_sdp_attribute_t *attr = (belle_sdp_attribute_t *)custom_attribute_it->data;
-		desc->custom_sdp_attributes = sal_custom_sdp_attribute_append(desc->custom_sdp_attributes, belle_sdp_attribute_get_name(attr), belle_sdp_attribute_get_value(attr));
+		desc->custom_sdp_attributes = sal_custom_sdp_attribute_append(
+			desc->custom_sdp_attributes, belle_sdp_attribute_get_name(attr), belle_sdp_attribute_get_value(attr));
 	}
 
-	for ( media_desc_it=belle_sdp_session_description_get_media_descriptions ( session_desc )
-						; media_desc_it!=NULL
-			; media_desc_it=media_desc_it->next ) {
-		if (desc->nb_streams==SAL_MEDIA_DESCRIPTION_MAX_STREAMS){
-			ms_warning("Cannot convert mline at position [%i] from SDP to SalMediaDescription",desc->nb_streams);
+	for (media_desc_it = belle_sdp_session_description_get_media_descriptions(session_desc); media_desc_it != NULL;
+		 media_desc_it = media_desc_it->next) {
+		if (desc->nb_streams == SAL_MEDIA_DESCRIPTION_MAX_STREAMS) {
+			ms_warning("Cannot convert mline at position [%i] from SDP to SalMediaDescription", desc->nb_streams);
 			break;
 		}
-		media_desc=BELLE_SDP_MEDIA_DESCRIPTION ( media_desc_it->data );
+		media_desc = BELLE_SDP_MEDIA_DESCRIPTION(media_desc_it->data);
 		sdp_to_stream_description(desc, media_desc);
 	}
 	return 0;
