@@ -7363,8 +7363,8 @@ void linphone_core_init_default_params(LinphoneCore *lc, LinphoneCallParams *par
 	params->in_conference = FALSE;
 	params->realtimetext_enabled = linphone_core_realtime_text_enabled(lc);
 	////TODO add option in ui
-	linphone_core_enable_screensharing(lc, TRUE);
-	linphone_core_set_screensharing_role(lc, LinphoneMediaDirectionSendRecv);
+	// linphone_core_enable_screensharing(lc, TRUE);
+	// linphone_core_set_screensharing_role(lc, LinphoneMediaDirectionRecvOnly);
 	////
 	params->screensharing_enabled = linphone_core_screensharing_enabled(lc);
 	params->privacy = LinphonePrivacyDefault;

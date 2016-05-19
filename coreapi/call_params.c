@@ -347,25 +347,30 @@ bool_t linphone_call_params_video_multicast_enabled(const LinphoneCallParams *pa
  * Constructor and destructor functions                                        *
  ******************************************************************************/
 
-static void _linphone_call_params_destroy(LinphoneCallParams *cp){
+static void _linphone_call_params_destroy(LinphoneCallParams *cp) {
 	unsigned int i;
-	if (cp->record_file) ms_free(cp->record_file);
-	if (cp->custom_headers) sal_custom_header_free(cp->custom_headers);
-	if (cp->custom_sdp_attributes) sal_custom_sdp_attribute_free(cp->custom_sdp_attributes);
+	if (cp->record_file)
+		ms_free(cp->record_file);
+	if (cp->custom_headers)
+		sal_custom_header_free(cp->custom_headers);
+	if (cp->custom_sdp_attributes)
+		sal_custom_sdp_attribute_free(cp->custom_sdp_attributes);
 	for (i = 0; i < (unsigned int)LinphoneStreamTypeUnknown; i++) {
-		if (cp->custom_sdp_media_attributes[i]) sal_custom_sdp_attribute_free(cp->custom_sdp_media_attributes[i]);
+		if (cp->custom_sdp_media_attributes[i])
+			sal_custom_sdp_attribute_free(cp->custom_sdp_media_attributes[i]);
 	}
-	if (cp->session_name) ms_free(cp->session_name);
+	if (cp->session_name)
+		ms_free(cp->session_name);
 }
 
-LinphoneCallParams * linphone_call_params_new(void) {
-	LinphoneCallParams *cp=belle_sip_object_new(LinphoneCallParams);
-	cp->audio_dir=LinphoneMediaDirectionSendRecv;
-	cp->video_dir=LinphoneMediaDirectionSendRecv;
-	cp->screensharing_dir=LinphoneMediaDirectionInactive;
-	cp->has_audio=TRUE;
-	cp->realtimetext_enabled=FALSE;
-	cp->screensharing_enabled=FALSE;
+LinphoneCallParams *linphone_call_params_new(void) {
+	LinphoneCallParams *cp = belle_sip_object_new(LinphoneCallParams);
+	cp->audio_dir = LinphoneMediaDirectionSendRecv;
+	cp->video_dir = LinphoneMediaDirectionSendRecv;
+	cp->screensharing_dir = LinphoneMediaDirectionInactive;
+	cp->has_audio = TRUE;
+	cp->realtimetext_enabled = FALSE;
+	cp->screensharing_enabled = FALSE;
 	return cp;
 }
 

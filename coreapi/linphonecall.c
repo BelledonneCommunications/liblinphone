@@ -2786,15 +2786,12 @@ void linphone_call_init_text_stream(LinphoneCall *call){
 	_linphone_call_prepare_ice_for_stream(call, call->main_text_stream_index, FALSE);
 }
 
-void linphone_call_init_screensharing_stream(LinphoneCall *call){
-	LinphoneCore *lc=call->core;
-
-	if(call->screenstream != NULL) return;
-	call->screenstream = screensharing_stream_new(0,FALSE);
-	lc->screen_conf.enabled=TRUE;
+void linphone_call_init_screensharing_stream(LinphoneCall *call) {
+	if (call->screenstream == NULL)
+		call->screenstream = screensharing_stream_new(0, FALSE);
 }
 
-void linphone_call_init_media_streams(LinphoneCall *call){
+void linphone_call_init_media_streams(LinphoneCall *call) {
 	linphone_call_init_audio_stream(call);
 	linphone_call_init_video_stream(call);
 	linphone_call_init_text_stream(call);
