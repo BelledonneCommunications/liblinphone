@@ -456,7 +456,7 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 	MSList *elem = ms_list_find(list->friends, lf);
 	if (elem == NULL) return LinphoneFriendListNonExistentFriend;
 
-#ifdef FRIENDS_SQL_STORAGE_ENABLED
+#ifdef SQLITE_STORAGE_ENABLED
 	if (lf && lf->lc && lf->lc->friends_db) {
 		linphone_core_remove_friend_from_db(lf->lc, lf);
 	}
@@ -633,7 +633,7 @@ void linphone_friend_list_update_subscriptions(LinphoneFriendList *list, Linphon
 			char *xml_content = create_resource_list_xml(list);
 			if ((address != NULL) && (xml_content != NULL) && (linphone_friend_list_has_subscribe_inactive(list) == TRUE)) {
 				unsigned char digest[16];
-				bctoolbox_md5((unsigned char *)xml_content, strlen(xml_content), digest);
+				bctbx_md5((unsigned char *)xml_content, strlen(xml_content), digest);
 				if ((list->event != NULL) && (list->content_digest != NULL) && (memcmp(list->content_digest, digest, sizeof(digest)) == 0)) {
 					/* The content has not changed, only refresh the event. */
 					linphone_event_refresh_subscribe(list->event);

@@ -62,7 +62,7 @@ void sal_op_set_privacy_from_message(SalOp* op,belle_sip_message_t* msg) {
 }
 static void set_tls_properties(Sal *ctx);
 
-void _belle_sip_log(belle_sip_log_level lev, const char *fmt, va_list args) {
+void _belle_sip_log(const char *domain, belle_sip_log_level lev, const char *fmt, va_list args) {
 	int ortp_level;
 	switch(lev) {
 		case BELLE_SIP_LOG_FATAL:
@@ -238,10 +238,11 @@ static void process_request_event(void *ud, const belle_sip_request_event_t *eve
 
 		if (op == NULL && strcmp("NOTIFY", method) == 0) {
 			/*special case for Dialog created by notify mathing subscribe*/
-			belle_sip_transaction_t *sub_trans = belle_sip_dialog_get_last_transaction(dialog);
-			op = (SalOp *)belle_sip_transaction_get_application_data(sub_trans);
-		} else if (op == NULL || op->state == SalOpStateTerminated) {
-			ms_warning("Receiving request for null or terminated op [%p], ignored", op);
+			belle_sip_transaction_t * sub_trans = belle_sip_dialog_get_last_transaction(dialog);
+			op = (SalOp*)belle_sip_transaction_get_application_data(sub_trans);
+		}
+		if (op==NULL || op->state==SalOpStateTerminated){
+			ms_warning("Receiving request for null or terminated op [%p], ignored",op);
 			return;
 		}
 	} else {

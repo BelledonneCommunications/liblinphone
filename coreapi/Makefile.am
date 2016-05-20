@@ -43,6 +43,7 @@ linphone_include_HEADERS=\
 	lpc2xml.h \
 	lpconfig.h \
 	sipsetup.h \
+	sqlite3_bctbx_vfs.h \
 	xml2lpc.h \
 	xmlrpc.h \
 	vcard.h \
@@ -96,6 +97,7 @@ liblinphone_la_SOURCES=\
 	vtables.c \
 	carddav.c \
 	ringtoneplayer.c ringtoneplayer.h\
+	sqlite3_bctbx_vfs.c sqlite3_bctbx_vfs.h\
 	$(GITVERSION_FILE)
 
 if BUILD_UPNP
