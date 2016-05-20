@@ -202,7 +202,7 @@ bool_t sal_media_description_has_dir(const SalMediaDescription *md, SalStreamDir
 }
 
 bool_t sal_stream_description_active(const SalStreamDescription *sd) {
-	return (sd->rtp_port > 0);
+	return (sd->rtp_port > 0 || sd->type == SalApplication); // Screensharing issue
 }
 
 /*these are switch case, so that when a new proto is added we can't forget to modify this function*/

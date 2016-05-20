@@ -838,7 +838,6 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 
 	if (belle_sdp_media_description_get_attribute(media_desc, "sendrecv")) {
 		stream->dir = SalStreamSendRecv;
-		stream->dir = SalStreamRecvOnly;
 	} else if (belle_sdp_media_description_get_attribute(media_desc, "sendonly")) {
 		stream->dir = SalStreamSendOnly;
 	} else if (belle_sdp_media_description_get_attribute(media_desc, "recvonly")) {

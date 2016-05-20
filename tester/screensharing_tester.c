@@ -36,7 +36,7 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 
 	if (sc_caller_enable && sc_caller_enable == sc_callee_enable && caller_dir != LinphoneMediaDirectionInactive &&
 		callee_dir != LinphoneMediaDirectionInactive) {
-		sc_call_result = (caller_dir != callee_dir || caller_dir == LinphoneMediaDirectionSendRecv);
+		sc_call_result = (caller_dir != callee_dir);
 	}
 
 	linphone_core_enable_screensharing(coreCaller->lc, sc_caller_enable);
@@ -86,6 +86,10 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 		BC_ASSERT_EQUAL(params->screensharing_enabled, sc_call_result, bool_t, "%d");
 		BC_ASSERT_EQUAL(params->screensharing_dir, callee_dir_result, int, "%d");
 		if (sc_call_result) {
+			BC_ASSERT_TRUE(wait_for(coreCaller->lc, coreCallee->lc, (int *)&(callee_call->screenstream->state),
+									(int)MSScreenSharingStreamRunning));
+			BC_ASSERT_TRUE(wait_for(coreCaller->lc, coreCallee->lc, (int *)&(caller_call->screenstream->state),
+									(int)MSScreenSharingStreamRunning));
 			if (callee_dir_result == LinphoneMediaDirectionRecvOnly) {
 				BC_ASSERT_TRUE(callee_call->screenstream->server != NULL);
 				BC_ASSERT_TRUE(callee_call->screenstream->client == NULL);
@@ -166,8 +170,8 @@ static void call_with_screensharing_SendRecv_SendRecv() {
 	pauline = linphone_core_manager_new("pauline_rc");
 
 	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaDirectionSendRecv,
-							  LinphoneMediaDirectionSendRecv, LinphoneMediaDirectionSendOnly,
-							  LinphoneMediaDirectionRecvOnly);
+							  LinphoneMediaDirectionSendRecv, LinphoneMediaDirectionInactive,
+							  LinphoneMediaDirectionInactive);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -242,12 +246,13 @@ static void call_without_screensharing_receiver_no_screensharing() {
 	linphone_core_manager_destroy(pauline);
 }
 
+// TODO asterix issue
 static void test_media_screensharing() {
-	belle_sdp_media_t* lTmp;
-	belle_sip_list_t* list;
-	belle_sdp_media_t* l_media = belle_sdp_media_parse("m=application 13078 TCP/RDP *");
-	char* l_raw_media = belle_sip_object_to_string(BELLE_SIP_OBJECT(l_media));
-	//char fmt = '*';
+	belle_sdp_media_t *lTmp;
+	belle_sip_list_t *list;
+	belle_sdp_media_t *l_media = belle_sdp_media_parse("m=application 13078 TCP/RDP *");
+	char *l_raw_media = belle_sip_object_to_string(BELLE_SIP_OBJECT(l_media));
+	// char fmt = '*';
 	belle_sip_object_unref(BELLE_SIP_OBJECT(l_media));
 	lTmp = belle_sdp_media_parse(l_raw_media);
 	l_media = BELLE_SDP_MEDIA(belle_sip_object_clone(BELLE_SIP_OBJECT(lTmp)));
