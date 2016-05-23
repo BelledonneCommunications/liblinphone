@@ -3658,7 +3658,9 @@ static void linphone_call_start_screensharing_stream(LinphoneCall *call) {
 		call->current_params->screensharing_dir = linphone_call_salmedia_to_linphonemedia(scstream->screensharing_role);
 		call->screenstream->is_server = (call->current_params->screensharing_dir == LinphoneMediaDirectionRecvOnly);
 		strcpy(call->screenstream->addr_ip, call->biggestdesc->addr);
-		call->screenstream->tcp_port = call->resultdesc->streams[call->main_screensharing_stream_index].rtcp_port;
+		call->screenstream->tcp_port = (call->screenstream->is_server)
+										   ? call->localdesc->streams[call->main_screensharing_stream_index].rtcp_port
+										   : call->resultdesc->streams[call->main_screensharing_stream_index].rtcp_port;
 		call->screenstream->state =
 			call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_state =
 				(call->screenstream->is_server) ? MSScreenSharingListening : MSScreenSharingConnecting;
