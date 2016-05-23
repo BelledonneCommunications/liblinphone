@@ -399,17 +399,17 @@ LpConfig * lp_config_new_from_buffer(const char *buffer){
 LpConfig *lp_config_new_with_factory(const char *config_filename, const char *factory_config_filename) {
 
 	int fd;
-	bctbx_vfs_file_t* pFile = NULL;
+	bctbx_vfs_file_t *pFile = NULL;
 
-	LpConfig *lpconfig=lp_new0(LpConfig,1);
+	LpConfig *lpconfig = lp_new0(LpConfig, 1);
 	bctbx_vfs_set_default(NULL);
 	lpconfig->g_bctbx_vfs = bctbx_vfs_get_default();
-	
-	lpconfig->refcnt=1;
-	if (config_filename!=NULL){
-		if(ortp_file_exist(config_filename) == 0) {
-			lpconfig->filename=lp_realpath(config_filename, NULL);
-			if(lpconfig->filename == NULL) {
+
+	lpconfig->refcnt = 1;
+	if (config_filename != NULL) {
+		if (ortp_file_exist(config_filename) == 0) {
+			lpconfig->filename = lp_realpath(config_filename, NULL);
+			if (lpconfig->filename == NULL) {
 				ms_error("Could not find the real path of %s: %s", config_filename, strerror(errno));
 				goto fail;
 			}
