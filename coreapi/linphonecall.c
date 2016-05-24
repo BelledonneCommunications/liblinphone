@@ -3652,16 +3652,23 @@ static void linphone_call_start_screensharing_stream(LinphoneCall *call) {
 	const SalStreamDescription *scstream;
 
 	scstream = sal_media_description_find_best_stream(call->resultdesc, SalApplication);
+	ms_message("Screensharing Start: role = %d",
+			   call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_role);
 	if (scstream != NULL && scstream->dir != SalStreamInactive &&
 		call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_role != SalStreamInactive) {
 		call->current_params->screensharing_enabled = TRUE;
+		ms_message("Screensharing Start: Sceensharing enable");
 		call->current_params->screensharing_dir = linphone_call_salmedia_to_linphonemedia(scstream->screensharing_role);
 		call->screenstream->is_server = (call->current_params->screensharing_dir == LinphoneMediaDirectionRecvOnly);
-		strcpy(call->screenstream->addr_ip, call->biggestdesc->addr);
+		ms_message("Screensharing Start: Is server = %d", call->screenstream->is_server);
+		strcpy(call->screenstream->addr_ip, call->resultdesc->addr);
 		call->screenstream->tcp_port = call->localdesc->streams[call->main_screensharing_stream_index].rtcp_port;
+		ms_message("Screensharing Start: Ip = %s ; Port = %d", call->screenstream->addr_ip,
+				   call->screenstream->tcp_port);
 		call->screenstream->state =
 			call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_state =
 				(call->screenstream->is_server) ? MSScreenSharingListening : MSScreenSharingConnecting;
+		ms_message("Screensharing State = %d", call->screenstream->state);
 	} else {
 		call->current_params->screensharing_dir = LinphoneMediaDirectionInactive;
 		call->screenstream->state =
