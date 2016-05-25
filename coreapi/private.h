@@ -860,38 +860,31 @@ typedef struct video_config {
 	bool_t display;
 	bool_t selfview; /*during calls*/
 	bool_t reuse_preview_source;
-}video_config_t;
+} video_config_t;
 
-typedef struct text_config{
+typedef struct text_config { bool_t enabled; } text_config_t;
+
+typedef struct screen_config {
 	bool_t enabled;
-}text_config_t;
+	LinphoneMediaDirection direction;
+} screen_config_t;
 
-typedef struct screen_config{
-	bool_t enabled;
-	LinphoneMediaDirection role;
-}screen_config_t;
-
-typedef struct ui_config
-{
+typedef struct ui_config {
 	int is_daemon;
 	int is_applet;
-	unsigned int timer_id;  /* the timer id for registration */
-}ui_config_t;
+	unsigned int timer_id; /* the timer id for registration */
+} ui_config_t;
 
-
-
-typedef struct autoreplier_config
-{
+typedef struct autoreplier_config {
 	int enabled;
-	int after_seconds;		/* accept the call after x seconds*/
-	int max_users;			/* maximum number of user that can call simultaneously */
-	int max_rec_time;  	/* the max time of incoming voice recorded */
-	int max_rec_msg;		/* maximum number of recorded messages */
-	const char *message;		/* the path of the file to be played */
-}autoreplier_config_t;
+	int after_seconds;   /* accept the call after x seconds*/
+	int max_users;		 /* maximum number of user that can call simultaneously */
+	int max_rec_time;	/* the max time of incoming voice recorded */
+	int max_rec_msg;	 /* maximum number of recorded messages */
+	const char *message; /* the path of the file to be played */
+} autoreplier_config_t;
 
-
-typedef struct _LinphoneToneDescription{
+typedef struct _LinphoneToneDescription {
 	LinphoneReason reason;
 	LinphoneToneID toneid;
 	char *audiofile;

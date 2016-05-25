@@ -41,8 +41,8 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 
 	linphone_core_enable_screensharing(coreCaller->lc, sc_caller_enable);
 	linphone_core_enable_screensharing(coreCallee->lc, sc_callee_enable);
-	linphone_core_set_screensharing_role(coreCaller->lc, caller_dir);
-	linphone_core_set_screensharing_role(coreCallee->lc, callee_dir);
+	linphone_core_set_screensharing_direction(coreCaller->lc, caller_dir);
+	linphone_core_set_screensharing_direction(coreCallee->lc, callee_dir);
 
 	BC_ASSERT_TRUE(call(coreCaller, coreCallee));
 	caller_call = linphone_core_get_current_call(coreCaller->lc);

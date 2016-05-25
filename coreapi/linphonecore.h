@@ -4445,10 +4445,17 @@ LINPHONE_PUBLIC void linphone_core_enable_screensharing(LinphoneCore *lc, bool_t
  * Set screensharing role for remote desktop.
  * @param[in] lc LinphoneCore object
  */
-LINPHONE_PUBLIC void linphone_core_set_screensharing_role(LinphoneCore *lc, LinphoneMediaDirection dir);
+LINPHONE_PUBLIC void linphone_core_set_screensharing_direction(LinphoneCore *lc, LinphoneMediaDirection dir);
 
 /**
- * Set http proxy address to be used for signaling during next channel connection. Use #linphone_core_set_network_reachable FASLE/TRUE to force channel restart.
+ * Get screensharing role for remote desktop.
+ * @param[in] lc LinphoneCore object
+ */
+LINPHONE_PUBLIC LinphoneMediaDirection linphone_core_get_screensharing_direction(LinphoneCore *lc);
+
+/**
+ * Set http proxy address to be used for signaling during next channel connection. Use
+ * #linphone_core_set_network_reachable FASLE/TRUE to force channel restart.
  * @param[in] lc LinphoneCore object
  * @param[in] hostname of IP adress of the http proxy (can be NULL to disable).
  */
