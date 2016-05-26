@@ -823,6 +823,7 @@ static void linphone_gtk_update_call_buttons(LinphoneCall *call){
 	}
 	if (call) {
 		linphone_gtk_update_video_button(call);
+		linphone_gtk_update_screensharing_button(call);
 	}
 }
 

@@ -4419,7 +4419,17 @@ LINPHONE_PUBLIC void linphone_core_set_video_preset(LinphoneCore *lc, const char
  * @param[in] lc LinphoneCore object
  * @return The name of the video preset used for video calls (can be NULL if the default video preset is used).
  */
-LINPHONE_PUBLIC const char * linphone_core_get_video_preset(const LinphoneCore *lc);
+LINPHONE_PUBLIC const char *linphone_core_get_video_preset(const LinphoneCore *lc);
+
+/**
+ * Screensharing server support
+ */
+LINPHONE_PUBLIC bool_t linphone_core_screensharing_server_supported(LinphoneCore *lc);
+
+/**
+ * Screensharing client support
+ */
+LINPHONE_PUBLIC bool_t linphone_core_screensharing_client_supported(LinphoneCore *lc);
 
 /**
  * Gets if realtime text is enabled or not

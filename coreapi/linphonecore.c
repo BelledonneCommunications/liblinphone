@@ -2955,36 +2955,41 @@ const char * linphone_core_get_route(LinphoneCore *lc){
 
 /**
  * Start a new call as a consequence of a transfer request received from a call.
- * This function is for advanced usage: the execution of transfers is automatically managed by the LinphoneCore. However if an application
- * wants to have control over the call parameters for the new call, it should call this function immediately during the LinphoneCallRefered notification.
+ * This function is for advanced usage: the execution of transfers is automatically managed by the LinphoneCore. However
+*if an application
+ * wants to have control over the call parameters for the new call, it should call this function immediately during the
+*LinphoneCallRefered notification.
  * @see LinphoneCoreVTable::call_state_changed
  * @param lc the LinphoneCore
  * @param call a call that has just been notified about LinphoneCallRefered state event.
  * @param params the call parameters to be applied to the new call.
  * @return a LinphoneCall corresponding to the new call that is attempted to the transfer destination.
 **/
-LinphoneCall * linphone_core_start_refered_call(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallParams *params){
-	LinphoneCallParams *cp=params ? linphone_call_params_copy(params) : linphone_core_create_call_params(lc, NULL);
+LinphoneCall *linphone_core_start_refered_call(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallParams *params) {
+	LinphoneCallParams *cp = params ? linphone_call_params_copy(params) : linphone_core_create_call_params(lc, NULL);
 	LinphoneCall *newcall;
 
-	if (call->state!=LinphoneCallPaused){
+	if (call->state != LinphoneCallPaused) {
 		ms_message("Automatically pausing current call to accept transfer.");
-		_linphone_core_pause_call(lc,call);
-		call->was_automatically_paused=TRUE;
+		_linphone_core_pause_call(lc, call);
+		call->was_automatically_paused = TRUE;
 	}
 
-	if (!params){
+	if (!params) {
 		cp->has_audio = call->current_params->has_audio;
-		cp->has_video = call->current_params->has_video; /*start the call to refer-target with video enabled if original call had video*/
+		cp->has_video =
+			call->current_params
+				->has_video; /*start the call to refer-target with video enabled if original call had video*/
+		cp->screensharing_enabled = call->current_params->screensharing_enabled; // TODO
 	}
-	cp->referer=call;
-	ms_message("Starting new call to refered address %s",call->refer_to);
-	call->refer_pending=FALSE;
-	newcall=linphone_core_invite_with_params(lc,call->refer_to,cp);
+	cp->referer = call;
+	ms_message("Starting new call to refered address %s", call->refer_to);
+	call->refer_pending = FALSE;
+	newcall = linphone_core_invite_with_params(lc, call->refer_to, cp);
 	linphone_call_params_destroy(cp);
 	if (newcall) {
-		call->transfer_target=linphone_call_ref(newcall);
-		linphone_core_notify_refer_state(lc,call,newcall);
+		call->transfer_target = linphone_call_ref(newcall);
+		linphone_core_notify_refer_state(lc, call, newcall);
 	}
 	return newcall;
 }
@@ -3628,21 +3633,25 @@ int linphone_core_update_call(LinphoneCore *lc, LinphoneCall *call, const Linpho
 #if defined(VIDEO_ENABLED) && defined(BUILD_UPNP)
 	bool_t has_video = FALSE;
 #endif
+#if defined HAVE_FREERDP_CLIENT || HAVE_FREERDP_SHADOW
+	bool_t has_screensharing = FALSE;
+#endif
 
-	switch(initial_state=call->state){
-		case LinphoneCallIncomingReceived:
-		case LinphoneCallIncomingEarlyMedia:
-		case LinphoneCallOutgoingRinging:
-		case LinphoneCallOutgoingEarlyMedia:
-			nextstate=LinphoneCallEarlyUpdating;
-			break;
-		case LinphoneCallStreamsRunning:
-		case LinphoneCallPaused:
-		case LinphoneCallPausedByRemote:
-			nextstate=LinphoneCallUpdating;
-			break;
-		default:
-		ms_error("linphone_core_update_call() is not allowed in [%s] state",linphone_call_state_to_string(call->state));
+	switch (initial_state = call->state) {
+	case LinphoneCallIncomingReceived:
+	case LinphoneCallIncomingEarlyMedia:
+	case LinphoneCallOutgoingRinging:
+	case LinphoneCallOutgoingEarlyMedia:
+		nextstate = LinphoneCallEarlyUpdating;
+		break;
+	case LinphoneCallStreamsRunning:
+	case LinphoneCallPaused:
+	case LinphoneCallPausedByRemote:
+		nextstate = LinphoneCallUpdating;
+		break;
+	default:
+		ms_error("linphone_core_update_call() is not allowed in [%s] state",
+				 linphone_call_state_to_string(call->state));
 		return -1;
 	}
 
@@ -3660,12 +3669,18 @@ int linphone_core_update_call(LinphoneCore *lc, LinphoneCall *call, const Linpho
 					linphone_call_delete_upnp_session(call);
 				}
 			}
-
 		}
 #endif /* defined(VIDEO_ENABLED) && defined(BUILD_UPNP) */
-		linphone_call_set_new_params(call,params);
-		err=linphone_call_prepare_ice(call,FALSE);
-		if (err==1) {
+#if defined HAVE_FREERDP_CLIENT || HAVE_FREERDP_SHADOW
+		has_screensharing = (call->params->screensharing_enabled);
+
+		if ((call->screenstream != NULL) && !has_screensharing) {
+			// TODO stop screensharing ?
+		}
+#endif
+		linphone_call_set_new_params(call, params);
+		err = linphone_call_prepare_ice(call, FALSE);
+		if (err == 1) {
 			ms_message("Defer call update to gather ICE candidates");
 			return 0;
 		}
@@ -3684,20 +3699,25 @@ int linphone_core_update_call(LinphoneCore *lc, LinphoneCall *call, const Linpho
 				}
 			}
 		}
-#endif //defined(VIDEO_ENABLED) && defined(BUILD_UPNP)
-		if ((err = linphone_core_start_update_call(lc, call)) && call->state!=initial_state) {
+#endif // defined(VIDEO_ENABLED) && defined(BUILD_UPNP)
+#if defined HAVE_FREERDP_CLIENT || HAVE_FREERDP_SHADOW
+		if (!has_screensharing && call->params->screensharing_enabled) {
+		}
+#endif
+		if ((err = linphone_core_start_update_call(lc, call)) && call->state != initial_state) {
 			/*Restore initial state*/
-			linphone_call_set_state(call,initial_state,"Restore initial state");
+			linphone_call_set_state(call, initial_state, "Restore initial state");
 		}
 
-	}else{
+	} else {
 #ifdef VIDEO_ENABLED
 		if ((call->videostream != NULL) && (call->state == LinphoneCallStreamsRunning)) {
-			video_stream_set_sent_video_size(call->videostream,linphone_core_get_preferred_video_size(lc));
+			video_stream_set_sent_video_size(call->videostream, linphone_core_get_preferred_video_size(lc));
 			video_stream_set_fps(call->videostream, linphone_core_get_preferred_framerate(lc));
-			if (call->camera_enabled && call->videostream->cam!=lc->video_conf.device){
+			if (call->camera_enabled && call->videostream->cam != lc->video_conf.device) {
 				video_stream_change_camera(call->videostream, lc->video_conf.device);
-			}else video_stream_update_video_params(call->videostream);
+			} else
+				video_stream_update_video_params(call->videostream);
 		}
 #endif
 	}
@@ -7385,14 +7405,14 @@ void linphone_core_init_default_params(LinphoneCore *lc, LinphoneCallParams *par
 	params->media_encryption = linphone_core_get_media_encryption(lc);
 	params->in_conference = FALSE;
 	params->realtimetext_enabled = linphone_core_realtime_text_enabled(lc);
-	params->screensharing_enabled = linphone_core_screensharing_enabled(lc);
+	params->screensharing_enabled = FALSE; // linphone_core_screensharing_enabled(lc);
 	params->privacy = LinphonePrivacyDefault;
 	params->avpf_enabled = linphone_core_get_avpf_mode(lc);
 	params->implicit_rtcp_fb = lp_config_get_int(lc->config, "rtp", "rtcp_fb_implicit_rtcp_fb", TRUE);
 	params->avpf_rr_interval = linphone_core_get_avpf_rr_interval(lc);
 	params->audio_dir = LinphoneMediaDirectionSendRecv;
 	params->video_dir = LinphoneMediaDirectionSendRecv;
-	params->screensharing_dir = lc->screen_conf.direction;
+	params->screensharing_dir = LinphoneMediaDirectionInactive; // lc->screen_conf.direction;
 	params->real_early_media = lp_config_get_int(lc->config, "misc", "real_early_media", FALSE);
 	params->audio_multicast_enabled = linphone_core_audio_multicast_enabled(lc);
 	params->video_multicast_enabled = linphone_core_video_multicast_enabled(lc);
@@ -7725,6 +7745,22 @@ LINPHONE_PUBLIC const char *linphone_core_log_collection_upload_state_to_string(
 	case LinphoneCoreLogCollectionUploadStateNotDelivered : return "LinphoneCoreLogCollectionUploadStateNotDelivered";
 	}
 	return "UNKNOWN";
+}
+
+bool_t linphone_core_screensharing_server_supported(LinphoneCore *lc) {
+#ifdef HAVE_FREERDP_SHADOW
+	return TRUE;
+#else
+	return FALSE;
+#endif
+}
+
+bool_t linphone_core_screensharing_client_supported(LinphoneCore *lc) {
+#ifdef HAVE_FREERDP_CLIENT
+	return TRUE;
+#else
+	return FALSE;
+#endif
 }
 
 bool_t linphone_core_realtime_text_enabled(LinphoneCore *lc) {

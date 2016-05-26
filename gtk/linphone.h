@@ -194,6 +194,9 @@ LINPHONE_PUBLIC void linphone_gtk_in_call_view_set_transfer_status(LinphoneCall 
 LINPHONE_PUBLIC void linphone_gtk_mute_clicked(GtkButton *button);
 LINPHONE_PUBLIC void transfer_button_clicked(GtkWidget *button, gpointer call_ref);
 LINPHONE_PUBLIC void linphone_gtk_enable_mute_button(GtkButton *button, gboolean sensitive);
+LINPHONE_PUBLIC void linphone_gtk_screensharing_button_clicked(GtkButton *button, LinphoneCall *call);
+LINPHONE_PUBLIC void linphone_gtk_enable_screensharing_button(LinphoneCall *call, gboolean sensitive);
+LINPHONE_PUBLIC void linphone_gtk_update_screensharing_button(LinphoneCall *call);
 LINPHONE_PUBLIC void linphone_gtk_enable_hold_button(LinphoneCall *call, gboolean sensitive, gboolean holdon);
 LINPHONE_PUBLIC void linphone_gtk_enable_transfer_button(LinphoneCore *lc, gboolean value);
 LINPHONE_PUBLIC void linphone_gtk_enable_conference_button(LinphoneCore *lc, gboolean value);

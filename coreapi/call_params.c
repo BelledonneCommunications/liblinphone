@@ -168,21 +168,24 @@ int linphone_call_params_enable_realtime_text(LinphoneCallParams *params, bool_t
 	return 0;
 }
 
-void linphone_call_params_enable_video(LinphoneCallParams *cp, bool_t enabled){
-	cp->has_video=enabled;
-	if (enabled && cp->video_dir==LinphoneMediaDirectionInactive)
-		cp->video_dir=LinphoneMediaDirectionSendRecv;
+void linphone_call_params_enable_video(LinphoneCallParams *cp, bool_t enabled) {
+	cp->has_video = enabled;
+	if (enabled && cp->video_dir == LinphoneMediaDirectionInactive)
+		cp->video_dir = LinphoneMediaDirectionSendRecv;
 }
 
-void linphone_call_params_enable_screensharing(LinphoneCallParams *cp, bool_t enabled){
-	cp->screensharing_enabled=enabled;
+void linphone_call_params_enable_screensharing(LinphoneCallParams *cp, bool_t enabled) {
+	cp->screensharing_enabled = enabled;
+	if (enabled && cp->screensharing_dir == LinphoneMediaDirectionInactive)
+		cp->screensharing_dir = LinphoneMediaDirectionSendOnly;
 }
 
-const char *linphone_call_params_get_custom_header(const LinphoneCallParams *params, const char *header_name){
-	return sal_custom_header_find(params->custom_headers,header_name);
+const char *linphone_call_params_get_custom_header(const LinphoneCallParams *params, const char *header_name) {
+	return sal_custom_header_find(params->custom_headers, header_name);
 }
 
-const char * linphone_call_params_get_custom_sdp_attribute(const LinphoneCallParams *params, const char *attribute_name) {
+const char *linphone_call_params_get_custom_sdp_attribute(const LinphoneCallParams *params,
+														  const char *attribute_name) {
 	return sal_custom_sdp_attribute_find(params->custom_sdp_attributes, attribute_name);
 }
 
