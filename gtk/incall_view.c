@@ -523,7 +523,7 @@ void linphone_gtk_update_screensharing_button(LinphoneCall *call) {
 	}
 	switch (linphone_call_get_state(call)) {
 	case LinphoneCallStreamsRunning:
-		button_sensitive = !linphone_call_media_in_progress(call);
+		button_sensitive = !linphone_call_media_in_progress(call); // CHANGE
 		break;
 	default:
 		button_sensitive = FALSE;
@@ -970,7 +970,7 @@ void linphone_gtk_enable_mute_button(GtkButton *button, gboolean sensitive) {
 }
 
 void linphone_gtk_screensharing_button_clicked(GtkButton *button, LinphoneCall *call) {
-	gboolean adding = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "screensharing_video"));
+	gboolean adding = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "adding_screensharing"));
 	LinphoneCore *lc = linphone_call_get_core(call);
 	LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
 	gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);

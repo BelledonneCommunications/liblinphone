@@ -1605,11 +1605,8 @@ void linphone_core_reload_ms_plugins(LinphoneCore *lc, const char *path){
 }
 
 void screensharing_config_read(LinphoneCore *lc) {
-	char screen[64] = {"Screensharing"};
+	char screen[64] = {"screensharing"};
 	linphone_core_enable_screensharing(lc, (bool_t)lp_config_get_int(lc->config, screen, "enabled", (int)FALSE));
-	linphone_core_set_screensharing_direction(
-		lc, (LinphoneMediaDirection)lp_config_get_int(lc->config, screen, "direction",
-													  (int)LinphoneMediaDirectionInactive));
 }
 
 static void linphone_core_start(LinphoneCore *lc) {
@@ -6634,9 +6631,8 @@ void friends_config_uninit(LinphoneCore* lc)
 }
 
 void screensharing_config_uninit(LinphoneCore *lc) {
-	char screen[64] = {"Screensharing"};
+	char screen[64] = {"screensharing"};
 	lp_config_set_int(lc->config, screen, "enabled", linphone_core_screensharing_enabled(lc));
-	lp_config_set_int(lc->config, screen, "direction", (int)linphone_core_get_screensharing_direction(lc));
 }
 
 /**
@@ -7401,18 +7397,18 @@ void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 
 void linphone_core_init_default_params(LinphoneCore *lc, LinphoneCallParams *params) {
 	params->has_audio = TRUE;
-	params->has_video = FALSE; // linphone_core_video_enabled(lc) && lc->video_policy.automatically_initiate;
+	params->has_video = linphone_core_video_enabled(lc) && lc->video_policy.automatically_initiate;
 	params->media_encryption = linphone_core_get_media_encryption(lc);
 	params->in_conference = FALSE;
 	params->realtimetext_enabled = linphone_core_realtime_text_enabled(lc);
-	params->screensharing_enabled = FALSE; // linphone_core_screensharing_enabled(lc);
+	params->screensharing_enabled = linphone_core_screensharing_enabled(lc);
 	params->privacy = LinphonePrivacyDefault;
 	params->avpf_enabled = linphone_core_get_avpf_mode(lc);
 	params->implicit_rtcp_fb = lp_config_get_int(lc->config, "rtp", "rtcp_fb_implicit_rtcp_fb", TRUE);
 	params->avpf_rr_interval = linphone_core_get_avpf_rr_interval(lc);
 	params->audio_dir = LinphoneMediaDirectionSendRecv;
 	params->video_dir = LinphoneMediaDirectionSendRecv;
-	params->screensharing_dir = LinphoneMediaDirectionInactive; // lc->screen_conf.direction;
+	params->screensharing_dir = LinphoneMediaDirectionInactive;
 	params->real_early_media = lp_config_get_int(lc->config, "misc", "real_early_media", FALSE);
 	params->audio_multicast_enabled = linphone_core_audio_multicast_enabled(lc);
 	params->video_multicast_enabled = linphone_core_video_multicast_enabled(lc);
@@ -7748,19 +7744,11 @@ LINPHONE_PUBLIC const char *linphone_core_log_collection_upload_state_to_string(
 }
 
 bool_t linphone_core_screensharing_server_supported(LinphoneCore *lc) {
-#ifdef HAVE_FREERDP_SHADOW
-	return TRUE;
-#else
-	return FALSE;
-#endif
+	return screensharing_server_supported();
 }
 
 bool_t linphone_core_screensharing_client_supported(LinphoneCore *lc) {
-#ifdef HAVE_FREERDP_CLIENT
-	return TRUE;
-#else
-	return FALSE;
-#endif
+	return screensharing_client_supported();
 }
 
 bool_t linphone_core_realtime_text_enabled(LinphoneCore *lc) {
