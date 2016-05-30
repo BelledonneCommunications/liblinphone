@@ -879,7 +879,7 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 	strncpy(md->streams[call->main_screensharing_stream_index].name, "Application",
 			sizeof(md->streams[call->main_screensharing_stream_index].name) - 1);
 
-	if (params->screensharing_enabled) {
+	if (params->screensharing_enabled && call->state == LinphoneCallUpdating) {
 		md->streams[call->main_screensharing_stream_index].dir = SalStreamSendRecv;
 		strncpy(md->streams[call->main_screensharing_stream_index].rtp_addr,
 				linphone_call_get_public_ip_for_stream(call, call->main_screensharing_stream_index),
@@ -3654,7 +3654,7 @@ static void linphone_call_start_screensharing_stream(LinphoneCall *call) {
 	scstream = sal_media_description_find_best_stream(call->resultdesc, SalApplication);
 	ms_message("Screensharing Start: role = %d",
 			   call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_role);
-	if (call->state == LinphoneCallStreamsRunning && scstream != NULL && scstream->dir != SalStreamInactive &&
+	if (scstream != NULL && scstream->dir != SalStreamInactive &&
 		call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_role != SalStreamInactive) {
 		call->current_params->screensharing_enabled = TRUE;
 		ms_message("Screensharing Start: Sceensharing enable");
