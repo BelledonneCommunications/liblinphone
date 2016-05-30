@@ -974,7 +974,7 @@ void linphone_gtk_screensharing_button_clicked(GtkButton *button, LinphoneCall *
 	LinphoneCore *lc = linphone_call_get_core(call);
 	LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
 	gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
-	linphone_call_params_enable_screensharing(params, adding);
+	linphone_call_params_enable_screensharing(params, adding, TRUE);
 	linphone_core_update_call(lc, call, params);
 	linphone_call_params_destroy(params);
 }

@@ -342,12 +342,10 @@ static void initiate_outgoing(MSFactory *factory, const SalStreamDescription *lo
 	}
 
 	result->proto = remote_answer->proto;
-	if ((result->type = local_offer->type) == SalApplication) {
+	if ((result->type = local_offer->type) == SalApplication)
 		result->screensharing_role =
-			(local_offer == SalStreamSendRecv && local_offer->screensharing_role == remote_answer->screensharing_role)
-				? SalStreamSendRecv
-				: compute_dir_outgoing(local_offer->screensharing_role, remote_answer->screensharing_role);
-	}
+			compute_dir_outgoing(local_offer->screensharing_role, remote_answer->screensharing_role);
+
 	if (local_offer->rtp_addr[0] != '\0' && ms_is_multicast(local_offer->rtp_addr)) {
 		/*6.2 Multicast Streams
 		...
@@ -444,12 +442,9 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 							  bool_t one_matching_codec) {
 	result->payloads = match_payloads(factory, local_cap->payloads, remote_offer->payloads, FALSE, one_matching_codec);
 	result->proto = remote_offer->proto;
-	if ((result->type = local_cap->type) == SalApplication) {
+	if ((result->type = local_cap->type) == SalApplication)
 		result->screensharing_role =
-			(local_cap == SalStreamSendRecv && remote_offer->screensharing_role == local_cap->screensharing_role)
-				? SalStreamSendRecv
-				: compute_dir_incoming(local_cap->screensharing_role, remote_offer->screensharing_role);
-	}
+			compute_dir_incoming(local_cap->screensharing_role, remote_offer->screensharing_role);
 	result->dir = compute_dir_incoming(local_cap->dir, remote_offer->dir);
 
 	if (remote_offer->type != SalApplication &&

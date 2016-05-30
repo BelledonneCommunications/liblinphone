@@ -1301,7 +1301,7 @@ static void on_call_updated_response(GtkWidget *dialog, gint responseid, gpointe
 		LinphoneCore *lc = linphone_call_get_core(call);
 		LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
 		if (*stream == linphone_call_get_screensharing_index(call)) {
-			linphone_call_params_enable_screensharing(params, responseid == GTK_RESPONSE_YES);
+			linphone_call_params_enable_screensharing(params, responseid == GTK_RESPONSE_YES, FALSE);
 		} else if (*stream == linphone_call_get_video_index(call)) {
 			linphone_call_params_enable_video(params, responseid == GTK_RESPONSE_YES);
 		}

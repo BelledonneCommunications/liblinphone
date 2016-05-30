@@ -119,8 +119,9 @@ LINPHONE_PUBLIC void linphone_call_params_enable_video(LinphoneCallParams *cp, b
  * Enable screen sharing stream.
  * @param[in] cp LinphoneCallParams object
  * @param[in] enabled A boolean value telling whether to enable screen sharing or not.
+ * @param[in] server A boolean value telling whether to launch server or client
 **/
-LINPHONE_PUBLIC void linphone_call_params_enable_screensharing(LinphoneCallParams *cp, bool_t enabled);
+LINPHONE_PUBLIC void linphone_call_params_enable_screensharing(LinphoneCallParams *cp, bool_t enabled, bool_t server);
 
 /**
  * Get a custom SIP header.

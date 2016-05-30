@@ -174,10 +174,12 @@ void linphone_call_params_enable_video(LinphoneCallParams *cp, bool_t enabled) {
 		cp->video_dir = LinphoneMediaDirectionSendRecv;
 }
 
-void linphone_call_params_enable_screensharing(LinphoneCallParams *cp, bool_t enabled) {
+void linphone_call_params_enable_screensharing(LinphoneCallParams *cp, bool_t enabled, bool_t server) {
 	cp->screensharing_enabled = enabled;
 	if (enabled && cp->screensharing_dir == LinphoneMediaDirectionInactive)
-		cp->screensharing_dir = LinphoneMediaDirectionSendOnly;
+		cp->screensharing_dir = (server) ? LinphoneMediaDirectionSendOnly : LinphoneMediaDirectionRecvOnly;
+	else
+		cp->screensharing_dir = LinphoneMediaDirectionInactive;
 }
 
 const char *linphone_call_params_get_custom_header(const LinphoneCallParams *params, const char *header_name) {
