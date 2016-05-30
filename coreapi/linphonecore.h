@@ -979,6 +979,22 @@ LINPHONE_PUBLIC int linphone_call_get_stream_count(LinphoneCall *call);
 LINPHONE_PUBLIC MSFormatType linphone_call_get_stream_type(LinphoneCall *call, int stream_index);
 
 /**
+ * Returns index of video stream.
+ * @param call
+ *
+ * @return index of video stream.
+**/
+LINPHONE_PUBLIC const int linphone_call_get_video_index(LinphoneCall *call);
+
+/**
+ * Returns index of screensharing stream.
+ * @param call
+ *
+ * @return index of screensharing stream.
+**/
+LINPHONE_PUBLIC const int linphone_call_get_screensharing_index(LinphoneCall *call);
+
+/**
  * Returns the meta rtp transport for the given stream index.
  * @param call
  * @param stream_index

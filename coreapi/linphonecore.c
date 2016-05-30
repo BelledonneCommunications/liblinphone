@@ -7408,7 +7408,8 @@ void linphone_core_init_default_params(LinphoneCore *lc, LinphoneCallParams *par
 	params->avpf_rr_interval = linphone_core_get_avpf_rr_interval(lc);
 	params->audio_dir = LinphoneMediaDirectionSendRecv;
 	params->video_dir = LinphoneMediaDirectionSendRecv;
-	params->screensharing_dir = LinphoneMediaDirectionInactive;
+	params->screensharing_dir = (linphone_core_screensharing_client_supported(lc)) ? LinphoneMediaDirectionRecvOnly
+																				   : LinphoneMediaDirectionInactive;
 	params->real_early_media = lp_config_get_int(lc->config, "misc", "real_early_media", FALSE);
 	params->audio_multicast_enabled = linphone_core_audio_multicast_enabled(lc);
 	params->video_multicast_enabled = linphone_core_video_multicast_enabled(lc);

@@ -5102,7 +5102,15 @@ MSFormatType linphone_call_get_stream_type(LinphoneCall *call, int stream_index)
 	return MSUnknownMedia;
 }
 
-RtpTransport* linphone_call_get_meta_rtp_transport(LinphoneCall *call, int stream_index) {
+const int linphone_call_get_video_index(LinphoneCall *call) {
+	return call->main_video_stream_index;
+}
+
+const int linphone_call_get_screensharing_index(LinphoneCall *call) {
+	return call->main_screensharing_stream_index;
+}
+
+RtpTransport *linphone_call_get_meta_rtp_transport(LinphoneCall *call, int stream_index) {
 	RtpTransport *meta_rtp;
 	RtpTransport *meta_rtcp;
 
