@@ -3654,7 +3654,7 @@ static void linphone_call_start_screensharing_stream(LinphoneCall *call) {
 	scstream = sal_media_description_find_best_stream(call->resultdesc, SalApplication);
 	ms_message("Screensharing Start: role = %d",
 			   call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_role);
-	if (scstream != NULL && scstream->dir != SalStreamInactive &&
+	if (call->state == LinphoneCallStreamsRunning && scstream != NULL && scstream->dir != SalStreamInactive &&
 		call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_role != SalStreamInactive) {
 		call->current_params->screensharing_enabled = TRUE;
 		ms_message("Screensharing Start: Sceensharing enable");
