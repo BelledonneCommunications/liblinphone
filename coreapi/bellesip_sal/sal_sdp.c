@@ -825,7 +825,7 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 		stream->type = SalVideo;
 	} else if (strcasecmp("text", mtype) == 0) {
 		stream->type = SalText;
-	} else if (strcasecmp("application", mtype) == 0) { // TODO
+	} else if (strcasecmp("application", mtype) == 0) {
 		stream->type = SalApplication;
 	} else {
 		stream->type = SalOther;
