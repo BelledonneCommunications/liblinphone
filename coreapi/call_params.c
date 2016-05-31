@@ -176,10 +176,8 @@ void linphone_call_params_enable_video(LinphoneCallParams *cp, bool_t enabled) {
 
 void linphone_call_params_enable_screensharing(LinphoneCallParams *cp, bool_t enabled, bool_t server) {
 	cp->has_screensharing = enabled;
-	if (enabled && cp->screensharing_role == LinphoneMediaRoleInactive)
+	if (enabled)
 		cp->screensharing_role = (server) ? LinphoneMediaRoleServer : LinphoneMediaRoleClient;
-	else
-		cp->screensharing_role = LinphoneMediaRoleInactive;
 }
 
 const char *linphone_call_params_get_custom_header(const LinphoneCallParams *params, const char *header_name) {
