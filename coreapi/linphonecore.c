@@ -3631,9 +3631,7 @@ int linphone_core_update_call(LinphoneCore *lc, LinphoneCall *call, const Linpho
 #if defined(VIDEO_ENABLED) && defined(BUILD_UPNP)
 	bool_t has_video = FALSE;
 #endif
-#if defined HAVE_FREERDP_CLIENT || HAVE_FREERDP_SHADOW
 	bool_t has_screensharing = FALSE;
-#endif
 
 	switch (initial_state = call->state) {
 	case LinphoneCallIncomingReceived:
@@ -3669,13 +3667,11 @@ int linphone_core_update_call(LinphoneCore *lc, LinphoneCall *call, const Linpho
 			}
 		}
 #endif /* defined(VIDEO_ENABLED) && defined(BUILD_UPNP) */
-#if defined HAVE_FREERDP_CLIENT || HAVE_FREERDP_SHADOW
 		has_screensharing = (call->params->has_screensharing);
 
 		if ((call->screenstream != NULL) && !has_screensharing) {
 			// TODO stop screensharing ?
 		}
-#endif
 		linphone_call_set_new_params(call, params);
 		err = linphone_call_prepare_ice(call, FALSE);
 		if (err == 1) {
@@ -3698,10 +3694,8 @@ int linphone_core_update_call(LinphoneCore *lc, LinphoneCall *call, const Linpho
 			}
 		}
 #endif // defined(VIDEO_ENABLED) && defined(BUILD_UPNP)
-#if defined HAVE_FREERDP_CLIENT || HAVE_FREERDP_SHADOW
 		if (!has_screensharing && call->params->screensharing_enabled) {
 		}
-#endif
 		if ((err = linphone_core_start_update_call(lc, call)) && call->state != initial_state) {
 			/*Restore initial state*/
 			linphone_call_set_state(call, initial_state, "Restore initial state");
@@ -7411,13 +7405,7 @@ void linphone_core_init_default_params(LinphoneCore *lc, LinphoneCallParams *par
 	params->avpf_rr_interval = linphone_core_get_avpf_rr_interval(lc);
 	params->audio_dir = LinphoneMediaDirectionSendRecv;
 	params->video_dir = LinphoneMediaDirectionSendRecv;
-	params->screensharing_role =
-		(linphone_core_screensharing_client_supported(lc) && linphone_core_screensharing_server_supported(lc))
-			? LinphoneMediaRoleServerClient
-			: (linphone_core_screensharing_client_supported(lc))
-				  ? LinphoneMediaRoleClient
-				  : (linphone_core_screensharing_server_supported(lc)) ? LinphoneMediaRoleServer
-																	   : LinphoneMediaRoleInactive;
+	params->screensharing_role = LinphoneMediaRoleInactive;
 	params->real_early_media = lp_config_get_int(lc->config, "misc", "real_early_media", FALSE);
 	params->audio_multicast_enabled = linphone_core_audio_multicast_enabled(lc);
 	params->video_multicast_enabled = linphone_core_video_multicast_enabled(lc);

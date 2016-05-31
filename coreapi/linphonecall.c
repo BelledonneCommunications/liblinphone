@@ -3775,7 +3775,6 @@ void linphone_call_start_media_streams(LinphoneCall *call, LinphoneCallState nex
 	if (call->params->realtimetext_enabled) {
 		linphone_call_start_text_stream(call);
 	}
-	call->current_params->has_screensharing = FALSE;
 	if (call->params->screensharing_enabled) {
 		linphone_call_start_screensharing_stream(call);
 	}
