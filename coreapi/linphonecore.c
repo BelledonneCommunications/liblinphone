@@ -1758,16 +1758,16 @@ static void linphone_core_internal_subscription_state_changed(LinphoneCore *lc, 
 	}
 }
 
-static void linphone_core_init(LinphoneCore * lc, const LinphoneCoreVTable *vtable, LpConfig *config, void * userdata){
+static void linphone_core_init(LinphoneCore *lc, const LinphoneCoreVTable *vtable, LpConfig *config, void *userdata) {
 	const char *remote_provisioning_uri = NULL;
-	LinphoneCoreVTable* local_vtable= linphone_core_v_table_new();
+	LinphoneCoreVTable *local_vtable = linphone_core_v_table_new();
 	LinphoneCoreVTable *internal_vtable = linphone_core_v_table_new();
 
 	ms_message("Initializing LinphoneCore %s", linphone_core_get_version());
 
-	lc->config=lp_config_ref(config);
-	lc->data=userdata;
-	lc->ringstream_autorelease=TRUE;
+	lc->config = lp_config_ref(config);
+	lc->data = userdata;
+	lc->ringstream_autorelease = TRUE;
 
 	linphone_task_list_init(&lc->hooks);
 
@@ -1786,9 +1786,9 @@ static void linphone_core_init(LinphoneCore * lc, const LinphoneCoreVTable *vtab
 	linphone_core_register_offer_answer_providers(lc);
 	/* Get the mediastreamer2 event queue */
 	/* This allows to run event's callback in linphone_core_iterate() */
-	lc->msevq=ms_factory_create_event_queue(lc->factory);
+	lc->msevq = ms_factory_create_event_queue(lc->factory);
 
-	lc->sal=sal_init(lc->factory);
+	lc->sal = sal_init(lc->factory);
 	sal_set_http_proxy_host(lc->sal, linphone_core_get_http_proxy_host(lc));
 	sal_set_http_proxy_port(lc->sal, linphone_core_get_http_proxy_port(lc));
 
@@ -2977,7 +2977,8 @@ LinphoneCall *linphone_core_start_refered_call(LinphoneCore *lc, LinphoneCall *c
 		cp->has_video =
 			call->current_params
 				->has_video; /*start the call to refer-target with video enabled if original call had video*/
-		cp->screensharing_enabled = call->current_params->screensharing_enabled; // TODO
+		cp->has_screensharing = call->current_params->has_screensharing;
+		cp->screensharing_enabled = call->current_params->screensharing_enabled;
 	}
 	cp->referer = call;
 	ms_message("Starting new call to refered address %s", call->refer_to);
@@ -3669,7 +3670,7 @@ int linphone_core_update_call(LinphoneCore *lc, LinphoneCall *call, const Linpho
 		}
 #endif /* defined(VIDEO_ENABLED) && defined(BUILD_UPNP) */
 #if defined HAVE_FREERDP_CLIENT || HAVE_FREERDP_SHADOW
-		has_screensharing = (call->params->screensharing_enabled);
+		has_screensharing = (call->params->has_screensharing);
 
 		if ((call->screenstream != NULL) && !has_screensharing) {
 			// TODO stop screensharing ?
@@ -3822,21 +3823,22 @@ int _linphone_core_accept_call_update(LinphoneCore *lc, LinphoneCall *call, cons
 		/* Remote has sent an INVITE with the same SDP as before, so send a 200 OK with the same SDP as before. */
 		ms_warning("SDP version has not changed, send same SDP as before.");
 		sal_call_accept(call->op);
-		linphone_call_set_state(call,next_state,state_info);
+		linphone_call_set_state(call, next_state, state_info);
 		return 0;
 	}
-	if (params==NULL){
+	if (params == NULL) {
 		if (!sal_call_is_offerer(call->op)) {
 			/*reset call param for multicast because this param is only relevant when offering*/
-			linphone_call_params_enable_audio_multicast(call->params,FALSE);
-			linphone_call_params_enable_video_multicast(call->params,FALSE);
+			linphone_call_params_enable_audio_multicast(call->params, FALSE);
+			linphone_call_params_enable_video_multicast(call->params, FALSE);
 		}
-	}else
-		linphone_call_set_new_params(call,params);
+	} else
+		linphone_call_set_new_params(call, params);
 
-	if (call->params->has_video && !linphone_core_video_enabled(lc)){
-		ms_warning("linphone_core_accept_call_update(): requested video but video support is globally disabled. Refusing video.");
-		call->params->has_video=FALSE;
+	if (call->params->has_video && !linphone_core_video_enabled(lc)) {
+		ms_warning("linphone_core_accept_call_update(): requested video but video support is globally disabled. "
+				   "Refusing video.");
+		call->params->has_video = FALSE;
 	}
 	if (call->current_params->in_conference) {
 		ms_warning("Video isn't supported in conference");
@@ -7402,19 +7404,20 @@ void linphone_core_init_default_params(LinphoneCore *lc, LinphoneCallParams *par
 	params->in_conference = FALSE;
 	params->realtimetext_enabled = linphone_core_realtime_text_enabled(lc);
 	params->screensharing_enabled = linphone_core_screensharing_enabled(lc);
+	params->has_screensharing = FALSE;
 	params->privacy = LinphonePrivacyDefault;
 	params->avpf_enabled = linphone_core_get_avpf_mode(lc);
 	params->implicit_rtcp_fb = lp_config_get_int(lc->config, "rtp", "rtcp_fb_implicit_rtcp_fb", TRUE);
 	params->avpf_rr_interval = linphone_core_get_avpf_rr_interval(lc);
 	params->audio_dir = LinphoneMediaDirectionSendRecv;
 	params->video_dir = LinphoneMediaDirectionSendRecv;
-	params->screensharing_dir =
+	params->screensharing_role =
 		(linphone_core_screensharing_client_supported(lc) && linphone_core_screensharing_server_supported(lc))
-			? LinphoneMediaDirectionSendRecv
+			? LinphoneMediaRoleServerClient
 			: (linphone_core_screensharing_client_supported(lc))
-				  ? LinphoneMediaDirectionRecvOnly
-				  : (linphone_core_screensharing_server_supported(lc)) ? LinphoneMediaDirectionSendOnly
-																	   : LinphoneMediaDirectionInactive;
+				  ? LinphoneMediaRoleClient
+				  : (linphone_core_screensharing_server_supported(lc)) ? LinphoneMediaRoleServer
+																	   : LinphoneMediaRoleInactive;
 	params->real_early_media = lp_config_get_int(lc->config, "misc", "real_early_media", FALSE);
 	params->audio_multicast_enabled = linphone_core_audio_multicast_enabled(lc);
 	params->video_multicast_enabled = linphone_core_video_multicast_enabled(lc);
@@ -7769,12 +7772,12 @@ void linphone_core_enable_screensharing(LinphoneCore *lc, bool_t yesno) {
 	lc->screen_conf.enabled = yesno;
 }
 
-void linphone_core_set_screensharing_direction(LinphoneCore *lc, LinphoneMediaDirection dir) {
-	lc->screen_conf.direction = dir;
+void linphone_core_set_screensharing_role(LinphoneCore *lc, LinphoneMediaRole role) {
+	lc->screen_conf.role = role;
 }
 
-LinphoneMediaDirection linphone_core_get_screensharing_direction(LinphoneCore *lc) {
-	return lc->screen_conf.direction;
+LinphoneMediaRole linphone_core_get_screensharing_role(LinphoneCore *lc) {
+	return lc->screen_conf.role;
 }
 
 void linphone_core_set_http_proxy_host(LinphoneCore *lc, const char *host) {

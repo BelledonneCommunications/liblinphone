@@ -175,11 +175,11 @@ void linphone_call_params_enable_video(LinphoneCallParams *cp, bool_t enabled) {
 }
 
 void linphone_call_params_enable_screensharing(LinphoneCallParams *cp, bool_t enabled, bool_t server) {
-	cp->screensharing_enabled = enabled;
-	if (enabled && cp->screensharing_dir == LinphoneMediaDirectionInactive)
-		cp->screensharing_dir = (server) ? LinphoneMediaDirectionSendOnly : LinphoneMediaDirectionRecvOnly;
+	cp->has_screensharing = enabled;
+	if (enabled && cp->screensharing_role == LinphoneMediaRoleInactive)
+		cp->screensharing_role = (server) ? LinphoneMediaRoleServer : LinphoneMediaRoleClient;
 	else
-		cp->screensharing_dir = LinphoneMediaDirectionInactive;
+		cp->screensharing_role = LinphoneMediaRoleInactive;
 }
 
 const char *linphone_call_params_get_custom_header(const LinphoneCallParams *params, const char *header_name) {
@@ -291,8 +291,8 @@ bool_t linphone_call_params_video_enabled(const LinphoneCallParams *cp){
 	return cp->has_video;
 }
 
-bool_t linphone_call_params_screensharing_enabled(const LinphoneCallParams *cp){
-	return cp->screensharing_enabled;
+bool_t linphone_call_params_screensharing_enabled(const LinphoneCallParams *cp) {
+	return cp->has_screensharing;
 }
 
 LinphoneMediaDirection linphone_call_params_get_audio_direction(const LinphoneCallParams *cp) {
@@ -372,8 +372,9 @@ LinphoneCallParams *linphone_call_params_new(void) {
 	LinphoneCallParams *cp = belle_sip_object_new(LinphoneCallParams);
 	cp->audio_dir = LinphoneMediaDirectionSendRecv;
 	cp->video_dir = LinphoneMediaDirectionSendRecv;
-	cp->screensharing_dir = LinphoneMediaDirectionInactive;
+	cp->screensharing_role = LinphoneMediaRoleInactive;
 	cp->has_audio = TRUE;
+	cp->has_screensharing = FALSE;
 	cp->realtimetext_enabled = FALSE;
 	cp->screensharing_enabled = FALSE;
 	return cp;

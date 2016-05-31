@@ -154,9 +154,10 @@ struct _LinphoneCallParams{
 	LinphonePrivacyMask privacy;
 	LinphoneMediaDirection audio_dir;
 	LinphoneMediaDirection video_dir;
-	LinphoneMediaDirection screensharing_dir;
+	LinphoneMediaRole screensharing_role;
 	bool_t has_audio;
 	bool_t has_video;
+	bool_t has_screensharing;
 	bool_t avpf_enabled; /* RTCP feedback messages are enabled */
 	bool_t implicit_rtcp_fb;
 
@@ -866,7 +867,7 @@ typedef struct text_config { bool_t enabled; } text_config_t;
 
 typedef struct screen_config {
 	bool_t enabled;
-	LinphoneMediaDirection direction;
+	LinphoneMediaRole role;
 } screen_config_t;
 
 typedef struct ui_config {

@@ -27,22 +27,21 @@
 #include "belle-sip/belle-sip.h"
 
 static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneCoreManager *coreCallee,
-									  bool_t sc_caller_enable, bool_t sc_callee_enable,
-									  LinphoneMediaDirection caller_dir, LinphoneMediaDirection callee_dir,
-									  LinphoneMediaDirection caller_dir_result,
-									  LinphoneMediaDirection callee_dir_result) {
+									  bool_t sc_caller_enable, bool_t sc_callee_enable, LinphoneMediaRole caller_role,
+									  LinphoneMediaRole callee_role, LinphoneMediaRole caller_role_result,
+									  LinphoneMediaRole callee_role_result) {
 	LinphoneCall *caller_call, *callee_call;
 	bool_t sc_call_result = FALSE;
 
-	if (sc_caller_enable && sc_caller_enable == sc_callee_enable && caller_dir != LinphoneMediaDirectionInactive &&
-		callee_dir != LinphoneMediaDirectionInactive) {
-		sc_call_result = (caller_dir != callee_dir);
+	if (sc_caller_enable && sc_caller_enable == sc_callee_enable && caller_role != LinphoneMediaRoleInactive &&
+		callee_role != LinphoneMediaRoleInactive) {
+		sc_call_result = (caller_role != callee_role);
 	}
 
 	linphone_core_enable_screensharing(coreCaller->lc, sc_caller_enable);
 	linphone_core_enable_screensharing(coreCallee->lc, sc_callee_enable);
-	linphone_core_set_screensharing_direction(coreCaller->lc, caller_dir);
-	linphone_core_set_screensharing_direction(coreCallee->lc, callee_dir);
+	linphone_core_set_screensharing_role(coreCaller->lc, caller_role);
+	linphone_core_set_screensharing_role(coreCallee->lc, callee_role);
 
 	BC_ASSERT_TRUE(call(coreCaller, coreCallee));
 	caller_call = linphone_core_get_current_call(coreCaller->lc);
@@ -54,12 +53,12 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 
 		BC_ASSERT_TRUE(
 			wait_for(coreCaller->lc, coreCallee->lc, &coreCaller->stat.number_of_LinphoneCallStreamsRunning, 1));
-		if (caller_dir_result == LinphoneMediaDirectionRecvOnly) {
+		if (caller_role_result == LinphoneMediaRoleClient) {
 			BC_ASSERT_TRUE(wait_for(coreCaller->lc, coreCallee->lc, (int *)&(caller_call->screenstream->state),
 									(int)MSScreenSharingListening));
 			BC_ASSERT_TRUE(wait_for(coreCaller->lc, coreCallee->lc, (int *)&(callee_call->screenstream->state),
 									(int)MSScreenSharingConnecting));
-		} else if (caller_dir_result == LinphoneMediaDirectionSendOnly) {
+		} else if (caller_role_result == LinphoneMediaRoleServer) {
 			BC_ASSERT_TRUE(wait_for(coreCaller->lc, coreCallee->lc, (int *)&(callee_call->screenstream->state),
 									(int)MSScreenSharingListening));
 			BC_ASSERT_TRUE(wait_for(coreCaller->lc, coreCallee->lc, (int *)&(caller_call->screenstream->state),
@@ -68,9 +67,9 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 
 		params = linphone_call_get_current_params(linphone_core_get_current_call(coreCaller->lc));
 		BC_ASSERT_EQUAL(params->screensharing_enabled, sc_call_result, bool_t, "%d");
-		BC_ASSERT_EQUAL(params->screensharing_dir, caller_dir_result, int, "%d");
+		BC_ASSERT_EQUAL(params->screensharing_role, caller_role_result, int, "%d");
 		if (sc_call_result) {
-			if (caller_dir_result == LinphoneMediaDirectionRecvOnly) {
+			if (caller_role_result == LinphoneMediaRoleServer) {
 				BC_ASSERT_TRUE(caller_call->screenstream->server != NULL);
 				BC_ASSERT_TRUE(caller_call->screenstream->client == NULL);
 			} else {
@@ -84,13 +83,13 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 
 		params = linphone_call_get_current_params(linphone_core_get_current_call(coreCallee->lc));
 		BC_ASSERT_EQUAL(params->screensharing_enabled, sc_call_result, bool_t, "%d");
-		BC_ASSERT_EQUAL(params->screensharing_dir, callee_dir_result, int, "%d");
+		BC_ASSERT_EQUAL(params->screensharing_role, callee_role_result, int, "%d");
 		if (sc_call_result) {
 			BC_ASSERT_TRUE(wait_for(coreCaller->lc, coreCallee->lc, (int *)&(callee_call->screenstream->state),
 									(int)MSScreenSharingStreamRunning));
 			BC_ASSERT_TRUE(wait_for(coreCaller->lc, coreCallee->lc, (int *)&(caller_call->screenstream->state),
 									(int)MSScreenSharingStreamRunning));
-			if (callee_dir_result == LinphoneMediaDirectionRecvOnly) {
+			if (callee_role_result == LinphoneMediaRoleClient) {
 				BC_ASSERT_TRUE(callee_call->screenstream->server != NULL);
 				BC_ASSERT_TRUE(callee_call->screenstream->client == NULL);
 			} else {
@@ -106,100 +105,119 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 	end_call(coreCaller, coreCallee);
 }
 
-static void call_with_screensharing_RecvOnly_SendOnly() {
+static void call_with_screensharing_Client_Server() {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 
-	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaDirectionRecvOnly,
-							  LinphoneMediaDirectionSendOnly, LinphoneMediaDirectionRecvOnly,
-							  LinphoneMediaDirectionSendOnly);
+	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaRoleClient, LinphoneMediaRoleClient,
+							  LinphoneMediaRoleServer, LinphoneMediaRoleServer);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_SendOnly_RecvOnly() {
+static void call_with_screensharing_Server_Client() {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 
-	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaDirectionSendOnly,
-							  LinphoneMediaDirectionRecvOnly, LinphoneMediaDirectionSendOnly,
-							  LinphoneMediaDirectionRecvOnly);
+	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaRoleServer, LinphoneMediaRoleClient,
+							  LinphoneMediaRoleServer, LinphoneMediaRoleClient);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_SendRecv_RecvOnly() {
+static void call_with_screensharing_ServerClient_Client() {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 
-	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaDirectionSendRecv,
-							  LinphoneMediaDirectionRecvOnly, LinphoneMediaDirectionSendOnly,
-							  LinphoneMediaDirectionRecvOnly);
+	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaRoleServerClient, LinphoneMediaRoleClient,
+							  LinphoneMediaRoleServer, LinphoneMediaRoleClient);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_SendOnly_SendRecv() {
+static void call_with_screensharing_ServerClient_Server() {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 
-	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaDirectionSendOnly,
-							  LinphoneMediaDirectionSendRecv, LinphoneMediaDirectionSendOnly,
-							  LinphoneMediaDirectionRecvOnly);
+	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaRoleServerClient, LinphoneMediaRoleServer,
+							  LinphoneMediaRoleClient, LinphoneMediaRoleServer);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_SendRecv_SendRecv() {
+static void call_with_screensharing_Server_ServerClient() {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 
-	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaDirectionSendRecv,
-							  LinphoneMediaDirectionSendRecv, LinphoneMediaDirectionInactive,
-							  LinphoneMediaDirectionInactive);
+	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaRoleServer, LinphoneMediaRoleServerClient,
+							  LinphoneMediaRoleServer, LinphoneMediaRoleClient);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_SendOnly_SendOnly() {
+static void call_with_screensharing_Client_ServerClient() {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 
-	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaDirectionSendOnly,
-							  LinphoneMediaDirectionSendOnly, LinphoneMediaDirectionInactive,
-							  LinphoneMediaDirectionInactive);
+	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaRoleClient, LinphoneMediaRoleServerClient,
+							  LinphoneMediaRoleClient, LinphoneMediaRoleServer);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_RecvOnly_RecvOnly() {
+static void call_with_screensharing_ServerClient_ServerClient() {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 
-	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaDirectionRecvOnly,
-							  LinphoneMediaDirectionRecvOnly, LinphoneMediaDirectionInactive,
-							  LinphoneMediaDirectionInactive);
+	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaRoleServerClient, LinphoneMediaRoleServerClient,
+							  LinphoneMediaRoleInactive, LinphoneMediaRoleInactive);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_with_screensharing_Server_Server() {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
+
+	marie = linphone_core_manager_new("marie_rc");
+	pauline = linphone_core_manager_new("pauline_rc");
+
+	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaRoleServer, LinphoneMediaRoleServer,
+							  LinphoneMediaRoleInactive, LinphoneMediaRoleInactive);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_with_screensharing_Client_Client() {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
+
+	marie = linphone_core_manager_new("marie_rc");
+	pauline = linphone_core_manager_new("pauline_rc");
+
+	call_screensharing_params(marie, pauline, TRUE, TRUE, LinphoneMediaRoleClient, LinphoneMediaRoleClient,
+							  LinphoneMediaRoleInactive, LinphoneMediaRoleInactive);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -211,9 +229,8 @@ static void call_without_screensharing() {
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 
-	call_screensharing_params(marie, pauline, FALSE, FALSE, LinphoneMediaDirectionInactive,
-							  LinphoneMediaDirectionInactive, LinphoneMediaDirectionInactive,
-							  LinphoneMediaDirectionInactive);
+	call_screensharing_params(marie, pauline, FALSE, FALSE, LinphoneMediaRoleInactive, LinphoneMediaRoleInactive,
+							  LinphoneMediaRoleInactive, LinphoneMediaRoleInactive);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -225,9 +242,8 @@ static void call_without_screensharing_transmitter_no_screensharing() {
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 
-	call_screensharing_params(pauline, marie, FALSE, TRUE, LinphoneMediaDirectionInactive,
-							  LinphoneMediaDirectionSendRecv, LinphoneMediaDirectionInactive,
-							  LinphoneMediaDirectionInactive);
+	call_screensharing_params(pauline, marie, FALSE, TRUE, LinphoneMediaRoleInactive, LinphoneMediaRoleServerClient,
+							  LinphoneMediaRoleInactive, LinphoneMediaRoleInactive);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -239,9 +255,8 @@ static void call_without_screensharing_receiver_no_screensharing() {
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 
-	call_screensharing_params(marie, pauline, TRUE, FALSE, LinphoneMediaDirectionSendRecv,
-							  LinphoneMediaDirectionInactive, LinphoneMediaDirectionInactive,
-							  LinphoneMediaDirectionInactive);
+	call_screensharing_params(marie, pauline, TRUE, FALSE, LinphoneMediaRoleServerClient, LinphoneMediaRoleInactive,
+							  LinphoneMediaRoleInactive, LinphoneMediaRoleInactive);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -269,13 +284,15 @@ static void test_media_screensharing() {
 }
 
 test_t screensharing_tests[] = {
-	TEST_NO_TAG("Call with screensharing RecvOnly SendOnly", call_with_screensharing_RecvOnly_SendOnly),
-	TEST_NO_TAG("Call with screensharing SendOnly RecvOnly", call_with_screensharing_SendOnly_RecvOnly),
-	TEST_NO_TAG("Call with screensharing SendRecv RecvOnly", call_with_screensharing_SendRecv_RecvOnly),
-	TEST_NO_TAG("Call with screensharing SendOnly SendRecv", call_with_screensharing_SendOnly_SendRecv),
-	TEST_NO_TAG("Call with screensharing SendRecv SendRecv", call_with_screensharing_SendRecv_SendRecv),
-	TEST_NO_TAG("Call with screensharing SendOnly SendOnly", call_with_screensharing_SendOnly_SendOnly),
-	TEST_NO_TAG("Call with screensharing RecvOnly RecvOnly", call_with_screensharing_RecvOnly_RecvOnly),
+	TEST_NO_TAG("Call with screensharing Client Server", call_with_screensharing_Client_Server),
+	TEST_NO_TAG("Call with screensharing Server Client", call_with_screensharing_Server_Client),
+	TEST_NO_TAG("Call with screensharing ServerClient Client", call_with_screensharing_ServerClient_Client),
+	TEST_NO_TAG("Call with screensharing ServerClient Server", call_with_screensharing_ServerClient_Server),
+	TEST_NO_TAG("Call with screensharing Server ServerClient", call_with_screensharing_Server_ServerClient),
+	TEST_NO_TAG("Call with screensharing Client ServerClient", call_with_screensharing_Client_ServerClient),
+	TEST_NO_TAG("Call with screensharing ServerClient ServerClient", call_with_screensharing_ServerClient_ServerClient),
+	TEST_NO_TAG("Call with screensharing Server Server", call_with_screensharing_Server_Server),
+	TEST_NO_TAG("Call with screensharing Client Client", call_with_screensharing_Client_Client),
 	TEST_NO_TAG("Call without screensharing", call_without_screensharing),
 	TEST_NO_TAG("Call without screensharing, transmitter without screensharing",
 				call_without_screensharing_transmitter_no_screensharing),

@@ -46,6 +46,20 @@ enum _LinphoneMediaDirection {
 typedef enum _LinphoneMediaDirection LinphoneMediaDirection;
 
 /**
+ * Indicates for a given media the role
+ * */
+enum _LinphoneMediaRole {
+	LinphoneMediaRoleInactive,
+	LinphoneMediaRoleServer,
+	LinphoneMediaRoleServerClient,
+	LinphoneMediaRoleClient
+};
+/**
+ * Typedef for enum
+**/
+typedef enum _LinphoneMediaRole LinphoneMediaRole;
+
+/**
  * Private structure definition for LinphoneCallParams.
 **/
 struct _LinphoneCallParams;
