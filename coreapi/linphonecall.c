@@ -908,7 +908,6 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 			max_index = call->main_screensharing_stream_index;
 	} else {
 		ms_message("Don't put screen sharing stream on local offer for call [%p]", call);
-		md->streams[call->main_screensharing_stream_index].dir = SalStreamInactive;
 	}
 
 	md->nb_streams = MAX(md->nb_streams, max_index + 1);

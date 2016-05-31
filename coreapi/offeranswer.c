@@ -480,11 +480,11 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 	if (sal_stream_description_has_srtp(result) == TRUE) {
 		/* select crypto algo */
 		memset(result->crypto, 0, sizeof(result->crypto));
-		if (!match_crypto_algo(local_cap->crypto, remote_offer->crypto, &result->crypto[0], &result->crypto_local_tag, TRUE)) {
+		if (!match_crypto_algo(local_cap->crypto, remote_offer->crypto, &result->crypto[0], &result->crypto_local_tag,
+							   TRUE)) {
 			result->rtp_port = 0;
-			ms_message("No matching crypto algo for remote stream's offer [%p]",remote_offer);
+			ms_message("No matching crypto algo for remote stream's offer [%p]", remote_offer);
 		}
-
 	}
 
 	if (remote_offer->haveZrtpHash == 1) {
