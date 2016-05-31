@@ -7407,11 +7407,11 @@ void linphone_core_init_default_params(LinphoneCore *lc, LinphoneCallParams *par
 	params->video_dir = LinphoneMediaDirectionSendRecv;
 	params->screensharing_role =
 		(linphone_core_screensharing_client_supported(lc) && linphone_core_screensharing_server_supported(lc))
-			? LinphoneMediaDirectionSendRecv
+			? LinphoneMediaRoleServerClient
 			: (linphone_core_screensharing_client_supported(lc))
-				  ? LinphoneMediaDirectionRecvOnly
-				  : (linphone_core_screensharing_server_supported(lc)) ? LinphoneMediaDirectionSendOnly
-																	   : LinphoneMediaDirectionInactive;
+				  ? LinphoneMediaRoleClient
+				  : (linphone_core_screensharing_server_supported(lc)) ? LinphoneMediaRoleServer
+																	   : LinphoneMediaRoleInactive;
 	params->real_early_media = lp_config_get_int(lc->config, "misc", "real_early_media", FALSE);
 	params->audio_multicast_enabled = linphone_core_audio_multicast_enabled(lc);
 	params->video_multicast_enabled = linphone_core_video_multicast_enabled(lc);
