@@ -1316,6 +1316,7 @@ static MSList *handle_missing_codecs(LinphoneCore *lc, const MSList *default_lis
 		name = "add_missing_text_codecs";
 		break;
 	case MSUnknownMedia:
+	default:
 		break;
 	}
 	add_missing = lp_config_get_int(lc->config, "misc", name, 1);
