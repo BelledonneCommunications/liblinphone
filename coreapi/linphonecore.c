@@ -3729,7 +3729,7 @@ int linphone_core_update_call(LinphoneCore *lc, LinphoneCall *call, const Linpho
 			}
 		}
 #endif // defined(VIDEO_ENABLED) && defined(BUILD_UPNP)
-		if (!has_screensharing && call->params->screensharing_enabled) {
+		if (!has_screensharing && call->params->has_screensharing) {
 		}
 		if ((err = linphone_core_start_update_call(lc, call)) && call->state != initial_state) {
 			/*Restore initial state*/

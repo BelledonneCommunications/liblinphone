@@ -2018,7 +2018,10 @@ const LinphoneCallParams * linphone_call_get_remote_params(LinphoneCall *call){
 			unsigned int nb_audio_streams = sal_media_description_nb_active_streams_of_type(md, SalAudio);
 			unsigned int nb_video_streams = sal_media_description_nb_active_streams_of_type(md, SalVideo);
 			unsigned int nb_text_streams = sal_media_description_nb_active_streams_of_type(md, SalText);
-			if (call->remote_params != NULL) linphone_call_params_unref(call->remote_params);
+			unsigned int nb_screensharing_streams = sal_media_description_nb_active_streams_of_type(md, SalApplication);
+
+			if (call->remote_params != NULL)
+				linphone_call_params_unref(call->remote_params);
 			cp = call->remote_params = linphone_call_params_new();
 
 			for (i = 0; i < nb_video_streams; i++) {
@@ -2032,25 +2035,36 @@ const LinphoneCallParams * linphone_call_get_remote_params(LinphoneCall *call){
 			}
 			for (i = 0; i < nb_text_streams; i++) {
 				sd = sal_media_description_get_active_stream_of_type(md, SalText, i);
-				if (sal_stream_description_has_srtp(sd) == TRUE) cp->media_encryption = LinphoneMediaEncryptionSRTP;
+				if (sal_stream_description_has_srtp(sd) == TRUE)
+					cp->media_encryption = LinphoneMediaEncryptionSRTP;
 				cp->realtimetext_enabled = TRUE;
 			}
-			if (!cp->has_video){
-				if (md->bandwidth>0 && md->bandwidth<=linphone_core_get_edge_bw(call->core)){
-					cp->low_bandwidth=TRUE;
+			if (!cp->has_video) {
+				if (md->bandwidth > 0 && md->bandwidth <= linphone_core_get_edge_bw(call->core)) {
+					cp->low_bandwidth = TRUE;
 				}
 			}
-			if (md->name[0]!='\0') linphone_call_params_set_session_name(cp,md->name);
+			cp->has_screensharing = (nb_screensharing_streams > 0);
+
+			if (md->name[0] != '\0')
+				linphone_call_params_set_session_name(cp, md->name);
 
 			linphone_call_params_set_custom_sdp_attributes(call->remote_params, md->custom_sdp_attributes);
-			linphone_call_params_set_custom_sdp_media_attributes(call->remote_params, LinphoneStreamTypeAudio, md->streams[call->main_audio_stream_index].custom_sdp_attributes);
-			linphone_call_params_set_custom_sdp_media_attributes(call->remote_params, LinphoneStreamTypeVideo, md->streams[call->main_video_stream_index].custom_sdp_attributes);
-			linphone_call_params_set_custom_sdp_media_attributes(call->remote_params, LinphoneStreamTypeText, md->streams[call->main_text_stream_index].custom_sdp_attributes);
+			linphone_call_params_set_custom_sdp_media_attributes(
+				call->remote_params, LinphoneStreamTypeAudio,
+				md->streams[call->main_audio_stream_index].custom_sdp_attributes);
+			linphone_call_params_set_custom_sdp_media_attributes(
+				call->remote_params, LinphoneStreamTypeVideo,
+				md->streams[call->main_video_stream_index].custom_sdp_attributes);
+			linphone_call_params_set_custom_sdp_media_attributes(
+				call->remote_params, LinphoneStreamTypeText,
+				md->streams[call->main_text_stream_index].custom_sdp_attributes);
 		}
 		ch = sal_op_get_recv_custom_header(call->op);
-		if (ch){
+		if (ch) {
 			/*instanciate a remote_params only if a SIP message was received before (custom headers indicates this).*/
-			if (call->remote_params == NULL) call->remote_params = linphone_call_params_new();
+			if (call->remote_params == NULL)
+				call->remote_params = linphone_call_params_new();
 			linphone_call_params_set_custom_headers(call->remote_params, ch);
 		}
 		return call->remote_params;

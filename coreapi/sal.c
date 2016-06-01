@@ -241,9 +241,9 @@ bool_t sal_stream_description_has_srtp(const SalStreamDescription *sd) {
 		case SalProtoUdpTlsRtpSavp:
 		case SalProtoTcpRdp:
 		case SalProtoOther:
+		default:
 			return FALSE;
-	}
-	return FALSE;
+		}
 }
 
 bool_t sal_stream_description_has_dtls(const SalStreamDescription *sd) {
