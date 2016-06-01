@@ -38,7 +38,9 @@ dist_status48icons_DATA= \
 	linphone-media-play.png \
 	linphone-media-pause.png \
 	linphone-warning.png \
-	linphone-take-screenshot.png
+	linphone-take-screenshot.png \
+	linphone-screensharing-disabled.png \
+	linphone-screensharing-disabled.png
 
 statussvgiconsdir=$(iconsdir)/scalable/status
 dist_statussvgicons_DATA= \

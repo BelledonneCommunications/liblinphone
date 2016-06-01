@@ -104,6 +104,8 @@ install(FILES
 	linphone-media-play.png
 	linphone-media-pause.png
 	linphone-warning.png
+	linphone-screensharing-disabled.png
+	linphone-screensharing-enabled.png
 	DESTINATION ${ICONS_INSTALL_DIR}/48x48/status
 	PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
