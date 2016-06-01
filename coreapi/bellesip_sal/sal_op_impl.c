@@ -793,9 +793,20 @@ bool_t sal_op_is_forked_of(const SalOp *op1, const SalOp *op2){
 }
 int sal_op_refresh(SalOp *op) {
 	if (op->refresher) {
-		belle_sip_refresher_refresh(op->refresher,belle_sip_refresher_get_expires(op->refresher));
+		belle_sip_refresher_refresh(op->refresher, belle_sip_refresher_get_expires(op->refresher));
 		return 0;
 	}
-	ms_warning("sal_refresh on op [%p] of type [%s] no refresher",op,sal_op_type_to_string(op->type));
+	ms_warning("sal_refresh on op [%p] of type [%s] no refresher", op, sal_op_type_to_string(op->type));
 	return -1;
+}
+
+void sal_op_set_event(SalOp *op, const char *eventname) {
+	belle_sip_header_event_t *header = NULL;
+	if (op->event)
+		belle_sip_object_unref(op->event);
+	if (eventname) {
+		header = belle_sip_header_event_create(eventname);
+		belle_sip_object_ref(header);
+	}
+	op->event = header;
 }

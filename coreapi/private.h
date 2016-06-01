@@ -597,11 +597,9 @@ int linphone_chat_room_upload_file(LinphoneChatMessage *msg);
 void _linphone_chat_room_send_message(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
 LinphoneChatMessageCbs *linphone_chat_message_cbs_new(void);
 LinphoneChatRoom *_linphone_core_create_chat_room_from_call(LinphoneCall *call);
-bool_t linphone_chat_room_lime_enabled(LinphoneChatRoom *cr);
 /**/
 
-struct _LinphoneProxyConfig
-{
+struct _LinphoneProxyConfig {
 	belle_sip_object_t base;
 	void *user_data;
 	struct _LinphoneCore *lc;
@@ -1526,7 +1524,9 @@ BELLE_SIP_DECLARE_VPTR(LinphoneTunnelConfig);
 
 int linphone_core_get_default_proxy_config_index(LinphoneCore *lc);
 
-char *linphone_presence_model_to_xml(LinphonePresenceModel *model) ;
+char *linphone_presence_model_to_xml(LinphonePresenceModel *model);
+
+#define LINPHONE_SQLITE3_VFS "sqlite3bctbx_vfs"
 
 #ifdef __cplusplus
 }

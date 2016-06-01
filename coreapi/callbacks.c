@@ -1310,114 +1310,106 @@ static void subscribe_response(SalOp *op, SalSubscribeStatus status){
 	}
 }
 
-static void notify(SalOp *op, SalSubscribeStatus st, const char *eventname, SalBodyHandler *body_handler){
-	LinphoneEvent *lev=(LinphoneEvent*)sal_op_get_user_pointer(op);
-	LinphoneCore *lc=(LinphoneCore *)sal_get_user_pointer(sal_op_get_sal(op));
-	bool_t out_of_dialog = (lev==NULL);
+static void notify(SalOp *op, SalSubscribeStatus st, const char *eventname, SalBodyHandler *body_handler) {
+	LinphoneEvent *lev = (LinphoneEvent *)sal_op_get_user_pointer(op);
+	LinphoneCore *lc = (LinphoneCore *)sal_get_user_pointer(sal_op_get_sal(op));
+	bool_t out_of_dialog = (lev == NULL);
 	if (out_of_dialog) {
-		/*out of subscribe notify */
-		lev=linphone_event_new_with_out_of_dialog_op(lc,op,LinphoneSubscriptionOutgoing,eventname);
+		/*out of dialog notify */
+		lev = linphone_event_new_with_out_of_dialog_op(lc, op, LinphoneSubscriptionOutgoing, eventname);
 	}
 	{
-		LinphoneContent *ct=linphone_content_from_sal_body_handler(body_handler);
+		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
 		if (ct) {
-			linphone_core_notify_notify_received(lc,lev,eventname,ct);
+			linphone_core_notify_notify_received(lc, lev, eventname, ct);
 			linphone_content_unref(ct);
 		}
 	}
-	if (st!=SalSubscribeNone){
-		linphone_event_set_state(lev,linphone_subscription_state_from_sal(st));
-	}
-
 	if (out_of_dialog) {
-		linphone_event_unref(lev);
+		/*out of dialog NOTIFY do not create an implicit subscription*/
+		linphone_event_set_state(lev, LinphoneSubscriptionTerminated);
+	} else if (st != SalSubscribeNone) {
+		linphone_event_set_state(lev, linphone_subscription_state_from_sal(st));
 	}
-
 }
 
-static void subscribe_received(SalOp *op, const char *eventname, const SalBodyHandler *body_handler){
-	LinphoneEvent *lev=(LinphoneEvent*)sal_op_get_user_pointer(op);
-	LinphoneCore *lc=(LinphoneCore *)sal_get_user_pointer(sal_op_get_sal(op));
+static void subscribe_received(SalOp *op, const char *eventname, const SalBodyHandler *body_handler) {
+	LinphoneEvent *lev = (LinphoneEvent *)sal_op_get_user_pointer(op);
+	LinphoneCore *lc = (LinphoneCore *)sal_get_user_pointer(sal_op_get_sal(op));
 
-	if (lev==NULL) {
-		lev=linphone_event_new_with_op(lc,op,LinphoneSubscriptionIncoming,eventname);
-		linphone_event_set_state(lev,LinphoneSubscriptionIncomingReceived);
-	}else{
+	if (lev == NULL) {
+		lev = linphone_event_new_with_op(lc, op, LinphoneSubscriptionIncoming, eventname);
+		linphone_event_set_state(lev, LinphoneSubscriptionIncomingReceived);
+	} else {
 		/*subscribe refresh, unhandled*/
 	}
-
 }
 
-static void incoming_subscribe_closed(SalOp *op){
-	LinphoneEvent *lev=(LinphoneEvent*)sal_op_get_user_pointer(op);
+static void incoming_subscribe_closed(SalOp *op) {
+	LinphoneEvent *lev = (LinphoneEvent *)sal_op_get_user_pointer(op);
 
-	linphone_event_set_state(lev,LinphoneSubscriptionTerminated);
+	linphone_event_set_state(lev, LinphoneSubscriptionTerminated);
 }
 
-static void on_publish_response(SalOp* op){
-	LinphoneEvent *lev=(LinphoneEvent*)sal_op_get_user_pointer(op);
-	const SalErrorInfo *ei=sal_op_get_error_info(op);
+static void on_publish_response(SalOp *op) {
+	LinphoneEvent *lev = (LinphoneEvent *)sal_op_get_user_pointer(op);
+	const SalErrorInfo *ei = sal_op_get_error_info(op);
 
-	if (lev==NULL) return;
-	if (ei->reason==SalReasonNone){
+	if (lev == NULL)
+		return;
+	if (ei->reason == SalReasonNone) {
 		if (!lev->terminating)
-			linphone_event_set_publish_state(lev,LinphonePublishOk);
+			linphone_event_set_publish_state(lev, LinphonePublishOk);
 		else
-			linphone_event_set_publish_state(lev,LinphonePublishCleared);
-	}else{
-		if (lev->publish_state==LinphonePublishOk){
-			linphone_event_set_publish_state(lev,LinphonePublishProgress);
-		}else{
-			linphone_event_set_publish_state(lev,LinphonePublishError);
+			linphone_event_set_publish_state(lev, LinphonePublishCleared);
+	} else {
+		if (lev->publish_state == LinphonePublishOk) {
+			linphone_event_set_publish_state(lev, LinphonePublishProgress);
+		} else {
+			linphone_event_set_publish_state(lev, LinphonePublishError);
 		}
 	}
 }
 
-static void on_expire(SalOp *op){
-	LinphoneEvent *lev=(LinphoneEvent*)sal_op_get_user_pointer(op);
+static void on_expire(SalOp *op) {
+	LinphoneEvent *lev = (LinphoneEvent *)sal_op_get_user_pointer(op);
 
-	if (lev==NULL) return;
+	if (lev == NULL)
+		return;
 
-	if (linphone_event_get_publish_state(lev)==LinphonePublishOk){
-		linphone_event_set_publish_state(lev,LinphonePublishExpiring);
-	}else if (linphone_event_get_subscription_state(lev)==LinphoneSubscriptionActive){
-		linphone_event_set_state(lev,LinphoneSubscriptionExpiring);
+	if (linphone_event_get_publish_state(lev) == LinphonePublishOk) {
+		linphone_event_set_publish_state(lev, LinphonePublishExpiring);
+	} else if (linphone_event_get_subscription_state(lev) == LinphoneSubscriptionActive) {
+		linphone_event_set_state(lev, LinphoneSubscriptionExpiring);
 	}
 }
 
-SalCallbacks linphone_sal_callbacks={
-	call_received,
-	call_ringing,
-	call_accepted,
-	call_ack,
-	call_updating,
-	call_terminated,
-	call_failure,
-	call_released,
-	auth_failure,
-	register_success,
-	register_failure,
-	vfu_request,
-	dtmf_received,
-	refer_received,
-	text_received,
-	text_delivery_update,
-	is_composing_received,
-	notify_refer,
-	subscribe_received,
-	incoming_subscribe_closed,
-	subscribe_response,
-	notify,
-	subscribe_presence_received,
-	subscribe_presence_closed,
-	parse_presence_requested,
-	convert_presence_to_xml_requested,
-	notify_presence,
-	ping_reply,
-	auth_requested,
-	info_received,
-	on_publish_response,
-	on_expire
-};
+static void on_notify_response(SalOp *op) {
+	LinphoneEvent *lev = (LinphoneEvent *)sal_op_get_user_pointer(op);
 
+	if (lev == NULL)
+		return;
+	/*this is actually handling out of dialogs notify - for the moment*/
+	if (!lev->is_out_of_dialog_op)
+		return;
+	switch (linphone_event_get_subscription_state(lev)) {
+	case LinphoneSubscriptionIncomingReceived:
+		if (sal_op_get_error_info(op)->reason == SalReasonNone) {
+			linphone_event_set_state(lev, LinphoneSubscriptionTerminated);
+		} else {
+			linphone_event_set_state(lev, LinphoneSubscriptionError);
+		}
+		break;
+	default:
+		ms_warning("Unhandled on_notify_response() case %s",
+				   linphone_subscription_state_to_string(linphone_event_get_subscription_state(lev)));
+	}
+}
 
+SalCallbacks linphone_sal_callbacks = {
+	call_received, call_ringing, call_accepted, call_ack, call_updating, call_terminated, call_failure, call_released,
+	auth_failure, register_success, register_failure, vfu_request, dtmf_received, refer_received, text_received,
+	text_delivery_update, is_composing_received, notify_refer, subscribe_received, incoming_subscribe_closed,
+	subscribe_response, notify, subscribe_presence_received, subscribe_presence_closed, parse_presence_requested,
+	convert_presence_to_xml_requested, notify_presence, ping_reply, auth_requested, info_received, on_publish_response,
+	on_expire, on_notify_response};

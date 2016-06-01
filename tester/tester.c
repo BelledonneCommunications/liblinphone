@@ -44,20 +44,21 @@ static int liblinphone_tester_keep_record_files = FALSE;
 static int liblinphone_tester_leak_detector_disabled = FALSE;
 int manager_count = 0;
 int leaked_objects_count = 0;
-const MSAudioDiffParams audio_cmp_params = {10,2000};
+const MSAudioDiffParams audio_cmp_params = {10, 2000};
 
-const char* test_domain="sipopen.example.org";
-const char* auth_domain="sip.example.org";
-const char* test_username="liblinphone_tester";
-const char* test_password="secret";
-const char* test_route="sip2.linphone.org";
+const char *test_domain = "sipopen.example.org";
+const char *auth_domain = "sip.example.org";
+const char *test_username = "liblinphone_tester";
+const char *test_password = "secret";
+const char *test_route = "sip2.linphone.org";
 const char *userhostsfile = "tester_hosts";
+bool_t liblinphonetester_ipv6 = FALSE;
 
-const char *liblinphone_tester_mire_id="Mire: Mire (synthetic moving picture)";
+const char *liblinphone_tester_mire_id = "Mire: Mire (synthetic moving picture)";
 
 static void network_reachable(LinphoneCore *lc, bool_t reachable) {
-	stats* counters;
-	ms_message("Network reachable [%s]",reachable?"TRUE":"FALSE");
+	stats *counters;
+	ms_message("Network reachable [%s]", reachable ? "TRUE" : "FALSE");
 	counters = get_stats(lc);
 	if (reachable)
 		counters->number_of_NetworkReachableTrue++;
@@ -148,6 +149,8 @@ LinphoneCore* configure_lc_from(LinphoneCoreVTable* v_table, const char* path, c
 		linphone_core_set_ringback(lc, ringbackpath);
 		linphone_core_set_root_ca(lc, rootcapath);
 	}
+
+	linphone_core_enable_ipv6(lc, liblinphonetester_ipv6);
 
 	sal_enable_test_features(lc->sal, TRUE);
 	sal_set_dns_user_hosts_file(lc->sal, dnsuserhostspath);
@@ -495,14 +498,19 @@ void liblinphone_tester_add_suites() {
 #if HAVE_SIPP
 	bc_tester_add_suite(&complex_sip_call_test_suite);
 #endif
+#ifdef VCARD_ENABLED
 	bc_tester_add_suite(&vcard_test_suite);
+<<<<<<< HEAD
 	bc_tester_add_suite(&screensharing_test_suite);
+=======
+	#endif
+>>>>>>> origin/master
 }
 
-static int linphone_core_manager_get_max_audio_bw_base(const int array[],int array_size) {
-	int i,result=0;
-	for (i=0; i<array_size; i++) {
-		result = MAX(result,array[i]);
+static int linphone_core_manager_get_max_audio_bw_base(const int array[], int array_size) {
+	int i, result = 0;
+	for (i = 0; i < array_size; i++) {
+		result = MAX(result, array[i]);
 	}
 	return result;
 }

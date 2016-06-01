@@ -120,14 +120,26 @@ LINPHONE_PUBLIC LinphoneEvent *linphone_core_subscribe(LinphoneCore *lc, const L
 /**
  * Create an outgoing subscription, specifying the destination resource, the event name, and an optional content body.
  * If accepted, the subscription runs for a finite period, but is automatically renewed if not terminated before.
- * Unlike linphone_core_subscribe() the subscription isn't sent immediately. It will be send when calling linphone_event_send_subscribe().
+ * Unlike linphone_core_subscribe() the subscription isn't sent immediately. It will be send when calling
+*linphone_event_send_subscribe().
  * @param lc the #LinphoneCore
  * @param resource the destination resource
  * @param event the event name
  * @param expires the whished duration of the subscription
  * @return a LinphoneEvent holding the context of the created subcription.
 **/
-LINPHONE_PUBLIC LinphoneEvent *linphone_core_create_subscribe(LinphoneCore *lc, const LinphoneAddress *resource, const char *event, int expires);
+LINPHONE_PUBLIC LinphoneEvent *linphone_core_create_subscribe(LinphoneCore *lc, const LinphoneAddress *resource,
+															  const char *event, int expires);
+
+/**
+ * Create an out-of-dialog notification, specifying the destination resource, the event name.
+ * The notification can be send with linphone_event_notify().
+ * @param lc the #LinphoneCore
+ * @param resource the destination resource
+ * @param event the event name
+ * @return a LinphoneEvent holding the context of the notification.
+**/
+LinphoneEvent *linphone_core_create_notify(LinphoneCore *lc, const LinphoneAddress *resource, const char *event);
 
 /**
  * Send a subscription previously created by linphone_core_create_subscribe().

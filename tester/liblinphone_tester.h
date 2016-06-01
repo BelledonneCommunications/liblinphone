@@ -60,7 +60,9 @@ extern test_suite_t video_test_suite;
 extern test_suite_t multicast_call_test_suite;
 extern test_suite_t multi_call_test_suite;
 extern test_suite_t proxy_config_test_suite;
+#ifdef VCARD_ENABLED
 extern test_suite_t vcard_test_suite;
+#endif
 extern test_suite_t screensharing_test_suite;
 extern test_suite_t audio_bypass_suite;
 
@@ -101,14 +103,13 @@ void liblinphone_tester_disable_leak_detector(int disabled);
  */
 extern void liblinphone_tester_clear_accounts(void);
 
-
-extern const char* test_domain;
-extern const char* auth_domain;
-extern const char* test_username;
-extern const char* test_password;
-extern const char* test_route;
-extern const char* userhostsfile;
-
+extern const char *test_domain;
+extern const char *auth_domain;
+extern const char *test_username;
+extern const char *test_password;
+extern const char *test_route;
+extern const char *userhostsfile;
+extern bool_t liblinphonetester_ipv6;
 
 typedef struct _stats {
 	int number_of_LinphoneRegistrationNone;
@@ -195,7 +196,7 @@ typedef struct _stats {
 	int number_of_LinphonePresenceActivityWorking;
 	int number_of_LinphonePresenceActivityWorship;
 	const LinphonePresenceModel *last_received_presence;
-	
+
 	int number_of_LinphonePresenceBasicStatusOpen;
 	int number_of_LinphonePresenceBasicStatusClosed;
 

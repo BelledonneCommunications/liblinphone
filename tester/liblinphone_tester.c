@@ -213,28 +213,31 @@ int main (int argc, char *argv[])
 			linphone_core_set_log_level(ORTP_MESSAGE);
 		} else if (strcmp(argv[i], "--silent") == 0) {
 			linphone_core_set_log_level(ORTP_FATAL);
-		} else if (strcmp(argv[i],"--log-file")==0){
+		} else if (strcmp(argv[i], "--log-file") == 0) {
 			CHECK_ARG("--log-file", ++i, argc);
-			if (liblinphone_tester_set_log_file(argv[i]) < 0) return -2;
-		} else if (strcmp(argv[i],"--domain")==0){
+			if (liblinphone_tester_set_log_file(argv[i]) < 0)
+				return -2;
+		} else if (strcmp(argv[i], "--domain") == 0) {
 			CHECK_ARG("--domain", ++i, argc);
-			test_domain=argv[i];
-		} else if (strcmp(argv[i],"--auth-domain")==0){
+			test_domain = argv[i];
+		} else if (strcmp(argv[i], "--auth-domain") == 0) {
 			CHECK_ARG("--auth-domain", ++i, argc);
-			auth_domain=argv[i];
-		}else if (strcmp(argv[i],"--dns-hosts")==0){
+			auth_domain = argv[i];
+		} else if (strcmp(argv[i], "--dns-hosts") == 0) {
 			CHECK_ARG("--dns-hosts", ++i, argc);
-			userhostsfile=argv[i];
-		} else if (strcmp(argv[i],"--keep-recorded-files")==0){
+			userhostsfile = argv[i];
+		} else if (strcmp(argv[i], "--keep-recorded-files") == 0) {
 			liblinphone_tester_keep_recorded_files(TRUE);
-		} else if (strcmp(argv[i],"--disable-leak-detector")==0){
+		} else if (strcmp(argv[i], "--disable-leak-detector") == 0) {
 			liblinphone_tester_disable_leak_detector(TRUE);
+		} else if (strcmp(argv[i], "--6") == 0) {
+			liblinphonetester_ipv6 = TRUE;
 		} else {
 			int bret = bc_tester_parse_args(argc, argv, i);
-			if (bret>0) {
+			if (bret > 0) {
 				i += bret - 1;
 				continue;
-			} else if (bret<0) {
+			} else if (bret < 0) {
 				bc_tester_helper(argv[0], liblinphone_helper);
 			}
 			return bret;

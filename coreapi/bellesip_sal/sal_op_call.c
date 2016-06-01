@@ -53,41 +53,44 @@ static void sdp_process(SalOp *h){
 	}
 
 	/* if SDP was invalid */
-	if (h->base.remote_media == NULL) return;
+	if (h->base.remote_media == NULL)
+		return;
 
-	h->result=sal_media_description_new();
-	if (h->sdp_offering){
-		offer_answer_initiate_outgoing(h->base.root->factory, h->base.local_media,h->base.remote_media,h->result);
-	}else{
+	h->result = sal_media_description_new();
+	if (h->sdp_offering) {
+		offer_answer_initiate_outgoing(h->base.root->factory, h->base.local_media, h->base.remote_media, h->result);
+	} else {
 		int i;
-		if (h->sdp_answer){
+		if (h->sdp_answer) {
 			belle_sip_object_unref(h->sdp_answer);
 		}
-		offer_answer_initiate_incoming(h->base.root->factory, h->base.local_media,h->base.remote_media,h->result,h->base.root->one_matching_codec);
+		offer_answer_initiate_incoming(h->base.root->factory, h->base.local_media, h->base.remote_media, h->result,
+									   h->base.root->one_matching_codec);
 		/*for backward compatibility purpose*/
-		if(h->cnx_ip_to_0000_if_sendonly_enabled && sal_media_description_has_dir(h->result,SalStreamSendOnly)) {
+		if (h->cnx_ip_to_0000_if_sendonly_enabled && sal_media_description_has_dir(h->result, SalStreamSendOnly)) {
 			set_addr_to_0000(h->result->addr);
-			for(i=0;i<SAL_MEDIA_DESCRIPTION_MAX_STREAMS;++i){
-				if (h->result->streams[i].dir == SalStreamSendOnly)
-						set_addr_to_0000(h->result->streams[i].rtp_addr);
-						set_addr_to_0000(h->result->streams[i].rtcp_addr);
+			for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; ++i) {
+				if (h->result->streams[i].dir == SalStreamSendOnly) {
+					set_addr_to_0000(h->result->streams[i].rtp_addr);
+					set_addr_to_0000(h->result->streams[i].rtcp_addr);
+				}
 			}
 		}
-		h->sdp_answer=(belle_sdp_session_description_t *)belle_sip_object_ref(media_description_to_sdp(h->result));
+		h->sdp_answer = (belle_sdp_session_description_t *)belle_sip_object_ref(media_description_to_sdp(h->result));
 		/*once we have generated the SDP answer, we modify the result description for processing by the upper layer.
 		 It should contains media parameters constraint from the remote offer, not our response*/
-		strcpy(h->result->addr,h->base.remote_media->addr);
-		h->result->bandwidth=h->base.remote_media->bandwidth;
+		strcpy(h->result->addr, h->base.remote_media->addr);
+		h->result->bandwidth = h->base.remote_media->bandwidth;
 
-		for(i=0;i<SAL_MEDIA_DESCRIPTION_MAX_STREAMS;++i){
+		for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; ++i) {
 			/*copy back parameters from remote description that we need in our result description*/
-			if (h->result->streams[i].rtp_port!=0){ /*if stream was accepted*/
-				strcpy(h->result->streams[i].rtp_addr,h->base.remote_media->streams[i].rtp_addr);
-				h->result->streams[i].ptime=h->base.remote_media->streams[i].ptime;
-				h->result->streams[i].bandwidth=h->base.remote_media->streams[i].bandwidth;
-				h->result->streams[i].rtp_port=h->base.remote_media->streams[i].rtp_port;
-				strcpy(h->result->streams[i].rtcp_addr,h->base.remote_media->streams[i].rtcp_addr);
-				h->result->streams[i].rtcp_port=h->base.remote_media->streams[i].rtcp_port;
+			if (h->result->streams[i].rtp_port != 0) { /*if stream was accepted*/
+				strcpy(h->result->streams[i].rtp_addr, h->base.remote_media->streams[i].rtp_addr);
+				h->result->streams[i].ptime = h->base.remote_media->streams[i].ptime;
+				h->result->streams[i].bandwidth = h->base.remote_media->streams[i].bandwidth;
+				h->result->streams[i].rtp_port = h->base.remote_media->streams[i].rtp_port;
+				strcpy(h->result->streams[i].rtcp_addr, h->base.remote_media->streams[i].rtcp_addr);
+				h->result->streams[i].rtcp_port = h->base.remote_media->streams[i].rtcp_port;
 
 				if (sal_stream_description_has_srtp(&h->result->streams[i])) {
 					h->result->streams[i].crypto[0] = h->base.remote_media->streams[i].crypto[0];

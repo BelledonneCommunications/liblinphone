@@ -170,20 +170,20 @@ void linphone_gtk_push_text(GtkWidget *w, const LinphoneAddress *from,
 	int pos = 0, start, end;
 
 	gtk_text_buffer_get_end_iter(buffer, &iter);
-	if (g_strcmp0(from_message,from_str)!=0){
-		gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, get_display_name(from), -1,
-		                                         "from", me ? "me" : NULL, NULL);
-		gtk_text_buffer_insert_with_tags_by_name(buffer,&iter, " : ", -1,
-		                                         "from", me ? "me" : NULL, NULL);
-		gtk_text_buffer_insert(buffer,&iter,"\n",-1);
+	if (g_strcmp0(from_message, from_str) != 0) {
+		gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, get_display_name(from), -1, "from", me ? "me" : NULL,
+												 NULL);
+		gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, " : ", -1, "from", me ? "me" : NULL, NULL);
+		gtk_text_buffer_insert(buffer, &iter, "\n", -1);
 		g_free(from_message);
-		g_object_set_data(G_OBJECT(w),"from_message",g_strdup(from_str));
+		g_object_set_data(G_OBJECT(w), "from_message", g_strdup(from_str));
 	}
 	ms_free(from_str);
-	
+
 	if (!message) {
 		const char *external_body_url = linphone_chat_message_get_external_body_url(msg);
-		if (external_body_url) message = external_body_url;
+		if (external_body_url)
+			message = external_body_url;
 	}
 
 	// Inserts message body and tags URIs as hypertext links
@@ -201,42 +201,44 @@ void linphone_gtk_push_text(GtkWidget *w, const LinphoneAddress *from,
 		g_match_info_free(match_info);
 	}
 
-	g_hash_table_insert(table,GUINT_TO_POINTER(linphone_chat_message_get_storage_id(msg)),GINT_TO_POINTER(gtk_text_iter_get_line(&iter)));
-	switch (linphone_chat_message_get_state (msg)){
-		case LinphoneChatMessageStateInProgress:
-			gtk_text_buffer_insert_with_tags_by_name(buffer,&iter,_("Sending..."),-1,"status", me ? "me" : NULL, NULL);
-			break;
-		case LinphoneChatMessageStateDelivered:
-			t=linphone_chat_message_get_time(msg);
-			tnow=time(NULL);
-			tm=localtime(&tnow);
-			tnow_day=tm->tm_yday;
-			tnow_year=tm->tm_year;
-			tm=localtime(&t);
-			if(tnow_day != tm->tm_yday || (tnow_day == tm->tm_yday && tnow_year != tm->tm_year)) {
-				strftime(buf,80,"%a %x, %H:%M",tm);
-			} else {
-				strftime(buf,80,"%H:%M",tm);
-			}
-			gtk_text_buffer_insert_with_tags_by_name(buffer,&iter,buf,-1,"status", me ? "me" : NULL, NULL);
-			break;
-		case LinphoneChatMessageStateNotDelivered:
-			gtk_text_buffer_insert_with_tags_by_name(buffer,&iter,_("Message not sent"),-1,"status", me ? "me" : NULL, NULL);
-			break;
-		default:
-			break;
+	g_hash_table_insert(table, GUINT_TO_POINTER(linphone_chat_message_get_storage_id(msg)),
+						GINT_TO_POINTER(gtk_text_iter_get_line(&iter)));
+	switch (linphone_chat_message_get_state(msg)) {
+	case LinphoneChatMessageStateInProgress:
+		gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, _("Sending..."), -1, "status", me ? "me" : NULL, NULL);
+		break;
+	case LinphoneChatMessageStateDelivered:
+		t = linphone_chat_message_get_time(msg);
+		tnow = time(NULL);
+		tm = localtime(&tnow);
+		tnow_day = tm->tm_yday;
+		tnow_year = tm->tm_year;
+		tm = localtime(&t);
+		if (tnow_day != tm->tm_yday || (tnow_day == tm->tm_yday && tnow_year != tm->tm_year)) {
+			strftime(buf, 80, "%a %x, %H:%M", tm);
+		} else {
+			strftime(buf, 80, "%H:%M:%S", tm);
+		}
+		gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, buf, -1, "status", me ? "me" : NULL, NULL);
+		break;
+	case LinphoneChatMessageStateNotDelivered:
+		gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, _("Message not sent"), -1, "status", me ? "me" : NULL,
+												 NULL);
+		break;
+	default:
+		break;
 	}
-	gtk_text_buffer_insert(buffer,&iter,"\n",-1);
-	g_idle_add((GSourceFunc)scroll_to_end,text);
+	gtk_text_buffer_insert(buffer, &iter, "\n", -1);
+	g_idle_add((GSourceFunc)scroll_to_end, text);
 }
 
-void update_chat_state_message(LinphoneChatMessageState state,LinphoneChatMessage *msg){
-	GtkWidget *main_window=linphone_gtk_get_main_window();
-	GtkWidget *friendlist=linphone_gtk_get_widget(main_window,"contact_list");
-	GtkWidget *page=(GtkWidget*)g_object_get_data(G_OBJECT(friendlist),"chatview");
-	GHashTable *table=(GHashTable*)g_object_get_data(G_OBJECT(page),"table");
+void update_chat_state_message(LinphoneChatMessageState state, LinphoneChatMessage *msg) {
+	GtkWidget *main_window = linphone_gtk_get_main_window();
+	GtkWidget *friendlist = linphone_gtk_get_widget(main_window, "contact_list");
+	GtkWidget *page = (GtkWidget *)g_object_get_data(G_OBJECT(friendlist), "chatview");
+	GHashTable *table = (GHashTable *)g_object_get_data(G_OBJECT(page), "table");
 
-	if (page!=NULL) {
+	if (page != NULL) {
 		char buf[80];
 		time_t t;
 		struct tm *tm;
@@ -246,35 +248,35 @@ void update_chat_state_message(LinphoneChatMessageState state,LinphoneChatMessag
 		GtkTextIter end;
 		GtkTextIter start;
 		gint line;
-		gpointer hash_table_ptr = g_hash_table_lookup(table,GUINT_TO_POINTER(linphone_chat_message_get_storage_id(msg)));
+		gpointer hash_table_ptr =
+			g_hash_table_lookup(table, GUINT_TO_POINTER(linphone_chat_message_get_storage_id(msg)));
 		if (hash_table_ptr != NULL) {
 			line = GPOINTER_TO_INT(hash_table_ptr);
-			gtk_text_buffer_get_iter_at_line(b,&iter,line);
-			if(gtk_text_iter_get_chars_in_line(&iter) >0) {
-				gtk_text_buffer_get_iter_at_line_offset(b,&start,line,
-						gtk_text_iter_get_chars_in_line(&iter)-1);
-			}else{
-				gtk_text_buffer_get_iter_at_line_offset(b,&start,line,0);
+			gtk_text_buffer_get_iter_at_line(b, &iter, line);
+			if (gtk_text_iter_get_chars_in_line(&iter) > 0) {
+				gtk_text_buffer_get_iter_at_line_offset(b, &start, line, gtk_text_iter_get_chars_in_line(&iter) - 1);
+			} else {
+				gtk_text_buffer_get_iter_at_line_offset(b, &start, line, 0);
 			}
-			gtk_text_buffer_get_iter_at_line_offset(b,&end,line,0);
-			gtk_text_buffer_delete(b,&start,&end);
-			gtk_text_buffer_get_iter_at_line(b,&iter,line);
+			gtk_text_buffer_get_iter_at_line_offset(b, &end, line, 0);
+			gtk_text_buffer_delete(b, &start, &end);
+			gtk_text_buffer_get_iter_at_line(b, &iter, line);
 
 			switch (state) {
-				case LinphoneChatMessageStateInProgress:
-					gtk_text_buffer_insert_with_tags_by_name(b,&iter,_("Sending..."),-1,"status", "me", NULL);
-					break;
-				case LinphoneChatMessageStateDelivered:
-					t=time(NULL);
-					tm=localtime(&t);
-					strftime(buf,80,"%H:%M",tm);
-					gtk_text_buffer_insert_with_tags_by_name(b,&iter,(gchar*)buf,-1,"status", "me", NULL);
-					break;
-				case LinphoneChatMessageStateNotDelivered:
-					gtk_text_buffer_insert_with_tags_by_name(b,&iter,_("Message not sent"),-1,"status", "me", NULL);
-					break;
-				default:
-					break;
+			case LinphoneChatMessageStateInProgress:
+				gtk_text_buffer_insert_with_tags_by_name(b, &iter, _("Sending..."), -1, "status", "me", NULL);
+				break;
+			case LinphoneChatMessageStateDelivered:
+				t = time(NULL);
+				tm = localtime(&t);
+				strftime(buf, 80, "%H:%M:%S", tm);
+				gtk_text_buffer_insert_with_tags_by_name(b, &iter, (gchar *)buf, -1, "status", "me", NULL);
+				break;
+			case LinphoneChatMessageStateNotDelivered:
+				gtk_text_buffer_insert_with_tags_by_name(b, &iter, _("Message not sent"), -1, "status", "me", NULL);
+				break;
+			default:
+				break;
 			}
 		}
 	}
@@ -468,15 +470,25 @@ static gboolean copy_uri_into_clipboard_handler(GtkMenuItem *menuitem, gpointer 
 	return FALSE;
 }
 
-static gint linphone_gtk_window_focused(GtkWidget* widget, GdkEvent *event, gpointer user_data) {
+static void refresh_lime_icon(GtkWidget *chat_view, LinphoneChatRoom *cr) {
+	GtkWidget *lime_icon = linphone_gtk_get_widget(chat_view, "lime_icon");
+	if (linphone_chat_room_lime_available(cr)) {
+		gtk_widget_show(lime_icon);
+	} else {
+		gtk_widget_hide(lime_icon);
+	}
+}
+
+static gint linphone_gtk_window_focused(GtkWidget *widget, GdkEvent *event, gpointer user_data) {
 	// if we are in a chat, mark it as read
-	GtkWidget *main_window=linphone_gtk_get_main_window();
-	GtkWidget *friendlist=linphone_gtk_get_widget(main_window,"contact_list");
-	GtkWidget *w=(GtkWidget*)g_object_get_data(G_OBJECT(friendlist),"chatview");
-	LinphoneChatRoom *cr=w?g_object_get_data(G_OBJECT(w),"cr"):NULL;
+	GtkWidget *main_window = linphone_gtk_get_main_window();
+	GtkWidget *friendlist = linphone_gtk_get_widget(main_window, "contact_list");
+	GtkWidget *w = (GtkWidget *)g_object_get_data(G_OBJECT(friendlist), "chatview");
+	LinphoneChatRoom *cr = w ? g_object_get_data(G_OBJECT(w), "cr") : NULL;
 	if (cr) {
 		linphone_gtk_mark_chat_read(cr);
 	}
+	refresh_lime_icon(w, cr);
 	return FALSE;
 }
 
@@ -559,6 +571,8 @@ GtkWidget* linphone_gtk_init_chatroom(LinphoneChatRoom *cr, const LinphoneAddres
 
 	gtk_signal_connect(GTK_OBJECT(main_window), "focus-in-event", GTK_SIGNAL_FUNC(linphone_gtk_window_focused), NULL);
 
+	refresh_lime_icon(chat_view, cr);
+
 	return chat_view;
 }
 
@@ -583,18 +597,21 @@ void linphone_gtk_load_chatroom(LinphoneChatRoom *cr,const LinphoneAddress *uri,
 		GtkTextIter end;
 		GtkTextBuffer *text_buffer;
 
-		text_buffer=gtk_text_view_get_buffer(text_view);
+		text_buffer = gtk_text_view_get_buffer(text_view);
 		gtk_text_buffer_get_bounds(text_buffer, &start, &end);
-		gtk_text_buffer_delete (text_buffer, &start, &end);
+		gtk_text_buffer_delete(text_buffer, &start, &end);
 		update_chat_header(GTK_NOTEBOOK(notebook), chat_view, cr, uri);
-		g_object_set_data(G_OBJECT(chat_view),"cr",cr);
-		g_object_set_data(G_OBJECT(linphone_gtk_get_widget(main_window,"contact_list")),"chatview",(gpointer)chat_view);
-		messages=linphone_chat_room_get_history(cr,NB_MSG_HIST);
-		g_object_set_data(G_OBJECT(chat_view),"from_message",g_strdup(uri_str));
-		display_history_message(chat_view,messages,uri);
-		gtk_text_buffer_get_end_iter(text_buffer,&end);
-		gtk_text_view_scroll_to_iter(text_view,&end,0,FALSE,1.0,0);
+		g_object_set_data(G_OBJECT(chat_view), "cr", cr);
+		g_object_set_data(G_OBJECT(linphone_gtk_get_widget(main_window, "contact_list")), "chatview",
+						  (gpointer)chat_view);
+		messages = linphone_chat_room_get_history(cr, NB_MSG_HIST);
+		g_object_set_data(G_OBJECT(chat_view), "from_message", g_strdup(uri_str));
+		display_history_message(chat_view, messages, uri);
+		gtk_text_buffer_get_end_iter(text_buffer, &end);
+		gtk_text_view_scroll_to_iter(text_view, &end, 0, FALSE, 1.0, 0);
 	}
+	refresh_lime_icon(chat_view, cr);
+
 	ms_free(from_str);
 	ms_free(uri_str);
 	ms_free(uri_only);

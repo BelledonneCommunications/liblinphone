@@ -400,9 +400,7 @@ LpConfig *lp_config_new_with_factory(const char *config_filename, const char *fa
 
 	int fd;
 	bctbx_vfs_file_t *pFile = NULL;
-
 	LpConfig *lpconfig = lp_new0(LpConfig, 1);
-	bctbx_vfs_set_default(NULL);
 	lpconfig->g_bctbx_vfs = bctbx_vfs_get_default();
 
 	lpconfig->refcnt = 1;
@@ -433,15 +431,16 @@ LpConfig *lp_config_new_with_factory(const char *config_filename, const char *fa
 #endif /*_WIN32*/
 		/*open with r+ to check if we can write on it later*/
 
-		pFile = bctbx_file_open(lpconfig->g_bctbx_vfs,lpconfig->filename, "r+");
-		fd  = pFile->fd;
+		pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, lpconfig->filename, "r+");
+		fd = pFile->fd;
 		lpconfig->pFile = pFile;
-		
+
 #ifdef RENAME_REQUIRES_NONEXISTENT_NEW_PATH
-		if (fd  == -1){
-			pFile = bctbx_filecreate_and_open(lpconfig->g_bctbx_vfs,lpconfig->tmpfilename, "r+");
-			if (fd){
-				ms_warning("Could not open %s but %s works, app may have crashed during last sync.",lpconfig->filename,lpconfig->tmpfilename);
+		if (fd == -1) {
+			pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, lpconfig->tmpfilename, "r+");
+			if (fd) {
+				ms_warning("Could not open %s but %s works, app may have crashed during last sync.", lpconfig->filename,
+						   lpconfig->tmpfilename);
 			}
 		}
 #endif
@@ -1056,4 +1055,24 @@ char* lp_config_dump(const LpConfig *lpconfig) {
 	lp_config_for_each_section(lpconfig, dump_section, &d);
 
 	return buffer;
+}
+
+void lp_config_clean_entry(LpConfig *lpconfig, const char *section, const char *key) {
+	LpSection *sec;
+	LpItem *item;
+	sec = lp_config_find_section(lpconfig, section);
+	if (sec != NULL) {
+		item = lp_section_find_item(sec, key);
+		if (item != NULL)
+			lp_section_remove_item(sec, item);
+	}
+	return;
+}
+int lp_config_has_entry(const LpConfig *lpconfig, const char *section, const char *key) {
+	LpSection *sec;
+	sec = lp_config_find_section(lpconfig, section);
+	if (sec != NULL) {
+		return lp_section_find_item(sec, key) != NULL;
+	} else
+		return FALSE;
 }

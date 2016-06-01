@@ -1532,6 +1532,13 @@ LINPHONE_PUBLIC LinphoneCore* linphone_chat_room_get_core(LinphoneChatRoom *cr);
 LINPHONE_PUBLIC uint32_t linphone_chat_room_get_char(const LinphoneChatRoom *cr);
 
 /**
+ * Returns true if lime is available for given peer
+ *
+ * @return true if zrtp secrets have already been shared and ready to use
+ */
+LINPHONE_PUBLIC bool_t linphone_chat_room_lime_available(LinphoneChatRoom *cr);
+
+/**
  * Returns an list of chat rooms
  * @param[in] lc #LinphoneCore object
  * @return \mslist{LinphoneChatRoom}
@@ -4404,22 +4411,28 @@ LINPHONE_PUBLIC bool_t linphone_core_video_multicast_enabled(const LinphoneCore 
 
 /**
  * Set the network simulator parameters.
- * Liblinphone has the capabability of simulating the effects of a network (latency, lost packets, jitter, max bandwidth).
+ * Liblinphone has the capabability of simulating the effects of a network (latency, lost packets, jitter, max
+*bandwidth).
  * Please refer to the oRTP documentation for the meaning of the parameters of the OrtpNetworkSimulatorParams structure.
- * This function has effect for future calls, but not for currently running calls, though this behavior may be changed in future versions.
- * @warning Due to design of network simulation in oRTP, simulation is applied independently for audio and video stream. This means for example that a bandwidth
- * limit of 250kbit/s will have no effect on an audio stream running at 40kbit/s while a videostream targetting 400kbit/s will be highly affected.
+ * This function has effect for future calls, but not for currently running calls, though this behavior may be changed
+*in future versions.
+ * @warning Due to design of network simulation in oRTP, simulation is applied independently for audio and video stream.
+*This means for example that a bandwidth
+ * limit of 250kbit/s will have no effect on an audio stream running at 40kbit/s while a videostream targetting
+*400kbit/s will be highly affected.
  * @param lc the LinphoneCore
  * @param params the parameters used for the network simulation.
  * @return 0 if successful, -1 otherwise.
+ * @ingroup media_parameters
 **/
-LINPHONE_PUBLIC int linphone_core_set_network_simulator_params(LinphoneCore *lc, const OrtpNetworkSimulatorParams *params);
-
+LINPHONE_PUBLIC int linphone_core_set_network_simulator_params(LinphoneCore *lc,
+															   const OrtpNetworkSimulatorParams *params);
 
 /**
  * Get the previously set network simulation parameters.
  * @see linphone_core_set_network_simulator_params
  * @return a OrtpNetworkSimulatorParams structure.
+ * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC const OrtpNetworkSimulatorParams *linphone_core_get_network_simulator_params(const LinphoneCore *lc);
 
@@ -4427,6 +4440,7 @@ LINPHONE_PUBLIC const OrtpNetworkSimulatorParams *linphone_core_get_network_simu
  * Set the video preset to be used for video calls.
  * @param[in] lc LinphoneCore object
  * @param[in] preset The name of the video preset to be used (can be NULL to use the default video preset).
+ * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_video_preset(LinphoneCore *lc, const char *preset);
 
@@ -4434,6 +4448,7 @@ LINPHONE_PUBLIC void linphone_core_set_video_preset(LinphoneCore *lc, const char
  * Get the video preset used for video calls.
  * @param[in] lc LinphoneCore object
  * @return The name of the video preset used for video calls (can be NULL if the default video preset is used).
+ * @ingroup media_parameters
  */
 LINPHONE_PUBLIC const char *linphone_core_get_video_preset(const LinphoneCore *lc);
 
@@ -4451,6 +4466,7 @@ LINPHONE_PUBLIC bool_t linphone_core_screensharing_client_supported(LinphoneCore
  * Gets if realtime text is enabled or not
  * @param[in] lc LinphoneCore object
  * @return true if realtime text is enabled, false otherwise
+ * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bool_t linphone_core_realtime_text_enabled(LinphoneCore *lc);
 
@@ -4484,13 +4500,15 @@ LINPHONE_PUBLIC LinphoneMediaRole linphone_core_get_screensharing_role(LinphoneC
  * #linphone_core_set_network_reachable FASLE/TRUE to force channel restart.
  * @param[in] lc LinphoneCore object
  * @param[in] hostname of IP adress of the http proxy (can be NULL to disable).
+ * @ingroup network_parameters
  */
-LINPHONE_PUBLIC	void linphone_core_set_http_proxy_host(LinphoneCore *lc, const char *host) ;
+LINPHONE_PUBLIC void linphone_core_set_http_proxy_host(LinphoneCore *lc, const char *host);
 
 /**
  * Set http proxy port to be used for signaling.
  * @param[in] lc LinphoneCore object
  * @param[in] port of the http proxy.
+ * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_http_proxy_port(LinphoneCore *lc, int port);
 
@@ -4498,15 +4516,17 @@ LINPHONE_PUBLIC void linphone_core_set_http_proxy_port(LinphoneCore *lc, int por
  * Get http proxy address to be used for signaling.
  * @param[in] lc LinphoneCore object
  * @return hostname of IP adress of the http proxy (can be NULL to disable).
+ * @ingroup network_parameters
  */
-LINPHONE_PUBLIC	const char *linphone_core_get_http_proxy_host(const LinphoneCore *lc);
+LINPHONE_PUBLIC const char *linphone_core_get_http_proxy_host(const LinphoneCore *lc);
 
 /**
  * Get http proxy port to be used for signaling.
  * @param[in] lc LinphoneCore object
  * @return port of the http proxy.
+ * @ingroup network_parameters
  */
-LINPHONE_PUBLIC	int linphone_core_get_http_proxy_port(const LinphoneCore *lc);
+LINPHONE_PUBLIC int linphone_core_get_http_proxy_port(const LinphoneCore *lc);
 
 /**
  * Converts a LinphoneTransportType enum to a lowercase string.

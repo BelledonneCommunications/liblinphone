@@ -69,7 +69,7 @@ LINPHONE_PUBLIC int lime_getCachedRcvKeyByZid(xmlDocPtr cacheBuffer, limeKey_t *
  *
  * @param[out]		cacheBuffer		The xmlDoc containing current cache to be updated
  * @param[in/out]	associatedKey	Structure containing the key and ZID to identify the peer node to be updated
- * @param[in]		role			Can be LIME_SENDER or LIME_RECEIVER, specify which key we want to update 
+ * @param[in]		role			Can be LIME_SENDER or LIME_RECEIVER, specify which key we want to update
  *
  * @return 0 on success, error code otherwise
  */
@@ -87,23 +87,27 @@ LINPHONE_PUBLIC void lime_freeKeys(limeURIKeys_t associatedKeys);
 
 /**
  * @brief encrypt a message with the given key
- * 
+ *
  * @param[in]	key					Key to use: first 192 bits are used as key, last 64 bits as init vector
  * @param[in]	message				The string to be encrypted
  * @param[in]	messageLength		The length in bytes of the message to be encrypted
  * @param[in]	selfZID				The self ZID is use in authentication tag computation
- * @param[out]	encryptedMessage	A buffer to hold the output, ouput length is input's one + 16 for the authentication tag
+ * @param[out]	encryptedMessage	A buffer to hold the output, ouput length is input's one + 16 for the authentication
+ *tag
  * 									Authentication tag is set at the begining of the encrypted Message
  *
  * @return 0 on success, error code otherwise
- * 
+ *
  */
-LINPHONE_PUBLIC int lime_encryptMessage(limeKey_t *key, uint8_t *plainMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *encryptedMessage);
+LINPHONE_PUBLIC int lime_encryptMessage(limeKey_t *key, uint8_t *plainMessage, uint32_t messageLength,
+										uint8_t selfZID[12], uint8_t *encryptedMessage);
 
 /**
- * @brief Encrypt a file before transfering it to the server, encryption is done in several call, first one will be done with cryptoContext null, last one with length = 0
+ * @brief Encrypt a file before transfering it to the server, encryption is done in several call, first one will be done
+ *with cryptoContext null, last one with length = 0
  *
- * @param[in/out]	cryptoContext		The context used to encrypt the file using AES-GCM. Is created at first call(if null)
+ * @param[in/out]	cryptoContext		The context used to encrypt the file using AES-GCM. Is created at first call(if
+ *null)
  * @param[in]		key					256 bits : 192 bits of key || 64 bits of Initial Vector
  * @param[in]		length				Length of data to be encrypted, if 0 it will conclude the encryption
  * @param[in]		plain				Plain data to be encrypted (length bytes)
@@ -130,28 +134,37 @@ LINPHONE_PUBLIC int lime_decryptFile(void **cryptoContext, unsigned char *key, s
 
 /**
  * @brief decrypt and authentify a message with the given key
- * 
+ *
  * @param[in]	key					Key to use: first 192 bits are used as key, last 64 bits as init vector
  * @param[in]	message				The string to be decrypted
- * @param[in]	messageLength		The length in bytes of the message to be decrypted (this include the 16 bytes tag at the begining of the message)
+ * @param[in]	messageLength		The length in bytes of the message to be decrypted (this include the 16 bytes tag at
+ *the
+ *begining of the message)
  * @param[in]	selfZID				The self ZID is use in authentication tag computation
- * @param[out]	plainMessage		A buffer to hold the output, ouput length is input's one - 16 for the authentication tag + 1 for null termination char
+ * @param[out]	plainMessage		A buffer to hold the output, ouput length is input's one - 16 for the authentication
+ *tag
+ *+ 1 for null termination char
  * 									Authentication tag is retrieved at the begining of the encrypted Message
  *
  * @return 0 on success, error code otherwise
- * 
+ *
  */
 
-LINPHONE_PUBLIC int lime_decryptMessage(limeKey_t *key, uint8_t *encryptedMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *plainMessage);
+LINPHONE_PUBLIC int lime_decryptMessage(limeKey_t *key, uint8_t *encryptedMessage, uint32_t messageLength,
+										uint8_t selfZID[12], uint8_t *plainMessage);
 
 /**
  * @brief create the encrypted multipart xml message from plain text and destination URI
  * Retrieve in cache the needed keys which are then updated. Output buffer is allocated and must be freed by caller
  *
- * @param[in/out]	cacheBuffer		The xmlDoc containing current cache, get the keys and selfZID from it, updated by this function with derivated keys
+ * @param[in/out]	cacheBuffer		The xmlDoc containing current cache, get the keys and selfZID from it, updated by
+ *this
+ *function with derivated keys
  * @param[in]		message			The plain text message to be encrypted
  * @param[in]		peerURI			The destination URI, associated keys will be found in cache
- * @param[out]		output			The output buffer, allocated and set with the encrypted message xml body(null terminated string). Must be freed by caller
+ * @param[out]		output			The output buffer, allocated and set with the encrypted message xml body(null
+ *terminated
+ *string). Must be freed by caller
  *
  * @return 	0 on success, error code otherwise
  */
