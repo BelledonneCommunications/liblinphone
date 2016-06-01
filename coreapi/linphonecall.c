@@ -1646,9 +1646,17 @@ void linphone_call_fix_call_parameters(LinphoneCall *call, SalMediaDescription *
 			ms_message("Call [%p]: disabling video in our call params because the remote doesn't want it.", call);
 			call->params->has_video = FALSE;
 		}
+		if (call->params->has_screensharing && !rcp->has_screensharing) {
+			ms_message("Call [%p]: disabling screensharing in our call params because the remote doesn't want it.",
+					   call);
+			call->params->has_screensharing = FALSE;
+		}
 
-		if (rcp->has_video && call->core->video_policy.automatically_accept && linphone_core_video_enabled(call->core) && !call->params->has_video){
-			ms_message("Call [%p]: re-enabling video in our call params because the remote wants it and the policy allows to automatically accept.", call);
+		if (rcp->has_video && call->core->video_policy.automatically_accept &&
+			linphone_core_video_enabled(call->core) && !call->params->has_video) {
+			ms_message("Call [%p]: re-enabling video in our call params because the remote wants it and the policy "
+					   "allows to automatically accept.",
+					   call);
 			linphone_call_params_enable_video(call->params, TRUE);
 		}
 
@@ -3661,7 +3669,8 @@ static void linphone_call_start_screensharing_stream(LinphoneCall *call) {
 	scstream = sal_media_description_find_best_stream(call->resultdesc, SalApplication);
 	ms_message("Screensharing Start: role = %d",
 			   call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_role);
-	if (scstream != NULL && scstream->dir != SalStreamInactive && call->params->has_screensharing) {
+	if (scstream != NULL && scstream->dir != SalStreamInactive && call->params->screensharing_enabled &&
+		call->params->has_screensharing) {
 		call->current_params->screensharing_enabled = TRUE;
 		call->current_params->has_screensharing = TRUE;
 		ms_message("Screensharing Start: Sceensharing enable");

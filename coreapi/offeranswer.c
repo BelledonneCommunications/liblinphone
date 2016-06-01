@@ -335,7 +335,7 @@ static void initiate_outgoing(MSFactory *factory, const SalStreamDescription *lo
 
 	if (remote_answer->rtp_port != 0)
 		result->payloads = match_payloads(factory, local_offer->payloads, remote_answer->payloads, TRUE, FALSE);
-	else {
+	else if (remote_answer->type != SalApplication) {
 		ms_message("Local stream description [%p] rejected by peer", local_offer);
 		result->rtp_port = 0;
 		return;
