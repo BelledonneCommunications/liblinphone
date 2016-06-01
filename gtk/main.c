@@ -1295,14 +1295,14 @@ static void linphone_gtk_global_state_changed(LinphoneCore *lc, LinphoneGlobalSt
 }
 
 static void on_call_updated_response(GtkWidget *dialog, gint responseid, gpointer user_data) {
-	int *stream = user_data;
+	int stream = GPOINTER_TO_INT(user_data);
 	LinphoneCall *call = (LinphoneCall *)g_object_get_data(G_OBJECT(dialog), "call");
 	if (linphone_call_get_state(call) == LinphoneCallUpdatedByRemote) {
 		LinphoneCore *lc = linphone_call_get_core(call);
 		LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
-		if (*stream == linphone_call_get_screensharing_index(call)) {
+		if (stream == linphone_call_get_screensharing_index(call)) {
 			linphone_call_params_enable_screensharing(params, responseid == GTK_RESPONSE_YES, FALSE);
-		} else if (*stream == linphone_call_get_video_index(call)) {
+		} else if (stream == linphone_call_get_video_index(call)) {
 			linphone_call_params_enable_video(params, responseid == GTK_RESPONSE_YES);
 		}
 		linphone_core_accept_call_update(lc, call, params);
@@ -1344,7 +1344,7 @@ static void linphone_gtk_call_updated_by_remote(LinphoneCall *call) {
 			g_object_set_data_full(G_OBJECT(dialog), "call", linphone_call_ref(call),
 								   (GDestroyNotify)linphone_call_unref);
 			g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(on_call_updated_response),
-							 (gpointer)&video_index);
+							 (gpointer)GINT_TO_POINTER(video_index));
 			g_timeout_add(20000, (GSourceFunc)on_call_updated_timeout, dialog);
 			gtk_widget_show(dialog);
 		}
@@ -1367,7 +1367,7 @@ static void linphone_gtk_call_updated_by_remote(LinphoneCall *call) {
 			g_object_set_data_full(G_OBJECT(dialog), "call", linphone_call_ref(call),
 								   (GDestroyNotify)linphone_call_unref);
 			g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(on_call_updated_response),
-							 (gpointer)&screensharing_index);
+							 (gpointer)GINT_TO_POINTER(screensharing_index));
 			g_timeout_add(20000, (GSourceFunc)on_call_updated_timeout, dialog);
 			gtk_widget_show(dialog);
 		}

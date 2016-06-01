@@ -888,7 +888,7 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 	strncpy(md->streams[call->main_screensharing_stream_index].name, "Application",
 			sizeof(md->streams[call->main_screensharing_stream_index].name) - 1);
 
-	if (params->screensharing_enabled) {
+	if (params->has_screensharing) {
 		strncpy(md->streams[call->main_screensharing_stream_index].rtp_addr,
 				linphone_call_get_public_ip_for_stream(call, call->main_screensharing_stream_index),
 				sizeof(md->streams[call->main_text_stream_index].rtp_addr));
