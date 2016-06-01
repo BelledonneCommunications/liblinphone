@@ -3666,8 +3666,6 @@ int linphone_core_update_call(LinphoneCore *lc, LinphoneCall *call, const Linpho
 #if defined(VIDEO_ENABLED) && defined(BUILD_UPNP)
 	bool_t has_video = FALSE;
 #endif
-	bool_t has_screensharing = FALSE;
-
 	switch (initial_state = call->state) {
 	case LinphoneCallIncomingReceived:
 	case LinphoneCallIncomingEarlyMedia:
@@ -3702,11 +3700,6 @@ int linphone_core_update_call(LinphoneCore *lc, LinphoneCall *call, const Linpho
 			}
 		}
 #endif /* defined(VIDEO_ENABLED) && defined(BUILD_UPNP) */
-		has_screensharing = (call->params->has_screensharing);
-
-		if ((call->screenstream != NULL) && !has_screensharing) {
-			// TODO stop screensharing ?
-		}
 		linphone_call_set_new_params(call, params);
 		err = linphone_call_prepare_ice(call, FALSE);
 		if (err == 1) {
@@ -3729,8 +3722,6 @@ int linphone_core_update_call(LinphoneCore *lc, LinphoneCall *call, const Linpho
 			}
 		}
 #endif // defined(VIDEO_ENABLED) && defined(BUILD_UPNP)
-		if (!has_screensharing && call->params->has_screensharing) {
-		}
 		if ((err = linphone_core_start_update_call(lc, call)) && call->state != initial_state) {
 			/*Restore initial state*/
 			linphone_call_set_state(call, initial_state, "Restore initial state");

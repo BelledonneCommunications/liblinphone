@@ -516,6 +516,8 @@ void linphone_gtk_update_screensharing_button(LinphoneCall *call) {
 
 	button = linphone_gtk_get_widget(call_view, "screensharing_button");
 
+	gtk_button_set_image(GTK_BUTTON(button),
+	gtk_image_new_from_icon_name(has_screensharing ? "linphone-screensharing-disabled" : "linphone-screensharing-enabled",GTK_ICON_SIZE_BUTTON));
 	g_object_set_data(G_OBJECT(button), "adding_screensharing", GINT_TO_POINTER(!has_screensharing));
 	if (!linphone_core_screensharing_server_supported(linphone_call_get_core(call))) {
 		gtk_widget_set_sensitive(button, FALSE);

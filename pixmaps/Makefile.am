@@ -66,7 +66,9 @@ dist_statussvgicons_DATA= \
 	svg/linphone-security-pending.svg \
 	svg/linphone-media-play.svg \
 	svg/linphone-media-pause.svg \
-	svg/linphone-warning.svg
+	svg/linphone-warning.svg \
+	svg/linphone-screensharing-disabled.svg \
+	svg/linphone-screensharing-enabled.svg
 
 actions48iconsdir=$(iconsdir)/48x48/actions
 dist_actions48icons_DATA= \

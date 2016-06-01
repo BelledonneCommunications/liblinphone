@@ -53,6 +53,8 @@ install(FILES
 	svg/linphone-media-play.svg
 	svg/linphone-media-pause.svg
 	svg/linphone-warning.svg
+	svg/linphone-screensharing-disabled.svg
+	svg/linphone-screensharing-enabled.svg
 	DESTINATION ${ICONS_INSTALL_DIR}/scalable/status
 	PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
