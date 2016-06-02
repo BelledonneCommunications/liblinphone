@@ -333,11 +333,11 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 			break;
 	}
 	if ( dir ) belle_sdp_media_description_add_attribute ( media_desc,belle_sdp_attribute_create ( dir,NULL ) );
-	
+
 	if (stream->rtcp_mux){
 		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create ("rtcp-mux",NULL ) );
 	}
-	
+
 	if (rtp_port != 0) {
 		different_rtp_and_rtcp_addr = (rtcp_addr[0] != '\0') && (strcmp(rtp_addr, rtcp_addr) != 0);
 		if ((rtcp_port != (rtp_port + 1)) || (different_rtp_and_rtcp_addr == TRUE)) {
@@ -364,7 +364,7 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 			add_ice_remote_candidates(media_desc,stream);
 		}
 	}
-	
+
 
 	if ((rtp_port != 0) && (sal_stream_description_has_avpf(stream) || sal_stream_description_has_implicit_avpf(stream))) {
 		add_rtcp_fb_attributes(media_desc, md, stream);

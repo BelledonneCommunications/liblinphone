@@ -907,6 +907,7 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 		if (call->main_screensharing_stream_index > max_index)
 			max_index = call->main_screensharing_stream_index;
 	} else {
+		md->streams[call->main_screensharing_stream_index].dir = SalStreamInactive;
 		ms_message("Don't put screen sharing stream on local offer for call [%p]", call);
 	}
 
@@ -3683,8 +3684,9 @@ static void linphone_call_start_screensharing_stream(LinphoneCall *call) {
 	scstream = sal_media_description_find_best_stream(call->resultdesc, SalApplication);
 	ms_message("Screensharing Start: role = %d",
 			   call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_role);
-	if (scstream != NULL && scstream->dir != SalStreamInactive && call->params->screensharing_enabled &&
-		call->params->has_screensharing) {
+	if (scstream != NULL && scstream->dir != SalStreamInactive && call->params->screensharing_enabled
+		&& call->params->has_screensharing && scstream->rtcp_port != 0) {
+
 		call->current_params->screensharing_enabled = TRUE;
 		call->current_params->has_screensharing = TRUE;
 		ms_message("Screensharing Start: Sceensharing enable");
@@ -3797,9 +3799,8 @@ void linphone_call_start_media_streams(LinphoneCall *call, LinphoneCallState nex
 		linphone_call_start_text_stream(call);
 	}
 	call->current_params->has_screensharing = FALSE;
-	if (call->screenstream != NULL) {
+	if (call->screenstream != NULL)
 		linphone_call_start_screensharing_stream(call);
-	}
 
 	set_dtls_fingerprint_on_all_streams(call);
 
