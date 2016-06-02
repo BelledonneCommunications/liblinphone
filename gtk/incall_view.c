@@ -494,9 +494,9 @@ void linphone_gtk_update_video_button(LinphoneCall *call){
 		break;
 	}
 	gtk_widget_set_sensitive(button,button_sensitive);
-	if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button),"signal_connected"))==0){
+	if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button),"signal_connected_video"))==0){
 		g_signal_connect(G_OBJECT(button),"clicked",(GCallback)video_button_clicked,call);
-		g_object_set_data(G_OBJECT(button),"signal_connected",GINT_TO_POINTER(1));
+		g_object_set_data(G_OBJECT(button),"signal_connected_video",GINT_TO_POINTER(1));
 	}
 	conf_frame=(GtkWidget *)g_object_get_data(G_OBJECT(linphone_gtk_get_main_window()),"conf_frame");
 	if(conf_frame!=NULL){
@@ -532,9 +532,9 @@ void linphone_gtk_update_screensharing_button(LinphoneCall *call) {
 		break;
 	}
 	gtk_widget_set_sensitive(button, button_sensitive);
-	if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "signal_connected")) == 0) {
+	if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "signal_connected_screensharing")) == 0) {
 		g_signal_connect(G_OBJECT(button), "clicked", (GCallback)linphone_gtk_screensharing_button_clicked, call);
-		g_object_set_data(G_OBJECT(button), "signal_connected", GINT_TO_POINTER(1));
+		g_object_set_data(G_OBJECT(button), "signal_connected_screensharing", GINT_TO_POINTER(1));
 	}
 	conf_frame = (GtkWidget *)g_object_get_data(G_OBJECT(linphone_gtk_get_main_window()), "conf_frame");
 	if (conf_frame != NULL) {

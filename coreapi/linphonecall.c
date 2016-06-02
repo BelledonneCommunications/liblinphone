@@ -896,8 +896,6 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 				linphone_call_get_public_ip_for_stream(call, call->main_screensharing_stream_index),
 				sizeof(md->streams[call->main_text_stream_index].rtcp_addr));
 
-		md->streams[call->main_screensharing_stream_index].rtp_port =
-			call->media_ports[call->main_screensharing_stream_index].rtp_port;
 		md->streams[call->main_screensharing_stream_index].rtcp_port =
 			call->media_ports[call->main_screensharing_stream_index].rtcp_port;
 		md->streams[call->main_screensharing_stream_index].screensharing_role =
@@ -908,6 +906,8 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 			max_index = call->main_screensharing_stream_index;
 	} else {
 		md->streams[call->main_screensharing_stream_index].dir = SalStreamInactive;
+		md->streams[call->main_screensharing_stream_index].screensharing_role =
+			linphone_call_linphonerole_to_salmedia(LinphoneMediaRoleInactive);
 		ms_message("Don't put screen sharing stream on local offer for call [%p]", call);
 	}
 
