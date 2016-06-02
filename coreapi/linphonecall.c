@@ -1664,6 +1664,7 @@ void linphone_call_fix_call_parameters(LinphoneCall *call, SalMediaDescription *
 		if (rcp->realtimetext_enabled && !call->params->realtimetext_enabled) {
 			call->params->realtimetext_enabled = TRUE;
 		}
+
 	}
 }
 
@@ -2040,12 +2041,15 @@ const LinphoneCallParams * linphone_call_get_remote_params(LinphoneCall *call){
 					cp->media_encryption = LinphoneMediaEncryptionSRTP;
 				cp->realtimetext_enabled = TRUE;
 			}
+			if (nb_screensharing_streams > 0) {
+				sd = sal_media_description_get_active_stream_of_type(md, SalApplication, 0);
+				cp->has_screensharing = (sd->screensharing_role != SalStreamInactive);
+			}
 			if (!cp->has_video) {
 				if (md->bandwidth > 0 && md->bandwidth <= linphone_core_get_edge_bw(call->core)) {
 					cp->low_bandwidth = TRUE;
 				}
 			}
-			cp->has_screensharing = (nb_screensharing_streams > 0);
 
 			if (md->name[0] != '\0')
 				linphone_call_params_set_session_name(cp, md->name);
