@@ -305,7 +305,6 @@ bool_t linphone_chat_room_lime_available(LinphoneChatRoom *cr) {
 				}
 			}
 		}
-		}
 	}
 	return FALSE;
 }
