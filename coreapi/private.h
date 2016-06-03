@@ -313,7 +313,7 @@ struct _LinphoneCall{
 	struct _AudioStream *audiostream;  /**/
 	struct _VideoStream *videostream;
 	struct _TextStream *textstream;
-	struct _ScreenStream *screenstream; // TODO
+	struct _ScreenStream *screenstream;
 	void *video_window_id;
 	MSAudioEndpoint *endpoint; /*used for conferencing*/
 	char *refer_to;
