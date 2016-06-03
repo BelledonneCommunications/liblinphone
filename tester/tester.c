@@ -153,6 +153,7 @@ LinphoneCore* configure_lc_from(LinphoneCoreVTable* v_table, const char* path, c
 	linphone_core_enable_ipv6(lc, liblinphonetester_ipv6);
 
 	sal_enable_test_features(lc->sal, TRUE);
+
 	sal_set_dns_user_hosts_file(lc->sal, dnsuserhostspath);
 	linphone_core_set_static_picture(lc, nowebcampath);
 
@@ -218,13 +219,12 @@ bool_t wait_for_list(MSList* lcs,int* counter,int value,int timeout_ms) {
 bool_t wait_for_stun_resolution(LinphoneCoreManager *m) {
 	MSTimeSpec start;
 	int timeout_ms = 10000;
-
 	liblinphone_tester_clock_start(&start);
-	while (m->lc->net_conf.stun_addrinfo == NULL && !liblinphone_tester_clock_elapsed(&start,timeout_ms)) {
+	while (linphone_core_get_stun_server_addrinfo(m->lc) == NULL && !liblinphone_tester_clock_elapsed(&start,timeout_ms)) {
 		linphone_core_iterate(m->lc);
 		ms_usleep(20000);
 	}
-	return m->lc->net_conf.stun_addrinfo != NULL;
+	return linphone_core_get_stun_server_addrinfo(m->lc) != NULL;
 }
 
 static void set_codec_enable(LinphoneCore* lc,const char* type,int rate,bool_t enable) {
@@ -342,6 +342,7 @@ void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file) {
 
 void linphone_core_manager_start(LinphoneCoreManager *mgr, int check_for_proxies) {
 	LinphoneProxyConfig* proxy;
+	LinphoneNatPolicy *nat_policy;
 	int proxy_count;
 
 	/*BC_ASSERT_EQUAL(ms_list_size(linphone_core_get_proxy_config_list(lc)),proxy_count, int, "%d");*/
@@ -373,9 +374,15 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, int check_for_proxies
 		linphone_address_clean(mgr->identity);
 	}
 
-	if (linphone_core_get_stun_server(mgr->lc) != NULL){
+	nat_policy = linphone_core_get_nat_policy(mgr->lc);
+	if ((nat_policy != NULL) && (linphone_nat_policy_get_stun_server(nat_policy) != NULL) &&
+		(linphone_nat_policy_stun_enabled(nat_policy) || linphone_nat_policy_turn_enabled(nat_policy))) {
 		/*before we go, ensure that the stun server is resolved, otherwise all ice related test will fail*/
-		BC_ASSERT_TRUE(wait_for_stun_resolution(mgr));
+		const char **tags = bc_tester_current_test_tags();
+		int ice_test = (tags && ((tags[0] && !strcmp(tags[0], "ICE")) || (tags[1] && !strcmp(tags[1], "ICE"))));
+		if (ice_test) {
+			BC_ASSERT_TRUE(wait_for_stun_resolution(mgr));
+		}
 	}
 	if (!check_for_proxies){
 		/*now that stun server resolution is done, we can start registering*/
@@ -561,6 +568,7 @@ int liblinphone_tester_after_each(void) {
 			ms_error("%s", format);
 
 			all_leaks_buffer = ms_strcat_printf(all_leaks_buffer, "\n%s", format);
+			ms_free(format);
 		}
 
 		// prevent any future leaks

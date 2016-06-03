@@ -1416,7 +1416,7 @@ static void linphone_call_compute_streams_indexes(LinphoneCall *call, const SalM
 LinphoneCall * linphone_call_new_incoming(LinphoneCore *lc, LinphoneAddress *from, LinphoneAddress *to, SalOp *op){
 	LinphoneCall *call = belle_sip_object_new(LinphoneCall);
 	SalMediaDescription *md;
-	LinphoneFirewallPolicy fpol;
+	LinphoneNatPolicy *nat_policy = NULL;
 	int i;
 
 	call->dir = LinphoneCallIncoming;
@@ -1494,28 +1494,26 @@ LinphoneCall * linphone_call_new_incoming(LinphoneCore *lc, LinphoneAddress *fro
 		}
 	}
 
-	fpol=linphone_core_get_firewall_policy(call->core);
-	/*create the ice session now if ICE is required*/
-	if (fpol==LinphonePolicyUseIce){
+	if (call->dest_proxy != NULL) nat_policy = linphone_proxy_config_get_nat_policy(call->dest_proxy);
+	if (nat_policy == NULL) nat_policy = linphone_core_get_nat_policy(call->core);
+	if ((nat_policy != NULL) && linphone_nat_policy_ice_enabled(nat_policy)) {
+		/* Create the ice session now if ICE is required */
 		if (md){
 			linphone_call_create_ice_session(call, IR_Controlled);
 		}else{
-			fpol=LinphonePolicyNoFirewall;
+			nat_policy = NULL;
 			ms_warning("ICE not supported for incoming INVITE without SDP.");
 		}
 	}
 
 	/*reserve the sockets immediately*/
 	linphone_call_init_media_streams(call);
-	switch (fpol) {
-		case LinphonePolicyUseIce:
+	if (nat_policy != NULL) {
+		if (linphone_nat_policy_ice_enabled(nat_policy)) {
 			call->defer_notify_incoming = linphone_call_prepare_ice(call,TRUE) == 1;
-			break;
-		case LinphonePolicyUseStun:
+		} else if (linphone_nat_policy_stun_enabled(nat_policy)) {
 			call->ping_time=linphone_core_run_stun_tests(call->core,call);
-			/* No break to also destroy ice session in this case. */
-			break;
-		case LinphonePolicyUseUpnp:
+		} else if (linphone_nat_policy_upnp_enabled(nat_policy)) {
 #ifdef BUILD_UPNP
 			if(!lc->rtp_conf.disable_upnp) {
 				call->upnp_session = linphone_upnp_session_new(call);
@@ -1527,9 +1525,7 @@ LinphoneCall * linphone_call_new_incoming(LinphoneCore *lc, LinphoneAddress *fro
 				}
 			}
 #endif //BUILD_UPNP
-			break;
-		default:
-			break;
+		}
 	}
 
 	discover_mtu(lc,linphone_address_get_domain(from));
@@ -1546,11 +1542,11 @@ void linphone_call_free_media_resources(LinphoneCall *call){
 	int i;
 
 	linphone_call_stop_media_streams(call);
+	linphone_call_delete_upnp_session(call);
+	linphone_call_delete_ice_session(call);
 	for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; ++i){
 		ms_media_stream_sessions_uninit(&call->sessions[i]);
 	}
-	linphone_call_delete_upnp_session(call);
-	linphone_call_delete_ice_session(call);
 	linphone_call_stats_uninit(&call->stats[LINPHONE_CALL_STATS_AUDIO]);
 	linphone_call_stats_uninit(&call->stats[LINPHONE_CALL_STATS_VIDEO]);
 	linphone_call_stats_uninit(&call->stats[LINPHONE_CALL_STATS_TEXT]);
@@ -2117,24 +2113,11 @@ const LinphoneErrorInfo *linphone_call_get_error_info(const LinphoneCall *call){
 	}else return linphone_error_info_from_sal_op(call->op);
 }
 
-/**
- * Get the user pointer associated with the LinphoneCall
- *
- * @ingroup call_control
- * @return  an opaque user pointer that can be retrieved at any time
-**/
 void *linphone_call_get_user_data(const LinphoneCall *call)
 {
 	return call->user_data;
 }
 
-/**
- * Set the user pointer associated with the LinphoneCall
- *
- * @ingroup call_control
- *
- * the user pointer is an opaque user pointer that can be retrieved at any time in the LinphoneCall
-**/
 void linphone_call_set_user_data(LinphoneCall *call, void *user_pointer)
 {
 	call->user_data = user_pointer;
@@ -2612,13 +2595,15 @@ void linphone_call_init_audio_stream(LinphoneCall *call){
 
 		/* init zrtp even if we didn't explicitely set it, just in case peer offers it */
 		if (ms_zrtp_available()) {
+			char *uri = linphone_address_as_string_uri_only((call->dir==LinphoneCallIncoming) ? call->log->from : call->log->to);
 			MSZrtpParams params;
 			memset(&params,0,sizeof(MSZrtpParams));
 			/*call->current_params.media_encryption will be set later when zrtp is activated*/
 			params.zid_file=lc->zrtp_secrets_cache;
-			params.uri= linphone_address_as_string_uri_only((call->dir==LinphoneCallIncoming) ? call->log->from : call->log->to);
+			params.uri=uri;
 			setZrtpCryptoTypesParameters(&params,call->core);
 			audio_stream_enable_zrtp(call->audiostream,&params);
+			if (uri != NULL) ms_free(uri);
 		}
 
 		media_stream_reclaim_sessions(&audiostream->ms, &call->sessions[call->main_audio_stream_index]);

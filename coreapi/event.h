@@ -139,7 +139,7 @@ LINPHONE_PUBLIC LinphoneEvent *linphone_core_create_subscribe(LinphoneCore *lc, 
  * @param event the event name
  * @return a LinphoneEvent holding the context of the notification.
 **/
-LinphoneEvent *linphone_core_create_notify(LinphoneCore *lc, const LinphoneAddress *resource, const char *event);
+LINPHONE_PUBLIC LinphoneEvent *linphone_core_create_notify(LinphoneCore *lc, const LinphoneAddress *resource, const char *event);
 
 /**
  * Send a subscription previously created by linphone_core_create_subscribe().
@@ -228,11 +228,11 @@ LINPHONE_PUBLIC int linphone_event_update_publish(LinphoneEvent *lev, const Linp
 LINPHONE_PUBLIC int linphone_event_refresh_publish(LinphoneEvent *lev);
 
 /**
- * Prevent an event  from refreshing its publish.
+ * Prevent an event from refreshing its publish.
  * This is useful to let registrations to expire naturally (or) when the application wants to keep control on when
  * refreshes are sent.
  * The refreshing operations can be resumed with linphone_proxy_config_refresh_register().
- * @param[in] cfg #LinphoneEvent object.
+ * @param[in] lev #LinphoneEvent object.
  **/
 LINPHONE_PUBLIC void linphone_event_pause_publish(LinphoneEvent *lev);
 

@@ -268,41 +268,39 @@ LinphoneChatRoom *linphone_core_get_chat_room_from_uri(LinphoneCore *lc, const c
 bool_t linphone_chat_room_lime_available(LinphoneChatRoom *cr) {
 	if (cr) {
 		switch (linphone_core_lime_enabled(cr->lc)) {
-		case LinphoneLimeDisabled:
-			return FALSE;
-		case LinphoneLimeMandatory:
-			return TRUE;
-		case LinphoneLimePreferred: {
-			FILE *CACHEFD = NULL;
-			if (cr->lc->zrtp_secrets_cache != NULL) {
-				CACHEFD = fopen(cr->lc->zrtp_secrets_cache, "rb+");
-				if (CACHEFD) {
-					size_t cacheSize;
-					xmlDocPtr cacheXml;
-					char *cacheString = ms_load_file_content(CACHEFD, &cacheSize);
-					if (!cacheString) {
-						ms_warning("Unable to load content of ZRTP ZID cache to decrypt message");
-						return FALSE;
-					}
-					cacheString[cacheSize] = '\0';
-					cacheSize += 1;
-					fclose(CACHEFD);
-					cacheXml = xmlParseDoc((xmlChar *)cacheString);
-					ms_free(cacheString);
-					if (cacheXml) {
-						bool_t res;
-						limeURIKeys_t associatedKeys;
-						/* retrieve keys associated to the peer URI */
-						associatedKeys.peerURI = (uint8_t *)malloc(strlen(cr->peer) + 1);
-						strcpy((char *)(associatedKeys.peerURI), cr->peer);
-						associatedKeys.associatedZIDNumber = 0;
-						associatedKeys.peerKeys = NULL;
+			case LinphoneLimeDisabled: return FALSE;
+			case LinphoneLimeMandatory: return TRUE;
+			case LinphoneLimePreferred: {
+				FILE *CACHEFD = NULL;
+				if (cr->lc->zrtp_secrets_cache != NULL) {
+					CACHEFD = fopen(cr->lc->zrtp_secrets_cache, "rb+");
+					if (CACHEFD) {
+						size_t cacheSize;
+						xmlDocPtr cacheXml;
+						char *cacheString=ms_load_file_content(CACHEFD, &cacheSize);
+						if (!cacheString){
+							ms_warning("Unable to load content of ZRTP ZID cache to decrypt message");
+							return FALSE;
+						}
+						cacheString[cacheSize] = '\0';
+						cacheSize += 1;
+						fclose(CACHEFD);
+						cacheXml = xmlParseDoc((xmlChar*)cacheString);
+						ms_free(cacheString);
+						if (cacheXml) {
+							bool_t res;
+							limeURIKeys_t associatedKeys;
+							/* retrieve keys associated to the peer URI */
+							associatedKeys.peerURI = (uint8_t *)malloc(strlen(cr->peer)+1);
+							strcpy((char *)(associatedKeys.peerURI), cr->peer);
+							associatedKeys.associatedZIDNumber  = 0;
+							associatedKeys.peerKeys = NULL;
 
-						res = (lime_getCachedSndKeysByURI(cacheXml, &associatedKeys) == 0 &&
-							   associatedKeys.associatedZIDNumber != 0);
-						lime_freeKeys(associatedKeys);
-						xmlFreeDoc(cacheXml);
-						return res;
+							res = (lime_getCachedSndKeysByURI(cacheXml, &associatedKeys) == 0 && associatedKeys.associatedZIDNumber != 0);
+							lime_freeKeys(&associatedKeys);
+							xmlFreeDoc(cacheXml);
+							return res;
+						}
 					}
 				}
 			}

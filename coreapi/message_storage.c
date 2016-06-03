@@ -28,8 +28,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifndef _WIN32
-#if !defined(ANDROID) && !defined(__QNXNTO__)
+#if !defined(__QNXNTO__)
 #	include <langinfo.h>
+#	include <locale.h>
 #	include <iconv.h>
 #	include <string.h>
 #endif
@@ -42,7 +43,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sqlite3.h"
 #include <assert.h>
 
-static char *utf8_convert(const char *filename) {
+
+#if 0
+static char *utf8_convert(const char *filename){
+
 	char db_file_utf8[MAX_PATH_SIZE] = "";
 #if defined(_WIN32)
 	wchar_t db_file_utf16[MAX_PATH_SIZE] = {0};
@@ -67,6 +71,8 @@ static char *utf8_convert(const char *filename) {
 	return ms_strdup(db_file_utf8);
 }
 
+#endif
+
 int _linphone_sqlite3_open(const char *db_file, sqlite3 **db) {
 	char *errmsg = NULL;
 	int ret;
@@ -78,10 +84,10 @@ int _linphone_sqlite3_open(const char *db_file, sqlite3 **db) {
 	 * We workaround by asking that the open is made with no protection*/
 	flags |= SQLITE_OPEN_FILEPROTECTION_NONE;
 #endif
-
-	char *utf8_filename = utf8_convert(db_file);
-	ret = sqlite3_open_v2(utf8_filename, db, flags, LINPHONE_SQLITE3_VFS);
-	ms_free(utf8_filename);
+	
+	/*since we plug our vfs into sqlite, there is no need to convert to UTF-8.
+	 * Indeed, our filesystem wrapper uses the default system encoding*/
+	ret = sqlite3_open_v2(db_file, db, flags, LINPHONE_SQLITE3_VFS);
 
 	if (ret != SQLITE_OK)
 		return ret;

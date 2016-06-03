@@ -82,9 +82,11 @@ static const char *person_prefix = "/pidf:presence/dm:person";
 /*****************************************************************************
  * PRIVATE FUNCTIONS                                                         *
  ****************************************************************************/
-/*defined in http://www.w3.org/TR/REC-xml/*/
+
+/* Defined in http://www.w3.org/TR/REC-xml/ */
 static char presence_id_valid_characters[] = "0123456789abcdefghijklmnopqrstuvwxyz-.";
-/*NameStartChar (NameChar)**/
+
+/* NameStartChar (NameChar)* */
 static char presence_id_valid_start_characters[] = ":_abcdefghijklmnopqrstuvwxyz";
 
 static char * generate_presence_id(void) {
@@ -446,6 +448,7 @@ int linphone_presence_model_add_activity(LinphonePresenceModel *model, LinphoneP
 			return -1;
 
 		presence_model_add_person(model, person);
+		linphone_presence_person_unref(person);
 	} else {
 		/* Add the activity to the first person in the model. */
 		person = (LinphonePresencePerson *)ms_list_nth_data(model->persons, 0);

@@ -34,7 +34,7 @@
 static void call_waiting_indication_with_param(bool_t enable_caller_privacy) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc_udp");
 	MSList *iterator;
 	MSList* lcs;
 	LinphoneCall* pauline_called_by_marie;
@@ -176,7 +176,7 @@ static void second_call_allowed_if_not_using_audio(void){
 static void incoming_call_accepted_when_outgoing_call_in_state(LinphoneCallState state) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc_udp");
 	MSList* lcs;
 	LinphoneCallParams *laure_params=linphone_core_create_call_params(laure->lc, NULL);
 	LinphoneCallParams *marie_params=linphone_core_create_call_params(marie->lc, NULL);
@@ -215,12 +215,12 @@ static void incoming_call_accepted_when_outgoing_call_in_state(LinphoneCallState
 
 	linphone_core_terminate_all_calls(marie->lc);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallEnd, 2, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallEnd, 1, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased, 1, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallReleased, 2, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallReleased, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,2,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,2,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallReleased,1,10000));
 
 	linphone_call_params_unref(laure_params);
 	linphone_call_params_unref(marie_params);
@@ -368,7 +368,7 @@ end:
 static void simple_conference(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc_udp");
 	simple_conference_base(marie,pauline,laure, NULL);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -378,7 +378,7 @@ static void simple_conference(void) {
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc_udp");
 
 	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
 		linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
@@ -413,7 +413,7 @@ static void simple_zrtp_conference_with_ice(void) {
 static void simple_call_transfer(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc_udp");
 	LinphoneCall* pauline_called_by_marie;
 	LinphoneCall *marie_calling_pauline;
 	LinphoneCall *marie_calling_laure;
@@ -477,7 +477,7 @@ end:
 static void unattended_call_transfer(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc_udp");
 	LinphoneCall* pauline_called_by_marie;
 
 	char* laure_identity=linphone_address_as_string(laure->identity);
@@ -566,7 +566,7 @@ static void unattended_call_transfer_with_error(void) {
 static void call_transfer_existing_call_outgoing_call(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc_udp");
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
 	LinphoneCall* marie_call_laure;
@@ -584,12 +584,18 @@ static void call_transfer_existing_call_outgoing_call(void) {
 		marie_call_pauline=linphone_core_get_current_call(marie->lc);
 		pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
 		/*marie pause pauline*/
-		BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie));
+		if (!BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie))) {
+			goto end;
+		}
 
 		/*marie call laure*/
-		BC_ASSERT_TRUE(call(marie,laure));
+		if (!BC_ASSERT_TRUE(call(marie,laure))) {
+			end_call(marie, pauline);
+			goto end;
+		}
 		marie_call_laure=linphone_core_get_current_call(marie->lc);
 		laure_called_by_marie=linphone_core_get_current_call(laure->lc);
+
 		/*marie pause laure*/
 		BC_ASSERT_TRUE(pause_call_1(marie,marie_call_laure,laure,laure_called_by_marie));
 
@@ -633,6 +639,7 @@ static void call_transfer_existing_call_outgoing_call(void) {
 
 		end_call(pauline, laure);
 	}
+end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);
@@ -739,7 +746,7 @@ end:
 static void eject_from_3_participants_local_conference(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc_udp");
 
 	eject_from_3_participants_conference(marie, pauline, laure, NULL);
 
@@ -751,8 +758,8 @@ static void eject_from_3_participants_local_conference(void) {
 static void eject_from_4_participants_conference(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc");
-	LinphoneCoreManager* michelle = linphone_core_manager_new( "michelle_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc_udp");
+	LinphoneCoreManager* michelle = linphone_core_manager_new( "michelle_rc_udp");
 	int timeout_ms = 5000;
 	stats initial_laure_stat;
 	stats initial_michelle_stat;
@@ -842,7 +849,7 @@ end:
 void simple_remote_conference(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
-	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", TRUE);
 	LpConfig *marie_config = linphone_core_get_config(marie->lc);
 	LinphoneProxyConfig *focus_proxy_config = linphone_core_get_default_proxy_config(((LinphoneCoreManager *)focus)->lc);
@@ -873,7 +880,7 @@ void simple_remote_conference(void) {
 void simple_remote_conference_shut_down_focus(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
-	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_new("laure_rc_udp");
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", FALSE);
 	LpConfig *marie_config = linphone_core_get_config(marie->lc);
 	LinphoneProxyConfig *focus_proxy_config = linphone_core_get_default_proxy_config(((LinphoneCoreManager *)focus)->lc);
@@ -904,7 +911,7 @@ void simple_remote_conference_shut_down_focus(void) {
 void eject_from_3_participants_remote_conference(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( "laure_rc_udp");
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", TRUE);
 	LpConfig *marie_config = linphone_core_get_config(marie->lc);
 	LinphoneProxyConfig *focus_proxy_config = linphone_core_get_default_proxy_config(((LinphoneCoreManager *)focus)->lc);

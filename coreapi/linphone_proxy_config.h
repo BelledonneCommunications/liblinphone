@@ -87,7 +87,7 @@ LINPHONE_PUBLIC int linphone_proxy_config_set_identity_address(LinphoneProxyConf
  * Sets a SIP route.
  * When a route is set, all outgoing calls will go to the route's destination if this proxy
  * is the default one (see linphone_core_set_default_proxy() ).
- * @Return -1 if route is invalid, 0 otherwise.
+ * @return -1 if route is invalid, 0 otherwise.
 **/
 LINPHONE_PUBLIC int linphone_proxy_config_set_route(LinphoneProxyConfig *cfg, const char *route);
 
@@ -546,6 +546,24 @@ LINPHONE_PUBLIC const char * linphone_proxy_config_get_ref_key(const LinphonePro
  * @param[in] refkey The reference key string to associate to the proxy config.
 **/
 LINPHONE_PUBLIC void linphone_proxy_config_set_ref_key(LinphoneProxyConfig *cfg, const char *refkey);
+
+/**
+ * Get The policy that is used to pass through NATs/firewalls when using this proxy config.
+ * If it is set to NULL, the default NAT policy from the core will be used instead.
+ * @param[in] cfg #LinphoneProxyConfig object
+ * @return LinphoneNatPolicy object in use.
+ * @see linphone_core_get_nat_policy()
+ */
+LINPHONE_PUBLIC LinphoneNatPolicy * linphone_proxy_config_get_nat_policy(const LinphoneProxyConfig *cfg);
+
+/**
+ * Set the policy to use to pass through NATs/firewalls when using this proxy config.
+ * If it is set to NULL, the default NAT policy from the core will be used instead.
+ * @param[in] cfg #LinphoneProxyConfig object
+ * @param[in] policy LinphoneNatPolicy object
+ * @see linphone_core_set_nat_policy()
+ */
+LINPHONE_PUBLIC void linphone_proxy_config_set_nat_policy(LinphoneProxyConfig *cfg, LinphoneNatPolicy *policy);
 
 /**
  * @}

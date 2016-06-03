@@ -1,3 +1,22 @@
+/*
+linphone
+Copyright (C) 2015  Belledonne Communications SARL
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
 #include "lime.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -12,7 +31,7 @@
  *
  * @return TRUE when Lime was fully compiled, FALSE when it wasn't
  */
-bool_t lime_is_available() { return TRUE; }
+bool_t lime_is_available(void) { return TRUE; }
 
 /**
  * @brief	convert an hexa char [0-9a-fA-F] into the corresponding unsigned integer value
@@ -440,21 +459,24 @@ static int lime_deriveKey(limeKey_t *key) {
 	return 0;
 }
 
-void lime_freeKeys(limeURIKeys_t associatedKeys) {
+void lime_freeKeys(limeURIKeys_t *associatedKeys) {
 	int i;
 
 	/* free all associated keys */
-	for (i=0; i< associatedKeys.associatedZIDNumber; i++) {
-		if (associatedKeys.peerKeys[i] != NULL) {
-			free(associatedKeys.peerKeys[i]);
-			associatedKeys.peerKeys[i] = NULL;
+	for (i=0; i< associatedKeys->associatedZIDNumber; i++) {
+		if (associatedKeys->peerKeys[i] != NULL) {
+			/*shouldn't we memset to zero the content of peerKeys[i] in order clear keys?*/
+			free(associatedKeys->peerKeys[i]);
+			associatedKeys->peerKeys[i] = NULL;
 		}
 	}
 
-	free(associatedKeys.peerKeys);
+	free(associatedKeys->peerKeys);
+	associatedKeys->peerKeys = NULL;
 
 	/* free sipURI string */
-	free(associatedKeys.peerURI);
+	free(associatedKeys->peerURI);
+	associatedKeys->peerURI = NULL;
 }
 
 int lime_encryptMessage(limeKey_t *key, uint8_t *plainMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *encryptedMessage) {
@@ -575,12 +597,12 @@ int lime_createMultipartMessage(xmlDocPtr cacheBuffer, uint8_t *message, uint8_t
 	associatedKeys.peerKeys = NULL;
 
 	if (lime_getCachedSndKeysByURI(cacheBuffer, &associatedKeys) != 0) {
-		lime_freeKeys(associatedKeys);
+		lime_freeKeys(&associatedKeys);
 		return LIME_UNABLE_TO_ENCRYPT_MESSAGE;
 	}
 
 	if (associatedKeys.associatedZIDNumber == 0) {
-		lime_freeKeys(associatedKeys);
+		lime_freeKeys(&associatedKeys);
 		return LIME_NO_VALID_KEY_FOUND_FOR_PEER;
 	}
 
@@ -648,7 +670,7 @@ int lime_createMultipartMessage(xmlDocPtr cacheBuffer, uint8_t *message, uint8_t
 	xmlDocDumpFormatMemoryEnc(xmlOutputMessage, output, &xmlStringLength, "UTF-8", 0);
 	xmlFreeDoc(xmlOutputMessage);
 
-	lime_freeKeys(associatedKeys);
+	lime_freeKeys(&associatedKeys);
 
 	return 0;
 }
@@ -798,6 +820,11 @@ int lime_decryptFile(void **cryptoContext, unsigned char *key, size_t length, ch
 int lime_decryptMultipartMessage(xmlDocPtr cacheBuffer, uint8_t *message, uint8_t **output) { return LIME_NOT_ENABLED;}
 int lime_createMultipartMessage(xmlDocPtr cacheBuffer, uint8_t *message, uint8_t *peerURI, uint8_t **output) { return LIME_NOT_ENABLED;}
 int lime_encryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) {return LIME_NOT_ENABLED;}
+void lime_freeKeys(limeURIKeys_t *associatedKeys){
+}
+int lime_getCachedSndKeysByURI(xmlDocPtr cacheBuffer, limeURIKeys_t *associatedKeys){
+	return LIME_NOT_ENABLED;
+}
 
 
 #endif /* HAVE_LIME */
