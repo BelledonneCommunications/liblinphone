@@ -105,7 +105,7 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 	end_call(coreCaller, coreCallee);
 }
 
-static void call_with_screensharing_Client_Server() {
+static void call_with_screensharing_Client_Server(void) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
@@ -118,7 +118,7 @@ static void call_with_screensharing_Client_Server() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_Server_Client() {
+static void call_with_screensharing_Server_Client(void) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
@@ -131,7 +131,7 @@ static void call_with_screensharing_Server_Client() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_ServerClient_Client() {
+static void call_with_screensharing_ServerClient_Client(void) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
@@ -144,7 +144,7 @@ static void call_with_screensharing_ServerClient_Client() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_ServerClient_Server() {
+static void call_with_screensharing_ServerClient_Server(void) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
@@ -157,7 +157,7 @@ static void call_with_screensharing_ServerClient_Server() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_Server_ServerClient() {
+static void call_with_screensharing_Server_ServerClient(void) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
@@ -170,7 +170,7 @@ static void call_with_screensharing_Server_ServerClient() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_Client_ServerClient() {
+static void call_with_screensharing_Client_ServerClient(void) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
@@ -183,7 +183,7 @@ static void call_with_screensharing_Client_ServerClient() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_ServerClient_ServerClient() {
+static void call_with_screensharing_ServerClient_ServerClient(void) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
@@ -196,7 +196,7 @@ static void call_with_screensharing_ServerClient_ServerClient() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_Server_Server() {
+static void call_with_screensharing_Server_Server(void) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
@@ -209,7 +209,7 @@ static void call_with_screensharing_Server_Server() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_screensharing_Client_Client() {
+static void call_with_screensharing_Client_Client(void) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
@@ -222,7 +222,7 @@ static void call_with_screensharing_Client_Client() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_without_screensharing() {
+static void call_without_screensharing(void) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
@@ -235,7 +235,7 @@ static void call_without_screensharing() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_without_screensharing_transmitter_no_screensharing() {
+static void call_without_screensharing_transmitter_no_screensharing(void) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
@@ -248,7 +248,7 @@ static void call_without_screensharing_transmitter_no_screensharing() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_without_screensharing_receiver_no_screensharing() {
+static void call_without_screensharing_receiver_no_screensharing(void) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 
@@ -262,7 +262,7 @@ static void call_without_screensharing_receiver_no_screensharing() {
 }
 
 // TODO asterix issue
-static void test_media_screensharing() {
+static void test_media_screensharing(void) {
 	belle_sdp_media_t *lTmp;
 	belle_sip_list_t *list;
 	belle_sdp_media_t *l_media = belle_sdp_media_parse("m=application 13078 TCP/RDP *");
