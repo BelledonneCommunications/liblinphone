@@ -896,7 +896,7 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 				linphone_call_get_public_ip_for_stream(call, call->main_screensharing_stream_index),
 				sizeof(md->streams[call->main_text_stream_index].rtcp_addr));
 
-		md->streams[call->main_screensharing_stream_index].rtcp_port =
+		md->streams[call->main_screensharing_stream_index].rtp_port =
 			call->media_ports[call->main_screensharing_stream_index].rtcp_port;
 		md->streams[call->main_screensharing_stream_index].screensharing_role =
 			linphone_call_linphonerole_to_salmedia(params->screensharing_role);
@@ -3683,7 +3683,7 @@ static void linphone_call_start_screensharing_stream(LinphoneCall *call) {
 		call->screenstream->is_server = (call->current_params->screensharing_role == LinphoneMediaRoleServer);
 		ms_message("Screensharing Start: Is server = %d", call->screenstream->is_server);
 		strcpy(call->screenstream->addr_ip, call->resultdesc->addr);
-		call->screenstream->tcp_port = call->localdesc->streams[call->main_screensharing_stream_index].rtcp_port;
+		call->screenstream->tcp_port = call->localdesc->streams[call->main_screensharing_stream_index].rtp_port;
 		ms_message("Screensharing Start: Ip = %s ; Port = %d", call->screenstream->addr_ip,
 				   call->screenstream->tcp_port);
 		call->screenstream->state =

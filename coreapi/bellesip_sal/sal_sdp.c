@@ -338,7 +338,7 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create ("rtcp-mux",NULL ) );
 	}
 
-	if (rtp_port != 0) {
+	if (rtp_port != 0 && stream->type != SalApplication) {
 		different_rtp_and_rtcp_addr = (rtcp_addr[0] != '\0') && (strcmp(rtp_addr, rtcp_addr) != 0);
 		if ((rtcp_port != (rtp_port + 1)) || (different_rtp_and_rtcp_addr == TRUE)) {
 			if (different_rtp_and_rtcp_addr == TRUE) {
