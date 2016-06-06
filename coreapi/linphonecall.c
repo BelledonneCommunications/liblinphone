@@ -3674,7 +3674,7 @@ static void linphone_call_start_screensharing_stream(LinphoneCall *call) {
 	ms_message("Screensharing Start: role = %d",
 			   call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_role);
 	if (scstream != NULL && scstream->dir != SalStreamInactive && call->params->screensharing_enabled
-		&& call->params->has_screensharing && scstream->rtcp_port != 0) {
+		&& call->params->has_screensharing && scstream->rtp_port != 0) {
 
 		call->current_params->screensharing_enabled = TRUE;
 		call->current_params->has_screensharing = TRUE;
@@ -4798,13 +4798,22 @@ void linphone_call_background_tasks(LinphoneCall *call, bool_t one_second_elapse
 	linphone_call_handle_stream_events(call, call->main_audio_stream_index);
 	linphone_call_handle_stream_events(call, call->main_video_stream_index);
 	linphone_call_handle_stream_events(call, call->main_text_stream_index);
-	linphone_call_handle_stream_events(call, call->main_screensharing_stream_index);//TODO
+	linphone_call_handle_stream_events(call, call->main_screensharing_stream_index);
 	if ((call->state == LinphoneCallStreamsRunning ||
 		call->state == LinphoneCallPausedByRemote) && one_second_elapsed && call->audiostream!=NULL
 		&& call->audiostream->ms.state==MSStreamStarted && disconnect_timeout>0 )
 		disconnected=!audio_stream_alive(call->audiostream,disconnect_timeout);
 	if (disconnected)
 		linphone_call_lost(call, LinphoneReasonUnknown);
+	if (call->state == LinphoneCallStreamsRunning && call->screenstream != NULL
+		&& call->screenstream->state == MSScreenSharingError) {
+		LinphoneCore *lc = linphone_call_get_core(call);
+		LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
+		linphone_call_params_enable_screensharing(params, FALSE, FALSE);
+		linphone_core_update_call(lc, call, params);
+		linphone_call_params_destroy(params);
+		call->screenstream->state = MSScreenSharingInactive;
+	}
 }
 
 void linphone_call_log_completed(LinphoneCall *call){
