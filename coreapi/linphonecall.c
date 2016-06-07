@@ -485,9 +485,7 @@ static void update_media_description_from_stun(SalMediaDescription *md, const St
 		} else if ((md->streams[i].type == SalText) && (tc->port != 0)) {
 			strcpy(md->streams[i].rtp_addr, tc->addr);
 			md->streams[i].rtp_port = tc->port;
-		} /* else if ((md->streams[i].type == SalApplication)) {
-			 //TODO screensharing
-		 }*/
+		}
 	}
 }
 
@@ -4810,8 +4808,10 @@ void linphone_call_background_tasks(LinphoneCall *call, bool_t one_second_elapse
 		LinphoneCore *lc = linphone_call_get_core(call);
 		LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
 		linphone_call_params_enable_screensharing(params, FALSE, FALSE);
-		linphone_core_update_call(lc, call, params);
-		linphone_call_params_destroy(params);
+		if (call->screenstream->server) {
+			linphone_core_update_call(lc, call, params);
+			linphone_call_params_destroy(params);
+		}
 		call->screenstream->state = MSScreenSharingInactive;
 	}
 }

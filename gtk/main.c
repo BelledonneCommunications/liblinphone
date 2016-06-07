@@ -1323,11 +1323,13 @@ static void linphone_gtk_call_updated_by_remote(LinphoneCall *call) {
 	const LinphoneCallParams *current_params = linphone_call_get_current_params(call);
 	gboolean video_requested = linphone_call_params_video_enabled(rparams);
 	gboolean video_used = linphone_call_params_video_enabled(current_params);
+	gboolean video_possibility = linphone_core_codec_enabled(linphone_core_get_video_codecs(lc));
 	gboolean screensharing_requested = linphone_call_params_screensharing_enabled(rparams);
 	gboolean screensharing_used = linphone_call_params_screensharing_enabled(current_params);
+	gboolean screensharing_enabled = linphone_core_screensharing_enabled(lc);
 	g_message("Video used=%i, video requested=%i, automatically_accept=%i", video_used, video_requested,
 			  pol->automatically_accept);
-	if (!video_used && video_requested && !pol->automatically_accept) {
+	if (!video_used && video_requested && !pol->automatically_accept && video_possibility) {
 		linphone_core_defer_call_update(lc, call);
 		{
 			int video_index = linphone_call_get_video_index(call);
@@ -1350,7 +1352,7 @@ static void linphone_gtk_call_updated_by_remote(LinphoneCall *call) {
 		}
 	}
 	g_message("Screensharing used=%i, screensharing requested=%i", screensharing_used, screensharing_requested);
-	if (!screensharing_used && screensharing_requested) {
+	if (!screensharing_used && screensharing_requested && screensharing_enabled) {
 		linphone_core_defer_call_update(lc, call);
 		{
 			int screensharing_index = linphone_call_get_screensharing_index(call);

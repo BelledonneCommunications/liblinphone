@@ -2821,6 +2821,8 @@ LINPHONE_PUBLIC const MSList *linphone_core_get_text_codecs(const LinphoneCore *
 
 LINPHONE_PUBLIC int linphone_core_set_text_codecs(LinphoneCore *lc, MSList *codecs);
 
+LINPHONE_PUBLIC bool_t linphone_core_codec_enabled(const MSList *codecs);
+
 LINPHONE_PUBLIC void linphone_core_enable_generic_confort_noise(LinphoneCore *lc, bool_t enabled);
 
 LINPHONE_PUBLIC bool_t linphone_core_generic_confort_noise_enabled(const LinphoneCore *lc);

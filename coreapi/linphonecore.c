@@ -1904,6 +1904,17 @@ const MSList *linphone_core_get_text_codecs(const LinphoneCore *lc)
 	return lc->codecs_conf.text_codecs;
 }
 
+bool_t linphone_core_codec_enabled(const MSList *codecs) {
+	const MSList *it;
+
+	for (it = codecs; it != NULL; it = it->next) {
+		PayloadType *pt = (PayloadType *)it->data;
+		if (payload_type_enabled(pt))
+			return TRUE;
+	}
+	return FALSE;
+}
+
 int linphone_core_set_primary_contact(LinphoneCore *lc, const char *contact)
 {
 	LinphoneAddress *ctt;
