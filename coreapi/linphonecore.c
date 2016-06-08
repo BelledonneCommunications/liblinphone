@@ -1862,13 +1862,14 @@ static void linphone_core_init(LinphoneCore *lc, const LinphoneCoreVTable *vtabl
 
 	lc->ringtoneplayer = linphone_ringtoneplayer_new();
 
+#ifdef SQLITE_STORAGE_ENABLED
+	sqlite3_bctbx_vfs_register(0);
+#endif
+	
 	remote_provisioning_uri = linphone_core_get_provisioning_uri(lc);
 	if (remote_provisioning_uri == NULL) {
 		linphone_configuring_terminated(lc, LinphoneConfiguringSkipped, NULL);
 	} // else linphone_core_start will be called after the remote provisioning (see linphone_core_iterate)
-#ifdef SQLITE_STORAGE_ENABLED
-	sqlite3_bctbx_vfs_register(0);
-#endif
 }
 
 LinphoneCore *linphone_core_new(const LinphoneCoreVTable *vtable,
@@ -5323,7 +5324,7 @@ void linphone_core_set_firewall_policy(LinphoneCore *lc, LinphoneFirewallPolicy 
 			break;
 		case LinphonePolicyUseUpnp:
 #ifdef BUILD_UPNP
-			linphone_nat_policy_enable_upnp(nat_policy);
+			linphone_nat_policy_enable_upnp(nat_policy, TRUE);
 #else
 			ms_warning("UPNP is not available, reset firewall policy to no firewall");
 #endif //BUILD_UPNP

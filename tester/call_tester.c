@@ -5710,8 +5710,8 @@ static void custom_rtp_modifier(bool_t pauseResumeTest, bool_t recordTest) {
 		rtp_stats_t pauline_rtp_stats = linphone_call_stats_get_rtp_stats(pauline_stats);
 		ms_message("Marie sent %i RTP packets and received %i (for real)", (int)marie_rtp_stats.packet_sent, (int)marie_rtp_stats.packet_recv);
 		ms_message("Pauline sent %i RTP packets and received %i (for real)", (int)pauline_rtp_stats.packet_sent, (int)pauline_rtp_stats.packet_recv);
-		BC_ASSERT_TRUE(data_marie->packetReceivedCount == marie_rtp_stats.packet_recv);
-		BC_ASSERT_TRUE(data_marie->packetSentCount == marie_rtp_stats.packet_sent);
+		BC_ASSERT_EQUAL(data_marie->packetReceivedCount, marie_rtp_stats.packet_recv, int,  "%i");
+		BC_ASSERT_EQUAL(data_marie->packetSentCount, marie_rtp_stats.packet_sent, int, "%i");
 		// There can be a small difference between the number of packets received in the modifier and the number processed in reception because the processing is asynchronous
 		BC_ASSERT_TRUE(data_pauline->packetReceivedCount - pauline_rtp_stats.packet_recv < 20);
 		BC_ASSERT_TRUE(data_pauline->packetSentCount == pauline_rtp_stats.packet_sent);
@@ -6383,9 +6383,39 @@ static void call_with_zrtp_configured_callee_side(void) {
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-
-
 }
+
+
+static void v6_call_over_nat_64(void){
+	LinphoneCoreManager* marie;
+	LinphoneCoreManager* pauline;
+	
+	if (!liblinphone_tester_ipv4_available() && liblinphone_tester_ipv6_available()){
+		
+		bool_t liblinphonetester_ipv6_save=liblinphonetester_ipv6; /*this test nee v6*/
+		liblinphonetester_ipv6=TRUE;
+		
+		marie = linphone_core_manager_new("marie_nat64_rc");
+		pauline = linphone_core_manager_new("pauline_nat64_rc");
+		
+		linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
+		linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
+
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneRegistrationOk, 1, 2000));
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 1, 2000));
+		
+		
+		BC_ASSERT_TRUE(call(marie,pauline));
+		
+		liblinphone_tester_check_rtcp(marie,pauline);
+		end_call(marie,pauline);
+		linphone_core_manager_destroy(marie);
+		linphone_core_manager_destroy(pauline);
+		liblinphonetester_ipv6=liblinphonetester_ipv6_save; /*this test nee v6*/
+		
+	}else ms_warning("Test skipped, no ipv6 nat64 available");
+}
+
 
 test_t call_tests[] = {
 	TEST_NO_TAG("Early declined call", early_declined_call),
@@ -6401,6 +6431,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call with http proxy", call_with_http_proxy),
 	TEST_NO_TAG("Call with timeouted bye", call_with_timeouted_bye),
 	TEST_NO_TAG("Direct call over IPv6", direct_call_over_ipv6),
+	TEST_NO_TAG("IPv6 call over NAT64", v6_call_over_nat_64),
 	TEST_NO_TAG("Outbound call with multiple proxy possible", call_outbound_with_multiple_proxy),
 	TEST_NO_TAG("Audio call recording", audio_call_recording_test),
 #if 0 /* not yet activated because not implemented */

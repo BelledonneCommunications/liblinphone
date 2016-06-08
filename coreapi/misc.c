@@ -635,6 +635,10 @@ void linphone_core_enable_forced_ice_relay(LinphoneCore *lc, bool_t enable) {
 	lc->forced_ice_relay = enable;
 }
 
+void linphone_core_enable_short_turn_refresh(LinphoneCore *lc, bool_t enable) {
+	lc->short_turn_refresh = enable;
+}
+
 static void stun_auth_requested_cb(LinphoneCall *call, const char *realm, const char *nonce, const char **username, const char **password, const char **ha1) {
 	LinphoneProxyConfig *proxy = NULL;
 	const LinphoneNatPolicy *nat_policy = NULL;
@@ -712,6 +716,7 @@ int linphone_core_gather_ice_candidates(LinphoneCore *lc, LinphoneCall *call){
 	linphone_core_notify_display_status(lc, _("ICE local candidates gathering in progress..."));
 
 	ice_session_enable_forced_relay(call->ice_session, lc->forced_ice_relay);
+	ice_session_enable_short_turn_refresh(call->ice_session, lc->short_turn_refresh);
 
 	// TODO: Handle IPv6
 	/* Gather local host candidates. */
@@ -907,7 +912,7 @@ void _update_local_media_description_from_ice(SalMediaDescription *desc, IceSess
 		if (result == TRUE) {
 			strncpy(desc->addr, rtp_candidate->taddr.ip, sizeof(desc->addr));
 		} else {
-			ms_warning("If ICE has completed successfully, rtp_addr should be set!");
+			ms_warning("If ICE has completed successfully, rtp_candidate should be set!");
 		}
 	}
 	else {
@@ -919,6 +924,7 @@ void _update_local_media_description_from_ice(SalMediaDescription *desc, IceSess
 		SalStreamDescription *stream = &desc->streams[i];
 		IceCheckList *cl = ice_session_check_list(session, i);
 		nb_candidates = 0;
+		rtp_candidate = rtcp_candidate = NULL;
 		if (!sal_stream_description_active(stream) || (cl == NULL)) continue;
 		if (ice_check_list_state(cl) == ICL_Completed) {
 			if (use_nortpproxy) stream->set_nortpproxy = TRUE;
