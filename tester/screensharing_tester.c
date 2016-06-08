@@ -49,7 +49,24 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 	callee_call = linphone_core_get_current_call(coreCallee->lc);
 	BC_ASSERT_PTR_NOT_NULL(callee_call);
 	if (caller_call) {
-		const LinphoneCallParams *params;
+		LinphoneCallParams *new_params;
+		const LinphoneCallParams *paramsCaller = 
+			linphone_call_get_current_params(caller_call);
+		const LinphoneCallParams *paramsCallee = 
+			linphone_call_get_current_params(callee_call);
+
+		if (caller_role_result == LinphoneMediaRoleServer) {
+			new_params = linphone_call_params_copy(paramsCaller);
+			linphone_call_params_enable_screensharing(new_params,TRUE,TRUE);
+			linphone_core_update_call(coreCaller->lc, caller_call, new_params);
+			linphone_call_params_destroy(new_params);
+		} else if (callee_role_result == LinphoneMediaRoleServer) {
+			new_params = linphone_call_params_copy(paramsCallee);
+			linphone_call_params_enable_screensharing(new_params,TRUE,TRUE);
+			linphone_core_update_call(coreCallee->lc, callee_call, new_params);
+			linphone_call_params_destroy(new_params);
+		}
+		linphone_call_get_current_params(caller_call);
 
 		BC_ASSERT_TRUE(
 			wait_for(coreCaller->lc, coreCallee->lc, &coreCaller->stat.number_of_LinphoneCallStreamsRunning, 1));
@@ -65,9 +82,9 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 									(int)MSScreenSharingConnecting));
 		}
 
-		params = linphone_call_get_current_params(linphone_core_get_current_call(coreCaller->lc));
-		BC_ASSERT_EQUAL(params->screensharing_enabled, sc_call_result, bool_t, "%d");
-		BC_ASSERT_EQUAL(params->screensharing_role, caller_role_result, int, "%d");
+
+		BC_ASSERT_EQUAL(paramsCaller->screensharing_enabled, sc_call_result, bool_t, "%d");
+		BC_ASSERT_EQUAL(paramsCaller->screensharing_role, caller_role_result, int, "%d");
 		if (sc_call_result) {
 			if (caller_role_result == LinphoneMediaRoleServer) {
 				BC_ASSERT_TRUE(caller_call->screenstream->server != NULL);
@@ -81,9 +98,8 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 			BC_ASSERT_TRUE(caller_call->screenstream->client == NULL);
 		}
 
-		params = linphone_call_get_current_params(linphone_core_get_current_call(coreCallee->lc));
-		BC_ASSERT_EQUAL(params->screensharing_enabled, sc_call_result, bool_t, "%d");
-		BC_ASSERT_EQUAL(params->screensharing_role, callee_role_result, int, "%d");
+		BC_ASSERT_EQUAL(paramsCallee->screensharing_enabled, sc_call_result, bool_t, "%d");
+		BC_ASSERT_EQUAL(paramsCallee->screensharing_role, callee_role_result, int, "%d");
 		if (sc_call_result) {
 			BC_ASSERT_TRUE(wait_for(coreCaller->lc, coreCallee->lc, (int *)&(callee_call->screenstream->state),
 									(int)MSScreenSharingStreamRunning));
@@ -298,7 +314,7 @@ test_t screensharing_tests[] = {
 				call_without_screensharing_transmitter_no_screensharing),
 	TEST_NO_TAG("Call without screensharing, receiver without screensharing",
 				call_without_screensharing_receiver_no_screensharing),
-	TEST_NO_TAG("m=application", test_media_screensharing)};
+	TEST_ONE_TAG("m=application", test_media_screensharing, "Screensharing")};
 
 test_suite_t screensharing_test_suite = {
 	"Screensharing", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

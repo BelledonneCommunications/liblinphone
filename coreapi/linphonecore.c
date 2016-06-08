@@ -3883,8 +3883,9 @@ int _linphone_core_accept_call_update(LinphoneCore *lc, LinphoneCall *call, cons
 		call->params->has_video = FALSE;
 	}
 	if (call->current_params->in_conference) {
-		ms_warning("Video isn't supported in conference");
+		ms_warning("Video and screensharing isn't supported in conference");
 		call->params->has_video = FALSE;
+		call->params->has_screensharing = FALSE;
 	}
 	/*update multicast params according to call params*/
 	linphone_call_fill_media_multicast_addr(call);
@@ -4258,6 +4259,8 @@ int _linphone_core_pause_call(LinphoneCore *lc, LinphoneCall *call){
 		ms_error("No reason to pause this call, it is already paused or inactive.");
 		return -1;
 	}
+	if (linphone_call_params_screensharing_enabled(call->current_params))
+		call->params->has_screensharing = FALSE;
 	call->broken = FALSE;
 	linphone_call_set_state(call, LinphoneCallPausing, "Pausing call");
 	linphone_call_make_local_media_description(call);
@@ -4343,6 +4346,8 @@ int linphone_core_resume_call(LinphoneCore *lc, LinphoneCall *call){
 	/* Stop playing music immediately. If remote side is a conference it
 	 prevents the participants to hear it while the 200OK comes back.*/
 	if (call->audiostream) audio_stream_play(call->audiostream, NULL);
+	if (call->params->screensharing_enabled && call->params->screensharing_role != LinphoneMediaRoleInactive)
+		call->params->has_screensharing = TRUE;
 
 	linphone_call_make_local_media_description(call);
 #ifdef BUILD_UPNP
