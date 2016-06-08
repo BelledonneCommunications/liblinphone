@@ -709,6 +709,8 @@ static void call_updating(SalOp *op, bool_t is_update){
 			linphone_call_set_new_params(call, p);
 			linphone_call_params_destroy(p);
 		}
+		if (call->params->screensharing_enabled && call->params->screensharing_role != LinphoneMediaRoleInactive)
+			call->params->has_screensharing = TRUE;
 		linphone_call_make_local_media_description(call);
 		sal_call_set_local_media_description(call->op,call->localdesc);
 	}
