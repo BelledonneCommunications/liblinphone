@@ -88,7 +88,7 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 									(int)MSScreenSharingConnecting));
 		}
 
-		paramsCallee = linphone_call_get_current_params(caller_call);
+		paramsCaller = linphone_call_get_current_params(caller_call);
 		BC_ASSERT_EQUAL(paramsCaller->screensharing_enabled, sc_call_result, bool_t, "%d");
 		BC_ASSERT_EQUAL(paramsCaller->screensharing_role, caller_role_result, int, "%d");
 		if (sc_call_result) {
@@ -307,20 +307,20 @@ static void test_media_screensharing(void) {
 }
 
 test_t screensharing_tests[] = {
-	TEST_NO_TAG("Call with screensharing Client Server", call_with_screensharing_Client_Server),
-	TEST_NO_TAG("Call with screensharing Server Client", call_with_screensharing_Server_Client),
-	TEST_NO_TAG("Call with screensharing ServerClient Client", call_with_screensharing_ServerClient_Client),
-	TEST_NO_TAG("Call with screensharing ServerClient Server", call_with_screensharing_ServerClient_Server),
-	TEST_NO_TAG("Call with screensharing Server ServerClient", call_with_screensharing_Server_ServerClient),
-	TEST_NO_TAG("Call with screensharing Client ServerClient", call_with_screensharing_Client_ServerClient),
-	TEST_NO_TAG("Call with screensharing ServerClient ServerClient", call_with_screensharing_ServerClient_ServerClient),
-	TEST_NO_TAG("Call with screensharing Server Server", call_with_screensharing_Server_Server),
-	TEST_NO_TAG("Call with screensharing Client Client", call_with_screensharing_Client_Client),
-	TEST_NO_TAG("Call without screensharing", call_without_screensharing),
-	TEST_NO_TAG("Call without screensharing, transmitter without screensharing",
-				call_without_screensharing_transmitter_no_screensharing),
-	TEST_NO_TAG("Call without screensharing, receiver without screensharing",
-				call_without_screensharing_receiver_no_screensharing),
+	TEST_ONE_TAG("Call with screensharing Client Server", call_with_screensharing_Client_Server, "Screensharing"),
+	TEST_ONE_TAG("Call with screensharing Server Client", call_with_screensharing_Server_Client, "Screensharing"),
+	TEST_ONE_TAG("Call with screensharing ServerClient Client", call_with_screensharing_ServerClient_Client, "Screensharing"),
+	TEST_ONE_TAG("Call with screensharing ServerClient Server", call_with_screensharing_ServerClient_Server, "Screensharing"),
+	TEST_ONE_TAG("Call with screensharing Server ServerClient", call_with_screensharing_Server_ServerClient, "Screensharing"),
+	TEST_ONE_TAG("Call with screensharing Client ServerClient", call_with_screensharing_Client_ServerClient, "Screensharing"),
+	TEST_ONE_TAG("Call with screensharing ServerClient ServerClient", call_with_screensharing_ServerClient_ServerClient, "Screensharing"),
+	TEST_ONE_TAG("Call with screensharing Server Server", call_with_screensharing_Server_Server, "Screensharing"),
+	TEST_ONE_TAG("Call with screensharing Client Client", call_with_screensharing_Client_Client, "Screensharing"),
+	TEST_ONE_TAG("Call without screensharing", call_without_screensharing, "Screensharing"),
+	TEST_ONE_TAG("Call without screensharing, transmitter without screensharing",
+				call_without_screensharing_transmitter_no_screensharing, "Screensharing"),
+	TEST_ONE_TAG("Call without screensharing, receiver without screensharing",
+				call_without_screensharing_receiver_no_screensharing, "Screensharing"),
 	TEST_ONE_TAG("m=application", test_media_screensharing, "Screensharing")};
 
 test_suite_t screensharing_test_suite = {

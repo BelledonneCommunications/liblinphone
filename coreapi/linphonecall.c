@@ -3998,13 +3998,14 @@ static void linphone_call_stop_screensharing_stream(LinphoneCall *call) {
 }
 
 void linphone_call_stop_media_streams(LinphoneCall *call){
-	if (call->audiostream || call->videostream || call->textstream) {
+	if (call->audiostream || call->videostream || call->textstream || call->screenstream) {
 		if (call->audiostream && call->videostream)
 			audio_stream_unlink_video(call->audiostream, call->videostream);
 		linphone_call_stop_audio_stream(call);
+		linphone_call_stop_screensharing_stream(call);
 		linphone_call_stop_video_stream(call);
 		linphone_call_stop_text_stream(call);
-		linphone_call_stop_screensharing_stream(call);
+		
 
 		if (call->core->msevq != NULL) {
 			ms_event_queue_skip(call->core->msevq);

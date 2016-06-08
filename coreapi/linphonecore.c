@@ -4276,7 +4276,7 @@ int _linphone_core_pause_call(LinphoneCore *lc, LinphoneCall *call){
 	}
 	lc->current_call=NULL;
 	linphone_core_notify_display_status(lc,_("Pausing the current call..."));
-	if (call->audiostream || call->videostream || call->textstream)
+	if (call->audiostream || call->videostream || call->textstream || call->screenstream)
 		linphone_call_stop_media_streams (call);
 	call->paused_by_app=FALSE;
 	return 0;
