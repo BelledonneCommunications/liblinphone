@@ -26,11 +26,23 @@
 #include "liblinphone_tester.h"
 #include "belle-sip/belle-sip.h"
 
+static void call_with_screensharing_activated(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) {
+	if (cstate == LinphoneCallUpdatedByRemote) {
+		LinphoneCallParams *params;
+		call->defer_update = TRUE;
+		params = linphone_core_create_call_params(lc, call);
+		linphone_call_params_enable_screensharing(params, TRUE, FALSE);
+		BC_ASSERT_EQUAL(linphone_core_accept_call_update(lc, call, params), 0, int, "%i");
+		linphone_call_params_destroy(params);
+	}
+}
+
 static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneCoreManager *coreCallee,
 									  bool_t sc_caller_enable, bool_t sc_callee_enable, LinphoneMediaRole caller_role,
 									  LinphoneMediaRole callee_role, LinphoneMediaRole caller_role_result,
 									  LinphoneMediaRole callee_role_result) {
 	LinphoneCall *caller_call, *callee_call;
+	LinphoneCoreVTable *vtable;
 	bool_t sc_call_result = FALSE;
 
 	if (sc_caller_enable && sc_caller_enable == sc_callee_enable && caller_role != LinphoneMediaRoleInactive &&
@@ -52,29 +64,39 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 		LinphoneCallParams *new_params;
 		const LinphoneCallParams *paramsCaller;
 		const LinphoneCallParams *paramsCallee;
+		vtable = linphone_core_v_table_new();
+		vtable->call_state_changed = call_with_screensharing_activated;
 
 		BC_ASSERT_TRUE(
 			wait_for(coreCaller->lc, coreCallee->lc, &coreCaller->stat.number_of_LinphoneCallStreamsRunning, 1));
 
+		// Screensharing enabled
 		if (caller_role_result == LinphoneMediaRoleServer) {
 			paramsCaller = linphone_call_get_current_params(caller_call);
 			new_params = linphone_call_params_copy(paramsCaller);
+			new_params->screensharing_enabled = TRUE;
 			linphone_call_params_enable_screensharing(new_params,TRUE,TRUE);
 			linphone_core_update_call(coreCaller->lc, caller_call, new_params);
 			linphone_call_params_destroy(new_params);
-			linphone_call_params_enable_screensharing(callee_call->params,TRUE,TRUE);
+			linphone_core_add_listener(coreCallee->lc, vtable);
 			BC_ASSERT_TRUE(
 				wait_for(coreCaller->lc, coreCallee->lc, &coreCallee->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+			BC_ASSERT_TRUE(wait_for(coreCaller->lc, coreCallee->lc, &coreCaller->stat.number_of_LinphoneCallUpdating, 1));
 		} else if (callee_role_result == LinphoneMediaRoleServer) {
 			paramsCallee = linphone_call_get_current_params(callee_call);
 			new_params = linphone_call_params_copy(paramsCallee);
+			new_params->screensharing_enabled = TRUE;
 			linphone_call_params_enable_screensharing(new_params,TRUE,TRUE);
 			linphone_core_update_call(coreCallee->lc, callee_call, new_params);
 			linphone_call_params_destroy(new_params);
-			linphone_call_params_enable_screensharing(caller_call->params,TRUE,TRUE);
+			linphone_core_add_listener(coreCaller->lc, vtable);
 			BC_ASSERT_TRUE(
 				wait_for(coreCaller->lc, coreCallee->lc, &coreCaller->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+			BC_ASSERT_TRUE(wait_for(coreCaller->lc, coreCallee->lc, &coreCallee->stat.number_of_LinphoneCallUpdating, 1));
 		}
+
+		BC_ASSERT_TRUE(
+			wait_for(coreCaller->lc, coreCallee->lc, &coreCaller->stat.number_of_LinphoneCallStreamsRunning, 1));
 
 		if (caller_role_result == LinphoneMediaRoleClient) {
 			BC_ASSERT_TRUE(wait_for(coreCaller->lc, coreCallee->lc, (int *)&(caller_call->screenstream->state),
@@ -112,7 +134,7 @@ static void call_screensharing_params(LinphoneCoreManager *coreCaller, LinphoneC
 									(int)MSScreenSharingStreamRunning));
 			BC_ASSERT_TRUE(wait_for(coreCaller->lc, coreCallee->lc, (int *)&(caller_call->screenstream->state),
 									(int)MSScreenSharingStreamRunning));
-			if (callee_role_result == LinphoneMediaRoleClient) {
+			if (callee_role_result == LinphoneMediaRoleServer) {
 				BC_ASSERT_TRUE(callee_call->screenstream->server != NULL);
 				BC_ASSERT_TRUE(callee_call->screenstream->client == NULL);
 			} else {

@@ -3675,7 +3675,6 @@ static void linphone_call_start_screensharing_stream(LinphoneCall *call) {
 			   call->resultdesc->streams[call->main_screensharing_stream_index].screensharing_role);
 	if (scstream != NULL && scstream->dir != SalStreamInactive && call->params->screensharing_enabled
 		&& call->params->has_screensharing && scstream->rtp_port != 0) {
-
 		call->current_params->screensharing_enabled = TRUE;
 		call->current_params->has_screensharing = TRUE;
 		ms_message("Screensharing Start: Sceensharing enable");

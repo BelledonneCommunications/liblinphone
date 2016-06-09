@@ -188,6 +188,7 @@ void linphone_core_update_streams(LinphoneCore *lc, LinphoneCall *call, SalMedia
 			ms_media_stream_sessions_uninit(&call->sessions[call->main_audio_stream_index]);
 			ms_media_stream_sessions_uninit(&call->sessions[call->main_video_stream_index]);
 			ms_media_stream_sessions_uninit(&call->sessions[call->main_text_stream_index]);
+			ms_media_stream_sessions_uninit(&call->sessions[call->main_screensharing_stream_index]);
 		}
 		linphone_call_init_media_streams (call);
 	}
