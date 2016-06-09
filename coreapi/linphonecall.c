@@ -3986,6 +3986,7 @@ static void linphone_call_stop_text_stream(LinphoneCall *call) {
 		ortp_ev_queue_destroy(call->textstream_app_evq);
 		call->textstream_app_evq = NULL;
 		call->current_params->text_codec = NULL;
+
 	}
 }
 
@@ -4003,6 +4004,7 @@ void linphone_call_stop_media_streams(LinphoneCall *call){
 			audio_stream_unlink_video(call->audiostream, call->videostream);
 		linphone_call_stop_audio_stream(call);
 		linphone_call_stop_screensharing_stream(call);
+		//Issue when screensharing + video stream are running and video stream are stop first
 		linphone_call_stop_video_stream(call);
 		linphone_call_stop_text_stream(call);
 		

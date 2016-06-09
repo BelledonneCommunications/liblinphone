@@ -7497,7 +7497,7 @@ void linphone_core_init_default_params(LinphoneCore *lc, LinphoneCallParams *par
 			: (linphone_core_screensharing_client_supported(lc))
 				  ? LinphoneMediaRoleClient
 				  : (linphone_core_screensharing_server_supported(lc)) ? LinphoneMediaRoleServer
-																	   : LinphoneMediaRoleInactive;
+					   : LinphoneMediaRoleInactive;
 	params->real_early_media = lp_config_get_int(lc->config, "misc", "real_early_media", FALSE);
 	params->audio_multicast_enabled = linphone_core_audio_multicast_enabled(lc);
 	params->video_multicast_enabled = linphone_core_video_multicast_enabled(lc);
