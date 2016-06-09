@@ -4347,8 +4347,6 @@ int linphone_core_resume_call(LinphoneCore *lc, LinphoneCall *call){
 	/* Stop playing music immediately. If remote side is a conference it
 	 prevents the participants to hear it while the 200OK comes back.*/
 	if (call->audiostream) audio_stream_play(call->audiostream, NULL);
-	if (call->params->screensharing_enabled && call->params->screensharing_role != LinphoneMediaRoleInactive)
-		call->params->has_screensharing = TRUE;
 
 	linphone_call_make_local_media_description(call);
 #ifdef BUILD_UPNP
