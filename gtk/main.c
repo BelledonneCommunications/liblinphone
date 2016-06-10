@@ -1329,10 +1329,13 @@ static void linphone_gtk_call_updated_by_remote(LinphoneCall *call) {
 	gboolean screensharing_enabled = linphone_core_screensharing_enabled(lc);
 	g_message("Video used=%i, video requested=%i, automatically_accept=%i", video_used, video_requested,
 			  pol->automatically_accept);
-	if (!video_used && video_requested && !pol->automatically_accept && video_possibility) {
+	g_message("Screensharing used=%i, screensharing requested=%i", screensharing_used, screensharing_requested);
+	if ((!video_used && video_requested && !pol->automatically_accept && video_possibility) ||
+		(!screensharing_used && screensharing_requested && screensharing_enabled)) {
 		linphone_core_defer_call_update(lc, call);
 		{
-			int video_index = linphone_call_get_video_index(call);
+			int index = (screensharing_requested) ? linphone_call_get_screensharing_index(call)
+				: linphone_call_get_video_index(call);
 			const LinphoneAddress *addr = linphone_call_get_remote_address(call);
 			GtkWidget *dialog;
 			const char *dname = linphone_address_get_display_name(addr);
@@ -1340,36 +1343,18 @@ static void linphone_gtk_call_updated_by_remote(LinphoneCall *call) {
 				dname = linphone_address_get_username(addr);
 			if (dname == NULL)
 				dname = linphone_address_get_domain(addr);
-			dialog = gtk_message_dialog_new(GTK_WINDOW(linphone_gtk_get_main_window()), GTK_DIALOG_DESTROY_WITH_PARENT,
+			if (screensharing_requested)
+				dialog = gtk_message_dialog_new(GTK_WINDOW(linphone_gtk_get_main_window()), GTK_DIALOG_DESTROY_WITH_PARENT,
+											GTK_MESSAGE_WARNING, GTK_BUTTONS_YES_NO,
+											_("%s proposed to start screensharing. Do you accept ?"), dname);
+			else
+				dialog = gtk_message_dialog_new(GTK_WINDOW(linphone_gtk_get_main_window()), GTK_DIALOG_DESTROY_WITH_PARENT,
 											GTK_MESSAGE_WARNING, GTK_BUTTONS_YES_NO,
 											_("%s proposed to start video. Do you accept ?"), dname);
 			g_object_set_data_full(G_OBJECT(dialog), "call", linphone_call_ref(call),
 								   (GDestroyNotify)linphone_call_unref);
 			g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(on_call_updated_response),
-							 (gpointer)GINT_TO_POINTER(video_index));
-			g_timeout_add(20000, (GSourceFunc)on_call_updated_timeout, dialog);
-			gtk_widget_show(dialog);
-		}
-	}
-	g_message("Screensharing used=%i, screensharing requested=%i", screensharing_used, screensharing_requested);
-	if (!screensharing_used && screensharing_requested && screensharing_enabled) {
-		linphone_core_defer_call_update(lc, call);
-		{
-			int screensharing_index = linphone_call_get_screensharing_index(call);
-			const LinphoneAddress *addr = linphone_call_get_remote_address(call);
-			GtkWidget *dialog;
-			const char *dname = linphone_address_get_display_name(addr);
-			if (dname == NULL)
-				dname = linphone_address_get_username(addr);
-			if (dname == NULL)
-				dname = linphone_address_get_domain(addr);
-			dialog = gtk_message_dialog_new(GTK_WINDOW(linphone_gtk_get_main_window()), GTK_DIALOG_DESTROY_WITH_PARENT,
-											GTK_MESSAGE_WARNING, GTK_BUTTONS_YES_NO,
-											_("%s proposed to start screensharing. Do you accept ?"), dname);
-			g_object_set_data_full(G_OBJECT(dialog), "call", linphone_call_ref(call),
-								   (GDestroyNotify)linphone_call_unref);
-			g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(on_call_updated_response),
-							 (gpointer)GINT_TO_POINTER(screensharing_index));
+							 (gpointer)GINT_TO_POINTER(index));
 			g_timeout_add(20000, (GSourceFunc)on_call_updated_timeout, dialog);
 			gtk_widget_show(dialog);
 		}
