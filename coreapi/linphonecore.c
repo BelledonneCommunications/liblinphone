@@ -7481,7 +7481,6 @@ void linphone_core_init_default_params(LinphoneCore *lc, LinphoneCallParams *par
 	params->media_encryption = linphone_core_get_media_encryption(lc);
 	params->in_conference = FALSE;
 	params->realtimetext_enabled = linphone_core_realtime_text_enabled(lc);
-	params->screensharing_enabled = linphone_core_screensharing_enabled(lc);
 	params->has_screensharing = FALSE;
 	params->privacy = LinphonePrivacyDefault;
 	params->avpf_enabled = linphone_core_get_avpf_mode(lc);
@@ -7493,9 +7492,12 @@ void linphone_core_init_default_params(LinphoneCore *lc, LinphoneCallParams *par
 		(linphone_core_screensharing_client_supported(lc) && linphone_core_screensharing_server_supported(lc))
 			? LinphoneMediaRoleServerClient
 			: (linphone_core_screensharing_client_supported(lc))
-				  ? LinphoneMediaRoleClient
-				  : (linphone_core_screensharing_server_supported(lc)) ? LinphoneMediaRoleServer
-					   : LinphoneMediaRoleInactive;
+				? LinphoneMediaRoleClient
+				: (linphone_core_screensharing_server_supported(lc))
+					? LinphoneMediaRoleServer
+					: LinphoneMediaRoleInactive;
+	params->screensharing_enabled = (params->screensharing_role != LinphoneMediaRoleInactive) ?
+		(linphone_core_screensharing_enabled(lc)) : FALSE;
 	params->real_early_media = lp_config_get_int(lc->config, "misc", "real_early_media", FALSE);
 	params->audio_multicast_enabled = linphone_core_audio_multicast_enabled(lc);
 	params->video_multicast_enabled = linphone_core_video_multicast_enabled(lc);
@@ -7843,7 +7845,9 @@ bool_t linphone_core_realtime_text_enabled(LinphoneCore *lc) {
 }
 
 bool_t linphone_core_screensharing_enabled(LinphoneCore *lc) {
-	return lc->screen_conf.enabled;
+	if (linphone_core_screensharing_server_supported(lc) || linphone_core_screensharing_client_supported(lc))
+		return lc->screen_conf.enabled;
+	return FALSE;
 }
 
 void linphone_core_enable_screensharing(LinphoneCore *lc, bool_t yesno) {
