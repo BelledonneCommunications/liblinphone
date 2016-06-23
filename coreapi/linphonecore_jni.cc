@@ -978,10 +978,12 @@ public:
 		LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_core_get_user_data(lc);
 		LinphoneCoreVTable *table = linphone_core_get_current_vtable(lc);
 		LinphoneCoreData* lcData = (LinphoneCoreData*)linphone_core_v_table_get_user_data(table);
-		env->CallVoidMethod(lcData->listener
-							,ljb->isComposingReceivedId
-							,lcData->core
-							,getChatRoom(env, room));
+        jobject chatroom = getChatRoom(env, room);
+        env->CallVoidMethod(lcData->listener
+                            ,ljb->isComposingReceivedId
+                            ,lcData->core
+                            ,chatroom);
+        env->DeleteLocalRef(chatroom);
 		handle_possible_java_exception(env, lcData->listener);
 	}
 	static void ecCalibrationStatus(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay_ms, void *data) {
