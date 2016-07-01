@@ -25,7 +25,9 @@
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic push
 #endif
+#ifndef _MSC_VER
 #pragma GCC diagnostic ignored "-Wstrict-prototypes"
+#endif
 
 #ifdef HAVE_GTK
 #include <gtk/gtk.h>
@@ -117,6 +119,7 @@ LinphoneCore* configure_lc_from(LinphoneCoreVTable* v_table, const char* path, c
 	char *rootcapath       = NULL;
 	char *dnsuserhostspath = NULL;
 	char *nowebcampath     = NULL;
+	char *chatdb     = NULL;
 
 	if (path==NULL) path=".";
 
@@ -134,7 +137,7 @@ LinphoneCore* configure_lc_from(LinphoneCoreVTable* v_table, const char* path, c
 	ringbackpath     = ms_strdup_printf("%s/sounds/ringback.wav", path);
 	nowebcampath     = ms_strdup_printf("%s/images/nowebcamCIF.jpg", path);
 	rootcapath       = ms_strdup_printf("%s/certificates/cn/cafile.pem", path);
-	dnsuserhostspath = ms_strdup_printf( "%s/%s", path, userhostsfile);
+	dnsuserhostspath = ms_strdup_printf("%s/%s", path, userhostsfile);
 
 
 	if( config != NULL ) {
@@ -149,19 +152,25 @@ LinphoneCore* configure_lc_from(LinphoneCoreVTable* v_table, const char* path, c
 		linphone_core_set_ringback(lc, ringbackpath);
 		linphone_core_set_root_ca(lc, rootcapath);
 	}
+	chatdb = ms_strdup_printf("%s/messages-%p.db",bc_tester_get_writable_dir_prefix(),lc);
 
 	linphone_core_enable_ipv6(lc, liblinphonetester_ipv6);
 
 	sal_enable_test_features(lc->sal, TRUE);
 
 	sal_set_dns_user_hosts_file(lc->sal, dnsuserhostspath);
-	linphone_core_set_static_picture(lc, nowebcampath);
+#ifdef VIDEO_ENABLED
+	linphone_core_set_static_picture(lc,nowebcampath);
+#endif
+
+	linphone_core_set_chat_database_path(lc, chatdb);
 
 	ms_free(ringpath);
 	ms_free(ringbackpath);
 	ms_free(nowebcampath);
 	ms_free(rootcapath);
 	ms_free(dnsuserhostspath);
+	ms_free(chatdb);
 
 	if( filepath ) ms_free(filepath);
 
@@ -172,14 +181,14 @@ LinphoneCore* configure_lc_from(LinphoneCoreVTable* v_table, const char* path, c
 
 
 bool_t wait_for_until(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value,int timout) {
-	MSList* lcs=NULL;
+	bctbx_list_t* lcs=NULL;
 	bool_t result;
 	if (lc_1)
-		lcs=ms_list_append(lcs,lc_1);
+		lcs=bctbx_list_append(lcs,lc_1);
 	if (lc_2)
-		lcs=ms_list_append(lcs,lc_2);
+		lcs=bctbx_list_append(lcs,lc_2);
 	result=wait_for_list(lcs,counter,value,timout);
-	ms_list_free(lcs);
+	bctbx_list_free(lcs);
 	return result;
 }
 
@@ -187,8 +196,8 @@ bool_t wait_for(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value) {
 	return wait_for_until(lc_1, lc_2,counter,value,10000);
 }
 
-bool_t wait_for_list(MSList* lcs,int* counter,int value,int timeout_ms) {
-	MSList* iterator;
+bool_t wait_for_list(bctbx_list_t* lcs,int* counter,int value,int timeout_ms) {
+	bctbx_list_t* iterator;
 	MSTimeSpec start;
 
 	liblinphone_tester_clock_start(&start);
@@ -228,16 +237,16 @@ bool_t wait_for_stun_resolution(LinphoneCoreManager *m) {
 }
 
 static void set_codec_enable(LinphoneCore* lc,const char* type,int rate,bool_t enable) {
-	MSList* codecs=ms_list_copy(linphone_core_get_audio_codecs(lc));
-	MSList* codecs_it;
+	bctbx_list_t* codecs=bctbx_list_copy(linphone_core_get_audio_codecs(lc));
+	bctbx_list_t* codecs_it;
 	PayloadType* pt;
 	for (codecs_it=codecs;codecs_it!=NULL;codecs_it=codecs_it->next) {
 		linphone_core_enable_payload_type(lc,(PayloadType*)codecs_it->data,0);
 	}
-	if((pt = linphone_core_find_payload_type(lc,type,rate,1))) {
+	if ((pt = linphone_core_find_payload_type(lc,type,rate,1))) {
 		linphone_core_enable_payload_type(lc,pt, enable);
 	}
-	ms_list_free(codecs);
+	bctbx_list_free(codecs);
 }
 
 static void enable_codec(LinphoneCore* lc,const char* type,int rate) {
@@ -264,11 +273,15 @@ bool_t transport_supported(LinphoneTransportType transport) {
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic push
 #endif
+#ifdef _MSC_VER
+#pragma warning(disable : 4996)
+#else
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file) {
 	char *rc_path = NULL;
 	char *hellopath = bc_tester_res("sounds/hello8000.wav");
-	mgr->number_of_cunit_error_at_creation =  bc_get_number_of_failures();
+	mgr->number_of_bcunit_error_at_creation =  bc_get_number_of_failures();
 	mgr->v_table.registration_state_changed=registration_state_changed;
 	mgr->v_table.auth_info_requested=auth_info_requested;
 	mgr->v_table.call_state_changed=call_state_changed;
@@ -342,12 +355,11 @@ void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file) {
 
 void linphone_core_manager_start(LinphoneCoreManager *mgr, int check_for_proxies) {
 	LinphoneProxyConfig* proxy;
-	LinphoneNatPolicy *nat_policy;
 	int proxy_count;
 
-	/*BC_ASSERT_EQUAL(ms_list_size(linphone_core_get_proxy_config_list(lc)),proxy_count, int, "%d");*/
+	/*BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(lc)),proxy_count, int, "%d");*/
 	if (check_for_proxies){ /**/
-		proxy_count=ms_list_size(linphone_core_get_proxy_config_list(mgr->lc));
+		proxy_count=bctbx_list_size(linphone_core_get_proxy_config_list(mgr->lc));
 	}else{
 		proxy_count=0;
 		/*this is to prevent registration to go on*/
@@ -374,16 +386,7 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, int check_for_proxies
 		linphone_address_clean(mgr->identity);
 	}
 
-	nat_policy = linphone_core_get_nat_policy(mgr->lc);
-	if ((nat_policy != NULL) && (linphone_nat_policy_get_stun_server(nat_policy) != NULL) &&
-		(linphone_nat_policy_stun_enabled(nat_policy) || linphone_nat_policy_turn_enabled(nat_policy))) {
-		/*before we go, ensure that the stun server is resolved, otherwise all ice related test will fail*/
-		const char **tags = bc_tester_current_test_tags();
-		int ice_test = (tags && ((tags[0] && !strcmp(tags[0], "ICE")) || (tags[1] && !strcmp(tags[1], "ICE"))));
-		if (ice_test) {
-			BC_ASSERT_TRUE(wait_for_stun_resolution(mgr));
-		}
-	}
+	linphone_core_manager_wait_for_stun_resolution(mgr);
 	if (!check_for_proxies){
 		/*now that stun server resolution is done, we can start registering*/
 		linphone_core_set_network_reachable(mgr->lc, TRUE);
@@ -415,25 +418,38 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 	if (mgr->stat.last_received_chat_message) {
 		linphone_chat_message_unref(mgr->stat.last_received_chat_message);
 	}
-	if (mgr->stat.last_received_info_message)
-		linphone_info_message_destroy(mgr->stat.last_received_info_message);
-	if (mgr->lc) {
-		const char *record_file = linphone_core_get_record_file(mgr->lc);
-
-		if (!liblinphone_tester_keep_record_files && record_file) {
-			if ((bc_get_number_of_failures() - mgr->number_of_cunit_error_at_creation) > 0) {
-				ms_message("Test has failed, keeping recorded file [%s]", record_file);
+	if (mgr->stat.last_received_info_message) linphone_info_message_destroy(mgr->stat.last_received_info_message);
+	if (mgr->lc){
+		const char *record_file=linphone_core_get_record_file(mgr->lc);
+		char *chatdb = ms_strdup(linphone_core_get_chat_database_path(mgr->lc));
+		if (!liblinphone_tester_keep_record_files && record_file){
+			if ((bc_get_number_of_failures()-mgr->number_of_bcunit_error_at_creation)>0) {
+				ms_message ("Test has failed, keeping recorded file [%s]",record_file);
 			} else {
 				unlink(record_file);
 			}
 		}
 		linphone_core_destroy(mgr->lc);
+		if (chatdb) {
+			unlink(chatdb);
+			ms_free(chatdb);
+		}
 	}
 	if (mgr->identity) {
 		linphone_address_destroy(mgr->identity);
 	}
 
 	manager_count--;
+}
+
+void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr) {
+	LinphoneNatPolicy *nat_policy = linphone_core_get_nat_policy(mgr->lc);
+	if ((nat_policy != NULL) && (linphone_nat_policy_get_stun_server(nat_policy) != NULL) &&
+		(linphone_nat_policy_stun_enabled(nat_policy) || linphone_nat_policy_turn_enabled(nat_policy)) &&
+		(linphone_nat_policy_ice_enabled(nat_policy))) {
+		/*before we go, ensure that the stun server is resolved, otherwise all ice related test will fail*/
+		BC_ASSERT_TRUE(wait_for_stun_resolution(mgr));
+	}
 }
 
 void linphone_core_manager_destroy(LinphoneCoreManager* mgr) {
@@ -500,6 +516,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
 	bc_tester_add_suite(&call_test_suite);
+	bc_tester_add_suite(&call_video_test_suite);
 	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);

@@ -24,7 +24,12 @@
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic push
 #endif
+#ifdef _MSC_VER
+#pragma warning(disable : 4996)
+#else
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic ignored "-Wstrict-prototypes"
+#endif
 
 #ifdef HAVE_GTK
 #include <gtk/gtk.h>
@@ -82,7 +87,20 @@ static void liblinphone_android_ortp_log_handler(const char *domain, OrtpLogLeve
 	liblinphone_android_log_handler(prio, fmt, args);
 }
 
-void cunit_android_trace_handler(int level, const char *fmt, va_list args) {
+static void liblinphone_android_bctbx_log_handler(const char *domain, BctbxLogLevel lev, const char *fmt, va_list args) {
+	int prio;
+	switch(lev){
+		case BCTBX_LOG_DEBUG:	prio = ANDROID_LOG_DEBUG;	break;
+		case BCTBX_LOG_MESSAGE:	prio = ANDROID_LOG_INFO;	break;
+		case BCTBX_LOG_WARNING:	prio = ANDROID_LOG_WARN;	break;
+		case BCTBX_LOG_ERROR:	prio = ANDROID_LOG_ERROR;	break;
+		case BCTBX_LOG_FATAL:	prio = ANDROID_LOG_FATAL;	break;
+		default:			prio = ANDROID_LOG_DEFAULT;	break;
+	}
+	liblinphone_android_log_handler(prio, fmt, args);
+}
+
+void bcunit_android_trace_handler(int level, const char *fmt, va_list args) {
 	char buffer[CALLBACK_BUFFER_SIZE];
 	jstring javaString;
 	jclass cls;
@@ -112,7 +130,7 @@ JNIEXPORT jint JNICALL Java_org_linphone_tester_Tester_run(JNIEnv *env, jobject 
 	}
 	current_env = env;
 	current_obj = obj;
-	bc_set_trace_handler(cunit_android_trace_handler);
+	bc_set_trace_handler(bcunit_android_trace_handler);
 	ret = main(argc, argv);
 	current_env = NULL;
 	bc_set_trace_handler(NULL);
@@ -141,7 +159,7 @@ static void log_handler(int lev, const char *fmt, va_list args) {
 	va_copy(cap,args);
 #ifdef ANDROID
 	/* IMPORTANT: needed by liblinphone tester to retrieve suite list...*/
-	cunit_android_trace_handler(lev == ORTP_ERROR, fmt, cap);
+	bcunit_android_trace_handler(lev == ORTP_ERROR, fmt, cap);
 #else
 	/* Otherwise, we must use stdio to avoid log formatting (for autocompletion etc.) */
 	vfprintf(lev == ORTP_ERROR ? stderr : stdout, fmt, cap);
@@ -158,6 +176,7 @@ void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, v
 	if (! log_file) {
 #if defined(ANDROID)
 		linphone_core_set_log_handler(liblinphone_android_ortp_log_handler);
+		bctbx_set_log_handler(liblinphone_android_bctbx_log_handler);
 #endif
 	}
 
@@ -176,6 +195,7 @@ int liblinphone_tester_set_log_file(const char *filename) {
 		return -1;
 	}
 	ms_message("Redirecting traces to file [%s]", filename);
+	bctbx_set_log_file(log_file);
 	ortp_set_log_file(log_file);
 	return 0;
 }

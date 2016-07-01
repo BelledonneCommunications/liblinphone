@@ -62,7 +62,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static void clear_ice_check_list(LinphoneCall *call, IceCheckList *removed);
 
 bool_t linphone_core_payload_type_enabled(LinphoneCore *lc, const LinphonePayloadType *pt){
-	if (ms_list_find(lc->codecs_conf.audio_codecs, (PayloadType*) pt) || ms_list_find(lc->codecs_conf.video_codecs, (PayloadType*)pt) || ms_list_find(lc->codecs_conf.text_codecs, (PayloadType*)pt)){
+	if (bctbx_list_find(lc->codecs_conf.audio_codecs, (PayloadType*) pt) || bctbx_list_find(lc->codecs_conf.video_codecs, (PayloadType*)pt) || bctbx_list_find(lc->codecs_conf.text_codecs, (PayloadType*)pt)){
 		return payload_type_enabled(pt);
 	}
 	ms_error("Getting enablement status of codec not in audio or video list of PayloadType !");
@@ -75,7 +75,7 @@ bool_t linphone_core_payload_type_is_vbr(LinphoneCore *lc, const LinphonePayload
 }
 
 int linphone_core_enable_payload_type(LinphoneCore *lc, LinphonePayloadType *pt, bool_t enabled){
-	if (ms_list_find(lc->codecs_conf.audio_codecs,pt) || ms_list_find(lc->codecs_conf.video_codecs,pt) || ms_list_find(lc->codecs_conf.text_codecs,pt)){
+	if (bctbx_list_find(lc->codecs_conf.audio_codecs,pt) || bctbx_list_find(lc->codecs_conf.video_codecs,pt) || bctbx_list_find(lc->codecs_conf.text_codecs,pt)){
 		payload_type_set_enable(pt,enabled);
 		_linphone_core_codec_config_write(lc);
 		linphone_core_update_allocated_audio_bandwidth(lc);
@@ -107,7 +107,7 @@ const char *linphone_core_get_payload_type_description(LinphoneCore *lc, Payload
 }
 
 void linphone_core_set_payload_type_bitrate(LinphoneCore *lc, LinphonePayloadType *pt, int bitrate){
-	if (ms_list_find(lc->codecs_conf.audio_codecs, (PayloadType*) pt) || ms_list_find(lc->codecs_conf.video_codecs, (PayloadType*)pt) || ms_list_find(lc->codecs_conf.text_codecs, (PayloadType*)pt)){
+	if (bctbx_list_find(lc->codecs_conf.audio_codecs, (PayloadType*) pt) || bctbx_list_find(lc->codecs_conf.video_codecs, (PayloadType*)pt) || bctbx_list_find(lc->codecs_conf.text_codecs, (PayloadType*)pt)){
 		if (pt->type==PAYLOAD_VIDEO || pt->flags & PAYLOAD_TYPE_IS_VBR){
 			pt->normal_bitrate=bitrate*1000;
 			pt->flags|=PAYLOAD_TYPE_BITRATE_OVERRIDE;
@@ -204,7 +204,7 @@ void linphone_core_update_allocated_audio_bandwidth_in_call(LinphoneCall *call, 
 }
 
 void linphone_core_update_allocated_audio_bandwidth(LinphoneCore *lc){
-	const MSList *elem;
+	const bctbx_list_t *elem;
 	int maxbw=get_min_bandwidth(linphone_core_get_download_bandwidth(lc),
 					linphone_core_get_upload_bandwidth(lc));
 	int max_codec_bitrate=0;
@@ -743,12 +743,13 @@ int linphone_core_gather_ice_candidates(LinphoneCore *lc, LinphoneCall *call){
 	}
 	if ((ai != NULL) && (nat_policy != NULL)
 		&& (linphone_nat_policy_stun_enabled(nat_policy) || linphone_nat_policy_turn_enabled(nat_policy))) {
+		bool_t gathering_in_progress;
 		ms_message("ICE: gathering candidate from [%s] using %s", server, linphone_nat_policy_turn_enabled(nat_policy) ? "TURN" : "STUN");
 		/* Gather local srflx candidates. */
 		ice_session_enable_turn(call->ice_session, linphone_nat_policy_turn_enabled(nat_policy));
 		ice_session_set_stun_auth_requested_cb(call->ice_session, (MSStunAuthRequestedCb)stun_auth_requested_cb, call);
-		ice_session_gather_candidates(call->ice_session, ai->ai_addr, (socklen_t)ai->ai_addrlen);
-		return 1;
+		gathering_in_progress = ice_session_gather_candidates(call->ice_session, ai->ai_addr, (socklen_t)ai->ai_addrlen);
+		return (gathering_in_progress == FALSE) ? 0 : 1;
 	} else {
 		ms_message("ICE: bypass candidates gathering");
 		ice_session_compute_candidates_foundations(call->ice_session);
@@ -903,7 +904,8 @@ void _update_local_media_description_from_ice(SalMediaDescription *desc, IceSess
 	IceCandidate *rtcp_candidate = NULL;
 	IceSessionState session_state = ice_session_state(session);
 	int nb_candidates;
-	int i, j;
+	int i;
+	size_t j;
 	bool_t result;
 
 	if (session_state == IS_Completed) {
@@ -953,9 +955,9 @@ void _update_local_media_description_from_ice(SalMediaDescription *desc, IceSess
 		stream->ice_mismatch = ice_check_list_is_mismatch(cl);
 		if ((ice_check_list_state(cl) == ICL_Running) || (ice_check_list_state(cl) == ICL_Completed)) {
 			memset(stream->ice_candidates, 0, sizeof(stream->ice_candidates));
-			for (j = 0; j < MIN(ms_list_size(cl->local_candidates), SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES); j++) {
+			for (j = 0; j < MIN(bctbx_list_size(cl->local_candidates), SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES); j++) {
 				SalIceCandidate *sal_candidate = &stream->ice_candidates[nb_candidates];
-				IceCandidate *ice_candidate = ms_list_nth_data(cl->local_candidates, j);
+				IceCandidate *ice_candidate = bctbx_list_nth_data(cl->local_candidates, j);
 				const char *default_addr = NULL;
 				int default_port = 0;
 				if (ice_candidate->componentID == 1) {
@@ -1624,7 +1626,7 @@ static int get_unique_transport(LinphoneCore *lc, LinphoneTransportType *type, i
 }
 
 static void linphone_core_migrate_proxy_config(LinphoneCore *lc, LinphoneTransportType type){
-	const MSList *elem;
+	const bctbx_list_t *elem;
 	for(elem=linphone_core_get_proxy_config_list(lc);elem!=NULL;elem=elem->next){
 		LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)elem->data;
 		const char *proxy=linphone_proxy_config_get_addr(cfg);
@@ -1696,7 +1698,7 @@ void linphone_tone_description_destroy(LinphoneToneDescription *obj){
 }
 
 LinphoneToneDescription *linphone_core_get_call_error_tone(const LinphoneCore *lc, LinphoneReason reason){
-	const MSList *elem;
+	const bctbx_list_t *elem;
 	for (elem=lc->tones;elem!=NULL;elem=elem->next){
 		LinphoneToneDescription *tone=(LinphoneToneDescription*)elem->data;
 		if (tone->reason==reason) return tone;
@@ -1705,7 +1707,7 @@ LinphoneToneDescription *linphone_core_get_call_error_tone(const LinphoneCore *l
 }
 
 const char *linphone_core_get_tone_file(const LinphoneCore *lc, LinphoneToneID id){
-	const MSList *elem;
+	const bctbx_list_t *elem;
 	for (elem=lc->tones;elem!=NULL;elem=elem->next){
 		LinphoneToneDescription *tone=(LinphoneToneDescription*)elem->data;
 		if (tone->toneid==id && tone->reason==LinphoneReasonNone && tone->audiofile!=NULL) return tone->audiofile;
@@ -1716,11 +1718,11 @@ const char *linphone_core_get_tone_file(const LinphoneCore *lc, LinphoneToneID i
 void _linphone_core_set_tone(LinphoneCore *lc, LinphoneReason reason, LinphoneToneID id, const char *audiofile){
 	LinphoneToneDescription *tone=linphone_core_get_call_error_tone(lc,reason);
 	if (tone){
-		lc->tones=ms_list_remove(lc->tones,tone);
+		lc->tones=bctbx_list_remove(lc->tones,tone);
 		linphone_tone_description_destroy(tone);
 	}
 	tone=linphone_tone_description_new(reason,id,audiofile);
-	lc->tones=ms_list_append(lc->tones,tone);
+	lc->tones=bctbx_list_append(lc->tones,tone);
 }
 
 /**
@@ -2009,15 +2011,15 @@ static void hook_invoke(Hook *h){
 }
 
 void linphone_task_list_add(LinphoneTaskList *t, LinphoneCoreIterateHook hook, void *hook_data){
-	t->hooks = ms_list_append(t->hooks,hook_new(hook,hook_data));
+	t->hooks = bctbx_list_append(t->hooks,hook_new(hook,hook_data));
 }
 
 void linphone_task_list_remove(LinphoneTaskList *t, LinphoneCoreIterateHook hook, void *hook_data){
-	MSList *elem;
+	bctbx_list_t *elem;
 	for(elem=t->hooks;elem!=NULL;elem=elem->next){
 		Hook *h=(Hook*)elem->data;
 		if (h->fun==hook && h->data==hook_data){
-			t->hooks = ms_list_remove_link(t->hooks,elem);
+			t->hooks = bctbx_list_remove_link(t->hooks,elem);
 			ms_free(h);
 			return;
 		}
@@ -2026,9 +2028,9 @@ void linphone_task_list_remove(LinphoneTaskList *t, LinphoneCoreIterateHook hook
 }
 
 void linphone_task_list_run(LinphoneTaskList *t){
-	ms_list_for_each(t->hooks,(void (*)(void*))hook_invoke);
+	bctbx_list_for_each(t->hooks,(void (*)(void*))hook_invoke);
 }
 
 void linphone_task_list_free(LinphoneTaskList *t){
-	t->hooks = ms_list_free_with_data(t->hooks, (void (*)(void*))ms_free);
+	t->hooks = bctbx_list_free_with_data(t->hooks, (void (*)(void*))ms_free);
 }

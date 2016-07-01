@@ -37,12 +37,44 @@ extern "C"
  */
 
 /**
+ * The LinphoneVcardContext object.
+ */
+typedef struct _LinphoneVcardContext LinphoneVcardContext;
+
+/**
+ * Creates a vCard context to reuse the same BelCardParser object
+ * @return a new LinphoneVcardContext object
+ */
+LINPHONE_PUBLIC LinphoneVcardContext* linphone_vcard_context_new(void);
+
+/**
+ * Destroys the vCard context
+ * @param[in] context a LinphoneVcardContext object
+ */
+LINPHONE_PUBLIC void linphone_vcard_context_destroy(LinphoneVcardContext *context);
+
+/**
+ * Gets the user data set in the LinphoneVcardContext
+ * @param[in] context a LinphoneVcardContext object
+ * @return the user data pointer
+ */
+LINPHONE_PUBLIC void* linphone_vcard_context_get_user_data(const LinphoneVcardContext *context);
+
+/**
+ * Sets the user data in the LinphoneVcardContext
+ * @param[in] context a LinphoneVcardContext object
+ * @param[in] data the user data pointer
+ */
+LINPHONE_PUBLIC void linphone_vcard_context_set_user_data(LinphoneVcardContext *context, void *data);
+
+/**
  * The LinphoneVcard object.
  */
 typedef struct _LinphoneVcard LinphoneVcard;
 
 /**
  * Creates a LinphoneVcard object that has a pointer to an empty vCard
+ * @return a new LinphoneVcard object
  */
 LINPHONE_PUBLIC LinphoneVcard* linphone_vcard_new(void);
 
@@ -54,24 +86,27 @@ LINPHONE_PUBLIC void linphone_vcard_free(LinphoneVcard *vCard);
 
 /**
  * Uses belcard to parse the content of a file and returns all the vcards it contains as LinphoneVcards, or NULL if it contains none.
+ * @param[in] context the vCard context to use (speed up the process by not creating a Belcard parser each time)
  * @param[in] file the path to the file to parse
  * @return \mslist{LinphoneVcard}
  */
-LINPHONE_PUBLIC MSList* linphone_vcard_list_from_vcard4_file(const char *file);
+LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_context_get_vcard_list_from_file(LinphoneVcardContext *context, const char *file);
 
 /**
  * Uses belcard to parse the content of a buffer and returns all the vcards it contains as LinphoneVcards, or NULL if it contains none.
+ * @param[in] context the vCard context to use (speed up the process by not creating a Belcard parser each time)
  * @param[in] buffer the buffer to parse
  * @return \mslist{LinphoneVcard}
  */
-LINPHONE_PUBLIC MSList* linphone_vcard_list_from_vcard4_buffer(const char *buffer);
+LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_context_get_vcard_list_from_buffer(LinphoneVcardContext *context, const char *buffer);
 
 /**
  * Uses belcard to parse the content of a buffer and returns one vCard if possible, or NULL otherwise.
+ * @param[in] context the vCard context to use (speed up the process by not creating a Belcard parser each time)
  * @param[in] buffer the buffer to parse
  * @return a LinphoneVcard if one could be parsed, or NULL otherwise
  */
-LINPHONE_PUBLIC LinphoneVcard* linphone_vcard_new_from_vcard4_buffer(const char *buffer);
+LINPHONE_PUBLIC LinphoneVcard* linphone_vcard_context_get_vcard_from_buffer(LinphoneVcardContext *context, const char *buffer);
 
 /**
  * Returns the vCard4 representation of the LinphoneVcard.
@@ -120,7 +155,7 @@ void linphone_vcard_edit_main_sip_address(LinphoneVcard *vCard, const char *sip_
  * @param[in] vCard the LinphoneVcard
  * @return \mslist{const char *}
  */
-LINPHONE_PUBLIC MSList* linphone_vcard_get_sip_addresses(const LinphoneVcard *vCard);
+LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_get_sip_addresses(const LinphoneVcard *vCard);
 
 /**
  * Adds a phone number in the vCard, using the TEL property
@@ -141,14 +176,14 @@ void linphone_vcard_remove_phone_number(LinphoneVcard *vCard, const char *phone)
  * @param[in] vCard the LinphoneVcard
  * @return \mslist{const char *}
  */
-LINPHONE_PUBLIC MSList* linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard);
+LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard);
 
 /**
  * Returns the list of SIP addresses (as string) in the vCard (all the IMPP attributes that has an URI value starting by "sip:") or NULL
  * @param[in] vCard the LinphoneVcard
  * @return \mslist{const char *}
  */
-LINPHONE_PUBLIC MSList* linphone_vcard_get_sip_addresses(const LinphoneVcard *vCard);
+LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_get_sip_addresses(const LinphoneVcard *vCard);
 
 /**
  * Fills the Organization field of the vCard

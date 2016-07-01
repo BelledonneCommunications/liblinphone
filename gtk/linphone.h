@@ -24,7 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic push
 #endif
+#ifndef _MSC_VER
 #pragma GCC diagnostic ignored "-Wstrict-prototypes"
+#endif
 
 #include <gtk/gtk.h>
 
@@ -369,7 +371,12 @@ LINPHONE_PUBLIC gboolean linphone_gtk_auto_answer_enabled(void);
 LINPHONE_PUBLIC void linphone_gtk_update_status_bar_icons(void);
 LINPHONE_PUBLIC void linphone_gtk_enable_auto_answer(GtkToggleButton *checkbox, gpointer user_data);
 
+LINPHONE_PUBLIC void linphone_gtk_import_contacts(void);
+LINPHONE_PUBLIC void linphone_gtk_export_contacts(void);
+
 LINPHONE_PUBLIC void linphone_gtk_mark_chat_read(LinphoneChatRoom *cr);
 #ifdef __APPLE__
 LINPHONE_PUBLIC void linphone_gtk_update_badge_count();
 #endif
+
+LINPHONE_PUBLIC gboolean linphone_gtk_on_key_press(GtkWidget *widget, GdkEvent *event, gpointer user_data);

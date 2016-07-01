@@ -220,8 +220,8 @@ if(ENABLE_SHARED)
 
 	if(BELCARD_FOUND)
 		if(APPLE)
-        	        set_target_properties(linphone PROPERTIES LINK_FLAGS "-stdlib=libc++")
-        	endif()
+	        set_target_properties(linphone PROPERTIES LINK_FLAGS "-stdlib=libc++")
+    	endif()
 	endif()
 
 	set_target_properties(linphone PROPERTIES LINKER_LANGUAGE CXX)
@@ -230,7 +230,7 @@ if(ENABLE_SHARED)
 		set_target_properties(linphone PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
 	endif()
 	add_dependencies(linphone liblinphone-git-version)
-	target_link_libraries(linphone ${LIBS})
+	target_link_libraries(linphone PRIVATE ${LIBS})
 	if(WIN32 AND CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 		set_target_properties(linphone PROPERTIES PREFIX "lib")
 	elseif(ANDROID)
@@ -238,8 +238,8 @@ if(ENABLE_SHARED)
 		add_dependencies(linphone linphonecore-jni-header)
 	endif()
 	if(MSVC)
-		if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-			install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Debug/linphone.pdb
+		if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+			install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/linphone.pdb
 				DESTINATION ${CMAKE_INSTALL_BINDIR}
 				PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 			)

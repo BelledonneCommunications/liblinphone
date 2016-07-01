@@ -132,8 +132,8 @@ static void subscribe_test_declined(void) {
 	LinphoneContent* content;
 	LinphoneEvent *lev;
 	const LinphoneErrorInfo *ei;
-	MSList* lcs=ms_list_append(NULL,marie->lc);
-	lcs=ms_list_append(lcs,pauline->lc);
+	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
+	lcs=bctbx_list_append(lcs,pauline->lc);
 
 	content = linphone_core_create_content(marie->lc);
 	linphone_content_set_type(content,"application");
@@ -174,9 +174,9 @@ static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTes
 	LinphoneContent* content;
 	LinphoneEvent *lev;
 	int expires= refresh_type!=NoRefresh ? 4 : 600;
-	MSList* lcs=ms_list_append(NULL,marie->lc);
+	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 
-	lcs=ms_list_append(lcs,pauline->lc);
+	lcs=bctbx_list_append(lcs,pauline->lc);
 
 	if (refresh_type==ManualRefresh){
 		lp_config_set_int(marie->lc->config,"sip","refresh_generic_subscribe",0);
@@ -227,9 +227,9 @@ static void subscribe_test_with_args2(bool_t terminated_by_subscriber, RefreshTe
 	LinphoneContent* content;
 	LinphoneEvent *lev;
 	int expires= refresh_type!=NoRefresh ? 4 : 600;
-	MSList* lcs=ms_list_append(NULL,marie->lc);
+	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 
-	lcs=ms_list_append(lcs,pauline->lc);
+	lcs=bctbx_list_append(lcs,pauline->lc);
 
 	if (refresh_type==ManualRefresh){
 		lp_config_set_int(marie->lc->config,"sip","refresh_generic_subscribe",0);
@@ -311,8 +311,8 @@ static void publish_test_with_args(bool_t refresh, int expires){
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneContent* content;
 	LinphoneEvent *lev;
-	MSList* lcs=ms_list_append(NULL,marie->lc);
-	lcs=ms_list_append(lcs,pauline->lc);
+	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
+	lcs=bctbx_list_append(lcs,pauline->lc);
 
 	content = linphone_core_create_content(marie->lc);
 	linphone_content_set_type(content,"application");
@@ -366,8 +366,9 @@ static void out_of_dialog_notify(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneContent *content;
 	LinphoneEvent *lev;
-	MSList *lcs = ms_list_append(NULL, marie->lc);
-	lcs = ms_list_append(lcs, pauline->lc);
+
+	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
+	lcs=bctbx_list_append(lcs,pauline->lc);
 
 	content = linphone_core_create_content(marie->lc);
 	linphone_content_set_type(content, "application");

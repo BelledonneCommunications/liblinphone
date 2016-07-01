@@ -287,9 +287,9 @@ void linphone_call_set_authentication_token_verified(LinphoneCall *call, bool_t 
 	propagate_encryption_changed(call);
 }
 
-static int get_max_codec_sample_rate(const MSList *codecs){
+static int get_max_codec_sample_rate(const bctbx_list_t *codecs){
 	int max_sample_rate=0;
-	const MSList *it;
+	const bctbx_list_t *it;
 	for(it=codecs;it!=NULL;it=it->next){
 		PayloadType *pt=(PayloadType*)it->data;
 		int sample_rate;
@@ -303,8 +303,8 @@ static int get_max_codec_sample_rate(const MSList *codecs){
 	return max_sample_rate;
 }
 
-static int find_payload_type_number(const MSList *assigned, const PayloadType *pt){
-	const MSList *elem;
+static int find_payload_type_number(const bctbx_list_t *assigned, const PayloadType *pt){
+	const bctbx_list_t *elem;
 	const PayloadType *candidate=NULL;
 	for(elem=assigned;elem!=NULL;elem=elem->next){
 		const PayloadType *it=(const PayloadType*)elem->data;
@@ -321,8 +321,8 @@ static int find_payload_type_number(const MSList *assigned, const PayloadType *p
 	return candidate ? payload_type_get_number(candidate) : -1;
 }
 
-bool_t is_payload_type_number_available(const MSList *l, int number, const PayloadType *ignore){
-	const MSList *elem;
+bool_t is_payload_type_number_available(const bctbx_list_t *l, int number, const PayloadType *ignore){
+	const bctbx_list_t *elem;
 	for (elem=l; elem!=NULL; elem=elem->next){
 		const PayloadType *pt=(PayloadType*)elem->data;
 		if (pt!=ignore && payload_type_get_number(pt)==number) return FALSE;
@@ -330,8 +330,8 @@ bool_t is_payload_type_number_available(const MSList *l, int number, const Paylo
 	return TRUE;
 }
 
-static void linphone_core_assign_payload_type_numbers(LinphoneCore *lc, MSList *codecs){
-	MSList *elem;
+static void linphone_core_assign_payload_type_numbers(LinphoneCore *lc, bctbx_list_t *codecs){
+	bctbx_list_t *elem;
 	int dyn_number=lc->codecs_conf.dyn_pt;
 	PayloadType *red = NULL, *t140 = NULL;
 
@@ -376,8 +376,8 @@ static void linphone_core_assign_payload_type_numbers(LinphoneCore *lc, MSList *
 	}
 }
 
-static bool_t has_telephone_event_at_rate(const MSList *tev, int rate){
-	const MSList *it;
+static bool_t has_telephone_event_at_rate(const bctbx_list_t *tev, int rate){
+	const bctbx_list_t *it;
 	for(it=tev;it!=NULL;it=it->next){
 		const PayloadType *pt=(PayloadType*)it->data;
 		if (pt->clock_rate==rate) return TRUE;
@@ -385,9 +385,9 @@ static bool_t has_telephone_event_at_rate(const MSList *tev, int rate){
 	return FALSE;
 }
 
-static MSList * create_telephone_events(LinphoneCore *lc, const MSList *codecs){
-	const MSList *it;
-	MSList *ret=NULL;
+static bctbx_list_t * create_telephone_events(LinphoneCore *lc, const bctbx_list_t *codecs){
+	const bctbx_list_t *it;
+	bctbx_list_t *ret=NULL;
 	for(it=codecs;it!=NULL;it=it->next){
 		const PayloadType *pt=(PayloadType*)it->data;
 		if (!has_telephone_event_at_rate(ret,pt->clock_rate)){
@@ -401,18 +401,18 @@ static MSList * create_telephone_events(LinphoneCore *lc, const MSList *codecs){
 					payload_type_set_number(tev, lc->codecs_conf.telephone_event_pt);
 				}
 			}
-			ret=ms_list_append(ret,tev);
+			ret=bctbx_list_append(ret,tev);
 		}
 	}
 	return ret;
 }
 
-static MSList *create_special_payload_types(LinphoneCore *lc, const MSList *codecs){
-	MSList *ret=create_telephone_events(lc, codecs);
+static bctbx_list_t *create_special_payload_types(LinphoneCore *lc, const bctbx_list_t *codecs){
+	bctbx_list_t *ret=create_telephone_events(lc, codecs);
 	if (linphone_core_generic_confort_noise_enabled(lc)){
 		PayloadType *cn=payload_type_clone(&payload_type_cn);
 		payload_type_set_number(cn, 13);
-		ret=ms_list_append(ret, cn);
+		ret=bctbx_list_append(ret, cn);
 	}
 	return ret;
 }
@@ -420,12 +420,12 @@ static MSList *create_special_payload_types(LinphoneCore *lc, const MSList *code
 typedef struct _CodecConstraints{
 	int bandwidth_limit;
 	int max_codecs;
-	MSList *previously_used;
+	bctbx_list_t *previously_used;
 }CodecConstraints;
 
-static MSList *make_codec_list(LinphoneCore *lc, CodecConstraints * hints, SalStreamType stype, const MSList *codecs){
-	MSList *l=NULL;
-	const MSList *it;
+static bctbx_list_t *make_codec_list(LinphoneCore *lc, CodecConstraints * hints, SalStreamType stype, const bctbx_list_t *codecs){
+	bctbx_list_t *l=NULL;
+	const bctbx_list_t *it;
 	int nb = 0;
 
 	for (it = codecs; it != NULL; it = it->next) {
@@ -452,15 +452,14 @@ static MSList *make_codec_list(LinphoneCore *lc, CodecConstraints * hints, SalSt
 			payload_type_set_number(pt, num);
 			payload_type_set_flag(pt, PAYLOAD_TYPE_FROZEN_NUMBER);
 		}
-
-		l = ms_list_append(l, pt);
+		l=bctbx_list_append(l, pt);
 		nb++;
 		if ((hints->max_codecs > 0) && (nb >= hints->max_codecs))
 			break;
 	}
-	if (stype == SalAudio) {
-		MSList *specials = create_special_payload_types(lc, l);
-		l = ms_list_concat(l, specials);
+	if (stype==SalAudio){
+		bctbx_list_t *specials=create_special_payload_types(lc,l);
+		l=bctbx_list_concat(l,specials);
 	}
 	linphone_core_assign_payload_type_numbers(lc, l);
 	return l;
@@ -576,7 +575,7 @@ static void setup_zrtp_hash(LinphoneCall *call, SalMediaDescription *md) {
 }
 
 static void setup_rtcp_fb(LinphoneCall *call, SalMediaDescription *md) {
-	MSList *pt_it;
+	bctbx_list_t *pt_it;
 	PayloadType *pt;
 	PayloadTypeAvpfParams avpf_params;
 	LinphoneCore *lc = call->core;
@@ -658,9 +657,9 @@ static void transfer_already_assigned_payload_types(SalMediaDescription *old, Sa
 	}
 }
 
-static const char *linphone_call_get_bind_ip_for_stream(LinphoneCall *call, int stream_index) {
-	const char *bind_ip = lp_config_get_string(call->core->config, "rtp", "bind_address",
-											   linphone_core_ipv6_enabled(call->core) ? "::0" : "0.0.0.0");
+static const char *linphone_call_get_bind_ip_for_stream(LinphoneCall *call, int stream_index){
+	const char *bind_ip = lp_config_get_string(call->core->config,"rtp","bind_address",
+				call->af == AF_INET6 ? "::0" : "0.0.0.0");
 
 	if (stream_index < 2 && call->media_ports[stream_index].multicast_ip[0] != '\0') {
 		if (call->dir == LinphoneCallOutgoing) {
@@ -717,7 +716,7 @@ static void force_streams_dir_according_to_state(LinphoneCall *call, SalMediaDes
 }
 
 void linphone_call_make_local_media_description(LinphoneCall *call) {
-	MSList *l;
+	bctbx_list_t *l;
 	SalMediaDescription *old_md=call->localdesc;
 	int i;
 	int max_index = 0;
@@ -804,7 +803,7 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 	} else {
 		ms_message("Don't put audio stream on local offer for call [%p]",call);
 		md->streams[call->main_audio_stream_index].dir = SalStreamInactive;
-		if(l) l=ms_list_free_with_data(l, (void (*)(void *))payload_type_destroy);
+		if(l) l=bctbx_list_free_with_data(l, (void (*)(void *))payload_type_destroy);
 	}
 	if (params->custom_sdp_media_attributes[LinphoneStreamTypeAudio])
 		md->streams[call->main_audio_stream_index].custom_sdp_attributes = sal_custom_sdp_attribute_clone(params->custom_sdp_media_attributes[LinphoneStreamTypeAudio]);
@@ -839,7 +838,7 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 	} else {
 		ms_message("Don't put video stream on local offer for call [%p]",call);
 		md->streams[call->main_video_stream_index].dir = SalStreamInactive;
-		if(l) l=ms_list_free_with_data(l, (void (*)(void *))payload_type_destroy);
+		if(l) l=bctbx_list_free_with_data(l, (void (*)(void *))payload_type_destroy);
 	}
 	if (params->custom_sdp_media_attributes[LinphoneStreamTypeVideo])
 		md->streams[call->main_video_stream_index].custom_sdp_attributes = sal_custom_sdp_attribute_clone(params->custom_sdp_media_attributes[LinphoneStreamTypeVideo]);
@@ -941,7 +940,7 @@ void linphone_call_make_local_media_description(LinphoneCall *call) {
 
 static int find_port_offset(LinphoneCore *lc, int stream_index, int base_port){
 	int offset;
-	MSList *elem;
+	bctbx_list_t *elem;
 	int tried_port;
 	int existing_port;
 	bool_t already_used=FALSE;
@@ -967,7 +966,7 @@ static int find_port_offset(LinphoneCore *lc, int stream_index, int base_port){
 }
 
 static int select_random_port(LinphoneCore *lc, int stream_index, int min_port, int max_port) {
-	MSList *elem;
+	bctbx_list_t *elem;
 	int nb_tries;
 	int tried_port = 0;
 	int existing_port = 0;
@@ -1183,7 +1182,15 @@ void linphone_call_fill_media_multicast_addr(LinphoneCall *call) {
 		call->media_ports[call->main_video_stream_index].multicast_ip[0]='\0';
 }
 
-static void linphone_call_create_ice_session(LinphoneCall *call, IceRole role){
+void linphone_call_check_ice_session(LinphoneCall *call, IceRole role, bool_t is_reinvite){
+	if (call->ice_session) return; /*already created*/
+	
+	if (!linphone_nat_policy_ice_enabled(linphone_core_get_nat_policy(call->core))){
+		return;
+	}
+		
+	if (is_reinvite && lp_config_get_int(call->core->config, "net", "allow_late_ice", 0) == 0) return;
+	
 	call->ice_session = ice_session_new();
 	/*for backward compatibility purposes, shall be enabled by default in futur*/
 	ice_session_enable_message_integrity_check(call->ice_session,lp_config_get_int(call->core->config,"net","ice_session_enable_message_integrity_check",1));
@@ -1194,7 +1201,6 @@ static void linphone_call_create_ice_session(LinphoneCall *call, IceRole role){
 		types[2] = ICT_CandidateInvalid;
 		ice_session_set_default_candidates_types(call->ice_session, types);
 	}
-	
 	ice_session_set_role(call->ice_session, role);
 }
 
@@ -1212,9 +1218,8 @@ LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, LinphoneAddr
 
 	linphone_call_fill_media_multicast_addr(call);
 
-	if (linphone_core_get_firewall_policy(call->core) == LinphonePolicyUseIce) {
-		linphone_call_create_ice_session(call, IR_Controlling);
-	}
+	linphone_call_check_ice_session(call, IR_Controlling, FALSE);
+	
 	if (linphone_core_get_firewall_policy(call->core) == LinphonePolicyUseStun) {
 		call->ping_time=linphone_core_run_stun_tests(call->core,call);
 	}
@@ -1499,7 +1504,7 @@ LinphoneCall * linphone_call_new_incoming(LinphoneCore *lc, LinphoneAddress *fro
 	if ((nat_policy != NULL) && linphone_nat_policy_ice_enabled(nat_policy)) {
 		/* Create the ice session now if ICE is required */
 		if (md){
-			linphone_call_create_ice_session(call, IR_Controlled);
+			linphone_call_check_ice_session(call, IR_Controlled, FALSE);
 		}else{
 			nat_policy = NULL;
 			ms_warning("ICE not supported for incoming INVITE without SDP.");
@@ -2838,14 +2843,14 @@ static void parametrize_equalizer(LinphoneCore *lc, AudioStream *st){
 		const char *gains=lp_config_get_string(lc->config,"sound","mic_eq_gains",NULL);
 		ms_filter_call_method(f,MS_EQUALIZER_SET_ACTIVE,&enabled);
 		if (enabled && gains){
-			MSList *gains_list = ms_parse_equalizer_string(gains);
-			MSList *it;
+			bctbx_list_t *gains_list = ms_parse_equalizer_string(gains);
+			bctbx_list_t *it;
 			for(it=gains_list; it; it=it->next) {
 				MSEqualizerGain *g = (MSEqualizerGain *)it->data;
 				ms_message("Read microphone equalizer gains: %f(~%f) --> %f",g->frequency,g->width,g->gain);
 				ms_filter_call_method(f,MS_EQUALIZER_SET_GAIN, g);
 			}
-			if(gains_list) ms_list_free_with_data(gains_list, ms_free);
+			if(gains_list) bctbx_list_free_with_data(gains_list, ms_free);
 		}
 	}
 	if (st->spk_equalizer){
@@ -2854,14 +2859,14 @@ static void parametrize_equalizer(LinphoneCore *lc, AudioStream *st){
 		const char *gains=lp_config_get_string(lc->config,"sound","spk_eq_gains",NULL);
 		ms_filter_call_method(f,MS_EQUALIZER_SET_ACTIVE,&enabled);
 		if (enabled && gains){
-			MSList *gains_list = ms_parse_equalizer_string(gains);
-			MSList *it;
+			bctbx_list_t *gains_list = ms_parse_equalizer_string(gains);
+			bctbx_list_t *it;
 			for(it=gains_list; it; it=it->next) {
 				MSEqualizerGain *g = (MSEqualizerGain *)it->data;
 				ms_message("Read speaker equalizer gains: %f(~%f) --> %f",g->frequency,g->width,g->gain);
 				ms_filter_call_method(f,MS_EQUALIZER_SET_GAIN, g);
 			}
-			if(gains_list) ms_list_free_with_data(gains_list, ms_free);
+			if(gains_list) bctbx_list_free_with_data(gains_list, ms_free);
 		}
 	}
 }
@@ -2994,7 +2999,7 @@ static int get_video_bw(LinphoneCall *call, const SalMediaDescription *md, const
 
 static RtpProfile *make_profile(LinphoneCall *call, const SalMediaDescription *md, const SalStreamDescription *desc, int *used_pt){
 	int bw=0;
-	const MSList *elem;
+	const bctbx_list_t *elem;
 	RtpProfile *prof=rtp_profile_new("Call profile");
 	bool_t first=TRUE;
 	LinphoneCore *lc=call->core;
@@ -4843,16 +4848,16 @@ void linphone_call_log_completed(LinphoneCall *call){
 	}
 #endif
 	if (!call_logs_sqlite_db_found) {
-		lc->call_logs=ms_list_prepend(lc->call_logs,linphone_call_log_ref(call->log));
-		if (ms_list_size(lc->call_logs)>lc->max_call_logs){
-			MSList *elem,*prevelem=NULL;
+		lc->call_logs=bctbx_list_prepend(lc->call_logs,linphone_call_log_ref(call->log));
+		if (bctbx_list_size(lc->call_logs)>(size_t)lc->max_call_logs){
+			bctbx_list_t *elem,*prevelem=NULL;
 			/*find the last element*/
 			for(elem=lc->call_logs;elem!=NULL;elem=elem->next){
 				prevelem=elem;
 			}
 			elem=prevelem;
 			linphone_call_log_unref((LinphoneCallLog*)elem->data);
-			lc->call_logs=ms_list_remove_link(lc->call_logs,elem);
+			lc->call_logs=bctbx_list_remove_link(lc->call_logs,elem);
 		}
 		call_logs_write_to_config_file(lc);
 	}
