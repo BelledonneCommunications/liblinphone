@@ -505,6 +505,45 @@ void linphone_gtk_update_video_button(LinphoneCall *call){
 	}
 }
 
+void linphone_gtk_update_screensharing_button(LinphoneCall *call) {
+	GtkWidget *call_view = (GtkWidget *)linphone_call_get_user_pointer(call);
+	GtkWidget *button;
+	GtkWidget *conf_frame;
+	LinphoneCore *lc = linphone_call_get_core(call);
+	const LinphoneCallParams *params = linphone_call_get_current_params(call);
+	gboolean has_screensharing = linphone_call_params_screensharing_enabled(params);
+	gboolean button_sensitive = FALSE;
+	if (call_view == NULL)
+		return;
+ 
+	button = linphone_gtk_get_widget(call_view, "screensharing_button");
+ 
+	gtk_button_set_image(GTK_BUTTON(button),
+	gtk_image_new_from_icon_name(has_screensharing ? "linphone-screensharing-disabled" : "linphone-screensharing-enabled",GTK_ICON_SIZE_BUTTON));
+	g_object_set_data(G_OBJECT(button), "adding_screensharing", GINT_TO_POINTER(!has_screensharing));
+	if (!linphone_core_screensharing_server_supported(linphone_call_get_core(call)) || !linphone_core_screensharing_enabled(lc)) {
+		gtk_widget_set_sensitive(button, FALSE);
+		return;
+	}
+	switch (linphone_call_get_state(call)) {
+	case LinphoneCallStreamsRunning:
+		button_sensitive = !linphone_call_media_in_progress(call); // CHANGE
+		break;
+	default:
+		button_sensitive = FALSE;
+		break;
+	}
+	gtk_widget_set_sensitive(button, button_sensitive);
+	if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "signal_connected_screensharing")) == 0) {
+		g_signal_connect(G_OBJECT(button), "clicked", (GCallback)linphone_gtk_screensharing_button_clicked, call);
+		g_object_set_data(G_OBJECT(button), "signal_connected_screensharing", GINT_TO_POINTER(1));
+	}
+	conf_frame = (GtkWidget *)g_object_get_data(G_OBJECT(linphone_gtk_get_main_window()), "conf_frame");
+	if (conf_frame != NULL) {
+		gtk_widget_set_sensitive(button, FALSE);
+	}
+}
+
 void linphone_gtk_remove_in_call_view(LinphoneCall *call){
 	GtkWidget *w=(GtkWidget*)linphone_call_get_user_pointer (call);
 	GtkWidget *main_window=linphone_gtk_get_main_window ();
