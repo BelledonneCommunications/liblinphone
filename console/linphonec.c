@@ -900,6 +900,9 @@ linphonec_prompt_for_auth_final(LinphoneCore *lc)
 	rl_line_buffer[0]='\0';
 	rl_event_hook=old_event_hook;
 #endif
+
+	reentrancy--;
+
 	return 1;
 }
 
