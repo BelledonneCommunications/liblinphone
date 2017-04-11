@@ -2101,23 +2101,20 @@ bool_t linphone_call_has_transfer_pending(const LinphoneCall *call){
 	return call->refer_pending;
 }
 
-static int _linphone_call_get_duration (const LinphoneCall *call) {
-	return (int)(ms_time(NULL) - call->log->connected_date_time);
+static int _linphone_call_compute_duration (const LinphoneCall *call) {
+	if (call->log->connected_date_time == 0) return 0;
+	else return (int)(ms_time(NULL) - call->log->connected_date_time);
 }
 
-int linphone_call_get_duration(const LinphoneCall *call){
-	if (call->log->connected_date_time==0) return 0;
-
+int linphone_call_get_duration(const LinphoneCall *call) {
 	switch (call->state) {
 	  case LinphoneCallEnd:
 	  case LinphoneCallError:
 	  case LinphoneCallReleased:
 	    return call->log->duration;
-
-	  default: break;
+	  default:
+		return _linphone_call_compute_duration(call);
 	}
-
-	return _linphone_call_get_duration(call);
 }
 
 LinphoneCall *linphone_call_get_replaced_call(LinphoneCall *call){
@@ -4613,7 +4610,8 @@ void linphone_call_log_completed(LinphoneCall *call){
 	LinphoneCore *lc=call->core;
 	bool_t call_logs_sqlite_db_found = FALSE;
 
-	call->log->duration=_linphone_call_get_duration(call); /*store duration since connected*/
+	call->log->duration= _linphone_call_compute_duration(call); /*store duration since connected*/
+	call->log->error_info = linphone_error_info_ref((LinphoneErrorInfo*)linphone_call_get_error_info(call));
 
 	if (call->log->status==LinphoneCallMissed){
 		char *info;
