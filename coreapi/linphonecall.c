@@ -4611,7 +4611,7 @@ void linphone_call_log_completed(LinphoneCall *call){
 	bool_t call_logs_sqlite_db_found = FALSE;
 
 	call->log->duration= _linphone_call_compute_duration(call); /*store duration since connected*/
-	call->log->error_info = linphone_error_info_ref((LinphoneErrorInfo*)linphone_call_get_error_info(call));
+	//call->log->error_info = linphone_error_info_ref((LinphoneErrorInfo*)linphone_call_get_error_info(call));
 
 	if (call->log->status==LinphoneCallMissed){
 		char *info;
