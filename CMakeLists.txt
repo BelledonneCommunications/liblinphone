@@ -21,6 +21,24 @@
 ############################################################################
 
 cmake_minimum_required(VERSION 3.0)
+# minimum required 3.0 is a bit contradiction to my experience. it should be 3.1 
+# because CMake 3.1 introduced the CMAKE_CXX_STANDARD. Cmake 3.1 compiles fine,
+# but CMake 3.0 does not have the CMAKE_CXX_STANDARD and then it does not use cxx11
+# then you hit error: 
+# expected template-name before ‘<’ token error enabled_shared_from_this
+# dirty patch
+macro(use_cxx11)
+  if (CMAKE_VERSION VERSION_LESS "3.1")
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      set (CMAKE_CXX_FLAGS "--std=gnu++11 ${CMAKE_CXX_FLAGS}")
+    endif ()
+  else ()
+    set (CMAKE_CXX_STANDARD 11)
+  endif ()
+endmacro(use_cxx11)
+use_cxx11()
+#end of dirty patch
+
 project(linphone VERSION 3.12.0 LANGUAGES C CXX)
 
 
