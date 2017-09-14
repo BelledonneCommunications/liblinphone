@@ -195,7 +195,7 @@ class LinphoneCoreImpl implements LinphoneCore {
 	private native Object createFriend(long nativePtr);
 	private native Object createFriendWithAddress(long nativePtr, String address);
 	private native int getIncomingTimeout(long nativePtr);
-	
+
 	LinphoneCoreImpl(LinphoneCoreListener listener, File userConfig, File factoryConfig, Object userdata) throws IOException {
 		mListener = listener;
 		String user = userConfig == null ? null : userConfig.getCanonicalPath();
@@ -503,6 +503,11 @@ class LinphoneCoreImpl implements LinphoneCore {
 	private native LinphoneFriendList[] getFriendLists(long nativePtr);
 	public synchronized LinphoneFriendList[] getFriendLists() {
 		return getFriendLists(nativePtr);
+	}
+
+	private native LinphoneAddress[] findContactsByChar(long nativePtr, String filter, boolean sipOnly);
+	public synchronized LinphoneAddress[] findContactsByChar(String filter, boolean sipOnly) {
+		return findContactsByChar(nativePtr, filter, sipOnly);
 	}
 
 	@SuppressWarnings("deprecation")
