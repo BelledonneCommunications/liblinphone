@@ -1120,20 +1120,20 @@ static void cancel_other_device_after_accept(void) {
 	BC_ASSERT_TRUE(wait_for(caller_mgr->lc, callee_mgr->lc, &caller_mgr->stat.number_of_LinphoneCallOutgoingProgress, 1));
 	call_callee = linphone_core_get_current_call(callee_mgr->lc);
 	if (BC_ASSERT_PTR_NOT_NULL(call_callee)) {
-		
+
 		linphone_call_ref(call_callee);
-		
+
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc, callee_mgr_2->lc, &callee_mgr_2->stat.number_of_LinphoneCallIncomingReceived, 1));
 		call_callee_2 = linphone_core_get_current_call(callee_mgr_2->lc);
 		linphone_call_ref(call_callee_2);
 		BC_ASSERT_PTR_NOT_NULL(call_callee_2);
-		
+
 		BC_ASSERT_EQUAL( linphone_call_accept(call_callee), 0 , int, "%d");
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallConnected,1));
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc, &caller_mgr->stat.number_of_LinphoneCallStreamsRunning, 1));
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr_2->lc,&callee_mgr_2->stat.number_of_LinphoneCallEnd,1));
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr_2->lc,&callee_mgr_2->stat.number_of_LinphoneCallReleased,1));
-		
+
 		rei = linphone_call_get_error_info(call_callee_2);
 		BC_ASSERT_PTR_NOT_NULL(rei);
 		if (rei){
@@ -1172,18 +1172,18 @@ static void cancel_other_device_after_decline(void) {
 	call_callee = linphone_core_get_current_call(callee_mgr->lc);
 	if (BC_ASSERT_PTR_NOT_NULL(call_callee)) {
 		linphone_call_ref(call_callee);
-		
+
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc, callee_mgr_2->lc, &callee_mgr_2->stat.number_of_LinphoneCallIncomingReceived, 1));
 		call_callee_2 = linphone_core_get_current_call(callee_mgr_2->lc);
 		linphone_call_ref(call_callee_2);
 		BC_ASSERT_PTR_NOT_NULL(call_callee_2);
-		
+
 		BC_ASSERT_EQUAL(linphone_call_decline(call_callee, LinphoneReasonDeclined), 0 , int, "%d");
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallEnd,1));
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc, &caller_mgr->stat.number_of_LinphoneCallReleased, 1));
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr_2->lc,&callee_mgr_2->stat.number_of_LinphoneCallEnd,1));
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr_2->lc,&callee_mgr_2->stat.number_of_LinphoneCallReleased,1));
-		
+
 		rei = linphone_call_get_error_info(call_callee_2);
 		BC_ASSERT_PTR_NOT_NULL(rei);
 		if (rei){
@@ -1304,11 +1304,11 @@ static void cancelled_ringing_call(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	const bctbx_list_t * call_history;
 	LinphoneCall* out_call;
-	
-	char * db_path= bctbx_strdup_printf("%s,%s",bc_tester_get_writable_dir_prefix(),"tmp_call_log.db");
+
+	char * db_path= bc_tester_file("tmp_call_log.db");
 	linphone_core_set_call_logs_database_path(marie->lc,db_path);
-	
-	
+
+
 	out_call = linphone_core_invite_address(pauline->lc,marie->identity);
 	linphone_call_ref(out_call);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallIncomingReceived,1));
@@ -1318,12 +1318,12 @@ static void cancelled_ringing_call(void) {
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallEnd,1, int, "%d");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallEnd,1, int, "%d");
-	
+
 	call_history = linphone_core_get_call_history(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(call_history);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(call_history),1, int,"%i");
 	BC_ASSERT_EQUAL(linphone_call_log_get_status((LinphoneCallLog*)bctbx_list_get_data(call_history)), LinphoneCallMissed, LinphoneCallStatus, "%i");
-	
+
 	linphone_call_unref(out_call);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -1695,7 +1695,7 @@ static void on_ack_processing(LinphoneCall *call, LinphoneHeaders *ack, bool_t i
 static void call_created(LinphoneCore *lc, LinphoneCall *call){
 	LinphoneCallCbs *cbs = linphone_factory_create_call_cbs(linphone_factory_get());
 	linphone_call_cbs_set_ack_processing(cbs, on_ack_processing);
-	linphone_call_add_callbacks(call, cbs);	
+	linphone_call_add_callbacks(call, cbs);
 	linphone_call_cbs_unref(cbs);
 }
 
@@ -1714,7 +1714,7 @@ static void call_with_custom_headers(void) {
 	char* tmp=linphone_address_as_string_uri_only(marie->identity);
 	char tmp2[256];
 	LinphoneCoreCbs *core_cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	
+
 	snprintf(tmp2,sizeof(tmp2),"%s?uriHeader=myUriHeader",tmp);
 	marie_identity=linphone_address_new(tmp2);
 	ms_free(tmp);
@@ -1724,7 +1724,7 @@ static void call_with_custom_headers(void) {
 	params=linphone_core_create_call_params(marie->lc, NULL);
 	linphone_call_params_add_custom_header(params,"Weather","bad");
 	linphone_call_params_add_custom_header(params,"Working","yes");
-	
+
 	linphone_core_cbs_set_call_created(core_cbs, call_created);
 	linphone_core_add_callbacks(marie->lc, core_cbs);
 	linphone_core_add_callbacks(pauline->lc, core_cbs);
@@ -1759,11 +1759,11 @@ static void call_with_custom_headers(void) {
 	BC_ASSERT_PTR_NOT_NULL(marie_remote_contact_header);
 	BC_ASSERT_STRING_EQUAL(pauline_remote_contact,pauline_remote_contact_header);
 	BC_ASSERT_STRING_EQUAL(marie_remote_contact,marie_remote_contact_header);
-	
-	
+
+
 	/*we need to wait for the ack to arrive*/
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 3000);
-	
+
 	BC_ASSERT_TRUE(linphone_call_get_user_data(call_marie) == (void*)1);
 	BC_ASSERT_TRUE(linphone_call_get_user_data(call_pauline) == (void*)1);
 
