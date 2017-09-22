@@ -153,7 +153,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/chat-room/chat-room.cpp
 	chat/chat-room/client-group-chat-room.cpp
 	chat/chat-room/real-time-text-chat-room.cpp
-	chat/chat-room/server-group-chat-room-stub.cpp
+	chat/chat-room/server-group-chat-room.cpp
 	chat/cpim/header/cpim-core-headers.cpp
 	chat/cpim/header/cpim-generic-header.cpp
 	chat/cpim/header/cpim-header.cpp

@@ -35,7 +35,8 @@ class Participant;
 
 class ServerGroupChatRoomPrivate : public ChatRoomPrivate {
 public:
-	ServerGroupChatRoomPrivate () = default;
+	ServerGroupChatRoomPrivate ();
+	virtual ~ServerGroupChatRoomPrivate () = default;
 
 	std::shared_ptr<Participant> addParticipant (const Address &addr);
 	void confirmCreation ();

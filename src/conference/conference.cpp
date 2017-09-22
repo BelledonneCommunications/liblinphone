@@ -238,9 +238,11 @@ shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const Call
 bool Conference::isMe (const Address &addr) const {
 	L_D();
 	Address cleanedMe = d->me->getAddress();
-	cleanedMe.setPort(0);
+	cleanedMe.clean();
+	cleanedMe.setDisplayName("");
 	Address cleanedAddr = addr;
-	cleanedAddr.setPort(0);
+	cleanedAddr.clean();
+	cleanedAddr.setDisplayName("");
 	return cleanedAddr == cleanedMe;
 }
 
