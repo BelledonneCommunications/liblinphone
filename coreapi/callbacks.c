@@ -1403,6 +1403,14 @@ static void message_delivery_update(SalOp *op, SalMessageDeliveryStatus status){
 	}
 	// check that the message does not belong to an already destroyed chat room - if so, do not invoke callbacks
 	if (chat_msg->chat_room != NULL) {
+		const SalCustomHeader *ch;
+		ch = sal_op_get_recv_custom_header(op);
+		if (ch) {
+			if (chat_msg->custom_headers) {
+				sal_custom_header_free(chat_msg->custom_headers);
+			}
+			chat_msg->custom_headers = sal_custom_header_clone(ch);
+		}
 		linphone_chat_message_update_state(chat_msg, chatStatusSal2Linphone(status));
 	}
 	if (status != SalMessageDeliveryInProgress) { /*only release op if not in progress*/
