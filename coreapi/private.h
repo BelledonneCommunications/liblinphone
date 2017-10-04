@@ -242,6 +242,7 @@ struct _LinphoneChatMessage {
 	LinphoneErrorInfo *ei;
 	LinphoneChatMessageDir dir;
 	char* message;
+	char* clear_text_message;
 	void* message_state_changed_user_data;
 	void* message_userdata;
 	char* appdata;
@@ -257,6 +258,7 @@ struct _LinphoneChatMessage {
 	SalOp *op;
 	LinphoneContent *file_transfer_information; /**< used to store file transfer information when the message is of file transfer type */
 	char *content_type; /**< is used to specified the type of message to be sent, used only for file transfer message */
+	char *clear_text_content_type;
 	bool_t to_be_stored;
 	belle_http_request_t *http_request; /**< keep a reference to the http_request in case of file transfer in order to be able to cancel the transfer */
 	belle_http_request_listener_t *http_listener; /* our listener, only owned by us*/
@@ -663,7 +665,8 @@ void linphone_chat_message_send_display_notification(LinphoneChatMessage *cm);
 void _linphone_chat_message_cancel_file_transfer(LinphoneChatMessage *msg, bool_t unref);
 int linphone_chat_room_upload_file(LinphoneChatMessage *msg);
 void _linphone_chat_room_send_message(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
-LinphoneChatMessageCbs *linphone_chat_message_cbs_new(void);
+void linphone_chat_message_send_to_sal(LinphoneChatMessage *msg);
+LINPHONE_PUBLIC LinphoneChatMessageCbs *linphone_chat_message_cbs_new(void);
 LinphoneChatRoom *_linphone_core_create_chat_room_from_call(LinphoneCall *call);
 void linphone_chat_room_add_transient_message(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
 void linphone_chat_room_remove_transient_message(LinphoneChatRoom *cr, LinphoneChatMessage *msg);

@@ -370,6 +370,35 @@ static void store_or_update_chat_message(LinphoneChatMessage *msg) {
 	}
 }
 
+
+static void linphone_chat_message_send_to_sal_from_op(SalOp *op, LinphoneChatMessage *msg) {
+	LinphoneChatRoom *cr = msg->chat_room;
+	char *peer_uri = linphone_address_as_string_uri_only(linphone_chat_room_get_peer_address(cr));
+	char *identity = linphone_address_as_string_uri_only(linphone_chat_message_get_from_address(msg));
+	const char *content_type = msg->content_type;
+	if (content_type == NULL) {
+		sal_text_send(op, identity, cr->peer, msg->message);
+	} else {
+		sal_message_send(op, identity, cr->peer, content_type, msg->message, peer_uri);
+	}
+	ms_free(peer_uri);
+	ms_free(identity);
+	if (msg->message && msg->clear_text_message && strcmp(msg->message, msg->clear_text_message) != 0) {
+		// We replace the encrypted message by the original one so it can be correctly stored and displayed by the application
+		ms_free(msg->message);
+		msg->message = ms_strdup(msg->clear_text_message);
+	}
+	if (msg->content_type && msg->clear_text_content_type && (strcmp(msg->content_type, msg->clear_text_content_type) != 0)) {
+		/* We replace the encrypted content type by the original one */
+		ms_free(msg->content_type);
+		msg->content_type = ms_strdup(msg->clear_text_content_type);
+	}
+	msg->message_id = ms_strdup(sal_op_get_call_id(op)); /* must be known at that time */
+	store_or_update_chat_message(msg);
+}
+void linphone_chat_message_send_to_sal(LinphoneChatMessage *msg) {
+	linphone_chat_message_send_to_sal_from_op(msg->op,msg);
+}
 void _linphone_chat_room_send_message(LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
 	int retval = -1;
 	LinphoneCore *lc = cr->lc;
@@ -400,16 +429,13 @@ void _linphone_chat_room_send_message(LinphoneChatRoom *cr, LinphoneChatMessage 
 	} else {
 		SalOp *op = msg->op;
 		LinphoneCall *call=NULL;
-		char *content_type;
 		const char *identity = NULL;
-		char *clear_text_message = NULL;
-		char *clear_text_content_type = NULL;
 
 		if (msg->message) {
-			clear_text_message = ms_strdup(msg->message);
+			msg->clear_text_message = ms_strdup(msg->message);
 		}
 		if (msg->content_type) {
-			clear_text_content_type = ms_strdup(msg->content_type);
+			msg->clear_text_content_type = ms_strdup(msg->content_type);
 		}
 
 		/* Add to transient list */
@@ -449,7 +475,7 @@ void _linphone_chat_room_send_message(LinphoneChatRoom *cr, LinphoneChatMessage 
 			LinphoneImEncryptionEngineCbsOutgoingMessageCb cb_process_outgoing_message = linphone_im_encryption_engine_cbs_get_process_outgoing_message(imee_cbs);
 			if (cb_process_outgoing_message) {
 				retval = cb_process_outgoing_message(imee, cr, msg);
-				if(retval == 0) {
+				if(retval == 0 || retval == 1) {
 					msg->is_secured = TRUE;
 				}
 			}
@@ -463,7 +489,7 @@ void _linphone_chat_room_send_message(LinphoneChatRoom *cr, LinphoneChatMessage 
 			sal_op_set_user_pointer(op, msg); /*if out of call, directly store msg*/
 		}
 
-		if (retval > 0) {
+		if (retval > 1) {
 			sal_error_info_set((SalErrorInfo *)sal_op_get_error_info(op), SalReasonNotAcceptable, "SIP", retval, "Unable to encrypt IM", NULL);
 			store_or_update_chat_message(msg);
 			linphone_chat_message_update_state(msg, LinphoneChatMessageStateNotDelivered);
@@ -472,32 +498,18 @@ void _linphone_chat_room_send_message(LinphoneChatRoom *cr, LinphoneChatMessage 
 		}
 
 		if (msg->external_body_url) {
-			content_type = ms_strdup_printf("message/external-body; access-type=URL; URL=\"%s\"", msg->external_body_url);
-			sal_message_send(op, identity, cr->peer, content_type, NULL, NULL);
-			ms_free(content_type);
+			msg->content_type = ms_strdup_printf("message/external-body; access-type=URL; URL=\"%s\"", msg->external_body_url);
+			linphone_chat_message_send_to_sal(msg);
 		} else {
-			char *peer_uri = linphone_address_as_string_uri_only(linphone_chat_room_get_peer_address(cr));
-			const char *content_type = msg->content_type;
-			if (content_type == NULL) {
-				sal_text_send(op, identity, cr->peer, msg->message);
-			} else {
-				sal_message_send(op, identity, cr->peer, content_type, msg->message, peer_uri);
+			if (retval != 1) {
+				if (msg->op)
+					linphone_chat_message_send_to_sal(msg);
+				else
+					linphone_chat_message_send_to_sal_from_op(op,msg);/*special case for in dialog chat message*/
 			}
-			ms_free(peer_uri);
 		}
 
-		if (msg->message && clear_text_message && strcmp(msg->message, clear_text_message) != 0) {
-			// We replace the encrypted message by the original one so it can be correctly stored and displayed by the application
-			ms_free(msg->message);
-			msg->message = ms_strdup(clear_text_message);
-		}
-		if (msg->content_type && clear_text_content_type && (strcmp(msg->content_type, clear_text_content_type) != 0)) {
-			/* We replace the encrypted content type by the original one */
-			ms_free(msg->content_type);
-			msg->content_type = ms_strdup(clear_text_content_type);
-		}
-		msg->message_id = ms_strdup(sal_op_get_call_id(op)); /* must be known at that time */
-		store_or_update_chat_message(msg);
+		
 
 		if (cr->is_composing == LinphoneIsComposingActive) {
 			cr->is_composing = LinphoneIsComposingIdle;
@@ -505,12 +517,7 @@ void _linphone_chat_room_send_message(LinphoneChatRoom *cr, LinphoneChatMessage 
 		linphone_chat_room_delete_composing_idle_timer(cr);
 		linphone_chat_room_delete_composing_refresh_timer(cr);
 
-		if (clear_text_message) {
-			ms_free(clear_text_message);
-		}
-		if (clear_text_content_type) {
-			ms_free(clear_text_content_type);
-		}
+
 
 		if (call && call->op == op) {
 			/*In this case, chat delivery status is not notified, so unrefing chat message right now*/
@@ -1705,6 +1712,12 @@ static void _linphone_chat_message_destroy(LinphoneChatMessage *msg) {
 	}
 	if (msg->callbacks) {
 		linphone_chat_message_cbs_unref(msg->callbacks);
+	}
+	if (msg->clear_text_message) {
+		ms_free(msg->clear_text_message);
+	}
+	if (msg->clear_text_content_type) {
+		ms_free(msg->clear_text_content_type);
 	}
 }
 
