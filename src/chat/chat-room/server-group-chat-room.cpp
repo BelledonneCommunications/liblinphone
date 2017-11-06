@@ -61,9 +61,8 @@ void ServerGroupChatRoomPrivate::confirmCreation () {
 	shared_ptr<CallSession> session = me->getPrivate()->getSession();
 	session->startIncomingNotification();
 
-	qConference->getPrivate()->conferenceAddress = me->getAddress();
-	qConference->getPrivate()->conferenceAddress.setUsername(generateConferenceId());
-	me->getPrivate()->setAddress(qConference->getPrivate()->conferenceAddress);
+	generateConferenceAddress(me);
+	peerAddress = qConference->getPrivate()->conferenceAddress = me->getAddress();
 	// Let the SIP stack set the domain and the port
 	Address addr = qConference->getPrivate()->conferenceAddress;
 	addr.setParam("isfocus");
@@ -77,11 +76,11 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	shared_ptr<Participant> participant;
 	if (q->getNbParticipants() == 0) {
 		// First participant (creator of the chat room)
-		participant = addParticipant(Address(op->get_from()));
+		participant = addParticipant(Address(op->get_remote_contact()));
 		participant->getPrivate()->setAdmin(true);
 	} else {
 		// INVITE coming from an invited participant
-		participant = q->findParticipant(Address(op->get_from()));
+		participant = q->findParticipant(Address(op->get_remote_contact()));
 		if (!participant) {
 			op->decline(SalReasonDeclined, nullptr);
 			return;
@@ -111,16 +110,18 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::findRemovedParticipant (cons
 	return nullptr;
 }
 
-string ServerGroupChatRoomPrivate::generateConferenceId () const {
+void ServerGroupChatRoomPrivate::generateConferenceAddress (shared_ptr<Participant> me) {
 	L_Q();
 	char token[11];
 	ostringstream os;
+	Address conferenceAddress = me->getAddress();
 	do {
 		belle_sip_random_token(token, sizeof(token));
 		os.str("");
 		os << "chatroom-" << token;
-	} while (static_cast<const CoreAccessor*>(q)->getCore()->findChatRoom(Address(os.str())));
-	return os.str();
+		conferenceAddress.setUsername(os.str());
+	} while (static_cast<const CoreAccessor*>(q)->getCore()->findChatRoom(conferenceAddress));
+	me->getPrivate()->setAddress(conferenceAddress);
 }
 
 void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<const Participant> &participant) {
@@ -224,7 +225,8 @@ bool ServerGroupChatRoomPrivate::isAdminLeft () const {
 // =============================================================================
 
 ServerGroupChatRoom::ServerGroupChatRoom (const std::shared_ptr<Core> &core, SalCallOp *op)
-: ChatRoom(*new ServerGroupChatRoomPrivate(), core, Address(op->get_to())), LocalConference(core->getCCore(), Address(op->get_to()), nullptr) {
+: ChatRoom(*new ServerGroupChatRoomPrivate(), core, Address(op->get_to())),
+LocalConference(core->getCCore(), Address(linphone_core_get_conference_factory_uri(core->getCCore())), nullptr) {
 	LocalConference::setSubject(op->get_subject() ? op->get_subject() : "");
 	getMe()->getPrivate()->createSession(*this, nullptr, false, this);
 	getMe()->getPrivate()->getSession()->configure(LinphoneCallIncoming, nullptr, op, Address(op->get_from()), Address(op->get_to()));
