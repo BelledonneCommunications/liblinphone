@@ -309,10 +309,6 @@ bool_t linphone_chat_message_has_text_content(const LinphoneChatMessage *msg) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->hasTextContent();
 }
 
-bool_t linphone_chat_message_has_file_transfer_content(const LinphoneChatMessage *msg) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->hasFileTransferContent();
-}
-
 const char * linphone_chat_message_get_text_content(const LinphoneChatMessage *msg) {
 	LinphonePrivate::Content content = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getTextContent();
 	if (content == LinphonePrivate::Content::Empty) {
