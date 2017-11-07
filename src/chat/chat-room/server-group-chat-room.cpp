@@ -76,11 +76,11 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	shared_ptr<Participant> participant;
 	if (q->getNbParticipants() == 0) {
 		// First participant (creator of the chat room)
-		participant = addParticipant(Address(op->get_remote_contact()));
+		participant = addParticipant(Address(op->get_from()));
 		participant->getPrivate()->setAdmin(true);
 	} else {
 		// INVITE coming from an invited participant
-		participant = q->findParticipant(Address(op->get_remote_contact()));
+		participant = q->findParticipant(Address(op->get_from()));
 		if (!participant) {
 			op->decline(SalReasonDeclined, nullptr);
 			return;
