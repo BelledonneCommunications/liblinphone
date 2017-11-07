@@ -46,9 +46,7 @@ ServerGroupChatRoomPrivate::ServerGroupChatRoomPrivate () {}
 
 shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const Address &addr) {
 	L_Q_T(LocalConference, qConference);
-	Address cleanedAddr(addr);
-	cleanedAddr.clean();
-	shared_ptr<Participant> participant = make_shared<Participant>(cleanedAddr);
+	shared_ptr<Participant> participant = make_shared<Participant>(addr);
 	qConference->getPrivate()->participants.push_back(participant);
 	return participant;
 }
@@ -61,10 +59,9 @@ void ServerGroupChatRoomPrivate::confirmCreation () {
 	shared_ptr<CallSession> session = me->getPrivate()->getSession();
 	session->startIncomingNotification();
 
-	generateConferenceAddress(me);
-	peerAddress = qConference->getPrivate()->conferenceAddress = me->getAddress();
+	peerAddress = qConference->getPrivate()->conferenceAddress = generateConferenceAddress(me);
 	// Let the SIP stack set the domain and the port
-	Address addr = qConference->getPrivate()->conferenceAddress;
+	Address addr = me->getContactAddress();
 	addr.setParam("isfocus");
 	session->redirect(addr);
 	setState(ChatRoom::State::Created);
@@ -77,6 +74,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	if (q->getNbParticipants() == 0) {
 		// First participant (creator of the chat room)
 		participant = addParticipant(Address(op->get_from()));
+		participant->getPrivate()->setContactAddress(Address(op->get_remote_contact()));
 		participant->getPrivate()->setAdmin(true);
 	} else {
 		// INVITE coming from an invited participant
@@ -110,11 +108,11 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::findRemovedParticipant (cons
 	return nullptr;
 }
 
-void ServerGroupChatRoomPrivate::generateConferenceAddress (shared_ptr<Participant> me) {
+Address ServerGroupChatRoomPrivate::generateConferenceAddress (shared_ptr<Participant> me) {
 	L_Q();
 	char token[11];
 	ostringstream os;
-	Address conferenceAddress = me->getAddress();
+	Address conferenceAddress = me->getContactAddress();
 	do {
 		belle_sip_random_token(token, sizeof(token));
 		os.str("");
@@ -122,6 +120,8 @@ void ServerGroupChatRoomPrivate::generateConferenceAddress (shared_ptr<Participa
 		conferenceAddress.setUsername(os.str());
 	} while (static_cast<const CoreAccessor*>(q)->getCore()->findChatRoom(conferenceAddress));
 	me->getPrivate()->setAddress(conferenceAddress);
+	me->getPrivate()->setContactAddress(conferenceAddress);
+	return me->getContactAddress();
 }
 
 void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<const Participant> &participant) {
@@ -170,13 +170,11 @@ void ServerGroupChatRoomPrivate::dispatchMessage (const Address &fromAddr, const
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 	for (const auto &p : qConference->getPrivate()->participants) {
-		Address cleanedAddress(p->getAddress());
-		cleanedAddress.setPort(0);
-		if (!cleanedAddress.weakEqual(fromAddr)) {
+		if (!fromAddr.weakEqual(p->getAddress())) {
 			shared_ptr<ChatMessage> msg = q->createMessage();
 			msg->setInternalContent(content);
 			msg->setFromAddress(q->getConferenceAddress());
-			msg->setToAddress(p->getAddress());
+			msg->setToAddress(p->getContactAddress());
 			msg->getPrivate()->setApplyModifiers(false);
 			msg->send();
 		}
@@ -288,7 +286,7 @@ void ServerGroupChatRoom::leave () {}
 void ServerGroupChatRoom::removeParticipant (const shared_ptr<const Participant> &participant) {
 	L_D();
 	SalReferOp *referOp = new SalReferOp(CoreAccessor::getCore()->getCCore()->sal);
-	LinphoneAddress *lAddr = linphone_address_new(participant->getAddress().asString().c_str());
+	LinphoneAddress *lAddr = linphone_address_new(participant->getContactAddress().asString().c_str());
 	linphone_configure_op(CoreAccessor::getCore()->getCCore(), referOp, lAddr, nullptr, false);
 	linphone_address_unref(lAddr);
 	Address referToAddr = getConferenceAddress();
