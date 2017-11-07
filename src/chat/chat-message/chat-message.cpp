@@ -179,6 +179,7 @@ void ChatMessagePrivate::setContentType (const ContentType &contentType) {
 }
 
 const string &ChatMessagePrivate::getText () {
+	L_Q();
 	if (direction == ChatMessage::Direction::Incoming) {
 		if (contents.size() > 0) {
 			Content content = contents.front();
@@ -187,7 +188,9 @@ const string &ChatMessagePrivate::getText () {
 			cText = internalContent.getBodyAsString();
 		}
 	} else {
-		if (!internalContent.isEmpty()) {
+		if (q->hasTextContent()) {
+			cText = q->getTextContent().getBodyAsString();
+		} else if (!internalContent.isEmpty()) {
 			cText = internalContent.getBodyAsString();
 		} else {
 			if (contents.size() > 0) {
@@ -764,7 +767,7 @@ void ChatMessagePrivate::processResponseFromPostFile (const belle_http_response_
 				
 				Content fileTransferContent;
 				fileTransferContent.setContentType(ContentType::FileTransfer);
-				fileTransferContent.setBody(getText());
+				fileTransferContent.setBody(internalContent.getBodyAsString());
 				q->addContent(fileTransferContent);
 
 				q->updateState(ChatMessage::State::FileTransferDone);
