@@ -35,7 +35,9 @@ class Core;
 class EventLog;
 class MainDbPrivate;
 
-class LINPHONE_PUBLIC MainDb : public AbstractDb, public CoreAccessor {
+class MainDb : public AbstractDb, public CoreAccessor {
+	friend class MainDbEventKey;
+
 public:
 	enum Filter {
 		NoFilter = 0x0,
@@ -53,7 +55,7 @@ public:
 	// ---------------------------------------------------------------------------
 
 	bool addEvent (const std::shared_ptr<EventLog> &eventLog);
-	bool deleteEvent (const std::shared_ptr<EventLog> &eventLog);
+	static bool deleteEvent (const std::shared_ptr<EventLog> &eventLog);
 	int getEventsCount (FilterMask mask = NoFilter) const;
 
 	// ---------------------------------------------------------------------------

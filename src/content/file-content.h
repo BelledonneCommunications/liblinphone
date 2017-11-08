@@ -1,5 +1,5 @@
 /*
- * event-log.h
+ * file-content.h
  * Copyright (C) 2010-2017 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,41 +17,42 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _EVENT_LOG_H_
-#define _EVENT_LOG_H_
+#ifndef _FILE_CONTENT_H_
+#define _FILE_CONTENT_H_
 
-#include <ctime>
-
-#include "linphone/enums/event-log-enums.h"
-#include "linphone/utils/enum-generator.h"
-
-#include "object/base-object.h"
+#include "content.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class EventLogPrivate;
+class FileContentPrivate;
 
-class LINPHONE_PUBLIC EventLog : public BaseObject {
-	friend class MainDb;
-
+class LINPHONE_PUBLIC FileContent : public Content {
 public:
-	L_DECLARE_ENUM(Type, L_ENUM_VALUES_EVENT_LOG_TYPE);
+	FileContent();
+	FileContent (const FileContent &src);
+	FileContent (FileContent &&src);
 
-	EventLog ();
+	FileContent &operator= (const FileContent &src);
+	FileContent &operator= (FileContent &&src);
+	bool operator== (const FileContent &content) const;
 
-	Type getType () const;
-	std::time_t getTime () const;
+	void setFileSize(size_t size);
+	size_t getFileSize() const;
+	
+	void setFileName(const std::string &name);
+	const std::string& getFileName() const;
+		
+	void setFilePath(const std::string &path);
+	const std::string& getFilePath() const;
 
-protected:
-	EventLog (EventLogPrivate &p, Type type, std::time_t time);
+	LinphoneContent * toLinphoneContent() const override;
 
 private:
-	L_DECLARE_PRIVATE(EventLog);
-	L_DISABLE_COPY(EventLog);
+	L_DECLARE_PRIVATE(FileContent);
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _EVENT_LOG_H_
+#endif // ifndef _FILE_CONTENT_H_

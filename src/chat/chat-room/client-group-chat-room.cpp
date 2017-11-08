@@ -196,8 +196,6 @@ void ClientGroupChatRoom::removeParticipant (const shared_ptr<const Participant>
 	Address referToAddr = participant->getAddress();
 	referToAddr.setParam("text");
 	referToAddr.setUriParam("method", "BYE");
-	referToAddr.setDomain("");
-	referToAddr.setPort(-1);
 	referOp->send_refer(referToAddr.getPrivate()->getInternalAddress());
 	referOp->unref();
 }
@@ -224,8 +222,6 @@ void ClientGroupChatRoom::setParticipantAdminStatus (shared_ptr<Participant> &pa
 	Address referToAddr = participant->getAddress();
 	referToAddr.setParam("text");
 	referToAddr.setParam("admin", Utils::toString(isAdmin));
-	referToAddr.setDomain("");
-	referToAddr.setPort(-1);
 	referOp->send_refer(referToAddr.getPrivate()->getInternalAddress());
 	referOp->unref();
 }
@@ -307,7 +303,7 @@ void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferencePartici
 }
 
 void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {
-	(void)isFullState; // unused
+	(void)isFullState;
 
 	L_D_T(RemoteConference, dConference);
 
@@ -401,7 +397,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 }
 
 void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {
-	(void)isFullState; // unused
+	(void)isFullState;
 
 	const Address &addr = event->getParticipantAddress();
 	shared_ptr<Participant> participant;

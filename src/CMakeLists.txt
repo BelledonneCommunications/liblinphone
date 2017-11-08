@@ -84,6 +84,9 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	content/content-manager.h
 	content/content-type.h
 	content/content.h
+	content/content-p.h
+	content/file-content.h
+	content/file-transfer-content.h
 	core/core-accessor.h
 	core/core-p.h
 	core/core.h
@@ -91,6 +94,8 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	core/platform-helpers/platform-helpers.h
 	db/abstract/abstract-db-p.h
 	db/abstract/abstract-db.h
+	db/main-db-event-key-p.h
+	db/main-db-event-key.h
 	db/main-db-p.h
 	db/main-db.h
 	db/session/db-session-p.h
@@ -182,12 +187,15 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	content/content-manager.cpp
 	content/content-type.cpp
 	content/content.cpp
+	content/file-content.cpp
+	content/file-transfer-content.cpp
 	core/core-accessor.cpp
 	core/core-chat-room.cpp
 	core/core.cpp
 	core/paths/paths.cpp
 	core/platform-helpers/platform-helpers.cpp
 	db/abstract/abstract-db.cpp
+	db/main-db-event-key.cpp
 	db/main-db.cpp
 	db/session/db-session-provider.cpp
 	db/session/db-session.cpp
