@@ -238,6 +238,10 @@ int ServerGroupChatRoom::getCapabilities () const {
 
 void ServerGroupChatRoom::addParticipant (const Address &addr, const CallSessionParams *params, bool hasMedia) {
 	L_D_T(LocalConference, dConference);
+	if (findParticipant(addr)) {
+		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the ServerGroupChatRoom";
+		return;
+	}
 	SalReferOp *referOp = new SalReferOp(CoreAccessor::getCore()->getCCore()->sal);
 	LinphoneAddress *lAddr = linphone_address_new(addr.asString().c_str());
 	linphone_configure_op(CoreAccessor::getCore()->getCCore(), referOp, lAddr, nullptr, false);
