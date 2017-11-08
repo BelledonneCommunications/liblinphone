@@ -30,6 +30,7 @@
 #include "chat/chat-room/real-time-text-chat-room.h"
 #include "chat/modifier/cpim-chat-message-modifier.h"
 #include "chat/modifier/encryption-chat-message-modifier.h"
+#include "chat/modifier/file-transfer-chat-message-modifier.h"
 #include "chat/modifier/multipart-chat-message-modifier.h"
 #include "content/file-content.h"
 #include "content/content.h"
@@ -719,7 +720,7 @@ void ChatMessagePrivate::processResponseFromPostFile (const belle_http_response_
 				first_part_header = "form-data; name=\"File\"; filename=\"filename.txt\"";
 			} else {
 				// temporary storage for the Content-disposition header value
-				first_part_header = "form-data; name=\"File\"; filename=\"" + currentFileContentToTransfer->getContentDisposition() + "\"";
+				first_part_header = "form-data; name=\"File\"; filename=\"" + currentFileContentToTransfer->getFileName() + "\"";
 			}
 
 			// create a user body handler to take care of the file and add the content disposition and content-type headers
@@ -1148,7 +1149,7 @@ void ChatMessagePrivate::createFileTransferInformationsFromVndGsmaRcsFtHttpXml (
 	xmlFreeDoc(xmlMessageBody);
 
 	fileContent->setFilePath(fileTransferContent->getFilePath()); // Copy file path from file transfer content to file content for file body handler
-	fileTransferContent->setFileUrl(string((const char *)file_url)); // Set file url in the file transfer content for the download
+	fileTransferContent->setFileUrl((const char *)file_url); // Set file url in the file transfer content for the download
 
 	// Link the FileContent to the FileTransferContent
 	fileTransferContent->setFileContent(fileContent);
@@ -1189,7 +1190,15 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	if (contents.size() == 0) {
 		// All previous modifiers only altered the internal content, let's fill the content list
-		contents.push_back(&internalContent);
+		// But first check if content type is file transfer
+		if (internalContent.getContentType() == ContentType::FileTransfer) {
+			FileTransferContent *content = new FileTransferContent();
+			content->setContentType(internalContent.getContentType());
+			content->setBody(internalContent.getBody());
+			contents.push_back(content);
+		} else {
+			contents.push_back(&internalContent);
+		}
 	}
 
 	// ---------------------------------------
@@ -1248,6 +1257,17 @@ void ChatMessagePrivate::send () {
 	if ((currentSendStep & ChatMessagePrivate::Step::FileUpload) == ChatMessagePrivate::Step::FileUpload) {
 		lInfo() << "File upload step already done, skipping";
 	} else {
+		// TODO
+		/*FileTransferChatMessageModifier ftcmm;
+		ChatMessageModifier::Result result = ftcmm.encode(q->getSharedFromThis(), errorCode);
+		if (result == ChatMessageModifier::Result::Error) {
+			return;
+		} else if (result == ChatMessageModifier::Result::Suspended) {
+			setState(ChatMessage::State::InProgress);
+			return;
+		}
+		currentSendStep |= ChatMessagePrivate::Step::FileUpload;*/
+
 		currentFileContentToTransfer = nullptr;
 		// For each FileContent, upload it and create a FileTransferContent
 		for (Content *content : contents) {
@@ -1648,6 +1668,11 @@ int ChatMessage::downloadFile(FileTransferContent *fileTransferContent) {
 	d->currentFileContentToTransfer = fileContent;
 	if (d->currentFileContentToTransfer == nullptr) {
 		return -1;
+	}
+	
+	// THIS IS ONLY FOR BACKWARD C API COMPAT
+	if (d->currentFileContentToTransfer->getFilePath().empty() && !getFileTransferFilepath().empty()) {
+		d->currentFileContentToTransfer->setFilePath(getFileTransferFilepath());
 	}
 	
 	belle_http_request_listener_callbacks_t cbs = { 0 };

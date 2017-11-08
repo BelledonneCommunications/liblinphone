@@ -538,6 +538,19 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 // -----------------------------------------------------------------------------
 
+	shared_ptr<EventLog> MainDbPrivate::getEventFromCache (long long eventId) const {
+		auto it = storageIdToEvent.find(eventId);
+		if (it == storageIdToEvent.cend())
+			return nullptr;
+
+		shared_ptr<EventLog> eventLog = it->second.lock();
+		// Must exist. If not, implementation bug.
+		L_ASSERT(eventLog);
+		return eventLog;
+	}
+
+// -----------------------------------------------------------------------------
+
 	void MainDb::init () {
 		L_D();
 		soci::session *session = d->dbSession.getBackendSession<soci::session>();
@@ -718,6 +731,19 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"    ON DELETE CASCADE,"
 			"  FOREIGN KEY (content_type_id)"
 			"    REFERENCES content_type(id)"
+			"    ON DELETE CASCADE"
+			")";
+
+		*session <<
+			"CREATE TABLE IF NOT EXISTS chat_message_file_content ("
+			"  chat_message_content_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
+
+			"  name VARCHAR(256) NOT NULL,"
+			"  size INT UNSIGNED NOT NULL,"
+			"  path VARCHAR(512) NOT NULL,"
+
+			"  FOREIGN KEY (chat_message_content_id)"
+			"    REFERENCES chat_message_content(id)"
 			"    ON DELETE CASCADE"
 			")";
 
@@ -920,13 +946,17 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		soci::transaction tr(*session);
 
 		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(peerAddress), soci::use(lastNotifyId));
-		for (const auto &row : rows)
-			events.push_back(d->selectGenericConferenceEvent(
-				getBackend() == Sqlite3 ? static_cast<long long>(row.get<int>(0)) : row.get<long long>(0),
+		for (const auto &row : rows) {
+			long long eventId = getBackend() == Sqlite3 ? static_cast<long long>(row.get<int>(0)) : row.get<long long>(0);
+			shared_ptr<EventLog> eventLog = d->getEventFromCache(eventId);
+
+			events.push_back(eventLog ? eventLog : d->selectGenericConferenceEvent(
+				eventId,
 				static_cast<EventLog::Type>(row.get<int>(1)),
 				Utils::getTmAsTimeT(row.get<tm>(2)),
 				peerAddress
 			));
+		}
 
 		L_END_LOG_EXCEPTION
 
@@ -1095,12 +1125,16 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			// See: http://soci.sourceforge.net/doc/master/backends/
 			// `row id` is not supported by soci on Sqlite3. It's necessary to cast id to int...
 			long long eventId = getBackend() == Sqlite3 ? static_cast<long long>(row.get<int>(0)) : row.get<long long>(0);
-			shared_ptr<EventLog> event = d->selectGenericConferenceEvent(
-				eventId,
-				static_cast<EventLog::Type>(row.get<int>(1)),
-				Utils::getTmAsTimeT(row.get<tm>(2)),
-				peerAddress
-			);
+			shared_ptr<EventLog> event = d->getEventFromCache(eventId);
+
+			if (!event)
+				event = d->selectGenericConferenceEvent(
+					eventId,
+					static_cast<EventLog::Type>(row.get<int>(1)),
+					Utils::getTmAsTimeT(row.get<tm>(2)),
+					peerAddress
+				);
+
 			if (event)
 				events.push_back(event);
 			else
