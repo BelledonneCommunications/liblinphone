@@ -89,8 +89,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 	) {
 		L_ASSERT(
 			find_if(filters.cbegin(), filters.cend(), [](const MainDb::Filter &filter) {
-					return filter == MainDb::NoFilter;
-				}) == filters.cend()
+				return filter == MainDb::NoFilter;
+			}) == filters.cend()
 		);
 
 		if (mask == MainDb::NoFilter)
@@ -134,7 +134,6 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 	void MainDbPrivate::insertContent (long long eventId, const Content &content) {
 		L_Q();
-
 		soci::session *session = dbSession.getBackendSession<soci::session>();
 
 		long long contentTypeId = insertContentType(content.getContentType().asString());
@@ -253,15 +252,11 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 	}
 
 	shared_ptr<EventLog> MainDbPrivate::selectConferenceEvent (
-		long long eventId,
+		long long,
 		EventLog::Type type,
 		time_t date,
 		const string &peerAddress
 	) const {
-		// Useless here.
-		(void)eventId;
-
-		// TODO: Use cache.
 		return make_shared<ConferenceEvent>(
 			type,
 			date,
@@ -352,7 +347,6 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"    AND participant_address.id = participant_address_id",
 			soci::into(notifyId), soci::into(participantAddress), soci::use(eventId);
 
-		// TODO: Use cache.
 		return make_shared<ConferenceParticipantEvent>(
 			type,
 			date,
@@ -383,7 +377,6 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"    AND gruu_address.id = gruu_address_id",
 			soci::into(notifyId), soci::into(participantAddress), soci::into(gruuAddress), soci::use(eventId);
 
-		// TODO: Use cache.
 		return make_shared<ConferenceParticipantDeviceEvent>(
 			type,
 			date,
@@ -410,7 +403,6 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"    AND conference_notified_event.event_id = conference_subject_event.event_id",
 			soci::into(notifyId), soci::into(subject), soci::use(eventId);
 
-		// TODO: Use cache.
 		return make_shared<ConferenceSubjectEvent>(
 			date,
 			Address(peerAddress),
@@ -478,7 +470,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			soci::use(static_cast<int>(chatMessage->getState())), soci::use(static_cast<int>(chatMessage->getDirection())),
 			soci::use(chatMessage->getImdnMessageId()), soci::use(chatMessage->isSecured() ? 1 : 0);
 
-		for (Content *content : chatMessage->getContents())
+		for (const Content *content : chatMessage->getContents())
 			insertContent(eventId, *content);
 
 		return eventId;
@@ -549,30 +541,49 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		return eventLog;
 	}
 
+	void MainDbPrivate::invalidEventsFromQuery (const string &query, const string &peerAddress) {
+		L_Q();
+
+		soci::session *session = dbSession.getBackendSession<soci::session>();
+		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(peerAddress));
+		for (const auto &row : rows) {
+			shared_ptr<EventLog> eventLog = getEventFromCache(
+				q->getBackend() == AbstractDb::Sqlite3 ? static_cast<long long>(row.get<int>(0)) : row.get<long long>(0)
+			);
+			if (eventLog) {
+				const EventLogPrivate *dEventLog = eventLog->getPrivate();
+				L_ASSERT(dEventLog->dbKey.isValid());
+				dEventLog->dbKey = MainDbEventKey();
+			}
+		}
+	}
+
 // -----------------------------------------------------------------------------
 
 	void MainDb::init () {
 		L_D();
+
+		const string charset = getBackend() == Mysql ? "DEFAULT CHARSET=utf8" : "";
 		soci::session *session = d->dbSession.getBackendSession<soci::session>();
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS sip_address ("
 			"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 			"  value VARCHAR(255) UNIQUE NOT NULL"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS content_type ("
 			"  id" + primaryKeyStr("SMALLINT UNSIGNED") + ","
 			"  value VARCHAR(255) UNIQUE NOT NULL"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS event ("
 			"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 			"  type TINYINT UNSIGNED NOT NULL,"
 			"  date DATE NOT NULL"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_room ("
@@ -596,7 +607,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  FOREIGN KEY (peer_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_room_participant ("
@@ -612,7 +623,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  FOREIGN KEY (sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_event ("
@@ -626,7 +637,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  FOREIGN KEY (chat_room_id)"
 			"    REFERENCES chat_room(peer_sip_address_id)"
 			"    ON DELETE CASCADE"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_notified_event ("
@@ -637,7 +648,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  FOREIGN KEY (event_id)"
 			"    REFERENCES conference_event(event_id)"
 			"    ON DELETE CASCADE"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_participant_event ("
@@ -651,7 +662,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  FOREIGN KEY (participant_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_participant_device_event ("
@@ -665,7 +676,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  FOREIGN KEY (gruu_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_subject_event ("
@@ -676,7 +687,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  FOREIGN KEY (event_id)"
 			"    REFERENCES conference_notified_event(event_id)"
 			"    ON DELETE CASCADE"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_chat_message_event ("
@@ -701,7 +712,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  FOREIGN KEY (remote_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_participant ("
@@ -716,7 +727,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  FOREIGN KEY (sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_content ("
@@ -732,7 +743,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  FOREIGN KEY (content_type_id)"
 			"    REFERENCES content_type(id)"
 			"    ON DELETE CASCADE"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_file_content ("
@@ -745,7 +756,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  FOREIGN KEY (chat_message_content_id)"
 			"    REFERENCES chat_message_content(id)"
 			"    ON DELETE CASCADE"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_content_app_data ("
@@ -758,7 +769,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  FOREIGN KEY (chat_message_content_id)"
 			"    REFERENCES chat_message_content(id)"
 			"    ON DELETE CASCADE"
-			")";
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_message_crypto_data ("
@@ -771,7 +782,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  FOREIGN KEY (event_id)"
 			"    REFERENCES conference_chat_message_event(event_id)"
 			"    ON DELETE CASCADE"
-			")";
+			") " + charset;
 
 		// Trigger to delete participant_message cache entries.
 		string displayedId = Utils::toString(static_cast<int>(ChatMessage::State::Displayed));
@@ -1154,19 +1165,15 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			return;
 		}
 
-		// TODO: Deal with mask.
-
-		string query;
-		if (mask == MainDb::NoFilter || mask & ConferenceChatMessageFilter)
-			query += "SELECT event_id FROM conference_event WHERE chat_room_id = ("
-				"  SELECT id FROM sip_address WHERE value = :peerAddress"
-				")";
-
-		if (query.empty())
-			return;
+		string query = "SELECT event_id FROM conference_event WHERE chat_room_id = ("
+			"  SELECT id FROM sip_address WHERE value = :peerAddress"
+			")" + buildSqlEventFilter({
+				ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter
+			}, mask);
 
 		L_BEGIN_LOG_EXCEPTION
 
+		d->invalidEventsFromQuery(query, peerAddress);
 		soci::session *session = d->dbSession.getBackendSession<soci::session>();
 		*session << "DELETE FROM event WHERE id IN (" + query + ")", soci::use(peerAddress);
 
@@ -1271,6 +1278,13 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		}
 
 		L_BEGIN_LOG_EXCEPTION
+
+		d->invalidEventsFromQuery(
+			"SELECT event_id FROM conference_event WHERE chat_room_id = ("
+			"  SELECT id FROM sip_address WHERE value = :peerAddress"
+			")",
+			peerAddress
+		);
 
 		soci::session *session = d->dbSession.getBackendSession<soci::session>();
 		*session << "DELETE FROM chat_room WHERE peer_sip_address_id = ("
