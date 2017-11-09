@@ -75,8 +75,11 @@ void ChatMessagePrivate::setIsReadOnly (bool readOnly) {
 	isReadOnly = readOnly;
 }
 
-void ChatMessagePrivate::setState (ChatMessage::State s) {
+void ChatMessagePrivate::setState (ChatMessage::State s, bool force) {
 	L_Q();
+
+	if (force)
+		state = s;
 
 	if (s == state || !q->getChatRoom())
 		return;
@@ -157,6 +160,77 @@ string ChatMessagePrivate::getSalCustomHeaderValue (const string &name) {
 // Below methods are only for C API backward compatibility...
 // -----------------------------------------------------------------------------
 
+bool ChatMessagePrivate::hasTextContent() const {
+	for (const Content *c : contents) {
+		if (c->getContentType() == ContentType::PlainText) {
+			return true;
+		}
+	}
+	return false;
+}
+
+const Content* ChatMessagePrivate::getTextContent() const {
+	for (const Content *c : contents) {
+		if (c->getContentType() == ContentType::PlainText) {
+			return c;
+		}
+	}
+	return &Content::Empty;
+}
+
+bool ChatMessagePrivate::hasFileTransferContent() const {
+	for (const Content *c : contents) {
+		if (c->getContentType() == ContentType::FileTransfer) {
+			return true;
+		}
+	}
+	return false;
+}
+
+const Content* ChatMessagePrivate::getFileTransferContent() const {
+	for (const Content *c : contents) {
+		if (c->getContentType() == ContentType::FileTransfer) {
+			return c;
+		}
+	}
+	return &Content::Empty;
+}
+
+const string &ChatMessagePrivate::getFileTransferFilepath () const {
+	return fileTransferFilePath;
+}
+
+void ChatMessagePrivate::setFileTransferFilepath (const string &path) {
+	fileTransferFilePath = path;
+}
+
+const string &ChatMessagePrivate::getAppdata () const {
+	for (const Content *c : contents) {
+		if (c->getContentType().isFile()) {
+			FileContent *fileContent = (FileContent *)c;
+			return fileContent->getFilePath();
+		}
+	}
+	return Utils::getEmptyConstRefObject<string>();
+}
+
+void ChatMessagePrivate::setAppdata (const string &data) {
+	for (const Content *c : contents) {
+		if (c->getContentType().isFile()) {
+			FileContent *fileContent = (FileContent *)c;
+			return fileContent->setFilePath(data);
+		}
+	}
+}
+
+const string &ChatMessagePrivate::getExternalBodyUrl () const {
+	if (hasFileTransferContent()) {
+		FileTransferContent *content = (FileTransferContent*) getFileTransferContent();
+		return content->getFileUrl();
+	}
+	return Utils::getEmptyConstRefObject<string>();
+}
+
 const ContentType &ChatMessagePrivate::getContentType () {
 	if (direction == ChatMessage::Direction::Incoming) {
 		if (contents.size() > 0) {
@@ -183,10 +257,9 @@ void ChatMessagePrivate::setContentType (const ContentType &contentType) {
 }
 
 const string &ChatMessagePrivate::getText () {
-	L_Q();
 	if (direction == ChatMessage::Direction::Incoming) {
-		if (q->hasTextContent()) {
-			cText = q->getTextContent()->getBodyAsString();
+		if (hasTextContent()) {
+			cText = getTextContent()->getBodyAsString();
 		} else if (contents.size() > 0) {
 			Content *content = contents.front();
 			cText = content->getBodyAsString();
@@ -194,8 +267,8 @@ const string &ChatMessagePrivate::getText () {
 			cText = internalContent.getBodyAsString();
 		}
 	} else {
-		if (q->hasTextContent()) {
-			cText = q->getTextContent()->getBodyAsString();
+		if (hasTextContent()) {
+			cText = getTextContent()->getBodyAsString();
 		} else if (!internalContent.isEmpty()) {
 			cText = internalContent.getBodyAsString();
 		} else {
@@ -213,9 +286,14 @@ void ChatMessagePrivate::setText (const string &text) {
 }
 
 LinphoneContent *ChatMessagePrivate::getFileTransferInformation () const {
-	L_Q();
-	if (q->hasFileTransferContent()) {
-		return q->getFileTransferContent()->toLinphoneContent();
+	if (hasFileTransferContent()) {
+		return getFileTransferContent()->toLinphoneContent();
+	}
+	for (const Content *c : contents) {
+		if (c->getContentType().isFile()) {
+			FileContent *fileContent = (FileContent *)c;
+			return fileContent->toLinphoneContent();
+		}
 	}
 	return NULL;
 }
@@ -388,17 +466,12 @@ LinphoneReason ChatMessagePrivate::receive () {
 	MultipartChatMessageModifier mcmm;
 	mcmm.decode(q->getSharedFromThis(), errorCode);
 
+	// This will check if internal content is FileTransfer and make the appropriate changes
+	fileTransferChatMessageModifier.decode(q->getSharedFromThis(), errorCode);
+
 	if (contents.size() == 0) {
 		// All previous modifiers only altered the internal content, let's fill the content list
-		// But first check if content type is file transfer
-		if (internalContent.getContentType() == ContentType::FileTransfer) {
-			FileTransferContent *content = new FileTransferContent();
-			content->setContentType(internalContent.getContentType());
-			content->setBody(internalContent.getBody());
-			contents.push_back(content);
-		} else {
-			contents.push_back(&internalContent);
-		}
+		contents.push_back(&internalContent);
 	}
 
 	// ---------------------------------------
@@ -540,7 +613,8 @@ void ChatMessagePrivate::send () {
 		if ((currentSendStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
 			lInfo() << "Cpim step already done, skipping";
 		} else {
-			if (lp_config_get_int(core->getCCore()->config, "sip", "use_cpim", 0) == 1) {
+			int defaultValue = !!lp_config_get_string(core->getCCore()->config, "misc", "conference_factory_uri", nullptr);
+			if (lp_config_get_int(core->getCCore()->config, "sip", "use_cpim", defaultValue) == 1) {
 				CpimChatMessageModifier ccmm;
 				ccmm.encode(q->getSharedFromThis(), errorCode);
 			}
@@ -556,18 +630,11 @@ void ChatMessagePrivate::send () {
 		internalContent = *(contents.front());
 	}
 
-	if (!externalBodyUrl.empty()) { // Deprecated way of sending files
-		char *content_type = ms_strdup_printf("message/external-body; access-type=URL; URL=\"%s\"", externalBodyUrl.c_str());
-		auto msgOp = dynamic_cast<SalMessageOpInterface *>(op);
-		msgOp->send_message(from.asString().c_str(), to.asString().c_str(), content_type, nullptr, nullptr);
-		ms_free(content_type);
+	auto msgOp = dynamic_cast<SalMessageOpInterface *>(op);
+	if (internalContent.getContentType().isValid()) {
+		msgOp->send_message(from.asString().c_str(), to.asString().c_str(), internalContent.getContentType().asString().c_str(), internalContent.getBodyAsString().c_str(), to.asStringUriOnly().c_str());
 	} else {
-		auto msgOp = dynamic_cast<SalMessageOpInterface *>(op);
-		if (internalContent.getContentType().isValid()) {
-			msgOp->send_message(from.asString().c_str(), to.asString().c_str(), internalContent.getContentType().asString().c_str(), internalContent.getBodyAsString().c_str(), to.asStringUriOnly().c_str());
-		} else {
-			msgOp->send_message(from.asString().c_str(), to.asString().c_str(), internalContent.getBodyAsString().c_str());
-		}
+		msgOp->send_message(from.asString().c_str(), to.asString().c_str(), internalContent.getBodyAsString().c_str());
 	}
 
 	for (Content *content : contents) {
@@ -889,84 +956,5 @@ int ChatMessage::putCharacter (uint32_t character) {
 	}
 	return -1;
 }
-
-// -----------------------------------------------------------------------------
-// Below methods are only for C API backward compatibility...
-// -----------------------------------------------------------------------------
-
-bool ChatMessage::hasTextContent() const {
-	L_D();
-	for (const Content *c : d->contents) {
-		if (c->getContentType() == ContentType::PlainText) {
-			return true;
-		}
-	}
-	return false;
-}
-
-const Content* ChatMessage::getTextContent() const {
-	L_D();
-	for (const Content *c : d->contents) {
-		if (c->getContentType() == ContentType::PlainText) {
-			return c;
-		}
-	}
-	return &Content::Empty;
-}
-
-bool ChatMessage::hasFileTransferContent() const {
-	L_D();
-	for (const Content *c : d->contents) {
-		if (c->getContentType() == ContentType::FileTransfer) {
-			return true;
-		}
-	}
-	return false;
-}
-
-const Content* ChatMessage::getFileTransferContent() const {
-	L_D();
-	for (const Content *c : d->contents) {
-		if (c->getContentType() == ContentType::FileTransfer) {
-			return c;
-		}
-	}
-	return &Content::Empty;
-}
-
-const string &ChatMessage::getFileTransferFilepath () const {
-	L_D();
-	return d->fileTransferFilePath;
-}
-
-void ChatMessage::setFileTransferFilepath (const string &path) {
-	L_D();
-	d->fileTransferFilePath = path;
-}
-
-const string &ChatMessage::getAppdata () const {
-	L_D();
-	return d->appData;
-}
-
-void ChatMessage::setAppdata (const string &appData) {
-	L_D();
-	d->appData = appData;
-
-	// TODO: history.
-	// linphone_chat_message_store_appdata(L_GET_C_BACK_PTR(this));
-}
-
-const string &ChatMessage::getExternalBodyUrl () const {
-	L_D();
-	return d->externalBodyUrl;
-}
-
-void ChatMessage::setExternalBodyUrl (const string &url) {
-	L_D();
-	d->externalBodyUrl = url;
-}
-
-// -----------------------------------------------------------------------------
 
 LINPHONE_END_NAMESPACE

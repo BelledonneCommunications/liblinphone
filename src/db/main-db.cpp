@@ -143,8 +143,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 		long long messageContentId = q->getLastInsertId();
 		for (const auto &appData : content.getAppDataMap())
-			*session << "INSERT INTO chat_message_content_app_data (chat_message_content_id, key, data) VALUES"
-				"  (:messageContentId, :key, :data)",
+			*session << "INSERT INTO chat_message_content_app_data (chat_message_content_id, name, data) VALUES"
+				"  (:messageContentId, :name, :data)",
 				soci::use(messageContentId), soci::use(appData.first), soci::use(appData.second);
 	}
 
@@ -300,18 +300,17 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		*session << "SELECT local_sip_address.value, remote_sip_address.value, imdn_message_id, state, direction, is_secured"
 			"  FROM event, conference_chat_message_event, sip_address AS local_sip_address,"
 			"  sip_address AS remote_sip_address"
-			"  WHERE event_id = event.id"
+			"  WHERE event_id = :eventId"
+			"  AND event_id = event.id"
 			"  AND local_sip_address_id = local_sip_address.id"
-			"  AND remote_sip_address_id = remote_sip_address.id"
-			"  AND remote_sip_address.value = :peerAddress", soci::into(localSipAddress), soci::into(remoteSipAddress),
-			soci::into(imdnMessageId), soci::into(state), soci::into(direction), soci::into(isSecured),
-			soci::use(peerAddress);
+			"  AND remote_sip_address_id = remote_sip_address.id", soci::into(localSipAddress), soci::into(remoteSipAddress),
+			soci::into(imdnMessageId), soci::into(state), soci::into(direction), soci::into(isSecured), soci::use(eventId);
 
 		// TODO: Create me.
 		// TODO: Use cache, do not fetch the same message twice.
 		shared_ptr<ChatMessage> chatMessage = make_shared<ChatMessage>(chatRoom);
 
-		chatMessage->getPrivate()->setState(static_cast<ChatMessage::State>(state));
+		chatMessage->getPrivate()->setState(static_cast<ChatMessage::State>(state), true);
 		chatMessage->getPrivate()->setDirection(static_cast<ChatMessage::Direction>(direction));
 		chatMessage->setIsSecured(static_cast<bool>(isSecured));
 
@@ -919,6 +918,10 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			buildSqlEventFilter({ ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter }, mask);
 		int count = 0;
 
+		DurationLogger durationLogger(
+			"Get events count with mask=" + Utils::toString(static_cast<int>(mask)) + "."
+		);
+
 		L_BEGIN_LOG_EXCEPTION
 
 		soci::session *session = d->dbSession.getBackendSession<soci::session>();
@@ -950,6 +953,11 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		}
 
 		list<shared_ptr<EventLog>> events;
+
+		DurationLogger durationLogger(
+			"Get conference notified events of: `" + peerAddress +
+			"` (lastNotifyId=" + Utils::toString(lastNotifyId) + ")."
+		);
 
 		L_BEGIN_LOG_EXCEPTION
 
@@ -983,6 +991,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		}
 
 		int count = 0;
+
+		DurationLogger durationLogger("Get chat messages count of: `" + peerAddress + "`.");
 
 		L_BEGIN_LOG_EXCEPTION
 
@@ -1027,6 +1037,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		query += " direction = " + Utils::toString(static_cast<int>(ChatMessage::Direction::Incoming)) +
 			+ " AND state <> " + Utils::toString(static_cast<int>(ChatMessage::State::Displayed));
 
+		DurationLogger durationLogger("Get unread chat messages count of: `" + peerAddress + "`.");
+
 		L_BEGIN_LOG_EXCEPTION
 
 		soci::session *session = d->dbSession.getBackendSession<soci::session>();
@@ -1063,6 +1075,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				") AND";
 		query += " direction = " + Utils::toString(static_cast<int>(ChatMessage::Direction::Incoming));
 
+		DurationLogger durationLogger("Mark chat messages as read of: `" + peerAddress + "`.");
+
 		L_BEGIN_LOG_EXCEPTION
 
 		soci::session *session = d->dbSession.getBackendSession<soci::session>();
@@ -1076,6 +1090,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 	}
 
 	list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const std::string &peerAddress) const {
+		DurationLogger durationLogger("Get unread chat messages: `" + peerAddress + "`.");
+
 		// TODO.
 		return list<shared_ptr<ChatMessage>>();
 	}
@@ -1126,6 +1142,11 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		if (begin > 0)
 			query += "  OFFSET " + Utils::toString(begin);
 
+		DurationLogger durationLogger(
+			"Get history range of: `" + peerAddress +
+			"` (begin=" + Utils::toString(begin) + ", end=" + Utils::toString(end) + ")."
+		);
+
 		L_BEGIN_LOG_EXCEPTION
 
 		soci::session *session = d->dbSession.getBackendSession<soci::session>();
@@ -1171,6 +1192,10 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter
 			}, mask);
 
+		DurationLogger durationLogger(
+			"Clean history of: `" + peerAddress + "` (mask=" + Utils::toString(static_cast<int>(mask)) + ")."
+		);
+
 		L_BEGIN_LOG_EXCEPTION
 
 		d->invalidEventsFromQuery(query, peerAddress);
@@ -1199,6 +1224,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		L_ASSERT(core);
 
 		list<shared_ptr<ChatRoom>> chatRooms;
+
+		DurationLogger durationLogger("Get chat rooms.");
 
 		L_BEGIN_LOG_EXCEPTION
 
@@ -1254,6 +1281,10 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			return;
 		}
 
+		DurationLogger durationLogger(
+			"Insert chat room: `" + peerAddress + "` (capabilities=" + Utils::toString(capabilities) + ")."
+		);
+
 		L_BEGIN_LOG_EXCEPTION
 
 		soci::transaction tr(*d->dbSession.getBackendSession<soci::session>());
@@ -1276,6 +1307,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			lWarning() << "Unable to delete chat room. Not connected.";
 			return;
 		}
+
+		DurationLogger durationLogger("Delete chat room: `" + peerAddress + "`.");
 
 		L_BEGIN_LOG_EXCEPTION
 

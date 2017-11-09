@@ -61,7 +61,7 @@ public:
 
 	void setDirection (ChatMessage::Direction dir);
 
-	void setState(ChatMessage::State state);
+	void setState(ChatMessage::State state, bool force = false);
 
 	void setTime(time_t time);
 
@@ -93,9 +93,23 @@ public:
 	const std::string &getText();
 	void setText(const std::string &text);
 
+	const std::string &getFileTransferFilepath () const;
+	void setFileTransferFilepath (const std::string &path);
+
+	const std::string &getAppdata () const;
+	void setAppdata (const std::string &appData);
+
+	const std::string &getExternalBodyUrl () const;
+
+	bool hasTextContent() const;
+	const Content* getTextContent() const;
+
+	bool hasFileTransferContent() const;
+	const Content* getFileTransferContent() const;
+
 	LinphoneContent *getFileTransferInformation() const;
 	void setFileTransferInformation(const LinphoneContent *content);
-	
+
 	int downloadFile ();
 
 	void sendImdn(Imdn::Type imdnType, LinphoneReason reason);
@@ -115,9 +129,6 @@ private:
 	Address to;
 	time_t time = 0;
 	std::string id;
-	std::string appData;
-	std::string fileTransferFilePath;
-	std::string externalBodyUrl;
 	std::string rttMessage;
 	bool isSecured = false;
 	bool isReadOnly = false;
@@ -132,11 +143,12 @@ private:
 	FileTransferChatMessageModifier fileTransferChatMessageModifier;
 
 	// Cache for returned values, used for compatibility with previous C API
+	std::string fileTransferFilePath;
 	ContentType cContentType;
 	std::string cText;
 
 	// -----------------------------------------------------------------------------
-	
+
 	std::string createImdnXml(Imdn::Type imdnType, LinphoneReason reason);
 
 	L_DECLARE_PUBLIC(ChatMessage);

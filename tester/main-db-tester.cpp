@@ -45,7 +45,7 @@ public:
 	MainDbProvider () {
 		mCoreManager = linphone_core_manager_new("marie_rc");
 		mMainDb = new MainDb(mCoreManager->lc->cppCore->getSharedFromThis());
-		BC_ASSERT_TRUE(mMainDb->connect(MainDb::Sqlite3, getDatabasePath()));
+		mMainDb->connect(MainDb::Sqlite3, getDatabasePath());
 	}
 
 	~MainDbProvider () {
@@ -66,6 +66,7 @@ private:
 
 static void open_database () {
 	MainDbProvider provider;
+	BC_ASSERT_TRUE(provider.getMainDb().isConnected());
 }
 
 static void get_events_count () {
@@ -74,14 +75,14 @@ static void get_events_count () {
 	BC_ASSERT_EQUAL(mainDb.getEventsCount(), 4994, int, "%d");
 	BC_ASSERT_EQUAL(mainDb.getEventsCount(MainDb::ConferenceCallFilter), 0, int, "%d");
 	BC_ASSERT_EQUAL(mainDb.getEventsCount(MainDb::ConferenceInfoFilter), 18, int, "%d");
-	BC_ASSERT_EQUAL(mainDb.getEventsCount(MainDb::ConferenceChatMessageFilter), 4976, int, "%d");
+	BC_ASSERT_EQUAL(mainDb.getEventsCount(MainDb::ConferenceChatMessageFilter), 5157, int, "%d");
 	BC_ASSERT_EQUAL(mainDb.getEventsCount(MainDb::NoFilter), 4994, int, "%d");
 }
 
 static void get_messages_count () {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
-	BC_ASSERT_EQUAL(mainDb.getChatMessagesCount(), 4976, int, "%d");
+	BC_ASSERT_EQUAL(mainDb.getChatMessagesCount(), 5157, int, "%d");
 	BC_ASSERT_EQUAL(mainDb.getChatMessagesCount("sip:test-39@sip.linphone.org"), 3, int, "%d");
 }
 
