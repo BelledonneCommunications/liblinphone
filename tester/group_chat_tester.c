@@ -1137,8 +1137,10 @@ static void group_chat_room_reinvited_after_removed (void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participants_added, initialPaulineStats.number_of_participants_added + 1, 1000));
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 2, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
-	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(laureCr), 2, int, "%d");
-	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(laureCr), initialSubject);
+	LinphoneChatRoom *newLaureCr = linphone_core_find_chat_room(laure->lc, confAddr);
+	BC_ASSERT_PTR_EQUAL(newLaureCr, laureCr);
+	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(newLaureCr), 2, int, "%d");
+	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(newLaureCr), initialSubject);
 
 	wait_for_list(coresList, &dummy, 1, 1000);
 	bctbx_list_free(coresList);
