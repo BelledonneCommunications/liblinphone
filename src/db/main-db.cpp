@@ -679,7 +679,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_subject_event ("
-			"  event_id" + primaryKeyStr("BIGINT") + ","
+			"  event_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 
 			"  subject VARCHAR(255) NOT NULL,"
 
@@ -783,6 +783,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"    ON DELETE CASCADE"
 			") " + charset;
 
+		/* TODO FIX this for mysql
 		// Trigger to delete participant_message cache entries.
 		string displayedId = Utils::toString(static_cast<int>(ChatMessage::State::Displayed));
 		string participantMessageDeleter =
@@ -802,7 +803,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  UPDATE conference_chat_message_event SET state = ";
 		participantMessageDeleter += displayedId;
 		participantMessageDeleter += " WHERE event_id = NEW.event_id;"
-			"  END";
+			"  END";*/
 
 		*session << participantMessageDeleter;
 	}
