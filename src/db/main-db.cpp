@@ -803,9 +803,9 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  UPDATE conference_chat_message_event SET state = ";
 		participantMessageDeleter += displayedId;
 		participantMessageDeleter += " WHERE event_id = NEW.event_id;"
-			"  END";*/
+			"  END";
 
-		*session << participantMessageDeleter;
+		*session << participantMessageDeleter;*/
 	}
 
 	bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
