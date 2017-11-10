@@ -69,7 +69,7 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	return session;
 }
 
-void ClientGroupChatRoomPrivate::notifyReceived (string body) {
+void ClientGroupChatRoomPrivate::notifyReceived (const string &body) {
 	L_Q_T(RemoteConference, qConference);
 	qConference->getPrivate()->eventHandler->notifyReceived(body);
 }
@@ -79,11 +79,11 @@ void ClientGroupChatRoomPrivate::notifyReceived (string body) {
 ClientGroupChatRoom::ClientGroupChatRoom (
 	const std::shared_ptr<Core> &core,
 	const Address &me,
-	const std::string &uri,
+	const std::string &factoryUri,
 	const std::string &subject
-) : ChatRoom(*new ClientGroupChatRoomPrivate, core, me), RemoteConference(core->getCCore(), me, nullptr) {
+) : ChatRoom(*new ClientGroupChatRoomPrivate, core, Address()), RemoteConference(core->getCCore(), me, nullptr) {
 	L_D_T(RemoteConference, dConference);
-	dConference->focus = make_shared<Participant>(Address(uri));
+	dConference->focus = make_shared<Participant>(Address(factoryUri));
 	RemoteConference::setSubject(subject);
 }
 
@@ -163,7 +163,7 @@ void ClientGroupChatRoom::join () {
 	L_D_T(RemoteConference, dConference);
 
 	shared_ptr<CallSession> session = dConference->focus->getPrivate()->getSession();
-	if (!session && d->state == ChatRoom::State::Instantiated) {
+	if (!session && ((d->state == ChatRoom::State::Instantiated) || (d->state == ChatRoom::State::Terminated))) {
 		session = d->createSession();
 		session->startInvite(nullptr, "", nullptr);
 		d->setState(ChatRoom::State::CreationPending);
@@ -266,6 +266,8 @@ void ClientGroupChatRoom::onConferenceCreated (const Address &addr) {
 
 void ClientGroupChatRoom::onConferenceTerminated (const Address &addr) {
 	L_D();
+	L_D_T(RemoteConference, dConference);
+	dConference->eventHandler->resetLastNotify();
 	d->setState(ChatRoom::State::Terminated);
 }
 
@@ -315,6 +317,8 @@ void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParti
 		return;
 	}
 
+	dConference->participants.remove(participant);
+
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(this);
 	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
 	LinphoneChatRoomCbsParticipantRemovedCb cb = linphone_chat_room_cbs_get_participant_removed(cbs);
@@ -322,8 +326,6 @@ void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParti
 
 	if (cb)
 		cb(cr, L_GET_C_BACK_PTR(event));
-
-	dConference->participants.remove(participant);
 }
 
 void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {
@@ -446,9 +448,9 @@ void ClientGroupChatRoom::onCallSessionStateChanged (
 				dConference->eventHandler->subscribe(getConferenceAddress());
 		} else if (d->state == ChatRoom::State::TerminationPending)
 			dConference->focus->getPrivate()->getSession()->terminate();
-	} else if (state == LinphoneCallReleased && d->state == ChatRoom::State::TerminationPending) {
+	} else if ((state == LinphoneCallReleased) && (d->state == ChatRoom::State::TerminationPending)) {
 		onConferenceTerminated(getConferenceAddress());
-	} else if (state == LinphoneCallError && d->state == ChatRoom::State::CreationPending) {
+	} else if ((state == LinphoneCallError) && (d->state == ChatRoom::State::CreationPending)) {
 		d->setState(ChatRoom::State::CreationFailed);
 	}
 }

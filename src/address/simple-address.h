@@ -53,8 +53,7 @@ public:
 
 	bool isSip () const;
 
-	std::string asString () const;
-	std::string asStringUriOnly () const;
+	virtual std::string asString () const;
 
 private:
 	L_DECLARE_PRIVATE(SimpleAddress);

@@ -28,6 +28,7 @@
 
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room.h"
+#include "chat/chat-room/client-group-chat-room.h"
 #include "conference/participant.h"
 #include "content/content-type.h"
 #include "content/content.h"
@@ -289,37 +290,79 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		if (!chatRoom)
 			return nullptr;
 
-		string localSipAddress;
-		string remoteSipAddress;
-		string imdnMessageId;
-		int state;
-		int direction;
-		int isSecured;
-
-		soci::session *session = dbSession.getBackendSession<soci::session>();
-		*session << "SELECT local_sip_address.value, remote_sip_address.value, imdn_message_id, state, direction, is_secured"
-			"  FROM event, conference_chat_message_event, sip_address AS local_sip_address,"
-			"  sip_address AS remote_sip_address"
-			"  WHERE event_id = :eventId"
-			"  AND event_id = event.id"
-			"  AND local_sip_address_id = local_sip_address.id"
-			"  AND remote_sip_address_id = remote_sip_address.id", soci::into(localSipAddress), soci::into(remoteSipAddress),
-			soci::into(imdnMessageId), soci::into(state), soci::into(direction), soci::into(isSecured), soci::use(eventId);
-
-		// TODO: Create me.
 		// TODO: Use cache, do not fetch the same message twice.
+
+		// 1 - Fetch chat message.
 		shared_ptr<ChatMessage> chatMessage = make_shared<ChatMessage>(chatRoom);
+		{
+			string localSipAddress;
+			string remoteSipAddress;
+			string imdnMessageId;
+			int state;
+			int direction;
+			int isSecured;
 
-		chatMessage->getPrivate()->setState(static_cast<ChatMessage::State>(state), true);
-		chatMessage->getPrivate()->setDirection(static_cast<ChatMessage::Direction>(direction));
-		chatMessage->setIsSecured(static_cast<bool>(isSecured));
+			soci::session *session = dbSession.getBackendSession<soci::session>();
+			*session << "SELECT local_sip_address.value, remote_sip_address.value, imdn_message_id, state, direction, is_secured"
+				"  FROM event, conference_chat_message_event, sip_address AS local_sip_address,"
+				"  sip_address AS remote_sip_address"
+				"  WHERE event_id = :eventId"
+				"  AND event_id = event.id"
+				"  AND local_sip_address_id = local_sip_address.id"
+				"  AND remote_sip_address_id = remote_sip_address.id", soci::into(localSipAddress), soci::into(remoteSipAddress),
+				soci::into(imdnMessageId), soci::into(state), soci::into(direction), soci::into(isSecured), soci::use(eventId);
 
-		if (direction == static_cast<int>(ChatMessage::Direction::Outgoing)) {
-			chatMessage->setFromAddress(Address(localSipAddress));
-			chatMessage->setToAddress(Address(remoteSipAddress));
-		} else {
-			chatMessage->setFromAddress(Address(remoteSipAddress));
-			chatMessage->setToAddress(Address(localSipAddress));
+			chatMessage->getPrivate()->setState(static_cast<ChatMessage::State>(state), true);
+			chatMessage->getPrivate()->setDirection(static_cast<ChatMessage::Direction>(direction));
+			chatMessage->setIsSecured(static_cast<bool>(isSecured));
+
+			if (direction == static_cast<int>(ChatMessage::Direction::Outgoing)) {
+				chatMessage->setFromAddress(Address(localSipAddress));
+				chatMessage->setToAddress(Address(remoteSipAddress));
+			} else {
+				chatMessage->setFromAddress(Address(remoteSipAddress));
+				chatMessage->setToAddress(Address(localSipAddress));
+			}
+		}
+
+		// 2 - Fetch contents.
+		{
+			soci::session *session = dbSession.getBackendSession<soci::session>();
+			const string query = "SELECT content_type.value, body FROM chat_message_content, content_type"
+				"  WHERE event_id = :eventId AND content_type_id = content_type.id";
+			soci::rowset<soci::row> rows = (session->prepare << query, soci::use(eventId));
+			for (const auto &row : rows) {
+				ContentType contentType(row.get<string>(1));
+				Content *content;
+
+				if (contentType == ContentType::FileTransfer)
+					content = new FileTransferContent();
+				else if (contentType.isFile()) {
+					long long contentId = q->getBackend() == AbstractDb::Sqlite3
+						? static_cast<long long>(row.get<int>(0))
+						: row.get<long long>(0);
+
+					string name;
+					int size;
+					string path;
+
+					*session << "SELECT name, size, path FROM chat_message_file_content"
+						"  WHERE chat_message_content_id = :contentId",
+						soci::into(name), soci::into(size), soci::into(path), soci::use(contentId);
+
+					FileContent *fileContent = new FileContent();
+					fileContent->setFileName(name);
+					fileContent->setFileSize(static_cast<size_t>(size));
+					fileContent->setFilePath(path);
+
+					content = fileContent;
+				} else
+					content = new Content();
+
+				content->setContentType(contentType);
+				content->setBody(row.get<string>(2));
+				chatMessage->addContent(content);
+			}
 		}
 
 		// TODO: Use cache.
@@ -1234,10 +1277,9 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 		soci::rowset<soci::row> rows = (session->prepare << query);
 		for (const auto &row : rows) {
-			string sipAddress = row.get<string>(0);
-			shared_ptr<ChatRoom> chatRoom = core->findChatRoom(Address(sipAddress));
+			Address peerAddress = Address(row.get<string>(0));
+			shared_ptr<ChatRoom> chatRoom = core->findChatRoom(peerAddress);
 			if (chatRoom) {
-				lInfo() << "Don't fetch chat room from database: `" << sipAddress << "`, it already exists.";
 				chatRooms.push_back(chatRoom);
 				continue;
 			}
@@ -1251,16 +1293,20 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			// TODO: Use me.
 			(void)creationDate;
 			(void)lastUpdateDate;
-			(void)subject;
 			(void)lastNotifyId;
 
 			if (capabilities & static_cast<int>(ChatRoom::Capabilities::Basic)) {
 				chatRoom = core->getPrivate()->createBasicChatRoom(
-					Address(sipAddress),
+					peerAddress,
 					capabilities & static_cast<int>(ChatRoom::Capabilities::RealTimeText)
 				);
 			} else if (capabilities & static_cast<int>(ChatRoom::Capabilities::Conference)) {
-				// TODO: Set sip address and participants.
+				chatRoom = make_shared<ClientGroupChatRoom>(
+					getCore(),
+					Address("sip:titi@sip.linphone.org"), // TODO: Fix me!!!
+					peerAddress.asStringUriOnly(),
+					subject
+				);
 			}
 
 			if (!chatRoom)

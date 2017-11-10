@@ -1,5 +1,5 @@
 /*
- * remote-conference-event-handler.h
+ * gruu-address-p.h
  * Copyright (C) 2010-2017 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,36 +17,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _REMOTE_CONFERENCE_EVENT_HANDLER_H_
-#define _REMOTE_CONFERENCE_EVENT_HANDLER_H_
+#ifndef _GRUU_ADDRESS_P_H_
+#define _GRUU_ADDRESS_P_H_
 
-#include <string>
+#include "gruu-address.h"
+#include "address/simple-address-p.h"
 
-#include "conference-listener.h"
-#include "object/object.h"
+// =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class RemoteConferenceEventHandlerPrivate;
+class GruuAddressPrivate : public SimpleAddressPrivate {
+private:
+	std::string urn;
+	bool valid = false;
 
-class RemoteConferenceEventHandler : public Object {
-	public:
-		RemoteConferenceEventHandler (LinphoneCore *core, ConferenceListener *listener);
-		~RemoteConferenceEventHandler ();
-
-		void subscribe (const Address &confAddress);
-		void notifyReceived (const std::string &xmlBody);
-		void unsubscribe ();
-
-		const Address &getConfAddress () const;
-		unsigned int getLastNotify () const;
-		void resetLastNotify ();
-
-	private:
-		L_DECLARE_PRIVATE(RemoteConferenceEventHandler);
-		L_DISABLE_COPY(RemoteConferenceEventHandler);
+	L_DECLARE_PUBLIC(GruuAddress);
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _REMOTE_CONFERENCE_EVENT_HANDLER_H_
+#endif // ifndef _GRUU_ADDRESS_P_H_

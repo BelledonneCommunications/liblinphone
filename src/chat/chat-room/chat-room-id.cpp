@@ -1,5 +1,5 @@
 /*
- * property-container.cpp
+ * chat-room-id.cpp
  * Copyright (C) 2010-2017 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include <unordered_map>
+#include "object/clonable-object-p.h"
 
-#include "property-container.h"
+#include "chat-room-id.h"
 
 // =============================================================================
 
@@ -27,44 +27,41 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-class PropertyContainerPrivate {
+class ChatRoomIdPrivate : public ClonableObjectPrivate {
 public:
-	unordered_map<string, Variant> properties;
+	SimpleAddress peerAddress;
+	SimpleAddress localAddress;
 };
 
 // -----------------------------------------------------------------------------
 
-PropertyContainer::PropertyContainer () : mPrivate(new PropertyContainerPrivate) {}
-
-/*
- * Empty copy constructor. Don't change this pattern.
- * PropertyContainer is an Entity component, not a simple structure.
- * An Entity is UNIQUE.
- */
-PropertyContainer::PropertyContainer (const PropertyContainer &) : mPrivate(new PropertyContainerPrivate) {}
-
-PropertyContainer::~PropertyContainer () {
-	delete mPrivate;
-}
-
-PropertyContainer &PropertyContainer::operator= (const PropertyContainer &) {
-	return *this;
-}
-
-Variant PropertyContainer::getProperty (const string &name) const {
+ChatRoomId::ChatRoomId (
+	const SimpleAddress &peerAddress,
+	const SimpleAddress &localAddress
+) : ClonableObject(*new ChatRoomIdPrivate) {
 	L_D();
-	auto it = d->properties.find(name);
-	return it == d->properties.cend() ? Variant() : it->second;
+	d->peerAddress = peerAddress;
+	d->localAddress = localAddress;
 }
 
-void PropertyContainer::setProperty (const string &name, const Variant &value) {
+bool ChatRoomId::operator== (const ChatRoomId &chatRoomId) const {
 	L_D();
-	d->properties[name] = value;
+	const ChatRoomIdPrivate *dChatRoomId = chatRoomId.getPrivate();
+	return d->peerAddress == dChatRoomId->peerAddress && d->localAddress == dChatRoomId->localAddress;
 }
 
-void PropertyContainer::setProperty (const string &name, Variant &&value) {
+bool ChatRoomId::operator!= (const ChatRoomId &chatRoomId) const {
+	return !(*this == chatRoomId);
+}
+
+const SimpleAddress &ChatRoomId::getPeerAddress () const {
 	L_D();
-	d->properties[name] = move(value);
+	return d->peerAddress;
+}
+
+const SimpleAddress &ChatRoomId::getLocalAddress () const {
+	L_D();
+	return d->localAddress;
 }
 
 LINPHONE_END_NAMESPACE

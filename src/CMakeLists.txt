@@ -23,6 +23,8 @@
 set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	address/address-p.h
 	address/address.h
+	address/gruu-address-p.h
+	address/gruu-address.h
 	address/simple-address-p.h
 	address/simple-address.h
 	c-wrapper/c-wrapper.h
@@ -35,6 +37,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/chat-message/chat-message.h
 	chat/chat-room/basic-chat-room-p.h
 	chat/chat-room/basic-chat-room.h
+	chat/chat-room/chat-room-id.h
 	chat/chat-room/chat-room-p.h
 	chat/chat-room/chat-room.h
 	chat/chat-room/client-group-chat-room-p.h
@@ -142,6 +145,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 
 set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	address/address.cpp
+	address/gruu-address.cpp
 	address/simple-address.cpp
 	c-wrapper/api/c-address.cpp
 	c-wrapper/api/c-call-cbs.cpp
@@ -159,6 +163,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	call/call.cpp
 	chat/chat-message/chat-message.cpp
 	chat/chat-room/basic-chat-room.cpp
+	chat/chat-room/chat-room-id.cpp
 	chat/chat-room/chat-room.cpp
 	chat/chat-room/client-group-chat-room.cpp
 	chat/chat-room/real-time-text-chat-room.cpp

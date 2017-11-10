@@ -1,5 +1,5 @@
 /*
- * remote-conference-event-handler.h
+ * chat-room-id.h
  * Copyright (C) 2010-2017 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,36 +17,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _REMOTE_CONFERENCE_EVENT_HANDLER_H_
-#define _REMOTE_CONFERENCE_EVENT_HANDLER_H_
+#ifndef _CHAT_ROOM_ID_H_
+#define _CHAT_ROOM_ID_H_
 
-#include <string>
+#include "address/simple-address.h"
 
-#include "conference-listener.h"
-#include "object/object.h"
+// =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class RemoteConferenceEventHandlerPrivate;
+class ChatRoomIdPrivate;
 
-class RemoteConferenceEventHandler : public Object {
-	public:
-		RemoteConferenceEventHandler (LinphoneCore *core, ConferenceListener *listener);
-		~RemoteConferenceEventHandler ();
+class LINPHONE_PUBLIC ChatRoomId : public ClonableObject {
+public:
+	ChatRoomId (const SimpleAddress &peerAddress, const SimpleAddress &localAddress);
 
-		void subscribe (const Address &confAddress);
-		void notifyReceived (const std::string &xmlBody);
-		void unsubscribe ();
+	bool operator== (const ChatRoomId &chatRoomId) const;
+	bool operator!= (const ChatRoomId &chatRoomId) const;
 
-		const Address &getConfAddress () const;
-		unsigned int getLastNotify () const;
-		void resetLastNotify ();
+	const SimpleAddress &getPeerAddress () const;
+	const SimpleAddress &getLocalAddress () const;
 
-	private:
-		L_DECLARE_PRIVATE(RemoteConferenceEventHandler);
-		L_DISABLE_COPY(RemoteConferenceEventHandler);
+private:
+	L_DECLARE_PRIVATE(ChatRoomId);
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _REMOTE_CONFERENCE_EVENT_HANDLER_H_
+#endif // ifndef _CHAT_ROOM_ID_H_
