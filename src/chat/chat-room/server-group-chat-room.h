@@ -38,6 +38,7 @@ class ServerGroupChatRoom : public ChatRoom, public LocalConference {
 public:
 	ServerGroupChatRoom (const std::shared_ptr<Core> &core, SalCallOp *op);
 
+	std::shared_ptr<Participant> findParticipant (const std::shared_ptr<const CallSession> &session) const;
 	int getCapabilities () const override;
 
 	/* ConferenceInterface */
