@@ -15,18 +15,21 @@
 %define _docdir            %{_datadir}/doc
 
 %define build_number @PROJECT_VERSION_BUILD@
+%if %{build_number}
+%define build_number_ext -%{build_number}
+%endif
 
 
 
 Name:           %{pkg_name}
 Version:        @PROJECT_VERSION@
-Release:        %build_number%{?dist}
+Release:        %{build_number}%{?dist}
 Summary:        Phone anywhere in the whole world by using the Internet
 
 Group:          Applications/Communications
 License:        GPL
 URL:            http://www.linphone.org
-Source0:        %{name}-%{version}-%{build_number}.tar.gz
+Source0:        %{name}-%{version}%{?build_number_ext}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 %description
 liblinphone is the voip sdk used by Linphone
@@ -52,10 +55,10 @@ develop programs using the liblinphone library.
 %endif
 
 %prep
-%setup -n %{name}-%{version}-%build_number
+%setup -n %{name}-%{version}%{?build_number_ext}
 
 %build
-%{expand:%%%cmake_name} . -DCMAKE_INSTALL_LIBDIR:PATH=%{_libdir} -DCMAKE_PREFIX_PATH:PATH=%{_prefix} -DENABLE_VIDEO=%{video}
+%{expand:%%%cmake_name} . -DCMAKE_INSTALL_LIBDIR:PATH=%{_libdir} -DCMAKE_PREFIX_PATH:PATH=%{_prefix} -DENABLE_VIDEO=%{video} -DENABLE_TOOLS=NO -DENABLE_CONSOLE_UI=NO -DENABLE_DAEMON=NO
 make %{?_smp_mflags}
 
 %install
