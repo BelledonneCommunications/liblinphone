@@ -8,6 +8,8 @@
 %define                 pkg_name        %{?_with_bc:bc-liblinphone}%{!?_with_bc:liblinphone}
 %{?_with_bc: %define    _prefix         /opt/belledonne-communications}
 
+%define     pkg_prefix %{?_with_bc:bc-}%{!?_with_bc:}
+
 # re-define some directories for older RPMBuild versions which don't. This messes up the doc/ dir
 # taken from https://fedoraproject.org/wiki/Packaging:RPMMacros?rd=Packaging/RPMMacros
 %define _datarootdir       %{_prefix}/share
@@ -31,6 +33,13 @@ License:        GPL
 URL:            http://www.linphone.org
 Source0:        %{name}-%{version}%{?build_number_ext}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
+
+Requires:	%{pkg_prefix}bctoolbox
+Requires:	%{pkg_prefix}ortp
+Requires:	%{pkg_prefix}mediastreamer
+Requires:	%{pkg_prefix}belle-sip
+Requires:	%{pkg_prefix}belr
+
 %description
 liblinphone is the voip sdk used by Linphone
 
@@ -77,25 +86,20 @@ rm -rf $RPM_BUILD_ROOT
 %files 
 %defattr(-,root,root)
 %doc AUTHORS ChangeLog COPYING NEWS README.md TODO
-%{_bindir}/linphonec
-%{_bindir}/linphonecsh
-%{_bindir}/lp-auto-answer
-%{_bindir}/lp-test-ecc
 %{_libdir}/*.so.*
 #%{_mandir}/*
 %{_datadir}/linphone
 %{_datadir}/sounds/linphone
-%{_datadir}/Linphone/rootca.pem
 
 %files devel
 %defattr(-,root,root)
-%{_bindir}/*
 %{_includedir}/linphone
+%{_includedir}/linphone++
 %{_libdir}/*.a
 %{_libdir}/*.so
-#%{_docdir}
+%{_docdir}
 %{_datadir}/Linphone/cmake/*.cmake
-%{_datadir}/liblinphone_tester
+%{_datadir}/LinphoneCxx/cmake/*.cmake
 
 
 %changelog
