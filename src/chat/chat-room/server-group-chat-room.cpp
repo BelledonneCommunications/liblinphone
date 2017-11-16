@@ -60,14 +60,16 @@ void ServerGroupChatRoomPrivate::confirmCreation () {
 	shared_ptr<CallSession> session = me->getPrivate()->getSession();
 	session->startIncomingNotification();
 
-	IdentityAddress confAddr(generateConferenceAddress(me));
-	qConference->getPrivate()->conferenceAddress = confAddr;
-	chatRoomId = ChatRoomId(confAddr, confAddr);
-	// Let the SIP stack set the domain and the port
-	Address addr = me->getContactAddress();
-	addr.setParam("isfocus");
-	session->redirect(addr);
-	setState(ChatRoom::State::Created);
+	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
+	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
+	LinphoneChatRoomCbsConferenceAddressGenerationCb cb = linphone_chat_room_cbs_get_conference_address_generation(cbs);
+	if (cb)
+		cb(cr);
+	else {
+		IdentityAddress confAddr(generateConferenceAddress(me));
+		qConference->getPrivate()->conferenceAddress = confAddr;
+		finalizeCreation();
+	}
 }
 
 void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
@@ -217,12 +219,34 @@ LinphoneReason ServerGroupChatRoomPrivate::messageReceived (SalOp *op, const Sal
 	return LinphoneReasonNone;
 }
 
+void ServerGroupChatRoomPrivate::setConferenceAddress (const IdentityAddress &confAddr) {
+	L_Q_T(LocalConference, qConference);
+	if (state != ChatRoom::State::Instantiated)
+		return;
+	qConference->getPrivate()->conferenceAddress = confAddr;
+	finalizeCreation();
+}
+
 // -----------------------------------------------------------------------------
 
 void ServerGroupChatRoomPrivate::designateAdmin () {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 	q->setParticipantAdminStatus(qConference->getPrivate()->participants.front(), true);
+}
+
+void ServerGroupChatRoomPrivate::finalizeCreation () {
+	L_Q();
+	L_Q_T(LocalConference, qConference);
+	IdentityAddress confAddr(qConference->getPrivate()->conferenceAddress);
+	chatRoomId = ChatRoomId(confAddr, confAddr);
+	// Let the SIP stack set the domain and the port
+	shared_ptr<Participant> me = q->getMe();
+	Address addr = me->getContactAddress();
+	addr.setParam("isfocus");
+	shared_ptr<CallSession> session = me->getPrivate()->getSession();
+	session->redirect(addr);
+	setState(ChatRoom::State::Created);
 }
 
 bool ServerGroupChatRoomPrivate::isAdminLeft () const {
