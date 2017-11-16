@@ -21,7 +21,7 @@
 
 #include "address/address-p.h"
 #include "address/address.h"
-#include "address/gruu-address.h"
+#include "address/identity-address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/modifier/cpim-chat-message-modifier.h"
@@ -60,7 +60,7 @@ void ServerGroupChatRoomPrivate::confirmCreation () {
 	shared_ptr<CallSession> session = me->getPrivate()->getSession();
 	session->startIncomingNotification();
 
-	SimpleAddress confAddr(generateConferenceAddress(me));
+	IdentityAddress confAddr(generateConferenceAddress(me));
 	qConference->getPrivate()->conferenceAddress = confAddr;
 	chatRoomId = ChatRoomId(confAddr, confAddr);
 	// Let the SIP stack set the domain and the port
@@ -93,7 +93,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		return;
 	}
 
-	GruuAddress gruu(contactAddr);
+	IdentityAddress gruu(contactAddr);
 	shared_ptr<ParticipantDevice> device = participant->getPrivate()->addDevice(gruu);
 	shared_ptr<CallSession> session = device->getSession();
 	if (!session) {
@@ -122,7 +122,7 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::findRemovedParticipant (cons
 	return nullptr;
 }
 
-SimpleAddress ServerGroupChatRoomPrivate::generateConferenceAddress (const shared_ptr<Participant> &me) const {
+IdentityAddress ServerGroupChatRoomPrivate::generateConferenceAddress (const shared_ptr<Participant> &me) const {
 	L_Q();
 	char token[11];
 	ostringstream os;
