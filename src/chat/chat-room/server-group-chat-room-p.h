@@ -42,7 +42,7 @@ public:
 	void confirmCreation ();
 	void confirmJoining (SalCallOp *op);
 	std::shared_ptr<Participant> findRemovedParticipant (const std::shared_ptr<const CallSession> &session) const;
-	Address generateConferenceAddress (std::shared_ptr<Participant> me);
+	SimpleAddress generateConferenceAddress (const std::shared_ptr<Participant> &me) const;
 	void removeParticipant (const std::shared_ptr<const Participant> &participant);
 	void subscribeReceived (LinphoneEvent *event);
 	void update (SalCallOp *op);

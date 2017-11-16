@@ -157,7 +157,9 @@ static bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList) {
 static LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, const LinphoneAddress *confAddr, const char* subject, int participantNumber) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateCreationPending, initialStats->number_of_LinphoneChatRoomStateCreationPending + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateCreated, initialStats->number_of_LinphoneChatRoomStateCreated + 1, 5000));
-	LinphoneChatRoom *chatRoom = linphone_core_find_chat_room(lcm->lc, confAddr);
+	LinphoneAddress *localAddr = linphone_address_new(linphone_core_get_identity(lcm->lc));
+	LinphoneChatRoom *chatRoom = linphone_core_find_chat_room(lcm->lc, confAddr, localAddr);
+	linphone_address_unref(localAddr);
 	BC_ASSERT_PTR_NOT_NULL(chatRoom);
 	if (chatRoom) {
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chatRoom), participantNumber, int, "%d");
@@ -305,7 +307,9 @@ static void group_chat_room_creation_local (void) {
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 3, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 3, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(laureCr), 3, int, "%d");
-	LinphoneChatRoom *chloeCr = linphone_core_find_chat_room(chloe->lc, confAddr);
+	LinphoneAddress *chloeAddr = linphone_address_new(linphone_core_get_identity(chloe->lc));
+	LinphoneChatRoom *chloeCr = linphone_core_find_chat_room(chloe->lc, confAddr, chloeAddr);
+	linphone_address_unref(chloeAddr);
 	BC_ASSERT_PTR_NOT_NULL(chloeCr);
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chloeCr), 3, int, "%d");
 	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(chloeCr), newSubject);
@@ -341,7 +345,7 @@ static void group_chat_room_creation_local (void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingIdleReceived, initialPaulineStats.number_of_LinphoneIsComposingIdleReceived + 1, 1000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneIsComposingIdleReceived, initialLaureStats.number_of_LinphoneIsComposingIdleReceived + 1, 1000));
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), chloeMessage);
-	LinphoneAddress *chloeAddr = linphone_address_new(linphone_core_get_identity(chloe->lc));
+	chloeAddr = linphone_address_new(linphone_core_get_identity(chloe->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(chloeAddr, linphone_chat_message_get_from_address(marie->stat.last_received_chat_message)));
 	linphone_address_unref(chloeAddr);
 
@@ -1119,7 +1123,6 @@ static void group_chat_room_reinvited_after_removed (void) {
 	// Marie removes Laure from the chat room
 	LinphoneAddress *laureAddr = linphone_address_new(linphone_core_get_identity(laure->lc));
 	LinphoneParticipant *laureParticipant = linphone_chat_room_find_participant(marieCr, laureAddr);
-	linphone_address_unref(laureAddr);
 	BC_ASSERT_PTR_NOT_NULL(laureParticipant);
 	linphone_chat_room_remove_participant(marieCr, laureParticipant);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomStateTerminated, initialLaureStats.number_of_LinphoneChatRoomStateTerminated + 1, 1000));
@@ -1137,7 +1140,8 @@ static void group_chat_room_reinvited_after_removed (void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participants_added, initialPaulineStats.number_of_participants_added + 1, 1000));
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 2, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
-	LinphoneChatRoom *newLaureCr = linphone_core_find_chat_room(laure->lc, confAddr);
+	LinphoneChatRoom *newLaureCr = linphone_core_find_chat_room(laure->lc, confAddr, laureAddr);
+	linphone_address_unref(laureAddr);
 	BC_ASSERT_PTR_EQUAL(newLaureCr, laureCr);
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(newLaureCr), 2, int, "%d");
 	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(newLaureCr), initialSubject);
