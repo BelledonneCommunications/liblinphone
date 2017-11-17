@@ -43,7 +43,8 @@ Requires:	%{pkg_prefix}belr
 %description
 liblinphone is the voip sdk used by Linphone
 
-%define         video           %{?_without_video:0}%{!?_without_video:1}
+%define		lime	%{?_without_lime:0}%{!?_without_lime:1}
+%define		video	%{?_without_video:0}%{!?_without_video:1}
 
 
 %package devel
@@ -67,7 +68,7 @@ develop programs using the liblinphone library.
 %setup -n %{name}-%{version}%{?build_number_ext}
 
 %build
-%{expand:%%%cmake_name} . -DCMAKE_INSTALL_LIBDIR:PATH=%{_libdir} -DCMAKE_PREFIX_PATH:PATH=%{_prefix} -DENABLE_VIDEO=%{video} -DENABLE_TOOLS=NO -DENABLE_CONSOLE_UI=NO -DENABLE_DAEMON=NO
+%{expand:%%%cmake_name} . -DCMAKE_INSTALL_LIBDIR:PATH=%{_libdir} -DCMAKE_PREFIX_PATH:PATH=%{_prefix} -DENABLE_VIDEO=%{video} -DENABLE_LIME=%{lime} -DENABLE_TOOLS=NO -DENABLE_CONSOLE_UI=NO -DENABLE_DAEMON=NO
 make %{?_smp_mflags}
 
 %install
@@ -97,7 +98,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/linphone++
 %{_libdir}/*.a
 %{_libdir}/*.so
-%{_docdir}
+%{_docdir}/linphone*/html
+%{_docdir}/linphone*/xml
 %{_datadir}/Linphone/cmake/*.cmake
 %{_datadir}/LinphoneCxx/cmake/*.cmake
 
