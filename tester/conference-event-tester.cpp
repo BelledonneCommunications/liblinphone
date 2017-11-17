@@ -19,15 +19,18 @@
 #include <map>
 #include <string>
 
+#include "address/identity-address.h"
 #include "conference/conference-listener.h"
-#include "conference/local-conference-event-handler-p.h"
+#include "conference/handlers/local-conference-event-handler-p.h"
+#include "conference/handlers/remote-conference-event-handler-p.h"
 #include "conference/local-conference-p.h"
 #include "conference/local-conference.h"
 #include "conference/participant-p.h"
-#include "conference/remote-conference-event-handler-p.h"
+#include "conference/remote-conference.h"
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
 #include "private.h"
+#include "tester_utils.h"
 #include "tools/private-access.h"
 #include "tools/tester.h"
 
@@ -439,7 +442,7 @@ static const char *confUri = "sips:conf233@example.com";
 
 L_ENABLE_ATTR_ACCESS(LocalConferencePrivate, unique_ptr<LocalConferenceEventHandler>, eventHandler);
 
-class ConferenceEventTester : public ConferenceListener {
+class ConferenceEventTester : public RemoteConference {
 public:
 	ConferenceEventTester (LinphoneCore *core, const Address &confAddr);
 	~ConferenceEventTester ();
@@ -462,8 +465,8 @@ public:
 	string confSubject;
 };
 
-ConferenceEventTester::ConferenceEventTester (LinphoneCore *core, const Address &confAddr) {
-	handler = new RemoteConferenceEventHandler(core, this);
+ConferenceEventTester::ConferenceEventTester (LinphoneCore *core, const Address &confAddr) : RemoteConference(core->cppCore, confAddr) {
+	handler = new RemoteConferenceEventHandler(this);
 }
 
 ConferenceEventTester::~ConferenceEventTester () {
@@ -532,7 +535,7 @@ void first_notify_parsing() {
 	size_t size = strlen(first_notify) + strlen(confUri);
 	char *notify = new char[size];
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 
 	snprintf(notify, size, first_notify, confUri);
 	tester.handler->notifyReceived(notify);
@@ -569,7 +572,7 @@ void first_notify_parsing_wrong_conf() {
 	size_t size = strlen(first_notify) + strlen(confUri);
 	char *notify = new char[size];
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	snprintf(notify, size, first_notify, confUri);
 	tester.handler->notifyReceived(notify);
 
@@ -600,7 +603,7 @@ void participant_added_parsing() {
 	size_t size2 = strlen(participant_added_notify) + strlen(confUri);
 	char *notify_added = new char[size2];
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	snprintf(notify, size, first_notify, confUri);
 	tester.handler->notifyReceived(notify);
 
@@ -645,7 +648,7 @@ void participant_not_added_parsing() {
 	size_t size2 = strlen(participant_not_added_notify) + strlen(confUri);
 	char *notify_not_added = new char[size2];
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	snprintf(notify, size, first_notify, confUri);
 	tester.handler->notifyReceived(notify);
 
@@ -687,7 +690,7 @@ void participant_deleted_parsing() {
 	size_t size2 = strlen(participant_deleted_notify) + strlen(confUri);
 	char *notify_deleted = new char[size2];
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	snprintf(notify, size, first_notify, confUri);
 	tester.handler->notifyReceived(notify);
 
@@ -729,7 +732,7 @@ void participant_admined_parsing() {
 	size_t size2 = strlen(participant_admined_notify) + strlen(confUri);
 	char *notify_admined = new char[size2];
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	snprintf(notify, size, first_notify, confUri);
 	tester.handler->notifyReceived(notify);
 
@@ -770,7 +773,7 @@ void participant_unadmined_parsing() {
 	size_t size2 = strlen(participant_unadmined_notify) + strlen(confUri);
 	char *notify_unadmined = new char[size2];
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	snprintf(notify, size, first_notify, confUri);
 	tester.handler->notifyReceived(notify);
 
@@ -803,7 +806,7 @@ void send_first_notify() {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	ConferenceEventTester tester(marie->lc, addr);
-	LocalConference localConf(pauline->lc, addr);
+	LocalConference localConf(pauline->lc->cppCore, addr);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	char *bobAddrStr = linphone_address_as_string(cBobAddr);
 	Address bobAddr(bobAddrStr);
@@ -827,7 +830,7 @@ void send_first_notify() {
 	const_cast<Address &>(localConf.getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	tester.handler->notifyReceived(notify);
 
 	BC_ASSERT_STRING_EQUAL(tester.confSubject.c_str(), "A random test subject");
@@ -848,7 +851,7 @@ void send_added_notify() {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	ConferenceEventTester tester(marie->lc, addr);
-	LocalConference localConf(pauline->lc, addr);
+	LocalConference localConf(pauline->lc->cppCore, addr);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	char *bobAddrStr = linphone_address_as_string(cBobAddr);
 	Address bobAddr(bobAddrStr);
@@ -876,7 +879,7 @@ void send_added_notify() {
 	const_cast<Address &>(localConf.getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	tester.handler->notifyReceived(notify);
 
 	BC_ASSERT_EQUAL(tester.participants.size(), 2, int, "%d");
@@ -909,7 +912,7 @@ void send_removed_notify() {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	ConferenceEventTester tester(marie->lc, addr);
-	LocalConference localConf(pauline->lc, addr);
+	LocalConference localConf(pauline->lc->cppCore, addr);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	char *bobAddrStr = linphone_address_as_string(cBobAddr);
 	Address bobAddr(bobAddrStr);
@@ -932,7 +935,7 @@ void send_removed_notify() {
 	const_cast<Address &>(localConf.getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	tester.handler->notifyReceived(notify);
 
 	BC_ASSERT_EQUAL(tester.participants.size(), 2, int, "%d");
@@ -962,7 +965,7 @@ void send_admined_notify() {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	ConferenceEventTester tester(marie->lc, addr);
-	LocalConference localConf(pauline->lc, addr);
+	LocalConference localConf(pauline->lc->cppCore, addr);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	char *bobAddrStr = linphone_address_as_string(cBobAddr);
 	Address bobAddr(bobAddrStr);
@@ -985,7 +988,7 @@ void send_admined_notify() {
 	const_cast<Address &>(localConf.getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	tester.handler->notifyReceived(notify);
 
 	BC_ASSERT_EQUAL(tester.participants.size(), 2, int, "%d");
@@ -1014,7 +1017,7 @@ void send_unadmined_notify() {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	ConferenceEventTester tester(marie->lc, addr);
-	LocalConference localConf(pauline->lc, addr);
+	LocalConference localConf(pauline->lc->cppCore, addr);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	char *bobAddrStr = linphone_address_as_string(cBobAddr);
 	Address bobAddr(bobAddrStr);
@@ -1037,7 +1040,7 @@ void send_unadmined_notify() {
 	const_cast<Address &>(localConf.getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	tester.handler->notifyReceived(notify);
 
 
@@ -1067,7 +1070,7 @@ void send_subject_changed_notify () {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	ConferenceEventTester tester(marie->lc, addr);
-	LocalConference localConf(pauline->lc, addr);
+	LocalConference localConf(pauline->lc->cppCore, addr);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	char *bobAddrStr = linphone_address_as_string(cBobAddr);
 	Address bobAddr(bobAddrStr);
@@ -1091,7 +1094,7 @@ void send_subject_changed_notify () {
 	const_cast<Address &>(localConf.getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	tester.handler->notifyReceived(notify);
 
 	BC_ASSERT_STRING_EQUAL(tester.confSubject.c_str(), "A random test subject");
@@ -1127,7 +1130,7 @@ void send_device_added_notify() {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	ConferenceEventTester tester(marie->lc, addr);
-	LocalConference localConf(pauline->lc, addr);
+	LocalConference localConf(pauline->lc->cppCore, addr);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	char *bobAddrStr = linphone_address_as_string(cBobAddr);
 	Address bobAddr(bobAddrStr);
@@ -1150,7 +1153,7 @@ void send_device_added_notify() {
 	const_cast<Address &>(localConf.getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	tester.handler->notifyReceived(notify);
 
 	BC_ASSERT_EQUAL(tester.participantDevices.size(), 2, int, "%d");
@@ -1179,7 +1182,7 @@ void send_device_removed_notify() {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	ConferenceEventTester tester(marie->lc, addr);
-	LocalConference localConf(pauline->lc, addr);
+	LocalConference localConf(pauline->lc->cppCore, addr);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
 	char *bobAddrStr = linphone_address_as_string(cBobAddr);
 	Address bobAddr(bobAddrStr);
@@ -1203,7 +1206,7 @@ void send_device_removed_notify() {
 	const_cast<Address &>(localConf.getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<Address &>(tester.handler->getConfAddress()) = addr;
+	const_cast<IdentityAddress &>(tester.handler->getChatRoomId().getPeerAddress()) = addr;
 	tester.handler->notifyReceived(notify);
 
 	BC_ASSERT_EQUAL(tester.participantDevices.size(), 2, int, "%d");
