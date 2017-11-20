@@ -25,7 +25,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/modifier/cpim-chat-message-modifier.h"
-#include "conference/local-conference-event-handler.h"
+#include "conference/handlers/local-conference-event-handler.h"
 #include "conference/local-conference-p.h"
 #include "conference/participant-p.h"
 #include "conference/session/call-session-p.h"
@@ -134,7 +134,7 @@ IdentityAddress ServerGroupChatRoomPrivate::generateConferenceAddress (const sha
 		os.str("");
 		os << "chatroom-" << token;
 		conferenceAddress.setUsername(os.str());
-	} while (static_cast<const CoreAccessor*>(q)->getCore()->findChatRoom(chatRoomId));
+	} while (q->getCore()->findChatRoom(chatRoomId));
 	me->getPrivate()->setAddress(conferenceAddress);
 	me->getPrivate()->setContactAddress(conferenceAddress);
 	return me->getAddress();
@@ -262,10 +262,14 @@ bool ServerGroupChatRoomPrivate::isAdminLeft () const {
 
 ServerGroupChatRoom::ServerGroupChatRoom (const std::shared_ptr<Core> &core, SalCallOp *op)
 : ChatRoom(*new ServerGroupChatRoomPrivate(), core, ChatRoomId()),
-LocalConference(core->getCCore(), Address(linphone_core_get_conference_factory_uri(core->getCCore())), nullptr) {
+LocalConference(getCore(), Address(linphone_core_get_conference_factory_uri(core->getCCore())), nullptr) {
 	LocalConference::setSubject(op->get_subject() ? op->get_subject() : "");
 	getMe()->getPrivate()->createSession(*this, nullptr, false, this);
 	getMe()->getPrivate()->getSession()->configure(LinphoneCallIncoming, nullptr, op, Address(op->get_from()), Address(op->get_to()));
+}
+
+shared_ptr<Core> ServerGroupChatRoom::getCore () const {
+	return ChatRoom::getCore();
 }
 
 shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const shared_ptr<const CallSession> &session) const {
@@ -292,9 +296,9 @@ void ServerGroupChatRoom::addParticipant (const Address &addr, const CallSession
 		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the ServerGroupChatRoom";
 		return;
 	}
-	SalReferOp *referOp = new SalReferOp(CoreAccessor::getCore()->getCCore()->sal);
+	SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal);
 	LinphoneAddress *lAddr = linphone_address_new(addr.asString().c_str());
-	linphone_configure_op(CoreAccessor::getCore()->getCCore(), referOp, lAddr, nullptr, false);
+	linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, false);
 	linphone_address_unref(lAddr);
 	Address referToAddr = getConferenceAddress();
 	referToAddr.setParam("text");
@@ -343,9 +347,9 @@ void ServerGroupChatRoom::leave () {}
 
 void ServerGroupChatRoom::removeParticipant (const shared_ptr<const Participant> &participant) {
 	L_D();
-	SalReferOp *referOp = new SalReferOp(CoreAccessor::getCore()->getCCore()->sal);
+	SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal);
 	LinphoneAddress *lAddr = linphone_address_new(participant->getContactAddress().asString().c_str());
-	linphone_configure_op(CoreAccessor::getCore()->getCCore(), referOp, lAddr, nullptr, false);
+	linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, false);
 	linphone_address_unref(lAddr);
 	Address referToAddr = getConferenceAddress();
 	referToAddr.setParam("text");
