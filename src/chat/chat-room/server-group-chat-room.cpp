@@ -45,7 +45,7 @@ ServerGroupChatRoomPrivate::ServerGroupChatRoomPrivate () {}
 
 // -----------------------------------------------------------------------------
 
-shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const Address &addr) {
+shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const IdentityAddress &addr) {
 	L_Q_T(LocalConference, qConference);
 	shared_ptr<Participant> participant = make_shared<Participant>(addr);
 	qConference->getPrivate()->participants.push_back(participant);
@@ -78,12 +78,11 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	shared_ptr<Participant> participant;
 	if (q->getNbParticipants() == 0) {
 		// First participant (creator of the chat room)
-		participant = addParticipant(Address(op->get_from()));
-		participant->getPrivate()->setContactAddress(Address(op->get_remote_contact()));
+		participant = addParticipant(IdentityAddress(op->get_from()));
 		participant->getPrivate()->setAdmin(true);
 	} else {
 		// INVITE coming from an invited participant
-		participant = q->findParticipant(Address(op->get_from()));
+		participant = q->findParticipant(IdentityAddress(op->get_from()));
 		if (!participant) {
 			op->decline(SalReasonDeclined, nullptr);
 			return;
@@ -128,7 +127,7 @@ IdentityAddress ServerGroupChatRoomPrivate::generateConferenceAddress (const sha
 	L_Q();
 	char token[11];
 	ostringstream os;
-	Address conferenceAddress = me->getContactAddress();
+	IdentityAddress conferenceAddress = me->getAddress();
 	do {
 		belle_sip_random_token(token, sizeof(token));
 		os.str("");
@@ -136,7 +135,6 @@ IdentityAddress ServerGroupChatRoomPrivate::generateConferenceAddress (const sha
 		conferenceAddress.setUsername(os.str());
 	} while (q->getCore()->findChatRoom(chatRoomId));
 	me->getPrivate()->setAddress(conferenceAddress);
-	me->getPrivate()->setContactAddress(conferenceAddress);
 	return me->getAddress();
 }
 
@@ -175,24 +173,26 @@ void ServerGroupChatRoomPrivate::update (SalCallOp *op) {
 	const Content &content = op->get_remote_body();
 	if ((content.getContentType() == ContentType::ResourceLists)
 		&& (content.getContentDisposition() == "recipient-list")) {
-		list<Address> addresses = q->parseResourceLists(content.getBodyAsString());
+		list<IdentityAddress> addresses = q->parseResourceLists(content.getBodyAsString());
 		q->addParticipants(addresses, nullptr, false);
 	}
 }
 
 // -----------------------------------------------------------------------------
 
-void ServerGroupChatRoomPrivate::dispatchMessage (const Address &fromAddr, const Content &content) {
+void ServerGroupChatRoomPrivate::dispatchMessage (const IdentityAddress &fromAddr, const Content &content) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 	for (const auto &p : qConference->getPrivate()->participants) {
-		if (!fromAddr.weakEqual(p->getAddress())) {
-			shared_ptr<ChatMessage> msg = q->createMessage();
-			msg->setInternalContent(content);
-			msg->getPrivate()->forceFromAddress(q->getConferenceAddress());
-			msg->getPrivate()->forceToAddress(p->getContactAddress());
-			msg->getPrivate()->setApplyModifiers(false);
-			msg->send();
+		for (const auto &d : p->getPrivate()->getDevices()) {
+			if (fromAddr != d->getAddress()) {
+				shared_ptr<ChatMessage> msg = q->createMessage();
+				msg->setInternalContent(content);
+				msg->getPrivate()->forceFromAddress(q->getConferenceAddress());
+				msg->getPrivate()->forceToAddress(p->getAddress());
+				msg->getPrivate()->setApplyModifiers(false);
+				msg->send();
+			}
 		}
 	}
 }
@@ -204,7 +204,7 @@ void ServerGroupChatRoomPrivate::storeOrUpdateMessage (const std::shared_ptr<Cha
 LinphoneReason ServerGroupChatRoomPrivate::messageReceived (SalOp *op, const SalMessage *salMsg) {
 	L_Q();
 	// Check that the message is coming from a participant of the chat room
-	Address fromAddr(op->get_from());
+	IdentityAddress fromAddr(op->get_from());
 	if (!q->findParticipant(fromAddr)) {
 		return LinphoneReasonNotAcceptable;
 	}
@@ -242,7 +242,7 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	chatRoomId = ChatRoomId(confAddr, confAddr);
 	// Let the SIP stack set the domain and the port
 	shared_ptr<Participant> me = q->getMe();
-	Address addr = me->getContactAddress();
+	Address addr = me->getAddress();
 	addr.setParam("isfocus");
 	shared_ptr<CallSession> session = me->getPrivate()->getSession();
 	session->redirect(addr);
@@ -262,7 +262,7 @@ bool ServerGroupChatRoomPrivate::isAdminLeft () const {
 
 ServerGroupChatRoom::ServerGroupChatRoom (const std::shared_ptr<Core> &core, SalCallOp *op)
 : ChatRoom(*new ServerGroupChatRoomPrivate(), core, ChatRoomId()),
-LocalConference(getCore(), Address(linphone_core_get_conference_factory_uri(core->getCCore())), nullptr) {
+LocalConference(getCore(), IdentityAddress(linphone_core_get_conference_factory_uri(core->getCCore())), nullptr) {
 	LocalConference::setSubject(op->get_subject() ? op->get_subject() : "");
 	getMe()->getPrivate()->createSession(*this, nullptr, false, this);
 	getMe()->getPrivate()->getSession()->configure(LinphoneCallIncoming, nullptr, op, Address(op->get_from()), Address(op->get_to()));
@@ -290,7 +290,7 @@ int ServerGroupChatRoom::getCapabilities () const {
 
 // -----------------------------------------------------------------------------
 
-void ServerGroupChatRoom::addParticipant (const Address &addr, const CallSessionParams *params, bool hasMedia) {
+void ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
 	L_D_T(LocalConference, dConference);
 	if (findParticipant(addr)) {
 		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the ServerGroupChatRoom";
@@ -309,7 +309,7 @@ void ServerGroupChatRoom::addParticipant (const Address &addr, const CallSession
 	dConference->eventHandler->notifyParticipantAdded(addr);
 }
 
-void ServerGroupChatRoom::addParticipants (const list<Address> &addresses, const CallSessionParams *params, bool hasMedia) {
+void ServerGroupChatRoom::addParticipants (const list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) {
 	LocalConference::addParticipants(addresses, params, hasMedia);
 }
 
@@ -317,11 +317,11 @@ bool ServerGroupChatRoom::canHandleParticipants () const {
 	return LocalConference::canHandleParticipants();
 }
 
-shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const Address &addr) const {
+shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const IdentityAddress &addr) const {
 	return LocalConference::findParticipant(addr);
 }
 
-const Address &ServerGroupChatRoom::getConferenceAddress () const {
+const IdentityAddress &ServerGroupChatRoom::getConferenceAddress () const {
 	return LocalConference::getConferenceAddress();
 }
 
@@ -348,7 +348,7 @@ void ServerGroupChatRoom::leave () {}
 void ServerGroupChatRoom::removeParticipant (const shared_ptr<const Participant> &participant) {
 	L_D();
 	SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal);
-	LinphoneAddress *lAddr = linphone_address_new(participant->getContactAddress().asString().c_str());
+	LinphoneAddress *lAddr = linphone_address_new(participant->getAddress().asString().c_str());
 	linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, false);
 	linphone_address_unref(lAddr);
 	Address referToAddr = getConferenceAddress();
