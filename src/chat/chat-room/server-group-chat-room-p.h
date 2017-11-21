@@ -38,7 +38,7 @@ public:
 	ServerGroupChatRoomPrivate ();
 	virtual ~ServerGroupChatRoomPrivate () = default;
 
-	std::shared_ptr<Participant> addParticipant (const Address &addr);
+	std::shared_ptr<Participant> addParticipant (const IdentityAddress &addr);
 	void confirmCreation ();
 	void confirmJoining (SalCallOp *op);
 	std::shared_ptr<Participant> findRemovedParticipant (const std::shared_ptr<const CallSession> &session) const;
@@ -47,7 +47,7 @@ public:
 	void subscribeReceived (LinphoneEvent *event);
 	void update (SalCallOp *op);
 
-	void dispatchMessage (const Address &fromAddr, const Content &content);
+	void dispatchMessage (const IdentityAddress &fromAddr, const Content &content);
 	void storeOrUpdateMessage (const std::shared_ptr<ChatMessage> &msg) override;
 	LinphoneReason messageReceived (SalOp *op, const SalMessage *msg) override;
 	void setConferenceAddress (const IdentityAddress &confAddr);
