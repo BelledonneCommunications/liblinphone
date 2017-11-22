@@ -64,13 +64,16 @@ void registration_state_changed(struct _LinphoneCore *lc, LinphoneProxyConfig *c
 		}
 }
 
-static void register_with_refresh_base_3(LinphoneCore* lc
-											, bool_t refresh
-											,const char* domain
-											,const char* route
-											,bool_t late_auth_info
-											,LinphoneTransports *transport
-											,LinphoneRegistrationState expected_final_state) {
+static void register_with_refresh_base_3_for_algo(
+	LinphoneCore* lc,
+	bool_t refresh,
+	const char* domain,
+	const char* route,
+	bool_t late_auth_info,
+	LinphoneTransports *transport,
+	LinphoneRegistrationState expected_final_state,
+	const char* username
+) {
 	int retry=0;
 	char* addr;
 	LinphoneProxyConfig* proxy_cfg;
@@ -88,7 +91,7 @@ static void register_with_refresh_base_3(LinphoneCore* lc
 
 	proxy_cfg = linphone_proxy_config_new();
 
-	from = create_linphone_address(domain);
+	from = create_linphone_address_for_algo(domain, username);
 
 	linphone_proxy_config_set_identity(proxy_cfg,addr=linphone_address_as_string(from));
 	ms_free(addr);
@@ -136,29 +139,52 @@ static void register_with_refresh_base_3(LinphoneCore* lc
 	linphone_proxy_config_unref(proxy_cfg);
 }
 
-static void register_with_refresh_base_2(LinphoneCore* lc
-											, bool_t refresh
-											,const char* domain
-											,const char* route
-											,bool_t late_auth_info
-											,LinphoneTransports *transport) {
-	register_with_refresh_base_3(lc, refresh, domain, route, late_auth_info, transport,LinphoneRegistrationOk );
+static void register_with_refresh_base_3(
+	LinphoneCore* lc,
+	bool_t refresh,
+	const char *domain,
+	const char *route,
+	bool_t late_auth_info,
+	LinphoneTransports *transport,
+	LinphoneRegistrationState expected_final_state
+) {
+	register_with_refresh_base_3_for_algo(lc, refresh, domain, route, late_auth_info, transport, expected_final_state, NULL);
 }
-static void register_with_refresh_base(LinphoneCore* lc, bool_t refresh,const char* domain,const char* route) {
+
+static void register_with_refresh_base_2(
+	LinphoneCore* lc,
+	bool_t refresh,
+	const char *domain,
+	const char *route,
+	bool_t late_auth_info,
+	LinphoneTransports *transport
+) {
+	register_with_refresh_base_3(lc, refresh, domain, route, late_auth_info, transport,LinphoneRegistrationOk);
+}
+
+static void register_with_refresh_base_for_algo(LinphoneCore* lc, bool_t refresh, const char *domain,const char *route, const char *username) {
 	LinphoneTransports *transport = linphone_factory_create_transports(linphone_factory_get());
 	linphone_transports_set_udp_port(transport, 5070);
 	linphone_transports_set_tcp_port(transport, 5070);
 	linphone_transports_set_tls_port(transport, 5071);
 	linphone_transports_set_dtls_port(transport, 0);
-	register_with_refresh_base_2(lc,refresh,domain,route,FALSE,transport);
+	register_with_refresh_base_3_for_algo(lc,refresh,domain,route,FALSE,transport,LinphoneRegistrationOk,username);
 	linphone_transports_unref(transport);
 }
 
-static void register_with_refresh(LinphoneCoreManager* lcm, bool_t refresh,const char* domain,const char* route) {
+static void register_with_refresh_base(LinphoneCore *lc, bool_t refresh, const char *domain, const char *route) {
+	register_with_refresh_base_for_algo(lc, refresh, domain, route, NULL);
+}
+
+static void register_with_refresh_for_algo(LinphoneCoreManager *lcm, bool_t refresh, const char *domain, const char*route, const char *username) {
 	stats* counters = &lcm->stat;
-	register_with_refresh_base(lcm->lc,refresh,domain,route);
+	register_with_refresh_base_for_algo(lcm->lc,refresh,domain,route,username);
 	linphone_core_manager_stop(lcm);
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationCleared,1, int, "%d");
+}
+
+static void register_with_refresh(LinphoneCoreManager* lcm, bool_t refresh,const char* domain,const char* route) {
+	register_with_refresh_for_algo(lcm, refresh, domain, route, NULL);
 }
 
 static void register_with_refresh_with_send_error(void) {
@@ -310,13 +336,27 @@ static void simple_tls_register(void){
 static void simple_authenticated_register(void){
 	stats* counters;
 	LinphoneCoreManager* lcm = create_lcm();
-	LinphoneAuthInfo *info=linphone_auth_info_new(test_username,NULL,test_password,NULL,auth_domain,NULL); /*create authentication structure from identity*/
+	LinphoneAuthInfo *info=linphone_auth_info_new_for_algorithm(test_username,NULL,test_password,NULL,auth_domain,NULL,NULL); /*create authentication structure from identity*/
 	char route[256];
 	sprintf(route,"sip:%s",test_route);
 	linphone_core_add_auth_info(lcm->lc,info); /*add authentication info to LinphoneCore*/
 	linphone_auth_info_unref(info);
 	counters = &lcm->stat;
 	register_with_refresh(lcm,FALSE,auth_domain,route);
+	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,0, int, "%d");
+	linphone_core_manager_destroy(lcm);
+}
+
+static void simple_authenticated_register_for_algorithm(void){
+	stats* counters;
+	LinphoneCoreManager* lcm = create_lcm();
+	LinphoneAuthInfo *info=linphone_auth_info_new_for_algorithm(test_sha_username,NULL,test_password,NULL,auth_domain,NULL,"SHA-256"); /*create authentication structure from identity*/
+	char route[256];
+	sprintf(route,"sip:%s",test_route);
+	linphone_core_add_auth_info(lcm->lc,info); /*add authentication info to LinphoneCore*/
+	linphone_auth_info_unref(info);
+	counters = &lcm->stat;
+	register_with_refresh_for_algo(lcm,FALSE,auth_domain,route,test_sha_username);
 	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,0, int, "%d");
 	linphone_core_manager_destroy(lcm);
 }
@@ -328,12 +368,29 @@ static void ha1_authenticated_register(void){
 	LinphoneAuthInfo *info;
 	char route[256];
 	sal_auth_compute_ha1(test_username,auth_domain,test_password,ha1);
-	info=linphone_auth_info_new(test_username,NULL,NULL,ha1,auth_domain,NULL); /*create authentication structure from identity*/
+	info=linphone_auth_info_new_for_algorithm(test_username,NULL,NULL,ha1,auth_domain,NULL,NULL); /*create authentication structure from identity*/
 	sprintf(route,"sip:%s",test_route);
 	linphone_core_add_auth_info(lcm->lc,info); /*add authentication info to LinphoneCore*/
 	linphone_auth_info_unref(info);
 	counters = &lcm->stat;
 	register_with_refresh(lcm,FALSE,auth_domain,route);
+	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,0, int, "%d");
+	linphone_core_manager_destroy(lcm);
+}
+
+static void ha1_authenticated_register_for_algorithm(void){
+	stats* counters;
+	LinphoneCoreManager* lcm = create_lcm();
+	char ha1[65];
+	LinphoneAuthInfo *info;
+	char route[256];
+	sal_auth_compute_ha1_for_algorithm(test_sha_username,auth_domain,test_password,ha1,65,"SHA-256");
+	info=linphone_auth_info_new_for_algorithm(test_sha_username,NULL,NULL,ha1,auth_domain,NULL,"SHA-256"); /*create authentication structure from identity*/
+	sprintf(route,"sip:%s",test_route);
+	linphone_core_add_auth_info(lcm->lc,info); /*add authentication info to LinphoneCore*/
+	linphone_auth_info_unref(info);
+	counters = &lcm->stat;
+	register_with_refresh_for_algo(lcm,FALSE,auth_domain,route,test_sha_username);
 	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,0, int, "%d");
 	linphone_core_manager_destroy(lcm);
 }
@@ -368,7 +425,7 @@ static void authenticated_register_with_late_credentials(void){
 
 	sprintf(route,"sip:%s",test_route);
 
-	lcm =  linphone_core_manager_new(NULL);
+	lcm = linphone_core_manager_new(NULL);
 	transport = linphone_factory_create_transports(linphone_factory_get());
 	linphone_transports_set_udp_port(transport, 5070);
 	linphone_transports_set_tcp_port(transport, 5070);
@@ -392,7 +449,7 @@ static void authenticated_register_with_provided_credentials(void){
 
 	sprintf(route,"sip:%s",test_route);
 
-	lcm =  linphone_core_manager_new(NULL);
+	lcm = linphone_core_manager_new(NULL);
 
 	counters = get_stats(lcm->lc);
 	cfg = linphone_core_create_proxy_config(lcm->lc);
@@ -434,7 +491,7 @@ static void authenticated_register_with_wrong_late_credentials(void){
 
 	sprintf(route,"sip:%s",test_route);
 
-	lcm =  linphone_core_manager_new(NULL);
+	lcm = linphone_core_manager_new(NULL);
 	transport = linphone_factory_create_transports(linphone_factory_get());
 	linphone_transports_set_udp_port(transport, 5070);
 	linphone_transports_set_tcp_port(transport, 5070);
@@ -687,8 +744,8 @@ static void proxy_transport_change(void){
 }
 /*
  * On ios, some firewal require to disable flow label (livebox with default firewall level).
- *  sudo sysctl net.inet6.ip6.auto_flowlabel=0
- *  It might be possible to found a sockopt for such purpose.
+ * sudo sysctl net.inet6.ip6.auto_flowlabel=0
+ * It might be possible to found a sockopt for such purpose.
  */
 static void proxy_transport_change_with_wrong_port(void) {
 	LinphoneCoreManager* lcm = create_lcm();
@@ -911,7 +968,7 @@ static void tls_certificate_failure(void){
 }
 
 char *read_file(const char *path) {
-	long  numbytes = 0;
+	long numbytes = 0;
 	size_t readbytes;
 	char *buffer = NULL;
 	FILE *infile = fopen(path, "rb");
@@ -1243,7 +1300,9 @@ test_t register_tests[] = {
 	TEST_NO_TAG("TLS certificate given by string instead of file",tls_certificate_data),
 	TEST_NO_TAG("TLS with non tls server",tls_with_non_tls_server),
 	TEST_NO_TAG("Simple authenticated register", simple_authenticated_register),
+	TEST_NO_TAG("Simple authenticated register SHA-256", simple_authenticated_register_for_algorithm),
 	TEST_NO_TAG("Ha1 authenticated register", ha1_authenticated_register),
+	TEST_NO_TAG("Ha1 authenticated register SHA-256", ha1_authenticated_register_for_algorithm),
 	TEST_NO_TAG("Digest auth without initial credentials", authenticated_register_with_no_initial_credentials),
 	TEST_NO_TAG("Digest auth with wrong credentials", authenticated_register_with_wrong_credentials),
 	TEST_NO_TAG("Digest auth with wrong credentials, check if registration attempts are stopped", authenticated_register_with_wrong_credentials_2),

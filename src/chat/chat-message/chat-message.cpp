@@ -411,9 +411,16 @@ string ChatMessagePrivate::createImdnXml (Imdn::Type imdnType, LinphoneReason re
 }
 
 void ChatMessagePrivate::sendImdn (Imdn::Type imdnType, LinphoneReason reason) {
-	// FIXME: Add impl.
-	// L_Q();
-	// q->getChatRoom()->getPrivate()->sendImdn(createImdnXml(imdnType, reason), reason);
+	L_Q();
+
+	shared_ptr<ChatMessage> msg = q->getChatRoom()->createMessage();
+	
+	Content *content = new Content();
+	content->setContentType("message/imdn+xml");
+	content->setBody(createImdnXml(imdnType, reason));
+	msg->addContent(*content);
+
+	msg->getPrivate()->send();
 }
 
 LinphoneReason ChatMessagePrivate::receive () {
@@ -675,11 +682,11 @@ ChatMessage::ChatMessage (const shared_ptr<ChatRoom> &chatRoom, ChatMessage::Dir
 	d->chatRoom = chatRoom;
 	d->chatRoomId = chatRoom->getChatRoomId();
 	if (direction == Direction::Outgoing) {
-		d->fromAddress = chatRoom->getLocalAddress();
-		d->toAddress = chatRoom->getPeerAddress();
+		d->fromAddress = d->chatRoomId.getLocalAddress();
+		d->toAddress = d->chatRoomId.getPeerAddress();
 	} else {
-		d->fromAddress = chatRoom->getPeerAddress();
-		d->toAddress = chatRoom->getLocalAddress();
+		d->fromAddress = d->chatRoomId.getPeerAddress();
+		d->toAddress = d->chatRoomId.getLocalAddress();
 	}
 	d->direction = direction;
 }
@@ -764,16 +771,6 @@ const IdentityAddress &ChatMessage::getFromAddress () const {
 const IdentityAddress &ChatMessage::getToAddress () const {
 	L_D();
 	return d->toAddress;
-}
-
-const IdentityAddress &ChatMessage::getLocalAddress () const {
-	L_D();
-	return d->chatRoomId.getLocalAddress();
-}
-
-const IdentityAddress &ChatMessage::getRemoteAddress () const {
-	L_D();
-	return d->direction == Direction::Outgoing ? d->chatRoomId.getPeerAddress() : d->fromAddress;
 }
 
 // -----------------------------------------------------------------------------

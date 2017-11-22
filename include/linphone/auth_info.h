@@ -51,8 +51,24 @@ extern "C" {
  * @return A #LinphoneAuthInfo object. linphone_auth_info_destroy() must be used to destroy it when no longer needed. The LinphoneCore makes a copy of LinphoneAuthInfo
  * passed through linphone_core_add_auth_info().
 **/
-LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_new(const char *username, const char *userid,
-	const char *passwd, const char *ha1,const char *realm, const char *domain);
+LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_new(
+	const char *username,
+	const char *userid,
+	const char *passwd,
+	const char *ha1,
+	const char *rfealm,
+	const char *domain
+);
+
+LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_new_for_algorithm(
+	const char *username,
+	const char *userid,
+	const char *passwd,
+	const char *ha1,
+	const char *realm,
+	const char *domain,
+	const char *algorithm
+);
 
 /**
  * Instantiates a new auth info with values from source.

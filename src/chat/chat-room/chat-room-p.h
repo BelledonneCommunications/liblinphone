@@ -47,7 +47,6 @@ public:
 	void removeTransientMessage (const std::shared_ptr<ChatMessage> &msg);
 
 	void release ();
-	void sendImdn (const std::string &content, LinphoneReason reason);
 
 	void setState (ChatRoom::State newState);
 
@@ -95,7 +94,13 @@ public:
 	// TODO: Use CoreAccessor on IsComposing. And avoid pointer if possible.
 	std::unique_ptr<IsComposing> isComposingHandler;
 
+	// TODO: Check all fields before this point.
+
+public:
 	ChatRoomId chatRoomId;
+
+	time_t creationTime = -1;
+	time_t lastUpdateTime = -1;
 
 private:
 	L_DECLARE_PUBLIC(ChatRoom);
