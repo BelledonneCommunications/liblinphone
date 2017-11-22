@@ -262,6 +262,10 @@ bool ServerGroupChatRoomPrivate::isAdminLeft () const {
 	return false;
 }
 
+// -----------------------------------------------------------------------------
+
+void ServerGroupChatRoomPrivate::onChatMessageReceived (const std::shared_ptr<ChatMessage> &msg) {}
+
 // =============================================================================
 
 ServerGroupChatRoom::ServerGroupChatRoom (const std::shared_ptr<Core> &core, SalCallOp *op)
@@ -385,8 +389,6 @@ void ServerGroupChatRoom::setSubject (const std::string &subject) {
 }
 
 // -----------------------------------------------------------------------------
-
-void ServerGroupChatRoom::onChatMessageReceived (const std::shared_ptr<ChatMessage> &msg) {}
 
 void ServerGroupChatRoom::onCallSessionStateChanged (const std::shared_ptr<const CallSession> &session, LinphoneCallState state, const std::string &message) {
 	L_D();
