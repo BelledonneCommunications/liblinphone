@@ -242,7 +242,8 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	chatRoomId = ChatRoomId(confAddr, confAddr);
 	// Let the SIP stack set the domain and the port
 	shared_ptr<Participant> me = q->getMe();
-	Address addr = me->getAddress();
+	me->getPrivate()->setAddress(confAddr);
+	Address addr(confAddr);
 	addr.setParam("isfocus");
 	shared_ptr<CallSession> session = me->getPrivate()->getSession();
 	session->redirect(addr);
