@@ -30,6 +30,7 @@
 #include "conference/participant-p.h"
 #include "conference/session/call-session-p.h"
 #include "content/content-type.h"
+#include "core/core-p.h"
 #include "logger/logger.h"
 #include "sal/refer-op.h"
 #include "server-group-chat-room-p.h"
@@ -247,7 +248,9 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	addr.setParam("isfocus");
 	shared_ptr<CallSession> session = me->getPrivate()->getSession();
 	session->redirect(addr);
+	q->getCore()->getPrivate()->insertChatRoom(q->getSharedFromThis());
 	setState(ChatRoom::State::Created);
+	q->getCore()->getPrivate()->insertChatRoomWithDb(q->getSharedFromThis());
 }
 
 bool ServerGroupChatRoomPrivate::isAdminLeft () const {
