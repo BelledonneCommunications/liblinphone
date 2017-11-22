@@ -24,9 +24,9 @@
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
 
-// =============================================================================
-
 #define LINPHONE_DB "linphone.db"
+
+// =============================================================================
 
 using namespace std;
 
@@ -42,7 +42,7 @@ shared_ptr<Core> Core::create (LinphoneCore *cCore) {
 	// Do not use `make_shared` => Private constructor.
 	shared_ptr<Core> core = shared_ptr<Core>(new Core);
 
-	CorePrivate * const d = core->getPrivate();
+	CorePrivate *const d = core->getPrivate();
 
 	d->cCore = cCore;
 	d->mainDb.reset(new MainDb(core->getSharedFromThis()));
@@ -72,6 +72,10 @@ LinphoneCore *Core::getCCore () const {
 	L_D();
 	return d->cCore;
 }
+
+// -----------------------------------------------------------------------------
+// Paths.
+// -----------------------------------------------------------------------------
 
 string Core::getDataPath() const {
 	L_D();

@@ -72,6 +72,7 @@ public:
 	std::list<std::shared_ptr<ChatMessage>> getHistoryRange (int startm, int endm);
 	int getUnreadChatMessagesCount ();
 	bool isRemoteComposing () const;
+	std::list<Address> getComposingAddresses () const;
 
 	virtual void markAsRead ();
 
@@ -79,8 +80,6 @@ public:
 
 protected:
 	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ChatRoomId &chatRoomId);
-
-	virtual void onChatMessageReceived (const std::shared_ptr<ChatMessage> &msg) = 0;
 
 private:
 	L_DECLARE_PRIVATE(ChatRoom);

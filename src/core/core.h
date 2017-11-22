@@ -42,6 +42,7 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class LocalConferenceEventHandlerPrivate;
 	friend class MainDb;
 	friend class MainDbEventKey;
+	friend class ServerGroupChatRoomPrivate;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(Core);
@@ -57,13 +58,6 @@ public:
 
 	// TODO: Remove me later.
 	LinphoneCore *getCCore () const;
-
-	// ---------------------------------------------------------------------------
-	// Paths.
-	// ---------------------------------------------------------------------------
-
-	std::string getDataPath() const;
-	std::string getConfigPath() const;
 
 	// ---------------------------------------------------------------------------
 	// ChatRoom.
@@ -83,6 +77,13 @@ public:
 	std::shared_ptr<ChatRoom> getOrCreateBasicChatRoomFromUri (const std::string &uri, bool isRtt = false);
 
 	static void deleteChatRoom (const std::shared_ptr<const ChatRoom> &chatRoom);
+
+	// ---------------------------------------------------------------------------
+	// Paths.
+	// ---------------------------------------------------------------------------
+
+	std::string getDataPath() const;
+	std::string getConfigPath() const;
 
 private:
 	Core ();

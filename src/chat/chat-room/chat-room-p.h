@@ -83,7 +83,7 @@ public:
 	LinphoneCall *call = nullptr;
 	ChatRoom::State state = ChatRoom::State::None;
 	bool isComposing = false;
-	std::unordered_set<std::string> remoteIsComposing;
+	std::list<Address> remoteIsComposing;
 	std::list<std::shared_ptr<ChatMessage>> transientMessages;
 
 	std::list<std::weak_ptr<ChatMessage>> weakMessages;
@@ -97,6 +97,8 @@ public:
 	// TODO: Check all fields before this point.
 
 public:
+	virtual void onChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) = 0;
+
 	ChatRoomId chatRoomId;
 
 	time_t creationTime = -1;
