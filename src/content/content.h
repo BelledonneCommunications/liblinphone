@@ -22,13 +22,12 @@
 
 #include <vector>
 
-// TODO: Remove me.
-#include "linphone/content.h"
-
 #include "object/app-data-container.h"
 #include "object/clonable-object.h"
 
 // =============================================================================
+
+L_DECL_C_STRUCT(LinphoneContent);
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -44,6 +43,7 @@ public:
 
 	Content &operator= (const Content &src);
 	Content &operator= (Content &&src);
+
 	bool operator== (const Content &content) const;
 
 	const ContentType &getContentType () const;
@@ -63,12 +63,12 @@ public:
 
 	size_t getSize () const;
 
-	bool isValid() const;
+	bool isValid () const;
 
 	bool isEmpty () const;
 
 	// TODO: Remove me later.
-	virtual LinphoneContent *toLinphoneContent() const;
+	virtual LinphoneContent *toLinphoneContent () const;
 
 protected:
 	explicit Content (ContentPrivate &p);

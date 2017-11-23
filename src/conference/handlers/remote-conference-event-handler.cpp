@@ -51,12 +51,8 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 
 	ConferenceListener *confListener = static_cast<ConferenceListener *>(conf);
 
-	// TODO: Temporary workaround, remove me.
-	const IdentityAddress &peerAddress = chatRoomId.getPeerAddress();
 	IdentityAddress entityAddress(confInfo->getEntity().c_str());
-	IdentityAddress peerAddressWorkaround = peerAddress;
-	peerAddressWorkaround.setDomain(entityAddress.getDomain());
-	if ((entityAddress == peerAddress) || (entityAddress == peerAddressWorkaround)) {
+	if (entityAddress == chatRoomId.getPeerAddress()) {
 		if (
 			confInfo->getConferenceDescription().present() &&
 			confInfo->getConferenceDescription().get().getSubject().present()
@@ -220,11 +216,9 @@ void RemoteConferenceEventHandler::multipartNotifyReceived (const string &xmlBod
 
 	Content multipart;
 	multipart.setBody(xmlBody);
-	ContentManager manager;
-	list<Content> contents = manager.multipartToContentLists(multipart);
-	for (const auto &content : contents) {
+
+	for (const auto &content : ContentManager::multipartToContentList(multipart))
 		d->simpleNotifyReceived(content.getBodyAsString());
-	}
 }
 
 // -----------------------------------------------------------------------------
