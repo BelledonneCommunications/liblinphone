@@ -48,7 +48,6 @@ public:
 	void update (SalCallOp *op);
 
 	void dispatchMessage (const IdentityAddress &fromAddr, const Content &content);
-	void storeOrUpdateMessage (const std::shared_ptr<ChatMessage> &msg) override;
 	LinphoneReason messageReceived (SalOp *op, const SalMessage *msg) override;
 	void setConferenceAddress (const IdentityAddress &confAddr);
 

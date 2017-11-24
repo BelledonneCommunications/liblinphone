@@ -35,7 +35,9 @@
 #include "content/file-content.h"
 #include "content/content.h"
 #include "core/core.h"
+#include "core/core-p.h"
 #include "logger/logger.h"
+#include "chat/notification/imdn.h"
 
 #include "ortp/b64.h"
 
@@ -94,6 +96,8 @@ void ChatMessagePrivate::setState (ChatMessage::State s, bool force) {
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	if (cbs && linphone_chat_message_cbs_get_msg_state_changed(cbs))
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, linphone_chat_message_get_state(msg));
+
+	store();
 }
 
 unsigned int ChatMessagePrivate::getStorageId () const {
@@ -310,106 +314,6 @@ bool ChatMessagePrivate::downloadFile () {
 
 // -----------------------------------------------------------------------------
 
-string ChatMessagePrivate::createImdnXml (Imdn::Type imdnType, LinphoneReason reason) {
-	xmlBufferPtr buf;
-	xmlTextWriterPtr writer;
-	int err;
-	string content;
-	char *datetime = nullptr;
-
-	// Check that the chat message has a message id.
-	if (id.empty()) return nullptr;
-
-	buf = xmlBufferCreate();
-	if (buf == nullptr) {
-		lError() << "Error creating the XML buffer";
-		return content;
-	}
-	writer = xmlNewTextWriterMemory(buf, 0);
-	if (writer == nullptr) {
-		lError() << "Error creating the XML writer";
-		return content;
-	}
-
-	datetime = linphone_timestamp_to_rfc3339_string(time);
-	err = xmlTextWriterStartDocument(writer, "1.0", "UTF-8", nullptr);
-	if (err >= 0) {
-		err = xmlTextWriterStartElementNS(writer, nullptr, (const xmlChar *)"imdn",
-				(const xmlChar *)"urn:ietf:params:xml:ns:imdn");
-	}
-	if ((err >= 0) && (reason != LinphoneReasonNone)) {
-		err = xmlTextWriterWriteAttributeNS(writer, (const xmlChar *)"xmlns", (const xmlChar *)"linphoneimdn", nullptr, (const xmlChar *)"http://www.linphone.org/xsds/imdn.xsd");
-	}
-	if (err >= 0) {
-		err = xmlTextWriterWriteElement(writer, (const xmlChar *)"message-id", (const xmlChar *)id.c_str());
-	}
-	if (err >= 0) {
-		err = xmlTextWriterWriteElement(writer, (const xmlChar *)"datetime", (const xmlChar *)datetime);
-	}
-	if (err >= 0) {
-		if (imdnType == Imdn::Type::Delivery) {
-			err = xmlTextWriterStartElement(writer, (const xmlChar *)"delivery-notification");
-		} else {
-			err = xmlTextWriterStartElement(writer, (const xmlChar *)"display-notification");
-		}
-	}
-	if (err >= 0) {
-		err = xmlTextWriterStartElement(writer, (const xmlChar *)"status");
-	}
-	if (err >= 0) {
-		if (reason == LinphoneReasonNone) {
-			if (imdnType == Imdn::Type::Delivery) {
-				err = xmlTextWriterStartElement(writer, (const xmlChar *)"delivered");
-			} else {
-				err = xmlTextWriterStartElement(writer, (const xmlChar *)"displayed");
-			}
-		} else {
-			err = xmlTextWriterStartElement(writer, (const xmlChar *)"error");
-		}
-	}
-	if (err >= 0) {
-		// Close the "delivered", "displayed" or "error" element.
-		err = xmlTextWriterEndElement(writer);
-	}
-	if ((err >= 0) && (reason != LinphoneReasonNone)) {
-		err = xmlTextWriterStartElementNS(writer, (const xmlChar *)"linphoneimdn", (const xmlChar *)"reason", nullptr);
-		if (err >= 0) {
-			char codestr[16];
-			snprintf(codestr, 16, "%d", linphone_reason_to_error_code(reason));
-			err = xmlTextWriterWriteAttribute(writer, (const xmlChar *)"code", (const xmlChar *)codestr);
-		}
-		if (err >= 0) {
-			err = xmlTextWriterWriteString(writer, (const xmlChar *)linphone_reason_to_string(reason));
-		}
-		if (err >= 0) {
-			err = xmlTextWriterEndElement(writer);
-		}
-	}
-	if (err >= 0) {
-		// Close the "status" element.
-		err = xmlTextWriterEndElement(writer);
-	}
-	if (err >= 0) {
-		// Close the "delivery-notification" or "display-notification" element.
-		err = xmlTextWriterEndElement(writer);
-	}
-	if (err >= 0) {
-		// Close the "imdn" element.
-		err = xmlTextWriterEndElement(writer);
-	}
-	if (err >= 0) {
-		err = xmlTextWriterEndDocument(writer);
-	}
-	if (err > 0) {
-		// xmlTextWriterEndDocument returns the size of the content.
-		content = string((char *)buf->content);
-	}
-	xmlFreeTextWriter(writer);
-	xmlBufferFree(buf);
-	ms_free(datetime);
-	return content;
-}
-
 void ChatMessagePrivate::sendImdn (Imdn::Type imdnType, LinphoneReason reason) {
 	L_Q();
 
@@ -417,7 +321,7 @@ void ChatMessagePrivate::sendImdn (Imdn::Type imdnType, LinphoneReason reason) {
 
 	Content *content = new Content();
 	content->setContentType("message/imdn+xml");
-	content->setBody(createImdnXml(imdnType, reason));
+	content->setBody(Imdn::createXml(id, time, imdnType, reason));
 	msg->addContent(*content);
 
 	msg->getPrivate()->send();
@@ -521,14 +425,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 		return reason;
 	}
 
-	bool messageToBeStored = false;
-	for (Content *c : contents) {
-		if (c->getContentType() == ContentType::FileTransfer || c->getContentType() == ContentType::PlainText) {
-			messageToBeStored = true;
-		}
-	}
-	if (messageToBeStored)
-		q->store();
+	store();
 
 	return reason;
 }
@@ -581,7 +478,6 @@ void ChatMessagePrivate::send () {
 		LinphoneAddress *peer = linphone_address_new(q->getToAddress().asString().c_str());
 		/* Sending out of call */
 		salOp = op = new SalMessageOp(core->getCCore()->sal);
-		op->setUseGruuInFrom(true);
 		linphone_configure_op(
 			core->getCCore(), op, peer, getSalCustomHeaders(),
 			!!lp_config_get_int(core->getCCore()->config, "sip", "chat_msg_with_contact", 0)
@@ -589,6 +485,8 @@ void ChatMessagePrivate::send () {
 		op->set_user_pointer(L_GET_C_BACK_PTR(q));     /* If out of call, directly store msg */
 		linphone_address_unref(peer);
 	}
+	op->set_from(q->getFromAddress().asString().c_str());
+	op->set_to(q->getToAddress().asString().c_str());
 
 	// ---------------------------------------
 	// Start of message modification
@@ -612,8 +510,7 @@ void ChatMessagePrivate::send () {
 			ChatMessageModifier::Result result = ecmm.encode(q->getSharedFromThis(), errorCode);
 			if (result == ChatMessageModifier::Result::Error) {
 				sal_error_info_set((SalErrorInfo *)op->get_error_info(), SalReasonNotAcceptable, "SIP", errorCode, "Unable to encrypt IM", nullptr);
-				q->updateState(ChatMessage::State::NotDelivered);
-				q->store();
+				setState(ChatMessage::State::NotDelivered);
 				return;
 			} else if (result == ChatMessageModifier::Result::Suspended) {
 				currentSendStep |= ChatMessagePrivate::Step::Encryption;
@@ -659,6 +556,8 @@ void ChatMessagePrivate::send () {
 
 	q->setImdnMessageId(op->get_call_id());   /* must be known at that time */
 
+	store();
+
 	if (call && linphone_call_get_op(call) == op) {
 		/* In this case, chat delivery status is not notified, so unrefing chat message right now */
 		/* Might be better fixed by delivering status, but too costly for now */
@@ -669,6 +568,52 @@ void ChatMessagePrivate::send () {
 	if (direction == ChatMessage::Direction::Outgoing) {
 		setIsReadOnly(true);
 		setState(ChatMessage::State::InProgress);
+	}
+}
+
+void ChatMessagePrivate::store() {
+	L_Q();
+
+	bool messageToBeStored = false;
+	for (Content *c : contents) {
+		ContentType contentType = c->getContentType();
+		if (contentType == ContentType::FileTransfer || contentType == ContentType::PlainText || contentType.isFile()) {
+			messageToBeStored = true;
+		}
+	}
+	if (!messageToBeStored) {
+		return;
+	}
+
+	shared_ptr<ConferenceChatMessageEvent> eventLog = chatEvent.lock();
+	if (eventLog) {
+		q->getChatRoom()->getCore()->getPrivate()->mainDb->updateEvent(eventLog);
+
+		if (direction == ChatMessage::Direction::Incoming) {
+			if (!hasFileTransferContent()) {
+				// Incoming message doesn't have any download waiting anymore, we can remove it's event from the transients
+				q->getChatRoom()->getPrivate()->removeTransientEvent(eventLog);
+			}
+		} else {
+			if (state == ChatMessage::State::Delivered || state == ChatMessage::State::NotDelivered) {
+				// Once message has reached this state it won't change anymore so we can remove the event from the transients
+				q->getChatRoom()->getPrivate()->removeTransientEvent(eventLog);
+			}
+		}
+	} else {
+		eventLog = make_shared<ConferenceChatMessageEvent>(time, q->getSharedFromThis());
+		chatEvent = eventLog;
+		q->getChatRoom()->getCore()->getPrivate()->mainDb->addEvent(eventLog);
+
+		if (direction == ChatMessage::Direction::Incoming) {
+			if (hasFileTransferContent()) {
+				// Keep the event in the transient list, message storage can be updated in near future
+				q->getChatRoom()->getPrivate()->addTransientEvent(eventLog);
+			}
+		} else {
+			// Keep event in transient to be able to store in database state changes
+			q->getChatRoom()->getPrivate()->addTransientEvent(eventLog);
+		}
 	}
 }
 
@@ -840,32 +785,10 @@ void ChatMessage::removeCustomHeader (const string &headerName) {
 	d->customHeaders.erase(headerName);
 }
 
-void ChatMessage::store () {
-	L_D();
-
-	if (d->storageId != 0) {
-		/* The message has already been stored (probably because of file transfer), update it */
-		// TODO: history.
-		// linphone_chat_message_store_update(L_GET_C_BACK_PTR(this));
-	} else {
-		/* Store the new message */
-		// TODO: history.
-		// linphone_chat_message_store(L_GET_C_BACK_PTR(this));
-	}
-}
-
 void ChatMessage::updateState (State state) {
 	L_D();
 
 	d->setState(state);
-	// TODO: history.
-	// linphone_chat_message_store_state(L_GET_C_BACK_PTR(this));
-
-	if (state == State::Delivered || state == State::NotDelivered) {
-		shared_ptr<ChatRoom> chatRoom = getChatRoom();
-		if (chatRoom)
-			chatRoom->getPrivate()->moveTransientMessageToWeakMessages(getSharedFromThis());
-	}
 }
 
 void ChatMessage::send () {

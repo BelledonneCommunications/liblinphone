@@ -56,6 +56,7 @@ public:
 	// ---------------------------------------------------------------------------
 
 	bool addEvent (const std::shared_ptr<EventLog> &eventLog);
+	bool updateEvent (const std::shared_ptr<EventLog> &eventLog);
 	static bool deleteEvent (const std::shared_ptr<EventLog> &eventLog);
 	int getEventsCount (FilterMask mask = NoFilter) const;
 
@@ -99,7 +100,7 @@ public:
 	// ---------------------------------------------------------------------------
 
 	std::list<std::shared_ptr<ChatRoom>> getChatRooms () const;
-	void insertChatRoom (const ChatRoomId &chatRoomId, int capabilities);
+	void insertChatRoom (const ChatRoomId &chatRoomId, int capabilities, const std::string &subject);
 	void deleteChatRoom (const ChatRoomId &chatRoomId);
 
 	// ---------------------------------------------------------------------------

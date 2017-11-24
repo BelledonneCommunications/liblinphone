@@ -452,7 +452,6 @@ void linphone_call_start_media_streams_for_ice_gathering(LinphoneCall *call);
 void linphone_call_stop_media_streams(LinphoneCall *call);
 void linphone_call_delete_upnp_session(LinphoneCall *call);
 int _linphone_core_apply_transports(LinphoneCore *lc);
-const char * linphone_core_get_identity(LinphoneCore *lc);
 
 void linphone_core_start_waiting(LinphoneCore *lc, const char *purpose);
 void linphone_core_update_progress(LinphoneCore *lc, const char *purpose, float progresses);
@@ -489,7 +488,6 @@ LinphoneChatRoom *_linphone_client_group_chat_room_new (LinphoneCore *core, cons
 LinphoneChatRoom *_linphone_server_group_chat_room_new (LinphoneCore *core, LinphonePrivate::SalCallOp *op);
 void linphone_chat_room_release(LinphoneChatRoom *cr);
 void linphone_chat_room_set_call(LinphoneChatRoom *cr, LinphoneCall *call);
-bctbx_list_t * linphone_chat_room_get_transient_messages(const LinphoneChatRoom *cr);
 LinphoneChatRoomCbs * linphone_chat_room_cbs_new (void);
 /**/
 

@@ -45,7 +45,8 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(
 	_linphone_chat_room_constructor, _linphone_chat_room_destructor,
 	LinphoneChatRoomCbs *cbs;
 	mutable LinphoneAddress *conferenceAddressCache;
-	LinphoneAddress *peerAddressCache;
+	mutable LinphoneAddress *peerAddressCache;
+	mutable LinphoneAddress *localAddressCache;
 )
 
 static void _linphone_chat_room_constructor (LinphoneChatRoom *cr) {
@@ -54,15 +55,12 @@ static void _linphone_chat_room_constructor (LinphoneChatRoom *cr) {
 
 static void _linphone_chat_room_destructor (LinphoneChatRoom *cr) {
 	linphone_chat_room_cbs_unref(cr->cbs);
-	cr->cbs = nullptr;
-	if (cr->conferenceAddressCache) {
+	if (cr->conferenceAddressCache)
 		linphone_address_unref(cr->conferenceAddressCache);
-		cr->conferenceAddressCache = nullptr;
-	}
-	if (cr->peerAddressCache) {
+	if (cr->peerAddressCache)
 		linphone_address_unref(cr->peerAddressCache);
-		cr->peerAddressCache = nullptr;
-	}
+	if (cr->localAddressCache)
+		linphone_address_unref(cr->localAddressCache);
 }
 
 // =============================================================================
@@ -71,10 +69,6 @@ static void _linphone_chat_room_destructor (LinphoneChatRoom *cr) {
 
 void linphone_chat_room_release (LinphoneChatRoom *cr) {
 	L_GET_PRIVATE_FROM_C_OBJECT(cr)->release();
-}
-
-void linphone_chat_room_remove_transient_message (LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
-	L_GET_PRIVATE_FROM_C_OBJECT(cr)->removeTransientMessage(L_GET_CPP_PTR_FROM_C_OBJECT(msg));
 }
 
 void linphone_chat_room_send_message (LinphoneChatRoom *cr, const char *msg) {
@@ -97,8 +91,18 @@ const LinphoneAddress *linphone_chat_room_get_peer_address (LinphoneChatRoom *cr
 	if (cr->peerAddressCache) {
 		linphone_address_unref(cr->peerAddressCache);
 	}
+
 	cr->peerAddressCache = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getPeerAddress().asString().c_str());
 	return cr->peerAddressCache;
+}
+
+const LinphoneAddress *linphone_chat_room_get_local_address (LinphoneChatRoom *cr) {
+	if (cr->localAddressCache) {
+		linphone_address_unref(cr->localAddressCache);
+	}
+
+	cr->localAddressCache = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getLocalAddress().asString().c_str());
+	return cr->localAddressCache;
 }
 
 LinphoneChatMessage *linphone_chat_room_create_message (LinphoneChatRoom *cr, const char *message) {
@@ -164,10 +168,6 @@ LinphoneCall *linphone_chat_room_get_call (const LinphoneChatRoom *cr) {
 void linphone_chat_room_set_call (LinphoneChatRoom *cr, LinphoneCall *call) {
 	if (linphone_core_realtime_text_enabled(linphone_chat_room_get_core(cr)))
 		L_GET_PRIVATE_FROM_C_OBJECT(cr, RealTimeTextChatRoom)->call = call;
-}
-
-bctbx_list_t *linphone_chat_room_get_transient_messages (const LinphoneChatRoom *cr) {
-	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_PRIVATE_FROM_C_OBJECT(cr)->getTransientMessages());
 }
 
 void linphone_chat_room_mark_as_read (LinphoneChatRoom *cr) {
@@ -351,8 +351,16 @@ LinphoneChatRoom *_linphone_client_group_chat_room_new (LinphoneCore *core, cons
 	LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(core, addr);
 	linphone_address_unref(addr);
 	string from;
-	if (proxy)
-		from = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_proxy_config_get_identity_address(proxy))->asString();
+	if (proxy) {
+		const LinphoneAddress *contactAddr = linphone_proxy_config_get_contact(proxy);
+		if (contactAddr) {
+			char *cFrom = linphone_address_as_string(contactAddr);
+			from = string(cFrom);
+			bctbx_free(cFrom);
+		} else {
+			from = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_proxy_config_get_identity_address(proxy))->asString();
+		}
+	}
 	if (from.empty())
 		from = linphone_core_get_primary_contact(core);
 	LinphonePrivate::IdentityAddress me(from);

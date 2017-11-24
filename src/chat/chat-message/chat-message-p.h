@@ -30,6 +30,7 @@
 #include "content/content.h"
 #include "content/file-content.h"
 #include "content/file-transfer-content.h"
+#include "event-log/conference/conference-chat-message-event.h"
 #include "object/object-p.h"
 #include "sal/sal.h"
 
@@ -121,6 +122,8 @@ public:
 	LinphoneReason receive();
 	void send();
 
+	void store();
+
 private:
 	// TODO: Clean attributes.
 	unsigned int storageId = 0;
@@ -145,12 +148,11 @@ private:
 	ContentType cContentType;
 	std::string cText;
 
-	std::string createImdnXml(Imdn::Type imdnType, LinphoneReason reason);
-
 	// TODO: Remove my comment. VARIABLES OK.
 	// Do not expose.
 
 	std::weak_ptr<ChatRoom> chatRoom;
+	std::weak_ptr<ConferenceChatMessageEvent> chatEvent;
 	ChatRoomId chatRoomId;
 	IdentityAddress fromAddress;
 	IdentityAddress toAddress;

@@ -104,10 +104,11 @@ void CorePrivate::deleteChatRoom (const ChatRoomId &chatRoomId) {
 
 void CorePrivate::insertChatRoomWithDb (const shared_ptr<ChatRoom> &chatRoom) {
 	L_ASSERT(chatRoom->getState() == ChatRoom::State::Created);
-
-	const ChatRoomId &chatRoomId = chatRoom->getChatRoomId();
-	ChatRoom::CapabilitiesMask capabilities = chatRoom->getCapabilities();
-	mainDb->insertChatRoom(chatRoomId, capabilities);
+	mainDb->insertChatRoom(
+		chatRoom->getChatRoomId(),
+		chatRoom->getCapabilities(),
+		chatRoom->getSubject()
+	);
 }
 
 void CorePrivate::deleteChatRoomWithDb (const ChatRoomId &chatRoomId) {
@@ -129,7 +130,7 @@ shared_ptr<ChatRoom> Core::findChatRoom (const ChatRoomId &chatRoomId) const {
 	if (it != d->chatRoomsById.cend())
 		return it->second;
 
-	lInfo() << "Unable to find chat room: (peer=" <<
+	lInfo() << "Unable to find chat room in RAM: (peer=" <<
 		chatRoomId.getPeerAddress().asString() << ", local=" << chatRoomId.getLocalAddress().asString() << ").";
 
 	return shared_ptr<ChatRoom>();

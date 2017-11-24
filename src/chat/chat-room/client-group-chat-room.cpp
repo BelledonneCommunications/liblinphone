@@ -64,7 +64,9 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	shared_ptr<Participant> focus = qConference->getPrivate()->focus;
 	shared_ptr<CallSession> session = focus->getPrivate()->createSession(*q, &csp, false, q);
 	const Address &myAddress = q->getMe()->getAddress();
-	session->configure(LinphoneCallOutgoing, nullptr, nullptr, myAddress, focus->getAddress());
+	Address myCleanedAddress(myAddress);
+	myCleanedAddress.setUriParam("gr"); // Remove gr parameter for INVITE
+	session->configure(LinphoneCallOutgoing, nullptr, nullptr, myCleanedAddress, focus->getAddress());
 	session->initiateOutgoing();
 	return session;
 }
@@ -84,15 +86,30 @@ void ClientGroupChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMes
 // =============================================================================
 
 ClientGroupChatRoom::ClientGroupChatRoom (
-	const std::shared_ptr<Core> &core,
-	const std::string &factoryUri,
+	const shared_ptr<Core> &core,
+	const string &factoryUri,
 	const IdentityAddress &me,
-	const std::string &subject
+	const string &subject
 ) : ChatRoom(*new ClientGroupChatRoomPrivate, core, ChatRoomId(IdentityAddress(), me)),
 RemoteConference(core, me, nullptr) {
 	L_D_T(RemoteConference, dConference);
 	dConference->focus = make_shared<Participant>(Address(factoryUri));
 	RemoteConference::setSubject(subject);
+}
+
+ClientGroupChatRoom::ClientGroupChatRoom (
+	const shared_ptr<Core> &core,
+	const ChatRoomId &chatRoomId,
+	const string &subject
+) : ChatRoom(*new ClientGroupChatRoomPrivate, core, chatRoomId),
+RemoteConference(core, chatRoomId.getLocalAddress(), nullptr) {
+	L_D();
+	L_D_T(RemoteConference, dConference);
+	const IdentityAddress &peerAddress = chatRoomId.getPeerAddress();
+	dConference->focus = make_shared<Participant>(peerAddress);
+	dConference->conferenceAddress = peerAddress;
+	dConference->subject = subject;
+	d->state = ChatRoom::State::Created;
 }
 
 shared_ptr<Core> ClientGroupChatRoom::getCore () const {
@@ -268,6 +285,7 @@ void ClientGroupChatRoom::onConferenceCreated (const IdentityAddress &addr) {
 	L_D();
 	L_D_T(RemoteConference, dConference);
 	dConference->conferenceAddress = addr;
+	dConference->focus = make_shared<Participant>(addr);
 	d->chatRoomId = ChatRoomId(addr, d->chatRoomId.getLocalAddress());
 	getCore()->getPrivate()->insertChatRoom(getSharedFromThis());
 }
@@ -432,7 +450,7 @@ void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<Conferenc
 
 // -----------------------------------------------------------------------------
 
-void ClientGroupChatRoom::onCallSessionSetReleased (const std::shared_ptr<const CallSession> &session) {
+void ClientGroupChatRoom::onCallSessionSetReleased (const shared_ptr<const CallSession> &session) {
 	L_D_T(RemoteConference, dConference);
 
 	ParticipantPrivate *participantPrivate = dConference->focus->getPrivate();
@@ -441,7 +459,7 @@ void ClientGroupChatRoom::onCallSessionSetReleased (const std::shared_ptr<const 
 }
 
 void ClientGroupChatRoom::onCallSessionStateChanged (
-	const std::shared_ptr<const CallSession> &session,
+	const shared_ptr<const CallSession> &session,
 	LinphoneCallState state,
 	const string &message
 ) {
