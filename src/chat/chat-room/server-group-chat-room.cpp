@@ -198,10 +198,6 @@ void ServerGroupChatRoomPrivate::dispatchMessage (const IdentityAddress &fromAdd
 	}
 }
 
-void ServerGroupChatRoomPrivate::storeOrUpdateMessage (const std::shared_ptr<ChatMessage> &msg) {
-	// Do not store the messages in the server group chat room
-}
-
 LinphoneReason ServerGroupChatRoomPrivate::messageReceived (SalOp *op, const SalMessage *salMsg) {
 	L_Q();
 	// Check that the message is coming from a participant of the chat room
