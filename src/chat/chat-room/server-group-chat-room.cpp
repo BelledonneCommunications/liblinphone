@@ -185,12 +185,12 @@ void ServerGroupChatRoomPrivate::dispatchMessage (const IdentityAddress &fromAdd
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 	for (const auto &p : qConference->getPrivate()->participants) {
-		for (const auto &d : p->getPrivate()->getDevices()) {
-			if (fromAddr != d->getAddress()) {
+		for (const auto &device : p->getPrivate()->getDevices()) {
+			if (fromAddr != device->getAddress()) {
 				shared_ptr<ChatMessage> msg = q->createMessage();
 				msg->setInternalContent(content);
 				msg->getPrivate()->forceFromAddress(q->getConferenceAddress());
-				msg->getPrivate()->forceToAddress(p->getAddress());
+				msg->getPrivate()->forceToAddress(device->getAddress());
 				msg->getPrivate()->setApplyModifiers(false);
 				msg->send();
 			}
@@ -355,15 +355,17 @@ void ServerGroupChatRoom::leave () {}
 
 void ServerGroupChatRoom::removeParticipant (const shared_ptr<const Participant> &participant) {
 	L_D();
-	SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal);
-	LinphoneAddress *lAddr = linphone_address_new(participant->getAddress().asString().c_str());
-	linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, false);
-	linphone_address_unref(lAddr);
-	Address referToAddr = getConferenceAddress();
-	referToAddr.setParam("text");
-	referToAddr.setUriParam("method", "BYE");
-	referOp->send_refer(referToAddr.getPrivate()->getInternalAddress());
-	referOp->unref();
+	for (const auto &device : participant->getPrivate()->getDevices()) {
+		SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal);
+		LinphoneAddress *lAddr = linphone_address_new(device->getAddress().asString().c_str());
+		linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, false);
+		linphone_address_unref(lAddr);
+		Address referToAddr = getConferenceAddress();
+		referToAddr.setParam("text");
+		referToAddr.setUriParam("method", "BYE");
+		referOp->send_refer(referToAddr.getPrivate()->getInternalAddress());
+		referOp->unref();
+	}
 	// TODO: Wait for the response to the REFER to really remove the participant
 	d->removeParticipant(participant);
 }
