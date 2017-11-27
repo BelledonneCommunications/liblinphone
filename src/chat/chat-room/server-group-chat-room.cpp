@@ -337,7 +337,7 @@ int ServerGroupChatRoom::getNbParticipants () const {
 	return LocalConference::getNbParticipants();
 }
 
-list<shared_ptr<Participant>> ServerGroupChatRoom::getParticipants () const {
+const list<shared_ptr<Participant>> &ServerGroupChatRoom::getParticipants () const {
 	return LocalConference::getParticipants();
 }
 
