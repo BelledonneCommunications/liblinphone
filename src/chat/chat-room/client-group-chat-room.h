@@ -41,8 +41,10 @@ public:
 
 	ClientGroupChatRoom (
 		const std::shared_ptr<Core> &core,
-		const ChatRoomId &chatRoomId,
-		const std::string &subject
+		const IdentityAddress &peerAddress,
+		std::shared_ptr<Participant> &me,
+		const std::string &subject,
+		std::list<std::shared_ptr<Participant>> &&participants
 	);
 
 	std::shared_ptr<Core> getCore () const;
@@ -63,7 +65,7 @@ public:
 
 	std::shared_ptr<Participant> getMe () const override;
 	int getNbParticipants () const override;
-	std::list<std::shared_ptr<Participant>> getParticipants () const override;
+	const std::list<std::shared_ptr<Participant>> &getParticipants () const override;
 
 	void setParticipantAdminStatus (std::shared_ptr<Participant> &participant, bool isAdmin) override;
 

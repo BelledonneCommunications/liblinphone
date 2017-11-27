@@ -27,9 +27,9 @@
 #include "linphone/utils/utils.h"
 
 #include "chat/chat-message/chat-message-p.h"
-#include "chat/chat-room/client-group-chat-room.h"
 #include "chat/chat-room/chat-room-p.h"
-#include "conference/participant.h"
+#include "chat/chat-room/client-group-chat-room.h"
+#include "conference/participant-p.h"
 #include "content/content-type.h"
 #include "content/content.h"
 #include "core/core-p.h"
@@ -213,8 +213,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		soci::session *session = dbSession.getBackendSession<soci::session>();
 
 		const ChatRoomId &chatRoomId = chatRoom->getChatRoomId();
-		long long peerSipAddressId = selectSipAddressId(chatRoomId.getPeerAddress().asString());
-		long long localSipAddressId = selectSipAddressId(chatRoomId.getLocalAddress().asString());
+		long long peerSipAddressId = insertSipAddress(chatRoomId.getPeerAddress().asString());
+		long long localSipAddressId = insertSipAddress(chatRoomId.getLocalAddress().asString());
 
 		long long id = selectChatRoomId(peerSipAddressId, localSipAddressId);
 		if (id >= 0) {
@@ -235,8 +235,10 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			soci::use(static_cast<int>(chatRoom->getCapabilities())), soci::use(chatRoom->getSubject());
 
 		id = q->getLastInsertId();
+		shared_ptr<Participant> me = chatRoom->getMe();
+		insertChatRoomParticipant(id, insertSipAddress(me->getAddress().asString()), me->isAdmin());
 		for (const auto &participant : chatRoom->getParticipants())
-			insertChatRoomParticipant(id, selectSipAddressId(participant->getAddress().asString()), participant->isAdmin());
+			insertChatRoomParticipant(id, insertSipAddress(participant->getAddress().asString()), participant->isAdmin());
 
 		return id;
 	}
@@ -453,7 +455,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 					content = new Content();
 
 				content->setContentType(contentType);
-				content->setBody(row.get<string>(2));
+				content->setBody(row.get<string>(3));
 				chatMessage->addContent(*content);
 			}
 		}
@@ -1390,8 +1392,16 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		return list<shared_ptr<ChatMessage>>();
 	}
 
+	shared_ptr<ChatMessage> MainDb::getLastChatMessage (const ChatRoomId &chatRoomId) const {
+		list<shared_ptr<EventLog>> chatList = getHistory(chatRoomId, 1, Filter::ConferenceChatMessageFilter);
+		if (chatList.empty())
+			return nullptr;
+
+		return static_pointer_cast<ConferenceChatMessageEvent>(chatList.front())->getChatMessage();
+	}
+
 	list<shared_ptr<EventLog>> MainDb::getHistory (const ChatRoomId &chatRoomId, int nLast, FilterMask mask) const {
-		return getHistoryRange(chatRoomId, 0, nLast - 1, mask);
+		return getHistoryRange(chatRoomId, 0, nLast, mask);
 	}
 
 	list<shared_ptr<EventLog>> MainDb::getHistoryRange (
@@ -1505,7 +1515,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 // -----------------------------------------------------------------------------
 
 	list<shared_ptr<ChatRoom>> MainDb::getChatRooms () const {
-		static const string query = "SELECT peer_sip_address.value, local_sip_address.value, creation_time, last_update_time, capabilities, subject, last_notify_id"
+		static const string query = "SELECT chat_room.id, peer_sip_address.value, local_sip_address.value, creation_time, last_update_time, capabilities, subject, last_notify_id"
 			"  FROM chat_room, sip_address AS peer_sip_address, sip_address AS local_sip_address"
 			"  WHERE chat_room.peer_sip_address_id = peer_sip_address.id AND chat_room.local_sip_address_id = local_sip_address.id"
 			"  ORDER BY last_update_time DESC";
@@ -1529,8 +1539,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		soci::rowset<soci::row> rows = (session->prepare << query);
 		for (const auto &row : rows) {
 			ChatRoomId chatRoomId = ChatRoomId(
-				IdentityAddress(row.get<string>(0)),
-				IdentityAddress(row.get<string>(1))
+				IdentityAddress(row.get<string>(1)),
+				IdentityAddress(row.get<string>(2))
 			);
 			shared_ptr<ChatRoom> chatRoom = core->findChatRoom(chatRoomId);
 			if (chatRoom) {
@@ -1538,11 +1548,11 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				continue;
 			}
 
-			tm creationTime = row.get<tm>(2);
-			tm lastUpdateTime = row.get<tm>(3);
-			int capabilities = row.get<int>(4);
-			string subject = row.get<string>(5);
-			unsigned int lastNotifyId = static_cast<unsigned int>(row.get<int>(6, 0));
+			tm creationTime = row.get<tm>(3);
+			tm lastUpdateTime = row.get<tm>(4);
+			int capabilities = row.get<int>(5);
+			string subject = row.get<string>(6);
+			unsigned int lastNotifyId = static_cast<unsigned int>(row.get<int>(7, 0));
 
 			// TODO: Use me.
 			(void)lastNotifyId;
@@ -1553,8 +1563,39 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 					capabilities & static_cast<int>(ChatRoom::Capabilities::RealTimeText)
 				);
 				chatRoom->setSubject(subject);
-			} else if (capabilities & static_cast<int>(ChatRoom::Capabilities::Conference))
-				chatRoom = make_shared<ClientGroupChatRoom>(core, chatRoomId, subject);
+			} else if (capabilities & static_cast<int>(ChatRoom::Capabilities::Conference)) {
+				list<shared_ptr<Participant>> participants;
+
+				long long dbChatRoomId = getBackend() == AbstractDb::Sqlite3
+					? static_cast<long long>(row.get<int>(0))
+					: row.get<long long>(0);
+
+				string query = "SELECT sip_address.value, is_admin"
+					"  FROM sip_address, chat_room, chat_room_participant"
+					"  WHERE chat_room.id = " + Utils::toString(dbChatRoomId) +
+					"  AND sip_address.id = chat_room_participant.participant_sip_address_id"
+					"  AND chat_room_participant.chat_room_id = chat_room.id";
+
+				soci::rowset<soci::row> rows = (session->prepare << query);
+				shared_ptr<Participant> me;
+				for (const auto &row : rows) {
+					shared_ptr<Participant> participant = make_shared<Participant>(IdentityAddress(row.get<string>(0)));
+					participant->getPrivate()->setAdmin(!!row.get<int>(1));
+
+					if (participant->getAddress() == chatRoomId.getLocalAddress())
+						me = participant;
+					else
+						participants.push_back(participant);
+				}
+
+				if (!me) {
+					lError() << "Unable to find me in: (peer=" + chatRoomId.getPeerAddress().asString() +
+						", local=" + chatRoomId.getLocalAddress().asString() + ").";
+					continue;
+				}
+
+				chatRoom = make_shared<ClientGroupChatRoom>(core, chatRoomId.getPeerAddress(), me, subject, move(participants));
+			}
 
 			if (!chatRoom)
 				continue; // Not fetched.

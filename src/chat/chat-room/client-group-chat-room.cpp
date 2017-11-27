@@ -99,17 +99,20 @@ RemoteConference(core, me, nullptr) {
 
 ClientGroupChatRoom::ClientGroupChatRoom (
 	const shared_ptr<Core> &core,
-	const ChatRoomId &chatRoomId,
-	const string &subject
-) : ChatRoom(*new ClientGroupChatRoomPrivate, core, chatRoomId),
-RemoteConference(core, chatRoomId.getLocalAddress(), nullptr) {
+	const IdentityAddress &peerAddress,
+	shared_ptr<Participant> &me,
+	const string &subject,
+	list<shared_ptr<Participant>> &&participants
+) : ChatRoom(*new ClientGroupChatRoomPrivate, core, ChatRoomId(peerAddress, me->getAddress())),
+RemoteConference(core, me->getAddress(), nullptr) {
 	L_D();
 	L_D_T(RemoteConference, dConference);
-	const IdentityAddress &peerAddress = chatRoomId.getPeerAddress();
 	dConference->focus = make_shared<Participant>(peerAddress);
 	dConference->conferenceAddress = peerAddress;
 	dConference->subject = subject;
+	dConference->participants = move(participants);
 	d->state = ChatRoom::State::Created;
+	getMe()->getPrivate()->setAdmin(me->isAdmin());
 }
 
 shared_ptr<Core> ClientGroupChatRoom::getCore () const {
@@ -197,7 +200,7 @@ int ClientGroupChatRoom::getNbParticipants () const {
 	return RemoteConference::getNbParticipants();
 }
 
-list<shared_ptr<Participant>> ClientGroupChatRoom::getParticipants () const {
+const list<shared_ptr<Participant>> &ClientGroupChatRoom::getParticipants () const {
 	return RemoteConference::getParticipants();
 }
 
