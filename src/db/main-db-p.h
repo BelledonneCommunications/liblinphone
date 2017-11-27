@@ -26,6 +26,10 @@
 
 // =============================================================================
 
+namespace soci {
+	class row;
+}
+
 LINPHONE_BEGIN_NAMESPACE
 
 class Content;
@@ -35,6 +39,12 @@ public:
 	std::unordered_map<long long, std::weak_ptr<EventLog>> storageIdToEvent;
 
 private:
+	// ---------------------------------------------------------------------------
+	// SOCI helpers.
+	// ---------------------------------------------------------------------------
+
+	long long resolveId (const soci::row &row, int col) const;
+
 	// ---------------------------------------------------------------------------
 	// Low level API.
 	// ---------------------------------------------------------------------------
@@ -56,6 +66,8 @@ private:
 	long long selectSipAddressId (const std::string &sipAddress) const;
 	long long selectChatRoomId (long long peerSipAddressId, long long localSipAddressId) const;
 	long long selectChatRoomId (const ChatRoomId &chatRoomId) const;
+
+	void deleteChatRoomParticipant (long long chatRoomId, long long participantSipAddressId);
 
 	// ---------------------------------------------------------------------------
 	// Events API.

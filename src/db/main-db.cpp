@@ -119,6 +119,15 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 // -----------------------------------------------------------------------------
 
+	long long MainDbPrivate::resolveId (const soci::row &row, int col) const {
+		L_Q();
+		// See: http://soci.sourceforge.net/doc/master/backends/
+		// `row id` is not supported by soci on Sqlite3. It's necessary to cast id to int...
+		return q->getBackend() == AbstractDb::Sqlite3
+			? static_cast<long long>(row.get<int>(0))
+			: row.get<long long>(0);
+	}
+
 	long long MainDbPrivate::insertSipAddress (const string &sipAddress) {
 		L_Q();
 		soci::session *session = dbSession.getBackendSession<soci::session>();
@@ -235,6 +244,10 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			soci::use(static_cast<int>(chatRoom->getCapabilities())), soci::use(chatRoom->getSubject());
 
 		id = q->getLastInsertId();
+
+		if (!chatRoom->canHandleParticipants())
+			return id;
+
 		shared_ptr<Participant> me = chatRoom->getMe();
 		insertChatRoomParticipant(id, insertSipAddress(me->getAddress().asString()), me->isAdmin());
 		for (const auto &participant : chatRoom->getParticipants())
@@ -301,6 +314,13 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			return -1;
 
 		return selectChatRoomId(peerSipAddressId, localSipAddressId);
+	}
+
+	void MainDbPrivate::deleteChatRoomParticipant (long long chatRoomId, long long participantSipAddressId) {
+		soci::session *session = dbSession.getBackendSession<soci::session>();
+		*session << "DELETE FROM chat_room_participant"
+			"  WHERE chat_room_id = :chatRoomId AND participant_sip_address_id = :participantSipAddressId",
+			soci::use(chatRoomId), soci::use(participantSipAddressId);
 	}
 
 // -----------------------------------------------------------------------------
@@ -433,9 +453,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				if (contentType == ContentType::FileTransfer)
 					content = new FileTransferContent();
 				else if (contentType.isFile()) {
-					long long contentId = q->getBackend() == AbstractDb::Sqlite3
-						? static_cast<long long>(row.get<int>(0))
-						: row.get<long long>(0);
+					long long contentId = resolveId(row, 0);
 
 					string name;
 					int size;
@@ -695,7 +713,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				break;
 
 			case EventLog::Type::ConferenceParticipantRemoved:
-				// TODO: Deal with remove.
+				deleteChatRoomParticipant(chatRoomId, participantAddressId);
+				break;
 
 			default:
 				break;
@@ -752,14 +771,10 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 	}
 
 	void MainDbPrivate::invalidConferenceEventsFromQuery (const string &query, long long chatRoomId) {
-		L_Q();
-
 		soci::session *session = dbSession.getBackendSession<soci::session>();
 		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(chatRoomId));
 		for (const auto &row : rows) {
-			shared_ptr<EventLog> eventLog = getEventFromCache(
-				q->getBackend() == AbstractDb::Sqlite3 ? static_cast<long long>(row.get<int>(0)) : row.get<long long>(0)
-			);
+			shared_ptr<EventLog> eventLog = getEventFromCache(resolveId(row, 0));
 			if (eventLog) {
 				const EventLogPrivate *dEventLog = eventLog->getPrivate();
 				L_ASSERT(dEventLog->dbKey.isValid());
@@ -1256,7 +1271,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(d->selectChatRoomId(chatRoomId)), soci::use(lastNotifyId));
 		for (const auto &row : rows) {
-			long long eventId = getBackend() == Sqlite3 ? static_cast<long long>(row.get<int>(0)) : row.get<long long>(0);
+			long long eventId = d->resolveId(row, 0);
 			shared_ptr<EventLog> eventLog = d->getEventFromCache(eventId);
 
 			events.push_back(eventLog ? eventLog : d->selectGenericConferenceEvent(
@@ -1357,7 +1372,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			return;
 
 		string query = "UPDATE FROM conference_chat_message_event"
-			"  SET state = " + Utils::toString(static_cast<int>(ChatMessage::State::Displayed));
+			"  SET state = " + Utils::toString(static_cast<int>(ChatMessage::State::Displayed)) + " ";
 		query += "WHERE";
 		if (chatRoomId.isValid())
 			query += " event_id IN ("
@@ -1458,9 +1473,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 		soci::rowset<soci::row> rows = (session->prepare << query);
 		for (const auto &row : rows) {
-			// See: http://soci.sourceforge.net/doc/master/backends/
-			// `row id` is not supported by soci on Sqlite3. It's necessary to cast id to int...
-			long long eventId = getBackend() == Sqlite3 ? static_cast<long long>(row.get<int>(0)) : row.get<long long>(0);
+			long long eventId = d->resolveId(row, 0);
 			shared_ptr<EventLog> event = d->getEventFromCache(eventId);
 
 			if (!event)
@@ -1566,13 +1579,9 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			} else if (capabilities & static_cast<int>(ChatRoom::Capabilities::Conference)) {
 				list<shared_ptr<Participant>> participants;
 
-				long long dbChatRoomId = getBackend() == AbstractDb::Sqlite3
-					? static_cast<long long>(row.get<int>(0))
-					: row.get<long long>(0);
-
 				string query = "SELECT sip_address.value, is_admin"
 					"  FROM sip_address, chat_room, chat_room_participant"
-					"  WHERE chat_room.id = " + Utils::toString(dbChatRoomId) +
+					"  WHERE chat_room.id = " + Utils::toString(d->resolveId(row, 0)) +
 					"  AND sip_address.id = chat_room_participant.participant_sip_address_id"
 					"  AND chat_room_participant.chat_room_id = chat_room.id";
 
