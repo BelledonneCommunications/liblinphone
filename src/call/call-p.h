@@ -67,6 +67,8 @@ public:
 		SalCallOp *getOp () const;
 	void setAudioMuted (bool value);
 
+	void createPlayer () const;
+
 private:
 	/* CallListener */
 	void onAckBeingSent (LinphoneHeaders *headers) override;
@@ -77,6 +79,7 @@ private:
 	void onCheckForAcceptation () override;
 	void onIncomingCallStarted () override;
 	void onIncomingCallToBeAdded () override;
+	void onInfoReceived (const LinphoneInfoMessage *im) override;
 	void onEncryptionChanged (bool activated, const std::string &authToken) override;
 	void onStatsUpdated (const LinphoneCallStats *stats) override;
 	void onResetCurrentCall () override;
@@ -88,6 +91,7 @@ private:
 
 	LinphoneCore *core = nullptr;
 	Conference *conference = nullptr;
+	mutable LinphonePlayer *player = nullptr;
 
 	CallCallbackObj nextVideoFrameDecoded;
 

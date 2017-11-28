@@ -1048,13 +1048,7 @@ void linphone_call_stop_recording (LinphoneCall *call) {
 }
 
 LinphonePlayer *linphone_call_get_player (LinphoneCall *call) {
-#if 0
-	if (!call->player)
-		call->player=linphone_call_build_player(call);
-	return call->player;
-#else
-	return nullptr;
-#endif
+	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getPlayer();
 }
 
 bool_t linphone_call_media_in_progress (const LinphoneCall *call) {
@@ -1062,15 +1056,7 @@ bool_t linphone_call_media_in_progress (const LinphoneCall *call) {
 }
 
 void linphone_call_ogl_render (const LinphoneCall *call) {
-#if 0
-	#ifdef VIDEO_ENABLED
-
-	VideoStream *stream = call->videostream;
-	if (stream && stream->output && ms_filter_get_id(stream->output) == MS_OGL_ID)
-		ms_filter_call_method(stream->output, MS_OGL_RENDER, nullptr);
-
-	#endif
-#endif
+	L_GET_CPP_PTR_FROM_C_OBJECT(call)->oglRender();
 }
 
 LinphoneStatus linphone_call_send_info_message (LinphoneCall *call, const LinphoneInfoMessage *info) {

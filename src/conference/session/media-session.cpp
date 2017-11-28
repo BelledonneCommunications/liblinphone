@@ -40,6 +40,7 @@
 #include <mediastreamer2/mseventqueue.h>
 #include <mediastreamer2/msfileplayer.h>
 #include <mediastreamer2/msjpegwriter.h>
+#include <mediastreamer2/msogl.h>
 #include <mediastreamer2/msrtt4103.h>
 #include <mediastreamer2/msvolume.h>
 #include <ortp/b64.h>
@@ -455,6 +456,13 @@ void MediaSessionPrivate::enableSymmetricRtp (bool value) {
 		if (sessions[i].rtp_session)
 			rtp_session_set_symmetric_rtp(sessions[i].rtp_session, value);
 	}
+}
+
+void MediaSessionPrivate::oglRender () const {
+#ifdef VIDEO_ENABLED
+	if (videoStream && videoStream->output && (ms_filter_get_id(videoStream->output) == MS_OGL_ID))
+		ms_filter_call_method(videoStream->output, MS_OGL_RENDER, nullptr);
+#endif
 }
 
 void MediaSessionPrivate::sendVfu () {
@@ -4313,6 +4321,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 	L_D();
 	LinphoneCallState nextState;
 	LinphoneCallState initialState = d->state;
+	LinphoneStatus result = 0;
 	if (!d->isUpdateAllowed(nextState))
 		return -1;
 	if (d->currentParams == msp)
@@ -4328,7 +4337,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 			lInfo() << "Defer CallSession update to gather ICE candidates";
 			return 0;
 		}
-		LinphoneStatus result = d->startUpdate(subject);
+		result = d->startUpdate(subject);
 		if (result && (d->state != initialState)) {
 			/* Restore initial state */
 			d->setState(initialState, "Restore initial state");
@@ -4349,7 +4358,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 		}
 #endif
 	}
-	return 0;
+	return result;
 }
 
 // -----------------------------------------------------------------------------

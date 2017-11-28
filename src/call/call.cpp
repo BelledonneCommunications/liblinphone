@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include "c-wrapper/c-wrapper.h"
 #include "call-p.h"
 #include "conference/local-conference.h"
 #include "conference/participant-p.h"
@@ -103,6 +104,13 @@ int CallPrivate::startInvite (const Address *destination) {
 
 // -----------------------------------------------------------------------------
 
+void CallPrivate::createPlayer () const {
+	L_Q();
+	player = linphone_call_build_player(L_GET_C_BACK_PTR(q));
+}
+
+// -----------------------------------------------------------------------------
+
 void CallPrivate::onAckBeingSent (LinphoneHeaders *headers) {
 	if (lcall)
 		linphone_call_notify_ack_processing(lcall, headers, false);
@@ -175,6 +183,11 @@ void CallPrivate::onIncomingCallStarted () {
 void CallPrivate::onIncomingCallToBeAdded () {
 	if (lcall) /* The call is acceptable so we can now add it to our list */
 		linphone_core_add_call(core, lcall);
+}
+
+void CallPrivate::onInfoReceived (const LinphoneInfoMessage *im) {
+	if (lcall)
+		linphone_call_notify_info_message_received(lcall, im);
 }
 
 void CallPrivate::onEncryptionChanged (bool activated, const string &authToken) {
@@ -262,6 +275,11 @@ LinphoneStatus Call::decline (LinphoneReason reason) {
 LinphoneStatus Call::decline (const LinphoneErrorInfo *ei) {
 	L_D();
 	return d->getActiveSession()->decline(ei);
+}
+
+void Call::oglRender () const {
+	L_D();
+	static_pointer_cast<MediaSession>(d->getActiveSession())->getPrivate()->oglRender();
 }
 
 LinphoneStatus Call::pause () {
@@ -438,6 +456,13 @@ void *Call::getNativeVideoWindowId () const {
 const MediaSessionParams *Call::getParams () const {
 	L_D();
 	return static_cast<const MediaSession *>(d->getActiveSession().get())->getMediaParams();
+}
+
+LinphonePlayer *Call::getPlayer () const {
+	L_D();
+	if (!d->player)
+		d->createPlayer();
+	return d->player;
 }
 
 float Call::getPlayVolume () const {
