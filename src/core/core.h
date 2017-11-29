@@ -30,19 +30,19 @@ L_DECL_C_STRUCT(LinphoneCore);
 
 LINPHONE_BEGIN_NAMESPACE
 
-class Address;
 class ChatRoom;
-class ChatMessagePrivate;
 class ChatRoomId;
 class CorePrivate;
 class IdentityAddress;
 
 class LINPHONE_PUBLIC Core : public Object {
-	friend class ChatRoom;
 	friend class ChatMessagePrivate;
+	friend class ChatRoom;
+	friend class ChatRoomPrivate;
 	friend class ClientGroupChatRoom;
 	friend class LocalConferenceEventHandlerPrivate;
 	friend class MainDb;
+	friend class MainDbChatMessageKey;
 	friend class MainDbEventKey;
 	friend class ServerGroupChatRoomPrivate;
 

@@ -1,5 +1,5 @@
 /*
- * remote-conference-event-handler.h
+ * main-db-key.h
  * Copyright (C) 2010-2017 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,40 +17,38 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _REMOTE_CONFERENCE_EVENT_HANDLER_H_
-#define _REMOTE_CONFERENCE_EVENT_HANDLER_H_
+#ifndef _MAIN_DB_KEY_H_
+#define _MAIN_DB_KEY_H_
 
-#include "object/object.h"
+#include <memory>
+
+#include "object/clonable-object.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ChatRoomId;
-class RemoteConference;
-class RemoteConferenceEventHandlerPrivate;
+class Core;
+class MainDbKeyPrivate;
 
-class RemoteConferenceEventHandler : public Object {
+class MainDbKey : public ClonableObject {
+	friend class MainDb;
+	friend class MainDbPrivate;
+
 public:
-	RemoteConferenceEventHandler (RemoteConference *remoteConference);
-	~RemoteConferenceEventHandler ();
+	MainDbKey ();
+	MainDbKey (const std::shared_ptr<Core> &core, long long storageId);
+	MainDbKey (const MainDbKey &src);
+	virtual ~MainDbKey () = 0;
 
-	void subscribe (const ChatRoomId &chatRoomId);
-	void notifyReceived (const std::string &xmlBody);
-	void multipartNotifyReceived (const std::string &xmlBody);
-	void unsubscribe ();
+	MainDbKey &operator= (const MainDbKey &src);
 
-	const ChatRoomId &getChatRoomId () const;
-
-	unsigned int getLastNotify () const;
-	void setLastNotify (unsigned int lastNotify);
-	void resetLastNotify ();
+	bool isValid () const;
 
 private:
-	L_DECLARE_PRIVATE(RemoteConferenceEventHandler);
-	L_DISABLE_COPY(RemoteConferenceEventHandler);
+	L_DECLARE_PRIVATE(MainDbKey);
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _REMOTE_CONFERENCE_EVENT_HANDLER_H_
+#endif // ifndef _MAIN_DB_KEY_H_

@@ -37,7 +37,7 @@
 #include "event-log/event-log-p.h"
 #include "event-log/events.h"
 #include "logger/logger.h"
-#include "main-db-event-key-p.h"
+#include "main-db-key-p.h"
 #include "main-db-p.h"
 
 // =============================================================================
@@ -343,36 +343,47 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		time_t creationTime,
 		const ChatRoomId &chatRoomId
 	) const {
+		shared_ptr<EventLog> eventLog;
+
 		switch (type) {
 			case EventLog::Type::None:
 				return nullptr;
 
 			case EventLog::Type::ConferenceCreated:
 			case EventLog::Type::ConferenceDestroyed:
-				return selectConferenceEvent(eventId, type, creationTime, chatRoomId);
+				eventLog = selectConferenceEvent(eventId, type, creationTime, chatRoomId);
+				break;
 
 			case EventLog::Type::ConferenceCallStart:
 			case EventLog::Type::ConferenceCallEnd:
-				return selectConferenceCallEvent(eventId, type, creationTime, chatRoomId);
+				eventLog = selectConferenceCallEvent(eventId, type, creationTime, chatRoomId);
+				break;
 
 			case EventLog::Type::ConferenceChatMessage:
-				return selectConferenceChatMessageEvent(eventId, type, creationTime, chatRoomId);
+				eventLog = selectConferenceChatMessageEvent(eventId, type, creationTime, chatRoomId);
+				break;
 
 			case EventLog::Type::ConferenceParticipantAdded:
 			case EventLog::Type::ConferenceParticipantRemoved:
 			case EventLog::Type::ConferenceParticipantSetAdmin:
 			case EventLog::Type::ConferenceParticipantUnsetAdmin:
-				return selectConferenceParticipantEvent(eventId, type, creationTime, chatRoomId);
+				eventLog = selectConferenceParticipantEvent(eventId, type, creationTime, chatRoomId);
+				break;
 
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
-				return selectConferenceParticipantDeviceEvent(eventId, type, creationTime, chatRoomId);
+				eventLog = selectConferenceParticipantDeviceEvent(eventId, type, creationTime, chatRoomId);
+				break;
 
 			case EventLog::Type::ConferenceSubjectChanged:
-				return selectConferenceSubjectEvent(eventId, type, creationTime, chatRoomId);
+				eventLog = selectConferenceSubjectEvent(eventId, type, creationTime, chatRoomId);
+				break;
 		}
 
-		return nullptr;
+		if (eventLog)
+			cache(eventLog, eventId);
+
+		return eventLog;
 	}
 
 	shared_ptr<EventLog> MainDbPrivate::selectConferenceEvent (
@@ -407,15 +418,14 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		L_Q();
 
 		shared_ptr<Core> core = q->getCore();
-
 		shared_ptr<ChatRoom> chatRoom = core->findChatRoom(chatRoomId);
 		if (!chatRoom)
 			return nullptr;
 
-		// TODO: Use cache, do not fetch the same message twice.
-
 		// 1 - Fetch chat message.
-		shared_ptr<ChatMessage> chatMessage;
+		shared_ptr<ChatMessage> chatMessage = getChatMessageFromCache(eventId);
+		if (chatMessage)
+			goto end;
 		{
 			string fromSipAddress;
 			string toSipAddress;
@@ -490,7 +500,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			}
 		}
 
-		// TODO: Use cache.
+	end:
 		return make_shared<ConferenceChatMessageEvent>(
 			creationTime,
 			chatMessage
@@ -676,7 +686,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		}
 
 		const EventLogPrivate *dEventLog = eventLog->getPrivate();
-		MainDbEventKeyPrivate *dEventKey = dEventLog->dbKey.getPrivate();
+		MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
 		const long long &eventId = dEventKey->storageId;
 
 		soci::session *session = dbSession.getBackendSession<soci::session>();
@@ -700,7 +710,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		soci::session *session = dbSession.getBackendSession<soci::session>();
 		*session << "INSERT INTO conference_notified_event (event_id, notify_id)"
 			"  VALUES (:eventId, :notifyId)", soci::use(eventId), soci::use(lastNotifyId);
-		*session << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE peer_sip_address_id = :chatRoomId",
+		*session << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :chatRoomId",
 			soci::use(lastNotifyId), soci::use(curChatRoomId);
 
 		if (chatRoomId)
@@ -781,8 +791,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 // -----------------------------------------------------------------------------
 
-	shared_ptr<EventLog> MainDbPrivate::getEventFromCache (long long eventId) const {
-		auto it = storageIdToEvent.find(eventId);
+	shared_ptr<EventLog> MainDbPrivate::getEventFromCache (long long storageId) const {
+		auto it = storageIdToEvent.find(storageId);
 		if (it == storageIdToEvent.cend())
 			return nullptr;
 
@@ -790,6 +800,37 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		// Must exist. If not, implementation bug.
 		L_ASSERT(eventLog);
 		return eventLog;
+	}
+
+	shared_ptr<ChatMessage> MainDbPrivate::getChatMessageFromCache (long long storageId) const {
+		auto it = storageIdToChatMessage.find(storageId);
+		if (it == storageIdToChatMessage.cend())
+			return nullptr;
+
+		shared_ptr<ChatMessage> chatMessage = it->second.lock();
+		// Must exist. If not, implementation bug.
+		L_ASSERT(chatMessage);
+		return chatMessage;
+	}
+
+	void MainDbPrivate::cache (const shared_ptr<EventLog> &eventLog, long long storageId) const {
+		L_Q();
+
+		EventLogPrivate *dEventLog = eventLog->getPrivate();
+		L_ASSERT(!dEventLog->dbKey.isValid());
+		dEventLog->dbKey = MainDbEventKey(q->getCore(), storageId);
+		storageIdToEvent[storageId] = eventLog;
+		L_ASSERT(dEventLog->dbKey.isValid());
+	}
+
+	void MainDbPrivate::cache (const shared_ptr<ChatMessage> &chatMessage, long long storageId) const {
+		L_Q();
+
+		ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+		L_ASSERT(!dChatMessage->dbKey.isValid());
+		dChatMessage->dbKey = MainDbChatMessageKey(q->getCore(), storageId);
+		storageIdToChatMessage[storageId] = chatMessage;
+		L_ASSERT(dChatMessage->dbKey.isValid());
 	}
 
 	void MainDbPrivate::invalidConferenceEventsFromQuery (const string &query, long long chatRoomId) {
@@ -1109,7 +1150,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 		soci::transaction tr(*d->dbSession.getBackendSession<soci::session>());
 
-		switch (eventLog->getType()) {
+		EventLog::Type type = eventLog->getType();
+		switch (type) {
 			case EventLog::Type::None:
 				return false;
 
@@ -1144,16 +1186,17 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				break;
 		}
 
-		tr.commit();
+		if (storageId >= 0) {
+			tr.commit();
+			d->cache(eventLog, storageId);
 
-		soFarSoGood = storageId >= 0;
+			if (type == EventLog::Type::ConferenceChatMessage)
+				d->cache(static_pointer_cast<ConferenceChatMessageEvent>(eventLog)->getChatMessage(), storageId);
+
+			soFarSoGood = true;
+		}
 
 		L_END_LOG_EXCEPTION
-
-		if (soFarSoGood) {
-			dEventLog->dbKey = MainDbEventKey(getCore(), storageId);
-			d->storageIdToEvent[storageId] = eventLog;
-		}
 
 		return soFarSoGood;
 	}
@@ -1212,7 +1255,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			return false;
 		}
 
-		MainDbEventKeyPrivate *dEventKey = dEventLog->dbKey.getPrivate();
+		MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
 		shared_ptr<Core> core = dEventKey->core.lock();
 		L_ASSERT(core);
 
@@ -1227,11 +1270,18 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		soci::session *session = mainDb.getPrivate()->dbSession.getBackendSession<soci::session>();
 		*session << "DELETE FROM event WHERE id = :id", soci::use(dEventKey->storageId);
 
-		L_END_LOG_EXCEPTION
-
 		dEventLog->dbKey = MainDbEventKey();
 
+		if (eventLog->getType() == EventLog::Type::ConferenceChatMessage)
+			static_pointer_cast<ConferenceChatMessageEvent>(
+				eventLog
+			)->getChatMessage()->getPrivate()->dbKey = MainDbChatMessageKey();
+
 		return true;
+
+		L_END_LOG_EXCEPTION
+
+		return false;
 	}
 
 	int MainDb::getEventsCount (FilterMask mask) const {
@@ -1652,9 +1702,6 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			string subject = row.get<string>(6);
 			unsigned int lastNotifyId = static_cast<unsigned int>(row.get<int>(7, 0));
 
-			// TODO: Use me.
-			(void)lastNotifyId;
-
 			if (capabilities & static_cast<int>(ChatRoom::Capabilities::Basic)) {
 				chatRoom = core->getPrivate()->createBasicChatRoom(
 					chatRoomId,
@@ -1689,7 +1736,14 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 					continue;
 				}
 
-				chatRoom = make_shared<ClientGroupChatRoom>(core, chatRoomId.getPeerAddress(), me, subject, move(participants));
+				chatRoom = make_shared<ClientGroupChatRoom>(
+					core,
+					chatRoomId.getPeerAddress(),
+					me,
+					subject,
+					move(participants),
+					lastNotifyId
+				);
 			}
 
 			if (!chatRoom)

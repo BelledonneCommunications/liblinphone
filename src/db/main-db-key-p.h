@@ -1,5 +1,5 @@
 /*
- * remote-conference-event-handler.h
+ * main-db-key-p.h
  * Copyright (C) 2010-2017 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,40 +17,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _REMOTE_CONFERENCE_EVENT_HANDLER_H_
-#define _REMOTE_CONFERENCE_EVENT_HANDLER_H_
+#ifndef _MAIN_DB_KEY_P_H_
+#define _MAIN_DB_KEY_P_H_
 
-#include "object/object.h"
+#include "main-db-key.h"
+#include "object/clonable-object-p.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ChatRoomId;
-class RemoteConference;
-class RemoteConferenceEventHandlerPrivate;
-
-class RemoteConferenceEventHandler : public Object {
+class MainDbKeyPrivate : public ClonableObjectPrivate {
 public:
-	RemoteConferenceEventHandler (RemoteConference *remoteConference);
-	~RemoteConferenceEventHandler ();
-
-	void subscribe (const ChatRoomId &chatRoomId);
-	void notifyReceived (const std::string &xmlBody);
-	void multipartNotifyReceived (const std::string &xmlBody);
-	void unsubscribe ();
-
-	const ChatRoomId &getChatRoomId () const;
-
-	unsigned int getLastNotify () const;
-	void setLastNotify (unsigned int lastNotify);
-	void resetLastNotify ();
-
-private:
-	L_DECLARE_PRIVATE(RemoteConferenceEventHandler);
-	L_DISABLE_COPY(RemoteConferenceEventHandler);
+	std::weak_ptr<Core> core;
+	long long storageId = -1;
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _REMOTE_CONFERENCE_EVENT_HANDLER_H_
+#endif // ifndef _MAIN_DB_KEY_P_H_

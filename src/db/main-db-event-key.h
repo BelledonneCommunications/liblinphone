@@ -20,33 +20,20 @@
 #ifndef _MAIN_DB_EVENT_KEY_H_
 #define _MAIN_DB_EVENT_KEY_H_
 
-#include <memory>
-
-#include "object/clonable-object.h"
+#include "main-db-key.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class Core;
-class MainDbEventKeyPrivate;
-
-class MainDbEventKey : public ClonableObject {
-	friend class MainDb;
-	friend class MainDbPrivate;
-
+class MainDbEventKey : public MainDbKey {
 public:
 	MainDbEventKey ();
 	MainDbEventKey (const std::shared_ptr<Core> &core, long long storageId);
-	MainDbEventKey (const MainDbEventKey &src);
 	~MainDbEventKey ();
 
-	MainDbEventKey &operator= (const MainDbEventKey &src);
-
-	bool isValid () const;
-
 private:
-	L_DECLARE_PRIVATE(MainDbEventKey);
+	L_DECLARE_PRIVATE(MainDbKey);
 };
 
 LINPHONE_END_NAMESPACE
