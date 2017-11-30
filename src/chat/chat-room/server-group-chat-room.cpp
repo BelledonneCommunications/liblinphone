@@ -292,6 +292,10 @@ int ServerGroupChatRoom::getCapabilities () const {
 	return static_cast<int>(Capabilities::Conference);
 }
 
+bool ServerGroupChatRoom::hasBeenLeft () const {
+	return false;
+}
+
 // -----------------------------------------------------------------------------
 
 void ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
