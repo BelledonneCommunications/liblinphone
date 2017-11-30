@@ -1,5 +1,5 @@
 /*
- * event-log-enums.h
+ * remote-conference-call-p.h
  * Copyright (C) 2010-2017 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,24 +17,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _EVENT_LOG_ENUMS_H_
-#define _EVENT_LOG_ENUMS_H_
+#ifndef _REMOTE_CONFERENCE_CALL_P_H_
+#define _REMOTE_CONFERENCE_CALL_P_H_
+
+#include "call/call-p.h"
+#include "remote-conference-call.h"
 
 // =============================================================================
 
-#define L_ENUM_VALUES_EVENT_LOG_TYPE(F) \
-	F(None) \
-	F(ConferenceCreated) \
-	F(ConferenceTerminated) \
-	F(ConferenceCallStart) \
-	F(ConferenceCallEnd) \
-	F(ConferenceChatMessage) \
-	F(ConferenceParticipantAdded) \
-	F(ConferenceParticipantRemoved) \
-	F(ConferenceParticipantSetAdmin) \
-	F(ConferenceParticipantUnsetAdmin) \
-	F(ConferenceParticipantDeviceAdded) \
-	F(ConferenceParticipantDeviceRemoved) \
-	F(ConferenceSubjectChanged)
+LINPHONE_BEGIN_NAMESPACE
 
-#endif // ifndef _EVENT_LOG_ENUMS_H_
+class RemoteConferenceCallPrivate : public CallPrivate {
+public:
+	RemoteConferenceCallPrivate () = default;
+
+	std::shared_ptr<CallSession> getActiveSession () const override;
+
+private:
+	L_DECLARE_PUBLIC(RemoteConferenceCall);
+};
+
+LINPHONE_END_NAMESPACE
+
+#endif // ifndef _REMOTE_CONFERENCE_CALL_P_H_

@@ -22,6 +22,7 @@
 
 #include "media-session-params.h"
 
+#include "core/core.h"
 #include "logger/logger.h"
 
 #include "private.h"
@@ -32,61 +33,42 @@ LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
 
-MediaSessionParamsPrivate::MediaSessionParamsPrivate () {
-	memset(customSdpMediaAttributes, 0, sizeof(customSdpMediaAttributes));
-}
-
-MediaSessionParamsPrivate::MediaSessionParamsPrivate (const MediaSessionParamsPrivate &src) : CallSessionParamsPrivate(src) {
-	clone(src, *this);
-}
-
-MediaSessionParamsPrivate::~MediaSessionParamsPrivate () {
-	this->clean();
-}
-
-MediaSessionParamsPrivate &MediaSessionParamsPrivate::operator= (const MediaSessionParamsPrivate &src) {
-	if (this != &src) {
-		this->clean();
-		clone(src, *this);
-	}
-	return *this;
-}
-
-void MediaSessionParamsPrivate::clone (const MediaSessionParamsPrivate &src, MediaSessionParamsPrivate &dst) {
-	dst.audioEnabled = src.audioEnabled;
-	dst.audioBandwidthLimit = src.audioBandwidthLimit;
-	dst.audioDirection = src.audioDirection;
-	dst.audioMulticastEnabled = src.audioMulticastEnabled;
-	dst.usedAudioCodec = src.usedAudioCodec;
-	dst.videoEnabled = src.videoEnabled;
-	dst.videoDirection = src.videoDirection;
-	dst.videoMulticastEnabled = src.videoMulticastEnabled;
-	dst.usedVideoCodec = src.usedVideoCodec;
-	dst.receivedFps = src.receivedFps;
-	dst.receivedVideoDefinition = src.receivedVideoDefinition ? linphone_video_definition_ref(src.receivedVideoDefinition) : nullptr;
-	dst.sentFps = src.sentFps;
-	dst.sentVideoDefinition = src.sentVideoDefinition ? linphone_video_definition_ref(src.sentVideoDefinition) : nullptr;
-	dst.realtimeTextEnabled = src.realtimeTextEnabled;
-	dst.usedRealtimeTextCodec = src.usedRealtimeTextCodec;
-	dst.avpfEnabled = src.avpfEnabled;
-	dst.avpfRrInterval = src.avpfRrInterval;
-	dst.lowBandwidthEnabled = src.lowBandwidthEnabled;
-	dst.recordFilePath = src.recordFilePath;
-	dst.earlyMediaSendingEnabled = src.earlyMediaSendingEnabled;
-	dst.encryption = src.encryption;
-	dst.mandatoryMediaEncryptionEnabled = src.mandatoryMediaEncryptionEnabled;
-	dst._implicitRtcpFbEnabled = src._implicitRtcpFbEnabled;
-	dst.downBandwidth = src.downBandwidth;
-	dst.upBandwidth = src.upBandwidth;
-	dst.downPtime = src.downPtime;
-	dst.upPtime = src.upPtime;
-	dst.updateCallWhenIceCompleted = src.updateCallWhenIceCompleted;
-	if (src.customSdpAttributes)
-		dst.customSdpAttributes = sal_custom_sdp_attribute_clone(src.customSdpAttributes);
-	memset(dst.customSdpMediaAttributes, 0, sizeof(dst.customSdpMediaAttributes));
+void MediaSessionParamsPrivate::clone (const MediaSessionParamsPrivate *src) {
+	clean();
+	CallSessionParamsPrivate::clone(src);
+	audioEnabled = src->audioEnabled;
+	audioBandwidthLimit = src->audioBandwidthLimit;
+	audioDirection = src->audioDirection;
+	audioMulticastEnabled = src->audioMulticastEnabled;
+	usedAudioCodec = src->usedAudioCodec;
+	videoEnabled = src->videoEnabled;
+	videoDirection = src->videoDirection;
+	videoMulticastEnabled = src->videoMulticastEnabled;
+	usedVideoCodec = src->usedVideoCodec;
+	receivedFps = src->receivedFps;
+	receivedVideoDefinition = src->receivedVideoDefinition ? linphone_video_definition_ref(src->receivedVideoDefinition) : nullptr;
+	sentFps = src->sentFps;
+	sentVideoDefinition = src->sentVideoDefinition ? linphone_video_definition_ref(src->sentVideoDefinition) : nullptr;
+	realtimeTextEnabled = src->realtimeTextEnabled;
+	usedRealtimeTextCodec = src->usedRealtimeTextCodec;
+	avpfEnabled = src->avpfEnabled;
+	avpfRrInterval = src->avpfRrInterval;
+	lowBandwidthEnabled = src->lowBandwidthEnabled;
+	recordFilePath = src->recordFilePath;
+	earlyMediaSendingEnabled = src->earlyMediaSendingEnabled;
+	encryption = src->encryption;
+	mandatoryMediaEncryptionEnabled = src->mandatoryMediaEncryptionEnabled;
+	_implicitRtcpFbEnabled = src->_implicitRtcpFbEnabled;
+	downBandwidth = src->downBandwidth;
+	upBandwidth = src->upBandwidth;
+	downPtime = src->downPtime;
+	upPtime = src->upPtime;
+	updateCallWhenIceCompleted = src->updateCallWhenIceCompleted;
+	if (src->customSdpAttributes)
+		customSdpAttributes = sal_custom_sdp_attribute_clone(src->customSdpAttributes);
 	for (unsigned int i = 0; i < (unsigned int)LinphoneStreamTypeUnknown; i++) {
-		if (src.customSdpMediaAttributes[i])
-			dst.customSdpMediaAttributes[i] = sal_custom_sdp_attribute_clone(src.customSdpMediaAttributes[i]);
+		if (src->customSdpMediaAttributes[i])
+			customSdpMediaAttributes[i] = sal_custom_sdp_attribute_clone(src->customSdpMediaAttributes[i]);
 	}
 }
 
@@ -101,6 +83,7 @@ void MediaSessionParamsPrivate::clean () {
 		if (customSdpMediaAttributes[i])
 			sal_custom_sdp_attribute_free(customSdpMediaAttributes[i]);
 	}
+	memset(customSdpMediaAttributes, 0, sizeof(customSdpMediaAttributes));
 }
 
 // -----------------------------------------------------------------------------
@@ -215,43 +198,54 @@ void MediaSessionParamsPrivate::setCustomSdpMediaAttributes (LinphoneStreamType 
 
 // =============================================================================
 
-MediaSessionParams::MediaSessionParams () : CallSessionParams(*new MediaSessionParamsPrivate) {}
+MediaSessionParams::MediaSessionParams () : CallSessionParams(*new MediaSessionParamsPrivate) {
+	L_D();
+	memset(d->customSdpMediaAttributes, 0, sizeof(d->customSdpMediaAttributes));
+}
 
 MediaSessionParams::MediaSessionParams (const MediaSessionParams &src)
-	: CallSessionParams(*new MediaSessionParamsPrivate(*src.getPrivate())) {}
+	: CallSessionParams(*new MediaSessionParamsPrivate) {
+	L_D();
+	memset(d->customSdpMediaAttributes, 0, sizeof(d->customSdpMediaAttributes));
+	d->clone(src.getPrivate());
+}
+
+MediaSessionParams::~MediaSessionParams () {
+	L_D();
+	d->clean();
+}
 
 MediaSessionParams &MediaSessionParams::operator= (const MediaSessionParams &src) {
 	L_D();
-	if (this != &src) {
-		CallSessionParams::operator=(src);
-		*d = *src.getPrivate();
-	}
+	if (this != &src)
+		d->clone(src.getPrivate());
 	return *this;
 }
 
 // -----------------------------------------------------------------------------
 
-void MediaSessionParams::initDefault (LinphoneCore *core) {
+void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core) {
 	L_D();
 	CallSessionParams::initDefault(core);
+	LinphoneCore *cCore = core->getCCore();
 	d->audioEnabled = true;
-	d->videoEnabled = linphone_core_video_enabled(core) && core->video_policy.automatically_initiate;
-	if (!linphone_core_video_enabled(core) && core->video_policy.automatically_initiate) {
+	d->videoEnabled = linphone_core_video_enabled(cCore) && cCore->video_policy.automatically_initiate;
+	if (!linphone_core_video_enabled(cCore) && cCore->video_policy.automatically_initiate) {
 		lError() << "LinphoneCore has video disabled for both capture and display, but video policy is to start the call with video. "
 			"This is a possible mis-use of the API. In this case, video is disabled in default LinphoneCallParams";
 	}
-	d->realtimeTextEnabled = !!linphone_core_realtime_text_enabled(core);
-	d->encryption = linphone_core_get_media_encryption(core);
-	d->avpfEnabled = (linphone_core_get_avpf_mode(core) == LinphoneAVPFEnabled);
-	d->_implicitRtcpFbEnabled = !!lp_config_get_int(linphone_core_get_config(core), "rtp", "rtcp_fb_implicit_rtcp_fb", true);
-	d->avpfRrInterval = static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(core));
+	d->realtimeTextEnabled = !!linphone_core_realtime_text_enabled(cCore);
+	d->encryption = linphone_core_get_media_encryption(cCore);
+	d->avpfEnabled = (linphone_core_get_avpf_mode(cCore) == LinphoneAVPFEnabled);
+	d->_implicitRtcpFbEnabled = !!lp_config_get_int(linphone_core_get_config(cCore), "rtp", "rtcp_fb_implicit_rtcp_fb", true);
+	d->avpfRrInterval = static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(cCore));
 	d->audioDirection = LinphoneMediaDirectionSendRecv;
 	d->videoDirection = LinphoneMediaDirectionSendRecv;
-	d->earlyMediaSendingEnabled = !!lp_config_get_int(linphone_core_get_config(core), "misc", "real_early_media", false);
-	d->audioMulticastEnabled = !!linphone_core_audio_multicast_enabled(core);
-	d->videoMulticastEnabled = !!linphone_core_video_multicast_enabled(core);
-	d->updateCallWhenIceCompleted = !!lp_config_get_int(linphone_core_get_config(core), "sip", "update_call_when_ice_completed", true);
-	d->mandatoryMediaEncryptionEnabled = !!linphone_core_is_media_encryption_mandatory(core);
+	d->earlyMediaSendingEnabled = !!lp_config_get_int(linphone_core_get_config(cCore), "misc", "real_early_media", false);
+	d->audioMulticastEnabled = !!linphone_core_audio_multicast_enabled(cCore);
+	d->videoMulticastEnabled = !!linphone_core_video_multicast_enabled(cCore);
+	d->updateCallWhenIceCompleted = !!lp_config_get_int(linphone_core_get_config(cCore), "sip", "update_call_when_ice_completed", true);
+	d->mandatoryMediaEncryptionEnabled = !!linphone_core_is_media_encryption_mandatory(cCore);
 }
 
 // -----------------------------------------------------------------------------

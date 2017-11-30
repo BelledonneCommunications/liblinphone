@@ -100,14 +100,6 @@ void ChatMessagePrivate::setState (ChatMessage::State s, bool force) {
 	store();
 }
 
-unsigned int ChatMessagePrivate::getStorageId () const {
-	return storageId;
-}
-
-void ChatMessagePrivate::setStorageId (unsigned int id) {
-	storageId = id;
-}
-
 belle_http_request_t *ChatMessagePrivate::getHttpRequest () const {
 	return fileTransferChatMessageModifier.getHttpRequest();
 }
@@ -586,9 +578,10 @@ void ChatMessagePrivate::store() {
 		return;
 	}
 
-	shared_ptr<ConferenceChatMessageEvent> eventLog = chatEvent.lock();
-	if (eventLog) {
-		q->getChatRoom()->getCore()->getPrivate()->mainDb->updateEvent(eventLog);
+	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
+	if (dbKey.isValid()) {
+		shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(dbKey);
+		mainDb->updateEvent(eventLog);
 
 		if (direction == ChatMessage::Direction::Incoming) {
 			if (!hasFileTransferContent()) {
@@ -602,9 +595,8 @@ void ChatMessagePrivate::store() {
 			}
 		}
 	} else {
-		eventLog = make_shared<ConferenceChatMessageEvent>(time, q->getSharedFromThis());
-		chatEvent = eventLog;
-		q->getChatRoom()->getCore()->getPrivate()->mainDb->addEvent(eventLog);
+		shared_ptr<EventLog> eventLog = make_shared<ConferenceChatMessageEvent>(time, q->getSharedFromThis());
+		mainDb->addEvent(eventLog);
 
 		if (direction == ChatMessage::Direction::Incoming) {
 			if (hasFileTransferContent()) {

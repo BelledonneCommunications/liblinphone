@@ -31,8 +31,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class CallSessionPrivate : public ObjectPrivate {
 public:
-	CallSessionPrivate (const Conference &conference, const CallSessionParams *params, CallSessionListener *listener);
-	virtual ~CallSessionPrivate ();
+	CallSessionPrivate () = default;
 
 	int computeDuration () const;
 	virtual void initializeParamsAccordingToIncomingCallParams ();
@@ -41,8 +40,10 @@ public:
 	bool startPing ();
 	void setPingTime (int value) { pingTime = value; }
 
+	CallSessionParams *getCurrentParams () const { return currentParams; }
 	LinphoneProxyConfig * getDestProxy () const { return destProxy; }
 	SalCallOp * getOp () const { return op; }
+	void setParams (CallSessionParams *csp);
 
 	virtual void abort (const std::string &errorMsg);
 	virtual void accepted ();
@@ -58,6 +59,8 @@ public:
 	virtual void updating (bool isUpdate);
 
 protected:
+	void init ();
+
 	void accept (const CallSessionParams *params);
 	virtual LinphoneStatus acceptUpdate (const CallSessionParams *csp, LinphoneCallState nextState, const std::string &stateInfo);
 	LinphoneStatus checkForAcceptation () const;
@@ -82,8 +85,6 @@ private:
 	LinphoneAddress * getFixedContact () const;
 
 protected:
-	const Conference &conference;
-	LinphoneCore *core = nullptr;
 	CallSessionListener *listener = nullptr;
 
 	CallSessionParams *params = nullptr;

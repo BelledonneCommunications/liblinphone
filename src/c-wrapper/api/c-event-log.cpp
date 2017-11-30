@@ -65,7 +65,7 @@ static bool isConferenceType (LinphoneEventLogType type) {
 		case LinphoneEventLogTypeConferenceCallStart:
 		case LinphoneEventLogTypeConferenceChatMessage:
 		case LinphoneEventLogTypeConferenceCreated:
-		case LinphoneEventLogTypeConferenceDestroyed:
+		case LinphoneEventLogTypeConferenceTerminated:
 		case LinphoneEventLogTypeConferenceParticipantAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceRemoved:
@@ -188,6 +188,10 @@ LinphoneEventLogType linphone_event_log_get_type (const LinphoneEventLog *event_
 
 time_t linphone_event_log_get_creation_time (const LinphoneEventLog *event_log) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(event_log)->getCreationTime();
+}
+
+void linphone_event_log_delete_from_database (LinphoneEventLog *event_log) {
+	LinphonePrivate::EventLog::deleteFromDatabase(L_GET_CPP_PTR_FROM_C_OBJECT(event_log));
 }
 
 // -----------------------------------------------------------------------------

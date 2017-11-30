@@ -200,10 +200,9 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		return q->getLastInsertId();
 	}
 
-	long long MainDbPrivate::insertChatRoom (
+	long long MainDbPrivate::insertBasicChatRoom (
 		long long peerSipAddressId,
 		long long localSipAddressId,
-		int capabilities,
 		const tm &creationTime
 	) {
 		L_Q();
@@ -214,6 +213,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		if (id >= 0)
 			return id;
 
+		static const int capabilities = static_cast<int>(ChatRoom::Capabilities::Basic);
 		lInfo() << "Insert new chat room in database: (peer=" << peerSipAddressId <<
 			", local=" << localSipAddressId << ", capabilities=" << capabilities << ").";
 		*session << "INSERT INTO chat_room ("
@@ -247,11 +247,12 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		const tm &creationTime = Utils::getTimeTAsTm(chatRoom->getCreationTime());
 		const int &capabilities = static_cast<int>(chatRoom->getCapabilities());
 		const string &subject = chatRoom->getSubject();
+		const int &flags = chatRoom->isReadOnly();
 		*session << "INSERT INTO chat_room ("
-			"  peer_sip_address_id, local_sip_address_id, creation_time, last_update_time, capabilities, subject"
-			") VALUES (:peerSipAddressId, :localSipAddressId, :creationTime, :lastUpdateTime, :capabilities, :subject)",
+			"  peer_sip_address_id, local_sip_address_id, creation_time, last_update_time, capabilities, subject, flags"
+			") VALUES (:peerSipAddressId, :localSipAddressId, :creationTime, :lastUpdateTime, :capabilities, :subject, :flags)",
 			soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime), soci::use(creationTime),
-			soci::use(capabilities), soci::use(subject);
+			soci::use(capabilities), soci::use(subject), soci::use(flags);
 
 		id = q->getLastInsertId();
 
@@ -350,7 +351,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				return nullptr;
 
 			case EventLog::Type::ConferenceCreated:
-			case EventLog::Type::ConferenceDestroyed:
+			case EventLog::Type::ConferenceTerminated:
 				eventLog = selectConferenceEvent(eventId, type, creationTime, chatRoomId);
 				break;
 
@@ -453,13 +454,15 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				chatRoom,
 				static_cast<ChatMessage::Direction>(direction)
 			));
-			chatMessage->getPrivate()->setState(static_cast<ChatMessage::State>(state), true);
 			chatMessage->setIsSecured(static_cast<bool>(isSecured));
 
-			chatMessage->getPrivate()->forceFromAddress(IdentityAddress(fromSipAddress));
-			chatMessage->getPrivate()->forceToAddress(IdentityAddress(toSipAddress));
+			ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+			dChatMessage->setState(static_cast<ChatMessage::State>(state), true);
 
-			chatMessage->getPrivate()->setTime(Utils::getTmAsTimeT(messageTime));
+			dChatMessage->forceFromAddress(IdentityAddress(fromSipAddress));
+			dChatMessage->forceToAddress(IdentityAddress(toSipAddress));
+
+			dChatMessage->setTime(Utils::getTmAsTimeT(messageTime));
 		}
 
 		// 2 - Fetch contents.
@@ -499,6 +502,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				chatMessage->addContent(*content);
 			}
 		}
+
+		cache(chatMessage, eventId);
 
 	end:
 		return make_shared<ConferenceChatMessageEvent>(
@@ -626,6 +631,9 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			*session << "UPDATE chat_room SET last_update_time = :lastUpdateTime"
 				"  WHERE id = :chatRoomId", soci::use(lastUpdateTime),
 				soci::use(curChatRoomId);
+
+			if (eventLog->getType() == EventLog::Type::ConferenceTerminated)
+				*session << "UPDATE chat_room SET flags = 1 WHERE id = :chatRoomId", soci::use(curChatRoomId);
 		}
 
 		if (chatRoomId)
@@ -837,11 +845,19 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		soci::session *session = dbSession.getBackendSession<soci::session>();
 		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(chatRoomId));
 		for (const auto &row : rows) {
-			shared_ptr<EventLog> eventLog = getEventFromCache(resolveId(row, 0));
+			long long eventId = resolveId(row, 0);
+			shared_ptr<EventLog> eventLog = getEventFromCache(eventId);
 			if (eventLog) {
 				const EventLogPrivate *dEventLog = eventLog->getPrivate();
 				L_ASSERT(dEventLog->dbKey.isValid());
 				dEventLog->dbKey = MainDbEventKey();
+			}
+			// TODO: Try to add a better code here...
+			shared_ptr<ChatMessage> chatMessage = getChatMessageFromCache(eventId);
+			if (chatMessage) {
+				const ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+				L_ASSERT(dChatMessage->dbKey.isValid());
+				dChatMessage->dbKey = MainDbChatMessageKey();
 			}
 		}
 	}
@@ -894,7 +910,9 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			// Chatroom subject.
 			"  subject VARCHAR(255),"
 
-			"  last_notify_id INT UNSIGNED,"
+			"  last_notify_id INT UNSIGNED DEFAULT 0,"
+
+			"  flags INT UNSIGNED DEFAULT 0,"
 
 			"  UNIQUE (peer_sip_address_id, local_sip_address_id),"
 
@@ -1144,7 +1162,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		}
 
 		bool soFarSoGood = false;
-		long long storageId;
+		long long storageId = 0;
 
 		L_BEGIN_LOG_EXCEPTION
 
@@ -1156,7 +1174,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				return false;
 
 			case EventLog::Type::ConferenceCreated:
-			case EventLog::Type::ConferenceDestroyed:
+			case EventLog::Type::ConferenceTerminated:
 				storageId = d->insertConferenceEvent(eventLog);
 				break;
 
@@ -1228,7 +1246,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				break;
 
 			case EventLog::Type::ConferenceCreated:
-			case EventLog::Type::ConferenceDestroyed:
+			case EventLog::Type::ConferenceTerminated:
 			case EventLog::Type::ConferenceCallStart:
 			case EventLog::Type::ConferenceCallEnd:
 			case EventLog::Type::ConferenceParticipantAdded:
@@ -1308,6 +1326,60 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		L_END_LOG_EXCEPTION
 
 		return count;
+	}
+
+	shared_ptr<EventLog> MainDb::getEventFromKey (const MainDbKey &dbKey) {
+		shared_ptr<EventLog> event;
+
+		if (!dbKey.isValid()) {
+			lWarning() << "Unable to get event from invalid key.";
+			return event;
+		}
+
+		unique_ptr<MainDb> &q = dbKey.getPrivate()->core.lock()->getPrivate()->mainDb;
+		MainDbPrivate *d = q->getPrivate();
+
+		if (!q->isConnected()) {
+			lWarning() << "Unable to get event from key. Not connected.";
+			return event;
+		}
+
+		const long long &storageId = dbKey.getPrivate()->storageId;
+		event = d->getEventFromCache(storageId);
+		if (event)
+			return event;
+
+		// TODO: Improve. Deal with all events in the future.
+		static string query = "SELECT peer_sip_address.value, local_sip_address.value, type, event.creation_time"
+			"  FROM event, conference_event, chat_room, sip_address AS peer_sip_address, sip_address as local_sip_address"
+			"  WHERE event.id = :eventId"
+			"  AND conference_event.event_id = event.id"
+			"  AND conference_event.chat_room_id = chat_room.id"
+			"  AND chat_room.peer_sip_address_id = peer_sip_address.id"
+			"  AND chat_room.local_sip_address_id = local_sip_address.id";
+
+		L_BEGIN_LOG_EXCEPTION
+
+		soci::session *session = d->dbSession.getBackendSession<soci::session>();
+		soci::transaction tr(*session);
+
+		string peerSipAddress;
+		string localSipAddress;
+		int type;
+		tm creationTime;
+		*session << query, soci::into(peerSipAddress), soci::into(localSipAddress), soci::into(type),
+			soci::into(creationTime), soci::use(storageId);
+
+		event = d->selectGenericConferenceEvent(
+			storageId,
+			static_cast<EventLog::Type>(type),
+			Utils::getTmAsTimeT(creationTime),
+			ChatRoomId(IdentityAddress(peerSipAddress), IdentityAddress(localSipAddress))
+		);
+
+		L_END_LOG_EXCEPTION
+
+		return event;
 	}
 
 	list<shared_ptr<EventLog>> MainDb::getConferenceNotifiedEvents (
@@ -1448,7 +1520,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		if (getUnreadChatMessagesCount(chatRoomId) == 0)
 			return;
 
-		string query = "UPDATE FROM conference_chat_message_event"
+		string query = "UPDATE conference_chat_message_event"
 			"  SET state = " + Utils::toString(static_cast<int>(ChatMessage::State::Displayed)) + " ";
 		query += "WHERE";
 		if (chatRoomId.isValid())
@@ -1663,7 +1735,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 // -----------------------------------------------------------------------------
 
 	list<shared_ptr<ChatRoom>> MainDb::getChatRooms () const {
-		static const string query = "SELECT chat_room.id, peer_sip_address.value, local_sip_address.value, creation_time, last_update_time, capabilities, subject, last_notify_id"
+		static const string query = "SELECT chat_room.id, peer_sip_address.value, local_sip_address.value, "
+			"creation_time, last_update_time, capabilities, subject, last_notify_id, flags"
 			"  FROM chat_room, sip_address AS peer_sip_address, sip_address AS local_sip_address"
 			"  WHERE chat_room.peer_sip_address_id = peer_sip_address.id AND chat_room.local_sip_address_id = local_sip_address.id"
 			"  ORDER BY last_update_time DESC";
@@ -1742,7 +1815,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 					me,
 					subject,
 					move(participants),
-					lastNotifyId
+					lastNotifyId,
+					!!row.get<int>(8, 0)
 				);
 			}
 
@@ -1934,10 +2008,9 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 					const long long &eventId = getLastInsertId();
 					const long long &localSipAddressId = d->insertSipAddress(message.get<string>(LEGACY_MESSAGE_COL_LOCAL_ADDRESS));
 					const long long &remoteSipAddressId = d->insertSipAddress(message.get<string>(LEGACY_MESSAGE_COL_REMOTE_ADDRESS));
-					const long long &chatRoomId = d->insertChatRoom(
+					const long long &chatRoomId = d->insertBasicChatRoom(
 						remoteSipAddressId,
 						localSipAddressId,
-						static_cast<int>(ChatRoom::Capabilities::Basic),
 						creationTime
 					);
 					const int &isSecured = message.get<int>(LEGACY_MESSAGE_COL_IS_SECURED, 0);
@@ -1988,12 +2061,20 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		return false;
 	}
 
+	bool MainDb::updateEvent (const std::shared_ptr<EventLog> &) {
+		return false;
+	}
+
 	bool MainDb::deleteEvent (const shared_ptr<EventLog> &) {
 		return false;
 	}
 
 	int MainDb::getEventsCount (FilterMask) const {
 		return 0;
+	}
+
+	shared_ptr<EventLog> MainDb::getEventFromKey (const MainDbKey &) {
+		return nullptr;
 	}
 
 	list<shared_ptr<EventLog>> MainDb::getConferenceNotifiedEvents (
@@ -2009,6 +2090,14 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 	int MainDb::getUnreadChatMessagesCount (const ChatRoomId &) const {
 		return 0;
+	}
+
+	shared_ptr<ChatMessage> MainDb::getLastChatMessage (const ChatRoomId &) const {
+		return nullptr;
+	}
+
+	list<std::shared_ptr<ChatMessage>> MainDb::findChatMessages (const ChatRoomId &, const std::string &) const {
+		return list<shared_ptr<ChatMessage>>();
 	}
 
 	void MainDb::markChatMessagesAsRead (const ChatRoomId &) const {}
@@ -2029,7 +2118,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		return list<shared_ptr<ChatRoom>>();
 	}
 
-	void MainDb::insertChatRoom (const ChatRoomId &, int, const string &) {}
+	void MainDb::insertChatRoom (const shared_ptr<ChatRoom> &) {}
 
 	void MainDb::deleteChatRoom (const ChatRoomId &) {}
 

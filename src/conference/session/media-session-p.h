@@ -37,8 +37,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class MediaSessionPrivate : public CallSessionPrivate {
 public:
-	MediaSessionPrivate (const Conference &conference, const CallSessionParams *params, CallSessionListener *listener);
-	virtual ~MediaSessionPrivate ();
+	MediaSessionPrivate () = default;
 
 public:
 	static void stunAuthRequestedCb (void *userData, const char *realm, const char *nonce, const char **username, const char **password, const char **ha1);
@@ -62,30 +61,23 @@ public:
 	void prepareStreamsForIceGathering (bool hasVideo);
 	void stopStreamsForIceGathering ();
 
-	int getAf () const {
-		return af;
-	}
+	int getAf () const { return af; }
 
-	bool getAudioMuted () const {
-		return audioMuted;
-	}
+	bool getAudioMuted () const { return audioMuted; }
 
-	LinphoneCore *getCore () const {
-		return core;
-	}
+	MediaSessionParams *getCurrentParams () const { return static_cast<MediaSessionParams *>(currentParams); }
+	MediaSessionParams *getParams () const { return static_cast<MediaSessionParams *>(params); }
+	MediaSessionParams *getRemoteParams () const { return static_cast<MediaSessionParams *>(remoteParams); }
+	void setCurrentParams (MediaSessionParams *msp);
+	void setParams (MediaSessionParams *msp);
+	void setRemoteParams (MediaSessionParams *msp);
 
-	IceSession *getIceSession () const {
-		return iceAgent->getIceSession();
-	}
+	IceSession *getIceSession () const { return iceAgent->getIceSession(); }
 
-	SalMediaDescription *getLocalDesc () const {
-		return localDesc;
-	}
+	SalMediaDescription *getLocalDesc () const { return localDesc; }
 
 	MediaStream *getMediaStream (LinphoneStreamType type) const;
-	LinphoneNatPolicy *getNatPolicy () const {
-		return natPolicy;
-	}
+	LinphoneNatPolicy *getNatPolicy () const { return natPolicy; }
 
 	int getRtcpPort (LinphoneStreamType type) const;
 	int getRtpPort (LinphoneStreamType type) const;
@@ -108,6 +100,7 @@ private:
 
 	static float aggregateQualityRatings (float audioRating, float videoRating);
 
+	std::shared_ptr<Participant> getMe () const;
 	void setState (LinphoneCallState newState, const std::string &message) override;
 
 	void computeStreamsIndexes (const SalMediaDescription *md);
@@ -253,9 +246,7 @@ private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;
 
-	MediaSessionParams *params = nullptr;
-	mutable MediaSessionParams *currentParams = nullptr;
-	MediaSessionParams *remoteParams = nullptr;
+	std::weak_ptr<Participant> me;
 
 	AudioStream *audioStream = nullptr;
 	OrtpEvQueue *audioStreamEvQueue = nullptr;

@@ -103,7 +103,8 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	shared_ptr<Participant> &me,
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
-	unsigned int lastNotifyId
+	unsigned int lastNotifyId,
+	bool isReadOnly
 ) : ChatRoom(*new ClientGroupChatRoomPrivate, core, ChatRoomId(peerAddress, me->getAddress())),
 RemoteConference(core, me->getAddress(), nullptr) {
 	L_D();
@@ -114,7 +115,7 @@ RemoteConference(core, me->getAddress(), nullptr) {
 	dConference->subject = subject;
 	dConference->participants = move(participants);
 
-	d->state = ChatRoom::State::Created;
+	d->state = isReadOnly ? ChatRoom::State::Terminated : ChatRoom::State::Created;
 
 	getMe()->getPrivate()->setAdmin(me->isAdmin());
 
@@ -128,6 +129,10 @@ shared_ptr<Core> ClientGroupChatRoom::getCore () const {
 
 ClientGroupChatRoom::CapabilitiesMask ClientGroupChatRoom::getCapabilities () const {
 	return static_cast<CapabilitiesMask>(Capabilities::Conference);
+}
+
+bool ClientGroupChatRoom::isReadOnly () const {
+	return getState() != State::Created;
 }
 
 bool ClientGroupChatRoom::canHandleParticipants () const {
@@ -305,6 +310,11 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 	L_D_T(RemoteConference, dConference);
 	dConference->eventHandler->resetLastNotify();
 	d->setState(ChatRoom::State::Terminated);
+	getCore()->getPrivate()->mainDb->addEvent(make_shared<ConferenceEvent>(
+		EventLog::Type::ConferenceTerminated,
+		time(nullptr),
+		d->chatRoomId
+	));
 }
 
 void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {

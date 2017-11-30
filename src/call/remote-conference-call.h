@@ -1,5 +1,5 @@
 /*
- * event-log-enums.h
+ * remote-conference-call.h
  * Copyright (C) 2010-2017 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,24 +17,39 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _EVENT_LOG_ENUMS_H_
-#define _EVENT_LOG_ENUMS_H_
+#ifndef _REMOTE_CONFERENCE_CALL_H_
+#define _REMOTE_CONFERENCE_CALL_H_
+
+#include "call/call.h"
+#include "conference/remote-conference.h"
 
 // =============================================================================
 
-#define L_ENUM_VALUES_EVENT_LOG_TYPE(F) \
-	F(None) \
-	F(ConferenceCreated) \
-	F(ConferenceTerminated) \
-	F(ConferenceCallStart) \
-	F(ConferenceCallEnd) \
-	F(ConferenceChatMessage) \
-	F(ConferenceParticipantAdded) \
-	F(ConferenceParticipantRemoved) \
-	F(ConferenceParticipantSetAdmin) \
-	F(ConferenceParticipantUnsetAdmin) \
-	F(ConferenceParticipantDeviceAdded) \
-	F(ConferenceParticipantDeviceRemoved) \
-	F(ConferenceSubjectChanged)
+LINPHONE_BEGIN_NAMESPACE
 
-#endif // ifndef _EVENT_LOG_ENUMS_H_
+class Core;
+class RemoteConferenceCallPrivate;
+
+class LINPHONE_PUBLIC RemoteConferenceCall : public Call, public RemoteConference {
+public:
+	// TODO: Make me private.
+	RemoteConferenceCall (
+		std::shared_ptr<Core> core,
+		LinphoneCallDir direction,
+		const Address &from,
+		const Address &to,
+		LinphoneProxyConfig *cfg,
+		SalCallOp *op,
+		const MediaSessionParams *msp
+	);
+
+	std::shared_ptr<Core> getCore () const;
+
+private:
+	L_DECLARE_PRIVATE(RemoteConferenceCall);
+	L_DISABLE_COPY(RemoteConferenceCall);
+};
+
+LINPHONE_END_NAMESPACE
+
+#endif // ifndef _REMOTE_CONFERENCE_CALL_H_

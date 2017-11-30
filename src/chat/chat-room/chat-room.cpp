@@ -35,13 +35,6 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-int ChatRoomPrivate::createChatMessageFromDb (void *data, int argc, char **argv, char **colName) {
-	ChatRoomPrivate *d = reinterpret_cast<ChatRoomPrivate *>(data);
-	return d->createChatMessageFromDb(argc, argv, colName);
-}
-
-// -----------------------------------------------------------------------------
-
 void ChatRoomPrivate::addTransientEvent (const shared_ptr<EventLog> &log) {
 	auto iter = find(transientEvents.begin(), transientEvents.end(), log);
 	if (iter == transientEvents.end())
@@ -67,7 +60,8 @@ void ChatRoomPrivate::setState (ChatRoom::State newState) {
 	L_Q();
 	if (newState != state) {
 		state = newState;
-		if (state == ChatRoom::State::Instantiated)
+		if (state == ChatRoom::State::Created)
+			// TODO : Rename from instatiated to created.
 			linphone_core_notify_chat_room_instantiated(q->getCore()->getCCore(), L_GET_C_BACK_PTR(q));
 		notifyStateChanged();
 	}
@@ -129,30 +123,6 @@ time_t ChatRoom::getLastUpdateTime () const {
 
 // -----------------------------------------------------------------------------
 
-/**
- * DB layout:
- *
- * | 0  | storage_id
- * | 1  | localContact
- * | 2  | remoteContact
- * | 3  | direction flag (LinphoneChatMessageDir)
- * | 4  | message (text content of the message)
- * | 5  | time (unused now, used to be string-based timestamp, replaced by the utc timestamp)
- * | 6  | read flag (no longer used, replaced by the LinphoneChatMessageStateDisplayed state)
- * | 7  | status (LinphoneChatMessageState)
- * | 8  | external body url (deprecated file transfer system)
- * | 9  | utc timestamp
- * | 10 | app data text
- * | 11 | linphone content id (LinphoneContent describing a file transfer)
- * | 12 | message id (used for IMDN)
- * | 13 | content type (of the message field [must be text representable])
- * | 14 | secured flag
- */
-int ChatRoomPrivate::createChatMessageFromDb (int argc, char **argv, char **colName) {
-	// TODO: history.
-	return 0;
-}
-
 list<shared_ptr<ChatMessage> > ChatRoomPrivate::findMessages (const string &messageId) const {
 	L_Q();
 	return q->getCore()->getPrivate()->mainDb->findChatMessages(q->getChatRoomId(), messageId);
@@ -163,14 +133,21 @@ void ChatRoomPrivate::sendMessage (const shared_ptr<ChatMessage> &msg) {
 
 	// TODO: Check direction.
 
-	msg->getPrivate()->setTime(ms_time(0));
-	msg->getPrivate()->send();
+	ChatMessagePrivate *dChatMessage = msg->getPrivate();
+	dChatMessage->setTime(ms_time(0));
+	dChatMessage->send();
 
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
 	LinphoneChatRoomCbsParticipantAddedCb cb = linphone_chat_room_cbs_get_chat_message_sent(cbs);
-	shared_ptr<ConferenceChatMessageEvent> event = make_shared<ConferenceChatMessageEvent>(msg->getTime(), msg);
+
 	if (cb) {
+		shared_ptr<ConferenceChatMessageEvent> event = static_pointer_cast<ConferenceChatMessageEvent>(
+			q->getCore()->getPrivate()->mainDb->getEventFromKey(dChatMessage->dbKey)
+		);
+		if (!event)
+			event = make_shared<ConferenceChatMessageEvent>(msg->getTime(), msg);
+
 		cb(cr, L_GET_C_BACK_PTR(event));
 	}
 
@@ -404,11 +381,7 @@ shared_ptr<ChatMessage> ChatRoom::createMessage () {
 }
 
 void ChatRoom::deleteHistory () {
-	// TODO: history.
-}
-
-void ChatRoom::deleteMessage (const shared_ptr<ChatMessage> &msg) {
-	// TODO: history.
+	getCore()->getPrivate()->mainDb->cleanHistory(getChatRoomId());
 }
 
 shared_ptr<ChatMessage> ChatRoom::findMessage (const string &messageId) {

@@ -57,8 +57,9 @@ public:
 	time_t getLastUpdateTime () const;
 
 	virtual CapabilitiesMask getCapabilities () const = 0;
+	virtual bool isReadOnly () const = 0;
 
-	std::shared_ptr<ChatMessage> getLastMessageInHistory() const;
+	std::shared_ptr<ChatMessage> getLastMessageInHistory () const;
 
 	// TODO: Remove useless functions.
 	void compose ();
@@ -66,7 +67,6 @@ public:
 	std::shared_ptr<ChatMessage> createMessage (const std::string &msg);
 	std::shared_ptr<ChatMessage> createMessage ();
 	void deleteHistory ();
-	void deleteMessage (const std::shared_ptr<ChatMessage> &msg);
 	std::shared_ptr<ChatMessage> findMessage (const std::string &messageId);
 	std::shared_ptr<ChatMessage> findMessageWithDirection (const std::string &messageId, ChatMessage::Direction direction);
 	std::list<std::shared_ptr<ChatMessage>> getHistory (int nbMessages);

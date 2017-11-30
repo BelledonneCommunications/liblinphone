@@ -39,11 +39,11 @@ class MediaSessionParams : public CallSessionParams {
 public:
 	MediaSessionParams ();
 	MediaSessionParams (const MediaSessionParams &src);
-	virtual ~MediaSessionParams () = default;
+	virtual ~MediaSessionParams ();
 
 	MediaSessionParams &operator= (const MediaSessionParams &src);
 
-	void initDefault (LinphoneCore *core) override;
+	void initDefault (const std::shared_ptr<Core> &core) override;
 
 	bool audioEnabled () const;
 	bool audioMulticastEnabled () const;
