@@ -183,7 +183,6 @@ LinphoneReason ChatRoomPrivate::messageReceived (SalOp *op, const SalMessage *sa
 	msg->setInternalContent(content);
 
 	msg->getPrivate()->setTime(salMsg->time);
-	msg->getPrivate()->setState(ChatMessage::State::Delivered);
 	msg->setImdnMessageId(op->get_call_id());
 
 	const SalCustomHeader *ch = op->get_recv_custom_header();
@@ -444,15 +443,9 @@ void ChatRoom::markAsRead () {
 	if (getUnreadChatMessagesCount() == 0)
 		return;
 
-	shared_ptr<Core> core = getCore();
-	if (!core)
-		return;
-
-	CorePrivate *dCore = core->getPrivate();
+	CorePrivate *dCore = getCore()->getPrivate();
 	const string peerAddress = getPeerAddress().asString();
-	list<shared_ptr<ChatMessage>> chatMessages = dCore->mainDb->getUnreadChatMessages(d->chatRoomId);
-
-	for (auto &chatMessage : chatMessages)
+	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->chatRoomId))
 		chatMessage->sendDisplayNotification();
 
 	dCore->mainDb->markChatMessagesAsRead(d->chatRoomId);

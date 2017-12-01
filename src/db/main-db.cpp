@@ -29,6 +29,7 @@
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
+#include "chat/chat-room/server-group-chat-room.h"
 #include "conference/participant-p.h"
 #include "content/content-type.h"
 #include "content/content.h"
@@ -1261,9 +1262,12 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 		tr.commit();
 
+		return true;
+
 		L_END_LOG_EXCEPTION
 
-		return true;
+		// Error.
+		return false;
 	}
 
 	bool MainDb::deleteEvent (const shared_ptr<EventLog> &eventLog) {
@@ -1299,6 +1303,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 		L_END_LOG_EXCEPTION
 
+		// Error.
 		return false;
 	}
 
@@ -1395,12 +1400,12 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 		L_D();
 
+		list<shared_ptr<EventLog>> events;
+
 		if (!isConnected()) {
 			lWarning() << "Unable to get conference notified events. Not connected.";
-			return list<shared_ptr<EventLog>>();
+			return events;
 		}
-
-		list<shared_ptr<EventLog>> events;
 
 		DurationLogger durationLogger(
 			"Get conference notified events of: (peer=" + chatRoomId.getPeerAddress().asString() +
@@ -1428,9 +1433,12 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			));
 		}
 
+		return events;
+
 		L_END_LOG_EXCEPTION
 
-		return events;
+		// Error.
+		return list<shared_ptr<EventLog>>();
 	}
 
 	int MainDb::getChatMessagesCount (const ChatRoomId &chatRoomId) const {
@@ -1549,12 +1557,65 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 	}
 
 	list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ChatRoomId &chatRoomId) const {
+		L_D();
+
+		list<shared_ptr<ChatMessage>> chatMessages;
+
+		if (!isConnected()) {
+			lWarning() << "Unable to get unread chat messages. Not connected.";
+			return chatMessages;
+		}
+
+		string query = "SELECT id, creation_time FROM event WHERE"
+			" id IN ("
+			"  SELECT conference_event.event_id FROM conference_event, conference_chat_message_event"
+			"  WHERE";
+		if (chatRoomId.isValid())
+			query += "  chat_room_id = :chatRoomId AND ";
+		query += "  conference_event.event_id = conference_chat_message_event.event_id"
+			"  AND direction = " + Utils::toString(static_cast<int>(ChatMessage::Direction::Incoming)) +
+			"  AND state <> " + Utils::toString(static_cast<int>(ChatMessage::State::Displayed)) +
+			")";
+
 		DurationLogger durationLogger(
 			"Get unread chat messages: (peer=" + chatRoomId.getPeerAddress().asString() +
 			", local=" + chatRoomId.getLocalAddress().asString() + ")."
 		);
 
-		// TODO.
+		L_BEGIN_LOG_EXCEPTION
+
+		soci::session *session = d->dbSession.getBackendSession<soci::session>();
+		soci::transaction tr(*session);
+
+		long long dbChatRoomId;
+		if (chatRoomId.isValid())
+			dbChatRoomId = d->selectChatRoomId(chatRoomId);
+
+		soci::rowset<soci::row> rows = chatRoomId.isValid()
+			? (session->prepare << query, soci::use(dbChatRoomId))
+			: (session->prepare << query);
+
+		for (const auto &row : rows) {
+			long long eventId = d->resolveId(row, 0);
+			shared_ptr<EventLog> event = d->getEventFromCache(eventId);
+
+			if (!event)
+				event = d->selectGenericConferenceEvent(
+					eventId,
+					EventLog::Type::ConferenceChatMessage,
+					Utils::getTmAsTimeT(row.get<tm>(1)),
+					chatRoomId
+				);
+
+			if (event)
+				chatMessages.push_back(static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage());
+		}
+
+		return chatMessages;
+
+		L_END_LOG_EXCEPTION
+
+		// Error.
 		return list<shared_ptr<ChatMessage>>();
 	}
 
@@ -1617,9 +1678,12 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				lWarning() << "Unable to fetch event: " << eventId;
 		}
 
+		return chatMessages;
+
 		L_END_LOG_EXCEPTION
 
-		return chatMessages;
+		// Error.
+		return list<shared_ptr<ChatMessage>>();
 	}
 
 	list<shared_ptr<EventLog>> MainDb::getHistory (const ChatRoomId &chatRoomId, int nLast, FilterMask mask) const {
@@ -1697,9 +1761,12 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				lWarning() << "Unable to fetch event: " << eventId;
 		}
 
+		return events;
+
 		L_END_LOG_EXCEPTION
 
-		return events;
+		// Error.
+		return list<shared_ptr<EventLog>>();
 	}
 
 	void MainDb::cleanHistory (const ChatRoomId &chatRoomId, FilterMask mask) {
@@ -1743,13 +1810,14 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 
 		L_D();
 
+		list<shared_ptr<ChatRoom>> chatRooms;
+
 		if (!isConnected()) {
 			lWarning() << "Unable to get chat rooms. Not connected.";
-			return list<shared_ptr<ChatRoom>>();
+			return chatRooms;
 		}
 
 		shared_ptr<Core> core = getCore();
-		list<shared_ptr<ChatRoom>> chatRooms;
 
 		DurationLogger durationLogger("Get chat rooms.");
 
@@ -1809,15 +1877,24 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 					continue;
 				}
 
-				chatRoom = make_shared<ClientGroupChatRoom>(
-					core,
-					chatRoomId.getPeerAddress(),
-					me,
-					subject,
-					move(participants),
-					lastNotifyId,
-					!!row.get<int>(8, 0)
-				);
+				if (!linphone_core_conference_server_enabled(core->getCCore()))
+					chatRoom = make_shared<ClientGroupChatRoom>(
+						core,
+						chatRoomId.getPeerAddress(),
+						me,
+						subject,
+						move(participants),
+						lastNotifyId,
+						!!row.get<int>(8, 0)
+					);
+				else
+					chatRoom = make_shared<ServerGroupChatRoom>(
+						core,
+						chatRoomId.getPeerAddress(),
+						subject,
+						move(participants),
+						lastNotifyId
+					);
 			}
 
 			if (!chatRoom)
@@ -1833,9 +1910,12 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			chatRooms.push_back(chatRoom);
 		}
 
+		return chatRooms;
+
 		L_END_LOG_EXCEPTION
 
-		return chatRooms;
+		// Error.
+		return list<shared_ptr<ChatRoom>>();
 	}
 
 	void MainDb::insertChatRoom (const shared_ptr<ChatRoom> &chatRoom) {
