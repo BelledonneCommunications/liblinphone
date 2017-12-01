@@ -265,11 +265,30 @@ void ServerGroupChatRoomPrivate::onChatMessageReceived (const std::shared_ptr<Ch
 // =============================================================================
 
 ServerGroupChatRoom::ServerGroupChatRoom (const std::shared_ptr<Core> &core, SalCallOp *op)
-: ChatRoom(*new ServerGroupChatRoomPrivate(), core, ChatRoomId()),
+: ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomId()),
 LocalConference(getCore(), IdentityAddress(linphone_core_get_conference_factory_uri(core->getCCore())), nullptr) {
 	LocalConference::setSubject(op->get_subject() ? op->get_subject() : "");
 	getMe()->getPrivate()->createSession(*this, nullptr, false, this);
 	getMe()->getPrivate()->getSession()->configure(LinphoneCallIncoming, nullptr, op, Address(op->get_from()), Address(op->get_to()));
+}
+
+ServerGroupChatRoom::ServerGroupChatRoom (
+	const std::shared_ptr<Core> &core,
+	const IdentityAddress &peerAddress,
+	const std::string &subject,
+	std::list<std::shared_ptr<Participant>> &&participants,
+	unsigned int lastNotifyId
+) : ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomId(peerAddress, peerAddress)),
+LocalConference(getCore(), peerAddress, nullptr) {
+	L_D();
+	L_D_T(LocalConference, dConference);
+
+	dConference->subject = subject;
+	dConference->participants = move(participants);
+
+	d->state = ChatRoom::State::Created;
+
+	dConference->eventHandler->setLastNotify(lastNotifyId);
 }
 
 shared_ptr<Core> ServerGroupChatRoom::getCore () const {
