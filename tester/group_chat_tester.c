@@ -92,14 +92,16 @@ static void chat_room_subject_changed (LinphoneChatRoom *cr, const LinphoneEvent
 	manager->stat.number_of_subject_changed++;
 }
 
-static void chat_room_instantiated (LinphoneCore *core, LinphoneChatRoom *cr) {
-	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
-	linphone_chat_room_cbs_set_is_composing_received(cbs, chat_room_is_composing_received);
-	linphone_chat_room_cbs_set_participant_added(cbs, chat_room_participant_added);
-	linphone_chat_room_cbs_set_participant_admin_status_changed(cbs, chat_room_participant_admin_status_changed);
-	linphone_chat_room_cbs_set_participant_removed(cbs, chat_room_participant_removed);
-	linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
-	linphone_chat_room_cbs_set_subject_changed(cbs, chat_room_subject_changed);
+static void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state) {
+	if (state == LinphoneChatRoomStateInstantiated) {
+		LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
+		linphone_chat_room_cbs_set_is_composing_received(cbs, chat_room_is_composing_received);
+		linphone_chat_room_cbs_set_participant_added(cbs, chat_room_participant_added);
+		linphone_chat_room_cbs_set_participant_admin_status_changed(cbs, chat_room_participant_admin_status_changed);
+		linphone_chat_room_cbs_set_participant_removed(cbs, chat_room_participant_removed);
+		linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
+		linphone_chat_room_cbs_set_subject_changed(cbs, chat_room_subject_changed);
+	}
 }
 
 static void configure_core_for_conference (LinphoneCore *core, const char* username, const LinphoneAddress *factoryAddr, bool_t server) {
@@ -138,7 +140,7 @@ static bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList) {
 	linphone_address_unref(factoryAddr);
 
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_chat_room_instantiated(cbs, chat_room_instantiated);
+	linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
 	bctbx_list_for_each2(coreManagerList, (void (*)(void *, void*))_configure_core_for_callbacks, (void*) cbs);
 	linphone_core_cbs_unref(cbs);
 	bctbx_list_t *iterator = coreManagerList;
@@ -225,7 +227,7 @@ static void group_chat_room_creation_local (void) {
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(laure->lc)));
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_chat_room_instantiated(cbs, chat_room_instantiated);
+	linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
 	linphone_core_add_callbacks(marie->lc, cbs);
 	linphone_core_add_callbacks(pauline->lc, cbs);
 	linphone_core_add_callbacks(laure->lc, cbs);
