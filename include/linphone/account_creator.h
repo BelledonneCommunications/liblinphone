@@ -237,6 +237,14 @@ LINPHONE_PUBLIC const char * linphone_account_creator_get_activation_code(const 
 LINPHONE_PUBLIC LinphoneAccountCreatorLanguageStatus linphone_account_creator_set_language(LinphoneAccountCreator *creator, const char *lang);
 
 /**
+* Set the algorithm supported.
+* @param[in] creator LinphoneAccountCreator object
+* @param[in] lang The algorithm to use
+* @return LinphoneAccountCreatorAlgoStatusOk if everything is OK, or a specific error otherwise.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorAlgoStatus linphone_account_creator_set_algorithm(LinphoneAccountCreator *creator, const char *algorithm);
+
+/**
  * Get the language use in email of SMS.
  * @param[in] creator LinphoneAccountCreator object
  * @return The language of the LinphoneAccountCreator

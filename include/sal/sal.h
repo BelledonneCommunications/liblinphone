@@ -569,6 +569,7 @@ SalAuthInfo* sal_auth_info_new(void);
 SalAuthInfo* sal_auth_info_clone(const SalAuthInfo* auth_info);
 void sal_auth_info_delete(SalAuthInfo* auth_info);
 LINPHONE_PUBLIC int sal_auth_compute_ha1(const char* userid,const char* realm,const char* password, char ha1[33]);
+LINPHONE_PUBLIC int sal_auth_compute_ha1_for_algo(const char* userid,const char* realm,const char* password, char ha1[65]);
 SalAuthMode sal_auth_info_get_mode(const SalAuthInfo* auth_info);
 belle_sip_signing_key_t *sal_auth_info_get_signing_key(const SalAuthInfo* auth_info);
 belle_sip_certificates_chain_t *sal_auth_info_get_certificates_chain(const SalAuthInfo* auth_info);

@@ -106,6 +106,16 @@ typedef enum _LinphoneAccountCreatorLanguageStatus {
 	LinphoneAccountCreatorLanguageStatusOk /**< Language ok */
 } LinphoneAccountCreatorLanguageStatus;
 
+
+/**
+ * Enum algorithm checking.
+ * @ingroup account_creator
+ **/
+typedef enum _LinphoneAccountCreatorAlgoStatus {
+	LinphoneAccountCreatorAlgoStatusOk, /**< Algorithm ok */
+	LinphoneAccountCreatorAlgoStatusNotSupported /**< Algorithm not supported */
+} LinphoneAccountCreatorAlgoStatus;
+
 /**
  * Enum describing Activation code checking.
  * @ingroup account_creator

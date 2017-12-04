@@ -944,6 +944,12 @@ void sal_use_dates(Sal *ctx, bool_t enabled){
 
 int sal_auth_compute_ha1(const char* userid,const char* realm,const char* password, char ha1[33]) {
 	return belle_sip_auth_helper_compute_ha1(userid, realm, password, ha1);
+	
+}
+
+int sal_auth_compute_ha1_for_algo(const char* userid,const char* realm,const char* password, char ha1[65]) {
+	return belle_sip_auth_helper_compute_ha1_for_algorithm(userid, realm, password, ha1, 65, "SHA-256");
+	
 }
 
 SalCustomHeader *sal_custom_header_ref(SalCustomHeader *ch){

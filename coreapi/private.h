@@ -1517,7 +1517,7 @@ struct _LinphoneAccountCreator {
 	char *activation_code; /**< Account validation code */
 	char *domain; /**< Domain */
 	LinphoneTransportType transport; /**< Transport used */
-
+	char *algorithm; /**< User algorithm */
 	/* Deprecated */
 	char *route;
 };
