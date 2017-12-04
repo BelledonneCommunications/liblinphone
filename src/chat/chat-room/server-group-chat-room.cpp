@@ -77,7 +77,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 	shared_ptr<Participant> participant;
-	if (q->getNbParticipants() == 0) {
+	if (q->getParticipantCount() == 0) {
 		// First participant (creator of the chat room)
 		participant = addParticipant(IdentityAddress(op->get_from()));
 		participant->getPrivate()->setAdmin(true);
@@ -155,7 +155,7 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<const Parti
 	}
 
 	qConference->getPrivate()->eventHandler->notifyParticipantRemoved(participant->getAddress());
-	if (q->getNbParticipants() == 0) {
+	if (q->getParticipantCount() == 0) {
 		Core::deleteChatRoom(q->getSharedFromThis());
 	} else if (!isAdminLeft())
 		designateAdmin();
@@ -352,8 +352,8 @@ shared_ptr<Participant> ServerGroupChatRoom::getMe () const {
 	return LocalConference::getMe();
 }
 
-int ServerGroupChatRoom::getNbParticipants () const {
-	return LocalConference::getNbParticipants();
+int ServerGroupChatRoom::getParticipantCount () const {
+	return LocalConference::getParticipantCount();
 }
 
 const list<shared_ptr<Participant>> &ServerGroupChatRoom::getParticipants () const {
