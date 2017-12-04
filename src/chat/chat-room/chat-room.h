@@ -29,6 +29,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class ChatRoomPrivate;
+class EventLog;
 
 class LINPHONE_PUBLIC ChatRoom : public Object, public CoreAccessor, public ConferenceInterface {
 	friend class ChatMessage;
@@ -59,20 +60,23 @@ public:
 	virtual CapabilitiesMask getCapabilities () const = 0;
 	virtual bool hasBeenLeft () const = 0;
 
-	std::shared_ptr<ChatMessage> getLastMessageInHistory () const;
+	std::list<std::shared_ptr<EventLog>> getHistory (int nLast);
+	std::list<std::shared_ptr<EventLog>> getHistoryRange (int begin, int end);
+	int getHistorySize ();
+
+	std::shared_ptr<ChatMessage> getLastChatMessageInHistory () const;
+
+	void deleteHistory ();
+
+	int getUnreadChatMessagesCount ();
 
 	// TODO: Remove useless functions.
 	void compose ();
 	std::shared_ptr<ChatMessage> createFileTransferMessage (const LinphoneContent *initialContent);
 	std::shared_ptr<ChatMessage> createMessage (const std::string &msg);
 	std::shared_ptr<ChatMessage> createMessage ();
-	void deleteHistory ();
 	std::shared_ptr<ChatMessage> findMessage (const std::string &messageId);
 	std::shared_ptr<ChatMessage> findMessageWithDirection (const std::string &messageId, ChatMessage::Direction direction);
-	std::list<std::shared_ptr<ChatMessage>> getHistory (int nbMessages);
-	int getHistorySize ();
-	std::list<std::shared_ptr<ChatMessage>> getHistoryRange (int startm, int endm);
-	int getUnreadChatMessagesCount ();
 	bool isRemoteComposing () const;
 	std::list<Address> getComposingAddresses () const;
 

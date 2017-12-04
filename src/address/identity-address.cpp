@@ -19,8 +19,10 @@
 
 #include "linphone/utils/utils.h"
 
+#include "address.h"
 #include "identity-address-p.h"
 #include "c-wrapper/c-wrapper.h"
+#include "identity-address-p.h"
 #include "logger/logger.h"
 
 // =============================================================================
@@ -128,6 +130,12 @@ bool IdentityAddress::setGruu (const string &gruu) {
 	L_D();
 	d->gruu = gruu;
 	return true;
+}
+
+IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
+	IdentityAddress address(*this);
+	address.setGruu("");
+	return address;
 }
 
 string IdentityAddress::asString () const {

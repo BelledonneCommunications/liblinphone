@@ -1,5 +1,5 @@
 /*
- * event-log.cpp
+ * core_private.h
  * Copyright (C) 2010-2017 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,35 +17,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include "db/main-db.h"
-#include "event-log-p.h"
+#ifndef _CORE_PRIVATE_H_
+#define _CORE_PRIVATE_H_
 
-// =============================================================================
+#include "linphone/types.h"
+#include "private_structs.h"
+#include "private_types.h"
 
-using namespace std;
+struct _LinphoneCore {
+	belle_sip_object_t base;
+	std::shared_ptr<LinphonePrivate::Core> cppPtr;
+	std::weak_ptr<LinphonePrivate::Core> weakCppPtr;
+	int owner;
+	LINPHONE_CORE_STRUCT_FIELDS
+};
 
-LINPHONE_BEGIN_NAMESPACE
-
-EventLog::EventLog () : BaseObject(*new EventLogPrivate) {}
-
-EventLog::EventLog (EventLogPrivate &p, Type type, time_t creationTime) : BaseObject(p) {
-	L_D();
-	d->type = type;
-	d->creationTime = creationTime;
-}
-
-EventLog::Type EventLog::getType () const {
-	L_D();
-	return d->type;
-}
-
-time_t EventLog::getCreationTime () const {
-	L_D();
-	return d->creationTime;
-}
-
-void EventLog::deleteFromDatabase (const shared_ptr<const EventLog> &eventLog) {
-	MainDb::deleteEvent(eventLog);
-}
-
-LINPHONE_END_NAMESPACE
+#endif /* _CORE_PRIVATE_H_ */

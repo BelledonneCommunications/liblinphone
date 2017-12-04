@@ -1270,8 +1270,8 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		return false;
 	}
 
-	bool MainDb::deleteEvent (const shared_ptr<EventLog> &eventLog) {
-		EventLogPrivate *dEventLog = eventLog->getPrivate();
+	bool MainDb::deleteEvent (const shared_ptr<const EventLog> &eventLog) {
+		const EventLogPrivate *dEventLog = eventLog->getPrivate();
 		if (!dEventLog->dbKey.isValid()) {
 			lWarning() << "Unable to delete invalid event.";
 			return false;
@@ -1295,7 +1295,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		dEventLog->dbKey = MainDbEventKey();
 
 		if (eventLog->getType() == EventLog::Type::ConferenceChatMessage)
-			static_pointer_cast<ConferenceChatMessageEvent>(
+			static_pointer_cast<const ConferenceChatMessageEvent>(
 				eventLog
 			)->getChatMessage()->getPrivate()->dbKey = MainDbChatMessageKey();
 
@@ -1567,14 +1567,14 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		}
 
 		string query = "SELECT id, creation_time FROM event WHERE"
-			" id IN ("
-			"  SELECT conference_event.event_id FROM conference_event, conference_chat_message_event"
-			"  WHERE";
+			"  id IN ("
+			"    SELECT conference_event.event_id FROM conference_event, conference_chat_message_event"
+			"    WHERE";
 		if (chatRoomId.isValid())
-			query += "  chat_room_id = :chatRoomId AND ";
-		query += "  conference_event.event_id = conference_chat_message_event.event_id"
-			"  AND direction = " + Utils::toString(static_cast<int>(ChatMessage::Direction::Incoming)) +
-			"  AND state <> " + Utils::toString(static_cast<int>(ChatMessage::State::Displayed)) +
+			query += "    chat_room_id = :chatRoomId AND ";
+		query += "    conference_event.event_id = conference_chat_message_event.event_id"
+			"    AND direction = " + Utils::toString(static_cast<int>(ChatMessage::Direction::Incoming)) +
+			"    AND state <> " + Utils::toString(static_cast<int>(ChatMessage::State::Displayed)) +
 			")";
 
 		DurationLogger durationLogger(
@@ -2145,7 +2145,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		return false;
 	}
 
-	bool MainDb::deleteEvent (const shared_ptr<EventLog> &) {
+	bool MainDb::deleteEvent (const shared_ptr<const EventLog> &) {
 		return false;
 	}
 

@@ -1,5 +1,5 @@
 /*
- * event-log.cpp
+ * c-core.cpp
  * Copyright (C) 2010-2017 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,35 +17,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include "db/main-db.h"
-#include "event-log-p.h"
+#include "linphone/wrapper_utils.h"
+
+#include "c-wrapper/c-wrapper.h"
+#include "core/core.h"
+
+#include "private_structs.h"
 
 // =============================================================================
 
 using namespace std;
 
-LINPHONE_BEGIN_NAMESPACE
+static void _linphone_core_constructor (LinphoneCore *lc);
+static void _linphone_core_destructor (LinphoneCore *lc);
 
-EventLog::EventLog () : BaseObject(*new EventLogPrivate) {}
+L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(
+	Core,
+	_linphone_core_constructor, _linphone_core_destructor,
+	LINPHONE_CORE_STRUCT_FIELDS
+)
 
-EventLog::EventLog (EventLogPrivate &p, Type type, time_t creationTime) : BaseObject(p) {
-	L_D();
-	d->type = type;
-	d->creationTime = creationTime;
+static void _linphone_core_constructor (LinphoneCore *lc) {
 }
 
-EventLog::Type EventLog::getType () const {
-	L_D();
-	return d->type;
+static void _linphone_core_destructor (LinphoneCore *lc) {
+	if (lc->callsCache)
+		bctbx_list_free(lc->callsCache);
+	_linphone_core_uninit(lc);
 }
-
-time_t EventLog::getCreationTime () const {
-	L_D();
-	return d->creationTime;
-}
-
-void EventLog::deleteFromDatabase (const shared_ptr<const EventLog> &eventLog) {
-	MainDb::deleteEvent(eventLog);
-}
-
-LINPHONE_END_NAMESPACE

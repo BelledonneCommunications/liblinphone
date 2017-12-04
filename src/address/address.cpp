@@ -20,9 +20,10 @@
 #include "linphone/utils/utils.h"
 
 #include "address-p.h"
-#include "c-wrapper/c-wrapper.h"
-#include "logger/logger.h"
 #include "address/identity-address.h"
+#include "c-wrapper/c-wrapper.h"
+#include "c-wrapper/internal/c-sal.h"
+#include "logger/logger.h"
 
 // =============================================================================
 
@@ -400,6 +401,16 @@ bool Address::setUriParams (const string &uriParams) {
 		return false;
 
 	sal_address_set_uri_params(d->internalAddress, L_STRING_TO_C(uriParams));
+	return true;
+}
+
+bool Address::removeUriParam (const string &uriParamName) {
+	L_D();
+
+	if (!d->internalAddress)
+		return false;
+
+	sal_address_remove_uri_param(d->internalAddress, L_STRING_TO_C(uriParamName));
 	return true;
 }
 
