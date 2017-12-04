@@ -280,14 +280,10 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	unsigned int lastNotifyId
 ) : ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomId(peerAddress, peerAddress)),
 LocalConference(getCore(), peerAddress, nullptr) {
-	L_D();
 	L_D_T(LocalConference, dConference);
 
 	dConference->subject = subject;
 	dConference->participants = move(participants);
-
-	d->state = ChatRoom::State::Created;
-
 	dConference->eventHandler->setLastNotify(lastNotifyId);
 }
 
