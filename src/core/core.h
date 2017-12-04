@@ -49,6 +49,7 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class MainDb;
 	friend class MainDbChatMessageKey;
 	friend class MainDbEventKey;
+	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
 
 public:
@@ -73,7 +74,7 @@ public:
 	bool areSoundResourcesLocked () const;
 	std::shared_ptr<Call> getCallByRemoteAddress (const Address &addr) const;
 	const std::list<std::shared_ptr<Call>> &getCalls () const;
-	unsigned int getCallsNb () const;
+	unsigned int getCallCount () const;
 	std::shared_ptr<Call> getCurrentCall () const;
 	LinphoneStatus pauseAllCalls ();
 	void soundcardHintCheck ();
