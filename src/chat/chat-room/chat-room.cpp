@@ -57,12 +57,8 @@ void ChatRoomPrivate::release () {
 // -----------------------------------------------------------------------------
 
 void ChatRoomPrivate::setState (ChatRoom::State newState) {
-	L_Q();
 	if (newState != state) {
 		state = newState;
-		if (state == ChatRoom::State::Created)
-			// TODO : Rename from instatiated to created.
-			linphone_core_notify_chat_room_instantiated(q->getCore()->getCCore(), L_GET_C_BACK_PTR(q));
 		notifyStateChanged();
 	}
 }
@@ -272,6 +268,7 @@ void ChatRoomPrivate::notifyIsComposingReceived (const Address &remoteAddr, bool
 
 void ChatRoomPrivate::notifyStateChanged () {
 	L_Q();
+	linphone_core_notify_chat_room_state_changed(q->getCore()->getCCore(), L_GET_C_BACK_PTR(q), (LinphoneChatRoomState)state);
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
 	LinphoneChatRoomCbsStateChangedCb cb = linphone_chat_room_cbs_get_state_changed(cbs);
@@ -354,7 +351,7 @@ list<shared_ptr<EventLog>> ChatRoom::getHistoryRange (int begin, int end) {
 }
 
 int ChatRoom::getHistorySize () {
-	return getCore()->getPrivate()->mainDb->getChatMessagesCount(getChatRoomId());
+	return getCore()->getPrivate()->mainDb->getHistorySize(getChatRoomId());
 }
 
 shared_ptr<ChatMessage> ChatRoom::getLastChatMessageInHistory() const {
@@ -363,6 +360,10 @@ shared_ptr<ChatMessage> ChatRoom::getLastChatMessageInHistory() const {
 
 void ChatRoom::deleteHistory () {
 	getCore()->getPrivate()->mainDb->cleanHistory(getChatRoomId());
+}
+
+int ChatRoom::getChatMessagesCount () {
+	return getCore()->getPrivate()->mainDb->getChatMessagesCount(getChatRoomId());
 }
 
 int ChatRoom::getUnreadChatMessagesCount () {
