@@ -31,10 +31,10 @@
 #include "conference/session/call-session-p.h"
 #include "content/content-type.h"
 #include "core/core-p.h"
+#include "event-log/events.h"
 #include "logger/logger.h"
 #include "sal/refer-op.h"
 #include "server-group-chat-room-p.h"
-#include "core/core.h"
 
 // =============================================================================
 
@@ -154,7 +154,8 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<const Parti
 		}
 	}
 
-	qConference->getPrivate()->eventHandler->notifyParticipantRemoved(participant->getAddress());
+	shared_ptr<ConferenceParticipantEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantRemoved(participant->getAddress());
+	q->getCore()->getPrivate()->mainDb->addEvent(event);
 	if (q->getParticipantCount() == 0) {
 		Core::deleteChatRoom(q->getSharedFromThis());
 	} else if (!isAdminLeft())
@@ -237,6 +238,7 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	L_Q_T(LocalConference, qConference);
 	IdentityAddress confAddr(qConference->getPrivate()->conferenceAddress);
 	chatRoomId = ChatRoomId(confAddr, confAddr);
+	qConference->getPrivate()->eventHandler->setChatRoomId(chatRoomId);
 	// Let the SIP stack set the domain and the port
 	shared_ptr<Participant> me = q->getMe();
 	me->getPrivate()->setAddress(confAddr);
@@ -280,11 +282,13 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	unsigned int lastNotifyId
 ) : ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomId(peerAddress, peerAddress)),
 LocalConference(getCore(), peerAddress, nullptr) {
+	L_D();
 	L_D_T(LocalConference, dConference);
 
 	dConference->subject = subject;
 	dConference->participants = move(participants);
 	dConference->eventHandler->setLastNotify(lastNotifyId);
+	dConference->eventHandler->setChatRoomId(d->chatRoomId);
 }
 
 shared_ptr<Core> ServerGroupChatRoom::getCore () const {
@@ -329,7 +333,8 @@ void ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const Cal
 	referOp->unref();
 	// TODO: Wait for the response to the REFER to really add the participant
 	LocalConference::addParticipant(addr, params, hasMedia);
-	dConference->eventHandler->notifyParticipantAdded(addr);
+	shared_ptr<ConferenceParticipantEvent> event = dConference->eventHandler->notifyParticipantAdded(addr);
+	getCore()->getPrivate()->mainDb->addEvent(event);
 }
 
 void ServerGroupChatRoom::addParticipants (const list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) {
@@ -393,7 +398,8 @@ void ServerGroupChatRoom::setParticipantAdminStatus (shared_ptr<Participant> &pa
 	L_D_T(LocalConference, dConference);
 	if (isAdmin != participant->isAdmin()) {
 		participant->getPrivate()->setAdmin(isAdmin);
-		dConference->eventHandler->notifyParticipantSetAdmin(participant->getAddress(), participant->isAdmin());
+		shared_ptr<ConferenceParticipantEvent> event = dConference->eventHandler->notifyParticipantSetAdmin(participant->getAddress(), participant->isAdmin());
+		getCore()->getPrivate()->mainDb->addEvent(event);
 	}
 }
 
@@ -401,7 +407,8 @@ void ServerGroupChatRoom::setSubject (const std::string &subject) {
 	L_D_T(LocalConference, dConference);
 	if (subject != getSubject()) {
 		LocalConference::setSubject(subject);
-		dConference->eventHandler->notifySubjectChanged();
+		shared_ptr<ConferenceSubjectEvent> event = dConference->eventHandler->notifySubjectChanged();
+		getCore()->getPrivate()->mainDb->addEvent(event);
 	}
 }
 
