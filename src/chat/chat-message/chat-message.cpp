@@ -188,7 +188,7 @@ const string &ChatMessagePrivate::getAppdata () const {
 	for (const Content *c : contents) {
 		if (c->getContentType().isFile()) {
 			FileContent *fileContent = (FileContent *)c;
-			return fileContent->getFilePath();
+			return fileContent->getAppData("app");
 		}
 	}
 	return Utils::getEmptyConstRefObject<string>();
@@ -198,7 +198,8 @@ void ChatMessagePrivate::setAppdata (const string &data) {
 	for (const Content *c : contents) {
 		if (c->getContentType().isFile()) {
 			FileContent *fileContent = (FileContent *)c;
-			return fileContent->setFilePath(data);
+			fileContent->setAppData("app", data);
+			break;
 		}
 	}
 }
@@ -567,6 +568,9 @@ void ChatMessagePrivate::send () {
 
 void ChatMessagePrivate::store() {
 	L_Q();
+
+	// TODO: store message in the future
+	if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) return;
 
 	bool messageToBeStored = false;
 	for (Content *c : contents) {

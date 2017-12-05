@@ -187,6 +187,18 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 				soci::use(appData.first), soci::use(appData.second), soci::use(messageContentId);
 	}
 
+	void MainDbPrivate::removeContentsForChatMessageEvent (long long eventId) {
+		soci::session *session = dbSession.getBackendSession<soci::session>();
+
+		*session << "DELETE FROM chat_message_content WHERE event_id=:eventId", soci::use(eventId);
+
+		//TODO: remove file content if exists
+		//*session << "DELETE FROM chat_message_file_content WHERE chat_message_content_id=:messageContentId", soci::use(messageContentId);
+
+		//TODO: remove contents' app_data
+		//*session << "DELETE FROM chat_message_content_app_data WHERE chat_message_content_id=:messageContentId", soci::use(messageContentId);
+	}
+
 	long long MainDbPrivate::insertContentType (const string &contentType) {
 		L_Q();
 		soci::session *session = dbSession.getBackendSession<soci::session>();
@@ -475,13 +487,13 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			soci::rowset<soci::row> rows = (session->prepare << query, soci::use(eventId));
 			for (const auto &row : rows) {
 				ContentType contentType(row.get<string>(2));
+				const long long &contentId = resolveId(row, 0);
 				Content *content;
 
 				if (contentType == ContentType::FileTransfer)
 					content = new FileTransferContent();
 				else if (contentType.isFile()) {
-					const long long &contentId = resolveId(row, 0);
-
+					// 2.1 - Fetch contents' file informations.
 					string name;
 					int size;
 					string path;
@@ -498,6 +510,16 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 					content = fileContent;
 				} else
 					content = new Content();
+
+				// 2.2 - Fetch contents' app data.
+				static const string content_app_data_query = "SELECT name, data FROM chat_message_content_app_data"
+					" WHERE chat_message_content_id = :messageContentId";
+				soci::rowset<soci::row> content_app_data_rows = (session->prepare << content_app_data_query, soci::use(contentId));
+				for (const auto &content_app_data_row : content_app_data_rows) {
+					string content_app_data_name(content_app_data_row.get<string>(0));
+					string content_app_data_value(content_app_data_row.get<string>(1));
+					content->setAppData(content_app_data_name, content_app_data_value);
+				}
 
 				content->setContentType(contentType);
 				content->setBody(row.get<string>(3));
@@ -704,9 +726,10 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		*session << "UPDATE conference_chat_message_event SET state = :state WHERE event_id = :eventId",
 			soci::use(state), soci::use(eventId);
 
-		/*for (const Content *content : chatMessage->getContents())
-			updateContent(eventId, *content);*/
-		//TODO check if content needs to be inserted, updated or removed
+		//TODO: improve
+		removeContentsForChatMessageEvent(eventId);
+		for (const Content *content : chatMessage->getContents())
+			insertContent(eventId, *content);
 	}
 
 	long long MainDbPrivate::insertConferenceNotifiedEvent (const shared_ptr<EventLog> &eventLog, long long *chatRoomId) {
@@ -1897,7 +1920,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 					shared_ptr<Participant> participant = make_shared<Participant>(IdentityAddress(row.get<string>(0)));
 					participant->getPrivate()->setAdmin(!!row.get<int>(1));
 
-					if (participant->getAddress() == chatRoomId.getLocalAddress())
+					if (participant->getAddress() == chatRoomId.getLocalAddress().getAddressWithoutGruu())
 						me = participant;
 					else
 						participants.push_back(participant);
@@ -1912,7 +1935,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 					}
 					chatRoom = make_shared<ClientGroupChatRoom>(
 						core,
-						chatRoomId.getPeerAddress(),
+						chatRoomId,
 						me,
 						subject,
 						move(participants),
