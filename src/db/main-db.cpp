@@ -272,8 +272,12 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		if (!chatRoom->canHandleParticipants())
 			return id;
 
-		shared_ptr<Participant> me = chatRoom->getMe();
-		insertChatRoomParticipant(id, insertSipAddress(me->getAddress().asString()), me->isAdmin());
+		// Do not add 'me' when creating a server-group-chat-room.
+		if (chatRoomId.getLocalAddress() != chatRoomId.getPeerAddress()) {
+			shared_ptr<Participant> me = chatRoom->getMe();
+			insertChatRoomParticipant(id, insertSipAddress(me->getAddress().asString()), me->isAdmin());
+		}
+
 		for (const auto &participant : chatRoom->getParticipants())
 			insertChatRoomParticipant(id, insertSipAddress(participant->getAddress().asString()), participant->isAdmin());
 
@@ -512,14 +516,11 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 					content = new Content();
 
 				// 2.2 - Fetch contents' app data.
-				static const string content_app_data_query = "SELECT name, data FROM chat_message_content_app_data"
-					" WHERE chat_message_content_id = :messageContentId";
-				soci::rowset<soci::row> content_app_data_rows = (session->prepare << content_app_data_query, soci::use(contentId));
-				for (const auto &content_app_data_row : content_app_data_rows) {
-					string content_app_data_name(content_app_data_row.get<string>(0));
-					string content_app_data_value(content_app_data_row.get<string>(1));
-					content->setAppData(content_app_data_name, content_app_data_value);
-				}
+				static const string query = "SELECT name, data FROM chat_message_content_app_data"
+					"  WHERE chat_message_content_id = :contentId";
+				soci::rowset<soci::row> rows = (session->prepare << query, soci::use(contentId));
+				for (const auto &row : rows)
+					content->setAppData(row.get<string>(0), row.get<string>(1));
 
 				content->setContentType(contentType);
 				content->setBody(row.get<string>(3));
@@ -911,7 +912,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"CREATE TABLE IF NOT EXISTS event ("
 			"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 			"  type TINYINT UNSIGNED NOT NULL,"
-			"  creation_time DATE NOT NULL"
+			"  creation_time TIMESTAMP NOT NULL"
 			") " + charset;
 
 		*session <<
@@ -924,10 +925,10 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  local_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
 
 			// Dialog creation time.
-			"  creation_time DATE NOT NULL,"
+			"  creation_time TIMESTAMP NOT NULL,"
 
 			// Last event time (call, message...).
-			"  last_update_time DATE NOT NULL,"
+			"  last_update_time TIMESTAMP NOT NULL,"
 
 			// ConferenceChatRoom, BasicChatRoom, RTT...
 			"  capabilities TINYINT UNSIGNED NOT NULL,"
@@ -1054,7 +1055,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  from_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
 			"  to_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
 
-			"  time DATE,"
+			"  time TIMESTAMP,"
 
 			// See: https://tools.ietf.org/html/rfc5438#section-6.3
 			"  imdn_message_id VARCHAR(255) NOT NULL,"
