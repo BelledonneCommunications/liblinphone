@@ -47,9 +47,12 @@ ServerGroupChatRoomPrivate::ServerGroupChatRoomPrivate () {}
 // -----------------------------------------------------------------------------
 
 shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const IdentityAddress &addr) {
+	L_Q();
 	L_Q_T(LocalConference, qConference);
 	shared_ptr<Participant> participant = make_shared<Participant>(addr);
 	qConference->getPrivate()->participants.push_back(participant);
+	shared_ptr<ConferenceParticipantEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantAdded(addr);
+	q->getCore()->getPrivate()->mainDb->addEvent(event);
 	return participant;
 }
 
