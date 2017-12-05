@@ -188,7 +188,7 @@ const string &ChatMessagePrivate::getAppdata () const {
 	for (const Content *c : contents) {
 		if (c->getContentType().isFile()) {
 			FileContent *fileContent = (FileContent *)c;
-			return fileContent->getAppData("app");
+			return fileContent->getAppData("legacy");
 		}
 	}
 	return Utils::getEmptyConstRefObject<string>();
@@ -198,7 +198,7 @@ void ChatMessagePrivate::setAppdata (const string &data) {
 	for (const Content *c : contents) {
 		if (c->getContentType().isFile()) {
 			FileContent *fileContent = (FileContent *)c;
-			fileContent->setAppData("app", data);
+			fileContent->setAppData("legacy", data);
 			break;
 		}
 	}
@@ -305,6 +305,12 @@ bool ChatMessagePrivate::downloadFile () {
 	return false;
 }
 
+void ChatMessagePrivate::loadFileTransferUrlFromBodyToContent() {
+	L_Q();
+	int errorCode = 0;
+	fileTransferChatMessageModifier.decode(q->getSharedFromThis(), errorCode);
+}
+
 // -----------------------------------------------------------------------------
 
 void ChatMessagePrivate::sendImdn (Imdn::Type imdnType, LinphoneReason reason) {
@@ -375,7 +381,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 		lInfo() << "File download step already done, skipping";
 	} else {
 		// This will check if internal content is FileTransfer and make the appropriate changes
-		fileTransferChatMessageModifier.decode(q->getSharedFromThis(), errorCode);
+		loadFileTransferUrlFromBodyToContent();
 		currentRecvStep |= ChatMessagePrivate::Step::FileUpload;
 	}
 
