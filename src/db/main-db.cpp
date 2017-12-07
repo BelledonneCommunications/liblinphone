@@ -190,7 +190,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		return q->getLastInsertId();
 	}
 
-	long long MainDbPrivate::insertBasicChatRoom (
+	long long MainDbPrivate::insertOrUpdateBasicChatRoom (
 		long long peerSipAddressId,
 		long long localSipAddressId,
 		const tm &creationTime
@@ -200,8 +200,11 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		soci::session *session = dbSession.getBackendSession<soci::session>();
 
 		long long id = selectChatRoomId(peerSipAddressId, localSipAddressId);
-		if (id >= 0)
+		if (id >= 0) {
+			*session << "UPDATE chat_room SET last_update_time = :lastUpdateTime WHERE id = :id",
+				soci::use(creationTime), soci::use(id);
 			return id;
+		}
 
 		static const int capabilities = static_cast<int>(ChatRoom::Capabilities::Basic);
 		lInfo() << "Insert new chat room in database: (peer=" << peerSipAddressId <<
@@ -1006,7 +1009,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"CREATE TABLE IF NOT EXISTS event ("
 			"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 			"  type TINYINT UNSIGNED NOT NULL,"
-			"  creation_time TIMESTAMP NOT NULL"
+			"  creation_time" + timestampType() + " NOT NULL"
 			") " + charset;
 
 		*session <<
@@ -1019,10 +1022,10 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  local_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
 
 			// Dialog creation time.
-			"  creation_time TIMESTAMP NOT NULL,"
+			"  creation_time" + timestampType() + " NOT NULL,"
 
 			// Last event time (call, message...).
-			"  last_update_time TIMESTAMP NOT NULL,"
+			"  last_update_time" + timestampType() + " NOT NULL,"
 
 			// ConferenceChatRoom, BasicChatRoom, RTT...
 			"  capabilities TINYINT UNSIGNED NOT NULL,"
@@ -1149,7 +1152,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			"  from_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
 			"  to_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
 
-			"  time TIMESTAMP,"
+			"  time" + timestampType() + " ,"
 
 			// See: https://tools.ietf.org/html/rfc5438#section-6.3
 			"  imdn_message_id VARCHAR(255) NOT NULL,"
@@ -1988,7 +1991,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 			tm creationTime = row.get<tm>(3);
 			tm lastUpdateTime = row.get<tm>(4);
 			int capabilities = row.get<int>(5);
-			string subject = row.get<string>(6);
+			string subject = row.get<string>(6, "");
 			unsigned int lastNotifyId = (getBackend() == Backend::Mysql)
 				? row.get<unsigned int>(7, 0)
 				: static_cast<unsigned int>(row.get<int>(7, 0));
@@ -2245,7 +2248,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 					const long long &eventId = getLastInsertId();
 					const long long &localSipAddressId = d->insertSipAddress(message.get<string>(LEGACY_MESSAGE_COL_LOCAL_ADDRESS));
 					const long long &remoteSipAddressId = d->insertSipAddress(message.get<string>(LEGACY_MESSAGE_COL_REMOTE_ADDRESS));
-					const long long &chatRoomId = d->insertBasicChatRoom(
+					const long long &chatRoomId = d->insertOrUpdateBasicChatRoom(
 						remoteSipAddressId,
 						localSipAddressId,
 						creationTime

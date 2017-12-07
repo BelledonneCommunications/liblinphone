@@ -78,6 +78,7 @@ public:
 
 	SalMediaDescription *getLocalDesc () const { return localDesc; }
 
+	unsigned int getMediaStartCount () const;
 	MediaStream *getMediaStream (LinphoneStreamType type) const;
 	LinphoneNatPolicy *getNatPolicy () const { return natPolicy; }
 
@@ -189,6 +190,7 @@ private:
 	void postConfigureAudioStreams (bool muted);
 	void setPlaybackGainDb (AudioStream *stream, float gain);
 	void setSymmetricRtp (bool value);
+	void setupRingbackPlayer ();
 	void startAudioStream (LinphoneCallState targetState, bool videoWillBeUsed);
 	void startStreams (LinphoneCallState targetState);
 	void startTextStream ();
@@ -237,7 +239,7 @@ private:
 	void terminate () override;
 	void updateCurrentParams () const override;
 
-	void accept (const MediaSessionParams *params);
+	void accept (const MediaSessionParams *params, bool wasRinging);
 	LinphoneStatus acceptUpdate (const CallSessionParams *csp, LinphoneCallState nextState, const std::string &stateInfo) override;
 
 	void refreshSockets ();
@@ -308,7 +310,7 @@ private:
 	bool authTokenVerified = false;
 	std::string dtlsCertificateFingerprint;
 
-	unsigned int nbMediaStarts = 0;
+	unsigned int mediaStartCount = 0;
 
 	// Upload bandwidth setting at the time the call is started. Used to detect if it changes during a call.
 	int upBandwidth = 0;
@@ -320,7 +322,6 @@ private:
 	bool audioMuted = false;
 	bool automaticallyPaused = false;
 	bool pausedByApp = false;
-	bool playingRingbackTone = false;
 	bool recordActive = false;
 
 	std::string onHoldFile;
