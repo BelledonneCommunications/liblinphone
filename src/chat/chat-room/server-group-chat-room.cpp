@@ -102,7 +102,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	shared_ptr<ParticipantDevice> device = participant->getPrivate()->addDevice(gruu);
 	shared_ptr<CallSession> session = device->getSession();
 	if (!session) {
-		session = participant->getPrivate()->createSession(*q, nullptr, false, q);
+		session = participant->getPrivate()->createSession(*q, nullptr, false, this);
 		session->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(), Address(op->get_to()));
 		session->startIncomingNotification();
 		Address addr = qConference->getPrivate()->conferenceAddress;
@@ -265,6 +265,24 @@ bool ServerGroupChatRoomPrivate::isAdminLeft () const {
 
 // -----------------------------------------------------------------------------
 
+void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const std::shared_ptr<const CallSession> &session, LinphoneCallState newState, const std::string &message) {
+	L_Q();
+	if (newState == LinphoneCallEnd) {
+		shared_ptr<Participant> participant = q->findParticipant(session);
+		if (participant)
+			removeParticipant(participant);
+		participant = findRemovedParticipant(session);
+		if (participant)
+			removedParticipants.remove(participant);
+	} else if (newState == LinphoneCallUpdatedByRemote) {
+		shared_ptr<Participant> participant = q->findParticipant(session);
+		if (participant && participant->isAdmin())
+			update(session->getPrivate()->getOp());
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 void ServerGroupChatRoomPrivate::onChatMessageReceived (const std::shared_ptr<ChatMessage> &msg) {}
 
 // =============================================================================
@@ -272,8 +290,9 @@ void ServerGroupChatRoomPrivate::onChatMessageReceived (const std::shared_ptr<Ch
 ServerGroupChatRoom::ServerGroupChatRoom (const std::shared_ptr<Core> &core, SalCallOp *op)
 : ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomId()),
 LocalConference(getCore(), IdentityAddress(linphone_core_get_conference_factory_uri(core->getCCore())), nullptr) {
+	L_D();
 	LocalConference::setSubject(op->get_subject() ? op->get_subject() : "");
-	getMe()->getPrivate()->createSession(*this, nullptr, false, this);
+	getMe()->getPrivate()->createSession(*this, nullptr, false, d);
 	getMe()->getPrivate()->getSession()->configure(LinphoneCallIncoming, nullptr, op, Address(op->get_from()), Address(op->get_to()));
 }
 
@@ -412,24 +431,6 @@ void ServerGroupChatRoom::setSubject (const std::string &subject) {
 		LocalConference::setSubject(subject);
 		shared_ptr<ConferenceSubjectEvent> event = dConference->eventHandler->notifySubjectChanged();
 		getCore()->getPrivate()->mainDb->addEvent(event);
-	}
-}
-
-// -----------------------------------------------------------------------------
-
-void ServerGroupChatRoom::onCallSessionStateChanged (const std::shared_ptr<const CallSession> &session, LinphoneCallState state, const std::string &message) {
-	L_D();
-	if (state == LinphoneCallEnd) {
-		shared_ptr<Participant> participant = findParticipant(session);
-		if (participant)
-			d->removeParticipant(participant);
-		participant = d->findRemovedParticipant(session);
-		if (participant)
-			d->removedParticipants.remove(participant);
-	} else if (state == LinphoneCallUpdatedByRemote) {
-		shared_ptr<Participant> participant = findParticipant(session);
-		if (participant && participant->isAdmin())
-			d->update(session->getPrivate()->getOp());
 	}
 }
 
