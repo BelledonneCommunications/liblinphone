@@ -3269,7 +3269,7 @@ void linphone_core_iterate(LinphoneCore *lc){
 			if (elapsed>lc->sip_conf.inc_timeout){
 				LinphoneReason decline_reason;
 				ms_message("incoming call timeout (%i)",lc->sip_conf.inc_timeout);
-				decline_reason = (lc->current_call != call) ? LinphoneReasonBusy : LinphoneReasonDeclined;
+				decline_reason = (lc->current_call != call) ? LinphoneReasonBusy : LinphoneReasonNotAnswered;
 				call->log->status=LinphoneCallMissed;
 				call->non_op_error = TRUE;
 				linphone_error_info_set(call->ei, NULL, decline_reason, linphone_reason_to_error_code(decline_reason), "Not answered", NULL);
