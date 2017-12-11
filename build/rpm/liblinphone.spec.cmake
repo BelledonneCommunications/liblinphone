@@ -39,6 +39,9 @@ Requires:	%{pkg_prefix}ortp
 Requires:	%{pkg_prefix}mediastreamer
 Requires:	%{pkg_prefix}belle-sip
 Requires:	%{pkg_prefix}belr
+%if 0%{?with_soci}
+Requires:	%{pkg_prefix}soci
+%endif
 
 %description
 liblinphone is the voip sdk used by Linphone
