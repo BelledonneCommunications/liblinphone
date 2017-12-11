@@ -39,6 +39,7 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsChatMessageReceivedCb chatMessageReceivedCb;
 	LinphoneChatRoomCbsChatMessageSentCb chatMessageSentCb;
 	LinphoneChatRoomCbsConferenceAddressGenerationCb conferenceAddressGenerationCb;
+	LinphoneChatRoomCbsParticipantDeviceFetchedCb participantDeviceFetchedCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatRoomCbs);
@@ -177,4 +178,12 @@ LinphoneChatRoomCbsConferenceAddressGenerationCb linphone_chat_room_cbs_get_conf
 
 void linphone_chat_room_cbs_set_conference_address_generation (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceAddressGenerationCb cb) {
 	cbs->conferenceAddressGenerationCb = cb;
+}
+
+LinphoneChatRoomCbsParticipantDeviceFetchedCb linphone_chat_room_cbs_get_participant_device_fetched (const LinphoneChatRoomCbs *cbs) {
+	return cbs->participantDeviceFetchedCb;
+}
+
+void linphone_chat_room_cbs_set_participant_device_fetched (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceFetchedCb cb) {
+	cbs->participantDeviceFetchedCb = cb;
 }

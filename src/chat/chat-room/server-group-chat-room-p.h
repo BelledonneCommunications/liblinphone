@@ -51,6 +51,7 @@ public:
 	void dispatchMessage (const IdentityAddress &fromAddr, const Content &content);
 	LinphoneReason messageReceived (SalOp *op, const SalMessage *msg) override;
 	void setConferenceAddress (const IdentityAddress &confAddr);
+	void setParticipantDevices(const IdentityAddress &addr, const std::list<IdentityAddress> &devices);
 
 private:
 	void designateAdmin ();

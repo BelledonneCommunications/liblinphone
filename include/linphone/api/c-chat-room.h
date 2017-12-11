@@ -404,6 +404,15 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_chat_room_get_composing_addresses(
 LINPHONE_PUBLIC void linphone_chat_room_set_conference_address (LinphoneChatRoom *cr, const LinphoneAddress *confAddr);
 
 /**
+ * Set the participant device. This function needs to be called from the
+ * LinphoneChatRoomCbsConferenceAddressGenerationCb callback and only there.
+ * @param[in] cr A LinphoneChatRoom object
+ * @param[in] partAddr The participant address
+ * @param[in] partDevices \bctbx_list{const char *} list of the participant devices to be used by the group chat room
+ */
+LINPHONE_PUBLIC void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const LinphoneAddress *partAddr, const bctbx_list_t *partDevices);
+
+/**
  * Returns back pointer to #LinphoneCore object.
  * @deprecated use linphone_chat_room_get_core()
  * @donotwrap

@@ -84,6 +84,14 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		// First participant (creator of the chat room)
 		participant = addParticipant(IdentityAddress(op->get_from()));
 		participant->getPrivate()->setAdmin(true);
+		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
+		LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
+		LinphoneChatRoomCbsParticipantDeviceFetchedCb cb = linphone_chat_room_cbs_get_participant_device_fetched(cbs);
+		if (cb) {
+			LinphoneAddress *laddr = linphone_address_new(op->get_from());
+			cb(cr, laddr);
+			linphone_address_unref(laddr);
+		}
 	} else {
 		// INVITE coming from an invited participant
 		participant = q->findParticipant(IdentityAddress(op->get_from()));
@@ -228,6 +236,22 @@ void ServerGroupChatRoomPrivate::setConferenceAddress (const IdentityAddress &co
 	finalizeCreation();
 }
 
+void ServerGroupChatRoomPrivate::setParticipantDevices(const IdentityAddress &addr, const list<IdentityAddress> &devices) {
+	L_Q();
+	shared_ptr<Participant> participant = q->findParticipant(addr);
+	for (const auto &deviceAddr : devices) {
+		shared_ptr<ParticipantDevice> device = participant->getPrivate()->addDevice(deviceAddr);
+		SalReferOp *referOp = new SalReferOp(q->getCore()->getCCore()->sal);
+		LinphoneAddress *lAddr = linphone_address_new(device->getAddress().asString().c_str());
+		linphone_configure_op(q->getCore()->getCCore(), referOp, lAddr, nullptr, false);
+		linphone_address_unref(lAddr);
+		Address referToAddr = q->getConferenceAddress();
+		referToAddr.setParam("text");
+		referOp->send_refer(referToAddr.getPrivate()->getInternalAddress());
+		referOp->unref();
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 void ServerGroupChatRoomPrivate::designateAdmin () {
@@ -345,15 +369,16 @@ void ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const Cal
 		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the ServerGroupChatRoom";
 		return;
 	}
-	SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal);
-	LinphoneAddress *lAddr = linphone_address_new(addr.asString().c_str());
-	linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, false);
-	linphone_address_unref(lAddr);
-	Address referToAddr = getConferenceAddress();
-	referToAddr.setParam("text");
-	referOp->send_refer(referToAddr.getPrivate()->getInternalAddress());
-	referOp->unref();
-	// TODO: Wait for the response to the REFER to really add the participant
+
+	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(this);
+	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
+	LinphoneChatRoomCbsParticipantDeviceFetchedCb cb = linphone_chat_room_cbs_get_participant_device_fetched(cbs);
+	if (cb) {
+		LinphoneAddress *laddr = linphone_address_new(addr.asString().c_str());
+		cb(cr, laddr);
+		linphone_address_unref(laddr);
+	}
+
 	LocalConference::addParticipant(addr, params, hasMedia);
 	shared_ptr<ConferenceParticipantEvent> event = dConference->eventHandler->notifyParticipantAdded(addr);
 	getCore()->getPrivate()->mainDb->addEvent(event);
