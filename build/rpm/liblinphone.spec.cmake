@@ -39,7 +39,7 @@ Requires:	%{pkg_prefix}ortp
 Requires:	%{pkg_prefix}mediastreamer
 Requires:	%{pkg_prefix}belle-sip
 Requires:	%{pkg_prefix}belr
-%if 0%{?with_soci}
+%if 0%{?_with_soci}
 Requires:	%{pkg_prefix}soci
 %endif
 
