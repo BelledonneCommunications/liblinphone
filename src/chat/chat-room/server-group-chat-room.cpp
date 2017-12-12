@@ -88,7 +88,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
 		LinphoneChatRoomCbsParticipantDeviceFetchedCb cb = linphone_chat_room_cbs_get_participant_device_fetched(cbs);
 		if (cb) {
-			LinphoneAddress *laddr = linphone_address_new(op->get_from());
+			LinphoneAddress *laddr = linphone_address_new(participant->getAddress().asString().c_str());
 			cb(cr, laddr);
 			linphone_address_unref(laddr);
 		}
@@ -180,8 +180,10 @@ void ServerGroupChatRoomPrivate::subscribeReceived (LinphoneEvent *event) {
 
 void ServerGroupChatRoomPrivate::update (SalCallOp *op) {
 	L_Q();
-	// Handle subject change
-	q->setSubject(L_C_TO_STRING(op->get_subject()));
+	if (sal_custom_header_find(op->get_recv_custom_header(), "Subject")) {
+		// Handle subject change
+		q->setSubject(L_C_TO_STRING(op->get_subject()));
+	}
 	// Handle participants addition
 	const Content &content = op->get_remote_body();
 	if ((content.getContentType() == ContentType::ResourceLists)
@@ -370,6 +372,10 @@ void ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const Cal
 		return;
 	}
 
+	LocalConference::addParticipant(addr, params, hasMedia);
+	shared_ptr<ConferenceParticipantEvent> event = dConference->eventHandler->notifyParticipantAdded(addr);
+	getCore()->getPrivate()->mainDb->addEvent(event);
+
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(this);
 	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
 	LinphoneChatRoomCbsParticipantDeviceFetchedCb cb = linphone_chat_room_cbs_get_participant_device_fetched(cbs);
@@ -378,10 +384,6 @@ void ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const Cal
 		cb(cr, laddr);
 		linphone_address_unref(laddr);
 	}
-
-	LocalConference::addParticipant(addr, params, hasMedia);
-	shared_ptr<ConferenceParticipantEvent> event = dConference->eventHandler->notifyParticipantAdded(addr);
-	getCore()->getPrivate()->mainDb->addEvent(event);
 }
 
 void ServerGroupChatRoom::addParticipants (const list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) {

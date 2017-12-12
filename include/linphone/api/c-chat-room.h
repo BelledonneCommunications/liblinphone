@@ -415,7 +415,7 @@ LINPHONE_PUBLIC void linphone_chat_room_set_conference_address (LinphoneChatRoom
  * LinphoneChatRoomCbsConferenceAddressGenerationCb callback and only there.
  * @param[in] cr A LinphoneChatRoom object
  * @param[in] partAddr The participant address
- * @param[in] partDevices \bctbx_list{const char *} list of the participant devices to be used by the group chat room
+ * @param[in] partDevices \bctbx_list{LinphoneAddress} list of the participant devices to be used by the group chat room
  */
 LINPHONE_PUBLIC void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const LinphoneAddress *partAddr, const bctbx_list_t *partDevices);
 
