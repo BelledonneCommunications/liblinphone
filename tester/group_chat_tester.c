@@ -1426,7 +1426,6 @@ static void multiple_is_composing_notification(void) {
 		BC_ASSERT_STRING_EQUAL(linphone_address_get_username(addr), linphone_address_get_username(pauline->identity));
 	}
 
-
 	// Pauline side
 	composing_addresses = linphone_chat_room_get_composing_addresses(paulineCr);
 	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 1, int, "%i");
