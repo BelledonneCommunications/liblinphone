@@ -20,38 +20,35 @@
 #ifndef _SERVER_GROUP_CHAT_ROOM_P_H_
 #define _SERVER_GROUP_CHAT_ROOM_P_H_
 
-// From coreapi.
-#include "private.h"
-
-#include "address/address.h"
 #include "chat-room-p.h"
-#include "server-group-chat-room.h"
 #include "conference/session/call-session-listener.h"
+#include "server-group-chat-room.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class Participant;
-
 class ServerGroupChatRoomPrivate : public ChatRoomPrivate, public CallSessionListener {
 public:
-	ServerGroupChatRoomPrivate ();
-	virtual ~ServerGroupChatRoomPrivate () = default;
+	std::shared_ptr<Participant> addParticipant (const IdentityAddress &participantAddress);
+	void removeParticipant (const std::shared_ptr<const Participant> &participant);
+	std::shared_ptr<Participant> findRemovedParticipant (const std::shared_ptr<const CallSession> &session) const;
 
-	std::shared_ptr<Participant> addParticipant (const IdentityAddress &addr);
 	void confirmCreation ();
 	void confirmJoining (SalCallOp *op);
-	std::shared_ptr<Participant> findRemovedParticipant (const std::shared_ptr<const CallSession> &session) const;
+
 	IdentityAddress generateConferenceAddress (const std::shared_ptr<Participant> &me) const;
-	void removeParticipant (const std::shared_ptr<const Participant> &participant);
+
 	void subscribeReceived (LinphoneEvent *event);
+
 	void update (SalCallOp *op);
 
-	void dispatchMessage (const IdentityAddress &fromAddr, const Content &content);
-	LinphoneReason messageReceived (SalOp *op, const SalMessage *msg) override;
-	void setConferenceAddress (const IdentityAddress &confAddr);
-	void setParticipantDevices(const IdentityAddress &addr, const std::list<IdentityAddress> &devices);
+	void dispatchMessage (const IdentityAddress &fromAddress, const Content &content);
+
+	void setConferenceAddress (const IdentityAddress &conferenceAddress);
+	void setParticipantDevices (const IdentityAddress &addr, const std::list<IdentityAddress> &devices);
+
+	LinphoneReason onSipMessageReceived (SalOp *op, const SalMessage *message) override;
 
 private:
 	void designateAdmin ();
@@ -59,9 +56,11 @@ private:
 	bool isAdminLeft () const;
 
 	// CallSessionListener
-	void onCallSessionStateChanged (const std::shared_ptr<const CallSession> &session, LinphoneCallState state, const std::string &message) override;
-
-	void onChatMessageReceived (const std::shared_ptr<ChatMessage> &) override;
+	void onCallSessionStateChanged (
+		const std::shared_ptr<const CallSession> &session,
+		LinphoneCallState state,
+		const std::string &message
+	) override;
 
 	std::list<std::shared_ptr<Participant>> removedParticipants;
 

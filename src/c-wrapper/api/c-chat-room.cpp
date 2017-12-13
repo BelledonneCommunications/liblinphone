@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include <algorithm>
+
 // TODO: Remove me later.
 #include "linphone/chat.h"
 
@@ -48,6 +50,7 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(
 	mutable LinphoneAddress *conferenceAddressCache;
 	mutable LinphoneAddress *peerAddressCache;
 	mutable LinphoneAddress *localAddressCache;
+	mutable bctbx_list_t *composingAddresses;
 )
 
 static void _linphone_chat_room_constructor (LinphoneChatRoom *cr) {
@@ -62,18 +65,16 @@ static void _linphone_chat_room_destructor (LinphoneChatRoom *cr) {
 		linphone_address_unref(cr->peerAddressCache);
 	if (cr->localAddressCache)
 		linphone_address_unref(cr->localAddressCache);
+	if (cr->composingAddresses)
+		bctbx_list_free_with_data(cr->composingAddresses, (bctbx_list_free_func)linphone_address_unref);
 }
 
 // =============================================================================
 // Public functions.
 // =============================================================================
 
-void linphone_chat_room_release (LinphoneChatRoom *cr) {
-	L_GET_PRIVATE_FROM_C_OBJECT(cr)->release();
-}
-
 void linphone_chat_room_send_message (LinphoneChatRoom *cr, const char *msg) {
-	L_GET_PRIVATE_FROM_C_OBJECT(cr)->sendMessage(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createMessage(msg));
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createChatMessage(msg)->send();
 }
 
 bool_t linphone_chat_room_is_remote_composing (const LinphoneChatRoom *cr) {
@@ -107,7 +108,7 @@ const LinphoneAddress *linphone_chat_room_get_local_address (LinphoneChatRoom *c
 }
 
 LinphoneChatMessage *linphone_chat_room_create_message (LinphoneChatRoom *cr, const char *message) {
-	shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createMessage(L_C_TO_STRING(message));
+	shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createChatMessage(L_C_TO_STRING(message));
 	LinphoneChatMessage *object = L_INIT(ChatMessage);
 	L_SET_CPP_PTR_FROM_C_OBJECT(object, cppPtr);
 	return object;
@@ -130,24 +131,13 @@ LinphoneChatMessage *linphone_chat_room_create_message_2 (
 	return msg;
 }
 
-void linphone_chat_room_send_message2 (
-	LinphoneChatRoom *cr,
-	LinphoneChatMessage *msg,
-	LinphoneChatMessageStateChangedCb status_cb,
-	void *ud
-) {
-	linphone_chat_message_set_message_state_changed_cb(msg, status_cb);
-	linphone_chat_message_set_message_state_changed_cb_user_data(msg, ud);
-	L_GET_PRIVATE_FROM_C_OBJECT(cr)->sendMessage(L_GET_CPP_PTR_FROM_C_OBJECT(msg));
-}
-
 void linphone_chat_room_send_chat_message_2 (LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
 	linphone_chat_message_ref(msg);
-	L_GET_PRIVATE_FROM_C_OBJECT(cr)->sendMessage(L_GET_CPP_PTR_FROM_C_OBJECT(msg));
+	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->send();
 }
 
 void linphone_chat_room_send_chat_message (LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
-	L_GET_PRIVATE_FROM_C_OBJECT(cr)->sendMessage(L_GET_CPP_PTR_FROM_C_OBJECT(msg));
+	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->send();
 }
 
 void linphone_chat_room_receive_chat_message (LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
@@ -235,7 +225,7 @@ LinphoneChatMessage *linphone_chat_room_get_last_message_in_history(LinphoneChat
 }
 
 LinphoneChatMessage *linphone_chat_room_find_message (LinphoneChatRoom *cr, const char *message_id) {
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findMessage(message_id));
+	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findChatMessage(message_id));
 }
 
 LinphoneChatRoomCbs *linphone_chat_room_get_callbacks (const LinphoneChatRoom *cr) {
@@ -323,8 +313,21 @@ void linphone_chat_room_set_subject (LinphoneChatRoom *cr, const char *subject) 
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setSubject(L_C_TO_STRING(subject));
 }
 
-const bctbx_list_t * linphone_chat_room_get_composing_addresses(LinphoneChatRoom *cr) {
-	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getComposingAddresses());
+const bctbx_list_t *linphone_chat_room_get_composing_addresses (LinphoneChatRoom *cr) {
+	bctbx_list_free_with_data(cr->composingAddresses, (bctbx_list_free_func)linphone_address_unref);
+	list<LinphonePrivate::Address> composingAddresses;
+	// TODO: Improve perf or algorithm?
+	{
+		list<LinphonePrivate::IdentityAddress> addresses = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getComposingAddresses();
+		transform(
+			addresses.cbegin(), addresses.cend(),
+			back_inserter(composingAddresses), [](const LinphonePrivate::Address &address) {
+				return LinphonePrivate::IdentityAddress(address);
+			}
+		);
+	}
+	cr->composingAddresses = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(composingAddresses);
+	return cr->composingAddresses;
 }
 
 LinphoneChatMessage *linphone_chat_room_create_file_transfer_message(LinphoneChatRoom *cr, const LinphoneContent *initial_content) {
@@ -401,7 +404,7 @@ LinphoneChatRoom *_linphone_client_group_chat_room_new (LinphoneCore *core, cons
 	L_SET_CPP_PTR_FROM_C_OBJECT(cr, make_shared<LinphonePrivate::ClientGroupChatRoom>(
 		L_GET_CPP_PTR_FROM_C_OBJECT(core), L_C_TO_STRING(uri), me, L_C_TO_STRING(subject))
 	);
-	L_GET_PRIVATE_FROM_C_OBJECT(cr)->setState(LinphonePrivate::ChatRoom::State::Instantiated);
+	L_GET_PRIVATE_FROM_C_OBJECT(cr, ChatRoom)->setState(LinphonePrivate::ChatRoom::State::Instantiated);
 	return cr;
 }
 

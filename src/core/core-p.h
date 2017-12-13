@@ -52,9 +52,13 @@ public:
 	void setCurrentCall (const std::shared_ptr<Call> &call) { currentCall = call; }
 	void unsetVideoWindowId (bool preview, void *id);
 
-	void insertChatRoom (const std::shared_ptr<ChatRoom> &chatRoom);
-	void insertChatRoomWithDb (const std::shared_ptr<ChatRoom> &chatRoom);
-	std::shared_ptr<ChatRoom> createBasicChatRoom (const ChatRoomId &chatRoomId, bool isRtt, bool notifyCreation = true);
+	void parameterizeEqualizer (AudioStream *stream);
+	void postConfigureAudioStream (AudioStream *stream, bool muted);
+	void setPlaybackGainDb (AudioStream *stream, float gain);
+
+	void insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
+	void insertChatRoomWithDb (const std::shared_ptr<AbstractChatRoom> &chatRoom);
+	std::shared_ptr<AbstractChatRoom> createBasicChatRoom (const ChatRoomId &chatRoomId, bool isRtt);
 
 	std::unique_ptr<MainDb> mainDb;
 
@@ -64,8 +68,8 @@ private:
 	std::list<std::shared_ptr<Call>> calls;
 	std::shared_ptr<Call> currentCall;
 
-	std::list<std::shared_ptr<ChatRoom>> chatRooms;
-	std::unordered_map<ChatRoomId, std::shared_ptr<ChatRoom>> chatRoomsById;
+	std::list<std::shared_ptr<AbstractChatRoom>> chatRooms;
+	std::unordered_map<ChatRoomId, std::shared_ptr<AbstractChatRoom>> chatRoomsById;
 
 	L_DECLARE_PUBLIC(Core);
 };

@@ -1,5 +1,5 @@
 /*
- * chat-room.h
+ * basic-to-client-group-chat-room.h
  * Copyright (C) 2010-2017 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _CHAT_ROOM_H_
-#define _CHAT_ROOM_H_
+#ifndef _BASIC_TO_CLIENT_GROUP_CHAT_ROOM_H_
+#define _BASIC_TO_CLIENT_GROUP_CHAT_ROOM_H_
 
 #include "abstract-chat-room.h"
 
@@ -26,11 +26,12 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ChatRoomPrivate;
+class BasicToClientGroupChatRoomPrivate;
+class ChatRoom;
 
-class LINPHONE_PUBLIC ChatRoom : public AbstractChatRoom {
+class LINPHONE_PUBLIC BasicToClientGroupChatRoom : public AbstractChatRoom {
 public:
-	L_OVERRIDE_SHARED_FROM_THIS(ChatRoom);
+	BasicToClientGroupChatRoom (const std::shared_ptr<ChatRoom> &chatRoom);
 
 	const ChatRoomId &getChatRoomId () const override;
 
@@ -71,14 +72,11 @@ public:
 
 	void markAsRead () override;
 
-protected:
-	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ChatRoomId &chatRoomId);
-
 private:
-	L_DECLARE_PRIVATE(ChatRoom);
-	L_DISABLE_COPY(ChatRoom);
+	L_DECLARE_PRIVATE(BasicToClientGroupChatRoom);
+	L_DISABLE_COPY(BasicToClientGroupChatRoom);
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _CHAT_ROOM_H_
+#endif // ifndef _BASIC_TO_CLIENT_GROUP_CHAT_ROOM_H_

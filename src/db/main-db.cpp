@@ -234,7 +234,7 @@ static inline string blobToString (soci::blob &in) {
 		return q->getLastInsertId();
 	}
 
-	long long MainDbPrivate::insertChatRoom (const shared_ptr<ChatRoom> &chatRoom) {
+	long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) {
 		L_Q();
 
 		soci::session *session = dbSession.getBackendSession<soci::session>();
@@ -501,7 +501,7 @@ static inline string blobToString (soci::blob &in) {
 		L_Q();
 
 		shared_ptr<Core> core = q->getCore();
-		shared_ptr<ChatRoom> chatRoom = core->findChatRoom(chatRoomId);
+		shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(chatRoomId);
 		if (!chatRoom) {
 			lError() << "Unable to find chat room storage id of (peer=" +
 				chatRoomId.getPeerAddress().asString() +
@@ -756,7 +756,7 @@ static inline string blobToString (soci::blob &in) {
 
 	long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<EventLog> &eventLog) {
 		shared_ptr<ChatMessage> chatMessage = static_pointer_cast<ConferenceChatMessageEvent>(eventLog)->getChatMessage();
-		shared_ptr<ChatRoom> chatRoom = chatMessage->getChatRoom();
+		shared_ptr<AbstractChatRoom> chatRoom = chatMessage->getChatRoom();
 		if (!chatRoom) {
 			lError() << "Unable to get a valid chat room. It was removed from database.";
 			return -1;
@@ -794,7 +794,7 @@ static inline string blobToString (soci::blob &in) {
 
 	void MainDbPrivate::updateConferenceChatMessageEvent (const shared_ptr<EventLog> &eventLog) {
 		shared_ptr<ChatMessage> chatMessage = static_pointer_cast<ConferenceChatMessageEvent>(eventLog)->getChatMessage();
-		shared_ptr<ChatRoom> chatRoom = chatMessage->getChatRoom();
+		shared_ptr<AbstractChatRoom> chatRoom = chatMessage->getChatRoom();
 		if (!chatRoom) {
 			lError() << "Unable to get a valid chat room. It was removed from database.";
 			return;
@@ -1266,8 +1266,9 @@ static inline string blobToString (soci::blob &in) {
 			"    ON DELETE CASCADE"
 			") " + charset;
 
-		/* TODO FIX this for mysql
 		// Trigger to delete participant_message cache entries.
+		// TODO: Fix me in the future. (Problem on Mysql backend.)
+		#if 0
 		string displayedId = Utils::toString(static_cast<int>(ChatMessage::State::Displayed));
 		string participantMessageDeleter =
 			"CREATE TRIGGER IF NOT EXISTS chat_message_participant_deleter"
@@ -1288,7 +1289,8 @@ static inline string blobToString (soci::blob &in) {
 		participantMessageDeleter += " WHERE event_id = NEW.event_id;"
 			"  END";
 
-		*session << participantMessageDeleter;*/
+		*session << participantMessageDeleter;
+		#endif
 	}
 
 	bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
@@ -1973,7 +1975,7 @@ static inline string blobToString (soci::blob &in) {
 
 // -----------------------------------------------------------------------------
 
-	list<shared_ptr<ChatRoom>> MainDb::getChatRooms () const {
+	list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 		static const string query = "SELECT chat_room.id, peer_sip_address.value, local_sip_address.value, "
 			"creation_time, last_update_time, capabilities, subject, last_notify_id, flags"
 			"  FROM chat_room, sip_address AS peer_sip_address, sip_address AS local_sip_address"
@@ -1982,7 +1984,7 @@ static inline string blobToString (soci::blob &in) {
 
 		L_D();
 
-		list<shared_ptr<ChatRoom>> chatRooms;
+		list<shared_ptr<AbstractChatRoom>> chatRooms;
 
 		if (!isConnected()) {
 			lWarning() << "Unable to get chat rooms. Not connected.";
@@ -2003,7 +2005,7 @@ static inline string blobToString (soci::blob &in) {
 				IdentityAddress(row.get<string>(1)),
 				IdentityAddress(row.get<string>(2))
 			);
-			shared_ptr<ChatRoom> chatRoom = core->findChatRoom(chatRoomId);
+			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(chatRoomId);
 			if (chatRoom) {
 				chatRooms.push_back(chatRoom);
 				continue;
@@ -2020,8 +2022,7 @@ static inline string blobToString (soci::blob &in) {
 			if (capabilities & static_cast<int>(ChatRoom::Capabilities::Basic)) {
 				chatRoom = core->getPrivate()->createBasicChatRoom(
 					chatRoomId,
-					capabilities & static_cast<int>(ChatRoom::Capabilities::RealTimeText),
-					false
+					capabilities & static_cast<int>(ChatRoom::Capabilities::RealTimeText)
 				);
 				chatRoom->setSubject(subject);
 			} else if (capabilities & static_cast<int>(ChatRoom::Capabilities::Conference)) {
@@ -2082,9 +2083,9 @@ static inline string blobToString (soci::blob &in) {
 			if (!chatRoom)
 				continue; // Not fetched.
 
-			ChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
-			dChatRoom->creationTime = Utils::getTmAsTimeT(creationTime);
-			dChatRoom->lastUpdateTime = Utils::getTmAsTimeT(lastUpdateTime);
+			AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
+			dChatRoom->setCreationTime(Utils::getTmAsTimeT(creationTime));
+			dChatRoom->setLastUpdateTime(Utils::getTmAsTimeT(lastUpdateTime));
 
 			lInfo() << "Found chat room in DB: (peer=" <<
 				chatRoomId.getPeerAddress().asString() << ", local=" << chatRoomId.getLocalAddress().asString() << ").";
@@ -2097,10 +2098,10 @@ static inline string blobToString (soci::blob &in) {
 		L_END_LOG_EXCEPTION
 
 		// Error.
-		return list<shared_ptr<ChatRoom>>();
+		return list<shared_ptr<AbstractChatRoom>>();
 	}
 
-	void MainDb::insertChatRoom (const shared_ptr<ChatRoom> &chatRoom) {
+	void MainDb::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) {
 		L_D();
 
 		if (!isConnected()) {
@@ -2380,11 +2381,11 @@ static inline string blobToString (soci::blob &in) {
 		return 0;
 	}
 
-	list<shared_ptr<ChatRoom>> MainDb::getChatRooms () const {
-		return list<shared_ptr<ChatRoom>>();
+	list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
+		return list<shared_ptr<AbstractChatRoom>>();
 	}
 
-	void MainDb::insertChatRoom (const shared_ptr<ChatRoom> &) {}
+	void MainDb::insertChatRoom (const shared_ptr<AbstractChatRoom> &) {}
 
 	void MainDb::deleteChatRoom (const ChatRoomId &) {}
 

@@ -42,10 +42,6 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-ServerGroupChatRoomPrivate::ServerGroupChatRoomPrivate () {}
-
-// -----------------------------------------------------------------------------
-
 shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const IdentityAddress &addr) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
@@ -201,7 +197,7 @@ void ServerGroupChatRoomPrivate::dispatchMessage (const IdentityAddress &fromAdd
 	for (const auto &p : qConference->getPrivate()->participants) {
 		for (const auto &device : p->getPrivate()->getDevices()) {
 			if (fromAddr != device->getAddress()) {
-				shared_ptr<ChatMessage> msg = q->createMessage();
+				shared_ptr<ChatMessage> msg = q->createChatMessage();
 				msg->setInternalContent(content);
 				msg->getPrivate()->forceFromAddress(q->getConferenceAddress());
 				msg->getPrivate()->forceToAddress(device->getAddress());
@@ -212,7 +208,7 @@ void ServerGroupChatRoomPrivate::dispatchMessage (const IdentityAddress &fromAdd
 	}
 }
 
-LinphoneReason ServerGroupChatRoomPrivate::messageReceived (SalOp *op, const SalMessage *salMsg) {
+LinphoneReason ServerGroupChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessage *salMsg) {
 	L_Q();
 	// Check that the message is coming from a participant of the chat room
 	IdentityAddress fromAddr(op->get_from());
@@ -231,8 +227,9 @@ LinphoneReason ServerGroupChatRoomPrivate::messageReceived (SalOp *op, const Sal
 }
 
 void ServerGroupChatRoomPrivate::setConferenceAddress (const IdentityAddress &confAddr) {
+	L_Q();
 	L_Q_T(LocalConference, qConference);
-	if (state != ChatRoom::State::Instantiated)
+	if (q->getState() != ChatRoom::State::Instantiated)
 		return;
 	qConference->getPrivate()->conferenceAddress = confAddr;
 	finalizeCreation();
@@ -306,10 +303,6 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const std::shared_pt
 			update(session->getPrivate()->getOp());
 	}
 }
-
-// -----------------------------------------------------------------------------
-
-void ServerGroupChatRoomPrivate::onChatMessageReceived (const std::shared_ptr<ChatMessage> &msg) {}
 
 // =============================================================================
 
@@ -443,7 +436,7 @@ void ServerGroupChatRoom::removeParticipants (const list<shared_ptr<Participant>
 	LocalConference::removeParticipants(participants);
 }
 
-void ServerGroupChatRoom::setParticipantAdminStatus (shared_ptr<Participant> &participant, bool isAdmin) {
+void ServerGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participant> &participant, bool isAdmin) {
 	L_D_T(LocalConference, dConference);
 	if (isAdmin != participant->isAdmin()) {
 		participant->getPrivate()->setAdmin(isAdmin);
