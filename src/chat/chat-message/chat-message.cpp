@@ -21,6 +21,7 @@
 
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
+#include "linphone/utils/utils.h"
 #include "c-wrapper/c-wrapper.h"
 #include "address/address.h"
 
@@ -326,6 +327,39 @@ void ChatMessagePrivate::sendImdn (Imdn::Type imdnType, LinphoneReason reason) {
 	msg->getPrivate()->send();
 }
 
+static void forceUtf8Content (Content &content) {
+	// TODO: Deal with other content type in the future.
+	ContentType contentType = content.getContentType();
+	if (contentType != ContentType::PlainText)
+		return;
+
+	string charset = contentType.getParameter();
+	if (charset.empty())
+		return;
+
+	size_t n = charset.find("charset=");
+	if (n == string::npos)
+		return;
+
+	L_BEGIN_LOG_EXCEPTION
+
+	size_t begin = n + sizeof("charset");
+	size_t end = charset.find(";", begin);
+	charset = charset.substr(begin, end - begin);
+
+	if (Utils::stringToLower(charset) != "utf-8") {
+		string utf8Body = Utils::convertString(content.getBodyAsUtf8String(), charset, "UTF-8");
+		if (!utf8Body.empty()) {
+			// TODO: use move operator if possible in the future!
+			content.setBodyFromUtf8(utf8Body);
+			contentType.setParameter(string(contentType.getParameter()).replace(begin, end - begin, "UTF-8"));
+			content.setContentType(contentType);
+		}
+	}
+
+	L_END_LOG_EXCEPTION
+}
+
 LinphoneReason ChatMessagePrivate::receive () {
 	L_Q();
 	int errorCode = 0;
@@ -388,6 +422,9 @@ LinphoneReason ChatMessagePrivate::receive () {
 		// All previous modifiers only altered the internal content, let's fill the content list
 		contents.push_back(&internalContent);
 	}
+
+	for (auto &content : contents)
+		forceUtf8Content(*content);
 
 	// ---------------------------------------
 	// End of message modification
@@ -491,7 +528,7 @@ void ChatMessagePrivate::send () {
 	// Start of message modification
 	// ---------------------------------------
 
-	if (applyModifiers) { 
+	if (applyModifiers) {
 		// Do not multipart or encapsulate with CPIM in an old ChatRoom to maintain backward compatibility
 		if (q->getChatRoom()->canHandleParticipants()) {
 			if ((currentSendStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {

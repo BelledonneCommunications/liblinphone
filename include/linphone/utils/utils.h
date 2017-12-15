@@ -99,6 +99,10 @@ namespace Utils {
 	// Return a buffer allocated with new.
 	LINPHONE_PUBLIC char *utf8ToChar (uint32_t ic);
 
+	LINPHONE_PUBLIC inline std::string cStringToCppString (const char *str) {
+		return str ? str : "";
+	}
+
 	template<typename T>
 	LINPHONE_PUBLIC const T &getEmptyConstRefObject () {
 		static const T object;
@@ -107,6 +111,10 @@ namespace Utils {
 
 	LINPHONE_PUBLIC std::tm getTimeTAsTm (time_t time);
 	LINPHONE_PUBLIC time_t getTmAsTimeT (const std::tm &time);
+
+	LINPHONE_PUBLIC std::string localeToUtf8 (const std::string &str);
+	LINPHONE_PUBLIC std::string utf8ToLocale (const std::string &str);
+	LINPHONE_PUBLIC std::string convertString (const std::string &str, const std::string &from, const std::string &to);
 }
 
 LINPHONE_END_NAMESPACE
