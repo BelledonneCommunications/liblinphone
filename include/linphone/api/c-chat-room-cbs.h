@@ -258,6 +258,20 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsParticipantDeviceFetchedCb linphone_chat_room
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_participant_device_fetched (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceFetchedCb cb);
 
 /**
+ * Get the participants capabilities callback.
+ * @param[in] cbs LinphoneChatRoomCbs object
+ * @return The participants capabilities getting callback
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb linphone_chat_room_cbs_get_participants_capabilities_checked (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the participants capabilities callback.
+ * @param[in] cbs LinphoneChatRoomCbs object
+ * @param[in] cb The participants capabilities callback to be used
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_participants_capabilities_checked (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb cb);
+
+/**
  * @}
  */
 

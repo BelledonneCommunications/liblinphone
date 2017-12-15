@@ -69,6 +69,13 @@ static void _linphone_chat_room_destructor (LinphoneChatRoom *cr) {
 		bctbx_list_free_with_data(cr->composingAddresses, (bctbx_list_free_func)linphone_address_unref);
 }
 
+static list<LinphonePrivate::IdentityAddress> _get_identity_address_list_from_address_list(list<LinphonePrivate::Address> addressList) {
+	list<LinphonePrivate::IdentityAddress> lIdent;
+	for (const auto &addr : addressList)
+		lIdent.push_back(LinphonePrivate::IdentityAddress(addr));
+	return lIdent;
+}
+
 // =============================================================================
 // Public functions.
 // =============================================================================
@@ -355,6 +362,18 @@ void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const Lin
 	if (sgcr)
 		sgcr->setParticipantDevices(LinphonePrivate::IdentityAddress(addrStr), lIdentAddr);
 	bctbx_free(addrStr);
+}
+
+void linphone_chat_room_add_compatible_participants (LinphoneChatRoom *cr, const LinphoneAddress *deviceAddr, const bctbx_list_t *participantsCompatible) {
+	list<LinphonePrivate::Address> lPartsComp = L_GET_RESOLVED_CPP_LIST_FROM_C_LIST(participantsCompatible, Address);
+	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr = dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
+	if (sgcr) {
+		char *deviceAddrStr = linphone_address_as_string_uri_only(deviceAddr);
+		sgcr->addCompatibleParticipants(LinphonePrivate::IdentityAddress(deviceAddrStr),
+										_get_identity_address_list_from_address_list(lPartsComp)
+		);
+		bctbx_free(deviceAddrStr);
+	}
 }
 
 // =============================================================================
