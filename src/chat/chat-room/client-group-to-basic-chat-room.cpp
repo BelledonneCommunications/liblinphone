@@ -1,5 +1,5 @@
 /*
- * address-p.h
+ * client-group-to-basic-chat-room.cpp
  * Copyright (C) 2010-2017 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,47 +17,33 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _ADDRESS_P_H_
-#define _ADDRESS_P_H_
-
-#include <unordered_map>
-
-#include "address.h"
-#include "object/clonable-object-p.h"
+#include "client-group-to-basic-chat-room.h"
+#include "proxy-chat-room-p.h"
 
 // =============================================================================
 
-struct SalAddress;
+using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-class AddressPrivate : public ClonableObjectPrivate {
+// -----------------------------------------------------------------------------
+
+class ClientGroupToBasicChatRoomPrivate : public ProxyChatRoomPrivate {
 public:
-	inline const SalAddress *getInternalAddress () const {
-		return internalAddress;
+	inline void sendChatMessage (const shared_ptr<ChatMessage> &chatMessage) override {
+		ProxyChatRoomPrivate::sendChatMessage(chatMessage);
+		// TODO: Try migration.
 	}
-	void setInternalAddress (const SalAddress *value);
 
-private:
-	struct AddressCache {
-		std::string scheme;
-		std::string displayName;
-		std::string username;
-		std::string domain;
-		std::string methodParam;
-		std::string password;
-
-		std::unordered_map<std::string, std::string> headers;
-		std::unordered_map<std::string, std::string> params;
-		std::unordered_map<std::string, std::string> uriParams;
-	};
-
-	SalAddress *internalAddress = nullptr;
-	mutable AddressCache cache;
-
-	L_DECLARE_PUBLIC(Address);
+	inline void onChatMessageReceived (const shared_ptr<ChatMessage> &chatMessage) override {
+		ProxyChatRoomPrivate::onChatMessageReceived(chatMessage);
+		// TODO: Try migration.
+	}
 };
 
-LINPHONE_END_NAMESPACE
+// =============================================================================
 
-#endif // ifndef _ADDRESS_P_H_
+ClientGroupToBasicChatRoom::ClientGroupToBasicChatRoom (const shared_ptr<ChatRoom> &chatRoom) :
+	ProxyChatRoom(*new ClientGroupToBasicChatRoomPrivate, chatRoom) {}
+
+LINPHONE_END_NAMESPACE

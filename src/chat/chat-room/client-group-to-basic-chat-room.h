@@ -1,5 +1,5 @@
 /*
- * address-p.h
+ * basic-to-client-group-chat-room.h
  * Copyright (C) 2010-2017 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,47 +17,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _ADDRESS_P_H_
-#define _ADDRESS_P_H_
+#ifndef _CLIENT_GROUP_TO_BASIC_CHAT_ROOM_H_
+#define _CLIENT_GROUP_TO_BASIC_CHAT_ROOM_H_
 
-#include <unordered_map>
-
-#include "address.h"
-#include "object/clonable-object-p.h"
+#include "proxy-chat-room.h"
 
 // =============================================================================
 
-struct SalAddress;
-
 LINPHONE_BEGIN_NAMESPACE
 
-class AddressPrivate : public ClonableObjectPrivate {
+class ClientGroupToBasicChatRoomPrivate;
+
+class LINPHONE_PUBLIC ClientGroupToBasicChatRoom : public ProxyChatRoom {
 public:
-	inline const SalAddress *getInternalAddress () const {
-		return internalAddress;
-	}
-	void setInternalAddress (const SalAddress *value);
+	ClientGroupToBasicChatRoom (const std::shared_ptr<ChatRoom> &chatRoom);
 
 private:
-	struct AddressCache {
-		std::string scheme;
-		std::string displayName;
-		std::string username;
-		std::string domain;
-		std::string methodParam;
-		std::string password;
-
-		std::unordered_map<std::string, std::string> headers;
-		std::unordered_map<std::string, std::string> params;
-		std::unordered_map<std::string, std::string> uriParams;
-	};
-
-	SalAddress *internalAddress = nullptr;
-	mutable AddressCache cache;
-
-	L_DECLARE_PUBLIC(Address);
+	L_DECLARE_PRIVATE(ClientGroupToBasicChatRoom);
+	L_DISABLE_COPY(ClientGroupToBasicChatRoom);
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _ADDRESS_P_H_
+#endif // ifndef _CLIENT_GROUP_TO_BASIC_CHAT_ROOM_H_
