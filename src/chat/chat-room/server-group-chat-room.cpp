@@ -160,9 +160,9 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<const Parti
 
 	shared_ptr<ConferenceParticipantEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantRemoved(participant->getAddress());
 	q->getCore()->getPrivate()->mainDb->addEvent(event);
-	if (q->getParticipantCount() == 0) {
-		Core::deleteChatRoom(q->getSharedFromThis());
-	} else if (!isAdminLeft())
+	if (q->getParticipantCount() == 0)
+		chatRoomListener->onChatRoomDeleteRequested(q->getSharedFromThis());
+	else if (!isAdminLeft())
 		designateAdmin();
 }
 
@@ -305,9 +305,9 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	addr.setParam("isfocus");
 	shared_ptr<CallSession> session = me->getPrivate()->getSession();
 	session->redirect(addr);
-	q->getCore()->getPrivate()->insertChatRoom(q->getSharedFromThis());
+	chatRoomListener->onChatRoomInsertRequested(q->getSharedFromThis());
 	setState(ChatRoom::State::Created);
-	q->getCore()->getPrivate()->insertChatRoomWithDb(q->getSharedFromThis());
+	chatRoomListener->onChatRoomInsertInDatabaseRequested(q->getSharedFromThis());
 }
 
 bool ServerGroupChatRoomPrivate::isAdminLeft () const {
@@ -317,6 +317,22 @@ bool ServerGroupChatRoomPrivate::isAdminLeft () const {
 			return true;
 	}
 	return false;
+}
+
+// -----------------------------------------------------------------------------
+
+void ServerGroupChatRoomPrivate::onChatRoomInsertRequested (const shared_ptr<AbstractChatRoom> &chatRoom) {
+	L_Q();
+	q->getCore()->getPrivate()->insertChatRoom(chatRoom);
+}
+
+void ServerGroupChatRoomPrivate::onChatRoomInsertInDatabaseRequested (const shared_ptr<AbstractChatRoom> &chatRoom) {
+	L_Q();
+	q->getCore()->getPrivate()->insertChatRoomWithDb(chatRoom);
+}
+
+void ServerGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<AbstractChatRoom> &chatRoom) {
+	Core::deleteChatRoom(chatRoom);
 }
 
 // -----------------------------------------------------------------------------
@@ -381,8 +397,8 @@ shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const shared_ptr<c
 	return nullptr;
 }
 
-int ServerGroupChatRoom::getCapabilities () const {
-	return static_cast<int>(Capabilities::Conference);
+ServerGroupChatRoom::CapabilitiesMask ServerGroupChatRoom::getCapabilities () const {
+	return Capabilities::Conference;
 }
 
 bool ServerGroupChatRoom::hasBeenLeft () const {
