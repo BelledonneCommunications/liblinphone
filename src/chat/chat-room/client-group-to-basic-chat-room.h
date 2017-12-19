@@ -32,6 +32,17 @@ class LINPHONE_PUBLIC ClientGroupToBasicChatRoom : public ProxyChatRoom {
 public:
 	ClientGroupToBasicChatRoom (const std::shared_ptr<ChatRoom> &chatRoom);
 
+	void addParticipant (
+		const IdentityAddress &participantAddress,
+		const CallSessionParams *params,
+		bool hasMedia
+	) override;
+	void addParticipants (
+		const std::list<IdentityAddress> &addresses,
+		const CallSessionParams *params,
+		bool hasMedia
+	) override;
+
 private:
 	L_DECLARE_PRIVATE(ClientGroupToBasicChatRoom);
 	L_DISABLE_COPY(ClientGroupToBasicChatRoom);

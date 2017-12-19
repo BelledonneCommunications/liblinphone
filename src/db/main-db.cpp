@@ -41,6 +41,9 @@
 #include "main-db-key-p.h"
 #include "main-db-p.h"
 
+#define DB_MODULE_VERSION_EVENTS L_VERSION(1, 0, 0)
+#define DB_MODULE_VERSION_LEGACY_HISTORY_IMPORT L_VERSION(1, 0, 0)
+
 // =============================================================================
 
 // See: http://soci.sourceforge.net/doc/3.2/exchange.html
@@ -106,7 +109,7 @@ MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), 
 		bool isStart = true;
 		string sql;
 		for (const auto &filter : filters) {
-			if (!(mask & filter))
+			if (!mask.isSet(filter))
 				continue;
 
 			if (isStart) {
@@ -226,7 +229,7 @@ static constexpr string &blobToString (string &in) {
 			return id;
 		}
 
-		static const int capabilities = static_cast<int>(ChatRoom::Capabilities::Basic);
+		static const int capabilities = ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Basic);
 		lInfo() << "Insert new chat room in database: (peer=" << peerSipAddressId <<
 			", local=" << localSipAddressId << ", capabilities=" << capabilities << ").";
 		*session << "INSERT INTO chat_room ("
@@ -258,7 +261,7 @@ static constexpr string &blobToString (string &in) {
 			", local=" << localSipAddressId << ").";
 
 		const tm &creationTime = Utils::getTimeTAsTm(chatRoom->getCreationTime());
-		const int &capabilities = static_cast<int>(chatRoom->getCapabilities());
+		const int &capabilities = chatRoom->getCapabilities();
 		const string &subject = chatRoom->getSubject();
 		const int &flags = chatRoom->hasBeenLeft();
 		*session << "INSERT INTO chat_room ("
@@ -1021,6 +1024,22 @@ static constexpr string &blobToString (string &in) {
 
 // -----------------------------------------------------------------------------
 
+	unsigned int MainDbPrivate::getModuleVersion (const string &name) {
+		soci::session *session = dbSession.getBackendSession<soci::session>();
+
+		unsigned int version;
+		*session << "SELECT version FROM db_module_version WHERE name = :name", soci::into(version), soci::use(name);
+		return session->got_data() ? version : 0;
+	}
+
+	void MainDbPrivate::updateModuleVersion (const string &name, unsigned int version) {
+		soci::session *session = dbSession.getBackendSession<soci::session>();
+		*session << "REPLACE INTO db_module_version (name, version) VALUES (:name, :version)",
+			soci::use(name), soci::use(version);
+	}
+
+// -----------------------------------------------------------------------------
+
 	void MainDb::init () {
 		L_D();
 
@@ -1304,6 +1323,14 @@ static constexpr string &blobToString (string &in) {
 
 		*session << participantMessageDeleter;
 		#endif
+
+		*session <<
+			"CREATE TABLE IF NOT EXISTS db_module_version ("
+			"  name" + varcharPrimaryKeyStr(16) + ","
+			"  version INT UNSIGNED NOT NULL"
+			") " + charset;
+
+		d->updateModuleVersion("events", DB_MODULE_VERSION_EVENTS);
 	}
 
 	bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
@@ -1478,7 +1505,7 @@ static constexpr string &blobToString (string &in) {
 		int count = 0;
 
 		DurationLogger durationLogger(
-			"Get events count with mask=" + Utils::toString(static_cast<int>(mask)) + "."
+			"Get events count with mask=" + Utils::toString(mask) + "."
 		);
 
 		L_BEGIN_LOG_EXCEPTION
@@ -1972,7 +1999,7 @@ static constexpr string &blobToString (string &in) {
 		DurationLogger durationLogger(
 			"Clean history of: (peer=" + chatRoomId.getPeerAddress().asString() +
 			", local=" + chatRoomId.getLocalAddress().asString() +
-			", mask=" + Utils::toString(static_cast<int>(mask)) + ")."
+			", mask=" + Utils::toString(mask) + ")."
 		);
 
 		L_BEGIN_LOG_EXCEPTION
@@ -2032,13 +2059,13 @@ static constexpr string &blobToString (string &in) {
 				? row.get<unsigned int>(7, 0)
 				: static_cast<unsigned int>(row.get<int>(7, 0));
 
-			if (capabilities & static_cast<int>(ChatRoom::Capabilities::Basic)) {
+			if (capabilities & ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Basic)) {
 				chatRoom = core->getPrivate()->createBasicChatRoom(
 					chatRoomId,
-					capabilities & static_cast<int>(ChatRoom::Capabilities::RealTimeText)
+					capabilities & ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::RealTimeText)
 				);
 				chatRoom->setSubject(subject);
-			} else if (capabilities & static_cast<int>(ChatRoom::Capabilities::Conference)) {
+			} else if (capabilities & ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Conference)) {
 				list<shared_ptr<Participant>> participants;
 
 				const long long &dbChatRoomId = d->resolveId(row, 0);
@@ -2216,10 +2243,15 @@ static constexpr string &blobToString (string &in) {
 
 		// Import messages.
 		try {
+			soci::transaction tr(*d->dbSession.getBackendSession<soci::session>());
+
+			unsigned int version = d->getModuleVersion("legacy-history-import");
+			if (version >= L_VERSION(1, 0, 0))
+				return false;
+			d->updateModuleVersion("legacy-history-import", DB_MODULE_VERSION_LEGACY_HISTORY_IMPORT);
+
 			soci::rowset<soci::row> messages = (inSession->prepare << "SELECT * FROM history");
 			try {
-				soci::transaction tr(*d->dbSession.getBackendSession<soci::session>());
-
 				for (const auto &message : messages) {
 					const int direction = message.get<int>(LEGACY_MESSAGE_COL_DIRECTION);
 					if (direction != 0 && direction != 1) {
@@ -2390,7 +2422,7 @@ static constexpr string &blobToString (string &in) {
 		return list<shared_ptr<EventLog>>();
 	}
 
-	int getHistorySize (const ChatRoomId &, FilterMask) const {
+	int MainDb::getHistorySize (const ChatRoomId &, FilterMask) const {
 		return 0;
 	}
 

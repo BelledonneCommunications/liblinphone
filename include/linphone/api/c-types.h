@@ -118,6 +118,12 @@ typedef struct _LinphoneChatMessageCbs LinphoneChatMessageCbs;
 typedef struct _LinphoneChatRoom LinphoneChatRoom;
 
 /**
+ * A mask of LinphoneChatRoomCapabilities
+ * @ingroup chatroom
+ */
+typedef int LinphoneChatRoomCapabilitiesMask;
+
+/**
  * An object to handle the callbacks for the handling a LinphoneChatRoom objects.
  * @ingroup chatroom
  */
@@ -168,6 +174,12 @@ L_DECLARE_C_ENUM(ChatMessageDirection, L_ENUM_VALUES_CHAT_MESSAGE_DIRECTION);
  * @ingroup chatroom
 */
 L_DECLARE_C_ENUM(ChatMessageState, L_ENUM_VALUES_CHAT_MESSAGE_STATE);
+
+/**
+ * LinphoneChatRoomCapabilities is used to indicated the capabilities of a chat room.
+ * @ingroup chatroom
+ */
+L_DECLARE_C_ENUM_FIXED_VALUES(ChatRoomCapabilities, L_ENUM_VALUES_CHAT_ROOM_CAPABILITIES);
 
 /**
  * LinphoneChatRoomState is used to indicate the current state of a chat room.
