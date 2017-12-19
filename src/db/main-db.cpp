@@ -1033,6 +1033,10 @@ static constexpr string &blobToString (string &in) {
 	}
 
 	void MainDbPrivate::updateModuleVersion (const string &name, unsigned int version) {
+		unsigned int oldVersion = getModuleVersion(name);
+		if (oldVersion == version)
+			return;
+
 		soci::session *session = dbSession.getBackendSession<soci::session>();
 		*session << "REPLACE INTO db_module_version (name, version) VALUES (:name, :version)",
 			soci::use(name), soci::use(version);
@@ -1326,7 +1330,7 @@ static constexpr string &blobToString (string &in) {
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS db_module_version ("
-			"  name" + varcharPrimaryKeyStr(16) + ","
+			"  name" + varcharPrimaryKeyStr(255) + ","
 			"  version INT UNSIGNED NOT NULL"
 			") " + charset;
 
@@ -2069,17 +2073,31 @@ static constexpr string &blobToString (string &in) {
 				list<shared_ptr<Participant>> participants;
 
 				const long long &dbChatRoomId = d->resolveId(row, 0);
-				static const string query = "SELECT sip_address.value, is_admin"
+				static const string query = "SELECT chat_room_participant.id, sip_address.value, is_admin"
 					"  FROM sip_address, chat_room, chat_room_participant"
 					"  WHERE chat_room.id = :chatRoomId"
 					"  AND sip_address.id = chat_room_participant.participant_sip_address_id"
 					"  AND chat_room_participant.chat_room_id = chat_room.id";
 
+				// Fetch participants.
 				soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 				shared_ptr<Participant> me;
 				for (const auto &row : rows) {
-					shared_ptr<Participant> participant = make_shared<Participant>(IdentityAddress(row.get<string>(0)));
-					participant->getPrivate()->setAdmin(!!row.get<int>(1));
+					shared_ptr<Participant> participant = make_shared<Participant>(IdentityAddress(row.get<string>(1)));
+					ParticipantPrivate *dParticipant = participant->getPrivate();
+					dParticipant->setAdmin(!!row.get<int>(2));
+
+					// Fetch devices.
+					{
+						const long long &participantId = d->resolveId(row, 0);
+						static const string query = "SELECT sip_address.value FROM chat_room_participant_device, sip_address"
+							"  WHERE chat_room_participant_id = :participantId"
+							"  AND participant_device_sip_address_id = sip_address.id";
+
+						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(participantId));
+						for (const auto &row : rows)
+							dParticipant->addDevice(IdentityAddress(row.get<string>(0)));
+					}
 
 					if (participant->getAddress() == chatRoomId.getLocalAddress().getAddressWithoutGruu())
 						me = participant;
@@ -2102,8 +2120,9 @@ static constexpr string &blobToString (string &in) {
 						move(participants),
 						lastNotifyId
 					);
-					chatRoom->getPrivate()->setState(LinphonePrivate::ChatRoom::State::Instantiated);
-					chatRoom->getPrivate()->setState(hasBeenLeft
+					AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
+					dChatRoom->setState(ChatRoom::State::Instantiated);
+					dChatRoom->setState(hasBeenLeft
 						? ChatRoom::State::Terminated
 						: ChatRoom::State::Created
 					);
@@ -2115,8 +2134,9 @@ static constexpr string &blobToString (string &in) {
 						move(participants),
 						lastNotifyId
 					);
-					chatRoom->getPrivate()->setState(LinphonePrivate::ChatRoom::State::Instantiated);
-					chatRoom->getPrivate()->setState(LinphonePrivate::ChatRoom::State::Created);
+					AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
+					dChatRoom->setState(ChatRoom::State::Instantiated);
+					dChatRoom->setState(ChatRoom::State::Created);
 				}
 			}
 
