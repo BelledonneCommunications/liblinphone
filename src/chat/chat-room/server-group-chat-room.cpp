@@ -84,23 +84,29 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		return;
 	}
 
+	IdentityAddress gruu(contactAddr);
+	shared_ptr<ParticipantDevice> device;
+	shared_ptr<CallSession> session;
 	bool isCreation = q->getParticipantCount() == 0;
 	if (isCreation) {
 		// First participant (creator of the chat room)
 		participant = addParticipant(IdentityAddress(op->get_from()));
 		participant->getPrivate()->setAdmin(true);
+		device = participant->getPrivate()->addDevice(gruu);
+		session = device->getSession();
+		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantDeviceAdded(participant->getAddress(), gruu);
+		q->getCore()->getPrivate()->mainDb->addEvent(event);
 	} else {
 		// INVITE coming from an invited participant
 		participant = q->findParticipant(IdentityAddress(op->get_from()));
+		device = participant->getPrivate()->addDevice(gruu);
+		session = device->getSession();
 		if (!participant) {
 			op->decline(SalReasonDeclined, nullptr);
 			return;
 		}
 	}
 
-	IdentityAddress gruu(contactAddr);
-	shared_ptr<ParticipantDevice> device = participant->getPrivate()->addDevice(gruu);
-	shared_ptr<CallSession> session = device->getSession();
 	if (!session) {
 		session = participant->getPrivate()->createSession(*q, nullptr, false, this);
 		session->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(), Address(op->get_to()));
@@ -248,11 +254,14 @@ void ServerGroupChatRoomPrivate::setConferenceAddress (const IdentityAddress &co
 
 void ServerGroupChatRoomPrivate::setParticipantDevices(const IdentityAddress &addr, const list<IdentityAddress> &devices) {
 	L_Q();
+	L_Q_T(LocalConference, qConference);
 	shared_ptr<Participant> participant = q->findParticipant(addr);
 	for (const auto &deviceAddr : devices) {
 		if (participant->getPrivate()->findDevice(deviceAddr))
 			continue;
 		shared_ptr<ParticipantDevice> device = participant->getPrivate()->addDevice(deviceAddr);
+		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantDeviceAdded(addr, deviceAddr);
+		q->getCore()->getPrivate()->mainDb->addEvent(event);
 		SalReferOp *referOp = new SalReferOp(q->getCore()->getCCore()->sal);
 		LinphoneAddress *lAddr = linphone_address_new(device->getAddress().asString().c_str());
 		linphone_configure_op(q->getCore()->getCCore(), referOp, lAddr, nullptr, false);
