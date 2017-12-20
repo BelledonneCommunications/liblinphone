@@ -94,8 +94,10 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		participant->getPrivate()->setAdmin(true);
 		device = participant->getPrivate()->addDevice(gruu);
 		session = device->getSession();
-		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantDeviceAdded(participant->getAddress(), gruu);
-		q->getCore()->getPrivate()->mainDb->addEvent(event);
+		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent = qConference->getPrivate()->eventHandler->notifyParticipantDeviceAdded(participant->getAddress(), gruu);
+		shared_ptr<ConferenceParticipantEvent> adminEvent = qConference->getPrivate()->eventHandler->notifyParticipantSetAdmin(participant->getAddress(), true);
+		q->getCore()->getPrivate()->mainDb->addEvent(deviceEvent);
+		q->getCore()->getPrivate()->mainDb->addEvent(adminEvent);
 	} else {
 		// INVITE coming from an invited participant
 		participant = q->findParticipant(IdentityAddress(op->get_from()));
@@ -386,6 +388,7 @@ LocalConference(getCore(), peerAddress, nullptr) {
 
 	dConference->subject = subject;
 	dConference->participants = move(participants);
+	dConference->conferenceAddress = peerAddress;
 	dConference->eventHandler->setLastNotify(lastNotifyId);
 	dConference->eventHandler->setChatRoomId(d->chatRoomId);
 }
