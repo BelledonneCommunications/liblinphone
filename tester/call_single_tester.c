@@ -316,13 +316,15 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 				,caller_mgr->lc
 				,&callee_mgr->stat.number_of_LinphoneCallIncomingReceived
 				,initial_callee.number_of_LinphoneCallIncomingReceived+1);
+	
 	BC_ASSERT_EQUAL(did_receive_call, !callee_test_params->sdp_simulate_error, int, "%d");
 
 	sal_default_set_sdp_handling(caller_mgr->lc->sal, SalOpSDPNormal);
 	sal_default_set_sdp_handling(callee_mgr->lc->sal, SalOpSDPNormal);
 
 	if (!did_receive_call) return 0;
-
+	LinphoneCall* callee_ref = linphone_core_get_current_call(callee_mgr->lc);
+	BC_ASSERT_PTR_NULL(linphone_call_params_get_custom_header(linphone_call_get_params(callee_ref), "Proxy-Authorization"));
 
 	if (linphone_core_get_calls_nb(callee_mgr->lc)<=1)
 		BC_ASSERT_TRUE(linphone_core_inc_invite_pending(callee_mgr->lc));
@@ -362,7 +364,6 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		linphone_address_unref(callee_from);
 	}
 
-
 	if (callee_params){
 		linphone_call_accept_with_params(callee_call,callee_params);
 	}else if (build_callee_params){
@@ -376,6 +377,8 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		linphone_call_accept(linphone_core_get_current_call(callee_mgr->lc));
 	}
 
+
+	
 	BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallConnected,initial_callee.number_of_LinphoneCallConnected+1));
 	BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallConnected,initial_caller.number_of_LinphoneCallConnected+1));
 
