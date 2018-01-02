@@ -786,8 +786,7 @@ lpc_cmd_answer(LinphoneCore *lc, char *args){
 	{
 		int nb=(int)bctbx_list_size(linphone_core_get_calls(lc));
 		if (nb==1){
-			//if just one call is present answer the only one in passing NULL to the linphone_core_accept_call ...
-			if ( -1 == linphone_core_accept_call(lc, NULL) )
+			if ( -1 == linphone_core_accept_call(lc, linphone_core_get_current_call(lc)) )
 			{
 				linphonec_out("Fail to accept incoming call\n");
 			}
