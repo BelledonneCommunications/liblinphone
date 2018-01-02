@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#include "linphone/utils/general.h"
+#include "linphone/utils/enum-generator.h"
 
 // =============================================================================
 
@@ -81,6 +81,10 @@ namespace Utils {
 	LINPHONE_PUBLIC std::string toString (long double val);
 	LINPHONE_PUBLIC std::string toString (const void *val);
 
+	LINPHONE_PUBLIC
+	template<typename T, typename = typename std::enable_if<IsDefinedEnum<T>::value, T>::type>
+	inline std::string toString (const T &val) { return getEnumValueAsString(val); }
+
 	LINPHONE_PUBLIC int stoi (const std::string &str, size_t *idx = 0, int base = 10);
 	LINPHONE_PUBLIC long long stoll (const std::string &str, size_t *idx = 0, int base = 10);
 	LINPHONE_PUBLIC unsigned long long stoull (const std::string &str, size_t *idx = 0, int base = 10);
@@ -96,7 +100,6 @@ namespace Utils {
 
 	LINPHONE_PUBLIC std::string stringToLower (const std::string &str);
 
-	// Return a buffer allocated with new.
 	LINPHONE_PUBLIC char *utf8ToChar (uint32_t ic);
 
 	LINPHONE_PUBLIC inline std::string cStringToCppString (const char *str) {

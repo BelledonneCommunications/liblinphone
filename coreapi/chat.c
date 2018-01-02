@@ -38,6 +38,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-room/basic-chat-room.h"
 #include "chat/chat-room/client-group-chat-room.h"
+#include "chat/chat-room/client-group-to-basic-chat-room.h"
 #include "chat/chat-room/real-time-text-chat-room-p.h"
 #include "chat/chat-room/real-time-text-chat-room.h"
 #include "content/content-type.h"
@@ -84,12 +85,6 @@ LinphoneChatRoom *linphone_core_get_chat_room (LinphoneCore *lc, const LinphoneA
 
 LinphoneChatRoom *linphone_core_create_client_group_chat_room (LinphoneCore *lc, const char *subject) {
 	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->createClientGroupChatRoom(L_C_TO_STRING(subject)));
-}
-
-LinphoneChatRoom *_linphone_core_join_client_group_chat_room (LinphoneCore *lc, const LinphonePrivate::Address &addr) {
-	LinphoneChatRoom *cr = _linphone_client_group_chat_room_new(lc, addr.asString().c_str(), nullptr);
-	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->join();
-	return cr;
 }
 
 LinphoneChatRoom *_linphone_core_create_server_group_chat_room (LinphoneCore *lc, LinphonePrivate::SalCallOp *op) {
@@ -140,7 +135,6 @@ int linphone_core_message_received(LinphoneCore *lc, LinphonePrivate::SalOp *op,
 	shared_ptr<LinphonePrivate::AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
 		LinphonePrivate::ChatRoomId(LinphonePrivate::IdentityAddress(peerAddress), LinphonePrivate::IdentityAddress(localAddress))
 	);
-
 	if (chatRoom)
 		reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
 	else {

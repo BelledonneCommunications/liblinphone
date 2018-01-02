@@ -28,6 +28,7 @@
 #include "chat/chat-message/chat-message-p.h"
 
 #include "chat/chat-room/chat-room-p.h"
+#include "chat/chat-room/client-group-to-basic-chat-room.h"
 #include "chat/chat-room/real-time-text-chat-room.h"
 #include "chat/modifier/cpim-chat-message-modifier.h"
 #include "chat/modifier/encryption-chat-message-modifier.h"
@@ -81,9 +82,8 @@ void ChatMessagePrivate::setState (ChatMessage::State s, bool force) {
 	)
 		return;
 
-	lInfo() << "Chat message " << this << ": moving from state " <<
-		linphone_chat_message_state_to_string((LinphoneChatMessageState)state) << " to " <<
-		linphone_chat_message_state_to_string((LinphoneChatMessageState)s);
+	lInfo() << "Chat message " << this << ": moving from " << Utils::toString(state) <<
+		" to " << Utils::toString(s);
 	state = s;
 
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
@@ -311,6 +311,18 @@ void ChatMessagePrivate::loadFileTransferUrlFromBodyToContent() {
 	L_Q();
 	int errorCode = 0;
 	fileTransferChatMessageModifier.decode(q->getSharedFromThis(), errorCode);
+}
+
+void ChatMessagePrivate::setChatRoom (const shared_ptr<AbstractChatRoom> &cr) {
+	chatRoom = cr;
+	chatRoomId = cr->getChatRoomId();
+	if (direction == ChatMessage::Direction::Outgoing) {
+		fromAddress = chatRoomId.getLocalAddress();
+		toAddress = chatRoomId.getPeerAddress();
+	} else {
+		fromAddress = chatRoomId.getPeerAddress();
+		toAddress = chatRoomId.getLocalAddress();
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -673,16 +685,8 @@ ChatMessage::ChatMessage (const shared_ptr<AbstractChatRoom> &chatRoom, ChatMess
 	Object(*new ChatMessagePrivate), CoreAccessor(chatRoom->getCore()) {
 	L_D();
 
-	d->chatRoom = chatRoom;
-	d->chatRoomId = chatRoom->getChatRoomId();
-	if (direction == Direction::Outgoing) {
-		d->fromAddress = d->chatRoomId.getLocalAddress();
-		d->toAddress = d->chatRoomId.getPeerAddress();
-	} else {
-		d->fromAddress = d->chatRoomId.getPeerAddress();
-		d->toAddress = d->chatRoomId.getLocalAddress();
-	}
 	d->direction = direction;
+	d->setChatRoom(chatRoom);
 }
 
 ChatMessage::~ChatMessage () {

@@ -21,6 +21,8 @@
 
 #include "address/address-p.h"
 #include "c-wrapper/c-wrapper.h"
+#include "basic-chat-room.h"
+#include "basic-to-client-group-chat-room.h"
 #include "client-group-chat-room-p.h"
 #include "conference/handlers/remote-conference-event-handler.h"
 #include "conference/participant-p.h"
@@ -382,12 +384,26 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	L_D();
 	d->setState(ChatRoom::State::Created);
 
+	if (getParticipantCount() == 1) {
+		ChatRoomId id(getParticipants().front()->getAddress(), getMe()->getAddress());
+		shared_ptr<AbstractChatRoom> chatRoom = getCore()->findChatRoom(id);
+		if (chatRoom && (chatRoom->getCapabilities() & ChatRoom::Capabilities::Basic)) {
+			BasicToClientGroupChatRoom::migrate(getSharedFromThis(), chatRoom);
+			return;
+		}
+	}
+
 	d->chatRoomListener->onChatRoomInsertInDatabaseRequested(getSharedFromThis());
+
+	// TODO: Bug. Event is inserted many times.
+	// Avoid this in the future. Deal with signals/slots system.
+	#if 0
 	getCore()->getPrivate()->mainDb->addEvent(make_shared<ConferenceEvent>(
 		EventLog::Type::ConferenceCreated,
 		time(nullptr),
 		d->chatRoomId
 	));
+	#endif
 }
 
 void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {

@@ -2148,6 +2148,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 					static_pointer_cast<ClientGroupToBasicChatRoom>(chatRoom)->getProxiedChatRoom());
 			else
 				cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
+
 			if (linphone_content_is_multipart(body)) {
 				// TODO : migrate to c++ 'Content'.
 				int i = 0;

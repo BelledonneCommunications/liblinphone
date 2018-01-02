@@ -118,6 +118,12 @@ public:
 	std::list<std::shared_ptr<AbstractChatRoom>> getChatRooms () const;
 	void insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
 	void deleteChatRoom (const ChatRoomId &chatRoomId);
+	void enableChatRoomMigration (const ChatRoomId &chatRoomId, bool enable);
+
+	void migrateBasicToClientGroupChatRoom (
+		const std::shared_ptr<AbstractChatRoom> &basicChatRoom,
+		const std::shared_ptr<AbstractChatRoom> &clientGroupChatRoom
+	);
 
 	// ---------------------------------------------------------------------------
 	// Other.
