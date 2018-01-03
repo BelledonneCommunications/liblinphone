@@ -62,7 +62,7 @@ private:
 	// CallSessionListener
 	void onCallSessionStateChanged (
 		const std::shared_ptr<const CallSession> &session,
-		CallSession::State state,
+		CallSession::State newState,
 		const std::string &message
 	) override;
 

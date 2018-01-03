@@ -348,16 +348,16 @@ void ServerGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<Abs
 
 // -----------------------------------------------------------------------------
 
-void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const std::shared_ptr<const CallSession> &session, LinphoneCallState newState, const std::string &message) {
+void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<const CallSession> &session, CallSession::State newState, const string &message) {
 	L_Q();
-	if (newState == LinphoneCallEnd) {
+	if (newState == CallSession::State::End) {
 		shared_ptr<Participant> participant = q->findParticipant(session);
 		if (participant)
 			removeParticipant(participant);
 		participant = findRemovedParticipant(session);
 		if (participant)
 			removedParticipants.remove(participant);
-	} else if (newState == LinphoneCallUpdatedByRemote) {
+	} else if (newState == CallSession::State::UpdatedByRemote) {
 		shared_ptr<Participant> participant = q->findParticipant(session);
 		if (participant && participant->isAdmin())
 			update(session->getPrivate()->getOp());
