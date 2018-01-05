@@ -333,6 +333,11 @@ static {{return}} {{callbackName}}({{params}}) {
 		env->DeleteLocalRef(j_{{objectName}});
 	}
 	{{/jobjects}}
+	{{#jenums}}
+	if (j_{{enumName}}) {
+		env->DeleteLocalRef(j_{{enumName}});
+	}
+	{{/jenums}}
 	{{#jstrings}}
 	if (j_{{stringName}}) {
 		env->DeleteLocalRef(j_{{stringName}});
@@ -426,7 +431,12 @@ jobject Java_{{jni_package}}FactoryImpl_createCore(JNIEnv *env, jobject thiz, jo
 {{#methods}}
 {{#notEmpty}}
 {{return}} {{name}}({{params}}) {
-	{{#notStatic}}{{classCName}} *cptr = ({{classCName}}*)ptr;{{/notStatic}}{{#strings}}
+	{{#notStatic}}{{classCName}} *cptr = ({{classCName}}*)ptr;
+	{{#isLinphoneFactory}}cptr = linphone_factory_get();{{/isLinphoneFactory}}
+	if (cptr == 0) {
+		return {{#hasReturn}}0{{/hasReturn}}{{#hasStringReturn}}0{{/hasStringReturn}}{{#hasListReturn}}0{{/hasListReturn}}{{#hasByteArrayReturn}}0{{/hasByteArrayReturn}};
+	}
+	{{/notStatic}}{{#strings}}
 	const char* c_{{string}} = GetStringUTFChars(env, {{string}});
 	{{/strings}}{{#bytes}}
 	{{bytesargtype}} c_{{bytesargname}} = ({{bytesargtype}})env->GetByteArrayElements({{bytesargname}}, NULL);
