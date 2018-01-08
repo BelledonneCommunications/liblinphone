@@ -139,6 +139,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	object/base-object.h
 	object/clonable-object-p.h
 	object/clonable-object.h
+	object/internal/list.h
 	object/object-head-p.h
 	object/object-head.h
 	object/object-p.h

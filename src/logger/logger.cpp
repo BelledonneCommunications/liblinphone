@@ -22,9 +22,8 @@
 
 #include <bctoolbox/logging.h>
 
-#include "object/base-object-p.h"
-
 #include "logger.h"
+#include "object/base-object-p.h"
 
 // =============================================================================
 
