@@ -27,7 +27,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 /*
- * Compile time list.
+ * Internal compile time list.
  */
 namespace Private {
 	template<typename...>
