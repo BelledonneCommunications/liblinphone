@@ -24,6 +24,8 @@
 #include <mutex>
 
 #include "base-object.h"
+#include "connection.h"
+#include "internal/slot-object.h"
 #include "property-container.h"
 
 // =============================================================================
@@ -35,6 +37,20 @@
 		"Unable to lock. Instance is not an Object or ObjectPrivate." \
 	); \
 	const std::lock_guard<Object::Lock> synchronized(const_cast<Object::Lock &>(getLock()));
+
+#define CHECK_CONNECT_TYPES(SIGNAL_TYPE, SLOT_TYPE) \
+	static_assert( \
+		static_cast<int>(SIGNAL_TYPE::ArgumentsNumber) >= static_cast<int>(SLOT_TYPE::ArgumentsNumber), \
+		"Slot requires less arguments." \
+	); \
+	static_assert( \
+		(Private::ArgsListConsistent<typename SIGNAL_TYPE::Arguments, typename SLOT_TYPE::Arguments>::Value), \
+		"Signal and slot args are not consistent." \
+	); \
+	static_assert( \
+		(Private::ArgsConsistent<typename SLOT_TYPE::ReturnType, typename SIGNAL_TYPE::ReturnType>::Value), \
+		"Return type of signal and slot are not consistent." \
+	);
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -53,16 +69,68 @@ public:
 	std::shared_ptr<Object> getSharedFromThis ();
 	std::shared_ptr<const Object> getSharedFromThis () const;
 
+	template<typename Func1, typename Func2>
+	static typename std::enable_if<Private::FunctionPointer<Func2>::ArgumentsNumber >= 0, Connection>::type connect (
+		const typename Private::FunctionPointer<Func1>::Object *sender,
+		Func1 signal,
+		Func2 slot
+	) {
+		typedef Private::FunctionPointer<Func1> SignalType;
+		typedef Private::FunctionPointer<Func2> SlotType;
+
+		CHECK_CONNECT_TYPES(SignalType, SlotType)
+
+		return connectInternal(
+			sender, reinterpret_cast<void **>(&signal), sender, nullptr,
+			new Private::SlotObjectFunction<
+				Func2,
+				typename Private::ListBuilder<typename SignalType::Arguments, SlotType::ArgumentsNumber>::Value
+			>(slot)
+		);
+	}
+
+	template<typename Func1, typename Func2>
+	static Connection connect (
+		const typename Private::FunctionPointer<Func1>::Object *sender,
+		Func1 signal,
+		const typename Private::FunctionPointer<Func2>::Object *receiver,
+		Func2 slot
+	) {
+		typedef Private::FunctionPointer<Func1> SignalType;
+		typedef Private::FunctionPointer<Func2> SlotType;
+
+		CHECK_CONNECT_TYPES(SignalType, SlotType)
+
+		return connectInternal(sender, reinterpret_cast<void **>(&signal), receiver, reinterpret_cast<void **>(&slot),
+			new Private::SlotObjectMemberFunction<
+				Func2,
+				typename Private::ListBuilder<typename SignalType::Arguments, SlotType::ArgumentsNumber>::Value
+			>(slot)
+		);
+	}
+
+	bool disconnect (const Connection &connection);
+
 protected:
 	explicit Object (ObjectPrivate &p);
 
 	const Lock &getLock () const;
 
 private:
+	static Connection connectInternal (
+		const Object *sender,
+		void **signal,
+		const Object *receiver,
+		void **slot,
+		Private::SlotObject *slotObject
+	);
+
 	L_DECLARE_PRIVATE(Object);
 	L_DISABLE_COPY(Object);
 };
 
 LINPHONE_END_NAMESPACE
+
+#undef CHECK_CONNECT_TYPES
 
 #endif // ifndef _L_OBJECT_H_

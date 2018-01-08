@@ -46,9 +46,20 @@ shared_ptr<const Object> Object::getSharedFromThis () const {
 	return nullptr;
 }
 
-inline const Object::Lock &Object::getLock () const {
+const Object::Lock &Object::getLock () const {
 	L_D();
 	return d->getLock();
+}
+
+Connection Object::connectInternal (
+	const Object *sender,
+	void **signal,
+	const Object *receiver,
+	void **slot,
+	Private::SlotObject *slotObject
+) {
+	// TODO.
+	return Connection();
 }
 
 LINPHONE_END_NAMESPACE
