@@ -139,6 +139,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	object/base-object.h
 	object/clonable-object-p.h
 	object/clonable-object.h
+	object/connection.h
 	object/internal/arguments.h
 	object/internal/function-call.h
 	object/internal/function-pointer.h
@@ -245,6 +246,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	object/app-data-container.cpp
 	object/base-object.cpp
 	object/clonable-object.cpp
+	object/connection.cpp
 	object/object.cpp
 	object/property-container.cpp
 	sal/call-op.cpp
