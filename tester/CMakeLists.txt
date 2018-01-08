@@ -203,6 +203,7 @@ set(SOURCE_FILES_CXX
 	cpim-tester.cpp
 	main-db-tester.cpp
 	multipart-tester.cpp
+	object-tester.cpp
 	property-container-tester.cpp
 )
 
