@@ -24,6 +24,8 @@
 	#include <type_traits>
 #endif
 
+#include "linphone/utils/magic-macros.h"
+
 // =============================================================================
 
 #ifdef __cplusplus
@@ -254,7 +256,7 @@ namespace Private {
 	};
 
 	template<typename... Args>
-	struct ResolveOverload : ResolveMemberFunctionOverload<Args...>, ResolveConstMemberFunctionOverload<Args...> {
+	struct ResolveOverload : ResolveConstMemberFunctionOverload<Args...>, ResolveMemberFunctionOverload<Args...> {
 		using ResolveMemberFunctionOverload<Args...>::operator();
 		using ResolveConstMemberFunctionOverload<Args...>::operator();
 
@@ -265,8 +267,11 @@ namespace Private {
 	};
 }
 
-// Useful to select a specific overloaded function. (Avoid usage of static_cast.)
-#define L_RESOLVE_OVERLOAD(ARGS) LinphonePrivate::Private::ResolveOverload<ARGS>
+#define L_DECLTYPE(NOOP, VAR) decltype(VAR)
+
+// Useful to select a specific overloaded function.
+#define L_RESOLVE_OVERLOAD(...) \
+	LinphonePrivate::Private::ResolveOverload<L_APPLY(L_DECLTYPE, 0, __VA_ARGS__)>()
 
 // -----------------------------------------------------------------------------
 // Wrapper public.

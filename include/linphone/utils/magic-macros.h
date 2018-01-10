@@ -20,11 +20,7 @@
 #ifndef _L_MAGIC_MACROS_H_
 #define _L_MAGIC_MACROS_H_
 
-#include "linphone/utils/general.h"
-
 // =============================================================================
-
-LINPHONE_BEGIN_NAMESPACE
 
 // Concat in depth context.
 #define L_CONCAT__(A, B) A ## B
@@ -281,7 +277,5 @@ LINPHONE_BEGIN_NAMESPACE
 		L_CONCAT(L_APPLY_WITHOUT_COMMA_, L_GET_N_ARGS(__VA_ARGS__)), \
 		(MACRONAME, DATA, __VA_ARGS__) \
 	)
-
-LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_MAGIC_MACROS_H_

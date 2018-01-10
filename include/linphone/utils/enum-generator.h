@@ -20,7 +20,7 @@
 #ifndef _L_ENUM_GENERATOR_H_
 #define _L_ENUM_GENERATOR_H_
 
-#include "linphone/utils/magic-macros.h"
+#include "linphone/utils/general.h"
 
 // =============================================================================
 
