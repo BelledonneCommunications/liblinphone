@@ -32,16 +32,11 @@ using namespace LinphonePrivate;
 
 class TestObjectPrivate : public ObjectPrivate {
 public:
-	TestObjectPrivate () = default;
-
-	TestObjectPrivate (const TestObjectPrivate &) : TestObjectPrivate() {}
 };
 
 class TestObject : public Object {
 public:
 	TestObject () : Object(*new TestObjectPrivate) {}
-
-	TestObject (const TestObject &src) : Object(*new TestObjectPrivate(*src.getPrivate())) {}
 
 private:
 	L_DECLARE_PRIVATE(TestObject);
@@ -51,10 +46,8 @@ private:
 
 static void check_object_creation () {
 	TestObject *object = new TestObject();
-	TestObject *object2 = new TestObject(*object);
 
 	delete object;
-	delete object2;
 }
 
 test_t object_tests[] = {
