@@ -38,7 +38,16 @@
 	); \
 	const std::lock_guard<Object::Lock> synchronized(const_cast<Object::Lock &>(getLock()));
 
-#define CHECK_CONNECT_TYPES(SIGNAL_TYPE, SLOT_TYPE) \
+#define L_SIGNAL_CONCAT_TYPE_ARG(TYPE, PARAM) TYPE PARAM
+
+// Declare one signal method.
+#define L_SIGNAL(NAME, TYPES, ...) void NAME (L_APPLY_LIST(L_SIGNAL_CONCAT_TYPE_ARG, TYPES, __VA_ARGS__)) { \
+	typedef std::remove_reference<decltype(*this)>::type ClassType; \
+	typedef decltype(L_CALL(L_RESOLVE_OVERLOAD, TYPES)(&ClassType::NAME)) SignalType; \
+	SignalType sig; (void)sig; \
+}
+
+#define L_CHECK_CONNECT_TYPES(SIGNAL_TYPE, SLOT_TYPE) \
 	static_assert( \
 		static_cast<int>(SIGNAL_TYPE::ArgumentsNumber) >= static_cast<int>(SLOT_TYPE::ArgumentsNumber), \
 		"Slot requires less arguments." \
@@ -78,7 +87,7 @@ public:
 		typedef Private::FunctionPointer<Func1> SignalType;
 		typedef Private::FunctionPointer<Func2> SlotType;
 
-		CHECK_CONNECT_TYPES(SignalType, SlotType)
+		L_CHECK_CONNECT_TYPES(SignalType, SlotType)
 
 		return connectInternal(
 			sender, reinterpret_cast<void **>(&signal), sender, nullptr,
@@ -99,7 +108,7 @@ public:
 		typedef Private::FunctionPointer<Func1> SignalType;
 		typedef Private::FunctionPointer<Func2> SlotType;
 
-		CHECK_CONNECT_TYPES(SignalType, SlotType)
+		L_CHECK_CONNECT_TYPES(SignalType, SlotType)
 
 		return connectInternal(sender, reinterpret_cast<void **>(&signal), receiver, reinterpret_cast<void **>(&slot),
 			new Private::SlotObjectMemberFunction<
@@ -131,6 +140,6 @@ private:
 
 LINPHONE_END_NAMESPACE
 
-#undef CHECK_CONNECT_TYPES
+#undef L_CHECK_CONNECT_TYPES
 
 #endif // ifndef _L_OBJECT_H_

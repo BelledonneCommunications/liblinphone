@@ -38,6 +38,9 @@ class TestObject : public Object {
 public:
 	TestObject () : Object(*new TestObjectPrivate) {}
 
+	L_SIGNAL(signal1, (int, float), toto, tata);
+	L_SIGNAL(signal2, (bool, float, int), a, b, c);
+
 private:
 	L_DECLARE_PRIVATE(TestObject);
 };

@@ -267,11 +267,9 @@ namespace Private {
 	};
 }
 
-#define L_DECLTYPE(NOOP, VAR) decltype(VAR)
-
 // Useful to select a specific overloaded function.
 #define L_RESOLVE_OVERLOAD(...) \
-	LinphonePrivate::Private::ResolveOverload<L_APPLY(L_DECLTYPE, 0, __VA_ARGS__)>()
+	LinphonePrivate::Private::ResolveOverload<__VA_ARGS__>()
 
 // -----------------------------------------------------------------------------
 // Wrapper public.

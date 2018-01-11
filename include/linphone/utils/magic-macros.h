@@ -22,18 +22,29 @@
 
 // =============================================================================
 
+// -----------------------------------------------------------------------------
+// Misc.
+// -----------------------------------------------------------------------------
+
 // Concat in depth context.
 #define L_CONCAT__(A, B) A ## B
 #define L_CONCAT_(A, B) L_CONCAT__(A, B)
 #define L_CONCAT(A, B) L_CONCAT_(A, B)
+
+// Expand X. Useful to deal with variadic on Windows.
+#define L_EXPAND(X) X
+
+#define L_EXPAND_VARIADIC(...) __VA_ARGS__
+
+// -----------------------------------------------------------------------------
+// Variadic arguments.
+// -----------------------------------------------------------------------------
 
 // Get argument numbers from variadic.
 #define L_ARG_N( \
 	A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, \
 	A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, N, ... \
 ) N
-
-#define L_EXPAND(X) X
 
 #define L_GET_N_ARGS(...) L_EXPAND(L_ARG_N( \
 	__VA_ARGS__, \
@@ -94,9 +105,19 @@
 	L_CONCAT(L_GET_HEAP_, L_GET_N_ARGS_SUB(__VA_ARGS__)) (__VA_ARGS__) \
 )
 
+#define L_GET_TAIL(NOOP, ...) __VA_ARGS__
+
+// -----------------------------------------------------------------------------
+// Callers.
+// -----------------------------------------------------------------------------
+
 // Call a macro on args.
 #define L_CALL(MACRO, ARGS) MACRO ARGS
 #define L_CALL_HELPER(MACRO, ARGS) MACRO ARGS
+
+// -----------------------------------------------------------------------------
+// Apply.
+// -----------------------------------------------------------------------------
 
 // Map each variadic args.
 #define L_APPLY_1(MACRONAME, DATA, A1) \
@@ -278,4 +299,59 @@
 		(MACRONAME, DATA, __VA_ARGS__) \
 	)
 
-#endif // ifndef _L_MAGIC_MACROS_H_
+// -----------------------------------------------------------------------------
+// Apply on list.
+// -----------------------------------------------------------------------------
+
+#define L_APPLY_LIST_CALL_HELPER(MACRONAME, LIST, A1) \
+	L_CALL_HELPER(MACRONAME, (L_CALL_HELPER(L_GET_ARG_1, LIST), A1))
+
+#define L_APPLY_LIST_GET_TAIL(LIST) \
+	(L_CALL_HELPER(L_GET_TAIL, LIST))
+
+#define L_APPLY_LIST_1(MACRONAME, LIST, A1) \
+	L_APPLY_LIST_CALL_HELPER(MACRONAME, LIST, A1)
+
+#define L_APPLY_LIST_2(MACRONAME, LIST, A1, A2) \
+	L_APPLY_LIST_CALL_HELPER(MACRONAME, LIST, A1), \
+	L_APPLY_LIST_1(MACRONAME, L_APPLY_LIST_GET_TAIL(LIST), A2)
+
+#define L_APPLY_LIST_3(MACRONAME, LIST, A1, A2, A3) \
+	L_APPLY_LIST_CALL_HELPER(MACRONAME, LIST, A1), \
+	L_APPLY_LIST_2(MACRONAME, L_APPLY_LIST_GET_TAIL(LIST), A2, A3)
+
+#define L_APPLY_LIST_4(MACRONAME, LIST, A1, A2, A3, A4) \
+	L_APPLY_LIST_CALL_HELPER(MACRONAME, LIST, A1), \
+	L_APPLY_LIST_3(MACRONAME, L_APPLY_LIST_GET_TAIL(LIST), A2, A3, A4)
+
+#define L_APPLY_LIST_5(MACRONAME, LIST, A1, A2, A3, A4, A5) \
+	L_APPLY_LIST_CALL_HELPER(MACRONAME, LIST, A1), \
+	L_APPLY_LIST_4(MACRONAME, L_APPLY_LIST_GET_TAIL(LIST), A2, A3, A4, A5)
+
+#define L_APPLY_LIST_6(MACRONAME, LIST, A1, A2, A3, A4, A5, A6) \
+	L_APPLY_LIST_CALL_HELPER(MACRONAME, LIST, A1), \
+	L_APPLY_LIST_5(MACRONAME, L_APPLY_LIST_GET_TAIL(LIST), A2, A3, A4, A5, A6)
+
+#define L_APPLY_LIST_7(MACRONAME, LIST, A1, A2, A3, A4, A5, A6, A7) \
+	L_APPLY_LIST_CALL_HELPER(MACRONAME, LIST, A1), \
+	L_APPLY_LIST_6(MACRONAME, L_APPLY_LIST_GET_TAIL(LIST), A2, A3, A4, A5, A6, A7)
+
+#define L_APPLY_LIST_8(MACRONAME, LIST, A1, A2, A3, A4, A5, A6, A7, A8) \
+	L_APPLY_LIST_CALL_HELPER(MACRONAME, LIST, A1), \
+	L_APPLY_LIST_7(MACRONAME, L_APPLY_LIST_GET_TAIL(LIST), A2, A3, A4, A5, A6, A7, A8)
+
+#define L_APPLY_LIST_9(MACRONAME, LIST, A1, A2, A3, A4, A5, A6, A7, A8, A9) \
+	L_APPLY_LIST_CALL_HELPER(MACRONAME, LIST, A1), \
+	L_APPLY_LIST_8(MACRONAME, L_APPLY_LIST_GET_TAIL(LIST), A2, A3, A4, A5, A6, A7, A8, A9)
+
+#define L_APPLY_LIST_10(MACRONAME, LIST, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) \
+	L_APPLY_LIST_CALL_HELPER(MACRONAME, LIST, A1), \
+	L_APPLY_LIST_9(MACRONAME, L_APPLY_LIST_GET_TAIL(LIST), A2, A3, A4, A5, A6, A7, A8, A9, A10)
+
+#define L_APPLY_LIST(MACRONAME, LIST, ...) \
+	L_CALL( \
+		L_CONCAT(L_APPLY_LIST_, L_GET_N_ARGS(__VA_ARGS__)), \
+		(MACRONAME, LIST, __VA_ARGS__) \
+	)
+
+#endif // ifndef _MAGIC_MACROS_H_
