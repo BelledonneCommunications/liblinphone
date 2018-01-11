@@ -25,6 +25,7 @@
 
 #include "base-object.h"
 #include "connection.h"
+#include "internal/signal-emitter.h"
 #include "internal/slot-object.h"
 #include "property-container.h"
 
@@ -44,7 +45,7 @@
 #define L_SIGNAL(NAME, TYPES, ...) void NAME (L_APPLY_LIST(L_SIGNAL_CONCAT_TYPE_ARG, TYPES, __VA_ARGS__)) { \
 	typedef std::remove_reference<decltype(*this)>::type ClassType; \
 	typedef decltype(L_CALL(L_RESOLVE_OVERLOAD, TYPES)(&ClassType::NAME)) SignalType; \
-	SignalType sig; (void)sig; \
+	LinphonePrivate::Private::SignalEmitter<SignalType, __LINE__>{this}(__VA_ARGS__); \
 }
 
 #define L_CHECK_CONNECT_TYPES(SIGNAL_TYPE, SLOT_TYPE) \

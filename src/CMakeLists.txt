@@ -144,6 +144,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	object/internal/function-call.h
 	object/internal/function-pointer.h
 	object/internal/list.h
+	object/internal/signal-emitter.h
 	object/internal/slot-object.h
 	object/object-head-p.h
 	object/object-head.h
