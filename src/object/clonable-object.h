@@ -42,7 +42,7 @@ LINPHONE_BEGIN_NAMESPACE
  * intelligence.
  */
 class LINPHONE_PUBLIC ClonableObject : public PropertyContainer {
-	L_OBJECT;
+	L_OBJECT_HEAD;
 
 public:
 	virtual ~ClonableObject ();

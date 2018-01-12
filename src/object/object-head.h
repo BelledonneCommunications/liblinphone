@@ -22,7 +22,7 @@
 
 // =============================================================================
 
-#define L_OBJECT \
+#define L_OBJECT_HEAD \
 	void *getCBackPtr () const; \
 	void setCBackPtr (void *cBackPtr);
 

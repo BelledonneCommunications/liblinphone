@@ -35,6 +35,8 @@ public:
 };
 
 class TestObject : public Object {
+	L_OBJECT(TestObject);
+
 public:
 	TestObject () : Object(*new TestObjectPrivate) {}
 

@@ -26,6 +26,10 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+// -----------------------------------------------------------------------------
+// Private Impl.
+// -----------------------------------------------------------------------------
+
 namespace Private {
 	// See: http://en.cppreference.com/w/cpp/types/void_t
 	template<typename... T> struct MakeVoid {
@@ -46,11 +50,25 @@ namespace Private {
 			decltype(std::declval<T&>()[std::declval<const typename T::key_type&>()])
 		>
 	> : std::true_type {};
+
+	template<typename T, typename U = void>
+	struct IsDefinedTypeImpl : std::false_type {};
+
+	template<typename T>
+	struct IsDefinedTypeImpl<T, typename void_t<T>::type> : std::true_type {};
 };
+
+// -----------------------------------------------------------------------------
+// Public API.
+// -----------------------------------------------------------------------------
 
 // Check if a type is a std container like map, unordered_map...
 template<typename T>
 struct IsMapContainer : Private::IsMapContainerImpl<T>::type {};
+
+// Check if a type is defined.
+template<typename T>
+struct IsDefinedTypeImpl : Private::IsDefinedTypeImpl<T>::type {};
 
 LINPHONE_END_NAMESPACE
 

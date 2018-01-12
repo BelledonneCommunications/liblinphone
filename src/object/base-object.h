@@ -36,7 +36,7 @@ class BaseObjectPrivate;
  * like Events.
  */
 class LINPHONE_PUBLIC BaseObject {
-	L_OBJECT;
+	L_OBJECT_HEAD;
 
 public:
 	virtual ~BaseObject ();

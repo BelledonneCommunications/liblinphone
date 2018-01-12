@@ -31,7 +31,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class ClonableObjectPrivate {
-	L_OBJECT_PRIVATE;
+	L_OBJECT_HEAD_PRIVATE;
 
 public:
 	ClonableObjectPrivate () = default;

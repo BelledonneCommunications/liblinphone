@@ -29,7 +29,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class BaseObjectPrivate {
-	L_OBJECT_PRIVATE;
+	L_OBJECT_HEAD_PRIVATE;
 
 public:
 	BaseObjectPrivate () = default;

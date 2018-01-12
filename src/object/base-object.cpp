@@ -27,7 +27,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-L_OBJECT_IMPL(BaseObject);
+L_OBJECT_HEAD_IMPL(BaseObject);
 
 BaseObject::BaseObject (BaseObjectPrivate &p) : mPrivate(&p) {
 	mPrivate->mPublic = this;

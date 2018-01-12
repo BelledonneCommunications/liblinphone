@@ -28,7 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-L_OBJECT_IMPL(ClonableObject);
+L_OBJECT_HEAD_IMPL(ClonableObject);
 
 ClonableObject::ClonableObject (ClonableObjectPrivate &p) {
 	setRef(p);

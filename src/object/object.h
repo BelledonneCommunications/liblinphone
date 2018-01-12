@@ -41,6 +41,15 @@
 
 #define L_SIGNAL_CONCAT_TYPE_ARG(TYPE, PARAM) TYPE PARAM
 
+#define L_OBJECT(NAME) \
+	private: \
+		constexpr static const char *lName = #NAME; \
+		\
+	public: \
+		constexpr static const char *getName () { \
+			return lName; \
+		}
+
 // Declare one signal method.
 #define L_SIGNAL(NAME, TYPES, ...) void NAME (L_APPLY_LIST(L_SIGNAL_CONCAT_TYPE_ARG, TYPES, __VA_ARGS__)) { \
 	typedef std::remove_reference<decltype(*this)>::type ClassType; \

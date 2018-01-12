@@ -22,7 +22,7 @@
 
 // =============================================================================
 
-#define L_OBJECT_IMPL(CLASS) \
+#define L_OBJECT_HEAD_IMPL(CLASS) \
 	void *CLASS::getCBackPtr () const { \
 		L_D(); \
 		return d->cBackPtr; \
@@ -32,7 +32,7 @@
 		d->cBackPtr = cBackPtr; \
 	}
 
-#define L_OBJECT_PRIVATE \
+#define L_OBJECT_HEAD_PRIVATE \
 	void *cBackPtr = nullptr;
 
 #endif // ifndef _L_OBJECT_HEAD_P_H_
