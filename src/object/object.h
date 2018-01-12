@@ -31,33 +31,15 @@
 
 // =============================================================================
 
-// Must be used in Object or ObjectPrivate.
-#define L_SYNC() \
-	static_assert( \
-		!std::is_base_of<Object, decltype(this)>::value && !std::is_base_of<ObjectPrivate, decltype(this)>::value, \
-		"Unable to lock. Instance is not an Object or ObjectPrivate." \
-	); \
-	const std::lock_guard<Object::Lock> synchronized(const_cast<Object::Lock &>(getLock()));
+LINPHONE_BEGIN_NAMESPACE
 
-#define L_SIGNAL_CONCAT_TYPE_ARG(TYPE, PARAM) TYPE PARAM
+// -----------------------------------------------------------------------------
+// Internal, do not use directly.
+// -----------------------------------------------------------------------------
 
-#define L_OBJECT(NAME) \
-	private: \
-		constexpr static const char *lName = #NAME; \
-		\
-	public: \
-		constexpr static const char *getName () { \
-			return lName; \
-		}
+#define L_INTERNAL_SIGNAL_CONCAT_TYPE_ARG(TYPE, PARAM) TYPE PARAM
 
-// Declare one signal method.
-#define L_SIGNAL(NAME, TYPES, ...) void NAME (L_APPLY_LIST(L_SIGNAL_CONCAT_TYPE_ARG, TYPES, __VA_ARGS__)) { \
-	typedef std::remove_reference<decltype(*this)>::type ClassType; \
-	typedef decltype(L_CALL(L_RESOLVE_OVERLOAD, TYPES)(&ClassType::NAME)) SignalType; \
-	LinphonePrivate::Private::SignalEmitter<SignalType, __LINE__>{this}(__VA_ARGS__); \
-}
-
-#define L_CHECK_CONNECT_TYPES(SIGNAL_TYPE, SLOT_TYPE) \
+#define L_INTERNAL_CHECK_CONNECT_TYPES(SIGNAL_TYPE, SLOT_TYPE) \
 	static_assert( \
 		static_cast<int>(SIGNAL_TYPE::ArgumentsNumber) >= static_cast<int>(SLOT_TYPE::ArgumentsNumber), \
 		"Slot requires less arguments." \
@@ -71,7 +53,67 @@
 		"Return type of signal and slot are not consistent." \
 	);
 
-LINPHONE_BEGIN_NAMESPACE
+#define L_INTERNAL_SIGNAL_INDEX(NAME, LINE) L_CONCAT(lSignalIndexOf ## _, L_CONCAT(NAME ## _, LINE))
+
+#define L_INTERNAL_META_RETURN(VALUE) -> decltype(VALUE) { return VALUE; }
+
+namespace Private {
+	template<int N = 255>
+	struct MetaObjectCounter : MetaObjectCounter<N - 1> {
+		static constexpr int value = N;
+		static constexpr MetaObjectCounter<N - 1> prev () {
+			return {};
+		}
+	};
+
+	template<>
+	struct MetaObjectCounter<0> {
+		static constexpr int value = 0;
+	};
+};
+
+// -----------------------------------------------------------------------------
+// Public API.
+// -----------------------------------------------------------------------------
+
+// Must be used in Object or ObjectPrivate.
+#define L_SYNC() \
+	static_assert( \
+		!std::is_base_of<Object, decltype(this)>::value && !std::is_base_of<ObjectPrivate, decltype(this)>::value, \
+		"Unable to lock. Instance is not an Object or ObjectPrivate." \
+	); \
+	const std::lock_guard<Object::Lock> synchronized(const_cast<Object::Lock &>(getLock()));
+
+// Declare one Smart Object with Signals.
+#define L_OBJECT(NAME) \
+	private: \
+		typedef NAME lType; \
+		static constexpr const char *lName = #NAME; \
+		friend constexpr std::tuple<> lMetaSignals (LinphonePrivate::Private::MetaObjectCounter<0>, lType **) { return {}; } \
+	public: \
+		static constexpr const char *getName () { \
+			return lName; \
+		}
+
+// Declare one signal method.
+#define L_SIGNAL(NAME, TYPES, ...) \
+	void NAME (L_APPLY_LIST(L_INTERNAL_SIGNAL_CONCAT_TYPE_ARG, TYPES, __VA_ARGS__)) { \
+		typedef decltype(L_CALL(L_RESOLVE_OVERLOAD, TYPES)(&lType::NAME)) SignalType; \
+		LinphonePrivate::Private::SignalEmitter<SignalType, L_INTERNAL_SIGNAL_INDEX(NAME, __LINE__)>{this}(__VA_ARGS__); \
+	} \
+	static constexpr int L_INTERNAL_SIGNAL_INDEX(NAME, __LINE__) = \
+		std::tuple_size< \
+			decltype(lMetaSignals(LinphonePrivate::Private::MetaObjectCounter<>(), static_cast<lType **>(nullptr))) \
+		>::value; \
+		friend constexpr auto lMetaSignals ( \
+			LinphonePrivate::Private::MetaObjectCounter<L_INTERNAL_SIGNAL_INDEX(NAME, __LINE__) + 1> counter, \
+			lType ** context \
+		) L_INTERNAL_META_RETURN( \
+			std::tuple_cat( \
+				lMetaSignals(counter.prev(), context), \
+				std::make_tuple('a') \
+			) \
+		)
 
 /*
  * Main Object of Linphone. Can be shared but is not Clonable.
@@ -97,7 +139,7 @@ public:
 		typedef Private::FunctionPointer<Func1> SignalType;
 		typedef Private::FunctionPointer<Func2> SlotType;
 
-		L_CHECK_CONNECT_TYPES(SignalType, SlotType)
+		L_INTERNAL_CHECK_CONNECT_TYPES(SignalType, SlotType)
 
 		return connectInternal(
 			sender, reinterpret_cast<void **>(&signal), sender, nullptr,
@@ -118,7 +160,7 @@ public:
 		typedef Private::FunctionPointer<Func1> SignalType;
 		typedef Private::FunctionPointer<Func2> SlotType;
 
-		L_CHECK_CONNECT_TYPES(SignalType, SlotType)
+		L_INTERNAL_CHECK_CONNECT_TYPES(SignalType, SlotType)
 
 		return connectInternal(sender, reinterpret_cast<void **>(&signal), receiver, reinterpret_cast<void **>(&slot),
 			new Private::SlotObjectMemberFunction<
@@ -148,8 +190,8 @@ private:
 	L_DISABLE_COPY(Object);
 };
 
-LINPHONE_END_NAMESPACE
+#undef L_INTERNAL_CHECK_CONNECT_TYPES
 
-#undef L_CHECK_CONNECT_TYPES
+LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_OBJECT_H_
