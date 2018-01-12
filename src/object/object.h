@@ -31,10 +31,8 @@
 
 // =============================================================================
 
-LINPHONE_BEGIN_NAMESPACE
-
 // -----------------------------------------------------------------------------
-// Internal, do not use directly.
+// Internal macros, do not use directly.
 // -----------------------------------------------------------------------------
 
 #define L_INTERNAL_SIGNAL_CONCAT_TYPE_ARG(TYPE, PARAM) TYPE PARAM
@@ -57,23 +55,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 #define L_INTERNAL_META_RETURN(VALUE) -> decltype(VALUE) { return VALUE; }
 
-namespace Private {
-	template<int N = 255>
-	struct MetaObjectCounter : MetaObjectCounter<N - 1> {
-		static constexpr int value = N;
-		static constexpr MetaObjectCounter<N - 1> prev () {
-			return {};
-		}
-	};
-
-	template<>
-	struct MetaObjectCounter<0> {
-		static constexpr int value = 0;
-	};
-};
-
 // -----------------------------------------------------------------------------
-// Public API.
+// Public macros API.
 // -----------------------------------------------------------------------------
 
 // Must be used in Object or ObjectPrivate.
@@ -111,9 +94,48 @@ namespace Private {
 		) L_INTERNAL_META_RETURN( \
 			std::tuple_cat( \
 				lMetaSignals(counter.prev(), context), \
-				std::make_tuple('a') \
+				std::make_tuple(LinphonePrivate::Private::makeMetaObjectSignalInfo( \
+					L_CALL(L_RESOLVE_OVERLOAD, TYPES)(&lType::NAME), \
+					#NAME \
+				)) \
 			) \
 		)
+
+// =============================================================================
+
+LINPHONE_BEGIN_NAMESPACE
+
+namespace Private {
+	// Compilation counter.
+	template<int N = 255>
+	struct MetaObjectCounter : MetaObjectCounter<N - 1> {
+		static constexpr int value = N;
+		static constexpr MetaObjectCounter<N - 1> prev () {
+			return {};
+		}
+	};
+
+	template<>
+	struct MetaObjectCounter<0> {
+		static constexpr int value = 0;
+	};
+
+	/*
+	* Meta data of one object's signal.
+	* Useful to get arguments number, params and signal name.
+	*/
+	template<typename Signal, int NameLength>
+	struct MetaObjectSignalInfo {
+		Signal signal;
+		StringLiteral<NameLength> name;
+		static constexpr int argumentsNumber = FunctionPointer<Signal>::ArgumentsNumber;
+	};
+
+	template<typename Signal, int NameLength>
+	constexpr MetaObjectSignalInfo<Signal, NameLength> makeMetaObjectSignalInfo (Signal signal, StringLiteral<NameLength> &name) {
+		return { signal, *name };
+	}
+};
 
 /*
  * Main Object of Linphone. Can be shared but is not Clonable.
@@ -190,8 +212,8 @@ private:
 	L_DISABLE_COPY(Object);
 };
 
-#undef L_INTERNAL_CHECK_CONNECT_TYPES
-
 LINPHONE_END_NAMESPACE
+
+#undef L_INTERNAL_CHECK_CONNECT_TYPES
 
 #endif // ifndef _L_OBJECT_H_

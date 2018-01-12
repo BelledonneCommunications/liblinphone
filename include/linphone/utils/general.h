@@ -278,6 +278,13 @@ namespace Private {
 #define L_DECL_C_STRUCT(STRUCT) typedef struct _ ## STRUCT STRUCT;
 #define L_DECL_C_STRUCT_PREFIX_LESS(STRUCT) typedef struct STRUCT STRUCT;
 
+// -----------------------------------------------------------------------------
+// Generic helpers.
+// -----------------------------------------------------------------------------
+
+// See: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4121.pdf
+template<int N> using StringLiteral = const char [N];
+
 #endif // ifdef __cplusplus
 
 LINPHONE_END_NAMESPACE

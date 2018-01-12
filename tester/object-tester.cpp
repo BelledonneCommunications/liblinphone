@@ -30,8 +30,8 @@ using namespace LinphonePrivate;
 
 // -----------------------------------------------------------------------------
 
-#define CHECK_SIGNAL_INDEX(NAME, EXPECTED_VALUE) \
-  static_assert(L_INTERNAL_SIGNAL_INDEX(NAME, __LINE__) == EXPECTED_VALUE, "Bad signal index.");
+#define CHECK_SIGNAL(NAME, INDEX) \
+	static_assert(L_INTERNAL_SIGNAL_INDEX(NAME, __LINE__) == INDEX, "Bad signal index.");
 
 class TestObjectPrivate : public ObjectPrivate {
 public:
@@ -43,8 +43,8 @@ class TestObject : public Object {
 public:
 	TestObject () : Object(*new TestObjectPrivate) {}
 
-	L_SIGNAL(signal1, (int, float), toto, tata); CHECK_SIGNAL_INDEX(signal1, 0);
-	L_SIGNAL(signal2, (bool, float, int), a, b, c); CHECK_SIGNAL_INDEX(signal2, 1);
+	L_SIGNAL(signal1, (int, float), toto, tata); CHECK_SIGNAL(signal1, 0);
+	L_SIGNAL(signal2, (bool, float, int), a, b, c); CHECK_SIGNAL(signal2, 1);
 
 private:
 	L_DECLARE_PRIVATE(TestObject);
