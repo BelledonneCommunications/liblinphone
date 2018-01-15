@@ -32,7 +32,6 @@ using namespace LinphonePrivate;
 
 #define CHECK_SIGNAL(NAME, INDEX) \
 	static_assert(L_INTERNAL_SIGNAL_INDEX(NAME, __LINE__) == INDEX, "Bad signal index.");
-
 class TestObjectPrivate : public ObjectPrivate {
 public:
 };
@@ -46,6 +45,14 @@ public:
 	L_SIGNAL(signal1, (int, float), toto, tata); CHECK_SIGNAL(signal1, 0);
 	L_SIGNAL(signal2, (bool, float, int), a, b, c); CHECK_SIGNAL(signal2, 1);
 
+	static void toto () {
+		lMetaSignals(
+			LinphonePrivate::Private::MetaObjectCounter<5>(),
+			static_cast<lType **>(nullptr)
+		);
+
+	}
+
 private:
 	L_DECLARE_PRIVATE(TestObject);
 };
@@ -55,6 +62,7 @@ private:
 static void check_object_creation () {
 	TestObject *object = new TestObject();
 
+	TestObject::toto();
 	delete object;
 }
 

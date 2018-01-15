@@ -88,18 +88,18 @@
 		std::tuple_size< \
 			decltype(lMetaSignals(LinphonePrivate::Private::MetaObjectCounter<>(), static_cast<lType **>(nullptr))) \
 		>::value; \
-		friend constexpr auto lMetaSignals ( \
-			LinphonePrivate::Private::MetaObjectCounter<L_INTERNAL_SIGNAL_INDEX(NAME, __LINE__) + 1> counter, \
-			lType ** context \
-		) L_INTERNAL_META_RETURN( \
-			std::tuple_cat( \
-				lMetaSignals(counter.prev(), context), \
-				std::make_tuple(LinphonePrivate::Private::makeMetaObjectSignalInfo( \
-					L_CALL(L_RESOLVE_OVERLOAD, TYPES)(&lType::NAME), \
-					#NAME \
-				)) \
-			) \
-		)
+	friend constexpr auto lMetaSignals ( \
+		LinphonePrivate::Private::MetaObjectCounter<L_INTERNAL_SIGNAL_INDEX(NAME, __LINE__) + 1> counter, \
+		lType **context \
+	) L_INTERNAL_META_RETURN( \
+		std::tuple_cat( \
+			lMetaSignals(counter.prev(), context), \
+			std::make_tuple(LinphonePrivate::Private::makeMetaObjectSignalInfo( \
+				L_CALL(L_RESOLVE_OVERLOAD, TYPES)(&lType::NAME), \
+				#NAME \
+			)) \
+		) \
+	)
 
 // =============================================================================
 
