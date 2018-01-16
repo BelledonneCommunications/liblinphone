@@ -97,7 +97,7 @@
 	) L_AUTO_CONSTEXPR_RETURN( \
 		std::tuple_cat( \
 			lMetaSignals(counter.prev(), context), \
-			std::make_tuple(LinphonePrivate::Private::makeMetaObjectSignalInfo( \
+			std::make_tuple(LinphonePrivate::Private::makeFunctionInfo( \
 				L_CALL(L_RESOLVE_OVERLOAD, TYPES)(&lType::NAME), \
 				#NAME, \
 				makeStringLiteralList(L_APPLY(L_INTERNAL_STRINGIFY, , L_CALL(L_EXPAND_VARIADIC, TYPES))), \
@@ -124,29 +124,6 @@ namespace Private {
 	struct MetaObjectCounter<0> {
 		static constexpr int value = 0;
 	};
-
-	/*
-	* Meta data of one object's signal.
-	* Useful to get arguments number, params and signal name.
-	*/
-	template<typename Signal, int NameLength, typename ArgumentsTypes, typename ArgumentsNames>
-	struct MetaObjectSignalInfo {
-		Signal signal;
-		StringLiteral<NameLength> name;
-		ArgumentsTypes argumentsTypes;
-		ArgumentsNames argumentsNames;
-		static constexpr int argumentsNumber = FunctionPointer<Signal>::ArgumentsNumber;
-	};
-
-	template<typename Signal, int NameLength, typename ArgumentsTypes, typename ArgumentsNames>
-	constexpr MetaObjectSignalInfo<Signal, NameLength, ArgumentsTypes, ArgumentsNames> makeMetaObjectSignalInfo (
-		Signal signal,
-		RawStringLiteral<NameLength> &name,
-		const ArgumentsTypes &argumentsTypes,
-		const ArgumentsNames &argumentsNames
-	) {
-		return { signal, { name }, argumentsTypes, argumentsNames };
-	}
 };
 
 /*

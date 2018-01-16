@@ -79,6 +79,29 @@ namespace Private {
 
 	// A member function with const qualifier.
 	MEMBER_FUNCTION(const);
+
+	/*
+	* Meta info of one function pointer.
+	* Useful to get arguments number, params and function name.
+	*/
+	template<typename Function, int NameLength, typename ArgumentsTypes, typename ArgumentsNames>
+	struct FunctionInfo {
+		Function function;
+		StringLiteral<NameLength> name;
+		ArgumentsTypes argumentsTypes;
+		ArgumentsNames argumentsNames;
+		static constexpr int argumentsNumber = FunctionPointer<Function>::ArgumentsNumber;
+	};
+
+	template<typename Function, int NameLength, typename ArgumentsTypes, typename ArgumentsNames>
+	constexpr FunctionInfo<Function, NameLength, ArgumentsTypes, ArgumentsNames> makeFunctionInfo (
+		Function function,
+		RawStringLiteral<NameLength> &name,
+		const ArgumentsTypes &argumentsTypes,
+		const ArgumentsNames &argumentsNames
+	) {
+		return { function, { name }, argumentsTypes, argumentsNames };
+	}
 }
 
 LINPHONE_END_NAMESPACE
