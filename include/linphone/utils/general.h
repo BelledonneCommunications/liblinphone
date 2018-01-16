@@ -21,6 +21,7 @@
 #define _L_GENERAL_H_
 
 #ifdef __cplusplus
+	#include <tuple>
 	#include <type_traits>
 #endif
 
@@ -102,6 +103,8 @@ void l_assert (const char *condition, const char *file, int line);
 
 // Define an integer version like: 0xXXYYZZ, XX=MAJOR, YY=MINOR, and ZZ=PATCH.
 #define L_VERSION(MAJOR, MINOR, PATCH) (((MAJOR) << 16) | ((MINOR) << 8) | (PATCH))
+
+#define L_AUTO_CONSTEXPR_RETURN(VALUE) -> decltype(VALUE) { return VALUE; }
 
 // -----------------------------------------------------------------------------
 // Data access.
@@ -312,7 +315,7 @@ template<std::size_t N>
 using MakeIndexSequence = typename Private::MakeIndexSequence<N>::type;
 
 // -----------------------------------------------------------------------------
-// Compil-time string.
+// Compile-time string.
 // -----------------------------------------------------------------------------
 
 namespace Private {
@@ -352,6 +355,30 @@ template<std::size_t N>
 constexpr StringLiteral<N> makeStringLiteral (RawStringLiteral<N> &raw) {
 	return StringLiteral<N>(raw);
 }
+
+// -----------------------------------------------------------------------------
+// Compile-time string list.
+// -----------------------------------------------------------------------------
+
+template<typename... T>
+using StringLiteralList = std::tuple<T...>;
+
+constexpr StringLiteralList<> makeStringLiteralList () {
+	return {};
+}
+
+template<std::size_t N, typename... T>
+constexpr auto makeStringLiteralList (RawStringLiteral<N> &raw, T&... list) L_AUTO_CONSTEXPR_RETURN(
+	std::tuple_cat(std::make_tuple(StringLiteral<N>(raw)), makeStringLiteralList(list...))
+)
+
+template<std::size_t N, typename T>
+constexpr auto appendStringLiteral (
+	const StringLiteralList<T> &list,
+	const StringLiteral<N> &stringLiteral
+) L_AUTO_CONSTEXPR_RETURN(
+	std::tuple_cat(list, stringLiteral)
+)
 
 #endif // ifdef __cplusplus
 

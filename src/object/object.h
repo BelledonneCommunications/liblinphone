@@ -53,8 +53,6 @@
 
 #define L_INTERNAL_SIGNAL_INDEX(NAME, LINE) L_CONCAT(lSignalIndexOf ## _, L_CONCAT(NAME ## _, LINE))
 
-#define L_INTERNAL_META_RETURN(VALUE) -> decltype(VALUE) { return VALUE; }
-
 // -----------------------------------------------------------------------------
 // Public macros API.
 // -----------------------------------------------------------------------------
@@ -94,7 +92,7 @@
 	friend constexpr auto lMetaSignals ( \
 		LinphonePrivate::Private::MetaObjectCounter<L_INTERNAL_SIGNAL_INDEX(NAME, __LINE__) + 1> counter, \
 		lType **context \
-	) L_INTERNAL_META_RETURN( \
+	) L_AUTO_CONSTEXPR_RETURN( \
 		std::tuple_cat( \
 			lMetaSignals(counter.prev(), context), \
 			std::make_tuple(LinphonePrivate::Private::makeMetaObjectSignalInfo( \
