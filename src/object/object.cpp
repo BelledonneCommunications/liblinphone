@@ -59,6 +59,7 @@ const Object::Lock &Object::getLock () const {
 	do { \
 		if (!PARAM) { \
 			lError() << "No " #PARAM " given!"; \
+			slotObject->call(Private::SlotObject::Delete, nullptr, nullptr); \
 			return Connection(); \
 		} \
 	} while (false)
