@@ -54,6 +54,7 @@
 #define L_INTERNAL_SIGNAL_INDEX(NAME, LINE) L_CONCAT(lSignalIndexOf ## _, L_CONCAT(NAME ## _, LINE))
 
 #define L_INTERNAL_STRINGIFY(NOOP, VALUE) #VALUE
+#define L_INTERNAL_STRINGIFY_LIST(...) makeStringLiteralList(L_APPLY(L_INTERNAL_STRINGIFY, , __VA_ARGS__))
 
 // -----------------------------------------------------------------------------
 // Public macros API.
@@ -100,8 +101,8 @@
 			std::make_tuple(LinphonePrivate::Private::makeFunctionInfo( \
 				L_CALL(L_RESOLVE_OVERLOAD, TYPES)(&lType::NAME), \
 				#NAME, \
-				makeStringLiteralList(L_APPLY(L_INTERNAL_STRINGIFY, , L_CALL(L_EXPAND_VARIADIC, TYPES))), \
-				makeStringLiteralList(L_APPLY(L_INTERNAL_STRINGIFY, , __VA_ARGS__)) \
+				L_INTERNAL_STRINGIFY_LIST(L_CALL(L_EXPAND_VARIADIC, TYPES)), \
+				L_INTERNAL_STRINGIFY_LIST(__VA_ARGS__) \
 			)) \
 		) \
 	)
