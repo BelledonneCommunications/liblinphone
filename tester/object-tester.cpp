@@ -17,7 +17,6 @@
  */
 
 #include "object/object-p.h"
-#include "object/object-p.h"
 
 #include "liblinphone_tester.h"
 #include "tester_utils.h"

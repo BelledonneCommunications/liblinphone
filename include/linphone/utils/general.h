@@ -360,25 +360,13 @@ constexpr StringLiteral<N> makeStringLiteral (RawStringLiteral<N> &raw) {
 // Compile-time string list.
 // -----------------------------------------------------------------------------
 
-template<typename... T>
-using StringLiteralList = std::tuple<T...>;
+template<std::size_t... N>
+using StringLiteralList = std::tuple<StringLiteral<N>...>;
 
-constexpr StringLiteralList<> makeStringLiteralList () {
-	return {};
+template<std::size_t... N>
+constexpr StringLiteralList<N...> makeStringLiteralList (RawStringLiteral<N>& ...list)  {
+	return std::make_tuple(StringLiteral<N>(list)...);
 }
-
-template<std::size_t N, typename... T>
-constexpr auto makeStringLiteralList (RawStringLiteral<N> &raw, T&... list) L_AUTO_CONSTEXPR_RETURN(
-	std::tuple_cat(std::make_tuple(StringLiteral<N>(raw)), makeStringLiteralList(list...))
-)
-
-template<std::size_t N, typename T>
-constexpr auto appendStringLiteral (
-	const StringLiteralList<T> &list,
-	const StringLiteral<N> &stringLiteral
-) L_AUTO_CONSTEXPR_RETURN(
-	std::tuple_cat(list, stringLiteral)
-)
 
 #endif // ifdef __cplusplus
 

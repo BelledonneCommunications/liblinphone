@@ -53,6 +53,8 @@
 
 #define L_INTERNAL_SIGNAL_INDEX(NAME, LINE) L_CONCAT(lSignalIndexOf ## _, L_CONCAT(NAME ## _, LINE))
 
+#define L_INTERNAL_STRINGIFY(NOOP, VALUE) #VALUE
+
 // -----------------------------------------------------------------------------
 // Public macros API.
 // -----------------------------------------------------------------------------
@@ -97,7 +99,8 @@
 			lMetaSignals(counter.prev(), context), \
 			std::make_tuple(LinphonePrivate::Private::makeMetaObjectSignalInfo( \
 				L_CALL(L_RESOLVE_OVERLOAD, TYPES)(&lType::NAME), \
-				#NAME \
+				#NAME, \
+				makeStringLiteralList(L_APPLY(L_INTERNAL_STRINGIFY, , L_CALL(L_EXPAND_VARIADIC, TYPES))) \
 			)) \
 		) \
 	)
@@ -125,19 +128,21 @@ namespace Private {
 	* Meta data of one object's signal.
 	* Useful to get arguments number, params and signal name.
 	*/
-	template<typename Signal, int NameLength>
+	template<typename Signal, int NameLength, typename ArgumentsTypes>
 	struct MetaObjectSignalInfo {
 		Signal signal;
 		StringLiteral<NameLength> name;
+		ArgumentsTypes argumentsTypes;
 		static constexpr int argumentsNumber = FunctionPointer<Signal>::ArgumentsNumber;
 	};
 
-	template<typename Signal, int NameLength>
-	constexpr MetaObjectSignalInfo<Signal, NameLength> makeMetaObjectSignalInfo (
+	template<typename Signal, int NameLength, typename ArgumentsTypes>
+	constexpr MetaObjectSignalInfo<Signal, NameLength, ArgumentsTypes> makeMetaObjectSignalInfo (
 		Signal signal,
-		RawStringLiteral<NameLength> &name
+		RawStringLiteral<NameLength> &name,
+		const ArgumentsTypes &argumentsTypes
 	) {
-		return { signal, { name } };
+		return { signal, { name }, argumentsTypes };
 	}
 };
 
