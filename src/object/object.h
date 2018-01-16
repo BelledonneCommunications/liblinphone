@@ -100,7 +100,8 @@
 			std::make_tuple(LinphonePrivate::Private::makeMetaObjectSignalInfo( \
 				L_CALL(L_RESOLVE_OVERLOAD, TYPES)(&lType::NAME), \
 				#NAME, \
-				makeStringLiteralList(L_APPLY(L_INTERNAL_STRINGIFY, , L_CALL(L_EXPAND_VARIADIC, TYPES))) \
+				makeStringLiteralList(L_APPLY(L_INTERNAL_STRINGIFY, , L_CALL(L_EXPAND_VARIADIC, TYPES))), \
+				makeStringLiteralList(L_APPLY(L_INTERNAL_STRINGIFY, , __VA_ARGS__)) \
 			)) \
 		) \
 	)
@@ -128,21 +129,23 @@ namespace Private {
 	* Meta data of one object's signal.
 	* Useful to get arguments number, params and signal name.
 	*/
-	template<typename Signal, int NameLength, typename ArgumentsTypes>
+	template<typename Signal, int NameLength, typename ArgumentsTypes, typename ArgumentsNames>
 	struct MetaObjectSignalInfo {
 		Signal signal;
 		StringLiteral<NameLength> name;
 		ArgumentsTypes argumentsTypes;
+		ArgumentsNames argumentsNames;
 		static constexpr int argumentsNumber = FunctionPointer<Signal>::ArgumentsNumber;
 	};
 
-	template<typename Signal, int NameLength, typename ArgumentsTypes>
-	constexpr MetaObjectSignalInfo<Signal, NameLength, ArgumentsTypes> makeMetaObjectSignalInfo (
+	template<typename Signal, int NameLength, typename ArgumentsTypes, typename ArgumentsNames>
+	constexpr MetaObjectSignalInfo<Signal, NameLength, ArgumentsTypes, ArgumentsNames> makeMetaObjectSignalInfo (
 		Signal signal,
 		RawStringLiteral<NameLength> &name,
-		const ArgumentsTypes &argumentsTypes
+		const ArgumentsTypes &argumentsTypes,
+		const ArgumentsNames &argumentsNames
 	) {
-		return { signal, { name }, argumentsTypes };
+		return { signal, { name }, argumentsTypes, argumentsNames };
 	}
 };
 
