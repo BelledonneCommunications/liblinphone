@@ -30,6 +30,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 Object::Object (ObjectPrivate &p) : BaseObject(p) {}
 
+// -----------------------------------------------------------------------------
+
 shared_ptr<Object> Object::getSharedFromThis () {
 	return const_pointer_cast<Object>(static_cast<const Object *>(this)->getSharedFromThis());
 }
@@ -51,6 +53,16 @@ const Object::Lock &Object::getLock () const {
 	return d->getLock();
 }
 
+// -----------------------------------------------------------------------------
+
+#define CHECK_CONNECT_PARAM(PARAM) \
+	do { \
+		if (!PARAM) { \
+			lError() << "No " #PARAM " given!"; \
+			return Connection(); \
+		} \
+	} while (false)
+
 Connection Object::connectInternal (
 	const Object *sender,
 	void **signal,
@@ -58,8 +70,15 @@ Connection Object::connectInternal (
 	void **slot,
 	Private::SlotObject *slotObject
 ) {
-	// TODO.
+	// Note: `receiver` can be null with non-member function slot.
+	CHECK_CONNECT_PARAM(sender);
+	CHECK_CONNECT_PARAM(signal);
+	CHECK_CONNECT_PARAM(slot);
+	CHECK_CONNECT_PARAM(slotObject);
+
 	return Connection();
 }
+
+#undef CHECK_CONNECT_PARAM
 
 LINPHONE_END_NAMESPACE
