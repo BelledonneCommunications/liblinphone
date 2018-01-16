@@ -30,8 +30,19 @@ using namespace LinphonePrivate;
 
 // -----------------------------------------------------------------------------
 
-#define CHECK_SIGNAL(NAME, INDEX) \
+#define GET_SIGNAL_INFO(INDEX) \
+	get<INDEX>(lMetaSignals( \
+		Private::MetaObjectCounter<INDEX + 1>(), \
+		static_cast<lType **>(nullptr) \
+	))
+
+#define CHECK_SIGNAL_INDEX(INDEX, NAME) \
 	static_assert(L_INTERNAL_SIGNAL_INDEX(NAME, __LINE__) == INDEX, "Bad signal index.");
+
+#define CHECK_SIGNAL_META_INTO(INDEX, NAME, ARGS_NUMBER) \
+	static_assert(GET_SIGNAL_INFO(INDEX).argumentsNumber == ARGS_NUMBER, "Unexpected arguments number in `" NAME "`."); \
+	static_assert(GET_SIGNAL_INFO(INDEX).name == makeStringLiteral(NAME), "Unexpected signal name for `" NAME "`.");
+
 class TestObjectPrivate : public ObjectPrivate {
 public:
 };
@@ -42,15 +53,12 @@ class TestObject : public Object {
 public:
 	TestObject () : Object(*new TestObjectPrivate) {}
 
-	L_SIGNAL(signal1, (int, float), toto, tata); CHECK_SIGNAL(signal1, 0);
-	L_SIGNAL(signal2, (bool, float, int), a, b, c); CHECK_SIGNAL(signal2, 1);
+	L_SIGNAL(signal1, (int, float), toto, tata); CHECK_SIGNAL_INDEX(0, signal1);
+	L_SIGNAL(signal2, (bool, float, int), a, b, c); CHECK_SIGNAL_INDEX(1, signal2);
 
-	static void toto () {
-		lMetaSignals(
-			LinphonePrivate::Private::MetaObjectCounter<5>(),
-			static_cast<lType **>(nullptr)
-		);
-
+	static void checkMetaInfoAtCompileTime () {
+		CHECK_SIGNAL_META_INTO(0, "signal1", 2);
+		CHECK_SIGNAL_META_INTO(1, "signal2", 3);
 	}
 
 private:
@@ -62,7 +70,6 @@ private:
 static void check_object_creation () {
 	TestObject *object = new TestObject();
 
-	TestObject::toto();
 	delete object;
 }
 

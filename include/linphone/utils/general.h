@@ -279,11 +279,79 @@ namespace Private {
 #define L_DECL_C_STRUCT_PREFIX_LESS(STRUCT) typedef struct STRUCT STRUCT;
 
 // -----------------------------------------------------------------------------
-// Generic helpers.
+// Index Sequence (C++11 impl).
 // -----------------------------------------------------------------------------
 
+template<std::size_t...>
+struct IndexSequence {
+	using type = IndexSequence;
+};
+
+namespace Private {
+	template<class S1, class S2>
+	struct ConcatSequence;
+
+	template<std::size_t... S1, std::size_t... S2>
+	struct ConcatSequence<IndexSequence<S1...>, IndexSequence<S2...>> :
+		IndexSequence<S1..., (sizeof...(S1) + S2)...> {};
+
+	template<std::size_t N>
+	struct MakeIndexSequence : ConcatSequence<
+		typename MakeIndexSequence<N / 2>::type,
+		typename MakeIndexSequence<N - N / 2>::type
+	> {};
+
+	template<>
+	struct MakeIndexSequence<0> : IndexSequence<> {};
+
+	template<>
+	struct MakeIndexSequence<1> : IndexSequence<0> {};
+}
+
+template<std::size_t N>
+using MakeIndexSequence = typename Private::MakeIndexSequence<N>::type;
+
+// -----------------------------------------------------------------------------
+// Compil-time string.
+// -----------------------------------------------------------------------------
+
+namespace Private {
+	constexpr bool equal (const char *a, const char *b) {
+		return *a == *b ? (*a == '\0' || equal(a + 1, b + 1)) : false;
+	}
+}
+
 // See: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4121.pdf
-template<int N> using StringLiteral = const char [N];
+template<std::size_t N> using RawStringLiteral = const char [N];
+
+template<std::size_t N, typename = MakeIndexSequence<N>>
+struct StringLiteral;
+
+template<std::size_t N, std::size_t... Index>
+struct StringLiteral<N, IndexSequence<Index...>> {
+	constexpr StringLiteral (RawStringLiteral<N> &inRaw) : raw{ (inRaw[Index])... } {}
+
+	constexpr char operator[] (std::size_t p) const {
+		return raw[p];
+	}
+
+	template<std::size_t M>
+	constexpr bool operator== (const StringLiteral<M> &other) const {
+		return N != M ? false : Private::equal(raw, other.raw);
+	}
+
+	template<std::size_t M>
+	constexpr bool operator!= (const StringLiteral<M> &other) const {
+		return !(*this == other);
+	}
+
+	RawStringLiteral<N> raw;
+};
+
+template<std::size_t N>
+constexpr StringLiteral<N> makeStringLiteral (RawStringLiteral<N> &raw) {
+	return StringLiteral<N>(raw);
+}
 
 #endif // ifdef __cplusplus
 

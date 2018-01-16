@@ -248,6 +248,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	object/base-object.cpp
 	object/clonable-object.cpp
 	object/connection.cpp
+	object/internal/signal-emitter.cpp
 	object/object.cpp
 	object/property-container.cpp
 	sal/call-op.cpp

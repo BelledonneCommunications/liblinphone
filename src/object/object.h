@@ -132,8 +132,8 @@ namespace Private {
 	};
 
 	template<typename Signal, int NameLength>
-	constexpr MetaObjectSignalInfo<Signal, NameLength> makeMetaObjectSignalInfo (Signal signal, StringLiteral<NameLength> &name) {
-		return { signal, *name };
+	constexpr MetaObjectSignalInfo<Signal, NameLength> makeMetaObjectSignalInfo (Signal signal, RawStringLiteral<NameLength> &name) {
+		return { signal, { name } };
 	}
 };
 
