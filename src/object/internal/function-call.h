@@ -66,7 +66,7 @@ namespace Private {
 	template<int... Index, typename... SignalArgs, typename Func>
 	struct FunctionCall<IndexesList<Index...>, List<SignalArgs...>, Func> {
 		static void call (Func &function, void **args) {
-			function((*reinterpret_cast<typename std::remove_reference<SignalArgs>::type *>(args[Index])) ...);
+			function((*reinterpret_cast<typename std::remove_reference<SignalArgs>::type *>(args[Index]))...);
 		}
 	};
 

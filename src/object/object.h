@@ -68,15 +68,18 @@
 	const std::lock_guard<Object::Lock> synchronized(const_cast<Object::Lock &>(getLock()));
 
 // Declare one Smart Object with Signals.
-#define L_OBJECT(NAME) \
+#define L_OBJECT(CLASS) \
 	private: \
-		typedef NAME lType; \
-		static constexpr const char *lName = #NAME; \
+		typedef CLASS lType; \
+		static constexpr const char *lName = #CLASS; \
 		friend constexpr std::tuple<> lMetaSignals (LinphonePrivate::Private::MetaObjectCounter<0>, lType **) { return {}; } \
 	public: \
-		static constexpr const char *getName () { \
+		virtual const char *getName () { \
 			return lName; \
 		}
+
+// Declare Smart Object implementation.
+#define L_OBJECT_IMPL(CLASS)
 
 // Declare one signal method.
 #define L_SIGNAL(NAME, TYPES, ...) \
@@ -132,7 +135,10 @@ namespace Private {
 	};
 
 	template<typename Signal, int NameLength>
-	constexpr MetaObjectSignalInfo<Signal, NameLength> makeMetaObjectSignalInfo (Signal signal, RawStringLiteral<NameLength> &name) {
+	constexpr MetaObjectSignalInfo<Signal, NameLength> makeMetaObjectSignalInfo (
+		Signal signal,
+		RawStringLiteral<NameLength> &name
+	) {
 		return { signal, { name } };
 	}
 };
