@@ -77,6 +77,7 @@
 	private: \
 		friend constexpr std::tuple<> lMetaSignals (LinphonePrivate::Private::MetaObjectCounter<0>, lType **) { return {}; } \
 	public: \
+		static const LinphonePrivate::MetaObject metaObject; \
 		virtual void lParent () override {};
 
 // Declare one signal method.
