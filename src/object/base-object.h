@@ -41,6 +41,8 @@ class LINPHONE_PUBLIC BaseObject {
 public:
 	virtual ~BaseObject ();
 
+	virtual void lParent () {};
+
 protected:
 	explicit BaseObject (BaseObjectPrivate &p);
 

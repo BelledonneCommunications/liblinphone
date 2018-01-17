@@ -70,14 +70,15 @@
 
 // Declare one Smart Object with Signals.
 #define L_OBJECT(CLASS) \
-	private: \
+	public: \
 		typedef CLASS lType; \
-		static constexpr const char *lName = #CLASS; \
+		using lBaseType = std::remove_reference< \
+			decltype(LinphonePrivate::Private::getParentObject(&lType::lParent)) \
+		>::type; \
+	private: \
 		friend constexpr std::tuple<> lMetaSignals (LinphonePrivate::Private::MetaObjectCounter<0>, lType **) { return {}; } \
 	public: \
-		virtual const char *getName () { \
-			return lName; \
-		}
+		virtual void lParent () override {};
 
 // Declare Smart Object implementation.
 #define L_OBJECT_IMPL(CLASS)
@@ -125,6 +126,9 @@ namespace Private {
 	struct MetaObjectCounter<0> {
 		static constexpr int value = 0;
 	};
+
+	template<typename T>
+	T &getParentObject (void (T::*)());
 };
 
 /*
@@ -136,6 +140,8 @@ class LINPHONE_PUBLIC Object :
 	public std::enable_shared_from_this<Object>,
 	public BaseObject,
 	public PropertyContainer {
+	L_OBJECT(Object);
+
 public:
 	typedef std::recursive_mutex Lock;
 
