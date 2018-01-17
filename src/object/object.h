@@ -25,7 +25,6 @@
 
 #include "base-object.h"
 #include "connection.h"
-#include "internal/signal-emitter.h"
 #include "internal/slot-object.h"
 #include "property-container.h"
 
@@ -72,16 +71,13 @@
 #define L_OBJECT(CLASS) \
 	public: \
 		typedef CLASS lType; \
-		using lBaseType = std::remove_reference< \
+		using lParentType = std::remove_reference< \
 			decltype(LinphonePrivate::Private::getParentObject(&lType::lParent)) \
 		>::type; \
 	private: \
 		friend constexpr std::tuple<> lMetaSignals (LinphonePrivate::Private::MetaObjectCounter<0>, lType **) { return {}; } \
 	public: \
 		virtual void lParent () override {};
-
-// Declare Smart Object implementation.
-#define L_OBJECT_IMPL(CLASS)
 
 // Declare one signal method.
 #define L_SIGNAL(NAME, TYPES, ...) \
@@ -112,6 +108,15 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+/*
+ * Meta data of one object.
+ * Gives a lot of info on one object.
+ */
+class LINPHONE_PUBLIC MetaObject {
+public:
+	static void activateSignal (Object *sender, const MetaObject *metaObject, int signalIndex, void **args);
+};
+
 namespace Private {
 	// Compilation counter.
 	template<int N = 255>
@@ -125,6 +130,18 @@ namespace Private {
 	template<>
 	struct MetaObjectCounter<0> {
 		static constexpr int value = 0;
+	};
+
+	template<typename Func, int Index>
+	struct SignalEmitter {};
+
+	template<typename Obj, typename... Args, int Index>
+	struct SignalEmitter<void (Obj::*)(Args...), Index> {
+		Obj *self;
+		inline void operator () (Args... args) {
+			void *argsPack[] = { (&args)... };
+			MetaObject::activateSignal(self, &Obj::metaObject, Index, argsPack);
+		}
 	};
 
 	template<typename T>

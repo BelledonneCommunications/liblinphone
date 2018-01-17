@@ -55,6 +55,10 @@ const Object::Lock &Object::getLock () const {
 
 // -----------------------------------------------------------------------------
 
+void MetaObject::activateSignal (Object *sender, const MetaObject *metaObject, int signalIndex, void **args) {
+	// TODO.
+}
+
 #define CHECK_CONNECT_PARAM(PARAM) \
 	do { \
 		if (!PARAM) { \

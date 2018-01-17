@@ -25,7 +25,27 @@
 
 // =============================================================================
 
+// -----------------------------------------------------------------------------
+// Public macros API.
+// -----------------------------------------------------------------------------
+
+// Declare Smart Object implementation.
+#define L_OBJECT_IMPL(CLASS) \
+	constexpr LinphonePrivate::MetaObject CLASS::metaObject = LinphonePrivate::MetaObjectBuilder::createMetaObject<CLASS>();
+
 LINPHONE_BEGIN_NAMESPACE
+
+class MetaObjectBuilder {
+public:
+	template<typename T>
+	static constexpr MetaObject createMetaObject () {
+		// TODO.
+		return MetaObject();
+	}
+
+private:
+	L_DISABLE_COPY(MetaObjectBuilder);
+};
 
 class ObjectPrivate : public BaseObjectPrivate {
 protected:
