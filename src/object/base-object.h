@@ -29,6 +29,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class BaseObjectPrivate;
+class MetaObject;
 
 /*
  * Base Object of Linphone. Cannot be cloned. Can be Shared.
@@ -41,7 +42,9 @@ class LINPHONE_PUBLIC BaseObject {
 public:
 	virtual ~BaseObject ();
 
-	virtual void lParent () {};
+	virtual const MetaObject *getMetaObject () const {
+		return nullptr;
+	};
 
 protected:
 	explicit BaseObject (BaseObjectPrivate &p);

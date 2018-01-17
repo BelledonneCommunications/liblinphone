@@ -28,6 +28,36 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
+void MetaObject::activateSignal (Object *sender, const MetaObject *metaObject, int signalIndex, void **args) {
+	// TODO.
+}
+
+const char *MetaObject::getClassName () const {
+	// TODO.
+	return nullptr;
+}
+
+const MetaObject *MetaObject::getParent () const {
+	// TODO
+	return nullptr;
+}
+
+int MetaObject::getSignalsNumber () const {
+	// TODO
+	return 0;
+}
+
+int MetaObject::getSignalIndex (void **signal) const {
+	// TODO
+	return -1;
+}
+
+// =============================================================================
+
+L_OBJECT_IMPL(Object);
+
+// -----------------------------------------------------------------------------
+
 Object::Object (ObjectPrivate &p) : BaseObject(p) {}
 
 // -----------------------------------------------------------------------------
@@ -55,10 +85,6 @@ const Object::Lock &Object::getLock () const {
 
 // -----------------------------------------------------------------------------
 
-void MetaObject::activateSignal (Object *sender, const MetaObject *metaObject, int signalIndex, void **args) {
-	// TODO.
-}
-
 #define CHECK_CONNECT_PARAM(PARAM) \
 	do { \
 		if (!PARAM) { \
@@ -73,13 +99,30 @@ Connection Object::connectInternal (
 	void **signal,
 	const Object *receiver,
 	void **slot,
-	Private::SlotObject *slotObject
+	Private::SlotObject *slotObject,
+	const MetaObject *metaObject
 ) {
 	// Note: `receiver` can be null with non-member function slot.
 	CHECK_CONNECT_PARAM(sender);
 	CHECK_CONNECT_PARAM(signal);
 	CHECK_CONNECT_PARAM(slot);
 	CHECK_CONNECT_PARAM(slotObject);
+
+	// 1. Try to find signal index and signal's meta object.
+	int signalIndex = -1;
+	for (; metaObject && signalIndex < 0; metaObject = metaObject->getParent()) {
+		signalIndex = metaObject->getSignalIndex(signal);
+		if (signalIndex >= 0)
+			break;
+	}
+
+	if (!metaObject) {
+		lError() << "Unable to find signal in: `" << sender->getMetaObject()->getClassName() << "`";
+		slotObject->call(Private::SlotObject::Delete, nullptr, nullptr);
+		return Connection();
+	}
+
+	// TODO: 2. Add connection in list.
 
 	return Connection();
 }

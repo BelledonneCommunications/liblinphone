@@ -72,13 +72,14 @@
 	public: \
 		typedef CLASS lType; \
 		using lParentType = std::remove_reference< \
-			decltype(LinphonePrivate::Private::getParentObject(&lType::lParent)) \
+			decltype(LinphonePrivate::Private::getParentObject(&lType::getMetaObject)) \
 		>::type; \
 	private: \
 		friend constexpr std::tuple<> lMetaSignals (LinphonePrivate::Private::MetaObjectCounter<0>, lType **) { return {}; } \
 	public: \
+		struct MetaObjectBuilder; \
 		static const LinphonePrivate::MetaObject metaObject; \
-		virtual void lParent () override {};
+		const MetaObject *getMetaObject () const override;
 
 // Declare one signal method.
 #define L_SIGNAL(NAME, TYPES, ...) \
@@ -109,12 +110,13 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-/*
- * Meta data of one object.
- * Gives a lot of info on one object.
- */
 class LINPHONE_PUBLIC MetaObject {
 public:
+	const char *getClassName () const;
+	const MetaObject *getParent () const;
+	int getSignalsNumber () const;
+	int getSignalIndex (void **signal) const;
+
 	static void activateSignal (Object *sender, const MetaObject *metaObject, int signalIndex, void **args);
 };
 
@@ -146,7 +148,7 @@ namespace Private {
 	};
 
 	template<typename T>
-	T &getParentObject (void (T::*)());
+	T &getParentObject (const MetaObject *(T::*)() const);
 };
 
 /*
@@ -182,7 +184,8 @@ public:
 			new Private::SlotObjectFunction<
 				Func2,
 				typename Private::ListBuilder<typename SignalType::Arguments, SlotType::ArgumentsNumber>::Value
-			>(slot)
+			>(slot),
+			&SignalType::Object::metaObject
 		);
 	}
 
@@ -198,11 +201,13 @@ public:
 
 		L_INTERNAL_CHECK_CONNECT_TYPES(SignalType, SlotType)
 
-		return connectInternal(sender, reinterpret_cast<void **>(&signal), receiver, reinterpret_cast<void **>(&slot),
+		return connectInternal(
+			sender, reinterpret_cast<void **>(&signal), receiver, reinterpret_cast<void **>(&slot),
 			new Private::SlotObjectMemberFunction<
 				Func2,
 				typename Private::ListBuilder<typename SignalType::Arguments, SlotType::ArgumentsNumber>::Value
-			>(slot)
+			>(slot),
+			&SignalType::Object::metaObject
 		);
 	}
 
@@ -219,7 +224,8 @@ private:
 		void **signal,
 		const Object *receiver,
 		void **slot,
-		Private::SlotObject *slotObject
+		Private::SlotObject *slotObject,
+		const MetaObject *metaObject
 	);
 
 	L_DECLARE_PRIVATE(Object);
