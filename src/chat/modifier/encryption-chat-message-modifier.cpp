@@ -21,10 +21,10 @@
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message.h"
 #include "chat/chat-room/chat-room.h"
+#include "chat/encryption/encryption-engine-listener.h"
 #include "content/content-type.h"
 #include "content/content.h"
 #include "core/core.h"
-
 #include "encryption-chat-message-modifier.h"
 
 // =============================================================================
@@ -38,32 +38,11 @@ ChatMessageModifier::Result EncryptionChatMessageModifier::encode (
 	int &errorCode
 ) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
-	if (!imee)
-		return ChatMessageModifier::Result::Skipped;
-
-	LinphoneImEncryptionEngineCbsOutgoingMessageCb cbProcessOutgoingMessage =
-		linphone_im_encryption_engine_cbs_get_process_outgoing_message(
-			linphone_im_encryption_engine_get_callbacks(imee)
-		);
-
-	if (!cbProcessOutgoingMessage)
-		return ChatMessageModifier::Result::Skipped;
-
-	int retval = cbProcessOutgoingMessage(imee, L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(message));
-	if (retval == -1)
-		return ChatMessageModifier::Result::Skipped;
-
-	if (retval != 0 && retval != 1) {
-		errorCode = retval;
-		return ChatMessageModifier::Result::Error;
-	}
-
-	message->setIsSecured(true);
-	if (retval == 1)
-		return ChatMessageModifier::Result::Suspended;
-
-	return ChatMessageModifier::Result::Done;
+    ChatMessageModifier::Result result = chatRoom->getCore()->getEncryptionEngine()->processOutgoingMessage(message, errorCode);
+    if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
+        message->setIsSecured(true);
+    }
+    return result;
 }
 
 ChatMessageModifier::Result EncryptionChatMessageModifier::decode (
@@ -71,32 +50,11 @@ ChatMessageModifier::Result EncryptionChatMessageModifier::decode (
 	int &errorCode
 ) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
-	if (!imee)
-		return ChatMessageModifier::Result::Skipped;
-
-	LinphoneImEncryptionEngineCbsIncomingMessageCb cbProcessIncomingMessage =
-		linphone_im_encryption_engine_cbs_get_process_incoming_message(
-			linphone_im_encryption_engine_get_callbacks(imee)
-		);
-
-	if (!cbProcessIncomingMessage)
-		return ChatMessageModifier::Result::Skipped;
-
-	int retval = cbProcessIncomingMessage(imee, L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(message));
-	if (retval == -1)
-		return ChatMessageModifier::Result::Skipped;
-
-	if (retval != 0 && retval != 1) {
-		errorCode = retval;
-		return ChatMessageModifier::Result::Error;
-	}
-
-	message->setIsSecured(true);
-	if (retval == 1)
-		return ChatMessageModifier::Result::Suspended;
-
-	return ChatMessageModifier::Result::Done;
+    ChatMessageModifier::Result result = chatRoom->getCore()->getEncryptionEngine()->processIncomingMessage(message, errorCode);
+    if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
+        message->setIsSecured(true);
+    }
+    return result;
 }
 
 LINPHONE_END_NAMESPACE

@@ -20,6 +20,7 @@
 #include <mediastreamer2/mscommon.h>
 
 #include "call/call.h"
+#include "chat/encryption/encryption-engine-listener.h"
 #include "core/core-listener.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
@@ -91,7 +92,10 @@ void CorePrivate::notifyRegistrationStateChanged (LinphoneProxyConfig *cfg, Linp
 
 // =============================================================================
 
-Core::Core () : Object(*new CorePrivate) {}
+Core::Core () : Object(*new CorePrivate) {
+    L_D();
+    d->imee.reset(new EncryptionEngineListener);
+}
 
 Core::~Core () {
 	lInfo() << "Destroying core: " << this;
@@ -112,12 +116,24 @@ LinphoneCore *Core::getCCore () const {
 // Paths.
 // -----------------------------------------------------------------------------
 
-string Core::getDataPath() const {
+string Core::getDataPath () const {
 	return Paths::getPath(Paths::Data, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper));
 }
 
-string Core::getConfigPath() const {
+string Core::getConfigPath () const {
 	return Paths::getPath(Paths::Config, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper));
+}
+
+// =============================================================================
+
+void Core::setEncryptionEngine (EncryptionEngineListener *imee) {
+    L_D();
+    d->imee.reset(imee);
+}
+
+EncryptionEngineListener *Core::getEncryptionEngine () {
+    L_D();
+    return d->imee.get();
 }
 
 LINPHONE_END_NAMESPACE

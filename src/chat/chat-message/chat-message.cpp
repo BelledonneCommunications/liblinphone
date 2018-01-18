@@ -387,17 +387,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	// Start of message modification
 	// ---------------------------------------
 
-	if ((currentRecvStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
-		lInfo() << "Cpim step already done, skipping";
-	} else {
-		if (internalContent.getContentType() == ContentType::Cpim) {
-			CpimChatMessageModifier ccmm;
-			ccmm.decode(q->getSharedFromThis(), errorCode);
-		}
-		currentRecvStep |= ChatMessagePrivate::Step::Cpim;
-	}
-
-	if ((currentRecvStep &ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
+    if ((currentRecvStep &ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
 		lInfo() << "Encryption step already done, skipping";
 	} else {
 		EncryptionChatMessageModifier ecmm;
@@ -413,6 +403,16 @@ LinphoneReason ChatMessagePrivate::receive () {
 			return LinphoneReasonNone;
 		}
 		currentRecvStep |= ChatMessagePrivate::Step::Encryption;
+	}
+
+	if ((currentRecvStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
+		lInfo() << "Cpim step already done, skipping";
+	} else {
+		if (internalContent.getContentType() == ContentType::Cpim) {
+			CpimChatMessageModifier ccmm;
+			ccmm.decode(q->getSharedFromThis(), errorCode);
+		}
+		currentRecvStep |= ChatMessagePrivate::Step::Cpim;
 	}
 
 	if ((currentRecvStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
@@ -559,7 +559,20 @@ void ChatMessagePrivate::send () {
 			}
 		}
 
-		if ((currentSendStep &ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
+		if (q->getChatRoom()->canHandleCpim()) {
+			if ((currentSendStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
+				lInfo() << "Cpim step already done, skipping";
+			} else {
+				int defaultValue = !!lp_config_get_string(core->getCCore()->config, "misc", "conference_factory_uri", nullptr);
+				if (lp_config_get_int(core->getCCore()->config, "sip", "use_cpim", defaultValue) == 1) {
+					CpimChatMessageModifier ccmm;
+					ccmm.encode(q->getSharedFromThis(), errorCode);
+				}
+				currentSendStep |= ChatMessagePrivate::Step::Cpim;
+			}
+		}
+
+        if ((currentSendStep &ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
 			lInfo() << "Encryption step already done, skipping";
 		} else {
 			EncryptionChatMessageModifier ecmm;
@@ -573,19 +586,6 @@ void ChatMessagePrivate::send () {
 				return;
 			}
 			currentSendStep |= ChatMessagePrivate::Step::Encryption;
-		}
-
-		if (q->getChatRoom()->canHandleCpim()) {
-			if ((currentSendStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
-				lInfo() << "Cpim step already done, skipping";
-			} else {
-				int defaultValue = !!lp_config_get_string(core->getCCore()->config, "misc", "conference_factory_uri", nullptr);
-				if (lp_config_get_int(core->getCCore()->config, "sip", "use_cpim", defaultValue) == 1) {
-					CpimChatMessageModifier ccmm;
-					ccmm.encode(q->getSharedFromThis(), errorCode);
-				}
-				currentSendStep |= ChatMessagePrivate::Step::Cpim;
-			}
 		}
 	}
 

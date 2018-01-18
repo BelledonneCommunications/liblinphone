@@ -7108,17 +7108,6 @@ const char *linphone_core_get_tls_key_path(const LinphoneCore *lc) {
 	return tls_key_path;
 }
 
-void linphone_core_set_im_encryption_engine(LinphoneCore *lc, LinphoneImEncryptionEngine *imee) {
-	if (lc->im_encryption_engine) {
-		linphone_im_encryption_engine_unref(lc->im_encryption_engine);
-		lc->im_encryption_engine = NULL;
-	}
-	if (imee) {
-		imee->lc = lc;
-		lc->im_encryption_engine = linphone_im_encryption_engine_ref(imee);
-	}
-}
-
 LinphoneImEncryptionEngine *linphone_core_get_im_encryption_engine(const LinphoneCore *lc) {
 	return lc->im_encryption_engine;
 }

@@ -61,6 +61,9 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/cpim/header/cpim-header.h
 	chat/cpim/message/cpim-message.h
 	chat/cpim/parser/cpim-parser.h
+	chat/encryption/encryption-engine-listener.h
+	chat/encryption/lime-backwards-compatible.h
+	chat/encryption/lime-v2.h
 	chat/modifier/chat-message-modifier.h
 	chat/modifier/cpim-chat-message-modifier.h
 	chat/modifier/encryption-chat-message-modifier.h
@@ -189,6 +192,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/cpim/header/cpim-header.cpp
 	chat/cpim/message/cpim-message.cpp
 	chat/cpim/parser/cpim-parser.cpp
+	chat/encryption/lime-backwards-compatible.cpp
+	chat/encryption/lime-v2.cpp
 	chat/modifier/cpim-chat-message-modifier.cpp
 	chat/modifier/encryption-chat-message-modifier.cpp
 	chat/modifier/file-transfer-chat-message-modifier.cpp

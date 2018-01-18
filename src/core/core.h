@@ -38,6 +38,7 @@ class ChatRoomId;
 class CorePrivate;
 class IdentityAddress;
 class AbstractChatRoom;
+class EncryptionEngineListener;
 
 class LINPHONE_PUBLIC Core : public Object {
 	friend class BasicToClientGroupChatRoom;
@@ -119,8 +120,15 @@ public:
 	// Paths.
 	// ---------------------------------------------------------------------------
 
-	std::string getDataPath() const;
-	std::string getConfigPath() const;
+	std::string getDataPath () const;
+	std::string getConfigPath () const;
+
+    // ---------------------------------------------------------------------------
+	// EncryptionEngine.
+	// ---------------------------------------------------------------------------
+
+    EncryptionEngineListener *getEncryptionEngine ();
+    void setEncryptionEngine (EncryptionEngineListener *imee);
 
 private:
 	Core ();

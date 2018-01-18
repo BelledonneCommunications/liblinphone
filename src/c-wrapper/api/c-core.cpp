@@ -24,9 +24,13 @@
 
 #include "private_structs.h"
 
+#include "chat/encryption/lime-backwards-compatible.h"
+
 // =============================================================================
 
 using namespace std;
+
+using namespace LinphonePrivate;
 
 static void _linphone_core_constructor (LinphoneCore *lc);
 static void _linphone_core_destructor (LinphoneCore *lc);
@@ -44,4 +48,17 @@ static void _linphone_core_destructor (LinphoneCore *lc) {
 	if (lc->callsCache)
 		bctbx_list_free_with_data(lc->callsCache, (bctbx_list_free_func)linphone_call_unref);
 	_linphone_core_uninit(lc);
+}
+
+void linphone_core_set_im_encryption_engine(LinphoneCore *lc, LinphoneImEncryptionEngine *imee) {
+    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setEncryptionEngine(new LimeBackwardsCompatible);
+
+	if (lc->im_encryption_engine) {
+		linphone_im_encryption_engine_unref(lc->im_encryption_engine);
+		lc->im_encryption_engine = NULL;
+	}
+	if (imee) {
+		imee->lc = lc;
+		lc->im_encryption_engine = linphone_im_encryption_engine_ref(imee);
+	}
 }
