@@ -67,6 +67,11 @@ private:
 	L_DECLARE_PRIVATE(TestObject);
 };
 
+class TestObject2 : public TestObject {
+public:
+	void slot1 (bool, float, int) {}
+};
+
 #undef GET_SIGNAL_INFO
 #undef CHECK_SIGNAL_INDEX
 #undef CHECK_SIGNAL_META_INFO
@@ -90,9 +95,16 @@ static void check_object_connection_to_function () {
 	Connection connection = Object::connect(&object, &TestObject::signal1, simple_slot);
 }
 
+static void check_object_connection_to_method () {
+	TestObject objectA;
+	TestObject2 objectB;
+	Connection connection = Object::connect(&objectA, &TestObject::signal2, &objectB, &TestObject2::slot1);
+}
+
 test_t object_tests[] = {
 	TEST_NO_TAG("Check object creation", check_object_creation),
-	TEST_NO_TAG("Check object connection to function", check_object_connection_to_function)
+	TEST_NO_TAG("Check object connection to function", check_object_connection_to_function),
+	TEST_NO_TAG("Check object connection to method", check_object_connection_to_method)
 };
 
 test_suite_t object_test_suite = {
