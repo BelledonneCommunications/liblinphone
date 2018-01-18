@@ -356,18 +356,6 @@ constexpr StringLiteral<N> makeStringLiteral (RawStringLiteral<N> &raw) {
 	return StringLiteral<N>(raw);
 }
 
-// -----------------------------------------------------------------------------
-// Compile-time string list.
-// -----------------------------------------------------------------------------
-
-template<std::size_t... N>
-using StringLiteralList = std::tuple<StringLiteral<N>...>;
-
-template<std::size_t... N>
-constexpr StringLiteralList<N...> makeStringLiteralList (RawStringLiteral<N>& ...list)  {
-	return std::make_tuple(StringLiteral<N>(list)...);
-}
-
 #endif // ifdef __cplusplus
 
 LINPHONE_END_NAMESPACE

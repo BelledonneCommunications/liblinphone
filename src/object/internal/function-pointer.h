@@ -82,25 +82,21 @@ namespace Private {
 
 	/*
 	* Meta info of one function pointer.
-	* Useful to get arguments number, params and function name.
+	* Useful to get arguments number, and function name.
 	*/
-	template<typename Function, int NameLength, typename ArgumentsTypes, typename ArgumentsNames>
+	template<typename Function, int NameLength>
 	struct FunctionInfo {
 		Function function;
 		StringLiteral<NameLength> name;
-		ArgumentsTypes argumentsTypes;
-		ArgumentsNames argumentsNames;
 		static constexpr int argumentsNumber = FunctionPointer<Function>::ArgumentsNumber;
 	};
 
-	template<typename Function, int NameLength, typename ArgumentsTypes, typename ArgumentsNames>
-	constexpr FunctionInfo<Function, NameLength, ArgumentsTypes, ArgumentsNames> makeFunctionInfo (
+	template<typename Function, int NameLength>
+	constexpr FunctionInfo<Function, NameLength> makeFunctionInfo (
 		Function function,
-		RawStringLiteral<NameLength> &name,
-		const ArgumentsTypes &argumentsTypes,
-		const ArgumentsNames &argumentsNames
+		RawStringLiteral<NameLength> &name
 	) {
-		return { function, { name }, argumentsTypes, argumentsNames };
+		return { function, { name } };
 	}
 }
 
