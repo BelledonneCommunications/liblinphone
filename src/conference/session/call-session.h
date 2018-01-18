@@ -1,6 +1,6 @@
 /*
  * call-session.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _CALL_SESSION_H_
-#define _CALL_SESSION_H_
+#ifndef _L_CALL_SESSION_H_
+#define _L_CALL_SESSION_H_
 
 #include "object/object.h"
 #include "address/address.h"
@@ -43,6 +43,8 @@ class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class ClientGroupChatRoomPrivate;
 	friend class Conference;
 	friend class CorePrivate;
+	friend class LocalConferenceCall;
+	friend class RemoteConferenceCall;
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
 
@@ -109,4 +111,4 @@ private:
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _CALL_SESSION_H_
+#endif // ifndef _L_CALL_SESSION_H_

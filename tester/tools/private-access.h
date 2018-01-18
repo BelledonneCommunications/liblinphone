@@ -1,6 +1,6 @@
 /*
  * private-access.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,8 +25,8 @@
 // See: http://en.cppreference.com/w/cpp/language/friend
 // =============================================================================
 
-#ifndef _PRIVATE_ACCESS_H_
-#define _PRIVATE_ACCESS_H_
+#ifndef _L_PRIVATE_ACCESS_H_
+#define _L_PRIVATE_ACCESS_H_
 
 #include <type_traits>
 
@@ -60,4 +60,4 @@
 		static_cast<L_INTERNAL_STRUCT_ATTR_SPY(ATTR_NAME)<std::remove_pointer<std::decay<decltype(OBJECT)>::type>::type> *>(nullptr) \
 	)
 
-#endif // ifndef _PRIVATE_ACCESS_H_
+#endif // ifndef _L_PRIVATE_ACCESS_H_

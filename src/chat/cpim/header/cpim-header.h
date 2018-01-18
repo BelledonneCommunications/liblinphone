@@ -1,6 +1,6 @@
 /*
  * cpim-header.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _CPIM_HEADER_H_
-#define _CPIM_HEADER_H_
+#ifndef _L_CPIM_HEADER_H_
+#define _L_CPIM_HEADER_H_
 
 #include "object/object.h"
 
@@ -53,4 +53,4 @@ namespace Cpim {
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _CPIM_HEADER_H_
+#endif // ifndef _L_CPIM_HEADER_H_

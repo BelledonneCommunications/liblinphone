@@ -1,6 +1,6 @@
 /*
  * c-dial-plan.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _C_DIAL_PLAN_H_
-#define _C_DIAL_PLAN_H_
+#ifndef _L_C_DIAL_PLAN_H_
+#define _L_C_DIAL_PLAN_H_
 
 #include "linphone/api/c-types.h"
 
@@ -113,4 +113,4 @@ LINPHONE_PUBLIC bool_t linphone_dial_plan_is_generic(const LinphoneDialPlan *ccc
 	}
 #endif // ifdef __cplusplus
 
-#endif // ifndef _C_DIAL_PLAN_H_
+#endif // ifndef _L_C_DIAL_PLAN_H_

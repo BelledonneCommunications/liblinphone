@@ -1,6 +1,6 @@
 /*
  * platform-helpers.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _PLATFORM_HELPERS_H_
-#define _PLATFORM_HELPERS_H_
+#ifndef _L_PLATFORM_HELPERS_H_
+#define _L_PLATFORM_HELPERS_H_
 
 #include <string>
 
@@ -75,4 +75,4 @@ PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemCon
 
 LINPHONE_END_NAMESPACE
 
-#endif // indef _PLATFORM_HELPERS_H_
+#endif // indef _L_PLATFORM_HELPERS_H_

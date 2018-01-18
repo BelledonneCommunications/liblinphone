@@ -1,6 +1,6 @@
 /*
  * media-session-p.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _MEDIA_SESSION_P_H_
-#define _MEDIA_SESSION_P_H_
+#ifndef _L_MEDIA_SESSION_P_H_
+#define _L_MEDIA_SESSION_P_H_
 
 #include <utility>
 
@@ -109,7 +109,7 @@ public:
 	SalMediaDescription *getResultDesc () const { return resultDesc; }
 
 	// CoreListener
-	void onNetworkReachable (bool reachable) override;
+	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
 
 private:
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo (const std::string &name);
@@ -338,4 +338,4 @@ private:
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _MEDIA_SESSION_P_H_
+#endif // ifndef _L_MEDIA_SESSION_P_H_

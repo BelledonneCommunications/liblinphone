@@ -1,6 +1,6 @@
 /*
  * c-call-stats.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _C_CALL_STATS_H_
-#define _C_CALL_STATS_H_
+#ifndef _L_C_CALL_STATS_H_
+#define _L_C_CALL_STATS_H_
 
 #include <ortp/rtp.h>
 
@@ -192,6 +192,15 @@ LINPHONE_PUBLIC float linphone_call_stats_get_jitter_buffer_size_ms (const Linph
 LINPHONE_PUBLIC float linphone_call_stats_get_round_trip_delay (const LinphoneCallStats *stats);
 
 /**
+ * Get the estimated bandwidth measurement of the received stream, expressed in kbit/s, including IP/UDP/RTP headers.
+ * @param[in] stats LinphoneCallStats object
+ * @return The estimated bandwidth measurement of the received stream in kbit/s.
+ */
+LINPHONE_PUBLIC float linphone_call_stats_get_estimated_download_bandwidth(const LinphoneCallStats *stats);
+
+void linphone_call_stats_set_estimated_download_bandwidth(LinphoneCallStats *stats, float estimated_value);
+
+/**
  * @}
  */
 
@@ -199,4 +208,4 @@ LINPHONE_PUBLIC float linphone_call_stats_get_round_trip_delay (const LinphoneCa
 	}
 #endif // ifdef __cplusplus
 
-#endif // ifndef _C_CALL_STATS_H_
+#endif // ifndef _L_C_CALL_STATS_H_

@@ -1,6 +1,6 @@
 /*
  * c-tools.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _C_TOOLS_H_
-#define _C_TOOLS_H_
+#ifndef _L_C_TOOLS_H_
+#define _L_C_TOOLS_H_
 
 #include <list>
 
@@ -812,4 +812,4 @@ LINPHONE_END_NAMESPACE
 #define L_GET_RESOLVED_CPP_LIST_FROM_C_LIST(C_LIST, C_TYPE) \
 	LinphonePrivate::Wrapper::getResolvedCppListFromCList<Linphone ## C_TYPE>(C_LIST)
 
-#endif // ifndef _C_TOOLS_H_
+#endif // ifndef _L_C_TOOLS_H_

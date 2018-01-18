@@ -1,6 +1,6 @@
 /*
  * content-manager.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _CONTENT_MANAGER_H_
-#define _CONTENT_MANAGER_H_
+#ifndef _L_CONTENT_MANAGER_H_
+#define _L_CONTENT_MANAGER_H_
 
 #include <list>
 
@@ -37,4 +37,4 @@ namespace ContentManager {
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _CONTENT_MANAGER_H_
+#endif // ifndef _L_CONTENT_MANAGER_H_

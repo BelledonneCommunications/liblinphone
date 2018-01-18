@@ -1,6 +1,6 @@
 /*
 player.h
-Copyright (C) 2010-2017 Belledonne Communications SARL
+Copyright (C) 2010-2018 Belledonne Communications SARL
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -125,6 +125,11 @@ LINPHONE_PUBLIC int linphone_player_get_current_position(LinphonePlayer *obj);
  */
 LINPHONE_PUBLIC void linphone_player_close(LinphonePlayer *obj);
 
+/**
+ * Returns the LinphoneCore object managing this player's call, if any.
+ * @param[in] fr LinphonePlayer object
+ */
+LINPHONE_PUBLIC LinphoneCore *linphone_player_get_core(const LinphonePlayer *player);
 
 /**
  * Acquire a reference to the LinphonePlayerCbs object.

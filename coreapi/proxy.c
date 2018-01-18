@@ -660,7 +660,7 @@ char* linphone_proxy_config_normalize_phone_number(LinphoneProxyConfig *proxy, c
 
 		ccc = DialPlan::lookupCccFromE164(flatten);
 		if (ccc>-1) { /*e164 like phone number*/
-			dialplan = DialPlan::findByCccAsInt(ccc);
+			dialplan = DialPlan::findByCcc(ccc);
 			nationnal_significant_number = strstr(flatten, dialplan.getCountryCallingCode().c_str());
 			if (nationnal_significant_number) {
 				nationnal_significant_number +=strlen(dialplan.getCountryCallingCode().c_str());

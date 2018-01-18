@@ -1,6 +1,6 @@
 /*
  * chat-message.cpp
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -387,16 +387,6 @@ LinphoneReason ChatMessagePrivate::receive () {
 	// Start of message modification
 	// ---------------------------------------
 
-	if ((currentRecvStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
-		lInfo() << "Cpim step already done, skipping";
-	} else {
-		if (internalContent.getContentType() == ContentType::Cpim) {
-			CpimChatMessageModifier ccmm;
-			ccmm.decode(q->getSharedFromThis(), errorCode);
-		}
-		currentRecvStep |= ChatMessagePrivate::Step::Cpim;
-	}
-
 	if ((currentRecvStep &ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
 		lInfo() << "Encryption step already done, skipping";
 	} else {
@@ -413,6 +403,16 @@ LinphoneReason ChatMessagePrivate::receive () {
 			return LinphoneReasonNone;
 		}
 		currentRecvStep |= ChatMessagePrivate::Step::Encryption;
+	}
+
+	if ((currentRecvStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
+		lInfo() << "Cpim step already done, skipping";
+	} else {
+		if (internalContent.getContentType() == ContentType::Cpim) {
+			CpimChatMessageModifier ccmm;
+			ccmm.decode(q->getSharedFromThis(), errorCode);
+		}
+		currentRecvStep |= ChatMessagePrivate::Step::Cpim;
 	}
 
 	if ((currentRecvStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
@@ -547,7 +547,7 @@ void ChatMessagePrivate::send () {
 
 	if (applyModifiers) {
 		// Do not multipart or encapsulate with CPIM in an old ChatRoom to maintain backward compatibility
-		if (q->getChatRoom()->canHandleParticipants()) {
+		if (q->getChatRoom()->canHandleCpim()) {
 			if ((currentSendStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
 				lInfo() << "Multipart step already done, skipping";
 			} else {
@@ -556,6 +556,19 @@ void ChatMessagePrivate::send () {
 					mcmm.encode(q->getSharedFromThis(), errorCode);
 				}
 				currentSendStep |= ChatMessagePrivate::Step::Multipart;
+			}
+		}
+
+		if (q->getChatRoom()->canHandleCpim()) {
+			if ((currentSendStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
+				lInfo() << "Cpim step already done, skipping";
+			} else {
+				int defaultValue = !!lp_config_get_string(core->getCCore()->config, "misc", "conference_factory_uri", nullptr);
+				if (lp_config_get_int(core->getCCore()->config, "sip", "use_cpim", defaultValue) == 1) {
+					CpimChatMessageModifier ccmm;
+					ccmm.encode(q->getSharedFromThis(), errorCode);
+				}
+				currentSendStep |= ChatMessagePrivate::Step::Cpim;
 			}
 		}
 
@@ -573,19 +586,6 @@ void ChatMessagePrivate::send () {
 				return;
 			}
 			currentSendStep |= ChatMessagePrivate::Step::Encryption;
-		}
-
-		if (q->getChatRoom()->canHandleParticipants()) {
-			if ((currentSendStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
-				lInfo() << "Cpim step already done, skipping";
-			} else {
-				int defaultValue = !!lp_config_get_string(core->getCCore()->config, "misc", "conference_factory_uri", nullptr);
-				if (lp_config_get_int(core->getCCore()->config, "sip", "use_cpim", defaultValue) == 1) {
-					CpimChatMessageModifier ccmm;
-					ccmm.encode(q->getSharedFromThis(), errorCode);
-				}
-				currentSendStep |= ChatMessagePrivate::Step::Cpim;
-			}
 		}
 	}
 
@@ -700,6 +700,8 @@ ChatMessage::~ChatMessage () {
 
 	if (d->salOp)
 		d->salOp->release();
+	if (d->salCustomHeaders)
+		sal_custom_header_unref(d->salCustomHeaders);
 }
 
 shared_ptr<AbstractChatRoom> ChatMessage::getChatRoom () const {

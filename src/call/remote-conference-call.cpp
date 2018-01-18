@@ -1,6 +1,6 @@
 /*
  * remote-conference-call.cpp
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 
 #include "conference/remote-conference-p.h"
 #include "conference/participant-p.h"
+#include "conference/session/media-session-p.h"
 #include "remote-conference-call-p.h"
 
 // =============================================================================
@@ -48,6 +49,13 @@ RemoteConferenceCall::RemoteConferenceCall (
 	addParticipant((direction == LinphoneCallIncoming) ? from : to, msp, true);
 	shared_ptr<Participant> participant = getParticipants().front();
 	participant->getPrivate()->getSession()->configure(direction, cfg, op, from, to);
+}
+
+RemoteConferenceCall::~RemoteConferenceCall () {
+	L_D();
+	auto session = d->getActiveSession();
+	if (session)
+		session->getPrivate()->setCallSessionListener(nullptr);
 }
 
 shared_ptr<Core> RemoteConferenceCall::getCore () const {

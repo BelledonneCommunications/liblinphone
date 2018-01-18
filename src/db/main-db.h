@@ -1,6 +1,6 @@
 /*
  * main-db.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _MAIN_DB_H_
-#define _MAIN_DB_H_
+#ifndef _L_MAIN_DB_H_
+#define _L_MAIN_DB_H_
 
 #include <list>
 
@@ -125,11 +125,16 @@ public:
 		const std::shared_ptr<AbstractChatRoom> &clientGroupChatRoom
 	);
 
+	IdentityAddress findOneToOneConferenceChatRoomAddress (
+		const IdentityAddress &participantA,
+		const IdentityAddress &participantB
+	) const;
+
 	// ---------------------------------------------------------------------------
 	// Other.
 	// ---------------------------------------------------------------------------
 
-	// Import legacy messages from old db.
+	// Import legacy calls/messages from old db.
 	bool import (Backend backend, const std::string &parameters) override;
 
 protected:
@@ -142,4 +147,4 @@ private:
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _MAIN_DB_H_
+#endif // ifndef _L_MAIN_DB_H_

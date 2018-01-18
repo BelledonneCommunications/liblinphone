@@ -1,6 +1,6 @@
 /*
  * dial-plan.cpp
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -64,7 +64,7 @@ const list<DialPlan> DialPlanPrivate::DialPlans = {
 	{ "Bolivia", "BO", "591", 8, "00" },
 	{ "Bosnia and Herzegovina", "BA", "387", 8, "00" },
 	{ "Botswana", "BW", "267", 8, "00" },
-	{ "Brazil", "BR", "55", 10, "00" },
+	{ "Brazil", "BR", "55", 11, "00" },
 	{ "Brunei Darussalam", "BN", "673", 7, "00" },
 	{ "Bulgaria", "BG", "359", 9, "00" },
 	{ "Burkina Faso", "BF", "226", 8, "00" },
@@ -379,7 +379,7 @@ int DialPlan::lookupCccFromIso (const string &iso) {
 	return -1;
 }
 
-const DialPlan &DialPlan::findByCccAsInt (int ccc) {
+const DialPlan &DialPlan::findByCcc (int ccc) {
 	return DialPlan::findByCcc(Utils::toString(ccc));
 }
 

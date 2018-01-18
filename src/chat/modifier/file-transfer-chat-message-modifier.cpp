@@ -1,6 +1,6 @@
 /*
  * file-transfer-chat-message-modifier.cpp
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -383,6 +383,11 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 				releaseHttpRequest();
 				fileUploadEndBackgroundTask();
 			}
+		} else if (code == 400) {
+			lWarning() << "Received HTTP code response " << code << " for file transfer, probably meaning file is too large";
+			chatMessage->updateState(ChatMessage::State::FileTransferError);
+			releaseHttpRequest();
+			fileUploadEndBackgroundTask();
 		} else {
 			lWarning() << "Unhandled HTTP code response " << code << " for file transfer";
 			chatMessage->updateState(ChatMessage::State::NotDelivered);
@@ -772,7 +777,7 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 				FileTransferContent *fileTransferContent = (FileTransferContent*)content;
 				if (fileTransferContent->getFileContent() == fileContent) {
 					chatMessage->removeContent(*content);
-					free(fileTransferContent);
+					delete fileTransferContent;
 					break;
 				}
 			}

@@ -1,6 +1,6 @@
 /*
  * abstract-db.cpp
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -203,6 +203,24 @@ void AbstractDb::enableForeignKeys (bool status) {
 				break;
 		}
 	#endif // ifdef SOCI_ENABLED
+}
+
+bool AbstractDb::checkTableExists (const string &table) const {
+	#ifdef SOCI_ENABLED
+		L_D();
+		soci::session *session = d->dbSession.getBackendSession<soci::session>();
+		switch (d->backend) {
+			case Mysql:
+				*session << "SHOW TABLES LIKE :table", soci::use(table);
+				return session->got_data() > 0;
+			case Sqlite3:
+				*session << "SELECT name FROM sqlite_master WHERE type='table' AND name=:table", soci::use(table);
+				return session->got_data() > 0;
+		}
+	#endif // ifdef SOCI_ENABLED
+
+	L_ASSERT(false);
+	return false;
 }
 
 LINPHONE_END_NAMESPACE
