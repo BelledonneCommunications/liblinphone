@@ -42,9 +42,9 @@ public:
 	virtual ChatMessageModifier::Result processOutgoingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) { return ChatMessageModifier::Result::Skipped; }
 	virtual ChatMessageModifier::Result processIncomingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) { return ChatMessageModifier::Result::Skipped; }
 	virtual bool encryptionEnabledForFileTransferCb (const std::shared_ptr<AbstractChatRoom> &ChatRoom) { return false; }
-    virtual void generateFileTransferKeyCb (const std::shared_ptr<AbstractChatRoom> &ChatRoom) {}
-    virtual int downloadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t *offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) { return 0; }
-    virtual int uploadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t *offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer) { return 0; }
+    virtual void generateFileTransferKeyCb (const std::shared_ptr<AbstractChatRoom> &ChatRoom, const std::shared_ptr<ChatMessage> &message) {}
+    virtual int downloadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decryptedBuffer) { return 0; }
+    virtual int uploadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *encryptedBuffer) { return 0; }
 };
 
 LINPHONE_END_NAMESPACE

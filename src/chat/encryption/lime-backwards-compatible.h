@@ -31,9 +31,9 @@ public:
     ChatMessageModifier::Result processIncomingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
     ChatMessageModifier::Result processOutgoingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
     bool encryptionEnabledForFileTransferCb (const std::shared_ptr<AbstractChatRoom> &ChatRoom) override;
-    void generateFileTransferKeyCb (const std::shared_ptr<AbstractChatRoom> &ChatRoom) override;
-    int downloadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t *offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) override;
-    int uploadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t *offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer) override;
+    void generateFileTransferKeyCb (const std::shared_ptr<AbstractChatRoom> &ChatRoom, const std::shared_ptr<ChatMessage> &message) override;
+    int downloadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) override;
+    int uploadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *encrypted_buffer) override;
 };
 
 LINPHONE_END_NAMESPACE

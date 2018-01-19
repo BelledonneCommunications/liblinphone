@@ -55,14 +55,15 @@ bool LimeV2::encryptionEnabledForFileTransferCb(
 }
 
 void LimeV2::generateFileTransferKeyCb(
-    const shared_ptr<AbstractChatRoom> &chatRoom
+    const shared_ptr<AbstractChatRoom> &chatRoom,
+    const shared_ptr<ChatMessage> &message
 ) {
     // Call lime processing methods
 }
 
 int LimeV2::downloadingFileCb(
     const shared_ptr<ChatMessage> &message,
-    size_t *offset,
+    size_t offset,
     const uint8_t *buffer,
     size_t size,
     uint8_t *decrypted_buffer
@@ -73,9 +74,9 @@ int LimeV2::downloadingFileCb(
 
 int LimeV2::uploadingFileCb(
     const shared_ptr<ChatMessage> &message,
-    size_t *offset,
+    size_t offset,
     const uint8_t *buffer,
-    size_t *size,
+    size_t size,
     uint8_t *encrypted_buffer
 ) {
     // Call lime processing methods

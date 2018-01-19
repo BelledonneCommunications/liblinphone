@@ -96,36 +96,61 @@ ChatMessageModifier::Result LimeBackwardsCompatible::processIncomingMessage(
 bool LimeBackwardsCompatible::encryptionEnabledForFileTransferCb(
     const shared_ptr<AbstractChatRoom> &chatRoom
 ) {
-    // Backwards compatible methods
+    LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
+    LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
+    LinphoneImEncryptionEngineCbsIsEncryptionEnabledForFileTransferCb is_encryption_enabled_for_file_transfer_cb =
+        linphone_im_encryption_engine_cbs_get_is_encryption_enabled_for_file_transfer(imee_cbs);
+    if (is_encryption_enabled_for_file_transfer_cb) {
+        return is_encryption_enabled_for_file_transfer_cb(imee, L_GET_C_BACK_PTR(chatRoom));
+    }
     return false;
 }
 
 void LimeBackwardsCompatible::generateFileTransferKeyCb(
-    const shared_ptr<AbstractChatRoom> &chatRoom
+    const shared_ptr<AbstractChatRoom> &chatRoom,
+    const shared_ptr<ChatMessage> &message
 ) {
-    // Backwards compatible methods
+    LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
+    LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
+    LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb generate_file_transfer_key_cb =
+        linphone_im_encryption_engine_cbs_get_generate_file_transfer_key(imee_cbs);
+    if (generate_file_transfer_key_cb) {
+        generate_file_transfer_key_cb(imee, L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(message));
+    }
 }
 
 int LimeBackwardsCompatible::downloadingFileCb(
     const shared_ptr<ChatMessage> &message,
-    size_t *offset,
+    size_t offset,
     const uint8_t *buffer,
     size_t size,
-    uint8_t *decrypted_buffer
+    uint8_t *decryptedBuffer
 ) {
-    // Backwards compatible methods
-    return 0;
+    shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
+    LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
+    LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
+    LinphoneImEncryptionEngineCbsDownloadingFileCb cb_process_downloading_file = linphone_im_encryption_engine_cbs_get_process_downloading_file(imee_cbs);
+    if (cb_process_downloading_file) {
+        return cb_process_downloading_file(imee, L_GET_C_BACK_PTR(message), offset, buffer, size, decryptedBuffer);
+    }
+    return -1;
 }
 
 int LimeBackwardsCompatible::uploadingFileCb(
     const shared_ptr<ChatMessage> &message,
-    size_t *offset,
+    size_t offset,
     const uint8_t *buffer,
-    size_t *size,
-    uint8_t *encrypted_buffer
+    size_t size,
+    uint8_t *encryptedBuffer
 ) {
-    // Backwards compatible methods
-    return 0;
+    shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
+    LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
+    LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
+    LinphoneImEncryptionEngineCbsUploadingFileCb cb_process_uploading_file = linphone_im_encryption_engine_cbs_get_process_uploading_file(imee_cbs);
+    if (cb_process_uploading_file) {
+        return cb_process_uploading_file(imee, L_GET_C_BACK_PTR(message), offset, buffer, &size, encryptedBuffer);
+    }
+    return -1;
 }
 
 LINPHONE_END_NAMESPACE
