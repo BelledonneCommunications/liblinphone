@@ -240,7 +240,7 @@ LinphoneReason ServerGroupChatRoomPrivate::onSipMessageReceived (SalOp *op, cons
 		return LinphoneReasonNotAcceptable;
 	Content content;
 	content.setContentType(message->content_type);
-	content.setBody(message->text ? message->text : "");
+	content.setBodyFromUtf8(message->text ? message->text : "");
 	dispatchMessage(fromAddr, content);
 	return LinphoneReasonNone;
 }
@@ -446,6 +446,10 @@ void ServerGroupChatRoom::addParticipants (const list<IdentityAddress> &addresse
 
 bool ServerGroupChatRoom::canHandleParticipants () const {
 	return LocalConference::canHandleParticipants();
+}
+
+bool ServerGroupChatRoom::canHandleCpim () const {
+	return LocalConference::canHandleCpim();
 }
 
 shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const IdentityAddress &addr) const {
