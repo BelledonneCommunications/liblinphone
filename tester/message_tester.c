@@ -64,7 +64,9 @@ void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMess
 	ms_free(from);
 	counters = get_stats(lc);
 	counters->number_of_LinphoneMessageReceived++;
-	if (counters->last_received_chat_message) linphone_chat_message_unref(counters->last_received_chat_message);
+	if (counters->last_received_chat_message) {
+		linphone_chat_message_unref(counters->last_received_chat_message);
+	}
 	counters->last_received_chat_message=linphone_chat_message_ref(msg);
 	if (linphone_chat_message_get_file_transfer_information(msg)) {
 		counters->number_of_LinphoneMessageReceivedWithFile++;
@@ -284,10 +286,11 @@ LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneCh
 }
 
 void text_message_base(LinphoneCoreManager* marie, LinphoneCoreManager* pauline) {
-	LinphoneChatMessage* msg = linphone_chat_room_create_message(linphone_core_get_chat_room(pauline->lc,marie->identity),"Bli bli bli \n blu");
+	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc,marie->identity);
+	LinphoneChatMessage* msg = linphone_chat_room_create_message(room,"Bli bli bli \n blu");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-	linphone_chat_room_send_chat_message(linphone_chat_message_get_chat_room(msg), msg);
+	linphone_chat_room_send_chat_message(room, msg);
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDelivered,1));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived,1));
@@ -297,6 +300,7 @@ void text_message_base(LinphoneCoreManager* marie, LinphoneCoreManager* pauline)
 	}
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room(marie->lc,pauline->identity));
+	linphone_chat_message_unref(msg);
 }
 
 /****************************** Tests starting below ******************************/
@@ -305,8 +309,7 @@ static void text_message(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 
-	linphone_chat_room_send_message(linphone_core_get_chat_room(pauline->lc,marie->identity), "hello");
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedLegacy,1));
+	text_message_base(marie, pauline);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -339,13 +342,14 @@ static void text_message_with_credential_from_auth_cb_auth_info_requested(Linpho
 static void text_message_with_credential_from_auth_callback(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreVTable* vtable = linphone_core_v_table_new();
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 
 	/*to force cb to be called*/
 	text_message_with_credential_from_auth_cb_auth_info=linphone_auth_info_clone((LinphoneAuthInfo*)(linphone_core_get_auth_info_list(pauline->lc)->data));
 	linphone_core_clear_all_auth_info(pauline->lc);
-	vtable->auth_info_requested=text_message_with_credential_from_auth_cb_auth_info_requested;
-	linphone_core_add_listener(pauline->lc, vtable);
+	linphone_core_cbs_set_auth_info_requested(cbs, text_message_with_credential_from_auth_cb_auth_info_requested);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
 
 	text_message_base(marie, pauline);
 
@@ -431,34 +435,6 @@ static void text_message_with_send_error(void) {
 	/*give a chance to register again to allow linphone_core_manager_destroy to properly unregister*/
 	linphone_core_refresh_registers(marie->lc);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneRegistrationOk,marie->stat.number_of_LinphoneRegistrationOk + 1));
-
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-}
-
-static void text_message_with_external_body(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
-	LinphoneChatMessage* msg = linphone_chat_room_create_message(chat_room,"Bli bli bli \n blu");
-	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
-
-	message_external_body_url="http://www.linphone.org";
-	linphone_chat_message_set_external_body_url(msg,message_external_body_url);
-	linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
-	linphone_chat_room_send_chat_message(chat_room,msg);
-
-	/* check transient msg list: the msg should be in it, and should be the only one */
-	/*BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_chat_room_get_transient_messages(chat_room)), 1, unsigned int, "%u");
-	BC_ASSERT_PTR_EQUAL(bctbx_list_nth_data(linphone_chat_room_get_transient_messages(chat_room),0), msg);*/
-
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived,1));
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDelivered,1));
-
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress,1, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageExtBodyReceived,1, int, "%d");
-
-	//BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_chat_room_get_transient_messages(chat_room)), 0, unsigned int, "%u");
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -562,11 +538,16 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 					compare_files(send_filepath, receive_filepath);
 				}
 			}
+
+			if (!download_from_history) {
+				linphone_chat_message_unref(recv_msg);
+			}
 		}
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress,2, int, "%d"); //sent twice because of file transfer
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered,1, int, "%d");
 	}
 end:
+	linphone_chat_message_unref(msg);
 	bctbx_list_free_with_data(msg_list, (bctbx_list_free_func)linphone_chat_message_unref);
 	remove(receive_filepath);
 	bc_free(send_filepath);
@@ -2338,78 +2319,13 @@ void im_encryption_engine_b64_async(void) {
 	im_encryption_engine_b64_base(TRUE);
 }
 
-void file_and_text_message(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
-
-	LpConfig *config = linphone_core_get_config(pauline->lc);
-	lp_config_set_int(config, "sip", "use_cpim", 1);
-
-	char *send_filepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
-	char *receive_filepath = bc_tester_file("receive_file.dump");
-	LinphoneChatRoom* chat_room;
-	LinphoneChatMessage* msg;
-	LinphoneChatMessageCbs *cbs;
-
-	/* Remove any previously downloaded file */
-	remove(receive_filepath);
-
-	/* Globally configure an http file transfer server. */
-	linphone_core_set_file_transfer_server(pauline->lc,"https://www.linphone.org:444/lft.php");
-
-	/* create a chatroom on pauline's side */
-	chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
-
-	/* create a file transfer msg */
-	msg = create_file_transfer_message_from_sintel_trailer(chat_room);
-	linphone_chat_message_add_text_content(msg, "Text message");
-
-	BC_ASSERT_TRUE(linphone_chat_message_has_text_content(msg));
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(msg), "Text message");
-
-	linphone_chat_room_send_chat_message(chat_room, msg);
-
-	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1, 60000));
-
-	if (marie->stat.last_received_chat_message) {
-		LinphoneChatMessage *recv_msg;
-		recv_msg = marie->stat.last_received_chat_message;
-
-		BC_ASSERT_TRUE(linphone_chat_message_has_text_content(recv_msg));
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(recv_msg), "Text message");
-
-		cbs = linphone_chat_message_get_callbacks(recv_msg);
-		linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-		linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
-		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
-		linphone_chat_message_set_file_transfer_filepath(recv_msg, receive_filepath);
-		linphone_chat_message_download_file(recv_msg);
-
-		/* wait for a long time in case the DNS SRV resolution takes times - it should be immediate though */
-		if (BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 1, 55000))) {
-			compare_files(send_filepath, receive_filepath);
-		}
-	}
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 2, int, "%d"); //sent twice because of file transfer
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 1, int, "%d");
-
-	remove(receive_filepath);
-	bc_free(send_filepath);
-	bc_free(receive_filepath);
-
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(marie);
-}
-
 test_t message_tests[] = {
-	TEST_NO_TAG("File + Text message", file_and_text_message),
 	TEST_NO_TAG("Text message", text_message),
 	TEST_NO_TAG("Text message with credentials from auth callback", text_message_with_credential_from_auth_callback),
 	TEST_NO_TAG("Text message with privacy", text_message_with_privacy),
 	TEST_NO_TAG("Text message compatibility mode", text_message_compatibility_mode),
 	TEST_NO_TAG("Text message with ack", text_message_with_ack),
 	TEST_NO_TAG("Text message with send error", text_message_with_send_error),
-	TEST_NO_TAG("Text message with external body", text_message_with_external_body),
 	TEST_NO_TAG("Transfer message", transfer_message),
 	TEST_NO_TAG("Transfer message 2", transfer_message_2),
 	TEST_NO_TAG("Transfer message 3", transfer_message_3),

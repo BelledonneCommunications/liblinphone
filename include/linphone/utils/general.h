@@ -1,6 +1,6 @@
 /*
  * general.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _GENERAL_H_
-#define _GENERAL_H_
+#ifndef _L_GENERAL_H_
+#define _L_GENERAL_H_
 
 #ifdef __cplusplus
 	#include <type_traits>
@@ -37,6 +37,10 @@
 // -----------------------------------------------------------------------------
 
 LINPHONE_BEGIN_NAMESPACE
+
+// -----------------------------------------------------------------------------
+// Export.
+// -----------------------------------------------------------------------------
 
 #ifndef LINPHONE_PUBLIC
 	#if defined(_MSC_VER)
@@ -66,6 +70,10 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef __cplusplus
 
+// -----------------------------------------------------------------------------
+// Debug.
+// -----------------------------------------------------------------------------
+
 void l_assert (const char *condition, const char *file, int line);
 
 #ifdef DEBUG
@@ -73,6 +81,10 @@ void l_assert (const char *condition, const char *file, int line);
 #else
 	#define L_ASSERT(CONDITION) static_cast<void>(false && (CONDITION))
 #endif
+
+// -----------------------------------------------------------------------------
+// Optimization.
+// -----------------------------------------------------------------------------
 
 #ifndef _MSC_VER
 	#define L_LIKELY(EXPRESSION) __builtin_expect(static_cast<bool>(EXPRESSION), true)
@@ -82,8 +94,16 @@ void l_assert (const char *condition, const char *file, int line);
 	#define L_UNLIKELY(EXPRESSION) EXPRESSION
 #endif
 
+// -----------------------------------------------------------------------------
+// Misc.
+// -----------------------------------------------------------------------------
+
 // Define an integer version like: 0xXXYYZZ, XX=MAJOR, YY=MINOR, and ZZ=PATCH.
 #define L_VERSION(MAJOR, MINOR, PATCH) (((MAJOR) << 16) | ((MINOR) << 8) | (PATCH))
+
+// -----------------------------------------------------------------------------
+// Data access.
+// -----------------------------------------------------------------------------
 
 class BaseObject;
 class BaseObjectPrivate;
@@ -213,6 +233,42 @@ struct AddConstMirror<const T, U> {
 	}
 
 // -----------------------------------------------------------------------------
+// Overload.
+// -----------------------------------------------------------------------------
+
+namespace Private {
+	template<typename... Args>
+	struct ResolveMemberFunctionOverload {
+		template<typename Ret, typename Obj>
+		constexpr auto operator() (Ret (Obj::*func)(Args...)) const -> decltype(func) {
+			return func;
+		}
+	};
+
+	template<typename... Args>
+	struct ResolveConstMemberFunctionOverload {
+		template<typename Ret, typename Obj>
+		constexpr auto operator() (Ret (Obj::*func)(Args...) const) const -> decltype(func) {
+			return func;
+		}
+	};
+
+	template<typename... Args>
+	struct ResolveOverload : ResolveMemberFunctionOverload<Args...>, ResolveConstMemberFunctionOverload<Args...> {
+		using ResolveMemberFunctionOverload<Args...>::operator();
+		using ResolveConstMemberFunctionOverload<Args...>::operator();
+
+		template<typename Ret>
+		constexpr auto operator() (Ret (*func)(Args...)) const -> decltype(func) {
+			return func;
+		}
+	};
+}
+
+// Useful to select a specific overloaded function. (Avoid usage of static_cast.)
+#define L_RESOLVE_OVERLOAD(ARGS) LinphonePrivate::Private::ResolveOverload<ARGS>
+
+// -----------------------------------------------------------------------------
 // Wrapper public.
 // -----------------------------------------------------------------------------
 
@@ -223,4 +279,4 @@ struct AddConstMirror<const T, U> {
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _GENERAL_H_
+#endif // ifndef _L_GENERAL_H_

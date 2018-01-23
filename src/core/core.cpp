@@ -1,6 +1,6 @@
 /*
  * core.cpp
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -79,9 +79,9 @@ void CorePrivate::uninit () {
 
 // -----------------------------------------------------------------------------
 
-void CorePrivate::notifyNetworkReachable (bool reachable) {
+void CorePrivate::notifyNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
 	for (const auto &listener : listeners)
-		listener->onNetworkReachable(reachable);
+		listener->onNetworkReachable(sipNetworkReachable, mediaNetworkReachable);
 }
 
 void CorePrivate::notifyRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const string &message) {

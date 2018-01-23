@@ -1,6 +1,6 @@
 /*
  * sal.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _SAL_H_
-#define _SAL_H_
+#ifndef _L_SAL_H_
+#define _L_SAL_H_
 
 #include "c-wrapper/internal/c-sal.h"
 #include "linphone/utils/general.h"
@@ -113,6 +113,10 @@ public:
 
 	Sal(MSFactory *factory);
 	~Sal();
+
+	void set_factory(MSFactory *factory) {
+		this->factory = factory;
+	}
 
 	void set_user_pointer(void *user_data) {this->up=user_data;}
 	void *get_user_pointer() const {return this->up;}
@@ -322,4 +326,4 @@ int to_sip_code(SalReason r);
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _SAL_H_
+#endif // ifndef _L_SAL_H_

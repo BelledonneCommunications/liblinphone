@@ -871,13 +871,13 @@ LINPHONE_PUBLIC const char *linphone_core_get_version(void);
 LINPHONE_PUBLIC const char *linphone_core_get_user_agent(LinphoneCore *lc);
 
 /**
- * @deprecated Use #linphone_core_get_user_agent instead.
+ * @deprecated 2016-12-20: Use #linphone_core_get_user_agent instead.
  * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_user_agent_name(void);
 
 /**
- * @deprecated Use #linphone_core_get_user_agent instead.
+ * @deprecated 2016-12-20: Use #linphone_core_get_user_agent instead.
  * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_user_agent_version(void);
@@ -904,7 +904,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_user_agent_ver
  * @param userdata an opaque user pointer that can be retrieved at any time (for example in
  *        callbacks) using linphone_core_get_user_data().
  * @see linphone_core_new_with_config
- * @deprecated Use linphone_factory_create_core() instead.
+ * @deprecated 2017-01-12: Use linphone_factory_create_core() instead.
  * @donotwrap
 **/
 LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_core_new(const LinphoneCoreVTable *vtable,
@@ -921,10 +921,17 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_core_new(const Linpho
  * @param userdata an opaque user pointer that can be retrieved at any time (for example in
  *        callbacks) using linphone_core_get_user_data().
  * @see linphone_core_new
- * @deprecated Use linphone_factory_create_core_with_config() instead.
+ * @deprecated 2017-01-12: Use linphone_factory_create_core_with_config() instead.
  * @donotwrap
 **/
 LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_core_new_with_config(const LinphoneCoreVTable *vtable, LpConfig *config, void *userdata);
+
+/**
+ * Start a LinphoneCore object after it has been instantiated.
+ * @ingroup initializing
+ * @param[in] core The #LinphoneCore object to be started
+ */
+LINPHONE_PUBLIC void linphone_core_start (LinphoneCore *core);
 
 /**
  * Increment the reference counter of a #LinphoneCore object.
@@ -4935,15 +4942,17 @@ void linphone_core_set_linphone_specs (LinphoneCore *core, const char *specs);
  * Set the chat database path.
  * @param lc the linphone core
  * @param path the database path
+ * @deprecated 2018-01-10: Use only for migration purposes
  */
-LINPHONE_PUBLIC void linphone_core_set_chat_database_path(LinphoneCore *lc, const char *path);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_set_chat_database_path(LinphoneCore *lc, const char *path);
 
 /**
  * Get path to the database file used for storing chat messages.
  * @param lc the linphone core
  * @return file path or NULL if not exist
+ * @deprecated 2018-01-10
  **/
-LINPHONE_PUBLIC const char *linphone_core_get_chat_database_path(const LinphoneCore *lc);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC const char *linphone_core_get_chat_database_path(const LinphoneCore *lc);
 
 /**
  * Create a client-side group chat room. When calling this function the chat room is only created
@@ -5286,13 +5295,6 @@ LINPHONE_PUBLIC void linphone_core_set_friends_database_path(LinphoneCore *lc, c
  * @return filesystem path
 **/
 LINPHONE_PUBLIC const char* linphone_core_get_friends_database_path(LinphoneCore *lc);
-
-/**
- * Migrates the friends from the linphonerc to the database if not done yet
- * @ingroup initializing
- * @param lc the linphone core
-**/
-LINPHONE_PUBLIC void linphone_core_migrate_friends_from_rc_to_db(LinphoneCore *lc);
 
 /**
  * Create a new empty LinphoneFriendList object.

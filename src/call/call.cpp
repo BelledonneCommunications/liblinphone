@@ -1,6 +1,6 @@
 /*
  * call.cpp
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -107,8 +107,9 @@ shared_ptr<Call> CallPrivate::startReferredCall (const MediaSessionParams *param
 	lInfo() << "Starting new call to referred address " << q->getReferTo();
 	L_GET_PRIVATE(&msp)->setReferer(getActiveSession());
 	L_GET_PRIVATE(getActiveSession())->setReferPending(false);
-	LinphoneCall *newCall = linphone_core_invite_with_params(
-		q->getCore()->getCCore(), q->getReferTo().c_str(), L_GET_C_BACK_PTR(&msp));
+	LinphoneCallParams *lcp = L_GET_C_BACK_PTR(&msp);
+	LinphoneCall *newCall = linphone_core_invite_with_params(q->getCore()->getCCore(), q->getReferTo().c_str(), lcp);
+	linphone_call_params_unref(lcp);
 	if (newCall) {
 		getActiveSession()->getPrivate()->setTransferTarget(L_GET_PRIVATE_FROM_C_OBJECT(newCall)->getActiveSession());
 		L_GET_PRIVATE_FROM_C_OBJECT(newCall)->getActiveSession()->getPrivate()->notifyReferState();

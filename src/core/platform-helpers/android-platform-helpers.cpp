@@ -1,6 +1,6 @@
 /*
  * android-platform-helpers.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -102,6 +102,9 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 	mGetPowerManagerId = getMethodId(env, klass, "getPowerManager", "()Ljava/lang/Object;");
 	mGetDataPathId = getMethodId(env, klass, "getDataPath", "()Ljava/lang/String;");
 	mGetConfigPathId = getMethodId(env, klass, "getConfigPath", "()Ljava/lang/String;");
+
+	jmethodID initCoreId = getMethodId(env, klass, "initCore", "(J)V");
+	env->CallVoidMethod(mJavaHelper, initCoreId, (jlong)lc);
 
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
 	belle_sip_wake_lock_init(env, pm);

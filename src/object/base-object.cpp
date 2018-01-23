@@ -1,6 +1,6 @@
 /*
  * base-object.cpp
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,11 +18,10 @@
  */
 
 #include "base-object-p.h"
+#include "base-object.h"
 
 // Necessary for: L_SIGNAL_CPP_PTR_DESTRUCTION.
 #include "c-wrapper/internal/c-tools.h"
-
-#include "base-object.h"
 
 // =============================================================================
 

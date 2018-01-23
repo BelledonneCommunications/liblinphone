@@ -1,6 +1,6 @@
 /*
  * conference-interface.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _CONFERENCE_INTERFACE_H_
-#define _CONFERENCE_INTERFACE_H_
+#ifndef _L_CONFERENCE_INTERFACE_H_
+#define _L_CONFERENCE_INTERFACE_H_
 
 #include <list>
 #include <memory>
@@ -48,6 +48,7 @@ public:
 		bool hasMedia
 	) = 0;
 	virtual bool canHandleParticipants () const = 0;
+	virtual bool canHandleCpim () const = 0;
 	virtual std::shared_ptr<Participant> findParticipant (const IdentityAddress &participantAddress) const = 0;
 	virtual const IdentityAddress &getConferenceAddress () const = 0;
 	virtual std::shared_ptr<Participant> getMe () const = 0;
@@ -64,4 +65,4 @@ public:
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _CONFERENCE_INTERFACE_H_
+#endif // ifndef _L_CONFERENCE_INTERFACE_H_

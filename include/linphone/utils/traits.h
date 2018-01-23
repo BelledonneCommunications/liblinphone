@@ -1,6 +1,6 @@
 /*
  * traits.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _TRAITS_H_
-#define _TRAITS_H_
+#ifndef _L_TRAITS_H_
+#define _L_TRAITS_H_
 
 #include "linphone/utils/general.h"
 
@@ -54,4 +54,4 @@ struct IsMapContainer : Private::IsMapContainerImpl<T>::type {};
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _TRAITS_H_
+#endif // ifndef _L_TRAITS_H_

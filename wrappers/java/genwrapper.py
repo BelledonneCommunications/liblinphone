@@ -78,6 +78,17 @@ ENUMS_LIST = {
     'XmlRpcRequestStatus': 'XmlRpcRequest',
 }
 
+CORE_ACCESSOR_LIST = [
+    'Call',
+    'ChatRoom',
+    'Event',
+    'Friend',
+    'FriendList',
+    'NatPolicy',
+    'Player',
+    'ProxyConfig'
+]
+
 ##########################################################################
 
 class JavaTranslator(object):
@@ -271,12 +282,12 @@ class JavaTranslator(object):
     def translate_argument(self, _arg, native=False, jni=False):
         return '{0} {1}'.format(self.translate_type(_arg.type, native, jni), self.translate_argument_name(_arg.name))
 
-    def translate_property(self, _property):
+    def translate_property(self, _property, _hasCoreAccessor):
         properties = []
         if _property.getter is not None:
-            properties.append(self.translate_method(_property.getter))
+            properties.append(self.translate_method(_property.getter, _hasCoreAccessor))
         if _property.setter is not None:
-            properties.append(self.translate_method(_property.setter))
+            properties.append(self.translate_method(_property.setter, _hasCoreAccessor))
         return properties
 
     def translate_jni_property(self, className, _property):
@@ -317,7 +328,7 @@ class JavaTranslator(object):
     def generate_set_listener(self, _class):
         return self.generate_listener('setListener', _class)
 
-    def translate_method(self, _method):
+    def translate_method(self, _method, _hasCoreAccessor=False):
         methodDict = {}
 
         methodDict['return'] = self.translate_type(_method.returnType, isReturn=True)
@@ -328,6 +339,8 @@ class JavaTranslator(object):
         methodDict['convertInputClassArrayToLongArray'] = False
 
         methodDict['name'] = _method.name.to_camel_case(lower=True)
+        methodDict['isNotGetCore'] = not methodDict['name'] == 'getCore'
+        methodDict['hasCoreAccessor'] = _hasCoreAccessor
         methodDict['exception'] = self.throws_exception(_method.returnType)
 
         methodDict['enumCast'] = type(_method.returnType) is AbsApi.EnumType
@@ -378,6 +391,10 @@ class JavaTranslator(object):
         methodDict['name'] = 'Java_' + self.jni_package + className.to_camel_case() + 'Impl_' + _method.name.to_camel_case(lower=True)
         methodDict['notStatic'] = not static
         methodDict['c_name'] = 'linphone_' + className.to_snake_case() + "_" + _method.name.to_snake_case()
+        if _method.name.to_snake_case() == 'create_core':
+            methodDict['c_name'] = 'linphone_' + className.to_snake_case() + "_" + 'create_core_3'
+        elif _method.name.to_snake_case() == 'create_core_with_config':
+            methodDict['c_name'] = 'linphone_' + className.to_snake_case() + "_" + 'create_core_with_config_3'
         methodDict['returnObject'] = methodDict['hasReturn'] and type(_method.returnType) is AbsApi.ClassType
         methodDict['returnClassName'] = self.translate_type(_method.returnType)
         methodDict['isRealObjectArray'] = False
@@ -457,18 +474,21 @@ class JavaTranslator(object):
 
         classDict['isLinphoneFactory'] = _class.name.to_camel_case() == "Factory"
         classDict['isLinphoneCore'] = _class.name.to_camel_case() == "Core"
+        hasCoreAccessor = _class.name.to_camel_case() in CORE_ACCESSOR_LIST
+        classDict['hasCoreAccessor'] = hasCoreAccessor
         classDict['doc'] = _class.briefDescription.translate(self.docTranslator) if _class.briefDescription is not None else None
+        classDict['refCountable'] = _class.refcountable
 
         for _property in _class.properties:
             try:
-                classDict['methods'] += self.translate_property(_property)
+                classDict['methods'] += self.translate_property(_property, hasCoreAccessor)
                 classDict['jniMethods'] += self.translate_jni_property(_class.name, _property)
             except AbsApi.Error as e:
                 logging.error('error while translating {0} property: {1}'.format(_property.name.to_snake_case(), e.args[0]))
 
         for method in _class.instanceMethods:
             try:
-                methodDict = self.translate_method(method)
+                methodDict = self.translate_method(method, hasCoreAccessor)
                 jniMethodDict = self.translate_jni_method(_class.name, method)
                 classDict['methods'].append(methodDict)
                 classDict['jniMethods'].append(jniMethodDict)
@@ -477,7 +497,7 @@ class JavaTranslator(object):
 
         for method in _class.classMethods:
             try:
-                methodDict = self.translate_method(method)
+                methodDict = self.translate_method(method, hasCoreAccessor)
                 jniMethodDict = self.translate_jni_method(_class.name, method, True)
                 classDict['methods'].append(methodDict)
                 classDict['jniMethods'].append(jniMethodDict)
@@ -692,11 +712,13 @@ class JavaClass(object):
         self.isLinphoneFactory = self._class['isLinphoneFactory']
         self.isLinphoneCore = self._class['isLinphoneCore']
         self.isNotLinphoneFactory = not self.isLinphoneFactory
+        self.hasCoreAccessor = self._class['hasCoreAccessor']
         self.cName = 'Linphone' + _class.name.to_camel_case()
         self.cPrefix = 'linphone_' + _class.name.to_snake_case()
         self.packageName = package
         self.className = _class.name.to_camel_case()
         self.classImplName = self.className + "Impl"
+        self.refCountable = self._class['refCountable']
         self.factoryName = _class.name.to_snake_case()
         self.filename = self.className + ".java"
         self.imports = []
@@ -748,6 +770,7 @@ class Jni(object):
             'className': javaClass.className,
             'classCName': javaClass.cName,
             'classImplName': javaClass.classImplName,
+            'refCountable': javaClass.refCountable
         }
         self.objects.append(obj)
 
@@ -765,7 +788,6 @@ class Jni(object):
             }
             for callback in jniInterface.callbacks:
                 interface['callbacksList'].append(callback)
-                print(obj['className'])
                 if obj['className'] == 'Core':
                     self.coreListener.append(callback)
             self.interfaces.append(interface)

@@ -1,6 +1,6 @@
 /*
  * c-event-log.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _C_EVENT_LOG_H_
-#define _C_EVENT_LOG_H_
+#ifndef _L_C_EVENT_LOG_H_
+#define _L_C_EVENT_LOG_H_
 
 #include "linphone/api/c-types.h"
 
@@ -159,4 +159,4 @@ LINPHONE_PUBLIC const char *linphone_event_log_get_subject (const LinphoneEventL
 	}
 #endif // ifdef __cplusplus
 
-#endif // ifndef _C_EVENT_LOG_H_
+#endif // ifndef _L_C_EVENT_LOG_H_

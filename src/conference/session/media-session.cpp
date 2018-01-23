@@ -1,6 +1,6 @@
 /*
  * media-session.cpp
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -267,10 +267,10 @@ void MediaSessionPrivate::pauseForTransfer () {
 
 void MediaSessionPrivate::pausedByRemote () {
 	L_Q();
-	MediaSessionParams *newParams = new MediaSessionParams(*getParams());
+	MediaSessionParams newParams(*getParams());
 	if (lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
-		newParams->setVideoDirection(LinphoneMediaDirectionInactive);
-	acceptUpdate(newParams, CallSession::State::PausedByRemote, "Call paused by remote");
+		newParams.setVideoDirection(LinphoneMediaDirectionInactive);
+	acceptUpdate(&newParams, CallSession::State::PausedByRemote, "Call paused by remote");
 }
 
 void MediaSessionPrivate::remoteRinging () {
@@ -629,14 +629,16 @@ void MediaSessionPrivate::stopStreams () {
 
 // -----------------------------------------------------------------------------
 
-void MediaSessionPrivate::onNetworkReachable (bool reachable) {
+void MediaSessionPrivate::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
 	L_Q();
-	if (reachable) {
+	if (mediaNetworkReachable) {
 		LinphoneConfig *config = linphone_core_get_config(q->getCore()->getCCore());
 		if (lp_config_get_int(config, "net", "recreate_sockets_when_network_is_up", 0))
 			refreshSockets();
+	} else {
+		setBroken();
 	}
-	CallSessionPrivate::onNetworkReachable(reachable);
+	CallSessionPrivate::onNetworkReachable(sipNetworkReachable, mediaNetworkReachable);
 }
 
 // -----------------------------------------------------------------------------
@@ -2187,9 +2189,9 @@ void MediaSessionPrivate::handleIceEvents (OrtpEvent *ev) {
 		if (iceAgent->hasCompletedCheckList()) {
 			/* At least one ICE session has succeeded, so perform a call update */
 			if (iceAgent->isControlling() && q->getCurrentParams()->getPrivate()->getUpdateCallWhenIceCompleted()) {
-				MediaSessionParams *newParams = new MediaSessionParams(*getParams());
-				newParams->getPrivate()->setInternalCallUpdate(true);
-				q->update(newParams);
+				MediaSessionParams newParams(*getParams());
+				newParams.getPrivate()->setInternalCallUpdate(true);
+				q->update(&newParams);
 			}
 			startDtlsOnAllStreams();
 		}
@@ -2295,7 +2297,9 @@ void MediaSessionPrivate::handleStreamEvents (int streamIndex) {
 			telephoneEventReceived(evd->info.telephone_event);
 		} else if (evt == ORTP_EVENT_NEW_VIDEO_BANDWIDTH_ESTIMATION_AVAILABLE) {
 			lInfo() << "Video bandwidth estimation is " << (int)(evd->info.video_bandwidth_available / 1000.) << " kbit/s";
-			// TODO
+			/* If this event happens then it should be a video stream */
+			if (streamIndex == mainVideoStreamIndex)
+				linphone_call_stats_set_estimated_download_bandwidth(stats, (float)(evd->info.video_bandwidth_available*1e-3));
 		}
 		ortp_event_destroy(ev);
 	}
@@ -3424,7 +3428,7 @@ void MediaSessionPrivate::reportBandwidth () {
 
 	lInfo() << "Bandwidth usage for CallSession [" << q << "]:\n" << fixed << setprecision(2) <<
 		"\tRTP  audio=[d=" << linphone_call_stats_get_download_bandwidth(audioStats) << ",u=" << linphone_call_stats_get_upload_bandwidth(audioStats) <<
-		"], video=[d=" << linphone_call_stats_get_download_bandwidth(videoStats) << ",u=" << linphone_call_stats_get_upload_bandwidth(videoStats) <<
+		"], video=[d=" << linphone_call_stats_get_download_bandwidth(videoStats) << ",u=" << linphone_call_stats_get_upload_bandwidth(videoStats) << ",ed=" << linphone_call_stats_get_estimated_download_bandwidth(videoStats) << 
 		"], text=[d=" << linphone_call_stats_get_download_bandwidth(textStats) << ",u=" << linphone_call_stats_get_upload_bandwidth(textStats) << "] kbits/sec\n" <<
 		"\tRTCP audio=[d=" << linphone_call_stats_get_rtcp_download_bandwidth(audioStats) << ",u=" << linphone_call_stats_get_rtcp_upload_bandwidth(audioStats) <<
 		"], video=[d=" << linphone_call_stats_get_rtcp_download_bandwidth(videoStats) << ",u=" << linphone_call_stats_get_rtcp_upload_bandwidth(videoStats) <<
@@ -3925,6 +3929,8 @@ MediaSession::MediaSession (const shared_ptr<Core> &core, shared_ptr<Participant
 MediaSession::~MediaSession () {
 	L_D();
 	cancelDtmfs();
+	if (d->audioStream || d->videoStream)
+		d->freeResources();
 	if (d->audioStats)
 		linphone_call_stats_unref(d->audioStats);
 	if (d->videoStats)
@@ -4038,6 +4044,7 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 				/* Create the ice session now if ICE is required */
 				d->iceAgent->checkSession(IR_Controlled, false);
 			} else {
+				linphone_nat_policy_unref(d->natPolicy);
 				d->natPolicy = nullptr;
 				lWarning() << "ICE not supported for incoming INVITE without SDP";
 			}
@@ -4213,7 +4220,7 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 	L_D();
 	linphone_core_stop_dtmf_stream(getCore()->getCCore());
 	d->makeLocalMediaDescription();
-	if (getCore()->getCCore()->ringstream && getCore()->getCCore()->sound_conf.play_sndcard && getCore()->getCCore()->sound_conf.capt_sndcard) {
+	if (!getCore()->getCCore()->ringstream && getCore()->getCCore()->sound_conf.play_sndcard && getCore()->getCCore()->sound_conf.capt_sndcard) {
 		/* Give a chance to set card prefered sampling frequency */
 		if (d->localDesc->streams[0].max_rate > 0)
 			ms_snd_card_set_preferred_sample_rate(getCore()->getCCore()->sound_conf.play_sndcard, d->localDesc->streams[0].max_rate);

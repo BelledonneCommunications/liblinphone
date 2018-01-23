@@ -114,6 +114,10 @@ set(LINPHONE_SOURCE_FILES_CXX
 if(ENABLE_JAVA_WRAPPER)
 	list(APPEND LINPHONE_SOURCE_FILES_CXX ${LINPHONE_JNI_SOURCES})
 	set_source_files_properties(${LINPHONE_JNI_SOURCES} PROPERTIES GENERATED TRUE)
+else()
+	if(ANDROID)
+		list(APPEND LINPHONE_SOURCE_FILES_C linphonecore_jni.cc)
+	endif()
 endif()
 
 set(LINPHONE_SOURCE_FILES_OBJC)
@@ -215,8 +219,8 @@ if(ENABLE_STATIC)
 	)
 endif()
 if(ENABLE_SHARED)
-	add_library(linphone SHARED ${LINPHONE_HEADER_FILES} ${LINPHONE_PRIVATE_HEADER_FILES}
-		${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC}
+	add_library(linphone SHARED "../share/cpim_grammar" ${LINPHONE_HEADER_FILES} ${LINPHONE_PRIVATE_HEADER_FILES}
+		${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC} 
 		$<TARGET_OBJECTS:linphone-cxx-objects>
 	)
 	if(IOS)
@@ -231,6 +235,7 @@ if(ENABLE_SHARED)
 			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphone
 			MACOSX_FRAMEWORK_INFO_PLIST Info.plist.in
 			PUBLIC_HEADER "${LINPHONE_HEADER_FILES}"
+			RESOURCE "../share/cpim_grammar"
 		)
 	endif()
 	if(BELCARD_FOUND)
@@ -254,7 +259,9 @@ if(ENABLE_SHARED)
 		set_target_properties(linphone PROPERTIES PREFIX "lib")
 	elseif(ANDROID)
 		target_link_libraries(linphone PUBLIC "log" ${SUPPORT_LIBRARIES} ${CPUFEATURES_LIBRARIES})
-		add_dependencies(linphone linphonej)
+		if(ENABLE_JAVA_WRAPPER)
+			add_dependencies(linphone linphonej)
+		endif()
 	endif()
 	if(MSVC)
 		if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")

@@ -1,6 +1,6 @@
 /*
  * remote-conference-p.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _REMOTE_CONFERENCE_P_H_
-#define _REMOTE_CONFERENCE_P_H_
+#ifndef _L_REMOTE_CONFERENCE_P_H_
+#define _L_REMOTE_CONFERENCE_P_H_
 
 #include "conference-p.h"
 #include "remote-conference.h"
@@ -40,4 +40,4 @@ private:
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _REMOTE_CONFERENCE_P_H_
+#endif // ifndef _L_REMOTE_CONFERENCE_P_H_

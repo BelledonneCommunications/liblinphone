@@ -1,6 +1,6 @@
 /*
  * c-types.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _C_TYPES_H_
-#define _C_TYPES_H_
+#ifndef _L_C_TYPES_H_
+#define _L_C_TYPES_H_
 
 // TODO: Remove me in the future.
 #include "linphone/types.h"
@@ -213,4 +213,4 @@ L_DECLARE_C_ENUM(EventLogType, L_ENUM_VALUES_EVENT_LOG_TYPE);
 	}
 #endif // ifdef __cplusplus
 
-#endif // ifndef _C_TYPES_H_
+#endif // ifndef _L_C_TYPES_H_

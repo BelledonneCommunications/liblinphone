@@ -1,6 +1,6 @@
 /*
  * c-sal.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,8 +23,8 @@
  protocols and implementations under linphone, for example SIP, JINGLE...
 **/
 
-#ifndef _C_SAL_H_
-#define _C_SAL_H_
+#ifndef _L_C_SAL_H_
+#define _L_C_SAL_H_
 
 #ifdef HAVE_CONFIG_H
 	#include "config.h"

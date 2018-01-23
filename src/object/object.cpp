@@ -1,6 +1,6 @@
 /*
  * object.cpp
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,6 +44,11 @@ shared_ptr<const Object> Object::getSharedFromThis () const {
 	// Unable to reach this point.
 	L_ASSERT(false);
 	return nullptr;
+}
+
+inline const Object::Lock &Object::getLock () const {
+	L_D();
+	return d->getLock();
 }
 
 LINPHONE_END_NAMESPACE

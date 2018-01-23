@@ -1,6 +1,6 @@
 /*
  * db-session-provider.h
- * Copyright (C) 2010-2017 Belledonne Communications SARL
+ * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _DB_SESSION_PROVIDER_H_
-#define _DB_SESSION_PROVIDER_H_
+#ifndef _L_DB_SESSION_PROVIDER_H_
+#define _L_DB_SESSION_PROVIDER_H_
 
 #include "db-session.h"
 #include "object/singleton.h"
@@ -43,4 +43,4 @@ private:
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _DB_SESSION_PROVIDER_H_
+#endif // ifndef _L_DB_SESSION_PROVIDER_H_

@@ -220,6 +220,7 @@ public:
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -242,7 +243,7 @@ jobject get{{className}}(JNIEnv *env, {{classCName}} *cptr) {
 		if (up == NULL) {
 			jobj = env->NewObject({{cPrefix}}_class, {{cPrefix}}_constructor, (jlong)cptr);
 			belle_sip_object_data_set((belle_sip_object_t *)cptr, belle_sip_java_user_data_key, (void*)env->NewWeakGlobalRef(jobj), NULL);
-			{{cPrefix}}_ref(cptr);
+			{{#refCountable}}{{cPrefix}}_ref(cptr);{{/refCountable}}
 		} else {
 			jobj = env->NewLocalRef((jobject)up);
 			if (jobj == NULL) {
@@ -251,7 +252,7 @@ jobject get{{className}}(JNIEnv *env, {{classCName}} *cptr) {
 				// takes implicit local ref
 				jobj = env->NewObject({{cPrefix}}_class, {{cPrefix}}_constructor, (jlong)cptr);
 				belle_sip_object_data_set((belle_sip_object_t *)cptr, belle_sip_java_user_data_key, (void*)env->NewWeakGlobalRef(jobj), NULL);
-				{{cPrefix}}_ref(cptr);
+				{{#refCountable}}{{cPrefix}}_ref(cptr);{{/refCountable}}
 			}
 		}
 	}
@@ -265,7 +266,7 @@ void Java_{{jniPrefix}}{{classImplName}}_unref(JNIEnv* env, jobject thiz, jlong 
 	if (wref) {
 		env->DeleteWeakGlobalRef(wref);
 	}
-	{{cPrefix}}_unref(cptr);
+	{{#refCountable}}{{cPrefix}}_unref(cptr);{{/refCountable}}
 }
 
 {{/objects}}
@@ -298,7 +299,7 @@ static {{return}} {{callbackName}}({{params}}) {
 	jobject jlistener = (jobject) {{cPrefix}}_cbs_get_user_data(cbs);
 
 	if (jlistener == NULL) {
-		ms_warning("{{name}}() notification without listener");
+		ms_warning("{{callbackName}}() notification without listener");
 		return{{returnIfFail}};
 	}
 
@@ -399,31 +400,6 @@ jobject Java_{{jni_package}}CoreImpl_getMediastreamerFactory(JNIEnv *env, jobjec
 	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
 	MSFactory *factory = linphone_core_get_ms_factory((LinphoneCore*)ptr);
 	return env->NewObject(ljb->ms_factory_class, ljb->ms_factory_class_constructor, (jlong)factory);
-}
-
-jobject Java_{{jni_package}}FactoryImpl_createCore(JNIEnv *env, jobject thiz, jobject jfactory, jobject jlistener, jstring jconfig_path, jstring jfactory_config_path, jobject jcontext) {
-	LinphoneFactory *cptr = linphone_factory_get();
-	SetObjectNativePtr(env, jfactory, (jlong)cptr); // Set the C factory ptr as Factory.nativePtr for next factory calls
-
-	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(cptr);
-	jobject listener = env->NewGlobalRef(jlistener);
-
-	const char *config_path = GetStringUTFChars(env, jconfig_path);
-	const char *factory_config_path = GetStringUTFChars(env, jfactory_config_path);
-	LinphoneCore *core = NULL;
-
-	linphone_core_cbs_set_user_data(cbs, listener);
-
-	{{#coreListener}}
-	linphone_core_cbs_set_{{callback}}(cbs, {{callbackName}});
-	{{/coreListener}}
-
-	core = linphone_factory_create_core_2(linphone_factory_get(), cbs, config_path, factory_config_path, NULL, (void *)jcontext);
-
-	ReleaseStringUTFChars(env, jconfig_path, config_path);
-	ReleaseStringUTFChars(env, jfactory_config_path, factory_config_path);
-
-	return getCore(env, core);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -557,6 +533,10 @@ void Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(JNIEnv *env, jobject
 		ms_message("Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(): DeleteGlobalRef(%p)", oldWindow);
 		env->DeleteGlobalRef(oldWindow);
 	}
+}
+
+jobject Java_org_linphone_core_FactoryImpl_getCore(JNIEnv *env, jobject thiz, jlong ptr, jlong lcPtr) {
+	return getCore(env, (LinphoneCore*)lcPtr);
 }
 
 #ifdef __cplusplus
