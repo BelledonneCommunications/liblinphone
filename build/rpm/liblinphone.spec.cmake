@@ -105,6 +105,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_docdir}/linphone*/xml
 %{_datadir}/Linphone/cmake/*.cmake
 %{_datadir}/LinphoneCxx/cmake/*.cmake
+%{_datadir}/belr/grammars/cpim_grammar
 
 
 %changelog

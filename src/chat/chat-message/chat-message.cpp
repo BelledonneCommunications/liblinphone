@@ -593,14 +593,20 @@ void ChatMessagePrivate::send () {
 	// End of message modification
 	// ---------------------------------------
 
-	if (internalContent.isEmpty())
-		internalContent = *(contents.front());
+	if (internalContent.isEmpty()) {
+		if (contents.size() > 0) {
+			internalContent = *(contents.front());
+		} else {
+			lError() << "Trying to send a message without any content !";
+			return;
+		}
+	}
 
 	auto msgOp = dynamic_cast<SalMessageOpInterface *>(op);
 	if (internalContent.getContentType().isValid()) {
-		msgOp->send_message(internalContent.getContentType().asString().c_str(), internalContent.getBodyAsString().c_str());
+		msgOp->send_message(internalContent.getContentType().asString().c_str(), internalContent.getBodyAsUtf8String().c_str());
 	} else
-		msgOp->send_message(ContentType::PlainText.asString().c_str(), internalContent.getBodyAsString().c_str());
+		msgOp->send_message(ContentType::PlainText.asString().c_str(), internalContent.getBodyAsUtf8String().c_str());
 
 	// Restore FileContents and remove FileTransferContents
 	list<Content*>::iterator i = contents.begin();
