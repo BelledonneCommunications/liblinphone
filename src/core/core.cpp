@@ -127,13 +127,13 @@ string Core::getConfigPath () const {
 // =============================================================================
 
 void Core::setEncryptionEngine (EncryptionEngineListener *imee) {
-    L_D();
-    d->imee.reset(imee);
+	L_D();
+	d->imee.reset(imee);
 }
 
 EncryptionEngineListener *Core::getEncryptionEngine () {
-    L_D();
-    return d->imee.get();
+	L_D();
+	return d->imee.get();
 }
 
 LINPHONE_END_NAMESPACE

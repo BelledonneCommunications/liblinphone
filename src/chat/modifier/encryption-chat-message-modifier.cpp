@@ -38,11 +38,11 @@ ChatMessageModifier::Result EncryptionChatMessageModifier::encode (
 	int &errorCode
 ) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-    ChatMessageModifier::Result result = chatRoom->getCore()->getEncryptionEngine()->processOutgoingMessage(message, errorCode);
-    if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
-        message->setIsSecured(true);
-    }
-    return result;
+	ChatMessageModifier::Result result = chatRoom->getCore()->getEncryptionEngine()->processOutgoingMessage(message, errorCode);
+	if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
+		message->setIsSecured(true);
+	}
+	return result;
 }
 
 ChatMessageModifier::Result EncryptionChatMessageModifier::decode (
@@ -50,11 +50,11 @@ ChatMessageModifier::Result EncryptionChatMessageModifier::decode (
 	int &errorCode
 ) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-    ChatMessageModifier::Result result = chatRoom->getCore()->getEncryptionEngine()->processIncomingMessage(message, errorCode);
-    if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
-        message->setIsSecured(true);
-    }
-    return result;
+	ChatMessageModifier::Result result = chatRoom->getCore()->getEncryptionEngine()->processIncomingMessage(message, errorCode);
+	if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
+		message->setIsSecured(true);
+	}
+	return result;
 }
 
 LINPHONE_END_NAMESPACE

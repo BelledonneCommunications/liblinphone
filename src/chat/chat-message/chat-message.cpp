@@ -387,7 +387,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	// Start of message modification
 	// ---------------------------------------
 
-    if ((currentRecvStep &ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
+	if ((currentRecvStep &ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
 		lInfo() << "Encryption step already done, skipping";
 	} else {
 		EncryptionChatMessageModifier ecmm;
@@ -572,7 +572,7 @@ void ChatMessagePrivate::send () {
 			}
 		}
 
-        if ((currentSendStep &ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
+		if ((currentSendStep &ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
 			lInfo() << "Encryption step already done, skipping";
 		} else {
 			EncryptionChatMessageModifier ecmm;

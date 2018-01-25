@@ -75,7 +75,7 @@ private:
 	std::list<std::shared_ptr<AbstractChatRoom>> chatRooms;
 	std::unordered_map<ChatRoomId, std::shared_ptr<AbstractChatRoom>> chatRoomsById;
 
-    std::unique_ptr<EncryptionEngineListener> imee;
+	std::unique_ptr<EncryptionEngineListener> imee;
 
 	L_DECLARE_PUBLIC(Core);
 };

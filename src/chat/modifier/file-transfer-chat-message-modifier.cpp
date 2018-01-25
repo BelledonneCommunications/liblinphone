@@ -177,17 +177,17 @@ int FileTransferChatMessageModifier::onSendBody (
 		imee = linphone_core_get_im_encryption_engine(core->getCCore());
 
 	if (imee) {
-        size_t max_size = *size;
-        uint8_t *encrypted_buffer = (uint8_t *)ms_malloc0(max_size);
-        retval = core->getEncryptionEngine()->uploadingFileCb(L_GET_CPP_PTR_FROM_C_OBJECT(msg), offset, buffer, *size, encrypted_buffer);
-        if (retval == 0) {
-            if (*size > max_size) {
-                lError() << "IM encryption engine process upload file callback returned a size bigger than the size of the buffer, so it will be truncated !";
-                *size = max_size;
-            }
-            memcpy(buffer, encrypted_buffer, *size);
-        }
-        ms_free(encrypted_buffer);
+		size_t max_size = *size;
+		uint8_t *encrypted_buffer = (uint8_t *)ms_malloc0(max_size);
+		retval = core->getEncryptionEngine()->uploadingFileCb(L_GET_CPP_PTR_FROM_C_OBJECT(msg), offset, buffer, *size, encrypted_buffer);
+		if (retval == 0) {
+			if (*size > max_size) {
+				lError() << "IM encryption engine process upload file callback returned a size bigger than the size of the buffer, so it will be truncated !";
+				*size = max_size;
+			}
+			memcpy(buffer, encrypted_buffer, *size);
+		}
+		ms_free(encrypted_buffer);
 	}
 
 	return retval <= 0 ? BELLE_SIP_CONTINUE : BELLE_SIP_STOP;
@@ -201,17 +201,10 @@ static void _chat_message_on_send_end (belle_sip_user_body_handler_t *bh, void *
 void FileTransferChatMessageModifier::onSendEnd (belle_sip_user_body_handler_t *bh) {
 	LinphoneImEncryptionEngine *imee = nullptr;
 	shared_ptr<Core> core = chatMessage->getCore();
-    imee = linphone_core_get_im_encryption_engine(core->getCCore());
+	imee = linphone_core_get_im_encryption_engine(core->getCCore());
 
 	if (imee) {
-        core->getEncryptionEngine()->uploadingFileCb(chatMessage, 0, nullptr, 0, nullptr);
-        /*
-		LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
-		LinphoneImEncryptionEngineCbsUploadingFileCb cb_process_uploading_file = linphone_im_encryption_engine_cbs_get_process_uploading_file(imee_cbs);
-		if (cb_process_uploading_file) {
-			cb_process_uploading_file(imee, L_GET_C_BACK_PTR(chatMessage), 0, nullptr, nullptr, nullptr);
-		}
-		*/
+		core->getEncryptionEngine()->uploadingFileCb(chatMessage, 0, nullptr, 0, nullptr);
 	}
 }
 
@@ -685,10 +678,10 @@ void FileTransferChatMessageModifier::onRecvBody (belle_sip_user_body_handler_t 
 		imee = linphone_core_get_im_encryption_engine(core->getCCore());
 
 	if (imee) {
-        retval = core->getEncryptionEngine()->downloadingFileCb(chatMessage, 0, nullptr, 0, nullptr);
-        if (retval == 0) {
-            memcpy(buffer, decrypted_buffer, size);
-        }
+		retval = core->getEncryptionEngine()->downloadingFileCb(chatMessage, 0, nullptr, 0, nullptr);
+		if (retval == 0) {
+			memcpy(buffer, decrypted_buffer, size);
+		}
 	}
 	ms_free(decrypted_buffer);
 
@@ -725,7 +718,7 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 	int retval = -1;
 
 	if (imee) {
-        retval = core->getEncryptionEngine()->downloadingFileCb(chatMessage, 0, nullptr, 0, nullptr);
+		retval = core->getEncryptionEngine()->downloadingFileCb(chatMessage, 0, nullptr, 0, nullptr);
 	}
 
 	if (retval <= 0) {

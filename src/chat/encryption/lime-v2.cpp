@@ -28,59 +28,62 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 ChatMessageModifier::Result LimeV2::processOutgoingMessage(
-    const shared_ptr<ChatMessage> &message,
-    int &errorCode
+	const shared_ptr<ChatMessage> &message,
+	int &errorCode
 ) {
     shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-    // Call lime processing methods
-    // Test errorCode
-    return ChatMessageModifier::Result::Skipped;
+
+	// Utiliser le LimeManager pour chiffrer le message
+	// userManager->encrypt()
+
+	// Test errorCode
+	return ChatMessageModifier::Result::Skipped;
 }
 
 ChatMessageModifier::Result LimeV2::processIncomingMessage(
-    const shared_ptr<ChatMessage> &message,
-    int &errorCode
+	const shared_ptr<ChatMessage> &message,
+	int &errorCode
 ) {
-    const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-    // Call lime processing methods
-    // Test errorCode
-    return ChatMessageModifier::Result::Skipped;
+	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
+	// Call lime processing methods
+	// Test errorCode
+	return ChatMessageModifier::Result::Skipped;
 }
 
 bool LimeV2::encryptionEnabledForFileTransferCb(
-    const shared_ptr<AbstractChatRoom> &chatRoom
+	const shared_ptr<AbstractChatRoom> &chatRoom
 ) {
-    // Call lime processing methods
-    return false;
+	// Call lime processing methods
+	return false;
 }
 
 void LimeV2::generateFileTransferKeyCb(
-    const shared_ptr<AbstractChatRoom> &chatRoom,
-    const shared_ptr<ChatMessage> &message
+	const shared_ptr<AbstractChatRoom> &chatRoom,
+	const shared_ptr<ChatMessage> &message
 ) {
-    // Call lime processing methods
+	// Call lime processing methods
 }
 
 int LimeV2::downloadingFileCb(
-    const shared_ptr<ChatMessage> &message,
-    size_t offset,
-    const uint8_t *buffer,
-    size_t size,
-    uint8_t *decrypted_buffer
+	const shared_ptr<ChatMessage> &message,
+	size_t offset,
+	const uint8_t *buffer,
+	size_t size,
+	uint8_t *decrypted_buffer
 ) {
-    // Call lime processing methods
-    return 0;
+	// Call lime processing methods
+	return 0;
 }
 
 int LimeV2::uploadingFileCb(
-    const shared_ptr<ChatMessage> &message,
-    size_t offset,
-    const uint8_t *buffer,
-    size_t size,
-    uint8_t *encrypted_buffer
+	const shared_ptr<ChatMessage> &message,
+	size_t offset,
+	const uint8_t *buffer,
+	size_t size,
+	uint8_t *encrypted_buffer
 ) {
-    // Call lime processing methods
-    return 0;
+	// Call lime processing methods
+	return 0;
 }
 
 LINPHONE_END_NAMESPACE

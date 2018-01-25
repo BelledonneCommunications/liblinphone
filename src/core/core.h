@@ -123,12 +123,12 @@ public:
 	std::string getDataPath () const;
 	std::string getConfigPath () const;
 
-    // ---------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------
 	// EncryptionEngine.
 	// ---------------------------------------------------------------------------
 
-    EncryptionEngineListener *getEncryptionEngine ();
-    void setEncryptionEngine (EncryptionEngineListener *imee);
+	EncryptionEngineListener *getEncryptionEngine ();
+	void setEncryptionEngine (EncryptionEngineListener *imee);
 
 private:
 	Core ();
