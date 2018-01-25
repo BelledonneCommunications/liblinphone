@@ -39,6 +39,7 @@ public:
 	ServerGroupChatRoom (
 		const std::shared_ptr<Core> &core,
 		const IdentityAddress &peerAddress,
+		AbstractChatRoom::CapabilitiesMask capabilities,
 		const std::string &subject,
 		std::list<std::shared_ptr<Participant>> &&participants,
 		unsigned int lastNotifyId

@@ -35,6 +35,7 @@ public:
 
 	void confirmCreation ();
 	void confirmJoining (SalCallOp *op);
+	void confirmRecreation (SalCallOp *op);
 
 	IdentityAddress generateConferenceAddress (const std::shared_ptr<Participant> &me) const;
 
@@ -45,7 +46,7 @@ public:
 	void dispatchMessage (const IdentityAddress &fromAddress, const Content &content);
 	void setConferenceAddress (const IdentityAddress &conferenceAddress);
 	void setParticipantDevices (const IdentityAddress &addr, const std::list<IdentityAddress> &devices);
-	void addCompatibleParticipants (const IdentityAddress &deviceAddr, const std::list<IdentityAddress> &participantCompatible);
+	void addCompatibleParticipants (const IdentityAddress &deviceAddr, const std::list<IdentityAddress> &compatibleParticipants);
 
 	LinphoneReason onSipMessageReceived (SalOp *op, const SalMessage *message) override;
 
@@ -68,6 +69,8 @@ private:
 
 	std::list<std::shared_ptr<Participant>> removedParticipants;
 	ChatRoomListener *chatRoomListener = this;
+	ServerGroupChatRoom::CapabilitiesMask capabilities = ServerGroupChatRoom::Capabilities::Conference;
+	bool joiningPendingAfterCreation = false;
 
 	L_DECLARE_PUBLIC(ServerGroupChatRoom);
 };
