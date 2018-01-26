@@ -125,6 +125,9 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	// Changes are only allowed from admin participants
 	if (participant->isAdmin())
 		update(op);
+
+	if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne)
+		dispatchQueuedMessages();
 }
 
 void ServerGroupChatRoomPrivate::confirmRecreation (SalCallOp *op) {
@@ -205,41 +208,10 @@ void ServerGroupChatRoomPrivate::update (SalCallOp *op) {
 	if (identAddresses.empty())
 		return;
 
-	list<Address> addresses;
-	for (const auto &addr : identAddresses) {
-		addresses.push_back(Address(addr));
-	}
-
-	bctbx_list_t * cAddresses = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(addresses);
-
-	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
-	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
-	LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb cb = linphone_chat_room_cbs_get_participants_capabilities_checked(cbs);
-	if (cb) {
-		LinphoneAddress *deviceAddr = linphone_address_new(op->get_remote_contact());
-		cb(cr, deviceAddr, cAddresses);
-		linphone_address_unref(deviceAddr);
-	}
+	checkCompatibleParticipants(IdentityAddress(op->get_remote_contact()), identAddresses);
 }
 
 // -----------------------------------------------------------------------------
-
-void ServerGroupChatRoomPrivate::dispatchMessage (const IdentityAddress &fromAddress, const Content &content) {
-	L_Q();
-	L_Q_T(LocalConference, qConference);
-	for (const auto &p : qConference->getPrivate()->participants) {
-		for (const auto &device : p->getPrivate()->getDevices()) {
-			if (fromAddress != device->getAddress()) {
-				shared_ptr<ChatMessage> msg = q->createChatMessage();
-				msg->setInternalContent(content);
-				msg->getPrivate()->forceFromAddress(q->getConferenceAddress());
-				msg->getPrivate()->forceToAddress(device->getAddress());
-				msg->getPrivate()->setApplyModifiers(false);
-				msg->send();
-			}
-		}
-	}
-}
 
 LinphoneReason ServerGroupChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessage *message) {
 	L_Q();
@@ -252,10 +224,25 @@ LinphoneReason ServerGroupChatRoomPrivate::onSipMessageReceived (SalOp *op, cons
 	ContentType contentType(message->content_type);
 	if (contentType != ContentType::Cpim)
 		return LinphoneReasonNotAcceptable;
-	Content content;
-	content.setContentType(message->content_type);
-	content.setBodyFromUtf8(message->text ? message->text : "");
-	dispatchMessage(fromAddr, content);
+
+	Message msg(op->get_from(), message->content_type, message->text ? message->text : "");
+	if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) {
+		if (q->getParticipantCount() != 2) {
+			queuedMessages.push_back(msg);
+			if (queuedMessages.size() == 1) {
+				list<IdentityAddress> identAddresses;
+				identAddresses.push_back(
+					q->getCore()->getPrivate()->mainDb->findMissingOneToOneConferenceChatRoomParticipantAddress(
+						q->getSharedFromThis(),
+						q->getParticipants().front()->getAddress()
+					)
+				);
+				checkCompatibleParticipants(IdentityAddress(op->get_from()), identAddresses);
+			}
+			return LinphoneReasonNone;
+		}
+	}
+	dispatchMessage(msg);
 	return LinphoneReasonNone;
 }
 
@@ -289,7 +276,7 @@ void ServerGroupChatRoomPrivate::setParticipantDevices(const IdentityAddress &ad
 	}
 }
 
-void ServerGroupChatRoomPrivate::addCompatibleParticipants(const IdentityAddress &deviceAddr, const list<IdentityAddress> &compatibleParticipants) {
+void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddress &deviceAddr, const list<IdentityAddress> &compatibleParticipants) {
 	L_Q();
 	shared_ptr<Participant> participant = q->findParticipant(deviceAddr);
 	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddr);
@@ -328,12 +315,55 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants(const IdentityAddress
 	}
 }
 
+void ServerGroupChatRoomPrivate::checkCompatibleParticipants (const IdentityAddress &deviceAddr, const list<IdentityAddress> &addressesToCheck) {
+	L_Q();
+	list<Address> addresses;
+	for (const auto &addr : addressesToCheck) {
+		addresses.push_back(Address(addr));
+	}
+
+	bctbx_list_t * cAddresses = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(addresses);
+
+	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
+	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
+	LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb cb = linphone_chat_room_cbs_get_participants_capabilities_checked(cbs);
+	if (cb) {
+		LinphoneAddress *cDeviceAddr = linphone_address_new(deviceAddr.asString().c_str());
+		cb(cr, cDeviceAddr, cAddresses);
+		linphone_address_unref(cDeviceAddr);
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 void ServerGroupChatRoomPrivate::designateAdmin () {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 	q->setParticipantAdminStatus(qConference->getPrivate()->participants.front(), true);
+}
+
+void ServerGroupChatRoomPrivate::dispatchMessage (const Message &message) {
+	L_Q();
+	L_Q_T(LocalConference, qConference);
+	for (const auto &p : qConference->getPrivate()->participants) {
+		for (const auto &device : p->getPrivate()->getDevices()) {
+			if (message.fromAddr != device->getAddress()) {
+				shared_ptr<ChatMessage> msg = q->createChatMessage();
+				msg->setInternalContent(message.content);
+				msg->getPrivate()->forceFromAddress(q->getConferenceAddress());
+				msg->getPrivate()->forceToAddress(device->getAddress());
+				msg->getPrivate()->setApplyModifiers(false);
+				msg->send();
+			}
+		}
+	}
+}
+
+void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {
+	for (const auto &msg : queuedMessages) {
+		dispatchMessage(msg);
+	}
+	queuedMessages.clear();
 }
 
 void ServerGroupChatRoomPrivate::finalizeCreation () {
