@@ -19,9 +19,6 @@
 %define build_number @PROJECT_VERSION_BUILD@
 %if %{build_number}
 %define build_number_ext -%{build_number}
-%endif
-
-
 
 Name:           %{pkg_name}
 Version:        @PROJECT_VERSION@
@@ -69,6 +66,8 @@ develop programs using the liblinphone library.
 
 %prep
 %setup -n %{name}-%{version}%{?build_number_ext}
+
+%debug_package
 
 %build
 %{expand:%%%cmake_name} . -DCMAKE_INSTALL_LIBDIR:PATH=%{_libdir} -DCMAKE_PREFIX_PATH:PATH=%{_prefix} -DENABLE_VIDEO=%{video} -DENABLE_LIME=%{lime} -DENABLE_TOOLS=NO -DENABLE_CONSOLE_UI=NO -DENABLE_DAEMON=NO
