@@ -19,6 +19,7 @@
 %define build_number @PROJECT_VERSION_BUILD@
 %if %{build_number}
 %define build_number_ext -%{build_number}
+%endif
 
 Name:           %{pkg_name}
 Version:        @PROJECT_VERSION@
