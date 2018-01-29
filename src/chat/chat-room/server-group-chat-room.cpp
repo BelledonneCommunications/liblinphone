@@ -184,6 +184,10 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<const Parti
 		}
 	}
 
+	// Do not notify participant removal for one-to-one chat rooms
+	if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne)
+		return;
+
 	shared_ptr<ConferenceParticipantEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantRemoved(participant->getAddress());
 	q->getCore()->getPrivate()->mainDb->addEvent(event);
 	if (q->getParticipantCount() == 0)
