@@ -459,7 +459,7 @@ LocalConference(getCore(), peerAddress, nullptr) {
 	L_D();
 	L_D_T(LocalConference, dConference);
 
-	d->capabilities = capabilities;
+	d->capabilities |= capabilities & ServerGroupChatRoom::Capabilities::OneToOne;
 	dConference->subject = subject;
 	dConference->participants = move(participants);
 	dConference->conferenceAddress = peerAddress;
