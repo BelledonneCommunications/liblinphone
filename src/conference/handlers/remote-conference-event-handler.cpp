@@ -57,7 +57,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 	if (entityAddress == chatRoomId.getPeerAddress()) {
 		if (confInfo->getVersion().present())
 			lastNotify = confInfo->getVersion().get();
-		
+
 		if (confInfo->getConferenceDescription().present()) {
 			if (confInfo->getConferenceDescription().get().getSubject().present() &&
 				!confInfo->getConferenceDescription().get().getSubject().get().empty()
@@ -235,6 +235,9 @@ Object(*new RemoteConferenceEventHandlerPrivate) {
 RemoteConferenceEventHandler::~RemoteConferenceEventHandler () {
 	L_D();
 	d->conf->getCore()->getPrivate()->unregisterListener(d);
+
+	if (d->lev)
+		unsubscribe();
 }
 
 // -----------------------------------------------------------------------------

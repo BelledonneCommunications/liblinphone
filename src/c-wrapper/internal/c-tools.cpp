@@ -1,5 +1,5 @@
 /*
- * cpim-header-p.h
+ * c-tools.cpp
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,25 +17,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _L_CPIM_HEADER_P_H_
-#define _L_CPIM_HEADER_P_H_
+#ifdef DEBUG
+	#include <typeinfo>
+#endif
 
-#include "cpim-header.h"
-#include "object/object-p.h"
+#include "c-tools.h"
+#include "object/base-object.h"
+#include "object/clonable-object.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-namespace Cpim {
-	class HeaderPrivate : public ObjectPrivate {
-	private:
-		std::string value;
+#ifdef DEBUG
+	void Wrapper::setName (belle_sip_object_t *cObject, const BaseObject *cppObject) {
+		belle_sip_object_set_name(cObject, typeid(*cppObject).name());
+	}
 
-		L_DECLARE_PUBLIC(Header);
-	};
-}
+	void Wrapper::setName (belle_sip_object_t *cObject, const ClonableObject *cppObject) {
+		belle_sip_object_set_name(cObject, typeid(*cppObject).name());
+	}
+#endif
 
 LINPHONE_END_NAMESPACE
-
-#endif // ifndef _L_CPIM_HEADER_P_H_
