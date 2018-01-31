@@ -68,8 +68,10 @@ void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMess
 		linphone_chat_message_unref(counters->last_received_chat_message);
 	}
 	counters->last_received_chat_message=linphone_chat_message_ref(msg);
-	if (linphone_chat_message_get_file_transfer_information(msg)) {
+	LinphoneContent * content = linphone_chat_message_get_file_transfer_information(msg);
+	if (content) {
 		counters->number_of_LinphoneMessageReceivedWithFile++;
+		linphone_content_unref(content);
 	} else if (linphone_chat_message_get_external_body_url(msg)) {
 		counters->number_of_LinphoneMessageExtBodyReceived++;
 		if (message_external_body_url) {
@@ -538,10 +540,6 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 					compare_files(send_filepath, receive_filepath);
 				}
 			}
-
-			if (!download_from_history) {
-				linphone_chat_message_unref(recv_msg);
-			}
 		}
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress,2, int, "%d"); //sent twice because of file transfer
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered,1, int, "%d");
@@ -617,6 +615,7 @@ static void transfer_message_upload_cancelled(void) {
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageNotDelivered,1, int, "%d");
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,0, int, "%d");
 
+		linphone_chat_message_unref(msg);
 		linphone_core_manager_destroy(pauline);
 		linphone_core_manager_destroy(marie);
 	}
@@ -654,6 +653,7 @@ static void transfer_message_download_cancelled(void) {
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,0, int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageNotDelivered,1, int, "%d");
 
+	linphone_chat_message_unref(msg);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -725,9 +725,9 @@ static void file_transfer_2_messages_simultaneously(void) {
 			linphone_chat_room_send_chat_message(pauline_room,msg);
 			linphone_chat_room_send_chat_message(pauline_room,msg2);
 			if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000))) {
-				msg = linphone_chat_message_ref(marie->stat.last_received_chat_message);
+				LinphoneChatMessage *recvMsg = linphone_chat_message_ref(marie->stat.last_received_chat_message);
 				BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,2, 60000));
-				msg2 = marie->stat.last_received_chat_message;
+				LinphoneChatMessage *recvMsg2 = marie->stat.last_received_chat_message;
 				BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)), 1, unsigned int, "%u");
 				if (bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)) != 1) {
 					char * buf = ms_strdup_printf("Found %d rooms instead of 1: ", bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)));
@@ -740,17 +740,17 @@ static void file_transfer_2_messages_simultaneously(void) {
 					ms_error("%s", buf);
 				}
 
-				cbs = linphone_chat_message_get_callbacks(msg);
+				cbs = linphone_chat_message_get_callbacks(recvMsg);
 				linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 				linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
 				linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
-				linphone_chat_message_download_file(msg);
+				linphone_chat_message_download_file(recvMsg);
 
-				cbs = linphone_chat_message_get_callbacks(msg2);
+				cbs = linphone_chat_message_get_callbacks(recvMsg2);
 				linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 				linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
 				linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
-				linphone_chat_message_download_file(msg2);
+				linphone_chat_message_download_file(recvMsg2);
 
 				BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,2,50000));
 
@@ -758,9 +758,11 @@ static void file_transfer_2_messages_simultaneously(void) {
 				BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered,2, int, "%d");
 				compare_files(send_filepath, receive_filepath);
 
-				linphone_chat_message_unref(msg);
+				linphone_chat_message_unref(recvMsg);
 			}
 		}
+		linphone_chat_message_unref(msg);
+		linphone_chat_message_unref(msg2);
 		linphone_core_manager_destroy(pauline);
 		remove(receive_filepath);
 		bc_free(send_filepath);
@@ -783,6 +785,7 @@ static void text_message_denied(void) {
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageNotDelivered,1));
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageReceived,0, int, "%d");
+	linphone_chat_message_unref(msg);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -986,7 +989,6 @@ static void _imdn_notifications(bool_t with_lime) {
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 	sent_cm = linphone_chat_room_create_message(pauline_chat_room, "Tell me if you get my message");
-	linphone_chat_message_ref(sent_cm);
 	cbs = linphone_chat_message_get_callbacks(sent_cm);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_room_send_chat_message(pauline_chat_room, sent_cm);
@@ -1053,7 +1055,6 @@ static void _im_notification_policy(bool_t with_lime) {
 
 	/* Test imdn delivered */
 	msg1 = linphone_chat_room_create_message(pauline_chat_room, "Happy new year!");
-	linphone_chat_message_ref(msg1);
 	cbs = linphone_chat_message_get_callbacks(msg1);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_room_send_chat_message(pauline_chat_room, msg1);
@@ -1062,14 +1063,12 @@ static void _im_notification_policy(bool_t with_lime) {
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDeliveredToUser, 0, int, "%d");
 	linphone_im_notif_policy_set_recv_imdn_delivered(pauline_policy, TRUE);
 	msg2 = linphone_chat_room_create_message(pauline_chat_room, "I said: Happy new year!");
-	linphone_chat_message_ref(msg2);
 	cbs = linphone_chat_message_get_callbacks(msg2);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_room_send_chat_message(pauline_chat_room, msg2);
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 2));
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDeliveredToUser, 1));
 	msg3 = linphone_chat_room_create_message(marie_chat_room, "Thank you! Happy easter to you!");
-	linphone_chat_message_ref(msg3);
 	cbs = linphone_chat_message_get_callbacks(msg3);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_room_send_chat_message(marie_chat_room, msg3);
@@ -1078,7 +1077,6 @@ static void _im_notification_policy(bool_t with_lime) {
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageDeliveredToUser, 0, int, "%d");
 	linphone_im_notif_policy_set_send_imdn_delivered(pauline_policy, TRUE);
 	msg4 = linphone_chat_room_create_message(marie_chat_room, "Yeah, yeah, I heard that...");
-	linphone_chat_message_ref(msg4);
 	cbs = linphone_chat_message_get_callbacks(msg4);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_room_send_chat_message(marie_chat_room, msg4);
@@ -1371,7 +1369,7 @@ void lime_transfer_message_base(bool_t encrypt_file,bool_t download_file_from_st
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000));
 	if (marie->stat.last_received_chat_message ) {
 		LinphoneChatMessage *recv_msg;
-		const LinphoneContent* content;
+		LinphoneContent* content;
 		if (download_file_from_stored_msg) {
 			LinphoneChatRoom *marie_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
 			msg_list = linphone_chat_room_get_history(marie_room,1);
@@ -1391,6 +1389,7 @@ void lime_transfer_message_base(bool_t encrypt_file,bool_t download_file_from_st
 			BC_ASSERT_PTR_NOT_NULL(linphone_content_get_key(content));
 		else
 			BC_ASSERT_PTR_NULL(linphone_content_get_key(content));
+		linphone_content_unref(content);
 
 		if (use_file_body_handler_in_download) {
 			linphone_chat_message_set_file_transfer_filepath(recv_msg, receive_filepath);
@@ -2150,6 +2149,9 @@ void _text_message_with_custom_content_type(bool_t with_lime) {
 	size_t file_size;
 	char *buf;
 
+	linphone_core_add_content_type_support(marie->lc, "image/svg+xml");
+	linphone_core_add_content_type_support(pauline->lc, "image/svg+xml");
+
 	if (with_lime) {
 		if (enable_lime_for_message_test(marie, pauline) < 0) goto end;
 	}
@@ -2165,8 +2167,6 @@ void _text_message_with_custom_content_type(bool_t with_lime) {
 	msg = linphone_chat_room_create_message(chat_room, buf);
 	linphone_chat_message_set_content_type(msg, "image/svg+xml");
 
-	linphone_core_add_content_type_support(marie->lc, "image/svg+xml");
-	linphone_core_add_content_type_support(pauline->lc, "image/svg+xml");
 	cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_room_send_chat_message(chat_room, msg);

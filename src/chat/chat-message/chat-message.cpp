@@ -63,7 +63,7 @@ void ChatMessagePrivate::setIsReadOnly (bool readOnly) {
 	isReadOnly = readOnly;
 }
 
-void ChatMessagePrivate::setState (ChatMessage::State s, bool force) {
+void ChatMessagePrivate::setState (ChatMessage::State s, bool force, bool storeInDb) {
 	L_Q();
 
 	if (force)
@@ -98,7 +98,9 @@ void ChatMessagePrivate::setState (ChatMessage::State s, bool force) {
 	if (cbs && linphone_chat_message_cbs_get_msg_state_changed(cbs))
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, linphone_chat_message_get_state(msg));
 
-	store();
+	if (storeInDb) {
+		store();
+	}
 }
 
 belle_http_request_t *ChatMessagePrivate::getHttpRequest () const {
@@ -187,7 +189,7 @@ void ChatMessagePrivate::setFileTransferFilepath (const string &path) {
 
 const string &ChatMessagePrivate::getAppdata () const {
 	for (const Content *c : contents) {
-		if (c->getContentType().isFile()) {
+		if (c->isFile()) {
 			FileContent *fileContent = (FileContent *)c;
 			return fileContent->getAppData("legacy");
 		}
@@ -197,7 +199,7 @@ const string &ChatMessagePrivate::getAppdata () const {
 
 void ChatMessagePrivate::setAppdata (const string &data) {
 	for (const Content *c : contents) {
-		if (c->getContentType().isFile()) {
+		if (c->isFile()) {
 			FileContent *fileContent = (FileContent *)c;
 			fileContent->setAppData("legacy", data);
 			break;
@@ -236,7 +238,11 @@ const ContentType &ChatMessagePrivate::getContentType () {
 }
 
 void ChatMessagePrivate::setContentType (const ContentType &contentType) {
-	internalContent.setContentType(contentType);
+	if (contents.size() > 0 && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
+		contents.front()->setContentType(contentType);
+	} else {
+		internalContent.setContentType(contentType);
+	}
 }
 
 const string &ChatMessagePrivate::getText () {
@@ -265,7 +271,11 @@ const string &ChatMessagePrivate::getText () {
 }
 
 void ChatMessagePrivate::setText (const string &text) {
-	internalContent.setBody(text);
+	if (contents.size() > 0 && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
+		contents.front()->setBody(text);
+	} else {
+		internalContent.setBody(text);
+	}
 }
 
 LinphoneContent *ChatMessagePrivate::getFileTransferInformation () const {
@@ -273,7 +283,7 @@ LinphoneContent *ChatMessagePrivate::getFileTransferInformation () const {
 		return getFileTransferContent()->toLinphoneContent();
 	}
 	for (const Content *c : contents) {
-		if (c->getContentType().isFile()) {
+		if (c->isFile()) {
 			FileContent *fileContent = (FileContent *)c;
 			return fileContent->toLinphoneContent();
 		}
@@ -381,7 +391,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	shared_ptr<Core> core = q->getCore();
 	shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
 
-	setState(ChatMessage::State::Delivered);
+	setState(ChatMessage::State::Delivered, false, false); // Wait for decryption and CPIM to reveal the real message to know if it must be stored or not
 
 	// ---------------------------------------
 	// Start of message modification
@@ -535,7 +545,7 @@ void ChatMessagePrivate::send () {
 			core->getCCore(), op, peer, getSalCustomHeaders(),
 			!!lp_config_get_int(core->getCCore()->config, "sip", "chat_msg_with_contact", 0)
 		);
-		op->set_user_pointer(L_GET_C_BACK_PTR(q));     /* If out of call, directly store msg */
+		op->set_user_pointer(q);     /* If out of call, directly store msg */
 		linphone_address_unref(peer);
 	}
 	op->set_from(q->getFromAddress().asString().c_str());
@@ -605,9 +615,10 @@ void ChatMessagePrivate::send () {
 	auto msgOp = dynamic_cast<SalMessageOpInterface *>(op);
 	if (internalContent.getContentType().isValid()) {
 		msgOp->send_message(internalContent.getContentType().asString().c_str(), internalContent.getBodyAsUtf8String().c_str());
-	} else
+	} else {
 		msgOp->send_message(ContentType::PlainText.asString().c_str(), internalContent.getBodyAsUtf8String().c_str());
-
+	}
+	
 	// Restore FileContents and remove FileTransferContents
 	list<Content*>::iterator i = contents.begin();
 	while (i != contents.end()) {
@@ -646,11 +657,12 @@ void ChatMessagePrivate::store() {
 	// TODO: store message in the future
 	if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) return;
 
-	bool messageToBeStored = false;
+	bool messageToBeStored = true;
 	for (Content *c : contents) {
 		ContentType contentType = c->getContentType();
-		if (contentType == ContentType::FileTransfer || contentType == ContentType::PlainText || contentType.isFile()) {
-			messageToBeStored = true;
+		if (contentType == ContentType::Imdn || contentType == ContentType::ImIsComposing) {
+			messageToBeStored = false;
+			break;
 		}
 	}
 	if (!messageToBeStored) {
@@ -704,8 +716,10 @@ ChatMessage::~ChatMessage () {
 	for (Content *content : d->contents)
 		delete content;
 
-	if (d->salOp)
-		d->salOp->release();
+	if (d->salOp) {
+		d->salOp->set_user_pointer(nullptr);
+		d->salOp->unref();
+	}
 	if (d->salCustomHeaders)
 		sal_custom_header_unref(d->salCustomHeaders);
 }
