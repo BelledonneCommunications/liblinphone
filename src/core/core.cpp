@@ -20,7 +20,7 @@
 #include <mediastreamer2/mscommon.h>
 
 #include "call/call.h"
-#include "chat/encryption/encryption-engine-listener.h"
+#include "chat/encryption/lime-v2.h"
 #include "core/core-listener.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
@@ -99,6 +99,10 @@ Core::Core () : Object(*new CorePrivate) {
 
 Core::~Core () {
 	lInfo() << "Destroying core: " << this;
+	//delete getEncryptionEngine();
+	if (getEncryptionEngine() == nullptr) {
+		delete getEncryptionEngine();
+	}
 }
 
 shared_ptr<Core> Core::create (LinphoneCore *cCore) {
@@ -131,9 +135,40 @@ void Core::setEncryptionEngine (EncryptionEngineListener *imee) {
 	d->imee.reset(imee);
 }
 
-EncryptionEngineListener *Core::getEncryptionEngine () {
+EncryptionEngineListener *Core::getEncryptionEngine () const {
 	L_D();
 	return d->imee.get();
+}
+
+void Core::enableLimeV2 (bool enable) {
+	L_D();
+	if (enable) {
+		if (d->imee == nullptr) {
+			LimeV2 *limev2 = new LimeV2();
+			setEncryptionEngine(limev2);
+		}
+	}
+	// Risk of disabling another encryption engine
+	if (d->imee != nullptr) {
+		d->imee.release();
+	}
+}
+
+bool Core::limeV2Enabled (void) const {
+	L_D();
+	// Check if it is a LimeV2 engine and not another one
+	if (d->imee != nullptr) {
+		return true;
+	}
+	return false;
+}
+
+bool Core::limeV2Available(void) const {
+	#ifdef HAVE_LIME
+	return true;
+	#else
+	return false;
+	#endif
 }
 
 LINPHONE_END_NAMESPACE

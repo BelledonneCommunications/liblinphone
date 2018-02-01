@@ -1450,6 +1450,31 @@ LINPHONE_PUBLIC LinphoneLimeState linphone_core_lime_enabled(const LinphoneCore 
 LINPHONE_PUBLIC bool_t linphone_core_lime_available(const LinphoneCore *lc);
 
 /**
+ * Tells to LinphoneCore to use Linphone Instant Messaging Encryption V2
+ * @param[in] lc LinphoneCore object
+ * @param[in] val The new lime state
+ * @ingroup network_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_lime_v2(LinphoneCore *lc, bool_t enable);
+
+
+/**
+ * Returns the lime V2 state
+ * @param[in] lc LinphoneCore object
+ * @return The current lime state
+ * @ingroup network_parameters
+**/
+LINPHONE_PUBLIC LinphoneLimeState linphone_core_lime_v2_enabled(const LinphoneCore *lc);
+
+
+/**
+ * Tells if lime V2 is available
+ * @param[in] lc LinphoneCore object
+ * @ingroup network_parameters
+**/
+LINPHONE_PUBLIC bool_t linphone_core_lime_v2_available(const LinphoneCore *lc);
+
+/**
  * Tells whether IPv6 is enabled or not.
  * @param[in] lc LinphoneCore object
  * @return A boolean value telling whether IPv6 is enabled or not

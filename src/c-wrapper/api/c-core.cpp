@@ -62,3 +62,20 @@ void linphone_core_set_im_encryption_engine(LinphoneCore *lc, LinphoneImEncrypti
 		lc->im_encryption_engine = linphone_im_encryption_engine_ref(imee);
 	}
 }
+
+void linphone_core_enable_lime_v2(LinphoneCore *lc, bool_t enable) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->enableLimeV2(enable);
+}
+
+//LinphoneLimeState ?
+LinphoneLimeState linphone_core_lime_v2_enabled(const LinphoneCore *lc) {
+	bool isEnabled = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeV2Enabled();
+	if (isEnabled) {
+		return LinphoneLimeMandatory;
+	}
+	return LinphoneLimeDisabled;
+}
+
+bool_t linphone_core_lime_v2_available(const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeV2Available();
+}
