@@ -224,10 +224,7 @@ LinphoneReason ServerGroupChatRoomPrivate::onSipMessageReceived (SalOp *op, cons
 	if (!q->findParticipant(fromAddr)) {
 		return LinphoneReasonNotAcceptable;
 	}
-	// Check that we received a CPIM message
-	ContentType contentType(message->content_type);
-	if (contentType != ContentType::Cpim)
-		return LinphoneReasonNotAcceptable;
+	// Do not check that we received a CPIM message because ciphered messages are not
 
 	Message msg(op->get_from(), message->content_type, message->text ? message->text : "");
 	if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) {
