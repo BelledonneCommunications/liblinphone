@@ -40,6 +40,7 @@ class Participant : public Object {
 	friend class ClientGroupChatRoom;
 	friend class ClientGroupChatRoomPrivate;
 	friend class Conference;
+	friend class LimeV2;
 	friend class LocalConference;
 	friend class LocalConferenceCall;
 	friend class LocalConferenceCallPrivate;

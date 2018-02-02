@@ -144,8 +144,10 @@ void Core::enableLimeV2 (bool enable) {
 	L_D();
 	if (enable) {
 		if (d->imee == nullptr) {
+			/*
 			LimeV2 *limev2 = new LimeV2();
 			setEncryptionEngine(limev2);
+			*/
 		}
 	}
 	// Risk of disabling another encryption engine
