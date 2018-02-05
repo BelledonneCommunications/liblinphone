@@ -83,6 +83,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		lError() << "Declining INVITE for ServerGroupChatRoom [" << q
 			<< "] because the contact does not have a 'gr' uri parameter [" << contactAddr.asString() << "]";
 		op->decline(SalReasonDeclined, nullptr);
+		joiningPendingAfterCreation = false;
 		return;
 	}
 
@@ -130,6 +131,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		if (!res && joiningPendingAfterCreation) {
 			lError() << "Declining INVITE because we expected a non-empty list of participants to invite in ServerGroupChatRoom [" << q << "], but it was empty";
 			op->decline(SalReasonNotAcceptable, nullptr);
+			joiningPendingAfterCreation = false;
 			return;
 		}
 	}
