@@ -2013,6 +2013,7 @@ int MainDb::getChatMessageCount (const ChatRoomId &chatRoomId) const {
 				"  SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
 				")";
 
+			soci::transaction tr(*session);
 			const long long &dbChatRoomId = d->selectChatRoomId(chatRoomId);
 			*session << query, soci::use(dbChatRoomId), soci::into(count);
 		}
@@ -2046,6 +2047,7 @@ int MainDb::getUnreadChatMessageCount (const ChatRoomId &chatRoomId) const {
 		if (!chatRoomId.isValid())
 			*session << query, soci::into(count);
 		else {
+			soci::transaction tr(*session);
 			const long long &dbChatRoomId = d->selectChatRoomId(chatRoomId);
 			*session << query, soci::use(dbChatRoomId), soci::into(count);
 		}
@@ -2080,8 +2082,10 @@ void MainDb::markChatMessagesAsRead (const ChatRoomId &chatRoomId) const {
 		if (!chatRoomId.isValid())
 			*session << query;
 		else {
+			soci::transaction tr(*session);
 			const long long &dbChatRoomId = d->selectChatRoomId(chatRoomId);
 			*session << query, soci::use(dbChatRoomId);
+			tr.commit();
 		}
 
 		return true;
@@ -2281,10 +2285,11 @@ int MainDb::getHistorySize (const ChatRoomId &chatRoomId, FilterMask mask) const
 	return L_SAFE_TRANSACTION {
 		L_D();
 
+		soci::session *session = d->dbSession.getBackendSession();
+		soci::transaction tr(*session);
+
 		int count;
 		const long long &dbChatRoomId = d->selectChatRoomId(chatRoomId);
-
-		soci::session *session = d->dbSession.getBackendSession();
 		*session << query, soci::into(count), soci::use(dbChatRoomId);
 
 		return count;

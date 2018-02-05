@@ -56,7 +56,7 @@ IdentityAddress ServerGroupChatRoomPrivate::generateConferenceAddress (const sha
 
 void ServerGroupChatRoomPrivate::subscribeReceived (LinphoneEvent *) {}
 
-void ServerGroupChatRoomPrivate::update (SalCallOp *) {}
+bool ServerGroupChatRoomPrivate::update (SalCallOp *) { return true; }
 
 // -----------------------------------------------------------------------------
 
@@ -125,6 +125,22 @@ ServerGroupChatRoom::CapabilitiesMask ServerGroupChatRoom::getCapabilities () co
 	return 0;
 }
 
+void ServerGroupChatRoom::allowCpim (bool value) {
+	
+}
+
+void ServerGroupChatRoom::allowMultipart (bool value) {
+	
+}
+
+bool ServerGroupChatRoom::canHandleCpim () const {
+	return true;
+}
+
+bool ServerGroupChatRoom::canHandleMultipart () const {
+	return true;
+}
+
 bool ServerGroupChatRoom::hasBeenLeft () const {
 	return true;
 }
@@ -135,10 +151,6 @@ const IdentityAddress &ServerGroupChatRoom::getConferenceAddress () const {
 
 bool ServerGroupChatRoom::canHandleParticipants () const {
 	return false;
-}
-
-bool ServerGroupChatRoom::canHandleCpim () const {
-	return true;
 }
 
 void ServerGroupChatRoom::addParticipant (const IdentityAddress &, const CallSessionParams *, bool) {}

@@ -47,6 +47,11 @@ public:
 
 	std::shared_ptr<Core> getCore () const;
 
+	void allowCpim (bool value) override;
+	void allowMultipart (bool value) override;
+	bool canHandleCpim () const override;
+	bool canHandleMultipart () const override;
+
 	std::shared_ptr<Participant> findParticipant (const std::shared_ptr<const CallSession> &session) const;
 
 	CapabilitiesMask getCapabilities () const override;
@@ -55,7 +60,6 @@ public:
 	const IdentityAddress &getConferenceAddress () const override;
 
 	bool canHandleParticipants () const override;
-	bool canHandleCpim () const override;
 
 	void addParticipant (const IdentityAddress &address, const CallSessionParams *params, bool hasMedia) override;
 	void addParticipants (

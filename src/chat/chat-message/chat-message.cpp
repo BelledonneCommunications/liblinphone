@@ -63,7 +63,7 @@ void ChatMessagePrivate::setIsReadOnly (bool readOnly) {
 	isReadOnly = readOnly;
 }
 
-void ChatMessagePrivate::setState (ChatMessage::State s, bool force, bool storeInDb) {
+void ChatMessagePrivate::setState (ChatMessage::State s, bool force) {
 	L_Q();
 
 	if (force)
@@ -98,9 +98,7 @@ void ChatMessagePrivate::setState (ChatMessage::State s, bool force, bool storeI
 	if (cbs && linphone_chat_message_cbs_get_msg_state_changed(cbs))
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, linphone_chat_message_get_state(msg));
 
-	if (storeInDb) {
-		store();
-	}
+	updateInDb();
 }
 
 belle_http_request_t *ChatMessagePrivate::getHttpRequest () const {
@@ -205,7 +203,7 @@ void ChatMessagePrivate::setAppdata (const string &data) {
 			break;
 		}
 	}
-	store();
+	updateInDb();
 }
 
 const string &ChatMessagePrivate::getExternalBodyUrl () const {
@@ -239,9 +237,14 @@ const ContentType &ChatMessagePrivate::getContentType () {
 
 void ChatMessagePrivate::setContentType (const ContentType &contentType) {
 	if (contents.size() > 0 && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
-		contents.front()->setContentType(contentType);
-	} else {
-		internalContent.setContentType(contentType);
+		internalContent.setBody(contents.front()->getBody());
+	}
+	internalContent.setContentType(contentType);
+
+	if ((currentSendStep &ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
+		// if not started yet the sending also alter the first content
+		if (contents.size() > 0)
+			contents.front()->setContentType(contentType);
 	}
 }
 
@@ -256,9 +259,7 @@ const string &ChatMessagePrivate::getText () {
 			cText = internalContent.getBodyAsString();
 		}
 	} else {
-		if (hasTextContent()) {
-			cText = getTextContent()->getBodyAsString();
-		} else if (!internalContent.isEmpty()) {
+		if (!internalContent.isEmpty()) {
 			cText = internalContent.getBodyAsString();
 		} else {
 			if (contents.size() > 0) {
@@ -272,9 +273,14 @@ const string &ChatMessagePrivate::getText () {
 
 void ChatMessagePrivate::setText (const string &text) {
 	if (contents.size() > 0 && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
-		contents.front()->setBody(text);
-	} else {
-		internalContent.setBody(text);
+		internalContent.setContentType(contents.front()->getContentType());
+	}
+	internalContent.setBody(text);
+
+	if ((currentSendStep &ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
+		// if not started yet the sending also alter the first content
+		if (contents.size() > 0)
+			contents.front()->setBody(text);
 	}
 }
 
@@ -347,6 +353,10 @@ void ChatMessagePrivate::sendImdn (Imdn::Type imdnType, LinphoneReason reason) {
 	content->setBody(Imdn::createXml(imdnId, time, imdnType, reason));
 	msg->addContent(*content);
 
+	if (reason != LinphoneReasonNone)
+		msg->getPrivate()->setEncryptionPrevented(true);
+	msg->setToBeStored(false);
+
 	msg->getPrivate()->send();
 }
 
@@ -383,6 +393,29 @@ static void forceUtf8Content (Content &content) {
 	L_END_LOG_EXCEPTION
 }
 
+void ChatMessagePrivate::notifyReceiving () {
+	L_Q();
+
+	if ((getContentType() == ContentType::Imdn) || (getContentType() == ContentType::ImIsComposing))
+		return;
+
+	LinphoneChatRoom *chatRoom = L_GET_C_BACK_PTR(q->getChatRoom());
+	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(chatRoom);
+	LinphoneChatRoomCbsParticipantAddedCb cb = linphone_chat_room_cbs_get_chat_message_received(cbs);
+	shared_ptr<ConferenceChatMessageEvent> event = make_shared<ConferenceChatMessageEvent>(
+		::time(nullptr), q->getSharedFromThis()
+	);
+	if (cb)
+		cb(chatRoom, L_GET_C_BACK_PTR(event));
+	// Legacy
+	q->getChatRoom()->getPrivate()->notifyChatMessageReceived(q->getSharedFromThis());
+
+	if (toBeStored)
+		storeInDb();
+
+	q->sendDeliveryNotification(LinphoneReasonNone);
+}
+
 LinphoneReason ChatMessagePrivate::receive () {
 	L_Q();
 	int errorCode = 0;
@@ -390,8 +423,6 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	shared_ptr<Core> core = q->getCore();
 	shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
-
-	setState(ChatMessage::State::Delivered, false, false); // Wait for decryption and CPIM to reveal the real message to know if it must be stored or not
 
 	// ---------------------------------------
 	// Start of message modification
@@ -453,6 +484,14 @@ LinphoneReason ChatMessagePrivate::receive () {
 	// End of message modification
 	// ---------------------------------------
 
+	// Remove internal content as it is not needed anymore and will confuse some old methods like getText()
+	internalContent.setBody("");
+	internalContent.setContentType(ContentType(""));
+	// Also remove current step so we go through all modifiers if message is re-sent
+	currentRecvStep = ChatMessagePrivate::Step::None;
+
+	setState(ChatMessage::State::Delivered);
+
 	if (errorCode <= 0) {
 		bool foundSupportContentType = false;
 		for (Content *c : contents) {
@@ -484,7 +523,8 @@ LinphoneReason ChatMessagePrivate::receive () {
 		return reason;
 	}
 
-	store();
+	if ((getContentType() == ContentType::ImIsComposing) || (getContentType() == ContentType::Imdn))
+		toBeStored = false;
 
 	return reason;
 }
@@ -494,6 +534,11 @@ void ChatMessagePrivate::send () {
 	SalOp *op = salOp;
 	LinphoneCall *lcall = nullptr;
 	int errorCode = 0;
+
+	currentSendStep |= ChatMessagePrivate::Step::Started;
+
+	if (toBeStored)
+		storeInDb();
 
 	if ((currentSendStep & ChatMessagePrivate::Step::FileUpload) == ChatMessagePrivate::Step::FileUpload) {
 		lInfo() << "File upload step already done, skipping";
@@ -557,7 +602,7 @@ void ChatMessagePrivate::send () {
 
 	if (applyModifiers) {
 		// Do not multipart or encapsulate with CPIM in an old ChatRoom to maintain backward compatibility
-		if (q->getChatRoom()->canHandleCpim()) {
+		if (q->getChatRoom()->canHandleMultipart()) {
 			if ((currentSendStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
 				lInfo() << "Multipart step already done, skipping";
 			} else {
@@ -585,15 +630,17 @@ void ChatMessagePrivate::send () {
 		if ((currentSendStep &ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
 			lInfo() << "Encryption step already done, skipping";
 		} else {
-			EncryptionChatMessageModifier ecmm;
-			ChatMessageModifier::Result result = ecmm.encode(q->getSharedFromThis(), errorCode);
-			if (result == ChatMessageModifier::Result::Error) {
-				sal_error_info_set((SalErrorInfo *)op->get_error_info(), SalReasonNotAcceptable, "SIP", errorCode, "Unable to encrypt IM", nullptr);
-				setState(ChatMessage::State::NotDelivered);
-				return;
-			} else if (result == ChatMessageModifier::Result::Suspended) {
-				currentSendStep |= ChatMessagePrivate::Step::Encryption;
-				return;
+			if (!encryptionPrevented) {
+				EncryptionChatMessageModifier ecmm;
+				ChatMessageModifier::Result result = ecmm.encode(q->getSharedFromThis(), errorCode);
+				if (result == ChatMessageModifier::Result::Error) {
+					sal_error_info_set((SalErrorInfo *)op->get_error_info(), SalReasonNotAcceptable, "SIP", errorCode, "Unable to encrypt IM", nullptr);
+					setState(ChatMessage::State::NotDelivered);
+					return;
+				} else if (result == ChatMessageModifier::Result::Suspended) {
+					currentSendStep |= ChatMessagePrivate::Step::Encryption;
+					return;
+				}
 			}
 			currentSendStep |= ChatMessagePrivate::Step::Encryption;
 		}
@@ -620,23 +667,27 @@ void ChatMessagePrivate::send () {
 	}
 	
 	// Restore FileContents and remove FileTransferContents
-	list<Content*>::iterator i = contents.begin();
-	while (i != contents.end()) {
-		Content *content = *i;
+	list<Content*>::iterator it = contents.begin();
+	while (it != contents.end()) {
+		Content *content = *it;
 		if (content->getContentType() == ContentType::FileTransfer) {
 			FileTransferContent *fileTransferContent = (FileTransferContent *)content;
-			contents.erase(i++);
+			it = contents.erase(it);
 			q->addContent(*fileTransferContent->getFileContent());
 			delete fileTransferContent;
 		} else {
-			++i;
+			it++;
 		}
 	}
 
+	// Remove internal content as it is not needed anymore and will confuse some old methods like getContentType()
+	internalContent.setBody("");
+	internalContent.setContentType(ContentType(""));
+	// Also remove current step so we go through all modifiers if message is re-sent
+	currentSendStep = ChatMessagePrivate::Step::None;
+
 	if (imdnId.empty())
 		setImdnMessageId(op->get_call_id());   /* must be known at that time */
-
-	//store(); // Store will be done right below in the setState(InProgress)
 
 	if (lcall && linphone_call_get_op(lcall) == op) {
 		/* In this case, chat delivery status is not notified, so unrefing chat message right now */
@@ -651,43 +702,17 @@ void ChatMessagePrivate::send () {
 	}
 }
 
-void ChatMessagePrivate::store() {
+void ChatMessagePrivate::storeInDb () {
 	L_Q();
 
 	// TODO: store message in the future
 	if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) return;
 
-	bool messageToBeStored = true;
-	for (Content *c : contents) {
-		ContentType contentType = c->getContentType();
-		if (contentType == ContentType::Imdn || contentType == ContentType::ImIsComposing) {
-			messageToBeStored = false;
-			break;
-		}
-	}
-	if (!messageToBeStored) {
-		return;
-	}
-
-	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
 	if (dbKey.isValid()) {
-		shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(dbKey);
-		mainDb->updateEvent(eventLog);
-
-		if (direction == ChatMessage::Direction::Incoming) {
-			if (!hasFileTransferContent()) {
-				// Incoming message doesn't have any download waiting anymore, we can remove it's event from the transients
-				q->getChatRoom()->getPrivate()->removeTransientEvent(eventLog);
-			}
-		} else {
-			if (state == ChatMessage::State::Delivered || state == ChatMessage::State::NotDelivered) {
-				// Once message has reached this state it won't change anymore so we can remove the event from the transients
-				q->getChatRoom()->getPrivate()->removeTransientEvent(eventLog);
-			}
-		}
+		updateInDb();
 	} else {
 		shared_ptr<EventLog> eventLog = make_shared<ConferenceChatMessageEvent>(time, q->getSharedFromThis());
-		mainDb->addEvent(eventLog);
+		q->getChatRoom()->getCore()->getPrivate()->mainDb->addEvent(eventLog);
 
 		if (direction == ChatMessage::Direction::Incoming) {
 			if (hasFileTransferContent()) {
@@ -697,6 +722,29 @@ void ChatMessagePrivate::store() {
 		} else {
 			// Keep event in transient to be able to store in database state changes
 			q->getChatRoom()->getPrivate()->addTransientEvent(eventLog);
+		}
+	}
+}
+
+void ChatMessagePrivate::updateInDb () {
+	L_Q();
+
+	if (!dbKey.isValid())
+		return;
+
+	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
+	shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(dbKey);
+	mainDb->updateEvent(eventLog);
+
+	if (direction == ChatMessage::Direction::Incoming) {
+		if (!hasFileTransferContent()) {
+			// Incoming message doesn't have any download waiting anymore, we can remove it's event from the transients
+			q->getChatRoom()->getPrivate()->removeTransientEvent(eventLog);
+		}
+	} else {
+		if (state == ChatMessage::State::Delivered || state == ChatMessage::State::NotDelivered) {
+			// Once message has reached this state it won't change anymore so we can remove the event from the transients
+			q->getChatRoom()->getPrivate()->removeTransientEvent(eventLog);
 		}
 	}
 }
@@ -799,6 +847,16 @@ const IdentityAddress &ChatMessage::getFromAddress () const {
 const IdentityAddress &ChatMessage::getToAddress () const {
 	L_D();
 	return d->toAddress;
+}
+
+bool ChatMessage::getToBeStored () const {
+	L_D();
+	return d->toBeStored;
+}
+
+void ChatMessage::setToBeStored (bool value) {
+	L_D();
+	d->toBeStored = value;
 }
 
 // -----------------------------------------------------------------------------

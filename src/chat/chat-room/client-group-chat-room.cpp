@@ -72,6 +72,7 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	myCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, myCleanedAddress, focus->getPrivate()->getDevices().front()->getAddress());
 	session->initiateOutgoing();
+	session->getPrivate()->createOp();
 	return session;
 }
 
@@ -205,6 +206,22 @@ shared_ptr<Core> ClientGroupChatRoom::getCore () const {
 	return ChatRoom::getCore();
 }
 
+void ClientGroupChatRoom::allowCpim (bool value) {
+	
+}
+
+void ClientGroupChatRoom::allowMultipart (bool value) {
+	
+}
+
+bool ClientGroupChatRoom::canHandleCpim () const {
+	return true;
+}
+
+bool ClientGroupChatRoom::canHandleMultipart () const {
+	return true;
+}
+
 ClientGroupChatRoom::CapabilitiesMask ClientGroupChatRoom::getCapabilities () const {
 	L_D();
 	return d->capabilities;
@@ -216,10 +233,6 @@ bool ClientGroupChatRoom::hasBeenLeft () const {
 
 bool ClientGroupChatRoom::canHandleParticipants () const {
 	return RemoteConference::canHandleParticipants();
-}
-
-bool ClientGroupChatRoom::canHandleCpim () const {
-	return true; 
 }
 
 const IdentityAddress &ClientGroupChatRoom::getConferenceAddress () const {
@@ -518,7 +531,7 @@ void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferencePart
 	else
 		participant = findParticipant(addr);
 	if (!participant) {
-		lWarning() << "Participant " << participant << " admin status has been changed but is not in the list of participants!";
+		lWarning() << "Participant " << addr.asString() << " admin status has been changed but is not in the list of participants!";
 		return;
 	}
 
@@ -564,7 +577,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 	else
 		participant = findParticipant(addr);
 	if (!participant) {
-		lWarning() << "Participant " << participant << " added a device but is not in the list of participants!";
+		lWarning() << "Participant " << addr.asString() << " added a device but is not in the list of participants!";
 		return;
 	}
 	participant->getPrivate()->addDevice(event->getDeviceAddress());
@@ -591,7 +604,7 @@ void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<Conferenc
 	else
 		participant = findParticipant(addr);
 	if (!participant) {
-		lWarning() << "Participant " << participant << " removed a device but is not in the list of participants!";
+		lWarning() << "Participant " << addr.asString() << " removed a device but is not in the list of participants!";
 		return;
 	}
 	participant->getPrivate()->removeDevice(event->getDeviceAddress());

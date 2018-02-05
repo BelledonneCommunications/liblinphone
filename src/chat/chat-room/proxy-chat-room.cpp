@@ -298,13 +298,27 @@ const IdentityAddress &ProxyChatRoom::getConferenceAddress () const {
 
 // -----------------------------------------------------------------------------
 
-bool ProxyChatRoom::canHandleParticipants () const {
-	L_D();
-	return d->chatRoom->canHandleParticipants();
+void ProxyChatRoom::allowCpim (bool value) {
+	
+}
+
+void ProxyChatRoom::allowMultipart (bool value) {
+	
 }
 
 bool ProxyChatRoom::canHandleCpim () const {
-	return true;
+	L_D();
+	return d->chatRoom->canHandleCpim();
+}
+
+bool ProxyChatRoom::canHandleMultipart () const {
+	L_D();
+	return d->chatRoom->canHandleMultipart();
+}
+
+bool ProxyChatRoom::canHandleParticipants () const {
+	L_D();
+	return d->chatRoom->canHandleParticipants();
 }
 
 void ProxyChatRoom::addParticipant (
