@@ -20,12 +20,11 @@
 #ifndef _L_LIME_V2_H_
 #define _L_LIME_V2_H_
 
+// clean
 #include "belle-sip/http-listener.h"
 #include "encryption-engine-listener.h"
 #include "lime/lime.hpp"
-
 #include <belle-sip/belle-sip.h>
-//#include "linphone/utils/general.h"
 #include "carddav.h"
 
 // =============================================================================
@@ -35,14 +34,11 @@ LINPHONE_BEGIN_NAMESPACE
 class BelleSipLimeManager : public lime::LimeManager {
 public:
 	BelleSipLimeManager(const std::string &db_access, belle_http_provider_t *prov);
-	//void X3DHBelleSipServerPost(const std::string &url, const std::string &from, const std::vector<uint8_t> &message, const lime::limeX3DHServerResponseProcess &responseProcess);
 
 private:
 	static void processIoError (void *data, const belle_sip_io_error_event_t *event) noexcept;
 	static void processResponse(void *data, const belle_http_response_event_t *event) noexcept;
 	static void processAuthRequestedFromCarddavRequest(void *data, belle_sip_auth_event_t *event) noexcept;
-
-	std::function<void(void *data, belle_sip_auth_event *event)> mProcessAuthRequest;
 };
 
 class LimeV2 : public EncryptionEngineListener {

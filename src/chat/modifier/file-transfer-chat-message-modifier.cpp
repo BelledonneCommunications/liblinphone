@@ -171,7 +171,7 @@ int FileTransferChatMessageModifier::onSendBody (
 	if (imee) {
 		size_t max_size = *size;
 		uint8_t *encrypted_buffer = (uint8_t *)ms_malloc0(max_size);
-		retval = core->getEncryptionEngine()->uploadingFileCb(L_GET_CPP_PTR_FROM_C_OBJECT(msg), offset, buffer, *size, encrypted_buffer);
+		retval = message->getCore()->getEncryptionEngine()->uploadingFileCb(L_GET_CPP_PTR_FROM_C_OBJECT(msg), offset, buffer, *size, encrypted_buffer);
 		if (retval == 0) {
 			if (*size > max_size) {
 				lError() << "IM encryption engine process upload file callback returned a size bigger than the size of the buffer, so it will be truncated !";
@@ -197,7 +197,7 @@ void FileTransferChatMessageModifier::onSendEnd (belle_sip_user_body_handler_t *
 
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(message->getCore()->getCCore());
 	if (imee) {
-		message->getCore()->getEncryptionEngine()->uploadingFileCb(chatMessage, 0, nullptr, 0, nullptr);
+		message->getCore()->getEncryptionEngine()->uploadingFileCb(message, 0, nullptr, 0, nullptr);
 	}
 }
 
@@ -228,19 +228,19 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			bool_t is_file_encryption_enabled = FALSE;
 
 			LinphoneImEncryptionEngine *imee = nullptr;
-			shared_ptr<Core> core = chatMessage->getCore();
+			shared_ptr<Core> core = message->getCore();
 			imee = linphone_core_get_im_encryption_engine(core->getCCore());
 
-			if (imee && chatRoom) {
-                is_file_encryption_enabled = core->getEncryptionEngine()->encryptionEnabledForFileTransferCb(chatRoom);
+			if (imee && message->getChatRoom()) {
+				is_file_encryption_enabled = core->getEncryptionEngine()->encryptionEnabledForFileTransferCb(message->getChatRoom());
 			}
 			// shall we encrypt the file
-			if (is_file_encryption_enabled && chatRoom) {
+			if (is_file_encryption_enabled && message->getChatRoom()) {
 
 				// temporary storage for the Content-disposition header value : use a generic filename to not leak it
 				// Actual filename stored in msg->file_transfer_information->name will be set in encrypted msg sent to
 				// temporary storage for the Content-disposition header value
-                core->getEncryptionEngine()->generateFileTransferKeyCb(chatRoom, chatMessage);
+				message->getCore()->getEncryptionEngine()->generateFileTransferKeyCb(message->getChatRoom(), message);
 				first_part_header = "form-data; name=\"File\"; filename=\"filename.txt\"";
 			} else {
 				first_part_header = "form-data; name=\"File\"; filename=\"" + currentFileContentToTransfer->getFileName() + "\"";
@@ -677,10 +677,12 @@ void FileTransferChatMessageModifier::onRecvBody (belle_sip_user_body_handler_t 
 	int retval = -1;
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(message->getCore()->getCCore());
 	if (imee) {
-		retval = core->getEncryptionEngine()->downloadingFileCb(chatMessage, 0, nullptr, 0, nullptr);
+		uint8_t *decrypted_buffer = (uint8_t *)ms_malloc0(size);
+		retval = message->getCore()->getEncryptionEngine()->downloadingFileCb(message, offset, buffer, size, decrypted_buffer);
 		if (retval == 0) {
 			memcpy(buffer, decrypted_buffer, size);
 		}
+		ms_free(decrypted_buffer);
 	}
 
 	if (retval <= 0) {

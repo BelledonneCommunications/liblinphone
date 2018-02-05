@@ -92,6 +92,7 @@ void BelleSipLimeManager::processAuthRequestedFromCarddavRequest(void *data, bel
 		}
 
 		if (!auth_infos) {
+			// Need new error handling because below functions are static
 			BCTBX_SLOGE << "CardDAV authentication error in lime v2";
 
 // 			ms_error("[carddav] Authentication requested during CardDAV request sending, and username/password weren't provided");
