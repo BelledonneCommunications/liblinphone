@@ -116,8 +116,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	db/main-db-p.h
 	db/main-db.h
 	db/session/db-session-p.h
-	db/session/db-session-provider.h
-	db/session/db-session.h
 	dial-plan/dial-plan-p.h
 	dial-plan/dial-plan.h
 	enums.h
@@ -173,6 +171,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-event-log.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/internal/c-sal.cpp
+	c-wrapper/internal/c-tools.cpp
 	call/call.cpp
 	call/local-conference-call.cpp
 	call/remote-conference-call.cpp
@@ -227,7 +226,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	db/main-db-event-key.cpp
 	db/main-db-key.cpp
 	db/main-db.cpp
-	db/session/db-session-provider.cpp
 	db/session/db-session.cpp
 	dial-plan/dial-plan.cpp
 	event-log/conference/conference-call-event.cpp

@@ -32,6 +32,7 @@ class ClientGroupChatRoomPrivate;
 class LINPHONE_PUBLIC ClientGroupChatRoom : public ChatRoom, public RemoteConference {
 	friend class BasicToClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
+	friend class Core;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ClientGroupChatRoom);
@@ -48,12 +49,18 @@ public:
 		const std::shared_ptr<Core> &core,
 		const ChatRoomId &chatRoomId,
 		std::shared_ptr<Participant> &me,
+		AbstractChatRoom::CapabilitiesMask capabilities,
 		const std::string &subject,
 		std::list<std::shared_ptr<Participant>> &&participants,
 		unsigned int lastNotifyId
 	);
 
 	std::shared_ptr<Core> getCore () const;
+	
+	void allowCpim (bool value) override;
+	void allowMultipart (bool value) override;
+	bool canHandleCpim () const override;
+	bool canHandleMultipart () const override;
 
 	CapabilitiesMask getCapabilities () const override;
 	bool hasBeenLeft () const override;
@@ -61,7 +68,8 @@ public:
 	const IdentityAddress &getConferenceAddress () const override;
 
 	bool canHandleParticipants () const override;
-	bool canHandleCpim () const override;
+
+	void deleteFromDb () override;
 
 	void addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
 	void addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
@@ -88,6 +96,7 @@ private:
 	// ALL METHODS AFTER THIS POINT.
 
 	void onConferenceCreated (const IdentityAddress &addr) override;
+	void onConferenceKeywordsChanged (const std::vector<std::string> &keywords) override;
 	void onConferenceTerminated (const IdentityAddress &addr) override;
 	void onFirstNotifyReceived (const IdentityAddress &addr) override;
 	void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;

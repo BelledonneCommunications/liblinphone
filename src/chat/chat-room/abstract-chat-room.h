@@ -38,6 +38,7 @@ class LINPHONE_PUBLIC AbstractChatRoom : public Object, public CoreAccessor, pub
 	friend class ChatMessage;
 	friend class ChatMessagePrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
+	friend class Core;
 	friend class CorePrivate;
 	friend class MainDb;
 	friend class ProxyChatRoomPrivate;
@@ -49,6 +50,11 @@ public:
 	L_DECLARE_ENUM(State, L_ENUM_VALUES_CHAT_ROOM_STATE);
 
 	typedef EnumMask<Capabilities> CapabilitiesMask;
+
+	virtual void allowCpim (bool value) = 0;
+	virtual void allowMultipart (bool value) = 0;
+	virtual bool canHandleCpim () const = 0;
+	virtual bool canHandleMultipart () const = 0;
 
 	virtual const ChatRoomId &getChatRoomId () const = 0;
 
@@ -66,6 +72,7 @@ public:
 	virtual std::list<std::shared_ptr<EventLog>> getHistoryRange (int begin, int end) const = 0;
 	virtual int getHistorySize () const = 0;
 
+	virtual void deleteFromDb () = 0;
 	virtual void deleteHistory () = 0;
 
 	virtual std::shared_ptr<ChatMessage> getLastChatMessageInHistory () const = 0;

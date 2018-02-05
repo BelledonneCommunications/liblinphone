@@ -52,7 +52,7 @@ public:
 	std::shared_ptr<ChatMessage> createChatMessage (ChatMessage::Direction direction);
 	std::list<std::shared_ptr<ChatMessage>> findChatMessages (const std::string &messageId) const;
 
-	void notifyChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage);
+	void notifyChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void notifyIsComposingReceived (const Address &remoteAddress, bool isComposing);
 	void notifyStateChanged ();
 	void notifyUndecryptableChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override;
@@ -66,6 +66,7 @@ public:
 	void onIsRemoteComposingStateChanged (const Address &remoteAddress, bool isComposing) override;
 
 	std::list<IdentityAddress> remoteIsComposing;
+	std::list<std::shared_ptr<EventLog>> transientEvents;
 
 	ChatRoomId chatRoomId;
 
@@ -79,7 +80,6 @@ private:
 	std::unique_ptr<IsComposing> isComposingHandler;
 
 	bool isComposing = false;
-	std::list<std::shared_ptr<EventLog>> transientEvents;
 
 	L_DECLARE_PUBLIC(ChatRoom);
 };

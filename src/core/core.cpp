@@ -18,6 +18,7 @@
  */
 
 #include <mediastreamer2/mscommon.h>
+#include <xercesc/util/PlatformUtils.hpp>
 
 #include "call/call.h"
 #include "chat/encryption/lime-v2.h"
@@ -53,7 +54,7 @@ void CorePrivate::init () {
 		uri = q->getDataPath() + LINPHONE_DB;
 	}
 
-	lInfo() << "Opening " LINPHONE_DB "...";
+	lInfo() << "Opening linphone database: " << uri;
 	if (!mainDb->connect(backend, uri))
 		lFatal() << "Unable to open linphone database.";
 
@@ -95,6 +96,7 @@ void CorePrivate::notifyRegistrationStateChanged (LinphoneProxyConfig *cfg, Linp
 Core::Core () : Object(*new CorePrivate) {
     L_D();
     d->imee.reset(new EncryptionEngineListener);
+	xercesc::XMLPlatformUtils::Initialize();
 }
 
 Core::~Core () {
@@ -103,6 +105,7 @@ Core::~Core () {
 	if (getEncryptionEngine() == nullptr) {
 		delete getEncryptionEngine();
 	}
+	xercesc::XMLPlatformUtils::Terminate();
 }
 
 shared_ptr<Core> Core::create (LinphoneCore *cCore) {

@@ -252,11 +252,12 @@ void Core::deleteChatRoom (const shared_ptr<const AbstractChatRoom> &chatRoom) {
 	CorePrivate *d = chatRoom->getCore()->getPrivate();
 
 	const ChatRoomId &chatRoomId = chatRoom->getChatRoomId();
-	auto it = d->chatRoomsById.find(chatRoomId);
-	if (it != d->chatRoomsById.end()) {
-		auto it = find(d->chatRooms.begin(), d->chatRooms.end(), chatRoom);
-		L_ASSERT(it != d->chatRooms.end());
-		d->chatRooms.erase(it);
+	auto chatRoomsByIdIt = d->chatRoomsById.find(chatRoomId);
+	if (chatRoomsByIdIt != d->chatRoomsById.end()) {
+		auto chatRoomsIt = find(d->chatRooms.begin(), d->chatRooms.end(), chatRoom);
+		L_ASSERT(chatRoomsIt != d->chatRooms.end());
+		d->chatRooms.erase(chatRoomsIt);
+		d->chatRoomsById.erase(chatRoomsByIdIt);
 		d->mainDb->deleteChatRoom(chatRoomId);
 	}
 }

@@ -80,11 +80,30 @@ static void call_received(SalCallOp *h) {
 	LinphoneAddress *toAddr = linphone_address_new(h->get_to());
 
 	if (_linphone_core_is_conference_creation(lc, toAddr)) {
-		if (sal_address_has_param(h->get_remote_contact_address(), "text"))
-			_linphone_core_create_server_group_chat_room(lc, h);
-		// TODO: handle media conference creation if the "text" feature tag is not present
 		linphone_address_unref(toAddr);
 		linphone_address_unref(fromAddr);
+		if (sal_address_has_param(h->get_remote_contact_address(), "text")) {
+			bool oneToOneChatRoom = false;
+			const char *oneToOneChatRoomStr = sal_custom_header_find(h->get_recv_custom_header(), "One-To-One-Chat-Room");
+			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
+				oneToOneChatRoom = true;
+			if (oneToOneChatRoom) {
+				IdentityAddress from(h->get_from());
+				list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(h->get_remote_body());
+				if (identAddresses.size() != 1) {
+					h->decline(SalReasonNotAcceptable, nullptr);
+					return;
+				}
+				IdentityAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front());
+				if (confAddr.isValid()) {
+					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ChatRoomId(confAddr, confAddr));
+					L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmRecreation(h);
+					return;
+				}
+			}
+			_linphone_core_create_server_group_chat_room(lc, h);
+		}
+		// TODO: handle media conference creation if the "text" feature tag is not present
 		return;
 	} else if (sal_address_has_param(h->get_remote_contact_address(), "text")) {
 		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
@@ -94,8 +113,11 @@ static void call_received(SalCallOp *h) {
 			L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmJoining(h);
 			linphone_address_unref(toAddr);
 			linphone_address_unref(fromAddr);
-			return;
+		} else {
+			//invite is for an unknown chatroom
+			h->decline(SalReasonNotFound, nullptr);
 		}
+		return;
 	} else {
 		// TODO: handle media conference joining if the "text" feature tag is not present
 	}
@@ -536,17 +558,14 @@ static LinphoneChatMessageState chatStatusSal2Linphone(SalMessageDeliveryStatus 
 	return LinphoneChatMessageStateIdle;
 }
 
-static void message_delivery_update(SalOp *op, SalMessageDeliveryStatus status){
-	LinphoneChatMessage *chat_msg=(LinphoneChatMessage* )op->get_user_pointer();
+static void message_delivery_update(SalOp *op, SalMessageDeliveryStatus status) {
+	LinphonePrivate::ChatMessage *msg = reinterpret_cast<LinphonePrivate::ChatMessage *>(op->get_user_pointer());
+	if (!msg)
+		return; // Do not handle delivery status for isComposing messages.
 
-	if (chat_msg == NULL) {
-		// Do not handle delivery status for isComposing messages.
-		return;
-	}
-	// check that the message does not belong to an already destroyed chat room - if so, do not invoke callbacks
-	if (linphone_chat_message_get_chat_room(chat_msg) != NULL) {
-		linphone_chat_message_update_state(chat_msg, chatStatusSal2Linphone(status));
-	}
+	// Check that the message does not belong to an already destroyed chat room - if so, do not invoke callbacks
+	if (msg->getChatRoom())
+		msg->updateState((LinphonePrivate::ChatMessage::State)chatStatusSal2Linphone(status));
 }
 
 static void info_received(SalOp *op, SalBodyHandler *body_handler) {

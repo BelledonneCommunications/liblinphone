@@ -46,6 +46,8 @@ void ServerGroupChatRoomPrivate::confirmCreation () {}
 
 void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *) {}
 
+void ServerGroupChatRoomPrivate::confirmRecreation (SalCallOp *) {}
+
 // -----------------------------------------------------------------------------
 
 IdentityAddress ServerGroupChatRoomPrivate::generateConferenceAddress (const shared_ptr<Participant> &me) const {
@@ -57,8 +59,6 @@ void ServerGroupChatRoomPrivate::subscribeReceived (LinphoneEvent *) {}
 void ServerGroupChatRoomPrivate::update (SalCallOp *) {}
 
 // -----------------------------------------------------------------------------
-
-void ServerGroupChatRoomPrivate::dispatchMessage (const IdentityAddress &, const Content &) {}
 
 void ServerGroupChatRoomPrivate::setConferenceAddress (const IdentityAddress &) {}
 
@@ -75,6 +75,10 @@ LinphoneReason ServerGroupChatRoomPrivate::onSipMessageReceived (SalOp *, const 
 // -----------------------------------------------------------------------------
 
 void ServerGroupChatRoomPrivate::designateAdmin () {}
+
+void ServerGroupChatRoomPrivate::dispatchMessage (const Message &message) {}
+
+void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {}
 
 void ServerGroupChatRoomPrivate::finalizeCreation () {}
 
@@ -110,6 +114,7 @@ LocalConference(core, IdentityAddress(op->get_to()), nullptr) {
 ServerGroupChatRoom::ServerGroupChatRoom (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &peerAddress,
+	AbstractChatRoom::CapabilitiesMask capabilities,
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId
@@ -118,6 +123,22 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 
 ServerGroupChatRoom::CapabilitiesMask ServerGroupChatRoom::getCapabilities () const {
 	return 0;
+}
+
+void ServerGroupChatRoom::allowCpim (bool value) {
+	
+}
+
+void ServerGroupChatRoom::allowMultipart (bool value) {
+	
+}
+
+bool ServerGroupChatRoom::canHandleCpim () const {
+	return true;
+}
+
+bool ServerGroupChatRoom::canHandleMultipart () const {
+	return true;
 }
 
 bool ServerGroupChatRoom::hasBeenLeft () const {
@@ -130,10 +151,6 @@ const IdentityAddress &ServerGroupChatRoom::getConferenceAddress () const {
 
 bool ServerGroupChatRoom::canHandleParticipants () const {
 	return false;
-}
-
-bool ServerGroupChatRoom::canHandleCpim () const {
-	return true;
 }
 
 void ServerGroupChatRoom::addParticipant (const IdentityAddress &, const CallSessionParams *, bool) {}

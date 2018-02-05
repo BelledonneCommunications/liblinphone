@@ -118,6 +118,26 @@ void ProxyChatRoomPrivate::setupCallbacks () {
 	linphone_chat_room_cbs_set_undecryptable_message_received(cbs, undecryptableMessageReceived);
 }
 
+void ProxyChatRoomPrivate::teardownCallbacks () {
+	LinphoneChatRoom *lcr = L_GET_C_BACK_PTR(chatRoom);
+	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(lcr);
+	linphone_chat_room_cbs_set_chat_message_received(cbs, nullptr);
+	linphone_chat_room_cbs_set_chat_message_sent(cbs, nullptr);
+	linphone_chat_room_cbs_set_conference_address_generation(cbs, nullptr);
+	linphone_chat_room_cbs_set_is_composing_received(cbs, nullptr);
+	linphone_chat_room_cbs_set_message_received(cbs, nullptr);
+	linphone_chat_room_cbs_set_participant_added(cbs, nullptr);
+	linphone_chat_room_cbs_set_participant_admin_status_changed(cbs, nullptr);
+	linphone_chat_room_cbs_set_participant_device_added(cbs, nullptr);
+	linphone_chat_room_cbs_set_participant_device_fetched(cbs, nullptr);
+	linphone_chat_room_cbs_set_participant_device_removed(cbs, nullptr);
+	linphone_chat_room_cbs_set_participant_removed(cbs, nullptr);
+	linphone_chat_room_cbs_set_participants_capabilities_checked(cbs, nullptr);
+	linphone_chat_room_cbs_set_state_changed(cbs, nullptr);
+	linphone_chat_room_cbs_set_subject_changed(cbs, nullptr);
+	linphone_chat_room_cbs_set_undecryptable_message_received(cbs, nullptr);
+}
+
 // -----------------------------------------------------------------------------
 
  ProxyChatRoom::ProxyChatRoom (ProxyChatRoomPrivate &p, const shared_ptr<ChatRoom> &chatRoom) :
@@ -188,6 +208,11 @@ list<shared_ptr<EventLog>> ProxyChatRoom::getHistoryRange (int begin, int end) c
 int ProxyChatRoom::getHistorySize () const {
 	L_D();
 	return d->chatRoom->getHistorySize();
+}
+
+void ProxyChatRoom::deleteFromDb () {
+	L_D();
+	d->chatRoom->deleteFromDb();
 }
 
 void ProxyChatRoom::deleteHistory () {
@@ -273,13 +298,27 @@ const IdentityAddress &ProxyChatRoom::getConferenceAddress () const {
 
 // -----------------------------------------------------------------------------
 
-bool ProxyChatRoom::canHandleParticipants () const {
-	L_D();
-	return d->chatRoom->canHandleParticipants();
+void ProxyChatRoom::allowCpim (bool value) {
+	
+}
+
+void ProxyChatRoom::allowMultipart (bool value) {
+	
 }
 
 bool ProxyChatRoom::canHandleCpim () const {
-	return true;
+	L_D();
+	return d->chatRoom->canHandleCpim();
+}
+
+bool ProxyChatRoom::canHandleMultipart () const {
+	L_D();
+	return d->chatRoom->canHandleMultipart();
+}
+
+bool ProxyChatRoom::canHandleParticipants () const {
+	L_D();
+	return d->chatRoom->canHandleParticipants();
 }
 
 void ProxyChatRoom::addParticipant (

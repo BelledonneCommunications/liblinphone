@@ -170,7 +170,6 @@ typedef struct _stats {
 
 	int number_of_LinphoneMessageReceived;
 	int number_of_LinphoneMessageReceivedWithFile;
-	int number_of_LinphoneMessageReceivedLegacy;
 	int number_of_LinphoneMessageExtBodyReceived;
 	int number_of_LinphoneMessageInProgress;
 	int number_of_LinphoneMessageDelivered;
@@ -186,9 +185,11 @@ typedef struct _stats {
 	int number_of_LinphoneChatRoomStateInstantiated;
 	int number_of_LinphoneChatRoomStateCreationPending;
 	int number_of_LinphoneChatRoomStateCreated;
+	int number_of_LinphoneChatRoomStateCreationFailed;
 	int number_of_LinphoneChatRoomStateTerminationPending;
 	int number_of_LinphoneChatRoomStateTerminated;
-	int number_of_LinphoneChatRoomStateCreationFailed;
+	int number_of_LinphoneChatRoomStateTerminationFailed;
+	int number_of_LinphoneChatRoomStateDeleted;
 
 	int number_of_IframeDecoded;
 
@@ -287,6 +288,7 @@ typedef struct _stats {
 	int number_of_participant_admin_statuses_changed;
 	int number_of_participants_removed;
 	int number_of_subject_changed;
+	int number_of_participant_devices_added;
 }stats;
 
 
@@ -331,6 +333,7 @@ void linphone_core_manager_restart(LinphoneCoreManager *mgr, bool_t check_for_pr
 void linphone_core_manager_uninit(LinphoneCoreManager *mgr);
 void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr);
 void linphone_core_manager_destroy(LinphoneCoreManager* mgr);
+void linphone_core_manager_delete_chat_room (LinphoneCoreManager *mgr, LinphoneChatRoom *cr, bctbx_list_t *coresList);
 
 void reset_counters( stats* counters);
 
@@ -339,7 +342,6 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 void linphone_transfer_state_changed(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state);
 void notify_presence_received(LinphoneCore *lc, LinphoneFriend * lf);
 void notify_presence_received_for_uri_or_tel(LinphoneCore *lc, LinphoneFriend *lf, const char *uri_or_tel, const LinphonePresenceModel *presence);
-void text_message_received(LinphoneCore *lc, LinphoneChatRoom *room, const LinphoneAddress *from_address, const char *message);
 void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage* message);
 void file_transfer_received(LinphoneChatMessage *message, const LinphoneContent* content, const LinphoneBuffer *buffer);
 LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t size);

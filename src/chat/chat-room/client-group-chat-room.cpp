@@ -62,6 +62,8 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	CallSessionParams csp;
 	csp.addCustomHeader("Require", "recipient-list-invite");
 	csp.addCustomContactParameter("text");
+	if (capabilities & ClientGroupChatRoom::Capabilities::OneToOne)
+		csp.addCustomHeader("One-To-One-Chat-Room", "true");
 
 	shared_ptr<Participant> focus = qConference->getPrivate()->focus;
 	shared_ptr<CallSession> session = focus->getPrivate()->createSession(*q, &csp, false, callSessionListener);
@@ -70,6 +72,7 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	myCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, myCleanedAddress, focus->getPrivate()->getDevices().front()->getAddress());
 	session->initiateOutgoing();
+	session->getPrivate()->createOp();
 	return session;
 }
 
@@ -111,6 +114,12 @@ void ClientGroupChatRoomPrivate::onChatRoomInsertInDatabaseRequested (const shar
 	q->getCore()->getPrivate()->insertChatRoomWithDb(chatRoom);
 }
 
+void ClientGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<AbstractChatRoom> &chatRoom) {
+	L_Q();
+	q->getCore()->deleteChatRoom(q->getSharedFromThis());
+	setState(ClientGroupChatRoom::State::Deleted);
+}
+
 // -----------------------------------------------------------------------------
 
 void ClientGroupChatRoomPrivate::onCallSessionSetReleased (const shared_ptr<const CallSession> &session) {
@@ -139,8 +148,14 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 			qConference->getPrivate()->focus->getPrivate()->getSession()->terminate();
 	} else if ((newState == CallSession::State::Released) && (q->getState() == ChatRoom::State::TerminationPending)) {
 		q->onConferenceTerminated(q->getConferenceAddress());
-	} else if ((newState == CallSession::State::Error) && (q->getState() == ChatRoom::State::CreationPending)) {
-		setState(ChatRoom::State::CreationFailed);
+	} else if (newState == CallSession::State::Error) {
+		if (q->getState() == ChatRoom::State::CreationPending)
+			setState(ChatRoom::State::CreationFailed);
+		else if (q->getState() == ChatRoom::State::TerminationPending) {
+			// Go to state TerminationFailed and then back to Created since it has not been terminated
+			setState(ChatRoom::State::TerminationFailed);
+			setState(ChatRoom::State::Created);
+		}
 	}
 }
 
@@ -164,13 +179,16 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	const shared_ptr<Core> &core,
 	const ChatRoomId &chatRoomId,
 	shared_ptr<Participant> &me,
+	AbstractChatRoom::CapabilitiesMask capabilities,
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId
 ) : ChatRoom(*new ClientGroupChatRoomPrivate, core, chatRoomId),
 RemoteConference(core, me->getAddress(), nullptr) {
+	L_D();
 	L_D_T(RemoteConference, dConference);
 
+	d->capabilities |= capabilities & ClientGroupChatRoom::Capabilities::OneToOne;
 	const IdentityAddress &peerAddress = chatRoomId.getPeerAddress();
 	dConference->focus = make_shared<Participant>(peerAddress);
 	dConference->focus->getPrivate()->addDevice(peerAddress);
@@ -188,8 +206,25 @@ shared_ptr<Core> ClientGroupChatRoom::getCore () const {
 	return ChatRoom::getCore();
 }
 
+void ClientGroupChatRoom::allowCpim (bool value) {
+	
+}
+
+void ClientGroupChatRoom::allowMultipart (bool value) {
+	
+}
+
+bool ClientGroupChatRoom::canHandleCpim () const {
+	return true;
+}
+
+bool ClientGroupChatRoom::canHandleMultipart () const {
+	return true;
+}
+
 ClientGroupChatRoom::CapabilitiesMask ClientGroupChatRoom::getCapabilities () const {
-	return Capabilities::Conference;
+	L_D();
+	return d->capabilities;
 }
 
 bool ClientGroupChatRoom::hasBeenLeft () const {
@@ -200,12 +235,18 @@ bool ClientGroupChatRoom::canHandleParticipants () const {
 	return RemoteConference::canHandleParticipants();
 }
 
-bool ClientGroupChatRoom::canHandleCpim () const {
-	return true; 
-}
-
 const IdentityAddress &ClientGroupChatRoom::getConferenceAddress () const {
 	return RemoteConference::getConferenceAddress();
+}
+
+void ClientGroupChatRoom::deleteFromDb () {
+	L_D();
+	if (!hasBeenLeft()) {
+		d->deletionOnTerminationEnabled = true;
+		leave();
+		return;
+	}
+	d->chatRoomListener->onChatRoomDeleteRequested(getSharedFromThis());
 }
 
 void ClientGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
@@ -229,6 +270,19 @@ void ClientGroupChatRoom::addParticipants (
 	if ((getState() != ChatRoom::State::Instantiated) && (getState() != ChatRoom::State::Created)) {
 		lError() << "Cannot add participants to the ClientGroupChatRoom in a state other than Instantiated or Created";
 		return;
+	}
+
+	if ((getState() == ChatRoom::State::Created) && (d->capabilities & ClientGroupChatRoom::Capabilities::OneToOne)) {
+		lError() << "Cannot add more participants to a OneToOne ClientGroupChatRoom";
+		return;
+	}
+
+	if ((getState() == ChatRoom::State::Instantiated)
+		&& (addressesList.size() == 1)
+		&& (linphone_config_get_bool(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())),
+			"misc", "one_to_one_chat_room_enabled", TRUE))
+	) {
+		d->capabilities |= ClientGroupChatRoom::Capabilities::OneToOne;
 	}
 
 	Content content;
@@ -372,6 +426,11 @@ void ClientGroupChatRoom::onConferenceCreated (const IdentityAddress &addr) {
 	d->chatRoomListener->onChatRoomInsertRequested(getSharedFromThis());
 }
 
+void ClientGroupChatRoom::onConferenceKeywordsChanged (const vector<string> &keywords) {
+	L_D();
+	d->capabilities |= ClientGroupChatRoom::Capabilities::OneToOne;
+}
+
 void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 	L_D();
 	L_D_T(RemoteConference, dConference);
@@ -382,6 +441,10 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 		time(nullptr),
 		d->chatRoomId
 	));
+	if (d->deletionOnTerminationEnabled) {
+		d->deletionOnTerminationEnabled = false;
+		d->chatRoomListener->onChatRoomDeleteRequested(getSharedFromThis());
+	}
 }
 
 void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
@@ -468,7 +531,7 @@ void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferencePart
 	else
 		participant = findParticipant(addr);
 	if (!participant) {
-		lWarning() << "Participant " << participant << " admin status has been changed but is not in the list of participants!";
+		lWarning() << "Participant " << addr.asString() << " admin status has been changed but is not in the list of participants!";
 		return;
 	}
 
@@ -514,7 +577,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 	else
 		participant = findParticipant(addr);
 	if (!participant) {
-		lWarning() << "Participant " << participant << " added a device but is not in the list of participants!";
+		lWarning() << "Participant " << addr.asString() << " added a device but is not in the list of participants!";
 		return;
 	}
 	participant->getPrivate()->addDevice(event->getDeviceAddress());
@@ -541,7 +604,7 @@ void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<Conferenc
 	else
 		participant = findParticipant(addr);
 	if (!participant) {
-		lWarning() << "Participant " << participant << " removed a device but is not in the list of participants!";
+		lWarning() << "Participant " << addr.asString() << " removed a device but is not in the list of participants!";
 		return;
 	}
 	participant->getPrivate()->removeDevice(event->getDeviceAddress());

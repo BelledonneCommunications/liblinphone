@@ -999,8 +999,12 @@ void MediaSessionPrivate::fillMulticastMediaAddresses () {
 	L_Q();
 	if (getParams()->audioMulticastEnabled())
 		mediaPorts[mainAudioStreamIndex].multicastIp = linphone_core_get_audio_multicast_addr(q->getCore()->getCCore());
+	else
+		mediaPorts[mainAudioStreamIndex].multicastIp.clear();
 	if (getParams()->videoMulticastEnabled())
 		mediaPorts[mainVideoStreamIndex].multicastIp = linphone_core_get_video_multicast_addr(q->getCore()->getCCore());
+	else
+		mediaPorts[mainVideoStreamIndex].multicastIp.clear();
 }
 
 int MediaSessionPrivate::selectFixedPort (int streamIndex, pair<int, int> portRange) {
@@ -3929,6 +3933,8 @@ MediaSession::MediaSession (const shared_ptr<Core> &core, shared_ptr<Participant
 MediaSession::~MediaSession () {
 	L_D();
 	cancelDtmfs();
+	if (d->audioStream || d->videoStream)
+		d->freeResources();
 	if (d->audioStats)
 		linphone_call_stats_unref(d->audioStats);
 	if (d->videoStats)
@@ -4020,6 +4026,7 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 	if (direction == LinphoneCallOutgoing) {
 		d->selectOutgoingIpVersion();
 		d->getLocalIp(to);
+		d->initializeStreams(); // Reserve the sockets immediately
 		d->getCurrentParams()->getPrivate()->setUpdateCallWhenIceCompleted(d->getParams()->getPrivate()->getUpdateCallWhenIceCompleted());
 		d->fillMulticastMediaAddresses();
 		if (d->natPolicy && linphone_nat_policy_ice_enabled(d->natPolicy))
@@ -4047,6 +4054,7 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 				lWarning() << "ICE not supported for incoming INVITE without SDP";
 			}
 		}
+		d->initializeStreams(); // Reserve the sockets immediately
 		if (d->natPolicy)
 			d->runStunTestsIfNeeded();
 		d->discoverMtu(cleanedFrom);
@@ -4218,7 +4226,7 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 	L_D();
 	linphone_core_stop_dtmf_stream(getCore()->getCCore());
 	d->makeLocalMediaDescription();
-	if (getCore()->getCCore()->ringstream && getCore()->getCCore()->sound_conf.play_sndcard && getCore()->getCCore()->sound_conf.capt_sndcard) {
+	if (!getCore()->getCCore()->ringstream && getCore()->getCCore()->sound_conf.play_sndcard && getCore()->getCCore()->sound_conf.capt_sndcard) {
 		/* Give a chance to set card prefered sampling frequency */
 		if (d->localDesc->streams[0].max_rate > 0)
 			ms_snd_card_set_preferred_sample_rate(getCore()->getCCore()->sound_conf.play_sndcard, d->localDesc->streams[0].max_rate);

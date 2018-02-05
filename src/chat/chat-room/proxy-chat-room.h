@@ -47,6 +47,7 @@ public:
 	std::list<std::shared_ptr<EventLog>> getHistoryRange (int begin, int end) const override;
 	int getHistorySize () const override;
 
+	void deleteFromDb () override;
 	void deleteHistory () override;
 
 	std::shared_ptr<ChatMessage> getLastChatMessageInHistory () const override;
@@ -74,8 +75,12 @@ public:
 
 	const IdentityAddress &getConferenceAddress () const override;
 
-	bool canHandleParticipants () const override;
+	void allowCpim (bool value) override;
+	void allowMultipart (bool value) override;
 	bool canHandleCpim () const override;
+	bool canHandleMultipart () const override;
+
+	bool canHandleParticipants () const override;
 
 	void addParticipant (
 		const IdentityAddress &participantAddress,

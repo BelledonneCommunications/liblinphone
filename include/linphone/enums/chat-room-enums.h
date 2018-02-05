@@ -27,15 +27,18 @@
 	F(Instantiated) \
 	F(CreationPending) \
 	F(Created) \
+	F(CreationFailed) \
 	F(TerminationPending) \
 	F(Terminated) \
-	F(CreationFailed)
+	F(TerminationFailed) \
+	F(Deleted)
 
 #define L_ENUM_VALUES_CHAT_ROOM_CAPABILITIES(F) \
 	F(Basic, 1 << 0) \
 	F(RealTimeText, 1 << 1) \
 	F(Conference, 1 << 2) \
 	F(Proxy, 1 << 3) \
-	F(Migratable, 1 << 4)
+	F(Migratable, 1 << 4) \
+	F(OneToOne, 1 << 5)
 
 #endif // ifndef _L_CHAT_ROOM_ENUMS_H_

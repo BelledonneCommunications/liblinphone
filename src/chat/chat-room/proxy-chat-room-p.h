@@ -52,6 +52,10 @@ public:
 		chatRoom->getPrivate()->removeTransientEvent(eventLog);
 	}
 
+	inline void notifyChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override {
+		chatRoom->getPrivate()->notifyChatMessageReceived(chatMessage);
+	}
+
 	inline void notifyUndecryptableChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override {
 		chatRoom->getPrivate()->notifyUndecryptableChatMessageReceived(chatMessage);
 	}
@@ -65,6 +69,7 @@ public:
 	}
 
 	void setupCallbacks ();
+	void teardownCallbacks ();
 
 	std::shared_ptr<AbstractChatRoom> chatRoom;
 

@@ -78,6 +78,7 @@ void ChatRoomPrivate::sendIsComposingNotification () {
 		string payload = isComposingHandler->marshal(isComposing);
 		if (!payload.empty()) {
 			shared_ptr<ChatMessage> chatMessage = createChatMessage(ChatMessage::Direction::Outgoing);
+			chatMessage->setToBeStored(false);
 			Content *content = new Content();
 			content->setContentType(ContentType::ImIsComposing);
 			content->setBody(payload);
@@ -244,24 +245,10 @@ end:
 }
 
 void ChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMessage> &chatMessage) {
-	L_Q();
-
-	ContentType contentType = chatMessage->getPrivate()->getContentType();
-	if (contentType != ContentType::Imdn && contentType != ContentType::ImIsComposing) {
-		LinphoneChatRoom *chatRoom = L_GET_C_BACK_PTR(q);
-		LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(chatRoom);
-		LinphoneChatRoomCbsParticipantAddedCb cb = linphone_chat_room_cbs_get_chat_message_received(cbs);
-		shared_ptr<ConferenceChatMessageEvent> event = make_shared<ConferenceChatMessageEvent>(time(nullptr), chatMessage);
-		if (cb)
-			cb(chatRoom, L_GET_C_BACK_PTR(event));
-		// Legacy
-		notifyChatMessageReceived(chatMessage);
-
-		const IdentityAddress &fromAddress = chatMessage->getFromAddress();
-		isComposingHandler->stopRemoteRefreshTimer(fromAddress.asString());
-		notifyIsComposingReceived(fromAddress, false);
-		chatMessage->sendDeliveryNotification(LinphoneReasonNone);
-	}
+	const IdentityAddress &fromAddress = chatMessage->getFromAddress();
+	isComposingHandler->stopRemoteRefreshTimer(fromAddress.asString());
+	notifyIsComposingReceived(fromAddress, false);
+	chatMessage->getPrivate()->notifyReceiving();
 }
 
 void ChatRoomPrivate::onImdnReceived (const string &text) {
@@ -346,6 +333,12 @@ int ChatRoom::getHistorySize () const {
 	return getCore()->getPrivate()->mainDb->getHistorySize(getChatRoomId());
 }
 
+void ChatRoom::deleteFromDb () {
+	L_D();
+	Core::deleteChatRoom(this->getSharedFromThis());
+	d->setState(ChatRoom::State::Deleted);
+}
+
 void ChatRoom::deleteHistory () {
 	getCore()->getPrivate()->mainDb->cleanHistory(getChatRoomId());
 }
@@ -424,9 +417,6 @@ shared_ptr<ChatMessage> ChatRoom::findChatMessage (const string &messageId, Chat
 
 void ChatRoom::markAsRead () {
 	L_D();
-
-	if (getUnreadChatMessageCount() == 0)
-		return;
 
 	CorePrivate *dCore = getCore()->getPrivate();
 	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->chatRoomId))

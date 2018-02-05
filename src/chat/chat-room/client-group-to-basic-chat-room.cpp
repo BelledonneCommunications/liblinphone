@@ -46,6 +46,12 @@ public:
 		q->getCore()->getPrivate()->insertChatRoomWithDb(q->getSharedFromThis());
 	}
 
+	void onChatRoomDeleteRequested (const shared_ptr<AbstractChatRoom> &chatRoom) override {
+		L_Q();
+		q->getCore()->deleteChatRoom(q->getSharedFromThis());
+		setState(AbstractChatRoom::State::Deleted);
+	}
+
 	void onCallSessionSetReleased (const std::shared_ptr<const CallSession> &session) override {
 		if (!(chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference))
 			return;
@@ -63,10 +69,12 @@ public:
 			return;
 		if ((newState == CallSession::State::Error) && (cgcr->getState() == ChatRoom::State::CreationPending)
 			&& (session->getReason() == LinphoneReasonNotAcceptable) && (invitedAddresses.size() == 1)) {
+			teardownCallbacks();
 			cgcr->getPrivate()->onCallSessionStateChanged(session, newState, message);
 			cgcr->getPrivate()->setCallSessionListener(nullptr);
 			cgcr->getPrivate()->setChatRoomListener(nullptr);
 			Core::deleteChatRoom(q->getSharedFromThis());
+			setupCallbacks();
 			LinphoneChatRoom *lcr = L_GET_C_BACK_PTR(q);
 			shared_ptr<AbstractChatRoom> bcr = cgcr->getCore()->onlyGetOrCreateBasicChatRoom(invitedAddresses.front());
 			L_SET_CPP_PTR_FROM_C_OBJECT(lcr, bcr);

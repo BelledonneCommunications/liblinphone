@@ -63,7 +63,6 @@ set(LINPHONE_SOURCE_FILES_C
 	call_log.c
 	carddav.c
 	chat.c
-	chat_file_transfer.c
 	contactprovider.c
 	content.c
 	dial_plan.c
@@ -222,8 +221,8 @@ if(ENABLE_STATIC)
 	)
 endif()
 if(ENABLE_SHARED)
-	add_library(linphone SHARED ${LINPHONE_HEADER_FILES} ${LINPHONE_PRIVATE_HEADER_FILES}
-		${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC}
+	add_library(linphone SHARED "../share/cpim_grammar" ${LINPHONE_HEADER_FILES} ${LINPHONE_PRIVATE_HEADER_FILES}
+		${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC} 
 		$<TARGET_OBJECTS:linphone-cxx-objects>
 	)
 	if(IOS)
@@ -238,6 +237,7 @@ if(ENABLE_SHARED)
 			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphone
 			MACOSX_FRAMEWORK_INFO_PLIST Info.plist.in
 			PUBLIC_HEADER "${LINPHONE_HEADER_FILES}"
+			RESOURCE "../share/cpim_grammar"
 		)
 	endif()
 	if(BELCARD_FOUND)

@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include <sstream>
+
 #include "linphone/utils/utils.h"
 
 #include "conference/remote-conference.h"
@@ -53,22 +55,33 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 
 	IdentityAddress entityAddress(confInfo->getEntity().c_str());
 	if (entityAddress == chatRoomId.getPeerAddress()) {
-		if (
-			confInfo->getConferenceDescription().present() &&
-			confInfo->getConferenceDescription().get().getSubject().present() &&
-			!confInfo->getConferenceDescription().get().getSubject().get().empty()
-		)
-			confListener->onSubjectChanged(
-				make_shared<ConferenceSubjectEvent>(
-					tm,
-					chatRoomId,
-					lastNotify,
-					confInfo->getConferenceDescription().get().getSubject().get()
-				),
-				isFullState
-			);
 		if (confInfo->getVersion().present())
 			lastNotify = confInfo->getVersion().get();
+
+		if (confInfo->getConferenceDescription().present()) {
+			if (confInfo->getConferenceDescription().get().getSubject().present() &&
+				!confInfo->getConferenceDescription().get().getSubject().get().empty()
+			) {
+				confListener->onSubjectChanged(
+					make_shared<ConferenceSubjectEvent>(
+						tm,
+						chatRoomId,
+						lastNotify,
+						confInfo->getConferenceDescription().get().getSubject().get()
+					),
+					isFullState
+				);
+			}
+			if (confInfo->getConferenceDescription().get().getKeywords().present()
+				&& !confInfo->getConferenceDescription().get().getKeywords().get().empty()
+			) {
+				KeywordsType xmlKeywords = confInfo->getConferenceDescription().get().getKeywords().get();
+				vector<string> keywords;
+				for (const auto &k : xmlKeywords)
+					keywords.push_back(k);
+				confListener->onConferenceKeywordsChanged(keywords);
+			}
+		}
 
 		if (!confInfo->getUsers().present())
 			return;
@@ -90,16 +103,6 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 					isFullState
 				);
 			} else {
-				bool isAdmin = false;
-				if (user.getRoles()) {
-					for (const auto &entry : user.getRoles()->getEntry()) {
-						if (entry == "admin") {
-							isAdmin = true;
-							break;
-						}
-					}
-				}
-
 				if (user.getState() == StateType::full) {
 					confListener->onParticipantAdded(
 						make_shared<ConferenceParticipantEvent>(
@@ -113,16 +116,25 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 					);
 				}
 
-				confListener->onParticipantSetAdmin(
-					make_shared<ConferenceParticipantEvent>(
-						isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
-						tm,
-						chatRoomId,
-						lastNotify,
-						addr
-					),
-					isFullState
-				);
+				if (user.getRoles()) {
+					bool isAdmin = false;
+					for (const auto &entry : user.getRoles()->getEntry()) {
+						if (entry == "admin") {
+							isAdmin = true;
+							break;
+						}
+					}
+					confListener->onParticipantSetAdmin(
+						make_shared<ConferenceParticipantEvent>(
+							isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
+							tm,
+							chatRoomId,
+							lastNotify,
+							addr
+						),
+						isFullState
+					);
+				}
 
 				for (const auto &endpoint : user.getEndpoint()) {
 					if (!endpoint.getEntity().present())
@@ -215,15 +227,21 @@ void RemoteConferenceEventHandlerPrivate::onRegistrationStateChanged (LinphonePr
 RemoteConferenceEventHandler::RemoteConferenceEventHandler (RemoteConference *remoteConference) :
 Object(*new RemoteConferenceEventHandlerPrivate) {
 	L_D();
-	xercesc::XMLPlatformUtils::Initialize();
 	d->conf = remoteConference;
 	d->conf->getCore()->getPrivate()->registerListener(d);
 }
 
 RemoteConferenceEventHandler::~RemoteConferenceEventHandler () {
 	L_D();
-	d->conf->getCore()->getPrivate()->unregisterListener(d);
-	xercesc::XMLPlatformUtils::Terminate();
+
+	try {
+		d->conf->getCore()->getPrivate()->unregisterListener(d);
+	} catch (const bad_weak_ptr &) {
+		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
+	}
+
+	if (d->lev)
+		unsubscribe();
 }
 
 // -----------------------------------------------------------------------------
