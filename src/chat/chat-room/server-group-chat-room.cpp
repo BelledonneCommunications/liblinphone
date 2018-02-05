@@ -92,7 +92,11 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	shared_ptr<CallSession> session;
 	if (joiningPendingAfterCreation) {
 		// First participant (creator of the chat room)
-		participant = addParticipant(IdentityAddress(op->get_from()));
+		participant = q->findParticipant(IdentityAddress(op->get_from()));
+		if (!participant) {
+			//first creation (nothing in db yet)
+			participant = addParticipant(IdentityAddress(op->get_from()));
+		}
 		participant->getPrivate()->setAdmin(true);
 		device = participant->getPrivate()->addDevice(gruu);
 		session = device->getSession();
