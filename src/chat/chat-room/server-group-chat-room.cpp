@@ -46,10 +46,14 @@ LINPHONE_BEGIN_NAMESPACE
 shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const IdentityAddress &addr) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
-	shared_ptr<Participant> participant = make_shared<Participant>(addr);
-	qConference->getPrivate()->participants.push_back(participant);
-	shared_ptr<ConferenceParticipantEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantAdded(addr);
-	q->getCore()->getPrivate()->mainDb->addEvent(event);
+	shared_ptr<Participant> participant;
+	participant = q->findParticipant(addr);
+	if (!participant) {
+		participant = make_shared<Participant>(addr);
+		qConference->getPrivate()->participants.push_back(participant);
+		shared_ptr<ConferenceParticipantEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantAdded(addr);
+		q->getCore()->getPrivate()->mainDb->addEvent(event);
+	}
 	return participant;
 }
 
@@ -91,12 +95,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	shared_ptr<ParticipantDevice> device;
 	shared_ptr<CallSession> session;
 	if (joiningPendingAfterCreation) {
-		// First participant (creator of the chat room)
-		participant = q->findParticipant(IdentityAddress(op->get_from()));
-		if (!participant) {
-			//first creation (nothing in db yet)
-			participant = addParticipant(IdentityAddress(op->get_from()));
-		}
+		participant = addParticipant(IdentityAddress(op->get_from()));
 		participant->getPrivate()->setAdmin(true);
 		device = participant->getPrivate()->addDevice(gruu);
 		session = device->getSession();
