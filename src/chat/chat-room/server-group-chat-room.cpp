@@ -116,7 +116,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		session = device->getSession();
 	}
 
-	if (!session) {
+	if (!session || (session->getPrivate()->getOp() != op)) {
 		session = participant->getPrivate()->createSession(*q, nullptr, false, this);
 		session->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(), Address(op->get_to()));
 		session->startIncomingNotification();
