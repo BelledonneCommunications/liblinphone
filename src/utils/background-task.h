@@ -1,5 +1,5 @@
 /*
- * file-content.h
+ * background-task.h
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,49 +17,43 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _L_FILE_CONTENT_H_
-#define _L_FILE_CONTENT_H_
+#ifndef _L_BACKGROUND_TASK_H_
+#define _L_BACKGROUND_TASK_H_
 
-#include "content.h"
+#include <string>
+
+#include "linphone/utils/general.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class FileContentPrivate;
-
-class LINPHONE_PUBLIC FileContent : public Content {
+class BackgroundTask {
 public:
-	FileContent ();
-	FileContent (const FileContent &src);
-	FileContent (FileContent &&src);
+	BackgroundTask () = default;
+	BackgroundTask (const std::string &name) : mName(name) {}
+	virtual ~BackgroundTask () {
+		stop();
+	}
 
-	FileContent &operator= (const FileContent &src);
-	FileContent &operator= (FileContent &&src);
+	void setName (const std::string &name) {
+		mName = name;
+	}
 
-	bool operator== (const FileContent &content) const;
+	void start ();
+	void stop ();
 
-	void setFileSize (size_t size);
-	size_t getFileSize () const;
+	const std::string &getName () const {
+		return mName;
+	}
 
-	void setFileName (const std::string &name);
-	const std::string &getFileName () const;
-
-	void setFilePath (const std::string &path);
-	const std::string &getFilePath () const;
-
-	void setFileKey (const std::string &key);
-	const std::string &getFileKey () const;
-
-	bool isFile () const override;
-
-	// TODO: Remove me later.
-	LinphoneContent *toLinphoneContent () const override;
+	virtual void handleTimeout ();
 
 private:
-	L_DECLARE_PRIVATE(FileContent);
+	std::string mName;
+	unsigned long mId = 0;
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_FILE_CONTENT_H_
+#endif // ifndef _L_BACKGROUND_TASK_H_

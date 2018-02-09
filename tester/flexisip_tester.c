@@ -81,6 +81,7 @@ static void message_forking(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneMessageReceived,1,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneMessageReceived,1,1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneMessageDelivered,1,1000));
+	linphone_chat_message_unref(message);
 
 	/*wait a bit that 200Ok for MESSAGE are sent to server before shuting down the cores, because otherwise Flexisip will consider the messages
 	 * as not delivered and will expedite them in the next test, after receiving the REGISTER from marie's instances*/
@@ -125,6 +126,8 @@ static void message_forking_with_unreachable_recipients(void) {
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress,1, int, "%d");
 	BC_ASSERT_EQUAL(marie2->stat.number_of_LinphoneMessageReceived, 0, int, "%d");
 	BC_ASSERT_EQUAL(marie3->stat.number_of_LinphoneMessageReceived, 0, int, "%d");
+	linphone_chat_message_unref(message);
+
 	/*marie 2 goes online */
 	linphone_core_set_network_reachable(marie2->lc,TRUE);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneMessageReceived,1,3000));
@@ -179,6 +182,7 @@ static void message_forking_with_all_recipients_unreachable(void) {
 	BC_ASSERT_EQUAL( marie->stat.number_of_LinphoneMessageReceived, 0, int, "%d");
 	BC_ASSERT_EQUAL( marie2->stat.number_of_LinphoneMessageReceived, 0, int, "%d");
 	BC_ASSERT_EQUAL( marie3->stat.number_of_LinphoneMessageReceived, 0, int, "%d");
+	linphone_chat_message_unref(message);
 
 	/*marie 1 goes online */
 	linphone_core_set_network_reachable(marie->lc,TRUE);
@@ -235,7 +239,7 @@ static void message_forking_with_unreachable_recipients_with_gruu(void) {
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageReceived, 0, int, "%d");
 	BC_ASSERT_EQUAL(marie2->stat.number_of_LinphoneMessageReceived, 0, int, "%d");
-	
+
 	/*marie 2 goes online */
 	linphone_core_set_network_reachable(marie2->lc,TRUE);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneMessageReceived,1,3000));
@@ -781,10 +785,12 @@ static void _call_with_ipv6(bool_t caller_with_ipv6, bool_t callee_with_ipv6) {
 	}
 
 	marie = linphone_core_manager_new2( "marie_rc", FALSE);
+	linphone_core_remove_supported_tag(marie->lc,"gruu"); // With gruu, we have no access to the "public IP from contact
 	linphone_core_enable_ipv6(marie->lc, caller_with_ipv6);
 	linphone_core_manager_start(marie, TRUE);
 
 	pauline = linphone_core_manager_new2( transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", FALSE);
+	linphone_core_remove_supported_tag(pauline->lc,"gruu"); // With gruu, we have no access to the "public IP from contact
 	linphone_core_enable_ipv6(pauline->lc, callee_with_ipv6);
 	linphone_core_manager_start(pauline, TRUE);
 
@@ -884,7 +890,7 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 		linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
 		linphone_chat_message_cbs_set_file_transfer_send(cbs, tester_file_transfer_send);
 		linphone_chat_room_send_chat_message(chat_room,message);
-		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageExtBodyReceived,1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,1));
 
 		if (marie->stat.last_received_chat_message ) {
 			cbs = linphone_chat_message_get_callbacks(marie->stat.last_received_chat_message);
@@ -896,88 +902,15 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress,2, int, "%d");
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered,1, int, "%d");
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageExtBodyReceived,1, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageReceivedWithFile,1, int, "%d");
 		compare_files(send_filepath, receive_filepath);
 
+		linphone_chat_message_unref(message);
 		linphone_content_unref(content);
 		linphone_core_manager_destroy(marie);
 		linphone_core_manager_destroy(pauline);
 		ms_free(send_filepath);
 		bc_free(receive_filepath);
-	}
-}
-
-void send_file_transfer_message_using_external_body_url(LinphoneCoreManager *marie, LinphoneCoreManager *pauline) {
-	LinphoneChatMessageCbs *cbs;
-	LinphoneChatRoom *chat_room;
-	LinphoneChatMessage *message;
-
-	/* create a chatroom on pauline's side */
-	chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
-
-	message = linphone_chat_room_create_message(chat_room, NULL);
-
-	cbs = linphone_chat_message_get_callbacks(message);
-	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-
-	linphone_chat_message_set_external_body_url(message, "https://www.linphone.org:444//tmp/54ec58280ace9_c30709218df8eaba61d1.jpg");
-	linphone_chat_room_send_chat_message(chat_room, message);
-
-	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
-	if (marie->stat.last_received_chat_message) {
-		linphone_chat_message_download_file(marie->stat.last_received_chat_message);
-	}
-	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageExtBodyReceived, 1));
-
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 1, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageExtBodyReceived, 1, int, "%d");
-
-	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDelivered, 1));
-
-}
-
-static void file_transfer_message_external_body_to_external_body_client(void) {
-	if (transport_supported(LinphoneTransportTls)) {
-		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_rc");
-
-		linphone_proxy_config_set_custom_header(linphone_core_get_default_proxy_config(marie->lc), "Accept", "application/sdp");
-		linphone_core_manager_start(marie, TRUE);
-
-		linphone_proxy_config_set_custom_header(linphone_core_get_default_proxy_config(pauline->lc), "Accept", "application/sdp");
-		linphone_core_manager_start(pauline, TRUE);
-
-		reset_counters(&marie->stat);
-		reset_counters(&pauline->stat);
-
-		linphone_core_refresh_registers(marie->lc);
-		linphone_core_refresh_registers(pauline->lc);
-
-		send_file_transfer_message_using_external_body_url(marie, pauline);
-
-		linphone_core_manager_destroy(pauline);
-		linphone_core_manager_destroy(marie);
-	}
-}
-
-static void file_transfer_message_external_body_to_rcs_client(void) {
-	if (transport_supported(LinphoneTransportTls)) {
-		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_rc");
-
-		linphone_proxy_config_set_custom_header(linphone_core_get_default_proxy_config(marie->lc), "Accept", "application/sdp");
-		linphone_core_manager_start(marie, TRUE);
-
-		linphone_proxy_config_set_custom_header(linphone_core_get_default_proxy_config(pauline->lc), "Accept", "application/sdp, text/plain, application/vnd.gsma.rcs-ft-http+xml");
-		linphone_core_manager_start(pauline, TRUE);
-
-		reset_counters(&marie->stat);
-		reset_counters(&pauline->stat);
-
-		send_file_transfer_message_using_external_body_url(marie, pauline);
-
-		linphone_core_manager_destroy(pauline);
-		linphone_core_manager_destroy(marie);
 	}
 }
 
@@ -1473,37 +1406,37 @@ void resend_refer_other_devices(void) {
 	Sal *pauline_sal = linphone_core_get_sal(pauline->lc);
 	sal_set_user_pointer(pauline_sal, (void*)pauline);
 	sal_set_call_refer_callback(pauline_sal, on_refer_received);
-	
-	
+
+
 	char *marie_address = linphone_address_as_string(marie->identity);
 	char *pauline_address = linphone_address_as_string(pauline->identity);
 	char *laure_address = linphone_address_as_string(laure->identity);
-	
+
 	/* Then we create a refer from marie to pauline that refers to laure */
 	SalOp *op = sal_create_refer_op(linphone_core_get_sal(marie->lc));
 	sal_op_set_from(op, marie_address);
 	sal_op_set_to(op, pauline_address);
-	
+
 	SalAddress *address = sal_address_new(laure_address);
 	sal_address_set_param(address, "text", NULL);
 	sal_op_send_refer(op, address);
-	
+
 	ms_free(marie_address);
 	ms_free(pauline_address);
 	ms_free(laure_address);
-	
+
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallRefered,1,5000));
-	
+
 	/* We create another pauline and check if it has received a refer */
 	pauline2 = linphone_core_manager_new( "pauline_rc");
 	lcs=bctbx_list_append(lcs,pauline2->lc);
-	
+
 	Sal *pauline2_sal = linphone_core_get_sal(pauline2->lc);
 	sal_set_user_pointer(pauline2_sal, (void*)pauline2);
 	sal_set_call_refer_callback(pauline2_sal, on_refer_received);
-	
+
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline2->stat.number_of_LinphoneCallRefered,1,5000));
-	
+
 	sal_address_unref(address);
 	sal_release_op(op);
 	linphone_core_manager_destroy(marie);
@@ -1541,8 +1474,6 @@ test_t flexisip_tests[] = {
 	TEST_NO_TAG("List subscribe", test_list_subscribe),
 	TEST_NO_TAG("List subscribe without body", test_list_subscribe_wrong_body),
 	TEST_NO_TAG("File transfer message rcs to external body client", file_transfer_message_rcs_to_external_body_client),
-	TEST_ONE_TAG("File transfer message external body to rcs client", file_transfer_message_external_body_to_rcs_client, "LeaksMemory"),
-	TEST_ONE_TAG("File transfer message external body to external body client", file_transfer_message_external_body_to_external_body_client, "LeaksMemory"),
 	TEST_NO_TAG("DoS module trigger by sending a lot of chat messages", dos_module_trigger),
 #if HAVE_SIPP
 	TEST_NO_TAG("Subscribe on wrong dialog", test_subscribe_on_wrong_dialog),
