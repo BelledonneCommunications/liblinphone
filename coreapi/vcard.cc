@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <belcard/belcard.hpp>
 
 #include "linphone/factory.h"
+#include "linphone/types.h"
 #include "linphone/wrapper_utils.h"
 
 #include "c-wrapper/c-wrapper.h"
@@ -36,14 +37,16 @@ using namespace std;
 struct _LinphoneVcardContext {
 	shared_ptr<belcard::BelCardParser> parser;
 	void *user_data;
+	LinphoneCore *lc;
 };
 
 extern "C" {
 
-LinphoneVcardContext* linphone_vcard_context_new(void) {
+LinphoneVcardContext* linphone_vcard_context_new(LinphoneCore *lc) {
 	LinphoneVcardContext* context = ms_new0(LinphoneVcardContext, 1);
 	context->parser = belcard::BelCardParser::getInstance();
-	context->user_data = NULL;
+	context->user_data = nullptr;
+	context->lc = lc;
 	return context;
 }
 

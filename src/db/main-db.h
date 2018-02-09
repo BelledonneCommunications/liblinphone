@@ -136,6 +136,12 @@ public:
 	void insertOneToOneConferenceChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
 
 	// ---------------------------------------------------------------------------
+	// Sip Address.
+	// ---------------------------------------------------------------------------
+
+	std::list<std::shared_ptr<Address>> getSipAddressLikeFilter(const std::string &filter);
+
+	// ---------------------------------------------------------------------------
 	// Other.
 	// ---------------------------------------------------------------------------
 

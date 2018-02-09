@@ -46,7 +46,7 @@ typedef struct _SipSetupContext SipSetupContext;
 #define SIP_SETUP_CAP_RELAY_PROVIDER	(1<<2)
 #define SIP_SETUP_CAP_BUDDY_LOOKUP	(1<<3)
 #define SIP_SETUP_CAP_ACCOUNT_MANAGER	(1<<4)  /*can create accounts*/
-#define SIP_SETUP_CAP_LOGIN		(1<<5)  /*can login to any account for a given proxy */
+#define SIP_SETUP_CAP_LOGIN	(1<<5)  /*can login to any account for a given proxy */
 
 typedef enum _BuddyLookupStatus{
 	BuddyLookupNone,

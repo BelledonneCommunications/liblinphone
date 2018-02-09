@@ -39,6 +39,7 @@
 	F(Core, Core) \
 	F(DialPlan, DialPlan) \
 	F(EventLog, EventLog) \
+	F(Friend, Friend) \
 	F(MediaSessionParams, CallParams) \
 	F(Participant, Participant)
 
@@ -88,7 +89,6 @@ BELLE_SIP_TYPE_ID(LinphoneCoreCbs),
 BELLE_SIP_TYPE_ID(LinphoneErrorInfo),
 BELLE_SIP_TYPE_ID(LinphoneEvent),
 BELLE_SIP_TYPE_ID(LinphoneFactory),
-BELLE_SIP_TYPE_ID(LinphoneFriend),
 BELLE_SIP_TYPE_ID(LinphoneFriendList),
 BELLE_SIP_TYPE_ID(LinphoneFriendListCbs),
 BELLE_SIP_TYPE_ID(LinphoneImEncryptionEngine),

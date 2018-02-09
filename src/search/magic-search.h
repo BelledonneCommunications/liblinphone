@@ -1,5 +1,5 @@
 /*
- * c-api.h
+ * magic-search.h
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,25 +17,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _L_C_API_H_
-#define _L_C_API_H_
+#ifndef _L_MAGIC_SEARCH_H_
+#define _L_MAGIC_SEARCH_H_
 
-#include "linphone/utils/general.h"
+#include <string>
 
-#include "linphone/api/c-address.h"
-#include "linphone/api/c-call.h"
-#include "linphone/api/c-call-cbs.h"
-#include "linphone/api/c-call-stats.h"
-#include "linphone/api/c-callbacks.h"
-#include "linphone/api/c-chat-message.h"
-#include "linphone/api/c-chat-message-cbs.h"
-#include "linphone/api/c-chat-room.h"
-#include "linphone/api/c-chat-room-cbs.h"
-#include "linphone/api/c-dial-plan.h"
-#include "linphone/api/c-event-log.h"
-#include "linphone/api/c-friend.h"
-#include "linphone/api/c-friend-list.h"
-#include "linphone/api/c-participant.h"
-#include "linphone/api/c-types.h"
+#include "core/core.h"
+#include "core/core-accessor.h"
 
-#endif // ifndef _L_C_API_H_
+LINPHONE_BEGIN_NAMESPACE
+
+class MagicSearch : public CoreAccessor{
+public:
+	static const unsigned int sMaxWeight;
+
+	MagicSearch(const std::shared_ptr<Core> &core) : CoreAccessor(core) {};
+	~MagicSearch();
+
+	void getContactListFromFilter(const std::string &filter);
+
+private:
+};
+
+LINPHONE_END_NAMESPACE
+
+#endif //_L_MAGIC_SEARCH_H_

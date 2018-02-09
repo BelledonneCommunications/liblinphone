@@ -34,7 +34,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class CallSession;
 
-class CallPrivate :	public ObjectPrivate, public CallSessionListener {
+class CallPrivate : public ObjectPrivate, public CallSessionListener {
 public:
 	CallPrivate () = default;
 

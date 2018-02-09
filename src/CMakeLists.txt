@@ -166,6 +166,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-core.cpp
 	c-wrapper/api/c-dial-plan.cpp
 	c-wrapper/api/c-event-log.cpp
+	c-wrapper/api/c-friend.cpp
+	c-wrapper/api/c-friend-list.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
@@ -248,6 +250,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	sal/refer-op.cpp
 	sal/register-op.cpp
 	sal/sal.cpp
+	search/magic-search.cpp
+	search/search-result.cpp
 	utils/fs.cpp
 	utils/general.cpp
 	utils/payload-type-handler.cpp

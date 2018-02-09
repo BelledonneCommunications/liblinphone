@@ -128,13 +128,14 @@ static void linphone_carddav_vcards_pulled(LinphoneCardDavContext *cdc, bctbx_li
 					linphone_vcard_set_etag(lvc, vCard->etag);
 					ms_debug("Downloaded vCard etag/url are %s and %s", vCard->etag, full_url);
 
-					lf = linphone_friend_new_from_vcard(lvc);
+					lf = linphone_core_create_friend_from_vcard(cdc->friend_list->lc, lvc);
 					linphone_vcard_unref(lvc); /*ref is now owned by friend*/
 					if (lf) {
 						local_friend = bctbx_list_find_custom(friends, (int (*)(const void*, const void*))find_matching_friend, lf);
 
 						if (local_friend) {
 							LinphoneFriend *lf2 = (LinphoneFriend *)local_friend->data;
+							//New setter and getter in private_function.h
 							lf->storage_id = lf2->storage_id;
 							lf->pol = lf2->pol;
 							lf->subscribe = lf2->subscribe;

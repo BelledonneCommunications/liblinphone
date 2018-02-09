@@ -628,7 +628,7 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 			}
 		}
 	}
-	if (!list->lc->friends_db_file) {
+	if (!linphone_core_get_friends_database_path(list->lc)) {
 		linphone_core_write_friends_config(list->lc);
 	}
 	list->friends = bctbx_list_erase_link(list->friends, elem);
@@ -1035,7 +1035,7 @@ static LinphoneStatus linphone_friend_list_import_friends_from_vcard4(LinphoneFr
 
 	while (vcards_iterator != NULL && bctbx_list_get_data(vcards_iterator) != NULL) {
 		LinphoneVcard *vcard = (LinphoneVcard *)bctbx_list_get_data(vcards_iterator);
-		LinphoneFriend *lf = linphone_friend_new_from_vcard(vcard);
+		LinphoneFriend *lf = linphone_core_create_friend_from_vcard(list->lc, vcard);
 		linphone_vcard_unref(vcard);
 		if (lf) {
 			if (LinphoneFriendListOK == linphone_friend_list_import_friend(list, lf, TRUE)) {

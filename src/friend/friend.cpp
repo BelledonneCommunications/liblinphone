@@ -1,5 +1,5 @@
 /*
- * c-api.h
+ * friend.cpp
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,25 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _L_C_API_H_
-#define _L_C_API_H_
+#include "linphone/utils/utils.h"
 
-#include "linphone/utils/general.h"
+#include "friend-p.h"
+#include "c-wrapper/c-wrapper.h"
+#include "logger/logger.h"
 
-#include "linphone/api/c-address.h"
-#include "linphone/api/c-call.h"
-#include "linphone/api/c-call-cbs.h"
-#include "linphone/api/c-call-stats.h"
-#include "linphone/api/c-callbacks.h"
-#include "linphone/api/c-chat-message.h"
-#include "linphone/api/c-chat-message-cbs.h"
-#include "linphone/api/c-chat-room.h"
-#include "linphone/api/c-chat-room-cbs.h"
-#include "linphone/api/c-dial-plan.h"
-#include "linphone/api/c-event-log.h"
-#include "linphone/api/c-friend.h"
-#include "linphone/api/c-friend-list.h"
-#include "linphone/api/c-participant.h"
-#include "linphone/api/c-types.h"
+using namespace std;
 
-#endif // ifndef _L_C_API_H_
+LINPHONE_BEGIN_NAMESPACE
+
+
+LINPHONE_END_NAMESPACE

@@ -86,6 +86,8 @@ set(C_API_HEADER_FILES
 	c-chat-room.h
 	c-dial-plan.h
 	c-event-log.h
+	c-friend.h
+	c-friend-list.h
 	c-participant.h
 	c-types.h
 )

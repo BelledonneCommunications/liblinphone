@@ -5160,6 +5160,14 @@ LINPHONE_PUBLIC LinphoneFriend * linphone_core_create_friend(LinphoneCore *lc);
 LINPHONE_PUBLIC LinphoneFriend * linphone_core_create_friend_with_address(LinphoneCore *lc, const char *address);
 
 /**
+ * Create a LinphoneFriend from the given vcard.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] vc #LinphoneVcard object
+ * @return The created #LinphoneFriend object
+ */
+LINPHONE_PUBLIC LinphoneFriend * linphone_core_create_friend_from_vcard(LinphoneCore *lc, LinphoneVcard *vc);
+
+/**
  * Set my presence status
  * @param[in] lc #LinphoneCore object
  * @param[in] minutes_away how long in away

@@ -166,32 +166,6 @@ struct _LinphoneFriendPhoneNumberSipUri {
 	char *uri;
 };
 
-struct _LinphoneFriend{
-	belle_sip_object_t base;
-	void *user_data;
-	LinphoneAddress *uri;
-	MSList *insubs; /*list of SalOp. There can be multiple instances of a same Friend that subscribe to our presence*/
-	LinphonePrivate::SalPresenceOp *outsub;
-	LinphoneSubscribePolicy pol;
-	MSList *presence_models; /* list of LinphoneFriendPresence. It associates SIP URIs and phone numbers with their respective presence models. */
-	MSList *phone_number_sip_uri_map; /* list of LinphoneFriendPhoneNumberSipUri. It associates phone numbers with their corresponding SIP URIs. */
-	struct _LinphoneCore *lc;
-	BuddyInfo *info;
-	char *refkey;
-	bool_t subscribe;
-	bool_t subscribe_active;
-	bool_t inc_subscribe_pending;
-	bool_t commit;
-	bool_t initial_subscribes_sent; /*used to know if initial subscribe message was sent or not*/
-	bool_t presence_received;
-	LinphoneVcard *vcard;
-	unsigned int storage_id;
-	LinphoneFriendList *friend_list;
-	LinphoneSubscriptionState out_sub_state;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriend);
-
 struct _LinphoneFriendListCbs {
 	belle_sip_object_t base;
 	void *user_data;
@@ -211,7 +185,7 @@ struct _LinphoneFriendList {
 	char *display_name;
 	char *rls_uri; /*this field is take in sync with rls_addr*/
 	LinphoneAddress *rls_addr;
-	MSList *friends;
+	bctbx_list_t *friends;
 	bctbx_map_t *friends_map;
 	bctbx_map_t *friends_map_uri;
 	unsigned char *content_digest;

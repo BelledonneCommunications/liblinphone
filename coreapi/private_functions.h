@@ -390,6 +390,17 @@ void linphone_nat_policy_save_to_config(const LinphoneNatPolicy *policy);
 
 void linphone_core_create_im_notif_policy(LinphoneCore *lc);
 
+/*****************************************************************************
+ * FRIEND PRIVATE SETTER GETTER                                              *
+ ****************************************************************************/
+/*
+ lf->pol = lf2->pol;
+ char *refkey;
+ bool_t subscribe;
+ bool_t presence_received;
+ unsigned int storage_id;
+ LinphoneFriendList *friend_list;
+ */
 
 /*****************************************************************************
  * REMOTE PROVISIONING FUNCTIONS                                             *

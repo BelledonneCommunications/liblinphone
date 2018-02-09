@@ -1,5 +1,5 @@
 /*
- * c-api.h
+ * friend.h
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,25 +17,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _L_C_API_H_
-#define _L_C_API_H_
+#ifndef _L_FRIEND_H_
+#define _L_FRIEND_H_
 
-#include "linphone/utils/general.h"
+#include "object/object.h"
+#include "core/core-accessor.h"
 
-#include "linphone/api/c-address.h"
-#include "linphone/api/c-call.h"
-#include "linphone/api/c-call-cbs.h"
-#include "linphone/api/c-call-stats.h"
-#include "linphone/api/c-callbacks.h"
-#include "linphone/api/c-chat-message.h"
-#include "linphone/api/c-chat-message-cbs.h"
-#include "linphone/api/c-chat-room.h"
-#include "linphone/api/c-chat-room-cbs.h"
-#include "linphone/api/c-dial-plan.h"
-#include "linphone/api/c-event-log.h"
-#include "linphone/api/c-friend.h"
-#include "linphone/api/c-friend-list.h"
-#include "linphone/api/c-participant.h"
-#include "linphone/api/c-types.h"
+LINPHONE_BEGIN_NAMESPACE
 
-#endif // ifndef _L_C_API_H_
+class FriendPrivate;
+
+class LINPHONE_PUBLIC Friend : public Object, public CoreAccessor {
+public:
+	Friend();
+	~Friend();
+
+private:
+	L_DECLARE_PRIVATE(Friend);
+};
+
+LINPHONE_END_NAMESPACE
+
+#endif //_L_FRIEND_H_

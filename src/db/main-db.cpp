@@ -22,6 +22,7 @@
 
 #include "linphone/utils/utils.h"
 
+#include "address/address.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
@@ -2678,6 +2679,32 @@ void MainDb::enableChatRoomMigration (const ChatRoomId &chatRoomId, bool enable)
 		tr.commit();
 
 		return true;
+	};
+}
+
+// -----------------------------------------------------------------------------
+
+std::list<std::shared_ptr<Address>> MainDb::getSipAddressLikeFilter(const string &filter) {
+	const string query = "SELECT sip_address.value FROM sip_address"
+	"  WHERE sip_address.value"
+	"  LIKE \"%:filter%\"";
+
+	return L_SAFE_TRANSACTION {
+		L_D();
+
+		soci::session *session = d->dbSession.getBackendSession();
+		soci::transaction tr(*session);
+
+		list<shared_ptr<Address>> sipAddress;
+		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(filter));
+
+		for (const auto &row : rows) {
+			string sip = row.get<string>(0);
+			shared_ptr<Address> address = make_shared<Address>(sip);
+			sipAddress.push_back(address);
+		}
+
+		return sipAddress;
 	};
 }
 

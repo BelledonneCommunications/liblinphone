@@ -35,9 +35,10 @@ typedef struct _LinphoneVcardContext LinphoneVcardContext;
 
 /**
  * Creates a vCard context to reuse the same BelCardParser object
+ * @param[in] lc a LinphoneCore object
  * @return a new LinphoneVcardContext object
  */
-LINPHONE_PUBLIC LinphoneVcardContext* linphone_vcard_context_new(void);
+LINPHONE_PUBLIC LinphoneVcardContext* linphone_vcard_context_new(LinphoneCore *lc);
 
 /**
  * Destroys the vCard context

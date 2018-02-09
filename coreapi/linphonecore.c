@@ -2302,7 +2302,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	sqlite3_bctbx_vfs_register(0);
 #endif
 
-	lc->vcard_context = linphone_vcard_context_new();
+	lc->vcard_context = linphone_vcard_context_new(lc);
 	linphone_core_initialize_supported_content_types(lc);
 	lc->bw_controller = ms_bandwidth_controller_new();
 
@@ -2658,7 +2658,7 @@ void linphone_core_add_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
 const bctbx_list_t * linphone_core_find_contacts_by_char(LinphoneCore *core, const char *filter, bool_t sip_only) {
 	// Get sipuri from filter if possible
 	bctbx_list_t *list = NULL, *_list = NULL;
-	LinphoneAddress *addr = linphone_core_interpret_url(core, (sip_only) ? filter : "");
+	LinphoneAddress *addr = linphone_core_interpret_url(core, (filter) ? filter : "");
 	bctbx_list_t* listFriendsList = (bctbx_list_t*)linphone_core_get_friends_lists(core);
 	bctbx_list_t* listFriend = (listFriendsList != NULL)
 			? (bctbx_list_t*)linphone_friend_list_get_friends((LinphoneFriendList*)listFriendsList->data) : NULL;
