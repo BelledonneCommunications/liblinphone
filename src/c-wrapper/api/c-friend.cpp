@@ -238,7 +238,7 @@ void linphone_friend_remove_phone_number(LinphoneFriend *lf, const char *phone) 
 	}
 }
 
-LinphoneStatus linphone_friend_set_name(LinphoneFriend *lf, const char *name){
+LinphoneStatus linphone_friend_set_name(LinphoneFriend *lf, const char *name) {
 	if (linphone_core_vcard_supported()) {
 		if (!lf->vcard) linphone_friend_create_vcard(lf, name);
 		linphone_vcard_set_full_name(lf->vcard, name);
@@ -263,7 +263,11 @@ const char * linphone_friend_get_name(const LinphoneFriend *lf) {
 	return NULL;
 }
 
-LinphoneStatus linphone_friend_enable_subscribes(LinphoneFriend *fr, bool_t val){
+bool_t linphone_friend_subscribes_enabled(const LinphoneFriend *lf) {
+	return lf->subscribe;
+}
+
+LinphoneStatus linphone_friend_enable_subscribes(LinphoneFriend *fr, bool_t val) {
 	fr->subscribe=val;
 	return 0;
 }
@@ -273,7 +277,7 @@ LinphoneStatus linphone_friend_set_inc_subscribe_policy(LinphoneFriend *fr, Linp
 	return 0;
 }
 
-LinphoneSubscribePolicy linphone_friend_get_inc_subscribe_policy(const LinphoneFriend *lf){
+LinphoneSubscribePolicy linphone_friend_get_inc_subscribe_policy(const LinphoneFriend *lf) {
 	return lf->pol;
 }
 
@@ -285,7 +289,8 @@ void linphone_friend_edit(LinphoneFriend *fr) {
 
 void linphone_friend_done(LinphoneFriend *fr) {
 	ms_return_if_fail(fr);
-	if (!fr->lc) return;
+	LinphoneCore *lc = L_GET_CPP_PTR_FROM_C_OBJECT(fr)->getCore()->getCCore();
+	if (!lc) return;
 
 	if (fr && linphone_core_vcard_supported() && fr->vcard) {
 		if (linphone_vcard_compare_md5_hash(fr->vcard) != 0) {
@@ -296,11 +301,11 @@ void linphone_friend_done(LinphoneFriend *fr) {
 			}
 		}
 	}
-	linphone_friend_apply(fr, fr->lc);
-	linphone_friend_save(fr, fr->lc);
+	linphone_friend_apply(fr, lc);
+	linphone_friend_save(fr, lc);
 }
 
-LinphoneOnlineStatus linphone_friend_get_status(const LinphoneFriend *lf){
+LinphoneOnlineStatus linphone_friend_get_status(const LinphoneFriend *lf) {
 	const LinphonePresenceModel *presence = linphone_friend_get_presence_model(lf);
 	LinphoneOnlineStatus online_status = LinphoneStatusOffline;
 	LinphonePresenceBasicStatus basic_status = LinphonePresenceBasicStatusClosed;
@@ -450,19 +455,19 @@ bool_t linphone_friend_is_presence_received(const LinphoneFriend *lf) {
 	return lf->presence_received;
 }
 
-void linphone_friend_set_user_data(LinphoneFriend *lf, void *data){
+void linphone_friend_set_user_data(LinphoneFriend *lf, void *data) {
 	lf->user_data=data;
 }
 
-void* linphone_friend_get_user_data(const LinphoneFriend *lf){
+void* linphone_friend_get_user_data(const LinphoneFriend *lf) {
 	return lf->user_data;
 }
 
-BuddyInfo * linphone_friend_get_info(const LinphoneFriend *lf){
+BuddyInfo * linphone_friend_get_info(const LinphoneFriend *lf) {
 	return lf->info;
 }
 
-void linphone_friend_set_ref_key(LinphoneFriend *lf, const char *key){
+void linphone_friend_set_ref_key(LinphoneFriend *lf, const char *key) {
 	if (lf->refkey != NULL) {
 		ms_free(lf->refkey);
 		lf->refkey = NULL;
@@ -470,8 +475,8 @@ void linphone_friend_set_ref_key(LinphoneFriend *lf, const char *key){
 	if (key) {
 		lf->refkey = ms_strdup(key);
 	}
-	if (lf->lc) {
-		linphone_friend_save(lf, lf->lc);
+	if (L_GET_CPP_PTR_FROM_C_OBJECT(lf)->getCore()->getCCore()) {
+		linphone_friend_save(lf, L_GET_CPP_PTR_FROM_C_OBJECT(lf)->getCore()->getCCore());
 	}
 }
 
@@ -492,8 +497,8 @@ void linphone_friend_unref(LinphoneFriend *lf) {
 	belle_sip_object_unref(lf);
 }
 
-LinphoneCore *linphone_friend_get_core(const LinphoneFriend *fr){
-	return fr->lc;
+LinphoneCore *linphone_friend_get_core(const LinphoneFriend *fr) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(fr)->getCore()->getCCore();
 }
 
 LinphoneVcard* linphone_friend_get_vcard(LinphoneFriend *fr) {
@@ -508,7 +513,7 @@ void linphone_friend_set_vcard(LinphoneFriend *fr, LinphoneVcard *vcard) {
 
 	if (fr->vcard) linphone_vcard_unref(fr->vcard);
 	fr->vcard = vcard;
-	linphone_friend_save(fr, fr->lc);
+	linphone_friend_save(fr, L_GET_CPP_PTR_FROM_C_OBJECT(fr)->getCore()->getCCore());
 }
 
 bool_t linphone_friend_create_vcard(LinphoneFriend *fr, const char *name) {
@@ -531,7 +536,7 @@ bool_t linphone_friend_create_vcard(LinphoneFriend *fr, const char *name) {
 
 	vcard = linphone_factory_create_vcard(linphone_factory_get());
 
-	lc = fr->lc;
+	lc = L_GET_CPP_PTR_FROM_C_OBJECT(fr)->getCore()->getCCore();
 	if (!lc && fr->friend_list) {
 		lc = fr->friend_list->lc;
 	}
@@ -578,3 +583,27 @@ void linphone_friend_save(LinphoneFriend *fr, LinphoneCore *lc) {
 	#endif
 }
 
+//--------- Private functions
+
+void linphone_friend_set_presence_received(LinphoneFriend *lf, bool_t p_r) {
+	if (!lf) return;
+	lf->presence_received = p_r;
+}
+
+void linphone_friend_set_storage_id(LinphoneFriend *lf, unsigned int id) {
+	if (!lf) return;
+	lf->storage_id = id;
+}
+
+unsigned int linphone_friend_get_storage_id(const LinphoneFriend *lf) {
+	return (!lf) ? -1 : lf->storage_id;
+}
+
+LinphoneFriendList *linphone_friend_get_friend_list(const LinphoneFriend *lf) {
+	return (!lf) ? nullptr : lf->friend_list;
+}
+
+void linphone_friend_set_friend_list(LinphoneFriend *lf, LinphoneFriendList * list) {
+	if (!lf) return;
+	lf->friend_list = list;
+}

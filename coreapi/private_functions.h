@@ -393,14 +393,12 @@ void linphone_core_create_im_notif_policy(LinphoneCore *lc);
 /*****************************************************************************
  * FRIEND PRIVATE SETTER GETTER                                              *
  ****************************************************************************/
-/*
- lf->pol = lf2->pol;
- char *refkey;
- bool_t subscribe;
- bool_t presence_received;
- unsigned int storage_id;
- LinphoneFriendList *friend_list;
- */
+
+void linphone_friend_set_presence_received(LinphoneFriend *lf, bool_t p_r);
+void linphone_friend_set_storage_id(LinphoneFriend *lf, unsigned int id);
+unsigned int linphone_friend_get_storage_id(const LinphoneFriend *lf);
+LinphoneFriendList *linphone_friend_get_friend_list(const LinphoneFriend *lf);
+void linphone_friend_set_friend_list(LinphoneFriend *lf, LinphoneFriendList * list);
 
 /*****************************************************************************
  * REMOTE PROVISIONING FUNCTIONS                                             *

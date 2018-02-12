@@ -366,10 +366,6 @@ static belle_sip_error_code _linphone_friend_marshall(belle_sip_object_t *obj, c
 	return err;
 }
 
-bool_t linphone_friend_get_send_subscribe(const LinphoneFriend *lf){
-	return lf->subscribe;
-}
-
 /*
  * updates the p2p subscriptions.
  * If only_when_registered is TRUE, subscribe will be sent only if the friend's corresponding proxy config is in registered.

@@ -136,14 +136,12 @@ static void linphone_carddav_vcards_pulled(LinphoneCardDavContext *cdc, bctbx_li
 						if (local_friend) {
 							LinphoneFriend *lf2 = (LinphoneFriend *)local_friend->data;
 							//New setter and getter in private_function.h
-							lf->storage_id = lf2->storage_id;
-							lf->pol = lf2->pol;
-							lf->subscribe = lf2->subscribe;
-							lf->refkey = ms_strdup(lf2->refkey);
-							lf->presence_received = lf2->presence_received;
-							lf->lc = lf2->lc;
-							lf->friend_list = lf2->friend_list;
-
+							linphone_friend_set_storage_id(lf, linphone_friend_get_storage_id(lf2));
+							linphone_friend_set_inc_subscribe_policy(lf, linphone_friend_get_inc_subscribe_policy(lf2));
+							linphone_friend_enable_subscribes(lf, linphone_friend_subscribes_enabled(lf2));
+							linphone_friend_set_ref_key(lf, linphone_friend_get_ref_key(lf2));
+							linphone_friend_set_presence_received(lf, linphone_friend_is_presence_received(lf2));
+							linphone_friend_set_friend_list(lf, linphone_friend_get_friend_list(lf2));
 							if (cdc->contact_updated_cb) {
 								ms_debug("Contact updated: %s", linphone_friend_get_name(lf));
 								cdc->contact_updated_cb(cdc, lf, lf2);
@@ -212,10 +210,11 @@ end:
 }
 
 static int find_matching_vcard(LinphoneCardDavResponse *response, LinphoneFriend *lf) {
-	if (!response->url || !lf || !lf->vcard || !linphone_vcard_get_url(lf->vcard)) {
+	LinphoneVcard *vcard = linphone_friend_get_vcard(lf);
+	if (!response->url || !vcard || !linphone_vcard_get_url(vcard)) {
 		return 1;
 	}
-	return strcmp(response->url, linphone_vcard_get_url(lf->vcard));
+	return strcmp(response->url, linphone_vcard_get_url(vcard));
 }
 
 static void linphone_carddav_vcards_fetched(LinphoneCardDavContext *cdc, bctbx_list_t *vCards) {
