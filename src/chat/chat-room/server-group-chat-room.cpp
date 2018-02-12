@@ -58,6 +58,16 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const Identi
 	return participant;
 }
 
+ParticipantDevice::State ServerGroupChatRoomPrivate::getParticipantDeviceState (const shared_ptr<const ParticipantDevice> &device) const {
+	return device->getState();
+}
+
+void ServerGroupChatRoomPrivate::setParticipantDeviceState (const shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state) {
+	L_Q();
+	device->setState(state);
+	q->getCore()->getPrivate()->mainDb->updateChatRoomParticipantDevice(q->getSharedFromThis(), device);
+}
+
 void ServerGroupChatRoomPrivate::confirmCreation () {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
@@ -176,7 +186,7 @@ void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {
 		}
 		// Dispatch messages for each device
 		for (const auto &device : participant->getPrivate()->getDevices()) {
-			if (device->getState() != ParticipantDevice::State::Present)
+			if (getParticipantDeviceState(device) != ParticipantDevice::State::Present)
 				continue;
 			string uri(device->getAddress().asString());
 			while (!queuedMessages[uri].empty()) {
@@ -496,16 +506,16 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 	if (!device)
 		return;
 
-	if (device->getState() == ParticipantDevice::State::Present) {
-		device->setState(ParticipantDevice::State::Left);
+	if (getParticipantDeviceState(device) == ParticipantDevice::State::Present) {
+		setParticipantDeviceState(device, ParticipantDevice::State::Left);
 		q->removeParticipant(participant);
 	} else {
-		device->setState(ParticipantDevice::State::Left);
+		setParticipantDeviceState(device, ParticipantDevice::State::Left);
 	}
 
 	bool allDevicesLeft = true;
 	for (const auto &device : participant->getPrivate()->getDevices()) {
-		if (device->getState() != ParticipantDevice::State::Left) {
+		if (getParticipantDeviceState(device) != ParticipantDevice::State::Left) {
 			allDevicesLeft = false;
 			break;
 		}
@@ -586,10 +596,10 @@ LocalConference(getCore(), peerAddress, nullptr) {
 	for (const auto &participant : getParticipants()) {
 		ParticipantDevice::State state = ParticipantDevice::State::Present;
 		for (const auto &device : participant->getPrivate()->getDevices()) {
-			if (device->getState() == ParticipantDevice::State::Leaving) {
+			if (d->getParticipantDeviceState(device) == ParticipantDevice::State::Leaving) {
 				state = ParticipantDevice::State::Leaving;
 				break;
-			} else if (device->getState() == ParticipantDevice::State::Joining)
+			} else if (d->getParticipantDeviceState(device) == ParticipantDevice::State::Joining)
 				state = ParticipantDevice::State::Joining;
 		}
 
@@ -597,7 +607,7 @@ LocalConference(getCore(), peerAddress, nullptr) {
 			removeParticipant(participant);
 		} else if (state == ParticipantDevice::State::Joining) {
 			for (const auto &device : participant->getPrivate()->getDevices()) {
-				if (device->getState() == ParticipantDevice::State::Joining)
+				if (d->getParticipantDeviceState(device) == ParticipantDevice::State::Joining)
 					d->inviteDevice(device);
 			}
 		}
@@ -706,7 +716,7 @@ void ServerGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	for (const auto &participant : getParticipants()) {
 		for (const auto &device : participant->getPrivate()->getDevices()) {
 			if (device->getAddress() == addr) {
-				device->setState(ParticipantDevice::State::Present);
+				d->setParticipantDeviceState(device, ParticipantDevice::State::Present);
 				d->dispatchQueuedMessages();
 				return;
 			}
@@ -717,9 +727,9 @@ void ServerGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 void ServerGroupChatRoom::removeParticipant (const shared_ptr<const Participant> &participant) {
 	L_D();
 	for (const auto &device : participant->getPrivate()->getDevices()) {
-		if (device->getState() != ParticipantDevice::State::Present)
+		if (d->getParticipantDeviceState(device) != ParticipantDevice::State::Present)
 			continue;
-		device->setState(ParticipantDevice::State::Leaving);
+		d->setParticipantDeviceState(device, ParticipantDevice::State::Leaving);
 		SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal);
 		LinphoneAddress *lAddr = linphone_address_new(device->getAddress().asString().c_str());
 		linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, false);
