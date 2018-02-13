@@ -90,6 +90,13 @@ void ChatRoomPrivate::sendIsComposingNotification () {
 
 // -----------------------------------------------------------------------------
 
+void ChatRoomPrivate::addEvent (const shared_ptr<EventLog> &eventLog) {
+	L_Q();
+
+	q->getCore()->getPrivate()->mainDb->addEvent(eventLog);
+	setLastUpdateTime(eventLog->getCreationTime());
+}
+
 void ChatRoomPrivate::addTransientEvent (const shared_ptr<EventLog> &eventLog) {
 	auto it = find(transientEvents.begin(), transientEvents.end(), eventLog);
 	if (it == transientEvents.end())
@@ -320,6 +327,14 @@ ChatRoom::State ChatRoom::getState () const {
 }
 
 // -----------------------------------------------------------------------------
+
+list<shared_ptr<EventLog>> ChatRoom::getMessageHistory (int nLast) const {
+	return getCore()->getPrivate()->mainDb->getHistory(getChatRoomId(), nLast, MainDb::Filter::ConferenceChatMessageFilter);
+}
+
+list<shared_ptr<EventLog>> ChatRoom::getMessageHistoryRange (int begin, int end) const {
+	return getCore()->getPrivate()->mainDb->getHistoryRange(getChatRoomId(), begin, end, MainDb::Filter::ConferenceChatMessageFilter);
+}
 
 list<shared_ptr<EventLog>> ChatRoom::getHistory (int nLast) const {
 	return getCore()->getPrivate()->mainDb->getHistory(getChatRoomId(), nLast);
