@@ -414,10 +414,9 @@ void ServerGroupChatRoomPrivate::checkCompatibleParticipants (const IdentityAddr
 
 void ServerGroupChatRoomPrivate::designateAdmin () {
 	L_Q();
-	L_Q_T(LocalConference, qConference);
 	// Do not designate new admin for one-to-one chat room
-	if (!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne)) {
-		q->setParticipantAdminStatus(qConference->getPrivate()->participants.front(), true);
+	if (!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && !filteredParticipants.empty()) {
+		q->setParticipantAdminStatus(filteredParticipants.front(), true);
 		lInfo() << "New admin designated in ServerGroupChatRoom [" << q << "]";
 	}
 }
