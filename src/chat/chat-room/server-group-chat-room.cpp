@@ -68,6 +68,13 @@ void ServerGroupChatRoomPrivate::setParticipantDeviceState (const shared_ptr<Par
 	q->getCore()->getPrivate()->mainDb->updateChatRoomParticipantDevice(q->getSharedFromThis(), device);
 }
 
+void ServerGroupChatRoomPrivate::acceptSession (const shared_ptr<CallSession> &session) {
+	if (session->getState() == CallSession::State::UpdatedByRemote)
+		session->acceptUpdate();
+	else
+		session->accept();
+}
+
 void ServerGroupChatRoomPrivate::confirmCreation () {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
@@ -136,18 +143,22 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		session->getPrivate()->getOp()->set_contact_address(addr.getPrivate()->getInternalAddress());
 		device->setSession(session);
 	}
-	if (!joiningPendingAfterCreation)
-		session->accept();
 
 	// Changes are only allowed from admin participants
 	if (participant->isAdmin()) {
 		bool res = update(op);
-		if (!res && joiningPendingAfterCreation) {
-			lError() << "Declining INVITE because we expected a non-empty list of participants to invite in ServerGroupChatRoom [" << q << "], but it was empty";
-			op->decline(SalReasonNotAcceptable, nullptr);
+		if (!res) {
+			if (joiningPendingAfterCreation) {
+				lError() << "Declining INVITE because we expected a non-empty list of participants to invite in ServerGroupChatRoom [" << q << "], but it was empty";
+				op->decline(SalReasonNotAcceptable, nullptr);
+			} else {
+				acceptSession(session);
+			}
 			joiningPendingAfterCreation = false;
 			return;
 		}
+	} else {
+		acceptSession(session);
 	}
 
 	joiningPendingAfterCreation = false;
@@ -362,7 +373,7 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 				device->getSession()->decline(LinphoneReasonNotAcceptable);
 			}
 		}
-		device->getSession()->accept();
+		acceptSession(device->getSession());
 		lInfo() << "Fetching participant devices for ServerGroupChatRoom [" << q << "]";
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 		LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
@@ -548,13 +559,16 @@ void ServerGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<Abs
 
 // -----------------------------------------------------------------------------
 
-void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<const CallSession> &session, CallSession::State newState, const string &message) {
+void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State newState, const string &message) {
 	if (newState == CallSession::State::End) {
 		onParticipantDeviceLeft(session);
 	} else if (newState == CallSession::State::UpdatedByRemote) {
 		shared_ptr<Participant> participant = findFilteredParticipant(session);
-		if (participant && participant->isAdmin())
-			update(session->getPrivate()->getOp());
+		if (participant && participant->isAdmin()) {
+			bool res = update(session->getPrivate()->getOp());
+			if (res)
+				session->deferUpdate();
+		}
 	}
 }
 
