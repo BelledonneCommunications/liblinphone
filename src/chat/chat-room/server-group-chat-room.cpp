@@ -374,6 +374,9 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 			}
 		}
 		acceptSession(device->getSession());
+
+		removeLeftParticipants(compatibleParticipants);
+
 		lInfo() << "Fetching participant devices for ServerGroupChatRoom [" << q << "]";
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 		LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
@@ -501,6 +504,27 @@ void ServerGroupChatRoomPrivate::queueMessage (const shared_ptr<Message> &msg, c
 	// Queue the message for all devices except the one that sent it
 	if (msg->fromAddr != deviceAddress)
 		queuedMessages[uri].push(msg);
+}
+
+void ServerGroupChatRoomPrivate::removeLeftParticipants (const list <IdentityAddress> &compatibleParticipants) {
+	L_Q();
+	L_Q_T(LocalConference, qConference);
+	for (const auto &addr : compatibleParticipants) {
+		shared_ptr<Participant> participant = q->findParticipant(addr);
+		if (participant) {
+			bool toRemove = true;
+			for (const auto &device : participant->getPrivate()->getDevices()) {
+				if ((device->getState() != ParticipantDevice::State::Leaving)
+					&& (device->getState() != ParticipantDevice::State::Left)
+				) {
+					toRemove = false;
+					break;
+				}
+			}
+			if (toRemove)
+				qConference->getPrivate()->participants.remove(participant);
+		}
+	}
 }
 
 // -----------------------------------------------------------------------------
