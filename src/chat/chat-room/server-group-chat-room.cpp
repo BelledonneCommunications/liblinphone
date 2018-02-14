@@ -629,8 +629,7 @@ LocalConference(getCore(), peerAddress, nullptr) {
 	dConference->eventHandler->setChatRoomId(d->chatRoomId);
 
 	// Handle transitional states (joining and leaving of participants)
-	d->filteredParticipants = getParticipants();
-	for (const auto &participant : getParticipants()) {
+	for (const auto &participant : dConference->participants) {
 		ParticipantDevice::State state = ParticipantDevice::State::Present;
 		for (const auto &device : participant->getPrivate()->getDevices()) {
 			if (d->getParticipantDeviceState(device) == ParticipantDevice::State::Leaving) {
@@ -647,6 +646,8 @@ LocalConference(getCore(), peerAddress, nullptr) {
 				if (d->getParticipantDeviceState(device) == ParticipantDevice::State::Joining)
 					d->inviteDevice(device);
 			}
+		} else if (state == ParticipantDevice::State::Present) {
+			d->filteredParticipants.push_back(participant);
 		}
 	}
 }
