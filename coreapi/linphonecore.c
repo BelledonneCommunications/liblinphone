@@ -3751,7 +3751,7 @@ static LinphoneCall * get_unique_call(LinphoneCore *lc) {
 }
 
 LinphoneStatus linphone_core_accept_call(LinphoneCore *lc, LinphoneCall *call) {
-	return linphone_call_accept_with_params(call, NULL);
+	return linphone_core_accept_call_with_params(lc, call, NULL);
 }
 
 LinphoneStatus linphone_core_accept_call_with_params(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallParams *params) {
