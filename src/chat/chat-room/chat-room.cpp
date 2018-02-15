@@ -227,7 +227,7 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 			goto end;
 		}
 	} else if (msg->getPrivate()->getContentType() == ContentType::Imdn) {
-		onImdnReceived(msg->getPrivate()->getText());
+		onImdnReceived(msg);
 		if (lp_config_get_int(linphone_core_get_config(cCore), "sip", "deliver_imdn", 0) != 1) {
 			goto end;
 		}
@@ -246,9 +246,8 @@ void ChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMessage> &chat
 	chatMessage->getPrivate()->notifyReceiving();
 }
 
-void ChatRoomPrivate::onImdnReceived (const string &text) {
-	L_Q();
-	Imdn::parse(*q, text);
+void ChatRoomPrivate::onImdnReceived (const shared_ptr<ChatMessage> &chatMessage) {
+	Imdn::parse(chatMessage);
 }
 
 void ChatRoomPrivate::onIsComposingReceived (const Address &remoteAddress, const string &text) {
@@ -325,11 +324,11 @@ list<shared_ptr<EventLog>> ChatRoom::getMessageHistoryRange (int begin, int end)
 }
 
 list<shared_ptr<EventLog>> ChatRoom::getHistory (int nLast) const {
-	return getCore()->getPrivate()->mainDb->getHistory(getChatRoomId(), nLast);
+	return getCore()->getPrivate()->mainDb->getHistory(getChatRoomId(), nLast, MainDb::Filter::ConferenceInfoNoDeviceFilter);
 }
 
 list<shared_ptr<EventLog>> ChatRoom::getHistoryRange (int begin, int end) const {
-	return getCore()->getPrivate()->mainDb->getHistoryRange(getChatRoomId(), begin, end);
+	return getCore()->getPrivate()->mainDb->getHistoryRange(getChatRoomId(), begin, end, MainDb::Filter::ConferenceInfoNoDeviceFilter);
 }
 
 int ChatRoom::getHistorySize () const {

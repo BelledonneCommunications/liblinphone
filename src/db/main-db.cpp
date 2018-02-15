@@ -220,7 +220,8 @@ static constexpr const char *mapEnumToSql (const EnumToSql<T> enumToSql[], size_
 static constexpr EnumToSql<MainDb::Filter> eventFilterToSql[] = {
 	{ MainDb::ConferenceCallFilter, "3, 4" },
 	{ MainDb::ConferenceChatMessageFilter, "5" },
-	{ MainDb::ConferenceInfoFilter, "1, 2, 6, 7, 8, 9, 10, 11, 12" }
+	{ MainDb::ConferenceInfoFilter, "1, 2, 6, 7, 8, 9, 10, 11, 12" },
+	{ MainDb::ConferenceInfoNoDeviceFilter, "1, 2, 6, 7, 8, 9, 12" }
 };
 
 static constexpr const char *mapEventFilterToSql (MainDb::Filter filter) {
@@ -279,6 +280,59 @@ static inline string blobToString (soci::blob &in) {
 
 static constexpr string &blobToString (string &in) {
 	return in;
+}
+
+// -----------------------------------------------------------------------------
+// Statements and helpers.
+// -----------------------------------------------------------------------------
+
+class StatementBind {
+public:
+	StatementBind (soci::statement &stmt) : mStmt(stmt) {}
+
+	~StatementBind () {
+		mStmt.bind_clean_up();
+	}
+
+	template<typename T>
+	void bind (const T &var, const char *name) {
+		mStmt.exchange(soci::use(var, name));
+	}
+
+	template<typename T>
+	void bindResult (T &var) {
+		mStmt.exchange(soci::into(var));
+	}
+
+	bool exec () {
+		mStmt.define_and_bind();
+		return mStmt.execute(true);
+	}
+
+private:
+	soci::statement &mStmt;
+};
+
+static inline unique_ptr<soci::statement> makeStatement (soci::session &session, const char *stmt) {
+	return makeUnique<soci::statement>(session.prepare << stmt);
+}
+
+struct MainDbPrivate::Statements {
+	typedef unique_ptr<soci::statement> Statement;
+
+	Statement selectSipAddressId;
+	Statement selectChatRoomId;
+};
+
+void MainDbPrivate::initStatements () {
+	soci::session *session = dbSession.getBackendSession();
+	statements = makeUnique<Statements>();
+
+	statements->selectSipAddressId = makeStatement(*session, "SELECT id FROM sip_address WHERE value = :sipAddress");
+	statements->selectChatRoomId = makeStatement(
+		*session,
+		"SELECT id FROM chat_room WHERE peer_sip_address_id = :peerSipAddressId AND local_sip_address_id = :localSipAddressId"
+	);
 }
 
 // -----------------------------------------------------------------------------
@@ -463,39 +517,35 @@ void MainDbPrivate::insertChatRoomParticipantDevice (
 }
 
 void MainDbPrivate::insertChatMessageParticipant (long long eventId, long long sipAddressId, int state) {
-	// TODO: Deal with read messages.
-	// Remove if displayed? Think a good alorithm for mark as read.
-	soci::session *session = dbSession.getBackendSession();
-	soci::statement statement = (
-		session->prepare << "UPDATE chat_message_participant SET state = :state"
-			" WHERE event_id = :eventId AND participant_sip_address_id = :sipAddressId",
-			soci::use(state), soci::use(eventId), soci::use(sipAddressId)
-	);
-	statement.execute();
-	if (statement.get_affected_rows() == 0 && state != int(ChatMessage::State::Displayed))
+	if (state != static_cast<int>(ChatMessage::State::Displayed)) {
+		soci::session *session = dbSession.getBackendSession();
 		*session << "INSERT INTO chat_message_participant (event_id, participant_sip_address_id, state)"
 			" VALUES (:eventId, :sipAddressId, :state)",
 			soci::use(eventId), soci::use(sipAddressId), soci::use(state);
+	}
 }
 
 // -----------------------------------------------------------------------------
 
 long long MainDbPrivate::selectSipAddressId (const string &sipAddress) const {
-	soci::session *session = dbSession.getBackendSession();
-
 	long long id;
-	*session << "SELECT id FROM sip_address WHERE value = :sipAddress", soci::use(sipAddress), soci::into(id);
-	return session->got_data() ? id : -1;
+
+	StatementBind stmt(*statements->selectSipAddressId);
+	stmt.bind(sipAddress, "sipAddress");
+	stmt.bindResult(id);
+
+	return stmt.exec() ? id : -1;
 }
 
 long long MainDbPrivate::selectChatRoomId (long long peerSipAddressId, long long localSipAddressId) const {
-	soci::session *session = dbSession.getBackendSession();
-
 	long long id;
-	*session << "SELECT id FROM chat_room"
-		"  WHERE peer_sip_address_id = :peerSipAddressId AND local_sip_address_id = :localSipAddressId",
-		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::into(id);
-	return session->got_data() ? id : -1;
+
+	StatementBind stmt(*statements->selectChatRoomId);
+	stmt.bind(peerSipAddressId, "peerSipAddressId");
+	stmt.bind(localSipAddressId, "localSipAddressId");
+	stmt.bindResult(id);
+
+	return stmt.exec() ? id : -1;
 }
 
 long long MainDbPrivate::selectChatRoomId (const ChatRoomId &chatRoomId) const {
@@ -936,6 +986,11 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 	for (const Content *content : chatMessage->getContents())
 		insertContent(eventId, *content);
 
+	for (const auto &participant : chatRoom->getParticipants()) {
+		const long long &participantSipAddressId = selectSipAddressId(participant->getAddress().asString());
+		insertChatMessageParticipant(eventId, participantSipAddressId, state);
+	}
+
 	return eventId;
 }
 
@@ -1202,13 +1257,11 @@ template<typename T>
 static T getValueFromRow (const soci::row &row, int index, bool &isNull) {
 	isNull = false;
 
-	try {
-		return row.get<T>(size_t(index));
-	} catch (const exception &) {
+	if (row.get_indicator(size_t(index)) == soci::i_null){
 		isNull = true;
+		return T();
 	}
-
-	return T();
+	return row.get<T>(size_t(index));
 }
 
 // -----------------------------------------------------------------------------
@@ -1768,6 +1821,8 @@ void MainDb::init () {
 
 	d->updateModuleVersion("events", ModuleVersionEvents);
 	d->updateModuleVersion("friends", ModuleVersionFriends);
+
+	d->initStatements();
 }
 
 bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
@@ -1904,7 +1959,7 @@ bool MainDb::deleteEvent (const shared_ptr<const EventLog> &eventLog) {
 
 int MainDb::getEventCount (FilterMask mask) const {
 	string query = "SELECT COUNT(*) FROM event" +
-		buildSqlEventFilter({ ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter }, mask);
+		buildSqlEventFilter({ ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter, ConferenceInfoNoDeviceFilter }, mask);
 
 	DurationLogger durationLogger(
 		"Get events count with mask=" + Utils::toString(mask) + "."
@@ -2158,6 +2213,75 @@ list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ChatRoomId &c
 	};
 }
 
+list<ChatMessage::State> MainDb::getChatMessageParticipantStates (const shared_ptr<EventLog> &eventLog) const {
+	return L_SAFE_TRANSACTION {
+		L_D();
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		const EventLogPrivate *dEventLog = eventLog->getPrivate();
+		MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
+		const long long &eventId = dEventKey->storageId;
+		list<ChatMessage::State> states;
+		unsigned int state;
+
+		soci::statement statement = (session->prepare
+			<< "SELECT state FROM chat_message_participant WHERE event_id = :eventId",
+			soci::into(state), soci::use(eventId)
+		);
+		statement.execute();
+		while (statement.fetch())
+			states.push_back(static_cast<ChatMessage::State>(state));
+
+		return states;
+	};
+}
+
+ChatMessage::State MainDb::getChatMessageParticipantState (
+	const shared_ptr<EventLog> &eventLog,
+	const IdentityAddress &participantAddress
+) const {
+	return L_SAFE_TRANSACTION {
+		L_D();
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		const EventLogPrivate *dEventLog = eventLog->getPrivate();
+		MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
+		const long long &eventId = dEventKey->storageId;
+		const long long &participantSipAddressId = d->selectSipAddressId(participantAddress.asString());
+		unsigned int state;
+
+		*session << "SELECT state FROM chat_message_participant"
+			" WHERE event_id = :eventId AND participant_sip_address_id = :participantSipAddressId",
+			soci::into(state), soci::use(eventId), soci::use(participantSipAddressId);
+
+		return static_cast<ChatMessage::State>(state);
+	};
+}
+
+void MainDb::setChatMessageParticipantState (
+	const shared_ptr<EventLog> &eventLog,
+	const IdentityAddress &participantAddress,
+	ChatMessage::State state
+) {
+	L_SAFE_TRANSACTION {
+		L_D();
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		const EventLogPrivate *dEventLog = eventLog->getPrivate();
+		MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
+		const long long &eventId = dEventKey->storageId;
+		const long long &participantSipAddressId = d->selectSipAddressId(participantAddress.asString());
+		int stateInt = static_cast<int>(state);
+
+		*session << "UPDATE chat_message_participant SET state = :state"
+			" WHERE event_id = :eventId AND participant_sip_address_id = :participantSipAddressId",
+			soci::use(stateInt), soci::use(eventId), soci::use(participantSipAddressId);
+	};
+}
+
 shared_ptr<ChatMessage> MainDb::getLastChatMessage (const ChatRoomId &chatRoomId) const {
 	list<shared_ptr<EventLog>> chatList = getHistory(chatRoomId, 1, Filter::ConferenceChatMessageFilter);
 	if (chatList.empty())
@@ -2241,7 +2365,7 @@ list<shared_ptr<EventLog>> MainDb::getHistoryRange (
 		"    SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
 		"  )";
 	query += buildSqlEventFilter({
-		ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter
+		ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter, ConferenceInfoNoDeviceFilter
 	}, mask, "AND");
 	query += "  ORDER BY creation_time DESC";
 
@@ -2293,7 +2417,7 @@ int MainDb::getHistorySize (const ChatRoomId &chatRoomId, FilterMask mask) const
 	const string query = "SELECT COUNT(*) FROM event, conference_event"
 		"  WHERE chat_room_id = :chatRoomId"
 		"  AND event_id = event.id" + buildSqlEventFilter({
-			ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter
+			ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter, ConferenceInfoNoDeviceFilter
 		}, mask, "AND");
 
 	return L_SAFE_TRANSACTION {
@@ -2313,7 +2437,7 @@ int MainDb::getHistorySize (const ChatRoomId &chatRoomId, FilterMask mask) const
 void MainDb::cleanHistory (const ChatRoomId &chatRoomId, FilterMask mask) {
 	const string query = "SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId" +
 		buildSqlEventFilter({
-			ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter
+			ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter, ConferenceInfoNoDeviceFilter
 		}, mask);
 
 	DurationLogger durationLogger(
