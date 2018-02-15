@@ -375,7 +375,8 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 		}
 		acceptSession(device->getSession());
 
-		removeLeftParticipants(compatibleParticipants);
+		// Remove participants for compatible list that do not have at least one device in the Present state
+		removeNonPresentParticipants(compatibleParticipants);
 
 		lInfo() << "Fetching participant devices for ServerGroupChatRoom [" << q << "]";
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
@@ -506,7 +507,7 @@ void ServerGroupChatRoomPrivate::queueMessage (const shared_ptr<Message> &msg, c
 		queuedMessages[uri].push(msg);
 }
 
-void ServerGroupChatRoomPrivate::removeLeftParticipants (const list <IdentityAddress> &compatibleParticipants) {
+void ServerGroupChatRoomPrivate::removeNonPresentParticipants (const list <IdentityAddress> &compatibleParticipants) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 	for (const auto &addr : compatibleParticipants) {
@@ -514,15 +515,17 @@ void ServerGroupChatRoomPrivate::removeLeftParticipants (const list <IdentityAdd
 		if (participant) {
 			bool toRemove = true;
 			for (const auto &device : participant->getPrivate()->getDevices()) {
-				if ((device->getState() != ParticipantDevice::State::Leaving)
-					&& (device->getState() != ParticipantDevice::State::Left)
-				) {
+				if (device->getState() == ParticipantDevice::State::Present) {
 					toRemove = false;
 					break;
 				}
 			}
-			if (toRemove)
+			if (toRemove) {
+				lInfo() << "Remove participant '" << participant->getAddress().asString()
+					<< "' from ServerGroupChatRoom [" << q
+					<< " to be able to add it again (it does not have at least one device in the Present state";
 				qConference->getPrivate()->participants.remove(participant);
+			}
 		}
 	}
 }
