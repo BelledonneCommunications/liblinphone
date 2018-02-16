@@ -18,6 +18,8 @@ Copyright (C) 2000  Simon MORLAT (simon.morlat@linphone.org)
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <iostream>
+
 #include <ctype.h>
 
 #include "linphone/core_utils.h"
@@ -140,6 +142,7 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 	cfg->avpf_rr_interval = lc ? !!lp_config_get_default_int(lc->config, "proxy", "avpf_rr_interval", 5) : 5;
 	cfg->publish_expires= lc ? lp_config_get_default_int(lc->config, "proxy", "publish_expires", -1) : -1;
 	cfg->publish = lc ? !!lp_config_get_default_int(lc->config, "proxy", "publish", FALSE) : FALSE;
+	cfg->lime_v2 = lc ? !!lp_config_get_default_int(lc->config, "proxy", "lime_v2", TRUE) : TRUE;
 	cfg->refkey = refkey ? ms_strdup(refkey) : NULL;
 	if (nat_policy_ref) {
 		LinphoneNatPolicy *policy = linphone_config_create_nat_policy_from_section(lc->config,nat_policy_ref);
@@ -991,6 +994,14 @@ const char *linphone_proxy_config_get_contact_uri_parameters(const LinphoneProxy
 	return cfg->contact_uri_params;
 }
 
+bool_t linphone_proxy_config_lime_v2_enabled(const LinphoneProxyConfig *cfg){
+	return cfg->lime_v2;
+}
+
+void linphone_proxy_config_enable_lime_v2(LinphoneProxyConfig *cfg, const bool_t val){
+	cfg->lime_v2=val;
+}
+
 struct _LinphoneCore * linphone_proxy_config_get_core(const LinphoneProxyConfig *cfg){
 	return cfg->lc;
 }
@@ -1135,16 +1146,17 @@ void linphone_proxy_config_write_to_config_file(LpConfig *config, LinphoneProxyC
 	lp_config_set_int(config,key,"reg_expires",cfg->expires);
 	lp_config_set_int(config,key,"reg_sendregister",cfg->reg_sendregister);
 	lp_config_set_int(config,key,"publish",cfg->publish);
-	lp_config_set_int(config, key, "avpf", cfg->avpf_mode);
-	lp_config_set_int(config, key, "avpf_rr_interval", cfg->avpf_rr_interval);
+	lp_config_set_int(config,key,"avpf",cfg->avpf_mode);
+	lp_config_set_int(config,key,"avpf_rr_interval",cfg->avpf_rr_interval);
 	lp_config_set_int(config,key,"dial_escape_plus",cfg->dial_escape_plus);
 	lp_config_set_string(config,key,"dial_prefix",cfg->dial_prefix);
 	lp_config_set_int(config,key,"privacy",(int)cfg->privacy);
 	if (cfg->refkey) lp_config_set_string(config,key,"refkey",cfg->refkey);
-	lp_config_set_int(config, key, "publish_expires", cfg->publish_expires);
+	lp_config_set_int(config,key,"publish_expires",cfg->publish_expires);
+	lp_config_set_int(config,key,"lime_v2",cfg->lime_v2);
 
 	if (cfg->nat_policy != NULL) {
-		lp_config_set_string(config, key, "nat_policy_ref", cfg->nat_policy->ref);
+		lp_config_set_string(config,key,"nat_policy_ref",cfg->nat_policy->ref);
 		linphone_nat_policy_save_to_config(cfg->nat_policy);
 	}
 }
@@ -1207,6 +1219,7 @@ LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(LinphoneCore* lc
 
 	CONFIGURE_STRING_VALUE(cfg,config,key,ref_key,"refkey")
 	CONFIGURE_INT_VALUE(cfg,config,key,publish_expires,"publish_expires",int)
+	CONFIGURE_BOOL_VALUE(cfg,config,key,lime_v2,"lime_v2")
 
 	nat_policy_ref = lp_config_get_string(config, key, "nat_policy_ref", NULL);
 	if (nat_policy_ref != NULL) {

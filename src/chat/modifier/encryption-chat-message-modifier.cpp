@@ -37,8 +37,8 @@ ChatMessageModifier::Result EncryptionChatMessageModifier::encode (
 	const shared_ptr<ChatMessage> &message,
 	int &errorCode
 ) {
-	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	ChatMessageModifier::Result result = chatRoom->getCore()->getEncryptionEngine()->processOutgoingMessage(message, errorCode);
+	ChatMessageModifier::Result result = message->getCore()->getEncryptionEngine()->processOutgoingMessage(message, errorCode);
+
 	if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
 		message->setIsSecured(true);
 	}
@@ -49,8 +49,7 @@ ChatMessageModifier::Result EncryptionChatMessageModifier::decode (
 	const shared_ptr<ChatMessage> &message,
 	int &errorCode
 ) {
-	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	ChatMessageModifier::Result result = chatRoom->getCore()->getEncryptionEngine()->processIncomingMessage(message, errorCode);
+	ChatMessageModifier::Result result = message->getCore()->getEncryptionEngine()->processIncomingMessage(message, errorCode);
 	if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
 		message->setIsSecured(true);
 	}

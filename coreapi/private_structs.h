@@ -112,6 +112,8 @@ struct _LinphoneProxyConfig
 	bool_t publish;
 	bool_t dial_escape_plus;
 
+	bool_t lime_v2;
+
 	bool_t send_publish;
 	bool_t quality_reporting_enabled;
 	uint8_t avpf_rr_interval;
