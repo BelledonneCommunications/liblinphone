@@ -19,9 +19,9 @@
 
 // TODO: Remove me later.
 #include "linphone/core.h"
-#include "linphone/utils/utils.h"
 
-#include <algorithm>
+#include "linphone/utils/algorithm.h"
+#include "linphone/utils/utils.h"
 
 #include "content-p.h"
 #include "content-type.h"
@@ -159,11 +159,6 @@ void Content::setBody (const void *buffer, size_t size) {
 	d->body = vector<char>(start, start + size);
 }
 
-// Set body from vector<uint8_t>
-// void Content::setBody (const vector<uint8_t> &body) {
-// 	L_D();
-// }
-
 void Content::setBodyFromUtf8 (const string &body) {
 	L_D();
 	d->body = vector<char>(body.cbegin(), body.cend());
@@ -207,7 +202,7 @@ void Content::removeHeader (const string &headerName) {
 
 list<pair<string, string>>::const_iterator Content::findHeader (const string &headerName) const {
 	L_D();
-	return find_if(d->headers.cbegin(), d->headers.cend(), [&headerName](const pair<string, string> &pair) {
+	return findIf(d->headers, [&headerName](const pair<string, string> &pair) {
 		return pair.first == headerName;
 	});
 }
