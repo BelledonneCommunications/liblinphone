@@ -36,20 +36,20 @@ LINPHONE_BEGIN_NAMESPACE
 
 Content::Content () : ClonableObject(*new ContentPrivate) {}
 
-Content::Content (const Content &src) : ClonableObject(*new ContentPrivate), AppDataContainer(src) {
+Content::Content (const Content &other) : ClonableObject(*new ContentPrivate), AppDataContainer(other) {
 	L_D();
-	d->body = src.getBody();
-	d->contentType = src.getContentType();
-	d->contentDisposition = src.getContentDisposition();
-	d->headers = src.getHeaders();
+	d->body = other.getBody();
+	d->contentType = other.getContentType();
+	d->contentDisposition = other.getContentDisposition();
+	d->headers = other.getHeaders();
 }
 
-Content::Content (Content &&src) : ClonableObject(*new ContentPrivate), AppDataContainer(move(src)) {
+Content::Content (Content &&other) : ClonableObject(*new ContentPrivate), AppDataContainer(move(other)) {
 	L_D();
-	d->body = move(src.getPrivate()->body);
-	d->contentType = move(src.getPrivate()->contentType);
-	d->contentDisposition = move(src.getPrivate()->contentDisposition);
-	d->headers = src.getHeaders();
+	d->body = move(other.getPrivate()->body);
+	d->contentType = move(other.getPrivate()->contentType);
+	d->contentDisposition = move(other.getPrivate()->contentDisposition);
+	d->headers = other.getHeaders();
 }
 
 Content::Content (ContentPrivate &p) : ClonableObject(p) {}
@@ -63,26 +63,26 @@ Content::~Content () {
 	d->body.assign(d->body.size(), 0);
 }
 
-Content &Content::operator= (const Content &src) {
+Content &Content::operator= (const Content &other) {
 	L_D();
-	if (this != &src) {
-		d->body = src.getBody();
-		d->contentType = src.getContentType();
-		d->contentDisposition = src.getContentDisposition();
-		d->headers = src.getHeaders();
-		AppDataContainer::operator=(src);
+	if (this != &other) {
+		d->body = other.getBody();
+		d->contentType = other.getContentType();
+		d->contentDisposition = other.getContentDisposition();
+		d->headers = other.getHeaders();
+		AppDataContainer::operator=(other);
 	}
 
 	return *this;
 }
 
-Content &Content::operator= (Content &&src) {
+Content &Content::operator= (Content &&other) {
 	L_D();
-	d->body = move(src.getPrivate()->body);
-	d->contentType = move(src.getPrivate()->contentType);
-	d->contentDisposition = move(src.getPrivate()->contentDisposition);
-	d->headers = src.getHeaders();
-	AppDataContainer::operator=(move(src));
+	d->body = move(other.getPrivate()->body);
+	d->contentType = move(other.getPrivate()->contentType);
+	d->contentDisposition = move(other.getPrivate()->contentDisposition);
+	d->headers = other.getHeaders();
+	AppDataContainer::operator=(move(other));
 	return *this;
 }
 
@@ -190,7 +190,7 @@ void Content::addHeader (const string &headerName, const string &headerValue) {
 	d->headers.push_back(make_pair(headerName, headerValue));
 }
 
-const list<pair<string,string>> &Content::getHeaders () const {
+const list<pair<string, string>> &Content::getHeaders () const {
 	L_D();
 	return d->headers;
 }
@@ -202,9 +202,9 @@ void Content::removeHeader (const string &headerName) {
 		d->headers.remove(*it);
 }
 
-list<pair<string,string>>::const_iterator Content::findHeader (const string &headerName) {
+list<pair<string, string>>::const_iterator Content::findHeader (const string &headerName) const {
 	L_D();
-	return find_if(d->headers.cbegin(), d->headers.cend(), [&headerName](const pair<string,string> &pair) {
+	return find_if(d->headers.cbegin(), d->headers.cend(), [&headerName](const pair<string, string> &pair) {
 		return pair.first == headerName;
 	});
 }

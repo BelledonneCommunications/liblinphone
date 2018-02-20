@@ -73,9 +73,9 @@ public:
 	virtual bool isFile () const;
 
 	void addHeader (const std::string &headerName, const std::string &headerValue);
-	const std::list<std::pair<std::string,std::string>> &getHeaders () const;
+	const std::list<std::pair<std::string, std::string>> &getHeaders () const;
 	void removeHeader (const std::string &headerName);
-	std::list<std::pair<std::string,std::string>>::const_iterator findHeader (const std::string &headerName);
+	std::list<std::pair<std::string, std::string>>::const_iterator findHeader (const std::string &headerName) const;
 
 	// TODO: Remove me later.
 	virtual LinphoneContent *toLinphoneContent () const;
