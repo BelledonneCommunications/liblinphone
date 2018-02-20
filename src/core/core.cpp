@@ -145,23 +145,24 @@ EncryptionEngineListener *Core::getEncryptionEngine () const {
 
 void Core::enableLimeV2 (bool enable) {
 	L_D();
-	if (enable) {
-		if (d->imee == nullptr) {
-			/*
-			LimeV2 *limev2 = new LimeV2();
-			setEncryptionEngine(limev2);
-			*/
-		}
-	}
-	// Risk of disabling another encryption engine
 	if (d->imee != nullptr) {
 		d->imee.release();
+	}
+
+	if (enable) {
+		if (d->imee == nullptr) {
+			cout << "enable LIMEv2 + registerListener" << endl;
+			string db_access = "test.c25519.sqlite3";
+			belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
+			LimeV2 *limev2 = new LimeV2(db_access, prov);
+			setEncryptionEngine(limev2);
+			d->registerListener(limev2);
+		}
 	}
 }
 
 bool Core::limeV2Enabled (void) const {
 	L_D();
-	// Check if it is a LimeV2 engine and not another one
 	if (d->imee != nullptr) {
 		return true;
 	}
