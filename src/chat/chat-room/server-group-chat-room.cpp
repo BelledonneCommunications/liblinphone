@@ -362,9 +362,11 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 	if (!participant)
 		return;
 	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddr);
+	shared_ptr<CallSession> session = device->getSession();
 	if (compatibleParticipants.size() == 0) {
-		lError() << q << ": Declining INVITE because no compatible participants have been found";
-		device->getSession()->decline(LinphoneReasonNotAcceptable);
+		lError() << q << ": No compatible participants have been found";
+		if (session)
+			session->decline(LinphoneReasonNotAcceptable);
 	} else {
 		lInfo() << q << ": Adding " << compatibleParticipants.size() << " compatible participant(s)";
 		if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) {
@@ -379,10 +381,10 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 			addresses.unique();
 			if (addresses.size() > 2) {
 				// Decline the participants addition to prevent having more than 2 participants in a one-to-one chat room.
-				device->getSession()->decline(LinphoneReasonNotAcceptable);
+				session->decline(LinphoneReasonNotAcceptable);
 			}
 		}
-		acceptSession(device->getSession());
+		acceptSession(session);
 
 		// Remove participants for compatible list that do not have at least one device in the Present state
 		removeNonPresentParticipants(compatibleParticipants);
