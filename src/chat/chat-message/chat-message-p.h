@@ -69,19 +69,13 @@ public:
 
 	void setImdnMessageId (const std::string &imdnMessageId);
 
-	void forceFromAddress (const IdentityAddress &fromAddress) {
+	inline void forceFromAddress (const IdentityAddress &fromAddress) {
 		this->fromAddress = fromAddress;
 	}
 
-	void forceToAddress (const IdentityAddress &toAddress) {
+	inline void forceToAddress (const IdentityAddress &toAddress) {
 		this->toAddress = toAddress;
 	}
-
-	void markContentsAsNotLoaded () {
-		contentsNotLoadedFromDatabase = true;
-	}
-
-	void loadContentsFromDatabase () const;
 
 	belle_http_request_t *getHttpRequest () const;
 	void setHttpRequest (belle_http_request_t *request);
@@ -148,7 +142,7 @@ private:
 	std::string imdnId;
 	std::string rttMessage;
 	bool isSecured = false;
-	mutable bool isReadOnly = false;
+	bool isReadOnly = false;
 	std::list<Content* > contents;
 	Content internalContent;
 	std::unordered_map<std::string, std::string> customHeaders;
@@ -182,7 +176,6 @@ private:
 
 	bool encryptionPrevented = false;
 	bool toBeStored = true;
-	mutable bool contentsNotLoadedFromDatabase = false;
 
 	L_DECLARE_PUBLIC(ChatMessage);
 };

@@ -183,7 +183,6 @@ string ChatMessagePrivate::getSalCustomHeaderValue (const string &name) {
 // -----------------------------------------------------------------------------
 
 bool ChatMessagePrivate::hasTextContent() const {
-	loadContentsFromDatabase();
 	for (const Content *c : contents) {
 		if (c->getContentType() == ContentType::PlainText) {
 			return true;
@@ -193,7 +192,6 @@ bool ChatMessagePrivate::hasTextContent() const {
 }
 
 const Content* ChatMessagePrivate::getTextContent() const {
-	loadContentsFromDatabase();
 	for (const Content *c : contents) {
 		if (c->getContentType() == ContentType::PlainText) {
 			return c;
@@ -203,7 +201,6 @@ const Content* ChatMessagePrivate::getTextContent() const {
 }
 
 bool ChatMessagePrivate::hasFileTransferContent() const {
-	loadContentsFromDatabase();
 	for (const Content *c : contents) {
 		if (c->getContentType() == ContentType::FileTransfer) {
 			return true;
@@ -230,7 +227,6 @@ void ChatMessagePrivate::setFileTransferFilepath (const string &path) {
 }
 
 const string &ChatMessagePrivate::getAppdata () const {
-	loadContentsFromDatabase();
 	for (const Content *c : contents) {
 		if (c->isFile()) {
 			FileContent *fileContent = (FileContent *)c;
@@ -241,7 +237,6 @@ const string &ChatMessagePrivate::getAppdata () const {
 }
 
 void ChatMessagePrivate::setAppdata (const string &data) {
-	loadContentsFromDatabase();
 	for (const Content *c : contents) {
 		if (c->isFile()) {
 			FileContent *fileContent = (FileContent *)c;
@@ -261,7 +256,6 @@ const string &ChatMessagePrivate::getExternalBodyUrl () const {
 }
 
 const ContentType &ChatMessagePrivate::getContentType () {
-	loadContentsFromDatabase();
 	if (direction == ChatMessage::Direction::Incoming) {
 		if (contents.size() > 0) {
 			Content *content = contents.front();
@@ -283,7 +277,6 @@ const ContentType &ChatMessagePrivate::getContentType () {
 }
 
 void ChatMessagePrivate::setContentType (const ContentType &contentType) {
-	loadContentsFromDatabase();
 	if (contents.size() > 0 && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
 		internalContent.setBody(contents.front()->getBody());
 	}
@@ -297,7 +290,6 @@ void ChatMessagePrivate::setContentType (const ContentType &contentType) {
 }
 
 const string &ChatMessagePrivate::getText () {
-	loadContentsFromDatabase();
 	if (direction == ChatMessage::Direction::Incoming) {
 		if (hasTextContent()) {
 			cText = getTextContent()->getBodyAsString();
@@ -321,7 +313,6 @@ const string &ChatMessagePrivate::getText () {
 }
 
 void ChatMessagePrivate::setText (const string &text) {
-	loadContentsFromDatabase();
 	if (contents.size() > 0 && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
 		internalContent.setContentType(contents.front()->getContentType());
 	}
@@ -365,7 +356,6 @@ void ChatMessagePrivate::setFileTransferInformation (const LinphoneContent *c_co
 
 bool ChatMessagePrivate::downloadFile () {
 	L_Q();
-	loadContentsFromDatabase();
 
 	for (auto &content : contents)
 		if (content->getContentType() == ContentType::FileTransfer)
@@ -897,18 +887,6 @@ void ChatMessagePrivate::setImdnMessageId (const string &id) {
 	imdnId = id;
 }
 
-void ChatMessagePrivate::loadContentsFromDatabase () const {
-	L_Q();
-	if (contentsNotLoadedFromDatabase) {
-		isReadOnly = false;
-		contentsNotLoadedFromDatabase = false;
-		q->getChatRoom()->getCore()->getPrivate()->mainDb->loadChatMessageContents(
-			const_pointer_cast<ChatMessage>(q->getSharedFromThis())
-		);
-		isReadOnly = true;
-	}
-}
-
 bool ChatMessage::isRead () const {
 	L_D();
 
@@ -961,7 +939,6 @@ bool ChatMessage::isReadOnly () const {
 
 const list<Content *> &ChatMessage::getContents () const {
 	L_D();
-	d->loadContentsFromDatabase();
 	return d->contents;
 }
 
@@ -1023,7 +1000,6 @@ void ChatMessage::send () {
 		return;
 	}
 
-	d->loadContentsFromDatabase();
 	getChatRoom()->getPrivate()->sendChatMessage(getSharedFromThis());
 }
 
@@ -1063,9 +1039,9 @@ void ChatMessage::cancelFileTransfer () {
 int ChatMessage::putCharacter (uint32_t character) {
 	L_D();
 
-	constexpr uint32_t newLine = 0x2028;
-	constexpr uint32_t crlf = 0x0D0A;
-	constexpr uint32_t lf = 0x0A;
+	static const uint32_t new_line = 0x2028;
+	static const uint32_t crlf = 0x0D0A;
+	static const uint32_t lf = 0x0A;
 
 	shared_ptr<AbstractChatRoom> chatRoom = getChatRoom();
 	if (!(chatRoom->getCapabilities() & LinphonePrivate::ChatRoom::Capabilities::RealTimeText))
@@ -1080,7 +1056,7 @@ int ChatMessage::putCharacter (uint32_t character) {
 	if (!call || !call->getPrivate()->getMediaStream(LinphoneStreamTypeText))
 		return -1;
 
-	if (character == newLine || character == crlf || character == lf) {
+	if (character == new_line || character == crlf || character == lf) {
 		shared_ptr<Core> core = getCore();
 		if (lp_config_get_int(core->getCCore()->config, "misc", "store_rtt_messages", 1) == 1) {
 			// TODO: History.
