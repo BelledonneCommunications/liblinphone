@@ -46,10 +46,11 @@ Content::Content (const Content &other) : ClonableObject(*new ContentPrivate), A
 
 Content::Content (Content &&other) : ClonableObject(*new ContentPrivate), AppDataContainer(move(other)) {
 	L_D();
-	d->body = move(other.getPrivate()->body);
-	d->contentType = move(other.getPrivate()->contentType);
-	d->contentDisposition = move(other.getPrivate()->contentDisposition);
-	d->headers = other.getHeaders();
+	ContentPrivate *dOther = other.getPrivate();
+	d->body = move(dOther->body);
+	d->contentType = move(dOther->contentType);
+	d->contentDisposition = move(dOther->contentDisposition);
+	d->headers = move(dOther->headers);
 }
 
 Content::Content (ContentPrivate &p) : ClonableObject(p) {}
@@ -66,6 +67,7 @@ Content::~Content () {
 Content &Content::operator= (const Content &other) {
 	L_D();
 	if (this != &other) {
+		AppDataContainer::operator=(other);
 		d->body = other.getBody();
 		d->contentType = other.getContentType();
 		d->contentDisposition = other.getContentDisposition();
@@ -78,11 +80,12 @@ Content &Content::operator= (const Content &other) {
 
 Content &Content::operator= (Content &&other) {
 	L_D();
-	d->body = move(other.getPrivate()->body);
-	d->contentType = move(other.getPrivate()->contentType);
-	d->contentDisposition = move(other.getPrivate()->contentDisposition);
-	d->headers = other.getHeaders();
 	AppDataContainer::operator=(move(other));
+	ContentPrivate *dOther = other.getPrivate();
+	d->body = move(dOther->body);
+	d->contentType = move(dOther->contentType);
+	d->contentDisposition = move(dOther->contentDisposition);
+	d->headers = move(dOther->headers);
 	return *this;
 }
 
