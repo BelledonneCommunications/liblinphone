@@ -31,6 +31,11 @@ class ChatRoomIdPrivate : public ClonableObjectPrivate {
 public:
 	IdentityAddress peerAddress;
 	IdentityAddress localAddress;
+
+private:
+	SharedObject *clone () override {
+		return new ChatRoomIdPrivate(*this);
+	}
 };
 
 // -----------------------------------------------------------------------------
@@ -45,8 +50,6 @@ ChatRoomId::ChatRoomId (
 	d->peerAddress = peerAddress;
 	d->localAddress = localAddress;
 }
-
-L_USE_DEFAULT_CLONABLE_OBJECT_SHARED_IMPL(ChatRoomId);
 
 bool ChatRoomId::operator== (const ChatRoomId &other) const {
 	L_D();

@@ -33,6 +33,8 @@ extern LinphoneCallParams * linphone_call_params_new_for_wrapper(void);
 LINPHONE_BEGIN_NAMESPACE
 
 class MediaSessionParamsPrivate : public CallSessionParamsPrivate {
+	friend class MediaSessionParams;
+
 public:
 	void clone (const MediaSessionParamsPrivate *src);
 	void clean ();
@@ -65,6 +67,12 @@ public:
 	void setUsedAudioCodec (OrtpPayloadType *pt) { usedAudioCodec = pt; }
 	void setUsedVideoCodec (OrtpPayloadType *pt) { usedVideoCodec = pt; }
 	void setUsedRealtimeTextCodec (OrtpPayloadType *pt) { usedRealtimeTextCodec = pt; }
+
+	void enableVideo (bool value) {
+		videoEnabled = value;
+		if (videoEnabled && videoDirection == LinphoneMediaDirectionInactive)
+			videoDirection = LinphoneMediaDirectionSendRecv;
+	}
 
 	SalCustomSdpAttribute * getCustomSdpAttributes () const;
 	void setCustomSdpAttributes (const SalCustomSdpAttribute *csa);
@@ -103,6 +111,12 @@ public:
 	bool mandatoryMediaEncryptionEnabled = false;
 
 private:
+	SharedObject *clone () override {
+		// TODO: Return SharedObject.
+		L_ASSERT(false);
+		return nullptr;
+	}
+
 	bool _implicitRtcpFbEnabled = false;
 	int downBandwidth = 0;
 	int upBandwidth = 0;
@@ -111,8 +125,6 @@ private:
 	bool updateCallWhenIceCompleted = true;
 	SalCustomSdpAttribute *customSdpAttributes = nullptr;
 	SalCustomSdpAttribute *customSdpMediaAttributes[LinphoneStreamTypeUnknown];
-
-	L_DECLARE_PUBLIC(MediaSessionParams);
 };
 
 LINPHONE_END_NAMESPACE

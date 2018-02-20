@@ -65,23 +65,10 @@ CallSessionParams::CallSessionParams () : ClonableObject(*new CallSessionParamsP
 
 CallSessionParams::CallSessionParams (CallSessionParamsPrivate &p) : ClonableObject(p) {}
 
-CallSessionParams::CallSessionParams (const CallSessionParams &other)
-	: ClonableObject(*new CallSessionParamsPrivate) {
-	L_D();
-	d->clone(other.getPrivate());
-}
-
 CallSessionParams::~CallSessionParams () {
 	L_D();
 	if (d->customHeaders)
 		sal_custom_header_free(d->customHeaders);
-}
-
-CallSessionParams &CallSessionParams::operator= (const CallSessionParams &other) {
-	L_D();
-	if (this != &other)
-		d->clone(other.getPrivate());
-	return *this;
 }
 
 // -----------------------------------------------------------------------------

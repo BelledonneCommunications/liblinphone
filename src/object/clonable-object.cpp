@@ -22,45 +22,12 @@
 
 // =============================================================================
 
-using namespace std;
-
 LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
 L_OBJECT_IMPL(ClonableObject);
 
-ClonableObject::ClonableObject (ClonableObjectPrivate &p) {
-	setRef(p);
-}
-
-#define UNREF() \
-	do { \
-		auto &h = mPrivate->mPublic; \
-		h.erase(this); \
-		if (h.empty()) \
-			delete mPrivate; \
-	} while (false);
-
-ClonableObject::~ClonableObject () {
-	UNREF();
-}
-
-void ClonableObject::setRef (const ClonableObjectPrivate &p) {
-	// Q-pointer must exist if private data is defined.
-	L_ASSERT(!mPrivate || !mPrivate->mPublic.empty());
-
-	// Nothing, same reference.
-	if (&p == mPrivate)
-		return;
-
-	// Unref previous private data.
-	if (mPrivate)
-		UNREF();
-
-	// Add and reference new private data.
-	mPrivate = const_cast<ClonableObjectPrivate *>(&p);
-	mPrivate->mPublic.insert(this);
-}
+ClonableObject::ClonableObject (ClonableObjectPrivate &p) : mPrivate(&p) {}
 
 LINPHONE_END_NAMESPACE

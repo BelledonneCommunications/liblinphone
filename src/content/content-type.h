@@ -33,9 +33,6 @@ public:
 	explicit ContentType (const std::string &contentType = "");
 	ContentType (const std::string &type, const std::string &subType);
 	ContentType (const std::string &type, const std::string &subType, const std::string &parameter);
-	ContentType (const ContentType &other);
-
-	ContentType &operator= (const ContentType &other);
 
 	bool operator== (const ContentType &other) const;
 	bool operator!= (const ContentType &other) const;

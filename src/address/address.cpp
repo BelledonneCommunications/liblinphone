@@ -33,16 +33,29 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
+AddressPrivate::~AddressPrivate () {
+	if (internalAddress)
+		sal_address_destroy(internalAddress);
+}
+
 void AddressPrivate::setInternalAddress (const SalAddress *addr) {
 	if (internalAddress)
 		sal_address_unref(internalAddress);
 	internalAddress = sal_address_clone(addr);
 }
 
+SharedObject *AddressPrivate::clone () {
+	AddressPrivate *dAddress = new AddressPrivate();
+	if (internalAddress)
+		dAddress->internalAddress = sal_address_clone(internalAddress);
+	return dAddress;
+}
+
 // -----------------------------------------------------------------------------
 
 Address::Address (const string &address) : ClonableObject(*new AddressPrivate) {
 	L_D();
+	// TODO: Optimize, use a cache.
 	if (!(d->internalAddress = sal_address_new(L_STRING_TO_C(address)))) {
 		lWarning() << "Cannot create Address, bad uri [" << address << "]";
 	}
@@ -65,32 +78,8 @@ Address::Address (const IdentityAddress &identityAddress) : ClonableObject(*new 
 	if (identityAddress.hasGruu())
 		uri += ";gr=" + identityAddress.getGruu();
 
+	// TODO: Optimize, use a cache.
 	d->internalAddress = sal_address_new(L_STRING_TO_C(uri));
-}
-
-Address::Address (const Address &other) : ClonableObject(*new AddressPrivate) {
-	L_D();
-	SalAddress *salAddress = other.getPrivate()->internalAddress;
-	if (salAddress)
-		d->internalAddress = sal_address_clone(salAddress);
-}
-
-Address::~Address () {
-	L_D();
-	if (d->internalAddress)
-		sal_address_destroy(d->internalAddress);
-}
-
-Address &Address::operator= (const Address &other) {
-	L_D();
-	if (this != &other) {
-		if (d->internalAddress)
-			sal_address_destroy(d->internalAddress);
-		SalAddress *salAddress = other.getPrivate()->internalAddress;
-		d->internalAddress = salAddress ? sal_address_clone(salAddress) : nullptr;
-	}
-
-	return *this;
 }
 
 bool Address::operator== (const Address &other) const {

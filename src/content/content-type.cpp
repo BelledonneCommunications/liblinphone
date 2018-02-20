@@ -35,6 +35,11 @@ public:
 	string type;
 	string subType;
 	string parameter;
+
+private:
+	SharedObject *clone () override {
+		return new ContentTypePrivate(*this);
+	}
 };
 
 // -----------------------------------------------------------------------------
@@ -89,18 +94,6 @@ ContentType::ContentType (
 	if (setType(type) && !setSubType(subType))
 		d->type.clear();
 	setParameter(parameter);
-}
-
-ContentType::ContentType (const ContentType &other) : ContentType(other.getType(), other.getSubType(), other.getParameter()) {}
-
-ContentType &ContentType::operator= (const ContentType &other) {
-	if (this != &other) {
-		setType(other.getType());
-		setSubType(other.getSubType());
-		setParameter(other.getParameter());
-	}
-
-	return *this;
 }
 
 bool ContentType::operator== (const ContentType &other) const {

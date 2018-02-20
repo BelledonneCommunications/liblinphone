@@ -29,14 +29,11 @@ LINPHONE_BEGIN_NAMESPACE
 class Address;
 class IdentityAddressPrivate;
 
+// TODO: Inherit from address and disable copy. Provide a virtual clone method on Address instead.
 class LINPHONE_PUBLIC IdentityAddress : public ClonableObject {
 public:
 	explicit IdentityAddress (const std::string &address = "");
 	IdentityAddress (const Address &address);
-	IdentityAddress (const IdentityAddress &other);
-	~IdentityAddress () = default;
-
-	IdentityAddress &operator= (const IdentityAddress &other);
 
 	bool operator== (const IdentityAddress &other) const;
 	bool operator!= (const IdentityAddress &other) const;

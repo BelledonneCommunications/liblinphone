@@ -31,28 +31,26 @@ template<typename T>
 friend class ClonableSharedPointer;
 
 public:
+	SharedObject () : mRefCounter(1) {};
+	SharedObject (const SharedObject &) : SharedObject() {}
+	virtual ~SharedObject () = default;
+
+	virtual SharedObject *clone () = 0;
+
 	int getRefCount () {
 		return mRefCounter;
 	}
 
-protected:
-	SharedObject () : mRefCounter(1) {}
-
-	// Do not use virtual here. Avoid extra storage (little bonus).
-	~SharedObject () = default;
-
 private:
 	int mRefCounter;
 
-	L_DISABLE_COPY(SharedObject);
+	L_DISABLE_ASSIGNMENT(SharedObject);
 };
 
 // -----------------------------------------------------------------------------
 
 template<typename T>
 class ClonableSharedPointer {
-	static_assert(std::is_base_of<SharedObject, T>::value, "T must be a inherited class of SharedObject.");
-
 public:
 	explicit ClonableSharedPointer (T *pointer = nullptr) : mPointer(pointer) {}
 
@@ -119,12 +117,16 @@ public:
 	}
 
 	T *get () {
+		tryClone();
 		return mPointer;
 	}
 
 	const T *get () const {
 		return mPointer;
 	}
+
+protected:
+	T *mPointer;
 
 private:
 	void ref () {
@@ -141,14 +143,10 @@ private:
 
 	void tryClone () {
 		if (mPointer && mPointer->mRefCounter > 1) {
-			T *newPointer = new T(*mPointer);
-			if (--mPointer->mRefCounter == 0)
-				delete mPointer;
-			mPointer = newPointer;
+			--mPointer->mRefCounter;
+			mPointer = mPointer->clone();
 		}
 	}
-
-	T *mPointer;
 };
 
 LINPHONE_END_NAMESPACE

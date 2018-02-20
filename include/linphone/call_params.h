@@ -355,20 +355,6 @@ void linphone_call_params_set_avpf_rr_interval(LinphoneCallParams *params, uint1
  ******************************************************************************/
 
 /**
- * Get the user data associated with the call params.
- * @param[in] cp LinphoneCallParams object
- * @return The user data associated with the call params.
-**/
-LINPHONE_PUBLIC void *linphone_call_params_get_user_data(const LinphoneCallParams *cp);
-
-/**
- * Assign a user data to the call params.
- * @param[in] cp LinphoneCallParams object
- * @param[in] ud The user data to associate with the call params.
-**/
-LINPHONE_PUBLIC void linphone_call_params_set_user_data(LinphoneCallParams *cp, void *ud);
-
-/**
  * Acquire a reference to the call params.
  * @param[in] cp LinphoneCallParams object
  * @return The same LinphoneCallParams object

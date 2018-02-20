@@ -39,6 +39,12 @@ public:
 	std::string username;
 	std::string domain;
 	std::string gruu;
+
+private:
+	SharedObject *clone () override {
+		// Default copy constructor is nice here. :)
+		return new IdentityAddressPrivate(*this);
+	}
 };
 
 // -----------------------------------------------------------------------------
@@ -61,25 +67,6 @@ IdentityAddress::IdentityAddress (const Address &address) : ClonableObject(*new 
 	d->domain = address.getDomain();
 	if (address.hasUriParam("gr"))
 		d->gruu = address.getUriParamValue("gr");
-}
-
-IdentityAddress::IdentityAddress (const IdentityAddress &other) : ClonableObject(*new IdentityAddressPrivate) {
-	L_D();
-	d->scheme = other.getScheme();
-	d->username = other.getUsername();
-	d->domain = other.getDomain();
-	d->gruu = other.getGruu();
-}
-
-IdentityAddress &IdentityAddress::operator= (const IdentityAddress &other) {
-	L_D();
-	if (this != &other) {
-		d->scheme = other.getScheme();
-		d->username = other.getUsername();
-		d->domain = other.getDomain();
-		d->gruu = other.getGruu();
-	}
-	return *this;
 }
 
 bool IdentityAddress::operator== (const IdentityAddress &other) const {

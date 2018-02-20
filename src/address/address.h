@@ -42,10 +42,6 @@ class LINPHONE_PUBLIC Address : public ClonableObject {
 public:
 	explicit Address (const std::string &address = "");
 	Address (const IdentityAddress &identityAddress);
-	Address (const Address &other);
-	~Address ();
-
-	Address &operator= (const Address &other);
 
 	bool operator== (const Address &other) const;
 	bool operator!= (const Address &other) const;

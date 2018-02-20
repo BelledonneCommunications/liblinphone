@@ -118,6 +118,9 @@ std::unique_ptr<T> makeUnique(Args && ...args) {
 // Class tools.
 // -----------------------------------------------------------------------------
 
+#define L_DISABLE_ASSIGNMENT(CLASS) \
+	CLASS &operator= (const CLASS &) = delete;
+
 #define L_DISABLE_COPY(CLASS) \
 	CLASS (const CLASS &) = delete; \
 	CLASS &operator= (const CLASS &) = delete;
@@ -133,6 +136,9 @@ class ClonableObjectPrivate;
 class Object;
 class ObjectPrivate;
 
+template<typename T>
+class ClonableSharedPointer;
+
 namespace Private {
 	template<typename T>
 	using BetterPrivateAncestor = typename std::conditional<
@@ -145,26 +151,19 @@ namespace Private {
 		>::type
 	>::type;
 
-	// Generic public helper.
-	template<
-		typename R,
-		typename P,
-		typename C
-	>
-	constexpr R *getPublicHelper (P *object, const C *) {
-		return static_cast<R *>(object);
+	template<typename T>
+	constexpr T *getPrivateHelper (T *p) {
+		return p;
 	}
 
-	// Generic public helper. Deal with shared data.
-	template<
-		typename R,
-		typename P,
-		typename C
-	>
-	inline R *getPublicHelper (const P &objectSet, const C *) {
-		auto it = objectSet.cbegin();
-		L_ASSERT(it != objectSet.cend());
-		return static_cast<R *>(*it);
+	template<typename T>
+	T *getPrivateHelper (ClonableSharedPointer<T> &p) {
+		return p.get();
+	}
+
+	template<typename T>
+	const T *getPrivateHelper (const ClonableSharedPointer<T> &p) {
+		return p.get();
 	}
 
 	template<typename T, typename U>
@@ -188,13 +187,13 @@ namespace Private {
 	inline CLASS ## Private *getPrivate () { \
 		L_INTERNAL_CHECK_OBJECT_INHERITANCE(CLASS); \
 		return reinterpret_cast<CLASS ## Private *>( \
-			LinphonePrivate::Private::BetterPrivateAncestor<CLASS>::mPrivate \
+			Private::getPrivateHelper(LinphonePrivate::Private::BetterPrivateAncestor<CLASS>::mPrivate) \
 		); \
 	} \
 	inline const CLASS ## Private *getPrivate () const { \
 		L_INTERNAL_CHECK_OBJECT_INHERITANCE(CLASS); \
 		return reinterpret_cast<const CLASS ## Private *>( \
-			LinphonePrivate::Private::BetterPrivateAncestor<CLASS>::mPrivate \
+			Private::getPrivateHelper(LinphonePrivate::Private::BetterPrivateAncestor<CLASS>::mPrivate) \
 		); \
 	} \
 	friend class CLASS ## Private; \
@@ -212,10 +211,10 @@ namespace Private {
 
 #define L_DECLARE_PUBLIC(CLASS) \
 	CLASS *getPublic () { \
-		return LinphonePrivate::Private::getPublicHelper<CLASS>(mPublic, this); \
+		return static_cast<CLASS *>(mPublic); \
 	} \
 	const CLASS *getPublic () const { \
-		return LinphonePrivate::Private::getPublicHelper<const CLASS>(mPublic, this); \
+		return static_cast<const CLASS *>(mPublic); \
 	} \
 	friend class CLASS;
 

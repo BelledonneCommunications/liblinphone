@@ -122,34 +122,31 @@ LinphoneMediaDirection MediaSessionParamsPrivate::salStreamDirToMediaDirection (
 // -----------------------------------------------------------------------------
 
 void MediaSessionParamsPrivate::adaptToNetwork (LinphoneCore *core, int pingTimeMs) {
-	L_Q();
 	if ((pingTimeMs > 0) && lp_config_get_int(linphone_core_get_config(core), "net", "activate_edge_workarounds", 0)) {
 		lInfo() << "STUN server ping time is " << pingTimeMs << " ms";
 		int threshold = lp_config_get_int(linphone_core_get_config(core), "net", "edge_ping_time", 500);
 		if (pingTimeMs > threshold) {
 			/* We might be in a 2G network */
-			q->enableLowBandwidth(true);
+			lowBandwidthEnabled = true;
 		} /* else use default settings */
 	}
-	if (q->lowBandwidthEnabled()) {
+	if (lowBandwidthEnabled) {
 		setUpBandwidth(linphone_core_get_edge_bw(core));
 		setDownBandwidth(linphone_core_get_edge_bw(core));
 		setUpPtime(linphone_core_get_edge_ptime(core));
 		setDownPtime(linphone_core_get_edge_ptime(core));
-		q->enableVideo(false);
+		enableVideo(false);
 	}
 }
 
 // -----------------------------------------------------------------------------
 
 SalStreamDir MediaSessionParamsPrivate::getSalAudioDirection () const {
-	L_Q();
-	return mediaDirectionToSalStreamDir(q->getAudioDirection());
+	return mediaDirectionToSalStreamDir(audioDirection);
 }
 
 SalStreamDir MediaSessionParamsPrivate::getSalVideoDirection () const {
-	L_Q();
-	return mediaDirectionToSalStreamDir(q->getVideoDirection());
+	return mediaDirectionToSalStreamDir(videoDirection);
 }
 
 // -----------------------------------------------------------------------------
@@ -306,9 +303,7 @@ void MediaSessionParams::setAudioDirection (LinphoneMediaDirection direction) {
 
 void MediaSessionParams::enableVideo (bool value) {
 	L_D();
-	d->videoEnabled = value;
-	if (d->videoEnabled && (getVideoDirection() == LinphoneMediaDirectionInactive))
-		setVideoDirection(LinphoneMediaDirectionSendRecv);
+	d->enableVideo(value);
 }
 
 void MediaSessionParams::enableVideoMulticast (bool value) {

@@ -32,9 +32,6 @@ class LINPHONE_PUBLIC ChatRoomId : public ClonableObject {
 public:
 	ChatRoomId ();
 	ChatRoomId (const IdentityAddress &peerAddress, const IdentityAddress &localAddress);
-	ChatRoomId (const ChatRoomId &other);
-
-	ChatRoomId &operator= (const ChatRoomId &other);
 
 	bool operator== (const ChatRoomId &other) const;
 	bool operator!= (const ChatRoomId &other) const;

@@ -32,14 +32,20 @@ struct SalAddress;
 LINPHONE_BEGIN_NAMESPACE
 
 class AddressPrivate : public ClonableObjectPrivate {
+	friend class Address;
+
 public:
-	inline const SalAddress *getInternalAddress () const {
+	~AddressPrivate ();
+
+	const SalAddress *getInternalAddress () const {
 		return internalAddress;
 	}
 	void setInternalAddress (const SalAddress *value);
 
 private:
-	struct AddressCache {
+	SharedObject *clone () override;
+
+	mutable struct {
 		std::string scheme;
 		std::string displayName;
 		std::string username;
@@ -50,12 +56,9 @@ private:
 		std::unordered_map<std::string, std::string> headers;
 		std::unordered_map<std::string, std::string> params;
 		std::unordered_map<std::string, std::string> uriParams;
-	};
+	} cache;
 
 	SalAddress *internalAddress = nullptr;
-	mutable AddressCache cache;
-
-	L_DECLARE_PUBLIC(Address);
 };
 
 LINPHONE_END_NAMESPACE

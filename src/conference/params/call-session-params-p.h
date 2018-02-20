@@ -22,9 +22,8 @@
 
 #include <unordered_map>
 
-#include "object/clonable-object-p.h"
-
 #include "call-session-params.h"
+#include "object/clonable-object-p.h"
 
 // =============================================================================
 
@@ -33,6 +32,8 @@ LINPHONE_BEGIN_NAMESPACE
 class CallSession;
 
 class CallSessionParamsPrivate : public ClonableObjectPrivate {
+	friend class CallSessionParams;
+
 public:
 	CallSessionParamsPrivate () = default;
 
@@ -45,7 +46,7 @@ public:
 	bool getNoUserConsent () const { return noUserConsent; }
 	void setNoUserConsent (bool value) { noUserConsent = value; }
 
-	SalCustomHeader * getCustomHeaders () const;
+	SalCustomHeader *getCustomHeaders () const;
 	void setCustomHeaders (const SalCustomHeader *ch);
 
 	const std::unordered_map<std::string, std::string> &getCustomContactParameters () const { return customContactParameters; }
@@ -59,14 +60,18 @@ public:
 	LinphonePrivacyMask privacy = LinphonePrivacyNone;
 
 private:
+	SharedObject *clone () override {
+		// TODO: Return SharedObject.
+		L_ASSERT(false);
+		return nullptr;
+	}
+
 	bool inConference = false;
 	bool internalCallUpdate = false;
 	bool noUserConsent = false; /* When set to true an UPDATE request will be used instead of reINVITE */
 	SalCustomHeader *customHeaders = nullptr;
 	std::unordered_map<std::string, std::string> customContactParameters;
 	std::shared_ptr<CallSession> referer; /* In case call creation is consecutive to an incoming transfer, this points to the original call */
-
-	L_DECLARE_PUBLIC(CallSessionParams);
 };
 
 LINPHONE_END_NAMESPACE
