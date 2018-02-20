@@ -113,7 +113,10 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	shared_ptr<ParticipantDevice> device;
 	shared_ptr<CallSession> session;
 	if (joiningPendingAfterCreation) {
-		participant = addParticipant(IdentityAddress(op->get_from()));
+		// Check if the participant is already there, this INVITE may come from an unknown device of an already present participant
+		participant = q->findParticipant(IdentityAddress(op->get_from()));
+		if (!participant)
+			participant = addParticipant(IdentityAddress(op->get_from()));
 		participant->getPrivate()->setAdmin(true);
 		device = participant->getPrivate()->addDevice(gruu);
 		session = device->getSession();
