@@ -379,12 +379,13 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 			addresses.sort();
 			addresses.merge(addressesToAdd);
 			addresses.unique();
-			if (addresses.size() > 2) {
+			if (session && (addresses.size() > 2)) {
 				// Decline the participants addition to prevent having more than 2 participants in a one-to-one chat room.
 				session->decline(LinphoneReasonNotAcceptable);
 			}
 		}
-		acceptSession(session);
+		if (session)
+			acceptSession(session);
 
 		// Remove participants for compatible list that do not have at least one device in the Present state
 		removeNonPresentParticipants(compatibleParticipants);
