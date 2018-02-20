@@ -51,7 +51,7 @@ public:
 		ConferenceCallFilter = 0x1,
 		ConferenceChatMessageFilter = 0x2,
 		ConferenceInfoFilter = 0x4,
-		ConferenceInfoNoDeviceFilter = 0x6
+		ConferenceInfoNoDeviceFilter = 0x8
 	};
 
 	typedef EnumMask<Filter> FilterMask;
@@ -124,6 +124,12 @@ public:
 	int getHistorySize (const ChatRoomId &chatRoomId, FilterMask mask = NoFilter) const;
 
 	void cleanHistory (const ChatRoomId &chatRoomId, FilterMask mask = NoFilter);
+
+	// ---------------------------------------------------------------------------
+	// Chat messages.
+	// ---------------------------------------------------------------------------
+
+	void loadChatMessageContents (const std::shared_ptr<ChatMessage> &chatMessage);
 
 	// ---------------------------------------------------------------------------
 	// Chat rooms.

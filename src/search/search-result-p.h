@@ -1,5 +1,5 @@
 /*
- * identity-address-p.h
+ * search-result-p.h
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,26 +17,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _L_IDENTITY_ADDRESS_P_H_
-#define _L_IDENTITY_ADDRESS_P_H_
+#ifndef _L_SEARCH_RESULT_P_H_
+#define _L_SEARCH_RESULT_P_H_
 
-#include "identity-address.h"
+#include "search-result.h"
 #include "object/clonable-object-p.h"
 
-// =============================================================================
+#include "linphone/types.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
-class IdentityAddressPrivate : public ClonableObjectPrivate {
+class SearchResultPrivate : public ClonableObjectPrivate {
 private:
-	std::string scheme;
-	std::string username;
-	std::string domain;
-	std::string gruu;
+	const LinphoneFriend *mFriend;
+	const LinphoneAddress *mAddress;
+	unsigned int mWeight;
 
-	L_DECLARE_PUBLIC(IdentityAddress);
+	L_DECLARE_PUBLIC(SearchResult);
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_IDENTITY_ADDRESS_P_H_
+#endif //_L_SEARCH_RESULT_P_H_
+

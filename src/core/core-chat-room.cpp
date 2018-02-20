@@ -106,16 +106,25 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const strin
 
 void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	L_ASSERT(chatRoom);
-	L_Q();
-
-	q->deleteChatRoom(chatRoom);
-	chatRooms.push_back(chatRoom);
-	chatRoomsById[chatRoom->getChatRoomId()] = chatRoom;
+	L_ASSERT(!chatRoomsById[chatRoom->getChatRoomId()]
+		|| (chatRoomsById[chatRoom->getChatRoomId()] == chatRoom)
+	);
+	if (!chatRoomsById[chatRoom->getChatRoomId()]) {
+		chatRooms.push_back(chatRoom);
+		chatRoomsById[chatRoom->getChatRoomId()] = chatRoom;
+	}
 }
 
 void CorePrivate::insertChatRoomWithDb (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	L_ASSERT(chatRoom->getState() == ChatRoom::State::Created);
 	mainDb->insertChatRoom(chatRoom);
+}
+
+void CorePrivate::loadChatRooms () {
+	chatRooms.clear();
+	chatRoomsById.clear();
+	for (auto &chatRoom : mainDb->getChatRooms())
+		insertChatRoom(chatRoom);
 }
 
 void CorePrivate::replaceChatRoom (const shared_ptr<AbstractChatRoom> &replacedChatRoom, const shared_ptr<AbstractChatRoom> &newChatRoom) {
