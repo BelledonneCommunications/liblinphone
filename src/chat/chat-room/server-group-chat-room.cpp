@@ -64,6 +64,7 @@ ParticipantDevice::State ServerGroupChatRoomPrivate::getParticipantDeviceState (
 
 void ServerGroupChatRoomPrivate::setParticipantDeviceState (const shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state) {
 	L_Q();
+	lInfo() << q << ": Set participant device '" << device->getAddress().asString() << "' state to " << state;
 	device->setState(state);
 	q->getCore()->getPrivate()->mainDb->updateChatRoomParticipantDevice(q->getSharedFromThis(), device);
 }
@@ -102,8 +103,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 
 	Address contactAddr(op->get_remote_contact());
 	if (contactAddr.getUriParamValue("gr").empty()) {
-		lError() << "Declining INVITE for ServerGroupChatRoom [" << q
-			<< "] because the contact does not have a 'gr' uri parameter [" << contactAddr.asString() << "]";
+		lError() << q << ": Declining INVITE because the contact does not have a 'gr' uri parameter [" << contactAddr.asString() << "]";
 		op->decline(SalReasonDeclined, nullptr);
 		joiningPendingAfterCreation = false;
 		return;
@@ -125,7 +125,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		// INVITE coming from an invited participant
 		participant = q->findParticipant(IdentityAddress(op->get_from()));
 		if (!participant) {
-			lError() << "Declining INVITE coming from someone that does not participate in ServerGroupChatRoom [" << q << "]";
+			lError() << q << ": Declining INVITE coming from someone that is not a participant";
 			op->decline(SalReasonDeclined, nullptr);
 			joiningPendingAfterCreation = false;
 			return;
@@ -149,7 +149,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		bool res = update(op);
 		if (!res) {
 			if (joiningPendingAfterCreation) {
-				lError() << "Declining INVITE because we expected a non-empty list of participants to invite in ServerGroupChatRoom [" << q << "], but it was empty";
+				lError() << q << ": Declining INVITE because we expected a non-empty list of participants to invite";
 				op->decline(SalReasonNotAcceptable, nullptr);
 			} else {
 				acceptSession(session);
@@ -168,6 +168,7 @@ void ServerGroupChatRoomPrivate::confirmRecreation (SalCallOp *op) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 	IdentityAddress confAddr(qConference->getPrivate()->conferenceAddress);
+	lInfo() << q << " recreated";
 	Address addr(confAddr);
 	addr.setParam("isfocus");
 	shared_ptr<Participant> me = q->getMe();
@@ -200,6 +201,9 @@ void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {
 			if (getParticipantDeviceState(device) != ParticipantDevice::State::Present)
 				continue;
 			string uri(device->getAddress().asString());
+			size_t nbMessages = queuedMessages[uri].size();
+			if (nbMessages > 0)
+				lInfo() << q << ": Dispatching " << nbMessages << " queued message(s) for '" << uri << "'";
 			while (!queuedMessages[uri].empty()) {
 				shared_ptr<Message> msg = queuedMessages[uri].front();
 				dispatchMessage(msg, uri);
@@ -272,7 +276,9 @@ bool ServerGroupChatRoomPrivate::update (SalCallOp *op) {
 	L_Q();
 	if (sal_custom_header_find(op->get_recv_custom_header(), "Subject")) {
 		// Handle subject change
-		q->setSubject(L_C_TO_STRING(op->get_subject()));
+		string newSubject(L_C_TO_STRING(op->get_subject()));
+		lInfo() << q << ": New subject \"" << newSubject << "\"";
+		q->setSubject(newSubject);
 	}
 	// Handle participants addition
 	list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(op->get_remote_body());
@@ -336,7 +342,7 @@ void ServerGroupChatRoomPrivate::setParticipantDevices(const IdentityAddress &ad
 	shared_ptr<Participant> participant = findFilteredParticipant(addr);
 	if (!participant)
 		return;
-	lInfo() << "Setting " << devices.size() << " participant devices for " << addr.asString() << " in ServerGroupChatRoom [" << q << "]";
+	lInfo() << q << ": Setting " << devices.size() << " participant device(s) for " << addr.asString();
 	for (const auto &deviceAddr : devices) {
 		if (participant->getPrivate()->findDevice(deviceAddr))
 			continue;
@@ -354,10 +360,10 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 		return;
 	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddr);
 	if (compatibleParticipants.size() == 0) {
-		lError() << "Declining INVITE for ServerGroupChatRoom [" << q << "] because no compatible participants have been found";
+		lError() << q << ": Declining INVITE because no compatible participants have been found";
 		device->getSession()->decline(LinphoneReasonNotAcceptable);
 	} else {
-		lInfo() << "Adding " << compatibleParticipants.size() << " compatible participants to ServerGroupChatRoom [" << q << "]";
+		lInfo() << q << ": Adding " << compatibleParticipants.size() << " compatible participant(s)";
 		if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) {
 			list<IdentityAddress> addressesToAdd(compatibleParticipants);
 			addressesToAdd.sort();
@@ -378,7 +384,7 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 		// Remove participants for compatible list that do not have at least one device in the Present state
 		removeNonPresentParticipants(compatibleParticipants);
 
-		lInfo() << "Fetching participant devices for ServerGroupChatRoom [" << q << "]";
+		lInfo() << q << ": Fetching participant devices";
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 		LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
 		LinphoneChatRoomCbsParticipantDeviceFetchedCb cb = linphone_chat_room_cbs_get_participant_device_fetched(cbs);
@@ -402,7 +408,7 @@ void ServerGroupChatRoomPrivate::checkCompatibleParticipants (const IdentityAddr
 		addresses.push_back(Address(addr));
 	}
 
-	lInfo() << "Checking compatible participants for ServerGroupChatRoom [" << q << "]";
+	lInfo() << q << ": Checking compatible participants";
 	bctbx_list_t * cAddresses = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(addresses);
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
@@ -421,7 +427,7 @@ void ServerGroupChatRoomPrivate::designateAdmin () {
 	// Do not designate new admin for one-to-one chat room
 	if (!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && !filteredParticipants.empty()) {
 		q->setParticipantAdminStatus(filteredParticipants.front(), true);
-		lInfo() << "New admin designated in ServerGroupChatRoom [" << q << "]";
+		lInfo() << q << ": New admin designated";
 	}
 }
 
@@ -448,6 +454,7 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	IdentityAddress confAddr(qConference->getPrivate()->conferenceAddress);
 	chatRoomId = ChatRoomId(confAddr, confAddr);
 	qConference->getPrivate()->eventHandler->setChatRoomId(chatRoomId);
+	lInfo() << q << " created";
 	// Let the SIP stack set the domain and the port
 	shared_ptr<Participant> me = q->getMe();
 	me->getPrivate()->setAddress(confAddr);
@@ -463,6 +470,7 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 
 void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevice> &device) {
 	L_Q();
+	lInfo() << q << ": Inviting device '" << device->getAddress().asString() << "'";
 	SalReferOp *referOp = new SalReferOp(q->getCore()->getCCore()->sal);
 	LinphoneAddress *lAddr = linphone_address_new(device->getAddress().asString().c_str());
 	linphone_configure_op(q->getCore()->getCCore(), referOp, lAddr, nullptr, false);
@@ -521,9 +529,8 @@ void ServerGroupChatRoomPrivate::removeNonPresentParticipants (const list <Ident
 				}
 			}
 			if (toRemove) {
-				lInfo() << "Remove participant '" << participant->getAddress().asString()
-					<< "' from ServerGroupChatRoom [" << q
-					<< " to be able to add it again (it does not have at least one device in the Present state";
+				lInfo() << q << ": Remove participant '" << participant->getAddress().asString()
+					<< "' to be able to add it again (it does not have at least one device in the Present state";
 				qConference->getPrivate()->participants.remove(participant);
 			}
 		}
@@ -543,6 +550,7 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 	if (!device)
 		return;
 
+	lInfo() << q << ": Participant device '" << device->getAddress().asString() << "' left";
 	if (getParticipantDeviceState(device) == ParticipantDevice::State::Present) {
 		setParticipantDeviceState(device, ParticipantDevice::State::Left);
 		q->removeParticipant(participant);
@@ -552,18 +560,22 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 
 	bool allDevicesLeft = true;
 	for (const auto &device : participant->getPrivate()->getDevices()) {
+		lError() << "GMA: deviceState " << static_cast<int>(getParticipantDeviceState(device));
 		if (getParticipantDeviceState(device) != ParticipantDevice::State::Left) {
 			allDevicesLeft = false;
 			break;
 		}
 	}
 	if (allDevicesLeft) {
+		lInfo() << q << ": Removing participant '" << participant->getAddress().asString() << "' since it has no device left";
 		qConference->getPrivate()->participants.remove(participant);
 		filteredParticipants.remove(participant);
 	}
 
-	if (q->getParticipantCount() == 0)
+	if (q->getParticipantCount() == 0) {
+		lInfo() << q << ": No participant left, deleting the chat room";
 		chatRoomListener->onChatRoomDeleteRequested(q->getSharedFromThis());
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -691,15 +703,16 @@ void ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const Cal
 	L_D();
 	L_D_T(LocalConference, dConference);
 	if (findParticipant(addr)) {
-		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the ServerGroupChatRoom";
+		lInfo() << this << ": Not adding participant '" << addr.asString() << "' because it is already a participant";
 		return;
 	}
 
 	if ((d->capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && (getParticipantCount() == 2)) {
-		lInfo() << "Not adding participant '" << addr.asString() << "' because the OneToOne ServerGroupChatRoom already has 2 participants";
+		lInfo() << this << ": Not adding participant '" << addr.asString() << "' because this OneToOne chat room already has 2 participants";
 		return;
 	}
 
+	lInfo() << this << ": Adding participant '" << addr.asString() << "'";
 	LocalConference::addParticipant(addr, params, hasMedia);
 	d->filteredParticipants.push_back(findParticipant(addr));
 	shared_ptr<ConferenceParticipantEvent> event = dConference->eventHandler->notifyParticipantAdded(addr);
@@ -771,6 +784,7 @@ void ServerGroupChatRoom::removeParticipant (const shared_ptr<const Participant>
 		if (d->getParticipantDeviceState(device) != ParticipantDevice::State::Present)
 			continue;
 		d->setParticipantDeviceState(device, ParticipantDevice::State::Leaving);
+		lInfo() << this << ": Asking device '" << device->getAddress().asString() << "' to leave";
 		SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal);
 		LinphoneAddress *lAddr = linphone_address_new(device->getAddress().asString().c_str());
 		linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, false);
@@ -804,6 +818,12 @@ void ServerGroupChatRoom::setSubject (const string &subject) {
 		shared_ptr<ConferenceSubjectEvent> event = dConference->eventHandler->notifySubjectChanged();
 		getCore()->getPrivate()->mainDb->addEvent(event);
 	}
+}
+
+// -----------------------------------------------------------------------------
+
+ostream &operator<< (ostream &stream, const ServerGroupChatRoom *chatRoom) {
+	return stream << "ServerGroupChatRoom [" << chatRoom->getChatRoomId().getPeerAddress().asString() << "]";
 }
 
 LINPHONE_END_NAMESPACE
