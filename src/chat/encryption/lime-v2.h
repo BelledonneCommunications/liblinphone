@@ -20,12 +20,12 @@
 #ifndef _L_LIME_V2_H_
 #define _L_LIME_V2_H_
 
-// clean
+#include "belle-sip/belle-sip.h"
 #include "belle-sip/http-listener.h"
+#include "carddav.h"
+#include "core/core-listener.h"
 #include "encryption-engine-listener.h"
 #include "lime/lime.hpp"
-#include <belle-sip/belle-sip.h>
-#include "carddav.h"
 
 // =============================================================================
 
@@ -41,16 +41,21 @@ private:
 	static void processAuthRequestedFromCarddavRequest(void *data, belle_sip_auth_event_t *event) noexcept;
 };
 
-class LimeV2 : public EncryptionEngineListener {
+class LimeV2 : public EncryptionEngineListener, public CoreListener {
 public:
 	LimeV2(const std::string &db_access, belle_http_provider_t *prov); // no manager without Database and http provider
 
+	// EncryptionEngineListener overrides
 	ChatMessageModifier::Result processIncomingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
 	ChatMessageModifier::Result processOutgoingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
 	bool encryptionEnabledForFileTransferCb (const std::shared_ptr<AbstractChatRoom> &ChatRoom) override;
 	void generateFileTransferKeyCb (const std::shared_ptr<AbstractChatRoom> &ChatRoom, const std::shared_ptr<ChatMessage> &message) override;
 	int downloadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) override;
 	int uploadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *encrypted_buffer) override;
+
+	// CoreListener overrides
+	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
+	void onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) override;
 
 private:
 	std::unique_ptr<BelleSipLimeManager> belleSipLimeManager;

@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+// clean
 #include "chat/chat-message/chat-message.h"
 #include "chat/chat-room/abstract-chat-room.h"
 #include "content/content.h"
@@ -24,6 +25,7 @@
 #include "conference/participant-p.h"
 #include "lime-v2.h"
 #include "private.h"
+#include "content/content-manager.h"
 
 using namespace std;
 //using namespace lime;
@@ -60,50 +62,8 @@ void BelleSipLimeManager::processResponse(void *data, const belle_http_response_
 }
 
 void BelleSipLimeManager::processAuthRequestedFromCarddavRequest(void *data, belle_sip_auth_event_t *event) noexcept {
-	LinphoneCardDavQuery *query = (LinphoneCardDavQuery *)data;
-	LinphoneCardDavContext *cdc = query->context;
-	const char *realm = belle_sip_auth_event_get_realm(event);
-	belle_generic_uri_t *uri = belle_generic_uri_parse(query->url);
-	const char *domain = belle_generic_uri_get_host(uri);
-
-	if (cdc->auth_info) {
-		belle_sip_auth_event_set_username(event, cdc->auth_info->username);
-		belle_sip_auth_event_set_passwd(event, cdc->auth_info->passwd);
-		belle_sip_auth_event_set_ha1(event, cdc->auth_info->ha1);
-	} else {
-		BCTBX_SLOGE << "Could not get authentication info from CardDAV context";
-
-		LinphoneCore *lc = cdc->friend_list->lc;
-		const bctbx_list_t *auth_infos = linphone_core_get_auth_info_list(lc);
-
-		ms_debug("Looking for auth info for domain %s and realm %s", domain, realm);
-		while (auth_infos) {
-			LinphoneAuthInfo *auth_info = (LinphoneAuthInfo *)auth_infos->data;
-			if (auth_info->domain && strcmp(domain, auth_info->domain) == 0) {
-				if (!auth_info->realm || strcmp(realm, auth_info->realm) == 0) {
-					belle_sip_auth_event_set_username(event, auth_info->username);
-					belle_sip_auth_event_set_passwd(event, auth_info->passwd);
-					belle_sip_auth_event_set_ha1(event, auth_info->ha1);
-					cdc->auth_info = linphone_auth_info_clone(auth_info);
-					break;
-				}
-			}
-			auth_infos = bctbx_list_next(auth_infos);
-		}
-
-		if (!auth_infos) {
-			// Need new error handling because below functions are static
-			BCTBX_SLOGE << "CardDAV authentication error in lime v2";
-
-// 			ms_error("[carddav] Authentication requested during CardDAV request sending, and username/password weren't provided");
-// 			if (is_query_client_to_server_sync(query)) {
-// 				linphone_carddav_client_to_server_sync_done(query->context, FALSE, "Authentication requested during CardDAV request sending, and username/password weren't provided");
-// 			} else {
-// 				linphone_carddav_server_to_client_sync_done(query->context, FALSE, "Authentication requested during CardDAV request sending, and username/password weren't provided");
-// 			}
-// 			linphone_carddav_query_free(query);
-		}
-	}
+	belle_sip_auth_event_set_username(event, "alice");
+	belle_sip_auth_event_set_passwd(event, "you see the problem is this");
 }
 
 BelleSipLimeManager::BelleSipLimeManager(const string &db_access, belle_http_provider_t *prov) : LimeManager(db_access, [prov](const string &url, const string &from, const vector<uint8_t> &message, const lime::limeX3DHServerResponseProcess &responseProcess) {
@@ -141,14 +101,11 @@ BelleSipLimeManager::BelleSipLimeManager(const string &db_access, belle_http_pro
 // =============================== LIME V2
 
 LimeV2::LimeV2 (const string &db_access, belle_http_provider_t *prov) {
-	//limeManager = unique_ptr<LimeManager>(new LimeManager(db_access, X3DHServerPost));
 	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(db_access, prov));
 }
 
-ChatMessageModifier::Result LimeV2::processOutgoingMessage (
-	const shared_ptr<ChatMessage> &message,
-	int &errorCode
-) {
+ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
+
     shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 
 	// Use the LimeManager to cipher the message
@@ -185,33 +142,45 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (
 	// cipherMessage
 	auto cipherMessage = make_shared<vector<uint8_t>>(); // an empty buffer to get the encrypted message
 
-	belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage,
-						 // callback lambda --> create a real callback that can be applied everywhere
-						 [recipients, cipherMessage] (lime::callbackReturn returnCode, string errorMessage) {
-						// counters is related to this test environment only, not to be considered for real usage
-						if (returnCode == lime::callbackReturn::success) {
-							// here is the code processing the output when all went well.
-							// Send the message to recipient
-							// that function must, before returning, send or copy the data to send them later
-							// recipients and cipherMessage are likely to be be destroyed as soon as we get out of this closure
-							// In this exanple we know that bodDevice is in recipients[0], real code shall loop on recipients vector
-							//sendMessageTo("bob", (*recipients)[0].cipherHeader, *cipherMessage);
-							return ChatMessageModifier::Result::Done;
-						} else {
-							// The encryption failed.
-							BCTBX_SLOGE << "Lime operation failed : " << errorMessage;
-							return ChatMessageModifier::Result::Error;
-						}
-					});
+	belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [recipients, cipherMessage, message] (lime::callbackReturn returnCode, string errorMessage) {
+		cout << "INSIDE ENCRYPT SUCCESS LAMBDA FUNCTION" << endl;
+		if (returnCode == lime::callbackReturn::success) {
+
+			list<Content> contents;
+
+			for (const auto &recipient : *recipients) {
+				string cipherHeaderString(recipient.cipherHeader.begin(), recipient.cipherHeader.end());
+				Content cipherHeaderContent;
+				cipherHeaderContent.setBodyFromUtf8(cipherHeaderString);
+				cipherHeaderContent.setContentType("application/lime");
+				cipherHeaderContent.addHeader("Content-Id", recipient.deviceId);
+				contents.push_back(move(cipherHeaderContent));
+			}
+
+			string cipherMessageString(cipherMessage->begin(), cipherMessage->end());
+			Content cipherMessageContent;
+			cipherMessageContent.setBodyFromUtf8(cipherMessageString);
+			cipherMessageContent.setContentType("application/octet-stream");
+			cipherMessageContent.addHeader("Content-Description", "Encrypted Message");
+			contents.push_back(move(cipherMessageContent));
+
+			Content finalContent = ContentManager::contentListToMultipart(contents);
+
+			message->setInternalContent(finalContent);
+			message->send();
+
+			return ChatMessageModifier::Result::Done;
+		} else {
+			BCTBX_SLOGE << "Lime operation failed : " << errorMessage;
+			return ChatMessageModifier::Result::Error;
+		}
+	});
 
 	// Test errorCode
-	return ChatMessageModifier::Result::Skipped;
+	return ChatMessageModifier::Result::Suspended;
 }
 
-ChatMessageModifier::Result LimeV2::processIncomingMessage (
-	const shared_ptr<ChatMessage> &message,
-	int &errorCode
-) {
+ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
 	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 
 	// Use the LimeManager to decipher the message
@@ -239,10 +208,7 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (
 	// cipherMessage
 	if (message->getInternalContent().isEmpty()) {
 		if (message->getContents().front()->isEmpty()) {
-			// return ChatMessageModifier::Result::Error;
-			// BC_FAIL() ?
-			// errorCode ?
-			// throw exception ?
+			BCTBX_SLOGE << "LIME v2 : no content in received message";
 		}
 		const string &cipherStringMessage = message->getContents().front()->getBodyAsUtf8String(); // utf8_string to vector<uint8_t>
 		const vector<uint8_t> &cipherMessage = vector<uint8_t>(cipherStringMessage.begin(), cipherStringMessage.end());
@@ -259,40 +225,48 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (
 	return ChatMessageModifier::Result::Skipped;
 }
 
-bool LimeV2::encryptionEnabledForFileTransferCb (
-	const shared_ptr<AbstractChatRoom> &chatRoom
-) {
+bool LimeV2::encryptionEnabledForFileTransferCb (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	// Work in progress
 	return false;
 }
 
-void LimeV2::generateFileTransferKeyCb (
-	const shared_ptr<AbstractChatRoom> &chatRoom,
-	const shared_ptr<ChatMessage> &message
-) {
+void LimeV2::generateFileTransferKeyCb (const shared_ptr<AbstractChatRoom> &chatRoom, const shared_ptr<ChatMessage> &message) {
 	// Work in progress
 }
 
-int LimeV2::downloadingFileCb (
-	const shared_ptr<ChatMessage> &message,
-	size_t offset,
-	const uint8_t *buffer,
-	size_t size,
-	uint8_t *decrypted_buffer
-) {
+int LimeV2::downloadingFileCb (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) {
 	// Work in progress
 	return 0;
 }
 
-int LimeV2::uploadingFileCb (
-	const shared_ptr<ChatMessage> &message,
-	size_t offset,
-	const uint8_t *buffer,
-	size_t size,
-	uint8_t *encrypted_buffer
-) {
+int LimeV2::uploadingFileCb (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *encrypted_buffer) {
 	// Work in progress
 	return 0;
+}
+
+void LimeV2::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
+	// work in progress
+}
+
+void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const string &message) {
+	if (state == LinphoneRegistrationState::LinphoneRegistrationOk) {
+		// Create user
+		const LinphoneAddress *contactAddr = linphone_proxy_config_get_contact(cfg);
+		char *contactAddrStr = linphone_address_as_string_uri_only(contactAddr);
+		IdentityAddress ia = IdentityAddress(contactAddrStr);
+		bctbx_free(contactAddrStr);
+		string localDeviceId = ia.getGruu();
+		string x3dhServerUrl = "https://localhost:25519";
+		lime::CurveId curve = lime::CurveId::c25519;
+		lime::limeCallback callback([](lime::callbackReturn returnCode, std::string anythingToSay) {
+				if (returnCode == lime::callbackReturn::success) {
+					BCTBX_SLOGI << "Lime create user operation successful";
+				} else {
+					BCTBX_SLOGE << "Lime operation failed : " << anythingToSay;
+				}
+			});
+		belleSipLimeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+	}
 }
 
 LINPHONE_END_NAMESPACE

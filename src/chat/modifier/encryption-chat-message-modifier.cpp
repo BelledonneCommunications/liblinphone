@@ -38,7 +38,6 @@ ChatMessageModifier::Result EncryptionChatMessageModifier::encode (
 	int &errorCode
 ) {
 	ChatMessageModifier::Result result = message->getCore()->getEncryptionEngine()->processOutgoingMessage(message, errorCode);
-
 	if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
 		message->setIsSecured(true);
 	}
