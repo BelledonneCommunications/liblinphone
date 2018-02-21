@@ -113,6 +113,7 @@ public:
 	/**
 	 * Create a sorted list of SearchResult from SipUri, Contact name,
 	 * Contact displayname, Contact phone number, which match with a filter word
+	 * The last item list will be an address formed with "filter" if a proxy config exist
 	 * During the first search, a cache is created and used for the next search and so on
 	 * Use resetSearchCache() to begin a new search
 	 * @param[in] filter word we search
@@ -156,13 +157,22 @@ private:
 	std::list<SearchResult> *continueSearch(const std::string &filter, const std::string &withDomain);
 
 	/**
-	 * Continue the search from the cache of precedent search
+	 * Search informations in friend given
 	 * @param[in] lFriend friend whose informations will be check
 	 * @param[in] filter word we search
 	 * @param[in] withDomain domain which we want to search only
 	 * @private
 	 **/
-	SearchResult search(const LinphoneFriend* lFriend, const std::string &filter, const std::string &withDomain);
+	SearchResult searchInFriend(const LinphoneFriend* lFriend, const std::string &filter, const std::string &withDomain);
+
+	/**
+	 * Search informations in address given
+	 * @param[in] lAddress address whose informations will be check
+	 * @param[in] filter word we search
+	 * @param[in] withDomain domain which we want to search only
+	 * @private
+	 **/
+	unsigned int searchInAddress(const LinphoneAddress *lAddress, const std::string &filter, const std::string &withDomain);
 
 	/**
 	 * Return a weight for a searched in with a filter
@@ -172,6 +182,15 @@ private:
 	 * @private
 	 **/
 	unsigned int getWeight(const std::string &stringWords, const std::string &filter) const;
+
+	/**
+	 * Return if the given address match domain policy
+	 * @param[in] lFriend friend whose domain will be check
+	 * @param[in] lAddress address whose domain will be check
+	 * @param[in] withDomain domain policy
+	 * @private
+	 **/
+	bool checkDomain(const LinphoneFriend* lFriend, const LinphoneAddress *lAddress, const std::string &withDomain) const;
 
 	L_DECLARE_PRIVATE(MagicSearch);
 };

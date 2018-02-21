@@ -33,12 +33,22 @@ namespace Statements {
 	};
 
 	enum Select {
+		SelectSipAddressId,
+		SelectChatRoomId,
+		SelectChatRoomParticipantId,
+		SelectOneToOneChatRoomId,
 		SelectConferenceEvents,
 		SelectCount
 	};
 
+	enum Insert {
+		InsertOneToOneChatRoom,
+		InsertCount
+	};
+
 	const char *get (Create createStmt, AbstractDb::Backend backend);
 	const char *get (Select selectStmt, AbstractDb::Backend backend);
+	const char *get (Insert insertStmt, AbstractDb::Backend backend);
 }
 
 LINPHONE_END_NAMESPACE
