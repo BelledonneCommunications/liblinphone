@@ -549,14 +549,14 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 
-	shared_ptr<Participant> participant = q->findParticipant(session);
-	if (!participant)
+	shared_ptr<ParticipantDevice> device = q->findParticipantDevice(session);
+	if (!device) {
+		lInfo() << q << ": Unknown device left";
 		return;
-	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(session);
-	if (!device)
-		return;
+	}
 
 	lInfo() << q << ": Participant device '" << device->getAddress().asString() << "' left";
+	shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 	if (getParticipantDeviceState(device) == ParticipantDevice::State::Present) {
 		setParticipantDeviceState(device, ParticipantDevice::State::Left);
 		q->removeParticipant(participant);
