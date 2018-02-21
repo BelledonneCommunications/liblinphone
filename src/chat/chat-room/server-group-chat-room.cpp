@@ -566,7 +566,6 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 
 	bool allDevicesLeft = true;
 	for (const auto &device : participant->getPrivate()->getDevices()) {
-		lError() << "GMA: deviceState " << static_cast<int>(getParticipantDeviceState(device));
 		if (getParticipantDeviceState(device) != ParticipantDevice::State::Left) {
 			allDevicesLeft = false;
 			break;
@@ -651,24 +650,36 @@ LocalConference(getCore(), peerAddress, nullptr) {
 
 	// Handle transitional states (joining and leaving of participants)
 	for (const auto &participant : dConference->participants) {
-		ParticipantDevice::State state = ParticipantDevice::State::Present;
+		bool atLeastOneDeviceLeaving = false;
+		bool atLeastOneDeviceJoining = false;
+		bool atLeastOneDevicePresent = false;
 		for (const auto &device : participant->getPrivate()->getDevices()) {
-			if (d->getParticipantDeviceState(device) == ParticipantDevice::State::Leaving) {
-				state = ParticipantDevice::State::Leaving;
-				break;
-			} else if (d->getParticipantDeviceState(device) == ParticipantDevice::State::Joining)
-				state = ParticipantDevice::State::Joining;
+			switch (d->getParticipantDeviceState(device)) {
+				case ParticipantDevice::State::Leaving:
+					atLeastOneDeviceLeaving = true;
+					break;
+				case ParticipantDevice::State::Joining:
+					atLeastOneDeviceJoining = true;
+					break;
+				case ParticipantDevice::State::Present:
+					atLeastOneDevicePresent = true;
+					break;
+				case ParticipantDevice::State::Left:
+					break;
+			}
 		}
 
-		if (state == ParticipantDevice::State::Leaving) {
+		if (atLeastOneDeviceLeaving) {
 			removeParticipant(participant);
-		} else if (state == ParticipantDevice::State::Joining) {
-			for (const auto &device : participant->getPrivate()->getDevices()) {
-				if (d->getParticipantDeviceState(device) == ParticipantDevice::State::Joining)
-					d->inviteDevice(device);
+		} else {
+			if (atLeastOneDeviceJoining) {
+				for (const auto &device : participant->getPrivate()->getDevices()) {
+					if (d->getParticipantDeviceState(device) == ParticipantDevice::State::Joining)
+						d->inviteDevice(device);
+				}
 			}
-		} else if (state == ParticipantDevice::State::Present) {
-			d->filteredParticipants.push_back(participant);
+			if (atLeastOneDevicePresent)
+				d->filteredParticipants.push_back(participant);
 		}
 	}
 }
