@@ -992,6 +992,36 @@ int SalOp::unsubscribe(){
 	return -1;
 }
 
+int SalOp::set_custom_body(belle_sip_message_t *msg, const Content &body) {
+	ContentType contentType = body.getContentType();
+	string contentDisposition = body.getContentDisposition();
+	size_t bodySize = body.getBody().size();
+
+	if (bodySize > SIP_MESSAGE_BODY_LIMIT) {
+		bctbx_error("trying to add a body greater than %lukB to message [%p]", (unsigned long)SIP_MESSAGE_BODY_LIMIT/1024, msg);
+		return -1;
+	}
+
+	if (contentType.isValid()) {
+		belle_sip_header_content_type_t *content_type = belle_sip_header_content_type_create(contentType.getType().c_str(), contentType.getSubType().c_str());
+		belle_sip_message_add_header(msg, BELLE_SIP_HEADER(content_type));
+	}
+	if (!contentDisposition.empty()) {
+		belle_sip_header_content_disposition_t *contentDispositionHeader = belle_sip_header_content_disposition_create(contentDisposition.c_str());
+		belle_sip_message_add_header(msg, BELLE_SIP_HEADER(contentDispositionHeader));
+	}
+	belle_sip_header_content_length_t *content_length = belle_sip_header_content_length_create(bodySize);
+	belle_sip_message_add_header(msg, BELLE_SIP_HEADER(content_length));
+
+	if (bodySize > 0) {
+		char *buffer = bctbx_new(char, bodySize);
+		memcpy(buffer, body.getBody().data(), bodySize);
+		belle_sip_message_assign_body(msg, buffer, bodySize);
+	}
+
+	return 0;
+}
+
 void SalOp::process_incoming_message(const belle_sip_request_event_t *event) {
 	belle_sip_request_t* req = belle_sip_request_event_get_request(event);
 	belle_sip_server_transaction_t* server_transaction = belle_sip_provider_create_server_transaction(this->root->prov,req);
@@ -1028,8 +1058,13 @@ void SalOp::process_incoming_message(const belle_sip_request_event_t *event) {
 		salmsg.from=from;
 		/* if we just deciphered a message, use the deciphered part(which can be a rcs xml body pointing to the file to retreive from server)*/
 		salmsg.text=(!external_body)?belle_sip_message_get_body(BELLE_SIP_MESSAGE(req)):NULL;
+		if (!salmsg.text && belle_sip_message_get_body_handler(BELLE_SIP_MESSAGE(req))) {
+			salmsg.text = belle_sip_object_to_string(belle_sip_message_get_body_handler(BELLE_SIP_MESSAGE(req)));
+		}
 		salmsg.url=NULL;
-		salmsg.content_type = ms_strdup_printf("%s/%s", belle_sip_header_content_type_get_type(content_type), belle_sip_header_content_type_get_subtype(content_type));
+		salmsg.content_type = bctbx_strdup(belle_sip_header_get_unparsed_value(BELLE_SIP_HEADER(content_type)));
+// 		salmsg.content_type = ms_strdup_printf("%s/%s", belle_sip_header_content_type_get_type(content_type), belle_sip_header_content_type_get_subtype(content_type));
+
 		if (external_body && belle_sip_parameters_get_parameter(BELLE_SIP_PARAMETERS(content_type),"URL")) {
 			size_t url_length=strlen(belle_sip_parameters_get_parameter(BELLE_SIP_PARAMETERS(content_type),"URL"));
 			salmsg.url = ms_strdup(belle_sip_parameters_get_parameter(BELLE_SIP_PARAMETERS(content_type),"URL")+1); /* skip first "*/

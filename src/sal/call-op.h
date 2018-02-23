@@ -102,7 +102,6 @@ private:
 	static std::vector<char> marshal_media_description(belle_sdp_session_description_t *session_desc, belle_sip_error_code &error);
 
 	// belle_sip_message handlers
-	static int set_custom_body(belle_sip_message_t *msg, const Content &body);
 	static int set_sdp(belle_sip_message_t *msg,belle_sdp_session_description_t* session_desc);
 	static int set_sdp_from_desc(belle_sip_message_t *msg, const SalMediaDescription *desc);
 	static void process_io_error_cb(void *user_ctx, const belle_sip_io_error_event_t *event);
@@ -115,9 +114,6 @@ private:
 	static void process_transaction_terminated_cb(void *user_ctx, const belle_sip_transaction_terminated_event_t *event);
 	static void process_request_event_cb(void *op_base, const belle_sip_request_event_t *event);
 	static void process_dialog_terminated_cb(void *ctx, const belle_sip_dialog_terminated_event_t *event);
-
-	// Private constants
-	static const size_t SIP_MESSAGE_BODY_LIMIT = 16*1024; // 16kB
 
 	// Attributes
 	SalMediaDescription *local_media = NULL;

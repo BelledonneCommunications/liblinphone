@@ -24,8 +24,6 @@
 #include <bctoolbox/defs.h>
 #include <belle-sip/provider.h>
 
-#include "content/content-type.h"
-
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
@@ -98,36 +96,6 @@ belle_sip_header_allow_t *SalCallOp::create_allow(bool_t enable_update) {
 	snprintf(allow,sizeof(allow),"INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, NOTIFY, MESSAGE, SUBSCRIBE, INFO%s",(enable_update?", UPDATE":""));
 	header_allow = belle_sip_header_allow_create(allow);
 	return header_allow;
-}
-
-int SalCallOp::set_custom_body(belle_sip_message_t *msg, const Content &body) {
-	ContentType contentType = body.getContentType();
-	string contentDisposition = body.getContentDisposition();
-	size_t bodySize = body.getBody().size();
-
-	if (bodySize > SIP_MESSAGE_BODY_LIMIT) {
-		bctbx_error("trying to add a body greater than %lukB to message [%p]", (unsigned long)SIP_MESSAGE_BODY_LIMIT/1024, msg);
-		return -1;
-	}
-
-	if (contentType.isValid()) {
-		belle_sip_header_content_type_t *content_type = belle_sip_header_content_type_create(contentType.getType().c_str(), contentType.getSubType().c_str());
-		belle_sip_message_add_header(msg, BELLE_SIP_HEADER(content_type));
-	}
-	if (!contentDisposition.empty()) {
-		belle_sip_header_content_disposition_t *contentDispositionHeader = belle_sip_header_content_disposition_create(contentDisposition.c_str());
-		belle_sip_message_add_header(msg, BELLE_SIP_HEADER(contentDispositionHeader));
-	}
-	belle_sip_header_content_length_t *content_length = belle_sip_header_content_length_create(bodySize);
-	belle_sip_message_add_header(msg, BELLE_SIP_HEADER(content_length));
-
-	if (bodySize > 0) {
-		char *buffer = bctbx_new(char, bodySize);
-		memcpy(buffer, body.getBody().data(), bodySize);
-		belle_sip_message_assign_body(msg, buffer, bodySize);
-	}
-
-	return 0;
 }
 
 std::vector<char> SalCallOp::marshal_media_description(belle_sdp_session_description_t *session_desc, belle_sip_error_code &error) {

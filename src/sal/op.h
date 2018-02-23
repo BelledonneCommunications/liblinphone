@@ -26,6 +26,7 @@
 
 #include "c-wrapper/internal/c-sal.h"
 #include "content/content.h"
+#include "content/content-type.h"
 #include "sal/sal.h"
 
 LINPHONE_BEGIN_NAMESPACE
@@ -144,6 +145,8 @@ protected:
 		Refer /*for out of dialog refer only*/
 	};
 
+	static const size_t SIP_MESSAGE_BODY_LIMIT = 16*1024; // 16kB
+
 	static const char *to_string(const SalOp::Type type);
 
 	typedef void (*ReleaseCb)(SalOp *op);
@@ -187,6 +190,8 @@ protected:
 	void add_headers(belle_sip_header_t *h, belle_sip_message_t *msg);
 	void add_custom_headers(belle_sip_message_t *msg);
 	int unsubscribe();
+
+	static int set_custom_body(belle_sip_message_t *msg, const Content &body);
 
 	void process_incoming_message(const belle_sip_request_event_t *event);
 	int reply_message(SalReason reason);
