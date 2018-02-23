@@ -603,8 +603,8 @@ void ServerGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<Abs
 // -----------------------------------------------------------------------------
 
 void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State newState, const string &message) {
-	if (newState == CallSession::State::End) {
-		onParticipantDeviceLeft(session);
+	if (newState == CallSession::State::End && session->getPreviousState() == CallSession::State::Connected) {
+		onParticipantDeviceLeft(session); //only in case of BYE (I.E previous state is connected)
 	} else if (newState == CallSession::State::UpdatedByRemote) {
 		shared_ptr<Participant> participant = findFilteredParticipant(session);
 		if (participant && participant->isAdmin()) {
