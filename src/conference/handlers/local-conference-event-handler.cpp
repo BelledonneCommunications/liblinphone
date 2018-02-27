@@ -321,13 +321,9 @@ void LocalConferenceEventHandlerPrivate::notifyResponseCb (const LinphoneEvent *
 // -----------------------------------------------------------------------------
 
 string LocalConferenceEventHandlerPrivate::createNotify (ConferenceType confInfo, int notifyId, bool isFullState) {
-	if (notifyId == -1) {
-		lastNotify = lastNotify + 1;
-		confInfo.setVersion(lastNotify);
-	} else {
-		confInfo.setVersion(static_cast<unsigned int>(notifyId));
-	}
+	confInfo.setVersion(notifyId == -1 ? ++lastNotify : static_cast<unsigned int>(notifyId));
 	confInfo.setState(isFullState ? StateType::full : StateType::partial);
+
 	if (!confInfo.getConferenceDescription()) {
 		ConferenceDescriptionType description = ConferenceDescriptionType();
 		confInfo.setConferenceDescription(description);
@@ -359,23 +355,25 @@ void LocalConferenceEventHandlerPrivate::notifyParticipant (const string &notify
 }
 
 void LocalConferenceEventHandlerPrivate::notifyParticipantDevice (const string &notify, const shared_ptr<ParticipantDevice> &device, bool multipart) {
-	if (device->isSubscribedToConferenceEventPackage() && !notify.empty()) {
-		LinphoneEvent *ev = device->getConferenceSubscribeEvent();
-		LinphoneEventCbs *cbs = linphone_event_get_callbacks(ev);
-		linphone_event_cbs_set_user_data(cbs, this);
-		linphone_event_cbs_set_notify_response(cbs, notifyResponseCb);
-		LinphoneContent *content = linphone_core_create_content(ev->lc);
-		linphone_content_set_buffer(content, (const uint8_t *)notify.c_str(), strlen(notify.c_str()));
-		if (multipart) {
-			linphone_content_set_type(content, "multipart");
-			linphone_content_set_subtype(content, "mixed;boundary=---------------------------14737809831466499882746641449");
-		} else {
-			linphone_content_set_type(content, "application");
-			linphone_content_set_subtype(content, "conference-info");
-		}
-		linphone_event_notify(ev, content);
-		linphone_content_unref(content);
-	}
+	if (!device->isSubscribedToConferenceEventPackage() || notify.empty())
+		return;
+
+	LinphoneEvent *ev = device->getConferenceSubscribeEvent();
+	LinphoneEventCbs *cbs = linphone_event_get_callbacks(ev);
+	linphone_event_cbs_set_user_data(cbs, this);
+	linphone_event_cbs_set_notify_response(cbs, notifyResponseCb);
+	LinphoneContent *content = linphone_core_create_content(ev->lc);
+	linphone_content_set_buffer(content, (const uint8_t *)notify.c_str(), strlen(notify.c_str()));
+	linphone_content_set_type(
+		content,
+		multipart ? "multipart" : "application"
+	);
+	linphone_content_set_subtype(
+		content,
+		multipart ? "mixed;boundary=---------------------------14737809831466499882746641449" : "conference-info"
+	);
+	linphone_event_notify(ev, content);
+	linphone_content_unref(content);
 }
 
 // =============================================================================

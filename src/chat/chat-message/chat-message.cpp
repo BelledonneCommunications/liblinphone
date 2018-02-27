@@ -84,6 +84,8 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 	if (!validStateTransition(currentState, newState))
 		return;
 
+	lInfo() << "Chat message " << this << ": moving participant '" << participantAddress.asString() << "' state to "
+		<< Utils::toString(newState);
 	mainDb->setChatMessageParticipantState(eventLog, participantAddress, newState);
 
 	list<ChatMessage::State> states = mainDb->getChatMessageParticipantStates(eventLog);
@@ -137,7 +139,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState, bool force) {
 
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	if (cbs && linphone_chat_message_cbs_get_msg_state_changed(cbs))
-		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, linphone_chat_message_get_state(msg));
+		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
 
 	updateInDb();
 }
@@ -183,8 +185,7 @@ string ChatMessagePrivate::getSalCustomHeaderValue (const string &name) {
 // -----------------------------------------------------------------------------
 
 bool ChatMessagePrivate::hasTextContent() const {
-	loadContentsFromDatabase();
-	for (const Content *c : contents) {
+	for (const Content *c : getContents()) {
 		if (c->getContentType() == ContentType::PlainText) {
 			return true;
 		}
@@ -193,8 +194,7 @@ bool ChatMessagePrivate::hasTextContent() const {
 }
 
 const Content* ChatMessagePrivate::getTextContent() const {
-	loadContentsFromDatabase();
-	for (const Content *c : contents) {
+	for (const Content *c : getContents()) {
 		if (c->getContentType() == ContentType::PlainText) {
 			return c;
 		}
@@ -203,8 +203,7 @@ const Content* ChatMessagePrivate::getTextContent() const {
 }
 
 bool ChatMessagePrivate::hasFileTransferContent() const {
-	loadContentsFromDatabase();
-	for (const Content *c : contents) {
+	for (const Content *c : getContents()) {
 		if (c->getContentType() == ContentType::FileTransfer) {
 			return true;
 		}
@@ -213,7 +212,7 @@ bool ChatMessagePrivate::hasFileTransferContent() const {
 }
 
 const Content* ChatMessagePrivate::getFileTransferContent() const {
-	for (const Content *c : contents) {
+	for (const Content *c : getContents()) {
 		if (c->getContentType() == ContentType::FileTransfer) {
 			return c;
 		}
@@ -230,8 +229,7 @@ void ChatMessagePrivate::setFileTransferFilepath (const string &path) {
 }
 
 const string &ChatMessagePrivate::getAppdata () const {
-	loadContentsFromDatabase();
-	for (const Content *c : contents) {
+	for (const Content *c : getContents()) {
 		if (c->isFile()) {
 			FileContent *fileContent = (FileContent *)c;
 			return fileContent->getAppData("legacy");
@@ -241,8 +239,7 @@ const string &ChatMessagePrivate::getAppdata () const {
 }
 
 void ChatMessagePrivate::setAppdata (const string &data) {
-	loadContentsFromDatabase();
-	for (const Content *c : contents) {
+	for (const Content *c : getContents()) {
 		if (c->isFile()) {
 			FileContent *fileContent = (FileContent *)c;
 			fileContent->setAppData("legacy", data);
@@ -338,13 +335,13 @@ LinphoneContent *ChatMessagePrivate::getFileTransferInformation () const {
 	if (hasFileTransferContent()) {
 		return getFileTransferContent()->toLinphoneContent();
 	}
-	for (const Content *c : contents) {
+	for (const Content *c : getContents()) {
 		if (c->isFile()) {
 			FileContent *fileContent = (FileContent *)c;
 			return fileContent->toLinphoneContent();
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 void ChatMessagePrivate::setFileTransferInformation (const LinphoneContent *c_content) {
@@ -356,7 +353,7 @@ void ChatMessagePrivate::setFileTransferInformation (const LinphoneContent *c_co
 	fileContent->setContentType(contentType);
 	fileContent->setFileSize(linphone_content_get_size(c_content));
 	fileContent->setFileName(linphone_content_get_name(c_content));
-	if (linphone_content_get_string_buffer(c_content) != NULL) {
+	if (linphone_content_get_string_buffer(c_content)) {
 		fileContent->setBody(linphone_content_get_string_buffer(c_content));
 	}
 
@@ -365,9 +362,8 @@ void ChatMessagePrivate::setFileTransferInformation (const LinphoneContent *c_co
 
 bool ChatMessagePrivate::downloadFile () {
 	L_Q();
-	loadContentsFromDatabase();
 
-	for (auto &content : contents)
+	for (auto &content : getContents())
 		if (content->getContentType() == ContentType::FileTransfer)
 			return q->downloadFile(*static_cast<FileTransferContent *>(content));
 
@@ -447,29 +443,22 @@ static void forceUtf8Content (Content &content) {
 void ChatMessagePrivate::notifyReceiving () {
 	L_Q();
 
-	if ((getContentType() == ContentType::Imdn) || (getContentType() == ContentType::ImIsComposing))
-		return;
-
 	LinphoneChatRoom *chatRoom = L_GET_C_BACK_PTR(q->getChatRoom());
-	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(chatRoom);
-
-	LinphoneChatRoomCbsShouldChatMessageBeStoredCb shouldMessageBeStoredCb = linphone_chat_room_cbs_get_chat_message_should_be_stored(cbs);
-	if (shouldMessageBeStoredCb)
-		shouldMessageBeStoredCb(chatRoom, L_GET_C_BACK_PTR(q->getSharedFromThis()));
-
-	if (toBeStored)
-		storeInDb();
-
+	if ((getContentType() != ContentType::Imdn) && (getContentType() != ContentType::ImIsComposing)) {
+		_linphone_chat_room_notify_chat_message_should_be_stored(chatRoom, L_GET_C_BACK_PTR(q->getSharedFromThis()));
+		if (toBeStored)
+			storeInDb();
+	}
 	shared_ptr<ConferenceChatMessageEvent> event = make_shared<ConferenceChatMessageEvent>(
 		::time(nullptr), q->getSharedFromThis()
 	);
-	LinphoneChatRoomCbsChatMessageReceivedCb messageReceivedCb = linphone_chat_room_cbs_get_chat_message_received(cbs);
-	if (messageReceivedCb)
-		messageReceivedCb(chatRoom, L_GET_C_BACK_PTR(event));
+	_linphone_chat_room_notify_chat_message_received(chatRoom, L_GET_C_BACK_PTR(event));
 	// Legacy
 	q->getChatRoom()->getPrivate()->notifyChatMessageReceived(q->getSharedFromThis());
 
-	q->sendDeliveryNotification(LinphoneReasonNone);
+	if ((getContentType() != ContentType::Imdn) && (getContentType() != ContentType::ImIsComposing)) {
+		q->sendDeliveryNotification(LinphoneReasonNone);
+	}
 }
 
 LinphoneReason ChatMessagePrivate::receive () {
@@ -768,6 +757,9 @@ void ChatMessagePrivate::storeInDb () {
 		updateInDb();
 	} else {
 		shared_ptr<EventLog> eventLog = make_shared<ConferenceChatMessageEvent>(time, q->getSharedFromThis());
+
+		// Avoid transaction in transaction if contents are not loaded.
+		loadContentsFromDatabase();
 		q->getChatRoom()->getPrivate()->addEvent(eventLog);
 
 		if (direction == ChatMessage::Direction::Incoming) {
@@ -790,6 +782,9 @@ void ChatMessagePrivate::updateInDb () {
 
 	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
 	shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(dbKey);
+
+	// Avoid transaction in transaction if contents are not loaded.
+	loadContentsFromDatabase();
 	mainDb->updateEvent(eventLog);
 
 	if (direction == ChatMessage::Direction::Incoming) {
@@ -961,22 +956,19 @@ bool ChatMessage::isReadOnly () const {
 
 const list<Content *> &ChatMessage::getContents () const {
 	L_D();
-	d->loadContentsFromDatabase();
-	return d->contents;
+	return d->getContents();
 }
 
 void ChatMessage::addContent (Content &content) {
 	L_D();
-	if (d->isReadOnly) return;
-
-	d->contents.push_back(&content);
+	if (!d->isReadOnly)
+		d->getContents().push_back(&content);
 }
 
 void ChatMessage::removeContent (const Content &content) {
 	L_D();
-	if (d->isReadOnly) return;
-
-	d->contents.remove(&const_cast<Content &>(content));
+	if (!d->isReadOnly)
+		d->getContents().remove(&const_cast<Content &>(content));
 }
 
 const Content &ChatMessage::getInternalContent () const {
