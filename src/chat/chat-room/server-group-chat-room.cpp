@@ -37,11 +37,23 @@
 #include "sal/refer-op.h"
 #include "server-group-chat-room-p.h"
 
+#include "linphone/wrapper_utils.h"
+
 // =============================================================================
 
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
+
+#define CALL_CHAT_ROOM_CBS(cr, cbName, functionName, ...) \
+	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_chat_room_get_callbacks_list(cr)); \
+	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
+		linphone_chat_room_set_current_callbacks(cr, reinterpret_cast<LinphoneChatRoomCbs *>(bctbx_list_get_data(it))); \
+		LinphoneChatRoomCbs ## cbName ## Cb cb = linphone_chat_room_cbs_get_ ## functionName (linphone_chat_room_get_current_callbacks(cr)); \
+		if (cb) \
+			cb(__VA_ARGS__); \
+	} \
+	bctbx_free(callbacksCopy);
 
 shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const IdentityAddress &addr) {
 	L_Q();
@@ -78,22 +90,13 @@ void ServerGroupChatRoomPrivate::acceptSession (const shared_ptr<CallSession> &s
 
 void ServerGroupChatRoomPrivate::confirmCreation () {
 	L_Q();
-	L_Q_T(LocalConference, qConference);
 
 	shared_ptr<Participant> me = q->getMe();
 	shared_ptr<CallSession> session = me->getPrivate()->getSession();
 	session->startIncomingNotification();
 
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
-	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
-	LinphoneChatRoomCbsConferenceAddressGenerationCb cb = linphone_chat_room_cbs_get_conference_address_generation(cbs);
-	if (cb)
-		cb(cr);
-	else {
-		IdentityAddress confAddr(generateConferenceAddress(me));
-		qConference->getPrivate()->conferenceAddress = confAddr;
-		finalizeCreation();
-	}
+	CALL_CHAT_ROOM_CBS(cr, ConferenceAddressGeneration, conference_address_generation, cr);
 }
 
 void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
@@ -214,21 +217,6 @@ void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {
 			}
 		}
 	}
-}
-
-IdentityAddress ServerGroupChatRoomPrivate::generateConferenceAddress (const shared_ptr<Participant> &me) const {
-	L_Q();
-	char token[11];
-	ostringstream os;
-	IdentityAddress conferenceAddress = me->getAddress();
-	do {
-		belle_sip_random_token(token, sizeof(token));
-		os.str("");
-		os << "chatroom-" << token;
-		conferenceAddress.setUsername(os.str());
-	} while (q->getCore()->findChatRoom(chatRoomId));
-	me->getPrivate()->setAddress(conferenceAddress);
-	return me->getAddress();
 }
 
 void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<const Participant> &participant) {
@@ -392,13 +380,9 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 
 		lInfo() << q << ": Fetching participant devices";
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
-		LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
-		LinphoneChatRoomCbsParticipantDeviceFetchedCb cb = linphone_chat_room_cbs_get_participant_device_fetched(cbs);
-		if (cb) {
-			LinphoneAddress *laddr = linphone_address_new(participant->getAddress().asString().c_str());
-			cb(cr, laddr);
-			linphone_address_unref(laddr);
-		}
+		LinphoneAddress *laddr = linphone_address_new(participant->getAddress().asString().c_str());
+		CALL_CHAT_ROOM_CBS(cr, ParticipantDeviceFetched, participant_device_fetched, cr, laddr);
+		linphone_address_unref(laddr);
 		q->addParticipants(compatibleParticipants, nullptr, false);
 		if ((capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && (q->getParticipantCount() == 2)) {
 			// Insert the one-to-one chat room in Db if participants count is 2.
@@ -415,15 +399,12 @@ void ServerGroupChatRoomPrivate::checkCompatibleParticipants (const IdentityAddr
 	}
 
 	lInfo() << q << ": Checking compatible participants";
-	bctbx_list_t * cAddresses = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(addresses);
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
-	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
-	LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb cb = linphone_chat_room_cbs_get_participants_capabilities_checked(cbs);
-	if (cb) {
-		LinphoneAddress *cDeviceAddr = linphone_address_new(deviceAddr.asString().c_str());
-		cb(cr, cDeviceAddr, cAddresses);
-		linphone_address_unref(cDeviceAddr);
-	}
+	bctbx_list_t * cAddresses = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(addresses);
+	LinphoneAddress *cDeviceAddr = linphone_address_new(deviceAddr.asString().c_str());
+	CALL_CHAT_ROOM_CBS(cr, ParticipantsCapabilitiesChecked, participants_capabilities_checked, cr, cDeviceAddr, cAddresses);
+	linphone_address_unref(cDeviceAddr);
+	bctbx_list_free_with_data(cAddresses, (bctbx_list_free_func)linphone_address_unref);
 }
 
 // -----------------------------------------------------------------------------
@@ -736,13 +717,9 @@ void ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const Cal
 	getCore()->getPrivate()->mainDb->addEvent(event);
 
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(this);
-	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_callbacks(cr);
-	LinphoneChatRoomCbsParticipantDeviceFetchedCb cb = linphone_chat_room_cbs_get_participant_device_fetched(cbs);
-	if (cb) {
-		LinphoneAddress *laddr = linphone_address_new(addr.asString().c_str());
-		cb(cr, laddr);
-		linphone_address_unref(laddr);
-	}
+	LinphoneAddress *laddr = linphone_address_new(addr.asString().c_str());
+	CALL_CHAT_ROOM_CBS(cr, ParticipantDeviceFetched, participant_device_fetched, cr, laddr);
+	linphone_address_unref(laddr);
 }
 
 void ServerGroupChatRoom::addParticipants (const list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) {
