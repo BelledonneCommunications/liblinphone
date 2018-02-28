@@ -86,6 +86,7 @@ void ServerGroupChatRoomPrivate::acceptSession (const shared_ptr<CallSession> &s
 		session->acceptUpdate();
 	else
 		session->accept();
+	joiningPendingAfterCreation = false;
 }
 
 void ServerGroupChatRoomPrivate::confirmCreation () {
@@ -157,17 +158,15 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 			if (joiningPendingAfterCreation) {
 				lError() << q << ": Declining INVITE because we expected a non-empty list of participants to invite";
 				op->decline(SalReasonNotAcceptable, nullptr);
+				chatRoomListener->onChatRoomDeleteRequested(q->getSharedFromThis());
 			} else {
 				acceptSession(session);
 			}
-			joiningPendingAfterCreation = false;
 			return;
 		}
 	} else {
 		acceptSession(session);
 	}
-
-	joiningPendingAfterCreation = false;
 }
 
 void ServerGroupChatRoomPrivate::confirmRecreation (SalCallOp *op) {
@@ -183,6 +182,11 @@ void ServerGroupChatRoomPrivate::confirmRecreation (SalCallOp *op) {
 	session->startIncomingNotification();
 	session->redirect(addr);
 	joiningPendingAfterCreation = true;
+}
+
+void ServerGroupChatRoomPrivate::declineSession (const shared_ptr<CallSession> &session, LinphoneReason reason) {
+	session->decline(reason);
+	joiningPendingAfterCreation = false;
 }
 
 void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {
@@ -353,8 +357,12 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 	shared_ptr<CallSession> session = device->getSession();
 	if (compatibleParticipants.size() == 0) {
 		lError() << q << ": No compatible participants have been found";
-		if (session)
-			session->decline(LinphoneReasonNotAcceptable);
+		if (session) {
+			bool toDelete = joiningPendingAfterCreation;
+			declineSession(session, LinphoneReasonNotAcceptable);
+			if (toDelete)
+				chatRoomListener->onChatRoomDeleteRequested(q->getSharedFromThis());
+		}
 	} else {
 		lInfo() << q << ": Adding " << compatibleParticipants.size() << " compatible participant(s)";
 		if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) {
@@ -369,7 +377,7 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 			addresses.unique();
 			if (session && (addresses.size() > 2)) {
 				// Decline the participants addition to prevent having more than 2 participants in a one-to-one chat room.
-				session->decline(LinphoneReasonNotAcceptable);
+				declineSession(session, LinphoneReasonNotAcceptable);
 			}
 		}
 		if (session)
