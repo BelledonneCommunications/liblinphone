@@ -94,7 +94,7 @@ void ServerGroupChatRoomPrivate::confirmCreation () {
 
 	shared_ptr<Participant> me = q->getMe();
 	shared_ptr<CallSession> session = me->getPrivate()->getSession();
-	session->startIncomingNotification();
+	session->startIncomingNotification(false);
 
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 	CALL_CHAT_ROOM_CBS(cr, ConferenceAddressGeneration, conference_address_generation, cr);
@@ -144,7 +144,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	if (!session || (session->getPrivate()->getOp() != op)) {
 		session = participant->getPrivate()->createSession(*q, nullptr, false, this);
 		session->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(), Address(op->get_to()));
-		session->startIncomingNotification();
+		session->startIncomingNotification(false);
 		Address addr = qConference->getPrivate()->conferenceAddress;
 		addr.setParam("isfocus");
 		session->getPrivate()->getOp()->set_contact_address(addr.getPrivate()->getInternalAddress());
@@ -179,7 +179,7 @@ void ServerGroupChatRoomPrivate::confirmRecreation (SalCallOp *op) {
 	shared_ptr<Participant> me = q->getMe();
 	shared_ptr<CallSession> session = me->getPrivate()->createSession(*q, nullptr, false, this);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->get_from()), Address(op->get_to()));
-	session->startIncomingNotification();
+	session->startIncomingNotification(false);
 	session->redirect(addr);
 	joiningPendingAfterCreation = true;
 }
