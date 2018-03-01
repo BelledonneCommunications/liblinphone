@@ -20,17 +20,19 @@
 #ifndef _L_SAL_MESSAGE_OP_INTERFACE_H_
 #define _L_SAL_MESSAGE_OP_INTERFACE_H_
 
+#include "sal/op.h"
+
 LINPHONE_BEGIN_NAMESPACE
 
 class SalMessageOpInterface {
 public:
 	virtual ~SalMessageOpInterface() = default;
 
-	virtual int send_message(const char* content_type, const char *msg) = 0;
+	virtual int send_message(const Content &content) = 0;
 	virtual int reply(SalReason reason) = 0;
 
 protected:
-	void prepare_message_request(belle_sip_request_t *req, const char* content_type, const char *msg);
+	void prepare_message_request(belle_sip_request_t *req, const Content &content);
 };
 
 LINPHONE_END_NAMESPACE

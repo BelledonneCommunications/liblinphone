@@ -1476,10 +1476,10 @@ void SalCallOp::process_notify(const belle_sip_request_event_t *event, belle_sip
 	}
 }
 
-int SalCallOp::send_message(const char* content_type, const char *msg) {
+int SalCallOp::send_message(const Content &content) {
 	if (!this->dialog) return -1;
 	belle_sip_request_t* req=belle_sip_dialog_create_queued_request(this->dialog,"MESSAGE");
-	prepare_message_request(req, content_type, msg);
+	prepare_message_request(req, content);
 	return send_request(req);
 }
 

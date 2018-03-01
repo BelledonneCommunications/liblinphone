@@ -77,27 +77,21 @@ void SalMessageOp::fill_cbs() {
 	this->type=Type::Message;
 }
 
-void SalMessageOpInterface::prepare_message_request(belle_sip_request_t *req, const char* content_type, const char *msg) {
-	char content_type_raw[256];
-	size_t content_length = msg?strlen(msg):0;
+void SalMessageOpInterface::prepare_message_request(belle_sip_request_t *req, const Content &content) {
 	time_t curtime = ms_time(NULL);
-	snprintf(content_type_raw,sizeof(content_type_raw),BELLE_SIP_CONTENT_TYPE ": %s",content_type);
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),BELLE_SIP_HEADER(belle_sip_header_content_type_parse(content_type_raw)));
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),BELLE_SIP_HEADER(belle_sip_header_content_length_create(content_length)));
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),BELLE_SIP_HEADER(belle_sip_header_date_create_from_time(&curtime)));
-	if (msg){
-		/*don't call set_body() with null argument because it resets content type and content length*/
-		belle_sip_message_set_body(BELLE_SIP_MESSAGE(req), msg, content_length);
+	if (content.isValid()) {
+		SalOp::set_custom_body(BELLE_SIP_MESSAGE(req), content);
 	}
 }
 
-int SalMessageOp::send_message(const char* content_type, const char *msg) {
+int SalMessageOp::send_message(const Content &content) {
 	fill_cbs();
 	this->dir = Dir::Outgoing;
 	belle_sip_request_t *req = build_request("MESSAGE");
 	if (!req)
 		return -1;
-	prepare_message_request(req, content_type, msg);
+	prepare_message_request(req, content);
 	return send_request(req);
 }
 

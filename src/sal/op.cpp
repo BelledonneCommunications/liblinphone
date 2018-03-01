@@ -19,8 +19,8 @@
 
 #include <cstring>
 
-#include "sal/op.h"
 #include "bellesip_sal/sal_impl.h"
+#include "sal/op.h"
 
 using namespace std;
 
@@ -1003,7 +1003,12 @@ int SalOp::set_custom_body(belle_sip_message_t *msg, const Content &body) {
 	}
 
 	if (contentType.isValid()) {
-		belle_sip_header_content_type_t *content_type = belle_sip_header_content_type_create(contentType.getType().c_str(), contentType.getSubType().c_str());
+		stringstream subtype;
+		subtype << contentType.getSubType();
+		const string &parameter = contentType.getParameter();
+		if (!parameter.empty())
+			subtype << ";" << parameter;
+		belle_sip_header_content_type_t *content_type = belle_sip_header_content_type_create(contentType.getType().c_str(), subtype.str().c_str());
 		belle_sip_message_add_header(msg, BELLE_SIP_HEADER(content_type));
 	}
 	if (!contentDisposition.empty()) {
@@ -1064,7 +1069,6 @@ void SalOp::process_incoming_message(const belle_sip_request_event_t *event) {
 		salmsg.url=NULL;
 		salmsg.content_type = bctbx_strdup(belle_sip_header_get_unparsed_value(BELLE_SIP_HEADER(content_type)));
 // 		salmsg.content_type = ms_strdup_printf("%s/%s", belle_sip_header_content_type_get_type(content_type), belle_sip_header_content_type_get_subtype(content_type));
-
 		if (external_body && belle_sip_parameters_get_parameter(BELLE_SIP_PARAMETERS(content_type),"URL")) {
 			size_t url_length=strlen(belle_sip_parameters_get_parameter(BELLE_SIP_PARAMETERS(content_type),"URL"));
 			salmsg.url = ms_strdup(belle_sip_parameters_get_parameter(BELLE_SIP_PARAMETERS(content_type),"URL")+1); /* skip first "*/

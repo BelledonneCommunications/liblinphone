@@ -31,6 +31,8 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class SalMessageOpInterface;
+
 class SalOp {
 public:
 	SalOp(Sal *sal);
@@ -191,12 +193,12 @@ protected:
 	void add_custom_headers(belle_sip_message_t *msg);
 	int unsubscribe();
 
-	static int set_custom_body(belle_sip_message_t *msg, const Content &body);
-
 	void process_incoming_message(const belle_sip_request_event_t *event);
 	int reply_message(SalReason reason);
 	void add_message_accept(belle_sip_message_t *msg);
 	static bool_t is_external_body(belle_sip_header_content_type_t* content_type);
+
+	static int set_custom_body(belle_sip_message_t *msg, const Content &body);
 
 	static void assign_address(SalAddress** address, const char *value);
 	static void assign_string(char **str, const char *arg);
@@ -260,6 +262,7 @@ protected:
 	bool_t op_released = FALSE;
 
 	friend class Sal;
+	friend class SalMessageOpInterface;
 };
 
 LINPHONE_END_NAMESPACE

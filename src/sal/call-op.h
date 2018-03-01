@@ -66,7 +66,7 @@ public:
 	void set_sdp_handling(SalOpSDPHandling handling);
 
 	// Implementation of SalMessageOpInterface
-	int send_message(const char* content_type, const char *msg) override;
+	int send_message(const Content &content) override;
 	int reply(SalReason reason) override {return SalOp::reply_message(reason);}
 
 private:
@@ -114,6 +114,9 @@ private:
 	static void process_transaction_terminated_cb(void *user_ctx, const belle_sip_transaction_terminated_event_t *event);
 	static void process_request_event_cb(void *op_base, const belle_sip_request_event_t *event);
 	static void process_dialog_terminated_cb(void *ctx, const belle_sip_dialog_terminated_event_t *event);
+
+	// Private constants
+	static const size_t SIP_MESSAGE_BODY_LIMIT = 16*1024; // 16kB
 
 	// Attributes
 	SalMediaDescription *local_media = NULL;
