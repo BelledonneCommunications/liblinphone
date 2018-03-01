@@ -464,7 +464,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::Multipart;
 	}
 
-	if ((currentRecvStep & ChatMessagePrivate::Step::FileUpload) == ChatMessagePrivate::Step::FileUpload) {
+	if ((currentRecvStep &ChatMessagePrivate::Step::FileUpload) == ChatMessagePrivate::Step::FileUpload) {
 		lInfo() << "File download step already done, skipping";
 	} else {
 		// This will check if internal content is FileTransfer and make the appropriate changes
@@ -530,6 +530,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 }
 
 void ChatMessagePrivate::send () {
+
 	L_Q();
 	SalOp *op = salOp;
 	LinphoneCall *lcall = nullptr;
@@ -661,9 +662,9 @@ void ChatMessagePrivate::send () {
 
 	auto msgOp = dynamic_cast<SalMessageOpInterface *>(op);
 	if (internalContent.getContentType().isValid()) {
-		msgOp->send_message(internalContent.getContentType().asString().c_str(), internalContent.getBodyAsUtf8String().c_str());
+		msgOp->send_message(internalContent);
 	} else {
-		msgOp->send_message(ContentType::PlainText.asString().c_str(), internalContent.getBodyAsUtf8String().c_str());
+		BCTBX_SLOGE << "Send message invalid content";
 	}
 	
 	// Restore FileContents and remove FileTransferContents
