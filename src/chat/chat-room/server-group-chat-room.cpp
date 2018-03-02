@@ -382,12 +382,24 @@ void ServerGroupChatRoomPrivate::setParticipantDevices(const IdentityAddress &ad
 		return;
 	lInfo() << q << ": Setting " << devices.size() << " participant device(s) for " << addr.asString();
 	for (const auto &deviceAddr : devices) {
-		if (participant->getPrivate()->findDevice(deviceAddr))
-			continue;
-		shared_ptr<ParticipantDevice> device = participant->getPrivate()->addDevice(deviceAddr);
-		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantDeviceAdded(addr, deviceAddr);
-		q->getCore()->getPrivate()->mainDb->addEvent(event);
-		inviteDevice(device);
+		bool toInvite = false;
+		shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddr);
+		if (device) {
+			if ((getParticipantDeviceState(device) != ParticipantDevice::State::Present)
+				&& (getParticipantDeviceState(device) != ParticipantDevice::State::Joining)
+			) {
+				setParticipantDeviceState(device, ParticipantDevice::State::Joining);
+				toInvite = true;
+			}
+		} else {
+			device = participant->getPrivate()->addDevice(deviceAddr);
+			toInvite = true;
+		}
+		if (toInvite) {
+			shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantDeviceAdded(addr, deviceAddr);
+			q->getCore()->getPrivate()->mainDb->addEvent(event);
+			inviteDevice(device);
+		}
 	}
 }
 
@@ -425,9 +437,6 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 		}
 		if (session)
 			acceptSession(session);
-
-		// Remove participants for compatible list that do not have at least one device in the Present state
-		removeNonPresentParticipants(compatibleParticipants);
 
 		lInfo() << q << ": Fetching participant devices";
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
@@ -553,31 +562,9 @@ void ServerGroupChatRoomPrivate::queueMessage (const shared_ptr<Message> &msg, c
 		queuedMessages[uri].push(msg);
 }
 
-void ServerGroupChatRoomPrivate::removeNonPresentParticipants (const list <IdentityAddress> &compatibleParticipants) {
-	L_Q();
-	L_Q_T(LocalConference, qConference);
-	for (const auto &addr : compatibleParticipants) {
-		shared_ptr<Participant> participant = q->findParticipant(addr);
-		if (participant) {
-			bool toRemove = true;
-			for (const auto &device : participant->getPrivate()->getDevices()) {
-				if (device->getState() == ParticipantDevice::State::Present) {
-					toRemove = false;
-					break;
-				}
-			}
-			if (toRemove) {
-				lInfo() << q << ": Remove participant '" << participant->getAddress().asString()
-					<< "' to be able to add it again (it does not have at least one device in the Present state";
-				qConference->getPrivate()->participants.remove(participant);
-			}
-		}
-	}
-}
-
 // -----------------------------------------------------------------------------
 
-void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<const CallSession> &session) {
+void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const shared_ptr<const CallSession> &session) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 
@@ -645,6 +632,13 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<Cal
 				session->deferUpdate();
 		}
 	}
+}
+
+void ServerGroupChatRoomPrivate::onCallSessionSetReleased (const shared_ptr<CallSession> &session) {
+	L_Q();
+	shared_ptr<ParticipantDevice> device = q->findParticipantDevice(session);
+	if (device)
+		device->setSession(nullptr);
 }
 
 // =============================================================================
@@ -716,7 +710,7 @@ bool ServerGroupChatRoom::hasBeenLeft () const {
 void ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
 	L_D();
 	L_D_T(LocalConference, dConference);
-	if (findParticipant(addr)) {
+	if (d->findFilteredParticipant(addr)) {
 		lInfo() << this << ": Not adding participant '" << addr.asString() << "' because it is already a participant";
 		return;
 	}
@@ -727,7 +721,8 @@ void ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const Cal
 	}
 
 	lInfo() << this << ": Adding participant '" << addr.asString() << "'";
-	LocalConference::addParticipant(addr, params, hasMedia);
+	if (!findParticipant(addr))
+		LocalConference::addParticipant(addr, params, hasMedia);
 	d->filteredParticipants.push_back(findParticipant(addr));
 	shared_ptr<ConferenceParticipantEvent> event = dConference->eventHandler->notifyParticipantAdded(addr);
 	getCore()->getPrivate()->mainDb->addEvent(event);
