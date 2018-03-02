@@ -55,6 +55,49 @@ LINPHONE_BEGIN_NAMESPACE
 	} \
 	bctbx_free(callbacksCopy);
 
+void ServerGroupChatRoomPrivate::setState (ChatRoom::State state) {
+	L_Q();
+	L_Q_T(LocalConference, qConference);
+	ChatRoomPrivate::setState(state);
+	if (state == ChatRoom::State::Created) {
+		// Handle transitional states (joining and leaving of participants)
+		// This is needed when the chat room is loaded from its state in database
+		for (const auto &participant : qConference->getPrivate()->participants) {
+			bool atLeastOneDeviceLeaving = false;
+			bool atLeastOneDeviceJoining = false;
+			bool atLeastOneDevicePresent = false;
+			for (const auto &device : participant->getPrivate()->getDevices()) {
+				switch (getParticipantDeviceState(device)) {
+					case ParticipantDevice::State::Leaving:
+						atLeastOneDeviceLeaving = true;
+						break;
+					case ParticipantDevice::State::Joining:
+						atLeastOneDeviceJoining = true;
+						break;
+					case ParticipantDevice::State::Present:
+						atLeastOneDevicePresent = true;
+						break;
+					case ParticipantDevice::State::Left:
+						break;
+				}
+			}
+
+			if (atLeastOneDeviceLeaving) {
+				q->removeParticipant(participant);
+			} else {
+				if (atLeastOneDeviceJoining) {
+					for (const auto &device : participant->getPrivate()->getDevices()) {
+						if (getParticipantDeviceState(device) == ParticipantDevice::State::Joining)
+							inviteDevice(device);
+					}
+				}
+				if (atLeastOneDevicePresent)
+					filteredParticipants.push_back(participant);
+			}
+		}
+	}
+}
+
 shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const IdentityAddress &addr) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
@@ -494,7 +537,7 @@ void ServerGroupChatRoomPrivate::queueMessage (const shared_ptr<Message> &msg) {
 }
 
 void ServerGroupChatRoomPrivate::queueMessage (const shared_ptr<Message> &msg, const IdentityAddress &deviceAddress) {
-	std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
+	chrono::system_clock::time_point timestamp = chrono::system_clock::now();
 	string uri(deviceAddress.asString());
 	// Remove queued messages older than one week
 	while (!queuedMessages[uri].empty()) {
@@ -636,41 +679,6 @@ LocalConference(getCore(), peerAddress, nullptr) {
 	dConference->conferenceAddress = peerAddress;
 	dConference->eventHandler->setLastNotify(lastNotifyId);
 	dConference->eventHandler->setChatRoomId(d->chatRoomId);
-
-	// Handle transitional states (joining and leaving of participants)
-	for (const auto &participant : dConference->participants) {
-		bool atLeastOneDeviceLeaving = false;
-		bool atLeastOneDeviceJoining = false;
-		bool atLeastOneDevicePresent = false;
-		for (const auto &device : participant->getPrivate()->getDevices()) {
-			switch (d->getParticipantDeviceState(device)) {
-				case ParticipantDevice::State::Leaving:
-					atLeastOneDeviceLeaving = true;
-					break;
-				case ParticipantDevice::State::Joining:
-					atLeastOneDeviceJoining = true;
-					break;
-				case ParticipantDevice::State::Present:
-					atLeastOneDevicePresent = true;
-					break;
-				case ParticipantDevice::State::Left:
-					break;
-			}
-		}
-
-		if (atLeastOneDeviceLeaving) {
-			removeParticipant(participant);
-		} else {
-			if (atLeastOneDeviceJoining) {
-				for (const auto &device : participant->getPrivate()->getDevices()) {
-					if (d->getParticipantDeviceState(device) == ParticipantDevice::State::Joining)
-						d->inviteDevice(device);
-				}
-			}
-			if (atLeastOneDevicePresent)
-				d->filteredParticipants.push_back(participant);
-		}
-	}
 }
 
 shared_ptr<Core> ServerGroupChatRoom::getCore () const {
