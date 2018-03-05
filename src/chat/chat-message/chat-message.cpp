@@ -40,6 +40,7 @@
 #include "core/core-p.h"
 #include "logger/logger.h"
 #include "chat/notification/imdn.h"
+#include "sip-tools/sip-headers.h"
 
 #include "ortp/b64.h"
 
@@ -402,7 +403,9 @@ void ChatMessagePrivate::sendImdn (Imdn::Type imdnType, LinphoneReason reason) {
 
 	if (reason != LinphoneReasonNone)
 		msg->getPrivate()->setEncryptionPrevented(true);
+
 	msg->setToBeStored(false);
+	msg->getPrivate()->addSalCustomHeader(PriorityHeader::HeaderName, PriorityHeader::NonUrgent);
 
 	msg->getPrivate()->send();
 }
@@ -663,11 +666,8 @@ void ChatMessagePrivate::send () {
 			if ((currentSendStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
 				lInfo() << "Cpim step already done, skipping";
 			} else {
-				int defaultValue = !!lp_config_get_string(core->getCCore()->config, "misc", "conference_factory_uri", nullptr);
-				if (lp_config_get_int(core->getCCore()->config, "sip", "use_cpim", defaultValue) == 1) {
-					CpimChatMessageModifier ccmm;
-					ccmm.encode(q->getSharedFromThis(), errorCode);
-				}
+				CpimChatMessageModifier ccmm;
+				ccmm.encode(q->getSharedFromThis(), errorCode);
 				currentSendStep |= ChatMessagePrivate::Step::Cpim;
 			}
 		}
