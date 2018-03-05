@@ -168,9 +168,11 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		device = participant->getPrivate()->addDevice(gruu);
 		session = device->getSession();
 		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent = qConference->getPrivate()->eventHandler->notifyParticipantDeviceAdded(participant->getAddress(), gruu);
-		shared_ptr<ConferenceParticipantEvent> adminEvent = qConference->getPrivate()->eventHandler->notifyParticipantSetAdmin(participant->getAddress(), true);
 		q->getCore()->getPrivate()->mainDb->addEvent(deviceEvent);
-		q->getCore()->getPrivate()->mainDb->addEvent(adminEvent);
+		if (!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne)) {
+			shared_ptr<ConferenceParticipantEvent> adminEvent = qConference->getPrivate()->eventHandler->notifyParticipantSetAdmin(participant->getAddress(), true);
+			q->getCore()->getPrivate()->mainDb->addEvent(adminEvent);
+		}
 	} else {
 		// INVITE coming from an invited participant
 		participant = q->findParticipant(IdentityAddress(op->get_from()));
@@ -180,6 +182,8 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 			joiningPendingAfterCreation = false;
 			return;
 		}
+		if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne)
+			participant->getPrivate()->setAdmin(true);
 		device = participant->getPrivate()->addDevice(gruu);
 		session = device->getSession();
 	}
@@ -406,8 +410,10 @@ void ServerGroupChatRoomPrivate::setParticipantDevices(const IdentityAddress &ad
 void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddress &deviceAddr, const list<IdentityAddress> &compatibleParticipants) {
 	L_Q();
 	shared_ptr<Participant> participant = findFilteredParticipant(deviceAddr);
-	if (!participant)
+	if (!participant) {
+		lError() << q << ": The device address that asked for compatible participants checking cannot be found in the filtered participants list";
 		return;
+	}
 	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddr);
 	shared_ptr<CallSession> session = device->getSession();
 	if (compatibleParticipants.size() == 0) {
@@ -645,7 +651,7 @@ void ServerGroupChatRoomPrivate::onCallSessionSetReleased (const shared_ptr<Call
 
 ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallOp *op)
 : ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomId()),
-LocalConference(getCore(), IdentityAddress(linphone_core_get_conference_factory_uri(core->getCCore())), nullptr) {
+LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(core->getCCore()))), nullptr) {
 	L_D();
 	LocalConference::setSubject(op->get_subject() ? op->get_subject() : "");
 	const char *oneToOneChatRoomStr = sal_custom_header_find(op->get_recv_custom_header(), "One-To-One-Chat-Room");
@@ -808,11 +814,14 @@ void ServerGroupChatRoom::removeParticipants (const list<shared_ptr<Participant>
 }
 
 void ServerGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participant> &participant, bool isAdmin) {
+	L_D();
 	L_D_T(LocalConference, dConference);
 	if (isAdmin != participant->isAdmin()) {
 		participant->getPrivate()->setAdmin(isAdmin);
-		shared_ptr<ConferenceParticipantEvent> event = dConference->eventHandler->notifyParticipantSetAdmin(participant->getAddress(), participant->isAdmin());
-		getCore()->getPrivate()->mainDb->addEvent(event);
+		if (!(d->capabilities & ServerGroupChatRoom::Capabilities::OneToOne)) {
+			shared_ptr<ConferenceParticipantEvent> event = dConference->eventHandler->notifyParticipantSetAdmin(participant->getAddress(), participant->isAdmin());
+			getCore()->getPrivate()->mainDb->addEvent(event);
+		}
 	}
 }
 
