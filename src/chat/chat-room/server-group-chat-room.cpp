@@ -101,14 +101,14 @@ void ServerGroupChatRoomPrivate::setState (ChatRoom::State state) {
 shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const IdentityAddress &addr) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
-	shared_ptr<Participant> participant;
-	participant = q->findParticipant(addr);
+	shared_ptr<Participant> participant = q->findParticipant(addr);
 	if (!participant) {
 		participant = make_shared<Participant>(addr);
 		qConference->getPrivate()->participants.push_back(participant);
 		shared_ptr<ConferenceParticipantEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantAdded(addr);
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
 	}
+	filteredParticipants.remove(participant);
 	filteredParticipants.push_back(participant);
 	return participant;
 }
@@ -161,9 +161,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	shared_ptr<CallSession> session;
 	if (joiningPendingAfterCreation) {
 		// Check if the participant is already there, this INVITE may come from an unknown device of an already present participant
-		participant = q->findParticipant(IdentityAddress(op->get_from()));
-		if (!participant)
-			participant = addParticipant(IdentityAddress(op->get_from()));
+		participant = addParticipant(IdentityAddress(op->get_from()));
 		participant->getPrivate()->setAdmin(true);
 		device = participant->getPrivate()->addDevice(gruu);
 		session = device->getSession();
