@@ -340,7 +340,12 @@ LinphoneReason ServerGroupChatRoomPrivate::onSipMessageReceived (SalOp *op, cons
 	}
 
 	// Do not check that we received a CPIM message because ciphered messages are not
-	shared_ptr<Message> msg = make_shared<Message>(op->get_from(), message->content_type, message->text ? message->text : "");
+	shared_ptr<Message> msg = make_shared<Message>(
+		op->get_from(),
+		message->content_type,
+		message->text ? message->text : "",
+		op->get_recv_custom_header()
+	);
 
 	// Handle reinvite of potentially missing participant in one-to-one chat room
 	if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) {
@@ -473,6 +478,18 @@ void ServerGroupChatRoomPrivate::checkCompatibleParticipants (const IdentityAddr
 
 // -----------------------------------------------------------------------------
 
+void ServerGroupChatRoomPrivate::copyMessageHeaders (const shared_ptr<Message> &fromMessage, const shared_ptr<ChatMessage> &toMessage) {
+	string headersToCopy[] = {
+		"Expires",
+		"Priority"
+	};
+	for (const auto &headerName : headersToCopy) {
+		const char *headerValue = sal_custom_header_find(fromMessage->customHeaders, headerName.c_str());
+		if (headerValue)
+			toMessage->getPrivate()->addSalCustomHeader(headerName, headerValue);
+	}
+}
+
 void ServerGroupChatRoomPrivate::designateAdmin () {
 	L_Q();
 	// Do not designate new admin for one-to-one chat room
@@ -489,6 +506,7 @@ void ServerGroupChatRoomPrivate::dispatchMessage (const shared_ptr<Message> &mes
 		shared_ptr<ParticipantDevice> device = p->getPrivate()->findDevice(deviceAddr);
 		if (device) {
 			shared_ptr<ChatMessage> msg = q->createChatMessage();
+			copyMessageHeaders(message, msg);
 			msg->setInternalContent(message->content);
 			msg->getPrivate()->forceFromAddress(q->getConferenceAddress());
 			msg->getPrivate()->forceToAddress(device->getAddress());
