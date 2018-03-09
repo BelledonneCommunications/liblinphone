@@ -143,8 +143,17 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 				qConference->getPrivate()->eventHandler->subscribe(q->getChatRoomId());
 		} else if (q->getState() == ChatRoom::State::TerminationPending)
 			qConference->getPrivate()->focus->getPrivate()->getSession()->terminate();
-	} else if ((newState == CallSession::State::Released) && (q->getState() == ChatRoom::State::TerminationPending)) {
-		q->onConferenceTerminated(q->getConferenceAddress());
+	} else if (newState == CallSession::State::Released) {
+		if (q->getState() == ChatRoom::State::TerminationPending) {
+			if (session->getReason() == LinphoneReasonNone) {
+				// Everything is fine, the chat room has been left on the server side
+				q->onConferenceTerminated(q->getConferenceAddress());
+			} else {
+				// Go to state TerminationFailed and then back to Created since it has not been terminated
+				setState(ChatRoom::State::TerminationFailed);
+				setState(ChatRoom::State::Created);
+			}
+		}
 	} else if (newState == CallSession::State::Error) {
 		if (q->getState() == ChatRoom::State::CreationPending)
 			setState(ChatRoom::State::CreationFailed);
@@ -512,7 +521,7 @@ void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferencePartici
 
 	d->addEvent(event);
 
-	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(this);
+	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_participant_added(cr, L_GET_C_BACK_PTR(event));
 }
 
@@ -532,7 +541,7 @@ void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParti
 	dConference->participants.remove(participant);
 	d->addEvent(event);
 
-	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(this);
+	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_participant_removed(cr, L_GET_C_BACK_PTR(event));
 }
 
@@ -560,7 +569,7 @@ void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferencePart
 
 	d->addEvent(event);
 
-	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(this);
+	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_participant_admin_status_changed(cr, L_GET_C_BACK_PTR(event));
 }
 
@@ -576,7 +585,7 @@ void ClientGroupChatRoom::onSubjectChanged (const shared_ptr<ConferenceSubjectEv
 
 	d->addEvent(event);
 
-	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(this);
+	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_subject_changed(cr, L_GET_C_BACK_PTR(event));
 }
 
@@ -600,7 +609,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 
 	d->addEvent(event);
 
-	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(this);
+	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_participant_device_added(cr, L_GET_C_BACK_PTR(event));
 }
 
@@ -622,7 +631,7 @@ void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<Conferenc
 	participant->getPrivate()->removeDevice(event->getDeviceAddress());
 	d->addEvent(event);
 
-	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(this);
+	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_participant_device_removed(cr, L_GET_C_BACK_PTR(event));
 }
 

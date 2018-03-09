@@ -54,8 +54,6 @@ public:
 		Started = 1 << 5,
 	};
 
-	ChatMessagePrivate () = default;
-
 	void setApplyModifiers (bool value) { applyModifiers = value; }
 
 	void setDirection (ChatMessage::Direction dir);
@@ -102,9 +100,9 @@ public:
 	SalCustomHeader *getSalCustomHeaders () const;
 	void setSalCustomHeaders (SalCustomHeader *headers);
 
-	void addSalCustomHeader (const std::string& name, const std::string& value);
-	void removeSalCustomHeader (const std::string& name);
-	std::string getSalCustomHeaderValue (const std::string& name);
+	void addSalCustomHeader (const std::string &name, const std::string &value);
+	void removeSalCustomHeader (const std::string &name);
+	std::string getSalCustomHeaderValue (const std::string &name);
 
 	void loadFileTransferUrlFromBodyToContent ();
 
@@ -138,6 +136,9 @@ public:
 
 	LinphoneContent *getFileTransferInformation () const;
 	void setFileTransferInformation (const LinphoneContent *content);
+
+	void addContent (Content &content);
+	void removeContent (const Content &content);
 
 	bool downloadFile ();
 
