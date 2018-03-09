@@ -53,7 +53,7 @@ LINPHONE_BEGIN_NAMESPACE
 		if (cb) \
 			cb(__VA_ARGS__); \
 	} \
-	bctbx_free(callbacksCopy);
+	bctbx_list_free(callbacksCopy);
 
 void ServerGroupChatRoomPrivate::setState (ChatRoom::State state) {
 	L_Q();
