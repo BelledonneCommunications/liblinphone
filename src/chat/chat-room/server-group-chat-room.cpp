@@ -119,9 +119,12 @@ ParticipantDevice::State ServerGroupChatRoomPrivate::getParticipantDeviceState (
 
 void ServerGroupChatRoomPrivate::setParticipantDeviceState (const shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state) {
 	L_Q();
-	lInfo() << q << ": Set participant device '" << device->getAddress().asString() << "' state to " << state;
+	string address(device->getAddress().asString());
+	lInfo() << q << ": Set participant device '" << address << "' state to " << state;
 	device->setState(state);
 	q->getCore()->getPrivate()->mainDb->updateChatRoomParticipantDevice(q->getSharedFromThis(), device);
+	if (state == ParticipantDevice::State::Leaving)
+		queuedMessages.erase(address);
 }
 
 void ServerGroupChatRoomPrivate::acceptSession (const shared_ptr<CallSession> &session) {
@@ -278,6 +281,8 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<const Parti
 			break;
 		}
 	}
+
+	queuedMessages.erase(participant->getAddress().asString());
 
 	// Do not notify participant removal for one-to-one chat rooms
 	if (!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne)) {
