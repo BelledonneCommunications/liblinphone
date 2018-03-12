@@ -632,18 +632,21 @@ void ChatMessagePrivate::send () {
 			lInfo() << "Encryption step already done, skipping";
 		} else {
 			if (!encryptionPrevented) {
+				currentSendStep |= ChatMessagePrivate::Step::Encryption;
 				EncryptionChatMessageModifier ecmm;
 				ChatMessageModifier::Result result = ecmm.encode(q->getSharedFromThis(), errorCode);
+				if (result == ChatMessageModifier::Result::Done) {
+					// LIMEv2 successful callback has sent the message, do not send another one
+					return;
+				}
 				if (result == ChatMessageModifier::Result::Error) {
 					sal_error_info_set((SalErrorInfo *)op->get_error_info(), SalReasonNotAcceptable, "SIP", errorCode, "Unable to encrypt IM", nullptr);
 					setState(ChatMessage::State::NotDelivered);
 					return;
 				} else if (result == ChatMessageModifier::Result::Suspended) {
-					currentSendStep |= ChatMessagePrivate::Step::Encryption;
 					return;
 				}
 			}
-			currentSendStep |= ChatMessagePrivate::Step::Encryption;
 		}
 	}
 

@@ -26,7 +26,6 @@
 #include "conference/participant.h"
 #include "conference/participant-p.h"
 #include "core/core.h"
-#include "linphone/core_utils.h" // iterate hook
 #include "lime-v2.h"
 #include "private.h"
 
@@ -46,7 +45,7 @@ void BelleSipLimeManager::processIoError (void *data, const belle_sip_io_error_e
 	delete(userData);
 }
 
-void BelleSipLimeManager::processResponse(void *data, const belle_http_response_event_t *event) noexcept {
+void BelleSipLimeManager::processResponse (void *data, const belle_http_response_event_t *event) noexcept {
 	X3DHServerPostContext *userData = static_cast<X3DHServerPostContext *>(data);
 	if (event->response){
 		auto code=belle_http_response_get_status_code(event->response);
@@ -60,12 +59,13 @@ void BelleSipLimeManager::processResponse(void *data, const belle_http_response_
 	delete(userData);
 }
 
-void BelleSipLimeManager::processAuthRequestedFromCarddavRequest(void *data, belle_sip_auth_event_t *event) noexcept {
+void BelleSipLimeManager::processAuthRequestedFromCarddavRequest (void *data, belle_sip_auth_event_t *event) noexcept {
+	// In real life situation, get the real username and password of user for authentication
 	belle_sip_auth_event_set_username(event, "alice");
 	belle_sip_auth_event_set_passwd(event, "you see the problem is this");
 }
 
-BelleSipLimeManager::BelleSipLimeManager(const string &db_access, belle_http_provider_t *prov) : LimeManager(db_access, [prov](const string &url, const string &from, const vector<uint8_t> &message, const lime::limeX3DHServerResponseProcess &responseProcess) {
+BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_provider_t *prov) : LimeManager(db_access, [prov](const string &url, const string &from, const vector<uint8_t> &message, const lime::limeX3DHServerResponseProcess &responseProcess) {
 	belle_http_request_listener_callbacks_t cbs= {};
 	belle_http_request_listener_t *l;
 	belle_generic_uri_t *uri;
@@ -97,18 +97,34 @@ LimeV2::LimeV2 (const string &db_access, belle_http_provider_t *prov) {
 	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(db_access, prov));
 }
 
+static vector<uint8_t> encodeBase64 (const vector<uint8_t> &input) {
+	const unsigned char *inputBuffer = input.data();
+	size_t inputLength = input.size();
+	size_t encodedLength = 0;
+	bctbx_base64_encode(NULL, &encodedLength, inputBuffer, inputLength);			// set encodedLength to the correct value
+	unsigned char* encodedBuffer = new unsigned char[encodedLength];				// allocate encoded buffer with correct length
+	bctbx_base64_encode(encodedBuffer, &encodedLength, inputBuffer, inputLength);	// real encoding
+	vector<uint8_t> output(encodedBuffer, encodedBuffer + encodedLength);
+	delete[] encodedBuffer;
+	return output;
+}
 
-static bool_t limeProcessOutgoingMessageAsyncImplem(void *message) {
-	cout << "asyncronous send() from hook" << endl;
-	shared_ptr<ChatMessage> *chatMessage = static_cast<shared_ptr<ChatMessage> *>(message);
-	(*chatMessage)->send();
-// 	delete chatMessage;
-	return TRUE;
+static vector<uint8_t> decodeBase64 (const vector<uint8_t> &input) {
+	const unsigned char *inputBuffer = input.data();
+	size_t inputLength = input.size();
+	size_t decodedLength = 0;
+	bctbx_base64_decode(NULL, &decodedLength, inputBuffer, inputLength);			// set decodedLength to the correct value
+	unsigned char* decodedBuffer = new unsigned char[decodedLength];				// allocate decoded buffer with correct length
+	bctbx_base64_decode(decodedBuffer, &decodedLength, inputBuffer, inputLength);	// real decoding
+	vector<uint8_t> output(decodedBuffer, decodedBuffer + decodedLength);
+	delete[] decodedBuffer;
+	return output;
 }
 
 ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
 
 	bool outgoingDebug = false;
+	ChatMessageModifier::Result result = ChatMessageModifier::Result::Suspended;
 
 	// Do not encrypt iscomposing
 
@@ -136,7 +152,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 		cout << "localDeviceId = " << localDeviceId << endl;
 		cout << "recipientUserId = " << *recipientUserId << endl;
 	}
-	belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [recipients, cipherMessage, message, outgoingDebug] (lime::callbackReturn returnCode, string errorMessage) {
+	belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [recipients, cipherMessage, message, &result, outgoingDebug] (lime::callbackReturn returnCode, string errorMessage) {
 		if (returnCode == lime::callbackReturn::success) {
 
 			list<Content> contents;
@@ -145,41 +161,28 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 
 			for (const auto &recipient : *recipients) {
 
-				// base64 encode header
-				vector<char> cipherHeader(recipient.cipherHeader.begin(), recipient.cipherHeader.end());
-				const unsigned char *input_buffer = recipient.cipherHeader.data();
-				size_t input_length = cipherHeader.size();
-				size_t encoded_length = 0;
-				bctbx_base64_encode(NULL, &encoded_length, input_buffer, input_length);				// set encoded_length to the correct value
-				unsigned char *encoded_buffer = new unsigned char[encoded_length];					// allocate encoded buffer with correct length
-				bctbx_base64_encode(encoded_buffer, &encoded_length, input_buffer, input_length);	// real encoding
-				vector<uint8_t> encodedCipher(encoded_buffer, encoded_buffer + encoded_length);
+				vector<uint8_t> encodedCipher = encodeBase64(recipient.cipherHeader);
 				vector<char> cipherHeaderB64(encodedCipher.begin(), encodedCipher.end());
 
 				Content cipherHeaderContent;
 				cipherHeaderContent.setBody(cipherHeaderB64);
-				cipherHeaderContent.setContentType("application/lime");
+				cipherHeaderContent.setContentType(ContentType::LimeHeader); // "application/lime"
 				cipherHeaderContent.addHeader("Content-Id", recipient.deviceId);
+				stringstream contentDescription;
+				contentDescription << "Key for " << message->getToAddress().asString();
+				cipherHeaderContent.addHeader("Content-Description", contentDescription.str());
 				contents.push_back(move(cipherHeaderContent));
-
-				delete[] encoded_buffer;
 			}
 
 			// ---------------------------------------------- MESSAGE
 
-			// base64 encode message
-			const unsigned char *input_buffer = cipherMessage->data();
-			size_t input_length = cipherMessage->size();
-			size_t encoded_length = 0;
-			bctbx_base64_encode(NULL, &encoded_length, input_buffer, input_length);					// set encoded_length to the correct value
-			unsigned char *encoded_buffer = new unsigned char[encoded_length];						// allocate encoded buffer with correct length
-			bctbx_base64_encode(encoded_buffer, &encoded_length, input_buffer, input_length);		// real encoding
-			vector<uint8_t> encodedCipher(encoded_buffer, encoded_buffer + encoded_length);
-			vector<char> cipherMessageB64(encodedCipher.begin(), encodedCipher.end());
+			const vector<uint8_t> *binaryCipherMessage = cipherMessage.get();
+			vector<uint8_t> encodedMessage = encodeBase64(*binaryCipherMessage);
+			vector<char> cipherMessageB64(encodedMessage.begin(), encodedMessage.end());
 
 			Content cipherMessageContent;
 			cipherMessageContent.setBody(cipherMessageB64);
-			cipherMessageContent.setContentType("application/octet-stream"); // ContentType::OctetStream
+			cipherMessageContent.setContentType(ContentType::OctetStream); // "application/octet-stream"
 			cipherMessageContent.addHeader("Content-Description", "Encrypted Message");
 			contents.push_back(move(cipherMessageContent));
 
@@ -191,28 +194,20 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 			}
 
 			message->setInternalContent(finalContent);
-			linphone_core_add_iterate_hook(message->getCore()->getCCore(), limeProcessOutgoingMessageAsyncImplem, new shared_ptr<ChatMessage>(message));
-			return ChatMessageModifier::Result::Done;
+			message->send();
+			result = ChatMessageModifier::Result::Done;
 		} else {
 			BCTBX_SLOGE << "Lime operation failed : " << errorMessage;
-			return ChatMessageModifier::Result::Error;
+			result = ChatMessageModifier::Result::Error;
 		}
 	});
 
-	// Test errorCode
-	cout << "encrypt returning suspended" << endl;
-	return ChatMessageModifier::Result::Suspended;
+	return result;
 }
 
 ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
 
 	bool incomingDebug = false;
-
-	// Check content-type to know if we have to decrypt or not
-	ContentType incomingContentType = message->getInternalContent().getContentType();
-	cout << "incomingContentType = " << incomingContentType.asString() << endl;
-	if (incomingContentType.asString().find("multipart/mixed") == string::npos) // "multipart/encrypted"
-		return ChatMessageModifier::Result::Error;
 
 	if (incomingDebug) {
 		string fullBodyString = message->getInternalContent().getBodyAsUtf8String();
@@ -227,14 +222,13 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 
 	Content content;
 	ContentType contentType = ContentType::Multipart;
-	string boundary = "boundary=-----------------------------14737809831466499882746641449";
-	contentType.setParameter(boundary);
+	contentType.setParameter("boundary=-----------------------------14737809831466499882746641449");
 	content.setContentType(contentType);
 
 	if (message->getInternalContent().isEmpty()) {
-		cout << "LIMEv2 ERROR : no internal content" << endl;
+		cout << "LIMEv2 ERROR: no internal content" << endl;
 		if (message->getContents().front()->isEmpty()) {
-			BCTBX_SLOGE << "LIMEv2 : no content in received message";
+			BCTBX_SLOGE << "LIMEv2: no content in received message";
 		}
 		vector<char> cipherBody(message->getContents().front()->getBody());
 	}
@@ -246,12 +240,12 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	// extract cipher header from content list
 	const vector<uint8_t> &cipherHeader = [&]() {
 		for (const auto &content : contentList) {
-			if (content.getContentType().getSubType() == "lime") {
+			if (content.getContentType() == ContentType::LimeHeader) { // .getSubType() == "lime"
 				const vector<uint8_t> &cipherHeader = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
 				return cipherHeader;
 			}
 		}
-		BCTBX_SLOGE << "LIMEv2 : unexpected subtype : " << content.getContentType().getSubType();
+		BCTBX_SLOGE << "LIMEv2: unexpected content-type: " << content.getContentType().asString();
 		//TODO return nothing or null value
 		const vector<uint8_t> &cipherHeader = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
 		return cipherHeader;
@@ -260,36 +254,19 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	// extract cipher message from content list
 	const vector<uint8_t> &cipherMessage = [&]() {
 		for (const auto &content : contentList) {
-			if (content.getContentType().getSubType() == "octet-stream") {
+			if (content.getContentType() == ContentType::OctetStream) { // .getSubType() == "octet-stream"
 				const vector<uint8_t> &cipherMessage = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
 				return cipherMessage;
 			}
 		}
-		BCTBX_SLOGE << "LIMEv2 : unexpected subtype : " << content.getContentType().getSubType();
+		BCTBX_SLOGE << "LIMEv2: unexpected content-type: " << content.getContentType().asString();
 		//TODO return nothing or null value
 		const vector<uint8_t> &cipherMessage = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
 		return cipherMessage;
 	}();
 
-	// base64 decode header
-	const unsigned char* encodedHeader = cipherHeader.data();
-	size_t encodedLength = cipherHeader.size();
-	size_t decodedLength = 0;
-	bctbx_base64_decode(NULL, &decodedLength, encodedHeader, encodedLength);				// set decodedLength to the correct value
-	unsigned char *decodedHeader = new unsigned char[decodedLength];						// allocate decoded buffer with correct length
-	bctbx_base64_decode(decodedHeader, &decodedLength, encodedHeader, encodedLength);		// real decoding
-	vector<uint8_t> decodedCipherHeader(decodedHeader, decodedHeader + decodedLength);
-	delete[] decodedHeader;
-
-	// base64 decode message
-	const unsigned char* encodedMessage = cipherMessage.data();
-	encodedLength = cipherMessage.size();
-	decodedLength = 0;
-	bctbx_base64_decode(NULL, &decodedLength, encodedMessage, encodedLength);				// set decodedLength to the correct value
-	unsigned char *decodedMessage = new unsigned char[decodedLength];						// allocate decoded buffer with correct length
-	bctbx_base64_decode(decodedMessage, &decodedLength, encodedMessage, encodedLength);		// real decoding
-	vector<uint8_t> decodedCipherMessage(decodedMessage, decodedMessage + decodedLength);
-	delete[] decodedMessage;
+	vector<uint8_t> decodedCipherHeader = decodeBase64(cipherHeader);
+	vector<uint8_t> decodedCipherMessage = decodeBase64(cipherMessage);
 
 	vector<uint8_t> plainMessage{};
 
