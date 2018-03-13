@@ -273,6 +273,7 @@ else()
 		"-Wunused"
 	)
 	list(APPEND STRICT_OPTIONS_CXX
+		"-Wnon-virtual-dtor"
 		"-Woverloaded-virtual"
 	)
 	CHECK_CXX_COMPILER_FLAG("-Wsuggest-override" SUGGEST_OVERRIDE)
