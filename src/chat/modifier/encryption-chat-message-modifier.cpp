@@ -37,22 +37,28 @@ ChatMessageModifier::Result EncryptionChatMessageModifier::encode (
 	const shared_ptr<ChatMessage> &message,
 	int &errorCode
 ) {
-	ChatMessageModifier::Result result = message->getCore()->getEncryptionEngine()->processOutgoingMessage(message, errorCode);
-	if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
-		message->setIsSecured(true);
+	if (message->getCore()->getEncryptionEngine() != nullptr) {
+		ChatMessageModifier::Result result = message->getCore()->getEncryptionEngine()->processOutgoingMessage(message, errorCode);
+		if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
+			message->setIsSecured(true);
+		}
+		return result;
 	}
-	return result;
+	return ChatMessageModifier::Result::Skipped;
 }
 
 ChatMessageModifier::Result EncryptionChatMessageModifier::decode (
 	const shared_ptr<ChatMessage> &message,
 	int &errorCode
 ) {
-	ChatMessageModifier::Result result = message->getCore()->getEncryptionEngine()->processIncomingMessage(message, errorCode);
-	if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
-		message->setIsSecured(true);
+	if (message->getCore()->getEncryptionEngine() != nullptr) {
+		ChatMessageModifier::Result result = message->getCore()->getEncryptionEngine()->processIncomingMessage(message, errorCode);
+		if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
+			message->setIsSecured(true);
+		}
+		return result;
 	}
-	return result;
+	return ChatMessageModifier::Result::Skipped;
 }
 
 LINPHONE_END_NAMESPACE

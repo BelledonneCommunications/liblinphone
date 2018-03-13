@@ -95,7 +95,7 @@ void CorePrivate::notifyRegistrationStateChanged (LinphoneProxyConfig *cfg, Linp
 
 Core::Core () : Object(*new CorePrivate) {
     L_D();
-    d->imee.reset(new EncryptionEngineListener);
+    d->imee.reset();
 	xercesc::XMLPlatformUtils::Initialize();
 }
 
@@ -163,6 +163,7 @@ void Core::enableLimeV2 (bool enable) {
 
 bool Core::limeV2Enabled (void) const {
 	L_D();
+	// TODO also check type of engine
 	if (d->imee != nullptr) {
 		return true;
 	}

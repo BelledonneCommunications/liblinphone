@@ -52,6 +52,7 @@ public:
 		Encryption = 1 << 3,
 		Cpim = 1 << 4,
 		Started = 1 << 5,
+		Sent = 1 << 6,
 	};
 
 	ChatMessagePrivate () = default;
