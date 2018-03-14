@@ -46,20 +46,31 @@ list<Content> ContentManager::multipartToContentList (const Content &content) {
 		belle_sip_body_handler_t *part = BELLE_SIP_BODY_HANDLER(parts->data);
 		const belle_sip_list_t *part_headers = belle_sip_body_handler_get_headers(part);
 		belle_sip_header_content_type_t *part_content_type = nullptr;
+		Content retContent;
 		for (belle_sip_list_t *it = (belle_sip_list_t *)part_headers; it; it = it->next) {
 			belle_sip_header_t *header = BELLE_SIP_HEADER(it->data);
 			if (strcasecmp("Content-Type", belle_sip_header_get_name(header)) == 0) {
 				part_content_type = BELLE_SIP_HEADER_CONTENT_TYPE(header);
-				break;
+				retContent.setContentType(ContentType(
+					belle_sip_header_content_type_get_type(part_content_type),
+					belle_sip_header_content_type_get_subtype(part_content_type)
+				));
+				continue;
+			}
+			if (strcasecmp("Content-Id", belle_sip_header_get_name(header)) == 0) {
+				belle_sip_header_t *part_header_content_id = BELLE_SIP_HEADER(header);
+				retContent.addHeader("Content-Id", belle_sip_header_get_unparsed_value(part_header_content_id));
+				continue;
+			}
+			if (strcasecmp("Content-Description", belle_sip_header_get_name(header)) == 0) {
+				belle_sip_header_t *part_header_content_desc = nullptr;
+				part_header_content_desc = BELLE_SIP_HEADER(header);
+				retContent.addHeader("Content-Description", belle_sip_header_get_unparsed_value(part_header_content_desc));
+				continue;
 			}
 		}
 
-		Content retContent;
 		retContent.setBody((const char *)belle_sip_memory_body_handler_get_buffer(BELLE_SIP_MEMORY_BODY_HANDLER(part)));
-		retContent.setContentType(ContentType(
-			belle_sip_header_content_type_get_type(part_content_type),
-			belle_sip_header_content_type_get_subtype(part_content_type)
-		));
 		contents.push_back(retContent);
 	}
 

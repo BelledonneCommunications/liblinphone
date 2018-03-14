@@ -69,7 +69,7 @@ public:
 	static const ContentType FileTransfer;
 	static const ContentType Imdn;
 	static const ContentType ImIsComposing;
-	static const ContentType LimeHeader;
+	static const ContentType LimeKey;
 	static const ContentType Multipart;
 	static const ContentType OctetStream;
 	static const ContentType PlainText;
