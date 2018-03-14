@@ -166,7 +166,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 
 				Content cipherHeaderContent;
 				cipherHeaderContent.setBody(cipherHeaderB64);
-				cipherHeaderContent.setContentType(ContentType::LimeHeader); // "application/lime"
+				cipherHeaderContent.setContentType(ContentType::LimeKey);
 				cipherHeaderContent.addHeader("Content-Id", recipient.deviceId);
 				stringstream contentDescription;
 				contentDescription << "Key for " << message->getToAddress().asString();
@@ -182,7 +182,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 
 			Content cipherMessageContent;
 			cipherMessageContent.setBody(cipherMessageB64);
-			cipherMessageContent.setContentType(ContentType::OctetStream); // "application/octet-stream"
+			cipherMessageContent.setContentType(ContentType::OctetStream);
 			cipherMessageContent.addHeader("Content-Description", "Encrypted Message");
 			contents.push_back(move(cipherMessageContent));
 
@@ -237,12 +237,17 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 
 	list<Content> contentList = ContentManager::multipartToContentList(content);
 
-	// extract cipher header from content list
+	// extract the corresponding cipher header from content list
 	const vector<uint8_t> &cipherHeader = [&]() {
 		for (const auto &content : contentList) {
-			if (content.getContentType() == ContentType::LimeHeader) { // .getSubType() == "lime"
-				const vector<uint8_t> &cipherHeader = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
-				return cipherHeader;
+			if (content.getContentType() != ContentType::LimeKey)
+				continue;
+
+			for (const auto &header : content.getHeaders()) {
+				if (header.second == localDeviceId) {
+					const vector<uint8_t> &cipherHeader = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
+					return cipherHeader;
+				}
 			}
 		}
 		BCTBX_SLOGE << "LIMEv2: unexpected content-type: " << content.getContentType().asString();
@@ -254,7 +259,7 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	// extract cipher message from content list
 	const vector<uint8_t> &cipherMessage = [&]() {
 		for (const auto &content : contentList) {
-			if (content.getContentType() == ContentType::OctetStream) { // .getSubType() == "octet-stream"
+			if (content.getContentType() == ContentType::OctetStream) {
 				const vector<uint8_t> &cipherMessage = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
 				return cipherMessage;
 			}
@@ -335,6 +340,7 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 				}
 			});
 
+		// check if user already created
 		belleSipLimeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
 	}
 }
