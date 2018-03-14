@@ -60,6 +60,7 @@ public:
 
 	void setConferenceAddress (const IdentityAddress &conferenceAddress);
 	void setParticipantDevices (const IdentityAddress &addr, const std::list<IdentityAddress> &devices);
+	void addParticipantDevice (const IdentityAddress &participantAddress, const IdentityAddress &deviceAddress);
 	void addCompatibleParticipants (const IdentityAddress &deviceAddr, const std::list<IdentityAddress> &compatibleParticipants);
 	void checkCompatibleParticipants (const IdentityAddress &deviceAddr, const std::list<IdentityAddress> &addressesToCheck);
 

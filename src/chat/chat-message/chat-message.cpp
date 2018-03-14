@@ -52,6 +52,11 @@ using namespace B64_NAMESPACE;
 
 LINPHONE_BEGIN_NAMESPACE
 
+ChatMessagePrivate::ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir):fileTransferChatMessageModifier(cr->getCore()->getCCore()->http_provider) {
+	direction = dir;
+	setChatRoom(cr);
+}
+
 void ChatMessagePrivate::setDirection (ChatMessage::Direction dir) {
 	direction = dir;
 }
@@ -621,8 +626,8 @@ void ChatMessagePrivate::send () {
 				|| (call->getState() == CallSession::State::Pausing)
 				|| (call->getState() == CallSession::State::PausedByRemote)
 			) {
-				lInfo() << "send SIP msg through the existing call.";
-				op = linphone_call_get_op(lcall);
+				lInfo() << "Send SIP msg through the existing call";
+				op = call->getPrivate()->getOp();
 				string identity = linphone_core_find_best_identity(core->getCCore(), linphone_call_get_remote_address(lcall));
 				if (identity.empty()) {
 					LinphoneAddress *addr = linphone_address_new(q->getToAddress().asString().c_str());
@@ -829,15 +834,12 @@ bool ChatMessagePrivate::validStateTransition (ChatMessage::State currentState, 
 // -----------------------------------------------------------------------------
 
 ChatMessage::ChatMessage (const shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction direction) :
-	Object(*new ChatMessagePrivate), CoreAccessor(chatRoom->getCore()) {
-	L_D();
-
-	d->direction = direction;
-	d->setChatRoom(chatRoom);
+	Object(*new ChatMessagePrivate(chatRoom,direction)), CoreAccessor(chatRoom->getCore()) {
 }
 
 ChatMessage::~ChatMessage () {
 	L_D();
+	
 	for (Content *content : d->contents)
 		delete content;
 
@@ -1019,7 +1021,7 @@ void ChatMessage::send () {
 	// Do not allow sending a message that is already being sent or that has been correctly delivered/displayed
 	if ((d->state == State::InProgress) || (d->state == State::Delivered) || (d->state == State::FileTransferDone) ||
 			(d->state == State::DeliveredToUser) || (d->state == State::Displayed)) {
-		lWarning() << "Cannot send chat message in state " << linphone_chat_message_state_to_string((LinphoneChatMessageState)d->state);
+		lWarning() << "Cannot send chat message in state " << Utils::toString(d->state);
 		return;
 	}
 
