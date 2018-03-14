@@ -413,6 +413,28 @@ void ServerGroupChatRoomPrivate::setParticipantDevices(const IdentityAddress &ad
 			inviteDevice(device);
 		}
 	}
+
+	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
+	LinphoneAddress *laddr = linphone_address_new(addr.asString().c_str());
+	CALL_CHAT_ROOM_CBS(cr, ParticipantRegistrationSubscriptionRequested, participant_registration_subscription_requested, cr, laddr);
+	linphone_address_unref(laddr);
+}
+
+void ServerGroupChatRoomPrivate::addParticipantDevice (const IdentityAddress &participantAddress, const IdentityAddress &deviceAddress) {
+	L_Q();
+	L_Q_T(LocalConference, qConference);
+	shared_ptr<Participant> participant = findFilteredParticipant(participantAddress);
+	if (!participant)
+		return;
+	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddress);
+	if (device) {
+		// TODO
+	} else {
+		device = participant->getPrivate()->addDevice(deviceAddress);
+		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantDeviceAdded(participantAddress, deviceAddress);
+		q->getCore()->getPrivate()->mainDb->addEvent(event);
+		inviteDevice(device);
+	}
 }
 
 void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddress &deviceAddr, const list<IdentityAddress> &compatibleParticipants) {
@@ -455,7 +477,7 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 		lInfo() << q << ": Fetching participant devices";
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 		LinphoneAddress *laddr = linphone_address_new(participant->getAddress().asString().c_str());
-		CALL_CHAT_ROOM_CBS(cr, ParticipantDeviceFetched, participant_device_fetched, cr, laddr);
+		CALL_CHAT_ROOM_CBS(cr, ParticipantDeviceFetchRequested, participant_device_fetch_requested, cr, laddr);
 		linphone_address_unref(laddr);
 		q->addParticipants(compatibleParticipants, nullptr, false);
 		if ((capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && (q->getParticipantCount() == 2)) {
@@ -756,7 +778,7 @@ void ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const Cal
 
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(this);
 	LinphoneAddress *laddr = linphone_address_new(addr.asString().c_str());
-	CALL_CHAT_ROOM_CBS(cr, ParticipantDeviceFetched, participant_device_fetched, cr, laddr);
+	CALL_CHAT_ROOM_CBS(cr, ParticipantDeviceFetchRequested, participant_device_fetch_requested, cr, laddr);
 	linphone_address_unref(laddr);
 }
 
@@ -812,6 +834,12 @@ void ServerGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 
 void ServerGroupChatRoom::removeParticipant (const shared_ptr<const Participant> &participant) {
 	L_D();
+
+	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(this);
+	LinphoneAddress *laddr = linphone_address_new(participant->getAddress().asString().c_str());
+	CALL_CHAT_ROOM_CBS(cr, ParticipantRegistrationUnsubscriptionRequested, participant_registration_unsubscription_requested, cr, laddr);
+	linphone_address_unref(laddr);
+
 	for (const auto &device : participant->getPrivate()->getDevices()) {
 		if (d->getParticipantDeviceState(device) != ParticipantDevice::State::Present)
 			continue;
