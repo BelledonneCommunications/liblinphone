@@ -149,27 +149,63 @@ void Core::enableLimeV2 (bool enable) {
 		d->imee.release();
 	}
 
-	if (enable) {
-		if (d->imee == nullptr) {
-			cout << "enable LIMEv2 + registerListener" << endl;
-			string db_access = "test.c25519.sqlite3";
-			belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
-			LimeV2 *limev2 = new LimeV2(db_access, prov);
-			setEncryptionEngine(limev2);
-			d->registerListener(limev2);
+	if (!enable)
+		return;
+
+	LimeV2 *limev2;
+	if (d->imee == nullptr) {
+		string db_access = "test.c25519.sqlite3";
+		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
+		limev2 = new LimeV2(db_access, prov);
+		setEncryptionEngine(limev2);
+		d->registerListener(limev2);
+	}
+
+	// Create user if not exist and if enough information from proxy config
+	const bctbx_list_t *proxyConfigList = linphone_core_get_proxy_config_list(getCCore());
+	const bctbx_list_t *proxyConfig;
+	for(proxyConfig = proxyConfigList; proxyConfig != NULL; proxyConfig = proxyConfig->next) {
+		LinphoneProxyConfig *config = (LinphoneProxyConfig*)(proxyConfig->data);
+		if (!linphone_proxy_config_lime_v2_enabled(config))
+			continue;
+
+		const LinphoneAddress *la = linphone_proxy_config_get_contact(config);
+		if (la == nullptr)
+			return;
+
+		string localDeviceId = IdentityAddress(linphone_address_as_string_uri_only(la)).getGruu();
+		string x3dhServerUrl = "https://localhost:25519"; // 25520
+		lime::CurveId curve = lime::CurveId::c25519; // c448
+
+		lime::limeCallback callback([](lime::callbackReturn returnCode, std::string anythingToSay) {
+			if (returnCode == lime::callbackReturn::success) {
+				BCTBX_SLOGI << "Lime create user operation successful";
+			} else {
+				BCTBX_SLOGE << "Lime operation failed: " << anythingToSay;
+			}
+		});
+
+		if (localDeviceId != "")
+			return;
+
+		try {
+			limev2->getLimeManager()->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+		} catch (const exception e) {
+			ms_message("%s while creating lime user\n", e.what());
 		}
 	}
 }
 
+// TODO also check engine type
 bool Core::limeV2Enabled (void) const {
 	L_D();
-	// TODO also check type of engine
 	if (d->imee != nullptr) {
 		return true;
 	}
 	return false;
 }
 
+// TODO does not work
 bool Core::limeV2Available(void) const {
 	#ifdef HAVE_LIME
 	return true;

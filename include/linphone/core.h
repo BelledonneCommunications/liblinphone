@@ -1369,7 +1369,6 @@ LINPHONE_PUBLIC LinphoneCall *linphone_core_get_call_by_remote_address(const Lin
  */
 LINPHONE_PUBLIC LinphoneCall *linphone_core_get_call_by_remote_address2(const LinphoneCore *lc, const LinphoneAddress *remote_address);
 
-
 /**
  * Send the specified dtmf.
  *
@@ -1432,7 +1431,6 @@ LINPHONE_PUBLIC bool_t linphone_core_get_guess_hostname(LinphoneCore *lc);
  */
 LINPHONE_PUBLIC void linphone_core_enable_lime(LinphoneCore *lc, LinphoneLimeState val);
 
-
 /**
  * Returns the lime state
  * @param[in] lc LinphoneCore object
@@ -1440,7 +1438,6 @@ LINPHONE_PUBLIC void linphone_core_enable_lime(LinphoneCore *lc, LinphoneLimeSta
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC LinphoneLimeState linphone_core_lime_enabled(const LinphoneCore *lc);
-
 
 /**
  * Tells if lime is available
@@ -1450,25 +1447,23 @@ LINPHONE_PUBLIC LinphoneLimeState linphone_core_lime_enabled(const LinphoneCore 
 LINPHONE_PUBLIC bool_t linphone_core_lime_available(const LinphoneCore *lc);
 
 /**
- * Tells to LinphoneCore to use Linphone Instant Messaging Encryption V2
+ * Tells to LinphoneCore to use LIMEv2
  * @param[in] lc LinphoneCore object
  * @param[in] val The new lime state
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_core_enable_lime_v2(LinphoneCore *lc, bool_t enable);
 
-
 /**
- * Returns the lime V2 state
+ * Returns the LIMEv2 state
  * @param[in] lc LinphoneCore object
  * @return The current lime state
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC LinphoneLimeState linphone_core_lime_v2_enabled(const LinphoneCore *lc);
 
-
 /**
- * Tells if lime V2 is available
+ * Tells if LIMEv2 is available
  * @param[in] lc LinphoneCore object
  * @ingroup network_parameters
 **/

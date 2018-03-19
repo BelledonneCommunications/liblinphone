@@ -33,6 +33,30 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+static vector<uint8_t> encodeBase64 (const vector<uint8_t> &input) {
+	const unsigned char *inputBuffer = input.data();
+	size_t inputLength = input.size();
+	size_t encodedLength = 0;
+	bctbx_base64_encode(NULL, &encodedLength, inputBuffer, inputLength);			// set encodedLength to the correct value
+	unsigned char* encodedBuffer = new unsigned char[encodedLength];				// allocate encoded buffer with correct length
+	bctbx_base64_encode(encodedBuffer, &encodedLength, inputBuffer, inputLength);	// real encoding
+	vector<uint8_t> output(encodedBuffer, encodedBuffer + encodedLength);
+	delete[] encodedBuffer;
+	return output;
+}
+
+static vector<uint8_t> decodeBase64 (const vector<uint8_t> &input) {
+	const unsigned char *inputBuffer = input.data();
+	size_t inputLength = input.size();
+	size_t decodedLength = 0;
+	bctbx_base64_decode(NULL, &decodedLength, inputBuffer, inputLength);			// set decodedLength to the correct value
+	unsigned char* decodedBuffer = new unsigned char[decodedLength];				// allocate decoded buffer with correct length
+	bctbx_base64_decode(decodedBuffer, &decodedLength, inputBuffer, inputLength);	// real decoding
+	vector<uint8_t> output(decodedBuffer, decodedBuffer + decodedLength);
+	delete[] decodedBuffer;
+	return output;
+}
+
 struct X3DHServerPostContext {
 	const lime::limeX3DHServerResponseProcess responseProcess;
 	const string username;
@@ -97,39 +121,12 @@ LimeV2::LimeV2 (const string &db_access, belle_http_provider_t *prov) {
 	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(db_access, prov));
 }
 
-static vector<uint8_t> encodeBase64 (const vector<uint8_t> &input) {
-	const unsigned char *inputBuffer = input.data();
-	size_t inputLength = input.size();
-	size_t encodedLength = 0;
-	bctbx_base64_encode(NULL, &encodedLength, inputBuffer, inputLength);			// set encodedLength to the correct value
-	unsigned char* encodedBuffer = new unsigned char[encodedLength];				// allocate encoded buffer with correct length
-	bctbx_base64_encode(encodedBuffer, &encodedLength, inputBuffer, inputLength);	// real encoding
-	vector<uint8_t> output(encodedBuffer, encodedBuffer + encodedLength);
-	delete[] encodedBuffer;
-	return output;
-}
-
-static vector<uint8_t> decodeBase64 (const vector<uint8_t> &input) {
-	const unsigned char *inputBuffer = input.data();
-	size_t inputLength = input.size();
-	size_t decodedLength = 0;
-	bctbx_base64_decode(NULL, &decodedLength, inputBuffer, inputLength);			// set decodedLength to the correct value
-	unsigned char* decodedBuffer = new unsigned char[decodedLength];				// allocate decoded buffer with correct length
-	bctbx_base64_decode(decodedBuffer, &decodedLength, inputBuffer, inputLength);	// real decoding
-	vector<uint8_t> output(decodedBuffer, decodedBuffer + decodedLength);
-	delete[] decodedBuffer;
-	return output;
-}
-
 ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
 
-	bool outgoingDebug = false;
 	ChatMessageModifier::Result result = ChatMessageModifier::Result::Suspended;
 
-	// Do not encrypt iscomposing
-
     shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	const string &localDeviceId = chatRoom->getMe()->getPrivate()->getDevices().front()->getAddress().getGruu();
+	const string &localDeviceId = chatRoom->getMe()->getPrivate()->getDevices().front()->getAddress().getGruu(); // front() is approximative
 	const IdentityAddress &peerAddress = chatRoom->getPeerAddress();
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
 
@@ -144,15 +141,9 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 
 	const string &plainStringMessage = message->getInternalContent().getBodyAsUtf8String();
 	shared_ptr<const vector<uint8_t>> plainMessage = make_shared<const vector<uint8_t>>(plainStringMessage.begin(), plainStringMessage.end());
-
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
-	if (outgoingDebug) {
-		cout << "ENCRYPT" << endl;
-		cout << "localDeviceId = " << localDeviceId << endl;
-		cout << "recipientUserId = " << *recipientUserId << endl;
-	}
-	belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [recipients, cipherMessage, message, &result, outgoingDebug] (lime::callbackReturn returnCode, string errorMessage) {
+	belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [recipients, cipherMessage, message, &result] (lime::callbackReturn returnCode, string errorMessage) {
 		if (returnCode == lime::callbackReturn::success) {
 
 			list<Content> contents;
@@ -188,16 +179,11 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 
 			Content finalContent = ContentManager::contentListToMultipart(contents);
 
-			if (outgoingDebug) {
-				string fullSentMessage = finalContent.getBodyAsUtf8String();
-				cout << "full sent message = " << endl << fullSentMessage << endl;
-			}
-
 			message->setInternalContent(finalContent);
 			message->send();
 			result = ChatMessageModifier::Result::Done;
 		} else {
-			BCTBX_SLOGE << "Lime operation failed : " << errorMessage;
+			BCTBX_SLOGE << "Lime operation failed: " << errorMessage;
 			result = ChatMessageModifier::Result::Error;
 		}
 	});
@@ -206,13 +192,6 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 }
 
 ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
-
-	bool incomingDebug = false;
-
-	if (incomingDebug) {
-		string fullBodyString = message->getInternalContent().getBodyAsUtf8String();
-		cout << "receiving encrypted message = " << endl << fullBodyString << endl;
-	}
 
 	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 
@@ -226,7 +205,7 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	content.setContentType(contentType);
 
 	if (message->getInternalContent().isEmpty()) {
-		cout << "LIMEv2 ERROR: no internal content" << endl;
+		BCTBX_SLOGE << "LIMEv2: no internal content";
 		if (message->getContents().front()->isEmpty()) {
 			BCTBX_SLOGE << "LIMEv2: no content in received message";
 		}
@@ -237,7 +216,8 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 
 	list<Content> contentList = ContentManager::multipartToContentList(content);
 
-	// extract the corresponding cipher header from content list
+	// ---------------------------------------------- HEADER
+
 	const vector<uint8_t> &cipherHeader = [&]() {
 		for (const auto &content : contentList) {
 			if (content.getContentType() != ContentType::LimeKey)
@@ -256,7 +236,8 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 		return cipherHeader;
 	}();
 
-	// extract cipher message from content list
+	// ---------------------------------------------- MESSAGE
+
 	const vector<uint8_t> &cipherMessage = [&]() {
 		for (const auto &content : contentList) {
 			if (content.getContentType() == ContentType::OctetStream) {
@@ -272,27 +253,22 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 
 	vector<uint8_t> decodedCipherHeader = decodeBase64(cipherHeader);
 	vector<uint8_t> decodedCipherMessage = decodeBase64(cipherMessage);
-
 	vector<uint8_t> plainMessage{};
 
-	if (incomingDebug) {
-		cout << "DECRYPT" << endl;
-		cout << "localDeviceId = " << localDeviceId << endl;
-		cout << "recipientUserId = " << recipientUserId << endl;
-		cout << "senderDeviceId = " << senderDeviceId << endl;
+	bool decryptResult = false;
+	try {
+		decryptResult = belleSipLimeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader, decodedCipherMessage, plainMessage);
+	} catch (const exception e) {
+		ms_message("%s while decrypting message\n", e.what());
 	}
-	bool decryptResult = belleSipLimeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader, decodedCipherMessage, plainMessage);
 
 	if (!decryptResult)
 		return ChatMessageModifier::Result::Error;
 
 	string plainMessageString(plainMessage.begin(), plainMessage.end());
 
-	if (incomingDebug)
-		cout << endl << "decrypted message = " << endl << plainMessageString << endl;
-
 	Content finalContent;
-	ContentType finalContentType = ContentType::Cpim; // should be the content-type of the decrypted message
+	ContentType finalContentType = ContentType::Cpim; // TODO should be the content-type of the decrypted message
 	finalContent.setContentType(finalContentType);
 	finalContent.setBodyFromUtf8(plainMessageString);
 	message->setInternalContent(finalContent);
@@ -324,24 +300,33 @@ void LimeV2::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReac
 	// work in progress
 }
 
+std::shared_ptr<BelleSipLimeManager> LimeV2::getLimeManager () {
+	return belleSipLimeManager;
+}
+
 void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const string &message) {
 	if (state == LinphoneRegistrationState::LinphoneRegistrationOk) {
 
-		// Create LIMEv2 user
 		string localDeviceId = IdentityAddress(linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg))).getGruu();
-		string x3dhServerUrl = "https://localhost:25519";
-		lime::CurveId curve = lime::CurveId::c25519;
+		string x3dhServerUrl = "https://localhost:25519"; // 25520
+		lime::CurveId curve = lime::CurveId::c25519; // c448
 
 		lime::limeCallback callback([](lime::callbackReturn returnCode, std::string anythingToSay) {
-				if (returnCode == lime::callbackReturn::success) {
-					BCTBX_SLOGI << "Lime create user operation successful";
-				} else {
-					BCTBX_SLOGE << "Lime operation failed : " << anythingToSay;
-				}
-			});
+			if (returnCode == lime::callbackReturn::success) {
+				BCTBX_SLOGI << "Lime create user operation successful";
+			} else {
+				BCTBX_SLOGE << "Lime operation failed: " << anythingToSay;
+			}
+		});
 
-		// check if user already created
-		belleSipLimeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+		if (localDeviceId == "")
+			return;
+
+		try {
+			belleSipLimeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+		} catch (const exception e) {
+			ms_message("%s while creating lime user\n", e.what());
+		}
 	}
 }
 

@@ -18,8 +18,6 @@ Copyright (C) 2000  Simon MORLAT (simon.morlat@linphone.org)
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <iostream>
-
 #include <ctype.h>
 
 #include "linphone/core_utils.h"
@@ -818,6 +816,12 @@ LinphoneStatus linphone_proxy_config_done(LinphoneProxyConfig *cfg)
 		}
 		cfg->commit = TRUE;
 	}
+
+	// will try to create user if not exist
+	if (cfg->lime_v2) {
+		linphone_core_enable_lime_v2(cfg->lc, TRUE);
+	}
+
 	if (cfg->register_changed){
 		cfg->commit = TRUE;
 		cfg->register_changed = FALSE;

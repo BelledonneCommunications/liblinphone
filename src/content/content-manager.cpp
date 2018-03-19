@@ -57,6 +57,7 @@ list<Content> ContentManager::multipartToContentList (const Content &content) {
 				));
 				continue;
 			}
+			// TODO manage all headers
 			if (strcasecmp("Content-Id", belle_sip_header_get_name(header)) == 0) {
 				belle_sip_header_t *part_header_content_id = BELLE_SIP_HEADER(header);
 				retContent.addHeader("Content-Id", belle_sip_header_get_unparsed_value(part_header_content_id));

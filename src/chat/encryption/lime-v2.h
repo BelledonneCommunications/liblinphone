@@ -33,17 +33,20 @@ LINPHONE_BEGIN_NAMESPACE
 
 class BelleSipLimeManager : public lime::LimeManager {
 public:
-	BelleSipLimeManager(const std::string &db_access, belle_http_provider_t *prov);
+	BelleSipLimeManager (const std::string &db_access, belle_http_provider_t *prov);
 
 private:
 	static void processIoError (void *data, const belle_sip_io_error_event_t *event) noexcept;
-	static void processResponse(void *data, const belle_http_response_event_t *event) noexcept;
-	static void processAuthRequestedFromCarddavRequest(void *data, belle_sip_auth_event_t *event) noexcept;
+	static void processResponse (void *data, const belle_http_response_event_t *event) noexcept;
+	static void processAuthRequestedFromCarddavRequest (void *data, belle_sip_auth_event_t *event) noexcept;
 };
 
 class LimeV2 : public EncryptionEngineListener, public CoreListener {
 public:
-	LimeV2(const std::string &db_access, belle_http_provider_t *prov); // no manager without Database and http provider
+	LimeV2 (const std::string &db_access, belle_http_provider_t *prov); // no manager without Database and http provider
+// 	std::unique_ptr<BelleSipLimeManager> belleSipLimeManager; // should not be public
+
+	std::shared_ptr<BelleSipLimeManager> getLimeManager ();
 
 	// EncryptionEngineListener overrides
 	ChatMessageModifier::Result processIncomingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
@@ -58,7 +61,7 @@ public:
 	void onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) override;
 
 private:
-	std::unique_ptr<BelleSipLimeManager> belleSipLimeManager;
+	std::shared_ptr<BelleSipLimeManager> belleSipLimeManager;
 };
 
 LINPHONE_END_NAMESPACE
