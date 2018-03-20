@@ -2506,8 +2506,6 @@ end:
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-
-	// clean lime db
 }
 
 static void group_chat_lime_v2_send_encrypted_message_with_composing (void) {
@@ -2953,7 +2951,7 @@ static void group_chat_lime_v2_X3DH_server_unavailable (void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void undecryptable_message_received(LinphoneChatRoom *room, LinphoneChatMessage *msg) {
+static void undecryptable_message_received (LinphoneChatRoom *room, LinphoneChatMessage *msg) {
 	get_stats(linphone_chat_room_get_core(room))->number_of_LinphoneMessageUndecryptable++;
 }
 
@@ -3015,6 +3013,40 @@ static void group_chat_lime_v2_encrypted_message_not_decrypted (void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void group_chat_lime_v2_update_keys (void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	int dummy = 0;
+
+	// Enable LIMEv2
+	printf("enabling LIMEv2 from tester\n");
+	linphone_core_enable_lime_v2(marie->lc, TRUE);
+
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+
+	printf("unregister\n");
+	printf("register\n");
+	linphone_core_manager_restart(marie, TRUE);
+
+	if (linphone_core_lime_v2_enabled(marie->lc))
+		printf("encryption enabled\n");
+	else
+		printf("encryption disabled\n");
+
+	printf("start waiting\n");
+	wait_for_list(coresList, &dummy, 1, 3000);
+	printf("stop waiting\n");
+
+	// Check that we correctly performed an update
+
+	// Clean
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+}
+
 test_t group_chat_tests[] = {
 	TEST_TWO_TAGS("Group chat room creation server", group_chat_room_creation_server, "Server", "LeaksMemory"),
 	TEST_TWO_TAGS("Send message", group_chat_room_send_message, "Server", "LeaksMemory"),
@@ -3056,7 +3088,8 @@ test_t group_chat_tests[] = {
 	TEST_TWO_TAGS("LIMEv2 message to non LIMEv2", group_chat_lime_v2_send_encrypted_message_to_non_lime_v2, "LIMEv2", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 multiple messages while network unreachable", group_chat_lime_v2_multiple_messages_while_network_unreachable, "LIMEv2", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 message X3DH server unavailable", group_chat_lime_v2_X3DH_server_unavailable, "LIMEv2", "LeaksMemory"),
-	TEST_TWO_TAGS("LIMEv2 message not decrypted", group_chat_lime_v2_encrypted_message_not_decrypted, "LIMEv2", "LeaksMemory")
+	TEST_TWO_TAGS("LIMEv2 message not decrypted", group_chat_lime_v2_encrypted_message_not_decrypted, "LIMEv2", "LeaksMemory"),
+	TEST_ONE_TAG("LIMEv2 update keys", group_chat_lime_v2_update_keys, "LIMEv2")
 };
 
 test_suite_t group_chat_test_suite = {

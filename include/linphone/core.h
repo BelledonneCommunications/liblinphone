@@ -1455,12 +1455,20 @@ LINPHONE_PUBLIC bool_t linphone_core_lime_available(const LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_enable_lime_v2(LinphoneCore *lc, bool_t enable);
 
 /**
+ * Tells to LinphoneCore to update LIMEv2
+ * @param[in] lc LinphoneCore object
+ * @return The LIMEv2 update state
+ * @ingroup network_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_update_lime_v2(const LinphoneCore *lc);
+
+/**
  * Returns the LIMEv2 state
  * @param[in] lc LinphoneCore object
  * @return The current lime state
  * @ingroup network_parameters
 **/
-LINPHONE_PUBLIC LinphoneLimeState linphone_core_lime_v2_enabled(const LinphoneCore *lc);
+LINPHONE_PUBLIC bool_t linphone_core_lime_v2_enabled(const LinphoneCore *lc);
 
 /**
  * Tells if LIMEv2 is available

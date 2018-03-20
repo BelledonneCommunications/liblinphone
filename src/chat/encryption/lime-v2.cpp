@@ -143,6 +143,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	shared_ptr<const vector<uint8_t>> plainMessage = make_shared<const vector<uint8_t>>(plainStringMessage.begin(), plainStringMessage.end());
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
+	cout << "Encrypt using localDeviceId = " << localDeviceId << endl;
 	belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [recipients, cipherMessage, message, &result] (lime::callbackReturn returnCode, string errorMessage) {
 		if (returnCode == lime::callbackReturn::success) {
 
@@ -257,6 +258,7 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 
 	bool decryptResult = false;
 	try {
+		cout << "Decrypt using localDeviceId = " << localDeviceId << endl;
 		decryptResult = belleSipLimeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader, decodedCipherMessage, plainMessage);
 	} catch (const exception e) {
 		ms_message("%s while decrypting message\n", e.what());
@@ -304,10 +306,30 @@ std::shared_ptr<BelleSipLimeManager> LimeV2::getLimeManager () {
 	return belleSipLimeManager;
 }
 
+bool LimeV2::update () {
+	lime::limeCallback updateCallback([](lime::callbackReturn returnCode, std::string anythingToSay) {
+		if (returnCode == lime::callbackReturn::success) {
+			BCTBX_SLOGI << "Lime update operation successful";
+			cout << "Lime update operation successful" << endl;
+		} else {
+			BCTBX_SLOGE << "Lime update operation failed: " << anythingToSay;
+		}
+	});
+
+	belleSipLimeManager->update(updateCallback);
+	cout << "Actually updating LIMEv2" << endl;
+	return true; // should return true only if update was successful (callback)
+}
+
 void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const string &message) {
 	if (state == LinphoneRegistrationState::LinphoneRegistrationOk) {
+		cout << "LinphoneRegistrationOk" << endl;
 
 		string localDeviceId = IdentityAddress(linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg))).getGruu();
+
+		if (localDeviceId == "")
+		return;
+
 		string x3dhServerUrl = "https://localhost:25519"; // 25520
 		lime::CurveId curve = lime::CurveId::c25519; // c448
 
@@ -319,13 +341,22 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 			}
 		});
 
-		if (localDeviceId == "")
-			return;
-
 		try {
 			belleSipLimeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+			cout << "Creating user " << localDeviceId << "from onRegistrationStateChanged()" << endl;
+			lastLimeUpdate = ms_time(NULL);
 		} catch (const exception e) {
 			ms_message("%s while creating lime user\n", e.what());
+
+			// update LIMEv2 if necessary
+			cout << "User already exist" << endl; //, check if update is necessary" << endl;
+// 			cout << "Current time = " << ms_time(NULL) << endl;
+// 			cout << "lastLimeUpdate = " << lastLimeUpdate << endl;
+// 			if (ms_time(NULL) - lastLimeUpdate > 5) {
+// 				cout << "Time for an update !" << endl;
+// 				update();
+// 				lastLimeUpdate = ms_time(NULL);
+// 			}
 		}
 	}
 }

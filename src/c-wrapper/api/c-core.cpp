@@ -50,7 +50,7 @@ static void _linphone_core_destructor (LinphoneCore *lc) {
 	_linphone_core_uninit(lc);
 }
 
-void linphone_core_set_im_encryption_engine(LinphoneCore *lc, LinphoneImEncryptionEngine *imee) {
+void linphone_core_set_im_encryption_engine (LinphoneCore *lc, LinphoneImEncryptionEngine *imee) {
     L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setEncryptionEngine(new LimeBackwardsCompatible);
 
 	if (lc->im_encryption_engine) {
@@ -63,19 +63,25 @@ void linphone_core_set_im_encryption_engine(LinphoneCore *lc, LinphoneImEncrypti
 	}
 }
 
-void linphone_core_enable_lime_v2(LinphoneCore *lc, bool_t enable) {
+void linphone_core_enable_lime_v2 (LinphoneCore *lc, bool_t enable) {
+// 	if (L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeV2Available()) {
+// 		cout << "LIMEv2 is available, enabling" << endl;
+// 	} else {
+// 		cout << "LIMEv2 is unavailable, not enabling" << endl;
+// 	}
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->enableLimeV2(enable);
 }
 
-//LinphoneLimeState ?
-LinphoneLimeState linphone_core_lime_v2_enabled(const LinphoneCore *lc) {
-	bool isEnabled = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeV2Enabled();
-	if (isEnabled) {
-		return LinphoneLimeMandatory;
-	}
-	return LinphoneLimeDisabled;
+bool_t linphone_core_update_lime_v2 (const LinphoneCore *lc) {
+	bool isUpdated = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->updateLimeV2();
+	return isUpdated?TRUE:FALSE;
 }
 
-bool_t linphone_core_lime_v2_available(const LinphoneCore *lc) {
+bool_t linphone_core_lime_v2_enabled (const LinphoneCore *lc) {
+	bool isEnabled = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeV2Enabled();
+	return isEnabled?TRUE:FALSE;
+}
+
+bool_t linphone_core_lime_v2_available (const LinphoneCore *lc) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeV2Available();
 }

@@ -144,6 +144,7 @@ EncryptionEngineListener *Core::getEncryptionEngine () const {
 }
 
 void Core::enableLimeV2 (bool enable) {
+	cout << "enableLimeV2()" << endl;
 	L_D();
 	if (d->imee != nullptr) {
 		d->imee.release();
@@ -152,13 +153,13 @@ void Core::enableLimeV2 (bool enable) {
 	if (!enable)
 		return;
 
-	LimeV2 *limev2;
+	LimeV2 *limeV2Engine;
 	if (d->imee == nullptr) {
 		string db_access = "test.c25519.sqlite3";
 		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
-		limev2 = new LimeV2(db_access, prov);
-		setEncryptionEngine(limev2);
-		d->registerListener(limev2);
+		limeV2Engine = new LimeV2(db_access, prov);
+		setEncryptionEngine(limeV2Engine);
+		d->registerListener(limeV2Engine);
 	}
 
 	// Create user if not exist and if enough information from proxy config
@@ -174,6 +175,10 @@ void Core::enableLimeV2 (bool enable) {
 			return;
 
 		string localDeviceId = IdentityAddress(linphone_address_as_string_uri_only(la)).getGruu();
+
+		if (localDeviceId == "")
+		return;
+
 		string x3dhServerUrl = "https://localhost:25519"; // 25520
 		lime::CurveId curve = lime::CurveId::c25519; // c448
 
@@ -185,23 +190,34 @@ void Core::enableLimeV2 (bool enable) {
 			}
 		});
 
-		if (localDeviceId != "")
-			return;
-
 		try {
-			limev2->getLimeManager()->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+			cout << "Creating user " << localDeviceId << "from enableLimev2()" << endl;
+			limeV2Engine->getLimeManager()->create_user(localDeviceId, x3dhServerUrl, curve, callback);
 		} catch (const exception e) {
 			ms_message("%s while creating lime user\n", e.what());
+			cout << "User already exist" << endl;
 		}
 	}
+}
+
+bool Core::updateLimeV2 (void) const {
+	L_D();
+
+	if (linphone_core_lime_v2_enabled(getCCore())) {
+		cout << "Actually updating LIMEv2" << endl;
+		bool updateResult = d->imee->update();
+		if (updateResult)
+			return true;
+	}
+	return false;
 }
 
 // TODO also check engine type
 bool Core::limeV2Enabled (void) const {
 	L_D();
-	if (d->imee != nullptr) {
+	// check lime_v2 parameter in proxy config
+	if (d->imee != nullptr)
 		return true;
-	}
 	return false;
 }
 
