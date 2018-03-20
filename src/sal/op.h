@@ -27,6 +27,7 @@
 #include "c-wrapper/internal/c-sal.h"
 #include "content/content.h"
 #include "content/content-type.h"
+#include "content/content-disposition.h"
 #include "sal/sal.h"
 
 LINPHONE_BEGIN_NAMESPACE

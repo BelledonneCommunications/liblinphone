@@ -105,6 +105,10 @@ static void chat_room_subject_changed (LinphoneChatRoom *cr, const LinphoneEvent
 	manager->stat.number_of_subject_changed++;
 }
 
+static void undecryptable_message_received (LinphoneChatRoom *room, LinphoneChatMessage *msg) {
+	get_stats(linphone_chat_room_get_core(room))->number_of_LinphoneMessageUndecryptable++;
+}
+
 static void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state) {
 	if (state == LinphoneChatRoomStateInstantiated) {
 		LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
@@ -115,6 +119,7 @@ static void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *
 		linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
 		linphone_chat_room_cbs_set_subject_changed(cbs, chat_room_subject_changed);
 		linphone_chat_room_cbs_set_participant_device_added(cbs, chat_room_participant_device_added);
+		linphone_chat_room_cbs_set_undecryptable_message_received(cbs, undecryptable_message_received);
 		linphone_chat_room_add_callbacks(cr, cbs);
 		linphone_chat_room_cbs_unref(cbs);
 	}
@@ -3726,10 +3731,6 @@ static void group_chat_lime_v2_X3DH_server_unavailable (void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void undecryptable_message_received (LinphoneChatRoom *room, LinphoneChatMessage *msg) {
-	get_stats(linphone_chat_room_get_core(room))->number_of_LinphoneMessageUndecryptable++;
-}
-
 static void group_chat_lime_v2_encrypted_message_not_decrypted (void) {
 
 	// Recipient can't decrypt message for following reasons:
@@ -3764,8 +3765,6 @@ static void group_chat_lime_v2_encrypted_message_not_decrypted (void) {
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
-	LinphoneChatRoomCbs *pauline_cbs = linphone_chat_room_get_callbacks(paulineCr);
-	linphone_chat_room_cbs_set_undecryptable_message_received(pauline_cbs, undecryptable_message_received);
 
 	// Marie sends a message
 	const char *marieMessage = "Hey ! What's up ?";
