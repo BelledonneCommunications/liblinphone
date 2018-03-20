@@ -207,7 +207,9 @@ Content SalCallOp::extract_body(belle_sip_message_t *message) {
 
 	if (type_str && subtype_str) body.setContentType(ContentType(type_str, subtype_str));
 	if (contentDisposition)
-		body.setContentDisposition(belle_sip_header_content_disposition_get_content_disposition(contentDisposition));
+		body.setContentDisposition(
+			ContentDisposition(belle_sip_header_content_disposition_get_content_disposition(contentDisposition))
+		);
 	if (length > 0 && body_str) body.setBody(body_str, length);
 	return body;
 }
@@ -1079,9 +1081,15 @@ int SalCallOp::update(const char *subject, bool_t no_user_consent) {
 	return -1;
 }
 
-void SalCallOp::cancel_invite_with_info(const SalErrorInfo *info) {
+int SalCallOp::cancel_invite_with_info(const SalErrorInfo *info) {
 	belle_sip_request_t* cancel;
 	ms_message("Cancelling INVITE request from [%s] to [%s] ",get_from(), get_to());
+	
+	if (this->pending_client_trans == NULL){
+		ms_warning("There is no transaction to cancel.");
+		return -1;
+	}
+	
 	cancel = belle_sip_client_transaction_create_cancel(this->pending_client_trans);
 	if (cancel){
 		if (info != NULL){
@@ -1089,6 +1097,7 @@ void SalCallOp::cancel_invite_with_info(const SalErrorInfo *info) {
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(cancel),BELLE_SIP_HEADER(reason));
 		}
 		send_request(cancel);
+		return 0;
 	}else if (this->dialog){
 		belle_sip_dialog_state_t state = belle_sip_dialog_get_state(this->dialog);;
 		/*case where the response received is invalid (could not establish a dialog), but the transaction is not cancellable
@@ -1104,6 +1113,7 @@ void SalCallOp::cancel_invite_with_info(const SalErrorInfo *info) {
 			break;
 		}
 	}
+	return -1;
 }
 
 SalMediaDescription *SalCallOp::get_final_media_description() {

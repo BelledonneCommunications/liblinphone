@@ -20,6 +20,7 @@
 #include <mediastreamer2/mscommon.h>
 #include <xercesc/util/PlatformUtils.hpp>
 
+#include "address/address-p.h"
 #include "call/call.h"
 #include "chat/encryption/lime-v2.h"
 #include "core/core-listener.h"
@@ -58,8 +59,7 @@ void CorePrivate::init () {
 	if (!mainDb->connect(backend, uri))
 		lFatal() << "Unable to open linphone database.";
 
-	for (auto &chatRoom : mainDb->getChatRooms())
-		insertChatRoom(chatRoom);
+	loadChatRooms();
 }
 
 void CorePrivate::registerListener (CoreListener *listener) {
@@ -77,6 +77,12 @@ void CorePrivate::uninit () {
 		linphone_core_iterate(L_GET_C_BACK_PTR(q));
 		ms_usleep(10000);
 	}
+
+	chatRooms.clear();
+	chatRoomsById.clear();
+	noCreatedClientGroupChatRooms.clear();
+
+	AddressPrivate::clearSipAddressesCache();
 }
 
 // -----------------------------------------------------------------------------

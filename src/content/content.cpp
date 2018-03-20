@@ -41,6 +41,7 @@ Content::Content (const Content &other) : ClonableObject(*new ContentPrivate), A
 	d->body = other.getBody();
 	d->contentType = other.getContentType();
 	d->contentDisposition = other.getContentDisposition();
+	d->contentEncoding = other.getContentEncoding();
 	d->headers = other.getHeaders();
 }
 
@@ -50,6 +51,7 @@ Content::Content (Content &&other) : ClonableObject(*new ContentPrivate), AppDat
 	d->body = move(dOther->body);
 	d->contentType = move(dOther->contentType);
 	d->contentDisposition = move(dOther->contentDisposition);
+	d->contentEncoding = move(dOther->contentEncoding);
 	d->headers = move(dOther->headers);
 }
 
@@ -71,10 +73,9 @@ Content &Content::operator= (const Content &other) {
 		d->body = other.getBody();
 		d->contentType = other.getContentType();
 		d->contentDisposition = other.getContentDisposition();
+		d->contentEncoding = other.getContentEncoding();
 		d->headers = other.getHeaders();
-		AppDataContainer::operator=(other);
 	}
-
 	return *this;
 }
 
@@ -85,16 +86,18 @@ Content &Content::operator= (Content &&other) {
 	d->body = move(dOther->body);
 	d->contentType = move(dOther->contentType);
 	d->contentDisposition = move(dOther->contentDisposition);
+	d->contentEncoding = move(dOther->contentEncoding);
 	d->headers = move(dOther->headers);
 	return *this;
 }
 
-bool Content::operator== (const Content &content) const {
+bool Content::operator== (const Content &other) const {
 	L_D();
-	return d->contentType == content.getContentType() &&
-		d->body == content.getBody() &&
-		d->contentDisposition == content.getContentDisposition() &&
-		d->headers == content.getHeaders();;
+	return d->contentType == other.getContentType() &&
+		d->body == other.getBody() &&
+		d->contentDisposition == other.getContentDisposition() &&
+		d->contentEncoding == other.getContentEncoding() &&
+		d->headers == other.getHeaders();
 }
 
 const ContentType &Content::getContentType () const {
@@ -107,19 +110,24 @@ void Content::setContentType (const ContentType &contentType) {
 	d->contentType = contentType;
 }
 
-void Content::setContentType (const string &contentType) {
-	L_D();
-	d->contentType = ContentType(contentType);
-}
-
-const string &Content::getContentDisposition () const {
+const ContentDisposition &Content::getContentDisposition () const {
 	L_D();
 	return d->contentDisposition;
 }
 
-void Content::setContentDisposition (const string &contentDisposition) {
+void Content::setContentDisposition (const ContentDisposition &contentDisposition) {
 	L_D();
 	d->contentDisposition = contentDisposition;
+}
+
+const string &Content::getContentEncoding () const {
+	L_D();
+	return d->contentEncoding;
+}
+
+void Content::setContentEncoding (const string &contentEncoding) {
+	L_D();
+	d->contentEncoding = contentEncoding;
 }
 
 const vector<char> &Content::getBody () const {

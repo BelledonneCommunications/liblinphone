@@ -634,10 +634,13 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 	list->friends = bctbx_list_erase_link(list->friends, elem);
 	if(lf->refkey) {
 		bctbx_iterator_t * it = bctbx_map_cchar_find_key(list->friends_map, lf->refkey);
-		if (!bctbx_iterator_cchar_equals(it, bctbx_map_cchar_end(list->friends_map))){
+		bctbx_iterator_t * end = bctbx_map_cchar_end(list->friends_map);
+		if (!bctbx_iterator_cchar_equals(it, end)){
 			linphone_friend_unref((LinphoneFriend*)bctbx_pair_cchar_get_second(bctbx_iterator_cchar_get_pair(it)));
 			bctbx_map_cchar_erase(list->friends_map, it);
 		}
+		if (it) bctbx_iterator_cchar_delete(it);
+		if (end) bctbx_iterator_cchar_delete(end);
 	}
 
 	phone_numbers = linphone_friend_get_phone_numbers(lf);
@@ -647,14 +650,17 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 		const char *uri = linphone_friend_phone_number_to_sip_uri(lf, number);
 		if(uri) {
 			bctbx_iterator_t * it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
-			if (!bctbx_iterator_cchar_equals(it, bctbx_map_cchar_end(list->friends_map_uri))){
+			bctbx_iterator_t * end = bctbx_map_cchar_end(list->friends_map_uri);
+			if (!bctbx_iterator_cchar_equals(it, end)){
 				linphone_friend_unref((LinphoneFriend*)bctbx_pair_cchar_get_second(bctbx_iterator_cchar_get_pair(it)));
 				bctbx_map_cchar_erase(list->friends_map_uri, it);
 			}
-			bctbx_iterator_cchar_delete(it);
+			if (it) bctbx_iterator_cchar_delete(it);
+			if (end) bctbx_iterator_cchar_delete(end);
 		}
 		iterator = bctbx_list_next(iterator);
 	}
+	if (phone_numbers) bctbx_list_free(phone_numbers);
 
 	addresses = linphone_friend_get_addresses(lf);
 	iterator = (bctbx_list_t *)addresses;
@@ -663,13 +669,16 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 		char *uri = linphone_address_as_string_uri_only(lfaddr);
 		if(uri) {
 			bctbx_iterator_t * it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
-			if (!bctbx_iterator_cchar_equals(it, bctbx_map_cchar_end(list->friends_map_uri))){
+			bctbx_iterator_t * end = bctbx_map_cchar_end(list->friends_map_uri);
+			if (!bctbx_iterator_cchar_equals(it, end)){
 				linphone_friend_unref((LinphoneFriend*)bctbx_pair_cchar_get_second(bctbx_iterator_cchar_get_pair(it)));
 				bctbx_map_cchar_erase(list->friends_map_uri, it);
 			}
-			bctbx_iterator_cchar_delete(it);
+			if (it) bctbx_iterator_cchar_delete(it);
+			if (end) bctbx_iterator_cchar_delete(end);
 			ms_free(uri);
 		}
+
 		iterator = bctbx_list_next(iterator);
 	}
 
@@ -766,21 +775,25 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 LinphoneFriend * linphone_friend_list_find_friend_by_address(const LinphoneFriendList *list, const LinphoneAddress *address) {
 	LinphoneAddress *clean_addr = linphone_address_clone(address);
 	LinphoneFriend *lf;
-	if (linphone_address_has_param(clean_addr, "gr")) {
+	if (linphone_address_has_uri_param(clean_addr, "gr")) {
 		linphone_address_remove_uri_param(clean_addr, "gr");
 	}
-	lf = linphone_friend_list_find_friend_by_uri(list, linphone_address_as_string_uri_only(clean_addr));
+	char *uri = linphone_address_as_string_uri_only(clean_addr);
+	lf = linphone_friend_list_find_friend_by_uri(list, uri);
+	bctbx_free(uri);
 	linphone_address_unref(clean_addr);
 	return lf;
 }
 
 LinphoneFriend * linphone_friend_list_find_friend_by_uri(const LinphoneFriendList *list, const char *uri) {
 	LinphoneFriend *result = NULL;
-	bctbx_iterator_t* it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
-	if (!bctbx_iterator_cchar_equals(it, bctbx_map_cchar_end(list->friends_map_uri))) {
+	bctbx_iterator_t *it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
+	bctbx_iterator_t *end = bctbx_map_cchar_end(list->friends_map_uri);
+	if (!bctbx_iterator_cchar_equals(it, end)) {
 		bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
 		result = (LinphoneFriend *)bctbx_pair_cchar_get_second(pair);
 	}
+	bctbx_iterator_cchar_delete(end);
 	bctbx_iterator_cchar_delete(it);
 	return result;
 }
