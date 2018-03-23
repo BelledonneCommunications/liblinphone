@@ -150,7 +150,6 @@ EncryptionEngineListener *Core::getEncryptionEngine () const {
 }
 
 void Core::enableLimeV2 (bool enable) {
-	cout << "enableLimeV2()" << endl;
 	L_D();
 	if (d->imee != nullptr) {
 		d->imee.release();
@@ -163,7 +162,7 @@ void Core::enableLimeV2 (bool enable) {
 	if (d->imee == nullptr) {
 		string db_access = "test.c25519.sqlite3";
 		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
-		limeV2Engine = new LimeV2(db_access, prov);
+		limeV2Engine = new LimeV2(db_access, prov, getCCore());
 		setEncryptionEngine(limeV2Engine);
 		d->registerListener(limeV2Engine);
 	}
@@ -188,34 +187,23 @@ void Core::enableLimeV2 (bool enable) {
 		string x3dhServerUrl = "https://localhost:25519"; // 25520
 		lime::CurveId curve = lime::CurveId::c25519; // c448
 
-		lime::limeCallback callback([](lime::callbackReturn returnCode, std::string anythingToSay) {
-			if (returnCode == lime::callbackReturn::success) {
-				BCTBX_SLOGI << "Lime create user operation successful";
-			} else {
-				BCTBX_SLOGE << "Lime operation failed: " << anythingToSay;
-			}
-		});
+		stringstream operation;
+		lime::limeCallback callback = limeV2Engine->setLimeCallback(operation.str());
 
 		try {
-			cout << "Creating user " << localDeviceId << "from enableLimev2()" << endl;
 			limeV2Engine->getLimeManager()->create_user(localDeviceId, x3dhServerUrl, curve, callback);
 		} catch (const exception e) {
 			ms_message("%s while creating lime user\n", e.what());
-			cout << "User already exist" << endl;
 		}
 	}
 }
 
-bool Core::updateLimeV2 (void) const {
+void Core::updateLimeV2 (void) const {
 	L_D();
 
 	if (linphone_core_lime_v2_enabled(getCCore())) {
-		cout << "Actually updating LIMEv2" << endl;
-		bool updateResult = d->imee->update();
-		if (updateResult)
-			return true;
+		d->imee->update(getCCore()->config);
 	}
-	return false;
 }
 
 // TODO also check engine type

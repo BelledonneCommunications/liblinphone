@@ -72,9 +72,8 @@ void linphone_core_enable_lime_v2 (LinphoneCore *lc, bool_t enable) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->enableLimeV2(enable);
 }
 
-bool_t linphone_core_update_lime_v2 (const LinphoneCore *lc) {
-	bool isUpdated = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->updateLimeV2();
-	return isUpdated?TRUE:FALSE;
+void linphone_core_update_lime_v2 (const LinphoneCore *lc) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->updateLimeV2();
 }
 
 bool_t linphone_core_lime_v2_enabled (const LinphoneCore *lc) {

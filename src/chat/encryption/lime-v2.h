@@ -43,13 +43,14 @@ private:
 
 class LimeV2 : public EncryptionEngineListener, public CoreListener {
 public:
-	LimeV2 (const std::string &db_access, belle_http_provider_t *prov);
+	LimeV2 (const std::__cxx11::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc);
 	std::shared_ptr<BelleSipLimeManager> getLimeManager ();
+	lime::limeCallback setLimeCallback (std::string operation);
 
 	// EncryptionEngineListener overrides
 	ChatMessageModifier::Result processIncomingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
 	ChatMessageModifier::Result processOutgoingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
-	bool update () override;
+	void update (LinphoneConfig *lpconfig) override;
 	bool encryptionEnabledForFileTransferCb (const std::shared_ptr<AbstractChatRoom> &ChatRoom) override;
 	void generateFileTransferKeyCb (const std::shared_ptr<AbstractChatRoom> &ChatRoom, const std::shared_ptr<ChatMessage> &message) override;
 	int downloadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) override;

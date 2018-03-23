@@ -131,7 +131,7 @@ public:
 	EncryptionEngineListener *getEncryptionEngine () const;
 	void setEncryptionEngine (EncryptionEngineListener *imee);
 	void enableLimeV2 (bool enable);
-	bool updateLimeV2 (void) const;
+	void updateLimeV2 (void) const;
 	bool limeV2Enabled (void) const;
 	bool limeV2Available (void) const;
 
