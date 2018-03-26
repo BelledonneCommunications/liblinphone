@@ -184,10 +184,12 @@ void Core::enableLimeV2 (bool enable) {
 		if (localDeviceId == "")
 		return;
 
+		// get info from LimeV2 member variables
 		string x3dhServerUrl = "https://localhost:25519"; // 25520
 		lime::CurveId curve = lime::CurveId::c25519; // c448
 
 		stringstream operation;
+		operation << "create user " << localDeviceId;
 		lime::limeCallback callback = limeV2Engine->setLimeCallback(operation.str());
 
 		try {

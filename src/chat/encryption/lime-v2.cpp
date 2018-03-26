@@ -17,17 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include "bctoolbox/crypto.h"
-#include "chat/chat-message/chat-message.h"
 #include "chat/chat-room/abstract-chat-room.h"
-#include "content/content.h"
 #include "content/content-manager.h"
-#include "content/content-type.h"
-#include "conference/participant.h"
 #include "conference/participant-p.h"
-#include "core/core.h"
 #include "lime-v2.h"
-#include "linphone/lpconfig.h"
 #include "private.h"
 
 using namespace std;
@@ -119,6 +112,9 @@ BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_pr
 }
 
 LimeV2::LimeV2(const std::__cxx11::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc) {
+	// TODO get x3dhServerUrl and curve from application level
+	x3dhServerUrl = "https://localhost:25519"; // 25520
+	curve = lime::CurveId::c25519; // c448
 	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(db_access, prov));
 	lastLimeUpdate = linphone_config_get_int(lc->config, "misc", "last_lime_update_time", 0);
 }
@@ -331,9 +327,6 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 
 		if (localDeviceId == "")
 		return;
-
-		string x3dhServerUrl = "https://localhost:25519"; // 25520
-		lime::CurveId curve = lime::CurveId::c25519; // c448
 
 		stringstream operation;
 		operation << "create user " << localDeviceId;

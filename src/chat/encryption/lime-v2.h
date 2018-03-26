@@ -62,7 +62,9 @@ public:
 
 private:
 	std::shared_ptr<BelleSipLimeManager> belleSipLimeManager;
-	time_t lastLimeUpdate;
+	std::time_t lastLimeUpdate;
+	std::string x3dhServerUrl;
+	lime::CurveId curve;
 };
 
 LINPHONE_END_NAMESPACE
