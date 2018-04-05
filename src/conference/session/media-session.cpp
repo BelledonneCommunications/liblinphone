@@ -2201,8 +2201,10 @@ void MediaSessionPrivate::handleIceEvents (OrtpEvent *ev) {
 		}
 		iceAgent->updateIceStateInCallStats();
 	} else if (evt == ORTP_EVENT_ICE_GATHERING_FINISHED) {
-		if (!evd->info.ice_processing_successful)
-			lWarning() << "No STUN answer from [" << linphone_core_get_stun_server(q->getCore()->getCCore()) << "], continuing without STUN";
+		if (!evd->info.ice_processing_successful) {
+			std::string stunServer(linphone_core_get_stun_server(q->getCore()->getCCore())?linphone_core_get_stun_server(q->getCore()->getCCore()):"not-set");
+			lWarning() << "No STUN answer from [" << stunServer << "], continuing without STUN";
+		}
 		iceAgent->gatheringFinished();
 		switch (state) {
 			case CallSession::State::Updating:
