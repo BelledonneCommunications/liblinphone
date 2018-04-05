@@ -182,6 +182,7 @@ typedef struct _stats {
 	int number_of_LinphoneIsComposingIdleReceived;
 	int progress_of_LinphoneFileTransfer;
 
+	int number_of_LinphoneChatRoomAllInformationReceived;
 	int number_of_LinphoneChatRoomStateInstantiated;
 	int number_of_LinphoneChatRoomStateCreationPending;
 	int number_of_LinphoneChatRoomStateCreated;
@@ -283,6 +284,7 @@ typedef struct _stats {
 	int number_of_rtcp_generic_nack;
 	int number_of_tmmbr_received;
 	int last_tmmbr_value_received;
+	int tmmbr_received_from_cb;
 
 	int number_of_participants_added;
 	int number_of_participant_admin_statuses_changed;

@@ -59,6 +59,7 @@ public:
 	void setDirection (ChatMessage::Direction dir);
 
 	void setParticipantState (const IdentityAddress &participantAddress, ChatMessage::State newState);
+	std::list<std::shared_ptr<Participant>> getParticipantsInState (const ChatMessage::State state) const;
 	void setState (ChatMessage::State newState, bool force = false);
 
 	void setTime (time_t time);
@@ -105,6 +106,7 @@ public:
 	std::string getSalCustomHeaderValue (const std::string &name);
 
 	void loadFileTransferUrlFromBodyToContent ();
+	std::string createFakeFileTransferFromUrl(const std::string &url);
 
 	void setChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
 
@@ -127,6 +129,7 @@ public:
 	void setAppdata (const std::string &appData);
 
 	const std::string &getExternalBodyUrl () const;
+	void setExternalBodyUrl (const std::string &url);
 
 	bool hasTextContent () const;
 	const Content* getTextContent () const;
@@ -161,6 +164,7 @@ private:
 	time_t time = ::ms_time(0); // TODO: Change me in all files.
 	std::string imdnId;
 	std::string rttMessage;
+	std::string externalBodyUrl;
 	bool isSecured = false;
 	mutable bool isReadOnly = false;
 	Content internalContent;

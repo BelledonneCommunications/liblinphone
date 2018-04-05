@@ -21,7 +21,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "linphone/core.h"
 #include "linphone/sipsetup.h"
 #include "linphone/lpconfig.h"
+#include "linphone/logging.h"
 #include "private.h"
+#include "logging-private.h"
 #include "quality_reporting.h"
 #include "lime.h"
 #include "conference_private.h"
@@ -500,40 +502,17 @@ void linphone_core_set_log_file(FILE *file) {
 }
 
 void linphone_core_set_log_level(OrtpLogLevel loglevel) {
-	unsigned int mask = loglevel;
-	switch (loglevel) {
-		case ORTP_TRACE:
-		case ORTP_DEBUG:
-			mask |= ORTP_DEBUG;
-			BCTBX_NO_BREAK;
-		case ORTP_MESSAGE:
-			mask |= ORTP_MESSAGE;
-			BCTBX_NO_BREAK;
-		case ORTP_WARNING:
-			mask |= ORTP_WARNING;
-			BCTBX_NO_BREAK;
-		case ORTP_ERROR:
-			mask |= ORTP_ERROR;
-			BCTBX_NO_BREAK;
-		case ORTP_FATAL:
-			mask |= ORTP_FATAL;
-			break;
-		case ORTP_LOGLEV_END:
-			break;
-	}
-	linphone_core_set_log_level_mask(mask);
+	LinphoneLoggingService *log_service = linphone_logging_service_get();
+	linphone_logging_service_set_log_level(log_service, _bctbx_log_level_to_linphone_log_level(loglevel));
 }
 
-void linphone_core_set_log_level_mask(unsigned int loglevel) {
-	bctbx_set_log_level_mask("bctbx", (int)loglevel);
-	bctbx_set_log_level_mask("ortp", (int)loglevel);
-	bctbx_set_log_level_mask("mediastreamer", (int)loglevel);
-	bctbx_set_log_level_mask("bzrtp", (int)loglevel); /*need something to set log level for all domains*/
-	bctbx_set_log_level_mask("linphone", (int)loglevel);
-	sal_set_log_level((OrtpLogLevel)loglevel);
+void linphone_core_set_log_level_mask(unsigned int mask) {
+	LinphoneLoggingService *log_service = linphone_logging_service_get();
+	linphone_logging_service_set_log_level_mask(log_service, _bctbx_log_mask_to_linphone_log_mask(mask));
 }
 unsigned int linphone_core_get_log_level_mask(void) {
-	return bctbx_get_log_level_mask(ORTP_LOG_DOMAIN);
+	LinphoneLoggingService *log_service = linphone_logging_service_get();
+	return linphone_logging_service_get_log_level_mask(log_service);
 }
 static int _open_log_collection_file_with_idx(int idx) {
 	struct stat statbuf;
@@ -3422,11 +3401,16 @@ LinphoneCall * linphone_core_start_refered_call(LinphoneCore *lc, LinphoneCall *
 	 system.
 */
 static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const LinphoneAddress *dest){
-	bctbx_list_t *ret=NULL;
-	const char *local_route=linphone_proxy_config_get_route(proxy);
-	const LinphoneAddress *srv_route=linphone_proxy_config_get_service_route(proxy);
-	if (local_route){
-		ret=bctbx_list_append(ret,sal_address_new(local_route));
+	bctbx_list_t *ret = NULL;
+	const bctbx_list_t *proxy_routes = linphone_proxy_config_get_routes(proxy);
+	bctbx_list_t *proxy_routes_iterator = (bctbx_list_t *)proxy_routes;
+	const LinphoneAddress *srv_route = linphone_proxy_config_get_service_route(proxy);
+	while (proxy_routes_iterator) {
+		const char *local_route = (const char *)bctbx_list_get_data(proxy_routes_iterator);
+		if (local_route) {
+			ret = bctbx_list_append(ret, sal_address_new(local_route));
+		}
+		proxy_routes_iterator = bctbx_list_next(proxy_routes_iterator);
 	}
 	if (srv_route){
 		ret=bctbx_list_append(ret,sal_address_clone(L_GET_PRIVATE_FROM_C_OBJECT(srv_route)->getInternalAddress()));

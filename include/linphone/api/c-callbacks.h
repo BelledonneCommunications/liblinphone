@@ -88,6 +88,14 @@ typedef void (*LinphoneCallCbsTransferStateChangedCb)(LinphoneCall *call, Linpho
 typedef void (*LinphoneCallCbsAckProcessingCb)(LinphoneCall *call, LinphoneHeaders *ack, bool_t is_received);
 
 /**
+ * Callback for notifying a received TMMBR.
+ * @param call LinphoneCall for which the TMMBR has changed
+ * @param stream_index the index of the current stream
+ * @param tmmbr the value of the received TMMBR
+ */
+typedef void (*LinphoneCallCbsTmmbrReceivedCb)(LinphoneCall *call, int stream_index, int tmmbr);
+
+/**
  * @}
 **/
 
@@ -226,6 +234,12 @@ typedef void (*LinphoneChatRoomCbsParticipantDeviceAddedCb) (LinphoneChatRoom *c
  * @param[in] participant The #LinphoneParticipant that has been removed from the chat room
  */
 typedef void (*LinphoneChatRoomCbsParticipantDeviceRemovedCb) (LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
+
+/**
+ * Callback used to notify a chat room has received all its information.
+ * @param[in] cr #LinphoneChatRoom object
+ */
+typedef void (*LinphoneChatRoomCbsAllInformationReceivedCb) (LinphoneChatRoom *cr);
 
 /**
  * Callback used when a group chat room is created server-side to generate the address of the chat room.

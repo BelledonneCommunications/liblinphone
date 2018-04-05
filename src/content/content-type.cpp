@@ -56,20 +56,20 @@ ContentType::ContentType (const string &contentType) : ClonableObject(*new Conte
 	L_D();
 
 	size_t pos = contentType.find('/');
-	size_t posParam = contentType.find("; ");
+	size_t posParam = contentType.find(";");
 	size_t end = contentType.length();
 	if (pos == string::npos)
 		return;
 
-	if (setType(contentType.substr(0, pos))) {
+	if (setType(Utils::trim(contentType.substr(0, pos)))) {
 		if (posParam != string::npos)
 			end = posParam;
-		if (!setSubType(contentType.substr(pos + 1, end - (pos + 1))))
+		if (!setSubType(Utils::trim(contentType.substr(pos + 1, end - (pos + 1)))))
 			d->type.clear();
 	}
 
 	if (posParam != string::npos)
-		setParameter(contentType.substr(posParam + 2)); // We remove the blankspace after the ;.
+		setParameter(Utils::trim(contentType.substr(posParam + 1)));
 }
 
 ContentType::ContentType (const string &type, const string &subType) : ClonableObject(*new ContentTypePrivate) {
@@ -103,10 +103,12 @@ ContentType &ContentType::operator= (const ContentType &other) {
 	return *this;
 }
 
+bool ContentType::weakEqual (const ContentType &other) const {
+	return (getType() == other.getType()) && (getSubType() == other.getSubType());
+}
+
 bool ContentType::operator== (const ContentType &other) const {
-	return getType() == other.getType() &&
-		getSubType() == other.getSubType() &&
-		getParameter() == other.getParameter();
+	return weakEqual(other) && (getParameter() == other.getParameter());
 }
 
 bool ContentType::operator!= (const ContentType &other) const {
