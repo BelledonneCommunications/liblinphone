@@ -179,14 +179,14 @@ void Core::enableLimeV2 (bool enable) {
 		if (la == nullptr)
 			return;
 
-		string localDeviceId = IdentityAddress(linphone_address_as_string_uri_only(la)).getGruu();
+		IdentityAddress ia = IdentityAddress(linphone_address_as_string_uri_only(la));
+		string localDeviceId = ia.asString();
 
 		if (localDeviceId == "")
-		return;
+			return;
 
-		// get info from LimeV2 member variables
-		string x3dhServerUrl = "https://localhost:25519"; // 25520
-		lime::CurveId curve = lime::CurveId::c25519; // c448
+		string x3dhServerUrl = limeV2Engine->getX3dhServerUrl();
+		lime::CurveId curve = limeV2Engine->getCurveId();
 
 		stringstream operation;
 		operation << "create user " << localDeviceId;

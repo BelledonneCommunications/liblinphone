@@ -33,12 +33,12 @@ LINPHONE_BEGIN_NAMESPACE
 
 class BelleSipLimeManager : public lime::LimeManager {
 public:
-	BelleSipLimeManager (const std::string &db_access, belle_http_provider_t *prov);
+	BelleSipLimeManager (const std::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc);
 
 private:
 	static void processIoError (void *data, const belle_sip_io_error_event_t *event) noexcept;
 	static void processResponse (void *data, const belle_http_response_event_t *event) noexcept;
-	static void processAuthRequestedFromCarddavRequest (void *data, belle_sip_auth_event_t *event) noexcept;
+	static void processAuthRequested (void *data, belle_sip_auth_event_t *event) noexcept;
 };
 
 class LimeV2 : public EncryptionEngineListener, public CoreListener {
@@ -46,6 +46,8 @@ public:
 	LimeV2 (const std::__cxx11::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc);
 	std::shared_ptr<BelleSipLimeManager> getLimeManager ();
 	lime::limeCallback setLimeCallback (std::string operation);
+	std::string getX3dhServerUrl () const;
+	lime::CurveId getCurveId () const;
 
 	// EncryptionEngineListener overrides
 	ChatMessageModifier::Result processIncomingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;

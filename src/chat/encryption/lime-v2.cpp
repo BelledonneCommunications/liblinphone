@@ -54,7 +54,8 @@ static vector<uint8_t> decodeBase64 (const vector<uint8_t> &input) {
 struct X3DHServerPostContext {
 	const lime::limeX3DHServerResponseProcess responseProcess;
 	const string username;
-	X3DHServerPostContext(const lime::limeX3DHServerResponseProcess &response, const string &username) : responseProcess(response), username{username} {};
+	LinphoneCore *lc;
+	X3DHServerPostContext(const lime::limeX3DHServerResponseProcess &response, const string &username, LinphoneCore *lc) : responseProcess(response), username{username}, lc{lc} {};
 };
 
 void BelleSipLimeManager::processIoError (void *data, const belle_sip_io_error_event_t *event) noexcept {
@@ -77,13 +78,25 @@ void BelleSipLimeManager::processResponse (void *data, const belle_http_response
 	delete(userData);
 }
 
-void BelleSipLimeManager::processAuthRequestedFromCarddavRequest (void *data, belle_sip_auth_event_t *event) noexcept {
-	// In real life situation, get the real username and password of user for authentication
-	belle_sip_auth_event_set_username(event, "alice");
-	belle_sip_auth_event_set_passwd(event, "you see the problem is this");
+void BelleSipLimeManager::processAuthRequested (void *data, belle_sip_auth_event_t *event) noexcept {
+	// In a real situation, get the real username and password of user for authentication
+
+	X3DHServerPostContext *userData = static_cast<X3DHServerPostContext *>(data);
+	LinphoneCore *lc = userData->lc;
+
+	const char *realm = belle_sip_auth_event_get_realm(event);
+	const char *username = belle_sip_auth_event_get_username(event);
+	const char *domain = belle_sip_auth_event_get_domain(event);
+
+	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(lc, realm, username, domain);
+
+	const char *auth_username = linphone_auth_info_get_username(auth_info);
+	const char *auth_password = linphone_auth_info_get_password(auth_info);
+	belle_sip_auth_event_set_username(event, auth_username);
+	belle_sip_auth_event_set_passwd(event, auth_password);
 }
 
-BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_provider_t *prov) : LimeManager(db_access, [prov](const string &url, const string &from, const vector<uint8_t> &message, const lime::limeX3DHServerResponseProcess &responseProcess) {
+BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_provider_t *prov, LinphoneCore *lc) : LimeManager(db_access, [prov, lc](const string &url, const string &from, const vector<uint8_t> &message, const lime::limeX3DHServerResponseProcess &responseProcess) {
 	belle_http_request_listener_callbacks_t cbs= {};
 	belle_http_request_listener_t *l;
 	belle_generic_uri_t *uri;
@@ -103,8 +116,8 @@ BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_pr
 	belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(req),BELLE_SIP_BODY_HANDLER(bh));
 	cbs.process_response = processResponse;
 	cbs.process_io_error = processIoError;
-	cbs.process_auth_requested = processAuthRequestedFromCarddavRequest;
-	X3DHServerPostContext *userData = new X3DHServerPostContext(responseProcess, from);
+	cbs.process_auth_requested = processAuthRequested;
+	X3DHServerPostContext *userData = new X3DHServerPostContext(responseProcess, from, lc);
 	l=belle_http_request_listener_create_from_callbacks(&cbs, userData);
 	belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "http_request_listener", l, belle_sip_object_unref);
 	belle_http_provider_send_request(prov,req,l);
@@ -115,8 +128,16 @@ LimeV2::LimeV2(const std::__cxx11::string &db_access, belle_http_provider_t *pro
 	// TODO get x3dhServerUrl and curve from application level
 	x3dhServerUrl = "https://localhost:25519"; // 25520
 	curve = lime::CurveId::c25519; // c448
-	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(db_access, prov));
+	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(db_access, prov, lc));
 	lastLimeUpdate = linphone_config_get_int(lc->config, "misc", "last_lime_update_time", 0);
+}
+
+string LimeV2::getX3dhServerUrl () const {
+	return x3dhServerUrl;
+}
+
+lime::CurveId LimeV2::getCurveId () const {
+	return curve;
 }
 
 ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
@@ -124,7 +145,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	ChatMessageModifier::Result result = ChatMessageModifier::Result::Suspended;
 
     shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	const string &localDeviceId = chatRoom->getMe()->getPrivate()->getDevices().front()->getAddress().getGruu(); // front() is approximative
+	const string &localDeviceId = chatRoom->getMe()->getPrivate()->getDevices().front()->getAddress().asString();
 	const IdentityAddress &peerAddress = chatRoom->getPeerAddress();
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
 
@@ -133,7 +154,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	for (const shared_ptr<Participant> &p : participants) {
 		const list<shared_ptr<ParticipantDevice>> devices = p->getPrivate()->getDevices();
 		for (const shared_ptr<ParticipantDevice> &pd : devices) {
-			recipients->emplace_back(pd->getAddress().getGruu());
+			recipients->emplace_back(pd->getAddress().asString());
 		}
 	}
 
@@ -184,7 +205,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 			BCTBX_SLOGE << "Lime operation failed: " << errorMessage;
 			result = ChatMessageModifier::Result::Error;
 		}
-	});
+	}, lime::EncryptionPolicy::cipherMessage);
 
 	return result;
 }
@@ -193,9 +214,9 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 
 	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 
-	const string &localDeviceId = chatRoom->getMe()->getPrivate()->getDevices().front()->getAddress().getGruu();
+	const string &localDeviceId = chatRoom->getMe()->getPrivate()->getDevices().front()->getAddress().asString();
 	const string &recipientUserId = chatRoom->getPeerAddress().getAddressWithoutGruu().asString();
-	const string &senderDeviceId = chatRoom->getParticipants().front()->getPrivate()->getDevices().front()->getAddress().getGruu();
+	const string &senderDeviceId = chatRoom->getParticipants().front()->getPrivate()->getDevices().front()->getAddress().asString();
 
 	Content content;
 	ContentType contentType = ContentType::Multipart;
@@ -323,7 +344,8 @@ lime::limeCallback LimeV2::setLimeCallback (string operation) {
 void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const string &message) {
 	if (state == LinphoneRegistrationState::LinphoneRegistrationOk) {
 
-		string localDeviceId = IdentityAddress(linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg))).getGruu();
+		IdentityAddress ia = IdentityAddress(linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg))); // .getGruu();
+		string localDeviceId = ia.asString();
 
 		if (localDeviceId == "")
 		return;
@@ -332,7 +354,7 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 		operation << "create user " << localDeviceId;
 		lime::limeCallback callback = setLimeCallback(operation.str());
 
-		LinphoneConfig *lpconfig = linphone_core_get_config(linphone_proxy_config_get_core(cfg)); // difference with lc->config ?
+		LinphoneConfig *lpconfig = linphone_core_get_config(linphone_proxy_config_get_core(cfg));
 		lastLimeUpdate = linphone_config_get_int(lpconfig, "misc", "last_lime_update_time", -1); // TODO should be done by the tester
 
 		try {
@@ -344,7 +366,7 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 			ms_message("%s while creating lime user\n", e.what());
 
 			// update keys if necessary
-			if (ms_time(NULL) - lastLimeUpdate > 86400) { // 24 hours = 86400 ms
+			if (ms_time(NULL) - lastLimeUpdate > 86400) { // 24 hours = 86400 ms TODO get update time value from application level
 				update(lpconfig);
 				lastLimeUpdate = ms_time(NULL);
 			} else {
