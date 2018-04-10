@@ -31,6 +31,7 @@
 #include "chat/notification/imdn.h"
 #include "content/content-type.h"
 #include "content/content.h"
+#include "conference/participant.h"
 
 // =============================================================================
 
@@ -108,7 +109,7 @@ const char *linphone_chat_message_get_external_body_url(const LinphoneChatMessag
 }
 
 void linphone_chat_message_set_external_body_url(LinphoneChatMessage *msg, const char *url) {
-
+	L_GET_PRIVATE_FROM_C_OBJECT(msg)->setExternalBodyUrl(L_C_TO_STRING(url));
 }
 
 time_t linphone_chat_message_get_time(const LinphoneChatMessage *msg) {
@@ -244,6 +245,10 @@ const char *linphone_chat_message_get_text_content(const LinphoneChatMessage *ms
 
 bool_t linphone_chat_message_is_file_transfer_in_progress(LinphoneChatMessage *msg) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isFileTransferInProgress();
+}
+
+bctbx_list_t *linphone_chat_message_get_participants_in_state (const LinphoneChatMessage *msg, const LinphoneChatMessageState state) {
+	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_PRIVATE_FROM_C_OBJECT(msg)->getParticipantsInState((LinphonePrivate::ChatMessage::State) state));
 }
 
 // =============================================================================

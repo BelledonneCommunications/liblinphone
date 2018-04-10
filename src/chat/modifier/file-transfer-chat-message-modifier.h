@@ -36,7 +36,7 @@ class FileTransferContent;
 
 class FileTransferChatMessageModifier : public ChatMessageModifier {
 public:
-	FileTransferChatMessageModifier ();
+	FileTransferChatMessageModifier (belle_http_provider_t *prov);
 	~FileTransferChatMessageModifier ();
 
 	Result encode (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
@@ -63,6 +63,7 @@ public:
 	int downloadFile(const std::shared_ptr<ChatMessage> &message, FileTransferContent *fileTransferContent);
 	void cancelFileTransfer();
 	bool isFileTransferInProgressAndValid();
+	std::string createFakeFileTransferFromUrl(const std::string &url);
 
 private:
 	int uploadFile();
@@ -77,6 +78,7 @@ private:
 
 	belle_http_request_t *httpRequest = nullptr;
 	belle_http_request_listener_t *httpListener = nullptr;
+	belle_http_provider_t *provider  = nullptr;
 
 	BackgroundTask bgTask;
 };

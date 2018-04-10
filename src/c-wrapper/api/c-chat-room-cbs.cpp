@@ -35,12 +35,15 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsParticipantAdminStatusChangedCb participantAdminStatusChangedCb;
 	LinphoneChatRoomCbsStateChangedCb stateChangedCb;
 	LinphoneChatRoomCbsSubjectChangedCb subjectChangedCb;
+	LinphoneChatRoomCbsAllInformationReceivedCb allInformationReceivedCb;
 	LinphoneChatRoomCbsUndecryptableMessageReceivedCb undecryptableMessageReceivedCb;
 	LinphoneChatRoomCbsChatMessageReceivedCb chatMessageReceivedCb;
 	LinphoneChatRoomCbsChatMessageSentCb chatMessageSentCb;
 	LinphoneChatRoomCbsConferenceAddressGenerationCb conferenceAddressGenerationCb;
-	LinphoneChatRoomCbsParticipantDeviceFetchedCb participantDeviceFetchedCb;
+	LinphoneChatRoomCbsParticipantDeviceFetchRequestedCb participantDeviceFetchRequestedCb;
 	LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb participantsCapabilitiesChecked;
+	LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb participantRegistrationSubscriptionRequestedCb;
+	LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequestedCb participantRegistrationUnsubscriptionRequestedCb;
 	LinphoneChatRoomCbsShouldChatMessageBeStoredCb shouldMessageBeStoredCb;
 };
 
@@ -174,6 +177,14 @@ void linphone_chat_room_cbs_set_participant_device_removed (LinphoneChatRoomCbs 
 	cbs->participantDeviceRemovedCb = cb;
 }
 
+LinphoneChatRoomCbsAllInformationReceivedCb linphone_chat_room_cbs_get_all_information_received (const LinphoneChatRoomCbs *cbs) {
+	return cbs->allInformationReceivedCb;
+}
+
+void linphone_chat_room_cbs_set_all_information_received (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsAllInformationReceivedCb cb) {
+	cbs->allInformationReceivedCb = cb;
+}
+
 LinphoneChatRoomCbsConferenceAddressGenerationCb linphone_chat_room_cbs_get_conference_address_generation (const LinphoneChatRoomCbs *cbs) {
 	return cbs->conferenceAddressGenerationCb;
 }
@@ -182,12 +193,12 @@ void linphone_chat_room_cbs_set_conference_address_generation (LinphoneChatRoomC
 	cbs->conferenceAddressGenerationCb = cb;
 }
 
-LinphoneChatRoomCbsParticipantDeviceFetchedCb linphone_chat_room_cbs_get_participant_device_fetched (const LinphoneChatRoomCbs *cbs) {
-	return cbs->participantDeviceFetchedCb;
+LinphoneChatRoomCbsParticipantDeviceFetchRequestedCb linphone_chat_room_cbs_get_participant_device_fetch_requested (const LinphoneChatRoomCbs *cbs) {
+	return cbs->participantDeviceFetchRequestedCb;
 }
 
-void linphone_chat_room_cbs_set_participant_device_fetched (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceFetchedCb cb) {
-	cbs->participantDeviceFetchedCb = cb;
+void linphone_chat_room_cbs_set_participant_device_fetch_requested (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceFetchRequestedCb cb) {
+	cbs->participantDeviceFetchRequestedCb = cb;
 }
 
 LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb linphone_chat_room_cbs_get_participants_capabilities_checked (const LinphoneChatRoomCbs *cbs) {
@@ -196,6 +207,22 @@ LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb linphone_chat_room_cbs_get_
 
 void linphone_chat_room_cbs_set_participants_capabilities_checked (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb cb) {
 	cbs->participantsCapabilitiesChecked = cb;
+}
+
+LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb linphone_chat_room_cbs_get_participant_registration_subscription_requested (const LinphoneChatRoomCbs *cbs) {
+	return cbs->participantRegistrationSubscriptionRequestedCb;
+}
+
+void linphone_chat_room_cbs_set_participant_registration_subscription_requested (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb cb) {
+	cbs->participantRegistrationSubscriptionRequestedCb = cb;
+}
+
+LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequestedCb linphone_chat_room_cbs_get_participant_registration_unsubscription_requested (const LinphoneChatRoomCbs *cbs) {
+	return cbs->participantRegistrationUnsubscriptionRequestedCb;
+}
+
+void linphone_chat_room_cbs_set_participant_registration_unsubscription_requested (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequestedCb cb) {
+	cbs->participantRegistrationUnsubscriptionRequestedCb = cb;
 }
 
 LinphoneChatRoomCbsShouldChatMessageBeStoredCb linphone_chat_room_cbs_get_chat_message_should_be_stored( LinphoneChatRoomCbs *cbs) {

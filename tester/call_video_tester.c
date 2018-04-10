@@ -2008,6 +2008,161 @@ static void video_call_with_thin_congestion(void){
 	linphone_core_manager_destroy(pauline);
 }
 
+static void on_tmmbr_received(LinphoneCall *call, int stream_index, int tmmbr) {
+	if (stream_index == _linphone_call_get_main_video_stream_index(call)) {
+		stats* stat = get_stats(linphone_call_get_core(call));
+		stat->tmmbr_received_from_cb = tmmbr;
+	}
+}
+
+static void call_created(LinphoneCore *lc, LinphoneCall *call) {
+	LinphoneCallCbs *cbs = linphone_factory_create_call_cbs(linphone_factory_get());
+	linphone_call_cbs_set_tmmbr_received(cbs, on_tmmbr_received);
+	linphone_call_add_callbacks(call, cbs);
+	linphone_call_cbs_unref(cbs);
+}
+
+/*
+ * This test simulates a higher bandwith available from marie than expected.
+ * The stream from pauline to marie is not under test.
+ * It checks that after a few seconds marie received a TMMBR with the approximate value corresponding to the new bandwidth.
+ *
+**/
+static void video_call_with_high_bandwidth_available(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	LinphoneVideoPolicy pol = {0};
+	OrtpNetworkSimulatorParams simparams = { 0 };
+	LinphoneCoreCbs *core_cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+
+	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	pol.automatically_accept = TRUE;
+	pol.automatically_initiate = TRUE;
+	linphone_core_set_video_policy(marie->lc, &pol);
+	linphone_core_set_video_policy(pauline->lc, &pol);
+
+	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
+	simparams.mode = OrtpNetworkSimulatorOutbound;
+	simparams.enabled = TRUE;
+	simparams.max_bandwidth = 1000000;
+	simparams.max_buffer_size = (int)simparams.max_bandwidth;
+	simparams.latency = 60;
+
+	linphone_core_set_network_simulator_params(marie->lc, &simparams);
+
+	linphone_core_cbs_set_call_created(core_cbs, call_created);
+	linphone_core_add_callbacks(marie->lc, core_cbs);
+
+	if (BC_ASSERT_TRUE(call(marie, pauline))){
+		/*wait a little in order to have traffic*/
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 5, 50000));
+
+		BC_ASSERT_GREATER((float)marie->stat.last_tmmbr_value_received, 870000.f, float, "%f");
+		BC_ASSERT_LOWER((float)marie->stat.last_tmmbr_value_received, 1150000.f, float, "%f");
+
+		end_call(marie, pauline);
+	}
+	linphone_core_cbs_unref(core_cbs);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void video_call_expected_fps_for_specified_bandwidth(int bandwidth, int fps, const char *resolution) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	LinphoneVideoPolicy pol = {0};
+	OrtpNetworkSimulatorParams simparams = { 0 };
+
+	if (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc)) >= 2) {
+		linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+		linphone_core_enable_video_capture(marie->lc, TRUE);
+		linphone_core_enable_video_display(marie->lc, TRUE);
+		linphone_core_enable_video_capture(pauline->lc, TRUE);
+		linphone_core_enable_video_display(pauline->lc, TRUE);
+
+		pol.automatically_accept = TRUE;
+		pol.automatically_initiate = TRUE;
+		linphone_core_set_video_policy(marie->lc, &pol);
+		linphone_core_set_video_policy(pauline->lc, &pol);
+
+		linphone_core_set_preferred_video_size_by_name(marie->lc, resolution);
+		simparams.mode = OrtpNetworkSimulatorOutbound;
+		simparams.enabled = TRUE;
+		simparams.max_bandwidth = (float)bandwidth;
+		simparams.max_buffer_size = bandwidth;
+		simparams.latency = 60;
+
+		linphone_core_set_network_simulator_params(marie->lc, &simparams);
+
+		if (BC_ASSERT_TRUE(call(marie, pauline))){
+			LinphoneCall *call = linphone_core_get_current_call(marie->lc);
+
+			/*wait for the first TMMBR*/
+			BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 10000));
+
+			VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
+			BC_ASSERT_EQUAL((int)vstream->configured_fps, fps, int, "%d");
+
+			end_call(marie, pauline);
+		}
+	} else {
+		BC_PASS("Test requires at least a dual core");
+	}
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+/*
+ * This test simulates a video call with a lower bandwidth than the required_bitrate of the lowest given configuration.
+ * The stream from pauline to marie is not under test.
+ * It checks that after a few seconds marie, after receiving a TMMBR, has her fps set to the lowest given configuration.
+ * This test requires at least a computer with 2 CPUs.
+ *
+**/
+static void video_call_expected_fps_for_low_bandwidth(void) {
+#if defined(__ANDROID__) || (TARGET_OS_IPHONE == 1) || defined(__arm__) || defined(_M_ARM)
+	video_call_expected_fps_for_specified_bandwidth(80000, 10, "qvga");
+#else
+	video_call_expected_fps_for_specified_bandwidth(250000, 15, "vga");
+#endif
+}
+
+/*
+ * This test simulates a video call with a regular bandwidth that is between a given configuration.
+ * The stream from pauline to marie is not under test.
+ * It checks that after a few seconds marie, after receiving a TMMBR, has her fps set to the expected given configuration.
+ * This test requires at least a computer with 2 CPUs.
+ *
+**/
+static void video_call_expected_fps_for_regular_bandwidth(void) {
+#if defined(__ANDROID__) || (TARGET_OS_IPHONE == 1) || defined(__arm__) || defined(_M_ARM)
+	video_call_expected_fps_for_specified_bandwidth(500000, 12, "vga");
+#else
+	video_call_expected_fps_for_specified_bandwidth(450000, 25, "vga");
+#endif
+}
+
+/*
+ * This test simulates a video call with a higher bandwidth than the bitrate_limit of the highest given configuration.
+ * The stream from pauline to marie is not under test.
+ * It checks that after a few seconds marie, after receiving a TMMBR, has her fps set to the highest given configuration.
+ * This test requires at least a computer with 2 CPUs.
+ *
+**/
+static void video_call_expected_fps_for_high_bandwidth(void) {
+#if defined(__ANDROID__) || (TARGET_OS_IPHONE == 1) || defined(__arm__) || defined(_M_ARM)
+	video_call_expected_fps_for_specified_bandwidth(400000, 12, "qcif");
+#else
+	video_call_expected_fps_for_specified_bandwidth(5000000, 30, "vga");
+#endif
+}
+
 test_t call_video_tests[] = {
 #ifdef VIDEO_ENABLED
 	TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
@@ -2073,10 +2228,14 @@ test_t call_video_tests[] = {
 	TEST_NO_TAG("Classic video entry phone setup", classic_video_entry_phone_setup),
 	TEST_NO_TAG("Incoming REINVITE with invalid SDP in ACK", incoming_reinvite_with_invalid_ack_sdp),
 	TEST_NO_TAG("Outgoing REINVITE with invalid SDP in ACK", outgoing_reinvite_with_invalid_ack_sdp),
-#endif
 	TEST_NO_TAG("Video call with no audio and no video codec", video_call_with_no_audio_and_no_video_codec),
 	TEST_NO_TAG("Call with early media and no SDP in 200 Ok with video", call_with_early_media_and_no_sdp_in_200_with_video),
-	TEST_NO_TAG("Video call with thin congestion", video_call_with_thin_congestion)
+	TEST_NO_TAG("Video call with thin congestion", video_call_with_thin_congestion),
+	TEST_NO_TAG("Video call with high bandwidth available", video_call_with_high_bandwidth_available),
+	TEST_NO_TAG("Video call expected FPS for low bandwidth", video_call_expected_fps_for_low_bandwidth),
+	TEST_NO_TAG("Video call expected FPS for regular bandwidth", video_call_expected_fps_for_regular_bandwidth),
+	TEST_NO_TAG("Video call expected FPS for high bandwidth", video_call_expected_fps_for_high_bandwidth)
+#endif
 };
 
 test_suite_t call_video_test_suite = {"Video Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

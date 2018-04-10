@@ -88,6 +88,14 @@ typedef void (*LinphoneCallCbsTransferStateChangedCb)(LinphoneCall *call, Linpho
 typedef void (*LinphoneCallCbsAckProcessingCb)(LinphoneCall *call, LinphoneHeaders *ack, bool_t is_received);
 
 /**
+ * Callback for notifying a received TMMBR.
+ * @param call LinphoneCall for which the TMMBR has changed
+ * @param stream_index the index of the current stream
+ * @param tmmbr the value of the received TMMBR
+ */
+typedef void (*LinphoneCallCbsTmmbrReceivedCb)(LinphoneCall *call, int stream_index, int tmmbr);
+
+/**
  * @}
 **/
 
@@ -228,6 +236,12 @@ typedef void (*LinphoneChatRoomCbsParticipantDeviceAddedCb) (LinphoneChatRoom *c
 typedef void (*LinphoneChatRoomCbsParticipantDeviceRemovedCb) (LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 
 /**
+ * Callback used to notify a chat room has received all its information.
+ * @param[in] cr #LinphoneChatRoom object
+ */
+typedef void (*LinphoneChatRoomCbsAllInformationReceivedCb) (LinphoneChatRoom *cr);
+
+/**
  * Callback used when a group chat room is created server-side to generate the address of the chat room.
  * The function linphone_chat_room_set_conference_address() needs to be called by this callback.
  * @param[in] cr #LinphoneChatRoom object
@@ -239,7 +253,7 @@ typedef void (*LinphoneChatRoomCbsConferenceAddressGenerationCb) (LinphoneChatRo
  * @param[in] cr #LinphoneChatRoom object
  * @param[in] participantAddr #LinphoneAddress object
  */
-typedef void (*LinphoneChatRoomCbsParticipantDeviceFetchedCb) (LinphoneChatRoom *cr, const LinphoneAddress *participantAddr);
+typedef void (*LinphoneChatRoomCbsParticipantDeviceFetchRequestedCb) (LinphoneChatRoom *cr, const LinphoneAddress *participantAddr);
 
 /**
  * Callback used when a group chat room server is checking participants capabilities.
@@ -248,6 +262,20 @@ typedef void (*LinphoneChatRoomCbsParticipantDeviceFetchedCb) (LinphoneChatRoom 
  * @param[in] participantsAddr \bctbx_list{LinphoneAddress}
  */
 typedef void (*LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb) (LinphoneChatRoom *cr, const LinphoneAddress *deviceAddr, const bctbx_list_t *participantsAddr);
+
+/**
+ * Callback used when a group chat room server is subscribing to registration state of a participant.
+ * @param[in] cr #LinphoneChatRoom object
+ * @param[in] participantAddr #LinphoneAddress object
+ */
+typedef void (*LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb) (LinphoneChatRoom *cr, const LinphoneAddress *participantAddr);
+
+/**
+ * Callback used when a group chat room server is unsubscribing to registration state of a participant.
+ * @param[in] cr #LinphoneChatRoom object
+ * @param[in] participantAddr #LinphoneAddress object
+ */
+typedef void (*LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequestedCb) (LinphoneChatRoom *cr, const LinphoneAddress *participantAddr);
 
 /**
  * Callback used to tell the core whether or not to store the incoming message in db or not using linphone_chat_message_set_to_be_stored().

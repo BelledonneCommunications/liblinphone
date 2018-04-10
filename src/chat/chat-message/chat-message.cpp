@@ -34,6 +34,7 @@
 #include "chat/modifier/encryption-chat-message-modifier.h"
 #include "chat/modifier/file-transfer-chat-message-modifier.h"
 #include "chat/modifier/multipart-chat-message-modifier.h"
+#include "conference/participant.h"
 #include "content/file-content.h"
 #include "content/content.h"
 #include "core/core.h"
@@ -51,6 +52,11 @@ using namespace std;
 using namespace B64_NAMESPACE;
 
 LINPHONE_BEGIN_NAMESPACE
+
+ChatMessagePrivate::ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir):fileTransferChatMessageModifier(cr->getCore()->getCCore()->http_provider) {
+	direction = dir;
+	setChatRoom(cr);
+}
 
 void ChatMessagePrivate::setDirection (ChatMessage::Direction dir) {
 	direction = dir;
@@ -115,6 +121,29 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 		setState(ChatMessage::State::Displayed);
 	else if ((nbDisplayedStates + nbDeliveredToUserStates) == states.size())
 		setState(ChatMessage::State::DeliveredToUser);
+}
+
+list<shared_ptr<Participant>> ChatMessagePrivate::getParticipantsInState (const ChatMessage::State state) const {
+	L_Q();
+
+	list<shared_ptr<Participant>> participantsInState;
+	if (!(q->getChatRoom()->getCapabilities() & AbstractChatRoom::Capabilities::Conference) || !dbKey.isValid()) {
+		return participantsInState;
+	}
+
+	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
+	shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(dbKey);
+	list<IdentityAddress> addressesInState = mainDb->getChatMessageParticipantsInState(eventLog, state);
+	const list<shared_ptr<Participant>> &participants = q->getChatRoom()->getParticipants();
+	for (IdentityAddress addr : addressesInState) {
+		for (const auto &participant : participants) {
+			if (participant->getAddress() == addr) {
+				participantsInState.push_back(participant);
+			}
+		}
+	}
+	
+	return participantsInState;
 }
 
 void ChatMessagePrivate::setState (ChatMessage::State newState, bool force) {
@@ -237,31 +266,38 @@ void ChatMessagePrivate::setFileTransferFilepath (const string &path) {
 
 const string &ChatMessagePrivate::getAppdata () const {
 	for (const Content *c : getContents()) {
-		if (c->isFile()) {
-			FileContent *fileContent = (FileContent *)c;
-			return fileContent->getAppData("legacy");
+		if (!c->getAppData("legacy").empty()) {
+			return c->getAppData("legacy");
 		}
 	}
 	return Utils::getEmptyConstRefObject<string>();
 }
 
 void ChatMessagePrivate::setAppdata (const string &data) {
-	for (const Content *c : getContents()) {
-		if (c->isFile()) {
-			FileContent *fileContent = (FileContent *)c;
-			fileContent->setAppData("legacy", data);
-			break;
-		}
+	bool contentFound = false;
+	for (Content *c : getContents()) {
+		c->setAppData("legacy", data);
+		contentFound = true;
+		break;
 	}
-	updateInDb();
+	if (contentFound) {
+		updateInDb();
+	}
 }
 
 const string &ChatMessagePrivate::getExternalBodyUrl () const {
+	if (!externalBodyUrl.empty()) {
+		return externalBodyUrl;
+	}
 	if (hasFileTransferContent()) {
 		FileTransferContent *content = (FileTransferContent*) getFileTransferContent();
 		return content->getFileUrl();
 	}
 	return Utils::getEmptyConstRefObject<string>();
+}
+
+void ChatMessagePrivate::setExternalBodyUrl (const string &url) {
+	externalBodyUrl = url;
 }
 
 const ContentType &ChatMessagePrivate::getContentType () {
@@ -391,6 +427,10 @@ void ChatMessagePrivate::loadFileTransferUrlFromBodyToContent() {
 	fileTransferChatMessageModifier.decode(q->getSharedFromThis(), errorCode);
 }
 
+std::string ChatMessagePrivate::createFakeFileTransferFromUrl(const std::string &url) {
+	return fileTransferChatMessageModifier.createFakeFileTransferFromUrl(url);
+}
+
 void ChatMessagePrivate::setChatRoom (const shared_ptr<AbstractChatRoom> &cr) {
 	chatRoom = cr;
 	chatRoomId = cr->getChatRoomId();
@@ -411,7 +451,7 @@ void ChatMessagePrivate::sendImdn (Imdn::Type imdnType, LinphoneReason reason) {
 	shared_ptr<ChatMessage> msg = q->getChatRoom()->createChatMessage();
 
 	Content *content = new Content();
-	content->setContentType("message/imdn+xml");
+	content->setContentType(ContentType::Imdn);
 	content->setBody(Imdn::createXml(imdnId, time, imdnType, reason));
 	msg->addContent(*content);
 
@@ -627,8 +667,8 @@ void ChatMessagePrivate::send () {
 				|| (call->getState() == CallSession::State::Pausing)
 				|| (call->getState() == CallSession::State::PausedByRemote)
 			) {
-				lInfo() << "send SIP msg through the existing call.";
-				op = linphone_call_get_op(lcall);
+				lInfo() << "Send SIP msg through the existing call";
+				op = call->getPrivate()->getOp();
 				string identity = linphone_core_find_best_identity(core->getCCore(), linphone_call_get_remote_address(lcall));
 				if (identity.empty()) {
 					LinphoneAddress *addr = linphone_address_new(q->getToAddress().asString().c_str());
@@ -712,14 +752,18 @@ void ChatMessagePrivate::send () {
 	if (internalContent.isEmpty()) {
 		if (contents.size() > 0) {
 			internalContent = *(contents.front());
-		} else {
+		} else if (externalBodyUrl.empty()) { // When using external body url, there is no content
 			lError() << "Trying to send a message without any content !";
 			return;
 		}
 	}
 
 	auto msgOp = dynamic_cast<SalMessageOpInterface *>(op);
-	if (internalContent.getContentType().isValid()) {
+	if (!externalBodyUrl.empty()) {
+		char *content_type = ms_strdup_printf("message/external-body; access-type=URL; URL=\"%s\"", externalBodyUrl.c_str());
+		msgOp->send_message(content_type, NULL);
+		ms_free(content_type);
+	} else if (internalContent.getContentType().isValid()) {
 		msgOp->send_message(internalContent.getContentType().asString().c_str(), internalContent.getBodyAsUtf8String().c_str());
 	} else {
 		msgOp->send_message(ContentType::PlainText.asString().c_str(), internalContent.getBodyAsUtf8String().c_str());
@@ -835,15 +879,12 @@ bool ChatMessagePrivate::validStateTransition (ChatMessage::State currentState, 
 // -----------------------------------------------------------------------------
 
 ChatMessage::ChatMessage (const shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction direction) :
-	Object(*new ChatMessagePrivate), CoreAccessor(chatRoom->getCore()) {
-	L_D();
-
-	d->direction = direction;
-	d->setChatRoom(chatRoom);
+	Object(*new ChatMessagePrivate(chatRoom,direction)), CoreAccessor(chatRoom->getCore()) {
 }
 
 ChatMessage::~ChatMessage () {
 	L_D();
+	
 	for (Content *content : d->contents)
 		delete content;
 
@@ -1025,7 +1066,7 @@ void ChatMessage::send () {
 	// Do not allow sending a message that is already being sent or that has been correctly delivered/displayed
 	if ((d->state == State::InProgress) || (d->state == State::Delivered) || (d->state == State::FileTransferDone) ||
 			(d->state == State::DeliveredToUser) || (d->state == State::Displayed)) {
-		lWarning() << "Cannot send chat message in state " << linphone_chat_message_state_to_string((LinphoneChatMessageState)d->state);
+		lWarning() << "Cannot send chat message in state " << Utils::toString(d->state);
 		return;
 	}
 
