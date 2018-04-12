@@ -641,7 +641,7 @@ class Project:
 		self.__discoverClasses()
 
 	def initFromDir(self, xmldir):
-		files = [ os.path.join(xmldir, f) for f in os.listdir(xmldir) if (os.path.isfile(os.path.join(xmldir, f)) and f.endswith('.xml')) ]
+		files = [ os.path.join(xmldir, f) for f in sorted(os.listdir(xmldir)) if (os.path.isfile(os.path.join(xmldir, f)) and f.endswith('.xml')) ]
 		self.initFromFiles(files)
 
 	def check(self):
