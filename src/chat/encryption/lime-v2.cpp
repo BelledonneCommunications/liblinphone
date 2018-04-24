@@ -79,7 +79,7 @@ void BelleSipLimeManager::processResponse (void *data, const belle_http_response
 }
 
 void BelleSipLimeManager::processAuthRequested (void *data, belle_sip_auth_event_t *event) noexcept {
-	// In a real situation, get the real username and password of user for authentication
+	// In real life situation, get the real username and password of user for authentication
 
 	X3DHServerPostContext *userData = static_cast<X3DHServerPostContext *>(data);
 	LinphoneCore *lc = userData->lc;
@@ -90,10 +90,18 @@ void BelleSipLimeManager::processAuthRequested (void *data, belle_sip_auth_event
 
 	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(lc, realm, username, domain);
 
-	const char *auth_username = linphone_auth_info_get_username(auth_info);
-	const char *auth_password = linphone_auth_info_get_password(auth_info);
-	belle_sip_auth_event_set_username(event, auth_username);
-	belle_sip_auth_event_set_passwd(event, auth_password);
+	if (auth_info) {
+		const char *auth_username = linphone_auth_info_get_username(auth_info);
+		const char *auth_password = linphone_auth_info_get_password(auth_info);
+		printf("setting auth event username = %s\n", auth_username);
+		printf("setting auth event password = %s\n", auth_password);
+		belle_sip_auth_event_set_username(event, auth_username);
+		belle_sip_auth_event_set_passwd(event, auth_password); // null
+	}
+
+	// Override authentication info for x3dh.js
+	belle_sip_auth_event_set_username(event, "alice");
+	belle_sip_auth_event_set_passwd(event, "you see the problem is this");
 }
 
 BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_provider_t *prov, LinphoneCore *lc) : LimeManager(db_access, [prov, lc](const string &url, const string &from, const vector<uint8_t> &message, const lime::limeX3DHServerResponseProcess &responseProcess) {
@@ -127,6 +135,7 @@ BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_pr
 LimeV2::LimeV2(const std::__cxx11::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc) {
 	// TODO get x3dhServerUrl and curve from application level
 	x3dhServerUrl = "https://localhost:25519"; // 25520
+// 	x3dhServerUrl = "http://subscribe.example.org/mtanon/tools/wizard_and_remote_provisioning_php_scripts/x3dh.php";
 	curve = lime::CurveId::c25519; // c448
 	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(db_access, prov, lc));
 	lastLimeUpdate = linphone_config_get_int(lc->config, "misc", "last_lime_update_time", 0);
