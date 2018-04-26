@@ -193,10 +193,20 @@ static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_s
 }
 
 static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const char *response_body) {
+
+	const char *response_body_trimmed;
+	if (response_body[0] == '\n') {
+		response_body_trimmed = response_body+2;
+		ms_warning("Wrongly formatted XML-RPC response");
+	} else if (response_body[0] == ' ') {
+		response_body_trimmed = response_body+3;
+		ms_warning("Wrongly formatted XML-RPC response");
+	}
+
 	xmlparsing_context_t *xml_ctx = linphone_xmlparsing_context_new();
 	xmlSetGenericErrorFunc(xml_ctx, linphone_xmlparsing_genericxml_error);
 	request->status = LinphoneXmlRpcStatusFailed;
-	xml_ctx->doc = xmlReadDoc((const unsigned char*)response_body, 0, NULL, 0);
+	xml_ctx->doc = xmlReadDoc((const unsigned char*)response_body_trimmed, 0, NULL, 0);
 	if (xml_ctx->doc != NULL) {
 		char *response_str = NULL;
 		if (linphone_create_xml_xpath_context(xml_ctx) < 0) goto end;
@@ -405,7 +415,19 @@ void linphone_xml_rpc_session_send_request(LinphoneXmlRpcSession *session, Linph
 		process_io_error_from_post_xml_rpc_request(request, NULL);
 		return;
 	}
-	req = belle_http_request_create("POST", uri, belle_sip_header_content_type_create("text", "xml"), NULL);
+
+	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(session->core);
+	if (cfg) {
+		const char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
+		req = belle_http_request_create("POST", uri,
+			belle_sip_header_content_type_create("text", "xml"),
+			belle_http_header_create("From", addr),
+			NULL);
+	} else {
+		req = belle_http_request_create("POST", uri,
+			belle_sip_header_content_type_create("text", "xml"),
+			NULL);
+	}
 	if (!req) {
 		belle_sip_object_unref(uri);
 		process_io_error_from_post_xml_rpc_request(request, NULL);
@@ -418,6 +440,7 @@ void linphone_xml_rpc_session_send_request(LinphoneXmlRpcSession *session, Linph
 	cbs.process_io_error = process_io_error_from_post_xml_rpc_request;
 	cbs.process_auth_requested = process_auth_requested_from_post_xml_rpc_request;
 	l = belle_http_request_listener_create_from_callbacks(&cbs, request);
+
 	belle_http_provider_send_request(session->core->http_provider, req, l);
 	/*ensure that the listener object will be destroyed with the request*/
 	belle_sip_object_data_set(BELLE_SIP_OBJECT(request), "listener", l, belle_sip_object_unref);

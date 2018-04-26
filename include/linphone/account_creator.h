@@ -70,11 +70,25 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_account(LinphoneAccountCreator *creator);
 
 /**
+ * Send a request to delete an account on server.
+ * @param[in] creator LinphoneAccountCreator object
+ * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_delete_account(LinphoneAccountCreator *creator);
+
+/**
  * Send a request to know if an account is activated on server.
  * @param[in] creator LinphoneAccountCreator object
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated(LinphoneAccountCreator *creator);
+
+/**
+ * Send a request to get the account confirmation key on server.
+ * @param[in] creator LinphoneAccountCreator object
+ * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key(LinphoneAccountCreator *creator);
 
 /**
  * Send a request to activate an account on server.
@@ -151,6 +165,13 @@ LINPHONE_PUBLIC void *linphone_account_creator_get_user_data(const LinphoneAccou
  * @param[in] ud The user pointer to associate with the LinphoneAccountCreator.
 **/
 LINPHONE_PUBLIC void linphone_account_creator_set_user_data(LinphoneAccountCreator *creator, void *ud);
+
+/**
+ * Assign a proxy config pointer to the LinphoneAccountCreator.
+ * @param[in] creator LinphoneAccountCreator object.
+ * @param[in] cfg The LinphoneProxyConfig to associate with the LinphoneAccountCreator.
+**/
+LINPHONE_PUBLIC void linphone_account_creator_set_proxy_config(LinphoneAccountCreator *creator, LinphoneProxyConfig *cfg);
 
 /**
  * Set the username.
@@ -379,6 +400,20 @@ LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_g
 LINPHONE_PUBLIC void linphone_account_creator_cbs_set_create_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
 
 /**
+ * Get the delete account request.
+ * @param[in] cbs LinphoneAccountCreatorCbs object.
+ * @return The current delete account request.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_delete_account(const LinphoneAccountCreatorCbs *cbs);
+
+/**
+ * Assign a user pointer to a LinphoneAccountCreatorCbs object.
+ * @param[in] cbs LinphoneAccountCreatorCbs object.
+ * @param[in] cb The delete account request to be used.
+**/
+LINPHONE_PUBLIC void linphone_account_creator_cbs_set_delete_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
+
+/**
  * Get the is account exist request.
  * @param[in] cbs LinphoneAccountCreatorCbs object.
  * @return The current is account exist request.
@@ -391,6 +426,20 @@ LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_g
  * @param[in] cb The is account exist request to be used.
 **/
 LINPHONE_PUBLIC void linphone_account_creator_cbs_set_is_account_exist(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
+
+/**
+ * Get the get confirmation key request.
+ * @param[in] cbs LinphoneAccountCreatorCbs object.
+ * @return The current is account exist request.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_get_confirmation_key(const LinphoneAccountCreatorCbs *cbs);
+
+/**
+ * Assign a user pointer to a LinphoneAccountCreatorCbs object.
+ * @param[in] cbs LinphoneAccountCreatorCbs object.
+ * @param[in] cb The get confirmation key request to be used.
+**/
+LINPHONE_PUBLIC void linphone_account_creator_cbs_set_get_confirmation_key(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
 
 /**
  * Get the activate account request.
