@@ -158,7 +158,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	const IdentityAddress &peerAddress = chatRoom->getPeerAddress();
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
 
-	auto recipients = make_shared<vector<lime::recipientData>>();
+	auto recipients = make_shared<vector<lime::RecipientData>>();
 	const list<shared_ptr<Participant>> participants = chatRoom->getParticipants();
 	for (const shared_ptr<Participant> &p : participants) {
 		const list<shared_ptr<ParticipantDevice>> devices = p->getPrivate()->getDevices();
@@ -171,8 +171,8 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	shared_ptr<const vector<uint8_t>> plainMessage = make_shared<const vector<uint8_t>>(plainStringMessage.begin(), plainStringMessage.end());
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
-	belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [recipients, cipherMessage, message, &result] (lime::callbackReturn returnCode, string errorMessage) {
-		if (returnCode == lime::callbackReturn::success) {
+	belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [recipients, cipherMessage, message, &result] (lime::CallbackReturn returnCode, string errorMessage) {
+		if (returnCode == lime::CallbackReturn::success) {
 
 			list<Content> contents;
 
@@ -180,7 +180,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 
 			for (const auto &recipient : *recipients) {
 
-				vector<uint8_t> encodedCipher = encodeBase64(recipient.cipherHeader);
+				vector<uint8_t> encodedCipher = encodeBase64(recipient.DRmessage);
 				vector<char> cipherHeaderB64(encodedCipher.begin(), encodedCipher.end());
 
 				Content cipherHeaderContent;
@@ -340,8 +340,8 @@ std::shared_ptr<BelleSipLimeManager> LimeV2::getLimeManager () {
 }
 
 lime::limeCallback LimeV2::setLimeCallback (string operation) {
-	lime::limeCallback callback([operation](lime::callbackReturn returnCode, string anythingToSay) {
-		if (returnCode == lime::callbackReturn::success) {
+	lime::limeCallback callback([operation](lime::CallbackReturn returnCode, string anythingToSay) {
+		if (returnCode == lime::CallbackReturn::success) {
 			BCTBX_SLOGI << "Lime operation successful: " << operation;
 		} else {
 			BCTBX_SLOGE << "Lime operation failed: " << anythingToSay;
