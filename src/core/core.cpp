@@ -180,9 +180,10 @@ void Core::enableLimeV2 (bool enable) {
 			return;
 
 		IdentityAddress ia = IdentityAddress(linphone_address_as_string_uri_only(la));
+
 		string localDeviceId = ia.asString();
 
-		if (localDeviceId == "")
+		if (localDeviceId == "" || localDeviceId.find("[::1]") != string::npos)
 			return;
 
 		string x3dhServerUrl = limeV2Engine->getX3dhServerUrl();

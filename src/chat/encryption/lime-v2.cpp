@@ -79,8 +79,6 @@ void BelleSipLimeManager::processResponse (void *data, const belle_http_response
 }
 
 void BelleSipLimeManager::processAuthRequested (void *data, belle_sip_auth_event_t *event) noexcept {
-	// In real life situation, get the real username and password of user for authentication
-
 	X3DHServerPostContext *userData = static_cast<X3DHServerPostContext *>(data);
 	LinphoneCore *lc = userData->lc;
 
@@ -88,15 +86,14 @@ void BelleSipLimeManager::processAuthRequested (void *data, belle_sip_auth_event
 	const char *username = belle_sip_auth_event_get_username(event);
 	const char *domain = belle_sip_auth_event_get_domain(event);
 
+	printf("finding auth_info for:\nrealm = %s\nusername = %s\ndomain = %s\n", realm, username, domain);
 	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(lc, realm, username, domain);
 
 	if (auth_info) {
 		const char *auth_username = linphone_auth_info_get_username(auth_info);
 		const char *auth_password = linphone_auth_info_get_password(auth_info);
-		printf("setting auth event username = %s\n", auth_username);
-		printf("setting auth event password = %s\n", auth_password);
 		belle_sip_auth_event_set_username(event, auth_username);
-		belle_sip_auth_event_set_passwd(event, auth_password); // null
+		belle_sip_auth_event_set_passwd(event, auth_password);
 	}
 
 	// Override authentication info for x3dh.js
@@ -353,11 +350,11 @@ lime::limeCallback LimeV2::setLimeCallback (string operation) {
 void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const string &message) {
 	if (state == LinphoneRegistrationState::LinphoneRegistrationOk) {
 
-		IdentityAddress ia = IdentityAddress(linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg))); // .getGruu();
+		IdentityAddress ia = IdentityAddress(linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg)));
 		string localDeviceId = ia.asString();
 
-		if (localDeviceId == "")
-		return;
+		if (localDeviceId == "" || localDeviceId.find("[::1]") != string::npos)
+			return;
 
 		stringstream operation;
 		operation << "create user " << localDeviceId;

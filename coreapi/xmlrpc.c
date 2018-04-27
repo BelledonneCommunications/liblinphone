@@ -194,13 +194,13 @@ static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_s
 
 static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const char *response_body) {
 
-	const char *response_body_trimmed;
+	const char *response_body_trimmed = response_body;
 	if (response_body[0] == '\n') {
 		response_body_trimmed = response_body+2;
-		ms_warning("Wrongly formatted XML-RPC response");
+		ms_warning("Wrongly formatted XML-RPC response.");
 	} else if (response_body[0] == ' ') {
 		response_body_trimmed = response_body+3;
-		ms_warning("Wrongly formatted XML-RPC response");
+		ms_warning("Wrongly formatted XML-RPC response.");
 	}
 
 	xmlparsing_context_t *xml_ctx = linphone_xmlparsing_context_new();

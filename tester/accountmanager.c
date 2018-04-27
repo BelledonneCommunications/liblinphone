@@ -19,6 +19,7 @@
 #include <belle-sip/belle-sip.h>
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
+#include <ctype.h>
 
 struct _Account{
 	LinphoneAddress *identity;
@@ -61,6 +62,8 @@ void account_destroy(Account *obj){
 struct _AccountManager{
 	char *unique_id;
 	bctbx_list_t *accounts;
+	// TODO bool_t create_on_db;
+	// TODO const char *xmlrpc_url;
 };
 
 typedef struct _AccountManager AccountManager;
@@ -71,6 +74,11 @@ AccountManager *account_manager_get(void){
 	if (the_am==NULL){
 		the_am=ms_new0(AccountManager,1);
 		the_am->unique_id=sal_get_random_token(6);
+		ms_message("Using lowercase random suffix.");
+
+		for (int i=0; i<6; i++) {
+			the_am->unique_id[i] = tolower(the_am->unique_id[i]);
+		}
 	}
 	return the_am;
 }
@@ -201,6 +209,142 @@ void account_create_on_server(Account *account, const LinphoneProxyConfig *refcf
 	linphone_core_unref(lc);
 }
 
+static void account_created_on_db_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char *resp){
+	switch(status){
+		case LinphoneAccountCreatorStatusAccountCreated:
+			creator->account_created = 1;
+			break;
+		default:
+			break;
+	}
+}
+
+static void get_confirmation_key_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char *resp){
+	switch(status){
+		case LinphoneAccountCreatorStatusRequestOk:
+			creator->confirmation_key = 1;
+			break;
+		default:
+			break;
+	}
+}
+
+static void account_activated_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char *resp){
+	switch(status){
+		case LinphoneAccountCreatorStatusAccountActivated:
+			creator->confirmation_key = 1;
+			break;
+		case LinphoneAccountCreatorStatusAccountAlreadyActivated:
+			creator->confirmation_key = 1;
+			break;
+		default:
+			break;
+	}
+}
+
+static void _authentication_requested(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method){
+	linphone_auth_info_set_passwd(auth_info, test_password);
+	linphone_core_add_auth_info(lc, auth_info); /*add authentication info to LinphoneCore*/
+}
+
+void account_create_on_db(Account *account, LinphoneProxyConfig *cfg, const char *phone_alias, const char *xmlrpc_url){
+
+	// TODO attempt to set sip.example.org in cfg
+// 	LinphoneAddress *addr = linphone_address_new("sip:sip.example.org"); // unref
+//  linphone_proxy_config_set_identity_address(cfg, addr);
+
+	LinphoneCore *lc;
+
+	// TODO be careful which LinphoneCore we are using
+// 	lc = linphone_proxy_config_get_core(cfg);
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_authentication_requested(cbs, _authentication_requested);
+	linphone_core_cbs_set_registration_state_changed(cbs, account_created_on_server_cb);
+	lc = configure_lc_from(cbs, bc_tester_get_resource_dir_prefix(), NULL, account); // works
+	linphone_core_cbs_unref(cbs);
+	LinphoneSipTransports tr;
+	tr.udp_port=LC_SIP_TRANSPORT_RANDOM;
+	tr.tcp_port=LC_SIP_TRANSPORT_RANDOM;
+	tr.tls_port=LC_SIP_TRANSPORT_RANDOM;
+	linphone_core_set_sip_transports(lc,&tr);
+
+	LinphoneAccountCreator *creator = linphone_account_creator_new(lc, xmlrpc_url);
+	LinphoneAccountCreatorCbs *creator_cbs = linphone_account_creator_get_callbacks(creator);
+
+	// TODO workaround
+	linphone_account_creator_set_proxy_config(creator, cfg);
+
+	linphone_account_creator_service_set_user_data(linphone_account_creator_get_service(creator), (void*)LinphoneAccountCreatorStatusAccountCreated);
+
+	const char *username = linphone_address_get_username(account->modified_identity);
+	const char *password = account->password;
+	const char *domain = "sip.example.org"; // TODO linphone_proxy_config_get_domain(cfg)
+
+	const char *at = "@";
+	char* email;
+	email = malloc(strlen(username)+strlen(domain)+strlen(at)+1);
+	strcpy(email, username);
+	strcat(email, at);
+	strcat(email, domain);
+
+	linphone_account_creator_set_username(creator, username);
+	linphone_account_creator_set_email(creator, email);
+	linphone_account_creator_set_password(creator, password);
+	linphone_account_creator_set_domain(creator, domain);
+	linphone_account_creator_cbs_set_create_account(creator_cbs, account_created_on_db_cb);
+
+	// TODO manage phone alias if there is one
+
+	printf("\ncreating account on db:\nusername = %s\nemail = %s\npassword = %s\ndomain = %s\n", username, email, password, domain);
+	linphone_account_creator_create_account(creator);
+
+	if (wait_for_until(lc,NULL,&creator->account_created,1,3000)==FALSE)
+		ms_fatal("Could not create account %s on db", linphone_proxy_config_get_identity(cfg));
+
+	const char *proxy_domain = linphone_proxy_config_get_domain(cfg);
+	const LinphoneAddress *proxy_addr = linphone_proxy_config_get_identity_address(cfg);
+	const char *proxy_username = linphone_address_get_username(proxy_addr);
+	const char *proxy_password = linphone_address_get_password(proxy_addr);
+	printf("proxy config:\nusername = %s\ndomain = %s\npassword = %s\n", proxy_username, proxy_domain, proxy_password);
+
+	// TODO rework this step
+	linphone_proxy_config_edit(cfg);
+	LinphoneAddress *modified_addr = linphone_address_clone(account->modified_identity);
+	linphone_address_set_secure(modified_addr, FALSE);
+	linphone_address_set_username(modified_addr, username);
+	linphone_proxy_config_set_identity_address(cfg, modified_addr);
+	linphone_proxy_config_done(cfg);
+
+	// TODO add auth info outside this function
+	LinphoneAuthInfo *ai = linphone_auth_info_new(username,NULL,password,NULL,domain,domain);
+	linphone_core_add_auth_info(lc,ai);
+	linphone_auth_info_unref(ai);
+
+	linphone_account_creator_cbs_set_get_confirmation_key(creator_cbs, get_confirmation_key_cb);
+	linphone_account_creator_get_confirmation_key(creator);
+
+	if (wait_for_until(lc,NULL,&creator->confirmation_key,1,3000)==FALSE)
+		ms_fatal("Could not get confirmation key for account %s", linphone_proxy_config_get_identity(cfg));
+
+	linphone_account_creator_cbs_set_activate_account(creator_cbs, account_activated_cb);
+	linphone_account_creator_activate_email_account_linphone(creator);
+
+	if (wait_for_until(lc,NULL,&creator->account_activated,1,3000))
+		ms_fatal("Could not activate account %s", linphone_proxy_config_get_identity(cfg));
+
+	linphone_account_creator_create_proxy_config(creator);
+
+	wait_for_until(lc,NULL,&account->created,1,3000);
+
+	// TODO workaround
+	linphone_account_creator_set_proxy_config(creator, linphone_core_create_proxy_config(lc));
+
+	ms_free(email);
+	linphone_account_creator_unref(creator);
+	linphone_core_unref(lc);
+}
+
 static LinphoneAddress *account_manager_check_account(AccountManager *m, LinphoneProxyConfig *cfg, LinphoneCoreManager *cm){
 	LinphoneCore *lc=linphone_proxy_config_get_core(cfg);
 	const char *identity=linphone_proxy_config_get_identity(cfg);
@@ -229,8 +373,10 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 	linphone_address_set_username(id_addr, linphone_address_get_username(account->modified_identity));
 	linphone_proxy_config_set_identity_address(cfg, id_addr);
 
+	// TODO choose to create on server or on db based on the tester call arguments (on server by default)
 	if (create_account){
-		account_create_on_server(account,cfg,phone_alias);
+// 		account_create_on_server(account,cfg,phone_alias);
+		account_create_on_db(account,cfg,phone_alias,"http://subscribe.example.org/mtanon/tools/wizard_and_remote_provisioning_php_scripts/xmlrpc.php"); // TODO xmlrpc_url
 	}
 
 	if (liblinphone_tester_keep_uuid) {
@@ -249,7 +395,11 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 
 	ai=linphone_auth_info_new(linphone_address_get_username(account->modified_identity),
 				NULL,
-				account->password,NULL,NULL,linphone_address_get_domain(account->modified_identity));
+				account->password,
+				NULL,
+				linphone_address_get_domain(account->modified_identity),
+				linphone_address_get_domain(account->modified_identity) // TODO realm = domain
+	);
 	linphone_core_add_auth_info(lc,ai);
 	linphone_auth_info_unref(ai);
 
