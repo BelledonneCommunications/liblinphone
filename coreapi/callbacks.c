@@ -61,6 +61,7 @@ static void call_received(SalCallOp *h) {
 
 	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
 		h->decline(SalReasonServiceUnavailable, nullptr);
+		h->release();
 		return;
 	}
 
@@ -96,10 +97,17 @@ static void call_received(SalCallOp *h) {
 			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
 				oneToOneChatRoom = true;
 			if (oneToOneChatRoom) {
+				bool_t oneToOneChatRoomEnabled = linphone_config_get_bool(linphone_core_get_config(lc), "misc", "enable_one_to_one_chat_room", FALSE);
+				if (!oneToOneChatRoomEnabled) {
+					h->decline(SalReasonNotAcceptable, nullptr);
+					h->release();
+					return;
+				}
 				IdentityAddress from(h->get_from());
 				list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(h->get_remote_body());
 				if (identAddresses.size() != 1) {
 					h->decline(SalReasonNotAcceptable, nullptr);
+					h->release();
 					return;
 				}
 				IdentityAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front());
@@ -125,6 +133,7 @@ static void call_received(SalCallOp *h) {
 			} else {
 				//invite is for an unknown chatroom
 				h->decline(SalReasonNotFound, nullptr);
+				h->release();
 			}
 		} else {
 			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
