@@ -64,7 +64,6 @@ set(LINPHONE_SOURCE_FILES_C
 	carddav.c
 	chat.c
 	contactprovider.c
-	content.c
 	dial_plan.c
 	dict.c
 	ec-calibrator.c
@@ -142,6 +141,7 @@ bc_git_version(liblinphone ${PROJECT_VERSION})
 add_definitions(
 	-DUSE_BELLESIP
 	-DLIBLINPHONE_EXPORTS
+	-DBCTBX_LOG_DOMAIN="liblinphone"
 )
 
 set(LIBS

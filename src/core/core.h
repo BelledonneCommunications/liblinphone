@@ -44,12 +44,14 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class BasicToClientGroupChatRoomPrivate;
 	friend class CallPrivate;
 	friend class CallSession;
+	friend class ChatMessage;
 	friend class ChatMessagePrivate;
 	friend class ChatRoom;
 	friend class ChatRoomPrivate;
 	friend class ClientGroupChatRoom;
 	friend class ClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
+	friend class Imdn;
 	friend class LocalConferenceEventHandlerPrivate;
 	friend class MainDb;
 	friend class MainDbChatMessageKey;

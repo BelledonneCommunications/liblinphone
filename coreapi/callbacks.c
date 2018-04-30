@@ -17,14 +17,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-
 #include "c-wrapper/internal/c-sal.h"
 #include "sal/call-op.h"
 #include "sal/message-op.h"
 #include "sal/refer-op.h"
 
+#include "linphone/api/c-content.h"
 #include "linphone/core.h"
 #include "linphone/utils/utils.h"
+
 #include "private.h"
 #include "mediastreamer2/mediastream.h"
 #include "linphone/lpconfig.h"
@@ -603,6 +604,12 @@ static LinphoneChatMessageState chatStatusSal2Linphone(SalMessageDeliveryStatus 
 }
 
 static void message_delivery_update(SalOp *op, SalMessageDeliveryStatus status) {
+	auto lc = reinterpret_cast<LinphoneCore *>(op->get_sal()->get_user_pointer());
+	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
+		static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
+		return;
+	}
+
 	LinphonePrivate::ChatMessage *msg = reinterpret_cast<LinphonePrivate::ChatMessage *>(op->get_user_pointer());
 	if (!msg)
 		return; // Do not handle delivery status for isComposing messages.
