@@ -183,7 +183,7 @@ void Core::enableLimeV2 (bool enable) {
 
 		string localDeviceId = ia.asString();
 
-		if (localDeviceId == "" || localDeviceId.find("[::1]") != string::npos)
+		if (localDeviceId == "")
 			return;
 
 		string x3dhServerUrl = limeV2Engine->getX3dhServerUrl();
