@@ -182,18 +182,36 @@ static void process_io_error_from_post_xml_rpc_request(void *data, const belle_s
 
 static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_sip_auth_event_t *event) {
 	LinphoneXmlRpcRequest *request = (LinphoneXmlRpcRequest *)data;
-	ms_error("Authentication error during XML-RPC request sending");
-	if (!linphone_xml_rpc_request_aborted(request)){
-		request->status = LinphoneXmlRpcStatusFailed;
-		if (request->callbacks->response != NULL) {
-			request->callbacks->response(request);
+	LinphoneAccountCreator *creator = (LinphoneAccountCreator *)linphone_xml_rpc_request_get_user_data(request);
+
+	LinphoneCore *lc = creator->core;
+
+	const char *realm = belle_sip_auth_event_get_realm(event);
+	const char *username = belle_sip_auth_event_get_username(event);
+	const char *domain = belle_sip_auth_event_get_domain(event);
+
+	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(lc, realm, username, domain);
+
+	if (auth_info) {
+		const char *auth_username = linphone_auth_info_get_username(auth_info);
+		const char *auth_password = linphone_auth_info_get_password(auth_info);
+		belle_sip_auth_event_set_username(event, auth_username);
+		belle_sip_auth_event_set_passwd(event, auth_password);
+	} else {
+		ms_error("Authentication error during XML-RPC request sending");
+		if (!linphone_xml_rpc_request_aborted(request)){
+			request->status = LinphoneXmlRpcStatusFailed;
+			if (request->callbacks->response != NULL) {
+				request->callbacks->response(request);
+			}
 		}
+		linphone_xml_rpc_request_unref(request);
 	}
-	linphone_xml_rpc_request_unref(request);
 }
 
 static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const char *response_body) {
 
+	// TODO In case of XML format problem
 	const char *response_body_trimmed = response_body;
 	if (response_body[0] == '\n') {
 		response_body_trimmed = response_body+2;
