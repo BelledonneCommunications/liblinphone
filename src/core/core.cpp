@@ -20,8 +20,12 @@
 #include <mediastreamer2/mscommon.h>
 #include <xercesc/util/PlatformUtils.hpp>
 
+//#include "linphone/utils/general.h"
+
 #include "address/address-p.h"
 #include "call/call.h"
+#include "conference/handlers/local-conference-list-event-handler.h"
+#include "conference/handlers/remote-conference-list-event-handler.h"
 #include "core/core-listener.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
@@ -42,6 +46,8 @@ LINPHONE_BEGIN_NAMESPACE
 void CorePrivate::init () {
 	L_Q();
 	mainDb.reset(new MainDb(q->getSharedFromThis()));
+	remoteListEventHandler = makeUnique<RemoteConferenceListEventHandler>(q->getSharedFromThis());
+	localListEventHandler = makeUnique<LocalConferenceListEventHandler>();
 
 	AbstractDb::Backend backend;
 	string uri = L_C_TO_STRING(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
@@ -80,6 +86,9 @@ void CorePrivate::uninit () {
 	chatRooms.clear();
 	chatRoomsById.clear();
 	noCreatedClientGroupChatRooms.clear();
+
+	remoteListEventHandler = nullptr;
+	localListEventHandler = nullptr;
 
 	AddressPrivate::clearSipAddressesCache();
 }

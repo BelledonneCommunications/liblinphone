@@ -24,6 +24,7 @@
 
 #include "conference/remote-conference.h"
 #include "content/content-manager.h"
+#include "content/content-type.h"
 #include "content/content.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
@@ -278,8 +279,7 @@ void RemoteConferenceEventHandler::unsubscribe () {
 void RemoteConferenceEventHandler::notifyReceived (const string &xmlBody) {
 	L_D();
 
-	lInfo() << "NOTIFY received for conference: (remote=" << d->chatRoomId.getPeerAddress().asString() <<
-		", local=" << d->chatRoomId.getLocalAddress().asString() << ").";
+	lInfo() << "NOTIFY received for conference: " << d->chatRoomId;
 
 	d->simpleNotifyReceived(xmlBody);
 }
@@ -287,17 +287,24 @@ void RemoteConferenceEventHandler::notifyReceived (const string &xmlBody) {
 void RemoteConferenceEventHandler::multipartNotifyReceived (const string &xmlBody) {
 	L_D();
 
-	lInfo() << "multipart NOTIFY received for conference: (remote=" << d->chatRoomId.getPeerAddress().asString() <<
-		", local=" << d->chatRoomId.getLocalAddress().asString() << ").";
+	lInfo() << "multipart NOTIFY received for conference: " << d->chatRoomId;
 
 	Content multipart;
 	multipart.setBody(xmlBody);
+	ContentType contentType(ContentType::Multipart);
+	contentType.addParameter("boundary", MultipartBoundary);
+	multipart.setContentType(contentType);
 
 	for (const auto &content : ContentManager::multipartToContentList(multipart))
 		d->simpleNotifyReceived(content.getBodyAsString());
 }
 
 // -----------------------------------------------------------------------------
+
+void RemoteConferenceEventHandler::setChatRoomId (ChatRoomId chatRoomId) {
+	L_D();
+	d->chatRoomId = chatRoomId;
+}
 
 const ChatRoomId &RemoteConferenceEventHandler::getChatRoomId () const {
 	L_D();

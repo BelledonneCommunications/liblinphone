@@ -23,8 +23,10 @@
 #include "basic-to-client-group-chat-room.h"
 #include "c-wrapper/c-wrapper.h"
 #include "client-group-chat-room-p.h"
-#include "conference/handlers/remote-conference-event-handler.h"
+#include "conference/handlers/remote-conference-event-handler-p.h"
+#include "conference/handlers/remote-conference-list-event-handler.h"
 #include "conference/participant-p.h"
+#include "conference/participant-device.h"
 #include "conference/remote-conference-p.h"
 #include "conference/session/call-session-p.h"
 #include "content/content-disposition.h"
@@ -90,6 +92,7 @@ void ClientGroupChatRoomPrivate::multipartNotifyReceived (const string &body) {
 void ClientGroupChatRoomPrivate::setCallSessionListener (CallSessionListener *listener) {
 	L_Q();
 	L_Q_T(RemoteConference, qConference);
+
 	callSessionListener = listener;
 	shared_ptr<CallSession> session = qConference->getPrivate()->focus->getPrivate()->getSession();
 	if (session)
@@ -100,6 +103,13 @@ void ClientGroupChatRoomPrivate::setCallSessionListener (CallSessionListener *li
 			session->getPrivate()->setCallSessionListener(listener);
 	}
 }
+
+unsigned int ClientGroupChatRoomPrivate::getLastNotifyId () const {
+	L_Q_T(RemoteConference, qConference);
+	return qConference->getPrivate()->eventHandler->getLastNotify();
+}
+
+// -----------------------------------------------------------------------------
 
 void ClientGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	L_Q();
@@ -135,7 +145,10 @@ void ClientGroupChatRoomPrivate::onChatRoomInsertRequested (const shared_ptr<Abs
 
 void ClientGroupChatRoomPrivate::onChatRoomInsertInDatabaseRequested (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	L_Q();
-	q->getCore()->getPrivate()->insertChatRoomWithDb(chatRoom);
+	L_Q_T(RemoteConference, qConference);
+
+	unsigned int notifyId = qConference->getPrivate()->eventHandler->getLastNotify();;
+	q->getCore()->getPrivate()->insertChatRoomWithDb(chatRoom, notifyId);
 }
 
 void ClientGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<AbstractChatRoom> &chatRoom) {
@@ -261,12 +274,21 @@ RemoteConference(core, me->getAddress(), nullptr) {
 
 	getMe()->getPrivate()->setAdmin(me->isAdmin());
 
+	dConference->eventHandler->setChatRoomId(chatRoomId);
 	dConference->eventHandler->setLastNotify(lastNotifyId);
-	dConference->eventHandler->subscribe(getChatRoomId());
+	getCore()->getPrivate()->remoteListEventHandler->addHandler(dConference->eventHandler.get());
 }
 
 ClientGroupChatRoom::~ClientGroupChatRoom () {
 	L_D();
+	L_D_T(RemoteConference, dConference);
+
+	try {
+		if (getCore()->getPrivate()->remoteListEventHandler)
+			getCore()->getPrivate()->remoteListEventHandler->removeHandler(dConference->eventHandler.get());
+	} catch (const bad_weak_ptr &) {
+		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
+	}
 	d->setCallSessionListener(nullptr);
 }
 
@@ -511,6 +533,7 @@ void ClientGroupChatRoom::onConferenceKeywordsChanged (const vector<string> &key
 void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 	L_D();
 	L_D_T(RemoteConference, dConference);
+
 	dConference->eventHandler->unsubscribe();
 	dConference->eventHandler->resetLastNotify();
 	d->setState(ChatRoom::State::Terminated);
@@ -527,7 +550,6 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 
 void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	L_D();
-
 	bool performMigration = false;
 	shared_ptr<AbstractChatRoom> chatRoom;
 	if (getParticipantCount() == 1) {

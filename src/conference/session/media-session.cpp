@@ -279,6 +279,7 @@ void MediaSessionPrivate::remoteRinging () {
 	getCurrentParams()->setPrivacy((LinphonePrivacyMask)op->get_privacy());
 	SalMediaDescription *md = op->get_final_media_description();
 	if (md) {
+		SalMediaDescription *rmd = op->get_remote_media_description();
 		/* Initialize the remote call params by invoking linphone_call_get_remote_params(). This is useful as the SDP may not be present in the 200Ok */
 		q->getRemoteParams();
 		/* Accept early media */
@@ -300,6 +301,7 @@ void MediaSessionPrivate::remoteRinging () {
 		if (listener)
 			listener->onStopRinging(q->getSharedFromThis());
 		lInfo() << "Doing early media...";
+		iceAgent->updateFromRemoteMediaDescription(localDesc, rmd, !op->is_offerer());
 		updateStreams(md, state);
 		if ((q->getCurrentParams()->getAudioDirection() == LinphoneMediaDirectionInactive) && audioStream) {
 			if (listener)
@@ -1997,7 +1999,7 @@ void MediaSessionPrivate::applyJitterBufferParams (RtpSession *session, Linphone
 	JBParameters params;
 	rtp_session_get_jitter_buffer_params(session, &params);
 	params.min_size = lp_config_get_int(config, "rtp", "jitter_buffer_min_size", 40);
-	params.max_size = lp_config_get_int(config, "rtp", "jitter_buffer_max_size", 250);
+	params.max_size = lp_config_get_int(config, "rtp", "jitter_buffer_max_size", 500);
 	params.max_packets = params.max_size * 200 / 1000; /* Allow 200 packet per seconds, quite large */
 	const char *algo = lp_config_get_string(config, "rtp", "jitter_buffer_algorithm", "rls");
 	params.buffer_algorithm = jitterBufferNameToAlgo(algo ? algo : "");

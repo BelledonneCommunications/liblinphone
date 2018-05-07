@@ -73,8 +73,10 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/conference.h
 	conference/handlers/local-conference-event-handler-p.h
 	conference/handlers/local-conference-event-handler.h
+	conference/handlers/local-conference-list-event-handler.h
 	conference/handlers/remote-conference-event-handler-p.h
 	conference/handlers/remote-conference-event-handler.h
+	conference/handlers/remote-conference-list-event-handler.h
 	conference/local-conference-p.h
 	conference/local-conference.h
 	conference/params/call-session-params-p.h
@@ -82,6 +84,8 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/params/media-session-params-p.h
 	conference/params/media-session-params.h
 	conference/participant-device.h
+	conference/participant-imdn-state.h
+	conference/participant-imdn-state-p.h
 	conference/participant-p.h
 	conference/participant.h
 	conference/remote-conference-p.h
@@ -99,6 +103,9 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	content/content.h
 	content/file-content.h
 	content/file-transfer-content.h
+	content/header/header.h
+	content/header/header-p.h
+	content/header/header-param.h
 	core/core-accessor.h
 	core/core-listener.h
 	core/core-p.h
@@ -157,6 +164,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	variant/variant.h
 	xml/conference-info.h
 	xml/resource-lists.h
+	xml/rlmi.h
 	xml/xml.h
 )
 
@@ -173,10 +181,12 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-chat-room-cbs.cpp
 	c-wrapper/api/c-chat-room.cpp
 	c-wrapper/api/c-core.cpp
+	c-wrapper/api/c-content.cpp
 	c-wrapper/api/c-dial-plan.cpp
 	c-wrapper/api/c-event-log.cpp
 	c-wrapper/api/c-magic-search.cpp
 	c-wrapper/api/c-participant.cpp
+	c-wrapper/api/c-participant-imdn-state.cpp
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
@@ -207,11 +217,14 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/notification/is-composing.cpp
 	conference/conference.cpp
 	conference/handlers/local-conference-event-handler.cpp
+	conference/handlers/local-conference-list-event-handler.cpp
 	conference/handlers/remote-conference-event-handler.cpp
+	conference/handlers/remote-conference-list-event-handler.cpp
 	conference/local-conference.cpp
 	conference/params/call-session-params.cpp
 	conference/params/media-session-params.cpp
 	conference/participant-device.cpp
+	conference/participant-imdn-state.cpp
 	conference/participant.cpp
 	conference/remote-conference.cpp
 	conference/session/call-session.cpp
@@ -222,6 +235,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	content/content.cpp
 	content/file-content.cpp
 	content/file-transfer-content.cpp
+	content/header/header.cpp
+	content/header/header-param.cpp
 	core/core-accessor.cpp
 	core/core-call.cpp
 	core/core-chat-room.cpp
@@ -271,6 +286,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	variant/variant.cpp
 	xml/conference-info.cpp
 	xml/resource-lists.cpp
+	xml/rlmi.cpp
 	xml/xml.cpp
 )
 

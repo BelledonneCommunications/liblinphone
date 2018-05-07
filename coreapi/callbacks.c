@@ -17,14 +17,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-
 #include "c-wrapper/internal/c-sal.h"
 #include "sal/call-op.h"
 #include "sal/message-op.h"
 #include "sal/refer-op.h"
 
+#include "linphone/api/c-content.h"
 #include "linphone/core.h"
 #include "linphone/utils/utils.h"
+
 #include "private.h"
 #include "mediastreamer2/mediastream.h"
 #include "linphone/lpconfig.h"
@@ -655,7 +656,7 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 		lev = linphone_event_new_with_out_of_dialog_op(lc,op,LinphoneSubscriptionOutgoing,eventname);
 	}
 	{
-		LinphoneContent *ct=linphone_content_from_sal_body_handler(body_handler);
+		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
 		if (ct) {
 			linphone_core_notify_notify_received(lc,lev,eventname,ct);
 			linphone_content_unref(ct);
@@ -669,7 +670,7 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 	}
 }
 
-static void subscribe_received(SalSubscribeOp *op, const char *eventname, const SalBodyHandler *body_handler){
+static void subscribe_received(SalSubscribeOp *op, const char *eventname, SalBodyHandler *body_handler){
 	LinphoneEvent *lev=(LinphoneEvent*)op->get_user_pointer();
 	LinphoneCore *lc=(LinphoneCore *)op->get_sal()->get_user_pointer();
 
@@ -681,7 +682,11 @@ static void subscribe_received(SalSubscribeOp *op, const char *eventname, const 
 	if (lev==NULL) {
 		lev=linphone_event_new_with_op(lc,op,LinphoneSubscriptionIncoming,eventname);
 		linphone_event_set_state(lev,LinphoneSubscriptionIncomingReceived);
-	}else{
+		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
+		linphone_core_notify_subscribe_received(lc,lev,eventname,ct);
+		if (ct)
+			linphone_content_unref(ct);
+	} else {
 		/*subscribe refresh, unhandled*/
 	}
 
