@@ -2178,10 +2178,9 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
 		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
 	));
-	if (chatRoom) {
-		linphone_event_accept_subscription(lev);
+	if (chatRoom)
 		L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscribeReceived(lev);
-	} else
+	else
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
 }
 
@@ -2247,7 +2246,9 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	// We need the Sal on the Android platform helper init
 	msplugins_dir = linphone_factory_get_msplugins_dir(lfactory);
 	image_resources_dir = linphone_factory_get_image_resources_dir(lfactory);
+
 	lc->sal=new Sal(NULL);
+	lc->sal->set_refresher_retry_after(lp_config_get_int(lc->config, "sip", "refresher_retry_after", 60000));
 	lc->sal->set_http_proxy_host(linphone_core_get_http_proxy_host(lc));
 	lc->sal->set_http_proxy_port(linphone_core_get_http_proxy_port(lc));
 
