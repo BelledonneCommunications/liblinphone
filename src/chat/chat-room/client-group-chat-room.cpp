@@ -216,8 +216,12 @@ void ClientGroupChatRoomPrivate::onChatRoomCreated (const Address &remoteContact
 	IdentityAddress addr(remoteContact);
 	q->onConferenceCreated(addr);
 	if (remoteContact.hasParam("isfocus")) {
-		bgTask.start(q->getCore(), 32); // It will be stopped when receiving the first notify
-		qConference->getPrivate()->eventHandler->subscribe(q->getChatRoomId());
+		if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->getChatRoomId())) {
+			q->getCore()->getPrivate()->remoteListEventHandler->subscribe();
+		} else {
+			bgTask.start(q->getCore(), 32); // It will be stopped when receiving the first notify
+			qConference->getPrivate()->eventHandler->subscribe(q->getChatRoomId());
+		}
 	}
 }
 
