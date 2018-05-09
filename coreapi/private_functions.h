@@ -29,6 +29,7 @@
 
 #include "private_types.h"
 #include "tester_utils.h"
+#include "conference/participant-imdn-state.h"
 #include "sal/op.h"
 #include "sal/event-op.h"
 
@@ -48,6 +49,8 @@ void linphone_call_notify_stats_updated(LinphoneCall *call, const LinphoneCallSt
 void linphone_call_notify_info_message_received(LinphoneCall *call, const LinphoneInfoMessage *msg);
 void linphone_call_notify_ack_processing(LinphoneCall *call, LinphoneHeaders *msg, bool_t is_received);
 void linphone_call_notify_tmmbr_received(LinphoneCall *call, int stream_index, int tmmbr);
+void linphone_call_notify_snapshot_taken(LinphoneCall *call, const char *file_path);
+void linphone_call_notify_next_video_frame_decoded(LinphoneCall *call);
 
 LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, const LinphoneCallParams *params, LinphoneProxyConfig *cfg);
 LinphoneCall * linphone_call_new_incoming(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op);
@@ -238,7 +241,6 @@ LinphoneFriend * linphone_friend_new_from_config_file(struct _LinphoneCore *lc, 
 void linphone_proxy_config_update(LinphoneProxyConfig *cfg);
 LinphoneProxyConfig * linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri);
 const char *linphone_core_find_best_identity(LinphoneCore *lc, const LinphoneAddress *to);
-int linphone_core_get_local_ip_for(int type, const char *dest, char *result);
 LINPHONE_PUBLIC void linphone_core_get_local_ip(LinphoneCore *lc, int af, const char *dest, char *result);
 
 LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(LinphoneCore *lc, int index);
@@ -299,6 +301,7 @@ void _linphone_chat_room_notify_participant_registration_subscription_requested(
 void _linphone_chat_room_notify_participant_registration_unsubscription_requested(LinphoneChatRoom *cr, const LinphoneAddress *participantAddr);
 void _linphone_chat_room_notify_chat_message_should_be_stored(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
 void _linphone_chat_room_clear_callbacks (LinphoneChatRoom *cr);
+const LinphoneParticipantImdnState *_linphone_participant_imdn_state_from_cpp_obj (const LinphonePrivate::ParticipantImdnState &state);
 
 LinphoneToneDescription * linphone_tone_description_new(LinphoneReason reason, LinphoneToneID id, const char *audiofile);
 void linphone_tone_description_destroy(LinphoneToneDescription *obj);
@@ -383,7 +386,7 @@ void linphone_configure_op(LinphoneCore *lc, LinphonePrivate::SalOp *op, const L
 void linphone_configure_op_with_proxy(LinphoneCore *lc, LinphonePrivate::SalOp *op, const LinphoneAddress *dest, SalCustomHeader *headers, bool_t with_contact, LinphoneProxyConfig *proxy);
 LinphoneContent * linphone_content_new(void);
 LinphoneContent * linphone_content_copy(const LinphoneContent *ref);
-SalBodyHandler *sal_body_handler_from_content(const LinphoneContent *content);
+SalBodyHandler *sal_body_handler_from_content(const LinphoneContent *content, bool parseMultipart = true);
 SalReason linphone_reason_to_sal(LinphoneReason reason);
 LinphoneReason linphone_reason_from_sal(SalReason reason);
 void linphone_error_info_to_sal(const LinphoneErrorInfo* ei, SalErrorInfo* sei);
@@ -558,6 +561,8 @@ LinphoneNatPolicy * linphone_config_create_nat_policy_from_section(const Linphon
 
 SalCustomHeader *linphone_info_message_get_headers (const LinphoneInfoMessage *im);
 void linphone_info_message_set_headers (LinphoneInfoMessage *im, const SalCustomHeader *headers);
+
+void _linphone_core_set_log_handler(OrtpLogFunc logfunc);
 
 #ifdef __cplusplus
 }

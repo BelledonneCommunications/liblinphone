@@ -18,6 +18,7 @@
  */
 
 #include "linphone/api/c-chat-message.h"
+#include "linphone/api/c-content.h"
 #include "linphone/utils/utils.h"
 #include "linphone/wrapper_utils.h"
 
@@ -32,6 +33,7 @@
 #include "content/content-type.h"
 #include "content/content.h"
 #include "conference/participant.h"
+#include "conference/participant-imdn-state.h"
 
 // =============================================================================
 
@@ -41,7 +43,9 @@ static void _linphone_chat_message_constructor (LinphoneChatMessage *msg);
 static void _linphone_chat_message_destructor (LinphoneChatMessage *msg);
 
 L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(ChatMessage,
-	_linphone_chat_message_constructor, _linphone_chat_message_destructor,
+	_linphone_chat_message_constructor,
+	_linphone_chat_message_destructor,
+
 	LinphoneChatMessageCbs *cbs;
 	LinphoneAddress *from; // cache for shared_ptr<Address>
 	LinphoneAddress *to; // cache for shared_ptr<Address>
@@ -228,7 +232,7 @@ void linphone_chat_message_add_text_content(LinphoneChatMessage *msg, const char
 	LinphonePrivate::ContentType contentType = LinphonePrivate::ContentType::PlainText;
 	content->setContentType(contentType);
 	content->setBody(L_C_TO_STRING(c_content));
-	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(*content);
+	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(content);
 }
 
 bool_t linphone_chat_message_has_text_content(const LinphoneChatMessage *msg) {
@@ -247,9 +251,10 @@ bool_t linphone_chat_message_is_file_transfer_in_progress(LinphoneChatMessage *m
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isFileTransferInProgress();
 }
 
-bctbx_list_t *linphone_chat_message_get_participants_in_state (const LinphoneChatMessage *msg, const LinphoneChatMessageState state) {
-	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_PRIVATE_FROM_C_OBJECT(msg)->getParticipantsInState((LinphonePrivate::ChatMessage::State) state));
+bctbx_list_t *linphone_chat_message_get_participants_by_imdn_state (const LinphoneChatMessage *msg, LinphoneChatMessageState state) {
+	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getParticipantsByImdnState(LinphonePrivate::ChatMessage::State(state)));
 }
+
 
 // =============================================================================
 // Old listener
@@ -294,7 +299,9 @@ int linphone_chat_message_set_text(LinphoneChatMessage *msg, const char* text) {
 }
 
 LinphoneContent *linphone_chat_message_get_file_transfer_information(LinphoneChatMessage *msg) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(msg)->getFileTransferInformation();
+	const LinphonePrivate::Content *content = L_GET_PRIVATE_FROM_C_OBJECT(msg)->getFileTransferInformation();
+	if (content) return L_GET_C_BACK_PTR(content);
+	return NULL;
 }
 
 // =============================================================================
