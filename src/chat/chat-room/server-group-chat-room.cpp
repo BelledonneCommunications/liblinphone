@@ -153,7 +153,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	L_Q_T(LocalConference, qConference);
 	shared_ptr<Participant> participant;
 
-	Address contactAddr(op->get_remote_contact());
+	Address contactAddr(op->getRemoteContact());
 	if (contactAddr.getUriParamValue("gr").empty()) {
 		lError() << q << ": Declining INVITE because the contact does not have a 'gr' uri parameter [" << contactAddr.asString() << "]";
 		op->decline(SalReasonDeclined, nullptr);
@@ -166,7 +166,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	shared_ptr<CallSession> session;
 	if (joiningPendingAfterCreation) {
 		// Check if the participant is already there, this INVITE may come from an unknown device of an already present participant
-		participant = addParticipant(IdentityAddress(op->get_from()));
+		participant = addParticipant(IdentityAddress(op->getFrom()));
 		participant->getPrivate()->setAdmin(true);
 		device = participant->getPrivate()->addDevice(gruu);
 		session = device->getSession();
@@ -178,7 +178,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		}
 	} else {
 		// INVITE coming from an invited participant
-		participant = q->findParticipant(IdentityAddress(op->get_from()));
+		participant = q->findParticipant(IdentityAddress(op->getFrom()));
 		if (!participant) {
 			lError() << q << ": Declining INVITE coming from someone that is not a participant";
 			op->decline(SalReasonDeclined, nullptr);
@@ -193,11 +193,11 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 
 	if (!session || (session->getPrivate()->getOp() != op)) {
 		session = participant->getPrivate()->createSession(*q, nullptr, false, this);
-		session->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(), Address(op->get_to()));
+		session->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(), Address(op->getTo()));
 		session->startIncomingNotification(false);
 		Address addr = qConference->getPrivate()->conferenceAddress;
 		addr.setParam("isfocus");
-		session->getPrivate()->getOp()->set_contact_address(addr.getPrivate()->getInternalAddress());
+		session->getPrivate()->getOp()->setContactAddress(addr.getPrivate()->getInternalAddress());
 		device->setSession(session);
 	}
 
@@ -228,7 +228,7 @@ void ServerGroupChatRoomPrivate::confirmRecreation (SalCallOp *op) {
 	addr.setParam("isfocus");
 	shared_ptr<Participant> me = q->getMe();
 	shared_ptr<CallSession> session = me->getPrivate()->createSession(*q, nullptr, false, this);
-	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->get_from()), Address(op->get_to()));
+	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 	session->startIncomingNotification(false);
 	session->redirect(addr);
 	joiningPendingAfterCreation = true;
@@ -329,18 +329,18 @@ void ServerGroupChatRoomPrivate::subscribeReceived (LinphoneEvent *event) {
 
 bool ServerGroupChatRoomPrivate::update (SalCallOp *op) {
 	L_Q();
-	if (sal_custom_header_find(op->get_recv_custom_header(), "Subject")) {
+	if (sal_custom_header_find(op->getRecvCustomHeaders(), "Subject")) {
 		// Handle subject change
-		string newSubject(L_C_TO_STRING(op->get_subject()));
+		string newSubject(L_C_TO_STRING(op->getSubject()));
 		lInfo() << q << ": New subject \"" << newSubject << "\"";
 		q->setSubject(newSubject);
 	}
 	// Handle participants addition
-	list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(op->get_remote_body());
+	list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(op->getRemoteBody());
 	if (identAddresses.empty())
 		return false;
 
-	checkCompatibleParticipants(IdentityAddress(op->get_remote_contact()), identAddresses);
+	checkCompatibleParticipants(IdentityAddress(op->getRemoteContact()), identAddresses);
 	return true;
 }
 
@@ -349,17 +349,17 @@ bool ServerGroupChatRoomPrivate::update (SalCallOp *op) {
 LinphoneReason ServerGroupChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessage *message) {
 	L_Q();
 	// Check that the message is coming from a participant of the chat room
-	IdentityAddress fromAddr(op->get_from());
+	IdentityAddress fromAddr(op->getFrom());
 	if (!findFilteredParticipant(fromAddr)) {
 		return LinphoneReasonNotAcceptable;
 	}
 
 	// Do not check that we received a CPIM message because ciphered messages are not
 	shared_ptr<Message> msg = make_shared<Message>(
-		op->get_from(),
+		op->getFrom(),
 		ContentType(message->content_type),
 		message->text ? message->text : "",
-		op->get_recv_custom_header()
+		op->getRecvCustomHeaders()
 	);
 
 	// Handle reinvite of potentially missing participant in one-to-one chat room
@@ -372,7 +372,7 @@ LinphoneReason ServerGroupChatRoomPrivate::onSipMessageReceived (SalOp *op, cons
 			if (queuedMessages[missingAddr.asString()].size() == 0) {
 				list<IdentityAddress> identAddresses;
 				identAddresses.push_back(missingAddr);
-				checkCompatibleParticipants(IdentityAddress(op->get_from()), identAddresses);
+				checkCompatibleParticipants(IdentityAddress(op->getFrom()), identAddresses);
 			}
 			queueMessage(msg, missingAddr);
 			return LinphoneReasonNone;
@@ -559,7 +559,7 @@ void ServerGroupChatRoomPrivate::byeDevice (const std::shared_ptr<ParticipantDev
 		Address contactAddr(qConference->getPrivate()->conferenceAddress);
 		contactAddr.setParam("isfocus");
 		contactAddr.setParam("text");
-		session->getPrivate()->getOp()->set_contact_address(contactAddr.getPrivate()->getInternalAddress());
+		session->getPrivate()->getOp()->setContactAddress(contactAddr.getPrivate()->getInternalAddress());
 		session->startInvite(nullptr, q->getSubject(), nullptr);
 	}
 }
@@ -637,7 +637,7 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 	Address contactAddr(qConference->getPrivate()->conferenceAddress);
 	contactAddr.setParam("isfocus");
 	contactAddr.setParam("text");
-	session->getPrivate()->getOp()->set_contact_address(contactAddr.getPrivate()->getInternalAddress());
+	session->getPrivate()->getOp()->setContactAddress(contactAddr.getPrivate()->getInternalAddress());
 
 	list<IdentityAddress> addressesList;
 	for (const auto &invitedParticipant : filteredParticipants) {
@@ -783,12 +783,12 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 : ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomId()),
 LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(core->getCCore()))), nullptr) {
 	L_D();
-	LocalConference::setSubject(op->get_subject() ? op->get_subject() : "");
-	const char *oneToOneChatRoomStr = sal_custom_header_find(op->get_recv_custom_header(), "One-To-One-Chat-Room");
+	LocalConference::setSubject(op->getSubject() ? op->getSubject() : "");
+	const char *oneToOneChatRoomStr = sal_custom_header_find(op->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 	if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
 		d->capabilities |= ServerGroupChatRoom::Capabilities::OneToOne;
 	shared_ptr<CallSession> session = getMe()->getPrivate()->createSession(*this, nullptr, false, d);
-	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->get_from()), Address(op->get_to()));
+	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 }
 
 ServerGroupChatRoom::ServerGroupChatRoom (
