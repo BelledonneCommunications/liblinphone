@@ -531,6 +531,7 @@ void ServerGroupChatRoomPrivate::checkCompatibleParticipants (const IdentityAddr
 
 void ServerGroupChatRoomPrivate::copyMessageHeaders (const shared_ptr<Message> &fromMessage, const shared_ptr<ChatMessage> &toMessage) {
 	string headersToCopy[] = {
+		"Content-Encoding",
 		"Expires",
 		"Priority"
 	};
