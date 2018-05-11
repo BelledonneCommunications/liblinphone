@@ -26,15 +26,15 @@ LINPHONE_BEGIN_NAMESPACE
 
 class SalPresenceOp : public SalSubscribeOp {
 public:
-	SalPresenceOp (Sal *sal) : SalSubscribeOp(sal) {}
+	SalPresenceOp (Sal *sal);
 
-	int subscribe (const char *from, const char *to, int expires);
+	int subscribe (int expires);
 	int unsubscribe () { return SalOp::unsubscribe(); }
 	int notifyPresence (SalPresenceModel *presence);
 	int notifyPresenceClose ();
 
 private:
-	virtual void fillCallbacks () override;
+	void fillCallbacks () override;
 	void handleNotify (belle_sip_request_t *request, belle_sip_dialog_t *dialog);
 	SalPresenceModel *processPresenceNotification (belle_sip_request_t *request);
 	int checkDialogState ();

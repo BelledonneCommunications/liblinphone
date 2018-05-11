@@ -2659,12 +2659,12 @@ LINPHONE_PUBLIC bool_t linphone_core_sip_transport_supported(const LinphoneCore 
 LINPHONE_PUBLIC bool_t linphone_core_content_encoding_supported(const LinphoneCore *lc, const char *content_encoding);
 
 /**
- *
  * Give access to the UDP sip socket. Can be useful to configure this socket as persistent I.E kCFStreamNetworkServiceType set to kCFStreamNetworkServiceTypeVoIP)
  * @param lc #LinphoneCore
  * @return socket file descriptor
+ * @deprecated Deprecated since 2018-08
  */
-ortp_socket_t linphone_core_get_sip_socket(LinphoneCore *lc);
+LINPHONE_DEPRECATED ortp_socket_t linphone_core_get_sip_socket(LinphoneCore *lc);
 
 /**
  * Set the incoming call timeout in seconds.

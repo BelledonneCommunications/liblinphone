@@ -35,366 +35,364 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-void Sal::processDialogTerminatedCb(void *sal, const belle_sip_dialog_terminated_event_t *event) {
-	belle_sip_dialog_t* dialog =  belle_sip_dialog_terminated_event_get_dialog(event);
-	SalOp* op = reinterpret_cast<SalOp *>(belle_sip_dialog_get_application_data(dialog));
-	if (op && op->mCallbacks && op->mCallbacks->process_dialog_terminated) {
-		op->mCallbacks->process_dialog_terminated(op,event);
+void Sal::processDialogTerminatedCb (void *sal, const belle_sip_dialog_terminated_event_t *event) {
+	auto dialog = belle_sip_dialog_terminated_event_get_dialog(event);
+	auto op = static_cast<SalOp *>(belle_sip_dialog_get_application_data(dialog));
+	if (op && op->mCallbacks && op->mCallbacks->process_dialog_terminated)
+		op->mCallbacks->process_dialog_terminated(op, event);
+	else
+		lError() << "Sal::processDialogTerminatedCb(): no op found for this dialog [" << dialog << "], ignoring";
+}
+
+void Sal::processIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event) {
+	if (BELLE_SIP_OBJECT_IS_INSTANCE_OF(belle_sip_io_error_event_get_source(event), belle_sip_client_transaction_t)) {
+		auto client_transaction = BELLE_SIP_CLIENT_TRANSACTION(belle_sip_io_error_event_get_source(event));
+		auto op = static_cast<SalOp *>(belle_sip_transaction_get_application_data(BELLE_SIP_TRANSACTION(client_transaction)));
+		// Also reset auth count on IO error
+		op->mAuthRequests = 0;
+		if (op->mCallbacks && op->mCallbacks->process_io_error)
+			op->mCallbacks->process_io_error(op, event);
 	} else {
-		ms_error("sal process_dialog_terminated no op found for this dialog [%p], ignoring",dialog);
+		// Nop, because already handled at transaction layer
 	}
 }
 
-void Sal::processIoErrorCb(void *user_ctx, const belle_sip_io_error_event_t *event){
-	belle_sip_client_transaction_t*client_transaction;
-	SalOp* op;
-	if (BELLE_SIP_OBJECT_IS_INSTANCE_OF(belle_sip_io_error_event_get_source(event),belle_sip_client_transaction_t)) {
-		client_transaction=BELLE_SIP_CLIENT_TRANSACTION(belle_sip_io_error_event_get_source(event));
-		op = (SalOp*)belle_sip_transaction_get_application_data(BELLE_SIP_TRANSACTION(client_transaction));
-		/*also reset auth count on IO error*/
-		op->mAuthRequests=0;
-		if (op->mCallbacks && op->mCallbacks->process_io_error) {
-			op->mCallbacks->process_io_error(op,event);
-		}
-	} else {
-		/*ms_error("sal process_io_error not implemented yet for non transaction");*/
-		/*nop, because already handle at transaction layer*/
-	}
-}
+void Sal::processRequestEventCb (void *userCtx, const belle_sip_request_event_t *event) {
+	auto sal = static_cast<Sal *>(userCtx);
+	SalOp *op = nullptr;
+	belle_sip_header_t *evh = nullptr;
+	auto request = belle_sip_request_event_get_request(event);
+	string method = belle_sip_request_get_method(request);
 
-void Sal::processRequestEventCb (void *ud, const belle_sip_request_event_t *event) {
-	Sal *sal = (Sal *)ud;
-	SalOp *op = NULL;
-	belle_sip_request_t *req = belle_sip_request_event_get_request(event);
-	belle_sip_dialog_t *dialog = belle_sip_request_event_get_dialog(event);
-	belle_sip_header_address_t *origin_address;
-	belle_sip_header_address_t *address=NULL;
-	belle_sip_header_from_t *from_header;
-	belle_sip_header_to_t *to;
-	belle_sip_header_diversion_t *diversion;
-	belle_sip_response_t *resp;
-	belle_sip_header_t *evh;
-	const char *method = belle_sip_request_get_method(req);
-	belle_sip_header_contact_t *remote_contact = belle_sip_message_get_header_by_type(req, belle_sip_header_contact_t);
-	belle_sip_header_t *subjectHeader = belle_sip_message_get_header(BELLE_SIP_MESSAGE(req), "Subject");
-
-	from_header = belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(req),belle_sip_header_from_t);
-
+	auto dialog = belle_sip_request_event_get_dialog(event);
 	if (dialog) {
-		op = (SalOp *)belle_sip_dialog_get_application_data(dialog);
-
-		if (op == NULL  && strcmp("NOTIFY",method) == 0) {
-			/*special case for Dialog created by notify mathing subscribe*/
-			belle_sip_transaction_t * sub_trans = belle_sip_dialog_get_last_transaction(dialog);
-			op = (SalOp*)belle_sip_transaction_get_application_data(sub_trans);
+		op = static_cast<SalOp *>(belle_sip_dialog_get_application_data(dialog));
+		if (!op && (method == "NOTIFY")) {
+			// Special case for dialog created by notify matching subscribe
+			auto subscribeTransaction = belle_sip_dialog_get_last_transaction(dialog);
+			op = static_cast<SalOp *>(belle_sip_transaction_get_application_data(subscribeTransaction));
 		}
-		if (op == NULL || op->mState == SalOp::State::Terminated){
-			ms_warning("Receiving request for null or terminated op [%p], ignored",op);
+		if (!op || (op->mState == SalOp::State::Terminated)) {
+			lWarning() << "Receiving request for null or terminated op [" << op << "], ignored";
 			return;
 		}
 	} else {
-		/*handle the case where we are receiving a request with to tag but it is not belonging to any dialog*/
-		belle_sip_header_to_t *to = belle_sip_message_get_header_by_type(req, belle_sip_header_to_t);
-		if ((strcmp("INVITE",method)==0 || strcmp("NOTIFY",method)==0) && (belle_sip_header_to_get_tag(to) != NULL)) {
-			ms_warning("Receiving %s with to-tag but no know dialog here. Rejecting.", method);
-			resp=belle_sip_response_create_from_request(req,481);
-			belle_sip_provider_send_response(sal->mProvider,resp);
+		// Handle the case where we are receiving a request with to tag but it is not belonging to any dialog
+		auto toHeader = belle_sip_message_get_header_by_type(request, belle_sip_header_to_t);
+		if (((method == "INVITE") || (method == "NOTIFY")) && belle_sip_header_to_get_tag(toHeader)) {
+			lWarning() << "Receiving " << method << " with to-tag but no know dialog here, rejecting";
+			auto response = belle_sip_response_create_from_request(request, 481);
+			belle_sip_provider_send_response(sal->mProvider, response);
 			return;
-		/* by default (eg. when a to-tag is present), out of dialog ACK are automatically
-		handled in lower layers (belle-sip) but in case it misses, it will be forwarded to us */
-		} else if (strcmp("ACK",method)==0 && (belle_sip_header_to_get_tag(to) == NULL)) {
-			ms_warning("Receiving ACK without to-tag but no know dialog here. Ignoring");
-			return;
-		}
-
-		if (strcmp("INVITE",method)==0) {
-			op=new SalCallOp(sal);
-			op->fillCallbacks();
-		}else if ((strcmp("SUBSCRIBE",method)==0 || strcmp("NOTIFY",method)==0) && (evh=belle_sip_message_get_header(BELLE_SIP_MESSAGE(req),"Event"))!=NULL) {
-			if (strncmp(belle_sip_header_get_unparsed_value(evh),"presence",strlen("presence"))==0){
-				op=new SalPresenceOp(sal);
-			} else {
-				op=new SalSubscribeOp(sal);
-			}
-			op->fillCallbacks();
-		}else if (strcmp("MESSAGE",method)==0) {
-			op=new SalMessageOp(sal);
-			op->fillCallbacks();
-		}else if (strcmp("REFER",method)==0) {
-			op=new SalReferOp(sal);
-		}else if (strcmp("OPTIONS",method)==0) {
-			resp=belle_sip_response_create_from_request(req,200);
-			belle_sip_provider_send_response(sal->mProvider,resp);
-			return;
-		}else if (strcmp("INFO",method)==0) {
-			resp=belle_sip_response_create_from_request(req,481);/*INFO out of call dialogs are not allowed*/
-			belle_sip_provider_send_response(sal->mProvider,resp);
-			return;
-		}else if (strcmp("BYE",method)==0) {
-			resp=belle_sip_response_create_from_request(req,481);/*out of dialog BYE */
-			belle_sip_provider_send_response(sal->mProvider,resp);
-			return;
-		}else if (strcmp("CANCEL",method)==0) {
-			resp=belle_sip_response_create_from_request(req,481);/*out of dialog CANCEL */
-			belle_sip_provider_send_response(sal->mProvider,resp);
-			return;
-		}else if (sal->mEnableTestFeatures && strcmp("PUBLISH",method)==0) {
-			resp=belle_sip_response_create_from_request(req,200);/*out of dialog PUBLISH */
-			belle_sip_message_add_header((belle_sip_message_t*)resp,belle_sip_header_create("SIP-Etag","4441929FFFZQOA"));
-			belle_sip_provider_send_response(sal->mProvider,resp);
-			return;
-		}else {
-			ms_error("sal process_request_event not implemented yet for method [%s]",belle_sip_request_get_method(req));
-			resp=belle_sip_response_create_from_request(req,405);
-			belle_sip_message_add_header(BELLE_SIP_MESSAGE(resp)
-										,BELLE_SIP_HEADER(belle_sip_header_allow_create("INVITE, CANCEL, ACK, BYE, SUBSCRIBE, NOTIFY, MESSAGE, OPTIONS, INFO")));
-			belle_sip_provider_send_response(sal->mProvider,resp);
+		// By default (eg. when a to-tag is present), out of dialog ACK are automatically
+		// handled in lower layers (belle-sip) but in case it misses, it will be forwarded to us
+		} else if ((method == "ACK") && !belle_sip_header_to_get_tag(toHeader)) {
+			lWarning() << "Receiving ACK without to-tag but no know dialog here, ignoring";
 			return;
 		}
-		op->mDir=SalOp::Dir::Incoming;
+
+		if (method == "INVITE") {
+			op = new SalCallOp(sal);
+			op->fillCallbacks();
+		} else if (((method == "SUBSCRIBE") || (method == "NOTIFY")) && (evh = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Event")) != nullptr) {
+			string eventHeaderValue = belle_sip_header_get_unparsed_value(evh);
+			if (eventHeaderValue == "presence")
+				op = new SalPresenceOp(sal);
+			else
+				op = new SalSubscribeOp(sal);
+			op->fillCallbacks();
+		} else if (method == "MESSAGE") {
+			op = new SalMessageOp(sal);
+			op->fillCallbacks();
+		} else if (method == "REFER") {
+			op = new SalReferOp(sal);
+		} else if (method == "OPTIONS") {
+			auto response = belle_sip_response_create_from_request(request, 200);
+			belle_sip_provider_send_response(sal->mProvider, response);
+			return;
+		} else if (method == "INFO") { // INFO out of call dialogs are not allowed
+			auto response = belle_sip_response_create_from_request(request, 481);
+			belle_sip_provider_send_response(sal->mProvider, response);
+			return;
+		} else if (method == "BYE") { // Out of dialog BYE
+			auto response = belle_sip_response_create_from_request(request, 481);
+			belle_sip_provider_send_response(sal->mProvider, response);
+			return;
+		} else if (method == "CANCEL") { // Out of dialog CANCEL
+			auto response = belle_sip_response_create_from_request(request, 481);
+			belle_sip_provider_send_response(sal->mProvider, response);
+			return;
+		} else if (sal->mEnableTestFeatures && (method == "PUBLISH")) { // Out of dialog PUBLISH
+			auto response = belle_sip_response_create_from_request(request, 200);
+			belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), belle_sip_header_create("SIP-Etag", "4441929FFFZQOA"));
+			belle_sip_provider_send_response(sal->mProvider, response);
+			return;
+		} else {
+			lError() << "Sal::processRequestEventCb(): not implemented yet for method [" << method << "]";
+			auto response = belle_sip_response_create_from_request(request, 405);
+			belle_sip_message_add_header(
+				BELLE_SIP_MESSAGE(response),
+				BELLE_SIP_HEADER(belle_sip_header_allow_create("INVITE, CANCEL, ACK, BYE, SUBSCRIBE, NOTIFY, MESSAGE, OPTIONS, INFO"))
+			);
+			belle_sip_provider_send_response(sal->mProvider, response);
+			return;
+		}
+		op->mDir = SalOp::Dir::Incoming;
 	}
 
-	if (!op->mFromAddress)  {
-		if (belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(from_header)))
-			address=belle_sip_header_address_create(belle_sip_header_address_get_displayname(BELLE_SIP_HEADER_ADDRESS(from_header))
-					,belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(from_header)));
-		else if ((belle_sip_header_address_get_absolute_uri(BELLE_SIP_HEADER_ADDRESS(from_header))))
-			address=belle_sip_header_address_create2(belle_sip_header_address_get_displayname(BELLE_SIP_HEADER_ADDRESS(from_header))
-					,belle_sip_header_address_get_absolute_uri(BELLE_SIP_HEADER_ADDRESS(from_header)));
-		else
-			ms_error("Cannot not find from uri from request [%p]",req);
-		op->setFromAddress((SalAddress*)address);
-		belle_sip_object_unref(address);
+	if (!op->mFromAddress) {
+		auto fromHeader = belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(request), belle_sip_header_from_t);
+		belle_sip_header_address_t *addressHeader = nullptr;
+		auto uri = belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(fromHeader));
+		auto absoluteUri = belle_sip_header_address_get_absolute_uri(BELLE_SIP_HEADER_ADDRESS(fromHeader));
+		if (uri) {
+			addressHeader = belle_sip_header_address_create(
+				belle_sip_header_address_get_displayname(BELLE_SIP_HEADER_ADDRESS(fromHeader)),
+				uri
+			);
+		} else if (absoluteUri) {
+			addressHeader = belle_sip_header_address_create2(
+				belle_sip_header_address_get_displayname(BELLE_SIP_HEADER_ADDRESS(fromHeader)),
+				absoluteUri
+			);
+		} else {
+			lError() << "Cannot find from uri from request [" << request << "]";
+		}
+		if (addressHeader) {
+			op->setFromAddress(reinterpret_cast<SalAddress *>(addressHeader));
+			belle_sip_object_unref(addressHeader);
+		}
 	}
 
-	if( remote_contact ){
-		op->setRemoteContact(belle_sip_header_get_unparsed_value(BELLE_SIP_HEADER(remote_contact)));
-	}
+	auto remoteContactHeader = belle_sip_message_get_header_by_type(request, belle_sip_header_contact_t);
+	if (remoteContactHeader)
+		op->setRemoteContact(belle_sip_header_get_unparsed_value(BELLE_SIP_HEADER(remoteContactHeader)));
 
 	if (!op->mToAddress) {
-		to=belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(req),belle_sip_header_to_t);
-		if (belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(to)))
-			address=belle_sip_header_address_create(belle_sip_header_address_get_displayname(BELLE_SIP_HEADER_ADDRESS(to))
-					,belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(to)));
-		else if ((belle_sip_header_address_get_absolute_uri(BELLE_SIP_HEADER_ADDRESS(to))))
-			address=belle_sip_header_address_create2(belle_sip_header_address_get_displayname(BELLE_SIP_HEADER_ADDRESS(to))
-					,belle_sip_header_address_get_absolute_uri(BELLE_SIP_HEADER_ADDRESS(to)));
-		else
-			ms_error("Cannot not find to uri from request [%p]",req);
-
-		op->setToAddress((SalAddress*)address);
-		belle_sip_object_unref(address);
+		auto toHeader = belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(request), belle_sip_header_to_t);
+		belle_sip_header_address_t *addressHeader = nullptr;
+		auto uri = belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(toHeader));
+		auto absoluteUri = belle_sip_header_address_get_absolute_uri(BELLE_SIP_HEADER_ADDRESS(toHeader));
+		if (uri) {
+			addressHeader = belle_sip_header_address_create(
+				belle_sip_header_address_get_displayname(BELLE_SIP_HEADER_ADDRESS(toHeader)),
+				uri
+			);
+		} else if (absoluteUri) {
+			addressHeader = belle_sip_header_address_create2(
+				belle_sip_header_address_get_displayname(BELLE_SIP_HEADER_ADDRESS(toHeader)),
+				absoluteUri
+			);
+		} else {
+			lError() << "Cannot find to uri from request [" << request << "]";
+		}
+		if (addressHeader) {
+			op->setToAddress(reinterpret_cast<SalAddress *>(addressHeader));
+			belle_sip_object_unref(addressHeader);
+		}
 	}
 
-	if (subjectHeader) {
-		const char *subject = belle_sip_header_get_unparsed_value(subjectHeader);
-		op->setSubject(subject);
-	}
+	auto subjectHeader = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Subject");
+	if (subjectHeader)
+		op->setSubject(belle_sip_header_get_unparsed_value(subjectHeader));
 
-	if(!op->mDiversionAddress){
-		diversion=belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(req),belle_sip_header_diversion_t);
-		if (diversion) {
-			if (belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(diversion)))
-				address=belle_sip_header_address_create(belle_sip_header_address_get_displayname(BELLE_SIP_HEADER_ADDRESS(diversion))
-						,belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(diversion)));
-			else if ((belle_sip_header_address_get_absolute_uri(BELLE_SIP_HEADER_ADDRESS(diversion))))
-				address=belle_sip_header_address_create2(belle_sip_header_address_get_displayname(BELLE_SIP_HEADER_ADDRESS(diversion))
-						,belle_sip_header_address_get_absolute_uri(BELLE_SIP_HEADER_ADDRESS(diversion)));
-			else
-				ms_warning("Cannot not find diversion header from request [%p]",req);
-			if (address) {
-				op->setDiversionAddress((SalAddress*)address);
-				belle_sip_object_unref(address);
+	if(!op->mDiversionAddress) {
+		auto diversionHeader = belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(request), belle_sip_header_diversion_t);
+		if (diversionHeader) {
+			belle_sip_header_address_t *addressHeader = nullptr;
+			auto uri = belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(diversionHeader));
+			auto absoluteUri = belle_sip_header_address_get_absolute_uri(BELLE_SIP_HEADER_ADDRESS(diversionHeader));
+			if (uri) {
+				addressHeader = belle_sip_header_address_create(
+					belle_sip_header_address_get_displayname(BELLE_SIP_HEADER_ADDRESS(diversionHeader)),
+					uri
+				);
+			} else if (absoluteUri) {
+				addressHeader = belle_sip_header_address_create2(
+					belle_sip_header_address_get_displayname(BELLE_SIP_HEADER_ADDRESS(diversionHeader)),
+					absoluteUri
+				);
+			} else {
+				lWarning() << "Cannot not find diversion header from request [" << request << "]";
+			}
+			if (addressHeader) {
+				op->setDiversionAddress(reinterpret_cast<SalAddress *>(addressHeader));
+				belle_sip_object_unref(addressHeader);
 			}
 		}
 	}
 
 	if (op->mOrigin.empty()) {
-		/*set origin uri*/
-		origin_address=belle_sip_header_address_create(NULL,belle_sip_request_extract_origin(req));
-		op->setNetworkOriginAddress((SalAddress*)origin_address);
-		belle_sip_object_unref(origin_address);
+		// Set origin uri
+		auto originAddressHeader = belle_sip_header_address_create(nullptr, belle_sip_request_extract_origin(request));
+		op->setNetworkOriginAddress(reinterpret_cast<SalAddress *>(originAddressHeader));
+		belle_sip_object_unref(originAddressHeader);
 	}
 	if (op->mRemoteUserAgent.empty())
-		op->setRemoteUserAgent(BELLE_SIP_MESSAGE(req));
+		op->setRemoteUserAgent(BELLE_SIP_MESSAGE(request));
 
 	if (op->mCallId.empty()) {
 		op->mCallId = belle_sip_header_call_id_get_call_id(
-			BELLE_SIP_HEADER_CALL_ID(belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(req), belle_sip_header_call_id_t))
+			BELLE_SIP_HEADER_CALL_ID(belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(request), belle_sip_header_call_id_t))
 		);
 	}
 
-	/*It is worth noting that proxies can (and will) remove this header field*/
-	op->setPrivacyFromMessage((belle_sip_message_t*)req);
+	// It is worth noting that proxies can (and will) remove this header field
+	op->setPrivacyFromMessage(BELLE_SIP_MESSAGE(request));
 
-	if (strcmp("ACK",method) != 0){
-		/*The ACK custom header is processed specifically later on*/
-		op->assignRecvHeaders((belle_sip_message_t*)req);
-	}
+	if (method != "ACK") // The ACK custom header is processed specifically later on
+		op->assignRecvHeaders(BELLE_SIP_MESSAGE(request));
 
-	if (op->mCallbacks && op->mCallbacks->process_request_event) {
-		op->mCallbacks->process_request_event(op,event);
-	} else {
-		ms_error("sal process_request_event not implemented yet");
-	}
-
+	if (op->mCallbacks && op->mCallbacks->process_request_event)
+		op->mCallbacks->process_request_event(op, event);
+	else
+		lError() << "Sal::processRequestEventCb(): not implemented yet";
 }
 
-void Sal::processResponseEventCb(void *user_ctx, const belle_sip_response_event_t *event) {
-	belle_sip_client_transaction_t* client_transaction = belle_sip_response_event_get_client_transaction(event);
-	belle_sip_response_t* response = belle_sip_response_event_get_response(event);
-	int response_code = belle_sip_response_get_status_code(response);
+void Sal::processResponseEventCb (void *userCtx, const belle_sip_response_event_t *event) {
+	auto response = belle_sip_response_event_get_response(event);
+	int responseCode = belle_sip_response_get_status_code(response);
 
-	if (!client_transaction) {
-		ms_warning("Discarding stateless response [%i]",response_code);
+	auto clientTransaction = belle_sip_response_event_get_client_transaction(event);
+	if (!clientTransaction) {
+		lWarning() << "Discarding stateless response [" << responseCode << "]";
 		return;
-	} else {
-		SalOp* op = (SalOp*)belle_sip_transaction_get_application_data(BELLE_SIP_TRANSACTION(client_transaction));
-		belle_sip_request_t* request=belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(client_transaction));
-		belle_sip_header_contact_t* remote_contact = belle_sip_message_get_header_by_type(response, belle_sip_header_contact_t);
+	}
 
-		if (op->mState == SalOp::State::Terminated) {
-			belle_sip_message("Op [%p] is terminated, nothing to do with this [%i]", op, response_code);
-			return;
-		}
-		/*do it all the time, since we can receive provisional responses from a different instance than the final one*/
-		op->setRemoteUserAgent(BELLE_SIP_MESSAGE(response));
+	auto op = static_cast<SalOp *>(belle_sip_transaction_get_application_data(BELLE_SIP_TRANSACTION(clientTransaction)));
+	if (op->mState == SalOp::State::Terminated) {
+		lInfo() << "Op [" << op << "] is terminated, nothing to do with this [" << responseCode << "]";
+		return;
+	}
 
-		if(remote_contact) {
-			op->setRemoteContact(belle_sip_header_get_unparsed_value(BELLE_SIP_HEADER(remote_contact)));
-		}
+	// Do it all the time, since we can receive provisional responses from a different instance than the final one
+	op->setRemoteUserAgent(BELLE_SIP_MESSAGE(response));
 
-		if (op->mCallId.empty()) {
-			op->mCallId = belle_sip_header_call_id_get_call_id(
-				BELLE_SIP_HEADER_CALL_ID(belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(response), belle_sip_header_call_id_t))
-			);
-		}
+	auto remoteContactHeader = belle_sip_message_get_header_by_type(response, belle_sip_header_contact_t);
+	if (remoteContactHeader)
+		op->setRemoteContact(belle_sip_header_get_unparsed_value(BELLE_SIP_HEADER(remoteContactHeader)));
 
-		op->assignRecvHeaders((belle_sip_message_t*)response);
+	if (op->mCallId.empty()) {
+		op->mCallId = belle_sip_header_call_id_get_call_id(
+			BELLE_SIP_HEADER_CALL_ID(belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(response), belle_sip_header_call_id_t))
+		);
+	}
 
-		if (op->mCallbacks && op->mCallbacks->process_response_event) {
-			/*handle authorization*/
-			switch (response_code) {
-				case 200:
-					break;
-				case 401:
-				case 407:
-					if (op->mState == SalOp::State::Terminating && strcmp("BYE",belle_sip_request_get_method(request))!=0) {
-						/*only bye are completed*/
-						belle_sip_message("Op is in state terminating, nothing else to do ");
-					} else {
-						if (op->mPendingAuthTransaction){
-							belle_sip_object_unref(op->mPendingAuthTransaction);
-							op->mPendingAuthTransaction=NULL;
-						}
-						if (++op->mAuthRequests > 2) {
-							ms_warning("Auth info cannot be found for op [%s/%s] after 2 attempts, giving up",op->getFrom().c_str()
-																												,op->getTo().c_str());
-							op->mRoot->mCallbacks.auth_failure(op,op->mAuthInfo);
-							op->mRoot->removePendingAuth(op);
-						} else {
-							op->mPendingAuthTransaction=(belle_sip_client_transaction_t*)belle_sip_object_ref(client_transaction);
-							op->processAuthentication();
-							return;
-						}
+	op->assignRecvHeaders(BELLE_SIP_MESSAGE(response));
+
+	if (op->mCallbacks && op->mCallbacks->process_response_event) {
+		// Handle authorization
+		auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(clientTransaction));
+		string method = belle_sip_request_get_method(request);
+		switch (responseCode) {
+			case 200:
+				break;
+			case 401:
+			case 407:
+				if ((op->mState == SalOp::State::Terminating) && (method != "BYE")) {
+					// Only bye are completed
+					lInfo() << "Op is in state terminating, nothing else to do";
+				} else {
+					if (op->mPendingAuthTransaction) {
+						belle_sip_object_unref(op->mPendingAuthTransaction);
+						op->mPendingAuthTransaction = nullptr;
 					}
-					break;
-				case 403:
-					if (op->mAuthInfo) op->mRoot->mCallbacks.auth_failure(op,op->mAuthInfo);
-					break;
-				case 302:
-				case 301:
-					if (op->processRedirect() == 0)
+					if (++op->mAuthRequests > 2) {
+						lWarning() << "Auth info cannot be found for op [" << op->getFrom() << "/" << op->getTo() << "] after 2 attempts, giving up";
+						op->mRoot->mCallbacks.auth_failure(op, op->mAuthInfo);
+						op->mRoot->removePendingAuth(op);
+					} else {
+						op->mPendingAuthTransaction = BELLE_SIP_CLIENT_TRANSACTION(belle_sip_object_ref(clientTransaction));
+						op->processAuthentication();
 						return;
-					break;
-			}
-			if (response_code >= 180 && response_code !=401 && response_code !=407 && response_code !=403) {
-				/*not an auth request*/
-				op->mAuthRequests=0;
-			}
-			op->mCallbacks->process_response_event(op,event);
-		} else {
-			ms_error("Unhandled event response [%p]",event);
+					}
+				}
+				break;
+			case 403:
+				if (op->mAuthInfo)
+					op->mRoot->mCallbacks.auth_failure(op, op->mAuthInfo);
+				break;
+			case 302:
+			case 301:
+				if (op->processRedirect() == 0)
+					return;
+				break;
 		}
+		if ((responseCode >= 180) && (responseCode != 401) && (responseCode != 407) && (responseCode != 403)) // Not an auth request
+			op->mAuthRequests = 0;
+		op->mCallbacks->process_response_event(op, event);
+	} else {
+		lError() << "Unhandled event response [" << event << "]";
 	}
 }
 
-void Sal::processTimeoutCb(void *user_ctx, const belle_sip_timeout_event_t *event) {
-	belle_sip_client_transaction_t* client_transaction = belle_sip_timeout_event_get_client_transaction(event);
-	SalOp* op = (SalOp*)belle_sip_transaction_get_application_data(BELLE_SIP_TRANSACTION(client_transaction));
-	if (op && op->mCallbacks && op->mCallbacks->process_timeout) {
-		op->mCallbacks->process_timeout(op,event);
-	} else {
-		ms_error("Unhandled event timeout [%p]",event);
-	}
+void Sal::processTimeoutCb (void *userCtx, const belle_sip_timeout_event_t *event) {
+	auto clientTransaction = belle_sip_timeout_event_get_client_transaction(event);
+	auto op = static_cast<SalOp *>(belle_sip_transaction_get_application_data(BELLE_SIP_TRANSACTION(clientTransaction)));
+	if (op && op->mCallbacks && op->mCallbacks->process_timeout)
+		op->mCallbacks->process_timeout(op, event);
+	else
+		lError() << "Unhandled event timeout [" << event << "]";
 }
 
-void Sal::processTransactionTerminatedCb(void *user_ctx, const belle_sip_transaction_terminated_event_t *event) {
-	belle_sip_client_transaction_t* client_transaction = belle_sip_transaction_terminated_event_get_client_transaction(event);
-	belle_sip_server_transaction_t* server_transaction = belle_sip_transaction_terminated_event_get_server_transaction(event);
-	belle_sip_transaction_t* trans;
-	SalOp* op;
+void Sal::processTransactionTerminatedCb (void *userCtx, const belle_sip_transaction_terminated_event_t *event) {
+	auto clientTransaction = belle_sip_transaction_terminated_event_get_client_transaction(event);
+	auto serverTransaction = belle_sip_transaction_terminated_event_get_server_transaction(event);
+	auto transaction = clientTransaction ? BELLE_SIP_TRANSACTION(clientTransaction) : BELLE_SIP_TRANSACTION(serverTransaction);
+	auto op = static_cast<SalOp *>(belle_sip_transaction_get_application_data(transaction));
 
-	if(client_transaction)
-		trans=BELLE_SIP_TRANSACTION(client_transaction);
-	 else
-		trans=BELLE_SIP_TRANSACTION(server_transaction);
+	if (op && op->mCallbacks && op->mCallbacks->process_transaction_terminated)
+		op->mCallbacks->process_transaction_terminated(op, event);
+	else
+		lInfo() << "Unhandled transaction terminated [" << transaction << "]";
 
-	op = (SalOp*)belle_sip_transaction_get_application_data(trans);
-	if (op && op->mCallbacks && op->mCallbacks->process_transaction_terminated) {
-		op->mCallbacks->process_transaction_terminated(op,event);
-	} else {
-		ms_message("Unhandled transaction terminated [%p]",trans);
-	}
 	if (op) {
-		op->unref(); /*because every transaction ref op*/
-		belle_sip_transaction_set_application_data(trans,NULL); /*no longuer reference something we do not ref to avoid futur access of a released op*/
+		op->unref(); // Because every transaction ref op
+		belle_sip_transaction_set_application_data(transaction, nullptr); // No longer reference something we do not ref to avoid future access of a released op
 	}
 }
 
-void Sal::processAuthRequestedCb(void *sal, belle_sip_auth_event_t *event) {
-	SalAuthInfo* auth_info = sal_auth_info_create(event);
-	((Sal*)sal)->mCallbacks.auth_requested(reinterpret_cast<Sal *>(sal),auth_info);
-	belle_sip_auth_event_set_passwd(event,(const char*)auth_info->password);
-	belle_sip_auth_event_set_ha1(event,(const char*)auth_info->ha1);
-	belle_sip_auth_event_set_userid(event,(const char*)auth_info->userid);
-	belle_sip_auth_event_set_signing_key(event,(belle_sip_signing_key_t *)auth_info->key);
-	belle_sip_auth_event_set_client_certificates_chain(event,(belle_sip_certificates_chain_t* )auth_info->certificates);
-	sal_auth_info_delete(auth_info);
+void Sal::processAuthRequestedCb (void *userCtx, belle_sip_auth_event_t *event) {
+	auto sal = static_cast<Sal *>(userCtx);
+	SalAuthInfo *authInfo = sal_auth_info_create(event);
+	sal->mCallbacks.auth_requested(sal, authInfo);
+	belle_sip_auth_event_set_passwd(event, (const char *)authInfo->password);
+	belle_sip_auth_event_set_ha1(event, (const char *)authInfo->ha1);
+	belle_sip_auth_event_set_userid(event, (const char *)authInfo->userid);
+	belle_sip_auth_event_set_signing_key(event, (belle_sip_signing_key_t *)authInfo->key);
+	belle_sip_auth_event_set_client_certificates_chain(event, (belle_sip_certificates_chain_t *)authInfo->certificates);
+	sal_auth_info_delete(authInfo);
 }
 
-Sal::Sal(MSFactory *factory){
-	belle_sip_listener_callbacks_t listener_callbacks = {0};
+Sal::Sal (MSFactory *factory) : mFactory(factory) {
+	// First create the stack, which initializes the belle-sip object's pool for this thread
+	mStack = belle_sip_stack_new(nullptr);
 
-	/*belle_sip_object_enable_marshal_check(TRUE);*/
-	mFactory = factory;
-	/*first create the stack, which initializes the belle-sip object's pool for this thread*/
-	mStack = belle_sip_stack_new(NULL);
-
-	mUserAgentHeader=belle_sip_header_user_agent_new();
+	mUserAgentHeader = belle_sip_header_user_agent_new();
 #if defined(PACKAGE_NAME) && defined(LIBLINPHONE_VERSION)
-	belle_sip_header_user_agent_add_product(user_agent, PACKAGE_NAME "/" LIBLINPHONE_VERSION);
+	belle_sip_header_user_agent_add_product(mUserAgentHeader, PACKAGE_NAME "/" LIBLINPHONE_VERSION);
 #else
 	belle_sip_header_user_agent_add_product(mUserAgentHeader, "Unknown");
 #endif
-	   appendStackStringToUserAgent();
+	appendStackStringToUserAgent();
 	belle_sip_object_ref(mUserAgentHeader);
 
-	mProvider = belle_sip_stack_create_provider(mStack,NULL);
-	enableNatHelper(TRUE);
+	mProvider = belle_sip_stack_create_provider(mStack, nullptr);
+	enableNatHelper(true);
 
-	listener_callbacks.process_dialog_terminated=processDialogTerminatedCb;
-	listener_callbacks.process_io_error=processIoErrorCb;
-	listener_callbacks.process_request_event=processRequestEventCb;
-	listener_callbacks.process_response_event=processResponseEventCb;
-	listener_callbacks.process_timeout=processTimeoutCb;
-	listener_callbacks.process_transaction_terminated=processTransactionTerminatedCb;
-	listener_callbacks.process_auth_requested=processAuthRequestedCb;
-	mListener=belle_sip_listener_create_from_callbacks(&listener_callbacks, this);
+	belle_sip_listener_callbacks_t listenerCallbacks = { 0 };
+	listenerCallbacks.process_dialog_terminated = processDialogTerminatedCb;
+	listenerCallbacks.process_io_error = processIoErrorCb;
+	listenerCallbacks.process_request_event = processRequestEventCb;
+	listenerCallbacks.process_response_event = processResponseEventCb;
+	listenerCallbacks.process_timeout = processTimeoutCb;
+	listenerCallbacks.process_transaction_terminated = processTransactionTerminatedCb;
+	listenerCallbacks.process_auth_requested = processAuthRequestedCb;
+	mListener = belle_sip_listener_create_from_callbacks(&listenerCallbacks, this);
 	belle_sip_provider_add_sip_listener(mProvider, mListener);
 }
 
-Sal::~Sal() {
+Sal::~Sal () {
 	belle_sip_object_unref(mUserAgentHeader);
 	belle_sip_object_unref(mProvider);
 	belle_sip_object_unref(mStack);
@@ -403,111 +401,118 @@ Sal::~Sal() {
 		belle_sip_object_unref(mSupportedHeader);
 }
 
-void Sal::setCallbacks(const Callbacks *cbs) {
-	memcpy(&mCallbacks,cbs,sizeof(*cbs));
-	if (mCallbacks.call_received==NULL)
-		mCallbacks.call_received=(OnCallReceivedCb)unimplementedStub;
-	if (mCallbacks.call_ringing==NULL)
-		mCallbacks.call_ringing=(OnCallRingingCb)unimplementedStub;
-	if (mCallbacks.call_accepted==NULL)
-		mCallbacks.call_accepted=(OnCallAcceptedCb)unimplementedStub;
-	if (mCallbacks.call_failure==NULL)
-		mCallbacks.call_failure=(OnCallFailureCb)unimplementedStub;
-	if (mCallbacks.call_terminated==NULL)
-		mCallbacks.call_terminated=(OnCallTerminatedCb)unimplementedStub;
-	if (mCallbacks.call_released==NULL)
-		mCallbacks.call_released=(OnCallReleasedCb)unimplementedStub;
-	if (mCallbacks.call_updating==NULL)
-		mCallbacks.call_updating=(OnCallUpdatingCb)unimplementedStub;
-	if (mCallbacks.auth_failure==NULL)
-		mCallbacks.auth_failure=(OnAuthFailureCb)unimplementedStub;
-	if (mCallbacks.register_success==NULL)
-		mCallbacks.register_success=(OnRegisterSuccessCb)unimplementedStub;
-	if (mCallbacks.register_failure==NULL)
-		mCallbacks.register_failure=(OnRegisterFailureCb)unimplementedStub;
-	if (mCallbacks.dtmf_received==NULL)
-		mCallbacks.dtmf_received=(OnDtmfReceivedCb)unimplementedStub;
-	if (mCallbacks.notify==NULL)
-		mCallbacks.notify=(OnNotifyCb)unimplementedStub;
-	if (mCallbacks.subscribe_received==NULL)
-		mCallbacks.subscribe_received=(OnSubscribeReceivedCb)unimplementedStub;
-	if (mCallbacks.incoming_subscribe_closed==NULL)
-		mCallbacks.incoming_subscribe_closed=(OnIncomingSubscribeClosedCb)unimplementedStub;
-	if (mCallbacks.parse_presence_requested==NULL)
-		mCallbacks.parse_presence_requested=(OnParsePresenceRequestedCb)unimplementedStub;
-	if (mCallbacks.convert_presence_to_xml_requested==NULL)
-		mCallbacks.convert_presence_to_xml_requested=(OnConvertPresenceToXMLRequestedCb)unimplementedStub;
-	if (mCallbacks.notify_presence==NULL)
-		mCallbacks.notify_presence=(OnNotifyPresenceCb)unimplementedStub;
-	if (mCallbacks.subscribe_presence_received==NULL)
-		mCallbacks.subscribe_presence_received=(OnSubscribePresenceReceivedCb)unimplementedStub;
-	if (mCallbacks.message_received==NULL)
-		mCallbacks.message_received=(OnMessageReceivedCb)unimplementedStub;
-	if (mCallbacks.ping_reply==NULL)
-		mCallbacks.ping_reply=(OnPingReplyCb)unimplementedStub;
-	if (mCallbacks.auth_requested==NULL)
-		mCallbacks.auth_requested=(OnAuthRequestedCb)unimplementedStub;
-	if (mCallbacks.info_received==NULL)
-		mCallbacks.info_received=(OnInfoReceivedCb)unimplementedStub;
-	if (mCallbacks.on_publish_response==NULL)
-		mCallbacks.on_publish_response=(OnPublishResponseCb)unimplementedStub;
-	if (mCallbacks.on_expire==NULL)
-		mCallbacks.on_expire=(OnExpireCb)unimplementedStub;
+void Sal::setCallbacks (const Callbacks *cbs) {
+	memcpy(&mCallbacks, cbs, sizeof(*cbs));
+	if (!mCallbacks.call_received)
+		mCallbacks.call_received = (OnCallReceivedCb)unimplementedStub;
+	if (!mCallbacks.call_ringing)
+		mCallbacks.call_ringing = (OnCallRingingCb)unimplementedStub;
+	if (!mCallbacks.call_accepted)
+		mCallbacks.call_accepted = (OnCallAcceptedCb)unimplementedStub;
+	if (!mCallbacks.call_failure)
+		mCallbacks.call_failure = (OnCallFailureCb)unimplementedStub;
+	if (!mCallbacks.call_terminated)
+		mCallbacks.call_terminated = (OnCallTerminatedCb)unimplementedStub;
+	if (!mCallbacks.call_released)
+		mCallbacks.call_released = (OnCallReleasedCb)unimplementedStub;
+	if (!mCallbacks.call_updating)
+		mCallbacks.call_updating = (OnCallUpdatingCb)unimplementedStub;
+	if (!mCallbacks.auth_failure)
+		mCallbacks.auth_failure = (OnAuthFailureCb)unimplementedStub;
+	if (!mCallbacks.register_success)
+		mCallbacks.register_success = (OnRegisterSuccessCb)unimplementedStub;
+	if (!mCallbacks.register_failure)
+		mCallbacks.register_failure = (OnRegisterFailureCb)unimplementedStub;
+	if (!mCallbacks.dtmf_received)
+		mCallbacks.dtmf_received = (OnDtmfReceivedCb)unimplementedStub;
+	if (!mCallbacks.notify)
+		mCallbacks.notify = (OnNotifyCb)unimplementedStub;
+	if (!mCallbacks.subscribe_received)
+		mCallbacks.subscribe_received = (OnSubscribeReceivedCb)unimplementedStub;
+	if (!mCallbacks.incoming_subscribe_closed)
+		mCallbacks.incoming_subscribe_closed = (OnIncomingSubscribeClosedCb)unimplementedStub;
+	if (!mCallbacks.parse_presence_requested)
+		mCallbacks.parse_presence_requested = (OnParsePresenceRequestedCb)unimplementedStub;
+	if (!mCallbacks.convert_presence_to_xml_requested)
+		mCallbacks.convert_presence_to_xml_requested = (OnConvertPresenceToXMLRequestedCb)unimplementedStub;
+	if (!mCallbacks.notify_presence)
+		mCallbacks.notify_presence = (OnNotifyPresenceCb)unimplementedStub;
+	if (!mCallbacks.subscribe_presence_received)
+		mCallbacks.subscribe_presence_received = (OnSubscribePresenceReceivedCb)unimplementedStub;
+	if (!mCallbacks.message_received)
+		mCallbacks.message_received = (OnMessageReceivedCb)unimplementedStub;
+	if (!mCallbacks.ping_reply)
+		mCallbacks.ping_reply = (OnPingReplyCb)unimplementedStub;
+	if (!mCallbacks.auth_requested)
+		mCallbacks.auth_requested = (OnAuthRequestedCb)unimplementedStub;
+	if (!mCallbacks.info_received)
+		mCallbacks.info_received = (OnInfoReceivedCb)unimplementedStub;
+	if (!mCallbacks.on_publish_response)
+		mCallbacks.on_publish_response = (OnPublishResponseCb)unimplementedStub;
+	if (!mCallbacks.on_expire)
+		mCallbacks.on_expire = (OnExpireCb)unimplementedStub;
 }
 
-void Sal::setTlsProperties(){
-	belle_sip_listening_point_t *lp=belle_sip_provider_get_listening_point(mProvider,"TLS");
-	if (lp){
-		belle_sip_tls_listening_point_t *tlp=BELLE_SIP_TLS_LISTENING_POINT(lp);
-		belle_tls_crypto_config_t *crypto_config = belle_tls_crypto_config_new();
-		int verify_exceptions = BELLE_TLS_VERIFY_NONE;
-		if (!mTlsVerify) verify_exceptions = BELLE_TLS_VERIFY_ANY_REASON;
-		else if (!mTlsVerifyCn) verify_exceptions = BELLE_TLS_VERIFY_CN_MISMATCH;
-		belle_tls_crypto_config_set_verify_exceptions(crypto_config, verify_exceptions);
-		if (!mRootCa.empty())
-			belle_tls_crypto_config_set_root_ca(crypto_config, mRootCa.c_str());
-		if (!mRootCaData.empty())
-			belle_tls_crypto_config_set_root_ca_data(crypto_config, mRootCaData.c_str());
-		if (mSslConfig != NULL) belle_tls_crypto_config_set_ssl_config(crypto_config, mSslConfig);
-		if (mTlsPostcheckCb) belle_tls_crypto_config_set_postcheck_callback(crypto_config, mTlsPostcheckCb, mTlsPostcheckCbData);
-		belle_sip_tls_listening_point_set_crypto_config(tlp, crypto_config);
-		belle_sip_object_unref(crypto_config);
-	}
+void Sal::setTlsProperties () {
+	auto listeningPoint = belle_sip_provider_get_listening_point(mProvider, "TLS");
+	if (!listeningPoint)
+		return;
+
+	auto cryptoConfig = belle_tls_crypto_config_new();
+	int verifyExceptions = BELLE_TLS_VERIFY_NONE;
+	if (!mTlsVerify)
+		verifyExceptions = BELLE_TLS_VERIFY_ANY_REASON;
+	else if (!mTlsVerifyCn)
+		verifyExceptions = BELLE_TLS_VERIFY_CN_MISMATCH;
+	belle_tls_crypto_config_set_verify_exceptions(cryptoConfig, verifyExceptions);
+
+	if (!mRootCa.empty())
+		belle_tls_crypto_config_set_root_ca(cryptoConfig, mRootCa.c_str());
+	if (!mRootCaData.empty())
+		belle_tls_crypto_config_set_root_ca_data(cryptoConfig, mRootCaData.c_str());
+	if (mSslConfig)
+		belle_tls_crypto_config_set_ssl_config(cryptoConfig, mSslConfig);
+	if (mTlsPostcheckCb)
+		belle_tls_crypto_config_set_postcheck_callback(cryptoConfig, mTlsPostcheckCb, mTlsPostcheckCbData);
+	auto tlsListeningPoint = BELLE_SIP_TLS_LISTENING_POINT(listeningPoint);
+	belle_sip_tls_listening_point_set_crypto_config(tlsListeningPoint, cryptoConfig);
+	belle_sip_object_unref(cryptoConfig);
 }
 
-int Sal::addListenPort(SalAddress* addr, bool is_tunneled) {
-	int result;
-	belle_sip_listening_point_t* lp;
-	if (is_tunneled){
+int Sal::addListenPort (SalAddress *addr, bool isTunneled) {
+	belle_sip_listening_point_t *listeningPoint;
+
+	if (isTunneled) {
 #ifdef TUNNEL_ENABLED
-		if (sal_address_get_transport(addr)!=SalTransportUDP){
-			ms_error("Tunneled mode is only available for UDP kind of transports.");
+		if (sal_address_get_transport(addr) != SalTransportUDP) {
+			lError() << "Tunneled mode is only available for UDP kind of transports";
 			return -1;
 		}
-		lp = belle_sip_tunnel_listening_point_new(mStack, mTunnelClient);
-		if (!lp){
-			ms_error("Could not create tunnel listening point.");
+		listeningPoint = belle_sip_tunnel_listening_point_new(mStack, mTunnelClient);
+		if (!listeningPoint) {
+			lError() << "Could not create tunnel listening point";
 			return -1;
 		}
 #else
-		ms_error("No tunnel support in library.");
+		lError() << "No tunnel support in library";
 		return -1;
 #endif
-	}else{
-		lp = belle_sip_stack_create_listening_point(mStack,
-									sal_address_get_domain(addr),
-									sal_address_get_port(addr),
-									sal_transport_to_string(sal_address_get_transport(addr)));
-	}
-	if (lp) {
-		belle_sip_listening_point_set_keep_alive(lp,(int)mKeepAlive);
-		result = belle_sip_provider_add_listening_point(mProvider,lp);
-		if (sal_address_get_transport(addr)==SalTransportTLS) {
-			         setTlsProperties();
-		}
 	} else {
-		return -1;
+		listeningPoint = belle_sip_stack_create_listening_point(
+			mStack,
+			sal_address_get_domain(addr),
+			sal_address_get_port(addr),
+			sal_transport_to_string(sal_address_get_transport(addr))
+		);
 	}
+
+	if (!listeningPoint)
+		return -1;
+
+	belle_sip_listening_point_set_keep_alive(listeningPoint, (int)mKeepAlive);
+	int result = belle_sip_provider_add_listening_point(mProvider, listeningPoint);
+	if (sal_address_get_transport(addr) == SalTransportTLS)
+		setTlsProperties();
 	return result;
 }
 
@@ -517,39 +522,37 @@ int Sal::setListenPort (const string &addr, int port, SalTransport tr, bool isTu
 	sal_address_set_port(salAddr, port);
 	sal_address_set_transport(salAddr, tr);
 	int result = addListenPort(salAddr, isTunneled);
-	sal_address_destroy(salAddr);
+	sal_address_unref(salAddr);
 	return result;
 }
 
-int Sal::getListeningPort(SalTransport tr){
-	const char *tpn=sal_transport_to_string(tr);
-	belle_sip_listening_point_t *lp=belle_sip_provider_get_listening_point(mProvider, tpn);
-	if (lp){
-		return belle_sip_listening_point_get_port(lp);
-	}
+int Sal::getListeningPort (SalTransport tr) {
+	const char *tpn = sal_transport_to_string(tr);
+	auto listeningPoint = belle_sip_provider_get_listening_point(mProvider, tpn);
+	if (listeningPoint)
+		return belle_sip_listening_point_get_port(listeningPoint);
 	return 0;
 }
 
-int Sal::unlistenPorts(){
-	const belle_sip_list_t * lps = belle_sip_provider_get_listening_points(mProvider);
-	belle_sip_list_t * tmp_list = belle_sip_list_copy(lps);
-	belle_sip_list_for_each2 (tmp_list,(void (*)(void*,void*))removeListeningPoint,mProvider);
-	belle_sip_list_free(tmp_list);
-	ms_message("sal_unlisten_ports done");
-	return 0;
+void Sal::unlistenPorts () {
+	auto listeningPoints = belle_sip_provider_get_listening_points(mProvider);
+	auto listeningPointsCopy = belle_sip_list_copy(listeningPoints);
+	belle_sip_list_for_each2(listeningPointsCopy, (bctbx_list_iterate2_func)removeListeningPoint, mProvider);
+	belle_sip_list_free(listeningPointsCopy);
+	lInfo() << "Sal::unlistenPorts(): done";
 }
 
-int Sal::isTransportAvailable(SalTransport t) {
-	switch(t){
+bool Sal::isTransportAvailable (SalTransport tr) {
+	switch (tr) {
 		case SalTransportUDP:
 		case SalTransportTCP:
-			return TRUE;
+			return true;
 		case SalTransportTLS:
 			return belle_sip_stack_tls_available(mStack);
 		case SalTransportDTLS:
-			return FALSE;
+		default:
+			return false;
 	}
-	return FALSE;
 }
 
 void Sal::makeSupportedHeader () {
@@ -597,15 +600,9 @@ void Sal::removeSupportedTag (const string &tag) {
 	}
 }
 
-int Sal::resetTransports() {
-	ms_message("Reseting transports");
+void Sal::resetTransports () {
+	lInfo() << "Reseting transports";
 	belle_sip_provider_clean_channels(mProvider);
-	return 0;
-}
-
-ortp_socket_t Sal::getSocket() const {
-	ms_warning("sal_get_socket is deprecated");
-	return -1;
 }
 
 void Sal::setUserAgent (const string &value) {
@@ -627,21 +624,21 @@ void Sal::appendStackStringToUserAgent () {
 	belle_sip_header_user_agent_add_product(mUserAgentHeader, stackStr.c_str());
 }
 
-void Sal::setKeepAlivePeriod(unsigned int value) {
-	const belle_sip_list_t* iterator;
-	belle_sip_listening_point_t* lp;
-	mKeepAlive=value;
-	for (iterator=belle_sip_provider_get_listening_points(mProvider);iterator!=NULL;iterator=iterator->next) {
-		lp=(belle_sip_listening_point_t*)iterator->data;
-		if (mUseTcpTlsKeepAlive || strcasecmp(belle_sip_listening_point_get_transport(lp),"udp")==0) {
-			belle_sip_listening_point_set_keep_alive(lp,(int)mKeepAlive);
+void Sal::setKeepAlivePeriod (unsigned int value) {
+	mKeepAlive = value;
+	for (auto it = belle_sip_provider_get_listening_points(mProvider); it; it = bctbx_list_next(it)) {
+		auto listeningPoint = static_cast<belle_sip_listening_point_t *>(bctbx_list_get_data(it));
+		if (mUseTcpTlsKeepAlive
+			|| (strcasecmp(belle_sip_listening_point_get_transport(listeningPoint), "udp") == 0)
+		) {
+			belle_sip_listening_point_set_keep_alive(listeningPoint, (int)mKeepAlive);
 		}
 	}
 }
 
-int Sal::setTunnel(void *tunnelclient) {
+int Sal::setTunnel (void *tunnelclient) {
 #ifdef TUNNEL_ENABLED
-	mTunnelClient=tunnelclient;
+	mTunnelClient = tunnelclient;
 	return 0;
 #else
 	return -1;
@@ -663,7 +660,10 @@ bool Sal::isContentEncodingAvailable (const string &contentEncoding) const {
 
 bool Sal::isContentTypeSupported (const string &contentType) const {
 	auto it = find_if(mSupportedContentTypes.cbegin(), mSupportedContentTypes.cend(),
-		[contentType](string supportedContentType) { return contentType == supportedContentType; });
+		[contentType](string supportedContentType) {
+			return contentType == supportedContentType;
+		}
+	);
 	return it != mSupportedContentTypes.cend();
 }
 
@@ -678,9 +678,9 @@ void Sal::removeContentTypeSupport (const string &contentType) {
 		mSupportedContentTypes.erase(it);
 }
 
-void Sal::useRport(bool use_rports) {
-	belle_sip_provider_enable_rport(mProvider,use_rports);
-	ms_message("Sal use rport [%s]", use_rports ? "enabled" : "disabled");
+void Sal::useRport (bool useRports) {
+	belle_sip_provider_enable_rport(mProvider, useRports);
+	lInfo() << "Sal use rports [" << (useRports ? "enabled" : "disabled") << "]";
 }
 
 void Sal::setRootCa (const string &value) {
@@ -693,58 +693,54 @@ void Sal::setRootCaData (const string &value) {
 	setTlsProperties();
 }
 
-void Sal::verifyServerCertificates(bool verify) {
-	mTlsVerify=verify;
+void Sal::verifyServerCertificates (bool verify) {
+	mTlsVerify = verify;
 	setTlsProperties();
 }
 
-void Sal::verifyServerCn(bool verify) {
+void Sal::verifyServerCn (bool verify) {
 	mTlsVerifyCn = verify;
 	setTlsProperties();
 }
 
-void Sal::setSslConfig(void *ssl_config) {
-	mSslConfig = ssl_config;
+void Sal::setSslConfig (void *sslConfig) {
+	mSslConfig = sslConfig;
 	setTlsProperties();
 }
 
-void Sal::setTlsPostcheckCallback(int (*cb)(void *, const bctbx_x509_certificate_t *), void *data){
+void Sal::setTlsPostcheckCallback (int (*cb)(void *, const bctbx_x509_certificate_t *), void *data) {
 	mTlsPostcheckCb = cb;
 	mTlsPostcheckCbData = data;
 }
 
-int Sal::createUuid(char *uuid, size_t len) {
-	if (generateUuid(uuid, len) == 0) {
-		      setUuid(uuid);
-		return 0;
-	}
-	return -1;
+string Sal::createUuid () {
+	setUuid(generateUuid());
+	return mUuid;
 }
 
-int Sal::generateUuid(char *uuid, size_t len) {
-	   SalUuid uuid_struct;
-	int i;
-	int written;
+string Sal::generateUuid () {
+	// Create an UUID as described in RFC4122, 4.4
+	SalUuid uuidStruct;
+	belle_sip_random_bytes((unsigned char *)&uuidStruct, sizeof(uuidStruct));
+	uuidStruct.clockSeqHiAndReserved &= (unsigned char)~(1 << 6);
+	uuidStruct.clockSeqHiAndReserved |= (unsigned char)(1 << 7);
+	uuidStruct.timeHiAndVersion &= (unsigned char)~(0xf << 12);
+	uuidStruct.timeHiAndVersion |= (unsigned char)(4 << 12);
 
-	if (len==0) return -1;
-	/*create an UUID as described in RFC4122, 4.4 */
-	belle_sip_random_bytes((unsigned char*)&uuid_struct, sizeof(SalUuid));
-	uuid_struct.clockSeqHiAndReserved&=(unsigned char)~(1<<6);
-	uuid_struct.clockSeqHiAndReserved|=(unsigned char)1<<7;
-	uuid_struct.timeHiAndVersion&=(unsigned char)~(0xf<<12);
-	uuid_struct.timeHiAndVersion|=(unsigned char)4<<12;
-
-	written=snprintf(uuid,len,"%8.8x-%4.4x-%4.4x-%2.2x%2.2x-", uuid_struct.timeLow, uuid_struct.timeMid,
-			uuid_struct.timeHiAndVersion, uuid_struct.clockSeqHiAndReserved,
-			uuid_struct.clockSeqLow);
-	if ((written < 0) || ((size_t)written > (len +13))) {
-		ms_error("sal_create_uuid(): buffer is too short !");
-		return -1;
-	}
-	for (i = 0; i < 6; i++)
-		written+=snprintf(uuid+written,len-(unsigned long)written,"%2.2x", uuid_struct.node[i]);
-	uuid[len-1]='\0';
-	return 0;
+	char generatedUuid[128] = { 0 };
+	int written = snprintf(
+		generatedUuid,
+		sizeof(generatedUuid) - 1,
+		"%8.8x-%4.4x-%4.4x-%2.2x%2.2x-",
+		uuidStruct.timeLow,
+		uuidStruct.timeMid,
+		uuidStruct.timeHiAndVersion,
+		uuidStruct.clockSeqHiAndReserved,
+		uuidStruct.clockSeqLow
+	);
+	for (int i = 0; i < 6; i++)
+		written += snprintf(generatedUuid + written, sizeof(generatedUuid) - (unsigned long)written, "%2.2x", uuidStruct.node[i]);
+	return generatedUuid;
 }
 
 void Sal::addPendingAuth (SalOp *op) {
@@ -762,31 +758,20 @@ void Sal::removePendingAuth (SalOp *op) {
 	}
 }
 
-void Sal::setDefaultSdpHandling(SalOpSDPHandling sdp_handling_method)  {
-	if (sdp_handling_method != SalOpSDPNormal ) ms_message("Enabling special SDP handling for all new SalOp in Sal[%p]!", this);
-	mDefaultSdpHandling = sdp_handling_method;
+void Sal::setDefaultSdpHandling (SalOpSDPHandling sdpHandlingMethod) {
+	if (sdpHandlingMethod != SalOpSDPNormal)
+		lInfo() << "Enabling special SDP handling for all new SalOp in Sal[" << this << "]!";
+	mDefaultSdpHandling = sdpHandlingMethod;
 }
 
-void Sal::enableNatHelper(bool enable) {
-	mNatHelperEnabled=enable;
-	belle_sip_provider_enable_nat_helper(mProvider,enable);
-	ms_message("Sal nat helper [%s]",enable?"enabled":"disabled");
+void Sal::enableNatHelper (bool enable) {
+	mNatHelperEnabled = enable;
+	belle_sip_provider_enable_nat_helper(mProvider, enable);
+	lInfo() << "Sal nat helper [" << (enable ? "enabled" : "disabled") << "]";
 }
 
-void Sal::getDefaultLocalIp(int address_family, char *ip, size_t iplen) {
-	strncpy(ip,address_family==AF_INET6 ? "::1" : "127.0.0.1",iplen);
-	ms_error("sal_get_default_local_ip() is deprecated.");
-}
-
-void Sal::setDnsServers(const bctbx_list_t *servers){
-	belle_sip_list_t *l = NULL;
-
-	/*we have to convert the bctbx_list_t into a belle_sip_list_t first*/
-	for (; servers != NULL; servers = servers->next){
-		l = belle_sip_list_append(l, servers->data);
-	}
-	belle_sip_stack_set_dns_servers(mStack, l);
-	belle_sip_list_free(l);
+void Sal::setDnsServers (const bctbx_list_t *servers) {
+	belle_sip_stack_set_dns_servers(mStack, servers);
 }
 
 void Sal::setDnsUserHostsFile (const string &value) {
@@ -816,104 +801,78 @@ void Sal::cancelTimer(belle_sip_source_t *timer) {
 	belle_sip_main_loop_remove_source(ml, timer);
 }
 
-belle_sip_response_t* Sal::createResponseFromRequest (belle_sip_request_t* req, int code ) {
-	belle_sip_response_t *resp=belle_sip_response_create_from_request(req,code);
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(resp),BELLE_SIP_HEADER(mUserAgentHeader));
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(resp), mSupportedHeader);
-	return resp;
+belle_sip_response_t *Sal::createResponseFromRequest (belle_sip_request_t *request, int code) {
+	auto response = belle_sip_response_create_from_request(request, code);
+	belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(mUserAgentHeader));
+	belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), mSupportedHeader);
+	return response;
 }
 
 
 
+//***********************************
+// Global functions implementation
+//***********************************
 
-/***********************************/
-/* Global functions implementation */
-/***********************************/
-
-int to_sip_code(SalReason r) {
-	int ret=500;
-	switch(r){
+int toSipCode (SalReason reason) {
+	switch (reason) {
 		case SalReasonNone:
-			ret=200;
-			break;
+			return 200;
 		case SalReasonIOError:
-			ret=503;
-			break;
+			return 503;
 		case SalReasonUnknown:
-			ret=400;
-			break;
+			return 400;
 		case SalReasonBusy:
-			ret=486;
-			break;
+			return 486;
 		case SalReasonDeclined:
-			ret=603;
-			break;
+			return 603;
 		case SalReasonDoNotDisturb:
-			ret=600;
-			break;
+			return 600;
 		case SalReasonForbidden:
-			ret=403;
-			break;
+			return 403;
 		case SalReasonUnsupportedContent:
-			ret=415;
-			break;
+			return 415;
 		case SalReasonNotFound:
-			ret=404;
-			break;
+			return 404;
 		case SalReasonRedirect:
-			ret=302;
-			break;
+			return 302;
 		case SalReasonTemporarilyUnavailable:
-			ret=480;
-			break;
+			return 480;
 		case SalReasonServiceUnavailable:
-			ret=503;
-			break;
+			return 503;
 		case SalReasonRequestPending:
-			ret=491;
-			break;
+			return 491;
 		case SalReasonUnauthorized:
-			ret=401;
-			break;
+			return 401;
 		case SalReasonNotAcceptable:
-			ret=488; /*or maybe 606 Not Acceptable ?*/
-			break;
+			return 488; // Or maybe 606 Not Acceptable?
 		case SalReasonNoMatch:
-			ret=481;
-			break;
+			return 481;
 		case SalReasonRequestTimeout:
-			ret=408;
-			break;
+			return 408;
 		case SalReasonMovedPermanently:
-			ret=301;
-			break;
+			return 301;
 		case SalReasonGone:
-			ret=410;
-			break;
+			return 410;
 		case SalReasonAddressIncomplete:
-			ret=484;
-			break;
+			return 484;
 		case SalReasonNotImplemented:
-			ret=501;
-			break;
+			return 501;
 		case SalReasonServerTimeout:
-			ret=504;
-			break;
+			return 504;
 		case SalReasonBadGateway:
-			ret=502;
-			break;
+			return 502;
 		case SalReasonInternalError:
-			ret=500;
-			break;
+		default:
+			return 500;
 	}
-	return ret;
 }
 
 LINPHONE_END_NAMESPACE
 
-/*******************************/
-/* C++ to C wrapping functions */
-/*******************************/
+//*******************************
+// C++ to C wrapping functions
+//*******************************
 
 using namespace LinphonePrivate;
 
@@ -923,148 +882,165 @@ using namespace LinphonePrivate;
 
 extern "C" {
 
-LINPHONE_PUBLIC Sal *linphone_core_get_sal(const LinphoneCore *lc) {
+LINPHONE_PUBLIC Sal *linphone_core_get_sal (const LinphoneCore *lc) {
 	return lc->sal;
 }
 
-LINPHONE_PUBLIC SalOp *linphone_proxy_config_get_sal_op(const LinphoneProxyConfig *cfg) {
+LINPHONE_PUBLIC SalOp *linphone_proxy_config_get_sal_op (const LinphoneProxyConfig *cfg) {
 	return cfg->op;
 }
 
-LINPHONE_PUBLIC SalOp *linphone_call_get_op_as_sal_op(const LinphoneCall *call) {
+LINPHONE_PUBLIC SalOp *linphone_call_get_op_as_sal_op (const LinphoneCall *call) {
 	return linphone_call_get_op(call);
 }
 
-LINPHONE_PUBLIC Sal *sal_init(MSFactory *factory) {
+LINPHONE_PUBLIC Sal *sal_init (MSFactory *factory) {
 	return new Sal(factory);
 }
 
-LINPHONE_PUBLIC void sal_uninit(Sal* sal) {
+LINPHONE_PUBLIC void sal_uninit (Sal* sal) {
 	delete sal;
 }
 
-LINPHONE_PUBLIC int sal_create_uuid(Sal *ctx, char *uuid, size_t len) {
-	return ctx->createUuid(uuid, len);
+LINPHONE_PUBLIC int sal_create_uuid (Sal *ctx, char *uuid, size_t len) {
+	string uuidStr = ctx->createUuid();
+	if (len < uuidStr.size())
+		return -1;
+	snprintf(uuid, len, "%s", uuidStr.c_str());
+	return 0;
 }
 
-LINPHONE_PUBLIC void sal_set_uuid(Sal *ctx, const char *uuid) {
+LINPHONE_PUBLIC void sal_set_uuid (Sal *ctx, const char *uuid) {
 	ctx->setUuid(L_C_TO_STRING(uuid));
 }
 
-LINPHONE_PUBLIC void sal_default_set_sdp_handling(Sal* h, SalOpSDPHandling handling_method) {
-	h->setDefaultSdpHandling(handling_method);
+LINPHONE_PUBLIC void sal_default_set_sdp_handling (Sal* h, SalOpSDPHandling sdpHandlingMethod) {
+	h->setDefaultSdpHandling(sdpHandlingMethod);
 }
 
-LINPHONE_PUBLIC void sal_set_send_error(Sal *sal,int value) {
+LINPHONE_PUBLIC void sal_set_send_error (Sal *sal,int value) {
 	sal->setSendError(value);
 }
 
-LINPHONE_PUBLIC void sal_set_recv_error(Sal *sal,int value) {
+LINPHONE_PUBLIC void sal_set_recv_error (Sal *sal,int value) {
 	sal->setRecvError(value);
 }
 
-LINPHONE_PUBLIC void sal_enable_pending_trans_checking(Sal *sal, bool value) {
+LINPHONE_PUBLIC void sal_enable_pending_trans_checking (Sal *sal, bool_t value) {
 	sal->enablePendingTransactionChecking(value);
 }
 
-LINPHONE_PUBLIC void sal_enable_unconditional_answer(Sal *sal,int value) {
+LINPHONE_PUBLIC void sal_enable_unconditional_answer (Sal *sal, bool_t value) {
 	sal->enableUnconditionalAnswer(value);
 }
 
-LINPHONE_PUBLIC void sal_set_dns_timeout(Sal* sal,int timeout) {
+LINPHONE_PUBLIC void sal_set_dns_timeout (Sal* sal, int timeout) {
 	sal->setDnsTimeout(timeout);
 }
 
-LINPHONE_PUBLIC void sal_set_dns_user_hosts_file(Sal *sal, const char *hosts_file) {
-	sal->setDnsUserHostsFile(hosts_file);
+LINPHONE_PUBLIC void sal_set_dns_user_hosts_file (Sal *sal, const char *hostsFile) {
+	sal->setDnsUserHostsFile(hostsFile);
 }
 
-LINPHONE_PUBLIC void *sal_get_stack_impl(Sal *sal) {
+LINPHONE_PUBLIC void *sal_get_stack_impl (Sal *sal) {
 	return sal->getStackImpl();
 }
 
-LINPHONE_PUBLIC void sal_set_refresher_retry_after(Sal *sal,int value) {
+LINPHONE_PUBLIC void sal_set_refresher_retry_after (Sal *sal, int value) {
 	sal->setRefresherRetryAfter(value);
 }
 
-LINPHONE_PUBLIC int sal_get_refresher_retry_after(const Sal *sal) {
+LINPHONE_PUBLIC int sal_get_refresher_retry_after (const Sal *sal) {
 	return sal->getRefresherRetryAfter();
 }
 
-LINPHONE_PUBLIC void sal_set_transport_timeout(Sal* sal,int timeout) {
+LINPHONE_PUBLIC void sal_set_transport_timeout (Sal* sal, int timeout) {
 	sal->setTransportTimeout(timeout);
 }
 
-LINPHONE_PUBLIC void sal_enable_test_features(Sal*ctx, bool enabled) {
-	ctx->enableTestFeatures(enabled);
+LINPHONE_PUBLIC void sal_enable_test_features (Sal*ctx, bool_t value) {
+	ctx->enableTestFeatures(value);
 }
 
-LINPHONE_PUBLIC int sal_transport_available(Sal *ctx, SalTransport t) {
-	return ctx->isTransportAvailable(t);
+LINPHONE_PUBLIC bool_t sal_transport_available (Sal *ctx, SalTransport tr) {
+	return (bool_t)ctx->isTransportAvailable(tr);
 }
 
-LINPHONE_PUBLIC const SalErrorInfo *sal_op_get_error_info(const SalOp *op) {
+LINPHONE_PUBLIC const SalErrorInfo *sal_op_get_error_info (const SalOp *op) {
 	return op->getErrorInfo();
 }
 
-LINPHONE_PUBLIC bool sal_call_dialog_request_pending(const SalOp *op) {
+LINPHONE_PUBLIC bool_t sal_call_dialog_request_pending (const SalOp *op) {
 	auto callOp = dynamic_cast<const SalCallOp *>(op);
+	if (!callOp)
+		return FALSE;
 	return callOp->dialogRequestPending();
 }
 
-LINPHONE_PUBLIC void sal_call_set_sdp_handling(SalOp *h, SalOpSDPHandling handling) {
-	auto callOp = dynamic_cast<SalCallOp *>(h);
-	callOp->setSdpHandling(handling);
+LINPHONE_PUBLIC void sal_call_set_sdp_handling (SalOp *op, SalOpSDPHandling handling) {
+	auto callOp = dynamic_cast<SalCallOp *>(op);
+	if (callOp)
+		callOp->setSdpHandling(handling);
 }
 
-LINPHONE_PUBLIC SalMediaDescription * sal_call_get_final_media_description(SalOp *h) {
-	auto callOp = dynamic_cast<SalCallOp *>(h);
+LINPHONE_PUBLIC SalMediaDescription *sal_call_get_final_media_description (SalOp *op) {
+	auto callOp = dynamic_cast<SalCallOp *>(op);
+	if (!callOp)
+		return nullptr;
 	return callOp->getFinalMediaDescription();
 }
 
-LINPHONE_PUBLIC belle_sip_resolver_context_t *sal_resolve_a(Sal *sal, const char *name, int port, int family, belle_sip_resolver_callback_t cb, void *data) {
+LINPHONE_PUBLIC belle_sip_resolver_context_t *sal_resolve_a (Sal *sal, const char *name, int port, int family, belle_sip_resolver_callback_t cb, void *data) {
 	return sal->resolveA(name, port, family, cb, data);
 }
 
-LINPHONE_PUBLIC Sal *sal_op_get_sal(SalOp *op) {
+LINPHONE_PUBLIC Sal *sal_op_get_sal (SalOp *op) {
 	return op->getSal();
 }
 
-LINPHONE_PUBLIC SalOp *sal_create_refer_op(Sal *sal) {
+LINPHONE_PUBLIC SalOp *sal_create_refer_op (Sal *sal) {
 	return new SalReferOp(sal);
 }
 
-LINPHONE_PUBLIC void sal_release_op(SalOp *op) {
+LINPHONE_PUBLIC void sal_release_op (SalOp *op) {
 	op->release();
 }
 
-LINPHONE_PUBLIC void sal_op_set_from(SalOp *sal_refer_op, const char* from) {
-	auto referOp = dynamic_cast<SalReferOp *>(sal_refer_op);
-	referOp->setFrom(from);
+LINPHONE_PUBLIC void sal_op_set_from (SalOp *salReferOp, const char *from) {
+	auto referOp = dynamic_cast<SalReferOp *>(salReferOp);
+	if (referOp)
+		referOp->setFrom(from);
 }
 
-LINPHONE_PUBLIC void sal_op_set_to(SalOp *sal_refer_op, const char* to) {
-	auto referOp = dynamic_cast<SalReferOp *>(sal_refer_op);
-	referOp->setTo(to);
+LINPHONE_PUBLIC void sal_op_set_to (SalOp *salReferOp, const char *to) {
+	auto referOp = dynamic_cast<SalReferOp *>(salReferOp);
+	if (referOp)
+		referOp->setTo(to);
 }
 
-LINPHONE_PUBLIC void sal_op_send_refer(SalOp *sal_refer_op, SalAddress* refer_to) {
-	auto referOp = dynamic_cast<SalReferOp *>(sal_refer_op);
-	referOp->sendRefer(refer_to);
+LINPHONE_PUBLIC void sal_op_send_refer (SalOp *salReferOp, SalAddress *referTo) {
+	auto referOp = dynamic_cast<SalReferOp *>(salReferOp);
+	if (referOp)
+		referOp->sendRefer(referTo);
 }
 
-LINPHONE_PUBLIC void sal_set_user_pointer(Sal *sal, void *user_pointer) {
-	sal->setUserPointer(user_pointer);
+LINPHONE_PUBLIC void sal_set_user_pointer (Sal *sal, void *userPointer) {
+	sal->setUserPointer(userPointer);
 }
 
-LINPHONE_PUBLIC void *sal_get_user_pointer(Sal *sal) {
+LINPHONE_PUBLIC void *sal_get_user_pointer (Sal *sal) {
 	return sal->getUserPointer();
 }
 
-LINPHONE_PUBLIC void sal_set_call_refer_callback(Sal *sal, void (*OnReferCb)(SalOp *op, const SalAddress *referto)) {
-	struct Sal::Callbacks cbs = {NULL};
+LINPHONE_PUBLIC void sal_set_call_refer_callback (Sal *sal, void (*OnReferCb)(SalOp *op, const SalAddress *referTo)) {
+	struct Sal::Callbacks cbs = { nullptr };
 	cbs.refer_received = OnReferCb;
 	sal->setCallbacks(&cbs);
+}
+
+char *sal_generate_uuid (void) {
+	string uuid = Sal::generateUuid();
+	return bctbx_strdup(uuid.c_str());
 }
 
 }

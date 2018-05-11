@@ -274,7 +274,7 @@ LinphoneStatus linphone_event_send_subscribe(LinphoneEvent *lev, const LinphoneC
 
 	body_handler = sal_body_handler_from_content(body);
 	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(lev->op);
-	err=subscribeOp->subscribe(NULL,NULL,lev->name,lev->expires,body_handler);
+	err=subscribeOp->subscribe(lev->name,lev->expires,body_handler);
 	if (err==0){
 		if (lev->subscription_state==LinphoneSubscriptionNone)
 			linphone_event_set_state(lev,LinphoneSubscriptionOutgoingProgress);
@@ -382,7 +382,7 @@ static int _linphone_event_send_publish(LinphoneEvent *lev, const LinphoneConten
 	} else lev->op->setSentCustomHeaders(NULL);
 	body_handler = sal_body_handler_from_content(body);
 	auto publishOp = dynamic_cast<SalPublishOp *>(lev->op);
-	err=publishOp->publish(NULL,NULL,lev->name,lev->expires,body_handler);
+	err=publishOp->publish(lev->name,lev->expires,body_handler);
 	if (err==0){
 		linphone_event_set_publish_state(lev,LinphonePublishProgress);
 	}else if (notify_err){

@@ -2434,9 +2434,8 @@ void linphone_core_start (LinphoneCore *lc) {
 	//to give a chance to change uuid before starting
 	const char* uuid=lp_config_get_string(lc->config,"misc","uuid",NULL);
 	if (!uuid){
-		char tmp[64];
-		lc->sal->createUuid(tmp,sizeof(tmp));
-		lp_config_set_string(lc->config,"misc","uuid",tmp);
+		string uuid = lc->sal->createUuid();
+		lp_config_set_string(lc->config,"misc","uuid",uuid.c_str());
 	}else if (strcmp(uuid,"0")!=0) /*to allow to disable sip.instance*/
 		lc->sal->setUuid(uuid);
 
@@ -3570,7 +3569,7 @@ static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const Lin
 		SalAddress *proxy_addr=sal_address_new(linphone_proxy_config_get_addr(proxy));
 		if (strcmp(sal_address_get_domain(proxy_addr),linphone_address_get_domain(dest))==0){
 			ret=bctbx_list_append(ret,proxy_addr);
-		}else sal_address_destroy(proxy_addr);
+		}else sal_address_unref(proxy_addr);
 	}
 	return ret;
 }
@@ -3662,7 +3661,7 @@ static void linphone_transfer_routes_to_op(bctbx_list_t *routes, SalOp *op){
 	for(it=routes;it!=NULL;it=it->next){
 		SalAddress *addr=(SalAddress*)it->data;
 		op->addRouteAddress(addr);
-		sal_address_destroy(addr);
+		sal_address_unref(addr);
 	}
 	bctbx_list_free(routes);
 }
@@ -6419,7 +6418,8 @@ bool_t linphone_core_is_network_reachable(LinphoneCore* lc) {
 }
 
 ortp_socket_t linphone_core_get_sip_socket(LinphoneCore *lc){
-	return lc->sal->getSocket();
+	ms_warning("linphone_core_get_sip_socket is deprecated");
+	return -1;
 }
 
 void linphone_core_destroy(LinphoneCore *lc){

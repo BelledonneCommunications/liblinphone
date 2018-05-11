@@ -361,18 +361,13 @@ const char* linphone_vcard_get_organization(const LinphoneVcard *vCard) {
 }
 
 bool_t linphone_vcard_generate_unique_id(LinphoneVcard *vCard) {
-	char uuid[64];
-
 	if (vCard) {
 		if (linphone_vcard_get_uid(vCard)) {
 			return FALSE;
 		}
-		if (LinphonePrivate::Sal::generateUuid(uuid, sizeof(uuid)) == 0) {
-			char vcard_uuid[sizeof(uuid)+4];
-			snprintf(vcard_uuid, sizeof(vcard_uuid), "urn:%s", uuid);
-			linphone_vcard_set_uid(vCard, vcard_uuid);
-			return TRUE;
-		}
+		string uuid = "urn:" + LinphonePrivate::Sal::generateUuid();
+		linphone_vcard_set_uid(vCard, uuid.c_str());
+		return TRUE;
 	}
 	return FALSE;
 }

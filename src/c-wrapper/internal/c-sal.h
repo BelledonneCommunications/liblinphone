@@ -119,7 +119,6 @@ void sal_address_set_port(SalAddress *uri, int port);
 void sal_address_clean(SalAddress *addr);
 char *sal_address_as_string(const SalAddress *u);
 char *sal_address_as_string_uri_only(const SalAddress *u);
-void sal_address_destroy(SalAddress *u);
 LINPHONE_PUBLIC void sal_address_set_param(SalAddress *u,const char* name,const char* value);
 void sal_address_set_transport(SalAddress* addr,SalTransport transport);
 void sal_address_set_transport_name(SalAddress* addr,const char* transport);
@@ -659,6 +658,8 @@ int sal_lines_get_value(const char *data, const char *key, char *value, size_t v
 
 unsigned long sal_begin_background_task(const char *name, void (*max_time_reached)(void *), void *data);
 void sal_end_background_task(unsigned long id);
+
+char *sal_generate_uuid (void);
 
 /*Some old equipment may not only rely on attribute sendonly/recvonly/sendrecv/inative*/
 

@@ -371,7 +371,7 @@ LinphoneStatus linphone_proxy_config_set_route(LinphoneProxyConfig *cfg, const c
 		}else tmp=ms_strdup(route);
 		addr=sal_address_new(tmp);
 		if (addr!=NULL){
-			sal_address_destroy(addr);
+			sal_address_unref(addr);
 			cfg->reg_routes = bctbx_list_append(cfg->reg_routes, tmp);
 			return 0;
 		}else{
@@ -402,7 +402,7 @@ LinphoneStatus linphone_proxy_config_set_routes(LinphoneProxyConfig *cfg, const 
 			}
 			addr = sal_address_new(tmp);
 			if (addr != NULL) {
-				sal_address_destroy(addr);
+				sal_address_unref(addr);
 				cfg->reg_routes = bctbx_list_append(cfg->reg_routes, tmp);
 			} else {
 				ms_free(tmp);
@@ -1459,7 +1459,7 @@ const char* linphone_proxy_config_get_transport(const LinphoneProxyConfig *cfg) 
 
 	ret=sal_transport_to_string(sal_address_get_transport(route_addr));
 	if (destroy_route_addr)
-		sal_address_destroy((SalAddress *)route_addr);
+		sal_address_unref((SalAddress *)route_addr);
 
 	return ret;
 }

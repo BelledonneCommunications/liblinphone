@@ -974,7 +974,7 @@ LinphoneStatus CallSession::decline (const LinphoneErrorInfo *ei) {
 		linphone_error_info_to_sal(ei, &sei);
 		d->op->declineWithErrorInfo(&sei , nullptr);
 	} else
-		d->op->decline(SalReasonDeclined, nullptr);
+		d->op->decline(SalReasonDeclined);
 	sal_error_info_reset(&sei);
 	sal_error_info_reset(&sub_sei);
 	d->terminate();
@@ -1101,7 +1101,7 @@ int CallSession::startInvite (const Address *destination, const string &subject,
 	shared_ptr<CallSession> ref = getSharedFromThis();
 	if (content)
 		d->op->setLocalBody(*content);
-	int result = d->op->call(from, destinationStr.c_str(), subject.empty() ? nullptr : subject.c_str());
+	int result = d->op->call(from, destinationStr, subject);
 	ms_free(from);
 	if (result < 0) {
 		if ((d->state != CallSession::State::Error) && (d->state != CallSession::State::Released)) {

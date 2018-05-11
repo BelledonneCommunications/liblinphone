@@ -278,7 +278,3 @@ bool_t sal_address_is_ipv6(const SalAddress *addr){
 	}
 	return FALSE;
 }
-
-void sal_address_destroy(SalAddress *addr){
-	sal_address_unref(addr);
-}

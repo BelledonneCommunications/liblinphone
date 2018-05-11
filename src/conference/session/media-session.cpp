@@ -4270,7 +4270,7 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 			linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
 			if (d->listener)
 				d->listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
-			d->op->decline(SalReasonNotAcceptable, nullptr);
+			d->op->decline(SalReasonNotAcceptable);
 			return;
 		}
 	}

@@ -61,7 +61,7 @@ static void call_received(SalCallOp *h) {
 	LinphoneCore *lc = reinterpret_cast<LinphoneCore *>(h->getSal()->getUserPointer());
 
 	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
-		h->decline(SalReasonServiceUnavailable, nullptr);
+		h->decline(SalReasonServiceUnavailable);
 		h->release();
 		return;
 	}
@@ -100,14 +100,14 @@ static void call_received(SalCallOp *h) {
 			if (oneToOneChatRoom) {
 				bool_t oneToOneChatRoomEnabled = linphone_config_get_bool(linphone_core_get_config(lc), "misc", "enable_one_to_one_chat_room", TRUE);
 				if (!oneToOneChatRoomEnabled) {
-					h->decline(SalReasonNotAcceptable, nullptr);
+					h->decline(SalReasonNotAcceptable);
 					h->release();
 					return;
 				}
 				IdentityAddress from(h->getFrom());
 				list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(h->getRemoteBody());
 				if (identAddresses.size() != 1) {
-					h->decline(SalReasonNotAcceptable, nullptr);
+					h->decline(SalReasonNotAcceptable);
 					h->release();
 					return;
 				}
@@ -133,7 +133,7 @@ static void call_received(SalCallOp *h) {
 				L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmJoining(h);
 			} else {
 				//invite is for an unknown chatroom
-				h->decline(SalReasonNotFound, nullptr);
+				h->decline(SalReasonNotFound);
 				h->release();
 			}
 		} else {
@@ -183,7 +183,7 @@ static void call_received(SalCallOp *h) {
 	}
 
 	if (!L_GET_PRIVATE_FROM_C_OBJECT(lc)->canWeAddCall()) { /* Busy */
-		h->decline(SalReasonBusy, nullptr);
+		h->decline(SalReasonBusy);
 		LinphoneErrorInfo *ei = linphone_error_info_new();
 		linphone_error_info_set(ei, nullptr, LinphoneReasonBusy, 486, "Busy - too many calls", nullptr);
 		linphone_core_report_early_failed_call(lc, LinphoneCallIncoming, fromAddr, toAddr, ei);
@@ -202,7 +202,7 @@ static void call_received(SalCallOp *h) {
 	if (fromAddressToSearchIfMe && L_GET_PRIVATE_FROM_C_OBJECT(lc)->isAlreadyInCallWithAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(fromAddressToSearchIfMe))) {
 		char *addr = linphone_address_as_string(fromAddr);
 		ms_warning("Receiving a call while one with same address [%s] is initiated, refusing this one with busy message", addr);
-		h->decline(SalReasonBusy, nullptr);
+		h->decline(SalReasonBusy);
 		LinphoneErrorInfo *ei = linphone_error_info_new();
 		linphone_error_info_set(ei, nullptr, LinphoneReasonBusy, 486, "Busy - duplicated call", nullptr);
 		linphone_core_report_early_failed_call(lc, LinphoneCallIncoming, fromAddr, toAddr, ei);
