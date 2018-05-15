@@ -332,9 +332,8 @@ bool ServerGroupChatRoomPrivate::update (SalCallOp *op) {
 	L_Q();
 	if (sal_custom_header_find(op->getRecvCustomHeaders(), "Subject")) {
 		// Handle subject change
-		string newSubject(L_C_TO_STRING(op->getSubject()));
-		lInfo() << q << ": New subject \"" << newSubject << "\"";
-		q->setSubject(newSubject);
+		lInfo() << q << ": New subject \"" << op->getSubject() << "\"";
+		q->setSubject(op->getSubject());
 	}
 	// Handle participants addition
 	list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(op->getRemoteBody());
@@ -788,7 +787,7 @@ LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_
 	L_D();
 	L_D_T(LocalConference, dConference);
 
-	LocalConference::setSubject(op->getSubject() ? op->getSubject() : "");
+	LocalConference::setSubject(op->getSubject());
 	const char *oneToOneChatRoomStr = sal_custom_header_find(op->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 	if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
 		d->capabilities |= ServerGroupChatRoom::Capabilities::OneToOne;
