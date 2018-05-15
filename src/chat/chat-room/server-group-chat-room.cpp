@@ -645,10 +645,6 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 		if (invitedParticipant != participant)
 			addressesList.push_back(invitedParticipant->getAddress());
 	}
-
-	if (addressesList.empty())
-		return;
-
 	Content content;
 	content.setBody(q->getResourceLists(addressesList));
 	content.setContentType(ContentType::ResourceLists);
