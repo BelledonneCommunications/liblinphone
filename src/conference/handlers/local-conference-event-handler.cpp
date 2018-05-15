@@ -382,10 +382,8 @@ void LocalConferenceEventHandlerPrivate::notifyParticipantDevice (const string &
 		contentType = ContentType(ContentType::ConferenceInfo);
 
 	content.setContentType(contentType);
-	// TODO: Activate compression
-	//if (linphone_core_content_encoding_supported(conf->getCore()->getCCore(), "deflate"))
-	//	linphone_content_set_encoding(content, "deflate");
-	// TODO: Activate compression
+	if (linphone_core_content_encoding_supported(conf->getCore()->getCCore(), "deflate"))
+		content.setContentEncoding("deflate");
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
 	linphone_event_notify(ev, cContent);
 }

@@ -653,10 +653,8 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 	content.setBody(q->getResourceLists(addressesList));
 	content.setContentType(ContentType::ResourceLists);
 	content.setContentDisposition(ContentDisposition::RecipientListHistory);
-	// TODO: Activate compression
-	//if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate"))
-	//	content.setContentEncoding("deflate");
-	// TODO: Activate compression
+	if (linphone_core_content_encoding_supported(q->getCore()->getCCore(), "deflate"))
+		content.setContentEncoding("deflate");
 	session->startInvite(nullptr, q->getSubject(), &content);
 }
 
