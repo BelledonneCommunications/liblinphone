@@ -96,6 +96,7 @@ def generate(name):
 		"--namespace-map", "urn:ietf:params:xml:ns:im-iscomposing=LinphonePrivate::Xsd::IsComposing",
 		"--namespace-map", "http://www.linphone.org/xsds/imdn.xsd=LinphonePrivate::Xsd::LinphoneImdn",
 		"--namespace-map", "urn:ietf:params:xml:ns:resource-lists=LinphonePrivate::Xsd::ResourceLists",
+		"--namespace-map", "urn:ietf:params:xml:ns:rlmi=LinphonePrivate::Xsd::Rlmi",
 		source_file
 		], shell=False)
 	p.communicate()
@@ -109,6 +110,7 @@ def main(argv = None):
 	generate("is-composing")
 	generate("linphone-imdn")
 	generate("resource-lists")
+	generate("rlmi")
 
 if __name__ == "__main__":
 	sys.exit(main())

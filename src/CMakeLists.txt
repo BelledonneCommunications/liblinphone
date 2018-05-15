@@ -124,8 +124,10 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/conference.h
 	conference/handlers/local-conference-event-handler-p.h
 	conference/handlers/local-conference-event-handler.h
+	conference/handlers/local-conference-list-event-handler.h
 	conference/handlers/remote-conference-event-handler-p.h
 	conference/handlers/remote-conference-event-handler.h
+	conference/handlers/remote-conference-list-event-handler.h
 	conference/local-conference-p.h
 	conference/local-conference.h
 	conference/params/call-session-params-p.h
@@ -215,6 +217,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	xml/is-composing.h
 	xml/linphone-imdn.h
 	xml/resource-lists.h
+	xml/rlmi.h
 	xml/xml.h
 )
 
@@ -270,7 +273,9 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/notification/is-composing.cpp
 	conference/conference.cpp
 	conference/handlers/local-conference-event-handler.cpp
+	conference/handlers/local-conference-list-event-handler.cpp
 	conference/handlers/remote-conference-event-handler.cpp
+	conference/handlers/remote-conference-list-event-handler.cpp
 	conference/local-conference.cpp
 	conference/params/call-session-params.cpp
 	conference/params/media-session-params.cpp
@@ -340,6 +345,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	xml/is-composing.cpp
 	xml/linphone-imdn.cpp
 	xml/resource-lists.cpp
+	xml/rlmi.cpp
 	xml/xml.cpp
 )
 
@@ -347,6 +353,7 @@ set(LINPHONE_OBJC_SOURCE_FILES)
 if (APPLE)
 	list(APPEND LINPHONE_OBJC_SOURCE_FILES core/paths/paths-apple.mm)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-apple.h)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES core/platform-helpers/ios-platform-helpers.cpp)
 elseif (ANDROID)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES core/paths/paths-android.cpp core/platform-helpers/android-platform-helpers.cpp)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-android.h)
@@ -398,6 +405,7 @@ if(ENABLE_SHARED)
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi>
 	)
+	#TODO: replace by if(APPLE) when we want to make apple framework on linphone-desktop too
 	if(IOS)
 		if(IOS)
 			set(MIN_OS ${LINPHONE_IOS_DEPLOYMENT_TARGET})

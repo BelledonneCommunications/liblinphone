@@ -403,7 +403,7 @@ void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState stat
 void linphone_event_set_publish_state(LinphoneEvent *lev, LinphonePublishState state);
 void _linphone_event_notify_notify_response(const LinphoneEvent *lev);
 LinphoneSubscriptionState linphone_subscription_state_from_sal(SalSubscribeStatus ss);
-LinphoneContent *linphone_content_from_sal_body_handler(SalBodyHandler *ref);
+LinphoneContent *linphone_content_from_sal_body_handler(const SalBodyHandler *ref, bool parseMultipart = true);
 void linphone_core_invalidate_friend_subscriptions(LinphoneCore *lc);
 void linphone_core_register_offer_answer_providers(LinphoneCore *lc);
 
@@ -505,6 +505,7 @@ void linphone_core_notify_configuring_status(LinphoneCore *lc, LinphoneConfiguri
 void linphone_core_notify_network_reachable(LinphoneCore *lc, bool_t reachable);
 
 void linphone_core_notify_notify_received(LinphoneCore *lc, LinphoneEvent *lev, const char *notified_event, const LinphoneContent *body);
+void linphone_core_notify_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const char *subscribe_event, const LinphoneContent *body);
 void linphone_core_notify_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state);
 void linphone_core_notify_publish_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphonePublishState state);
 void linphone_core_notify_log_collection_upload_state_changed(LinphoneCore *lc, LinphoneCoreLogCollectionUploadState state, const char *info);

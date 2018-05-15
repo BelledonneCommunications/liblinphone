@@ -57,7 +57,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "chat/chat-room/client-group-chat-room-p.h"
 #include "chat/chat-room/client-group-to-basic-chat-room.h"
 #include "chat/chat-room/server-group-chat-room-p.h"
+#include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/handlers/remote-conference-event-handler.h"
+#include "conference/handlers/remote-conference-list-event-handler.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core-p.h"
@@ -369,6 +371,14 @@ LinphoneCoreCbsNotifyReceivedCb linphone_core_cbs_get_notify_received(LinphoneCo
 
 void linphone_core_cbs_set_notify_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsNotifyReceivedCb cb) {
 	cbs->vtable->notify_received = cb;
+}
+
+LinphoneCoreCbsSubscribeReceivedCb linphone_core_cbs_get_subscribe_received(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->subscribe_received;
+}
+
+void linphone_core_cbs_set_subscribe_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsSubscribeReceivedCb cb) {
+	cbs->vtable->subscribe_received = cb;
 }
 
 LinphoneCoreCbsPublishStateChangedCb linphone_core_cbs_get_rpublish_state_changed(LinphoneCoreCbs *cbs) {
@@ -1305,7 +1315,7 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	lc->sal->useNoInitialRoute(!!lp_config_get_int(lc->config,"sip","use_no_initial_route",0));
 	lc->sal->useRport(!!lp_config_get_int(lc->config,"sip","use_rport",1));
-	lc->sal->setContactLinphoneSpecs(lp_config_get_string(lc->config, "sip", "linphone_specs", NULL));
+	lc->sal->setContactLinphoneSpecs(lp_config_get_string(lc->config, "sip", "linphone_specs", ""));
 
 	if (!lp_config_get_int(lc->config,"sip","ipv6_migration_done",FALSE) && lp_config_has_entry(lc->config,"sip","use_ipv6")) {
 		lp_config_clean_entry(lc->config,"sip","use_ipv6");
@@ -2124,59 +2134,70 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 		}
 	} else if (strcmp(notified_event, "conference") == 0) {
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
-		const LinphoneAddress *from = linphone_event_get_from(lev);
+		char *resourceAddrStr = linphone_address_as_string_uri_only(resource);
+		if (strcmp(resourceAddrStr, linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc))) == 0) {
+			bctbx_free(resourceAddrStr);
+			L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(L_GET_CPP_PTR_FROM_C_OBJECT(body));
+			return;
+		}
+		bctbx_free(resourceAddrStr);
 
+		const LinphoneAddress *from = linphone_event_get_from(lev);
 		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ChatRoomId(
 			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
 			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
 		));
+		if (!chatRoom)
+			return;
 
-		if (chatRoom) {
-			shared_ptr<ClientGroupChatRoom> cgcr;
-			if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Proxy)
-				cgcr = static_pointer_cast<ClientGroupChatRoom>(
-					static_pointer_cast<ClientGroupToBasicChatRoom>(chatRoom)->getProxiedChatRoom());
-			else
-				cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
+		shared_ptr<ClientGroupChatRoom> cgcr;
+		if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Proxy)
+			cgcr = static_pointer_cast<ClientGroupChatRoom>(
+				static_pointer_cast<ClientGroupToBasicChatRoom>(chatRoom)->getProxiedChatRoom());
+		else
+			cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 
-			if (linphone_content_is_multipart(body)) {
-				// TODO : migrate to c++ 'Content'.
-				int i = 0;
-				LinphoneContent *part = NULL;
-				while ((part = linphone_content_get_part(body, i))) {
-					i++;
-					L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_string_buffer(part));
-					linphone_content_unref(part);
-				}
-			} else
-				L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_string_buffer(body));
-		}
+		if (linphone_content_is_multipart(body)) {
+			// TODO : migrate to c++ 'Content'.
+			int i = 0;
+			LinphoneContent *part = nullptr;
+			while ((part = linphone_content_get_part(body, i))) {
+				i++;
+				L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_string_buffer(part));
+				linphone_content_unref(part);
+			}
+		} else
+			L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_string_buffer(body));
 	}
 }
 
-static void _linphone_core_conference_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
-	if (
-		linphone_event_get_subscription_dir(lev) == LinphoneSubscriptionIncoming &&
-		state == LinphoneSubscriptionIncomingReceived
-	) {
-		const LinphoneAddress *resource = linphone_event_get_resource(lev);
-		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ChatRoomId(
-			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
-		));
-		if (chatRoom) {
-			linphone_event_accept_subscription(lev);
-			L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscribeReceived(lev);
-		} else
-			linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
+static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneContent *body) {
+	if (body && linphone_event_get_custom_header(lev, "Content-Disposition") && strcasecmp(linphone_event_get_custom_header(lev, "Content-Disposition"), "recipient-list") == 0) {
+		// List subscription
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->localListEventHandler->subscribeReceived(lev, body);
+		return;
+	}
+
+	const LinphoneAddress *resource = linphone_event_get_resource(lev);
+	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ChatRoomId(
+		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+	));
+	if (chatRoom)
+		L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscribeReceived(lev);
+	else
+		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
+}
+
+static void linphone_core_internal_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const char *subscribe_event, const LinphoneContent *body) {
+	if (strcmp(linphone_event_get_name(lev), "conference") == 0) {
+		_linphone_core_conference_subscribe_received(lc, lev, body);
 	}
 }
 
 static void linphone_core_internal_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
 	if (strcasecmp(linphone_event_get_name(lev), "Presence") == 0) {
 		linphone_friend_list_subscription_state_changed(lc, lev, state);
-	} else if (strcmp(linphone_event_get_name(lev), "conference") == 0) {
-		_linphone_core_conference_subscription_state_changed(lc, lev, state);
 	}
 }
 
@@ -2233,7 +2254,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	lc->sal=new Sal(NULL);
 	lc->sal->setRefresherRetryAfter(lp_config_get_int(lc->config, "sip", "refresher_retry_after", 60000));
-	lc->sal->setHttpProxyHost(linphone_core_get_http_proxy_host(lc));
+	lc->sal->setHttpProxyHost(L_C_TO_STRING(linphone_core_get_http_proxy_host(lc)));
 	lc->sal->setHttpProxyPort(linphone_core_get_http_proxy_port(lc));
 
 	lc->sal->setUserPointer(lc);
@@ -2242,6 +2263,8 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 #ifdef __ANDROID__
 	if (system_context)
 		lc->platform_helper = LinphonePrivate::createAndroidPlatformHelpers(lc, system_context);
+#elif TARGET_OS_IPHONE
+	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc, system_context);
 #endif
 	if (lc->platform_helper == NULL)
 		lc->platform_helper = new LinphonePrivate::StubbedPlatformHelpers(lc);
@@ -2257,6 +2280,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	_linphone_core_init_account_creator_service(lc);
 
 	linphone_core_cbs_set_notify_received(internal_cbs, linphone_core_internal_notify_received);
+	linphone_core_cbs_set_subscribe_received(internal_cbs, linphone_core_internal_subscribe_received);
 	linphone_core_cbs_set_subscription_state_changed(internal_cbs, linphone_core_internal_subscription_state_changed);
 	linphone_core_cbs_set_publish_state_changed(internal_cbs, linphone_core_internal_publish_state_changed);
 	_linphone_core_add_callbacks(lc, internal_cbs, TRUE);
@@ -2330,8 +2354,8 @@ void linphone_core_start (LinphoneCore *lc) {
 	}else if (strcmp(uuid,"0")!=0) /*to allow to disable sip.instance*/
 		lc->sal->setUuid(uuid);
 
-	if (lc->sal->getRootCa()) {
-		belle_tls_crypto_config_set_root_ca(lc->http_crypto_config, lc->sal->getRootCa());
+	if (!lc->sal->getRootCa().empty()) {
+		belle_tls_crypto_config_set_root_ca(lc->http_crypto_config, lc->sal->getRootCa().c_str());
 		belle_http_provider_set_tls_crypto_config(lc->http_provider, lc->http_crypto_config);
 	}
 
@@ -2866,7 +2890,7 @@ void linphone_core_set_user_agent(LinphoneCore *lc, const char *name, const char
 	}
 }
 const char *linphone_core_get_user_agent(LinphoneCore *lc){
-	return lc->sal->getUserAgent();
+	return lc->sal->getUserAgent().c_str();
 }
 
 const char *linphone_core_get_user_agent_name(void){
@@ -3552,7 +3576,7 @@ void linphone_configure_op_with_proxy(LinphoneCore *lc, SalOp *op, const Linphon
 	op->setToAddress(L_GET_PRIVATE_FROM_C_OBJECT(dest)->getInternalAddress());
 	op->setFrom(identity);
 	op->setSentCustomHeaders(headers);
-	op->setRealm(linphone_proxy_config_get_realm(proxy));
+	op->setRealm(L_C_TO_STRING(linphone_proxy_config_get_realm(proxy)));
 
 	if (with_contact && proxy && proxy->op){
 		const LinphoneAddress *contact = linphone_proxy_config_get_contact(proxy);
@@ -4308,7 +4332,7 @@ const char *linphone_core_get_ring(const LinphoneCore *lc){
 }
 
 void linphone_core_set_root_ca(LinphoneCore *lc, const char *path) {
-	lc->sal->setRootCa(path);
+	lc->sal->setRootCa(L_C_TO_STRING(path));
 	if (lc->http_crypto_config) {
 		belle_tls_crypto_config_set_root_ca(lc->http_crypto_config, path);
 	}
@@ -4316,8 +4340,8 @@ void linphone_core_set_root_ca(LinphoneCore *lc, const char *path) {
 }
 
 void linphone_core_set_root_ca_data(LinphoneCore *lc, const char *data) {
-	lc->sal->setRootCa(NULL);
-	lc->sal->setRootCaData(data);
+	lc->sal->setRootCa("");
+	lc->sal->setRootCaData(L_C_TO_STRING(data));
 	if (lc->http_crypto_config) {
 		belle_tls_crypto_config_set_root_ca_data(lc->http_crypto_config, data);
 	}
@@ -6776,12 +6800,12 @@ const char * linphone_core_get_file_transfer_server(LinphoneCore *core) {
 
 void linphone_core_add_supported_tag(LinphoneCore *lc, const char *tag){
 	lc->sal->addSupportedTag(tag);
-	lp_config_set_string(lc->config,"sip","supported",lc->sal->getSupportedTags());
+	lp_config_set_string(lc->config,"sip","supported",lc->sal->getSupportedTags().c_str());
 }
 
 void linphone_core_remove_supported_tag(LinphoneCore *lc, const char *tag){
 	lc->sal->removeSupportedTag(tag);
-	lp_config_set_string(lc->config,"sip","supported",lc->sal->getSupportedTags());
+	lp_config_set_string(lc->config,"sip","supported",lc->sal->getSupportedTags().c_str());
 }
 
 void linphone_core_set_avpf_mode(LinphoneCore *lc, LinphoneAVPFMode mode){
@@ -7337,5 +7361,5 @@ const char *linphone_core_get_linphone_specs (const LinphoneCore *core) {
 
 void linphone_core_set_linphone_specs (LinphoneCore *core, const char *specs) {
 	lp_config_set_string(linphone_core_get_config(core), "sip", "linphone_specs", specs);
-	core->sal->setContactLinphoneSpecs(specs);
+	core->sal->setContactLinphoneSpecs(L_C_TO_STRING(specs));
 }

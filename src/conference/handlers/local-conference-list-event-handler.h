@@ -1,5 +1,5 @@
 /*
- * remote-conference-p.h
+ * local-conference-list-event-handler.h
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,27 +17,38 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _L_REMOTE_CONFERENCE_P_H_
-#define _L_REMOTE_CONFERENCE_P_H_
+#ifndef _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
+#define _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
 
-#include "conference-p.h"
-#include "remote-conference.h"
+#include <memory>
+#include <list>
+
+#include "chat/chat-room/chat-room-id.h"
+#include "core/core-accessor.h"
+#include "linphone/utils/general.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class RemoteConferenceEventHandler;
+class LocalConferenceEventHandler;
 
-class RemoteConferencePrivate : public ConferencePrivate {
+class LocalConferenceListEventHandler : public CoreAccessor {
 public:
-	std::shared_ptr<Participant> focus;
-	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
+	LocalConferenceListEventHandler (const std::shared_ptr<Core> &core);
+
+	void subscribeReceived (LinphoneEvent *lev, const LinphoneContent *body);
+	void addHandler (LocalConferenceEventHandler *handler);
+	void removeHandler (LocalConferenceEventHandler *handler);
+	LocalConferenceEventHandler *findHandler (const ChatRoomId &chatRoomId) const;
+	const std::list<LocalConferenceEventHandler *> &getHandlers () const;
 
 private:
-	L_DECLARE_PUBLIC(RemoteConference);
+	std::list<LocalConferenceEventHandler *> handlers;
+
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_REMOTE_CONFERENCE_P_H_
+#endif // ifndef _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
+

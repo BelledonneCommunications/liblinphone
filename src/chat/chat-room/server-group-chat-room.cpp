@@ -27,6 +27,7 @@
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/modifier/cpim-chat-message-modifier.h"
 #include "conference/handlers/local-conference-event-handler.h"
+#include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/local-conference-p.h"
 #include "conference/participant-p.h"
 #include "conference/session/call-session-p.h"
@@ -331,9 +332,8 @@ bool ServerGroupChatRoomPrivate::update (SalCallOp *op) {
 	L_Q();
 	if (sal_custom_header_find(op->getRecvCustomHeaders(), "Subject")) {
 		// Handle subject change
-		string newSubject(L_C_TO_STRING(op->getSubject()));
-		lInfo() << q << ": New subject \"" << newSubject << "\"";
-		q->setSubject(newSubject);
+		lInfo() << q << ": New subject \"" << op->getSubject() << "\"";
+		q->setSubject(op->getSubject());
 	}
 	// Handle participants addition
 	list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(op->getRemoteBody());
@@ -645,6 +645,10 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 		if (invitedParticipant != participant)
 			addressesList.push_back(invitedParticipant->getAddress());
 	}
+
+	if (addressesList.empty())
+		return;
+
 	Content content;
 	content.setBody(q->getResourceLists(addressesList));
 	content.setContentType(ContentType::ResourceLists);
@@ -782,12 +786,15 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 : ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomId()),
 LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(core->getCCore()))), nullptr) {
 	L_D();
-	LocalConference::setSubject(op->getSubject() ? op->getSubject() : "");
+	L_D_T(LocalConference, dConference);
+
+	LocalConference::setSubject(op->getSubject());
 	const char *oneToOneChatRoomStr = sal_custom_header_find(op->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 	if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
 		d->capabilities |= ServerGroupChatRoom::Capabilities::OneToOne;
 	shared_ptr<CallSession> session = getMe()->getPrivate()->createSession(*this, nullptr, false, d);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
+	getCore()->getPrivate()->localListEventHandler->addHandler(dConference->eventHandler.get());
 }
 
 ServerGroupChatRoom::ServerGroupChatRoom (
@@ -808,7 +815,19 @@ LocalConference(getCore(), peerAddress, nullptr) {
 	dConference->conferenceAddress = peerAddress;
 	dConference->eventHandler->setLastNotify(lastNotifyId);
 	dConference->eventHandler->setChatRoomId(d->chatRoomId);
+	getCore()->getPrivate()->localListEventHandler->addHandler(dConference->eventHandler.get());
 }
+
+ServerGroupChatRoom::~ServerGroupChatRoom () {
+	L_D_T(LocalConference, dConference);
+
+	try {
+		if (getCore()->getPrivate()->localListEventHandler)
+			getCore()->getPrivate()->localListEventHandler->removeHandler(dConference->eventHandler.get());
+	} catch (const bad_weak_ptr &) {
+		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
+	}
+};
 
 shared_ptr<Core> ServerGroupChatRoom::getCore () const {
 	return ChatRoom::getCore();
