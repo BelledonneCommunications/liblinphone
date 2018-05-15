@@ -1315,7 +1315,7 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	lc->sal->useNoInitialRoute(!!lp_config_get_int(lc->config,"sip","use_no_initial_route",0));
 	lc->sal->useRport(!!lp_config_get_int(lc->config,"sip","use_rport",1));
-	lc->sal->setContactLinphoneSpecs(lp_config_get_string(lc->config, "sip", "linphone_specs", NULL));
+	lc->sal->setContactLinphoneSpecs(lp_config_get_string(lc->config, "sip", "linphone_specs", ""));
 
 	if (!lp_config_get_int(lc->config,"sip","ipv6_migration_done",FALSE) && lp_config_has_entry(lc->config,"sip","use_ipv6")) {
 		lp_config_clean_entry(lc->config,"sip","use_ipv6");
@@ -2134,14 +2134,15 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 		}
 	} else if (strcmp(notified_event, "conference") == 0) {
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
-		if (strcmp(linphone_address_as_string_uri_only(resource), linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc))) == 0) {
-			linphone_content_ref((LinphoneContent *) body);
+		char *resourceAddrStr = linphone_address_as_string_uri_only(resource);
+		if (strcmp(resourceAddrStr, linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc))) == 0) {
+			bctbx_free(resourceAddrStr);
 			L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(L_GET_CPP_PTR_FROM_C_OBJECT(body));
 			return;
 		}
+		bctbx_free(resourceAddrStr);
 
 		const LinphoneAddress *from = linphone_event_get_from(lev);
-
 		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ChatRoomId(
 			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
 			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
@@ -2159,7 +2160,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 		if (linphone_content_is_multipart(body)) {
 			// TODO : migrate to c++ 'Content'.
 			int i = 0;
-			LinphoneContent *part = NULL;
+			LinphoneContent *part = nullptr;
 			while ((part = linphone_content_get_part(body, i))) {
 				i++;
 				L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_string_buffer(part));
@@ -2253,7 +2254,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	lc->sal=new Sal(NULL);
 	lc->sal->setRefresherRetryAfter(lp_config_get_int(lc->config, "sip", "refresher_retry_after", 60000));
-	lc->sal->setHttpProxyHost(linphone_core_get_http_proxy_host(lc));
+	lc->sal->setHttpProxyHost(L_C_TO_STRING(linphone_core_get_http_proxy_host(lc)));
 	lc->sal->setHttpProxyPort(linphone_core_get_http_proxy_port(lc));
 
 	lc->sal->setUserPointer(lc);
@@ -2262,6 +2263,8 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 #ifdef __ANDROID__
 	if (system_context)
 		lc->platform_helper = LinphonePrivate::createAndroidPlatformHelpers(lc, system_context);
+#elif TARGET_OS_IPHONE
+	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc, system_context);
 #endif
 	if (lc->platform_helper == NULL)
 		lc->platform_helper = new LinphonePrivate::StubbedPlatformHelpers(lc);
@@ -2351,8 +2354,8 @@ void linphone_core_start (LinphoneCore *lc) {
 	}else if (strcmp(uuid,"0")!=0) /*to allow to disable sip.instance*/
 		lc->sal->setUuid(uuid);
 
-	if (lc->sal->getRootCa()) {
-		belle_tls_crypto_config_set_root_ca(lc->http_crypto_config, lc->sal->getRootCa());
+	if (!lc->sal->getRootCa().empty()) {
+		belle_tls_crypto_config_set_root_ca(lc->http_crypto_config, lc->sal->getRootCa().c_str());
 		belle_http_provider_set_tls_crypto_config(lc->http_provider, lc->http_crypto_config);
 	}
 
@@ -2887,7 +2890,7 @@ void linphone_core_set_user_agent(LinphoneCore *lc, const char *name, const char
 	}
 }
 const char *linphone_core_get_user_agent(LinphoneCore *lc){
-	return lc->sal->getUserAgent();
+	return lc->sal->getUserAgent().c_str();
 }
 
 const char *linphone_core_get_user_agent_name(void){
@@ -3573,7 +3576,7 @@ void linphone_configure_op_with_proxy(LinphoneCore *lc, SalOp *op, const Linphon
 	op->setToAddress(L_GET_PRIVATE_FROM_C_OBJECT(dest)->getInternalAddress());
 	op->setFrom(identity);
 	op->setSentCustomHeaders(headers);
-	op->setRealm(linphone_proxy_config_get_realm(proxy));
+	op->setRealm(L_C_TO_STRING(linphone_proxy_config_get_realm(proxy)));
 
 	if (with_contact && proxy && proxy->op){
 		const LinphoneAddress *contact = linphone_proxy_config_get_contact(proxy);
@@ -4329,7 +4332,7 @@ const char *linphone_core_get_ring(const LinphoneCore *lc){
 }
 
 void linphone_core_set_root_ca(LinphoneCore *lc, const char *path) {
-	lc->sal->setRootCa(path);
+	lc->sal->setRootCa(L_C_TO_STRING(path));
 	if (lc->http_crypto_config) {
 		belle_tls_crypto_config_set_root_ca(lc->http_crypto_config, path);
 	}
@@ -4337,8 +4340,8 @@ void linphone_core_set_root_ca(LinphoneCore *lc, const char *path) {
 }
 
 void linphone_core_set_root_ca_data(LinphoneCore *lc, const char *data) {
-	lc->sal->setRootCa(NULL);
-	lc->sal->setRootCaData(data);
+	lc->sal->setRootCa("");
+	lc->sal->setRootCaData(L_C_TO_STRING(data));
 	if (lc->http_crypto_config) {
 		belle_tls_crypto_config_set_root_ca_data(lc->http_crypto_config, data);
 	}
@@ -6797,12 +6800,12 @@ const char * linphone_core_get_file_transfer_server(LinphoneCore *core) {
 
 void linphone_core_add_supported_tag(LinphoneCore *lc, const char *tag){
 	lc->sal->addSupportedTag(tag);
-	lp_config_set_string(lc->config,"sip","supported",lc->sal->getSupportedTags());
+	lp_config_set_string(lc->config,"sip","supported",lc->sal->getSupportedTags().c_str());
 }
 
 void linphone_core_remove_supported_tag(LinphoneCore *lc, const char *tag){
 	lc->sal->removeSupportedTag(tag);
-	lp_config_set_string(lc->config,"sip","supported",lc->sal->getSupportedTags());
+	lp_config_set_string(lc->config,"sip","supported",lc->sal->getSupportedTags().c_str());
 }
 
 void linphone_core_set_avpf_mode(LinphoneCore *lc, LinphoneAVPFMode mode){
@@ -7358,5 +7361,5 @@ const char *linphone_core_get_linphone_specs (const LinphoneCore *core) {
 
 void linphone_core_set_linphone_specs (LinphoneCore *core, const char *specs) {
 	lp_config_set_string(linphone_core_get_config(core), "sip", "linphone_specs", specs);
-	core->sal->setContactLinphoneSpecs(specs);
+	core->sal->setContactLinphoneSpecs(L_C_TO_STRING(specs));
 }
