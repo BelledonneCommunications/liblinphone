@@ -210,21 +210,10 @@ static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_s
 }
 
 static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const char *response_body) {
-
-	// TODO In case of XML format problem
-	const char *response_body_trimmed = response_body;
-	if (response_body[0] == '\n') {
-		response_body_trimmed = response_body+2;
-		ms_warning("Wrongly formatted XML-RPC response.");
-	} else if (response_body[0] == ' ') {
-		response_body_trimmed = response_body+3;
-		ms_warning("Wrongly formatted XML-RPC response.");
-	}
-
 	xmlparsing_context_t *xml_ctx = linphone_xmlparsing_context_new();
 	xmlSetGenericErrorFunc(xml_ctx, linphone_xmlparsing_genericxml_error);
 	request->status = LinphoneXmlRpcStatusFailed;
-	xml_ctx->doc = xmlReadDoc((const unsigned char*)response_body_trimmed, 0, NULL, 0);
+	xml_ctx->doc = xmlReadDoc((const unsigned char*)response_body, 0, NULL, 0);
 	if (xml_ctx->doc != NULL) {
 		char *response_str = NULL;
 		if (linphone_create_xml_xpath_context(xml_ctx) < 0) goto end;
