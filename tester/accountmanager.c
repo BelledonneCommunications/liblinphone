@@ -17,9 +17,9 @@
  */
 
 #include <belle-sip/belle-sip.h>
+#include <ctype.h>
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
-#include <ctype.h>
 
 struct _Account{
 	LinphoneAddress *identity;
@@ -343,9 +343,10 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 	// choose to create on server or on db based on the tester tags
 	const char **tags = bc_tester_current_test_tags();
 	if (create_account){
-		if ((tags[0] && !strcmp(tags[0], "CreateUserInDb")) || (tags[1] && !strcmp(tags[1], "CreateUserInDb")))
-			account_create_on_db(account,cfg,phone_alias,"http://subscribe.example.org/mtanon/tools/wizard_and_remote_provisioning_php_scripts/xmlrpc.php"); // TODO xmlrpc_url
-		else
+		if ((tags[0] && !strcmp(tags[0], "CreateUserInDb")) || (tags[1] && !strcmp(tags[1], "CreateUserInDb"))) {
+			const char *xmlrpc_url = linphone_config_get_string(linphone_core_get_config(lc), "misc", "xmlrpc_server_url", "");
+			account_create_on_db(account,cfg,phone_alias,xmlrpc_url);
+		} else
 			account_create_on_server(account,cfg,phone_alias);
 	}
 
