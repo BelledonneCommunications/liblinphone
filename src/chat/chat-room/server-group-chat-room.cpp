@@ -742,10 +742,20 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<Cal
 			setParticipantDeviceState(device, ParticipantDevice::State::Leaving);
 			q->removeParticipant(device->getParticipant()->getSharedFromThis());
 		}
-	} else if ((newState == CallSession::State::Released) && (session->getReason() == LinphoneReasonNone)) {
-		auto device = q->findParticipantDevice(session);
-		if (device && (device->getState() == ParticipantDevice::State::Leaving))
-			onParticipantDeviceLeft(device);
+	} else if (newState == CallSession::State::Released) {
+		if (session->getReason() == LinphoneReasonNone) {
+			auto device = q->findParticipantDevice(session);
+			if (device && (device->getState() == ParticipantDevice::State::Leaving))
+				onParticipantDeviceLeft(device);
+		} else if (session->getReason() == LinphoneReasonNoMatch) {
+			auto device = q->findParticipantDevice(session);
+			if (device) {
+				if (device->getState() == ParticipantDevice::State::Joining)
+					inviteDevice(device);
+				else if (device->getState() == ParticipantDevice::State::Leaving)
+					byeDevice(device);
+			}
+		}
 	} else if (newState == CallSession::State::UpdatedByRemote) {
 		shared_ptr<Participant> participant = findFilteredParticipant(session);
 		if (participant && participant->isAdmin()) {
