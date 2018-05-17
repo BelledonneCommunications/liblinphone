@@ -407,14 +407,15 @@ void ServerGroupChatRoomPrivate::setParticipantDevices(const IdentityAddress &ad
 		bool toInvite = false;
 		shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddr);
 		if (device) {
-			if ((getParticipantDeviceState(device) != ParticipantDevice::State::Present)
-				&& (getParticipantDeviceState(device) != ParticipantDevice::State::Joining)
-			) {
+			if (getParticipantDeviceState(device) != ParticipantDevice::State::Present) {
+				if (getParticipantDeviceState(device) != ParticipantDevice::State::Joining)
+					toInvite = true;
+
 				setParticipantDeviceState(device, ParticipantDevice::State::Joining);
-				toInvite = true;
 			}
 		} else {
 			device = participant->getPrivate()->addDevice(deviceAddr);
+			setParticipantDeviceState(device, ParticipantDevice::State::Joining);
 			toInvite = true;
 		}
 		if (toInvite) {
@@ -438,20 +439,10 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const IdentityAddress &pa
 		return;
 	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddress);
 	if (device) {
-		auto session = device->getSession();
-		if (device->getState() == ParticipantDevice::State::Joining) {
-			if (session) {
-				session->terminate();
-				device->setSession(nullptr);
-			}
+		if (device->getState() == ParticipantDevice::State::Joining)
 			inviteDevice(device);
-		} else if (device->getState() == ParticipantDevice::State::Leaving) {
-			if (session) {
-				session->terminate();
-				device->setSession(nullptr);
-			}
+		else if (device->getState() == ParticipantDevice::State::Leaving)
 			byeDevice(device);
-		}
 	} else if (findFilteredParticipant(participantAddress)) {
 		// Add device only if participant is not currently being removed
 		device = participant->getPrivate()->addDevice(deviceAddress);
