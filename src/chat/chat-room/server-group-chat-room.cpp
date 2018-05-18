@@ -538,9 +538,12 @@ void ServerGroupChatRoomPrivate::byeDevice (const std::shared_ptr<ParticipantDev
 	L_Q_T(LocalConference, qConference);
 
 	shared_ptr<CallSession> session = device->getSession();
-	if (session) {
+	if (session && (session->getState() != CallSession::State::Released)) {
 		session->terminate();
-	} else {
+		return;
+	}
+	// If 481 is received when sending the BYE, perform a new INVITE to send the BYE correctly
+	if (!session || (session->getReason() == LinphoneReasonNoMatch)) {
 		CallSessionParams csp;
 		auto participant = device->getParticipant();
 		session = participant->getPrivate()->createSession(*q, &csp, false, this);
