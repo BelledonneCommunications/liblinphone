@@ -181,6 +181,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreInfoReceivedCb info_received; /**<Notifies an incoming informational message received.*/
 	LinphoneCoreSubscriptionStateChangedCb subscription_state_changed; /**<Notifies subscription state change */
 	LinphoneCoreNotifyReceivedCb notify_received; /**< Notifies a an event notification, see linphone_core_subscribe() */
+	LinphoneCoreSubscribeReceivedCb subscribe_received; /**< Notifies a subscribe has been received, see linphone_core_subscribe() */
 	LinphoneCorePublishStateChangedCb publish_state_changed;/**Notifies publish state change (only from #LinphoneEvent api)*/
 	LinphoneCoreConfiguringStatusCb configuring_status; /** Notifies configuring status changes */
 	LINPHONE_DEPRECATED LinphoneCoreTextMessageReceivedCb text_received; /**< @brief A text message has been received.
@@ -551,6 +552,20 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_notify_received(LinphoneCoreCbs *cbs,
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsNotifyReceivedCb linphone_core_cbs_get_notify_received(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the #LinphoneCoreCbsSubscribeReceivedCb callback.
+ * @param[in] cbs A #LinphoneCoreCbs.
+ * @param[in] cb The callback.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_subscribe_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsSubscribeReceivedCb cb);
+
+/**
+ * Get the #LinphoneCoreCbsSubscribeReceivedCb callback.
+ * @param[in] cbs A #LinphoneCoreCbs.
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsSubscribeReceivedCb linphone_core_cbs_get_subscribe_received(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsPublishStateChangedCb callback.
@@ -4012,6 +4027,18 @@ LINPHONE_PUBLIC void *linphone_core_get_user_data(const LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_set_user_data(LinphoneCore *lc, void *userdata);
 
 /**
+ * This method is called by the application to notify the linphone core library when it enters background mode.
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_enter_background(LinphoneCore *lc);
+
+/**
+ * This method is called by the application to notify the linphone core library when it enters foreground mode.
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_enter_foreground(LinphoneCore *lc);
+
+/**
  * Returns the LpConfig object used to manage the storage (config) file.
  * @param[in] lc #LinphoneCore object
  * The application can use the LpConfig object to insert its own private
@@ -4971,6 +4998,15 @@ const char *linphone_core_get_linphone_specs (const LinphoneCore *core);
  * @ingroup initializing
  */
 void linphone_core_set_linphone_specs (LinphoneCore *core, const char *specs);
+
+/**
+ * Remove support for the specified content type.
+ * It is the application responsibility to handle it correctly afterwards.
+ * @param[in] lc LinphoneCore object
+ * @param[in] content_type The content type to remove support for
+ */
+LINPHONE_PUBLIC void linphone_core_remove_content_type_support(LinphoneCore *lc, const char *content_type);
+
 
 /**
  * @addtogroup chatroom

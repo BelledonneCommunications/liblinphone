@@ -77,7 +77,7 @@ static void message_forking(void) {
 	lcs=bctbx_list_append(lcs,marie2->lc);
 
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-	linphone_chat_room_send_chat_message(chat_room, message);
+	linphone_chat_message_send(message);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneMessageReceived,1,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneMessageReceived,1,1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneMessageDelivered,1,1000));
@@ -120,7 +120,7 @@ static void message_forking_with_unreachable_recipients(void) {
 	linphone_core_set_network_reachable(marie3->lc,FALSE);
 
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-	linphone_chat_room_send_chat_message(chat_room, message);
+	linphone_chat_message_send(message);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneMessageReceived,1,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneMessageDelivered,1,1000));
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress,1, int, "%d");
@@ -174,7 +174,7 @@ static void message_forking_with_all_recipients_unreachable(void) {
 	linphone_core_set_network_reachable(marie3->lc,FALSE);
 
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-	linphone_chat_room_send_chat_message(chat_room, message);
+	linphone_chat_message_send(message);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneMessageInProgress,1,5000));
 	/*flexisip will accept the message with 202 after 16 seconds*/
@@ -207,19 +207,28 @@ static void message_forking_with_all_recipients_unreachable(void) {
 }
 
 static void message_forking_with_unreachable_recipients_with_gruu(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new( transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneCoreManager* marie2 = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager *marie = ms_new0(LinphoneCoreManager, 1);
+	LinphoneCoreManager *pauline = ms_new0(LinphoneCoreManager, 1);
+	LinphoneCoreManager *marie2 = ms_new0(LinphoneCoreManager, 1);
+	
+	linphone_core_manager_init(marie, "marie_rc", NULL);
+	linphone_core_manager_init(pauline, transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", NULL);
+	linphone_core_manager_init(marie2, "marie_rc", NULL);
+	
+	linphone_core_add_supported_tag(marie->lc,"gruu");
+	linphone_core_add_supported_tag(pauline->lc,"gruu");
+	linphone_core_add_supported_tag(marie2->lc,"gruu");
+	
+	linphone_core_manager_start(marie,TRUE);
+	linphone_core_manager_start(pauline,TRUE);
+	linphone_core_manager_start(marie2,TRUE);
+	
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 
 	LinphoneProxyConfig *marie_proxy_config = linphone_core_get_default_proxy_config(marie->lc);
-	LinphoneProxyConfig *marie2_proxy_config = linphone_core_get_default_proxy_config(marie2->lc);
 	const LinphoneAddress *marie_address = linphone_proxy_config_get_contact(marie_proxy_config);
-	const LinphoneAddress *marie2_address = linphone_proxy_config_get_contact(marie2_proxy_config);
 	LinphoneChatRoom* chat_room_1 = linphone_core_get_chat_room(pauline->lc, marie_address);
 	LinphoneChatMessage* message_1 = linphone_chat_room_create_message(chat_room_1,"Bli bli bli \n blu");
-	LinphoneChatRoom* chat_room_2 = linphone_core_get_chat_room(pauline->lc, marie2_address);
-	LinphoneChatMessage* message_2 = linphone_chat_room_create_message(chat_room_2,"Bla bla bla \n bli");
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,marie2->lc);
@@ -235,24 +244,23 @@ static void message_forking_with_unreachable_recipients_with_gruu(void) {
 	linphone_core_set_network_reachable(marie2->lc,FALSE);
 
 	linphone_chat_room_send_chat_message(chat_room_1, message_1);
-	linphone_chat_room_send_chat_message(chat_room_2, message_2);
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageReceived, 0, int, "%d");
 	BC_ASSERT_EQUAL(marie2->stat.number_of_LinphoneMessageReceived, 0, int, "%d");
 
 	/*marie 2 goes online */
 	linphone_core_set_network_reachable(marie2->lc,TRUE);
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneMessageReceived,1,3000));
+	BC_ASSERT_FALSE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneMessageReceived,1,3000));
 
 	/*wait a long time so that all transactions are expired*/
 	wait_for_list(lcs,NULL,0,32000);
 
 	/*marie goes online now*/
 	linphone_core_set_network_reachable(marie->lc,TRUE);
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneMessageReceived,1,3000));
-
+	if (BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneMessageReceived,1,3000))) {
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), linphone_chat_message_get_text(message_1));
+	}
 	linphone_chat_message_unref(message_1);
-	linphone_chat_message_unref(message_2);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(marie2);
 	linphone_core_manager_destroy(pauline);
@@ -535,6 +543,64 @@ static void call_forking_with_push_notification_single(void){
 
 		liblinphone_tester_check_rtcp(pauline,marie);
 
+		linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,5000));
+	}
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+	bctbx_list_free(lcs);
+}
+
+/*
+ * This test is a variant of push notification (single) where the client do send ambigous REGISTER with two contacts,
+ * one of them being the previous contact address with "expires=0" to tell the server to remove it.
+**/
+static void call_forking_with_push_notification_double_contact(void){
+	bctbx_list_t* lcs;
+	LinphoneCoreManager* marie = linphone_core_manager_new2( "marie_rc", FALSE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new2( transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc",FALSE);
+	int dummy=0;
+
+	
+	lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "unregister_previous_contact", 1);
+	lp_config_set_int(linphone_core_get_config(pauline->lc), "sip", "unregister_previous_contact", 1);
+	linphone_core_set_user_agent(marie->lc,"Natted Linphone",NULL);
+	linphone_core_set_user_agent(pauline->lc,"Natted Linphone",NULL);
+	linphone_proxy_config_set_contact_uri_parameters(
+		linphone_core_get_default_proxy_config(marie->lc),
+		"app-id=org.linphonetester;pn-tok=aaabbb;pn-type=apple;pn-msg-str=33;pn-call-str=34;");
+
+	lcs=bctbx_list_append(NULL,pauline->lc);
+	lcs=bctbx_list_append(lcs,marie->lc);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneRegistrationOk,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneRegistrationOk,1,5000));
+
+	/*unfortunately marie gets unreachable due to crappy 3G operator or iOS bug...*/
+	linphone_core_set_network_reachable(marie->lc,FALSE);
+
+	linphone_core_invite_address(pauline->lc,marie->identity);
+
+	/*After 5 seconds the server is expected to send a push notification to marie, this will wake up linphone, that will reconnect:*/
+	wait_for_list(lcs,&dummy,1,6000);
+	linphone_core_set_network_reachable(marie->lc,TRUE);
+
+	/*Marie shall receive the call immediately*/
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallIncomingReceived,1,5000));
+	/*pauline should hear ringback as well*/
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingRinging,1,1000));
+
+	/*marie accepts the call*/
+	if (BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(marie->lc))) {
+		linphone_call_accept(linphone_core_get_current_call(marie->lc));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallConnected,1,1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,1000));
+		
+		liblinphone_tester_check_rtcp(pauline,marie);
+		
 		linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,5000));
@@ -931,7 +997,7 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 		}
 		linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
 		linphone_chat_message_cbs_set_file_transfer_send(cbs, tester_file_transfer_send);
-		linphone_chat_room_send_chat_message(chat_room,message);
+		linphone_chat_message_send(message);
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,1));
 
 		if (marie->stat.last_received_chat_message ) {
@@ -975,7 +1041,7 @@ static void dos_module_trigger(void) {
 		char msg[128];
 		sprintf(msg, "Flood message number %i", i);
 		chat_msg = linphone_chat_room_create_message(chat_room, msg);
-		linphone_chat_room_send_chat_message(chat_room, chat_msg);
+		linphone_chat_message_send(chat_msg);
 		wait_for_until(marie->lc, pauline->lc, &dummy, 1, 10);
 		i++;
 	} while (i < number_of_messge_to_send);
@@ -987,7 +1053,7 @@ static void dos_module_trigger(void) {
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
 	chat_msg = linphone_chat_room_create_message(chat_room, passmsg);
-	linphone_chat_room_send_chat_message(chat_room, chat_msg);
+	linphone_chat_message_send(chat_msg);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived, 1));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageReceived, 1, int, "%d");
 	if (marie->stat.last_received_chat_message) {
@@ -1395,24 +1461,33 @@ end:
 	ms_free(hellopath);
 }
 
+static void register_without_regid(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new2("marie_rc", FALSE);
+	linphone_core_manager_start(marie,TRUE);
+	LinphoneProxyConfig *cfg=linphone_core_get_default_proxy_config(marie->lc);
+	if(cfg) {
+		const LinphoneAddress *addr = linphone_proxy_config_get_contact(cfg);
+		BC_ASSERT_PTR_NOT_NULL(addr);
+		BC_ASSERT_PTR_NULL(strstr(linphone_address_as_string_uri_only(addr), "regid"));
+	}
+	linphone_core_manager_destroy(marie);
+}
+
 void test_removing_old_tport(void) {
-	bctbx_list_t* lcs;
-	LinphoneCoreManager* marie2;
 	LinphoneCoreManager* marie1 = linphone_core_manager_new("marie_rc");
-	lcs=bctbx_list_append(NULL,marie1->lc);
+	bctbx_list_t *lcs = bctbx_list_append(NULL, marie1->lc);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie1->stat.number_of_LinphoneRegistrationOk,1,5000));
 
-	marie2 = ms_new0(LinphoneCoreManager, 1);
-	linphone_core_manager_init(marie2, "marie_rc", NULL);
-	sal_set_uuid(linphone_core_get_sal(marie2->lc), linphone_config_get_string(linphone_core_get_config(marie1->lc),"misc", "uuid", "0"));
+	LinphoneCoreManager *marie2 = linphone_core_manager_create("marie_rc");
+	const char *uuid = linphone_config_get_string(linphone_core_get_config(marie1->lc), "misc", "uuid", "0");
+	lp_config_set_string(linphone_core_get_config(marie2->lc), "misc", "uuid", uuid);
 	linphone_core_manager_start(marie2, TRUE);
-	lcs=bctbx_list_append(lcs, marie2->lc);
+	lcs = bctbx_list_append(lcs, marie2->lc);
 	linphone_core_refresh_registers(marie2->lc);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneRegistrationOk,1,5000));
-
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie1->stat.number_of_LinphoneRegistrationProgress,2,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneRegistrationOk, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie1->stat.number_of_LinphoneRegistrationProgress, 2, 5000));
 
 	linphone_core_manager_destroy(marie1);
 	linphone_core_manager_destroy(marie2);
@@ -1822,6 +1897,7 @@ test_t flexisip_tests[] = {
 	TEST_NO_TAG("Call forking declined localy", call_forking_declined_localy),
 	TEST_NO_TAG("Call forking with urgent reply", call_forking_with_urgent_reply),
 	TEST_NO_TAG("Call forking with push notification (single)", call_forking_with_push_notification_single),
+	TEST_NO_TAG("Call forking with push notification with double contact", call_forking_with_push_notification_double_contact),
 	TEST_NO_TAG("Call forking with push notification (multiple)", call_forking_with_push_notification_multiple),
 	TEST_NO_TAG("Call forking not responded", call_forking_not_responded),
 	TEST_NO_TAG("Early-media call forking", early_media_call_forking),
@@ -1852,7 +1928,8 @@ test_t flexisip_tests[] = {
 	TEST_NO_TAG("Sequential forking with timeout for highest priority", sequential_forking_with_timeout_for_highest_priority),
 	TEST_NO_TAG("Sequential forking with no response from highest priority", sequential_forking_with_no_response_for_highest_priority),
 	TEST_NO_TAG("Sequential forking with insertion of higher priority", sequential_forking_with_insertion_of_higher_priority),
-	TEST_NO_TAG("Sequential forking with fallback route", sequential_forking_with_fallback_route)
+	TEST_NO_TAG("Sequential forking with fallback route", sequential_forking_with_fallback_route),
+	TEST_NO_TAG("Registered contact does not have regid param", register_without_regid)
 };
 
 

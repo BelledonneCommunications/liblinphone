@@ -49,6 +49,8 @@ void linphone_call_notify_stats_updated(LinphoneCall *call, const LinphoneCallSt
 void linphone_call_notify_info_message_received(LinphoneCall *call, const LinphoneInfoMessage *msg);
 void linphone_call_notify_ack_processing(LinphoneCall *call, LinphoneHeaders *msg, bool_t is_received);
 void linphone_call_notify_tmmbr_received(LinphoneCall *call, int stream_index, int tmmbr);
+void linphone_call_notify_snapshot_taken(LinphoneCall *call, const char *file_path);
+void linphone_call_notify_next_video_frame_decoded(LinphoneCall *call);
 
 LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, const LinphoneCallParams *params, LinphoneProxyConfig *cfg);
 LinphoneCall * linphone_call_new_incoming(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op);
@@ -288,7 +290,8 @@ void _linphone_chat_room_notify_participant_device_removed(LinphoneChatRoom *cr,
 void _linphone_chat_room_notify_participant_admin_status_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_state_changed(LinphoneChatRoom *cr, LinphoneChatRoomState newState);
 void _linphone_chat_room_notify_subject_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
-void _linphone_chat_room_notify_all_information_received(LinphoneChatRoom *cr);
+void _linphone_chat_room_notify_conference_joined(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
+void _linphone_chat_room_notify_conference_left(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_undecryptable_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
 void _linphone_chat_room_notify_chat_message_received(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_chat_message_sent(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
@@ -384,7 +387,7 @@ void linphone_configure_op(LinphoneCore *lc, LinphonePrivate::SalOp *op, const L
 void linphone_configure_op_with_proxy(LinphoneCore *lc, LinphonePrivate::SalOp *op, const LinphoneAddress *dest, SalCustomHeader *headers, bool_t with_contact, LinphoneProxyConfig *proxy);
 LinphoneContent * linphone_content_new(void);
 LinphoneContent * linphone_content_copy(const LinphoneContent *ref);
-SalBodyHandler *sal_body_handler_from_content(const LinphoneContent *content);
+SalBodyHandler *sal_body_handler_from_content(const LinphoneContent *content, bool parseMultipart = true);
 SalReason linphone_reason_to_sal(LinphoneReason reason);
 LinphoneReason linphone_reason_from_sal(SalReason reason);
 void linphone_error_info_to_sal(const LinphoneErrorInfo* ei, SalErrorInfo* sei);
@@ -401,7 +404,7 @@ void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState stat
 void linphone_event_set_publish_state(LinphoneEvent *lev, LinphonePublishState state);
 void _linphone_event_notify_notify_response(const LinphoneEvent *lev);
 LinphoneSubscriptionState linphone_subscription_state_from_sal(SalSubscribeStatus ss);
-LinphoneContent *linphone_content_from_sal_body_handler(SalBodyHandler *ref);
+LinphoneContent *linphone_content_from_sal_body_handler(const SalBodyHandler *ref, bool parseMultipart = true);
 void linphone_core_invalidate_friend_subscriptions(LinphoneCore *lc);
 void linphone_core_register_offer_answer_providers(LinphoneCore *lc);
 
@@ -503,6 +506,7 @@ void linphone_core_notify_configuring_status(LinphoneCore *lc, LinphoneConfiguri
 void linphone_core_notify_network_reachable(LinphoneCore *lc, bool_t reachable);
 
 void linphone_core_notify_notify_received(LinphoneCore *lc, LinphoneEvent *lev, const char *notified_event, const LinphoneContent *body);
+void linphone_core_notify_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const char *subscribe_event, const LinphoneContent *body);
 void linphone_core_notify_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state);
 void linphone_core_notify_publish_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphonePublishState state);
 void linphone_core_notify_log_collection_upload_state_changed(LinphoneCore *lc, LinphoneCoreLogCollectionUploadState state, const char *info);

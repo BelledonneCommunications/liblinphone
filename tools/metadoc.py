@@ -558,6 +558,7 @@ class SphinxTranslator(Translator):
 		if langCode == 'C':
 			self.domain = 'cpp'
 			self.classDeclarator = 'type'
+			self.interfaceDeclarator = self.classDeclarator
 			self.methodDeclarator = 'function'
 			self.enumDeclarator = 'enum'
 			self.enumeratorDeclarator = 'enumerator'
@@ -565,6 +566,7 @@ class SphinxTranslator(Translator):
 		elif langCode == 'Cpp':
 			self.domain = 'cpp'
 			self.classDeclarator = 'class'
+			self.interfaceDeclarator = self.classDeclarator
 			self.methodDeclarator = 'function'
 			self.enumDeclarator = 'enum'
 			self.enumeratorDeclarator = 'enumerator'
@@ -573,17 +575,20 @@ class SphinxTranslator(Translator):
 		elif langCode == 'CSharp':
 			self.domain = 'csharp'
 			self.classDeclarator = 'class'
+			self.interfaceDeclarator = self.classDeclarator
 			self.methodDeclarator = 'method'
 			self.enumDeclarator = 'enum'
 			self.enumeratorDeclarator = 'value'
 			self.namespaceDeclarator = 'namespace'
 			self.classReferencer = 'type'
+			self.interfaceReferencer = self.classReferencer
 			self.enumReferencer = 'type'
 			self.enumeratorReferencer = 'enum'
 			self.methodReferencer = 'meth'
 		elif langCode == 'Java':
 			self.domain = 'java'
 			self.classDeclarator = 'type'
+			self.interfaceDeclarator = self.classDeclarator
 			self.methodDeclarator = 'method'
 			self.enumDeclarator = 'type'
 			self.enumeratorDeclarator = 'field'
@@ -683,9 +688,11 @@ class SandCastleTranslator(Translator):
 		if len(lines) > 0:
 			lines.insert(0, '<summary>')
 			lines.append('</summary>')
-	
-	def translate_reference(self, ref):
+
+	def translate_function_reference(self, ref):
 		refStr = Translator.translate_reference(self, ref, absName=True)
-		if isinstance(ref, FunctionReference):
-			refStr += '()'
+		return '<see cref="{0}()" />'.format(refStr)
+
+	def translate_class_reference(self, ref):
+		refStr = Translator.translate_reference(self, ref, absName=True)
 		return '<see cref="{0}" />'.format(refStr)

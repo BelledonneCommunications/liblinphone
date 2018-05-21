@@ -86,6 +86,16 @@ void Imdn::notifyDisplay (const shared_ptr<ChatMessage> &message) {
 void Imdn::onImdnMessageDelivered (const std::shared_ptr<ImdnMessage> &message) {
 	// If an IMDN has been successfully delivered, remove it from the list so that
 	// it does not get sent again
+	auto context = message->getPrivate()->getContext();
+	for (const auto &deliveredMsg : context.deliveredMessages)
+		deliveredMessages.remove(deliveredMsg);
+
+	for (const auto &displayedMsg : context.displayedMessages)
+		displayedMessages.remove(displayedMsg);
+
+	for (const auto &nonDeliveredMsg : context.nonDeliveredMessages)
+		nonDeliveredMessages.remove(nonDeliveredMsg);
+
 	sentImdnMessages.remove(message);
 }
 
@@ -103,15 +113,9 @@ void Imdn::onGlobalStateChanged (LinphoneGlobalState state) {
 
 void Imdn::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
 	if (sipNetworkReachable) {
-		// When the SIP network gets up, retry sending every IMDN message that has not
-		// successfully been delivered
-		auto messages = sentImdnMessages;
+		// When the SIP network gets up, retry notification
 		sentImdnMessages.clear();
-		for (const auto &message : messages) {
-			auto imdnMessage = chatRoom->getPrivate()->createImdnMessage(message);
-			sentImdnMessages.push_back(imdnMessage);
-			imdnMessage->send();
-		}
+		send();
 	}
 }
 
@@ -150,7 +154,7 @@ string Imdn::createXml (const string &id, time_t timestamp, Imdn::Type imdnType,
 	map[""].name = "urn:ietf:params:xml:ns:imdn";
 	if (needLinphoneImdnNamespace)
 		map["imdn"].name = "http://www.linphone.org/xsds/imdn.xsd";
-	Xsd::Imdn::serializeImdn(ss, imdn, map);
+	Xsd::Imdn::serializeImdn(ss, imdn, map, "UTF-8", Xsd::XmlSchema::Flags::dont_pretty_print);
 	return ss.str();
 }
 
@@ -198,29 +202,37 @@ int Imdn::timerExpired (void *data, unsigned int revents) {
 
 // -----------------------------------------------------------------------------
 
+bool Imdn::aggregationEnabled () const {
+	auto config = linphone_core_get_config(chatRoom->getCore()->getCCore());
+	bool aggregateImdn = linphone_config_get_bool(config, "misc", "aggregate_imdn", TRUE);
+	return (chatRoom->canHandleCpim() && aggregateImdn);
+}
+
 void Imdn::send () {
 	bool networkReachable = linphone_core_is_network_reachable(chatRoom->getCore()->getCCore());
+	if (!networkReachable)
+		return;
+
 	if (!deliveredMessages.empty() || !displayedMessages.empty()) {
 		auto imdnMessage = chatRoom->getPrivate()->createImdnMessage(deliveredMessages, displayedMessages);
 		sentImdnMessages.push_back(imdnMessage);
-		if (networkReachable)
-			imdnMessage->getPrivate()->send();
-		deliveredMessages.clear();
-		displayedMessages.clear();
+		imdnMessage->getPrivate()->send();
+		if (!aggregationEnabled()) {
+			deliveredMessages.clear();
+			displayedMessages.clear();
+		}
 	}
 	if (!nonDeliveredMessages.empty()) {
 		auto imdnMessage = chatRoom->getPrivate()->createImdnMessage(nonDeliveredMessages);
 		sentImdnMessages.push_back(imdnMessage);
-		if (networkReachable)
-			imdnMessage->getPrivate()->send();
-		nonDeliveredMessages.clear();
+		imdnMessage->getPrivate()->send();
+		if (!aggregationEnabled())
+			nonDeliveredMessages.clear();
 	}
 }
 
 void Imdn::startTimer () {
-	auto config = linphone_core_get_config(chatRoom->getCore()->getCCore());
-	bool aggregateImdn = linphone_config_get_bool(config, "misc", "aggregate_imdn", TRUE);
-	if (!chatRoom->canHandleCpim() || !aggregateImdn) {
+	if (!aggregationEnabled()) {
 		// Compatibility mode for basic chat rooms, do not aggregate notifications
 		send();
 		return;
@@ -228,7 +240,7 @@ void Imdn::startTimer () {
 
 	unsigned int duration = 500;
 	if (!timer)
-		timer = chatRoom->getCore()->getCCore()->sal->create_timer(timerExpired, this, duration, "imdn timeout");
+		timer = chatRoom->getCore()->getCCore()->sal->createTimer(timerExpired, this, duration, "imdn timeout");
 	else
 		belle_sip_source_set_timeout(timer, duration);
 	bgTask.start(chatRoom->getCore(), 1);
@@ -238,7 +250,7 @@ void Imdn::stopTimer () {
 	if (timer) {
 		auto core = chatRoom->getCore()->getCCore();
 		if (core && core->sal)
-			core->sal->cancel_timer(timer);
+			core->sal->cancelTimer(timer);
 		belle_sip_object_unref(timer);
 		timer = nullptr;
 	}

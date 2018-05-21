@@ -57,7 +57,9 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class MainDbChatMessageKey;
 	friend class MainDbEventKey;
 	friend class MediaSessionPrivate;
+	friend class RealTimeTextChatRoomPrivate;
 	friend class RemoteConferenceEventHandler;
+	friend class RemoteConferenceListEventHandler;
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
 
@@ -68,6 +70,13 @@ public:
 
 	// Return a new Core instance. Entry point of Linphone.
 	static std::shared_ptr<Core> create (LinphoneCore *cCore);
+
+	// ---------------------------------------------------------------------------
+	// Application lifecycle.
+	// ---------------------------------------------------------------------------
+
+	void enterBackground ();
+	void enterForeground ();
 
 	// ---------------------------------------------------------------------------
 	// C-Core.

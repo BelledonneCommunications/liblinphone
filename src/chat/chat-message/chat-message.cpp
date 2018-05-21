@@ -680,11 +680,11 @@ void ChatMessagePrivate::send () {
 			core->getCCore(), op, peer, getSalCustomHeaders(),
 			!!lp_config_get_int(core->getCCore()->config, "sip", "chat_msg_with_contact", 0)
 		);
-		op->set_user_pointer(q);     /* If out of call, directly store msg */
+		op->setUserPointer(q);     /* If out of call, directly store msg */
 		linphone_address_unref(peer);
 	}
-	op->set_from(q->getFromAddress().asString().c_str());
-	op->set_to(q->getToAddress().asString().c_str());
+	op->setFrom(q->getFromAddress().asString().c_str());
+	op->setTo(q->getToAddress().asString().c_str());
 
 	// ---------------------------------------
 	// Start of message modification
@@ -721,7 +721,7 @@ void ChatMessagePrivate::send () {
 				EncryptionChatMessageModifier ecmm;
 				ChatMessageModifier::Result result = ecmm.encode(q->getSharedFromThis(), errorCode);
 				if (result == ChatMessageModifier::Result::Error) {
-					sal_error_info_set((SalErrorInfo *)op->get_error_info(), SalReasonNotAcceptable, "SIP", errorCode, "Unable to encrypt IM", nullptr);
+					sal_error_info_set((SalErrorInfo *)op->getErrorInfo(), SalReasonNotAcceptable, "SIP", errorCode, "Unable to encrypt IM", nullptr);
 					setState(ChatMessage::State::NotDelivered);
 					return;
 				} else if (result == ChatMessageModifier::Result::Suspended) {
@@ -783,7 +783,7 @@ void ChatMessagePrivate::send () {
 	currentSendStep = ChatMessagePrivate::Step::None;
 
 	if (imdnId.empty())
-		setImdnMessageId(op->get_call_id());   /* must be known at that time */
+		setImdnMessageId(op->getCallId());   /* must be known at that time */
 
 	if (lcall && linphone_call_get_op(lcall) == op) {
 		/* In this case, chat delivery status is not notified, so unrefing chat message right now */
@@ -890,7 +890,7 @@ ChatMessage::~ChatMessage () {
 	}
 
 	if (d->salOp) {
-		d->salOp->set_user_pointer(nullptr);
+		d->salOp->setUserPointer(nullptr);
 		d->salOp->unref();
 	}
 	if (d->salCustomHeaders)
@@ -1142,22 +1142,16 @@ int ChatMessage::putCharacter (uint32_t character) {
 	if (character == newLine || character == crlf || character == lf) {
 		shared_ptr<Core> core = getCore();
 		if (lp_config_get_int(core->getCCore()->config, "misc", "store_rtt_messages", 1) == 1) {
-			// TODO: History.
-			lDebug() << "New line sent, forge a message with content " << d->rttMessage.c_str();
-			d->setTime(ms_time(0));
+			lInfo() << "New line sent, forge a message with content " << d->rttMessage;
 			d->state = State::Displayed;
-			// d->direction = Direction::Outgoing;
-			// setFromAddress(Address(
-			// 	linphone_address_as_string(linphone_address_new(linphone_core_get_identity(core->getCCore())))
-			// ));
-			// linphone_chat_message_store(L_GET_C_BACK_PTR(this));
+			d->setText(d->rttMessage);
+			d->storeInDb();
 			d->rttMessage = "";
 		}
 	} else {
 		char *value = LinphonePrivate::Utils::utf8ToChar(character);
-		d->rttMessage = d->rttMessage + string(value);
-		lDebug() << "Sent RTT character: " << value << "(" << (unsigned long)character <<
-			"), pending text is " << d->rttMessage.c_str();
+		d->rttMessage += string(value);
+		lDebug() << "Sent RTT character: " << value << "(" << (unsigned long)character << "), pending text is " << d->rttMessage;
 		delete[] value;
 	}
 

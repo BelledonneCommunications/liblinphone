@@ -33,7 +33,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-// -----------------------------------------------------------------------------
+// =============================================================================
 
 Content::Content () : ClonableObject(*new ContentPrivate) {}
 

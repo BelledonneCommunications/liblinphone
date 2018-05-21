@@ -26,6 +26,7 @@
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
 #include "chat/chat-room/server-group-chat-room.h"
+#include "conference/participant-device.h"
 #include "conference/participant-p.h"
 #include "core/core-p.h"
 #include "event-log/event-log-p.h"
@@ -321,14 +322,18 @@ long long MainDbPrivate::insertOrUpdateImportedBasicChatRoom (
 	return dbSession.getLastInsertId();
 }
 
-long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) {
+long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
 	const ChatRoomId &chatRoomId = chatRoom->getChatRoomId();
 	const long long &peerSipAddressId = insertSipAddress(chatRoomId.getPeerAddress().asString());
 	const long long &localSipAddressId = insertSipAddress(chatRoomId.getLocalAddress().asString());
 
 	long long id = selectChatRoomId(peerSipAddressId, localSipAddressId);
-	if (id >= 0)
+	if (id >= 0) {
+		// The chat room is already stored in DB, but still update the notify id that might have changed
+		*dbSession.getBackendSession() << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :chatRoomId",
+			soci::use(notifyId), soci::use(id);
 		return id;
+	}
 
 	lInfo() << "Insert new chat room in database: " << chatRoomId << ".";
 
@@ -341,10 +346,14 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 	const string &subject = chatRoom->getSubject();
 	const int &flags = chatRoom->hasBeenLeft();
 	*dbSession.getBackendSession() << "INSERT INTO chat_room ("
-		"  peer_sip_address_id, local_sip_address_id, creation_time, last_update_time, capabilities, subject, flags"
-		") VALUES (:peerSipAddressId, :localSipAddressId, :creationTime, :lastUpdateTime, :capabilities, :subject, :flags)",
-		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime), soci::use(lastUpdateTime),
-		soci::use(capabilities), soci::use(subject), soci::use(flags);
+		"  peer_sip_address_id, local_sip_address_id, creation_time,"
+		"  last_update_time, capabilities, subject, flags, last_notify_id"
+		") VALUES ("
+		"  :peerSipAddressId, :localSipAddressId, :creationTime,"
+		"  :lastUpdateTime, :capabilities, :subject, :flags, :lastNotifyId"
+		")",
+		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime),
+		soci::use(lastUpdateTime), soci::use(capabilities), soci::use(subject), soci::use(flags), soci::use(notifyId);
 
 	id = dbSession.getLastInsertId();
 	if (!chatRoom->canHandleParticipants())
@@ -709,7 +718,9 @@ long long MainDbPrivate::insertConferenceEvent (const shared_ptr<EventLog> &even
 			soci::use(curChatRoomId);
 
 		if (eventLog->getType() == EventLog::Type::ConferenceTerminated)
-			*session << "UPDATE chat_room SET flags = 1 WHERE id = :chatRoomId", soci::use(curChatRoomId);
+			*session << "UPDATE chat_room SET flags = 1, last_notify_id = 0 WHERE id = :chatRoomId", soci::use(curChatRoomId);
+		else if (eventLog->getType() == EventLog::Type::ConferenceCreated)
+			*session << "UPDATE chat_room SET flags = 0 WHERE id = :chatRoomId", soci::use(curChatRoomId);
 	}
 
 	if (chatRoomId)
@@ -2425,7 +2436,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						capabilities,
 						subject,
 						move(participants),
-						lastNotifyId
+						lastNotifyId,
+						hasBeenLeft
 					);
 					AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
 					dChatRoom->setState(ChatRoom::State::Instantiated);
@@ -2467,11 +2479,11 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 	};
 }
 
-void MainDb::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) {
+void MainDb::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
 	L_DB_TRANSACTION {
 		L_D();
 
-		d->insertChatRoom(chatRoom);
+		d->insertChatRoom(chatRoom, notifyId);
 		tr.commit();
 	};
 }

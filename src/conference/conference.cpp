@@ -18,6 +18,7 @@
  */
 
 #include "conference-p.h"
+#include "conference/participant-device.h"
 #include "conference/session/call-session-p.h"
 #include "content/content.h"
 #include "content/content-disposition.h"

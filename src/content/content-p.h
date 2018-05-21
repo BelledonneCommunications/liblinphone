@@ -39,6 +39,8 @@ private:
 	std::string contentEncoding;
 	std::list<Header> headers;
 
+	const std::list<std::pair<std::string, std::string>>::const_iterator findHeader (const std::string &headerName) const;
+
 	L_DECLARE_PUBLIC(Content);
 };
 

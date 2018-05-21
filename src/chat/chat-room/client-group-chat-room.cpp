@@ -25,8 +25,10 @@
 #include "basic-to-client-group-chat-room.h"
 #include "c-wrapper/c-wrapper.h"
 #include "client-group-chat-room-p.h"
-#include "conference/handlers/remote-conference-event-handler.h"
+#include "conference/handlers/remote-conference-event-handler-p.h"
+#include "conference/handlers/remote-conference-list-event-handler.h"
 #include "conference/participant-p.h"
+#include "conference/participant-device.h"
 #include "conference/remote-conference-p.h"
 #include "conference/session/call-session-p.h"
 #include "content/content-disposition.h"
@@ -92,6 +94,7 @@ void ClientGroupChatRoomPrivate::multipartNotifyReceived (const string &body) {
 void ClientGroupChatRoomPrivate::setCallSessionListener (CallSessionListener *listener) {
 	L_Q();
 	L_Q_T(RemoteConference, qConference);
+
 	callSessionListener = listener;
 	shared_ptr<CallSession> session = qConference->getPrivate()->focus->getPrivate()->getSession();
 	if (session)
@@ -103,6 +106,13 @@ void ClientGroupChatRoomPrivate::setCallSessionListener (CallSessionListener *li
 	}
 }
 
+unsigned int ClientGroupChatRoomPrivate::getLastNotifyId () const {
+	L_Q_T(RemoteConference, qConference);
+	return qConference->getPrivate()->eventHandler->getLastNotify();
+}
+
+// -----------------------------------------------------------------------------
+
 void ClientGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	L_Q();
 	L_Q_T(RemoteConference, qConference);
@@ -110,13 +120,13 @@ void ClientGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	auto focus = qConference->getPrivate()->focus;
 	bool previousSession = (focus->getPrivate()->getSession() != nullptr);
 	auto session = focus->getPrivate()->createSession(*q, nullptr, false, this);
-	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->get_from()), Address(op->get_to()));
+	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 	session->startIncomingNotification(false);
 
 	if (!previousSession) {
 		setState(ClientGroupChatRoom::State::CreationPending);
 		// Handle participants addition
-		list<IdentityAddress> identAddresses = ClientGroupChatRoom::parseResourceLists(op->get_remote_body());
+		list<IdentityAddress> identAddresses = ClientGroupChatRoom::parseResourceLists(op->getRemoteBody());
 		for (const auto &addr : identAddresses) {
 			auto participant = q->findParticipant(addr);
 			if (!participant) {
@@ -137,7 +147,10 @@ void ClientGroupChatRoomPrivate::onChatRoomInsertRequested (const shared_ptr<Abs
 
 void ClientGroupChatRoomPrivate::onChatRoomInsertInDatabaseRequested (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	L_Q();
-	q->getCore()->getPrivate()->insertChatRoomWithDb(chatRoom);
+	L_Q_T(RemoteConference, qConference);
+
+	unsigned int notifyId = qConference->getPrivate()->eventHandler->getLastNotify();;
+	q->getCore()->getPrivate()->insertChatRoomWithDb(chatRoom, notifyId);
 }
 
 void ClientGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<AbstractChatRoom> &chatRoom) {
@@ -170,7 +183,7 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 		} else if (q->getState() == ChatRoom::State::TerminationPending)
 			qConference->getPrivate()->focus->getPrivate()->getSession()->terminate();
 	} else if (newState == CallSession::State::End) {
-		q->onConferenceTerminated(q->getConferenceAddress());
+		setState(ChatRoom::State::TerminationPending);
 	} else if (newState == CallSession::State::Released) {
 		if (q->getState() == ChatRoom::State::TerminationPending) {
 			if (session->getReason() == LinphoneReasonNone) {
@@ -205,8 +218,12 @@ void ClientGroupChatRoomPrivate::onChatRoomCreated (const Address &remoteContact
 	IdentityAddress addr(remoteContact);
 	q->onConferenceCreated(addr);
 	if (remoteContact.hasParam("isfocus")) {
-		bgTask.start(q->getCore(), 32); // It will be stopped when receiving the first notify
-		qConference->getPrivate()->eventHandler->subscribe(q->getChatRoomId());
+		if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->getChatRoomId())) {
+			q->getCore()->getPrivate()->remoteListEventHandler->subscribe();
+		} else {
+			bgTask.start(q->getCore(), 32); // It will be stopped when receiving the first notify
+			qConference->getPrivate()->eventHandler->subscribe(q->getChatRoomId());
+		}
 	}
 }
 
@@ -247,7 +264,8 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	AbstractChatRoom::CapabilitiesMask capabilities,
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
-	unsigned int lastNotifyId
+	unsigned int lastNotifyId,
+	bool hasBeenLeft
 ) : ChatRoom(*new ClientGroupChatRoomPrivate, core, chatRoomId),
 RemoteConference(core, me->getAddress(), nullptr) {
 	L_D();
@@ -263,12 +281,22 @@ RemoteConference(core, me->getAddress(), nullptr) {
 
 	getMe()->getPrivate()->setAdmin(me->isAdmin());
 
+	dConference->eventHandler->setChatRoomId(chatRoomId);
 	dConference->eventHandler->setLastNotify(lastNotifyId);
-	dConference->eventHandler->subscribe(getChatRoomId());
+	if (!hasBeenLeft)
+		getCore()->getPrivate()->remoteListEventHandler->addHandler(dConference->eventHandler.get());
 }
 
 ClientGroupChatRoom::~ClientGroupChatRoom () {
 	L_D();
+	L_D_T(RemoteConference, dConference);
+
+	try {
+		if (getCore()->getPrivate()->remoteListEventHandler)
+			getCore()->getPrivate()->remoteListEventHandler->removeHandler(dConference->eventHandler.get());
+	} catch (const bad_weak_ptr &) {
+		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
+	}
 	d->setCallSessionListener(nullptr);
 }
 
@@ -351,7 +379,7 @@ void ClientGroupChatRoom::addParticipant (const IdentityAddress &addr, const Cal
 		linphone_address_unref(lAddr);
 		Address referToAddr = addr;
 		referToAddr.setParam("text");
-		referOp->send_refer(referToAddr.getPrivate()->getInternalAddress());
+		referOp->sendRefer(referToAddr.getPrivate()->getInternalAddress());
 		referOp->unref();
 	}
 }
@@ -402,7 +430,7 @@ void ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &part
 	Address referToAddr = participant->getAddress();
 	referToAddr.setParam("text");
 	referToAddr.setUriParam("method", "BYE");
-	referOp->send_refer(referToAddr.getPrivate()->getInternalAddress());
+	referOp->sendRefer(referToAddr.getPrivate()->getInternalAddress());
 	referOp->unref();
 }
 
@@ -444,7 +472,7 @@ void ClientGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	Address referToAddr = participant->getAddress();
 	referToAddr.setParam("text");
 	referToAddr.setParam("admin", Utils::toString(isAdmin));
-	referOp->send_refer(referToAddr.getPrivate()->getInternalAddress());
+	referOp->sendRefer(referToAddr.getPrivate()->getInternalAddress());
 	referOp->unref();
 }
 
@@ -496,7 +524,6 @@ void ClientGroupChatRoom::leave () {
 	L_D_T(RemoteConference, dConference);
 
 	dConference->eventHandler->unsubscribe();
-
 	shared_ptr<CallSession> session = dConference->focus->getPrivate()->getSession();
 	if (session)
 		session->terminate();
@@ -531,14 +558,21 @@ void ClientGroupChatRoom::onConferenceKeywordsChanged (const vector<string> &key
 void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 	L_D();
 	L_D_T(RemoteConference, dConference);
+
 	dConference->eventHandler->unsubscribe();
 	dConference->eventHandler->resetLastNotify();
 	d->setState(ChatRoom::State::Terminated);
-	d->addEvent(make_shared<ConferenceEvent>(
+
+	auto event = make_shared<ConferenceEvent>(
 		EventLog::Type::ConferenceTerminated,
 		time(nullptr),
 		d->chatRoomId
-	));
+	);
+	d->addEvent(event);
+
+	LinphoneChatRoom *cr = d->getCChatRoom();
+	_linphone_chat_room_notify_conference_left(cr, L_GET_C_BACK_PTR(event));
+
 	if (d->deletionOnTerminationEnabled) {
 		d->deletionOnTerminationEnabled = false;
 		d->chatRoomListener->onChatRoomDeleteRequested(getSharedFromThis());
@@ -547,6 +581,11 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 
 void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	L_D();
+
+	if (getState() != ChatRoom::State::Created) {
+		lWarning() << "First notify received in ClientGroupChatRoom that is not in the Created state, ignoring it!";
+		return;
+	}
 
 	bool performMigration = false;
 	shared_ptr<AbstractChatRoom> chatRoom;
@@ -562,20 +601,17 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	else
 		d->chatRoomListener->onChatRoomInsertInDatabaseRequested(getSharedFromThis());
 
-	LinphoneChatRoom *cr = d->getCChatRoom();
-	_linphone_chat_room_notify_all_information_received(cr);
-
-	d->bgTask.stop();
-
-	// TODO: Bug. Event is inserted many times.
-	// Avoid this in the future. Deal with signals/slots system.
-	#if 0
-	d->addEvent(make_shared<ConferenceEvent>(
+	auto event = make_shared<ConferenceEvent>(
 		EventLog::Type::ConferenceCreated,
 		time(nullptr),
 		d->chatRoomId
-	));
-	#endif
+	);
+	d->addEvent(event);
+
+	LinphoneChatRoom *cr = d->getCChatRoom();
+	_linphone_chat_room_notify_conference_joined(cr, L_GET_C_BACK_PTR(event));
+
+	d->bgTask.stop();
 }
 
 void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {

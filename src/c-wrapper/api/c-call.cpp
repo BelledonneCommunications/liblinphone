@@ -184,6 +184,13 @@ void linphone_call_notify_tmmbr_received (LinphoneCall *call, int stream_index, 
 	NOTIFY_IF_EXIST(TmmbrReceived, tmmbr_received, call, stream_index, tmmbr)
 }
 
+void linphone_call_notify_snapshot_taken(LinphoneCall *call, const char *file_path) {
+	NOTIFY_IF_EXIST(SnapshotTaken, snapshot_taken, call, file_path)
+}
+
+void linphone_call_notify_next_video_frame_decoded(LinphoneCall *call) {
+	NOTIFY_IF_EXIST(NextVideoFrameDecoded, next_video_frame_decoded, call)
+}
 
 // =============================================================================
 // Public functions.
@@ -200,7 +207,7 @@ LinphoneCallState linphone_call_get_state (const LinphoneCall *call) {
 bool_t linphone_call_asked_to_autoanswer (LinphoneCall *call) {
 	//return TRUE if the unique(for the moment) incoming call asked to be autoanswered
 	if (call)
-		return linphone_call_get_op(call)->autoanswer_asked();
+		return linphone_call_get_op(call)->autoAnswerAsked();
 	return FALSE;
 }
 
@@ -568,8 +575,8 @@ void linphone_call_ogl_render (const LinphoneCall *call) {
 
 LinphoneStatus linphone_call_send_info_message (LinphoneCall *call, const LinphoneInfoMessage *info) {
 	SalBodyHandler *body_handler = sal_body_handler_from_content(linphone_info_message_get_content(info));
-	linphone_call_get_op(call)->set_sent_custom_header(linphone_info_message_get_headers(info));
-	return linphone_call_get_op(call)->send_info(nullptr, nullptr, body_handler);
+	linphone_call_get_op(call)->setSentCustomHeaders(linphone_info_message_get_headers(info));
+	return linphone_call_get_op(call)->sendInfo(body_handler);
 }
 
 LinphoneCallStats *linphone_call_get_stats (LinphoneCall *call, LinphoneStreamType type) {

@@ -20,7 +20,7 @@
 #
 ############################################################################
 
-if (ENABLE_SPHINX_DOC)
+if (ENABLE_DOC)
 	set(doc_source_dir ${CMAKE_CURRENT_BINARY_DIR}/source)
 	set(doc_output_dir ${CMAKE_CURRENT_BINARY_DIR}/build)
 	set(reference_doc_source_dir ${doc_source_dir}/reference)
@@ -43,7 +43,6 @@ if (ENABLE_SPHINX_DOC)
 		index.rst
 		logo.png
 		samples/samples.rst
-		toc.rst
 	)
 	configure_file(conf.py.in ${doc_source_dir}/conf.py)
 	foreach(file ${static_documentation_files})
@@ -56,4 +55,5 @@ if (ENABLE_SPHINX_DOC)
 	add_custom_target(sphinx-doc ALL ${PYTHON_EXECUTABLE} '${CMAKE_CURRENT_SOURCE_DIR}/gendoc.py' '${LINPHONE_DOXYGEN_XML_DIR}' -o '${reference_doc_source_dir}'
 		COMMAND ${PYTHON_EXECUTABLE} -msphinx -M html '${doc_source_dir}' '${doc_output_dir}'
 		DEPENDS linphone-doc)
+	install(DIRECTORY ${doc_output_dir}/html/ DESTINATION ${CMAKE_INSTALL_DOCDIR}/${LINPHONE_VERSION})
 endif()
