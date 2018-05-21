@@ -174,7 +174,7 @@ LINPHONE_PUBLIC LinphoneImEncryptionEngineCbsUploadingFileCb linphone_im_encrypt
 LINPHONE_PUBLIC void linphone_im_encryption_engine_cbs_set_process_uploading_file(LinphoneImEncryptionEngineCbs *cbs, LinphoneImEncryptionEngineCbsUploadingFileCb cb);
 
 /**
- * Gets the callback telling wheter or not to encrypt the files
+ * Gets the callback telling whether or not to encrypt the files
  * @param[in] cbs the LinphoneImEncryptionEngineCbs object
  * @return the callback
  * @donotwrap
@@ -182,7 +182,7 @@ LINPHONE_PUBLIC void linphone_im_encryption_engine_cbs_set_process_uploading_fil
 LINPHONE_PUBLIC LinphoneImEncryptionEngineCbsIsEncryptionEnabledForFileTransferCb linphone_im_encryption_engine_cbs_get_is_encryption_enabled_for_file_transfer(LinphoneImEncryptionEngineCbs *cbs);
 
 /**
- * Sets the callback telling wheter or not to encrypt the files
+ * Sets the callback telling whether or not to encrypt the files
  * @param[in] cbs the LinphoneImEncryptionEngineCbs object
  * @param[in] cb the callback to call
  * @donotwrap
