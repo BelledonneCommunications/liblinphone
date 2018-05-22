@@ -612,14 +612,6 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 	lInfo() << q << ": Inviting device '" << device->getAddress().asString() << "'";
 	shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 	shared_ptr<CallSession> session = device->getSession();
-	if (session
-		&& ((session->getState() == CallSession::State::OutgoingProgress)
-			|| (session->getState() == CallSession::State::OutgoingRinging)
-		)
-	) {
-		session->terminate();
-		session = nullptr;
-	}
 	if (!session) {
 		CallSessionParams csp;
 		session = participant->getPrivate()->createSession(*q, &csp, false, this);
