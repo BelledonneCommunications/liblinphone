@@ -1,6 +1,6 @@
 [misc]
 xmlrpc_server_url=http://subscribe.example.org/mtanon/tools/wizard_and_remote_provisioning_php_scripts/xmlrpc.php
-x3dh_server_url=https://shuttle-debian8/mtanon/tools/wizard_and_remote_provisioning_php_scripts/x3dh-25519.php
+x3dh_server_url=https://shuttle-debian8/mtanon/tools/wizard_and_remote_provisioning_php_scripts/x3dh-22519.php
 lime_update_threshold=86400
 
 [sip]

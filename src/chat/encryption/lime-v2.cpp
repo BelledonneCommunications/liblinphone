@@ -85,11 +85,15 @@ void BelleSipLimeManager::processAuthRequested (void *data, belle_sip_auth_event
 	const char *realm = belle_sip_auth_event_get_realm(event);
 	const char *username = belle_sip_auth_event_get_username(event);
 	const char *domain = belle_sip_auth_event_get_domain(event);
+
+// 	printf("[LIMEv2] finding auth_info for:\nrealm = %s\nusername = %s\ndomain = %s\n", realm, username, domain);
 	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(lc, realm, username, domain);
 
 	if (auth_info) {
 		const char *auth_username = linphone_auth_info_get_username(auth_info);
 		const char *auth_password = linphone_auth_info_get_password(auth_info);
+// 		printf("setting auth event username = %s\n", auth_username);
+// 		printf("setting auth event password = %s\n", auth_password);
 		belle_sip_auth_event_set_username(event, auth_username);
 		belle_sip_auth_event_set_passwd(event, auth_password);
 	}
@@ -103,9 +107,7 @@ BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_pr
 	belle_sip_memory_body_handler_t *bh;
 
 	bh = belle_sip_memory_body_handler_new_copy_from_buffer(message.data(), message.size(), NULL, NULL);
-
 	uri=belle_generic_uri_parse(url.data());
-
 	req=belle_http_request_create("POST", uri,
 			belle_http_header_create("User-Agent", "lime"),
 			belle_http_header_create("Content-type", "x3dh/octet-stream"),
@@ -123,9 +125,8 @@ BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_pr
 }) {
 }
 
-LimeV2::LimeV2(const std::__cxx11::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc) {
-	// TODO get x3dhServerUrl and curve from application level
-	x3dhServerUrl = "http://subscribe.example.org/mtanon/tools/wizard_and_remote_provisioning_php_scripts/x3dh.php";
+LimeV2::LimeV2 (const std::__cxx11::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc) {
+	x3dhServerUrl = linphone_config_get_string(linphone_core_get_config(lc), "misc", "x3dh_server_url", "");
 	curve = lime::CurveId::c25519; // c448
 	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(db_access, prov, lc));
 	lastLimeUpdate = linphone_config_get_int(lc->config, "misc", "last_lime_update_time", 0);
@@ -209,12 +210,27 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 }
 
 ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
-
 	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 
 	const string &localDeviceId = chatRoom->getMe()->getPrivate()->getDevices().front()->getAddress().asString(); // TODO cfg->contact_address
 	const string &recipientUserId = chatRoom->getPeerAddress().getAddressWithoutGruu().asString();
-	const string &senderDeviceId = chatRoom->getParticipants().front()->getPrivate()->getDevices().front()->getAddress().asString();
+	const string &senderDeviceId = chatRoom->getParticipants().front()->getPrivate()->getDevices().front()->getAddress().asString(); // TODO find the correct participant
+
+	// debug
+	auto participants = chatRoom->getParticipants();
+	list<shared_ptr<ParticipantDevice>> devices;
+	cout << endl << "[" << chatRoom->getMe()->getPrivate()->getDevices().front()->getAddress().getUsername() << "]" << endl;
+	cout << "list of participants:" << endl;
+	for (const auto &participant : participants) {
+		devices = participant->getPrivate()->getDevices();
+		for (const auto &device : devices) {
+			cout << device->getAddress().asString() << endl;
+		}
+	}
+	const string &from_address = message->getFromAddress().asString();
+
+	cout << "From address = " << from_address << endl;
+	cout << "senderDeviceId = " << senderDeviceId << endl;
 
 	Content content;
 	ContentType contentType = ContentType::Multipart;
@@ -275,7 +291,7 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	bool decryptResult = false;
 	try {
 		decryptResult = belleSipLimeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader, decodedCipherMessage, plainMessage);
-	} catch (const exception e) {
+	} catch (const exception &e) {
 		ms_message("%s while decrypting message\n", e.what());
 	}
 
@@ -301,21 +317,65 @@ void LimeV2::update (LinphoneConfig *lpconfig) {
 }
 
 bool LimeV2::encryptionEnabledForFileTransferCb (const shared_ptr<AbstractChatRoom> &chatRoom) {
-	// Work in progress
+	// TODO Work in progress
+
+	// get the callback telling whether or not to encrypt the files ?
+
+	// default value ?
+
+	// expected behaviour ?
 	return false;
 }
 
 void LimeV2::generateFileTransferKeyCb (const shared_ptr<AbstractChatRoom> &chatRoom, const shared_ptr<ChatMessage> &message) {
-	// Work in progress
+	// TODO Work in progress
+
+	/** in LIMEv1
+	 *
+	char keyBuffer [FILE_TRANSFER_KEY_SIZE]; // temporary storage of generated key: 192 bits of key + 64 bits of initial vector
+	// generate a random 192 bits key + 64 bits of initial vector and store it into the file_transfer_information->key field of the msg
+	sal_get_random_bytes((unsigned char *)keyBuffer, FILE_TRANSFER_KEY_SIZE);
+	LinphoneContent *content = linphone_chat_message_get_file_transfer_information(msg);
+	if (!content)
+		return;
+	linphone_content_set_key(content, keyBuffer, FILE_TRANSFER_KEY_SIZE); // key is duplicated in the content private structure
+	linphone_content_unref(content);
+	*/
 }
 
 int LimeV2::downloadingFileCb (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) {
-	// Work in progress
+	// TODO Work in progress
+
+	// get encrypted buffer from content
+
+	// check file transfer key
+
+	// decrypt encrypted buffer
+
+	// return result code
+
+	//message->isFileTransferInProgress();
+	//message->downloadFile();
+	//message->cancelFileTransfer();
+
+	// see lime_im_encryption_engine_process_downloading_file_cb in lime.c
+
 	return 0;
 }
 
 int LimeV2::uploadingFileCb (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *encrypted_buffer) {
-	// Work in progress
+	// TODO Work in progress
+
+	// get file transfer key
+
+	// encrypt content
+
+	// check encrypted content size
+
+	// return result code
+
+	// see lime_im_encryption_engine_process_downloading_file_cb in lime.c
+
 	return 0;
 }
 
@@ -344,8 +404,13 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 		IdentityAddress ia = IdentityAddress(linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg)));
 		string localDeviceId = ia.asString();
 
-		if (localDeviceId == "")
-			return;
+// 		const LinphoneAddress *addr = linphone_proxy_config_get_identity_address(cfg);
+// 		cout << "[Register] domain = " << linphone_address_get_domain(addr) << endl;
+// 		localDeviceId = linphone_address_as_string(addr);
+
+		// TODO may not be necessary
+// 		if (localDeviceId == "")
+// 			return;
 
 		stringstream operation;
 		operation << "create user " << localDeviceId;
@@ -356,14 +421,17 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 
 		try {
 			// create user if not exist
+			cout << "[Register] trying to create lime user = " << localDeviceId << endl;
 			belleSipLimeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
 			lastLimeUpdate = ms_time(NULL);
 			lp_config_set_int(lpconfig, "misc", "last_lime_update_time", (int)lastLimeUpdate);
-		} catch (const exception e) {
+		} catch (const exception &e) {
+			cout << "[Register] user already exists" << endl;
 			ms_message("%s while creating lime user\n", e.what());
 
 			// update keys if necessary
-			if (ms_time(NULL) - lastLimeUpdate > 86400) { // 24 hours = 86400 ms TODO get update time value from application level
+			int limeUpdateThreshold = lp_config_get_int(lpconfig, "misc", "lime_update_threshold", 86400);
+			if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) { // 24 hours = 86400 ms
 				update(lpconfig);
 				lastLimeUpdate = ms_time(NULL);
 			} else {
