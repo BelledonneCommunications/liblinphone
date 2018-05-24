@@ -94,9 +94,17 @@ void ServerGroupChatRoomPrivate::setState (ChatRoom::State state) {
 							inviteDevice(device);
 					}
 				}
-				if (atLeastOneDevicePresent)
+				if (atLeastOneDevicePresent || atLeastOneDeviceJoining)
 					filteredParticipants.push_back(participant);
 			}
+		}
+
+		// Subscribe to the registration events from the proxy
+		for (const auto &participant : qConference->getPrivate()->participants) {
+			LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
+			LinphoneAddress *laddr = linphone_address_new(participant->getAddress().asString().c_str());
+			CALL_CHAT_ROOM_CBS(cr, ParticipantRegistrationSubscriptionRequested, participant_registration_subscription_requested, cr, laddr);
+			linphone_address_unref(laddr);
 		}
 	}
 }
