@@ -98,9 +98,11 @@ namespace Linphone
 		internal IntPtr nativePtr;
 
 		internal GCHandle handle;
+		
+		~LinphoneObject() => Destructor(nativePtr, (IntPtr)handle);
 
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		private delegate void OnLinphoneObjectDataDestroyed(IntPtr data);
+		private delegate void OnLinphoneObjectDataDestroyed(IntPtr data, IntPtr handlePtr);
 
 		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 #if WINDOWS_UWP
@@ -137,14 +139,12 @@ namespace Linphone
 		[MonoPInvokeCallback(typeof(OnLinphoneObjectDataDestroyed))]
 #endif
 
-		~LinphoneObject()
+		private static void Destructor(IntPtr nativePtr, IntPtr handlePtr)
 		{
-			//Console.WriteLine("Destroying " + this.ToString());
 			if (nativePtr != IntPtr.Zero) {
-				//Console.WriteLine("Unreffing " + this.ToString());
 				belle_sip_object_data_remove(nativePtr, "cs_obj");
 				belle_sip_object_unref(nativePtr);
-				handle.Free();
+				((GCHandle)handlePtr).Free();
 			}
 		}
 
