@@ -231,9 +231,8 @@ static void set_video_controls_position(GtkWidget *video_window){
 	g_timeout_add(0,(GSourceFunc)_set_video_controls_position,video_window);
 }
 
-static gboolean video_window_moved(GtkWidget *widget, GdkEvent  *event, gpointer   user_data){
-	/*Workaround to Video window bug on Windows. */
-	/* set_video_controls_position(widget); */
+static gboolean video_window_expose(GtkWidget *widget, GdkEventExpose *event) {
+	set_video_controls_position(widget);
 	return FALSE;
 }
 
@@ -306,12 +305,12 @@ static GtkWidget *create_video_window(LinphoneCall *call){
 	gtk_drag_dest_set(video_window, GTK_DEST_DEFAULT_ALL, targets, sizeof(targets)/sizeof(GtkTargetEntry), GDK_ACTION_COPY);
 	gtk_widget_show(video_window);
 	gdk_window_set_events(gtk_widget_get_window(video_window),
-			      gdk_window_get_events(gtk_widget_get_window(video_window)) | GDK_POINTER_MOTION_MASK);
+			      gdk_window_get_events(gtk_widget_get_window(video_window)) | GDK_POINTER_MOTION_MASK | GDK_EXPOSURE_MASK);
 	timeout=g_timeout_add(500,(GSourceFunc)resize_video_window,call);
 	g_signal_connect(video_window,"destroy",(GCallback)on_video_window_destroy,GINT_TO_POINTER(timeout));
 	g_signal_connect(video_window,"key-press-event",(GCallback)on_video_window_key_press,NULL);
 	g_signal_connect_swapped(video_window,"motion-notify-event",(GCallback)show_video_controls,video_window);
-	g_signal_connect(video_window,"configure-event",(GCallback)video_window_moved,NULL);
+	g_signal_connect(video_window,"expose-event",G_CALLBACK(video_window_expose),NULL);
 	g_signal_connect(video_window, "drag-data-received",(GCallback)drag_data_received, NULL);
 	g_signal_connect(video_window, "drag-drop",(GCallback)drag_drop, NULL);
 	g_object_set_data(G_OBJECT(video_window),"call",call);
@@ -324,12 +323,17 @@ void linphone_gtk_in_call_show_video(LinphoneCall *call){
 	const LinphoneCallParams *params=linphone_call_get_current_params(call);
 	LinphoneCore *lc=linphone_gtk_get_core();
 
+	/* acquire GTK thread lock */
+	gdk_threads_enter();
+
 	if (((bool_t)lp_config_get_int(linphone_core_get_config(lc), "video", "rtp_io", FALSE)) == FALSE) {
 		if (linphone_call_get_state(call)!=LinphoneCallPaused && params && linphone_call_params_video_enabled(params)){
 			if (video_window==NULL){
 				video_window=create_video_window(call);
 				g_object_set_data(G_OBJECT(callview),"video_window",video_window);
 			}
+			/* Make sure all X commands are sent to the X server */
+			gdk_flush ();
 			linphone_core_set_native_video_window_id(lc,get_native_handle(gtk_widget_get_window(video_window)));
 			gtk_window_present(GTK_WINDOW(video_window));
 		}else{
@@ -339,6 +343,9 @@ void linphone_gtk_in_call_show_video(LinphoneCall *call){
 			}
 		}
 	}
+
+	/* release GTK thread lock */
+	gdk_threads_leave();
 }
 
 static void on_video_preview_destroyed(GtkWidget *video_preview, GtkWidget *mw){
