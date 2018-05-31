@@ -552,8 +552,10 @@ end:
 	bc_free(receive_filepath);
 }
 
-void transfer_message_base(bool_t upload_error, bool_t download_error, bool_t use_file_body_handler_in_upload,
-						   bool_t use_file_body_handler_in_download, bool_t download_from_history, bool_t enable_imdn) {
+void transfer_message_base(
+	bool_t upload_error, bool_t download_error, bool_t use_file_body_handler_in_upload,
+	bool_t use_file_body_handler_in_download, bool_t download_from_history, bool_t enable_imdn
+) {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
@@ -1503,7 +1505,7 @@ static void lime_cache_migration(void) {
 		if ((xmlCacheFD = fopen(xmlCache_filepath, "w") ) == NULL) {
 			BC_ASSERT_PTR_NOT_NULL(xmlCacheFD);
 			ms_error("Unable to create temporary XML ZID cache file to test cache migration");
-			return;
+			goto end2;
 		}
 		fprintf(xmlCacheFD, "%s", xmlCacheMigration);
 		fclose(xmlCacheFD);
@@ -1517,9 +1519,11 @@ static void lime_cache_migration(void) {
 
 		linphone_proxy_config_done(cfg);
 
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 2, 5000));
+
 		if (!linphone_core_lime_available(marie->lc)) {
 			ms_warning("Lime not available, skiping");
-			return;
+			goto end1;
 		}
 
 		/* make sure lime is enabled */
@@ -1543,8 +1547,12 @@ static void lime_cache_migration(void) {
 		/* TODO */
 
 		/* free memory */
+
+	end1:
 		linphone_core_manager_destroy(marie);
+	end2:
 		remove(xmlCache_filepath);
+		bc_free(xmlCache_filepath);
 	}
 }
 
@@ -1748,8 +1756,11 @@ static void file_transfer_io_error_after_destroying_chatroom(void) {
 	file_transfer_io_error_base("https://www.linphone.org:444/lft.php", TRUE);
 }
 
-static void real_time_text(bool_t audio_stream_enabled, bool_t srtp_enabled, bool_t mess_with_marie_payload_number, bool_t mess_with_pauline_payload_number,
-						   bool_t ice_enabled, bool_t sql_storage, bool_t do_not_store_rtt_messages_in_sql_storage) {
+static void real_time_text(
+	bool_t audio_stream_enabled, bool_t srtp_enabled, bool_t mess_with_marie_payload_number,
+	bool_t mess_with_pauline_payload_number, bool_t ice_enabled, bool_t sql_storage,
+	bool_t do_not_store_rtt_messages_in_sql_storage
+) {
 	LinphoneChatRoom *pauline_chat_room;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
