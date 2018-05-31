@@ -26,10 +26,11 @@
 #include "chat/chat-room/chat-room-id.h"
 #include "chat/modifier/file-transfer-chat-message-modifier.h"
 #include "chat/notification/imdn.h"
-#include "content/content-type.h"
 #include "content/content.h"
+#include "content/content-type.h"
 #include "content/file-content.h"
 #include "content/file-transfer-content.h"
+#include "db/main-db.h"
 #include "db/main-db-chat-message-key.h"
 #include "event-log/conference/conference-chat-message-event.h"
 #include "object/object-p.h"
@@ -43,6 +44,7 @@ class ChatMessagePrivate : public ObjectPrivate {
 	friend class CpimChatMessageModifier;
 	friend class EncryptionChatMessageModifier;
 	friend class MultipartChatMessageModifier;
+	friend class NotificationMessagePrivate;
 
 public:
 	enum Step {
@@ -59,8 +61,8 @@ public:
 
 	void setDirection (ChatMessage::Direction dir);
 
-	void setParticipantState (const IdentityAddress &participantAddress, ChatMessage::State newState);
-	void setState (ChatMessage::State newState, bool force = false);
+	void setParticipantState (const IdentityAddress &participantAddress, ChatMessage::State newState, time_t stateChangeTime);
+	virtual void setState (ChatMessage::State newState, bool force = false);
 
 	void setTime (time_t time);
 
@@ -97,6 +99,13 @@ public:
 
 	SalOp *getSalOp () const;
 	void setSalOp (SalOp *op);
+
+	bool getDisplayNotificationRequired () const { return displayNotificationRequired; }
+	bool getNegativeDeliveryNotificationRequired () const { return negativeDeliveryNotificationRequired; }
+	bool getPositiveDeliveryNotificationRequired () const { return positiveDeliveryNotificationRequired; }
+	virtual void setDisplayNotificationRequired (bool value) { displayNotificationRequired = value; }
+	virtual void setNegativeDeliveryNotificationRequired (bool value) { negativeDeliveryNotificationRequired = value; }
+	virtual void setPositiveDeliveryNotificationRequired (bool value) { positiveDeliveryNotificationRequired = value; }
 
 	SalCustomHeader *getSalCustomHeaders () const;
 	void setSalCustomHeaders (SalCustomHeader *headers);
@@ -137,15 +146,13 @@ public:
 	bool hasFileTransferContent () const;
 	const Content* getFileTransferContent () const;
 
-	LinphoneContent *getFileTransferInformation () const;
-	void setFileTransferInformation (const LinphoneContent *content);
+	const Content* getFileTransferInformation () const;
+	void setFileTransferInformation (Content *content);
 
-	void addContent (Content &content);
-	void removeContent (const Content &content);
+	void addContent (Content *content);
+	void removeContent (Content *content);
 
 	bool downloadFile ();
-
-	void sendImdn (Imdn::Type imdnType, LinphoneReason reason);
 
 	void notifyReceiving ();
 	LinphoneReason receive ();
@@ -155,11 +162,21 @@ public:
 	void updateInDb ();
 
 private:
-	
 	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir);
-	
+
 	static bool validStateTransition (ChatMessage::State currentState, ChatMessage::State newState);
 
+public:
+	mutable MainDbChatMessageKey dbKey;
+
+protected:
+	bool displayNotificationRequired = true;
+	bool negativeDeliveryNotificationRequired = true;
+	bool positiveDeliveryNotificationRequired = true;
+	bool toBeStored = true;
+	std::string contentEncoding;
+
+private:
 	// TODO: Clean attributes.
 	time_t time = ::ms_time(0); // TODO: Change me in all files.
 	std::string imdnId;
@@ -188,10 +205,6 @@ private:
 	// TODO: Remove my comment. VARIABLES OK.
 	// Do not expose.
 
-public:
-	mutable MainDbChatMessageKey dbKey;
-
-private:
 	std::weak_ptr<AbstractChatRoom> chatRoom;
 	ChatRoomId chatRoomId;
 	IdentityAddress fromAddress;
@@ -203,7 +216,6 @@ private:
 	std::list<Content* > contents;
 
 	bool encryptionPrevented = false;
-	bool toBeStored = true;
 	mutable bool contentsNotLoadedFromDatabase = false;
 	L_DECLARE_PUBLIC(ChatMessage);
 };

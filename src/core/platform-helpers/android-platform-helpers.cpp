@@ -103,11 +103,10 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 	mGetDataPathId = getMethodId(env, klass, "getDataPath", "()Ljava/lang/String;");
 	mGetConfigPathId = getMethodId(env, klass, "getConfigPath", "()Ljava/lang/String;");
 
-	jmethodID initCoreId = getMethodId(env, klass, "initCore", "(J)V");
-	env->CallVoidMethod(mJavaHelper, initCoreId, (jlong)lc);
-
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
 	belle_sip_wake_lock_init(env, pm);
+
+	linphone_factory_set_top_resources_dir(linphone_factory_get() , getDataPath().append("share").c_str());
 
 	lInfo() << "AndroidPlatformHelpers is fully initialised.";
 }
@@ -123,7 +122,7 @@ AndroidPlatformHelpers::~AndroidPlatformHelpers () {
 }
 
 void AndroidPlatformHelpers::setDnsServers () {
-	if (!mJavaHelper) {
+	if (!mJavaHelper || linphone_core_get_dns_set_by_app(mCore)) {
 		lError() << "AndroidPlatformHelpers' mJavaHelper is null.";
 		return;
 	}

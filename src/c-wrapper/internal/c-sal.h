@@ -94,10 +94,10 @@ extern "C" {
 const char* sal_transport_to_string(SalTransport transport);
 SalTransport sal_transport_parse(const char*);
 /* Address manipulation API*/
-SalAddress * sal_address_new(const char *uri);
+LINPHONE_PUBLIC SalAddress * sal_address_new(const char *uri);
 SalAddress * sal_address_clone(const SalAddress *addr);
 SalAddress * sal_address_ref(SalAddress *addr);
-void sal_address_unref(SalAddress *addr);
+LINPHONE_PUBLIC void sal_address_unref(SalAddress *addr);
 const char *sal_address_get_scheme(const SalAddress *addr);
 const char *sal_address_get_display_name(const SalAddress* addr);
 const char *sal_address_get_display_name_unquoted(const SalAddress *addr);
@@ -119,7 +119,7 @@ void sal_address_clean(SalAddress *addr);
 char *sal_address_as_string(const SalAddress *u);
 char *sal_address_as_string_uri_only(const SalAddress *u);
 void sal_address_destroy(SalAddress *u);
-void sal_address_set_param(SalAddress *u,const char* name,const char* value);
+LINPHONE_PUBLIC void sal_address_set_param(SalAddress *u,const char* name,const char* value);
 void sal_address_set_transport(SalAddress* addr,SalTransport transport);
 void sal_address_set_transport_name(SalAddress* addr,const char* transport);
 void sal_address_set_method_param(SalAddress *addr, const char *method);
@@ -636,6 +636,9 @@ const char * sal_body_handler_get_type(const SalBodyHandler *body_handler);
 void sal_body_handler_set_type(SalBodyHandler *body_handler, const char *type);
 const char * sal_body_handler_get_subtype(const SalBodyHandler *body_handler);
 void sal_body_handler_set_subtype(SalBodyHandler *body_handler, const char *subtype);
+const belle_sip_list_t * sal_body_handler_get_content_type_parameters_names(const SalBodyHandler *body_handler);
+const char * sal_body_handler_get_content_type_parameter(const SalBodyHandler *body_handler, const char *name);
+void sal_body_handler_set_content_type_parameter(SalBodyHandler *body_handler, const char *paramName, const char *paramValue);
 const char * sal_body_handler_get_encoding(const SalBodyHandler *body_handler);
 void sal_body_handler_set_encoding(SalBodyHandler *body_handler, const char *encoding);
 void * sal_body_handler_get_data(const SalBodyHandler *body_handler);
@@ -644,8 +647,10 @@ size_t sal_body_handler_get_size(const SalBodyHandler *body_handler);
 void sal_body_handler_set_size(SalBodyHandler *body_handler, size_t size);
 bool_t sal_body_handler_is_multipart(const SalBodyHandler *body_handler);
 SalBodyHandler * sal_body_handler_get_part(const SalBodyHandler *body_handler, int idx);
+const belle_sip_list_t * sal_body_handler_get_parts(const SalBodyHandler *body_handler);
 SalBodyHandler * sal_body_handler_find_part_by_header(const SalBodyHandler *body_handler, const char *header_name, const char *header_value);
 const char * sal_body_handler_get_header(const SalBodyHandler *body_handler, const char *header_name);
+const belle_sip_list_t* sal_body_handler_get_headers(const SalBodyHandler *body_handler);
 
 /*this function parses a document with key=value pairs separated by new lines, and extracts the value for a given key*/
 int sal_lines_get_value(const char *data, const char *key, char *value, size_t value_size);

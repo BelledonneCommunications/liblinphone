@@ -20,6 +20,7 @@
 #include <algorithm>
 
 #include "object/object-p.h"
+#include "participant-device.h"
 #include "participant-p.h"
 
 #include "participant.h"
@@ -108,12 +109,6 @@ const IdentityAddress& Participant::getAddress () const {
 bool Participant::isAdmin () const {
 	L_D();
 	return d->isAdmin;
-}
-
-// =============================================================================
-
-ostream & operator<< (ostream &strm, const shared_ptr<Participant> &participant) {
-	return strm << "'" << participant->getAddress().asString() << "'";
 }
 
 LINPHONE_END_NAMESPACE

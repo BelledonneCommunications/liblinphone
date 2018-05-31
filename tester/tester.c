@@ -19,6 +19,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "linphone/core.h"
+#include "linphone/logging.h"
+#include "logging-private.h"
 #include "liblinphone_tester.h"
 #include <bctoolbox/tester.h>
 #include "tester_utils.h"
@@ -26,8 +28,11 @@
 #if _WIN32
 #define unlink _unlink
 #endif
-
-
+#ifdef __ANDROID__
+extern jobject system_context;
+#else
+void *system_context=0;
+#endif
 static int liblinphone_tester_keep_accounts_flag = 0;
 static bool_t liblinphone_tester_keep_record_files = FALSE;
 static bool_t liblinphone_tester_leak_detector_disabled = FALSE;
@@ -105,6 +110,8 @@ static void auth_info_requested(LinphoneCore *lc, const char *realm, const char 
 void reset_counters( stats* counters) {
 	if (counters->last_received_chat_message) linphone_chat_message_unref(counters->last_received_chat_message);
 	if (counters->last_received_info_message) linphone_info_message_unref(counters->last_received_info_message);
+	if (counters->dtmf_list_received) bctbx_free(counters->dtmf_list_received);
+
 	memset(counters,0,sizeof(stats));
 }
 
@@ -140,9 +147,9 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, const ch
 		lp_config_set_string(config, "sound", "remote_ring", ringbackpath);
 		lp_config_set_string(config, "sound", "local_ring" , ringpath);
 		lp_config_set_string(config, "sip",   "root_ca"    , rootcapath);
-		lc = linphone_factory_create_core_with_config_3(linphone_factory_get(), config, NULL);
+		lc = linphone_factory_create_core_with_config_3(linphone_factory_get(), config, system_context);
 	} else {
-		lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, (filepath && (filepath[0] != '\0')) ? filepath : NULL, NULL);
+		lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, (filepath && (filepath[0] != '\0')) ? filepath : NULL, system_context);
 		linphone_core_set_ring(lc, ringpath);
 		linphone_core_set_ringback(lc, ringbackpath);
 		linphone_core_set_root_ca(lc,rootcapath);
@@ -428,6 +435,17 @@ LinphoneCoreManager* linphone_core_manager_create(const char* rc_file) {
 	return linphone_core_manager_create2(rc_file, NULL);
 }
 
+LinphoneCoreManager* linphone_core_manager_new4(const char* rc_file, int check_for_proxies, const char* phone_alias, const char* contact_params, int expires) {
+	/* This function is for testing purposes. */
+	LinphoneCoreManager *manager = ms_new0(LinphoneCoreManager, 1);
+	
+	linphone_core_manager_init(manager, rc_file, phone_alias);
+	linphone_proxy_config_set_contact_parameters(linphone_core_get_default_proxy_config(manager->lc), contact_params);
+	linphone_proxy_config_set_expires(linphone_core_get_default_proxy_config(manager->lc), expires);
+	linphone_core_manager_start(manager, check_for_proxies);
+	return manager;
+}
+
 LinphoneCoreManager* linphone_core_manager_new3(const char* rc_file, bool_t check_for_proxies, const char* phone_alias) {
 	LinphoneCoreManager *manager = linphone_core_manager_create2(rc_file, phone_alias);
 	linphone_core_manager_start(manager, check_for_proxies);
@@ -485,10 +503,6 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 	if (mgr->phone_alias) {
 		ms_free(mgr->phone_alias);
 	}
-	if (mgr->stat.last_received_chat_message) {
-		linphone_chat_message_unref(mgr->stat.last_received_chat_message);
-	}
-	if (mgr->stat.last_received_info_message) linphone_info_message_unref(mgr->stat.last_received_info_message);
 	if (mgr->identity) {
 		linphone_address_unref(mgr->identity);
 	}
@@ -502,8 +516,10 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 	if (mgr->cbs)
 		linphone_core_cbs_unref(mgr->cbs);
 
+	reset_counters(&mgr->stat);
+
 	manager_count--;
-	linphone_core_set_log_level(old_log_level);
+	linphone_core_set_log_level_mask(old_log_level);
 }
 
 void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr) {
@@ -594,7 +610,9 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
 	bc_tester_add_suite(&call_test_suite);
-	bc_tester_add_suite(&call_video_test_suite);
+	#ifdef VIDEO_ENABLED
+		bc_tester_add_suite(&call_video_test_suite);
+	#endif // ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);
@@ -604,7 +622,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&stun_test_suite);
 	bc_tester_add_suite(&event_test_suite);
 	bc_tester_add_suite(&conference_event_test_suite);
-	bc_tester_add_suite(&content_manager_test_suite);
+	bc_tester_add_suite(&contents_test_suite);
 	bc_tester_add_suite(&flexisip_test_suite);
 	bc_tester_add_suite(&remote_provisioning_test_suite);
 	bc_tester_add_suite(&quality_reporting_test_suite);
@@ -842,6 +860,7 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 				linphone_core_iterate(callee->lc);
 				linphone_call_stats_unref(stats1);
 				linphone_call_stats_unref(stats2);
+				stats1 = stats2 = NULL;
 			}
 			ms_usleep(20000);
 		} while (!liblinphone_tester_clock_elapsed(&ts,10000));
@@ -870,6 +889,7 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 				linphone_core_iterate(callee->lc);
 				linphone_call_stats_unref(stats1);
 				linphone_call_stats_unref(stats2);
+				stats1 = stats2 = NULL;
 			}
 			ms_usleep(20000);
 		} while (!liblinphone_tester_clock_elapsed(&ts,10000));

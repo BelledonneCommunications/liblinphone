@@ -21,6 +21,10 @@
 #define _L_SAL_MESSAGE_OP_INTERFACE_H_
 
 #include "sal/op.h"
+#include <ctime>
+
+#include "content/content.h"
+#include "content/content-type.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -28,11 +32,44 @@ class SalMessageOpInterface {
 public:
 	virtual ~SalMessageOpInterface() = default;
 
-	virtual int send_message(const Content &content) = 0;
-	virtual int reply(SalReason reason) = 0;
+	virtual int sendMessage (const Content &content) = 0;
+	virtual int reply (SalReason reason) = 0;
 
 protected:
-	void prepare_message_request(belle_sip_request_t *req, const Content &content);
+	void prepareMessageRequest (belle_sip_request_t *req, const Content &content) {
+		time_t curtime = std::time(nullptr);
+		belle_sip_message_add_header(
+			BELLE_SIP_MESSAGE(req),
+			BELLE_SIP_HEADER(belle_sip_header_date_create_from_time(&curtime))
+		);
+		std::string contentEncoding = content.getContentEncoding();
+		if (!contentEncoding.empty())
+			belle_sip_message_add_header(
+				BELLE_SIP_MESSAGE(req),
+				belle_sip_header_create("Content-Encoding", contentEncoding.c_str())
+			);
+		const ContentType &contentType = content.getContentType();
+		std::string contentTypeStr = std::string(BELLE_SIP_CONTENT_TYPE ": ") + contentType.asString();
+		belle_sip_message_add_header(
+			BELLE_SIP_MESSAGE(req),
+			BELLE_SIP_HEADER(belle_sip_header_content_type_parse(contentTypeStr.c_str()))
+		);
+		if (content.isEmpty()) {
+			belle_sip_message_add_header(
+				BELLE_SIP_MESSAGE(req),
+				BELLE_SIP_HEADER(belle_sip_header_content_length_create(0))
+			);
+		} else {
+			std::string body = content.getBodyAsUtf8String();
+			size_t contentLength = body.size();
+			belle_sip_message_add_header(
+				BELLE_SIP_MESSAGE(req),
+				BELLE_SIP_HEADER(belle_sip_header_content_length_create(contentLength))
+			);
+			belle_sip_message_set_body(BELLE_SIP_MESSAGE(req), body.c_str(), contentLength);
+		}
+	}
+
 };
 
 LINPHONE_END_NAMESPACE

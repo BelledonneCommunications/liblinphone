@@ -34,7 +34,7 @@ class CallPrivate;
 class CallSessionPrivate;
 class MediaSessionPrivate;
 
-class Call : public Object, public CoreAccessor {
+class LINPHONE_PUBLIC Call : public Object, public CoreAccessor {
 	friend class CallSessionPrivate;
 	friend class ChatMessage;
 	friend class ChatMessagePrivate;
@@ -123,6 +123,7 @@ public:
 	void setMicrophoneVolumeGain (float value);
 	void setNativeVideoWindowId (void *id);
 	void setNextVideoFrameDecodedCallback (LinphoneCallCbFunc cb, void *user_data);
+	void requestNotifyNextVideoFrameDecoded();
 	void setParams (const MediaSessionParams *msp);
 	void setSpeakerVolumeGain (float value);
 

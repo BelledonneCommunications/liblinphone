@@ -265,7 +265,7 @@ static void friends_sqlite_storage(void) {
 	cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_friend_list_created(cbs, friend_list_created_cb);
 	linphone_core_cbs_set_friend_list_removed(cbs, friend_list_removed_cb);
-	lc = linphone_factory_create_core(linphone_factory_get(), cbs, NULL, NULL);
+	lc = linphone_factory_create_core_2(linphone_factory_get(), cbs, NULL, NULL, NULL, system_context);
 	linphone_core_cbs_unref(cbs);
 	friends = linphone_friend_list_get_friends(linphone_core_get_default_friend_list(lc));
 	lfl = linphone_core_create_friend_list(lc);
@@ -364,8 +364,12 @@ static void friends_sqlite_store_lot_of_friends(void) {
 	char* errmsg = NULL;
 	int ret;
 	char *buf;
+	char *friends_db = bc_tester_file("friends.db");
 
-	ret = sqlite3_open(linphone_core_get_friends_database_path(lc), &db);
+	unlink(friends_db);
+	ret = sqlite3_open(friends_db, &db);
+	bc_free(friends_db);
+
 	BC_ASSERT_TRUE(ret ==SQLITE_OK);
 	ret = sqlite3_exec(db,"BEGIN",0,0,&errmsg);
 	BC_ASSERT_TRUE(ret ==SQLITE_OK);
@@ -432,8 +436,12 @@ static void friends_sqlite_find_friend_in_lot_of_friends(void) {
 	char *buf;
 	bctoolboxTimeSpec t1;
 	bctoolboxTimeSpec t2;
+	char *friends_db = bc_tester_file("friends.db");
 
-	ret = sqlite3_open(linphone_core_get_friends_database_path(lc), &db);
+	unlink(friends_db);
+	ret = sqlite3_open(friends_db, &db);
+	bc_free(friends_db);
+
 	BC_ASSERT_TRUE(ret ==SQLITE_OK);
 	ret = sqlite3_exec(db,"BEGIN",0,0,&errmsg);
 	BC_ASSERT_TRUE(ret ==SQLITE_OK);
@@ -943,7 +951,9 @@ static void find_friend_by_ref_key_test(void) {
 		goto end;
 	}
 	addr = linphone_friend_get_address(lf2);
-	BC_ASSERT_STRING_EQUAL(linphone_address_as_string_uri_only(addr), "sip:toto@sip.linphone.org");
+	char *uri_addr = linphone_address_as_string_uri_only(addr);
+	BC_ASSERT_STRING_EQUAL(uri_addr, "sip:toto@sip.linphone.org");
+	bctbx_free(uri_addr);
 	BC_ASSERT_EQUAL(lf2, lf, void*, "%p");
 end:
 	linphone_friend_unref(lf);

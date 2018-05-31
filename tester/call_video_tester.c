@@ -21,6 +21,7 @@
 #include "tester_utils.h"
 
 #ifdef VIDEO_ENABLED
+
 static void call_paused_resumed_with_video_base_call_cb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) {
 	if (cstate == LinphoneCallUpdatedByRemote) {
 		LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
@@ -275,7 +276,7 @@ bool_t request_video(LinphoneCoreManager* caller,LinphoneCoreManager* callee, bo
 		}
 
 		if (video_added) {
-			linphone_call_set_next_video_frame_decoded_callback(call_obj,linphone_call_iframe_decoded_cb,callee->lc);
+			liblinphone_tester_set_next_video_frame_decoded_cb(call_obj);
 			/*send vfu*/
 			linphone_call_send_vfu_request(call_obj);
 			BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&callee->stat.number_of_IframeDecoded,initial_callee_stat.number_of_IframeDecoded+1));
@@ -599,7 +600,7 @@ void video_call_base_2(LinphoneCoreManager* caller,LinphoneCoreManager* callee, 
 			BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(caller_call)));
 
 			/*check video path*/
-			linphone_call_set_next_video_frame_decoded_callback(callee_call,linphone_call_iframe_decoded_cb,callee->lc);
+			liblinphone_tester_set_next_video_frame_decoded_cb(callee_call);
 			linphone_call_send_vfu_request(callee_call);
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_IframeDecoded,1));
 		} else {
@@ -622,8 +623,8 @@ static void check_fir(LinphoneCoreManager* caller,LinphoneCoreManager* callee ){
 
 	/*check video path is established in both directions.
 	 Indeed, FIR are ignored until the first RTP packet is received, because SSRC is not known.*/
-	linphone_call_set_next_video_frame_decoded_callback(callee_call,linphone_call_iframe_decoded_cb,callee->lc);
-	linphone_call_set_next_video_frame_decoded_callback(caller_call,linphone_call_iframe_decoded_cb,caller->lc);
+	liblinphone_tester_set_next_video_frame_decoded_cb(callee_call);
+	liblinphone_tester_set_next_video_frame_decoded_cb(caller_call);
 
 	BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_IframeDecoded,1));
 	BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_IframeDecoded,1));
@@ -639,7 +640,7 @@ static void check_fir(LinphoneCoreManager* caller,LinphoneCoreManager* callee ){
 	ms_message("check_fir: [%p] received  %d FIR  ",&caller_call ,caller_vstream->ms_video_stat.counter_rcvd_fir);
 	ms_message("check_fir: [%p] stat number of iframe decoded  %d ",&callee_call, callee->stat.number_of_IframeDecoded);
 
-	linphone_call_set_next_video_frame_decoded_callback(caller_call,linphone_call_iframe_decoded_cb,caller->lc);
+	liblinphone_tester_set_next_video_frame_decoded_cb(caller_call);
 	linphone_call_send_vfu_request(caller_call);
 	BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_IframeDecoded,1));
 
@@ -668,6 +669,12 @@ void video_call_base_3(LinphoneCoreManager* caller,LinphoneCoreManager* callee, 
 		linphone_core_set_video_policy(callee->lc,&callee_policy);
 		linphone_core_set_video_policy(caller->lc,&caller_policy);
 	}
+	
+	linphone_core_set_preferred_video_size_by_name(caller->lc, "QVGA");
+	linphone_core_set_preferred_video_size_by_name(callee->lc, "QVGA");
+	
+	linphone_core_set_video_device(caller->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(callee->lc, "Mire: Mire (synthetic moving picture)");
 
 	linphone_core_enable_video_display(callee->lc, callee_video_enabled);
 	linphone_core_enable_video_capture(callee->lc, callee_video_enabled);
@@ -878,8 +885,8 @@ static void video_call_established_by_reinvite_with_implicit_avpf(void) {
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(callee_call)));
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(caller_call)));
 
-		linphone_call_set_next_video_frame_decoded_callback(caller_call,linphone_call_iframe_decoded_cb,caller->lc);
-		linphone_call_set_next_video_frame_decoded_callback(callee_call,linphone_call_iframe_decoded_cb,callee->lc);
+		liblinphone_tester_set_next_video_frame_decoded_cb(caller_call);
+		liblinphone_tester_set_next_video_frame_decoded_cb(callee_call);
 
 		BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_IframeDecoded,1));
 		BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_IframeDecoded,1));
@@ -1328,10 +1335,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 	/*The send-only client shall set rtp symmetric in absence of media relay for this test.*/
 	lp_config_set_int(linphone_core_get_config(marie->lc),"rtp","symmetric",1);
 
-	linphone_call_set_next_video_frame_decoded_callback(linphone_core_invite_address(pauline->lc,marie->identity)
-														,linphone_call_iframe_decoded_cb
-														,pauline->lc);
-
+	liblinphone_tester_set_next_video_frame_decoded_cb(linphone_core_invite_address(pauline->lc,marie->identity));
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingReceived,1,DEFAULT_WAIT_FOR));
 
@@ -1421,8 +1425,6 @@ static void video_early_media_call(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_early_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
 	LinphoneCall *pauline_to_marie;
-
-	linphone_core_set_video_device(pauline->lc, "Mire: Mire (synthetic moving picture)");
 
 	video_call_base_3(pauline, marie, TRUE, LinphoneMediaEncryptionNone, TRUE, TRUE);
 
@@ -1693,6 +1695,15 @@ static void video_call_recording_vp8_test(void) {
 	record_call("recording", TRUE, "VP8");
 }
 
+static void snapshot_taken(LinphoneCall *call, const char *filepath) {
+	char *filename = bc_tester_file("snapshot.jpeg");
+	LinphoneCore *lc = linphone_call_get_core(call);
+	stats *callstats = get_stats(lc);
+	BC_ASSERT_STRING_EQUAL(filepath, filename);
+	callstats->number_of_snapshot_taken++;
+	ms_free(filename);
+}
+
 static void video_call_snapshot(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -1700,7 +1711,6 @@ static void video_call_snapshot(void) {
 	LinphoneCallParams *paulineParams = linphone_core_create_call_params(pauline->lc, NULL);
 	LinphoneCall *callInst = NULL;
 	char *filename = bc_tester_file("snapshot.jpeg");
-	int dummy = 0;
 	bool_t call_succeeded = FALSE;
 
 	linphone_core_enable_video_capture(marie->lc, TRUE);
@@ -1712,12 +1722,73 @@ static void video_call_snapshot(void) {
 
 	BC_ASSERT_TRUE(call_succeeded = call_with_params(marie, pauline, marieParams, paulineParams));
 	BC_ASSERT_PTR_NOT_NULL(callInst = linphone_core_get_current_call(marie->lc));
-	if((call_succeeded == TRUE) && (callInst != NULL)) {
+	if (call_succeeded == TRUE && callInst != NULL) {
+		LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+		LinphoneCallCbs *marie_call_cbs = linphone_factory_create_call_cbs(linphone_factory_get());
+		BC_ASSERT_PTR_NOT_NULL(marie_call);
+		linphone_call_cbs_set_snapshot_taken(marie_call_cbs, snapshot_taken);
+		linphone_call_add_callbacks(marie_call, marie_call_cbs);
+		linphone_call_cbs_unref(marie_call_cbs);
 		int jpeg_support = linphone_call_take_video_snapshot(callInst, filename);
 		if (jpeg_support < 0) {
 			ms_warning("No jpegwriter support!");
 		} else {
-			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 5000);
+			BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_snapshot_taken,1));
+			BC_ASSERT_EQUAL(ortp_file_exist(filename), 0, int, "%d");
+			remove(filename);
+		}
+		end_call(marie, pauline);
+	}
+	ms_free(filename);
+	linphone_call_params_unref(marieParams);
+	linphone_call_params_unref(paulineParams);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void video_call_snapshots(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCallParams *marieParams = linphone_core_create_call_params(marie->lc, NULL);
+	LinphoneCallParams *paulineParams = linphone_core_create_call_params(pauline->lc, NULL);
+	LinphoneCall *callInst = NULL;
+	char *filename = bc_tester_file("snapshot.jpeg");
+	bool_t call_succeeded = FALSE;
+	int dummy = 0;
+
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, FALSE);
+	linphone_call_params_enable_video(marieParams, TRUE);
+	linphone_call_params_enable_video(paulineParams, TRUE);
+
+	BC_ASSERT_TRUE(call_succeeded = call_with_params(marie, pauline, marieParams, paulineParams));
+	BC_ASSERT_PTR_NOT_NULL(callInst = linphone_core_get_current_call(marie->lc));
+	if (call_succeeded == TRUE && callInst != NULL) {
+		LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+		LinphoneCallCbs *marie_call_cbs = linphone_factory_create_call_cbs(linphone_factory_get());
+		BC_ASSERT_PTR_NOT_NULL(marie_call);
+		linphone_call_cbs_set_snapshot_taken(marie_call_cbs, snapshot_taken);
+		linphone_call_add_callbacks(marie_call, marie_call_cbs);
+		linphone_call_cbs_unref(marie_call_cbs);
+		int jpeg_support = linphone_call_take_video_snapshot(callInst, filename);
+		if (jpeg_support < 0) {
+			ms_warning("No jpegwriter support!");
+		} else {
+			BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_snapshot_taken,1));
+			BC_ASSERT_EQUAL(ortp_file_exist(filename), 0, int, "%d");
+			remove(filename);
+
+			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 1000);
+			linphone_call_take_video_snapshot(callInst, filename);
+			BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_snapshot_taken,2));
+			BC_ASSERT_EQUAL(ortp_file_exist(filename), 0, int, "%d");
+			remove(filename);
+
+			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 1000);
+			linphone_call_take_video_snapshot(callInst, filename);
+			BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_snapshot_taken,3));
 			BC_ASSERT_EQUAL(ortp_file_exist(filename), 0, int, "%d");
 			remove(filename);
 		}
@@ -1894,7 +1965,6 @@ static void outgoing_reinvite_with_invalid_ack_sdp(void)  {
 	linphone_core_manager_destroy(caller);
 }
 
-#endif
 static void video_call_with_no_audio_and_no_video_codec(void){
 	LinphoneCoreManager* callee = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* caller = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
@@ -2072,8 +2142,108 @@ static void video_call_with_high_bandwidth_available(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void video_call_expected_fps_for_specified_bandwidth(int bandwidth, int fps, const char *resolution) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	LinphoneVideoPolicy pol = {0};
+	OrtpNetworkSimulatorParams simparams = { 0 };
+
+	if (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc)) >= 2) {
+		linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+		linphone_core_enable_video_capture(marie->lc, TRUE);
+		linphone_core_enable_video_display(marie->lc, TRUE);
+		linphone_core_enable_video_capture(pauline->lc, TRUE);
+		linphone_core_enable_video_display(pauline->lc, TRUE);
+
+		pol.automatically_accept = TRUE;
+		pol.automatically_initiate = TRUE;
+		linphone_core_set_video_policy(marie->lc, &pol);
+		linphone_core_set_video_policy(pauline->lc, &pol);
+
+		linphone_core_set_preferred_video_size_by_name(marie->lc, resolution);
+		simparams.mode = OrtpNetworkSimulatorOutbound;
+		simparams.enabled = TRUE;
+		simparams.max_bandwidth = (float)bandwidth;
+		simparams.max_buffer_size = bandwidth;
+		simparams.latency = 60;
+
+		linphone_core_set_network_simulator_params(marie->lc, &simparams);
+
+		if (BC_ASSERT_TRUE(call(marie, pauline))){
+			LinphoneCall *call = linphone_core_get_current_call(marie->lc);
+			VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
+			int count;
+			/*wait some time until the target fps is reached. Indeed the bandwidth measurement may take several iterations to converge
+			 to a value big enough to allow mediastreamer2 to switch to the high fps profile*/
+			
+			for (count = 0 ; count < 3; count++){
+				/*wait for at least the first TMMBR to arrive*/
+				BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 10000));
+				
+				if ((int)vstream->configured_fps == fps){
+					break;
+				}else{
+					/*target fps not reached yet, wait more time*/
+					wait_for_until(marie->lc, pauline->lc, NULL, 0, 2000);
+				}
+			}
+			BC_ASSERT_EQUAL((int)vstream->configured_fps, fps, int, "%d");
+			end_call(marie, pauline);
+		}
+	} else {
+		BC_PASS("Test requires at least a dual core");
+	}
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+/*
+ * This test simulates a video call with a lower bandwidth than the required_bitrate of the lowest given configuration.
+ * The stream from pauline to marie is not under test.
+ * It checks that after a few seconds marie, after receiving a TMMBR, has her fps set to the lowest given configuration.
+ * This test requires at least a computer with 2 CPUs.
+ *
+**/
+static void video_call_expected_fps_for_low_bandwidth(void) {
+#if defined(__ANDROID__) || (TARGET_OS_IPHONE == 1) || defined(__arm__) || defined(_M_ARM)
+	video_call_expected_fps_for_specified_bandwidth(80000, 10, "qvga");
+#else
+	video_call_expected_fps_for_specified_bandwidth(250000, 15, "vga");
+#endif
+}
+
+/*
+ * This test simulates a video call with a regular bandwidth that is between a given configuration.
+ * The stream from pauline to marie is not under test.
+ * It checks that after a few seconds marie, after receiving a TMMBR, has her fps set to the expected given configuration.
+ * This test requires at least a computer with 2 CPUs.
+ *
+**/
+static void video_call_expected_fps_for_regular_bandwidth(void) {
+#if defined(__ANDROID__) || (TARGET_OS_IPHONE == 1) || defined(__arm__) || defined(_M_ARM)
+	video_call_expected_fps_for_specified_bandwidth(500000, 12, "vga");
+#else
+	video_call_expected_fps_for_specified_bandwidth(450000, 25, "vga");
+#endif
+}
+
+/*
+ * This test simulates a video call with a higher bandwidth than the bitrate_limit of the highest given configuration.
+ * The stream from pauline to marie is not under test.
+ * It checks that after a few seconds marie, after receiving a TMMBR, has her fps set to the highest given configuration.
+ * This test requires at least a computer with 2 CPUs.
+ *
+**/
+static void video_call_expected_fps_for_high_bandwidth(void) {
+#if defined(__ANDROID__) || (TARGET_OS_IPHONE == 1) || defined(__arm__) || defined(_M_ARM)
+	video_call_expected_fps_for_specified_bandwidth(400000, 12, "qcif");
+#else
+	video_call_expected_fps_for_specified_bandwidth(5000000, 30, "vga");
+#endif
+}
+
 test_t call_video_tests[] = {
-#ifdef VIDEO_ENABLED
 	TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
 	TEST_NO_TAG("Call paused resumed with video no sdp ack", call_paused_resumed_with_no_sdp_ack),
 	TEST_NO_TAG("Call paused resumed with video no sdk ack using video policy for resume offers", call_paused_resumed_with_no_sdp_ack_using_video_policy),
@@ -2122,6 +2292,7 @@ test_t call_video_tests[] = {
 	TEST_NO_TAG("Video call recording (H264)", video_call_recording_h264_test),
 	TEST_NO_TAG("Video call recording (VP8)", video_call_recording_vp8_test),
 	TEST_NO_TAG("Snapshot", video_call_snapshot),
+	TEST_NO_TAG("Snapshots", video_call_snapshots),
 	TEST_NO_TAG("Video call with early media and no matching audio codecs", video_call_with_early_media_no_matching_audio_codecs),
 	TEST_NO_TAG("DTLS SRTP video call", dtls_srtp_video_call),
 	TEST_ONE_TAG("DTLS SRTP ice video call", dtls_srtp_ice_video_call, "ICE"),
@@ -2140,9 +2311,13 @@ test_t call_video_tests[] = {
 	TEST_NO_TAG("Video call with no audio and no video codec", video_call_with_no_audio_and_no_video_codec),
 	TEST_NO_TAG("Call with early media and no SDP in 200 Ok with video", call_with_early_media_and_no_sdp_in_200_with_video),
 	TEST_NO_TAG("Video call with thin congestion", video_call_with_thin_congestion),
-	TEST_NO_TAG("Video call with high bandwidth available", video_call_with_high_bandwidth_available)
-#endif
+	TEST_NO_TAG("Video call with high bandwidth available", video_call_with_high_bandwidth_available),
+	TEST_NO_TAG("Video call expected FPS for low bandwidth", video_call_expected_fps_for_low_bandwidth),
+	TEST_NO_TAG("Video call expected FPS for regular bandwidth", video_call_expected_fps_for_regular_bandwidth),
+	TEST_NO_TAG("Video call expected FPS for high bandwidth", video_call_expected_fps_for_high_bandwidth)
 };
 
 test_suite_t call_video_test_suite = {"Video Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
 								sizeof(call_video_tests) / sizeof(call_video_tests[0]), call_video_tests};
+
+#endif // ifdef VIDEO_ENABLED

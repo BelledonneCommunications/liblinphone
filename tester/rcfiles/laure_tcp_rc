@@ -4,9 +4,9 @@ x3dh_server_url=https://shuttle-debian8/mtanon/tools/wizard_and_remote_provision
 lime_update_threshold=86400
 
 [sip]
-sip_port=5092
-sip_tcp_port=5092
-sip_tls_port=5093
+sip_port=-1
+sip_tcp_port=-1
+sip_tls_port=-1
 default_proxy=0
 ping_with_options=0
 

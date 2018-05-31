@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "c-wrapper/c-wrapper.h"
 
+#include "address/address-p.h"
+
 // TODO: From coreapi. Remove me later.
 #include "private.h"
 
@@ -145,6 +147,7 @@ LinphoneFactory *linphone_factory_get(void) {
 }
 
 void linphone_factory_clean(void){
+	LinphonePrivate::AddressPrivate::clearSipAddressesCache();
 	if (_factory){
 		belle_sip_object_unref(_factory);
 		_factory = NULL;
@@ -164,6 +167,7 @@ static LinphoneCore *_linphone_factory_create_core (
 	LpConfig *config = lp_config_new_with_factory(config_path, factory_config_path);
 	LinphoneCore *lc = _linphone_core_new_with_config(cbs, config, user_data, system_context, automatically_start);
 	lp_config_unref(config);
+	bctbx_uninit_logger();
 	return lc;
 }
 
@@ -434,4 +438,8 @@ void linphone_factory_set_log_collection_path(LinphoneFactory *factory, const ch
 
 void linphone_factory_enable_log_collection(LinphoneFactory *factory, LinphoneLogCollectionState state) {
 	linphone_core_enable_log_collection(state);
+}
+
+LinphoneTunnelConfig *linphone_factory_create_tunnel_config(LinphoneFactory *factory) {
+	return linphone_tunnel_config_new();
 }

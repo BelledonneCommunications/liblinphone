@@ -141,6 +141,23 @@ private:
 	void setSearchCache(std::list<SearchResult> *cache);
 
 	/**
+	 * Get all address from call log
+	 * @param[in] filter word we search
+	 * @param[in] withDomain domain which we want to search only
+	 * @return all address from call log which match in a SearchResult list
+	 * @private
+	 **/
+	std::list<SearchResult> getAddressFromCallLog(const std::string &filter, const std::string &withDomain);
+
+	/**
+	 * Get all friends as SearchResult
+	 * @param[in] withDomain domain which we want to search only
+	 * @return all friends in a SearchResult list
+	 * @private
+	 **/
+	std::list<SearchResult> getFriends(const std::string &withDomain);
+
+	/**
 	 * Begin the search from friend list
 	 * @param[in] filter word we search
 	 * @param[in] withDomain domain which we want to search only
@@ -161,9 +178,10 @@ private:
 	 * @param[in] lFriend friend whose informations will be check
 	 * @param[in] filter word we search
 	 * @param[in] withDomain domain which we want to search only
+	 * @return list of result from friend
 	 * @private
 	 **/
-	SearchResult searchInFriend(const LinphoneFriend* lFriend, const std::string &filter, const std::string &withDomain);
+	std::list<SearchResult> searchInFriend(const LinphoneFriend* lFriend, const std::string &filter, const std::string &withDomain);
 
 	/**
 	 * Search informations in address given
@@ -191,6 +209,10 @@ private:
 	 * @private
 	 **/
 	bool checkDomain(const LinphoneFriend* lFriend, const LinphoneAddress *lAddress, const std::string &withDomain) const;
+
+	void addResultsToResultsList(std::list<SearchResult> &results, std::list<SearchResult> &srL);
+
+	std::list<SearchResult> *uniqueItemsList(std::list<SearchResult> &list);
 
 	L_DECLARE_PRIVATE(MagicSearch);
 };
