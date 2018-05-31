@@ -65,7 +65,11 @@ void Cpim::Message::addMessageHeader (const Header &messageHeader, const string 
 		d->messageHeaders[ns] = make_shared<Cpim::MessagePrivate::PrivHeaderList>();
 
 	auto list = d->messageHeaders.at(ns);
-	list->push_back(Parser::getInstance()->cloneHeader(messageHeader));
+	auto clonedHeader = Parser::getInstance()->cloneHeader(messageHeader);
+	if (clonedHeader == nullptr){
+		lFatal() << "Cannot add CPIM header " << messageHeader.getName() << " with value " << messageHeader.getValue(); // merge conflit avec le fix de return false de mickael
+	}
+	list->push_back(clonedHeader);
 }
 
 void Cpim::Message::removeMessageHeader (const Header &messageHeader, const string &ns) {
