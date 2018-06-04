@@ -1,5 +1,5 @@
 /*
- * cpim-chat-message-modifier.h
+ * lime-v2.h
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or

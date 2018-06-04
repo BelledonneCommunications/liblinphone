@@ -1,5 +1,5 @@
 /*
- * encryption-chat-message-modifier.cpp
+ * lime-v2.cpp
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,9 @@
 
 #include "chat/chat-room/abstract-chat-room.h"
 #include "content/content-manager.h"
+#include "content/header/header-param.h"
 #include "conference/participant-p.h"
+#include "conference/participant-device.h"
 #include "lime-v2.h"
 #include "private.h"
 
@@ -86,14 +88,11 @@ void BelleSipLimeManager::processAuthRequested (void *data, belle_sip_auth_event
 	const char *username = belle_sip_auth_event_get_username(event);
 	const char *domain = belle_sip_auth_event_get_domain(event);
 
-// 	printf("[LIMEv2] finding auth_info for:\nrealm = %s\nusername = %s\ndomain = %s\n", realm, username, domain);
 	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(lc, realm, username, domain);
 
 	if (auth_info) {
 		const char *auth_username = linphone_auth_info_get_username(auth_info);
 		const char *auth_password = linphone_auth_info_get_password(auth_info);
-// 		printf("setting auth event username = %s\n", auth_username);
-// 		printf("setting auth event password = %s\n", auth_password);
 		belle_sip_auth_event_set_username(event, auth_username);
 		belle_sip_auth_event_set_passwd(event, auth_password);
 	}
@@ -144,16 +143,26 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	ChatMessageModifier::Result result = ChatMessageModifier::Result::Suspended;
 
     shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	const string &localDeviceId = chatRoom->getMe()->getPrivate()->getDevices().front()->getAddress().asString();
+	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 	const IdentityAddress &peerAddress = chatRoom->getPeerAddress();
+
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
 
+	// Add participants to the recipient list
 	auto recipients = make_shared<vector<lime::RecipientData>>();
 	const list<shared_ptr<Participant>> participants = chatRoom->getParticipants();
-	for (const shared_ptr<Participant> &p : participants) {
-		const list<shared_ptr<ParticipantDevice>> devices = p->getPrivate()->getDevices();
-		for (const shared_ptr<ParticipantDevice> &pd : devices) {
-			recipients->emplace_back(pd->getAddress().asString());
+	for (const shared_ptr<Participant> &participant : participants) {
+		const list<shared_ptr<ParticipantDevice>> devices = participant->getPrivate()->getDevices();
+		for (const shared_ptr<ParticipantDevice> &device : devices) {
+			recipients->emplace_back(device->getAddress().asString());
+		}
+	}
+
+	// Add potential other devices of the sender
+	const list<shared_ptr<ParticipantDevice>> senderDevices = chatRoom->getMe()->getPrivate()->getDevices();
+	for (const auto &senderDevice : senderDevices) {
+		if (senderDevice->getAddress() != chatRoom->getLocalAddress()) {
+			recipients->emplace_back(senderDevice->getAddress().asString());
 		}
 	}
 
@@ -163,24 +172,21 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 
 	belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [recipients, cipherMessage, message, &result] (lime::CallbackReturn returnCode, string errorMessage) {
 		if (returnCode == lime::CallbackReturn::success) {
+			list<Content *> contents;
 
-			list<Content> contents;
-
-			// ---------------------------------------------- HEADER
+			// ---------------------------------------------- HEADERS
 
 			for (const auto &recipient : *recipients) {
-
 				vector<uint8_t> encodedCipher = encodeBase64(recipient.DRmessage);
 				vector<char> cipherHeaderB64(encodedCipher.begin(), encodedCipher.end());
-
-				Content cipherHeaderContent;
-				cipherHeaderContent.setBody(cipherHeaderB64);
-				cipherHeaderContent.setContentType(ContentType::LimeKey);
-				cipherHeaderContent.addHeader("Content-Id", recipient.deviceId);
-				stringstream contentDescription;
-				contentDescription << "Key for " << message->getToAddress().asString();
-				cipherHeaderContent.addHeader("Content-Description", contentDescription.str());
+				Content *cipherHeaderContent = new Content();
+				cipherHeaderContent->setBody(cipherHeaderB64);
+				cipherHeaderContent->setContentType(ContentType::LimeKey);
+				cipherHeaderContent->addHeader("Content-Id", recipient.deviceId);
+				Header contentDescription("Content-Description", "Cipher key");
+				cipherHeaderContent->addHeader(contentDescription);
 				contents.push_back(move(cipherHeaderContent));
+// 				delete cipherHeaderContent;
 			}
 
 			// ---------------------------------------------- MESSAGE
@@ -188,14 +194,14 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 			const vector<uint8_t> *binaryCipherMessage = cipherMessage.get();
 			vector<uint8_t> encodedMessage = encodeBase64(*binaryCipherMessage);
 			vector<char> cipherMessageB64(encodedMessage.begin(), encodedMessage.end());
-
-			Content cipherMessageContent;
-			cipherMessageContent.setBody(cipherMessageB64);
-			cipherMessageContent.setContentType(ContentType::OctetStream);
-			cipherMessageContent.addHeader("Content-Description", "Encrypted Message");
+			Content *cipherMessageContent = new Content();
+			cipherMessageContent->setBody(cipherMessageB64);
+			cipherMessageContent->setContentType(ContentType::OctetStream);
+			cipherMessageContent->addHeader("Content-Description", "Encrypted message");
 			contents.push_back(move(cipherMessageContent));
+// 			delete cipherMessageContent;
 
-			Content finalContent = ContentManager::contentListToMultipart(contents);
+			Content finalContent = ContentManager::contentListToMultipart(contents, MultipartBoundary, true);
 
 			message->setInternalContent(finalContent);
 			message->send();
@@ -212,75 +218,69 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
 	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 
-	const string &localDeviceId = chatRoom->getMe()->getPrivate()->getDevices().front()->getAddress().asString(); // TODO cfg->contact_address
+	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 	const string &recipientUserId = chatRoom->getPeerAddress().getAddressWithoutGruu().asString();
-	const string &senderDeviceId = chatRoom->getParticipants().front()->getPrivate()->getDevices().front()->getAddress().asString(); // TODO find the correct participant
+	const string &senderDeviceId = chatRoom->getParticipants().front()->getPrivate()->getDevices().front()->getAddress().asString(); // TODO find the correct sender participant
 
-	// debug
-	auto participants = chatRoom->getParticipants();
-	list<shared_ptr<ParticipantDevice>> devices;
-	cout << endl << "[" << chatRoom->getMe()->getPrivate()->getDevices().front()->getAddress().getUsername() << "]" << endl;
-	cout << "list of participants:" << endl;
-	for (const auto &participant : participants) {
-		devices = participant->getPrivate()->getDevices();
-		for (const auto &device : devices) {
-			cout << device->getAddress().asString() << endl;
-		}
-	}
-	const string &from_address = message->getFromAddress().asString();
-
-	cout << "From address = " << from_address << endl;
-	cout << "senderDeviceId = " << senderDeviceId << endl;
-
-	Content content;
-	ContentType contentType = ContentType::Multipart;
-	contentType.setParameter("boundary=-----------------------------14737809831466499882746641449");
-	content.setContentType(contentType);
-
+	Content internalContent;
+	message->getContents();
 	if (message->getInternalContent().isEmpty()) {
 		BCTBX_SLOGE << "LIMEv2: no internal content";
 		if (message->getContents().front()->isEmpty()) {
 			BCTBX_SLOGE << "LIMEv2: no content in received message";
 		}
-		vector<char> cipherBody(message->getContents().front()->getBody());
+		internalContent = *message->getContents().front();
 	}
-	vector<char> cipherBody(message->getInternalContent().getBody());
-	content.setBody(cipherBody);
+	internalContent = message->getInternalContent();
 
-	list<Content> contentList = ContentManager::multipartToContentList(content);
+	ContentType expectedContentType = ContentType::Encrypted;
+	expectedContentType.addParameter("boundary", MultipartBoundary);
+	if (internalContent.getContentType() != expectedContentType) {
+		BCTBX_SLOGE << "LIMEv2: unexpected content-type: " << internalContent.getContentType();
+		return ChatMessageModifier::Result::Error;
+	}
+	list<Content> contentList = ContentManager::multipartToContentList(internalContent);
 
-	// ---------------------------------------------- HEADER
+	// ---------------------------------------------- HEADERS
 
-	const vector<uint8_t> &cipherHeader = [&]() {
+	const vector<uint8_t> &cipherHeader = [contentList, localDeviceId]() {
 		for (const auto &content : contentList) {
 			if (content.getContentType() != ContentType::LimeKey)
 				continue;
 
-			for (const auto &header : content.getHeaders()) {
-				if (header.second == localDeviceId) {
-					const vector<uint8_t> &cipherHeader = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
-					return cipherHeader;
-				}
+			// TODO workaround because GRUU is parsed as a parameter by content-manager
+			Header headerDeviceId = content.getHeader("Content-Id");
+			list<HeaderParam> params = headerDeviceId.getParameters();
+			HeaderParam gruuParam;
+			for (const auto &param : params) {
+				if (param.getName() == "gr")
+					gruuParam = param;
+			}
+
+			const string &recomposedGruu = headerDeviceId.getValue() + gruuParam.asString();
+			if (recomposedGruu == localDeviceId) {
+				const vector<uint8_t> &cipherHeader = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
+				return cipherHeader;
 			}
 		}
-		BCTBX_SLOGE << "LIMEv2: unexpected content-type: " << content.getContentType().asString();
-		//TODO return nothing or null value
-		const vector<uint8_t> &cipherHeader = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
+		BCTBX_SLOGE << "LIMEv2: no cipher header found";
+		// TODO return nothing or null value
+		const vector<uint8_t> cipherHeader;
 		return cipherHeader;
 	}();
 
 	// ---------------------------------------------- MESSAGE
 
-	const vector<uint8_t> &cipherMessage = [&]() {
+	const vector<uint8_t> &cipherMessage = [contentList]() {
 		for (const auto &content : contentList) {
 			if (content.getContentType() == ContentType::OctetStream) {
 				const vector<uint8_t> &cipherMessage = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
 				return cipherMessage;
 			}
 		}
-		BCTBX_SLOGE << "LIMEv2: unexpected content-type: " << content.getContentType().asString();
-		//TODO return nothing or null value
-		const vector<uint8_t> &cipherMessage = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
+		BCTBX_SLOGE << "LIMEv2: no cipher message found";
+		// TODO return nothing or null value
+		const vector<uint8_t> cipherMessage;
 		return cipherMessage;
 	}();
 
@@ -318,69 +318,25 @@ void LimeV2::update (LinphoneConfig *lpconfig) {
 
 bool LimeV2::encryptionEnabledForFileTransferCb (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	// TODO Work in progress
-
-	// get the callback telling whether or not to encrypt the files ?
-
-	// default value ?
-
-	// expected behaviour ?
 	return false;
 }
 
 void LimeV2::generateFileTransferKeyCb (const shared_ptr<AbstractChatRoom> &chatRoom, const shared_ptr<ChatMessage> &message) {
 	// TODO Work in progress
-
-	/** in LIMEv1
-	 *
-	char keyBuffer [FILE_TRANSFER_KEY_SIZE]; // temporary storage of generated key: 192 bits of key + 64 bits of initial vector
-	// generate a random 192 bits key + 64 bits of initial vector and store it into the file_transfer_information->key field of the msg
-	sal_get_random_bytes((unsigned char *)keyBuffer, FILE_TRANSFER_KEY_SIZE);
-	LinphoneContent *content = linphone_chat_message_get_file_transfer_information(msg);
-	if (!content)
-		return;
-	linphone_content_set_key(content, keyBuffer, FILE_TRANSFER_KEY_SIZE); // key is duplicated in the content private structure
-	linphone_content_unref(content);
-	*/
 }
 
 int LimeV2::downloadingFileCb (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) {
 	// TODO Work in progress
-
-	// get encrypted buffer from content
-
-	// check file transfer key
-
-	// decrypt encrypted buffer
-
-	// return result code
-
-	//message->isFileTransferInProgress();
-	//message->downloadFile();
-	//message->cancelFileTransfer();
-
-	// see lime_im_encryption_engine_process_downloading_file_cb in lime.c
-
 	return 0;
 }
 
 int LimeV2::uploadingFileCb (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *encrypted_buffer) {
 	// TODO Work in progress
-
-	// get file transfer key
-
-	// encrypt content
-
-	// check encrypted content size
-
-	// return result code
-
-	// see lime_im_encryption_engine_process_downloading_file_cb in lime.c
-
 	return 0;
 }
 
 void LimeV2::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
-	// work in progress
+	// TODO Work in progress
 }
 
 std::shared_ptr<BelleSipLimeManager> LimeV2::getLimeManager () {
@@ -404,14 +360,6 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 		IdentityAddress ia = IdentityAddress(linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg)));
 		string localDeviceId = ia.asString();
 
-// 		const LinphoneAddress *addr = linphone_proxy_config_get_identity_address(cfg);
-// 		cout << "[Register] domain = " << linphone_address_get_domain(addr) << endl;
-// 		localDeviceId = linphone_address_as_string(addr);
-
-		// TODO may not be necessary
-// 		if (localDeviceId == "")
-// 			return;
-
 		stringstream operation;
 		operation << "create user " << localDeviceId;
 		lime::limeCallback callback = setLimeCallback(operation.str());
@@ -421,12 +369,10 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 
 		try {
 			// create user if not exist
-			cout << "[Register] trying to create lime user = " << localDeviceId << endl;
 			belleSipLimeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
 			lastLimeUpdate = ms_time(NULL);
 			lp_config_set_int(lpconfig, "misc", "last_lime_update_time", (int)lastLimeUpdate);
 		} catch (const exception &e) {
-			cout << "[Register] user already exists" << endl;
 			ms_message("%s while creating lime user\n", e.what());
 
 			// update keys if necessary
