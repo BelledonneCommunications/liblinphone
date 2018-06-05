@@ -91,7 +91,7 @@ static inline vector<char> blobToVector (soci::blob &in) {
 	if (!len)
 		return vector<char>();
 	vector<char> out(len);
-	in.read_from_start(&out[0], len);
+	in.read(0, &out[0], len);
 	return out;
 }
 
@@ -362,8 +362,6 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 		soci::use(lastUpdateTime), soci::use(capabilities), soci::use(subject), soci::use(flags), soci::use(notifyId);
 
 	id = dbSession.getLastInsertId();
-	if (!chatRoom->canHandleParticipants())
-		return id;
 
 	// Do not add 'me' when creating a server-group-chat-room.
 	if (chatRoomId.getLocalAddress() != chatRoomId.getPeerAddress()) {

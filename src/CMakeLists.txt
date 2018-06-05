@@ -410,7 +410,8 @@ if(ENABLE_STATIC)
 	)
 endif()
 if(ENABLE_SHARED)
-	add_library(linphone SHARED "../share/cpim_grammar" ${LINPHONE_HEADER_FILES}
+	set(LINPHONE_RESOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../share/cpim_grammar") #keep it relative to current dir to allow CMakeList inclusion
+	add_library(linphone SHARED ${LINPHONE_RESOURCES} ${LINPHONE_HEADER_FILES}
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi>
 	)
@@ -426,7 +427,7 @@ if(ENABLE_SHARED)
 			FRAMEWORK TRUE
 			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphone
 			MACOSX_FRAMEWORK_INFO_PLIST Info.plist.in
-			RESOURCE "../share/cpim_grammar"
+			RESOURCE ${LINPHONE_RESOURCES}
 		)
 	endif()
 	if(BELCARD_FOUND)
