@@ -53,6 +53,7 @@ const ContentType ContentType::PlainText("text/plain");
 const ContentType ContentType::ResourceLists("application/resource-lists+xml");
 const ContentType ContentType::Rlmi("application/rlmi+xml");
 const ContentType ContentType::Sdp("application/sdp");
+const ContentType ContentType::SipFrag("message/sipfrag");
 
 // -----------------------------------------------------------------------------
 

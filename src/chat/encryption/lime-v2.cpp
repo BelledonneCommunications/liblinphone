@@ -170,23 +170,29 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	shared_ptr<const vector<uint8_t>> plainMessage = make_shared<const vector<uint8_t>>(plainStringMessage.begin(), plainStringMessage.end());
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
-	belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [recipients, cipherMessage, message, &result] (lime::CallbackReturn returnCode, string errorMessage) {
+	belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, &result] (lime::CallbackReturn returnCode, string errorMessage) {
 		if (returnCode == lime::CallbackReturn::success) {
 			list<Content *> contents;
+
+			// ---------------------------------------------- SIPFRAG
+
+			Content *sipfrag = new Content();
+			sipfrag->setBody(localDeviceId);
+			sipfrag->setContentType(ContentType::SipFrag);
+			contents.push_back(move(sipfrag));
 
 			// ---------------------------------------------- HEADERS
 
 			for (const auto &recipient : *recipients) {
 				vector<uint8_t> encodedCipher = encodeBase64(recipient.DRmessage);
 				vector<char> cipherHeaderB64(encodedCipher.begin(), encodedCipher.end());
-				Content *cipherHeaderContent = new Content();
-				cipherHeaderContent->setBody(cipherHeaderB64);
-				cipherHeaderContent->setContentType(ContentType::LimeKey);
-				cipherHeaderContent->addHeader("Content-Id", recipient.deviceId);
+				Content *cipherHeader = new Content();
+				cipherHeader->setBody(cipherHeaderB64);
+				cipherHeader->setContentType(ContentType::LimeKey);
+				cipherHeader->addHeader("Content-Id", recipient.deviceId);
 				Header contentDescription("Content-Description", "Cipher key");
-				cipherHeaderContent->addHeader(contentDescription);
-				contents.push_back(move(cipherHeaderContent));
-// 				delete cipherHeaderContent;
+				cipherHeader->addHeader(contentDescription);
+				contents.push_back(move(cipherHeader));
 			}
 
 			// ---------------------------------------------- MESSAGE
@@ -194,18 +200,22 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 			const vector<uint8_t> *binaryCipherMessage = cipherMessage.get();
 			vector<uint8_t> encodedMessage = encodeBase64(*binaryCipherMessage);
 			vector<char> cipherMessageB64(encodedMessage.begin(), encodedMessage.end());
-			Content *cipherMessageContent = new Content();
-			cipherMessageContent->setBody(cipherMessageB64);
-			cipherMessageContent->setContentType(ContentType::OctetStream);
-			cipherMessageContent->addHeader("Content-Description", "Encrypted message");
-			contents.push_back(move(cipherMessageContent));
-// 			delete cipherMessageContent;
+			Content *cipherMessage = new Content();
+			cipherMessage->setBody(cipherMessageB64);
+			cipherMessage->setContentType(ContentType::OctetStream);
+			cipherMessage->addHeader("Content-Description", "Encrypted message");
+			contents.push_back(move(cipherMessage));
 
 			Content finalContent = ContentManager::contentListToMultipart(contents, MultipartBoundary, true);
 
 			message->setInternalContent(finalContent);
 			message->send();
 			result = ChatMessageModifier::Result::Done;
+
+			// TODO can be improved
+			for (const auto &content : contents) {
+				delete content;
+			}
 		} else {
 			BCTBX_SLOGE << "Lime operation failed: " << errorMessage;
 			result = ChatMessageModifier::Result::Error;
@@ -220,7 +230,6 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 
 	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 	const string &recipientUserId = chatRoom->getPeerAddress().getAddressWithoutGruu().asString();
-	const string &senderDeviceId = chatRoom->getParticipants().front()->getPrivate()->getDevices().front()->getAddress().asString(); // TODO find the correct sender participant
 
 	Content internalContent;
 	message->getContents();
@@ -240,6 +249,23 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 		return ChatMessageModifier::Result::Error;
 	}
 	list<Content> contentList = ContentManager::multipartToContentList(internalContent);
+
+	// ---------------------------------------------- SIPFRAG
+
+	const string &senderDeviceId = [contentList]() {
+		string senderDeviceId;
+		for (const auto &content : contentList) {
+			if (content.getContentType() != ContentType::SipFrag)
+				continue;
+			senderDeviceId = content.getBodyAsUtf8String();
+			const string &result = senderDeviceId;
+			return result;
+		}
+		// TODO return nothing or null value
+		BCTBX_SLOGE << "LIMEv2: no sipfrag found";
+		const string &result = senderDeviceId;
+		return result;
+	}();
 
 	// ---------------------------------------------- HEADERS
 
@@ -263,8 +289,8 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 				return cipherHeader;
 			}
 		}
-		BCTBX_SLOGE << "LIMEv2: no cipher header found";
 		// TODO return nothing or null value
+		BCTBX_SLOGE << "LIMEv2: no cipher header found";
 		const vector<uint8_t> cipherHeader;
 		return cipherHeader;
 	}();
@@ -278,8 +304,8 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 				return cipherMessage;
 			}
 		}
-		BCTBX_SLOGE << "LIMEv2: no cipher message found";
 		// TODO return nothing or null value
+		BCTBX_SLOGE << "LIMEv2: no cipher message found";
 		const vector<uint8_t> cipherMessage;
 		return cipherMessage;
 	}();

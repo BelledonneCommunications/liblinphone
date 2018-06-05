@@ -77,6 +77,7 @@ public:
 	static const ContentType ResourceLists;
 	static const ContentType Rlmi;
 	static const ContentType Sdp;
+	static const ContentType SipFrag;
 
 private:
 	L_DECLARE_PRIVATE(ContentType);
