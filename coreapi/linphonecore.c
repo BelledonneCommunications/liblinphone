@@ -6829,7 +6829,7 @@ bool_t linphone_core_media_encryption_supported(const LinphoneCore *lc, Linphone
 }
 
 LinphoneStatus linphone_core_set_media_encryption(LinphoneCore *lc, LinphoneMediaEncryption menc) {
-	const char *type="none";
+	const char *type="zrtp";
 	int ret=-1;
 
 	switch(menc){
@@ -6876,15 +6876,15 @@ LinphoneMediaEncryption linphone_core_get_media_encryption(LinphoneCore *lc) {
 	const char* menc = lp_config_get_string(lc->config, "sip", "media_encryption", NULL);
 
 	if (menc == NULL)
-		return LinphoneMediaEncryptionNone;
+		return LinphoneMediaEncryptionZRTP;
 	else if (strcmp(menc, "srtp")==0)
 		return LinphoneMediaEncryptionSRTP;
 	else if (strcmp(menc, "dtls")==0)
 		return LinphoneMediaEncryptionDTLS;
-	else if (strcmp(menc, "zrtp")==0)
-		return LinphoneMediaEncryptionZRTP;
-	else
+	else if (strcmp(menc, "none")==0)
 		return LinphoneMediaEncryptionNone;
+	else
+		return LinphoneMediaEncryptionZRTP;
 }
 
 bool_t linphone_core_is_media_encryption_mandatory(LinphoneCore *lc) {

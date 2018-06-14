@@ -1304,13 +1304,13 @@ static void linphone_gtk_media_encryption_changed(GtkWidget *combo){
 		}else if (strcasecmp(selected,"DTLS")==0){
 			linphone_core_set_media_encryption(lc,LinphoneMediaEncryptionDTLS);
 			gtk_widget_set_sensitive(mandatory_box,TRUE);
-		}else if (strcasecmp(selected,"ZRTP")==0){
-			linphone_core_set_media_encryption(lc,LinphoneMediaEncryptionZRTP);
-			gtk_widget_set_sensitive(mandatory_box,TRUE);
-		} else {
+		}else if (strcasecmp(selected,"None")==0){
 			linphone_core_set_media_encryption(lc,LinphoneMediaEncryptionNone);
 			gtk_widget_set_sensitive(mandatory_box,FALSE);
 			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mandatory_box), FALSE);
+		} else {
+			linphone_core_set_media_encryption(lc,LinphoneMediaEncryptionZRTP);
+			gtk_widget_set_sensitive(mandatory_box,TRUE);
 		}
 		g_free(selected);
 	}else g_warning("gtk_combo_box_get_active_text() returned NULL");
