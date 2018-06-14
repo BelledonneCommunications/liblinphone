@@ -529,6 +529,15 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::Encryption;
 	}
 
+	// If LIMEv2 is enabled, it sets the authenticatedFromAddress as the decypted CPIM From Address
+	// If not it must be set here as the SIP From address
+	if (!core->limeV2Enabled()) {
+		if (q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Basic) {
+			IdentityAddress sipFromAddress = q->getSharedFromThis()->getFromAddress();
+			q->getSharedFromThis()->getPrivate()->setAuthenticatedFromAddress(sipFromAddress);
+		}
+	}
+
 	if ((currentRecvStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
 		lInfo() << "Cpim step already done, skipping";
 	} else {
@@ -985,6 +994,11 @@ bool ChatMessage::isRead () const {
 		return true;
 
 	return d->state == State::Delivered || d->state == State::Displayed || d->state == State::DeliveredToUser;
+}
+
+const IdentityAddress &ChatMessage::getAuthenticatedFromAddress () const {
+	L_D();
+	return d->authenticatedFromAddress;
 }
 
 const IdentityAddress &ChatMessage::getFromAddress () const {

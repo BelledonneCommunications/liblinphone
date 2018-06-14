@@ -70,6 +70,10 @@ public:
 
 	void setImdnMessageId (const std::string &imdnMessageId);
 
+	void setAuthenticatedFromAddress (const IdentityAddress &authenticatedFromAddress) {
+		this->authenticatedFromAddress = authenticatedFromAddress;
+	}
+
 	void forceFromAddress (const IdentityAddress &fromAddress) {
 		this->fromAddress = fromAddress;
 	}
@@ -208,6 +212,7 @@ private:
 	std::weak_ptr<AbstractChatRoom> chatRoom;
 	ChatRoomId chatRoomId;
 	IdentityAddress fromAddress;
+	IdentityAddress authenticatedFromAddress;
 	IdentityAddress toAddress;
 
 	ChatMessage::State state = ChatMessage::State::Idle;

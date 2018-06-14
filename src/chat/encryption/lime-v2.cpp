@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include "chat/chat-message/chat-message-p.h"
+#include "chat/chat-room/chat-room.h"
 #include "chat/chat-room/abstract-chat-room.h"
 #include "content/content-manager.h"
 #include "content/header/header-param.h"
@@ -332,6 +334,9 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	finalContent.setBodyFromUtf8(plainMessageString);
 	message->setInternalContent(finalContent);
 
+	// Set the contact in sipfrag as the authenticatedFromAddress for sender authentication
+	IdentityAddress sipfragAddress(senderDeviceId);
+	message->getPrivate()->setAuthenticatedFromAddress(sipfragAddress);
 	// Test errorCode
 	return ChatMessageModifier::Result::Done;
 }
