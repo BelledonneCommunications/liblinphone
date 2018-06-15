@@ -620,7 +620,11 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 	lInfo() << q << ": Inviting device '" << device->getAddress().asString() << "'";
 	shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 	shared_ptr<CallSession> session = device->getSession();
-	if (!session) {
+	if (!session
+		|| (session->getState() == CallSession::State::End)
+		|| (session->getState() == CallSession::State::Error)
+		|| (session->getState() == CallSession::State::Released)
+	) {
 		CallSessionParams csp;
 		session = participant->getPrivate()->createSession(*q, &csp, false, this);
 		session->configure(LinphoneCallOutgoing, nullptr, nullptr, qConference->getPrivate()->conferenceAddress, device->getAddress());
