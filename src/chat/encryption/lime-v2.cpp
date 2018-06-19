@@ -429,8 +429,12 @@ lime::limeCallback LimeV2::setLimeCallback (string operation) {
 void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const string &message) {
 	if (state == LinphoneRegistrationState::LinphoneRegistrationOk) {
 
+		char *contactAddress = linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg));
+		IdentityAddress ia = IdentityAddress(contactAddress);
 		IdentityAddress ia = IdentityAddress(linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg)));
 		string localDeviceId = ia.asString();
+		if (contactAddress)
+			ms_free(contactAddress);
 
 		stringstream operation;
 		operation << "create user " << localDeviceId;

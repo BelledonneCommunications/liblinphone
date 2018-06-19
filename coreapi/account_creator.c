@@ -291,7 +291,9 @@ static void _linphone_account_creator_destroy(LinphoneAccountCreator *creator) {
 	}
 	
 	linphone_account_creator_cbs_unref(creator->cbs);
-	linphone_proxy_config_unref(creator->proxy_cfg);
+	if (creator->proxy_cfg) {
+		linphone_proxy_config_unref(creator->proxy_cfg);
+	}
 	linphone_account_creator_reset(creator);
 }
 
@@ -374,7 +376,17 @@ void linphone_account_creator_set_user_data(LinphoneAccountCreator *creator, voi
 }
 
 void linphone_account_creator_set_proxy_config(LinphoneAccountCreator *creator, LinphoneProxyConfig *cfg) {
-	creator->proxy_cfg = cfg;
+	LinphoneProxyConfig *old_cfg = creator->proxy_cfg;
+
+	if (cfg) {
+		creator->proxy_cfg = linphone_proxy_config_ref(cfg);
+	} else {
+		creator->proxy_cfg = NULL;
+	}
+
+	if (old_cfg) {
+		linphone_proxy_config_unref(old_cfg);
+	}
 }
 
 LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_username(LinphoneAccountCreator *creator, const char *username) {
