@@ -126,6 +126,7 @@ BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_pr
 }
 
 LimeV2::LimeV2 (const std::__cxx11::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc) {
+	engineType = EncryptionEngineListener::EngineType::LimeV2;
 	x3dhServerUrl = linphone_config_get_string(linphone_core_get_config(lc), "misc", "x3dh_server_url", "");
 	cout << "LimeV2 constructor x3dhServerUrl = " << x3dhServerUrl << endl;
 	curve = lime::CurveId::c25519; // c448
@@ -407,6 +408,9 @@ int LimeV2::uploadingFileCb (const shared_ptr<ChatMessage> &message, size_t offs
 	return 0;
 }
 
+EncryptionEngineListener::EngineType LimeV2::getEngineType () {
+	return engineType;
+}
 void LimeV2::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
 	// TODO Work in progress
 }

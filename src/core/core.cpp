@@ -269,6 +269,7 @@ bool Core::limeV2Enabled (void) const {
 	L_D();
 	// check lime_v2 parameter in proxy config
 	if (d->imee != nullptr)
+	if (d->imee != nullptr && d->imee->getEngineType() == EncryptionEngineListener::EngineType::LimeV2)
 		return true;
 	return false;
 }

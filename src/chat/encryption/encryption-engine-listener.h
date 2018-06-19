@@ -37,6 +37,13 @@ class ChatMessage;
 
 class EncryptionEngineListener {
 public:
+	enum class EngineType {
+		Undefined = -1,
+		LimeV2 = 0,
+		Another = 1,
+		YetAnother = 2
+	};
+
 	virtual ~EncryptionEngineListener () = default;
 
 	virtual ChatMessageModifier::Result processOutgoingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) { return ChatMessageModifier::Result::Skipped; }
@@ -46,6 +53,10 @@ public:
 	virtual void generateFileTransferKeyCb (const std::shared_ptr<AbstractChatRoom> &ChatRoom, const std::shared_ptr<ChatMessage> &message) {}
 	virtual int downloadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decryptedBuffer) { return 0; }
 	virtual int uploadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *encryptedBuffer) { return 0; }
+	virtual EncryptionEngineListener::EngineType getEngineType () { return EngineType::Undefined; }
+
+protected:
+	EncryptionEngineListener::EngineType engineType;
 };
 
 LINPHONE_END_NAMESPACE
