@@ -144,10 +144,7 @@ Core::Core () : Object(*new CorePrivate) {
 
 Core::~Core () {
 	lInfo() << "Destroying core: " << this;
-	//delete getEncryptionEngine();
-	if (getEncryptionEngine() == nullptr) {
-		delete getEncryptionEngine();
-	}
+	enableLimeV2(FALSE);
 	xercesc::XMLPlatformUtils::Terminate();
 }
 
@@ -206,12 +203,17 @@ EncryptionEngineListener *Core::getEncryptionEngine () const {
 
 void Core::enableLimeV2 (bool enable) {
 	L_D();
-	if (d->imee != nullptr) {
-		d->imee.release();
+	if (!enable) {
+		if (d->imee != nullptr)
+			d->imee.release();
+		return;
 	}
 
-	if (!enable)
+	if (limeV2Enabled())
 		return;
+
+	if (d->imee != nullptr)
+		d->imee.release();
 
 	LimeV2 *limeV2Engine;
 	if (d->imee == nullptr) {
@@ -235,7 +237,6 @@ void Core::enableLimeV2 (bool enable) {
 			return;
 
 		IdentityAddress ia = IdentityAddress(linphone_address_as_string_uri_only(la));
-
 		string localDeviceId = ia.asString();
 
 		if (localDeviceId == "")
@@ -268,7 +269,8 @@ void Core::updateLimeV2 (void) const {
 bool Core::limeV2Enabled (void) const {
 	L_D();
 	// check lime_v2 parameter in proxy config
-	if (d->imee != nullptr)
+	// check result of dynamic cast
+	// check EngineType parameter
 	if (d->imee != nullptr && d->imee->getEngineType() == EncryptionEngineListener::EngineType::LimeV2)
 		return true;
 	return false;
@@ -276,11 +278,11 @@ bool Core::limeV2Enabled (void) const {
 
 // TODO does not work
 bool Core::limeV2Available(void) const {
-	#ifdef HAVE_LIME
+#ifdef HAVE_LIME
 	return true;
-	#else
+#else
 	return false;
-	#endif
+#endif
 }
 
 LINPHONE_END_NAMESPACE
