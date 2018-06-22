@@ -162,6 +162,7 @@ private:
 	void setupRtcpFb (SalMediaDescription *md);
 	void setupRtcpXr (SalMediaDescription *md);
 	void setupZrtpHash (SalMediaDescription *md);
+	void setupLimeIdentityKey (SalMediaDescription *md);
 	void transferAlreadyAssignedPayloadTypes (SalMediaDescription *oldMd, SalMediaDescription *md);
 	void updateLocalMediaDescriptionFromIce ();
 

@@ -21,6 +21,8 @@
 #include <math.h>
 
 #include "address/address-p.h"
+#include "bzrtp/bzrtp.h"
+#include "chat/encryption/lime-v2.h"
 #include "c-wrapper/c-wrapper.h"
 #include "conference/session/media-session-p.h"
 #include "call/call-p.h"
@@ -28,6 +30,7 @@
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/media-session.h"
 #include "core/core-p.h"
+#include "sal/call-op.h"
 #include "sal/sal.h"
 #include "utils/payload-type-handler.h"
 
@@ -1500,6 +1503,7 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 	setupEncryptionKeys(md);
 	setupDtlsKeys(md);
 	setupZrtpHash(md);
+	setupLimeIdentityKey(md);
 	setupRtcpFb(md);
 	setupRtcpXr(md);
 	if (stunClient)
@@ -1630,6 +1634,52 @@ void MediaSessionPrivate::setupZrtpHash (SalMediaDescription *md) {
 			} else
 				md->streams[i].haveZrtpHash = 0;
 		}
+	}
+}
+
+void MediaSessionPrivate::setupLimeIdentityKey (SalMediaDescription *md) {
+	L_Q();
+	if (linphone_core_lime_v2_enabled(q->getCore()->getCCore())) {
+
+		// get proxy config
+		LinphoneProxyConfig *proxy = nullptr;
+		if (destProxy) {
+			proxy = destProxy;
+		} else {
+			proxy = linphone_core_get_default_proxy_config(q->getCore()->getCCore());
+		}
+
+		if (!proxy) {
+			lWarning() << "No proxy config available, unable to send lime identity key for ZRTP auxiliary shared secret";
+			return;
+		}
+
+		// get local device id from local contact address
+		const LinphoneAddress *contactAddress = linphone_proxy_config_get_contact(proxy);
+		IdentityAddress identityAddress = IdentityAddress(linphone_address_as_string(contactAddress));
+		string localDeviceId = identityAddress.asString();
+
+		// get self identity key from LIMEv2 engine
+		vector<uint8_t> Ik;
+		LimeV2 *limeV2Engine;
+		if (!linphone_core_lime_v2_enabled(linphone_proxy_config_get_core(proxy))) {
+			lWarning() << "LIMEv2 disabled, unable to send lime identity key for ZRTP auxiliary shared secret";
+			return;
+		}
+		limeV2Engine = static_cast<LimeV2*>(q->getCore()->getEncryptionEngine());
+		limeV2Engine->getLimeManager()->get_selfIdentityKey(localDeviceId, Ik);
+
+		if (Ik.empty()) {
+			lWarning() << "No identity key available, unable to send lime identity key for ZRTP auxiliary shared secret";
+			return;
+		}
+
+		// encode to base64 and append to sdp
+		vector<uint8_t> IkB64_vector = encodeBase64(Ik);
+		string IkB64_string(IkB64_vector.begin(), IkB64_vector.end());
+		const char *IkB64_char = IkB64_string.data();
+		lInfo() << "Appending LIMEv2 identity key to SDP attributes";
+		md->custom_sdp_attributes = sal_custom_sdp_attribute_append(md->custom_sdp_attributes, "Ik", IkB64_char);
 	}
 }
 
@@ -2757,11 +2807,50 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 			const SalStreamDescription *remoteStream = sal_media_description_find_best_stream(remote, SalAudio);
 			if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), LinphoneMediaEncryptionZRTP)
 				&& ((getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream->haveZrtpHash == 1))) {
+
+				// get local and remote identity keys from sdp attributes
+				const char *charLocalIk = sal_custom_sdp_attribute_find(op->getLocalMediaDescription()->custom_sdp_attributes, "Ik");
+				const char *charRemoteIk = sal_custom_sdp_attribute_find(op->getRemoteMediaDescription()->custom_sdp_attributes, "Ik");
+
+				// If LIMEv2 is disabled there might not be identity keys
+				if (charLocalIk != NULL && charRemoteIk != NULL) {
+					const string &stringB64LocalIk(charLocalIk);
+					const string &stringB64RemoteIk(charRemoteIk);
+
+					// convert to vectors and decode base64
+					vector<uint8_t> localIk = vector<uint8_t>(stringB64LocalIk.begin(), stringB64LocalIk.end());
+					vector<uint8_t> remoteIk = vector<uint8_t>(stringB64RemoteIk.begin(), stringB64RemoteIk.end());
+					localIk = decodeBase64(localIk);
+					remoteIk = decodeBase64(remoteIk);
+
+					// concatenate identity keys in the right order
+					vector<uint8_t> vectorAuxSharedSecret;
+					if (this->getPublic()->CallSession::getDirection() == LinphoneCallDir::LinphoneCallOutgoing) {
+						localIk.insert(localIk.end(), remoteIk.begin(), remoteIk.end());
+						vectorAuxSharedSecret = localIk;
+					} else if (this->getPublic()->CallSession::getDirection() == LinphoneCallDir::LinphoneCallIncoming) {
+						remoteIk.insert(remoteIk.end(), localIk.begin(), localIk.end());
+						vectorAuxSharedSecret = remoteIk;
+					} else {
+						lError() << "Unable to concatenate and set ZRTP auxiliary shared secret";
+					}
+
+					// get the final auxSharedSecret and set it as auxiliary shared secret in ZRTP
+					if (!vectorAuxSharedSecret.empty()) {
+						const uint8_t *auxSharedSecret = vectorAuxSharedSecret.data();
+						size_t auxSharedSecretLength = sizeof(auxSharedSecret);
+						lInfo() << "Setting ZRTP auxiliary shared secret after identity key concatenation";
+						int retval = ms_zrtp_setAuxiliarySharedSecret(audioStream->ms.sessions.zrtp_context, auxSharedSecret, auxSharedSecretLength);
+						if (retval != 0)
+							lError() << "ZRTP auxiliary shared secret mismatch 0x" << hex << retval;
+					}
+				}
+
 				audio_stream_start_zrtp(audioStream);
 				if (remoteStream->haveZrtpHash == 1) {
 					int retval = ms_zrtp_setPeerHelloHash(audioStream->ms.sessions.zrtp_context, (uint8_t *)remoteStream->zrtphash, strlen((const char *)(remoteStream->zrtphash)));
 					if (retval != 0)
-						lError() << "Zrtp hash mismatch 0x" << hex << retval;
+						lError() << "ZRTP hash mismatch 0x" << hex << retval;
 				}
 			}
 		}
@@ -3396,10 +3485,58 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 		if (!authToken.empty()) {
 			/* ZRTP only is using auth_token */
 			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
+
+			if (authTokenVerified && ms_zrtp_getAuxiliarySharedSecretMismatch(audioStream->ms.sessions.zrtp_context) != 2) {
+				// get remote Ik from sdp attributes and decode base64
+				const string &remoteIkB64_string(sal_custom_sdp_attribute_find(op->getRemoteMediaDescription()->custom_sdp_attributes, "Ik"));
+				vector<uint8_t> remoteIkB64_vector = vector<uint8_t>(remoteIkB64_string.begin(), remoteIkB64_string.end());
+				vector<uint8_t> remoteIk_vector = decodeBase64(remoteIkB64_vector);
+
+				// get proxy config
+				LinphoneProxyConfig *proxy = nullptr;
+				if (destProxy)
+					proxy = destProxy;
+				else
+					proxy = linphone_core_get_default_proxy_config(q->getCore()->getCCore());
+
+				// get LIMEv2 context
+				LimeV2 *limeV2Engine;
+				if (proxy && linphone_core_lime_v2_enabled(linphone_proxy_config_get_core(proxy))) {
+					limeV2Engine = static_cast<LimeV2*>(q->getCore()->getEncryptionEngine());
+				} else {
+					lWarning() << "LIMEv2 disabled or proxy config unavailable, unable to set peer identity verified status";
+				}
+
+				// get peer's GRUU
+				const SalAddress *remoteAddress = getOp()->getRemoteContactAddress();
+				char *peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
+
+				// TODO if mismatch = 0 set this peer as trusted with this Ik
+				// TODO if mismatch = 1 it means that the stored Ik was corrupted (identity theft)
+				if (ms_zrtp_getAuxiliarySharedSecretMismatch(audioStream->ms.sessions.zrtp_context) == 0) {
+					lInfo() << "ZRTP auxiliary shared secrets match";
+					if (limeV2Engine) {
+						try {
+							lInfo() << "LIMEv2 peer status set to trusted";
+							limeV2Engine->getLimeManager()->set_peerIdentityVerifiedStatus(peerDeviceId, remoteIk_vector, TRUE);
+						} catch (const exception &e) {
+							// TODO Report the security issue to application level
+							lWarning() << "LIMEv2 identity theft detected: " << e.what();
+						}
+					} else {
+						lWarning() << "Unable to get LIMEv2 context, unable to set peer identity verified status";
+					}
+				} else {
+					// TODO Report the security issue to application level
+					lWarning() << "LIMEv2 identity theft detected during ZRTP auxiliary shared secret check";
+				}
+				ms_free(peerDeviceId);
+			}
 		} else {
 			/* Otherwise it must be DTLS as SDES doesn't go through this function */
 			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionDTLS);
 		}
+
 		lInfo() << "All streams are encrypted, key exchanged using "
 			<< ((q->getCurrentParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) ? "ZRTP"
 				: (q->getCurrentParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS) ? "DTLS" : "Unknown mechanism");

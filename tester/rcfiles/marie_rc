@@ -1,6 +1,8 @@
 [misc]
-xmlrpc_server_url=http://subscribe.example.org/mtanon/tools/wizard_and_remote_provisioning_php_scripts/xmlrpc.php
-x3dh_server_url=https://shuttle-debian8/mtanon/tools/wizard_and_remote_provisioning_php_scripts/x3dh-25519.php
+enable_basic_to_client_group_chat_room_migration=1
+basic_to_client_group_chat_room_migration_timer=180
+xmlrpc_server_url=http://subscribe.example.org/mtanon/tools/flexisip_account_manager/xmlrpc.php
+x3dh_server_url=https://shuttle-debian8/mtanon/tools/flexisip_account_manager/x3dh-25519.php
 lime_update_threshold=86400
 
 [sip]
@@ -31,10 +33,6 @@ dial_escape_plus=0
 url="Paupoche" <sip:pauline@sip.example.org>
 pol=accept
 subscribe=0
-
-[misc]
-enable_basic_to_client_group_chat_room_migration=1
-basic_to_client_group_chat_room_migration_timer=180
 
 [rtp]
 audio_rtp_port=18070-28000
