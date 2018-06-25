@@ -23,6 +23,7 @@
 #include "object/object-p.h"
 
 #include "conference/participant.h"
+#include "conference/participant-device.h"
 #include "conference/session/call-session.h"
 #include "conference/session/call-session-listener.h"
 #include "conference/params/call-session-params.h"
@@ -45,6 +46,7 @@ public:
 	std::shared_ptr<ParticipantDevice> findDevice (const std::shared_ptr<const CallSession> &session);
 	const std::list<std::shared_ptr<ParticipantDevice>> &getDevices () const;
 	void removeDevice (const IdentityAddress &gruu);
+	SecurityLevel getSecurityLevel ();
 
 private:
 	IdentityAddress addr;

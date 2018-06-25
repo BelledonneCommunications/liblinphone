@@ -28,6 +28,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class ClientGroupChatRoomPrivate;
+enum class SecurityLevel;
 
 class LINPHONE_PUBLIC ClientGroupChatRoom : public ChatRoom, public RemoteConference {
 	friend class BasicToClientGroupChatRoomPrivate;
@@ -89,6 +90,8 @@ public:
 	const std::list<std::shared_ptr<Participant>> &getParticipants () const override;
 
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
+
+	SecurityLevel getSecurityLevel () const;
 
 	const std::string &getSubject () const override;
 	void setSubject (const std::string &subject) override;

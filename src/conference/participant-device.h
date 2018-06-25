@@ -34,6 +34,14 @@ LINPHONE_BEGIN_NAMESPACE
 class CallSession;
 class Participant;
 
+enum class SecurityLevel {
+	Fail, // Undecrypted message
+	ClearText, // LIMEv2 disabled
+	Unknown, // First encryption
+	Encrypted, // Untrusted
+	Safe // Trusted
+};
+
 class ParticipantDevice {
 public:
 	enum class State {
@@ -55,6 +63,7 @@ public:
 	inline void setSession (std::shared_ptr<CallSession> session) { mSession = session; }
 	inline State getState () const { return mState; }
 	inline void setState (State newState) { mState = newState; }
+	SecurityLevel getSecurityLevel ();
 
 	inline bool isSubscribedToConferenceEventPackage () const { return mConferenceSubscribeEvent != nullptr; }
 	LinphoneEvent *getConferenceSubscribeEvent () const { return mConferenceSubscribeEvent; }

@@ -20,7 +20,6 @@
 #include <algorithm>
 
 #include "object/object-p.h"
-#include "participant-device.h"
 #include "participant-p.h"
 
 #include "participant.h"
@@ -88,6 +87,11 @@ void ParticipantPrivate::removeDevice (const IdentityAddress &gruu) {
 			return;
 		}
 	}
+}
+
+SecurityLevel ParticipantPrivate::getSecurityLevel () {
+	// TODO compute the Participant SecurityLevel based on its devices SecurityLevel
+	return SecurityLevel::Safe;
 }
 
 // =============================================================================

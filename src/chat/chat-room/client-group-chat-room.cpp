@@ -476,6 +476,11 @@ void ClientGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	referOp->unref();
 }
 
+SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
+	// TODO compute SecurityLevel based on participants PeerDeviceStatus
+	return SecurityLevel::Safe;
+}
+
 const string &ClientGroupChatRoom::getSubject () const {
 	return RemoteConference::getSubject();
 }

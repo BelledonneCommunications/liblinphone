@@ -47,6 +47,11 @@ void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
 	mConferenceSubscribeEvent = linphone_event_ref(ev);
 }
 
+SecurityLevel ParticipantDevice::getSecurityLevel () {
+	// TODO get the device SecurityLevel from the LimeManager
+	return SecurityLevel::Safe;
+}
+
 ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
 	switch (state) {
 		case ParticipantDevice::State::Joining:
