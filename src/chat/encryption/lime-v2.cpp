@@ -151,77 +151,82 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	shared_ptr<const vector<uint8_t>> plainMessage = make_shared<const vector<uint8_t>>(plainStringMessage.begin(), plainStringMessage.end());
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
-	belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, &result] (lime::CallbackReturn returnCode, string errorMessage) {
-		if (returnCode == lime::CallbackReturn::success) {
-			list<Content *> contents;
+	try {
+		belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, &result] (lime::CallbackReturn returnCode, string errorMessage) {
+			if (returnCode == lime::CallbackReturn::success) {
+				list<Content *> contents;
 
-			for (const auto &recipient : *recipients) {
-				cout << "recipient " << recipient.deviceId << " status = ";
-				switch (recipient.peerStatus) {
-					case lime::PeerDeviceStatus::unknown:
-						BCTBX_SLOGI << "LIMEv2 peer device unkown";
-						cout << "unknown" << endl;
-						break;
-					case lime::PeerDeviceStatus::untrusted:
-						BCTBX_SLOGI << "LIMEv2 peer device untrusted";
-						cout << "untrusted" << endl;
-						break;
-					case lime::PeerDeviceStatus::trusted:
-						BCTBX_SLOGI << "LIMEv2 peer device trusted";
-						cout << "trusted" << endl;
-						break;
-					default:
-						break;
+				for (const auto &recipient : *recipients) {
+					cout << "recipient " << recipient.deviceId << " status = ";
+					switch (recipient.peerStatus) {
+						case lime::PeerDeviceStatus::unknown:
+							BCTBX_SLOGI << "LIMEv2 peer device unkown";
+							cout << "unknown" << endl;
+							break;
+						case lime::PeerDeviceStatus::untrusted:
+							BCTBX_SLOGI << "LIMEv2 peer device untrusted";
+							cout << "untrusted" << endl;
+							break;
+						case lime::PeerDeviceStatus::trusted:
+							BCTBX_SLOGI << "LIMEv2 peer device trusted";
+							cout << "trusted" << endl;
+							break;
+						default:
+							break;
+					}
 				}
+
+				// ---------------------------------------------- SIPFRAG
+
+				Content *sipfrag = new Content();
+				sipfrag->setBody(localDeviceId); // "From: " +
+				sipfrag->setContentType(ContentType::SipFrag);
+				contents.push_back(move(sipfrag));
+
+				// ---------------------------------------------- HEADERS
+
+				for (const auto &recipient : *recipients) {
+					vector<uint8_t> encodedCipher = encodeBase64(recipient.DRmessage);
+					vector<char> cipherHeaderB64(encodedCipher.begin(), encodedCipher.end());
+					Content *cipherHeader = new Content();
+					cipherHeader->setBody(cipherHeaderB64);
+					cipherHeader->setContentType(ContentType::LimeKey);
+					cipherHeader->addHeader("Content-Id", recipient.deviceId);
+					Header contentDescription("Content-Description", "Cipher key");
+					cipherHeader->addHeader(contentDescription);
+					contents.push_back(move(cipherHeader));
+				}
+
+				// ---------------------------------------------- MESSAGE
+
+				const vector<uint8_t> *binaryCipherMessage = cipherMessage.get();
+				vector<uint8_t> encodedMessage = encodeBase64(*binaryCipherMessage);
+				vector<char> cipherMessageB64(encodedMessage.begin(), encodedMessage.end());
+				Content *cipherMessage = new Content();
+				cipherMessage->setBody(cipherMessageB64);
+				cipherMessage->setContentType(ContentType::OctetStream);
+				cipherMessage->addHeader("Content-Description", "Encrypted message");
+				contents.push_back(move(cipherMessage));
+
+				Content finalContent = ContentManager::contentListToMultipart(contents, MultipartBoundary, true);
+
+				message->setInternalContent(finalContent);
+				message->send(); // seems to leak when called for the second time
+				result = ChatMessageModifier::Result::Done;
+
+				// TODO can be improved
+				for (const auto &content : contents) {
+					delete content;
+				}
+			} else {
+				BCTBX_SLOGE << "Lime operation failed: " << errorMessage;
+				result = ChatMessageModifier::Result::Error;
 			}
-
-			// ---------------------------------------------- SIPFRAG
-
-			Content *sipfrag = new Content();
-			sipfrag->setBody(localDeviceId); // "From: " +
-			sipfrag->setContentType(ContentType::SipFrag);
-			contents.push_back(move(sipfrag));
-
-			// ---------------------------------------------- HEADERS
-
-			for (const auto &recipient : *recipients) {
-				vector<uint8_t> encodedCipher = encodeBase64(recipient.DRmessage);
-				vector<char> cipherHeaderB64(encodedCipher.begin(), encodedCipher.end());
-				Content *cipherHeader = new Content();
-				cipherHeader->setBody(cipherHeaderB64);
-				cipherHeader->setContentType(ContentType::LimeKey);
-				cipherHeader->addHeader("Content-Id", recipient.deviceId);
-				Header contentDescription("Content-Description", "Cipher key");
-				cipherHeader->addHeader(contentDescription);
-				contents.push_back(move(cipherHeader));
-			}
-
-			// ---------------------------------------------- MESSAGE
-
-			const vector<uint8_t> *binaryCipherMessage = cipherMessage.get();
-			vector<uint8_t> encodedMessage = encodeBase64(*binaryCipherMessage);
-			vector<char> cipherMessageB64(encodedMessage.begin(), encodedMessage.end());
-			Content *cipherMessage = new Content();
-			cipherMessage->setBody(cipherMessageB64);
-			cipherMessage->setContentType(ContentType::OctetStream);
-			cipherMessage->addHeader("Content-Description", "Encrypted message");
-			contents.push_back(move(cipherMessage));
-
-			Content finalContent = ContentManager::contentListToMultipart(contents, MultipartBoundary, true);
-
-			message->setInternalContent(finalContent);
-			message->send();
-			result = ChatMessageModifier::Result::Done;
-
-			// TODO can be improved
-			for (const auto &content : contents) {
-				delete content;
-			}
-		} else {
-			BCTBX_SLOGE << "Lime operation failed: " << errorMessage;
-			result = ChatMessageModifier::Result::Error;
-		}
-	}, lime::EncryptionPolicy::cipherMessage);
+		}, lime::EncryptionPolicy::cipherMessage);
+	} catch (const exception &e) {
+		BCTBX_SLOGE << e.what() << " while encrypting message";
+		result = ChatMessageModifier::Result::Error;
+	}
 
 	return result;
 }
@@ -320,7 +325,7 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	try {
 		 peerStatus = belleSipLimeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader, decodedCipherMessage, plainMessage);
 	} catch (const exception &e) {
-		ms_message("%s while decrypting message\n", e.what());
+		BCTBX_SLOGE << e.what() << " while decrypting message";
 	}
 
 	cout << "decrypt status = ";
@@ -429,7 +434,7 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 			lastLimeUpdate = ms_time(NULL);
 			lp_config_set_int(lpconfig, "misc", "last_lime_update_time", (int)lastLimeUpdate);
 		} catch (const exception &e) {
-			ms_message("%s while creating lime user\n", e.what());
+			BCTBX_SLOGE << e.what() << " while creating lime user";
 
 			// update keys if necessary
 			int limeUpdateThreshold = lp_config_get_int(lpconfig, "misc", "lime_update_threshold", 86400);
