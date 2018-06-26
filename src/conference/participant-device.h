@@ -32,6 +32,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class CallSession;
+class Core;
 class Participant;
 
 enum class SecurityLevel {
@@ -56,6 +57,8 @@ public:
 	virtual ~ParticipantDevice ();
 
 	bool operator== (const ParticipantDevice &device) const;
+
+	std::shared_ptr<Core> getCore () const;
 
 	inline const IdentityAddress &getAddress () const { return mGruu; }
 	Participant *getParticipant () const { return mParticipant; }

@@ -96,8 +96,9 @@ SecurityLevel ParticipantPrivate::getSecurityLevel () {
 
 // =============================================================================
 
-Participant::Participant (const IdentityAddress &address) : Object(*new ParticipantPrivate) {
+Participant::Participant (Conference *conference, const IdentityAddress &address) : Object(*new ParticipantPrivate) {
 	L_D();
+	d->mConference = conference;
 	d->addr = address.getAddressWithoutGruu();
 }
 
