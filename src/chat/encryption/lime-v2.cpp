@@ -101,7 +101,7 @@ BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_pr
 }) {
 }
 
-LimeV2::LimeV2 (const std::__cxx11::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc) {
+LimeV2::LimeV2 (const std::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc) {
 	engineType = EncryptionEngineListener::EngineType::LimeV2;
 	x3dhServerUrl = linphone_config_get_string(linphone_core_get_config(lc), "misc", "x3dh_server_url", "");
 	cout << "LimeV2 constructor x3dhServerUrl = " << x3dhServerUrl << endl;
@@ -416,7 +416,6 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 
 		char *contactAddress = linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg));
 		IdentityAddress ia = IdentityAddress(contactAddress);
-		IdentityAddress ia = IdentityAddress(linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg)));
 		string localDeviceId = ia.asString();
 		if (contactAddress)
 			ms_free(contactAddress);

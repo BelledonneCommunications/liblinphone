@@ -67,7 +67,7 @@ private:
 
 class LimeV2 : public EncryptionEngineListener, public CoreListener {
 public:
-	LimeV2 (const std::__cxx11::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc);
+	LimeV2 (const std::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc);
 	std::shared_ptr<BelleSipLimeManager> getLimeManager ();
 	lime::limeCallback setLimeCallback (std::string operation);
 	std::string getX3dhServerUrl () const;
