@@ -31,6 +31,7 @@
 #include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/real-time-text-chat-room-p.h"
+#include "chat/chat-room/client-group-chat-room-p.h"
 #include "chat/chat-room/server-group-chat-room-p.h"
 #include "conference/participant.h"
 #include "core/core-p.h"
@@ -316,6 +317,13 @@ bctbx_list_t *linphone_chat_room_get_participants (const LinphoneChatRoom *cr) {
 
 const char * linphone_chat_room_get_subject (const LinphoneChatRoom *cr) {
 	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getSubject());
+}
+
+const char *linphone_chat_room_get_security_level (LinphoneChatRoom *cr) {
+	LinphonePrivate::ClientGroupChatRoomPrivate *cgcr = dynamic_cast<LinphonePrivate::ClientGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
+	if (cgcr)
+		return L_STRING_TO_C(cgcr->getSecurityLevelAsString());
+	return "Undefined";
 }
 
 void linphone_chat_room_leave (LinphoneChatRoom *cr) {

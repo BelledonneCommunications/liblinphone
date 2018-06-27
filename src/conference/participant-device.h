@@ -23,6 +23,7 @@
 #include <string>
 
 #include "address/identity-address.h"
+#include "chat/encryption/encryption-engine-listener.h"
 
 #include "linphone/types.h"
 #include "linphone/utils/general.h"
@@ -34,14 +35,6 @@ LINPHONE_BEGIN_NAMESPACE
 class CallSession;
 class Core;
 class Participant;
-
-enum class SecurityLevel {
-	Fail, // Undecrypted message
-	ClearText, // LIMEv2 disabled
-	Unknown, // First encryption
-	Encrypted, // Untrusted
-	Safe // Trusted
-};
 
 class ParticipantDevice {
 public:
@@ -66,7 +59,7 @@ public:
 	inline void setSession (std::shared_ptr<CallSession> session) { mSession = session; }
 	inline State getState () const { return mState; }
 	inline void setState (State newState) { mState = newState; }
-	SecurityLevel getSecurityLevel ();
+	EncryptionEngineListener::SecurityLevel getSecurityLevel ();
 
 	inline bool isSubscribedToConferenceEventPackage () const { return mConferenceSubscribeEvent != nullptr; }
 	LinphoneEvent *getConferenceSubscribeEvent () const { return mConferenceSubscribeEvent; }

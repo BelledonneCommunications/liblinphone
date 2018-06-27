@@ -17,8 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include "chat/encryption/encryption-engine-listener.h"
 #include "participant-device.h"
 #include "participant-p.h"
+#include "core/core.h"
 
 #include "linphone/event.h"
 
@@ -27,6 +29,8 @@ using namespace std;
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
+
+class Core;
 
 ParticipantDevice::ParticipantDevice () {}
 
@@ -52,9 +56,25 @@ void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
 	mConferenceSubscribeEvent = linphone_event_ref(ev);
 }
 
-SecurityLevel ParticipantDevice::getSecurityLevel () {
-	// TODO get the device SecurityLevel from the LimeManager
-	return SecurityLevel::Safe;
+EncryptionEngineListener::SecurityLevel ParticipantDevice::getSecurityLevel () {
+	EncryptionEngineListener::SecurityLevel level = getCore()->getEncryptionEngine()->getSecurityLevel(mGruu.asString());
+
+	cout << "[DEVICE] " << mGruu.asString();
+	switch (level) {
+		case EncryptionEngineListener::SecurityLevel::Unsafe:
+			cout << " SecurityLevel = Unsafe" << endl;
+			break;
+		case EncryptionEngineListener::SecurityLevel::ClearText:
+			cout << " SecurityLevel = ClearText" << endl;
+			break;
+		case EncryptionEngineListener::SecurityLevel::Encrypted:
+			cout << " SecurityLevel = Encrypted" << endl;
+			break;
+		case EncryptionEngineListener::SecurityLevel::Safe:
+			cout << " SecurityLevel = Safe" << endl;
+			break;
+	}
+	return level;
 }
 
 ostream &operator<< (ostream &stream, ParticipantDevice::State state) {

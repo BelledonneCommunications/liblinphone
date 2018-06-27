@@ -91,8 +91,6 @@ public:
 
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 
-	SecurityLevel getSecurityLevel () const;
-
 	const std::string &getSubject () const override;
 	void setSubject (const std::string &subject) override;
 

@@ -89,9 +89,29 @@ void ParticipantPrivate::removeDevice (const IdentityAddress &gruu) {
 	}
 }
 
-SecurityLevel ParticipantPrivate::getSecurityLevel () {
-	// TODO compute the Participant SecurityLevel based on its devices SecurityLevel
-	return SecurityLevel::Safe;
+EncryptionEngineListener::SecurityLevel ParticipantPrivate::getSecurityLevel () {
+	cout << "[PARTICIPANT] " << this->getPublic()->getAddress().asString() << endl;
+	EncryptionEngineListener::SecurityLevel level;
+	bool isSafe = true;
+	for (const auto &device : getDevices()) {
+
+		level = device->getSecurityLevel();
+		switch ((int)level) {
+			case 0:
+				return level; // if one device is Unsafe the whole participant is Unsafe (red)
+			case 1:
+				return level; // TODO if all devices are in ClearText the whole participant is in ClearText (grey)
+			case 2:
+				isSafe = false; // if one device is Encrypted the whole participant is Encrypted (orange)
+				break;
+			case 3:
+				break; // if all devices are Safe the whole participant is Safe (green)
+		}
+	}
+	if (isSafe)
+		return EncryptionEngineListener::SecurityLevel::Safe;
+	else
+		return EncryptionEngineListener::SecurityLevel::Encrypted;
 }
 
 // =============================================================================

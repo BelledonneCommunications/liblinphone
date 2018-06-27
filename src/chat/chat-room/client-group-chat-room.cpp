@@ -476,9 +476,46 @@ void ClientGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	referOp->unref();
 }
 
-SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
-	// TODO compute SecurityLevel based on participants PeerDeviceStatus
-	return SecurityLevel::Safe;
+EncryptionEngineListener::SecurityLevel ClientGroupChatRoomPrivate::getSecurityLevel () const {
+	EncryptionEngineListener::SecurityLevel level;
+	bool isSafe = true;
+	cout << endl << "[CHATROOM] " << getPublic()->getMe()->getAddress().asString() << endl;
+
+	for (const auto &participant : getPublic()->getParticipants()) {
+		level = participant->getPrivate()->getSecurityLevel();
+		switch ((int)level) {
+			case 0:
+				return level; // if one participant is Unsafe the whole chatroom is Unsafe (red)
+			case 1:
+				return level; // TODO if all participants are in ClearText the whole chatroom is ClearText (grey)
+			case 2:
+				isSafe = false; // if one participant is Encrypted the whole chatroom is Encrypted (orange)
+				break;
+			case 3:
+				break; // if all participants are Safe the whole chatroom is Safe (green)
+		}
+	}
+
+	if (isSafe)
+		return EncryptionEngineListener::SecurityLevel::Safe;
+	else
+		return EncryptionEngineListener::SecurityLevel::Encrypted;
+}
+
+const std::string ClientGroupChatRoomPrivate::getSecurityLevelAsString () const {
+	EncryptionEngineListener::SecurityLevel level = getSecurityLevel();
+	switch (level) {
+		case EncryptionEngineListener::SecurityLevel::Unsafe:
+			return "Unsafe";
+		case EncryptionEngineListener::SecurityLevel::ClearText:
+			return "ClearText";
+		case EncryptionEngineListener::SecurityLevel::Encrypted:
+			return "Encrypted";
+		case EncryptionEngineListener::SecurityLevel::Safe:
+			return "Safe";
+		default:
+			return "Undefined";
+	}
 }
 
 const string &ClientGroupChatRoom::getSubject () const {

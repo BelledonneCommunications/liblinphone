@@ -25,6 +25,7 @@
 
 // include includes
 #include "chat/modifier/chat-message-modifier.h"
+#include "linphone/lpconfig.h"
 
 // local includes
 
@@ -44,6 +45,13 @@ public:
 		YetAnother = 2
 	};
 
+	enum class SecurityLevel {
+		Unsafe = 0, // Fail
+		ClearText, // LIMEv2 disabled
+		Encrypted, // Unknown or Untrusted
+		Safe // Trusted
+	};
+
 	virtual ~EncryptionEngineListener () = default;
 
 	virtual ChatMessageModifier::Result processOutgoingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) { return ChatMessageModifier::Result::Skipped; }
@@ -54,6 +62,7 @@ public:
 	virtual int downloadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decryptedBuffer) { return 0; }
 	virtual int uploadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *encryptedBuffer) { return 0; }
 	virtual EncryptionEngineListener::EngineType getEngineType () { return EngineType::Undefined; }
+	virtual EncryptionEngineListener::SecurityLevel getSecurityLevel (std::string deviceId) { return EncryptionEngineListener::SecurityLevel::Unsafe; }
 
 protected:
 	EncryptionEngineListener::EngineType engineType;

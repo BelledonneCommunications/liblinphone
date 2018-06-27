@@ -21,6 +21,7 @@
 #define _L_CLIENT_GROUP_CHAT_ROOM_P_H_
 
 #include "chat/chat-room/chat-room-p.h"
+#include "chat/encryption/encryption-engine-listener.h"
 #include "client-group-chat-room.h"
 #include "utils/background-task.h"
 
@@ -40,6 +41,9 @@ public:
 	void setChatRoomListener (ChatRoomListener *listener) { chatRoomListener = listener; }
 
 	unsigned int getLastNotifyId () const;
+
+	EncryptionEngineListener::SecurityLevel getSecurityLevel () const;
+	const std::string getSecurityLevelAsString () const;
 
 	// ChatRoomListener
 	void onChatRoomInsertRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
