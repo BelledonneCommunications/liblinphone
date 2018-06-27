@@ -82,6 +82,7 @@ public:
 	int downloadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) override;
 	int uploadingFileCb (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *encrypted_buffer) override;
 	EncryptionEngineListener::EngineType getEngineType () override;
+	EncryptionEngineListener::SecurityLevel getSecurityLevel (std::string deviceId) override;
 
 	// CoreListener overrides
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;

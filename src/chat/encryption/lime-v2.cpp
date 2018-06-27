@@ -104,7 +104,6 @@ BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_pr
 LimeV2::LimeV2 (const std::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc) {
 	engineType = EncryptionEngineListener::EngineType::LimeV2;
 	x3dhServerUrl = linphone_config_get_string(linphone_core_get_config(lc), "misc", "x3dh_server_url", "");
-	cout << "LimeV2 constructor x3dhServerUrl = " << x3dhServerUrl << endl;
 	curve = lime::CurveId::c25519; // c448
 	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(db_access, prov, lc));
 	lastLimeUpdate = linphone_config_get_int(lc->config, "misc", "last_lime_update_time", 0);
@@ -392,6 +391,33 @@ int LimeV2::uploadingFileCb (const shared_ptr<ChatMessage> &message, size_t offs
 EncryptionEngineListener::EngineType LimeV2::getEngineType () {
 	return engineType;
 }
+
+EncryptionEngineListener::SecurityLevel LimeV2::getSecurityLevel (string deviceId) {
+	lime::PeerDeviceStatus status = belleSipLimeManager->get_peerDeviceStatus(deviceId);
+	EncryptionEngineListener::SecurityLevel level;
+
+	switch (status) {
+		case lime::PeerDeviceStatus::unknown:
+			cout << "lime peer status for " << deviceId << " = unkown" << endl;
+			level = EncryptionEngineListener::SecurityLevel::Encrypted;
+			break;
+		case lime::PeerDeviceStatus::untrusted:
+			cout << "lime peer status for " << deviceId << " = untrusted" << endl;
+			level = EncryptionEngineListener::SecurityLevel::Encrypted;
+			break;
+		case lime::PeerDeviceStatus::trusted:
+			cout << "lime peer status for " << deviceId << " = trusted" << endl;
+			level = EncryptionEngineListener::SecurityLevel::Safe;
+			break;
+		default:
+			cout << "unexpected peer device status for " << deviceId << endl;
+			level = EncryptionEngineListener::SecurityLevel::Unsafe;
+			break;
+	}
+
+	return level;
+}
+
 void LimeV2::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
 	// TODO Work in progress
 }
@@ -405,7 +431,7 @@ lime::limeCallback LimeV2::setLimeCallback (string operation) {
 		if (returnCode == lime::CallbackReturn::success) {
 			BCTBX_SLOGI << "Lime operation successful: " << operation;
 		} else {
-			BCTBX_SLOGE << "Lime operation failed: " << anythingToSay;
+			BCTBX_SLOGE << "Lime operation failed: " << operation;
 		}
 	});
 	return callback;
@@ -415,8 +441,8 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 	if (state == LinphoneRegistrationState::LinphoneRegistrationOk) {
 
 		char *contactAddress = linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg));
-		IdentityAddress ia = IdentityAddress(contactAddress);
-		string localDeviceId = ia.asString();
+		IdentityAddress identityAddress = IdentityAddress(contactAddress);
+		string localDeviceId = identityAddress.asString();
 		if (contactAddress)
 			ms_free(contactAddress);
 
