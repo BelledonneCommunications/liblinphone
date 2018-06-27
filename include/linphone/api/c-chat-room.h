@@ -408,7 +408,11 @@ LINPHONE_PUBLIC bctbx_list_t * linphone_chat_room_get_participants (const Linpho
  */
 LINPHONE_PUBLIC const char * linphone_chat_room_get_subject (const LinphoneChatRoom *cr);
 
-// TODO doc
+/**
+ * Get the security level of a chat room.
+ * @param[in] cr A #LinphoneChatRoom object
+ * @return The security level of the chat room
+ */
 LINPHONE_PUBLIC const char *linphone_chat_room_get_security_level (LinphoneChatRoom *cr);
 
 /**
