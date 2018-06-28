@@ -304,6 +304,11 @@ void linphone_core_notify_chat_room_state_changed (LinphoneCore *lc, LinphoneCha
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_qrcode_found(LinphoneCore *lc, const char *result) {
+	NOTIFY_IF_EXIST(qrcode_found, lc, result);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_ec_calibration_result(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay_ms) {
 	NOTIFY_IF_EXIST(ec_calibration_result, lc, status, delay_ms);
 	cleanup_dead_vtable_refs(lc);

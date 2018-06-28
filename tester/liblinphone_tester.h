@@ -50,7 +50,7 @@ extern test_suite_t call_test_suite;
 
 #if VIDEO_ENABLED
 	extern test_suite_t call_video_test_suite;
-#endif
+#endif // if VIDEO_ENABLED
 
 extern test_suite_t clonable_object_test_suite;
 extern test_suite_t conference_event_test_suite;
@@ -138,6 +138,7 @@ extern bool_t liblinphone_tester_keep_uuid;
 extern bool_t liblinphone_tester_tls_support_disabled;
 extern const MSAudioDiffParams audio_cmp_params;
 extern const char *liblinphone_tester_mire_id;
+extern const char *liblinphone_tester_static_image_id;
 extern bool_t liblinphonetester_ipv6;
 extern bool_t liblinphonetester_show_account_manager_logs;
 
@@ -371,6 +372,7 @@ void new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char
 void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *ev, LinphoneSubscriptionState state);
 void linphone_publish_state_changed(LinphoneCore *lc, LinphoneEvent *ev, LinphonePublishState state);
 void linphone_notify_received(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content);
+void linphone_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content);
 void linphone_configuration_status(LinphoneCore *lc, LinphoneConfiguringState status, const char *message);
 void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token);
 void dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf);

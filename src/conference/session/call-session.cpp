@@ -786,6 +786,7 @@ void CallSessionPrivate::reinviteToRecoverFromConnectionLoss () {
 
 void CallSessionPrivate::repairByInviteWithReplaces () {
 	L_Q();
+	lInfo() << "CallSession [" << q << "] is going to have a new INVITE replacing the previous one in order to recover from lost connectivity";
 	string callId = op->getCallId();
 	const char *fromTag = op->getLocalTag();
 	const char *toTag = op->getRemoteTag();
@@ -1018,7 +1019,7 @@ bool CallSession::initiateOutgoing () {
 void CallSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 	L_D();
 	int elapsed = (int)(currentRealTime - d->log->start_date_time);
-	if ((d->state == CallSession::State::OutgoingInit) && (elapsed >= getCore()->getCCore()->sip_conf.delayed_timeout)) {
+	if ((d->state == CallSession::State::OutgoingInit) && (elapsed > getCore()->getCCore()->sip_conf.delayed_timeout)) {
 		/* Start the call even if the OPTIONS reply did not arrive */
 		startInvite(nullptr, "");
 	}

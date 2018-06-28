@@ -42,8 +42,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <ortp/telephonyevents.h>
 #include <mediastreamer2/zrtp.h>
 #include <mediastreamer2/dtls_srtp.h>
-#include <bctoolbox/defs.h>
-#include <belr/grammarbuilder.h>
+#include "bctoolbox/defs.h"
+#include "bctoolbox/regex.h"
+#include "belr/grammarbuilder.h"
 
 #include "mediastreamer2/dtmfgen.h"
 #include "mediastreamer2/mediastream.h"
@@ -53,6 +54,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "mediastreamer2/msjpegwriter.h"
 #include "mediastreamer2/msogl.h"
 #include "mediastreamer2/msvolume.h"
+#include "mediastreamer2/msqrcodereader.h"
+
 #include "bctoolbox/charconv.h"
 
 #include "chat/chat-room/client-group-chat-room-p.h"
@@ -68,6 +71,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // For migration purpose.
 #include "address/address-p.h"
 #include "c-wrapper/c-wrapper.h"
+
 
 #ifdef INET6
 #ifndef _WIN32
@@ -460,6 +464,14 @@ LinphoneCoreCbsChatRoomStateChangedCb linphone_core_cbs_get_chat_room_state_chan
 
 void linphone_core_cbs_set_chat_room_state_changed (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomStateChangedCb cb) {
 	cbs->vtable->chat_room_state_changed = cb;
+}
+
+LinphoneCoreCbsQrcodeFoundCb linphone_core_cbs_get_qrcode_found(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->qrcode_found;
+}
+
+void linphone_core_cbs_set_qrcode_found(LinphoneCoreCbs *cbs, LinphoneCoreCbsQrcodeFoundCb cb) {
+	cbs->vtable->qrcode_found = cb;
 }
 
 void linphone_core_cbs_set_ec_calibration_result(LinphoneCoreCbs *cbs, LinphoneCoreCbsEcCalibrationResultCb cb) {
@@ -1274,6 +1286,34 @@ static void sound_config_read(LinphoneCore *lc)
 	_linphone_core_set_tone(lc,LinphoneReasonBusy,LinphoneToneBusy,NULL);
 }
 
+static int _linphone_core_tls_postcheck_callback(void *data, const bctbx_x509_certificate_t *peer_cert){
+	LinphoneCore *lc = (LinphoneCore *) data;
+	const char *tls_certificate_subject_regexp = lp_config_get_string(lc->config,"sip","tls_certificate_subject_regexp", NULL);
+	int ret = 0;
+	if (tls_certificate_subject_regexp){
+		ret = -1;
+		/*the purpose of this handling is to a peer certificate for which there is no single subject matching the regexp given
+		 * in the "tls_certificate_subject_regexp" property.
+		 */
+		bctbx_list_t *subjects = bctbx_x509_certificate_get_subjects(peer_cert);
+		bctbx_list_t *elem;
+		for(elem = subjects; elem != NULL; elem = elem->next){
+			const char *subject = (const char *)elem->data;
+			ms_message("_linphone_core_tls_postcheck_callback: subject=%s", subject);
+			if (bctbx_is_matching_regex(subject, tls_certificate_subject_regexp)){
+				ret = 0;
+				ms_message("_linphone_core_tls_postcheck_callback(): successful by matching '%s'", subject);
+				break;
+			}
+		}
+		bctbx_list_free_with_data(subjects, bctbx_free);
+	}
+	if (ret == -1){
+		ms_message("_linphone_core_tls_postcheck_callback(): postcheck failed, nothing matched.");
+	}
+	return ret;
+}
+
 static void certificates_config_read(LinphoneCore *lc) {
 	LinphoneFactory *factory = linphone_factory_get();
 	const char *data_dir = linphone_factory_get_data_resources_dir(factory);
@@ -1295,6 +1335,8 @@ static void certificates_config_read(LinphoneCore *lc) {
 	linphone_core_verify_server_certificates(lc, !!lp_config_get_int(lc->config,"sip","verify_server_certs",TRUE));
 	linphone_core_verify_server_cn(lc, !!lp_config_get_int(lc->config,"sip","verify_server_cn",TRUE));
 	bctbx_free(root_ca_path);
+
+	lc->sal->setTlsPostcheckCallback(_linphone_core_tls_postcheck_callback, lc);
 }
 
 static void sip_config_read(LinphoneCore *lc) {
@@ -2246,9 +2288,6 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->ringstream_autorelease=TRUE;
 
 	// We need the Sal on the Android platform helper init
-	msplugins_dir = linphone_factory_get_msplugins_dir(lfactory);
-	image_resources_dir = linphone_factory_get_image_resources_dir(lfactory);
-
 	lc->sal=new Sal(NULL);
 	lc->sal->setRefresherRetryAfter(lp_config_get_int(lc->config, "sip", "refresher_retry_after", 60000));
 	lc->sal->setHttpProxyHost(L_C_TO_STRING(linphone_core_get_http_proxy_host(lc)));
@@ -2266,6 +2305,8 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	if (lc->platform_helper == NULL)
 		lc->platform_helper = new LinphonePrivate::StubbedPlatformHelpers(lc);
 
+	msplugins_dir = linphone_factory_get_msplugins_dir(lfactory);
+	image_resources_dir = linphone_factory_get_image_resources_dir(lfactory);
 	// MS Factory MUST be created after Android has been set, otherwise no camera will be detected !
 	lc->factory = ms_factory_new_with_voip_and_directories(msplugins_dir, image_resources_dir);
 	lc->sal->setFactory(lc->factory);
@@ -2319,6 +2360,11 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 #ifdef SQLITE_STORAGE_ENABLED
 	sqlite3_bctbx_vfs_register(0);
 #endif
+
+	lc->qrcode_rect.h = 0;
+	lc->qrcode_rect.w = 0;
+	lc->qrcode_rect.x = 0;
+	lc->qrcode_rect.y = 0;
 
 	lc->vcard_context = linphone_vcard_context_new();
 	linphone_core_initialize_supported_content_types(lc);
@@ -3140,19 +3186,29 @@ bool_t linphone_core_content_encoding_supported(const LinphoneCore *lc, const ch
 	return (strcmp(handle_content_encoding, content_encoding) == 0) && lc->sal->isContentEncodingAvailable(content_encoding);
 }
 
+static void notify_network_reachable_change (LinphoneCore *lc) {
+	if (!lc->network_reachable_to_be_notified)
+		return;
+
+	lc->network_reachable_to_be_notified = FALSE;
+	linphone_core_notify_network_reachable(lc, lc->sip_network_reachable);
+	if (lc->sip_network_reachable)
+		linphone_core_resolve_stun_server(lc);
+}
+
 static void monitor_network_state(LinphoneCore *lc, time_t curtime){
 	bool_t new_status=lc->network_last_status;
 	char newip[LINPHONE_IPADDR_SIZE];
 
-	/* only do the network up checking every five seconds */
+	// only do the network up checking every five seconds
 	if (lc->network_last_check==0 || (curtime-lc->network_last_check)>=5){
 		linphone_core_get_local_ip(lc,AF_UNSPEC,NULL,newip);
 		if (strcmp(newip,"::1")!=0 && strcmp(newip,"127.0.0.1")!=0){
 			new_status=TRUE;
-		}else new_status=FALSE; /*no network*/
+		}else new_status=FALSE; //no network
 
 		if (new_status==lc->network_last_status && new_status==TRUE && strcmp(newip,lc->localip)!=0){
-			/*IP address change detected*/
+			//IP address change detected
 			ms_message("IP address change detected.");
 			set_network_reachable(lc,FALSE,curtime);
 			lc->network_last_status=FALSE;
@@ -3168,6 +3224,8 @@ static void monitor_network_state(LinphoneCore *lc, time_t curtime){
 		}
 		lc->network_last_check=curtime;
 	}
+
+	notify_network_reachable_change(lc);
 }
 
 static void proxy_update(LinphoneCore *lc){
@@ -3260,13 +3318,6 @@ void linphone_core_iterate(LinphoneCore *lc){
 	int64_t diff_time;
 	bool one_second_elapsed = false;
 
-	if (lc->network_reachable_to_be_notified) {
-		lc->network_reachable_to_be_notified=FALSE;
-		linphone_core_notify_network_reachable(lc,lc->sip_network_reachable);
-		if (lc->sip_network_reachable) {
-			linphone_core_resolve_stun_server(lc);
-		}
-	}
 	if (lc->prevtime_ms == 0){
 		lc->prevtime_ms = curtime_ms;
 	}
@@ -4810,11 +4861,24 @@ void linphone_core_migrate_logs_from_rc_to_db(LinphoneCore *lc) {
  * Video related functions                                                  *
  ******************************************************************************/
 
+
 #ifdef VIDEO_ENABLED
-static void snapshot_taken(void *userdata, struct _MSFilter *f, unsigned int id, void *arg) {
-	if (id == MS_JPEG_WRITER_SNAPSHOT_TAKEN) {
-		LinphoneCore *lc = (LinphoneCore *)userdata;
-		linphone_core_enable_video_preview(lc, FALSE);
+static void video_filter_callback(void *userdata, struct _MSFilter *f, unsigned int id, void *arg) {
+	switch(id) {
+		case  MS_JPEG_WRITER_SNAPSHOT_TAKEN: {
+			LinphoneCore *lc = (LinphoneCore *)userdata;
+			linphone_core_enable_video_preview(lc, FALSE);
+			break;
+		}
+		case MS_QRCODE_READER_QRCODE_FOUND: {
+			LinphoneCore *lc = (LinphoneCore *)userdata;
+			if (linphone_core_cbs_get_qrcode_found(linphone_core_get_current_callbacks(lc)) != NULL) {
+				char* result = ms_strdup((const char*)arg);
+				linphone_core_notify_qrcode_found(lc, result);
+				ms_free(result);
+			}
+			break;
+		}
 	}
 }
 #endif
@@ -4837,7 +4901,7 @@ LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore *lc, const char 
 			lc->previewstream->ms.factory = lc->factory;
 			linphone_core_enable_video_preview(lc, TRUE);
 
-			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter, snapshot_taken, lc, TRUE);
+			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter, video_filter_callback, lc, TRUE);
 			ms_filter_call_method(lc->previewstream->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void*)file);
 		} else {
 			ms_filter_call_method(lc->previewstream->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void*)file);
@@ -4858,16 +4922,30 @@ static void toggle_video_preview(LinphoneCore *lc, bool_t val){
 			if (!vdef || linphone_video_definition_is_undefined(vdef)) {
 				vdef = linphone_core_get_preferred_video_definition(lc);
 			}
-			vsize.width = (int)linphone_video_definition_get_width(vdef);
-			vsize.height = (int)linphone_video_definition_get_height(vdef);
-			lc->previewstream=video_preview_new(lc->factory);
+			if (linphone_core_qrcode_video_preview_enabled(lc)) {
+				vsize.width = 720;
+				vsize.height = 1280;
+			} else {
+				vsize.width = (int)linphone_video_definition_get_width(vdef);
+				vsize.height = (int)linphone_video_definition_get_height(vdef);
+			}
+			lc->previewstream = video_preview_new(lc->factory);
 			video_preview_set_size(lc->previewstream,vsize);
 			if (display_filter)
 				video_preview_set_display_filter_name(lc->previewstream,display_filter);
 			if (lc->preview_window_id != NULL)
 				video_preview_set_native_window_id(lc->previewstream,lc->preview_window_id);
 			video_preview_set_fps(lc->previewstream,linphone_core_get_preferred_framerate(lc));
+			if (linphone_core_qrcode_video_preview_enabled(lc)) {
+				video_preview_enable_qrcode(lc->previewstream, TRUE);
+				if (lc->qrcode_rect.w != 0 && lc->qrcode_rect.h != 0) {
+					video_preview_set_decode_rect(lc->previewstream, lc->qrcode_rect);
+				}
+			}
 			video_preview_start(lc->previewstream,lc->video_conf.device);
+			if (video_preview_qrcode_enabled(lc->previewstream)) {
+				ms_filter_add_notify_callback(lc->previewstream->qrcode, video_filter_callback, lc, TRUE);
+			}
 		}
 	}else{
 		if (lc->previewstream!=NULL){
@@ -5040,6 +5118,27 @@ void linphone_core_enable_video_preview(LinphoneCore *lc, bool_t val){
 
 bool_t linphone_core_video_preview_enabled(const LinphoneCore *lc){
 	return lc->video_conf.show_local;
+}
+
+void linphone_core_enable_qrcode_video_preview(LinphoneCore *lc, bool_t val) {
+	lc->video_conf.qrcode_decoder=val;
+	if (linphone_core_ready(lc))
+		lp_config_set_int(lc->config,"video","qrcode_decoder",val);
+}
+
+bool_t linphone_core_qrcode_video_preview_enabled(const LinphoneCore *lc) {
+	return lc->video_conf.qrcode_decoder;
+}
+
+void linphone_core_set_qrcode_decode_rect(LinphoneCore *lc, const int x, const int y, const int w, const int h) {
+	if (lc) {
+		MSRect rect;
+		rect.x = x;
+		rect.y = y;
+		rect.w = w;
+		rect.h = h;
+		lc->qrcode_rect = rect;
+	}
 }
 
 void linphone_core_enable_self_view(LinphoneCore *lc, bool_t val){
@@ -6172,6 +6271,7 @@ static void set_sip_network_reachable(LinphoneCore* lc,bool_t is_sip_reachable, 
 
 	if (is_sip_reachable){
 		getPlatformHelpers(lc)->setDnsServers();
+		if (lc->sip_conf.guess_hostname) update_primary_contact(lc);
 	}
 
 	ms_message("SIP network reachability state is now [%s]",is_sip_reachable?"UP":"DOWN");
@@ -6234,19 +6334,22 @@ static void disable_internal_network_reachability_detection(LinphoneCore *lc){
 	}
 }
 
-void linphone_core_set_network_reachable(LinphoneCore* lc,bool_t isReachable) {
+void linphone_core_set_network_reachable(LinphoneCore *lc, bool_t isReachable) {
 	disable_internal_network_reachability_detection(lc);
 	set_network_reachable(lc, isReachable, ms_time(NULL));
+	notify_network_reachable_change(lc);
 }
 
 void linphone_core_set_media_network_reachable(LinphoneCore *lc, bool_t is_reachable){
 	disable_internal_network_reachability_detection(lc);
 	set_media_network_reachable(lc, is_reachable);
+	notify_network_reachable_change(lc);
 }
 
 void linphone_core_set_sip_network_reachable(LinphoneCore *lc, bool_t is_reachable){
 	disable_internal_network_reachability_detection(lc);
 	set_sip_network_reachable(lc, is_reachable, ms_time(NULL));
+	notify_network_reachable_change(lc);
 }
 
 bool_t linphone_core_is_network_reachable(LinphoneCore* lc) {
@@ -7305,6 +7408,7 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 	int err;
 	bool_t is_desktop = FALSE;
 	const char *platform = NULL;
+	const char *mobilePlatform = NULL;
 	const char *version_check_url_root = lp_config_get_string(lc->config, "misc", "version_check_url_root", NULL);
 
 	if (version_check_url_root != NULL) {
@@ -7320,9 +7424,14 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 			if (strcmp(tag, "win32") == 0) platform = "windows";
 			else if (strcmp(tag, "apple") == 0) platform = "macosx";
 			else if (strcmp(tag, "linux") == 0) platform = "linux";
+	    else if (strcmp(tag, "ios") == 0) mobilePlatform = "ios";
+	    else if (strcmp(tag, "android") == 0) mobilePlatform = "android";
 			else if (strcmp(tag, "desktop") == 0) is_desktop = TRUE;
 		}
-		if ((is_desktop == FALSE) || (platform == NULL)) {
+		  if (!is_desktop) {
+		    platform = mobilePlatform;
+		  }
+		  if (platform == NULL) {
 			ms_warning("Update checking is not supported on this platform");
 			return;
 		}

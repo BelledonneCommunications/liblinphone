@@ -210,19 +210,19 @@ static void message_forking_with_unreachable_recipients_with_gruu(void) {
 	LinphoneCoreManager *marie = ms_new0(LinphoneCoreManager, 1);
 	LinphoneCoreManager *pauline = ms_new0(LinphoneCoreManager, 1);
 	LinphoneCoreManager *marie2 = ms_new0(LinphoneCoreManager, 1);
-	
+
 	linphone_core_manager_init(marie, "marie_rc", NULL);
 	linphone_core_manager_init(pauline, transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", NULL);
 	linphone_core_manager_init(marie2, "marie_rc", NULL);
-	
+
 	linphone_core_add_supported_tag(marie->lc,"gruu");
 	linphone_core_add_supported_tag(pauline->lc,"gruu");
 	linphone_core_add_supported_tag(marie2->lc,"gruu");
-	
+
 	linphone_core_manager_start(marie,TRUE);
 	linphone_core_manager_start(pauline,TRUE);
 	linphone_core_manager_start(marie2,TRUE);
-	
+
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 
 	LinphoneProxyConfig *marie_proxy_config = linphone_core_get_default_proxy_config(marie->lc);
@@ -562,7 +562,7 @@ static void call_forking_with_push_notification_double_contact(void){
 	LinphoneCoreManager* pauline = linphone_core_manager_new2( transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc",FALSE);
 	int dummy=0;
 
-	
+
 	lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "unregister_previous_contact", 1);
 	lp_config_set_int(linphone_core_get_config(pauline->lc), "sip", "unregister_previous_contact", 1);
 	linphone_core_set_user_agent(marie->lc,"Natted Linphone",NULL);
@@ -598,9 +598,9 @@ static void call_forking_with_push_notification_double_contact(void){
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,1000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallConnected,1,1000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,1000));
-		
+
 		liblinphone_tester_check_rtcp(pauline,marie);
-		
+
 		linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,5000));
@@ -1212,15 +1212,17 @@ static void test_list_subscribe (void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,1,5000));
 	/*dummy wait to avoid derred notify*/
 	wait_for_list(lcs,&dummy,1,2000);
+	int initial_number_of_notify = marie->stat.number_of_NotifyReceived;
+	
 	setPublish(linphone_core_get_default_proxy_config(pauline->lc), TRUE);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,2,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,initial_number_of_notify + 1,5000));
 
 	setPublish(linphone_core_get_default_proxy_config(laure->lc), TRUE);
-	/*make sure notify is not sent "imadiatly but defered*/
-	BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,3,1000));
+	/*make sure notify is not sent "immediatly but defered*/
+	BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,initial_number_of_notify + 2,1000));
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,3,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,initial_number_of_notify + 2,5000));
 
 	linphone_event_terminate(lev);
 
@@ -1342,14 +1344,28 @@ static void tls_authentication_requested_bad(LinphoneCore *lc, LinphoneAuthInfo 
 	}
 }
 
-static void tls_client_auth_try_register(const char *identity, bool_t with_good_cert, bool_t must_work){
+static void tls_authentication_provide_altname_cert(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method){
+	if (method == LinphoneAuthTls){
+
+		char *cert = bc_tester_res("certificates/client/cert3.pem");
+		char *key = bc_tester_res("certificates/client/key3.pem");
+
+		linphone_auth_info_set_tls_cert_path(auth_info, cert);
+		linphone_auth_info_set_tls_key_path(auth_info, key);
+		linphone_core_add_auth_info(lc, auth_info);
+		bc_free(cert);
+		bc_free(key);
+	}
+}
+
+static void tls_client_auth_try_register(const char *identity, LinphoneCoreAuthenticationRequestedCb cb, bool_t good_cert, bool_t must_work){
 	LinphoneCoreManager *lcm;
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	LinphoneProxyConfig *cfg;
 
 	lcm = linphone_core_manager_new(NULL);
 
-	linphone_core_cbs_set_authentication_requested(cbs, with_good_cert ? tls_authentication_requested_good : tls_authentication_requested_bad);
+	linphone_core_cbs_set_authentication_requested(cbs, cb);
 	linphone_core_add_callbacks(lcm->lc, cbs);
 	linphone_core_cbs_unref(cbs);
 	cfg = linphone_core_create_proxy_config(lcm->lc);
@@ -1368,7 +1384,8 @@ static void tls_client_auth_try_register(const char *identity, bool_t with_good_
 		/*we should expect at least 2 "auth_requested": one for the TLS certificate, another one because the server rejects the REGISTER with 401,
 		 with eventually MD5 + SHA256 challenge*/
 		/*If the certificate isn't recognized at all, the connection will not happen and no SIP response will be received from server.*/
-		if (with_good_cert) BC_ASSERT_GREATER(lcm->stat.number_of_auth_info_requested,2, int, "%d");
+		if (good_cert) BC_ASSERT_GREATER(lcm->stat.number_of_auth_info_requested,2, int, "%d");
+
 		else BC_ASSERT_EQUAL(lcm->stat.number_of_auth_info_requested,1, int, "%d");
 	}
 
@@ -1380,9 +1397,9 @@ void tls_client_auth_bad_certificate_cn(void) {
 	if (transport_supported(LinphoneTransportTls)) {
 		/*first register to the proxy with galadrielle's identity, and authenticate by supplying galadrielle's certificate.
 		* It must work.*/
-		tls_client_auth_try_register("sip:galadrielle@sip.example.org", TRUE, TRUE);
+		tls_client_auth_try_register("sip:galadrielle@sip.example.org", tls_authentication_requested_good, TRUE, TRUE);
 		/*now do the same thing, but trying to register as "Arwen". It must fail.*/
-		tls_client_auth_try_register("sip:arwen@sip.example.org", TRUE, FALSE);
+		tls_client_auth_try_register("sip:arwen@sip.example.org", tls_authentication_requested_good, TRUE, FALSE);
 	}
 }
 
@@ -1390,7 +1407,18 @@ void tls_client_auth_bad_certificate(void) {
 	if (transport_supported(LinphoneTransportTls)) {
 		/*first register to the proxy with galadrielle's identity, and authenticate by supplying galadrielle's certificate.
 		* It must work.*/
-		tls_client_auth_try_register("sip:galadrielle@sip.example.org", FALSE, FALSE);
+		tls_client_auth_try_register("sip:galadrielle@sip.example.org", tls_authentication_requested_bad, FALSE, FALSE);
+	}
+}
+
+/*
+ * This test verifies that the flexisip certificate postcheck works.
+ * Here, the certificate presented for gandalf is valid and matches the SIP from. However we've set the regexp in flexisip.conf to only accept
+ * certificates with subjects containing either galadrielle or sip:sip.example.org.
+ */
+static void tls_client_rejected_due_to_unmatched_subject(void){
+	if (transport_supported(LinphoneTransportTls)) {
+		tls_client_auth_try_register("sip:gandalf@sip.example.org", tls_authentication_provide_altname_cert, TRUE, FALSE);
 	}
 }
 
@@ -1602,7 +1630,7 @@ void sequential_forking(void) {
 	BC_ASSERT_EQUAL(marie2->stat.number_of_LinphoneCallIncomingReceived, 0, int, "%d");
 
 	LinphoneCall *call = linphone_core_get_current_call(marie->lc);
-	if (!BC_ASSERT_PTR_NOT_NULL(call)) return;
+	if (!BC_ASSERT_PTR_NOT_NULL(call)) goto end;
 
 	/*marie accepts the call on its second device*/
 	linphone_call_accept(call);
@@ -1618,6 +1646,7 @@ void sequential_forking(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,1000));
 
+end:
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(marie2);
@@ -1658,16 +1687,17 @@ void sequential_forking_with_timeout_for_highest_priority(void) {
 
 	linphone_core_invite_address(pauline->lc,marie->identity);
 
+	/*second and third devices should have received the call*/
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallIncomingReceived,1,13000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallIncomingReceived,1,3000));
 	/*pauline should hear ringback*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingRinging,1,3000));
 	/*first device should receive nothing since it is disconnected*/
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallIncomingReceived, 0, int, "%d");
-	/*second and third devices should have received the call*/
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallIncomingReceived,1,3000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallIncomingReceived,1,3000));
+
 
 	LinphoneCall *call = linphone_core_get_current_call(marie3->lc);
-	if (!BC_ASSERT_PTR_NOT_NULL(call)) return;
+	if (!BC_ASSERT_PTR_NOT_NULL(call)) goto end;
 
 	/*marie accepts the call on her third device*/
 	linphone_call_accept(call);
@@ -1686,6 +1716,7 @@ void sequential_forking_with_timeout_for_highest_priority(void) {
 	/*first device should have received nothing*/
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallEnd, 0, int, "%d");
 
+end:
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(marie2);
@@ -1716,10 +1747,10 @@ void sequential_forking_with_no_response_for_highest_priority(void) {
 
 	linphone_core_invite_address(pauline->lc,marie->identity);
 
-	/*pauline should hear ringback*/
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingRinging,1,3000));
 	/*first device should receive the call*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallIncomingReceived,1,3000));
+	/*pauline should hear ringback*/
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingRinging,1,3000));
 	/*second device should have not received the call yet*/
 	BC_ASSERT_EQUAL(marie2->stat.number_of_LinphoneCallIncomingReceived, 0, int, "%d");
 
@@ -1730,7 +1761,7 @@ void sequential_forking_with_no_response_for_highest_priority(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallIncomingReceived, 1, 3000));
 
 	LinphoneCall *call = linphone_core_get_current_call(marie2->lc);
-	if (!BC_ASSERT_PTR_NOT_NULL(call)) return;
+	if (!BC_ASSERT_PTR_NOT_NULL(call)) goto end;
 
 	/*marie accepts the call on her second device*/
 	linphone_call_accept(call);
@@ -1746,6 +1777,7 @@ void sequential_forking_with_no_response_for_highest_priority(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallEnd,1,1000));
 
+end:
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(marie2);
@@ -1778,12 +1810,12 @@ void sequential_forking_with_insertion_of_higher_priority(void) {
 
 	linphone_core_invite_address(pauline->lc,marie->identity);
 
+	/*second device should have received the call*/
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallIncomingReceived,1,13000));
 	/*pauline should hear ringback*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingRinging,1,3000));
 	/*first device should receive nothing since it is disconnected*/
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallIncomingReceived, 0, int, "%d");
-	/*second device should have received the call*/
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallIncomingReceived,1,3000));
 
 	/*we create a new device*/
 	LinphoneCoreManager* marie3 = linphone_core_manager_new("marie_rc");
@@ -1794,7 +1826,7 @@ void sequential_forking_with_insertion_of_higher_priority(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallIncomingReceived,1,3000));
 
 	LinphoneCall *call = linphone_core_get_current_call(marie3->lc);
-	if (!BC_ASSERT_PTR_NOT_NULL(call)) return;
+	if (!BC_ASSERT_PTR_NOT_NULL(call)) goto end;
 
 	/*marie accepts the call on her third device*/
 	linphone_call_accept(call);
@@ -1813,6 +1845,7 @@ void sequential_forking_with_insertion_of_higher_priority(void) {
 	/*first device should have received nothing*/
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallEnd, 0, int, "%d");
 
+end:
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(marie2);
@@ -1860,16 +1893,16 @@ void sequential_forking_with_fallback_route(void) {
 	/*marie invites pauline2 on the other server*/
 	linphone_core_invite_address(marie->lc,pauline2->identity);
 
+	/*the call should be routed to the first server with pauline account*/
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,13000));
+
 	/*marie should hear ringback*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallOutgoingRinging,1,3000));
 	/*pauline2 should receive nothing since it is disconnected*/
 	BC_ASSERT_EQUAL(pauline2->stat.number_of_LinphoneCallIncomingReceived, 0, int, "%d");
 
-	/*the call should be routed to the first server with pauline account*/
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,3000));
-
 	LinphoneCall *call = linphone_core_get_current_call(pauline->lc);
-	if (!BC_ASSERT_PTR_NOT_NULL(call)) return;
+	if (!BC_ASSERT_PTR_NOT_NULL(call)) goto end;
 
 	/*pauline accepts the call*/
 	linphone_call_accept(call);
@@ -1885,10 +1918,119 @@ void sequential_forking_with_fallback_route(void) {
 	/*first device should have received nothing*/
 	BC_ASSERT_EQUAL(pauline2->stat.number_of_LinphoneCallEnd, 0, int, "%d");
 
+end:
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(pauline2);
 	linphone_core_manager_destroy(marie);
 	bctbx_list_free(lcs);
+}
+
+static void deal_with_jwe_auth_module(const char *jwe, bool_t invalid_jwe, bool_t invalid_oid) {
+	if (!transport_supported(LinphoneTransportTls))
+		return;
+
+	// 1. Register Gandalf.
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	LinphoneCoreManager *gandalf = linphone_core_manager_new(NULL);
+
+	// Do not use Authentication module.
+	linphone_core_set_user_agent(gandalf->lc, "JweAuth Linphone", NULL);
+
+	linphone_core_cbs_set_authentication_requested(cbs, tls_authentication_provide_altname_cert);
+	linphone_core_add_callbacks(gandalf->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
+	LinphoneProxyConfig *cfg = linphone_core_create_proxy_config(gandalf->lc);
+
+	linphone_proxy_config_set_server_addr(cfg, "sip:sip2.linphone.org:5063;transport=tls");
+	linphone_proxy_config_set_route(cfg, "sip:sip2.linphone.org:5063;transport=tls");
+	linphone_proxy_config_enable_register(cfg, TRUE);
+	linphone_proxy_config_set_identity(cfg, "sip:gandalf@sip.example.org");
+	linphone_core_add_proxy_config(gandalf->lc, cfg);
+
+	BC_ASSERT_TRUE(wait_for(gandalf->lc, NULL, &gandalf->stat.number_of_LinphoneRegistrationOk, 1));
+	BC_ASSERT_EQUAL(gandalf->stat.number_of_LinphoneRegistrationFailed,0, int, "%d");
+	BC_ASSERT_EQUAL(gandalf->stat.number_of_auth_info_requested,1, int, "%d");
+
+	// 2. Invite Pauline.
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+
+	bctbx_list_t *lcs = bctbx_list_append(NULL, gandalf->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	LinphoneCallParams *gandalf_params = linphone_core_create_call_params(gandalf->lc, NULL);
+	linphone_call_params_add_custom_header(
+		gandalf_params,
+		"X-token-oid",
+		invalid_oid ? "sip:invalid@sip.example.org" : "sip:gandalf@sip.example.org"
+	);
+	linphone_call_params_add_custom_header(gandalf_params, "X-token-aud", "plic-ploc");
+	linphone_call_params_add_custom_header(gandalf_params, "X-token-req_act", "DRAAAAA LES PYRAMIDES");
+	linphone_call_params_add_custom_header(gandalf_params, "X-token-jwe", jwe);
+
+	linphone_core_invite_address_with_params(gandalf->lc, pauline->identity, gandalf_params);
+	linphone_call_params_unref(gandalf_params);
+
+	int n_expected_calls = invalid_jwe || invalid_oid ? 0 : 1;
+	BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallOutgoingRinging, n_expected_calls, 3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived, n_expected_calls, 3000));
+
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	if (!n_expected_calls)
+		BC_ASSERT_PTR_NULL(pauline_call);
+	else {
+		if (pauline_call)
+			linphone_call_accept(pauline_call);
+		BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallConnected, 1, 1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallStreamsRunning, 1, 1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallConnected, 1, 1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 1000));
+	}
+
+	LinphoneCall *gandalf_call = linphone_core_get_current_call(gandalf->lc);
+	if (n_expected_calls) {
+		if (gandalf_call)
+			linphone_call_terminate(gandalf_call);
+		BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallEnd, 1, 1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 1000));
+	}
+
+	linphone_core_manager_destroy(gandalf);
+	linphone_core_manager_destroy(pauline);
+
+	linphone_proxy_config_unref(cfg);
+
+	bctbx_list_free(lcs);
+}
+
+void use_jwe_auth_module(void) {
+	static const char jwe[] = "eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAtMjU2Iiwia2lkIjoiOFp0TTNUQjJYN2YxRTBoSDk3dzlCelNvai1fck1qXzVpQnlPVG9ZcWltOCJ9.YIkpmyFKUJaSIBXh8ABjAeymbMN21VAGr7qXFmek0l8Oh3bEGBuf5YggQWP1G55V00WI8KESxm3LJnqzf-L3FDm3S8D-dLeR7GiJgJtJqED6KKf9U86aLo6UZPmh8xIdfVqLFDUeDQQwy3zwZw-MwY_xtDn_RR2u_W5bmWL-t1-A-xTIw6TEwdjqe8X_D0CuhcPx-virV3RBUHwjSO43vsdHMqLExDXIk95CuQOcUJufZJMu0q5KmpuvDSVesf6ZcmKBEVnkIlSbgAl_Hsv51RXPUT3rFsNy0LSEIByyF-zO6u_L6jpqlt8DxKc6aefa9-4KvyaxU1K7AApYZKh2TQ.fjXkk_TeGhfakvKQ.GP8RivXqe5g4OQhvzlvJ-l2jxuRziLWFNohmFIkZoXwL2mvnEqq71GWYr6_X0V7Z3I7nkMKDwhOfBpKbjnDKK-x1BEUmOmTwaJqeX_lJlZeZkXl597jtBXN3fH5vdccRvoxVFHT0DfZcEA.Km01D704Zl-J28hQJ05dEA";
+	deal_with_jwe_auth_module(jwe, FALSE, FALSE);
+}
+
+void use_jwe_auth_module_with_invalid_oid(void) {
+	static const char jwe[] = "eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAtMjU2Iiwia2lkIjoiOFp0TTNUQjJYN2YxRTBoSDk3dzlCelNvai1fck1qXzVpQnlPVG9ZcWltOCJ9.YIkpmyFKUJaSIBXh8ABjAeymbMN21VAGr7qXFmek0l8Oh3bEGBuf5YggQWP1G55V00WI8KESxm3LJnqzf-L3FDm3S8D-dLeR7GiJgJtJqED6KKf9U86aLo6UZPmh8xIdfVqLFDUeDQQwy3zwZw-MwY_xtDn_RR2u_W5bmWL-t1-A-xTIw6TEwdjqe8X_D0CuhcPx-virV3RBUHwjSO43vsdHMqLExDXIk95CuQOcUJufZJMu0q5KmpuvDSVesf6ZcmKBEVnkIlSbgAl_Hsv51RXPUT3rFsNy0LSEIByyF-zO6u_L6jpqlt8DxKc6aefa9-4KvyaxU1K7AApYZKh2TQ.fjXkk_TeGhfakvKQ.GP8RivXqe5g4OQhvzlvJ-l2jxuRziLWFNohmFIkZoXwL2mvnEqq71GWYr6_X0V7Z3I7nkMKDwhOfBpKbjnDKK-x1BEUmOmTwaJqeX_lJlZeZkXl597jtBXN3fH5vdccRvoxVFHT0DfZcEA.Km01D704Zl-J28hQJ05dEA";
+	deal_with_jwe_auth_module(jwe, FALSE, TRUE);
+}
+
+void use_jwe_auth_module_with_expired_exp(void) {
+	static const char jwe[] = "eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAtMjU2Iiwia2lkIjoiOFp0TTNUQjJYN2YxRTBoSDk3dzlCelNvai1fck1qXzVpQnlPVG9ZcWltOCJ9.PChRlYeTptnYoQDSxYRtqLCBgC3LTpsqWGKDXp-cHC_hF5vurvQfrj__KQb6mR65qBm68PmHp1KwykTAld3bUVA3ykcsGqKI7WBnpu3DLNaQ9kaluP2BvFsyhUBWDU6IqU_O8CIykTwiaSn3HSBH2MiL-lPeNfDY6ndcGXlEAOGosgXAlkFerkNsu8bm4Qkch1JIrxV6I0MhfLrNGIfPPazfYU8byVXScd0YkKlwOuaJZpUXew5nAsgb0L39vMuKomLi5ibH84X01akODOnucX6fU2f_e2MuUH4X3zgqmG9AZ8RV_Iy7irsk_VG4sS8VRftk7YqMVO8kByTkOkLwLA.DO2Navrjk-1vep94.V6n_kZt7gbYGDHnaa9q3DHK7ujkFv2Jd-9jK8xUpkH7PcG3WKTPwiLy40sFvGFr7iWnojK-tODYzakfM5t3uXWdq4iYDXv2tP_JDJt-muiE99C_07cBtL2ymrIzMp-6efzNl3YL_K-rQ9g.p3YUmwPAGO0H9e64MavQlg";
+	deal_with_jwe_auth_module(jwe, TRUE, FALSE);
+}
+
+void use_jwe_auth_module_with_no_exp(void) {
+	static const char jwe[] = "eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAtMjU2Iiwia2lkIjoiOFp0TTNUQjJYN2YxRTBoSDk3dzlCelNvai1fck1qXzVpQnlPVG9ZcWltOCJ9.Hn2oL4835Tkzqb4U3_0aDqgg-pxImCi2EbuTtWwa5uQ5cVz6p6gZ7s7PTPgkfJgtQTYzaRqsywI0cLIWkofAFWUGcL43U-w7_vm3gBpO7BpUKq81kscz6-31ni7M3prxyxw7eoqhdu8Hf9QjirHMaWAw7gYpEjcAshAA559T4a8svan0wq_WGoeXYYS0cEv8UEX6Lpz41tNkvchy9Ydm4kWYXloqnnl0ARR1bMOlxhpOD--Sm2fcTopO_E24tmDjdvgGddwGhHX4qOXs3dXWKM8SPj-PLvZSy7BJ3-Jfz5T1ErEzXlUxutgnV-9K1QZGCbVT6hiF39bcPfAj-y9Emw.xJR4Ot1XCoptlHau.dcYkLAvBJ2N0PnAJ5lr3f3b4CDVJNpi6PrprVB25k4EycdlW-IiiiC97SAyBeygvK5BAybyyjotU33_MC_1163Gk1SsRGn6yjujWgYeoLBRUL6yQcIiPZus.CCaNmMMMsIX4o-dIt7HquQ";
+	deal_with_jwe_auth_module(jwe, TRUE, FALSE);
+}
+
+void use_jwe_auth_module_with_invalid_attr(void) {
+	static const char jwe[] = "eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAtMjU2Iiwia2lkIjoiOFp0TTNUQjJYN2YxRTBoSDk3dzlCelNvai1fck1qXzVpQnlPVG9ZcWltOCJ9.Lj-1x8-c1BJWSvwYQtMWDV2fhGRNZ0B6auR1QgVRw2e4kxEToSSjZJAXKudAvNII0FUtPU6hf0uvuDuc9VQHRDCV3DSg0iLxVfcLJcnC0hygHnjBuVJiglqfKVfXnaLwadkRVS7Q3A52sC_YZnk0aTZKpefu1Zc_kr_llKH_pIEZDd2FL1M3XZXNiiemM1Lwq5sbRPYqxOHhVySOIUcAzUkPJpzgaIMGVwn4cwvDL58inp9tyUDak6BV6sFoSovpJ4w4HDIRLUj8BXcBZiyXlzj06YUiZVkO2JPRZR_KBPdZtKAE5KoWGe074e5q-L_f6_i3Y0psN9hI8FZfzy0nvw.FAtaQpIlLCx19mPq.TJS8q2aCeLT-oLSy24eRa2FN07AIjlymwruBvYROFeU-_UgomwIcPQhVvfE0h_QyJNVcY1iwBnCBe8KDbVHUrfHhQcCHJmOHXZ7ouzINBPk0qqr-ubCroHuV3J-prIa10qwvEzjmFBAPEw4.6cOmc0txLOCpIXa3WOkRSA";
+	deal_with_jwe_auth_module(jwe, TRUE, FALSE);
+}
+
+void use_jwe_auth_with_malformed_token(void) {
+	static const char jwe[] = "eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAtMjU2Iiwia2lkIjoiOFp0TTNUQjJYN2YxRTBoSDk3dzlCelNvai1fck1qXzVpQnlPVG9ZcWltOCJ9.YIkpmyFKUJaSIBXh8ABjAeymbMN21VAGr7qXFmek0l8Oh3bEGBuf5YggQWP1G55V00WI8KESxm3LJnqzf-L3FDm3S8D-dLeR7GiJgJtJqED6KKf9U86aLo6UZPmh8xIdfVqLFDUeDQQwy3zwZw-MwY_xtDn_RR2u_W5bmWL-t1-A-xTIw6TEwdjqe8X_D0CuhcPx-virV3RBUHwjSO43vsdHMqLExDXIk95CuQOcUJufZJMu0q5KmpuvDSVesf6ZcmKBEVnkIlSbgAl_Hsv51RXPUT3rFsNy0LSEIByyF-zO6u_L6jpqlt8DxKc6aefa9-4KvyaxU1K7AApYZKh2TQ.fjXkk_TeGhfakvKQ.GP8RivXqe5g4OQhvzlvJ-l2jxuRziLWFNohmFIkZoXwL2mvnEqq71GWYr6_X0V7Z3I7nkMKDwhOfBpKbjnDKK-x1BEUmOmTwaJqeX_lJlZeZkXl597jtBXN3fH5vdccRvoxVFHT0DfZcEA.Km01D704Zl-J18hQJ05dEA";
+	deal_with_jwe_auth_module(jwe, TRUE, FALSE);
 }
 
 test_t flexisip_tests[] = {
@@ -1929,6 +2071,7 @@ test_t flexisip_tests[] = {
 	TEST_ONE_TAG("Redis Publish/subscribe", redis_publish_subscribe, "Skip"),
 	TEST_NO_TAG("TLS authentication - client rejected due to CN mismatch", tls_client_auth_bad_certificate_cn),
 	TEST_NO_TAG("TLS authentication - client rejected due to unrecognized certificate chain", tls_client_auth_bad_certificate),
+	TEST_NO_TAG("TLS authentication - client rejected due to unmatched certificate subject", tls_client_rejected_due_to_unmatched_subject),
 	TEST_NO_TAG("Transcoder", transcoder_tester),
 	TEST_NO_TAG("Removing old tport on flexisip for the same client", test_removing_old_tport),
 	/*TEST_NO_TAG("Resend of REFER with other devices", resend_refer_other_devices),*/
@@ -1937,9 +2080,17 @@ test_t flexisip_tests[] = {
 	TEST_NO_TAG("Sequential forking with no response from highest priority", sequential_forking_with_no_response_for_highest_priority),
 	TEST_NO_TAG("Sequential forking with insertion of higher priority", sequential_forking_with_insertion_of_higher_priority),
 	TEST_NO_TAG("Sequential forking with fallback route", sequential_forking_with_fallback_route),
-	TEST_NO_TAG("Registered contact does not have regid param", register_without_regid)
+	TEST_NO_TAG("Registered contact does not have regid param", register_without_regid),
+	TEST_NO_TAG("Use JweAuth module", use_jwe_auth_module),
+	TEST_NO_TAG("Use JweAuth module with invalid oid", use_jwe_auth_module_with_invalid_oid),
+	TEST_NO_TAG("Use JweAuth module with expired exp", use_jwe_auth_module_with_expired_exp),
+	TEST_NO_TAG("Use JweAuth module with no exp", use_jwe_auth_module_with_no_exp),
+	TEST_NO_TAG("Use JweAuth module with invalid attr", use_jwe_auth_module_with_invalid_attr),
+	TEST_NO_TAG("Use JweAuth module with malformed token", use_jwe_auth_with_malformed_token)
 };
 
-
-test_suite_t flexisip_test_suite = {"Flexisip", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-									sizeof(flexisip_tests) / sizeof(flexisip_tests[0]), flexisip_tests};
+test_suite_t flexisip_test_suite = {
+	"Flexisip", NULL, NULL,
+	liblinphone_tester_before_each, liblinphone_tester_after_each,
+	sizeof(flexisip_tests) / sizeof(flexisip_tests[0]), flexisip_tests
+};

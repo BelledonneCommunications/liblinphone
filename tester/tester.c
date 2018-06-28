@@ -28,11 +28,13 @@
 #if _WIN32
 #define unlink _unlink
 #endif
+
 #ifdef __ANDROID__
 extern jobject system_context;
 #else
 void *system_context=0;
 #endif
+
 static int liblinphone_tester_keep_accounts_flag = 0;
 static bool_t liblinphone_tester_keep_record_files = FALSE;
 static bool_t liblinphone_tester_leak_detector_disabled = FALSE;
@@ -56,6 +58,7 @@ int liblinphonetester_transport_timeout = 9000; /*milliseconds. it is set to suc
 			Thanks to the timeout, it will fallback to IPv4*/
 
 const char *liblinphone_tester_mire_id="Mire: Mire (synthetic moving picture)";
+const char *liblinphone_tester_static_image_id="StaticImage: Static picture";
 
 static void network_reachable(LinphoneCore *lc, bool_t reachable) {
 	stats* counters;
@@ -361,6 +364,7 @@ void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, c
 	linphone_core_cbs_set_info_received(mgr->cbs, info_message_received);
 	linphone_core_cbs_set_subscription_state_changed(mgr->cbs, linphone_subscription_state_change);
 	linphone_core_cbs_set_notify_received(mgr->cbs, linphone_notify_received);
+	linphone_core_cbs_set_subscribe_received(mgr->cbs, linphone_subscribe_received);
 	linphone_core_cbs_set_publish_state_changed(mgr->cbs, linphone_publish_state_changed);
 	linphone_core_cbs_set_configuring_status(mgr->cbs, linphone_configuration_status);
 	linphone_core_cbs_set_call_encryption_changed(mgr->cbs, linphone_call_encryption_changed);
@@ -438,7 +442,7 @@ LinphoneCoreManager* linphone_core_manager_create(const char* rc_file) {
 LinphoneCoreManager* linphone_core_manager_new4(const char* rc_file, int check_for_proxies, const char* phone_alias, const char* contact_params, int expires) {
 	/* This function is for testing purposes. */
 	LinphoneCoreManager *manager = ms_new0(LinphoneCoreManager, 1);
-	
+
 	linphone_core_manager_init(manager, rc_file, phone_alias);
 	linphone_proxy_config_set_contact_parameters(linphone_core_get_default_proxy_config(manager->lc), contact_params);
 	linphone_proxy_config_set_expires(linphone_core_get_default_proxy_config(manager->lc), expires);

@@ -69,12 +69,6 @@ static jlong GetObjectNativePtr(JNIEnv *env, jobject object) {
 	return nativePtr;
 }
 
-static void SetObjectNativePtr(JNIEnv *env, jobject object, jlong ptr) {
-	jclass objClass = env->GetObjectClass(object);
-	jfieldID nativePtrId = env->GetFieldID(objClass, "nativePtr", "J");
-	env->SetLongField(object, nativePtrId, ptr);
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void linphone_android_log_handler(int prio, char *str) {
@@ -283,9 +277,8 @@ static inline void handle_possible_java_exception(JNIEnv *env, jobject listener)
 
 {{#callbacks}}
 static {{return}} {{callbackName}}({{params}}) {
-	JNIEnv *env = 0;
-	jint jvmResult = jvm->AttachCurrentThread(&env,NULL);
-	if (jvmResult != 0) {
+	JNIEnv *env = ms_get_jni_env();
+	if (!env) {
 		ms_error("cannot attach VM");
 		return{{returnIfFail}};
 	}

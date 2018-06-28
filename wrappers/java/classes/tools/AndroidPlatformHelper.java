@@ -29,6 +29,7 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.MulticastLock;
 import android.net.wifi.WifiManager.WifiLock;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
@@ -82,7 +83,7 @@ public class AndroidPlatformHelper {
 		mWifiLock.setReferenceCounted(true);
 
 		String basePath = mContext.getFilesDir().getAbsolutePath();
-		//make sur to follow same path as unix version of the sdk
+		//make sure to follow same path as unix version of the sdk
 		mLinphoneRootCaFile = basePath + "/share/linphone/rootca.pem";
 		mRingSoundFile = basePath + "/share/sounds/linphone/rings/notes_of_the_optimistic.mkv";
 		mRingbackSoundFile = basePath + "/share/sounds/linphone/ringback.wav";
@@ -92,10 +93,10 @@ public class AndroidPlatformHelper {
 		mGrammarVcardFile = basePath + "/share/belr/grammars/vcard_grammar";
 		mUserCertificatePath = basePath;
 
-		try {
+		try{
 			copyAssetsFromPackage();
-		} catch (Exception e) {
-			Log.e(e, "AndroidPlatformHelper: Cannot copy assets from package.");
+		}catch (IOException e) {
+			Log.e("AndroidPlatformHelper(): failed to install some resources.");
 		}
 	}
 
@@ -136,6 +137,11 @@ public class AndroidPlatformHelper {
 	public String getCachePath() {
 		return mContext.getCacheDir().getAbsolutePath();
 	}
+	
+	public String getNativeLibraryDir(){
+		ApplicationInfo info = mContext.getApplicationInfo();
+		return info.nativeLibraryDir;
+	}
 
 	public void acquireWifiLock() {
 		Log.i("acquireWifiLock()");
@@ -173,7 +179,7 @@ public class AndroidPlatformHelper {
 			Log.d("App doesn't seem to embed resource " + name + "in it's res/raw/ directory, use linphone's instead");
 			resId = mResources.getIdentifier(name, "raw", "org.linphone");
 			if (resId == 0) {
-				Log.e("App doesn't seem to embed resource " + name + "in it's res/raw/ directory, please add it");
+				Log.i("App doesn't seem to embed resource " + name + "in it's res/raw/ directory. Make sure this file is either brought as an asset or a resource");
 			}
 		}
 		return resId;

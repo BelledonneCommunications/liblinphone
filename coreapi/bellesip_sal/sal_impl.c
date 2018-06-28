@@ -450,3 +450,4 @@ const char * sal_body_handler_get_header(const SalBodyHandler *body_handler, con
 const belle_sip_list_t* sal_body_handler_get_headers(const SalBodyHandler *body_handler) {
 	return belle_sip_body_handler_get_headers(BELLE_SIP_BODY_HANDLER(body_handler));
 }
+

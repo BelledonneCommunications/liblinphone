@@ -323,6 +323,11 @@ void MediaSessionPrivate::remoteRinging () {
 	}
 }
 
+void MediaSessionPrivate::replaceOp (SalCallOp *newOp) {
+	CallSessionPrivate::replaceOp(newOp);
+	updateStreams(newOp->getFinalMediaDescription(), state);
+}
+
 int MediaSessionPrivate::resumeAfterFailedTransfer () {
 	L_Q();
 	if (automaticallyPaused && (state == CallSession::State::Pausing))
@@ -1125,7 +1130,7 @@ void MediaSessionPrivate::discoverMtu (const Address &remoteAddr) {
 
 string MediaSessionPrivate::getBindIpForStream (int streamIndex) {
 	L_Q();
-	string bindIp = lp_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "bind_address", (af == AF_INET6) ? "::0" : "0.0.0.0");
+	string bindIp = lp_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "bind_address", "");
 	PortConfig *pc = &mediaPorts[streamIndex];
 	if (!pc->multicastIp.empty()){
 		if (direction == LinphoneCallOutgoing) {
@@ -1179,7 +1184,7 @@ void MediaSessionPrivate::getLocalIp (const Address &remoteAddr) {
 		struct addrinfo *res = nullptr;
 		string host(remoteAddr.getDomain());
 		int err;
-		
+
 		if (host[0] == '[')
 			host = host.substr(1, host.size() - 2);
 		memset(&hints, 0, sizeof(hints));
@@ -2417,7 +2422,7 @@ void MediaSessionPrivate::initializeAudioStream () {
 		if (remoteDesc)
 			streamDesc = sal_media_description_find_best_stream(remoteDesc, SalAudio);
 
-		audioStream = audio_stream_new2(q->getCore()->getCCore()->factory, getBindIpForStream(mainAudioStreamIndex).c_str(),
+		audioStream = audio_stream_new2(q->getCore()->getCCore()->factory, L_STRING_TO_C(getBindIpForStream(mainAudioStreamIndex)),
 			(multicastRole ==  SalMulticastReceiver) ? streamDesc->rtp_port : mediaPorts[mainAudioStreamIndex].rtpPort,
 			(multicastRole ==  SalMulticastReceiver) ? 0 /* Disabled for now */ : mediaPorts[mainAudioStreamIndex].rtcpPort);
 		if (multicastRole == SalMulticastReceiver)
@@ -2431,8 +2436,14 @@ void MediaSessionPrivate::initializeAudioStream () {
 
 		/* Initialize zrtp even if we didn't explicitely set it, just in case peer offers it */
 		if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), LinphoneMediaEncryptionZRTP)) {
-			char *peerUri = linphone_address_as_string_uri_only((direction == LinphoneCallIncoming) ? log->from : log->to);
-			char *selfUri = linphone_address_as_string_uri_only((direction == LinphoneCallIncoming) ? log->to : log->from);
+			LinphoneAddress *peerAddr = (direction == LinphoneCallIncoming) ? log->from : log->to;
+			LinphoneAddress *selfAddr = (direction == LinphoneCallIncoming) ? log->to : log->from;
+			char *peerUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(peerAddr)
+														, linphone_address_get_username(peerAddr)
+														, linphone_address_get_domain(peerAddr));
+			char *selfUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(selfAddr)
+														, linphone_address_get_username(selfAddr)
+														, linphone_address_get_domain(selfAddr));
 			MSZrtpParams params;
 			memset(&params, 0, sizeof(MSZrtpParams));
 			/* media encryption of current params will be set later when zrtp is activated */
@@ -2523,7 +2534,7 @@ void MediaSessionPrivate::initializeTextStream () {
 		if (remoteDesc)
 			streamDesc = sal_media_description_find_best_stream(remoteDesc, SalText);
 
-		textStream = text_stream_new2(q->getCore()->getCCore()->factory, getBindIpForStream(mainTextStreamIndex).c_str(),
+		textStream = text_stream_new2(q->getCore()->getCCore()->factory, L_STRING_TO_C(getBindIpForStream(mainTextStreamIndex)),
 			(multicastRole ==  SalMulticastReceiver) ? streamDesc->rtp_port : mediaPorts[mainTextStreamIndex].rtpPort,
 			(multicastRole ==  SalMulticastReceiver) ? 0 /* Disabled for now */ : mediaPorts[mainTextStreamIndex].rtcpPort);
 		if (multicastRole == SalMulticastReceiver)
@@ -2567,7 +2578,7 @@ void MediaSessionPrivate::initializeVideoStream () {
 		if (remoteDesc)
 			streamDesc = sal_media_description_find_best_stream(remoteDesc, SalVideo);
 
-		videoStream = video_stream_new2(q->getCore()->getCCore()->factory, getBindIpForStream(mainVideoStreamIndex).c_str(),
+		videoStream = video_stream_new2(q->getCore()->getCCore()->factory, L_STRING_TO_C(getBindIpForStream(mainVideoStreamIndex)),
 			(multicastRole ==  SalMulticastReceiver) ? streamDesc->rtp_port : mediaPorts[mainVideoStreamIndex].rtpPort,
 			(multicastRole ==  SalMulticastReceiver) ?  0 /* Disabled for now */ : mediaPorts[mainVideoStreamIndex].rtcpPort);
 		if (multicastRole == SalMulticastReceiver)
@@ -3866,7 +3877,7 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 	L_Q();
 	if (msp) {
 		setParams(new MediaSessionParams(*msp));
-		iceAgent->prepare(localDesc, true);
+		iceAgent->prepare(localDesc, true, false /*we don't allow gathering now, it must have been done before*/);
 		makeLocalMediaDescription();
 		op->setLocalMediaDescription(localDesc);
 	}
@@ -3952,6 +3963,14 @@ void MediaSessionPrivate::reinviteToRecoverFromConnectionLoss () {
 	if (iceAgent->hasSession())
 		iceAgent->resetSession(IR_Controlling);
 	q->update(getParams());
+}
+
+void MediaSessionPrivate::repairByInviteWithReplaces () {
+	if ((state == CallSession::State::IncomingEarlyMedia) || (state == CallSession::State::OutgoingEarlyMedia)) {
+		stopStreams();
+		initializeStreams();
+	}
+	CallSessionPrivate::repairByInviteWithReplaces();
 }
 
 // -----------------------------------------------------------------------------
@@ -4282,14 +4301,7 @@ bool MediaSession::initiateOutgoing () {
 
 void MediaSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 	L_D();
-	int elapsed = (int)(currentRealTime - d->log->start_date_time);
 	d->executeBackgroundTasks(oneSecondElapsed);
-	if ((d->state == CallSession::State::OutgoingInit) && (elapsed >= getCore()->getCCore()->sip_conf.delayed_timeout)) {
-		if (d->iceAgent->hasSession()) {
-			lWarning() << "ICE candidates gathering from [" << linphone_nat_policy_get_stun_server(d->natPolicy) << "] has not finished yet, proceed with the call without ICE anyway";
-			d->iceAgent->deleteSession();
-		}
-	}
 	CallSession::iterate(currentRealTime, oneSecondElapsed);
 }
 

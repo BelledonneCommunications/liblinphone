@@ -216,12 +216,12 @@ static void profile_call_base(bool_t avpf1
 	}else {
 		ms_message("Unsupported [%s] encryption type, cannot test",linphone_media_encryption_to_string(srtp2));
 		goto end;
-
 	}
 
 	BC_ASSERT_TRUE(call(marie, pauline));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000); /*wait 1 second for streams to start flowing*/
 	if (linphone_core_get_current_call(marie->lc)) {
 		params = linphone_call_get_current_params(linphone_core_get_current_call(marie->lc));
 		BC_ASSERT_STRING_EQUAL(linphone_call_params_get_rtp_profile(params), expected_profile);
@@ -490,6 +490,7 @@ static void compatible_avpf_features(void) {
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000); /*wait 1 second for streams to start flowing*/
 	check_avpf_features(marie->lc, pt->avpf.features);
 	check_avpf_features(pauline->lc, pt->avpf.features);
 
@@ -514,6 +515,7 @@ static void incompatible_avpf_features(void) {
 	if (!call_ok) goto end;
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000); /*wait 1 second for streams to start flowing*/
 	check_avpf_features(marie->lc, PAYLOAD_TYPE_AVPF_NONE);
 	check_avpf_features(pauline->lc, PAYLOAD_TYPE_AVPF_NONE);
 

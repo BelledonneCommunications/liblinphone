@@ -200,6 +200,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsCallCreatedCb call_created;
 	LinphoneCoreCbsVersionUpdateCheckResultReceivedCb version_update_check_result_received;
 	LinphoneCoreCbsChatRoomStateChangedCb chat_room_state_changed;
+	LinphoneCoreCbsQrcodeFoundCb qrcode_found;
 	LinphoneCoreCbsEcCalibrationResultCb ec_calibration_result;
 	LinphoneCoreCbsEcCalibrationAudioInitCb ec_calibration_audio_init;
 	LinphoneCoreCbsEcCalibrationAudioUninitCb ec_calibration_audio_uninit;
@@ -708,6 +709,20 @@ LINPHONE_PUBLIC LinphoneCoreCbsChatRoomStateChangedCb linphone_core_cbs_get_chat
 LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_state_changed (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomStateChangedCb cb);
 
 /**
+ * Get the qrcode found callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsQrcodeFoundCb linphone_core_cbs_get_qrcode_found(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the qrcode found callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ **/
+LINPHONE_PUBLIC void linphone_core_cbs_set_qrcode_found(LinphoneCoreCbs *cbs, LinphoneCoreCbsQrcodeFoundCb cb);
+
+/**
  * @brief Sets a callback to call each time the echo-canceler calibration is completed.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_ec_calibration_result(LinphoneCoreCbs *cbs, LinphoneCoreCbsEcCalibrationResultCb cb);
@@ -753,7 +768,7 @@ LINPHONE_PUBLIC void linphone_core_enable_log_collection(LinphoneLogCollectionSt
 LINPHONE_PUBLIC const char * linphone_core_get_log_collection_path(void);
 
 /**
- * Set the path where the log files will be written for log collection.
+ * Set the path of a directory where the log files will be written for log collection.
  * @param[in] path The path where the log files will be written.
  */
 LINPHONE_PUBLIC void linphone_core_set_log_collection_path(const char *path);
@@ -3692,6 +3707,33 @@ LINPHONE_PUBLIC void linphone_core_enable_video_preview(LinphoneCore *lc, bool_t
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC bool_t linphone_core_video_preview_enabled(const LinphoneCore *lc);
+
+/**
+ * Controls QRCode enablement.
+ * @param[in] lc LinphoneCore object
+ * @param[in] val A boolean value telling whether the QRCode is enabled in the preview.
+ * @ingroup media_parameters
+ **/
+LINPHONE_PUBLIC void linphone_core_enable_qrcode_video_preview(LinphoneCore *lc, bool_t val);
+
+/**
+ * Set the rectangle where the decoder will search a QRCode
+ * @param[in] lc LinphoneCore* object
+ * @param[in] x axis
+ * @param[in] y axis
+ * @param[in] w width
+ * @param[in] h height
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_set_qrcode_decode_rect(LinphoneCore *lc, const int x, const int y, const int w, const int h);
+
+/**
+ * Tells whether QRCode is enabled in the preview.
+ * @param[in] lc LinphoneCore object
+ * @return A boolean value telling whether QRCode is enabled in the preview.
+ * @ingroup media_parameters
+ **/
+LINPHONE_PUBLIC bool_t linphone_core_qrcode_video_preview_enabled(const LinphoneCore *lc);
 
 /**
  * Take a photo of currently from capture device and write it into a jpeg file.

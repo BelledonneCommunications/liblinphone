@@ -31,6 +31,9 @@ Requires:	%{pkg_prefix}ortp
 Requires:	%{pkg_prefix}mediastreamer
 Requires:	%{pkg_prefix}belle-sip
 Requires:	%{pkg_prefix}belr
+%if @ENABLE_VCARD@
+Requires:	%{pkg_prefix}belcard
+%endif
 %if @ENABLE_SOCI_STORAGE@
 Requires:	%{pkg_prefix}soci
 %endif
@@ -70,6 +73,12 @@ make %{?_smp_mflags}
 %install
 make install DESTDIR=%{buildroot}
 
+mkdir -p $RPM_BUILD_ROOT/lib/systemd/system
+mkdir -p $RPM_BUILD_ROOT/etc/sysconfig
+install -p -m 0644 build/rpm/lp-autoanswer.service $RPM_BUILD_ROOT/lib/systemd/system
+install -p -m 0644 build/rpm/lp-autoanswer.conf $RPM_BUILD_ROOT/etc/sysconfig
+mv $RPM_BUILD_ROOT/etc/sysconfig/lp-autoanswer.conf $RPM_BUILD_ROOT/etc/sysconfig/lp-autoanswer
+
 %check
 #%{ctest_name} -V %{?_smp_mflags}
 
@@ -83,13 +92,15 @@ rm -rf $RPM_BUILD_ROOT
 %files 
 %defattr(-,root,root)
 %doc AUTHORS ChangeLog COPYING NEWS README.md TODO
-%if @ENABLE_DAEMON@ || @ENABLE_CONSOLE_UI@
+%if @ENABLE_DAEMON@ || @ENABLE_CONSOLE_UI@ || @ENABLE_TOOLS@
 %{_bindir}/*
 %endif
 %{_libdir}/*.so.*
 #%{_mandir}/*
 %{_datadir}/linphone
 %{_datadir}/sounds/linphone
+/etc/sysconfig/lp-autoanswer
+/lib/systemd/system/lp-autoanswer.service
 
 %files devel
 %defattr(-,root,root)

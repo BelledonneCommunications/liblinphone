@@ -1,6 +1,7 @@
 #
 # OpenSSL example configuration file.
 # This is mostly being used for generation of certificate requests.
+# This variant is used for generating client certificate with subjectAltName.uri.
 #
 
 # This definition stops the following lines choking if HOME isn't
@@ -207,6 +208,8 @@ authorityKeyIdentifier=keyid,issuer
 # An alternative to produce certificates that aren't
 # deprecated according to PKIX.
 # subjectAltName=email:move
+
+subjectAltName=URI:sip:gandalf@sip.linphone.org, URI:sip:gandalf@sip.example.org
 
 # Copy subject details
 # issuerAltName=issuer:copy

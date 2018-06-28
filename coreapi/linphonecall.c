@@ -1,4 +1,3 @@
-
 /*
 linphone
 Copyright (C) 2010  Belledonne Communications SARL
