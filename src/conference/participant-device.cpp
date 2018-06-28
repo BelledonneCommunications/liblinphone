@@ -57,7 +57,9 @@ void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
 }
 
 AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
-	return getCore()->getEncryptionEngine()->getSecurityLevel(mGruu.asString());
+	if (getCore()->getEncryptionEngine())
+		return getCore()->getEncryptionEngine()->getSecurityLevel(mGruu.asString());
+	return AbstractChatRoom::SecurityLevel::ClearText;
 }
 
 ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
