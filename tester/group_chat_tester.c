@@ -3936,6 +3936,23 @@ static void group_chat_lime_v2_send_encrypted_message_with_response_and_composin
 	lime_v2_message_test(TRUE, TRUE);
 }
 
+bool_t simple_zrtp_call_with_sas_validation(LinphoneCoreManager *caller, LinphoneCoreManager *callee) {
+	bool_t call_ok = FALSE;
+	BC_ASSERT_TRUE((call_ok=call(caller, callee)));
+	if (!call_ok) return FALSE;
+	// If caller set ZRTP or (callee set ZRTP and caller has no encryption requested), ZRTP shall take place, wait for the SAS
+	if ((linphone_core_get_media_encryption(caller->lc) == LinphoneMediaEncryptionZRTP)
+		|| ((linphone_core_get_media_encryption(callee->lc) == LinphoneMediaEncryptionZRTP) && (linphone_core_get_media_encryption(caller->lc) == LinphoneMediaEncryptionNone))) {
+
+		// Simulate SAS validation
+		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(caller->lc), TRUE);
+		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(callee->lc), TRUE);
+		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(caller->lc)));
+		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(callee->lc)));
+	}
+	end_call(caller, callee);
+}
+
 static void group_chat_lime_v2_with_zrtp_verification (void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
@@ -4102,17 +4119,12 @@ static void group_chat_lime_v2_chatroom_security_level (void) {
 	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, -1);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
-	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	// Check that the chat room is correctly created on Pauline and Laure sides and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, 0);
-
-	// Check that the chat room is correctly created on Laure's side and that the participants are added
 	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, 0);
 
 // 	// Check that the chat room is correctly created on Laure's side and that the participants are added
 // 	LinphoneChatRoom *chloeCr = check_creation_chat_room_client_side(coresList, chloe, &initialChloeStats, confAddr, initialSubject, 2, 0);
-
-	// Wait for lime users to be created on X3DH server
-	wait_for_list(coresList, &dummy, 1, 5000);
 
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hey guys ! What's up ?";
@@ -4138,6 +4150,7 @@ static void group_chat_lime_v2_chatroom_security_level (void) {
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr2, linphone_chat_message_get_from_address(laureLastMsg)));
 	linphone_address_unref(marieAddr2);
 
+	// Check chat room security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
@@ -4148,40 +4161,20 @@ static void group_chat_lime_v2_chatroom_security_level (void) {
 
 	// ZRTP verification call between Marie and Pauline
 	bool_t pauline_call_ok = FALSE;
-	BC_ASSERT_TRUE((pauline_call_ok=call(marie, pauline)));
+	BC_ASSERT_TRUE((pauline_call_ok=simple_zrtp_call_with_sas_validation(marie, pauline)));
 	if (!pauline_call_ok) goto end;
-	// If caller set ZRTP or (callee set ZRTP and caller has no encryption requested), ZRTP shall take place, wait for the SAS
-	if ((linphone_core_get_media_encryption(marie->lc) == LinphoneMediaEncryptionZRTP)
-		|| ((linphone_core_get_media_encryption(pauline->lc) == LinphoneMediaEncryptionZRTP) && (linphone_core_get_media_encryption(marie->lc) == LinphoneMediaEncryptionNone))) {
 
-		// Simulate SAS validation
-		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(marie->lc), TRUE);
-		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(pauline->lc), TRUE);
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
-	}
-	end_call(marie, pauline);
-
+	// Check chat room security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
 	// ZRTP verification call between Marie and Laure
 	bool_t laure_call_ok = FALSE;
-	BC_ASSERT_TRUE((laure_call_ok=call(marie, laure)));
+	BC_ASSERT_TRUE((laure_call_ok=simple_zrtp_call_with_sas_validation(marie, laure)));
 	if (!laure_call_ok) goto end;
-	// If caller set ZRTP or (callee set ZRTP and caller has no encryption requested), ZRTP shall take place, wait for the SAS
-	if ((linphone_core_get_media_encryption(marie->lc) == LinphoneMediaEncryptionZRTP)
-		|| ((linphone_core_get_media_encryption(laure->lc) == LinphoneMediaEncryptionZRTP) && (linphone_core_get_media_encryption(marie->lc) == LinphoneMediaEncryptionNone))) {
 
-		// Simulate SAS validation
-		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(marie->lc), TRUE);
-		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(laure->lc), TRUE);
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(laure->lc)));
-	}
-	end_call(marie, laure);
-
+	// Check chat room security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
