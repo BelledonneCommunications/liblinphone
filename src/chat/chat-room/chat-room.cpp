@@ -377,6 +377,10 @@ ChatRoom::State ChatRoom::getState () const {
 	return d->state;
 }
 
+ChatRoom::SecurityLevel ChatRoom::getSecurityLevel () const {
+	return ChatRoom::SecurityLevel::ClearText;
+}
+
 // -----------------------------------------------------------------------------
 
 list<shared_ptr<EventLog>> ChatRoom::getMessageHistory (int nLast) const {

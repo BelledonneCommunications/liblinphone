@@ -23,6 +23,7 @@
 #include <list>
 
 #include "address/identity-address.h"
+#include "chat/chat-room/abstract-chat-room.h"
 #include "conference/params/call-session-params.h"
 #include "object/object.h"
 
@@ -64,6 +65,7 @@ public:
 	explicit Participant (Conference *conference, const IdentityAddress &address);
 
 	const IdentityAddress &getAddress () const;
+	AbstractChatRoom::SecurityLevel getSecurityLevel () const;
 	bool isAdmin () const;
 
 private:

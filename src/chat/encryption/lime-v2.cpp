@@ -392,30 +392,19 @@ EncryptionEngineListener::EngineType LimeV2::getEngineType () {
 	return engineType;
 }
 
-EncryptionEngineListener::SecurityLevel LimeV2::getSecurityLevel (string deviceId) {
+AbstractChatRoom::SecurityLevel LimeV2::getSecurityLevel (string deviceId) const {
 	lime::PeerDeviceStatus status = belleSipLimeManager->get_peerDeviceStatus(deviceId);
-	EncryptionEngineListener::SecurityLevel level;
-
 	switch (status) {
 		case lime::PeerDeviceStatus::unknown:
-			cout << "lime peer status for " << deviceId << " = unkown" << endl;
-			level = EncryptionEngineListener::SecurityLevel::Encrypted;
-			break;
+			return AbstractChatRoom::SecurityLevel::Encrypted;
 		case lime::PeerDeviceStatus::untrusted:
-			cout << "lime peer status for " << deviceId << " = untrusted" << endl;
-			level = EncryptionEngineListener::SecurityLevel::Encrypted;
-			break;
+			return AbstractChatRoom::SecurityLevel::Encrypted;
 		case lime::PeerDeviceStatus::trusted:
-			cout << "lime peer status for " << deviceId << " = trusted" << endl;
-			level = EncryptionEngineListener::SecurityLevel::Safe;
-			break;
+			return AbstractChatRoom::SecurityLevel::Safe;
 		default:
-			cout << "unexpected peer device status for " << deviceId << endl;
-			level = EncryptionEngineListener::SecurityLevel::Unsafe;
-			break;
+			BCTBX_SLOGD << "LIMEv2 unexpected peer device status for " << deviceId;
+			return AbstractChatRoom::SecurityLevel::Unsafe;
 	}
-
-	return level;
 }
 
 void LimeV2::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {

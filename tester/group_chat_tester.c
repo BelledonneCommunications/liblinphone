@@ -4138,19 +4138,15 @@ static void group_chat_lime_v2_chatroom_security_level (void) {
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr2, linphone_chat_message_get_from_address(laureLastMsg)));
 	linphone_address_unref(marieAddr2);
 
-	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_security_level(marieCr), "Encrypted");
-	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_security_level(paulineCr), "Encrypted");
-	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_security_level(laureCr), "Encrypted");
-
-	// ZRTP verification call between Marie and Pauline
-	linphone_core_set_firewall_policy(marie->lc, LinphonePolicyNoFirewall);
-	linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyNoFirewall);
-	linphone_core_set_firewall_policy(laure->lc, LinphonePolicyNoFirewall);
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
 	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP);
 	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
 	linphone_core_set_media_encryption(laure->lc, LinphoneMediaEncryptionZRTP);
 
+	// ZRTP verification call between Marie and Pauline
 	bool_t pauline_call_ok = FALSE;
 	BC_ASSERT_TRUE((pauline_call_ok=call(marie, pauline)));
 	if (!pauline_call_ok) goto end;
@@ -4166,11 +4162,11 @@ static void group_chat_lime_v2_chatroom_security_level (void) {
 	}
 	end_call(marie, pauline);
 
-	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_security_level(marieCr), "Encrypted");
-	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_security_level(paulineCr), "Encrypted");
-	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_security_level(laureCr), "Encrypted");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
-	// ZRTP verification call between Marie and Pauline
+	// ZRTP verification call between Marie and Laure
 	bool_t laure_call_ok = FALSE;
 	BC_ASSERT_TRUE((laure_call_ok=call(marie, laure)));
 	if (!laure_call_ok) goto end;
@@ -4186,9 +4182,9 @@ static void group_chat_lime_v2_chatroom_security_level (void) {
 	}
 	end_call(marie, laure);
 
-	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_security_level(marieCr), "Safe");
-	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_security_level(paulineCr), "Encrypted");
-	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_security_level(laureCr), "Encrypted");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
 end:
 	// Clean db from chat room

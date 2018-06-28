@@ -56,25 +56,8 @@ void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
 	mConferenceSubscribeEvent = linphone_event_ref(ev);
 }
 
-EncryptionEngineListener::SecurityLevel ParticipantDevice::getSecurityLevel () {
-	EncryptionEngineListener::SecurityLevel level = getCore()->getEncryptionEngine()->getSecurityLevel(mGruu.asString());
-
-	cout << "[DEVICE] " << mGruu.asString();
-	switch (level) {
-		case EncryptionEngineListener::SecurityLevel::Unsafe:
-			cout << " SecurityLevel = Unsafe" << endl;
-			break;
-		case EncryptionEngineListener::SecurityLevel::ClearText:
-			cout << " SecurityLevel = ClearText" << endl;
-			break;
-		case EncryptionEngineListener::SecurityLevel::Encrypted:
-			cout << " SecurityLevel = Encrypted" << endl;
-			break;
-		case EncryptionEngineListener::SecurityLevel::Safe:
-			cout << " SecurityLevel = Safe" << endl;
-			break;
-	}
-	return level;
+AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
+	return getCore()->getEncryptionEngine()->getSecurityLevel(mGruu.asString());
 }
 
 ostream &operator<< (ostream &stream, ParticipantDevice::State state) {

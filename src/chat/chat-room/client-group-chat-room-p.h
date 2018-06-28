@@ -42,9 +42,6 @@ public:
 
 	unsigned int getLastNotifyId () const;
 
-	EncryptionEngineListener::SecurityLevel getSecurityLevel () const;
-	const std::string getSecurityLevelAsString () const;
-
 	// ChatRoomListener
 	void onChatRoomInsertRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
 	void onChatRoomInsertInDatabaseRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;

@@ -23,6 +23,7 @@
 #include <string>
 
 #include "address/identity-address.h"
+#include "chat/chat-room/abstract-chat-room.h"
 #include "chat/encryption/encryption-engine-listener.h"
 
 #include "linphone/types.h"
@@ -59,7 +60,7 @@ public:
 	inline void setSession (std::shared_ptr<CallSession> session) { mSession = session; }
 	inline State getState () const { return mState; }
 	inline void setState (State newState) { mState = newState; }
-	EncryptionEngineListener::SecurityLevel getSecurityLevel ();
+	AbstractChatRoom::SecurityLevel getSecurityLevel () const;
 
 	inline bool isSubscribedToConferenceEventPackage () const { return mConferenceSubscribeEvent != nullptr; }
 	LinphoneEvent *getConferenceSubscribeEvent () const { return mConferenceSubscribeEvent; }

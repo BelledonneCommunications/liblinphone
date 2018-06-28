@@ -325,6 +325,28 @@ ClientGroupChatRoom::CapabilitiesMask ClientGroupChatRoom::getCapabilities () co
 	return d->capabilities;
 }
 
+ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
+	bool isSafe = true;
+	for (const auto &participant : getParticipants()) {
+		auto level = participant->getSecurityLevel();
+		switch (level) {
+			case AbstractChatRoom::SecurityLevel::Unsafe:
+				return level; // if one device is Unsafe the whole participant is Unsafe (red)
+			case AbstractChatRoom::SecurityLevel::ClearText:
+				return level; // TODO if all devices are in ClearText the whole participant is in ClearText (grey)
+			case AbstractChatRoom::SecurityLevel::Encrypted:
+				isSafe = false; // if one device is Encrypted the whole participant is Encrypted (orange)
+				break;
+			case AbstractChatRoom::SecurityLevel::Safe:
+				break; // if all devices are Safe the whole participant is Safe (green)
+		}
+	}
+	if (isSafe)
+		return AbstractChatRoom::SecurityLevel::Safe;
+	else
+		return AbstractChatRoom::SecurityLevel::Encrypted;
+}
+
 bool ClientGroupChatRoom::hasBeenLeft () const {
 	return (getState() != State::Created);
 }
@@ -474,48 +496,6 @@ void ClientGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	referToAddr.setParam("admin", Utils::toString(isAdmin));
 	referOp->sendRefer(referToAddr.getPrivate()->getInternalAddress());
 	referOp->unref();
-}
-
-EncryptionEngineListener::SecurityLevel ClientGroupChatRoomPrivate::getSecurityLevel () const {
-	EncryptionEngineListener::SecurityLevel level;
-	bool isSafe = true;
-	cout << endl << "[CHATROOM] " << getPublic()->getMe()->getAddress().asString() << endl;
-
-	for (const auto &participant : getPublic()->getParticipants()) {
-		level = participant->getPrivate()->getSecurityLevel();
-		switch ((int)level) {
-			case 0:
-				return level; // if one participant is Unsafe the whole chatroom is Unsafe (red)
-			case 1:
-				return level; // TODO if all participants are in ClearText the whole chatroom is ClearText (grey)
-			case 2:
-				isSafe = false; // if one participant is Encrypted the whole chatroom is Encrypted (orange)
-				break;
-			case 3:
-				break; // if all participants are Safe the whole chatroom is Safe (green)
-		}
-	}
-
-	if (isSafe)
-		return EncryptionEngineListener::SecurityLevel::Safe;
-	else
-		return EncryptionEngineListener::SecurityLevel::Encrypted;
-}
-
-const std::string ClientGroupChatRoomPrivate::getSecurityLevelAsString () const {
-	EncryptionEngineListener::SecurityLevel level = getSecurityLevel();
-	switch (level) {
-		case EncryptionEngineListener::SecurityLevel::Unsafe:
-			return "Unsafe";
-		case EncryptionEngineListener::SecurityLevel::ClearText:
-			return "ClearText";
-		case EncryptionEngineListener::SecurityLevel::Encrypted:
-			return "Encrypted";
-		case EncryptionEngineListener::SecurityLevel::Safe:
-			return "Safe";
-		default:
-			return "Undefined";
-	}
 }
 
 const string &ClientGroupChatRoom::getSubject () const {

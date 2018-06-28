@@ -413,7 +413,7 @@ LINPHONE_PUBLIC const char * linphone_chat_room_get_subject (const LinphoneChatR
  * @param[in] cr A #LinphoneChatRoom object
  * @return The security level of the chat room
  */
-LINPHONE_PUBLIC const char *linphone_chat_room_get_security_level (LinphoneChatRoom *cr);
+LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel linphone_chat_room_get_security_level (LinphoneChatRoom *cr);
 
 /**
  * Leave a chat room.
