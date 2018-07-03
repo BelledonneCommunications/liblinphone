@@ -143,7 +143,7 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 	cfg->avpf_rr_interval = lc ? !!lp_config_get_default_int(lc->config, "proxy", "avpf_rr_interval", 5) : 5;
 	cfg->publish_expires= lc ? lp_config_get_default_int(lc->config, "proxy", "publish_expires", -1) : -1;
 	cfg->publish = lc ? !!lp_config_get_default_int(lc->config, "proxy", "publish", FALSE) : FALSE;
-	cfg->lime_v2 = lc ? !!lp_config_get_default_int(lc->config, "proxy", "lime_v2", FALSE) : FALSE;
+	cfg->lime_v2 = lc ? !!lp_config_get_default_int(lc->config, "proxy", "lime_v2", TRUE) : TRUE; // WARNING TRUE can cause problems for non-db test users
 	cfg->push_notification_allowed = lc ? !!lp_config_get_default_int(lc->config, "proxy", "push_notification_allowed", TRUE) : TRUE;
 	cfg->refkey = refkey ? ms_strdup(refkey) : NULL;
 	if (nat_policy_ref) {
@@ -863,11 +863,6 @@ LinphoneStatus linphone_proxy_config_done(LinphoneProxyConfig *cfg)
 		cfg->commit = TRUE;
 	}
 
-	// will try to create user if not exist
-	if (cfg->lime_v2) {
-		linphone_core_enable_lime_v2(cfg->lc, TRUE);
-	}
-
 	if (cfg->register_changed){
 		cfg->commit = TRUE;
 		cfg->register_changed = FALSE;
@@ -1339,6 +1334,7 @@ void linphone_proxy_config_update(LinphoneProxyConfig *cfg){
 			linphone_proxy_config_activate_sip_setup(cfg);
 		}
 		if (can_register(cfg)){
+			linphone_core_enable_lime_v2(lc, cfg->lime_v2);
 			linphone_proxy_config_register(cfg);
 			cfg->commit=FALSE;
 		}
