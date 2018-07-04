@@ -217,7 +217,7 @@ void Core::enableLimeV2 (bool enable) {
 
 	LimeV2 *limeV2Engine;
 	if (d->imee == nullptr) {
-		const char *charPrefix = linphone_address_get_username(linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(getCCore())));
+		const char *charPrefix = linphone_factory_get_data_resources_dir(linphone_factory_get());
 		string stringPrefix(charPrefix);
 		string db_access = stringPrefix + ".c25519.sqlite3";
 		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
