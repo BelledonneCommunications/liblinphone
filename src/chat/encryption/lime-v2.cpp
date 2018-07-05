@@ -70,8 +70,10 @@ void BelleSipLimeManager::processAuthRequested (void *data, belle_sip_auth_event
 	if (auth_info) {
 		const char *auth_username = linphone_auth_info_get_username(auth_info);
 		const char *auth_password = linphone_auth_info_get_password(auth_info);
+		const char *auth_ha1 = linphone_auth_info_get_ha1(auth_info);
 		belle_sip_auth_event_set_username(event, auth_username);
 		belle_sip_auth_event_set_passwd(event, auth_password);
+		belle_sip_auth_event_set_ha1(event, auth_ha1);
 	}
 }
 
