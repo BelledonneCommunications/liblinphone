@@ -82,9 +82,6 @@ bool_t linphone_tunnel_get_activated(const LinphoneTunnel *tunnel){
 	return FALSE;
 }
 
-void linphone_tunnel_enable_logs_with_handler(LinphoneTunnel *tunnel, bool_t enabled, OrtpLogFunc logHandler){
-}
-
 void linphone_tunnel_set_http_proxy_auth_info(LinphoneTunnel *tunnel, const char* username,const char* passwd){
 }
 

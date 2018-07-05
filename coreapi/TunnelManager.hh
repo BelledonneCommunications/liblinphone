@@ -119,14 +119,6 @@ namespace belledonnecomm {
 		 */
 		LinphoneTunnelMode getMode() const;
 		/**
-		 * Enables debug logs of the Tunnel subsystem.
-		**/
-		void enableLogs(bool isEnabled);
-		/**
-		 * Enables debugs logs of the Tunnel subsystem and specify a callback where to receive the debug messages.
-		**/
-		void enableLogs(bool isEnabled,LogHandler logHandler);
-		/**
 		 * iOS only feature: specify http proxy credentials.
 		 * When the iOS device has an http proxy configured in the iOS settings, the tunnel client will connect to the server
 		 * through this http proxy. Credentials might be needed depending on the proxy configuration.

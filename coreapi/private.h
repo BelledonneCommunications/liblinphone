@@ -1185,7 +1185,6 @@ BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneEvent);
 
 LinphoneTunnel *linphone_core_tunnel_new(LinphoneCore *lc);
 void linphone_tunnel_configure(LinphoneTunnel *tunnel);
-void linphone_tunnel_enable_logs_with_handler(LinphoneTunnel *tunnel, bool_t enabled, OrtpLogFunc logHandler);
 
 /**
  * Check if we do not have exceed the number of simultaneous call

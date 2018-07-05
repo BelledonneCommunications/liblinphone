@@ -429,45 +429,6 @@ void TunnelManager::sOnIterate(TunnelManager *zis){
 	zis->onIterate();
 }
 
-#ifdef __ANDROID__
-extern void linphone_android_log_handler(int prio, char *str);
-static void linphone_android_tunnel_log_handler(int lev, const char *fmt, va_list args) {
-	char str[4096];
-	vsnprintf(str, sizeof(str) - 1, fmt, args);
-	str[sizeof(str) - 1] = '\0';
-
-	int prio;
-	switch(lev){
-	case TUNNEL_DEBUG:	prio = ANDROID_LOG_DEBUG;	break;
-	case TUNNEL_INFO:	prio = ANDROID_LOG_INFO;	break;
-	case TUNNEL_NOTICE:	prio = ANDROID_LOG_INFO;	break;
-	case TUNNEL_WARN:	prio = ANDROID_LOG_WARN;	break;
-	case TUNNEL_ERROR:	prio = ANDROID_LOG_ERROR;	break;
-	default:		prio = ANDROID_LOG_DEFAULT;	break;
-	}
-	linphone_android_log_handler(prio, str);
-}
-#endif /* __ANDROID__ */
-
-void TunnelManager::enableLogs(bool value) {
-	enableLogs(value,NULL);
-}
-
-void TunnelManager::enableLogs(bool isEnabled,LogHandler logHandler) {
-	if (logHandler != NULL)	SetLogHandler(logHandler);
-#ifdef __ANDROID__
-	else SetLogHandler(linphone_android_tunnel_log_handler);
-#else
-	else SetLogHandler(tunnel_default_log_handler);
-#endif
-
-	if (isEnabled) {
-		SetLogLevel(TUNNEL_ERROR|TUNNEL_WARN|TUNNEL_INFO);
-	} else {
-		SetLogLevel(TUNNEL_ERROR|TUNNEL_WARN);
-	}
-}
-
 LinphoneTunnelMode TunnelManager::getMode() const {
 	return mMode;
 }
