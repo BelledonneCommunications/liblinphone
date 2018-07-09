@@ -29,12 +29,12 @@ execute_process(
 	WORKING_DIRECTORY ${OUTPUT_DIR}
 )
 execute_process(
-	COMMAND "../scripts/mk-ca-bundle.pl" "${OUTPUT_DIR}/fresh-rootca.pem"
-	WORKING_DIRECTORY ${WORK_DIR}
+	COMMAND "${SOURCE_DIR}/../scripts/mk-ca-bundle.pl" "-u" "fresh-rootca.pem"
+	WORKING_DIRECTORY ${OUTPUT_DIR}
 )
 if(EXISTS "${OUTPUT_DIR}/fresh-rootca.pem")
 	file(RENAME "${OUTPUT_DIR}/fresh-rootca.pem" "${OUTPUT_DIR}/rootca.pem")
 else()
-	file(COPY "${WORK_DIR}/archived-rootca.pem" DESTINATION "${OUTPUT_DIR}")
+	file(COPY "${SOURCE_DIR}/archived-rootca.pem" DESTINATION "${OUTPUT_DIR}")
 	file(RENAME "${OUTPUT_DIR}/archived-rootca.pem" "${OUTPUT_DIR}/rootca.pem")
 endif()
