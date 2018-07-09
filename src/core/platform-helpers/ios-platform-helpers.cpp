@@ -72,16 +72,18 @@ IosPlatformHelpers::IosPlatformHelpers (LinphoneCore *lc, void *system_context) 
 	mCpuLockTaskId = 0;
 
 	std::string cpimPath = directoryForResource(CFSTR("org.linphone.linphone"), CFSTR("cpim_grammar"));
-	std::string vcardPath = directoryForResource(CFSTR("org.linphone.belcard"), CFSTR("vcard_grammar"));
 	if (!cpimPath.empty())
 		belr::GrammarLoader::get().addPath(cpimPath);
 	else
 		lError() << "IosPlatformHelpers did not find cpim grammar resource directory...";
 
+#ifdef VCARD_ENABLED
+	std::string vcardPath = directoryForResource(CFSTR("org.linphone.belcard"), CFSTR("vcard_grammar"));
 	if (!vcardPath.empty())
 		belr::GrammarLoader::get().addPath(vcardPath);
 	else
 		lError() << "IosPlatformHelpers did not find vcard grammar resource directory...";
+#endif
 
 	lInfo() << "IosPlatformHelpers is fully initialised.";
 }
