@@ -95,6 +95,7 @@ protected:
 	std::list<const DaemonCommandExample*> mExamples;
 };
 
+/*Base class for all kind of responses to commands*/
 class Response {
 public:
 	enum Status {
@@ -144,30 +145,58 @@ private:
 	std::string mBody;
 };
 
-class EventResponse: public Response {
+/*Base class for all kind of event poping out of the linphonecore. They are posted to the Daemon's event queue with queueEvent().*/
+class Event{
 public:
-	EventResponse(Daemon *daemon, LinphoneCall *call, LinphoneCallState state);
+	Event(const std::string &eventType, const std::string &body="") : mEventType(eventType), mBody(body){}
+	const std::string &getBody()const{
+		return mBody;
+	}
+	void setBody(const std::string &body){
+		mBody = body;
+	}
+	virtual ~Event(){
+	}
+	virtual std::string toBuf() const {
+		std::ostringstream buf;
+
+		buf << "Event-type: " << mEventType << "\n";
+		if (!mBody.empty()) {
+			buf << "\n" << mBody << "\n";
+		}
+		return buf.str();
+	}
+protected:
+	const std::string mEventType;
+	std::string mBody;
 };
 
-class CallStatsResponse: public Response {
+class CallEvent : public Event {
 public:
-	CallStatsResponse(Daemon *daemon, LinphoneCall *call, const LinphoneCallStats *stats, bool unique);
+	CallEvent(Daemon *daemon, LinphoneCall *call, LinphoneCallState state);
 };
 
-class AudioStreamStatsResponse: public Response {
+class CallStatsEvent: public Event {
 public:
-	AudioStreamStatsResponse(Daemon *daemon, AudioStream *stream,
-		const LinphoneCallStats *stats, bool event);
+	CallStatsEvent(Daemon *daemon, LinphoneCall *call, const LinphoneCallStats *stats);
 };
 
-class CallPlayingStatsResponse: public Response {
+class CallPlayingStatsEvent: public Event {
 public:
-	CallPlayingStatsResponse(Daemon *daemon, int id);
+	CallPlayingStatsEvent(Daemon *daemon, int id);
 }; 
 
-class DtmfResponse: public Response {
+
+class DtmfEvent: public Event {
 public:
-	DtmfResponse(Daemon *daemon, LinphoneCall *call, int dtmf);
+	DtmfEvent(Daemon *daemon, LinphoneCall *call, int dtmf);
+};
+
+
+class AudioStreamStatsEvent: public Event {
+public:
+	AudioStreamStatsEvent(Daemon *daemon, AudioStream *stream,
+		const LinphoneCallStats *stats);
 };
 
 class PayloadTypeResponse: public Response {
@@ -216,6 +245,7 @@ public:
 	int run();
 	void quit();
 	void sendResponse(const Response &resp);
+	void queueEvent(Event *resp);
 	LinphoneCore *getCore();
 	LinphoneSoundDaemon *getLSD();
 	const std::list<DaemonCommand*> &getCommandList() const;
@@ -245,9 +275,12 @@ private:
 	static void callStateChanged(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState state, const char *msg);
 	static void callStatsUpdated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *stats);
 	static void dtmfReceived(LinphoneCore *lc, LinphoneCall *call, int dtmf);
+	static void messageReceived(LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatMessage *msg);
 	void callStateChanged(LinphoneCall *call, LinphoneCallState state, const char *msg);
 	void callStatsUpdated(LinphoneCall *call, const LinphoneCallStats *stats);
 	void dtmfReceived(LinphoneCall *call, int dtmf);
+	void messageReceived(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
+	
 	void execCommand(const std::string &command);
 	std::string readLine(const std::string&, bool*);
 	std::string readPipe();
@@ -260,7 +293,7 @@ private:
 	LinphoneCore *mLc;
 	LinphoneSoundDaemon *mLSD;
 	std::list<DaemonCommand*> mCommands;
-	std::queue<Response*> mEventQueue;
+	std::queue<Event*> mEventQueue;
 	ortp_pipe_t mServerFd;
 	ortp_pipe_t mChildFd;
 	std::string mHistfile;
