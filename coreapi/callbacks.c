@@ -98,6 +98,12 @@ static void call_received(SalCallOp *h) {
 			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
 				oneToOneChatRoom = true;
 			if (oneToOneChatRoom) {
+				bool_t oneToOneChatRoomEnabled = linphone_config_get_bool(linphone_core_get_config(lc), "misc", "enable_one_to_one_chat_room", TRUE);
+				if (!oneToOneChatRoomEnabled) {
+					h->decline(SalReasonNotAcceptable, nullptr);
+					h->release();
+					return;
+				}
 				IdentityAddress from(h->getFrom());
 				list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(h->getRemoteBody());
 				if (identAddresses.size() != 1) {
