@@ -275,6 +275,13 @@ void * linphone_chat_message_get_message_state_changed_cb_user_data(LinphoneChat
 // Structure has changed, hard to keep the behavior
 // =============================================================================
 
+size_t linphone_chat_message_get_file_size(const LinphoneChatMessage *msg) {
+	if (L_GET_PRIVATE_FROM_C_OBJECT(msg)->hasFileTransferContent())
+		return L_GET_PRIVATE_FROM_C_OBJECT(msg)->getFileTransferContent()->getSize();
+
+	return 0;
+}
+
 const char *linphone_chat_message_get_content_type(LinphoneChatMessage *msg) {
 	msg->cache.contentType = L_GET_PRIVATE_FROM_C_OBJECT(msg)->getContentType().asString();
 	return L_STRING_TO_C(msg->cache.contentType);

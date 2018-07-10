@@ -104,6 +104,13 @@ LINPHONE_PUBLIC const LinphoneAddress* linphone_chat_message_get_from_address(Li
 LINPHONE_PUBLIC const LinphoneAddress* linphone_chat_message_get_to_address(LinphoneChatMessage* msg);
 
 /**
+ * Get destination size of file of the message
+ * @param[in] message #LinphoneChatMessage obj
+ * @return the size of file of the message (0 if none)
+ */
+LINPHONE_PUBLIC size_t linphone_chat_message_get_file_size(const LinphoneChatMessage *msg);
+
+/**
  * Get the content type of a chat message.
  * @param[in] message LinphoneChatMessage object
  * @return The content type of the chat message
