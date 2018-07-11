@@ -277,7 +277,7 @@ void * linphone_chat_message_get_message_state_changed_cb_user_data(LinphoneChat
 
 size_t linphone_chat_message_get_file_size(const LinphoneChatMessage *msg) {
 	if (L_GET_PRIVATE_FROM_C_OBJECT(msg)->hasFileTransferContent())
-		return L_GET_PRIVATE_FROM_C_OBJECT(msg)->getFileTransferContent()->getSize();
+		return L_GET_PRIVATE_FROM_C_OBJECT(msg)->getFileTransferContent()->getFileSize();
 
 	return 0;
 }
