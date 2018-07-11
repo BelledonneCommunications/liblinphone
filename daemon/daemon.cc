@@ -515,7 +515,7 @@ void Daemon::uninitCommands() {
 bool Daemon::pullEvent() {
 	bool status = false;
 	ostringstream ostr;
-	ssize_t size = mEventQueue.size();
+	size_t size = mEventQueue.size();
 	
 	if (size != 0) size--;
 	
