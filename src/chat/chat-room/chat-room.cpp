@@ -234,9 +234,6 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 	LinphoneReason reason = LinphoneReasonNone;
 	shared_ptr<ChatMessage> msg;
 
-	shared_ptr<Core> core = q->getCore();
-	LinphoneCore *cCore = core->getCCore();
-
 	msg = createChatMessage(
 		IdentityAddress(op->getFrom()) == q->getLocalAddress()
 			? ChatMessage::Direction::Outgoing
@@ -267,22 +264,25 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 		// Return LinphoneReasonNone to avoid flexisip resending us a message we can't decrypt
 		return LinphoneReasonNone;
 	}
-
-	if (msg->getPrivate()->getContentType() == ContentType::ImIsComposing) {
-		onIsComposingReceived(msg->getFromAddress(), msg->getPrivate()->getText());
-		if (lp_config_get_int(linphone_core_get_config(cCore), "sip", "deliver_imdn", 0) != 1)
-			return reason;
-	} else if (msg->getPrivate()->getContentType() == ContentType::Imdn) {
-		onImdnReceived(msg);
-		if (lp_config_get_int(linphone_core_get_config(cCore), "sip", "deliver_imdn", 0) != 1)
-			return reason;
-	}
-
-	onChatMessageReceived(msg);
 	return reason;
 }
 
 void ChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMessage> &chatMessage) {
+	L_Q();
+
+	shared_ptr<Core> core = q->getCore();
+	LinphoneCore *cCore = core->getCCore();
+
+	if (chatMessage->getPrivate()->getContentType() == ContentType::ImIsComposing) {
+		onIsComposingReceived(chatMessage->getFromAddress(), chatMessage->getPrivate()->getText());
+		if (lp_config_get_int(linphone_core_get_config(cCore), "sip", "deliver_imdn", 0) != 1)
+			return;
+	} else if (chatMessage->getPrivate()->getContentType() == ContentType::Imdn) {
+		onImdnReceived(chatMessage);
+		if (lp_config_get_int(linphone_core_get_config(cCore), "sip", "deliver_imdn", 0) != 1)
+			return;
+	}
+
 	const IdentityAddress &fromAddress = chatMessage->getFromAddress();
 	if ((chatMessage->getPrivate()->getContentType() != ContentType::ImIsComposing)
 		&& (chatMessage->getPrivate()->getContentType() != ContentType::Imdn)

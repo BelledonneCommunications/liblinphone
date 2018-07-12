@@ -54,6 +54,7 @@ public:
 		Encryption = 1 << 3,
 		Cpim = 1 << 4,
 		Started = 1 << 5,
+		FileDownload = 1 << 6,
 	};
 
 	void setApplyModifiers (bool value) { applyModifiers = value; }

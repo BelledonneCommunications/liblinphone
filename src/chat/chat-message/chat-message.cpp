@@ -547,12 +547,12 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::Multipart;
 	}
 
-	if ((currentRecvStep & ChatMessagePrivate::Step::FileUpload) == ChatMessagePrivate::Step::FileUpload) {
+	if ((currentRecvStep & ChatMessagePrivate::Step::FileDownload) == ChatMessagePrivate::Step::FileDownload) {
 		lInfo() << "File download step already done, skipping";
 	} else {
 		// This will check if internal content is FileTransfer and make the appropriate changes
 		loadFileTransferUrlFromBodyToContent();
-		currentRecvStep |= ChatMessagePrivate::Step::FileUpload;
+		currentRecvStep |= ChatMessagePrivate::Step::FileDownload;
 	}
 
 	if (contents.size() == 0) {
@@ -615,6 +615,8 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	if ((getContentType() == ContentType::ImIsComposing) || (getContentType() == ContentType::Imdn))
 		toBeStored = false;
+
+	chatRoom->getPrivate()->onChatMessageReceived(q->getSharedFromThis());
 
 	return reason;
 }
