@@ -37,6 +37,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class AbstractChatRoom;
 class Content;
+class FileContent;
 class FileTransferContent;
 class ChatMessagePrivate;
 class Participant;

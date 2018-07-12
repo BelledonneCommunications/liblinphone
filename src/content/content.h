@@ -44,6 +44,10 @@ public:
 	Content (Content &&other);
 	~Content ();
 
+	Content* clone () const override {
+		return new Content(*this);
+	}
+
 	Content &operator= (const Content &other);
 	Content &operator= (Content &&other);
 

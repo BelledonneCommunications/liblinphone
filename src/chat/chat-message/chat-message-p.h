@@ -145,9 +145,7 @@ public:
 
 	bool hasFileTransferContent () const;
 	const Content* getFileTransferContent () const;
-
 	const Content* getFileTransferInformation () const;
-	void setFileTransferInformation (Content *content);
 
 	void addContent (Content *content);
 	void removeContent (Content *content);

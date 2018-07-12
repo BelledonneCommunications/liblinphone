@@ -61,7 +61,14 @@ LINPHONE_PUBLIC void *linphone_chat_room_get_user_data(const LinphoneChatRoom *c
 LINPHONE_PUBLIC void linphone_chat_room_set_user_data(LinphoneChatRoom *cr, void *ud);
 
 /**
- * Create a message attached to a dedicated chat room;
+ * Creates an empty message attached to a dedicated chat room.
+ * @param cr the chat room.
+ * @return a new #LinphoneChatMessage
+ */
+LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_create_empty_message (LinphoneChatRoom *cr);
+
+/**
+ * Creates a message attached to a dedicated chat room.
  * @param cr the chat room.
  * @param message text message, NULL if absent.
  * @return a new #LinphoneChatMessage
@@ -69,7 +76,7 @@ LINPHONE_PUBLIC void linphone_chat_room_set_user_data(LinphoneChatRoom *cr, void
 LINPHONE_PUBLIC LinphoneChatMessage* linphone_chat_room_create_message(LinphoneChatRoom *cr,const char* message);
 
 /**
- * Create a message attached to a dedicated chat room;
+ * Creates a message attached to a dedicated chat room.
  * @param cr the chat room.
  * @param message text message, NULL if absent.
  * @param external_body_url the URL given in external body or NULL.
@@ -84,7 +91,7 @@ LINPHONE_PUBLIC LinphoneChatMessage* linphone_chat_room_create_message(LinphoneC
 LINPHONE_PUBLIC LinphoneChatMessage* linphone_chat_room_create_message_2(LinphoneChatRoom *cr, const char* message, const char* external_body_url, LinphoneChatMessageState state, time_t time, bool_t is_read, bool_t is_incoming);
 
  /**
- * Create a message attached to a dedicated chat room with a particular content.
+ * Creates a message attached to a dedicated chat room with a particular content.
  * Use #linphone_chat_room_send_message to initiate the transfer
  * @param cr the chat room.
  * @param initial_content #LinphoneContent initial content. #LinphoneCoreVTable.file_transfer_send is invoked later to notify file transfer progress and collect next chunk of the message if LinphoneContent.data is NULL.

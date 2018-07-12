@@ -237,6 +237,41 @@ LINPHONE_PUBLIC size_t linphone_content_get_key_size (const LinphoneContent *con
 LINPHONE_PUBLIC void linphone_content_set_key (LinphoneContent *content, const char *key, const size_t key_length);
 
 /**
+ * Get the file transfer filepath set for this content (replace linphone_chat_message_get_file_transfer_filepath).
+ * @param[in] content #LinphoneContent object.
+ * @return The file path set for this content if it has been set, NULL otherwise.
+ */
+LINPHONE_PUBLIC const char *linphone_content_get_file_path (const LinphoneContent *content);
+
+/**
+ * Set the file transfer filepath for this content (replace linphone_chat_message_set_file_transfer_filepath).
+ * @param[in] content #LinphoneContent object.
+ * @param[in] file_path the file transfer filepath.
+ */
+LINPHONE_PUBLIC void linphone_content_set_file_path (LinphoneContent *content, const char *file_path);
+
+/**
+ * Tells whether or not this content contains text.
+ * @param[in] content #LinphoneContent object.
+ * @return True if this content contains plain text, false otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_content_is_text (const LinphoneContent *content);
+
+/**
+ * Tells whether or not this content contains a file.
+ * @param[in] content #LinphoneContent object.
+ * @return True if this content contains a file, false otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_content_is_file (const LinphoneContent *content);
+
+/**
+ * Tells whether or not this content is a file transfer.
+ * @param[in] content #LinphoneContent object.
+ * @return True if this content is a file transfer, false otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_content_is_file_transfer (const LinphoneContent *content);
+
+/**
  * @}
  */
 

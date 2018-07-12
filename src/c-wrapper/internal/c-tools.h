@@ -578,6 +578,20 @@ public:
 	}
 
 	template<
+		typename CppType,
+		typename = typename std::enable_if<IsDefinedClonableCppObject<CppType>::value, CppType>::type
+	>
+	static inline bctbx_list_t *getResolvedCListFromCppList (const std::list<CppType *> &cppList) {
+		bctbx_list_t *result = nullptr;
+		for (const auto &value : cppList) {
+			auto cValue = getCBackPtr(value->clone());
+			reinterpret_cast<WrappedClonableObject<CppType> *>(cValue)->owner = WrappedObjectOwner::External;
+			result = bctbx_list_append(result, cValue);
+		}
+		return result;
+	}
+
+	template<
 		typename CType,
 		typename CppType = typename CTypeMetaInfo<CType>::cppType,
 		typename = typename std::enable_if<IsDefinedCppObject<CppType>::value, CppType>::type

@@ -47,6 +47,10 @@ public:
 	Address (const Address &other);
 	~Address ();
 
+	Address* clone () const override {
+		return new Address(*this);
+	}
+
 	Address &operator= (const Address &other);
 
 	bool operator== (const Address &other) const;

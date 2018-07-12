@@ -474,9 +474,9 @@ shared_ptr<ChatMessage> ChatRoom::createChatMessage (const string &text) {
 	return chatMessage;
 }
 
-shared_ptr<ChatMessage> ChatRoom::createFileTransferMessage (Content *initialContent) {
+shared_ptr<ChatMessage> ChatRoom::createFileTransferMessage (FileContent *content) {
 	shared_ptr<ChatMessage> chatMessage = createChatMessage();
-	chatMessage->getPrivate()->setFileTransferInformation(initialContent);
+	chatMessage->addContent(content);
 	return chatMessage;
 }
 

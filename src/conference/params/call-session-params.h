@@ -43,6 +43,10 @@ public:
 	CallSessionParams (const CallSessionParams &other);
 	virtual ~CallSessionParams ();
 
+	CallSessionParams* clone () const override {
+		return new CallSessionParams(*this);
+	}
+
 	CallSessionParams &operator= (const CallSessionParams &other);
 
 	virtual void initDefault (const std::shared_ptr<Core> &core);

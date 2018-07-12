@@ -38,6 +38,10 @@ public:
 	Header (const std::string &name, const std::string &value, const std::list<HeaderParam> &params);
 	Header (const Header &other);
 
+	Header* clone () const override {
+		return new Header(*this);
+	}
+
 	Header &operator= (const Header &other);
 
 	bool operator== (const Header &other) const;

@@ -203,10 +203,6 @@ void linphone_chat_message_set_to_be_stored (LinphoneChatMessage *message, bool_
 // Methods
 // =============================================================================
 
-bool_t linphone_chat_message_download_file (LinphoneChatMessage *msg) {
-	return !!L_GET_PRIVATE_FROM_C_OBJECT(msg)->downloadFile();
-}
-
 void linphone_chat_message_cancel_file_transfer (LinphoneChatMessage *msg) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->cancelFileTransfer();
 }
@@ -227,12 +223,35 @@ LinphoneStatus linphone_chat_message_put_char (LinphoneChatMessage *msg, uint32_
 	return ((LinphoneStatus)L_GET_CPP_PTR_FROM_C_OBJECT(msg)->putCharacter(character));
 }
 
-void linphone_chat_message_add_text_content (LinphoneChatMessage *msg, const char *c_content) {
+void linphone_chat_message_add_file_content (LinphoneChatMessage *msg, LinphoneContent *c_content) {
+	LinphonePrivate::FileContent *fileContent = new LinphonePrivate::FileContent();
+	LinphonePrivate::ContentType contentType;
+	contentType.setType(L_C_TO_STRING(linphone_content_get_type(c_content)));
+	contentType.setSubType(L_C_TO_STRING(linphone_content_get_subtype(c_content)));
+	fileContent->setContentType(contentType);
+	fileContent->setFileSize(linphone_content_get_size(c_content));
+	fileContent->setFileName(linphone_content_get_name(c_content));
+	fileContent->setFilePath(linphone_content_get_file_path(c_content));
+	if (linphone_content_get_size(c_content) > 0) {
+		fileContent->setBody(linphone_content_get_string_buffer(c_content));
+	}
+	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(fileContent);
+}
+
+void linphone_chat_message_add_text_content (LinphoneChatMessage *msg, const char *text) {
 	LinphonePrivate::Content *content = new LinphonePrivate::Content();
 	LinphonePrivate::ContentType contentType = LinphonePrivate::ContentType::PlainText;
 	content->setContentType(contentType);
-	content->setBody(L_C_TO_STRING(c_content));
+	content->setBody(L_C_TO_STRING(text));
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(content);
+}
+
+void linphone_chat_message_remove_content (LinphoneChatMessage *msg, LinphoneContent *content) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->removeContent(L_GET_CPP_PTR_FROM_C_OBJECT(content));
+}
+
+bctbx_list_t* linphone_chat_message_get_contents(const LinphoneChatMessage *msg) {
+	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getContents());
 }
 
 bool_t linphone_chat_message_has_text_content (const LinphoneChatMessage *msg) {
@@ -255,6 +274,15 @@ bctbx_list_t *linphone_chat_message_get_participants_by_imdn_state (const Linpho
 	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getParticipantsByImdnState(LinphonePrivate::ChatMessage::State(state)));
 }
 
+bool_t linphone_chat_message_download_content (LinphoneChatMessage *msg, LinphoneContent *c_content) {
+	LinphonePrivate::Content *content = L_GET_CPP_PTR_FROM_C_OBJECT(c_content);
+	if (!content->isFileTransfer()) {
+		lError() << "LinphoneContent isn't an instance of FileTransferContent";
+		return false;
+	}
+	LinphonePrivate::FileTransferContent *fileTransferContent = static_cast<LinphonePrivate::FileTransferContent* >(content);
+	return !!L_GET_CPP_PTR_FROM_C_OBJECT(msg)->downloadFile(fileTransferContent);
+}
 
 // =============================================================================
 // Old listener
@@ -302,6 +330,10 @@ LinphoneContent *linphone_chat_message_get_file_transfer_information (LinphoneCh
 	const LinphonePrivate::Content *content = L_GET_PRIVATE_FROM_C_OBJECT(msg)->getFileTransferInformation();
 	if (content) return L_GET_C_BACK_PTR(content);
 	return NULL;
+}
+
+bool_t linphone_chat_message_download_file (LinphoneChatMessage *msg) {
+	return !!L_GET_PRIVATE_FROM_C_OBJECT(msg)->downloadFile();
 }
 
 // =============================================================================

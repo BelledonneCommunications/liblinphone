@@ -38,6 +38,10 @@ public:
 	SearchResult(const SearchResult &other);
 	~SearchResult();
 
+	SearchResult* clone () const override {
+		return new SearchResult(*this);
+	}
+
 	bool operator<(const SearchResult &other) const;
 	bool operator>(const SearchResult &other) const;
 	bool operator>=(const SearchResult &other) const;

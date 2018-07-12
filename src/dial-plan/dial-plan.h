@@ -41,6 +41,10 @@ public:
 	);
 	DialPlan (const DialPlan &other);
 
+	DialPlan* clone () const override {
+		return new DialPlan(*this);
+	}
+
 	DialPlan &operator= (const DialPlan &other);
 
 	const std::string &getCountry () const;

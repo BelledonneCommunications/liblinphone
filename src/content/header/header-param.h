@@ -34,6 +34,10 @@ public:
 	HeaderParam (const std::string &name, const std::string &value);
 	HeaderParam (const HeaderParam &other);
 
+	HeaderParam* clone () const override {
+		return new HeaderParam(*this);
+	}
+
 	HeaderParam &operator= (const HeaderParam &other);
 
 	bool operator== (const HeaderParam &other) const;
