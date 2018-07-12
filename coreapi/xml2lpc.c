@@ -61,6 +61,11 @@ void xml2lpc_context_destroy(xml2lpc_context *ctx) {
 		xmlFreeDoc(ctx->xsd);
 		ctx->xsd = NULL;
 	}
+
+	// TODO Fix me, xml2 isn't robust for use with multiple context
+	// Unset callback to not disturb other user of the xml lib
+	xmlSetGenericErrorFunc(NULL, NULL);
+
 	free(ctx);
 }
 
