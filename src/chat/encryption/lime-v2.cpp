@@ -120,7 +120,8 @@ lime::CurveId LimeV2::getCurveId () const {
 }
 
 ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
-	ChatMessageModifier::Result result = ChatMessageModifier::Result::Suspended;
+	// We use a shared ptr here due to non synchronism with the lambda in the encrypt method
+	shared_ptr<ChatMessageModifier::Result> result =  make_shared<ChatMessageModifier::Result>(ChatMessageModifier::Result::Suspended);
 
 	cout << endl << "[ENCRYPT]" << endl;
 
@@ -153,7 +154,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
 	try {
-		belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, &result] (lime::CallbackReturn returnCode, string errorMessage) {
+		belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, result] (lime::CallbackReturn returnCode, string errorMessage) {
 			if (returnCode == lime::CallbackReturn::success) {
 				list<Content *> contents;
 
@@ -213,7 +214,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 
 				message->setInternalContent(finalContent);
 				message->send(); // seems to leak when called for the second time
-				result = ChatMessageModifier::Result::Done;
+				*result = ChatMessageModifier::Result::Done;
 
 				// TODO can be improved
 				for (const auto &content : contents) {
@@ -221,15 +222,15 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 				}
 			} else {
 				BCTBX_SLOGE << "Lime operation failed: " << errorMessage;
-				result = ChatMessageModifier::Result::Error;
+				*result = ChatMessageModifier::Result::Error;
 			}
 		}, lime::EncryptionPolicy::cipherMessage);
 	} catch (const exception &e) {
 		BCTBX_SLOGE << e.what() << " while encrypting message";
-		result = ChatMessageModifier::Result::Error;
+		*result = ChatMessageModifier::Result::Error;
 	}
 
-	return result;
+	return *result;
 }
 
 ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
