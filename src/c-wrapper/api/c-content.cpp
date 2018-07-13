@@ -90,7 +90,8 @@ void linphone_content_set_user_data (LinphoneContent *content, void *user_data) 
 // =============================================================================
 
 const char *linphone_content_get_type (const LinphoneContent *content) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType().getType().c_str();
+	content->cache.type = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType().getType();
+	return content->cache.type.c_str();
 }
 
 void linphone_content_set_type (LinphoneContent *content, const char *type) {
@@ -100,7 +101,8 @@ void linphone_content_set_type (LinphoneContent *content, const char *type) {
 }
 
 const char *linphone_content_get_subtype (const LinphoneContent *content) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType().getSubType().c_str();
+	content->cache.subtype = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType().getSubType();
+	return content->cache.subtype.c_str();
 }
 
 void linphone_content_set_subtype (LinphoneContent *content, const char *subtype) {
