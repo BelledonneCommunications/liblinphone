@@ -38,12 +38,7 @@ LINPHONE_BEGIN_NAMESPACE
 Content::Content () : ClonableObject(*new ContentPrivate) {}
 
 Content::Content (const Content &other) : ClonableObject(*new ContentPrivate), AppDataContainer(other) {
-	L_D();
-	d->body = other.getBody();
-	d->contentType = other.getContentType();
-	d->contentDisposition = other.getContentDisposition();
-	d->contentEncoding = other.getContentEncoding();
-	d->headers = other.getHeaders();
+	copy(other);
 }
 
 Content::Content (Content &&other) : ClonableObject(*new ContentPrivate), AppDataContainer(move(other)) {
@@ -68,14 +63,9 @@ Content::~Content () {
 }
 
 Content &Content::operator= (const Content &other) {
-	L_D();
 	if (this != &other) {
 		AppDataContainer::operator=(other);
-		d->body = other.getBody();
-		d->contentType = other.getContentType();
-		d->contentDisposition = other.getContentDisposition();
-		d->contentEncoding = other.getContentEncoding();
-		d->headers = other.getHeaders();
+		copy(other);
 	}
 	return *this;
 }
@@ -99,6 +89,15 @@ bool Content::operator== (const Content &other) const {
 		d->contentDisposition == other.getContentDisposition() &&
 		d->contentEncoding == other.getContentEncoding() &&
 		d->headers == other.getHeaders();
+}
+
+void Content::copy(const Content &other) {
+	L_D();
+	d->body = other.getBody();
+	d->contentType = other.getContentType();
+	d->contentDisposition = other.getContentDisposition();
+	d->contentEncoding = other.getContentEncoding();
+	d->headers = other.getHeaders();
 }
 
 const ContentType &Content::getContentType () const {

@@ -44,6 +44,7 @@ FileContent::FileContent () : Content(*new FileContentPrivate) {}
 
 FileContent::FileContent (const FileContent &other) : Content(*new FileContentPrivate) {
 	L_D();
+	Content::copy(other);
 	d->fileName = other.getFileName();
 	d->filePath = other.getFilePath();
 	d->fileSize = other.getFileSize();
@@ -51,6 +52,7 @@ FileContent::FileContent (const FileContent &other) : Content(*new FileContentPr
 
 FileContent::FileContent (FileContent &&other) : Content(*new FileContentPrivate) {
 	L_D();
+	Content::copy(other);
 	d->fileName = move(other.getPrivate()->fileName);
 	d->filePath = move(other.getPrivate()->filePath);
 	d->fileSize = move(other.getPrivate()->fileSize);
@@ -58,11 +60,10 @@ FileContent::FileContent (FileContent &&other) : Content(*new FileContentPrivate
 
 FileContent &FileContent::operator= (const FileContent &other) {
 	L_D();
-		Content::operator=(other);
-		d->fileName = other.getFileName();
-		d->filePath = other.getFilePath();
-		d->fileSize = other.getFileSize();
-
+	Content::operator=(other);
+	d->fileName = other.getFileName();
+	d->filePath = other.getFilePath();
+	d->fileSize = other.getFileSize();
 	return *this;
 }
 

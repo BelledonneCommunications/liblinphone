@@ -53,6 +53,8 @@ public:
 
 	bool operator== (const Content &other) const;
 
+	void copy(const Content &other);
+
 	const ContentType &getContentType () const;
 	void setContentType (const ContentType &contentType);
 
