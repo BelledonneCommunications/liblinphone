@@ -59,3 +59,7 @@ const LinphoneAddress *linphone_participant_get_address (const LinphoneParticipa
 bool_t linphone_participant_is_admin (const LinphoneParticipant *participant) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(participant)->isAdmin();
 }
+
+LinphoneChatRoomSecurityLevel linphone_participant_get_security_level (const LinphoneParticipant *participant) {
+	return (LinphoneChatRoomSecurityLevel)L_GET_CPP_PTR_FROM_C_OBJECT(participant)->getSecurityLevel();
+}
