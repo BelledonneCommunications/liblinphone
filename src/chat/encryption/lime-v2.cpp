@@ -213,7 +213,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 				Content finalContent = ContentManager::contentListToMultipart(contents, MultipartBoundary, true);
 
 				message->setInternalContent(finalContent);
-				message->send(); // seems to leak when called for the second time
+				message->getPrivate()->send(); // seems to leak when called for the second time
 				*result = ChatMessageModifier::Result::Done;
 
 				// TODO can be improved
