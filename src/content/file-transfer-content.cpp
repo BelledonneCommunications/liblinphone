@@ -49,6 +49,7 @@ FileTransferContent::FileTransferContent () : Content(*new FileTransferContentPr
 
 FileTransferContent::FileTransferContent (const FileTransferContent &other) : Content(*new FileTransferContentPrivate) {
 	L_D();
+	Content::copy(other);
 	d->fileName = other.getFileName();
 	d->fileUrl = other.getFileUrl();
 	d->filePath = other.getFilePath();
@@ -59,6 +60,7 @@ FileTransferContent::FileTransferContent (const FileTransferContent &other) : Co
 
 FileTransferContent::FileTransferContent (FileTransferContent &&other) : Content(*new FileTransferContentPrivate) {
 	L_D();
+	Content::copy(other);
 	d->fileName = move(other.getPrivate()->fileName);
 	d->fileUrl = move(other.getPrivate()->fileUrl);
 	d->filePath = move(other.getPrivate()->filePath);
