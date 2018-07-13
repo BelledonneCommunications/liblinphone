@@ -611,7 +611,7 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 
 	bool performMigration = false;
 	shared_ptr<AbstractChatRoom> chatRoom;
-	if (getParticipantCount() == 1) {
+	if (getParticipantCount() == 1 && d->capabilities & ClientGroupChatRoom::Capabilities::OneToOne) {
 		ChatRoomId id(getParticipants().front()->getAddress(), getMe()->getAddress());
 		chatRoom = getCore()->findChatRoom(id);
 		if (chatRoom && (chatRoom->getCapabilities() & ChatRoom::Capabilities::Basic))
