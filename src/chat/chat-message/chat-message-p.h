@@ -55,6 +55,7 @@ public:
 		Cpim = 1 << 4,
 		Started = 1 << 5,
 		FileDownload = 1 << 6,
+		AutoFileDownload = 1 << 7,
 	};
 
 	void setApplyModifiers (bool value) { applyModifiers = value; }
@@ -92,6 +93,14 @@ public:
 	const std::list<Content* > &getContents () const {
 		loadContentsFromDatabase();
 		return contents;
+	}
+
+	void enableAutoFileTransferDownload(bool enable) {
+		isAutoDownloadAttachedFilesEnabled = enable;
+	}
+
+	bool isAutoFileTransferDownloadEnabled() const {
+		return isAutoDownloadAttachedFilesEnabled;
 	}
 
 	belle_http_request_t *getHttpRequest () const;
@@ -183,6 +192,7 @@ private:
 	bool isSecured = false;
 	mutable bool isReadOnly = false;
 	Content internalContent;
+	bool isAutoDownloadAttachedFilesEnabled = true;
 
 	// TODO: to replace salCustomheaders
 	std::unordered_map<std::string, std::string> customHeaders;

@@ -536,6 +536,21 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::FileDownload;
 	}
 
+	if ((currentRecvStep & ChatMessagePrivate::Step::AutoFileDownload) == ChatMessagePrivate::Step::AutoFileDownload) {
+		lInfo() << "Auto file download step already done, skipping";
+	} else {
+		for (Content *c : contents) {
+			if (c->isFileTransfer() && isAutoFileTransferDownloadEnabled()) {
+				FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
+				ftc->setFilePath(q->getCore()->getDataPath() + ftc->getFileName());
+				q->downloadFile(ftc);
+				return LinphoneReasonNone;
+			}
+		}
+		currentRecvStep |= ChatMessagePrivate::Step::AutoFileDownload;
+		q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
+	}
+
 	if (contents.size() == 0) {
 		// All previous modifiers only altered the internal content, let's fill the content list
 		contents.push_back(new Content(internalContent));
@@ -556,7 +571,9 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	setState(ChatMessage::State::Delivered);
 
-	if (errorCode <= 0) {
+	if (errorCode <= 0 && !isAutoFileTransferDownloadEnabled()) { 
+		// if auto download enabled and message contains only file transfer, 
+		// the following will state that the content type of the file is unsupported
 		bool foundSupportContentType = false;
 		for (Content *c : contents) {
 			ContentType ct(c->getContentType());

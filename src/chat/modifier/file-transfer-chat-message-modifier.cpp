@@ -823,7 +823,12 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 				}
 			}
 		}
-		message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
+		if (message->getPrivate()->isAutoFileTransferDownloadEnabled()) {
+			releaseHttpRequest();
+			message->getPrivate()->receive();
+		} else {
+			message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
+		}
 	}
 }
 

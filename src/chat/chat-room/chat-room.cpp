@@ -103,6 +103,18 @@ void ChatRoomPrivate::removeTransientEvent (const shared_ptr<EventLog> &eventLog
 		transientEvents.erase(it);
 }
 
+void ChatRoomPrivate::addTransientChatMessage (const shared_ptr<ChatMessage> &message) {
+	auto it = find(transientMessages.begin(), transientMessages.end(), message);
+	if (it == transientMessages.end())
+		transientMessages.push_back(message);
+}
+
+void ChatRoomPrivate::removeTransientChatMessage (const shared_ptr<ChatMessage> &message) {
+	auto it = find(transientMessages.begin(), transientMessages.end(), message);
+	if (it != transientMessages.end())
+		transientMessages.erase(it);
+}
+
 // -----------------------------------------------------------------------------
 
 shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage (ChatMessage::Direction direction) {
@@ -258,6 +270,9 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 	if (ch)
 		msg->getPrivate()->setSalCustomHeaders(sal_custom_header_clone(ch));
 
+	if (msg->getPrivate()->isAutoFileTransferDownloadEnabled()) {
+		addTransientChatMessage(msg);
+	}
 	reason = msg->getPrivate()->receive();
 
 	if (reason == LinphoneReasonNotAcceptable || reason == LinphoneReasonUnknown) {
