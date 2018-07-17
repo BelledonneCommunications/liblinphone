@@ -331,20 +331,29 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
 		auto level = participant->getSecurityLevel();
 		switch (level) {
 			case AbstractChatRoom::SecurityLevel::Unsafe:
+				lInfo() << "Participant " << participant->getAddress().asString() << " SecurityLevel = Unsafe";
+				lInfo() << "ChatRoom SecurityLevel = Unsafe";
 				return level; // if one device is Unsafe the whole participant is Unsafe (red)
 			case AbstractChatRoom::SecurityLevel::ClearText:
+				lInfo() << "Participant " << participant->getAddress().asString() << " SecurityLevel = ClearText";
+				lInfo() << "ChatRoom SecurityLevel = ClearText";
 				return level; // TODO if all devices are in ClearText the whole participant is in ClearText (grey)
 			case AbstractChatRoom::SecurityLevel::Encrypted:
+				lInfo() << "Participant " << participant->getAddress().asString() << " SecurityLevel = Encrypted";
 				isSafe = false; // if one device is Encrypted the whole participant is Encrypted (orange)
 				break;
 			case AbstractChatRoom::SecurityLevel::Safe:
+				lInfo() << "Participant " << participant->getAddress().asString() << " SecurityLevel = Safe";
 				break; // if all devices are Safe the whole participant is Safe (green)
 		}
 	}
-	if (isSafe)
+	if (isSafe) {
+		lInfo() << "ChatRoom SecurityLevel = Safe";
 		return AbstractChatRoom::SecurityLevel::Safe;
-	else
+	} else {
+		lInfo() << "ChatRoom SecurityLevel = Encrypted";
 		return AbstractChatRoom::SecurityLevel::Encrypted;
+	}
 }
 
 bool ClientGroupChatRoom::hasBeenLeft () const {

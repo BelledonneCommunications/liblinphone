@@ -158,26 +158,6 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 			if (returnCode == lime::CallbackReturn::success) {
 				list<Content *> contents;
 
-				for (const auto &recipient : *recipients) {
-					cout << "recipient " << recipient.deviceId << " status = ";
-					switch (recipient.peerStatus) {
-						case lime::PeerDeviceStatus::unknown:
-							BCTBX_SLOGI << "LIMEv2 peer device unkown";
-							cout << "unknown" << endl;
-							break;
-						case lime::PeerDeviceStatus::untrusted:
-							BCTBX_SLOGI << "LIMEv2 peer device untrusted";
-							cout << "untrusted" << endl;
-							break;
-						case lime::PeerDeviceStatus::trusted:
-							BCTBX_SLOGI << "LIMEv2 peer device trusted";
-							cout << "trusted" << endl;
-							break;
-						default:
-							break;
-					}
-				}
-
 				// ---------------------------------------------- SIPFRAG
 
 				Content *sipfrag = new Content();
@@ -222,11 +202,13 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 				}
 			} else {
 				BCTBX_SLOGE << "Lime operation failed: " << errorMessage;
+				lError() << "Lime operation failed: " << errorMessage;
 				*result = ChatMessageModifier::Result::Error;
 			}
 		}, lime::EncryptionPolicy::cipherMessage);
 	} catch (const exception &e) {
 		BCTBX_SLOGE << e.what() << " while encrypting message";
+// 		lError() << "test" << " while encrypting message";
 		*result = ChatMessageModifier::Result::Error;
 	}
 
@@ -396,15 +378,20 @@ EncryptionEngineListener::EngineType LimeV2::getEngineType () {
 }
 
 AbstractChatRoom::SecurityLevel LimeV2::getSecurityLevel (string deviceId) const {
+	lInfo() << "Asking LIMEv2 for " << deviceId << " PeerDeviceStatus";
 	lime::PeerDeviceStatus status = belleSipLimeManager->get_peerDeviceStatus(deviceId);
 	switch (status) {
 		case lime::PeerDeviceStatus::unknown:
+			lInfo() << "PeerDeviceStatus = unknown (SecurityLevel = Encrypted)";
 			return AbstractChatRoom::SecurityLevel::Encrypted;
 		case lime::PeerDeviceStatus::untrusted:
+			lInfo() << "PeerDeviceStatus = untrusted (SecurityLevel = Encrypted)";
 			return AbstractChatRoom::SecurityLevel::Encrypted;
 		case lime::PeerDeviceStatus::trusted:
+			lInfo() << "PeerDeviceStatus = trusted (SecurityLevel = Safe)";
 			return AbstractChatRoom::SecurityLevel::Safe;
 		default:
+			lInfo() << "PeerDeviceStatus = failed or undefined (SecurityLevel = Unsafe)";
 			BCTBX_SLOGD << "LIMEv2 unexpected peer device status for " << deviceId;
 			return AbstractChatRoom::SecurityLevel::Unsafe;
 	}
