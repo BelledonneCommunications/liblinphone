@@ -516,6 +516,14 @@ void linphone_player_set_current_callbacks(LinphonePlayer *player, LinphonePlaye
 
 
 /*****************************************************************************
+ * Recorder interface                                                          *
+ ****************************************************************************/
+
+LinphoneRecorder * linphone_recorder_new(void);
+void _linphone_recorder_destroy(LinphoneRecorder *recorder);
+
+
+/*****************************************************************************
  * XML UTILITY FUNCTIONS                                                     *
  ****************************************************************************/
 

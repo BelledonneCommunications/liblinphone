@@ -53,6 +53,7 @@ set(ROOT_HEADER_FILES
 	player.h
 	presence.h
 	proxy_config.h
+	recorder.h
 	ringtoneplayer.h
 	sipsetup.h
 	tunnel.h

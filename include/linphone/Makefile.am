@@ -34,6 +34,7 @@ linphone_include_HEADERS=\
 	player.h \
 	presence.h \
 	proxy_config.h \
+	recorder.h \
 	ringtoneplayer.h \
 	sipsetup.h \
 	tunnel.h \

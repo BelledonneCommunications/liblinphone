@@ -59,6 +59,7 @@
 #include "linphone/player.h"
 #include "linphone/presence.h"
 #include "linphone/proxy_config.h"
+#include "linphone/recorder.h"
 #include "linphone/ringtoneplayer.h"
 #include "linphone/vcard.h"
 #include "linphone/video_definition.h"
@@ -104,6 +105,18 @@ LINPHONE_PUBLIC LinphoneAddress * linphone_core_create_address(LinphoneCore *cor
  * @return A pointer on the new instance. NULL if failed. @maybenil
  */
 LINPHONE_PUBLIC LinphonePlayer *linphone_core_create_local_player(LinphoneCore *core, const char *sound_card_name, const char *video_display_name, void *window_id);
+
+/**
+* Create a media file recorder.
+* This recorder support WAVE and MATROSKA formats.
+* @param lc A #LinphoneCore object
+* @param sound_card_name Recording sound card. If NULL, the ringer sound card set in #LinphoneCore will be used
+* @param web_cam_name Recording web cam. If NULL, no video will be recorded.
+* @param video_display_name Video display. If NULL, the video display set in #LinphoneCore will be used
+* @param window_id Id of the drawing window. Depend of video out
+* @return A pointer on the new instance. NULL if failed.
+*/
+LINPHONE_PUBLIC LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, const char *sound_card_name, const char *web_cam_name, const char *video_display_name, void *window_id);
 
 /**
  * Creates an empty info message.

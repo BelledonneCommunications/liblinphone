@@ -769,6 +769,22 @@ typedef enum LinphonePlayerState {
 } LinphonePlayerState;
 
 /**
+ * @brief Recorder interface.
+ * @ingroup call_control
+ **/
+typedef struct _LinphoneRecorder LinphoneRecorder;
+
+/**
+ * @brief The state of a LinphoneRecorder`.
+ * @ingroup call_control
+ */
+typedef enum LinphoneRecorderState {
+	LinphoneRecorderClosed, /**< No file is opened for recording. */
+	LinphoneRecorderPaused, /**< The recorder is paused. */
+	LinphoneRecorderRunning /**< The recorder is running. */
+} LinphoneRecorderState;
+
+/**
  * @brief Presence activity type holding information about a presence activity.
  * @ingroup buddy_list
  */
