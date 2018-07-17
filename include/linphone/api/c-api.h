@@ -48,6 +48,8 @@
 #include "linphone/api/c-participant-device-identity.h"
 #include "linphone/api/c-push-notification-message.h"
 #include "linphone/api/c-push-notification-config.h"
+#include "linphone/api/c-recorder.h"
+#include "linphone/api/c-recorder-params.h"
 #include "linphone/api/c-search-result.h"
 #include "linphone/api/c-types.h"
 

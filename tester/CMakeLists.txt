@@ -273,6 +273,7 @@ set(SOURCE_FILES_C
 	presence_tester.c
 	proxy_config_tester.c
 	quality_reporting_tester.c
+	recorder_tester.c
 	register_tester.c
 	remote_provisioning_tester.c
 	session_timers_tester.c
