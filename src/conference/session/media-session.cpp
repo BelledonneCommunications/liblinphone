@@ -3497,7 +3497,7 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 			/* ZRTP only is using auth_token */
 			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
 
-			if (authTokenVerified && ms_zrtp_getAuxiliarySharedSecretMismatch(audioStream->ms.sessions.zrtp_context) != 2) {
+			if (ms_zrtp_getAuxiliarySharedSecretMismatch(audioStream->ms.sessions.zrtp_context) != 2) {
 				// get remote Ik from sdp attributes and decode base64
 				const string &remoteIkB64_string(sal_custom_sdp_attribute_find(op->getRemoteMediaDescription()->custom_sdp_attributes, "Ik"));
 				vector<uint8_t> remoteIkB64_vector = vector<uint8_t>(remoteIkB64_string.begin(), remoteIkB64_string.end());
@@ -3529,7 +3529,8 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 					if (limeV2Engine) {
 						try {
 							lInfo() << "LIMEv2 peer status set to trusted";
-							limeV2Engine->getLimeManager()->set_peerIdentityVerifiedStatus(peerDeviceId, remoteIk_vector, TRUE);
+							// if SAS verified lime peer is trusted, untrusted otherwise
+							limeV2Engine->getLimeManager()->set_peerIdentityVerifiedStatus(peerDeviceId, remoteIk_vector, authTokenVerified);
 						} catch (const exception &e) {
 							// TODO Report the security issue to application level
 							lWarning() << "LIMEv2 identity theft detected: " << e.what();
