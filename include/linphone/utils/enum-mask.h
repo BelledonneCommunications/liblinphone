@@ -138,8 +138,8 @@ private:
 		return (mMask & value) == value && (value || mMask == 0);
 	}
 
-// On CentOs 7 GCC 4.8.5 have issue with array-bounds.
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 8 && __GNUC_PATCHLEVEL__ == 5
+// GCC versions prior to 5.0 have issues with array-bounds.
+#if defined(__GNUC__) && (__GNUC__ < 5)
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
@@ -151,7 +151,7 @@ private:
 		return begin != end ? (StorageType(*begin) | init(begin + 1, end)) : StorageType(0);
 	}
 
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 8 && __GNUC_PATCHLEVEL__ == 5
+#if defined(__GNUC__) && (__GNUC__ < 5)
 	#pragma GCC diagnostic pop
 #endif
 
