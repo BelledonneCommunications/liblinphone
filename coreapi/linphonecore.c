@@ -1293,7 +1293,7 @@ static void certificates_config_read(LinphoneCore *lc) {
 	linphone_core_verify_server_certificates(lc,lp_config_get_int(lc->config,"sip","verify_server_certs",TRUE));
 	linphone_core_verify_server_cn(lc,lp_config_get_int(lc->config,"sip","verify_server_cn",TRUE));
 	bctbx_free(root_ca_path);
-	
+
 	sal_set_tls_postcheck_callback(lc->sal, _linphone_core_tls_postcheck_callback, lc);
 }
 
@@ -1338,7 +1338,12 @@ static void sip_config_read(LinphoneCore *lc) {
 		const char *username=NULL;
 #if !defined(LINPHONE_WINDOWS_UNIVERSAL) && !defined(LINPHONE_WINDOWS_PHONE) // Using getenv is forbidden on Windows 10 and Windows Phone
 		hostname=getenv("HOST");
-		username=getenv("USER");
+
+		#if defined _WIN32
+			username = getenv("USERNAME");
+		#else
+			username = getenv("USER");
+		#endif // if defined _WIN32
 		if (hostname==NULL) hostname=getenv("HOSTNAME");
 #endif
 		if (hostname==NULL)
@@ -6396,7 +6401,7 @@ void linphone_core_soundcard_hint_check( LinphoneCore* lc){
 	bool_t use_rtp_io_enable_local_output = lp_config_get_int(lc->config, "sound", "rtp_io_enable_local_output", FALSE);
 
 	if (lc->conf_ctx && linphone_conference_get_size(lc->conf_ctx) >= 1) return;
-	
+
 	/* check if the remaining calls are paused */
 	while( the_calls ){
 		call = reinterpret_cast<LinphoneCall *>(the_calls->data);
