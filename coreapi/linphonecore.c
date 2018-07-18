@@ -1381,7 +1381,12 @@ static void sip_config_read(LinphoneCore *lc) {
 		const char *username=NULL;
 #if !defined(LINPHONE_WINDOWS_UNIVERSAL) && !defined(LINPHONE_WINDOWS_PHONE) // Using getenv is forbidden on Windows 10 and Windows Phone
 		hostname=getenv("HOST");
-		username=getenv("USER");
+
+		#if defined _WIN32
+			username = getenv("USERNAME");
+		#else
+			username = getenv("USER");
+		#endif // if defined _WIN32
 		if (hostname==NULL) hostname=getenv("HOSTNAME");
 #endif
 		if (hostname==NULL)
