@@ -345,56 +345,6 @@ bool_t linphone_tunnel_get_activated(const LinphoneTunnel *tunnel){
 	return bcTunnel(tunnel)->isActivated();
 }
 
-static OrtpLogFunc tunnelOrtpLogHandler=NULL;
-
-/*
-#define TUNNEL_DEBUG (1)
-#define TUNNEL_INFO  (1<<1)
-#define TUNNEL_NOTICE (1<<2)
-#define TUNNEL_WARN  (1<<3)
-#define TUNNEL_ERROR (1<<4)
-#define TUNNEL_ALERT (1<<5)
-#define TUNNEL_FATAL (1<<6)
-*/
-
-static void tunnelLogHandler(int level, const char *fmt, va_list l){
-	if (tunnelOrtpLogHandler){
-		OrtpLogLevel ortp_level=ORTP_DEBUG;
-		switch(level){
-			case TUNNEL_DEBUG:
-				ortp_level=ORTP_DEBUG;
-			break;
-			case TUNNEL_INFO:
-				ortp_level=ORTP_MESSAGE;
-			break;
-			case TUNNEL_NOTICE:
-				ortp_level=ORTP_MESSAGE;
-			break;
-			case TUNNEL_WARN:
-				ortp_level=ORTP_WARNING;
-			break;
-			case TUNNEL_ERROR:
-				ortp_level=ORTP_ERROR;
-			break;
-			case TUNNEL_ALERT:
-				ortp_level=ORTP_ERROR;
-			break;
-			case TUNNEL_FATAL:
-				ortp_level=ORTP_FATAL;
-			break;
-			default:
-				ms_fatal("Unexepcted tunnel log %i: %s",level,fmt);
-			break;
-		}
-		tunnelOrtpLogHandler("tunnel", ortp_level,fmt,l);
-	}
-}
-
-void linphone_tunnel_enable_logs_with_handler(LinphoneTunnel *tunnel, bool_t enabled, OrtpLogFunc logHandler){
-	tunnelOrtpLogHandler=logHandler;
-	bcTunnel(tunnel)->enableLogs(enabled == FALSE ? false : true, tunnelLogHandler);
-}
-
 void linphone_tunnel_set_http_proxy_auth_info(LinphoneTunnel *tunnel, const char* username,const char* passwd){
 	bcTunnel(tunnel)->setHttpProxyAuthInfo(username, passwd);
 }
@@ -436,10 +386,6 @@ bool_t linphone_tunnel_verify_server_certificate_enabled(const LinphoneTunnel *t
 	return bcTunnel(tunnel)->verifyServerCertificateEnabled() ? TRUE : FALSE;
 }
 
-static void my_ortp_logv(const char *domain, OrtpLogLevel level, const char *fmt, va_list args){
-	ortp_logv(domain, level,fmt,args);
-}
-
 
 /**
  * Startup tunnel using configuration.
@@ -456,7 +402,6 @@ void linphone_tunnel_configure(LinphoneTunnel *tunnel){
 	bcTunnel(tunnel)->setHttpProxy(http_host, http_port, http_username, http_passwd);
 	
 	linphone_tunnel_enable_dual_mode(tunnel, useDualMode);
-	linphone_tunnel_enable_logs_with_handler(tunnel,TRUE,my_ortp_logv);
 	linphone_tunnel_load_config(tunnel);
 	linphone_tunnel_enable_sip(tunnel, tunnelizeSIPPackets);
 	linphone_tunnel_verify_server_certificate(tunnel, tunnelVerifyServerCertificate);
