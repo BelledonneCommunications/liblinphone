@@ -26,13 +26,10 @@ import org.linphone.mediastream.Version;
 
 import android.content.res.Resources;
 import android.net.wifi.WifiManager;
-import android.net.wifi.WifiManager.MulticastLock;
-import android.net.wifi.WifiManager.WifiLock;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkInfo;
+import android.os.Environment;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.Build;
@@ -40,7 +37,6 @@ import android.os.Build;
 import java.net.InetAddress;
 import java.util.List;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -139,7 +135,12 @@ public class AndroidPlatformHelper {
 	}
 
 	public String getDownloadPath() {
-		return Environment.getExternalStorageDirectory() + "/" + mContext.getString(R.string.app_name);
+		String downloadPath = Environment.getExternalStorageDirectory() + "/" + mContext.getString(mResources.getIdentifier("app_name", "string", mContext.getPackageName()));
+		File dir = new File(downloadPath);
+		if (!dir.exists()) {
+			dir.mkdirs();
+		}
+		return downloadPath;
 	}
 	
 	public String getNativeLibraryDir(){
