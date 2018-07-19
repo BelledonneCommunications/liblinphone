@@ -137,6 +137,10 @@ public class AndroidPlatformHelper {
 	public String getCachePath() {
 		return mContext.getCacheDir().getAbsolutePath();
 	}
+
+	public String getDownloadPath() {
+		return Environment.getExternalStorageDirectory() + "/" + mContext.getString(R.string.app_name);
+	}
 	
 	public String getNativeLibraryDir(){
 		ApplicationInfo info = mContext.getApplicationInfo();

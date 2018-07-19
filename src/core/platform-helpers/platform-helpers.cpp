@@ -49,4 +49,8 @@ string StubbedPlatformHelpers::getConfigPath () {
 	return "";
 }
 
+string StubbedPlatformHelpers::getDownloadPath () {
+	return "";
+}
+
 LINPHONE_END_NAMESPACE

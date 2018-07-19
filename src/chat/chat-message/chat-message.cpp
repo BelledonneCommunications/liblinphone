@@ -542,7 +542,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 		for (Content *c : contents) {
 			if (c->isFileTransfer() && isAutoFileTransferDownloadEnabled()) {
 				FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
-				ftc->setFilePath(q->getCore()->getDataPath() + ftc->getFileName());
+				ftc->setFilePath(q->getCore()->getDownloadPath() + ftc->getFileName());
 				q->downloadFile(ftc);
 				return LinphoneReasonNone;
 			}

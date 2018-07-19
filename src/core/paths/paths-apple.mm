@@ -63,4 +63,9 @@ std::string SysPaths::getConfigPath (PlatformHelpers *) {
 	return fullPath.UTF8String;
 }
 
+std::string SysPaths::getDownloadPath (PlatformHelpers *) {
+	//TODO
+	return "";
+}
+
 LINPHONE_END_NAMESPACE

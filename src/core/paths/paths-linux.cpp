@@ -48,4 +48,10 @@ string SysPaths::getConfigPath (PlatformHelpers *) {
 	return configPath;
 }
 
+string SysPaths::getDownloadPath (PlatformHelpers *) {
+	//TODO
+	static string downloadPath = getBaseDirectory() + "/.config/linphone/";
+	return downloadPath;
+}
+
 LINPHONE_END_NAMESPACE

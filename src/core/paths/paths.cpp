@@ -44,6 +44,8 @@ string Paths::getPath (Paths::Type type, PlatformHelpers *platformHelpers) {
 			return SysPaths::getDataPath(platformHelpers);
 		case Config:
 			return SysPaths::getConfigPath(platformHelpers);
+		case Download:
+			return SysPaths::getDownloadPath(platformHelpers);
 	}
 
 	L_ASSERT(false);

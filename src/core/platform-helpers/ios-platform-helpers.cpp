@@ -55,6 +55,7 @@ public:
 	void releaseCpuLock () override;
 	string getDataPath () override {return Utils::getEmptyConstRefObject<string>();}
 	string getConfigPath () override {return Utils::getEmptyConstRefObject<string>();}
+	string getDownloadPath () override {return Utils::getEmptyConstRefObject<string>();}
 
 private:
 	void bgTaskTimeout ();

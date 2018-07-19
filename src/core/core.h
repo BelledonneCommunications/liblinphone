@@ -133,6 +133,7 @@ public:
 
 	std::string getDataPath() const;
 	std::string getConfigPath() const;
+	std::string getDownloadPath() const;
 
 private:
 	Core ();
