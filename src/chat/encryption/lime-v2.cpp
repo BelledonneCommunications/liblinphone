@@ -310,12 +310,14 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	vector<uint8_t> decodedCipherMessage = decodeBase64(cipherMessage);
 	vector<uint8_t> plainMessage{};
 
-	lime::PeerDeviceStatus peerStatus = lime::PeerDeviceStatus::fail;
+	lime::PeerDeviceStatus peerDeviceStatus = lime::PeerDeviceStatus::fail;
 	try {
-		 peerStatus = belleSipLimeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader, decodedCipherMessage, plainMessage);
+		 peerDeviceStatus = belleSipLimeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader, decodedCipherMessage, plainMessage);
 	} catch (const exception &e) {
 		lError() << e.what() << " while decrypting message";
 	}
+
+	if (peerDeviceStatus == lime::PeerDeviceStatus::fail) lError() << "Failed to decrypt message from " << senderDeviceId;
 
 	// Prepare decrypted message for next modifier
 	string plainMessageString(plainMessage.begin(), plainMessage.end());
