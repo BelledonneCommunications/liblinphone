@@ -128,13 +128,17 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
 
 	// Add participants to the recipient list
+	bool isMultidevice = FALSE;
 	auto recipients = make_shared<vector<lime::RecipientData>>();
 	const list<shared_ptr<Participant>> participants = chatRoom->getParticipants();
 	for (const shared_ptr<Participant> &participant : participants) {
+		int nbDevice = 0;
 		const list<shared_ptr<ParticipantDevice>> devices = participant->getPrivate()->getDevices();
 		for (const shared_ptr<ParticipantDevice> &device : devices) {
+			nbDevice++;
 			recipients->emplace_back(device->getAddress().asString());
 		}
+		if (nbDevice > 1) isMultidevice = TRUE;
 	}
 
 	// Add potential other devices of the sender
@@ -142,7 +146,14 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	for (const auto &senderDevice : senderDevices) {
 		if (senderDevice->getAddress() != chatRoom->getLocalAddress()) {
 			recipients->emplace_back(senderDevice->getAddress().asString());
+			isMultidevice = TRUE;
 		}
+	}
+
+	// TODO warning when multiple devices for the same participant
+	if (isMultidevice) {
+		// TODO add policies to adapt behaviour when multiple devices
+		lWarning() << "Sending encrypted message to multidevice participant";
 	}
 
 	const string &plainStringMessage = message->getInternalContent().getBodyAsUtf8String();
