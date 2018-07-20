@@ -2688,6 +2688,7 @@ void tester_file_transfer_send_2(LinphoneChatMessage *msg, LinphoneContent* cont
 	ms_free(buf);
 }
 
+<<<<<<< HEAD
 /**
  * function invoked to report file transfer progress.
  * */

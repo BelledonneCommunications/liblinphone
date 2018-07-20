@@ -26,6 +26,7 @@
 #include "mediastreamer2/msvideo.h"
 #include "mediastreamer2/mediastream.h"
 #include "mediastreamer2/bitratecontrol.h"
+#include "mediastreamer2/msmediaplayer.h"
 
 #include "linphone/defs.h"
 #include "linphone/types.h"
@@ -114,9 +115,11 @@ LINPHONE_PUBLIC LinphonePlayer *linphone_core_create_local_player(LinphoneCore *
 * @param web_cam_name Recording web cam. If NULL, no video will be recorded.
 * @param video_display_name Video display. If NULL, the video display set in #LinphoneCore will be used
 * @param window_id Id of the drawing window. Depend of video out
+* @param format File format we want to record to, MS_FILE_FORMAT_WAVE or MS_FILE_FORMAT_MATROSKA
+* @param video_codec Codec of the video if we record video. "vp8" or "h264"
 * @return A pointer on the new instance. NULL if failed.
 */
-LINPHONE_PUBLIC LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, const char *sound_card_name, const char *web_cam_name, const char *video_display_name, void *window_id);
+LINPHONE_PUBLIC LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, const char *sound_card_name, const char *web_cam_name, const char *video_display_name, void *window_id, MSFileFormat format, const char *video_codec);
 
 /**
  * Creates an empty info message.

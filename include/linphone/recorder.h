@@ -96,6 +96,12 @@ LINPHONE_PUBLIC LinphoneRecorderState linphone_recorder_get_state(LinphoneRecord
  */
 LINPHONE_PUBLIC void linphone_recorder_close(LinphoneRecorder *obj);
 
+/**
+ * Close the opened file.
+ * @param[in] obj #LinphoneRecorder object
+ */
+LINPHONE_PUBLIC void linphone_recorder_remove_file(LinphoneRecorder *obj, const char *filename);
+
 #ifdef __cplusplus
 }
 #endif

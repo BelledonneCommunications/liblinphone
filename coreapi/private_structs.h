@@ -592,6 +592,7 @@ struct _LinphoneRecorder{
 	MSRecorderState (*get_state)(LinphoneRecorder* recorder);
 	void (*close)(LinphoneRecorder* recorder);
 	void (*destroy)(LinphoneRecorder *recorder);
+	void (*remove_file)(LinphoneRecorder* recorder, const char *filename);
 	void *impl;
 };
 
