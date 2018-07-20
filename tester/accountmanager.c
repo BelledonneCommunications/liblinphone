@@ -71,10 +71,11 @@ static AccountManager *the_am=NULL;
 AccountManager *account_manager_get(void){
 	if (the_am==NULL){
 		the_am=ms_new0(AccountManager,1);
-		the_am->unique_id=sal_get_random_token(6);
+		int tokenLength = 6;
+		the_am->unique_id=sal_get_random_token(tokenLength);
 
 		ms_message("Using lowercase random token for test username.");
-		for (int i=0; i<6; i++) {
+		for (int i=0; i<tokenLength; i++) {
 			the_am->unique_id[i] = tolower(the_am->unique_id[i]);
 		}
 	}

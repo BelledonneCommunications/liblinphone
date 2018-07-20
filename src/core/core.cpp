@@ -254,7 +254,8 @@ void Core::enableLimeV2 (bool enable) {
 		try {
 			limeV2Engine->getLimeManager()->create_user(localDeviceId, x3dhServerUrl, curve, callback);
 		} catch (const exception &e) {
-			ms_message("%s while creating lime user\n", e.what());
+			lInfo() << e.what() << " while creating lime user";
+			// TODO attempt update if necessary here too ?
 		}
 	}
 }
@@ -267,12 +268,8 @@ void Core::updateLimeV2 (void) const {
 	}
 }
 
-// TODO also check engine type
 bool Core::limeV2Enabled (void) const {
 	L_D();
-	// check lime_v2 parameter in proxy config
-	// check result of dynamic cast
-	// check EngineType parameter
 	if (d->imee != nullptr && d->imee->getEngineType() == EncryptionEngineListener::EngineType::LimeV2)
 		return true;
 	return false;

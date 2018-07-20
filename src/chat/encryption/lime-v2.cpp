@@ -122,13 +122,9 @@ lime::CurveId LimeV2::getCurveId () const {
 ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
 	// We use a shared ptr here due to non synchronism with the lambda in the encrypt method
 	shared_ptr<ChatMessageModifier::Result> result =  make_shared<ChatMessageModifier::Result>(ChatMessageModifier::Result::Suspended);
-
-	cout << endl << "[ENCRYPT]" << endl;
-
     shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 	const IdentityAddress &peerAddress = chatRoom->getPeerAddress();
-
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
 
 	// Add participants to the recipient list
@@ -201,14 +197,12 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 					delete content;
 				}
 			} else {
-				BCTBX_SLOGE << "Lime operation failed: " << errorMessage;
 				lError() << "Lime operation failed: " << errorMessage;
 				*result = ChatMessageModifier::Result::Error;
 			}
 		}, lime::EncryptionPolicy::cipherMessage);
 	} catch (const exception &e) {
-		BCTBX_SLOGE << e.what() << " while encrypting message";
-// 		lError() << "test" << " while encrypting message";
+		lError() << "test" << " while encrypting message";
 		*result = ChatMessageModifier::Result::Error;
 	}
 
@@ -220,23 +214,23 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 	const string &recipientUserId = chatRoom->getPeerAddress().getAddressWithoutGruu().asString();
 
-	cout << endl << "[DECRYPT]" << endl;
-
+	// Get message internal content if there is one
 	Content internalContent;
 	message->getContents();
 	if (message->getInternalContent().isEmpty()) {
-		BCTBX_SLOGE << "LIMEv2 no internal content";
+		lError() << "LIMEv2 no internal content";
 		if (message->getContents().front()->isEmpty()) {
-			BCTBX_SLOGE << "LIMEv2 no content in received message";
+			lError() << "LIMEv2 no content in received message";
 		}
 		internalContent = *message->getContents().front();
 	}
 	internalContent = message->getInternalContent();
 
+	// Check if message if encrypted and unwrap the multipart
 	ContentType expectedContentType = ContentType::Encrypted;
 	expectedContentType.addParameter("boundary", MultipartBoundary);
 	if (internalContent.getContentType() != expectedContentType) {
-		BCTBX_SLOGE << "LIMEv2 unexpected content-type: " << internalContent.getContentType();
+		lError() << "LIMEv2 unexpected content-type: " << internalContent.getContentType();
 		return ChatMessageModifier::Result::Error;
 	}
 	list<Content> contentList = ContentManager::multipartToContentList(internalContent);
@@ -253,7 +247,7 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 			return result;
 		}
 		// TODO return nothing or null value
-		BCTBX_SLOGE << "LIMEv2 no sipfrag found";
+		lError() << "LIMEv2 no sipfrag found";
 		const string &result = senderDeviceId;
 		return result;
 	}();
@@ -281,7 +275,7 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 			}
 		}
 		// TODO return nothing or null value
-		BCTBX_SLOGE << "LIMEv2 no cipher header found";
+		lError() << "LIMEv2 no cipher header found";
 		const vector<uint8_t> cipherHeader;
 		return cipherHeader;
 	}();
@@ -296,7 +290,7 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 			}
 		}
 		// TODO return nothing or null value
-		BCTBX_SLOGE << "LIMEv2 no cipher message found";
+		lError() << "LIMEv2 no cipher message found";
 		const vector<uint8_t> cipherMessage;
 		return cipherMessage;
 	}();
@@ -309,31 +303,11 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	try {
 		 peerStatus = belleSipLimeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader, decodedCipherMessage, plainMessage);
 	} catch (const exception &e) {
-		BCTBX_SLOGE << e.what() << " while decrypting message";
+		lError() << e.what() << " while decrypting message";
 	}
 
-	cout << "decrypt status = ";
-	switch (peerStatus) {
-		case lime::PeerDeviceStatus::unknown:
-			BCTBX_SLOGI << "LIMEv2 peer device unkown";
-			cout << "unknown" << endl;
-			break;
-		case lime::PeerDeviceStatus::untrusted:
-			BCTBX_SLOGI << "LIMEv2 peer device untrusted";
-			cout << "untrusted" << endl;
-			break;
-		case lime::PeerDeviceStatus::trusted:
-			BCTBX_SLOGI << "LIMEv2 peer device trusted";
-			cout << "trusted" << endl;
-			break;
-		case lime::PeerDeviceStatus::fail:
-			BCTBX_SLOGE << "LIMEv2 decryption failure";
-			cout << "fail" << endl;
-			return ChatMessageModifier::Result::Error;
-	}
-
+	// Prepare decrypted message for next modifier
 	string plainMessageString(plainMessage.begin(), plainMessage.end());
-
 	Content finalContent;
 	ContentType finalContentType = ContentType::Cpim; // TODO should be the content-type of the decrypted message
 	finalContent.setContentType(finalContentType);
@@ -378,26 +352,15 @@ EncryptionEngineListener::EngineType LimeV2::getEngineType () {
 }
 
 AbstractChatRoom::SecurityLevel LimeV2::getSecurityLevel (string deviceId) const {
-	stringstream log;
-	log << "LIMEv2 " << deviceId << " PeerDeviceStatus = ";
 	lime::PeerDeviceStatus status = belleSipLimeManager->get_peerDeviceStatus(deviceId);
 	switch (status) {
 		case lime::PeerDeviceStatus::unknown:
-			log << "unknown (SecurityLevel = Encrypted)";
-			lInfo() << log.str();
 			return AbstractChatRoom::SecurityLevel::Encrypted;
 		case lime::PeerDeviceStatus::untrusted:
-			log << "untrusted (SecurityLevel = Encrypted)";
-			lInfo() << log.str();
 			return AbstractChatRoom::SecurityLevel::Encrypted;
 		case lime::PeerDeviceStatus::trusted:
-			log << "trusted (SecurityLevel = Safe)";
-			lInfo() << log.str();
 			return AbstractChatRoom::SecurityLevel::Safe;
 		default:
-			log << "failed or undefined (SecurityLevel = Unsafe)";
-			lInfo() << log.str();
-			BCTBX_SLOGD << "LIMEv2 unexpected peer device status for " << deviceId;
 			return AbstractChatRoom::SecurityLevel::Unsafe;
 	}
 }
@@ -413,9 +376,9 @@ std::shared_ptr<BelleSipLimeManager> LimeV2::getLimeManager () {
 lime::limeCallback LimeV2::setLimeCallback (string operation) {
 	lime::limeCallback callback([operation](lime::CallbackReturn returnCode, string anythingToSay) {
 		if (returnCode == lime::CallbackReturn::success) {
-			BCTBX_SLOGI << "Lime operation successful: " << operation;
+			lInfo() << "Lime operation successful: " << operation;
 		} else {
-			BCTBX_SLOGE << "Lime operation failed: " << operation;
+			lInfo() << "Lime operation failed: " << operation;
 		}
 	});
 	return callback;
@@ -443,7 +406,7 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 			lastLimeUpdate = ms_time(NULL);
 			lp_config_set_int(lpconfig, "misc", "last_lime_update_time", (int)lastLimeUpdate);
 		} catch (const exception &e) {
-			BCTBX_SLOGE << e.what() << " while creating lime user";
+			lInfo() << e.what() << " while creating lime user";
 
 			// update keys if necessary
 			int limeUpdateThreshold = lp_config_get_int(lpconfig, "misc", "lime_update_threshold", 86400);
