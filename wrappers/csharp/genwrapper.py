@@ -278,6 +278,11 @@ class CsharpTranslator(object):
 						listenerDict['delegate']['params'] += "fromNativePtr<" + normalType + ">(" + argName + ")"
 					elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.EnumType:
 						listenerDict['delegate']['params'] += "(" + normalType + ")" + argName + ""
+					elif type(arg.type) is AbsApi.ListType:
+						if normalType == "string":
+							listenerDict['delegate']['params'] += "MarshalStringArray(" + argName + ")"
+						else:
+							listenerDict['delegate']['params'] += "MarshalBctbxList<" + self.get_class_array_type(normalType) + ">(" + argName + ")"
 					else:
 						print 'Not supported yet: ' + delegate_name_public
 						return {}
