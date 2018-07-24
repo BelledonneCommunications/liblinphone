@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "linphone/api/c-content.h"
 
+#include "bctoolbox/crypto.h"
 #include "lime.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -26,7 +27,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #ifdef HAVE_LIME
 #include "private.h"
-#include "bctoolbox/crypto.h"
 #include "bctoolbox/port.h"
 #include "bzrtp/bzrtp.h"
 
@@ -398,53 +398,6 @@ int lime_encryptMessage(limeKey_t *key, const uint8_t *plainMessage, uint32_t me
 
 	return 0;
 }
-
-int lime_encryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) {
-	bctbx_aes_gcm_context_t *gcmContext;
-
-	if (key == NULL) return -1;
-
-	if (*cryptoContext == NULL) { /* first call to the function, allocate a crypto context and initialise it */
-		/* key contains 192bits of key || 64 bits of Initialisation Vector, no additional data */
-		gcmContext = bctbx_aes_gcm_context_new(key, 24, NULL, 0, key+24, 8, BCTBX_GCM_ENCRYPT);
-		*cryptoContext = gcmContext;
-	} else { /* this is not the first call, get the context */
-		gcmContext = (bctbx_aes_gcm_context_t *)*cryptoContext;
-	}
-
-	if (length != 0) {
-		bctbx_aes_gcm_process_chunk(gcmContext, (const uint8_t *)plain, length, (uint8_t *)cipher);
-	} else { /* lenght is 0, finish the stream, no tag to be generated */
-		bctbx_aes_gcm_finish(gcmContext, NULL, 0);
-		*cryptoContext = NULL;
-	}
-
-	return 0;
-}
-
-int lime_decryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) {
-	bctbx_aes_gcm_context_t *gcmContext;
-
-	if (key == NULL) return -1;
-
-	if (*cryptoContext == NULL) { /* first call to the function, allocate a crypto context and initialise it */
-		/* key contains 192bits of key || 64 bits of Initialisation Vector, no additional data */
-		gcmContext = bctbx_aes_gcm_context_new(key, 24, NULL, 0, key+24, 8, BCTBX_GCM_DECRYPT);
-		*cryptoContext = gcmContext;
-	} else { /* this is not the first call, get the context */
-		gcmContext = (bctbx_aes_gcm_context_t *)*cryptoContext;
-	}
-
-	if (length != 0) {
-		bctbx_aes_gcm_process_chunk(gcmContext, (const unsigned char *)cipher, length, (unsigned char *)plain);
-	} else { /* lenght is 0, finish the stream */
-		bctbx_aes_gcm_finish(gcmContext, NULL, 0);
-		*cryptoContext = NULL;
-	}
-
-	return 0;
-}
-
 
 int lime_decryptMessage(limeKey_t *key, uint8_t *encryptedMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *plainMessage) {
 	uint8_t authenticatedData[28];
@@ -1003,11 +956,57 @@ void lime_im_encryption_engine_generate_file_transfer_key_cb(LinphoneImEncryptio
 
 #else /* HAVE_LIME */
 
+int lime_encryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) {
+	bctbx_aes_gcm_context_t *gcmContext;
+
+	if (key == NULL) return -1;
+
+	if (*cryptoContext == NULL) { /* first call to the function, allocate a crypto context and initialise it */
+		/* key contains 192bits of key || 64 bits of Initialisation Vector, no additional data */
+		gcmContext = bctbx_aes_gcm_context_new(key, 24, NULL, 0, key+24, 8, BCTBX_GCM_ENCRYPT);
+		*cryptoContext = gcmContext;
+	} else { /* this is not the first call, get the context */
+		gcmContext = (bctbx_aes_gcm_context_t *)*cryptoContext;
+	}
+
+	if (length != 0) {
+		bctbx_aes_gcm_process_chunk(gcmContext, (const uint8_t *)plain, length, (uint8_t *)cipher);
+	} else { /* lenght is 0, finish the stream, no tag to be generated */
+		bctbx_aes_gcm_finish(gcmContext, NULL, 0);
+		*cryptoContext = NULL;
+	}
+
+	return 0;
+}
+
+int lime_decryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) {
+	bctbx_aes_gcm_context_t *gcmContext;
+
+	if (key == NULL) return -1;
+
+	if (*cryptoContext == NULL) { /* first call to the function, allocate a crypto context and initialise it */
+		/* key contains 192bits of key || 64 bits of Initialisation Vector, no additional data */
+		gcmContext = bctbx_aes_gcm_context_new(key, 24, NULL, 0, key+24, 8, BCTBX_GCM_DECRYPT);
+		*cryptoContext = gcmContext;
+	} else { /* this is not the first call, get the context */
+		gcmContext = (bctbx_aes_gcm_context_t *)*cryptoContext;
+	}
+
+	if (length != 0) {
+		bctbx_aes_gcm_process_chunk(gcmContext, (const unsigned char *)cipher, length, (unsigned char *)plain);
+	} else { /* lenght is 0, finish the stream */
+		bctbx_aes_gcm_finish(gcmContext, NULL, 0);
+		*cryptoContext = NULL;
+	}
+
+	return 0;
+}
+
 bool_t lime_is_available() { return FALSE; }
-int lime_decryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) { return LIME_NOT_ENABLED;}
+// int lime_decryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) { return LIME_NOT_ENABLED;}
 int lime_decryptMultipartMessage(void *cachedb, uint8_t *message, const char *selfURI, const char *peerURI, uint8_t **output, char **content_type, uint64_t validityTimeSpan) { return LIME_NOT_ENABLED;}
 int lime_createMultipartMessage(void *cachedb, const char *contentType, uint8_t *message, const char *selfURI, const char *peerURI, uint8_t **output) { return LIME_NOT_ENABLED;}
-int lime_encryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) {return LIME_NOT_ENABLED;}
+// int lime_encryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) {return LIME_NOT_ENABLED;}
 void lime_freeKeys(limeURIKeys_t *associatedKeys){
 }
 int lime_getCachedSndKeysByURI(void *cachedb, limeURIKeys_t *associatedKeys){

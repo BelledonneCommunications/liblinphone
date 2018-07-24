@@ -117,11 +117,11 @@ void linphone_im_encryption_engine_cbs_set_process_outgoing_message(LinphoneImEn
 }
 
 LinphoneImEncryptionEngineCbsDownloadingFileCb linphone_im_encryption_engine_cbs_get_process_downloading_file(LinphoneImEncryptionEngineCbs *cbs) {
-	return cbs->process_downlading_file;
+	return cbs->process_downloading_file;
 }
 
 void linphone_im_encryption_engine_cbs_set_process_downloading_file(LinphoneImEncryptionEngineCbs *cbs, LinphoneImEncryptionEngineCbsDownloadingFileCb cb) {
-	cbs->process_downlading_file = cb;
+	cbs->process_downloading_file = cb;
 }
 
 LinphoneImEncryptionEngineCbsUploadingFileCb linphone_im_encryption_engine_cbs_get_process_uploading_file(LinphoneImEncryptionEngineCbs *cbs) {
