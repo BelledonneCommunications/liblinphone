@@ -350,7 +350,7 @@ bool LimeV2::encryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom
 }
 
 void LimeV2::generateFileTransferKey (const shared_ptr<AbstractChatRoom> &chatRoom, const shared_ptr<ChatMessage> &message) {
-	int FILE_TRANSFER_KEY_SIZE = 32; // TODO #define or get it from a config
+	int FILE_TRANSFER_KEY_SIZE = 32;
 	char keyBuffer [FILE_TRANSFER_KEY_SIZE];// temporary storage of generated key: 192 bits of key + 64 bits of initial vector
 	// generate a random 192 bits key + 64 bits of initial vector and store it into the file_transfer_information->key field of the msg
     sal_get_random_bytes((unsigned char *)keyBuffer, FILE_TRANSFER_KEY_SIZE);
@@ -405,12 +405,10 @@ int LimeV2::uploadingFile (const shared_ptr<ChatMessage> &message, size_t offset
 
 	size_t file_size = fileTransferContent->getFileSize();
 	if (file_size == 0) {
-		ms_warning("File size has not been set, encryption will fail if not done in one step (if file is larger than 16K)");
+		lWarning() << "File size has not been set, encryption will fail if not done in one step (if file is larger than 16K)";
 	} else if (offset + *size < file_size) {
 		*size -= (*size % 16);
 	}
-
-	lInfo() << "Uploading encrypted file " << fileTransferContent->getFileName() << " " << *size << " out of " << file_size;
 
 	return lime_encryptFile(
 		linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)),

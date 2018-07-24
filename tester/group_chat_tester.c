@@ -3932,6 +3932,98 @@ static void group_chat_lime_v2_send_encrypted_message_with_response_and_composin
 	lime_v2_message_test(TRUE, TRUE);
 }
 
+static void group_chat_lime_v2_send_encrypted_file_with_or_without_text (bool_t with_text) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
+	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	int dummy = 0;
+	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+	char *receivePaulineFilepath = bc_tester_file("receive_file_pauline.dump");
+	char *receiveChloeFilepath = bc_tester_file("receive_file_chloe.dump");
+	const char *text = "Hello Group !";
+
+	// Globally configure an http file transfer server
+	linphone_core_set_file_transfer_server(marie->lc, "https://www.linphone.org:444/lft.php");
+// 	linphone_core_set_file_transfer_server(marie->lc, "http://subscribe.example.org/flexisip-account-manager/lft.php"); // https
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	coresManagerList = bctbx_list_append(coresManagerList, chloe);
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(chloe->lc)));
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+	stats initialChloeStats = chloe->stat;
+
+	// Remove any previously downloaded file
+	remove(receivePaulineFilepath);
+	remove(receiveChloeFilepath);
+
+	// Wait for lime users to be created on X3DH server
+	wait_for_list(coresList, &dummy, 1, 1000);
+
+	// Check encryption status for both participants
+	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(chloe->lc));
+
+	// Marie creates a new group chat room
+	const char *initialSubject = "Colleagues";
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, -1);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
+
+	// Check that the chat room is correctly created on Chloe's side and that the participants are added
+	LinphoneChatRoom *chloeCr = check_creation_chat_room_client_side(coresList, chloe, &initialChloeStats, confAddr, initialSubject, 2, FALSE);
+
+	// Send encrypted file
+	if (with_text) {
+		_send_file_plus_text(marieCr, sendFilepath, text);
+	} else {
+		_send_file(marieCr, sendFilepath);
+	}
+
+	wait_for_list(coresList, &dummy, 1, 10000);
+
+	// Check that chat rooms have received the file
+	if (with_text) {
+		_receive_file_plus_text(coresList, pauline, &initialPaulineStats, receivePaulineFilepath, sendFilepath, text);
+		_receive_file_plus_text(coresList, chloe, &initialChloeStats, receiveChloeFilepath, sendFilepath, text);
+	} else {
+		_receive_file(coresList, pauline, &initialPaulineStats, receivePaulineFilepath, sendFilepath);
+		_receive_file(coresList, chloe, &initialChloeStats, receiveChloeFilepath, sendFilepath);
+	}
+
+	// Clean db from chat room
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(chloe, chloeCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+	remove(receivePaulineFilepath);
+	remove(receiveChloeFilepath);
+	bc_free(sendFilepath);
+	bc_free(receivePaulineFilepath);
+	bc_free(receiveChloeFilepath);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(chloe);
+}
+
+static void group_chat_lime_v2_send_encrypted_file (void) {
+	group_chat_lime_v2_send_encrypted_file_with_or_without_text(FALSE);
+}
+
+static void group_chat_lime_v2_send_encrypted_file_plus_text (void) {
+	group_chat_lime_v2_send_encrypted_file_with_or_without_text(TRUE);
+}
+
 bool_t simple_zrtp_call_with_sas_validation(LinphoneCoreManager *caller, LinphoneCoreManager *callee, bool_t callerValidation, bool_t calleeValidation) {
 	bool_t call_ok = FALSE;
 	BC_ASSERT_TRUE((call_ok=call(caller, callee)));
@@ -5159,6 +5251,8 @@ test_t group_chat_tests[] = {
 	TEST_TWO_TAGS("LIMEv2 message with composing", group_chat_lime_v2_send_encrypted_message_with_composing, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 message with response", group_chat_lime_v2_send_encrypted_message_with_response, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 message with response and composing", group_chat_lime_v2_send_encrypted_message_with_response_and_composing, "CreateUserInDb", "LeaksMemory"),
+	TEST_TWO_TAGS("LIMEv2 send encrypted file", group_chat_lime_v2_send_encrypted_file, "CreateUserInDb", "LeaksMemory"),
+	TEST_TWO_TAGS("LIMEv2 send encrypted file + text", group_chat_lime_v2_send_encrypted_file_plus_text, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 ZRTP verification", group_chat_lime_v2_with_zrtp_verification, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 chatroom security level upgrade", group_chat_lime_v2_chatroom_security_level_upgrade, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 chatroom security level downgrade adding participant", group_chat_lime_v2_chatroom_security_level_downgrade_adding_participant, "CreateUserInDb", "LeaksMemory"),
