@@ -1,1 +1,1 @@
-wrappers/java/classes/tools/AndroidPlatformHelper.java
+../../../../../../wrappers/java/classes/tools/AndroidPlatformHelper.java
