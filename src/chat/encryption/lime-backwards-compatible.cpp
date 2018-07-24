@@ -31,10 +31,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-ChatMessageModifier::Result LimeBackwardsCompatible::processOutgoingMessage(
-	const shared_ptr<ChatMessage> &message,
-	int &errorCode
-) {
+ChatMessageModifier::Result LimeBackwardsCompatible::processOutgoingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	if (!imee)
@@ -62,10 +59,7 @@ ChatMessageModifier::Result LimeBackwardsCompatible::processOutgoingMessage(
 	return ChatMessageModifier::Result::Done;
 }
 
-ChatMessageModifier::Result LimeBackwardsCompatible::processIncomingMessage(
-	const shared_ptr<ChatMessage> &message,
-	int &errorCode
-) {
+ChatMessageModifier::Result LimeBackwardsCompatible::processIncomingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	if (!imee)
@@ -93,9 +87,7 @@ ChatMessageModifier::Result LimeBackwardsCompatible::processIncomingMessage(
 	return ChatMessageModifier::Result::Done;
 }
 
-bool LimeBackwardsCompatible::encryptionEnabledForFileTransferCb(
-	const shared_ptr<AbstractChatRoom> &chatRoom
-) {
+bool LimeBackwardsCompatible::encryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
 	LinphoneImEncryptionEngineCbsIsEncryptionEnabledForFileTransferCb is_encryption_enabled_for_file_transfer_cb =
@@ -106,10 +98,7 @@ bool LimeBackwardsCompatible::encryptionEnabledForFileTransferCb(
 	return false;
 }
 
-void LimeBackwardsCompatible::generateFileTransferKeyCb(
-	const shared_ptr<AbstractChatRoom> &chatRoom,
-	const shared_ptr<ChatMessage> &message
-) {
+void LimeBackwardsCompatible::generateFileTransferKey (const shared_ptr<AbstractChatRoom> &chatRoom, const shared_ptr<ChatMessage> &message) {
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
 	LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb generate_file_transfer_key_cb =
@@ -119,13 +108,7 @@ void LimeBackwardsCompatible::generateFileTransferKeyCb(
 	}
 }
 
-int LimeBackwardsCompatible::downloadingFileCb(
-	const shared_ptr<ChatMessage> &message,
-	size_t offset,
-	const uint8_t *buffer,
-	size_t size,
-	uint8_t *decryptedBuffer
-) {
+int LimeBackwardsCompatible::downloadingFile (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decryptedBuffer) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
@@ -136,19 +119,13 @@ int LimeBackwardsCompatible::downloadingFileCb(
 	return -1;
 }
 
-int LimeBackwardsCompatible::uploadingFileCb(
-	const shared_ptr<ChatMessage> &message,
-	size_t offset,
-	const uint8_t *buffer,
-	size_t size,
-	uint8_t *encryptedBuffer
-) {
+int LimeBackwardsCompatible::uploadingFile (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encryptedBuffer) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
 	LinphoneImEncryptionEngineCbsUploadingFileCb cb_process_uploading_file = linphone_im_encryption_engine_cbs_get_process_uploading_file(imee_cbs);
 	if (cb_process_uploading_file) {
-		return cb_process_uploading_file(imee, L_GET_C_BACK_PTR(message), offset, buffer, &size, encryptedBuffer);
+		return cb_process_uploading_file(imee, L_GET_C_BACK_PTR(message), offset, buffer, size, encryptedBuffer);
 	}
 	return -1;
 }

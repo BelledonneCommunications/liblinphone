@@ -23,8 +23,12 @@
 #include "content/header/header-param.h"
 #include "conference/participant-p.h"
 #include "conference/participant-device.h"
+#include "c-wrapper/c-wrapper.h"
 #include "lime-v2.h"
 #include "private.h"
+
+// TODO remove me
+#include "lime.h"
 
 using namespace std;
 
@@ -341,22 +345,81 @@ void LimeV2::update (LinphoneConfig *lpconfig) {
 	lp_config_set_int(lpconfig, "misc", "last_lime_update_time", (int)lastLimeUpdate);
 }
 
-bool LimeV2::encryptionEnabledForFileTransferCb (const shared_ptr<AbstractChatRoom> &chatRoom) {
-	// TODO Work in progress
-	return false;
+bool LimeV2::encryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom> &chatRoom) {
+	return true;
 }
 
-void LimeV2::generateFileTransferKeyCb (const shared_ptr<AbstractChatRoom> &chatRoom, const shared_ptr<ChatMessage> &message) {
-	// TODO Work in progress
+void LimeV2::generateFileTransferKey (const shared_ptr<AbstractChatRoom> &chatRoom, const shared_ptr<ChatMessage> &message) {
+	int FILE_TRANSFER_KEY_SIZE = 32; // TODO #define or get it from a config
+	char keyBuffer [FILE_TRANSFER_KEY_SIZE];// temporary storage of generated key: 192 bits of key + 64 bits of initial vector
+	// generate a random 192 bits key + 64 bits of initial vector and store it into the file_transfer_information->key field of the msg
+    sal_get_random_bytes((unsigned char *)keyBuffer, FILE_TRANSFER_KEY_SIZE);
+
+	for (Content *content : message->getContents()) {
+		if (content->isFileTransfer()) {
+			FileTransferContent *fileTransferContent = dynamic_cast<FileTransferContent *>(content); // TODO could static_cast
+			fileTransferContent->setFileKey(keyBuffer, FILE_TRANSFER_KEY_SIZE);
+			return;
+		}
+	}
 }
 
-int LimeV2::downloadingFileCb (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) {
-	// TODO Work in progress
+int LimeV2::downloadingFile (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) {
+	const Content *content = message->getPrivate()->getFileTransferContent();
+	if (!content)
+		return -1;
+
+	const FileTransferContent *fileTransferContent = dynamic_cast<const FileTransferContent *>(content); // TODO could static_cast
+	const char *fileKey = fileTransferContent->getFileKey().data();
+
+	if (!fileKey)
+		return -1;
+
+	if (!buffer || size == 0)
+		return lime_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, 0, NULL, NULL);
+
+	return lime_decryptFile(
+		linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)),
+		(unsigned char *)fileKey,
+		size,
+		(char *)decrypted_buffer,
+		(char *)buffer
+	);
+
 	return 0;
 }
 
-int LimeV2::uploadingFileCb (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *encrypted_buffer) {
-	// TODO Work in progress
+int LimeV2::uploadingFile (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer) {
+	const Content *content = message->getPrivate()->getFileTransferContent();
+	if (!content)
+		return -1;
+
+	const FileTransferContent *fileTransferContent = dynamic_cast<const FileTransferContent *>(content);
+	const char *fileKey = fileTransferContent->getFileKey().data();
+
+	if (!fileKey)
+		return -1;
+
+	if (!buffer || *size == 0)
+		return lime_encryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, 0, NULL, NULL);
+
+	size_t file_size = fileTransferContent->getFileSize();
+	if (file_size == 0) {
+		ms_warning("File size has not been set, encryption will fail if not done in one step (if file is larger than 16K)");
+	} else if (offset + *size < file_size) {
+		*size -= (*size % 16);
+	}
+
+	lInfo() << "Uploading encrypted file " << fileTransferContent->getFileName() << " " << *size << " out of " << file_size;
+
+	return lime_encryptFile(
+		linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)),
+		(unsigned char *)fileKey,
+		*size,
+		(char *)buffer,
+		(char *)encrypted_buffer
+	);
+
 	return 0;
 }
 
