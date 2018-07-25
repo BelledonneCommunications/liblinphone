@@ -83,6 +83,7 @@ public:
 	int uploadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer) override;
 	EncryptionEngineListener::EngineType getEngineType () override;
 	AbstractChatRoom::SecurityLevel getSecurityLevel (std::string deviceId) const override;
+	void cleanDb () override;
 
 	// CoreListener overrides
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
@@ -92,6 +93,7 @@ private:
 	std::shared_ptr<BelleSipLimeManager> belleSipLimeManager;
 	std::time_t lastLimeUpdate;
 	std::string x3dhServerUrl;
+	std::string _dbAccess;
 	lime::CurveId curve;
 };
 

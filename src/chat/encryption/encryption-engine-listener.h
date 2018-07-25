@@ -20,15 +20,11 @@
 #ifndef _L_ENCRYPTION_ENGINE_LISTENER_H_
 #define _L_ENCRYPTION_ENGINE_LISTENER_H_
 
-// system includes
 #include <memory>
 
-// include includes
 #include "chat/chat-room/abstract-chat-room.h"
 #include "chat/modifier/chat-message-modifier.h"
 #include "linphone/lpconfig.h"
-
-// local includes
 
 // =============================================================================
 
@@ -42,8 +38,8 @@ public:
 	enum class EngineType {
 		Undefined = -1,
 		LimeV2 = 0,
-		Another = 1,
-		YetAnother = 2
+		//Another = 1,
+		//YetAnother = 2
 	};
 
 	virtual ~EncryptionEngineListener () = default;
@@ -57,6 +53,7 @@ public:
 	virtual int uploadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encryptedBuffer) { return 0; }
 	virtual EncryptionEngineListener::EngineType getEngineType () { return EngineType::Undefined; }
 	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (std::string deviceId) const { return AbstractChatRoom::SecurityLevel::Unsafe; }
+	virtual void cleanDb () {}
 
 protected:
 	EncryptionEngineListener::EngineType engineType;

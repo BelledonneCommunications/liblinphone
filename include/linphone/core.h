@@ -1541,6 +1541,13 @@ LINPHONE_PUBLIC bool_t linphone_core_lime_v2_enabled(const LinphoneCore *lc);
 LINPHONE_PUBLIC bool_t linphone_core_lime_v2_available(const LinphoneCore *lc);
 
 /**
+ * Deletes local LIMEv2 database
+ * @param[in] lc LinphoneCore object
+ * @ingroup network_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_delete_local_lime_v2_db(const LinphoneCore *lc);
+
+/**
  * Tells whether IPv6 is enabled or not.
  * @param[in] lc #LinphoneCore object
  * @return A boolean value telling whether IPv6 is enabled or not

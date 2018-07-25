@@ -84,3 +84,7 @@ bool_t linphone_core_lime_v2_enabled (const LinphoneCore *lc) {
 bool_t linphone_core_lime_v2_available (const LinphoneCore *lc) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeV2Available();
 }
+
+void linphone_core_delete_local_lime_v2_db (const LinphoneCore *lc) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getEncryptionEngine()->cleanDb();
+}

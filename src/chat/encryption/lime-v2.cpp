@@ -81,7 +81,7 @@ void BelleSipLimeManager::processAuthRequested (void *data, belle_sip_auth_event
 	}
 }
 
-BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_provider_t *prov, LinphoneCore *lc) : LimeManager(db_access, [prov, lc](const string &url, const string &from, const vector<uint8_t> &message, const lime::limeX3DHServerResponseProcess &responseProcess) {
+BelleSipLimeManager::BelleSipLimeManager (const string &dbAccess, belle_http_provider_t *prov, LinphoneCore *lc) : LimeManager(dbAccess, [prov, lc](const string &url, const string &from, const vector<uint8_t> &message, const lime::limeX3DHServerResponseProcess &responseProcess) {
 	belle_http_request_listener_callbacks_t cbs= {};
 	belle_http_request_listener_t *l;
 	belle_generic_uri_t *uri;
@@ -107,11 +107,12 @@ BelleSipLimeManager::BelleSipLimeManager (const string &db_access, belle_http_pr
 }) {
 }
 
-LimeV2::LimeV2 (const std::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc) {
+LimeV2::LimeV2 (const std::string &dbAccess, belle_http_provider_t *prov, LinphoneCore *lc) {
 	engineType = EncryptionEngineListener::EngineType::LimeV2;
-	x3dhServerUrl = linphone_config_get_string(linphone_core_get_config(lc), "misc", "x3dh_server_url", "");
 	curve = lime::CurveId::c25519; // c448
-	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(db_access, prov, lc));
+	x3dhServerUrl = linphone_config_get_string(linphone_core_get_config(lc), "misc", "x3dh_server_url", "");
+	_dbAccess = dbAccess;
+	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(dbAccess, prov, lc));
 	lastLimeUpdate = linphone_config_get_int(lc->config, "misc", "last_lime_update_time", 0);
 }
 
@@ -437,6 +438,10 @@ AbstractChatRoom::SecurityLevel LimeV2::getSecurityLevel (string deviceId) const
 		default:
 			return AbstractChatRoom::SecurityLevel::Unsafe;
 	}
+}
+
+void LimeV2::cleanDb () {
+	remove(_dbAccess.c_str());
 }
 
 void LimeV2::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {

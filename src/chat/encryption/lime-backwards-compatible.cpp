@@ -130,4 +130,6 @@ int LimeBackwardsCompatible::uploadingFile (const shared_ptr<ChatMessage> &messa
 	return -1;
 }
 
+void LimeBackwardsCompatible::cleanDb () {}
+
 LINPHONE_END_NAMESPACE
