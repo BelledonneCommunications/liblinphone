@@ -4617,7 +4617,7 @@ static void group_chat_lime_v2_send_multiple_successive_encrypted_messages (void
 	linphone_address_unref(marieAddr1);
 	paulineLastMsg = NULL;
 
-	// Check that the message was correctly received and decrypted by Laure
+	// Check that message 1 was correctly received and decrypted by Laure
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived, initialLaureStats.number_of_LinphoneMessageReceived + 1, 10000));
 	LinphoneChatMessage *laureLastMsg = laure->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
@@ -4632,7 +4632,7 @@ static void group_chat_lime_v2_send_multiple_successive_encrypted_messages (void
 	const char *marieMessage2 = "What's up ?";
 	_send_message(marieCr, marieMessage2);
 
-	// Check that message 2 was correctly decrypted by Pauline
+	// Check that message 2 was correctly received and decrypted by Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 2, 10000));
 	paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
@@ -4652,7 +4652,7 @@ static void group_chat_lime_v2_send_multiple_successive_encrypted_messages (void
 	const char *marieMessage3 = "I need to talk to you.";
 	_send_message(marieCr, marieMessage3);
 
-	// Check that message 3 was correctly decrypted by Pauline
+	// Check that message 3 was correctly received and decrypted by Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 3, 10000));
 	paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
@@ -4671,6 +4671,7 @@ static void group_chat_lime_v2_send_multiple_successive_encrypted_messages (void
 	// Check chatroom security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
 end:
 	// Clean local LIMEv2 databases
@@ -4738,6 +4739,7 @@ static void group_chat_lime_v2_send_encrypted_message_to_disabled_lime_v2 (void)
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelClearText, int, "%d");
 
 	// Clean local LIMEv2 databases
+	linphone_core_enable_lime_v2(pauline->lc, TRUE);
 	linphone_core_delete_local_lime_v2_db(marie->lc);
 	linphone_core_delete_local_lime_v2_db(pauline->lc);
 

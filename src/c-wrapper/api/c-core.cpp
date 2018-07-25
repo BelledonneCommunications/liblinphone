@@ -86,5 +86,9 @@ bool_t linphone_core_lime_v2_available (const LinphoneCore *lc) {
 }
 
 void linphone_core_delete_local_lime_v2_db (const LinphoneCore *lc) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getEncryptionEngine()->cleanDb();
+	if (L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeV2Enabled()) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getEncryptionEngine()->cleanDb();
+	} else {
+		lWarning() << "Trying to clean local LIMEv2 databases but LIMEv2 is disabled";
+	}
 }
