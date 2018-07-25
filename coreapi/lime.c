@@ -956,6 +956,52 @@ void lime_im_encryption_engine_generate_file_transfer_key_cb(LinphoneImEncryptio
 
 #else /* HAVE_LIME */
 
+bool_t lime_is_available() { return FALSE; }
+// int lime_decryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) { return LIME_NOT_ENABLED;}
+int lime_decryptMultipartMessage(void *cachedb, uint8_t *message, const char *selfURI, const char *peerURI, uint8_t **output, char **content_type, uint64_t validityTimeSpan) { return LIME_NOT_ENABLED;}
+int lime_createMultipartMessage(void *cachedb, const char *contentType, uint8_t *message, const char *selfURI, const char *peerURI, uint8_t **output) { return LIME_NOT_ENABLED;}
+// int lime_encryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) {return LIME_NOT_ENABLED;}
+void lime_freeKeys(limeURIKeys_t *associatedKeys){
+}
+int lime_getCachedSndKeysByURI(void *cachedb, limeURIKeys_t *associatedKeys){
+	return LIME_NOT_ENABLED;
+}
+int lime_encryptMessage(limeKey_t *key, const uint8_t *plainMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *encryptedMessage) {
+	return LIME_NOT_ENABLED;
+}
+int lime_setCachedKey(void * cacheDb, limeKey_t *associatedKey, uint8_t role, uint64_t validityTimeSpan) {
+	return LIME_NOT_ENABLED;
+}
+int lime_getCachedRcvKeyByZid(void * cacheDb, limeKey_t *associatedKey, const char *selfURI, const char *peerURI) {
+	return LIME_NOT_ENABLED;
+}
+int lime_decryptMessage(limeKey_t *key, uint8_t *encryptedMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *plainMessage) {
+	return LIME_NOT_ENABLED;
+}
+bool_t linphone_chat_room_lime_available(LinphoneChatRoom *cr) {
+	return FALSE;
+}
+int lime_im_encryption_engine_process_incoming_message_cb(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
+	return 500;
+}
+int lime_im_encryption_engine_process_outgoing_message_cb(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
+	return 500;
+}
+int lime_im_encryption_engine_process_downloading_file_cb(LinphoneImEncryptionEngine *engine, LinphoneChatMessage *msg, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) {
+	return 500;
+}
+int lime_im_encryption_engine_process_uploading_file_cb(LinphoneImEncryptionEngine *engine, LinphoneChatMessage *msg, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer) {
+	return 500;
+}
+bool_t lime_im_encryption_engine_is_file_encryption_enabled_cb(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room) {
+	return FALSE;
+}
+void lime_im_encryption_engine_generate_file_transfer_key_cb(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
+
+}
+
+#endif /* HAVE_LIME */
+
 int lime_encryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) {
 	bctbx_aes_gcm_context_t *gcmContext;
 
@@ -1001,51 +1047,6 @@ int lime_decryptFile(void **cryptoContext, unsigned char *key, size_t length, ch
 
 	return 0;
 }
-
-bool_t lime_is_available() { return FALSE; }
-// int lime_decryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) { return LIME_NOT_ENABLED;}
-int lime_decryptMultipartMessage(void *cachedb, uint8_t *message, const char *selfURI, const char *peerURI, uint8_t **output, char **content_type, uint64_t validityTimeSpan) { return LIME_NOT_ENABLED;}
-int lime_createMultipartMessage(void *cachedb, const char *contentType, uint8_t *message, const char *selfURI, const char *peerURI, uint8_t **output) { return LIME_NOT_ENABLED;}
-// int lime_encryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher) {return LIME_NOT_ENABLED;}
-void lime_freeKeys(limeURIKeys_t *associatedKeys){
-}
-int lime_getCachedSndKeysByURI(void *cachedb, limeURIKeys_t *associatedKeys){
-	return LIME_NOT_ENABLED;
-}
-int lime_encryptMessage(limeKey_t *key, const uint8_t *plainMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *encryptedMessage) {
-	return LIME_NOT_ENABLED;
-}
-int lime_setCachedKey(void * cacheDb, limeKey_t *associatedKey, uint8_t role, uint64_t validityTimeSpan) {
-	return LIME_NOT_ENABLED;
-}
-int lime_getCachedRcvKeyByZid(void * cacheDb, limeKey_t *associatedKey, const char *selfURI, const char *peerURI) {
-	return LIME_NOT_ENABLED;
-}
-int lime_decryptMessage(limeKey_t *key, uint8_t *encryptedMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *plainMessage) {
-	return LIME_NOT_ENABLED;
-}
-bool_t linphone_chat_room_lime_available(LinphoneChatRoom *cr) {
-	return FALSE;
-}
-int lime_im_encryption_engine_process_incoming_message_cb(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
-	return 500;
-}
-int lime_im_encryption_engine_process_outgoing_message_cb(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
-	return 500;
-}
-int lime_im_encryption_engine_process_downloading_file_cb(LinphoneImEncryptionEngine *engine, LinphoneChatMessage *msg, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) {
-	return 500;
-}
-int lime_im_encryption_engine_process_uploading_file_cb(LinphoneImEncryptionEngine *engine, LinphoneChatMessage *msg, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer) {
-	return 500;
-}
-bool_t lime_im_encryption_engine_is_file_encryption_enabled_cb(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room) {
-	return FALSE;
-}
-void lime_im_encryption_engine_generate_file_transfer_key_cb(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
-
-}
-#endif /* HAVE_LIME */
 
 const char *lime_error_code_to_string(int errorCode) {
 	switch (errorCode) {
