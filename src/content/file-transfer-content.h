@@ -37,6 +37,10 @@ public:
 	FileTransferContent (const FileTransferContent &other);
 	FileTransferContent (FileTransferContent &&other);
 
+	FileTransferContent* clone () const override {
+		return new FileTransferContent(*this);
+	}
+
 	FileTransferContent &operator= (const FileTransferContent &other);
 	FileTransferContent &operator= (FileTransferContent &&other);
 

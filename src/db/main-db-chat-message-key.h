@@ -32,6 +32,10 @@ public:
 	MainDbChatMessageKey (const std::shared_ptr<Core> &core, long long storageId);
 	~MainDbChatMessageKey ();
 
+	MainDbChatMessageKey* clone () const override {
+		return new MainDbChatMessageKey(*this);
+	}
+
 private:
 	L_DECLARE_PRIVATE(MainDbKey);
 };

@@ -33,6 +33,10 @@ public:
 	explicit ContentDisposition (const std::string &contentDisposition = "");
 	ContentDisposition (const ContentDisposition &other);
 
+	ContentDisposition* clone () const override {
+		return new ContentDisposition(*this);
+	}
+
 	ContentDisposition &operator= (const ContentDisposition &other);
 
 	bool weakEqual (const ContentDisposition &other) const;

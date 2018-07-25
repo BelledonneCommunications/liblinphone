@@ -43,6 +43,8 @@ public:
 	LocalConferenceEventHandler *findHandler (const ChatRoomId &chatRoomId) const;
 	const std::list<LocalConferenceEventHandler *> &getHandlers () const;
 
+	static void notifyResponseCb (const LinphoneEvent *ev);
+
 private:
 	std::list<LocalConferenceEventHandler *> handlers;
 

@@ -48,13 +48,13 @@ public:
 
 	inline unsigned int getLastNotify () const { return lastNotify; };
 
+	static void notifyResponseCb (const LinphoneEvent *ev);
+
 private:
 	ChatRoomId chatRoomId;
 
 	LocalConference *conf = nullptr;
 	unsigned int lastNotify = 1;
-
-	static void notifyResponseCb (const LinphoneEvent *ev);
 
 	std::string createNotify (Xsd::ConferenceInfo::ConferenceType confInfo, int notifyId = -1, bool isFullState = false);
 	std::string createNotifySubjectChanged (const std::string &subject, int notifyId = -1);

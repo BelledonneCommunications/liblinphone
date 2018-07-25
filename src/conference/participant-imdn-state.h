@@ -35,6 +35,10 @@ public:
 	ParticipantImdnState (const std::shared_ptr<Participant> &participant, ChatMessage::State state, time_t stateChangeTime);
 	ParticipantImdnState (const ParticipantImdnState &other);
 
+	ParticipantImdnState* clone () const override {
+		return new ParticipantImdnState(*this);
+	}
+
 	std::shared_ptr<Participant> getParticipant () const;
 	ChatMessage::State getState () const;
 	time_t getStateChangeTime () const;

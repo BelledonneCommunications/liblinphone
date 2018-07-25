@@ -39,19 +39,19 @@ namespace Linphone
 #endif
 
 #if WINDOWS_UWP
-        public const string BELLE_SIP_LIB_NAME = "bellesip";
-				public const string BCTOOLBOX_LIB_NAME = "bctoolbox";
+		public const string BELLE_SIP_LIB_NAME = "bellesip";
+		public const string BCTOOLBOX_LIB_NAME = "bctoolbox";
 #else
-        public const string BELLE_SIP_LIB_NAME = "linphone";
-				public const string BCTOOLBOX_LIB_NAME = "linphone";
+		public const string BELLE_SIP_LIB_NAME = LIB_NAME;
+		public const string BCTOOLBOX_LIB_NAME = LIB_NAME;
 #endif
 
 #if ANDROID
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		static extern void setAndroidLogHandler();
 #endif
 #if __IOS__
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		static extern void linphone_iphone_enable_logs();
 #endif
 
@@ -102,35 +102,35 @@ namespace Linphone
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		private delegate void OnLinphoneObjectDataDestroyed(IntPtr data);
 
-		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 #if WINDOWS_UWP
 		static extern int belle_sip_object_data_set(IntPtr ptr, string name, IntPtr data, IntPtr cb);
 #else
 		static extern int belle_sip_object_data_set(IntPtr ptr, string name, IntPtr data, OnLinphoneObjectDataDestroyed cb);
 #endif
 
-		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr belle_sip_object_data_get(IntPtr ptr, string name);
 
-		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr belle_sip_object_ref(IntPtr ptr);
 
-		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		static extern void belle_sip_object_unref(IntPtr ptr);
 
-		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		static extern void belle_sip_object_data_remove(IntPtr ptr, string data);
 
-		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr bctbx_list_next(IntPtr ptr);
 
-		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr bctbx_list_get_data(IntPtr ptr);
 
-		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr bctbx_list_append(IntPtr elem, string data);
 
-		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr bctbx_list_append(IntPtr elem, IntPtr data);
 
 #if __IOS__
@@ -255,10 +255,10 @@ namespace Linphone
 	/// </summary>
 	public class LinphoneAndroid
 	{
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		static extern void ms_set_jvm_from_env(IntPtr jnienv);
 
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		static extern void setMediastreamerAndroidContext(IntPtr jnienv, IntPtr context);
 
 		/// <summary>
@@ -318,7 +318,7 @@ namespace Linphone
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		private delegate void {{name_private}}({{params_private}});
 
-		public delegate void {{name_public}}({{params_public}});
+		public delegate void {{name_public}}({{{params_public}}});
 		private {{name_private}} {{var_private}};
 		private {{name_public}} {{var_public}};
 
@@ -371,7 +371,7 @@ namespace Linphone
 	public class {{className}} : LinphoneObject
 	{
 		{{#isLinphoneFactory}}
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr linphone_factory_create_core_cbs(IntPtr factory);
 
 		public CoreListener CreateCoreListener()
@@ -424,10 +424,10 @@ namespace Linphone
 		}
 		{{/isLinphoneCore}}
 		{{#dllImports}}
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		{{{prototype}}}
 		{{#has_second_prototype}}
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME), CallingConvention = CallingConvention.Cdecl)]
 		{{second_prototype}}
 		{{/has_second_prototype}}
 

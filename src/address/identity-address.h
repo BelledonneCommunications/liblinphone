@@ -38,6 +38,10 @@ public:
 	IdentityAddress (const IdentityAddress &other);
 	~IdentityAddress () = default;
 
+	IdentityAddress* clone () const override {
+		return new IdentityAddress(*this);
+	}
+
 	IdentityAddress &operator= (const IdentityAddress &other);
 
 	bool operator== (const IdentityAddress &other) const;

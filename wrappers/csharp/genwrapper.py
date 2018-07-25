@@ -278,8 +278,14 @@ class CsharpTranslator(object):
 						listenerDict['delegate']['params'] += "fromNativePtr<" + normalType + ">(" + argName + ")"
 					elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.EnumType:
 						listenerDict['delegate']['params'] += "(" + normalType + ")" + argName + ""
+					elif type(arg.type) is AbsApi.ListType:
+						if normalType == "string":
+							listenerDict['delegate']['params'] += "MarshalStringArray(" + argName + ")"
+						else:
+							listenerDict['delegate']['params'] += "MarshalBctbxList<" + self.get_class_array_type(normalType) + ">(" + argName + ")"
 					else:
-						raise("Error")
+						print 'Not supported yet: ' + delegate_name_public
+						return {}
 			else:
 				listenerDict['delegate']['first_param'] = argName
 				listenerDict['delegate']['params'] = 'thiz'
@@ -426,7 +432,7 @@ class CsharpTranslator(object):
 		interfaceDict = {}
 		interfaceDict['interfaceName'] = interface.name.translate(self.nameTranslator)
 		interfaceDict['methods'] = []
-		for method in interface.methods:
+		for method in interface.instanceMethods:
 			interfaceDict['methods'].append(self.translate_listener(interface, method))
 
 		return interfaceDict
@@ -499,27 +505,17 @@ if __name__ == '__main__':
 	renderer = pystache.Renderer()
 
 	enums = []
-	for item in parser.enumsIndex.items():
-		if item[1] is not None:
-			impl = EnumImpl(item[1], translator)
-			enums.append(impl)
-		else:
-			logging.warning('{0} enum won\'t be translated because of parsing errors'.format(item[0]))
-
 	interfaces = []
 	classes = []
-	for index in [parser.classesIndex, parser.interfacesIndex]:
-		for _class in index.values():
-			if _class is not None:
-				try:
-					if type(_class) is AbsApi.Class:
-						impl = ClassImpl(_class, translator)
-						classes.append(impl)
-					else:
-						impl = InterfaceImpl(_class, translator)
-						interfaces.append(impl)
-				except AbsApi.Error as e:
-					logging.error('Could not translate {0}: {1}'.format(_class.name.to_c(), e.args[0]))
+	for _interface in parser.namespace.interfaces:
+		impl = InterfaceImpl(_interface, translator)
+		interfaces.append(impl)
+	for _class in parser.namespace.classes:
+		impl = ClassImpl(_class, translator)
+		classes.append(impl)
+	for _enum in parser.namespace.enums:
+		impl = EnumImpl(_enum, translator)
+		enums.append(impl)
 
 	wrapper = WrapperImpl(enums, interfaces, classes)
 	render(renderer, wrapper, args.outputdir + "/" + args.outputfile)

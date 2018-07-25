@@ -114,11 +114,24 @@ const LinphoneAddress *linphone_chat_room_get_local_address (LinphoneChatRoom *c
 	return cr->localAddressCache;
 }
 
+LinphoneChatMessage *linphone_chat_room_create_empty_message (LinphoneChatRoom *cr) {
+	shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createChatMessage();
+	LinphoneChatMessage *object = L_INIT(ChatMessage);
+	L_SET_CPP_PTR_FROM_C_OBJECT(object, cppPtr);
+	return object;
+}
+
 LinphoneChatMessage *linphone_chat_room_create_message (LinphoneChatRoom *cr, const char *message) {
 	shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createChatMessage(L_C_TO_STRING(message));
 	LinphoneChatMessage *object = L_INIT(ChatMessage);
 	L_SET_CPP_PTR_FROM_C_OBJECT(object, cppPtr);
 	return object;
+}
+
+LinphoneChatMessage *linphone_chat_room_create_file_transfer_message(LinphoneChatRoom *cr, LinphoneContent *initial_content) {
+	LinphoneChatMessage *msg = linphone_chat_room_create_empty_message(cr);
+	linphone_chat_message_add_file_content(msg, initial_content);
+	return msg;
 }
 
 LinphoneChatMessage *linphone_chat_room_create_message_2 (
@@ -357,13 +370,6 @@ const bctbx_list_t *linphone_chat_room_get_composing_addresses (LinphoneChatRoom
 	}
 	cr->composingAddresses = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(composingAddresses);
 	return cr->composingAddresses;
-}
-
-LinphoneChatMessage *linphone_chat_room_create_file_transfer_message(LinphoneChatRoom *cr, LinphoneContent *initial_content) {
-	shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createFileTransferMessage(L_GET_CPP_PTR_FROM_C_OBJECT(initial_content));
-	LinphoneChatMessage *object = L_INIT(ChatMessage);
-	L_SET_CPP_PTR_FROM_C_OBJECT(object, cppPtr);
-	return object;
 }
 
 void linphone_chat_room_set_conference_address (LinphoneChatRoom *cr, const LinphoneAddress *confAddr) {

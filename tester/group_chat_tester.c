@@ -184,9 +184,11 @@ static void _send_file_plus_text(LinphoneChatRoom* cr, const char *sendFilepath,
 	linphone_content_set_type(content,"video");
 	linphone_content_set_subtype(content,"mkv");
 	linphone_content_set_name(content,"sintel_trailer_opus_h264.mkv");
+	linphone_content_set_file_path(content, sendFilepath);
 
-	msg = linphone_chat_room_create_file_transfer_message(cr, content);
-	linphone_chat_message_set_file_transfer_filepath(msg, sendFilepath);
+	msg = linphone_chat_room_create_empty_message(cr);
+	linphone_chat_message_add_file_content(msg, content);
+	linphone_content_unref(content);
 
 	if (text)
 		linphone_chat_message_add_text_content(msg, text);
@@ -196,7 +198,6 @@ static void _send_file_plus_text(LinphoneChatRoom* cr, const char *sendFilepath,
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
 	linphone_chat_message_send(msg);
-	linphone_content_unref(content);
 	linphone_chat_message_unref(msg);
 }
 
@@ -213,8 +214,11 @@ static void _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, sta
 		linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 		linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
 		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
-		linphone_chat_message_set_file_transfer_filepath(msg, receive_filepath);
-		linphone_chat_message_download_file(msg);
+
+		LinphoneContent *fileTransferContent = linphone_chat_message_get_file_transfer_information(msg);
+		BC_ASSERT_TRUE(linphone_content_is_file_transfer(fileTransferContent));
+		linphone_content_set_file_path(fileTransferContent, receive_filepath);
+		linphone_chat_message_download_content(msg, fileTransferContent);
 
 		if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneFileTransferDownloadSuccessful,receiverStats->number_of_LinphoneFileTransferDownloadSuccessful + 1, 20000))) {
 			compare_files(sendFilepath, receive_filepath);
@@ -234,8 +238,11 @@ static void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager
 		linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 		linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
 		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
-		linphone_chat_message_set_file_transfer_filepath(msg, receive_filepath);
-		linphone_chat_message_download_file(msg);
+
+		LinphoneContent *fileTransferContent = linphone_chat_message_get_file_transfer_information(msg);
+		BC_ASSERT_TRUE(linphone_content_is_file_transfer(fileTransferContent));
+		linphone_content_set_file_path(fileTransferContent, receive_filepath);
+		linphone_chat_message_download_content(msg, fileTransferContent);
 
 		if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneFileTransferDownloadSuccessful,receiverStats->number_of_LinphoneFileTransferDownloadSuccessful + 1, 20000))) {
 			compare_files(sendFilepath, receive_filepath);

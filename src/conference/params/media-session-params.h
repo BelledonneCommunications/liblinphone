@@ -41,6 +41,10 @@ public:
 	MediaSessionParams (const MediaSessionParams &other);
 	virtual ~MediaSessionParams ();
 
+	MediaSessionParams* clone () const override {
+		return new MediaSessionParams(*this);
+	}
+
 	MediaSessionParams &operator= (const MediaSessionParams &other);
 
 	void initDefault (const std::shared_ptr<Core> &core) override;

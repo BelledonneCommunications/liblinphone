@@ -55,6 +55,7 @@ public:
 		Cpim = 1 << 4,
 		Started = 1 << 5,
 		Sent = 1 << 6,
+		FileDownload = 1 << 7,
 	};
 
 	void setApplyModifiers (bool value) { applyModifiers = value; }
@@ -149,9 +150,7 @@ public:
 
 	bool hasFileTransferContent () const;
 	const Content* getFileTransferContent () const;
-
 	const Content* getFileTransferInformation () const;
-	void setFileTransferInformation (Content *content);
 
 	void addContent (Content *content);
 	void removeContent (Content *content);

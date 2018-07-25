@@ -34,6 +34,10 @@ public:
 	FileContent (const FileContent &other);
 	FileContent (FileContent &&other);
 
+	FileContent* clone () const override {
+		return new FileContent(*this);
+	}
+
 	FileContent &operator= (const FileContent &other);
 	FileContent &operator= (FileContent &&other);
 

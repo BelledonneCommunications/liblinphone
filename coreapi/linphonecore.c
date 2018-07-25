@@ -1381,7 +1381,12 @@ static void sip_config_read(LinphoneCore *lc) {
 		const char *username=NULL;
 #if !defined(LINPHONE_WINDOWS_UNIVERSAL) && !defined(LINPHONE_WINDOWS_PHONE) // Using getenv is forbidden on Windows 10 and Windows Phone
 		hostname=getenv("HOST");
-		username=getenv("USER");
+
+		#if defined _WIN32
+			username = getenv("USERNAME");
+		#else
+			username = getenv("USER");
+		#endif // if defined _WIN32
 		if (hostname==NULL) hostname=getenv("HOSTNAME");
 #endif
 		if (hostname==NULL)
@@ -2154,6 +2159,7 @@ static void linphone_core_register_default_codecs(LinphoneCore *lc){
 	/*default enabled video codecs, in order of preference*/
 	linphone_core_register_payload_type(lc,&payload_type_vp8,NULL,TRUE);
 	linphone_core_register_payload_type(lc,&payload_type_h264,"profile-level-id=42801F",TRUE);
+	linphone_core_register_payload_type(lc,&payload_type_h265,NULL,TRUE);
 	linphone_core_register_payload_type(lc,&payload_type_mp4v,"profile-level-id=3",TRUE);
 	linphone_core_register_payload_type(lc,&payload_type_h263_1998,"CIF=1;QCIF=1",FALSE);
 	linphone_core_register_payload_type(lc,&payload_type_h263,NULL,FALSE);

@@ -266,7 +266,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/chat-room/client-group-to-basic-chat-room.cpp
 	chat/chat-room/proxy-chat-room.cpp
 	chat/chat-room/real-time-text-chat-room.cpp
-	chat/chat-room/server-group-chat-room-stub.cpp
+	chat/chat-room/server-group-chat-room.cpp
 	chat/cpim/header/cpim-core-headers.cpp
 	chat/cpim/header/cpim-generic-header.cpp
 	chat/cpim/header/cpim-header.cpp
@@ -380,7 +380,6 @@ set(LINPHONE_CXX_OBJECTS_INCLUDE_DIRS
 	${SOCI_INCLUDE_DIRS}
 	${SOCI_MYSQL_INCLUDES}
 )
-set(LINPHONE_CXX_OBJECTS_DEFINITIONS "-DLINPHONE_EXPORTS")
 set(LINPHONE_CXX_OBJECTS_INCLUDE_DIRS ${BELR_INCLUDE_DIRS})
 
 set(LINPHONE_PRIVATE_HEADER_FILES)
@@ -418,6 +417,7 @@ if(ENABLE_SHARED)
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi>
 	)
+	target_compile_definitions(linphone PRIVATE "-DLINPHONE_EXPORTS")
 	#TODO: replace by if(APPLE) when we want to make apple framework on linphone-desktop too
 	if(IOS)
 		if(IOS)
@@ -451,7 +451,7 @@ if(ENABLE_SHARED)
 	endif()
 	if(WIN32)
 		# Export Xerces and Soci symbols.
-		list(APPEND LINPHONE_CXX_OBJECTS_DEFINITIONS "-DDLL_EXPORT" "-DSOCI_DLL")
+		target_compile_definitions(linphone PRIVATE "-DDLL_EXPORT" "-DSOCI_DLL")
 		if(CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 			set_target_properties(linphone PROPERTIES PREFIX "lib")
 		endif()
@@ -474,7 +474,6 @@ if(ENABLE_SHARED)
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	)
 endif()
-target_compile_definitions(linphone PRIVATE ${LINPHONE_CXX_OBJECTS_DEFINITIONS})
 
 if(ICONV_FOUND)
 	if(APPLE)

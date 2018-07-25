@@ -75,7 +75,7 @@ public class AndroidPlatformHelper {
 		mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
 		mConnectivityManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-		mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,	"AndroidPlatformHelper");
+		mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "AndroidPlatformHelper");
 		mWakeLock.setReferenceCounted(true);
 		mMcastLock = wifiMgr.createMulticastLock("AndroidPlatformHelper");
 		mMcastLock.setReferenceCounted(true);

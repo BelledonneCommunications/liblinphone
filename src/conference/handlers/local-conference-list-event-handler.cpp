@@ -31,7 +31,7 @@
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core.h"
-#include "local-conference-event-handler.h"
+#include "local-conference-event-handler-p.h"
 #include "local-conference-list-event-handler.h"
 #include "logger/logger.h"
 #include "xml/resource-lists.h"
@@ -53,6 +53,27 @@ namespace {
 // -----------------------------------------------------------------------------
 
 LocalConferenceListEventHandler::LocalConferenceListEventHandler (const std::shared_ptr<Core> &core) : CoreAccessor(core) {}
+
+// -----------------------------------------------------------------------------
+
+void LocalConferenceListEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
+	LinphoneEventCbs *cbs = linphone_event_get_callbacks(ev);
+	LocalConferenceListEventHandler *listHandler = static_cast<LocalConferenceListEventHandler *>(
+		linphone_event_cbs_get_user_data(cbs)
+	);
+	linphone_event_cbs_set_user_data(cbs, nullptr);
+	linphone_event_cbs_set_notify_response(cbs, nullptr);
+
+	if (linphone_event_get_reason(ev) != LinphoneReasonNone)
+		return;
+
+	for (const auto &handler : listHandler->handlers) {
+		linphone_event_cbs_set_user_data(cbs, handler->getPrivate());
+		LocalConferenceEventHandlerPrivate::notifyResponseCb(ev);
+	}
+	linphone_event_cbs_set_user_data(cbs, nullptr);
+	linphone_event_cbs_set_notify_response(cbs, nullptr);
+}
 
 // -----------------------------------------------------------------------------
 
@@ -169,6 +190,9 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate"))
 		multipart.setContentEncoding("deflate");
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&multipart);
+	LinphoneEventCbs *cbs = linphone_event_get_callbacks(lev);
+	linphone_event_cbs_set_user_data(cbs, this);
+	linphone_event_cbs_set_notify_response(cbs, notifyResponseCb);
 	linphone_event_notify(lev, cContent);
 	contents.clear();
 }

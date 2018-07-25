@@ -47,6 +47,8 @@ class LINPHONE_PUBLIC ClonableObject : public PropertyContainer {
 public:
 	virtual ~ClonableObject ();
 
+	virtual ClonableObject* clone () const = 0;
+
 protected:
 	explicit ClonableObject (ClonableObjectPrivate &p);
 

@@ -73,7 +73,7 @@ void CallStatsCommand::exec(Daemon *app, const string& args) {
 	}
 
 	ostringstream ostr;
-	ostr << CallStatsResponse(app, call, linphone_call_get_audio_stats(call), false).getBody();
-	ostr << CallStatsResponse(app, call, linphone_call_get_video_stats(call), false).getBody();
+	ostr << CallStatsEvent(app, call, linphone_call_get_audio_stats(call)).getBody();
+	ostr << CallStatsEvent(app, call, linphone_call_get_video_stats(call)).getBody();
 	app->sendResponse(Response(ostr.str(), Response::Ok));
 }

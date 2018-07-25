@@ -48,6 +48,7 @@ L_DECLARE_C_CLONABLE_OBJECT_IMPL_WITH_XTORS(Content,
 		string type;
 		string subtype;
 		string buffer;
+		string file_path;
 	} mutable cache;
 )
 
@@ -89,7 +90,8 @@ void linphone_content_set_user_data (LinphoneContent *content, void *user_data) 
 // =============================================================================
 
 const char *linphone_content_get_type (const LinphoneContent *content) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType().getType().c_str();
+	content->cache.type = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType().getType();
+	return content->cache.type.c_str();
 }
 
 void linphone_content_set_type (LinphoneContent *content, const char *type) {
@@ -99,7 +101,8 @@ void linphone_content_set_type (LinphoneContent *content, const char *type) {
 }
 
 const char *linphone_content_get_subtype (const LinphoneContent *content) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType().getSubType().c_str();
+	content->cache.subtype = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType().getSubType();
+	return content->cache.subtype.c_str();
 }
 
 void linphone_content_set_subtype (LinphoneContent *content, const char *subtype) {
@@ -240,6 +243,39 @@ void linphone_content_set_key (LinphoneContent *content, const char *key, const 
 		LinphonePrivate::FileTransferContent *ftc = static_cast<LinphonePrivate::FileTransferContent *>(c);
 		ftc->setFileKey(key, keyLength);
 	}
+}
+
+const char *linphone_content_get_file_path (const LinphoneContent *content) {
+	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	if (c->isFile())
+		return static_cast<const LinphonePrivate::FileContent *>(c)->getFilePath().c_str();
+	if (c->isFileTransfer())
+		return static_cast<const LinphonePrivate::FileTransferContent *>(c)->getFilePath().c_str();
+	return content->cache.file_path.c_str();
+}
+
+void linphone_content_set_file_path (LinphoneContent *content, const char *file_path) {
+	LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	if (c->isFile())
+		static_cast<LinphonePrivate::FileContent *>(c)->setFilePath(L_C_TO_STRING(file_path));
+	if (c->isFileTransfer())
+		static_cast<LinphonePrivate::FileTransferContent *>(c)->setFilePath(L_C_TO_STRING(file_path));
+	content->cache.file_path = L_C_TO_STRING(file_path);
+}
+
+bool_t linphone_content_is_text (const LinphoneContent *content) {
+	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	return c->getContentType() == LinphonePrivate::ContentType::PlainText;
+}
+
+bool_t linphone_content_is_file (const LinphoneContent *content) {
+	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	return c->isFile(); // TODO FIXME this doesn't work when Content is from linphone_chat_message_get_contents() list
+}
+
+bool_t linphone_content_is_file_transfer (const LinphoneContent *content) {
+	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	return c->isFileTransfer(); // TODO FIXME this doesn't work when Content is from linphone_chat_message_get_contents() list
 }
 
 // =============================================================================

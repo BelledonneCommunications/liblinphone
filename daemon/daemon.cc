@@ -83,6 +83,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "commands/cn.h"
 #include "commands/version.h"
 #include "commands/play.h"
+#include "commands/message.h"
 
 #include "private.h"
 
@@ -125,29 +126,28 @@ void *Daemon::iterateThread(void *arg) {
 	return 0;
 }
 
-EventResponse::EventResponse(Daemon *daemon, LinphoneCall *call, LinphoneCallState state) {
+CallEvent::CallEvent(Daemon *daemon, LinphoneCall *call, LinphoneCallState state) : Event("call-state-changed") {
 	LinphoneCallLog *callLog = linphone_call_get_call_log(call);
 	const LinphoneAddress *fromAddr = linphone_call_log_get_from_address(callLog);
 	char *fromStr = linphone_address_as_string(fromAddr);
 
 	ostringstream ostr;
-	ostr << "Event-type: call-state-changed" << "\n";
 	ostr << "Event: " << linphone_call_state_to_string(state) << "\n";
 	ostr << "From: " << fromStr << "\n";
 	ostr << "Id: " << daemon->updateCallId(call) << "\n";
-	setBody(ostr.str().c_str());
+	setBody(ostr.str());
 
 	bctbx_free(fromStr);
 	
 }
 
-DtmfResponse::DtmfResponse(Daemon *daemon, LinphoneCall *call, int dtmf) {
+DtmfEvent::DtmfEvent(Daemon *daemon, LinphoneCall *call, int dtmf) : Event("receiving-tone"){
 	ostringstream ostr;
 	char *remote = linphone_call_get_remote_address_as_string(call);
-	ostr << "Event-type: receiving-tone\nTone: " << (char) dtmf << "\n";
+	ostr << "Tone: " << (char) dtmf << "\n";
 	ostr << "From: " << remote << "\n";
 	ostr << "Id: " << daemon->updateCallId(call) << "\n";
-	setBody(ostr.str().c_str());
+	setBody(ostr.str());
 	ms_free(remote);
 }
 
@@ -168,24 +168,20 @@ static ostream &printCallStatsHelper(ostream &ostr, const LinphoneCallStats *sta
 	return ostr;
 }
 
-CallStatsResponse::CallStatsResponse(Daemon *daemon, LinphoneCall *call, const LinphoneCallStats *stats, bool event) {
+CallStatsEvent::CallStatsEvent(Daemon *daemon, LinphoneCall *call, const LinphoneCallStats *stats) : Event("call-stats"){
 	const LinphoneCallParams *callParams = linphone_call_get_current_params(call);
 	const char *prefix = "";
 
 	ostringstream ostr;
-	if (event) {
-		ostr << "Event-type: call-stats\n";
-		ostr << "Id: " << daemon->updateCallId(call) << "\n";
-		ostr << "Type: ";
-		if (linphone_call_stats_get_type(stats) == LINPHONE_CALL_STATS_AUDIO) {
-			ostr << "Audio";
-		} else {
-			ostr << "Video";
-		}
-		ostr << "\n";
+	ostr << "Id: " << daemon->updateCallId(call) << "\n";
+	ostr << "Type: ";
+	if (linphone_call_stats_get_type(stats) == LINPHONE_CALL_STATS_AUDIO) {
+		ostr << "Audio";
 	} else {
-		prefix = ((linphone_call_stats_get_type(stats) == LINPHONE_CALL_STATS_AUDIO) ? "Audio-" : "Video-");
+		ostr << "Video";
 	}
+	ostr << "\n";
+
 
 	printCallStatsHelper(ostr, stats, prefix);
 
@@ -197,41 +193,35 @@ CallStatsResponse::CallStatsResponse(Daemon *daemon, LinphoneCall *call, const L
 		ostr << PayloadTypeResponse(linphone_call_get_core(call), videoCodec, -1, prefix, false).getBody() << "\n";
 	}
 
-	setBody(ostr.str().c_str());
+	setBody(ostr.str());
 }
 
 
-AudioStreamStatsResponse::AudioStreamStatsResponse(Daemon* daemon, AudioStream* stream,
-		const LinphoneCallStats *stats, bool event) {
+AudioStreamStatsEvent::AudioStreamStatsEvent(Daemon* daemon, AudioStream* stream,
+		const LinphoneCallStats *stats) : Event("audio-stream-stats"){
 	const char *prefix = "";
 
 	ostringstream ostr;
-	if (event) {
-		ostr << "Event-type: audio-stream-stats\n";
-		ostr << "Id: " << daemon->updateAudioStreamId(stream) << "\n";
-		ostr << "Type: ";
-		if (linphone_call_stats_get_type(stats) == LINPHONE_CALL_STATS_AUDIO) {
-			ostr << "Audio";
-		} else {
-			ostr << "Video";
-		}
-		ostr << "\n";
+	ostr << "Id: " << daemon->updateAudioStreamId(stream) << "\n";
+	ostr << "Type: ";
+	if (linphone_call_stats_get_type(stats) == LINPHONE_CALL_STATS_AUDIO) {
+		ostr << "Audio";
 	} else {
-		prefix = ((linphone_call_stats_get_type(stats) == LINPHONE_CALL_STATS_AUDIO) ? "Audio-" : "Video-");
+		ostr << "Video";
 	}
+	ostr << "\n";
 
 	printCallStatsHelper(ostr, stats, prefix);
 
-	setBody(ostr.str().c_str());
+	setBody(ostr.str());
 }
 
-CallPlayingStatsResponse::CallPlayingStatsResponse(Daemon* daemon, int id) {
+CallPlayingStatsEvent::CallPlayingStatsEvent(Daemon* daemon, int id) : Event("call-playing-complete"){
 	ostringstream ostr;
  
-	ostr << "Event-type: call-playing-complete\n";
 	ostr << "Id: " << id << "\n";
 
-	setBody(ostr.str().c_str());
+	setBody(ostr.str());
 }
 
 PayloadTypeResponse::PayloadTypeResponse(LinphoneCore *core, const PayloadType *payloadType, int index, const string &prefix, bool enabled_status) {
@@ -347,6 +337,7 @@ Daemon::Daemon(const char *config_path, const char *factory_config_path, const c
 	vtable.call_state_changed = callStateChanged;
 	vtable.call_stats_updated = callStatsUpdated;
 	vtable.dtmf_received = dtmfReceived;
+	vtable.message_received = messageReceived;
 	mLc = linphone_core_new(&vtable, config_path, factory_config_path, this);
 	linphone_core_set_user_data(mLc, this);
 	linphone_core_enable_video_capture(mLc,capture_video);
@@ -510,6 +501,7 @@ void Daemon::initCommands() {
 	mCommands.push_back(new IncallPlayerStopCommand());
 	mCommands.push_back(new IncallPlayerPauseCommand());
 	mCommands.push_back(new IncallPlayerResumeCommand());
+	mCommands.push_back(new MessageCommand());
 	mCommands.sort(compareCommands);
 }
 
@@ -523,41 +515,51 @@ void Daemon::uninitCommands() {
 bool Daemon::pullEvent() {
 	bool status = false;
 	ostringstream ostr;
+	size_t size = mEventQueue.size();
+	
+	if (size != 0) size--;
+	
+	ostr << "Size: " << size << "\n"; //size is the number items remaining in the queue after popping the event.
+	
 	if (!mEventQueue.empty()) {
-		Response *r = mEventQueue.front();
+		Event *e = mEventQueue.front();
 		mEventQueue.pop();
-		ostr << r->getBody() << "\n";
-		delete r;
+		ostr << e->toBuf() << "\n";
+		delete e;
 		status = true;
 	}
-	ostr << "Size: " << mEventQueue.size() << "\n";
+	
 	sendResponse(Response(ostr.str().c_str(), Response::Ok));
 	return status;
 }
 
 void Daemon::callStateChanged(LinphoneCall *call, LinphoneCallState state, const char *msg) {
-	mEventQueue.push(new EventResponse(this, call, state));
+	queueEvent(new CallEvent(this, call, state));
 	
 	if (state == LinphoneCallIncomingReceived && mAutoAnswer){
 		linphone_call_accept(call);
 	}
 }
 
+void Daemon::messageReceived(LinphoneChatRoom *cr, LinphoneChatMessage *msg){
+	queueEvent(new IncomingMessageEvent(msg));
+}
+
 void Daemon::callStatsUpdated(LinphoneCall *call, const LinphoneCallStats *stats) {
 	if (mUseStatsEvents) {
 		/* don't queue periodical updates (3 per seconds for just bandwidth updates) */
 		if (!(_linphone_call_stats_get_updated(stats) & LINPHONE_CALL_STATS_PERIODICAL_UPDATE)){
-			mEventQueue.push(new CallStatsResponse(this, call, stats, true));
+			queueEvent(new CallStatsEvent(this, call, stats));
 		}
 	}
 }
 
 void Daemon::callPlayingComplete(int id) {
-	mEventQueue.push(new CallPlayingStatsResponse(this, id));
+	queueEvent(new CallPlayingStatsEvent(this, id));
 }
 
 void Daemon::dtmfReceived(LinphoneCall *call, int dtmf) {
-	mEventQueue.push(new DtmfResponse(this, call, dtmf));
+	queueEvent(new DtmfEvent(this, call, dtmf));
 }
 
 void Daemon::callStateChanged(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState state, const char *msg) {
@@ -573,6 +575,11 @@ void Daemon::dtmfReceived(LinphoneCore *lc, LinphoneCall *call, int dtmf) {
 	app->dtmfReceived(call, dtmf);
 }
 
+void Daemon::messageReceived(LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatMessage *msg){
+	Daemon *app = (Daemon*) linphone_core_get_user_data(lc);
+	app->messageReceived(cr, msg);
+}
+
 void Daemon::iterateStreamStats() {
 	for (map<int, AudioStreamAndOther*>::iterator it = mAudioStreams.begin(); it != mAudioStreams.end(); ++it) {
 		OrtpEvent *ev;
@@ -580,8 +587,8 @@ void Daemon::iterateStreamStats() {
 			OrtpEventType evt=ortp_event_get_type(ev);
 			if (evt == ORTP_EVENT_RTCP_PACKET_RECEIVED || evt == ORTP_EVENT_RTCP_PACKET_EMITTED) {
 				linphone_call_stats_fill(it->second->stats, &it->second->stream->ms, ev);
-				if (mUseStatsEvents) mEventQueue.push(new AudioStreamStatsResponse(this,
-					it->second->stream, it->second->stats, true));
+				if (mUseStatsEvents) mEventQueue.push(new AudioStreamStatsEvent(this,
+					it->second->stream, it->second->stats));
 			}
 			ortp_event_destroy(ev);
 		}
@@ -593,9 +600,9 @@ void Daemon::iterate() {
 	iterateStreamStats();
 	if (mChildFd == (ortp_pipe_t)-1) {
 		if (!mEventQueue.empty()) {
-			Response *r = mEventQueue.front();
+			Event *r = mEventQueue.front();
 			mEventQueue.pop();
-			fprintf(stdout, "%s\n", r->getBody().c_str());
+			fprintf(stdout, "\n%s\n", r->toBuf().c_str());
 			fflush(stdout);
 			delete r;
 		}
@@ -629,6 +636,10 @@ void Daemon::sendResponse(const Response &resp) {
 	} else {
 		cout << buf << flush;
 	}
+}
+
+void Daemon::queueEvent(Event *ev){
+	mEventQueue.push(ev);
 }
 
 string Daemon::readPipe() {
@@ -793,7 +804,7 @@ static void printHelp() {
 		"\t--help                     Print this notice." << endl <<
 		"\t--dump-commands-help       Dump the help of every available commands." << endl <<
 		"\t--dump-commands-html-help  Dump the help of every available commands." << endl <<
-		"\t--pipe <pipename>          Create an unix server socket to receive commands." << endl <<
+		"\t--pipe <pipename>          Create an unix server socket in /tmp to receive commands from." << endl <<
 		"\t--log <path>               Supply a file where the log will be saved." << endl <<
 		"\t--factory-config <path>    Supply a readonly linphonerc style config file to start with." << endl <<
 		"\t--config <path>            Supply a linphonerc style config file to start with." << endl <<

@@ -32,6 +32,10 @@ public:
 	MainDbEventKey (const std::shared_ptr<Core> &core, long long storageId);
 	~MainDbEventKey ();
 
+	MainDbEventKey* clone () const override {
+		return new MainDbEventKey(*this);
+	}
+
 private:
 	L_DECLARE_PRIVATE(MainDbKey);
 };

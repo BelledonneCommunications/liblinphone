@@ -178,9 +178,9 @@ shared_ptr<ChatMessage> ProxyChatRoom::createChatMessage (const string &text) {
 	return d->chatRoom->createChatMessage(text);
 }
 
-shared_ptr<ChatMessage> ProxyChatRoom::createFileTransferMessage (Content *initialContent) {
+shared_ptr<ChatMessage> ProxyChatRoom::createFileTransferMessage (FileContent *content) {
 	L_D();
-	return d->chatRoom->createFileTransferMessage(initialContent);
+	return d->chatRoom->createFileTransferMessage(content);
 }
 
 // -----------------------------------------------------------------------------

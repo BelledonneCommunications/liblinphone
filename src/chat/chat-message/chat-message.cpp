@@ -375,25 +375,6 @@ const Content *ChatMessagePrivate::getFileTransferInformation () const {
 	return nullptr;
 }
 
-void ChatMessagePrivate::setFileTransferInformation (Content *content) {
-	L_Q();
-
-	if (content->isFile()) {
-		q->addContent(content);
-	} else {
-		// This scenario is more likely to happen because the caller is using the C API
-		LinphoneContent *c_content = L_GET_C_BACK_PTR(content);
-		FileContent *fileContent = new FileContent();
-		fileContent->setContentType(content->getContentType());
-		fileContent->setFileSize(linphone_content_get_size(c_content)); // This information is only available from C Content if it was created from C API
-		fileContent->setFileName(linphone_content_get_name(c_content)); // This information is only available from C Content if it was created from C API
-		if (!content->isEmpty()) {
-			fileContent->setBody(content->getBody());
-		}
-		q->addContent(fileContent);
-	}
-}
-
 bool ChatMessagePrivate::downloadFile () {
 	L_Q();
 
@@ -556,12 +537,12 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::Multipart;
 	}
 
-	if ((currentRecvStep &ChatMessagePrivate::Step::FileUpload) == ChatMessagePrivate::Step::FileUpload) {
+	if ((currentRecvStep & ChatMessagePrivate::Step::FileDownload) == ChatMessagePrivate::Step::FileDownload) {
 		lInfo() << "File download step already done, skipping";
 	} else {
 		// This will check if internal content is FileTransfer and make the appropriate changes
 		loadFileTransferUrlFromBodyToContent();
-		currentRecvStep |= ChatMessagePrivate::Step::FileUpload;
+		currentRecvStep |= ChatMessagePrivate::Step::FileDownload;
 	}
 
 	if (contents.size() == 0) {
@@ -624,6 +605,8 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	if ((getContentType() == ContentType::ImIsComposing) || (getContentType() == ContentType::Imdn))
 		toBeStored = false;
+
+	chatRoom->getPrivate()->onChatMessageReceived(q->getSharedFromThis());
 
 	return reason;
 }

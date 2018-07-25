@@ -165,6 +165,7 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_chat_message_get_chat_room (const Lin
  * Get the path to the file to read from or write to during the file transfer.
  * @param[in] msg #LinphoneChatMessage object
  * @return The path to the file to use for the file transfer.
+ * @deprecated use linphone_content_get_file_path() instead.
  */
 LINPHONE_PUBLIC const char *linphone_chat_message_get_file_transfer_filepath (LinphoneChatMessage *msg);
 
@@ -225,9 +226,9 @@ LINPHONE_PUBLIC void linphone_chat_message_set_external_body_url (LinphoneChatMe
 LINPHONE_PUBLIC LinphoneContent *linphone_chat_message_get_file_transfer_information (LinphoneChatMessage *msg);
 
 /**
- * Return whether or not a chat message is a file tranfer.
+ * Return whether or not a chat message is a file transfer.
  * @param[in] msg #LinphoneChatMessage object
- * @return Whether or not the message is a file tranfer
+ * @return Whether or not the message is a file transfer
  */
 LINPHONE_PUBLIC bool_t linphone_chat_message_is_file_transfer (LinphoneChatMessage *msg);
 
@@ -256,8 +257,16 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_message_start_file_downlo
 /**
  * Start the download of the file referenced in a #LinphoneChatMessage from remote server.
  * @param[in] msg #LinphoneChatMessage object.
+ * @deprecated Use linphone_chat_message_download_content() instead
  */
 LINPHONE_PUBLIC bool_t linphone_chat_message_download_file (LinphoneChatMessage *msg);
+
+/**
+ * Start the download of the #LinphoneContent referenced in the #LinphoneChatMessage from remote server.
+ * @param[in] msg #LinphoneChatMessage object.
+ * @param[in] c_content #LinphoneContent object to download.
+ */
+LINPHONE_PUBLIC bool_t linphone_chat_message_download_content(LinphoneChatMessage *msg, LinphoneContent *c_content);
 
 /**
  * Cancel an ongoing file transfer attached to this message.(upload or download)
@@ -333,6 +342,7 @@ LINPHONE_PUBLIC const LinphoneErrorInfo *linphone_chat_message_get_error_info (c
  * Set the path to the file to read from or write to during the file transfer.
  * @param[in] msg #LinphoneChatMessage object.
  * @param[in] filepath The path to the file to use for the file transfer.
+ * @deprecated use linphone_content_set_file_path() instead.
  */
 LINPHONE_PUBLIC void linphone_chat_message_set_file_transfer_filepath (LinphoneChatMessage *msg, const char *filepath);
 
@@ -353,11 +363,32 @@ LINPHONE_PUBLIC LinphoneStatus linphone_chat_message_put_char (LinphoneChatMessa
 LINPHONE_PUBLIC LinphoneChatMessageCbs *linphone_chat_message_get_callbacks (const LinphoneChatMessage *msg);
 
 /**
- * Adds a content to the ChatMessage
+ * Adds a file content to the ChatMessage.
  * @param[in] msg #LinphoneChatMessage object.
- * @param[in] c_content #LinphoneContent object
+ * @param[in] c_content #LinphoneContent object to add.
  */
-LINPHONE_PUBLIC void linphone_chat_message_add_text_content (LinphoneChatMessage *msg, const char *c_content);
+LINPHONE_PUBLIC void linphone_chat_message_add_file_content (LinphoneChatMessage *msg, LinphoneContent *c_content);
+
+/**
+ * Adds a text content to the ChatMessage.
+ * @param[in] msg #LinphoneChatMessage object.
+ * @param[in] text The text to add to the message.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_add_text_content (LinphoneChatMessage *msg, const char *text);
+
+/**
+ * Removes a content from the ChatMessage.
+ * @param[in] msg #LinphoneChatMessage object.
+ * @param[in] content the #LinphoneContent object to remove.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_remove_content (LinphoneChatMessage *msg, LinphoneContent *content);
+
+/**
+ * Returns the list of contents in the message.
+ * @param[in] msg #LinphoneChatMessage object.
+ * @return \bctbx_list{LinphoneContent} the list of #LinphoneContent.
+ */
+LINPHONE_PUBLIC bctbx_list_t* linphone_chat_message_get_contents(const LinphoneChatMessage *msg);
 
 /**
  * Returns true if the chat message has a text content

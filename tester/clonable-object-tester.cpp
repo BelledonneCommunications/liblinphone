@@ -43,6 +43,10 @@ public:
 
 	TestObject (const TestObject &src) : ClonableObject(*new TestObjectPrivate(*src.getPrivate())) {}
 
+	TestObject* clone () const override {
+		return new TestObject(*this);
+	}
+
 private:
 	L_DECLARE_PRIVATE(TestObject);
 };

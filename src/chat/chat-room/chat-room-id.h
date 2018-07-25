@@ -34,6 +34,10 @@ public:
 	ChatRoomId (const IdentityAddress &peerAddress, const IdentityAddress &localAddress);
 	ChatRoomId (const ChatRoomId &other);
 
+	ChatRoomId* clone () const override {
+		return new ChatRoomId(*this);
+	}
+
 	ChatRoomId &operator= (const ChatRoomId &other);
 
 	bool operator== (const ChatRoomId &other) const;
