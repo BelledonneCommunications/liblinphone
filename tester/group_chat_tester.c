@@ -3906,6 +3906,10 @@ static void lime_v2_message_test (bool_t with_composing, bool_t with_response) {
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
 end:
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
+
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
@@ -3998,6 +4002,11 @@ static void group_chat_lime_v2_send_encrypted_file_with_or_without_text (bool_t 
 		_receive_file(coresList, pauline, &initialPaulineStats, receivePaulineFilepath, sendFilepath);
 		_receive_file(coresList, chloe, &initialChloeStats, receiveChloeFilepath, sendFilepath);
 	}
+
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_delete_local_lime_v2_db(chloe->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -4141,6 +4150,10 @@ static void group_chat_lime_v2_with_zrtp_verification (void) {
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 
 end:
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
+
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
@@ -4272,6 +4285,12 @@ static void group_chat_lime_v2_chatroom_security_level_upgrade (void) {
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(chloeCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
 end:
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_delete_local_lime_v2_db(laure->lc);
+	linphone_core_delete_local_lime_v2_db(chloe->lc);
+
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
@@ -4398,6 +4417,12 @@ static void group_chat_lime_v2_chatroom_security_level_downgrade_adding_particip
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(chloeCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
 end:
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_delete_local_lime_v2_db(laure->lc);
+	linphone_core_delete_local_lime_v2_db(chloe->lc);
+
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
@@ -4509,6 +4534,11 @@ static void group_chat_lime_v2_chatroom_security_level_downgrade_resetting_zrtp 
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 
 end:
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_delete_local_lime_v2_db(laure->lc);
+
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
@@ -4636,6 +4666,11 @@ static void group_chat_lime_v2_send_multiple_successive_encrypted_messages (void
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
 end:
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_delete_local_lime_v2_db(laure->lc);
+
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
@@ -4694,6 +4729,10 @@ static void group_chat_lime_v2_send_encrypted_message_to_disabled_lime_v2 (void)
 	// Check the chatrooms security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelClearText, int, "%d");
+
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -4803,6 +4842,13 @@ static void group_chat_lime_v2_send_encrypted_message_to_multidevice_participant
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
 end:
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie1->lc);
+	linphone_core_delete_local_lime_v2_db(marie2->lc);
+	linphone_core_delete_local_lime_v2_db(pauline1->lc);
+	linphone_core_delete_local_lime_v2_db(pauline2->lc);
+	linphone_core_delete_local_lime_v2_db(laure->lc);
+
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie1, marieCr1, coresList);
 	linphone_core_manager_delete_chat_room(marie2, marieCr2, coresList);
@@ -4884,6 +4930,10 @@ static void group_chat_lime_v2_multiple_messages_while_network_unreachable (void
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
 end:
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
+
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
@@ -4935,6 +4985,10 @@ static void group_chat_lime_v2_X3DH_server_unavailable (void) {
 
 	// Check that the message could not be encrypted nor sent
 	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -4999,6 +5053,10 @@ static void group_chat_lime_v2_encrypted_message_not_decrypted (void) {
 	// Check chatroom security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -5098,6 +5156,10 @@ static void group_chat_lime_v2_update_keys (void) {
 	BC_ASSERT_GREATER(newUpdateTime, oldUpdateTime, int, "%d");
 
 end:
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
+
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
