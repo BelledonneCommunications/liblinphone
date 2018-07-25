@@ -217,11 +217,13 @@ void Core::enableLimeV2 (bool enable) {
 
 	LimeV2 *limeV2Engine;
 	if (d->imee == nullptr) {
-		const char *charPrefix = linphone_factory_get_data_resources_dir(linphone_factory_get());
-		string stringPrefix(charPrefix);
-		string db_access = stringPrefix + ".c25519.sqlite3";
+		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
+		string filename = lp_config_get_string(lpconfig, "misc", "x3dh_db_path", "x3dh.c25519.sqlite3");
+		string dbAccess = getDataPath() + filename;
+
 		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
-		limeV2Engine = new LimeV2(db_access, prov, getCCore());
+		limeV2Engine = new LimeV2(dbAccess, prov, getCCore());
+
 		setEncryptionEngine(limeV2Engine);
 		d->registerListener(limeV2Engine);
 	}
@@ -240,7 +242,6 @@ void Core::enableLimeV2 (bool enable) {
 
 		IdentityAddress identityAddress = IdentityAddress(linphone_address_as_string_uri_only(linphoneAddress));
 		string localDeviceId = identityAddress.asString();
-
 		if (localDeviceId == "")
 			return;
 
