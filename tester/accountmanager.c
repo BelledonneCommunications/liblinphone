@@ -259,6 +259,7 @@ void account_create_on_db(Account *account, LinphoneProxyConfig *cfg, const char
 	LinphoneAccountCreatorCbs *creator_cbs = linphone_account_creator_get_callbacks(creator);
 
 	// TODO workaround
+	LinphoneProxyConfig *default_cfg = linphone_core_get_default_proxy_config(lc);
 	linphone_account_creator_set_proxy_config(creator, cfg);
 
 	linphone_account_creator_service_set_user_data(linphone_account_creator_get_service(creator), (void*)LinphoneAccountCreatorStatusAccountCreated);
@@ -306,7 +307,7 @@ void account_create_on_db(Account *account, LinphoneProxyConfig *cfg, const char
 		ms_fatal("Could not activate account %s", linphone_proxy_config_get_identity(cfg));
 
 	// TODO workaround
-	linphone_account_creator_set_proxy_config(creator, linphone_core_create_proxy_config(lc));
+	linphone_account_creator_set_proxy_config(creator, default_cfg);
 
 	ms_free(email);
 	linphone_account_creator_unref(creator);
