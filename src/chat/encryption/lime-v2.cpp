@@ -173,7 +173,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 				// ---------------------------------------------- SIPFRAG
 
 				Content *sipfrag = new Content();
-				sipfrag->setBody(localDeviceId); // "From: " +
+				sipfrag->setBody("Contact: " + localDeviceId);
 				sipfrag->setContentType(ContentType::SipFrag);
 				contents.push_back(move(sipfrag));
 
@@ -259,6 +259,11 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 			if (content.getContentType() != ContentType::SipFrag)
 				continue;
 			senderDeviceId = content.getBodyAsUtf8String();
+
+			// Extract Contact header from sipfrag content
+			string toErase = "Contact: ";
+			size_t contactPosition = senderDeviceId.find(toErase);
+			if (contactPosition != string::npos) senderDeviceId.erase(contactPosition, toErase.length());
 			const string &result = senderDeviceId;
 			return result;
 		}
