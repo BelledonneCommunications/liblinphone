@@ -1,3 +1,9 @@
+[misc]
+xmlrpc_server_url=http://subscribe.example.org/flexisip-account-manager/xmlrpc.php
+x3dh_server_url=http://x3dh.linphone.org/flexisip-account-manager/x3dh-25519.php
+x3dh_db_path=pauline.x3dh.sqlite3
+lime_update_threshold=86400
+
 [sip]
 sip_port=-1
 sip_tcp_port=-1
@@ -7,8 +13,8 @@ ping_with_options=0
 composing_idle_timeout=1
 
 [auth_info_0]
-username=chloe
-userid=chloe
+username=pauline
+userid=pauline
 passwd=secret
 realm=sip.example.org
 
@@ -16,11 +22,17 @@ realm=sip.example.org
 realm=sip.example.org
 reg_proxy=sip2.linphone.org;transport=tls
 reg_route=sip2.linphone.org;transport=tls
-reg_identity=sip:chloe@sip.example.org
+reg_identity=sip:pauline@sip.example.org
 reg_expires=3600
 reg_sendregister=1
 publish=0
 dial_escape_plus=0
+lime_v2=1
+
+#[friend_0]
+#url="Mariette" <sip:marie@sip.example.org>
+#pol=accept
+#subscribe=0
 
 [rtp]
 audio_rtp_port=18070-28000

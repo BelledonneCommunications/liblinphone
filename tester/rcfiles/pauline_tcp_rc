@@ -1,16 +1,9 @@
-[misc]
-xmlrpc_server_url=http://subscribe.example.org/flexisip-account-manager/xmlrpc.php
-x3dh_server_url=http://x3dh.linphone.org/flexisip-account-manager/x3dh-25519.php
-x3dh_db_path=pauline.x3dh.sqlite3
-lime_update_threshold=86400
-
 [sip]
 sip_port=-1
 sip_tcp_port=-1
 sip_tls_port=-1
 default_proxy=0
 ping_with_options=0
-
 composing_idle_timeout=1
 
 [auth_info_0]
@@ -18,7 +11,6 @@ username=pauline
 userid=pauline
 passwd=secret
 realm=sip.example.org
-
 
 [proxy_0]
 realm=sip.example.org
@@ -56,4 +48,3 @@ echocancellation=0 #to not overload cpu in case of VG
 
 [net]
 stun_server=stun.linphone.org
-

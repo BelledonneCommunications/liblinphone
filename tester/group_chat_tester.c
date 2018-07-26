@@ -3837,8 +3837,8 @@ static void group_chat_room_complex_participant_removal_scenario (void) {
 }
 
 static void lime_v2_message_test (bool_t with_composing, bool_t with_response) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
@@ -3944,9 +3944,9 @@ static void group_chat_lime_v2_send_encrypted_message_with_response_and_composin
 }
 
 static void group_chat_lime_v2_send_encrypted_file_with_or_without_text (bool_t with_text) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
-	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
+	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	int dummy = 0;
@@ -4059,8 +4059,8 @@ bool_t simple_zrtp_call_with_sas_validation(LinphoneCoreManager *caller, Linphon
 }
 
 static void group_chat_lime_v2_with_zrtp_verification (void) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
@@ -4172,10 +4172,10 @@ end:
 }
 
 static void group_chat_lime_v2_chatroom_security_level_upgrade (void) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
-	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
-	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_create("laure_lime_v2_rc");
+	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
@@ -4313,10 +4313,10 @@ end:
 }
 
 static void group_chat_lime_v2_chatroom_security_level_downgrade_adding_participant (void) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
-	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
-	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_create("laure_lime_v2_rc");
+	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_lime_v2_rc");
 	LinphoneChatRoom *chloeCr = NULL;
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
@@ -4445,9 +4445,9 @@ end:
 }
 
 static void group_chat_lime_v2_chatroom_security_level_downgrade_resetting_zrtp (void) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
-	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_create("laure_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
@@ -4565,9 +4565,9 @@ end:
 // }
 
 static void group_chat_lime_v2_send_multiple_successive_encrypted_messages (void) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
-	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_create("laure_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
@@ -4692,8 +4692,8 @@ end:
 }
 
 static void group_chat_lime_v2_send_encrypted_message_to_disabled_lime_v2 (void) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
@@ -4754,11 +4754,11 @@ static void group_chat_lime_v2_send_encrypted_message_to_disabled_lime_v2 (void)
 }
 
 static void group_chat_lime_v2_send_encrypted_message_to_multidevice_participants (void) {
-	LinphoneCoreManager *marie1 = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *marie2 = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline1 = linphone_core_manager_create("pauline_tcp_rc");
-	LinphoneCoreManager *pauline2 = linphone_core_manager_create("pauline_tcp_rc");
-	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
+	LinphoneCoreManager *marie1 = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *marie2 = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline1 = linphone_core_manager_create("pauline_lime_v2_rc");
+	LinphoneCoreManager *pauline2 = linphone_core_manager_create("pauline_lime_v2_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_create("laure_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie1);
@@ -4875,8 +4875,8 @@ end:
 }
 
 static void group_chat_lime_v2_multiple_messages_while_network_unreachable (void) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
@@ -4954,8 +4954,8 @@ end:
 }
 
 static void group_chat_lime_v2_X3DH_server_unavailable (void) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
@@ -5019,8 +5019,8 @@ static void group_chat_lime_v2_encrypted_message_not_decrypted (void) {
 	//	- Altered message
 	//	- Expired cipher keys
 
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
@@ -5078,8 +5078,8 @@ static void group_chat_lime_v2_encrypted_message_not_decrypted (void) {
 }
 
 static void group_chat_lime_v2_update_keys (void) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
@@ -5180,8 +5180,8 @@ end:
 }
 
 static void sender_authentication_in_basic_chat_room (void) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
@@ -5218,8 +5218,8 @@ static void sender_authentication_in_basic_chat_room (void) {
 }
 
 static void sender_authentication_in_group_chat_room (void) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_tcp_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);

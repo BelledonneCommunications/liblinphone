@@ -88,15 +88,18 @@ set(RC_FILES
 	rcfiles/account_creator_rc
 	rcfiles/assistant_create.rc
 	rcfiles/carddav_rc
+	rcfiles/chloe_lime_v2_rc
 	rcfiles/chloe_rc
 	rcfiles/conference_focus_rc
 	rcfiles/empty_rc
 	rcfiles/friends_rc
 	rcfiles/laure_call_logs_rc
+	rcfiles/laure_lime_v2_rc
 	rcfiles/laure_rc_udp
 	rcfiles/laure_tcp_rc
 	rcfiles/marie_early_rc
 	rcfiles/marie_h264_rc
+	rcfiles/marie_lime_v2_rc
 	rcfiles/marie_nat64_rc
 	rcfiles/marie_quality_reporting_rc
 	rcfiles/marie_rc
@@ -125,6 +128,7 @@ set(RC_FILES
 	rcfiles/pauline_alt_rc
 	rcfiles/pauline_as_friend_rc
 	rcfiles/pauline_h264_rc
+	rcfiles/pauline_lime_v2_rc
 	rcfiles/pauline_nat64_rc
 	rcfiles/pauline_rc
 	rcfiles/pauline_rc_rtcp_xr
