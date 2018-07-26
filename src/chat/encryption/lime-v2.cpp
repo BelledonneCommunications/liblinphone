@@ -327,7 +327,10 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 		lError() << e.what() << " while decrypting message";
 	}
 
-	if (peerDeviceStatus == lime::PeerDeviceStatus::fail) lError() << "Failed to decrypt message from " << senderDeviceId;
+	if (peerDeviceStatus == lime::PeerDeviceStatus::fail) {
+		lError() << "Failed to decrypt message from " << senderDeviceId;
+		return ChatMessageModifier::Result::Error;
+	}
 
 	// Prepare decrypted message for next modifier
 	string plainMessageString(plainMessage.begin(), plainMessage.end());
