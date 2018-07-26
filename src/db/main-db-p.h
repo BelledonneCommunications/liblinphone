@@ -46,7 +46,7 @@ private:
 
 	static time_t getTmAsTimeT (const tm &t);
 
-	std::shared_ptr<AbstractChatRoom> findChatRoom (const ChatRoomId &chatRoomId) const;
+	std::shared_ptr<AbstractChatRoom> findChatRoom (const ConferenceId &conferenceId) const;
 
 	// ---------------------------------------------------------------------------
 	// Low level API.
@@ -61,18 +61,18 @@ private:
 		const tm &creationTime
 	);
 	long long insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
-	long long insertChatRoomParticipant (long long chatRoomId, long long participantSipAddressId, bool isAdmin);
+	long long insertChatRoomParticipant (long long conferenceId, long long participantSipAddressId, bool isAdmin);
 	void insertChatRoomParticipantDevice (long long participantId, long long participantDeviceSipAddressId);
 	void insertChatMessageParticipant (long long chatMessageId, long long sipAddressId, int state, time_t stateChangeTime);
 
 	long long selectSipAddressId (const std::string &sipAddress) const;
 	long long selectChatRoomId (long long peerSipAddressId, long long localSipAddressId) const;
-	long long selectChatRoomId (const ChatRoomId &chatRoomId) const;
-	long long selectChatRoomParticipantId (long long chatRoomId, long long participantSipAddressId) const;
+	long long selectChatRoomId (const ConferenceId &conferenceId) const;
+	long long selectChatRoomParticipantId (long long conferenceId, long long participantSipAddressId) const;
 	long long selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB) const;
 
 	void deleteContents (long long chatMessageId);
-	void deleteChatRoomParticipant (long long chatRoomId, long long participantSipAddressId);
+	void deleteChatRoomParticipant (long long conferenceId, long long participantSipAddressId);
 	void deleteChatRoomParticipantDevice (long long participantId, long long participantDeviceSipAddressId);
 
 	// ---------------------------------------------------------------------------
@@ -100,18 +100,18 @@ private:
 	) const;
 
 	std::shared_ptr<EventLog> selectGenericConferenceNotifiedEvent (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		const soci::row &row
 	) const;
 
 	std::shared_ptr<EventLog> selectConferenceEvent (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		EventLog::Type type,
 		const soci::row &row
 	) const;
 
 	std::shared_ptr<EventLog> selectConferenceCallEvent (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		EventLog::Type type,
 		const soci::row &row
 	) const;
@@ -123,30 +123,30 @@ private:
 	) const;
 
 	std::shared_ptr<EventLog> selectConferenceParticipantEvent (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		EventLog::Type type,
 		const soci::row &row
 	) const;
 
 	std::shared_ptr<EventLog> selectConferenceParticipantDeviceEvent (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		EventLog::Type type,
 		const soci::row &row
 	) const;
 
 	std::shared_ptr<EventLog> selectConferenceSubjectEvent (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		EventLog::Type type,
 		const soci::row &row
 	) const;
 
 	long long insertEvent (const std::shared_ptr<EventLog> &eventLog);
-	long long insertConferenceEvent (const std::shared_ptr<EventLog> &eventLog, long long *chatRoomId = nullptr);
+	long long insertConferenceEvent (const std::shared_ptr<EventLog> &eventLog, long long *conferenceId = nullptr);
 	long long insertConferenceCallEvent (const std::shared_ptr<EventLog> &eventLog);
 	long long insertConferenceChatMessageEvent (const std::shared_ptr<EventLog> &eventLog);
 	void updateConferenceChatMessageEvent(const std::shared_ptr<EventLog> &eventLog);
-	long long insertConferenceNotifiedEvent (const std::shared_ptr<EventLog> &eventLog, long long *chatRoomId = nullptr);
-	long long insertConferenceParticipantEvent (const std::shared_ptr<EventLog> &eventLog, long long *chatRoomId = nullptr);
+	long long insertConferenceNotifiedEvent (const std::shared_ptr<EventLog> &eventLog, long long *conferenceId = nullptr);
+	long long insertConferenceParticipantEvent (const std::shared_ptr<EventLog> &eventLog, long long *conferenceId = nullptr);
 	long long insertConferenceParticipantDeviceEvent (const std::shared_ptr<EventLog> &eventLog);
 	long long insertConferenceSubjectEvent (const std::shared_ptr<EventLog> &eventLog);
 
@@ -167,7 +167,7 @@ private:
 	std::shared_ptr<EventLog> getEventFromCache (long long storageId) const;
 	std::shared_ptr<ChatMessage> getChatMessageFromCache (long long storageId) const;
 
-	void invalidConferenceEventsFromQuery (const std::string &query, long long chatRoomId);
+	void invalidConferenceEventsFromQuery (const std::string &query, long long conferenceId);
 
 	// ---------------------------------------------------------------------------
 	// Versions.

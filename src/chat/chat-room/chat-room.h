@@ -39,7 +39,7 @@ public:
 
 	~ChatRoom ();
 
-	const ChatRoomId &getChatRoomId () const override;
+	const ConferenceId &getConferenceId () const override;
 
 	const IdentityAddress &getPeerAddress () const override;
 	const IdentityAddress &getLocalAddress () const override;
@@ -82,7 +82,7 @@ public:
 	void markAsRead () override;
 
 protected:
-	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ChatRoomId &chatRoomId);
+	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId);
 
 private:
 	L_DECLARE_PRIVATE(ChatRoom);

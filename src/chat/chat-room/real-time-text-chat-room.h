@@ -42,7 +42,7 @@ public:
 	std::shared_ptr<Call> getCall () const;
 
 private:
-	RealTimeTextChatRoom (const std::shared_ptr<Core> &core, const ChatRoomId &chatRoomId);
+	RealTimeTextChatRoom (const std::shared_ptr<Core> &core, const ConferenceId &conferenceId);
 
 	L_DECLARE_PRIVATE(RealTimeTextChatRoom);
 	L_DISABLE_COPY(RealTimeTextChatRoom);

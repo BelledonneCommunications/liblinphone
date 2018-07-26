@@ -134,7 +134,7 @@ shared_ptr<IsComposingMessage> ChatRoomPrivate::createIsComposingMessage () {
 
 list<shared_ptr<ChatMessage>> ChatRoomPrivate::findChatMessages (const string &messageId) const {
 	L_Q();
-	return q->getCore()->getPrivate()->mainDb->findChatMessages(q->getChatRoomId(), messageId);
+	return q->getCore()->getPrivate()->mainDb->findChatMessages(q->getConferenceId(), messageId);
 }
 
 // -----------------------------------------------------------------------------
@@ -157,7 +157,7 @@ void ChatRoomPrivate::sendDeliveryNotifications () {
 	L_Q();
 	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCore()->getCCore());
 	if (linphone_im_notif_policy_get_send_imdn_delivered(policy)) {
-		auto messages = q->getCore()->getPrivate()->mainDb->findChatMessagesToBeNotifiedAsDelivered(q->getChatRoomId());
+		auto messages = q->getCore()->getPrivate()->mainDb->findChatMessagesToBeNotifiedAsDelivered(q->getConferenceId());
 		for (const auto message : messages)
 			imdnHandler->notifyDelivery(message);
 	}
@@ -326,11 +326,11 @@ LinphoneChatRoom *ChatRoomPrivate::getCChatRoom () const {
 
 // =============================================================================
 
-ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ChatRoomId &chatRoomId) :
+ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ConferenceId &conferenceId) :
 	AbstractChatRoom(p, core) {
 	L_D();
 
-	d->chatRoomId = chatRoomId;
+	d->conferenceId = conferenceId;
 	d->imdnHandler.reset(new Imdn(this));
 	d->isComposingHandler.reset(new IsComposing(core->getCCore(), d));
 }
@@ -343,19 +343,19 @@ ChatRoom::~ChatRoom () {
 
 // -----------------------------------------------------------------------------
 
-const ChatRoomId &ChatRoom::getChatRoomId () const {
+const ConferenceId &ChatRoom::getConferenceId () const {
 	L_D();
-	return d->chatRoomId;
+	return d->conferenceId;
 }
 
 const IdentityAddress &ChatRoom::getPeerAddress () const {
 	L_D();
-	return d->chatRoomId.getPeerAddress();
+	return d->conferenceId.getPeerAddress();
 }
 
 const IdentityAddress &ChatRoom::getLocalAddress () const {
 	L_D();
-	return d->chatRoomId.getLocalAddress();
+	return d->conferenceId.getLocalAddress();
 }
 
 // -----------------------------------------------------------------------------
@@ -384,16 +384,16 @@ ChatRoom::SecurityLevel ChatRoom::getSecurityLevel () const {
 // -----------------------------------------------------------------------------
 
 list<shared_ptr<EventLog>> ChatRoom::getMessageHistory (int nLast) const {
-	return getCore()->getPrivate()->mainDb->getHistory(getChatRoomId(), nLast, MainDb::Filter::ConferenceChatMessageFilter);
+	return getCore()->getPrivate()->mainDb->getHistory(getConferenceId(), nLast, MainDb::Filter::ConferenceChatMessageFilter);
 }
 
 list<shared_ptr<EventLog>> ChatRoom::getMessageHistoryRange (int begin, int end) const {
-	return getCore()->getPrivate()->mainDb->getHistoryRange(getChatRoomId(), begin, end, MainDb::Filter::ConferenceChatMessageFilter);
+	return getCore()->getPrivate()->mainDb->getHistoryRange(getConferenceId(), begin, end, MainDb::Filter::ConferenceChatMessageFilter);
 }
 
 list<shared_ptr<EventLog>> ChatRoom::getHistory (int nLast) const {
 	return getCore()->getPrivate()->mainDb->getHistory(
-		getChatRoomId(),
+		getConferenceId(),
 		nLast,
 		MainDb::FilterMask({ MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter })
 	);
@@ -401,7 +401,7 @@ list<shared_ptr<EventLog>> ChatRoom::getHistory (int nLast) const {
 
 list<shared_ptr<EventLog>> ChatRoom::getHistoryRange (int begin, int end) const {
 	return getCore()->getPrivate()->mainDb->getHistoryRange(
-		getChatRoomId(),
+		getConferenceId(),
 		begin,
 		end,
 		MainDb::FilterMask({ MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter })
@@ -409,7 +409,7 @@ list<shared_ptr<EventLog>> ChatRoom::getHistoryRange (int begin, int end) const 
 }
 
 int ChatRoom::getHistorySize () const {
-	return getCore()->getPrivate()->mainDb->getHistorySize(getChatRoomId());
+	return getCore()->getPrivate()->mainDb->getHistorySize(getConferenceId());
 }
 
 void ChatRoom::deleteFromDb () {
@@ -421,20 +421,20 @@ void ChatRoom::deleteFromDb () {
 }
 
 void ChatRoom::deleteHistory () {
-	getCore()->getPrivate()->mainDb->cleanHistory(getChatRoomId());
+	getCore()->getPrivate()->mainDb->cleanHistory(getConferenceId());
 }
 
 shared_ptr<ChatMessage> ChatRoom::getLastChatMessageInHistory () const {
-	return getCore()->getPrivate()->mainDb->getLastChatMessage(getChatRoomId());
+	return getCore()->getPrivate()->mainDb->getLastChatMessage(getConferenceId());
 }
 
 int ChatRoom::getChatMessageCount () const {
-	return getCore()->getPrivate()->mainDb->getChatMessageCount(getChatRoomId());
+	return getCore()->getPrivate()->mainDb->getChatMessageCount(getConferenceId());
 }
 
 int ChatRoom::getUnreadChatMessageCount () const {
 	L_D();
-	int dbUnreadCount = getCore()->getPrivate()->mainDb->getUnreadChatMessageCount(getChatRoomId());
+	int dbUnreadCount = getCore()->getPrivate()->mainDb->getUnreadChatMessageCount(getConferenceId());
 	int notifiedCount = d->imdnHandler->getDisplayNotificationCount();
 	L_ASSERT(dbUnreadCount >= notifiedCount);
 	return dbUnreadCount - notifiedCount;
@@ -505,7 +505,7 @@ void ChatRoom::markAsRead () {
 
 	bool globallyMarkAsReadInDb = true;
 	CorePrivate *dCore = getCore()->getPrivate();
-	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->chatRoomId)) {
+	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->conferenceId)) {
 		// Do not send display notification for file transfer until it has been downloaded (it won't have a file transfer content anymore)
 		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
 			bool doNotStoreInDb = d->sendDisplayNotification(chatMessage);
@@ -517,7 +517,7 @@ void ChatRoom::markAsRead () {
 	}
 
 	if (globallyMarkAsReadInDb)
-		dCore->mainDb->markChatMessagesAsRead(d->chatRoomId);
+		dCore->mainDb->markChatMessagesAsRead(d->conferenceId);
 }
 
 LINPHONE_END_NAMESPACE

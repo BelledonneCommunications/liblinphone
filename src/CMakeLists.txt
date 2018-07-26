@@ -94,7 +94,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/chat-room/basic-chat-room-p.h
 	chat/chat-room/basic-chat-room.h
 	chat/chat-room/basic-to-client-group-chat-room.h
-	chat/chat-room/chat-room-id.h
 	chat/chat-room/chat-room-listener.h
 	chat/chat-room/chat-room-p.h
 	chat/chat-room/chat-room.h
@@ -125,6 +124,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/notification/imdn.h
 	chat/notification/is-composing-listener.h
 	chat/notification/is-composing.h
+	conference/conference-id.h
 	conference/conference-listener.h
 	conference/conference-p.h
 	conference/conference.h
@@ -260,7 +260,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/chat-room/abstract-chat-room.cpp
 	chat/chat-room/basic-chat-room.cpp
 	chat/chat-room/basic-to-client-group-chat-room.cpp
-	chat/chat-room/chat-room-id.cpp
 	chat/chat-room/chat-room.cpp
 	chat/chat-room/client-group-chat-room.cpp
 	chat/chat-room/client-group-to-basic-chat-room.cpp
@@ -280,6 +279,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/modifier/multipart-chat-message-modifier.cpp
 	chat/notification/imdn.cpp
 	chat/notification/is-composing.cpp
+	conference/conference-id.cpp
 	conference/conference.cpp
 	conference/handlers/local-conference-event-handler.cpp
 	conference/handlers/local-conference-list-event-handler.cpp

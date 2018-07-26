@@ -23,7 +23,7 @@
 #include <belle-sip/types.h>
 
 #include "chat/chat-message/chat-message.h"
-#include "chat/chat-room/chat-room-id.h"
+#include "conference/conference-id.h"
 #include "chat/modifier/file-transfer-chat-message-modifier.h"
 #include "chat/notification/imdn.h"
 #include "content/content.h"
@@ -146,11 +146,11 @@ public:
 	void setExternalBodyUrl (const std::string &url);
 
 	bool hasTextContent () const;
-	const Content* getTextContent () const;
+	const Content *getTextContent () const;
 
 	bool hasFileTransferContent () const;
-	const Content* getFileTransferContent () const;
-	const Content* getFileTransferInformation () const;
+	const Content *getFileTransferContent () const;
+	const Content *getFileTransferInformation () const;
 
 	void addContent (Content *content);
 	void removeContent (Content *content);
@@ -192,7 +192,7 @@ private:
 	// TODO: to replace salCustomheaders
 	std::unordered_map<std::string, std::string> customHeaders;
 
-	mutable LinphoneErrorInfo * errorInfo = nullptr;
+	mutable LinphoneErrorInfo *errorInfo = nullptr;
 	SalOp *salOp = nullptr;
 	SalCustomHeader *salCustomHeaders = nullptr;
 	unsigned char currentSendStep = Step::None;
@@ -209,7 +209,7 @@ private:
 	// Do not expose.
 
 	std::weak_ptr<AbstractChatRoom> chatRoom;
-	ChatRoomId chatRoomId;
+	ConferenceId conferenceId;
 	IdentityAddress fromAddress;
 	IdentityAddress authenticatedFromAddress;
 	IdentityAddress toAddress;
@@ -217,7 +217,7 @@ private:
 	ChatMessage::State state = ChatMessage::State::Idle;
 	ChatMessage::Direction direction = ChatMessage::Direction::Incoming;
 
-	std::list<Content* > contents;
+	std::list<Content *> contents;
 
 	bool encryptionPrevented = false;
 	mutable bool contentsNotLoadedFromDatabase = false;

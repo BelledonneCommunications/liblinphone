@@ -1,5 +1,5 @@
 /*
- * chat-room-id.h
+ * conference-id.h
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _L_CHAT_ROOM_ID_H_
-#define _L_CHAT_ROOM_ID_H_
+#ifndef _L_CONFERENCE_ID_H_
+#define _L_CONFERENCE_ID_H_
 
 #include "address/identity-address.h"
 
@@ -26,24 +26,24 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ChatRoomIdPrivate;
+class ConferenceIdPrivate;
 
-class LINPHONE_PUBLIC ChatRoomId : public ClonableObject {
+class LINPHONE_PUBLIC ConferenceId : public ClonableObject {
 public:
-	ChatRoomId ();
-	ChatRoomId (const IdentityAddress &peerAddress, const IdentityAddress &localAddress);
-	ChatRoomId (const ChatRoomId &other);
+	ConferenceId ();
+	ConferenceId (const IdentityAddress &peerAddress, const IdentityAddress &localAddress);
+	ConferenceId (const ConferenceId &other);
 
-	ChatRoomId* clone () const override {
-		return new ChatRoomId(*this);
+	ConferenceId* clone () const override {
+		return new ConferenceId(*this);
 	}
 
-	ChatRoomId &operator= (const ChatRoomId &other);
+	ConferenceId &operator= (const ConferenceId &other);
 
-	bool operator== (const ChatRoomId &other) const;
-	bool operator!= (const ChatRoomId &other) const;
+	bool operator== (const ConferenceId &other) const;
+	bool operator!= (const ConferenceId &other) const;
 
-	bool operator< (const ChatRoomId &other) const;
+	bool operator< (const ConferenceId &other) const;
 
 	const IdentityAddress &getPeerAddress () const;
 	const IdentityAddress &getLocalAddress () const;
@@ -51,11 +51,11 @@ public:
 	bool isValid () const;
 
 private:
-	L_DECLARE_PRIVATE(ChatRoomId);
+	L_DECLARE_PRIVATE(ConferenceId);
 };
 
-inline std::ostream &operator<< (std::ostream &os, const ChatRoomId &chatRoomId) {
-	os << "ChatRoomId(" << chatRoomId.getPeerAddress() << ", local=" << chatRoomId.getLocalAddress() << ")";
+inline std::ostream &operator<< (std::ostream &os, const ConferenceId &conferenceId) {
+	os << "ConferenceId(" << conferenceId.getPeerAddress() << ", local=" << conferenceId.getLocalAddress() << ")";
 	return os;
 }
 
@@ -64,12 +64,12 @@ LINPHONE_END_NAMESPACE
 // Add map key support.
 namespace std {
 	template<>
-	struct hash<LinphonePrivate::ChatRoomId> {
-		std::size_t operator() (const LinphonePrivate::ChatRoomId &chatRoomId) const {
-			return hash<string>()(chatRoomId.getPeerAddress().asString()) ^
-				(hash<string>()(chatRoomId.getLocalAddress().asString()) << 1);
+	struct hash<LinphonePrivate::ConferenceId> {
+		std::size_t operator() (const LinphonePrivate::ConferenceId &conferenceId) const {
+			return hash<string>()(conferenceId.getPeerAddress().asString()) ^
+				(hash<string>()(conferenceId.getLocalAddress().asString()) << 1);
 		}
 	};
 }
 
-#endif // ifndef _L_CHAT_ROOM_ID_H_
+#endif // ifndef _L_CONFERENCE_ID_H_

@@ -20,7 +20,7 @@
 #ifndef _L_CONFERENCE_EVENT_P_H_
 #define _L_CONFERENCE_EVENT_P_H_
 
-#include "chat/chat-room/chat-room-id.h"
+#include "conference/conference-id.h"
 #include "conference-event.h"
 #include "event-log/event-log-p.h"
 
@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceEventPrivate : public EventLogPrivate {
 private:
-	ChatRoomId chatRoomId;
+	ConferenceId conferenceId;
 
 	L_DECLARE_PUBLIC(ConferenceEvent);
 };

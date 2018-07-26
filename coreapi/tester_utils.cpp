@@ -158,7 +158,7 @@ int _linphone_call_get_main_video_stream_index (const LinphoneCall *call) {
 
 void _linphone_chat_room_enable_migration(LinphoneChatRoom *cr, bool_t enable) {
 	shared_ptr<AbstractChatRoom> acr = L_GET_CPP_PTR_FROM_C_OBJECT(cr);
-	L_GET_PRIVATE(acr->getCore())->mainDb->enableChatRoomMigration(acr->getChatRoomId(), !!enable);
+	L_GET_PRIVATE(acr->getCore())->mainDb->enableChatRoomMigration(acr->getConferenceId(), !!enable);
 }
 
 int _linphone_chat_room_get_transient_message_count (const LinphoneChatRoom *cr) {
