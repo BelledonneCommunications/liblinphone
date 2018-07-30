@@ -371,28 +371,6 @@ namespace Linphone
 	[StructLayout(LayoutKind.Sequential)]
 	public class {{className}} : LinphoneObject
 	{
-		{{#_class_enums}}
-		{{#enum}}
-		{{#doc}}
-		{{#lines}}
-		/// {{{line}}}
-		{{/lines}}
-		{{/doc}}
-		public enum {{enumName}}
-		{
-			{{#values}}
-			{{#doc}}
-			{{#lines}}
-			/// {{{line}}}
-			{{/lines}}
-			{{/doc}}
-			{{name}} = {{value}},
-			{{/values}}
-		}
-
-		{{/enum}}
-		{{/_class_enums}}
-
 		{{#isLinphoneFactory}}
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr linphone_factory_create_core_cbs(IntPtr factory);

@@ -450,10 +450,6 @@ class ClassImpl(object):
 		namespace = _class.find_first_ancestor_by_type(AbsApi.Namespace)
 		self.namespace = namespace.name.concatenate(fullName=True) if namespace is not None else None
 		self._class = translator.translate_class(_class)
-		self._class_enums = []
-		for enum in _class.enums:
-			parsed_enum = EnumImpl(enum, translator)
-			self._class_enums.append(parsed_enum)
 
 class InterfaceImpl(object):
 	def __init__(self, interface, translator):
@@ -504,6 +500,7 @@ if __name__ == '__main__':
 		'linphone_core_get_current_vtable']
 	parser.classBl += 'LinphoneCoreVTable'
 	parser.methodBl.remove('getCurrentCallbacks')
+	parser.enum_relocations = {} # No nested enums in C#, will cause ambiguousness between Call.State (the enum) and call.State (the property)
 	parser.parse_all()
 	translator = CsharpTranslator()
 	renderer = pystache.Renderer()
@@ -514,12 +511,15 @@ if __name__ == '__main__':
 	for _interface in parser.namespace.interfaces:
 		impl = InterfaceImpl(_interface, translator)
 		interfaces.append(impl)
-	for _class in parser.namespace.classes:
-		impl = ClassImpl(_class, translator)
-		classes.append(impl)
 	for _enum in parser.namespace.enums:
 		impl = EnumImpl(_enum, translator)
 		enums.append(impl)
+	for _class in parser.namespace.classes:
+		impl = ClassImpl(_class, translator)
+		classes.append(impl)
+		for _enum in _class.enums:
+			enum_impl = EnumImpl(_enum, translator)
+			enums.append(enum_impl)
 
 	wrapper = WrapperImpl(enums, interfaces, classes)
 	render(renderer, wrapper, args.outputdir + "/" + args.outputfile)
