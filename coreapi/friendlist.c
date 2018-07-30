@@ -206,7 +206,7 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 	xmlparsing_context_t *xml_ctx = linphone_xmlparsing_context_new();
 	xmlSetGenericErrorFunc(xml_ctx, linphone_xmlparsing_genericxml_error);
 	xml_ctx->doc = xmlReadDoc((const unsigned char*)first_part_body, 0, NULL, 0);
-	if (xml_ctx->doc != NULL) {
+	if (xml_ctx->doc) {
 		LinphoneFriend *lf;
 		LinphoneContent *presence_part;
 		xmlXPathObjectPtr resource_object;
@@ -221,7 +221,7 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 		xmlXPathRegisterNs(xml_ctx->xpath_ctx, (const xmlChar *)"rlmi", (const xmlChar *)"urn:ietf:params:xml:ns:rlmi");
 
 		version_str = linphone_get_xml_attribute_text_content(xml_ctx, "/rlmi:list", "version");
-		if (version_str == NULL) {
+		if (!version_str) {
 			ms_warning("rlmi+xml: No version attribute in list");
 			goto end;
 		}
@@ -232,7 +232,7 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 		}
 
 		full_state_str = linphone_get_xml_attribute_text_content(xml_ctx, "/rlmi:list", "fullState");
-		if (full_state_str == NULL) {
+		if (!full_state_str) {
 			ms_warning("rlmi+xml: No fullState attribute in list");
 			goto end;
 		}
@@ -245,32 +245,34 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 			full_state = TRUE;
 		}
 		linphone_free_xml_text_content(full_state_str);
-		if ((list->expected_notification_version == 0) && (full_state == FALSE)) {
+		if ((list->expected_notification_version == 0) && !full_state) {
 			ms_warning("rlmi+xml: Notification with version 0 is not full state, this is not valid");
 			goto end;
 		}
 		list->expected_notification_version = version + 1;
 
 		resource_object = linphone_get_xml_xpath_object_for_node_list(xml_ctx, "/rlmi:list/rlmi:resource/rlmi:instance[@state=\"active\"]/..");
-		if ((resource_object != NULL) && (resource_object->nodesetval != NULL)) {
+		if (resource_object && resource_object->nodesetval) {
 			for (i = 1; i <= resource_object->nodesetval->nodeNr; i++) {
 				char *cid = NULL;
 				linphone_xml_xpath_context_set_node(xml_ctx, xmlXPathNodeSetItem(resource_object->nodesetval, i-1));
 				cid = linphone_get_xml_text_content(xml_ctx, "./rlmi:instance/@cid");
-				if (cid != NULL) {
+				if (cid) {
 					presence_part = linphone_content_find_part_by_header(body, "Content-Id", cid);
-					if (presence_part == NULL) {
+					if (!presence_part) {
 						ms_warning("rlmi+xml: Cannot find part with Content-Id: %s", cid);
 					} else {
 						SalPresenceModel *presence = NULL;
 						linphone_notify_parse_presence(linphone_content_get_type(presence_part), linphone_content_get_subtype(presence_part), linphone_content_get_string_buffer(presence_part), &presence);
-						if (presence != NULL) {
+						if (presence) {
 							// Try to reduce CPU cost of linphone_address_new and find_friend_by_address by only doing it when we know for sure we have a presence to notify
 							LinphoneAddress* addr;
 							uri = linphone_get_xml_text_content(xml_ctx, "./@uri");
-							if (uri == NULL) continue;
+							if (!uri)
+								continue;
 							addr = linphone_address_new(uri);
-							if (!addr) continue;
+							if (!addr)
+								continue;
 							lf = linphone_friend_list_find_friend_by_address(list, addr);
 							linphone_address_unref(addr);
 							if (lf) {
@@ -289,7 +291,7 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 								} else {
 									linphone_friend_set_presence_model_for_uri_or_tel(lf, uri, (LinphonePresenceModel *)presence);
 								}
-								if (full_state == FALSE) {
+								if (!full_state) {
 									if (phone_number)
 										linphone_core_notify_notify_presence_received_for_uri_or_tel(list->lc, lf, phone_number, (LinphonePresenceModel *)presence);
 									else
@@ -305,9 +307,10 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 				}
 			}
 		}
-		if (resource_object != NULL) xmlXPathFreeObject(resource_object);
+		if (resource_object)
+			xmlXPathFreeObject(resource_object);
 
-		if (full_state == TRUE) {
+		if (full_state) {
 			const bctbx_list_t *addresses;
 			bctbx_list_t *numbers;
 			bctbx_list_t *iterator;
@@ -335,7 +338,7 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 					iterator = bctbx_list_next(iterator);
 				}
 				if (numbers) bctbx_list_free(numbers);
-				if (linphone_friend_is_presence_received(lf) == TRUE) {
+				if (linphone_friend_is_presence_received(lf)) {
 					linphone_core_notify_notify_presence_received(list->lc, lf);
 				}
 			}
