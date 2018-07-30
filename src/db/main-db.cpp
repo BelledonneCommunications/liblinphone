@@ -526,7 +526,18 @@ shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceEvent (
 		long long eventId = getConferenceEventIdFromRow(row);
 		shared_ptr<EventLog> eventLog = getEventFromCache(eventId);
 		if (!eventLog) {
-			eventLog = selectConferenceChatMessageEvent(chatRoom, type, row);
+			EventLog::Type type = EventLog::Type(row.get<int>(1));
+			switch (type) {
+				case EventLog::Type::ConferenceChatMessage:
+					eventLog = selectConferenceChatMessageEvent(chatRoom, type, row);
+					break;
+				case EventLog::Type::ConferenceSecurityAlert:
+					eventLog = selectConferenceSecurityEvent(chatRoom->getConferenceId(), type, row);
+					break;
+				default:
+					return nullptr;
+			}
+
 			if (eventLog)
 				cache(eventLog, eventId);
 		}
@@ -571,6 +582,10 @@ shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceNotifiedEvent (
 		case EventLog::Type::ConferenceParticipantDeviceAdded:
 		case EventLog::Type::ConferenceParticipantDeviceRemoved:
 			eventLog = selectConferenceParticipantDeviceEvent(conferenceId, type, row);
+			break;
+
+		case EventLog::Type::ConferenceSecurityAlert:
+			eventLog = selectConferenceSecurityEvent(conferenceId, type, row);
 			break;
 
 		case EventLog::Type::ConferenceSubjectChanged:
@@ -672,6 +687,18 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantDeviceEvent (
 		getConferenceEventNotifyIdFromRow(row),
 		IdentityAddress(row.get<string>(12)),
 		IdentityAddress(row.get<string>(11))
+	);
+}
+
+shared_ptr<EventLog> MainDbPrivate::selectConferenceSecurityEvent (
+	const ConferenceId &conferenceId,
+	EventLog::Type type,
+	const soci::row &row
+) const {
+	return make_shared<ConferenceSecurityEvent>(
+		getConferenceEventCreationTimeFromRow(row),
+		conferenceId,
+		row.get<string>(13)
 	);
 }
 
@@ -904,6 +931,23 @@ long long MainDbPrivate::insertConferenceParticipantDeviceEvent (const shared_pt
 		default:
 			break;
 	}
+
+	return eventId;
+}
+
+long long MainDbPrivate::insertConferenceSecurityEvent (const shared_ptr<EventLog> &eventLog) {
+	long long conferenceId;
+	const long long &eventId = insertConferenceEvent(eventLog, &conferenceId);
+	if (eventId < 0)
+		return -1;
+
+	const string &securityAlert = static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getSecurityAlert();
+
+
+	// insert security event into new table "conference_security_event"
+	soci::session *session = dbSession.getBackendSession();
+	*session << "INSERT INTO conference_security_event (event_id, security_alert)"
+		" VALUES (:eventId, :securityAlert)", soci::use(eventId), soci::use(securityAlert);
 
 	return eventId;
 }
@@ -1508,6 +1552,17 @@ void MainDb::init () {
 		") " + charset;
 
 	*session <<
+		"CREATE TABLE IF NOT EXISTS conference_security_event ("
+		"  event_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
+
+		"  security_alert VARCHAR(255) NOT NULL,"
+
+		"  FOREIGN KEY (event_id)"
+		"    REFERENCES conference_event(event_id)"
+		"    ON DELETE CASCADE"
+		") " + charset;
+
+	*session <<
 		"CREATE TABLE IF NOT EXISTS conference_subject_event ("
 		"  event_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 
@@ -1718,6 +1773,11 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 				eventId = d->insertConferenceParticipantDeviceEvent(eventLog);
 				break;
 
+			case EventLog::Type::ConferenceSecurityAlert:
+				cout << "adding security event to db" << endl;
+				eventId = d->insertConferenceSecurityEvent(eventLog);
+				break;
+
 			case EventLog::Type::ConferenceSubjectChanged:
 				eventId = d->insertConferenceSubjectEvent(eventLog);
 				break;
@@ -1764,6 +1824,7 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceParticipantUnsetAdmin:
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
+			case EventLog::Type::ConferenceSecurityAlert:
 			case EventLog::Type::ConferenceSubjectChanged:
 				return false;
 		}

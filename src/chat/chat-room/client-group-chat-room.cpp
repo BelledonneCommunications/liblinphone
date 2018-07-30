@@ -715,6 +715,13 @@ void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferencePart
 	_linphone_chat_room_notify_participant_admin_status_changed(cr, L_GET_C_BACK_PTR(event));
 }
 
+void ClientGroupChatRoom::onSecurityAlert (const shared_ptr<ConferenceSecurityEvent> &event) {
+	L_D();
+
+	cout << "onSecurityAlert() securityAlert = " << event->getSecurityAlert() << endl;
+	d->addEvent(event);
+}
+
 void ClientGroupChatRoom::onSubjectChanged (const shared_ptr<ConferenceSubjectEvent> &event, bool isFullState) {
 	L_D();
 

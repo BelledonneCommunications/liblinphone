@@ -62,6 +62,7 @@
 	F(EventLog, ConferenceNotifiedEvent) \
 	F(EventLog, ConferenceParticipantDeviceEvent) \
 	F(EventLog, ConferenceParticipantEvent) \
+	F(EventLog, ConferenceSecurityEvent) \
 	F(EventLog, ConferenceSubjectEvent)
 
 // =============================================================================

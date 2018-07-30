@@ -31,6 +31,7 @@ class ClientGroupChatRoomPrivate;
 enum class SecurityLevel;
 
 class LINPHONE_PUBLIC ClientGroupChatRoom : public ChatRoom, public RemoteConference {
+	friend class LimeV2;
 	friend class BasicToClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
 	friend class Core;
@@ -105,6 +106,7 @@ private:
 	void onConferenceCreated (const IdentityAddress &addr) override;
 	void onConferenceKeywordsChanged (const std::vector<std::string> &keywords) override;
 	void onConferenceTerminated (const IdentityAddress &addr) override;
+	void onSecurityAlert (const std::shared_ptr<ConferenceSecurityEvent> &event) override;
 	void onFirstNotifyReceived (const IdentityAddress &addr) override;
 	void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
 	void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) override;

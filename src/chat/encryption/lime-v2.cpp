@@ -18,7 +18,7 @@
  */
 
 #include "chat/chat-message/chat-message-p.h"
-#include "chat/chat-room/chat-room.h"
+#include "chat/chat-room/chat-room-p.h"
 #include "content/content-manager.h"
 #include "content/header/header-param.h"
 #include "conference/participant-p.h"
@@ -29,6 +29,9 @@
 
 // TODO remove me
 #include "lime.h"
+
+#include "event-log/conference/conference-security-event.h"
+#include "chat/chat-room/client-group-chat-room.h"
 
 using namespace std;
 
@@ -159,6 +162,13 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	if (isMultidevice) {
 		// TODO add policies to adapt behaviour when multiple devices
 		lWarning() << "Sending encrypted message to multidevice participant";
+
+		// TODO if multidevice is forbidden send a ConferenceSecurityEvent
+		time_t securityAlertTime = time(nullptr);
+		const string &securityAlert = "Sending encrypted message to multidevice participant";
+		shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(securityAlertTime, chatRoom->getConferenceId(), securityAlert);
+		shared_ptr<ClientGroupChatRoom> confListener = static_pointer_cast<ClientGroupChatRoom>(chatRoom); // WARNING invalid static_cast
+		confListener->onSecurityAlert(securityEvent);
 	}
 
 	const string &plainStringMessage = message->getInternalContent().getBodyAsUtf8String();

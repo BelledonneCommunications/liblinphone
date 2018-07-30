@@ -35,6 +35,7 @@
 	F(ConferenceParticipantUnsetAdmin /**< Conference participant (unset admin) event */) \
 	F(ConferenceParticipantDeviceAdded /**< Conference participant device (added) event */) \
 	F(ConferenceParticipantDeviceRemoved /**< Conference participant device (removed) event */) \
+	F(ConferenceSecurityAlert /**< Conference security alert event*/) \
 	F(ConferenceSubjectChanged /**< Conference subject event */) \
 
 #endif // ifndef _L_EVENT_LOG_ENUMS_H_
