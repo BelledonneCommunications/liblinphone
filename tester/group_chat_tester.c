@@ -104,6 +104,10 @@ static void chat_room_state_changed (LinphoneChatRoom *cr, LinphoneChatRoomState
 	}
 }
 
+static void chat_room_security_alert (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	printf("Chatroom security alert detected\n");
+}
+
 static void chat_room_subject_changed (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
@@ -124,6 +128,7 @@ static void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *
 		linphone_chat_room_cbs_set_participant_admin_status_changed(cbs, chat_room_participant_admin_status_changed);
 		linphone_chat_room_cbs_set_participant_removed(cbs, chat_room_participant_removed);
 		linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
+		linphone_chat_room_cbs_set_security_alert(cbs, chat_room_security_alert);
 		linphone_chat_room_cbs_set_subject_changed(cbs, chat_room_subject_changed);
 		linphone_chat_room_cbs_set_participant_device_added(cbs, chat_room_participant_device_added);
 		linphone_chat_room_cbs_set_undecryptable_message_received(cbs, undecryptable_message_received);

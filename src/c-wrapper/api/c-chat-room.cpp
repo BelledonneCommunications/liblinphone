@@ -487,6 +487,10 @@ void _linphone_chat_room_notify_state_changed(LinphoneChatRoom *cr, LinphoneChat
 	NOTIFY_IF_EXIST(StateChanged, state_changed, cr, newState)
 }
 
+void _linphone_chat_room_notify_security_alert(LinphoneChatRoom *cr, LinphoneEventLog *event_log) {
+	NOTIFY_IF_EXIST(SecurityAlert, security_alert, cr, event_log)
+}
+
 void _linphone_chat_room_notify_subject_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
 	NOTIFY_IF_EXIST(SubjectChanged, subject_changed, cr, event_log)
 }
