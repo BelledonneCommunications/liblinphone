@@ -171,10 +171,10 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 
 	if (cpimFromAddress.isValid() && (cpimFromAddress == message->getAuthenticatedFromAddress())) {
 		message->getPrivate()->forceFromAddress(cpimFromAddress);
-		lInfo() << "[CPIM] Sender authentication sucessful" << endl;
+		lInfo() << "[CPIM] Sender authentication sucessful";
 	}
 	else {
-		lWarning() << "[CPIM] Sender authentication failed" << endl;
+		lWarning() << "[CPIM] Sender authentication failed";
 		errorCode = 488;
 		return ChatMessageModifier::Result::Error;
 	}

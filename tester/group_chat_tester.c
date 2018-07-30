@@ -5094,11 +5094,6 @@ static void group_chat_lime_v2_update_keys (void) {
 	stats initialPaulineStats = pauline->stat;
 	int dummy = 0;
 
-	LinphoneConfig *lpconfig = linphone_core_get_config(marie->lc);
-	printf("x3dh_server_url = %s\n", lp_config_get_string(lpconfig, "misc", "x3dh_server_url", "default_string"));
-	lp_config_set_string(lpconfig, "misc", "x3dh_server_url", "https://shuttle-debian8/mtanon/tools/flexisip_account_manager/x3dh-25519.php");
-	printf("x3dh_server_url = %s\n", lp_config_get_string(lpconfig, "misc", "x3dh_server_url", "default_string"));
-
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 
@@ -5327,8 +5322,8 @@ test_t group_chat_tests[] = {
 	TEST_TWO_TAGS("LIMEv2 message with composing", group_chat_lime_v2_send_encrypted_message_with_composing, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 message with response", group_chat_lime_v2_send_encrypted_message_with_response, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 message with response and composing", group_chat_lime_v2_send_encrypted_message_with_response_and_composing, "CreateUserInDb", "LeaksMemory"),
-	TEST_TWO_TAGS("LIMEv2 send encrypted file", group_chat_lime_v2_send_encrypted_file, "CreateUserInDb", "LeaksMemory"),
-	TEST_TWO_TAGS("LIMEv2 send encrypted file + text", group_chat_lime_v2_send_encrypted_file_plus_text, "CreateUserInDb", "LeaksMemory"),
+	TEST_ONE_TAG("LIMEv2 send encrypted file", group_chat_lime_v2_send_encrypted_file, "CreateUserInDb"),
+	TEST_ONE_TAG("LIMEv2 send encrypted file + text", group_chat_lime_v2_send_encrypted_file_plus_text, "CreateUserInDb"),
 	TEST_TWO_TAGS("LIMEv2 ZRTP verification", group_chat_lime_v2_with_zrtp_verification, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 chatroom security level upgrade", group_chat_lime_v2_chatroom_security_level_upgrade, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 chatroom security level downgrade adding participant", group_chat_lime_v2_chatroom_security_level_downgrade_adding_participant, "CreateUserInDb", "LeaksMemory"),

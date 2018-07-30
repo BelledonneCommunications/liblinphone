@@ -144,7 +144,6 @@ Core::Core () : Object(*new CorePrivate) {
 
 Core::~Core () {
 	lInfo() << "Destroying core: " << this;
-	enableLimeV2(FALSE);
 	xercesc::XMLPlatformUtils::Terminate();
 }
 
