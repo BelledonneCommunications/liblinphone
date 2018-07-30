@@ -450,6 +450,10 @@ class ClassImpl(object):
 		namespace = _class.find_first_ancestor_by_type(AbsApi.Namespace)
 		self.namespace = namespace.name.concatenate(fullName=True) if namespace is not None else None
 		self._class = translator.translate_class(_class)
+		self._class_enums = []
+		for enum in _class.enums:
+			parsed_enum = EnumImpl(enum, translator)
+			self._class_enums.append(parsed_enum)
 
 class InterfaceImpl(object):
 	def __init__(self, interface, translator):
