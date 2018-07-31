@@ -543,7 +543,7 @@ static LinphoneFriendListStatus _linphone_friend_list_add_friend(LinphoneFriendL
 		linphone_friend_save(lf, lf->lc);
 	}
 
-	if (!list->rls_uri) // Mimic the behaviour of linphone_core_add_friend() when a resource list server is not in use */
+	if (!list->rls_uri) // Mimic the behaviour of linphone_core_add_friend() when a resource list server is not in use
 		linphone_friend_apply(lf, lf->lc);
 
 	return status;
