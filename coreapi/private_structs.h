@@ -123,7 +123,7 @@ struct _LinphoneProxyConfig
 	/*use to check if server config has changed  between edit() and done()*/
 	LinphoneAddress *saved_proxy;
 	LinphoneAddress *saved_identity;
-	
+
 	/*---*/
 	LinphoneAddress *pending_contact; /*use to store previous contact in case of network failure*/
 	LinphoneEvent *presence_publish_event;
@@ -220,6 +220,7 @@ struct _LinphoneFriendList {
 	int revision;
 	LinphoneFriendListCbs *cbs;
 	bool_t enable_subscriptions;
+	bool_t bodyless_subscription;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriendList);
