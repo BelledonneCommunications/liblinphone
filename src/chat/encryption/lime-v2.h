@@ -91,6 +91,7 @@ public:
 
 private:
 	std::shared_ptr<BelleSipLimeManager> belleSipLimeManager;
+	int maxNbDevicePerParticipant;
 	std::time_t lastLimeUpdate;
 	std::string x3dhServerUrl;
 	std::string _dbAccess;

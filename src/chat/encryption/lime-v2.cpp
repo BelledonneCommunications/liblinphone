@@ -117,6 +117,7 @@ LimeV2::LimeV2 (const std::string &dbAccess, belle_http_provider_t *prov, Linpho
 	_dbAccess = dbAccess;
 	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(dbAccess, prov, lc));
 	lastLimeUpdate = linphone_config_get_int(lc->config, "encryption", "last_lime_update_time", 0);
+	maxNbDevicePerParticipant = linphone_config_get_int(lc->config, "encryption", "max_nb_device_per_participant", 1); // TODO discuss default value
 }
 
 string LimeV2::getX3dhServerUrl () const {
@@ -136,7 +137,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
 
 	// Add participants to the recipient list
-	bool isMultidevice = FALSE;
+	bool tooManyDevices = FALSE;
 	auto recipients = make_shared<vector<lime::RecipientData>>();
 	const list<shared_ptr<Participant>> participants = chatRoom->getParticipants();
 	for (const shared_ptr<Participant> &participant : participants) {
@@ -146,7 +147,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 			nbDevice++;
 			recipients->emplace_back(device->getAddress().asString());
 		}
-		if (nbDevice > 1) isMultidevice = TRUE;
+		if (nbDevice > maxNbDevicePerParticipant) tooManyDevices = TRUE;
 	}
 
 	// Add potential other devices of the sender
@@ -154,21 +155,24 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	for (const auto &senderDevice : senderDevices) {
 		if (senderDevice->getAddress() != chatRoom->getLocalAddress()) {
 			recipients->emplace_back(senderDevice->getAddress().asString());
-			isMultidevice = TRUE;
+			tooManyDevices = TRUE;
 		}
 	}
 
 	// TODO warning when multiple devices for the same participant
-	if (isMultidevice) {
-		// TODO add policies to adapt behaviour when multiple devices
-		lWarning() << "Sending encrypted message to multidevice participant";
+	if (tooManyDevices) {
+		// get multidevice participants and set all their devices to untrusted ?
+		// or override its participant security level somehow
 
 		// TODO if multidevice is forbidden send a ConferenceSecurityEvent
 		time_t securityAlertTime = time(nullptr);
 		const string &securityAlert = "Sending encrypted message to multidevice participant";
 		shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(securityAlertTime, chatRoom->getConferenceId(), securityAlert);
-		shared_ptr<ClientGroupChatRoom> confListener = static_pointer_cast<ClientGroupChatRoom>(chatRoom); // WARNING invalid static_cast
+		shared_ptr<ClientGroupChatRoom> confListener = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 		confListener->onSecurityAlert(securityEvent);
+		lError() << "Sending encrypted message to multidevice participant";
+		cout << "[ALERT] Sending encrypted message to multidevice participant (message rejected)" << endl;
+		return ChatMessageModifier::Result::Error;
 	}
 
 	const string &plainStringMessage = message->getInternalContent().getBodyAsUtf8String();
