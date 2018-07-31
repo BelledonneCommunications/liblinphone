@@ -3503,14 +3503,14 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 				vector<uint8_t> remoteIkB64_vector = vector<uint8_t>(remoteIkB64_string.begin(), remoteIkB64_string.end());
 				vector<uint8_t> remoteIk_vector = decodeBase64(remoteIkB64_vector);
 
-				// get proxy config
+				// Get proxy config
 				LinphoneProxyConfig *proxy = nullptr;
 				if (destProxy)
 					proxy = destProxy;
 				else
 					proxy = linphone_core_get_default_proxy_config(q->getCore()->getCCore());
 
-				// get LIMEv2 context
+				// Get LIMEv2 context
 				LimeV2 *limeV2Engine;
 				if (proxy && linphone_core_lime_v2_enabled(linphone_proxy_config_get_core(proxy))) {
 					limeV2Engine = static_cast<LimeV2*>(q->getCore()->getEncryptionEngine());
@@ -3518,16 +3518,16 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 					lWarning() << "LIMEv2 disabled or proxy config unavailable, unable to set peer identity verified status";
 				}
 
-				// get peer's GRUU
+				// Get peer's GRUU
 				const SalAddress *remoteAddress = getOp()->getRemoteContactAddress();
 				char *peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
 
-				// TODO if mismatch = 0 set this peer as trusted with this Ik
-				// TODO if mismatch = 1 it means that the stored Ik was corrupted (identity theft)
+				// TODO If mismatch = 0 set this peer as trusted with this Ik
+				// TODO If mismatch = 1 it means that the stored Ik was corrupted (identity theft)
 				if (ms_zrtp_getAuxiliarySharedSecretMismatch(audioStream->ms.sessions.zrtp_context) == 0) {
 					if (limeV2Engine) {
 						try {
-							// if SAS verified lime peer is trusted, untrusted otherwise
+							// If SAS verified lime peer is trusted, untrusted otherwise
 							limeV2Engine->getLimeManager()->set_peerIdentityVerifiedStatus(peerDeviceId, remoteIk_vector, authTokenVerified);
 							lInfo() << "LIMEv2 peer device " << peerDeviceId << " is now trusted";
 						} catch (const exception &e) {

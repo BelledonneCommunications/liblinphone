@@ -113,10 +113,10 @@ BelleSipLimeManager::BelleSipLimeManager (const string &dbAccess, belle_http_pro
 LimeV2::LimeV2 (const std::string &dbAccess, belle_http_provider_t *prov, LinphoneCore *lc) {
 	engineType = EncryptionEngineListener::EngineType::LimeV2;
 	curve = lime::CurveId::c25519; // c448
-	x3dhServerUrl = linphone_config_get_string(linphone_core_get_config(lc), "misc", "x3dh_server_url", "");
+	x3dhServerUrl = linphone_config_get_string(linphone_core_get_config(lc), "encryption", "x3dh_server_url", "");
 	_dbAccess = dbAccess;
 	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(dbAccess, prov, lc));
-	lastLimeUpdate = linphone_config_get_int(lc->config, "misc", "last_lime_update_time", 0);
+	lastLimeUpdate = linphone_config_get_int(lc->config, "encryption", "last_lime_update_time", 0);
 }
 
 string LimeV2::getX3dhServerUrl () const {
@@ -228,7 +228,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 			}
 		}, lime::EncryptionPolicy::cipherMessage);
 	} catch (const exception &e) {
-		lError() << "test" << " while encrypting message";
+		lError() << e.what() << " while encrypting message";
 		*result = ChatMessageModifier::Result::Error;
 	}
 
@@ -361,7 +361,7 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 void LimeV2::update (LinphoneConfig *lpconfig) {
 	lime::limeCallback callback = setLimeCallback("Keys update");
 	belleSipLimeManager->update(callback);
-	lp_config_set_int(lpconfig, "misc", "last_lime_update_time", (int)lastLimeUpdate);
+	lp_config_set_int(lpconfig, "encryption", "last_lime_update_time", (int)lastLimeUpdate);
 }
 
 bool LimeV2::encryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom> &chatRoom) {
@@ -495,18 +495,18 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 		lime::limeCallback callback = setLimeCallback(operation.str());
 
 		LinphoneConfig *lpconfig = linphone_core_get_config(linphone_proxy_config_get_core(cfg));
-		lastLimeUpdate = linphone_config_get_int(lpconfig, "misc", "last_lime_update_time", -1); // TODO should be done by the tester
+		lastLimeUpdate = linphone_config_get_int(lpconfig, "encryption", "last_lime_update_time", -1); // TODO should be done by the tester
 
 		try {
 			// create user if not exist
 			belleSipLimeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
 			lastLimeUpdate = ms_time(NULL);
-			lp_config_set_int(lpconfig, "misc", "last_lime_update_time", (int)lastLimeUpdate);
+			lp_config_set_int(lpconfig, "encryption", "last_lime_update_time", (int)lastLimeUpdate);
 		} catch (const exception &e) {
 			lInfo() << e.what() << " while creating lime user";
 
 			// update keys if necessary
-			int limeUpdateThreshold = lp_config_get_int(lpconfig, "misc", "lime_update_threshold", 86400);
+			int limeUpdateThreshold = lp_config_get_int(lpconfig, "encryption", "lime_update_threshold", 86400);
 			if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) { // 24 hours = 86400 ms
 				update(lpconfig);
 				lastLimeUpdate = ms_time(NULL);
