@@ -932,6 +932,7 @@ static void _linphone_friend_list_send_list_subscription_without_body(LinphoneFr
 		lf->subscribe_active = TRUE;
 	}
 	linphone_event_send_subscribe(list->event, NULL);
+	linphone_event_set_user_data(list->event, list);
 }
 
 static void linphone_friend_list_send_list_subscription(LinphoneFriendList *list) {
