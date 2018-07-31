@@ -482,7 +482,7 @@ static void test_presence_list_base(bool_t enable_compression) {
 	presence = linphone_core_create_presence_model_with_activity(marie->lc, LinphonePresenceActivityOnThePhone, NULL);
 	linphone_core_set_presence_model(marie->lc, presence);
 	linphone_presence_model_unref(presence);
-	
+
 	int previous_laure_number_of_NotifyPresenceReceived = laure->stat.number_of_NotifyPresenceReceived ;
 	wait_for_list(lcs, &laure->stat.number_of_NotifyPresenceReceived, previous_laure_number_of_NotifyPresenceReceived + 1, 4000);
 	BC_ASSERT_EQUAL(laure->stat.number_of_NotifyPresenceReceived, previous_laure_number_of_NotifyPresenceReceived + 1, int, "%d");
@@ -846,11 +846,11 @@ static void long_term_presence_large_number_of_subs(void) {
 	}
 	linphone_core_add_friend_list(pauline->lc, friends);
 	linphone_friend_list_unref(friends);
-	
+
 	BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_NotifyPresenceReceived,i));
 
 	linphone_core_manager_destroy(pauline);
-	
+
 #endif
 }
 
@@ -994,7 +994,7 @@ static void long_term_presence_with_phone_without_sip(void) {
 	if (linphone_core_vcard_supported()){
 		const LinphoneDialPlan *dialPlan;
 		const LinphoneDialPlan *genericDialPlan = linphone_dial_plan_by_ccc(NULL);
-		
+
 		char phone[20];
 		char* e164;
 		size_t i;
@@ -1055,7 +1055,7 @@ static void long_term_presence_with_phone_without_sip(void) {
 				ms_free(presence_contact);
 			}
 		}
-		
+
 		linphone_friend_unref(friend2);
 		belle_sip_object_remove_from_leak_detector((void*)dialPlan); //because mostCommon dial plan is a static object freed at the end of the process. This f is only to avoid wrong leak detection.
 		belle_sip_object_remove_from_leak_detector((void*)genericDialPlan);
@@ -1608,11 +1608,11 @@ static void simple_publish_with_expire(int expires) {
 	LinphoneProxyConfig* proxy;
 	LinphonePresenceModel* presence;
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	
+
 	linphone_core_cbs_set_publish_state_changed(cbs, linphone_publish_state_changed);
 	_linphone_core_add_callbacks(marie->lc, cbs, TRUE);
 	linphone_core_cbs_unref(cbs);
-	
+
 	proxy = linphone_core_get_default_proxy_config(marie->lc);
 	linphone_proxy_config_edit(proxy);
 	if (expires > 0) {
@@ -1620,45 +1620,45 @@ static void simple_publish_with_expire(int expires) {
 	}
 	linphone_proxy_config_enable_publish(proxy,TRUE);
 	linphone_proxy_config_done(proxy);
-	
+
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishProgress,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishOk,1));
-	
+
 	presence = linphone_presence_model_new();
 	linphone_presence_model_set_basic_status(presence, LinphonePresenceBasicStatusClosed);
 	linphone_core_set_presence_model(marie->lc,presence);
 	linphone_presence_model_unref(presence);
-	
+
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishProgress,2));
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishOk,2));
-	
+
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_done(proxy);
 	/*make sure no publish is sent*/
 	BC_ASSERT_FALSE(wait_for_until(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishProgress,3,2000));
-	
+
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_enable_publish(proxy,FALSE);
 	linphone_proxy_config_done(proxy);
-	
-	
+
+
 	/*fixme PUBLISH state machine is too simple, clear state should only be propagated at API level  when 200ok is received*/
 	/*BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishProgress,3));*/
 	wait_for_until(marie->lc,marie->lc,NULL,0,2000);
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishCleared,1));
-	
+
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_enable_publish(proxy,TRUE);
 	linphone_proxy_config_done(proxy);
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishProgress,3));
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishOk,3));
-	
+
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_publish_expires(proxy, linphone_proxy_config_get_publish_expires(proxy)+1);
 	linphone_proxy_config_done(proxy);
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishProgress,4));
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishOk,4));
-	
+
 	linphone_core_manager_stop(marie);
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishCleared,3,int,"%i"); /*yes it is 3 because when we change the expires, a new LinphoneEvent is created*/
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOk,4,int,"%i");
@@ -1677,76 +1677,86 @@ static void publish_with_dual_identity(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new("multi_account_rc");
 	const bctbx_list_t* proxies;
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	
+
 	linphone_core_cbs_set_publish_state_changed(cbs, linphone_publish_state_changed);
 	_linphone_core_add_callbacks(pauline->lc, cbs, TRUE);
 	linphone_core_cbs_unref(cbs);
-	
+
 	for (proxies = linphone_core_get_proxy_config_list(pauline->lc); proxies!=NULL; proxies = proxies->next) {
 		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *) proxies->data;
 		linphone_proxy_config_edit(proxy);
 		linphone_proxy_config_enable_publish(proxy,TRUE);
 		linphone_proxy_config_done(proxy);
 	}
-	
+
 	BC_ASSERT_TRUE(wait_for(pauline->lc,pauline->lc,&pauline->stat.number_of_LinphonePublishProgress,4));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,pauline->lc,&pauline->stat.number_of_LinphonePublishOk,4));
-	
+
 	linphone_core_manager_stop(pauline);
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphonePublishCleared,4,int,"%i");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphonePublishOk,4,int,"%i");
 	linphone_core_manager_destroy(pauline);
-	
+
 }
 static void publish_with_network_state_changes(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneFriend* marie_as_friend = linphone_core_create_friend_with_address(pauline->lc, get_identity(marie));
-	
+
 	LinphoneProxyConfig* proxy;
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	
+
 	linphone_core_cbs_set_publish_state_changed(cbs, linphone_publish_state_changed);
 	_linphone_core_add_callbacks(marie->lc, cbs,TRUE);
 	linphone_core_cbs_unref(cbs);
-	
+
 	linphone_core_set_user_agent(marie->lc, "full-presence-support", NULL);
 	linphone_core_set_user_agent(marie->lc, "full-presence-support-bypass", NULL);
-	
+
 	proxy = linphone_core_get_default_proxy_config(marie->lc);
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_enable_publish(proxy,TRUE);
 	linphone_proxy_config_done(proxy);
-	
+
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishProgress,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishOk,1));
-	
+
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphoneRegistrationNone,1));
 	BC_ASSERT_FALSE(wait_for_until(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishProgress,2,1000));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOk,1,int,"%i");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishError,0,int,"%i");
-	
+
 	linphone_core_set_network_reachable(marie->lc, TRUE);
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishProgress,2));
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphonePublishOk,2));
-	
-	
-	
+
 	linphone_core_manager_stop(marie);
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishCleared,1,int,"%i"); /*yes it is 3 because when we change the expires, a new LinphoneEvent is created*/
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOk,2,int,"%i");
 	linphone_core_manager_destroy(marie);
-	
+
 	/*make sure there is no remaining publish caused by network failure*/
 	linphone_core_set_user_agent(pauline->lc, "full-presence-support", NULL);
 	linphone_core_set_user_agent(pauline->lc, "full-presence-support-bypass", NULL);
 	linphone_core_add_friend(pauline->lc, marie_as_friend);
-	
+
 	BC_ASSERT_TRUE(wait_for(pauline->lc,pauline->lc,&pauline->stat.number_of_LinphonePresenceActivityAway,1));
 	linphone_friend_unref(marie_as_friend);
 	linphone_core_manager_destroy(pauline);
+}
 
+static void simple_bodyless_list_subscription(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneFriendList *friendList = linphone_core_create_friend_list(marie->lc);
+	friendList->display_name = "Friends";
+	friendList->bodyless_subscription = TRUE;
+	linphone_friend_list_set_rls_uri(friendList, "sip:rls@sip.example.org");
+	linphone_friend_list_enable_subscriptions(TRUE);
+
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_NotifyPresenceReceived, 1, 4000));
+
+	linphone_core_manager_destroy(pauline);
 }
 
 test_t presence_server_tests[] = {
@@ -1779,6 +1789,7 @@ test_t presence_server_tests[] = {
 	TEST_NO_TAG("Extended notify only when both side subscribed to each other 2", extended_notify_only_both_side_subscribed2),
 	TEST_NO_TAG("Extended notify only when subscribe then unsubscribe then re-subscribe", extended_notify_sub_unsub_sub),
 	TEST_NO_TAG("Extended notify only when subscribe then unsubscribe then re-subscribe 2", extended_notify_sub_unsub_sub2),
+	TEST_ONE_TAG("Simple bodyless list subscription", simple_bodyless_list_subscription, "bodyless"),
 };
 
 test_suite_t presence_server_test_suite = {"Presence using server", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
