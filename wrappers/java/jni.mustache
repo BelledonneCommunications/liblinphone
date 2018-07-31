@@ -165,6 +165,26 @@ static jstring get_jstring_from_char(JNIEnv *env, const char* cString) {
     return javaString;
 }
 
+#ifdef __ANDROID__
+int dumbMethodForAllowingUsageOfCpuFeaturesFromStaticLibMediastream() {
+        return (android_getCpuFamily() == ANDROID_CPU_FAMILY_ARM && (android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_NEON) != 0);
+}
+
+int dumbMethodForAllowingUsageOfMsAudioDiffFromStaticLibMediastream() {
+        return ms_audio_diff(NULL, NULL, NULL, 0, NULL, NULL);
+}
+
+extern "C" void setAndroidLogHandler() {
+        linphone_core_enable_logs_with_cb(linphone_android_ortp_log_handler);
+}
+
+extern "C" void setMediastreamerAndroidContext(JNIEnv *env, void *context) {
+        jclass ms_class = env->FindClass("org/linphone/mediastream/MediastreamerAndroidContext");
+        jmethodID set_context = env->GetStaticMethodID(ms_class, "setContext", "(Ljava/lang/Object;)V");
+        env->CallStaticVoidMethod(ms_class, set_context, (jobject)context);
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class LinphoneJavaBindings {
