@@ -1016,33 +1016,34 @@ void linphone_friend_list_notify_presence(LinphoneFriendList *list, LinphonePres
 }
 
 void linphone_friend_list_notify_presence_received(LinphoneFriendList *list, LinphoneEvent *lev, const LinphoneContent *body) {
-	if (linphone_content_is_multipart(body)) {
-		LinphoneContent *first_part;
-		const char *type = linphone_content_get_type(body);
-		const char *subtype = linphone_content_get_subtype(body);
+	if (!linphone_content_is_multipart(body))
+		return;
 
-		if ((strcmp(type, "multipart") != 0) || (strcmp(subtype, "related") != 0)) {
-			ms_warning("multipart presence notified but it is not 'multipart/related', instead is '%s/%s'", type, subtype);
-			return;
-		}
+	LinphoneContent *first_part;
+	const char *type = linphone_content_get_type(body);
+	const char *subtype = linphone_content_get_subtype(body);
 
-		first_part = linphone_content_get_part(body, 0);
-		if (first_part == NULL) {
-			ms_warning("'multipart/related' presence notified but it doesn't contain any part");
-			return;
-		}
-
-		type = linphone_content_get_type(first_part);
-		subtype = linphone_content_get_subtype(first_part);
-		if ((strcmp(type, "application") != 0) || (strcmp(subtype, "rlmi+xml") != 0)) {
-			ms_warning("multipart presence notified but first part is not 'application/rlmi+xml'");
-			linphone_content_unref(first_part);
-			return;
-		}
-
-		linphone_friend_list_parse_multipart_related_body(list, body, linphone_content_get_string_buffer(first_part));
-		linphone_content_unref(first_part);
+	if ((strcmp(type, "multipart") != 0) || (strcmp(subtype, "related") != 0)) {
+		ms_warning("multipart presence notified but it is not 'multipart/related', instead is '%s/%s'", type, subtype);
+		return;
 	}
+
+	first_part = linphone_content_get_part(body, 0);
+	if (first_part == NULL) {
+		ms_warning("'multipart/related' presence notified but it doesn't contain any part");
+		return;
+	}
+
+	type = linphone_content_get_type(first_part);
+	subtype = linphone_content_get_subtype(first_part);
+	if ((strcmp(type, "application") != 0) || (strcmp(subtype, "rlmi+xml") != 0)) {
+		ms_warning("multipart presence notified but first part is not 'application/rlmi+xml'");
+		linphone_content_unref(first_part);
+		return;
+	}
+
+	linphone_friend_list_parse_multipart_related_body(list, body, linphone_content_get_string_buffer(first_part));
+	linphone_content_unref(first_part);
 }
 
 const char * linphone_friend_list_get_uri(const LinphoneFriendList *list) {
