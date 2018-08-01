@@ -16,7 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "linphone/core.h"
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
@@ -1749,7 +1748,7 @@ static void publish_with_network_state_changes(void) {
 static void simple_bodyless_list_subscription(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneFriendList *friendList = linphone_core_create_friend_list(marie->lc);
-	friendList->display_name = "Friends";
+	linphone_friend_list_set_display_name(friendList, "Friends");
 	friendList->bodyless_subscription = TRUE;
 	linphone_friend_list_set_rls_uri(friendList, "sip:rls@sip.example.org");
 	linphone_friend_list_enable_subscriptions(TRUE);
