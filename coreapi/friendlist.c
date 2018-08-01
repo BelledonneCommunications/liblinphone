@@ -378,7 +378,7 @@ static LinphoneFriendList * linphone_friend_list_new(void) {
 	list->enable_subscriptions = TRUE;
 	list->friends_map = bctbx_mmap_cchar_new();
 	list->friends_map_uri = bctbx_mmap_cchar_new();
-	list->bodyless_subscription = true;
+	list->bodyless_subscription = FALSE;
 	return list;
 }
 
