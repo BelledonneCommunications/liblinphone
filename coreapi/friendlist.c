@@ -1056,6 +1056,14 @@ void linphone_friend_list_set_uri(LinphoneFriendList *list, const char *uri) {
 	}
 }
 
+bool_t linphone_friend_list_is_subscription_bodyless(LinphoneFriendList *list) {
+	return list->bodyless_subscription;
+}
+
+void linphone_friend_list_set_subscription_bodyless(LinphoneFriendList *list, bool_t bodyless) {
+	list->bodyless_subscription = bodyless;
+}
+
 void linphone_friend_list_update_revision(LinphoneFriendList *list, int rev) {
 	list->revision = rev;
 	linphone_core_store_friends_list_in_db(list->lc, list);
