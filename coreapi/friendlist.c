@@ -357,6 +357,9 @@ end:
 }
 
 static bool_t linphone_friend_list_has_subscribe_inactive(const LinphoneFriendList *list) {
+	if (list->bodyless_subscription)
+		return TRUE;
+
 	bctbx_list_t *l = list->friends;
 	bool_t has_subscribe_inactive = FALSE;
 	for (; l != NULL; l = bctbx_list_next(l)) {
