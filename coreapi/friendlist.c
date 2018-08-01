@@ -279,6 +279,7 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 							if (!lf && list->bodyless_subscription) {
 								lf = linphone_core_create_friend_with_address(list->lc, uri);
 								linphone_friend_list_add_friend(list, lf);
+								linphone_friend_unref(lf);
 							}
 							if (lf) {
 								const char *phone_number = linphone_friend_sip_uri_to_phone_number(lf, uri);
