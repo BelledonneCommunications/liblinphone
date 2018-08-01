@@ -255,6 +255,8 @@ namespace Linphone
 	/// </summary>
 	public class LinphoneAndroid
 	{
+		public static IntPtr AndroidContext { get; set; } 
+
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern void ms_set_jvm_from_env(IntPtr jnienv);
 
@@ -267,8 +269,9 @@ namespace Linphone
 		/// </summary>
 		public static void setAndroidContext(IntPtr jnienv, IntPtr context)
 		{
+			AndroidContext = context;
 			ms_set_jvm_from_env(jnienv);
-			setMediastreamerAndroidContext(jnienv, context);
+			setMediastreamerAndroidContext(jnienv, AndroidContext);
 		}
 	}
 #endif
