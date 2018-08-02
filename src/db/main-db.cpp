@@ -48,7 +48,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 namespace {
-	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 4);
+	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 5);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -157,7 +157,7 @@ namespace {
 		// TODO: Find a workaround to deal with StaticString concatenation!!!
 		constexpr char ConferenceCallFilter[] = "3,4";
 		constexpr char ConferenceChatMessageFilter[] = "5";
-		constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12";
+		constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12,13";
 		constexpr char ConferenceInfoFilter[] = "1,2,6,7,8,9,10,11,12";
 	#else
 		constexpr auto ConferenceCallFilter = SqlEventFilterBuilder<
@@ -174,7 +174,8 @@ namespace {
 			EventLog::Type::ConferenceParticipantRemoved,
 			EventLog::Type::ConferenceParticipantSetAdmin,
 			EventLog::Type::ConferenceParticipantUnsetAdmin,
-			EventLog::Type::ConferenceSubjectChanged
+			EventLog::Type::ConferenceSubjectChanged,
+			EventLog::Type::ConferenceSecurityAlert
 		>::get();
 
 		constexpr auto ConferenceInfoFilter = ConferenceInfoNoDeviceFilter + "," + SqlEventFilterBuilder<
@@ -698,7 +699,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceSecurityEvent (
 	return make_shared<ConferenceSecurityEvent>(
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		row.get<string>(13)
+		static_cast<ConferenceSecurityEvent::SecurityAlertType>(row.get<int>(16))
 	);
 }
 
@@ -941,13 +942,12 @@ long long MainDbPrivate::insertConferenceSecurityEvent (const shared_ptr<EventLo
 	if (eventId < 0)
 		return -1;
 
-	const string &securityAlert = static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getSecurityAlert();
-
+	const int &securityAlertType = int(static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getSecurityAlertType());
 
 	// insert security event into new table "conference_security_event"
 	soci::session *session = dbSession.getBackendSession();
 	*session << "INSERT INTO conference_security_event (event_id, security_alert)"
-		" VALUES (:eventId, :securityAlert)", soci::use(eventId), soci::use(securityAlert);
+		" VALUES (:eventId, :securityAlertType)", soci::use(eventId), soci::use(securityAlertType);
 
 	return eventId;
 }
@@ -1100,23 +1100,25 @@ void MainDbPrivate::updateSchema () {
 	if (version < makeVersion(1, 0, 4)) {
 		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN delivery_notification_required BOOLEAN NOT NULL DEFAULT 0";
 		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN display_notification_required BOOLEAN NOT NULL DEFAULT 0";
-
+	}
+	if (version < makeVersion(1, 0, 5)) {
 		*session << "DROP VIEW IF EXISTS conference_event_view";
 
 		string query;
 		if (q->getBackend() == AbstractDb::Backend::Mysql)
-			query = "CREATE OR REPLACE VIEW conference_event_view AS";
+			query = "CREATE VIEW conference_event_view AS";
 		else
-			query = "CREATE VIEW IF NOT EXISTS conference_event_view AS";
+			query = "CREATE VIEW conference_event_view AS";
 		*session << query +
-			"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required"
+			"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required, security_alert" // TEST
 			"  FROM event"
 			"  LEFT JOIN conference_event ON conference_event.event_id = event.id"
 			"  LEFT JOIN conference_chat_message_event ON conference_chat_message_event.event_id = event.id"
 			"  LEFT JOIN conference_notified_event ON conference_notified_event.event_id = event.id"
 			"  LEFT JOIN conference_participant_device_event ON conference_participant_device_event.event_id = event.id"
 			"  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
-			"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id";
+			"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
+			"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id"; // TEST
 	}
 }
 
@@ -1555,7 +1557,7 @@ void MainDb::init () {
 		"CREATE TABLE IF NOT EXISTS conference_security_event ("
 		"  event_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 
-		"  security_alert VARCHAR(255) NOT NULL,"
+		"  security_alert TINYINT UNSIGNED NOT NULL,"
 
 		"  FOREIGN KEY (event_id)"
 		"    REFERENCES conference_event(event_id)"

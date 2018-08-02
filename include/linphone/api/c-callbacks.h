@@ -230,7 +230,7 @@ typedef void (*LinphoneChatRoomCbsStateChangedCb) (LinphoneChatRoom *cr, Linphon
 /**
  * Callback used to notify a security alert in the chat room.
  * @param[in] cr #LinphoneChatRoom object
- * @param[in] securityAlert the security alert
+ * @param[in] securityAlertType the security alert type
  */
 typedef void (*LinphoneChatRoomCbsSecurityAlertCb) (LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 

@@ -721,7 +721,7 @@ void ClientGroupChatRoom::onSecurityAlert (const shared_ptr<ConferenceSecurityEv
 	cout << "onSecurityAlert() securityAlert = " << event->getSecurityAlert() << endl;
 	d->addEvent(event);
 
-	// TODO notify the application for UI alert
+	// notify the application for UI alert
 	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_security_alert(cr, L_GET_C_BACK_PTR(event));
 }

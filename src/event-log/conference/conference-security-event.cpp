@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceSecurityEventPrivate : public ConferenceEventPrivate {
 public:
-	string securityAlert;
+	ConferenceSecurityEvent::SecurityAlertType securityAlertType;
 };
 
 // -----------------------------------------------------------------------------
@@ -38,7 +38,7 @@ public:
 ConferenceSecurityEvent::ConferenceSecurityEvent (
 	time_t creationTime,
 	const ConferenceId &conferenceId,
-	const string &securityAlert
+	SecurityAlertType securityAlertType
 ) : ConferenceEvent(
 	*new ConferenceSecurityEventPrivate,
 	Type::ConferenceSecurityAlert,
@@ -46,12 +46,12 @@ ConferenceSecurityEvent::ConferenceSecurityEvent (
 	conferenceId
 ) {
 	L_D();
-	d->securityAlert = securityAlert;
+	d->securityAlertType = securityAlertType;
 }
 
-const string &ConferenceSecurityEvent::getSecurityAlert () const {
+ConferenceSecurityEvent::SecurityAlertType ConferenceSecurityEvent::getSecurityAlertType () const {
 	L_D();
-	return d->securityAlert;
+	return d->securityAlertType;
 }
 
 LINPHONE_END_NAMESPACE

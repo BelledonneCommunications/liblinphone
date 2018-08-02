@@ -31,14 +31,26 @@ LINPHONE_BEGIN_NAMESPACE
 class ConferenceSecurityEventPrivate;
 
 class LINPHONE_PUBLIC ConferenceSecurityEvent : public ConferenceEvent {
+
 public:
+	enum SecurityAlertType {
+		/**
+		* Encrypting message to forbidden multidevice participant.
+		*/
+		MultideviceParticipant,
+		/**
+		* Trying to set lime PeerDeviceStatus using a new identity key.
+		*/
+		LimeIdentityKeyChanged
+	};
+
 	ConferenceSecurityEvent (
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		const std::string &securityAlert
+		SecurityAlertType securityAlertType
 	);
 
-	const std::string &getSecurityAlert () const;
+	SecurityAlertType getSecurityAlertType () const;
 
 private:
 	L_DECLARE_PRIVATE(ConferenceSecurityEvent);

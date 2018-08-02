@@ -166,10 +166,12 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 
 		// TODO if multidevice is forbidden send a ConferenceSecurityEvent
 		time_t securityAlertTime = time(nullptr);
-		const string &securityAlert = "Sending encrypted message to multidevice participant";
-		shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(securityAlertTime, chatRoom->getConferenceId(), securityAlert);
+		ConferenceSecurityEvent::SecurityAlertType securityAlertType = ConferenceSecurityEvent::SecurityAlertType::MultideviceParticipant;
+		shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(securityAlertTime, chatRoom->getConferenceId(), securityAlertType);
 		shared_ptr<ClientGroupChatRoom> confListener = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 		confListener->onSecurityAlert(securityEvent);
+
+		// TODO add policies to adapt behaviour when multiple devices
 		lError() << "Sending encrypted message to multidevice participant";
 		cout << "[ALERT] Sending encrypted message to multidevice participant (message rejected)" << endl;
 		return ChatMessageModifier::Result::Error;
