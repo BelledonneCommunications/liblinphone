@@ -3528,7 +3528,8 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 					if (limeV2Engine) {
 						try {
 							// If SAS verified lime peer is trusted, untrusted otherwise
-							limeV2Engine->getLimeManager()->set_peerIdentityVerifiedStatus(peerDeviceId, remoteIk_vector, authTokenVerified);
+							lime::PeerDeviceStatus peerDeviceStatus = authTokenVerified ? lime::PeerDeviceStatus::trusted : lime::PeerDeviceStatus::untrusted;
+							limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, peerDeviceStatus);
 							lInfo() << "LIMEv2 peer device " << peerDeviceId << " is now trusted";
 						} catch (const exception &e) {
 							// TODO Report the security issue to application level (chatroom event)

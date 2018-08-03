@@ -105,7 +105,13 @@ static void chat_room_state_changed (LinphoneChatRoom *cr, LinphoneChatRoomState
 }
 
 static void chat_room_security_alert (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
-	printf("Chatroom security alert detected\n");
+	printf("[TEST] Chatroom security alert detected from %s\n", linphone_address_as_string(linphone_event_log_get_security_alert_faulty_device(event_log)));
+
+	// TODO set the forbidden device to unsafe PeerDeviceStatus in LIMEv2
+
+	LinphoneCore *core = linphone_chat_room_get_core(cr);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_security_alerts++;
 }
 
 static void chat_room_subject_changed (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
@@ -4696,18 +4702,28 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_participant_devices_added, initialPauline1Stats.number_of_participant_devices_added + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participant_devices_added, initialLaureStats.number_of_participant_devices_added + 1, 3000));
 
+	// Check that the participants have received a security alert because Pauline2 is forbidden
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_security_alerts, initialMarieStats.number_of_security_alerts + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_security_alerts, initialPauline1Stats.number_of_security_alerts + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_security_alerts, initialLaureStats.number_of_security_alerts + 1, 3000));
+
+	// Check the security level was downgraded for Marie and Laure
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	// Check that the lowest security level is reached for everyone because of the security alert and Pauline2 set to unsafe status
+
 	// Laure sends a message to trigger a LIMEv2 security alert because maxNumberOfDevicePerParticipant has been exceeded
-	size_t nbEventsBeforeAlert = bctbx_list_size(linphone_chat_room_get_history_events(laureCr, 0));
 	const char *laureMessage = "I'm going to the cinema";
 	_send_message(laureCr, laureMessage);
 
+	// Check that Laure received another security alert because a multidevice participant was detected during encryption
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_security_alerts, initialLaureStats.number_of_security_alerts + 2, 3000));
+
 	// Check that the message was not received by Pauline1 or Laure
-	// TODO optimize
+	// TODO optimize and choose wether we are still allowed to send message during a security alert or not
 	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline1->stat.number_of_LinphoneMessageReceived, initialPauline1Stats.number_of_LinphoneMessageReceived + 3, 3000));
 	BC_ASSERT_FALSE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived, initialLaureStats.number_of_LinphoneMessageReceived + 3, 3000));
 
-	// TODO +2 = one event for sending chat message and one for security event
-	BC_ASSERT_EQUAL(bctbx_list_size(linphone_chat_room_get_history_events(laureCr, 0)), nbEventsBeforeAlert + 2, int, "%d");
 
 end:
 	// Clean local LIMEv2 databases
