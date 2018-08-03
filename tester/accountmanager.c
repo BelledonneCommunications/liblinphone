@@ -286,7 +286,7 @@ void account_create_on_db(Account *account, LinphoneProxyConfig *cfg, const char
 	// TODO manage phone alias if there is one
 
 	if (wait_for_until(lc,NULL,&creator->account_created,1,3000)==FALSE)
-		ms_fatal("Could not create account %s on db", linphone_proxy_config_get_identity(cfg));
+		ms_warning("Could not create account %s on db", linphone_proxy_config_get_identity(cfg));
 
 	LinphoneAuthInfo *ai = linphone_auth_info_new(username,NULL,password,NULL,domain,domain);
 	linphone_core_add_auth_info(lc,ai);
@@ -297,14 +297,14 @@ void account_create_on_db(Account *account, LinphoneProxyConfig *cfg, const char
 	linphone_account_creator_get_confirmation_key(creator);
 
 	if (wait_for_until(lc,NULL,&creator->confirmation_key,1,3000)==FALSE)
-		ms_fatal("Could not get confirmation key for account %s", linphone_proxy_config_get_identity(cfg));
+		ms_warning("Could not get confirmation key for account %s", linphone_proxy_config_get_identity(cfg));
 
 	// activate account
 	linphone_account_creator_cbs_set_activate_account(creator_cbs, account_activated_cb);
 	linphone_account_creator_activate_email_account_linphone(creator);
 
 	if (wait_for_until(lc,NULL,&creator->account_activated,1,3000))
-		ms_fatal("Could not activate account %s", linphone_proxy_config_get_identity(cfg));
+		ms_warning("Could not activate account %s", linphone_proxy_config_get_identity(cfg));
 
 	// TODO workaround
 	linphone_account_creator_set_proxy_config(creator, default_cfg);
