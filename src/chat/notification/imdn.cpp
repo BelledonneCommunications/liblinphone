@@ -212,20 +212,48 @@ void Imdn::send () {
 		return;
 
 	if (!deliveredMessages.empty() || !displayedMessages.empty()) {
-		auto imdnMessage = chatRoom->getPrivate()->createImdnMessage(deliveredMessages, displayedMessages);
-		sentImdnMessages.push_back(imdnMessage);
-		imdnMessage->getPrivate()->send();
-		if (!aggregationEnabled()) {
+		if (aggregationEnabled()) {
+			auto imdnMessage = chatRoom->getPrivate()->createImdnMessage(deliveredMessages, displayedMessages);
+			sentImdnMessages.push_back(imdnMessage);
+			imdnMessage->getPrivate()->send();
+		} else {
+			list<shared_ptr<ImdnMessage>> imdnMessages;
+			for (const auto &message : deliveredMessages) {
+				list<shared_ptr<ChatMessage>> l;
+				l.push_back(message);
+				imdnMessages.push_back(chatRoom->getPrivate()->createImdnMessage(l, list<shared_ptr<ChatMessage>>()));
+			}
+			for (const auto &message : displayedMessages) {
+				list<shared_ptr<ChatMessage>> l;
+				l.push_back(message);
+				imdnMessages.push_back(chatRoom->getPrivate()->createImdnMessage(list<shared_ptr<ChatMessage>>(), l));
+			}
+			for (const auto &message : imdnMessages) {
+				sentImdnMessages.push_back(message);
+				message->getPrivate()->send();
+			}
 			deliveredMessages.clear();
 			displayedMessages.clear();
 		}
 	}
 	if (!nonDeliveredMessages.empty()) {
-		auto imdnMessage = chatRoom->getPrivate()->createImdnMessage(nonDeliveredMessages);
-		sentImdnMessages.push_back(imdnMessage);
-		imdnMessage->getPrivate()->send();
-		if (!aggregationEnabled())
+		if (aggregationEnabled()) {
+			auto imdnMessage = chatRoom->getPrivate()->createImdnMessage(nonDeliveredMessages);
+			sentImdnMessages.push_back(imdnMessage);
+			imdnMessage->getPrivate()->send();
+		} else {
+			list<shared_ptr<ImdnMessage>> imdnMessages;
+			for (const auto &message : nonDeliveredMessages) {
+				list<MessageReason> l;
+				l.push_back(message);
+				imdnMessages.push_back(chatRoom->getPrivate()->createImdnMessage(l));
+			}
+			for (const auto &message : imdnMessages) {
+				sentImdnMessages.push_back(message);
+				message->getPrivate()->send();
+			}
 			nonDeliveredMessages.clear();
+		}
 	}
 }
 
