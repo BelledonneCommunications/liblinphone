@@ -188,6 +188,20 @@ LINPHONE_PUBLIC const char * linphone_friend_list_get_uri(const LinphoneFriendLi
 LINPHONE_PUBLIC void linphone_friend_list_set_uri(LinphoneFriendList *list, const char *uri);
 
 /**
+ * Get wheter the subscription of the friend list is bodyless or not.
+ * @param[in] list #LinphoneFriendList object.
+ * @return Wheter the subscription of the friend list is bodyless or not.
+**/
+LINPHONE_PUBLIC bool_t linphone_friend_list_is_subscription_bodyless(LinphoneFriendList *list);
+
+/**
+ * Set wheter the subscription of the friend list is bodyless or not.
+ * @param[in] list #LinphoneFriendList object.
+ * @param[in] a boolean telling if the subscription of the friend list is bodyless or not.
+**/
+LINPHONE_PUBLIC void linphone_friend_list_set_subscription_bodyless(LinphoneFriendList *list, bool_t bodyless);
+
+/**
  * Sets the revision from the last synchronization.
  * @param[in] list #LinphoneFriendList object.
  * @param[in] rev The revision

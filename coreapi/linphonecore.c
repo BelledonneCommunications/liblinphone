@@ -2173,7 +2173,8 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 		for (const bctbx_list_t *it = linphone_core_get_friends_lists(lc); it; it = bctbx_list_next(it)) {
 			LinphoneFriendList *list = reinterpret_cast<LinphoneFriendList *>(bctbx_list_get_data(it));
 			ms_message("Notify presence for list %p", list);
-			linphone_friend_list_notify_presence_received(list, lev, body);
+			if (list->event == lev)
+				linphone_friend_list_notify_presence_received(list, lev, body);
 		}
 	} else if (strcmp(notified_event, "conference") == 0) {
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);

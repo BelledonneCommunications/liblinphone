@@ -2287,7 +2287,7 @@ void MediaSessionPrivate::handleIceEvents (OrtpEvent *ev) {
 		iceAgent->updateIceStateInCallStats();
 	} else if (evt == ORTP_EVENT_ICE_GATHERING_FINISHED) {
 		if (!evd->info.ice_processing_successful)
-			lWarning() << "No STUN answer from [" << linphone_core_get_stun_server(q->getCore()->getCCore()) << "], continuing without STUN";
+			lWarning() << "No STUN answer from [" << linphone_nat_policy_get_stun_server(q->getPrivate()->getNatPolicy()) << "], continuing without STUN";
 		iceAgent->gatheringFinished();
 		switch (state) {
 			case CallSession::State::Updating:
