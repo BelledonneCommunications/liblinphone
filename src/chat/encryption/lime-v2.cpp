@@ -159,21 +159,19 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 		}
 	}
 
-	// TODO warning when multiple devices for the same participant
-	if (tooManyDevices) {
-		// get multidevice participants and set all their devices to untrusted ?
-		// or override its participant security level somehow
+	// TODO the PeerDeviceStatus of recipients could be tested here and the unsafe ones removed
 
-		// TODO if multidevice is forbidden send a ConferenceSecurityEvent
-		time_t securityAlertTime = time(nullptr);
+	// TODO add policies to adapt behaviour when multiple devices
+	if (tooManyDevices) {
+		// If too many devices for a participant, throw a local security alert event
+		lWarning() << "Sending encrypted message to multidevice participant";
+
 		ConferenceSecurityEvent::SecurityAlertType securityAlertType = ConferenceSecurityEvent::SecurityAlertType::MultideviceParticipant;
-		shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(securityAlertTime, chatRoom->getConferenceId(), securityAlertType);
+		IdentityAddress noFaultyDevice;
+		shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(time(nullptr), chatRoom->getConferenceId(), securityAlertType, noFaultyDevice);
 		shared_ptr<ClientGroupChatRoom> confListener = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 		confListener->onSecurityAlert(securityEvent);
 
-		// TODO add policies to adapt behaviour when multiple devices
-		lError() << "Sending encrypted message to multidevice participant";
-		cout << "[ALERT] Sending encrypted message to multidevice participant (message rejected)" << endl;
 		return ChatMessageModifier::Result::Error;
 	}
 

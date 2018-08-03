@@ -718,10 +718,8 @@ void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferencePart
 void ClientGroupChatRoom::onSecurityAlert (const shared_ptr<ConferenceSecurityEvent> &event) {
 	L_D();
 
-	cout << "onSecurityAlert() securityAlert = " << event->getSecurityAlert() << endl;
 	d->addEvent(event);
 
-	// notify the application for UI alert
 	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_security_alert(cr, L_GET_C_BACK_PTR(event));
 }
@@ -761,6 +759,21 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 		return;
 
 	d->addEvent(event);
+
+	// If LIMEv2 enabled and if too many devices for a participant, throw a local security alert event
+	int nbDevice = int(participant->getPrivate()->getDevices().size());
+	int maxNbDevicesPerParticipant = linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())), "encryption", "max_nb_device_per_participant", 1);
+
+	if (getCore()->limeV2Enabled() && nbDevice > maxNbDevicesPerParticipant) {
+		lWarning() << "LIMEv2 maximum number of devices exceeded for " << participant->getAddress();
+		const shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(
+			time(nullptr),
+			d->conferenceId,
+			ConferenceSecurityEvent::SecurityAlertType::MultideviceParticipant,
+			event->getDeviceAddress()
+		);
+		onSecurityAlert(securityEvent);
+	}
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_participant_device_added(cr, L_GET_C_BACK_PTR(event));

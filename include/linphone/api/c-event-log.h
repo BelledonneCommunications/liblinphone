@@ -141,6 +141,17 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_event_log_get_participant_addres
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_log_get_device_address (const LinphoneEventLog *event_log);
 
 // -----------------------------------------------------------------------------
+// ConferenceSecurityEvent.
+// -----------------------------------------------------------------------------
+
+/**
+ * Returns the faulty device address of a conference security event.
+ * @param[in] event_log A #LinphoneEventLog object.
+ * @return The address of the faulty device.
+ */
+LINPHONE_PUBLIC LinphoneAddress *linphone_event_log_get_security_alert_faulty_device (const LinphoneEventLog *event_log);
+
+// -----------------------------------------------------------------------------
 // ConferenceSubjectEvent.
 // -----------------------------------------------------------------------------
 

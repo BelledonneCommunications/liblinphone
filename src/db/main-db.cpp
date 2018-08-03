@@ -699,7 +699,8 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceSecurityEvent (
 	return make_shared<ConferenceSecurityEvent>(
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		static_cast<ConferenceSecurityEvent::SecurityAlertType>(row.get<int>(16))
+		static_cast<ConferenceSecurityEvent::SecurityAlertType>(row.get<int>(16)),
+		IdentityAddress(row.get<string>(17))
 	);
 }
 
@@ -943,11 +944,12 @@ long long MainDbPrivate::insertConferenceSecurityEvent (const shared_ptr<EventLo
 		return -1;
 
 	const int &securityAlertType = int(static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getSecurityAlertType());
+	const string &faultyDevice = static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getFaultyDevice().asString();
 
 	// insert security event into new table "conference_security_event"
 	soci::session *session = dbSession.getBackendSession();
-	*session << "INSERT INTO conference_security_event (event_id, security_alert)"
-		" VALUES (:eventId, :securityAlertType)", soci::use(eventId), soci::use(securityAlertType);
+	*session << "INSERT INTO conference_security_event (event_id, security_alert, faulty_device)"
+		" VALUES (:eventId, :securityAlertType, :faultyDevice)", soci::use(eventId), soci::use(securityAlertType), soci::use(faultyDevice);
 
 	return eventId;
 }
@@ -1110,7 +1112,7 @@ void MainDbPrivate::updateSchema () {
 		else
 			query = "CREATE VIEW conference_event_view AS";
 		*session << query +
-			"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required, security_alert" // TEST
+			"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device"
 			"  FROM event"
 			"  LEFT JOIN conference_event ON conference_event.event_id = event.id"
 			"  LEFT JOIN conference_chat_message_event ON conference_chat_message_event.event_id = event.id"
@@ -1118,7 +1120,7 @@ void MainDbPrivate::updateSchema () {
 			"  LEFT JOIN conference_participant_device_event ON conference_participant_device_event.event_id = event.id"
 			"  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
 			"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
-			"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id"; // TEST
+			"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
 	}
 }
 
@@ -1558,6 +1560,7 @@ void MainDb::init () {
 		"  event_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 
 		"  security_alert TINYINT UNSIGNED NOT NULL,"
+		"  faulty_device VARCHAR(255) NOT NULL,"
 
 		"  FOREIGN KEY (event_id)"
 		"    REFERENCES conference_event(event_id)"
@@ -1776,7 +1779,6 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 				break;
 
 			case EventLog::Type::ConferenceSecurityAlert:
-				cout << "adding security event to db" << endl;
 				eventId = d->insertConferenceSecurityEvent(eventLog);
 				break;
 
