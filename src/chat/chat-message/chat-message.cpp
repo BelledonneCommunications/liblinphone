@@ -510,12 +510,16 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::Encryption;
 	}
 
-	// If LIMEv2 is enabled, it sets the authenticatedFromAddress as the decypted CPIM From Address
-	// If not it must be set here as the SIP From address
+	// If LIMEv2 is enabled, it sets the authenticatedFromAddress as the decrypted CPIM From Address
+	// If LIMEv2 is disabled, the authenticatedFromAddress must be set here as the SIP From Address
+	// In case of clear message in group chat room the sender authentication is disabled
 	if (!core->limeV2Enabled()) {
 		if (q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Basic) {
 			IdentityAddress sipFromAddress = q->getSharedFromThis()->getFromAddress();
 			q->getSharedFromThis()->getPrivate()->setAuthenticatedFromAddress(sipFromAddress);
+		} else {
+			lInfo() << "Sender authentication disabled";
+			senderAuthenticationEnabled = false;
 		}
 	}
 

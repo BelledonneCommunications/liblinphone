@@ -169,14 +169,18 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 	if (dateTimeHeader)
 		message->getPrivate()->setTime(dateTimeHeader->getTime());
 
-	if (cpimFromAddress.isValid() && (cpimFromAddress == message->getAuthenticatedFromAddress())) {
-		message->getPrivate()->forceFromAddress(cpimFromAddress);
-		lInfo() << "[CPIM] Sender authentication sucessful";
-	}
-	else {
-		lWarning() << "[CPIM] Sender authentication failed";
-		errorCode = 488;
-		return ChatMessageModifier::Result::Error;
+	if (message->getPrivate()->senderAuthenticationEnabled) {
+		if (cpimFromAddress.isValid() && (cpimFromAddress == message->getAuthenticatedFromAddress())) {
+			message->getPrivate()->forceFromAddress(cpimFromAddress);
+			lInfo() << "[CPIM] Sender authentication successful";
+			cout << "[CPIM] Sender authentication successful" << endl;
+		}
+		else {
+			lWarning() << "[CPIM] Sender authentication failed";
+			cout << "[CPIM] Sender authentication failed" << endl;
+			errorCode = 488;
+			return ChatMessageModifier::Result::Error;
+		}
 	}
 
 	auto messageIdHeader = cpimMessage->getMessageHeader("Message-ID"); // TODO: For compatibility, to remove

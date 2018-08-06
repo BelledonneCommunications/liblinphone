@@ -212,6 +212,7 @@ private:
 	ConferenceId conferenceId;
 	IdentityAddress fromAddress;
 	IdentityAddress authenticatedFromAddress;
+	bool senderAuthenticationEnabled = true;
 	IdentityAddress toAddress;
 
 	ChatMessage::State state = ChatMessage::State::Idle;
