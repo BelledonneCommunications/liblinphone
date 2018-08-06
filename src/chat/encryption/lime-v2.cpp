@@ -159,12 +159,17 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 		}
 	}
 
-	// TODO the PeerDeviceStatus of recipients could be tested here and the unsafe ones removed
+	// Check PeerDeviceStatus of message recipients before encrypting the message
+	for (const auto &recipient : *recipients) {
+		if (belleSipLimeManager->get_peerDeviceStatus(recipient.deviceId) == lime::PeerDeviceStatus::unsafe) {
+			lWarning() << "Sending encrypted message to a chatroom with unsafe participant devices" << endl;
+		}
+	}
 
 	// TODO add policies to adapt behaviour when multiple devices
 	if (tooManyDevices) {
 		// If too many devices for a participant, throw a local security alert event
-		lWarning() << "Sending encrypted message to multidevice participant";
+		lWarning() << "Sending encrypted message to multidevice participant, message rejected";
 
 		ConferenceSecurityEvent::SecurityAlertType securityAlertType = ConferenceSecurityEvent::SecurityAlertType::MultideviceParticipant;
 		IdentityAddress noFaultyDevice;
