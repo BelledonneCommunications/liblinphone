@@ -3513,7 +3513,7 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 				// Get LIMEv2 context
 				LimeV2 *limeV2Engine;
 				if (proxy && linphone_core_lime_v2_enabled(linphone_proxy_config_get_core(proxy))) {
-					limeV2Engine = static_cast<LimeV2*>(q->getCore()->getEncryptionEngine());
+					limeV2Engine = static_cast<LimeV2 *>(q->getCore()->getEncryptionEngine());
 				} else {
 					lWarning() << "LIMEv2 disabled or proxy config unavailable, unable to set peer identity verified status";
 				}
