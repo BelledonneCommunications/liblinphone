@@ -23,6 +23,7 @@
 
 #include "address/address-p.h"
 #include "basic-to-client-group-chat-room.h"
+#include "chat/encryption/lime-v2.h"
 #include "c-wrapper/c-wrapper.h"
 #include "client-group-chat-room-p.h"
 #include "conference/handlers/remote-conference-event-handler-p.h"
