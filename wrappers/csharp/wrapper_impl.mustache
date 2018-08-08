@@ -32,6 +32,7 @@ namespace Linphone
 	/// </summary>
 	public class LinphoneWrapper
 	{
+		public const string VERSION = "{{version}}";
 #if __IOS__
 		public const string LIB_NAME = "linphone.framework/linphone";
 #else
@@ -297,7 +298,7 @@ namespace Linphone
 		/// {{{line}}}
 		{{/lines}}
 		{{/doc}}
-		{{name}} = {{value}},
+		{{name}} = {{{value}}},
 		{{/values}}
 	}
 
