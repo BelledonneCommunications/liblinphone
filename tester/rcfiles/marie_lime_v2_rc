@@ -4,6 +4,7 @@ basic_to_client_group_chat_room_migration_timer=180
 xmlrpc_server_url=http://subscribe.example.org/flexisip-account-manager/xmlrpc.php
 
 [encryption]
+lime_v2=1
 x3dh_server_url=http://x3dh.linphone.org/flexisip-account-manager/x3dh-25519.php
 x3dh_db_path=marie.x3dh.sqlite3
 lime_update_threshold=86400
@@ -32,7 +33,6 @@ reg_expires=3600
 reg_sendregister=1
 publish=0
 dial_escape_plus=0
-lime_v2=1
 
 [friend_0]
 url="Paupoche" <sip:pauline@sip.example.org>
