@@ -4573,6 +4573,8 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
 	LinphoneCoreManager *pauline1 = linphone_core_manager_create("pauline_lime_v2_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_lime_v2_rc");
+	LinphoneCoreManager *pauline2 = NULL;
+	LinphoneChatRoom *pauline2Cr = NULL;
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
@@ -4673,10 +4675,9 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
 		goto end;
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(laureLastMsg), marieMessage);
-	laureLastMsg = NULL;
 
 	// Create second device for Pauline
-	LinphoneCoreManager *pauline2 = linphone_core_manager_create("pauline_lime_v2_rc");
+	pauline2 = linphone_core_manager_create("pauline_lime_v2_rc");
 	stats initialPauline2Stats = pauline2->stat;
 	bctbx_list_t *newCoresManagerList = bctbx_list_append(NULL, pauline2);
 	bctbx_list_t *newCoresList = init_core_for_conference(newCoresManagerList);
@@ -4697,7 +4698,7 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 	participantsAddresses = NULL;
 
 	// Check that the chat room is correctly created on Pauline2's side and that she was added everywhere
-	LinphoneChatRoom *pauline2Cr = check_creation_chat_room_client_side(coresList, pauline2, &initialPauline2Stats, confAddr, initialSubject, 2, 0);
+	pauline2Cr = check_creation_chat_room_client_side(coresList, pauline2, &initialPauline2Stats, confAddr, initialSubject, 2, 0);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participant_devices_added, initialMarieStats.number_of_participant_devices_added + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_participant_devices_added, initialPauline1Stats.number_of_participant_devices_added + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participant_devices_added, initialLaureStats.number_of_participant_devices_added + 1, 3000));
@@ -4729,7 +4730,7 @@ end:
 	// Clean local LIMEv2 databases
 	linphone_core_delete_local_lime_v2_db(marie->lc);
 	linphone_core_delete_local_lime_v2_db(pauline1->lc);
-	linphone_core_delete_local_lime_v2_db(pauline2->lc);
+	if (pauline2) linphone_core_delete_local_lime_v2_db(pauline2->lc);
 	linphone_core_delete_local_lime_v2_db(laure->lc);
 
 	// Clean db from chat room
@@ -4742,7 +4743,7 @@ end:
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline1);
-	linphone_core_manager_destroy(pauline2);
+	if (pauline2) linphone_core_manager_destroy(pauline2);
 	linphone_core_manager_destroy(laure);
 }
 
