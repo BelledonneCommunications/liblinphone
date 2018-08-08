@@ -17,21 +17,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include "bctoolbox/crypto.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
+#include "chat/chat-room/client-group-chat-room.h"
 #include "content/content-manager.h"
 #include "content/header/header-param.h"
 #include "conference/participant-p.h"
 #include "conference/participant-device.h"
 #include "c-wrapper/c-wrapper.h"
+#include "event-log/conference/conference-security-event.h"
 #include "lime-v2.h"
 #include "private.h"
-
-// TODO remove me
-#include "lime.h"
-
-#include "event-log/conference/conference-security-event.h"
-#include "chat/chat-room/client-group-chat-room.h"
 
 using namespace std;
 
@@ -404,9 +401,9 @@ int LimeV2::downloadingFile (const shared_ptr<ChatMessage> &message, size_t offs
 		return -1;
 
 	if (!buffer || size == 0)
-		return lime_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, 0, NULL, NULL);
+		return bctbx_aes_gcm_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, 0, NULL, NULL);
 
-	return lime_decryptFile(
+	return bctbx_aes_gcm_decryptFile(
 		linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)),
 		(unsigned char *)fileKey,
 		size,
@@ -429,7 +426,7 @@ int LimeV2::uploadingFile (const shared_ptr<ChatMessage> &message, size_t offset
 		return -1;
 
 	if (!buffer || *size == 0)
-		return lime_encryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, 0, NULL, NULL);
+		return bctbx_aes_gcm_encryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, 0, NULL, NULL);
 
 	size_t file_size = fileTransferContent->getFileSize();
 	if (file_size == 0) {
@@ -438,7 +435,7 @@ int LimeV2::uploadingFile (const shared_ptr<ChatMessage> &message, size_t offset
 		*size -= (*size % 16);
 	}
 
-	return lime_encryptFile(
+	return bctbx_aes_gcm_encryptFile(
 		linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)),
 		(unsigned char *)fileKey,
 		*size,
