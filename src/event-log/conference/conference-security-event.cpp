@@ -40,7 +40,7 @@ ConferenceSecurityEvent::ConferenceSecurityEvent (
 	time_t creationTime,
 	const ConferenceId &conferenceId,
 	SecurityAlertType securityAlertType,
-	IdentityAddress faultyDevice
+	const IdentityAddress &faultyDevice
 ) : ConferenceEvent(
 	*new ConferenceSecurityEventPrivate,
 	Type::ConferenceSecurityAlert,
@@ -52,12 +52,26 @@ ConferenceSecurityEvent::ConferenceSecurityEvent (
 	d->faultyDevice = faultyDevice;
 }
 
+ConferenceSecurityEvent::ConferenceSecurityEvent (
+	time_t creationTime,
+	const ConferenceId &conferenceId,
+	SecurityAlertType securityAlertType
+) : ConferenceEvent(
+	*new ConferenceSecurityEventPrivate,
+	Type::ConferenceSecurityAlert,
+	creationTime,
+	conferenceId
+) {
+	L_D();
+	d->securityAlertType = securityAlertType;
+}
+
 ConferenceSecurityEvent::SecurityAlertType ConferenceSecurityEvent::getSecurityAlertType () const {
 	L_D();
 	return d->securityAlertType;
 }
 
-const IdentityAddress ConferenceSecurityEvent::getFaultyDevice () const {
+const IdentityAddress &ConferenceSecurityEvent::getFaultyDevice () const {
 	L_D();
 	return d->faultyDevice;
 }

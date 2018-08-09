@@ -48,11 +48,17 @@ public:
 		time_t creationTime,
 		const ConferenceId &conferenceId,
 		SecurityAlertType securityAlertType,
-		IdentityAddress faultyDevice
+		const IdentityAddress &faultyDevice
+	);
+
+	ConferenceSecurityEvent (
+		time_t creationTime,
+		const ConferenceId &conferenceId,
+		SecurityAlertType securityAlertType
 	);
 
 	SecurityAlertType getSecurityAlertType () const;
-	const IdentityAddress getFaultyDevice () const;
+	const IdentityAddress &getFaultyDevice () const;
 
 private:
 	L_DECLARE_PRIVATE(ConferenceSecurityEvent);

@@ -175,8 +175,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 		lWarning() << "Sending encrypted message to multidevice participant, message rejected";
 
 		ConferenceSecurityEvent::SecurityAlertType securityAlertType = ConferenceSecurityEvent::SecurityAlertType::MultideviceParticipant;
-		IdentityAddress noFaultyDevice;
-		shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(time(nullptr), chatRoom->getConferenceId(), securityAlertType, noFaultyDevice);
+		shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(time(nullptr), chatRoom->getConferenceId(), securityAlertType);
 		shared_ptr<ClientGroupChatRoom> confListener = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 		confListener->onSecurityAlert(securityEvent);
 
