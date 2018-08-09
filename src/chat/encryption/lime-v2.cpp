@@ -115,7 +115,6 @@ LimeV2::LimeV2 (const std::string &dbAccess, belle_http_provider_t *prov, Linpho
 	_dbAccess = dbAccess;
 	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(dbAccess, prov, lc));
 	lastLimeUpdate = linphone_config_get_int(lc->config, "lime", "last_lime_update_time", 0);
-	maxNbDevicePerParticipant = linphone_config_get_int(lc->config, "lime", "max_nb_device_per_participant", 1); // TODO discuss default value
 }
 
 string LimeV2::getX3dhServerUrl () const {
