@@ -205,8 +205,10 @@ public:
 	}
 
 	~LinphoneJavaBindings() {
-		JNIEnv *env = 0;
-		jvm->AttachCurrentThread(&env,NULL);
+		JNIEnv *env = ms_get_jni_env();
+                if (!env) {
+                        ms_error("cannot attach VM");
+                }
 
 		env->DeleteGlobalRef(ms_factory_class);
 
