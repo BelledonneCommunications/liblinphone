@@ -226,38 +226,6 @@ void Core::enableLimeV2 (bool enable) {
 		setEncryptionEngine(limeV2Engine);
 		d->registerListener(limeV2Engine);
 	}
-
-	// Create user if not exist and if enough information from proxy config
-	const bctbx_list_t *proxyConfigList = linphone_core_get_proxy_config_list(getCCore());
-	const bctbx_list_t *proxyConfig;
-	for(proxyConfig = proxyConfigList; proxyConfig != NULL; proxyConfig = proxyConfig->next) {
-		LinphoneProxyConfig *config = (LinphoneProxyConfig*)(proxyConfig->data);
-		if (!linphone_proxy_config_lime_v2_enabled(config))
-			continue;
-
-		const LinphoneAddress *linphoneAddress = linphone_proxy_config_get_contact(config);
-		if (linphoneAddress == nullptr)
-			return;
-
-		IdentityAddress identityAddress = IdentityAddress(linphone_address_as_string_uri_only(linphoneAddress));
-		string localDeviceId = identityAddress.asString();
-		if (localDeviceId == "")
-			return;
-
-		string x3dhServerUrl = limeV2Engine->getX3dhServerUrl();
-		lime::CurveId curve = limeV2Engine->getCurveId();
-
-		stringstream operation;
-		operation << "create user " << localDeviceId;
-		lime::limeCallback callback = limeV2Engine->setLimeCallback(operation.str());
-
-		try {
-			limeV2Engine->getLimeManager()->create_user(localDeviceId, x3dhServerUrl, curve, callback);
-		} catch (const exception &e) {
-			lInfo() << e.what() << " while creating lime user";
-			// TODO attempt update if necessary here too ?
-		}
-	}
 }
 
 void Core::updateLimeV2 (void) const {
