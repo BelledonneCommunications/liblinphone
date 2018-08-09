@@ -143,29 +143,33 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 		int nbDevice = 0;
 		const list<shared_ptr<ParticipantDevice>> devices = participant->getPrivate()->getDevices();
 		for (const shared_ptr<ParticipantDevice> &device : devices) {
-			nbDevice++;
 			recipients->emplace_back(device->getAddress().asString());
+			nbDevice++;
 		}
 		if (nbDevice > maxNbDevicePerParticipant) tooManyDevices = TRUE;
 	}
 
-	// Add potential other devices of the sender
+	// Add potential other devices of the sender participant
+	int nbDevice = 0;
 	const list<shared_ptr<ParticipantDevice>> senderDevices = chatRoom->getMe()->getPrivate()->getDevices();
 	for (const auto &senderDevice : senderDevices) {
 		if (senderDevice->getAddress() != chatRoom->getLocalAddress()) {
 			recipients->emplace_back(senderDevice->getAddress().asString());
-			tooManyDevices = TRUE;
+			nbDevice++;
+		}
+	}
+	if (nbDevice > maxNbDevicePerParticipant) tooManyDevices = TRUE;
+
+	// Refuse message in unsafe chatroom if not allowed
+	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
+		for (const auto &recipient : *recipients) {
+			if (belleSipLimeManager->get_peerDeviceStatus(recipient.deviceId) == lime::PeerDeviceStatus::unsafe) {
+				lWarning() << "Sending encrypted message to a chatroom with unsafe participant devices" << endl;
+				return ChatMessageModifier::Result::Error;
+			}
 		}
 	}
 
-	// Check PeerDeviceStatus of message recipients before encrypting the message
-	for (const auto &recipient : *recipients) {
-		if (belleSipLimeManager->get_peerDeviceStatus(recipient.deviceId) == lime::PeerDeviceStatus::unsafe) {
-			lWarning() << "Sending encrypted message to a chatroom with unsafe participant devices" << endl;
-		}
-	}
-
-	// TODO add policies to adapt behaviour when multiple devices
 	if (tooManyDevices) {
 		// If too many devices for a participant, throw a local security alert event
 		lWarning() << "Sending encrypted message to multidevice participant, message rejected";
