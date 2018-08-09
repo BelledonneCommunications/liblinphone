@@ -1,7 +1,7 @@
 [misc]
 xmlrpc_server_url=http://subscribe.example.org/flexisip-account-manager/xmlrpc.php
 
-[encryption]
+[lime]
 lime_v2=1
 x3dh_server_url=http://x3dh.linphone.org/flexisip-account-manager/x3dh-25519.php
 x3dh_db_path=pauline.x3dh.sqlite3

@@ -771,7 +771,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 
 	// If LIMEv2 enabled and if too many devices for a participant, throw a local security alert event
 	int nbDevice = int(participant->getPrivate()->getDevices().size());
-	int maxNbDevicesPerParticipant = linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())), "encryption", "max_nb_device_per_participant", 1);
+	int maxNbDevicesPerParticipant = linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())), "lime", "max_nb_device_per_participant", 1);
 
 	if (getCore()->limeV2Enabled() && nbDevice > maxNbDevicesPerParticipant) {
 		lWarning() << "LIMEv2 maximum number of devices exceeded for " << participant->getAddress();
