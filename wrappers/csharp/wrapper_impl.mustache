@@ -32,6 +32,7 @@ namespace Linphone
 	/// </summary>
 	public class LinphoneWrapper
 	{
+		public const string VERSION = "{{version}}";
 #if __IOS__
 		public const string LIB_NAME = "linphone.framework/linphone";
 #else
@@ -194,17 +195,21 @@ namespace Linphone
 			return null;
 		}
 
-		internal static IEnumerable<string> MarshalStringArray(IntPtr arrayPtr)
+		internal static IEnumerable<string> MarshalStringArray(IntPtr listPtr)
 		{
-			if (arrayPtr != IntPtr.Zero)
+			if (listPtr != IntPtr.Zero)
 			{
-				IntPtr ptr = Marshal.ReadIntPtr(arrayPtr);
+				IntPtr ptr = listPtr;
 				while (ptr != IntPtr.Zero)
 				{
-					string key = Marshal.PtrToStringAnsi(ptr);
+					IntPtr dataPtr = bctbx_list_get_data(ptr);
+					if (dataPtr == IntPtr.Zero)
+					{
+						break;
+					}
+					string key = Marshal.PtrToStringAuto(dataPtr);
 					yield return key;
-					arrayPtr = new IntPtr(arrayPtr.ToInt64() + IntPtr.Size);
-					ptr = Marshal.ReadIntPtr(arrayPtr);
+					ptr = bctbx_list_next(ptr);
 				}
 			}
 		}
@@ -293,7 +298,7 @@ namespace Linphone
 		/// {{{line}}}
 		{{/lines}}
 		{{/doc}}
-		{{name}} = {{value}},
+		{{name}} = {{{value}}},
 		{{/values}}
 	}
 
@@ -391,7 +396,7 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringUni(linphone_call_get_native_video_window_id(nativePtr));
+				return Marshal.PtrToStringAuto(linphone_call_get_native_video_window_id(nativePtr));
 			}
 			set
 			{
@@ -406,7 +411,7 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringUni(linphone_core_get_native_video_window_id(nativePtr));
+				return Marshal.PtrToStringAuto(linphone_core_get_native_video_window_id(nativePtr));
 			}
 			set
 			{
@@ -419,7 +424,7 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringUni(linphone_core_get_native_preview_window_id(nativePtr));
+				return Marshal.PtrToStringAuto(linphone_core_get_native_preview_window_id(nativePtr));
 			}
 			set
 			{
@@ -448,7 +453,7 @@ namespace Linphone
 			{
 				{{#is_string}}
 				IntPtr stringPtr = {{getter_c_name}}({{getter_nativePtr}});
-				return Marshal.PtrToStringAnsi(stringPtr);
+				return Marshal.PtrToStringAuto(stringPtr);
 				{{/is_string}}
 				{{#is_bool}}
 				return {{getter_c_name}}({{getter_nativePtr}}) != 0;
@@ -517,7 +522,7 @@ namespace Linphone
 		{
 			{{#is_string}}
 			IntPtr stringPtr = {{c_name}}({{nativePtr}}{{c_args}});
-			return Marshal.PtrToStringAnsi(stringPtr);
+			return Marshal.PtrToStringAuto(stringPtr);
 			{{/is_string}}
 			{{#is_bool}}
 			{{return}}{{c_name}}({{nativePtr}}{{c_args}}) == (char)0 ? false : true;

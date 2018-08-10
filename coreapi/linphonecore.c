@@ -1339,6 +1339,41 @@ static void certificates_config_read(LinphoneCore *lc) {
 	lc->sal->setTlsPostcheckCallback(_linphone_core_tls_postcheck_callback, lc);
 }
 
+static void bodyless_config_read(LinphoneCore *lc) {
+	const char *lists = lp_config_get_string(lc->config, "sip", "bodyless_lists", NULL);
+	if (!lists)
+		return;
+
+	char tmp[256] = {0};
+	char name[256];
+	char *p, *n;
+	strncpy(tmp, lists, sizeof(tmp)-1);
+	for(p = tmp; *p != '\0'; p++) {
+		if (*p==' ')
+			continue;
+
+		n = strchr(p,',');
+		if (n)
+			*n = '\0';
+		sscanf(p, "%s", name);
+		LinphoneAddress *addr = linphone_address_new(name);
+		if(!addr)
+			continue;
+
+		ms_message("Found bodyless friendlist %s", name);
+		LinphoneFriendList *friendList = linphone_core_create_friend_list(lc);
+		linphone_friend_list_set_rls_uri(friendList, name);
+		linphone_friend_list_set_display_name(friendList, linphone_address_get_username(addr));
+		linphone_address_unref(addr);
+		linphone_friend_list_set_subscription_bodyless(friendList, TRUE);
+		linphone_core_add_friend_list(lc, friendList);
+		if (!n)
+			break;
+
+		p = n;
+	}
+}
+
 static void sip_config_read(LinphoneCore *lc) {
 	char *contact;
 	const char *tmpstr;
@@ -1463,6 +1498,8 @@ static void sip_config_read(LinphoneCore *lc) {
 	lc->sal->setSupportedTags(lp_config_get_string(lc->config,"sip","supported","replaces, outbound, gruu"));
 	lc->sip_conf.save_auth_info = !!lp_config_get_int(lc->config, "sip", "save_auth_info", 1);
 	linphone_core_create_im_notif_policy(lc);
+
+	bodyless_config_read(lc);
 }
 
 static void rtp_config_read(LinphoneCore *lc) {
@@ -2702,6 +2739,25 @@ LinphoneFriendList* linphone_core_get_default_friend_list(const LinphoneCore *lc
 		return (LinphoneFriendList *)lc->friends_lists->data;
 	}
 	return NULL;
+}
+
+LinphoneFriendList *linphone_core_get_friend_list_by_name(const LinphoneCore *lc, const char *name) {
+	if (!lc)
+		return NULL;
+
+	LinphoneFriendList *ret = NULL;
+	bctbx_list_t *list_copy = lc->friends_lists;
+	while (list_copy) {
+		LinphoneFriendList *list = (LinphoneFriendList *)list_copy->data;
+		const char *list_name = linphone_friend_list_get_display_name(list);
+		if (list_name && strcmp(name, list_name) == 0) {
+			ret = list;
+			break;
+		}
+		list_copy = list_copy->next;
+	}
+
+	return ret;
 }
 
 void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
