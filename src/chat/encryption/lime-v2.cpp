@@ -516,8 +516,8 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 			lInfo() << e.what() << " while creating lime user";
 
 			// update keys if necessary
-			int limeUpdateThreshold = lp_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400);
-			if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) { // 24 hours = 86400 ms
+			int limeUpdateThreshold = lp_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
+			if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {
 				update(lpconfig);
 				lastLimeUpdate = ms_time(NULL);
 			} else {
