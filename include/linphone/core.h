@@ -5450,6 +5450,14 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_friends_lists(const Linph
 LINPHONE_PUBLIC LinphoneFriendList * linphone_core_get_default_friend_list(const LinphoneCore *lc);
 
 /**
+ * Retrieves the list of #LinphoneFriend from the core that has the given display name.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] name the name of the list
+ * @return the first #LinphoneFriendList object or NULL
+ */
+LINPHONE_PUBLIC LinphoneFriendList* linphone_core_get_friend_list_by_name(const LinphoneCore *lc, const char *name);
+
+/**
  * Retrieves a list of #LinphoneAddress sort and filter
  * @param[in] lc #LinphoneCore object
  * @param[in] filter Chars used for the filter*

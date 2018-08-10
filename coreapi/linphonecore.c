@@ -2739,6 +2739,25 @@ LinphoneFriendList* linphone_core_get_default_friend_list(const LinphoneCore *lc
 	return NULL;
 }
 
+LinphoneFriendList *linphone_core_get_friend_list_by_name(const LinphoneCore *lc, const char *name) {
+	if (!lc)
+		return NULL;
+
+	LinphoneFriendList *ret = NULL;
+	bctbx_list_t *list_copy = lc->friends_lists;
+	while (list_copy) {
+		LinphoneFriendList *list = (LinphoneFriendList *)list_copy->data;
+		const char *list_name = linphone_friend_list_get_display_name(list);
+		if (list_name && strcmp(name, list_name) == 0) {
+			ret = list;
+			break;
+		}
+		list_copy = list_copy->next;
+	}
+
+	return ret;
+}
+
 void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
 	bctbx_list_t *elem = bctbx_list_find(lc->friends_lists, list);
 	if (elem == NULL) return;
