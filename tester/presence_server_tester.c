@@ -1749,17 +1749,17 @@ static void simple_bodyless_list_subscription(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneFriendList *friendList = linphone_core_create_friend_list(marie->lc);
 	linphone_core_add_friend_list(marie->lc, friendList);
-	linphone_friend_list_set_rls_uri(friendList, "sip:friends@sipopen.example.org");
+	linphone_friend_list_set_rls_uri(friendList, "sip:friends@sip.example.org");
 	linphone_friend_list_set_display_name(friendList, "Friends");
 	linphone_friend_list_set_subscription_bodyless(friendList, TRUE);
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_NotifyPresenceReceived, 4, 4000));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_NotifyPresenceReceived, 4, 15000));
 	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(friendList)), 4, int, "%d");
-	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend1@sipopen.example.org"));
-	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend2@sipopen.example.org"));
-	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend3@sipopen.example.org"));
-	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend4@sipopen.example.org"));
-	BC_ASSERT_PTR_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend5@sipopen.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend1@sip.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend2@sip.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend3@sip.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend4@sip.example.org"));
+	BC_ASSERT_PTR_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend5@sip.example.org"));
 
 	linphone_friend_list_unref(friendList);
 	linphone_core_manager_destroy(marie);
@@ -1772,38 +1772,74 @@ static void multiple_bodyless_list_subscription(void) {
 	LinphoneFriendList *broList = linphone_core_create_friend_list(marie->lc);
 
 	linphone_core_add_friend_list(marie->lc, friendList);
-	linphone_friend_list_set_rls_uri(friendList, "sip:friends@sipopen.example.org");
+	linphone_friend_list_set_rls_uri(friendList, "sip:friends@sip.example.org");
 	linphone_friend_list_set_display_name(friendList, "Friends");
 	linphone_friend_list_set_subscription_bodyless(friendList, TRUE);
 
 	linphone_core_add_friend_list(marie->lc, buddyList);
-	linphone_friend_list_set_rls_uri(buddyList, "sip:buddies@sipopen.example.org");
+	linphone_friend_list_set_rls_uri(buddyList, "sip:buddies@sip.example.org");
 	linphone_friend_list_set_display_name(buddyList, "Buddies");
 	linphone_friend_list_set_subscription_bodyless(buddyList, TRUE);
 
 	linphone_core_add_friend_list(marie->lc, broList);
-	linphone_friend_list_set_rls_uri(broList, "sip:bros@sipopen.example.org");
+	linphone_friend_list_set_rls_uri(broList, "sip:bros@sip.example.org");
 	linphone_friend_list_set_display_name(broList, "Bros");
 	linphone_friend_list_set_subscription_bodyless(broList, TRUE);
 
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_NotifyPresenceReceived, 8, 8000));
 
 	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(friendList)), 4, int, "%d");
-	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend1@sipopen.example.org"));
-	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend2@sipopen.example.org"));
-	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend3@sipopen.example.org"));
-	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend4@sipopen.example.org"));
-	BC_ASSERT_PTR_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend5@sipopen.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend1@sip.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend2@sip.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend3@sip.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend4@sip.example.org"));
+	BC_ASSERT_PTR_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend5@sip.example.org"));
 
 	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(buddyList)), 3, int, "%d");
-	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(buddyList, "sip:buddy1@sipopen.example.org"));
-	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(buddyList, "sip:buddy2@sipopen.example.org"));
-	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(buddyList, "sip:buddy3@sipopen.example.org"));
-	BC_ASSERT_PTR_NULL(linphone_friend_list_find_friend_by_uri(buddyList, "sip:buddy4@sipopen.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(buddyList, "sip:buddy1@sip.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(buddyList, "sip:buddy2@sip.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(buddyList, "sip:buddy3@sip.example.org"));
+	BC_ASSERT_PTR_NULL(linphone_friend_list_find_friend_by_uri(buddyList, "sip:buddy4@sip.example.org"));
 
 	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(broList)), 1, int, "%d");
-	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(broList, "sip:bro@sipopen.example.org"));
-	BC_ASSERT_PTR_NULL(linphone_friend_list_find_friend_by_uri(broList, "sip:bro2@sipopen.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(broList, "sip:bro@sip.example.org"));
+	BC_ASSERT_PTR_NULL(linphone_friend_list_find_friend_by_uri(broList, "sip:bro2@sip.example.org"));
+
+	linphone_friend_list_unref(friendList);
+	linphone_friend_list_unref(buddyList);
+	linphone_friend_list_unref(broList);
+	linphone_core_manager_destroy(marie);
+}
+
+static void multiple_bodyless_list_subscription_with_rc(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_bodyless_rc");
+
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_NotifyPresenceReceived, 8, 8000));
+
+	LinphoneFriendList *friendList = linphone_core_get_friend_list_by_name(marie->lc, "friends");
+	LinphoneFriendList *buddyList = linphone_core_get_friend_list_by_name(marie->lc, "buddies");
+	LinphoneFriendList *broList = linphone_core_get_friend_list_by_name(marie->lc, "bros");
+
+	BC_ASSERT_PTR_NOT_NULL(friendList);
+	BC_ASSERT_PTR_NOT_NULL(buddyList);
+	BC_ASSERT_PTR_NOT_NULL(broList);
+
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(friendList)), 4, int, "%d");
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend1@sip.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend2@sip.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend3@sip.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend4@sip.example.org"));
+	BC_ASSERT_PTR_NULL(linphone_friend_list_find_friend_by_uri(friendList, "sip:friend5@sip.example.org"));
+
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(buddyList)), 3, int, "%d");
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(buddyList, "sip:buddy1@sip.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(buddyList, "sip:buddy2@sip.example.org"));
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(buddyList, "sip:buddy3@sip.example.org"));
+	BC_ASSERT_PTR_NULL(linphone_friend_list_find_friend_by_uri(buddyList, "sip:buddy4@sip.example.org"));
+
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(broList)), 1, int, "%d");
+	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(broList, "sip:bro@sip.example.org"));
+	BC_ASSERT_PTR_NULL(linphone_friend_list_find_friend_by_uri(broList, "sip:bro2@sip.example.org"));
 
 	linphone_friend_list_unref(friendList);
 	linphone_friend_list_unref(buddyList);
@@ -1843,6 +1879,7 @@ test_t presence_server_tests[] = {
 	TEST_NO_TAG("Extended notify only when subscribe then unsubscribe then re-subscribe 2", extended_notify_sub_unsub_sub2),
 	TEST_ONE_TAG("Simple bodyless list subscription", simple_bodyless_list_subscription, "bodyless"),
 	TEST_ONE_TAG("Multiple bodyless list subscription", multiple_bodyless_list_subscription, "bodyless"),
+	TEST_ONE_TAG("Multiple bodyless list subscription with rc", multiple_bodyless_list_subscription_with_rc, "bodyless"),
 };
 
 test_suite_t presence_server_test_suite = {"Presence using server", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
