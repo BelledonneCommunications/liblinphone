@@ -56,7 +56,7 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 		LinphoneAddress *server_addr = linphone_address_new(linphone_proxy_config_get_server_addr(proxy));
 		LinphoneAddress *route = linphone_address_new(linphone_proxy_config_get_route(proxy));
 		char  tunnel_ip[64];
-		char *public_ip, *public_ip2=NULL;
+		char *public_ip = NULL, *public_ip2 = NULL;
 		BC_ASSERT_FALSE(get_ip_from_hostname("tunnel.linphone.org",tunnel_ip,sizeof(tunnel_ip)));
 
 		if (!gruu) {
@@ -176,8 +176,8 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 #endif
 		end_call(pauline,marie);
 
-		ms_free(public_ip);
-		if(public_ip2 != NULL) ms_free(public_ip2);
+		if (public_ip) ms_free(public_ip);
+		if (public_ip2 != NULL) ms_free(public_ip2);
 		linphone_address_unref(server_addr);
 		linphone_address_unref(route);
 		linphone_core_manager_destroy(pauline);
