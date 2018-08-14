@@ -725,7 +725,7 @@ void ClientGroupChatRoom::onSecurityAlert (const shared_ptr<ConferenceSecurityEv
 	_linphone_chat_room_notify_security_alert(cr, L_GET_C_BACK_PTR(event));
 
 	// Try to set the faulty device PeerDeviceStatus to unsafe
-	if (getCore()->limeV2Enabled()) {
+	if (getCore()->limeV2Enabled() && event->getFaultyDevice().isValid()) {
 		LimeV2 *limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
 
 		// TODO has no effect if faulty device is unkown to LIMEv2

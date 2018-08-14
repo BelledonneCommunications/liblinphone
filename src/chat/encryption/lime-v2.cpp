@@ -169,15 +169,28 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 		}
 	}
 
+	// If too many devices for a participant, throw a local security alert event
 	if (tooManyDevices) {
-		// If too many devices for a participant, throw a local security alert event
 		lWarning() << "Sending encrypted message to multidevice participant, message rejected";
 
-		ConferenceSecurityEvent::SecurityAlertType securityAlertType = ConferenceSecurityEvent::SecurityAlertType::MultideviceParticipant;
-		shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(time(nullptr), chatRoom->getConferenceId(), securityAlertType);
+		// Check the last 2 events for security alerts before sending a new security event
+		bool recentSecurityAlert = false;
 		shared_ptr<ClientGroupChatRoom> confListener = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
-		confListener->onSecurityAlert(securityEvent);
+		list<shared_ptr<EventLog>> eventList = chatRoom->getHistory(2);
 
+		// If there is at least one security alert don't send a new one
+		for (const auto &event : eventList) {
+			if (event->getType() == ConferenceEvent::Type::ConferenceSecurityAlert) {
+				recentSecurityAlert = true;
+			}
+		}
+
+		// If there is no recent security alert send a new one
+		if (!recentSecurityAlert) {
+			ConferenceSecurityEvent::SecurityAlertType securityAlertType = ConferenceSecurityEvent::SecurityAlertType::MultideviceParticipant;
+			shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(time(nullptr), chatRoom->getConferenceId(), securityAlertType);
+			confListener->onSecurityAlert(securityEvent);
+		}
 		return ChatMessageModifier::Result::Error;
 	}
 

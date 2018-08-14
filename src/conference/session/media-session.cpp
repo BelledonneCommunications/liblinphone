@@ -3523,7 +3523,7 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 				char *peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
 
 				// TODO If mismatch = 0 set this peer as trusted with this Ik
-				// TODO If mismatch = 1 it means that the stored Ik was corrupted (identity theft)
+				// TODO If mismatch = 1 the Ik exchange went wrong (possible identity theft)
 				if (ms_zrtp_getAuxiliarySharedSecretMismatch(audioStream->ms.sessions.zrtp_context) == 0) {
 					if (limeV2Engine) {
 						try {
@@ -3532,15 +3532,16 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 							limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, peerDeviceStatus);
 							lInfo() << "LIMEv2 peer device " << peerDeviceId << " is now trusted";
 						} catch (const exception &e) {
+							// The stored IK doesn't correspond to the Ik we are trying to use here
 							// TODO Report the security issue to application level (chatroom event)
 							lError() << "LIMEv2 identity theft detected from " << peerDeviceId << " (" << e.what() << ")";
 						}
 					} else {
-						lError() << "Unable to get LIMEv2 context, unable to set peer identity verified status";
+						lError() << "Unable to get LIMEv2 context, unable to set peer device status";
 					}
 				} else {
 					// TODO Report the security issue to application level (chatroom event)
-					lError() << "LIMEv2 identity theft detected from " << peerDeviceId;
+					lError() << "LIMEv2 auxiliary secret mismatch: possible identity theft detected from " << peerDeviceId;
 				}
 				ms_free(peerDeviceId);
 			}
