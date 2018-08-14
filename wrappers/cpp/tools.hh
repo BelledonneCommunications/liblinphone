@@ -27,18 +27,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "object.hh"
 
 namespace linphone {
-	
+
 	class AbstractBctbxListWrapper {
 	public:
 		AbstractBctbxListWrapper(): mCList(NULL) {}
 		virtual ~AbstractBctbxListWrapper() {}
 		::bctbx_list_t *c_list() {return mCList;}
-		
+
 	protected:
 		::bctbx_list_t *mCList;
 	};
-	
-	
+
+
 	template <class T>
 	class ObjectBctbxListWrapper: public AbstractBctbxListWrapper {
 	public:
@@ -72,22 +72,22 @@ namespace linphone {
 			}
 			return cList;
 		}
-	
+
 	private:
 		static void unrefData(void *data) {
 			if (data != NULL) belle_sip_object_unref(data);
 		}
 	};
-	
-	
+
+
 	class StringBctbxListWrapper: public AbstractBctbxListWrapper {
 	public:
 		StringBctbxListWrapper(const std::list<std::string> &cppList);
 		virtual ~StringBctbxListWrapper();
 		static std::list<std::string> bctbxListToCppList(const ::bctbx_list_t *bctbxList);
 	};
-	
-	
+
+
 	template <class T, class U>
 	class StructBctbxListWrapper: public AbstractBctbxListWrapper {
 	public:
@@ -111,11 +111,11 @@ namespace linphone {
 			}
 			return cList;
 		}
-	
+
 	private:
 		static void deleteCStruct(U *cStruct) {delete cStruct;}
 	};
-	
+
 	class StringUtilities {
 	public:
 		static std::string cStringToCpp(const char *cstr);
@@ -123,7 +123,7 @@ namespace linphone {
 		static const char *cppStringToC(const std::string &cppstr);
 		static std::list<std::string> cStringArrayToCppList(const char **cArray);
 	};
-	
+
 	template <class T>
 	class StructWrapper {
 	public:
@@ -133,7 +133,7 @@ namespace linphone {
 		const void *ptr() const {
 			return &mStruct;
 		}
-		
+
 	private:
 		T mStruct;
 	};

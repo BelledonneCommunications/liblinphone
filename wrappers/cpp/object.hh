@@ -46,12 +46,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 namespace linphone {
-	
+
 	class Object: public std::enable_shared_from_this<Object> {
 	public:
 		Object(void *ptr, bool takeRef=true);
 		virtual ~Object();
-		
+
 	public:
 		template <class T>
 		void setData(const std::string &key, T &data) {
@@ -70,7 +70,7 @@ namespace linphone {
 		}
 		LINPHONECXX_PUBLIC void unsetData(const std::string &key);
 		LINPHONECXX_PUBLIC bool dataExists(const std::string &key);
-	
+
 	public:
 		template <class T>
 		static std::shared_ptr<T> cPtrToSharedPtr(void *ptr, bool takeRef=true) {
@@ -100,58 +100,61 @@ namespace linphone {
 		}
 		static void *sharedPtrToCPtr(const std::shared_ptr<const Object> &sharedPtr);
 
-	
+
 	private:
 		LINPHONECXX_PUBLIC std::map<std::string,void *> &getUserData() const;
 		static Object *getBackPtrFromCPtr(const void *ptr);
 		template <class T> static void deleteSharedPtr(std::shared_ptr<T> *ptr) {if (ptr != NULL) delete ptr;}
 		static void deleteString(std::string *str) {if (str != NULL) delete str;}
-	
+
 	protected:
 		void *mPrivPtr;
-	
+
 	private:
 		static const std::string sUserDataKey;
 	};
-	
-	
-	class Listener {};
-	
-	
+
+
+	class Listener {
+	public:
+		virtual ~Listener() = 0;
+	};
+
+
 	class ListenableObject: public Object {
 	protected:
 		ListenableObject(void *ptr, bool takeRef=true);
 		void setListener(const std::shared_ptr<Listener> &listener);
-	
+
 	public:
 		static std::shared_ptr<Listener> & getListenerFromObject(void *object);
-	
+
 	private:
 		static void deleteListenerPtr(std::shared_ptr<Listener> *ptr) {delete ptr;}
-	
+
 	private:
 		static std::string sListenerDataName;
 	};
-	
+
 	class MultiListenableObject: public Object {
 		friend class Factory;
-		
+
 	protected:
 		MultiListenableObject(void *ptr, bool takeRef=true);
 		virtual ~MultiListenableObject() {};
-		
+
 	protected:
 		void addListener(const std::shared_ptr<Listener> &listener);
 		void removeListener(const std::shared_ptr<Listener> &listener);
 		std::list<std::shared_ptr<Listener> > &getListeners() const;
-	
+
 	private:
 		static void deleteListenerList(std::list<std::shared_ptr<Listener> > *listeners) {delete listeners;}
-	
+
 	private:
 		static std::string sListenerListName;
 	};
-	
+
 };
 
 #endif // _LINPHONE_OBJECT_HH
