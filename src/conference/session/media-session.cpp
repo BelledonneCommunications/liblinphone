@@ -1672,7 +1672,12 @@ void MediaSessionPrivate::setupLimeIdentityKey (SalMediaDescription *md) {
 			return;
 		}
 		limeV2Engine = static_cast<LimeV2*>(q->getCore()->getEncryptionEngine());
-		limeV2Engine->getLimeManager()->get_selfIdentityKey(localDeviceId, Ik);
+		try {
+			limeV2Engine->getLimeManager()->get_selfIdentityKey(localDeviceId, Ik);
+		} catch (const exception &e) {
+			lError() << e.what() << " while setting up Ik for ZRTP auxiliary shared secret";
+			return;
+		}
 
 		if (Ik.empty()) {
 			lWarning() << "No identity key available, unable to send lime identity key for ZRTP auxiliary shared secret";
