@@ -470,7 +470,7 @@ struct _LinphoneNatPolicy {
 	void *user_data;
 	LinphoneCore *lc;
 	belle_sip_resolver_context_t *stun_resolver_context;
-	struct addrinfo *stun_addrinfo;
+	belle_sip_resolver_results_t *resolver_results;
 	char *stun_server;
 	char *stun_server_username;
 	char *ref;
