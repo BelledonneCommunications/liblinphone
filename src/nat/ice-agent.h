@@ -59,7 +59,9 @@ public:
 	bool isControlling () const;
 	bool prepare (const SalMediaDescription *localDesc, bool incomingOffer, bool allowGathering = true);
 	void prepareIceForStream (MediaStream *ms, bool createChecklist);
+	//Clear all local candidates and restart the ICE session
 	void resetSession (IceRole role);
+	//Restart the session but keeping previous local candidates
 	void restartSession (IceRole role);
 	void startConnectivityChecks ();
 	void stopIceForInactiveStreams (SalMediaDescription *desc);

@@ -267,34 +267,19 @@ void IceAgent::updateIceStateInCallStats () {
 	LinphoneCallStats *audioStats = mediaSession.getPrivate()->getStats(LinphoneStreamTypeAudio);
 	LinphoneCallStats *videoStats = mediaSession.getPrivate()->getStats(LinphoneStreamTypeVideo);
 	LinphoneCallStats *textStats = mediaSession.getPrivate()->getStats(LinphoneStreamTypeText);
-	IceSessionState sessionState = ice_session_state(iceSession);
-	if ((sessionState == IS_Completed) || ((sessionState == IS_Failed) && ice_session_has_completed_check_list(iceSession))) {
-		_linphone_call_stats_set_ice_state(audioStats, LinphoneIceStateNotActivated);
-		if (audioCheckList && mediaSession.getMediaParams()->audioEnabled())
-			updateIceStateInCallStatsForStream(audioStats, audioCheckList);
+	
+	_linphone_call_stats_set_ice_state(audioStats, LinphoneIceStateNotActivated);
+	if (audioCheckList && mediaSession.getMediaParams()->audioEnabled())
+		updateIceStateInCallStatsForStream(audioStats, audioCheckList);
 
-		_linphone_call_stats_set_ice_state(videoStats, LinphoneIceStateNotActivated);
-		if (videoCheckList && mediaSession.getMediaParams()->videoEnabled())
-			updateIceStateInCallStatsForStream(videoStats, videoCheckList);
+	_linphone_call_stats_set_ice_state(videoStats, LinphoneIceStateNotActivated);
+	if (videoCheckList && mediaSession.getMediaParams()->videoEnabled())
+		updateIceStateInCallStatsForStream(videoStats, videoCheckList);
 
-		_linphone_call_stats_set_ice_state(textStats, LinphoneIceStateNotActivated);
-		if (textCheckList && mediaSession.getMediaParams()->realtimeTextEnabled())
-			updateIceStateInCallStatsForStream(textStats, textCheckList);
-	} else if (sessionState == IS_Running) {
-		if (audioCheckList && mediaSession.getMediaParams()->audioEnabled())
-			_linphone_call_stats_set_ice_state(audioStats, LinphoneIceStateInProgress);
-		if (videoCheckList && mediaSession.getMediaParams()->videoEnabled())
-			_linphone_call_stats_set_ice_state(videoStats, LinphoneIceStateInProgress);
-		if (textCheckList && mediaSession.getMediaParams()->realtimeTextEnabled())
-			_linphone_call_stats_set_ice_state(textStats, LinphoneIceStateInProgress);
-	} else {
-		if (audioCheckList && mediaSession.getMediaParams()->audioEnabled())
-			_linphone_call_stats_set_ice_state(audioStats, LinphoneIceStateFailed);
-		if (videoCheckList && mediaSession.getMediaParams()->videoEnabled())
-			_linphone_call_stats_set_ice_state(videoStats, LinphoneIceStateFailed);
-		if (textCheckList && mediaSession.getMediaParams()->realtimeTextEnabled())
-			_linphone_call_stats_set_ice_state(textStats, LinphoneIceStateFailed);
-	}
+	_linphone_call_stats_set_ice_state(textStats, LinphoneIceStateNotActivated);
+	if (textCheckList && mediaSession.getMediaParams()->realtimeTextEnabled())
+		updateIceStateInCallStatsForStream(textStats, textCheckList);
+		
 	lInfo() << "CallSession [" << &mediaSession << "] New ICE state: audio: [" << linphone_ice_state_to_string(linphone_call_stats_get_ice_state(audioStats)) <<
 		"]    video: [" << linphone_ice_state_to_string(linphone_call_stats_get_ice_state(videoStats)) <<
 		"]    text: [" << linphone_ice_state_to_string(linphone_call_stats_get_ice_state(textStats)) << "]";
@@ -716,11 +701,21 @@ bool IceAgent::iceParamsFoundInRemoteMediaDescription (const SalMediaDescription
 }
 
 void IceAgent::updateIceStateInCallStatsForStream (LinphoneCallStats *stats, IceCheckList *cl) {
-	if (ice_check_list_state(cl) != ICL_Completed) {
-		_linphone_call_stats_set_ice_state(stats, LinphoneIceStateFailed);
-		return;
+	IceCheckListState state = ice_check_list_state(cl);
+	switch (state){
+		case ICL_Failed:
+			_linphone_call_stats_set_ice_state(stats, LinphoneIceStateFailed);
+		break;
+		case ICL_Running:
+			_linphone_call_stats_set_ice_state(stats, LinphoneIceStateInProgress);
+		break;
+		case ICL_Completed:
+			goto set_ice_connection_type;
+		break;
 	}
+	return;
 
+set_ice_connection_type:
 	switch (ice_check_list_selected_valid_candidate_type(cl)) {
 		case ICT_HostCandidate:
 			_linphone_call_stats_set_ice_state(stats, LinphoneIceStateHostConnection);
