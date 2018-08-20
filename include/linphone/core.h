@@ -5092,6 +5092,20 @@ LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_create_client_group_chat_room(L
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_get_chat_room(LinphoneCore *lc, const LinphoneAddress *addr);
 
 /**
+ * Get a basic chat room. If it does not exist yet, it will be created.
+ * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * @param lc the linphone core
+ * @param peer_addr a linphone address.
+ * @param local_addr a linphone address.
+ * @return #LinphoneChatRoom where messaging can take place.
+**/
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_get_chat_room_2(
+	LinphoneCore *lc,
+	const LinphoneAddress *peer_addr,
+	const LinphoneAddress *local_addr
+);
+
+/**
  * Get a basic chat room for messaging from a sip uri like sip:joe@sip.linphone.org. If it does not exist yet, it will be created.
  * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
  * @param lc A #LinphoneCore object
