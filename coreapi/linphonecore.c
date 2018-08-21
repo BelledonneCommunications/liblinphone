@@ -2216,7 +2216,8 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 	} else if (strcmp(notified_event, "conference") == 0) {
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
 		char *resourceAddrStr = linphone_address_as_string_uri_only(resource);
-		if (strcmp(resourceAddrStr, linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc))) == 0) {
+		const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc));
+		if (factoryUri && (strcmp(resourceAddrStr, factoryUri) == 0)) {
 			bctbx_free(resourceAddrStr);
 			L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(L_GET_CPP_PTR_FROM_C_OBJECT(body));
 			return;
