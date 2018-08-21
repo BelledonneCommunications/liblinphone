@@ -33,6 +33,7 @@ add_custom_command(OUTPUT include/linphone++/linphone.hh src/linphone++.cc
 	class_impl.mustache
 	enums_header.mustache
 	main_header.mustache
+	${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml/index.xml
 	linphone-doc
 )
 
