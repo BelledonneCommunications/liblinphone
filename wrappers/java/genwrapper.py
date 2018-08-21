@@ -176,6 +176,7 @@ class JavaTranslator(object):
         methodDict['return_keyword'] = ''
         methodDict['convertInputClassArrayToLongArray'] = False
         methodDict['name'] = name
+        methodDict['name_native'] = name
         methodDict['exception'] = False
         methodDict['enumCast'] = False
         methodDict['classCast'] = False
@@ -212,6 +213,11 @@ class JavaTranslator(object):
         methodDict['convertInputClassArrayToLongArray'] = False
 
         methodDict['name'] = _method.name.to_camel_case(lower=True)
+        methodDict['name_native'] = methodDict['name']
+
+        if _method.name.to_c() == 'linphone_core_get_chat_room_2':
+            methodDict['name_native'] += "2"
+
         methodDict['isNotGetCore'] = not methodDict['name'] == 'getCore'
         methodDict['hasCoreAccessor'] = _hasCoreAccessor
         methodDict['exception'] = self.throws_exception(_method.returnType)
@@ -253,6 +259,9 @@ class JavaTranslator(object):
         methodDict['hasNormalReturn'] = not methodDict['hasListReturn'] and not methodDict['hasStringReturn'] and not methodDict['hasByteArrayReturn']
         methodDict['name'] = 'Java_' + self.jni_package + className + 'Impl_' + _method.name.translate(self.nameTranslator)
         methodDict['notStatic'] = not static
+
+        if _method.name.to_c() == 'linphone_core_get_chat_room_2':
+            methodDict['name'] += "2"
 
         if _method.name.to_c() == 'linphone_factory_create_core':
             methodDict['c_name'] = 'linphone_factory_create_core_3'

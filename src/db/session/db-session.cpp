@@ -258,7 +258,7 @@ long long DbSession::resolveId (const soci::row &row, int col) const {
 time_t DbSession::getTime (const soci::row &row, int col) const {
 	L_D();
 
-	tm t = row.get<tm>(col);
+	tm t = row.get<tm>((size_t)col);
 	switch (d->backend) {
 		case DbSessionPrivate::Backend::Mysql:
 			return mktime(&t); // Local time to UTC. For Mysql the local time is used, not a problem.
