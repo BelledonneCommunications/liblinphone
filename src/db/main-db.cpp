@@ -233,12 +233,6 @@ static string buildSqlEventFilter (
 // Misc helpers.
 // -----------------------------------------------------------------------------
 
-time_t MainDbPrivate::getTmAsTimeT (const tm &t) {
-	tm t2 = t;
-	t2.tm_isdst = 0;
-	return Utils::getTmAsTimeT(t2);
-}
-
 shared_ptr<AbstractChatRoom> MainDbPrivate::findChatRoom (const ChatRoomId &chatRoomId) const {
 	L_Q();
 	shared_ptr<AbstractChatRoom> chatRoom = q->getCore()->findChatRoom(chatRoomId);
@@ -629,7 +623,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 		dChatMessage->forceFromAddress(IdentityAddress(row.get<string>(3)));
 		dChatMessage->forceToAddress(IdentityAddress(row.get<string>(4)));
 
-		dChatMessage->setTime(MainDbPrivate::getTmAsTimeT(row.get<tm>(5)));
+		dChatMessage->setTime(dbSession.getTime(row, 5));
 		dChatMessage->setImdnMessageId(row.get<string>(6));
 		dChatMessage->setPositiveDeliveryNotificationRequired(!!row.get<int>(14));
 		dChatMessage->setDisplayNotificationRequired(!!row.get<int>(15));
@@ -2025,7 +2019,7 @@ list<MainDb::ParticipantState> MainDb::getChatMessageParticipantsByImdnState (
 
 		list<MainDb::ParticipantState> result;
 		for (const auto &row : rows)
-			result.emplace_back(IdentityAddress(row.get<string>(0)), state, MainDbPrivate::getTmAsTimeT(row.get<tm>(1)));
+			result.emplace_back(IdentityAddress(row.get<string>(0)), state, d->dbSession.getTime(row, 1));
 		return result;
 	};
 }
@@ -2377,8 +2371,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 				continue;
 			}
 
-			tm creationTime = row.get<tm>(3);
-			tm lastUpdateTime = row.get<tm>(4);
+			time_t creationTime = d->dbSession.getTime(row, 3);
+			time_t lastUpdateTime = d->dbSession.getTime(row, 4);
 			int capabilities = row.get<int>(5);
 			string subject = row.get<string>(6, "");
 			unsigned int lastNotifyId = getBackend() == Backend::Mysql
@@ -2475,8 +2469,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 				continue; // Not fetched.
 
 			AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
-			dChatRoom->setCreationTime(MainDbPrivate::getTmAsTimeT(creationTime));
-			dChatRoom->setLastUpdateTime(MainDbPrivate::getTmAsTimeT(lastUpdateTime));
+			dChatRoom->setCreationTime(creationTime);
+			dChatRoom->setLastUpdateTime(lastUpdateTime);
 
 			lInfo() << "Found chat room in DB: (peer=" <<
 				chatRoomId.getPeerAddress().asString() << ", local=" << chatRoomId.getLocalAddress().asString() << ").";

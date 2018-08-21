@@ -60,6 +60,8 @@ public:
 
 	long long resolveId (const soci::row &row, int col) const;
 
+	std::time_t getTime (const soci::row &row, int col) const;
+
 private:
 	DbSessionPrivate *mPrivate;
 
