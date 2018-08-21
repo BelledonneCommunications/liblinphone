@@ -200,30 +200,31 @@ time_t Utils::getTmAsTimeT (const tm &time) {
 	time_t result;
 
 	#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
-		long adjust_timezone;
+		long adjustTimezone;
 	#else
-		time_t adjust_timezone;
+		time_t adjustTimezone;
 	#endif
 
 	#if TARGET_IPHONE_SIMULATOR
 		result = timegm(&const_cast<tm &>(time));
-		adjust_timezone = 0;
+		adjustTimezone = 0;
 	#else
+		// mktime uses local time => It's necessary to adjust the timezone to get an UTC time.
 		result = mktime(&const_cast<tm &>(time));
 
 		#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
-			_get_timezone(&adjust_timezone);
+			_get_timezone(&adjustTimezone);
 		#else
-			adjust_timezone = timezone;
+			adjustTimezone = timezone;
 		#endif
 	#endif
 
-	if (result == (time_t)-1) {
-		lError() << "mktime failed: " << strerror(errno);
-		return (time_t)-1;
+	if (result == time_t(-1)) {
+		lError() << "timegm/mktime failed: " << strerror(errno);
+		return time_t(-1);
 	}
 
-	return result - (time_t)adjust_timezone;
+	return result - time_t(adjustTimezone);
 }
 
 // -----------------------------------------------------------------------------
