@@ -215,7 +215,7 @@ class JavaTranslator(object):
         methodDict['name'] = _method.name.to_camel_case(lower=True)
         methodDict['name_native'] = methodDict['name']
 
-        if _method.name.to_c() == 'linphone_core_get_chat_room_2':
+        if _method.name.to_c()[-1] == '2':
             methodDict['name_native'] += "2"
 
         methodDict['isNotGetCore'] = not methodDict['name'] == 'getCore'
@@ -260,7 +260,7 @@ class JavaTranslator(object):
         methodDict['name'] = 'Java_' + self.jni_package + className + 'Impl_' + _method.name.translate(self.nameTranslator)
         methodDict['notStatic'] = not static
 
-        if _method.name.to_c() == 'linphone_core_get_chat_room_2':
+        if _method.name.to_c()[-1] == '2':
             methodDict['name'] += "2"
 
         if _method.name.to_c() == 'linphone_factory_create_core':
