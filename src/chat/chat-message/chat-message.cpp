@@ -575,8 +575,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	}
 
 	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
-	Address me(linphone_core_get_identity(core->getCCore()));
-	if (me.weakEqual(q->getFromAddress()))
+	if (Address(chatRoom->getLocalAddress()).weakEqual(q->getFromAddress()))
 		setDirection(ChatMessage::Direction::Outgoing);
 
 	// Check if this is a duplicate message.
