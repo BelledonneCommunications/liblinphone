@@ -428,6 +428,7 @@ void Java_{{jniPackage}}{{className}}Impl_removeListener(JNIEnv* env, jobject th
 			break;
 		}
 	}
+	{{#isNotConstList}}bctbx_list_free(cbs_list);{{/isNotConstList}}
 }
 {{/isMultiListener}}
 {{/interfaces}}
@@ -474,7 +475,7 @@ jobject Java_{{jni_package}}CoreImpl_getMediastreamerFactory(JNIEnv *env, jobjec
 		{{/isObjList}}
 	}
 	{{/lists}}{{#hasListReturn}}
-	const bctbx_list_t *list = {{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}});
+	{{#isConstList}}const {{/isConstList}}bctbx_list_t *list = {{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}});
 	size_t count = bctbx_list_size(list);
 	{{#isRealObjectArray}}
 	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
@@ -493,6 +494,7 @@ jobject Java_{{jni_package}}CoreImpl_getMediastreamerFactory(JNIEnv *env, jobjec
 		}
 		list = bctbx_list_next(list);
 	}
+	{{#isNotConstList}}bctbx_list_free(list);{{/isNotConstList}}
 	{{/hasListReturn}}{{#hasByteArrayReturn}}
 	{{c_type_return}} jni_result = {{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}});
 	if (!jni_result) return NULL;

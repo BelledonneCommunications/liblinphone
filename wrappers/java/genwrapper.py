@@ -259,6 +259,8 @@ class JavaTranslator(object):
         methodDict['hasNormalReturn'] = not methodDict['hasListReturn'] and not methodDict['hasStringReturn'] and not methodDict['hasByteArrayReturn']
         methodDict['name'] = 'Java_' + self.jni_package + className + 'Impl_' + _method.name.translate(self.nameTranslator)
         methodDict['notStatic'] = not static
+        methodDict['isConstList'] = _method.returnType.isconst
+        methodDict['isNotConstList'] = not _method.returnType.isconst
 
         if _method.name.to_c()[-1] == '2':
             methodDict['name'] += "2"
