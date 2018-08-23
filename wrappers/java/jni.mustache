@@ -428,7 +428,6 @@ void Java_{{jniPackage}}{{className}}Impl_removeListener(JNIEnv* env, jobject th
 			break;
 		}
 	}
-	{{#isNotConstList}}bctbx_list_free(cbs_list);{{/isNotConstList}}
 }
 {{/isMultiListener}}
 {{/interfaces}}
