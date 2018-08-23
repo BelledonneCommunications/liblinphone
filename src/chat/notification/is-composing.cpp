@@ -164,8 +164,8 @@ int IsComposing::refreshTimerExpired () {
 }
 
 int IsComposing::remoteRefreshTimerExpired (const string &uri) {
-	stopRemoteRefreshTimer(uri);
 	listener->onIsRemoteComposingStateChanged(Address(uri), false);
+	stopRemoteRefreshTimer(uri);
 	return BELLE_SIP_STOP;
 }
 
