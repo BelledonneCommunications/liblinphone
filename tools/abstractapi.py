@@ -869,6 +869,7 @@ class CParser(object):
 			absType.isref = cType.completeType.endswith('*')
 		elif cType.ctype == self.cListType:
 			absType = ListType(cType.containedType)
+			absType.isconst = cType.completeType.startswith('const ')
 		elif cType.ctype.endswith('Mask'):
 			absType = BaseType('integer', isUnsigned=True)
 		else:
