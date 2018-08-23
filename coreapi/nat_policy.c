@@ -41,7 +41,7 @@ static void linphone_nat_policy_destroy(LinphoneNatPolicy *policy) {
 	if (policy->ref) belle_sip_free(policy->ref);
 	if (policy->stun_server) belle_sip_free(policy->stun_server);
 	if (policy->stun_server_username) belle_sip_free(policy->stun_server_username);
-	if (policy->stun_addrinfo) bctbx_freeaddrinfo(policy->stun_addrinfo);
+	if (policy->resolver_results) belle_sip_object_unref(policy->resolver_results);
 	if (policy->stun_resolver_context) {
 		belle_sip_resolver_context_cancel(policy->stun_resolver_context);
 		belle_sip_object_unref(policy->stun_resolver_context);
@@ -185,9 +185,9 @@ void linphone_nat_policy_set_stun_server(LinphoneNatPolicy *policy, const char *
 	if (new_stun_server != NULL) {
 		policy->stun_server = new_stun_server;
 	}
-	if (policy->stun_addrinfo) {
-		bctbx_freeaddrinfo(policy->stun_addrinfo);
-		policy->stun_addrinfo = NULL;
+	if (policy->resolver_results) {
+		belle_sip_object_unref(policy->resolver_results);
+		policy->resolver_results = NULL;
 	}
 	if (policy->stun_resolver_context){
 		belle_sip_resolver_context_cancel(policy->stun_resolver_context);
@@ -213,18 +213,21 @@ void linphone_nat_policy_set_stun_server_username(LinphoneNatPolicy *policy, con
 	if (new_username != NULL) policy->stun_server_username = new_username;
 }
 
-static void stun_server_resolved(void *data, const char *name, struct addrinfo *addrinfo, uint32_t ttl) {
+static void stun_server_resolved(void *data, belle_sip_resolver_results_t *results) {
 	LinphoneNatPolicy *policy = (LinphoneNatPolicy *)data;
-	if (policy->stun_addrinfo) {
-		bctbx_freeaddrinfo(policy->stun_addrinfo);
-		policy->stun_addrinfo = NULL;
+
+	if (policy->resolver_results) {
+		belle_sip_object_unref(policy->resolver_results);
+		policy->resolver_results = NULL;
 	}
-	if (addrinfo) {
+	
+	if (belle_sip_resolver_results_get_addrinfos(results)) {
 		ms_message("Stun server resolution successful.");
+		belle_sip_object_ref(results);
+		policy->resolver_results = results;
 	} else {
 		ms_warning("Stun server resolution failed.");
 	}
-	policy->stun_addrinfo = addrinfo;
 	if (policy->stun_resolver_context){
 		belle_sip_object_unref(policy->stun_resolver_context);
 		policy->stun_resolver_context = NULL;
@@ -266,17 +269,17 @@ const struct addrinfo * linphone_nat_policy_get_stun_server_addrinfo(LinphoneNat
 	 *  - if no cached value exists, block for a short time; this case must be unprobable because the resolution will be asked each
 	 *    time the stun server value is changed.
 	 */
-	if (linphone_nat_policy_stun_server_activated(policy) && (policy->stun_addrinfo == NULL)) {
+	if (linphone_nat_policy_stun_server_activated(policy) && (policy->resolver_results == NULL)) {
 		int wait_ms = 0;
 		int wait_limit = 1000;
 		linphone_nat_policy_resolve_stun_server(policy);
-		while ((policy->stun_addrinfo == NULL) && (policy->stun_resolver_context != NULL) && (wait_ms < wait_limit)) {
+		while ((policy->resolver_results == NULL) && (policy->stun_resolver_context != NULL) && (wait_ms < wait_limit)) {
 			policy->lc->sal->iterate();
 			ms_usleep(50000);
 			wait_ms += 50;
 		}
 	}
-	return policy->stun_addrinfo;
+	return policy->resolver_results ? belle_sip_resolver_results_get_addrinfos(policy->resolver_results) : NULL;
 }
 
 LinphoneNatPolicy * linphone_core_create_nat_policy(LinphoneCore *lc) {
