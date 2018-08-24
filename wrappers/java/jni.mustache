@@ -477,23 +477,26 @@ jobject Java_{{jni_package}}CoreImpl_getMediastreamerFactory(JNIEnv *env, jobjec
 	}
 	{{/lists}}{{#hasListReturn}}
 	{{#isConstList}}const {{/isConstList}}bctbx_list_t *list = {{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}});
+	bctbx_list_t *list_it = (bctbx_list_t *)list;
 	size_t count = bctbx_list_size(list);
 	{{#isRealObjectArray}}
 	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
 	jobjectArray jni_list_result = env->NewObjectArray((int)count, ljb->{{objectCPrefix}}_class, NULL);{{/isRealObjectArray}}
 	{{#isStringObjectArray}}jobjectArray jni_list_result = env->NewObjectArray((int)count, env->FindClass("java/lang/String"), env->NewStringUTF(""));{{/isStringObjectArray}}
-	for (size_t i = 0; i < count; i++) {
+	int i = 0;
+	while (list_it != NULL) {
 		{{#isRealObjectArray}}
-		{{objectClassCName}}* c_object = ({{objectClassCName}}*)list->data;
-		jobject object = get{{objectClassName}}(env, c_object, TRUE); //TODO
+		{{objectClassCName}}* c_object = ({{objectClassCName}}*)list_it->data;
+		jobject object = get{{objectClassName}}(env, c_object, {{takeRefOnReturnedObject}});
 		{{/isRealObjectArray}}
-		{{#isStringObjectArray}}const char *cstring = (const char *)list->data;
+		{{#isStringObjectArray}}const char *cstring = (const char *)list_it->data;
 		jstring object = cstring ? get_jstring_from_char(env, cstring) : 0;{{/isStringObjectArray}}
 		if (object != 0) {
 			env->SetObjectArrayElement(jni_list_result, (int)i, object);
 			{{#isRealObjectArray}}env->DeleteLocalRef(object);{{/isRealObjectArray}}
 		}
-		list = bctbx_list_next(list);
+		list_it = bctbx_list_next(list_it);
+		i += 1;
 	}
 	{{#isNotConstList}}bctbx_list_free(list);{{/isNotConstList}}
 	{{/hasListReturn}}{{#hasByteArrayReturn}}

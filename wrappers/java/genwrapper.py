@@ -284,6 +284,9 @@ class JavaTranslator(object):
             return {'notEmpty': False}
 
         if methodDict['hasListReturn']:
+            if isinstance(_method.returnType, AbsApi.OnTheFlyListType):
+                methodDict['takeRefOnReturnedObject'] = "FALSE"
+
             if isinstance(_method.returnType, AbsApi.BaseType) and _method.returnType.name == 'string_array':
                 methodDict['isStringObjectArray'] = True
             elif isinstance(_method.returnType.containedTypeDesc, AbsApi.BaseType):
