@@ -50,16 +50,16 @@ namespace linphone {
 				bctbx_list_free_with_data(mCList, unrefData);
 			}
 		}
-		static std::list<std::shared_ptr<T> > bctbxListToCppList(const ::bctbx_list_t *bctbxList) {
+		static std::list<std::shared_ptr<T> > bctbxListToCppList(const ::bctbx_list_t *bctbxList, bool takeRef=true) {
 			std::list<std::shared_ptr<T> > cppList;
 			for(const ::bctbx_list_t *it=bctbxList; it!=NULL; it=it->next) {
-				std::shared_ptr<T> newObj = Object::cPtrToSharedPtr<T>(it->data);
+				std::shared_ptr<T> newObj = Object::cPtrToSharedPtr<T>(it->data, takeRef);
 				cppList.push_back(newObj);
 			}
 			return cppList;
 		}
-		static std::list<std::shared_ptr<T>> bctbxListToCppList(::bctbx_list_t *bctbxList) {
-			std::list<std::shared_ptr<T>> cppList = bctbxListToCppList((const ::bctbx_list_t *)bctbxList);
+		static std::list<std::shared_ptr<T>> bctbxListToCppList(::bctbx_list_t *bctbxList, bool takeRef=true) {
+			std::list<std::shared_ptr<T>> cppList = bctbxListToCppList(const_cast<const ::bctbx_list_t *>(bctbxList), takeRef);
 			bctbx_list_free(bctbxList);
 			return cppList;
 		}

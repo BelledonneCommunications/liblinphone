@@ -60,13 +60,13 @@ class CsharpTranslator(object):
 		return not methodDict['is_string'] and not methodDict['is_bool'] and not methodDict['is_class'] and not methodDict['is_enum'] and methodDict['list_type'] == None
 
 	def is_linphone_type(self, _type, isArg, dllImport=True):
-		if type(_type) is AbsApi.ClassType:
+		if isinstance(_type, AbsApi.ClassType)
 			return False if dllImport else True
-		elif type(_type) is AbsApi.EnumType:
+		elif isinstance(_type, AbsApi.EnumType)
 			return False if dllImport else True
 
 	def throws_exception(self, return_type):
-		if type(return_type) is AbsApi.BaseType:
+		if isinstance(return_type, AbsApi.BaseType)
 			if return_type.name == 'status':
 				return True
 		return False
@@ -111,7 +111,7 @@ class CsharpTranslator(object):
 			methodDict['is_enum'] = self.is_linphone_type(method.returnType, False, False) and type(method.returnType) is AbsApi.EnumType
 			methodDict['is_generic'] = self.is_generic(methodDict)
 			methodDict['takeRef'] = 'true'
-			if type(method.returnType.parent) is AbsApi.Method and len(method.returnType.parent.name.words) >=1:
+			if isinstance(method.returnType.parent, AbsApi.Method) and len(method.returnType.parent.name.words) >=1:
 				if method.returnType.parent.name.words == ['new'] or method.returnType.parent.name.words[0] == 'create':
 					methodDict['takeRef'] = 'false'
 
@@ -122,7 +122,7 @@ class CsharpTranslator(object):
 					methodDict['impl']['args'] += ', '
 					methodDict['impl']['c_args'] += ', '
 				if self.is_linphone_type(arg.type, False, False):
-					if type(arg.type) is AbsApi.ClassType:
+					if isinstance(arg.type, AbsApi.ClassType)
 						argname = arg.name.translate(self.nameTranslator)
 						methodDict['impl']['c_args'] += argname + " != null ? " + argname + ".nativePtr : IntPtr.Zero"
 					else:
@@ -168,7 +168,7 @@ class CsharpTranslator(object):
 		methodDict['is_enum'] = self.is_linphone_type(prop.returnType, False, False) and type(prop.returnType) is AbsApi.EnumType
 		methodDict['is_generic'] = self.is_generic(methodDict)
 		methodDict['takeRef'] = 'true'
-		if type(prop.returnType.parent) is AbsApi.Method and len(prop.returnType.parent.name.words) >=1:
+		if isinstance(prop.returnType.parent, AbsApi.Method) and len(prop.returnType.parent.name.words) >=1:
 			if prop.returnType.parent.name.words == ['new'] or prop.returnType.parent.name.words[0] == 'create':
 				methodDict['takeRef'] = 'false'
 
@@ -278,7 +278,7 @@ class CsharpTranslator(object):
 						listenerDict['delegate']['params'] += "fromNativePtr<" + normalType + ">(" + argName + ")"
 					elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.EnumType:
 						listenerDict['delegate']['params'] += "(" + normalType + ")" + argName + ""
-					elif type(arg.type) is AbsApi.ListType:
+					elif isinstance(arg.type, AbsApi.ListType):
 						if normalType == "string":
 							listenerDict['delegate']['params'] += "MarshalStringArray(" + argName + ")"
 						else:

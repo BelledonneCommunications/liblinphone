@@ -148,7 +148,7 @@ class JavaTranslator(object):
     def throws_exception(self, _type):
         if not self.exceptions:
             return False
-        if type(_type) is AbsApi.BaseType:
+        if isinstance(_type, AbsApi.BaseType):
             if _type.name == 'status':
                 return True
         return False
@@ -284,11 +284,11 @@ class JavaTranslator(object):
             return {'notEmpty': False}
 
         if methodDict['hasListReturn']:
-            if type(_method.returnType) is AbsApi.BaseType and _method.returnType.name == 'string_array':
+            if isinstance(_method.returnType, AbsApi.BaseType) and _method.returnType.name == 'string_array':
                 methodDict['isStringObjectArray'] = True
-            elif type(_method.returnType.containedTypeDesc) is AbsApi.BaseType:
+            elif isinstance(_method.returnType.containedTypeDesc, AbsApi.BaseType):
                 methodDict['isStringObjectArray'] = True
-            elif type(_method.returnType.containedTypeDesc) is AbsApi.ClassType:
+            elif isinstance(_method.returnType.containedTypeDesc, AbsApi.ClassType):
                 methodDict['isRealObjectArray'] = True
                 methodDict['objectCPrefix'] = 'linphone_' + _method.returnType.containedTypeDesc.desc.name.to_snake_case()
                 methodDict['objectClassCName'] = 'Linphone' + _method.returnType.containedTypeDesc.desc.name.to_camel_case()
@@ -314,24 +314,24 @@ class JavaTranslator(object):
             methodDict['params'] += arg.translate(self.langTranslator, jni=True, namespace=namespace)
             argname = arg.name.translate(self.nameTranslator)
 
-            if type(arg.type) is AbsApi.ClassType:
+            if isinstance(arg.type, AbsApi.ClassType):
                 classCName = 'Linphone' + arg.type.desc.name.to_camel_case()
                 if classCName[-8:] == 'Listener':
                    classCName = 'Linphone' + arg.type.desc.name.to_camel_case()[:-8] + 'Cbs'
                 methodDict['objects'].append({'object': argname, 'objectClassCName': classCName})
                 methodDict['params_impl'] += 'c_' + argname
 
-            elif type(arg.type) is AbsApi.ListType:
+            elif isinstance(arg.type, AbsApi.ListType):
                 isStringList = type(arg.type.containedTypeDesc) is AbsApi.BaseType and arg.type.containedTypeDesc.name == 'string'
                 isObjList = type(arg.type.containedTypeDesc) is AbsApi.ClassType
                 methodDict['lists'].append({'list': argname, 'isStringList': isStringList, 'isObjList': isObjList, 'objectClassCName': arg.type.containedTypeDesc.name})
                 methodDict['params_impl'] += 'bctbx_list_' + argname
 
-            elif type(arg.type) is AbsApi.EnumType:
+            elif isinstance(arg.type, AbsApi.EnumType):
                 argCType = arg.type.name
                 methodDict['params_impl'] += '(' + argCType + ') ' + argname
 
-            elif type(arg.type) is AbsApi.BaseType:
+            elif isinstance(arg.type, AbsApi.BaseType):
                 if arg.type.name == 'integer' and arg.type.size is not None and arg.type.isref:
                     methodDict['bytes'].append({'bytesargname': argname, 'bytesargtype' : arg.type.translate(self.clangTranslator)})
                     methodDict['params_impl'] += 'c_' + argname
@@ -407,11 +407,11 @@ class JavaTranslator(object):
         methodDict['jniUpcallMethod'] = 'CallVoidMethod'
         methodDict['isJniUpcallBasicType'] = False
         methodDict['isJniUpcallObject'] = False
-        if type(_method.returnType) is AbsApi.ClassType:
+        if isinstance(_method.returnType, AbsApi.ClassType):
             methodDict['jniUpcallMethod'] = 'CallObjectMethod'
             methodDict['isJniUpcallObject'] = True
             methodDict['jniUpcallType'] = 'jobject'
-        elif type(_method.returnType) is AbsApi.BaseType:
+        elif isinstance(_method.returnType, AbsApi.BaseType):
             if not _method.returnType.name == 'void':
                 methodDict['jniUpcallMethod'] = 'CallIntMethod'
                 methodDict['jniUpcallType'] = _method.returnType.translate(self.langTranslator, jni=True)
@@ -438,22 +438,22 @@ class JavaTranslator(object):
 
             methodDict['params'] += '{0} {1}'.format(arg.type.translate(self.clangTranslator), argname)
 
-            if type(arg.type) is AbsApi.ClassType:
+            if isinstance(arg.type, AbsApi.ClassType):
                 methodDict['jparams'] += 'L' + self.jni_path + arg.type.desc.name.to_camel_case() + ';'
                 methodDict['params_impl'] += 'j_' + argname
                 methodDict['jobjects'].append({'objectName': argname, 'className': arg.type.desc.name.to_camel_case(), })
-            elif type(arg.type) is AbsApi.BaseType:
+            elif isinstance(arg.type, AbsApi.BaseType):
                 methodDict['jparams'] += arg.type.translate(self.jnilangTranslator)
                 if arg.type.name == 'string':
                     methodDict['params_impl'] += 'j_' + argname
                     methodDict['jstrings'].append({'stringName': argname,})
                 else:
                     methodDict['params_impl'] += argname
-            elif type(arg.type) is AbsApi.EnumType:
+            elif isinstance(arg.type, AbsApi.EnumType):
                 methodDict['jparams'] += 'L' + self.jni_path + arg.type.desc.name.translate(self.jninameTranslator) + ';'
                 methodDict['params_impl'] += 'j_' + argname
                 methodDict['jenums'].append({'enumName': argname, 'cEnumPrefix': arg.type.desc.name.to_snake_case(fullName=True)})
-            elif type(arg.type) is AbsApi.ListType:
+            elif isinstance(arg.type, AbsApi.ListType):
                 methodDict['jparams'] += '[L' + self.jni_path + arg.type.containedTypeDesc.name + ';'
                 methodDict['params_impl'] += 'NULL'
 
@@ -461,9 +461,9 @@ class JavaTranslator(object):
         if (methodDict['return'] == 'void'):
             methodDict['jparams'] += 'V'
         else:
-            if type(_method.returnType) is AbsApi.ClassType:
+            if isinstance(_method.returnType, AbsApi.ClassType):
                 methodDict['jparams'] += 'L' + self.jni_path + _method.returnType.desc.name.to_camel_case() + ';'
-            elif type(_method.returnType) is AbsApi.BaseType:
+            elif isinstance(_method.returnType, AbsApi.BaseType):
                 methodDict['jparams'] += self.translate_java_jni_base_type_name(_method.returnType.name)
             else:
                 pass #TODO
