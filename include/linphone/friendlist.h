@@ -299,6 +299,20 @@ LINPHONE_PUBLIC LinphoneFriendListCbsSyncStateChangedCb linphone_friend_list_cbs
 LINPHONE_PUBLIC void linphone_friend_list_cbs_set_sync_status_changed(LinphoneFriendListCbs *cbs, LinphoneFriendListCbsSyncStateChangedCb cb);
 
 /**
+ * Get the presence received callback.
+ * @param[in] cbs #LinphoneFriendListCbs object.
+ * @return The current presence received callback.
+**/
+LINPHONE_PUBLIC LinphoneFriendListCbsPresenceReceivedCb linphone_friend_list_cbs_get_presence_received(const LinphoneFriendListCbs *cbs);
+
+/**
+ * Set the presence received callback.
+ * @param[in] cbs #LinphoneFriendListCbs object.
+ * @param[in] cb The presence received callback to be used.
+**/
+LINPHONE_PUBLIC void linphone_friend_list_cbs_set_presence_received(LinphoneFriendListCbs *cbs, LinphoneFriendListCbsPresenceReceivedCb cb);
+
+/**
  * Starts a CardDAV synchronization using value set using linphone_friend_list_set_uri.
  * @param[in] list #LinphoneFriendList object.
  */

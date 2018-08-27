@@ -198,6 +198,7 @@ struct _LinphoneFriendListCbs {
 	LinphoneFriendListCbsContactDeletedCb contact_deleted_cb;
 	LinphoneFriendListCbsContactUpdatedCb contact_updated_cb;
 	LinphoneFriendListCbsSyncStateChangedCb sync_state_changed_cb;
+	LinphoneFriendListCbsPresenceReceivedCb presence_received_cb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriendListCbs);
