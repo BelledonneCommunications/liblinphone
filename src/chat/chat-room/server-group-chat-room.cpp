@@ -395,6 +395,14 @@ LinphoneReason ServerGroupChatRoomPrivate::onSipMessageReceived (SalOp *op, cons
 void ServerGroupChatRoomPrivate::setConferenceAddress (const IdentityAddress &conferenceAddress) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
+
+	if (!conferenceAddress.isValid()) {
+		shared_ptr<CallSession> session = q->getMe()->getPrivate()->getSession();
+		session->decline(LinphoneReasonServerTimeout);
+		setState(ChatRoom::State::CreationFailed);
+		return;
+	}
+
 	if (q->getState() != ChatRoom::State::Instantiated) {
 		lError() << "Cannot set the conference address of the ServerGroupChatRoom in state " << Utils::toString(q->getState());
 		return;
