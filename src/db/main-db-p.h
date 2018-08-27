@@ -25,6 +25,7 @@
 #include "linphone/utils/utils.h"
 
 #include "abstract/abstract-db-p.h"
+#include "containers/lru-cache.h"
 #include "event-log/event-log.h"
 #include "main-db.h"
 
@@ -181,6 +182,10 @@ private:
 
 	void importLegacyFriends (DbSession &inDbSession);
 	void importLegacyHistory (DbSession &inDbSession);
+
+	// ---------------------------------------------------------------------------
+
+	mutable LruCache<ChatRoomId, int> unreadChatMessageCountCache;
 
 	L_DECLARE_PUBLIC(MainDb);
 };

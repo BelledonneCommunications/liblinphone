@@ -1903,6 +1903,12 @@ int MainDb::getChatMessageCount (const ChatRoomId &chatRoomId) const {
 }
 
 int MainDb::getUnreadChatMessageCount (const ChatRoomId &chatRoomId) const {
+	L_D();
+
+	const int *count = d->unreadChatMessageCountCache[chatRoomId];
+	if (count)
+		return *count;
+
 	string query = "SELECT COUNT(*) FROM conference_chat_message_event WHERE";
 	if (chatRoomId.isValid())
 		query += " event_id IN ("
@@ -1918,8 +1924,6 @@ int MainDb::getUnreadChatMessageCount (const ChatRoomId &chatRoomId) const {
 	);
 
 	return L_DB_TRANSACTION {
-		L_D();
-
 		int count = 0;
 
 		soci::session *session = d->dbSession.getBackendSession();
@@ -1931,6 +1935,7 @@ int MainDb::getUnreadChatMessageCount (const ChatRoomId &chatRoomId) const {
 			*session << query, soci::use(dbChatRoomId), soci::into(count);
 		}
 
+		d->unreadChatMessageCountCache.insert(chatRoomId, count);
 		return count;
 	};
 }
