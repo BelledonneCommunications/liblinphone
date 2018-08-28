@@ -131,6 +131,31 @@ LINPHONE_PUBLIC LinphoneMagicSearch *linphone_core_create_magic_search(LinphoneC
 LINPHONE_PUBLIC void linphone_core_check_for_update(LinphoneCore *lc, const char *current_version);
 
 /**
+ * Return the global unread chat message count.
+ * @param[in] lc #LinphoneCore object.
+ * @return The global unread chat message count.
+ */
+LINPHONE_PUBLIC int linphone_core_get_unread_chat_message_count (const LinphoneCore *lc);
+
+/**
+ * Return the unread chat message count for a given local address.
+ * @param[in] lc #LinphoneCore object.
+ * @param[in] address #LinphoneAddress object.
+ * @return The unread chat message count.
+ */
+LINPHONE_PUBLIC int linphone_core_get_unread_chat_message_count_from_local (
+	const LinphoneCore *lc,
+	const LinphoneAddress *address
+);
+
+/**
+ * Return the unread chat message count for all active local address. (Primary contact + proxy configs.)
+ * @param[in] lc #LinphoneCore object.
+ * @return The unread chat message count.
+ */
+LINPHONE_PUBLIC int linphone_core_get_unread_chat_message_count_from_active_locals (const LinphoneCore *lc);
+
+/**
  * @}
  */
 

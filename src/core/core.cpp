@@ -20,10 +20,9 @@
 #include <mediastreamer2/mscommon.h>
 #include <xercesc/util/PlatformUtils.hpp>
 
-//#include "linphone/utils/general.h"
-
 #include "address/address-p.h"
 #include "call/call.h"
+#include "chat/chat-room/chat-room.h"
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
 #include "core/core-listener.h"
@@ -177,12 +176,52 @@ LinphoneCore *Core::getCCore () const {
 // Paths.
 // -----------------------------------------------------------------------------
 
-string Core::getDataPath() const {
+string Core::getDataPath () const {
 	return Paths::getPath(Paths::Data, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper));
 }
 
-string Core::getConfigPath() const {
+string Core::getConfigPath () const {
 	return Paths::getPath(Paths::Config, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper));
+}
+
+// -----------------------------------------------------------------------------
+// Misc.
+// -----------------------------------------------------------------------------
+
+int Core::getUnreadChatMessageCount () const {
+	L_D();
+	return d->mainDb->getUnreadChatMessageCount();
+}
+
+int Core::getUnreadChatMessageCount (const IdentityAddress &localAddress) const {
+	L_D();
+	int count = 0;
+	for (const auto &chatRoom : d->chatRooms)
+		if (chatRoom->getLocalAddress() == localAddress)
+			count += chatRoom->getUnreadChatMessageCount();
+	return count;
+}
+
+int Core::getUnreadChatMessageCountFromActiveLocals () const {
+	L_D();
+
+	set<IdentityAddress> localAddresses;
+	{
+		LinphoneAddress *address = linphone_core_get_primary_contact_parsed(getCCore());
+		localAddresses.insert(*L_GET_CPP_PTR_FROM_C_OBJECT(address));
+		linphone_address_unref(address);
+	}
+
+	for (const bctbx_list_t *it = linphone_core_get_proxy_config_list(getCCore()); it; it = bctbx_list_next(it))
+		localAddresses.insert(*L_GET_CPP_PTR_FROM_C_OBJECT(static_cast<LinphoneProxyConfig *>(it->data)->identity_address));
+
+	int count = 0;
+	for (const auto &chatRoom : d->chatRooms) {
+		auto it = localAddresses.find(chatRoom->getLocalAddress());
+		if (it != localAddresses.end())
+			count += chatRoom->getUnreadChatMessageCount();
+	}
+	return count;
 }
 
 LINPHONE_END_NAMESPACE

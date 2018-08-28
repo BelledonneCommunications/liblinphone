@@ -34,7 +34,7 @@ public:
 	ChatRoomId (const IdentityAddress &peerAddress, const IdentityAddress &localAddress);
 	ChatRoomId (const ChatRoomId &other);
 
-	ChatRoomId* clone () const override {
+	ChatRoomId *clone () const override {
 		return new ChatRoomId(*this);
 	}
 
@@ -66,6 +66,7 @@ namespace std {
 	template<>
 	struct hash<LinphonePrivate::ChatRoomId> {
 		std::size_t operator() (const LinphonePrivate::ChatRoomId &chatRoomId) const {
+			if (!chatRoomId.isValid()) return std::size_t(-1);
 			return hash<string>()(chatRoomId.getPeerAddress().asString()) ^
 				(hash<string>()(chatRoomId.getLocalAddress().asString()) << 1);
 		}

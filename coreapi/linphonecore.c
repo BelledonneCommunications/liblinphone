@@ -7526,6 +7526,20 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 #endif
 }
 
+int linphone_core_get_unread_chat_message_count (const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getUnreadChatMessageCount();
+}
+
+int linphone_core_get_unread_chat_message_count_from_local (const LinphoneCore *lc, const LinphoneAddress *address) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getUnreadChatMessageCount(
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(address))
+	);
+}
+
+int linphone_core_get_unread_chat_message_count_from_active_locals (const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getUnreadChatMessageCountFromActiveLocals();
+}
+
 bool_t linphone_core_has_crappy_opengl(LinphoneCore *lc) {
 	MSFactory * factory = linphone_core_get_ms_factory(lc);
 	MSDevicesInfo *devices = ms_factory_get_devices_info(factory);

@@ -28,6 +28,7 @@ Copyright (C) 2000  Simon MORLAT (simon.morlat@linphone.org)
 
 #include "mediastreamer2/mediastream.h"
 
+#include "core/core.h"
 #include "enum.h"
 #include "private.h"
 
@@ -1600,4 +1601,10 @@ bool_t linphone_proxy_config_is_push_notification_allowed(const LinphoneProxyCon
 
 void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t is_allowed) {
 	cfg->push_notification_allowed = is_allowed;
+}
+
+int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *cfg) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cfg->lc)->getUnreadChatMessageCount(
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(cfg->identity_address))
+	);
 }

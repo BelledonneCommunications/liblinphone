@@ -57,9 +57,10 @@ public:
 
 	void insert (const Key &key, const Value &value) {
 		auto it = mKeyToPair.find(key);
-		if (it != mKeyToPair.end())
+		if (it != mKeyToPair.end()) {
 			mKeys.erase(it->second.first);
-		else if (int(mKeyToPair.size()) == mCapacity) {
+			mKeyToPair.erase(it);
+		} else if (int(mKeyToPair.size()) == mCapacity) {
 			Key lastKey = mKeys.back();
 			mKeys.pop_back();
 			mKeyToPair.erase(lastKey);
@@ -71,9 +72,10 @@ public:
 
 	void insert (const Key &key, Value &&value) {
 		auto it = mKeyToPair.find(key);
-		if (it != mKeyToPair.end())
+		if (it != mKeyToPair.end()) {
 			mKeys.erase(it->second.first);
-		else if (int(mKeyToPair.size()) == mCapacity) {
+			mKeyToPair.erase(it);
+		} else if (int(mKeyToPair.size()) == mCapacity) {
 			Key lastKey = mKeys.back();
 			mKeys.pop_back();
 			mKeyToPair.erase(lastKey);
