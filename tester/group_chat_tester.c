@@ -4053,6 +4053,7 @@ bool_t simple_zrtp_call_with_sas_validation(LinphoneCoreManager *caller, Linphon
 	bool_t call_ok = FALSE;
 	BC_ASSERT_TRUE((call_ok=call(caller, callee)));
 	if (!call_ok) return FALSE;
+
 	// If caller set ZRTP or (callee set ZRTP and caller has no encryption requested), ZRTP shall take place, wait for the SAS
 	if ((linphone_core_get_media_encryption(caller->lc) == LinphoneMediaEncryptionZRTP)
 		|| ((linphone_core_get_media_encryption(callee->lc) == LinphoneMediaEncryptionZRTP) && (linphone_core_get_media_encryption(caller->lc) == LinphoneMediaEncryptionNone))) {
@@ -4067,13 +4068,15 @@ bool_t simple_zrtp_call_with_sas_validation(LinphoneCoreManager *caller, Linphon
 	return TRUE;
 }
 
-static void group_chat_lime_v2_with_zrtp_verification (void) {
+static void group_chat_lime_v2_zrtp_verification_before_encrypted_message (void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	LinphoneChatRoom *marieCr = NULL;
+	LinphoneChatRoom *paulineCr = NULL;
 	int dummy = 0;
 
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
@@ -4089,16 +4092,29 @@ static void group_chat_lime_v2_with_zrtp_verification (void) {
 	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
 	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
 
+	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP);
+	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
+
+	// ZRTP verification call between Marie and Pauline
+	bool_t pauline_call_ok = FALSE;
+	BC_ASSERT_TRUE((pauline_call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
+	if (!pauline_call_ok) goto end;
+
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, -1);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, -1);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
-	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
 
+	// Check chat room security level
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+
+	printf("\nMarie sends a message\n");
 	// Marie sends a message
-	const char *marieMessage = "I have sensitive information to give you ?";
+	const char *marieMessage = "I have a sensitive piece of information for you";
 	_send_message(marieCr, marieMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
@@ -4125,43 +4141,7 @@ static void group_chat_lime_v2_with_zrtp_verification (void) {
 	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineAddr, linphone_chat_message_get_from_address(marieLastMsg)));
 	linphone_address_unref(paulineAddr);
 
-	// Provoke ZRTP call verification
-	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP);
-	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
-
-	linphone_core_set_firewall_policy(marie->lc, LinphonePolicyNoFirewall);
-	linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyNoFirewall);
-
-	bool_t call_ok = FALSE;
-	BC_ASSERT_TRUE((call_ok=call(marie, pauline)));
-	if (!call_ok) goto end;
-	// If caller set ZRTP or (callee set ZRTP and caller has no encryption requested), ZRTP shall take place, wait for the SAS
-	if ((linphone_core_get_media_encryption(marie->lc) == LinphoneMediaEncryptionZRTP)
-		|| ((linphone_core_get_media_encryption(pauline->lc) == LinphoneMediaEncryptionZRTP) && (linphone_core_get_media_encryption(marie->lc) == LinphoneMediaEncryptionNone))) {
-
-		// Simulate SAS validation
-		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(marie->lc), TRUE);
-		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(pauline->lc), TRUE);
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
-	}
-	end_call(marie, pauline);
-
-	// Marie sends another message
-	const char *marieMessage2 = "This conversation is now secure";
-	_send_message(marieCr, marieMessage2);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 2, 10000));
-	paulineLastMsg = pauline->stat.last_received_chat_message;
-	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
-		goto end;
-
-	// Check that the message was correctly decrypted
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage2);
-	marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
-	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
-	linphone_address_unref(marieAddr);
-
-	// Check chat room security level is Safe
+	// Check chat room security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 
@@ -4269,7 +4249,7 @@ static void group_chat_lime_v2_chatroom_security_level_upgrade (void) {
 
 	// ZRTP verification call between Marie and Pauline
 	bool_t pauline_call_ok = FALSE;
-	BC_ASSERT_TRUE((pauline_call_ok=simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
+	BC_ASSERT_TRUE((pauline_call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
 	if (!pauline_call_ok) goto end;
 
 	// Check chat room security level has not changed
@@ -4280,7 +4260,7 @@ static void group_chat_lime_v2_chatroom_security_level_upgrade (void) {
 
 	// ZRTP verification call between Marie and Laure
 	bool_t laure_call_ok = FALSE;
-	BC_ASSERT_TRUE((laure_call_ok=simple_zrtp_call_with_sas_validation(marie, laure, TRUE, TRUE)));
+	BC_ASSERT_TRUE((laure_call_ok = simple_zrtp_call_with_sas_validation(marie, laure, TRUE, TRUE)));
 	if (!laure_call_ok) goto end;
 
 	// Check chat room security level has not changed
@@ -4291,7 +4271,7 @@ static void group_chat_lime_v2_chatroom_security_level_upgrade (void) {
 
 	// ZRTP verification call between Marie and Chloe
 	bool_t chloe_call_ok = FALSE;
-	BC_ASSERT_TRUE((chloe_call_ok=simple_zrtp_call_with_sas_validation(marie, chloe, TRUE, TRUE)));
+	BC_ASSERT_TRUE((chloe_call_ok = simple_zrtp_call_with_sas_validation(marie, chloe, TRUE, TRUE)));
 	if (!chloe_call_ok) goto end;
 
 	// Check that Marie is now in a safe chatroom
@@ -4392,17 +4372,17 @@ static void group_chat_lime_v2_chatroom_security_level_downgrade_adding_particip
 
 	// ZRTP verification call between Marie and Pauline
 	bool_t call_ok = FALSE;
-	BC_ASSERT_TRUE((call_ok=simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
 	if (!call_ok) goto end;
 
 	// ZRTP verification call between Marie and Laure
 	call_ok = FALSE;
-	BC_ASSERT_TRUE((call_ok=simple_zrtp_call_with_sas_validation(marie, laure, TRUE, TRUE)));
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, laure, TRUE, TRUE)));
 	if (!call_ok) goto end;
 
 	// ZRTP verification call between Pauline and Laure
 	call_ok = FALSE;
-	BC_ASSERT_TRUE((call_ok=simple_zrtp_call_with_sas_validation(pauline, laure, TRUE, TRUE)));
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(pauline, laure, TRUE, TRUE)));
 	if (!call_ok) goto end;
 
 	// Check that the maximum security level is reached for everyone
@@ -4519,17 +4499,17 @@ static void group_chat_lime_v2_chatroom_security_level_downgrade_resetting_zrtp 
 
 	// ZRTP verification call between Marie and Pauline
 	bool_t call_ok = FALSE;
-	BC_ASSERT_TRUE((call_ok=simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
 	if (!call_ok) goto end;
 
 	// ZRTP verification call between Marie and Laure
 	call_ok = FALSE;
-	BC_ASSERT_TRUE((call_ok=simple_zrtp_call_with_sas_validation(marie, laure, TRUE, TRUE)));
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, laure, TRUE, TRUE)));
 	if (!call_ok) goto end;
 
 	// ZRTP verification call between Pauline and Laure
 	call_ok = FALSE;
-	BC_ASSERT_TRUE((call_ok=simple_zrtp_call_with_sas_validation(pauline, laure, TRUE, TRUE)));
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(pauline, laure, TRUE, TRUE)));
 	if (!call_ok) goto end;
 
 	// Check that the maximum security level is reached for everyone
@@ -4538,7 +4518,9 @@ static void group_chat_lime_v2_chatroom_security_level_downgrade_resetting_zrtp 
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 
 	// New call with ZRTP verification but pauline refuses the SAS
-	simple_zrtp_call_with_sas_validation(pauline, marie, FALSE, TRUE);
+	call_ok = FALSE;
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(pauline, marie, FALSE, TRUE)));
+	if (!call_ok) goto end;
 
 	// Marie's chatroom security level is expected to be downgraded too but we are in a state of ZRTP asynchronism
 	// There is no ZRTP exchange until next call, where SAS can be validated or invalidated again
@@ -4637,17 +4619,17 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 
 	// ZRTP verification call between Marie and Pauline1
 	bool_t call_ok = FALSE;
-	BC_ASSERT_TRUE((call_ok=simple_zrtp_call_with_sas_validation(marie, pauline1, TRUE, TRUE)));
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline1, TRUE, TRUE)));
 	if (!call_ok) goto end;
 
 	// ZRTP verification call between Marie and Laure
 	call_ok = FALSE;
-	BC_ASSERT_TRUE((call_ok=simple_zrtp_call_with_sas_validation(marie, laure, TRUE, TRUE)));
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, laure, TRUE, TRUE)));
 	if (!call_ok) goto end;
 
 	// ZRTP verification call between Pauline1 and Laure
 	call_ok = FALSE;
-	BC_ASSERT_TRUE((call_ok=simple_zrtp_call_with_sas_validation(pauline1, laure, TRUE, TRUE)));
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(pauline1, laure, TRUE, TRUE)));
 	if (!call_ok) goto end;
 
 	// Check that the maximum security level is reached for everyone
@@ -5573,7 +5555,7 @@ test_t group_chat_tests[] = {
 	TEST_TWO_TAGS("LIMEv2 message with response and composing", group_chat_lime_v2_send_encrypted_message_with_response_and_composing, "CreateUserInDb", "LeaksMemory"),
 	TEST_ONE_TAG("LIMEv2 send encrypted file", group_chat_lime_v2_send_encrypted_file, "CreateUserInDb"),
 	TEST_ONE_TAG("LIMEv2 send encrypted file + text", group_chat_lime_v2_send_encrypted_file_plus_text, "CreateUserInDb"),
-	TEST_TWO_TAGS("LIMEv2 ZRTP verification", group_chat_lime_v2_with_zrtp_verification, "CreateUserInDb", "LeaksMemory"),
+	TEST_TWO_TAGS("LIMEv2 ZRTP verification before message", group_chat_lime_v2_zrtp_verification_before_encrypted_message, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 chatroom security level upgrade", group_chat_lime_v2_chatroom_security_level_upgrade, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 chatroom security level downgrade adding participant", group_chat_lime_v2_chatroom_security_level_downgrade_adding_participant, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 chatroom security level downgrade resetting zrtp", group_chat_lime_v2_chatroom_security_level_downgrade_resetting_zrtp, "CreateUserInDb", "LeaksMemory"),
