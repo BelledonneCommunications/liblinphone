@@ -583,9 +583,10 @@ static void fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml (FileTran
 							xmlChar *keyb64 = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
 							size_t keyLength;
 							bctbx_base64_decode(NULL, &keyLength, (unsigned char *)keyb64, strlen((const char *)keyb64));
-							uint8_t *keyBuffer = (uint8_t *)malloc(keyLength);
+							uint8_t *keyBuffer = (uint8_t *)malloc(keyLength + 1);
 							// decode the key into local key buffer
 							bctbx_base64_decode(keyBuffer, &keyLength, (unsigned char *)keyb64, strlen((const char *)keyb64));
++							keyBuffer[keyLength] = '\0';
 							fileTransferContent->setFileKey((const char *)keyBuffer, keyLength);
 							// duplicate key value into the linphone content private structure
 							xmlFree(keyb64);
