@@ -42,7 +42,7 @@ static void record_file(const char *filename, bool_t supported_format, const cha
 	BC_ASSERT_PTR_NOT_NULL(recorder);
 	if(recorder == NULL) goto fail;
 
-	res = linphone_recorder_open(recorder, filename);
+	res = linphone_recorder_open(recorder, filename, linphone_core_get_device_rotation(lc_manager->lc));
 	BC_ASSERT_EQUAL(res, 0, int, "%d");
 	if(res == -1) goto fail;
 

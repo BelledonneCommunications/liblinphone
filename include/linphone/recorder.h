@@ -67,7 +67,7 @@ LINPHONE_PUBLIC void linphone_recorder_set_user_data(LinphoneRecorder *recorder,
  * @param[in] obj #LinphoneRecorder object
  * @param[in] filename The path to the file to open
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_recorder_open(LinphoneRecorder *obj, const char *filename);
+LINPHONE_PUBLIC LinphoneStatus linphone_recorder_open(LinphoneRecorder *obj, const char *filename, int device_orientation);
 
 /**
  * Start playing a file that has been opened with linphone_recorder_open().

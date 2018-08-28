@@ -37,7 +37,7 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneRecorder, belle_sip_object_t,
 	FALSE
 );
 
-static int _recorder_open(LinphoneRecorder *obj, const char *filename);
+static int _recorder_open(LinphoneRecorder *obj, const char *filename, int device_orientation);
 static int _recorder_start(LinphoneRecorder *obj);
 static int _recorder_pause(LinphoneRecorder *obj);
 static MSRecorderState _recorder_get_state(LinphoneRecorder *obj);
@@ -51,7 +51,7 @@ LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, const char *so
 	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(lc->factory);
 	MSWebCam *web_cam;
 	MSWebCamManager *web_cam_manager = ms_factory_get_web_cam_manager(lc->factory);
-	if (sound_card_name == NULL) sound_card_name = linphone_core_get_ringer_device(lc);
+	if (sound_card_name == NULL) sound_card_name = linphone_core_get_capture_device(lc);
 	snd_card = ms_snd_card_manager_get_card(snd_card_manager, sound_card_name);
 	if (web_cam_name == NULL) web_cam_name = linphone_core_get_video_device(lc);
 	web_cam = ms_web_cam_manager_get_cam(web_cam_manager, web_cam_name);
@@ -71,8 +71,8 @@ bool_t linphone_recorder_matroska_supported(void) {
 	return ms_media_recorder_matroska_supported();
 }
 
-static int _recorder_open(LinphoneRecorder *obj, const char *filename) {
-	return ms_media_recorder_open((MSMediaRecorder *)obj->impl, filename) ? 0 : -1;
+static int _recorder_open(LinphoneRecorder *obj, const char *filename, int device_orientation) {
+	return ms_media_recorder_open((MSMediaRecorder *)obj->impl, filename, device_orientation) ? 0 : -1;
 }
 
 static int _recorder_start(LinphoneRecorder *obj) {
@@ -122,8 +122,8 @@ void linphone_recorder_set_user_data(LinphoneRecorder *recorder, void *ud) {
 	recorder->user_data = ud;
 }
 
-LinphoneStatus linphone_recorder_open(LinphoneRecorder *obj, const char *filename){
-	return obj->open(obj,filename);
+LinphoneStatus linphone_recorder_open(LinphoneRecorder *obj, const char *filename, int device_orientation){
+	return obj->open(obj,filename,device_orientation);
 }
 
 LinphoneStatus linphone_recorder_start(LinphoneRecorder *obj){

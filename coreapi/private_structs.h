@@ -586,7 +586,7 @@ BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphonePlayer);
 struct _LinphoneRecorder{
 	belle_sip_object_t base;
 	void *user_data;
-	int (*open)(LinphoneRecorder* recorder, const char *filename);
+	int (*open)(LinphoneRecorder* recorder, const char *filename, int device_orientation);
 	int (*start)(LinphoneRecorder* recorder);
 	int (*pause)(LinphoneRecorder* recorder);
 	MSRecorderState (*get_state)(LinphoneRecorder* recorder);
