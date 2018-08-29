@@ -2342,6 +2342,8 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 #ifdef __ANDROID__
 	if (system_context)
 		lc->platform_helper = LinphonePrivate::createAndroidPlatformHelpers(lc, system_context);
+	else
+		ms_fatal("You must provide the Android's app context when creating the core!");
 #elif TARGET_OS_IPHONE
 	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc, system_context);
 #endif
