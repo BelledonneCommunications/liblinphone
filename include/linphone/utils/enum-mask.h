@@ -118,7 +118,7 @@ public:
 	}
 
 	constexpr EnumMask operator| (T mask) const {
-		return int(Mask | StorageType(mask));
+		return int(mMask | StorageType(mask));
 	}
 
 	constexpr EnumMask operator^ (EnumMask mask) const {
