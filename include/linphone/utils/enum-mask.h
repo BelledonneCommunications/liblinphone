@@ -110,7 +110,7 @@ public:
 	}
 
 	constexpr EnumMask operator& (T mask) const {
-		return (int) (mMask & StorageType(mask));
+		return int(mMask & StorageType(mask));
 	}
 
 	constexpr EnumMask operator| (EnumMask mask) const {
@@ -118,7 +118,7 @@ public:
 	}
 
 	constexpr EnumMask operator| (T mask) const {
-		return mMask | StorageType(mask);
+		return int(Mask | StorageType(mask));
 	}
 
 	constexpr EnumMask operator^ (EnumMask mask) const {
@@ -126,7 +126,7 @@ public:
 	}
 
 	constexpr EnumMask operator^ (T mask) const {
-		return mMask ^ StorageType(mask);
+		return int(mMask ^ StorageType(mask));
 	}
 
 	constexpr EnumMask operator~ () const {
