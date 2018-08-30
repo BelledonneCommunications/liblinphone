@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceSecurityEventPrivate : public ConferenceEventPrivate {
 public:
-	ConferenceSecurityEvent::SecurityAlertType securityAlertType;
+	ConferenceSecurityEvent::SecurityEventType securityEventType;
 	IdentityAddress faultyDevice;
 };
 
@@ -39,36 +39,36 @@ public:
 ConferenceSecurityEvent::ConferenceSecurityEvent (
 	time_t creationTime,
 	const ConferenceId &conferenceId,
-	SecurityAlertType securityAlertType,
+	SecurityEventType securityEventType,
 	const IdentityAddress &faultyDevice
 ) : ConferenceEvent(
 	*new ConferenceSecurityEventPrivate,
-	Type::ConferenceSecurityAlert,
+	Type::ConferenceSecurityEvent,
 	creationTime,
 	conferenceId
 ) {
 	L_D();
-	d->securityAlertType = securityAlertType;
+	d->securityEventType = securityEventType;
 	d->faultyDevice = faultyDevice;
 }
 
 ConferenceSecurityEvent::ConferenceSecurityEvent (
 	time_t creationTime,
 	const ConferenceId &conferenceId,
-	SecurityAlertType securityAlertType
+	SecurityEventType securityEventType
 ) : ConferenceEvent(
 	*new ConferenceSecurityEventPrivate,
-	Type::ConferenceSecurityAlert,
+	Type::ConferenceSecurityEvent,
 	creationTime,
 	conferenceId
 ) {
 	L_D();
-	d->securityAlertType = securityAlertType;
+	d->securityEventType = securityEventType;
 }
 
-ConferenceSecurityEvent::SecurityAlertType ConferenceSecurityEvent::getSecurityAlertType () const {
+ConferenceSecurityEvent::SecurityEventType ConferenceSecurityEvent::getSecurityEventType () const {
 	L_D();
-	return d->securityAlertType;
+	return d->securityEventType;
 }
 
 const IdentityAddress &ConferenceSecurityEvent::getFaultyDevice () const {

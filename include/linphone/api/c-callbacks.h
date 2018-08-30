@@ -228,11 +228,11 @@ typedef void (*LinphoneChatRoomCbsParticipantAdminStatusChangedCb) (LinphoneChat
 typedef void (*LinphoneChatRoomCbsStateChangedCb) (LinphoneChatRoom *cr, LinphoneChatRoomState newState);
 
 /**
- * Callback used to notify a security alert in the chat room.
+ * Callback used to notify a security event in the chat room.
  * @param[in] cr #LinphoneChatRoom object
- * @param[in] securityAlertType the security alert type
+ * @param[in] securityEventType the security event type
  */
-typedef void (*LinphoneChatRoomCbsSecurityAlertCb) (LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
+typedef void (*LinphoneChatRoomCbsSecurityEventCb) (LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 
 /**
  * Callback used to notify that the subject of a chat room has changed.

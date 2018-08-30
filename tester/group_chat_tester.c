@@ -104,12 +104,24 @@ static void chat_room_state_changed (LinphoneChatRoom *cr, LinphoneChatRoomState
 	}
 }
 
-static void chat_room_security_alert (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
-	printf("[TEST] Chatroom security alert detected from %s\n", linphone_address_as_string(linphone_event_log_get_security_alert_faulty_device(event_log)));
-
+static void chat_room_security_event (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
-	manager->stat.number_of_security_alerts++;
+
+	switch (linphone_event_log_get_security_event_type(event_log)) {
+		case LinphoneSecurityEventTypeSecurityLevelDowngraded:
+			manager->stat.number_of_SecurityLevelDowngraded++;
+			break;
+		case LinphoneSecurityEventTypeMultideviceParticipantDetected:
+			manager->stat.number_of_MultideviceParticipantDetected++;
+			break;
+		case LinphoneSecurityEventTypeLimeIdentityKeyChanged:
+			manager->stat.number_of_LimeIdentityKeyChanged++;
+			break;
+		case LinphoneSecurityEventTypeManInTheMiddleDetected:
+			manager->stat.number_of_ManInTheMiddleDetected++;
+			break;
+	}
 }
 
 static void chat_room_subject_changed (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
@@ -132,7 +144,7 @@ static void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *
 		linphone_chat_room_cbs_set_participant_admin_status_changed(cbs, chat_room_participant_admin_status_changed);
 		linphone_chat_room_cbs_set_participant_removed(cbs, chat_room_participant_removed);
 		linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
-		linphone_chat_room_cbs_set_security_alert(cbs, chat_room_security_alert);
+		linphone_chat_room_cbs_set_security_event(cbs, chat_room_security_event);
 		linphone_chat_room_cbs_set_subject_changed(cbs, chat_room_subject_changed);
 		linphone_chat_room_cbs_set_participant_device_added(cbs, chat_room_participant_device_added);
 		linphone_chat_room_cbs_set_undecryptable_message_received(cbs, undecryptable_message_received);
@@ -4412,6 +4424,11 @@ static void group_chat_lime_v2_chatroom_security_level_downgrade_adding_particip
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(chloeCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
+	// Check that participants have received a SecurityLevelDowngraded event
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_SecurityLevelDowngraded, initialLaureStats.number_of_SecurityLevelDowngraded + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_SecurityLevelDowngraded, initialLaureStats.number_of_SecurityLevelDowngraded + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_SecurityLevelDowngraded, initialLaureStats.number_of_SecurityLevelDowngraded + 1, 3000));
+
 end:
 	// Clean local LIMEv2 databases
 	linphone_core_delete_local_lime_v2_db(marie->lc);
@@ -4522,6 +4539,7 @@ static void group_chat_lime_v2_chatroom_security_level_downgrade_resetting_zrtp 
 	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(pauline, marie, FALSE, TRUE)));
 	if (!call_ok) goto end;
 
+	// WARNING
 	// Marie's chatroom security level is expected to be downgraded too but we are in a state of ZRTP asynchronism
 	// There is no ZRTP exchange until next call, where SAS can be validated or invalidated again
 	// Until then Marie trusts Pauline but Pauline doesn't trust Marie so security levels correspond to this state
@@ -4672,8 +4690,6 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 
 	// Pauline2 is automatically added to the chatroom
 
-	// Marie adds Pauline2 to the chat room
-
 	// Check that the chat room is correctly created on Pauline2's side and that she was added everywhere
 	pauline2Cr = check_creation_chat_room_client_side(coresList, pauline2, &initialPauline2Stats, confAddr, initialSubject, 2, 0);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participant_devices_added, initialMarieStats.number_of_participant_devices_added + 1, 3000));
@@ -4681,9 +4697,9 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participant_devices_added, initialLaureStats.number_of_participant_devices_added + 1, 3000));
 
 	// Check that the participants have received a security alert because Pauline2 is forbidden
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_security_alerts, initialMarieStats.number_of_security_alerts + 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_security_alerts, initialPauline1Stats.number_of_security_alerts + 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_security_alerts, initialLaureStats.number_of_security_alerts + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_MultideviceParticipantDetected, initialMarieStats.number_of_MultideviceParticipantDetected + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_MultideviceParticipantDetected, initialPauline1Stats.number_of_MultideviceParticipantDetected + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_MultideviceParticipantDetected, initialLaureStats.number_of_MultideviceParticipantDetected + 1, 3000));
 
 	// Check the security level was downgraded for Marie and Laure
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
@@ -4694,18 +4710,18 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 	linphone_chat_room_compose(laureCr);
 
 	// No new security alert sent because there is a recent one
-	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_security_alerts, initialLaureStats.number_of_security_alerts + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_MultideviceParticipantDetected, initialLaureStats.number_of_MultideviceParticipantDetected + 1, 3000));
 
 	const char *laureMessage = "I'm going to the cinema";
 	_send_message(laureCr, laureMessage);
 
 	// No new security alert sent because there is a recent one
-	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_security_alerts, initialLaureStats.number_of_security_alerts + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_MultideviceParticipantDetected, initialLaureStats.number_of_MultideviceParticipantDetected + 1, 3000));
 
 	_send_message(laureCr, laureMessage);
 
 	// Check that Laure received another security alert because a multidevice participant was detected during encryption
-	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_security_alerts, initialLaureStats.number_of_security_alerts + 2, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_MultideviceParticipantDetected, initialLaureStats.number_of_MultideviceParticipantDetected + 2, 3000));
 
 	// Check that the message was not received by Pauline1 or Laure
 	// TODO optimize and choose wether we are still allowed to send message during a security alert or not

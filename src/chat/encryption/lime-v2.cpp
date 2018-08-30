@@ -187,9 +187,9 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 
 		// If there is no recent security alert send a new one
 		if (!recentSecurityAlert) {
-			ConferenceSecurityEvent::SecurityAlertType securityAlertType = ConferenceSecurityEvent::SecurityAlertType::MultideviceParticipant;
-			shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(time(nullptr), chatRoom->getConferenceId(), securityAlertType);
-			confListener->onSecurityAlert(securityEvent);
+			ConferenceSecurityEvent::SecurityEventType securityEventType = ConferenceSecurityEvent::SecurityEventType::MultideviceParticipantDetected;
+			shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(time(nullptr), chatRoom->getConferenceId(), securityEventType);
+			confListener->onSecurityEvent(securityEvent);
 		}
 		return ChatMessageModifier::Result::Error;
 	}

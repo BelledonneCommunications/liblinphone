@@ -174,18 +174,18 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsStateChangedCb linphone_chat_room_cbs_get_sta
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_state_changed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsStateChangedCb cb);
 
 /**
- * Get the security alert callback.
+ * Get the security event callback.
  * @param[in] cbs #LinphoneChatRoomCbs object.
- * @return The security alert callback to be used.
+ * @return The security event callback to be used.
  */
-LINPHONE_PUBLIC LinphoneChatRoomCbsSecurityAlertCb linphone_chat_room_cbs_get_security_alert (const LinphoneChatRoomCbs *cbs);
+LINPHONE_PUBLIC LinphoneChatRoomCbsSecurityEventCb linphone_chat_room_cbs_get_security_event (const LinphoneChatRoomCbs *cbs);
 
 /**
- * Set the security alert callback.
+ * Set the security event callback.
  * @param[in] cbs #LinphoneChatRoomCbs object.
- * @param[in] cb The current security alert callback to be used.
+ * @param[in] cb The current security event callback to be used.
  */
-LINPHONE_PUBLIC void linphone_chat_room_cbs_set_security_alert (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsSecurityAlertCb cb);
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_security_event (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsSecurityEventCb cb);
 
 /**
  * Get the subject changed callback.

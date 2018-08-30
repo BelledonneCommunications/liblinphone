@@ -169,7 +169,7 @@ static bool isConferenceSubjectType (LinphoneEventLogType type) {
 
 static bool isConferenceSecurityType (LinphoneEventLogType type) {
 	switch (type) {
-		case LinphoneEventLogTypeConferenceSecurityAlert:
+		case LinphoneEventLogTypeConferenceSecurityEvent:
 			return true;
 
 		default:
@@ -321,7 +321,7 @@ const LinphoneAddress *linphone_event_log_get_device_address (const LinphoneEven
 // ConferenceSecurityEvent.
 // -----------------------------------------------------------------------------
 
-LINPHONE_PUBLIC LinphoneAddress *linphone_event_log_get_security_alert_faulty_device (const LinphoneEventLog *event_log) {
+LINPHONE_PUBLIC LinphoneAddress *linphone_event_log_get_security_event_faulty_device (const LinphoneEventLog *event_log) {
 	if (!isConferenceSecurityType(linphone_event_log_get_type(event_log)))
 		return nullptr;
 

@@ -716,13 +716,13 @@ void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferencePart
 	_linphone_chat_room_notify_participant_admin_status_changed(cr, L_GET_C_BACK_PTR(event));
 }
 
-void ClientGroupChatRoom::onSecurityAlert (const shared_ptr<ConferenceSecurityEvent> &event) {
+void ClientGroupChatRoom::onSecurityEvent (const shared_ptr<ConferenceSecurityEvent> &event) {
 	L_D();
 
 	d->addEvent(event);
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
-	_linphone_chat_room_notify_security_alert(cr, L_GET_C_BACK_PTR(event));
+	_linphone_chat_room_notify_security_event(cr, L_GET_C_BACK_PTR(event));
 
 	// Try to set the faulty device PeerDeviceStatus to unsafe
 	if (getCore()->limeV2Enabled() && event->getFaultyDevice().isValid()) {

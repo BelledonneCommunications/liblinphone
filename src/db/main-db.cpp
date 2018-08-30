@@ -175,7 +175,7 @@ namespace {
 			EventLog::Type::ConferenceParticipantSetAdmin,
 			EventLog::Type::ConferenceParticipantUnsetAdmin,
 			EventLog::Type::ConferenceSubjectChanged,
-			EventLog::Type::ConferenceSecurityAlert
+			EventLog::Type::ConferenceSecurityEvent
 		>::get();
 
 		constexpr auto ConferenceInfoFilter = ConferenceInfoNoDeviceFilter + "," + SqlEventFilterBuilder<
@@ -532,7 +532,7 @@ shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceEvent (
 				case EventLog::Type::ConferenceChatMessage:
 					eventLog = selectConferenceChatMessageEvent(chatRoom, type, row);
 					break;
-				case EventLog::Type::ConferenceSecurityAlert:
+				case EventLog::Type::ConferenceSecurityEvent:
 					eventLog = selectConferenceSecurityEvent(chatRoom->getConferenceId(), type, row);
 					break;
 				default:
@@ -585,7 +585,7 @@ shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceNotifiedEvent (
 			eventLog = selectConferenceParticipantDeviceEvent(conferenceId, type, row);
 			break;
 
-		case EventLog::Type::ConferenceSecurityAlert:
+		case EventLog::Type::ConferenceSecurityEvent:
 			eventLog = selectConferenceSecurityEvent(conferenceId, type, row);
 			break;
 
@@ -699,7 +699,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceSecurityEvent (
 	return make_shared<ConferenceSecurityEvent>(
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		static_cast<ConferenceSecurityEvent::SecurityAlertType>(row.get<int>(16)),
+		static_cast<ConferenceSecurityEvent::SecurityEventType>(row.get<int>(16)),
 		IdentityAddress(row.get<string>(17))
 	);
 }
@@ -943,13 +943,13 @@ long long MainDbPrivate::insertConferenceSecurityEvent (const shared_ptr<EventLo
 	if (eventId < 0)
 		return -1;
 
-	const int &securityAlertType = int(static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getSecurityAlertType());
+	const int &securityEventType = int(static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getSecurityEventType());
 	const string &faultyDevice = static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getFaultyDevice().asString();
 
 	// insert security event into new table "conference_security_event"
 	soci::session *session = dbSession.getBackendSession();
 	*session << "INSERT INTO conference_security_event (event_id, security_alert, faulty_device)"
-		" VALUES (:eventId, :securityAlertType, :faultyDevice)", soci::use(eventId), soci::use(securityAlertType), soci::use(faultyDevice);
+		" VALUES (:eventId, :securityEventType, :faultyDevice)", soci::use(eventId), soci::use(securityEventType), soci::use(faultyDevice);
 
 	return eventId;
 }
@@ -1778,7 +1778,7 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 				eventId = d->insertConferenceParticipantDeviceEvent(eventLog);
 				break;
 
-			case EventLog::Type::ConferenceSecurityAlert:
+			case EventLog::Type::ConferenceSecurityEvent:
 				eventId = d->insertConferenceSecurityEvent(eventLog);
 				break;
 
@@ -1828,7 +1828,7 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceParticipantUnsetAdmin:
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
-			case EventLog::Type::ConferenceSecurityAlert:
+			case EventLog::Type::ConferenceSecurityEvent:
 			case EventLog::Type::ConferenceSubjectChanged:
 				return false;
 		}

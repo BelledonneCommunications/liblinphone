@@ -106,7 +106,7 @@ private:
 	void onConferenceCreated (const IdentityAddress &addr) override;
 	void onConferenceKeywordsChanged (const std::vector<std::string> &keywords) override;
 	void onConferenceTerminated (const IdentityAddress &addr) override;
-	void onSecurityAlert (const std::shared_ptr<ConferenceSecurityEvent> &event) override;
+	void onSecurityEvent (const std::shared_ptr<ConferenceSecurityEvent> &event) override;
 	void onFirstNotifyReceived (const IdentityAddress &addr) override;
 	void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
 	void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) override;

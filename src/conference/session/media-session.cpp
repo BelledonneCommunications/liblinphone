@@ -3527,8 +3527,8 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 				const SalAddress *remoteAddress = getOp()->getRemoteContactAddress();
 				char *peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
 
-				// TODO If mismatch = 0 set this peer as trusted with this Ik
-				// TODO If mismatch = 1 the Ik exchange went wrong (possible identity theft)
+				// If mismatch = 0 set this peer as trusted with this Ik
+				// If mismatch = 1 the Ik exchange went wrong (possible identity theft)
 				if (ms_zrtp_getAuxiliarySharedSecretMismatch(audioStream->ms.sessions.zrtp_context) == 0) {
 					if (limeV2Engine) {
 						try {
@@ -3537,7 +3537,7 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 							limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, peerDeviceStatus);
 							lInfo() << "LIMEv2 peer device " << peerDeviceId << " is now trusted";
 						} catch (const exception &e) {
-							// The stored IK doesn't correspond to the Ik we are trying to use here
+							// The stored IK doesn't match with the Ik we are trying to use here
 							// TODO Report the security issue to application level (chatroom event)
 							lError() << "LIMEv2 identity theft detected from " << peerDeviceId << " (" << e.what() << ")";
 						}

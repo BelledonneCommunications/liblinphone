@@ -23,6 +23,7 @@
 #include <string>
 
 #include "conference-event.h"
+#include "linphone/enums/security-event-enums.h"
 
 // =============================================================================
 
@@ -33,31 +34,22 @@ class ConferenceSecurityEventPrivate;
 class LINPHONE_PUBLIC ConferenceSecurityEvent : public ConferenceEvent {
 
 public:
-	enum SecurityAlertType {
-		/**
-		* Encrypting message to forbidden multidevice participant.
-		*/
-		MultideviceParticipant,
-		/**
-		* Trying to set lime PeerDeviceStatus using a new identity key.
-		*/
-		LimeIdentityKeyChanged
-	};
+	L_DECLARE_ENUM(SecurityEventType, L_ENUM_VALUES_SECURITY_EVENT_TYPE);
 
 	ConferenceSecurityEvent (
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		SecurityAlertType securityAlertType,
+		SecurityEventType securityEventType,
 		const IdentityAddress &faultyDevice
 	);
 
 	ConferenceSecurityEvent (
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		SecurityAlertType securityAlertType
+		SecurityEventType securityEventType
 	);
 
-	SecurityAlertType getSecurityAlertType () const;
+	SecurityEventType getSecurityEventType () const;
 	const IdentityAddress &getFaultyDevice () const;
 
 private:

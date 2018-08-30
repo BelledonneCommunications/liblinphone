@@ -35,7 +35,7 @@ public:
 	virtual void onConferenceCreated (const IdentityAddress &addr) {}
 	virtual void onConferenceKeywordsChanged (const std::vector<std::string> &keywords) {}
 	virtual void onConferenceTerminated (const IdentityAddress &addr) {}
-	virtual void onSecurityAlert (const std::shared_ptr<ConferenceSecurityEvent> &event) {}
+	virtual void onSecurityEvent (const std::shared_ptr<ConferenceSecurityEvent> &event) {}
 
 	virtual void onFirstNotifyReceived (const IdentityAddress &addr) {}
 	virtual void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {}
