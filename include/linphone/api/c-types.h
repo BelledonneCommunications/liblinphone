@@ -28,6 +28,7 @@
 #include "linphone/enums/chat-room-enums.h"
 #include "linphone/enums/encryption-engine-enums.h"
 #include "linphone/enums/event-log-enums.h"
+#include "linphone/enums/security-event-enums.h"
 #include "linphone/utils/enum-generator.h"
 
 // =============================================================================
@@ -261,6 +262,12 @@ L_DECLARE_C_ENUM(ChatRoomState, L_ENUM_VALUES_CHAT_ROOM_STATE);
  * @ingroup events
  */
 L_DECLARE_C_ENUM(EventLogType, L_ENUM_VALUES_EVENT_LOG_TYPE);
+
+/**
+ * #LinphoneSecurityEventType is used to indicate the type of security event.
+ * @ingroup events
+ */
+L_DECLARE_C_ENUM(SecurityEventType, L_ENUM_VALUES_SECURITY_EVENT_TYPE);
 
 #ifdef __cplusplus
 	}

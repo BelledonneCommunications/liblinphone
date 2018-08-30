@@ -133,6 +133,15 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	const IdentityAddress &peerAddress = chatRoom->getPeerAddress();
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
 
+	// Refuse message in unsafe chatroom if not allowed
+	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
+		if (chatRoom->getSecurityLevel() == ClientGroupChatRoom::SecurityLevel::Unsafe) {
+			cout << "Sending encrypted message in an unsafe chatroom" << endl;
+			lWarning() << "Sending encrypted message in an unsafe chatroom" << endl;
+			return ChatMessageModifier::Result::Error;
+		}
+	}
+
 	// Add participants to the recipient list
 	bool tooManyDevices = FALSE;
 	int maxNbDevicePerParticipant = linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "max_nb_device_per_participant", 1);
@@ -159,16 +168,6 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	}
 	if (nbDevice > maxNbDevicePerParticipant) tooManyDevices = TRUE;
 
-	// Refuse message in unsafe chatroom if not allowed
-	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
-		for (const auto &recipient : *recipients) {
-			if (belleSipLimeManager->get_peerDeviceStatus(recipient.deviceId) == lime::PeerDeviceStatus::unsafe) {
-				lWarning() << "Sending encrypted message to a chatroom with unsafe participant devices" << endl;
-				return ChatMessageModifier::Result::Error;
-			}
-		}
-	}
-
 	// If too many devices for a participant, throw a local security alert event
 	if (tooManyDevices) {
 		lWarning() << "Sending encrypted message to multidevice participant, message rejected";
@@ -180,8 +179,11 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 
 		// If there is at least one security alert don't send a new one
 		for (const auto &event : eventList) {
-			if (event->getType() == ConferenceEvent::Type::ConferenceSecurityAlert) {
-				recentSecurityAlert = true;
+			if (event->getType() == ConferenceEvent::Type::ConferenceSecurityEvent) {
+				auto securityEvent = static_pointer_cast<ConferenceSecurityEvent>(event);
+				if (securityEvent->getSecurityEventType() == ConferenceSecurityEvent::SecurityEventType::MultideviceParticipantDetected) {
+					recentSecurityAlert = true;
+				}
 			}
 		}
 

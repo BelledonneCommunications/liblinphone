@@ -719,18 +719,30 @@ void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferencePart
 void ClientGroupChatRoom::onSecurityEvent (const shared_ptr<ConferenceSecurityEvent> &event) {
 	L_D();
 
+	// Add security events or alerts based on the type of security event
+	switch (event->getSecurityEventType()) {
+		case ConferenceSecurityEvent::SecurityEventType::SecurityLevelDowngraded:
+			// Expected behaviour: nothing more to do
+			break;
+		case ConferenceSecurityEvent::SecurityEventType::MultideviceParticipantDetected:
+		case ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged:
+		case ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected:
+			// Unexpected behaviour: set faulty device PeerDeviceStatus to unsafe
+			if (getCore()->limeV2Enabled() && event->getFaultyDevice().isValid()) {
+				LimeV2 *limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
+				limeV2Engine->getLimeManager()->set_peerDeviceStatus(event->getFaultyDevice().asString(), lime::PeerDeviceStatus::unsafe);
+				// WARNING has no effect if faulty device is not in X3DH database
+			}
+			break;
+		case ConferenceSecurityEvent::SecurityEventType::Null:
+			// Event is not a security event
+			break;
+	}
+
 	d->addEvent(event);
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_security_event(cr, L_GET_C_BACK_PTR(event));
-
-	// Try to set the faulty device PeerDeviceStatus to unsafe
-	if (getCore()->limeV2Enabled() && event->getFaultyDevice().isValid()) {
-		LimeV2 *limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
-
-		// TODO has no effect if faulty device is unkown to LIMEv2
-		limeV2Engine->getLimeManager()->set_peerDeviceStatus(event->getFaultyDevice().asString(), lime::PeerDeviceStatus::unsafe);
-	}
 }
 
 void ClientGroupChatRoom::onSubjectChanged (const shared_ptr<ConferenceSubjectEvent> &event, bool isFullState) {
@@ -762,6 +774,37 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 		lWarning() << "Participant " << addr.asString() << " added a device but is not in the list of participants!";
 		return;
 	}
+
+	shared_ptr<ConferenceSecurityEvent> securityEvent;
+	if (getCore()->limeV2Enabled()) {
+		int nbDevice = int(participant->getPrivate()->getDevices().size());
+		int maxNbDevicesPerParticipant = linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())), "lime", "max_nb_device_per_participant", 1);
+
+		// Check if the new participant device is unexpected, in which case a security alert is created
+		if (nbDevice >= maxNbDevicesPerParticipant) {
+			lWarning() << "LIMEv2 alert: maximum number of devices exceeded for " << participant->getAddress();
+			securityEvent = make_shared<ConferenceSecurityEvent>(
+				time(nullptr),
+				d->conferenceId,
+				ConferenceSecurityEvent::SecurityEventType::MultideviceParticipantDetected,
+				event->getDeviceAddress()
+			);
+		// Otherwise check if this new device downgrades the chatroom security level, in which case a security event is created
+		} else {
+			LimeV2 *limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
+			lime::PeerDeviceStatus newDeviceStatus = limeV2Engine->getLimeManager()->get_peerDeviceStatus(event->getDeviceAddress().asString());
+			if (getSecurityLevel() == SecurityLevel::Safe && newDeviceStatus != lime::PeerDeviceStatus::trusted) {
+				lInfo() << "LIMEv2 chat room security level downgraded by "<< event->getDeviceAddress().asString();
+				securityEvent = make_shared<ConferenceSecurityEvent>(
+					time(nullptr),
+					d->conferenceId,
+					ConferenceSecurityEvent::SecurityEventType::SecurityLevelDowngraded,
+					event->getDeviceAddress()
+				);
+			}
+		}
+	}
+
 	participant->getPrivate()->addDevice(event->getDeviceAddress());
 
 	if (isFullState)
@@ -769,20 +812,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 
 	d->addEvent(event);
 
-	// If LIMEv2 enabled and if too many devices for a participant, throw a local security alert event
-	int nbDevice = int(participant->getPrivate()->getDevices().size());
-	int maxNbDevicesPerParticipant = linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())), "lime", "max_nb_device_per_participant", 1);
-
-	if (getCore()->limeV2Enabled() && nbDevice > maxNbDevicesPerParticipant) {
-		lWarning() << "LIMEv2 maximum number of devices exceeded for " << participant->getAddress();
-		const shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(
-			time(nullptr),
-			d->conferenceId,
-			ConferenceSecurityEvent::SecurityAlertType::MultideviceParticipant,
-			event->getDeviceAddress()
-		);
-		onSecurityAlert(securityEvent);
-	}
+	if (securityEvent) onSecurityEvent(securityEvent);
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_participant_device_added(cr, L_GET_C_BACK_PTR(event));
