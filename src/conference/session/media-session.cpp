@@ -2824,7 +2824,7 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 			if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), LinphoneMediaEncryptionZRTP)
 				&& ((getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream->haveZrtpHash == 1))) {
 
-				// get local and remote identity keys from sdp attributes
+				// Get local and remote identity keys from sdp attributes
 				const char *charLocalIk = sal_custom_sdp_attribute_find(op->getLocalMediaDescription()->custom_sdp_attributes, "Ik");
 				const char *charRemoteIk = sal_custom_sdp_attribute_find(op->getRemoteMediaDescription()->custom_sdp_attributes, "Ik");
 
@@ -2833,13 +2833,13 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 					const string &stringB64LocalIk(charLocalIk);
 					const string &stringB64RemoteIk(charRemoteIk);
 
-					// convert to vectors and decode base64
+					// Convert to vectors and decode base64
 					vector<uint8_t> localIk = vector<uint8_t>(stringB64LocalIk.begin(), stringB64LocalIk.end());
 					vector<uint8_t> remoteIk = vector<uint8_t>(stringB64RemoteIk.begin(), stringB64RemoteIk.end());
 					localIk = decodeBase64(localIk);
 					remoteIk = decodeBase64(remoteIk);
 
-					// concatenate identity keys in the right order
+					// Concatenate identity keys in the right order
 					vector<uint8_t> vectorAuxSharedSecret;
 					if (this->getPublic()->CallSession::getDirection() == LinphoneCallDir::LinphoneCallOutgoing) {
 						localIk.insert(localIk.end(), remoteIk.begin(), remoteIk.end());
@@ -2851,7 +2851,7 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 						lError() << "Unable to concatenate and set ZRTP auxiliary shared secret";
 					}
 
-					// get the final auxSharedSecret and set it as auxiliary shared secret in ZRTP
+					// Get the final auxSharedSecret and set it as auxiliary shared secret in ZRTP
 					if (!vectorAuxSharedSecret.empty()) {
 						const uint8_t *auxSharedSecret = vectorAuxSharedSecret.data();
 						size_t auxSharedSecretLength = sizeof(auxSharedSecret);
@@ -3528,25 +3528,36 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 				char *peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
 
 				// If mismatch = 0 set this peer as trusted with this Ik
-				// If mismatch = 1 the Ik exchange went wrong (possible identity theft)
 				if (ms_zrtp_getAuxiliarySharedSecretMismatch(audioStream->ms.sessions.zrtp_context) == 0) {
 					if (limeV2Engine) {
 						try {
-							// If SAS verified lime peer is trusted, untrusted otherwise
+							// If SAS verified, the lime peer is trusted, untrusted otherwise
 							lime::PeerDeviceStatus peerDeviceStatus = authTokenVerified ? lime::PeerDeviceStatus::trusted : lime::PeerDeviceStatus::untrusted;
 							limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, peerDeviceStatus);
 							lInfo() << "LIMEv2 peer device " << peerDeviceId << " is now trusted";
 						} catch (const exception &e) {
-							// The stored IK doesn't match with the Ik we are trying to use here
-							// TODO Report the security issue to application level (chatroom event)
+							// The stored IK doesn't match with the Ik given during this exchange
 							lError() << "LIMEv2 identity theft detected from " << peerDeviceId << " (" << e.what() << ")";
+							limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe);
+							// TODO Report the security issue to application level (LimeIdentityKeyChanged chatroom event)
 						}
 					} else {
 						lError() << "Unable to get LIMEv2 context, unable to set peer device status";
 					}
 				} else {
-					// TODO Report the security issue to application level (chatroom event)
+					// If mismatch != 0 the Ik exchange went wrong (possible identity theft)
+					// TODO Report the security issue to application level (LimeIdentityKeyChanged chatroom event)
 					lError() << "LIMEv2 auxiliary secret mismatch: possible identity theft detected from " << peerDeviceId;
+					try {
+						// Try to set peer device to untrusted
+						limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::untrusted);
+						lInfo() << "LIMEv2 peer device " << peerDeviceId << " is now untrusted";
+					} catch (const exception &e) {
+						// The stored IK doesn't match with the Ik given during this exchange (identity theft)
+						lError() << "LIMEv2 identity theft detected from " << peerDeviceId << " (" << e.what() << ")";
+						limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe);
+						// TODO Report the security issue to application level (LimeIdentityKeyChanged chatroom event)
+					}
 				}
 				ms_free(peerDeviceId);
 			}
