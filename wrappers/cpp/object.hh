@@ -117,7 +117,7 @@ namespace linphone {
 
 	class Listener {
 	public:
-		virtual ~Listener() = 0;
+		LINPHONECXX_PUBLIC virtual ~Listener() = 0;
 	};
 
 
