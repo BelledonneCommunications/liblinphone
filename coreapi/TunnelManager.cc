@@ -47,7 +47,7 @@ void TunnelManager::addServer(const char *ip, int port) {
 	}
 
 	mServerAddrs.push_back(ServerAddr(ip,port));
-	if (mTunnelClient && !mUseDualClient) {
+	if (mTunnelClient && !mTunnelClient->isDualTunnelClient()) {
 		static_cast<TunnelClient*>(mTunnelClient)->addServer(ip,port);
 	}
 }
@@ -72,7 +72,7 @@ void TunnelManager::addServerPair(const char *ip1, int port1, const char *ip2, i
 	}
 
 	mDualServerAddrs.push_back(DualServerAddr(ip1, port1, ip2, port2));
-	if (mTunnelClient && mUseDualClient) {
+	if (mTunnelClient && mTunnelClient->isDualTunnelClient()) {
 		static_cast<DualTunnelClient*>(mTunnelClient)->addServerPair(ip1, port1, ip2, port2);
 	}
 }
@@ -208,6 +208,8 @@ void TunnelManager::stopClient(){
 		if (mTunnelClient) {
 			ms_message("TunnelManager: stoppping tunnel client");
 			mTunnelClient->stop();
+			delete mTunnelClient;
+			mTunnelClient = NULL;
 		}
 		/*otherwise, it doesn't really matter if the tunnel connection is kept alive even if it is not used anymore by the liblinphone.*/
 	}
