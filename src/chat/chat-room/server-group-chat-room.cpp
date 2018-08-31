@@ -333,7 +333,7 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::findFilteredParticipant (con
 
 void ServerGroupChatRoomPrivate::subscribeReceived (LinphoneEvent *event) {
 	L_Q_T(LocalConference, qConference);
-	qConference->getPrivate()->eventHandler->subscribeReceived(event, capabilities & ServerGroupChatRoom::Capabilities::OneToOne);
+	qConference->getPrivate()->eventHandler->subscribeReceived(event, !!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne));
 }
 
 bool ServerGroupChatRoomPrivate::update (SalCallOp *op) {

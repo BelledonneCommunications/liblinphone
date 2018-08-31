@@ -548,7 +548,7 @@ bool Sal::isTransportAvailable (SalTransport tr) {
 		case SalTransportTCP:
 			return true;
 		case SalTransportTLS:
-			return belle_sip_stack_tls_available(mStack);
+			return !!belle_sip_stack_tls_available(mStack);
 		case SalTransportDTLS:
 		default:
 			return false;
@@ -927,7 +927,7 @@ LINPHONE_PUBLIC void sal_set_recv_error (Sal *sal,int value) {
 }
 
 LINPHONE_PUBLIC void sal_enable_pending_trans_checking (Sal *sal, bool_t value) {
-	sal->enablePendingTransactionChecking(value);
+	sal->enablePendingTransactionChecking(!!value);
 }
 
 LINPHONE_PUBLIC void sal_enable_unconditional_answer (Sal *sal, bool_t value) {
@@ -959,7 +959,7 @@ LINPHONE_PUBLIC void sal_set_transport_timeout (Sal* sal, int timeout) {
 }
 
 LINPHONE_PUBLIC void sal_enable_test_features (Sal*ctx, bool_t value) {
-	ctx->enableTestFeatures(value);
+	ctx->enableTestFeatures(!!value);
 }
 
 LINPHONE_PUBLIC bool_t sal_transport_available (Sal *ctx, SalTransport tr) {
