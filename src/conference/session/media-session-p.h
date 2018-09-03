@@ -225,6 +225,7 @@ private:
 	unsigned int getNbActiveStreams () const;
 	bool isEncryptionMandatory () const;
 	int mediaParametersChanged (SalMediaDescription *oldMd, SalMediaDescription *newMd);
+	void addSecurityEventInChatrooms (const IdentityAddress &faultyDevice, ConferenceSecurityEvent::SecurityEventType securityEventType);
 	void propagateEncryptionChanged ();
 
 	void fillLogStats (MediaStream *st);

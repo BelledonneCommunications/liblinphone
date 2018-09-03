@@ -31,11 +31,12 @@ class ClientGroupChatRoomPrivate;
 enum class SecurityLevel;
 
 class LINPHONE_PUBLIC ClientGroupChatRoom : public ChatRoom, public RemoteConference {
-	friend class LimeV2;
 	friend class BasicToClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
 	friend class Core;
 	friend class CorePrivate;
+	friend class LimeV2;
+	friend class MediaSessionPrivate;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ClientGroupChatRoom);
