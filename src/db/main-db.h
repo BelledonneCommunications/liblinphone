@@ -55,7 +55,8 @@ public:
 		ConferenceCallFilter = 0x1,
 		ConferenceChatMessageFilter = 0x2,
 		ConferenceInfoFilter = 0x4,
-		ConferenceInfoNoDeviceFilter = 0x8
+		ConferenceInfoNoDeviceFilter = 0x8,
+		ConferenceChatMessageSecurityFilter = 0x10
 	};
 
 	typedef EnumMask<Filter> FilterMask;

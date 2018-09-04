@@ -159,6 +159,7 @@ namespace {
 		constexpr char ConferenceChatMessageFilter[] = "5";
 		constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12,13";
 		constexpr char ConferenceInfoFilter[] = "1,2,6,7,8,9,10,11,12";
+		constexpr char ConferenceChatMessageSecurityFilter[] = "5,13";
 	#else
 		constexpr auto ConferenceCallFilter = SqlEventFilterBuilder<
 			EventLog::Type::ConferenceCallStart,
@@ -182,13 +183,18 @@ namespace {
 			EventLog::Type::ConferenceParticipantDeviceAdded,
 			EventLog::Type::ConferenceParticipantDeviceRemoved
 		>::get();
+
+		constexpr auto ConferenceChatMessageSecurityFilter = ConferenceChatMessageFilter + "," + SqlEventFilterBuilder<
+			EventLog::Type::ConferenceSecurityEvent
+		>::get();
 	#endif // ifdef _WIN32
 
 	constexpr EnumToSql<MainDb::Filter> EventFilterToSql[] = {
 		{ MainDb::ConferenceCallFilter, ConferenceCallFilter },
 		{ MainDb::ConferenceChatMessageFilter, ConferenceChatMessageFilter },
 		{ MainDb::ConferenceInfoNoDeviceFilter, ConferenceInfoNoDeviceFilter },
-		{ MainDb::ConferenceInfoFilter, ConferenceInfoFilter }
+		{ MainDb::ConferenceInfoFilter, ConferenceInfoFilter },
+		{ MainDb::ConferenceChatMessageSecurityFilter, ConferenceChatMessageSecurityFilter }
 	};
 }
 
