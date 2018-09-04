@@ -36,7 +36,7 @@ using namespace std;
 
 using namespace LinphonePrivate;
 
-static void check_contents(bctbx_list_t *contents, bool first_file_transfer, bool second_file_transfer, bool third_content) {
+static void check_contents(const bctbx_list_t *contents, bool first_file_transfer, bool second_file_transfer, bool third_content) {
 	BC_ASSERT_PTR_NOT_NULL(contents);
 	if (third_content)
 		BC_ASSERT_EQUAL(bctbx_list_size(contents), 3, int, "%d");
@@ -46,10 +46,10 @@ static void check_contents(bctbx_list_t *contents, bool first_file_transfer, boo
 	int textContentCount = 0;
 	int fileTransferContentCount = 0;
 	int unexpectedContentCount = 0;
-	bctbx_list_t *it;
-	
+	const bctbx_list_t *it;
+
 	for (it = contents; it != NULL; it = bctbx_list_next(it)) {
-		LinphoneContent *content = (LinphoneContent *) bctbx_list_get_data(it);
+		const LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(it);
 		BC_ASSERT_PTR_NOT_NULL(content);
 
 		if (linphone_content_is_file_transfer(content)) {
@@ -186,11 +186,10 @@ static void chat_message_multipart_modifier_base(bool first_file_transfer, bool 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
 
-	bctbx_list_t *contents = linphone_chat_message_get_contents(pauline->stat.last_received_chat_message);
+	const bctbx_list_t *contents = linphone_chat_message_get_contents(pauline->stat.last_received_chat_message);
 	check_contents(contents, first_file_transfer, second_file_transfer, third_content);
 
 	marieRoom.reset(); // Avoid bad weak ptr when the core is destroyed below this line.
-	bctbx_list_free_with_data(contents, (void (*)(void *))linphone_content_unref);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);

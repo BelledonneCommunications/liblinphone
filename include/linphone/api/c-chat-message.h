@@ -388,7 +388,7 @@ LINPHONE_PUBLIC void linphone_chat_message_remove_content (LinphoneChatMessage *
  * @param[in] msg #LinphoneChatMessage object.
  * @return \bctbx_list{LinphoneContent} the list of #LinphoneContent.
  */
-LINPHONE_PUBLIC bctbx_list_t* linphone_chat_message_get_contents(const LinphoneChatMessage *msg);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_message_get_contents(const LinphoneChatMessage *msg);
 
 /**
  * Returns true if the chat message has a text content
