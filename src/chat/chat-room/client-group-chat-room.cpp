@@ -721,21 +721,17 @@ void ClientGroupChatRoom::onSecurityEvent (const shared_ptr<ConferenceSecurityEv
 
 	// Add security events or alerts based on the type of security event
 	switch (event->getSecurityEventType()) {
-		case ConferenceSecurityEvent::SecurityEventType::SecurityLevelDowngraded:
-			// Expected behaviour: nothing more to do
-			break;
 		case ConferenceSecurityEvent::SecurityEventType::MultideviceParticipantDetected:
-		case ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged:
-		case ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected:
-			// Unexpected behaviour: set faulty device PeerDeviceStatus to unsafe
+			// Unexpected behaviour, set faulty device PeerDeviceStatus to unsafe
 			if (getCore()->limeV2Enabled() && event->getFaultyDevice().isValid()) {
 				LimeV2 *limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
 				limeV2Engine->getLimeManager()->set_peerDeviceStatus(event->getFaultyDevice().asString(), lime::PeerDeviceStatus::unsafe);
 				// WARNING has no effect if faulty device is not in X3DH database
 			}
 			break;
-		case ConferenceSecurityEvent::SecurityEventType::Null:
-			// Event is not a security event
+		default:
+			// Other security event types are already managed
+			// Or This event is not a security event
 			break;
 	}
 
