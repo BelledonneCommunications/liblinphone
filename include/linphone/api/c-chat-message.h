@@ -416,9 +416,12 @@ LINPHONE_PUBLIC bool_t linphone_chat_message_is_file_transfer_in_progress (Linph
  * @param[in] msg #LinphoneChatMessage object.
  * @param[in] state The LinphoneChatMessageState the imdn have reached (only use LinphoneChatMessageStateDelivered,
  * LinphoneChatMessageStateDeliveredToUser, LinphoneChatMessageStateDisplayed and LinphoneChatMessageStateNotDelivered)
- * @return \bctbx_list{LinphoneParticipantImdnState}
+ * @return \bctbx_list{LinphoneParticipantImdnState} \onTheFlyList
  */
-LINPHONE_PUBLIC bctbx_list_t *linphone_chat_message_get_participants_by_imdn_state (const LinphoneChatMessage *msg, LinphoneChatMessageState state);
+LINPHONE_PUBLIC bctbx_list_t *linphone_chat_message_get_participants_by_imdn_state (
+	const LinphoneChatMessage *msg,
+	LinphoneChatMessageState state
+);
 
 /**
  * @}

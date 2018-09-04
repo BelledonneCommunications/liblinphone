@@ -271,7 +271,9 @@ bool_t linphone_chat_message_is_file_transfer_in_progress (LinphoneChatMessage *
 }
 
 bctbx_list_t *linphone_chat_message_get_participants_by_imdn_state (const LinphoneChatMessage *msg, LinphoneChatMessageState state) {
-	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getParticipantsByImdnState(LinphonePrivate::ChatMessage::State(state)));
+	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(
+		L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getParticipantsByImdnState(LinphonePrivate::ChatMessage::State(state))
+	);
 }
 
 bool_t linphone_chat_message_download_content (LinphoneChatMessage *msg, LinphoneContent *c_content) {
