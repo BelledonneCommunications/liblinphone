@@ -457,7 +457,7 @@ class JavaTranslator(object):
                 methodDict['params_impl'] += 'j_' + argname
                 methodDict['jenums'].append({'enumName': argname, 'cEnumPrefix': arg.type.desc.name.to_snake_case(fullName=True)})
             elif isinstance(arg.type, AbsApi.ListType):
-                methodDict['jparams'] += '[L' + self.jni_path + arg.type.containedTypeDesc.name + ';'
+                methodDict['jparams'] += '[L' + self.jni_path + arg.type.containedTypeDesc.desc.name.to_camel_case() + ';'
                 methodDict['params_impl'] += 'NULL'
 
         methodDict['jparams'] += ')'
