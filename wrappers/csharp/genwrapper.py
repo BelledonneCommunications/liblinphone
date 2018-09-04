@@ -60,13 +60,13 @@ class CsharpTranslator(object):
 		return not methodDict['is_string'] and not methodDict['is_bool'] and not methodDict['is_class'] and not methodDict['is_enum'] and methodDict['list_type'] == None
 
 	def is_linphone_type(self, _type, isArg, dllImport=True):
-		if isinstance(_type, AbsApi.ClassType)
+		if isinstance(_type, AbsApi.ClassType):
 			return False if dllImport else True
-		elif isinstance(_type, AbsApi.EnumType)
+		elif isinstance(_type, AbsApi.EnumType):
 			return False if dllImport else True
 
 	def throws_exception(self, return_type):
-		if isinstance(return_type, AbsApi.BaseType)
+		if isinstance(return_type, AbsApi.BaseType):
 			if return_type.name == 'status':
 				return True
 		return False
@@ -122,7 +122,7 @@ class CsharpTranslator(object):
 					methodDict['impl']['args'] += ', '
 					methodDict['impl']['c_args'] += ', '
 				if self.is_linphone_type(arg.type, False, False):
-					if isinstance(arg.type, AbsApi.ClassType)
+					if isinstance(arg.type, AbsApi.ClassType):
 						argname = arg.name.translate(self.nameTranslator)
 						methodDict['impl']['c_args'] += argname + " != null ? " + argname + ".nativePtr : IntPtr.Zero"
 					else:
@@ -353,22 +353,20 @@ class CsharpTranslator(object):
 		enumDict['enumName'] = enum.name.translate(self.nameTranslator)
 		enumDict['doc'] = enum.briefDescription.translate(self.docTranslator, tagAsBrief=True)
 		enumDict['values'] = []
+		enumDict['isFlag'] = False
 		i = 0
 		lastValue = None
-		print 'Enum name is ' + enumDict['enumName']
 		for enumValue in enum.enumerators:
 			enumValDict = {}
 			enumValDict['name'] = enumValue.name.translate(self.nameTranslator)
 			enumValDict['doc'] = enumValue.briefDescription.translate(self.docTranslator, tagAsBrief=True)
 			if isinstance(enumValue.value, int):
-				print 'Enum value is int ! ' + str(enumValue.value)
 				lastValue = enumValue.value
 				enumValDict['value'] = str(enumValue.value)
 			elif isinstance(enumValue.value, AbsApi.Flag):
-				print 'Enum value is flag ! ' + '1<<' + str(enumValue.value.position)
 				enumValDict['value'] = '1<<' + str(enumValue.value.position)
+				enumDict['isFlag'] = True
 			else:
-				print 'Unknown enum value type !'
 				if lastValue is not None:
 					enumValDict['value'] = lastValue + 1
 					lastValue += 1
