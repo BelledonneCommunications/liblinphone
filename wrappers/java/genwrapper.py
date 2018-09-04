@@ -428,6 +428,7 @@ class JavaTranslator(object):
         methodDict['jobjects'] = []
         methodDict['jenums'] = []
         methodDict['jstrings'] = []
+        methodDict['jlists'] = []
         methodDict['params'] = ''
         methodDict['jparams'] = '('
         methodDict['params_impl'] = ''
@@ -458,7 +459,15 @@ class JavaTranslator(object):
                 methodDict['jenums'].append({'enumName': argname, 'cEnumPrefix': arg.type.desc.name.to_snake_case(fullName=True)})
             elif isinstance(arg.type, AbsApi.ListType):
                 methodDict['jparams'] += '[L' + self.jni_path + arg.type.containedTypeDesc.desc.name.to_camel_case() + ';'
-                methodDict['params_impl'] += 'NULL'
+                methodDict['params_impl'] += 'j_' + argname
+
+                if isinstance( arg.type.containedTypeDesc, AbsApi.BaseType):
+                    methodDict['jlists'].append({'list_name': argname, 'isRealObjectArray':False, 'isStringObjectArray':True})
+                elif isinstance( arg.type.containedTypeDesc, AbsApi.ClassType):
+                    cprefix = 'linphone_' +  arg.type.containedTypeDesc.desc.name.to_snake_case()
+                    classcname = 'Linphone' +  arg.type.containedTypeDesc.desc.name.to_camel_case()
+                    classname =  arg.type.containedTypeDesc.desc.name.to_camel_case()
+                    methodDict['jlists'].append({'list_name': argname, 'objectCPrefix':cprefix, 'objectClassCName':classcname, 'objectClassName':classname, 'isRealObjectArray':True, 'isStringObjectArray':False})
 
         methodDict['jparams'] += ')'
         if (methodDict['return'] == 'void'):

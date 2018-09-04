@@ -334,6 +334,29 @@ static {{return}} {{callbackName}}({{params}}) {
 	{{#jstrings}}
 	jstring j_{{stringName}} = {{stringName}} ? get_jstring_from_char(env, {{stringName}}) : NULL;
 	{{/jstrings}}
+	{{#jlists}}
+	bctbx_list_t *list_it = (bctbx_list_t *){{list_name}};
+	size_t count = bctbx_list_size({{list_name}});
+	{{#isRealObjectArray}}
+	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
+	jobjectArray j_{{list_name}} = env->NewObjectArray((int)count, ljb->{{objectCPrefix}}_class, NULL);{{/isRealObjectArray}}
+	{{#isStringObjectArray}}jobjectArray j_{{list_name}} = env->NewObjectArray((int)count, env->FindClass("java/lang/String"), env->NewStringUTF(""));{{/isStringObjectArray}}
+	int i = 0;
+	while (list_it != NULL) {
+		{{#isRealObjectArray}}
+		{{objectClassCName}}* c_object = ({{objectClassCName}}*)list_it->data;
+		jobject object = get{{objectClassName}}(env, c_object, TRUE);
+		{{/isRealObjectArray}}
+		{{#isStringObjectArray}}const char *cstring = (const char *)list_it->data;
+		jstring object = cstring ? get_jstring_from_char(env, cstring) : 0;{{/isStringObjectArray}}
+		if (object != 0) {
+			env->SetObjectArrayElement(j_{{list_name}}, (int)i, object);
+			{{#isRealObjectArray}}env->DeleteLocalRef(object);{{/isRealObjectArray}}
+		}
+		list_it = bctbx_list_next(list_it);
+		i += 1;
+	}
+	{{/jlists}}
 
 	{{#hasReturn}}{{jniUpcallType}} jni_upcall_result = {{/hasReturn}}env->{{jniUpcallMethod}}(jlistener, jcallback, {{params_impl}});
 	{{#hasReturn}}
