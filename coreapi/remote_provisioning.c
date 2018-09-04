@@ -67,7 +67,23 @@ static void belle_request_process_timeout(void *ctx, const belle_sip_timeout_eve
 
 static void belle_request_process_auth_requested(void *ctx, belle_sip_auth_event_t *event) {
 	LinphoneCore *lc = (LinphoneCore *)ctx;
-	linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http auth requested");
+
+	const char *realm = belle_sip_auth_event_get_realm(event);
+	const char *username = belle_sip_auth_event_get_username(event);
+	const char *domain = belle_sip_auth_event_get_domain(event);
+
+	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(lc, realm, username, domain);
+
+	if (auth_info) {
+		const char *auth_username = linphone_auth_info_get_username(auth_info);
+		const char *auth_password = linphone_auth_info_get_password(auth_info);
+		const char *auth_ha1 = linphone_auth_info_get_ha1(auth_info);
+		belle_sip_auth_event_set_username(event, auth_username);
+		belle_sip_auth_event_set_passwd(event, auth_password);
+		belle_sip_auth_event_set_ha1(event, auth_ha1);
+	} else {
+		linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http auth requested");
+	}
 }
 
 int linphone_remote_provisioning_download_and_apply(LinphoneCore *lc, const char *remote_provisioning_uri) {
