@@ -3149,7 +3149,7 @@ void MediaSessionPrivate::stopAudioStream () {
 			proxy = linphone_core_get_default_proxy_config(q->getCore()->getCCore());
 
 		// Get LIMEv2 context
-		LimeV2 *limeV2Engine;
+		LimeV2 *limeV2Engine = nullptr;
 		if (proxy && linphone_core_lime_v2_enabled(linphone_proxy_config_get_core(proxy))) {
 			limeV2Engine = static_cast<LimeV2 *>(q->getCore()->getEncryptionEngine());
 		} else {
@@ -3595,7 +3595,7 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 				proxy = linphone_core_get_default_proxy_config(q->getCore()->getCCore());
 
 			// Get LIMEv2 context
-			LimeV2 *limeV2Engine;
+			LimeV2 *limeV2Engine = nullptr;
 			if (proxy && linphone_core_lime_v2_enabled(linphone_proxy_config_get_core(proxy))) {
 				limeV2Engine = static_cast<LimeV2 *>(q->getCore()->getEncryptionEngine());
 			} else {
