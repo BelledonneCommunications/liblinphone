@@ -718,14 +718,27 @@ void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferencePart
 
 void ClientGroupChatRoom::onSecurityEvent (const shared_ptr<ConferenceSecurityEvent> &event) {
 	L_D();
+	shared_ptr<ConferenceSecurityEvent> finalEvent = nullptr;
+	shared_ptr<ConferenceSecurityEvent> cleanEvent = nullptr;
+
+	// Remove faulty device if its address is invalid
+	IdentityAddress faultyDevice = event->getFaultyDevice();
+	if (!faultyDevice.isValid()) {
+		cleanEvent = make_shared<ConferenceSecurityEvent>(
+			event->getCreationTime(),
+			event->getConferenceId(),
+			event->getSecurityEventType()
+		);
+	}
+	finalEvent = cleanEvent ? cleanEvent : event;
 
 	// Add security events or alerts based on the type of security event
-	switch (event->getSecurityEventType()) {
+	switch (finalEvent->getSecurityEventType()) {
 		case ConferenceSecurityEvent::SecurityEventType::MultideviceParticipantDetected:
 			// Unexpected behaviour, set faulty device PeerDeviceStatus to unsafe
-			if (getCore()->limeV2Enabled() && event->getFaultyDevice().isValid()) {
+			if (getCore()->limeV2Enabled() && finalEvent->getFaultyDevice().isValid()) {
 				LimeV2 *limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
-				limeV2Engine->getLimeManager()->set_peerDeviceStatus(event->getFaultyDevice().asString(), lime::PeerDeviceStatus::unsafe);
+				limeV2Engine->getLimeManager()->set_peerDeviceStatus(finalEvent->getFaultyDevice().asString(), lime::PeerDeviceStatus::unsafe);
 				// WARNING has no effect if faulty device is not in X3DH database
 			}
 			break;
@@ -780,7 +793,12 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 		// Check if the new participant device is unexpected, in which case a security alert is created
 		if (nbDevice >= maxNbDevicesPerParticipant) {
 			lWarning() << "LIMEv2 alert: maximum number of devices exceeded for " << participant->getAddress();
-			securityEvent = make_shared<ConferenceSecurityEvent>(time(nullptr), d->conferenceId, ConferenceSecurityEvent::SecurityEventType::MultideviceParticipantDetected, event->getDeviceAddress());
+			securityEvent = make_shared<ConferenceSecurityEvent>(
+				time(nullptr),
+				d->conferenceId,
+				ConferenceSecurityEvent::SecurityEventType::MultideviceParticipantDetected,
+				event->getDeviceAddress()
+			);
 			limeV2Engine->getLimeManager()->set_peerDeviceStatus(event->getDeviceAddress().asString(), lime::PeerDeviceStatus::unsafe); // WARNING no effect if user not in lime db
 		// Otherwise check if this new device downgrades the chatroom security level, in which case a security event is created
 		} else {
