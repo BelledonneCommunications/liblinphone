@@ -758,7 +758,7 @@ void ClientGroupChatRoom::onSecurityEvent (const shared_ptr<ConferenceSecurityEv
 	// Add security events or alerts based on the type of security event
 	switch (finalEvent->getSecurityEventType()) {
 		case ConferenceSecurityEvent::SecurityEventType::MultideviceParticipantDetected:
-			// Unexpected behaviour, set faulty device PeerDeviceStatus to unsafe
+			// Always set faulty device PeerDeviceStatus to unsafe
 			if (getCore()->limeV2Enabled() && finalEvent->getFaultyDevice().isValid()) {
 				LimeV2 *limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
 				limeV2Engine->getLimeManager()->set_peerDeviceStatus(finalEvent->getFaultyDevice().asString(), lime::PeerDeviceStatus::unsafe);
@@ -815,7 +815,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 
 		// Check if the new participant device is unexpected, in which case a security alert is created
 		if (nbDevice >= maxNbDevicesPerParticipant) {
-			lWarning() << "LIMEv2 alert: maximum number of devices exceeded for " << participant->getAddress();
+			lWarning() << "LIMEv2 maximum number of devices exceeded for " << participant->getAddress();
 			securityEvent = make_shared<ConferenceSecurityEvent>(
 				time(nullptr),
 				d->conferenceId,
@@ -823,11 +823,11 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 				event->getDeviceAddress()
 			);
 			limeV2Engine->getLimeManager()->set_peerDeviceStatus(event->getDeviceAddress().asString(), lime::PeerDeviceStatus::unsafe); // WARNING no effect if user not in lime db
-		// Otherwise check if this new device downgrades the chatroom security level, in which case a security event is created
+		// Otherwise check if this new device degrades the chatroom security level, in which case a security event is created
 		} else {
 			lime::PeerDeviceStatus newDeviceStatus = limeV2Engine->getLimeManager()->get_peerDeviceStatus(event->getDeviceAddress().asString());
 			if (getSecurityLevel() == SecurityLevel::Safe && newDeviceStatus != lime::PeerDeviceStatus::trusted) {
-				lInfo() << "LIMEv2 chat room security level downgraded by "<< event->getDeviceAddress().asString();
+				lInfo() << "LIMEv2 chat room security level degraded by " << event->getDeviceAddress().asString();
 				securityEvent = make_shared<ConferenceSecurityEvent>(
 					time(nullptr),
 					d->conferenceId,

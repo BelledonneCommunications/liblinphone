@@ -170,7 +170,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 
 	// If too many devices for a participant, throw a local security alert event
 	if (tooManyDevices) {
-		lWarning() << "Sending encrypted message to multidevice participant, message rejected";
+		lWarning() << "LIMEv2 encrypting message for excessive number of devices, message rejected";
 
 		// Check the last 2 events for security alerts before sending a new security event
 		bool recentSecurityAlert = false;

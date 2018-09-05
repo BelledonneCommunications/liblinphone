@@ -52,11 +52,11 @@ class LINPHONE_INTERNAL_PUBLIC MainDb : public AbstractDb, public CoreAccessor {
 public:
 	enum Filter {
 		NoFilter = 0x0,
-		ConferenceCallFilter = 0x1,
-		ConferenceChatMessageFilter = 0x2,
-		ConferenceInfoFilter = 0x4,
-		ConferenceInfoNoDeviceFilter = 0x8,
-		ConferenceChatMessageSecurityFilter = 0x10
+		ConferenceCallFilter = 1 << 0,
+		ConferenceChatMessageFilter = 1 << 1,
+		ConferenceInfoFilter = 1 << 2,
+		ConferenceInfoNoDeviceFilter = 1 << 3,
+		ConferenceChatMessageSecurityFilter = 1 << 4
 	};
 
 	typedef EnumMask<Filter> FilterMask;
