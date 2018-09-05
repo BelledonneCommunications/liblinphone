@@ -375,6 +375,29 @@ void ClientGroupChatRoom::deleteFromDb () {
 	d->chatRoomListener->onChatRoomDeleteRequested(getSharedFromThis());
 }
 
+list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistory (int nLast) const {
+	L_D();
+	return getCore()->getPrivate()->mainDb->getHistory(
+		getConferenceId(),
+		nLast,
+		(d->capabilities & Capabilities::OneToOne) ?
+			MainDb::Filter::ConferenceChatMessageSecurityFilter :
+			MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter})
+	);
+}
+
+list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistoryRange (int begin, int end) const {
+	L_D();
+	return getCore()->getPrivate()->mainDb->getHistoryRange(
+		getConferenceId(),
+		begin,
+		end,
+		(d->capabilities & Capabilities::OneToOne) ?
+			MainDb::Filter::ConferenceChatMessageSecurityFilter :
+			MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter})
+	);
+}
+
 void ClientGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
 	L_D();
 

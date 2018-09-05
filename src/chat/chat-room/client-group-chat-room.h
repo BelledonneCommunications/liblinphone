@@ -80,6 +80,9 @@ public:
 
 	void deleteFromDb () override;
 
+	std::list<std::shared_ptr<EventLog>> getHistory (int nLast) const override;
+	std::list<std::shared_ptr<EventLog>> getHistoryRange (int begin, int end) const override;
+
 	void addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
 	void addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
 
