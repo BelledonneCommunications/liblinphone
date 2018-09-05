@@ -270,9 +270,7 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 	if (ch)
 		msg->getPrivate()->setSalCustomHeaders(sal_custom_header_clone(ch));
 
-	if (msg->getPrivate()->isAutoFileTransferDownloadEnabled()) {
-		addTransientChatMessage(msg);
-	}
+	addTransientChatMessage(msg);
 	reason = msg->getPrivate()->receive();
 
 	if (reason == LinphoneReasonNotAcceptable || reason == LinphoneReasonUnknown) {

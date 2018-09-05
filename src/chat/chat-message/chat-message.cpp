@@ -478,7 +478,6 @@ void ChatMessagePrivate::notifyReceiving () {
 LinphoneReason ChatMessagePrivate::receive () {
 	L_Q();
 	int errorCode = 0;
-	bool autoDownloadedFile = false;
 	LinphoneReason reason = LinphoneReasonNone;
 
 	shared_ptr<Core> core = q->getCore();
@@ -542,12 +541,12 @@ LinphoneReason ChatMessagePrivate::receive () {
 	} else {
 		for (Content *c : contents) {
 			if (c->isFileTransfer()) {
-				max_size = linphone_core_get_max_size_for_auto_download_incoming_files(getCore()->getCCore());
+				int max_size = linphone_core_get_max_size_for_auto_download_incoming_files(q->getCore()->getCCore());
 				if (max_size >= 0) {
 					FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
-					if (max_size > 0 && ftc->getFileSize() <= max_size) {
+					if (max_size > 0 && ftc->getFileSize() <= (size_t)max_size) {
 						ftc->setFilePath(q->getCore()->getDownloadPath() + ftc->getFileName());
-						autoDownloadedFile = true;
+						setAutoFileTransferDownloadHappened(true);
 						q->downloadFile(ftc);
 						return LinphoneReasonNone;
 					}
@@ -578,7 +577,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	setState(ChatMessage::State::Delivered);
 
-	if (errorCode <= 0 && !autoDownloadedFile) { 
+	if (errorCode <= 0 && !isAutoFileTransferDownloadHappened()) { 
 		// if auto download happened and message contains only file transfer, 
 		// the following will state that the content type of the file is unsupported
 		bool foundSupportContentType = false;

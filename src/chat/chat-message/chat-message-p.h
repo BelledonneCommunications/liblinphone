@@ -95,6 +95,14 @@ public:
 		return contents;
 	}
 
+	void setAutoFileTransferDownloadHappened(bool yesno) {
+		isAutoDownloadAttachedFilesHappened = yesno;
+	}
+
+	bool isAutoFileTransferDownloadHappened() const {
+		return isAutoDownloadAttachedFilesHappened;
+	}
+
 	belle_http_request_t *getHttpRequest () const;
 	void setHttpRequest (belle_http_request_t *request);
 
@@ -184,6 +192,7 @@ private:
 	bool isSecured = false;
 	mutable bool isReadOnly = false;
 	Content internalContent;
+	bool isAutoDownloadAttachedFilesHappened = false;
 
 	// TODO: to replace salCustomheaders
 	std::unordered_map<std::string, std::string> customHeaders;
