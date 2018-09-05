@@ -159,8 +159,10 @@ void StunClient::updateMediaDescription (SalMediaDescription *md) const {
 					audioCandidate.address == videoCandidate.address
 				) ||
 				sal_media_description_get_nb_active_streams(md) == 1
-			)
+			) {
 				strncpy(md->addr, audioCandidate.address.c_str(), sizeof(md->addr));
+				md->addr[sizeof(md->addr) - 1] = '\0';
+			}
 		} else if (md->streams[i].type == SalVideo && videoCandidate.port != 0) {
 			strncpy(md->streams[i].rtp_addr, videoCandidate.address.c_str(), sizeof(md->streams[i].rtp_addr));
 			md->streams[i].rtp_port = videoCandidate.port;

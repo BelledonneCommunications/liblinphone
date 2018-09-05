@@ -211,7 +211,7 @@ static void on_report_send_remove_fields (const LinphoneCall *call, SalStreamTyp
 	/* Corrupt start of the report */
 	const char *corrupted_str = "corrupted report is corrupted";
 	size_t corrupted_len = strlen(corrupted_str);
-	strncpy(body, corrupted_str, corrupted_len);
+	strncpy(body, corrupted_str, corrupted_len + 1);
 	linphone_content_set_string_buffer((LinphoneContent *)content, body);
 	bctbx_free(body);
 }

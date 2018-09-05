@@ -1357,8 +1357,10 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 	getParams()->getPrivate()->adaptToNetwork(q->getCore()->getCCore(), pingTime);
 
 	string subject = q->getParams()->getSessionName();
-	if (!subject.empty())
+	if (!subject.empty()) {
 		strncpy(md->name, subject.c_str(), sizeof(md->name));
+		md->name[sizeof(md->name) - 1] = '\0';
+	}
 	md->session_id = (oldMd ? oldMd->session_id : (rand() & 0xfff));
 	md->session_ver = (oldMd ? (oldMd->session_ver + 1) : (rand() & 0xfff));
 	md->nb_streams = (biggestDesc ? biggestDesc->nb_streams : 1);
@@ -1370,14 +1372,18 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 	}
 
 	strncpy(md->addr, mediaLocalIp.c_str(), sizeof(md->addr));
+	md->addr[sizeof(md->addr) - 1] = '\0';
+	
 	LinphoneAddress *addr = nullptr;
 	if (destProxy) {
 		addr = linphone_address_clone(linphone_proxy_config_get_identity_address(destProxy));
 	} else {
 		addr = linphone_address_new(linphone_core_get_identity(q->getCore()->getCCore()));
 	}
-	if (linphone_address_get_username(addr)) /* Might be null in case of identity without userinfo */
+	if (linphone_address_get_username(addr)) {/* Might be null in case of identity without userinfo */
 		strncpy(md->username, linphone_address_get_username(addr), sizeof(md->username));
+		md->username[sizeof(md->username) - 1] = '\0';
+	}
 	linphone_address_unref(addr);
 
 	int bandwidth = getParams()->getPrivate()->getDownBandwidth();
