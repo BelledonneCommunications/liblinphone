@@ -33,7 +33,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-MagicSearch::MagicSearch(const std::shared_ptr<Core> &core) : CoreAccessor(core), Object(*new MagicSearchPrivate){
+MagicSearch::MagicSearch (const std::shared_ptr<Core> &core) : CoreAccessor(core), Object(*new MagicSearchPrivate){
 	L_D();
 	d->mMinWeight = 0;
 	d->mMaxWeight = 1000;
@@ -44,71 +44,71 @@ MagicSearch::MagicSearch(const std::shared_ptr<Core> &core) : CoreAccessor(core)
 	d->mCacheResult = nullptr;
 }
 
-MagicSearch::~MagicSearch() {
+MagicSearch::~MagicSearch () {
 	resetSearchCache();
 }
 
-void MagicSearch::setMinWeight(const unsigned int weight) {
+void MagicSearch::setMinWeight (const unsigned int weight) {
 	L_D();
 	d->mMinWeight = weight;
 }
 
-unsigned int MagicSearch::getMinWeight() const {
+unsigned int MagicSearch::getMinWeight () const {
 	L_D();
 	return d->mMinWeight;
 }
 
-void MagicSearch::setMaxWeight(const unsigned int weight) {
+void MagicSearch::setMaxWeight (const unsigned int weight) {
 	L_D();
 	d->mMaxWeight = weight;
 }
 
-unsigned int MagicSearch::getMaxWeight() const {
+unsigned int MagicSearch::getMaxWeight () const {
 	L_D();
 	return d->mMaxWeight;
 }
 
-const string &MagicSearch::getDelimiter() const {
+const string &MagicSearch::getDelimiter () const {
 	L_D();
 	return d->mDelimiter;
 }
 
-void MagicSearch::setDelimiter(const string &delimiter) {
+void MagicSearch::setDelimiter (const string &delimiter) {
 	L_D();
 	d->mDelimiter = delimiter;
 }
 
-bool MagicSearch::getUseDelimiter() const {
+bool MagicSearch::getUseDelimiter () const {
 	L_D();
 	return d->mUseDelimiter;
 }
 
-void MagicSearch::setUseDelimiter(bool enable) {
+void MagicSearch::setUseDelimiter (bool enable) {
 	L_D();
 	d->mUseDelimiter = enable;
 }
 
-unsigned int MagicSearch::getSearchLimit() const {
+unsigned int MagicSearch::getSearchLimit () const {
 	L_D();
 	return d->mSearchLimit;
 }
 
-void MagicSearch::setSearchLimit(const unsigned int limit) {
+void MagicSearch::setSearchLimit (const unsigned int limit) {
 	L_D();
 	d->mSearchLimit = limit;
 }
 
-bool MagicSearch::getLimitedSearch() const {
+bool MagicSearch::getLimitedSearch () const {
 	L_D();
 	return d->mLimitedSearch;
 }
 
-void MagicSearch::setLimitedSearch(const bool limited) {
+void MagicSearch::setLimitedSearch (const bool limited) {
 	L_D();
 	d->mLimitedSearch = limited;
 }
 
-void MagicSearch::resetSearchCache() {
+void MagicSearch::resetSearchCache () const {
 	L_D();
 	if (d->mCacheResult) {
 		delete d->mCacheResult;
@@ -116,7 +116,7 @@ void MagicSearch::resetSearchCache() {
 	}
 }
 
-list<SearchResult> MagicSearch::getContactListFromFilter(const string &filter, const string &withDomain) {
+list<SearchResult> MagicSearch::getContactListFromFilter (const string &filter, const string &withDomain) const {
 	list<SearchResult> *resultList;
 	list<SearchResult> returnList;
 	LinphoneProxyConfig *proxy = nullptr;
@@ -166,18 +166,18 @@ list<SearchResult> MagicSearch::getContactListFromFilter(const string &filter, c
 // Private Methods //
 /////////////////////
 
-list<SearchResult> *MagicSearch::getSearchCache() const {
+list<SearchResult> *MagicSearch::getSearchCache () const {
 	L_D();
 	return d->mCacheResult;
 }
 
-void MagicSearch::setSearchCache(list<SearchResult> *cache) {
+void MagicSearch::setSearchCache (list<SearchResult> *cache) const {
 	L_D();
 	if (d->mCacheResult != cache) resetSearchCache();
 	d->mCacheResult = cache;
 }
 
-static bool findAddress(const list<SearchResult> &list, const LinphoneAddress *addr) {
+static bool findAddress (const list<SearchResult> &list, const LinphoneAddress *addr) {
 	bool returnValue = false;
 	char *charAddr = linphone_address_as_string_uri_only(addr);
 	string sAddr = charAddr;
@@ -197,7 +197,11 @@ static bool findAddress(const list<SearchResult> &list, const LinphoneAddress *a
 	return returnValue;
 }
 
-list<SearchResult> MagicSearch::getAddressFromCallLog(const string &filter, const string &withDomain, const list<SearchResult> &currentList) {
+list<SearchResult> MagicSearch::getAddressFromCallLog (
+	const string &filter,
+	const string &withDomain,
+	const list<SearchResult> &currentList
+) const {
 	list<SearchResult> resultList;
 	const bctbx_list_t *callLog = linphone_core_get_call_logs(this->getCore()->getCCore());
 
@@ -223,7 +227,7 @@ list<SearchResult> MagicSearch::getAddressFromCallLog(const string &filter, cons
 	return resultList;
 }
 
-list<SearchResult> MagicSearch::getFriends(const string &withDomain) {
+list<SearchResult> MagicSearch::getFriends (const string &withDomain) const {
 	list<SearchResult> returnList;
 	list<SearchResult> clResults;
 	LinphoneFriendList *list = linphone_core_get_default_friend_list(this->getCore()->getCCore());
@@ -296,7 +300,7 @@ list<SearchResult> MagicSearch::getFriends(const string &withDomain) {
 	return *uniqueItemsList(returnList);
 }
 
-list<SearchResult> *MagicSearch::beginNewSearch(const string &filter, const string &withDomain) {
+list<SearchResult> *MagicSearch::beginNewSearch (const string &filter, const string &withDomain) const {
 	list<SearchResult> clResults;
 	list<SearchResult> *resultList = new list<SearchResult>();
 	LinphoneFriendList *fList = linphone_core_get_default_friend_list(this->getCore()->getCCore());
@@ -313,7 +317,7 @@ list<SearchResult> *MagicSearch::beginNewSearch(const string &filter, const stri
 	return uniqueItemsList(*resultList);
 }
 
-list<SearchResult> *MagicSearch::continueSearch(const string &filter, const string &withDomain) {
+list<SearchResult> *MagicSearch::continueSearch (const string &filter, const string &withDomain) const {
 	list<SearchResult> *resultList = new list<SearchResult>();
 	const list <SearchResult> *cacheList = getSearchCache();
 
@@ -334,7 +338,7 @@ list<SearchResult> *MagicSearch::continueSearch(const string &filter, const stri
 	return uniqueItemsList(*resultList);
 }
 
-list<SearchResult> MagicSearch::searchInFriend(const LinphoneFriend *lFriend, const string &filter, const string &withDomain) {
+list<SearchResult> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, const string &filter, const string &withDomain) const {
 	list<SearchResult> friendResult;
 	string phoneNumber = "";
 	unsigned int weight = getMinWeight();
@@ -411,7 +415,7 @@ list<SearchResult> MagicSearch::searchInFriend(const LinphoneFriend *lFriend, co
 	return friendResult;
 }
 
-unsigned int MagicSearch::searchInAddress(const LinphoneAddress *lAddress, const string &filter, const string &withDomain) {
+unsigned int MagicSearch::searchInAddress (const LinphoneAddress *lAddress, const string &filter, const string &withDomain) const {
 	unsigned int weight = getMinWeight();
 	if (lAddress != nullptr && checkDomain(nullptr, lAddress, withDomain)) {
 		// SIPURI
@@ -426,7 +430,7 @@ unsigned int MagicSearch::searchInAddress(const LinphoneAddress *lAddress, const
 	return weight;
 }
 
-unsigned int MagicSearch::getWeight(const string &stringWords, const string &filter) const {
+unsigned int MagicSearch::getWeight (const string &stringWords, const string &filter) const {
 	locale loc;
 	string filterLC = filter;
 	string stringWordsLC = stringWords;
@@ -467,7 +471,7 @@ unsigned int MagicSearch::getWeight(const string &stringWords, const string &fil
 	return (weight != string::npos) ? (unsigned int)(weight) : getMinWeight();
 }
 
-bool MagicSearch::checkDomain(const LinphoneFriend *lFriend, const LinphoneAddress *lAddress, const string &withDomain) const {
+bool MagicSearch::checkDomain (const LinphoneFriend *lFriend, const LinphoneAddress *lAddress, const string &withDomain) const {
 	bool onlyOneDomain = !withDomain.empty() && withDomain != "*";
 	const LinphonePresenceModel *presenceModel = lFriend ? linphone_friend_get_presence_model(lFriend) : nullptr;
 	char *contactPresence = presenceModel ? linphone_presence_model_get_contact(presenceModel) : nullptr;
@@ -492,13 +496,13 @@ bool MagicSearch::checkDomain(const LinphoneFriend *lFriend, const LinphoneAddre
 	return soFarSoGood;
 }
 
-void MagicSearch::addResultsToResultsList(std::list<SearchResult> &results, std::list<SearchResult> &srL) {
+void MagicSearch::addResultsToResultsList (std::list<SearchResult> &results, std::list<SearchResult> &srL) const {
 	if (results.size() > 0) {
 		srL.merge(results);
 	}
 }
 
-static string getAddressFromSearchResult(const SearchResult &sr, const shared_ptr<Core> lc) {
+static string getAddressFromSearchResult (const SearchResult &sr, const shared_ptr<Core> lc) {
 	string sAddress = "";
 	if (!sr.getAddress() && sr.getFriend()) {
 		const LinphonePresenceModel *presenceModel = linphone_friend_get_presence_model(sr.getFriend());
@@ -524,7 +528,7 @@ static string getAddressFromSearchResult(const SearchResult &sr, const shared_pt
 	return sAddress;
 }
 
-list<SearchResult> *MagicSearch::uniqueItemsList(list<SearchResult> &list) {
+list<SearchResult> *MagicSearch::uniqueItemsList (list<SearchResult> &list) const {
 	auto lc = this->getCore();
 	list.unique([lc](const SearchResult& lsr, const SearchResult& rsr){
 		string left = getAddressFromSearchResult(lsr, lc);

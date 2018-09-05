@@ -124,14 +124,14 @@ Address::Address (const Address &other) : ClonableObject(*new AddressPrivate) {
 Address::~Address () {
 	L_D();
 	if (d->internalAddress)
-		sal_address_destroy(d->internalAddress);
+		sal_address_unref(d->internalAddress);
 }
 
 Address &Address::operator= (const Address &other) {
 	L_D();
 	if (this != &other) {
 		if (d->internalAddress)
-			sal_address_destroy(d->internalAddress);
+			sal_address_unref(d->internalAddress);
 		SalAddress *salAddress = other.getPrivate()->internalAddress;
 		d->internalAddress = salAddress ? sal_address_clone(salAddress) : nullptr;
 	}

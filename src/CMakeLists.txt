@@ -66,6 +66,9 @@ if(ENABLE_TUNNEL)
 	add_definitions(-DTUNNEL_ENABLED)
 endif()
 
+#define log domain for this part of code
+add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
+
 set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	address/address-p.h
 	address/address.h

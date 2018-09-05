@@ -1350,6 +1350,91 @@ static void multi_devices_register_with_gruu(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void update_contact_private_ip_address(void) {
+	LinphoneCoreManager *lcm;
+	stats* counters;
+	LinphoneProxyConfig *cfg;
+	char route[256];
+	LinphoneAddress *from;
+	char *addr;
+	LinphoneAuthInfo *ai;
+
+	sprintf(route,"sip:%s",test_route);
+
+	lcm = linphone_core_manager_new(NULL);
+
+	/* Remove gruu for this test */
+	linphone_core_remove_supported_tag(lcm->lc, "gruu");
+	/* Disable ipv6 */
+	linphone_core_enable_ipv6(lcm->lc, FALSE);
+
+	counters = get_stats(lcm->lc);
+	cfg = linphone_core_create_proxy_config(lcm->lc);
+	from = create_linphone_address(auth_domain);
+
+	linphone_proxy_config_set_identity(cfg, addr=linphone_address_as_string(from));
+	ms_free(addr);
+
+	linphone_proxy_config_enable_register(cfg, TRUE);
+	linphone_proxy_config_set_expires(cfg, 1);
+	linphone_proxy_config_set_route(cfg, test_route);
+	linphone_proxy_config_set_server_addr(cfg, test_route);
+	linphone_address_unref(from);
+
+	ai = linphone_auth_info_new(test_username, NULL, test_password, NULL, NULL, NULL);
+	linphone_core_add_auth_info(lcm->lc, ai);
+	linphone_auth_info_unref(ai);
+	linphone_core_add_proxy_config(lcm->lc, cfg);
+
+	BC_ASSERT_TRUE(wait_for(lcm->lc, lcm->lc, &counters->number_of_LinphoneRegistrationOk, 1));
+	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested, 0, int, "%d");
+
+	LinphoneAddress *contact = linphone_address_clone(linphone_proxy_config_get_contact(cfg));
+	BC_ASSERT_PTR_NOT_NULL(contact);
+	BC_ASSERT_PTR_NOT_NULL(linphone_address_get_domain(contact));
+
+	linphone_proxy_config_unref(cfg);
+	linphone_core_manager_destroy(lcm);
+
+	/* We have to recreate the core manager */
+	lcm = linphone_core_manager_new(NULL);
+
+	linphone_core_remove_supported_tag(lcm->lc, "gruu");
+	linphone_core_enable_ipv6(lcm->lc, FALSE);
+	/* We want this REGISTER to not be processed by flexisip's NatHelper module */
+	linphone_core_set_user_agent(lcm->lc, "No NatHelper", NULL);
+
+	counters = get_stats(lcm->lc);
+	cfg = linphone_core_create_proxy_config(lcm->lc);
+	from = create_linphone_address(auth_domain);
+
+	linphone_proxy_config_set_identity(cfg, addr=linphone_address_as_string(from));
+	ms_free(addr);
+
+	linphone_proxy_config_enable_register(cfg, TRUE);
+	linphone_proxy_config_set_expires(cfg, 1);
+	linphone_proxy_config_set_route(cfg, test_route);
+	linphone_proxy_config_set_server_addr(cfg, test_route);
+	linphone_address_unref(from);
+
+	ai = linphone_auth_info_new(test_username, NULL, test_password, NULL, NULL, NULL);
+	linphone_core_add_auth_info(lcm->lc, ai);
+	linphone_auth_info_unref(ai);
+	linphone_core_add_proxy_config(lcm->lc, cfg);
+
+	BC_ASSERT_TRUE(wait_for_until(lcm->lc, lcm->lc, &counters->number_of_LinphoneRegistrationOk, 2, 5000));
+
+	const LinphoneAddress *contactUpdated = linphone_proxy_config_get_contact(cfg);
+	BC_ASSERT_PTR_NOT_NULL(contactUpdated);
+	BC_ASSERT_PTR_NOT_NULL(linphone_address_get_domain(contactUpdated));
+
+	BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(contactUpdated), linphone_address_get_domain(contact));
+
+	linphone_address_unref(contact);
+	linphone_proxy_config_unref(cfg);
+	linphone_core_manager_destroy(lcm);
+}
+
 
 test_t register_tests[] = {
 	TEST_NO_TAG("Simple register", simple_register),
@@ -1401,7 +1486,8 @@ test_t register_tests[] = {
 	TEST_NO_TAG("AuthInfo TLS client certificate authentication in callback", tls_auth_info_client_cert_cb),
 	TEST_NO_TAG("AuthInfo TLS client certificate authentication in callback 2", tls_auth_info_client_cert_cb_2),
 	TEST_NO_TAG("Register get GRUU", register_get_gruu),
-	TEST_NO_TAG("Register get GRUU for multi device", multi_devices_register_with_gruu)
+	TEST_NO_TAG("Register get GRUU for multi device", multi_devices_register_with_gruu),
+	TEST_NO_TAG("Update contact private IP address", update_contact_private_ip_address)
 };
 
 test_suite_t register_test_suite = {"Register", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

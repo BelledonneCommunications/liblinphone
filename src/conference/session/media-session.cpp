@@ -1757,6 +1757,7 @@ void MediaSessionPrivate::setupDtlsParams (MediaStream *ms) {
 		char *certificate = nullptr;
 		char *key = nullptr;
 		char *fingerprint = nullptr;
+		
 		sal_certificates_chain_parse_directory(&certificate, &key, &fingerprint,
 			linphone_core_get_user_certificates_path(q->getCore()->getCCore()), "linphone-dtls-default-identity", SAL_CERTIFICATE_RAW_FORMAT_PEM, true, true);
 		if (fingerprint) {
@@ -2237,7 +2238,7 @@ void MediaSessionPrivate::handleIceEvents (OrtpEvent *ev) {
 		iceAgent->updateIceStateInCallStats();
 	} else if (evt == ORTP_EVENT_ICE_GATHERING_FINISHED) {
 		if (!evd->info.ice_processing_successful)
-			lWarning() << "No STUN answer from [" << linphone_core_get_stun_server(q->getCore()->getCCore()) << "], continuing without STUN";
+			lWarning() << "No STUN answer from [" << linphone_nat_policy_get_stun_server(q->getPrivate()->getNatPolicy()) << "], continuing without STUN";
 		iceAgent->gatheringFinished();
 		switch (state) {
 			case CallSession::State::Updating:
@@ -4270,7 +4271,7 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 			linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
 			if (d->listener)
 				d->listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
-			d->op->decline(SalReasonNotAcceptable, nullptr);
+			d->op->decline(SalReasonNotAcceptable);
 			return;
 		}
 	}

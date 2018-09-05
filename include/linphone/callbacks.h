@@ -516,6 +516,13 @@ typedef void (*LinphoneFriendListCbsContactUpdatedCb)(LinphoneFriendList *list, 
 typedef void (*LinphoneFriendListCbsSyncStateChangedCb)(LinphoneFriendList *list, LinphoneFriendListSyncStatus status, const char *msg);
 
 /**
+ * Callback used to notify a list with all friends that have received presence information.
+ * @param list The #LinphoneFriendList object for which the status has changed
+ * @param friends A \bctbx_list{LinphoneFriend} of the relevant friends
+**/
+typedef void (*LinphoneFriendListCbsPresenceReceivedCb)(LinphoneFriendList *list, const bctbx_list_t *friends);
+
+/**
  * @}
 **/
 

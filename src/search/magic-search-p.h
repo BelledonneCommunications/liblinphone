@@ -33,7 +33,8 @@ private:
 	bool mLimitedSearch; // Limit the search
 	std::string mDelimiter; // Delimiter use for the search
 	bool mUseDelimiter;
-	std::list<SearchResult> *mCacheResult;
+
+	mutable std::list<SearchResult> *mCacheResult;
 
 	L_DECLARE_PUBLIC(MagicSearch);
 };
@@ -41,4 +42,3 @@ private:
 LINPHONE_END_NAMESPACE
 
 #endif //_L_MAGIC_SEARCH_P_H_
-

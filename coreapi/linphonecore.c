@@ -1339,6 +1339,41 @@ static void certificates_config_read(LinphoneCore *lc) {
 	lc->sal->setTlsPostcheckCallback(_linphone_core_tls_postcheck_callback, lc);
 }
 
+static void bodyless_config_read(LinphoneCore *lc) {
+	const char *lists = lp_config_get_string(lc->config, "sip", "bodyless_lists", NULL);
+	if (!lists)
+		return;
+
+	char tmp[256] = {0};
+	char name[256];
+	char *p, *n;
+	strncpy(tmp, lists, sizeof(tmp)-1);
+	for(p = tmp; *p != '\0'; p++) {
+		if (*p==' ')
+			continue;
+
+		n = strchr(p,',');
+		if (n)
+			*n = '\0';
+		sscanf(p, "%s", name);
+		LinphoneAddress *addr = linphone_address_new(name);
+		if(!addr)
+			continue;
+
+		ms_message("Found bodyless friendlist %s", name);
+		LinphoneFriendList *friendList = linphone_core_create_friend_list(lc);
+		linphone_friend_list_set_rls_uri(friendList, name);
+		linphone_friend_list_set_display_name(friendList, linphone_address_get_username(addr));
+		linphone_address_unref(addr);
+		linphone_friend_list_set_subscription_bodyless(friendList, TRUE);
+		linphone_core_add_friend_list(lc, friendList);
+		if (!n)
+			break;
+
+		p = n;
+	}
+}
+
 static void sip_config_read(LinphoneCore *lc) {
 	char *contact;
 	const char *tmpstr;
@@ -1381,7 +1416,12 @@ static void sip_config_read(LinphoneCore *lc) {
 		const char *username=NULL;
 #if !defined(LINPHONE_WINDOWS_UNIVERSAL) && !defined(LINPHONE_WINDOWS_PHONE) // Using getenv is forbidden on Windows 10 and Windows Phone
 		hostname=getenv("HOST");
-		username=getenv("USER");
+
+		#if defined _WIN32
+			username = getenv("USERNAME");
+		#else
+			username = getenv("USER");
+		#endif // if defined _WIN32
 		if (hostname==NULL) hostname=getenv("HOSTNAME");
 #endif
 		if (hostname==NULL)
@@ -1461,6 +1501,8 @@ static void sip_config_read(LinphoneCore *lc) {
 	lc->sal->setSupportedTags(lp_config_get_string(lc->config,"sip","supported","replaces, outbound, gruu"));
 	lc->sip_conf.save_auth_info = !!lp_config_get_int(lc->config, "sip", "save_auth_info", 1);
 	linphone_core_create_im_notif_policy(lc);
+
+	bodyless_config_read(lc);
 }
 
 static void rtp_config_read(LinphoneCore *lc) {
@@ -2171,12 +2213,14 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 		for (const bctbx_list_t *it = linphone_core_get_friends_lists(lc); it; it = bctbx_list_next(it)) {
 			LinphoneFriendList *list = reinterpret_cast<LinphoneFriendList *>(bctbx_list_get_data(it));
 			ms_message("Notify presence for list %p", list);
-			linphone_friend_list_notify_presence_received(list, lev, body);
+			if (list->event == lev)
+				linphone_friend_list_notify_presence_received(list, lev, body);
 		}
 	} else if (strcmp(notified_event, "conference") == 0) {
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
 		char *resourceAddrStr = linphone_address_as_string_uri_only(resource);
-		if (strcmp(resourceAddrStr, linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc))) == 0) {
+		const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc));
+		if (factoryUri && (strcmp(resourceAddrStr, factoryUri) == 0)) {
 			bctbx_free(resourceAddrStr);
 			L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(L_GET_CPP_PTR_FROM_C_OBJECT(body));
 			return;
@@ -2301,6 +2345,8 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 #ifdef __ANDROID__
 	if (system_context)
 		lc->platform_helper = LinphonePrivate::createAndroidPlatformHelpers(lc, system_context);
+	else
+		ms_fatal("You must provide the Android's app context when creating the core!");
 #elif TARGET_OS_IPHONE
 	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc, system_context);
 #endif
@@ -2393,9 +2439,8 @@ void linphone_core_start (LinphoneCore *lc) {
 	//to give a chance to change uuid before starting
 	const char* uuid=lp_config_get_string(lc->config,"misc","uuid",NULL);
 	if (!uuid){
-		char tmp[64];
-		lc->sal->createUuid(tmp,sizeof(tmp));
-		lp_config_set_string(lc->config,"misc","uuid",tmp);
+		string uuid = lc->sal->createUuid();
+		lp_config_set_string(lc->config,"misc","uuid",uuid.c_str());
 	}else if (strcmp(uuid,"0")!=0) /*to allow to disable sip.instance*/
 		lc->sal->setUuid(uuid);
 
@@ -2697,6 +2742,25 @@ LinphoneFriendList* linphone_core_get_default_friend_list(const LinphoneCore *lc
 		return (LinphoneFriendList *)lc->friends_lists->data;
 	}
 	return NULL;
+}
+
+LinphoneFriendList *linphone_core_get_friend_list_by_name(const LinphoneCore *lc, const char *name) {
+	if (!lc)
+		return NULL;
+
+	LinphoneFriendList *ret = NULL;
+	bctbx_list_t *list_copy = lc->friends_lists;
+	while (list_copy) {
+		LinphoneFriendList *list = (LinphoneFriendList *)list_copy->data;
+		const char *list_name = linphone_friend_list_get_display_name(list);
+		if (list_name && strcmp(name, list_name) == 0) {
+			ret = list;
+			break;
+		}
+		list_copy = list_copy->next;
+	}
+
+	return ret;
 }
 
 void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
@@ -3510,7 +3574,7 @@ static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const Lin
 		SalAddress *proxy_addr=sal_address_new(linphone_proxy_config_get_addr(proxy));
 		if (strcmp(sal_address_get_domain(proxy_addr),linphone_address_get_domain(dest))==0){
 			ret=bctbx_list_append(ret,proxy_addr);
-		}else sal_address_destroy(proxy_addr);
+		}else sal_address_unref(proxy_addr);
 	}
 	return ret;
 }
@@ -3602,7 +3666,7 @@ static void linphone_transfer_routes_to_op(bctbx_list_t *routes, SalOp *op){
 	for(it=routes;it!=NULL;it=it->next){
 		SalAddress *addr=(SalAddress*)it->data;
 		op->addRouteAddress(addr);
-		sal_address_destroy(addr);
+		sal_address_unref(addr);
 	}
 	bctbx_list_free(routes);
 }
@@ -6367,7 +6431,8 @@ bool_t linphone_core_is_network_reachable(LinphoneCore* lc) {
 }
 
 ortp_socket_t linphone_core_get_sip_socket(LinphoneCore *lc){
-	return lc->sal->getSocket();
+	ms_warning("linphone_core_get_sip_socket is deprecated");
+	return -1;
 }
 
 void linphone_core_destroy(LinphoneCore *lc){
@@ -7472,6 +7537,20 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 		err = belle_http_provider_send_request(lc->http_provider, request, lc->update_check_http_listener);
 	}
 #endif
+}
+
+int linphone_core_get_unread_chat_message_count (const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getUnreadChatMessageCount();
+}
+
+int linphone_core_get_unread_chat_message_count_from_local (const LinphoneCore *lc, const LinphoneAddress *address) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getUnreadChatMessageCount(
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(address))
+	);
+}
+
+int linphone_core_get_unread_chat_message_count_from_active_locals (const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getUnreadChatMessageCountFromActiveLocals();
 }
 
 bool_t linphone_core_has_crappy_opengl(LinphoneCore *lc) {

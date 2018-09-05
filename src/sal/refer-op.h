@@ -32,7 +32,7 @@ public:
 	int reply (SalReason reason);
 
 private:
-	virtual void fillCallbacks () override;
+	void fillCallbacks () override;
 	void processError ();
 
 	static void processIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event);

@@ -89,6 +89,7 @@ struct _LinphoneProxyConfig
 	char *reg_identity;
 	LinphoneAddress* identity_address;
 	LinphoneAddress *contact_address;
+	LinphoneAddress *service_route;
 	LinphoneAddress *contact_address_without_params;
 	bctbx_list_t *reg_routes;
 	char *quality_reporting_collector;
@@ -123,7 +124,7 @@ struct _LinphoneProxyConfig
 	/*use to check if server config has changed  between edit() and done()*/
 	LinphoneAddress *saved_proxy;
 	LinphoneAddress *saved_identity;
-	
+
 	/*---*/
 	LinphoneAddress *pending_contact; /*use to store previous contact in case of network failure*/
 	LinphoneEvent *presence_publish_event;
@@ -197,6 +198,7 @@ struct _LinphoneFriendListCbs {
 	LinphoneFriendListCbsContactDeletedCb contact_deleted_cb;
 	LinphoneFriendListCbsContactUpdatedCb contact_updated_cb;
 	LinphoneFriendListCbsSyncStateChangedCb sync_state_changed_cb;
+	LinphoneFriendListCbsPresenceReceivedCb presence_received_cb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriendListCbs);
@@ -220,6 +222,7 @@ struct _LinphoneFriendList {
 	int revision;
 	LinphoneFriendListCbs *cbs;
 	bool_t enable_subscriptions;
+	bool_t bodyless_subscription;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriendList);
@@ -468,7 +471,7 @@ struct _LinphoneNatPolicy {
 	void *user_data;
 	LinphoneCore *lc;
 	belle_sip_resolver_context_t *stun_resolver_context;
-	struct addrinfo *stun_addrinfo;
+	belle_sip_resolver_results_t *resolver_results;
 	char *stun_server;
 	char *stun_server_username;
 	char *ref;

@@ -187,43 +187,44 @@ string Utils::trim (const string &str) {
 
 // -----------------------------------------------------------------------------
 
-tm Utils::getTimeTAsTm (time_t time) {
+tm Utils::getTimeTAsTm (time_t t) {
 	#ifdef _WIN32
-		return *gmtime(&time);
+		return *gmtime(&t);
 	#else
 		tm result;
-		return *gmtime_r(&time, &result);
+		return *gmtime_r(&t, &result);
 	#endif
 }
 
-time_t Utils::getTmAsTimeT (const tm &time) {
+time_t Utils::getTmAsTimeT (const tm &t) {
 	time_t result;
 
 	#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
-		long adjust_timezone;
+		long adjustTimezone;
 	#else
-		time_t adjust_timezone;
+		time_t adjustTimezone;
 	#endif
 
 	#if TARGET_IPHONE_SIMULATOR
-		result = timegm(&const_cast<tm &>(time));
-		adjust_timezone = 0;
+		result = timegm(&const_cast<tm &>(t));
+		adjustTimezone = 0;
 	#else
-		result = mktime(&const_cast<tm &>(time));
+		// mktime uses local time => It's necessary to adjust the timezone to get an UTC time.
+		result = mktime(&const_cast<tm &>(t));
 
 		#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
-			_get_timezone(&adjust_timezone);
+			_get_timezone(&adjustTimezone);
 		#else
-			adjust_timezone = timezone;
+			adjustTimezone = timezone;
 		#endif
 	#endif
 
-	if (result == (time_t)-1) {
-		lError() << "mktime failed: " << strerror(errno);
-		return (time_t)-1;
+	if (result == time_t(-1)) {
+		lError() << "timegm/mktime failed: " << strerror(errno);
+		return time_t(-1);
 	}
 
-	return result - (time_t)adjust_timezone;
+	return result - time_t(adjustTimezone);
 }
 
 // -----------------------------------------------------------------------------

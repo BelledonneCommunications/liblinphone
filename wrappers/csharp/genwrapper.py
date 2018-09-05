@@ -60,13 +60,13 @@ class CsharpTranslator(object):
 		return not methodDict['is_string'] and not methodDict['is_bool'] and not methodDict['is_class'] and not methodDict['is_enum'] and methodDict['list_type'] == None
 
 	def is_linphone_type(self, _type, isArg, dllImport=True):
-		if type(_type) is AbsApi.ClassType:
+		if isinstance(_type, AbsApi.ClassType):
 			return False if dllImport else True
-		elif type(_type) is AbsApi.EnumType:
+		elif isinstance(_type, AbsApi.EnumType):
 			return False if dllImport else True
 
 	def throws_exception(self, return_type):
-		if type(return_type) is AbsApi.BaseType:
+		if isinstance(return_type, AbsApi.BaseType):
 			if return_type.name == 'status':
 				return True
 		return False
@@ -111,7 +111,7 @@ class CsharpTranslator(object):
 			methodDict['is_enum'] = self.is_linphone_type(method.returnType, False, False) and type(method.returnType) is AbsApi.EnumType
 			methodDict['is_generic'] = self.is_generic(methodDict)
 			methodDict['takeRef'] = 'true'
-			if type(method.returnType.parent) is AbsApi.Method and len(method.returnType.parent.name.words) >=1:
+			if isinstance(method.returnType.parent, AbsApi.Method) and len(method.returnType.parent.name.words) >=1:
 				if method.returnType.parent.name.words == ['new'] or method.returnType.parent.name.words[0] == 'create':
 					methodDict['takeRef'] = 'false'
 
@@ -122,7 +122,7 @@ class CsharpTranslator(object):
 					methodDict['impl']['args'] += ', '
 					methodDict['impl']['c_args'] += ', '
 				if self.is_linphone_type(arg.type, False, False):
-					if type(arg.type) is AbsApi.ClassType:
+					if isinstance(arg.type, AbsApi.ClassType):
 						argname = arg.name.translate(self.nameTranslator)
 						methodDict['impl']['c_args'] += argname + " != null ? " + argname + ".nativePtr : IntPtr.Zero"
 					else:
@@ -168,7 +168,7 @@ class CsharpTranslator(object):
 		methodDict['is_enum'] = self.is_linphone_type(prop.returnType, False, False) and type(prop.returnType) is AbsApi.EnumType
 		methodDict['is_generic'] = self.is_generic(methodDict)
 		methodDict['takeRef'] = 'true'
-		if type(prop.returnType.parent) is AbsApi.Method and len(prop.returnType.parent.name.words) >=1:
+		if isinstance(prop.returnType.parent, AbsApi.Method) and len(prop.returnType.parent.name.words) >=1:
 			if prop.returnType.parent.name.words == ['new'] or prop.returnType.parent.name.words[0] == 'create':
 				methodDict['takeRef'] = 'false'
 
@@ -278,8 +278,14 @@ class CsharpTranslator(object):
 						listenerDict['delegate']['params'] += "fromNativePtr<" + normalType + ">(" + argName + ")"
 					elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.EnumType:
 						listenerDict['delegate']['params'] += "(" + normalType + ")" + argName + ""
+					elif isinstance(arg.type, AbsApi.ListType):
+						if normalType == "string":
+							listenerDict['delegate']['params'] += "MarshalStringArray(" + argName + ")"
+						else:
+							listenerDict['delegate']['params'] += "MarshalBctbxList<" + self.get_class_array_type(normalType) + ">(" + argName + ")"
 					else:
-						raise("Error")
+						print 'Not supported yet: ' + delegate_name_public
+						return {}
 			else:
 				listenerDict['delegate']['first_param'] = argName
 				listenerDict['delegate']['params'] = 'thiz'
@@ -347,17 +353,19 @@ class CsharpTranslator(object):
 		enumDict['enumName'] = enum.name.translate(self.nameTranslator)
 		enumDict['doc'] = enum.briefDescription.translate(self.docTranslator, tagAsBrief=True)
 		enumDict['values'] = []
+		enumDict['isFlag'] = False
 		i = 0
 		lastValue = None
 		for enumValue in enum.enumerators:
 			enumValDict = {}
 			enumValDict['name'] = enumValue.name.translate(self.nameTranslator)
 			enumValDict['doc'] = enumValue.briefDescription.translate(self.docTranslator, tagAsBrief=True)
-			if type(enumValue.value) is int:
+			if isinstance(enumValue.value, int):
 				lastValue = enumValue.value
 				enumValDict['value'] = str(enumValue.value)
-			elif type(enumValue.value) is AbsApi.Flag:
+			elif isinstance(enumValue.value, AbsApi.Flag):
 				enumValDict['value'] = '1<<' + str(enumValue.value.position)
+				enumDict['isFlag'] = True
 			else:
 				if lastValue is not None:
 					enumValDict['value'] = lastValue + 1
@@ -426,7 +434,7 @@ class CsharpTranslator(object):
 		interfaceDict = {}
 		interfaceDict['interfaceName'] = interface.name.translate(self.nameTranslator)
 		interfaceDict['methods'] = []
-		for method in interface.methods:
+		for method in interface.instanceMethods:
 			interfaceDict['methods'].append(self.translate_listener(interface, method))
 
 		return interfaceDict
@@ -452,7 +460,8 @@ class InterfaceImpl(object):
 		self.interface = translator.translate_interface(interface)
 
 class WrapperImpl(object):
-	def __init__(self, enums, interfaces, classes):
+	def __init__(self, version, enums, interfaces, classes):
+		self.version = version
 		self.enums = enums
 		self.interfaces = interfaces
 		self.classes = classes
@@ -472,6 +481,9 @@ def render(renderer, item, path):
 
 
 if __name__ == '__main__':
+	import subprocess
+	git_version = subprocess.check_output(["git", "describe"]).strip()
+
 	argparser = argparse.ArgumentParser(description='Generate source files for the C# wrapper')
 	argparser.add_argument('xmldir', type=str, help='Directory where the XML documentation of the Linphone\'s API generated by Doxygen is placed')
 	argparser.add_argument('-o --output', type=str, help='the directory where to generate the source files', dest='outputdir', default='.')
@@ -494,32 +506,26 @@ if __name__ == '__main__':
 		'linphone_core_get_current_vtable']
 	parser.classBl += 'LinphoneCoreVTable'
 	parser.methodBl.remove('getCurrentCallbacks')
+	parser.enum_relocations = {} # No nested enums in C#, will cause ambiguousness between Call.State (the enum) and call.State (the property)
 	parser.parse_all()
 	translator = CsharpTranslator()
 	renderer = pystache.Renderer()
 
 	enums = []
-	for item in parser.enumsIndex.items():
-		if item[1] is not None:
-			impl = EnumImpl(item[1], translator)
-			enums.append(impl)
-		else:
-			logging.warning('{0} enum won\'t be translated because of parsing errors'.format(item[0]))
-
 	interfaces = []
 	classes = []
-	for index in [parser.classesIndex, parser.interfacesIndex]:
-		for _class in index.values():
-			if _class is not None:
-				try:
-					if type(_class) is AbsApi.Class:
-						impl = ClassImpl(_class, translator)
-						classes.append(impl)
-					else:
-						impl = InterfaceImpl(_class, translator)
-						interfaces.append(impl)
-				except AbsApi.Error as e:
-					logging.error('Could not translate {0}: {1}'.format(_class.name.to_c(), e.args[0]))
+	for _interface in parser.namespace.interfaces:
+		impl = InterfaceImpl(_interface, translator)
+		interfaces.append(impl)
+	for _enum in parser.namespace.enums:
+		impl = EnumImpl(_enum, translator)
+		enums.append(impl)
+	for _class in parser.namespace.classes:
+		impl = ClassImpl(_class, translator)
+		classes.append(impl)
+		for _enum in _class.enums:
+			enum_impl = EnumImpl(_enum, translator)
+			enums.append(enum_impl)
 
-	wrapper = WrapperImpl(enums, interfaces, classes)
+	wrapper = WrapperImpl(git_version, enums, interfaces, classes)
 	render(renderer, wrapper, args.outputdir + "/" + args.outputfile)

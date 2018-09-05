@@ -99,6 +99,7 @@ public:
 
 	int getChatMessageCount (const ChatRoomId &chatRoomId = ChatRoomId()) const;
 	int getUnreadChatMessageCount (const ChatRoomId &chatRoomId = ChatRoomId()) const;
+
 	void markChatMessagesAsRead (const ChatRoomId &chatRoomId) const;
 	std::list<std::shared_ptr<ChatMessage>> getUnreadChatMessages (const ChatRoomId &chatRoomId) const;
 

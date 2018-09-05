@@ -188,6 +188,20 @@ LINPHONE_PUBLIC const char * linphone_friend_list_get_uri(const LinphoneFriendLi
 LINPHONE_PUBLIC void linphone_friend_list_set_uri(LinphoneFriendList *list, const char *uri);
 
 /**
+ * Get wheter the subscription of the friend list is bodyless or not.
+ * @param[in] list #LinphoneFriendList object.
+ * @return Wheter the subscription of the friend list is bodyless or not.
+**/
+LINPHONE_PUBLIC bool_t linphone_friend_list_is_subscription_bodyless(LinphoneFriendList *list);
+
+/**
+ * Set wheter the subscription of the friend list is bodyless or not.
+ * @param[in] list #LinphoneFriendList object.
+ * @param[in] a boolean telling if the subscription of the friend list is bodyless or not.
+**/
+LINPHONE_PUBLIC void linphone_friend_list_set_subscription_bodyless(LinphoneFriendList *list, bool_t bodyless);
+
+/**
  * Sets the revision from the last synchronization.
  * @param[in] list #LinphoneFriendList object.
  * @param[in] rev The revision
@@ -283,6 +297,20 @@ LINPHONE_PUBLIC LinphoneFriendListCbsSyncStateChangedCb linphone_friend_list_cbs
  * @param[in] cb The sync status changed to be used.
 **/
 LINPHONE_PUBLIC void linphone_friend_list_cbs_set_sync_status_changed(LinphoneFriendListCbs *cbs, LinphoneFriendListCbsSyncStateChangedCb cb);
+
+/**
+ * Get the presence received callback.
+ * @param[in] cbs #LinphoneFriendListCbs object.
+ * @return The current presence received callback.
+**/
+LINPHONE_PUBLIC LinphoneFriendListCbsPresenceReceivedCb linphone_friend_list_cbs_get_presence_received(const LinphoneFriendListCbs *cbs);
+
+/**
+ * Set the presence received callback.
+ * @param[in] cbs #LinphoneFriendListCbs object.
+ * @param[in] cb The presence received callback to be used.
+**/
+LINPHONE_PUBLIC void linphone_friend_list_cbs_set_presence_received(LinphoneFriendListCbs *cbs, LinphoneFriendListCbsPresenceReceivedCb cb);
 
 /**
  * Starts a CardDAV synchronization using value set using linphone_friend_list_set_uri.

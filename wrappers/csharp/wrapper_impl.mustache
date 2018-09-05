@@ -32,6 +32,7 @@ namespace Linphone
 	/// </summary>
 	public class LinphoneWrapper
 	{
+		public const string VERSION = "{{version}}";
 #if __IOS__
 		public const string LIB_NAME = "linphone.framework/linphone";
 #else
@@ -39,19 +40,19 @@ namespace Linphone
 #endif
 
 #if WINDOWS_UWP
-        public const string BELLE_SIP_LIB_NAME = "bellesip";
-				public const string BCTOOLBOX_LIB_NAME = "bctoolbox";
+		public const string BELLE_SIP_LIB_NAME = "bellesip";
+		public const string BCTOOLBOX_LIB_NAME = "bctoolbox";
 #else
-        public const string BELLE_SIP_LIB_NAME = "linphone";
-				public const string BCTOOLBOX_LIB_NAME = "linphone";
+		public const string BELLE_SIP_LIB_NAME = LIB_NAME;
+		public const string BCTOOLBOX_LIB_NAME = LIB_NAME;
 #endif
 
 #if ANDROID
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern void setAndroidLogHandler();
 #endif
 #if __IOS__
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern void linphone_iphone_enable_logs();
 #endif
 
@@ -102,35 +103,35 @@ namespace Linphone
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		private delegate void OnLinphoneObjectDataDestroyed(IntPtr data);
 
-		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 #if WINDOWS_UWP
 		static extern int belle_sip_object_data_set(IntPtr ptr, string name, IntPtr data, IntPtr cb);
 #else
 		static extern int belle_sip_object_data_set(IntPtr ptr, string name, IntPtr data, OnLinphoneObjectDataDestroyed cb);
 #endif
 
-		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr belle_sip_object_data_get(IntPtr ptr, string name);
 
-		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr belle_sip_object_ref(IntPtr ptr);
 
-		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern void belle_sip_object_unref(IntPtr ptr);
 
-		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern void belle_sip_object_data_remove(IntPtr ptr, string data);
 
-		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr bctbx_list_next(IntPtr ptr);
 
-		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr bctbx_list_get_data(IntPtr ptr);
 
-		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr bctbx_list_append(IntPtr elem, string data);
 
-		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME)]
+		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr bctbx_list_append(IntPtr elem, IntPtr data);
 
 #if __IOS__
@@ -194,17 +195,21 @@ namespace Linphone
 			return null;
 		}
 
-		internal static IEnumerable<string> MarshalStringArray(IntPtr arrayPtr)
+		internal static IEnumerable<string> MarshalStringArray(IntPtr listPtr)
 		{
-			if (arrayPtr != IntPtr.Zero)
+			if (listPtr != IntPtr.Zero)
 			{
-				IntPtr ptr = Marshal.ReadIntPtr(arrayPtr);
+				IntPtr ptr = listPtr;
 				while (ptr != IntPtr.Zero)
 				{
-					string key = Marshal.PtrToStringAnsi(ptr);
+					IntPtr dataPtr = bctbx_list_get_data(ptr);
+					if (dataPtr == IntPtr.Zero)
+					{
+						break;
+					}
+					string key = Marshal.PtrToStringAuto(dataPtr);
 					yield return key;
-					arrayPtr = new IntPtr(arrayPtr.ToInt64() + IntPtr.Size);
-					ptr = Marshal.ReadIntPtr(arrayPtr);
+					ptr = bctbx_list_next(ptr);
 				}
 			}
 		}
@@ -255,10 +260,12 @@ namespace Linphone
 	/// </summary>
 	public class LinphoneAndroid
 	{
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		public static IntPtr AndroidContext { get; set; } 
+
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern void ms_set_jvm_from_env(IntPtr jnienv);
 
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern void setMediastreamerAndroidContext(IntPtr jnienv, IntPtr context);
 
 		/// <summary>
@@ -267,8 +274,9 @@ namespace Linphone
 		/// </summary>
 		public static void setAndroidContext(IntPtr jnienv, IntPtr context)
 		{
+			AndroidContext = context;
 			ms_set_jvm_from_env(jnienv);
-			setMediastreamerAndroidContext(jnienv, context);
+			setMediastreamerAndroidContext(jnienv, AndroidContext);
 		}
 	}
 #endif
@@ -281,7 +289,7 @@ namespace Linphone
 	{{#lines}}
 	/// {{{line}}}
 	{{/lines}}
-	{{/doc}}
+	{{/doc}}{{#isFlag}}[Flags]{{/isFlag}}
 	public enum {{enumName}}
 	{
 		{{#values}}
@@ -290,7 +298,7 @@ namespace Linphone
 		/// {{{line}}}
 		{{/lines}}
 		{{/doc}}
-		{{name}} = {{value}},
+		{{name}} = {{{value}}},
 		{{/values}}
 	}
 
@@ -305,7 +313,7 @@ namespace Linphone
 	public class {{interfaceName}} : LinphoneObject
 	{
 		{{#methods}}
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		{{#cb_setter}}
 #if WINDOWS_UWP
 		static extern void {{name}}(IntPtr thiz, IntPtr cb);
@@ -318,7 +326,7 @@ namespace Linphone
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		private delegate void {{name_private}}({{params_private}});
 
-		public delegate void {{name_public}}({{params_public}});
+		public delegate void {{name_public}}({{{params_public}}});
 		private {{name_private}} {{var_private}};
 		private {{name_public}} {{var_public}};
 
@@ -367,11 +375,12 @@ namespace Linphone
 	/// {{{line}}}
 	{{/lines}}
 	{{/doc}}
+
 	[StructLayout(LayoutKind.Sequential)]
 	public class {{className}} : LinphoneObject
 	{
 		{{#isLinphoneFactory}}
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr linphone_factory_create_core_cbs(IntPtr factory);
 
 		public CoreListener CreateCoreListener()
@@ -387,7 +396,7 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringUni(linphone_call_get_native_video_window_id(nativePtr));
+				return Marshal.PtrToStringAuto(linphone_call_get_native_video_window_id(nativePtr));
 			}
 			set
 			{
@@ -402,7 +411,7 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringUni(linphone_core_get_native_video_window_id(nativePtr));
+				return Marshal.PtrToStringAuto(linphone_core_get_native_video_window_id(nativePtr));
 			}
 			set
 			{
@@ -415,7 +424,7 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringUni(linphone_core_get_native_preview_window_id(nativePtr));
+				return Marshal.PtrToStringAuto(linphone_core_get_native_preview_window_id(nativePtr));
 			}
 			set
 			{
@@ -424,10 +433,10 @@ namespace Linphone
 		}
 		{{/isLinphoneCore}}
 		{{#dllImports}}
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		{{{prototype}}}
 		{{#has_second_prototype}}
-		[DllImport(LinphoneWrapper.LIB_NAME)]
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		{{second_prototype}}
 		{{/has_second_prototype}}
 
@@ -444,7 +453,7 @@ namespace Linphone
 			{
 				{{#is_string}}
 				IntPtr stringPtr = {{getter_c_name}}({{getter_nativePtr}});
-				return Marshal.PtrToStringAnsi(stringPtr);
+				return Marshal.PtrToStringAuto(stringPtr);
 				{{/is_string}}
 				{{#is_bool}}
 				return {{getter_c_name}}({{getter_nativePtr}}) != 0;
@@ -513,7 +522,7 @@ namespace Linphone
 		{
 			{{#is_string}}
 			IntPtr stringPtr = {{c_name}}({{nativePtr}}{{c_args}});
-			return Marshal.PtrToStringAnsi(stringPtr);
+			return Marshal.PtrToStringAuto(stringPtr);
 			{{/is_string}}
 			{{#is_bool}}
 			{{return}}{{c_name}}({{nativePtr}}{{c_args}}) == (char)0 ? false : true;

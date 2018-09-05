@@ -633,6 +633,13 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_push_notification_allowed(Linphon
 LINPHONE_PUBLIC bool_t linphone_proxy_config_is_push_notification_allowed(const LinphoneProxyConfig *cfg);
 
 /**
+ * Return the unread chat message count for a given proxy config.
+ * @param[in] cfg #LinphoneProxyConfig object.
+ * @return The unread chat message count.
+ */
+LINPHONE_PUBLIC int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *cfg);
+
+/**
  * @}
  */
 

@@ -141,15 +141,15 @@ LINPHONE_PUBLIC void sal_default_set_sdp_handling(Sal* h, SalOpSDPHandling handl
 LINPHONE_PUBLIC	void sal_set_send_error(Sal *sal,int value);
 LINPHONE_PUBLIC	void sal_set_recv_error(Sal *sal,int value);
 LINPHONE_PUBLIC int sal_enable_pending_trans_checking(Sal *sal, bool_t value);
-LINPHONE_PUBLIC	void sal_enable_unconditional_answer(Sal *sal,int value);
+LINPHONE_PUBLIC	void sal_enable_unconditional_answer(Sal *sal, bool_t value);
 LINPHONE_PUBLIC	void sal_set_dns_timeout(Sal* sal,int timeout);
 LINPHONE_PUBLIC void sal_set_dns_user_hosts_file(Sal *sal, const char *hosts_file);
 LINPHONE_PUBLIC void *sal_get_stack_impl(Sal *sal);
 LINPHONE_PUBLIC	void sal_set_refresher_retry_after(Sal *sal,int value);
 LINPHONE_PUBLIC	int sal_get_refresher_retry_after(const Sal *sal);
 LINPHONE_PUBLIC	void sal_set_transport_timeout(Sal* sal,int timeout);
-LINPHONE_PUBLIC void sal_enable_test_features(Sal*ctx, bool_t enabled);
-LINPHONE_PUBLIC int sal_transport_available(Sal *ctx, SalTransport t);
+LINPHONE_PUBLIC void sal_enable_test_features(Sal*ctx, bool_t value);
+LINPHONE_PUBLIC bool_t sal_transport_available(Sal *ctx, SalTransport t);
 
 LINPHONE_PUBLIC const SalErrorInfo *sal_op_get_error_info(const SalOp *op);
 LINPHONE_PUBLIC bool_t sal_call_dialog_request_pending(const SalOp *op);

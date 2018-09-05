@@ -84,6 +84,17 @@ LinphoneChatRoom *linphone_core_get_chat_room (LinphoneCore *lc, const LinphoneA
 	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getOrCreateBasicChatRoom(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)));
 }
 
+LinphoneChatRoom *linphone_core_get_chat_room_2 (
+	LinphoneCore *lc,
+	const LinphoneAddress *peer_addr,
+	const LinphoneAddress *local_addr
+) {
+	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getOrCreateBasicChatRoom(LinphonePrivate::ChatRoomId(
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr)),
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr))
+	)));
+}
+
 LinphoneChatRoom *linphone_core_create_client_group_chat_room (LinphoneCore *lc, const char *subject, bool_t fallback) {
 	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->createClientGroupChatRoom(L_C_TO_STRING(subject), !!fallback));
 }
@@ -133,18 +144,17 @@ int linphone_core_message_received(LinphoneCore *lc, LinphonePrivate::SalOp *op,
 		localAddress = op->getTo();
 	}
 
-	shared_ptr<LinphonePrivate::AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
-		LinphonePrivate::ChatRoomId(LinphonePrivate::IdentityAddress(peerAddress), LinphonePrivate::IdentityAddress(localAddress))
-	);
+	LinphonePrivate::ChatRoomId chatRoomId{
+		LinphonePrivate::IdentityAddress(peerAddress),
+		LinphonePrivate::IdentityAddress(localAddress)
+	};
+	shared_ptr<LinphonePrivate::AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(chatRoomId);
 	if (chatRoom)
 		reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
 	else if (!linphone_core_conference_server_enabled(lc)) {
-		LinphoneAddress *addr = linphone_address_new(sal_msg->from);
-		linphone_address_clean(addr);
-		LinphoneChatRoom *cr = linphone_core_get_chat_room(lc, addr);
-		if (cr)
-			reason = L_GET_PRIVATE_FROM_C_OBJECT(cr)->onSipMessageReceived(op, sal_msg);
-		linphone_address_unref(addr);
+		chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getOrCreateBasicChatRoom(chatRoomId);
+		if (chatRoom)
+			reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
 	}
 	return reason;
 }

@@ -179,6 +179,14 @@ class ListType(Type):
 		return translator.translate_list_type(self, **params)
 
 
+class BasicListType(ListType):
+	pass
+
+
+class OnTheFlyListType(ListType):
+	pass
+
+
 class DocumentableObject(Object):
 	def __init__(self, name):
 		Object.__init__(self, name)
@@ -868,7 +876,11 @@ class CParser(object):
 			absType.isconst = cType.completeType.startswith('const ')
 			absType.isref = cType.completeType.endswith('*')
 		elif cType.ctype == self.cListType:
-			absType = ListType(cType.containedType)
+			if cType.onTheFlyList:
+				absType = OnTheFlyListType(cType.containedType)
+			else:
+				absType = BasicListType(cType.containedType)
+			absType.isconst = cType.completeType.startswith('const ')
 		elif cType.ctype.endswith('Mask'):
 			absType = BaseType('integer', isUnsigned=True)
 		else:

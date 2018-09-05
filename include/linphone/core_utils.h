@@ -50,9 +50,11 @@ LINPHONE_PUBLIC void linphone_core_use_sound_daemon(LinphoneCore *lc, LinphoneSo
 LINPHONE_PUBLIC void linphone_sound_daemon_destroy(LinphoneSoundDaemon *obj);
 
 
-LINPHONE_DEPRECATED typedef void (*LinphoneEcCalibrationCallback)(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay_ms, void *data);
-LINPHONE_DEPRECATED typedef void (*LinphoneEcCalibrationAudioInit)(void *data);
-LINPHONE_DEPRECATED typedef void (*LinphoneEcCalibrationAudioUninit)(void *data);
+/*These typedefs are deprecated, but we don't mark them LINPHONE_DEPRECATED otherwise we get deprecation warnings with
+ * the deprecated linphone_core_start_echo_calibration() that make use of them*/
+typedef void (*LinphoneEcCalibrationCallback)(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay_ms, void *data);
+typedef void (*LinphoneEcCalibrationAudioInit)(void *data);
+typedef void (*LinphoneEcCalibrationAudioUninit)(void *data);
 
 /**
  * @brief Starts an echo calibration of the sound devices, in order to find adequate settings for the echo canceler automatically.

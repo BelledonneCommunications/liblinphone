@@ -31,9 +31,9 @@ public:
 
 class SalSubscribeOp: public SalEventOp {
 public:
-	SalSubscribeOp (Sal *sal): SalEventOp(sal) {}
+	SalSubscribeOp (Sal *sal);
 
-	int subscribe (const char *from, const char *to, const char *eventName, int expires, const SalBodyHandler *bodyHandler);
+	int subscribe (const std::string &eventName, int expires, const SalBodyHandler *bodyHandler);
 	int unsubscribe () { return SalOp::unsubscribe(); }
 	int accept ();
 	int decline (SalReason reason);
@@ -42,7 +42,7 @@ public:
 	int closeNotify ();
 
 private:
-	virtual void fillCallbacks () override;
+	void fillCallbacks () override;
 	void handleNotify (belle_sip_request_t *request, const char *eventName, SalBodyHandler *bodyHandler);
 
 	static void subscribeProcessIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event);
@@ -57,13 +57,13 @@ private:
 
 class SalPublishOp : public SalEventOp {
 public:
-	SalPublishOp (Sal *sal) : SalEventOp(sal) {}
+	SalPublishOp (Sal *sal);
 
-	int publish (const char *from, const char *to, const char *eventName, int expires, const SalBodyHandler *bodyHandler);
+	int publish (const std::string &eventName, int expires, const SalBodyHandler *bodyHandler);
 	int unpublish ();
 
 private:
-	virtual void fillCallbacks () override;
+	void fillCallbacks () override;
 
 	static void publishResponseEventCb (void *userCtx, const belle_sip_response_event_t *event);
 	static void publishRefresherListenerCb (belle_sip_refresher_t *refresher, void *userCtx, unsigned int statusCode, const char *reasonPhrase, int willRetry);

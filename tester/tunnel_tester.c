@@ -47,7 +47,7 @@ static char* get_public_contact_ip(LinphoneCore* lc)  {
 }
 
 
-static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_sip, LinphoneMediaEncryption encryption, bool_t with_video_and_ice, bool_t dual_socket) {
+static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_sip, LinphoneMediaEncryption encryption, bool_t with_video_and_ice, bool_t dual_socket, bool_t gruu) {
 	if (linphone_core_tunnel_available()){
 		LinphoneCoreManager *pauline = linphone_core_manager_new( "pauline_rc");
 		LinphoneCoreManager *marie = linphone_core_manager_new( "marie_rc");
@@ -56,14 +56,20 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 		LinphoneAddress *server_addr = linphone_address_new(linphone_proxy_config_get_server_addr(proxy));
 		LinphoneAddress *route = linphone_address_new(linphone_proxy_config_get_route(proxy));
 		char  tunnel_ip[64];
-		char *public_ip, *public_ip2=NULL;
+		char *public_ip = NULL, *public_ip2 = NULL;
 		BC_ASSERT_FALSE(get_ip_from_hostname("tunnel.linphone.org",tunnel_ip,sizeof(tunnel_ip)));
-		linphone_core_remove_supported_tag(pauline->lc,"gruu"); /*with gruu, we have no access to the "public IP from contact*/
-		linphone_core_remove_supported_tag(marie->lc,"gruu");
 
+		if (!gruu) {
+			linphone_core_remove_supported_tag(pauline->lc,"gruu"); /*with gruu, we have no access to the "public IP from contact*/
+			linphone_core_remove_supported_tag(marie->lc,"gruu");
+		}
+		
 		BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneRegistrationOk,1));
-		public_ip = get_public_contact_ip(pauline->lc);
-		BC_ASSERT_STRING_NOT_EQUAL(public_ip, tunnel_ip);
+
+		if (!gruu) {
+			public_ip = get_public_contact_ip(pauline->lc);
+			BC_ASSERT_STRING_NOT_EQUAL(public_ip, tunnel_ip);
+		}
 
 		linphone_core_set_media_encryption(pauline->lc, encryption);
 
@@ -118,16 +124,20 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 				To:
 				Contact: <sip:pauline@91.121.209.194:43867>;[....] (91.121.209.194 must be tunnel.liphone.org)
 				*/
-				ms_free(public_ip);
-				public_ip = get_public_contact_ip(pauline->lc);
-				if (!dual_socket) {
-					BC_ASSERT_STRING_EQUAL(public_ip, tunnel_ip);
-				} else {
-					BC_ASSERT_STRING_EQUAL(public_ip, "94.23.19.176");
+				if (!gruu) {
+					ms_free(public_ip);
+					public_ip = get_public_contact_ip(pauline->lc);
+					if (!dual_socket) {
+						BC_ASSERT_STRING_EQUAL(public_ip, tunnel_ip);
+					} else {
+						BC_ASSERT_STRING_EQUAL(public_ip, "94.23.19.176");
+					}
 				}
 			} else {
-				public_ip2 = get_public_contact_ip(pauline->lc);
-				BC_ASSERT_STRING_EQUAL(public_ip, public_ip2);
+				if (!gruu) {
+					public_ip2 = get_public_contact_ip(pauline->lc);
+					BC_ASSERT_STRING_EQUAL(public_ip, public_ip2);
+				}
 			}
 		}
 
@@ -166,8 +176,8 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 #endif
 		end_call(pauline,marie);
 
-		ms_free(public_ip);
-		if(public_ip2 != NULL) ms_free(public_ip2);
+		if (public_ip) ms_free(public_ip);
+		if (public_ip2 != NULL) ms_free(public_ip2);
 		linphone_address_unref(server_addr);
 		linphone_address_unref(route);
 		linphone_core_manager_destroy(pauline);
@@ -179,30 +189,34 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 
 
 static void call_with_tunnel(void) {
-	call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, FALSE, FALSE);
+	call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, FALSE, FALSE, FALSE);
+}
+
+static void call_with_tunnel_and_gruu(void) {
+	call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, FALSE, FALSE, TRUE);
 }
 
 static void call_with_tunnel_srtp(void) {
-	call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionSRTP, FALSE, FALSE);
+	call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionSRTP, FALSE, FALSE, FALSE);
 }
 
 static void call_with_tunnel_without_sip(void) {
-	call_with_tunnel_base(LinphoneTunnelModeEnable, FALSE, LinphoneMediaEncryptionNone, FALSE, FALSE);
+	call_with_tunnel_base(LinphoneTunnelModeEnable, FALSE, LinphoneMediaEncryptionNone, FALSE, FALSE, FALSE);
 }
 
 static void call_with_tunnel_auto(void) {
-	call_with_tunnel_base(LinphoneTunnelModeAuto, TRUE, LinphoneMediaEncryptionNone, FALSE, FALSE);
+	call_with_tunnel_base(LinphoneTunnelModeAuto, TRUE, LinphoneMediaEncryptionNone, FALSE, FALSE, FALSE);
 }
 
 static void call_with_tunnel_auto_without_sip_with_srtp(void) {
-	call_with_tunnel_base(LinphoneTunnelModeAuto, FALSE, LinphoneMediaEncryptionSRTP, FALSE, FALSE);
+	call_with_tunnel_base(LinphoneTunnelModeAuto, FALSE, LinphoneMediaEncryptionSRTP, FALSE, FALSE, FALSE);
 }
 
 #ifdef VIDEO_ENABLED
 
 static void full_tunnel_video_ice_call(void){
 	if (linphone_core_tunnel_available()){
-		call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, TRUE, FALSE);
+		call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, TRUE, FALSE, FALSE);
 	}else
 		ms_warning("Could not test %s because tunnel functionality is not available",__FUNCTION__);
 }
@@ -304,20 +318,21 @@ static void register_on_second_tunnel(void) {
 
 static void dual_socket_mode(void) {
 	if (linphone_core_tunnel_available())
-		call_with_tunnel_base(LinphoneTunnelModeEnable, FALSE, LinphoneMediaEncryptionNone, FALSE, TRUE);
+		call_with_tunnel_base(LinphoneTunnelModeEnable, FALSE, LinphoneMediaEncryptionNone, FALSE, TRUE, FALSE);
 	else
 		ms_warning("Could not test %s because tunnel functionality is not available",__FUNCTION__);
 }
 
 static void dual_socket_mode_with_sip(void) {
 	if (linphone_core_tunnel_available())
-		call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, FALSE, TRUE);
+		call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, FALSE, TRUE, FALSE);
 	else
 		ms_warning("Could not test %s because tunnel functionality is not available",__FUNCTION__);
 }
 
 test_t tunnel_tests[] = {
 	TEST_NO_TAG("Simple", call_with_tunnel),
+	TEST_NO_TAG("Simple call with gruu", call_with_tunnel_and_gruu),
 	TEST_NO_TAG("With SRTP", call_with_tunnel_srtp),
 	TEST_NO_TAG("Without SIP", call_with_tunnel_without_sip),
 	TEST_NO_TAG("In automatic mode", call_with_tunnel_auto),

@@ -135,6 +135,14 @@ public:
 	std::string getConfigPath() const;
 	std::string getDownloadPath() const;
 
+	// ---------------------------------------------------------------------------
+	// Misc.
+	// ---------------------------------------------------------------------------
+
+	int getUnreadChatMessageCount () const;
+	int getUnreadChatMessageCount (const IdentityAddress &localAddress) const;
+	int getUnreadChatMessageCountFromActiveLocals () const;
+
 private:
 	Core ();
 

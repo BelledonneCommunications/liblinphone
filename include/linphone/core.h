@@ -131,6 +131,31 @@ LINPHONE_PUBLIC LinphoneMagicSearch *linphone_core_create_magic_search(LinphoneC
 LINPHONE_PUBLIC void linphone_core_check_for_update(LinphoneCore *lc, const char *current_version);
 
 /**
+ * Return the global unread chat message count.
+ * @param[in] lc #LinphoneCore object.
+ * @return The global unread chat message count.
+ */
+LINPHONE_PUBLIC int linphone_core_get_unread_chat_message_count (const LinphoneCore *lc);
+
+/**
+ * Return the unread chat message count for a given local address.
+ * @param[in] lc #LinphoneCore object.
+ * @param[in] address #LinphoneAddress object.
+ * @return The unread chat message count.
+ */
+LINPHONE_PUBLIC int linphone_core_get_unread_chat_message_count_from_local (
+	const LinphoneCore *lc,
+	const LinphoneAddress *address
+);
+
+/**
+ * Return the unread chat message count for all active local address. (Primary contact + proxy configs.)
+ * @param[in] lc #LinphoneCore object.
+ * @return The unread chat message count.
+ */
+LINPHONE_PUBLIC int linphone_core_get_unread_chat_message_count_from_active_locals (const LinphoneCore *lc);
+
+/**
  * @}
  */
 
@@ -2634,12 +2659,12 @@ LINPHONE_PUBLIC bool_t linphone_core_sip_transport_supported(const LinphoneCore 
 LINPHONE_PUBLIC bool_t linphone_core_content_encoding_supported(const LinphoneCore *lc, const char *content_encoding);
 
 /**
- *
  * Give access to the UDP sip socket. Can be useful to configure this socket as persistent I.E kCFStreamNetworkServiceType set to kCFStreamNetworkServiceTypeVoIP)
  * @param lc #LinphoneCore
  * @return socket file descriptor
+ * @deprecated Deprecated since 2018-08
  */
-ortp_socket_t linphone_core_get_sip_socket(LinphoneCore *lc);
+LINPHONE_DEPRECATED ortp_socket_t linphone_core_get_sip_socket(LinphoneCore *lc);
 
 /**
  * Set the incoming call timeout in seconds.
@@ -5092,6 +5117,20 @@ LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_create_client_group_chat_room(L
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_get_chat_room(LinphoneCore *lc, const LinphoneAddress *addr);
 
 /**
+ * Get a basic chat room. If it does not exist yet, it will be created.
+ * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * @param lc the linphone core
+ * @param peer_addr a linphone address.
+ * @param local_addr a linphone address.
+ * @return #LinphoneChatRoom where messaging can take place.
+**/
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_get_chat_room_2(
+	LinphoneCore *lc,
+	const LinphoneAddress *peer_addr,
+	const LinphoneAddress *local_addr
+);
+
+/**
  * Get a basic chat room for messaging from a sip uri like sip:joe@sip.linphone.org. If it does not exist yet, it will be created.
  * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
  * @param lc A #LinphoneCore object
@@ -5448,6 +5487,14 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_friends_lists(const Linph
  * @return the first #LinphoneFriendList object or NULL
  */
 LINPHONE_PUBLIC LinphoneFriendList * linphone_core_get_default_friend_list(const LinphoneCore *lc);
+
+/**
+ * Retrieves the list of #LinphoneFriend from the core that has the given display name.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] name the name of the list
+ * @return the first #LinphoneFriendList object or NULL
+ */
+LINPHONE_PUBLIC LinphoneFriendList* linphone_core_get_friend_list_by_name(const LinphoneCore *lc, const char *name);
 
 /**
  * Retrieves a list of #LinphoneAddress sort and filter

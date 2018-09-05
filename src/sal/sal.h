@@ -154,8 +154,8 @@ public:
 	void setDefaultSdpHandling (SalOpSDPHandling sdpHandlingMethod);
 
 	void setUuid (const std::string &value) { mUuid = value; }
-	int createUuid (char *uuid, size_t len);
-	static int generateUuid (char *uuid, size_t len);
+	std::string createUuid ();
+	static std::string generateUuid ();
 
 	void enableNatHelper (bool value);
 	bool natHelperEnabled () const { return mNatHelperEnabled; }
@@ -187,9 +187,7 @@ public:
 	// ---------------------------------------------------------------------------
 	int setListenPort (const std::string &addr, int port, SalTransport tr, bool isTunneled);
 	int getListeningPort (SalTransport tr);
-	int isTransportAvailable (SalTransport t);
-
-	void getDefaultLocalIp (int addressFamily, char *ip, size_t ipLen);
+	bool isTransportAvailable (SalTransport tr);
 
 	void setTransportTimeout (int value) { belle_sip_stack_set_transport_timeout(mStack, value); }
 	int getTransportTimeout () const { return belle_sip_stack_get_transport_timeout(mStack); }
@@ -208,10 +206,8 @@ public:
 	void setHttpProxyPort (int value) { belle_sip_stack_set_http_proxy_port(mStack, value); }
 	int getHttpProxyPort () const { return belle_sip_stack_get_http_proxy_port(mStack); }
 
-	ortp_socket_t getSocket () const;
-
-	int unlistenPorts ();
-	int resetTransports ();
+	void unlistenPorts ();
+	void resetTransports ();
 
 
 	// ---------------------------------------------------------------------------
@@ -336,7 +332,7 @@ private:
 	friend class SalReferOp;
 };
 
-int to_sip_code(SalReason r);
+int toSipCode (SalReason reason);
 
 LINPHONE_END_NAMESPACE
 

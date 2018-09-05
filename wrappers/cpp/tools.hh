@@ -27,18 +27,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "object.hh"
 
 namespace linphone {
-	
+
 	class AbstractBctbxListWrapper {
 	public:
 		AbstractBctbxListWrapper(): mCList(NULL) {}
 		virtual ~AbstractBctbxListWrapper() {}
 		::bctbx_list_t *c_list() {return mCList;}
-		
+
 	protected:
 		::bctbx_list_t *mCList;
 	};
-	
-	
+
+
 	template <class T>
 	class ObjectBctbxListWrapper: public AbstractBctbxListWrapper {
 	public:
@@ -50,16 +50,16 @@ namespace linphone {
 				bctbx_list_free_with_data(mCList, unrefData);
 			}
 		}
-		static std::list<std::shared_ptr<T> > bctbxListToCppList(const ::bctbx_list_t *bctbxList) {
+		static std::list<std::shared_ptr<T> > bctbxListToCppList(const ::bctbx_list_t *bctbxList, bool takeRef=true) {
 			std::list<std::shared_ptr<T> > cppList;
 			for(const ::bctbx_list_t *it=bctbxList; it!=NULL; it=it->next) {
-				std::shared_ptr<T> newObj = Object::cPtrToSharedPtr<T>(it->data);
+				std::shared_ptr<T> newObj = Object::cPtrToSharedPtr<T>(it->data, takeRef);
 				cppList.push_back(newObj);
 			}
 			return cppList;
 		}
-		static std::list<std::shared_ptr<T>> bctbxListToCppList(::bctbx_list_t *bctbxList) {
-			std::list<std::shared_ptr<T>> cppList = bctbxListToCppList((const ::bctbx_list_t *)bctbxList);
+		static std::list<std::shared_ptr<T>> bctbxListToCppList(::bctbx_list_t *bctbxList, bool takeRef=true) {
+			std::list<std::shared_ptr<T>> cppList = bctbxListToCppList(const_cast<const ::bctbx_list_t *>(bctbxList), takeRef);
 			bctbx_list_free(bctbxList);
 			return cppList;
 		}
@@ -72,22 +72,22 @@ namespace linphone {
 			}
 			return cList;
 		}
-	
+
 	private:
 		static void unrefData(void *data) {
 			if (data != NULL) belle_sip_object_unref(data);
 		}
 	};
-	
-	
+
+
 	class StringBctbxListWrapper: public AbstractBctbxListWrapper {
 	public:
 		StringBctbxListWrapper(const std::list<std::string> &cppList);
 		virtual ~StringBctbxListWrapper();
 		static std::list<std::string> bctbxListToCppList(const ::bctbx_list_t *bctbxList);
 	};
-	
-	
+
+
 	template <class T, class U>
 	class StructBctbxListWrapper: public AbstractBctbxListWrapper {
 	public:
@@ -111,11 +111,11 @@ namespace linphone {
 			}
 			return cList;
 		}
-	
+
 	private:
 		static void deleteCStruct(U *cStruct) {delete cStruct;}
 	};
-	
+
 	class StringUtilities {
 	public:
 		static std::string cStringToCpp(const char *cstr);
@@ -123,7 +123,7 @@ namespace linphone {
 		static const char *cppStringToC(const std::string &cppstr);
 		static std::list<std::string> cStringArrayToCppList(const char **cArray);
 	};
-	
+
 	template <class T>
 	class StructWrapper {
 	public:
@@ -133,7 +133,7 @@ namespace linphone {
 		const void *ptr() const {
 			return &mStruct;
 		}
-		
+
 	private:
 		T mStruct;
 	};

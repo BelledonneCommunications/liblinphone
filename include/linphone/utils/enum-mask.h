@@ -40,7 +40,7 @@ public:
 		std::is_signed<typename std::underlying_type<T>::type>::value, int, unsigned int
 	>::type StorageType;
 
-	constexpr EnumMask (int mask = 0) : mMask(mask) {}
+	constexpr EnumMask (int mask = 0) : mMask(StorageType(mask)) {}
 	constexpr EnumMask (T value) : mMask(StorageType(value)) {}
 	constexpr EnumMask (std::initializer_list<T> mask) : mMask(init(mask.begin(), mask.end())) {}
 
@@ -110,7 +110,7 @@ public:
 	}
 
 	constexpr EnumMask operator& (T mask) const {
-		return mMask & StorageType(mask);
+		return int(mMask & StorageType(mask));
 	}
 
 	constexpr EnumMask operator| (EnumMask mask) const {
@@ -118,7 +118,7 @@ public:
 	}
 
 	constexpr EnumMask operator| (T mask) const {
-		return mMask | StorageType(mask);
+		return int(mMask | StorageType(mask));
 	}
 
 	constexpr EnumMask operator^ (EnumMask mask) const {
@@ -126,7 +126,7 @@ public:
 	}
 
 	constexpr EnumMask operator^ (T mask) const {
-		return mMask ^ StorageType(mask);
+		return int(mMask ^ StorageType(mask));
 	}
 
 	constexpr EnumMask operator~ () const {
@@ -138,8 +138,8 @@ private:
 		return (mMask & value) == value && (value || mMask == 0);
 	}
 
-// On CentOs 7 GCC 4.8.5 have issue with array-bounds.
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 8 && __GNUC_PATCHLEVEL__ == 5
+// GCC versions prior to 5.0 have issues with array-bounds.
+#if defined(__GNUC__) && (__GNUC__ < 5)
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
@@ -151,7 +151,7 @@ private:
 		return begin != end ? (StorageType(*begin) | init(begin + 1, end)) : StorageType(0);
 	}
 
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 8 && __GNUC_PATCHLEVEL__ == 5
+#if defined(__GNUC__) && (__GNUC__ < 5)
 	#pragma GCC diagnostic pop
 #endif
 

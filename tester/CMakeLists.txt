@@ -142,6 +142,7 @@ set(RC_FILES
 	rcfiles/remote_zero_length_params_rc
 	rcfiles/stun_rc
 	rcfiles/zero_length_params_rc
+	rcfiles/marie_bodyless_rc
 )
 
 set(IMAGE_FILES

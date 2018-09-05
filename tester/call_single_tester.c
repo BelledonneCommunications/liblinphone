@@ -6025,6 +6025,14 @@ static void call_with_ice_stun_not_responding(void){
 	/*we expect ICE to continue without stun candidates*/
 	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE);
 
+	/*retry but with nat policy instead of core */
+	linphone_core_set_stun_server(marie->lc, NULL);
+	linphone_core_set_stun_server(pauline->lc, NULL);
+	linphone_nat_policy_set_stun_server(linphone_core_get_nat_policy(marie->lc), "belledonne-communications.com:443");
+	linphone_nat_policy_set_stun_server(linphone_core_get_nat_policy(pauline->lc), "belledonne-communications.com:443");
+	/*we expect ICE to continue without stun candidates*/
+	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE);
+
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }

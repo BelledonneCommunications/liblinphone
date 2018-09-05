@@ -53,9 +53,16 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(ChatMessage,
 	void *message_state_changed_user_data;
 
 	struct Cache {
+		~Cache () {
+			if (contents)
+				bctbx_list_free(contents);
+		}
+
 		string contentType;
 		string textContentBody;
 		string customHeaderValue;
+
+		bctbx_list_t *contents = nullptr;
 	} mutable cache;
 )
 
@@ -250,8 +257,11 @@ void linphone_chat_message_remove_content (LinphoneChatMessage *msg, LinphoneCon
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->removeContent(L_GET_CPP_PTR_FROM_C_OBJECT(content));
 }
 
-bctbx_list_t* linphone_chat_message_get_contents(const LinphoneChatMessage *msg) {
-	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getContents());
+const bctbx_list_t *linphone_chat_message_get_contents (const LinphoneChatMessage *msg) {
+	if (msg->cache.contents)
+		bctbx_free(msg->cache.contents);
+	msg->cache.contents = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getContents());
+	return msg->cache.contents;
 }
 
 bool_t linphone_chat_message_has_text_content (const LinphoneChatMessage *msg) {
@@ -271,7 +281,9 @@ bool_t linphone_chat_message_is_file_transfer_in_progress (LinphoneChatMessage *
 }
 
 bctbx_list_t *linphone_chat_message_get_participants_by_imdn_state (const LinphoneChatMessage *msg, LinphoneChatMessageState state) {
-	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getParticipantsByImdnState(LinphonePrivate::ChatMessage::State(state)));
+	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(
+		L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getParticipantsByImdnState(LinphonePrivate::ChatMessage::State(state))
+	);
 }
 
 bool_t linphone_chat_message_download_content (LinphoneChatMessage *msg, LinphoneContent *c_content) {

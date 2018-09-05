@@ -90,7 +90,7 @@ namespace Statements {
 			LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id
 			LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id
 			LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id
-			WHERE event_id = :1
+			WHERE conference_event_view.id = :1
 		)",
 
 		/* SelectConferenceEvents */ R"(

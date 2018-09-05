@@ -436,13 +436,13 @@ static int _linphone_config_init_from_files(LinphoneConfig *lpconfig, const char
 #ifdef RENAME_REQUIRES_NONEXISTENT_NEW_PATH
 		if (lpconfig->pFile == NULL){
 			lpconfig->pFile = bctbx_file_open(lpconfig->g_bctbx_vfs,lpconfig->tmpfilename, "r+");
-			if (lpconfig->pFile == NULL){
+			if (lpconfig->pFile != NULL){
 				ms_warning("Could not open %s but %s works, app may have crashed during last sync.",lpconfig->filename,lpconfig->tmpfilename);
 			}
 		}
 #endif
 		if (lpconfig->pFile != NULL){
-		    linphone_config_parse(lpconfig, lpconfig->pFile);
+			linphone_config_parse(lpconfig, lpconfig->pFile);
 			bctbx_file_close(lpconfig->pFile);
 			lpconfig->pFile = NULL;
 			lpconfig->modified = FALSE;
