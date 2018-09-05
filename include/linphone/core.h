@@ -5543,7 +5543,21 @@ LINPHONE_PUBLIC void linphone_core_notify_notify_presence_received(LinphoneCore 
  */
 LINPHONE_PUBLIC void linphone_core_notify_notify_presence_received_for_uri_or_tel(LinphoneCore *lc, LinphoneFriend *lf, const char *uri_or_tel, const LinphonePresenceModel *presence_model);
 
+/**
+ * Sets the size under which incoming files in chat messages will be downloaded automatically.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] size The size in bytes, -1 to disable the autodownload feature, 0 to download them all no matter the size
+ * @ingroup chat
+**/
+LINPHONE_PUBLIC void linphone_core_set_max_size_for_auto_download_incoming_files(LinphoneCore *lc, int size);
 
+/**
+ * Gets the size under which incoming files in chat messages will be downloaded automatically.
+ * @param[in] lc #LinphoneCore object
+ * @return The size in bytes, -1 if autodownload feature is disabled, 0 to download them all no matter the size
+ * @ingroup chat
+**/
+LINPHONE_PUBLIC int linphone_core_get_max_size_for_auto_download_incoming_files(LinphoneCore *lc);
 
 /**
  * @}

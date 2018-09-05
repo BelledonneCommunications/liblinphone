@@ -1409,6 +1409,9 @@ static void sip_config_read(LinphoneCore *lc) {
 	tmp=lp_config_get_int(lc->config,"sip","delayed_timeout",4);
 	linphone_core_set_delayed_timeout(lc,tmp);
 
+	tmp=lp_config_get_int(lc->config,"app","auto_download_incoming_files_max_size",-1);
+	linphone_core_set_max_size_for_auto_download_incoming_files(lc, tmp);
+
 	/* get proxies config */
 	for(i=0;; i++){
 		LinphoneProxyConfig *cfg=linphone_proxy_config_new_from_config_file(lc,i);
@@ -3919,6 +3922,14 @@ int linphone_core_get_delayed_timeout(LinphoneCore *lc){
 
 void linphone_core_set_delayed_timeout(LinphoneCore *lc, int seconds){
 	lc->sip_conf.delayed_timeout=seconds;
+}
+
+int linphone_core_get_max_size_for_auto_download_incoming_files(LinphoneCore *lc) {
+	return lc->auto_download_incoming_files_max_size;
+}
+
+void linphone_core_set_max_size_for_auto_download_incoming_files(LinphoneCore *lc, int size) {
+	lc->auto_download_incoming_files_max_size = size;
 }
 
 void linphone_core_set_presence_info(LinphoneCore *lc, int minutes_away, const char *contact, LinphoneOnlineStatus os) {
