@@ -149,6 +149,7 @@ bctbx_list_t * linphone_core_read_call_logs_from_config_file(LinphoneCore *lc){
 				tmp=lp_config_get_string(cfg,logsection,"start_date",NULL);
 				if (tmp) {
 					strncpy(cl->start_date,tmp,sizeof(cl->start_date));
+					cl->start_date[sizeof(cl->start_date) - 1] = '\0';
 					cl->start_date_time=string_to_time(cl->start_date);
 				}
 			}

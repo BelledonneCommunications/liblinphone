@@ -42,6 +42,7 @@ void parse_args(int argc, char *argv[]) {
 		exit(-1);
 	}
 	strncpy(config_file, argv[2], 1024);
+	config_file[sizeof(config_file) - 1] = '\0';
 }
 
 int main(int argc, char *argv[]) {

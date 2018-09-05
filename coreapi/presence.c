@@ -202,7 +202,6 @@ static time_t parse_timestamp(const char *timestamp) {
 }
 
 char * linphone_timestamp_to_rfc3339_string(time_t timestamp) {
-	char timestamp_str[22];
 	struct tm *ret;
 #ifndef _WIN32
 	struct tm gmt;
@@ -210,9 +209,12 @@ char * linphone_timestamp_to_rfc3339_string(time_t timestamp) {
 #else
 	ret = gmtime(&timestamp);
 #endif
-	snprintf(timestamp_str, sizeof(timestamp_str), "%4d-%02d-%02dT%02d:%02d:%02dZ",
+	int n = snprintf(0, 0, "%4d-%02d-%02dT%02d:%02d:%02dZ",
 		 ret->tm_year + 1900, ret->tm_mon + 1, ret->tm_mday, ret->tm_hour, ret->tm_min, ret->tm_sec);
-	return ms_strdup(timestamp_str);
+	char *timestamp_str = (char *) ms_malloc(n + 1);
+	snprintf(timestamp_str, n + 1, "%4d-%02d-%02dT%02d:%02d:%02dZ",
+		 ret->tm_year + 1900, ret->tm_mon + 1, ret->tm_mday, ret->tm_hour, ret->tm_min, ret->tm_sec);
+	return timestamp_str;
 }
 
 static LinphonePresencePerson * presence_person_new(const char *id,  time_t timestamp) {
