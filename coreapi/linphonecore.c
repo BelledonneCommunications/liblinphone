@@ -3994,6 +3994,7 @@ int linphone_core_get_max_size_for_auto_download_incoming_files(LinphoneCore *lc
 
 void linphone_core_set_max_size_for_auto_download_incoming_files(LinphoneCore *lc, int size) {
 	lc->auto_download_incoming_files_max_size = size;
+	lp_config_set_int(lc->config, "app", "auto_download_incoming_files_max_size", size);
 }
 
 void linphone_core_set_presence_info(LinphoneCore *lc, int minutes_away, const char *contact, LinphoneOnlineStatus os) {
