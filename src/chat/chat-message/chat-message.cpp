@@ -544,7 +544,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 				int max_size = linphone_core_get_max_size_for_auto_download_incoming_files(q->getCore()->getCCore());
 				if (max_size >= 0) {
 					FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
-					if (max_size > 0 && ftc->getFileSize() <= (size_t)max_size) {
+					if (max_size == 0 || ftc->getFileSize() <= (size_t)max_size) {
 						ftc->setFilePath(q->getCore()->getDownloadPath() + ftc->getFileName());
 						setAutoFileTransferDownloadHappened(true);
 						q->downloadFile(ftc);
