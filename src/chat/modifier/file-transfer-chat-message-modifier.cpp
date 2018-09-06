@@ -915,8 +915,14 @@ void FileTransferChatMessageModifier::processAuthRequestedDownload (const belle_
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	if (!message)
 		return;
-	message->getPrivate()->setState(ChatMessage::State::FileTransferError);
-	releaseHttpRequest();
+	if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
+		message->getPrivate()->autoDownloadFailedDoNoRetry();
+		releaseHttpRequest();
+		message->getPrivate()->receive();
+	} else {
+		message->getPrivate()->setState(ChatMessage::State::FileTransferError);
+		releaseHttpRequest();
+	}
 }
 
 static void _chat_message_process_io_error_download (void *data, const belle_sip_io_error_event_t *event) {
@@ -929,8 +935,14 @@ void FileTransferChatMessageModifier::processIoErrorDownload (const belle_sip_io
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	if (!message)
 		return;
-	message->getPrivate()->setState(ChatMessage::State::FileTransferError);
-	releaseHttpRequest();
+	if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
+		message->getPrivate()->autoDownloadFailedDoNoRetry();
+		releaseHttpRequest();
+		message->getPrivate()->receive();
+	} else {
+		message->getPrivate()->setState(ChatMessage::State::FileTransferError);
+		releaseHttpRequest();
+	}
 }
 
 static void _chat_message_process_response_from_get_file (void *data, const belle_http_response_event_t *event) {
@@ -948,11 +960,17 @@ void FileTransferChatMessageModifier::processResponseFromGetFile (const belle_ht
 		int code = belle_http_response_get_status_code(event->response);
 		if (code >= 400 && code < 500) {
 			lWarning() << "File transfer failed with code " << code;
-			message->getPrivate()->setState(ChatMessage::State::FileTransferError);
+			if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
+				message->getPrivate()->autoDownloadFailedDoNoRetry();
+				releaseHttpRequest();
+				message->getPrivate()->receive();
+			} else {
+				message->getPrivate()->setState(ChatMessage::State::FileTransferError);
+				releaseHttpRequest();
+			}
 		} else if (code != 200) {
 			lWarning() << "Unhandled HTTP code response " << code << " for file transfer";
 		}
-		releaseHttpRequest();
 	}
 }
 

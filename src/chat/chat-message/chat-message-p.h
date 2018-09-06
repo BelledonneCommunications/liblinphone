@@ -130,6 +130,10 @@ public:
 
 	void setEncryptionPrevented (bool value) { encryptionPrevented = value; }
 
+	void autoDownloadFailedDoNoRetry() {
+		currentRecvStep |= ChatMessagePrivate::Step::AutoFileDownload;
+	}
+
 	// -----------------------------------------------------------------------------
 	// Deprecated methods only used for C wrapper, to be removed some day...
 	// -----------------------------------------------------------------------------

@@ -596,6 +596,8 @@ LinphoneReason ChatMessagePrivate::receive () {
 			lError() << "No content-type in the contents list is supported...";
 		}
 	}
+	// If auto download failed, reset this flag so the user can normally download the file later
+	setAutoFileTransferDownloadHappened(false);
 
 	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
 	if (Address(chatRoom->getLocalAddress()).weakEqual(fromAddress))
