@@ -143,7 +143,7 @@ string DbSession::currentTimestamp () const {
 			char buffer[n + 1];
 			snprintf(
 				buffer,
-				n+1,
+				(size_t)n+1,
 				"'%d-%02d-%02d %02d:%02d:%02d'",
 				now.tm_year + 1900, now.tm_mon + 1, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec
 			);
