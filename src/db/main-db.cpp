@@ -786,34 +786,50 @@ void MainDbPrivate::updateConferenceChatMessageEvent (const shared_ptr<EventLog>
 	MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
 	const long long &eventId = dEventKey->storageId;
 
-	const bool isOutgoing = chatMessage->getDirection() == ChatMessage::Direction::Outgoing;
+	// 1. Get current chat message state and database state.
 	const ChatMessage::State state = chatMessage->getState();
+	ChatMessage::State dbState;
+	{
+		int intState;
+		*dbSession.getBackendSession() << "SELECT state FROM conference_chat_message_event WHERE event_id = :eventId",
+			soci::into(intState), soci::use(eventId);
+		dbState = ChatMessage::State(intState);
+	}
 
+	// 2. Update unread chat message count if necessary.
+	const bool isOutgoing = chatMessage->getDirection() == ChatMessage::Direction::Outgoing;
 	shared_ptr<AbstractChatRoom> chatRoom(chatMessage->getChatRoom());
-
-	if (!isOutgoing && chatMessage->getState() == ChatMessage::State::Displayed) {
+	if (!isOutgoing && state == ChatMessage::State::Displayed) {
 		int *count = unreadChatMessageCountCache[chatRoom->getChatRoomId()];
-		if (count) {
-			int state;
-			*dbSession.getBackendSession() << "SELECT state FROM conference_chat_message_event WHERE event_id = :eventId",
-				soci::into(state), soci::use(eventId);
-			if (state != int(ChatMessage::State::Displayed)) {
-				L_ASSERT(*count > 0);
-				--*count;
-			}
+		if (count && dbState != ChatMessage::State::Displayed) {
+			L_ASSERT(*count > 0);
+			--*count;
 		}
 	}
 
-	const string &imdnMessageId = chatMessage->getImdnMessageId();
-	int stateInt = int(state);
-	*dbSession.getBackendSession() << "UPDATE conference_chat_message_event SET state = :state, imdn_message_id = :imdnMessageId"
-		" WHERE event_id = :eventId",
-		soci::use(stateInt), soci::use(imdnMessageId), soci::use(eventId);
+	// 3. Update chat message event.
+	{
+		const string &imdnMessageId = chatMessage->getImdnMessageId();
+		// Do not store transfer state.
+		const int stateInt = int(
+			state == ChatMessage::State::InProgress ||
+			state == ChatMessage::State::FileTransferDone ||
+			state == ChatMessage::State::FileTransferError
+				? dbState
+				: state
+		);
 
+		*dbSession.getBackendSession() << "UPDATE conference_chat_message_event SET state = :state, imdn_message_id = :imdnMessageId"
+			" WHERE event_id = :eventId",
+			soci::use(stateInt), soci::use(imdnMessageId), soci::use(eventId);
+	}
+
+	// 4. Update contents.
 	deleteContents(eventId);
 	for (const auto &content : chatMessage->getContents())
 		insertContent(eventId, *content);
 
+	// 5. Update participants.
 	if (isOutgoing && (state == ChatMessage::State::Delivered || state == ChatMessage::State::NotDelivered))
 		for (const auto &participant : chatRoom->getParticipants())
 			setChatMessageParticipantState(eventLog, participant->getAddress(), state, std::time(nullptr));

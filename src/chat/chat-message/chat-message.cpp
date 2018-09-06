@@ -80,7 +80,7 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
 	shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(dbKey);
 	ChatMessage::State currentState = mainDb->getChatMessageParticipantState(eventLog, participantAddress);
-	if (!validStateTransition(currentState, newState))
+	if (!isValidStateTransition(currentState, newState))
 		return;
 
 	lInfo() << "Chat message " << this << ": moving participant '" << participantAddress.asString() << "' state to "
@@ -139,7 +139,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState, bool force) {
 	if (force)
 		state = newState;
 
-	if (!validStateTransition(state, newState))
+	if (!isValidStateTransition(state, newState))
 		return;
 
 	lInfo() << "Chat message " << this << ": moving from " << Utils::toString(state) <<
@@ -158,14 +158,15 @@ void ChatMessagePrivate::setState (ChatMessage::State newState, bool force) {
 	if (cbs && linphone_chat_message_cbs_get_msg_state_changed(cbs))
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
 
-	if (state == ChatMessage::State::FileTransferDone && !hasFileTransferContent()) {
-		// We wait until the file has been downloaded to send the displayed IMDN
-		bool doNotStoreInDb = static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
-		// Force the state so it is stored directly in DB, but when the IMDN has successfully been delivered
-		setState(ChatMessage::State::Displayed, doNotStoreInDb);
-	} else {
+	if (state == ChatMessage::State::FileTransferDone) {
+		if (!hasFileTransferContent()) {
+			// We wait until the file has been downloaded to send the displayed IMDN
+			bool doNotStoreInDb = static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
+			// Force the state so it is stored directly in DB, but when the IMDN has successfully been delivered
+			setState(ChatMessage::State::Displayed, doNotStoreInDb);
+		}
+	} else if (state != ChatMessage::State::FileTransferError && state != ChatMessage::State::InProgress)
 		updateInDb();
-	}
 }
 
 belle_http_request_t *ChatMessagePrivate::getHttpRequest () const {
@@ -835,20 +836,18 @@ void ChatMessagePrivate::updateInDb () {
 
 // -----------------------------------------------------------------------------
 
-bool ChatMessagePrivate::validStateTransition (ChatMessage::State currentState, ChatMessage::State newState) {
+bool ChatMessagePrivate::isValidStateTransition (ChatMessage::State currentState, ChatMessage::State newState) {
 	if (newState == currentState)
 		return false;
 
-	if (
+	return !(
 		(currentState == ChatMessage::State::Displayed || currentState == ChatMessage::State::DeliveredToUser) &&
 		(
 			newState == ChatMessage::State::DeliveredToUser ||
 			newState == ChatMessage::State::Delivered ||
 			newState == ChatMessage::State::NotDelivered
 		)
-	)
-		return false;
-	return true;
+	);
 }
 
 // -----------------------------------------------------------------------------
@@ -857,8 +856,7 @@ ChatMessage::ChatMessage (const shared_ptr<AbstractChatRoom> &chatRoom, ChatMess
 	Object(*new ChatMessagePrivate(chatRoom, direction)), CoreAccessor(chatRoom->getCore()) {
 }
 
-ChatMessage::ChatMessage (ChatMessagePrivate &p) : Object(p), CoreAccessor(p.getPublic()->getChatRoom()->getCore()) {
-}
+ChatMessage::ChatMessage (ChatMessagePrivate &p) : Object(p), CoreAccessor(p.getPublic()->getChatRoom()->getCore()) {}
 
 ChatMessage::~ChatMessage () {
 	L_D();

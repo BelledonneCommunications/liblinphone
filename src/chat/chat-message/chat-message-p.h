@@ -159,10 +159,10 @@ public:
 	void storeInDb ();
 	void updateInDb ();
 
+	static bool isValidStateTransition (ChatMessage::State currentState, ChatMessage::State newState);
+
 private:
 	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir);
-
-	static bool validStateTransition (ChatMessage::State currentState, ChatMessage::State newState);
 
 public:
 	mutable MainDbChatMessageKey dbKey;
