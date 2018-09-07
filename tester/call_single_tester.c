@@ -49,6 +49,15 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 	char* to=linphone_address_as_string(linphone_call_log_get_to(calllog));
 	char* from=linphone_address_as_string(linphone_call_log_get_from(calllog));
 	stats* counters;
+	
+	
+	const LinphoneAddress *to_addr = linphone_call_get_to_address(call);
+	const LinphoneAddress *remote_addr = linphone_call_get_remote_address(call);
+	//const LinphoneAddress *from_addr = linphone_call_get_from_address(call);
+	BC_ASSERT_PTR_NOT_NULL(to_addr);
+	//BC_ASSERT_PTR_NOT_NULL(from_addr);
+	BC_ASSERT_PTR_NOT_NULL(remote_addr);
+	
 	ms_message(" %s call from [%s] to [%s], new state is [%s]"	,linphone_call_log_get_dir(calllog)==LinphoneCallIncoming?"Incoming":"Outgoing"
 																,from
 																,to

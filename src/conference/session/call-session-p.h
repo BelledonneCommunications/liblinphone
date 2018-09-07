@@ -111,7 +111,6 @@ protected:
 	CallSessionParams *remoteParams = nullptr;
 	mutable Address diversionAddress;
 	mutable Address remoteContactAddress;
-	mutable Address toAddress;
 
 	std::string subject;
 	LinphoneCallDir direction = LinphoneCallOutgoing;
