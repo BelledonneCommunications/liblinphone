@@ -201,7 +201,7 @@ void ChatMessagePrivate::removeSalCustomHeader (const string &name) {
 	salCustomHeaders = sal_custom_header_remove(salCustomHeaders, name.c_str());
 }
 
-string ChatMessagePrivate::getSalCustomHeaderValue (const string &name) {
+string ChatMessagePrivate::getSalCustomHeaderValue (const string &name) const {
 	return L_C_TO_STRING(sal_custom_header_find(salCustomHeaders, name.c_str()));
 }
 
@@ -289,7 +289,7 @@ void ChatMessagePrivate::setExternalBodyUrl (const string &url) {
 	externalBodyUrl = url;
 }
 
-const ContentType &ChatMessagePrivate::getContentType () {
+const ContentType &ChatMessagePrivate::getContentType () const {
 	loadContentsFromDatabase();
 	if (direction == ChatMessage::Direction::Incoming) {
 		if (contents.size() > 0) {
@@ -325,7 +325,7 @@ void ChatMessagePrivate::setContentType (const ContentType &contentType) {
 	}
 }
 
-const string &ChatMessagePrivate::getText () {
+const string &ChatMessagePrivate::getText () const {
 	loadContentsFromDatabase();
 	if (direction == ChatMessage::Direction::Incoming) {
 		if (hasTextContent()) {
@@ -1082,7 +1082,7 @@ bool ChatMessage::downloadFile(FileTransferContent *fileTransferContent) {
 	return d->fileTransferChatMessageModifier.downloadFile(getSharedFromThis(), fileTransferContent);
 }
 
-bool ChatMessage::isFileTransferInProgress() {
+bool ChatMessage::isFileTransferInProgress () const {
 	L_D();
 	return d->fileTransferChatMessageModifier.isFileTransferInProgressAndValid();
 }

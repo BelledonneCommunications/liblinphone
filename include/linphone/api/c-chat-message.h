@@ -88,28 +88,28 @@ LINPHONE_PUBLIC time_t linphone_chat_message_get_time (const LinphoneChatMessage
  * Returns TRUE if the message has been sent, returns FALSE if the message has been received.
  * @param[in] msg #LinphoneChatMessage object.
  */
-LINPHONE_PUBLIC bool_t linphone_chat_message_is_outgoing (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC bool_t linphone_chat_message_is_outgoing (const LinphoneChatMessage *msg);
 
 /**
  * Get origin of the message
  * @param[in] msg #LinphoneChatMessage object.
  * @return #LinphoneAddress
  */
-LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_from_address (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_from_address (const LinphoneChatMessage *msg);
 
 /**
  * Get destination of the message
  * @param[in] msg #LinphoneChatMessage object.
  * @return #LinphoneAddress
  */
-LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_to_address (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_to_address (const LinphoneChatMessage *msg);
 
 /**
  * Get the content type of a chat message.
  * @param[in] msg #LinphoneChatMessage object.
  * @return The content type of the chat message
  */
-LINPHONE_PUBLIC const char *linphone_chat_message_get_content_type (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC const char *linphone_chat_message_get_content_type (const LinphoneChatMessage *msg);
 
 /**
  * Set the content type of a chat message.
@@ -125,7 +125,7 @@ LINPHONE_PUBLIC void linphone_chat_message_set_content_type (LinphoneChatMessage
  * @return text or NULL if no text.
  * @deprecated use getTextContent() instead
  */
-LINPHONE_PUBLIC const char *linphone_chat_message_get_text (LinphoneChatMessage* msg);
+LINPHONE_PUBLIC const char *linphone_chat_message_get_text (const LinphoneChatMessage* msg);
 
 /**
  * Get the message identifier.
@@ -167,7 +167,7 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_chat_message_get_chat_room (const Lin
  * @return The path to the file to use for the file transfer.
  * @deprecated use linphone_content_get_file_path() instead.
  */
-LINPHONE_PUBLIC const char *linphone_chat_message_get_file_transfer_filepath (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC const char *linphone_chat_message_get_file_transfer_filepath (const LinphoneChatMessage *msg);
 
 // =============================================================================
 
@@ -200,7 +200,7 @@ LINPHONE_PUBLIC LinphoneChatMessageState linphone_chat_message_get_state (const 
  * @param[in] msg #LinphoneChatMessage object.
  * @return whether the message was encrypted when transfered or not
  */
-LINPHONE_PUBLIC bool_t linphone_chat_message_is_secured (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC bool_t linphone_chat_message_is_secured (const LinphoneChatMessage *msg);
 
 /**
  * Linphone message can carry external body as defined by rfc2017
@@ -223,21 +223,21 @@ LINPHONE_PUBLIC void linphone_chat_message_set_external_body_url (LinphoneChatMe
  * @param[in] msg #LinphoneChatMessage object.
  * @return a pointer to the #LinphoneContent structure or NULL if not present.
  */
-LINPHONE_PUBLIC LinphoneContent *linphone_chat_message_get_file_transfer_information (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC LinphoneContent *linphone_chat_message_get_file_transfer_information (const LinphoneChatMessage *msg);
 
 /**
  * Return whether or not a chat message is a file transfer.
  * @param[in] msg #LinphoneChatMessage object
  * @return Whether or not the message is a file transfer
  */
-LINPHONE_PUBLIC bool_t linphone_chat_message_is_file_transfer (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC bool_t linphone_chat_message_is_file_transfer (const LinphoneChatMessage *msg);
 
 /**
  * Return whether or not a chat message is a text.
  * @param[in] msg #LinphoneChatMessage object.
  * @return Whether or not the message is a text
  */
-LINPHONE_PUBLIC bool_t linphone_chat_message_is_text (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC bool_t linphone_chat_message_is_text (const LinphoneChatMessage *msg);
 
 /**
  * Start the download of the file from remote server
@@ -288,14 +288,14 @@ LINPHONE_PUBLIC void linphone_chat_message_send (LinphoneChatMessage *msg);
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_message_resend (LinphoneChatMessage *msg);
 
-LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_peer_address (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_peer_address (const LinphoneChatMessage *msg);
 
 /**
  * Returns the origin address of a message if it was a outgoing message, or the destination address if it was an incoming message.
  * @param[in] msg #LinphoneChatMessage object.
  * @return #LinphoneAddress
  */
-LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_local_address (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_local_address (const LinphoneChatMessage *msg);
 
 /**
  * Add custom headers to the message.
@@ -314,7 +314,7 @@ LINPHONE_PUBLIC void linphone_chat_message_add_custom_header (
  * @param[in] msg #LinphoneChatMessage object.
  * @param header_name header name searched
  */
-LINPHONE_PUBLIC const char * linphone_chat_message_get_custom_header (LinphoneChatMessage *msg, const char *header_name);
+LINPHONE_PUBLIC const char * linphone_chat_message_get_custom_header (const LinphoneChatMessage *msg, const char *header_name);
 
 /**
  * Removes a custom header from the message.
@@ -327,9 +327,9 @@ LINPHONE_PUBLIC void linphone_chat_message_remove_custom_header (LinphoneChatMes
  * Returns TRUE if the message has been read, otherwise returns FALSE.
  * @param[in] msg #LinphoneChatMessage object.
  */
-LINPHONE_PUBLIC bool_t linphone_chat_message_is_read (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC bool_t linphone_chat_message_is_read (const LinphoneChatMessage *msg);
 
-LINPHONE_PUBLIC LinphoneReason linphone_chat_message_get_reason (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC LinphoneReason linphone_chat_message_get_reason (const LinphoneChatMessage *msg);
 
 /**
  * Get full details about delivery error of a chat message.
@@ -409,7 +409,7 @@ LINPHONE_PUBLIC const char *linphone_chat_message_get_text_content (const Linpho
  * @param[in] msg #LinphoneChatMessage object.
  * @return true if download or upload is in progress, false otherwise
  */
-LINPHONE_PUBLIC bool_t linphone_chat_message_is_file_transfer_in_progress (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC bool_t linphone_chat_message_is_file_transfer_in_progress (const LinphoneChatMessage *msg);
 
 /**
  * Gets the list of participants for which the imdn state has reached the specified state and the time at which they did.

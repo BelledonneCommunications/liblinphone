@@ -112,7 +112,7 @@ public:
 
 	void addSalCustomHeader (const std::string &name, const std::string &value);
 	void removeSalCustomHeader (const std::string &name);
-	std::string getSalCustomHeaderValue (const std::string &name);
+	std::string getSalCustomHeaderValue (const std::string &name) const;
 
 	void loadFileTransferUrlFromBodyToContent ();
 	std::string createFakeFileTransferFromUrl(const std::string &url);
@@ -125,10 +125,10 @@ public:
 	// Deprecated methods only used for C wrapper, to be removed some day...
 	// -----------------------------------------------------------------------------
 
-	const ContentType &getContentType ();
+	const ContentType &getContentType () const;
 	void setContentType (const ContentType &contentType);
 
-	const std::string &getText ();
+	const std::string &getText () const;
 	void setText (const std::string &text);
 
 	const std::string &getFileTransferFilepath () const;
@@ -197,8 +197,8 @@ private:
 
 	// Cache for returned values, used for compatibility with previous C API
 	std::string fileTransferFilePath;
-	ContentType cContentType;
-	std::string cText;
+	mutable ContentType cContentType;
+	mutable std::string cText;
 
 	// TODO: Remove my comment. VARIABLES OK.
 	// Do not expose.

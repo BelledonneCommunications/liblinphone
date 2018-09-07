@@ -1016,7 +1016,7 @@ void FileTransferChatMessageModifier::cancelFileTransfer () {
 	releaseHttpRequest();
 }
 
-bool FileTransferChatMessageModifier::isFileTransferInProgressAndValid () {
+bool FileTransferChatMessageModifier::isFileTransferInProgressAndValid () const {
 	return httpRequest && !belle_http_request_is_cancelled(httpRequest);
 }
 
