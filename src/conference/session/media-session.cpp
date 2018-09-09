@@ -1141,6 +1141,12 @@ string MediaSessionPrivate::getBindIpForStream (int streamIndex) {
 			 * dual stack socket and multicast don't work well on Mac OS (linux is OK, as usual). */
 			bindIp = (pc->multicastIp.find_first_of(':') == string::npos) ? "0.0.0.0" : "::0";
 		}
+	}else if (bindIp.empty()){
+		/*If ipv6 is not enabled, for listening to 0.0.0.0. The default behavior of mediastreamer when no IP is passed is to try ::0, and in
+		 * case of failure try 0.0.0.0 . But we don't want this if IPv6 is explicitely disabled.*/
+		if (!linphone_core_ipv6_enabled(q->getCore()->getCCore())){
+			bindIp = "0.0.0.0";
+		}
 	}
 	return bindIp;
 }
