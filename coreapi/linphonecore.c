@@ -1367,6 +1367,7 @@ static void bodyless_config_read(LinphoneCore *lc) {
 		linphone_address_unref(addr);
 		linphone_friend_list_set_subscription_bodyless(friendList, TRUE);
 		linphone_core_add_friend_list(lc, friendList);
+		linphone_friend_list_unref(friendList);
 		if (!n)
 			break;
 

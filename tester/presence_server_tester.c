@@ -1841,9 +1841,6 @@ static void multiple_bodyless_list_subscription_with_rc(void) {
 	BC_ASSERT_PTR_NOT_NULL(linphone_friend_list_find_friend_by_uri(broList, "sip:bro@sip.example.org"));
 	BC_ASSERT_PTR_NULL(linphone_friend_list_find_friend_by_uri(broList, "sip:bro2@sip.example.org"));
 
-	linphone_friend_list_unref(friendList);
-	linphone_friend_list_unref(buddyList);
-	linphone_friend_list_unref(broList);
 	linphone_core_manager_destroy(marie);
 }
 
