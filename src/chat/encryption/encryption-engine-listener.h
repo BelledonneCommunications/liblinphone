@@ -52,7 +52,7 @@ public:
 	virtual int downloadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decryptedBuffer) { return 0; }
 	virtual int uploadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encryptedBuffer) { return 0; }
 	virtual EncryptionEngineListener::EngineType getEngineType () { return EngineType::Undefined; }
-	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (std::string deviceId) const { return AbstractChatRoom::SecurityLevel::Unsafe; }
+	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const { return AbstractChatRoom::SecurityLevel::Unsafe; }
 	virtual void cleanDb () {}
 
 protected:

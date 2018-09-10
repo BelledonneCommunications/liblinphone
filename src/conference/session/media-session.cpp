@@ -2824,7 +2824,7 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 				const char *charRemoteIk = sal_custom_sdp_attribute_find(op->getRemoteMediaDescription()->custom_sdp_attributes, "Ik");
 
 				// If LIMEv2 is disabled there might not be identity keys
-				if (charLocalIk != NULL && charRemoteIk != NULL) {
+				if (charLocalIk && charRemoteIk) {
 					const string &stringB64LocalIk(charLocalIk);
 					const string &stringB64RemoteIk(charRemoteIk);
 

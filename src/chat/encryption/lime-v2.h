@@ -82,7 +82,7 @@ public:
 	int downloadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) override;
 	int uploadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer) override;
 	EncryptionEngineListener::EngineType getEngineType () override;
-	AbstractChatRoom::SecurityLevel getSecurityLevel (std::string deviceId) const override;
+	AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const override;
 	void cleanDb () override;
 
 	// CoreListener overrides

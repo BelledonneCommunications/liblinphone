@@ -111,10 +111,12 @@ BelleSipLimeManager::BelleSipLimeManager (const string &dbAccess, belle_http_pro
 LimeV2::LimeV2 (const std::string &dbAccess, belle_http_provider_t *prov, LinphoneCore *lc) {
 	engineType = EncryptionEngineListener::EngineType::LimeV2;
 	curve = lime::CurveId::c25519; // c448
-	x3dhServerUrl = linphone_config_get_string(linphone_core_get_config(lc), "lime", "x3dh_server_url", "");
 	_dbAccess = dbAccess;
 	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(dbAccess, prov, lc));
 	lastLimeUpdate = linphone_config_get_int(lc->config, "lime", "last_lime_update_time", 0);
+	x3dhServerUrl = linphone_config_get_string(linphone_core_get_config(lc), "lime", "x3dh_server_url", "");
+	if (x3dhServerUrl.empty())
+		lError() << "LIMEv2 X3DH server URL unavailable for encryption engine";
 }
 
 string LimeV2::getX3dhServerUrl () const {
@@ -469,7 +471,7 @@ EncryptionEngineListener::EngineType LimeV2::getEngineType () {
 	return engineType;
 }
 
-AbstractChatRoom::SecurityLevel LimeV2::getSecurityLevel (string deviceId) const {
+AbstractChatRoom::SecurityLevel LimeV2::getSecurityLevel (const string &deviceId) const {
 	lime::PeerDeviceStatus status = belleSipLimeManager->get_peerDeviceStatus(deviceId);
 	switch (status) {
 		case lime::PeerDeviceStatus::unknown:
@@ -509,6 +511,11 @@ lime::limeCallback LimeV2::setLimeCallback (string operation) {
 void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const string &message) {
 	if (state == LinphoneRegistrationState::LinphoneRegistrationOk) {
 
+		if (x3dhServerUrl.empty()) {
+			lError() << "LIMEv2 X3DH server URL unavailable for encryption engine: can't create lime user";
+			return;
+		}
+
 		char *contactAddress = linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg));
 		IdentityAddress identityAddress = IdentityAddress(contactAddress);
 		string localDeviceId = identityAddress.asString();
@@ -520,7 +527,7 @@ void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegis
 		lime::limeCallback callback = setLimeCallback(operation.str());
 
 		LinphoneConfig *lpconfig = linphone_core_get_config(linphone_proxy_config_get_core(cfg));
-		lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_lime_update_time", -1); // TODO should be done by the tester
+		lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_lime_update_time", -1);
 
 		try {
 			// create user if not exist
