@@ -138,7 +138,6 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	// Refuse message in unsafe chatroom if not allowed
 	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
 		if (chatRoom->getSecurityLevel() == ClientGroupChatRoom::SecurityLevel::Unsafe) {
-			cout << "Sending encrypted message in an unsafe chatroom" << endl;
 			lWarning() << "Sending encrypted message in an unsafe chatroom" << endl;
 			return ChatMessageModifier::Result::Error;
 		}

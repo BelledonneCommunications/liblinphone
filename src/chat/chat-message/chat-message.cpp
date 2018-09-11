@@ -510,15 +510,16 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::Encryption;
 	}
 
-	// If LIMEv2 is enabled, it sets the authenticatedFromAddress as the decrypted CPIM From Address
-	// If LIMEv2 is disabled, the authenticatedFromAddress must be set here as the SIP From Address
-	// In case of clear message in group chat room the sender authentication is disabled
+	// Sender Authentication
+	// If LIMEv2 enabled, the authenticatedFromAddress is the decrypted CPIM From Address
+	// If LIMEv2 disabled, the authenticatedFromAddress must be set here as the SIP From Address
+	// If LIMEv2 disabled in group chat room the sender authentication is disabled
 	if (!core->limeV2Enabled()) {
 		if (q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Basic) {
 			IdentityAddress sipFromAddress = q->getSharedFromThis()->getFromAddress();
 			q->getSharedFromThis()->getPrivate()->setAuthenticatedFromAddress(sipFromAddress);
 		} else {
-			lInfo() << "Sender authentication disabled";
+			lInfo() << "Sender authentication disabled for clear text group chat";
 			senderAuthenticationEnabled = false;
 		}
 	}
@@ -533,14 +534,10 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::Cpim;
 	}
 
-	// Message Authorisation (could be done in CPIM modifier)
-	// If LIMEv2 enabled, check authorisation warning flag
-	// If warning flag is true, check if message is an isComposing or an IMDN
+	// Message Authorisation
 	if (q->getSharedFromThis()->getPrivate()->getAuthorisationWarning()) {
 		if (q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::Imdn && q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::ImIsComposing) {
-			// TODO acknowledge message reception with errorCode = 0
-			// TODO return a "message refused because not encrypted" IMDN to the sender
-			errorCode = 415; // TODO 415 for example, maybe another one is better ? 488 ? 603 ?
+			errorCode = 415; // TODO 415/488/603
 			reason = linphone_error_code_to_reason(errorCode);
 			if (getNegativeDeliveryNotificationRequired()) {
 				static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryErrorNotification(
@@ -548,8 +545,9 @@ LinphoneReason ChatMessagePrivate::receive () {
 					reason
 				);
 			}
-			return reason;
+			return LinphoneReasonNone;
 		}
+	}
 	if ((currentRecvStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
 		lInfo() << "Multipart step already done, skipping";
 	} else {
@@ -633,7 +631,6 @@ LinphoneReason ChatMessagePrivate::receive () {
 }
 
 void ChatMessagePrivate::send () {
-
 	L_Q();
 	SalOp *op = salOp;
 	LinphoneCall *lcall = nullptr;

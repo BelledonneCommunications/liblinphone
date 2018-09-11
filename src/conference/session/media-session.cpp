@@ -3577,11 +3577,7 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
 		} else {
 			// Get proxy config
-			LinphoneProxyConfig *proxy = nullptr;
-			if (destProxy)
-				proxy = destProxy;
-			else
-				proxy = linphone_core_get_default_proxy_config(q->getCore()->getCCore());
+			LinphoneProxyConfig *proxy = destProxy ? destProxy : linphone_core_get_default_proxy_config(q->getCore()->getCCore());
 
 			// Get LIMEv2 context
 			LimeV2 *limeV2Engine = nullptr;

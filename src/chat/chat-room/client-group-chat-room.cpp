@@ -756,20 +756,6 @@ void ClientGroupChatRoom::onSecurityEvent (const shared_ptr<ConferenceSecurityEv
 	finalEvent = cleanEvent ? cleanEvent : event;
 
 	// Add security events or alerts based on the type of security event
-	switch (finalEvent->getSecurityEventType()) {
-		case ConferenceSecurityEvent::SecurityEventType::MultideviceParticipantDetected:
-			// Always set faulty device PeerDeviceStatus to unsafe
-			if (getCore()->limeV2Enabled() && finalEvent->getFaultyDevice().isValid()) {
-				LimeV2 *limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
-				limeV2Engine->getLimeManager()->set_peerDeviceStatus(finalEvent->getFaultyDevice().asString(), lime::PeerDeviceStatus::unsafe);
-				// WARNING has no effect if faulty device is not in X3DH database
-			}
-			break;
-		default:
-			// Other security event types are already managed
-			// Or This event is not a security event
-			break;
-	}
 
 	d->addEvent(event);
 

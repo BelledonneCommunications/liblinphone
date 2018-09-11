@@ -126,6 +126,8 @@ public:
 
 	void setEncryptionPrevented (bool value) { encryptionPrevented = value; }
 
+	void enableSenderAuthentication (bool value) { senderAuthenticationEnabled = value; }
+
 	void setAuthorisationWarning (bool value) { authorizationWarning = value; } // TODO find better name
 	bool getAuthorisationWarning () { return authorizationWarning; } // TODO find better name
 
