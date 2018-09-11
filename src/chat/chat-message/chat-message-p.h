@@ -126,6 +126,9 @@ public:
 
 	void setEncryptionPrevented (bool value) { encryptionPrevented = value; }
 
+	void setAuthorisationWarning (bool value) { authorizationWarning = value; } // TODO find better name
+	bool getAuthorisationWarning () { return authorizationWarning; } // TODO find better name
+
 	// -----------------------------------------------------------------------------
 	// Deprecated methods only used for C wrapper, to be removed some day...
 	// -----------------------------------------------------------------------------
@@ -213,6 +216,7 @@ private:
 	IdentityAddress fromAddress;
 	IdentityAddress authenticatedFromAddress;
 	bool senderAuthenticationEnabled = true;
+	bool authorizationWarning = false; // TODO find a better name
 	IdentityAddress toAddress;
 
 	ChatMessage::State state = ChatMessage::State::Idle;

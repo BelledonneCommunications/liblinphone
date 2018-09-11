@@ -280,10 +280,18 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	internalContent = message->getInternalContent();
 
 	// Check if message if encrypted and unwrap the multipart
+	ContentType incomingContentType = message->getInternalContent().getContentType();
 	ContentType expectedContentType = ContentType::Encrypted;
 	expectedContentType.addParameter("boundary", MultipartBoundary);
-	if (internalContent.getContentType() != expectedContentType) {
-		lError() << "LIMEv2 unexpected content-type: " << internalContent.getContentType();
+
+	if (incomingContentType == ContentType::Cpim) {
+		lInfo() << "LIMEv2 incoming CPIM message";
+		message->getPrivate()->setAuthorisationWarning(true);
+		// Disable sender authentication otherwise the message will always get discarded because it doesn't have a sipfrag
+		message->getPrivate()->enableSenderAuthentication(false);
+		return ChatMessageModifier::Result::Skipped;
+	} else if (incomingContentType != expectedContentType) {
+		lError() << "LIMEv2 unexpected content-type: " << incomingContentType;
 		return ChatMessageModifier::Result::Error;
 	}
 	list<Content> contentList = ContentManager::multipartToContentList(internalContent);

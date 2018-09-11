@@ -533,6 +533,23 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::Cpim;
 	}
 
+	// Message Authorisation (could be done in CPIM modifier)
+	// If LIMEv2 enabled, check authorisation warning flag
+	// If warning flag is true, check if message is an isComposing or an IMDN
+	if (q->getSharedFromThis()->getPrivate()->getAuthorisationWarning()) {
+		if (q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::Imdn && q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::ImIsComposing) {
+			// TODO acknowledge message reception with errorCode = 0
+			// TODO return a "message refused because not encrypted" IMDN to the sender
+			errorCode = 415; // TODO 415 for example, maybe another one is better ? 488 ? 603 ?
+			reason = linphone_error_code_to_reason(errorCode);
+			if (getNegativeDeliveryNotificationRequired()) {
+				static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryErrorNotification(
+					q->getSharedFromThis(),
+					reason
+				);
+			}
+			return reason;
+		}
 	if ((currentRecvStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
 		lInfo() << "Multipart step already done, skipping";
 	} else {
