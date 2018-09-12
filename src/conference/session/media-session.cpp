@@ -2848,8 +2848,8 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 
 					// Get the final auxSharedSecret and set it as auxiliary shared secret in ZRTP
 					if (!vectorAuxSharedSecret.empty()) {
+						size_t auxSharedSecretLength = vectorAuxSharedSecret.size();
 						const uint8_t *auxSharedSecret = vectorAuxSharedSecret.data();
-						size_t auxSharedSecretLength = sizeof(auxSharedSecret);
 						lInfo() << "Setting ZRTP auxiliary shared secret after identity key concatenation";
 						int retval = ms_zrtp_setAuxiliarySharedSecret(audioStream->ms.sessions.zrtp_context, auxSharedSecret, auxSharedSecretLength);
 						if (retval != 0)
