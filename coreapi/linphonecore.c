@@ -1340,38 +1340,28 @@ static void certificates_config_read(LinphoneCore *lc) {
 }
 
 static void bodyless_config_read(LinphoneCore *lc) {
-	const char *lists = lp_config_get_string(lc->config, "sip", "bodyless_lists", NULL);
-	if (!lists)
-		return;
-
-	char tmp[256] = {0};
-	char name[256];
-	char *p, *n;
-	strncpy(tmp, lists, sizeof(tmp)-1);
-	for(p = tmp; *p != '\0'; p++) {
-		if (*p==' ')
-			continue;
-
-		n = strchr(p,',');
-		if (n)
-			*n = '\0';
-		sscanf(p, "%s", name);
+	bctbx_list_t *bodyless_lists = linphone_config_get_string_list(lc->config, "sip", "bodyless_lists", NULL);
+	while (bodyless_lists) {
+		char *name = (char *)bodyless_lists->data;
+		bodyless_lists = bodyless_lists->next;
 		LinphoneAddress *addr = linphone_address_new(name);
 		if(!addr)
 			continue;
 
 		ms_message("Found bodyless friendlist %s", name);
+		bctbx_free(name);
 		LinphoneFriendList *friendList = linphone_core_create_friend_list(lc);
-		linphone_friend_list_set_rls_uri(friendList, name);
-		linphone_friend_list_set_display_name(friendList, linphone_address_get_username(addr));
+		linphone_friend_list_set_rls_address(friendList, addr);
+		linphone_friend_list_set_display_name(
+			friendList,
+			linphone_address_get_display_name(addr)
+				? linphone_address_get_display_name(addr)
+				: linphone_address_get_username(addr)
+		);
 		linphone_address_unref(addr);
 		linphone_friend_list_set_subscription_bodyless(friendList, TRUE);
 		linphone_core_add_friend_list(lc, friendList);
 		linphone_friend_list_unref(friendList);
-		if (!n)
-			break;
-
-		p = n;
 	}
 }
 
