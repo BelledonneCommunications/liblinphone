@@ -544,12 +544,14 @@ static void content_header_parsing(void) {
 	BC_ASSERT_TRUE(header.getParameter("param3").getValue() == "value3");
 	BC_ASSERT_EQUAL(3, header.getParameters().size(), int, "%d");
 	BC_ASSERT_STRING_EQUAL("", header.getParameter("encoding").getValue().c_str());
+	BC_ASSERT_TRUE(header.getValueWithParams() == value);
 
 	value = "b64";
 	header = Header("Content-Encoding", value);
 	BC_ASSERT_TRUE(header.getValue() == value);
 	BC_ASSERT_EQUAL(0, header.getParameters().size(), int, "%d");
 	BC_ASSERT_STRING_EQUAL("", header.getParameter("access-type").getValue().c_str());
+	BC_ASSERT_TRUE(header.getValueWithParams() == value);
 }
 
 test_t contents_tests[] = {

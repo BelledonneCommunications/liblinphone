@@ -109,6 +109,15 @@ string Header::getValue () const {
 	return d->value;
 }
 
+std::string Header::getValueWithParams () const {
+	stringstream returnValue;
+	returnValue << getValue();
+	for (const auto &param : getParameters())
+		returnValue << param.asString();
+
+	return returnValue.str();
+}
+
 void Header::cleanParameters () {
 	L_D();
 	d->parameters.clear();
@@ -132,7 +141,7 @@ void Header::addParameter (const HeaderParam &param) {
 void Header::addParameters(const list<HeaderParam> &params) {
 	for (auto it = std::begin(params); it!=std::end(params); ++it) {
 		HeaderParam param = *it;
-    	addParameter(param.getName(), param.getValue());
+		addParameter(param.getName(), param.getValue());
 	}
 }
 
@@ -157,21 +166,21 @@ list<HeaderParam>::const_iterator Header::findParameter (const string &paramName
 const HeaderParam &Header::getParameter (const string &paramName) const {
 	L_D();
 	list<HeaderParam>::const_iterator it = findParameter(paramName);
-	if (it != d->parameters.cend()) {
+	if (it != d->parameters.cend())
 		return *it;
-	}
+
 	return Utils::getEmptyConstRefObject<HeaderParam>();
 }
 
 string Header::asString () const {
 	stringstream asString;
-	if (!getName().empty()) {
+	if (!getName().empty())
 		asString << getName() << ":";
-	}
+
 	asString << getValue();
-	for (const auto &param : getParameters()) {
+	for (const auto &param : getParameters())
 		asString << param.asString();
-	}
+
 	return asString.str();
 }
 
