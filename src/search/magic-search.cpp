@@ -210,7 +210,7 @@ list<SearchResult> MagicSearch::getAddressFromCallLog (
 		LinphoneCallLog *log = reinterpret_cast<LinphoneCallLog*>(f->data);
 		const LinphoneAddress *addr = (linphone_call_log_get_dir(log) == LinphoneCallDir::LinphoneCallIncoming) ?
 		linphone_call_log_get_from_address(log) : linphone_call_log_get_to_address(log);
-		if (addr) {
+		if (addr && linphone_call_log_get_status(log) != LinphoneCallAborted) {
 			if (filter.empty()) {
 				if (findAddress(currentList, addr)) continue;
 				resultList.push_back(SearchResult(0, addr, "", nullptr));
