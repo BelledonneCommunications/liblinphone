@@ -40,22 +40,19 @@ static const char *subtype2 = "pidf+xml";
 static const char *subtype3 = "pidf+xml";
 static const char *subtype4 = "pidf+xml";
 
-// static const char *contentid1 = "urn:uuid:1a0830e4-2a12-400f-907b-de2c97d23a6f";
-// static const char *contentid2 = "urn:uuid:2a9461cb-9014-4022-a21d-875074da7010";
-// static const char *contentid3 = "urn:uuid:3789446b-6278-4099-bc1a-6da95858aad2";
-//
-// static const char *contentdesc1 = "Key for Marie";
-// static const char *contentdesc2 = "Key for Pauline";
-// static const char *contentdesc3 = "Key for Laure";
-// static const char *contentdesc4 = "Encrypted message";
+static const char *contentid1 = "sip:marie@sip.example.org;gr=urn:uuid:6cfdef8a-ae0b-4072-97bc-c0399ab9071b";
+static const char *contentid2 = "sip:pauline@sip.example.org;gr=urn:uuid:2a9461cb-9014-4022-a21d-875074da7010";
+static const char *contentid3 = "sip:laure@sip.example.org;gr=urn:uuid:3789446b-6278-4099-bc1a-6da95858aad2";
 
-// static const char* multipart =
-// =======
+static const char *contentdesc1 = "Key for Marie";
+static const char *contentdesc2 = "Key for Pauline";
+static const char *contentdesc3 = "Key for Laure";
+static const char *contentdesc4 = "Encrypted message";
+
 static const char* source_multipart = \
-// >>>>>>> dev_refactor_cpp:tester/contents-tester.cpp
 "-----------------------------14737809831466499882746641449\r\n" \
 "Content-Type: application/rlmi+xml;charset=\"UTF-8\"\r\n" \
-"Content-Id: urn:uuid:1a0830e4-2a12-400f-907b-de2c97d23a6f\r\n" \
+"Content-Id: sip:marie@sip.example.org;gr=urn:uuid:6cfdef8a-ae0b-4072-97bc-c0399ab9071b\r\n" \
 "Content-Description: Key for Marie\r\n\r\n" \
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
 "<list xmlns=\"urn:ietf:params:xml:ns:rlmi\" fullState=\"false\" uri=\"sip:rls@sip.linphone.org\" version=\"1\">" \
@@ -71,7 +68,7 @@ static const char* source_multipart = \
 "</list>" \
 "-----------------------------14737809831466499882746641449\r\n" \
 "Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n" \
-"Content-Id: urn:uuid:2a9461cb-9014-4022-a21d-875074da7010\r\n" \
+"Content-Id: sip:pauline@sip.example.org;gr=urn:uuid:2a9461cb-9014-4022-a21d-875074da7010\r\n" \
 "Content-Description: Key for Pauline\r\n\r\n" \
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
 "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+YYYYYYYYYY@sip.linphone.org;user=phone\" xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">" \
@@ -89,14 +86,10 @@ static const char* source_multipart = \
 "	</p1:person>" \
 "</presence>" \
 "-----------------------------14737809831466499882746641449\r\n" \
-// <<<<<<< HEAD:tester/content-manager-tester.cpp
-// "Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
-"Content-Id: urn:uuid:3789446b-6278-4099-bc1a-6da95858aad2\r\n" \
-"Content-Description: Key for Laure\r\n\r\n" \
-// =======
-"Content-Encoding: b64\r\n" \
-"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n\r\n" \
-// >>>>>>> dev_refactor_cpp:tester/contents-tester.cpp
+"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
+"Content-Id: sip:laure@sip.example.org;gr=urn:uuid:3789446b-6278-4099-bc1a-6da95858aad2\r\n" \
+"Content-Description: Key for Laure\r\n" \
+"Content-Encoding: b64\r\n\r\n" \
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
 "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+XXXXXXXXXX@sip.linphone.org;user=phone\" xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">" \
 "	<tuple id=\"szohvt\">" \
@@ -113,13 +106,10 @@ static const char* source_multipart = \
 "	</p1:person>" \
 "</presence>" \
 "-----------------------------14737809831466499882746641449\r\n" \
-// <<<<<<< HEAD:tester/content-manager-tester.cpp
-// "Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
-"Content-Description: Encrypted message\r\n\r\n"
-// =======
+"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
+"Content-Description: Encrypted message\r\n"
 "Content-Id: toto;param1=value1;param2;param3=value3\r\n" \
 "Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n\r\n" \
-// >>>>>>> dev_refactor_cpp:tester/contents-tester.cpp
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
 "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+ZZZZZZZZZZ@sip.linphone.org;user=phone\" xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">" \
 "	<tuple id=\"oc3e08\">" \
@@ -139,6 +129,8 @@ static const char* source_multipart = \
 
 static const char* generated_multipart = \
 "-----------------------------14737809831466499882746641449\r\n" \
+"Content-Id: sip:marie@sip.example.org;gr=urn:uuid:6cfdef8a-ae0b-4072-97bc-c0399ab9071b\r\n" \
+"Content-Description: Key for Marie\r\n" \
 "Content-Type: application/rlmi+xml;charset=\"UTF-8\"\r\n" \
 "Content-Length:582\r\n\r\n" \
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
@@ -154,6 +146,8 @@ static const char* generated_multipart = \
 "	</resource>" \
 "</list>" \
 "-----------------------------14737809831466499882746641449\r\n" \
+"Content-Id: sip:pauline@sip.example.org;gr=urn:uuid:2a9461cb-9014-4022-a21d-875074da7010\r\n" \
+"Content-Description: Key for Pauline\r\n" \
 "Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n" \
 "Content-Length:561\r\n\r\n" \
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
@@ -173,6 +167,8 @@ static const char* generated_multipart = \
 "</presence>" \
 "-----------------------------14737809831466499882746641449\r\n" \
 "Content-Encoding:b64\r\n" \
+"Content-Id: sip:laure@sip.example.org;gr=urn:uuid:3789446b-6278-4099-bc1a-6da95858aad2\r\n" \
+"Content-Description: Key for Laure\r\n" \
 "Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n" \
 "Content-Length:561\r\n\r\n" \
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
@@ -191,7 +187,8 @@ static const char* generated_multipart = \
 "	</p1:person>" \
 "</presence>" \
 "-----------------------------14737809831466499882746641449\r\n" \
-"Content-Id:toto;param1=value1;param2;param3=value3\r\n" \
+"Content-Description: Encrypted message\r\n" \
+"Content-Id: toto;param1=value1;param2;param3=value3\r\n" \
 "Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n" \
 "Content-Length:546\r\n\r\n" \
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
@@ -316,12 +313,13 @@ void multipart_to_list () {
 	BC_ASSERT_TRUE(originalSubType1 == generatedSubType1);
 
 	// check custom headers
-// 	string originalContentId1(contentid1);
-// 	string originalContentDesc1(contentdesc1);
-// 	string generatedContentId1 = content1.getHeaders().front().second;
-// 	string generatedContentDesc1 = content1.getHeaders().back().second;
-// 	BC_ASSERT_TRUE(originalContentId1 == generatedContentId1);
-// 	BC_ASSERT_TRUE(originalContentDesc1 == generatedContentDesc1);
+	string originalContentId1(contentid1);
+	string originalContentDesc1(contentdesc1);
+	string generatedContentId1 = content1.getHeader("Content-Id").getValueWithParams();
+	string generatedContentDesc1 = content1.getHeader("Content-Description").getValue();
+
+	BC_ASSERT_TRUE(originalContentId1 == generatedContentId1);
+	BC_ASSERT_TRUE(originalContentDesc1 == generatedContentDesc1);
 
 	Content content2 = contents.front();
 	contents.pop_front();
@@ -352,12 +350,12 @@ void multipart_to_list () {
 	BC_ASSERT_TRUE(originalType2 == generatedType2);
 	BC_ASSERT_TRUE(originalSubType2 == generatedSubType2);
 
-// 	string originalContentId2(contentid2);
-// 	string originalContentDesc2(contentdesc2);
-// 	string generatedContentId2 = content2.getHeaders().front().second;
-// 	string generatedContentDesc2 = content2.getHeaders().back().second;
-// 	BC_ASSERT_TRUE(originalContentId2 == generatedContentId2);
-// 	BC_ASSERT_TRUE(originalContentDesc2 == generatedContentDesc2);
+	string originalContentId2(contentid2);
+	string originalContentDesc2(contentdesc2);
+	string generatedContentId2 = content2.getHeader("Content-Id").getValueWithParams();
+	string generatedContentDesc2 = content2.getHeader("Content-Description").getValue();
+	BC_ASSERT_TRUE(originalContentId2 == generatedContentId2);
+	BC_ASSERT_TRUE(originalContentDesc2 == generatedContentDesc2);
 
 	Content content3 = contents.front();
 	contents.pop_front();
@@ -389,12 +387,12 @@ void multipart_to_list () {
 	BC_ASSERT_TRUE(originalType3 == generatedType3);
 	BC_ASSERT_TRUE(originalSubType3 == generatedSubType3);
 
-// 	string originalContentId3(contentid3);
-// 	string originalContentDesc3(contentdesc3);
-// 	string generatedContentId3 = content3.getHeaders().front().second;
-// 	string generatedContentDesc3 = content3.getHeaders().back().second;
-// 	BC_ASSERT_TRUE(originalContentId3 == generatedContentId3);
-// 	BC_ASSERT_TRUE(originalContentDesc3 == generatedContentDesc3);
+	string originalContentId3(contentid3);
+	string originalContentDesc3(contentdesc3);
+	string generatedContentId3 = content3.getHeader("Content-Id").getValueWithParams();
+	string generatedContentDesc3 = content3.getHeader("Content-Description").getValue();
+	BC_ASSERT_TRUE(originalContentId3 == generatedContentId3);
+	BC_ASSERT_TRUE(originalContentDesc3 == generatedContentDesc3);
 
 	Content content4 = contents.front();
 	contents.pop_front();
@@ -413,7 +411,6 @@ void multipart_to_list () {
 	ms_message("\n\n----- Original part 4 -----");
 	ms_message("%s", originalStr4.c_str());
 	BC_ASSERT_TRUE(originalStr4 == generatedStr4);
-// <<<<<<< HEAD:tester/content-manager-tester.cpp
 
 	string originalType4(type4);
 	string originalSubType4(subtype4);
@@ -426,15 +423,14 @@ void multipart_to_list () {
 	BC_ASSERT_TRUE(originalType4 == generatedType4);
 	BC_ASSERT_TRUE(originalSubType4 == generatedSubType4);
 
-// 	string originalContentDesc4(contentdesc4);
-// 	string generatedContentDesc4 = content4.getHeaders().back().second;
-// 	BC_ASSERT_TRUE(originalContentDesc4 == generatedContentDesc4);
-// =======
+	string originalContentDesc4(contentdesc4);
+	string generatedContentDesc4 = content4.getHeader("Content-Description").getValue();
+	BC_ASSERT_TRUE(originalContentDesc4 == generatedContentDesc4);
+
 	BC_ASSERT_TRUE(content4.getHeader("Content-Id").getValue() == "toto");
 	BC_ASSERT_TRUE(content4.getHeader("Content-Id").getParameter("param1").getValue() == "value1");
 	BC_ASSERT_TRUE(content4.getHeader("Content-Id").getParameter("param2").getValue().empty());
 	BC_ASSERT_TRUE(content4.getHeader("Content-Id").getParameter("param3").getValue() == "value3");
-// >>>>>>> dev_refactor_cpp:tester/contents-tester.cpp
 }
 
 void list_to_multipart () {
@@ -443,7 +439,7 @@ void list_to_multipart () {
 	Content content1;
 	content1.setBody(part1);
 	content1.setContentType(contentType);
-	Header contentId1("Content-Id", "urn:uuid:1a0830e4-2a12-400f-907b-de2c97d23a6f");
+	Header contentId1("Content-Id", "sip:marie@sip.example.org;gr=urn:uuid:6cfdef8a-ae0b-4072-97bc-c0399ab9071b");
 	Header contentDesc1("Content-Description", "Key for Marie");
 	content1.addHeader(contentId1);
 	content1.addHeader(contentDesc1);
@@ -453,7 +449,7 @@ void list_to_multipart () {
 	Content content2;
 	content2.setBody(part2);
 	content2.setContentType(contentType);
-	Header contentId2("Content-Id", "urn:uuid:2a9461cb-9014-4022-a21d-875074da7010");
+	Header contentId2("Content-Id", "sip:pauline@sip.example.org;gr=urn:uuid:2a9461cb-9014-4022-a21d-875074da7010");
 	Header contentDesc2("Content-Description", "Key for Pauline");
 	content2.addHeader(contentId2);
 	content2.addHeader(contentDesc2);
@@ -462,7 +458,7 @@ void list_to_multipart () {
 	content3.setBody(part3);
 	content3.setContentType(contentType);
 	Header contentEncoding3("Content-Encoding", "b64");
-	Header contentId3("Content-Id", "urn:uuid:3789446b-6278-4099-bc1a-6da95858aad2");
+	Header contentId3("Content-Id", "sip:laure@sip.example.org;gr=urn:uuid:3789446b-6278-4099-bc1a-6da95858aad2");
 	Header contentDesc3("Content-Description", "Key for Laure");
 	content3.addHeader(contentEncoding3);
 	content3.addHeader(contentId3);
