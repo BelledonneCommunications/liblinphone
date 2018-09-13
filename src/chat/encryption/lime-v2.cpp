@@ -209,7 +209,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 				// ---------------------------------------------- SIPFRAG
 
 				Content *sipfrag = new Content();
-				sipfrag->setBody("Contact: " + localDeviceId);
+				sipfrag->setBody("From: <" + localDeviceId + ">");
 				sipfrag->setContentType(ContentType::SipFrag);
 				contents.push_back(move(sipfrag));
 
@@ -285,6 +285,7 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 
 	if (incomingContentType == ContentType::Cpim) {
 		lInfo() << "LIMEv2 incoming CPIM message";
+		// Set authorisation warning flag because incoming message is a message/cpim instead of expected multipart/encrypted
 		message->getPrivate()->setAuthorisationWarning(true);
 		// Disable sender authentication otherwise the message will always get discarded because it doesn't have a sipfrag
 		message->getPrivate()->enableSenderAuthentication(false);
@@ -305,10 +306,11 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 			senderDeviceId = content.getBodyAsUtf8String();
 
 			// Extract Contact header from sipfrag content
-			string toErase = "Contact: ";
+			string toErase = "From: ";
 			size_t contactPosition = senderDeviceId.find(toErase);
 			if (contactPosition != string::npos) senderDeviceId.erase(contactPosition, toErase.length());
-			const string &result = senderDeviceId;
+			IdentityAddress tmpIdentityAddress(senderDeviceId);
+			const string &result = tmpIdentityAddress.asString();
 			return result;
 		}
 		// TODO return nothing or null value
@@ -324,17 +326,9 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 			if (content.getContentType() != ContentType::LimeKey)
 				continue;
 
-			// TODO workaround because GRUU is parsed as a parameter by content-manager
 			Header headerDeviceId = content.getHeader("Content-Id");
-			list<HeaderParam> params = headerDeviceId.getParameters();
-			HeaderParam gruuParam;
-			for (const auto &param : params) {
-				if (param.getName() == "gr")
-					gruuParam = param;
-			}
 
-			const string &recomposedGruu = headerDeviceId.getValue() + gruuParam.asString();
-			if (recomposedGruu == localDeviceId) {
+			if (headerDeviceId.getValueWithParams() == localDeviceId) {
 				const vector<uint8_t> &cipherHeader = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
 				return cipherHeader;
 			}
