@@ -701,6 +701,7 @@ LINPHONE_PUBLIC float linphone_call_get_average_quality(const LinphoneCall *call
 
 /**
  * Start call recording.
+ * Video record is only available if this function is called in state StreamRunning.
  * The output file where audio is recorded must be previously specified with linphone_call_params_set_record_file().
 **/
 LINPHONE_PUBLIC void linphone_call_start_recording(LinphoneCall *call);

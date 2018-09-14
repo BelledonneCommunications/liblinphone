@@ -3729,6 +3729,12 @@ void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, bctbx_l
 	}
 
 }
+static void call_state_changed_callback_to_start_record(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState state, const char *message){
+	if (state == /*LinphoneCallStreamsRunning*/ LinphoneCallConnected){
+		ms_message("call_recording(): start early recording into %s",linphone_call_params_get_record_file(linphone_call_get_params(call)));
+		linphone_call_start_recording(call);
+	}
+}
 
 void record_call(const char *filename, bool_t enableVideo, const char *video_codec) {
 	LinphoneCoreManager *marie = NULL;
@@ -3774,7 +3780,14 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 		}
 	}
 #endif
-
+	bool_t early_record = FALSE ; /*preliminary work to have a test starting video record in state Connected*/
+	if (early_record) {
+		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+		linphone_core_cbs_set_call_state_changed(cbs, call_state_changed_callback_to_start_record);
+		linphone_core_add_callbacks(marie->lc, cbs);
+		belle_sip_object_unref(cbs);
+	}
+	
 	formats = linphone_core_get_supported_file_formats(marie->lc);
 
 	for(i=0, format = formats[0]; format != NULL; i++, format = formats[i]) {
@@ -3786,8 +3799,10 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 		BC_ASSERT_TRUE(call_succeeded = call_with_params(marie, pauline, marieParams, paulineParams));
 		BC_ASSERT_PTR_NOT_NULL(callInst = linphone_core_get_current_call(marie->lc));
 		if ((call_succeeded == TRUE) && (callInst != NULL)) {
-			ms_message("call_recording(): start recording into %s", filepath);
-			linphone_call_start_recording(callInst);
+			if (!early_record) {
+				ms_message("call_recording(): start recording into %s", filepath);
+				linphone_call_start_recording(callInst);
+			}
 			wait_for_until(marie->lc,pauline->lc,&dummy,1,5000);
 			linphone_call_stop_recording(callInst);
 			end_call(marie, pauline);
