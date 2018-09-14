@@ -138,7 +138,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	// Refuse message in unsafe chatroom if not allowed
 	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
 		if (chatRoom->getSecurityLevel() == ClientGroupChatRoom::SecurityLevel::Unsafe) {
-			lWarning() << "Sending encrypted message in an unsafe chatroom" << endl;
+			lWarning() << "Sending encrypted message in an unsafe chatroom";
 			return ChatMessageModifier::Result::Error;
 		}
 	}
@@ -171,7 +171,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 
 	// If too many devices for a participant, throw a local security alert event
 	if (tooManyDevices) {
-		lWarning() << "LIMEv2 encrypting message for excessive number of devices, message rejected";
+		lWarning() << "LIMEv2 encrypting message for excessive number of devices, message discarded";
 
 		// Check the last 2 events for security alerts before sending a new security event
 		bool recentSecurityAlert = false;
@@ -265,36 +265,28 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 	const string &recipientUserId = chatRoom->getPeerAddress().getAddressWithoutGruu().asString();
+	lime::PeerDeviceStatus peerDeviceStatus = lime::PeerDeviceStatus::fail;
 
-	// Get message internal content if there is one
-	Content internalContent;
-	message->getContents();
-	if (message->getInternalContent().isEmpty()) {
-		lError() << "LIMEv2 no internal content";
-		if (message->getContents().front()->isEmpty()) {
-			lError() << "LIMEv2 no content in received message";
-		}
-		internalContent = *message->getContents().front();
-	}
-	internalContent = message->getInternalContent();
+	const Content *internalContent;
+	if (!message->getInternalContent().isEmpty())
+		internalContent = &(message->getInternalContent());
+	else
+		internalContent = message->getContents().front();
 
-	// Check if message if encrypted and unwrap the multipart
-	ContentType incomingContentType = message->getInternalContent().getContentType();
+	// Check if the message is encrypted and unwrap the multipart
+	ContentType incomingContentType = internalContent->getContentType();
 	ContentType expectedContentType = ContentType::Encrypted;
 	expectedContentType.addParameter("boundary", MultipartBoundary);
 
-	if (incomingContentType == ContentType::Cpim) {
-		lInfo() << "LIMEv2 incoming CPIM message";
-		// Set authorisation warning flag because incoming message is a message/cpim instead of expected multipart/encrypted
+	if (incomingContentType != expectedContentType) {
+		lError() << "LIMEv2 unexpected content-type: " << incomingContentType;
+		// Set authorisation warning flag because incoming message type is unexpected
 		message->getPrivate()->setAuthorisationWarning(true);
-		// Disable sender authentication otherwise the message will always get discarded because it doesn't have a sipfrag
+		// Disable sender authentication otherwise the unexpected message will always be discarded
 		message->getPrivate()->enableSenderAuthentication(false);
 		return ChatMessageModifier::Result::Skipped;
-	} else if (incomingContentType != expectedContentType) {
-		lError() << "LIMEv2 unexpected content-type: " << incomingContentType;
-		return ChatMessageModifier::Result::Error;
 	}
-	list<Content> contentList = ContentManager::multipartToContentList(internalContent);
+	list<Content> contentList = ContentManager::multipartToContentList(*internalContent);
 
 	// ---------------------------------------------- SIPFRAG
 
@@ -318,6 +310,13 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 		const string &result = senderDeviceId;
 		return result;
 	}();
+
+	// Discard incoming messages from unsafe peer devices
+	if (peerDeviceStatus == lime::PeerDeviceStatus::unsafe) {
+		lWarning() << "LIMEv2 discard incoming message from unsafe sender device";
+		// TODO Result::Error causes a notifyUndecryptableChatMessageReceived + IMDN
+		return ChatMessageModifier::Result::Error;
+	}
 
 	// ---------------------------------------------- HEADERS
 
@@ -358,7 +357,6 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	vector<uint8_t> decodedCipherMessage = decodeBase64(cipherMessage);
 	vector<uint8_t> plainMessage{};
 
-	lime::PeerDeviceStatus peerDeviceStatus = lime::PeerDeviceStatus::fail;
 	try {
 		 peerDeviceStatus = belleSipLimeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader, decodedCipherMessage, plainMessage);
 	} catch (const exception &e) {

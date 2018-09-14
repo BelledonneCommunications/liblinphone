@@ -3192,7 +3192,7 @@ void MediaSessionPrivate::stopAudioStream () {
 			ms_free(peerDeviceId);
 		}
 	} else {
-		lError() << "Unable to get LIMEv2 context, unable to set peer device status";
+		lWarning() << "Unable to get LIMEv2 context, unable to set peer device status";
 	}
 
 	if (listener)
@@ -3610,7 +3610,7 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 					}
 				}
 			} else {
-				lError() << "Unable to get LIMEv2 context, unable to set peer device status";
+				lWarning() << "Unable to get LIMEv2 context, unable to set peer device status";
 			}
 
 			/* Otherwise it must be DTLS as SDES doesn't go through this function */

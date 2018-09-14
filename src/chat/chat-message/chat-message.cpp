@@ -514,10 +514,11 @@ LinphoneReason ChatMessagePrivate::receive () {
 	// If LIMEv2 enabled, the authenticatedFromAddress is the decrypted CPIM From Address
 	// If LIMEv2 disabled, the authenticatedFromAddress must be set here as the SIP From Address
 	// If LIMEv2 disabled in group chat room the sender authentication is disabled
+	// TODO replace me with future "chatRoom->isEncrypted()" API because LIMEv2 will always be enabled
 	if (!core->limeV2Enabled()) {
 		if (q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Basic) {
 			IdentityAddress sipFromAddress = q->getSharedFromThis()->getFromAddress();
-			q->getSharedFromThis()->getPrivate()->setAuthenticatedFromAddress(sipFromAddress);
+			setAuthenticatedFromAddress(sipFromAddress);
 		} else {
 			lInfo() << "Sender authentication disabled for clear text group chat";
 			senderAuthenticationEnabled = false;
@@ -535,19 +536,16 @@ LinphoneReason ChatMessagePrivate::receive () {
 	}
 
 	// Message Authorisation
-	if (q->getSharedFromThis()->getPrivate()->getAuthorisationWarning()) {
-		if (q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::Imdn && q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::ImIsComposing) {
-			errorCode = 415; // TODO 415/488/603
-			reason = linphone_error_code_to_reason(errorCode);
-			if (getNegativeDeliveryNotificationRequired()) {
-				static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryErrorNotification(
-					q->getSharedFromThis(),
-					reason
-				);
-			}
-			return LinphoneReasonNone;
+	if (getAuthorisationWarning()) {
+		lWarning() << "Message authorisation warning raised by LIMEv2";
+		// TODO Allow error IMDN exclusively
+		if (q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::Imdn) {
+			lWarning() << "Discarding message of type " << q->getSharedFromThis()->getInternalContent().getContentType();
+			errorCode = 415;
+			return linphone_error_code_to_reason(errorCode);
 		}
 	}
+
 	if ((currentRecvStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
 		lInfo() << "Multipart step already done, skipping";
 	} else {
