@@ -211,7 +211,7 @@ char * linphone_timestamp_to_rfc3339_string(time_t timestamp) {
 #endif
 	int n = snprintf(0, 0, "%4d-%02d-%02dT%02d:%02d:%02dZ",
 		 ret->tm_year + 1900, ret->tm_mon + 1, ret->tm_mday, ret->tm_hour, ret->tm_min, ret->tm_sec);
-	char *timestamp_str = (char *) ms_malloc(n + 1);
+	char *timestamp_str = (char *) ms_malloc(size_t(n + 1));
 	snprintf(timestamp_str, (size_t)n + 1, "%4d-%02d-%02dT%02d:%02d:%02dZ",
 		 ret->tm_year + 1900, ret->tm_mon + 1, ret->tm_mday, ret->tm_hour, ret->tm_min, ret->tm_sec);
 	return timestamp_str;
