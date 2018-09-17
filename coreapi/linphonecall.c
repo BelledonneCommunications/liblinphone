@@ -766,21 +766,24 @@ static void transfer_already_assigned_payload_types(SalMediaDescription *old, Sa
 }
 
 static const char *linphone_call_get_bind_ip_for_stream(LinphoneCall *call, int stream_index){
-	const char *bind_ip = lp_config_get_string(call->core->config,"rtp","bind_address",
-				call->af == AF_INET6 ? "::0" : "0.0.0.0");
+	const char *bind_ip = lp_config_get_string(call->core->config,"rtp", "bind_address", NULL);
 	PortConfig *pc = &call->media_ports[stream_index];
-	if (pc->multicast_ip[0]!='\0'){
-		if (call->dir==LinphoneCallOutgoing){
+	if (pc->multicast_ip[0] != '\0') {
+		if (call->dir == LinphoneCallOutgoing) {
 			/*as multicast sender, we must decide a local interface to use to send multicast, and bind to it*/
 			linphone_core_get_local_ip_for(strchr(pc->multicast_ip,':') ? AF_INET6 : AF_INET,
 				NULL, pc->multicast_bind_ip);
 			bind_ip = pc->multicast_bind_ip;
-		}else{
-			/*otherwise we shall use an address family of the same family of the multicast address, because
-			 * dual stack socket and multicast don't work well on Mac OS (linux is OK, as usual).*/
+		} else {
+			/* Otherwise we shall use an address family of the same family of the multicast address, because
+			 * dual stack socket and multicast don't work well on Mac OS (linux is OK, as usual). */
 			bind_ip = strchr(pc->multicast_ip,':') ? "::0" : "0.0.0.0";
 		}
-	}
+	} else if (!bind_ip && !linphone_core_ipv6_enabled(linphone_call_get_core(call)))
+		/* If ipv6 is not enabled, for listening to 0.0.0.0. The default behavior of mediastreamer when no IP is passed is
+		 * to try ::0, and in case of failure try 0.0.0.0. But we don't want this if IPv6 is explicitely disabled. */
+			bind_ip = "0.0.0.0";
+
 	return bind_ip;
 }
 
@@ -1225,7 +1228,7 @@ static void linphone_call_outgoing_select_ip_version(LinphoneCall *call, Linphon
 	char ipv6[LINPHONE_IPADDR_SIZE];
 	bool_t have_ipv6 = FALSE;
 	bool_t have_ipv4 = FALSE;
-	
+
 	call->af = AF_UNSPEC;
 	if (linphone_core_get_local_ip_for(AF_INET, NULL, ipv4) == 0){
 		have_ipv4 = TRUE;
@@ -1240,8 +1243,8 @@ static void linphone_call_outgoing_select_ip_version(LinphoneCall *call, Linphon
 		}else if (sal_address_is_ipv6((SalAddress*)to)){
 			call->af = AF_INET6;
 		}
-		
-		if (lp_config_get_int(call->core->config, "rtp", "prefer_ipv6", 1) == 0 && have_ipv4){ 
+
+		if (lp_config_get_int(call->core->config, "rtp", "prefer_ipv6", 1) == 0 && have_ipv4){
 			/* This is the case where ipv4 is to be prefered if both are available.*/
 			call->af = AF_INET; /*we'll use IPv4*/
 			ms_message("prefer_ipv6 is set to false, as both IP versions are available we are going to use IPv4");
@@ -1384,7 +1387,7 @@ LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, LinphoneAddr
 
 	/*reserve the sockets immediately*/
 	linphone_call_init_media_streams(call);
-	
+
 	call->current_params->update_call_when_ice_completed = call->params->update_call_when_ice_completed; /*copy param*/
 
 	linphone_call_fill_media_multicast_addr(call);
@@ -2365,7 +2368,7 @@ void linphone_call_enable_camera (LinphoneCall *call, bool_t enable){
 void linphone_call_send_vfu_request(LinphoneCall *call) {
 #ifdef VIDEO_ENABLED
 	const LinphoneCallParams *current_params = linphone_call_get_current_params(call);
-	
+
 	if (call->videostream && call->videostream->ms.decoder) {
 		ms_filter_call_method_noarg(call->videostream->ms.decoder, MS_VIDEO_DECODER_RESET_FIRST_IMAGE_NOTIFICATION);
 	}
@@ -2739,7 +2742,7 @@ void linphone_call_init_audio_stream(LinphoneCall *call){
 	char* cname;
 
 	if (call->audiostream != NULL) return;
-	
+
 	if (call->sessions[call->main_audio_stream_index].rtp_session==NULL){
 		SalMulticastRole multicast_role = linphone_call_get_multicast_role(call,SalAudio);
 		SalMediaDescription *remotedesc=NULL;
@@ -3161,7 +3164,7 @@ static int get_video_bw(LinphoneCall *call, const SalMediaDescription *md, const
 		/*case where b=AS is given globally, not per stream*/
 		remote_bw=get_remaining_bandwidth_for_video(md->bandwidth,call->audio_bw);
 	}
-	
+
 	bw=get_min_bandwidth(get_remaining_bandwidth_for_video(linphone_core_get_upload_bandwidth(call->core),call->audio_bw),remote_bw);
 	return bw;
 }
@@ -3723,7 +3726,7 @@ static void linphone_call_start_video_stream(LinphoneCall *call, LinphoneCallSta
 
 			call->current_params->video_codec = rtp_profile_get_payload(call->video_profile, used_pt);
 			call->current_params->has_video=TRUE;
-			
+
 			media_stream_set_max_network_bitrate(&call->videostream->ms, linphone_core_get_upload_bandwidth(lc) * 1000);
 			rtp_session_enable_rtcp_mux(call->videostream->ms.sessions.rtp_session, vstream->rtcp_mux);
 			if (lc->video_conf.preview_vsize.width!=0)
@@ -4898,7 +4901,7 @@ void linphone_call_handle_stream_events(LinphoneCall *call, int stream_index){
 			stats_index = LINPHONE_CALL_STATS_TEXT;
 			stats = call->text_stats;
 		}
-		
+
 		/*This MUST be done before any call to "linphone_call_stats_fill" since it has ownership over evd->packet*/
 		if (evt == ORTP_EVENT_RTCP_PACKET_RECEIVED) {
 			do {
