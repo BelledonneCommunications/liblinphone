@@ -259,11 +259,6 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 		msg->getPrivate()->setSalCustomHeaders(sal_custom_header_clone(ch));
 
 	reason = msg->getPrivate()->receive();
-
-	if (reason == LinphoneReasonNotAcceptable || reason == LinphoneReasonUnknown) {
-		// Return LinphoneReasonNone to avoid flexisip resending us a message we can't decrypt
-		return LinphoneReasonNone;
-	}
 	return reason;
 }
 
