@@ -5266,8 +5266,6 @@ static void group_chat_lime_v2_message_while_network_unreachable (void) {
 	// Simulate pauline has disconnected
 	linphone_core_set_network_reachable(pauline->lc, FALSE);
 
-	wait_for_list(coresList, &dummy, 1, 2000);
-
 	// Marie starts composing a message
 	linphone_chat_room_compose(marieCr);
 
@@ -5275,13 +5273,10 @@ static void group_chat_lime_v2_message_while_network_unreachable (void) {
 	const char *marieMessage = "Hey ! What's up ?";
 	_send_message(marieCr, marieMessage);
 
-	wait_for_list(coresList, &dummy, 1, 4000);
-
 	// Reconnect pauline
 	linphone_core_set_network_reachable(pauline->lc, TRUE);
 
-	// Check if messages are received and correcty decrypted
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, initialPaulineStats.number_of_LinphoneIsComposingActiveReceived + 1, 10000));
+	// Check if the message is received
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))

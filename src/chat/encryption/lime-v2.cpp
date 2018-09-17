@@ -139,6 +139,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
 		if (chatRoom->getSecurityLevel() == ClientGroupChatRoom::SecurityLevel::Unsafe) {
 			lWarning() << "Sending encrypted message in an unsafe chatroom";
+			errorCode = 488; // Not Acceptable
 			return ChatMessageModifier::Result::Error;
 		}
 	}
@@ -194,6 +195,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 			shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(time(nullptr), chatRoom->getConferenceId(), securityEventType);
 			confListener->onSecurityEvent(securityEvent);
 		}
+		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Error;
 	}
 
@@ -202,7 +204,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
 	try {
-		belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, result] (lime::CallbackReturn returnCode, string errorMessage) {
+		belleSipLimeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, result, &errorCode] (lime::CallbackReturn returnCode, string errorMessage) {
 			if (returnCode == lime::CallbackReturn::success) {
 				list<Content *> contents;
 
@@ -250,14 +252,15 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 				}
 			} else {
 				lError() << "Lime operation failed: " << errorMessage;
+				errorCode = 503; // IO Error
 				*result = ChatMessageModifier::Result::Error;
 			}
 		}, lime::EncryptionPolicy::cipherMessage);
 	} catch (const exception &e) {
 		lError() << e.what() << " while encrypting message";
+		errorCode = 503; // IO Error
 		*result = ChatMessageModifier::Result::Error;
 	}
-
 	return *result;
 }
 
@@ -281,7 +284,7 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	if (incomingContentType != expectedContentType) {
 		lError() << "LIMEv2 unexpected content-type: " << incomingContentType;
 		// Set authorisation warning flag because incoming message type is unexpected
-		message->getPrivate()->setAuthorisationWarning(true);
+		message->getPrivate()->setAuthorizationWarning(true);
 		// Disable sender authentication otherwise the unexpected message will always be discarded
 		message->getPrivate()->enableSenderAuthentication(false);
 		return ChatMessageModifier::Result::Skipped;
@@ -314,7 +317,7 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	// Discard incoming messages from unsafe peer devices
 	if (peerDeviceStatus == lime::PeerDeviceStatus::unsafe) {
 		lWarning() << "LIMEv2 discard incoming message from unsafe sender device";
-		// TODO Result::Error causes a notifyUndecryptableChatMessageReceived + IMDN
+		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Error;
 	}
 
@@ -326,7 +329,6 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 				continue;
 
 			Header headerDeviceId = content.getHeader("Content-Id");
-
 			if (headerDeviceId.getValueWithParams() == localDeviceId) {
 				const vector<uint8_t> &cipherHeader = vector<uint8_t>(content.getBody().begin(), content.getBody().end());
 				return cipherHeader;
@@ -365,7 +367,8 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 
 	if (peerDeviceStatus == lime::PeerDeviceStatus::fail) {
 		lError() << "Failed to decrypt message from " << senderDeviceId;
-		return ChatMessageModifier::Result::Error;
+		errorCode = 488; // Not Acceptable
+		return ChatMessageModifier::Result::Done;
 	}
 
 	// Prepare decrypted message for next modifier
@@ -380,7 +383,6 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	IdentityAddress sipfragAddress(senderDeviceId);
 	message->getPrivate()->setAuthenticatedFromAddress(sipfragAddress);
 
-	// Test errorCode
 	return ChatMessageModifier::Result::Done;
 }
 

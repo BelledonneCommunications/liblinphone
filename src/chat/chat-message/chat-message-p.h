@@ -128,8 +128,8 @@ public:
 
 	void enableSenderAuthentication (bool value) { senderAuthenticationEnabled = value; }
 
-	void setAuthorisationWarning (bool value) { authorizationWarning = value; } // TODO find better name
-	bool getAuthorisationWarning () { return authorizationWarning; } // TODO find better name
+	void setAuthorizationWarning (bool value) { authorizationWarning = value; } // TODO find better name
+	bool getAuthorizationWarning () { return authorizationWarning; } // TODO find better name
 
 	// -----------------------------------------------------------------------------
 	// Deprecated methods only used for C wrapper, to be removed some day...

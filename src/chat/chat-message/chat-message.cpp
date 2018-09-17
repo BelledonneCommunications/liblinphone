@@ -535,11 +535,13 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::Cpim;
 	}
 
-	// Message Authorisation
-	if (getAuthorisationWarning()) {
-		lWarning() << "Message authorisation warning raised by LIMEv2";
-		// TODO Allow error IMDN exclusively
-		if (q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::Imdn) {
+
+	// Message Authorization
+	if (getAuthorizationWarning()) {
+		lWarning() << "Message authorization warning raised by LIMEv2";
+
+		// Allow error IMDN exclusively
+		if (q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::Imdn && !Imdn::isError(q->getSharedFromThis())) {
 			lWarning() << "Discarding message of type " << q->getSharedFromThis()->getInternalContent().getContentType();
 			errorCode = 415;
 			return linphone_error_code_to_reason(errorCode);

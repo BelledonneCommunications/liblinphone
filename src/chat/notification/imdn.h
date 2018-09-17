@@ -73,6 +73,7 @@ public:
 
 	static std::string createXml (const std::string &id, time_t time, Imdn::Type imdnType, LinphoneReason reason);
 	static void parse (const std::shared_ptr<ChatMessage> &chatMessage);
+	static bool isError (const std::shared_ptr<ChatMessage> &chatMessage);
 
 private:
 	static int timerExpired (void *data, unsigned int revents);

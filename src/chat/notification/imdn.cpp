@@ -191,6 +191,22 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 	}
 }
 
+bool Imdn::isError (const shared_ptr<ChatMessage> &chatMessage) {
+	for (const auto &content : chatMessage->getPrivate()->getContents()) {
+		istringstream data(content->getBodyAsString());
+		unique_ptr<Xsd::Imdn::Imdn> imdn(Xsd::Imdn::parseImdn(data, Xsd::XmlSchema::Flags::dont_validate));
+		if (!imdn)
+			continue;
+		auto &deliveryNotification = imdn->getDeliveryNotification();
+		if (deliveryNotification.present()) {
+			auto &status = deliveryNotification.get().getStatus();
+			if (status.getFailed().present() || status.getError().present())
+				return true;
+		}
+	}
+	return false;
+}
+
 // -----------------------------------------------------------------------------
 
 int Imdn::timerExpired (void *data, unsigned int revents) {
