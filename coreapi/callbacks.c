@@ -145,6 +145,9 @@ static void call_received(SalCallOp *h) {
 					h->getSubject(), h->getRemoteContact(), h->getRemoteBody(), false
 				);
 			}
+			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
+			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
+				L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->addOneToOneCapability();
 			L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->confirmJoining(h);
 		}
 		return;
