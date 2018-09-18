@@ -627,6 +627,8 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 		|| (session->getState() == CallSession::State::Released)
 	) {
 		CallSessionParams csp;
+		if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne)
+			csp.addCustomHeader("One-To-One-Chat-Room", "true");
 		session = participant->getPrivate()->createSession(*q, &csp, false, this);
 		session->configure(LinphoneCallOutgoing, nullptr, nullptr, qConference->getPrivate()->conferenceAddress, device->getAddress());
 		device->setSession(session);
