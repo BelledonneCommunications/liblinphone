@@ -4230,12 +4230,22 @@ LINPHONE_PUBLIC void linphone_core_set_zrtp_secrets_file(LinphoneCore *lc, const
 LINPHONE_PUBLIC const char *linphone_core_get_zrtp_secrets_file(LinphoneCore *lc);
 
 /**
- * Get a pointer to the sqlite db holding zrtp/lime cache
+ * Get a pointer to the sqlite db holding zrtp/lime cache.
  * @param[in] lc #LinphoneCore object.
  * @return An sqlite3 pointer cast to a void one or NULL if cache is not available(not enabled at compile or access failed)
  * @ingroup initializing
  */
 LINPHONE_PUBLIC void *linphone_core_get_zrtp_cache_db(LinphoneCore *lc);
+
+/**
+ * Get the zrtp sas validation status for a peer uri.
+ * Once the SAS has been validated or rejected, the status will never return to UNKNOWN (unless you delete your cache)
+ * @param[in] lc #LinphoneCore object.
+ * @return  - BZRTP_CACHE_PEER_STATUS_UNKNOWN: this uri is not present in cache OR during calls with the active device, SAS never was validated or rejected
+ *  		- BZRTP_CACHE_PEER_STATUS_VALID: the active device status is set to valid
+ *  		- BZRTP_CACHE_PEER_STATUS_INVALID: the active peer device status is set to invalid
+ */
+LINPHONE_PUBLIC int linphone_core_get_zrtp_status(LinphoneCore *lc, const char *addr);
 
 /**
  * Set the path to the directory storing the user's x509 certificates (used by dtls)
