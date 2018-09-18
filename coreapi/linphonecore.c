@@ -6718,14 +6718,24 @@ void *linphone_core_get_zrtp_cache_db(LinphoneCore *lc){
 #endif /* SQLITE_STORAGE_ENABLED */
 }
 
-int linphone_core_get_zrtp_status(LinphoneCore *lc, const char *peerUri) {
+LinphoneZrtpPeerStatus linphone_core_get_zrtp_status(LinphoneCore *lc, const char *peerUri) {
 #ifdef SQLITE_STORAGE_ENABLED
+	int status = MS_ZRTP_PEER_STATUS_UNKNOWN;
 	if (lc->zrtp_cache_db) {
-		return ms_zrtp_get_peer_status(lc->zrtp_cache_db, peerUri);
+		status = ms_zrtp_get_peer_status(lc->zrtp_cache_db, peerUri);
 	}
-	return 0;
+	switch (status) {
+		case MS_ZRTP_PEER_STATUS_UNKNOWN:
+			return LinphoneZrtpPeerStatusUnknown;
+		case MS_ZRTP_PEER_STATUS_INVALID:
+			return LinphoneZrtpPeerStatusInvalid;
+		case MS_ZRTP_PEER_STATUS_VALID:
+			return LinphoneZrtpPeerStatusValid;
+		default:
+			return LinphoneZrtpPeerStatusUnknown;
+	}
 #else /* SQLITE_STORAGE_ENABLED */
-	return 0;
+	return LinphoneZrtpPeerStatusUnkown;
 #endif /* SQLITE_STORAGE_ENABLED */
 }
 

@@ -588,6 +588,16 @@ typedef enum _LinphoneMediaEncryption {
 } LinphoneMediaEncryption;
 
 /**
+ * Enum describing the ZRTP SAS validation status of a peer URI
+ * @ingroup media_parameters
+**/
+typedef enum _LinphoneZrtpPeerStatus {
+	LinphoneZrtpPeerStatusUnknown, /**< Peer URI unkown or never validated/invalidated the SAS */
+	LinphoneZrtpPeerStatusInvalid, /**< Peer URI SAS rejected in database */
+	LinphoneZrtpPeerStatusValid /**< Peer URI SAS validated in database */
+} LinphoneZrtpPeerStatus;
+
+/**
  * Policy to use to pass through NATs/firewalls.
  * @ingroup network_parameters
  */
