@@ -476,11 +476,14 @@ AbstractChatRoom::SecurityLevel LimeV2::getSecurityLevel (const string &deviceId
 	lime::PeerDeviceStatus status = belleSipLimeManager->get_peerDeviceStatus(deviceId);
 	switch (status) {
 		case lime::PeerDeviceStatus::unknown:
-			return AbstractChatRoom::SecurityLevel::Encrypted;
+			cout << "LIMEv2 returning security level ClearText because device unknown" << endl;
+			return AbstractChatRoom::SecurityLevel::ClearText;
 		case lime::PeerDeviceStatus::untrusted:
 			return AbstractChatRoom::SecurityLevel::Encrypted;
 		case lime::PeerDeviceStatus::trusted:
 			return AbstractChatRoom::SecurityLevel::Safe;
+		case lime::PeerDeviceStatus::unsafe:
+			return AbstractChatRoom::SecurityLevel::Unsafe;
 		default:
 			return AbstractChatRoom::SecurityLevel::Unsafe;
 	}

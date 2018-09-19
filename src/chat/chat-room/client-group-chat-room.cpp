@@ -335,8 +335,6 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
 				lInfo() << "Chatroom SecurityLevel = Unsafe";
 				return level; // if one device is Unsafe the whole participant is Unsafe (red)
 			case AbstractChatRoom::SecurityLevel::ClearText:
-				lInfo() << "Chatroom SecurityLevel = ClearText";
-				return level; // TODO if all devices are in ClearText the whole participant is in ClearText (grey)
 			case AbstractChatRoom::SecurityLevel::Encrypted:
 				isSafe = false; // if one device is Encrypted the whole participant is Encrypted (orange)
 				break;
