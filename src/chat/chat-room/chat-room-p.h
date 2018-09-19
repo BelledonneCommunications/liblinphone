@@ -47,7 +47,7 @@ public:
 		this->lastUpdateTime = lastUpdateTime;
 	}
 
-	void setState (ChatRoom::State state) override;
+	void setState (ChatRoom::State newState) override;
 
 	void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void sendIsComposingNotification ();
@@ -67,10 +67,10 @@ public:
 	std::shared_ptr<IsComposingMessage> createIsComposingMessage ();
 	std::list<std::shared_ptr<ChatMessage>> findChatMessages (const std::string &messageId) const;
 
-	void sendDeliveryErrorNotification (const std::shared_ptr<ChatMessage> &message, LinphoneReason reason);
-	void sendDeliveryNotification (const std::shared_ptr<ChatMessage> &message);
+	void sendDeliveryErrorNotification (const std::shared_ptr<ChatMessage> &chatMessage, LinphoneReason reason);
+	void sendDeliveryNotification (const std::shared_ptr<ChatMessage> &chatMessage);
 	void sendDeliveryNotifications () override;
-	bool sendDisplayNotification (const std::shared_ptr<ChatMessage> &message);
+	void sendDisplayNotification (const std::shared_ptr<ChatMessage> &chatMessage);
 
 	void notifyChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void notifyIsComposingReceived (const Address &remoteAddress, bool isComposing);

@@ -38,9 +38,9 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-void ChatRoomPrivate::setState (ChatRoom::State state) {
-	if (this->state != state) {
-		this->state = state;
+void ChatRoomPrivate::setState (ChatRoom::State newState) {
+	if (state != newState) {
+		state = newState;
 		notifyStateChanged();
 	}
 }
@@ -139,38 +139,57 @@ list<shared_ptr<ChatMessage>> ChatRoomPrivate::findChatMessages (const string &m
 
 // -----------------------------------------------------------------------------
 
-void ChatRoomPrivate::sendDeliveryErrorNotification (const shared_ptr<ChatMessage> &message, LinphoneReason reason) {
-	L_Q();
-	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCore()->getCCore());
-	if (linphone_im_notif_policy_get_send_imdn_delivered(policy))
-		imdnHandler->notifyDeliveryError(message, reason);
+void ChatRoomPrivate::sendDeliveryErrorNotification (const shared_ptr<ChatMessage> &chatMessage, LinphoneReason reason) {
+	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(chatMessage->getCore()->getCCore());
+	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+	if (
+		linphone_im_notif_policy_get_send_imdn_delivered(policy) &&
+		chatMessage->getPrivate()->getNegativeDeliveryNotificationRequired()
+	) {
+		dChatMessage->setNegativeDeliveryNotificationRequired(false);
+		imdnHandler->notifyDeliveryError(chatMessage, reason);
+	}
 }
 
-void ChatRoomPrivate::sendDeliveryNotification (const shared_ptr<ChatMessage> &message) {
-	L_Q();
-	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCore()->getCCore());
-	if (linphone_im_notif_policy_get_send_imdn_delivered(policy))
-		imdnHandler->notifyDelivery(message);
+void ChatRoomPrivate::sendDeliveryNotification (const shared_ptr<ChatMessage> &chatMessage) {
+	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(chatMessage->getCore()->getCCore());
+	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+	if (
+		linphone_im_notif_policy_get_send_imdn_delivered(policy) &&
+		dChatMessage->getPositiveDeliveryNotificationRequired()
+	) {
+		dChatMessage->setPositiveDeliveryNotificationRequired(false);
+		imdnHandler->notifyDelivery(chatMessage);
+	}
 }
 
 void ChatRoomPrivate::sendDeliveryNotifications () {
 	L_Q();
 	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCore()->getCCore());
 	if (linphone_im_notif_policy_get_send_imdn_delivered(policy)) {
-		auto messages = q->getCore()->getPrivate()->mainDb->findChatMessagesToBeNotifiedAsDelivered(q->getChatRoomId());
-		for (const auto message : messages)
-			imdnHandler->notifyDelivery(message);
+		auto chatMessages = q->getCore()->getPrivate()->mainDb->findChatMessagesToBeNotifiedAsDelivered(q->getChatRoomId());
+		for (const auto &chatMessage : chatMessages) {
+			ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+			if (dChatMessage->getPositiveDeliveryNotificationRequired()) {
+				dChatMessage->setPositiveDeliveryNotificationRequired(false);
+				imdnHandler->notifyDelivery(chatMessage);
+			}
+		}
 	}
 }
 
-bool ChatRoomPrivate::sendDisplayNotification (const shared_ptr<ChatMessage> &message) {
+void ChatRoomPrivate::sendDisplayNotification (const shared_ptr<ChatMessage> &chatMessage) {
 	L_Q();
 	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCore()->getCCore());
-	if (linphone_im_notif_policy_get_send_imdn_displayed(policy)) {
-		imdnHandler->notifyDisplay(message);
-		return imdnHandler->aggregationEnabled();
+	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+	if (
+		linphone_im_notif_policy_get_send_imdn_displayed(policy) &&
+		chatMessage->getPrivate()->getDisplayNotificationRequired()
+	) {
+		dChatMessage->setPositiveDeliveryNotificationRequired(false);
+		dChatMessage->setDisplayNotificationRequired(false);
+		imdnHandler->notifyDisplay(chatMessage);
 	}
-	return false;
 }
 
 // -----------------------------------------------------------------------------
@@ -429,11 +448,7 @@ int ChatRoom::getChatMessageCount () const {
 }
 
 int ChatRoom::getUnreadChatMessageCount () const {
-	L_D();
-	int dbUnreadCount = getCore()->getPrivate()->mainDb->getUnreadChatMessageCount(getChatRoomId());
-	int notifiedCount = d->imdnHandler->getDisplayNotificationCount();
-	L_ASSERT(dbUnreadCount >= notifiedCount);
-	return dbUnreadCount - notifiedCount;
+	return getCore()->getPrivate()->mainDb->getUnreadChatMessageCount(getChatRoomId());
 }
 
 // -----------------------------------------------------------------------------
@@ -499,21 +514,11 @@ shared_ptr<ChatMessage> ChatRoom::findChatMessage (const string &messageId, Chat
 void ChatRoom::markAsRead () {
 	L_D();
 
-	bool globallyMarkAsReadInDb = true;
 	CorePrivate *dCore = getCore()->getPrivate();
-	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->chatRoomId)) {
-		// Do not send display notification for file transfer until it has been downloaded (it won't have a file transfer content anymore)
-		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
-			bool doNotStoreInDb = d->sendDisplayNotification(chatMessage);
-			// Force the state so it is stored directly in DB, but when the IMDN has successfully been delivered
-			chatMessage->getPrivate()->setState(ChatMessage::State::Displayed, doNotStoreInDb);
-			if (doNotStoreInDb)
-				globallyMarkAsReadInDb = false;
-		}
-	}
+	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->chatRoomId))
+		chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
 
-	if (globallyMarkAsReadInDb)
-		dCore->mainDb->markChatMessagesAsRead(d->chatRoomId);
+	dCore->mainDb->markChatMessagesAsRead(d->chatRoomId);
 }
 
 LINPHONE_END_NAMESPACE
