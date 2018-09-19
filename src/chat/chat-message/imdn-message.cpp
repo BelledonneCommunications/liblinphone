@@ -31,7 +31,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-void ImdnMessagePrivate::setState (ChatMessage::State newState) {
+void ImdnMessagePrivate::setState (ChatMessage::State newState, bool force) {
 	L_Q();
 
 	if (newState == ChatMessage::State::Delivered) {

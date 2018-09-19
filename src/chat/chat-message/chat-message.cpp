@@ -133,14 +133,15 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 		setState(ChatMessage::State::DeliveredToUser);
 }
 
-void ChatMessagePrivate::setState (ChatMessage::State newState) {
+void ChatMessagePrivate::setState (ChatMessage::State newState, bool force) {
 	L_Q();
 
-	// 1. Check valid transition.
+	if (force)
+		state = newState;
+
 	if (!isValidStateTransition(state, newState))
 		return;
 
-	// 2. Update state and notify changes.
 	lInfo() << "Chat message " << this << ": moving from " << Utils::toString(state) <<
 		" to " << Utils::toString(newState);
 	state = newState;
@@ -149,7 +150,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	if (linphone_chat_message_get_message_state_changed_cb(msg))
 		linphone_chat_message_get_message_state_changed_cb(msg)(
 			msg,
-			LinphoneChatMessageState(state),
+			(LinphoneChatMessageState)state,
 			linphone_chat_message_get_message_state_changed_cb_user_data(msg)
 		);
 
@@ -157,21 +158,16 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	if (cbs && linphone_chat_message_cbs_get_msg_state_changed(cbs))
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
 
-	// 3. Specific case, change to displayed after transfer.
 	if (state == ChatMessage::State::FileTransferDone) {
-		setState(ChatMessage::State::Displayed);
-		return;
-	}
-
-	// 4. Send notification and update in database if necessary.
-	if (state != ChatMessage::State::FileTransferError && state != ChatMessage::State::InProgress) {
-		if (state == ChatMessage::State::Displayed)
-			static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
+		if (!hasFileTransferContent()) {
+			// We wait until the file has been downloaded to send the displayed IMDN
+			bool doNotStoreInDb = static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
+			// Force the state so it is stored directly in DB, but when the IMDN has successfully been delivered
+			setState(ChatMessage::State::Displayed, doNotStoreInDb);
+		}
+	} else if (state != ChatMessage::State::FileTransferError && state != ChatMessage::State::InProgress)
 		updateInDb();
-	}
 }
-
-// -----------------------------------------------------------------------------
 
 belle_http_request_t *ChatMessagePrivate::getHttpRequest () const {
 	return fileTransferChatMessageModifier.getHttpRequest();
@@ -180,24 +176,6 @@ belle_http_request_t *ChatMessagePrivate::getHttpRequest () const {
 void ChatMessagePrivate::setHttpRequest (belle_http_request_t *request) {
 	fileTransferChatMessageModifier.setHttpRequest(request);
 }
-
-// -----------------------------------------------------------------------------
-
-void ChatMessagePrivate::disableDeliveryNotificationRequiredInDatabase () {
-	L_Q();
-	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
-	if (dbKey.isValid())
-		mainDb->disableDeliveryNotificationRequired(mainDb->getEventFromKey(dbKey));
-}
-
-void ChatMessagePrivate::disableDisplayNotificationRequiredInDatabase () {
-	L_Q();
-	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
-	if (dbKey.isValid())
-		mainDb->disableDisplayNotificationRequired(mainDb->getEventFromKey(dbKey));
-}
-
-// -----------------------------------------------------------------------------
 
 SalOp *ChatMessagePrivate::getSalOp () const {
 	return salOp;
@@ -491,11 +469,11 @@ void ChatMessagePrivate::notifyReceiving () {
 		::time(nullptr), q->getSharedFromThis()
 	);
 	_linphone_chat_room_notify_chat_message_received(chatRoom, L_GET_C_BACK_PTR(event));
+	// Legacy
+	q->getChatRoom()->getPrivate()->notifyChatMessageReceived(q->getSharedFromThis());
 
-	// Legacy.
-	AbstractChatRoomPrivate *dChatRoom = q->getChatRoom()->getPrivate();
-	dChatRoom->notifyChatMessageReceived(q->getSharedFromThis());
-	static_cast<ChatRoomPrivate *>(dChatRoom)->sendDeliveryNotification(q->getSharedFromThis());
+	if (getPositiveDeliveryNotificationRequired())
+		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryNotification(q->getSharedFromThis());
 }
 
 LinphoneReason ChatMessagePrivate::receive () {
@@ -519,14 +497,14 @@ LinphoneReason ChatMessagePrivate::receive () {
 			/* Unable to decrypt message */
 			chatRoom->getPrivate()->notifyUndecryptableChatMessageReceived(q->getSharedFromThis());
 			reason = linphone_error_code_to_reason(errorCode);
-			static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryErrorNotification(
-				q->getSharedFromThis(),
-				reason
-			);
+			if (getNegativeDeliveryNotificationRequired()) {
+				static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryErrorNotification(
+					q->getSharedFromThis(),
+					reason
+				);
+			}
 			return reason;
-		}
-
-		if (result == ChatMessageModifier::Result::Suspended) {
+		} else if (result == ChatMessageModifier::Result::Suspended) {
 			currentRecvStep |= ChatMessagePrivate::Step::Encryption;
 			return LinphoneReasonNone;
 		}
@@ -598,10 +576,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	}
 
 	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
-	if (
-		(chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference) &&
-		Address(chatRoom->getLocalAddress()).weakEqual(fromAddress)
-	)
+	if (Address(chatRoom->getLocalAddress()).weakEqual(fromAddress))
 		setDirection(ChatMessage::Direction::Outgoing);
 
 	// Check if this is a duplicate message.
@@ -610,10 +585,12 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	if (errorCode > 0) {
 		reason = linphone_error_code_to_reason(errorCode);
-		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryErrorNotification(
-			q->getSharedFromThis(),
-			reason
-		);
+		if (getNegativeDeliveryNotificationRequired()) {
+			static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryErrorNotification(
+				q->getSharedFromThis(),
+				reason
+			);
+		}
 		return reason;
 	}
 
@@ -643,8 +620,7 @@ void ChatMessagePrivate::send () {
 		if (result == ChatMessageModifier::Result::Error) {
 			setState(ChatMessage::State::NotDelivered);
 			return;
-		}
-		if (result == ChatMessageModifier::Result::Suspended) {
+		} else if (result == ChatMessageModifier::Result::Suspended) {
 			setState(ChatMessage::State::InProgress);
 			return;
 		}
