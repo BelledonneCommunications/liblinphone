@@ -48,7 +48,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 namespace {
-	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 4);
+	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 5);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -1104,6 +1104,21 @@ void MainDbPrivate::updateSchema () {
 			"  LEFT JOIN conference_participant_device_event ON conference_participant_device_event.event_id = event.id"
 			"  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
 			"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id";
+	}
+	if (version < makeVersion(1, 0, 5)) {
+		const string queryDelivery = "UPDATE conference_chat_message_event"
+			"  SET delivery_notification_required = 0"
+			"  WHERE direction = " + Utils::toString(int(ChatMessage::Direction::Incoming)) +
+			"  AND state = " + Utils::toString(int(ChatMessage::State::Delivered));
+
+		*session << queryDelivery;
+
+		const string queryDisplay = "UPDATE conference_chat_message_event"
+			"  SET delivery_notification_required = 0, display_notification_required = 0"
+			"  WHERE direction = " + Utils::toString(int(ChatMessage::Direction::Incoming)) +
+			"  AND state = " + Utils::toString(int(ChatMessage::State::Displayed));
+
+		*session << queryDisplay;
 	}
 }
 
