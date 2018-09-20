@@ -2110,7 +2110,6 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 		lc->provisioning_http_listener = NULL;
 	}
 
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
 	linphone_core_set_state(lc,LinphoneGlobalOn,"Ready");
 }
 
@@ -2432,6 +2431,8 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 void linphone_core_start (LinphoneCore *lc) {
 	linphone_core_set_state(lc,LinphoneGlobalStartup,"Starting up");
+
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
 
 	//to give a chance to change uuid before starting
 	const char* uuid=lp_config_get_string(lc->config,"misc","uuid",NULL);
