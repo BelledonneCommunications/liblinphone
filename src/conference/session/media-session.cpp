@@ -4896,83 +4896,91 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 		limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
 	}
 
+	char *peerDeviceId;
+	vector<uint8_t> remoteIkB64_vector;
+	vector<uint8_t> remoteIk_vector;
+	IdentityAddress faultyDevice;
+	if (limeV2Engine) {
+		// Get peer's Ik
+		const string &remoteIkB64_string(sal_custom_sdp_attribute_find(d->op->getRemoteMediaDescription()->custom_sdp_attributes, "Ik"));
+		remoteIkB64_vector = vector<uint8_t>(remoteIkB64_string.begin(), remoteIkB64_string.end());
+		remoteIk_vector = decodeBase64(remoteIkB64_vector);
+
+		// Get peer's GRUU
+		const SalAddress *remoteAddress = d->getOp()->getRemoteContactAddress();
+		peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
+		faultyDevice = IdentityAddress(peerDeviceId);
+	} else lWarning() << "Unable to get LIMEv2 context, unable to set peer device status";
+
 	// SAS verified
 	if (!d->authTokenVerified && value) {
 		cout << endl << "SAS verified" << endl;
 		ms_zrtp_sas_verified(d->audioStream->ms.sessions.zrtp_context);
 
-		if (limeV2Engine) {
-			if (ms_zrtp_getAuxiliarySharedSecretMismatch(d->audioStream->ms.sessions.zrtp_context) == 2) {
-				cout << "no Ik exchange probably because LIMEv2 disabled" << endl;
-			}
-			// SAS is verified and the auxiliary secret matches so we can trust this peer device
-			else if (ms_zrtp_getAuxiliarySharedSecretMismatch(d->audioStream->ms.sessions.zrtp_context) == 0) {
-				cout << "Ik match" << endl;
-				const string &remoteIkB64_string(sal_custom_sdp_attribute_find(d->op->getRemoteMediaDescription()->custom_sdp_attributes, "Ik"));
-				vector<uint8_t> remoteIkB64_vector = vector<uint8_t>(remoteIkB64_string.begin(), remoteIkB64_string.end());
-				vector<uint8_t> remoteIk_vector = decodeBase64(remoteIkB64_vector);
+		if (ms_zrtp_getAuxiliarySharedSecretMismatch(d->audioStream->ms.sessions.zrtp_context) == 2) {
+			cout << "no Ik exchange probably because LIMEv2 disabled" << endl;
+		}
+		// SAS is verified and the auxiliary secret matches so we can trust this peer device
+		else if (ms_zrtp_getAuxiliarySharedSecretMismatch(d->audioStream->ms.sessions.zrtp_context) == 0) {
+			cout << "Ik match" << endl;
+			try {
+				cout << "setting peer device to trusted" << endl;
+				limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
+			} catch (const exception &e) {
+				// Ik error occured --> TODO remove lime db entry and replace it with new one + send alert if previously safe or untrusted
 
-				// Get peer's GRUU
-				const SalAddress *remoteAddress = d->getOp()->getRemoteContactAddress();
-				char *peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
+				// TODO
+				cout << "SAS verified but exception during set_peerDeviceStatus --> Ik mismatch --> check peer status" << endl;
 
-				try {
-					// Set peer device to trusted --> TODO
-					cout << "setting peer device to trusted" << endl;
-					limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
-				} catch (const exception &e) {
-					// Ik error occured --> TODO remove lime db entry and replace it with new one + send alert if previously safe or untrusted
-
-					// TODO
-					cout << "we should not go through there yet" << endl;
-					lError() << "LIMEv2 identity theft detected from " << peerDeviceId << " (" << e.what() << ")";
-// 					limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe);
-// 					const IdentityAddress faultyDevice = IdentityAddress(peerDeviceId);
-// 					d->addSecurityEventInChatrooms(faultyDevice, ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged);
+				lime::PeerDeviceStatus status = limeV2Engine->getLimeManager()->get_peerDeviceStatus(peerDeviceId);
+				switch (status) {
+					case lime::PeerDeviceStatus::unsafe:
+						cout << "current peer device status is unsafe --> do nothing" << endl;
+						break;
+					case lime::PeerDeviceStatus::untrusted:
+					case lime::PeerDeviceStatus::unknown:
+						cout << "current peer device status is unknown/untrusted --> previous messages compromised alert --> delete peer device and set new one as trusted" << endl;
+						limeV2Engine->getLimeManager()->delete_peerDevice(peerDeviceId);
+						limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
+						d->addSecurityEventInChatrooms(faultyDevice, ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged); // TODO specific alert
+						break;
+					case lime::PeerDeviceStatus::trusted:
+						cout << "current peer device status is trusted --> device changed Ik without changing GRUU alert" << endl;
+						// TODO delete and recreate with trust ? or send an alert ?
+						break;
+					case lime::PeerDeviceStatus::fail:
+						cout << "current peer device status is fail --> should not be possible" << endl;
+						break;
 				}
 			}
-			// SAS is verified but the auxiliary secret mismatches --> TODO what to do here ?
-			else {
-				cout << "SAS verified but aux secret mismatch --> reseting sas + alert" << endl;
-				ms_zrtp_sas_reset_verified(d->audioStream->ms.sessions.zrtp_context);
-// 				limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe);
-// 				const IdentityAddress faultyDevice = IdentityAddress(peerDeviceId);
-// 				d->addSecurityEventInChatrooms(faultyDevice, ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged);
-			}
-		} else lWarning() << "Unable to get LIMEv2 context, unable to set peer device status";
+		}
+		// SAS is verified but the auxiliary secret mismatches
+		else {
+			cout << "SAS verified but aux secret mismatch --> resetting sas + alert" << endl;
+			ms_zrtp_sas_reset_verified(d->audioStream->ms.sessions.zrtp_context);
+// 			limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe); // TODO what status ?
+			d->addSecurityEventInChatrooms(faultyDevice, ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged); // TODO what event ?
+		}
 	}
 
 	// SAS rejected
 	else if (d->authTokenVerified && !value) {
 		cout << endl << "SAS refused" << endl;
 		ms_zrtp_sas_reset_verified(d->audioStream->ms.sessions.zrtp_context);
-
-		if (limeV2Engine) {
-			// get remote Ik from sdp attributes and decode base64
-			const string &remoteIkB64_string(sal_custom_sdp_attribute_find(d->op->getRemoteMediaDescription()->custom_sdp_attributes, "Ik"));
-			vector<uint8_t> remoteIkB64_vector = vector<uint8_t>(remoteIkB64_string.begin(), remoteIkB64_string.end());
-			vector<uint8_t> remoteIk_vector = decodeBase64(remoteIkB64_vector);
-
-			// Get peer's GRUU
-			const SalAddress *remoteAddress = d->getOp()->getRemoteContactAddress();
-			char *peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
-			const IdentityAddress faultyDevice = IdentityAddress(peerDeviceId);
-
-			try {
-				cout << "setting peer device to unsafe" << endl;
-				// Set peer device to untrusted or unsafe depending on configuration
-				LinphoneConfig *lp_config = linphone_core_get_config(getCore()->getCCore());
-				lime::PeerDeviceStatus statusIfSASrefused = lp_config_get_int(lp_config, "lime", "unsafe_if_sas_refused", 1) ? lime::PeerDeviceStatus::unsafe : lime::PeerDeviceStatus::untrusted;
-				limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, statusIfSASrefused);
-			} catch (const exception &e) {
-				cout << "this shouldn't happen --> TODO" << endl;
-// 				// Ik error occured --> TODO remove lime db entry and replace it with new one + send alert if previously safe or untrusted
-// 				lError() << "LIMEv2 identity theft detected from " << peerDeviceId << " (" << e.what() << ")";
-// 				limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, statusIfSASrefused);
-// 				d->addSecurityEventInChatrooms(faultyDevice, ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged);
-			}
-			ms_free(peerDeviceId);
-		} else lWarning() << "Unable to get LIMEv2 context, unable to set peer device status";
+		try {
+			cout << "setting peer device to unsafe" << endl;
+			// Set peer device to untrusted or unsafe depending on configuration
+			LinphoneConfig *lp_config = linphone_core_get_config(getCore()->getCCore());
+			lime::PeerDeviceStatus statusIfSASrefused = lp_config_get_int(lp_config, "lime", "unsafe_if_sas_refused", 1) ? lime::PeerDeviceStatus::unsafe : lime::PeerDeviceStatus::untrusted;
+			limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, statusIfSASrefused);
+		} catch (const exception &e) {
+			cout << "this shouldn't happen --> TODO" << endl;
+			// Ik error occured --> TODO remove lime db entry and replace it with new one + send alert if previously safe or untrusted
+// 			lError() << "LIMEv2 identity theft detected from " << peerDeviceId << " (" << e.what() << ")";
+			limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe); // TODO unsafe ?
+			d->addSecurityEventInChatrooms(faultyDevice, ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged);
+		}
+		ms_free(peerDeviceId);
 	}
 
 	else if (!d->authTokenVerified && !value) {
