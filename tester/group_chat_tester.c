@@ -5112,8 +5112,8 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_MultideviceParticipantDetected, initialLaureStats.number_of_MultideviceParticipantDetected + 1, 3000));
 
 	// Check the security level was downgraded for Marie and Laure
-	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d"); // TODO shall be unsafe thanks to new LIMEv2 API
-	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d"); // TODO shall be unsafe thanks to new LIMEv2 API
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
 
 	// Laure sends a messages to trigger a LIMEv2 security alerts because maxNumberOfDevicePerParticipant has been exceeded
 	if (lp_config_get_int(linphone_core_get_config(laure->lc), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
@@ -5123,32 +5123,7 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 		BC_ASSERT_FALSE((marie->stat.number_of_LinphoneMessageReceived == initialPauline1Stats.number_of_LinphoneMessageReceived + 3));
 		BC_ASSERT_FALSE((pauline1->stat.number_of_LinphoneMessageReceived == initialPauline1Stats.number_of_LinphoneMessageReceived + 3));
 		BC_ASSERT_FALSE((pauline2->stat.number_of_LinphoneMessageReceived == initialPauline2Stats.number_of_LinphoneMessageReceived + 1));
-		goto end;
 	}
-
-	// Laure starts composing a message
-	linphone_chat_room_compose(laureCr);
-
-	// No new security alert sent because there is a recent one
-	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_MultideviceParticipantDetected, initialLaureStats.number_of_MultideviceParticipantDetected + 1, 3000));
-
-	// Laure sends the message
-	const char *laureMessage = "I'm going to the cinema";
-	_send_message(laureCr, laureMessage);
-
-	// No new security alert sent because there is a recent one
-	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_MultideviceParticipantDetected, initialLaureStats.number_of_MultideviceParticipantDetected + 1, 3000));
-
-	// Laure sends another message
-	_send_message(laureCr, laureMessage);
-
-	// Check that Laure received another security alert because a multidevice participant was detected during encryption
-	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_MultideviceParticipantDetected, initialLaureStats.number_of_MultideviceParticipantDetected + 2, 3000));
-
-	// Check that the message was not received by Pauline1 or Laure
-	// TODO optimize and choose wether we are still allowed to send message during a security alert or not
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_LinphoneMessageReceived, initialPauline1Stats.number_of_LinphoneMessageReceived + 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived, initialLaureStats.number_of_LinphoneMessageReceived + 1, 3000));
 
 
 end:
@@ -5421,19 +5396,19 @@ static void group_chat_lime_v2_send_encrypted_message_to_disabled_lime_v2 (void)
 	// Marie starts composing a message
 	linphone_chat_room_compose(marieCr);
 
-	// Check that the IsComposing is undecryptable and that an undecryptabled message error IMDN is returned to Marie
+	// Check that the IsComposing is undecipherable and that an undecipherable message error IMDN is returned to Marie
 	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, initialPaulineStats.number_of_LinphoneIsComposingActiveReceived + 1, 3000));
 
 	// Marie sends the message
 	const char *marieMessage = "What's up ?";
 	_send_message(marieCr, marieMessage);
 
-	// Check that the message is discarded and that an undecrpytabled message error IMDN is returned to Marie
+	// Check that the message is discarded and that an undecipherable message error IMDN is returned to Marie
 	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
 
 	// Check the chatrooms security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
-	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelClearText, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
 	// Clean local LIMEv2 databases
 	linphone_core_enable_lime_v2(pauline->lc, TRUE);
@@ -5712,8 +5687,6 @@ end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
-
-
 
 static void group_chat_lime_v2_update_keys (void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
