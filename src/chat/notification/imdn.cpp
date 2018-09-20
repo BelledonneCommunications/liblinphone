@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include <algorithm>
+#include "linphone/utils/algorithm.h"
 
 #include "chat/chat-message/imdn-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
@@ -47,24 +47,19 @@ Imdn::~Imdn () {
 
 // -----------------------------------------------------------------------------
 
-int Imdn::getDisplayNotificationCount () const {
-	return static_cast<int>(displayedMessages.size());
-}
-
-// -----------------------------------------------------------------------------
-
 void Imdn::notifyDelivery (const shared_ptr<ChatMessage> &message) {
-	if (find(deliveredMessages.begin(), deliveredMessages.end(), message) == deliveredMessages.end()) {
+	if (find(deliveredMessages, message) == deliveredMessages.end()) {
 		deliveredMessages.push_back(message);
 		startTimer();
 	}
 }
 
 void Imdn::notifyDeliveryError (const shared_ptr<ChatMessage> &message, LinphoneReason reason) {
-	auto it = find_if(nonDeliveredMessages.begin(), nonDeliveredMessages.end(), [message](const MessageReason mr) {
-		return message == mr.message;
-	});
-	if (it == nonDeliveredMessages.end()) {
+	if (
+		findIf(nonDeliveredMessages, [message](const MessageReason &mr) {
+			return message == mr.message;
+		}) == nonDeliveredMessages.end()
+	) {
 		nonDeliveredMessages.emplace_back(message, reason);
 		startTimer();
 	}
@@ -87,14 +82,18 @@ void Imdn::onImdnMessageDelivered (const std::shared_ptr<ImdnMessage> &message) 
 	// If an IMDN has been successfully delivered, remove it from the list so that
 	// it does not get sent again
 	auto context = message->getPrivate()->getContext();
-	for (const auto &deliveredMsg : context.deliveredMessages)
-		deliveredMessages.remove(deliveredMsg);
+	for (const auto &chatMessage : context.deliveredMessages) {
+		chatMessage->getPrivate()->disableDeliveryNotificationRequiredInDatabase();
+		deliveredMessages.remove(chatMessage);
+	}
 
-	for (const auto &displayedMsg : context.displayedMessages)
-		displayedMessages.remove(displayedMsg);
+	for (const auto &chatMessage : context.displayedMessages) {
+		chatMessage->getPrivate()->disableDisplayNotificationRequiredInDatabase();
+		displayedMessages.remove(chatMessage);
+	}
 
-	for (const auto &nonDeliveredMsg : context.nonDeliveredMessages)
-		nonDeliveredMessages.remove(nonDeliveredMsg);
+	for (const auto &chatMessage : context.nonDeliveredMessages)
+		nonDeliveredMessages.remove(chatMessage);
 
 	sentImdnMessages.remove(message);
 }

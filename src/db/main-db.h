@@ -156,6 +156,9 @@ public:
 
 	void loadChatMessageContents (const std::shared_ptr<ChatMessage> &chatMessage);
 
+	void disableDeliveryNotificationRequired (const std::shared_ptr<const EventLog> &eventLog);
+	void disableDisplayNotificationRequired (const std::shared_ptr<const EventLog> &eventLog);
+
 	// ---------------------------------------------------------------------------
 	// Chat rooms.
 	// ---------------------------------------------------------------------------

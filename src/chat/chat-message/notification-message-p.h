@@ -35,7 +35,7 @@ protected:
 	NotificationMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir)
 		: ChatMessagePrivate(cr, dir) {}
 
-	void setState (ChatMessage::State newState, bool force = false) override {};
+	void setState (ChatMessage::State newState) override {};
 
 private:
 	void setDisplayNotificationRequired (bool value) override {}

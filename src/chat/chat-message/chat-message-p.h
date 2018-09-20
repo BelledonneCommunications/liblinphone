@@ -62,7 +62,11 @@ public:
 	void setDirection (ChatMessage::Direction dir);
 
 	void setParticipantState (const IdentityAddress &participantAddress, ChatMessage::State newState, time_t stateChangeTime);
-	virtual void setState (ChatMessage::State newState, bool force = false);
+
+	virtual void setState (ChatMessage::State newState);
+	void forceState (ChatMessage::State newState) {
+		state = newState;
+	}
 
 	void setTime (time_t time);
 
@@ -97,15 +101,18 @@ public:
 	belle_http_request_t *getHttpRequest () const;
 	void setHttpRequest (belle_http_request_t *request);
 
-	SalOp *getSalOp () const;
-	void setSalOp (SalOp *op);
-
 	bool getDisplayNotificationRequired () const { return displayNotificationRequired; }
 	bool getNegativeDeliveryNotificationRequired () const { return negativeDeliveryNotificationRequired; }
 	bool getPositiveDeliveryNotificationRequired () const { return positiveDeliveryNotificationRequired; }
 	virtual void setDisplayNotificationRequired (bool value) { displayNotificationRequired = value; }
 	virtual void setNegativeDeliveryNotificationRequired (bool value) { negativeDeliveryNotificationRequired = value; }
 	virtual void setPositiveDeliveryNotificationRequired (bool value) { positiveDeliveryNotificationRequired = value; }
+
+	SalOp *getSalOp () const;
+	void setSalOp (SalOp *op);
+
+	void disableDeliveryNotificationRequiredInDatabase ();
+	void disableDisplayNotificationRequiredInDatabase ();
 
 	SalCustomHeader *getSalCustomHeaders () const;
 	void setSalCustomHeaders (SalCustomHeader *headers);
