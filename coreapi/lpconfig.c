@@ -88,6 +88,7 @@ struct _LpConfig{
 	bctbx_vfs_file_t* pFile;
 	char *filename;
 	char *tmpfilename;
+	char *factory_filename;
 	bctbx_list_t *sections;
 	bool_t modified;
 	bool_t readonly;
@@ -396,6 +397,11 @@ static void _linphone_config_init_from_buffer(LinphoneConfig *conf, const char *
 	ms_free(ptr);
 }
 
+void _linphone_config_apply_factory_config (LpConfig *config) {
+	if (config->factory_filename)
+		linphone_config_read_file(config, config->factory_filename);
+}
+
 LpConfig * linphone_config_new_from_buffer(const char *buffer){
 	LpConfig* conf = belle_sip_object_new(LinphoneConfig);
 	_linphone_config_init_from_buffer(conf, buffer);
@@ -448,9 +454,7 @@ static int _linphone_config_init_from_files(LinphoneConfig *lpconfig, const char
 			lpconfig->modified = FALSE;
 		}
 	}
-	if (factory_config_filename != NULL) {
-		linphone_config_read_file(lpconfig, factory_config_filename);
-	}
+	_linphone_config_apply_factory_config(lpconfig);
 	return 0;
 
 fail:
@@ -459,6 +463,8 @@ fail:
 
 LpConfig *linphone_config_new_with_factory(const char *config_filename, const char *factory_config_filename) {
 	LpConfig *lpconfig=belle_sip_object_new(LinphoneConfig);
+	if (factory_config_filename)
+		lpconfig->factory_filename = bctbx_strdup(factory_config_filename);
 	if (_linphone_config_init_from_files(lpconfig, config_filename, factory_config_filename) == 0) {
 		return lpconfig;
 	} else {
@@ -566,6 +572,7 @@ void lp_item_set_value(LpItem *item, const char *value){
 static void _linphone_config_uninit(LpConfig *lpconfig){
 	if (lpconfig->filename!=NULL) ortp_free(lpconfig->filename);
 	if (lpconfig->tmpfilename) ortp_free(lpconfig->tmpfilename);
+	if (lpconfig->factory_filename) bctbx_free(lpconfig->factory_filename);
 	bctbx_list_for_each(lpconfig->sections,(void (*)(void*))lp_section_destroy);
 	bctbx_list_free(lpconfig->sections);
 }
