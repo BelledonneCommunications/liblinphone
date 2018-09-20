@@ -130,7 +130,7 @@ public:
 
 	void setEncryptionPrevented (bool value) { encryptionPrevented = value; }
 
-	void autoDownloadFailedDoNoRetry() {
+	void doNotRetryAutoDownload() {
 		currentRecvStep |= ChatMessagePrivate::Step::AutoFileDownload;
 	}
 

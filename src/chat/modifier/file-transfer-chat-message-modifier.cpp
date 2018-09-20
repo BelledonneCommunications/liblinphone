@@ -905,6 +905,20 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile (const b
 	}
 }
 
+void FileTransferChatMessageModifier::onDownloadFailed() {
+	shared_ptr<ChatMessage> message = chatMessage.lock();
+	if (!message)
+		return;
+	if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
+		message->getPrivate()->doNotRetryAutoDownload();
+		releaseHttpRequest();
+		message->getPrivate()->receive();
+	} else {
+		message->getPrivate()->setState(ChatMessage::State::FileTransferError);
+		releaseHttpRequest();
+	}
+}
+
 static void _chat_message_process_auth_requested_download (void *data, belle_sip_auth_event *event) {
 	FileTransferChatMessageModifier *d = (FileTransferChatMessageModifier *)data;
 	d->processAuthRequestedDownload(event);
@@ -912,17 +926,7 @@ static void _chat_message_process_auth_requested_download (void *data, belle_sip
 
 void FileTransferChatMessageModifier::processAuthRequestedDownload (const belle_sip_auth_event *event) {
 	lError() << "Error during file download : auth requested for msg [" << this << "]";
-	shared_ptr<ChatMessage> message = chatMessage.lock();
-	if (!message)
-		return;
-	if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
-		message->getPrivate()->autoDownloadFailedDoNoRetry();
-		releaseHttpRequest();
-		message->getPrivate()->receive();
-	} else {
-		message->getPrivate()->setState(ChatMessage::State::FileTransferError);
-		releaseHttpRequest();
-	}
+	onDownloadFailed();
 }
 
 static void _chat_message_process_io_error_download (void *data, const belle_sip_io_error_event_t *event) {
@@ -932,17 +936,7 @@ static void _chat_message_process_io_error_download (void *data, const belle_sip
 
 void FileTransferChatMessageModifier::processIoErrorDownload (const belle_sip_io_error_event_t *event) {
 	lError() << "I/O Error during file download msg [" << this << "]";
-	shared_ptr<ChatMessage> message = chatMessage.lock();
-	if (!message)
-		return;
-	if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
-		message->getPrivate()->autoDownloadFailedDoNoRetry();
-		releaseHttpRequest();
-		message->getPrivate()->receive();
-	} else {
-		message->getPrivate()->setState(ChatMessage::State::FileTransferError);
-		releaseHttpRequest();
-	}
+	onDownloadFailed();
 }
 
 static void _chat_message_process_response_from_get_file (void *data, const belle_http_response_event_t *event) {
@@ -960,14 +954,7 @@ void FileTransferChatMessageModifier::processResponseFromGetFile (const belle_ht
 		int code = belle_http_response_get_status_code(event->response);
 		if (code >= 400 && code < 500) {
 			lWarning() << "File transfer failed with code " << code;
-			if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
-				message->getPrivate()->autoDownloadFailedDoNoRetry();
-				releaseHttpRequest();
-				message->getPrivate()->receive();
-			} else {
-				message->getPrivate()->setState(ChatMessage::State::FileTransferError);
-				releaseHttpRequest();
-			}
+			onDownloadFailed();
 		} else if (code != 200) {
 			lWarning() << "Unhandled HTTP code response " << code << " for file transfer";
 		}
