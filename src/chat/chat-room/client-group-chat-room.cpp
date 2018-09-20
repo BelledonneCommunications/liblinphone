@@ -806,7 +806,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 				ConferenceSecurityEvent::SecurityEventType::MultideviceParticipantDetected,
 				event->getDeviceAddress()
 			);
-			limeV2Engine->getLimeManager()->set_peerDeviceStatus(event->getDeviceAddress().asString(), lime::PeerDeviceStatus::unsafe); // WARNING no effect if user not in lime db
+			limeV2Engine->getLimeManager()->set_peerDeviceStatus(event->getDeviceAddress().asString(), lime::PeerDeviceStatus::unsafe); // ignored if user is already safe in database
 		// Otherwise check if this new device degrades the chatroom security level, in which case a security event is created
 		} else {
 			lime::PeerDeviceStatus newDeviceStatus = limeV2Engine->getLimeManager()->get_peerDeviceStatus(event->getDeviceAddress().asString());

@@ -4082,7 +4082,7 @@ bool_t simple_zrtp_call_with_sas_validation(LinphoneCoreManager *caller, Linphon
 	return TRUE;
 }
 
-static void group_chat_lime_v2_zrtp_verification_before_encrypted_message (void) {
+static void group_chat_lime_v2_verify_sas_before_message (void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -4098,6 +4098,8 @@ static void group_chat_lime_v2_zrtp_verification_before_encrypted_message (void)
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
+	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
+	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
 
 	// Wait for lime users to be created on X3DH server
 	wait_for_list(coresList, &dummy, 1, 1000);
@@ -4106,13 +4108,30 @@ static void group_chat_lime_v2_zrtp_verification_before_encrypted_message (void)
 	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
 	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
 
-	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP);
-	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
+	// TEST activate zrtp cache
+	const char *filepath;
+	const char *filepath2;
+	remove(bc_tester_file("tmpZIDCacheMarie.sqlite"));
+	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
+	filepath = bc_tester_file("tmpZIDCacheMarie.sqlite");
+	filepath2 = bc_tester_file("tmpZIDCachePauline.sqlite");
+	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionZRTP);
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionZRTP);
+	linphone_core_set_zrtp_secrets_file(marie->lc, filepath);
+	linphone_core_set_zrtp_secrets_file(pauline->lc, filepath2);
+
+	// Check ZRTP status
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
 
 	// ZRTP verification call between Marie and Pauline
-	bool_t pauline_call_ok = FALSE;
-	BC_ASSERT_TRUE((pauline_call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
-	if (!pauline_call_ok) goto end;
+	bool_t call_ok = FALSE;
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
+	if (!call_ok) goto end;
+
+	// Check ZRTP status
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
@@ -4122,9 +4141,11 @@ static void group_chat_lime_v2_zrtp_verification_before_encrypted_message (void)
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
 
-	// Check chat room security level
+	// Check LIMEv2 and ZRTP status
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
 
 	printf("\nMarie sends a message\n");
 	// Marie sends a message
@@ -4137,9 +4158,7 @@ static void group_chat_lime_v2_zrtp_verification_before_encrypted_message (void)
 
 	// Check that the message was correctly decrypted by Pauline
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
-	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
-	linphone_address_unref(marieAddr);
 
 	// Pauline sends a response
 	const char *paulineMessage = "Are you sure this conversation is secure ?";
@@ -4151,15 +4170,402 @@ static void group_chat_lime_v2_zrtp_verification_before_encrypted_message (void)
 
 	// Check that the response was correctly decrypted
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), paulineMessage);
-	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineAddr, linphone_chat_message_get_from_address(marieLastMsg)));
-	linphone_address_unref(paulineAddr);
 
-	// Check chat room security level
+	// Check LIMEv2 and ZRTP status
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+
+	// ZRTP verification call Marie rejects the SAS
+	call_ok = FALSE;
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, FALSE, TRUE)));
+	if (!call_ok) goto end;
+
+	// Check LIMEv2 and ZRTP status
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusInvalid, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+
+	// Delete chatrooms
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+
+	// Check ZRTP status
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusInvalid, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+
+	linphone_address_unref(marieAddr);
+	linphone_address_unref(paulineAddr);
 
 end:
+	// Clean local ZRTP databases
+	remove(bc_tester_file("tmpZIDCacheMarie.sqlite"));
+	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
+
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
+
+	// Clean db from chat room
+// 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+// 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void group_chat_lime_v2_reject_sas_before_message (void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	LinphoneChatRoom *marieCr = NULL;
+	LinphoneChatRoom *paulineCr = NULL;
+	int dummy = 0;
+
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
+	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
+
+	// Wait for lime users to be created on X3DH server
+	wait_for_list(coresList, &dummy, 1, 1000);
+
+	// Check encryption status for both participants
+	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+
+	// TEST activate zrtp cache
+	const char *filepath;
+	const char *filepath2;
+	remove(bc_tester_file("tmpZIDCacheMarie.sqlite"));
+	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
+	filepath = bc_tester_file("tmpZIDCacheMarie.sqlite");
+	filepath2 = bc_tester_file("tmpZIDCachePauline.sqlite");
+	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionZRTP);
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionZRTP);
+	linphone_core_set_zrtp_secrets_file(marie->lc, filepath);
+	linphone_core_set_zrtp_secrets_file(pauline->lc, filepath2);
+
+	// Check ZRTP status
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
+
+	// ZRTP verification call Marie rejects the SAS
+	bool_t call_ok = FALSE;
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, FALSE, TRUE)));
+	if (!call_ok) goto end;
+
+	// Check ZRTP status
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusInvalid, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+
+	// Marie creates a new group chat room
+	const char *initialSubject = "Friends";
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, -1);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+
+	// Check LIMEv2 and ZRTP status
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusInvalid, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+
+	// Marie sends a message
+	const char *marieMessage = "I have a sensitive piece of information for you";
+	_send_message(marieCr, marieMessage);
+
+	if (lp_config_get_int(linphone_core_get_config(marie->lc), "lime", "allow_message_in_unsafe_chatroom", 0) == 1) {
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+		LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
+		if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
+			goto end;
+
+		// Check that the message was correctly decrypted by Pauline
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+		BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
+	} else {
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
+	}
+
+	// Pauline sends a response
+	const char *paulineMessage = "Are you sure this conversation is secure ?";
+	_send_message(paulineCr, paulineMessage);
+
+	// Marie does not receive Pauline's message because Pauline is unsafe for Marie
+	BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 3000));
+
+	// ZRTP verification call between Marie and Pauline
+	call_ok = FALSE;
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
+	if (!call_ok) goto end;
+
+	// Check LIMEv2 and ZRTP status
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+
+	// Delete chatrooms
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+
+	// Check ZRTP status
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+
+	linphone_address_unref(marieAddr);
+	linphone_address_unref(paulineAddr);
+
+end:
+	// Clean local ZRTP databases
+	remove(bc_tester_file("tmpZIDCacheMarie.sqlite"));
+	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
+
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
+
+	// Clean db from chat room
+// 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+// 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void group_chat_lime_v2_message_before_verify_sas (void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	LinphoneChatRoom *marieCr = NULL;
+	LinphoneChatRoom *paulineCr = NULL;
+	int dummy = 0;
+
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
+	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
+
+	// Wait for lime users to be created on X3DH server
+	wait_for_list(coresList, &dummy, 1, 1000);
+
+	// Check encryption status for both participants
+	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+
+	// TEST activate zrtp cache
+	const char *filepath;
+	const char *filepath2;
+	remove(bc_tester_file("tmpZIDCacheMarie.sqlite"));
+	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
+	filepath = bc_tester_file("tmpZIDCacheMarie.sqlite");
+	filepath2 = bc_tester_file("tmpZIDCachePauline.sqlite");
+	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionZRTP);
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionZRTP);
+	linphone_core_set_zrtp_secrets_file(marie->lc, filepath);
+	linphone_core_set_zrtp_secrets_file(pauline->lc, filepath2);
+
+	// Marie creates a new group chat room
+	const char *initialSubject = "Friends";
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, -1);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+
+	// Check LIMEv2 and ZRTP status
+	printf("\nChecking LIMEv2 and ZRTP status\n");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
+
+	// Marie sends a message
+	const char *marieMessage = "I have a sensitive piece of information for you";
+	_send_message(marieCr, marieMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
+		goto end;
+
+	// Check that the message was correctly decrypted by Pauline
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
+
+	// Pauline sends a response
+	const char *paulineMessage = "Are you sure this conversation is secure ?";
+	_send_message(paulineCr, paulineMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 10000));
+	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
+		goto end;
+
+	// Check that the response was correctly decrypted
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), paulineMessage);
+	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineAddr, linphone_chat_message_get_from_address(marieLastMsg)));
+
+	// Check LIMEv2 and ZRTP status
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
+
+	// ZRTP verification call between Marie and Pauline
+	bool_t call_ok = FALSE;
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
+	if (!call_ok) goto end;
+
+	// Check LIMEv2 and ZRTP status
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+
+	linphone_address_unref(marieAddr);
+	linphone_address_unref(paulineAddr);
+
+end:
+	// Clean local ZRTP databases
+	remove(bc_tester_file("tmpZIDCacheMarie.sqlite"));
+	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
+
+	// Clean local LIMEv2 databases
+	linphone_core_delete_local_lime_v2_db(marie->lc);
+	linphone_core_delete_local_lime_v2_db(pauline->lc);
+
+	// Clean db from chat room
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void group_chat_lime_v2_message_before_reject_sas (void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	int dummy = 0;
+
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
+	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
+
+	// Wait for lime users to be created on X3DH server
+	wait_for_list(coresList, &dummy, 1, 1000);
+
+	// Check encryption status for participants
+	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+
+	// TEST activate zrtp cache
+	const char *filepath;
+	const char *filepath2;
+
+	remove(bc_tester_file("tmpZIDCacheMarie.sqlite"));
+	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
+	filepath = bc_tester_file("tmpZIDCacheMarie.sqlite");
+	filepath2 = bc_tester_file("tmpZIDCachePauline.sqlite");
+
+	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionZRTP);
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionZRTP);
+	linphone_core_set_zrtp_secrets_file(marie->lc, filepath);
+	linphone_core_set_zrtp_secrets_file(pauline->lc, filepath2);
+
+	// Check ZRTP status
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
+
+	// Marie creates a new group chat room
+	const char *initialSubject = "Friends";
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, -1);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+	// Check that the chat room is correctly created on Pauline's side
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+
+	// Marie sends a message to the chatroom
+	const char *marieMessage = "Hi Pauline, how are you ?";
+	_send_message(marieCr, marieMessage);
+
+	// Check that the message was correctly received and decrypted by Pauline
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
+		goto end;
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
+
+	// Check LIME and ZRTP status
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
+
+	// ZRTP call both validate the SAS
+	bool_t call_ok = FALSE;
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
+	if (!call_ok) goto end;
+
+	// Check LIME and ZRTP status
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+
+	// ZRTP call Marie rejects the SAS
+	call_ok = FALSE;
+	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, FALSE, TRUE)));
+	if (!call_ok) goto end;
+
+	// Check LIME and ZRTP status
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusInvalid, int , "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
+
+	// Check security event
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_ManInTheMiddleDetected, initialMarieStats.number_of_ManInTheMiddleDetected + 1, 3000));
+
+	linphone_address_unref(marieAddr);
+	linphone_address_unref(paulineAddr);
+
+end:
+	// Clean local ZRTP databases
+	remove(bc_tester_file("tmpZIDCacheMarie.sqlite"));
+	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
+
 	// Clean local LIMEv2 databases
 	linphone_core_delete_local_lime_v2_db(marie->lc);
 	linphone_core_delete_local_lime_v2_db(pauline->lc);
@@ -5462,7 +5868,10 @@ test_t group_chat_tests[] = {
 	TEST_TWO_TAGS("LIMEv2 message with response and composing", group_chat_lime_v2_send_encrypted_message_with_response_and_composing, "CreateUserInDb", "LeaksMemory"),
 	TEST_ONE_TAG("LIMEv2 send encrypted file", group_chat_lime_v2_send_encrypted_file, "CreateUserInDb"),
 	TEST_ONE_TAG("LIMEv2 send encrypted file + text", group_chat_lime_v2_send_encrypted_file_plus_text, "CreateUserInDb"),
-	TEST_TWO_TAGS("LIMEv2 ZRTP verification before message", group_chat_lime_v2_zrtp_verification_before_encrypted_message, "CreateUserInDb", "LeaksMemory"),
+	TEST_TWO_TAGS("LIMEv2 verify SAS before message", group_chat_lime_v2_verify_sas_before_message, "CreateUserInDb", "LeaksMemory"),
+	TEST_TWO_TAGS("LIMEv2 reject SAS before message", group_chat_lime_v2_reject_sas_before_message, "CreateUserInDb", "LeaksMemory"),
+	TEST_TWO_TAGS("LIMEv2 message before verify SAS", group_chat_lime_v2_message_before_verify_sas, "CreateUserInDb", "LeaksMemory"),
+	TEST_TWO_TAGS("LIMEv2 message before reject SAS", group_chat_lime_v2_message_before_reject_sas, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 chatroom security level upgrade", group_chat_lime_v2_chatroom_security_level_upgrade, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 chatroom security level downgrade adding participant", group_chat_lime_v2_chatroom_security_level_downgrade_adding_participant, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 chatroom security level downgrade resetting zrtp", group_chat_lime_v2_chatroom_security_level_downgrade_resetting_zrtp, "CreateUserInDb", "LeaksMemory"),
