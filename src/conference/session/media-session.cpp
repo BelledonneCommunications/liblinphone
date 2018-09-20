@@ -4896,7 +4896,7 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 		limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
 	}
 
-	char *peerDeviceId;
+	char *peerDeviceId = nullptr;
 	vector<uint8_t> remoteIkB64_vector;
 	vector<uint8_t> remoteIk_vector;
 	IdentityAddress faultyDevice;
