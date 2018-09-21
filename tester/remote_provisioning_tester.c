@@ -45,6 +45,8 @@ static void remote_provisioning_http(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_rc", FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
+	/*make sure proxy config is not added in double, one time at core init, next time at configuring successfull*/
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc)), 1, int,"%i");
 	linphone_core_manager_destroy(marie);
 }
 
