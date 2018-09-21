@@ -27,13 +27,13 @@ LINPHONE_BEGIN_NAMESPACE
 
 class SalMessageOp : public SalOp, public SalMessageOpInterface {
 public:
-	SalMessageOp (Sal *sal) : SalOp(sal) {}
+	SalMessageOp (Sal *sal);
 
 	int sendMessage (const Content &content) override;
 	int reply (SalReason reason) override { return SalOp::replyMessage(reason); }
 
 private:
-	virtual void fillCallbacks () override;
+	void fillCallbacks () override;
 	void processError ();
 
 	static void processIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event);

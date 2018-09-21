@@ -28,6 +28,7 @@ Copyright (C) 2000  Simon MORLAT (simon.morlat@linphone.org)
 
 #include "mediastreamer2/mediastream.h"
 
+#include "core/core.h"
 #include "enum.h"
 #include "private.h"
 
@@ -371,7 +372,7 @@ LinphoneStatus linphone_proxy_config_set_route(LinphoneProxyConfig *cfg, const c
 		}else tmp=ms_strdup(route);
 		addr=sal_address_new(tmp);
 		if (addr!=NULL){
-			sal_address_destroy(addr);
+			sal_address_unref(addr);
 			cfg->reg_routes = bctbx_list_append(cfg->reg_routes, tmp);
 			return 0;
 		}else{
@@ -402,7 +403,7 @@ LinphoneStatus linphone_proxy_config_set_routes(LinphoneProxyConfig *cfg, const 
 			}
 			addr = sal_address_new(tmp);
 			if (addr != NULL) {
-				sal_address_destroy(addr);
+				sal_address_unref(addr);
 				cfg->reg_routes = bctbx_list_append(cfg->reg_routes, tmp);
 			} else {
 				ms_free(tmp);
@@ -1471,7 +1472,7 @@ const char* linphone_proxy_config_get_transport(const LinphoneProxyConfig *cfg) 
 
 	ret=sal_transport_to_string(sal_address_get_transport(route_addr));
 	if (destroy_route_addr)
-		sal_address_destroy((SalAddress *)route_addr);
+		sal_address_unref((SalAddress *)route_addr);
 
 	return ret;
 }
@@ -1613,4 +1614,10 @@ bool_t linphone_proxy_config_is_push_notification_allowed(const LinphoneProxyCon
 
 void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t is_allowed) {
 	cfg->push_notification_allowed = is_allowed;
+}
+
+int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *cfg) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cfg->lc)->getUnreadChatMessageCount(
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(cfg->identity_address))
+	);
 }

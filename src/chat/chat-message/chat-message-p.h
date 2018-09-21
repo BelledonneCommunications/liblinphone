@@ -63,7 +63,11 @@ public:
 	void setDirection (ChatMessage::Direction dir);
 
 	void setParticipantState (const IdentityAddress &participantAddress, ChatMessage::State newState, time_t stateChangeTime);
-	virtual void setState (ChatMessage::State newState, bool force = false);
+
+	virtual void setState (ChatMessage::State newState);
+	void forceState (ChatMessage::State newState) {
+		state = newState;
+	}
 
 	void setTime (time_t time);
 
@@ -102,9 +106,6 @@ public:
 	belle_http_request_t *getHttpRequest () const;
 	void setHttpRequest (belle_http_request_t *request);
 
-	SalOp *getSalOp () const;
-	void setSalOp (SalOp *op);
-
 	bool getDisplayNotificationRequired () const { return displayNotificationRequired; }
 	bool getNegativeDeliveryNotificationRequired () const { return negativeDeliveryNotificationRequired; }
 	bool getPositiveDeliveryNotificationRequired () const { return positiveDeliveryNotificationRequired; }
@@ -112,12 +113,18 @@ public:
 	virtual void setNegativeDeliveryNotificationRequired (bool value) { negativeDeliveryNotificationRequired = value; }
 	virtual void setPositiveDeliveryNotificationRequired (bool value) { positiveDeliveryNotificationRequired = value; }
 
+	SalOp *getSalOp () const;
+	void setSalOp (SalOp *op);
+
+	void disableDeliveryNotificationRequiredInDatabase ();
+	void disableDisplayNotificationRequiredInDatabase ();
+
 	SalCustomHeader *getSalCustomHeaders () const;
 	void setSalCustomHeaders (SalCustomHeader *headers);
 
 	void addSalCustomHeader (const std::string &name, const std::string &value);
 	void removeSalCustomHeader (const std::string &name);
-	std::string getSalCustomHeaderValue (const std::string &name);
+	std::string getSalCustomHeaderValue (const std::string &name) const;
 
 	void loadFileTransferUrlFromBodyToContent ();
 	std::string createFakeFileTransferFromUrl(const std::string &url);
@@ -135,10 +142,10 @@ public:
 	// Deprecated methods only used for C wrapper, to be removed some day...
 	// -----------------------------------------------------------------------------
 
-	const ContentType &getContentType ();
+	const ContentType &getContentType () const;
 	void setContentType (const ContentType &contentType);
 
-	const std::string &getText ();
+	const std::string &getText () const;
 	void setText (const std::string &text);
 
 	const std::string &getFileTransferFilepath () const;
@@ -169,10 +176,10 @@ public:
 	void storeInDb ();
 	void updateInDb ();
 
+	static bool isValidStateTransition (ChatMessage::State currentState, ChatMessage::State newState);
+
 private:
 	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir);
-
-	static bool validStateTransition (ChatMessage::State currentState, ChatMessage::State newState);
 
 public:
 	mutable MainDbChatMessageKey dbKey;
@@ -207,8 +214,8 @@ private:
 
 	// Cache for returned values, used for compatibility with previous C API
 	std::string fileTransferFilePath;
-	ContentType cContentType;
-	std::string cText;
+	mutable ContentType cContentType;
+	mutable std::string cText;
 
 	// TODO: Remove my comment. VARIABLES OK.
 	// Do not expose.

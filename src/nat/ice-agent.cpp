@@ -327,7 +327,10 @@ void IceAgent::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) {
 	}
 
 	strncpy(desc->ice_pwd, ice_session_local_pwd(iceSession), sizeof(desc->ice_pwd));
+	desc->ice_pwd[sizeof(desc->ice_pwd) - 1] = '\0';
 	strncpy(desc->ice_ufrag, ice_session_local_ufrag(iceSession), sizeof(desc->ice_ufrag));
+	desc->ice_ufrag[sizeof(desc->ice_ufrag) - 1] = '\0';
+	
 	for (int i = 0; i < desc->nb_streams; i++) {
 		SalStreamDescription *stream = &desc->streams[i];
 		IceCheckList *cl = ice_session_check_list(iceSession, i);

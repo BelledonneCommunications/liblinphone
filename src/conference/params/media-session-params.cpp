@@ -238,7 +238,7 @@ void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core) {
 	d->encryption = linphone_core_get_media_encryption(cCore);
 	d->avpfEnabled = (linphone_core_get_avpf_mode(cCore) == LinphoneAVPFEnabled);
 	d->_implicitRtcpFbEnabled = !!lp_config_get_int(linphone_core_get_config(cCore), "rtp", "rtcp_fb_implicit_rtcp_fb", true);
-	d->avpfRrInterval = static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(cCore));
+	d->avpfRrInterval = static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(cCore) * 1000);
 	d->audioDirection = LinphoneMediaDirectionSendRecv;
 	d->videoDirection = LinphoneMediaDirectionSendRecv;
 	d->earlyMediaSendingEnabled = !!lp_config_get_int(linphone_core_get_config(cCore), "misc", "real_early_media", false);

@@ -38,7 +38,7 @@ public:
 	IdentityAddress (const IdentityAddress &other);
 	~IdentityAddress () = default;
 
-	IdentityAddress* clone () const override {
+	IdentityAddress *clone () const override {
 		return new IdentityAddress(*this);
 	}
 
@@ -77,5 +77,16 @@ inline std::ostream &operator<< (std::ostream &os, const IdentityAddress &identi
 }
 
 LINPHONE_END_NAMESPACE
+
+// Add map key support.
+namespace std {
+	template<>
+	struct hash<LinphonePrivate::IdentityAddress> {
+		std::size_t operator() (const LinphonePrivate::IdentityAddress &identityAddress) const {
+			if (!identityAddress.isValid()) return std::size_t(-1);
+			return hash<string>()(identityAddress.asString());
+		}
+	};
+}
 
 #endif // ifndef _L_IDENTITY_ADDRESS_H_

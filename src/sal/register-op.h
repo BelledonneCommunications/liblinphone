@@ -26,9 +26,9 @@ LINPHONE_BEGIN_NAMESPACE
 
 class SalRegisterOp : public SalOp {
 public:
-	SalRegisterOp(Sal *sal) : SalOp(sal) {}
+	SalRegisterOp(Sal *sal) : SalOp(sal) { mType = Type::Register; }
 
-	int sendRegister (const char *proxy, const char *from, int expires, const SalAddress *oldContact);
+	int sendRegister (const std::string &proxy, const std::string &from, int expires, const SalAddress *oldContact);
 	int refreshRegister (int expires) {
 		return mRefresher ? belle_sip_refresher_refresh(mRefresher, expires) : -1;
 	}
@@ -38,7 +38,7 @@ public:
         refreshRegister(-1); }
 
 private:
-	virtual void fillCallbacks () override {};
+	void fillCallbacks () override {};
 	static void registerRefresherListener (belle_sip_refresher_t *refresher, void *userCtx, unsigned int statusCode, const char *reasonPhrase, int willRetry);
 };
 

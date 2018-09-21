@@ -23,68 +23,71 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-void SalMessageOp::processError() {
-	if (mDir == Dir::Outgoing) {
+void SalMessageOp::processError () {
+	if (mDir == Dir::Outgoing)
 		mRoot->mCallbacks.message_delivery_update(this, SalMessageDeliveryFailed);
-	} else {
-		ms_warning("unexpected io error for incoming message on op [%p]", this);
-	}
-	mState=State::Terminated;
-}
-
-void SalMessageOp::processIoErrorCb(void *user_ctx, const belle_sip_io_error_event_t *event) {
-	SalMessageOp * op = (SalMessageOp *)user_ctx;
-	sal_error_info_set(&op->mErrorInfo,SalReasonIOError, "SIP", 503,"IO Error",NULL);
-	op->processError();
-}
-
-void SalMessageOp::processResponseEventCb(void *op_base, const belle_sip_response_event_t *event) {
-	SalMessageOp * op = (SalMessageOp *)op_base;
-	int code = belle_sip_response_get_status_code(belle_sip_response_event_get_response(event));
-	SalMessageDeliveryStatus status;
-	op->setErrorInfoFromResponse(belle_sip_response_event_get_response(event));
-	
-	if (code>=100 && code <200)
-		status=SalMessageDeliveryInProgress;
-	else if (code>=200 && code <300)
-		status=SalMessageDeliveryDone;
 	else
-		status=SalMessageDeliveryFailed;
-	
-	op->mRoot->mCallbacks.message_delivery_update(op,status);
+		lWarning() << "Unexpected error for incoming message on op [" << this << "]";
+	mState = State::Terminated;
 }
 
-void SalMessageOp::processTimeoutCb(void *user_ctx, const belle_sip_timeout_event_t *event) {
-	SalMessageOp * op=(SalMessageOp *)user_ctx;
-	sal_error_info_set(&op->mErrorInfo,SalReasonRequestTimeout, "SIP", 408,"Request timeout",NULL);
+void SalMessageOp::processIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event) {
+	auto op = static_cast<SalMessageOp *>(userCtx);
+	sal_error_info_set(&op->mErrorInfo, SalReasonIOError, "SIP", 503, "IO Error", nullptr);
 	op->processError();
 }
 
-void SalMessageOp::processRequestEventCb(void *op_base, const belle_sip_request_event_t *event) {
-	SalMessageOp * op = (SalMessageOp *)op_base;
+void SalMessageOp::processResponseEventCb (void *userCtx, const belle_sip_response_event_t *event) {
+	auto op = static_cast<SalMessageOp *>(userCtx);
+	int statusCode = belle_sip_response_get_status_code(belle_sip_response_event_get_response(event));
+
+	op->setErrorInfoFromResponse(belle_sip_response_event_get_response(event));
+
+	SalMessageDeliveryStatus status = SalMessageDeliveryFailed;
+	if ((statusCode >= 100) && (statusCode < 200))
+		status = SalMessageDeliveryInProgress;
+	else if ((statusCode >= 200) && (statusCode < 300))
+		status = SalMessageDeliveryDone;
+
+	op->mRoot->mCallbacks.message_delivery_update(op, status);
+}
+
+void SalMessageOp::processTimeoutCb (void *userCtx, const belle_sip_timeout_event_t *event) {
+	auto op = static_cast<SalMessageOp *>(userCtx);
+	sal_error_info_set(&op->mErrorInfo, SalReasonRequestTimeout, "SIP", 408, "Request timeout", nullptr);
+	op->processError();
+}
+
+void SalMessageOp::processRequestEventCb (void *userCtx, const belle_sip_request_event_t *event) {
+	auto op = static_cast<SalMessageOp *>(userCtx);
 	op->processIncomingMessage(event);
 }
 
-void SalMessageOp::fillCallbacks() {
-	static belle_sip_listener_callbacks_t op_message_callbacks = {0};
-	if (op_message_callbacks.process_io_error==NULL) {
-		op_message_callbacks.process_io_error=processIoErrorCb;
-		op_message_callbacks.process_response_event=processResponseEventCb;
-		op_message_callbacks.process_timeout=processTimeoutCb;
-		op_message_callbacks.process_request_event=processRequestEventCb;
+SalMessageOp::SalMessageOp (Sal *sal) : SalOp(sal) {
+	mType = Type::Message;
+	fillCallbacks();
+}
+
+void SalMessageOp::fillCallbacks () {
+	static belle_sip_listener_callbacks_t opMessageCallbacks = { 0 };
+	if (!opMessageCallbacks.process_io_error) {
+		opMessageCallbacks.process_io_error = processIoErrorCb;
+		opMessageCallbacks.process_response_event = processResponseEventCb;
+		opMessageCallbacks.process_timeout = processTimeoutCb;
+		opMessageCallbacks.process_request_event = processRequestEventCb;
 	}
-	mCallbacks=&op_message_callbacks;
-	mType=Type::Message;
+	mCallbacks = &opMessageCallbacks;
 }
 
 int SalMessageOp::sendMessage (const Content &content) {
-	   fillCallbacks();
 	mDir = Dir::Outgoing;
-	belle_sip_request_t *req = buildRequest("MESSAGE");
-	if (!req)
+
+	auto request = buildRequest("MESSAGE");
+	if (!request)
 		return -1;
-	prepareMessageRequest(req, content);
-	return sendRequest(req);
+
+	prepareMessageRequest(request, content);
+	return sendRequest(request);
 }
 
 LINPHONE_END_NAMESPACE

@@ -199,7 +199,7 @@ void __linphone_friend_do_subscribe(LinphoneFriend *fr){
 		}
 		fr->outsub=new SalPresenceOp(lc->sal);
 		linphone_configure_op(lc,fr->outsub,addr,NULL,TRUE);
-		fr->outsub->subscribe(NULL,NULL,lp_config_get_int(lc->config,"sip","subscribe_expires",600));
+		fr->outsub->subscribe(lp_config_get_int(lc->config,"sip","subscribe_expires",600));
 		fr->subscribe_active=TRUE;
 	}
 }

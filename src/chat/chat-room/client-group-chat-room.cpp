@@ -107,6 +107,10 @@ void ClientGroupChatRoomPrivate::setCallSessionListener (CallSessionListener *li
 	}
 }
 
+void ClientGroupChatRoomPrivate::addOneToOneCapability () {
+	capabilities |= ClientGroupChatRoom::Capabilities::OneToOne;
+}
+
 unsigned int ClientGroupChatRoomPrivate::getLastNotifyId () const {
 	L_Q_T(RemoteConference, qConference);
 	return qConference->getPrivate()->eventHandler->getLastNotify();

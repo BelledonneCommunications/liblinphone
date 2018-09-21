@@ -30,13 +30,15 @@
 
 #include "cpim-parser.h"
 
-#define CPIM_GRAMMAR "cpim_grammar"
-
 // =============================================================================
 
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
+
+namespace {
+	string CpimGrammar("cpim_grammar");
+}
 
 namespace Cpim {
 	class Node {
@@ -579,7 +581,7 @@ public:
 
 Cpim::Parser::Parser () : Singleton(*new ParserPrivate) {
 	L_D();
-	d->grammar = belr::GrammarLoader::get().load(CPIM_GRAMMAR);
+	d->grammar = belr::GrammarLoader::get().load(CpimGrammar);
 	if (!d->grammar)
 		lFatal() << "Unable to load CPIM grammar.";
 }

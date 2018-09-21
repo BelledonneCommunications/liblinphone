@@ -486,7 +486,7 @@ static void sdp_parse_payload_types(belle_sdp_media_description_t *media_desc, S
 static void sdp_parse_media_crypto_parameters(belle_sdp_media_description_t *media_desc, SalStreamDescription *stream) {
 	belle_sip_list_t *attribute_it;
 	belle_sdp_attribute_t *attribute;
-	char tmp[257], tmp2[257], parameters[257]={0};
+	char tmp[257]={0}, tmp2[128]={0}, parameters[257]={0};
 	int valid_count = 0;
 	int nb;
 
@@ -497,7 +497,7 @@ static void sdp_parse_media_crypto_parameters(belle_sdp_media_description_t *med
 		attribute=BELLE_SDP_ATTRIBUTE ( attribute_it->data );
 
 		if ( keywordcmp ( "crypto",belle_sdp_attribute_get_name ( attribute ) ) ==0 && belle_sdp_attribute_get_value ( attribute ) !=NULL ) {
-			nb = sscanf ( belle_sdp_attribute_get_value ( attribute ), "%d %256s inline:%256s %256s",
+			nb = sscanf ( belle_sdp_attribute_get_value ( attribute ), "%d %256s inline:%128s %256s",
 							&stream->crypto[valid_count].tag,
 							tmp,
 							tmp2, parameters );
@@ -514,7 +514,8 @@ static void sdp_parse_media_crypto_parameters(belle_sdp_media_description_t *med
 					stream->crypto[valid_count].algo = MS_CRYPTO_SUITE_INVALID;
 				}else{
 					char *sep;
-					strncpy ( stream->crypto[valid_count].master_key, tmp2, sizeof(stream->crypto[valid_count].master_key)-1 );
+					strncpy ( stream->crypto[valid_count].master_key, tmp2, sizeof(stream->crypto[valid_count].master_key));
+					stream->crypto[valid_count].master_key[sizeof(stream->crypto[valid_count].master_key) - 1] = '\0';
 					sep=strchr(stream->crypto[valid_count].master_key,'|');
 					if (sep) *sep='\0';
 					stream->crypto[valid_count].algo = cs;
@@ -566,7 +567,7 @@ static void sdp_parse_media_ice_parameters(belle_sdp_media_description_t *media_
 			while (3 == sscanf(ptr, "%u %s %u%n", &componentID, candidate.addr, &candidate.port, &offset)) {
 				if ((componentID > 0) && (componentID <= SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES)) {
 					SalIceRemoteCandidate *remote_candidate = &stream->ice_remote_candidates[componentID - 1];
-					strncpy(remote_candidate->addr, candidate.addr, sizeof(remote_candidate->addr)-1);
+					strncpy(remote_candidate->addr, candidate.addr, sizeof(remote_candidate->addr));
 					remote_candidate->port = candidate.port;
 				}
 				ptr += offset;
@@ -814,15 +815,17 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	snprintf(stream->rtcp_addr, sizeof(stream->rtcp_addr), "%s", stream->rtp_addr);
 	attribute=belle_sdp_media_description_get_attribute(media_desc,"rtcp");
 	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
-		char tmp[256];
+		char *tmp = (char *)ms_malloc0(strlen(value));
 		int nb = sscanf(value, "%d IN IP4 %s", &stream->rtcp_port, tmp);
 		if (nb == 1) {
 			/* SDP rtcp attribute only contains the port */
 		} else if (nb == 2) {
-			strncpy(stream->rtcp_addr, tmp, sizeof(stream->rtcp_addr)-1);
+			strncpy(stream->rtcp_addr, tmp, sizeof(stream->rtcp_addr));
+			stream->rtcp_addr[sizeof(stream->rtcp_addr) - 1] = '\0';
 		} else {
 			ms_warning("sdp has a strange a=rtcp line (%s) nb=%i", value, nb);
 		}
+		ms_free(tmp);
 	}
 
 	/* Read DTLS specific attributes : check is some are found in the stream description otherwise copy the session description one(which are at least set to Invalid) */

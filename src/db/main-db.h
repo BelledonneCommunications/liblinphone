@@ -98,10 +98,11 @@ public:
 
 	using ParticipantStateRetrievalFunc = std::function<std::list<ParticipantState>(const std::shared_ptr<EventLog> &eventLog)>;
 
-	int getChatMessageCount (const ConferenceId &conferenceId = ConferenceId()) const;
-	int getUnreadChatMessageCount (const ConferenceId &conferenceId = ConferenceId()) const;
-	void markChatMessagesAsRead (const ConferenceId &conferenceId) const;
-	std::list<std::shared_ptr<ChatMessage>> getUnreadChatMessages (const ConferenceId &conferenceId) const;
+	int getChatMessageCount (const ConferenceId &ConferenceId = ConferenceId()) const;
+	int getUnreadChatMessageCount (const ConferenceId &ConferenceId = ConferenceId()) const;
+
+	void markChatMessagesAsRead (const ConferenceId &ConferenceId) const;
+	std::list<std::shared_ptr<ChatMessage>> getUnreadChatMessages (const ConferenceId &ConferenceId) const;
 
 	std::list<ParticipantState> getChatMessageParticipantsByImdnState (
 		const std::shared_ptr<EventLog> &eventLog,
@@ -155,6 +156,9 @@ public:
 	// ---------------------------------------------------------------------------
 
 	void loadChatMessageContents (const std::shared_ptr<ChatMessage> &chatMessage);
+
+	void disableDeliveryNotificationRequired (const std::shared_ptr<const EventLog> &eventLog);
+	void disableDisplayNotificationRequired (const std::shared_ptr<const EventLog> &eventLog);
 
 	// ---------------------------------------------------------------------------
 	// Chat rooms.

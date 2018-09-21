@@ -40,7 +40,7 @@ public:
 		std::is_signed<typename std::underlying_type<T>::type>::value, int, unsigned int
 	>::type StorageType;
 
-	constexpr EnumMask (int mask = 0) : mMask(mask) {}
+	constexpr EnumMask (int mask = 0) : mMask(StorageType(mask)) {}
 	constexpr EnumMask (T value) : mMask(StorageType(value)) {}
 	constexpr EnumMask (std::initializer_list<T> mask) : mMask(init(mask.begin(), mask.end())) {}
 
@@ -110,7 +110,7 @@ public:
 	}
 
 	constexpr EnumMask operator& (T mask) const {
-		return mMask & StorageType(mask);
+		return int(mMask & StorageType(mask));
 	}
 
 	constexpr EnumMask operator| (EnumMask mask) const {
@@ -118,7 +118,7 @@ public:
 	}
 
 	constexpr EnumMask operator| (T mask) const {
-		return mMask | StorageType(mask);
+		return int(mMask | StorageType(mask));
 	}
 
 	constexpr EnumMask operator^ (EnumMask mask) const {
@@ -126,7 +126,7 @@ public:
 	}
 
 	constexpr EnumMask operator^ (T mask) const {
-		return mMask ^ StorageType(mask);
+		return int(mMask ^ StorageType(mask));
 	}
 
 	constexpr EnumMask operator~ () const {

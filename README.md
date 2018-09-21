@@ -1,17 +1,16 @@
 [![pipeline status](https://gitlab.linphone.org/BC/public/linphone/badges/master/pipeline.svg)](https://gitlab.linphone.org/BC/public/linphone/commits/master)
 
 liblinphone
-========
+===========
 
 This is liblinphone, a free (GPL) video voip library based on the SIP protocol.
-
 This library is used by Linphone. It's source code is available at *linphone-desktop[1]*.
 
 
-Building liblinphone
------------------
+# Building liblinphone
 
-### Required dependencies
+
+## Required dependencies
 
 * **BcToolbox[2]:** portability layer
 * **BelleSIP[3]:** SIP stack
@@ -25,13 +24,13 @@ Building liblinphone
 * **doxygen** and **dot** (needed for C++ wrapper and API documentation)
 
 
-### Opitonal dependencies
+## Optional dependencies
 
 * **Bzrtp[6]**: zrtp stack used for Linphone Instant Messaging Encryption.
 * For API documentatino generation: **sphinx**, **javasphinx**, **sphinx_csharp** python modules are needed.
 
 
-### Build instructions
+## Build instructions
 
 	cmake . -DCMAKE_INSTALL_PREFIX=<prefix> -DCMAKE_PREFIX_PATH=<search_prefixes>
 	
@@ -39,7 +38,7 @@ Building liblinphone
 	make install
 
 
-### Supported build opitons
+## Supported build opitons
 
 * **`CMAKE_INSTALL_PREFIX=<string>`** : install prefix
 * **`CMAKE_PREFIX_PATH=<string>`**    : column-separated list of prefixes where to search for dependencies
@@ -53,7 +52,7 @@ Building liblinphone
 * **`ENABLE_TOOLS=NO`**               : do not build tool binaries
 * **`ENABLE_LIME=YES`**               : disable Linphone Instant Messaging Encryption
 
-### Note for packagers
+## Note for packagers
 
 Our CMake scripts may automatically add some paths into research paths of generated binaries.
 To ensure that the installed binaries are striped of any rpath, use `-DCMAKE_SKIP_INSTALL_RPATH=ON`
@@ -68,22 +67,13 @@ make package_source
 rpmbuild -ta --clean --rmsource --rmspec liblinphone-<version>-<release>.tar.gz
 
 
-Notes for developers
---------------------
+# Credits
 
-Here is a short description of the content of the source tree.
+Belledonne Communications SARL, all rights reserved.
 
+# License
 
-- **coreapi/** is the central point of linphone, which handles relationship between sip signalisation and media
-               streaming. It contains an easy to use api to create a sip phone.
-
-
-- **console/**
-	* linphonec.c is the main file for the console version of linphone.
-	* sipomatic.c / sipomatic.h contains the code for sipomatic, the test program that auto-answer to linphone calls.
-	* shell.c (program name: linphonecsh) is a small utilities to send interactive commands to a running linphonec daemon.
-
-- **share/** contains translation, documentation, rings and hello sound files.
+This software is distributed under GNU GPLv2. Please read COPYING file for full license text.
 
 
 ------------------------------

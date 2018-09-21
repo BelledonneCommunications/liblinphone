@@ -557,16 +557,20 @@ static void fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml (FileTran
 							fileUrl = xmlGetProp(cur, (const xmlChar *)"url");
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-key")) {
-							// there is a key in the msg: file has been encrypted
-							// convert the key from base 64
+							// There is a key in the msg: file has been encrypted.
+							// Convert the key from base 64.
 							xmlChar *keyb64 = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
+							size_t keyb64Length = strlen(reinterpret_cast<char *>(keyb64));
+
 							size_t keyLength;
-							bctbx_base64_decode(NULL, &keyLength, (unsigned char *)keyb64, strlen((const char *)keyb64));
-							uint8_t *keyBuffer = (uint8_t *)malloc(keyLength);
-							// decode the key into local key buffer
-							bctbx_base64_decode(keyBuffer, &keyLength, (unsigned char *)keyb64, strlen((const char *)keyb64));
-							fileTransferContent->setFileKey((const char *)keyBuffer, keyLength);
-							// duplicate key value into the linphone content private structure
+							bctbx_base64_decode(nullptr, &keyLength, keyb64, keyb64Length);
+
+							uint8_t *keyBuffer = static_cast<uint8_t *>(malloc(keyLength + 1));
+
+							// Decode the key into local key buffer.
+							bctbx_base64_decode(keyBuffer, &keyLength, keyb64, keyb64Length);
+							keyBuffer[keyLength] = '\0';
+							fileTransferContent->setFileKey(reinterpret_cast<char *>(keyBuffer), keyLength);
 							xmlFree(keyb64);
 							free(keyBuffer);
 						}
@@ -985,7 +989,7 @@ void FileTransferChatMessageModifier::cancelFileTransfer () {
 	releaseHttpRequest();
 }
 
-bool FileTransferChatMessageModifier::isFileTransferInProgressAndValid () {
+bool FileTransferChatMessageModifier::isFileTransferInProgressAndValid () const {
 	return httpRequest && !belle_http_request_is_cancelled(httpRequest);
 }
 

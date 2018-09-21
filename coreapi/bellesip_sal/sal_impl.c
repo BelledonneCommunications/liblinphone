@@ -247,6 +247,9 @@ void sal_certificates_chain_parse_directory(char **certificate_pem, char **key_p
 				*certificate_pem = belle_sip_certificates_chain_get_pem(certificate);
 				*key_pem = belle_sip_signing_key_get_pem(key);
 				ms_message("Generate self-signed certificate with CN=%s successful\n", subject);
+			}else{
+				ms_error("Self-signed certificate generation failed.");
+				return;
 			}
 		}
 	}

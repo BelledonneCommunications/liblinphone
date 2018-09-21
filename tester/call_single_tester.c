@@ -49,6 +49,15 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 	char* to=linphone_address_as_string(linphone_call_log_get_to(calllog));
 	char* from=linphone_address_as_string(linphone_call_log_get_from(calllog));
 	stats* counters;
+	
+	
+	const LinphoneAddress *to_addr = linphone_call_get_to_address(call);
+	const LinphoneAddress *remote_addr = linphone_call_get_remote_address(call);
+	//const LinphoneAddress *from_addr = linphone_call_get_from_address(call);
+	BC_ASSERT_PTR_NOT_NULL(to_addr);
+	//BC_ASSERT_PTR_NOT_NULL(from_addr);
+	BC_ASSERT_PTR_NOT_NULL(remote_addr);
+	
 	ms_message(" %s call from [%s] to [%s], new state is [%s]"	,linphone_call_log_get_dir(calllog)==LinphoneCallIncoming?"Incoming":"Outgoing"
 																,from
 																,to
@@ -3720,6 +3729,12 @@ void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, bctbx_l
 	}
 
 }
+static void call_state_changed_callback_to_start_record(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState state, const char *message){
+	if (state == /*LinphoneCallStreamsRunning*/ LinphoneCallConnected){
+		ms_message("call_recording(): start early recording into %s",linphone_call_params_get_record_file(linphone_call_get_params(call)));
+		linphone_call_start_recording(call);
+	}
+}
 
 void record_call(const char *filename, bool_t enableVideo, const char *video_codec) {
 	LinphoneCoreManager *marie = NULL;
@@ -3765,7 +3780,14 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 		}
 	}
 #endif
-
+	bool_t early_record = FALSE ; /*preliminary work to have a test starting video record in state Connected*/
+	if (early_record) {
+		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+		linphone_core_cbs_set_call_state_changed(cbs, call_state_changed_callback_to_start_record);
+		linphone_core_add_callbacks(marie->lc, cbs);
+		belle_sip_object_unref(cbs);
+	}
+	
 	formats = linphone_core_get_supported_file_formats(marie->lc);
 
 	for(i=0, format = formats[0]; format != NULL; i++, format = formats[i]) {
@@ -3777,8 +3799,10 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 		BC_ASSERT_TRUE(call_succeeded = call_with_params(marie, pauline, marieParams, paulineParams));
 		BC_ASSERT_PTR_NOT_NULL(callInst = linphone_core_get_current_call(marie->lc));
 		if ((call_succeeded == TRUE) && (callInst != NULL)) {
-			ms_message("call_recording(): start recording into %s", filepath);
-			linphone_call_start_recording(callInst);
+			if (!early_record) {
+				ms_message("call_recording(): start recording into %s", filepath);
+				linphone_call_start_recording(callInst);
+			}
 			wait_for_until(marie->lc,pauline->lc,&dummy,1,5000);
 			linphone_call_stop_recording(callInst);
 			end_call(marie, pauline);
@@ -6555,8 +6579,8 @@ test_t call_tests[] = {
 	TEST_NO_TAG("ZRTP SAS call", zrtp_sas_call),
 	TEST_NO_TAG("ZRTP Cipher call", zrtp_cipher_call),
 	TEST_NO_TAG("ZRTP Key Agreement call", zrtp_key_agreement_call),
-	TEST_NO_TAG("DTLS SRTP call", dtls_srtp_call),
-	TEST_NO_TAG("DTLS SRTP call with media relay", dtls_srtp_call_with_media_realy),
+	TEST_ONE_TAG("DTLS SRTP call", dtls_srtp_call, "DTLS"),
+	TEST_ONE_TAG("DTLS SRTP call with media relay", dtls_srtp_call_with_media_realy, "DTLS"),
 	TEST_NO_TAG("SRTP call with declined srtp", call_with_declined_srtp),
 	TEST_NO_TAG("SRTP call paused and resumed", call_srtp_paused_and_resumed),
 	TEST_NO_TAG("Call with file player", call_with_file_player),
@@ -6565,8 +6589,8 @@ test_t call_tests[] = {
 	TEST_ONE_TAG("SRTP ice call", srtp_ice_call, "ICE"),
 	TEST_ONE_TAG("ZRTP ice call", zrtp_ice_call, "ICE"),
 	TEST_ONE_TAG("ZRTP ice call with relay", zrtp_ice_call_with_relay, "ICE"),
-	TEST_ONE_TAG("DTLS SRTP ice call", dtls_srtp_ice_call, "ICE"),
-	TEST_ONE_TAG("DTLS ice call with relay", dtls_ice_call_with_relay, "ICE"),
+	TEST_TWO_TAGS("DTLS SRTP ice call", dtls_srtp_ice_call, "ICE", "DTLS"),
+	TEST_TWO_TAGS("DTLS ice call with relay", dtls_ice_call_with_relay, "ICE", "DTLS"),
 	TEST_NO_TAG("Call with privacy", call_with_privacy),
 	TEST_NO_TAG("Call with privacy 2", call_with_privacy2),
 	TEST_NO_TAG("Call rejected because of wrong credential", call_rejected_because_wrong_credentials),

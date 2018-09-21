@@ -25,6 +25,7 @@
 #include "linphone/utils/utils.h"
 
 #include "abstract/abstract-db-p.h"
+#include "containers/lru-cache.h"
 #include "event-log/event-log.h"
 #include "main-db.h"
 
@@ -43,8 +44,6 @@ private:
 	// ---------------------------------------------------------------------------
 	// Misc helpers.
 	// ---------------------------------------------------------------------------
-
-	static time_t getTmAsTimeT (const tm &t);
 
 	std::shared_ptr<AbstractChatRoom> findChatRoom (const ConferenceId &conferenceId) const;
 
@@ -190,6 +189,10 @@ private:
 
 	void importLegacyFriends (DbSession &inDbSession);
 	void importLegacyHistory (DbSession &inDbSession);
+
+	// ---------------------------------------------------------------------------
+
+	mutable LruCache<ConferenceId, int> unreadChatMessageCountCache;
 
 	L_DECLARE_PUBLIC(MainDb);
 };

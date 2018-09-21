@@ -77,6 +77,9 @@ linphone::Object *linphone::Object::getBackPtrFromCPtr(const void *ptr) {
 }
 
 
+Listener::~Listener() {};
+
+
 std::string ListenableObject::sListenerDataName = "cpp_listener";
 
 ListenableObject::ListenableObject(void *ptr, bool takeRef): Object(ptr, takeRef) {

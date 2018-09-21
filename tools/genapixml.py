@@ -88,6 +88,7 @@ class CArgument(CObject):
 		CObject.__init__(self, name)
 		self.description = None
 		self.containedType = None
+		self.onTheFlyList = False
 		keywords = [ 'const', 'struct', 'enum', 'signed', 'unsigned', 'short', 'long', '*' ]
 		fullySplittedType = []
 		splittedType = t.strip().split(' ')
@@ -563,6 +564,7 @@ class Project:
 				n = returndesc.find('.//bctbxlist')
 				if n is not None:
 					returnarg.containedType = n.text
+					returnarg.onTheFlyList = True if returndesc.find('.//onTheFlyList') is not None else False
 			returnarg.description = self.__cleanDescription(returndesc)
 		elif returnarg.completeType != 'void':
 			missingDocWarning += "\tReturn value is not documented\n"

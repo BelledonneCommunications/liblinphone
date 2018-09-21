@@ -93,6 +93,14 @@ void linphone_friend_list_cbs_set_sync_status_changed(LinphoneFriendListCbs *cbs
 	cbs->sync_state_changed_cb = cb;
 }
 
+LinphoneFriendListCbsPresenceReceivedCb linphone_friend_list_cbs_get_presence_received(const LinphoneFriendListCbs *cbs) {
+	return cbs->presence_received_cb;
+}
+
+void linphone_friend_list_cbs_set_presence_received(LinphoneFriendListCbs *cbs, LinphoneFriendListCbsPresenceReceivedCb cb) {
+	cbs->presence_received_cb = cb;
+}
+
 static int add_uri_entry(xmlTextWriterPtr writer, int err, const char *uri) {
 	if (err >= 0) {
 		err = xmlTextWriterStartElement(writer, (const xmlChar *)"entry");
@@ -216,6 +224,8 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 		bool_t full_state = FALSE;
 		int version;
 		int i;
+		bctbx_list_t *list_friends_presence_received = NULL;
+		LinphoneFriendListCbs *list_cbs = linphone_friend_list_get_callbacks(list);
 
 		if (linphone_create_xml_xpath_context(xml_ctx) < 0) goto end;
 		xmlXPathRegisterNs(xml_ctx->xpath_ctx, (const xmlChar *)"rlmi", (const xmlChar *)"urn:ietf:params:xml:ns:rlmi");
@@ -302,7 +312,9 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 										linphone_core_notify_notify_presence_received_for_uri_or_tel(list->lc, lf, phone_number, (LinphonePresenceModel *)presence);
 									else
 										linphone_core_notify_notify_presence_received_for_uri_or_tel(list->lc, lf, uri, (LinphonePresenceModel *)presence);
+									// Deprecated
 									linphone_core_notify_notify_presence_received(list->lc, lf);
+									list_friends_presence_received = bctbx_list_prepend(list_friends_presence_received, lf);
 								}
 								linphone_free_xml_text_content(uri);
 							}
@@ -312,6 +324,11 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 					linphone_free_xml_text_content(cid);
 				}
 			}
+			// Notify list with all friends for which we received presence information
+			if (bctbx_list_size(list_friends_presence_received) > 0 && list_cbs && linphone_friend_list_cbs_get_presence_received(list_cbs)) {
+				linphone_friend_list_cbs_get_presence_received(list_cbs)(list, list_friends_presence_received);
+			}
+			bctbx_list_free(list_friends_presence_received);
 		}
 		if (resource_object)
 			xmlXPathFreeObject(resource_object);
@@ -345,9 +362,16 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 				}
 				if (numbers) bctbx_list_free(numbers);
 				if (linphone_friend_is_presence_received(lf)) {
+					// Deprecated
 					linphone_core_notify_notify_presence_received(list->lc, lf);
+					list_friends_presence_received = bctbx_list_prepend(list_friends_presence_received, lf);
 				}
 			}
+			// Notify list with all friends for which we received presence information
+			if (bctbx_list_size(list_friends_presence_received) > 0 && list_cbs && linphone_friend_list_cbs_get_presence_received(list_cbs)) {
+				linphone_friend_list_cbs_get_presence_received(list_cbs)(list, list_friends_presence_received);
+			}
+			bctbx_list_free(list_friends_presence_received);
 		}
 	} else {
 		ms_warning("Wrongly formatted rlmi+xml body: %s", xml_ctx->errorBuffer);

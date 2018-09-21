@@ -66,6 +66,7 @@ namespace std {
 	template<>
 	struct hash<LinphonePrivate::ConferenceId> {
 		std::size_t operator() (const LinphonePrivate::ConferenceId &conferenceId) const {
+			if (!conferenceId.isValid()) return std::size_t(-1);
 			return hash<string>()(conferenceId.getPeerAddress().asString()) ^
 				(hash<string>()(conferenceId.getLocalAddress().asString()) << 1);
 		}

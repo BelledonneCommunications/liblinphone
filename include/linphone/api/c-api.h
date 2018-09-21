@@ -34,9 +34,9 @@
 #include "linphone/api/c-content.h"
 #include "linphone/api/c-dial-plan.h"
 #include "linphone/api/c-event-log.h"
-#include "linphone/api/c-participant.h"
-#include "linphone/api/c-participant-imdn-state.h"
 #include "linphone/api/c-magic-search.h"
+#include "linphone/api/c-participant-imdn-state.h"
+#include "linphone/api/c-participant.h"
 #include "linphone/api/c-search-result.h"
 #include "linphone/api/c-types.h"
 

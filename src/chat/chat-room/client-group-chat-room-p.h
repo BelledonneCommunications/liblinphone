@@ -40,6 +40,7 @@ public:
 	void setCallSessionListener (CallSessionListener *listener);
 	void setChatRoomListener (ChatRoomListener *listener) { chatRoomListener = listener; }
 
+	void addOneToOneCapability ();
 	unsigned int getLastNotifyId () const;
 
 	// ChatRoomListener
