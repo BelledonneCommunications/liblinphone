@@ -795,6 +795,8 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 		return;
 	}
 
+	participant->getPrivate()->addDevice(event->getDeviceAddress());
+
 	shared_ptr<ConferenceSecurityEvent> securityEvent;
 	if (getCore()->limeV2Enabled()) {
 		int nbDevice = int(participant->getPrivate()->getDevices().size());
@@ -802,7 +804,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 		LimeV2 *limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
 
 		// Check if the new participant device is unexpected, in which case a security alert is created
-		if (nbDevice >= maxNbDevicesPerParticipant) {
+		if (nbDevice > maxNbDevicesPerParticipant) {
 			lWarning() << "LIMEv2 maximum number of devices exceeded for " << participant->getAddress();
 			securityEvent = make_shared<ConferenceSecurityEvent>(
 				time(nullptr),
@@ -825,8 +827,6 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 			}
 		}
 	}
-
-	participant->getPrivate()->addDevice(event->getDeviceAddress());
 
 	if (isFullState)
 		return;
