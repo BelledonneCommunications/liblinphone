@@ -79,9 +79,9 @@ This software is distributed under GNU GPLv2. Please read COPYING file for full 
 ------------------------------
 
 
-- [1] linphone-desktop: git://git.linphone.org/linphone-desktop.git
-- [2] bctoolbox: git://git.linphone.org/bctoolbox.git *or* <https://www.linphone.org/releases/sources/bctoolbox>
-- [3] belle-sip: git://git.linphone.org/belle-sip.git *or* <https://www.linphone.org/releases/sources/belle-sip>
-- [4] mediastreamer2: git://git.linphone.org/mediastreamer2.git *or* <https://www.linphone.org/releases/sources/mediastreamer>
-- [5] belcard: git://git.linphone.org/belcard.git *or* <https://www.linphone.org/releases/sources/belcard>
-- [6] bzrtp: git://git.linphone.org/bzrtp.git *or* <https://www.linphone.org/releases/sources/bzrtp>
+- [1] linphone-desktop: https://gitlab.linphone.org/BC/public/linphone-desktop
+- [2] bctoolbox: https://gitlab.linphone.org/BC/public/bctoolbox *or* <https://www.linphone.org/releases/sources/bctoolbox>
+- [3] belle-sip: https://gitlab.linphone.org/BC/public/belle-sip *or* <https://www.linphone.org/releases/sources/belle-sip>
+- [4] mediastreamer2: https://gitlab.linphone.org/BC/public/mediastreamer2 *or* <https://www.linphone.org/releases/sources/mediastreamer>
+- [5] belcard: https://gitlab.linphone.org/BC/public/belcard *or* <https://www.linphone.org/releases/sources/belcard>
+- [6] bzrtp: https://gitlab.linphone.org/BC/public/bzrtp *or* <https://www.linphone.org/releases/sources/bzrtp>
