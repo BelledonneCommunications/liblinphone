@@ -4938,28 +4938,28 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 				lInfo() << "SAS verified and Ik exchange successful";
 				limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
 			} catch (const exception &e) {
-				// Ik error occured --> the stored Ik is different from this Ik
-				limeV2Engine->getLimeManager()->delete_peerDevice(peerDeviceId);
-				limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
+				// Ik error occured, the stored Ik is different from this Ik
 
 				lime::PeerDeviceStatus status = limeV2Engine->getLimeManager()->get_peerDeviceStatus(peerDeviceId);
 				switch (status) {
 					case lime::PeerDeviceStatus::unsafe:
-						lWarning() << "Ik is different from stored Ik and peer device is unsafe";
+						lWarning() << "LIMEv2 peer device " << peerDeviceId << " is unsafe and its lime identity key has changed";
 						break;
 					case lime::PeerDeviceStatus::untrusted:
-						lWarning() << "Ik is different from stored Ik and peer device is untrusted";
+						lWarning() << "LIMEv2 peer device " << peerDeviceId << " is untrusted and its lime identity key has changed";
 						d->addSecurityEventInChatrooms(faultyDevice, ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged); // TODO specific alert
 						break;
 					case lime::PeerDeviceStatus::trusted:
-						lWarning() << "Ik is different from stored Ik but peer device was already trusted";
-						// TODO delete and recreate with trust ? or send an alert ?
+						lError() << "LIMEv2 peer device " << peerDeviceId << " is already trusted but its lime identity key has changed";
 						break;
 					case lime::PeerDeviceStatus::unknown:
 					case lime::PeerDeviceStatus::fail:
-						lWarning() << "Ik is different from stored Ik but peer device is unknown";
+						lError() << "LIMEv2 peer device " << peerDeviceId << " is unknown but its lime identity key has changed";
 						break;
 				}
+
+				limeV2Engine->getLimeManager()->delete_peerDevice(peerDeviceId);
+				limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
 			}
 		}
 		// SAS is verified but the auxiliary secret mismatches
