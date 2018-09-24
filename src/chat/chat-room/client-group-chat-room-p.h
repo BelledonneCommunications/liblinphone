@@ -60,6 +60,7 @@ private:
 	CallSessionListener *callSessionListener = this;
 	ChatRoomListener *chatRoomListener = this;
 	ClientGroupChatRoom::CapabilitiesMask capabilities = ClientGroupChatRoom::Capabilities::Conference;
+	bool isEncrypted = false;
 	bool deletionOnTerminationEnabled = false;
 	BackgroundTask bgTask { "Subscribe/notify of full state conference" };
 	L_DECLARE_PUBLIC(ClientGroupChatRoom);

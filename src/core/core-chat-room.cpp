@@ -133,10 +133,11 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const strin
 		}
 	}
 
+	bool isEncrypted = true; // TODO get parameter from application level
 	shared_ptr<AbstractChatRoom> chatRoom;
 	{
 		shared_ptr<ClientGroupChatRoom> clientGroupChatRoom = make_shared<ClientGroupChatRoom>(
-			q->getSharedFromThis(), usedUri, IdentityAddress(from), subject, content
+			q->getSharedFromThis(), usedUri, IdentityAddress(from), subject, content, isEncrypted
 		);
 		ClientGroupChatRoomPrivate *dClientGroupChatRoom = clientGroupChatRoom->getPrivate();
 

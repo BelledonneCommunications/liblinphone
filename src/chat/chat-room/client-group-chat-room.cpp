@@ -248,7 +248,8 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	const string &uri,
 	const IdentityAddress &me,
 	const string &subject,
-	const Content &content
+	const Content &content,
+	bool isEncrypted
 ) : ChatRoom(*new ClientGroupChatRoomPrivate, core, ConferenceId(IdentityAddress(), me)),
 RemoteConference(core, me, nullptr) {
 	L_D_T(RemoteConference, dConference);
@@ -260,6 +261,9 @@ RemoteConference(core, me, nullptr) {
 	list<IdentityAddress> identAddresses = Conference::parseResourceLists(content);
 	for (const auto &addr : identAddresses)
 		dConference->participants.push_back(make_shared<Participant>(this, addr));
+
+	L_D();
+	d->isEncrypted = isEncrypted;
 }
 
 ClientGroupChatRoom::ClientGroupChatRoom (
@@ -270,7 +274,8 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId,
-	bool hasBeenLeft
+	bool hasBeenLeft,
+	bool isEncrypted
 ) : ChatRoom(*new ClientGroupChatRoomPrivate, core, conferenceId),
 RemoteConference(core, me->getAddress(), nullptr) {
 	L_D();
@@ -290,6 +295,8 @@ RemoteConference(core, me->getAddress(), nullptr) {
 	dConference->eventHandler->setLastNotify(lastNotifyId);
 	if (!hasBeenLeft)
 		getCore()->getPrivate()->remoteListEventHandler->addHandler(dConference->eventHandler.get());
+
+	d->isEncrypted = isEncrypted;
 }
 
 ClientGroupChatRoom::~ClientGroupChatRoom () {
@@ -328,6 +335,11 @@ bool ClientGroupChatRoom::canHandleMultipart () const {
 ClientGroupChatRoom::CapabilitiesMask ClientGroupChatRoom::getCapabilities () const {
 	L_D();
 	return d->capabilities;
+}
+
+bool ClientGroupChatRoom::isEncrypted () const {
+	L_D();
+	return d->isEncrypted;
 }
 
 ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {

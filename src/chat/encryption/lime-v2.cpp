@@ -135,7 +135,16 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	const IdentityAddress &peerAddress = chatRoom->getPeerAddress();
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
 
-	// Refuse message in unsafe chatroom if not allowed
+	// Check if chatroom is encrypted or not
+	shared_ptr<ClientGroupChatRoom> cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
+	if (cgcr->isEncrypted()) {
+		lWarning() << "LIMEv2 this chatroom is encrypted, proceed to encrypt outgoing message";
+	} else {
+		lWarning() << "LIMEv2 this chatroom is not encrypted, no need encrypt outgoing message";
+		return ChatMessageModifier::Result::Skipped;
+	}
+
+	// Reject message in unsafe chatroom if not allowed
 	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
 		if (chatRoom->getSecurityLevel() == ClientGroupChatRoom::SecurityLevel::Unsafe) {
 			lWarning() << "Sending encrypted message in an unsafe chatroom";

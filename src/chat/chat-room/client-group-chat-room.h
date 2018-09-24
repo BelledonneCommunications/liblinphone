@@ -47,7 +47,8 @@ public:
 		const std::string &factoryUri,
 		const IdentityAddress &me,
 		const std::string &subject,
-		const Content &content
+		const Content &content,
+		const bool isEncrypted
 	);
 
 	ClientGroupChatRoom (
@@ -58,7 +59,8 @@ public:
 		const std::string &subject,
 		std::list<std::shared_ptr<Participant>> &&participants,
 		unsigned int lastNotifyId,
-		bool hasBeenLeft = false
+		bool hasBeenLeft = false,
+		const bool isEncrypted = false
 	);
 
 	~ClientGroupChatRoom ();
@@ -71,6 +73,7 @@ public:
 	bool canHandleMultipart () const override;
 
 	CapabilitiesMask getCapabilities () const override;
+	bool isEncrypted () const;
 	ChatRoom::SecurityLevel getSecurityLevel () const override;
 	bool hasBeenLeft () const override;
 
