@@ -1,5 +1,5 @@
 /*
- * usb-watcher-linux.h
+ * media-device-watcher-linux.h
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,20 +17,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _L_USB_WATCHER_LINUX_H_
-#define _L_USB_WATCHER_LINUX_H_
+#ifndef _L_MEDIA_DEVICE_WATCHER_LINUX_H_
+#define _L_MEDIA_DEVICE_WATCHER_LINUX_H_
 
 #include <libudev.h>
 
 #include "logger/logger.h"
+#include "media-device-watcher.h"
 #include "object/object-p.h"
-#include "usb-watcher.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class UsbWatcherPrivate : public ObjectPrivate {
+class MediaDeviceWatcherPrivate : public ObjectPrivate {
 public:
 	udev *udevContext;
 	udev_monitor *udevMonitor;
@@ -38,14 +38,14 @@ public:
 	void clean ();
 };
 
-void UsbWatcherPrivate::clean () {
+void MediaDeviceWatcherPrivate::clean () {
 	if (udevMonitor)
 		udev_monitor_unref(udevMonitor);
 	if (udevContext)
 		udev_unref(udevContext);
 }
 
-UsbWatcher::UsbWatcher () : Object(*new UsbWatcherPrivate) {
+MediaDeviceWatcher::MediaDeviceWatcher () : Object(*new MediaDeviceWatcherPrivate) {
 	L_D();
 
 	if (!(d->udevContext = udev_new())) {
@@ -75,11 +75,11 @@ UsbWatcher::UsbWatcher () : Object(*new UsbWatcherPrivate) {
 	// TODO: Deal with fd. Add a socket notifier in core?
 }
 
-UsbWatcher::~UsbWatcher () {
+MediaDeviceWatcher::~MediaDeviceWatcher () {
 	L_D();
 	d->clean();
 }
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_USB_WATCHER_LINUX_H_
+#endif // ifndef _L_MEDIA_DEVICE_WATCHER_LINUX_H_
