@@ -315,8 +315,9 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	}();
 
 	// Discard incoming messages from unsafe peer devices
+	peerDeviceStatus = belleSipLimeManager->get_peerDeviceStatus(senderDeviceId);
 	if (peerDeviceStatus == lime::PeerDeviceStatus::unsafe) {
-		lWarning() << "LIMEv2 discard incoming message from unsafe sender device";
+		lWarning() << "LIMEv2 discard incoming message from unsafe sender device " << senderDeviceId;
 		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Error;
 	}
