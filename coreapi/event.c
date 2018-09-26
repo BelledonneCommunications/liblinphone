@@ -178,10 +178,12 @@ void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState stat
 
 void linphone_event_set_publish_state(LinphoneEvent *lev, LinphonePublishState state){
 	if (lev->publish_state!=state){
-		ms_message("LinphoneEvent [%p] moving from [%s] to publish state %s"
-				   , lev
-				   , linphone_publish_state_to_string(lev->publish_state)
-				   , linphone_publish_state_to_string(state));
+		ms_message(
+			"LinphoneEvent [%p] moving from [%s] to publish state %s",
+			lev,
+			linphone_publish_state_to_string(lev->publish_state),
+			linphone_publish_state_to_string(state)
+		);
 		lev->publish_state=state;
 		linphone_core_notify_publish_state_changed(lev->lc,lev,state);
 		switch(state){
@@ -271,8 +273,8 @@ LinphoneStatus linphone_event_send_subscribe(LinphoneEvent *lev, const LinphoneC
 	}else lev->op->setSentCustomHeaders(NULL);
 
 	body_handler = sal_body_handler_from_content(body);
-    auto subscribeOp = dynamic_cast<SalSubscribeOp *>(lev->op);
-	err=subscribeOp->subscribe(NULL,NULL,lev->name,lev->expires,body_handler);
+	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(lev->op);
+	err=subscribeOp->subscribe(lev->name,lev->expires,body_handler);
 	if (err==0){
 		if (lev->subscription_state==LinphoneSubscriptionNone)
 			linphone_event_set_state(lev,LinphoneSubscriptionOutgoingProgress);
@@ -308,7 +310,7 @@ LinphoneStatus linphone_event_deny_subscription(LinphoneEvent *lev, LinphoneReas
 		ms_error("linphone_event_deny_subscription(): cannot deny subscription if subscription wasn't just received.");
 		return -1;
 	}
-    auto subscribeOp = dynamic_cast<SalSubscribeOp *>(lev->op);
+	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(lev->op);
 	err=subscribeOp->decline(linphone_reason_to_sal(reason));
 	linphone_event_set_state(lev,LinphoneSubscriptionTerminated);
 	return err;
@@ -325,7 +327,7 @@ LinphoneStatus linphone_event_notify(LinphoneEvent *lev, const LinphoneContent *
 		return -1;
 	}
 	body_handler = sal_body_handler_from_content(body, false);
-    auto subscribeOp = dynamic_cast<SalSubscribeOp *>(lev->op);
+	auto subscribeOp = dynamic_cast<SalSubscribeOp *>(lev->op);
 	return subscribeOp->notify(body_handler);
 }
 
@@ -377,10 +379,10 @@ static int _linphone_event_send_publish(LinphoneEvent *lev, const LinphoneConten
 		lev->op->setSentCustomHeaders(lev->send_custom_headers);
 		sal_custom_header_free(lev->send_custom_headers);
 		lev->send_custom_headers=NULL;
-	}else lev->op->setSentCustomHeaders(NULL);
+	} else lev->op->setSentCustomHeaders(NULL);
 	body_handler = sal_body_handler_from_content(body);
-    auto publishOp = dynamic_cast<SalPublishOp *>(lev->op);
-	err=publishOp->publish(NULL,NULL,lev->name,lev->expires,body_handler);
+	auto publishOp = dynamic_cast<SalPublishOp *>(lev->op);
+	err=publishOp->publish(lev->name,lev->expires,body_handler);
 	if (err==0){
 		linphone_event_set_publish_state(lev,LinphonePublishProgress);
 	}else if (notify_err){
@@ -418,9 +420,9 @@ void linphone_event_pause_publish(LinphoneEvent *lev) {
 void linphone_event_unpublish(LinphoneEvent *lev) {
 	lev->terminating = TRUE; /* needed to get clear event*/
 	if (lev->op) {
-        auto op = dynamic_cast<SalPublishOp *>(lev->op);
-        op->unpublish();
-    }
+		auto op = dynamic_cast<SalPublishOp *>(lev->op);
+		op->unpublish();
+	}
 }
 void linphone_event_set_user_data(LinphoneEvent *ev, void *up){
 	ev->userdata=up;
@@ -452,16 +454,16 @@ void linphone_event_terminate(LinphoneEvent *lev){
 
 	lev->terminating=TRUE;
 	if (lev->dir==LinphoneSubscriptionIncoming){
-        auto op = dynamic_cast<SalSubscribeOp *>(lev->op);
+		auto op = dynamic_cast<SalSubscribeOp *>(lev->op);
 		op->closeNotify();
 	}else if (lev->dir==LinphoneSubscriptionOutgoing){
-        auto op = dynamic_cast<SalSubscribeOp *>(lev->op);
+		auto op = dynamic_cast<SalSubscribeOp *>(lev->op);
 		op->unsubscribe();
 	}
 
 	if (lev->publish_state!=LinphonePublishNone){
 		if (lev->publish_state==LinphonePublishOk && lev->expires!=-1){
-            auto op = dynamic_cast<SalPublishOp *>(lev->op);
+			auto op = dynamic_cast<SalPublishOp *>(lev->op);
 			op->unpublish();
 		}
 		linphone_event_set_publish_state(lev,LinphonePublishCleared);

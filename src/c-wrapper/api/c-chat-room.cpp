@@ -373,11 +373,14 @@ const bctbx_list_t *linphone_chat_room_get_composing_addresses (LinphoneChatRoom
 }
 
 void linphone_chat_room_set_conference_address (LinphoneChatRoom *cr, const LinphoneAddress *confAddr) {
-	char *addrStr = linphone_address_as_string(confAddr);
+	char *addrStr = confAddr ? linphone_address_as_string(confAddr) : nullptr;
 	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr = dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
-	if (sgcr)
-		sgcr->setConferenceAddress(LinphonePrivate::IdentityAddress(addrStr));
-	bctbx_free(addrStr);
+	if (sgcr) {
+		LinphonePrivate::IdentityAddress idAddr = addrStr ? LinphonePrivate::IdentityAddress(addrStr) : LinphonePrivate::IdentityAddress("");
+		sgcr->setConferenceAddress(idAddr);
+	}
+	if (addrStr)
+		bctbx_free(addrStr);
 }
 
 void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const LinphoneAddress *partAddr, const bctbx_list_t *partDevices) {
@@ -390,16 +393,6 @@ void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const Lin
 	if (sgcr)
 		sgcr->setParticipantDevices(LinphonePrivate::IdentityAddress(addrStr), lIdentAddr);
 	bctbx_free(addrStr);
-}
-
-void linphone_chat_room_add_participant_device (LinphoneChatRoom *cr, const LinphoneAddress *participantAddress, const LinphoneAddress *deviceAddress) {
-	char *participantAddressStr = linphone_address_as_string(participantAddress);
-	char *deviceAddressStr = linphone_address_as_string(deviceAddress);
-	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr = dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
-	if (sgcr)
-		sgcr->addParticipantDevice(LinphonePrivate::IdentityAddress(participantAddressStr), LinphonePrivate::IdentityAddress(deviceAddressStr));
-	bctbx_free(participantAddressStr);
-	bctbx_free(deviceAddressStr);
 }
 
 void linphone_chat_room_add_compatible_participants (LinphoneChatRoom *cr, const LinphoneAddress *deviceAddr, const bctbx_list_t *participantsCompatible) {

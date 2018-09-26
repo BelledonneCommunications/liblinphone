@@ -24,11 +24,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 static void linphone_remote_provisioning_apply(LinphoneCore *lc, const char *xml) {
-	const char* error_msg = _linphone_config_load_from_xml_string(linphone_core_get_config(lc), xml);
+	LinphoneConfig *config = linphone_core_get_config(lc);
+	const char *error_msg = _linphone_config_load_from_xml_string(config, xml);
 
-	linphone_configuring_terminated(lc
-									,error_msg ? LinphoneConfiguringFailed : LinphoneConfiguringSuccessful
-									, error_msg);
+	_linphone_config_apply_factory_config(config);
+	linphone_configuring_terminated(
+		lc,
+		error_msg ? LinphoneConfiguringFailed : LinphoneConfiguringSuccessful,
+		error_msg
+	);
 }
 
 int linphone_remote_provisioning_load_file( LinphoneCore* lc, const char* file_path){

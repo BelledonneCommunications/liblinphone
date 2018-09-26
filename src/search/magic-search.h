@@ -35,80 +35,80 @@ class MagicSearchPrivate;
 class LINPHONE_PUBLIC MagicSearch : public CoreAccessor, public Object{
 public:
 
-	MagicSearch(const std::shared_ptr<Core> &core);
-	MagicSearch(const MagicSearch &ms) = delete;
-	~MagicSearch();
+	MagicSearch (const std::shared_ptr<Core> &core);
+	MagicSearch (const MagicSearch &ms) = delete;
+	~MagicSearch ();
 
 	/**
 	 * Set the minimum value used to calculate the weight in search
 	 * @param[in] weight minimum weight
 	 **/
-	void setMinWeight(const unsigned int weight);
+	void setMinWeight (const unsigned int weight);
 
 	/**
 	 * @return the minimum value used to calculate the weight in search
 	 **/
-	unsigned int getMinWeight() const;
+	unsigned int getMinWeight () const;
 
 	/**
 	 * Set the maximum value used to calculate the weight in search
 	 * @param[in] weight maximum weight
 	 **/
-	void setMaxWeight(const unsigned int weight);
+	void setMaxWeight (const unsigned int weight);
 
 	/**
 	 * @return the maximum value used to calculate the weight in search
 	 **/
-	unsigned int getMaxWeight() const;
+	unsigned int getMaxWeight () const;
 
 	/**
 	 * @return the delimiter used to find matched filter word
 	 **/
-	const std::string& getDelimiter() const;
+	const std::string& getDelimiter () const;
 
 	/**
 	 * Set the delimiter used to find matched filter word
 	 * @param[in] delimiter delimiter (example "-_.,")
 	 **/
-	void setDelimiter(const std::string &delimiter);
+	void setDelimiter (const std::string &delimiter);
 
 	/**
 	 * @return if the delimiter search is used
 	 **/
-	bool getUseDelimiter() const;
+	bool getUseDelimiter () const;
 
 	/**
 	 * Enable or disable the delimiter in search
 	 * @param[in] enable
 	 **/
-	void setUseDelimiter(bool enable);
+	void setUseDelimiter (bool enable);
 
 	/**
 	 * @return the number of the maximum SearchResult which will be return
 	 **/
-	unsigned int getSearchLimit() const;
+	unsigned int getSearchLimit () const;
 
 	/**
 	 * Set the number of the maximum SearchResult which will be return
 	 * @param[in] limit
 	 **/
-	void setSearchLimit(const unsigned int limit);
+	void setSearchLimit (const unsigned int limit);
 
 	/**
 	 * @return if the search is limited
 	 **/
-	bool getLimitedSearch() const;
+	bool getLimitedSearch () const;
 
 	/**
 	 * Enable or disable the limited search
 	 * @param[in] limited
 	 **/
-	void setLimitedSearch(const bool limited);
+	void setLimitedSearch (const bool limited);
 
 	/**
 	 * Reset the cache to begin a new search
 	 **/
-	void resetSearchCache();
+	void resetSearchCache () const;
 
 	/**
 	 * Create a sorted list of SearchResult from SipUri, Contact name,
@@ -123,7 +123,7 @@ public:
 	 * - "yourdomain" for searching in contact from "yourdomain" domain
 	 * @return sorted list of SearchResult with "filter" or an empty list if "filter" is empty
 	 **/
-	std::list<SearchResult> getContactListFromFilter(const std::string &filter, const std::string &withDomain = "");
+	std::list<SearchResult> getContactListFromFilter (const std::string &filter, const std::string &withDomain = "") const;
 
 private:
 
@@ -131,14 +131,14 @@ private:
 	 * @return the cache of precedent result
 	 * @private
 	 **/
-	std::list<SearchResult> *getSearchCache() const;
+	std::list<SearchResult> *getSearchCache () const;
 
 	/**
 	 * Save a result for future search
 	 * @param[in] cache result we want to save
 	 * @private
 	 **/
-	void setSearchCache(std::list<SearchResult> *cache);
+	void setSearchCache (std::list<SearchResult> *cache) const;
 
 	/**
 	 * Get all address from call log
@@ -148,7 +148,11 @@ private:
 	 * @return all address from call log which match in a SearchResult list
 	 * @private
 	 **/
-	std::list<SearchResult> getAddressFromCallLog(const std::string &filter, const std::string &withDomain, const std::list<SearchResult> &currentList);
+	std::list<SearchResult> getAddressFromCallLog (
+		const std::string &filter,
+		const std::string &withDomain,
+		const std::list<SearchResult> &currentList
+	) const;
 
 	/**
 	 * Get all friends as SearchResult
@@ -156,7 +160,7 @@ private:
 	 * @return all friends in a SearchResult list
 	 * @private
 	 **/
-	std::list<SearchResult> getFriends(const std::string &withDomain);
+	std::list<SearchResult> getFriends (const std::string &withDomain) const;
 
 	/**
 	 * Begin the search from friend list
@@ -164,7 +168,7 @@ private:
 	 * @param[in] withDomain domain which we want to search only
 	 * @private
 	 **/
-	std::list<SearchResult> *beginNewSearch(const std::string &filter, const std::string &withDomain);
+	std::list<SearchResult> *beginNewSearch (const std::string &filter, const std::string &withDomain) const;
 
 	/**
 	 * Continue the search from the cache of precedent search
@@ -172,7 +176,7 @@ private:
 	 * @param[in] withDomain domain which we want to search only
 	 * @private
 	 **/
-	std::list<SearchResult> *continueSearch(const std::string &filter, const std::string &withDomain);
+	std::list<SearchResult> *continueSearch (const std::string &filter, const std::string &withDomain) const;
 
 	/**
 	 * Search informations in friend given
@@ -182,7 +186,7 @@ private:
 	 * @return list of result from friend
 	 * @private
 	 **/
-	std::list<SearchResult> searchInFriend(const LinphoneFriend* lFriend, const std::string &filter, const std::string &withDomain);
+	std::list<SearchResult> searchInFriend (const LinphoneFriend* lFriend, const std::string &filter, const std::string &withDomain) const;
 
 	/**
 	 * Search informations in address given
@@ -191,7 +195,7 @@ private:
 	 * @param[in] withDomain domain which we want to search only
 	 * @private
 	 **/
-	unsigned int searchInAddress(const LinphoneAddress *lAddress, const std::string &filter, const std::string &withDomain);
+	unsigned int searchInAddress (const LinphoneAddress *lAddress, const std::string &filter, const std::string &withDomain) const;
 
 	/**
 	 * Return a weight for a searched in with a filter
@@ -200,7 +204,7 @@ private:
 	 * @return calculate weight
 	 * @private
 	 **/
-	unsigned int getWeight(const std::string &stringWords, const std::string &filter) const;
+	unsigned int getWeight (const std::string &stringWords, const std::string &filter) const;
 
 	/**
 	 * Return if the given address match domain policy
@@ -209,11 +213,11 @@ private:
 	 * @param[in] withDomain domain policy
 	 * @private
 	 **/
-	bool checkDomain(const LinphoneFriend* lFriend, const LinphoneAddress *lAddress, const std::string &withDomain) const;
+	bool checkDomain (const LinphoneFriend* lFriend, const LinphoneAddress *lAddress, const std::string &withDomain) const;
 
-	void addResultsToResultsList(std::list<SearchResult> &results, std::list<SearchResult> &srL);
+	void addResultsToResultsList (std::list<SearchResult> &results, std::list<SearchResult> &srL) const;
 
-	std::list<SearchResult> *uniqueItemsList(std::list<SearchResult> &list);
+	std::list<SearchResult> *uniqueItemsList (std::list<SearchResult> &list) const;
 
 	L_DECLARE_PRIVATE(MagicSearch);
 };

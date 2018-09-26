@@ -124,8 +124,8 @@ namespace Utils {
 		return object;
 	}
 
-	LINPHONE_PUBLIC std::tm getTimeTAsTm (time_t time);
-	LINPHONE_PUBLIC time_t getTmAsTimeT (const std::tm &time);
+	LINPHONE_PUBLIC std::tm getTimeTAsTm (time_t t);
+	LINPHONE_PUBLIC time_t getTmAsTimeT (const std::tm &t);
 
 	LINPHONE_PUBLIC std::string localeToUtf8 (const std::string &str);
 	LINPHONE_PUBLIC std::string utf8ToLocale (const std::string &str);

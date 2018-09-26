@@ -112,7 +112,7 @@ public:
 	void removeCustomHeader (const std::string &headerName);
 
 	bool downloadFile (FileTransferContent *content);
-	bool isFileTransferInProgress();
+	bool isFileTransferInProgress () const;
 
 protected:
 	explicit ChatMessage (ChatMessagePrivate &p);

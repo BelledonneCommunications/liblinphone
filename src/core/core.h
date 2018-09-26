@@ -146,6 +146,14 @@ public:
 	bool limeV2Enabled (void) const;
 	bool limeV2Available (void) const;
 
+	// ---------------------------------------------------------------------------
+	// Misc.
+	// ---------------------------------------------------------------------------
+
+	int getUnreadChatMessageCount () const;
+	int getUnreadChatMessageCount (const IdentityAddress &localAddress) const;
+	int getUnreadChatMessageCountFromActiveLocals () const;
+
 private:
 	Core ();
 

@@ -47,7 +47,7 @@ void TunnelManager::addServer(const char *ip, int port) {
 	}
 
 	mServerAddrs.push_back(ServerAddr(ip,port));
-	if (mTunnelClient && !mUseDualClient) {
+	if (mTunnelClient && !mTunnelClient->isDualTunnelClient()) {
 		static_cast<TunnelClient*>(mTunnelClient)->addServer(ip,port);
 	}
 }
@@ -72,7 +72,7 @@ void TunnelManager::addServerPair(const char *ip1, int port1, const char *ip2, i
 	}
 
 	mDualServerAddrs.push_back(DualServerAddr(ip1, port1, ip2, port2));
-	if (mTunnelClient && mUseDualClient) {
+	if (mTunnelClient && mTunnelClient->isDualTunnelClient()) {
 		static_cast<DualTunnelClient*>(mTunnelClient)->addServerPair(ip1, port1, ip2, port2);
 	}
 }
@@ -203,13 +203,15 @@ void TunnelManager::startClient() {
 }
 
 void TunnelManager::stopClient(){
-	if (linphone_core_get_calls_nb(mCore) == 0){
-		/*if no calls are running, we can decide to stop the client completely, so that the connection to the tunnel server is terminated.*/
-		if (mTunnelClient) {
-			ms_message("TunnelManager: stoppping tunnel client");
-			mTunnelClient->stop();
+	if (mTunnelClient) {
+		ms_message("TunnelManager: stoppping tunnel client");
+		mTunnelClient->stop();
+		
+		/* We only delete the tunnel client if there is no call running */
+		if (linphone_core_get_calls_nb(mCore) == 0){
+			delete mTunnelClient;
+			mTunnelClient = NULL;
 		}
-		/*otherwise, it doesn't really matter if the tunnel connection is kept alive even if it is not used anymore by the liblinphone.*/
 	}
 }
 
@@ -277,10 +279,6 @@ TunnelManager::~TunnelManager(){
 		udpMirror->stop();
 	}
 	stopClient();
-	if (mTunnelClient) {
-		mTunnelClient->stop();
-		delete mTunnelClient;
-	}
 	mCore->sal->setTunnel(NULL);
 	linphone_core_remove_listener(mCore, mVTable);
 	linphone_core_v_table_destroy(mVTable);
@@ -475,6 +473,7 @@ void TunnelManager::networkReachableCb(LinphoneCore *lc, bool_t reachable) {
 	TunnelManager *tunnel = bcTunnel(linphone_core_get_tunnel(lc));
 
 	if (reachable) {
+		ms_message("TunnelManager: Network is reachable, starting tunnel client");
 		linphone_core_get_local_ip_for(AF_INET, NULL,tunnel->mLocalAddr);
 		if (tunnel->getMode() == LinphoneTunnelModeAuto){
 			tunnel->startAutoDetection();
@@ -483,11 +482,12 @@ void TunnelManager::networkReachableCb(LinphoneCore *lc, bool_t reachable) {
 			tunnel->applyState();
 		}
 	} else if (!reachable) {
+		ms_message("TunnelManager: Network is unreachable, stopping tunnel client");
 		// if network is no more reachable, cancel autodetection if any
 		tunnel->stopAutoDetection();
 		//turn off the tunnel connection
-		tunnel->stopClient();
 		tunnel->untunnelizeLiblinphone();
+		tunnel->stopClient();
 	}
 }
 

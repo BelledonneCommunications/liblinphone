@@ -1145,6 +1145,12 @@ string MediaSessionPrivate::getBindIpForStream (int streamIndex) {
 			 * dual stack socket and multicast don't work well on Mac OS (linux is OK, as usual). */
 			bindIp = (pc->multicastIp.find_first_of(':') == string::npos) ? "0.0.0.0" : "::0";
 		}
+	}else if (bindIp.empty()){
+		/*If ipv6 is not enabled, for listening to 0.0.0.0. The default behavior of mediastreamer when no IP is passed is to try ::0, and in
+		 * case of failure try 0.0.0.0 . But we don't want this if IPv6 is explicitely disabled.*/
+		if (!linphone_core_ipv6_enabled(q->getCore()->getCCore())){
+			bindIp = "0.0.0.0";
+		}
 	}
 	return bindIp;
 }
@@ -1361,8 +1367,10 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 	getParams()->getPrivate()->adaptToNetwork(q->getCore()->getCCore(), pingTime);
 
 	string subject = q->getParams()->getSessionName();
-	if (!subject.empty())
+	if (!subject.empty()) {
 		strncpy(md->name, subject.c_str(), sizeof(md->name));
+		md->name[sizeof(md->name) - 1] = '\0';
+	}
 	md->session_id = (oldMd ? oldMd->session_id : (rand() & 0xfff));
 	md->session_ver = (oldMd ? (oldMd->session_ver + 1) : (rand() & 0xfff));
 	md->nb_streams = (biggestDesc ? biggestDesc->nb_streams : 1);
@@ -1374,14 +1382,18 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 	}
 
 	strncpy(md->addr, mediaLocalIp.c_str(), sizeof(md->addr));
+	md->addr[sizeof(md->addr) - 1] = '\0';
+	
 	LinphoneAddress *addr = nullptr;
 	if (destProxy) {
 		addr = linphone_address_clone(linphone_proxy_config_get_identity_address(destProxy));
 	} else {
 		addr = linphone_address_new(linphone_core_get_identity(q->getCore()->getCCore()));
 	}
-	if (linphone_address_get_username(addr)) /* Might be null in case of identity without userinfo */
+	if (linphone_address_get_username(addr)) {/* Might be null in case of identity without userinfo */
 		strncpy(md->username, linphone_address_get_username(addr), sizeof(md->username));
+		md->username[sizeof(md->username) - 1] = '\0';
+	}
 	linphone_address_unref(addr);
 
 	int bandwidth = getParams()->getPrivate()->getDownBandwidth();
@@ -1807,6 +1819,7 @@ void MediaSessionPrivate::setupDtlsParams (MediaStream *ms) {
 		char *certificate = nullptr;
 		char *key = nullptr;
 		char *fingerprint = nullptr;
+		
 		sal_certificates_chain_parse_directory(&certificate, &key, &fingerprint,
 			linphone_core_get_user_certificates_path(q->getCore()->getCCore()), "linphone-dtls-default-identity", SAL_CERTIFICATE_RAW_FORMAT_PEM, true, true);
 		if (fingerprint) {
@@ -4378,7 +4391,7 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 			linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
 			if (d->listener)
 				d->listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
-			d->op->decline(SalReasonNotAcceptable, nullptr);
+			d->op->decline(SalReasonNotAcceptable);
 			return;
 		}
 	}
@@ -4896,7 +4909,7 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 		limeV2Engine = static_cast<LimeX3DHEncryptionEngine *>(getCore()->getEncryptionEngine());
 	}
 
-	char *peerDeviceId;
+	char *peerDeviceId = nullptr;
 	vector<uint8_t> remoteIkB64_vector;
 	vector<uint8_t> remoteIk_vector;
 	IdentityAddress faultyDevice;
@@ -4925,28 +4938,28 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 				lInfo() << "SAS verified and Ik exchange successful";
 				limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
 			} catch (const exception &e) {
-				// Ik error occured --> the stored Ik is different from this Ik
-				limeV2Engine->getLimeManager()->delete_peerDevice(peerDeviceId);
-				limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
+				// Ik error occured, the stored Ik is different from this Ik
 
 				lime::PeerDeviceStatus status = limeV2Engine->getLimeManager()->get_peerDeviceStatus(peerDeviceId);
 				switch (status) {
 					case lime::PeerDeviceStatus::unsafe:
-						lWarning() << "Ik is different from stored Ik and peer device is unsafe";
+						lWarning() << "LIMEv2 peer device " << peerDeviceId << " is unsafe and its lime identity key has changed";
 						break;
 					case lime::PeerDeviceStatus::untrusted:
-						lWarning() << "Ik is different from stored Ik and peer device is untrusted";
+						lWarning() << "LIMEv2 peer device " << peerDeviceId << " is untrusted and its lime identity key has changed";
 						d->addSecurityEventInChatrooms(faultyDevice, ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged); // TODO specific alert
 						break;
 					case lime::PeerDeviceStatus::trusted:
-						lWarning() << "Ik is different from stored Ik but peer device was already trusted";
-						// TODO delete and recreate with trust ? or send an alert ?
+						lError() << "LIMEv2 peer device " << peerDeviceId << " is already trusted but its lime identity key has changed";
 						break;
 					case lime::PeerDeviceStatus::unknown:
 					case lime::PeerDeviceStatus::fail:
-						lWarning() << "Ik is different from stored Ik but peer device is unknown";
+						lError() << "LIMEv2 peer device " << peerDeviceId << " is unknown but its lime identity key has changed";
 						break;
 				}
+
+				limeV2Engine->getLimeManager()->delete_peerDevice(peerDeviceId);
+				limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
 			}
 		}
 		// SAS is verified but the auxiliary secret mismatches

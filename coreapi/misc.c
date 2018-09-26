@@ -303,6 +303,7 @@ bool_t linphone_core_tone_indications_enabled(LinphoneCore*lc){
 }
 
 int linphone_core_get_local_ip_for(int type, const char *dest, char *result){
+	if (dest && dest[0] == '\0') dest = NULL; /*If null, bctbx_get_local_ip_for() will use an arbitrary public address instead.*/
 	return bctbx_get_local_ip_for(type, dest, 5060, result, LINPHONE_IPADDR_SIZE);
 }
 

@@ -130,17 +130,20 @@ string DbSession::currentTimestamp () const {
 	switch (d->backend) {
 		case DbSessionPrivate::Backend::Mysql:
 			return " CURRENT_TIMESTAMP";
-		case DbSessionPrivate::Backend::Sqlite3:
+		case DbSessionPrivate::Backend::Sqlite3: {
 			// Ugly hack but Sqlite3 does not allow table alteration where we add a date column using a default value
-			// of CURRENT_TIMESTAMP
-			{
-				const tm &now = Utils::getTimeTAsTm(std::time(nullptr));
-				const size_t bufSize = 22;
-				char buffer[bufSize];
-				snprintf(buffer, bufSize, "'%d-%02d-%02d %02d:%02d:%02d'",
-					now.tm_year + 1900, now.tm_mon + 1, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec);
-				return buffer;
-			}
+			// of CURRENT_TIMESTAMP.
+			const tm &now = Utils::getTimeTAsTm(std::time(nullptr));
+
+			char buffer[128];
+			snprintf(
+				buffer,
+				sizeof buffer,
+				"'%d-%02d-%02d %02d:%02d:%02d'",
+				now.tm_year + 1900, now.tm_mon + 1, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec
+			);
+			return buffer;
+		}
 		case DbSessionPrivate::Backend::None:
 			return "";
 	}
@@ -245,6 +248,24 @@ long long DbSession::resolveId (const soci::row &row, int col) const {
 			return static_cast<long long>(row.get<unsigned long long>(0));
 		case DbSessionPrivate::Backend::Sqlite3:
 			return static_cast<long long>(row.get<int>(0));
+		case DbSessionPrivate::Backend::None:
+			return 0;
+	}
+
+	L_ASSERT(false);
+	return 0;
+}
+
+time_t DbSession::getTime (const soci::row &row, int col) const {
+	L_D();
+
+	tm t = row.get<tm>((size_t)col);
+	switch (d->backend) {
+		case DbSessionPrivate::Backend::Mysql:
+			return mktime(&t); // Local time to UTC. For Mysql the local time is used, not a problem.
+		case DbSessionPrivate::Backend::Sqlite3:
+			t.tm_isdst = 0; // Sqlite3 = UTC. Soci can set the DST field, it's not good for us...
+			return Utils::getTmAsTimeT(t);
 		case DbSessionPrivate::Backend::None:
 			return 0;
 	}

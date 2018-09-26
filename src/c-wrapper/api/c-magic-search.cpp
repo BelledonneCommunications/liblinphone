@@ -101,8 +101,8 @@ void linphone_magic_search_reset_search_cache (LinphoneMagicSearch *magic_search
 	L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->resetSearchCache();
 }
 
-bctbx_list_t* linphone_magic_search_get_contact_list_from_filter (
-	LinphoneMagicSearch *magic_search,
+bctbx_list_t *linphone_magic_search_get_contact_list_from_filter (
+	const LinphoneMagicSearch *magic_search,
 	const char *filter,
 	const char *domain
 ) {

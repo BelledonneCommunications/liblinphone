@@ -24,6 +24,9 @@
 
 
 #if HAVE_SIPP
+
+#include <netdb.h>
+
 void check_rtcp(LinphoneCall *call) {
 	MSTimeSpec ts;
 	LinphoneCallStats *audio_stats, *video_stats;
@@ -93,33 +96,36 @@ static FILE *sip_start_recv(const char *senario) {
 	return file;
 }
 
-static void dest_server_server_resolved(void *data, const char *name, struct addrinfo *ai_list, uint32_t ttl) {
-	*(struct addrinfo **)data =ai_list;
+static void dest_server_server_resolved(void *data, belle_sip_resolver_results_t *results) {
+	belle_sip_object_ref(results);
+	*(belle_sip_resolver_results_t **)data = results;
 }
 
 LinphoneAddress * linphone_core_manager_resolve(LinphoneCoreManager *mgr, const LinphoneAddress *source) {
-	struct addrinfo *addrinfo = NULL;
 	char ipstring [INET6_ADDRSTRLEN];
+	belle_sip_resolver_results_t *results = NULL;
+	const struct addrinfo *ai = NULL;
+	LinphoneAddress *dest;
 	int err;
 	int port = linphone_address_get_port(source);
-	LinphoneAddress * dest;
 
-	sal_resolve_a(linphone_core_get_sal(mgr->lc)
-	 ,linphone_address_get_domain(source)
-	 ,linphone_address_get_port(source)
-	 ,AF_INET
-	 ,dest_server_server_resolved
-	 ,&addrinfo);
+	sal_resolve_a(
+		linphone_core_get_sal(mgr->lc),
+		linphone_address_get_domain(source),
+		linphone_address_get_port(source),
+		AF_INET,
+		dest_server_server_resolved,
+		&results
+	);
+	wait_for_until(mgr->lc, mgr->lc, (int*)&results, 1,2000);
 
-	 dest=linphone_address_new(NULL);
-	 
-	 wait_for_until(mgr->lc, mgr->lc, (int*)&addrinfo, 1,2000);
-	 err=bctbx_getnameinfo((struct sockaddr*)addrinfo->ai_addr,addrinfo->ai_addrlen,ipstring,INET6_ADDRSTRLEN,NULL,0,NI_NUMERICHOST);
-	 if (err !=0 ){
-		 ms_error("linphone_core_manager_resolve(): getnameinfo error %s", gai_strerror(err));
-	 }
-	 linphone_address_set_domain(dest, ipstring);
-	 if (port > 0)
+	ai = belle_sip_resolver_results_get_addrinfos(results);
+	err = bctbx_getnameinfo((struct sockaddr*)ai->ai_addr, ai->ai_addrlen, ipstring, INET6_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST);
+	if (err != 0)
+		ms_error("linphone_core_manager_resolve(): getnameinfo error %s", gai_strerror(err));
+	dest = linphone_address_new(NULL);
+	linphone_address_set_domain(dest, ipstring);
+	if (port > 0)
 		linphone_address_set_port(dest, port);
 
 	return dest;

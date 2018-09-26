@@ -27,8 +27,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 class SalCallOp : public SalOp, public SalMessageOpInterface {
 public:
-	SalCallOp (Sal *sal) : SalOp(sal) {}
-	~SalCallOp () override;
+	SalCallOp (Sal *sal);
+	~SalCallOp ();
 
 	SalMediaDescription *getLocalMediaDescription () const { return mLocalMedia; }
 	int setLocalMediaDescription (SalMediaDescription *desc);
@@ -39,14 +39,14 @@ public:
 	const Content &getRemoteBody () const { return mRemoteBody; }
 	SalMediaDescription *getFinalMediaDescription ();
 
-	int call (const char *from, const char *to, const char *subject);
+	int call (const std::string &from, const std::string &to, const std::string &subject);
 	int notifyRinging (bool earlyMedia);
 	int accept ();
-	int decline (SalReason reason, const char *redirection = nullptr);
+	int decline (SalReason reason, const std::string &redirectionUri = "");
 	int declineWithErrorInfo (const SalErrorInfo *info, const SalAddress *redirectionAddr = nullptr);
-	int update (const char *subject, bool noUserConsent);
+	int update (const std::string &subject, bool noUserConsent);
 	int cancelInvite (const SalErrorInfo *info = nullptr);
-	int refer (const char *referTo);
+	int refer (const std::string &referToUri);
 	int referWithReplaces (SalCallOp *otherCallOp);
 	int setReferrer (SalCallOp *referredCall);
 	SalCallOp *getReplaces () const;
@@ -60,7 +60,7 @@ public:
 	bool dialogRequestPending () const { return (belle_sip_dialog_request_pending(mDialog) != 0); }
 	const char *getLocalTag () { return belle_sip_dialog_get_local_tag(mDialog); }
 	const char *getRemoteTag () { return belle_sip_dialog_get_remote_tag(mDialog); }
-	void setReplaces (const char *callId, const char *fromTag, const char *toTag);
+	void setReplaces (const std::string &callId, const std::string &fromTag, const std::string &toTag);
 	void setSdpHandling (SalOpSDPHandling handling);
 
 	// Implementation of SalMessageOpInterface
@@ -68,7 +68,7 @@ public:
 	int reply (SalReason reason) override { return SalOp::replyMessage(reason); }
 
 private:
-	virtual void fillCallbacks () override;
+	void fillCallbacks () override;
 	void setReleased ();
 
 	void setError (belle_sip_response_t *response, bool fatal);
@@ -85,14 +85,14 @@ private:
 	void fillInvite (belle_sip_request_t *invite);
 	void cancellingInvite (const SalErrorInfo *info);
 	int referTo (belle_sip_header_refer_to_t *referToHeader, belle_sip_header_referred_by_t *referredByHeader);
-	int sendNotifyForRefer (int code, const char *reason);
+	int sendNotifyForRefer (int code, const std::string &reason);
 	void notifyLastResponse (SalCallOp *newCallOp);
 	void processRefer (const belle_sip_request_event_t *event, belle_sip_server_transaction_t *serverTransaction);
 	void processNotify (const belle_sip_request_event_t *event, belle_sip_server_transaction_t *serverTransaction);
 
 	static void setAddrTo0000 (char value[], size_t sz);
-	static int isMediaDescriptionAcceptable (SalMediaDescription *md);
-	static bool isAPendingIncomingInviteTransaction (belle_sip_transaction_t *tr);
+	static bool isMediaDescriptionAcceptable (SalMediaDescription *md);
+	static bool isAPendingIncomingInviteTransaction (belle_sip_transaction_t *transaction);
 	static void setCallAsReleased (SalCallOp *op);
 	static void unsupportedMethod (belle_sip_server_transaction_t *serverTransaction, belle_sip_request_t *request);
 	static belle_sip_header_reason_t *makeReasonHeader (const SalErrorInfo *info);

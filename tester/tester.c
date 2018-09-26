@@ -958,6 +958,7 @@ static void linphone_conference_server_refer_received(LinphoneCore *core, const 
 
 	if(refer_to_addr == NULL) return;
 	strncpy(method, linphone_address_get_method_param(refer_to_addr), sizeof(method));
+	method[sizeof(method) - 1] = '\0';
 	if(strcmp(method, "BYE") == 0) {
 		linphone_address_clean(refer_to_addr);
 		uri = linphone_address_as_string_uri_only(refer_to_addr);

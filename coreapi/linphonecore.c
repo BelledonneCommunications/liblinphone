@@ -2101,7 +2101,6 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 		lc->provisioning_http_listener = NULL;
 	}
 
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
 	linphone_core_set_state(lc,LinphoneGlobalOn,"Ready");
 }
 
@@ -2207,7 +2206,8 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 	} else if (strcmp(notified_event, "conference") == 0) {
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
 		char *resourceAddrStr = linphone_address_as_string_uri_only(resource);
-		if (strcmp(resourceAddrStr, linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc))) == 0) {
+		const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc));
+		if (factoryUri && (strcmp(resourceAddrStr, factoryUri) == 0)) {
 			bctbx_free(resourceAddrStr);
 			L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(L_GET_CPP_PTR_FROM_C_OBJECT(body));
 			return;
@@ -2334,6 +2334,8 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 #ifdef __ANDROID__
 	if (system_context)
 		lc->platform_helper = LinphonePrivate::createAndroidPlatformHelpers(lc, system_context);
+	else
+		ms_fatal("You must provide the Android's app context when creating the core!");
 #elif TARGET_OS_IPHONE
 	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc, system_context);
 #endif
@@ -2423,12 +2425,13 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 void linphone_core_start (LinphoneCore *lc) {
 	linphone_core_set_state(lc,LinphoneGlobalStartup,"Starting up");
 
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
+
 	//to give a chance to change uuid before starting
 	const char* uuid=lp_config_get_string(lc->config,"misc","uuid",NULL);
 	if (!uuid){
-		char tmp[64];
-		lc->sal->createUuid(tmp,sizeof(tmp));
-		lp_config_set_string(lc->config,"misc","uuid",tmp);
+		string uuid = lc->sal->createUuid();
+		lp_config_set_string(lc->config,"misc","uuid",uuid.c_str());
 	}else if (strcmp(uuid,"0")!=0) /*to allow to disable sip.instance*/
 		lc->sal->setUuid(uuid);
 
@@ -3562,7 +3565,7 @@ static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const Lin
 		SalAddress *proxy_addr=sal_address_new(linphone_proxy_config_get_addr(proxy));
 		if (strcmp(sal_address_get_domain(proxy_addr),linphone_address_get_domain(dest))==0){
 			ret=bctbx_list_append(ret,proxy_addr);
-		}else sal_address_destroy(proxy_addr);
+		}else sal_address_unref(proxy_addr);
 	}
 	return ret;
 }
@@ -3654,7 +3657,7 @@ static void linphone_transfer_routes_to_op(bctbx_list_t *routes, SalOp *op){
 	for(it=routes;it!=NULL;it=it->next){
 		SalAddress *addr=(SalAddress*)it->data;
 		op->addRouteAddress(addr);
-		sal_address_destroy(addr);
+		sal_address_unref(addr);
 	}
 	bctbx_list_free(routes);
 }
@@ -6411,7 +6414,8 @@ bool_t linphone_core_is_network_reachable(LinphoneCore* lc) {
 }
 
 ortp_socket_t linphone_core_get_sip_socket(LinphoneCore *lc){
-	return lc->sal->getSocket();
+	ms_warning("linphone_core_get_sip_socket is deprecated");
+	return -1;
 }
 
 void linphone_core_destroy(LinphoneCore *lc){
@@ -7526,6 +7530,20 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 		err = belle_http_provider_send_request(lc->http_provider, request, lc->update_check_http_listener);
 	}
 #endif
+}
+
+int linphone_core_get_unread_chat_message_count (const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getUnreadChatMessageCount();
+}
+
+int linphone_core_get_unread_chat_message_count_from_local (const LinphoneCore *lc, const LinphoneAddress *address) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getUnreadChatMessageCount(
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(address))
+	);
+}
+
+int linphone_core_get_unread_chat_message_count_from_active_locals (const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getUnreadChatMessageCountFromActiveLocals();
 }
 
 bool_t linphone_core_has_crappy_opengl(LinphoneCore *lc) {

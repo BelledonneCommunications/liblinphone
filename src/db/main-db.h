@@ -100,6 +100,7 @@ public:
 
 	int getChatMessageCount (const ConferenceId &conferenceId = ConferenceId()) const;
 	int getUnreadChatMessageCount (const ConferenceId &conferenceId = ConferenceId()) const;
+
 	void markChatMessagesAsRead (const ConferenceId &conferenceId) const;
 	std::list<std::shared_ptr<ChatMessage>> getUnreadChatMessages (const ConferenceId &conferenceId) const;
 
@@ -155,6 +156,9 @@ public:
 	// ---------------------------------------------------------------------------
 
 	void loadChatMessageContents (const std::shared_ptr<ChatMessage> &chatMessage);
+
+	void disableDeliveryNotificationRequired (const std::shared_ptr<const EventLog> &eventLog);
+	void disableDisplayNotificationRequired (const std::shared_ptr<const EventLog> &eventLog);
 
 	// ---------------------------------------------------------------------------
 	// Chat rooms.

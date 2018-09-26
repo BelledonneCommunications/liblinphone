@@ -119,7 +119,7 @@ void sal_error_info_set(SalErrorInfo *ei, SalReason reason, const char *protocol
 	else{
 		ei->reason=reason;
 		if (code == 0) {
-			code = LinphonePrivate::to_sip_code(reason);
+			code = LinphonePrivate::toSipCode(reason);
 		}
 	}
 	ei->protocol_code=code;
