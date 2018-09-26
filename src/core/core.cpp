@@ -199,7 +199,7 @@ EncryptionEngine *Core::getEncryptionEngine () const {
 	return d->imee.get();
 }
 
-void Core::enableLimeV2 (bool enable) {
+void Core::enableLimeX3dh (bool enable) {
 	L_D();
 	if (!enable) {
 		if (d->imee != nullptr)
@@ -207,35 +207,35 @@ void Core::enableLimeV2 (bool enable) {
 		return;
 	}
 
-	if (limeV2Enabled())
+	if (limeX3dhEnabled())
 		return;
 
 	if (d->imee != nullptr)
 		d->imee.release();
 
-	LimeX3DHEncryptionEngine *limeV2Engine;
+	LimeX3DHEncryptionEngine *engine;
 	if (d->imee == nullptr) {
 		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
 		string filename = lp_config_get_string(lpconfig, "lime", "x3dh_db_path", "x3dh.c25519.sqlite3");
 		string dbAccess = getDataPath() + filename;
 
 		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
-		limeV2Engine = new LimeX3DHEncryptionEngine(dbAccess, prov, getCCore()); // getSharedFromThis()
+		engine = new LimeX3DHEncryptionEngine(dbAccess, prov, getCCore()); // getSharedFromThis()
 
-		setEncryptionEngine(limeV2Engine);
-		d->registerListener(limeV2Engine);
+		setEncryptionEngine(engine);
+		d->registerListener(engine);
 	}
 }
 
-void Core::updateLimeV2 (void) const {
+void Core::updateLimeX3dh (void) const {
 	L_D();
 
-	if (linphone_core_lime_v2_enabled(getCCore())) {
+	if (linphone_core_lime_x3dh_enabled(getCCore())) {
 		d->imee->update(getCCore()->config);
 	}
 }
 
-bool Core::limeV2Enabled (void) const {
+bool Core::limeX3dhEnabled (void) const {
 	L_D();
 	if (d->imee != nullptr && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3DHEncryptionEngine)
 		return true;
@@ -243,7 +243,7 @@ bool Core::limeV2Enabled (void) const {
 }
 
 // TODO does not work
-bool Core::limeV2Available(void) const {
+bool Core::limeX3dhAvailable(void) const {
 #ifdef HAVE_LIME
 	return true;
 #else

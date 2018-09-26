@@ -141,10 +141,10 @@ public:
 
 	EncryptionEngine *getEncryptionEngine () const;
 	void setEncryptionEngine (EncryptionEngine *imee);
-	void enableLimeV2 (bool enable);
-	void updateLimeV2 (void) const;
-	bool limeV2Enabled (void) const;
-	bool limeV2Available (void) const;
+	void enableLimeX3dh (bool enable);
+	void updateLimeX3dh (void) const;
+	bool limeX3dhEnabled (void) const;
+	bool limeX3dhAvailable (void) const;
 
 	// ---------------------------------------------------------------------------
 	// Misc.

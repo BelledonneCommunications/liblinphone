@@ -1336,7 +1336,7 @@ void linphone_proxy_config_update(LinphoneProxyConfig *cfg){
 			linphone_proxy_config_activate_sip_setup(cfg);
 		}
 		if (can_register(cfg)){
-			linphone_core_enable_lime_v2(lc, cfg->lime_v2);
+			linphone_core_enable_lime_x3dh(lc, cfg->lime_v2);
 			linphone_proxy_config_register(cfg);
 			cfg->commit=FALSE;
 		}

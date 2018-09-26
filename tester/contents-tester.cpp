@@ -29,7 +29,6 @@
 using namespace LinphonePrivate;
 using namespace std;
 
-// <<<<<<< HEAD:tester/content-manager-tester.cpp
 static const char *type1 = "application";
 static const char *type2 = "application";
 static const char *type3 = "application";

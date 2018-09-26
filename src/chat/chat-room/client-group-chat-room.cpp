@@ -23,7 +23,7 @@
 
 #include "address/address-p.h"
 #include "basic-to-client-group-chat-room.h"
-#include "chat/encryption/lime-v2.h"
+#include "chat/encryption/lime-x3dh-encryption-engine.h"
 #include "c-wrapper/c-wrapper.h"
 #include "client-group-chat-room-p.h"
 #include "conference/handlers/remote-conference-event-handler-p.h"
@@ -796,12 +796,12 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 	}
 
 	// Get LIMEv2 context if enabled and get the new device status
-	LimeV2 *limeV2Engine = nullptr;
+	LimeX3DHEncryptionEngine *engine = nullptr;
 	shared_ptr<ConferenceSecurityEvent> securityEvent;
 	bool securityLevelDegraded = false;
-	if (getCore()->limeV2Enabled()) {
-		limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
-		lime::PeerDeviceStatus newDeviceStatus = limeV2Engine->getLimeManager()->get_peerDeviceStatus(event->getDeviceAddress().asString());
+	if (getCore()->limeX3dhEnabled()) {
+		engine = static_cast<LimeX3DHEncryptionEngine *>(getCore()->getEncryptionEngine());
+		lime::PeerDeviceStatus newDeviceStatus = engine->getLimeManager()->get_peerDeviceStatus(event->getDeviceAddress().asString());
 
 		// If the new device degrades the chatroom security level it must be notified to the user
 		if (getSecurityLevel() == SecurityLevel::Safe && newDeviceStatus != lime::PeerDeviceStatus::trusted)
@@ -810,10 +810,10 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 
 	participant->getPrivate()->addDevice(event->getDeviceAddress());
 
-	if (limeV2Engine) {
+	if (engine) {
 		int nbDevice = int(participant->getPrivate()->getDevices().size());
 		int maxNbDevicesPerParticipant = linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())), "lime", "max_nb_device_per_participant", 1);
-		LimeX3DHEncryptionEngine *limeV2Engine = static_cast<LimeX3DHEncryptionEngine *>(getCore()->getEncryptionEngine());
+		LimeX3DHEncryptionEngine *engine = static_cast<LimeX3DHEncryptionEngine *>(getCore()->getEncryptionEngine());
 
 		// Check if the new participant device is unexpected in which case a security alert is created
 		if (nbDevice > maxNbDevicesPerParticipant) {
@@ -824,7 +824,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 				ConferenceSecurityEvent::SecurityEventType::MultideviceParticipantDetected,
 				event->getDeviceAddress()
 			);
-			limeV2Engine->getLimeManager()->set_peerDeviceStatus(event->getDeviceAddress().asString(), lime::PeerDeviceStatus::unsafe);
+			engine->getLimeManager()->set_peerDeviceStatus(event->getDeviceAddress().asString(), lime::PeerDeviceStatus::unsafe);
 		}
 		// Otherwise if the chatroom security level was degraded a corresponding security event is created
 		else {

@@ -1657,7 +1657,7 @@ void MediaSessionPrivate::setupZrtpHash (SalMediaDescription *md) {
 
 void MediaSessionPrivate::setupLimeIdentityKey (SalMediaDescription *md) {
 	L_Q();
-	if (!linphone_core_lime_v2_enabled(q->getCore()->getCCore())) {
+	if (!linphone_core_lime_x3dh_enabled(q->getCore()->getCCore())) {
 		lWarning() << "LIMEv2 disabled, unable to send lime identity key for ZRTP auxiliary shared secret";
 		return;
 	}
@@ -1676,11 +1676,11 @@ void MediaSessionPrivate::setupLimeIdentityKey (SalMediaDescription *md) {
 
 	// Get LIMEv2 context
 	vector<uint8_t> Ik;
-	LimeX3DHEncryptionEngine *limeV2Engine = static_cast<LimeX3DHEncryptionEngine*>(q->getCore()->getEncryptionEngine());
-	if (limeV2Engine) {
+	LimeX3DHEncryptionEngine *engine = static_cast<LimeX3DHEncryptionEngine*>(q->getCore()->getEncryptionEngine());
+	if (engine) {
 		try {
 			// Get self identity key from LIMEv2 engine
-			limeV2Engine->getLimeManager()->get_selfIdentityKey(localDeviceId, Ik);
+			engine->getLimeManager()->get_selfIdentityKey(localDeviceId, Ik);
 		} catch (const exception &e) {
 			lError() << e.what() << " while sending Ik for ZRTP auxiliary shared secret";
 			return;
@@ -4904,16 +4904,16 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 	}
 
 	// Get LIMEv2 context
-	LimeX3DHEncryptionEngine *limeV2Engine = nullptr;
-	if (linphone_core_lime_v2_enabled(getCore()->getCCore())) {
-		limeV2Engine = static_cast<LimeX3DHEncryptionEngine *>(getCore()->getEncryptionEngine());
+	LimeX3DHEncryptionEngine *engine = nullptr;
+	if (linphone_core_lime_x3dh_enabled(getCore()->getCCore())) {
+		engine = static_cast<LimeX3DHEncryptionEngine *>(getCore()->getEncryptionEngine());
 	}
 
 	char *peerDeviceId = nullptr;
 	vector<uint8_t> remoteIkB64_vector;
 	vector<uint8_t> remoteIk_vector;
 	IdentityAddress faultyDevice;
-	if (limeV2Engine) {
+	if (engine) {
 		// Get peer's Ik
 		const string &remoteIkB64_string(sal_custom_sdp_attribute_find(d->op->getRemoteMediaDescription()->custom_sdp_attributes, "Ik"));
 		remoteIkB64_vector = vector<uint8_t>(remoteIkB64_string.begin(), remoteIkB64_string.end());
@@ -4936,11 +4936,11 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 		else if (ms_zrtp_getAuxiliarySharedSecretMismatch(d->audioStream->ms.sessions.zrtp_context) == 0) {
 			try {
 				lInfo() << "SAS verified and Ik exchange successful";
-				limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
+				engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
 			} catch (const exception &e) {
 				// Ik error occured, the stored Ik is different from this Ik
 
-				lime::PeerDeviceStatus status = limeV2Engine->getLimeManager()->get_peerDeviceStatus(peerDeviceId);
+				lime::PeerDeviceStatus status = engine->getLimeManager()->get_peerDeviceStatus(peerDeviceId);
 				switch (status) {
 					case lime::PeerDeviceStatus::unsafe:
 						lWarning() << "LIMEv2 peer device " << peerDeviceId << " is unsafe and its lime identity key has changed";
@@ -4958,14 +4958,14 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 						break;
 				}
 
-				limeV2Engine->getLimeManager()->delete_peerDevice(peerDeviceId);
-				limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
+				engine->getLimeManager()->delete_peerDevice(peerDeviceId);
+				engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
 			}
 		}
 		// SAS is verified but the auxiliary secret mismatches
 		else {
 			ms_zrtp_sas_reset_verified(d->audioStream->ms.sessions.zrtp_context);
-			limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe);
+			engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe);
 			d->addSecurityEventInChatrooms(faultyDevice, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected);
 		}
 	}
@@ -4978,7 +4978,7 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 		// Set peer device to untrusted or unsafe depending on configuration
 		LinphoneConfig *lp_config = linphone_core_get_config(getCore()->getCCore());
 		lime::PeerDeviceStatus statusIfSASrefused = lp_config_get_int(lp_config, "lime", "unsafe_if_sas_refused", 1) ? lime::PeerDeviceStatus::unsafe : lime::PeerDeviceStatus::untrusted;
-		limeV2Engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, statusIfSASrefused);
+		engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, statusIfSASrefused);
 	}
 
 	ms_free(peerDeviceId);
