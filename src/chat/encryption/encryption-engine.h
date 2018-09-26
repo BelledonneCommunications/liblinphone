@@ -1,5 +1,5 @@
 /*
- * cpim-chat-message-modifier.h
+ * encryption-engine.h
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _L_ENCRYPTION_ENGINE_LISTENER_H_
-#define _L_ENCRYPTION_ENGINE_LISTENER_H_
+#ifndef _L_ENCRYPTION_ENGINE_H_
+#define _L_ENCRYPTION_ENGINE_H_
 
 #include <memory>
 
@@ -33,16 +33,16 @@ LINPHONE_BEGIN_NAMESPACE
 class AbstractChatRoom;
 class ChatMessage;
 
-class EncryptionEngineListener {
+class EncryptionEngine {
 public:
 	enum class EngineType {
 		Undefined = -1,
-		LimeV2 = 0,
+		LimeX3DHEncryptionEngine = 0,
 		//Another = 1,
 		//YetAnother = 2
 	};
 
-	virtual ~EncryptionEngineListener () = default;
+	virtual ~EncryptionEngine () = default;
 
 	virtual ChatMessageModifier::Result processOutgoingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) { return ChatMessageModifier::Result::Skipped; }
 	virtual ChatMessageModifier::Result processIncomingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) { return ChatMessageModifier::Result::Skipped; }
@@ -51,14 +51,14 @@ public:
 	virtual void generateFileTransferKey (const std::shared_ptr<AbstractChatRoom> &ChatRoom, const std::shared_ptr<ChatMessage> &message) {}
 	virtual int downloadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decryptedBuffer) { return 0; }
 	virtual int uploadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encryptedBuffer) { return 0; }
-	virtual EncryptionEngineListener::EngineType getEngineType () { return EngineType::Undefined; }
+	virtual EncryptionEngine::EngineType getEngineType () { return EngineType::Undefined; }
 	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const { return AbstractChatRoom::SecurityLevel::Unsafe; }
 	virtual void cleanDb () {}
 
 protected:
-	EncryptionEngineListener::EngineType engineType;
+	EncryptionEngine::EngineType engineType;
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // #define _L_ENCRYPTION_ENGINELISTENER_H_
+#endif // #define _L_ENCRYPTION_ENGINE_H_

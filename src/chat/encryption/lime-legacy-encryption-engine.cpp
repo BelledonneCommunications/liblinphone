@@ -1,5 +1,5 @@
 /*
- * encryption-chat-message-modifier.cpp
+ * lime-legacy-encryption-engine.cpp
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 #include "chat/chat-room/abstract-chat-room.h"
 #include "core/core.h"
 #include "c-wrapper/c-wrapper.h"
-#include "lime-backwards-compatible.h"
+#include "lime-legacy-encryption-engine.h"
 
 // =============================================================================
 
@@ -31,7 +31,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-ChatMessageModifier::Result LimeBackwardsCompatible::processOutgoingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
+ChatMessageModifier::Result LimeLegacyEncryptionEngine::processOutgoingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	if (!imee)
@@ -59,7 +59,7 @@ ChatMessageModifier::Result LimeBackwardsCompatible::processOutgoingMessage (con
 	return ChatMessageModifier::Result::Done;
 }
 
-ChatMessageModifier::Result LimeBackwardsCompatible::processIncomingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
+ChatMessageModifier::Result LimeLegacyEncryptionEngine::processIncomingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	if (!imee)
@@ -87,7 +87,7 @@ ChatMessageModifier::Result LimeBackwardsCompatible::processIncomingMessage (con
 	return ChatMessageModifier::Result::Done;
 }
 
-bool LimeBackwardsCompatible::encryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom> &chatRoom) {
+bool LimeLegacyEncryptionEngine::encryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
 	LinphoneImEncryptionEngineCbsIsEncryptionEnabledForFileTransferCb is_encryption_enabled_for_file_transfer_cb =
@@ -98,7 +98,7 @@ bool LimeBackwardsCompatible::encryptionEnabledForFileTransfer (const shared_ptr
 	return false;
 }
 
-void LimeBackwardsCompatible::generateFileTransferKey (const shared_ptr<AbstractChatRoom> &chatRoom, const shared_ptr<ChatMessage> &message) {
+void LimeLegacyEncryptionEngine::generateFileTransferKey (const shared_ptr<AbstractChatRoom> &chatRoom, const shared_ptr<ChatMessage> &message) {
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
 	LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb generate_file_transfer_key_cb =
@@ -108,7 +108,7 @@ void LimeBackwardsCompatible::generateFileTransferKey (const shared_ptr<Abstract
 	}
 }
 
-int LimeBackwardsCompatible::downloadingFile (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decryptedBuffer) {
+int LimeLegacyEncryptionEngine::downloadingFile (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decryptedBuffer) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
@@ -119,7 +119,7 @@ int LimeBackwardsCompatible::downloadingFile (const shared_ptr<ChatMessage> &mes
 	return -1;
 }
 
-int LimeBackwardsCompatible::uploadingFile (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encryptedBuffer) {
+int LimeLegacyEncryptionEngine::uploadingFile (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encryptedBuffer) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());
 	LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
@@ -130,6 +130,6 @@ int LimeBackwardsCompatible::uploadingFile (const shared_ptr<ChatMessage> &messa
 	return -1;
 }
 
-void LimeBackwardsCompatible::cleanDb () {}
+void LimeLegacyEncryptionEngine::cleanDb () {}
 
 LINPHONE_END_NAMESPACE

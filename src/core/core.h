@@ -38,7 +38,7 @@ class ConferenceId;
 class CorePrivate;
 class IdentityAddress;
 class AbstractChatRoom;
-class EncryptionEngineListener;
+class EncryptionEngine;
 
 class LINPHONE_PUBLIC Core : public Object {
 	friend class BasicToClientGroupChatRoom;
@@ -139,8 +139,8 @@ public:
 	// EncryptionEngine.
 	// ---------------------------------------------------------------------------
 
-	EncryptionEngineListener *getEncryptionEngine () const;
-	void setEncryptionEngine (EncryptionEngineListener *imee);
+	EncryptionEngine *getEncryptionEngine () const;
+	void setEncryptionEngine (EncryptionEngine *imee);
 	void enableLimeV2 (bool enable);
 	void updateLimeV2 (void) const;
 	bool limeV2Enabled (void) const;

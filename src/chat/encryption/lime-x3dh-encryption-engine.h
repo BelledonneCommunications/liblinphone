@@ -1,5 +1,5 @@
 /*
- * lime-v2.h
+ * lime-x3dh-encryption-engine.h
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,14 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _L_LIME_V2_H_
-#define _L_LIME_V2_H_
+#ifndef _L_LIME_X3DH_ENCRYPTION_ENGINE_H_
+#define _L_LIME_X3DH_ENCRYPTION_ENGINE_H_
 
 #include "belle-sip/belle-sip.h"
 #include "belle-sip/http-listener.h"
 #include "carddav.h"
 #include "core/core-listener.h"
-#include "encryption-engine-listener.h"
+#include "encryption-engine.h"
 #include "lime/lime.hpp"
 
 // =============================================================================
@@ -65,15 +65,15 @@ private:
 	static void processAuthRequested (void *data, belle_sip_auth_event_t *event) noexcept;
 };
 
-class LimeV2 : public EncryptionEngineListener, public CoreListener {
+class LimeX3DHEncryptionEngine : public EncryptionEngine, public CoreListener { // , public CoreAccessor
 public:
-	LimeV2 (const std::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc);
+	LimeX3DHEncryptionEngine (const std::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc);
 	std::shared_ptr<BelleSipLimeManager> getLimeManager ();
 	lime::limeCallback setLimeCallback (std::string operation);
 	std::string getX3dhServerUrl () const;
 	lime::CurveId getCurveId () const;
 
-	// EncryptionEngineListener overrides
+	// EncryptionEngine overrides
 	ChatMessageModifier::Result processIncomingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
 	ChatMessageModifier::Result processOutgoingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
 	void update (LinphoneConfig *lpconfig) override;
@@ -81,7 +81,7 @@ public:
 	void generateFileTransferKey (const std::shared_ptr<AbstractChatRoom> &ChatRoom, const std::shared_ptr<ChatMessage> &message) override;
 	int downloadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) override;
 	int uploadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer) override;
-	EncryptionEngineListener::EngineType getEngineType () override;
+	EncryptionEngine::EngineType getEngineType () override;
 	AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const override;
 	void cleanDb () override;
 
@@ -99,4 +99,4 @@ private:
 
 LINPHONE_END_NAMESPACE
 
-#endif // _L_LIME_V2_H_
+#endif // _L_LIME_X3DH_ENCRYPTION_ENGINE_H_

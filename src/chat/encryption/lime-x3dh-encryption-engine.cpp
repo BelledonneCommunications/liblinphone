@@ -1,5 +1,5 @@
 /*
- * lime-v2.cpp
+ * lime-x3dh-encryption-engine.cpp
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include "core/core.h"
 #include "c-wrapper/c-wrapper.h"
 #include "event-log/conference/conference-security-event.h"
-#include "lime-v2.h"
+#include "lime-x3dh-encryption-engine.h"
 #include "private.h"
 
 using namespace std;
@@ -108,8 +108,8 @@ BelleSipLimeManager::BelleSipLimeManager (const string &dbAccess, belle_http_pro
 }) {
 }
 
-LimeV2::LimeV2 (const std::string &dbAccess, belle_http_provider_t *prov, LinphoneCore *lc) {
-	engineType = EncryptionEngineListener::EngineType::LimeV2;
+LimeX3DHEncryptionEngine::LimeX3DHEncryptionEngine (const std::string &dbAccess, belle_http_provider_t *prov, LinphoneCore *lc) {
+	engineType = EncryptionEngine::EngineType::LimeX3DHEncryptionEngine;
 	curve = lime::CurveId::c25519; // c448
 	_dbAccess = dbAccess;
 	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(dbAccess, prov, lc));
@@ -119,15 +119,15 @@ LimeV2::LimeV2 (const std::string &dbAccess, belle_http_provider_t *prov, Linpho
 		lError() << "LIMEv2 X3DH server URL unavailable for encryption engine";
 }
 
-string LimeV2::getX3dhServerUrl () const {
+string LimeX3DHEncryptionEngine::getX3dhServerUrl () const {
 	return x3dhServerUrl;
 }
 
-lime::CurveId LimeV2::getCurveId () const {
+lime::CurveId LimeX3DHEncryptionEngine::getCurveId () const {
 	return curve;
 }
 
-ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
+ChatMessageModifier::Result LimeX3DHEncryptionEngine::processOutgoingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
 	// We use a shared_ptr here due to non synchronism with the lambda in the encrypt method
 	shared_ptr<ChatMessageModifier::Result> result =  make_shared<ChatMessageModifier::Result>(ChatMessageModifier::Result::Suspended);
     shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
@@ -264,7 +264,7 @@ ChatMessageModifier::Result LimeV2::processOutgoingMessage (const shared_ptr<Cha
 	return *result;
 }
 
-ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
+ChatMessageModifier::Result LimeX3DHEncryptionEngine::processIncomingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
 	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 	const string &recipientUserId = chatRoom->getPeerAddress().getAddressWithoutGruu().asString();
@@ -386,17 +386,18 @@ ChatMessageModifier::Result LimeV2::processIncomingMessage (const shared_ptr<Cha
 	return ChatMessageModifier::Result::Done;
 }
 
-void LimeV2::update (LinphoneConfig *lpconfig) {
+void LimeX3DHEncryptionEngine::update (LinphoneConfig *lpconfig) {
 	lime::limeCallback callback = setLimeCallback("Keys update");
+
 	belleSipLimeManager->update(callback);
 	lp_config_set_int(lpconfig, "lime", "last_lime_update_time", (int)lastLimeUpdate);
 }
 
-bool LimeV2::encryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom> &chatRoom) {
+bool LimeX3DHEncryptionEngine::encryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	return true;
 }
 
-void LimeV2::generateFileTransferKey (const shared_ptr<AbstractChatRoom> &chatRoom, const shared_ptr<ChatMessage> &message) {
+void LimeX3DHEncryptionEngine::generateFileTransferKey (const shared_ptr<AbstractChatRoom> &chatRoom, const shared_ptr<ChatMessage> &message) {
 	size_t FILE_TRANSFER_KEY_SIZE = 32;
 	char keyBuffer [FILE_TRANSFER_KEY_SIZE];// temporary storage of generated key: 192 bits of key + 64 bits of initial vector
 	// generate a random 192 bits key + 64 bits of initial vector and store it into the file_transfer_information->key field of the msg
@@ -411,7 +412,7 @@ void LimeV2::generateFileTransferKey (const shared_ptr<AbstractChatRoom> &chatRo
 	}
 }
 
-int LimeV2::downloadingFile (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) {
+int LimeX3DHEncryptionEngine::downloadingFile (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) {
 	const Content *content = message->getPrivate()->getFileTransferContent();
 	if (!content)
 		return -1;
@@ -436,7 +437,7 @@ int LimeV2::downloadingFile (const shared_ptr<ChatMessage> &message, size_t offs
 	return 0;
 }
 
-int LimeV2::uploadingFile (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer) {
+int LimeX3DHEncryptionEngine::uploadingFile (const shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer) {
 	const Content *content = message->getPrivate()->getFileTransferContent();
 	if (!content)
 		return -1;
@@ -468,11 +469,11 @@ int LimeV2::uploadingFile (const shared_ptr<ChatMessage> &message, size_t offset
 	return 0;
 }
 
-EncryptionEngineListener::EngineType LimeV2::getEngineType () {
+EncryptionEngine::EngineType LimeX3DHEncryptionEngine::getEngineType () {
 	return engineType;
 }
 
-AbstractChatRoom::SecurityLevel LimeV2::getSecurityLevel (const string &deviceId) const {
+AbstractChatRoom::SecurityLevel LimeX3DHEncryptionEngine::getSecurityLevel (const string &deviceId) const {
 	lime::PeerDeviceStatus status = belleSipLimeManager->get_peerDeviceStatus(deviceId);
 	switch (status) {
 		case lime::PeerDeviceStatus::unknown:
@@ -488,19 +489,19 @@ AbstractChatRoom::SecurityLevel LimeV2::getSecurityLevel (const string &deviceId
 	}
 }
 
-void LimeV2::cleanDb () {
+void LimeX3DHEncryptionEngine::cleanDb () {
 	remove(_dbAccess.c_str());
 }
 
-void LimeV2::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
+void LimeX3DHEncryptionEngine::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
 	// TODO Work in progress
 }
 
-std::shared_ptr<BelleSipLimeManager> LimeV2::getLimeManager () {
+std::shared_ptr<BelleSipLimeManager> LimeX3DHEncryptionEngine::getLimeManager () {
 	return belleSipLimeManager;
 }
 
-lime::limeCallback LimeV2::setLimeCallback (string operation) {
+lime::limeCallback LimeX3DHEncryptionEngine::setLimeCallback (string operation) {
 	lime::limeCallback callback([operation](lime::CallbackReturn returnCode, string anythingToSay) {
 		if (returnCode == lime::CallbackReturn::success) {
 			lInfo() << "Lime operation successful: " << operation;
@@ -511,7 +512,7 @@ lime::limeCallback LimeV2::setLimeCallback (string operation) {
 	return callback;
 }
 
-void LimeV2::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const string &message) {
+void LimeX3DHEncryptionEngine::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const string &message) {
 	if (state == LinphoneRegistrationState::LinphoneRegistrationOk) {
 
 		if (x3dhServerUrl.empty()) {

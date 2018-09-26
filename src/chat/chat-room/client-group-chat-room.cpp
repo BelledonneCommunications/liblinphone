@@ -795,7 +795,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 	if (getCore()->limeV2Enabled()) {
 		int nbDevice = int(participant->getPrivate()->getDevices().size());
 		int maxNbDevicesPerParticipant = linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())), "lime", "max_nb_device_per_participant", 1);
-		LimeV2 *limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
+		LimeX3DHEncryptionEngine *limeV2Engine = static_cast<LimeX3DHEncryptionEngine *>(getCore()->getEncryptionEngine());
 
 		// Check if the new participant device is unexpected, in which case a security alert is created
 		if (nbDevice >= maxNbDevicesPerParticipant) {

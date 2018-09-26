@@ -24,7 +24,7 @@
 #include "bzrtp/bzrtp.h"
 #include "call/call-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
-#include "chat/encryption/lime-v2.h"
+#include "chat/encryption/lime-x3dh-encryption-engine.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant-p.h"
 #include "conference/session/media-session-p.h"
@@ -1664,7 +1664,7 @@ void MediaSessionPrivate::setupLimeIdentityKey (SalMediaDescription *md) {
 
 	// Get LIMEv2 context
 	vector<uint8_t> Ik;
-	LimeV2 *limeV2Engine = static_cast<LimeV2*>(q->getCore()->getEncryptionEngine());
+	LimeX3DHEncryptionEngine *limeV2Engine = static_cast<LimeX3DHEncryptionEngine*>(q->getCore()->getEncryptionEngine());
 	if (limeV2Engine) {
 		try {
 			// Get self identity key from LIMEv2 engine
@@ -1688,7 +1688,7 @@ void MediaSessionPrivate::setupLimeIdentityKey (SalMediaDescription *md) {
 	md->custom_sdp_attributes = sal_custom_sdp_attribute_append(md->custom_sdp_attributes, "Ik", IkB64_char);
 }
 
-void MediaSessionPrivate::setupEncryptionKeys (SalMediaDescription *md) {
+void MediaSessionPrivate::setupEncryptionKeys (SalMediaDescription *md) { // setupEncryptionParameters
 	L_Q();
 	SalMediaDescription *oldMd = localDesc;
 	bool keepSrtpKeys = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
@@ -4891,9 +4891,9 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 	}
 
 	// Get LIMEv2 context
-	LimeV2 *limeV2Engine = nullptr;
+	LimeX3DHEncryptionEngine *limeV2Engine = nullptr;
 	if (linphone_core_lime_v2_enabled(getCore()->getCCore())) {
-		limeV2Engine = static_cast<LimeV2 *>(getCore()->getEncryptionEngine());
+		limeV2Engine = static_cast<LimeX3DHEncryptionEngine *>(getCore()->getEncryptionEngine());
 	}
 
 	char *peerDeviceId;

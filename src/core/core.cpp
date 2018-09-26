@@ -24,7 +24,7 @@
 
 #include "address/address-p.h"
 #include "call/call.h"
-#include "chat/encryption/lime-v2.h"
+#include "chat/encryption/lime-x3dh-encryption-engine.h"
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
 #include "core/core-listener.h"
@@ -190,12 +190,12 @@ string Core::getConfigPath () const {
 
 // =============================================================================
 
-void Core::setEncryptionEngine (EncryptionEngineListener *imee) {
+void Core::setEncryptionEngine (EncryptionEngine *imee) {
 	L_D();
 	d->imee.reset(imee);
 }
 
-EncryptionEngineListener *Core::getEncryptionEngine () const {
+EncryptionEngine *Core::getEncryptionEngine () const {
 	L_D();
 	return d->imee.get();
 }
@@ -214,14 +214,14 @@ void Core::enableLimeV2 (bool enable) {
 	if (d->imee != nullptr)
 		d->imee.release();
 
-	LimeV2 *limeV2Engine;
+	LimeX3DHEncryptionEngine *limeV2Engine;
 	if (d->imee == nullptr) {
 		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
 		string filename = lp_config_get_string(lpconfig, "lime", "x3dh_db_path", "x3dh.c25519.sqlite3");
 		string dbAccess = getDataPath() + filename;
 
 		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
-		limeV2Engine = new LimeV2(dbAccess, prov, getCCore());
+		limeV2Engine = new LimeX3DHEncryptionEngine(dbAccess, prov, getCCore()); // getSharedFromThis()
 
 		setEncryptionEngine(limeV2Engine);
 		d->registerListener(limeV2Engine);
@@ -238,7 +238,7 @@ void Core::updateLimeV2 (void) const {
 
 bool Core::limeV2Enabled (void) const {
 	L_D();
-	if (d->imee != nullptr && d->imee->getEngineType() == EncryptionEngineListener::EngineType::LimeV2)
+	if (d->imee != nullptr && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3DHEncryptionEngine)
 		return true;
 	return false;
 }
