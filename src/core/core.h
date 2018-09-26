@@ -24,6 +24,7 @@
 
 #include "object/object.h"
 
+#include "chat/chat-room/abstract-chat-room.h"
 #include "linphone/types.h"
 
 // =============================================================================
@@ -32,13 +33,9 @@ L_DECL_C_STRUCT(LinphoneCore);
 
 LINPHONE_BEGIN_NAMESPACE
 
-class Address;
 class Call;
-class ConferenceId;
 class CorePrivate;
-class IdentityAddress;
-class AbstractChatRoom;
-class EncryptionEngineListener;
+class EncryptionEngine;
 
 class LINPHONE_PUBLIC Core : public Object {
 	friend class BasicToClientGroupChatRoom;
@@ -139,12 +136,12 @@ public:
 	// EncryptionEngine.
 	// ---------------------------------------------------------------------------
 
-	EncryptionEngineListener *getEncryptionEngine () const;
-	void setEncryptionEngine (EncryptionEngineListener *imee);
-	void enableLimeV2 (bool enable);
-	void updateLimeV2 (void) const;
-	bool limeV2Enabled (void) const;
-	bool limeV2Available (void) const;
+	EncryptionEngine *getEncryptionEngine () const;
+	void setEncryptionEngine (EncryptionEngine *imee);
+	void enableLimeX3dh (bool enable);
+	void updateLimeX3dh () const;
+	bool limeX3dhEnabled () const;
+	bool limeX3dhAvailable () const;
 
 	// ---------------------------------------------------------------------------
 	// Misc.

@@ -31,7 +31,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class CoreListener;
-class EncryptionEngineListener;
+class EncryptionEngine;
 class LocalConferenceListEventHandler;
 class RemoteConferenceListEventHandler;
 
@@ -86,7 +86,7 @@ private:
 
 	std::unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>> chatRoomsById;
 
-	std::unique_ptr<EncryptionEngineListener> imee;
+	std::unique_ptr<EncryptionEngine> imee;
 
 	// Ugly cache to deal with C code.
 	std::unordered_map<const AbstractChatRoom *, std::shared_ptr<const AbstractChatRoom>> noCreatedClientGroupChatRooms;
