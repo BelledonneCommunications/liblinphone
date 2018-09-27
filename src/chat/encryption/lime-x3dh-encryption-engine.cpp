@@ -108,13 +108,13 @@ BelleSipLimeManager::BelleSipLimeManager (const string &dbAccess, belle_http_pro
 }) {
 }
 
-LimeX3DHEncryptionEngine::LimeX3DHEncryptionEngine (const std::string &dbAccess, belle_http_provider_t *prov, LinphoneCore *lc) {
+LimeX3DHEncryptionEngine::LimeX3DHEncryptionEngine (const std::string &dbAccess, belle_http_provider_t *prov, shared_ptr<Core> core) : CoreAccessor(core) {
 	engineType = EncryptionEngine::EngineType::LimeX3DHEncryptionEngine;
 	curve = lime::CurveId::c25519; // c448
 	_dbAccess = dbAccess;
-	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(dbAccess, prov, lc));
-	lastLimeUpdate = linphone_config_get_int(lc->config, "lime", "last_lime_update_time", 0);
-	x3dhServerUrl = linphone_config_get_string(linphone_core_get_config(lc), "lime", "x3dh_server_url", "");
+	belleSipLimeManager = unique_ptr<BelleSipLimeManager>(new BelleSipLimeManager(dbAccess, prov, core->getCCore()));
+	lastLimeUpdate = linphone_config_get_int(core->getCCore()->config, "lime", "last_lime_update_time", 0);
+	x3dhServerUrl = linphone_config_get_string(linphone_core_get_config(core->getCCore()), "lime", "x3dh_server_url", "");
 	if (x3dhServerUrl.empty())
 		lError() << "LIMEv2 X3DH server URL unavailable for encryption engine";
 }
@@ -491,9 +491,9 @@ AbstractChatRoom::SecurityLevel LimeX3DHEncryptionEngine::getSecurityLevel (cons
 }
 
 // TODO return pointer on the list
-list<pair<string,string>> LimeX3DHEncryptionEngine::getEncryptionParameters (shared_ptr<Core> core) {
+list<pair<string,string>> LimeX3DHEncryptionEngine::getEncryptionParameters () {
 	// Get proxy config
-	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(core->getCCore());
+	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(getCore()->getCCore());
 	if (!proxy) {
 		lWarning() << "No proxy config available, unable to setup LIMEv2 identity key for ZRTP auxiliary shared secret";
 		return {};
@@ -568,7 +568,7 @@ void LimeX3DHEncryptionEngine::mutualAuthentication (SalMediaDescription *localM
 		lError() << "ZRTP auxiliary shared secret mismatch 0x" << hex << retval;
 }
 
-void LimeX3DHEncryptionEngine::authenticationVerified (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext, shared_ptr<Core> core) {
+void LimeX3DHEncryptionEngine::authenticationVerified (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) {
 
 	// TEST
 // 	const char *peerDeviceId = peerDeviceAddr.asString().c_str();
@@ -606,7 +606,7 @@ void LimeX3DHEncryptionEngine::authenticationVerified (const char *peerDeviceId,
 				case lime::PeerDeviceStatus::untrusted:
 					lWarning() << "LIMEv2 peer device " << peerDeviceId << " is untrusted and its lime identity key has changed";
 					// TODO specific alert to warn the user that previous messages are compromised
-					addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged, core);
+					addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged);
 					break;
 				case lime::PeerDeviceStatus::trusted:
 					lError() << "LIMEv2 peer device " << peerDeviceId << " is already trusted but its lime identity key has changed";
@@ -626,11 +626,11 @@ void LimeX3DHEncryptionEngine::authenticationVerified (const char *peerDeviceId,
 	else {
 		ms_zrtp_sas_reset_verified(zrtpContext);
 		belleSipLimeManager->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe);
-		addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected, core);
+		addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected);
 	}
 }
 
-void LimeX3DHEncryptionEngine::authenticationRejected (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext, shared_ptr<Core> core) {
+void LimeX3DHEncryptionEngine::authenticationRejected (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) {
 
 	// TEST
 // 	const char *peerDeviceId = peerDeviceAddr.asString().c_str();
@@ -644,16 +644,16 @@ void LimeX3DHEncryptionEngine::authenticationRejected (const char *peerDeviceId,
 
 	// TODO explain
 	const IdentityAddress peerDeviceAddr = IdentityAddress(peerDeviceId);
-	addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected, core);
+	addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected);
 
 	// Set peer device to untrusted or unsafe depending on configuration
-	LinphoneConfig *lp_config = linphone_core_get_config(core->getCCore());
+	LinphoneConfig *lp_config = linphone_core_get_config(getCore()->getCCore());
 	lime::PeerDeviceStatus statusIfSASrefused = lp_config_get_int(lp_config, "lime", "unsafe_if_sas_refused", 1) ? lime::PeerDeviceStatus::unsafe : lime::PeerDeviceStatus::untrusted;
 	belleSipLimeManager->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, statusIfSASrefused);
 }
 
-void LimeX3DHEncryptionEngine::addSecurityEventInChatrooms (const IdentityAddress &peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType securityEventType, shared_ptr<Core> core) {
-	const list<shared_ptr<AbstractChatRoom>> chatRooms = core->getChatRooms();
+void LimeX3DHEncryptionEngine::addSecurityEventInChatrooms (const IdentityAddress &peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType securityEventType) {
+	const list<shared_ptr<AbstractChatRoom>> chatRooms = getCore()->getChatRooms();
 	for (const auto &chatRoom : chatRooms) {
 		if (chatRoom->findParticipant(peerDeviceAddr)) {
 			shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(

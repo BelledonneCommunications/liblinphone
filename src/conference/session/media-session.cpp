@@ -1659,7 +1659,7 @@ void MediaSessionPrivate::setupImEncryptionEngineParameters (SalMediaDescription
 	if (!q->getCore()->getEncryptionEngine())
 		return;
 
-	list<pair<string,string>> paramList = q->getCore()->getEncryptionEngine()->getEncryptionParameters(q->getCore());
+	list<pair<string,string>> paramList = q->getCore()->getEncryptionEngine()->getEncryptionParameters();
 
 	// Loop over IM Encryption Engine parameters and append them to the SDP
 	for (const auto &param : paramList) {
@@ -4835,7 +4835,7 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 		ms_zrtp_sas_verified(d->audioStream->ms.sessions.zrtp_context);
 
 		if (engine)
-			engine->authenticationVerified(peerDeviceId, d->op->getRemoteMediaDescription(), d->audioStream->ms.sessions.zrtp_context, getCore());
+			engine->authenticationVerified(peerDeviceId, d->op->getRemoteMediaDescription(), d->audioStream->ms.sessions.zrtp_context);
 	}
 
 	// SAS rejected
@@ -4843,7 +4843,7 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 		ms_zrtp_sas_reset_verified(d->audioStream->ms.sessions.zrtp_context);
 
 		if (engine)
-			engine->authenticationRejected(peerDeviceId, d->op->getRemoteMediaDescription(), d->audioStream->ms.sessions.zrtp_context, getCore());
+			engine->authenticationRejected(peerDeviceId, d->op->getRemoteMediaDescription(), d->audioStream->ms.sessions.zrtp_context);
 	}
 
 	ms_free(peerDeviceId);

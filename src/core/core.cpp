@@ -220,7 +220,7 @@ void Core::enableLimeX3dh (bool enable) {
 		string dbAccess = getDataPath() + filename;
 
 		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
-		engine = new LimeX3DHEncryptionEngine(dbAccess, prov, getCCore()); // getSharedFromThis()
+		engine = new LimeX3DHEncryptionEngine(dbAccess, prov, getSharedFromThis());
 
 		setEncryptionEngine(engine);
 		d->registerListener(engine);

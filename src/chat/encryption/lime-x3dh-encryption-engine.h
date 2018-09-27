@@ -65,9 +65,9 @@ private:
 	static void processAuthRequested (void *data, belle_sip_auth_event_t *event) noexcept;
 };
 
-class LimeX3DHEncryptionEngine : public EncryptionEngine, public CoreListener { // , public CoreAccessor
+class LimeX3DHEncryptionEngine : public EncryptionEngine, public CoreListener, public CoreAccessor {
 public:
-	LimeX3DHEncryptionEngine (const std::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc);
+	LimeX3DHEncryptionEngine (const std::string &db_access, belle_http_provider_t *prov, std::shared_ptr<Core> core);
 	std::shared_ptr<BelleSipLimeManager> getLimeManager ();
 	lime::limeCallback setLimeCallback (std::string operation);
 	std::string getX3dhServerUrl () const;
@@ -83,11 +83,11 @@ public:
 	int uploadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer) override;
 	EncryptionEngine::EngineType getEngineType () override;
 	AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const override;
-	std::list<std::pair<std::string, std::string>> getEncryptionParameters (std::shared_ptr<Core> core) override;
+	std::list<std::pair<std::string, std::string>> getEncryptionParameters () override;
 	void mutualAuthentication (SalMediaDescription *localMediaDescription, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext, LinphoneCallDir direction) override;
-	void authenticationVerified (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext, std::shared_ptr<Core> core) override;
-	void authenticationRejected (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext, std::shared_ptr<Core> core) override;
-	void addSecurityEventInChatrooms (const IdentityAddress &peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType securityEventType, std::shared_ptr<Core> core) override;
+	void authenticationVerified (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) override;
+	void authenticationRejected (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) override;
+	void addSecurityEventInChatrooms (const IdentityAddress &peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType securityEventType) override;
 	void cleanDb () override;
 
 	// CoreListener overrides

@@ -56,11 +56,11 @@ public:
 	virtual void update (LinphoneConfig *lpconfig) {}
 	virtual EncryptionEngine::EngineType getEngineType () { return EngineType::Undefined; }
 	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const { return AbstractChatRoom::SecurityLevel::Unsafe; }
-	virtual std::list<std::pair<std::string, std::string>> getEncryptionParameters (std::shared_ptr<Core> core) { return {}; }
+	virtual std::list<std::pair<std::string, std::string>> getEncryptionParameters () { return {}; }
 	virtual void mutualAuthentication (SalMediaDescription *localMediaDescription, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext, LinphoneCallDir direction) {}
-	virtual void authenticationVerified (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext, std::shared_ptr<Core> core) {}
-	virtual void authenticationRejected (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext, std::shared_ptr<Core> core) {}
-	virtual void addSecurityEventInChatrooms (const IdentityAddress &peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType securityEventType, std::shared_ptr<Core> core) {}
+	virtual void authenticationVerified (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) {}
+	virtual void authenticationRejected (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) {}
+	virtual void addSecurityEventInChatrooms (const IdentityAddress &peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType securityEventType) {}
 	virtual void cleanDb () {}
 
 protected:
