@@ -490,6 +490,184 @@ AbstractChatRoom::SecurityLevel LimeX3DHEncryptionEngine::getSecurityLevel (cons
 	}
 }
 
+// TODO return pointer on the list
+list<pair<string,string>> LimeX3DHEncryptionEngine::getEncryptionParameters (shared_ptr<Core> core) {
+	// Get proxy config
+	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(core->getCCore());
+	if (!proxy) {
+		lWarning() << "No proxy config available, unable to setup LIMEv2 identity key for ZRTP auxiliary shared secret";
+		return {};
+	}
+
+	// Get local device Id from local contact address
+	const LinphoneAddress *contactAddress = linphone_proxy_config_get_contact(proxy);
+	IdentityAddress identityAddress = IdentityAddress(linphone_address_as_string(contactAddress));
+	string localDeviceId = identityAddress.asString();
+
+	vector<uint8_t> Ik;
+	belleSipLimeManager->get_selfIdentityKey(localDeviceId, Ik);
+// 	getLimeManager()->get_selfIdentityKey(localDeviceId, Ik);
+
+	if (Ik.empty()) {
+		lWarning() << "No identity key available, unable to setup lime identity key for ZRTP auxiliary shared secret";
+		return {};
+	}
+
+	// Encode to base64 and append to the parameter list
+	list<pair<string,string>> paramList;
+	vector<uint8_t> IkB64_vector = encodeBase64(Ik);
+	string IkB64_string(IkB64_vector.begin(), IkB64_vector.end());
+	paramList.push_back(make_pair("Ik", IkB64_string));
+	return paramList;
+}
+
+void LimeX3DHEncryptionEngine::mutualAuthentication (SalMediaDescription *localMediaDescription, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext, LinphoneCallDir direction) {
+	// Get local and remote identity keys from sdp attributes
+	const char *charLocalIk = sal_custom_sdp_attribute_find(localMediaDescription->custom_sdp_attributes, "Ik");
+	const char *charRemoteIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik");
+
+	// If LIMEv2 is disabled there might not be identity keys
+	if (!charLocalIk || !charRemoteIk) {
+		lError() << "Missing identity keys for mutual authentication";
+		return;
+	}
+
+	const string &stringB64LocalIk(charLocalIk);
+	const string &stringB64RemoteIk(charRemoteIk);
+
+	// Convert to vectors and decode base64
+	vector<uint8_t> localIk = vector<uint8_t>(stringB64LocalIk.begin(), stringB64LocalIk.end());
+	vector<uint8_t> remoteIk = vector<uint8_t>(stringB64RemoteIk.begin(), stringB64RemoteIk.end());
+	localIk = decodeBase64(localIk);
+	remoteIk = decodeBase64(remoteIk);
+
+	// Concatenate identity keys in the right order
+	vector<uint8_t> vectorAuxSharedSecret;
+	if (direction == LinphoneCallDir::LinphoneCallOutgoing) {
+		localIk.insert(localIk.end(), remoteIk.begin(), remoteIk.end());
+		vectorAuxSharedSecret = localIk;
+	} else if (direction == LinphoneCallDir::LinphoneCallIncoming) {
+		remoteIk.insert(remoteIk.end(), localIk.begin(), localIk.end());
+		vectorAuxSharedSecret = remoteIk;
+	} else {
+		lError() << "Unknown call direction for mutual authentication";
+		return;
+	}
+
+	if (vectorAuxSharedSecret.empty()) {
+		lError() << "Empty auxiliary shared secret for mutual authentication";
+		return;
+	}
+
+	// Set the auxiliary shared secret in ZRTP
+	size_t auxSharedSecretLength = vectorAuxSharedSecret.size();
+	const uint8_t *auxSharedSecret = vectorAuxSharedSecret.data();
+	lInfo() << "Setting ZRTP auxiliary shared secret after identity key concatenation";
+	int retval = ms_zrtp_setAuxiliarySharedSecret(zrtpContext, auxSharedSecret, auxSharedSecretLength);
+	if (retval != 0)
+		lError() << "ZRTP auxiliary shared secret mismatch 0x" << hex << retval;
+}
+
+void LimeX3DHEncryptionEngine::authenticationVerified (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext, shared_ptr<Core> core) {
+
+	// TEST
+// 	const char *peerDeviceId = peerDeviceAddr.asString().c_str();
+// 	cout << endl << "authenticationVerified" << endl;
+// 	cout << "peerDeviceAddr = " << peerDeviceAddr << endl;
+// 	cout << "peerDeviceAddr.asString() = " << peerDeviceAddr.asString() << endl;
+// 	cout << "peerDeviceAddr.asString().c_str() = " << peerDeviceAddr.asString().c_str() << endl;
+// 	cout << "peerDeviceId = " << peerDeviceId << endl;
+// 	string testString = string(peerDeviceId);
+// 	cout << "testString = " << testString << endl;
+
+	// Get peer's Ik
+	vector<uint8_t> remoteIkB64_vector;
+	vector<uint8_t> remoteIk_vector;
+	const string &remoteIkB64_string(sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik"));
+	remoteIkB64_vector = vector<uint8_t>(remoteIkB64_string.begin(), remoteIkB64_string.end());
+	remoteIk_vector = decodeBase64(remoteIkB64_vector);
+	const IdentityAddress peerDeviceAddr = IdentityAddress(peerDeviceId);
+
+	if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 2) {
+		lInfo() << "No auxiliary shared secret exchange because LIMEv2 disabled";
+	}
+	// SAS is verified and the auxiliary secret matches so we can trust this peer device
+	else if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 0) {
+		try {
+			lInfo() << "SAS verified and Ik exchange successful";
+			belleSipLimeManager->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
+		} catch (const exception &e) {
+			// Ik error occured, the stored Ik is different from this Ik
+			lime::PeerDeviceStatus status = belleSipLimeManager->get_peerDeviceStatus(peerDeviceId);
+			switch (status) {
+				case lime::PeerDeviceStatus::unsafe:
+					lWarning() << "LIMEv2 peer device " << peerDeviceId << " is unsafe and its lime identity key has changed";
+					break;
+				case lime::PeerDeviceStatus::untrusted:
+					lWarning() << "LIMEv2 peer device " << peerDeviceId << " is untrusted and its lime identity key has changed";
+					// TODO specific alert to warn the user that previous messages are compromised
+					addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged, core);
+					break;
+				case lime::PeerDeviceStatus::trusted:
+					lError() << "LIMEv2 peer device " << peerDeviceId << " is already trusted but its lime identity key has changed";
+					break;
+				case lime::PeerDeviceStatus::unknown:
+				case lime::PeerDeviceStatus::fail:
+					lError() << "LIMEv2 peer device " << peerDeviceId << " is unknown but its lime identity key has changed";
+					break;
+			}
+
+			// Delete current peer device data and replace it with the new Ik and a trusted status
+			belleSipLimeManager->delete_peerDevice(peerDeviceId);
+			belleSipLimeManager->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
+		}
+	}
+	// SAS is verified but the auxiliary secret mismatches
+	else {
+		ms_zrtp_sas_reset_verified(zrtpContext);
+		belleSipLimeManager->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe);
+		addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected, core);
+	}
+}
+
+void LimeX3DHEncryptionEngine::authenticationRejected (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext, shared_ptr<Core> core) {
+
+	// TEST
+// 	const char *peerDeviceId = peerDeviceAddr.asString().c_str();
+
+	// Get peer's Ik
+	vector<uint8_t> remoteIkB64_vector;
+	vector<uint8_t> remoteIk_vector;
+	const string &remoteIkB64_string(sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik"));
+	remoteIkB64_vector = vector<uint8_t>(remoteIkB64_string.begin(), remoteIkB64_string.end());
+	remoteIk_vector = decodeBase64(remoteIkB64_vector);
+
+	// TODO explain
+	const IdentityAddress peerDeviceAddr = IdentityAddress(peerDeviceId);
+	addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected, core);
+
+	// Set peer device to untrusted or unsafe depending on configuration
+	LinphoneConfig *lp_config = linphone_core_get_config(core->getCCore());
+	lime::PeerDeviceStatus statusIfSASrefused = lp_config_get_int(lp_config, "lime", "unsafe_if_sas_refused", 1) ? lime::PeerDeviceStatus::unsafe : lime::PeerDeviceStatus::untrusted;
+	belleSipLimeManager->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, statusIfSASrefused);
+}
+
+void LimeX3DHEncryptionEngine::addSecurityEventInChatrooms (const IdentityAddress &peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType securityEventType, shared_ptr<Core> core) {
+	const list<shared_ptr<AbstractChatRoom>> chatRooms = core->getChatRooms();
+	for (const auto &chatRoom : chatRooms) {
+		if (chatRoom->findParticipant(peerDeviceAddr)) {
+			shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(
+				time(nullptr),
+				chatRoom->getConferenceId(),
+				securityEventType,
+				peerDeviceAddr
+			);
+			shared_ptr<ClientGroupChatRoom> confListener = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
+			confListener->onSecurityEvent(securityEvent);
+		}
+	}
+}
+
 void LimeX3DHEncryptionEngine::cleanDb () {
 	remove(_dbAccess.c_str());
 }

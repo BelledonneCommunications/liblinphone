@@ -24,6 +24,7 @@
 
 #include "object/object.h"
 
+#include "chat/chat-room/abstract-chat-room.h"
 #include "linphone/types.h"
 
 // =============================================================================
@@ -32,12 +33,8 @@ L_DECL_C_STRUCT(LinphoneCore);
 
 LINPHONE_BEGIN_NAMESPACE
 
-class Address;
 class Call;
-class ConferenceId;
 class CorePrivate;
-class IdentityAddress;
-class AbstractChatRoom;
 class EncryptionEngine;
 
 class LINPHONE_PUBLIC Core : public Object {

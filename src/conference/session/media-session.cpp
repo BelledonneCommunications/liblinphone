@@ -24,7 +24,6 @@
 #include "bzrtp/bzrtp.h"
 #include "call/call-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
-#include "chat/encryption/lime-x3dh-encryption-engine.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant-p.h"
 #include "conference/session/media-session-p.h"
@@ -1521,7 +1520,7 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 	setupEncryptionKeys(md);
 	setupDtlsKeys(md);
 	setupZrtpHash(md);
-	setupLimeIdentityKey(md);
+	setupImEncryptionEngineParameters(md);
 	setupRtcpFb(md);
 	setupRtcpXr(md);
 	if (stunClient)
@@ -1655,49 +1654,18 @@ void MediaSessionPrivate::setupZrtpHash (SalMediaDescription *md) {
 	}
 }
 
-void MediaSessionPrivate::setupLimeIdentityKey (SalMediaDescription *md) {
+void MediaSessionPrivate::setupImEncryptionEngineParameters (SalMediaDescription *md) {
 	L_Q();
-	if (!linphone_core_lime_x3dh_enabled(q->getCore()->getCCore())) {
-		lWarning() << "LIMEv2 disabled, unable to send lime identity key for ZRTP auxiliary shared secret";
+	if (!q->getCore()->getEncryptionEngine())
 		return;
+
+	list<pair<string,string>> paramList = q->getCore()->getEncryptionEngine()->getEncryptionParameters(q->getCore());
+
+	// Loop over IM Encryption Engine parameters and append them to the SDP
+	for (const auto &param : paramList) {
+		lInfo() << "Appending " << param.first << " parameter to SDP attributes";
+		md->custom_sdp_attributes = sal_custom_sdp_attribute_append(md->custom_sdp_attributes, param.first.data(), param.second.data());
 	}
-
-	// Get proxy config
-	LinphoneProxyConfig *proxy = destProxy ? destProxy : linphone_core_get_default_proxy_config(q->getCore()->getCCore());
-	if (!proxy) {
-		lWarning() << "No proxy config available, unable to send lime identity key for ZRTP auxiliary shared secret";
-		return;
-	}
-
-	// Get local device id from local contact address
-	const LinphoneAddress *contactAddress = linphone_proxy_config_get_contact(proxy);
-	IdentityAddress identityAddress = IdentityAddress(linphone_address_as_string(contactAddress));
-	string localDeviceId = identityAddress.asString();
-
-	// Get LIMEv2 context
-	vector<uint8_t> Ik;
-	LimeX3DHEncryptionEngine *engine = static_cast<LimeX3DHEncryptionEngine*>(q->getCore()->getEncryptionEngine());
-	if (engine) {
-		try {
-			// Get self identity key from LIMEv2 engine
-			engine->getLimeManager()->get_selfIdentityKey(localDeviceId, Ik);
-		} catch (const exception &e) {
-			lError() << e.what() << " while sending Ik for ZRTP auxiliary shared secret";
-			return;
-		}
-	}
-
-	if (Ik.empty()) {
-		lWarning() << "No identity key available, unable to send lime identity key for ZRTP auxiliary shared secret";
-		return;
-	}
-
-	// Encode to base64 and append to sdp
-	vector<uint8_t> IkB64_vector = encodeBase64(Ik);
-	string IkB64_string(IkB64_vector.begin(), IkB64_vector.end());
-	const char *IkB64_char = IkB64_string.data();
-	lInfo() << "Appending LIMEv2 identity key to SDP attributes";
-	md->custom_sdp_attributes = sal_custom_sdp_attribute_append(md->custom_sdp_attributes, "Ik", IkB64_char);
 }
 
 void MediaSessionPrivate::setupEncryptionKeys (SalMediaDescription *md) { // setupEncryptionParameters
@@ -2832,43 +2800,9 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 			if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), LinphoneMediaEncryptionZRTP)
 				&& ((getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream->haveZrtpHash == 1))) {
 
-				// Get local and remote identity keys from sdp attributes
-				const char *charLocalIk = sal_custom_sdp_attribute_find(op->getLocalMediaDescription()->custom_sdp_attributes, "Ik");
-				const char *charRemoteIk = sal_custom_sdp_attribute_find(op->getRemoteMediaDescription()->custom_sdp_attributes, "Ik");
-
-				// If LIMEv2 is disabled there might not be identity keys
-				if (charLocalIk && charRemoteIk) {
-					const string &stringB64LocalIk(charLocalIk);
-					const string &stringB64RemoteIk(charRemoteIk);
-
-					// Convert to vectors and decode base64
-					vector<uint8_t> localIk = vector<uint8_t>(stringB64LocalIk.begin(), stringB64LocalIk.end());
-					vector<uint8_t> remoteIk = vector<uint8_t>(stringB64RemoteIk.begin(), stringB64RemoteIk.end());
-					localIk = decodeBase64(localIk);
-					remoteIk = decodeBase64(remoteIk);
-
-					// Concatenate identity keys in the right order
-					vector<uint8_t> vectorAuxSharedSecret;
-					if (this->getPublic()->CallSession::getDirection() == LinphoneCallDir::LinphoneCallOutgoing) {
-						localIk.insert(localIk.end(), remoteIk.begin(), remoteIk.end());
-						vectorAuxSharedSecret = localIk;
-					} else if (this->getPublic()->CallSession::getDirection() == LinphoneCallDir::LinphoneCallIncoming) {
-						remoteIk.insert(remoteIk.end(), localIk.begin(), localIk.end());
-						vectorAuxSharedSecret = remoteIk;
-					} else {
-						lError() << "Unable to concatenate and set ZRTP auxiliary shared secret";
-					}
-
-					// Get the final auxSharedSecret and set it as auxiliary shared secret in ZRTP
-					if (!vectorAuxSharedSecret.empty()) {
-						size_t auxSharedSecretLength = vectorAuxSharedSecret.size();
-						const uint8_t *auxSharedSecret = vectorAuxSharedSecret.data();
-						lInfo() << "Setting ZRTP auxiliary shared secret after identity key concatenation";
-						int retval = ms_zrtp_setAuxiliarySharedSecret(audioStream->ms.sessions.zrtp_context, auxSharedSecret, auxSharedSecretLength);
-						if (retval != 0)
-							lError() << "ZRTP auxiliary shared secret mismatch 0x" << hex << retval;
-					}
-				}
+				// Perform LIMEv2 mutual authentication if LIMEv2 enabled
+				if (q->getCore()->getEncryptionEngine())
+					q->getCore()->getEncryptionEngine()->mutualAuthentication(op->getLocalMediaDescription(), op->getRemoteMediaDescription(), audioStream->ms.sessions.zrtp_context, this->getPublic()->CallSession::getDirection());
 
 				audio_stream_start_zrtp(audioStream);
 				if (remoteStream->haveZrtpHash == 1) {
@@ -3497,23 +3431,6 @@ int MediaSessionPrivate::mediaParametersChanged (SalMediaDescription *oldMd, Sal
 		ms_free(differences);
 	}
 	return localDescChanged | otherDescChanged;
-}
-
-void MediaSessionPrivate::addSecurityEventInChatrooms (const IdentityAddress &faultyDevice, ConferenceSecurityEvent::SecurityEventType securityEventType) {
-	L_Q();
-	const list<shared_ptr<AbstractChatRoom>> chatRooms = q->getCore()->getChatRooms();
-	for (const auto &chatRoom : chatRooms) {
-		if (chatRoom->findParticipant(faultyDevice)) {
-			shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(
-				time(nullptr),
-				chatRoom->getConferenceId(),
-				securityEventType,
-				faultyDevice
-			);
-			shared_ptr<ClientGroupChatRoom> confListener = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
-			confListener->onSecurityEvent(securityEvent);
-		}
-	}
 }
 
 void MediaSessionPrivate::propagateEncryptionChanged () {
@@ -4903,82 +4820,30 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 		return;
 	}
 
-	// Get LIMEv2 context
-	LimeX3DHEncryptionEngine *engine = nullptr;
-	if (linphone_core_lime_x3dh_enabled(getCore()->getCCore())) {
-		engine = static_cast<LimeX3DHEncryptionEngine *>(getCore()->getEncryptionEngine());
-	}
-
 	char *peerDeviceId = nullptr;
-	vector<uint8_t> remoteIkB64_vector;
-	vector<uint8_t> remoteIk_vector;
-	IdentityAddress faultyDevice;
+	IdentityAddress peerDeviceAddr;
+	EncryptionEngine *engine = getCore()->getEncryptionEngine();
 	if (engine) {
-		// Get peer's Ik
-		const string &remoteIkB64_string(sal_custom_sdp_attribute_find(d->op->getRemoteMediaDescription()->custom_sdp_attributes, "Ik"));
-		remoteIkB64_vector = vector<uint8_t>(remoteIkB64_string.begin(), remoteIkB64_string.end());
-		remoteIk_vector = decodeBase64(remoteIkB64_vector);
-
-		// Get peer's GRUU
+		// TODO build IdentityAddress from SalAddress
 		const SalAddress *remoteAddress = d->getOp()->getRemoteContactAddress();
 		peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
-		faultyDevice = IdentityAddress(peerDeviceId);
-	} else lWarning() << "Unable to get LIMEv2 context, unable to set peer device status";
+// 		peerDeviceAddr = IdentityAddress(peerDeviceId);
+	}
 
 	// SAS verified
 	if (value) {
 		ms_zrtp_sas_verified(d->audioStream->ms.sessions.zrtp_context);
 
-		if (ms_zrtp_getAuxiliarySharedSecretMismatch(d->audioStream->ms.sessions.zrtp_context) == 2) {
-			lInfo() << "No auxiliary shared secret exchange because LIMEv2 disabled";
-		}
-		// SAS is verified and the auxiliary secret matches so we can trust this peer device
-		else if (ms_zrtp_getAuxiliarySharedSecretMismatch(d->audioStream->ms.sessions.zrtp_context) == 0) {
-			try {
-				lInfo() << "SAS verified and Ik exchange successful";
-				engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
-			} catch (const exception &e) {
-				// Ik error occured, the stored Ik is different from this Ik
-
-				lime::PeerDeviceStatus status = engine->getLimeManager()->get_peerDeviceStatus(peerDeviceId);
-				switch (status) {
-					case lime::PeerDeviceStatus::unsafe:
-						lWarning() << "LIMEv2 peer device " << peerDeviceId << " is unsafe and its lime identity key has changed";
-						break;
-					case lime::PeerDeviceStatus::untrusted:
-						lWarning() << "LIMEv2 peer device " << peerDeviceId << " is untrusted and its lime identity key has changed";
-						d->addSecurityEventInChatrooms(faultyDevice, ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged); // TODO specific alert
-						break;
-					case lime::PeerDeviceStatus::trusted:
-						lError() << "LIMEv2 peer device " << peerDeviceId << " is already trusted but its lime identity key has changed";
-						break;
-					case lime::PeerDeviceStatus::unknown:
-					case lime::PeerDeviceStatus::fail:
-						lError() << "LIMEv2 peer device " << peerDeviceId << " is unknown but its lime identity key has changed";
-						break;
-				}
-
-				engine->getLimeManager()->delete_peerDevice(peerDeviceId);
-				engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, lime::PeerDeviceStatus::trusted);
-			}
-		}
-		// SAS is verified but the auxiliary secret mismatches
-		else {
-			ms_zrtp_sas_reset_verified(d->audioStream->ms.sessions.zrtp_context);
-			engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe);
-			d->addSecurityEventInChatrooms(faultyDevice, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected);
-		}
+		if (engine)
+			engine->authenticationVerified(peerDeviceId, d->op->getRemoteMediaDescription(), d->audioStream->ms.sessions.zrtp_context, getCore());
 	}
 
 	// SAS rejected
 	else {
 		ms_zrtp_sas_reset_verified(d->audioStream->ms.sessions.zrtp_context);
-		d->addSecurityEventInChatrooms(faultyDevice, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected);
 
-		// Set peer device to untrusted or unsafe depending on configuration
-		LinphoneConfig *lp_config = linphone_core_get_config(getCore()->getCCore());
-		lime::PeerDeviceStatus statusIfSASrefused = lp_config_get_int(lp_config, "lime", "unsafe_if_sas_refused", 1) ? lime::PeerDeviceStatus::unsafe : lime::PeerDeviceStatus::untrusted;
-		engine->getLimeManager()->set_peerDeviceStatus(peerDeviceId, remoteIk_vector, statusIfSASrefused);
+		if (engine)
+			engine->authenticationRejected(peerDeviceId, d->op->getRemoteMediaDescription(), d->audioStream->ms.sessions.zrtp_context, getCore());
 	}
 
 	ms_free(peerDeviceId);
