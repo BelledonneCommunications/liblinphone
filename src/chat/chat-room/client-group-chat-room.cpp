@@ -757,8 +757,6 @@ void ClientGroupChatRoom::onSecurityEvent (const shared_ptr<ConferenceSecurityEv
 	}
 	finalEvent = cleanEvent ? cleanEvent : event;
 
-	// Add security events or alerts based on the type of security event
-
 	d->addEvent(event);
 
 	LinphoneChatRoom *cr = d->getCChatRoom();

@@ -130,6 +130,4 @@ int LimeLegacyEncryptionEngine::uploadingFile (const shared_ptr<ChatMessage> &me
 	return -1;
 }
 
-void LimeLegacyEncryptionEngine::cleanDb () {}
-
 LINPHONE_END_NAMESPACE

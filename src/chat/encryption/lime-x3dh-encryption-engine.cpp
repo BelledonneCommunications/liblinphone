@@ -135,7 +135,7 @@ ChatMessageModifier::Result LimeX3DHEncryptionEngine::processOutgoingMessage (co
 	const IdentityAddress &peerAddress = chatRoom->getPeerAddress();
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
 
-	// Refuse message in unsafe chatroom if not allowed
+	// Reject message in unsafe chatroom if not allowed
 	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
 		if (chatRoom->getSecurityLevel() == ClientGroupChatRoom::SecurityLevel::Unsafe) {
 			lWarning() << "Sending encrypted message in an unsafe chatroom";
@@ -506,7 +506,6 @@ list<pair<string,string>> LimeX3DHEncryptionEngine::getEncryptionParameters () {
 
 	vector<uint8_t> Ik;
 	belleSipLimeManager->get_selfIdentityKey(localDeviceId, Ik);
-// 	getLimeManager()->get_selfIdentityKey(localDeviceId, Ik);
 
 	if (Ik.empty()) {
 		lWarning() << "No identity key available, unable to setup lime identity key for ZRTP auxiliary shared secret";
@@ -569,17 +568,6 @@ void LimeX3DHEncryptionEngine::mutualAuthentication (SalMediaDescription *localM
 }
 
 void LimeX3DHEncryptionEngine::authenticationVerified (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) {
-
-	// TEST
-// 	const char *peerDeviceId = peerDeviceAddr.asString().c_str();
-// 	cout << endl << "authenticationVerified" << endl;
-// 	cout << "peerDeviceAddr = " << peerDeviceAddr << endl;
-// 	cout << "peerDeviceAddr.asString() = " << peerDeviceAddr.asString() << endl;
-// 	cout << "peerDeviceAddr.asString().c_str() = " << peerDeviceAddr.asString().c_str() << endl;
-// 	cout << "peerDeviceId = " << peerDeviceId << endl;
-// 	string testString = string(peerDeviceId);
-// 	cout << "testString = " << testString << endl;
-
 	// Get peer's Ik
 	vector<uint8_t> remoteIkB64_vector;
 	vector<uint8_t> remoteIk_vector;
@@ -631,10 +619,6 @@ void LimeX3DHEncryptionEngine::authenticationVerified (const char *peerDeviceId,
 }
 
 void LimeX3DHEncryptionEngine::authenticationRejected (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) {
-
-	// TEST
-// 	const char *peerDeviceId = peerDeviceAddr.asString().c_str();
-
 	// Get peer's Ik
 	vector<uint8_t> remoteIkB64_vector;
 	vector<uint8_t> remoteIk_vector;

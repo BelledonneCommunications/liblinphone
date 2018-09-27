@@ -20,6 +20,7 @@ default_proxy=0
 ping_with_options=0
 composing_idle_timeout=1
 store_ha1_passwd=0 #used for sipp
+zrtp_cache_migration_done=1
 
 [auth_info_0]
 username=marie
