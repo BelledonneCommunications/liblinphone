@@ -59,6 +59,7 @@ public:
 	virtual void authenticationVerified (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) {}
 	virtual void authenticationRejected (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) {}
 	virtual void addSecurityEventInChatrooms (const IdentityAddress &peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType securityEventType) {}
+	virtual std::shared_ptr<ConferenceSecurityEvent> onDeviceAdded (const IdentityAddress &newDeviceAddr, std::shared_ptr<Participant> participant, const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatRoom::SecurityLevel currentSecurityLevel) { return nullptr; }
 	virtual void cleanDb () {}
 
 protected:

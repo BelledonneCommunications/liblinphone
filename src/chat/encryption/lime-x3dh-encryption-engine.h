@@ -88,6 +88,7 @@ public:
 	void authenticationVerified (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) override;
 	void authenticationRejected (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) override;
 	void addSecurityEventInChatrooms (const IdentityAddress &peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType securityEventType) override;
+	std::shared_ptr<ConferenceSecurityEvent> onDeviceAdded(const IdentityAddress &newDeviceAddr, std::shared_ptr<Participant> participant, const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatRoom::SecurityLevel currentSecurityLevel) override;
 	void cleanDb () override;
 
 	// CoreListener overrides
