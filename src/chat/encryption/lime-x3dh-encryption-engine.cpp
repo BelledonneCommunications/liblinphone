@@ -185,6 +185,13 @@ ChatMessageModifier::Result LimeX3DHEncryptionEngine::processOutgoingMessage (
 	}
 	if (nbDevice > maxNbDevicePerParticipant) tooManyDevices = TRUE;
 
+	// Check if there is at least one recipient
+	if (recipients->empty()) {
+		lError() << "LIMEv2 encrypting message with no recipient";
+		errorCode = 488;
+		return ChatMessageModifier::Result::Error;
+	}
+
 	// If too many devices for a participant, throw a local security alert event
 	if (tooManyDevices) {
 		lWarning() << "LIMEv2 encrypting message for excessive number of devices, message discarded";
