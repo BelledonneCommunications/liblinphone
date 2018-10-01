@@ -31,6 +31,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+LimeLegacyEncryptionEngine::LimeLegacyEncryptionEngine (const shared_ptr<Core> &core) : EncryptionEngine(core) {}
+
 ChatMessageModifier::Result LimeLegacyEncryptionEngine::processOutgoingMessage (const shared_ptr<ChatMessage> &message, int &errorCode) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(chatRoom->getCore()->getCCore());

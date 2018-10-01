@@ -65,12 +65,12 @@ private:
 	static void processAuthRequested (void *data, belle_sip_auth_event_t *event) noexcept;
 };
 
-class LimeX3DHEncryptionEngine : public EncryptionEngine, public CoreListener, public CoreAccessor {
+class LimeX3DHEncryptionEngine : public EncryptionEngine, public CoreListener {
 public:
 	LimeX3DHEncryptionEngine (
 		const std::string &db_access,
 		belle_http_provider_t *prov,
-		std::shared_ptr<Core> core
+		const std::shared_ptr<Core> core
 	);
 
 	std::shared_ptr<BelleSipLimeManager> getLimeManager ();

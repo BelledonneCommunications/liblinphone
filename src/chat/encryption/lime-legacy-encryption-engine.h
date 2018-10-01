@@ -28,6 +28,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LimeLegacyEncryptionEngine : public EncryptionEngine {
 public:
+	LimeLegacyEncryptionEngine (const std::shared_ptr<Core> &core);
+
 	ChatMessageModifier::Result processIncomingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
 	ChatMessageModifier::Result processOutgoingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
 	bool encryptionEnabledForFileTransfer (const std::shared_ptr<AbstractChatRoom> &ChatRoom) override;

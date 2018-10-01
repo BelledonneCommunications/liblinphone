@@ -24,6 +24,7 @@
 
 #include "chat/chat-room/client-group-chat-room.h"
 #include "chat/modifier/chat-message-modifier.h"
+#include "core/core-accessor.h"
 #include "linphone/lpconfig.h"
 #include "sal/sal.h"
 
@@ -36,7 +37,7 @@ class ChatMessage;
 
 using EncryptionParameter = std::pair<std::string, std::string>;
 
-class EncryptionEngine {
+class EncryptionEngine : public CoreAccessor {
 public:
 	enum class EngineType {
 		Undefined = -1,
@@ -112,12 +113,14 @@ public:
 
 	virtual void cleanDb () {}
 	virtual void update () {}
-	virtual EncryptionEngine::EngineType getEngineType () { return EngineType::Undefined; }
+	virtual EngineType getEngineType () { return EngineType::Undefined; }
 	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const { return AbstractChatRoom::SecurityLevel::ClearText; }
 	virtual std::list<EncryptionParameter> getEncryptionParameters () { return std::list<EncryptionParameter>(); }
 
 protected:
-	EncryptionEngine::EngineType engineType;
+	EncryptionEngine (const std::shared_ptr<Core> &core) : CoreAccessor(core) {}
+
+	EngineType engineType;
 };
 
 LINPHONE_END_NAMESPACE

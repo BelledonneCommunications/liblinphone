@@ -51,7 +51,8 @@ static void _linphone_core_destructor (LinphoneCore *lc) {
 }
 
 void linphone_core_set_im_encryption_engine (LinphoneCore *lc, LinphoneImEncryptionEngine *imee) {
-    L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setEncryptionEngine(new LimeLegacyEncryptionEngine);
+	auto core = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
+    core->setEncryptionEngine(new LimeLegacyEncryptionEngine(core));
 
 	if (lc->im_encryption_engine) {
 		linphone_im_encryption_engine_unref(lc->im_encryption_engine);

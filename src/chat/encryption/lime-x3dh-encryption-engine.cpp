@@ -118,8 +118,8 @@ BelleSipLimeManager::BelleSipLimeManager (
 LimeX3DHEncryptionEngine::LimeX3DHEncryptionEngine (
 	const std::string &dbAccess,
 	belle_http_provider_t *prov,
-	shared_ptr<Core> core
-) : CoreAccessor(core) {
+	const shared_ptr<Core> core
+) : EncryptionEngine(core) {
 	engineType = EncryptionEngine::EngineType::LimeX3DH;
 	curve = lime::CurveId::c25519; // c448
 	_dbAccess = dbAccess;
