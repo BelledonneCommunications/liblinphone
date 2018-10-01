@@ -21,7 +21,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message.h"
 #include "chat/chat-room/chat-room.h"
-#include "chat/encryption/encryption-engine-listener.h"
+#include "chat/encryption/encryption-engine.h"
 #include "content/content-type.h"
 #include "content/content.h"
 #include "core/core.h"

@@ -538,7 +538,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	// If LIMEv2 disabled, the authenticatedFromAddress must be set here as the SIP From Address
 	// If LIMEv2 disabled in group chat room the sender authentication is disabled
 	// TODO replace me with future "chatRoom->isEncrypted()" API because LIMEv2 will always be enabled
-	if (!core->limeV2Enabled()) {
+	if (!core->limeX3dhEnabled()) {
 		if (q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Basic) {
 			IdentityAddress sipFromAddress = q->getSharedFromThis()->getFromAddress();
 			setAuthenticatedFromAddress(sipFromAddress);
