@@ -1656,19 +1656,20 @@ void MediaSessionPrivate::setupZrtpHash (SalMediaDescription *md) {
 
 void MediaSessionPrivate::setupImEncryptionEngineParameters (SalMediaDescription *md) {
 	L_Q();
-	if (!q->getCore()->getEncryptionEngine())
+	auto encryptionEngine = q->getCore()->getEncryptionEngine();
+	if (!encryptionEngine)
 		return;
 
-	list<pair<string,string>> paramList = q->getCore()->getEncryptionEngine()->getEncryptionParameters();
+	list<EncryptionParameter> paramList = encryptionEngine->getEncryptionParameters();
 
 	// Loop over IM Encryption Engine parameters and append them to the SDP
 	for (const auto &param : paramList) {
 		lInfo() << "Appending " << param.first << " parameter to SDP attributes";
-		md->custom_sdp_attributes = sal_custom_sdp_attribute_append(md->custom_sdp_attributes, param.first.data(), param.second.data());
+		md->custom_sdp_attributes = sal_custom_sdp_attribute_append(md->custom_sdp_attributes, param.first.c_str(), param.second.c_str());
 	}
 }
 
-void MediaSessionPrivate::setupEncryptionKeys (SalMediaDescription *md) { // setupEncryptionParameters
+void MediaSessionPrivate::setupEncryptionKeys (SalMediaDescription *md) {
 	L_Q();
 	SalMediaDescription *oldMd = localDesc;
 	bool keepSrtpKeys = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
@@ -2801,8 +2802,9 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 				&& ((getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream->haveZrtpHash == 1))) {
 
 				// Perform LIMEv2 mutual authentication if LIMEv2 enabled
-				if (q->getCore()->getEncryptionEngine())
-					q->getCore()->getEncryptionEngine()->mutualAuthentication(op->getLocalMediaDescription(), op->getRemoteMediaDescription(), audioStream->ms.sessions.zrtp_context, this->getPublic()->CallSession::getDirection());
+				auto encryptionEngine = q->getCore()->getEncryptionEngine();
+				if (encryptionEngine)
+					encryptionEngine->mutualAuthentication(audioStream->ms.sessions.zrtp_context, op->getLocalMediaDescription(), op->getRemoteMediaDescription(), this->getPublic()->CallSession::getDirection());
 
 				audio_stream_start_zrtp(audioStream);
 				if (remoteStream->haveZrtpHash == 1) {
@@ -4821,29 +4823,26 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 	}
 
 	char *peerDeviceId = nullptr;
-	IdentityAddress peerDeviceAddr;
-	EncryptionEngine *engine = getCore()->getEncryptionEngine();
-	if (engine) {
-		// TODO build IdentityAddress from SalAddress
+	auto encryptionEngine = getCore()->getEncryptionEngine();
+	if (encryptionEngine) {
 		const SalAddress *remoteAddress = d->getOp()->getRemoteContactAddress();
 		peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
-// 		peerDeviceAddr = IdentityAddress(peerDeviceId);
 	}
 
 	// SAS verified
 	if (value) {
 		ms_zrtp_sas_verified(d->audioStream->ms.sessions.zrtp_context);
 
-		if (engine)
-			engine->authenticationVerified(peerDeviceId, d->op->getRemoteMediaDescription(), d->audioStream->ms.sessions.zrtp_context);
+		if (encryptionEngine)
+			encryptionEngine->authenticationVerified(d->audioStream->ms.sessions.zrtp_context, d->op->getRemoteMediaDescription(), peerDeviceId);
 	}
 
 	// SAS rejected
 	else {
 		ms_zrtp_sas_reset_verified(d->audioStream->ms.sessions.zrtp_context);
 
-		if (engine)
-			engine->authenticationRejected(peerDeviceId, d->op->getRemoteMediaDescription(), d->audioStream->ms.sessions.zrtp_context);
+		if (encryptionEngine)
+			encryptionEngine->authenticationRejected(d->op->getRemoteMediaDescription(), peerDeviceId);
 	}
 
 	ms_free(peerDeviceId);

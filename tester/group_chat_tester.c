@@ -114,8 +114,8 @@ static void chat_room_security_event (LinphoneChatRoom *cr, const LinphoneEventL
 		case LinphoneSecurityEventTypeSecurityLevelDowngraded:
 			manager->stat.number_of_SecurityLevelDowngraded++;
 			break;
-		case LinphoneSecurityEventTypeMultideviceParticipantDetected:
-			manager->stat.number_of_MultideviceParticipantDetected++;
+		case LinphoneSecurityEventTypeParticipantMaxDeviceCountExceeded:
+			manager->stat.number_of_ParticipantMaxDeviceCountExceeded++;
 			break;
 		case LinphoneSecurityEventTypeLimeIdentityKeyChanged:
 			manager->stat.number_of_LimeIdentityKeyChanged++;
@@ -5107,9 +5107,9 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participant_devices_added, initialLaureStats.number_of_participant_devices_added + 1, 3000));
 
 	// Check that the participants have received a security alert because Pauline2 is forbidden
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_MultideviceParticipantDetected, initialMarieStats.number_of_MultideviceParticipantDetected + 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_MultideviceParticipantDetected, initialPauline1Stats.number_of_MultideviceParticipantDetected + 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_MultideviceParticipantDetected, initialLaureStats.number_of_MultideviceParticipantDetected + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_ParticipantMaxDeviceCountExceeded, initialMarieStats.number_of_ParticipantMaxDeviceCountExceeded + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_ParticipantMaxDeviceCountExceeded, initialPauline1Stats.number_of_ParticipantMaxDeviceCountExceeded + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_ParticipantMaxDeviceCountExceeded, initialLaureStats.number_of_ParticipantMaxDeviceCountExceeded + 1, 3000));
 
 	// Check the security level was downgraded for Marie and Laure
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
@@ -5124,7 +5124,6 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 		BC_ASSERT_FALSE((pauline1->stat.number_of_LinphoneMessageReceived == initialPauline1Stats.number_of_LinphoneMessageReceived + 3));
 		BC_ASSERT_FALSE((pauline2->stat.number_of_LinphoneMessageReceived == initialPauline2Stats.number_of_LinphoneMessageReceived + 1));
 	}
-
 
 end:
 	// Clean local LIMEv2 databases
@@ -5148,9 +5147,6 @@ end:
 }
 
 static void group_chat_lime_v2_call_security_alert (void) {
-	// Simulate security alert during ZRTP call
-	// Check if security event is sent to correct chatrooms
-
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;

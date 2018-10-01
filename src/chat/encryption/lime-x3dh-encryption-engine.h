@@ -31,24 +31,24 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-inline std::vector<uint8_t> encodeBase64 (const std::vector<uint8_t> &input) {
+inline std::string encodeBase64 (const std::vector<uint8_t> &input) {
 	const unsigned char *inputBuffer = input.data();
 	size_t inputLength = input.size();
 	size_t encodedLength = 0;
 	bctbx_base64_encode(NULL, &encodedLength, inputBuffer, inputLength);			// set encodedLength to the correct value
-	unsigned char* encodedBuffer = new unsigned char[encodedLength];				// allocate encoded buffer with correct length
+	unsigned char *encodedBuffer = new unsigned char[encodedLength];				// allocate encoded buffer with correct length
 	bctbx_base64_encode(encodedBuffer, &encodedLength, inputBuffer, inputLength);	// real encoding
-	std::vector<uint8_t> output(encodedBuffer, encodedBuffer + encodedLength);
+	std::string output((char*)encodedBuffer);
 	delete[] encodedBuffer;
 	return output;
 }
 
-inline std::vector<uint8_t> decodeBase64 (const std::vector<uint8_t> &input) {
-	const unsigned char *inputBuffer = input.data();
+inline std::vector<uint8_t> decodeBase64 (const std::string &input) {
+	const unsigned char *inputBuffer = (const unsigned char*)input.data();
 	size_t inputLength = input.size();
 	size_t decodedLength = 0;
 	bctbx_base64_decode(NULL, &decodedLength, inputBuffer, inputLength);			// set decodedLength to the correct value
-	unsigned char* decodedBuffer = new unsigned char[decodedLength];				// allocate decoded buffer with correct length
+	unsigned char *decodedBuffer = new unsigned char[decodedLength];				// allocate decoded buffer with correct length
 	bctbx_base64_decode(decodedBuffer, &decodedLength, inputBuffer, inputLength);	// real decoding
 	std::vector<uint8_t> output(decodedBuffer, decodedBuffer + decodedLength);
 	delete[] decodedBuffer;
@@ -67,33 +67,97 @@ private:
 
 class LimeX3DHEncryptionEngine : public EncryptionEngine, public CoreListener, public CoreAccessor {
 public:
-	LimeX3DHEncryptionEngine (const std::string &db_access, belle_http_provider_t *prov, std::shared_ptr<Core> core);
+	LimeX3DHEncryptionEngine (
+		const std::string &db_access,
+		belle_http_provider_t *prov,
+		std::shared_ptr<Core> core
+	);
+
 	std::shared_ptr<BelleSipLimeManager> getLimeManager ();
 	lime::limeCallback setLimeCallback (std::string operation);
 	std::string getX3dhServerUrl () const;
 	lime::CurveId getCurveId () const;
 
 	// EncryptionEngine overrides
-	ChatMessageModifier::Result processIncomingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
-	ChatMessageModifier::Result processOutgoingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
-	void update (LinphoneConfig *lpconfig) override;
+	ChatMessageModifier::Result processIncomingMessage (
+		const std::shared_ptr<ChatMessage> &message,
+		int &errorCode
+	) override;
+
+	ChatMessageModifier::Result processOutgoingMessage (
+		const std::shared_ptr<ChatMessage> &message,
+		int &errorCode
+	) override;
+
+	void generateFileTransferKey (
+		const std::shared_ptr<AbstractChatRoom> &ChatRoom,
+		const std::shared_ptr<ChatMessage> &message
+	) override;
+
+	int downloadingFile (
+		const std::shared_ptr<ChatMessage> &message,
+		size_t offset,
+		const uint8_t *buffer,
+		size_t size,
+		uint8_t *decrypted_buffer
+	) override;
+
+	int uploadingFile (
+		const std::shared_ptr<ChatMessage> &message,
+		size_t offset,
+		const uint8_t *buffer,
+		size_t *size,
+		uint8_t *encrypted_buffer
+	) override;
+
+	void mutualAuthentication (
+		MSZrtpContext *zrtpContext,
+		SalMediaDescription *localMediaDescription,
+		SalMediaDescription *remoteMediaDescription,
+		LinphoneCallDir direction
+	) override;
+
+	void authenticationVerified (
+		MSZrtpContext *zrtpContext,
+		SalMediaDescription *remoteMediaDescription,
+		const char *peerDeviceId
+	) override;
+
+	void authenticationRejected (
+		SalMediaDescription *remoteMediaDescription,
+		const char *peerDeviceId
+	) override;
+
+	void addSecurityEventInChatrooms (
+		const IdentityAddress &peerDeviceAddr,
+		ConferenceSecurityEvent::SecurityEventType securityEventType
+	) override;
+
+	std::shared_ptr<ConferenceSecurityEvent> onDeviceAdded (
+		const IdentityAddress &newDeviceAddr,
+		std::shared_ptr<Participant> participant,
+		const std::shared_ptr<AbstractChatRoom> &chatRoom,
+		ChatRoom::SecurityLevel currentSecurityLevel
+	) override;
+
 	bool encryptionEnabledForFileTransfer (const std::shared_ptr<AbstractChatRoom> &ChatRoom) override;
-	void generateFileTransferKey (const std::shared_ptr<AbstractChatRoom> &ChatRoom, const std::shared_ptr<ChatMessage> &message) override;
-	int downloadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer) override;
-	int uploadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer) override;
-	EncryptionEngine::EngineType getEngineType () override;
 	AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const override;
-	std::list<std::pair<std::string, std::string>> getEncryptionParameters () override;
-	void mutualAuthentication (SalMediaDescription *localMediaDescription, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext, LinphoneCallDir direction) override;
-	void authenticationVerified (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) override;
-	void authenticationRejected (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) override;
-	void addSecurityEventInChatrooms (const IdentityAddress &peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType securityEventType) override;
-	std::shared_ptr<ConferenceSecurityEvent> onDeviceAdded(const IdentityAddress &newDeviceAddr, std::shared_ptr<Participant> participant, const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatRoom::SecurityLevel currentSecurityLevel) override;
+	EncryptionEngine::EngineType getEngineType () override;
+	std::list<EncryptionParameter> getEncryptionParameters () override;
+	void update () override;
 	void cleanDb () override;
 
 	// CoreListener overrides
-	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
-	void onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) override;
+	void onNetworkReachable (
+		bool sipNetworkReachable,
+		bool mediaNetworkReachable
+	) override;
+
+	void onRegistrationStateChanged (
+		LinphoneProxyConfig *cfg,
+		LinphoneRegistrationState state,
+		const std::string &message
+	) override;
 
 private:
 	std::shared_ptr<BelleSipLimeManager> belleSipLimeManager;

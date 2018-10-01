@@ -227,23 +227,23 @@ void Core::enableLimeX3dh (bool enable) {
 	}
 }
 
-void Core::updateLimeX3dh (void) const {
+void Core::updateLimeX3dh () const {
 	L_D();
 
 	if (linphone_core_lime_x3dh_enabled(getCCore())) {
-		d->imee->update(getCCore()->config);
+		d->imee->update();
 	}
 }
 
-bool Core::limeX3dhEnabled (void) const {
+bool Core::limeX3dhEnabled () const {
 	L_D();
-	if (d->imee != nullptr && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3DHEncryptionEngine)
+	if (d->imee != nullptr && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3DH)
 		return true;
 	return false;
 }
 
 // TODO does not work
-bool Core::limeX3dhAvailable(void) const {
+bool Core::limeX3dhAvailable() const {
 #ifdef HAVE_LIME
 	return true;
 #else

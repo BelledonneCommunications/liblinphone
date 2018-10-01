@@ -26,7 +26,6 @@
 #include "chat/modifier/chat-message-modifier.h"
 #include "linphone/lpconfig.h"
 #include "sal/sal.h"
-#include "core/core.h"
 
 // =============================================================================
 
@@ -35,32 +34,87 @@ LINPHONE_BEGIN_NAMESPACE
 class AbstractChatRoom;
 class ChatMessage;
 
+using EncryptionParameter = std::pair<std::string, std::string>;
+
 class EncryptionEngine {
 public:
 	enum class EngineType {
 		Undefined = -1,
-		LimeX3DHEncryptionEngine = 0,
+		LimeX3DH = 0,
 	};
 
 	virtual ~EncryptionEngine () = default;
 
-	virtual ChatMessageModifier::Result processOutgoingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) { return ChatMessageModifier::Result::Skipped; }
-	virtual ChatMessageModifier::Result processIncomingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) { return ChatMessageModifier::Result::Skipped; }
-	virtual bool encryptionEnabledForFileTransfer (const std::shared_ptr<AbstractChatRoom> &ChatRoom) { return false; }
-	virtual void generateFileTransferKey (const std::shared_ptr<AbstractChatRoom> &ChatRoom, const std::shared_ptr<ChatMessage> &message) {}
-	virtual int downloadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decryptedBuffer) { return 0; }
-	virtual int uploadingFile (const std::shared_ptr<ChatMessage> &message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encryptedBuffer) { return 0; }
+	virtual ChatMessageModifier::Result processOutgoingMessage (
+		const std::shared_ptr<ChatMessage> &message,
+		int &errorCode
+	) { return ChatMessageModifier::Result::Skipped; }
 
-	virtual void update (LinphoneConfig *lpconfig) {}
-	virtual EncryptionEngine::EngineType getEngineType () { return EngineType::Undefined; }
-	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const { return AbstractChatRoom::SecurityLevel::Unsafe; }
-	virtual std::list<std::pair<std::string, std::string>> getEncryptionParameters () { return {}; }
-	virtual void mutualAuthentication (SalMediaDescription *localMediaDescription, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext, LinphoneCallDir direction) {}
-	virtual void authenticationVerified (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) {}
-	virtual void authenticationRejected (const char *peerDeviceId, SalMediaDescription *remoteMediaDescription, MSZrtpContext *zrtpContext) {}
-	virtual void addSecurityEventInChatrooms (const IdentityAddress &peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType securityEventType) {}
-	virtual std::shared_ptr<ConferenceSecurityEvent> onDeviceAdded (const IdentityAddress &newDeviceAddr, std::shared_ptr<Participant> participant, const std::shared_ptr<AbstractChatRoom> &chatRoom, ChatRoom::SecurityLevel currentSecurityLevel) { return nullptr; }
+	virtual ChatMessageModifier::Result processIncomingMessage (
+		const std::shared_ptr<ChatMessage> &message,
+		int &errorCode
+	) { return ChatMessageModifier::Result::Skipped; }
+
+	virtual bool encryptionEnabledForFileTransfer (
+		const std::shared_ptr<AbstractChatRoom> &ChatRoom
+	) { return false; }
+
+	virtual void generateFileTransferKey (
+		const std::shared_ptr<AbstractChatRoom> &ChatRoom,
+		const std::shared_ptr<ChatMessage> &message
+	) {}
+
+	virtual int downloadingFile (
+		const std::shared_ptr<ChatMessage> &message,
+		size_t offset,
+		const uint8_t *buffer,
+		size_t size,
+		uint8_t *decryptedBuffer
+	) { return 0; }
+
+	virtual int uploadingFile (
+		const std::shared_ptr<ChatMessage> &message,
+		size_t offset,
+		const uint8_t *buffer,
+		size_t *size,
+		uint8_t *encryptedBuffer
+	) { return 0; }
+
+	virtual void mutualAuthentication (
+		MSZrtpContext *zrtpContext,
+		SalMediaDescription *localMediaDescription,
+		SalMediaDescription *remoteMediaDescription,
+		LinphoneCallDir direction
+	) {}
+
+	virtual void authenticationVerified (
+		MSZrtpContext *zrtpContext,
+		SalMediaDescription *remoteMediaDescription,
+		const char *peerDeviceId
+	) {}
+
+	virtual void authenticationRejected (
+		SalMediaDescription *remoteMediaDescription,
+		const char *peerDeviceId
+	) {}
+
+	virtual void addSecurityEventInChatrooms (
+		const IdentityAddress &peerDeviceAddr,
+		ConferenceSecurityEvent::SecurityEventType securityEventType
+	) {}
+
+	virtual std::shared_ptr<ConferenceSecurityEvent> onDeviceAdded (
+		const IdentityAddress &newDeviceAddr,
+		std::shared_ptr<Participant> participant,
+		const std::shared_ptr<AbstractChatRoom> &chatRoom,
+		ChatRoom::SecurityLevel currentSecurityLevel
+	) { return nullptr; }
+
 	virtual void cleanDb () {}
+	virtual void update () {}
+	virtual EncryptionEngine::EngineType getEngineType () { return EngineType::Undefined; }
+	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const { return AbstractChatRoom::SecurityLevel::ClearText; }
+	virtual std::list<EncryptionParameter> getEncryptionParameters () { return std::list<EncryptionParameter>(); }
 
 protected:
 	EncryptionEngine::EngineType engineType;
