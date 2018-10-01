@@ -305,7 +305,7 @@ typedef struct _stats {
 	int number_of_participant_devices_added;
 
 	int number_of_SecurityLevelDowngraded;
-	int number_of_MultideviceParticipantDetected;
+	int number_of_ParticipantMaxDeviceCountExceeded;
 	int number_of_LimeIdentityKeyChanged;
 	int number_of_ManInTheMiddleDetected;
 

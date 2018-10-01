@@ -16,6 +16,7 @@ sip_tcp_port=-1
 sip_tls_port=-1
 default_proxy=0
 ping_with_options=0
+zrtp_cache_migration_done=1
 
 [auth_info_0]
 username=laure

@@ -23,7 +23,7 @@
 #include "bctoolbox/crypto.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
-#include "chat/encryption/encryption-engine-listener.h"
+#include "chat/encryption/encryption-engine.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "content/content-type.h"
 #include "content/content.h"
@@ -175,7 +175,7 @@ int FileTransferChatMessageModifier::onSendBody (
 		}
 	}
 
-	EncryptionEngineListener *imee = message->getCore()->getEncryptionEngine();
+	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
 	if (imee) {
 		size_t max_size = *size;
 		uint8_t *encrypted_buffer = (uint8_t *)ms_malloc0(max_size);
@@ -203,7 +203,7 @@ void FileTransferChatMessageModifier::onSendEnd (belle_sip_user_body_handler_t *
 	if (!message)
 		return;
 
-	EncryptionEngineListener *imee = message->getCore()->getEncryptionEngine();
+	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
 	if (imee) {
 		imee->uploadingFile(message, 0, nullptr, 0, nullptr);
 	}
@@ -234,7 +234,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			belle_sip_body_handler_t *first_part_bh;
 
 			bool isFileEncryptionEnabled = false;
-			EncryptionEngineListener *imee = message->getCore()->getEncryptionEngine();
+			EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
 			if (imee)
 				isFileEncryptionEnabled = imee->encryptionEnabledForFileTransfer(message->getChatRoom());
 
@@ -722,7 +722,7 @@ void FileTransferChatMessageModifier::onRecvBody (belle_sip_user_body_handler_t 
 		return;
 
 	int retval = -1;
-	EncryptionEngineListener *imee = message->getCore()->getEncryptionEngine();
+	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
 	if (imee) {
 		uint8_t *decrypted_buffer = (uint8_t *)ms_malloc0(size);
 		retval = imee->downloadingFile(message, offset, buffer, size, decrypted_buffer);
@@ -765,7 +765,7 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 	shared_ptr<Core> core = message->getCore();
 
 	int retval = -1;
-	EncryptionEngineListener *imee = message->getCore()->getEncryptionEngine();
+	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
 	if (imee) {
 		retval = imee->downloadingFile(message, 0, nullptr, 0, nullptr);
 	}

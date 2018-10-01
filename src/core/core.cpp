@@ -22,8 +22,7 @@
 
 #include "address/address-p.h"
 #include "call/call.h"
-#include "chat/encryption/lime-v2.h"
-#include "chat/chat-room/chat-room.h"
+#include "chat/encryption/lime-x3dh-encryption-engine.h"
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
 #include "core/core-listener.h"
@@ -189,17 +188,17 @@ string Core::getConfigPath () const {
 
 // =============================================================================
 
-void Core::setEncryptionEngine (EncryptionEngineListener *imee) {
+void Core::setEncryptionEngine (EncryptionEngine *imee) {
 	L_D();
 	d->imee.reset(imee);
 }
 
-EncryptionEngineListener *Core::getEncryptionEngine () const {
+EncryptionEngine *Core::getEncryptionEngine () const {
 	L_D();
 	return d->imee.get();
 }
 
-void Core::enableLimeV2 (bool enable) {
+void Core::enableLimeX3dh (bool enable) {
 	L_D();
 	if (!enable) {
 		if (d->imee != nullptr)
@@ -207,43 +206,43 @@ void Core::enableLimeV2 (bool enable) {
 		return;
 	}
 
-	if (limeV2Enabled())
+	if (limeX3dhEnabled())
 		return;
 
 	if (d->imee != nullptr)
 		d->imee.release();
 
-	LimeV2 *limeV2Engine;
+	LimeX3DHEncryptionEngine *engine;
 	if (d->imee == nullptr) {
 		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
 		string filename = lp_config_get_string(lpconfig, "lime", "x3dh_db_path", "x3dh.c25519.sqlite3");
 		string dbAccess = getDataPath() + filename;
 
 		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
-		limeV2Engine = new LimeV2(dbAccess, prov, getCCore());
+		engine = new LimeX3DHEncryptionEngine(dbAccess, prov, getSharedFromThis());
 
-		setEncryptionEngine(limeV2Engine);
-		d->registerListener(limeV2Engine);
+		setEncryptionEngine(engine);
+		d->registerListener(engine);
 	}
 }
 
-void Core::updateLimeV2 (void) const {
+void Core::updateLimeX3dh () const {
 	L_D();
 
-	if (linphone_core_lime_v2_enabled(getCCore())) {
-		d->imee->update(getCCore()->config);
+	if (linphone_core_lime_x3dh_enabled(getCCore())) {
+		d->imee->update();
 	}
 }
 
-bool Core::limeV2Enabled (void) const {
+bool Core::limeX3dhEnabled () const {
 	L_D();
-	if (d->imee != nullptr && d->imee->getEngineType() == EncryptionEngineListener::EngineType::LimeV2)
+	if (d->imee != nullptr && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3DH)
 		return true;
 	return false;
 }
 
 // TODO does not work
-bool Core::limeV2Available(void) const {
+bool Core::limeX3dhAvailable() const {
 #ifdef HAVE_LIME
 	return true;
 #else

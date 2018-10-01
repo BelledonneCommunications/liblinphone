@@ -24,7 +24,7 @@
 
 #include "address/identity-address.h"
 #include "chat/chat-room/abstract-chat-room.h"
-#include "chat/encryption/encryption-engine-listener.h"
+#include "chat/encryption/encryption-engine.h"
 
 #include "linphone/types.h"
 #include "linphone/utils/general.h"

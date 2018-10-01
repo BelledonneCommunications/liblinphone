@@ -35,7 +35,7 @@ class LINPHONE_PUBLIC ClientGroupChatRoom : public ChatRoom, public RemoteConfer
 	friend class ClientGroupToBasicChatRoomPrivate;
 	friend class Core;
 	friend class CorePrivate;
-	friend class LimeV2;
+	friend class LimeX3DHEncryptionEngine;
 	friend class MediaSessionPrivate;
 
 public:
