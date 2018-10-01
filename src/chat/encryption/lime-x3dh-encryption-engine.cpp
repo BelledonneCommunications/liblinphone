@@ -407,7 +407,7 @@ void LimeX3DHEncryptionEngine::generateFileTransferKey (
 
 	for (Content *content : message->getContents()) {
 		if (content->isFileTransfer()) {
-			FileTransferContent *fileTransferContent = dynamic_cast<FileTransferContent *>(content);
+			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
 			fileTransferContent->setFileKey(keyBuffer, FILE_TRANSFER_KEY_SIZE);
 			return;
 		}
@@ -425,7 +425,7 @@ int LimeX3DHEncryptionEngine::downloadingFile (
 	if (!content)
 		return -1;
 
-	const FileTransferContent *fileTransferContent = dynamic_cast<const FileTransferContent *>(content);
+	const FileTransferContent *fileTransferContent = static_cast<const FileTransferContent *>(content);
 	const char *fileKey = fileTransferContent->getFileKey().data();
 
 	if (!fileKey)
