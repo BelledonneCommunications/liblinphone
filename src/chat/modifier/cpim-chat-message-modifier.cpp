@@ -169,17 +169,6 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 	if (dateTimeHeader)
 		message->getPrivate()->setTime(dateTimeHeader->getTime());
 
-	if (message->getPrivate()->senderAuthenticationEnabled) {
-		if (cpimFromAddress.isValid() && (cpimFromAddress == message->getAuthenticatedFromAddress())) {
-			message->getPrivate()->forceFromAddress(cpimFromAddress);
-			lInfo() << "[CPIM] Sender authentication successful";
-		} else {
-			lWarning() << "[CPIM] Sender authentication failed";
-			errorCode = 488;
-			return ChatMessageModifier::Result::Error;
-		}
-	}
-
 	auto messageIdHeader = cpimMessage->getMessageHeader("Message-ID"); // TODO: For compatibility, to remove
 	if (!imdnNamespace.empty()) {
 		if (!messageIdHeader)
@@ -199,8 +188,25 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 	if (messageIdHeader)
 		message->getPrivate()->setImdnMessageId(messageIdHeader->getValue());
 
+	// Discard message if sender authentication is enabled and failed
+	if (message->getPrivate()->senderAuthenticationEnabled) {
+		if (cpimFromAddress == message->getAuthenticatedFromAddress()) {
+			lInfo() << "[CPIM] Sender authentication successful";
+			cout << "[CPIM] Sender authentication successful" << endl;
+		} else {
+			lWarning() << "[CPIM] Sender authentication failed";
+			cout << "[CPIM] Sender authentication failed" << endl;
+			cout << "cpimFromAddress = " << cpimFromAddress.asString() << endl;
+			cout << "authFromAddress = " << message->getAuthenticatedFromAddress() << endl;
+			errorCode = 488;
+			return ChatMessageModifier::Result::Error;
+		}
+	}
+
 	// Modify the initial message since there was no error
 	message->setInternalContent(newContent);
+	if (cpimFromAddress.isValid())
+		message->getPrivate()->forceFromAddress(cpimFromAddress);
 
 	return ChatMessageModifier::Result::Done;
 }
