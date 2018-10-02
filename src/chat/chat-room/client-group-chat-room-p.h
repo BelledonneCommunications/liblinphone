@@ -21,7 +21,7 @@
 #define _L_CLIENT_GROUP_CHAT_ROOM_P_H_
 
 #include "chat/chat-room/chat-room-p.h"
-#include "chat/encryption/encryption-engine-listener.h"
+#include "chat/encryption/encryption-engine.h"
 #include "client-group-chat-room.h"
 #include "utils/background-task.h"
 

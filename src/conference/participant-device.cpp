@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include "chat/encryption/encryption-engine-listener.h"
+#include "chat/encryption/encryption-engine.h"
 #include "participant-device.h"
 #include "participant-p.h"
 #include "core/core.h"

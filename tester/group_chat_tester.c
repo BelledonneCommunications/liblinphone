@@ -114,8 +114,8 @@ static void chat_room_security_event (LinphoneChatRoom *cr, const LinphoneEventL
 		case LinphoneSecurityEventTypeSecurityLevelDowngraded:
 			manager->stat.number_of_SecurityLevelDowngraded++;
 			break;
-		case LinphoneSecurityEventTypeMultideviceParticipantDetected:
-			manager->stat.number_of_MultideviceParticipantDetected++;
+		case LinphoneSecurityEventTypeParticipantMaxDeviceCountExceeded:
+			manager->stat.number_of_ParticipantMaxDeviceCountExceeded++;
 			break;
 		case LinphoneSecurityEventTypeLimeIdentityKeyChanged:
 			manager->stat.number_of_LimeIdentityKeyChanged++;
@@ -3878,8 +3878,8 @@ static void lime_v2_message_test (bool_t with_composing, bool_t with_response) {
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status for both participants
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
@@ -3937,8 +3937,8 @@ static void lime_v2_message_test (bool_t with_composing, bool_t with_response) {
 
 end:
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -4000,9 +4000,9 @@ static void group_chat_lime_v2_send_encrypted_file_with_or_without_text (bool_t 
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status for both participants
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(chloe->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(chloe->lc));
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
@@ -4034,9 +4034,9 @@ static void group_chat_lime_v2_send_encrypted_file_with_or_without_text (bool_t 
 	}
 
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
-	linphone_core_delete_local_lime_v2_db(chloe->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
+	linphone_core_delete_local_lime_x3dh_db(chloe->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -4105,8 +4105,8 @@ static void group_chat_lime_v2_verify_sas_before_message (void) {
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status for both participants
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
 	// TEST activate zrtp cache
 	const char *filepath;
@@ -4206,8 +4206,8 @@ end:
 	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
 
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
 
 	// Clean db from chat room
 // 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -4242,8 +4242,8 @@ static void group_chat_lime_v2_reject_sas_before_message (void) {
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status for both participants
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
 	// TEST activate zrtp cache
 	const char *filepath;
@@ -4336,8 +4336,8 @@ end:
 	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
 
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
 
 	// Clean db from chat room
 // 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -4372,8 +4372,8 @@ static void group_chat_lime_v2_message_before_verify_sas (void) {
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status for both participants
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
 	// TEST activate zrtp cache
 	const char *filepath;
@@ -4452,8 +4452,8 @@ end:
 	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
 
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -4486,8 +4486,8 @@ static void group_chat_lime_v2_message_before_reject_sas (void) {
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status for participants
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
 	// TEST activate zrtp cache
 	const char *filepath;
@@ -4567,8 +4567,8 @@ end:
 	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
 
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -4607,10 +4607,10 @@ static void group_chat_lime_v2_chatroom_security_level_upgrade (void) {
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status for participants
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(laure->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(chloe->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(chloe->lc));
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
@@ -4702,10 +4702,10 @@ static void group_chat_lime_v2_chatroom_security_level_upgrade (void) {
 
 end:
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
-	linphone_core_delete_local_lime_v2_db(laure->lc);
-	linphone_core_delete_local_lime_v2_db(chloe->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
+	linphone_core_delete_local_lime_x3dh_db(laure->lc);
+	linphone_core_delete_local_lime_x3dh_db(chloe->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -4748,10 +4748,10 @@ static void group_chat_lime_v2_chatroom_security_level_downgrade_adding_particip
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status for participants
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(laure->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(chloe->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(chloe->lc));
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
@@ -4839,10 +4839,10 @@ static void group_chat_lime_v2_chatroom_security_level_downgrade_adding_particip
 
 end:
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
-	linphone_core_delete_local_lime_v2_db(laure->lc);
-	linphone_core_delete_local_lime_v2_db(chloe->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
+	linphone_core_delete_local_lime_x3dh_db(laure->lc);
+	linphone_core_delete_local_lime_x3dh_db(chloe->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -4881,9 +4881,9 @@ static void group_chat_lime_v2_chatroom_security_level_downgrade_resetting_zrtp 
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status for participants
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(laure->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure->lc));
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
@@ -4961,9 +4961,9 @@ static void group_chat_lime_v2_chatroom_security_level_downgrade_resetting_zrtp 
 
 end:
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
-	linphone_core_delete_local_lime_v2_db(laure->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
+	linphone_core_delete_local_lime_x3dh_db(laure->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -5002,9 +5002,9 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status for participants
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline1->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(laure->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline1->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure->lc));
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
@@ -5095,7 +5095,7 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 
 	// Wait for Pauline2 lime user to be created on X3DH server
 	wait_for_list(coresList, &dummy, 1, 1000);
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline2->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline2->lc));
 	linphone_core_set_media_encryption(pauline2->lc, LinphoneMediaEncryptionZRTP);
 
 	// Pauline2 is automatically added to the chatroom
@@ -5107,9 +5107,9 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participant_devices_added, initialLaureStats.number_of_participant_devices_added + 1, 3000));
 
 	// Check that the participants have received a security alert because Pauline2 is forbidden
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_MultideviceParticipantDetected, initialMarieStats.number_of_MultideviceParticipantDetected + 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_MultideviceParticipantDetected, initialPauline1Stats.number_of_MultideviceParticipantDetected + 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_MultideviceParticipantDetected, initialLaureStats.number_of_MultideviceParticipantDetected + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_ParticipantMaxDeviceCountExceeded, initialMarieStats.number_of_ParticipantMaxDeviceCountExceeded + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_ParticipantMaxDeviceCountExceeded, initialPauline1Stats.number_of_ParticipantMaxDeviceCountExceeded + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_ParticipantMaxDeviceCountExceeded, initialLaureStats.number_of_ParticipantMaxDeviceCountExceeded + 1, 3000));
 
 	// Check the security level was downgraded for Marie and Laure
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
@@ -5125,13 +5125,12 @@ static void group_chat_lime_v2_chatroom_security_alert (void) {
 		BC_ASSERT_FALSE((pauline2->stat.number_of_LinphoneMessageReceived == initialPauline2Stats.number_of_LinphoneMessageReceived + 1));
 	}
 
-
 end:
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline1->lc);
-	if (pauline2) linphone_core_delete_local_lime_v2_db(pauline2->lc);
-	linphone_core_delete_local_lime_v2_db(laure->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline1->lc);
+	if (pauline2) linphone_core_delete_local_lime_x3dh_db(pauline2->lc);
+	linphone_core_delete_local_lime_x3dh_db(laure->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -5148,9 +5147,6 @@ end:
 }
 
 static void group_chat_lime_v2_call_security_alert (void) {
-	// Simulate security alert during ZRTP call
-	// Check if security event is sent to correct chatrooms
-
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -5169,8 +5165,8 @@ static void group_chat_lime_v2_call_security_alert (void) {
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status for both participants
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
@@ -5219,8 +5215,8 @@ static void group_chat_lime_v2_call_security_alert (void) {
 
 end:
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -5254,9 +5250,9 @@ static void group_chat_lime_v2_send_multiple_successive_encrypted_messages (void
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status for all participants
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(laure->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure->lc));
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
@@ -5340,9 +5336,9 @@ static void group_chat_lime_v2_send_multiple_successive_encrypted_messages (void
 
 end:
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
-	linphone_core_delete_local_lime_v2_db(laure->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
+	linphone_core_delete_local_lime_x3dh_db(laure->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -5375,8 +5371,8 @@ static void group_chat_lime_v2_send_encrypted_message_to_disabled_lime_v2 (void)
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
@@ -5387,11 +5383,11 @@ static void group_chat_lime_v2_send_encrypted_message_to_disabled_lime_v2 (void)
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
 
 	// Pauline disables LIMEv2
-	linphone_core_enable_lime_v2(pauline->lc, FALSE);
+	linphone_core_enable_lime_x3dh(pauline->lc, FALSE);
 
 	// Check encryption status
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_FALSE(linphone_core_lime_v2_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_FALSE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
 	// Marie starts composing a message
 	linphone_chat_room_compose(marieCr);
@@ -5411,9 +5407,9 @@ static void group_chat_lime_v2_send_encrypted_message_to_disabled_lime_v2 (void)
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
 	// Clean local LIMEv2 databases
-	linphone_core_enable_lime_v2(pauline->lc, TRUE);
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_enable_lime_x3dh(pauline->lc, TRUE);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -5444,8 +5440,8 @@ static void group_chat_lime_v2_send_plain_message_to_enabled_lime_v2 (void) {
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
@@ -5456,11 +5452,11 @@ static void group_chat_lime_v2_send_plain_message_to_enabled_lime_v2 (void) {
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
 
 	// Marie disables LIMEv2
-	linphone_core_enable_lime_v2(marie->lc, FALSE);
+	linphone_core_enable_lime_x3dh(marie->lc, FALSE);
 
 	// Check encryption status
-	BC_ASSERT_FALSE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+	BC_ASSERT_FALSE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
 	// Marie starts composing a message
 	linphone_chat_room_compose(marieCr);
@@ -5476,9 +5472,9 @@ static void group_chat_lime_v2_send_plain_message_to_enabled_lime_v2 (void) {
 	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
 
 	// Clean local LIMEv2 databases
-	linphone_core_enable_lime_v2(marie->lc, TRUE);
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_enable_lime_x3dh(marie->lc, TRUE);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -5519,11 +5515,11 @@ static void group_chat_lime_v2_send_encrypted_message_to_multidevice_participant
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status for all participants
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie1->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie2->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline1->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline2->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(laure->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie1->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie2->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline1->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline2->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure->lc));
 
 	// Change the value of max_nb_device_per_participant to allow multidevice
 	linphone_config_set_int(linphone_core_get_config(marie1->lc), "lime", "max_nb_device_per_participant", 2);
@@ -5592,11 +5588,11 @@ static void group_chat_lime_v2_send_encrypted_message_to_multidevice_participant
 
 end:
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie1->lc);
-	linphone_core_delete_local_lime_v2_db(marie2->lc);
-	linphone_core_delete_local_lime_v2_db(pauline1->lc);
-	linphone_core_delete_local_lime_v2_db(pauline2->lc);
-	linphone_core_delete_local_lime_v2_db(laure->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie1->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie2->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline1->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline2->lc);
+	linphone_core_delete_local_lime_x3dh_db(laure->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie1, marieCr1, coresList);
@@ -5633,8 +5629,8 @@ static void group_chat_lime_v2_message_while_network_unreachable (void) {
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
@@ -5675,8 +5671,8 @@ static void group_chat_lime_v2_message_while_network_unreachable (void) {
 
 end:
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -5707,8 +5703,8 @@ static void group_chat_lime_v2_update_keys (void) {
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Check encryption status
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
@@ -5746,7 +5742,7 @@ static void group_chat_lime_v2_update_keys (void) {
 	linphone_core_set_network_reachable(marie->lc, TRUE);
 
 	// check if Marie's encryption is still active after restart
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
 
 	// Check that we have not performed an update
 	int newUpdateTime = linphone_config_get_int(config, "misc", "last_lime_update_time", -1);
@@ -5761,7 +5757,7 @@ static void group_chat_lime_v2_update_keys (void) {
 	linphone_core_set_network_reachable(marie->lc, TRUE);
 
 	// check if Marie's encryption is still active after restart
-	BC_ASSERT_TRUE(linphone_core_lime_v2_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
 
 	// Wait for update callback
 	wait_for_list(coresList, &dummy, 1, 2000);
@@ -5772,8 +5768,8 @@ static void group_chat_lime_v2_update_keys (void) {
 
 end:
 	// Clean local LIMEv2 databases
-	linphone_core_delete_local_lime_v2_db(marie->lc);
-	linphone_core_delete_local_lime_v2_db(pauline->lc);
+	linphone_core_delete_local_lime_x3dh_db(marie->lc);
+	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
