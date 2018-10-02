@@ -526,10 +526,18 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 	L_Q_T(LocalConference, qConference);
 	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddress);
 	if (device) {
-		if (device->getState() == ParticipantDevice::State::Joining)
-			inviteDevice(device);
-		else if (device->getState() == ParticipantDevice::State::Leaving)
-			byeDevice(device);
+		lInfo() << q << ": Adding participant device that is currently in state [" << device->getState() << "]";
+		switch (device->getState()) {
+			case ParticipantDevice::State::Joining:
+			case ParticipantDevice::State::Left:
+				inviteDevice(device);
+				break;
+			case ParticipantDevice::State::Leaving:
+				byeDevice(device);
+				break;
+			default:
+				break;
+		}
 	} else if (findFilteredParticipant(participant->getAddress())) {
 		// Add device only if participant is not currently being removed
 		device = participant->getPrivate()->addDevice(deviceAddress);
@@ -621,6 +629,7 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 	shared_ptr<CallSession> session = device->getSession();
 	if (session && (session->getDirection() == LinphoneCallIncoming))
 		return; // Do not try to invite the device that is currently creating the chat room
+	device->setState(ParticipantDevice::State::Joining);
 	if (!session
 		|| (session->getState() == CallSession::State::End)
 		|| (session->getState() == CallSession::State::Error)
