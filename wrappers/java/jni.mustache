@@ -279,6 +279,10 @@ jobject get{{className}}(JNIEnv *env, {{classCName}} *cptr, bool_t takeref) {
 
 void Java_{{jniPrefix}}{{classImplName}}_unref(JNIEnv* env, jobject thiz, jlong ptr) {
 	{{classCName}} *cptr = ({{classCName}}*)ptr;
+	if (cptr == 0) {
+		bctbx_error("{{classCName}} C ptr is null !");
+		return;
+	}
 	jobject wref = (jobject)belle_sip_object_data_get((belle_sip_object_t *)cptr, belle_sip_java_user_data_key);
 	belle_sip_object_data_set((belle_sip_object_t *)cptr, belle_sip_java_user_data_key, NULL, NULL);
 	if (wref) {
@@ -398,6 +402,10 @@ static {{return}} {{callbackName}}({{params}}) {
 {{#isSingleListener}}
 void Java_{{jniPackage}}{{className}}Impl_setListener(JNIEnv* env, jobject thiz, jlong ptr, jobject jlistener) {
 	{{classCName}} *cptr = ({{classCName}}*)ptr;
+	if (cptr == 0) {
+		bctbx_error("{{classCName}} C ptr is null !");
+		return;
+	}
 	{{classCName}}Cbs *cbs = {{cPrefix}}_get_callbacks(cptr);
 	if (jlistener == NULL) {
 		jobject listener = (jobject) {{cPrefix}}_cbs_get_user_data(cbs);
@@ -429,6 +437,10 @@ void Java_{{jniPackage}}{{className}}Impl_setListener(JNIEnv* env, jobject thiz,
 void Java_{{jniPackage}}{{className}}Impl_addListener(JNIEnv* env, jobject thiz, jlong ptr, jobject jlistener) {
 	if (jlistener == NULL) return;
 	{{classCName}} *cptr = ({{classCName}}*)ptr;
+	if (cptr == 0) {
+		bctbx_error("{{classCName}} C ptr is null !");
+		return;
+	}
 	jobject listener = env->NewGlobalRef(jlistener);
 	{{classCName}}Cbs *cbs = linphone_factory_create_{{factoryName}}_cbs(NULL);
 	{{cPrefix}}_cbs_set_user_data(cbs, listener);
@@ -441,6 +453,10 @@ void Java_{{jniPackage}}{{className}}Impl_addListener(JNIEnv* env, jobject thiz,
 
 void Java_{{jniPackage}}{{className}}Impl_removeListener(JNIEnv* env, jobject thiz, jlong ptr, jobject jlistener) {
 	{{classCName}} *cptr = ({{classCName}}*)ptr;
+	if (cptr == 0) {
+		bctbx_error("{{classCName}} C ptr is null !");
+		return;
+	}
 	const bctbx_list_t *cbs_list = {{cPrefix}}_get_callbacks_list(cptr);
 	bctbx_list_t *it;
 	for (it = (bctbx_list_t *)cbs_list; it != NULL; it = it->next) {
@@ -472,7 +488,14 @@ jobject Java_{{jni_package}}CoreImpl_getMediastreamerFactory(JNIEnv *env, jobjec
 	{{#notStatic}}{{classCName}} *cptr = ({{classCName}}*)ptr;
 	{{#isLinphoneFactory}}cptr = linphone_factory_get();{{/isLinphoneFactory}}
 	if (cptr == 0) {
-		return {{#hasReturn}}0{{/hasReturn}}{{#hasStringReturn}}0{{/hasStringReturn}}{{#hasListReturn}}0{{/hasListReturn}}{{#hasByteArrayReturn}}0{{/hasByteArrayReturn}};
+		bctbx_error("{{classCName}} C ptr is null !");
+		{{#hasListReturn}}
+		{{#isRealObjectArray}}
+		LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
+		jobjectArray jni_list_result = env->NewObjectArray(0, ljb->{{objectCPrefix}}_class, NULL);{{/isRealObjectArray}}
+		{{#isStringObjectArray}}jobjectArray jni_list_result = env->NewObjectArray(0, env->FindClass("java/lang/String"), env->NewStringUTF(""));{{/isStringObjectArray}}
+		{{/hasListReturn}}
+		return {{#hasReturn}}0{{/hasReturn}}{{#hasListReturn}}jni_list_result{{/hasListReturn}}{{#hasByteArrayReturn}}0{{/hasByteArrayReturn}};
 	}
 	{{/notStatic}}{{#strings}}
 	const char* c_{{string}} = GetStringUTFChars(env, {{string}});
@@ -549,6 +572,10 @@ jobject Java_{{jni_package}}CoreImpl_getMediastreamerFactory(JNIEnv *env, jobjec
 
 void Java_org_linphone_core_CallImpl_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	LinphoneCall *cptr = (LinphoneCall*)ptr;
+	if (cptr == 0) {
+		bctbx_error("LinphoneCall C ptr is null !");
+		return;
+	}
 	jobject oldWindow = (jobject) linphone_call_get_native_video_window_id(cptr);
 	if (oldWindow == id) {
 		ms_warning("Java_org_linphone_core_CallImpl_setNativeVideoWindowId(): new id (%p) is the same as the current one, skipping...", id);
@@ -567,6 +594,10 @@ void Java_org_linphone_core_CallImpl_setNativeVideoWindowId(JNIEnv *env, jobject
 
 void Java_org_linphone_core_CoreImpl_setNativePreviewWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	LinphoneCore *cptr = (LinphoneCore*)ptr;
+	if (cptr == 0) {
+		bctbx_error("LinphoneCore C ptr is null !");
+		return;
+	}
 	jobject oldWindow = (jobject) linphone_core_get_native_preview_window_id(cptr);
 	if (oldWindow == id) {
 		ms_warning("Java_org_linphone_core_CoreImpl_setNativePreviewWindowId(): new id (%p) is the same as the current one, skipping...", id);
@@ -585,6 +616,10 @@ void Java_org_linphone_core_CoreImpl_setNativePreviewWindowId(JNIEnv *env, jobje
 
 void Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	LinphoneCore *cptr = (LinphoneCore*)ptr;
+	if (cptr == 0) {
+		bctbx_error("LinphoneCore C ptr is null !");
+		return;
+	}
 	jobject oldWindow = (jobject) linphone_core_get_native_video_window_id(cptr);
 	if (oldWindow == id) {
 		ms_warning("Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(): new id (%p) is the same as the current one, skipping...", id);
