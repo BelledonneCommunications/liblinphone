@@ -593,7 +593,7 @@ JNIEXPORT void JNICALL Java_org_linphone_core_CallImpl_setNativeVideoWindowId(JN
 JNIEXPORT void JNICALL Java_org_linphone_core_CoreImpl_setNativePreviewWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	LinphoneCore *cptr = (LinphoneCore*)ptr;
 	if (cptr == 0) {
-		bctbx_error("LinphoneCore C ptr is null !");
+		bctbx_error("LinphoneCore C ptr is null!");
 		return;
 	}
 	jobject oldWindow = (jobject) linphone_core_get_native_preview_window_id(cptr);
@@ -615,7 +615,7 @@ JNIEXPORT void JNICALL Java_org_linphone_core_CoreImpl_setNativePreviewWindowId(
 JNIEXPORT void JNICALL Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	LinphoneCore *cptr = (LinphoneCore*)ptr;
 	if (cptr == 0) {
-		bctbx_error("LinphoneCore C ptr is null !");
+		bctbx_error("LinphoneCore C ptr is null!");
 		return;
 	}
 	jobject oldWindow = (jobject) linphone_core_get_native_video_window_id(cptr);
