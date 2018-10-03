@@ -801,6 +801,23 @@ void Sal::cancelTimer(belle_sip_source_t *timer) {
 	belle_sip_main_loop_remove_source(ml, timer);
 }
 
+belle_sip_source_t *Sal::createSocketWatcher (
+	belle_sip_source_func_t func,
+	void *data,
+	unsigned int timeoutValueMs,
+	belle_sip_socket_t fd,
+	unsigned int events
+) {
+	belle_sip_source_t *socketWatcher = belle_sip_socket_source_new(func, data, fd, events, timeoutValueMs);
+	belle_sip_main_loop_add_source(belle_sip_stack_get_main_loop(mStack), socketWatcher);
+	return socketWatcher;
+}
+
+void Sal::destroySocketWatcher (belle_sip_source_t *socketWatcher) {
+	if (socketWatcher)
+		belle_sip_main_loop_remove_source(belle_sip_stack_get_main_loop(mStack), socketWatcher);
+}
+
 belle_sip_response_t *Sal::createResponseFromRequest (belle_sip_request_t *request, int code) {
 	auto response = belle_sip_response_create_from_request(request, code);
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(mUserAgentHeader));

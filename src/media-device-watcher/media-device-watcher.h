@@ -26,11 +26,12 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Core;
 class MediaDeviceWatcherPrivate;
 
 class MediaDeviceWatcher : public Object {
 public:
-	MediaDeviceWatcher ();
+	MediaDeviceWatcher (Core *core);
 	~MediaDeviceWatcher ();
 
 private:

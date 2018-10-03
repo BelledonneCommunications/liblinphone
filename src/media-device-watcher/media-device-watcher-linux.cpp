@@ -22,6 +22,8 @@
 
 #include <libudev.h>
 
+#include "core_private.h"
+#include "core/core.h"
 #include "logger/logger.h"
 #include "media-device-watcher.h"
 #include "object/object-p.h"
@@ -32,20 +34,41 @@ LINPHONE_BEGIN_NAMESPACE
 
 class MediaDeviceWatcherPrivate : public ObjectPrivate {
 public:
-	udev *udevContext;
-	udev_monitor *udevMonitor;
+	udev *udevContext = nullptr;
+	udev_monitor *udevMonitor = nullptr;
+
+	Core *core = nullptr;
+	belle_sip_source_t *socketWatcher = nullptr;
 
 	void clean ();
+
+	static int handleNotification (void *userData, unsigned int) {
+		MediaDeviceWatcherPrivate *d = static_cast<MediaDeviceWatcherPrivate *>(userData);
+		udev_device *udevDevice = udev_monitor_receive_device(d->udevMonitor);
+		const char *subsystem = udev_device_get_subsystem(udevDevice);
+		if (subsystem) {
+			if (!strcmp(subsystem, "sound")) {
+				// TODO:
+			}
+
+			if (!strcmp(subsystem, "video4linux")) {
+				// TODO:
+			}
+		}
+		udev_device_unref(udevDevice);
+	}
 };
 
 void MediaDeviceWatcherPrivate::clean () {
+	if (core)
+		core->getCCore()->sal->destroySocketWatcher(socketWatcher);
 	if (udevMonitor)
 		udev_monitor_unref(udevMonitor);
 	if (udevContext)
 		udev_unref(udevContext);
 }
 
-MediaDeviceWatcher::MediaDeviceWatcher () : Object(*new MediaDeviceWatcherPrivate) {
+MediaDeviceWatcher::MediaDeviceWatcher (Core *core) : Object(*new MediaDeviceWatcherPrivate) {
 	L_D();
 
 	if (!(d->udevContext = udev_new())) {
@@ -72,7 +95,8 @@ MediaDeviceWatcher::MediaDeviceWatcher () : Object(*new MediaDeviceWatcherPrivat
 		return;
 	}
 
-	// TODO: Deal with fd. Add a socket notifier in core?
+	d->core = core;
+	core->getCCore()->sal->createSocketWatcher(&MediaDeviceWatcherPrivate::handleNotification, d, 0, fd, BELLE_SIP_EVENT_READ);
 }
 
 MediaDeviceWatcher::~MediaDeviceWatcher () {

@@ -157,9 +157,9 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	content/content.h
 	content/file-content.h
 	content/file-transfer-content.h
-	content/header/header.h
 	content/header/header-p.h
 	content/header/header-param.h
+	content/header/header.h
 	core/core-accessor.h
 	core/core-listener.h
 	core/core-p.h
@@ -194,6 +194,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	event-log/events.h
 	hacks/hacks.h
 	logger/logger.h
+	media-device-watcher/media-device-watcher.h
 	nat/ice-agent.h
 	nat/stun-client.h
 	object/app-data-container.h
@@ -365,8 +366,9 @@ elseif (WIN32)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES core/paths/paths-windows.cpp)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-windows.h)
 elseif (UNIX)
-	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES core/paths/paths-linux.cpp)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-linux.h)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES core/paths/paths-linux.cpp)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES media-device-watcher/media-device-watcher-linux.cpp)
 endif ()
 
 set(LINPHONE_CXX_OBJECTS_INCLUDE_DIRS
@@ -383,7 +385,7 @@ foreach (header ${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES})
 endforeach ()
 set(LINPHONE_PRIVATE_HEADER_FILES ${LINPHONE_PRIVATE_HEADER_FILES} PARENT_SCOPE)
 
-if (ANDROID AND CMAKE_C_COMPILER_ID STREQUAL "GNU") 
+if (ANDROID AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
 	list(APPEND STRICT_OPTIONS_CXX "-Wno-attributes")
 endif()
 bc_apply_compile_flags(LINPHONE_CXX_OBJECTS_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)

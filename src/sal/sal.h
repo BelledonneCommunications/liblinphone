@@ -240,8 +240,7 @@ public:
 	const std::string &getDnsUserHostsFile () const;
 
 	belle_sip_resolver_context_t *resolveA (const std::string &name, int port, int family, belle_sip_resolver_callback_t cb, void *data);
-	belle_sip_resolver_context_t *resolve (const std::string &service, const std::string &transport, const std::string &name, int port, int family, belle_sip_resolver_callback_t cb, void *data); 
-
+	belle_sip_resolver_context_t *resolve (const std::string &service, const std::string &transport, const std::string &name, int port, int family, belle_sip_resolver_callback_t cb, void *data);
 
 	// ---------------------------------------------------------------------------
 	// Timers
@@ -249,6 +248,17 @@ public:
 	belle_sip_source_t *createTimer (belle_sip_source_func_t func, void *data, unsigned int timeoutValueMs, const std::string &timerName);
 	void cancelTimer (belle_sip_source_t *timer);
 
+	// ---------------------------------------------------------------------------
+	// Socket watcher
+	// ---------------------------------------------------------------------------
+	belle_sip_source_t *createSocketWatcher (
+		belle_sip_source_func_t func,
+		void *data,
+		unsigned int timeoutValueMs,
+		belle_sip_socket_t fd,
+		unsigned int events
+	);
+	void destroySocketWatcher (belle_sip_source_t *socketWatcher);
 
 private:
 	struct SalUuid {
@@ -337,4 +347,3 @@ int toSipCode (SalReason reason);
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_SAL_H_
-
