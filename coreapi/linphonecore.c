@@ -1340,6 +1340,9 @@ static void certificates_config_read(LinphoneCore *lc) {
 }
 
 static void bodyless_config_read(LinphoneCore *lc) {
+	// Clean previous friend lists
+	linphone_core_clear_friend_lists(lc);
+
 	bctbx_list_t *bodyless_lists = linphone_config_get_string_list(lc->config, "sip", "bodyless_lists", NULL);
 	while (bodyless_lists) {
 		char *name = (char *)bodyless_lists->data;
@@ -1440,13 +1443,13 @@ static void sip_config_read(LinphoneCore *lc) {
 	tmp=lp_config_get_int(lc->config,"sip","delayed_timeout",4);
 	linphone_core_set_delayed_timeout(lc,tmp);
 
-	
+
 	/*In case of remote provisionning, function sip_config_read is initialy called in core_init, then in state ConfiguringSuccessfull*/
 	/*Accordingly, to avoid proxy_config to be added twice, it is mandatory to reset proxy config list from LinphoneCore*/
 	/*We assume, lc->config contains an accurate list of proxy_config, so no need to keep it from LinphoneCore */
 	/*Consequence in case of remote provisionning, linphone_core_add_proxy function should not be called before state GlobalOn*/
 	linphone_core_clear_proxy_config(lc);
-	
+
 	/* get proxies config */
 	for(i=0;; i++){
 		LinphoneProxyConfig *cfg=linphone_proxy_config_new_from_config_file(lc,i);
@@ -2771,6 +2774,15 @@ void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list
 	list->lc = NULL;
 	linphone_friend_list_unref(list);
 	lc->friends_lists = bctbx_list_erase_link(lc->friends_lists, elem);
+}
+
+void linphone_core_clear_friend_lists(LinphoneCore *lc) {
+	bctbx_list_t* list = bctbx_list_copy(linphone_core_get_friends_lists((const LinphoneCore *)lc));
+	bctbx_list_t* copy = list;
+	for (; list != NULL; list = list->next) {
+		linphone_core_remove_friend_list(lc, (LinphoneFriendList *)list->data);
+	}
+	bctbx_list_free(copy);
 }
 
 void linphone_core_add_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {

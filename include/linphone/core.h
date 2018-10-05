@@ -5521,6 +5521,12 @@ LINPHONE_PUBLIC void linphone_core_add_friend_list(LinphoneCore *lc, LinphoneFri
 LINPHONE_PUBLIC void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list);
 
 /**
+ * Removes all friend lists.
+ * @param[in] lc #LinphoneCore object
+ */
+LINPHONE_PUBLIC void linphone_core_clear_friend_lists(LinphoneCore *lc);
+
+/**
  * Retrieves the list of #LinphoneFriendList from the core.
  * @param[in] lc #LinphoneCore object
  * @return \bctbx_list{LinphoneFriendList} a list of #LinphoneFriendList
