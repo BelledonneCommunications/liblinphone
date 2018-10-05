@@ -176,13 +176,17 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 		auto dispositionNotificationHeader = cpimMessage->getMessageHeader("Disposition-Notification", imdnNamespace);
 		if (dispositionNotificationHeader) {
 			vector<string> values = Utils::split(dispositionNotificationHeader->getValue(), ", ");
-			for (const auto &value : values)
-				if (value == "positive-delivery")
+			for (const auto &value : values) {
+				string trimedValue = Utils::trim(value); //Might be better to have a Disposition-Notification parser from the CPIM paser
+				if (trimedValue == "positive-delivery")
 					message->getPrivate()->setPositiveDeliveryNotificationRequired(true);
-				else if (value == "negative-delivery")
+				else if (trimedValue == "negative-delivery")
 					message->getPrivate()->setNegativeDeliveryNotificationRequired(true);
-				else if (value == "display")
+				else if (trimedValue == "display")
 					message->getPrivate()->setDisplayNotificationRequired(true);
+				else
+					lError() << "Uknown Disposition-Notification value [" << trimedValue << "]";
+			}
 		}
 	}
 	if (messageIdHeader)
