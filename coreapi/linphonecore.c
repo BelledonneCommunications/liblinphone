@@ -7423,10 +7423,10 @@ typedef struct _parsed_version_st {
 } parsed_version_t;
 
 static int compare_parsed_versions(parsed_version_t current_version, parsed_version_t last_version) {
-	if (last_version.major > current_version.major) return 1;
-	if (last_version.minor > current_version.minor) return 1;
-	if (last_version.patch > current_version.patch) return 1;
-	return -1;
+	if (last_version.major < current_version.major) return -1;
+	if (last_version.minor < current_version.minor) return -1;
+	if (last_version.patch < current_version.patch) return -1;
+	return 1;
 }
 
 static void parse_version(const char *version, parsed_version_t *parsed_version) {
