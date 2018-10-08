@@ -1449,13 +1449,13 @@ static void sip_config_read(LinphoneCore *lc) {
 	tmp=lp_config_get_int(lc->config,"sip","delayed_timeout",4);
 	linphone_core_set_delayed_timeout(lc,tmp);
 
-	
+
 	/*In case of remote provisionning, function sip_config_read is initialy called in core_init, then in state ConfiguringSuccessfull*/
 	/*Accordingly, to avoid proxy_config to be added twice, it is mandatory to reset proxy config list from LinphoneCore*/
 	/*We assume, lc->config contains an accurate list of proxy_config, so no need to keep it from LinphoneCore */
 	/*Consequence in case of remote provisionning, linphone_core_add_proxy function should not be called before state GlobalOn*/
 	linphone_core_clear_proxy_config(lc);
-	
+
 	/* get proxies config */
 	for(i=0;; i++){
 		LinphoneProxyConfig *cfg=linphone_proxy_config_new_from_config_file(lc,i);
@@ -7408,8 +7408,8 @@ typedef struct _parsed_version_st {
 } parsed_version_t;
 
 static int compare_parsed_versions(parsed_version_t current_version, parsed_version_t last_version) {
-	boolean same_major = (last_version.major == current_version.major);
-	boolean same_minor = (last_version.minor == current_version.minor);
+	bool same_major = (last_version.major == current_version.major);
+	bool same_minor = (last_version.minor == current_version.minor);
 	if (last_version.major > current_version.major) return 1;
 	if (same_major && last_version.minor > current_version.minor) return 1;
 	if (same_minor && last_version.patch > current_version.patch) return 1;
