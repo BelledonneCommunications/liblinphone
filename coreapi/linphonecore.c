@@ -7423,8 +7423,8 @@ typedef struct _parsed_version_st {
 } parsed_version_t;
 
 static int compare_parsed_versions(parsed_version_t current_version, parsed_version_t last_version) {
-	boolean same_major = (last_version.major == current_version.major);
-	boolean same_minor = (last_version.minor == current_version.minor);
+	bool same_major = (last_version.major == current_version.major);
+	bool same_minor = (last_version.minor == current_version.minor);
 	if (last_version.major > current_version.major) return 1;
 	if (same_major && last_version.minor > current_version.minor) return 1;
 	if (same_minor && last_version.patch > current_version.patch) return 1;
