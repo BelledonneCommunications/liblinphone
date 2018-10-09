@@ -23,11 +23,6 @@ reg_sendregister=1
 publish=0
 dial_escape_plus=0
 
-[friend_0]
-url="Paupoche" <sip:pauline@sip.example.org>
-pol=accept
-subscribe=0
-
 [misc]
 enable_basic_to_client_group_chat_room_migration=1
 basic_to_client_group_chat_room_migration_timer=180

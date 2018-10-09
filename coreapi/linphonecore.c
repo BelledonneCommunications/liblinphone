@@ -1341,7 +1341,7 @@ static void certificates_config_read(LinphoneCore *lc) {
 
 static void bodyless_config_read(LinphoneCore *lc) {
 	// Clean previous friend lists
-	linphone_core_clear_friend_lists(lc);
+	linphone_core_clear_bodyless_friend_lists(lc);
 
 	bctbx_list_t *bodyless_lists = linphone_config_get_string_list(lc->config, "sip", "bodyless_lists", NULL);
 	while (bodyless_lists) {
@@ -2776,11 +2776,13 @@ void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list
 	lc->friends_lists = bctbx_list_erase_link(lc->friends_lists, elem);
 }
 
-void linphone_core_clear_friend_lists(LinphoneCore *lc) {
+void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc) {
 	bctbx_list_t* list = bctbx_list_copy(linphone_core_get_friends_lists((const LinphoneCore *)lc));
 	bctbx_list_t* copy = list;
 	for (; list != NULL; list = list->next) {
-		linphone_core_remove_friend_list(lc, (LinphoneFriendList *)list->data);
+		LinphoneFriendList *friends = (LinphoneFriendList *)list->data;
+		if (linphone_friend_list_is_subscription_bodyless(friends))
+			linphone_core_remove_friend_list(lc, (LinphoneFriendList *)list->data);
 	}
 	bctbx_list_free(copy);
 }
