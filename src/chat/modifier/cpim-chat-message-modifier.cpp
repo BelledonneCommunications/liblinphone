@@ -177,7 +177,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 		if (dispositionNotificationHeader) {
 			vector<string> values = Utils::split(dispositionNotificationHeader->getValue(), ", ");
 			for (const auto &value : values) {
-				string trimmedValue = Utils::trim(value); //Might be better to have a Disposition-Notification parser from the CPIM paser
+				string trimmedValue = Utils::trim(value); // Might be better to have a Disposition-Notification parser from the CPIM parser
 				if (trimmedValue == "positive-delivery")
 					message->getPrivate()->setPositiveDeliveryNotificationRequired(true);
 				else if (trimmedValue == "negative-delivery")

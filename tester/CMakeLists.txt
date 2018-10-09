@@ -214,6 +214,7 @@ set(SOURCE_FILES_CXX
 	main-db-tester.cpp
 	multipart-tester.cpp
 	property-container-tester.cpp
+	utils-tester.cpp
 )
 
 set(HEADER_FILES
