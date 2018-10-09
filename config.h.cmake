@@ -46,4 +46,5 @@
 #cmakedefine HAVE_CU_CURSES 1
 #cmakedefine HAVE_LIBUDEV_H 0
 #cmakedefine HAVE_LIME
+#cmakedefine HAVE_LIME_X3DH
 #cmakedefine ENABLE_UPDATE_CHECK 1

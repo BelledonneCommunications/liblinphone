@@ -170,6 +170,7 @@ if(ENABLE_LIME AND ENABLE_LIME_V2)
 endif()
 if(ENABLE_LIME_V2)
 	find_package(Lime REQUIRED)
+	set(HAVE_LIME_X3DH TRUE)
 endif()
 if(ENABLE_LIME)
 	#bzrtp is only required for LIME
