@@ -281,8 +281,10 @@ namespace Linphone
 	}
 #endif
 
-	public class MediastreamerFactory : LinphoneObject
+	public class MediastreamerFactory
 	{
+		public IntPtr nativePtr;
+
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern int ms_factory_enable_filter_from_name(IntPtr nativePtr, string name, char enabled);
 
@@ -418,12 +420,15 @@ namespace Linphone
 		{{#isLinphoneCore}}
 
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern IntPtr linphone_core_get_ms_factory(IntPtr corePtr);
+		static extern IntPtr linphone_core_get_ms_factory(IntPtr thiz);
 
 		public MediastreamerFactory MsFactory {
 			get
 			{
-				return fromNativePtr<MediastreamerFactory>(linphone_core_get_ms_factory(nativePtr), false);
+				IntPtr ptr = linphone_core_get_ms_factory(nativePtr);
+		                MediastreamerFactory factory = new MediastreamerFactory();
+				factory.nativePtr = ptr;
+		                return factory;
 			}
 		}
 
