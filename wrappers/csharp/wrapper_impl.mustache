@@ -418,7 +418,7 @@ namespace Linphone
 		{{#isLinphoneCore}}
 
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern IntPtr linphone_core_get_ms_factory();
+		static extern IntPtr linphone_core_get_ms_factory(IntPtr corePtr);
 
 		public MediastreamerFactory MsFactory {
 			get
