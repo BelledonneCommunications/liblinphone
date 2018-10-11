@@ -2,4 +2,3 @@ Makefile
 Makefile.in
 *.raw
 linphone.pc
-rootca.pem
