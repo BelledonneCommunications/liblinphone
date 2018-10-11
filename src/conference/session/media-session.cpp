@@ -1379,7 +1379,7 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 
 	strncpy(md->addr, mediaLocalIp.c_str(), sizeof(md->addr));
 	md->addr[sizeof(md->addr) - 1] = '\0';
-	
+
 	LinphoneAddress *addr = nullptr;
 	if (destProxy) {
 		addr = linphone_address_clone(linphone_proxy_config_get_identity_address(destProxy));
@@ -1769,7 +1769,7 @@ void MediaSessionPrivate::setupDtlsParams (MediaStream *ms) {
 		char *certificate = nullptr;
 		char *key = nullptr;
 		char *fingerprint = nullptr;
-		
+
 		sal_certificates_chain_parse_directory(&certificate, &key, &fingerprint,
 			linphone_core_get_user_certificates_path(q->getCore()->getCCore()), "linphone-dtls-default-identity", SAL_CERTIFICATE_RAW_FORMAT_PEM, true, true);
 		if (fingerprint) {
@@ -2441,8 +2441,8 @@ void MediaSessionPrivate::initializeAudioStream () {
 			audio_stream_enable_echo_limiter(audioStream, ELControlFull);
 	}
 
-	/* Equalizer location in the graph: 'mic' = in input graph, otherwise in output graph.
-	   Any other value than mic will default to output graph for compatibility */
+	// Equalizer location in the graph: 'mic' = in input graph, otherwise in output graph.
+	// Any other value than mic will default to output graph for compatibility.
 	string location = lp_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "sound", "eq_location", "hp");
 	audioStream->eq_loc = (location == "mic") ? MSEqualizerMic : MSEqualizerHP;
 	lInfo() << "Equalizer location: " << location;
@@ -2755,6 +2755,9 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 				}
 			}
 			if (ok) {
+				currentCaptureCard = io.input.soundcard;
+				currentPlayCard = io.output.soundcard;
+
 				int err = audio_stream_start_from_io(audioStream, audioProfile, rtpAddr, stream->rtp_port,
 					(stream->rtcp_addr[0] != '\0') ? stream->rtcp_addr : resultDesc->addr,
 					(linphone_core_rtcp_enabled(q->getCore()->getCCore()) && !isMulticast) ? (stream->rtcp_port ? stream->rtcp_port : stream->rtp_port + 1) : 0,
@@ -3082,6 +3085,9 @@ void MediaSessionPrivate::stopAudioStream () {
 		audioStreamEvQueue = nullptr;
 
 		getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
+
+		currentCaptureCard = nullptr;
+		currentPlayCard = nullptr;
 	}
 }
 
@@ -4314,8 +4320,8 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 		return result;
 	}
 	if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
-		/* We are NOT offering, set local media description after sending the call so that we are ready to
-		   process the remote offer when it will arrive. */
+		// We are NOT offering, set local media description after sending the call so that we are ready to
+		// process the remote offer when it will arrive.
 		d->op->setLocalMediaDescription(d->localDesc);
 	}
 	return result;
@@ -4369,9 +4375,19 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 			/* Restore initial state */
 			d->setState(initialState, "Restore initial state");
 		}
-	} else {
-#ifdef VIDEO_ENABLED
-		if (d->videoStream && (d->state == CallSession::State::StreamsRunning)) {
+	} else if (d->state == CallSession::State::StreamsRunning) {
+		const sound_config_t &soundConfig = getCore()->getCCore()->sound_conf;
+		const MSSndCard *captureCard = soundConfig.capt_sndcard;
+		const MSSndCard *playCard = soundConfig.lsd_card ? soundConfig.lsd_card : soundConfig.play_sndcard;
+
+		if (captureCard != d->currentCaptureCard || playCard != d->currentPlayCard) {
+			d->stopStreams();
+			d->initializeStreams();
+			d->startStreams(CallSession::State::StreamsRunning);
+		}
+
+	#ifdef VIDEO_ENABLED
+		else if (d->videoStream) {
 			const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(getCore()->getCCore());
 			MSVideoSize vsize;
 			vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
@@ -4383,7 +4399,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 			else
 				video_stream_update_video_params(d->videoStream);
 		}
-#endif
+	#endif
 	}
 	return result;
 }
