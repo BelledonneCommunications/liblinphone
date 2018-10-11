@@ -6697,7 +6697,8 @@ void linphone_core_set_zrtp_secrets_file(LinphoneCore *lc, const char* file){
 			char *bkpFile = reinterpret_cast<char *>(bctbx_malloc(strlen(file)+6));
 			sprintf(bkpFile,"%s.bkp", file);
 			char *selfURI = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(proxy));
-			if ((ret = ms_zrtp_cache_migration((void *)cacheXml, linphone_core_get_zrtp_cache_db(lc), selfURI)) == 0) {
+			zrtpCacheAccess zrtpCacheInfo = linphone_core_get_zrtp_cache_access(lc);
+			if ((ret = ms_zrtp_cache_migration((void *)cacheXml, zrtpCacheInfo.db, selfURI)) == 0) {
 				ms_message("LIME/ZRTP cache migration successfull, obsolete xml file kept as backup in %s", bkpFile);
 			} else {
 				ms_error("LIME/ZRTP cache migration failed(returned -%x), start with a fresh cache, old one kept as backup in %s", -ret, bkpFile);
@@ -6735,6 +6736,18 @@ const char *linphone_core_get_zrtp_secrets_file(LinphoneCore *lc){
 	return lc->zrtp_secrets_cache;
 }
 
+zrtpCacheAccess linphone_core_get_zrtp_cache_access(LinphoneCore *lc){
+	zrtpCacheAccess ret;
+#ifdef SQLITE_STORAGE_ENABLED
+	ret.db = (void *)lc->zrtp_cache_db;
+	ret.dbMutex = &(lc->zrtp_cache_db_mutex);
+#else /* SQITE_STORAGE_ENABLED */
+	ret.db = NULL;
+	ret.dbMutex = NULL
+#endif /* SQLITE_STORAGE_ENABLED */
+	return ret;
+}
+
 void *linphone_core_get_zrtp_cache_db(LinphoneCore *lc){
 #ifdef SQLITE_STORAGE_ENABLED
 	return (void *)lc->zrtp_cache_db;
@@ -6747,7 +6760,7 @@ LinphoneZrtpPeerStatus linphone_core_get_zrtp_status(LinphoneCore *lc, const cha
 #ifdef SQLITE_STORAGE_ENABLED
 	int status = MS_ZRTP_PEER_STATUS_UNKNOWN;
 	if (lc->zrtp_cache_db) {
-		status = ms_zrtp_get_peer_status(lc->zrtp_cache_db, peerUri);
+		status = ms_zrtp_get_peer_status(lc->zrtp_cache_db, peerUri, &(lc->zrtp_cache_db_mutex));
 	}
 	switch (status) {
 		case MS_ZRTP_PEER_STATUS_UNKNOWN:
@@ -6768,6 +6781,7 @@ static void linphone_core_zrtp_cache_close(LinphoneCore *lc) {
 #ifdef SQLITE_STORAGE_ENABLED
 	if (lc->zrtp_cache_db) {
 		sqlite3_close(lc->zrtp_cache_db);
+		bctbx_mutex_destroy(&(lc->zrtp_cache_db_mutex));
 		lc->zrtp_cache_db = NULL;
 	}
 #endif /* SQLITE_STORAGE_ENABLED */
@@ -6784,6 +6798,8 @@ void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName) {
 
 	linphone_core_zrtp_cache_close(lc);
 
+	bctbx_mutex_init(&(lc->zrtp_cache_db_mutex), NULL);
+
 	ret = _linphone_sqlite3_open(fileName, &db);
 	if (ret != SQLITE_OK) {
 		errmsg = sqlite3_errmsg(db);
@@ -6795,7 +6811,7 @@ void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName) {
 		goto end;
 	}
 
-	ret = ms_zrtp_initCache((void *)db); /* this may perform an update, check return value */
+	ret = ms_zrtp_initCache((void *)db, &(lc->zrtp_cache_db_mutex)); /* this may perform an update, check return value */
 
 	if (ret == MSZRTP_CACHE_SETUP || ret == MSZRTP_CACHE_UPDATE) {
 		/* After updating schema, database need to be closed/reopenned */

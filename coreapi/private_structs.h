@@ -826,6 +826,7 @@ namespace LinphonePrivate {
 #define LINPHONE_CORE_STRUCT_FIELDS \
 	LINPHONE_CORE_STRUCT_BASE_FIELDS \
 	sqlite3 *zrtp_cache_db; \
+	bctbx_mutex_t zrtp_cache_db_mutex; \
 	sqlite3 *logs_db; \
 	sqlite3 *friends_db; \
 	bool_t debug_storage;
