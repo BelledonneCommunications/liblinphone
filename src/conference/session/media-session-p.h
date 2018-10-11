@@ -332,6 +332,9 @@ private:
 	bool recordActive = false;
 	bool incomingIceReinvitePending = false;
 
+	MSSndCard *currentCaptureCard = nullptr;
+	MSSndCard *currentPlayCard = nullptr;
+
 	std::string onHoldFile;
 
 	L_DECLARE_PUBLIC(MediaSession);

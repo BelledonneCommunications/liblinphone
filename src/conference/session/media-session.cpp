@@ -2779,6 +2779,9 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 				}
 			}
 			if (ok) {
+				currentCaptureCard = ms_media_resource_get_soundcard(&io.input);
+				currentPlayCard = ms_media_resource_get_soundcard(&io.output);
+
 				int err = audio_stream_start_from_io(audioStream, audioProfile, rtpAddr, stream->rtp_port,
 					(stream->rtcp_addr[0] != '\0') ? stream->rtcp_addr : resultDesc->addr,
 					(linphone_core_rtcp_enabled(q->getCore()->getCCore()) && !isMulticast) ? (stream->rtcp_port ? stream->rtcp_port : stream->rtp_port + 1) : 0,
@@ -3106,6 +3109,9 @@ void MediaSessionPrivate::stopAudioStream () {
 		audioStreamEvQueue = nullptr;
 
 		getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
+
+		currentCaptureCard = nullptr;
+		currentPlayCard = nullptr;
 	}
 }
 
@@ -4338,8 +4344,8 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 		return result;
 	}
 	if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
-		/* We are NOT offering, set local media description after sending the call so that we are ready to
-			 process the remote offer when it will arrive. */
+		// We are NOT offering, set local media description after sending the call so that we are ready to
+		// process the remote offer when it will arrive.
 		d->op->setLocalMediaDescription(d->localDesc);
 	}
 	return result;
@@ -4393,9 +4399,19 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 			/* Restore initial state */
 			d->setState(initialState, "Restore initial state");
 		}
-	} else {
-#ifdef VIDEO_ENABLED
-		if (d->videoStream && (d->state == CallSession::State::StreamsRunning)) {
+	} else if (d->state == CallSession::State::StreamsRunning) {
+		const sound_config_t &soundConfig = getCore()->getCCore()->sound_conf;
+		const MSSndCard *captureCard = soundConfig.capt_sndcard;
+		const MSSndCard *playCard = soundConfig.lsd_card ? soundConfig.lsd_card : soundConfig.play_sndcard;
+
+		if (captureCard != d->currentCaptureCard || playCard != d->currentPlayCard) {
+			d->stopStreams();
+			d->initializeStreams();
+			d->startStreams(CallSession::State::StreamsRunning);
+		}
+
+	#ifdef VIDEO_ENABLED
+		else if (d->videoStream) {
 			const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(getCore()->getCCore());
 			MSVideoSize vsize;
 			vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
@@ -4407,7 +4423,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 			else
 				video_stream_update_video_params(d->videoStream);
 		}
-#endif
+	#endif
 	}
 	return result;
 }
