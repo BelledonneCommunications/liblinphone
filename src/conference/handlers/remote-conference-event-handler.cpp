@@ -296,13 +296,13 @@ void RemoteConferenceEventHandler::multipartNotifyReceived (const string &xmlBod
 	lInfo() << "multipart NOTIFY received for conference: " << d->conferenceId;
 
 	Content multipart;
-	multipart.setBody(xmlBody);
+	multipart.setBodyFromUtf8(xmlBody);
 	ContentType contentType(ContentType::Multipart);
 	contentType.addParameter("boundary", MultipartBoundary);
 	multipart.setContentType(contentType);
 
 	for (const auto &content : ContentManager::multipartToContentList(multipart))
-		d->simpleNotifyReceived(content.getBodyAsString());
+		d->simpleNotifyReceived(content.getBodyAsUtf8String());
 }
 
 // -----------------------------------------------------------------------------

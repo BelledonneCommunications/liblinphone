@@ -193,7 +193,7 @@ string LocalConferenceEventHandlerPrivate::createNotifyMultipart (int notifyId) 
 	list<Content *> contentPtrs;
 	for (auto &content : contents)
 		contentPtrs.push_back(&content);
-	string multipart = ContentManager::contentListToMultipart(contentPtrs).getBodyAsString();
+	string multipart = ContentManager::contentListToMultipart(contentPtrs).getBodyAsUtf8String();
 	return multipart;
 }
 
@@ -373,7 +373,7 @@ void LocalConferenceEventHandlerPrivate::notifyParticipantDevice (const string &
 	linphone_event_cbs_set_notify_response(cbs, notifyResponseCb);
 
 	Content content;
-	content.setBody(notify);
+	content.setBodyFromUtf8(notify);
 	ContentType contentType;
 	if (multipart) {
 		contentType = ContentType(ContentType::Multipart);

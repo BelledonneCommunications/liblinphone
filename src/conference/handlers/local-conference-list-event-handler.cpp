@@ -158,7 +158,7 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 			} else
 				content->setContentType(ContentType::ConferenceInfo);
 
-			content->setBody(notifyBody);
+			content->setBodyFromUtf8(notifyBody);
 			char token[17];
 			belle_sip_random_token(token, sizeof(token));
 			content->addHeader("Content-Id", token);
@@ -183,7 +183,7 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 	Xsd::XmlSchema::NamespaceInfomap map;
 	stringstream rlmiBody;
 	Xsd::Rlmi::serializeList(rlmiBody, list, map);
-	rlmiContent->setBody(rlmiBody.str());
+	rlmiContent->setBodyFromUtf8(rlmiBody.str());
 
 	contents.push_front(rlmiContent);
 	Content multipart = ContentManager::contentListToMultipart(contents, MultipartBoundaryListEventHandler);

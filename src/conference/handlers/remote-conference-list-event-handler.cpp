@@ -137,7 +137,7 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 
 	if (notifyContent->getContentType().weakEqual(ContentType::ConferenceInfo)) {
 		// Simple notify received directly from a chat-room
-		const string &xmlBody = notifyContent->getBodyAsString();
+		const string &xmlBody = notifyContent->getBodyAsUtf8String();
 		istringstream data(xmlBody);
 		unique_ptr<Xsd::ConferenceInfo::ConferenceType> confInfo = Xsd::ConferenceInfo::parseConferenceInfo(data, Xsd::XmlSchema::Flags::dont_validate);
 
@@ -153,7 +153,7 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 	bctbx_free(from);
 	map<string, IdentityAddress> addresses;
 	for (const auto &content : contents) {
-		const string &body = content.getBodyAsString();
+		const string &body = content.getBodyAsUtf8String();
 		const ContentType &contentType = content.getContentType();
 		if (contentType == ContentType::Rlmi) {
 			addresses = parseRlmi(body);
