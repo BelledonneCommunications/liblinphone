@@ -541,6 +541,14 @@ void linphone_call_set_microphone_volume_gain (LinphoneCall *call, float volume)
 	L_GET_CPP_PTR_FROM_C_OBJECT(call)->setMicrophoneVolumeGain(volume);
 }
 
+bool_t linphone_call_get_speaker_muted (const LinphoneCall *call) {
+	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getSpeakerMuted();
+}
+
+void linphone_call_set_speaker_muted (LinphoneCall *call, bool_t muted) {
+	L_GET_PRIVATE_FROM_C_OBJECT(call)->setSpeakerMuted(!!muted);
+}
+
 bool_t linphone_call_get_microphone_muted (const LinphoneCall *call) {
 	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getMicrophoneMuted();
 }

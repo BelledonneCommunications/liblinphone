@@ -674,6 +674,20 @@ LINPHONE_PUBLIC float linphone_call_get_microphone_volume_gain(const LinphoneCal
 LINPHONE_PUBLIC void linphone_call_set_microphone_volume_gain(LinphoneCall *call, float volume);
 
 /**
+ * Get speaker muted state.
+ * @param call The #LinphoneCall object.
+ * @return The speaker muted state.
+ **/
+LINPHONE_PUBLIC bool_t linphone_call_get_speaker_muted (const LinphoneCall *call);
+
+/**
+ * Set speaker muted state.
+ * @param call The #LinphoneCall object.
+ * @param muted The speaker muted state.
+ **/
+LINPHONE_PUBLIC void linphone_call_set_speaker_muted (LinphoneCall *call, bool_t muted);
+
+/**
  * Get microphone muted state.
  * @param call The #LinphoneCall object.
  * @return The microphone muted state.

@@ -59,6 +59,9 @@ public:
 	bool getRingingBeep () const { return ringingBeep; }
 	void setRingingBeep (bool value) { ringingBeep = value; }
 
+	bool getSpeakerMuted () const;
+	void setSpeakerMuted (bool muted);
+
 	bool getMicrophoneMuted () const;
 	void setMicrophoneMuted (bool muted);
 

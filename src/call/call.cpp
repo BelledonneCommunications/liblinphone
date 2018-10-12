@@ -63,6 +63,14 @@ SalCallOp * CallPrivate::getOp () const {
 	return getActiveSession()->getPrivate()->getOp();
 }
 
+bool CallPrivate::getSpeakerMuted () const {
+	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getSpeakerMuted();
+}
+
+void CallPrivate::setSpeakerMuted (bool muted) {
+	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->setSpeakerMuted(muted);
+}
+
 bool CallPrivate::getMicrophoneMuted () const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getMicrophoneMuted();
 }

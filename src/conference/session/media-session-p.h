@@ -66,6 +66,10 @@ public:
 
 	int getAf () const { return af; }
 
+	bool getSpeakerMuted () const;
+	void setSpeakerMuted (bool muted);
+	void forceSpeakerMuted (bool muted);
+
 	bool getMicrophoneMuted () const;
 	void setMicrophoneMuted (bool muted);
 
@@ -259,6 +263,7 @@ private:
 	int sendDtmf ();
 
 	void stunAuthRequestedCb (const char *realm, const char *nonce, const char **username, const char **password, const char **ha1);
+
 private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;
@@ -324,6 +329,7 @@ private:
 	// Upload bandwidth used by audio.
 	int audioBandwidth = 0;
 
+	bool speakerMuted = false;
 	bool microphoneMuted = false;
 
 	bool allMuted = false;

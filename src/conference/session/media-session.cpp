@@ -507,6 +507,33 @@ void MediaSessionPrivate::stopStreamsForIceGathering () {
 
 // -----------------------------------------------------------------------------
 
+bool MediaSessionPrivate::getSpeakerMuted () const {
+	return speakerMuted;
+}
+
+void MediaSessionPrivate::setSpeakerMuted (bool muted) {
+	if (speakerMuted == muted)
+		return;
+	speakerMuted = muted;
+
+	if (state == CallSession::State::StreamsRunning)
+		forceSpeakerMuted(speakerMuted);
+}
+
+void MediaSessionPrivate::forceSpeakerMuted (bool muted) {
+	L_Q();
+
+	if (!audioStream)
+		return;
+
+	if (muted)
+		audio_stream_set_spk_gain(audioStream, 0);
+	else
+		audio_stream_set_spk_gain_db(audioStream, q->getCore()->getCCore()->sound_conf.soft_play_lev);
+}
+
+// -----------------------------------------------------------------------------
+
 bool MediaSessionPrivate::getMicrophoneMuted () const {
 	return microphoneMuted;
 }
@@ -522,7 +549,7 @@ void MediaSessionPrivate::setMicrophoneMuted (bool muted) {
 		return;
 
 	if (state == CallSession::State::StreamsRunning) {
-		if (muted)
+		if (microphoneMuted)
 			audio_stream_set_mic_gain(audioStream, 0);
 		else
 			audio_stream_set_mic_gain_db(audioStream, q->getCore()->getCCore()->sound_conf.soft_mic_lev);
@@ -2635,6 +2662,7 @@ void MediaSessionPrivate::prepareEarlyMediaForking () {
 void MediaSessionPrivate::postConfigureAudioStreams (bool muted) {
 	L_Q();
 	q->getCore()->getPrivate()->postConfigureAudioStream(audioStream, muted);
+	forceSpeakerMuted(speakerMuted);
 	if (linphone_core_dtmf_received_has_listener(q->getCore()->getCCore()))
 		audio_stream_play_received_dtmfs(audioStream, false);
 	if (recordActive)
