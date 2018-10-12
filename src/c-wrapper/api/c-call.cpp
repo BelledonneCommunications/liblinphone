@@ -126,14 +126,6 @@ IceSession * linphone_call_get_ice_session (const LinphoneCall *call) {
 	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getIceSession();
 }
 
-bool_t linphone_call_get_audio_muted (const LinphoneCall *call) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getAudioMuted();
-}
-
-void linphone_call_set_audio_muted (LinphoneCall *call, bool_t value) {
-	L_GET_PRIVATE_FROM_C_OBJECT(call)->setAudioMuted(!!value);
-}
-
 bool_t linphone_call_get_all_muted (const LinphoneCall *call) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getAllMuted();
 }
@@ -547,6 +539,14 @@ float linphone_call_get_microphone_volume_gain (const LinphoneCall *call) {
 
 void linphone_call_set_microphone_volume_gain (LinphoneCall *call, float volume) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(call)->setMicrophoneVolumeGain(volume);
+}
+
+bool_t linphone_call_microphone_muted (const LinphoneCall *call) {
+	return L_GET_PRIVATE_FROM_C_OBJECT(call)->microphoneMuted();
+}
+
+void linphone_call_mute_microphone (LinphoneCall *call, bool_t muted) {
+	L_GET_PRIVATE_FROM_C_OBJECT(call)->muteMicrophone(!!muted);
 }
 
 float linphone_call_get_current_quality (const LinphoneCall *call) {

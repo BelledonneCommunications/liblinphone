@@ -507,6 +507,30 @@ void MediaSessionPrivate::stopStreamsForIceGathering () {
 
 // -----------------------------------------------------------------------------
 
+bool MediaSessionPrivate::microphoneMuted () const {
+	return _microphoneMuted;
+}
+
+void MediaSessionPrivate::muteMicrophone (bool muted) {
+	L_Q();
+
+	if (_microphoneMuted == muted)
+		return;
+	_microphoneMuted = muted;
+
+	if (!audioStream)
+		return;
+
+	if (state == CallSession::State::StreamsRunning) {
+		if (muted)
+			audio_stream_set_mic_gain(audioStream, 0);
+		else
+			audio_stream_set_mic_gain_db(audioStream, q->getCore()->getCCore()->sound_conf.soft_mic_lev);
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 void MediaSessionPrivate::setCurrentParams (MediaSessionParams *msp) {
 	if (currentParams)
 		delete currentParams;
@@ -1379,7 +1403,7 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 
 	strncpy(md->addr, mediaLocalIp.c_str(), sizeof(md->addr));
 	md->addr[sizeof(md->addr) - 1] = '\0';
-	
+
 	LinphoneAddress *addr = nullptr;
 	if (destProxy) {
 		addr = linphone_address_clone(linphone_proxy_config_get_identity_address(destProxy));
@@ -1769,7 +1793,7 @@ void MediaSessionPrivate::setupDtlsParams (MediaStream *ms) {
 		char *certificate = nullptr;
 		char *key = nullptr;
 		char *fingerprint = nullptr;
-		
+
 		sal_certificates_chain_parse_directory(&certificate, &key, &fingerprint,
 			linphone_core_get_user_certificates_path(q->getCore()->getCCore()), "linphone-dtls-default-identity", SAL_CERTIFICATE_RAW_FORMAT_PEM, true, true);
 		if (fingerprint) {
@@ -2441,8 +2465,8 @@ void MediaSessionPrivate::initializeAudioStream () {
 			audio_stream_enable_echo_limiter(audioStream, ELControlFull);
 	}
 
-	/* Equalizer location in the graph: 'mic' = in input graph, otherwise in output graph.
-	   Any other value than mic will default to output graph for compatibility */
+	// Equalizer location in the graph: 'mic' = in input graph, otherwise in output graph.
+	// Any other value than mic will default to output graph for compatibility.
 	string location = lp_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "sound", "eq_location", "hp");
 	audioStream->eq_loc = (location == "mic") ? MSEqualizerMic : MSEqualizerHP;
 	lInfo() << "Equalizer location: " << location;
@@ -2760,7 +2784,7 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 					(linphone_core_rtcp_enabled(q->getCore()->getCCore()) && !isMulticast) ? (stream->rtcp_port ? stream->rtcp_port : stream->rtp_port + 1) : 0,
 					usedPt, &io);
 				if (err == 0)
-					postConfigureAudioStreams((allMuted || audioMuted) && (listener && !listener->isPlayingRingbackTone(q->getSharedFromThis())));
+					postConfigureAudioStreams((allMuted || _microphoneMuted) && (listener && !listener->isPlayingRingbackTone(q->getSharedFromThis())));
 			}
 			ms_media_stream_sessions_set_encryption_mandatory(&audioStream->ms.sessions, isEncryptionMandatory());
 			if ((targetState == CallSession::State::Paused) && !captcard && !playfile.empty()) {
@@ -3641,8 +3665,8 @@ LinphoneStatus MediaSessionPrivate::startUpdate (const string &subject) {
 		op->setLocalMediaDescription(nullptr);
 	LinphoneStatus result = CallSessionPrivate::startUpdate(subject);
 	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack) {
-		/* We are NOT offering, set local media description after sending the call so that we are ready to
-		 * process the remote offer when it will arrive. */
+		// We are NOT offering, set local media description after sending the call so that we are ready to
+		// process the remote offer when it will arrive.
 		op->setLocalMediaDescription(localDesc);
 	}
 	return result;
@@ -4315,7 +4339,7 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 	}
 	if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
 		/* We are NOT offering, set local media description after sending the call so that we are ready to
-		   process the remote offer when it will arrive. */
+			 process the remote offer when it will arrive. */
 		d->op->setLocalMediaDescription(d->localDesc);
 	}
 	return result;
@@ -4647,7 +4671,7 @@ float MediaSession::getPlayVolume () const {
 
 float MediaSession::getRecordVolume () const {
 	L_D();
-	if (d->audioStream && d->audioStream->volsend && !d->audioMuted && (d->state == CallSession::State::StreamsRunning)) {
+	if (d->audioStream && d->audioStream->volsend && !d->_microphoneMuted && (d->state == CallSession::State::StreamsRunning)) {
 		float vol = 0;
 		ms_filter_call_method(d->audioStream->volsend, MS_VOLUME_GET, &vol);
 		return vol;
