@@ -34,10 +34,6 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-bool CallPrivate::getAudioMuted () const {
-	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getAudioMuted();
-}
-
 shared_ptr<RealTimeTextChatRoom> CallPrivate::getChatRoom () {
 	L_Q();
 	if (!chatRoom && (q->getState() != CallSession::State::End) && (q->getState() != CallSession::State::Released)) {
@@ -67,8 +63,12 @@ SalCallOp * CallPrivate::getOp () const {
 	return getActiveSession()->getPrivate()->getOp();
 }
 
-void CallPrivate::setAudioMuted (bool value) {
-	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->setAudioMuted(value);
+bool CallPrivate::getMicrophoneMuted () const {
+	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getMicrophoneMuted();
+}
+
+void CallPrivate::setMicrophoneMuted (bool muted) {
+	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->setMicrophoneMuted(muted);
 }
 
 LinphoneCallStats *CallPrivate::getStats (LinphoneStreamType type) const {
@@ -414,7 +414,7 @@ void CallPrivate::onFirstVideoFrameDecoded (const shared_ptr<CallSession> &sessi
 }
 
 void CallPrivate::onResetFirstVideoFrameDecoded (const shared_ptr<CallSession> &session) {
-	/*we are called here by the MediaSession when the stream start to know whether there is the deprecated nextVideoFrameDecoded callback set, 
+	/*we are called here by the MediaSession when the stream start to know whether there is the deprecated nextVideoFrameDecoded callback set,
 	 * so that we can request the notification of the next frame decoded.*/
 #ifdef VIDEO_ENABLED
 	if (nextVideoFrameDecoded._func)
