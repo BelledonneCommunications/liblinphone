@@ -70,9 +70,6 @@ LINPHONE_PUBLIC LinphoneCallLog * linphone_call_get_log(const LinphoneCall *call
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC IceSession *linphone_call_get_ice_session(const LinphoneCall *call);
 
-bool_t linphone_call_get_audio_muted(const LinphoneCall *call);
-void linphone_call_set_audio_muted(LinphoneCall *call, bool_t value);
-
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC bool_t linphone_call_get_all_muted(const LinphoneCall *call);
 

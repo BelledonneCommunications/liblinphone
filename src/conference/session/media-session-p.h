@@ -66,7 +66,8 @@ public:
 
 	int getAf () const { return af; }
 
-	bool getAudioMuted () const { return audioMuted; }
+	bool microphoneMuted () const;
+	void muteMicrophone (bool muted);
 
 	MediaSessionParams *getCurrentParams () const { return static_cast<MediaSessionParams *>(currentParams); }
 	MediaSessionParams *getParams () const { return static_cast<MediaSessionParams *>(params); }
@@ -90,7 +91,6 @@ public:
 	int getStreamIndex (MediaStream *ms) const;
 	SalCallOp * getOp () const { return op; }
 	MSWebCam *getVideoDevice () const;
-	void setAudioMuted (bool value) { audioMuted = value; }
 
 	void initializeStreams ();
 	void stopStreams ();
@@ -324,8 +324,9 @@ private:
 	// Upload bandwidth used by audio.
 	int audioBandwidth = 0;
 
+	bool _microphoneMuted = false;
+
 	bool allMuted = false;
-	bool audioMuted = false;
 	bool automaticallyPaused = false;
 	bool pausedByApp = false;
 	bool recordActive = false;
