@@ -134,16 +134,11 @@ string DbSession::currentTimestamp () const {
 			// Ugly hack but Sqlite3 does not allow table alteration where we add a date column using a default value
 			// of CURRENT_TIMESTAMP.
 			const tm &now = Utils::getTimeTAsTm(std::time(nullptr));
-			int n = snprintf(
-				0,
-				0,
-				"'%d-%02d-%02d %02d:%02d:%02d'",
-				now.tm_year + 1900, now.tm_mon + 1, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec
-			);
-			char buffer[n + 1];
+
+			char buffer[128];
 			snprintf(
 				buffer,
-				n+1,
+				sizeof buffer,
 				"'%d-%02d-%02d %02d:%02d:%02d'",
 				now.tm_year + 1900, now.tm_mon + 1, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec
 			);

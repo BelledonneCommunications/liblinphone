@@ -48,9 +48,9 @@ void ProxyChatRoomPrivate::teardownProxy () {
 
 // -----------------------------------------------------------------------------
 
-const ChatRoomId &ProxyChatRoom::getChatRoomId () const {
+const ConferenceId &ProxyChatRoom::getConferenceId () const {
 	L_D();
-	return d->chatRoom->getChatRoomId();
+	return d->chatRoom->getConferenceId();
 }
 
 const IdentityAddress &ProxyChatRoom::getPeerAddress () const {
@@ -80,6 +80,11 @@ time_t ProxyChatRoom::getLastUpdateTime () const {
 ProxyChatRoom::CapabilitiesMask ProxyChatRoom::getCapabilities () const {
 	L_D();
 	return d->chatRoom->getCapabilities() | ProxyChatRoom::Capabilities::Proxy;
+}
+
+ProxyChatRoom::SecurityLevel ProxyChatRoom::getSecurityLevel () const {
+	L_D();
+	return d->chatRoom->getSecurityLevel();
 }
 
 ProxyChatRoom::State ProxyChatRoom::getState () const {

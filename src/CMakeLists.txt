@@ -32,6 +32,9 @@ set(LIBS
 if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	list(APPEND LIBS "Ws2_32")
 endif()
+if(LIME_FOUND)
+	list(APPEND LIBS ${LIME_LIBRARIES})
+endif()
 if(ENABLE_LIME)
 	list(APPEND LIBS ${BZRTP_LIBRARIES})
 endif()
@@ -94,7 +97,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/chat-room/basic-chat-room-p.h
 	chat/chat-room/basic-chat-room.h
 	chat/chat-room/basic-to-client-group-chat-room.h
-	chat/chat-room/chat-room-id.h
 	chat/chat-room/chat-room-listener.h
 	chat/chat-room/chat-room-p.h
 	chat/chat-room/chat-room.h
@@ -114,6 +116,9 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/cpim/header/cpim-header.h
 	chat/cpim/message/cpim-message.h
 	chat/cpim/parser/cpim-parser.h
+	chat/encryption/encryption-engine.h
+	chat/encryption/lime-legacy-encryption-engine.h
+	chat/encryption/lime-x3dh-encryption-engine.h
 	chat/modifier/chat-message-modifier.h
 	chat/modifier/cpim-chat-message-modifier.h
 	chat/modifier/encryption-chat-message-modifier.h
@@ -122,6 +127,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/notification/imdn.h
 	chat/notification/is-composing-listener.h
 	chat/notification/is-composing.h
+	conference/conference-id.h
 	conference/conference-listener.h
 	conference/conference-p.h
 	conference/conference.h
@@ -188,6 +194,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	event-log/conference/conference-participant-device-event.h
 	event-log/conference/conference-participant-event-p.h
 	event-log/conference/conference-participant-event.h
+	event-log/conference/conference-security-event.h
 	event-log/conference/conference-subject-event.h
 	event-log/event-log-p.h
 	event-log/event-log.h
@@ -257,7 +264,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/chat-room/abstract-chat-room.cpp
 	chat/chat-room/basic-chat-room.cpp
 	chat/chat-room/basic-to-client-group-chat-room.cpp
-	chat/chat-room/chat-room-id.cpp
 	chat/chat-room/chat-room.cpp
 	chat/chat-room/client-group-chat-room.cpp
 	chat/chat-room/client-group-to-basic-chat-room.cpp
@@ -269,12 +275,15 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/cpim/header/cpim-header.cpp
 	chat/cpim/message/cpim-message.cpp
 	chat/cpim/parser/cpim-parser.cpp
+	chat/encryption/lime-legacy-encryption-engine.cpp
+	chat/encryption/lime-x3dh-encryption-engine.cpp
 	chat/modifier/cpim-chat-message-modifier.cpp
 	chat/modifier/encryption-chat-message-modifier.cpp
 	chat/modifier/file-transfer-chat-message-modifier.cpp
 	chat/modifier/multipart-chat-message-modifier.cpp
 	chat/notification/imdn.cpp
 	chat/notification/is-composing.cpp
+	conference/conference-id.cpp
 	conference/conference.cpp
 	conference/handlers/local-conference-event-handler.cpp
 	conference/handlers/local-conference-list-event-handler.cpp
@@ -317,6 +326,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	event-log/conference/conference-notified-event.cpp
 	event-log/conference/conference-participant-device-event.cpp
 	event-log/conference/conference-participant-event.cpp
+	event-log/conference/conference-security-event.cpp
 	event-log/conference/conference-subject-event.cpp
 	event-log/event-log.cpp
 	hacks/hacks.cpp

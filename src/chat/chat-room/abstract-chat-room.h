@@ -31,7 +31,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class AbstractChatRoomPrivate;
-class ChatRoomId;
+class ConferenceId;
 class EventLog;
 
 class LINPHONE_PUBLIC AbstractChatRoom : public Object, public CoreAccessor, public ConferenceInterface {
@@ -47,6 +47,7 @@ public:
 	L_OVERRIDE_SHARED_FROM_THIS(AbstractChatRoom);
 
 	L_DECLARE_ENUM(Capabilities, L_ENUM_VALUES_CHAT_ROOM_CAPABILITIES);
+	L_DECLARE_ENUM(SecurityLevel, L_ENUM_VALUES_ENCRYPTION_ENGINE_SECURITY_LEVEL);
 	L_DECLARE_ENUM(State, L_ENUM_VALUES_CHAT_ROOM_STATE);
 
 	typedef EnumMask<Capabilities> CapabilitiesMask;
@@ -56,7 +57,7 @@ public:
 	virtual bool canHandleCpim () const = 0;
 	virtual bool canHandleMultipart () const = 0;
 
-	virtual const ChatRoomId &getChatRoomId () const = 0;
+	virtual const ConferenceId &getConferenceId () const = 0;
 
 	virtual const IdentityAddress &getPeerAddress () const = 0;
 	virtual const IdentityAddress &getLocalAddress () const = 0;
@@ -66,6 +67,7 @@ public:
 
 	virtual CapabilitiesMask getCapabilities () const = 0;
 	virtual State getState () const = 0;
+	virtual SecurityLevel getSecurityLevel () const = 0;
 	virtual bool hasBeenLeft () const = 0;
 
 	virtual std::list<std::shared_ptr<EventLog>> getMessageHistory (int nLast) const = 0;

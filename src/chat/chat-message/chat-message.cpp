@@ -80,7 +80,7 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
 	shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(dbKey);
 	ChatMessage::State currentState = mainDb->getChatMessageParticipantState(eventLog, participantAddress);
-	if (!validStateTransition(currentState, newState))
+	if (!isValidStateTransition(currentState, newState))
 		return;
 
 	lInfo() << "Chat message " << this << ": moving participant '" << participantAddress.asString() << "' state to "
@@ -133,15 +133,14 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 		setState(ChatMessage::State::DeliveredToUser);
 }
 
-void ChatMessagePrivate::setState (ChatMessage::State newState, bool force) {
+void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	L_Q();
 
-	if (force)
-		state = newState;
-
-	if (!validStateTransition(state, newState))
+	// 1. Check valid transition.
+	if (!isValidStateTransition(state, newState))
 		return;
 
+	// 2. Update state and notify changes.
 	lInfo() << "Chat message " << this << ": moving from " << Utils::toString(state) <<
 		" to " << Utils::toString(newState);
 	state = newState;
@@ -150,7 +149,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState, bool force) {
 	if (linphone_chat_message_get_message_state_changed_cb(msg))
 		linphone_chat_message_get_message_state_changed_cb(msg)(
 			msg,
-			(LinphoneChatMessageState)state,
+			LinphoneChatMessageState(state),
 			linphone_chat_message_get_message_state_changed_cb_user_data(msg)
 		);
 
@@ -158,15 +157,21 @@ void ChatMessagePrivate::setState (ChatMessage::State newState, bool force) {
 	if (cbs && linphone_chat_message_cbs_get_msg_state_changed(cbs))
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
 
-	if (state == ChatMessage::State::FileTransferDone && !hasFileTransferContent()) {
-		// We wait until the file has been downloaded to send the displayed IMDN
-		bool doNotStoreInDb = static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
-		// Force the state so it is stored directly in DB, but when the IMDN has successfully been delivered
-		setState(ChatMessage::State::Displayed, doNotStoreInDb);
-	} else {
+	// 3. Specific case, change to displayed after transfer.
+	if (state == ChatMessage::State::FileTransferDone) {
+		setState(ChatMessage::State::Displayed);
+		return;
+	}
+
+	// 4. Send notification and update in database if necessary.
+	if (state != ChatMessage::State::FileTransferError && state != ChatMessage::State::InProgress) {
+		if (state == ChatMessage::State::Displayed)
+			static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
 		updateInDb();
 	}
 }
+
+// -----------------------------------------------------------------------------
 
 belle_http_request_t *ChatMessagePrivate::getHttpRequest () const {
 	return fileTransferChatMessageModifier.getHttpRequest();
@@ -175,6 +180,24 @@ belle_http_request_t *ChatMessagePrivate::getHttpRequest () const {
 void ChatMessagePrivate::setHttpRequest (belle_http_request_t *request) {
 	fileTransferChatMessageModifier.setHttpRequest(request);
 }
+
+// -----------------------------------------------------------------------------
+
+void ChatMessagePrivate::disableDeliveryNotificationRequiredInDatabase () {
+	L_Q();
+	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
+	if (dbKey.isValid())
+		mainDb->disableDeliveryNotificationRequired(mainDb->getEventFromKey(dbKey));
+}
+
+void ChatMessagePrivate::disableDisplayNotificationRequiredInDatabase () {
+	L_Q();
+	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
+	if (dbKey.isValid())
+		mainDb->disableDisplayNotificationRequired(mainDb->getEventFromKey(dbKey));
+}
+
+// -----------------------------------------------------------------------------
 
 SalOp *ChatMessagePrivate::getSalOp () const {
 	return salOp;
@@ -200,7 +223,7 @@ void ChatMessagePrivate::removeSalCustomHeader (const string &name) {
 	salCustomHeaders = sal_custom_header_remove(salCustomHeaders, name.c_str());
 }
 
-string ChatMessagePrivate::getSalCustomHeaderValue (const string &name) {
+string ChatMessagePrivate::getSalCustomHeaderValue (const string &name) const {
 	return L_C_TO_STRING(sal_custom_header_find(salCustomHeaders, name.c_str()));
 }
 
@@ -288,7 +311,7 @@ void ChatMessagePrivate::setExternalBodyUrl (const string &url) {
 	externalBodyUrl = url;
 }
 
-const ContentType &ChatMessagePrivate::getContentType () {
+const ContentType &ChatMessagePrivate::getContentType () const {
 	loadContentsFromDatabase();
 	if (direction == ChatMessage::Direction::Incoming) {
 		if (contents.size() > 0) {
@@ -324,7 +347,7 @@ void ChatMessagePrivate::setContentType (const ContentType &contentType) {
 	}
 }
 
-const string &ChatMessagePrivate::getText () {
+const string &ChatMessagePrivate::getText () const {
 	loadContentsFromDatabase();
 	if (direction == ChatMessage::Direction::Incoming) {
 		if (hasTextContent()) {
@@ -405,13 +428,13 @@ std::string ChatMessagePrivate::createFakeFileTransferFromUrl(const std::string 
 
 void ChatMessagePrivate::setChatRoom (const shared_ptr<AbstractChatRoom> &cr) {
 	chatRoom = cr;
-	chatRoomId = cr->getChatRoomId();
+	conferenceId = cr->getConferenceId();
 	if (direction == ChatMessage::Direction::Outgoing) {
-		fromAddress = chatRoomId.getLocalAddress();
-		toAddress = chatRoomId.getPeerAddress();
+		fromAddress = conferenceId.getLocalAddress();
+		toAddress = conferenceId.getPeerAddress();
 	} else {
-		fromAddress = chatRoomId.getPeerAddress();
-		toAddress = chatRoomId.getLocalAddress();
+		fromAddress = conferenceId.getPeerAddress();
+		toAddress = conferenceId.getLocalAddress();
 	}
 }
 
@@ -468,11 +491,11 @@ void ChatMessagePrivate::notifyReceiving () {
 		::time(nullptr), q->getSharedFromThis()
 	);
 	_linphone_chat_room_notify_chat_message_received(chatRoom, L_GET_C_BACK_PTR(event));
-	// Legacy
-	q->getChatRoom()->getPrivate()->notifyChatMessageReceived(q->getSharedFromThis());
 
-	if (getPositiveDeliveryNotificationRequired())
-		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryNotification(q->getSharedFromThis());
+	// Legacy.
+	AbstractChatRoomPrivate *dChatRoom = q->getChatRoom()->getPrivate();
+	dChatRoom->notifyChatMessageReceived(q->getSharedFromThis());
+	static_cast<ChatRoomPrivate *>(dChatRoom)->sendDeliveryNotification(q->getSharedFromThis());
 }
 
 LinphoneReason ChatMessagePrivate::receive () {
@@ -496,18 +519,33 @@ LinphoneReason ChatMessagePrivate::receive () {
 			/* Unable to decrypt message */
 			chatRoom->getPrivate()->notifyUndecryptableChatMessageReceived(q->getSharedFromThis());
 			reason = linphone_error_code_to_reason(errorCode);
-			if (getNegativeDeliveryNotificationRequired()) {
-				static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryErrorNotification(
-					q->getSharedFromThis(),
-					reason
-				);
-			}
+			static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryErrorNotification(
+				q->getSharedFromThis(),
+				reason
+			);
 			return reason;
-		} else if (result == ChatMessageModifier::Result::Suspended) {
+		}
+
+		if (result == ChatMessageModifier::Result::Suspended) {
 			currentRecvStep |= ChatMessagePrivate::Step::Encryption;
 			return LinphoneReasonNone;
 		}
 		currentRecvStep |= ChatMessagePrivate::Step::Encryption;
+	}
+
+	// Sender Authentication
+	// If LIMEv2 enabled, the authenticatedFromAddress is the decrypted CPIM From Address
+	// If LIMEv2 disabled, the authenticatedFromAddress must be set here as the SIP From Address
+	// If LIMEv2 disabled in group chat room the sender authentication is disabled
+	// TODO replace me with future "chatRoom->isEncrypted()" API because LIMEv2 will always be enabled
+	if (!core->limeX3dhEnabled()) {
+		if (q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Basic) {
+			IdentityAddress sipFromAddress = q->getSharedFromThis()->getFromAddress();
+			setAuthenticatedFromAddress(sipFromAddress);
+		} else {
+			lInfo() << "Sender authentication disabled for clear text group chat";
+			senderAuthenticationEnabled = false;
+		}
 	}
 
 	if ((currentRecvStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
@@ -518,6 +556,19 @@ LinphoneReason ChatMessagePrivate::receive () {
 			ccmm.decode(q->getSharedFromThis(), errorCode);
 		}
 		currentRecvStep |= ChatMessagePrivate::Step::Cpim;
+	}
+
+
+	// Message Authorization
+	if (getAuthorizationWarning()) {
+		lWarning() << "Message authorization warning raised by LIMEv2";
+
+		// Allow error IMDN exclusively
+		if (q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::Imdn && !Imdn::isError(q->getSharedFromThis())) {
+			lWarning() << "Discarding message of type " << q->getSharedFromThis()->getInternalContent().getContentType();
+			errorCode = 415;
+			return linphone_error_code_to_reason(errorCode);
+		}
 	}
 
 	if ((currentRecvStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
@@ -600,7 +651,10 @@ LinphoneReason ChatMessagePrivate::receive () {
 	setAutoFileTransferDownloadHappened(false);
 
 	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
-	if (Address(chatRoom->getLocalAddress()).weakEqual(fromAddress))
+	if (
+		(chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference) &&
+		Address(chatRoom->getLocalAddress()).weakEqual(fromAddress)
+	)
 		setDirection(ChatMessage::Direction::Outgoing);
 
 	// Check if this is a duplicate message.
@@ -609,12 +663,10 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	if (errorCode > 0) {
 		reason = linphone_error_code_to_reason(errorCode);
-		if (getNegativeDeliveryNotificationRequired()) {
-			static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryErrorNotification(
-				q->getSharedFromThis(),
-				reason
-			);
-		}
+		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryErrorNotification(
+			q->getSharedFromThis(),
+			reason
+		);
 		return reason;
 	}
 
@@ -643,8 +695,11 @@ void ChatMessagePrivate::send () {
 		ChatMessageModifier::Result result = fileTransferChatMessageModifier.encode(q->getSharedFromThis(), errorCode);
 		if (result == ChatMessageModifier::Result::Error) {
 			setState(ChatMessage::State::NotDelivered);
+			// Remove current step so we go through all modifiers if message is re-sent
+			currentSendStep = ChatMessagePrivate::Step::None;
 			return;
-		} else if (result == ChatMessageModifier::Result::Suspended) {
+		}
+		if (result == ChatMessageModifier::Result::Suspended) {
 			setState(ChatMessage::State::InProgress);
 			return;
 		}
@@ -725,18 +780,19 @@ void ChatMessagePrivate::send () {
 			lInfo() << "Encryption step already done, skipping";
 		} else {
 			if (!encryptionPrevented) {
+				currentSendStep |= ChatMessagePrivate::Step::Encryption;
 				EncryptionChatMessageModifier ecmm;
 				ChatMessageModifier::Result result = ecmm.encode(q->getSharedFromThis(), errorCode);
 				if (result == ChatMessageModifier::Result::Error) {
 					sal_error_info_set((SalErrorInfo *)op->getErrorInfo(), SalReasonNotAcceptable, "SIP", errorCode, "Unable to encrypt IM", nullptr);
 					setState(ChatMessage::State::NotDelivered);
+					// Remove current step so we go through all modifiers if message is re-sent
+					currentSendStep = ChatMessagePrivate::Step::None;
 					return;
 				} else if (result == ChatMessageModifier::Result::Suspended) {
-					currentSendStep |= ChatMessagePrivate::Step::Encryption;
 					return;
 				}
 			}
-			currentSendStep |= ChatMessagePrivate::Step::Encryption;
 		}
 	}
 
@@ -753,19 +809,28 @@ void ChatMessagePrivate::send () {
 		}
 	}
 
+	// If message already sent by LIMEv2 synchronous encryption, do not send another one
+	if ((currentSendStep &ChatMessagePrivate::Step::Sent) == ChatMessagePrivate::Step::Sent) {
+		lInfo() << "Send step already done, skipping";
+		return;
+	}
+
 	auto msgOp = dynamic_cast<SalMessageOpInterface *>(op);
+
 	if (!externalBodyUrl.empty()) {
 		Content content;
 		ContentType contentType(ContentType::ExternalBody);
 		contentType.addParameter("access-type", "URL");
 		contentType.addParameter("URL", "\"" + externalBodyUrl + "\"");
 		content.setContentType(contentType);
+		currentSendStep |= ChatMessagePrivate::Step::Sent;
 		msgOp->sendMessage(content);
 	} else {
 		if (!internalContent.getContentType().isValid())
 			internalContent.setContentType(ContentType::PlainText);
 		if (!contentEncoding.empty())
 			internalContent.setContentEncoding(contentEncoding);
+		currentSendStep |= ChatMessagePrivate::Step::Sent;
 		msgOp->sendMessage(internalContent);
 	}
 
@@ -786,8 +851,6 @@ void ChatMessagePrivate::send () {
 	// Remove internal content as it is not needed anymore and will confuse some old methods like getContentType()
 	internalContent.setBody("");
 	internalContent.setContentType(ContentType(""));
-	// Also remove current step so we go through all modifiers if message is re-sent
-	currentSendStep = ChatMessagePrivate::Step::None;
 
 	if (imdnId.empty())
 		setImdnMessageId(op->getCallId());   /* must be known at that time */
@@ -860,20 +923,18 @@ void ChatMessagePrivate::updateInDb () {
 
 // -----------------------------------------------------------------------------
 
-bool ChatMessagePrivate::validStateTransition (ChatMessage::State currentState, ChatMessage::State newState) {
+bool ChatMessagePrivate::isValidStateTransition (ChatMessage::State currentState, ChatMessage::State newState) {
 	if (newState == currentState)
 		return false;
 
-	if (
+	return !(
 		(currentState == ChatMessage::State::Displayed || currentState == ChatMessage::State::DeliveredToUser) &&
 		(
 			newState == ChatMessage::State::DeliveredToUser ||
 			newState == ChatMessage::State::Delivered ||
 			newState == ChatMessage::State::NotDelivered
 		)
-	)
-		return false;
-	return true;
+	);
 }
 
 // -----------------------------------------------------------------------------
@@ -882,8 +943,7 @@ ChatMessage::ChatMessage (const shared_ptr<AbstractChatRoom> &chatRoom, ChatMess
 	Object(*new ChatMessagePrivate(chatRoom, direction)), CoreAccessor(chatRoom->getCore()) {
 }
 
-ChatMessage::ChatMessage (ChatMessagePrivate &p) : Object(p), CoreAccessor(p.getPublic()->getChatRoom()->getCore()) {
-}
+ChatMessage::ChatMessage (ChatMessagePrivate &p) : Object(p), CoreAccessor(p.getPublic()->getChatRoom()->getCore()) {}
 
 ChatMessage::~ChatMessage () {
 	L_D();
@@ -909,7 +969,7 @@ shared_ptr<AbstractChatRoom> ChatMessage::getChatRoom () const {
 
 	shared_ptr<AbstractChatRoom> chatRoom = d->chatRoom.lock();
 	if (!chatRoom) {
-		chatRoom = getCore()->getOrCreateBasicChatRoom(d->chatRoomId);
+		chatRoom = getCore()->getOrCreateBasicChatRoom(d->conferenceId);
 		if (!chatRoom) {
 			lError() << "Unable to get valid chat room instance.";
 			throw logic_error("Unable to get chat room of chat message.");
@@ -981,6 +1041,11 @@ bool ChatMessage::isRead () const {
 		return true;
 
 	return d->state == State::Delivered || d->state == State::Displayed || d->state == State::DeliveredToUser;
+}
+
+const IdentityAddress &ChatMessage::getAuthenticatedFromAddress () const {
+	L_D();
+	return d->authenticatedFromAddress;
 }
 
 const IdentityAddress &ChatMessage::getFromAddress () const {
@@ -1109,7 +1174,7 @@ bool ChatMessage::downloadFile(FileTransferContent *fileTransferContent) {
 	return d->fileTransferChatMessageModifier.downloadFile(getSharedFromThis(), fileTransferContent);
 }
 
-bool ChatMessage::isFileTransferInProgress() {
+bool ChatMessage::isFileTransferInProgress () const {
 	L_D();
 	return d->fileTransferChatMessageModifier.isFileTransferInProgressAndValid();
 }

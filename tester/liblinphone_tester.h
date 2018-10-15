@@ -185,6 +185,7 @@ typedef struct _stats {
 	int number_of_LinphoneMessageInProgress;
 	int number_of_LinphoneMessageDelivered;
 	int number_of_LinphoneMessageNotDelivered;
+	int number_of_LinphoneMessageUndecryptable;
 	int number_of_LinphoneMessageFileTransferDone;
 	int number_of_LinphoneMessageFileTransferError;
 	int number_of_LinphoneMessageDeliveredToUser;
@@ -302,6 +303,11 @@ typedef struct _stats {
 	int number_of_participants_removed;
 	int number_of_subject_changed;
 	int number_of_participant_devices_added;
+
+	int number_of_SecurityLevelDowngraded;
+	int number_of_ParticipantMaxDeviceCountExceeded;
+	int number_of_LimeIdentityKeyChanged;
+	int number_of_ManInTheMiddleDetected;
 
 	int number_of_snapshot_taken;
 }stats;

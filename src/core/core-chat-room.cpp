@@ -66,7 +66,7 @@ static IdentityAddress getDefaultLocalAddress (const shared_ptr<Core> &core, con
 // -----------------------------------------------------------------------------
 
 shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
-	const ChatRoomId &chatRoomId,
+	const ConferenceId &conferenceId,
 	ChatRoom::CapabilitiesMask capabilities
 ) {
 	L_Q();
@@ -74,10 +74,10 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 	shared_ptr<AbstractChatRoom> chatRoom;
 
 	if (capabilities & ChatRoom::Capabilities::RealTimeText)
-		chatRoom.reset(new RealTimeTextChatRoom(q->getSharedFromThis(), chatRoomId));
+		chatRoom.reset(new RealTimeTextChatRoom(q->getSharedFromThis(), conferenceId));
 	else {
-		BasicChatRoom *basicChatRoom = new BasicChatRoom(q->getSharedFromThis(), chatRoomId);
-		LinphoneAddress *lAddr = linphone_address_new(chatRoomId.getLocalAddress().asString().c_str());
+		BasicChatRoom *basicChatRoom = new BasicChatRoom(q->getSharedFromThis(), conferenceId);
+		LinphoneAddress *lAddr = linphone_address_new(conferenceId.getLocalAddress().asString().c_str());
 		LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(q->getCCore(), lAddr);
 		linphone_address_unref(lAddr);
 		const char *conferenceFactoryUri = nullptr;
@@ -159,8 +159,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const strin
 void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	L_ASSERT(chatRoom);
 
-	const ChatRoomId &chatRoomId = chatRoom->getChatRoomId();
-	auto it = chatRoomsById.find(chatRoomId);
+	const ConferenceId &conferenceId = chatRoom->getConferenceId();
+	auto it = chatRoomsById.find(conferenceId);
 	// Chat room not exist or yes but with the same pointer!
 	L_ASSERT(it == chatRoomsById.end() || it->second == chatRoom);
 	if (it == chatRoomsById.end()) {
@@ -168,7 +168,7 @@ void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) 
 		noCreatedClientGroupChatRooms.erase(chatRoom.get());
 
 		chatRooms.push_back(chatRoom);
-		chatRoomsById[chatRoomId] = chatRoom;
+		chatRoomsById[conferenceId] = chatRoom;
 	}
 }
 
@@ -187,16 +187,16 @@ void CorePrivate::loadChatRooms () {
 }
 
 void CorePrivate::replaceChatRoom (const shared_ptr<AbstractChatRoom> &replacedChatRoom, const shared_ptr<AbstractChatRoom> &newChatRoom) {
-	const ChatRoomId &replacedChatRoomId = replacedChatRoom->getChatRoomId();
-	const ChatRoomId &newChatRoomId = newChatRoom->getChatRoomId();
+	const ConferenceId &replacedConferenceId = replacedChatRoom->getConferenceId();
+	const ConferenceId &newConferenceId = newChatRoom->getConferenceId();
 	if (replacedChatRoom->getCapabilities() & ChatRoom::Capabilities::Proxy) {
 		chatRooms.remove(newChatRoom);
-		chatRoomsById.erase(newChatRoomId);
-		chatRoomsById[newChatRoomId] = replacedChatRoom;
+		chatRoomsById.erase(newConferenceId);
+		chatRoomsById[newConferenceId] = replacedChatRoom;
 	} else {
 		chatRooms.remove(replacedChatRoom);
-		chatRoomsById.erase(replacedChatRoomId);
-		chatRoomsById[newChatRoomId] = newChatRoom;
+		chatRoomsById.erase(replacedConferenceId);
+		chatRoomsById[newConferenceId] = newChatRoom;
 	}
 }
 
@@ -207,14 +207,14 @@ const list<shared_ptr<AbstractChatRoom>> &Core::getChatRooms () const {
 	return d->chatRooms;
 }
 
-shared_ptr<AbstractChatRoom> Core::findChatRoom (const ChatRoomId &chatRoomId) const {
+shared_ptr<AbstractChatRoom> Core::findChatRoom (const ConferenceId &conferenceId) const {
 	L_D();
 
-	auto it = d->chatRoomsById.find(chatRoomId);
+	auto it = d->chatRoomsById.find(conferenceId);
 	if (it != d->chatRoomsById.cend())
 		return it->second;
 
-	lInfo() << "Unable to find chat room in RAM: " << chatRoomId << ".";
+	lInfo() << "Unable to find chat room in RAM: " << conferenceId << ".";
 	return nullptr;
 }
 
@@ -273,14 +273,14 @@ shared_ptr<AbstractChatRoom> Core::createClientGroupChatRoom (const string &subj
 	return d->createClientGroupChatRoom(subject, "", Content(), fallback);
 }
 
-shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ChatRoomId &chatRoomId, bool isRtt) {
+shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt) {
 	L_D();
 
-	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(chatRoomId);
+	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
 	if (chatRoom)
 		return chatRoom;
 
-	chatRoom = d->createBasicChatRoom(chatRoomId,
+	chatRoom = d->createBasicChatRoom(conferenceId,
 		isRtt ? ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::RealTimeText) : ChatRoom::CapabilitiesMask()
 	);
 	d->insertChatRoom(chatRoom);
@@ -297,7 +297,7 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddre
 		return chatRooms.front();
 
 	shared_ptr<AbstractChatRoom> chatRoom = d->createBasicChatRoom(
-		ChatRoomId(peerAddress, getDefaultLocalAddress(getSharedFromThis(), peerAddress)),
+		ConferenceId(peerAddress, getDefaultLocalAddress(getSharedFromThis(), peerAddress)),
 		isRtt ? ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::RealTimeText) : ChatRoom::CapabilitiesMask()
 	);
 	d->insertChatRoom(chatRoom);
@@ -322,14 +322,14 @@ void Core::deleteChatRoom (const shared_ptr<const AbstractChatRoom> &chatRoom) {
 	CorePrivate *d = chatRoom->getCore()->getPrivate();
 
 	d->noCreatedClientGroupChatRooms.erase(chatRoom.get());
-	const ChatRoomId &chatRoomId = chatRoom->getChatRoomId();
-	auto chatRoomsByIdIt = d->chatRoomsById.find(chatRoomId);
+	const ConferenceId &conferenceId = chatRoom->getConferenceId();
+	auto chatRoomsByIdIt = d->chatRoomsById.find(conferenceId);
 	if (chatRoomsByIdIt != d->chatRoomsById.end()) {
 		auto chatRoomsIt = find(d->chatRooms.begin(), d->chatRooms.end(), chatRoom);
 		L_ASSERT(chatRoomsIt != d->chatRooms.end());
 		d->chatRooms.erase(chatRoomsIt);
 		d->chatRoomsById.erase(chatRoomsByIdIt);
-		d->mainDb->deleteChatRoom(chatRoomId);
+		d->mainDb->deleteChatRoom(conferenceId);
 	}
 }
 

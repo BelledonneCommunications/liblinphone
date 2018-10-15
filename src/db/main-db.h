@@ -27,7 +27,7 @@
 
 #include "abstract/abstract-db.h"
 #include "chat/chat-message/chat-message.h"
-#include "chat/chat-room/chat-room-id.h"
+#include "conference/conference-id.h"
 #include "core/core-accessor.h"
 
 // =============================================================================
@@ -52,10 +52,11 @@ class LINPHONE_INTERNAL_PUBLIC MainDb : public AbstractDb, public CoreAccessor {
 public:
 	enum Filter {
 		NoFilter = 0x0,
-		ConferenceCallFilter = 0x1,
-		ConferenceChatMessageFilter = 0x2,
-		ConferenceInfoFilter = 0x4,
-		ConferenceInfoNoDeviceFilter = 0x8
+		ConferenceCallFilter = 1 << 0,
+		ConferenceChatMessageFilter = 1 << 1,
+		ConferenceInfoFilter = 1 << 2,
+		ConferenceInfoNoDeviceFilter = 1 << 3,
+		ConferenceChatMessageSecurityFilter = 1 << 4
 	};
 
 	typedef EnumMask<Filter> FilterMask;
@@ -87,7 +88,7 @@ public:
 	// ---------------------------------------------------------------------------
 
 	std::list<std::shared_ptr<EventLog>> getConferenceNotifiedEvents (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		unsigned int lastNotifyId
 	) const;
 
@@ -97,11 +98,11 @@ public:
 
 	using ParticipantStateRetrievalFunc = std::function<std::list<ParticipantState>(const std::shared_ptr<EventLog> &eventLog)>;
 
-	int getChatMessageCount (const ChatRoomId &chatRoomId = ChatRoomId()) const;
-	int getUnreadChatMessageCount (const ChatRoomId &chatRoomId = ChatRoomId()) const;
+	int getChatMessageCount (const ConferenceId &conferenceId = ConferenceId()) const;
+	int getUnreadChatMessageCount (const ConferenceId &conferenceId = ConferenceId()) const;
 
-	void markChatMessagesAsRead (const ChatRoomId &chatRoomId) const;
-	std::list<std::shared_ptr<ChatMessage>> getUnreadChatMessages (const ChatRoomId &chatRoomId) const;
+	void markChatMessagesAsRead (const ConferenceId &conferenceId) const;
+	std::list<std::shared_ptr<ChatMessage>> getUnreadChatMessages (const ConferenceId &conferenceId) const;
 
 	std::list<ParticipantState> getChatMessageParticipantsByImdnState (
 		const std::shared_ptr<EventLog> &eventLog,
@@ -119,15 +120,15 @@ public:
 		time_t stateChangeTime
 	);
 
-	std::shared_ptr<ChatMessage> getLastChatMessage (const ChatRoomId &chatRoomId) const;
+	std::shared_ptr<ChatMessage> getLastChatMessage (const ConferenceId &conferenceId) const;
 
 	std::list<std::shared_ptr<ChatMessage>> findChatMessages (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		const std::string &imdnMessageId
 	) const;
 
 	std::list<std::shared_ptr<ChatMessage>> findChatMessagesToBeNotifiedAsDelivered (
-		const ChatRoomId &chatRoomId
+		const ConferenceId &conferenceId
 	) const;
 
 	// ---------------------------------------------------------------------------
@@ -135,20 +136,20 @@ public:
 	// ---------------------------------------------------------------------------
 
 	std::list<std::shared_ptr<EventLog>> getHistory (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		int nLast,
 		FilterMask mask = NoFilter
 	) const;
 	std::list<std::shared_ptr<EventLog>> getHistoryRange (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		int begin,
 		int end,
 		FilterMask mask = NoFilter
 	) const;
 
-	int getHistorySize (const ChatRoomId &chatRoomId, FilterMask mask = NoFilter) const;
+	int getHistorySize (const ConferenceId &conferenceId, FilterMask mask = NoFilter) const;
 
-	void cleanHistory (const ChatRoomId &chatRoomId, FilterMask mask = NoFilter);
+	void cleanHistory (const ConferenceId &conferenceId, FilterMask mask = NoFilter);
 
 	// ---------------------------------------------------------------------------
 	// Chat messages.
@@ -156,14 +157,17 @@ public:
 
 	void loadChatMessageContents (const std::shared_ptr<ChatMessage> &chatMessage);
 
+	void disableDeliveryNotificationRequired (const std::shared_ptr<const EventLog> &eventLog);
+	void disableDisplayNotificationRequired (const std::shared_ptr<const EventLog> &eventLog);
+
 	// ---------------------------------------------------------------------------
 	// Chat rooms.
 	// ---------------------------------------------------------------------------
 
 	std::list<std::shared_ptr<AbstractChatRoom>> getChatRooms () const;
 	void insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
-	void deleteChatRoom (const ChatRoomId &chatRoomId);
-	void enableChatRoomMigration (const ChatRoomId &chatRoomId, bool enable);
+	void deleteChatRoom (const ConferenceId &conferenceId);
+	void enableChatRoomMigration (const ConferenceId &conferenceId, bool enable);
 
 	void migrateBasicToClientGroupChatRoom (
 		const std::shared_ptr<AbstractChatRoom> &basicChatRoom,

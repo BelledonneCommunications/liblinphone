@@ -163,6 +163,7 @@ private:
 	void setupRtcpFb (SalMediaDescription *md);
 	void setupRtcpXr (SalMediaDescription *md);
 	void setupZrtpHash (SalMediaDescription *md);
+	void setupImEncryptionEngineParameters (SalMediaDescription *md);
 	void transferAlreadyAssignedPayloadTypes (SalMediaDescription *oldMd, SalMediaDescription *md);
 	void updateLocalMediaDescriptionFromIce ();
 
@@ -224,6 +225,7 @@ private:
 	unsigned int getNbActiveStreams () const;
 	bool isEncryptionMandatory () const;
 	int mediaParametersChanged (SalMediaDescription *oldMd, SalMediaDescription *newMd);
+	void addSecurityEventInChatrooms (const IdentityAddress &faultyDevice, ConferenceSecurityEvent::SecurityEventType securityEventType);
 	void propagateEncryptionChanged ();
 
 	void fillLogStats (MediaStream *st);

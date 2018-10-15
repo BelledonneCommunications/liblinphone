@@ -1458,7 +1458,6 @@ LINPHONE_PUBLIC LinphoneCall *linphone_core_get_call_by_remote_address(const Lin
  */
 LINPHONE_PUBLIC LinphoneCall *linphone_core_get_call_by_remote_address2(const LinphoneCore *lc, const LinphoneAddress *remote_address);
 
-
 /**
  * @brief Send the specified dtmf.
  *
@@ -1521,7 +1520,6 @@ LINPHONE_PUBLIC bool_t linphone_core_get_guess_hostname(LinphoneCore *lc);
  */
 LINPHONE_PUBLIC void linphone_core_enable_lime(LinphoneCore *lc, LinphoneLimeState val);
 
-
 /**
  * Returns the lime state
  * @param[in] lc #LinphoneCore object
@@ -1530,13 +1528,49 @@ LINPHONE_PUBLIC void linphone_core_enable_lime(LinphoneCore *lc, LinphoneLimeSta
 **/
 LINPHONE_PUBLIC LinphoneLimeState linphone_core_lime_enabled(const LinphoneCore *lc);
 
-
 /**
  * Tells if lime is available
  * @param[in] lc #LinphoneCore object
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC bool_t linphone_core_lime_available(const LinphoneCore *lc);
+
+/**
+ * Tells to LinphoneCore to use LIME X3DH
+ * @param[in] lc LinphoneCore object
+ * @param[in] val The new lime state
+ * @ingroup network_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_lime_x3dh(LinphoneCore *lc, bool_t enable);
+
+/**
+ * Tells to LinphoneCore to update LIME X3DH
+ * @param[in] lc LinphoneCore object
+ * @ingroup network_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_update_lime_x3dh(const LinphoneCore *lc);
+
+/**
+ * Returns the LIME X3DH state
+ * @param[in] lc LinphoneCore object
+ * @return The current lime state
+ * @ingroup network_parameters
+**/
+LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_enabled(const LinphoneCore *lc);
+
+/**
+ * Tells if LIME X3DH is available
+ * @param[in] lc LinphoneCore object
+ * @ingroup network_parameters
+**/
+LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_available(const LinphoneCore *lc);
+
+/**
+ * Deletes local LIME X3DH database
+ * @param[in] lc LinphoneCore object
+ * @ingroup network_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_delete_local_lime_x3dh_db(const LinphoneCore *lc);
 
 /**
  * Tells whether IPv6 is enabled or not.
@@ -4221,12 +4255,24 @@ LINPHONE_PUBLIC void linphone_core_set_zrtp_secrets_file(LinphoneCore *lc, const
 LINPHONE_PUBLIC const char *linphone_core_get_zrtp_secrets_file(LinphoneCore *lc);
 
 /**
- * Get a pointer to the sqlite db holding zrtp/lime cache
+ * Get a pointer to the sqlite db holding zrtp/lime cache.
  * @param[in] lc #LinphoneCore object.
  * @return An sqlite3 pointer cast to a void one or NULL if cache is not available(not enabled at compile or access failed)
  * @ingroup initializing
  */
 LINPHONE_PUBLIC void *linphone_core_get_zrtp_cache_db(LinphoneCore *lc);
+
+/**
+ * Get the zrtp sas validation status for a peer uri.
+ * Once the SAS has been validated or rejected, the status will never return to Unknown (unless you delete your cache)
+ * @param[in] lc #LinphoneCore object.
+ * @param[in] addr the peer uri
+ * @ingroup media_parameters
+ * @return  - LinphoneZrtpPeerStatusUnknown: this uri is not present in cache OR during calls with the active device, SAS never was validated or rejected
+ *  		- LinphoneZrtpPeerStatusValid: the active device status is set to valid
+ *  		- LinphoneZrtpPeerStatusInvalid: the active peer device status is set to invalid
+ */
+LINPHONE_PUBLIC LinphoneZrtpPeerStatus linphone_core_get_zrtp_status(LinphoneCore *lc, const char *addr);
 
 /**
  * Set the path to the directory storing the user's x509 certificates (used by dtls)

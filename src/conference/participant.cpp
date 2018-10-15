@@ -20,7 +20,6 @@
 #include <algorithm>
 
 #include "object/object-p.h"
-#include "participant-device.h"
 #include "participant-p.h"
 
 #include "participant.h"
@@ -103,6 +102,29 @@ Participant::Participant (Conference *conference, const IdentityAddress &address
 const IdentityAddress& Participant::getAddress () const {
 	L_D();
 	return d->addr;
+}
+
+AbstractChatRoom::SecurityLevel Participant::getSecurityLevel () const {
+	L_D();
+	bool isSafe = true;
+	for (const auto &device : d->getDevices()) {
+		auto level = device->getSecurityLevel();
+		switch (level) {
+			case AbstractChatRoom::SecurityLevel::Unsafe:
+				return level; // if one device is Unsafe the whole participant is Unsafe (red)
+			case AbstractChatRoom::SecurityLevel::ClearText:
+				return level; // TODO if all devices are in ClearText the whole participant is in ClearText (grey)
+			case AbstractChatRoom::SecurityLevel::Encrypted:
+				isSafe = false; // if one device is Encrypted the whole participant is Encrypted (orange)
+				break;
+			case AbstractChatRoom::SecurityLevel::Safe:
+				break; // if all devices are Safe the whole participant is Safe (green)
+		}
+	}
+	if (isSafe)
+		return AbstractChatRoom::SecurityLevel::Safe;
+	else
+		return AbstractChatRoom::SecurityLevel::Encrypted;
 }
 
 // -----------------------------------------------------------------------------

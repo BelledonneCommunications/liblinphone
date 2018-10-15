@@ -113,7 +113,7 @@ static void call_received(SalCallOp *h) {
 				}
 				IdentityAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front());
 				if (confAddr.isValid()) {
-					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ChatRoomId(confAddr, confAddr));
+					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ConferenceId(confAddr, confAddr));
 					L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmRecreation(h);
 					return;
 				}
@@ -127,7 +127,7 @@ static void call_received(SalCallOp *h) {
 		linphone_address_unref(fromAddr);
 		if (linphone_core_conference_server_enabled(lc)) {
 			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
-				ChatRoomId(IdentityAddress(h->getTo()), IdentityAddress(h->getTo()))
+				ConferenceId(IdentityAddress(h->getTo()), IdentityAddress(h->getTo()))
 			);
 			if (chatRoom) {
 				L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmJoining(h);
@@ -138,13 +138,16 @@ static void call_received(SalCallOp *h) {
 			}
 		} else {
 			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
-				ChatRoomId(IdentityAddress(h->getFrom()), IdentityAddress(h->getTo()))
+				ConferenceId(IdentityAddress(h->getFrom()), IdentityAddress(h->getTo()))
 			);
 			if (!chatRoom) {
 				chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom(
 					h->getSubject(), h->getRemoteContact(), h->getRemoteBody(), false
 				);
 			}
+			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
+			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
+				L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->addOneToOneCapability();
 			L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->confirmJoining(h);
 		}
 		return;
@@ -777,7 +780,7 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 				if (linphone_core_conference_server_enabled(lc)) {
 					// Removal of a participant at the server side
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
-						ChatRoomId(IdentityAddress(op->getTo()), IdentityAddress(op->getTo()))
+						ConferenceId(IdentityAddress(op->getTo()), IdentityAddress(op->getTo()))
 					);
 					if (chatRoom) {
 						std::shared_ptr<Participant> participant = chatRoom->findParticipant(IdentityAddress(op->getFrom()));
@@ -794,7 +797,7 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 				} else {
 					// The server asks a participant to leave a chat room
 					LinphoneChatRoom *cr = L_GET_C_BACK_PTR(
-						L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ChatRoomId(addr, IdentityAddress(op->getTo())))
+						L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ConferenceId(addr, IdentityAddress(op->getTo())))
 					);
 					if (cr) {
 						L_GET_CPP_PTR_FROM_C_OBJECT(cr)->leave();
@@ -806,7 +809,7 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 			} else {
 				if (linphone_core_conference_server_enabled(lc)) {
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
-						ChatRoomId(IdentityAddress(op->getTo()), IdentityAddress(op->getTo()))
+						ConferenceId(IdentityAddress(op->getTo()), IdentityAddress(op->getTo()))
 					);
 					LinphoneChatRoom *cr = L_GET_C_BACK_PTR(chatRoom);
 					if (cr) {
@@ -840,7 +843,7 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 					}
 				} else {
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
-						ChatRoomId(addr, IdentityAddress(op->getTo()))
+						ConferenceId(addr, IdentityAddress(op->getTo()))
 					);
 					if (!chatRoom)
 						chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom("", addr.asString(), Content(), false);

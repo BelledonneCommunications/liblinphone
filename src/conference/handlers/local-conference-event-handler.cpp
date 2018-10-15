@@ -105,7 +105,7 @@ string LocalConferenceEventHandlerPrivate::createNotifyFullState (int notifyId, 
 
 string LocalConferenceEventHandlerPrivate::createNotifyMultipart (int notifyId) {
 	list<shared_ptr<EventLog>> events = conf->getCore()->getPrivate()->mainDb->getConferenceNotifiedEvents(
-		ChatRoomId(conf->getConferenceAddress(), conf->getConferenceAddress()),
+		ConferenceId(conf->getConferenceAddress(), conf->getConferenceAddress()),
 		static_cast<unsigned int>(notifyId)
 	);
 
@@ -451,7 +451,7 @@ shared_ptr<ConferenceParticipantEvent> LocalConferenceEventHandler::notifyPartic
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantAdded,
 		time(nullptr),
-		d->chatRoomId,
+		d->conferenceId,
 		d->lastNotify,
 		addr
 	);
@@ -465,7 +465,7 @@ shared_ptr<ConferenceParticipantEvent> LocalConferenceEventHandler::notifyPartic
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantRemoved,
 		time(nullptr),
-		d->chatRoomId,
+		d->conferenceId,
 		d->lastNotify,
 		addr
 	);
@@ -478,7 +478,7 @@ shared_ptr<ConferenceParticipantEvent> LocalConferenceEventHandler::notifyPartic
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
 		time(nullptr),
-		d->chatRoomId,
+		d->conferenceId,
 		d->lastNotify,
 		addr
 	);
@@ -490,7 +490,7 @@ shared_ptr<ConferenceSubjectEvent> LocalConferenceEventHandler::notifySubjectCha
 	d->notifyAll(d->createNotifySubjectChanged());
 	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(
 		time(nullptr),
-		d->chatRoomId,
+		d->conferenceId,
 		d->lastNotify,
 		d->conf->getSubject()
 	);
@@ -503,7 +503,7 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConferenceEventHandler::notify
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceAdded,
 		time(nullptr),
-		d->chatRoomId,
+		d->conferenceId,
 		d->lastNotify,
 		addr,
 		gruu
@@ -517,7 +517,7 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConferenceEventHandler::notify
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceRemoved,
 		time(nullptr),
-		d->chatRoomId,
+		d->conferenceId,
 		d->lastNotify,
 		addr,
 		gruu
@@ -530,14 +530,14 @@ void LocalConferenceEventHandler::setLastNotify (unsigned int lastNotify) {
 	d->lastNotify = lastNotify;
 }
 
-void LocalConferenceEventHandler::setChatRoomId (const ChatRoomId &chatRoomId) {
+void LocalConferenceEventHandler::setConferenceId (const ConferenceId &conferenceId) {
 	L_D();
-	d->chatRoomId = chatRoomId;
+	d->conferenceId = conferenceId;
 }
 
-ChatRoomId LocalConferenceEventHandler::getChatRoomId () const {
+ConferenceId LocalConferenceEventHandler::getConferenceId () const {
 	L_D();
-	return d->chatRoomId;
+	return d->conferenceId;
 }
 
 string LocalConferenceEventHandler::getNotifyForId (int notifyId, bool oneToOne) {

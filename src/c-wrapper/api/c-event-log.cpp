@@ -22,7 +22,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "chat/chat-message/chat-message.h"
-#include "chat/chat-room/chat-room-id.h"
+#include "conference/conference-id.h"
 #include "event-log/events.h"
 
 // =============================================================================
@@ -167,6 +167,18 @@ static bool isConferenceSubjectType (LinphoneEventLogType type) {
 	return false;
 }
 
+static bool isConferenceSecurityType (LinphoneEventLogType type) {
+	switch (type) {
+		case LinphoneEventLogTypeConferenceSecurityEvent:
+			return true;
+
+		default:
+			break;
+	}
+
+	return false;
+}
+
 // -----------------------------------------------------------------------------
 // EventLog.
 // -----------------------------------------------------------------------------
@@ -206,7 +218,7 @@ const LinphoneAddress *linphone_event_log_get_peer_address (const LinphoneEventL
 		event_log->peerAddressCache = linphone_address_new(
 			static_pointer_cast<const LinphonePrivate::ConferenceEvent>(
 				L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-			)->getChatRoomId().getPeerAddress().asString().c_str()
+			)->getConferenceId().getPeerAddress().asString().c_str()
 		);
 
 	return event_log->peerAddressCache;
@@ -220,7 +232,7 @@ const LinphoneAddress *linphone_event_log_get_local_address (const LinphoneEvent
 		event_log->localAddressCache = linphone_address_new(
 			static_pointer_cast<const LinphonePrivate::ConferenceEvent>(
 				L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-			)->getChatRoomId().getLocalAddress().asString().c_str()
+			)->getConferenceId().getLocalAddress().asString().c_str()
 		);
 
 	return event_log->localAddressCache;
@@ -303,6 +315,32 @@ const LinphoneAddress *linphone_event_log_get_device_address (const LinphoneEven
 		);
 
 	return event_log->deviceAddressCache;
+}
+
+// -----------------------------------------------------------------------------
+// ConferenceSecurityEvent.
+// -----------------------------------------------------------------------------
+
+LINPHONE_PUBLIC LinphoneSecurityEventType linphone_event_log_get_security_event_type (const LinphoneEventLog *event_log) {
+	if (!isConferenceSecurityType(linphone_event_log_get_type(event_log)))
+		return LinphoneSecurityEventTypeNull;
+
+	const auto securityEvent = static_pointer_cast<const LinphonePrivate::ConferenceSecurityEvent>(
+		L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
+	);
+	LinphoneSecurityEventType eventType = static_cast<LinphoneSecurityEventType>(securityEvent->getSecurityEventType());
+	return eventType;
+}
+
+LINPHONE_PUBLIC LinphoneAddress *linphone_event_log_get_security_event_faulty_device (const LinphoneEventLog *event_log) {
+	if (!isConferenceSecurityType(linphone_event_log_get_type(event_log)))
+		return nullptr;
+
+	return linphone_address_new(
+		static_pointer_cast<const LinphonePrivate::ConferenceSecurityEvent>(
+			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
+		)->getFaultyDevice().asString().c_str()
+	);
 }
 
 // -----------------------------------------------------------------------------

@@ -17,8 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include "chat/encryption/encryption-engine.h"
 #include "participant-device.h"
 #include "participant-p.h"
+#include "core/core.h"
 
 #include "linphone/event.h"
 
@@ -27,6 +29,8 @@ using namespace std;
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
+
+class Core;
 
 ParticipantDevice::ParticipantDevice () {}
 
@@ -50,6 +54,12 @@ void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
 	if (mConferenceSubscribeEvent)
 		linphone_event_unref(mConferenceSubscribeEvent);
 	mConferenceSubscribeEvent = linphone_event_ref(ev);
+}
+
+AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
+	if (getCore()->getEncryptionEngine())
+		return getCore()->getEncryptionEngine()->getSecurityLevel(mGruu.asString());
+	return AbstractChatRoom::SecurityLevel::ClearText;
 }
 
 ostream &operator<< (ostream &stream, ParticipantDevice::State state) {

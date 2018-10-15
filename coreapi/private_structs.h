@@ -114,6 +114,8 @@ struct _LinphoneProxyConfig
 	bool_t publish;
 	bool_t dial_escape_plus;
 
+	bool_t lime_x3dh;
+
 	bool_t send_publish;
 	bool_t quality_reporting_enabled;
 	uint8_t avpf_rr_interval;
@@ -633,7 +635,7 @@ struct _LinphoneImEncryptionEngineCbs {
 	LinphoneImEncryptionEngineCbsOutgoingMessageCb process_outgoing_message;
 	LinphoneImEncryptionEngineCbsIsEncryptionEnabledForFileTransferCb is_encryption_enabled_for_file_transfer;
 	LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb generate_file_transfer_key;
-	LinphoneImEncryptionEngineCbsDownloadingFileCb process_downlading_file;
+	LinphoneImEncryptionEngineCbsDownloadingFileCb process_downloading_file;
 	LinphoneImEncryptionEngineCbsUploadingFileCb process_uploading_file;
 };
 

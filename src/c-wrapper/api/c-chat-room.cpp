@@ -31,6 +31,7 @@
 #include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/real-time-text-chat-room-p.h"
+#include "chat/chat-room/client-group-chat-room-p.h"
 #include "chat/chat-room/server-group-chat-room-p.h"
 #include "conference/participant.h"
 #include "core/core-p.h"
@@ -329,6 +330,10 @@ const char * linphone_chat_room_get_subject (const LinphoneChatRoom *cr) {
 	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getSubject());
 }
 
+LinphoneChatRoomSecurityLevel linphone_chat_room_get_security_level (LinphoneChatRoom *cr) {
+	return (LinphoneChatRoomSecurityLevel)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getSecurityLevel();
+}
+
 void linphone_chat_room_leave (LinphoneChatRoom *cr) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->leave();
 }
@@ -473,6 +478,10 @@ void _linphone_chat_room_notify_participant_admin_status_changed(LinphoneChatRoo
 
 void _linphone_chat_room_notify_state_changed(LinphoneChatRoom *cr, LinphoneChatRoomState newState) {
 	NOTIFY_IF_EXIST(StateChanged, state_changed, cr, newState)
+}
+
+void _linphone_chat_room_notify_security_event(LinphoneChatRoom *cr, LinphoneEventLog *event_log) {
+	NOTIFY_IF_EXIST(SecurityEvent, security_event, cr, event_log)
 }
 
 void _linphone_chat_room_notify_subject_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {

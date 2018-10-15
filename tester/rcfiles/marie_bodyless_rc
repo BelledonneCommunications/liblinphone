@@ -6,7 +6,7 @@ default_proxy=0
 ping_with_options=0
 composing_idle_timeout=1
 store_ha1_passwd=0 #used for sipp
-bodyless_lists=sip:friends@sipopen.example.org, sip:buddies@sipopen.example.org, sip:bros@sipopen.example.org
+bodyless_lists="Friends of Marie" <sip:friends@sip.example.org>, sip:buddies@sip.example.org, "Bros of Marie" sip:bros@sip.example.org
 
 [auth_info_0]
 username=marie

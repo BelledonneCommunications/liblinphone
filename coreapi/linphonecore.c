@@ -1340,37 +1340,28 @@ static void certificates_config_read(LinphoneCore *lc) {
 }
 
 static void bodyless_config_read(LinphoneCore *lc) {
-	const char *lists = lp_config_get_string(lc->config, "sip", "bodyless_lists", NULL);
-	if (!lists)
-		return;
-
-	char tmp[256] = {0};
-	char name[256];
-	char *p, *n;
-	strncpy(tmp, lists, sizeof(tmp)-1);
-	for(p = tmp; *p != '\0'; p++) {
-		if (*p==' ')
-			continue;
-
-		n = strchr(p,',');
-		if (n)
-			*n = '\0';
-		sscanf(p, "%s", name);
+	bctbx_list_t *bodyless_lists = linphone_config_get_string_list(lc->config, "sip", "bodyless_lists", NULL);
+	while (bodyless_lists) {
+		char *name = (char *)bodyless_lists->data;
+		bodyless_lists = bodyless_lists->next;
 		LinphoneAddress *addr = linphone_address_new(name);
 		if(!addr)
 			continue;
 
 		ms_message("Found bodyless friendlist %s", name);
+		bctbx_free(name);
 		LinphoneFriendList *friendList = linphone_core_create_friend_list(lc);
-		linphone_friend_list_set_rls_uri(friendList, name);
-		linphone_friend_list_set_display_name(friendList, linphone_address_get_username(addr));
+		linphone_friend_list_set_rls_address(friendList, addr);
+		linphone_friend_list_set_display_name(
+			friendList,
+			linphone_address_get_display_name(addr)
+				? linphone_address_get_display_name(addr)
+				: linphone_address_get_username(addr)
+		);
 		linphone_address_unref(addr);
 		linphone_friend_list_set_subscription_bodyless(friendList, TRUE);
 		linphone_core_add_friend_list(lc, friendList);
-		if (!n)
-			break;
-
-		p = n;
+		linphone_friend_list_unref(friendList);
 	}
 }
 
@@ -1452,6 +1443,12 @@ static void sip_config_read(LinphoneCore *lc) {
 	tmp=lp_config_get_int(lc->config,"app","auto_download_incoming_files_max_size",-1);
 	linphone_core_set_max_size_for_auto_download_incoming_files(lc, tmp);
 
+	/*In case of remote provisionning, function sip_config_read is initialy called in core_init, then in state ConfiguringSuccessfull*/
+	/*Accordingly, to avoid proxy_config to be added twice, it is mandatory to reset proxy config list from LinphoneCore*/
+	/*We assume, lc->config contains an accurate list of proxy_config, so no need to keep it from LinphoneCore */
+	/*Consequence in case of remote provisionning, linphone_core_add_proxy function should not be called before state GlobalOn*/
+	linphone_core_clear_proxy_config(lc);
+	
 	/* get proxies config */
 	for(i=0;; i++){
 		LinphoneProxyConfig *cfg=linphone_proxy_config_new_from_config_file(lc,i);
@@ -2113,7 +2110,6 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 		lc->provisioning_http_listener = NULL;
 	}
 
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
 	linphone_core_set_state(lc,LinphoneGlobalOn,"Ready");
 }
 
@@ -2228,7 +2224,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 		bctbx_free(resourceAddrStr);
 
 		const LinphoneAddress *from = linphone_event_get_from(lev);
-		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ChatRoomId(
+		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
 			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
 			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
 		));
@@ -2264,7 +2260,7 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 	}
 
 	const LinphoneAddress *resource = linphone_event_get_resource(lev);
-	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ChatRoomId(
+	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
 		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
 		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
 	));
@@ -2305,7 +2301,9 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	service->account_creator_service_constructor_cb = linphone_account_creator_constructor_linphone;
 	service->account_creator_service_destructor_cb = NULL;
 	service->create_account_request_cb = linphone_account_creator_create_account_linphone;
+	service->delete_account_request_cb = linphone_account_creator_delete_account_linphone;
 	service->is_account_exist_request_cb = linphone_account_creator_is_account_exist_linphone;
+	service->get_confirmation_key_request_cb = linphone_account_creator_get_confirmation_key_linphone;
 	service->activate_account_request_cb = linphone_account_creator_activate_account_linphone;
 	service->is_account_activated_request_cb = linphone_account_creator_is_account_activated_linphone;
 	service->link_account_request_cb = linphone_account_creator_link_phone_number_with_account_linphone;
@@ -2435,6 +2433,8 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 void linphone_core_start (LinphoneCore *lc) {
 	linphone_core_set_state(lc,LinphoneGlobalStartup,"Starting up");
+
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
 
 	//to give a chance to change uuid before starting
 	const char* uuid=lp_config_get_string(lc->config,"misc","uuid",NULL);
@@ -6740,6 +6740,27 @@ void *linphone_core_get_zrtp_cache_db(LinphoneCore *lc){
 #endif /* SQLITE_STORAGE_ENABLED */
 }
 
+LinphoneZrtpPeerStatus linphone_core_get_zrtp_status(LinphoneCore *lc, const char *peerUri) {
+#ifdef SQLITE_STORAGE_ENABLED
+	int status = MS_ZRTP_PEER_STATUS_UNKNOWN;
+	if (lc->zrtp_cache_db) {
+		status = ms_zrtp_get_peer_status(lc->zrtp_cache_db, peerUri);
+	}
+	switch (status) {
+		case MS_ZRTP_PEER_STATUS_UNKNOWN:
+			return LinphoneZrtpPeerStatusUnknown;
+		case MS_ZRTP_PEER_STATUS_INVALID:
+			return LinphoneZrtpPeerStatusInvalid;
+		case MS_ZRTP_PEER_STATUS_VALID:
+			return LinphoneZrtpPeerStatusValid;
+		default:
+			return LinphoneZrtpPeerStatusUnknown;
+	}
+#else /* SQLITE_STORAGE_ENABLED */
+	return LinphoneZrtpPeerStatusUnkown;
+#endif /* SQLITE_STORAGE_ENABLED */
+}
+
 static void linphone_core_zrtp_cache_close(LinphoneCore *lc) {
 #ifdef SQLITE_STORAGE_ENABLED
 	if (lc->zrtp_cache_db) {
@@ -7357,17 +7378,6 @@ const char *linphone_core_get_tls_cert_path(const LinphoneCore *lc) {
 const char *linphone_core_get_tls_key_path(const LinphoneCore *lc) {
 	const char *tls_key_path = lp_config_get_string(lc->config, "sip", "client_cert_key", NULL);
 	return tls_key_path;
-}
-
-void linphone_core_set_im_encryption_engine(LinphoneCore *lc, LinphoneImEncryptionEngine *imee) {
-	if (lc->im_encryption_engine) {
-		linphone_im_encryption_engine_unref(lc->im_encryption_engine);
-		lc->im_encryption_engine = NULL;
-	}
-	if (imee) {
-		imee->lc = lc;
-		lc->im_encryption_engine = linphone_im_encryption_engine_ref(imee);
-	}
 }
 
 LinphoneImEncryptionEngine *linphone_core_get_im_encryption_engine(const LinphoneCore *lc) {

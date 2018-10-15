@@ -33,7 +33,7 @@ class LINPHONE_PUBLIC ProxyChatRoom : public AbstractChatRoom {
 	friend class CorePrivate;
 
 public:
-	const ChatRoomId &getChatRoomId () const override;
+	const ConferenceId &getConferenceId () const override;
 
 	const IdentityAddress &getPeerAddress () const override;
 	const IdentityAddress &getLocalAddress () const override;
@@ -43,6 +43,7 @@ public:
 
 	CapabilitiesMask getCapabilities () const override;
 	State getState () const override;
+	SecurityLevel getSecurityLevel () const override;
 	bool hasBeenLeft () const override;
 
 	std::list<std::shared_ptr<EventLog>> getMessageHistory (int nLast) const override;

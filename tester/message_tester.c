@@ -930,7 +930,7 @@ static int enable_lime_for_message_test(LinphoneCoreManager *marie, LinphoneCore
 	char *tmp;
 
 	if (!linphone_core_lime_available(marie->lc) || !linphone_core_lime_available(pauline->lc)) {
-		ms_warning("Lime not available, skiping");
+		ms_warning("Lime not available, skipping");
 		return -1;
 	}
 	/* make sure lime is enabled */
@@ -1232,7 +1232,7 @@ static void _im_error_delivery_notification(bool_t online) {
 	void *zrtp_cache_db_holder=NULL;
 
 	if (!linphone_core_lime_available(marie->lc)) {
-		ms_warning("Lime not available, skiping");
+		ms_warning("Lime not available, skipping");
 		goto end;
 	}
 
@@ -1299,7 +1299,7 @@ static void lime_text_message(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 
 	if (!linphone_core_lime_available(marie->lc)) {
-		ms_warning("Lime not available, skiping");
+		ms_warning("Lime not available, skipping");
 		goto end;
 	}
 
@@ -1328,7 +1328,7 @@ static void lime_text_message_to_non_lime(bool_t sender_policy_mandatory, bool_t
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 
 	if (!linphone_core_lime_available(marie->lc)) {
-		ms_warning("Lime not available, skiping");
+		ms_warning("Lime not available, skipping");
 		goto end;
 	}
 	/* make sure lime is enabled */
@@ -1346,7 +1346,7 @@ static void lime_text_message_to_non_lime(bool_t sender_policy_mandatory, bool_t
 	chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
 
 	linphone_chat_room_send_message(chat_room,"Bla bla bla bla");
-	//since we cannot decrypt message, we should not receive any message
+	// since we cannot decrypt message, we should not receive any message
 	if (sender_policy_mandatory || lime_key_available) {
 		int chat_room_size = 0;
 		BC_ASSERT_FALSE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived,1));
@@ -1396,7 +1396,7 @@ static void lime_multiple_messages_while_network_unreachable(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 
 	if (!linphone_core_lime_available(marie->lc)) {
-		ms_warning("Lime not available, skiping");
+		ms_warning("Lime not available, skipping");
 		goto end;
 	}
 
@@ -1438,7 +1438,7 @@ void lime_transfer_message_base(bool_t encrypt_file,bool_t download_file_from_st
 	pauline = linphone_core_manager_new( "pauline_tcp_rc");
 
 	if (!linphone_core_lime_available(marie->lc)) {
-		ms_warning("Lime not available, skiping");
+		ms_warning("Lime not available, skipping");
 		goto end;
 	}
 	/* make sure lime is enabled */
@@ -1562,7 +1562,7 @@ static void lime_cache_migration(void) {
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 2, 5000));
 
 		if (!linphone_core_lime_available(marie->lc)) {
-			ms_warning("Lime not available, skiping");
+			ms_warning("Lime not available, skipping");
 			goto end1;
 		}
 

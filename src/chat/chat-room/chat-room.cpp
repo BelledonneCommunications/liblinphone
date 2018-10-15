@@ -39,9 +39,9 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-void ChatRoomPrivate::setState (ChatRoom::State state) {
-	if (this->state != state) {
-		this->state = state;
+void ChatRoomPrivate::setState (ChatRoom::State newState) {
+	if (state != newState) {
+		state = newState;
 		notifyStateChanged();
 	}
 }
@@ -147,43 +147,62 @@ shared_ptr<IsComposingMessage> ChatRoomPrivate::createIsComposingMessage () {
 
 list<shared_ptr<ChatMessage>> ChatRoomPrivate::findChatMessages (const string &messageId) const {
 	L_Q();
-	return q->getCore()->getPrivate()->mainDb->findChatMessages(q->getChatRoomId(), messageId);
+	return q->getCore()->getPrivate()->mainDb->findChatMessages(q->getConferenceId(), messageId);
 }
 
 // -----------------------------------------------------------------------------
 
-void ChatRoomPrivate::sendDeliveryErrorNotification (const shared_ptr<ChatMessage> &message, LinphoneReason reason) {
-	L_Q();
-	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCore()->getCCore());
-	if (linphone_im_notif_policy_get_send_imdn_delivered(policy))
-		imdnHandler->notifyDeliveryError(message, reason);
+void ChatRoomPrivate::sendDeliveryErrorNotification (const shared_ptr<ChatMessage> &chatMessage, LinphoneReason reason) {
+	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(chatMessage->getCore()->getCCore());
+	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+	if (
+		linphone_im_notif_policy_get_send_imdn_delivered(policy) &&
+		chatMessage->getPrivate()->getNegativeDeliveryNotificationRequired()
+	) {
+		dChatMessage->setNegativeDeliveryNotificationRequired(false);
+		imdnHandler->notifyDeliveryError(chatMessage, reason);
+	}
 }
 
-void ChatRoomPrivate::sendDeliveryNotification (const shared_ptr<ChatMessage> &message) {
-	L_Q();
-	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCore()->getCCore());
-	if (linphone_im_notif_policy_get_send_imdn_delivered(policy))
-		imdnHandler->notifyDelivery(message);
+void ChatRoomPrivate::sendDeliveryNotification (const shared_ptr<ChatMessage> &chatMessage) {
+	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(chatMessage->getCore()->getCCore());
+	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+	if (
+		linphone_im_notif_policy_get_send_imdn_delivered(policy) &&
+		dChatMessage->getPositiveDeliveryNotificationRequired()
+	) {
+		dChatMessage->setPositiveDeliveryNotificationRequired(false);
+		imdnHandler->notifyDelivery(chatMessage);
+	}
 }
 
 void ChatRoomPrivate::sendDeliveryNotifications () {
 	L_Q();
 	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCore()->getCCore());
 	if (linphone_im_notif_policy_get_send_imdn_delivered(policy)) {
-		auto messages = q->getCore()->getPrivate()->mainDb->findChatMessagesToBeNotifiedAsDelivered(q->getChatRoomId());
-		for (const auto message : messages)
-			imdnHandler->notifyDelivery(message);
+		auto chatMessages = q->getCore()->getPrivate()->mainDb->findChatMessagesToBeNotifiedAsDelivered(q->getConferenceId());
+		for (const auto &chatMessage : chatMessages) {
+			ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+			if (dChatMessage->getPositiveDeliveryNotificationRequired()) {
+				dChatMessage->setPositiveDeliveryNotificationRequired(false);
+				imdnHandler->notifyDelivery(chatMessage);
+			}
+		}
 	}
 }
 
-bool ChatRoomPrivate::sendDisplayNotification (const shared_ptr<ChatMessage> &message) {
+void ChatRoomPrivate::sendDisplayNotification (const shared_ptr<ChatMessage> &chatMessage) {
 	L_Q();
 	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCore()->getCCore());
-	if (linphone_im_notif_policy_get_send_imdn_displayed(policy)) {
-		imdnHandler->notifyDisplay(message);
-		return imdnHandler->aggregationEnabled();
+	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+	if (
+		linphone_im_notif_policy_get_send_imdn_displayed(policy) &&
+		chatMessage->getPrivate()->getDisplayNotificationRequired()
+	) {
+		dChatMessage->setPositiveDeliveryNotificationRequired(false);
+		dChatMessage->setDisplayNotificationRequired(false);
+		imdnHandler->notifyDisplay(chatMessage);
 	}
-	return false;
 }
 
 // -----------------------------------------------------------------------------
@@ -273,11 +292,6 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 
 	addTransientChatMessage(msg);
 	reason = msg->getPrivate()->receive();
-
-	if (reason == LinphoneReasonNotAcceptable || reason == LinphoneReasonUnknown) {
-		// Return LinphoneReasonNone to avoid flexisip resending us a message we can't decrypt
-		return LinphoneReasonNone;
-	}
 	return reason;
 }
 
@@ -340,11 +354,11 @@ LinphoneChatRoom *ChatRoomPrivate::getCChatRoom () const {
 
 // =============================================================================
 
-ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ChatRoomId &chatRoomId) :
+ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ConferenceId &conferenceId) :
 	AbstractChatRoom(p, core) {
 	L_D();
 
-	d->chatRoomId = chatRoomId;
+	d->conferenceId = conferenceId;
 	d->imdnHandler.reset(new Imdn(this));
 	d->isComposingHandler.reset(new IsComposing(core->getCCore(), d));
 }
@@ -357,19 +371,19 @@ ChatRoom::~ChatRoom () {
 
 // -----------------------------------------------------------------------------
 
-const ChatRoomId &ChatRoom::getChatRoomId () const {
+const ConferenceId &ChatRoom::getConferenceId () const {
 	L_D();
-	return d->chatRoomId;
+	return d->conferenceId;
 }
 
 const IdentityAddress &ChatRoom::getPeerAddress () const {
 	L_D();
-	return d->chatRoomId.getPeerAddress();
+	return d->conferenceId.getPeerAddress();
 }
 
 const IdentityAddress &ChatRoom::getLocalAddress () const {
 	L_D();
-	return d->chatRoomId.getLocalAddress();
+	return d->conferenceId.getLocalAddress();
 }
 
 // -----------------------------------------------------------------------------
@@ -391,19 +405,23 @@ ChatRoom::State ChatRoom::getState () const {
 	return d->state;
 }
 
+ChatRoom::SecurityLevel ChatRoom::getSecurityLevel () const {
+	return ChatRoom::SecurityLevel::ClearText;
+}
+
 // -----------------------------------------------------------------------------
 
 list<shared_ptr<EventLog>> ChatRoom::getMessageHistory (int nLast) const {
-	return getCore()->getPrivate()->mainDb->getHistory(getChatRoomId(), nLast, MainDb::Filter::ConferenceChatMessageFilter);
+	return getCore()->getPrivate()->mainDb->getHistory(getConferenceId(), nLast, MainDb::Filter::ConferenceChatMessageFilter);
 }
 
 list<shared_ptr<EventLog>> ChatRoom::getMessageHistoryRange (int begin, int end) const {
-	return getCore()->getPrivate()->mainDb->getHistoryRange(getChatRoomId(), begin, end, MainDb::Filter::ConferenceChatMessageFilter);
+	return getCore()->getPrivate()->mainDb->getHistoryRange(getConferenceId(), begin, end, MainDb::Filter::ConferenceChatMessageFilter);
 }
 
 list<shared_ptr<EventLog>> ChatRoom::getHistory (int nLast) const {
 	return getCore()->getPrivate()->mainDb->getHistory(
-		getChatRoomId(),
+		getConferenceId(),
 		nLast,
 		MainDb::FilterMask({ MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter })
 	);
@@ -411,7 +429,7 @@ list<shared_ptr<EventLog>> ChatRoom::getHistory (int nLast) const {
 
 list<shared_ptr<EventLog>> ChatRoom::getHistoryRange (int begin, int end) const {
 	return getCore()->getPrivate()->mainDb->getHistoryRange(
-		getChatRoomId(),
+		getConferenceId(),
 		begin,
 		end,
 		MainDb::FilterMask({ MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter })
@@ -419,7 +437,7 @@ list<shared_ptr<EventLog>> ChatRoom::getHistoryRange (int begin, int end) const 
 }
 
 int ChatRoom::getHistorySize () const {
-	return getCore()->getPrivate()->mainDb->getHistorySize(getChatRoomId());
+	return getCore()->getPrivate()->mainDb->getHistorySize(getConferenceId());
 }
 
 void ChatRoom::deleteFromDb () {
@@ -431,23 +449,19 @@ void ChatRoom::deleteFromDb () {
 }
 
 void ChatRoom::deleteHistory () {
-	getCore()->getPrivate()->mainDb->cleanHistory(getChatRoomId());
+	getCore()->getPrivate()->mainDb->cleanHistory(getConferenceId());
 }
 
 shared_ptr<ChatMessage> ChatRoom::getLastChatMessageInHistory () const {
-	return getCore()->getPrivate()->mainDb->getLastChatMessage(getChatRoomId());
+	return getCore()->getPrivate()->mainDb->getLastChatMessage(getConferenceId());
 }
 
 int ChatRoom::getChatMessageCount () const {
-	return getCore()->getPrivate()->mainDb->getChatMessageCount(getChatRoomId());
+	return getCore()->getPrivate()->mainDb->getChatMessageCount(getConferenceId());
 }
 
 int ChatRoom::getUnreadChatMessageCount () const {
-	L_D();
-	int dbUnreadCount = getCore()->getPrivate()->mainDb->getUnreadChatMessageCount(getChatRoomId());
-	int notifiedCount = d->imdnHandler->getDisplayNotificationCount();
-	L_ASSERT(dbUnreadCount >= notifiedCount);
-	return dbUnreadCount - notifiedCount;
+	return getCore()->getPrivate()->mainDb->getUnreadChatMessageCount(getConferenceId());
 }
 
 // -----------------------------------------------------------------------------
@@ -513,21 +527,11 @@ shared_ptr<ChatMessage> ChatRoom::findChatMessage (const string &messageId, Chat
 void ChatRoom::markAsRead () {
 	L_D();
 
-	bool globallyMarkAsReadInDb = true;
 	CorePrivate *dCore = getCore()->getPrivate();
-	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->chatRoomId)) {
-		// Do not send display notification for file transfer until it has been downloaded (it won't have a file transfer content anymore)
-		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
-			bool doNotStoreInDb = d->sendDisplayNotification(chatMessage);
-			// Force the state so it is stored directly in DB, but when the IMDN has successfully been delivered
-			chatMessage->getPrivate()->setState(ChatMessage::State::Displayed, doNotStoreInDb);
-			if (doNotStoreInDb)
-				globallyMarkAsReadInDb = false;
-		}
-	}
+	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->conferenceId))
+		chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
 
-	if (globallyMarkAsReadInDb)
-		dCore->mainDb->markChatMessagesAsRead(d->chatRoomId);
+	dCore->mainDb->markChatMessagesAsRead(d->conferenceId);
 }
 
 LINPHONE_END_NAMESPACE

@@ -26,7 +26,9 @@
 #include "linphone/enums/call-enums.h"
 #include "linphone/enums/chat-message-enums.h"
 #include "linphone/enums/chat-room-enums.h"
+#include "linphone/enums/encryption-engine-enums.h"
 #include "linphone/enums/event-log-enums.h"
+#include "linphone/enums/security-event-enums.h"
 #include "linphone/utils/enum-generator.h"
 
 // =============================================================================
@@ -210,8 +212,8 @@ typedef struct _LinphoneSearchResult LinphoneSearchResult;
 // -----------------------------------------------------------------------------
 
 /**
- * #LinphoneCallState enum represents the different state a call can reach into.
- * The application is notified of state changes through the LinphoneCoreVTable::call_state_changed callback.
+ * #LinphoneCallState enum represents the different states a call can reach into.
+ * The application is notified of a state change through the LinphoneCoreVTable::call_state_changed callback.
  * @ingroup call_control
  */
 L_DECLARE_C_ENUM(CallState, L_ENUM_VALUES_CALL_SESSION_STATE);
@@ -227,16 +229,23 @@ L_DECLARE_C_ENUM(CallState, L_ENUM_VALUES_CALL_SESSION_STATE);
 L_DECLARE_C_ENUM(ChatMessageDirection, L_ENUM_VALUES_CHAT_MESSAGE_DIRECTION);
 
 /**
- * #LinphoneChatMessageState is used to notify if messages have been succesfully delivered or not.
+ * #LinphoneChatMessageState is used to notify if messages have been successfully delivered or not.
  * @ingroup chatroom
  */
 L_DECLARE_C_ENUM(ChatMessageState, L_ENUM_VALUES_CHAT_MESSAGE_STATE);
 
 /**
- * #LinphoneChatRoomCapabilities is used to indicated the capabilities of a chat room.
+ * #LinphoneChatRoomCapabilities is used to indicate the capabilities of a chat room.
  * @ingroup chatroom
  */
 L_DECLARE_C_ENUM_FIXED_VALUES(ChatRoomCapabilities, L_ENUM_VALUES_CHAT_ROOM_CAPABILITIES);
+
+/**
+ * TODO move to encryption engine object when available
+ * #LinphoneChatRoomSecurityLevel is used to indicate the encryption security level of a chat room.
+ * @ingroup chatroom
+ */
+L_DECLARE_C_ENUM(ChatRoomSecurityLevel, L_ENUM_VALUES_ENCRYPTION_ENGINE_SECURITY_LEVEL);
 
 /**
  * #LinphoneChatRoomState is used to indicate the current state of a chat room.
@@ -253,6 +262,12 @@ L_DECLARE_C_ENUM(ChatRoomState, L_ENUM_VALUES_CHAT_ROOM_STATE);
  * @ingroup events
  */
 L_DECLARE_C_ENUM(EventLogType, L_ENUM_VALUES_EVENT_LOG_TYPE);
+
+/**
+ * #LinphoneSecurityEventType is used to indicate the type of security event.
+ * @ingroup events
+ */
+L_DECLARE_C_ENUM(SecurityEventType, L_ENUM_VALUES_SECURITY_EVENT_TYPE);
 
 #ifdef __cplusplus
 	}

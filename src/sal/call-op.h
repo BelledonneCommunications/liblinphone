@@ -100,7 +100,6 @@ private:
 	static std::vector<char> marshalMediaDescription (belle_sdp_session_description_t *sessionDesc, belle_sip_error_code &error);
 
 	// belle_sip_message handlers
-	static int setCustomBody (belle_sip_message_t *message, const Content &body);
 	static int setSdp (belle_sip_message_t *message, belle_sdp_session_description_t *sessionDesc);
 	static int setSdpFromDesc (belle_sip_message_t *message, const SalMediaDescription *desc);
 	static void processIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event);

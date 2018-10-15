@@ -88,7 +88,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files 
 %defattr(-,root,root)
-%doc AUTHORS ChangeLog COPYING NEWS README.md TODO
+%doc ChangeLog.md COPYING README.md
 %if @ENABLE_DAEMON@ || @ENABLE_CONSOLE_UI@ || @ENABLE_TOOLS@
 %{_bindir}/*
 %endif

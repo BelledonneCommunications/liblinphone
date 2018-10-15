@@ -24,9 +24,13 @@
 
 #include "private_structs.h"
 
+#include "chat/encryption/lime-legacy-encryption-engine.h"
+
 // =============================================================================
 
 using namespace std;
+
+using namespace LinphonePrivate;
 
 static void _linphone_core_constructor (LinphoneCore *lc);
 static void _linphone_core_destructor (LinphoneCore *lc);
@@ -44,4 +48,48 @@ static void _linphone_core_destructor (LinphoneCore *lc) {
 	if (lc->callsCache)
 		bctbx_list_free_with_data(lc->callsCache, (bctbx_list_free_func)linphone_call_unref);
 	_linphone_core_uninit(lc);
+}
+
+void linphone_core_set_im_encryption_engine (LinphoneCore *lc, LinphoneImEncryptionEngine *imee) {
+	auto core = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
+	core->setEncryptionEngine(new LimeLegacyEncryptionEngine(core));
+
+	if (lc->im_encryption_engine) {
+		linphone_im_encryption_engine_unref(lc->im_encryption_engine);
+		lc->im_encryption_engine = NULL;
+	}
+	if (imee) {
+		imee->lc = lc;
+		lc->im_encryption_engine = linphone_im_encryption_engine_ref(imee);
+	}
+}
+
+void linphone_core_enable_lime_x3dh (LinphoneCore *lc, bool_t enable) {
+// 	if (L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeX3dhAvailable()) {
+// 		cout << "LIMEv2 is available, enabling" << endl;
+// 	} else {
+// 		cout << "LIMEv2 is unavailable, not enabling" << endl;
+// 	}
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->enableLimeX3dh(enable);
+}
+
+void linphone_core_update_lime_x3dh (const LinphoneCore *lc) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->updateLimeX3dh();
+}
+
+bool_t linphone_core_lime_x3dh_enabled (const LinphoneCore *lc) {
+	bool isEnabled = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeX3dhEnabled();
+	return isEnabled?TRUE:FALSE;
+}
+
+bool_t linphone_core_lime_x3dh_available (const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeX3dhAvailable();
+}
+
+void linphone_core_delete_local_lime_x3dh_db (const LinphoneCore *lc) {
+	if (L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeX3dhEnabled()) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getEncryptionEngine()->cleanDb();
+	} else {
+		lWarning() << "Trying to clean local LIMEv2 databases but LIMEv2 is disabled";
+	}
 }

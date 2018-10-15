@@ -1304,8 +1304,7 @@ CallSession::State CallSession::getPreviousState () const {
 
 const Address& CallSession::getToAddress () const {
 	L_D();
-	d->toAddress = Address(d->op->getTo());
-	return d->toAddress;
+	return *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_to(d->log));
 }
 
 CallSession::State CallSession::getTransferState () const {

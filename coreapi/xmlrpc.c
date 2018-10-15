@@ -182,14 +182,31 @@ static void process_io_error_from_post_xml_rpc_request(void *data, const belle_s
 
 static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_sip_auth_event_t *event) {
 	LinphoneXmlRpcRequest *request = (LinphoneXmlRpcRequest *)data;
-	ms_error("Authentication error during XML-RPC request sending");
-	if (!linphone_xml_rpc_request_aborted(request)){
-		request->status = LinphoneXmlRpcStatusFailed;
-		if (request->callbacks->response != NULL) {
-			request->callbacks->response(request);
+	LinphoneAccountCreator *creator = (LinphoneAccountCreator *)linphone_xml_rpc_request_get_user_data(request);
+
+	LinphoneCore *lc = creator->core;
+
+	const char *realm = belle_sip_auth_event_get_realm(event);
+	const char *username = belle_sip_auth_event_get_username(event);
+	const char *domain = belle_sip_auth_event_get_domain(event);
+
+	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(lc, realm, username, domain);
+
+	if (auth_info) {
+		const char *auth_username = linphone_auth_info_get_username(auth_info);
+		const char *auth_password = linphone_auth_info_get_password(auth_info);
+		belle_sip_auth_event_set_username(event, auth_username);
+		belle_sip_auth_event_set_passwd(event, auth_password);
+	} else {
+		ms_error("Authentication error during XML-RPC request sending");
+		if (!linphone_xml_rpc_request_aborted(request)){
+			request->status = LinphoneXmlRpcStatusFailed;
+			if (request->callbacks->response != NULL) {
+				request->callbacks->response(request);
+			}
 		}
+		linphone_xml_rpc_request_unref(request);
 	}
-	linphone_xml_rpc_request_unref(request);
 }
 
 static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const char *response_body) {
@@ -405,7 +422,19 @@ void linphone_xml_rpc_session_send_request(LinphoneXmlRpcSession *session, Linph
 		process_io_error_from_post_xml_rpc_request(request, NULL);
 		return;
 	}
-	req = belle_http_request_create("POST", uri, belle_sip_header_content_type_create("text", "xml"), NULL);
+
+	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(session->core);
+	if (cfg) {
+		const char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
+		req = belle_http_request_create("POST", uri,
+			belle_sip_header_content_type_create("text", "xml"),
+			belle_http_header_create("From", addr),
+			NULL);
+	} else {
+		req = belle_http_request_create("POST", uri,
+			belle_sip_header_content_type_create("text", "xml"),
+			NULL);
+	}
 	if (!req) {
 		belle_sip_object_unref(uri);
 		process_io_error_from_post_xml_rpc_request(request, NULL);
@@ -418,6 +447,7 @@ void linphone_xml_rpc_session_send_request(LinphoneXmlRpcSession *session, Linph
 	cbs.process_io_error = process_io_error_from_post_xml_rpc_request;
 	cbs.process_auth_requested = process_auth_requested_from_post_xml_rpc_request;
 	l = belle_http_request_listener_create_from_callbacks(&cbs, request);
+
 	belle_http_provider_send_request(session->core->http_provider, req, l);
 	/*ensure that the listener object will be destroyed with the request*/
 	belle_sip_object_data_set(BELLE_SIP_OBJECT(request), "listener", l, belle_sip_object_unref);

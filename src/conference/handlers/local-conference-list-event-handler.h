@@ -23,7 +23,7 @@
 #include <memory>
 #include <list>
 
-#include "chat/chat-room/chat-room-id.h"
+#include "conference/conference-id.h"
 #include "core/core-accessor.h"
 #include "linphone/utils/general.h"
 
@@ -40,7 +40,7 @@ public:
 	void subscribeReceived (LinphoneEvent *lev, const LinphoneContent *body);
 	void addHandler (LocalConferenceEventHandler *handler);
 	void removeHandler (LocalConferenceEventHandler *handler);
-	LocalConferenceEventHandler *findHandler (const ChatRoomId &chatRoomId) const;
+	LocalConferenceEventHandler *findHandler (const ConferenceId &conferenceId) const;
 	const std::list<LocalConferenceEventHandler *> &getHandlers () const;
 
 	static void notifyResponseCb (const LinphoneEvent *ev);

@@ -188,6 +188,21 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 	if (messageIdHeader)
 		message->getPrivate()->setImdnMessageId(messageIdHeader->getValue());
 
+	// Discard message if sender authentication is enabled and failed
+	if (message->getPrivate()->senderAuthenticationEnabled) {
+		if (cpimFromAddress == message->getAuthenticatedFromAddress()) {
+			lInfo() << "[CPIM] Sender authentication successful";
+			cout << "[CPIM] Sender authentication successful" << endl;
+		} else {
+			lWarning() << "[CPIM] Sender authentication failed";
+			cout << "[CPIM] Sender authentication failed" << endl;
+			cout << "cpimFromAddress = " << cpimFromAddress.asString() << endl;
+			cout << "authFromAddress = " << message->getAuthenticatedFromAddress() << endl;
+			errorCode = 488;
+			return ChatMessageModifier::Result::Error;
+		}
+	}
+
 	// Modify the initial message since there was no error
 	message->setInternalContent(newContent);
 	if (cpimFromAddress.isValid())

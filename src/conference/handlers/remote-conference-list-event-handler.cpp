@@ -76,15 +76,15 @@ void RemoteConferenceListEventHandler::subscribe () {
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
 	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
 	for (const auto &handler : handlers) {
-		const ChatRoomId &chatRoomId = handler->getChatRoomId();
-		shared_ptr<AbstractChatRoom> cr = getCore()->findChatRoom(chatRoomId);
+		const ConferenceId &conferenceId = handler->getConferenceId();
+		shared_ptr<AbstractChatRoom> cr = getCore()->findChatRoom(conferenceId);
 		if (!cr)
 			continue;
 
 		if (cr->hasBeenLeft())
 			continue;
 
-		Address addr = chatRoomId.getPeerAddress();
+		Address addr = conferenceId.getPeerAddress();
 		addr.setUriParam("Last-Notify", Utils::toString(handler->getLastNotify()));
 		Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asStringUriOnly());
 		l.getEntry().push_back(entry);
@@ -142,7 +142,7 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 		unique_ptr<Xsd::ConferenceInfo::ConferenceType> confInfo = Xsd::ConferenceInfo::parseConferenceInfo(data, Xsd::XmlSchema::Flags::dont_validate);
 
 		IdentityAddress entityAddress(confInfo->getEntity().c_str());
-		ChatRoomId id(entityAddress, local);
+		ConferenceId id(entityAddress, local);
 		RemoteConferenceEventHandler *handler = findHandler(id);
 		if (!handler)
 			return;
@@ -171,7 +171,7 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 			continue;
 
 		IdentityAddress peer = it->second;
-		ChatRoomId id(peer, local);
+		ConferenceId id(peer, local);
 		RemoteConferenceEventHandler *handler = findHandler(id);
 		if (!handler)
 			continue;
@@ -185,9 +185,9 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 
 // -----------------------------------------------------------------------------
 
-RemoteConferenceEventHandler *RemoteConferenceListEventHandler::findHandler (const ChatRoomId &chatRoomId) const {
+RemoteConferenceEventHandler *RemoteConferenceListEventHandler::findHandler (const ConferenceId &conferenceId) const {
 	for (const auto &handler : handlers) {
-		if (handler->getChatRoomId() == chatRoomId)
+		if (handler->getConferenceId() == conferenceId)
 			return handler;
 	}
 

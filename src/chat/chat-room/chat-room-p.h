@@ -23,7 +23,7 @@
 #include <ctime>
 
 #include "abstract-chat-room-p.h"
-#include "chat-room-id.h"
+#include "conference/conference-id.h"
 #include "chat-room.h"
 #include "chat/notification/imdn.h"
 #include "chat/notification/is-composing.h"
@@ -47,7 +47,7 @@ public:
 		this->lastUpdateTime = lastUpdateTime;
 	}
 
-	void setState (ChatRoom::State state) override;
+	void setState (ChatRoom::State newState) override;
 
 	void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void sendIsComposingNotification ();
@@ -70,10 +70,10 @@ public:
 	std::shared_ptr<IsComposingMessage> createIsComposingMessage ();
 	std::list<std::shared_ptr<ChatMessage>> findChatMessages (const std::string &messageId) const;
 
-	void sendDeliveryErrorNotification (const std::shared_ptr<ChatMessage> &message, LinphoneReason reason);
-	void sendDeliveryNotification (const std::shared_ptr<ChatMessage> &message);
+	void sendDeliveryErrorNotification (const std::shared_ptr<ChatMessage> &chatMessage, LinphoneReason reason);
+	void sendDeliveryNotification (const std::shared_ptr<ChatMessage> &chatMessage);
 	void sendDeliveryNotifications () override;
-	bool sendDisplayNotification (const std::shared_ptr<ChatMessage> &message);
+	void sendDisplayNotification (const std::shared_ptr<ChatMessage> &chatMessage);
 
 	void notifyChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void notifyIsComposingReceived (const Address &remoteAddress, bool isComposing);
@@ -96,7 +96,7 @@ public:
 	std::list<std::shared_ptr<EventLog>> transientEvents;
 	std::list<std::shared_ptr<ChatMessage>> transientMessages;
 
-	ChatRoomId chatRoomId;
+	ConferenceId conferenceId;
 
 private:
 	AbstractChatRoom *proxyChatRoom = nullptr;
