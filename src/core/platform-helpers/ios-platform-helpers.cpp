@@ -59,7 +59,8 @@ public:
 private:
 	void bgTaskTimeout ();
 	static void sBgTaskTimeout (void *data);
-	static std::string directoryForResource (CFStringRef framework, CFStringRef resource);
+	static string getResourceDirPath (CFStringRef framework, CFStringRef resource);
+	static string getResourcePath (CFStringRef framework, CFStringRef resource);
 
 	long int mCpuLockTaskId;
 	int mCpuLockCount;
@@ -71,20 +72,20 @@ IosPlatformHelpers::IosPlatformHelpers (LinphoneCore *lc, void *system_context) 
 	mCpuLockCount = 0;
 	mCpuLockTaskId = 0;
 
-	string rootCaPath = directoryForResource(CFSTR("org.linphone.linphone"), CFSTR("rootca.pem"));
+	string rootCaPath = getResourcePath(CFSTR("org.linphone.linphone"), CFSTR("rootca.pem"));
 	if (!rootCaPath.empty())
 		linphone_core_set_root_ca(lc, rootCaPath.c_str());
 	else
 		lError() << "IosPlatformHelpers did not find rootca.pem resource";
 
-	string cpimPath = directoryForResource(CFSTR("org.linphone.linphone"), CFSTR("cpim_grammar"));
+	string cpimPath = getResourceDirPath(CFSTR("org.linphone.linphone"), CFSTR("cpim_grammar"));
 	if (!cpimPath.empty())
 		belr::GrammarLoader::get().addPath(cpimPath);
 	else
 		lError() << "IosPlatformHelpers did not find cpim grammar resource directory...";
 
 #ifdef VCARD_ENABLED
-	string vcardPath = directoryForResource(CFSTR("org.linphone.belcard"), CFSTR("vcard_grammar"));
+	string vcardPath = getResourceDirPath(CFSTR("org.linphone.belcard"), CFSTR("vcard_grammar"));
 	if (!vcardPath.empty())
 		belr::GrammarLoader::get().addPath(vcardPath);
 	else
@@ -133,7 +134,7 @@ void IosPlatformHelpers::releaseCpuLock () {
 	mCpuLockTaskId = 0;
 }
 
-string IosPlatformHelpers::directoryForResource (CFStringRef framework, CFStringRef resource) {
+string IosPlatformHelpers::getResourceDirPath (CFStringRef framework, CFStringRef resource) {
 	CFBundleRef bundle = CFBundleGetBundleWithIdentifier(framework);
 	CFURLRef resourceUrl = CFBundleCopyResourceURL(bundle, resource, nullptr, nullptr);
 	CFURLRef resourceUrlDirectory = CFURLCreateCopyDeletingLastPathComponent(nullptr, resourceUrl);
@@ -144,6 +145,12 @@ string IosPlatformHelpers::directoryForResource (CFStringRef framework, CFString
 	CFRelease(resourcePath);
 	CFRelease(resourceUrlDirectory);
 	return path;
+}
+
+string IosPlatformHelpers::getResourcePath (CFStringRef framework, CFStringRef resource) {
+	CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
+	string resourceFile(CFStringGetCStringPtr(resource, encodingMethod));
+	return getResourceDirPath(framework, resource) + "/" + resourceFile;
 }
 
 // -----------------------------------------------------------------------------
