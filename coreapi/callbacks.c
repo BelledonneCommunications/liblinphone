@@ -140,11 +140,16 @@ static void call_received(SalCallOp *h) {
 			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
 				ChatRoomId(IdentityAddress(h->getFrom()), IdentityAddress(h->getTo()))
 			);
-			if (!chatRoom) {
+			if (chatRoom && chatRoom->getCapabilities() & ChatRoom::Capabilities::Basic) {
+				lError() << "Invalid basic chat room found. It should have been a ClientGroupChatRoom... Recreating it...";
+				chatRoom->deleteFromDb();
+				chatRoom.reset();
+			}
+			if (!chatRoom)
 				chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom(
 					h->getSubject(), h->getRemoteContact(), h->getRemoteBody(), false
 				);
-			}
+
 			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
 				L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->addOneToOneCapability();
