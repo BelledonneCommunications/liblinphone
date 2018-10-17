@@ -480,6 +480,8 @@ void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event
 								lError() << "This call has been already terminated";
 								return;
 							}
+							// Ref the ack request so that it is not destroyed when the call_ack_being_sent callbacks is called
+							belle_sip_object_ref(ack);
 							if (op->mSdpAnswer) {
 								setSdp(BELLE_SIP_MESSAGE(ack), op->mSdpAnswer);
 								belle_sip_object_unref(op->mSdpAnswer);
@@ -489,6 +491,7 @@ void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event
 							op->mRoot->mCallbacks.call_accepted(op); // INVITE
 							op->mRoot->mCallbacks.call_ack_being_sent(op, reinterpret_cast<SalCustomHeader *>(ack));
 							belle_sip_dialog_send_ack(op->mDialog, ack);
+							belle_sip_object_unref(ack);
 							op->mState = State::Active;
 						} else if (code >= 300) {
 							op->setError(response, false);
