@@ -33,7 +33,7 @@ This library is used by Linphone. It's source code is available at *linphone-des
 ## Build instructions
 
 	cmake . -DCMAKE_INSTALL_PREFIX=<prefix> -DCMAKE_PREFIX_PATH=<search_prefixes>
-	
+
 	make
 	make install
 
@@ -48,7 +48,6 @@ This library is used by Linphone. It's source code is available at *linphone-des
 * **`ENABLE_DOC=YES`**                : Make the reference documentation of liblinphone to generated
 * **`ENABLE_UNIT_TESTS=NO`**          : do not build testing binaries
 * **`ENABLE_VCARD=NO`**               : disable VCard support
-* **`ENABLE_SQLITE_STORAGE=NO`**      : disable SQlite user data storage (message, history, contacts list)
 * **`ENABLE_TOOLS=NO`**               : do not build tool binaries
 * **`ENABLE_LIME=YES`**               : disable Linphone Instant Messaging Encryption
 

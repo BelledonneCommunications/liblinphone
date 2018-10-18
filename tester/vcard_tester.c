@@ -203,7 +203,6 @@ static void linphone_vcard_phone_numbers_and_sip_addresses(void) {
 	linphone_core_manager_destroy(manager);
 }
 
-#ifdef SQLITE_STORAGE_ENABLED
 static void friends_if_no_db_set(void) {
 	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
 	LinphoneFriend *lf = linphone_core_create_friend(manager->lc);
@@ -510,8 +509,6 @@ static void friends_sqlite_find_friend_in_lot_of_friends(void) {
 	sqlite3_close(db);
 	linphone_core_unref(lc);
 }
-
-#endif
 
 typedef struct _LinphoneCardDAVStats {
 	int sync_done_count;
@@ -1022,12 +1019,10 @@ test_t vcard_tests[] = {
 	TEST_NO_TAG("Import a lot of friends from vCards", linphone_vcard_import_a_lot_of_friends_test),
 	TEST_NO_TAG("vCard creation for existing friends", linphone_vcard_update_existing_friends_test),
 	TEST_NO_TAG("vCard phone numbers and SIP addresses", linphone_vcard_phone_numbers_and_sip_addresses),
-#ifdef SQLITE_STORAGE_ENABLED
 	TEST_NO_TAG("Friends working if no db set", friends_if_no_db_set),
 	TEST_NO_TAG("Friends storage in sqlite database", friends_sqlite_storage),
 	TEST_NO_TAG("20000 Friends storage in sqlite database", friends_sqlite_store_lot_of_friends),
 	TEST_NO_TAG("Find friend in database of 20000 objects", friends_sqlite_find_friend_in_lot_of_friends),
-#endif
 	TEST_NO_TAG("CardDAV clean", carddav_clean), // This is to ensure the content of the test addressbook is in the correct state for the following tests
 	TEST_NO_TAG("CardDAV synchronization", carddav_sync),
 	TEST_NO_TAG("CardDAV synchronization 2", carddav_sync_2),
@@ -1040,7 +1035,6 @@ test_t vcard_tests[] = {
 	TEST_NO_TAG("create a map and insert 20000 objects", insert_lot_of_friends_map_test),
 	TEST_NO_TAG("Find ref key in 20000 objects map", find_friend_by_ref_key_in_lot_of_friends_test),
 	TEST_NO_TAG("Find friend by ref key in empty list", find_friend_by_ref_key_empty_list_test)
-
 };
 
 test_suite_t vcard_test_suite = {
