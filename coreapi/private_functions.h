@@ -253,8 +253,6 @@ LINPHONE_PUBLIC bool_t _linphone_call_stats_rtcp_received_via_mux (const Linphon
 bool_t linphone_core_media_description_contains_video_stream(const SalMediaDescription *md);
 
 void linphone_core_send_initial_subscribes(LinphoneCore *lc);
-void linphone_core_write_friends_config(LinphoneCore* lc);
-void linphone_friend_write_to_config_file(LinphoneConfig *config, LinphoneFriend *lf, int index);
 LinphoneFriend * linphone_friend_new_from_config_file(struct _LinphoneCore *lc, int index);
 
 void linphone_proxy_config_update(LinphoneProxyConfig *cfg);
@@ -390,9 +388,7 @@ LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpCon
 int linphone_upnp_init(LinphoneCore *lc);
 void linphone_upnp_destroy(LinphoneCore *lc);
 
-#ifdef SQLITE_STORAGE_ENABLED
 int _linphone_sqlite3_open(const char *db_file, sqlite3 **db);
-#endif
 
 LinphoneChatMessageStateChangedCb linphone_chat_message_get_message_state_changed_cb(LinphoneChatMessage* msg);
 void linphone_chat_message_set_message_state_changed_cb(LinphoneChatMessage* msg, LinphoneChatMessageStateChangedCb cb);

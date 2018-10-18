@@ -49,15 +49,15 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 	char* to=linphone_address_as_string(linphone_call_log_get_to(calllog));
 	char* from=linphone_address_as_string(linphone_call_log_get_from(calllog));
 	stats* counters;
-	
-	
+
+
 	const LinphoneAddress *to_addr = linphone_call_get_to_address(call);
 	const LinphoneAddress *remote_addr = linphone_call_get_remote_address(call);
 	//const LinphoneAddress *from_addr = linphone_call_get_from_address(call);
 	BC_ASSERT_PTR_NOT_NULL(to_addr);
 	//BC_ASSERT_PTR_NOT_NULL(from_addr);
 	BC_ASSERT_PTR_NOT_NULL(remote_addr);
-	
+
 	ms_message(" %s call from [%s] to [%s], new state is [%s]"	,linphone_call_log_get_dir(calllog)==LinphoneCallIncoming?"Incoming":"Outgoing"
 																,from
 																,to
@@ -3787,7 +3787,7 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 		linphone_core_add_callbacks(marie->lc, cbs);
 		belle_sip_object_unref(cbs);
 	}
-	
+
 	formats = linphone_core_get_supported_file_formats(marie->lc);
 
 	for(i=0, format = formats[0]; format != NULL; i++, format = formats[i]) {
@@ -5629,9 +5629,6 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
-
-#ifdef SQLITE_STORAGE_ENABLED
-
 static void call_logs_if_no_db_set(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* laure = linphone_core_manager_new("laure_call_logs_rc");
@@ -5802,9 +5799,6 @@ static void call_logs_sqlite_storage(void) {
 	unlink(logs_db);
 	ms_free(logs_db);
 }
-
-#endif
-
 
 static void call_with_http_proxy(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
@@ -6307,9 +6301,8 @@ static void call_with_network_reachable_down_in_callback(void){
 }
 
 static void recreate_zrtpdb_when_corrupted(void) {
-#ifdef SQLITE_STORAGE_ENABLED
-		LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-		LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
 
 	if (BC_ASSERT_TRUE(linphone_core_media_encryption_supported(marie->lc,LinphoneMediaEncryptionZRTP))) {
 		void *db;
@@ -6392,7 +6385,6 @@ static void recreate_zrtpdb_when_corrupted(void) {
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-#endif /* SQLITE_STORAGE_ENABLED */
 }
 
 static void simple_call_with_gruu(void) {
@@ -6639,11 +6631,9 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call with RTP IO mode", call_with_rtp_io_mode),
 	TEST_NO_TAG("Call with generic NACK RTCP feedback", call_with_generic_nack_rtcp_feedback),
 	TEST_NO_TAG("Call with complex late offering", call_with_complex_late_offering),
-#ifdef SQLITE_STORAGE_ENABLED
 	TEST_NO_TAG("Call log working if no db set", call_logs_if_no_db_set),
 	TEST_NO_TAG("Call log storage migration from rc to db", call_logs_migrate),
 	TEST_NO_TAG("Call log storage in sqlite database", call_logs_sqlite_storage),
-#endif
 	TEST_NO_TAG("Call with custom RTP Modifier", call_with_custom_rtp_modifier),
 	TEST_NO_TAG("Call paused resumed with custom RTP Modifier", call_paused_resumed_with_custom_rtp_modifier),
 	TEST_NO_TAG("Call record with custom RTP Modifier", call_record_with_custom_rtp_modifier),
