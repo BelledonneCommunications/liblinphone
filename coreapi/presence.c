@@ -1282,10 +1282,11 @@ static int process_pidf_xml_presence_services(xmlparsing_context_t *xml_ctx, Lin
 			}
 
 			snprintf(xpath_str, sizeof(xpath_str), "%s[%i]/pidf:status/pidfonline:online", service_prefix, i);
-			if ((pidfonline_object = linphone_get_xml_xpath_object_for_node_list(xml_ctx, xpath_str)) != NULL
-				&& pidfonline_object->nodesetval
-				&& pidfonline_object->nodesetval->nodeNr >0) {
-				model->is_online = TRUE;
+			pidfonline_object = linphone_get_xml_xpath_object_for_node_list(xml_ctx, xpath_str);
+			if (pidfonline_object) {
+				if (pidfonline_object->nodesetval && pidfonline_object->nodesetval->nodeNr > 0)
+					model->is_online = TRUE;
+				xmlXPathFreeObject(pidfonline_object);
 			}
 
 			snprintf(xpath_str, sizeof(xpath_str), "%s[%i]/pidf:timestamp", service_prefix, i);
