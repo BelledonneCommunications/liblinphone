@@ -932,12 +932,11 @@ void linphone_core_report_call_log(LinphoneCore *lc, LinphoneCallLog *call_log){
 		return;
 	// End of workaround
 
-#ifdef SQLITE_STORAGE_ENABLED
 	if (lc->logs_db) {
 		call_logs_sqlite_db_found = TRUE;
 		linphone_core_store_call_log(lc, call_log);
 	}
-#endif
+
 	if (!call_logs_sqlite_db_found) {
 		lc->call_logs=bctbx_list_prepend(lc->call_logs,linphone_call_log_ref(call_log));
 		if (bctbx_list_size(lc->call_logs)>(size_t)lc->max_call_logs){

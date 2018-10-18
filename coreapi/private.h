@@ -113,10 +113,7 @@
 #endif
 
 
-#ifdef SQLITE_STORAGE_ENABLED
 #include <sqlite3.h>
-#endif
-
 
 #include "private_structs.h"
 #include "private_functions.h"
@@ -141,11 +138,7 @@
 
 #define LINPHONE_MAX_CALL_HISTORY_UNLIMITED (-1)
 #ifndef LINPHONE_MAX_CALL_HISTORY_SIZE
-	#ifdef SQLITE_STORAGE_ENABLED
-		#define LINPHONE_MAX_CALL_HISTORY_SIZE LINPHONE_MAX_CALL_HISTORY_UNLIMITED
-	#else
-		#define LINPHONE_MAX_CALL_HISTORY_SIZE 30
-	#endif
+	#define LINPHONE_MAX_CALL_HISTORY_SIZE LINPHONE_MAX_CALL_HISTORY_UNLIMITED
 #endif
 
 #define LINPHONE_SQLITE3_VFS "sqlite3bctbx_vfs"

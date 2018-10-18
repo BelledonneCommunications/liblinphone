@@ -17,7 +17,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifdef SQLITE_STORAGE_ENABLED
 #include "private.h"
 
 #include "bctoolbox/charconv.h"
@@ -408,5 +407,3 @@ void sqlite3_bctbx_vfs_unregister(void)
 	sqlite3_vfs* pVfs = sqlite3_vfs_find(LINPHONE_SQLITE3_VFS);
 	sqlite3_vfs_unregister(pVfs);
 }
-
-#endif /*SQLITE_STORAGE_ENABLED*/

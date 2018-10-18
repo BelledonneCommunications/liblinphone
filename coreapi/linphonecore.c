@@ -32,9 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "conference_private.h"
 #include "logger/logger.h"
 
-#ifdef SQLITE_STORAGE_ENABLED
 #include "sqlite3_bctbx_vfs.h"
-#endif
 
 #include <math.h>
 #include <sys/types.h>
@@ -1868,33 +1866,14 @@ static void read_friends_from_rc(LinphoneCore *lc)
 	}
 }
 
-static void ui_config_read(LinphoneCore *lc)
-{
-#ifndef SQLITE_STORAGE_ENABLED
-	read_friends_from_rc(lc);
-	lc->call_logs = call_logs_read_from_config_file(lc);
-#else
+static void ui_config_read(LinphoneCore *lc) {
 	if (!lc->friends_db) {
 		read_friends_from_rc(lc);
 	}
 	if (!lc->logs_db) {
 		lc->call_logs = linphone_core_read_call_logs_from_config_file(lc);
 	}
-#endif
 }
-
-/*
-static void autoreplier_config_init(LinphoneCore *lc)
-{
-	autoreplier_config_t *config=&lc->autoreplier_conf;
-	config->enabled=lp_config_get_int(lc->config,"autoreplier","enabled",0);
-	config->after_seconds=lp_config_get_int(lc->config,"autoreplier","after_seconds",6);
-	config->max_users=lp_config_get_int(lc->config,"autoreplier","max_users",1);
-	config->max_rec_time=lp_config_get_int(lc->config,"autoreplier","max_rec_time",60);
-	config->max_rec_msg=lp_config_get_int(lc->config,"autoreplier","max_rec_msg",10);
-	config->message=lp_config_get_string(lc->config,"autoreplier","message",NULL);
-}
-*/
 
 bool_t linphone_core_tunnel_available(void){
 #ifdef TUNNEL_ENABLED
@@ -2408,9 +2387,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	lc->ringtoneplayer = linphone_ringtoneplayer_new();
 
-#ifdef SQLITE_STORAGE_ENABLED
 	sqlite3_bctbx_vfs_register(0);
-#endif
 
 	lc->qrcode_rect.h = 0;
 	lc->qrcode_rect.w = 0;
@@ -2771,9 +2748,7 @@ LinphoneFriendList *linphone_core_get_friend_list_by_name(const LinphoneCore *lc
 void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
 	bctbx_list_t *elem = bctbx_list_find(lc->friends_lists, list);
 	if (elem == NULL) return;
-#ifdef SQLITE_STORAGE_ENABLED
 	linphone_core_remove_friends_list_from_db(lc, list);
-#endif
 	linphone_core_notify_friend_list_removed(lc, list);
 	list->lc = NULL;
 	linphone_friend_list_unref(list);
@@ -2785,9 +2760,7 @@ void linphone_core_add_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
 		list->lc = lc;
 	}
 	lc->friends_lists = bctbx_list_append(lc->friends_lists, linphone_friend_list_ref(list));
-#ifdef SQLITE_STORAGE_ENABLED
 	linphone_core_store_friends_list_in_db(lc, list);
-#endif
 	linphone_core_notify_friend_list_created(lc, list);
 }
 
@@ -4821,23 +4794,19 @@ const char * linphone_core_get_call_logs_database_path(LinphoneCore *lc) {
 }
 
 const bctbx_list_t* linphone_core_get_call_logs(LinphoneCore *lc) {
-#ifdef SQLITE_STORAGE_ENABLED
 	if (lc->logs_db) {
 		linphone_core_get_call_history(lc);
 	}
-#endif
 	return lc->call_logs;
 }
 
 void linphone_core_clear_call_logs(LinphoneCore *lc) {
 	bool_t call_logs_sqlite_db_found = FALSE;
 	lc->missed_calls=0;
-#ifdef SQLITE_STORAGE_ENABLED
 	if (lc->logs_db) {
 		call_logs_sqlite_db_found = TRUE;
 		linphone_core_delete_call_history(lc);
 	}
-#endif
 	if (!call_logs_sqlite_db_found) {
 		bctbx_list_for_each(lc->call_logs, (void (*)(void*))linphone_call_log_unref);
 		lc->call_logs = bctbx_list_free(lc->call_logs);
@@ -4855,12 +4824,10 @@ void linphone_core_reset_missed_calls_count(LinphoneCore *lc) {
 
 void linphone_core_remove_call_log(LinphoneCore *lc, LinphoneCallLog *cl) {
 	bool_t call_logs_sqlite_db_found = FALSE;
-#ifdef SQLITE_STORAGE_ENABLED
 	if (lc->logs_db) {
 		call_logs_sqlite_db_found = TRUE;
 		linphone_core_delete_call_log(lc, cl);
 	}
-#endif
 	lc->call_logs = bctbx_list_remove(lc->call_logs, cl);
 	if (!call_logs_sqlite_db_found) {
 		call_logs_write_to_config_file(lc);
@@ -4874,10 +4841,6 @@ void linphone_core_migrate_logs_from_rc_to_db(LinphoneCore *lc) {
 	size_t original_logs_count, migrated_logs_count;
 	int i;
 
-#ifndef SQLITE_STORAGE_ENABLED
-	ms_warning("linphone has been compiled without sqlite, can't migrate call logs");
-	return;
-#endif
 	if (!lc) {
 		return;
 	}
@@ -6613,8 +6576,6 @@ void linphone_core_remove_iterate_hook(LinphoneCore *lc, LinphoneCoreIterateHook
 // TODO: Remove me later, code found in message_storage.c.
 // =============================================================================
 
-#ifdef SQLITE_STORAGE_ENABLED
-
 int _linphone_sqlite3_open(const char *db_file, sqlite3 **db) {
 	char* errmsg = NULL;
 	int ret;
@@ -6644,8 +6605,6 @@ int _linphone_sqlite3_open(const char *db_file, sqlite3 **db) {
 
 	return ret;
 }
-
-#endif
 
 // =============================================================================
 
@@ -6729,25 +6688,18 @@ const char *linphone_core_get_zrtp_secrets_file(LinphoneCore *lc){
 }
 
 void *linphone_core_get_zrtp_cache_db(LinphoneCore *lc){
-#ifdef SQLITE_STORAGE_ENABLED
 	return (void *)lc->zrtp_cache_db;
-#else /* SQLITE_STORAGE_ENABLED */
-	return NULL;
-#endif /* SQLITE_STORAGE_ENABLED */
 }
 
 static void linphone_core_zrtp_cache_close(LinphoneCore *lc) {
-#ifdef SQLITE_STORAGE_ENABLED
 	if (lc->zrtp_cache_db) {
 		sqlite3_close(lc->zrtp_cache_db);
 		lc->zrtp_cache_db = NULL;
 	}
-#endif /* SQLITE_STORAGE_ENABLED */
 }
 
 
 void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName) {
-#ifdef SQLITE_STORAGE_ENABLED
 	int ret;
 	const char *errmsg;
 	const char *backupExtension = "_backup";
@@ -6786,7 +6738,6 @@ void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName) {
 	lc->zrtp_cache_db = db;
 end:
 	if (backupName) bctbx_free(backupName);
-#endif /* SQLITE_STORAGE_ENABLED */
 }
 
 void linphone_core_set_user_certificates_path (LinphoneCore *lc, const char *path) {
@@ -7509,14 +7460,14 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 			if (strcmp(tag, "win32") == 0) platform = "windows";
 			else if (strcmp(tag, "apple") == 0) platform = "macosx";
 			else if (strcmp(tag, "linux") == 0) platform = "linux";
-	    else if (strcmp(tag, "ios") == 0) mobilePlatform = "ios";
-	    else if (strcmp(tag, "android") == 0) mobilePlatform = "android";
+			else if (strcmp(tag, "ios") == 0) mobilePlatform = "ios";
+			else if (strcmp(tag, "android") == 0) mobilePlatform = "android";
 			else if (strcmp(tag, "desktop") == 0) is_desktop = TRUE;
 		}
-		  if (!is_desktop) {
-		    platform = mobilePlatform;
-		  }
-		  if (platform == NULL) {
+		if (!is_desktop) {
+			platform = mobilePlatform;
+		}
+		if (platform == NULL) {
 			ms_warning("Update checking is not supported on this platform");
 			return;
 		}
