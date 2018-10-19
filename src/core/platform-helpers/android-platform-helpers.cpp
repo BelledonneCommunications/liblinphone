@@ -48,6 +48,9 @@ public:
 	void setVideoWindow (void *window_id) override;
 	void setVideoPreviewWindow (void *window_id) override;
 
+	void _setPreviewVideoWindow(jobject window);
+	void _setVideoWindow(jobject window);
+
 private:
 	int callVoidMethod (jmethodID id);
 	static jmethodID getMethodId (JNIEnv *env, jclass klass, const char *method, const char *signature);
@@ -65,7 +68,9 @@ private:
 	jmethodID mGetConfigPathId;
 	jmethodID mGetNativeLibraryDirId;
 	jmethodID mSetNativeVideoWindowId;
-	jmethodID mSetnativePreviewVideoWindowId;
+	jmethodID mSetNativePreviewVideoWindowId;
+	jobject mPreviewVideoWindow;
+	jobject mVideoWindow;
 };
 
 static const char *GetStringUTFChars (JNIEnv *env, jstring string) {
@@ -110,7 +115,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 	mGetConfigPathId = getMethodId(env, klass, "getConfigPath", "()Ljava/lang/String;");
 	mGetNativeLibraryDirId = getMethodId(env, klass, "getNativeLibraryDir", "()Ljava/lang/String;");
 	mSetNativeVideoWindowId = getMethodId(env, klass, "setVideoRenderingView", "(Ljava/lang/Object;)V");
-	mSetnativePreviewVideoWindowId = getMethodId(env, klass, "setVideoPreviewView", "(Ljava/lang/Object;)V");
+	mSetNativePreviewVideoWindowId = getMethodId(env, klass, "setVideoPreviewView", "(Ljava/lang/Object;)V");
 
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
 	belle_sip_wake_lock_init(env, pm);
@@ -118,6 +123,9 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 	linphone_factory_set_top_resources_dir(linphone_factory_get() , getDataPath().append("share").c_str());
 	linphone_factory_set_msplugins_dir(linphone_factory_get(), getNativeLibraryDir().c_str());
 	lInfo() << "AndroidPlatformHelpers is fully initialised.";
+
+	mPreviewVideoWindow = nullptr;
+	mVideoWindow = nullptr;
 }
 
 AndroidPlatformHelpers::~AndroidPlatformHelpers () {
@@ -232,27 +240,75 @@ int AndroidPlatformHelpers::callVoidMethod (jmethodID id) {
 }
 
 void AndroidPlatformHelpers::setVideoPreviewWindow (void *window_id) {
-	callVoidMethod(mSetnativePreviewVideoWindowId, (jobject)window_id);
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		if (window_id) {
+			env->CallVoidMethod(mJavaHelper, mSetNativePreviewVideoWindowId, (jobject)window_id);
+			if (env->ExceptionCheck()) {
+				env->ExceptionClear();
+			}
+		} else {
+			_setPreviewVideoWindow((jobject)window_id);
+		}
+	}
 }
 
 void AndroidPlatformHelpers::setVideoWindow (void *window_id) {
-	callVoidMethod(mSetNativeVideoWindowId, (jobject)window_id);
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		if (window_id) {
+			env->CallVoidMethod(mJavaHelper, mSetNativeVideoWindowId, (jobject)window_id);
+			if (env->ExceptionCheck()) {
+				env->ExceptionClear();
+			}
+		} else {
+			_setVideoWindow((jobject)window_id);
+		}
+	}
+}
+
+void AndroidPlatformHelpers::_setPreviewVideoWindow(jobject window) {
+	JNIEnv *env = ms_get_jni_env();
+	LinphoneCore *lc = getCore();
+	if (window != nullptr && window != mPreviewVideoWindow) {
+		if (mPreviewVideoWindow != nullptr) {
+			env->DeleteGlobalRef(mPreviewVideoWindow);
+		}
+		mPreviewVideoWindow = env->NewGlobalRef(window);
+	} else if (window == nullptr && mPreviewVideoWindow != nullptr) {
+		env->DeleteGlobalRef(mPreviewVideoWindow);
+		mPreviewVideoWindow = nullptr;
+	}
+	_linphone_core_set_native_preview_window_id(lc, (void *)mPreviewVideoWindow);
+}
+
+void AndroidPlatformHelpers::_setVideoWindow(jobject window) {
+	JNIEnv *env = ms_get_jni_env();
+	LinphoneCore *lc = getCore();
+	if (window != nullptr && window != mVideoWindow) {
+		if (mVideoWindow != nullptr) {
+			env->DeleteGlobalRef(mVideoWindow);
+		}
+		mVideoWindow = env->NewGlobalRef(window);
+	} else if (window == nullptr && mVideoWindow != nullptr) {
+		env->DeleteGlobalRef(mVideoWindow);
+		mVideoWindow = nullptr;
+	}
+	_linphone_core_set_native_video_window_id(lc, (void *)mVideoWindow);
 }
 
 PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext) {
 	return new AndroidPlatformHelpers(lc, systemContext);
 }
 
-JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativePreviewWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
-	AndroidPlatformHelpers *thiz = (AndroidPlatformHelpers *)ptr;
-	LinphoneCore *lc = thiz->getCore();
-	_linphone_core_set_native_video_window_id(lc, (void *)id);
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativePreviewWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
+	AndroidPlatformHelpers *androidPlatformHelper = (AndroidPlatformHelpers *)ptr;
+	androidPlatformHelper->_setPreviewVideoWindow(id);
 }
 
-JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
-	AndroidPlatformHelpers *thiz = (AndroidPlatformHelpers *)ptr;
-	LinphoneCore *lc = thiz->getCore();
-	_linphone_core_set_native_preview_window_id(lc, (void *)id);
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
+	AndroidPlatformHelpers *androidPlatformHelper = (AndroidPlatformHelpers *)ptr;
+	androidPlatformHelper->_setVideoWindow(id);
 }
 
 LINPHONE_END_NAMESPACE
