@@ -3315,13 +3315,6 @@ LINPHONE_PUBLIC void linphone_core_set_call_logs_database_path(LinphoneCore *lc,
 LINPHONE_PUBLIC const char * linphone_core_get_call_logs_database_path(LinphoneCore *lc);
 
 /**
- * Migrates the call logs from the linphonerc to the database if not done yet
- * @ingroup initializing
- * @param lc the linphone core
-**/
-LINPHONE_PUBLIC void linphone_core_migrate_logs_from_rc_to_db(LinphoneCore *lc);
-
-/**
  * @}
 **/
 

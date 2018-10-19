@@ -253,7 +253,6 @@ LINPHONE_PUBLIC bool_t _linphone_call_stats_rtcp_received_via_mux (const Linphon
 bool_t linphone_core_media_description_contains_video_stream(const SalMediaDescription *md);
 
 void linphone_core_send_initial_subscribes(LinphoneCore *lc);
-LinphoneFriend * linphone_friend_new_from_config_file(struct _LinphoneCore *lc, int index);
 
 void linphone_proxy_config_update(LinphoneProxyConfig *cfg);
 LinphoneProxyConfig * linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri);
@@ -370,7 +369,6 @@ LINPHONE_PUBLIC unsigned int linphone_core_get_audio_features(LinphoneCore *lc);
 
 void _linphone_core_codec_config_write(LinphoneCore *lc);
 
-LINPHONE_PUBLIC bctbx_list_t * linphone_core_read_call_logs_from_config_file(LinphoneCore *lc);
 void call_logs_write_to_config_file(LinphoneCore *lc);
 void linphone_core_call_log_storage_init(LinphoneCore *lc);
 void linphone_core_call_log_storage_close(LinphoneCore *lc);

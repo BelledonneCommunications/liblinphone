@@ -5636,82 +5636,6 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_logs_if_no_db_set(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new("laure_call_logs_rc");
-	BC_ASSERT_TRUE(bctbx_list_size(linphone_core_get_call_logs(laure->lc)) == 10);
-
-	BC_ASSERT_TRUE(call(marie, laure));
-	wait_for_until(marie->lc, laure->lc, NULL, 5, 1000);
-	end_call(marie, laure);
-
-	BC_ASSERT_TRUE(bctbx_list_size(linphone_core_get_call_logs(laure->lc)) == 11);
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(laure);
-}
-
-static void call_logs_migrate(void) {
-	LinphoneCoreManager* laure = linphone_core_manager_new("laure_call_logs_rc");
-	char *logs_db = bc_tester_file("call_logs.db");
-	size_t i = 0;
-	int incoming_count = 0, outgoing_count = 0, missed_count = 0, aborted_count = 0, decline_count = 0, video_enabled_count = 0;
-	bctbx_list_t **call_logs_attr = NULL;
-
-	unlink(logs_db);
-	BC_ASSERT_TRUE(bctbx_list_size(linphone_core_get_call_logs(laure->lc)) == 10);
-
-	linphone_core_set_call_logs_database_path(laure->lc, logs_db);
-	BC_ASSERT_TRUE(linphone_core_get_call_history_size(laure->lc) == 10);
-
-	for (; i < bctbx_list_size(linphone_core_get_call_logs(laure->lc)); i++) {
-		LinphoneCallLog *log = bctbx_list_nth_data(linphone_core_get_call_logs(laure->lc), (int)i);
-		LinphoneCallStatus state = linphone_call_log_get_status(log);
-		LinphoneCallDir direction = linphone_call_log_get_dir(log);
-
-		if (state == LinphoneCallAborted) {
-			aborted_count += 1;
-		} else if (state == LinphoneCallMissed) {
-			missed_count += 1;
-		} else if (state == LinphoneCallDeclined) {
-			decline_count += 1;
-		}
-
-		if (direction == LinphoneCallOutgoing) {
-			outgoing_count += 1;
-		} else {
-			incoming_count += 1;
-		}
-
-		if (linphone_call_log_video_enabled(log)) {
-			video_enabled_count += 1;
-		}
-	}
-	BC_ASSERT_TRUE(incoming_count == 5);
-	BC_ASSERT_TRUE(outgoing_count == 5);
-	BC_ASSERT_TRUE(missed_count == 1);
-	BC_ASSERT_TRUE(aborted_count == 3);
-	BC_ASSERT_TRUE(decline_count == 2);
-	BC_ASSERT_TRUE(video_enabled_count == 3);
-
-	{
-		LinphoneCallLog *log = linphone_core_get_last_outgoing_call_log(laure->lc);
-		BC_ASSERT_PTR_NOT_NULL(log);
-		if (log) {
-			BC_ASSERT_EQUAL((int)linphone_call_log_get_start_date(log), 1441738272, int, "%d");
-			linphone_call_log_unref(log);
-			log = NULL;
-		}
-	}
-
-	call_logs_attr = linphone_core_get_call_logs_attribute(laure->lc);
-	*call_logs_attr = bctbx_list_free_with_data(*call_logs_attr, (void (*)(void*))linphone_call_log_unref);
-	*call_logs_attr = linphone_core_read_call_logs_from_config_file(laure->lc);
-
-	unlink(logs_db);
-	ms_free(logs_db);
-	linphone_core_manager_destroy(laure);
-}
-
 static void call_logs_sqlite_storage(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -6639,8 +6563,6 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call with RTP IO mode", call_with_rtp_io_mode),
 	TEST_NO_TAG("Call with generic NACK RTCP feedback", call_with_generic_nack_rtcp_feedback),
 	TEST_NO_TAG("Call with complex late offering", call_with_complex_late_offering),
-	TEST_NO_TAG("Call log working if no db set", call_logs_if_no_db_set),
-	TEST_NO_TAG("Call log storage migration from rc to db", call_logs_migrate),
 	TEST_NO_TAG("Call log storage in sqlite database", call_logs_sqlite_storage),
 	TEST_NO_TAG("Call with custom RTP Modifier", call_with_custom_rtp_modifier),
 	TEST_NO_TAG("Call paused resumed with custom RTP Modifier", call_paused_resumed_with_custom_rtp_modifier),

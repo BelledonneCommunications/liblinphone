@@ -50,16 +50,6 @@ static size_t my_strftime(char *s, size_t max, const char  *fmt,  const struct t
 	return strftime(s, max, fmt, tm);
 }
 
-static time_t string_to_time(const char *date){
-#ifndef _WIN32
-	struct tm tmtime={0};
-	strptime(date,"%c",&tmtime);
-	return mktime(&tmtime);
-#else
-	return 0;
-#endif
-}
-
 static void set_call_log_date(LinphoneCallLog *cl, time_t start_time){
 	struct tm loctime;
 #ifdef _WIN32
@@ -114,54 +104,6 @@ void call_logs_write_to_config_file(LinphoneCore *lc){
 		lp_config_clean_section(cfg,logsection);
 	}
 }
-
-bctbx_list_t * linphone_core_read_call_logs_from_config_file(LinphoneCore *lc){
-	char logsection[32];
-	int i;
-	const char *tmp;
-	uint64_t sec;
-	LpConfig *cfg=lc->config;
-	bctbx_list_t *call_logs = NULL;
-
-	for(i=0;;++i){
-		snprintf(logsection,sizeof(logsection),"call_log_%i",i);
-		if (lp_config_has_section(cfg,logsection)){
-			LinphoneCallLog *cl;
-			LinphoneAddress *from=NULL,*to=NULL;
-			tmp=lp_config_get_string(cfg,logsection,"from",NULL);
-			if (tmp) from=linphone_address_new(tmp);
-			tmp=lp_config_get_string(cfg,logsection,"to",NULL);
-			if (tmp) to=linphone_address_new(tmp);
-			if (!from || !to)
-				continue;
-			cl=linphone_call_log_new(static_cast<LinphoneCallDir>(lp_config_get_int(cfg,logsection,"dir",0)),from,to);
-			cl->status=static_cast<LinphoneCallStatus>(lp_config_get_int(cfg,logsection,"status",0));
-			sec=(uint64_t)lp_config_get_int64(cfg,logsection,"start_date_time",0);
-			if (sec) {
-				/*new call log format with date expressed in seconds */
-				cl->start_date_time=(time_t)sec;
-				set_call_log_date(cl,cl->start_date_time);
-			}else{
-				tmp=lp_config_get_string(cfg,logsection,"start_date",NULL);
-				if (tmp) {
-					strncpy(cl->start_date,tmp,sizeof(cl->start_date));
-					cl->start_date[sizeof(cl->start_date) - 1] = '\0';
-					cl->start_date_time=string_to_time(cl->start_date);
-				}
-			}
-			cl->duration=lp_config_get_int(cfg,logsection,"duration",0);
-			tmp=lp_config_get_string(cfg,logsection,"refkey",NULL);
-			if (tmp) cl->refkey=ms_strdup(tmp);
-			cl->quality=lp_config_get_float(cfg,logsection,"quality",-1);
-			cl->video_enabled=!!lp_config_get_int(cfg,logsection,"video_enabled",0);
-			tmp=lp_config_get_string(cfg,logsection,"call_id",NULL);
-			if (tmp) cl->call_id=ms_strdup(tmp);
-			call_logs=bctbx_list_append(call_logs,cl);
-		}else break;
-	}
-	return call_logs;
-}
-
 
 /*******************************************************************************
  * Public functions                                                            *

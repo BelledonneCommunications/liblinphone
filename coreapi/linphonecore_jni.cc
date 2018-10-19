@@ -2016,12 +2016,6 @@ extern "C" jlong Java_org_linphone_core_LinphoneCoreImpl_getLastOutgoingCallLog(
 	return (jlong)linphone_core_get_last_outgoing_call_log((LinphoneCore*)lc);
 }
 
-extern "C" void Java_org_linphone_core_LinphoneCoreImpl_migrateCallLogs(JNIEnv*  env
-		,jobject  thiz
-		,jlong lc) {
-		linphone_core_migrate_logs_from_rc_to_db((LinphoneCore *)lc);
-}
-
 extern "C" jobject Java_org_linphone_core_LinphoneCoreImpl_getMSFactory(JNIEnv*  env
 		,jobject  thiz
 		,jlong lc){

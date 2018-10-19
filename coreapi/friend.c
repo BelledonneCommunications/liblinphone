@@ -1006,41 +1006,6 @@ LinphoneProxyConfig *__index_to_proxy(LinphoneCore *lc, int index){
 	else return NULL;
 }
 
-LinphoneFriend * linphone_friend_new_from_config_file(LinphoneCore *lc, int index){
-	const char *tmp;
-	char item[50];
-	int a;
-	LinphoneFriend *lf;
-	LpConfig *config=lc->config;
-
-	sprintf(item,"friend_%i",index);
-
-	if (!lp_config_has_section(config,item)){
-		return NULL;
-	}
-
-	tmp=lp_config_get_string(config,item,"url",NULL);
-	if (tmp==NULL) {
-		return NULL;
-	}
-	lf=linphone_core_create_friend_with_address(lc, tmp);
-	if (lf==NULL) {
-		return NULL;
-	}
-	tmp=lp_config_get_string(config,item,"pol",NULL);
-	if (tmp==NULL) linphone_friend_set_inc_subscribe_policy(lf,LinphoneSPWait);
-	else{
-		linphone_friend_set_inc_subscribe_policy(lf,__policy_str_to_enum(tmp));
-	}
-	a=lp_config_get_int(config,item,"subscribe",0);
-	linphone_friend_send_subscribe(lf,!!a);
-	a = lp_config_get_int(config, item, "presence_received", 0);
-	lf->presence_received = (bool_t)a;
-
-	linphone_friend_set_ref_key(lf,lp_config_get_string(config,item,"refkey",NULL));
-	return lf;
-}
-
 const char *__policy_enum_to_str(LinphoneSubscribePolicy pol){
 	switch(pol){
 		case LinphoneSPAccept:

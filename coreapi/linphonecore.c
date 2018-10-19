@@ -1856,25 +1856,6 @@ static void video_config_read(LinphoneCore *lc){
 #endif
 }
 
-static void read_friends_from_rc(LinphoneCore *lc)
-{
-	LinphoneFriend *lf = NULL;
-	int i;
-	for (i = 0; (lf = linphone_friend_new_from_config_file(lc, i)) != NULL; i++) {
-		linphone_core_add_friend(lc, lf);
-		linphone_friend_unref(lf);
-	}
-}
-
-static void ui_config_read(LinphoneCore *lc) {
-	if (!lc->friends_db) {
-		read_friends_from_rc(lc);
-	}
-	if (!lc->logs_db) {
-		lc->call_logs = linphone_core_read_call_logs_from_config_file(lc);
-	}
-}
-
 bool_t linphone_core_tunnel_available(void){
 #ifdef TUNNEL_ENABLED
 	return TRUE;
@@ -2073,7 +2054,6 @@ static void _linphone_core_read_config(LinphoneCore * lc) {
 	video_config_read(lc);
 	//autoreplier_config_init(&lc->autoreplier_conf);
 	misc_config_read(lc);
-	ui_config_read(lc);
 #ifdef TUNNEL_ENABLED
 	if (lc->tunnel) {
 		linphone_tunnel_configure(lc->tunnel);
@@ -4784,8 +4764,6 @@ void linphone_core_set_call_logs_database_path(LinphoneCore *lc, const char *pat
 	if (path) {
 		lc->logs_db_file = ms_strdup(path);
 		linphone_core_call_log_storage_init(lc);
-
-		linphone_core_migrate_logs_from_rc_to_db(lc);
 	}
 }
 
@@ -4834,62 +4812,6 @@ void linphone_core_remove_call_log(LinphoneCore *lc, LinphoneCallLog *cl) {
 		linphone_call_log_unref(cl);
 	}
 }
-
-void linphone_core_migrate_logs_from_rc_to_db(LinphoneCore *lc) {
-	bctbx_list_t *logs_to_migrate = NULL;
-	LpConfig *lpc = NULL;
-	size_t original_logs_count, migrated_logs_count;
-	int i;
-
-	if (!lc) {
-		return;
-	}
-
-	lpc = linphone_core_get_config(lc);
-	if (!lpc) {
-		ms_warning("this core has been started without a rc file, nothing to migrate");
-		return;
-	}
-	if (lp_config_get_int(lpc, "misc", "call_logs_migration_done", 0) == 1) {
-		ms_warning("the call logs migration has already been done, skipping...");
-		return;
-	}
-
-	logs_to_migrate = linphone_core_read_call_logs_from_config_file(lc);
-	if (!logs_to_migrate) {
-		ms_warning("nothing to migrate, skipping...");
-		return;
-	}
-
-	// This is because there must have been a call previously to linphone_core_call_log_storage_init
-	lc->call_logs = bctbx_list_free_with_data(lc->call_logs, (void (*)(void*))linphone_call_log_unref);
-	lc->call_logs = NULL;
-
-	// We can't use bctbx_list_for_each because logs_to_migrate are listed in the wrong order (latest first), and we want to store the logs latest last
-	for (i = (int)bctbx_list_size(logs_to_migrate) - 1; i >= 0; i--) {
-		LinphoneCallLog *log = (LinphoneCallLog *) bctbx_list_nth_data(logs_to_migrate, i);
-		linphone_core_store_call_log(lc, log);
-	}
-
-	original_logs_count = bctbx_list_size(logs_to_migrate);
-	migrated_logs_count = bctbx_list_size(lc->call_logs);
-	if (original_logs_count == migrated_logs_count) {
-		size_t i = 0;
-		ms_debug("call logs migration successful: %u logs migrated", (unsigned int)bctbx_list_size(lc->call_logs));
-		lp_config_set_int(lpc, "misc", "call_logs_migration_done", 1);
-
-		for (; i < original_logs_count; i++) {
-			char logsection[32];
-			snprintf(logsection, sizeof(logsection), "call_log_%u", (unsigned int)i);
-			lp_config_clean_section(lpc, logsection);
-		}
-	} else {
-		ms_error("not as many logs saved in db has logs read from rc (" FORMAT_SIZE_T " in rc against " FORMAT_SIZE_T " in db)!", original_logs_count, migrated_logs_count);
-	}
-
-	bctbx_list_free_with_data(logs_to_migrate, (void (*)(void*))linphone_call_log_unref);
-}
-
 
 /*******************************************************************************
  * Video related functions                                                  *

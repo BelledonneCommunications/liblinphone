@@ -39,7 +39,6 @@ RCFILES = \
 					rcfiles/carddav_rc\
 					rcfiles/empty_rc\
 					rcfiles/friends_rc\
-					rcfiles/laure_call_logs_rc\
 					rcfiles/laure_rc_udp\
 					rcfiles/marie_early_rc\
 					rcfiles/marie_h264_rc\

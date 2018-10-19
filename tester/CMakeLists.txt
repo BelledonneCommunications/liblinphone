@@ -92,7 +92,6 @@ set(RC_FILES
 	rcfiles/conference_focus_rc
 	rcfiles/empty_rc
 	rcfiles/friends_rc
-	rcfiles/laure_call_logs_rc
 	rcfiles/laure_rc_udp
 	rcfiles/laure_tcp_rc
 	rcfiles/marie_early_rc
