@@ -59,6 +59,10 @@ void *linphone::Object::sharedPtrToCPtr(const std::shared_ptr< const linphone::O
 	else return sharedPtr->mPrivPtr;
 }
 
+void linphone::Object::unrefCPtr(void *ptr) {
+	belle_sip_object_unref(ptr);
+}
+
 static void deleteCppUserDataMap(std::map<std::string,void *> *userDataMap) {
 	delete userDataMap;
 }
