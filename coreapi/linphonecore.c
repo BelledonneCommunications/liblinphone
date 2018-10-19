@@ -5348,7 +5348,7 @@ static void unset_video_window_id(LinphoneCore *lc, bool_t preview, void *id){
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->unsetVideoWindowId(!!preview, id);
 }
 
-void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id){
+void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 	if ((id == NULL)
 #ifndef _WIN32
 		|| ((unsigned long)id == (unsigned long)-1)
@@ -5366,6 +5366,14 @@ void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id){
 				video_stream_set_native_window_id(vstream,id);
 		}
 	}
+#endif
+}
+
+void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
+#ifdef ANDROID
+	getPlatformHelpers(lc)->setNativeWindowId(id);
+#else
+	_linphone_core_set_native_video_window_id(lc, id);
 #endif
 }
 
@@ -5389,7 +5397,7 @@ void * linphone_core_get_native_preview_window_id(const LinphoneCore *lc){
 	return 0;
 }
 
-void linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id){
+void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
 	if ((id == NULL)
 #ifndef _WIN32
 		|| ((unsigned long)id == (unsigned long)-1)
@@ -5409,6 +5417,14 @@ void linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id){
 			video_preview_set_native_window_id(lc->previewstream,id);
 		}
 	}
+#endif
+}
+
+void linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
+#ifdef ANDROID
+	getPlatformHelpers(lc)->setNativePreviewWindowId(id);
+#else
+	_linphone_core_set_native_preview_window_id(lc, id);
 #endif
 }
 
