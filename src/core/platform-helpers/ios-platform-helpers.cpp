@@ -55,8 +55,8 @@ public:
 	void releaseCpuLock () override;
 	string getDataPath () override {return Utils::getEmptyConstRefObject<string>();}
 	string getConfigPath () override {return Utils::getEmptyConstRefObject<string>();}
-	void setVideoWindow (void *window_id) override {}
-	void setVideoPreviewWindow (void *window_id) override {}
+	void setVideoWindow (void *windowId) override {}
+	void setVideoPreviewWindow (void *windowId) override {}
 
 private:
 	void bgTaskTimeout ();

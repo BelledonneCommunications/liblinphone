@@ -50,8 +50,8 @@ public:
 	virtual void releaseCpuLock () = 0;
 	virtual std::string getDataPath () = 0;
 	virtual std::string getConfigPath () = 0;
-	virtual void setVideoWindow (void *window_id) = 0;
-	virtual void setVideoPreviewWindow (void *window_id) = 0;
+	virtual void setVideoWindow (void *windowId) = 0;
+	virtual void setVideoPreviewWindow (void *windowId) = 0;
 
 protected:
 	inline explicit PlatformHelpers (LinphoneCore *lc) : mCore(lc) {}
@@ -73,8 +73,8 @@ public:
 	void releaseCpuLock () override;
 	std::string getDataPath () override;
 	std::string getConfigPath () override;
-	void setVideoWindow (void *window_id) override;
-	void setVideoPreviewWindow (void *window_id) override;
+	void setVideoWindow (void *windowId) override;
+	void setVideoPreviewWindow (void *windowId) override;
 };
 
 PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext);
