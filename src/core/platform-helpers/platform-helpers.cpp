@@ -49,11 +49,11 @@ string StubbedPlatformHelpers::getConfigPath () {
 	return "";
 }
 
-void StubbedPlatformHelpers::setVideoPreviewWindow (void *window_id) {
+void StubbedPlatformHelpers::setVideoPreviewWindow (void *windowId) {
 
 }
 
-void StubbedPlatformHelpers::setVideoWindow (void *window_id) {
+void StubbedPlatformHelpers::setVideoWindow (void *windowId) {
 
 }
 
