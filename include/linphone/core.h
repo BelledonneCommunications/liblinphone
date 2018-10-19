@@ -3250,7 +3250,7 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_call_logs(LinphoneCore *l
  * At the contrary of linphone_core_get_call_logs, it is your responsibility to unref the logs and free this list once you are done using it.
  * @param[in] lc #LinphoneCore object
  * @param[in] addr #LinphoneAddress object
- * @return \bctbx_list{LinphoneCallLog}
+ * @return \bctbx_list{LinphoneCallLog} \onTheFlyList
 **/
 LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_call_history_for_address(LinphoneCore *lc, const LinphoneAddress *addr);
 
