@@ -5371,7 +5371,7 @@ void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 
 void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 #ifdef ANDROID
-	getPlatformHelpers(lc)->setNativeWindowId(id);
+	getPlatformHelpers(lc)->setVideoWindow(id);
 #else
 	_linphone_core_set_native_video_window_id(lc, id);
 #endif
@@ -5422,7 +5422,7 @@ void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
 
 void linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
 #ifdef ANDROID
-	getPlatformHelpers(lc)->setNativePreviewWindowId(id);
+	getPlatformHelpers(lc)->setVideoPreviewWindow(id);
 #else
 	_linphone_core_set_native_preview_window_id(lc, id);
 #endif

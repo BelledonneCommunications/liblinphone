@@ -596,20 +596,7 @@ JNIEXPORT void JNICALL Java_org_linphone_core_CoreImpl_setNativePreviewWindowId(
 		bctbx_error("LinphoneCore C ptr is null!");
 		return;
 	}
-	jobject oldWindow = (jobject) linphone_core_get_native_preview_window_id(cptr);
-	if (oldWindow == id) {
-		bctbx_warning("Java_org_linphone_core_CoreImpl_setNativePreviewWindowId(): new id (%p) is the same as the current one, skipping...", id);
-		return;
-	}
-	if (id != nullptr) {
-		id = env->NewGlobalRef(id);
-		bctbx_message("Java_org_linphone_core_CoreImpl_setNativePreviewWindowId(): NewGlobalRef(%p)", id);
-	} else bctbx_message("Java_org_linphone_core_CoreImpl_setNativePreviewWindowId(): setting to nullptr");
 	linphone_core_set_native_preview_window_id(cptr, (void *)id);
-	if (oldWindow != nullptr) {
-		bctbx_message("Java_org_linphone_core_CoreImpl_setNativePreviewWindowId(): DeleteGlobalRef(%p)", oldWindow);
-		env->DeleteGlobalRef(oldWindow);
-	}
 }
 
 JNIEXPORT void JNICALL Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
@@ -618,20 +605,7 @@ JNIEXPORT void JNICALL Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(JN
 		bctbx_error("LinphoneCore C ptr is null!");
 		return;
 	}
-	jobject oldWindow = (jobject) linphone_core_get_native_video_window_id(cptr);
-	if (oldWindow == id) {
-		bctbx_warning("Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(): new id (%p) is the same as the current one, skipping...", id);
-		return;
-	}
-	if (id != nullptr) {
-		id = env->NewGlobalRef(id);
-		bctbx_message("Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(): NewGlobalRef(%p)", id);
-	} else bctbx_message("Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(): setting to nullptr");
 	linphone_core_set_native_video_window_id(cptr, (void *)id);
-	if (oldWindow != nullptr) {
-		bctbx_message("Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(): DeleteGlobalRef(%p)", oldWindow);
-		env->DeleteGlobalRef(oldWindow);
-	}
 }
 
 JNIEXPORT jobject JNICALL Java_org_linphone_core_FactoryImpl_getCore(JNIEnv *env, jobject thiz, jlong ptr, jlong lcPtr) {

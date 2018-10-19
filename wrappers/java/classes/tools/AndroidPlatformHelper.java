@@ -26,6 +26,7 @@ import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.Version;
 
 import android.content.res.Resources;
+import android.graphics.SurfaceTexture;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.MulticastLock;
 import android.net.wifi.WifiManager.WifiLock;
@@ -37,6 +38,8 @@ import android.net.NetworkInfo;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.Build;
+import android.view.Surface;
+import android.view.TextureView;
 
 import java.net.InetAddress;
 import java.util.List;
@@ -268,7 +271,7 @@ public class AndroidPlatformHelper {
 	}
 
 	public void setVideoPreviewView(Object view) {
-		if (!view instanceof TextureView) {
+		if (!(view instanceof TextureView)) {
 			Log.e("Preview window id is not an instance of TextureView !");
 			return;
 		}
@@ -304,7 +307,7 @@ public class AndroidPlatformHelper {
 	}
 
 	public void setVideoRenderingView(Object view) {
-		if (!view instanceof TextureView) {
+		if (!(view instanceof TextureView)) {
 			Log.e("Rendering window id is not an instance of TextureView !");
 			return;
 		}
@@ -336,7 +339,7 @@ public class AndroidPlatformHelper {
 		});
 		if (textureView.isAvailable()) {
 			Log.i("Rendering window surface is available");
-			mSurface = new Surface(surface);
+			mSurface = new Surface(textureView.getSurfaceTexture());
 			setNativeVideoWindowId(mNativePtr, mSurface);
 		}
 	}
