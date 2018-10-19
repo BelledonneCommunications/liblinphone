@@ -84,17 +84,22 @@ void file_transfer_received(LinphoneChatMessage *msg, const LinphoneContent* con
 		file = fopen(receive_file,"wb");
 		linphone_chat_message_set_user_data(msg,(void*)file); /*store fd for next chunks*/
 	}
-	bc_free(receive_file);
+	
 	file = (FILE*)linphone_chat_message_get_user_data(msg);
 	BC_ASSERT_PTR_NOT_NULL(file);
 	if (linphone_buffer_is_empty(buffer)) { /* tranfer complete */
+		struct stat st;
+		
 		linphone_chat_message_set_user_data(msg, NULL);
 		fclose(file);
+		BC_ASSERT_TRUE(stat(receive_file, &st)==0);
+		BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), (int)st.st_size, int, "%i");
 	} else { /* store content on a file*/
 		if (fwrite(linphone_buffer_get_content(buffer),linphone_buffer_get_size(buffer),1,file)==0){
 			ms_error("file_transfer_received(): write() failed: %s",strerror(errno));
 		}
 	}
+	bc_free(receive_file);
 }
 
 /*

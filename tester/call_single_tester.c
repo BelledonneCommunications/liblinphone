@@ -4981,6 +4981,8 @@ static void call_record_with_custom_rtp_modifier(void) {
 	custom_rtp_modifier(FALSE, TRUE);
 }
 
+
+/*Case where the caller disconnects just after initiating the call*/
 static void recovered_call_on_network_switch_in_early_state(LinphoneCoreManager* callerMgr) {
 	const LinphoneCallParams *remote_params;
 	LinphoneCall *incoming_call;
@@ -5026,6 +5028,8 @@ static void recovered_call_on_network_switch_in_early_state_1_udp(void) {
 	recovered_call_on_network_switch_in_early_state(laure);
 	linphone_core_manager_destroy(laure);
 }
+
+/*case where the caller disconnects just after the call is accepted*/
 static void recovered_call_on_network_switch_in_early_state_2(void) {
 	LinphoneCall *incoming_call;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
@@ -5054,6 +5058,8 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+
+/*case where the callee disconnects between the moment it receives the call and the moment it accepts the call*/
 static void recovered_call_on_network_switch_in_early_state_3(void) {
 	LinphoneCall *incoming_call;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
@@ -5083,6 +5089,7 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+/*case where the callee disconnects just after accepting the call*/
 static void recovered_call_on_network_switch_in_early_state_4(void) {
 	LinphoneCall *incoming_call;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
