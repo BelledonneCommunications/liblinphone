@@ -574,20 +574,8 @@ JNIEXPORT void JNICALL Java_org_linphone_core_CallImpl_setNativeVideoWindowId(JN
 		bctbx_error("LinphoneCall C ptr is null!");
 		return;
 	}
-	jobject oldWindow = (jobject) linphone_call_get_native_video_window_id(cptr);
-	if (oldWindow == id) {
-		bctbx_warning("Java_org_linphone_core_CallImpl_setNativeVideoWindowId(): new id (%p) is the same as the current one, skipping...", id);
-		return;
-	}
-	if (id != nullptr) {
-		id = env->NewGlobalRef(id);
-		bctbx_message("Java_org_linphone_core_CallImpl_setNativeVideoWindowId(): NewGlobalRef(%p)", id);
-	} else bctbx_message("Java_org_linphone_core_CallImpl_setNativeVideoWindowId(): setting to nullptr");
-	linphone_call_set_native_video_window_id(cptr, (void *)id);
-	if (oldWindow != nullptr) {
-		bctbx_message("Java_org_linphone_core_CallImpl_setNativeVideoWindowId(): DeleteGlobalRef(%p)", oldWindow);
-		env->DeleteGlobalRef(oldWindow);
-	}
+	LinphoneCore *lc = linphone_call_get_core(cptr);
+	linphone_core_set_native_video_window_id(lc, (void *)id);
 }
 
 JNIEXPORT void JNICALL Java_org_linphone_core_CoreImpl_setNativePreviewWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
