@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.linphone.core.tools;
 
+import org.linphone.core.Core;
 import org.linphone.mediastream.Log;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.Version;
@@ -50,6 +51,7 @@ import java.io.InputStream;
  **/
 
 public class AndroidPlatformHelper {
+	private long mNativePtr;
 	private Context mContext;
 	private WifiManager.WifiLock mWifiLock;
 	private WifiManager.MulticastLock mMcastLock;
@@ -65,8 +67,13 @@ public class AndroidPlatformHelper {
 	private String mGrammarCpimFile;
 	private String mGrammarVcardFile ;
 	private String mUserCertificatePath;
+	private Surface mSurface;
 
-	public AndroidPlatformHelper(Object ctx_obj) {
+	private native void setNativePreviewWindowId(long nativePtr, Object view);
+	private native void setNativeVideoWindowId(long nativePtr, Object view);
+
+	public AndroidPlatformHelper(long nativePtr, Object ctx_obj) {
+		mNativePtr = nativePtr;
 		mContext = (Context) ctx_obj;
 		mResources = mContext.getResources();
 		MediastreamerAndroidContext.setContext(mContext);
@@ -93,13 +100,12 @@ public class AndroidPlatformHelper {
 		mGrammarVcardFile = basePath + "/share/belr/grammars/vcard_grammar";
 		mUserCertificatePath = basePath;
 
-		try{
+		try {
 			copyAssetsFromPackage();
-		}catch (IOException e) {
+		} catch (IOException e) {
 			Log.e("AndroidPlatformHelper(): failed to install some resources.");
 		}
 	}
-
 
 	public Object getPowerManager() {
 		return mPowerManager;
@@ -258,6 +264,80 @@ public class AndroidPlatformHelper {
 			lOutputStream.flush();
 			lOutputStream.close();
 			lInputStream.close();
+		}
+	}
+
+	public void setVideoPreviewView(Object view) {
+		if (!view instanceof TextureView) {
+			Log.e("Preview window id is not an instance of TextureView !");
+			return;
+		}
+		TextureView textureView = (TextureView)view;
+		textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+			@Override
+			public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+				Log.i("Preview window surface is available");
+				setNativePreviewWindowId(mNativePtr, surface);
+			}
+
+			@Override
+			public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+
+			}
+
+			@Override
+			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+				Log.i("Preview window surface is no longer available");
+				setNativePreviewWindowId(mNativePtr, null);
+				return false;
+			}
+
+			@Override
+			public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+
+			}
+		});
+		if (textureView.isAvailable()) {
+			Log.i("Preview window surface is available");
+			setNativePreviewWindowId(mNativePtr, textureView.getSurfaceTexture());
+		}
+	}
+
+	public void setVideoRenderingView(Object view) {
+		if (!view instanceof TextureView) {
+			Log.e("Rendering window id is not an instance of TextureView !");
+			return;
+		}
+		TextureView textureView = (TextureView)view;
+		textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+			@Override
+			public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+				Log.i("Rendering window surface is available");
+				mSurface = new Surface(surface);
+				setNativeVideoWindowId(mNativePtr, mSurface);
+			}
+
+			@Override
+			public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+
+			}
+
+			@Override
+			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+				Log.i("Rendering window surface is no longer available");
+				setNativeVideoWindowId(mNativePtr, null);
+				return false;
+			}
+
+			@Override
+			public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+
+			}
+		});
+		if (textureView.isAvailable()) {
+			Log.i("Rendering window surface is available");
+			mSurface = new Surface(surface);
+			setNativeVideoWindowId(mNativePtr, mSurface);
 		}
 	}
 };

@@ -583,6 +583,9 @@ void linphone_info_message_set_headers (LinphoneInfoMessage *im, const SalCustom
 
 void _linphone_core_set_log_handler(OrtpLogFunc logfunc);
 
+void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id);
+void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id);
+
 #ifdef __cplusplus
 }
 #endif
