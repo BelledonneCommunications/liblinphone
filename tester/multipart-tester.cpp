@@ -185,9 +185,11 @@ static void chat_message_multipart_modifier_base(bool first_file_transfer, bool 
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
-
-	const bctbx_list_t *contents = linphone_chat_message_get_contents(pauline->stat.last_received_chat_message);
-	check_contents(contents, first_file_transfer, second_file_transfer, third_content);
+	
+	if (pauline->stat.last_received_chat_message){
+		const bctbx_list_t *contents = linphone_chat_message_get_contents(pauline->stat.last_received_chat_message);
+		check_contents(contents, first_file_transfer, second_file_transfer, third_content);
+	}
 
 	marieRoom.reset(); // Avoid bad weak ptr when the core is destroyed below this line.
 
