@@ -3692,6 +3692,11 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 	LinphoneCall *call;
 	LinphoneCallParams *cp;
 
+	if (!addr) {
+		ms_error("Can't invite a NULL address");
+		return NULL;
+	}
+
 	if (!(!linphone_call_params_audio_enabled(params) ||
 		linphone_call_params_get_audio_direction(params) == LinphoneMediaDirectionInactive ||
 		linphone_call_params_get_local_conference_mode(params) == TRUE
