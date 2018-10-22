@@ -7091,12 +7091,18 @@ void linphone_core_set_http_proxy_host(LinphoneCore *lc, const char *host) {
 		lc->sal->setHttpProxyHost(host);
 		lc->sal->setHttpProxyPort(linphone_core_get_http_proxy_port(lc)); /*to make sure default value is set*/
 	}
+	if (lc->tunnel){
+		linphone_tunnel_set_http_proxy(lc->tunnel, host, linphone_core_get_http_proxy_port(lc), NULL, NULL);
+	}
 }
 
 void linphone_core_set_http_proxy_port(LinphoneCore *lc, int port) {
 	lp_config_set_int(lc->config,"sip","http_proxy_port",port);
 	if (lc->sal)
 		lc->sal->setHttpProxyPort(port);
+	if (lc->tunnel){
+		linphone_tunnel_set_http_proxy(lc->tunnel, linphone_core_get_http_proxy_host(lc), port, NULL, NULL);
+	}
 }
 
 const char *linphone_core_get_http_proxy_host(const LinphoneCore *lc) {
