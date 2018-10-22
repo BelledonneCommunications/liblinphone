@@ -272,7 +272,10 @@ public class AndroidPlatformHelper {
 
 	public void setVideoPreviewView(Object view) {
 		if (!(view instanceof TextureView)) {
-			throw new RuntimeException("Preview window id is not an instance of TextureView !");
+			throw new RuntimeException("Preview window id is not an instance of TextureView. 
+				Please update your UI layer so that the preview video view is a TextureView (or an instance of it) 
+				or enable compatibility mode by setting displaytype=MSAndroidOpenGLDisplay in the [video] section your linphonerc factory configuration file 
+				so you can keep using your existing application code for managing video views.");
 		}
 		TextureView textureView = (TextureView)view;
 		textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
@@ -307,7 +310,10 @@ public class AndroidPlatformHelper {
 
 	public void setVideoRenderingView(Object view) {
 		if (!(view instanceof TextureView)) {
-			throw new RuntimeException("Rendering window id is not an instance of TextureView !");
+			throw new RuntimeException("Rendering window id is not an instance of TextureView.
+				Please update your UI layer so that the video rendering view is a TextureView (or an instance of it) 
+				or enable compatibility mode by setting displaytype=MSAndroidOpenGLDisplay in the [video] section your linphonerc factory configuration file 
+				so you can keep using your existing application code for managing video views.");
 		}
 		TextureView textureView = (TextureView)view;
 		textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
