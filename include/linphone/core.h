@@ -1557,11 +1557,20 @@ LINPHONE_PUBLIC void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val);
 
 /**
  * Same as linphone_core_get_primary_contact() but the result is a #LinphoneAddress object
- * instead of const char*
+ * instead of const char *.
+ *
+ * @ingroup proxies
+ * @deprecated Use linphone_core_create_primary_contact_parsed() instead. Deprecated since 2018-10-22.
+**/
+LINPHONE_PUBLIC LinphoneAddress *linphone_core_get_primary_contact_parsed(LinphoneCore *lc);
+
+/**
+ * Same as linphone_core_get_primary_contact() but the result is a #LinphoneAddress object
+ * instead of const char *.
  *
  * @ingroup proxies
 **/
-LINPHONE_PUBLIC LinphoneAddress *linphone_core_get_primary_contact_parsed(LinphoneCore *lc);
+LINPHONE_PUBLIC LinphoneAddress *linphone_core_create_primary_contact_parsed (LinphoneCore *lc);
 
 LINPHONE_PUBLIC const char * linphone_core_get_identity(LinphoneCore *lc);
 
