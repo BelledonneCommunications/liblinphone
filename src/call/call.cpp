@@ -38,7 +38,7 @@ shared_ptr<RealTimeTextChatRoom> CallPrivate::getChatRoom () {
 	L_Q();
 	if (!chatRoom && (q->getState() != CallSession::State::End) && (q->getState() != CallSession::State::Released)) {
 		chatRoom = static_pointer_cast<RealTimeTextChatRoom>(q->getCore()->getOrCreateBasicChatRoom(q->getRemoteAddress(), true));
-		chatRoom->getPrivate()->setCall(q->getSharedFromThis());
+		if (chatRoom) chatRoom->getPrivate()->setCall(q->getSharedFromThis());
 	}
 	return chatRoom;
 }
@@ -498,7 +498,9 @@ bool CallPrivate::isPlayingRingbackTone (const shared_ptr<CallSession> &session)
 
 void CallPrivate::onRealTimeTextCharacterReceived (const shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *data) {
 	L_Q();
-	getChatRoom()->getPrivate()->realtimeTextReceived(data->character, q->getSharedFromThis());
+	shared_ptr<RealTimeTextChatRoom> cr = getChatRoom();
+	if (cr) cr->getPrivate()->realtimeTextReceived(data->character, q->getSharedFromThis());
+	else lError()<<"CallPrivate::onRealTimeTextCharacterReceived: no chatroom.";
 }
 
 void CallPrivate::onTmmbrReceived (const shared_ptr<CallSession> &session, int streamIndex, int tmmbr) {

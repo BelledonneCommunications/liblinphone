@@ -84,17 +84,22 @@ void file_transfer_received(LinphoneChatMessage *msg, const LinphoneContent* con
 		file = fopen(receive_file,"wb");
 		linphone_chat_message_set_user_data(msg,(void*)file); /*store fd for next chunks*/
 	}
-	bc_free(receive_file);
+	
 	file = (FILE*)linphone_chat_message_get_user_data(msg);
 	BC_ASSERT_PTR_NOT_NULL(file);
 	if (linphone_buffer_is_empty(buffer)) { /* tranfer complete */
+		struct stat st;
+		
 		linphone_chat_message_set_user_data(msg, NULL);
 		fclose(file);
+		BC_ASSERT_TRUE(stat(receive_file, &st)==0);
+		BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), (int)st.st_size, int, "%i");
 	} else { /* store content on a file*/
 		if (fwrite(linphone_buffer_get_content(buffer),linphone_buffer_get_size(buffer),1,file)==0){
 			ms_error("file_transfer_received(): write() failed: %s",strerror(errno));
 		}
 	}
+	bc_free(receive_file);
 }
 
 /*
@@ -1747,6 +1752,7 @@ static void real_time_text(
 	bool_t do_not_store_rtt_messages_in_sql_storage
 ) {
 	LinphoneChatRoom *pauline_chat_room;
+	LinphoneChatRoom *marie_chat_room;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCallParams *marie_params = NULL;
@@ -1819,12 +1825,14 @@ static void real_time_text(
 		}
 
 		pauline_chat_room = linphone_call_get_chat_room(pauline_call);
+		marie_chat_room = linphone_call_get_chat_room(marie_call);
 		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
-		if (pauline_chat_room) {
+		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
+		if (pauline_chat_room && marie_chat_room) {
 			const char* message = "Be l3l";
 			size_t i;
 			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			LinphoneChatRoom *marie_chat_room = linphone_call_get_chat_room(marie_call);
+			
 
 			for (i = 0; i < strlen(message); i++) {
 				BC_ASSERT_FALSE(linphone_chat_message_put_char(rtt_message, message[i]));
@@ -1911,7 +1919,7 @@ static void real_time_text_conversation(void) {
 		pauline_chat_room = linphone_call_get_chat_room(pauline_call);
 		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
 		marie_chat_room = linphone_call_get_chat_room(marie_call);
-		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
+		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
 		if (pauline_chat_room && marie_chat_room) {
 			const char* message1_1 = "Lorem";
 			const char* message1_2 = "Ipsum";
@@ -2017,6 +2025,7 @@ static void real_time_text_message_compat(bool_t end_with_crlf, bool_t end_with_
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCallParams *marie_params = NULL;
 	LinphoneCall *pauline_call, *marie_call;
+	LinphoneChatRoom *marie_chat_room;
 
 	marie_params = linphone_core_create_call_params(marie->lc, NULL);
 	linphone_call_params_enable_realtime_text(marie_params,TRUE);
@@ -2028,12 +2037,13 @@ static void real_time_text_message_compat(bool_t end_with_crlf, bool_t end_with_
 		BC_ASSERT_TRUE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(pauline_call)));
 
 		pauline_chat_room = linphone_call_get_chat_room(pauline_call);
+		marie_chat_room = linphone_call_get_chat_room(marie_call);
 		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
-		if (pauline_chat_room) {
+		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
+		if (pauline_chat_room && marie_chat_room) {
 			const char* message = "Be l3l";
 			size_t i;
 			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			LinphoneChatRoom *marie_chat_room = linphone_call_get_chat_room(marie_call);
 			uint32_t crlf = 0x0D0A;
 			uint32_t lf = 0x0A;
 
@@ -2069,6 +2079,7 @@ static void real_time_text_message_compat_lf(void) {
 
 static void real_time_text_message_accented_chars(void) {
 	LinphoneChatRoom *pauline_chat_room;
+	LinphoneChatRoom *marie_chat_room;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCallParams *marie_params = NULL;
@@ -2084,10 +2095,11 @@ static void real_time_text_message_accented_chars(void) {
 		BC_ASSERT_TRUE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(pauline_call)));
 
 		pauline_chat_room = linphone_call_get_chat_room(pauline_call);
+		marie_chat_room = linphone_call_get_chat_room(marie_call);
 		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
-		if (pauline_chat_room) {
+		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
+		if (pauline_chat_room && marie_chat_room) {
 			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			LinphoneChatRoom *marie_chat_room = linphone_call_get_chat_room(marie_call);
 			int i;
 			uint32_t message[8];
 			int message_len = 8;
@@ -2134,6 +2146,7 @@ static void real_time_text_message_different_text_codecs_payload_numbers_receive
 
 static void real_time_text_copy_paste(void) {
 	LinphoneChatRoom *pauline_chat_room;
+	LinphoneChatRoom *marie_chat_room;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCallParams *marie_params = NULL;
@@ -2149,12 +2162,14 @@ static void real_time_text_copy_paste(void) {
 		BC_ASSERT_TRUE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(pauline_call)));
 
 		pauline_chat_room = linphone_call_get_chat_room(pauline_call);
+		marie_chat_room = linphone_call_get_chat_room(marie_call);
 		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
-		if (pauline_chat_room) {
+		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
+		if (pauline_chat_room && marie_chat_room) {
 			const char* message = "Be l3l";
 			size_t i;
 			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			LinphoneChatRoom *marie_chat_room = linphone_call_get_chat_room(marie_call);
+			
 
 			for (i = 1; i <= strlen(message); i++) {
 				linphone_chat_message_put_char(rtt_message, message[i-1]);

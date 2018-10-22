@@ -275,6 +275,40 @@ bool_t transport_supported(LinphoneTransportType transport) {
 	}
 }
 
+#ifdef __linux
+static void avoid_pulseaudio_hack(LinphoneCoreManager *mgr){
+	bctbx_list_t *cards = linphone_core_get_sound_devices_list(mgr->lc);
+	bctbx_list_t *it;
+	bool_t capture_set = FALSE, playback_set = FALSE;
+	bool_t pulseaudio_found = FALSE;
+	for (it = cards; it != NULL ; it = it->next){
+		const char * card_id = (const char *)it->data;
+		if (strstr(card_id, "PulseAudio") != NULL) {
+			pulseaudio_found = TRUE;
+			continue;
+		}
+		if (!capture_set && linphone_core_sound_device_can_capture(mgr->lc, card_id)){
+			capture_set = TRUE;
+			linphone_core_set_capture_device(mgr->lc, card_id);
+		}
+		if (!playback_set && linphone_core_sound_device_can_playback(mgr->lc, card_id)){
+			playback_set = TRUE;
+			linphone_core_set_playback_device(mgr->lc, card_id);
+			linphone_core_set_ringer_device(mgr->lc, card_id);
+		}
+		if (playback_set && capture_set){
+			if (pulseaudio_found) ms_warning("PulseAudio is not used in liblinphone_tester because of internal random crashes or hangs.");
+			break;
+		}
+	}
+	if (!playback_set || !capture_set){
+		ms_error("Could not find soundcard other than pulseaudio to use during tests. Some tests may crash or hang.");
+	}
+	bctbx_list_free(cards);
+}
+#endif
+
+
 void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	LinphoneImNotifPolicy *im_notif_policy;
 	char *hellopath = bc_tester_res("sounds/hello8000.wav");
@@ -294,6 +328,13 @@ void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	linphone_core_set_ringback(mgr->lc, NULL);
 #elif __QNX__
 	linphone_core_set_playback_device(mgr->lc, "QSA: voice");
+#elif defined(__linux)
+	{
+		/* Special trick for linux. Pulseaudio has random hangs, deadlocks or abort while executing test suites.
+		 * It never happens in the linphone app.
+		 * So far we could not identify something bad in our pulseaudio usage. As a workaround, we disable pulseaudio for the tests.*/
+		avoid_pulseaudio_hack(mgr);
+	}
 #endif
 
 #ifdef VIDEO_ENABLED
