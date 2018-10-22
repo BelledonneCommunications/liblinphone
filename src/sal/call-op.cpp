@@ -49,6 +49,7 @@ int SalCallOp::setLocalMediaDescription (SalMediaDescription *desc) {
 		belle_sip_error_code error;
 		belle_sdp_session_description_t *sdp = media_description_to_sdp(desc);
 		vector<char> buffer = marshalMediaDescription(sdp, error);
+		belle_sip_object_unref(sdp);
 		if (error != BELLE_SIP_OK)
 			return -1;
 
