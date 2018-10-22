@@ -2672,6 +2672,10 @@ LinphoneAddress *linphone_core_get_primary_contact_parsed(LinphoneCore *lc){
 	return linphone_address_new(linphone_core_get_primary_contact(lc));
 }
 
+LinphoneAddress *linphone_core_create_primary_contact_parsed (LinphoneCore *lc) {
+	return linphone_address_new(linphone_core_get_primary_contact(lc));
+}
+
 LinphoneStatus linphone_core_set_audio_codecs(LinphoneCore *lc, bctbx_list_t *codecs){
 	if (lc->codecs_conf.audio_codecs!=NULL) bctbx_list_free(lc->codecs_conf.audio_codecs);
 	lc->codecs_conf.audio_codecs=codecs;
