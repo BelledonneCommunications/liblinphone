@@ -21,6 +21,7 @@
 
 #include "platform-helpers.h"
 #include "logger/logger.h"
+#include "c-wrapper/c-wrapper.h"
 
 // TODO: Remove me later.
 #include "private.h"
@@ -242,7 +243,7 @@ int AndroidPlatformHelpers::callVoidMethod (jmethodID id) {
 void AndroidPlatformHelpers::setVideoPreviewWindow (void *windowId) {
 	JNIEnv *env = ms_get_jni_env();
 	if (env && mJavaHelper) {
-		string displayFilter = linphone_core_get_video_display_filter(getCore());
+		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()));
 		if (windowId && (displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
 			env->CallVoidMethod(mJavaHelper, mSetNativePreviewVideoWindowId, (jobject)windowId);
 		} else {
@@ -254,7 +255,7 @@ void AndroidPlatformHelpers::setVideoPreviewWindow (void *windowId) {
 void AndroidPlatformHelpers::setVideoWindow (void *windowId) {
 	JNIEnv *env = ms_get_jni_env();
 	if (env && mJavaHelper) {
-		string displayFilter = linphone_core_get_video_display_filter(getCore());
+		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()));
 		if (windowId && (displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
 			env->CallVoidMethod(mJavaHelper, mSetNativeVideoWindowId, (jobject)windowId);
 		} else {
