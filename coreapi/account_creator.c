@@ -394,11 +394,7 @@ void linphone_account_creator_set_user_data(LinphoneAccountCreator *creator, voi
 void linphone_account_creator_set_proxy_config(LinphoneAccountCreator *creator, LinphoneProxyConfig *cfg) {
 	LinphoneProxyConfig *old_cfg = creator->proxy_cfg;
 
-	if (cfg) {
-		creator->proxy_cfg = linphone_proxy_config_ref(cfg);
-	} else {
-		creator->proxy_cfg = NULL;
-	}
+	creator->proxy_cfg = cfg ? linphone_proxy_config_ref(cfg) : NULL;
 
 	if (old_cfg) {
 		linphone_proxy_config_unref(old_cfg);
