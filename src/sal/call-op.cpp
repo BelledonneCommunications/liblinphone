@@ -79,7 +79,7 @@ int SalCallOp::setLocalBody (const Content &body) {
 	return setLocalBody(move(bodyCopy));
 }
 
-int SalCallOp::setLocalBody (const Content &&body) {
+int SalCallOp::setLocalBody (Content &&body) {
 	if (!body.isValid())
 		return -1;
 
@@ -100,7 +100,7 @@ int SalCallOp::setLocalBody (const Content &&body) {
 		mLocalMedia = desc;
 	}
 
-	mLocalBody = body;
+	mLocalBody = move(body);
 	return 0;
 }
 
