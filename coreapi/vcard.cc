@@ -42,14 +42,14 @@ extern "C" {
 
 LinphoneVcardContext* linphone_vcard_context_new(void) {
 	LinphoneVcardContext* context = ms_new0(LinphoneVcardContext, 1);
-	context->parser = belcard::BelCardParser::getInstance();
+	new (&context->parser) shared_ptr<belcard::BelCardParser>(belcard::BelCardParser::getInstance());
 	context->user_data = NULL;
 	return context;
 }
 
 void linphone_vcard_context_destroy(LinphoneVcardContext *context) {
 	if (context) {
-		context->parser = nullptr;
+		context->parser.~shared_ptr<belcard::BelCardParser>();
 		ms_free(context);
 	}
 }
@@ -81,7 +81,7 @@ static void _linphone_vcard_uninit(LinphoneVcard *vCard) {
 	if (vCard->etag) ms_free(vCard->etag);
 	if (vCard->url) ms_free(vCard->url);
 	linphone_vcard_clean_cache(vCard);
-	vCard->belCard.reset();
+	vCard->belCard.~shared_ptr<belcard::BelCard>();
 }
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneVcard);
@@ -95,7 +95,7 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneVcard, belle_sip_object_t,
 
 LinphoneVcard* _linphone_vcard_new(void) {
 	LinphoneVcard* vCard = belle_sip_object_new(LinphoneVcard);
-	vCard->belCard = belcard::BelCardGeneric::create<belcard::BelCard>();
+	new (&vCard->belCard) shared_ptr<belcard::BelCard>(belcard::BelCardGeneric::create<belcard::BelCard>());
 	return vCard;
 }
 
@@ -105,7 +105,7 @@ LinphoneVcard *linphone_vcard_new(void) {
 
 static LinphoneVcard* linphone_vcard_new_from_belcard(shared_ptr<belcard::BelCard> belcard) {
 	LinphoneVcard* vCard = belle_sip_object_new(LinphoneVcard);
-	vCard->belCard = belcard;
+	new (&vCard->belCard) shared_ptr<belcard::BelCard>(belcard);
 	return vCard;
 }
 
@@ -124,7 +124,7 @@ void linphone_vcard_unref(LinphoneVcard *vCard) {
 LinphoneVcard *linphone_vcard_clone(const LinphoneVcard *vCard) {
 	LinphoneVcard *copy = belle_sip_object_new(LinphoneVcard);
 
-	copy->belCard = belcard::BelCardParser::getInstance()->parseOne(vCard->belCard->toFoldedString());
+	new (&copy->belCard) shared_ptr<belcard::BelCard>(belcard::BelCardParser::getInstance()->parseOne(vCard->belCard->toFoldedString()));
 
 	if (vCard->url) copy->url = ms_strdup(vCard->url);
 	if (vCard->etag) copy->etag = ms_strdup(vCard->etag);
