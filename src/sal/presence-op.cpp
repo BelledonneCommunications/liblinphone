@@ -189,6 +189,7 @@ void SalPresenceOp::handleNotify (belle_sip_request_t *request, belle_sip_dialog
 		subscriptionState = getSubscriptionState(BELLE_SIP_MESSAGE(request));
 	}
 
+	ref(); // Take a ref because the notify_presence callback may release the op
 	belle_sip_response_t *response = nullptr;
 	const char *body = belle_sip_message_get_body(BELLE_SIP_MESSAGE(request));
 	auto presenceModel = processPresenceNotification(request);
@@ -204,6 +205,7 @@ void SalPresenceOp::handleNotify (belle_sip_request_t *request, belle_sip_dialog
 	}
 	if (response)
 		belle_sip_server_transaction_send_response(mPendingServerTransaction, response);
+	unref();
 }
 
 void SalPresenceOp::presenceProcessRequestEventCb (void *userCtx, const belle_sip_request_event_t *event) {
