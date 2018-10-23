@@ -45,21 +45,21 @@ LINPHONE_PUBLIC void linphone_participant_device_unref (LinphoneParticipantDevic
 
 /**
  * Retrieve the user pointer associated with the participant's device.
- * @param[in] participant A #LinphoneParticipantDevice object
+ * @param[in] participant_device A #LinphoneParticipantDevice object
  * @return The user pointer associated with the participant's device.
 **/
 LINPHONE_PUBLIC void * linphone_participant_device_get_user_data(const LinphoneParticipantDevice *participant_device);
 
 /**
  * Assign a user pointer to the participant's device.
- * @param[in] participant A #LinphoneParticipantDevice object
+ * @param[in] participant_device A #LinphoneParticipantDevice object
  * @param[in] ud The user pointer to associate with the participant's device
 **/
 LINPHONE_PUBLIC void linphone_participant_device_set_user_data(LinphoneParticipantDevice *participant_device, void *ud);
 
 /**
  * Get the address of a participant's device.
- * @param[in] participant A #LinphoneParticipantDevice object
+ * @param[in] participant_device A #LinphoneParticipantDevice object
  * @return The address of the participant's device
  */
 LINPHONE_PUBLIC const LinphoneAddress * linphone_participant_device_get_address (const LinphoneParticipantDevice *participant_device);
