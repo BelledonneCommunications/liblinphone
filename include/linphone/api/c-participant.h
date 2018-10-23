@@ -72,6 +72,13 @@ LINPHONE_PUBLIC const LinphoneAddress * linphone_participant_get_address (const 
 LINPHONE_PUBLIC bool_t linphone_participant_is_admin (const LinphoneParticipant *participant);
 
 /**
+ * Gets the list of devices from a chat room's participant.
+ * @param[in] participant A #LinphoneParticipant object
+ * @return \bctbx_list{LinphoneParticipantDevice}
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_participant_get_devices (const LinphoneParticipant *participant);
+
+/**
  * @}
  */
 

@@ -44,6 +44,7 @@
 	F(MediaSessionParams, CallParams) \
 	F(Participant, Participant) \
 	F(ParticipantImdnState, ParticipantImdnState) \
+	F(ParticipantDevice, ParticipantDevice) \
 	F(SearchResult, SearchResult)
 
 #define L_REGISTER_SUBTYPES(F) \

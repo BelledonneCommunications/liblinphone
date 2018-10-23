@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include "object/object-p.h"
 #include "participant-device.h"
 #include "participant-p.h"
 
@@ -28,10 +29,17 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-ParticipantDevice::ParticipantDevice () {}
+class ParticipantDevicePrivate : public ObjectPrivate {
+private:
+	L_DECLARE_PUBLIC(Participant);
+};
+
+// =============================================================================
+
+ParticipantDevice::ParticipantDevice () : Object(*new ParticipantDevicePrivate) {}
 
 ParticipantDevice::ParticipantDevice (Participant *participant, const IdentityAddress &gruu)
-	: mParticipant(participant), mGruu(gruu) {}
+	:  Object(*new ParticipantDevicePrivate), mParticipant(participant), mGruu(gruu) {}
 
 ParticipantDevice::~ParticipantDevice () {
 	if (mConferenceSubscribeEvent)
