@@ -228,7 +228,7 @@ list<SearchResult> MagicSearch::getAddressFromCallLog (
 }
 
 static string getAddressFromSearchResult (const SearchResult &sr, const shared_ptr<Core> lc) {
-	string sAddress = "";
+	string sAddress;
 	if (!sr.getAddress() && sr.getFriend()) {
 		const LinphonePresenceModel *presenceModel = linphone_friend_get_presence_model(sr.getFriend());
 		char *contactPresence = presenceModel ? linphone_presence_model_get_contact(presenceModel) : nullptr;
@@ -254,7 +254,7 @@ static string getAddressFromSearchResult (const SearchResult &sr, const shared_p
 }
 
 static string getDisplayNameFromSearchResult (const SearchResult &sr) {
-	string name = "";
+	string name;
 	if (sr.getFriend()) {
 		name = linphone_friend_get_name(sr.getFriend());
 	} else if (sr.getAddress()){
