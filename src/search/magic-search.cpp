@@ -554,9 +554,11 @@ list<SearchResult> *MagicSearch::uniqueItemsList (list<SearchResult> &list) cons
 		string left = getAddressFromSearchResult(lsr, lc);
 		string right = getAddressFromSearchResult(rsr, lc);
 
-		// Remove potential ";user=phone"
-		if (left.find(";user=phone") != string::npos) left.erase(left.find(";user=phone"), 11);
-		if (right.find(";user=phone") != string::npos) right.erase(right.find(";user=phone"), 11);
+		const char phonePattern[] = ";user=phone";
+		size_t i = left.find(phonePattern);
+		if (i != string::npos) left.erase(i, sizeof phonePattern - 1);
+		i = right.find(phonePattern);
+		if (i != string::npos) right.erase(i, sizeof phonePattern - 1);
 
 		return (!left.empty() || !right.empty()) && left == right;
 	});
