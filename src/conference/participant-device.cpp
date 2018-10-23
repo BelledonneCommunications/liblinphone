@@ -30,9 +30,6 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 class ParticipantDevicePrivate : public ObjectPrivate {
-public:
-	string disposition;
-	string parameter;
 private:
 	L_DECLARE_PUBLIC(Participant);
 };
