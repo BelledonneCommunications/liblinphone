@@ -1172,6 +1172,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone(L
 		}
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
+	bctbx_free(identity);
 
 	if (creator->xmlrpc_session) {
 		const char *username = creator->username ? creator->username : creator->phone_number;
