@@ -678,11 +678,10 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 	bctbx_list_t *elem = bctbx_list_find(list->friends, lf);
 	if (elem == NULL) return LinphoneFriendListNonExistentFriend;
 
-#ifdef SQLITE_STORAGE_ENABLED
 	if (lf && lf->lc && lf->lc->friends_db) {
 		linphone_core_remove_friend_from_db(lf->lc, lf);
 	}
-#endif
+
 	if (remove_from_server) {
 		LinphoneVcard *lvc = linphone_friend_get_vcard(lf);
 		if (lvc && linphone_vcard_get_uid(lvc)) {
@@ -695,9 +694,6 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 				linphone_carddav_delete_vcard(cdc, lf);
 			}
 		}
-	}
-	if (!list->lc->friends_db_file) {
-		linphone_core_write_friends_config(list->lc);
 	}
 	list->friends = bctbx_list_erase_link(list->friends, elem);
 	if(lf->refkey) {

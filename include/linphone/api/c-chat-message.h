@@ -23,10 +23,6 @@
 #include "linphone/api/c-chat-message-cbs.h"
 #include "linphone/api/c-types.h"
 
-#ifdef SQLITE_STORAGE_ENABLED
-	#include <sqlite3.h>
-#endif // ifdef SQLITE_STORAGE_ENABLED
-
 // =============================================================================
 
 typedef enum _LinphoneChatMessageDir{

@@ -510,6 +510,57 @@ void MediaSessionPrivate::stopStreamsForIceGathering () {
 
 // -----------------------------------------------------------------------------
 
+bool MediaSessionPrivate::getSpeakerMuted () const {
+	return speakerMuted;
+}
+
+void MediaSessionPrivate::setSpeakerMuted (bool muted) {
+	if (speakerMuted == muted)
+		return;
+	speakerMuted = muted;
+
+	if (state == CallSession::State::StreamsRunning)
+		forceSpeakerMuted(speakerMuted);
+}
+
+void MediaSessionPrivate::forceSpeakerMuted (bool muted) {
+	L_Q();
+
+	if (!audioStream)
+		return;
+
+	if (muted)
+		audio_stream_set_spk_gain(audioStream, 0);
+	else
+		audio_stream_set_spk_gain_db(audioStream, q->getCore()->getCCore()->sound_conf.soft_play_lev);
+}
+
+// -----------------------------------------------------------------------------
+
+bool MediaSessionPrivate::getMicrophoneMuted () const {
+	return microphoneMuted;
+}
+
+void MediaSessionPrivate::setMicrophoneMuted (bool muted) {
+	L_Q();
+
+	if (microphoneMuted == muted)
+		return;
+	microphoneMuted = muted;
+
+	if (!audioStream)
+		return;
+
+	if (state == CallSession::State::StreamsRunning) {
+		if (microphoneMuted)
+			audio_stream_set_mic_gain(audioStream, 0);
+		else
+			audio_stream_set_mic_gain_db(audioStream, q->getCore()->getCCore()->sound_conf.soft_mic_lev);
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 void MediaSessionPrivate::setCurrentParams (MediaSessionParams *msp) {
 	if (currentParams)
 		delete currentParams;
@@ -1382,7 +1433,7 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 
 	strncpy(md->addr, mediaLocalIp.c_str(), sizeof(md->addr));
 	md->addr[sizeof(md->addr) - 1] = '\0';
-	
+
 	LinphoneAddress *addr = nullptr;
 	if (destProxy) {
 		addr = linphone_address_clone(linphone_proxy_config_get_identity_address(destProxy));
@@ -1741,14 +1792,6 @@ void MediaSessionPrivate::joinMulticastGroup (int streamIndex, MediaStream *ms) 
 
 // -----------------------------------------------------------------------------
 
-int MediaSessionPrivate::findCryptoIndexFromTag (const SalSrtpCryptoAlgo crypto[], unsigned char tag) {
-	for (int i = 0; i < SAL_CRYPTO_ALGO_MAX; i++) {
-		if (crypto[i].tag == tag)
-			return i;
-	}
-	return -1;
-}
-
 void MediaSessionPrivate::setDtlsFingerprint (MSMediaStreamSessions *sessions, const SalStreamDescription *sd, const SalStreamDescription *remote) {
 	if (sal_stream_description_has_dtls(sd)) {
 		if (sd->dtls_role == SalDtlsRoleInvalid)
@@ -1788,7 +1831,7 @@ void MediaSessionPrivate::setupDtlsParams (MediaStream *ms) {
 		char *certificate = nullptr;
 		char *key = nullptr;
 		char *fingerprint = nullptr;
-		
+
 		sal_certificates_chain_parse_directory(&certificate, &key, &fingerprint,
 			linphone_core_get_user_certificates_path(q->getCore()->getCCore()), "linphone-dtls-default-identity", SAL_CERTIFICATE_RAW_FORMAT_PEM, true, true);
 		if (fingerprint) {
@@ -1913,7 +1956,7 @@ void MediaSessionPrivate::updateCryptoParameters (SalMediaDescription *oldMd, Sa
 }
 
 bool MediaSessionPrivate::updateStreamCryptoParameters (const SalStreamDescription *localStreamDesc, SalStreamDescription *oldStream, SalStreamDescription *newStream, MediaStream *ms) {
-	int cryptoIdx = findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(newStream->crypto_local_tag));
+	int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(newStream->crypto_local_tag));
 	if (cryptoIdx >= 0) {
 		if (localDescChanged & SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED)
 			ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, newStream->crypto[0].algo, localStreamDesc->crypto[cryptoIdx].master_key);
@@ -2464,8 +2507,8 @@ void MediaSessionPrivate::initializeAudioStream () {
 			audio_stream_enable_echo_limiter(audioStream, ELControlFull);
 	}
 
-	/* Equalizer location in the graph: 'mic' = in input graph, otherwise in output graph.
-	   Any other value than mic will default to output graph for compatibility */
+	// Equalizer location in the graph: 'mic' = in input graph, otherwise in output graph.
+	// Any other value than mic will default to output graph for compatibility.
 	string location = lp_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "sound", "eq_location", "hp");
 	audioStream->eq_loc = (location == "mic") ? MSEqualizerMic : MSEqualizerHP;
 	lInfo() << "Equalizer location: " << location;
@@ -2634,6 +2677,7 @@ void MediaSessionPrivate::prepareEarlyMediaForking () {
 void MediaSessionPrivate::postConfigureAudioStreams (bool muted) {
 	L_Q();
 	q->getCore()->getPrivate()->postConfigureAudioStream(audioStream, muted);
+	forceSpeakerMuted(speakerMuted);
 	if (linphone_core_dtmf_received_has_listener(q->getCore()->getCCore()))
 		audio_stream_play_received_dtmfs(audioStream, false);
 	if (recordActive)
@@ -2730,7 +2774,7 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 			// Valid local tags are > 0
 			if (sal_stream_description_has_srtp(stream)) {
 				const SalStreamDescription *localStreamDesc = sal_media_description_find_stream(localDesc, stream->proto, SalAudio);
-				int cryptoIdx = findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(stream->crypto_local_tag));
+				int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(stream->crypto_local_tag));
 				if (cryptoIdx >= 0) {
 					ms_media_stream_sessions_set_srtp_recv_key_b64(&audioStream->ms.sessions, stream->crypto[0].algo, stream->crypto[0].master_key);
 					ms_media_stream_sessions_set_srtp_send_key_b64(&audioStream->ms.sessions, stream->crypto[0].algo, localStreamDesc->crypto[cryptoIdx].master_key);
@@ -2778,12 +2822,15 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 				}
 			}
 			if (ok) {
+				currentCaptureCard = ms_media_resource_get_soundcard(&io.input);
+				currentPlayCard = ms_media_resource_get_soundcard(&io.output);
+
 				int err = audio_stream_start_from_io(audioStream, audioProfile, rtpAddr, stream->rtp_port,
 					(stream->rtcp_addr[0] != '\0') ? stream->rtcp_addr : resultDesc->addr,
 					(linphone_core_rtcp_enabled(q->getCore()->getCCore()) && !isMulticast) ? (stream->rtcp_port ? stream->rtcp_port : stream->rtp_port + 1) : 0,
 					usedPt, &io);
 				if (err == 0)
-					postConfigureAudioStreams((allMuted || audioMuted) && (listener && !listener->isPlayingRingbackTone(q->getSharedFromThis())));
+					postConfigureAudioStreams((allMuted || microphoneMuted) && (listener && !listener->isPlayingRingbackTone(q->getSharedFromThis())));
 			}
 			ms_media_stream_sessions_set_encryption_mandatory(&audioStream->ms.sessions, isEncryptionMandatory());
 			if ((targetState == CallSession::State::Paused) && !captcard && !playfile.empty()) {
@@ -2916,7 +2963,7 @@ void MediaSessionPrivate::startTextStream () {
 			getCurrentParams()->getPrivate()->setUsedRealtimeTextCodec(rtp_profile_get_payload(textProfile, usedPt));
 			getCurrentParams()->enableRealtimeText(true);
 			if (sal_stream_description_has_srtp(tstream)) {
-				int cryptoIdx = findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(tstream->crypto_local_tag));
+				int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(tstream->crypto_local_tag));
 				if (cryptoIdx >= 0) {
 					ms_media_stream_sessions_set_srtp_recv_key_b64(&textStream->ms.sessions, tstream->crypto[0].algo, tstream->crypto[0].master_key);
 					ms_media_stream_sessions_set_srtp_send_key_b64(&textStream->ms.sessions, tstream->crypto[0].algo, localStreamDesc->crypto[cryptoIdx].master_key);
@@ -3009,7 +3056,7 @@ void MediaSessionPrivate::startVideoStream (CallSession::State targetState) {
 			if (isActive) {
 				if (sal_stream_description_has_srtp(vstream)) {
 					const SalStreamDescription *localStreamDesc = sal_media_description_find_stream(localDesc, vstream->proto, SalVideo);
-					int cryptoIdx = findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(vstream->crypto_local_tag));
+					int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(vstream->crypto_local_tag));
 					if (cryptoIdx >= 0) {
 						ms_media_stream_sessions_set_srtp_recv_key_b64(&videoStream->ms.sessions, vstream->crypto[0].algo, vstream->crypto[0].master_key);
 						ms_media_stream_sessions_set_srtp_send_key_b64(&videoStream->ms.sessions, vstream->crypto[0].algo, localStreamDesc->crypto[cryptoIdx].master_key);
@@ -3113,6 +3160,10 @@ void MediaSessionPrivate::stopAudioStream () {
 	audioStreamEvQueue = nullptr;
 
 	getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
+
+	currentCaptureCard = nullptr;
+	currentPlayCard = nullptr;
+
 }
 
 void MediaSessionPrivate::stopTextStream () {
@@ -3672,8 +3723,8 @@ LinphoneStatus MediaSessionPrivate::startUpdate (const string &subject) {
 		op->setLocalMediaDescription(nullptr);
 	LinphoneStatus result = CallSessionPrivate::startUpdate(subject);
 	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack) {
-		/* We are NOT offering, set local media description after sending the call so that we are ready to
-		 * process the remote offer when it will arrive. */
+		// We are NOT offering, set local media description after sending the call so that we are ready to
+		// process the remote offer when it will arrive.
 		op->setLocalMediaDescription(localDesc);
 	}
 	return result;
@@ -4345,8 +4396,8 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 		return result;
 	}
 	if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
-		/* We are NOT offering, set local media description after sending the call so that we are ready to
-		   process the remote offer when it will arrive. */
+		// We are NOT offering, set local media description after sending the call so that we are ready to
+		// process the remote offer when it will arrive.
 		d->op->setLocalMediaDescription(d->localDesc);
 	}
 	return result;
@@ -4400,9 +4451,19 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 			/* Restore initial state */
 			d->setState(initialState, "Restore initial state");
 		}
-	} else {
-#ifdef VIDEO_ENABLED
-		if (d->videoStream && (d->state == CallSession::State::StreamsRunning)) {
+	} else if (d->state == CallSession::State::StreamsRunning) {
+		const sound_config_t &soundConfig = getCore()->getCCore()->sound_conf;
+		const MSSndCard *captureCard = soundConfig.capt_sndcard;
+		const MSSndCard *playCard = soundConfig.lsd_card ? soundConfig.lsd_card : soundConfig.play_sndcard;
+
+		if (captureCard != d->currentCaptureCard || playCard != d->currentPlayCard) {
+			d->stopStreams();
+			d->initializeStreams();
+			d->startStreams(CallSession::State::StreamsRunning);
+		}
+
+	#ifdef VIDEO_ENABLED
+		else if (d->videoStream) {
 			const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(getCore()->getCCore());
 			MSVideoSize vsize;
 			vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
@@ -4414,7 +4475,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 			else
 				video_stream_update_video_params(d->videoStream);
 		}
-#endif
+	#endif
 	}
 	return result;
 }
@@ -4678,7 +4739,7 @@ float MediaSession::getPlayVolume () const {
 
 float MediaSession::getRecordVolume () const {
 	L_D();
-	if (d->audioStream && d->audioStream->volsend && !d->audioMuted && (d->state == CallSession::State::StreamsRunning)) {
+	if (d->audioStream && d->audioStream->volsend && !d->microphoneMuted && (d->state == CallSession::State::StreamsRunning)) {
 		float vol = 0;
 		ms_filter_call_method(d->audioStream->volsend, MS_VOLUME_GET, &vol);
 		return vol;

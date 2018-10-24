@@ -81,25 +81,18 @@ namespace linphone {
 				if (cppPtr == NULL) {
 					return std::make_shared<T>(ptr, takeRef);
 				} else {
+					if (!takeRef) unrefCPtr(ptr);
 					return std::static_pointer_cast<T,Object>(cppPtr->shared_from_this());
 				}
 			}
 		}
 		template <class T>
 		static std::shared_ptr<const T> cPtrToSharedPtr(const void *ptr, bool takeRef=true) {
-			if (ptr == NULL) {
-				return nullptr;
-			} else {
-				Object *cppPtr = getBackPtrFromCPtr(ptr);
-				if (cppPtr == NULL) {
-					return std::make_shared<const T>((void *)ptr, takeRef);
-				} else {
-					return std::static_pointer_cast<const T,Object>(cppPtr->shared_from_this());
-				}
-			}
+			return cPtrToSharedPtr<T>(const_cast<void *>(ptr), takeRef);
 		}
 		static void *sharedPtrToCPtr(const std::shared_ptr<const Object> &sharedPtr);
 
+		static void unrefCPtr(void *ptr);
 
 	private:
 		LINPHONECXX_PUBLIC std::map<std::string,void *> &getUserData() const;

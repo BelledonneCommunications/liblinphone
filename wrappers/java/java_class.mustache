@@ -161,10 +161,7 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
 		loadOptionalLibrary("ffmpeg-linphone");
 		System.loadLibrary("bctoolbox");
 		System.loadLibrary("ortp");
-		//System.loadLibrary("soci_core");
-		//System.loadLibrary("soci_sqlite3");
-		System.loadLibrary("mediastreamer_base");
-		System.loadLibrary("mediastreamer_voip");
+		System.loadLibrary("mediastreamer");
 		System.loadLibrary("linphone");
 		Version.dumpCapabilities();
 	}

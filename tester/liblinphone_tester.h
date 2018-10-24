@@ -80,6 +80,7 @@ extern test_suite_t setup_test_suite;
 extern test_suite_t stun_test_suite;
 extern test_suite_t tunnel_test_suite;
 extern test_suite_t upnp_test_suite;
+extern test_suite_t utils_test_suite;
 extern test_suite_t video_test_suite;
 
 #ifdef VCARD_ENABLED

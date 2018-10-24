@@ -306,8 +306,8 @@ class CppTranslator(object):
 			cppReturnType = exprtype.translate(self.langTranslator, namespace=usedNamespace)
 			if exprtype.desc.refcountable:
 				cppReturnType = CppTranslator.sharedPtrTypeExtractor.match(cppReturnType).group(2)
-				
-				if isinstance(exprtype.parent, AbsApi.Method) and len(exprtype.parent.name.words) >=1 and (exprtype.parent.name.words == ['new'] or exprtype.parent.name.words[0] == 'create'):
+
+				if isinstance(exprtype.parent, AbsApi.Method) and len(exprtype.parent.name.words) >=1 and (exprtype.parent.name.words[0] == 'create' or exprtype.parent.name.words[0] == 'new'):
 					return 'Object::cPtrToSharedPtr<{0}>({1}, false)'.format(cppReturnType, cExpr)
 				else:
 					return 'Object::cPtrToSharedPtr<{0}>({1})'.format(cppReturnType, cExpr)

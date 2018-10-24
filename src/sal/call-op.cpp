@@ -46,6 +46,7 @@ int SalCallOp::setLocalMediaDescription (SalMediaDescription *desc) {
 		belle_sip_error_code error;
 		belle_sdp_session_description_t *sdp = media_description_to_sdp(desc);
 		vector<char> buffer = marshalMediaDescription(sdp, error);
+		belle_sip_object_unref(sdp);
 		if (error != BELLE_SIP_OK)
 			return -1;
 
@@ -76,7 +77,7 @@ int SalCallOp::setLocalBody (const Content &body) {
 	return setLocalBody(move(bodyCopy));
 }
 
-int SalCallOp::setLocalBody (const Content &&body) {
+int SalCallOp::setLocalBody (Content &&body) {
 	if (!body.isValid())
 		return -1;
 
@@ -97,7 +98,7 @@ int SalCallOp::setLocalBody (const Content &&body) {
 		mLocalMedia = desc;
 	}
 
-	mLocalBody = body;
+	mLocalBody = move(body);
 	return 0;
 }
 
@@ -310,8 +311,13 @@ void SalCallOp::sdpProcess () {
 				mResult->streams[i].rtp_port = mRemoteMedia->streams[i].rtp_port;
 				strcpy(mResult->streams[i].rtcp_addr, mRemoteMedia->streams[i].rtcp_addr);
 				mResult->streams[i].rtcp_port = mRemoteMedia->streams[i].rtcp_port;
-				if (sal_stream_description_has_srtp(&mResult->streams[i]))
-					mResult->streams[i].crypto[0] = mRemoteMedia->streams[i].crypto[0];
+				if (sal_stream_description_has_srtp(&mResult->streams[i])) {
+					int cryptoIdx = Sal::findCryptoIndexFromTag(	mRemoteMedia->streams[i].crypto, static_cast<unsigned char>(mResult->streams[i].crypto[0].tag));
+					if (cryptoIdx >= 0)
+						mResult->streams[i].crypto[0] = mRemoteMedia->streams[i].crypto[cryptoIdx];
+					else
+						lError() << "Failed to find crypto algo with tag: " << mResult->streams[i].crypto_local_tag << "from resulting description [" << mResult << "]";
+				}
 			}
 		}
 	}
@@ -438,6 +444,8 @@ void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event
 								lError() << "This call has been already terminated";
 								return;
 							}
+							// Ref the ack request so that it is not destroyed when the call_ack_being_sent callbacks is called
+							belle_sip_object_ref(ack);
 							if (op->mSdpAnswer) {
 								setSdp(BELLE_SIP_MESSAGE(ack), op->mSdpAnswer);
 								belle_sip_object_unref(op->mSdpAnswer);
@@ -447,6 +455,7 @@ void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event
 							op->mRoot->mCallbacks.call_accepted(op); // INVITE
 							op->mRoot->mCallbacks.call_ack_being_sent(op, reinterpret_cast<SalCustomHeader *>(ack));
 							belle_sip_dialog_send_ack(op->mDialog, ack);
+							belle_sip_object_unref(ack);
 							op->mState = State::Active;
 						} else if (code >= 300) {
 							op->setError(response, false);

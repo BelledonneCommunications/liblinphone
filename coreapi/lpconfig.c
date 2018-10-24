@@ -519,6 +519,7 @@ const char* linphone_config_load_from_xml_file(LinphoneConfig *lpc, const char *
 	if (path) {
 		context = xml2lpc_context_new(NULL, NULL);
 		error_msg = _linphone_config_xml_convert(lpc, context, xml2lpc_set_xml_file(context, path));
+		bctbx_free(path);
 	}
 	if (context) xml2lpc_context_destroy(context);
 	return error_msg;

@@ -1591,11 +1591,20 @@ LINPHONE_PUBLIC void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val);
 
 /**
  * Same as linphone_core_get_primary_contact() but the result is a #LinphoneAddress object
- * instead of const char*
+ * instead of const char *.
+ *
+ * @ingroup proxies
+ * @deprecated Use linphone_core_create_primary_contact_parsed() instead. Deprecated since 2018-10-22.
+**/
+LINPHONE_PUBLIC LinphoneAddress *linphone_core_get_primary_contact_parsed(LinphoneCore *lc);
+
+/**
+ * Same as linphone_core_get_primary_contact() but the result is a #LinphoneAddress object
+ * instead of const char *.
  *
  * @ingroup proxies
 **/
-LINPHONE_PUBLIC LinphoneAddress *linphone_core_get_primary_contact_parsed(LinphoneCore *lc);
+LINPHONE_PUBLIC LinphoneAddress *linphone_core_create_primary_contact_parsed (LinphoneCore *lc);
 
 LINPHONE_PUBLIC const char * linphone_core_get_identity(LinphoneCore *lc);
 
@@ -3284,7 +3293,7 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_call_logs(LinphoneCore *l
  * At the contrary of linphone_core_get_call_logs, it is your responsibility to unref the logs and free this list once you are done using it.
  * @param[in] lc #LinphoneCore object
  * @param[in] addr #LinphoneAddress object
- * @return \bctbx_list{LinphoneCallLog}
+ * @return \bctbx_list{LinphoneCallLog} \onTheFlyList
 **/
 LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_call_history_for_address(LinphoneCore *lc, const LinphoneAddress *addr);
 

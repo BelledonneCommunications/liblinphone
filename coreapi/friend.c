@@ -25,20 +25,13 @@
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 
-#ifdef SQLITE_STORAGE_ENABLED
-	#ifndef _WIN32
-		#if !defined(__ANDROID__) && !defined(__QNXNTO__)
-			#include <langinfo.h>
-			#include <iconv.h>
-			#include <string.h>
-	#endif
-#else
-	#include <Windows.h>
-#endif
+#if !defined(_WIN32) && !defined(__ANDROID__) && !defined(__QNXNTO__)
+	#include <langinfo.h>
+	#include <iconv.h>
+	#include <string.h>
+#endif // if !defined(_WIN32) && !defined(__ANDROID__) && !defined(__QNXNTO__)
 
 #define MAX_PATH_SIZE 1024
-	#include "sqlite3.h"
-#endif
 
 #include "c-wrapper/c-wrapper.h"
 #include "core/core-p.h"
@@ -778,16 +771,8 @@ void linphone_friend_update_subscribes(LinphoneFriend *fr, bool_t only_when_regi
 }
 
 void linphone_friend_save(LinphoneFriend *fr, LinphoneCore *lc) {
-	if (!lc) return;
-#ifdef SQLITE_STORAGE_ENABLED
-	if (lc->friends_db_file) {
+	if (lc && lc->friends_db_file)
 		linphone_core_store_friend_in_db(lc, fr);
-	} else {
-		linphone_core_write_friends_config(lc);
-	}
-#else
-	linphone_core_write_friends_config(lc);
-#endif
 }
 
 void linphone_friend_apply(LinphoneFriend *fr, LinphoneCore *lc) {
@@ -1077,50 +1062,6 @@ const char *__policy_enum_to_str(LinphoneSubscribePolicy pol){
 	return "wait";
 }
 
-void linphone_friend_write_to_config_file(LpConfig *config, LinphoneFriend *lf, int index){
-	char key[50];
-	char *tmp;
-	const char *refkey;
-
-	sprintf(key,"friend_%i",index);
-
-	if (lf==NULL){
-		lp_config_clean_section(config,key);
-		return;
-	}
-	if (lf->uri!=NULL){
-		tmp=linphone_address_as_string(lf->uri);
-		if (tmp==NULL) {
-			return;
-		}
-		lp_config_set_string(config,key,"url",tmp);
-		ms_free(tmp);
-	}
-	lp_config_set_string(config,key,"pol",__policy_enum_to_str(lf->pol));
-	lp_config_set_int(config,key,"subscribe",lf->subscribe);
-	lp_config_set_int(config, key, "presence_received", lf->presence_received);
-
-	refkey=linphone_friend_get_ref_key(lf);
-	if (refkey){
-		lp_config_set_string(config,key,"refkey",refkey);
-	}
-}
-
-void linphone_core_write_friends_config(LinphoneCore* lc) {
-	bctbx_list_t *elem;
-	int i;
-	int store_friends;
-
-	if (! linphone_core_ready(lc)) return; /*dont write config when reading it !*/
-	store_friends = lp_config_get_int(lc->config, "misc", "store_friends", 1);
-	if (store_friends) {
-		for (elem=linphone_core_get_default_friend_list(lc)->friends,i=0; elem!=NULL; elem=bctbx_list_next(elem),i++){
-			linphone_friend_write_to_config_file(lc->config,(LinphoneFriend*)bctbx_list_get_data(elem),i);
-		}
-		linphone_friend_write_to_config_file(lc->config,NULL,i);	/* set the end */
-	}
-}
-
 LinphoneCore *linphone_friend_get_core(const LinphoneFriend *fr){
 	return fr->lc;
 }
@@ -1238,8 +1179,6 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneFriend, belle_sip_object_t,
 /*******************************************************************************
  * SQL storage related functions                                               *
  ******************************************************************************/
-
-#ifdef SQLITE_STORAGE_ENABLED
 
 static void linphone_create_friends_table(sqlite3* db) {
 	char* errmsg = NULL;
@@ -1697,36 +1636,6 @@ bctbx_list_t* linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc) {
 
 	return result;
 }
-
-#else
-
-void linphone_core_friends_storage_init(LinphoneCore *lc) {
-}
-
-void linphone_core_friends_storage_close(LinphoneCore *lc) {
-}
-
-void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
-}
-
-void linphone_core_store_friends_list_in_db(LinphoneCore *lc, LinphoneFriendList *list) {
-}
-
-void linphone_core_remove_friend_from_db(LinphoneCore *lc, LinphoneFriend *lf) {
-}
-
-void linphone_core_remove_friends_list_from_db(LinphoneCore *lc, LinphoneFriendList *list) {
-}
-
-bctbx_list_t* linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFriendList *list) {
-	return NULL;
-}
-
-bctbx_list_t* linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc) {
-	return NULL;
-}
-
-#endif
 
 void linphone_core_set_friends_database_path(LinphoneCore *lc, const char *path) {
 	if (!linphone_core_conference_server_enabled(lc))

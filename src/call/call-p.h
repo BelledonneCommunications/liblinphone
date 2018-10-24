@@ -48,7 +48,6 @@ public:
 	std::shared_ptr<Call> startReferredCall (const MediaSessionParams *params);
 
 	virtual std::shared_ptr<CallSession> getActiveSession () const { return nullptr; }
-	bool getAudioMuted () const;
 	std::shared_ptr<RealTimeTextChatRoom> getChatRoom ();
 
 	LinphoneProxyConfig *getDestProxy () const;
@@ -56,9 +55,16 @@ public:
 	unsigned int getMediaStartCount () const;
 	MediaStream *getMediaStream (LinphoneStreamType type) const;
 	SalCallOp *getOp () const;
+
 	bool getRingingBeep () const { return ringingBeep; }
-	void setAudioMuted (bool value);
 	void setRingingBeep (bool value) { ringingBeep = value; }
+
+	bool getSpeakerMuted () const;
+	void setSpeakerMuted (bool muted);
+
+	bool getMicrophoneMuted () const;
+	void setMicrophoneMuted (bool muted);
+
 	LinphoneCallStats *getStats (LinphoneStreamType type) const;
 
 	void createPlayer () const;

@@ -234,6 +234,7 @@ void ChatRoomPrivate::notifyIsComposingReceived (const Address &remoteAddress, b
 void ChatRoomPrivate::notifyStateChanged () {
 	L_Q();
 	LinphoneChatRoom *cr = getCChatRoom();
+	lInfo() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(state);
 	linphone_core_notify_chat_room_state_changed(q->getCore()->getCCore(), cr, (LinphoneChatRoomState)state);
 	_linphone_chat_room_notify_state_changed(cr, (LinphoneChatRoomState)state);
 }

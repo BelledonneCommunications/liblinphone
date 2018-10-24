@@ -458,11 +458,11 @@ LinphoneReason linphone_reason_from_sal(SalReason r){
  * @ingroup media_parameters
 **/
 void linphone_core_set_video_display_filter(LinphoneCore *lc, const char *filter_name){
-	lp_config_set_string(lc->config,"video","displaytype",filter_name);
+	lp_config_set_string(lc->config,"video", "displaytype", filter_name);
 }
 
 const char *linphone_core_get_video_display_filter(LinphoneCore *lc){
-	return lp_config_get_string(lc->config,"video","displaytype",NULL);
+	return lp_config_get_string(lc->config, "video","displaytype", NULL);
 }
 
 void linphone_core_set_echo_canceller_filter_name(LinphoneCore *lc, const char *filtername) {
@@ -932,12 +932,11 @@ void linphone_core_report_call_log(LinphoneCore *lc, LinphoneCallLog *call_log){
 		return;
 	// End of workaround
 
-#ifdef SQLITE_STORAGE_ENABLED
 	if (lc->logs_db) {
 		call_logs_sqlite_db_found = TRUE;
 		linphone_core_store_call_log(lc, call_log);
 	}
-#endif
+
 	if (!call_logs_sqlite_db_found) {
 		lc->call_logs=bctbx_list_prepend(lc->call_logs,linphone_call_log_ref(call_log));
 		if (bctbx_list_size(lc->call_logs)>(size_t)lc->max_call_logs){

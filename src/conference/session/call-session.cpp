@@ -104,6 +104,8 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 								int code = linphone_error_info_get_protocol_code(ei);
 								if ((code >= 200) && (code < 300))
 									log->status = LinphoneCallAcceptedElsewhere;
+								else if (code == 487)
+									log->status = LinphoneCallMissed;
 							}
 						}
 						break;

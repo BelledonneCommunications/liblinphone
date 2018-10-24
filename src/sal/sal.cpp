@@ -808,6 +808,13 @@ belle_sip_response_t *Sal::createResponseFromRequest (belle_sip_request_t *reque
 	return response;
 }
 
+int Sal::findCryptoIndexFromTag (const SalSrtpCryptoAlgo crypto[], unsigned char tag) {
+	for (int i = 0; i < SAL_CRYPTO_ALGO_MAX; i++) {
+		if (crypto[i].tag == tag)
+			return i;
+	}
+	return -1;
+}
 
 
 //***********************************
