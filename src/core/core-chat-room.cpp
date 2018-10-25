@@ -137,7 +137,12 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const strin
 	shared_ptr<AbstractChatRoom> chatRoom;
 	{
 		shared_ptr<ClientGroupChatRoom> clientGroupChatRoom = make_shared<ClientGroupChatRoom>(
-			q->getSharedFromThis(), usedUri, IdentityAddress(from), subject, content, isEncrypted
+			q->getSharedFromThis(),
+			usedUri,
+			IdentityAddress(from),
+			subject,
+			content,
+			isEncrypted
 		);
 		ClientGroupChatRoomPrivate *dClientGroupChatRoom = clientGroupChatRoom->getPrivate();
 
