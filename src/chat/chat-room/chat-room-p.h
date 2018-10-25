@@ -106,7 +106,6 @@ private:
 	std::unique_ptr<IsComposing> isComposingHandler;
 
 	bool isComposing = false;
-	bool isEncrypted = false;
 
 	L_DECLARE_PUBLIC(ChatRoom);
 };

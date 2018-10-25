@@ -48,7 +48,7 @@ public:
 		const IdentityAddress &me,
 		const std::string &subject,
 		const Content &content,
-		const bool isEncrypted
+		bool isEncrypted = false
 	);
 
 	ClientGroupChatRoom (
@@ -59,8 +59,7 @@ public:
 		const std::string &subject,
 		std::list<std::shared_ptr<Participant>> &&participants,
 		unsigned int lastNotifyId,
-		bool hasBeenLeft = false,
-		const bool isEncrypted = false
+		bool hasBeenLeft = false
 	);
 
 	~ClientGroupChatRoom ();
