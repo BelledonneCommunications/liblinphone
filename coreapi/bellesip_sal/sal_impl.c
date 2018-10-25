@@ -85,11 +85,6 @@ int sal_auth_compute_ha1(const char* userid,const char* realm,const char* passwo
 	
 }
 
-int sal_auth_compute_ha1_for_algo(const char* userid,const char* realm,const char* password, char ha1[65]) {
-	return belle_sip_auth_helper_compute_ha1_for_algorithm(userid, realm, password, ha1, 65, "SHA-256");
-	
-}
-
 int sal_auth_compute_ha1_for_algorithm(
 	const char *userid,
 	const char *realm,
