@@ -1745,6 +1745,7 @@ static void publish_with_network_state_changes(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+#if 0
 static void simple_bodyless_list_subscription(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneFriendList *friendList = linphone_core_create_friend_list(marie->lc);
@@ -1855,6 +1856,7 @@ static void multiple_bodyless_list_subscription_with_rc(void) {
 end:
 	linphone_core_manager_destroy(marie);
 }
+#endif
 
 test_t presence_server_tests[] = {
 	TEST_NO_TAG("Simple Publish", simple_publish),
@@ -1886,9 +1888,11 @@ test_t presence_server_tests[] = {
 	TEST_NO_TAG("Extended notify only when both side subscribed to each other 2", extended_notify_only_both_side_subscribed2),
 	TEST_NO_TAG("Extended notify only when subscribe then unsubscribe then re-subscribe", extended_notify_sub_unsub_sub),
 	TEST_NO_TAG("Extended notify only when subscribe then unsubscribe then re-subscribe 2", extended_notify_sub_unsub_sub2),
+#if 0
 	TEST_ONE_TAG("Simple bodyless list subscription", simple_bodyless_list_subscription, "bodyless"),
 	TEST_ONE_TAG("Multiple bodyless list subscription", multiple_bodyless_list_subscription, "bodyless"),
 	TEST_ONE_TAG("Multiple bodyless list subscription with rc", multiple_bodyless_list_subscription_with_rc, "bodyless"),
+#endif
 };
 
 test_suite_t presence_server_test_suite = {"Presence using server", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

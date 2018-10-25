@@ -37,6 +37,7 @@
 #include "linphone/api/c-magic-search.h"
 #include "linphone/api/c-participant-imdn-state.h"
 #include "linphone/api/c-participant.h"
+#include "linphone/api/c-participant-device.h"
 #include "linphone/api/c-search-result.h"
 #include "linphone/api/c-types.h"
 
