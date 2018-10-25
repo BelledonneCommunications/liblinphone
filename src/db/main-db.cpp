@@ -982,7 +982,7 @@ long long MainDbPrivate::insertConferenceSecurityEvent (const shared_ptr<EventLo
 		return -1;
 
 	const int &securityEventType = int(static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getSecurityEventType());
-	const string &faultyDevice = static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getFaultyDevice().asString();
+	const string &faultyDevice = static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getFaultyDeviceAddress().asString();
 
 	// insert security event into new table "conference_security_event"
 	soci::session *session = dbSession.getBackendSession();
