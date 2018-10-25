@@ -480,7 +480,7 @@ void _linphone_chat_room_notify_state_changed(LinphoneChatRoom *cr, LinphoneChat
 	NOTIFY_IF_EXIST(StateChanged, state_changed, cr, newState)
 }
 
-void _linphone_chat_room_notify_security_event(LinphoneChatRoom *cr, LinphoneEventLog *event_log) {
+void _linphone_chat_room_notify_security_event(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
 	NOTIFY_IF_EXIST(SecurityEvent, security_event, cr, event_log)
 }
 
