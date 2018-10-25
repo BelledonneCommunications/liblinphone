@@ -70,7 +70,8 @@ public class AndroidPlatformHelper {
 	private String mGrammarCpimFile;
 	private String mGrammarVcardFile ;
 	private String mUserCertificatePath;
-	private Surface mSurface;
+	private Surface mSurfaceCapture;
+	private Surface mSurfacePreview;
 
 	private native void setNativePreviewWindowId(long nativePtr, Object view);
 	private native void setNativeVideoWindowId(long nativePtr, Object view);
@@ -146,7 +147,7 @@ public class AndroidPlatformHelper {
 	public String getCachePath() {
 		return mContext.getCacheDir().getAbsolutePath();
 	}
-	
+
 	public String getNativeLibraryDir(){
 		ApplicationInfo info = mContext.getApplicationInfo();
 		return info.nativeLibraryDir;
@@ -282,12 +283,13 @@ public class AndroidPlatformHelper {
 			@Override
 			public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
 				Log.i("Preview window surface is available");
-				setNativePreviewWindowId(mNativePtr, surface);
+				mSurfacePreview = new Surface(surface);
+				//API >= 24 = Surface else SurfaceTexture
+				setNativePreviewWindowId(mNativePtr, mSurfacePreview);
 			}
 
 			@Override
 			public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-
 			}
 
 			@Override
@@ -304,6 +306,7 @@ public class AndroidPlatformHelper {
 		});
 		if (textureView.isAvailable()) {
 			Log.i("Preview window surface is available");
+			mSurfacePreview = new Surface(textureView.getSurfaceTexture());
 			setNativePreviewWindowId(mNativePtr, textureView.getSurfaceTexture());
 		}
 	}
@@ -320,8 +323,8 @@ public class AndroidPlatformHelper {
 			@Override
 			public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
 				Log.i("Rendering window surface is available");
-				mSurface = new Surface(surface);
-				setNativeVideoWindowId(mNativePtr, mSurface);
+				mSurfaceCapture = new Surface(surface);
+				setNativeVideoWindowId(mNativePtr, mSurfaceCapture);
 			}
 
 			@Override
@@ -343,8 +346,8 @@ public class AndroidPlatformHelper {
 		});
 		if (textureView.isAvailable()) {
 			Log.i("Rendering window surface is available");
-			mSurface = new Surface(textureView.getSurfaceTexture());
-			setNativeVideoWindowId(mNativePtr, mSurface);
+			mSurfaceCapture = new Surface(textureView.getSurfaceTexture());
+			setNativeVideoWindowId(mNativePtr, mSurfaceCapture);
 		}
 	}
 };
