@@ -33,7 +33,7 @@ public:
 	SalMediaDescription *getLocalMediaDescription () const { return mLocalMedia; }
 	int setLocalMediaDescription (SalMediaDescription *desc);
 	int setLocalBody (const Content &body);
-	int setLocalBody (const Content &&body);
+	int setLocalBody (Content &&body);
 
 	SalMediaDescription *getRemoteMediaDescription () { return mRemoteMedia; }
 	const Content &getRemoteBody () const { return mRemoteBody; }

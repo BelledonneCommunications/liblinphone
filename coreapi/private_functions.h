@@ -70,9 +70,6 @@ LINPHONE_PUBLIC LinphoneCallLog * linphone_call_get_log(const LinphoneCall *call
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC IceSession *linphone_call_get_ice_session(const LinphoneCall *call);
 
-bool_t linphone_call_get_audio_muted(const LinphoneCall *call);
-void linphone_call_set_audio_muted(LinphoneCall *call, bool_t value);
-
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC bool_t linphone_call_get_all_muted(const LinphoneCall *call);
 
@@ -256,8 +253,6 @@ LINPHONE_PUBLIC bool_t _linphone_call_stats_rtcp_received_via_mux (const Linphon
 bool_t linphone_core_media_description_contains_video_stream(const SalMediaDescription *md);
 
 void linphone_core_send_initial_subscribes(LinphoneCore *lc);
-void linphone_core_write_friends_config(LinphoneCore* lc);
-void linphone_friend_write_to_config_file(LinphoneConfig *config, LinphoneFriend *lf, int index);
 LinphoneFriend * linphone_friend_new_from_config_file(struct _LinphoneCore *lc, int index);
 
 void linphone_proxy_config_update(LinphoneProxyConfig *cfg);
@@ -394,9 +389,7 @@ LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpCon
 int linphone_upnp_init(LinphoneCore *lc);
 void linphone_upnp_destroy(LinphoneCore *lc);
 
-#ifdef SQLITE_STORAGE_ENABLED
 int _linphone_sqlite3_open(const char *db_file, sqlite3 **db);
-#endif
 
 LinphoneChatMessageStateChangedCb linphone_chat_message_get_message_state_changed_cb(LinphoneChatMessage* msg);
 void linphone_chat_message_set_message_state_changed_cb(LinphoneChatMessage* msg, LinphoneChatMessageStateChangedCb cb);
@@ -590,6 +583,9 @@ SalCustomHeader *linphone_info_message_get_headers (const LinphoneInfoMessage *i
 void linphone_info_message_set_headers (LinphoneInfoMessage *im, const SalCustomHeader *headers);
 
 void _linphone_core_set_log_handler(OrtpLogFunc logfunc);
+
+void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id);
+void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id);
 
 #ifdef __cplusplus
 }

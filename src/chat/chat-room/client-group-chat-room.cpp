@@ -648,7 +648,8 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	L_D();
 
 	if (getState() != ChatRoom::State::Created) {
-		lWarning() << "First notify received in ClientGroupChatRoom that is not in the Created state, ignoring it!";
+		lWarning() << "First notify received in ClientGroupChatRoom that is not in the Created state ["
+			<< Utils::toString(getState()) << "], ignoring it!";
 		return;
 	}
 

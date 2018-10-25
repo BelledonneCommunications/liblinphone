@@ -32,9 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "conference_private.h"
 #include "logger/logger.h"
 
-#ifdef SQLITE_STORAGE_ENABLED
 #include "sqlite3_bctbx_vfs.h"
-#endif
 
 #include <math.h>
 #include <sys/types.h>
@@ -1340,6 +1338,9 @@ static void certificates_config_read(LinphoneCore *lc) {
 }
 
 static void bodyless_config_read(LinphoneCore *lc) {
+	// Clean previous friend lists
+	linphone_core_clear_bodyless_friend_lists(lc);
+
 	bctbx_list_t *bodyless_lists = linphone_config_get_string_list(lc->config, "sip", "bodyless_lists", NULL);
 	while (bodyless_lists) {
 		char *name = (char *)bodyless_lists->data;
@@ -1439,6 +1440,13 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	tmp=lp_config_get_int(lc->config,"sip","delayed_timeout",4);
 	linphone_core_set_delayed_timeout(lc,tmp);
+
+
+	/*In case of remote provisionning, function sip_config_read is initialy called in core_init, then in state ConfiguringSuccessfull*/
+	/*Accordingly, to avoid proxy_config to be added twice, it is mandatory to reset proxy config list from LinphoneCore*/
+	/*We assume, lc->config contains an accurate list of proxy_config, so no need to keep it from LinphoneCore */
+	/*Consequence in case of remote provisionning, linphone_core_add_proxy function should not be called before state GlobalOn*/
+	linphone_core_clear_proxy_config(lc);
 
 	/* get proxies config */
 	for(i=0;; i++){
@@ -1852,33 +1860,14 @@ static void read_friends_from_rc(LinphoneCore *lc)
 	}
 }
 
-static void ui_config_read(LinphoneCore *lc)
-{
-#ifndef SQLITE_STORAGE_ENABLED
-	read_friends_from_rc(lc);
-	lc->call_logs = call_logs_read_from_config_file(lc);
-#else
+static void ui_config_read(LinphoneCore *lc) {
 	if (!lc->friends_db) {
 		read_friends_from_rc(lc);
 	}
 	if (!lc->logs_db) {
 		lc->call_logs = linphone_core_read_call_logs_from_config_file(lc);
 	}
-#endif
 }
-
-/*
-static void autoreplier_config_init(LinphoneCore *lc)
-{
-	autoreplier_config_t *config=&lc->autoreplier_conf;
-	config->enabled=lp_config_get_int(lc->config,"autoreplier","enabled",0);
-	config->after_seconds=lp_config_get_int(lc->config,"autoreplier","after_seconds",6);
-	config->max_users=lp_config_get_int(lc->config,"autoreplier","max_users",1);
-	config->max_rec_time=lp_config_get_int(lc->config,"autoreplier","max_rec_time",60);
-	config->max_rec_msg=lp_config_get_int(lc->config,"autoreplier","max_rec_msg",10);
-	config->message=lp_config_get_string(lc->config,"autoreplier","message",NULL);
-}
-*/
 
 bool_t linphone_core_tunnel_available(void){
 #ifdef TUNNEL_ENABLED
@@ -2394,9 +2383,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	lc->ringtoneplayer = linphone_ringtoneplayer_new();
 
-#ifdef SQLITE_STORAGE_ENABLED
 	sqlite3_bctbx_vfs_register(0);
-#endif
 
 	lc->qrcode_rect.h = 0;
 	lc->qrcode_rect.w = 0;
@@ -2681,6 +2668,10 @@ LinphoneAddress *linphone_core_get_primary_contact_parsed(LinphoneCore *lc){
 	return linphone_address_new(linphone_core_get_primary_contact(lc));
 }
 
+LinphoneAddress *linphone_core_create_primary_contact_parsed (LinphoneCore *lc) {
+	return linphone_address_new(linphone_core_get_primary_contact(lc));
+}
+
 LinphoneStatus linphone_core_set_audio_codecs(LinphoneCore *lc, bctbx_list_t *codecs){
 	if (lc->codecs_conf.audio_codecs!=NULL) bctbx_list_free(lc->codecs_conf.audio_codecs);
 	lc->codecs_conf.audio_codecs=codecs;
@@ -2757,13 +2748,22 @@ LinphoneFriendList *linphone_core_get_friend_list_by_name(const LinphoneCore *lc
 void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
 	bctbx_list_t *elem = bctbx_list_find(lc->friends_lists, list);
 	if (elem == NULL) return;
-#ifdef SQLITE_STORAGE_ENABLED
 	linphone_core_remove_friends_list_from_db(lc, list);
-#endif
 	linphone_core_notify_friend_list_removed(lc, list);
 	list->lc = NULL;
 	linphone_friend_list_unref(list);
 	lc->friends_lists = bctbx_list_erase_link(lc->friends_lists, elem);
+}
+
+void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc) {
+	bctbx_list_t* list = bctbx_list_copy(linphone_core_get_friends_lists((const LinphoneCore *)lc));
+	bctbx_list_t* copy = list;
+	for (; list != NULL; list = list->next) {
+		LinphoneFriendList *friends = (LinphoneFriendList *)list->data;
+		if (linphone_friend_list_is_subscription_bodyless(friends))
+			linphone_core_remove_friend_list(lc, (LinphoneFriendList *)list->data);
+	}
+	bctbx_list_free(copy);
 }
 
 void linphone_core_add_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
@@ -2771,9 +2771,7 @@ void linphone_core_add_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
 		list->lc = lc;
 	}
 	lc->friends_lists = bctbx_list_append(lc->friends_lists, linphone_friend_list_ref(list));
-#ifdef SQLITE_STORAGE_ENABLED
 	linphone_core_store_friends_list_in_db(lc, list);
-#endif
 	linphone_core_notify_friend_list_created(lc, list);
 }
 
@@ -4569,10 +4567,10 @@ void linphone_core_enable_mic(LinphoneCore *lc, bool_t enable) {
 	list = linphone_core_get_calls(lc);
 	for (elem = list; elem != NULL; elem = elem->next) {
 		call = (LinphoneCall *)elem->data;
-		linphone_call_set_audio_muted(call, !enable);
+		linphone_call_set_microphone_muted(call, !enable);
 		AudioStream *astream = reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
 		if (astream)
-			linphone_core_mute_audio_stream(lc, astream, linphone_call_get_audio_muted(call));
+			linphone_core_mute_audio_stream(lc, astream, linphone_call_get_microphone_muted(call));
 	}
 }
 
@@ -4584,7 +4582,7 @@ bool_t linphone_core_mic_enabled(LinphoneCore *lc) {
 		ms_warning("%s(): No current call!", __FUNCTION__);
 		return TRUE;
 	}
-	return !linphone_call_get_audio_muted(call);
+	return !linphone_call_get_microphone_muted(call);
 }
 
 bool_t linphone_core_is_rtp_muted(LinphoneCore *lc){
@@ -4594,7 +4592,7 @@ bool_t linphone_core_is_rtp_muted(LinphoneCore *lc){
 		return FALSE;
 	}
 	if( linphone_core_get_rtp_no_xmit_on_audio_mute(lc)){
-		return linphone_call_get_audio_muted(call);
+		return linphone_call_get_microphone_muted(call);
 	}
 	return FALSE;
 }
@@ -4807,23 +4805,19 @@ const char * linphone_core_get_call_logs_database_path(LinphoneCore *lc) {
 }
 
 const bctbx_list_t* linphone_core_get_call_logs(LinphoneCore *lc) {
-#ifdef SQLITE_STORAGE_ENABLED
 	if (lc->logs_db) {
 		linphone_core_get_call_history(lc);
 	}
-#endif
 	return lc->call_logs;
 }
 
 void linphone_core_clear_call_logs(LinphoneCore *lc) {
 	bool_t call_logs_sqlite_db_found = FALSE;
 	lc->missed_calls=0;
-#ifdef SQLITE_STORAGE_ENABLED
 	if (lc->logs_db) {
 		call_logs_sqlite_db_found = TRUE;
 		linphone_core_delete_call_history(lc);
 	}
-#endif
 	if (!call_logs_sqlite_db_found) {
 		bctbx_list_for_each(lc->call_logs, (void (*)(void*))linphone_call_log_unref);
 		lc->call_logs = bctbx_list_free(lc->call_logs);
@@ -4841,12 +4835,10 @@ void linphone_core_reset_missed_calls_count(LinphoneCore *lc) {
 
 void linphone_core_remove_call_log(LinphoneCore *lc, LinphoneCallLog *cl) {
 	bool_t call_logs_sqlite_db_found = FALSE;
-#ifdef SQLITE_STORAGE_ENABLED
 	if (lc->logs_db) {
 		call_logs_sqlite_db_found = TRUE;
 		linphone_core_delete_call_log(lc, cl);
 	}
-#endif
 	lc->call_logs = bctbx_list_remove(lc->call_logs, cl);
 	if (!call_logs_sqlite_db_found) {
 		call_logs_write_to_config_file(lc);
@@ -4860,10 +4852,6 @@ void linphone_core_migrate_logs_from_rc_to_db(LinphoneCore *lc) {
 	size_t original_logs_count, migrated_logs_count;
 	int i;
 
-#ifndef SQLITE_STORAGE_ENABLED
-	ms_warning("linphone has been compiled without sqlite, can't migrate call logs");
-	return;
-#endif
 	if (!lc) {
 		return;
 	}
@@ -5371,7 +5359,7 @@ static void unset_video_window_id(LinphoneCore *lc, bool_t preview, void *id){
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->unsetVideoWindowId(!!preview, id);
 }
 
-void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id){
+void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 	if ((id == NULL)
 #ifndef _WIN32
 		|| ((unsigned long)id == (unsigned long)-1)
@@ -5389,6 +5377,14 @@ void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id){
 				video_stream_set_native_window_id(vstream,id);
 		}
 	}
+#endif
+}
+
+void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
+#ifdef ANDROID
+	getPlatformHelpers(lc)->setVideoWindow(id);
+#else
+	_linphone_core_set_native_video_window_id(lc, id);
 #endif
 }
 
@@ -5412,7 +5408,7 @@ void * linphone_core_get_native_preview_window_id(const LinphoneCore *lc){
 	return 0;
 }
 
-void linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id){
+void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
 	if ((id == NULL)
 #ifndef _WIN32
 		|| ((unsigned long)id == (unsigned long)-1)
@@ -5432,6 +5428,14 @@ void linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id){
 			video_preview_set_native_window_id(lc->previewstream,id);
 		}
 	}
+#endif
+}
+
+void linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
+#ifdef ANDROID
+	getPlatformHelpers(lc)->setVideoPreviewWindow(id);
+#else
+	_linphone_core_set_native_preview_window_id(lc, id);
 #endif
 }
 
@@ -6599,8 +6603,6 @@ void linphone_core_remove_iterate_hook(LinphoneCore *lc, LinphoneCoreIterateHook
 // TODO: Remove me later, code found in message_storage.c.
 // =============================================================================
 
-#ifdef SQLITE_STORAGE_ENABLED
-
 int _linphone_sqlite3_open(const char *db_file, sqlite3 **db) {
 	char* errmsg = NULL;
 	int ret;
@@ -6630,8 +6632,6 @@ int _linphone_sqlite3_open(const char *db_file, sqlite3 **db) {
 
 	return ret;
 }
-
-#endif
 
 // =============================================================================
 
@@ -6676,7 +6676,8 @@ void linphone_core_set_zrtp_secrets_file(LinphoneCore *lc, const char* file){
 			char *bkpFile = reinterpret_cast<char *>(bctbx_malloc(strlen(file)+6));
 			sprintf(bkpFile,"%s.bkp", file);
 			char *selfURI = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(proxy));
-			if ((ret = ms_zrtp_cache_migration((void *)cacheXml, linphone_core_get_zrtp_cache_db(lc), selfURI)) == 0) {
+			zrtpCacheAccess zrtpCacheInfo = linphone_core_get_zrtp_cache_access(lc);
+			if ((ret = ms_zrtp_cache_migration((void *)cacheXml, zrtpCacheInfo.db, selfURI)) == 0) {
 				ms_message("LIME/ZRTP cache migration successfull, obsolete xml file kept as backup in %s", bkpFile);
 			} else {
 				ms_error("LIME/ZRTP cache migration failed(returned -%x), start with a fresh cache, old one kept as backup in %s", -ret, bkpFile);
@@ -6714,19 +6715,21 @@ const char *linphone_core_get_zrtp_secrets_file(LinphoneCore *lc){
 	return lc->zrtp_secrets_cache;
 }
 
+zrtpCacheAccess linphone_core_get_zrtp_cache_access(LinphoneCore *lc){
+	zrtpCacheAccess ret;
+	ret.db = (void *)lc->zrtp_cache_db;
+	ret.dbMutex = &(lc->zrtp_cache_db_mutex);
+	return ret;
+}
+
 void *linphone_core_get_zrtp_cache_db(LinphoneCore *lc){
-#ifdef SQLITE_STORAGE_ENABLED
 	return (void *)lc->zrtp_cache_db;
-#else /* SQLITE_STORAGE_ENABLED */
-	return NULL;
-#endif /* SQLITE_STORAGE_ENABLED */
 }
 
 LinphoneZrtpPeerStatus linphone_core_get_zrtp_status(LinphoneCore *lc, const char *peerUri) {
-#ifdef SQLITE_STORAGE_ENABLED
 	int status = MS_ZRTP_PEER_STATUS_UNKNOWN;
 	if (lc->zrtp_cache_db) {
-		status = ms_zrtp_get_peer_status(lc->zrtp_cache_db, peerUri);
+		status = ms_zrtp_get_peer_status(lc->zrtp_cache_db, peerUri, &(lc->zrtp_cache_db_mutex));
 	}
 	switch (status) {
 		case MS_ZRTP_PEER_STATUS_UNKNOWN:
@@ -6738,23 +6741,18 @@ LinphoneZrtpPeerStatus linphone_core_get_zrtp_status(LinphoneCore *lc, const cha
 		default:
 			return LinphoneZrtpPeerStatusUnknown;
 	}
-#else /* SQLITE_STORAGE_ENABLED */
-	return LinphoneZrtpPeerStatusUnkown;
-#endif /* SQLITE_STORAGE_ENABLED */
 }
 
 static void linphone_core_zrtp_cache_close(LinphoneCore *lc) {
-#ifdef SQLITE_STORAGE_ENABLED
 	if (lc->zrtp_cache_db) {
 		sqlite3_close(lc->zrtp_cache_db);
+		bctbx_mutex_destroy(&(lc->zrtp_cache_db_mutex));
 		lc->zrtp_cache_db = NULL;
 	}
-#endif /* SQLITE_STORAGE_ENABLED */
 }
 
 
 void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName) {
-#ifdef SQLITE_STORAGE_ENABLED
 	int ret;
 	const char *errmsg;
 	const char *backupExtension = "_backup";
@@ -6762,6 +6760,8 @@ void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName) {
 	sqlite3 *db;
 
 	linphone_core_zrtp_cache_close(lc);
+
+	bctbx_mutex_init(&(lc->zrtp_cache_db_mutex), NULL);
 
 	ret = _linphone_sqlite3_open(fileName, &db);
 	if (ret != SQLITE_OK) {
@@ -6774,7 +6774,7 @@ void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName) {
 		goto end;
 	}
 
-	ret = ms_zrtp_initCache((void *)db); /* this may perform an update, check return value */
+	ret = ms_zrtp_initCache((void *)db, &(lc->zrtp_cache_db_mutex)); /* this may perform an update, check return value */
 
 	if (ret == MSZRTP_CACHE_SETUP || ret == MSZRTP_CACHE_UPDATE) {
 		/* After updating schema, database need to be closed/reopenned */
@@ -6793,7 +6793,6 @@ void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName) {
 	lc->zrtp_cache_db = db;
 end:
 	if (backupName) bctbx_free(backupName);
-#endif /* SQLITE_STORAGE_ENABLED */
 }
 
 void linphone_core_set_user_certificates_path (LinphoneCore *lc, const char *path) {
@@ -7404,9 +7403,11 @@ typedef struct _parsed_version_st {
 } parsed_version_t;
 
 static int compare_parsed_versions(parsed_version_t current_version, parsed_version_t last_version) {
+	bool same_major = (last_version.major == current_version.major);
+	bool same_minor = (last_version.minor == current_version.minor);
 	if (last_version.major > current_version.major) return 1;
-	if (last_version.minor > current_version.minor) return 1;
-	if (last_version.patch > current_version.patch) return 1;
+	if (same_major && last_version.minor > current_version.minor) return 1;
+	if (same_minor && last_version.patch > current_version.patch) return 1;
 	return -1;
 }
 
@@ -7503,14 +7504,14 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 			if (strcmp(tag, "win32") == 0) platform = "windows";
 			else if (strcmp(tag, "apple") == 0) platform = "macosx";
 			else if (strcmp(tag, "linux") == 0) platform = "linux";
-	    else if (strcmp(tag, "ios") == 0) mobilePlatform = "ios";
-	    else if (strcmp(tag, "android") == 0) mobilePlatform = "android";
+			else if (strcmp(tag, "ios") == 0) mobilePlatform = "ios";
+			else if (strcmp(tag, "android") == 0) mobilePlatform = "android";
 			else if (strcmp(tag, "desktop") == 0) is_desktop = TRUE;
 		}
-		  if (!is_desktop) {
-		    platform = mobilePlatform;
-		  }
-		  if (platform == NULL) {
+		if (!is_desktop) {
+			platform = mobilePlatform;
+		}
+		if (platform == NULL) {
 			ms_warning("Update checking is not supported on this platform");
 			return;
 		}

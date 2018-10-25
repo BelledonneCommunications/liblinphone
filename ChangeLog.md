@@ -11,6 +11,8 @@ Group changes to describe their impact on the project, as follows:
     Security to invite users to upgrade in case of vulnerabilities.
 
 ## [Incomming]
+- Implementation of bodyless subscription
+- Parsing of Display name in presence NOTIFY
 
 ### Added
 - Avoid some SIP DNS lookups by keeping SRV target names

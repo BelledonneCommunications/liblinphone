@@ -100,6 +100,7 @@ struct _LinphoneAccountCreator {
 	char *language; /**< User language */
 	char *activation_code; /**< Account validation code */
 	char *domain; /**< Domain */
+	char *algorithm; /**< Digest authentication algorithm */
 	LinphoneTransportType transport; /**< Transport used */
 
 	// test

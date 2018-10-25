@@ -47,8 +47,7 @@ public class LinphoneCoreFactoryImpl extends LinphoneCoreFactory {
 		loadOptionalLibrary("ffmpeg-linphone");
 		System.loadLibrary("bctoolbox");
 		System.loadLibrary("ortp");
-		System.loadLibrary("mediastreamer_base");
-		System.loadLibrary("mediastreamer_voip");
+		System.loadLibrary("mediastreamer");
 		System.loadLibrary("linphone");
 		Version.dumpCapabilities();
 	}

@@ -822,17 +822,12 @@ namespace LinphonePrivate {
 	bctbx_list_t *callsCache; \
 	bool_t dns_set_by_app; \
 
-#ifdef SQLITE_STORAGE_ENABLED
 #define LINPHONE_CORE_STRUCT_FIELDS \
 	LINPHONE_CORE_STRUCT_BASE_FIELDS \
 	sqlite3 *zrtp_cache_db; \
+	bctbx_mutex_t zrtp_cache_db_mutex; \
 	sqlite3 *logs_db; \
 	sqlite3 *friends_db; \
 	bool_t debug_storage;
-#else
-#define LINPHONE_CORE_STRUCT_FIELDS \
-	LINPHONE_CORE_STRUCT_BASE_FIELDS
-#endif
-
 
 #endif /* _PRIVATE_STRUCTS_H_ */

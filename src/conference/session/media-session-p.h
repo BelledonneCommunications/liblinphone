@@ -66,7 +66,12 @@ public:
 
 	int getAf () const { return af; }
 
-	bool getAudioMuted () const { return audioMuted; }
+	bool getSpeakerMuted () const;
+	void setSpeakerMuted (bool muted);
+	void forceSpeakerMuted (bool muted);
+
+	bool getMicrophoneMuted () const;
+	void setMicrophoneMuted (bool muted);
 
 	MediaSessionParams *getCurrentParams () const { return static_cast<MediaSessionParams *>(currentParams); }
 	MediaSessionParams *getParams () const { return static_cast<MediaSessionParams *>(params); }
@@ -90,7 +95,6 @@ public:
 	int getStreamIndex (MediaStream *ms) const;
 	SalCallOp * getOp () const { return op; }
 	MSWebCam *getVideoDevice () const;
-	void setAudioMuted (bool value) { audioMuted = value; }
 
 	void initializeStreams ();
 	void stopStreams ();
@@ -170,7 +174,6 @@ private:
 	SalMulticastRole getMulticastRole (SalStreamType type);
 	void joinMulticastGroup (int streamIndex, MediaStream *ms);
 
-	int findCryptoIndexFromTag (const SalSrtpCryptoAlgo crypto[], unsigned char tag);
 	void setDtlsFingerprint (MSMediaStreamSessions *sessions, const SalStreamDescription *sd, const SalStreamDescription *remote);
 	void setDtlsFingerprintOnAllStreams ();
 	void setupDtlsParams (MediaStream *ms);
@@ -261,6 +264,7 @@ private:
 	int sendDtmf ();
 
 	void stunAuthRequestedCb (const char *realm, const char *nonce, const char **username, const char **password, const char **ha1);
+
 private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;
@@ -326,12 +330,17 @@ private:
 	// Upload bandwidth used by audio.
 	int audioBandwidth = 0;
 
+	bool speakerMuted = false;
+	bool microphoneMuted = false;
+
 	bool allMuted = false;
-	bool audioMuted = false;
 	bool automaticallyPaused = false;
 	bool pausedByApp = false;
 	bool recordActive = false;
 	bool incomingIceReinvitePending = false;
+
+	MSSndCard *currentCaptureCard = nullptr;
+	MSSndCard *currentPlayCard = nullptr;
 
 	std::string onHoldFile;
 

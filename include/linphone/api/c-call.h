@@ -481,7 +481,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_early_media_with_params (Lin
 
 /**
  * Updates a running call according to supplied call parameters or parameters changed in the LinphoneCore.
- *  It triggers a SIP reINVITE in order to perform a new offer/answer of media capabilities. 
+ *  It triggers a SIP reINVITE in order to perform a new offer/answer of media capabilities.
  * Changing the size of the transmitted video after calling #linphone_core_set_preferred_video_size() can be used by passing NULL as params argument.
  * In case no changes are requested through the #LinphoneCallParams argument, then this argument can be omitted and set to NULL.
  * WARNING: Updating a call in the #LinphoneCallPaused state will still result in a paused call even if the media directions set in the
@@ -642,7 +642,7 @@ LINPHONE_PUBLIC float linphone_call_get_record_volume(const LinphoneCall *call);
  * If the sound backend supports it, the returned gain is equal to the gain set
  * with the system mixer.
  * @param call The call.
- * @return Percenatge of the max supported volume gain. Valid values are in [ 0.0 : 1.0 ].
+ * @return Percentage of the max supported volume gain. Valid values are in [ 0.0 : 1.0 ].
  * In case of failure, a negative value is returned
  */
 LINPHONE_PUBLIC float linphone_call_get_speaker_volume_gain(const LinphoneCall *call);
@@ -659,8 +659,8 @@ LINPHONE_PUBLIC void linphone_call_set_speaker_volume_gain(LinphoneCall *call, f
  * Get microphone volume gain.
  * If the sound backend supports it, the returned gain is equal to the gain set
  * with the system mixer.
- * @param call The call.
- * @return double Percenatge of the max supported volume gain. Valid values are in [ 0.0 : 1.0 ].
+ * @param call The #LinphoneCall object.
+ * @return double Percentage of the max supported volume gain. Valid values are in [ 0.0 : 1.0 ].
  * In case of failure, a negative value is returned
  */
 LINPHONE_PUBLIC float linphone_call_get_microphone_volume_gain(const LinphoneCall *call);
@@ -668,10 +668,38 @@ LINPHONE_PUBLIC float linphone_call_get_microphone_volume_gain(const LinphoneCal
 /**
  * Set microphone volume gain.
  * If the sound backend supports it, the new gain will synchronized with the system mixer.
- * @param call The call.
+ * @param call The #LinphoneCall object.
  * @param volume Percentage of the max supported gain. Valid values are in [ 0.0 : 1.0 ].
  */
 LINPHONE_PUBLIC void linphone_call_set_microphone_volume_gain(LinphoneCall *call, float volume);
+
+/**
+ * Get speaker muted state.
+ * @param call The #LinphoneCall object.
+ * @return The speaker muted state.
+ **/
+LINPHONE_PUBLIC bool_t linphone_call_get_speaker_muted (const LinphoneCall *call);
+
+/**
+ * Set speaker muted state.
+ * @param call The #LinphoneCall object.
+ * @param muted The speaker muted state.
+ **/
+LINPHONE_PUBLIC void linphone_call_set_speaker_muted (LinphoneCall *call, bool_t muted);
+
+/**
+ * Get microphone muted state.
+ * @param call The #LinphoneCall object.
+ * @return The microphone muted state.
+ **/
+LINPHONE_PUBLIC bool_t linphone_call_get_microphone_muted (const LinphoneCall *call);
+
+/**
+ * Set microphone muted state.
+ * @param call The #LinphoneCall object.
+ * @param muted The microphone muted state.
+ **/
+LINPHONE_PUBLIC void linphone_call_set_microphone_muted (LinphoneCall *call, bool_t muted);
 
 /**
  * Obtain real-time quality rating of the call
@@ -796,7 +824,7 @@ LINPHONE_PUBLIC void linphone_call_set_params(LinphoneCall *call, const Linphone
  * @param call the #LinphoneCall object
  * @return the call's local parameters.
  **/
-LINPHONE_PUBLIC const LinphoneCallParams * linphone_call_get_params(LinphoneCall *call);
+LINPHONE_PUBLIC const LinphoneCallParams *linphone_call_get_params(LinphoneCall *call);
 
 /**
  * @}

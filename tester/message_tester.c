@@ -27,10 +27,6 @@
 #include "linphone/core_utils.h"
 #include <bctoolbox/vfs.h>
 
-#ifdef SQLITE_STORAGE_ENABLED
-#include <sqlite3.h>
-#endif
-
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)
 #endif
@@ -38,14 +34,12 @@
 
 static char* message_external_body_url=NULL;
 
-#ifdef SQLITE_STORAGE_ENABLED
 /* sql cache creation string, contains 3 string to be inserted : selfuri/selfuri/peeruri */
 static const char *marie_zid_sqlcache = "BEGIN TRANSACTION; CREATE TABLE IF NOT EXISTS ziduri (zuid          INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,zid		BLOB NOT NULL DEFAULT '000000000000',selfuri	 TEXT NOT NULL DEFAULT 'unset',peeruri	 TEXT NOT NULL DEFAULT 'unset'); INSERT INTO `ziduri` (zuid,zid,selfuri,peeruri) VALUES (1,X'4ddc8042bee500ad0366bf93','%s','self'), (2,X'bcb4028bf55e1b7ac4c4edee','%s','%s'); CREATE TABLE IF NOT EXISTS zrtp (zuid		INTEGER NOT NULL DEFAULT 0 UNIQUE,rs1		BLOB DEFAULT NULL,rs2		BLOB DEFAULT NULL,aux		BLOB DEFAULT NULL,pbx		BLOB DEFAULT NULL,pvs		BLOB DEFAULT NULL,FOREIGN KEY(zuid) REFERENCES ziduri(zuid) ON UPDATE CASCADE ON DELETE CASCADE); INSERT INTO `zrtp` (zuid,rs1,rs2,aux,pbx,pvs) VALUES (2,X'f0e0ad4d3d4217ba4048d1553e5ab26fae0b386cdac603f29a66d5f4258e14ef',NULL,NULL,NULL,X'01'); CREATE TABLE IF NOT EXISTS lime (zuid		INTEGER NOT NULL DEFAULT 0 UNIQUE,sndKey		BLOB DEFAULT NULL,rcvKey		BLOB DEFAULT NULL,sndSId		BLOB DEFAULT NULL,rcvSId		BLOB DEFAULT NULL,sndIndex	BLOB DEFAULT NULL,rcvIndex	BLOB DEFAULT NULL,valid		BLOB DEFAULT NULL,FOREIGN KEY(zuid) REFERENCES ziduri(zuid) ON UPDATE CASCADE ON DELETE CASCADE); INSERT INTO `lime` (zuid,sndKey,rcvKey,sndSId,rcvSId,sndIndex,rcvIndex,valid) VALUES (2,X'97c75a5a92a041b415296beec268efc3373ef4aa8b3d5f301ac7522a7fb4e332',x'3b74b709b961e5ebccb1db6b850ea8c1f490546d6adee2f66b5def7093cead3d',X'e2ebca22ad33071bc37631393bf25fc0a9badeea7bf6dcbcb5d480be7ff8c5ea',X'a2086d195344ec2997bf3de7441d261041cda5d90ed0a0411ab2032e5860ea48',X'33376935',X'7ce32d86',X'0000000000000000'); COMMIT;";
 
 static const char *pauline_zid_sqlcache = "BEGIN TRANSACTION; CREATE TABLE IF NOT EXISTS ziduri (zuid          INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,zid		BLOB NOT NULL DEFAULT '000000000000',selfuri	 TEXT NOT NULL DEFAULT 'unset',peeruri	 TEXT NOT NULL DEFAULT 'unset'); INSERT INTO `ziduri` (zuid,zid,selfuri,peeruri) VALUES (1,X'bcb4028bf55e1b7ac4c4edee','%s','self'), (2,X'4ddc8042bee500ad0366bf93','%s','%s'); CREATE TABLE IF NOT EXISTS zrtp (zuid		INTEGER NOT NULL DEFAULT 0 UNIQUE,rs1		BLOB DEFAULT NULL,rs2		BLOB DEFAULT NULL,aux		BLOB DEFAULT NULL,pbx		BLOB DEFAULT NULL,pvs		BLOB DEFAULT NULL,FOREIGN KEY(zuid) REFERENCES ziduri(zuid) ON UPDATE CASCADE ON DELETE CASCADE); INSERT INTO `zrtp` (zuid,rs1,rs2,aux,pbx,pvs) VALUES (2,X'f0e0ad4d3d4217ba4048d1553e5ab26fae0b386cdac603f29a66d5f4258e14ef',NULL,NULL,NULL,X'01'); CREATE TABLE IF NOT EXISTS lime (zuid		INTEGER NOT NULL DEFAULT 0 UNIQUE,sndKey		BLOB DEFAULT NULL,rcvKey		BLOB DEFAULT NULL,sndSId		BLOB DEFAULT NULL,rcvSId		BLOB DEFAULT NULL,sndIndex	BLOB DEFAULT NULL,rcvIndex	BLOB DEFAULT NULL,valid		BLOB DEFAULT NULL,FOREIGN KEY(zuid) REFERENCES ziduri(zuid) ON UPDATE CASCADE ON DELETE CASCADE); INSERT INTO `lime` (zuid,rcvKey,sndKey,rcvSId,sndSId,rcvIndex,sndIndex,valid) VALUES (2,X'97c75a5a92a041b415296beec268efc3373ef4aa8b3d5f301ac7522a7fb4e332',x'3b74b709b961e5ebccb1db6b850ea8c1f490546d6adee2f66b5def7093cead3d',X'e2ebca22ad33071bc37631393bf25fc0a9badeea7bf6dcbcb5d480be7ff8c5ea',X'a2086d195344ec2997bf3de7441d261041cda5d90ed0a0411ab2032e5860ea48',X'33376935',X'7ce32d86',X'0000000000000000'); COMMIT;";
 
 static const char *xmlCacheMigration = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<cache><selfZID>00112233445566778899aabb</selfZID><peer><ZID>99887766554433221100ffee</ZID><rs1>c4274f13a2b6fa05c15ec93158f930e7264b0a893393376dbc80c6eb1cccdc5a</rs1><uri>sip:bob@sip.linphone.org</uri><sndKey>219d9e445d10d4ed64083c7ccbb83a23bc17a97df0af5de4261f3fe026b05b0b</sndKey><rcvKey>747e72a5cc996413cb9fa6e3d18d8b370436e274cd6ba4efc1a4580340af57ca</rcvKey><sndSId>df2bf38e719fa89e17332cf8d5e774ee70d347baa74d16dee01f306c54789869</sndSId><rcvSId>928ce78b0bfc30427a02b1b668b2b3b0496d5664d7e89b75ed292ee97e3fc850</rcvSId><sndIndex>496bcc89</sndIndex><rcvIndex>59337abe</rcvIndex><rs2>5dda11f388384b349d210612f30824268a3753a7afa52ef6df5866dca76315c4</rs2><uri>sip:bob2@sip.linphone.org</uri></peer><peer><ZID>ffeeddccbbaa987654321012</ZID><rs1>858b495dfad483af3c088f26d68c4beebc638bd44feae45aea726a771727235e</rs1><uri>sip:bob@sip.linphone.org</uri><sndKey>b6aac945057bc4466bfe9a23771c6a1b3b8d72ec3e7d8f30ed63cbc5a9479a25</sndKey><rcvKey>bea5ac3225edd0545b816f061a8190370e3ee5160e75404846a34d1580e0c263</rcvKey><sndSId>17ce70fdf12e500294bcb5f2ffef53096761bb1c912b21e972ae03a5a9f05c47</sndSId><rcvSId>7e13a20e15a517700f0be0921f74b96d4b4a0c539d5e14d5cdd8706441874ac0</rcvSId><sndIndex>75e18caa</sndIndex><rcvIndex>2cfbbf06</rcvIndex><rs2>1533dee20c8116dc2c282cae9adfea689b87bc4c6a4e18a846f12e3e7fea3959</rs2></peer><peer><ZID>0987654321fedcba5a5a5a5a</ZID><rs1>cb6ecc87d1dd87b23f225eec53a26fc541384917623e0c46abab8c0350c6929e</rs1><sndKey>92bb03988e8f0ccfefa37a55fd7c5893bea3bfbb27312f49dd9b10d0e3c15fc7</sndKey><rcvKey>2315705a5830b98f68458fcd49623144cb34a667512c4d44686aee125bb8b622</rcvKey><sndSId>94c56eea0dd829379263b6da3f6ac0a95388090f168a3568736ca0bd9f8d595f</sndSId><rcvSId>c319ae0d41183fec90afc412d42253c5b456580f7a463c111c7293623b8631f4</rcvSId><uri>sip:bob@sip.linphone.org</uri><sndIndex>2c46ddcc</sndIndex><rcvIndex>15f5779e</rcvIndex><valid>0000000058f095bf</valid><pvs>01</pvs></peer></cache>";
-#endif // SQLITE_STORAGE_ENABLED
 
 void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage* msg) {
 	char* from=linphone_address_as_string(linphone_chat_message_get_from_address(msg));
@@ -90,17 +84,22 @@ void file_transfer_received(LinphoneChatMessage *msg, const LinphoneContent* con
 		file = fopen(receive_file,"wb");
 		linphone_chat_message_set_user_data(msg,(void*)file); /*store fd for next chunks*/
 	}
-	bc_free(receive_file);
+	
 	file = (FILE*)linphone_chat_message_get_user_data(msg);
 	BC_ASSERT_PTR_NOT_NULL(file);
 	if (linphone_buffer_is_empty(buffer)) { /* tranfer complete */
+		struct stat st;
+		
 		linphone_chat_message_set_user_data(msg, NULL);
 		fclose(file);
+		BC_ASSERT_TRUE(stat(receive_file, &st)==0);
+		BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), (int)st.st_size, int, "%i");
 	} else { /* store content on a file*/
 		if (fwrite(linphone_buffer_get_content(buffer),linphone_buffer_get_size(buffer),1,file)==0){
 			ms_error("file_transfer_received(): write() failed: %s",strerror(errno));
 		}
 	}
+	bc_free(receive_file);
 }
 
 /*
@@ -880,7 +879,6 @@ static void info_message_with_body(void){
 }
 
 static int enable_lime_for_message_test(LinphoneCoreManager *marie, LinphoneCoreManager *pauline) {
-#ifdef SQLITE_STORAGE_ENABLED
 	char* filepath = NULL;
 	char* stmt = NULL;
 	char* errmsg=NULL;
@@ -939,9 +937,6 @@ static int enable_lime_for_message_test(LinphoneCoreManager *marie, LinphoneCore
 	ms_free(marieUri);
 
 	return 0;
-#else /* SQLITE_STORAGE_ENABLED */
-	return -1; /* cannot enable lime without SQLITE_STORAGE */
-#endif /* SQLITE_STORAGE_ENABLED */
 }
 
 static void _is_composing_notification(bool_t lime_enabled) {
@@ -1013,11 +1008,9 @@ static void is_composing_notification(void) {
 	_is_composing_notification(FALSE);
 }
 
-#ifdef SQLITE_STORAGE_ENABLED
 static void is_composing_notification_with_lime(void) {
 	_is_composing_notification(TRUE);
 }
-#endif
 
 static void _imdn_notifications(bool_t with_lime) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
@@ -1173,7 +1166,6 @@ static void im_notification_policy(void) {
 	_im_notification_policy(FALSE);
 }
 
-#ifdef SQLITE_STORAGE_ENABLED
 static void imdn_notifications_with_lime(void) {
 	_imdn_notifications(TRUE);
 }
@@ -1697,8 +1689,6 @@ void crash_during_file_transfer(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-#endif /* SQLITE_STORAGE_ENABLED */
-
 static void text_status_after_destroying_chat_room(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:Jehan@sip.linphone.org>");
@@ -1762,6 +1752,7 @@ static void real_time_text(
 	bool_t do_not_store_rtt_messages_in_sql_storage
 ) {
 	LinphoneChatRoom *pauline_chat_room;
+	LinphoneChatRoom *marie_chat_room;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCallParams *marie_params = NULL;
@@ -1834,12 +1825,14 @@ static void real_time_text(
 		}
 
 		pauline_chat_room = linphone_call_get_chat_room(pauline_call);
+		marie_chat_room = linphone_call_get_chat_room(marie_call);
 		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
-		if (pauline_chat_room) {
+		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
+		if (pauline_chat_room && marie_chat_room) {
 			const char* message = "Be l3l";
 			size_t i;
 			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			LinphoneChatRoom *marie_chat_room = linphone_call_get_chat_room(marie_call);
+			
 
 			for (i = 0; i < strlen(message); i++) {
 				BC_ASSERT_FALSE(linphone_chat_message_put_char(rtt_message, message[i]));
@@ -1926,7 +1919,7 @@ static void real_time_text_conversation(void) {
 		pauline_chat_room = linphone_call_get_chat_room(pauline_call);
 		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
 		marie_chat_room = linphone_call_get_chat_room(marie_call);
-		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
+		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
 		if (pauline_chat_room && marie_chat_room) {
 			const char* message1_1 = "Lorem";
 			const char* message1_2 = "Ipsum";
@@ -2032,6 +2025,7 @@ static void real_time_text_message_compat(bool_t end_with_crlf, bool_t end_with_
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCallParams *marie_params = NULL;
 	LinphoneCall *pauline_call, *marie_call;
+	LinphoneChatRoom *marie_chat_room;
 
 	marie_params = linphone_core_create_call_params(marie->lc, NULL);
 	linphone_call_params_enable_realtime_text(marie_params,TRUE);
@@ -2043,12 +2037,13 @@ static void real_time_text_message_compat(bool_t end_with_crlf, bool_t end_with_
 		BC_ASSERT_TRUE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(pauline_call)));
 
 		pauline_chat_room = linphone_call_get_chat_room(pauline_call);
+		marie_chat_room = linphone_call_get_chat_room(marie_call);
 		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
-		if (pauline_chat_room) {
+		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
+		if (pauline_chat_room && marie_chat_room) {
 			const char* message = "Be l3l";
 			size_t i;
 			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			LinphoneChatRoom *marie_chat_room = linphone_call_get_chat_room(marie_call);
 			uint32_t crlf = 0x0D0A;
 			uint32_t lf = 0x0A;
 
@@ -2084,6 +2079,7 @@ static void real_time_text_message_compat_lf(void) {
 
 static void real_time_text_message_accented_chars(void) {
 	LinphoneChatRoom *pauline_chat_room;
+	LinphoneChatRoom *marie_chat_room;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCallParams *marie_params = NULL;
@@ -2099,10 +2095,11 @@ static void real_time_text_message_accented_chars(void) {
 		BC_ASSERT_TRUE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(pauline_call)));
 
 		pauline_chat_room = linphone_call_get_chat_room(pauline_call);
+		marie_chat_room = linphone_call_get_chat_room(marie_call);
 		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
-		if (pauline_chat_room) {
+		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
+		if (pauline_chat_room && marie_chat_room) {
 			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			LinphoneChatRoom *marie_chat_room = linphone_call_get_chat_room(marie_call);
 			int i;
 			uint32_t message[8];
 			int message_len = 8;
@@ -2149,6 +2146,7 @@ static void real_time_text_message_different_text_codecs_payload_numbers_receive
 
 static void real_time_text_copy_paste(void) {
 	LinphoneChatRoom *pauline_chat_room;
+	LinphoneChatRoom *marie_chat_room;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCallParams *marie_params = NULL;
@@ -2164,12 +2162,14 @@ static void real_time_text_copy_paste(void) {
 		BC_ASSERT_TRUE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(pauline_call)));
 
 		pauline_chat_room = linphone_call_get_chat_room(pauline_call);
+		marie_chat_room = linphone_call_get_chat_room(marie_call);
 		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
-		if (pauline_chat_room) {
+		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
+		if (pauline_chat_room && marie_chat_room) {
 			const char* message = "Be l3l";
 			size_t i;
 			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			LinphoneChatRoom *marie_chat_room = linphone_call_get_chat_room(marie_call);
+			
 
 			for (i = 1; i <= strlen(message); i++) {
 				linphone_chat_message_put_char(rtt_message, message[i-1]);
@@ -2520,7 +2520,6 @@ test_t message_tests[] = {
 	TEST_NO_TAG("IsComposing notification", is_composing_notification),
 	TEST_NO_TAG("IMDN notifications", imdn_notifications),
 	TEST_NO_TAG("IM notification policy", im_notification_policy),
-#ifdef SQLITE_STORAGE_ENABLED
 	TEST_NO_TAG("Unread message count", unread_message_count),
 	TEST_NO_TAG("Unread message count in callback", unread_message_count_callback),
 	TEST_ONE_TAG("IsComposing notification lime", is_composing_notification_with_lime, "LIME"),
@@ -2543,7 +2542,6 @@ test_t message_tests[] = {
 	TEST_ONE_TAG("Lime transfer message without encryption 2", lime_transfer_message_without_encryption_2, "LIME"),
 	TEST_ONE_TAG("Lime cache migration", lime_cache_migration, "LIME"),
 	TEST_ONE_TAG("Lime unitary", lime_unit, "LIME"),
-#endif
 	TEST_NO_TAG("Transfer not sent if invalid url", file_transfer_not_sent_if_invalid_url),
 	TEST_NO_TAG("Transfer not sent if host not found", file_transfer_not_sent_if_host_not_found),
 	TEST_NO_TAG("Transfer not sent if url moved permanently", file_transfer_not_sent_if_url_moved_permanently),
@@ -2562,9 +2560,7 @@ test_t message_tests[] = {
 	TEST_ONE_TAG("Real Time Text copy paste", real_time_text_copy_paste, "RTT"),
 	TEST_NO_TAG("IM Encryption Engine custom headers", chat_message_custom_headers),
 	TEST_NO_TAG("Text message with custom content-type", text_message_with_custom_content_type),
-#ifdef SQLITE_STORAGE_ENABLED
 	TEST_ONE_TAG("Text message with custom content-type and lime", text_message_with_custom_content_type_and_lime, "LIME"),
-#endif
 	TEST_NO_TAG("IM Encryption Engine b64", im_encryption_engine_b64),
 	TEST_NO_TAG("IM Encryption Engine b64 async", im_encryption_engine_b64_async),
 	TEST_NO_TAG("Text message within call dialog", text_message_within_call_dialog),

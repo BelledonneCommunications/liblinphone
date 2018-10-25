@@ -278,8 +278,13 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId 
 	L_D();
 
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
-	if (chatRoom)
+	if (chatRoom){
+		if (isRtt && !(chatRoom->getCapabilities() & ChatRoom::Capabilities::RealTimeText)){
+			lError() << "Found chatroom but without RealTimeText capability. This is a bug, fixme";
+			return nullptr;
+		}
 		return chatRoom;
+	}
 
 	chatRoom = d->createBasicChatRoom(conferenceId,
 		isRtt ? ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::RealTimeText) : ChatRoom::CapabilitiesMask()
@@ -294,8 +299,14 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddre
 	L_D();
 
 	list<shared_ptr<AbstractChatRoom>> chatRooms = findChatRooms(peerAddress);
-	if (!chatRooms.empty())
-		return chatRooms.front();
+	if (!chatRooms.empty()){
+		shared_ptr<AbstractChatRoom> ret = chatRooms.front();
+		if (isRtt && !(ret->getCapabilities() & ChatRoom::Capabilities::RealTimeText)){
+			lError() << "Found chatroom but without RealTimeText capability. This is a bug, fixme";
+			ret = nullptr;
+		}
+		return ret;
+	}
 
 	shared_ptr<AbstractChatRoom> chatRoom = d->createBasicChatRoom(
 		ConferenceId(peerAddress, getDefaultLocalAddress(getSharedFromThis(), peerAddress)),

@@ -20,11 +20,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _TESTER_UTILS_H_
 #define _TESTER_UTILS_H_
 
+#include <sqlite3.h>
+
 #include "account_creator_private.h"
 #include "linphone/core.h"
 #include "linphone/tunnel.h"
 #include "c-wrapper/internal/c-sal.h"
-#include <sqlite3.h>
 #include "quality_reporting.h"
 #include "vcard_private.h"
 

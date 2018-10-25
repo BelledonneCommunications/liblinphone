@@ -58,7 +58,7 @@ vector<string> Utils::split (const string &str, const string &delimiter) {
 	vector<string> out;
 
 	size_t pos = 0, oldPos = 0;
-	for (; (pos = str.find(delimiter, pos)) != string::npos; oldPos = pos + 1, pos = oldPos)
+	for (; (pos = str.find(delimiter, pos)) != string::npos; oldPos = pos + delimiter.length(), pos = oldPos)
 		out.push_back(str.substr(oldPos, pos - oldPos));
 	out.push_back(str.substr(oldPos));
 

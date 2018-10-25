@@ -1,3 +1,6 @@
+[misc]
+xmlrpc_server_url=http://subscribe.example.org/flexisip-account-manager/xmlrpc.php
+
 [sip]
 sip_port=-1
 sip_tcp_port=-1
@@ -22,11 +25,6 @@ reg_expires=3600
 reg_sendregister=1
 publish=0
 dial_escape_plus=0
-
-[friend_0]
-url="Paupoche" <sip:pauline@sip.example.org>
-pol=accept
-subscribe=0
 
 [misc]
 enable_basic_to_client_group_chat_room_migration=1

@@ -55,11 +55,14 @@ public:
 	void releaseCpuLock () override;
 	string getDataPath () override {return Utils::getEmptyConstRefObject<string>();}
 	string getConfigPath () override {return Utils::getEmptyConstRefObject<string>();}
+	void setVideoWindow (void *windowId) override {}
+	void setVideoPreviewWindow (void *windowId) override {}
 
 private:
 	void bgTaskTimeout ();
 	static void sBgTaskTimeout (void *data);
-	static std::string directoryForResource (CFStringRef framework, CFStringRef resource);
+	static string getResourceDirPath (CFStringRef framework, CFStringRef resource);
+	static string getResourcePath (CFStringRef framework, CFStringRef resource);
 
 	long int mCpuLockTaskId;
 	int mCpuLockCount;
@@ -71,21 +74,27 @@ IosPlatformHelpers::IosPlatformHelpers (LinphoneCore *lc, void *system_context) 
 	mCpuLockCount = 0;
 	mCpuLockTaskId = 0;
 
-	std::string cpimPath = directoryForResource(CFSTR("org.linphone.linphone"), CFSTR("cpim_grammar"));
+	string rootCaPath = getResourcePath(CFSTR("org.linphone.linphone"), CFSTR("rootca.pem"));
+	if (!rootCaPath.empty())
+		linphone_core_set_root_ca(lc, rootCaPath.c_str());
+	else
+		lError() << "IosPlatformHelpers did not find rootca.pem resource";
+
+	string cpimPath = getResourceDirPath(CFSTR("org.linphone.linphone"), CFSTR("cpim_grammar"));
 	if (!cpimPath.empty())
 		belr::GrammarLoader::get().addPath(cpimPath);
 	else
 		lError() << "IosPlatformHelpers did not find cpim grammar resource directory...";
 
 #ifdef VCARD_ENABLED
-	std::string vcardPath = directoryForResource(CFSTR("org.linphone.belcard"), CFSTR("vcard_grammar"));
+	string vcardPath = getResourceDirPath(CFSTR("org.linphone.belcard"), CFSTR("vcard_grammar"));
 	if (!vcardPath.empty())
 		belr::GrammarLoader::get().addPath(vcardPath);
 	else
 		lError() << "IosPlatformHelpers did not find vcard grammar resource directory...";
 #endif
 
-	lInfo() << "IosPlatformHelpers is fully initialised.";
+	lInfo() << "IosPlatformHelpers is fully initialised";
 }
 
 // -----------------------------------------------------------------------------
@@ -127,17 +136,23 @@ void IosPlatformHelpers::releaseCpuLock () {
 	mCpuLockTaskId = 0;
 }
 
-std::string IosPlatformHelpers::directoryForResource (CFStringRef framework, CFStringRef resource) {
+string IosPlatformHelpers::getResourceDirPath (CFStringRef framework, CFStringRef resource) {
 	CFBundleRef bundle = CFBundleGetBundleWithIdentifier(framework);
-	CFURLRef grammarUrl = CFBundleCopyResourceURL(bundle, resource, nullptr, nullptr);
-	CFURLRef grammarUrlDirectory = CFURLCreateCopyDeletingLastPathComponent(nullptr, grammarUrl);
-	CFStringRef grammarPath = CFURLCopyFileSystemPath(grammarUrlDirectory, kCFURLPOSIXPathStyle);
+	CFURLRef resourceUrl = CFBundleCopyResourceURL(bundle, resource, nullptr, nullptr);
+	CFURLRef resourceUrlDirectory = CFURLCreateCopyDeletingLastPathComponent(nullptr, resourceUrl);
+	CFStringRef resourcePath = CFURLCopyFileSystemPath(resourceUrlDirectory, kCFURLPOSIXPathStyle);
 	CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
-	std::string path(CFStringGetCStringPtr(grammarPath, encodingMethod));
-	CFRelease(grammarUrl);
-	CFRelease(grammarPath);
-	CFRelease(grammarUrlDirectory);
+	string path(CFStringGetCStringPtr(resourcePath, encodingMethod));
+	CFRelease(resourceUrl);
+	CFRelease(resourcePath);
+	CFRelease(resourceUrlDirectory);
 	return path;
+}
+
+string IosPlatformHelpers::getResourcePath (CFStringRef framework, CFStringRef resource) {
+	CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
+	string resourceFile(CFStringGetCStringPtr(resource, encodingMethod));
+	return getResourceDirPath(framework, resource) + "/" + resourceFile;
 }
 
 // -----------------------------------------------------------------------------

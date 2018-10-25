@@ -746,8 +746,8 @@ LINPHONE_END_NAMESPACE
 			defined = true, \
 			isSubtype = true \
 		}; \
-		typedef CppTypeMetaInfo<CPP_TYPE>::cType cType; \
-		static inline typename CppTypeMetaInfo<CPP_TYPE>::cType *init () { \
+		using cType = CppTypeMetaInfo<CPP_TYPE>::cType; \
+		static inline cType *init () { \
 			return CppTypeMetaInfo<CPP_TYPE>::init(); \
 		} \
 	}; \

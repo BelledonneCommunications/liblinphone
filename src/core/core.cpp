@@ -241,9 +241,8 @@ bool Core::limeX3dhEnabled () const {
 	return false;
 }
 
-// TODO does not work
 bool Core::limeX3dhAvailable() const {
-#ifdef HAVE_LIME
+#ifdef HAVE_LIME_X3DH
 	return true;
 #else
 	return false;

@@ -38,6 +38,8 @@ class PlatformHelpers {
 public:
 	virtual ~PlatformHelpers () = default;
 
+	LinphoneCore *getCore() { return mCore; }
+
 	// This method shall retrieve DNS server list from the platform and assign it to the core.
 	virtual void setDnsServers () = 0;
 	virtual void acquireWifiLock () = 0;
@@ -48,6 +50,8 @@ public:
 	virtual void releaseCpuLock () = 0;
 	virtual std::string getDataPath () = 0;
 	virtual std::string getConfigPath () = 0;
+	virtual void setVideoWindow (void *windowId) = 0;
+	virtual void setVideoPreviewWindow (void *windowId) = 0;
 
 protected:
 	inline explicit PlatformHelpers (LinphoneCore *lc) : mCore(lc) {}
@@ -69,6 +73,8 @@ public:
 	void releaseCpuLock () override;
 	std::string getDataPath () override;
 	std::string getConfigPath () override;
+	void setVideoWindow (void *windowId) override;
+	void setVideoPreviewWindow (void *windowId) override;
 };
 
 PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext);

@@ -234,7 +234,7 @@ namespace Private {
 		>::type * \
 	>(CLASS::mPrivate);
 
-// Get Private data of class in a multiple inheritance case.
+// Get Public data of class in a multiple inheritance case.
 #define L_Q_T(CLASS, NAME) \
 	auto const NAME = static_cast< \
 		LinphonePrivate::Private::AddConstMirror< \

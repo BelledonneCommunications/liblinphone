@@ -218,6 +218,7 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 		LinphoneFriend *lf;
 		LinphoneContent *presence_part;
 		xmlXPathObjectPtr resource_object;
+		xmlXPathObjectPtr name_object;
 		char *version_str = NULL;
 		char *full_state_str = NULL;
 		char *uri = NULL;
@@ -260,6 +261,35 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 			goto end;
 		}
 		list->expected_notification_version = version + 1;
+
+		name_object = linphone_get_xml_xpath_object_for_node_list(xml_ctx, "/rlmi:list/rlmi:resource/rlmi:name/..");
+		if (name_object && name_object->nodesetval) {
+			for (i = 1; i <= name_object->nodesetval->nodeNr; i++) {
+				char *name = NULL;
+				LinphoneAddress* addr;
+				linphone_xml_xpath_context_set_node(xml_ctx, xmlXPathNodeSetItem(name_object->nodesetval, i-1));
+				name = linphone_get_xml_text_content(xml_ctx, "./rlmi:name");
+				uri = linphone_get_xml_text_content(xml_ctx, "./@uri");
+				if (!uri)
+					continue;
+				addr = linphone_address_new(uri);
+				if (!addr)
+					continue;
+				lf = linphone_friend_list_find_friend_by_address(list, addr);
+				linphone_address_unref(addr);
+				if (!lf && list->bodyless_subscription) {
+					lf = linphone_core_create_friend_with_address(list->lc, uri);
+					linphone_friend_list_add_friend(list, lf);
+					linphone_friend_unref(lf);
+				}
+				if (name) {
+					linphone_friend_set_name(lf, name);
+					linphone_free_xml_text_content(name);
+				}
+			}
+		}
+		if (name_object)
+			xmlXPathFreeObject(name_object);
 
 		resource_object = linphone_get_xml_xpath_object_for_node_list(xml_ctx, "/rlmi:list/rlmi:resource/rlmi:instance[@state=\"active\"]/..");
 		if (resource_object && resource_object->nodesetval) {
@@ -648,11 +678,10 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 	bctbx_list_t *elem = bctbx_list_find(list->friends, lf);
 	if (elem == NULL) return LinphoneFriendListNonExistentFriend;
 
-#ifdef SQLITE_STORAGE_ENABLED
 	if (lf && lf->lc && lf->lc->friends_db) {
 		linphone_core_remove_friend_from_db(lf->lc, lf);
 	}
-#endif
+
 	if (remove_from_server) {
 		LinphoneVcard *lvc = linphone_friend_get_vcard(lf);
 		if (lvc && linphone_vcard_get_uid(lvc)) {
@@ -665,9 +694,6 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 				linphone_carddav_delete_vcard(cdc, lf);
 			}
 		}
-	}
-	if (!list->lc->friends_db_file) {
-		linphone_core_write_friends_config(list->lc);
 	}
 	list->friends = bctbx_list_erase_link(list->friends, elem);
 	if(lf->refkey) {

@@ -23,17 +23,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <time.h>
 
-#ifdef SQLITE_STORAGE_ENABLED
-	#if !defined(_WIN32) && !defined(__ANDROID__) && !defined(__QNXNTO__)
-		#include <langinfo.h>
-		#include <iconv.h>
-		#include <string.h>
-	#endif
+#if !defined(_WIN32) && !defined(__ANDROID__) && !defined(__QNXNTO__)
+	#include <langinfo.h>
+	#include <iconv.h>
+	#include <string.h>
+#endif // if !defined(_WIN32) && !defined(__ANDROID__) && !defined(__QNXNTO__)
 
-	#include "sqlite3.h"
-
-	#define MAX_PATH_SIZE 1024
-#endif
+#define MAX_PATH_SIZE 1024
 
 #include "c-wrapper/c-wrapper.h"
 
@@ -171,7 +167,7 @@ bctbx_list_t * linphone_core_read_call_logs_from_config_file(LinphoneCore *lc){
  * Public functions                                                            *
  ******************************************************************************/
 
-LinphoneCallLog *linphone_core_create_call_log(LinphoneCore *lc, LinphoneAddress *from, LinphoneAddress *to, LinphoneCallDir dir, 
+LinphoneCallLog *linphone_core_create_call_log(LinphoneCore *lc, LinphoneAddress *from, LinphoneAddress *to, LinphoneCallDir dir,
 		int duration, time_t start_time, time_t connected_time, LinphoneCallStatus status, bool_t video_enabled, float quality) {
 	LinphoneCallLog *log = linphone_call_log_new(dir, linphone_address_ref(from), linphone_address_ref(to));
 
@@ -373,8 +369,6 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneCallLog, belle_sip_object_t,
 /*******************************************************************************
  * SQL storage related functions                                               *
  ******************************************************************************/
-
-#ifdef SQLITE_STORAGE_ENABLED
 
 static void linphone_create_call_log_table(sqlite3* db) {
 	char* errmsg=NULL;
@@ -725,42 +719,3 @@ LinphoneCallLog * linphone_core_find_call_log_from_call_id(LinphoneCore *lc, con
 
 	return result;
 }
-
-#else
-
-void linphone_core_call_log_storage_init(LinphoneCore *lc) {
-}
-
-void linphone_core_call_log_storage_close(LinphoneCore *lc) {
-}
-
-void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
-}
-
-const bctbx_list_t *linphone_core_get_call_history(LinphoneCore *lc) {
-	return NULL;
-}
-
-void linphone_core_delete_call_history(LinphoneCore *lc) {
-}
-
-void linphone_core_delete_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
-}
-
-int linphone_core_get_call_history_size(LinphoneCore *lc) {
-	return 0;
-}
-
-bctbx_list_t * linphone_core_get_call_history_for_address(LinphoneCore *lc, const LinphoneAddress *addr) {
-	return NULL;
-}
-
-LinphoneCallLog * linphone_core_get_last_outgoing_call_log(LinphoneCore *lc) {
-	return NULL;
-}
-
-LinphoneCallLog * linphone_core_find_call_log_from_call_id(LinphoneCore *lc, const char *call_id) {
-	return NULL;
-}
-
-#endif
