@@ -305,6 +305,8 @@ static void call_process_response(void *op_base, const belle_sip_response_event_
 						if (code >=200 && code<300) {
 							handle_sdp_from_response(op,response);
 							ack=belle_sip_dialog_create_ack(op->dialog,belle_sip_dialog_get_local_seq_number(op->dialog));
+							// Ref the ack request so that it is not destroyed when the call_ack_being_sent callbacks is called.
+							belle_sip_object_ref(ack);
 							if (ack == NULL) {
 								ms_error("This call has been already terminated.");
 								return ;
@@ -318,6 +320,7 @@ static void call_process_response(void *op_base, const belle_sip_response_event_
 							op->base.root->callbacks.call_accepted(op); /*INVITE*/
 							op->base.root->callbacks.call_ack_being_sent(op, (SalCustomHeader*)ack);
 							belle_sip_dialog_send_ack(op->dialog,ack);
+							belle_sip_object_unref(ack);
 							op->state=SalOpStateActive;
 						}else if (code >= 300){
 							call_set_error(op,response, FALSE);
