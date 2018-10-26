@@ -1159,7 +1159,7 @@ void MainDbPrivate::updateSchema () {
 			"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
 			"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
 	}
-	if (version < makeVersion(1, 0, 5)) {
+	if (version < makeVersion(1, 0, 6)) {
 		const string queryDelivery = "UPDATE conference_chat_message_event"
 			"  SET delivery_notification_required = 0"
 			"  WHERE direction = " + Utils::toString(int(ChatMessage::Direction::Incoming)) +
