@@ -73,8 +73,9 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_acc
  * Send a request to delete an account on server.
  * @param[in] creator LinphoneAccountCreator object
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
+ * @donotwrap This is a security breach, exists for tests purposes only
 **/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_delete_account(LinphoneAccountCreator *creator);
+LinphoneAccountCreatorStatus linphone_account_creator_delete_account(LinphoneAccountCreator *creator);
 
 /**
  * Send a request to know if an account is activated on server.
@@ -87,8 +88,9 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account
  * Send a request to get the account confirmation key on server.
  * @param[in] creator LinphoneAccountCreator object
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
+ * @donotwrap This is a security breach, exists for tests purposes only
 **/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key(LinphoneAccountCreator *creator);
+LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key(LinphoneAccountCreator *creator);
 
 /**
  * Send a request to activate an account on server.
@@ -411,15 +413,17 @@ LINPHONE_PUBLIC void linphone_account_creator_cbs_set_create_account(LinphoneAcc
  * Get the delete account request.
  * @param[in] cbs LinphoneAccountCreatorCbs object.
  * @return The current delete account request.
+ * @donotwrap This is a security breach, exists for tests purposes only
 **/
-LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_delete_account(const LinphoneAccountCreatorCbs *cbs);
+LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_delete_account(const LinphoneAccountCreatorCbs *cbs);
 
 /**
  * Assign a user pointer to a LinphoneAccountCreatorCbs object.
  * @param[in] cbs LinphoneAccountCreatorCbs object.
  * @param[in] cb The delete account request to be used.
+ * @donotwrap This is a security breach, exists for tests purposes only
 **/
-LINPHONE_PUBLIC void linphone_account_creator_cbs_set_delete_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
+void linphone_account_creator_cbs_set_delete_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
 
 /**
  * Get the is account exist request.
@@ -439,15 +443,17 @@ LINPHONE_PUBLIC void linphone_account_creator_cbs_set_is_account_exist(LinphoneA
  * Get the get confirmation key request.
  * @param[in] cbs LinphoneAccountCreatorCbs object.
  * @return The current is account exist request.
+ * @donotwrap This is a security breach, exists for tests purposes only
 **/
-LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_get_confirmation_key(const LinphoneAccountCreatorCbs *cbs);
+LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_get_confirmation_key(const LinphoneAccountCreatorCbs *cbs);
 
 /**
  * Assign a user pointer to a LinphoneAccountCreatorCbs object.
  * @param[in] cbs LinphoneAccountCreatorCbs object.
  * @param[in] cb The get confirmation key request to be used.
+ * @donotwrap This is a security breach, exists for tests purposes only
 **/
-LINPHONE_PUBLIC void linphone_account_creator_cbs_set_get_confirmation_key(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
+void linphone_account_creator_cbs_set_get_confirmation_key(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
 
 /**
  * Get the activate account request.
