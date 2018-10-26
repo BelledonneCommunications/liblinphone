@@ -71,7 +71,7 @@ ConferenceSecurityEvent::SecurityEventType ConferenceSecurityEvent::getSecurityE
 	return d->securityEventType;
 }
 
-const IdentityAddress &ConferenceSecurityEvent::getFaultyDevice () const {
+const IdentityAddress &ConferenceSecurityEvent::getFaultyDeviceAddress () const {
 	L_D();
 	return d->faultyDevice;
 }

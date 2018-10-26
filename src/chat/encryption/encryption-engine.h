@@ -56,7 +56,7 @@ public:
 		int &errorCode
 	) { return ChatMessageModifier::Result::Skipped; }
 
-	virtual bool encryptionEnabledForFileTransfer (
+	virtual bool isEncryptionEnabledForFileTransfer (
 		const std::shared_ptr<AbstractChatRoom> &ChatRoom
 	) { return false; }
 

@@ -982,7 +982,7 @@ long long MainDbPrivate::insertConferenceSecurityEvent (const shared_ptr<EventLo
 		return -1;
 
 	const int &securityEventType = int(static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getSecurityEventType());
-	const string &faultyDevice = static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getFaultyDevice().asString();
+	const string &faultyDevice = static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getFaultyDeviceAddress().asString();
 
 	// insert security event into new table "conference_security_event"
 	soci::session *session = dbSession.getBackendSession();
@@ -1159,7 +1159,7 @@ void MainDbPrivate::updateSchema () {
 			"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
 			"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
 	}
-	if (version < makeVersion(1, 0, 5)) {
+	if (version < makeVersion(1, 0, 6)) {
 		const string queryDelivery = "UPDATE conference_chat_message_event"
 			"  SET delivery_notification_required = 0"
 			"  WHERE direction = " + Utils::toString(int(ChatMessage::Direction::Incoming)) +

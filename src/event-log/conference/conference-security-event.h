@@ -50,7 +50,7 @@ public:
 	);
 
 	SecurityEventType getSecurityEventType () const;
-	const IdentityAddress &getFaultyDevice () const;
+	const IdentityAddress &getFaultyDeviceAddress () const;
 
 private:
 	L_DECLARE_PRIVATE(ConferenceSecurityEvent);

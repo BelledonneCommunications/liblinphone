@@ -758,7 +758,7 @@ void ClientGroupChatRoom::onSecurityEvent (const shared_ptr<ConferenceSecurityEv
 	shared_ptr<ConferenceSecurityEvent> cleanEvent = nullptr;
 
 	// Remove faulty device if its address is invalid
-	IdentityAddress faultyDevice = event->getFaultyDevice();
+	IdentityAddress faultyDevice = event->getFaultyDeviceAddress();
 	if (!faultyDevice.isValid()) {
 		cleanEvent = make_shared<ConferenceSecurityEvent>(
 			event->getCreationTime(),
