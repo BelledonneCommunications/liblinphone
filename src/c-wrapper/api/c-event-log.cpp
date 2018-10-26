@@ -323,7 +323,7 @@ const LinphoneAddress *linphone_event_log_get_device_address (const LinphoneEven
 
 LINPHONE_PUBLIC LinphoneSecurityEventType linphone_event_log_get_security_event_type (const LinphoneEventLog *event_log) {
 	if (!isConferenceSecurityType(linphone_event_log_get_type(event_log)))
-		return LinphoneSecurityEventTypeNull;
+		return LinphoneSecurityEventTypeNone;
 
 	const auto securityEvent = static_pointer_cast<const LinphonePrivate::ConferenceSecurityEvent>(
 		L_GET_CPP_PTR_FROM_C_OBJECT(event_log)

@@ -399,7 +399,7 @@ void LimeX3DHEncryptionEngine::update () {
 	lp_config_set_int(lpconfig, "lime", "last_lime_update_time", (int)lastLimeUpdate);
 }
 
-bool LimeX3DHEncryptionEngine::encryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom> &chatRoom) {
+bool LimeX3DHEncryptionEngine::isEncryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	return true;
 }
 
@@ -684,7 +684,7 @@ void LimeX3DHEncryptionEngine::addSecurityEventInChatrooms (
 	}
 }
 
-shared_ptr<ConferenceSecurityEvent> LimeX3DHEncryptionEngine::onDeviceAdded(
+shared_ptr<ConferenceSecurityEvent> LimeX3DHEncryptionEngine::onDeviceAdded (
 	const IdentityAddress &newDeviceAddr,
 	shared_ptr<Participant> participant,
 	const shared_ptr<AbstractChatRoom> &chatRoom,
@@ -750,41 +750,40 @@ void LimeX3DHEncryptionEngine::onRegistrationStateChanged (
 	LinphoneRegistrationState state,
 	const string &message
 ) {
-	if (state == LinphoneRegistrationState::LinphoneRegistrationOk) {
+	if (state != LinphoneRegistrationState::LinphoneRegistrationOk)
+		return;
 
-		if (x3dhServerUrl.empty()) {
-			lError() << "LIMEv2 X3DH server URL unavailable for encryption engine: can't create lime user";
-			return;
-		}
+	if (x3dhServerUrl.empty()) {
+		lError() << "LIMEv2 X3DH server URL unavailable for encryption engine: can't create lime user";
+		return;
+	}
 
-		char *contactAddress = linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg));
-		IdentityAddress identityAddress = IdentityAddress(contactAddress);
-		string localDeviceId = identityAddress.asString();
-		if (contactAddress)
-			ms_free(contactAddress);
+	char *contactAddress = linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg));
+	IdentityAddress identityAddress = IdentityAddress(contactAddress);
+	string localDeviceId = identityAddress.asString();
+	if (contactAddress)
+		ms_free(contactAddress);
 
-		stringstream operation;
-		operation << "create user " << localDeviceId;
-		lime::limeCallback callback = setLimeCallback(operation.str());
+	stringstream operation;
+	operation << "create user " << localDeviceId;
+	lime::limeCallback callback = setLimeCallback(operation.str());
 
-		LinphoneConfig *lpconfig = linphone_core_get_config(linphone_proxy_config_get_core(cfg));
-		lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_lime_update_time", -1);
+	LinphoneConfig *lpconfig = linphone_core_get_config(linphone_proxy_config_get_core(cfg));
+	lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_lime_update_time", -1);
 
-		try {
-			// create user if not exist
-			belleSipLimeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+	try {
+		// create user if not exist
+		belleSipLimeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+		lastLimeUpdate = ms_time(NULL);
+		lp_config_set_int(lpconfig, "lime", "last_lime_update_time", (int)lastLimeUpdate);
+	} catch (const exception &e) {
+		lInfo() << e.what() << " while creating lime user";
+
+		// update keys if necessary
+		int limeUpdateThreshold = lp_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
+		if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {
+			update();
 			lastLimeUpdate = ms_time(NULL);
-			lp_config_set_int(lpconfig, "lime", "last_lime_update_time", (int)lastLimeUpdate);
-		} catch (const exception &e) {
-			lInfo() << e.what() << " while creating lime user";
-
-			// update keys if necessary
-			int limeUpdateThreshold = lp_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
-			if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {
-				update();
-				lastLimeUpdate = ms_time(NULL);
-			} else {
-			}
 		}
 	}
 }

@@ -236,7 +236,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			bool isFileEncryptionEnabled = false;
 			EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
 			if (imee)
-				isFileEncryptionEnabled = imee->encryptionEnabledForFileTransfer(message->getChatRoom());
+				isFileEncryptionEnabled = imee->isEncryptionEnabledForFileTransfer(message->getChatRoom());
 
 			FileTransferContent *fileTransferContent = new FileTransferContent();
 			fileTransferContent->setContentType(ContentType::FileTransfer);

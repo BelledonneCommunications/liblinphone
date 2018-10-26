@@ -144,6 +144,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_acc
  * Send an XML-RPC request to delete a Linphone account.
  * @param[in] creator LinphoneAccountCreator object
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
+ * @donotwrap
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone(LinphoneAccountCreator *creator);
 
@@ -172,6 +173,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account
  * Send an XML-RPC request to get the confirmation key of a Linphone account.
  * @param[in] creator LinphoneAccountCreator object
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
+ * @donotwrap
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key_linphone(LinphoneAccountCreator *creator);
 

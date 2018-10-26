@@ -23,9 +23,9 @@
 // =============================================================================
 
 #define L_ENUM_VALUES_ENCRYPTION_ENGINE_SECURITY_LEVEL(F) \
-	F(Unsafe /**< Fail */) \
+	F(Unsafe /**< Security failure */) \
 	F(ClearText /**< No encryption */) \
 	F(Encrypted /**< Encrypted */) \
-	F(Safe /**< Encrypted and Verified */)
+	F(Safe /**< Encrypted and verified */)
 
 #endif // ifndef _L_ENCRYPTION_ENGINE_ENUMS_H_

@@ -109,7 +109,7 @@ static void chat_room_security_event (LinphoneChatRoom *cr, const LinphoneEventL
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 
 	switch (linphone_event_log_get_security_event_type(event_log)) {
-		case LinphoneSecurityEventTypeNull:
+		case LinphoneSecurityEventTypeNone:
 			break;
 		case LinphoneSecurityEventTypeSecurityLevelDowngraded:
 			manager->stat.number_of_SecurityLevelDowngraded++;
