@@ -5178,6 +5178,18 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC const char *linphone_core_get_chat_database_
 LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_create_client_group_chat_room(LinphoneCore *lc, const char *subject, bool_t fallback);
 
 /**
+ * Create a client-side group chat room. When calling this function the chat room is only created
+ * at the client-side and is empty. You need to call linphone_chat_room_add_participants() to
+ * create at the server side and add participants to it.
+ * @param[in] lc A #LinphoneCore object
+ * @param[in] subject The subject of the group chat room
+ * @param[in] fallback Boolean value telling whether we should plan on being able to fallback to a basic chat room if the client-side group chat room creation fails
+ * @param[in] encrypted Boolean value telling whether we should apply encryption or not on chat messages sent and received on this room.
+ * @return The newly created client-side group chat room.
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_client_group_chat_room_2 (LinphoneCore *lc, const char *subject, bool_t fallback, bool_t encrypted);
+
+/**
  * Get a basic chat room whose peer is the supplied address. If it does not exist yet, it will be created.
  * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
  * @param lc the linphone core
