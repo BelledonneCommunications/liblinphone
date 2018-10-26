@@ -5121,6 +5121,39 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void recovered_call_on_network_switch_in_early_state_5(void) {
+	LinphoneCall *incoming_call;
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
+	linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
+	
+	linphone_core_invite_address(marie->lc, pauline->identity);
+	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1))) goto end;
+	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1))) goto end;
+	
+	/*simulate a general socket error*/
+	sal_set_recv_error(linphone_core_get_sal(pauline->lc), 0);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneRegistrationProgress, pauline->stat.number_of_LinphoneRegistrationProgress +1));
+	/*restart normal behavior*/
+	sal_set_recv_error(linphone_core_get_sal(pauline->lc), 1);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneRegistrationOk, pauline->stat.number_of_LinphoneRegistrationOk +1));
+	
+	wait_for_until(marie->lc, pauline->lc, NULL, 1, 2000);
+	incoming_call = linphone_core_get_current_call(pauline->lc);
+	linphone_call_accept(incoming_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	liblinphone_tester_check_rtcp(marie,pauline);
+	end_call(marie,pauline);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void recovered_call_on_network_switch_during_reinvite_1(void) {
 	LinphoneCall *incoming_call;
 	LinphoneCall *outgoing_call;
@@ -6659,6 +6692,7 @@ test_t call_tests[] = {
 	TEST_ONE_TAG("Recovered call on network switch in early state 2", recovered_call_on_network_switch_in_early_state_2, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch in early state 3", recovered_call_on_network_switch_in_early_state_3, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch in early state 4", recovered_call_on_network_switch_in_early_state_4, "CallRecovery"),
+	TEST_ONE_TAG("Recovered call on network switch in early state 5", recovered_call_on_network_switch_in_early_state_5, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch during re-invite 1", recovered_call_on_network_switch_during_reinvite_1, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch during re-invite 2", recovered_call_on_network_switch_during_reinvite_2, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch during re-invite 3", recovered_call_on_network_switch_during_reinvite_3, "CallRecovery"),
