@@ -101,7 +101,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const string &subject, const string &uri, const Content &content, bool fallback) {
+shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const string &subject, const string &uri, const Content &content, bool fallback, bool isEncrypted) {
 	L_Q();
 
 	string usedUri;
@@ -133,7 +133,6 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const strin
 		}
 	}
 
-	bool isEncrypted = true; // TODO get parameter from application level
 	shared_ptr<AbstractChatRoom> chatRoom;
 	{
 		shared_ptr<ClientGroupChatRoom> clientGroupChatRoom = make_shared<ClientGroupChatRoom>(
@@ -274,9 +273,9 @@ shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 	return nullptr;
 }
 
-shared_ptr<AbstractChatRoom> Core::createClientGroupChatRoom (const string &subject, bool fallback) {
+shared_ptr<AbstractChatRoom> Core::createClientGroupChatRoom (const string &subject, bool fallback, bool isEncrypted) {
 	L_D();
-	return d->createClientGroupChatRoom(subject, "", Content(), fallback);
+	return d->createClientGroupChatRoom(subject, "", Content(), fallback, isEncrypted);
 }
 
 shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt) {

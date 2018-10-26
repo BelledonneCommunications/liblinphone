@@ -110,11 +110,8 @@ public:
 		const IdentityAddress &participantAddress
 	) const;
 
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, bool fallback = true);
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (
-		const std::string &subject,
-		const IdentityAddress &localAddress
-	);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, bool fallback = true, bool isEncrypted = false);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, const IdentityAddress &localAddress); // TODO isEncrypted ? who uses this ?
 
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt = false);
 

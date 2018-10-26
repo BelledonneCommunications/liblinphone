@@ -78,7 +78,7 @@ public:
 		}
 		migrationRealTime = currentRealTime;
 		clientGroupChatRoom = static_pointer_cast<ClientGroupChatRoom>(
-			chatRoom->getCore()->getPrivate()->createClientGroupChatRoom(chatRoom->getSubject(), "", Content(), false)
+			chatRoom->getCore()->getPrivate()->createClientGroupChatRoom(chatRoom->getSubject(), "", Content(), false, false) // TODO false because chatroom migration ?
 		);
 		clientGroupChatRoom->getPrivate()->setCallSessionListener(this);
 		clientGroupChatRoom->getPrivate()->setChatRoomListener(this);
