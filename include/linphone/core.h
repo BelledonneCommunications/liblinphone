@@ -1556,6 +1556,22 @@ LINPHONE_PUBLIC bool_t linphone_core_ipv6_enabled(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val);
 
 /**
+ * Tells whether Wifi only mode is enabled or not
+ * @param[in] lc #LinphoneCore object
+ * @return A boolean value telling whether Wifi only mode is enabled or not
+ * @ingroup network_parameters
+**/
+LINPHONE_PUBLIC bool_t linphone_core_wifi_only_enabled(LinphoneCore *lc);
+
+/**
+ * Turns Wifi only mode on or off
+ * @param[in] lc #LinphoneCore object
+ * @param[in] val A boolean value telling whether to enable IPv6 support
+ * @ingroup network_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_enable_wifi_only(LinphoneCore *lc, bool_t val);
+
+/**
  * Same as linphone_core_get_primary_contact() but the result is a #LinphoneAddress object
  * instead of const char *.
  *

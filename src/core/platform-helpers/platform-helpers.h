@@ -54,6 +54,7 @@ public:
 	virtual void setVideoPreviewWindow (void *windowId) = 0;
 	virtual void setNetworkReachable (bool reachable) = 0;
 	virtual void onLinphoneCoreReady () = 0;
+	virtual void onWifiOnlyEnabled (bool enabled) = 0;
 
 protected:
 	inline explicit PlatformHelpers (LinphoneCore *lc) : mCore(lc) {}
@@ -79,6 +80,7 @@ public:
 	void setVideoPreviewWindow (void *windowId) override;
 	void setNetworkReachable (bool reachable) override;
 	void onLinphoneCoreReady () override;
+	void onWifiOnlyEnabled (bool enabled) override;
 };
 
 PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext);
