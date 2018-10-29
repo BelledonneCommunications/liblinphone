@@ -282,6 +282,7 @@ RemoteConference(core, me->getAddress(), nullptr) {
 	L_D_T(RemoteConference, dConference);
 
 	d->capabilities |= capabilities & ClientGroupChatRoom::Capabilities::OneToOne;
+	d->capabilities |= capabilities & ClientGroupChatRoom::Capabilities::Encrypted;
 	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
 	dConference->focus = make_shared<Participant>(this, peerAddress);
 	dConference->focus->getPrivate()->addDevice(peerAddress);
