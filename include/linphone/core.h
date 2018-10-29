@@ -3260,8 +3260,22 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_call_logs(LinphoneCore *l
  * @param[in] lc #LinphoneCore object
  * @param[in] addr #LinphoneAddress object
  * @return \bctbx_list{LinphoneCallLog} \onTheFlyList
+ * @deprecated Use #linphone_core_get_call_history_2 instead. Deprecated since 2018-10-29.
 **/
 LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_call_history_for_address(LinphoneCore *lc, const LinphoneAddress *addr);
+
+/**
+ * Get the list of call logs (past calls).
+ * At the contrary of linphone_core_get_call_logs, it is your responsibility to unref the logs and free this list once you are done using it.
+ * @param[in] lc #LinphoneCore object.
+ * @param[in] peer_addr A #LinphoneAddress object.
+ * @return \bctbx_list{LinphoneCallLog} \onTheFlyList
+**/
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_call_history_2(
+	LinphoneCore *lc,
+	const LinphoneAddress *peer_addr,
+	const LinphoneAddress *local_addr
+);
 
 /**
  * Get the latest outgoing call log.
