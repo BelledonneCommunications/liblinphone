@@ -60,7 +60,7 @@ AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
 	auto encryptionEngine = getCore()->getEncryptionEngine();
 	if (encryptionEngine)
 		return encryptionEngine->getSecurityLevel(mGruu.asString());
-	return AbstractChatRoom::SecurityLevel::ClearText; // Undefined / Unknown
+	return AbstractChatRoom::SecurityLevel::ClearText;
 }
 
 ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
