@@ -52,6 +52,8 @@ public:
 	virtual std::string getConfigPath () = 0;
 	virtual void setVideoWindow (void *windowId) = 0;
 	virtual void setVideoPreviewWindow (void *windowId) = 0;
+	virtual void setNetworkReachable (bool reachable) = 0;
+	virtual void onLinphoneCoreReady () = 0;
 
 protected:
 	inline explicit PlatformHelpers (LinphoneCore *lc) : mCore(lc) {}
@@ -75,6 +77,8 @@ public:
 	std::string getConfigPath () override;
 	void setVideoWindow (void *windowId) override;
 	void setVideoPreviewWindow (void *windowId) override;
+	void setNetworkReachable (bool reachable) override;
+	void onLinphoneCoreReady () override;
 };
 
 PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext);

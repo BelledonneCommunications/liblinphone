@@ -2096,6 +2096,8 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 		lc->provisioning_http_listener = NULL;
 	}
 
+	getPlatformHelpers(lc)->onLinphoneCoreReady();
+
 	linphone_core_set_state(lc,LinphoneGlobalOn,"Ready");
 }
 

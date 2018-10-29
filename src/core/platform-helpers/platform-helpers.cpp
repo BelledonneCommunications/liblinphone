@@ -49,12 +49,12 @@ string StubbedPlatformHelpers::getConfigPath () {
 	return "";
 }
 
-void StubbedPlatformHelpers::setVideoPreviewWindow (void *windowId) {
+void StubbedPlatformHelpers::setVideoPreviewWindow (void *windowId) {}
 
-}
+void StubbedPlatformHelpers::setVideoWindow (void *windowId) {}
 
-void StubbedPlatformHelpers::setVideoWindow (void *windowId) {
+void StubbedPlatformHelpers::setNetworkReachable (bool reachable) {}
 
-}
+void StubbedPlatformHelpers::onLinphoneCoreReady () {}
 
 LINPHONE_END_NAMESPACE
