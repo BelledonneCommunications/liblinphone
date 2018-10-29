@@ -45,7 +45,7 @@ private:
 	// Misc helpers.
 	// ---------------------------------------------------------------------------
 
-	std::shared_ptr<AbstractChatRoom> findChatRoom (const ChatRoomId &chatRoomId) const;
+	std::shared_ptr<AbstractChatRoom> findChatRoom (const ConferenceId &conferenceId) const;
 
 	// ---------------------------------------------------------------------------
 	// Low level API.
@@ -66,7 +66,7 @@ private:
 
 	long long selectSipAddressId (const std::string &sipAddress) const;
 	long long selectChatRoomId (long long peerSipAddressId, long long localSipAddressId) const;
-	long long selectChatRoomId (const ChatRoomId &chatRoomId) const;
+	long long selectChatRoomId (const ConferenceId &conferenceId) const;
 	long long selectChatRoomParticipantId (long long chatRoomId, long long participantSipAddressId) const;
 	long long selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB) const;
 
@@ -99,18 +99,18 @@ private:
 	) const;
 
 	std::shared_ptr<EventLog> selectGenericConferenceNotifiedEvent (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		const soci::row &row
 	) const;
 
 	std::shared_ptr<EventLog> selectConferenceEvent (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		EventLog::Type type,
 		const soci::row &row
 	) const;
 
 	std::shared_ptr<EventLog> selectConferenceCallEvent (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		EventLog::Type type,
 		const soci::row &row
 	) const;
@@ -122,19 +122,19 @@ private:
 	) const;
 
 	std::shared_ptr<EventLog> selectConferenceParticipantEvent (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		EventLog::Type type,
 		const soci::row &row
 	) const;
 
 	std::shared_ptr<EventLog> selectConferenceParticipantDeviceEvent (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		EventLog::Type type,
 		const soci::row &row
 	) const;
 
 	std::shared_ptr<EventLog> selectConferenceSubjectEvent (
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		EventLog::Type type,
 		const soci::row &row
 	) const;
@@ -185,7 +185,7 @@ private:
 
 	// ---------------------------------------------------------------------------
 
-	mutable LruCache<ChatRoomId, int> unreadChatMessageCountCache;
+	mutable LruCache<ConferenceId, int> unreadChatMessageCountCache;
 
 	L_DECLARE_PUBLIC(MainDb);
 };

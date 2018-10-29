@@ -546,7 +546,7 @@ void first_notify_parsing() {
 	size_t size = strlen(first_notify) + strlen(confUri);
 	char *notify = new char[size];
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 
 	snprintf(notify, size, first_notify, confUri);
 	tester->handler->notifyReceived(notify);
@@ -584,7 +584,7 @@ void first_notify_parsing_wrong_conf() {
 	size_t size = strlen(first_notify) + strlen(confUri);
 	char *notify = new char[size];
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	snprintf(notify, size, first_notify, confUri);
 	tester->handler->notifyReceived(notify);
 
@@ -616,7 +616,7 @@ void participant_added_parsing() {
 	size_t size2 = strlen(participant_added_notify) + strlen(confUri);
 	char *notify_added = new char[size2];
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	snprintf(notify, size, first_notify, confUri);
 	tester->handler->notifyReceived(notify);
 
@@ -662,7 +662,7 @@ void participant_not_added_parsing() {
 	size_t size2 = strlen(participant_not_added_notify) + strlen(confUri);
 	char *notify_not_added = new char[size2];
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	snprintf(notify, size, first_notify, confUri);
 	tester->handler->notifyReceived(notify);
 
@@ -705,7 +705,7 @@ void participant_deleted_parsing() {
 	size_t size2 = strlen(participant_deleted_notify) + strlen(confUri);
 	char *notify_deleted = new char[size2];
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	snprintf(notify, size, first_notify, confUri);
 	tester->handler->notifyReceived(notify);
 
@@ -748,7 +748,7 @@ void participant_admined_parsing() {
 	size_t size2 = strlen(participant_admined_notify) + strlen(confUri);
 	char *notify_admined = new char[size2];
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	snprintf(notify, size, first_notify, confUri);
 	tester->handler->notifyReceived(notify);
 
@@ -790,7 +790,7 @@ void participant_unadmined_parsing() {
 	size_t size2 = strlen(participant_unadmined_notify) + strlen(confUri);
 	char *notify_unadmined = new char[size2];
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	snprintf(notify, size, first_notify, confUri);
 	tester->handler->notifyReceived(notify);
 
@@ -848,7 +848,7 @@ void send_first_notify() {
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
 	BC_ASSERT_STRING_EQUAL(tester->confSubject.c_str(), "A random test subject");
@@ -900,7 +900,7 @@ void send_added_notify() {
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
 	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
@@ -959,7 +959,7 @@ void send_removed_notify() {
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
 	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
@@ -1015,7 +1015,7 @@ void send_admined_notify() {
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
 	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
@@ -1070,7 +1070,7 @@ void send_unadmined_notify() {
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
 	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
@@ -1126,7 +1126,7 @@ void send_subject_changed_notify () {
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
 	BC_ASSERT_STRING_EQUAL(tester->confSubject.c_str(), "A random test subject");
@@ -1188,7 +1188,7 @@ void send_device_added_notify() {
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
 	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
@@ -1248,7 +1248,7 @@ void send_device_removed_notify() {
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState();
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
 	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
@@ -1321,7 +1321,7 @@ void one_to_one_keyword () {
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandlerPrivate->createNotifyFullState(-1, true);
 
-	const_cast<IdentityAddress &>(tester->handler->getChatRoomId().getPeerAddress()) = addr;
+	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
 	BC_ASSERT_EQUAL(tester->participantDevices.size(), 1, int, "%d");

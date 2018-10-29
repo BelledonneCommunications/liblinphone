@@ -31,7 +31,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class AbstractChatRoomPrivate;
-class ChatRoomId;
+class ConferenceId;
 class EventLog;
 
 class LINPHONE_PUBLIC AbstractChatRoom : public Object, public CoreAccessor, public ConferenceInterface {
@@ -56,7 +56,7 @@ public:
 	virtual bool canHandleCpim () const = 0;
 	virtual bool canHandleMultipart () const = 0;
 
-	virtual const ChatRoomId &getChatRoomId () const = 0;
+	virtual const ConferenceId &getConferenceId () const = 0;
 
 	virtual const IdentityAddress &getPeerAddress () const = 0;
 	virtual const IdentityAddress &getLocalAddress () const = 0;

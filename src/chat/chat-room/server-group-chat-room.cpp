@@ -605,8 +605,8 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 	IdentityAddress confAddr(qConference->getPrivate()->conferenceAddress);
-	chatRoomId = ChatRoomId(confAddr, confAddr);
-	qConference->getPrivate()->eventHandler->setChatRoomId(chatRoomId);
+	conferenceId = ConferenceId(confAddr, confAddr);
+	qConference->getPrivate()->eventHandler->setConferenceId(conferenceId);
 	lInfo() << q << " created";
 	// Let the SIP stack set the domain and the port
 	shared_ptr<Participant> me = q->getMe();
@@ -807,7 +807,7 @@ void ServerGroupChatRoomPrivate::onCallSessionSetReleased (const shared_ptr<Call
 // =============================================================================
 
 ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallOp *op)
-: ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomId()),
+: ChatRoom(*new ServerGroupChatRoomPrivate, core, ConferenceId()),
 LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(core->getCCore()))), nullptr) {
 	L_D();
 	L_D_T(LocalConference, dConference);
@@ -828,7 +828,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId
-) : ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomId(peerAddress, peerAddress)),
+) : ChatRoom(*new ServerGroupChatRoomPrivate, core, ConferenceId(peerAddress, peerAddress)),
 LocalConference(getCore(), peerAddress, nullptr) {
 	L_D();
 	L_D_T(LocalConference, dConference);
@@ -838,7 +838,7 @@ LocalConference(getCore(), peerAddress, nullptr) {
 	dConference->participants = move(participants);
 	dConference->conferenceAddress = peerAddress;
 	dConference->eventHandler->setLastNotify(lastNotifyId);
-	dConference->eventHandler->setChatRoomId(d->chatRoomId);
+	dConference->eventHandler->setConferenceId(d->conferenceId);
 	getCore()->getPrivate()->localListEventHandler->addHandler(dConference->eventHandler.get());
 }
 
@@ -1003,7 +1003,7 @@ void ServerGroupChatRoom::setSubject (const string &subject) {
 // -----------------------------------------------------------------------------
 
 ostream &operator<< (ostream &stream, const ServerGroupChatRoom *chatRoom) {
-	return stream << "ServerGroupChatRoom [" << chatRoom->getChatRoomId().getPeerAddress().asString() << "]";
+	return stream << "ServerGroupChatRoom [" << chatRoom->getConferenceId().getPeerAddress().asString() << "]";
 }
 
 LINPHONE_END_NAMESPACE

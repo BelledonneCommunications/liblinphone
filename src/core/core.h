@@ -32,12 +32,12 @@ L_DECL_C_STRUCT(LinphoneCore);
 
 LINPHONE_BEGIN_NAMESPACE
 
+class AbstractChatRoom;
 class Address;
 class Call;
-class ChatRoomId;
+class ConferenceId;
 class CorePrivate;
 class IdentityAddress;
-class AbstractChatRoom;
 
 class LINPHONE_PUBLIC Core : public Object {
 	friend class BasicToClientGroupChatRoom;
@@ -104,7 +104,7 @@ public:
 
 	const std::list<std::shared_ptr<AbstractChatRoom>> &getChatRooms () const;
 
-	std::shared_ptr<AbstractChatRoom> findChatRoom (const ChatRoomId &chatRoomId) const;
+	std::shared_ptr<AbstractChatRoom> findChatRoom (const ConferenceId &conferenceId) const;
 	std::list<std::shared_ptr<AbstractChatRoom>> findChatRooms (const IdentityAddress &peerAddress) const;
 
 	std::shared_ptr<AbstractChatRoom> findOneToOneChatRoom (
@@ -118,7 +118,7 @@ public:
 		const IdentityAddress &localAddress
 	);
 
-	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const ChatRoomId &chatRoomId, bool isRtt = false);
+	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt = false);
 
 	// TODO: Remove me in the future, a chatroom is identified by a local and peer address now!
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const IdentityAddress &peerAddress, bool isRtt = false);

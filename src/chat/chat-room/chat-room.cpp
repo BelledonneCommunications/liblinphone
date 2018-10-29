@@ -134,7 +134,7 @@ shared_ptr<IsComposingMessage> ChatRoomPrivate::createIsComposingMessage () {
 
 list<shared_ptr<ChatMessage>> ChatRoomPrivate::findChatMessages (const string &messageId) const {
 	L_Q();
-	return q->getCore()->getPrivate()->mainDb->findChatMessages(q->getChatRoomId(), messageId);
+	return q->getCore()->getPrivate()->mainDb->findChatMessages(q->getConferenceId(), messageId);
 }
 
 // -----------------------------------------------------------------------------
@@ -167,7 +167,7 @@ void ChatRoomPrivate::sendDeliveryNotifications () {
 	L_Q();
 	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCore()->getCCore());
 	if (linphone_im_notif_policy_get_send_imdn_delivered(policy)) {
-		auto chatMessages = q->getCore()->getPrivate()->mainDb->findChatMessagesToBeNotifiedAsDelivered(q->getChatRoomId());
+		auto chatMessages = q->getCore()->getPrivate()->mainDb->findChatMessagesToBeNotifiedAsDelivered(q->getConferenceId());
 		for (const auto &chatMessage : chatMessages) {
 			ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 			if (dChatMessage->getPositiveDeliveryNotificationRequired()) {
@@ -234,7 +234,7 @@ void ChatRoomPrivate::notifyIsComposingReceived (const Address &remoteAddress, b
 void ChatRoomPrivate::notifyStateChanged () {
 	L_Q();
 	LinphoneChatRoom *cr = getCChatRoom();
-	lInfo() << "Chat room [" << q->getChatRoomId() << "] state changed to: " << Utils::toString(state);
+	lInfo() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(state);
 	linphone_core_notify_chat_room_state_changed(q->getCore()->getCCore(), cr, (LinphoneChatRoomState)state);
 	_linphone_chat_room_notify_state_changed(cr, (LinphoneChatRoomState)state);
 }
@@ -346,11 +346,11 @@ LinphoneChatRoom *ChatRoomPrivate::getCChatRoom () const {
 
 // =============================================================================
 
-ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ChatRoomId &chatRoomId) :
+ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ConferenceId &conferenceId) :
 	AbstractChatRoom(p, core) {
 	L_D();
 
-	d->chatRoomId = chatRoomId;
+	d->conferenceId = conferenceId;
 	d->imdnHandler.reset(new Imdn(this));
 	d->isComposingHandler.reset(new IsComposing(core->getCCore(), d));
 }
@@ -363,19 +363,19 @@ ChatRoom::~ChatRoom () {
 
 // -----------------------------------------------------------------------------
 
-const ChatRoomId &ChatRoom::getChatRoomId () const {
+const ConferenceId &ChatRoom::getConferenceId () const {
 	L_D();
-	return d->chatRoomId;
+	return d->conferenceId;
 }
 
 const IdentityAddress &ChatRoom::getPeerAddress () const {
 	L_D();
-	return d->chatRoomId.getPeerAddress();
+	return d->conferenceId.getPeerAddress();
 }
 
 const IdentityAddress &ChatRoom::getLocalAddress () const {
 	L_D();
-	return d->chatRoomId.getLocalAddress();
+	return d->conferenceId.getLocalAddress();
 }
 
 // -----------------------------------------------------------------------------
@@ -400,16 +400,16 @@ ChatRoom::State ChatRoom::getState () const {
 // -----------------------------------------------------------------------------
 
 list<shared_ptr<EventLog>> ChatRoom::getMessageHistory (int nLast) const {
-	return getCore()->getPrivate()->mainDb->getHistory(getChatRoomId(), nLast, MainDb::Filter::ConferenceChatMessageFilter);
+	return getCore()->getPrivate()->mainDb->getHistory(getConferenceId(), nLast, MainDb::Filter::ConferenceChatMessageFilter);
 }
 
 list<shared_ptr<EventLog>> ChatRoom::getMessageHistoryRange (int begin, int end) const {
-	return getCore()->getPrivate()->mainDb->getHistoryRange(getChatRoomId(), begin, end, MainDb::Filter::ConferenceChatMessageFilter);
+	return getCore()->getPrivate()->mainDb->getHistoryRange(getConferenceId(), begin, end, MainDb::Filter::ConferenceChatMessageFilter);
 }
 
 list<shared_ptr<EventLog>> ChatRoom::getHistory (int nLast) const {
 	return getCore()->getPrivate()->mainDb->getHistory(
-		getChatRoomId(),
+		getConferenceId(),
 		nLast,
 		MainDb::FilterMask({ MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter })
 	);
@@ -417,7 +417,7 @@ list<shared_ptr<EventLog>> ChatRoom::getHistory (int nLast) const {
 
 list<shared_ptr<EventLog>> ChatRoom::getHistoryRange (int begin, int end) const {
 	return getCore()->getPrivate()->mainDb->getHistoryRange(
-		getChatRoomId(),
+		getConferenceId(),
 		begin,
 		end,
 		MainDb::FilterMask({ MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter })
@@ -425,7 +425,7 @@ list<shared_ptr<EventLog>> ChatRoom::getHistoryRange (int begin, int end) const 
 }
 
 int ChatRoom::getHistorySize () const {
-	return getCore()->getPrivate()->mainDb->getHistorySize(getChatRoomId());
+	return getCore()->getPrivate()->mainDb->getHistorySize(getConferenceId());
 }
 
 void ChatRoom::deleteFromDb () {
@@ -437,19 +437,19 @@ void ChatRoom::deleteFromDb () {
 }
 
 void ChatRoom::deleteHistory () {
-	getCore()->getPrivate()->mainDb->cleanHistory(getChatRoomId());
+	getCore()->getPrivate()->mainDb->cleanHistory(getConferenceId());
 }
 
 shared_ptr<ChatMessage> ChatRoom::getLastChatMessageInHistory () const {
-	return getCore()->getPrivate()->mainDb->getLastChatMessage(getChatRoomId());
+	return getCore()->getPrivate()->mainDb->getLastChatMessage(getConferenceId());
 }
 
 int ChatRoom::getChatMessageCount () const {
-	return getCore()->getPrivate()->mainDb->getChatMessageCount(getChatRoomId());
+	return getCore()->getPrivate()->mainDb->getChatMessageCount(getConferenceId());
 }
 
 int ChatRoom::getUnreadChatMessageCount () const {
-	return getCore()->getPrivate()->mainDb->getUnreadChatMessageCount(getChatRoomId());
+	return getCore()->getPrivate()->mainDb->getUnreadChatMessageCount(getConferenceId());
 }
 
 // -----------------------------------------------------------------------------
@@ -516,10 +516,10 @@ void ChatRoom::markAsRead () {
 	L_D();
 
 	CorePrivate *dCore = getCore()->getPrivate();
-	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->chatRoomId))
+	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->conferenceId))
 		chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
 
-	dCore->mainDb->markChatMessagesAsRead(d->chatRoomId);
+	dCore->mainDb->markChatMessagesAsRead(d->conferenceId);
 }
 
 LINPHONE_END_NAMESPACE

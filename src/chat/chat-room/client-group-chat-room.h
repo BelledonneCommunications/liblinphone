@@ -49,7 +49,7 @@ public:
 
 	ClientGroupChatRoom (
 		const std::shared_ptr<Core> &core,
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		std::shared_ptr<Participant> &me,
 		AbstractChatRoom::CapabilitiesMask capabilities,
 		const std::string &subject,

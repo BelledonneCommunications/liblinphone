@@ -27,16 +27,16 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceEventPrivate;
-class ChatRoomId;
+class ConferenceId;
 
 class LINPHONE_PUBLIC ConferenceEvent : public EventLog {
 public:
-	ConferenceEvent (Type type, time_t creationTime, const ChatRoomId &chatRoomId);
+	ConferenceEvent (Type type, time_t creationTime, const ConferenceId &conferenceId);
 
-	const ChatRoomId &getChatRoomId () const;
+	const ConferenceId &getConferenceId () const;
 
 protected:
-	ConferenceEvent (ConferenceEventPrivate &p, Type type, time_t creationTime, const ChatRoomId &chatRoomId);
+	ConferenceEvent (ConferenceEventPrivate &p, Type type, time_t creationTime, const ConferenceId &conferenceId);
 
 private:
 	L_DECLARE_PRIVATE(ConferenceEvent);

@@ -22,12 +22,11 @@
 
 #include <list>
 #include <map>
-#include <memory>
 
 #include "linphone/types.h"
 #include "linphone/utils/general.h"
 
-#include "chat/chat-room/chat-room-id.h"
+#include "conference/conference-id.h"
 #include "core/core-accessor.h"
 #include "core/core-listener.h"
 
@@ -49,7 +48,7 @@ public:
 	void notifyReceived (const Content *notifyContent);
 	void addHandler (RemoteConferenceEventHandler *handler);
 	void removeHandler (RemoteConferenceEventHandler *handler);
-	RemoteConferenceEventHandler *findHandler (const ChatRoomId &chatRoomId) const;
+	RemoteConferenceEventHandler *findHandler (const ConferenceId &conferenceId) const;
 	const std::list<RemoteConferenceEventHandler *> &getHandlers () const;
 
 private:
