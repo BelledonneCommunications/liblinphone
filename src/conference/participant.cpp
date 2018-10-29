@@ -111,14 +111,14 @@ AbstractChatRoom::SecurityLevel Participant::getSecurityLevel () const {
 		auto level = device->getSecurityLevel();
 		switch (level) {
 			case AbstractChatRoom::SecurityLevel::Unsafe:
-				return level; // if one device is Unsafe the whole participant is Unsafe (red)
+				return level; // if one device is Unsafe the whole participant is Unsafe
 			case AbstractChatRoom::SecurityLevel::ClearText:
-				return level; // TODO if all devices are in ClearText the whole participant is in ClearText (grey)
+				return level; // if one device is ClearText the whole participant is ClearText
 			case AbstractChatRoom::SecurityLevel::Encrypted:
-				isSafe = false; // if one device is Encrypted the whole participant is Encrypted (orange)
+				isSafe = false; // if one device is Encrypted the whole participant is Encrypted
 				break;
 			case AbstractChatRoom::SecurityLevel::Safe:
-				break; // if all devices are Safe the whole participant is Safe (green)
+				break; // if all devices are Safe the whole participant is Safe
 		}
 	}
 	if (isSafe)

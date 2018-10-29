@@ -68,6 +68,8 @@ AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
 	auto encryptionEngine = getCore()->getEncryptionEngine();
 	if (encryptionEngine)
 		return encryptionEngine->getSecurityLevel(mGruu.asString());
+
+	lWarning() << "Asking device security level but there is no encryption engine enabled";
 	return AbstractChatRoom::SecurityLevel::ClearText; // Undefined / Unknown
 }
 

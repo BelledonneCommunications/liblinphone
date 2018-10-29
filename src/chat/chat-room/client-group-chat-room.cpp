@@ -342,19 +342,26 @@ bool ClientGroupChatRoom::isEncrypted () const {
 }
 
 ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
+	L_D();
+	if (!(d->capabilities & ClientGroupChatRoom::Capabilities::Encrypted)) {
+		return AbstractChatRoom::SecurityLevel::ClearText;
+	}
+
 	bool isSafe = true;
 	for (const auto &participant : getParticipants()) {
 		auto level = participant->getSecurityLevel();
 		switch (level) {
 			case AbstractChatRoom::SecurityLevel::Unsafe:
 				lInfo() << "Chatroom SecurityLevel = Unsafe";
-				return level; // if one device is Unsafe the whole participant is Unsafe (red)
+				return level; // if one device is Unsafe the whole participant is Unsafe
 			case AbstractChatRoom::SecurityLevel::ClearText:
+				lInfo() << "Chatroom securityLevel = ClearText";
+				return level; // if one device is ClearText the whole participant is ClearText
 			case AbstractChatRoom::SecurityLevel::Encrypted:
-				isSafe = false; // if one device is Encrypted the whole participant is Encrypted (orange)
+				isSafe = false; // if one device is Encrypted the whole participant is Encrypted
 				break;
 			case AbstractChatRoom::SecurityLevel::Safe:
-				break; // if all devices are Safe the whole participant is Safe (green)
+				break; // if all devices are Safe the whole participant is Safe
 		}
 	}
 	if (isSafe) {

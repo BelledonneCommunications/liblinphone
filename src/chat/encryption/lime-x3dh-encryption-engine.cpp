@@ -507,14 +507,12 @@ AbstractChatRoom::SecurityLevel LimeX3DHEncryptionEngine::getSecurityLevel (cons
 	lime::PeerDeviceStatus status = belleSipLimeManager->get_peerDeviceStatus(deviceId);
 	switch (status) {
 		case lime::PeerDeviceStatus::unknown:
-			return AbstractChatRoom::SecurityLevel::ClearText;
 		case lime::PeerDeviceStatus::untrusted:
 			return AbstractChatRoom::SecurityLevel::Encrypted;
 		case lime::PeerDeviceStatus::trusted:
 			return AbstractChatRoom::SecurityLevel::Safe;
 		case lime::PeerDeviceStatus::unsafe:
-			return AbstractChatRoom::SecurityLevel::Unsafe;
-		default:
+		case lime::PeerDeviceStatus::fail:
 			return AbstractChatRoom::SecurityLevel::Unsafe;
 	}
 }
