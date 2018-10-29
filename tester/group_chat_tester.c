@@ -317,7 +317,13 @@ static LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs
 }
 
 static LinphoneChatRoom * create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, int expectedParticipantSize) {
-	LinphoneChatRoom *chatRoom = linphone_core_create_client_group_chat_room(lcm->lc, initialSubject, FALSE);
+	int lime_v2 = linphone_config_get_int(linphone_core_get_config(lcm->lc), "lime", "lime_v2", 0);
+	bool_t isEncrypted = FALSE;
+	if (lime_v2 == 1) {
+		isEncrypted = TRUE;
+	}
+
+	LinphoneChatRoom *chatRoom = linphone_core_create_client_group_chat_room_2(lcm->lc, initialSubject, FALSE, isEncrypted);
 	if (!chatRoom) return NULL;
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateInstantiated, initialStats->number_of_LinphoneChatRoomStateInstantiated + 1, 100));
