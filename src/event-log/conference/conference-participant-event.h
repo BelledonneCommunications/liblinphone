@@ -34,7 +34,7 @@ public:
 	ConferenceParticipantEvent (
 		Type type,
 		time_t creationTime,
-		const ChatRoomId &ChatRoomId,
+		const ConferenceId &conferenceId,
 		unsigned int notifyId,
 		const IdentityAddress &participantAddress
 	);
@@ -46,7 +46,7 @@ protected:
 		ConferenceParticipantEventPrivate &p,
 		Type type,
 		time_t creationTime,
-		const ChatRoomId &ChatRoomId,
+		const ConferenceId &conferenceId,
 		unsigned int notifyId,
 		const IdentityAddress &participantAddress
 	);

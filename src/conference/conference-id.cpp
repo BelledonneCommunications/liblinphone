@@ -1,5 +1,5 @@
 /*
- * chat-room-id.cpp
+ * conference-id.cpp
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
 
 #include "object/clonable-object-p.h"
 
-#include "chat-room-id.h"
+#include "conference-id.h"
 
 // =============================================================================
 
@@ -27,7 +27,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ChatRoomIdPrivate : public ClonableObjectPrivate {
+class ConferenceIdPrivate : public ClonableObjectPrivate {
 public:
 	IdentityAddress peerAddress;
 	IdentityAddress localAddress;
@@ -35,47 +35,47 @@ public:
 
 // -----------------------------------------------------------------------------
 
-ChatRoomId::ChatRoomId () : ClonableObject(*new ChatRoomIdPrivate) {}
+ConferenceId::ConferenceId () : ClonableObject(*new ConferenceIdPrivate) {}
 
-ChatRoomId::ChatRoomId (
+ConferenceId::ConferenceId (
 	const IdentityAddress &peerAddress,
 	const IdentityAddress &localAddress
-) : ClonableObject(*new ChatRoomIdPrivate) {
+) : ClonableObject(*new ConferenceIdPrivate) {
 	L_D();
 	d->peerAddress = peerAddress;
 	d->localAddress = localAddress;
 }
 
-L_USE_DEFAULT_CLONABLE_OBJECT_SHARED_IMPL(ChatRoomId);
+L_USE_DEFAULT_CLONABLE_OBJECT_SHARED_IMPL(ConferenceId);
 
-bool ChatRoomId::operator== (const ChatRoomId &other) const {
+bool ConferenceId::operator== (const ConferenceId &other) const {
 	L_D();
-	const ChatRoomIdPrivate *dChatRoomId = other.getPrivate();
-	return d->peerAddress == dChatRoomId->peerAddress && d->localAddress == dChatRoomId->localAddress;
+	const ConferenceIdPrivate *dConferenceId = other.getPrivate();
+	return d->peerAddress == dConferenceId->peerAddress && d->localAddress == dConferenceId->localAddress;
 }
 
-bool ChatRoomId::operator!= (const ChatRoomId &other) const {
+bool ConferenceId::operator!= (const ConferenceId &other) const {
 	return !(*this == other);
 }
 
-bool ChatRoomId::operator< (const ChatRoomId &other) const {
+bool ConferenceId::operator< (const ConferenceId &other) const {
 	L_D();
-	const ChatRoomIdPrivate *dChatRoomId = other.getPrivate();
-	return d->peerAddress < dChatRoomId->peerAddress
-		|| (d->peerAddress == dChatRoomId->peerAddress && d->localAddress < dChatRoomId->localAddress);
+	const ConferenceIdPrivate *dConferenceId = other.getPrivate();
+	return d->peerAddress < dConferenceId->peerAddress
+		|| (d->peerAddress == dConferenceId->peerAddress && d->localAddress < dConferenceId->localAddress);
 }
 
-const IdentityAddress &ChatRoomId::getPeerAddress () const {
+const IdentityAddress &ConferenceId::getPeerAddress () const {
 	L_D();
 	return d->peerAddress;
 }
 
-const IdentityAddress &ChatRoomId::getLocalAddress () const {
+const IdentityAddress &ConferenceId::getLocalAddress () const {
 	L_D();
 	return d->localAddress;
 }
 
-bool ChatRoomId::isValid () const {
+bool ConferenceId::isValid () const {
 	L_D();
 	return d->peerAddress.isValid() && d->localAddress.isValid();
 }

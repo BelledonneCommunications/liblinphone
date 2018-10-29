@@ -33,7 +33,7 @@ class LINPHONE_PUBLIC ProxyChatRoom : public AbstractChatRoom {
 	friend class CorePrivate;
 
 public:
-	const ChatRoomId &getChatRoomId () const override;
+	const ConferenceId &getConferenceId () const override;
 
 	const IdentityAddress &getPeerAddress () const override;
 	const IdentityAddress &getLocalAddress () const override;

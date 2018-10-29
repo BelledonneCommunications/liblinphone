@@ -22,7 +22,7 @@
 
 #include "linphone/types.h"
 
-#include "chat/chat-room/chat-room-id.h"
+#include "conference/conference-id.h"
 #include "core/core-listener.h"
 #include "object/object-p.h"
 #include "remote-conference-event-handler.h"
@@ -44,7 +44,7 @@ private:
 	void onEnteringBackground () override;
 	void onEnteringForeground () override;
 
-	ChatRoomId chatRoomId;
+	ConferenceId conferenceId;
 
 	RemoteConference *conf = nullptr;
 	LinphoneEvent *lev = nullptr;
