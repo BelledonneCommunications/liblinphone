@@ -165,7 +165,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 
 	// 4. Send notification and update in database if necessary.
 	if (state != ChatMessage::State::FileTransferError && state != ChatMessage::State::InProgress) {
-		if (state == ChatMessage::State::Displayed)
+		if ((state == ChatMessage::State::Displayed) && (direction == ChatMessage::Direction::Incoming))
 			static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
 		updateInDb();
 	}
