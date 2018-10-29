@@ -84,14 +84,16 @@ public class AndroidPlatformHelper {
 	private BroadcastReceiver mNetworkReceiver;
 	private IntentFilter mDozeIntentFilter;
 	private IntentFilter mNetworkIntentFilter;
+	private boolean mWifiOnly;
 
 	private native void setNativePreviewWindowId(long nativePtr, Object view);
 	private native void setNativeVideoWindowId(long nativePtr, Object view);
 	private native void setNetworkReachable(long nativePtr, boolean reachable);
 
-	public AndroidPlatformHelper(long nativePtr, Object ctx_obj) {
+	public AndroidPlatformHelper(long nativePtr, Object ctx_obj, boolean wifiOnly) {
 		mNativePtr = nativePtr;
 		mContext = (Context) ctx_obj;
+		mWifiOnly = wifiOnly;
 		mResources = mContext.getResources();
 		MediastreamerAndroidContext.setContext(mContext);
 
@@ -168,6 +170,9 @@ public class AndroidPlatformHelper {
 		updateNetworkReachability();
 	}
 
+	public void onWifiOnlyEnabled(boolean enabled) {
+		mWifiOnly = enabled;
+		updateNetworkReachability();
 	}
 
 	public Object getPowerManager() {
@@ -422,6 +427,14 @@ public class AndroidPlatformHelper {
 			Log.i("Doze Mode enabled: shutting down network");
 			setNetworkReachable(mNativePtr, false);
 		} else if (connected) {
+			if (mWifiOnly) {
+				if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+					setNetworkReachable(mNativePtr, true);
+				} else {
+					Log.i("Wifi-only mode, setting network not reachable");
+					setNetworkReachable(mNativePtr, false);
+				}
+			} else {
 				int curtype = networkInfo.getType();
 
 				if (curtype != mLastNetworkType) {
@@ -432,6 +445,7 @@ public class AndroidPlatformHelper {
 				}
 				setNetworkReachable(mNativePtr, true);
 				mLastNetworkType = curtype;
+			}
 		}
 	}
 

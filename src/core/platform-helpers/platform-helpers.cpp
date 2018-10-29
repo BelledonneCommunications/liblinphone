@@ -57,4 +57,6 @@ void StubbedPlatformHelpers::setNetworkReachable (bool reachable) {}
 
 void StubbedPlatformHelpers::onLinphoneCoreReady () {}
 
+void StubbedPlatformHelpers::onWifiOnlyEnabled (bool enabled) {}
+
 LINPHONE_END_NAMESPACE

@@ -3231,6 +3231,17 @@ void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val){
 	}
 }
 
+bool_t linphone_core_wifi_only_enabled(LinphoneCore *lc) {
+	return (bool_t)lp_config_get_int(lc->config, "net", "wifi_only", 0);
+}
+
+void linphone_core_enable_wifi_only(LinphoneCore *lc, bool_t val) {
+	if (linphone_core_ready(lc)) {
+		lp_config_set_int(lc->config, "net", "wifi_only", (int)val);
+		getPlatformHelpers(lc)->onWifiOnlyEnabled(val);
+	}
+}
+
 bool_t linphone_core_content_encoding_supported(const LinphoneCore *lc, const char *content_encoding) {
 	const char *handle_content_encoding = lp_config_get_string(lc->config, "sip", "handle_content_encoding", "deflate");
 	return (strcmp(handle_content_encoding, content_encoding) == 0) && lc->sal->isContentEncodingAvailable(content_encoding);

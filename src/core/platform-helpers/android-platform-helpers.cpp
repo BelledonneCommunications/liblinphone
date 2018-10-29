@@ -50,6 +50,7 @@ public:
 	void setVideoPreviewWindow (void *windowId) override;
 	void setNetworkReachable (bool reachable) override;
 	void onLinphoneCoreReady () override;
+	void onWifiOnlyEnabled (bool enabled) override;
 
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
@@ -74,6 +75,7 @@ private:
 	jmethodID mSetNativePreviewVideoWindowId;
 	jmethodID mUpdateNetworkReachabilityId;
 	jmethodID mOnLinphoneCoreReadyId;
+	jmethodID mOnWifiOnlyEnabledId;
 	jobject mPreviewVideoWindow;
 	jobject mVideoWindow;
 };
@@ -123,6 +125,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 	mSetNativePreviewVideoWindowId = getMethodId(env, klass, "setVideoPreviewView", "(Ljava/lang/Object;)V");
 	mUpdateNetworkReachabilityId = getMethodId(env, klass, "updateNetworkReachability", "()V");
 	mOnLinphoneCoreReadyId = getMethodId(env, klass, "onLinphoneCoreReady", "()V");
+	mOnWifiOnlyEnabledId = getMethodId(env, klass, "onWifiOnlyEnabled", "(Z)V");
 
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
 	belle_sip_wake_lock_init(env, pm);
@@ -308,6 +311,13 @@ void AndroidPlatformHelpers::onLinphoneCoreReady() {
 	JNIEnv *env = ms_get_jni_env();
 	if (env && mJavaHelper) {
 		env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreReadyId);
+	}
+}
+
+void AndroidPlatformHelpers::onWifiOnlyEnabled(bool enabled) {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		env->CallVoidMethod(mJavaHelper, mOnWifiOnlyEnabledId, (jboolean)enabled);
 	}
 }
 
