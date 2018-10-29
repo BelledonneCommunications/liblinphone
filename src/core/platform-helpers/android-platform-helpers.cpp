@@ -48,6 +48,8 @@ public:
 	string getConfigPath () override;
 	void setVideoWindow (void *windowId) override;
 	void setVideoPreviewWindow (void *windowId) override;
+	void setNetworkReachable (bool reachable) override;
+	void onLinphoneCoreReady () override;
 
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
@@ -70,6 +72,8 @@ private:
 	jmethodID mGetNativeLibraryDirId;
 	jmethodID mSetNativeVideoWindowId;
 	jmethodID mSetNativePreviewVideoWindowId;
+	jmethodID mUpdateNetworkReachabilityId;
+	jmethodID mOnLinphoneCoreReadyId;
 	jobject mPreviewVideoWindow;
 	jobject mVideoWindow;
 };
@@ -117,6 +121,8 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 	mGetNativeLibraryDirId = getMethodId(env, klass, "getNativeLibraryDir", "()Ljava/lang/String;");
 	mSetNativeVideoWindowId = getMethodId(env, klass, "setVideoRenderingView", "(Ljava/lang/Object;)V");
 	mSetNativePreviewVideoWindowId = getMethodId(env, klass, "setVideoPreviewView", "(Ljava/lang/Object;)V");
+	mUpdateNetworkReachabilityId = getMethodId(env, klass, "updateNetworkReachability", "()V");
+	mOnLinphoneCoreReadyId = getMethodId(env, klass, "onLinphoneCoreReady", "()V");
 
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
 	belle_sip_wake_lock_init(env, pm);
@@ -294,6 +300,17 @@ void AndroidPlatformHelpers::_setVideoWindow(jobject window) {
 	_linphone_core_set_native_video_window_id(lc, (void *)mVideoWindow);
 }
 
+void AndroidPlatformHelpers::setNetworkReachable(bool reachable) {
+	linphone_core_set_network_reachable(mCore, reachable);
+}
+
+void AndroidPlatformHelpers::onLinphoneCoreReady() {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreReadyId);
+	}
+}
+
 PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext) {
 	return new AndroidPlatformHelpers(lc, systemContext);
 }
@@ -306,6 +323,11 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	AndroidPlatformHelpers *androidPlatformHelper = (AndroidPlatformHelpers *)ptr;
 	androidPlatformHelper->_setVideoWindow(id);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNetworkReachable(JNIEnv* env, jobject thiz, jlong ptr, jboolean reachable) {
+	AndroidPlatformHelpers *androidPlatformHelper = (AndroidPlatformHelpers *)ptr;
+	androidPlatformHelper->setNetworkReachable(reachable);
 }
 
 LINPHONE_END_NAMESPACE

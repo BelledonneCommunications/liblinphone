@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 package org.linphone.core.tools;
 
 import org.linphone.core.Core;
+import org.linphone.core.receivers.DozeReceiver;
+import org.linphone.core.receivers.NetworkManager;
 import org.linphone.mediastream.Log;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.Version;
@@ -30,11 +32,14 @@ import android.graphics.SurfaceTexture;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.MulticastLock;
 import android.net.wifi.WifiManager.WifiLock;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
+import android.net.NetworkRequest;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.Build;
@@ -54,11 +59,14 @@ import java.io.InputStream;
  **/
 
 public class AndroidPlatformHelper {
+	private static boolean mIsInstanciated = false;
+	private static AndroidPlatformHelper instance = null;
 	private long mNativePtr;
 	private Context mContext;
 	private WifiManager.WifiLock mWifiLock;
 	private WifiManager.MulticastLock mMcastLock;
 	private ConnectivityManager mConnectivityManager;
+	private int mLastNetworkType = -1;
 	private PowerManager mPowerManager;
 	private WakeLock mWakeLock;
 	private Resources mResources;
@@ -71,9 +79,15 @@ public class AndroidPlatformHelper {
 	private String mGrammarVcardFile ;
 	private String mUserCertificatePath;
 	private Surface mSurface;
+	private boolean dozeModeEnabled;
+	private BroadcastReceiver mDozeReceiver;
+	private BroadcastReceiver mNetworkReceiver;
+	private IntentFilter mDozeIntentFilter;
+	private IntentFilter mNetworkIntentFilter;
 
 	private native void setNativePreviewWindowId(long nativePtr, Object view);
 	private native void setNativeVideoWindowId(long nativePtr, Object view);
+	private native void setNetworkReachable(long nativePtr, boolean reachable);
 
 	public AndroidPlatformHelper(long nativePtr, Object ctx_obj) {
 		mNativePtr = nativePtr;
@@ -108,6 +122,52 @@ public class AndroidPlatformHelper {
 		} catch (IOException e) {
 			Log.e("AndroidPlatformHelper(): failed to install some resources.");
 		}
+		
+		mIsInstanciated = true;
+		instance = this;
+	}
+
+	public static boolean isInstanciated() {
+		return mIsInstanciated;
+	}
+
+	public static AndroidPlatformHelper getInstance() {
+		return instance;
+	}
+
+	public void onLinphoneCoreReady() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+			mNetworkReceiver = new NetworkManager();
+			mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+			mContext.registerReceiver(mNetworkReceiver, mNetworkIntentFilter);
+		} else {
+			mConnectivityManager.registerNetworkCallback(
+				new NetworkRequest.Builder().build(),
+				new ConnectivityManager.NetworkCallback() {
+					@Override
+					public void onAvailable(Network network) {
+						updateNetworkReachability();
+					}
+
+					@Override
+					public void onLost(Network network) {
+						updateNetworkReachability();
+					}
+				}
+			);
+		}
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mDozeIntentFilter = new IntentFilter();
+            mDozeIntentFilter.addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED);
+            mDozeReceiver = new DozeReceiver();
+            dozeModeEnabled = ((PowerManager) mContext.getSystemService(Context.POWER_SERVICE)).isDeviceIdleMode();
+            mContext.registerReceiver(mDozeReceiver, mDozeIntentFilter);
+		}
+
+		updateNetworkReachability();
+	}
+
 	}
 
 	public Object getPowerManager() {
@@ -346,6 +406,37 @@ public class AndroidPlatformHelper {
 			mSurface = new Surface(textureView.getSurfaceTexture());
 			setNativeVideoWindowId(mNativePtr, mSurface);
 		}
+	}
+
+	public void updateNetworkReachability() {
+		if (mConnectivityManager == null) return;
+
+		boolean connected = false;
+		NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
+		connected = networkInfo != null && networkInfo.isConnected();
+
+		if (networkInfo == null || !connected) {
+			Log.i("No connectivity: setting network unreachable");
+			setNetworkReachable(mNativePtr, false);
+		} else if (dozeModeEnabled) {
+			Log.i("Doze Mode enabled: shutting down network");
+			setNetworkReachable(mNativePtr, false);
+		} else if (connected) {
+				int curtype = networkInfo.getType();
+
+				if (curtype != mLastNetworkType) {
+					//if kind of network has changed, we need to notify network_reachable(false) to make sure all current connections are destroyed.
+					//they will be re-created during setNetworkReachable(true).
+					Log.i("Connectivity has changed.");
+					setNetworkReachable(mNativePtr, false);
+				}
+				setNetworkReachable(mNativePtr, true);
+				mLastNetworkType = curtype;
+		}
+	}
+
+	public void setDozeModeEnabled(boolean b) {
+		dozeModeEnabled = b;
 	}
 };
 
