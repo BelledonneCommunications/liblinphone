@@ -529,9 +529,14 @@ list<EncryptionParameter> LimeX3DHEncryptionEngine::getEncryptionParameters () {
 	const LinphoneAddress *contactAddress = linphone_proxy_config_get_contact(proxy);
 	IdentityAddress identityAddress = IdentityAddress(linphone_address_as_string(contactAddress));
 	string localDeviceId = identityAddress.asString();
-
 	vector<uint8_t> Ik;
-	belleSipLimeManager->get_selfIdentityKey(localDeviceId, Ik);
+
+	try {
+		belleSipLimeManager->get_selfIdentityKey(localDeviceId, Ik);
+	} catch (const exception &e) {
+		lInfo() << e.what() << " while setting up lime identity key for ZRTP auxiliary secret";
+		return {};
+	}
 
 	if (Ik.empty()) {
 		lWarning() << "No identity key available, unable to setup lime identity key for ZRTP auxiliary shared secret";
