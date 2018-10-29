@@ -44,7 +44,7 @@ ConferenceChatMessageEvent::ConferenceChatMessageEvent (
 	*new ConferenceChatMessageEventPrivate,
 	EventLog::Type::ConferenceChatMessage,
 	creationTime,
-	chatMessage->getChatRoom()->getChatRoomId()
+	chatMessage->getChatRoom()->getConferenceId()
 ) {
 	L_D();
 	L_ASSERT(chatMessage);

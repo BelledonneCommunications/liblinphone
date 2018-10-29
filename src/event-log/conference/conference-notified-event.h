@@ -32,7 +32,7 @@ class LINPHONE_PUBLIC ConferenceNotifiedEvent : public ConferenceEvent {
 public:
 	ConferenceNotifiedEvent (
 		Type type, time_t creationTime,
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		unsigned int notifiyId
 	);
 
@@ -43,7 +43,7 @@ protected:
 		ConferenceNotifiedEventPrivate &p,
 		Type type,
 		time_t creationTime,
-		const ChatRoomId &chatRoomId,
+		const ConferenceId &conferenceId,
 		unsigned int notifyId
 	);
 

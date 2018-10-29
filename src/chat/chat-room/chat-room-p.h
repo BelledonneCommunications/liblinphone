@@ -23,10 +23,10 @@
 #include <ctime>
 
 #include "abstract-chat-room-p.h"
-#include "chat-room-id.h"
 #include "chat-room.h"
 #include "chat/notification/imdn.h"
 #include "chat/notification/is-composing.h"
+#include "conference/conference-id.h"
 
 // =============================================================================
 
@@ -92,7 +92,7 @@ public:
 	std::list<IdentityAddress> remoteIsComposing;
 	std::list<std::shared_ptr<EventLog>> transientEvents;
 
-	ChatRoomId chatRoomId;
+	ConferenceId conferenceId;
 
 private:
 	AbstractChatRoom *proxyChatRoom = nullptr;

@@ -30,7 +30,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ChatRoomId;
+class ConferenceId;
 class ConferenceParticipantDeviceEvent;
 class ConferenceParticipantEvent;
 class ConferenceSubjectEvent;
@@ -51,8 +51,8 @@ public:
 	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (const Address &addr, const Address &gruu);
 
 	void setLastNotify (unsigned int lastNotify);
-	void setChatRoomId (const ChatRoomId &chatRoomId);
-	ChatRoomId getChatRoomId () const;
+	void setConferenceId (const ConferenceId &conferenceId);
+	ConferenceId getConferenceId () const;
 
 	std::string getNotifyForId (int notifyId, bool oneToOne = false);
 

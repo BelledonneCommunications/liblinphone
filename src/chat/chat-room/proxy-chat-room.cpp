@@ -48,9 +48,9 @@ void ProxyChatRoomPrivate::teardownProxy () {
 
 // -----------------------------------------------------------------------------
 
-const ChatRoomId &ProxyChatRoom::getChatRoomId () const {
+const ConferenceId &ProxyChatRoom::getConferenceId () const {
 	L_D();
-	return d->chatRoom->getChatRoomId();
+	return d->chatRoom->getConferenceId();
 }
 
 const IdentityAddress &ProxyChatRoom::getPeerAddress () const {
@@ -208,11 +208,11 @@ const IdentityAddress &ProxyChatRoom::getConferenceAddress () const {
 // -----------------------------------------------------------------------------
 
 void ProxyChatRoom::allowCpim (bool value) {
-	
+
 }
 
 void ProxyChatRoom::allowMultipart (bool value) {
-	
+
 }
 
 bool ProxyChatRoom::canHandleCpim () const {

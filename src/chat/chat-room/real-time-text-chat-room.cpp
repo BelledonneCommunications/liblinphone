@@ -105,8 +105,8 @@ void RealTimeTextChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage>
 
 // =============================================================================
 
-RealTimeTextChatRoom::RealTimeTextChatRoom (const shared_ptr<Core> &core, const ChatRoomId &chatRoomId) :
-	BasicChatRoom(*new RealTimeTextChatRoomPrivate, core, chatRoomId) {}
+RealTimeTextChatRoom::RealTimeTextChatRoom (const shared_ptr<Core> &core, const ConferenceId &conferenceId) :
+	BasicChatRoom(*new RealTimeTextChatRoomPrivate, core, conferenceId) {}
 
 RealTimeTextChatRoom::CapabilitiesMask RealTimeTextChatRoom::getCapabilities () const {
 	return BasicChatRoom::getCapabilities() | Capabilities::RealTimeText;

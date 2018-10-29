@@ -27,26 +27,26 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-ConferenceEvent::ConferenceEvent (Type type, time_t creationTime, const ChatRoomId &chatRoomId) :
+ConferenceEvent::ConferenceEvent (Type type, time_t creationTime, const ConferenceId &conferenceId) :
 	EventLog(*new ConferenceEventPrivate, type, creationTime) {
 	L_D();
 	L_ASSERT(type == Type::ConferenceCreated || type == Type::ConferenceTerminated);
-	d->chatRoomId = chatRoomId;
+	d->conferenceId = conferenceId;
 }
 
 ConferenceEvent::ConferenceEvent (
 	ConferenceEventPrivate &p,
 	Type type,
 	time_t creationTime,
-	const ChatRoomId &chatRoomId
+	const ConferenceId &conferenceId
 ) : EventLog(p, type, creationTime) {
 	L_D();
-	d->chatRoomId = chatRoomId;
+	d->conferenceId = conferenceId;
 }
 
-const ChatRoomId &ConferenceEvent::getChatRoomId () const {
+const ConferenceId &ConferenceEvent::getConferenceId () const {
 	L_D();
-	return d->chatRoomId;
+	return d->conferenceId;
 }
 
 LINPHONE_END_NAMESPACE

@@ -20,10 +20,9 @@
 #ifndef _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
 #define _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
 
-#include <memory>
 #include <list>
 
-#include "chat/chat-room/chat-room-id.h"
+#include "conference/conference-id.h"
 #include "core/core-accessor.h"
 #include "linphone/utils/general.h"
 
@@ -40,7 +39,7 @@ public:
 	void subscribeReceived (LinphoneEvent *lev, const LinphoneContent *body);
 	void addHandler (LocalConferenceEventHandler *handler);
 	void removeHandler (LocalConferenceEventHandler *handler);
-	LocalConferenceEventHandler *findHandler (const ChatRoomId &chatRoomId) const;
+	LocalConferenceEventHandler *findHandler (const ConferenceId &conferenceId) const;
 	const std::list<LocalConferenceEventHandler *> &getHandlers () const;
 
 	static void notifyResponseCb (const LinphoneEvent *ev);
@@ -53,4 +52,3 @@ private:
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
-

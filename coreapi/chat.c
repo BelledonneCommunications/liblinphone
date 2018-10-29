@@ -89,7 +89,7 @@ LinphoneChatRoom *linphone_core_get_chat_room_2 (
 	const LinphoneAddress *peer_addr,
 	const LinphoneAddress *local_addr
 ) {
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getOrCreateBasicChatRoom(LinphonePrivate::ChatRoomId(
+	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getOrCreateBasicChatRoom(LinphonePrivate::ConferenceId(
 		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr)),
 		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr))
 	)));
@@ -116,7 +116,7 @@ LinphoneChatRoom *linphone_core_find_chat_room(
 	const LinphoneAddress *peer_addr,
 	const LinphoneAddress *local_addr
 ) {
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ChatRoomId(
+	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
 		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr)),
 		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr))
 	)));
@@ -144,15 +144,15 @@ int linphone_core_message_received(LinphoneCore *lc, LinphonePrivate::SalOp *op,
 		localAddress = op->getTo();
 	}
 
-	LinphonePrivate::ChatRoomId chatRoomId{
+	LinphonePrivate::ConferenceId conferenceId{
 		LinphonePrivate::IdentityAddress(peerAddress),
 		LinphonePrivate::IdentityAddress(localAddress)
 	};
-	shared_ptr<LinphonePrivate::AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(chatRoomId);
+	shared_ptr<LinphonePrivate::AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
 	if (chatRoom)
 		reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
 	else if (!linphone_core_conference_server_enabled(lc)) {
-		chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getOrCreateBasicChatRoom(chatRoomId);
+		chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getOrCreateBasicChatRoom(conferenceId);
 		if (chatRoom)
 			reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
 	}

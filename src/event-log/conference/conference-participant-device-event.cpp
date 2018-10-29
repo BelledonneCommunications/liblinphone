@@ -38,7 +38,7 @@ public:
 ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent (
 	Type type,
 	time_t creationTime,
-	const ChatRoomId &chatRoomId,
+	const ConferenceId &conferenceId,
 	unsigned int notifyId,
 	const IdentityAddress &participantAddress,
 	const IdentityAddress &deviceAddress
@@ -46,7 +46,7 @@ ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent (
 	*new ConferenceParticipantDeviceEventPrivate,
 	type,
 	creationTime,
-	chatRoomId,
+	conferenceId,
 	notifyId,
 	participantAddress
 ) {
