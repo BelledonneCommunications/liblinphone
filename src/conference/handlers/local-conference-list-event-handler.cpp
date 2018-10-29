@@ -120,26 +120,26 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 			Address addr(entry.getUri());
 			string notifyIdStr = addr.getUriParamValue("Last-Notify");
 			addr.removeUriParam("Last-Notify");
-			ChatRoomId chatRoomId(addr, addr);
-			LocalConferenceEventHandler *handler = findHandler(chatRoomId);
+			ConferenceId conferenceId(addr, addr);
+			LocalConferenceEventHandler *handler = findHandler(conferenceId);
 			if (!handler)
 				continue;
 
-			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_event_get_core(lev))->findChatRoom(chatRoomId);
+			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_event_get_core(lev))->findChatRoom(conferenceId);
 			if (!chatRoom) {
-				lError() << "Received subscribe for unknown chat room: " << chatRoomId;
+				lError() << "Received subscribe for unknown chat room: " << conferenceId;
 				continue;
 			}
 
 			shared_ptr<Participant> participant = chatRoom->findParticipant(participantAddr);
 			if (!participant) {
-				lError() << "Received subscribe for unknown participant: " << participantAddr <<  " for chat room: " << chatRoomId;
+				lError() << "Received subscribe for unknown participant: " << participantAddr <<  " for chat room: " << conferenceId;
 				continue;
 			}
 			shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddr);
 			if (!device || (device->getState() != ParticipantDevice::State::Present && device->getState() != ParticipantDevice::State::Joining)) {
 				lError() << "Received subscribe for unknown device: " << deviceAddr << " for participant: "
-					<< participantAddr <<  " for chat room: " << chatRoomId;
+					<< participantAddr <<  " for chat room: " << conferenceId;
 				continue;
 			}
 			device->setConferenceSubscribeEvent((subscriptionState == LinphoneSubscriptionIncomingReceived) ? lev : nullptr);
@@ -209,9 +209,9 @@ void LocalConferenceListEventHandler::removeHandler (LocalConferenceEventHandler
 		handlers.remove(handler);
 }
 
-LocalConferenceEventHandler *LocalConferenceListEventHandler::findHandler (const ChatRoomId &chatRoomId) const {
+LocalConferenceEventHandler *LocalConferenceListEventHandler::findHandler (const ConferenceId &conferenceId) const {
 	for (const auto &handler : handlers) {
-		if (handler->getChatRoomId() == chatRoomId)
+		if (handler->getConferenceId() == conferenceId)
 			return handler;
 	}
 
@@ -223,4 +223,3 @@ const list<LocalConferenceEventHandler *> &LocalConferenceListEventHandler::getH
 }
 
 LINPHONE_END_NAMESPACE
-

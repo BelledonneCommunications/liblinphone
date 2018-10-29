@@ -222,11 +222,11 @@ void ClientGroupChatRoomPrivate::onChatRoomCreated (const Address &remoteContact
 	IdentityAddress addr(remoteContact);
 	q->onConferenceCreated(addr);
 	if (remoteContact.hasParam("isfocus")) {
-		if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->getChatRoomId())) {
+		if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->getConferenceId())) {
 			q->getCore()->getPrivate()->remoteListEventHandler->subscribe();
 		} else {
 			bgTask.start(q->getCore(), 32); // It will be stopped when receiving the first notify
-			qConference->getPrivate()->eventHandler->subscribe(q->getChatRoomId());
+			qConference->getPrivate()->eventHandler->subscribe(q->getConferenceId());
 		}
 	}
 }
@@ -248,7 +248,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	const IdentityAddress &me,
 	const string &subject,
 	const Content &content
-) : ChatRoom(*new ClientGroupChatRoomPrivate, core, ChatRoomId(IdentityAddress(), me)),
+) : ChatRoom(*new ClientGroupChatRoomPrivate, core, ConferenceId(IdentityAddress(), me)),
 RemoteConference(core, me, nullptr) {
 	L_D_T(RemoteConference, dConference);
 
@@ -263,20 +263,20 @@ RemoteConference(core, me, nullptr) {
 
 ClientGroupChatRoom::ClientGroupChatRoom (
 	const shared_ptr<Core> &core,
-	const ChatRoomId &chatRoomId,
+	const ConferenceId &conferenceId,
 	shared_ptr<Participant> &me,
 	AbstractChatRoom::CapabilitiesMask capabilities,
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId,
 	bool hasBeenLeft
-) : ChatRoom(*new ClientGroupChatRoomPrivate, core, chatRoomId),
+) : ChatRoom(*new ClientGroupChatRoomPrivate, core, conferenceId),
 RemoteConference(core, me->getAddress(), nullptr) {
 	L_D();
 	L_D_T(RemoteConference, dConference);
 
 	d->capabilities |= capabilities & ClientGroupChatRoom::Capabilities::OneToOne;
-	const IdentityAddress &peerAddress = chatRoomId.getPeerAddress();
+	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
 	dConference->focus = make_shared<Participant>(this, peerAddress);
 	dConference->focus->getPrivate()->addDevice(peerAddress);
 	dConference->conferenceAddress = peerAddress;
@@ -285,7 +285,7 @@ RemoteConference(core, me->getAddress(), nullptr) {
 
 	getMe()->getPrivate()->setAdmin(me->isAdmin());
 
-	dConference->eventHandler->setChatRoomId(chatRoomId);
+	dConference->eventHandler->setConferenceId(conferenceId);
 	dConference->eventHandler->setLastNotify(lastNotifyId);
 	if (!hasBeenLeft)
 		getCore()->getPrivate()->remoteListEventHandler->addHandler(dConference->eventHandler.get());
@@ -548,7 +548,7 @@ void ClientGroupChatRoom::onConferenceCreated (const IdentityAddress &addr) {
 	dConference->focus->getPrivate()->setAddress(addr);
 	dConference->focus->getPrivate()->clearDevices();
 	dConference->focus->getPrivate()->addDevice(addr);
-	d->chatRoomId = ChatRoomId(addr, d->chatRoomId.getLocalAddress());
+	d->conferenceId = ConferenceId(addr, d->conferenceId.getLocalAddress());
 	d->chatRoomListener->onChatRoomInsertRequested(getSharedFromThis());
 	d->setState(ChatRoom::State::Created);
 }
@@ -570,7 +570,7 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 	auto event = make_shared<ConferenceEvent>(
 		EventLog::Type::ConferenceTerminated,
 		time(nullptr),
-		d->chatRoomId
+		d->conferenceId
 	);
 	d->addEvent(event);
 
@@ -595,8 +595,9 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	bool performMigration = false;
 	shared_ptr<AbstractChatRoom> chatRoom;
 	if (getParticipantCount() == 1) {
-		ChatRoomId id(getParticipants().front()->getAddress(), getMe()->getAddress());
-		chatRoom = getCore()->findChatRoom(id);
+		chatRoom = getCore()->findChatRoom(
+			ConferenceId(getParticipants().front()->getAddress(), getMe()->getAddress())
+		);
 		if (chatRoom && (chatRoom->getCapabilities() & ChatRoom::Capabilities::Basic))
 			performMigration = true;
 	}
@@ -609,7 +610,7 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	auto event = make_shared<ConferenceEvent>(
 		EventLog::Type::ConferenceCreated,
 		time(nullptr),
-		d->chatRoomId
+		d->conferenceId
 	);
 	d->addEvent(event);
 

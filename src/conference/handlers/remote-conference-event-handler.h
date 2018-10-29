@@ -26,7 +26,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ChatRoomId;
+class ConferenceId;
 class RemoteConference;
 class RemoteConferenceEventHandlerPrivate;
 
@@ -37,13 +37,13 @@ public:
 	RemoteConferenceEventHandler (RemoteConference *remoteConference);
 	~RemoteConferenceEventHandler ();
 
-	void subscribe (const ChatRoomId &chatRoomId);
+	void subscribe (const ConferenceId &conferenceId);
 	void notifyReceived (const std::string &xmlBody);
 	void multipartNotifyReceived (const std::string &xmlBody);
 	void unsubscribe ();
 
-	void setChatRoomId (ChatRoomId chatRoomId);
-	const ChatRoomId &getChatRoomId () const;
+	void setConferenceId (ConferenceId conferenceId);
+	const ConferenceId &getConferenceId () const;
 
 	unsigned int getLastNotify () const;
 	void setLastNotify (unsigned int lastNotify);

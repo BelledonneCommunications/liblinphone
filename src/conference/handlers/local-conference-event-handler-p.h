@@ -20,9 +20,7 @@
 #ifndef _L_LOCAL_CONFERENCE_EVENT_HANDLER_P_H_
 #define _L_LOCAL_CONFERENCE_EVENT_HANDLER_P_H_
 
-#include <string>
-
-#include "chat/chat-room/chat-room-id.h"
+#include "conference/conference-id.h"
 #include "local-conference-event-handler.h"
 #include "object/object-p.h"
 #include "xml/conference-info.h"
@@ -51,7 +49,7 @@ public:
 	static void notifyResponseCb (const LinphoneEvent *ev);
 
 private:
-	ChatRoomId chatRoomId;
+	ConferenceId conferenceId;
 
 	LocalConference *conf = nullptr;
 	unsigned int lastNotify = 1;

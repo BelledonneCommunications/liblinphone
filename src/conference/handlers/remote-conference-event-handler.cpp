@@ -49,7 +49,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 	unique_ptr<ConferenceType> confInfo = parseConferenceInfo(data, Xsd::XmlSchema::Flags::dont_validate);
 
 	IdentityAddress entityAddress(confInfo->getEntity().c_str());
-	if (entityAddress != chatRoomId.getPeerAddress())
+	if (entityAddress != conferenceId.getPeerAddress())
 		return;
 
 	auto &confDescription = confInfo->getConferenceDescription();
@@ -79,7 +79,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 			confListener->onSubjectChanged(
 				make_shared<ConferenceSubjectEvent>(
 					creationTime,
-					chatRoomId,
+					conferenceId,
 					lastNotify,
 					subject.get()
 				),
@@ -115,7 +115,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 				make_shared<ConferenceParticipantEvent>(
 					EventLog::Type::ConferenceParticipantRemoved,
 					creationTime,
-					chatRoomId,
+					conferenceId,
 					lastNotify,
 					addr
 				),
@@ -130,7 +130,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 				make_shared<ConferenceParticipantEvent>(
 					EventLog::Type::ConferenceParticipantAdded,
 					creationTime,
-					chatRoomId,
+					conferenceId,
 					lastNotify,
 					addr
 				),
@@ -146,7 +146,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 						? EventLog::Type::ConferenceParticipantSetAdmin
 						: EventLog::Type::ConferenceParticipantUnsetAdmin,
 					creationTime,
-					chatRoomId,
+					conferenceId,
 					lastNotify,
 					addr
 				),
@@ -166,7 +166,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 					make_shared<ConferenceParticipantDeviceEvent>(
 						EventLog::Type::ConferenceParticipantDeviceRemoved,
 						creationTime,
-						chatRoomId,
+						conferenceId,
 						lastNotify,
 						addr,
 						gruu
@@ -178,7 +178,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 					make_shared<ConferenceParticipantDeviceEvent>(
 						EventLog::Type::ConferenceParticipantDeviceAdded,
 						creationTime,
-						chatRoomId,
+						conferenceId,
 						lastNotify,
 						addr,
 						gruu
@@ -190,7 +190,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 	}
 
 	if (isFullState)
-		confListener->onFirstNotifyReceived(chatRoomId.getPeerAddress());
+		confListener->onFirstNotifyReceived(conferenceId.getPeerAddress());
 }
 
 // -----------------------------------------------------------------------------
@@ -199,7 +199,7 @@ void RemoteConferenceEventHandlerPrivate::subscribe () {
 	if (lev || !subscriptionWanted)
 		return; // Already subscribed or application did not request subscription
 
-	const string &peerAddress = chatRoomId.getPeerAddress().asString();
+	const string &peerAddress = conferenceId.getPeerAddress().asString();
 	LinphoneAddress *lAddr = linphone_address_new(peerAddress.c_str());
 	LinphoneCore *lc = conf->getCore()->getCCore();
 	LinphoneProxyConfig *cfg = linphone_core_lookup_known_proxy(lc, lAddr);
@@ -209,7 +209,7 @@ void RemoteConferenceEventHandlerPrivate::subscribe () {
 	}
 
 	lev = linphone_core_create_subscribe(conf->getCore()->getCCore(), lAddr, "conference", 600);
-	lev->op->setFrom(chatRoomId.getLocalAddress().asString().c_str());
+	lev->op->setFrom(conferenceId.getLocalAddress().asString().c_str());
 	const string &lastNotifyStr = Utils::toString(lastNotify);
 	linphone_event_add_custom_header(lev, "Last-Notify-Version", lastNotifyStr.c_str());
 	linphone_address_unref(lAddr);
@@ -269,9 +269,9 @@ RemoteConferenceEventHandler::~RemoteConferenceEventHandler () {
 
 // -----------------------------------------------------------------------------
 
-void RemoteConferenceEventHandler::subscribe (const ChatRoomId &chatRoomId) {
+void RemoteConferenceEventHandler::subscribe (const ConferenceId &conferenceId) {
 	L_D();
-	d->chatRoomId = chatRoomId;
+	d->conferenceId = conferenceId;
 	d->subscriptionWanted = true;
 	d->subscribe();
 }
@@ -285,7 +285,7 @@ void RemoteConferenceEventHandler::unsubscribe () {
 void RemoteConferenceEventHandler::notifyReceived (const string &xmlBody) {
 	L_D();
 
-	lInfo() << "NOTIFY received for conference: " << d->chatRoomId;
+	lInfo() << "NOTIFY received for conference: " << d->conferenceId;
 
 	d->simpleNotifyReceived(xmlBody);
 }
@@ -293,7 +293,7 @@ void RemoteConferenceEventHandler::notifyReceived (const string &xmlBody) {
 void RemoteConferenceEventHandler::multipartNotifyReceived (const string &xmlBody) {
 	L_D();
 
-	lInfo() << "multipart NOTIFY received for conference: " << d->chatRoomId;
+	lInfo() << "multipart NOTIFY received for conference: " << d->conferenceId;
 
 	Content multipart;
 	multipart.setBody(xmlBody);
@@ -307,14 +307,14 @@ void RemoteConferenceEventHandler::multipartNotifyReceived (const string &xmlBod
 
 // -----------------------------------------------------------------------------
 
-void RemoteConferenceEventHandler::setChatRoomId (ChatRoomId chatRoomId) {
+void RemoteConferenceEventHandler::setConferenceId (ConferenceId conferenceId) {
 	L_D();
-	d->chatRoomId = chatRoomId;
+	d->conferenceId = conferenceId;
 }
 
-const ChatRoomId &RemoteConferenceEventHandler::getChatRoomId () const {
+const ConferenceId &RemoteConferenceEventHandler::getConferenceId () const {
 	L_D();
-	return d->chatRoomId;
+	return d->conferenceId;
 }
 
 unsigned int RemoteConferenceEventHandler::getLastNotify () const {

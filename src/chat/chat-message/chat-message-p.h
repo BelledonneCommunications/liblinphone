@@ -23,15 +23,15 @@
 #include <belle-sip/types.h>
 
 #include "chat/chat-message/chat-message.h"
-#include "chat/chat-room/chat-room-id.h"
 #include "chat/modifier/file-transfer-chat-message-modifier.h"
 #include "chat/notification/imdn.h"
-#include "content/content.h"
+#include "conference/conference-id.h"
 #include "content/content-type.h"
+#include "content/content.h"
 #include "content/file-content.h"
 #include "content/file-transfer-content.h"
-#include "db/main-db.h"
 #include "db/main-db-chat-message-key.h"
+#include "db/main-db.h"
 #include "event-log/conference/conference-chat-message-event.h"
 #include "object/object-p.h"
 #include "sal/sal.h"
@@ -211,7 +211,7 @@ private:
 	// Do not expose.
 
 	std::weak_ptr<AbstractChatRoom> chatRoom;
-	ChatRoomId chatRoomId;
+	ConferenceId conferenceId;
 	IdentityAddress fromAddress;
 	IdentityAddress toAddress;
 
