@@ -76,6 +76,8 @@ Content ContentManager::contentListToMultipart (const list<Content *> &contents,
 	SalBodyHandler *sbh = (SalBodyHandler *)mpbh;
 	sal_body_handler_set_type(sbh, ContentType::Multipart.getType().c_str());
 	sal_body_handler_set_subtype(sbh, isEncrypted ? ContentType::Encrypted.getSubType().c_str() : ContentType::Multipart.getSubType().c_str());
+	if (isEncrypted)
+		sal_body_handler_set_content_type_parameter(sbh, "protocol", "\"application/lime\"");
 	sal_body_handler_set_content_type_parameter(sbh, "boundary", boundary.c_str());
 
 	LinphoneContent *cContent = linphone_content_from_sal_body_handler(sbh);
