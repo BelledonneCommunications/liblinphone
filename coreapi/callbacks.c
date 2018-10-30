@@ -145,11 +145,12 @@ static void call_received(SalCallOp *h) {
 				chatRoom->deleteFromDb();
 				chatRoom.reset();
 			}
-			if (!chatRoom)
+			if (!chatRoom) {
 				bool_t isEncrypted = false; // TODO get encryption information from INVITE
 				chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom(
 					h->getSubject(), h->getRemoteContact(), h->getRemoteBody(), false, isEncrypted
 				);
+			}
 
 			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
@@ -854,6 +855,7 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 					if (!chatRoom) {
 						bool_t isEncrypted = false; // TODO get encryption information from INVITE
 						chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom("", addr.asString(), Content(), false, isEncrypted);
+					}
 					chatRoom->join();
 					static_cast<SalReferOp *>(op)->reply(SalReasonNone);
 					return;

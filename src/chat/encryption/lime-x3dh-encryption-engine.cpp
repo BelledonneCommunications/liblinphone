@@ -512,7 +512,8 @@ AbstractChatRoom::SecurityLevel LimeX3DHEncryptionEngine::getSecurityLevel (cons
 		case lime::PeerDeviceStatus::trusted:
 			return AbstractChatRoom::SecurityLevel::Safe;
 		case lime::PeerDeviceStatus::unsafe:
-		case lime::PeerDeviceStatus::fail:
+			return AbstractChatRoom::SecurityLevel::Unsafe;
+		default:
 			return AbstractChatRoom::SecurityLevel::Unsafe;
 	}
 }
