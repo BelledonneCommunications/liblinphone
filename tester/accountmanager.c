@@ -38,7 +38,7 @@ static Account *account_new(LinphoneAddress *identity, const char *unique_id){
 	char *modified_username;
 	Account *obj=ms_new0(Account,1);
 
-	/* we need to inhibit leak detector because the two LinphoneAddress will remain behond the scope of the test being run */
+	// we need to inhibit leak detector because the two LinphoneAddress will remain behond the scope of the test being run
 	belle_sip_object_inhibit_leak_detector(TRUE);
 	obj->identity=linphone_address_clone(identity);
 	obj->password=sal_get_random_token(8);
@@ -168,13 +168,13 @@ void account_create_on_server(Account *account, const LinphoneProxyConfig *refcf
 
 	server_addr=linphone_address_new(linphone_proxy_config_get_server_addr(refcfg));
 	linphone_address_set_secure(server_addr, FALSE);
-	linphone_address_set_transport(server_addr,LinphoneTransportTcp); /*use tcp for account creation, we may not have certificates configured at this stage*/
+	linphone_address_set_transport(server_addr,LinphoneTransportTcp); // use tcp for account creation, we may not have certificates configured at this stage
 	linphone_address_set_port(server_addr,0);
 	tmp=linphone_address_as_string(server_addr);
 	linphone_proxy_config_set_server_addr(cfg,tmp);
 	ms_free(tmp);
 	linphone_address_unref(server_addr);
-	linphone_proxy_config_set_expires(cfg,3*3600); //accounts are valid 3 hours
+	linphone_proxy_config_set_expires(cfg,3*3600); // accounts are valid 3 hours
 
 	linphone_core_add_proxy_config(lc,cfg);
 	/*wait 25 seconds, since the DNS SRV resolution may take a while - and
@@ -186,7 +186,7 @@ void account_create_on_server(Account *account, const LinphoneProxyConfig *refcf
 	tmp_identity=linphone_address_clone(account->modified_identity);
 	linphone_address_set_secure(tmp_identity, FALSE);
 	tmp=linphone_address_as_string(tmp_identity);
-	linphone_proxy_config_set_identity(cfg,tmp); /*remove the X-Create-Account header*/
+	linphone_proxy_config_set_identity(cfg,tmp); // remove the X-Create-Account header
 	linphone_address_unref(tmp_identity);
 	ms_free(tmp);
 	linphone_proxy_config_done(cfg);
@@ -341,18 +341,18 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 		create_account=TRUE;
 		m->accounts=bctbx_list_append(m->accounts,account);
 	}
-	/*modify the username of the identity of the proxy config*/
+	// modify the username of the identity of the proxy config
 	linphone_address_set_username(id_addr, linphone_address_get_username(account->modified_identity));
 	linphone_proxy_config_set_identity_address(cfg, id_addr);
 
-	// choose to create on server or on db based on the tester tags
+	// create account using account creator and flexisip-account-manager
 	if (create_account){
 		const char *xmlrpc_url = linphone_config_get_string(linphone_core_get_config(lc), "misc", "xmlrpc_server_url", "");
 		account_create_on_db(account,cfg,xmlrpc_url);
 	}
 
 	if (liblinphone_tester_keep_uuid) {
-		/* create and/or set uuid */
+		// create and/or set uuid
 		if (account->uuid == NULL) {
 			char tmp[64];
 			sal_create_uuid(linphone_core_get_sal(cm->lc), tmp, sizeof(tmp));
@@ -361,7 +361,7 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 		sal_set_uuid(linphone_core_get_sal(cm->lc), account->uuid);
 	}
 
-	/*remove previous auth info to avoid mismatching*/
+	// remove previous auth info to avoid mismatching
 	if (original_ai)
 		linphone_core_remove_auth_info(lc,original_ai);
 

@@ -145,7 +145,7 @@ ChatMessageModifier::Result LimeX3DHEncryptionEngine::processOutgoingMessage (
 ) {
 	// We use a shared_ptr here due to non synchronism with the lambda in the encrypt method
 	shared_ptr<ChatMessageModifier::Result> result =  make_shared<ChatMessageModifier::Result>(ChatMessageModifier::Result::Suspended);
-    shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
+	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 	const IdentityAddress &peerAddress = chatRoom->getPeerAddress();
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
@@ -311,6 +311,7 @@ ChatMessageModifier::Result LimeX3DHEncryptionEngine::processIncomingMessage (
 	// Check if the message is encrypted and unwrap the multipart
 	ContentType incomingContentType = internalContent->getContentType();
 	ContentType expectedContentType = ContentType::Encrypted;
+	expectedContentType.addParameter("protocol", "\"application/lime\"");
 	expectedContentType.addParameter("boundary", MultipartBoundary);
 
 	if (incomingContentType != expectedContentType) {
@@ -739,10 +740,6 @@ void LimeX3DHEncryptionEngine::cleanDb () {
 	remove(_dbAccess.c_str());
 }
 
-void LimeX3DHEncryptionEngine::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
-	// TODO Work in progress
-}
-
 std::shared_ptr<BelleSipLimeManager> LimeX3DHEncryptionEngine::getLimeManager () {
 	return belleSipLimeManager;
 }
@@ -757,6 +754,8 @@ lime::limeCallback LimeX3DHEncryptionEngine::setLimeCallback (string operation) 
 	});
 	return callback;
 }
+
+void LimeX3DHEncryptionEngine::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {}
 
 void LimeX3DHEncryptionEngine::onRegistrationStateChanged (
 	LinphoneProxyConfig *cfg,

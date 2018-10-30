@@ -79,6 +79,7 @@ public:
 	lime::CurveId getCurveId () const;
 
 	// EncryptionEngine overrides
+
 	ChatMessageModifier::Result processIncomingMessage (
 		const std::shared_ptr<ChatMessage> &message,
 		int &errorCode
@@ -148,6 +149,7 @@ public:
 	void cleanDb () override;
 
 	// CoreListener overrides
+
 	void onNetworkReachable (
 		bool sipNetworkReachable,
 		bool mediaNetworkReachable
