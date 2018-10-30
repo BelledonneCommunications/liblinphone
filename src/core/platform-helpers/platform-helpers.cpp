@@ -59,4 +59,6 @@ void StubbedPlatformHelpers::onLinphoneCoreReady () {}
 
 void StubbedPlatformHelpers::onWifiOnlyEnabled (bool enabled) {}
 
+void StubbedPlatformHelpers::setHttpProxy (string host, int port) {}
+
 LINPHONE_END_NAMESPACE
