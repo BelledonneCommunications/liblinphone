@@ -40,6 +40,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
+import android.net.ProxyInfo;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.Build;
@@ -85,10 +86,12 @@ public class AndroidPlatformHelper {
 	private IntentFilter mDozeIntentFilter;
 	private IntentFilter mNetworkIntentFilter;
 	private boolean mWifiOnly;
+	private boolean mUsingHttpProxy;
 
 	private native void setNativePreviewWindowId(long nativePtr, Object view);
 	private native void setNativeVideoWindowId(long nativePtr, Object view);
 	private native void setNetworkReachable(long nativePtr, boolean reachable);
+	private native void setHttpProxy(long nativePtr, String host, int port);
 
 	public AndroidPlatformHelper(long nativePtr, Object ctx_obj, boolean wifiOnly) {
 		mNativePtr = nativePtr;
@@ -416,9 +419,22 @@ public class AndroidPlatformHelper {
 	public void updateNetworkReachability() {
 		if (mConnectivityManager == null) return;
 
+		boolean usingHttpProxyBefore = mUsingHttpProxy;
 		boolean connected = false;
 		NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
 		connected = networkInfo != null && networkInfo.isConnected();
+
+		if (connected){
+			ProxyInfo proxy = mConnectivityManager.getDefaultProxy();
+			if (proxy != null && proxy.getHost() != null){
+				Log.i("The active network is using an http proxy: " + proxy.toString());
+				setHttpProxy(mNativePtr, proxy.getHost(), proxy.getPort());
+				mUsingHttpProxy = true;
+			}else{
+				setHttpProxy(mNativePtr, "", 0);
+				mUsingHttpProxy = false;
+			}
+		}
 
 		if (networkInfo == null || !connected) {
 			Log.i("No connectivity: setting network unreachable");
@@ -437,7 +453,7 @@ public class AndroidPlatformHelper {
 			} else {
 				int curtype = networkInfo.getType();
 
-				if (curtype != mLastNetworkType) {
+				if (curtype != mLastNetworkType || mUsingHttpProxy != usingHttpProxyBefore) {
 					//if kind of network has changed, we need to notify network_reachable(false) to make sure all current connections are destroyed.
 					//they will be re-created during setNetworkReachable(true).
 					Log.i("Connectivity has changed.");

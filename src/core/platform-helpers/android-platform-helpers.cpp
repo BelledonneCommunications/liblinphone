@@ -51,6 +51,7 @@ public:
 	void setNetworkReachable (bool reachable) override;
 	void onLinphoneCoreReady () override;
 	void onWifiOnlyEnabled (bool enabled) override;
+	void setHttpProxy (string host, int port) override;
 
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
@@ -321,6 +322,11 @@ void AndroidPlatformHelpers::onWifiOnlyEnabled(bool enabled) {
 	}
 }
 
+void AndroidPlatformHelpers::setHttpProxy(string host, int port) {
+	linphone_core_set_http_proxy_host(mCore, host.c_str());
+	linphone_core_set_http_proxy_port(mCore, port);
+}
+
 PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext) {
 	return new AndroidPlatformHelpers(lc, systemContext);
 }
@@ -338,6 +344,12 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNetworkReachable(JNIEnv* env, jobject thiz, jlong ptr, jboolean reachable) {
 	AndroidPlatformHelpers *androidPlatformHelper = (AndroidPlatformHelpers *)ptr;
 	androidPlatformHelper->setNetworkReachable(reachable);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setHttpProxy(JNIEnv* env, jobject thiz, jlong ptr, jstring host, jint port) {
+	AndroidPlatformHelpers *androidPlatformHelper = (AndroidPlatformHelpers *)ptr;
+	const char *hostC = GetStringUTFChars(env, host);
+	androidPlatformHelper->setHttpProxy(hostC, port);
 }
 
 LINPHONE_END_NAMESPACE

@@ -55,6 +55,7 @@ public:
 	virtual void setNetworkReachable (bool reachable) = 0;
 	virtual void onLinphoneCoreReady () = 0;
 	virtual void onWifiOnlyEnabled (bool enabled) = 0;
+	virtual void setHttpProxy (std::string host, int port) = 0;
 
 protected:
 	inline explicit PlatformHelpers (LinphoneCore *lc) : mCore(lc) {}
@@ -81,6 +82,7 @@ public:
 	void setNetworkReachable (bool reachable) override;
 	void onLinphoneCoreReady () override;
 	void onWifiOnlyEnabled (bool enabled) override;
+	void setHttpProxy (std::string host, int port) override;
 };
 
 PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext);
