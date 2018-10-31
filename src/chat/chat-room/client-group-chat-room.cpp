@@ -69,6 +69,8 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	csp.addCustomContactParameter("text");
 	if (capabilities & ClientGroupChatRoom::Capabilities::OneToOne)
 		csp.addCustomHeader("One-To-One-Chat-Room", "true");
+	if (capabilities & ClientGroupChatRoom::Capabilities::Encrypted)
+		csp.addCustomHeader("End-To-End-Encrypted", "true");
 
 	ParticipantPrivate *dFocus = qConference->getPrivate()->focus->getPrivate();
 	shared_ptr<CallSession> session = dFocus->createSession(*q, &csp, false, callSessionListener);

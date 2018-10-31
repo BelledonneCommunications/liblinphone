@@ -93,11 +93,8 @@ static void call_received(SalCallOp *h) {
 		linphone_address_unref(toAddr);
 		linphone_address_unref(fromAddr);
 		if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
-			bool oneToOneChatRoom = false;
 			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
-			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
-				oneToOneChatRoom = true;
-			if (oneToOneChatRoom) {
+			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0)) {
 				bool_t oneToOneChatRoomEnabled = linphone_config_get_bool(linphone_core_get_config(lc), "misc", "enable_one_to_one_chat_room", TRUE);
 				if (!oneToOneChatRoomEnabled) {
 					h->decline(SalReasonNotAcceptable);
@@ -111,7 +108,12 @@ static void call_received(SalCallOp *h) {
 					h->release();
 					return;
 				}
-				IdentityAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front());
+				bool isEncrypted = false;
+				const char *endToEndEncryptedStr = sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted");
+				if (endToEndEncryptedStr && (strcmp(endToEndEncryptedStr, "true") == 0)) {
+					isEncrypted = true;
+				}
+				IdentityAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front(), isEncrypted);
 				if (confAddr.isValid()) {
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ConferenceId(confAddr, confAddr));
 					L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmRecreation(h);
@@ -146,7 +148,11 @@ static void call_received(SalCallOp *h) {
 				chatRoom.reset();
 			}
 			if (!chatRoom) {
-				bool_t isEncrypted = false; // TODO get encryption information from INVITE
+				bool isEncrypted = false;
+				const char *endToEndEncryptedStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
+				if (endToEndEncryptedStr && (strcmp(endToEndEncryptedStr, "true") == 0)) {
+					isEncrypted = true;
+				}
 				chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom(
 					h->getSubject(), h->getRemoteContact(), h->getRemoteBody(), false, isEncrypted
 				);
@@ -853,7 +859,7 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 						ConferenceId(addr, IdentityAddress(op->getTo()))
 					);
 					if (!chatRoom) {
-						bool_t isEncrypted = false; // TODO get encryption information from INVITE
+						bool isEncrypted = false; // TODO get encryption information from INVITE
 						chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom("", addr.asString(), Content(), false, isEncrypted);
 					}
 					chatRoom->join();

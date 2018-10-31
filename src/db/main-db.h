@@ -180,9 +180,10 @@ public:
 	);
 	IdentityAddress findOneToOneConferenceChatRoomAddress (
 		const IdentityAddress &participantA,
-		const IdentityAddress &participantB
+		const IdentityAddress &participantB,
+		bool isEncrypted
 	) const;
-	void insertOneToOneConferenceChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
+	void insertOneToOneConferenceChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom, bool isEncrypted);
 
 	void updateChatRoomParticipantDevice (
 		const std::shared_ptr<AbstractChatRoom> &chatRoom,
