@@ -5242,11 +5242,28 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_find_chat_room (
  * @param local_addr a linphone address.
  * @param participant_addr a linphone address.
  * @return #LinphoneChatRoom where messaging can take place.
+ * @deprecated Use linphone_core_find_one_to_one_chat_room_2 instead
 **/
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_find_one_to_one_chat_room (
 	const LinphoneCore *lc,
 	const LinphoneAddress *local_addr,
 	const LinphoneAddress *participant_addr
+);
+
+/**
+ * Find a one to one chat room.
+ * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * @param lc the linphone core
+ * @param local_addr a linphone address.
+ * @param participant_addr a linphone address.
+ * @param encrypted whether to look for an encrypted chat room or not
+ * @return #LinphoneChatRoom where messaging can take place.
+**/
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_find_one_to_one_chat_room_2 (
+	const LinphoneCore *lc,
+	const LinphoneAddress *local_addr,
+	const LinphoneAddress *participant_addr,
+	bool_t encrypted
 );
 
 /**

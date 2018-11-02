@@ -107,7 +107,8 @@ public:
 
 	std::shared_ptr<AbstractChatRoom> findOneToOneChatRoom (
 		const IdentityAddress &localAddress,
-		const IdentityAddress &participantAddress
+		const IdentityAddress &participantAddress,
+		bool encrypted
 	) const;
 
 	// TODO add createClientGroupChatRoom with local address

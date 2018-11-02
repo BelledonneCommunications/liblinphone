@@ -239,7 +239,8 @@ list<shared_ptr<AbstractChatRoom>> Core::findChatRooms (const IdentityAddress &p
 
 shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 	const IdentityAddress &localAddress,
-	const IdentityAddress &participantAddress
+	const IdentityAddress &participantAddress,
+	bool encrypted
 ) const {
 	L_D();
 	for (const auto &chatRoom : d->chatRooms) {
@@ -249,6 +250,12 @@ shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 		// We are looking for a one to one chatroom
 		// Do not return a group chat room that everyone except one person has left
 		if (!(capabilities & ChatRoom::Capabilities::OneToOne))
+			continue;
+
+		if (encrypted && !(capabilities & ChatRoom::Capabilities::Encrypted))
+			continue;
+		
+		if (!encrypted && capabilities & ChatRoom::Capabilities::Encrypted)
 			continue;
 
 		// One to one client group chat room
