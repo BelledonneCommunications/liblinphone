@@ -57,6 +57,11 @@ public:
 	string getConfigPath () override {return Utils::getEmptyConstRefObject<string>();}
 	void setVideoWindow (void *windowId) override {}
 	void setVideoPreviewWindow (void *windowId) override {}
+	void setNetworkReachable (bool reachable) override {}
+	bool isNetworkReachable () override {}
+	void onLinphoneCoreReady (bool monitoringEnabled) override {}
+	void onWifiOnlyEnabled (bool enabled) override {}
+	void setHttpProxy (string host, int port) override {}
 
 private:
 	void bgTaskTimeout ();
