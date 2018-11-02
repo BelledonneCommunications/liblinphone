@@ -133,9 +133,9 @@ LinphoneChatRoom *linphone_core_find_one_to_one_chat_room (
 ) {
 	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findOneToOneChatRoom(
 		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr)),
-		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(participant_addr),
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(participant_addr)),
 		false)
-	));
+	);
 }
 
 LinphoneChatRoom *linphone_core_find_one_to_one_chat_room_2 (
@@ -146,9 +146,9 @@ LinphoneChatRoom *linphone_core_find_one_to_one_chat_room_2 (
 ) {
 	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findOneToOneChatRoom(
 		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr)),
-		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(participant_addr),
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(participant_addr)),
 		encrypted)
-	));
+	);
 }
 
 int linphone_core_message_received(LinphoneCore *lc, LinphonePrivate::SalOp *op, const SalMessage *sal_msg) {
