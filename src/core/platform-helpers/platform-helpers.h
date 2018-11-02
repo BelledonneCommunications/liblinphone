@@ -53,7 +53,8 @@ public:
 	virtual void setVideoWindow (void *windowId) = 0;
 	virtual void setVideoPreviewWindow (void *windowId) = 0;
 	virtual void setNetworkReachable (bool reachable) = 0;
-	virtual void onLinphoneCoreReady () = 0;
+	virtual bool isNetworkReachable () = 0;
+	virtual void onLinphoneCoreReady (bool monitoringEnabled) = 0;
 	virtual void onWifiOnlyEnabled (bool enabled) = 0;
 	virtual void setHttpProxy (std::string host, int port) = 0;
 
@@ -80,7 +81,8 @@ public:
 	void setVideoWindow (void *windowId) override;
 	void setVideoPreviewWindow (void *windowId) override;
 	void setNetworkReachable (bool reachable) override;
-	void onLinphoneCoreReady () override;
+	bool isNetworkReachable () override;
+	void onLinphoneCoreReady (bool monitoringEnabled) override;
 	void onWifiOnlyEnabled (bool enabled) override;
 	void setHttpProxy (std::string host, int port) override;
 };

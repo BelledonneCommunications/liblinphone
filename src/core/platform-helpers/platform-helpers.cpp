@@ -55,7 +55,11 @@ void StubbedPlatformHelpers::setVideoWindow (void *windowId) {}
 
 void StubbedPlatformHelpers::setNetworkReachable (bool reachable) {}
 
-void StubbedPlatformHelpers::onLinphoneCoreReady () {}
+bool StubbedPlatformHelpers::isNetworkReachable () {
+	return true;
+}
+
+void StubbedPlatformHelpers::onLinphoneCoreReady (bool monitoringEnabled) {}
 
 void StubbedPlatformHelpers::onWifiOnlyEnabled (bool enabled) {}
 

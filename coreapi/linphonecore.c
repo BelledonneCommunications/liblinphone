@@ -2096,7 +2096,7 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 		lc->provisioning_http_listener = NULL;
 	}
 
-	getPlatformHelpers(lc)->onLinphoneCoreReady();
+	getPlatformHelpers(lc)->onLinphoneCoreReady(lc->auto_net_state_mon);
 
 	linphone_core_set_state(lc,LinphoneGlobalOn,"Ready");
 }
@@ -2377,6 +2377,10 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	lc->network_last_check = 0;
 	lc->network_last_status = FALSE;
+
+	lc->network_reachable = TRUE;
+	lc->sip_network_reachable = TRUE;
+	lc->media_network_reachable = TRUE;
 
 	/* Create the http provider in dual stack mode (ipv4 and ipv6.
 	 * If this creates problem, we may need to implement parallel ipv6/ ipv4 http requests in belle-sip.
@@ -3433,7 +3437,7 @@ void linphone_core_iterate(LinphoneCore *lc){
 
 	lc->sal->iterate();
 	if (lc->msevq) ms_event_queue_pump(lc->msevq);
-	if (lc->auto_net_state_mon) monitor_network_state(lc, current_real_time);
+	//if (lc->auto_net_state_mon) monitor_network_state(lc, current_real_time);
 
 	proxy_update(lc);
 
@@ -6406,20 +6410,29 @@ static void disable_internal_network_reachability_detection(LinphoneCore *lc){
 	}
 }
 
-void linphone_core_set_network_reachable(LinphoneCore *lc, bool_t isReachable) {
-	disable_internal_network_reachability_detection(lc);
-	set_network_reachable(lc, isReachable, ms_time(NULL));
+void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_reachable) {
+	if (lc->auto_net_state_mon) {
+		set_network_reachable(lc, lc->network_reachable && is_reachable, ms_time(NULL));
+		notify_network_reachable_change(lc);
+	}
+}
+
+void linphone_core_set_network_reachable(LinphoneCore *lc, bool_t is_reachable) {
+	bool_t reachable = is_reachable;
+
+	if (lc->auto_net_state_mon) reachable = reachable && getPlatformHelpers(lc)->isNetworkReachable();
+
+	lc->network_reachable = is_reachable;
+	set_network_reachable(lc, reachable, ms_time(NULL));
 	notify_network_reachable_change(lc);
 }
 
 void linphone_core_set_media_network_reachable(LinphoneCore *lc, bool_t is_reachable){
-	disable_internal_network_reachability_detection(lc);
 	set_media_network_reachable(lc, is_reachable);
 	notify_network_reachable_change(lc);
 }
 
 void linphone_core_set_sip_network_reachable(LinphoneCore *lc, bool_t is_reachable){
-	disable_internal_network_reachability_detection(lc);
 	set_sip_network_reachable(lc, is_reachable, ms_time(NULL));
 	notify_network_reachable_change(lc);
 }

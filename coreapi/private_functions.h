@@ -189,6 +189,8 @@ int parse_hostname_to_addr(const char *server, struct sockaddr_storage *ss, sock
 bool_t host_has_ipv6_network(void);
 bool_t lp_spawn_command_line_sync(const char *command, char **result,int *command_ret);
 
+void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_reachable);
+
 static MS2_INLINE void set_string(char **dest, const char *src, bool_t lowercase){
 	if (*dest){
 		ms_free(*dest);

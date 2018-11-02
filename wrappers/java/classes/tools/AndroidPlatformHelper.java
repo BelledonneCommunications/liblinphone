@@ -140,7 +140,9 @@ public class AndroidPlatformHelper {
 		return instance;
 	}
 
-	public void onLinphoneCoreReady() {
+	public void onLinphoneCoreReady(boolean monitoringEnabled) {
+		if (!monitoringEnabled) return;
+		
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
 			mNetworkReceiver = new NetworkManager();
 			mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);

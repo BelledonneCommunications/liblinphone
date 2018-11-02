@@ -49,7 +49,8 @@ public:
 	void setVideoWindow (void *windowId) override;
 	void setVideoPreviewWindow (void *windowId) override;
 	void setNetworkReachable (bool reachable) override;
-	void onLinphoneCoreReady () override;
+	bool isNetworkReachable () override;
+	void onLinphoneCoreReady (bool monitoringEnabled) override;
 	void onWifiOnlyEnabled (bool enabled) override;
 	void setHttpProxy (string host, int port) override;
 
@@ -60,6 +61,7 @@ private:
 	int callVoidMethod (jmethodID id);
 	static jmethodID getMethodId (JNIEnv *env, jclass klass, const char *method, const char *signature);
 	string getNativeLibraryDir();
+
 	jobject mJavaHelper;
 	jmethodID mWifiLockAcquireId;
 	jmethodID mWifiLockReleaseId;
@@ -79,6 +81,8 @@ private:
 	jmethodID mOnWifiOnlyEnabledId;
 	jobject mPreviewVideoWindow;
 	jobject mVideoWindow;
+
+	bool mNetworkReachable;
 };
 
 static const char *GetStringUTFChars (JNIEnv *env, jstring string) {
@@ -125,7 +129,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 	mSetNativeVideoWindowId = getMethodId(env, klass, "setVideoRenderingView", "(Ljava/lang/Object;)V");
 	mSetNativePreviewVideoWindowId = getMethodId(env, klass, "setVideoPreviewView", "(Ljava/lang/Object;)V");
 	mUpdateNetworkReachabilityId = getMethodId(env, klass, "updateNetworkReachability", "()V");
-	mOnLinphoneCoreReadyId = getMethodId(env, klass, "onLinphoneCoreReady", "()V");
+	mOnLinphoneCoreReadyId = getMethodId(env, klass, "onLinphoneCoreReady", "(Z)V");
 	mOnWifiOnlyEnabledId = getMethodId(env, klass, "onWifiOnlyEnabled", "(Z)V");
 
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
@@ -137,6 +141,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 
 	mPreviewVideoWindow = nullptr;
 	mVideoWindow = nullptr;
+	mNetworkReachable = false;
 }
 
 AndroidPlatformHelpers::~AndroidPlatformHelpers () {
@@ -305,13 +310,18 @@ void AndroidPlatformHelpers::_setVideoWindow(jobject window) {
 }
 
 void AndroidPlatformHelpers::setNetworkReachable(bool reachable) {
-	linphone_core_set_network_reachable(mCore, reachable);
+	mNetworkReachable = reachable;
+	linphone_core_set_network_reachable_internal(mCore, reachable ? 1 : 0);
 }
 
-void AndroidPlatformHelpers::onLinphoneCoreReady() {
+bool AndroidPlatformHelpers::isNetworkReachable() {
+	return mNetworkReachable;
+}
+
+void AndroidPlatformHelpers::onLinphoneCoreReady(bool monitoringEnabled) {
 	JNIEnv *env = ms_get_jni_env();
 	if (env && mJavaHelper) {
-		env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreReadyId);
+		env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreReadyId, (jboolean)monitoringEnabled);
 	}
 }
 
