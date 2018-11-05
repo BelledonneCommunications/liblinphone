@@ -149,7 +149,7 @@ static void call_received(SalCallOp *h) {
 			}
 			if (!chatRoom) {
 				bool isEncrypted = false;
-				const char *endToEndEncryptedStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
+				const char *endToEndEncryptedStr = sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted");
 				if (endToEndEncryptedStr && (strcmp(endToEndEncryptedStr, "true") == 0)) {
 					isEncrypted = true;
 				}
