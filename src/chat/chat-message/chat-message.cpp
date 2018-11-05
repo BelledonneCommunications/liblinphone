@@ -632,6 +632,7 @@ void ChatMessagePrivate::send () {
 	int errorCode = 0;
 
 	currentSendStep |= ChatMessagePrivate::Step::Started;
+	imdnId.clear();
 
 	if (toBeStored && currentSendStep == (ChatMessagePrivate::Step::Started | ChatMessagePrivate::Step::None))
 		storeInDb();
@@ -791,6 +792,7 @@ void ChatMessagePrivate::send () {
 
 	if (imdnId.empty())
 		setImdnMessageId(op->getCallId());   /* must be known at that time */
+	updateInDb(); // Update IMDN message ID in DB, TODO: update only the message ID, do not rewrite the contents
 
 	if (lcall && linphone_call_get_op(lcall) == op) {
 		/* In this case, chat delivery status is not notified, so unrefing chat message right now */
