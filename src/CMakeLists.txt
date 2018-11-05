@@ -432,11 +432,6 @@ if(ENABLE_SHARED)
 			RESOURCE "${LINPHONE_RESOURCES}"
 		)
 	endif()
-	if(BELCARD_FOUND)
-		if(APPLE)
-			set_target_properties(linphone PROPERTIES LINK_FLAGS "-stdlib=libc++")
-		endif()
-	endif()
 
 	set_target_properties(linphone PROPERTIES LINKER_LANGUAGE CXX)
 	if(NOT ANDROID)
