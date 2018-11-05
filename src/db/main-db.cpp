@@ -480,7 +480,7 @@ long long MainDbPrivate::selectChatRoomParticipantId (long long conferenceId, lo
 	return session->got_data() ? id : -1;
 }
 
-long long MainDbPrivate::selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB, bool isEncrypted) const {
+long long MainDbPrivate::selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB) const {
 	long long id;
 	const int capabilities = int(ChatRoom::Capabilities::Encrypted);
 
@@ -2766,8 +2766,7 @@ IdentityAddress MainDb::findMissingOneToOneConferenceChatRoomParticipantAddress 
 
 IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 	const IdentityAddress &participantA,
-	const IdentityAddress &participantB,
-	bool isEncrypted
+	const IdentityAddress &participantB
 ) const {
 	return L_DB_TRANSACTION {
 		L_D();
@@ -2777,7 +2776,7 @@ IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 		if (participantASipAddressId == -1 || participantBSipAddressId == -1)
 			return IdentityAddress();
 
-		const long long &conferenceId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId, isEncrypted);
+		const long long &conferenceId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId);
 
 		string chatRoomAddress;
 		*d->dbSession.getBackendSession() << "SELECT sip_address.value"
@@ -2789,7 +2788,7 @@ IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 	};
 }
 
-void MainDb::insertOneToOneConferenceChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom, bool isEncrypted) {
+void MainDb::insertOneToOneConferenceChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	L_ASSERT(linphone_core_conference_server_enabled(chatRoom->getCore()->getCCore()));
 	L_ASSERT(chatRoom->getCapabilities() & ChatRoom::Capabilities::OneToOne);
 
@@ -2802,7 +2801,7 @@ void MainDb::insertOneToOneConferenceChatRoom (const shared_ptr<AbstractChatRoom
 		L_ASSERT(participantASipAddressId != -1);
 		L_ASSERT(participantBSipAddressId != -1);
 
-		long long conferenceId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId, isEncrypted);
+		long long conferenceId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId);
 		if (conferenceId == -1) {
 			conferenceId = d->selectChatRoomId(chatRoom->getConferenceId());
 			*d->dbSession.getBackendSession() << Statements::get(Statements::InsertOneToOneChatRoom, getBackend()),

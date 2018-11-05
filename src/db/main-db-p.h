@@ -68,7 +68,7 @@ private:
 	long long selectChatRoomId (long long peerSipAddressId, long long localSipAddressId) const;
 	long long selectChatRoomId (const ConferenceId &conferenceId) const;
 	long long selectChatRoomParticipantId (long long conferenceId, long long participantSipAddressId) const;
-	long long selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB, bool isEncrypted) const;
+	long long selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB) const;
 
 	void deleteContents (long long chatMessageId);
 	void deleteChatRoomParticipant (long long conferenceId, long long participantSipAddressId);
