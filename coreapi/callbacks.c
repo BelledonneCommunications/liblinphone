@@ -93,11 +93,8 @@ static void call_received(SalCallOp *h) {
 		linphone_address_unref(toAddr);
 		linphone_address_unref(fromAddr);
 		if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
-			bool oneToOneChatRoom = false;
 			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
-			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
-				oneToOneChatRoom = true;
-			if (oneToOneChatRoom) {
+			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0)) {
 				bool_t oneToOneChatRoomEnabled = linphone_config_get_bool(linphone_core_get_config(lc), "misc", "enable_one_to_one_chat_room", TRUE);
 				if (!oneToOneChatRoomEnabled) {
 					h->decline(SalReasonNotAcceptable);
