@@ -475,10 +475,12 @@ long long MainDbPrivate::selectChatRoomParticipantId (long long chatRoomId, long
 
 long long MainDbPrivate::selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB) const {
 	long long chatRoomId;
+	const int capabilities = int(ChatRoom::Capabilities::Encrypted);
 
 	soci::session *session = dbSession.getBackendSession();
 	*session << Statements::get(Statements::SelectOneToOneChatRoomId),
 		soci::use(sipAddressIdA, "1"), soci::use(sipAddressIdB, "2"),
+		soci::use(capabilities), soci::use(capabilities),
 		soci::into(chatRoomId);
 
 	return session->got_data() ? chatRoomId : -1;
