@@ -339,7 +339,7 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 		account->phone_alias=ms_strdup(phone_alias);
 		ms_message("No account for %s exists, going to create one.",identity);
 		create_account=TRUE;
-		m->accounts=bctbx_list_append(m->accounts,account);
+		m->accounts=bctbx_list_append(m->accounts, account);
 	}
 	// modify the username of the identity of the proxy config
 	linphone_address_set_username(id_addr, linphone_address_get_username(account->modified_identity));
@@ -347,8 +347,12 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 
 	// create account using account creator and flexisip-account-manager
 	if (create_account){
-		const char *xmlrpc_url = linphone_config_get_string(linphone_core_get_config(lc), "misc", "xmlrpc_server_url", "");
-		account_create_on_db(account,cfg,xmlrpc_url);
+		if (liblinphonetester_no_account_creator) {
+			account_create_on_server(account, cfg, phone_alias);
+		} else {
+			const char *xmlrpc_url = linphone_config_get_string(linphone_core_get_config(lc), "misc", "xmlrpc_server_url", "");
+			account_create_on_db(account,cfg,xmlrpc_url);
+		}
 	}
 
 	if (liblinphone_tester_keep_uuid) {
