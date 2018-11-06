@@ -338,11 +338,6 @@ ClientGroupChatRoom::CapabilitiesMask ClientGroupChatRoom::getCapabilities () co
 	return d->capabilities;
 }
 
-bool ClientGroupChatRoom::isEncrypted () const {
-	L_D();
-	return d->capabilities & ClientGroupChatRoom::Capabilities::Encrypted;
-}
-
 ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
 	L_D();
 	if (!(d->capabilities & ClientGroupChatRoom::Capabilities::Encrypted)) {

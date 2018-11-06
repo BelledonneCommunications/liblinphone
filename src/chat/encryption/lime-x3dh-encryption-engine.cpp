@@ -152,8 +152,8 @@ ChatMessageModifier::Result LimeX3DHEncryptionEngine::processOutgoingMessage (
 
 	// Check if chatroom is encrypted or not
 	shared_ptr<ClientGroupChatRoom> cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
-	if (cgcr->isEncrypted()) {
 		lWarning() << "LIMEv2 this chatroom is encrypted, proceed to encrypt outgoing message";
+	if (cgcr->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
 	} else {
 		lWarning() << "LIMEv2 this chatroom is not encrypted, no need encrypt outgoing message";
 		return ChatMessageModifier::Result::Skipped;

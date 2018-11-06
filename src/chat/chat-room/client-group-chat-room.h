@@ -72,7 +72,6 @@ public:
 	bool canHandleMultipart () const override;
 
 	CapabilitiesMask getCapabilities () const override;
-	bool isEncrypted () const;
 	ChatRoom::SecurityLevel getSecurityLevel () const override;
 	bool hasBeenLeft () const override;
 
