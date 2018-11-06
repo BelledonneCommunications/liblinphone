@@ -206,6 +206,7 @@ static const char* liblinphone_helper =
 		"\t\t\t--disable-tls-support\n"
 		"\t\t\t--no-ipv6 (turn off IPv6 in LinphoneCore, tests requiring IPv6 will be skipped)\n"
 		"\t\t\t--show-account-manager-logs (show temporary test account creation logs)\n"
+		"\t\t\t--no-account-creator (use file database flexisip for account creation)\n"
 		;
 
 int main (int argc, char *argv[])
@@ -243,6 +244,8 @@ int main (int argc, char *argv[])
 			liblinphonetester_ipv6 = FALSE;
 		} else if (strcmp(argv[i],"--show-account-manager-logs")==0){
 			liblinphonetester_show_account_manager_logs=TRUE;
+		} else if (strcmp(argv[i],"--no-account-creator")==0){
+			liblinphonetester_no_account_creator=TRUE;
 		} else {
 			int bret = bc_tester_parse_args(argc, argv, i);
 			if (bret>0) {

@@ -53,6 +53,7 @@ const char* test_route="sip2.linphone.org";
 const char *userhostsfile = "tester_hosts";
 bool_t liblinphonetester_ipv6 = TRUE;
 bool_t liblinphonetester_show_account_manager_logs = FALSE;
+bool_t liblinphonetester_no_account_creator = FALSE;
 int liblinphonetester_transport_timeout = 9000; /*milliseconds. it is set to such low value to workaround a problem with our Freebox v6 when connecting to Ipv6 addresses.
 			It was found that the freebox sometimes block SYN-ACK packets, which prevents connection to be succesful.
 			Thanks to the timeout, it will fallback to IPv4*/
