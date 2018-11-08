@@ -209,11 +209,24 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
 
 {{/isLinphoneCore}}
 {{#isNotLinphoneFactory}}
-    private native void unref(long ptr);
+    private native boolean unref(long ptr);
     protected void finalize() throws Throwable {
+        /* Considering the following scenario:
+        User scrolls fast in a chat message list that contains a lot of images, 
+        so the VM will garbage collect often due to the images taking much space.
+        The view itself only has a reference on the EventLogs, not the ChatMessages directly,
+        so each call of onBindView will call eventLog.getChatMessage() and the reference will only be temporary.
+        It has been observed a race condition can occurs in which the JNI level can obtain a LocalRef from a WeakGlobalRef
+        of an object that has been scheduled for destruction and for which the finalize() method will be called shortly after.
+        The result is a Java object that has been finalized can have it's methods be called after the finalize() has terminated.*/
+        
+        /*The workaround we made here is to keep the nativePtr value even after the unref() only if the object is still reffed by the SDK,
+        so the few methods calls following the finalize() will still work because we know the native pointer still exists.*/
 		if (nativePtr != 0) {
-			unref(nativePtr);
-			nativePtr = 0;
+			boolean destroyed = unref(nativePtr);
+            if (destroyed) {
+			    nativePtr = 0;
+            }
 		}
 		super.finalize();
 	}
