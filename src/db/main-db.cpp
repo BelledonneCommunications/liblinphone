@@ -480,15 +480,16 @@ long long MainDbPrivate::selectChatRoomParticipantId (long long conferenceId, lo
 	return session->got_data() ? id : -1;
 }
 
-long long MainDbPrivate::selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB) const {
+long long MainDbPrivate::selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB, bool encrypted) const {
 	long long id;
-	const int capabilities = int(ChatRoom::Capabilities::Encrypted);
+	const int encryptedCapability = int(ChatRoom::Capabilities::Encrypted);
+	const int expectedCapabilities = encrypted ? encryptedCapability : 0;
 
 	soci::session *session = dbSession.getBackendSession();
 	*session << Statements::get(Statements::SelectOneToOneChatRoomId),
 		soci::use(sipAddressIdA), soci::use(sipAddressIdB),
 		soci::use(sipAddressIdA), soci::use(sipAddressIdB),
-		soci::use(capabilities), soci::use(capabilities),
+		soci::use(encryptedCapability), soci::use(expectedCapabilities),
 		soci::into(id);
 
 	return session->got_data() ? id : -1;
@@ -2766,7 +2767,8 @@ IdentityAddress MainDb::findMissingOneToOneConferenceChatRoomParticipantAddress 
 
 IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 	const IdentityAddress &participantA,
-	const IdentityAddress &participantB
+	const IdentityAddress &participantB,
+	bool encrypted
 ) const {
 	return L_DB_TRANSACTION {
 		L_D();
@@ -2776,7 +2778,7 @@ IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 		if (participantASipAddressId == -1 || participantBSipAddressId == -1)
 			return IdentityAddress();
 
-		const long long &conferenceId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId);
+		const long long &conferenceId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId, encrypted);
 
 		string chatRoomAddress;
 		*d->dbSession.getBackendSession() << "SELECT sip_address.value"
@@ -2788,7 +2790,7 @@ IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 	};
 }
 
-void MainDb::insertOneToOneConferenceChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) {
+void MainDb::insertOneToOneConferenceChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom, bool encrypted) {
 	L_ASSERT(linphone_core_conference_server_enabled(chatRoom->getCore()->getCCore()));
 	L_ASSERT(chatRoom->getCapabilities() & ChatRoom::Capabilities::OneToOne);
 
@@ -2801,7 +2803,7 @@ void MainDb::insertOneToOneConferenceChatRoom (const shared_ptr<AbstractChatRoom
 		L_ASSERT(participantASipAddressId != -1);
 		L_ASSERT(participantBSipAddressId != -1);
 
-		long long conferenceId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId);
+		long long conferenceId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId, encrypted);
 		if (conferenceId == -1) {
 			conferenceId = d->selectChatRoomId(chatRoom->getConferenceId());
 			*d->dbSession.getBackendSession() << Statements::get(Statements::InsertOneToOneChatRoom, getBackend()),
