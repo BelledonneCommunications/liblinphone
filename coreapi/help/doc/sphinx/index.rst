@@ -47,6 +47,7 @@ Beginners' guides
 	guides/event_api
 	guides/misc
 	guides/ios_portability
+	guides/android_portability
 
 
 Code samples
