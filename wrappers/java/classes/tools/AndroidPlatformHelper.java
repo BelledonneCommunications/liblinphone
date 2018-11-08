@@ -403,7 +403,7 @@ public class AndroidPlatformHelper {
 		NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
 		connected = networkInfo != null && networkInfo.isConnected();
 
-		if (connected){
+		if (connected && Build.VERSION.SDK_INT >= Version.API23_MARSHMALLOW_60){
 			ProxyInfo proxy = mConnectivityManager.getDefaultProxy();
 			if (proxy != null && proxy.getHost() != null){
 				Log.i("The active network is using an http proxy: " + proxy.toString());
