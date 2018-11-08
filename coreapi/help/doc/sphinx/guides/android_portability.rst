@@ -4,10 +4,11 @@ Video
 -----
 
 To be able to display remote and locally captured video streams on Android, you have to give the Core 2 TextureViews.
-These objects must be given using :java:func`setNativeVideoWindowId` and java:func`setNativePreviewWindowId`.
+These objects must be given using :java:meth:`setNativeVideoWindowId` and :java:meth:`setNativePreviewWindowId`.
 Here's the complete code:
 
 .. code-block:: java
+
 	Core mCore; // Get it the way you prefer
 
 	TextureView mVideoView = view.findViewById(R.id.videoSurface);
