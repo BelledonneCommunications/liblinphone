@@ -645,7 +645,8 @@ class Jni(object):
             'className': javaClass.className,
             'classCName': javaClass.cName,
             'classImplName': javaClass.classImplName,
-            'refCountable': javaClass.refCountable
+            'refCountable': javaClass.refCountable,
+            'notRefCountable': not javaClass.refCountable
         }
         self.objects.append(obj)
 

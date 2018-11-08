@@ -69,6 +69,15 @@ static jlong GetObjectNativePtr(JNIEnv *env, jobject object) {
 	return nativePtr;
 }
 
+static void LogJavaObjectForNativePtr(JNIEnv *env, jobject obj, jlong cptr) {
+	jclass javaObject = env->FindClass("java/lang/Object");
+	jmethodID javaObjectToString = env->GetMethodID(javaObject, "toString", "()Ljava/lang/String;");
+	jstring javaObjectName = (jstring)env->CallObjectMethod(obj, javaObjectToString);
+	const char *name = GetStringUTFChars(env, javaObjectName);
+	bctbx_debug("Java object name is %s for native pointer %p", name, (void *)cptr);
+	ReleaseStringUTFChars(env, javaObjectName, name);
+}
+
 extern "C" {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -275,18 +284,19 @@ JNIEXPORT jobject JNICALL get{{className}}(JNIEnv *env, {{classCName}} *cptr, bo
 	return jobj;
 }
 
-JNIEXPORT void JNICALL Java_{{jniPrefix}}{{classImplName}}_unref(JNIEnv* env, jobject thiz, jlong ptr) {
+JNIEXPORT jboolean JNICALL Java_{{jniPrefix}}{{classImplName}}_unref(JNIEnv* env, jobject thiz, jlong ptr) {
 	{{classCName}} *cptr = ({{classCName}}*)ptr;
 	if (cptr == 0) {
-		bctbx_error("{{classCName}} C ptr is null!");
-		return;
+		bctbx_error("Java_{{jniPrefix}}{{classImplName}}_unref's {{classCName}} C ptr is null!");
+		return TRUE;
 	}
 	jobject wref = (jobject)belle_sip_object_data_get((belle_sip_object_t *)cptr, belle_sip_java_user_data_key);
 	belle_sip_object_data_set((belle_sip_object_t *)cptr, belle_sip_java_user_data_key, nullptr, nullptr);
 	if (wref) {
 		env->DeleteWeakGlobalRef(wref);
 	}
-	{{#refCountable}}{{cPrefix}}_unref(cptr);{{/refCountable}}
+	{{#refCountable}}return belle_sip_object_unref_2(cptr);{{/refCountable}}
+	{{#notRefCountable}}return FALSE;{{/notRefCountable}}
 }
 
 {{/objects}}
@@ -401,7 +411,7 @@ static {{return}} {{callbackName}}({{params}}) {
 JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_setListener(JNIEnv* env, jobject thiz, jlong ptr, jobject jlistener) {
 	{{classCName}} *cptr = ({{classCName}}*)ptr;
 	if (cptr == 0) {
-		bctbx_error("{{classCName}} C ptr is null!");
+		bctbx_error("Java_{{jniPackage}}{{className}}Impl_setListener's {{classCName}} C ptr is null!");
 		return;
 	}
 	{{classCName}}Cbs *cbs = {{cPrefix}}_get_callbacks(cptr);
@@ -436,7 +446,7 @@ JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_addListener(JNIEnv* 
 	if (jlistener == nullptr) return;
 	{{classCName}} *cptr = ({{classCName}}*)ptr;
 	if (cptr == 0) {
-		bctbx_error("{{classCName}} C ptr is null!");
+		bctbx_error("Java_{{jniPackage}}{{className}}Impl_addListener's {{classCName}} C ptr is null!");
 		return;
 	}
 	jobject listener = env->NewGlobalRef(jlistener);
@@ -452,7 +462,7 @@ JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_addListener(JNIEnv* 
 JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_removeListener(JNIEnv* env, jobject thiz, jlong ptr, jobject jlistener) {
 	{{classCName}} *cptr = ({{classCName}}*)ptr;
 	if (cptr == 0) {
-		bctbx_error("{{classCName}} C ptr is null!");
+		bctbx_error("Java_{{jniPackage}}{{className}}Impl_removeListener's {{classCName}} C ptr is null!");
 		return;
 	}
 	const bctbx_list_t *cbs_list = {{cPrefix}}_get_callbacks_list(cptr);
@@ -486,7 +496,7 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 	{{#notStatic}}{{classCName}} *cptr = ({{classCName}}*)ptr;
 	{{#isLinphoneFactory}}cptr = linphone_factory_get();{{/isLinphoneFactory}}
 	if (cptr == nullptr) {
-		bctbx_error("{{classCName}} C ptr is null!");
+		bctbx_error("{{name}}'s {{classCName}} C ptr is null!");
 		{{#hasListReturn}}
 		{{#isRealObjectArray}}
 		LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
@@ -571,7 +581,7 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 JNIEXPORT void JNICALL Java_org_linphone_core_CallImpl_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	LinphoneCall *cptr = (LinphoneCall*)ptr;
 	if (cptr == 0) {
-		bctbx_error("LinphoneCall C ptr is null!");
+		bctbx_error("Java_org_linphone_core_CallImpl_setNativeVideoWindowId's LinphoneCall C ptr is null!");
 		return;
 	}
 	LinphoneCore *lc = linphone_call_get_core(cptr);
@@ -581,7 +591,7 @@ JNIEXPORT void JNICALL Java_org_linphone_core_CallImpl_setNativeVideoWindowId(JN
 JNIEXPORT void JNICALL Java_org_linphone_core_CoreImpl_setNativePreviewWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	LinphoneCore *cptr = (LinphoneCore*)ptr;
 	if (cptr == 0) {
-		bctbx_error("LinphoneCore C ptr is null!");
+		bctbx_error("Java_org_linphone_core_CoreImpl_setNativePreviewWindowId's LinphoneCore C ptr is null!");
 		return;
 	}
 	linphone_core_set_native_preview_window_id(cptr, (void *)id);
@@ -590,7 +600,7 @@ JNIEXPORT void JNICALL Java_org_linphone_core_CoreImpl_setNativePreviewWindowId(
 JNIEXPORT void JNICALL Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	LinphoneCore *cptr = (LinphoneCore*)ptr;
 	if (cptr == 0) {
-		bctbx_error("LinphoneCore C ptr is null!");
+		bctbx_error("Java_org_linphone_core_CoreImpl_setNativeVideoWindowId's LinphoneCore C ptr is null!");
 		return;
 	}
 	linphone_core_set_native_video_window_id(cptr, (void *)id);
