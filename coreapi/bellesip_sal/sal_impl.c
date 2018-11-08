@@ -82,7 +82,6 @@ void sal_signing_key_delete(belle_sip_signing_key_t *key) {
 
 int sal_auth_compute_ha1(const char* userid,const char* realm,const char* password, char ha1[33]) {
 	return belle_sip_auth_helper_compute_ha1(userid, realm, password, ha1);
-	
 }
 
 int sal_auth_compute_ha1_for_algorithm(
