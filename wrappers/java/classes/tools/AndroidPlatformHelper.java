@@ -134,7 +134,6 @@ public class AndroidPlatformHelper {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
 			mNetworkReceiver = new NetworkManager(this);
 			mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-			android.util.Log.i("Linphone","NETWORK: registered");
 			mContext.registerReceiver(mNetworkReceiver, mNetworkIntentFilter);
 		} else {
 			mNetworkManagerAbove21 = new NetworkManagerAbove21(this);

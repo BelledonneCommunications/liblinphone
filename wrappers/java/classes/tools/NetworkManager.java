@@ -34,12 +34,10 @@ public class NetworkManager extends BroadcastReceiver {
 
     public NetworkManager(AndroidPlatformHelper helper) {
         mHelper = helper;
-        android.util.Log.i("Linphone","NETWORK: networkManager created");
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        android.util.Log.i("Linphone","NETWORK: Call onReceive");
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         Boolean lNoConnectivity = intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
         if (mHelper != null) {
