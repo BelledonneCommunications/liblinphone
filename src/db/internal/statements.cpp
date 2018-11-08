@@ -74,11 +74,12 @@ namespace Statements {
 		)",
 
 		/* SelectOneToOneChatRoomId */ R"(
-			SELECT chat_room_id
-			FROM one_to_one_chat_room
-			WHERE participant_a_sip_address_id IN (:1, :2)
-			AND participant_b_sip_address_id IN (:3, :4)
-			AND (capabilities & :5) == :6
+			SELECT one_to_one_chat_room.chat_room_id
+			FROM one_to_one_chat_room, chat_room
+			WHERE one_to_one_chat_room.participant_a_sip_address_id IN (:1, :2)
+			AND one_to_one_chat_room.participant_b_sip_address_id IN (:3, :4)
+			AND one_to_one_chat_room.chat_room_id = chat_room.id
+			AND (chat_room.capabilities & :5) = :6
 		)",
 
 		/* SelectConferenceEvent */ R"(
