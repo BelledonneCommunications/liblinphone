@@ -251,7 +251,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	const IdentityAddress &me,
 	const string &subject,
 	const Content &content,
-	bool isEncrypted
+	bool encrypted
 ) : ChatRoom(*new ClientGroupChatRoomPrivate, core, ConferenceId(IdentityAddress(), me)),
 RemoteConference(core, me, nullptr) {
 	L_D();
@@ -265,7 +265,7 @@ RemoteConference(core, me, nullptr) {
 	for (const auto &addr : identAddresses)
 		dConference->participants.push_back(make_shared<Participant>(this, addr));
 
-	if (isEncrypted)
+	if (encrypted)
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Encrypted;
 }
 

@@ -143,13 +143,13 @@ static void call_received(SalCallOp *h) {
 				chatRoom.reset();
 			}
 			if (!chatRoom) {
-				bool isEncrypted = false;
+				bool encrypted = false;
 				const char *endToEndEncryptedStr = sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted");
 				if (endToEndEncryptedStr && (strcmp(endToEndEncryptedStr, "true") == 0)) {
-					isEncrypted = true;
+					encrypted = true;
 				}
 				chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom(
-					h->getSubject(), h->getRemoteContact(), h->getRemoteBody(), false, isEncrypted
+					h->getSubject(), h->getRemoteContact(), h->getRemoteBody(), false, encrypted
 				);
 			}
 
@@ -854,8 +854,8 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 						ConferenceId(addr, IdentityAddress(op->getTo()))
 					);
 					if (!chatRoom) {
-						bool isEncrypted = false; // TODO get encryption information from INVITE
-						chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom("", addr.asString(), Content(), false, isEncrypted);
+						bool encrypted = false; // TODO get encryption information from INVITE
+						chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom("", addr.asString(), Content(), false, encrypted);
 					}
 					chatRoom->join();
 					static_cast<SalReferOp *>(op)->reply(SalReasonNone);

@@ -112,7 +112,7 @@ public:
 	) const;
 
 	// TODO add createClientGroupChatRoom with local address
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, bool fallback = true, bool isEncrypted = false);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, bool fallback = true, bool encrypted = false);
 
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt = false);
 

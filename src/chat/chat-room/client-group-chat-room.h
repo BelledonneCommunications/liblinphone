@@ -48,7 +48,7 @@ public:
 		const IdentityAddress &me,
 		const std::string &subject,
 		const Content &content,
-		bool isEncrypted = false
+		bool encrypted = false
 	);
 
 	ClientGroupChatRoom (
