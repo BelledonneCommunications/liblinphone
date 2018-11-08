@@ -82,7 +82,7 @@ namespace Statements {
 				(participant_a_sip_address_id <> participant_b_sip_address_id AND :1 <> :2) OR
 				(participant_a_sip_address_id = participant_b_sip_address_id AND :1 = :2)
 			)
-			AND (capabilities & :3) == :4
+			AND (chat_room.capabilities & :3) = :4
 		)",
 
 		/* SelectConferenceEvent */ R"(
