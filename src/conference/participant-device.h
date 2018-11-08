@@ -28,6 +28,7 @@
 
 #include "linphone/types.h"
 #include "linphone/utils/general.h"
+#include "object/object.h"
 
 // =============================================================================
 
@@ -36,8 +37,9 @@ LINPHONE_BEGIN_NAMESPACE
 class CallSession;
 class Core;
 class Participant;
+class ParticipantDevicePrivate;
 
-class ParticipantDevice {
+class ParticipantDevice : public Object {
 public:
 	enum class State {
 		Joining,
@@ -69,12 +71,15 @@ public:
 	bool isValid () const { return mGruu.isValid(); }
 
 private:
+	L_OVERRIDE_SHARED_FROM_THIS(ParticipantDevice);
+
 	Participant *mParticipant = nullptr;
 	IdentityAddress mGruu;
 	std::shared_ptr<CallSession> mSession;
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
 
+	L_DECLARE_PRIVATE(ParticipantDevice);
 	L_DISABLE_COPY(ParticipantDevice);
 };
 

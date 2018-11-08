@@ -127,6 +127,13 @@ static char* _get_identity(const LinphoneAccountCreator *creator) {
 	return identity;
 }
 
+static inline void resetField (char **field) {
+	if (*field) {
+		bctbx_free(*field);
+		*field = nullptr;
+	}
+}
+
 LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const LinphoneAccountCreator *creator) {
 	LinphoneAuthInfo *info;
 	LinphoneProxyConfig *cfg = linphone_core_create_proxy_config(creator->core);
@@ -168,6 +175,7 @@ LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const Linphon
 	}
 
 	linphone_core_remove_auth_info(creator->core, info);
+	linphone_auth_info_unref(info);
 	return NULL;
 }
 
@@ -305,7 +313,7 @@ static void _linphone_account_creator_destroy(LinphoneAccountCreator *creator) {
 				linphone_account_creator_service_get_destructor_cb(creator->service)(creator);
 			linphone_account_creator_service_unref(creator->service);
 	}
-	
+
 	linphone_account_creator_cbs_unref(creator->cbs);
 	if (creator->proxy_cfg) {
 		linphone_proxy_config_unref(creator->proxy_cfg);
@@ -348,27 +356,19 @@ LinphoneAccountCreator * linphone_account_creator_new(LinphoneCore *core, const 
 	return _linphone_account_creator_new(core, xmlrpc_url);
 }
 
-#define _reset_field(field) \
-	if (field) { \
-		ms_free(field); \
-		field = NULL; \
-	}
-
 void linphone_account_creator_reset(LinphoneAccountCreator *creator) {
-	_reset_field(creator->username);
-	_reset_field(creator->display_name);
-	_reset_field(creator->password);
-	_reset_field(creator->ha1);
-	_reset_field(creator->phone_number);
-	_reset_field(creator->phone_country_code);
-	_reset_field(creator->email);
-	_reset_field(creator->language);
-	_reset_field(creator->activation_code);
-	_reset_field(creator->domain);
-	_reset_field(creator->route);
+	resetField(&creator->username);
+	resetField(&creator->display_name);
+	resetField(&creator->password);
+	resetField(&creator->ha1);
+	resetField(&creator->phone_number);
+	resetField(&creator->phone_country_code);
+	resetField(&creator->email);
+	resetField(&creator->language);
+	resetField(&creator->activation_code);
+	resetField(&creator->domain);
+	resetField(&creator->route);
 }
-
-#undef _reset_field
 
 LinphoneAccountCreator * linphone_core_create_account_creator(LinphoneCore *core, const char *xmlrpc_url) {
 	return _linphone_account_creator_new(core, xmlrpc_url);
@@ -407,7 +407,7 @@ LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_username(Linph
 	bool_t use_phone_number = !!lp_config_get_int(creator->core->config, "assistant", "use_phone_number", 0);
 	const char* regex = lp_config_get_string(creator->core->config, "assistant", "username_regex", 0);
 	if (!username) {
-		creator->username = NULL;
+		resetField(&creator->username);
 		return LinphoneAccountCreatorUsernameStatusOk;
 	} else if (min_length > 0 && strlen(username) < (size_t)min_length) {
 		return LinphoneAccountCreatorUsernameStatusTooShort;
@@ -482,7 +482,7 @@ LinphoneAccountCreatorPasswordStatus linphone_account_creator_set_password(Linph
 	int min_length = lp_config_get_int(creator->core->config, "assistant", "password_min_length", -1);
 	int max_length = lp_config_get_int(creator->core->config, "assistant", "password_max_length", -1);
 	if (!password) {
-		creator->password = NULL;
+		resetField(&creator->password);
 		return LinphoneAccountCreatorPasswordStatusTooShort;
 	}
 	if (min_length > 0 && strlen(password) < (size_t)min_length) {
@@ -1147,7 +1147,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_link_phone_number_with_acc
 		}
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
-	
+
 	if (creator->xmlrpc_session) {
 		ms_debug("Account creator: link_phone_number_with_account (phone number=%s, username=%s, domain=%s, language=%s)",
 			creator->phone_number,

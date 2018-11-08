@@ -69,6 +69,8 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	csp.addCustomContactParameter("text");
 	if (capabilities & ClientGroupChatRoom::Capabilities::OneToOne)
 		csp.addCustomHeader("One-To-One-Chat-Room", "true");
+	if (capabilities & ClientGroupChatRoom::Capabilities::Encrypted)
+		csp.addCustomHeader("End-To-End-Encrypted", "true");
 
 	ParticipantPrivate *dFocus = qConference->getPrivate()->focus->getPrivate();
 	shared_ptr<CallSession> session = dFocus->createSession(*q, &csp, false, callSessionListener);
@@ -248,9 +250,11 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	const string &uri,
 	const IdentityAddress &me,
 	const string &subject,
-	const Content &content
+	const Content &content,
+	bool encrypted
 ) : ChatRoom(*new ClientGroupChatRoomPrivate, core, ConferenceId(IdentityAddress(), me)),
 RemoteConference(core, me, nullptr) {
+	L_D();
 	L_D_T(RemoteConference, dConference);
 
 	IdentityAddress focusAddr(uri);
@@ -260,6 +264,9 @@ RemoteConference(core, me, nullptr) {
 	list<IdentityAddress> identAddresses = Conference::parseResourceLists(content);
 	for (const auto &addr : identAddresses)
 		dConference->participants.push_back(make_shared<Participant>(this, addr));
+
+	if (encrypted)
+		d->capabilities |= ClientGroupChatRoom::Capabilities::Encrypted;
 }
 
 ClientGroupChatRoom::ClientGroupChatRoom (
@@ -277,6 +284,7 @@ RemoteConference(core, me->getAddress(), nullptr) {
 	L_D_T(RemoteConference, dConference);
 
 	d->capabilities |= capabilities & ClientGroupChatRoom::Capabilities::OneToOne;
+	d->capabilities |= capabilities & ClientGroupChatRoom::Capabilities::Encrypted;
 	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
 	dConference->focus = make_shared<Participant>(this, peerAddress);
 	dConference->focus->getPrivate()->addDevice(peerAddress);
@@ -331,19 +339,26 @@ ClientGroupChatRoom::CapabilitiesMask ClientGroupChatRoom::getCapabilities () co
 }
 
 ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
+	L_D();
+	if (!(d->capabilities & ClientGroupChatRoom::Capabilities::Encrypted)) {
+		return AbstractChatRoom::SecurityLevel::ClearText;
+	}
+
 	bool isSafe = true;
 	for (const auto &participant : getParticipants()) {
 		auto level = participant->getSecurityLevel();
 		switch (level) {
 			case AbstractChatRoom::SecurityLevel::Unsafe:
 				lInfo() << "Chatroom SecurityLevel = Unsafe";
-				return level; // if one device is Unsafe the whole participant is Unsafe (red)
+				return level; // if one device is Unsafe the whole participant is Unsafe
 			case AbstractChatRoom::SecurityLevel::ClearText:
+				lInfo() << "Chatroom securityLevel = ClearText";
+				return level; // if one device is ClearText the whole participant is ClearText
 			case AbstractChatRoom::SecurityLevel::Encrypted:
-				isSafe = false; // if one device is Encrypted the whole participant is Encrypted (orange)
+				isSafe = false; // if one device is Encrypted the whole participant is Encrypted
 				break;
 			case AbstractChatRoom::SecurityLevel::Safe:
-				break; // if all devices are Safe the whole participant is Safe (green)
+				break; // if all devices are Safe the whole participant is Safe
 		}
 	}
 	if (isSafe) {
@@ -454,6 +469,15 @@ void ClientGroupChatRoom::addParticipants (
 			"misc", "one_to_one_chat_room_enabled", TRUE))
 	) {
 		d->capabilities |= ClientGroupChatRoom::Capabilities::OneToOne;
+		const IdentityAddress &me = getMe()->getAddress();
+		const IdentityAddress &participant = addresses.front();
+		bool encrypted = getCapabilities() & ClientGroupChatRoom::Capabilities::Encrypted;
+		auto existingChatRoom = getCore()->findOneToOneChatRoom(getLocalAddress(), participant, encrypted);
+		if (existingChatRoom) {
+			lError() << "Trying to create already existing " << (encrypted ? "" : "non-") << "encrypted one-to-one chatroom with participants: " <<
+				me << ", " << participant;
+			return;
+		}
 	}
 
 	if (getState() == ChatRoom::State::Instantiated) {

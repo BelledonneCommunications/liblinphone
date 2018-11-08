@@ -47,7 +47,8 @@ public:
 		const std::string &factoryUri,
 		const IdentityAddress &me,
 		const std::string &subject,
-		const Content &content
+		const Content &content,
+		bool encrypted = false
 	);
 
 	ClientGroupChatRoom (

@@ -99,6 +99,10 @@ LinphoneChatRoom *linphone_core_create_client_group_chat_room (LinphoneCore *lc,
 	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->createClientGroupChatRoom(L_C_TO_STRING(subject), !!fallback));
 }
 
+LinphoneChatRoom *linphone_core_create_client_group_chat_room_2 (LinphoneCore *lc, const char *subject, bool_t fallback, bool_t encrypted) {
+	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->createClientGroupChatRoom(L_C_TO_STRING(subject), !!fallback, !!encrypted));
+}
+
 LinphoneChatRoom *_linphone_core_create_server_group_chat_room (LinphoneCore *lc, LinphonePrivate::SalCallOp *op) {
 	return _linphone_server_group_chat_room_new(lc, op);
 }
@@ -129,8 +133,22 @@ LinphoneChatRoom *linphone_core_find_one_to_one_chat_room (
 ) {
 	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findOneToOneChatRoom(
 		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr)),
-		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(participant_addr))
-	));
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(participant_addr)),
+		false)
+	);
+}
+
+LinphoneChatRoom *linphone_core_find_one_to_one_chat_room_2 (
+	const LinphoneCore *lc,
+	const LinphoneAddress *local_addr,
+	const LinphoneAddress *participant_addr,
+	bool_t encrypted
+) {
+	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findOneToOneChatRoom(
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr)),
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(participant_addr)),
+		encrypted)
+	);
 }
 
 int linphone_core_message_received(LinphoneCore *lc, LinphonePrivate::SalOp *op, const SalMessage *sal_msg) {

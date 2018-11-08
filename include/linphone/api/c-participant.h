@@ -79,6 +79,13 @@ LINPHONE_PUBLIC bool_t linphone_participant_is_admin (const LinphoneParticipant 
 LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel linphone_participant_get_security_level (const LinphoneParticipant *participant);
 
 /**
+ * Gets the list of devices from a chat room's participant.
+ * @param[in] participant A #LinphoneParticipant object
+ * @return \bctbx_list{LinphoneParticipantDevice}
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_participant_get_devices (const LinphoneParticipant *participant);
+
+/**
  * @}
  */
 

@@ -67,7 +67,7 @@ public:
 	void insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
 	void insertChatRoomWithDb (const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
 	std::shared_ptr<AbstractChatRoom> createBasicChatRoom (const ConferenceId &conferenceId, AbstractChatRoom::CapabilitiesMask capabilities);
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, const std::string &uri = "", const Content &content = Content(), bool fallback = true);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, const std::string &uri = "", const Content &content = Content(), bool fallback = true, bool encrypted = false);
 	void replaceChatRoom (const std::shared_ptr<AbstractChatRoom> &replacedChatRoom, const std::shared_ptr<AbstractChatRoom> &newChatRoom);
 
 	std::unique_ptr<MainDb> mainDb;

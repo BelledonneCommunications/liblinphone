@@ -78,6 +78,7 @@ namespace Statements {
 			FROM one_to_one_chat_room
 			WHERE participant_a_sip_address_id IN (:1, :2)
 			AND participant_b_sip_address_id IN (:3, :4)
+			AND (capabilities & :5) = :6
 		)",
 
 		/* SelectConferenceEvent */ R"(

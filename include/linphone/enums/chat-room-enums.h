@@ -39,6 +39,7 @@
 	F(Conference /**< Use server (supports group chat) */, 1 << 2) \
 	F(Proxy /**< Special proxy chat room flag */, 1 << 3) \
 	F(Migratable /**< Chat room migratable from Basic to Conference */, 1 << 4) \
-	F(OneToOne /**< A communication between two participants (can be Basic or Conference) */, 1 << 5)
+	F(OneToOne /**< A communication between two participants (can be Basic or Conference) */, 1 << 5) \
+	F(Encrypted /**< Chat room is encrypted */, 1 << 6)
 
 #endif // ifndef _L_CHAT_ROOM_ENUMS_H_

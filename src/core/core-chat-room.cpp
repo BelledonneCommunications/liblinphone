@@ -17,8 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include <algorithm>
 #include <iterator>
+
+#include "linphone/utils/algorithm.h"
 
 #include "address/identity-address.h"
 #include "chat/chat-room/basic-chat-room.h"
@@ -101,7 +102,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const string &subject, const string &uri, const Content &content, bool fallback) {
+shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const string &subject, const string &uri, const Content &content, bool fallback, bool encrypted) {
 	L_Q();
 
 	string usedUri;
@@ -136,7 +137,12 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const strin
 	shared_ptr<AbstractChatRoom> chatRoom;
 	{
 		shared_ptr<ClientGroupChatRoom> clientGroupChatRoom = make_shared<ClientGroupChatRoom>(
-			q->getSharedFromThis(), usedUri, IdentityAddress(from), subject, content
+			q->getSharedFromThis(),
+			usedUri,
+			IdentityAddress(from),
+			subject,
+			content,
+			encrypted
 		);
 		ClientGroupChatRoomPrivate *dClientGroupChatRoom = clientGroupChatRoom->getPrivate();
 
@@ -161,6 +167,7 @@ void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) 
 
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
 	auto it = chatRoomsById.find(conferenceId);
+
 	// Chat room not exist or yes but with the same pointer!
 	L_ASSERT(it == chatRoomsById.end() || it->second == chatRoom);
 	if (it == chatRoomsById.end()) {
@@ -234,7 +241,8 @@ list<shared_ptr<AbstractChatRoom>> Core::findChatRooms (const IdentityAddress &p
 
 shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 	const IdentityAddress &localAddress,
-	const IdentityAddress &participantAddress
+	const IdentityAddress &participantAddress,
+	bool encrypted
 ) const {
 	L_D();
 	for (const auto &chatRoom : d->chatRooms) {
@@ -244,6 +252,9 @@ shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 		// We are looking for a one to one chatroom
 		// Do not return a group chat room that everyone except one person has left
 		if (!(capabilities & ChatRoom::Capabilities::OneToOne))
+			continue;
+
+		if (encrypted != bool(capabilities & ChatRoom::Capabilities::Encrypted))
 			continue;
 
 		// One to one client group chat room
@@ -268,9 +279,9 @@ shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 	return nullptr;
 }
 
-shared_ptr<AbstractChatRoom> Core::createClientGroupChatRoom (const string &subject, bool fallback) {
+shared_ptr<AbstractChatRoom> Core::createClientGroupChatRoom (const string &subject, bool fallback, bool encrypted) {
 	L_D();
-	return d->createClientGroupChatRoom(subject, "", Content(), fallback);
+	return d->createClientGroupChatRoom(subject, "", Content(), fallback, encrypted);
 }
 
 shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt) {
@@ -336,12 +347,13 @@ void Core::deleteChatRoom (const shared_ptr<const AbstractChatRoom> &chatRoom) {
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
 	auto chatRoomsByIdIt = d->chatRoomsById.find(conferenceId);
 	if (chatRoomsByIdIt != d->chatRoomsById.end()) {
-		auto chatRoomsIt = find(d->chatRooms.begin(), d->chatRooms.end(), chatRoom);
+		auto chatRoomsIt = find(d->chatRooms, chatRoom);
 		L_ASSERT(chatRoomsIt != d->chatRooms.end());
 		d->chatRooms.erase(chatRoomsIt);
 		d->chatRoomsById.erase(chatRoomsByIdIt);
 		d->mainDb->deleteChatRoom(conferenceId);
-	}
+	} else
+		L_ASSERT(find(d->chatRooms, chatRoom) == d->chatRooms.end());
 }
 
 LINPHONE_END_NAMESPACE

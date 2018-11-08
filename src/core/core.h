@@ -107,14 +107,12 @@ public:
 
 	std::shared_ptr<AbstractChatRoom> findOneToOneChatRoom (
 		const IdentityAddress &localAddress,
-		const IdentityAddress &participantAddress
+		const IdentityAddress &participantAddress,
+		bool encrypted
 	) const;
 
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, bool fallback = true);
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (
-		const std::string &subject,
-		const IdentityAddress &localAddress
-	);
+	// TODO add createClientGroupChatRoom with local address
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, bool fallback = true, bool encrypted = false);
 
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt = false);
 
