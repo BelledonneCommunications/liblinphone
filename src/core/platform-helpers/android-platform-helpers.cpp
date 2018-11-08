@@ -108,7 +108,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 		lFatal() << "Could not find java AndroidPlatformHelper class.";
 
 	jmethodID ctor = env->GetMethodID(klass, "<init>", "(JLjava/lang/Object;Z)V");
-	mJavaHelper = env->NewObject(klass, ctor, this, (jobject)systemContext, (jboolean)linphone_core_wifi_only_enabled(lc));
+	mJavaHelper = env->NewObject(klass, ctor, (jlong)this, (jobject)systemContext, (jboolean)linphone_core_wifi_only_enabled(lc));
 	if (!mJavaHelper) {
 		lError() << "Could not instanciate AndroidPlatformHelper object.";
 		return;
