@@ -21,8 +21,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 package org.linphone.core.tools;
 
 import org.linphone.core.Core;
-import org.linphone.core.receivers.DozeReceiver;
-import org.linphone.core.receivers.NetworkManager;
+import org.linphone.core.tools.DozeReceiver;
+import org.linphone.core.tools.NetworkManager;
+import org.linphone.core.tools.NetworkManagerAbove21;
 import org.linphone.mediastream.Log;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.Version;
@@ -39,7 +40,6 @@ import android.content.pm.ApplicationInfo;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
-import android.net.NetworkRequest;
 import android.net.ProxyInfo;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
@@ -60,8 +60,6 @@ import java.io.InputStream;
  **/
 
 public class AndroidPlatformHelper {
-	private static boolean mIsInstanciated = false;
-	private static AndroidPlatformHelper instance = null;
 	private long mNativePtr;
 	private Context mContext;
 	private WifiManager.WifiLock mWifiLock;
@@ -87,6 +85,7 @@ public class AndroidPlatformHelper {
 	private IntentFilter mNetworkIntentFilter;
 	private boolean mWifiOnly;
 	private boolean mUsingHttpProxy;
+	private NetworkManagerAbove21 mNetworkManagerAbove21;
 
 	private native void setNativePreviewWindowId(long nativePtr, Object view);
 	private native void setNativeVideoWindowId(long nativePtr, Object view);
@@ -127,47 +126,25 @@ public class AndroidPlatformHelper {
 		} catch (IOException e) {
 			Log.e("AndroidPlatformHelper(): failed to install some resources.");
 		}
-		
-		mIsInstanciated = true;
-		instance = this;
-	}
-
-	public static boolean isInstanciated() {
-		return mIsInstanciated;
-	}
-
-	public static AndroidPlatformHelper getInstance() {
-		return instance;
 	}
 
 	public void onLinphoneCoreReady(boolean monitoringEnabled) {
 		if (!monitoringEnabled) return;
 		
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-			mNetworkReceiver = new NetworkManager();
+			mNetworkReceiver = new NetworkManager(this);
 			mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+			android.util.Log.i("Linphone","NETWORK: registered");
 			mContext.registerReceiver(mNetworkReceiver, mNetworkIntentFilter);
 		} else {
-			mConnectivityManager.registerNetworkCallback(
-				new NetworkRequest.Builder().build(),
-				new ConnectivityManager.NetworkCallback() {
-					@Override
-					public void onAvailable(Network network) {
-						updateNetworkReachability();
-					}
-
-					@Override
-					public void onLost(Network network) {
-						updateNetworkReachability();
-					}
-				}
-			);
+			mNetworkManagerAbove21 = new NetworkManagerAbove21(this);
+			mNetworkManagerAbove21.registerNetworkCallbacks(mConnectivityManager);
 		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             mDozeIntentFilter = new IntentFilter();
             mDozeIntentFilter.addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED);
-            mDozeReceiver = new DozeReceiver();
+            mDozeReceiver = new DozeReceiver(this);
             dozeModeEnabled = ((PowerManager) mContext.getSystemService(Context.POWER_SERVICE)).isDeviceIdleMode();
             mContext.registerReceiver(mDozeReceiver, mDozeIntentFilter);
 		}

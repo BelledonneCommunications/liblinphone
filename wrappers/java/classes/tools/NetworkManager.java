@@ -1,7 +1,5 @@
-package org.linphone.core.receivers;
-
 /*
-DozeReceiver.java
+NetworkManager.java
 Copyright (C) 2017  Belledonne Communications, Grenoble, France
 
 This program is free software; you can redistribute it and/or
@@ -19,27 +17,33 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+package org.linphone.core.tools;
+
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
-import android.os.PowerManager;
+import android.net.ConnectivityManager;
 
 import org.linphone.core.tools.AndroidPlatformHelper;
 
-/*
- * Purpose of this receiver is to disable keep alives when device is on idle
- * */
-public class DozeReceiver extends android.content.BroadcastReceiver {
+/**
+ * Intercept network state changes and update linphone core.
+ */
+public class NetworkManager extends BroadcastReceiver {
+    private AndroidPlatformHelper mHelper;
+
+    public NetworkManager(AndroidPlatformHelper helper) {
+        mHelper = helper;
+        android.util.Log.i("Linphone","NETWORK: networkManager created");
+    }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            boolean dozeM = pm.isDeviceIdleMode();
-            if (AndroidPlatformHelper.isInstanciated()) {
-                AndroidPlatformHelper.getInstance().setDozeModeEnabled(dozeM);
-                AndroidPlatformHelper.getInstance().updateNetworkReachability();
-            }
+        android.util.Log.i("Linphone","NETWORK: Call onReceive");
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        Boolean lNoConnectivity = intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
+        if (mHelper != null) {
+            mHelper.updateNetworkReachability();
         }
     }
 
