@@ -8,9 +8,10 @@ These objects must be given using :java:func`setNativeVideoWindowId` and java:fu
 Here's the complete code:
 
 .. code-block:: java
+	Core mCore; // Get it the way you prefer
 
 	TextureView mVideoView = view.findViewById(R.id.videoSurface);
 	TextureView mCaptureView = view.findViewById(R.id.videoCaptureSurface);
 
-	LinphoneManager.getLc().setNativeVideoWindowId(mVideoView);
-	LinphoneManager.getLc().setNativePreviewWindowId(mCaptureView);
+	mCore.setNativeVideoWindowId(mVideoView);
+	mCore.setNativePreviewWindowId(mCaptureView);
