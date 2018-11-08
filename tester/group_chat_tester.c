@@ -3893,12 +3893,11 @@ static void group_chat_lime_v2_create_lime_user (void) {
 	linphone_core_manager_destroy(marie);
 }
 
-static void group_chat_lime_v2_encrypted_chatroom (void) {
+static void group_chat_lime_v2_encrypted_chatrooms (void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_v2_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_v2_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
-	bctbx_list_t *encryptedParticipantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	LinphoneChatRoom *marieEncryptedCr = NULL;
@@ -3918,25 +3917,21 @@ static void group_chat_lime_v2_encrypted_chatroom (void) {
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
-	// Marie creates a new group chat room
+	// Marie creates a new regular chat room
 	const char *initialSubject = "Friends";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, -1, FALSE);
-	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
-
-	printf("\nMarie's Regular Chatroom = (%s, %s)\n",
-		linphone_address_as_string(linphone_chat_room_get_local_address(marieCr)),
-		linphone_address_as_string(linphone_chat_room_get_peer_address(marieCr)));
+	LinphoneChatRoom *mariePlainCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneAddress *plainConfAddr = linphone_address_clone(linphone_chat_room_get_conference_address(mariePlainCr));
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(mariePlainCr) & LinphoneChatRoomCapabilitiesOneToOne);
+	BC_ASSERT_FALSE(linphone_chat_room_get_capabilities(mariePlainCr) & LinphoneChatRoomCapabilitiesEncrypted);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
-	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
-
-	printf("\nPauline's Regular Chatroom = (%s, %s)\n",
-		linphone_address_as_string(linphone_chat_room_get_local_address(paulineCr)),
-		linphone_address_as_string(linphone_chat_room_get_peer_address(paulineCr)));
+	LinphoneChatRoom *paulinePlainCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, plainConfAddr, initialSubject, 1, 0);
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulinePlainCr) & LinphoneChatRoomCapabilitiesOneToOne);
+	BC_ASSERT_FALSE(linphone_chat_room_get_capabilities(paulinePlainCr) & LinphoneChatRoomCapabilitiesEncrypted);
 
 	// Marie sends a plain message
 	const char *marieMessage = "Hey ! What's up ?";
-	_send_message(marieCr, marieMessage);
+	_send_message(mariePlainCr, marieMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
@@ -3948,36 +3943,89 @@ static void group_chat_lime_v2_encrypted_chatroom (void) {
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	linphone_address_unref(marieAddr);
 
+	// Reset stats for new chatroom creation
+	reset_counters(&marie->stat);
+	reset_counters(&pauline->stat);
+
 	// Marie creates an encrypted chatroom
 	initialSubject = "Encrypted Friends";
-	encryptedParticipantsAddresses = bctbx_list_append(encryptedParticipantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
-	marieEncryptedCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, encryptedParticipantsAddresses, initialSubject, -1, TRUE);
-	confAddr = linphone_chat_room_get_conference_address(marieEncryptedCr);
-
-	printf("\nMarie's Encrypted Chatroom = (%s, %s)\n",
-		linphone_address_as_string(linphone_chat_room_get_local_address(marieEncryptedCr)),
-		linphone_address_as_string(linphone_chat_room_get_peer_address(marieEncryptedCr)));
+	participantsAddresses = bctbx_list_append(NULL, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	marieEncryptedCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
+	LinphoneAddress *encryptedConfAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieEncryptedCr));
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieEncryptedCr) & LinphoneChatRoomCapabilitiesOneToOne);
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieEncryptedCr) & LinphoneChatRoomCapabilitiesEncrypted);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
-	paulineEncryptedCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+	paulineEncryptedCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, encryptedConfAddr, initialSubject, 1, 0);
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineEncryptedCr) & LinphoneChatRoomCapabilitiesOneToOne);
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineEncryptedCr) & LinphoneChatRoomCapabilitiesEncrypted);
 
-	printf("\nPauline's Encrypted Chatroom = (%s, %s)\n",
-		linphone_address_as_string(linphone_chat_room_get_local_address(paulineEncryptedCr)),
-		linphone_address_as_string(linphone_chat_room_get_peer_address(paulineEncryptedCr)));
-
-	// Marie sends a plain message
+	// Marie sends an encrypted message
 	marieMessage = "We can say whatever we want in this chatrooom!";
-	_send_message(marieCr, marieMessage);
+	_send_message(marieEncryptedCr, marieMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
 	paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
 
-	// Check that the message is received by Pauline
+	// Check that the message is received and decrypted by Pauline
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
 	marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	linphone_address_unref(marieAddr);
+
+	// Marie deletes the regular chat room
+	linphone_core_manager_delete_chat_room(marie, mariePlainCr, coresList);
+	wait_for_list(coresList, 0, 1, 2000);
+	BC_ASSERT_EQUAL(pauline->stat.number_of_participants_removed, initialPaulineStats.number_of_participants_removed, int, "%d");
+
+	// Marie creates the regular chat room again
+	initialMarieStats = marie->stat;
+	initialPaulineStats = pauline->stat;
+	initialSubject = "Friends";
+	participantsAddresses = bctbx_list_append(NULL, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	mariePlainCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+
+	// Marie sends a new plain message
+	marieMessage = "Hey again";
+	_send_message(mariePlainCr, marieMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), marieMessage);
+
+	// Check that the recreated regular chat room address is the same as before and the capabilities are correct
+	const LinphoneAddress *newPlainConfAddr = linphone_chat_room_get_conference_address(mariePlainCr);
+	BC_ASSERT_TRUE(linphone_address_weak_equal(plainConfAddr, newPlainConfAddr));
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(mariePlainCr) & LinphoneChatRoomCapabilitiesOneToOne);
+	BC_ASSERT_FALSE(linphone_chat_room_get_capabilities(mariePlainCr) & LinphoneChatRoomCapabilitiesEncrypted);
+
+	// Marie deletes the encrypted chat room
+	linphone_core_manager_delete_chat_room(marie, marieEncryptedCr, coresList);
+	wait_for_list(coresList, 0, 1, 2000);
+	BC_ASSERT_EQUAL(pauline->stat.number_of_participants_removed, initialPaulineStats.number_of_participants_removed, int, "%d");
+
+	// Marie creates the encrypted chat room again
+	initialMarieStats = marie->stat;
+	initialPaulineStats = pauline->stat;
+	initialSubject = "Encrypted Friends";
+	participantsAddresses = bctbx_list_append(NULL, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	marieEncryptedCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
+
+	// Marie sends a new encrypted message
+	marieMessage = "Hey again from the encrypted chatroom";
+	_send_message(marieEncryptedCr, marieMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), marieMessage);
+
+	// Check that the recreated encrypted chat room address is the same as before and the capabilities are correct
+	const LinphoneAddress *newEncryptedConfAddr = linphone_chat_room_get_conference_address(marieEncryptedCr);
+	BC_ASSERT_TRUE(linphone_address_weak_equal(encryptedConfAddr, newEncryptedConfAddr));
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieEncryptedCr) & LinphoneChatRoomCapabilitiesOneToOne);
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieEncryptedCr) & LinphoneChatRoomCapabilitiesEncrypted);
+
+	linphone_address_unref(plainConfAddr);
+	linphone_address_unref(encryptedConfAddr);
 
 end:
 	// Clean local LIMEv2 databases
@@ -3985,8 +4033,8 @@ end:
 	linphone_core_delete_local_lime_x3dh_db(pauline->lc);
 
 	// Clean db from chat room
-	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
-	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+	linphone_core_manager_delete_chat_room(marie, mariePlainCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulinePlainCr, coresList);
 	if (marieEncryptedCr) linphone_core_manager_delete_chat_room(marie, marieEncryptedCr, coresList);
 	if (paulineEncryptedCr) linphone_core_manager_delete_chat_room(pauline, paulineEncryptedCr, coresList);
 
@@ -6092,7 +6140,7 @@ test_t group_chat_tests[] = {
 	TEST_ONE_TAG("Chat room list subscription", group_chat_room_list_subscription, "LeaksMemory"),
 	TEST_ONE_TAG("Complex participant removal scenario", group_chat_room_complex_participant_removal_scenario, "LeaksMemory"),
 	TEST_ONE_TAG("LIMEv2 create lime user", group_chat_lime_v2_create_lime_user, "CreateUserInDb"),
-	TEST_TWO_TAGS("LIMEv2 encrypted chatroom", group_chat_lime_v2_encrypted_chatroom, "CreateUserInDb", "LeaksMemory"),
+	TEST_TWO_TAGS("LIMEv2 encrypted chatrooms", group_chat_lime_v2_encrypted_chatrooms, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 message", group_chat_lime_v2_send_encrypted_message, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 message with composing", group_chat_lime_v2_send_encrypted_message_with_composing, "CreateUserInDb", "LeaksMemory"),
 	TEST_TWO_TAGS("LIMEv2 message with response", group_chat_lime_v2_send_encrypted_message_with_response, "CreateUserInDb", "LeaksMemory"),
