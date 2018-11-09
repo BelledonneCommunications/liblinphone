@@ -85,19 +85,19 @@ public:
 
 	bool canHandleParticipants () const override;
 
-	void addParticipant (
+	bool addParticipant (
 		const IdentityAddress &participantAddress,
 		const CallSessionParams *params,
 		bool hasMedia
 	) override;
-	void addParticipants (
+	bool addParticipants (
 		const std::list<IdentityAddress> &addresses,
 		const CallSessionParams *params,
 		bool hasMedia
 	) override;
 
-	void removeParticipant (const std::shared_ptr<Participant> &participant) override;
-	void removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
+	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
+	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
 
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &participantAddress) const override;
 

@@ -44,28 +44,30 @@ RemoteConference::~RemoteConference () {
 
 // -----------------------------------------------------------------------------
 
-void RemoteConference::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
+bool RemoteConference::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
 	L_D();
 	shared_ptr<Participant> participant = findParticipant(addr);
 	if (participant) {
 		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the RemoteConference";
-		return;
+		return false;
 	}
 	participant = make_shared<Participant>(this, addr);
 	participant->getPrivate()->createSession(*this, params, hasMedia, d->listener);
 	d->participants.push_back(participant);
 	if (!d->activeParticipant)
 		d->activeParticipant = participant;
+	return true;
 }
 
-void RemoteConference::removeParticipant (const shared_ptr<Participant> &participant) {
+bool RemoteConference::removeParticipant (const shared_ptr<Participant> &participant) {
 	L_D();
 	for (const auto &p : d->participants) {
 		if (participant->getAddress() == p->getAddress()) {
 			d->participants.remove(p);
-			return;
+			return true;
 		}
 	}
+	return false;
 }
 
 // -----------------------------------------------------------------------------
