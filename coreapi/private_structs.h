@@ -769,7 +769,6 @@ namespace LinphonePrivate {
 	char* zrtp_secrets_cache; \
 	char* user_certificates_path; \
 	LinphoneVideoPolicy video_policy; \
-	time_t network_last_check; \
 	LinphoneNatPolicy *nat_policy; \
 	LinphoneImNotifPolicy *im_notif_policy; \
 	bool_t use_files; \
