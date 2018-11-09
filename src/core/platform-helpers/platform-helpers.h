@@ -24,6 +24,9 @@
 
 #include "linphone/utils/general.h"
 
+// TODO: Remove me later.
+#include "private.h"
+
 // =============================================================================
 
 L_DECL_C_STRUCT(LinphoneCore);
@@ -64,10 +67,10 @@ protected:
 	LinphoneCore *mCore;
 };
 
-class StubbedPlatformHelpers : public PlatformHelpers {
+class GenericPlatformHelpers : public PlatformHelpers {
 public:
-	explicit StubbedPlatformHelpers (LinphoneCore *lc);
-	virtual ~StubbedPlatformHelpers () = default;
+	explicit GenericPlatformHelpers (LinphoneCore *lc);
+	~GenericPlatformHelpers ();
 
 	void setDnsServers () override;
 	void acquireWifiLock () override;
@@ -85,6 +88,15 @@ public:
 	void onLinphoneCoreReady (bool monitoringEnabled) override;
 	void onWifiOnlyEnabled (bool enabled) override;
 	void setHttpProxy (std::string host, int port) override;
+
+private:
+	static int monitorTimerExpired (void *data, unsigned int revents);
+
+private:
+	static const int mDefaultMonitorTimeout = 5;
+
+	belle_sip_source_t *mMonitorTimer;
+	bool mNetworkReachable;
 };
 
 PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext);
