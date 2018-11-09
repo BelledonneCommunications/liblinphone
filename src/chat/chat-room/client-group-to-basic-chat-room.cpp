@@ -105,7 +105,7 @@ private:
 ClientGroupToBasicChatRoom::ClientGroupToBasicChatRoom (const shared_ptr<ChatRoom> &chatRoom) :
 	ProxyChatRoom(*new ClientGroupToBasicChatRoomPrivate, chatRoom) {}
 
-void ClientGroupToBasicChatRoom::addParticipant (
+bool ClientGroupToBasicChatRoom::addParticipant (
 	const IdentityAddress &participantAddress,
 	const CallSessionParams *params,
 	bool hasMedia
@@ -115,9 +115,9 @@ void ClientGroupToBasicChatRoom::addParticipant (
 		d->invitedAddresses.clear();
 		d->invitedAddresses.push_back(participantAddress);
 	}
-	ProxyChatRoom::addParticipant(participantAddress, params, hasMedia);
+	return ProxyChatRoom::addParticipant(participantAddress, params, hasMedia);
 }
-void ClientGroupToBasicChatRoom::addParticipants (
+bool ClientGroupToBasicChatRoom::addParticipants (
 	const list<IdentityAddress> &addresses,
 	const CallSessionParams *params,
 	bool hasMedia
@@ -125,7 +125,7 @@ void ClientGroupToBasicChatRoom::addParticipants (
 	L_D();
 	if ((getState() == ChatRoom::State::Instantiated) && (addresses.size() == 1))
 		d->invitedAddresses = addresses;
-	ProxyChatRoom::addParticipants(addresses, params, hasMedia);
+	return ProxyChatRoom::addParticipants(addresses, params, hasMedia);
 }
 
 LINPHONE_END_NAMESPACE

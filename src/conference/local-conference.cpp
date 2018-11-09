@@ -41,28 +41,30 @@ LocalConference::~LocalConference () {
 
 // -----------------------------------------------------------------------------
 
-void LocalConference::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
+bool LocalConference::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
 	L_D();
 	shared_ptr<Participant> participant = findParticipant(addr);
 	if (participant) {
 		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the LocalConference";
-		return;
+		return false;
 	}
 	participant = make_shared<Participant>(this, addr);
 	participant->getPrivate()->createSession(*this, params, hasMedia, d->listener);
 	d->participants.push_back(participant);
 	if (!d->activeParticipant)
 		d->activeParticipant = participant;
+	return true;
 }
 
-void LocalConference::removeParticipant (const shared_ptr<Participant> &participant) {
+bool LocalConference::removeParticipant (const shared_ptr<Participant> &participant) {
 	L_D();
 	for (const auto &p : d->participants) {
 		if (participant->getAddress() == p->getAddress()) {
 			d->participants.remove(p);
-			return;
+			return true;
 		}
 	}
+	return false;
 }
 
 LINPHONE_END_NAMESPACE
