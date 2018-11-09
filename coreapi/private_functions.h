@@ -150,6 +150,11 @@ const LinphoneAddress *_linphone_proxy_config_get_contact_without_params (const 
 void linphone_friend_list_invalidate_subscriptions(LinphoneFriendList *list);
 void linphone_friend_list_notify_presence_received(LinphoneFriendList *list, LinphoneEvent *lev, const LinphoneContent *body);
 void linphone_friend_list_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state);
+/**
+ * Removes all bodyless friend lists.
+ * @param[in] lc #LinphoneCore object
+ */
+void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc);
 void _linphone_friend_list_release(LinphoneFriendList *list);
 /*get rls either from list or core if any*/
 const LinphoneAddress * _linphone_friend_list_get_rls_address(const LinphoneFriendList *list);
