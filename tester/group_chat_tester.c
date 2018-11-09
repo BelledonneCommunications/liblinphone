@@ -2340,7 +2340,6 @@ static void group_chat_room_creation_successful_if_at_least_one_invited_particip
 	linphone_core_manager_destroy(laure);
 }
 
-/*
 static void group_chat_room_migrate_from_basic_chat_room (void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
@@ -2647,7 +2646,6 @@ static void group_chat_donot_room_migrate_from_basic_chat_room (void) {
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
-*/
 
 static void group_chat_room_send_file_with_or_without_text (bool_t with_text) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
