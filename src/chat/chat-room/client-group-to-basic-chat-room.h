@@ -32,12 +32,12 @@ class LINPHONE_PUBLIC ClientGroupToBasicChatRoom : public ProxyChatRoom {
 public:
 	ClientGroupToBasicChatRoom (const std::shared_ptr<ChatRoom> &chatRoom);
 
-	void addParticipant (
+	bool addParticipant (
 		const IdentityAddress &participantAddress,
 		const CallSessionParams *params,
 		bool hasMedia
 	) override;
-	void addParticipants (
+	bool addParticipants (
 		const std::list<IdentityAddress> &addresses,
 		const CallSessionParams *params,
 		bool hasMedia

@@ -351,17 +351,17 @@ void ClientGroupChatRoom::deleteFromDb () {
 	d->chatRoomListener->onChatRoomDeleteRequested(getSharedFromThis());
 }
 
-void ClientGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
+bool ClientGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
 	L_D();
 
 	if ((getState() != ChatRoom::State::Instantiated) && (getState() != ChatRoom::State::Created)) {
 		lError() << "Cannot add participants to the ClientGroupChatRoom in a state other than Instantiated or Created";
-		return;
+		return false;
 	}
 
 	if ((getState() == ChatRoom::State::Created) && (d->capabilities & ClientGroupChatRoom::Capabilities::OneToOne)) {
 		lError() << "Cannot add more participants to a OneToOne ClientGroupChatRoom";
-		return;
+		return false;
 	}
 
 	LinphoneCore *cCore = getCore()->getCCore();
@@ -386,9 +386,11 @@ void ClientGroupChatRoom::addParticipant (const IdentityAddress &addr, const Cal
 		referOp->sendRefer(referToAddr.getPrivate()->getInternalAddress());
 		referOp->unref();
 	}
+
+	return true;
 }
 
-void ClientGroupChatRoom::addParticipants (
+bool ClientGroupChatRoom::addParticipants (
 	const list<IdentityAddress> &addresses,
 	const CallSessionParams *params,
 	bool hasMedia
@@ -396,8 +398,10 @@ void ClientGroupChatRoom::addParticipants (
 	L_D();
 
 	list<IdentityAddress> addressesList = d->cleanAddressesList(addresses);
-	if (addressesList.empty())
-		return;
+	if (addressesList.empty()) {
+		lError() << "No participants given.";
+		return false;
+	}
 
 	if ((getState() == ChatRoom::State::Instantiated)
 		&& (addressesList.size() == 1)
@@ -405,6 +409,14 @@ void ClientGroupChatRoom::addParticipants (
 			"misc", "one_to_one_chat_room_enabled", TRUE))
 	) {
 		d->capabilities |= ClientGroupChatRoom::Capabilities::OneToOne;
+		const IdentityAddress &me = getMe()->getAddress();
+		const IdentityAddress &participant = addresses.front();
+		auto existingChatRoom = getCore()->findOneToOneChatRoom(getLocalAddress(), participant);
+		if (existingChatRoom) {
+			lError() << "Trying to create already existing one-to-one chatroom with participants: " <<
+				me << ", " << participant;
+			return false;
+		}
 	}
 
 	if (getState() == ChatRoom::State::Instantiated) {
@@ -422,9 +434,11 @@ void ClientGroupChatRoom::addParticipants (
 		for (const auto &addr : addresses)
 			addParticipant(addr, params, hasMedia);
 	}
+
+	return true;
 }
 
-void ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &participant) {
+bool ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &participant) {
 	LinphoneCore *cCore = getCore()->getCCore();
 
 	SalReferOp *referOp = new SalReferOp(cCore->sal);
@@ -436,10 +450,12 @@ void ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &part
 	referToAddr.setUriParam("method", "BYE");
 	referOp->sendRefer(referToAddr.getPrivate()->getInternalAddress());
 	referOp->unref();
+
+	return true;
 }
 
-void ClientGroupChatRoom::removeParticipants (const list<shared_ptr<Participant>> &participants) {
-	RemoteConference::removeParticipants(participants);
+bool ClientGroupChatRoom::removeParticipants (const list<shared_ptr<Participant>> &participants) {
+	return RemoteConference::removeParticipants(participants);
 }
 
 shared_ptr<Participant> ClientGroupChatRoom::findParticipant (const IdentityAddress &addr) const {

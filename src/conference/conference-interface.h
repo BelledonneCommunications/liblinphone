@@ -36,12 +36,12 @@ class LINPHONE_PUBLIC ConferenceInterface {
 public:
 	virtual ~ConferenceInterface () = default;
 
-	virtual void addParticipant (
+	virtual bool addParticipant (
 		const IdentityAddress &participantAddress,
 		const CallSessionParams *params,
 		bool hasMedia
 	) = 0;
-	virtual void addParticipants (
+	virtual bool addParticipants (
 		const std::list<IdentityAddress> &addresses,
 		const CallSessionParams *params,
 		bool hasMedia
@@ -55,8 +55,8 @@ public:
 	virtual const std::string &getSubject () const = 0;
 	virtual void join () = 0;
 	virtual void leave () = 0;
-	virtual void removeParticipant (const std::shared_ptr<Participant> &participant) = 0;
-	virtual void removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) = 0;
+	virtual bool removeParticipant (const std::shared_ptr<Participant> &participant) = 0;
+	virtual bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) = 0;
 	virtual void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) = 0;
 	virtual void setSubject (const std::string &subject) = 0;
 };
