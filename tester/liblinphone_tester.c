@@ -163,6 +163,21 @@ static void log_handler(int lev, const char *fmt, va_list args) {
 	bctbx_logv(BCTBX_LOG_DOMAIN, lev, fmt, args);
 }
 
+int silent_arg_func(const char *arg) {
+	linphone_core_set_log_level(ORTP_FATAL);
+	return 0;
+}
+
+int verbose_arg_func(const char *arg) {
+	linphone_core_set_log_level(ORTP_MESSAGE);
+	return 0;
+}
+
+int logfile_arg_func(const char *arg) {
+	if (liblinphone_tester_set_log_file(arg) < 0) return -2;
+	return 0;
+}
+
 void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, va_list args)) {
 	bctbx_init_logger(FALSE);
 	if (! log_file) {
@@ -173,6 +188,9 @@ void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, v
 	}
 
 	if (ftester_printf == NULL) ftester_printf = log_handler;
+	bc_tester_set_silent_func(silent_arg_func);
+	bc_tester_set_verbose_func(verbose_arg_func);
+	bc_tester_set_logfile_func(logfile_arg_func);
 	bc_tester_init(ftester_printf, ORTP_MESSAGE, ORTP_ERROR, "rcfiles");
 	liblinphone_tester_add_suites();
 }
@@ -195,9 +213,6 @@ int liblinphone_tester_set_log_file(const char *filename) {
 #if !TARGET_OS_IPHONE && !(defined(LINPHONE_WINDOWS_PHONE) || defined(LINPHONE_WINDOWS_UNIVERSAL))
 
 static const char* liblinphone_helper =
-		"\t\t\t--verbose\n"
-		"\t\t\t--silent\n"
-		"\t\t\t--log-file <output log file path>\n"
 		"\t\t\t--domain <test sip domain>\n"
 		"\t\t\t--auth-domain <test auth domain>\n"
 		"\t\t\t--dns-hosts </etc/hosts -like file to used to override DNS names (default: tester_hosts)>\n"
@@ -218,14 +233,7 @@ int main (int argc, char *argv[])
 	linphone_core_set_log_level(ORTP_ERROR);
 
 	for(i = 1; i < argc; ++i) {
-		if (strcmp(argv[i], "--verbose") == 0) {
-			linphone_core_set_log_level(ORTP_MESSAGE);
-		} else if (strcmp(argv[i], "--silent") == 0) {
-			linphone_core_set_log_level(ORTP_FATAL);
-		} else if (strcmp(argv[i],"--log-file")==0){
-			CHECK_ARG("--log-file", ++i, argc);
-			if (liblinphone_tester_set_log_file(argv[i]) < 0) return -2;
-		} else if (strcmp(argv[i],"--domain")==0){
+		if (strcmp(argv[i],"--domain")==0){
 			CHECK_ARG("--domain", ++i, argc);
 			test_domain=argv[i];
 		} else if (strcmp(argv[i],"--auth-domain")==0){
