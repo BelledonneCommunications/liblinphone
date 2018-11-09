@@ -295,7 +295,7 @@ JNIEXPORT jboolean JNICALL Java_{{jniPrefix}}{{classImplName}}_unref(JNIEnv* env
 	if (wref) {
 		env->DeleteWeakGlobalRef(wref);
 	}
-	{{#refCountable}}return belle_sip_object_unref_2(cptr);{{/refCountable}}
+	{{#refCountable}}return belle_sip_object_unref_2(cptr) == 1;{{/refCountable}}
 	{{#notRefCountable}}return FALSE;{{/notRefCountable}}
 }
 
