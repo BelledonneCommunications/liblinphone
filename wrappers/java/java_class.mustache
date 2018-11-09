@@ -222,6 +222,18 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
         
         /*The workaround we made here is to keep the nativePtr value even after the unref() only if the object is still reffed by the SDK,
         so the few methods calls following the finalize() will still work because we know the native pointer still exists.*/
+
+        /*This solution will work as long as the objects still have a ref at C level, which is the case with ChatMessages because they are hold by the Events.
+        Should we have this problem again in a situation where the C no longer holds a reference (resulting in the C object being  destroyed by finalize()), 
+        another solution is possible (but more complex to implement).
+        This solution would consist in implementing at C level, a queue of belle_sip_object_t that are loosing their last ref. 
+        Instead of being deleted immediately by belle_sip_object_unref() calling belle_sip_object_delete(), 
+        unref() would place the object onto this "C finalizer queue", the delete() call would then be performed later, 
+        by a hook added into the main android looper.
+        This solution should work because the actual destruction will be performed from the looper context, 
+        so in a place where the local java object causing our troubles no longer exists for sure.
+        This solution has however the inconvenience that it can work within an application that uses a single thread to call liblinphone API.*/
+        
 		if (nativePtr != 0) {
 			boolean destroyed = unref(nativePtr);
             if (destroyed) {
