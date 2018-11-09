@@ -18,6 +18,8 @@
  */
 
 #include "platform-helpers.h"
+#include "logger/logger.h"
+#include "c-wrapper/c-wrapper.h"
 
 // =============================================================================
 
@@ -25,44 +27,91 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-StubbedPlatformHelpers::StubbedPlatformHelpers (LinphoneCore *lc) : PlatformHelpers(lc) {}
+GenericPlatformHelpers::GenericPlatformHelpers (LinphoneCore *lc) : PlatformHelpers(lc) {}
 
-void StubbedPlatformHelpers::setDnsServers () {}
+GenericPlatformHelpers::~GenericPlatformHelpers () {
+	if (mMonitorTimer) {
+		if (mCore && mCore->sal) mCore->sal->cancelTimer(mMonitorTimer);
+		belle_sip_object_unref(mMonitorTimer);
+		mMonitorTimer = nullptr;
+	}
+}
 
-void StubbedPlatformHelpers::acquireWifiLock () {}
+void GenericPlatformHelpers::setDnsServers () {}
 
-void StubbedPlatformHelpers::releaseWifiLock () {}
+void GenericPlatformHelpers::acquireWifiLock () {}
 
-void StubbedPlatformHelpers::acquireMcastLock () {}
+void GenericPlatformHelpers::releaseWifiLock () {}
 
-void StubbedPlatformHelpers::releaseMcastLock () {}
+void GenericPlatformHelpers::acquireMcastLock () {}
 
-void StubbedPlatformHelpers::acquireCpuLock () {}
+void GenericPlatformHelpers::releaseMcastLock () {}
 
-void StubbedPlatformHelpers::releaseCpuLock () {}
+void GenericPlatformHelpers::acquireCpuLock () {}
 
-string StubbedPlatformHelpers::getDataPath () {
+void GenericPlatformHelpers::releaseCpuLock () {}
+
+string GenericPlatformHelpers::getDataPath () {
 	return "";
 }
 
-string StubbedPlatformHelpers::getConfigPath () {
+string GenericPlatformHelpers::getConfigPath () {
 	return "";
 }
 
-void StubbedPlatformHelpers::setVideoPreviewWindow (void *windowId) {}
+void GenericPlatformHelpers::setVideoPreviewWindow (void *windowId) {}
 
-void StubbedPlatformHelpers::setVideoWindow (void *windowId) {}
+void GenericPlatformHelpers::setVideoWindow (void *windowId) {}
 
-void StubbedPlatformHelpers::setNetworkReachable (bool reachable) {}
-
-bool StubbedPlatformHelpers::isNetworkReachable () {
-	return true;
+void GenericPlatformHelpers::setNetworkReachable (bool reachable) {
+	mNetworkReachable = reachable;
+	linphone_core_set_network_reachable_internal(mCore, reachable);
 }
 
-void StubbedPlatformHelpers::onLinphoneCoreReady (bool monitoringEnabled) {}
+bool GenericPlatformHelpers::isNetworkReachable () {
+	return mNetworkReachable;
+}
 
-void StubbedPlatformHelpers::onWifiOnlyEnabled (bool enabled) {}
+void GenericPlatformHelpers::onLinphoneCoreReady (bool monitoringEnabled) {
+	if (!monitoringEnabled) return;
 
-void StubbedPlatformHelpers::setHttpProxy (string host, int port) {}
+	if (!mMonitorTimer) {
+		mMonitorTimer = mCore->sal->createTimer(monitorTimerExpired, this,
+			mDefaultMonitorTimeout * 1000, "monitor network timeout");
+	} else {
+		belle_sip_source_set_timeout(mMonitorTimer, mDefaultMonitorTimeout * 1000);
+	}
+}
+
+void GenericPlatformHelpers::onWifiOnlyEnabled (bool enabled) {}
+
+void GenericPlatformHelpers::setHttpProxy (string host, int port) {}
+
+int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revents) {
+	GenericPlatformHelpers *helper = (GenericPlatformHelpers *) data;
+	LinphoneCore *core = helper->getCore();
+
+	char newIp[LINPHONE_IPADDR_SIZE];
+	linphone_core_get_local_ip(core, AF_UNSPEC, NULL, newIp);
+
+	bool status = strcmp(newIp,"::1") != 0 && strcmp(newIp,"127.0.0.1") != 0;
+	if (status && core->network_last_status && strcmp(newIp, core->localip) != 0) {
+		lInfo() << "IP address change detected.";
+		helper->setNetworkReachable(false);
+		core->network_last_status = FALSE;
+	}
+
+	strncpy(core->localip, newIp, sizeof(core->localip));
+
+	if (status != !!core->network_last_status) {
+		if (status){
+			lInfo() << "New local ip address is " << core->localip;
+		}
+		helper->setNetworkReachable(status);
+		core->network_last_status = status;
+	}
+
+	return BELLE_SIP_CONTINUE;
+}
 
 LINPHONE_END_NAMESPACE

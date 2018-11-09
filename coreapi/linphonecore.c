@@ -2335,7 +2335,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc, system_context);
 #endif
 	if (lc->platform_helper == NULL)
-		lc->platform_helper = new LinphonePrivate::StubbedPlatformHelpers(lc);
+		lc->platform_helper = new LinphonePrivate::GenericPlatformHelpers(lc);
 
 	msplugins_dir = linphone_factory_get_msplugins_dir(lfactory);
 	image_resources_dir = linphone_factory_get_image_resources_dir(lfactory);
@@ -2375,7 +2375,6 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->tunnel=linphone_core_tunnel_new(lc);
 #endif
 
-	lc->network_last_check = 0;
 	lc->network_last_status = FALSE;
 
 	lc->network_reachable = TRUE;
@@ -3261,38 +3260,6 @@ static void notify_network_reachable_change (LinphoneCore *lc) {
 		linphone_core_resolve_stun_server(lc);
 }
 
-static void monitor_network_state(LinphoneCore *lc, time_t curtime){
-	bool_t new_status=lc->network_last_status;
-	char newip[LINPHONE_IPADDR_SIZE];
-
-	// only do the network up checking every five seconds
-	if (lc->network_last_check==0 || (curtime-lc->network_last_check)>=5){
-		linphone_core_get_local_ip(lc,AF_UNSPEC,NULL,newip);
-		if (strcmp(newip,"::1")!=0 && strcmp(newip,"127.0.0.1")!=0){
-			new_status=TRUE;
-		}else new_status=FALSE; //no network
-
-		if (new_status==lc->network_last_status && new_status==TRUE && strcmp(newip,lc->localip)!=0){
-			//IP address change detected
-			ms_message("IP address change detected.");
-			set_network_reachable(lc,FALSE,curtime);
-			lc->network_last_status=FALSE;
-		}
-		strncpy(lc->localip,newip,sizeof(lc->localip));
-
-		if (new_status!=lc->network_last_status) {
-			if (new_status){
-				ms_message("New local ip address is %s",lc->localip);
-			}
-			set_network_reachable(lc,new_status, curtime);
-			lc->network_last_status=new_status;
-		}
-		lc->network_last_check=curtime;
-	}
-
-	notify_network_reachable_change(lc);
-}
-
 static void proxy_update(LinphoneCore *lc){
 	bctbx_list_t *elem,*next;
 	bctbx_list_for_each(lc->sip_conf.proxies,(void (*)(void*))&linphone_proxy_config_update);
@@ -3437,7 +3404,6 @@ void linphone_core_iterate(LinphoneCore *lc){
 
 	lc->sal->iterate();
 	if (lc->msevq) ms_event_queue_pump(lc->msevq);
-	//if (lc->auto_net_state_mon) monitor_network_state(lc, current_real_time);
 
 	proxy_update(lc);
 
