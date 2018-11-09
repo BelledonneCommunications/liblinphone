@@ -122,7 +122,9 @@ static void call_received(SalCallOp *h) {
 		}
 		// TODO: handle media conference creation if the "text" feature tag is not present
 		return;
-	} else if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
+	}
+
+	if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
 		linphone_address_unref(toAddr);
 		linphone_address_unref(fromAddr);
 		if (linphone_core_conference_server_enabled(lc)) {
