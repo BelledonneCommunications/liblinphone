@@ -24,6 +24,9 @@
 
 #include "linphone/utils/general.h"
 
+// TODO: Remove me later.
+#include "private.h"
+
 // =============================================================================
 
 L_DECL_C_STRUCT(LinphoneCore);
@@ -52,6 +55,11 @@ public:
 	virtual std::string getConfigPath () = 0;
 	virtual void setVideoWindow (void *windowId) = 0;
 	virtual void setVideoPreviewWindow (void *windowId) = 0;
+	virtual void setNetworkReachable (bool reachable) = 0;
+	virtual bool isNetworkReachable () = 0;
+	virtual void onLinphoneCoreReady (bool monitoringEnabled) = 0;
+	virtual void onWifiOnlyEnabled (bool enabled) = 0;
+	virtual void setHttpProxy (std::string host, int port) = 0;
 
 protected:
 	inline explicit PlatformHelpers (LinphoneCore *lc) : mCore(lc) {}
@@ -59,10 +67,10 @@ protected:
 	LinphoneCore *mCore;
 };
 
-class StubbedPlatformHelpers : public PlatformHelpers {
+class GenericPlatformHelpers : public PlatformHelpers {
 public:
-	explicit StubbedPlatformHelpers (LinphoneCore *lc);
-	virtual ~StubbedPlatformHelpers () = default;
+	explicit GenericPlatformHelpers (LinphoneCore *lc);
+	~GenericPlatformHelpers ();
 
 	void setDnsServers () override;
 	void acquireWifiLock () override;
@@ -75,6 +83,20 @@ public:
 	std::string getConfigPath () override;
 	void setVideoWindow (void *windowId) override;
 	void setVideoPreviewWindow (void *windowId) override;
+	void setNetworkReachable (bool reachable) override;
+	bool isNetworkReachable () override;
+	void onLinphoneCoreReady (bool monitoringEnabled) override;
+	void onWifiOnlyEnabled (bool enabled) override;
+	void setHttpProxy (std::string host, int port) override;
+
+private:
+	static int monitorTimerExpired (void *data, unsigned int revents);
+
+private:
+	static const int mDefaultMonitorTimeout = 5;
+
+	belle_sip_source_t *mMonitorTimer;
+	bool mNetworkReachable;
 };
 
 PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext);

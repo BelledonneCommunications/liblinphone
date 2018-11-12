@@ -2096,6 +2096,8 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 		lc->provisioning_http_listener = NULL;
 	}
 
+	getPlatformHelpers(lc)->onLinphoneCoreReady(lc->auto_net_state_mon);
+
 	linphone_core_set_state(lc,LinphoneGlobalOn,"Ready");
 }
 
@@ -2333,7 +2335,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc, system_context);
 #endif
 	if (lc->platform_helper == NULL)
-		lc->platform_helper = new LinphonePrivate::StubbedPlatformHelpers(lc);
+		lc->platform_helper = new LinphonePrivate::GenericPlatformHelpers(lc);
 
 	msplugins_dir = linphone_factory_get_msplugins_dir(lfactory);
 	image_resources_dir = linphone_factory_get_image_resources_dir(lfactory);
@@ -2373,8 +2375,11 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->tunnel=linphone_core_tunnel_new(lc);
 #endif
 
-	lc->network_last_check = 0;
 	lc->network_last_status = FALSE;
+
+	lc->network_reachable = TRUE;
+	lc->sip_network_reachable = TRUE;
+	lc->media_network_reachable = TRUE;
 
 	/* Create the http provider in dual stack mode (ipv4 and ipv6.
 	 * If this creates problem, we may need to implement parallel ipv6/ ipv4 http requests in belle-sip.
@@ -3229,6 +3234,17 @@ void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val){
 	}
 }
 
+bool_t linphone_core_wifi_only_enabled(LinphoneCore *lc) {
+	return (bool_t)lp_config_get_int(lc->config, "net", "wifi_only", 0);
+}
+
+void linphone_core_enable_wifi_only(LinphoneCore *lc, bool_t val) {
+	if (linphone_core_ready(lc)) {
+		lp_config_set_int(lc->config, "net", "wifi_only", (int)val);
+		getPlatformHelpers(lc)->onWifiOnlyEnabled(val);
+	}
+}
+
 bool_t linphone_core_content_encoding_supported(const LinphoneCore *lc, const char *content_encoding) {
 	const char *handle_content_encoding = lp_config_get_string(lc->config, "sip", "handle_content_encoding", "deflate");
 	return (strcmp(handle_content_encoding, content_encoding) == 0) && lc->sal->isContentEncodingAvailable(content_encoding);
@@ -3242,38 +3258,6 @@ static void notify_network_reachable_change (LinphoneCore *lc) {
 	linphone_core_notify_network_reachable(lc, lc->sip_network_reachable);
 	if (lc->sip_network_reachable)
 		linphone_core_resolve_stun_server(lc);
-}
-
-static void monitor_network_state(LinphoneCore *lc, time_t curtime){
-	bool_t new_status=lc->network_last_status;
-	char newip[LINPHONE_IPADDR_SIZE];
-
-	// only do the network up checking every five seconds
-	if (lc->network_last_check==0 || (curtime-lc->network_last_check)>=5){
-		linphone_core_get_local_ip(lc,AF_UNSPEC,NULL,newip);
-		if (strcmp(newip,"::1")!=0 && strcmp(newip,"127.0.0.1")!=0){
-			new_status=TRUE;
-		}else new_status=FALSE; //no network
-
-		if (new_status==lc->network_last_status && new_status==TRUE && strcmp(newip,lc->localip)!=0){
-			//IP address change detected
-			ms_message("IP address change detected.");
-			set_network_reachable(lc,FALSE,curtime);
-			lc->network_last_status=FALSE;
-		}
-		strncpy(lc->localip,newip,sizeof(lc->localip));
-
-		if (new_status!=lc->network_last_status) {
-			if (new_status){
-				ms_message("New local ip address is %s",lc->localip);
-			}
-			set_network_reachable(lc,new_status, curtime);
-			lc->network_last_status=new_status;
-		}
-		lc->network_last_check=curtime;
-	}
-
-	notify_network_reachable_change(lc);
 }
 
 static void proxy_update(LinphoneCore *lc){
@@ -3420,7 +3404,6 @@ void linphone_core_iterate(LinphoneCore *lc){
 
 	lc->sal->iterate();
 	if (lc->msevq) ms_event_queue_pump(lc->msevq);
-	if (lc->auto_net_state_mon) monitor_network_state(lc, current_real_time);
 
 	proxy_update(lc);
 
@@ -6393,20 +6376,29 @@ static void disable_internal_network_reachability_detection(LinphoneCore *lc){
 	}
 }
 
-void linphone_core_set_network_reachable(LinphoneCore *lc, bool_t isReachable) {
-	disable_internal_network_reachability_detection(lc);
-	set_network_reachable(lc, isReachable, ms_time(NULL));
+void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_reachable) {
+	if (lc->auto_net_state_mon) {
+		set_network_reachable(lc, lc->network_reachable && is_reachable, ms_time(NULL));
+		notify_network_reachable_change(lc);
+	}
+}
+
+void linphone_core_set_network_reachable(LinphoneCore *lc, bool_t is_reachable) {
+	bool_t reachable = is_reachable;
+
+	if (lc->auto_net_state_mon) reachable = reachable && getPlatformHelpers(lc)->isNetworkReachable();
+
+	lc->network_reachable = is_reachable;
+	set_network_reachable(lc, reachable, ms_time(NULL));
 	notify_network_reachable_change(lc);
 }
 
 void linphone_core_set_media_network_reachable(LinphoneCore *lc, bool_t is_reachable){
-	disable_internal_network_reachability_detection(lc);
 	set_media_network_reachable(lc, is_reachable);
 	notify_network_reachable_change(lc);
 }
 
 void linphone_core_set_sip_network_reachable(LinphoneCore *lc, bool_t is_reachable){
-	disable_internal_network_reachability_detection(lc);
 	set_sip_network_reachable(lc, is_reachable, ms_time(NULL));
 	notify_network_reachable_change(lc);
 }

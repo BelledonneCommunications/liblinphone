@@ -21,6 +21,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 package org.linphone.core.tools;
 
 import org.linphone.core.Core;
+import org.linphone.core.tools.DozeReceiver;
+import org.linphone.core.tools.NetworkManager;
+import org.linphone.core.tools.NetworkManagerAbove21;
 import org.linphone.mediastream.Log;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.Version;
@@ -30,11 +33,14 @@ import android.graphics.SurfaceTexture;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.MulticastLock;
 import android.net.wifi.WifiManager.WifiLock;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
+import android.net.ProxyInfo;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.Build;
@@ -59,6 +65,7 @@ public class AndroidPlatformHelper {
 	private WifiManager.WifiLock mWifiLock;
 	private WifiManager.MulticastLock mMcastLock;
 	private ConnectivityManager mConnectivityManager;
+	private int mLastNetworkType = -1;
 	private PowerManager mPowerManager;
 	private WakeLock mWakeLock;
 	private Resources mResources;
@@ -71,13 +78,24 @@ public class AndroidPlatformHelper {
 	private String mGrammarVcardFile ;
 	private String mUserCertificatePath;
 	private Surface mSurface;
+	private boolean dozeModeEnabled;
+	private BroadcastReceiver mDozeReceiver;
+	private BroadcastReceiver mNetworkReceiver;
+	private IntentFilter mDozeIntentFilter;
+	private IntentFilter mNetworkIntentFilter;
+	private boolean mWifiOnly;
+	private boolean mUsingHttpProxy;
+	private NetworkManagerAbove21 mNetworkManagerAbove21;
 
 	private native void setNativePreviewWindowId(long nativePtr, Object view);
 	private native void setNativeVideoWindowId(long nativePtr, Object view);
+	private native void setNetworkReachable(long nativePtr, boolean reachable);
+	private native void setHttpProxy(long nativePtr, String host, int port);
 
-	public AndroidPlatformHelper(long nativePtr, Object ctx_obj) {
+	public AndroidPlatformHelper(long nativePtr, Object ctx_obj, boolean wifiOnly) {
 		mNativePtr = nativePtr;
 		mContext = (Context) ctx_obj;
+		mWifiOnly = wifiOnly;
 		mResources = mContext.getResources();
 		MediastreamerAndroidContext.setContext(mContext);
 
@@ -108,6 +126,34 @@ public class AndroidPlatformHelper {
 		} catch (IOException e) {
 			Log.e("AndroidPlatformHelper(): failed to install some resources.");
 		}
+	}
+
+	public void onLinphoneCoreReady(boolean monitoringEnabled) {
+		if (!monitoringEnabled) return;
+		
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+			mNetworkReceiver = new NetworkManager(this);
+			mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+			mContext.registerReceiver(mNetworkReceiver, mNetworkIntentFilter);
+		} else {
+			mNetworkManagerAbove21 = new NetworkManagerAbove21(this);
+			mNetworkManagerAbove21.registerNetworkCallbacks(mConnectivityManager);
+		}
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mDozeIntentFilter = new IntentFilter();
+            mDozeIntentFilter.addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED);
+            mDozeReceiver = new DozeReceiver(this);
+            dozeModeEnabled = ((PowerManager) mContext.getSystemService(Context.POWER_SERVICE)).isDeviceIdleMode();
+            mContext.registerReceiver(mDozeReceiver, mDozeIntentFilter);
+		}
+
+		updateNetworkReachability();
+	}
+
+	public void onWifiOnlyEnabled(boolean enabled) {
+		mWifiOnly = enabled;
+		updateNetworkReachability();
 	}
 
 	public Object getPowerManager() {
@@ -346,6 +392,59 @@ public class AndroidPlatformHelper {
 			mSurface = new Surface(textureView.getSurfaceTexture());
 			setNativeVideoWindowId(mNativePtr, mSurface);
 		}
+	}
+
+	public void updateNetworkReachability() {
+		if (mConnectivityManager == null) return;
+
+		boolean usingHttpProxyBefore = mUsingHttpProxy;
+		boolean connected = false;
+		NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
+		connected = networkInfo != null && networkInfo.isConnected();
+
+		if (connected && Build.VERSION.SDK_INT >= Version.API23_MARSHMALLOW_60){
+			ProxyInfo proxy = mConnectivityManager.getDefaultProxy();
+			if (proxy != null && proxy.getHost() != null){
+				Log.i("The active network is using an http proxy: " + proxy.toString());
+				setHttpProxy(mNativePtr, proxy.getHost(), proxy.getPort());
+				mUsingHttpProxy = true;
+			}else{
+				setHttpProxy(mNativePtr, "", 0);
+				mUsingHttpProxy = false;
+			}
+		}
+
+		if (networkInfo == null || !connected) {
+			Log.i("No connectivity: setting network unreachable");
+			setNetworkReachable(mNativePtr, false);
+		} else if (dozeModeEnabled) {
+			Log.i("Doze Mode enabled: shutting down network");
+			setNetworkReachable(mNativePtr, false);
+		} else if (connected) {
+			if (mWifiOnly) {
+				if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+					setNetworkReachable(mNativePtr, true);
+				} else {
+					Log.i("Wifi-only mode, setting network not reachable");
+					setNetworkReachable(mNativePtr, false);
+				}
+			} else {
+				int curtype = networkInfo.getType();
+
+				if (curtype != mLastNetworkType || mUsingHttpProxy != usingHttpProxyBefore) {
+					//if kind of network has changed, we need to notify network_reachable(false) to make sure all current connections are destroyed.
+					//they will be re-created during setNetworkReachable(true).
+					Log.i("Connectivity has changed.");
+					setNetworkReachable(mNativePtr, false);
+				}
+				setNetworkReachable(mNativePtr, true);
+				mLastNetworkType = curtype;
+			}
+		}
+	}
+
+	public void setDozeModeEnabled(boolean b) {
+		dozeModeEnabled = b;
 	}
 };
 
