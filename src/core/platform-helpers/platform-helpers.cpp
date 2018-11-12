@@ -27,7 +27,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-GenericPlatformHelpers::GenericPlatformHelpers (LinphoneCore *lc) : PlatformHelpers(lc) {}
+GenericPlatformHelpers::GenericPlatformHelpers (LinphoneCore *lc) : PlatformHelpers(lc), mMonitorTimer(nullptr) {}
 
 GenericPlatformHelpers::~GenericPlatformHelpers () {
 	if (mMonitorTimer) {
