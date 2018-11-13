@@ -57,6 +57,14 @@ public:
 		chatRoom->getPrivate()->removeTransientEvent(eventLog);
 	}
 
+	inline void addTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override {
+		chatRoom->getPrivate()->addTransientChatMessage(message);
+	}
+
+	inline void removeTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override {
+		chatRoom->getPrivate()->removeTransientChatMessage(message);
+	}
+
 	inline void sendDeliveryNotifications () override {
 		chatRoom->getPrivate()->sendDeliveryNotifications();
 	}

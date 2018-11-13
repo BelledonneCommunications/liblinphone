@@ -20,6 +20,7 @@
 #include <algorithm>
 
 #include "linphone/utils/utils.h"
+#include "linphone/utils/algorithm.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
@@ -92,15 +93,27 @@ void ChatRoomPrivate::addEvent (const shared_ptr<EventLog> &eventLog) {
 }
 
 void ChatRoomPrivate::addTransientEvent (const shared_ptr<EventLog> &eventLog) {
-	auto it = find(transientEvents.begin(), transientEvents.end(), eventLog);
+	auto it = find(transientEvents, eventLog);
 	if (it == transientEvents.end())
 		transientEvents.push_back(eventLog);
 }
 
 void ChatRoomPrivate::removeTransientEvent (const shared_ptr<EventLog> &eventLog) {
-	auto it = find(transientEvents.begin(), transientEvents.end(), eventLog);
+	auto it = find(transientEvents, eventLog);
 	if (it != transientEvents.end())
 		transientEvents.erase(it);
+}
+
+void ChatRoomPrivate::addTransientChatMessage (const shared_ptr<ChatMessage> &message) {
+	auto it = find(transientMessages, message);
+	if (it == transientMessages.end())
+		transientMessages.push_back(message);
+}
+
+void ChatRoomPrivate::removeTransientChatMessage (const shared_ptr<ChatMessage> &message) {
+	auto it = find(transientMessages, message);
+	if (it != transientMessages.end())
+		transientMessages.erase(it);
 }
 
 // -----------------------------------------------------------------------------
@@ -278,6 +291,7 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 	if (ch)
 		msg->getPrivate()->setSalCustomHeaders(sal_custom_header_clone(ch));
 
+	addTransientChatMessage(msg);
 	reason = msg->getPrivate()->receive();
 	return reason;
 }

@@ -57,6 +57,7 @@ public:
 	string getConfigPath () override {return Utils::getEmptyConstRefObject<string>();}
 	void setVideoWindow (void *windowId) override {}
 	void setVideoPreviewWindow (void *windowId) override {}
+	string getDownloadPath () override {return Utils::getEmptyConstRefObject<string>();}
 
 private:
 	void bgTaskTimeout ();

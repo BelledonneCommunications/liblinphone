@@ -54,8 +54,9 @@ public:
 		Encryption = 1 << 3,
 		Cpim = 1 << 4,
 		Started = 1 << 5,
+		FileDownload = 1 << 6,
+		AutoFileDownload = 1 << 7,
 		Sent = 1 << 6,
-		FileDownload = 1 << 7,
 	};
 
 	void setApplyModifiers (bool value) { applyModifiers = value; }
@@ -103,6 +104,14 @@ public:
 		return contents;
 	}
 
+	void setAutoFileTransferDownloadHappened(bool yesno) {
+		isAutoDownloadAttachedFilesHappened = yesno;
+	}
+
+	bool isAutoFileTransferDownloadHappened() const {
+		return isAutoDownloadAttachedFilesHappened;
+	}
+
 	belle_http_request_t *getHttpRequest () const;
 	void setHttpRequest (belle_http_request_t *request);
 
@@ -133,6 +142,9 @@ public:
 
 	void setEncryptionPrevented (bool value) { encryptionPrevented = value; }
 
+	void doNotRetryAutoDownload() {
+		currentRecvStep |= ChatMessagePrivate::Step::AutoFileDownload;
+	}
 	void enableSenderAuthentication (bool value) { senderAuthenticationEnabled = value; }
 
 	void setAuthorizationWarning (bool value) { authorizationWarning = value; } // TODO find better name
@@ -200,6 +212,7 @@ private:
 	bool isSecured = false;
 	mutable bool isReadOnly = false;
 	Content internalContent;
+	bool isAutoDownloadAttachedFilesHappened = false;
 
 	// TODO: to replace salCustomheaders
 	std::unordered_map<std::string, std::string> customHeaders;

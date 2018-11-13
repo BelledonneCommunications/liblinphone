@@ -127,8 +127,9 @@ public:
 	// Paths.
 	// ---------------------------------------------------------------------------
 
-	std::string getDataPath () const;
-	std::string getConfigPath () const;
+	std::string getDataPath() const;
+	std::string getConfigPath() const;
+	std::string getDownloadPath() const;
 
 	// ---------------------------------------------------------------------------
 	// EncryptionEngine.

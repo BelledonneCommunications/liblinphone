@@ -57,4 +57,8 @@ void StubbedPlatformHelpers::setVideoWindow (void *windowId) {
 
 }
 
+string StubbedPlatformHelpers::getDownloadPath () {
+	return "";
+}
+
 LINPHONE_END_NAMESPACE
