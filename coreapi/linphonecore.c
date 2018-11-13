@@ -6246,7 +6246,7 @@ void _linphone_core_uninit(LinphoneCore *lc)
 
 	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
 
-	linphone_core_set_state(lc,LinphoneGlobalShutdown,"Shutting down");
+	//linphone_core_set_state(NULL,LinphoneGlobalShutdown,"Shutting down");
 #ifdef VIDEO_ENABLED
 	if (lc->previewstream!=NULL){
 		video_preview_stop(lc->previewstream);
@@ -6316,7 +6316,7 @@ void _linphone_core_uninit(LinphoneCore *lc)
 	linphone_core_friends_storage_close(lc);
 	linphone_core_zrtp_cache_close(lc);
 
-	linphone_core_set_state(lc,LinphoneGlobalOff,"Off");
+	//linphone_core_set_state(NULL,LinphoneGlobalOff,"Off");
 	linphone_core_deactivate_log_serialization_if_needed();
 	bctbx_list_free_with_data(lc->vtable_refs,(void (*)(void *))v_table_reference_destroy);
 	ms_bandwidth_controller_destroy(lc->bw_controller);
