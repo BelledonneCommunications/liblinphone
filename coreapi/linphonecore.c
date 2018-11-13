@@ -6369,13 +6369,6 @@ void linphone_core_refresh_registers(LinphoneCore* lc) {
 	}
 }
 
-static void disable_internal_network_reachability_detection(LinphoneCore *lc){
-	if (lc->auto_net_state_mon) {
-		ms_message("Disabling automatic network state monitoring");
-		lc->auto_net_state_mon=FALSE;
-	}
-}
-
 void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_reachable) {
 	if (lc->auto_net_state_mon) {
 		set_network_reachable(lc, lc->network_reachable && is_reachable, ms_time(NULL));
