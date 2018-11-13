@@ -137,7 +137,6 @@ public:
 	EncryptionEngine *getEncryptionEngine () const;
 	void setEncryptionEngine (EncryptionEngine *imee);
 	void enableLimeX3dh (bool enable);
-	void updateLimeX3dh () const;
 	bool limeX3dhEnabled () const;
 	bool limeX3dhAvailable () const;
 

@@ -135,8 +135,8 @@ void CorePrivate::notifyEnteringForeground () {
 // =============================================================================
 
 Core::Core () : Object(*new CorePrivate) {
-    L_D();
-    d->imee.reset();
+	L_D();
+	d->imee.reset();
 	xercesc::XMLPlatformUtils::Initialize();
 }
 
@@ -212,8 +212,8 @@ void Core::enableLimeX3dh (bool enable) {
 	if (d->imee != nullptr)
 		d->imee.release();
 
-	LimeX3DHEncryptionEngine *engine;
 	if (d->imee == nullptr) {
+		LimeX3DHEncryptionEngine *engine;
 		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
 		string filename = lp_config_get_string(lpconfig, "lime", "x3dh_db_path", "x3dh.c25519.sqlite3");
 		string dbAccess = getDataPath() + filename;
@@ -226,17 +226,9 @@ void Core::enableLimeX3dh (bool enable) {
 	}
 }
 
-void Core::updateLimeX3dh () const {
-	L_D();
-
-	if (linphone_core_lime_x3dh_enabled(getCCore())) {
-		d->imee->update();
-	}
-}
-
 bool Core::limeX3dhEnabled () const {
 	L_D();
-	if (d->imee != nullptr && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3DH)
+	if (d->imee && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3DH)
 		return true;
 	return false;
 }

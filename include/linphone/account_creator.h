@@ -260,9 +260,9 @@ LINPHONE_PUBLIC const char * linphone_account_creator_get_activation_code(const 
 LINPHONE_PUBLIC LinphoneAccountCreatorLanguageStatus linphone_account_creator_set_language(LinphoneAccountCreator *creator, const char *lang);
 
 /**
-* Set the algorithm supported.
+* Set the supported algorithm.
 * @param[in] creator LinphoneAccountCreator object
-* @param[in] lang The algorithm to use
+* @param[in] algorithm The algorithm to use
 * @return LinphoneAccountCreatorAlgoStatusOk if everything is OK, or a specific error otherwise.
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorAlgoStatus linphone_account_creator_set_algorithm(LinphoneAccountCreator *creator, const char *algorithm);

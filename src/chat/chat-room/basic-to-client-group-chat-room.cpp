@@ -78,7 +78,7 @@ public:
 		}
 		migrationRealTime = currentRealTime;
 		clientGroupChatRoom = static_pointer_cast<ClientGroupChatRoom>(
-			chatRoom->getCore()->getPrivate()->createClientGroupChatRoom(chatRoom->getSubject(), "", Content(), false, false) // TODO encrypted = false because chatroom migration
+			chatRoom->getCore()->getPrivate()->createClientGroupChatRoom(chatRoom->getSubject(), "", Content(), false, false)
 		);
 		clientGroupChatRoom->getPrivate()->setCallSessionListener(this);
 		clientGroupChatRoom->getPrivate()->setChatRoomListener(this);

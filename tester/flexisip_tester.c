@@ -1259,7 +1259,6 @@ static void test_subscribe_on_wrong_dialog(void) {
 }
 #endif
 
-#if 0
 static void test_list_subscribe_wrong_body(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 
@@ -1283,7 +1282,6 @@ static void test_list_subscribe_wrong_body(void) {
 	linphone_core_manager_destroy(marie);
 	linphone_address_unref(sub_addr);
 }
-#endif
 
 
 static void redis_publish_subscribe(void) {
@@ -2064,7 +2062,7 @@ test_t flexisip_tests[] = {
 #endif
 	TEST_NO_TAG("Publish/unpublish", test_publish_unpublish),
 	TEST_NO_TAG("List subscribe", test_list_subscribe),
-	//TEST_NO_TAG("List subscribe without body", test_list_subscribe_wrong_body),
+	TEST_NO_TAG("List subscribe without body", test_list_subscribe_wrong_body),
 	TEST_NO_TAG("File transfer message rcs to external body client", file_transfer_message_rcs_to_external_body_client),
 	TEST_NO_TAG("DoS module trigger by sending a lot of chat messages", dos_module_trigger),
 #if HAVE_SIPP

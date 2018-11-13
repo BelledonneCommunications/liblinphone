@@ -316,7 +316,7 @@ ChatMessageModifier::Result LimeX3DHEncryptionEngine::processIncomingMessage (
 
 	if (incomingContentType != expectedContentType) {
 		lError() << "LIMEv2 unexpected content-type: " << incomingContentType;
-		// Set authorisation warning flag because incoming message type is unexpected
+		// Set authorization warning flag because incoming message type is unexpected
 		message->getPrivate()->setAuthorizationWarning(true);
 		// Disable sender authentication otherwise the unexpected message will always be discarded
 		message->getPrivate()->enableSenderAuthentication(false);
@@ -634,7 +634,7 @@ void LimeX3DHEncryptionEngine::authenticationVerified (
 				case lime::PeerDeviceStatus::untrusted:
 					lWarning() << "LIMEv2 peer device " << peerDeviceId << " is untrusted and its lime identity key has changed";
 					// TODO specific alert to warn the user that previous messages are compromised
-					addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::LimeIdentityKeyChanged);
+					addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::EncryptionIdentityKeyChanged);
 					break;
 				case lime::PeerDeviceStatus::trusted:
 					lError() << "LIMEv2 peer device " << peerDeviceId << " is already trusted but its lime identity key has changed";

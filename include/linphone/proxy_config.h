@@ -372,7 +372,7 @@ LINPHONE_PUBLIC bool_t linphone_proxy_config_lime_x3dh_enabled(const LinphonePro
 
 /**
  * @param[in] cfg #LinphoneProxyConfig object.
- * @param val if TRUE LIME X3DH will be enabled for this user
+ * @param val if TRUE LIME X3DH will be enabled for this proxy config
 **/
 LINPHONE_PUBLIC void linphone_proxy_config_enable_lime_x3dh(LinphoneProxyConfig *cfg, const bool_t val);
 

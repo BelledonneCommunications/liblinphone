@@ -26,7 +26,7 @@
 	F(None /**< Event is not a security event */) \
 	F(SecurityLevelDowngraded /**< Chatroom security level downgraded event */) \
 	F(ParticipantMaxDeviceCountExceeded /**< Participant has exceeded the maximum number of device event */) \
-	F(LimeIdentityKeyChanged /**< Peer device lime identity key has changed event */) \
+	F(EncryptionIdentityKeyChanged /**< Peer device instant messaging encryption identity key has changed event */) \
 	F(ManInTheMiddleDetected /**< Man in the middle detected event */) \
 
 #endif // ifndef _L_SECURITY_EVENT_ENUMS_H_

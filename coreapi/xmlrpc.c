@@ -184,13 +184,11 @@ static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_s
 	LinphoneXmlRpcRequest *request = (LinphoneXmlRpcRequest *)data;
 	LinphoneAccountCreator *creator = (LinphoneAccountCreator *)linphone_xml_rpc_request_get_user_data(request);
 
-	LinphoneCore *lc = creator->core;
-
 	const char *realm = belle_sip_auth_event_get_realm(event);
 	const char *username = belle_sip_auth_event_get_username(event);
 	const char *domain = belle_sip_auth_event_get_domain(event);
 
-	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(lc, realm, username, domain);
+	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(creator->core, realm, username, domain);
 
 	if (auth_info) {
 		const char *auth_username = linphone_auth_info_get_username(auth_info);

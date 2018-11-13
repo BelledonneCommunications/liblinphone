@@ -866,7 +866,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_create_account_linphone(Li
 	return LinphoneAccountCreatorStatusRequestFailed;
 }
 
-static void _delete_account_cb_custom(LinphoneXmlRpcRequest *request) {
+static void _delete_linphone_account_response_cb(LinphoneXmlRpcRequest *request) {
 	LinphoneAccountCreator *creator = (LinphoneAccountCreator *)linphone_xml_rpc_request_get_user_data(request);
 	if (creator->cbs->delete_account_response_cb != NULL) {
 		LinphoneAccountCreatorStatus status = LinphoneAccountCreatorStatusRequestFailed;
@@ -883,7 +883,6 @@ static void _delete_account_cb_custom(LinphoneXmlRpcRequest *request) {
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone(LinphoneAccountCreator *creator) {
-	LinphoneXmlRpcRequest *request;
 	if ((!creator->username && !creator->phone_number) || !creator->password) {
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
@@ -893,12 +892,12 @@ LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone(Li
 		creator->password,
 		linphone_proxy_config_get_domain(creator->proxy_cfg));
 
-	request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "delete_account");
+	LinphoneXmlRpcRequest *request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "delete_account");
 	linphone_xml_rpc_request_add_string_arg(request, creator->username ? creator->username : creator->phone_number);
 	linphone_xml_rpc_request_add_string_arg(request, creator->password);
 	linphone_xml_rpc_request_add_string_arg(request, linphone_proxy_config_get_domain(creator->proxy_cfg));
 	linphone_xml_rpc_request_set_user_data(request, creator);
-	linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request), _delete_account_cb_custom);
+	linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request), _delete_linphone_account_response_cb);
 	linphone_xml_rpc_session_send_request(creator->xmlrpc_session, request);
 	linphone_xml_rpc_request_unref(request);
 
@@ -986,7 +985,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_lin
 	return LinphoneAccountCreatorStatusRequestFailed;
 }
 
-static void _get_confirmation_key_cb_custom(LinphoneXmlRpcRequest *request) {
+static void get_linphone_confirmation_key_response_cb(LinphoneXmlRpcRequest *request) {
 	LinphoneAccountCreator *creator = (LinphoneAccountCreator *)linphone_xml_rpc_request_get_user_data(request);
 	if (creator->cbs->get_confirmation_key_response_cb != NULL) {
 		LinphoneAccountCreatorStatus status = LinphoneAccountCreatorStatusRequestFailed;
@@ -1002,15 +1001,12 @@ static void _get_confirmation_key_cb_custom(LinphoneXmlRpcRequest *request) {
 				status = LinphoneAccountCreatorStatusRequestOk;
 				set_string(&creator->activation_code, resp, FALSE);
 			}
-		} else {
 		}
 		creator->cbs->get_confirmation_key_response_cb(creator, status, resp);
-	} else {
 	}
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key_linphone(LinphoneAccountCreator *creator) {
-	LinphoneXmlRpcRequest *request;
 	if (!creator->username || !creator->password) {
 		if (creator->cbs->get_confirmation_key_response_cb != NULL) {
 			creator->cbs->get_confirmation_key_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
@@ -1023,13 +1019,13 @@ LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key_linph
 		creator->password,
 		linphone_proxy_config_get_domain(creator->proxy_cfg));
 
-	request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "get_confirmation_key");
+	LinphoneXmlRpcRequest *request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "get_confirmation_key");
 	linphone_xml_rpc_request_add_string_arg(request, creator->username);
 	linphone_xml_rpc_request_add_string_arg(request, ha1_for_passwd(creator->username, linphone_proxy_config_get_domain(creator->proxy_cfg), creator->password, creator->algorithm));
 	linphone_xml_rpc_request_add_string_arg(request, linphone_proxy_config_get_domain(creator->proxy_cfg));
 	linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 	linphone_xml_rpc_request_set_user_data(request, creator);
-	linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request), _get_confirmation_key_cb_custom);
+	linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request), get_linphone_confirmation_key_response_cb);
 	linphone_xml_rpc_session_send_request(creator->xmlrpc_session, request);
 	linphone_xml_rpc_request_unref(request);
 	return LinphoneAccountCreatorStatusRequestOk;
@@ -1339,7 +1335,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone(L
 
 	if (creator->xmlrpc_session) {
 		const char *username = creator->username ? creator->username : creator->phone_number;
-		char *ha1 = bctbx_strdup(creator->ha1 ? creator->ha1 : ha1_for_passwd(username, _get_domain(creator), creator->password, creator->algorithm) );
+		char *ha1 = bctbx_strdup(creator->ha1 ? creator->ha1 : ha1_for_passwd(username, _get_domain(creator), creator->password, creator->algorithm));
 		char *new_ha1 = bctbx_strdup(ha1_for_passwd(username, _get_domain(creator), new_pwd, creator->algorithm));
 
 		ms_debug("Account creator: update_password (username=%s, domain=%s)",

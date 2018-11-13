@@ -308,7 +308,7 @@ typedef struct _stats {
 
 	int number_of_SecurityLevelDowngraded;
 	int number_of_ParticipantMaxDeviceCountExceeded;
-	int number_of_LimeIdentityKeyChanged;
+	int number_of_EncryptionIdentityKeyChanged;
 	int number_of_ManInTheMiddleDetected;
 
 	int number_of_snapshot_taken;

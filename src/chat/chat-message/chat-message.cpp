@@ -560,7 +560,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	// Message Authorization
 	if (getAuthorizationWarning()) {
-		lWarning() << "Message authorization warning raised by LIMEv2";
+		lWarning() << "Message authorization warning raised by encryption engine";
 
 		// Allow error IMDN exclusively
 		if (q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::Imdn && !Imdn::isError(q->getSharedFromThis())) {

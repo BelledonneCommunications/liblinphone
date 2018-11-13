@@ -1343,11 +1343,13 @@ static void bodyless_config_read(LinphoneCore *lc) {
 
 	bctbx_list_t *bodyless_lists = linphone_config_get_string_list(lc->config, "sip", "bodyless_lists", NULL);
 	while (bodyless_lists) {
-		char *name = (char *)bodyless_lists->data;
-		bodyless_lists = bodyless_lists->next;
+		char *name = (char *)bctbx_list_get_data(bodyless_lists);
+		bodyless_lists = bctbx_list_next(bodyless_lists);
 		LinphoneAddress *addr = linphone_address_new(name);
-		if(!addr)
+		if(!addr) {
+			bctbx_free(name);
 			continue;
+		}
 
 		ms_message("Found bodyless friendlist %s", name);
 		bctbx_free(name);
@@ -2756,12 +2758,11 @@ void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list
 }
 
 void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc) {
-	bctbx_list_t* list = bctbx_list_copy(linphone_core_get_friends_lists((const LinphoneCore *)lc));
-	bctbx_list_t* copy = list;
-	for (; list != NULL; list = list->next) {
-		LinphoneFriendList *friends = (LinphoneFriendList *)list->data;
+	bctbx_list_t *copy = bctbx_list_copy(linphone_core_get_friends_lists((const LinphoneCore *)lc));
+	for (auto it = copy; it; it = bctbx_list_next(it)) {
+		LinphoneFriendList *friends = (LinphoneFriendList *)bctbx_list_get_data(copy);
 		if (linphone_friend_list_is_subscription_bodyless(friends))
-			linphone_core_remove_friend_list(lc, (LinphoneFriendList *)list->data);
+			linphone_core_remove_friend_list(lc, (LinphoneFriendList *)bctbx_list_get_data(copy));
 	}
 	bctbx_list_free(copy);
 }

@@ -1538,20 +1538,13 @@ LINPHONE_PUBLIC bool_t linphone_core_lime_available(const LinphoneCore *lc);
 /**
  * Tells to LinphoneCore to use LIME X3DH
  * @param[in] lc LinphoneCore object
- * @param[in] val The new lime state
+ * @param[in] enable A boolean value telling whether to enable or disable LIME X3DH
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_core_enable_lime_x3dh(LinphoneCore *lc, bool_t enable);
 
 /**
- * Tells to LinphoneCore to update LIME X3DH
- * @param[in] lc LinphoneCore object
- * @ingroup network_parameters
- */
-LINPHONE_PUBLIC void linphone_core_update_lime_x3dh(const LinphoneCore *lc);
-
-/**
- * Returns the LIME X3DH state
+ * Tells wether LIME X3DH is enabled or not
  * @param[in] lc LinphoneCore object
  * @return The current lime state
  * @ingroup network_parameters

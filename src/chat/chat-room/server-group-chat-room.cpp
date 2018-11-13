@@ -485,9 +485,7 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 		q->addParticipants(compatibleParticipants, nullptr, false);
 		if ((capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && (q->getParticipantCount() == 2)) {
 			// Insert the one-to-one chat room in Db if participants count is 2.
-			bool encrypted = false;
-			if ((capabilities & ServerGroupChatRoom::Capabilities::Encrypted))
-				encrypted = true;
+			bool encrypted = (capabilities & ServerGroupChatRoom::Capabilities::Encrypted);
 			q->getCore()->getPrivate()->mainDb->insertOneToOneConferenceChatRoom(q->getSharedFromThis(), encrypted);
 		}
 	}
@@ -822,8 +820,8 @@ LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_
 	if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
 		d->capabilities |= ServerGroupChatRoom::Capabilities::OneToOne;
 
-	const char *endToEndEncryptedStr = sal_custom_header_find(op->getRecvCustomHeaders(), "End-To-End-Encrypted");
-	if (endToEndEncryptedStr && (strcmp(endToEndEncryptedStr, "true") == 0))
+	string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "End-To-End-Encrypted"));
+	if (endToEndEncrypted == "true")
 		d->capabilities |= ServerGroupChatRoom::Capabilities::Encrypted;
 
 	shared_ptr<CallSession> session = getMe()->getPrivate()->createSession(*this, nullptr, false, d);

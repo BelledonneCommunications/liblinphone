@@ -117,8 +117,8 @@ static void chat_room_security_event (LinphoneChatRoom *cr, const LinphoneEventL
 		case LinphoneSecurityEventTypeParticipantMaxDeviceCountExceeded:
 			manager->stat.number_of_ParticipantMaxDeviceCountExceeded++;
 			break;
-		case LinphoneSecurityEventTypeLimeIdentityKeyChanged:
-			manager->stat.number_of_LimeIdentityKeyChanged++;
+		case LinphoneSecurityEventTypeEncryptionIdentityKeyChanged:
+			manager->stat.number_of_EncryptionIdentityKeyChanged++;
 			break;
 		case LinphoneSecurityEventTypeManInTheMiddleDetected:
 			manager->stat.number_of_ManInTheMiddleDetected++;

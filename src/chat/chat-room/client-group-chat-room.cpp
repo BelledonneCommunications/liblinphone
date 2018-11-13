@@ -469,11 +469,11 @@ void ClientGroupChatRoom::addParticipants (
 			"misc", "one_to_one_chat_room_enabled", TRUE))
 	) {
 		d->capabilities |= ClientGroupChatRoom::Capabilities::OneToOne;
-		const IdentityAddress &me = getMe()->getAddress();
 		const IdentityAddress &participant = addresses.front();
 		bool encrypted = getCapabilities() & ClientGroupChatRoom::Capabilities::Encrypted;
 		auto existingChatRoom = getCore()->findOneToOneChatRoom(getLocalAddress(), participant, encrypted);
 		if (existingChatRoom) {
+			const IdentityAddress &me = getMe()->getAddress();
 			lError() << "Trying to create already existing " << (encrypted ? "" : "non-") << "encrypted one-to-one chatroom with participants: " <<
 				me << ", " << participant;
 			return;

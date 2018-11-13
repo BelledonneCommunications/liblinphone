@@ -2852,10 +2852,15 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 			if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), LinphoneMediaEncryptionZRTP)
 				&& ((getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream->haveZrtpHash == 1))) {
 
-				// Perform LIMEv2 mutual authentication if LIMEv2 enabled
+				// Perform mutual authentication if instant messaging encryption is enabled
 				auto encryptionEngine = q->getCore()->getEncryptionEngine();
 				if (encryptionEngine)
-					encryptionEngine->mutualAuthentication(audioStream->ms.sessions.zrtp_context, op->getLocalMediaDescription(), op->getRemoteMediaDescription(), this->getPublic()->CallSession::getDirection());
+					encryptionEngine->mutualAuthentication(
+						audioStream->ms.sessions.zrtp_context,
+						op->getLocalMediaDescription(),
+						op->getRemoteMediaDescription(),
+						this->getPublic()->CallSession::getDirection()
+					);
 
 				audio_stream_start_zrtp(audioStream);
 				if (remoteStream->haveZrtpHash == 1) {

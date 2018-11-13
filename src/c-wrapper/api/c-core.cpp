@@ -65,21 +65,12 @@ void linphone_core_set_im_encryption_engine (LinphoneCore *lc, LinphoneImEncrypt
 }
 
 void linphone_core_enable_lime_x3dh (LinphoneCore *lc, bool_t enable) {
-// 	if (L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeX3dhAvailable()) {
-// 		cout << "LIMEv2 is available, enabling" << endl;
-// 	} else {
-// 		cout << "LIMEv2 is unavailable, not enabling" << endl;
-// 	}
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->enableLimeX3dh(enable);
-}
-
-void linphone_core_update_lime_x3dh (const LinphoneCore *lc) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->updateLimeX3dh();
 }
 
 bool_t linphone_core_lime_x3dh_enabled (const LinphoneCore *lc) {
 	bool isEnabled = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeX3dhEnabled();
-	return isEnabled?TRUE:FALSE;
+	return isEnabled ? TRUE : FALSE;
 }
 
 bool_t linphone_core_lime_x3dh_available (const LinphoneCore *lc) {
@@ -90,6 +81,6 @@ void linphone_core_delete_local_lime_x3dh_db (const LinphoneCore *lc) {
 	if (L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeX3dhEnabled()) {
 		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getEncryptionEngine()->cleanDb();
 	} else {
-		lWarning() << "Trying to clean local LIMEv2 databases but LIMEv2 is disabled";
+		lWarning() << "Trying to clean local LIME X3DH databases but LIME X3DH is disabled";
 	}
 }

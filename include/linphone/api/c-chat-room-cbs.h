@@ -183,7 +183,7 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsSecurityEventCb linphone_chat_room_cbs_get_se
 /**
  * Set the security event callback.
  * @param[in] cbs #LinphoneChatRoomCbs object.
- * @param[in] cb The current security event callback to be used.
+ * @param[in] cb The security event callback to be used.
  */
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_security_event (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsSecurityEventCb cb);
 
