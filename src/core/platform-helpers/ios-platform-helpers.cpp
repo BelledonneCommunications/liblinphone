@@ -53,12 +53,12 @@ public:
 	void releaseMcastLock () override {}
 	void acquireCpuLock () override;
 	void releaseCpuLock () override;
-	string getDataPath () override {return Utils::getEmptyConstRefObject<string>();}
-	string getConfigPath () override {return Utils::getEmptyConstRefObject<string>();}
+	string getDataPath () override { return ""; }
+	string getConfigPath () override { return ""; }
 	void setVideoWindow (void *windowId) override {}
 	void setVideoPreviewWindow (void *windowId) override {}
 	void setNetworkReachable (bool reachable) override {}
-	bool isNetworkReachable () override {}
+	bool isNetworkReachable () override { return false; }
 	void onLinphoneCoreReady (bool monitoringEnabled) override {}
 	void onWifiOnlyEnabled (bool enabled) override {}
 	void setHttpProxy (string host, int port) override {}
