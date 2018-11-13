@@ -42,7 +42,9 @@ Imdn::Imdn (ChatRoom *chatRoom) : chatRoom(chatRoom) {
 
 Imdn::~Imdn () {
 	stopTimer();
-	chatRoom->getCore()->getPrivate()->unregisterListener(this);
+	try {
+		chatRoom->getCore()->getPrivate()->unregisterListener(this);
+	} catch (const bad_weak_ptr &) {}
 }
 
 // -----------------------------------------------------------------------------
