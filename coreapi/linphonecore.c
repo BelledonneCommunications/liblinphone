@@ -2096,7 +2096,7 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 		lc->provisioning_http_listener = NULL;
 	}
 
-	getPlatformHelpers(lc)->onLinphoneCoreReady(lc->auto_net_state_mon);
+	getPlatformHelpers(lc)->onLinphoneCoreReady(!!lc->auto_net_state_mon);
 
 	linphone_core_set_state(lc,LinphoneGlobalOn,"Ready");
 }
@@ -3241,7 +3241,7 @@ bool_t linphone_core_wifi_only_enabled(LinphoneCore *lc) {
 void linphone_core_enable_wifi_only(LinphoneCore *lc, bool_t val) {
 	if (linphone_core_ready(lc)) {
 		lp_config_set_int(lc->config, "net", "wifi_only", (int)val);
-		getPlatformHelpers(lc)->onWifiOnlyEnabled(val);
+		getPlatformHelpers(lc)->onWifiOnlyEnabled(!!val);
 	}
 }
 
