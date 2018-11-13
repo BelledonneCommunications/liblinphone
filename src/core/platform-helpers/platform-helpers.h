@@ -24,10 +24,9 @@
 
 #include "linphone/utils/general.h"
 
-// TODO: Remove me later.
-#include "private.h"
-
 // =============================================================================
+
+typedef struct belle_sip_source belle_sip_source_t;
 
 L_DECL_C_STRUCT(LinphoneCore);
 

@@ -17,9 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include "platform-helpers.h"
 #include "logger/logger.h"
-#include "c-wrapper/c-wrapper.h"
+#include "platform-helpers.h"
+
+// TODO: Remove me.
+#include "private.h"
 
 // =============================================================================
 
