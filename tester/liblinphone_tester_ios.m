@@ -58,7 +58,7 @@ int main(int argc, char * argv[]) {
     g_argv=argv;
     pthread_create(&main_thread,NULL,_apple_main,NULL);
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    int value = UIApplicationMain(0, nil, nil, nil);
+    int value = UIApplicationMain(argc, argv, nil, nil);
     [pool release];
     return value;
     pthread_join(main_thread,NULL);
