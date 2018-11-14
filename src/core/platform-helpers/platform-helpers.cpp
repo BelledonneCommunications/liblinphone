@@ -78,10 +78,14 @@ void GenericPlatformHelpers::onLinphoneCoreReady (bool monitoringEnabled) {
 	if (!monitoringEnabled) return;
 
 	if (!mMonitorTimer) {
-		mMonitorTimer = mCore->sal->createTimer(monitorTimerExpired, this,
-			mDefaultMonitorTimeout * 1000, "monitor network timeout");
+		mMonitorTimer = mCore->sal->createTimer(
+			monitorTimerExpired,
+			this,
+			DefaultMonitorTimeout * 1000,
+			"monitor network timeout"
+		);
 	} else {
-		belle_sip_source_set_timeout(mMonitorTimer, mDefaultMonitorTimeout * 1000);
+		belle_sip_source_set_timeout(mMonitorTimer, DefaultMonitorTimeout * 1000);
 	}
 }
 

@@ -92,10 +92,10 @@ private:
 	static int monitorTimerExpired (void *data, unsigned int revents);
 
 private:
-	static const int mDefaultMonitorTimeout = 5;
+	static constexpr int DefaultMonitorTimeout = 5;
 
 	belle_sip_source_t *mMonitorTimer;
-	bool mNetworkReachable;
+	bool mNetworkReachable = false;
 };
 
 PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext);
