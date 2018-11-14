@@ -741,7 +741,7 @@ static void file_transfer_2_messages_simultaneously(void) {
 	}
 }
 
-static void file_transfer_external_body_url(bool_t use_file_body_handler_in_download) {
+static void file_transfer_external_body_url(bool_t use_file_body_handler_in_download, bool_t use_invalid_url) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
@@ -749,7 +749,11 @@ static void file_transfer_external_body_url(bool_t use_file_body_handler_in_down
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	char *receive_filepath = bc_tester_file("receive_file.dump");
 
-	linphone_chat_message_set_external_body_url(msg, "https://www.linphone.org/img/linphone-open-source-voip-projectX2.png");
+	if (use_invalid_url) {
+		linphone_chat_message_set_external_body_url(msg, "https://linphone.org:444/download/0aa00aaa00a0a_a0000d00aaa0a0aaaa00.jpg");
+	} else {
+		linphone_chat_message_set_external_body_url(msg, "https://www.linphone.org/img/linphone-open-source-voip-projectX2.png");
+	}
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);
 	linphone_chat_message_unref(msg);
@@ -770,7 +774,13 @@ static void file_transfer_external_body_url(bool_t use_file_body_handler_in_down
 		linphone_chat_message_download_file(recv_msg);
 
 		/* wait for a long time in case the DNS SRV resolution takes times - it should be immediate though */
-		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneFileTransferDownloadSuccessful, 1, 55000));
+		if (use_invalid_url) {
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageFileTransferError, 1, 55000));
+			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferDone, 0, int, "%d");
+			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDisplayed, 0, int, "%d");
+		} else {
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneFileTransferDownloadSuccessful, 1, 55000));
+		}
 	}
 
 	remove(receive_filepath);
@@ -780,11 +790,15 @@ static void file_transfer_external_body_url(bool_t use_file_body_handler_in_down
 }
 
 static void file_transfer_using_external_body_url(void) {
-	file_transfer_external_body_url(FALSE);
+	file_transfer_external_body_url(FALSE, FALSE);
 }
 
 static void file_transfer_using_external_body_url_2(void) {
-	file_transfer_external_body_url(TRUE);
+	file_transfer_external_body_url(TRUE, FALSE);
+}
+
+static void file_transfer_using_external_body_url_404(void) {
+	file_transfer_external_body_url(FALSE, TRUE);
 }
 
 static void text_message_denied(void) {
@@ -2515,6 +2529,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer 2 messages simultaneously", file_transfer_2_messages_simultaneously),
 	TEST_NO_TAG("Transfer using external body URL", file_transfer_using_external_body_url),
 	TEST_NO_TAG("Transfer using external body URL 2", file_transfer_using_external_body_url_2),
+	TEST_NO_TAG("Transfer using external body URL 404", file_transfer_using_external_body_url_404),
 	TEST_NO_TAG("Text message denied", text_message_denied),
 	TEST_NO_TAG("IsComposing notification", is_composing_notification),
 	TEST_NO_TAG("IMDN notifications", imdn_notifications),

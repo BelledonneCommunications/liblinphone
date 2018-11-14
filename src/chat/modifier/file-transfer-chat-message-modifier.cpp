@@ -859,13 +859,22 @@ static FileContent* createFileTransferInformationFromHeaders (const belle_sip_me
 
 void FileTransferChatMessageModifier::processResponseHeadersFromGetFile (const belle_http_response_event_t *event) {
 	if (event->response) {
+		int code = belle_http_response_get_status_code(event->response);
+		shared_ptr<ChatMessage> message = chatMessage.lock();
+
+		if (!message)
+			return;
+
+		if (code >= 400 && code < 500) {
+			lWarning() << "File transfer failed with code " << code;
+			message->getPrivate()->setState(ChatMessage::State::FileTransferError);
+			releaseHttpRequest();
+			return;
+		}
+
 		// we are receiving a response, set a specific body handler to acquire the response.
 		// if not done, belle-sip will create a memory body handler, the default
 		belle_sip_message_t *response = BELLE_SIP_MESSAGE(event->response);
-
-		shared_ptr<ChatMessage> message = chatMessage.lock();
-		if (!message)
-			return;
 
 		if (currentFileContentToTransfer) {
 			belle_sip_header_content_length_t *content_length_hdr = BELLE_SIP_HEADER_CONTENT_LENGTH(belle_sip_message_get_header(response, "Content-Length"));
