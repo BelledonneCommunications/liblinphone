@@ -39,7 +39,6 @@ GenericPlatformHelpers::~GenericPlatformHelpers () {
 	}
 }
 
-void GenericPlatformHelpers::setDnsServers () {}
 
 void GenericPlatformHelpers::acquireWifiLock () {}
 
@@ -53,26 +52,64 @@ void GenericPlatformHelpers::acquireCpuLock () {}
 
 void GenericPlatformHelpers::releaseCpuLock () {}
 
-string GenericPlatformHelpers::getDataPath () {
+
+string GenericPlatformHelpers::getConfigPath () const {
 	return "";
 }
 
-string GenericPlatformHelpers::getConfigPath () {
+string GenericPlatformHelpers::getDataPath () const {
 	return "";
 }
+
+string GenericPlatformHelpers::getDataResource (const string &filename) const {
+	return getFilePath(
+		linphone_factory_get_data_resources_dir(linphone_factory_get()),
+		filename
+	);
+}
+
+string GenericPlatformHelpers::getImageResource (const string &filename) const {
+	return getFilePath(
+		linphone_factory_get_image_resources_dir(linphone_factory_get()),
+		filename
+	);
+}
+
+string GenericPlatformHelpers::getRingResource (const string &filename) const {
+	return getFilePath(
+		linphone_factory_get_ring_resources_dir(linphone_factory_get()),
+		filename
+	);
+}
+
+string GenericPlatformHelpers::getSoundResource (const string &filename) const {
+	return getFilePath(
+		linphone_factory_get_sound_resources_dir(linphone_factory_get()),
+		filename
+	);
+}
+
 
 void GenericPlatformHelpers::setVideoPreviewWindow (void *windowId) {}
 
 void GenericPlatformHelpers::setVideoWindow (void *windowId) {}
+
+
+bool GenericPlatformHelpers::isNetworkReachable () {
+	return mNetworkReachable;
+}
+
+void GenericPlatformHelpers::onWifiOnlyEnabled (bool enabled) {}
+
+void GenericPlatformHelpers::setDnsServers () {}
+
+void GenericPlatformHelpers::setHttpProxy (string host, int port) {}
 
 void GenericPlatformHelpers::setNetworkReachable (bool reachable) {
 	mNetworkReachable = reachable;
 	linphone_core_set_network_reachable_internal(mCore, reachable);
 }
 
-bool GenericPlatformHelpers::isNetworkReachable () {
-	return mNetworkReachable;
-}
 
 void GenericPlatformHelpers::onLinphoneCoreReady (bool monitoringEnabled) {
 	if (!monitoringEnabled) return;
@@ -89,9 +126,6 @@ void GenericPlatformHelpers::onLinphoneCoreReady (bool monitoringEnabled) {
 	}
 }
 
-void GenericPlatformHelpers::onWifiOnlyEnabled (bool enabled) {}
-
-void GenericPlatformHelpers::setHttpProxy (string host, int port) {}
 
 int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revents) {
 	GenericPlatformHelpers *helper = static_cast<GenericPlatformHelpers *>(data);
