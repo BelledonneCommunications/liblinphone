@@ -1148,29 +1148,24 @@ static void build_sound_devices_table(LinphoneCore *lc){
 	if (old!=NULL) ms_free((void *)old);
 }
 
-static char *get_default_local_ring(LinphoneCore * lc) {
-	LinphoneFactory *factory = linphone_factory_get();
+static string get_default_local_ring(LinphoneCore * lc) {
 	if (linphone_core_file_format_supported(lc, "mkv")) {
-		return bctbx_strdup_printf("%s/%s", linphone_factory_get_ring_resources_dir(factory), LOCAL_RING_MKV);
+		return static_cast<PlatformHelpers *>(lc->platform_helper)->getRingResource(LOCAL_RING_MKV);
 	}
-	return bctbx_strdup_printf("%s/%s", linphone_factory_get_ring_resources_dir(factory), LOCAL_RING_WAV);
+	return static_cast<PlatformHelpers *>(lc->platform_helper)->getRingResource(LOCAL_RING_WAV);
 }
 
-static char *get_default_onhold_music(LinphoneCore * lc) {
-	LinphoneFactory *factory = linphone_factory_get();
+static string get_default_onhold_music(LinphoneCore * lc) {
 	if (linphone_core_file_format_supported(lc, "mkv")) {
-		return bctbx_strdup_printf("%s/%s", linphone_factory_get_sound_resources_dir(factory), HOLD_MUSIC_MKV);
+		return static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(HOLD_MUSIC_MKV);
 	}
-	return bctbx_strdup_printf("%s/%s", linphone_factory_get_sound_resources_dir(factory), HOLD_MUSIC_WAV);
+	return static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(HOLD_MUSIC_WAV);
 }
 
-static void sound_config_read(LinphoneCore *lc)
-{
+static void sound_config_read(LinphoneCore *lc) {
 	int tmp;
-	char *default_remote_ring;
 	const char *tmpbuf;
 	const char *devid;
-	LinphoneFactory *factory = linphone_factory_get();
 
 #ifdef __linux
 	/*alsadev let the user use custom alsa device within linphone*/
@@ -1230,23 +1225,19 @@ static void sound_config_read(LinphoneCore *lc)
 			ms_warning("'%s' ring file does not exist", tmpbuf);
 		}
 	} else {
-		char *default_local_ring = get_default_local_ring(lc);
-		linphone_core_set_ring(lc, default_local_ring);
-		bctbx_free(default_local_ring);
+		linphone_core_set_ring(lc, get_default_local_ring(lc).c_str());
 	}
 
-	default_remote_ring = bctbx_strdup_printf("%s/%s", linphone_factory_get_sound_resources_dir(factory), REMOTE_RING_WAV);
-	tmpbuf = default_remote_ring;
-	tmpbuf = lp_config_get_string(lc->config, "sound", "remote_ring", tmpbuf);
+	string defaultRemoteRing = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(REMOTE_RING_WAV);
+	tmpbuf = lp_config_get_string(lc->config, "sound", "remote_ring", defaultRemoteRing.c_str());
 	if (bctbx_file_exist(tmpbuf) == -1){
-		tmpbuf = default_remote_ring;
+		tmpbuf = defaultRemoteRing.c_str();
 	}
 	if (strstr(tmpbuf, ".wav") == NULL) {
 		/* It currently uses old sound files, so replace them */
-		tmpbuf = default_remote_ring;
+		tmpbuf = defaultRemoteRing.c_str();
 	}
 	linphone_core_set_ringback(lc, tmpbuf);
-	bctbx_free(default_remote_ring);
 
 	tmpbuf = lp_config_get_string(lc->config, "sound", "hold_music", NULL);
 	if (tmpbuf) {
@@ -1256,9 +1247,7 @@ static void sound_config_read(LinphoneCore *lc)
 			ms_warning("'%s' on-hold music file does not exist", tmpbuf);
 		}
 	} else {
-		char *default_onhold_music = get_default_onhold_music(lc);
-		linphone_core_set_play_file(lc, default_onhold_music);
-		bctbx_free(default_onhold_music);
+		linphone_core_set_play_file(lc, get_default_onhold_music(lc).c_str());
 	}
 
 	lc->sound_conf.latency=0;
@@ -1313,26 +1302,24 @@ static int _linphone_core_tls_postcheck_callback(void *data, const bctbx_x509_ce
 }
 
 static void certificates_config_read(LinphoneCore *lc) {
-	LinphoneFactory *factory = linphone_factory_get();
-	const char *data_dir = linphone_factory_get_data_resources_dir(factory);
-	char *root_ca_path = bctbx_strdup_printf("%s/rootca.pem", data_dir);
-	const char *rootca = lp_config_get_string(lc->config,"sip","root_ca", NULL);
+	string rootCaPath = static_cast<PlatformHelpers *>(lc->platform_helper)->getDataResource("rootca.pem");
+	const char *rootca = lp_config_get_string(lc->config, "sip", "root_ca", nullptr);
 
 	// If rootca is not existing anymore, we try data_resources_dir/rootca.pem else default from belle-sip
-	if (rootca == NULL  || ((bctbx_file_exist(rootca) != 0 && !bctbx_directory_exists(rootca)))) {
-		//Check root_ca_path
-		if ((bctbx_file_exist(root_ca_path) == 0) || bctbx_directory_exists(root_ca_path))
-			rootca = root_ca_path;
+	if (!rootca || ((bctbx_file_exist(rootca) != 0) && !bctbx_directory_exists(rootca))) {
+		// Check root_ca_path
+		if ((bctbx_file_exist(rootCaPath.c_str()) == 0) || bctbx_directory_exists(rootCaPath.c_str()))
+			rootca = rootCaPath.c_str();
 		else
-			rootca = NULL;
+			rootca = nullptr;
 	}
 
 	if (rootca)
-		linphone_core_set_root_ca(lc,rootca);
-		/*else use default value from belle-sip*/
-	linphone_core_verify_server_certificates(lc, !!lp_config_get_int(lc->config,"sip","verify_server_certs",TRUE));
-	linphone_core_verify_server_cn(lc, !!lp_config_get_int(lc->config,"sip","verify_server_cn",TRUE));
-	bctbx_free(root_ca_path);
+		linphone_core_set_root_ca(lc, rootca);
+	// else use default value from belle-sip
+
+	linphone_core_verify_server_certificates(lc, !!lp_config_get_int(lc->config, "sip", "verify_server_certs", TRUE));
+	linphone_core_verify_server_cn(lc, !!lp_config_get_int(lc->config, "sip", "verify_server_cn", TRUE));
 
 	lc->sal->setTlsPostcheckCallback(_linphone_core_tls_postcheck_callback, lc);
 }
