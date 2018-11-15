@@ -2330,8 +2330,14 @@ void MediaSessionPrivate::handleIceEvents (OrtpEvent *ev) {
 
 void MediaSessionPrivate::handleStreamEvents (int streamIndex) {
 	L_Q();
-	MediaStream *ms = (streamIndex == mainAudioStreamIndex) ? &audioStream->ms :
-		(streamIndex == mainVideoStreamIndex ? &videoStream->ms : &textStream->ms);
+	MediaStream *ms;
+	if (streamIndex == mainAudioStreamIndex)
+		ms = audioStream ? &audioStream->ms : nullptr;
+	else if (streamIndex == mainVideoStreamIndex)
+		ms = videoStream ? &videoStream->ms : nullptr;
+	else
+		ms = textStream ? &textStream->ms : nullptr;
+
 	if (ms) {
 		/* Ensure there is no dangling ICE check list */
 		if (!iceAgent->hasSession())
