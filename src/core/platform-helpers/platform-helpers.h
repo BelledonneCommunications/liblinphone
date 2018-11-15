@@ -42,23 +42,31 @@ public:
 
 	LinphoneCore *getCore() { return mCore; }
 
-	// This method shall retrieve DNS server list from the platform and assign it to the core.
-	virtual void setDnsServers () = 0;
 	virtual void acquireWifiLock () = 0;
 	virtual void releaseWifiLock () = 0;
 	virtual void acquireMcastLock () = 0;
 	virtual void releaseMcastLock () = 0;
 	virtual void acquireCpuLock () = 0;
 	virtual void releaseCpuLock () = 0;
-	virtual std::string getDataPath () = 0;
+
 	virtual std::string getConfigPath () = 0;
-	virtual void setVideoWindow (void *windowId) = 0;
+	virtual std::string getDataPath () = 0;
+	virtual std::string getDataResource (const std::string &filename) = 0;
+	virtual std::string getImageResource (const std::string &filename) = 0;
+	virtual std::string getRingResource (const std::string &filename) = 0;
+	virtual std::string getSoundResource (const std::string &filename) = 0;
+
 	virtual void setVideoPreviewWindow (void *windowId) = 0;
-	virtual void setNetworkReachable (bool reachable) = 0;
+	virtual void setVideoWindow (void *windowId) = 0;
+
+	// This method shall retrieve DNS server list from the platform and assign it to the core.
 	virtual bool isNetworkReachable () = 0;
-	virtual void onLinphoneCoreReady (bool monitoringEnabled) = 0;
 	virtual void onWifiOnlyEnabled (bool enabled) = 0;
+	virtual void setDnsServers () = 0;
 	virtual void setHttpProxy (std::string host, int port) = 0;
+	virtual void setNetworkReachable (bool reachable) = 0;
+
+	virtual void onLinphoneCoreReady (bool monitoringEnabled) = 0;
 
 protected:
 	inline explicit PlatformHelpers (LinphoneCore *lc) : mCore(lc) {}
@@ -71,22 +79,30 @@ public:
 	explicit GenericPlatformHelpers (LinphoneCore *lc);
 	~GenericPlatformHelpers ();
 
-	void setDnsServers () override;
 	void acquireWifiLock () override;
 	void releaseWifiLock () override;
 	void acquireMcastLock () override;
 	void releaseMcastLock () override;
 	void acquireCpuLock () override;
 	void releaseCpuLock () override;
-	std::string getDataPath () override;
+
 	std::string getConfigPath () override;
-	void setVideoWindow (void *windowId) override;
+	std::string getDataPath () override;
+	std::string getDataResource (const std::string &filename) override;
+	std::string getImageResource (const std::string &filename) override;
+	std::string getRingResource (const std::string &filename) override;
+	std::string getSoundResource (const std::string &filename) override;
+
 	void setVideoPreviewWindow (void *windowId) override;
-	void setNetworkReachable (bool reachable) override;
+	void setVideoWindow (void *windowId) override;
+
 	bool isNetworkReachable () override;
-	void onLinphoneCoreReady (bool monitoringEnabled) override;
 	void onWifiOnlyEnabled (bool enabled) override;
+	void setDnsServers () override;
 	void setHttpProxy (std::string host, int port) override;
+	void setNetworkReachable (bool reachable) override;
+
+	void onLinphoneCoreReady (bool monitoringEnabled) override;
 
 private:
 	static int monitorTimerExpired (void *data, unsigned int revents);

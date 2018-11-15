@@ -46,53 +46,59 @@ public:
 	IosPlatformHelpers (LinphoneCore *lc, void *system_context);
 	~IosPlatformHelpers () = default;
 
-	void setDnsServers () override {}
 	void acquireWifiLock () override {}
 	void releaseWifiLock () override {}
 	void acquireMcastLock () override {}
 	void releaseMcastLock () override {}
 	void acquireCpuLock () override;
 	void releaseCpuLock () override;
-	string getDataPath () override { return ""; }
+
 	string getConfigPath () override { return ""; }
-	void setVideoWindow (void *windowId) override {}
+	string getDataPath () override { return ""; }
+	string getDataResource (const string &filename) override;
+	string getImageResource (const string &filename) override;
+	string getRingResource (const string &filename) override;
+	string getSoundResource (const string &filename) override;
+
 	void setVideoPreviewWindow (void *windowId) override {}
-	void setNetworkReachable (bool reachable) override {}
+	void setVideoWindow (void *windowId) override {}
+
 	bool isNetworkReachable () override { return false; }
-	void onLinphoneCoreReady (bool monitoringEnabled) override {}
 	void onWifiOnlyEnabled (bool enabled) override {}
+	void setDnsServers () override {}
 	void setHttpProxy (string host, int port) override {}
+	void setNetworkReachable (bool reachable) override {}
+
+	void onLinphoneCoreReady (bool monitoringEnabled) override {}
 
 private:
 	void bgTaskTimeout ();
 	static void sBgTaskTimeout (void *data);
-	static string getResourceDirPath (CFStringRef framework, CFStringRef resource);
-	static string getResourcePath (CFStringRef framework, CFStringRef resource);
+	static string getResourceDirPath (const string &framework, const string &resource);
+	static string getResourcePath (const string &framework, const string &resource);
 
 	long int mCpuLockTaskId;
 	int mCpuLockCount;
+
+	static const string sFramework;
 };
 
 // =============================================================================
+
+const string IosPlatformHelpers::sFramework = "org.linphone.linphone";
 
 IosPlatformHelpers::IosPlatformHelpers (LinphoneCore *lc, void *system_context) : PlatformHelpers(lc) {
 	mCpuLockCount = 0;
 	mCpuLockTaskId = 0;
 
-	string rootCaPath = getResourcePath(CFSTR("org.linphone.linphone"), CFSTR("rootca.pem"));
-	if (!rootCaPath.empty())
-		linphone_core_set_root_ca(lc, rootCaPath.c_str());
-	else
-		lError() << "IosPlatformHelpers did not find rootca.pem resource";
-
-	string cpimPath = getResourceDirPath(CFSTR("org.linphone.linphone"), CFSTR("cpim_grammar"));
+	string cpimPath = getResourceDirPath(sFramework, "cpim_grammar");
 	if (!cpimPath.empty())
 		belr::GrammarLoader::get().addPath(cpimPath);
 	else
 		lError() << "IosPlatformHelpers did not find cpim grammar resource directory...";
 
 #ifdef VCARD_ENABLED
-	string vcardPath = getResourceDirPath(CFSTR("org.linphone.belcard"), CFSTR("vcard_grammar"));
+	string vcardPath = getResourceDirPath("org.linphone.belcard", "vcard_grammar");
 	if (!vcardPath.empty())
 		belr::GrammarLoader::get().addPath(vcardPath);
 	else
@@ -141,23 +147,45 @@ void IosPlatformHelpers::releaseCpuLock () {
 	mCpuLockTaskId = 0;
 }
 
-string IosPlatformHelpers::getResourceDirPath (CFStringRef framework, CFStringRef resource) {
-	CFBundleRef bundle = CFBundleGetBundleWithIdentifier(framework);
-	CFURLRef resourceUrl = CFBundleCopyResourceURL(bundle, resource, nullptr, nullptr);
+// -----------------------------------------------------------------------------
+
+string IosPlatformHelpers::getDataResource (const string &filename) {
+	return getResourcePath(sFramework, filename);
+}
+
+string IosPlatformHelpers::getImageResource (const string &filename) {
+	return getResourcePath(sFramework, filename);
+}
+
+string IosPlatformHelpers::getRingResource (const string &filename) {
+	return getResourcePath(sFramework, filename);
+}
+
+string IosPlatformHelpers::getSoundResource (const string &filename) {
+	return getResourcePath(sFramework, filename);
+}
+
+// -----------------------------------------------------------------------------
+
+string IosPlatformHelpers::getResourceDirPath (const string &framework, const string &resource) {
+	CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
+	CFStringRef cfFramework = CFStringCreateWithCString(nullptr, framework.c_str(), encodingMethod);
+	CFStringRef cfResource = CFStringCreateWithCString(nullptr, resource.c_str(), encodingMethod);
+	CFBundleRef bundle = CFBundleGetBundleWithIdentifier(cfFramework);
+	CFURLRef resourceUrl = CFBundleCopyResourceURL(bundle, cfResource, nullptr, nullptr);
 	CFURLRef resourceUrlDirectory = CFURLCreateCopyDeletingLastPathComponent(nullptr, resourceUrl);
 	CFStringRef resourcePath = CFURLCopyFileSystemPath(resourceUrlDirectory, kCFURLPOSIXPathStyle);
-	CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
 	string path(CFStringGetCStringPtr(resourcePath, encodingMethod));
-	CFRelease(resourceUrl);
 	CFRelease(resourcePath);
 	CFRelease(resourceUrlDirectory);
+	CFRelease(resourceUrl);
+	CFRelease(cfResource);
+	CFRelease(cfFramework);
 	return path;
 }
 
-string IosPlatformHelpers::getResourcePath (CFStringRef framework, CFStringRef resource) {
-	CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
-	string resourceFile(CFStringGetCStringPtr(resource, encodingMethod));
-	return getResourceDirPath(framework, resource) + "/" + resourceFile;
+string IosPlatformHelpers::getResourcePath (const string &framework, const string &resource) {
+	return getResourceDirPath(framework, resource) + "/" + resource;
 }
 
 // -----------------------------------------------------------------------------
