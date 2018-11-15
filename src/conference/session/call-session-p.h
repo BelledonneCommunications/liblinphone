@@ -72,6 +72,7 @@ protected:
 	void init ();
 
 	void accept (const CallSessionParams *params);
+	void acceptOrTerminateReplacedSessionInIncomingNotification ();
 	virtual LinphoneStatus acceptUpdate (const CallSessionParams *csp, CallSession::State nextState, const std::string &stateInfo);
 	LinphoneStatus checkForAcceptation ();
 	virtual void handleIncomingReceivedStateInIncomingNotification ();
