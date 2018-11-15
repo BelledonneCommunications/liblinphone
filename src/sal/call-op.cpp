@@ -1281,15 +1281,6 @@ SalCallOp *SalCallOp::getReplaces () const {
 		belle_sip_header_replaces_get_from_tag(mReplaces)
 	);
 
-	if (!dialog) {
-		// For backward compatibility with liblinphone <= 3.10.2-243
-		dialog = belle_sip_provider_find_dialog(
-			mRoot->mProvider,
-			belle_sip_header_replaces_get_call_id(mReplaces),
-			belle_sip_header_replaces_get_from_tag(mReplaces),
-			belle_sip_header_replaces_get_to_tag(mReplaces)
-		);
-	}
 	if (dialog)
 		return reinterpret_cast<SalCallOp *>(belle_sip_dialog_get_application_data(dialog));
 	return nullptr;

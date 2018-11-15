@@ -542,12 +542,24 @@ LinphoneStatus CallSessionPrivate::checkForAcceptation () {
 
 void CallSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 	L_Q();
+
 	/* Try to be best-effort in giving real local or routable contact address for 100Rel case */
 	setContactOp();
 	if (notifyRinging)
 		op->notifyRinging(false);
-	if (op->getReplaces() && lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "auto_answer_replacing_calls", 1))
-		q->accept();
+
+	CallSession *replacedSession = nullptr;
+	if (op->getReplaces())
+		replacedSession = reinterpret_cast<CallSession *>(op->getReplaces()->getUserPointer());
+	if (replacedSession) {
+		if (replacedSession->getState() == CallSession::State::Connected) {
+			if (lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "auto_answer_replacing_calls", 1)) {
+				q->accept();
+			}
+		} else {
+			replacedSession->terminate();
+		}
+	}
 }
 
 bool CallSessionPrivate::isReadyForInvite () const {
