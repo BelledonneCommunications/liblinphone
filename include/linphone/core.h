@@ -1539,7 +1539,7 @@ LINPHONE_PUBLIC bool_t linphone_core_lime_available(const LinphoneCore *lc);
  * Tells to LinphoneCore to use LIME X3DH
  * @param[in] lc LinphoneCore object
  * @param[in] enable A boolean value telling whether to enable or disable LIME X3DH
- * @ingroup network_parameters
+ * @ingroup misc
  */
 LINPHONE_PUBLIC void linphone_core_enable_lime_x3dh(LinphoneCore *lc, bool_t enable);
 
@@ -1547,23 +1547,16 @@ LINPHONE_PUBLIC void linphone_core_enable_lime_x3dh(LinphoneCore *lc, bool_t ena
  * Tells wether LIME X3DH is enabled or not
  * @param[in] lc LinphoneCore object
  * @return The current lime state
- * @ingroup network_parameters
+ * @ingroup misc
 **/
 LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_enabled(const LinphoneCore *lc);
 
 /**
  * Tells if LIME X3DH is available
  * @param[in] lc LinphoneCore object
- * @ingroup network_parameters
+ * @ingroup misc
 **/
 LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_available(const LinphoneCore *lc);
-
-/**
- * Deletes local LIME X3DH database
- * @param[in] lc LinphoneCore object
- * @ingroup network_parameters
-**/
-LINPHONE_PUBLIC void linphone_core_delete_local_lime_x3dh_db(const LinphoneCore *lc);
 
 /**
  * Tells whether IPv6 is enabled or not.

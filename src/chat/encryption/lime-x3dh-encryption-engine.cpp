@@ -271,6 +271,13 @@ ChatMessageModifier::Result LimeX3DHEncryptionEngine::processOutgoingMessage (
 
 				Content finalContent = ContentManager::contentListToMultipart(contents, MultipartBoundary, true);
 
+				// Insert protocol param before boundary for flexisip
+				ContentType contentType(finalContent.getContentType());
+				contentType.removeParameter("boundary");
+				contentType.addParameter("protocol", "\"application/lime\"");
+				contentType.addParameter("boundary", MultipartBoundary);
+				finalContent.setContentType(contentType);
+
 				message->setInternalContent(finalContent);
 				message->getPrivate()->send(); // seems to leak when called for the second time
 				*result = ChatMessageModifier::Result::Done;
@@ -316,8 +323,8 @@ ChatMessageModifier::Result LimeX3DHEncryptionEngine::processIncomingMessage (
 
 	if (incomingContentType != expectedContentType) {
 		lError() << "LIMEv2 unexpected content-type: " << incomingContentType;
-		// Set authorization warning flag because incoming message type is unexpected
-		message->getPrivate()->setAuthorizationWarning(true);
+		// Set unencrypted content warning flag because incoming message type is unexpected
+		message->getPrivate()->setUnencryptedContentWarning(true);
 		// Disable sender authentication otherwise the unexpected message will always be discarded
 		message->getPrivate()->enableSenderAuthentication(false);
 		return ChatMessageModifier::Result::Skipped;

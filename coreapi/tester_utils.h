@@ -125,6 +125,76 @@ LINPHONE_PUBLIC int linphone_friend_list_get_revision(const LinphoneFriendList *
 
 LINPHONE_PUBLIC int linphone_remote_provisioning_load_file( LinphoneCore* lc, const char* file_path);
 
+/**
+ * Send an XML-RPC request to delete a Linphone account.
+ * @param[in] creator LinphoneAccountCreator object
+ * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
+ * @donotwrap Exists for tests purposes only
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone(LinphoneAccountCreator *creator);
+
+/**
+ * Send an XML-RPC request to get the confirmation key of a Linphone account.
+ * @param[in] creator LinphoneAccountCreator object
+ * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
+ * @donotwrap Exists for tests purposes only
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key_linphone(LinphoneAccountCreator *creator);
+
+/**
+ * Send a request to delete an account on server.
+ * @param[in] creator LinphoneAccountCreator object
+ * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
+ * @donotwrap Exists for tests purposes only
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_delete_account(LinphoneAccountCreator *creator);
+
+/**
+ * Send a request to get the account confirmation key on server.
+ * @param[in] creator LinphoneAccountCreator object
+ * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
+ * @donotwrap Exists for tests purposes only
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key(LinphoneAccountCreator *creator);
+
+/**
+ * Get the delete account request.
+ * @param[in] cbs LinphoneAccountCreatorCbs object.
+ * @return The current delete account request.
+ * @donotwrap Exists for tests purposes only
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_delete_account(const LinphoneAccountCreatorCbs *cbs);
+
+/**
+ * Assign a user pointer to a LinphoneAccountCreatorCbs object.
+ * @param[in] cbs LinphoneAccountCreatorCbs object.
+ * @param[in] cb The delete account request to be used.
+ * @donotwrap Exists for tests purposes only
+**/
+LINPHONE_PUBLIC void linphone_account_creator_cbs_set_delete_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
+
+/**
+ * Get the get confirmation key request.
+ * @param[in] cbs LinphoneAccountCreatorCbs object.
+ * @return The current is account exist request.
+ * @donotwrap Exists for tests purposes only
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_get_confirmation_key(const LinphoneAccountCreatorCbs *cbs);
+
+/**
+ * Assign a user pointer to a LinphoneAccountCreatorCbs object.
+ * @param[in] cbs LinphoneAccountCreatorCbs object.
+ * @param[in] cb The get confirmation key request to be used.
+ * @donotwrap Exists for tests purposes only
+**/
+LINPHONE_PUBLIC void linphone_account_creator_cbs_set_get_confirmation_key(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
+
+/**
+ * Deletes local LIME X3DH database
+ * @param[in] lc LinphoneCore object
+ * @donotwrap Exists for tests purposes only
+**/
+LINPHONE_PUBLIC void linphone_core_delete_local_encryption_db(const LinphoneCore *lc);
 
 #ifndef __cplusplus
 LINPHONE_PUBLIC Sal *linphone_core_get_sal(const LinphoneCore *lc);

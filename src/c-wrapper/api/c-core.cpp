@@ -51,9 +51,6 @@ static void _linphone_core_destructor (LinphoneCore *lc) {
 }
 
 void linphone_core_set_im_encryption_engine (LinphoneCore *lc, LinphoneImEncryptionEngine *imee) {
-	auto core = L_GET_CPP_PTR_FROM_C_OBJECT(lc);
-	core->setEncryptionEngine(new LimeLegacyEncryptionEngine(core));
-
 	if (lc->im_encryption_engine) {
 		linphone_im_encryption_engine_unref(lc->im_encryption_engine);
 		lc->im_encryption_engine = NULL;
@@ -77,10 +74,8 @@ bool_t linphone_core_lime_x3dh_available (const LinphoneCore *lc) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeX3dhAvailable();
 }
 
-void linphone_core_delete_local_lime_x3dh_db (const LinphoneCore *lc) {
-	if (L_GET_CPP_PTR_FROM_C_OBJECT(lc)->limeX3dhEnabled()) {
-		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getEncryptionEngine()->cleanDb();
-	} else {
-		lWarning() << "Trying to clean local LIME X3DH databases but LIME X3DH is disabled";
-	}
+void linphone_core_delete_local_encryption_db (const LinphoneCore *lc) {
+	auto encryptionEngine = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getEncryptionEngine();
+	if (encryptionEngine)
+		encryptionEngine->cleanDb();
 }

@@ -104,9 +104,9 @@ struct _LinphoneAccountCreator {
 	LinphoneTransportType transport; /**< Transport used */
 
 	// test
-	int account_created;
-	int confirmation_key;
-	int account_activated;
+	bool_t account_created;
+	bool_t confirmation_key_received;
+	bool_t account_activated;
 
 	/* Deprecated */
 	char *route;
@@ -141,14 +141,6 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_account_linphone(LinphoneAccountCreator *creator);
 
 /**
- * Send an XML-RPC request to delete a Linphone account.
- * @param[in] creator LinphoneAccountCreator object
- * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
- * @donotwrap
-**/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone(LinphoneAccountCreator *creator);
-
-/**
  * Send an XML-RPC request to activate a Linphone account with phone number.
  * @param[in] creator LinphoneAccountCreator object
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
@@ -168,14 +160,6 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_activate_e
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated_linphone(LinphoneAccountCreator *creator);
-
-/**
- * Send an XML-RPC request to get the confirmation key of a Linphone account.
- * @param[in] creator LinphoneAccountCreator object
- * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
- * @donotwrap
-**/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key_linphone(LinphoneAccountCreator *creator);
 
 /**
  * Send an XML-RPC request to test the existence a phone number with a Linphone account.

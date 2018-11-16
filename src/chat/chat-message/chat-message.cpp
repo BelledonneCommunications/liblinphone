@@ -557,10 +557,9 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::Cpim;
 	}
 
-
-	// Message Authorization
-	if (getAuthorizationWarning()) {
-		lWarning() << "Message authorization warning raised by encryption engine";
+	// Check if incoming message was flagged as unencrypted in an encrypted context
+	if (getUnencryptedContentWarning()) {
+		lWarning() << "Unencrypted content warning raised by encryption engine";
 
 		// Allow error IMDN exclusively
 		if (q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::Imdn && !Imdn::isError(q->getSharedFromThis())) {

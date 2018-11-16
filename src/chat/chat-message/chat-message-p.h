@@ -135,8 +135,8 @@ public:
 
 	void enableSenderAuthentication (bool value) { senderAuthenticationEnabled = value; }
 
-	void setAuthorizationWarning (bool value) { authorizationWarning = value; } // TODO find better name
-	bool getAuthorizationWarning () { return authorizationWarning; } // TODO find better name
+	void setUnencryptedContentWarning (bool value) { unencryptedContentWarning = value; }
+	bool getUnencryptedContentWarning () { return unencryptedContentWarning; }
 
 	// -----------------------------------------------------------------------------
 	// Deprecated methods only used for C wrapper, to be removed some day...
@@ -225,7 +225,7 @@ private:
 	IdentityAddress fromAddress;
 	IdentityAddress authenticatedFromAddress;
 	bool senderAuthenticationEnabled = true;
-	bool authorizationWarning = false; // TODO find a better name
+	bool unencryptedContentWarning = false;
 	IdentityAddress toAddress;
 
 	ChatMessage::State state = ChatMessage::State::Idle;
