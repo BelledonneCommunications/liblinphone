@@ -576,18 +576,8 @@ void MediaSessionPrivate::setRemoteParams (MediaSessionParams *msp) {
 	remoteParams = msp;
 }
 
-MediaStream * MediaSessionPrivate::getMediaStream (LinphoneStreamType type) const {
-	switch (type) {
-		case LinphoneStreamTypeAudio:
-			return &audioStream->ms;
-		case LinphoneStreamTypeVideo:
-			return &videoStream->ms;
-		case LinphoneStreamTypeText:
-			return &textStream->ms;
-		case LinphoneStreamTypeUnknown:
-		default:
-			return nullptr;
-	}
+MediaStream *MediaSessionPrivate::getMediaStream (LinphoneStreamType type) const {
+	return getMediaStream(int(type));
 }
 
 int MediaSessionPrivate::getRtcpPort (LinphoneStreamType type) const  {
@@ -1059,13 +1049,13 @@ unsigned int MediaSessionPrivate::getMediaStartCount () const {
 	return mediaStartCount;
 }
 
-MediaStream * MediaSessionPrivate::getMediaStream (int streamIndex) const {
+MediaStream *MediaSessionPrivate::getMediaStream (int streamIndex) const {
 	if (streamIndex == mainAudioStreamIndex)
-		return &audioStream->ms;
+		return audioStream ? &audioStream->ms : nullptr;
 	if (streamIndex == mainVideoStreamIndex)
-		return &videoStream->ms;
+		return videoStream ? &videoStream->ms : nullptr;
 	if (streamIndex == mainTextStreamIndex)
-		return &textStream->ms;
+		return textStream ? &textStream->ms : nullptr;
 	lError() << "getMediaStream(): no stream index " << streamIndex;
 	return nullptr;
 }
@@ -2330,14 +2320,8 @@ void MediaSessionPrivate::handleIceEvents (OrtpEvent *ev) {
 
 void MediaSessionPrivate::handleStreamEvents (int streamIndex) {
 	L_Q();
-	MediaStream *ms;
-	if (streamIndex == mainAudioStreamIndex)
-		ms = audioStream ? &audioStream->ms : nullptr;
-	else if (streamIndex == mainVideoStreamIndex)
-		ms = videoStream ? &videoStream->ms : nullptr;
-	else
-		ms = textStream ? &textStream->ms : nullptr;
 
+	MediaStream *ms = getMediaStream(streamIndex);
 	if (ms) {
 		/* Ensure there is no dangling ICE check list */
 		if (!iceAgent->hasSession())
