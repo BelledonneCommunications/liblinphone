@@ -109,35 +109,42 @@ static void rtcp_received(stats* counters, mblk_t *packet) {
 }
 
 void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *lstats) {
-	stats* counters = get_stats(lc);
+	const int updated = _linphone_call_stats_get_updated(lstats);
+	stats *counters = get_stats(lc);
+
 	counters->number_of_LinphoneCallStatsUpdated++;
-	if (_linphone_call_stats_get_updated(lstats) & LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE) {
+	if (updated & LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE) {
 		counters->number_of_rtcp_received++;
 		if (_linphone_call_stats_rtcp_received_via_mux(lstats)){
 			counters->number_of_rtcp_received_via_mux++;
 		}
 		rtcp_received(counters, _linphone_call_stats_get_received_rtcp(lstats));
 	}
-	if (_linphone_call_stats_get_updated(lstats) & LINPHONE_CALL_STATS_SENT_RTCP_UPDATE ) {
+	if (updated & LINPHONE_CALL_STATS_SENT_RTCP_UPDATE ) {
 		counters->number_of_rtcp_sent++;
 	}
-	if (_linphone_call_stats_get_updated(lstats) & LINPHONE_CALL_STATS_PERIODICAL_UPDATE ) {
-		int tab_size = sizeof (counters->audio_download_bandwidth)/sizeof(int);
-		int index = (counters->current_bandwidth_index[linphone_call_stats_get_type(lstats)]++) % tab_size;
-		LinphoneCallStats *audio_stats, *video_stats;
-		audio_stats = linphone_call_get_audio_stats(call);
-		video_stats = linphone_call_get_video_stats(call);
-		if (linphone_call_stats_get_type(lstats) == LINPHONE_CALL_STATS_AUDIO) {
-			counters->audio_download_bandwidth[index] = (int)linphone_call_stats_get_download_bandwidth(audio_stats);
-			counters->audio_upload_bandwidth[index] = (int)linphone_call_stats_get_upload_bandwidth(audio_stats);
-		} else {
-			counters->video_download_bandwidth[index] = (int)linphone_call_stats_get_download_bandwidth(video_stats);
-			counters->video_upload_bandwidth[index] = (int)linphone_call_stats_get_upload_bandwidth(video_stats);
-		}
-		linphone_call_stats_unref(audio_stats);
-		linphone_call_stats_unref(video_stats);
-	}
+	if (updated & LINPHONE_CALL_STATS_PERIODICAL_UPDATE ) {
+		const int tab_size = sizeof counters->audio_download_bandwidth / sizeof(int);
 
+		LinphoneCallStats *call_stats;
+		int index;
+
+		int type = linphone_call_stats_get_type(lstats);
+		if (type != LINPHONE_CALL_STATS_AUDIO && type != LINPHONE_CALL_STATS_VIDEO)
+			return; // Avoid out of bounds if type is TEXT.
+
+		index = (counters->current_bandwidth_index[type]++) % tab_size;
+		if (type == LINPHONE_CALL_STATS_AUDIO) {
+			call_stats = linphone_call_get_audio_stats(call);
+			counters->audio_download_bandwidth[index] = (int)linphone_call_stats_get_download_bandwidth(call_stats);
+			counters->audio_upload_bandwidth[index] = (int)linphone_call_stats_get_upload_bandwidth(call_stats);
+		} else {
+			call_stats = linphone_call_get_video_stats(call);
+			counters->video_download_bandwidth[index] = (int)linphone_call_stats_get_download_bandwidth(call_stats);
+			counters->video_upload_bandwidth[index] = (int)linphone_call_stats_get_upload_bandwidth(call_stats);
+		}
+		linphone_call_stats_unref(call_stats);
+	}
 }
 
 void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token) {
