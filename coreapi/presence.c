@@ -1993,8 +1993,11 @@ void linphone_notify_recv(LinphoneCore *lc, SalOp *op, SalSubscribeStatus ss, Sa
 		}
 	}else{
 		ms_message("But this person is not part of our friend list, so we don't care.");
+		/*
+		 * This case may happen when a friend has been removed from FriendList, in which case it its presence is no longer managed.
+		 * We don't have to release() or unref() the op, because it is still hold by the detached LinphoneFriend.
+		 */
 		linphone_presence_model_unref(presence);
-		op->release();
 		return ;
 	}
 	if (ss==SalSubscribeTerminated){
