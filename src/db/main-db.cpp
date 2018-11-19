@@ -478,7 +478,7 @@ long long MainDbPrivate::selectOneToOneChatRoomId (long long sipAddressIdA, long
 
 	soci::session *session = dbSession.getBackendSession();
 	*session << Statements::get(Statements::SelectOneToOneChatRoomId),
-		soci::use(sipAddressIdA), soci::use(sipAddressIdB), soci::use(sipAddressIdA), soci::use(sipAddressIdB),
+		soci::use(sipAddressIdA, "1"), soci::use(sipAddressIdB, "2"),
 		soci::into(chatRoomId);
 
 	return session->got_data() ? chatRoomId : -1;
