@@ -218,7 +218,7 @@ typedef struct SalIceRemoteCandidate {
 typedef struct SalSrtpCryptoAlgo {
 	unsigned int tag;
 	MSCryptoSuite algo;
-	char master_key[SAL_SRTP_KEY_SIZE];
+	char master_key[SAL_SRTP_KEY_SIZE + 1];
 } SalSrtpCryptoAlgo;
 
 #define SAL_CRYPTO_ALGO_MAX 4
