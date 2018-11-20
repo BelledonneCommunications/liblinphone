@@ -1045,6 +1045,10 @@ const char *linphone_proxy_config_get_contact_uri_parameters(const LinphoneProxy
 	return cfg->contact_uri_params;
 }
 
+bool_t linphone_proxy_config_lime_x3dh_enabled(const LinphoneProxyConfig *cfg){
+	return cfg->lime_x3dh;
+}
+
 void linphone_proxy_config_enable_lime_x3dh(LinphoneProxyConfig *cfg, const bool_t val){
 	cfg->lime_x3dh=val;
 }
