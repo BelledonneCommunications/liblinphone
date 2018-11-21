@@ -41,12 +41,14 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.ProxyInfo;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.Build;
 import android.view.Surface;
 import android.view.TextureView;
 
+import java.lang.Runnable;
 import java.net.InetAddress;
 import java.util.List;
 import java.io.File;
@@ -86,6 +88,8 @@ public class AndroidPlatformHelper {
 	private boolean mWifiOnly;
 	private boolean mUsingHttpProxy;
 	private NetworkManagerAbove21 mNetworkManagerAbove21;
+	private Handler mMainHandler;
+	private Runnable mNetworkUpdateRunner;
 
 	private native void setNativePreviewWindowId(long nativePtr, Object view);
 	private native void setNativeVideoWindowId(long nativePtr, Object view);
@@ -98,6 +102,14 @@ public class AndroidPlatformHelper {
 		mWifiOnly = wifiOnly;
 		mResources = mContext.getResources();
 		MediastreamerAndroidContext.setContext(mContext);
+
+		mMainHandler = new Handler(mContext.getMainLooper());
+		mNetworkUpdateRunner = new Runnable() {
+			@Override
+			public void run() {
+				updateNetworkReachability();
+			}
+		};
 
 		WifiManager wifiMgr = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
 		mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
@@ -148,12 +160,12 @@ public class AndroidPlatformHelper {
             mContext.registerReceiver(mDozeReceiver, mDozeIntentFilter);
 		}
 
-		updateNetworkReachability();
+		postNetworkUpdateRunner();
 	}
 
 	public void onWifiOnlyEnabled(boolean enabled) {
 		mWifiOnly = enabled;
-		updateNetworkReachability();
+		postNetworkUpdateRunner();
 	}
 
 	public Object getPowerManager() {
@@ -392,6 +404,10 @@ public class AndroidPlatformHelper {
 			mSurface = new Surface(textureView.getSurfaceTexture());
 			setNativeVideoWindowId(mNativePtr, mSurface);
 		}
+	}
+
+	public void postNetworkUpdateRunner() {
+		mMainHandler.post(mNetworkUpdateRunner);
 	}
 
 	public void updateNetworkReachability() {

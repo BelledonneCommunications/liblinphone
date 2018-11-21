@@ -41,7 +41,7 @@ public class NetworkManager extends BroadcastReceiver {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         Boolean lNoConnectivity = intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
         if (mHelper != null) {
-            mHelper.updateNetworkReachability();
+            mHelper.postNetworkUpdateRunner();
         }
     }
 

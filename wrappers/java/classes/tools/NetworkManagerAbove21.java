@@ -47,12 +47,12 @@ public class NetworkManagerAbove21 {
 			new ConnectivityManager.NetworkCallback() {
 				@Override
 				public void onAvailable(Network network) {
-					mHelper.updateNetworkReachability();
+					mHelper.postNetworkUpdateRunner();
 				}
 
 				@Override
 				public void onLost(Network network) {
-					mHelper.updateNetworkReachability();
+					mHelper.postNetworkUpdateRunner();
 				}
 			}
 		);
