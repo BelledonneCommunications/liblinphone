@@ -503,6 +503,7 @@ class CParser(object):
 			'LinphoneChatMessageState'                   : 'LinphoneChatMessage',
 			'LinphoneCoreLogCollectionUploadState'       : 'LinphoneCore',
 			'LinphoneEventLogType'                       : 'LinphoneEventLog',
+			'LinphoneSecurityEventType'                  : 'LinphoneEventLog',
 			'LinphoneFriendListStatus'                   : 'LinphoneFriendList',
 			'LinphoneFriendListSyncStatus'               : 'LinphoneFriendList',
 			'LinphonePlayerState'                        : 'LinphonePlayer',
