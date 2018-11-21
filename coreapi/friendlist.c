@@ -635,7 +635,7 @@ LinphoneFriendListStatus linphone_friend_list_import_friend(LinphoneFriendList *
 }
 
 static void carddav_done(LinphoneCardDavContext *cdc, bool_t success, const char *msg) {
-	if (cdc && cdc->friend_list->cbs->sync_state_changed_cb) {
+	if (cdc && cdc->friend_list->cbs && cdc->friend_list->cbs->sync_state_changed_cb) {
 		cdc->friend_list->cbs->sync_state_changed_cb(cdc->friend_list, success ? LinphoneFriendListSyncSuccessful : LinphoneFriendListSyncFailure, msg);
 	}
 	linphone_carddav_context_destroy(cdc);
