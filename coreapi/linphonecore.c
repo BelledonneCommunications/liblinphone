@@ -2361,6 +2361,9 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 #endif
 
 	lc->network_last_status = FALSE;
+	lc->network_reachable_user = TRUE;
+	lc->sip_network_reachable_user = FALSE;
+	lc->media_network_reachable_user = FALSE;
 
 	/* Create the http provider in dual stack mode (ipv4 and ipv6.
 	 * If this creates problem, we may need to implement parallel ipv6/ ipv4 http requests in belle-sip.
@@ -6354,7 +6357,7 @@ void linphone_core_refresh_registers(LinphoneCore* lc) {
 
 void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_reachable) {
 	if (lc->auto_net_state_mon) {
-		set_network_reachable(lc, lc->network_reachable && is_reachable, ms_time(NULL));
+		set_network_reachable(lc, lc->network_reachable_user && is_reachable, ms_time(NULL));
 		notify_network_reachable_change(lc);
 	}
 }
@@ -6364,7 +6367,7 @@ void linphone_core_set_network_reachable(LinphoneCore *lc, bool_t is_reachable) 
 
 	if (lc->auto_net_state_mon) reachable = reachable && getPlatformHelpers(lc)->isNetworkReachable();
 
-	lc->network_reachable = is_reachable;
+	lc->network_reachable_user = is_reachable;
 	set_network_reachable(lc, reachable, ms_time(NULL));
 	notify_network_reachable_change(lc);
 }
