@@ -174,7 +174,7 @@ static void subscriber_no_longer_reachable(void){
 
 	/*make sure marie subscribe is not reset by accident because of code below located in linphone_core_iterate
 
-	 if (lc->sip_network_reachable && lc->netup_time!=0 && (current_real_time-lc->netup_time)>3){
+	 if (lc->sip_network_state.global_state && lc->netup_time!=0 && (current_real_time-lc->netup_time)>3){
 
 		linphone_core_send_initial_subscribes(lc);
 	}

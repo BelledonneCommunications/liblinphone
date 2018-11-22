@@ -290,6 +290,12 @@ struct net_config
 	bool_t nat_sdp_only;
 };
 
+struct net_state
+{
+	bool_t global_state;
+	bool_t user_state;
+};
+
 struct sound_config
 {
 	struct _MSSndCard * ring_sndcard;	/* the playback sndcard currently used */
@@ -777,9 +783,8 @@ namespace LinphonePrivate {
 	bool_t bl_refresh; \
 	bool_t preview_finished; \
 	bool_t auto_net_state_mon; \
-	bool_t network_reachable; \
-	bool_t sip_network_reachable; \
-	bool_t media_network_reachable; \
+	net_state_t sip_network_state; \
+	net_state_t media_network_state; \
 	bool_t network_reachable_to_be_notified; \
 	bool_t use_preview_window; \
 	bool_t network_last_status; \

@@ -111,7 +111,7 @@ void GenericPlatformHelpers::setNetworkReachable (bool reachable) {
 }
 
 
-void GenericPlatformHelpers::onLinphoneCoreReady (bool monitoringEnabled) {
+void GenericPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
 	if (!monitoringEnabled) return;
 
 	if (!mMonitorTimer) {
@@ -124,8 +124,9 @@ void GenericPlatformHelpers::onLinphoneCoreReady (bool monitoringEnabled) {
 	} else {
 		belle_sip_source_set_timeout(mMonitorTimer, DefaultMonitorTimeout * 1000);
 	}
-	//get ip right now to avoid waiting for 5s
-	monitorTimerExpired(this,0);
+
+	// Get ip right now to avoid waiting for 5s
+	monitorTimerExpired(this, 0);
 }
 
 

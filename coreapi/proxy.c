@@ -1312,7 +1312,7 @@ SipSetup *linphone_proxy_config_get_sip_setup(LinphoneProxyConfig *cfg){
 static bool_t can_register(LinphoneProxyConfig *cfg){
 	LinphoneCore *lc=cfg->lc;
 	if (lc->sip_conf.register_only_when_network_is_up){
-		return lc->sip_network_reachable;
+		return lc->sip_network_state.global_state;
 	}
 	return TRUE;
 }
