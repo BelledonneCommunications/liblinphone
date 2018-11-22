@@ -214,7 +214,7 @@ static void account_created_in_db_cb(LinphoneAccountCreator *creator, LinphoneAc
 			creator->account_created = TRUE;
 			break;
 		default:
-			ms_warning("Account not created on DB for %s.", linphone_account_creator_get_username(creator));
+			ms_fatal("Account not created on DB for %s.", linphone_account_creator_get_username(creator));
 			creator->account_created = FALSE;
 			break;
 	}
