@@ -2362,8 +2362,8 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	lc->network_last_status = FALSE;
 	lc->network_reachable_user = TRUE;
-	lc->sip_network_reachable_user = FALSE;
-	lc->media_network_reachable_user = FALSE;
+	lc->sip_network_reachable = FALSE;
+	lc->media_network_reachable = FALSE;
 
 	/* Create the http provider in dual stack mode (ipv4 and ipv6.
 	 * If this creates problem, we may need to implement parallel ipv6/ ipv4 http requests in belle-sip.
