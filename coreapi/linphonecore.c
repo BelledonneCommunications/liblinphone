@@ -2083,8 +2083,6 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 		lc->provisioning_http_listener = NULL;
 	}
 
-	getPlatformHelpers(lc)->onLinphoneCoreReady(!!lc->auto_net_state_mon);
-
 	linphone_core_set_state(lc,LinphoneGlobalOn,"Ready");
 }
 
@@ -2418,6 +2416,8 @@ void linphone_core_start (LinphoneCore *lc) {
 		belle_tls_crypto_config_set_root_ca(lc->http_crypto_config, lc->sal->getRootCa().c_str());
 		belle_http_provider_set_tls_crypto_config(lc->http_provider, lc->http_crypto_config);
 	}
+
+	getPlatformHelpers(lc)->onLinphoneCoreStart(!!lc->auto_net_state_mon);
 
 	linphone_core_set_state(lc, LinphoneGlobalConfiguring, "Configuring");
 

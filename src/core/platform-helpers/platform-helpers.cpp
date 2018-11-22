@@ -111,7 +111,7 @@ void GenericPlatformHelpers::setNetworkReachable (bool reachable) {
 }
 
 
-void GenericPlatformHelpers::onLinphoneCoreReady (bool monitoringEnabled) {
+void GenericPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
 	if (!monitoringEnabled) return;
 
 	if (!mMonitorTimer) {

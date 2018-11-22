@@ -69,7 +69,7 @@ public:
 	void setHttpProxy (string host, int port) override {}
 	void setNetworkReachable (bool reachable) override {}
 
-	void onLinphoneCoreReady (bool monitoringEnabled) override {}
+	void onLinphoneCoreStart (bool monitoringEnabled) override {}
 
 private:
 	void bgTaskTimeout ();

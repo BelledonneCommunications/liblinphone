@@ -67,7 +67,7 @@ public:
 	virtual void setHttpProxy (std::string host, int port) = 0;
 	virtual void setNetworkReachable (bool reachable) = 0;
 
-	virtual void onLinphoneCoreReady (bool monitoringEnabled) = 0;
+	virtual void onLinphoneCoreStart (bool monitoringEnabled) = 0;
 
 protected:
 	inline explicit PlatformHelpers (LinphoneCore *lc) : mCore(lc) {}
@@ -109,7 +109,7 @@ public:
 	void setHttpProxy (std::string host, int port) override;
 	void setNetworkReachable (bool reachable) override;
 
-	void onLinphoneCoreReady (bool monitoringEnabled) override;
+	void onLinphoneCoreStart (bool monitoringEnabled) override;
 
 private:
 	static int monitorTimerExpired (void *data, unsigned int revents);

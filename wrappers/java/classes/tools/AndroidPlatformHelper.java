@@ -140,7 +140,7 @@ public class AndroidPlatformHelper {
 		}
 	}
 
-	public void onLinphoneCoreReady(boolean monitoringEnabled) {
+	public void onLinphoneCoreStart(boolean monitoringEnabled) {
 		if (!monitoringEnabled) return;
 		
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
