@@ -337,7 +337,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 	long long id = selectChatRoomId(peerSipAddressId, localSipAddressId);
 	if (id >= 0) {
 		// The chat room is already stored in DB, but still update the notify id that might have changed
-		*dbSession.getBackendSession() << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :conferenceId",
+		*dbSession.getBackendSession() << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :chatRoomId",
 			soci::use(notifyId), soci::use(id);
 		return id;
 	}
@@ -390,12 +390,12 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 }
 
 long long MainDbPrivate::insertChatRoomParticipant (
-	long long conferenceId,
+	long long chatRoomId,
 	long long participantSipAddressId,
 	bool isAdmin
 ) {
 	soci::session *session = dbSession.getBackendSession();
-	long long id = selectChatRoomParticipantId(conferenceId, participantSipAddressId);
+	long long id = selectChatRoomParticipantId(chatRoomId, participantSipAddressId);
 	if (id >= 0) {
 		// See: https://stackoverflow.com/a/15299655 (cast to reference)
 		*session << "UPDATE chat_room_participant SET is_admin = :isAdmin WHERE id = :id",
@@ -404,8 +404,8 @@ long long MainDbPrivate::insertChatRoomParticipant (
 	}
 
 	*session << "INSERT INTO chat_room_participant (chat_room_id, participant_sip_address_id, is_admin)"
-		" VALUES (:conferenceId, :participantSipAddressId, :isAdmin)",
-		soci::use(conferenceId), soci::use(participantSipAddressId), soci::use(static_cast<const int &>(isAdmin));
+		" VALUES (:chatRoomId, :participantSipAddressId, :isAdmin)",
+		soci::use(chatRoomId), soci::use(participantSipAddressId), soci::use(static_cast<const int &>(isAdmin));
 
 	return dbSession.getLastInsertId();
 }
@@ -470,12 +470,12 @@ long long MainDbPrivate::selectChatRoomId (const ConferenceId &conferenceId) con
 	return selectChatRoomId(peerSipAddressId, localSipAddressId);
 }
 
-long long MainDbPrivate::selectChatRoomParticipantId (long long conferenceId, long long participantSipAddressId) const {
+long long MainDbPrivate::selectChatRoomParticipantId (long long chatRoomId, long long participantSipAddressId) const {
 	long long id;
 
 	soci::session *session = dbSession.getBackendSession();
 	*session << Statements::get(Statements::SelectChatRoomParticipantId),
-		soci::use(conferenceId), soci::use(participantSipAddressId), soci::into(id);
+		soci::use(chatRoomId), soci::use(participantSipAddressId), soci::into(id);
 
 	return session->got_data() ? id : -1;
 }
@@ -502,10 +502,10 @@ void MainDbPrivate::deleteContents (long long chatMessageId) {
 		soci::use(chatMessageId);
 }
 
-void MainDbPrivate::deleteChatRoomParticipant (long long conferenceId, long long participantSipAddressId) {
+void MainDbPrivate::deleteChatRoomParticipant (long long chatRoomId, long long participantSipAddressId) {
 	*dbSession.getBackendSession() << "DELETE FROM chat_room_participant"
-		" WHERE chat_room_id = :conferenceId AND participant_sip_address_id = :participantSipAddressId",
-		soci::use(conferenceId), soci::use(participantSipAddressId);
+		" WHERE chat_room_id = :chatRoomId AND participant_sip_address_id = :participantSipAddressId",
+		soci::use(chatRoomId), soci::use(participantSipAddressId);
 }
 
 void MainDbPrivate::deleteChatRoomParticipantDevice (
@@ -531,28 +531,17 @@ shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceEvent (
 		long long eventId = getConferenceEventIdFromRow(row);
 		shared_ptr<EventLog> eventLog = getEventFromCache(eventId);
 		if (!eventLog) {
-			EventLog::Type type = EventLog::Type(row.get<int>(1));
-			switch (type) {
-				case EventLog::Type::ConferenceChatMessage:
-					eventLog = selectConferenceChatMessageEvent(chatRoom, type, row);
-					break;
-				case EventLog::Type::ConferenceSecurityEvent:
-					eventLog = selectConferenceSecurityEvent(chatRoom->getConferenceId(), type, row);
-					break;
-				default:
-					return nullptr;
-			}
-
+			eventLog = selectConferenceChatMessageEvent(chatRoom, type, row);
 			if (eventLog)
 				cache(eventLog, eventId);
 		}
 		return eventLog;
 	}
 
-	return selectGenericConferenceNotifiedEvent(chatRoom->getConferenceId(), row);
+	return selectConferenceInfoEvent(chatRoom->getConferenceId(), row);
 }
 
-shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceNotifiedEvent (
+shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 	const ConferenceId &conferenceId,
 	const soci::row &row
 ) const {
@@ -589,12 +578,12 @@ shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceNotifiedEvent (
 			eventLog = selectConferenceParticipantDeviceEvent(conferenceId, type, row);
 			break;
 
-		case EventLog::Type::ConferenceSecurityEvent:
-			eventLog = selectConferenceSecurityEvent(conferenceId, type, row);
-			break;
-
 		case EventLog::Type::ConferenceSubjectChanged:
 			eventLog = selectConferenceSubjectEvent(conferenceId, type, row);
+			break;
+
+		case EventLog::Type::ConferenceSecurityEvent:
+			eventLog = selectConferenceSecurityEvent(conferenceId, type, row);
 			break;
 	}
 
@@ -732,36 +721,36 @@ long long MainDbPrivate::insertEvent (const shared_ptr<EventLog> &eventLog) {
 	return dbSession.getLastInsertId();
 }
 
-long long MainDbPrivate::insertConferenceEvent (const shared_ptr<EventLog> &eventLog, long long *conferenceId) {
+long long MainDbPrivate::insertConferenceEvent (const shared_ptr<EventLog> &eventLog, long long *chatRoomId) {
 	shared_ptr<ConferenceEvent> conferenceEvent = static_pointer_cast<ConferenceEvent>(eventLog);
 
 	long long eventId = -1;
-	const long long &curConferenceId = selectChatRoomId(conferenceEvent->getConferenceId());
-	if (curConferenceId < 0) {
+	const ConferenceId &conferenceId = conferenceEvent->getConferenceId();
+	const long long &curChatRoomId = selectChatRoomId(conferenceId);
+	if (curChatRoomId < 0) {
 		// A conference event can be inserted in database only if chat room exists.
 		// Otherwise it's an error.
-		const ConferenceId &conferenceId = conferenceEvent->getConferenceId();
 		lError() << "Unable to find chat room storage id of: " << conferenceId << ".";
 	} else {
 		eventId = insertEvent(eventLog);
 
 		soci::session *session = dbSession.getBackendSession();
 		*session << "INSERT INTO conference_event (event_id, chat_room_id)"
-			" VALUES (:eventId, :conferenceId)", soci::use(eventId), soci::use(curConferenceId);
+			" VALUES (:eventId, :chatRoomId)", soci::use(eventId), soci::use(curChatRoomId);
 
 		const tm &lastUpdateTime = Utils::getTimeTAsTm(eventLog->getCreationTime());
 		*session << "UPDATE chat_room SET last_update_time = :lastUpdateTime"
-			" WHERE id = :conferenceId", soci::use(lastUpdateTime),
-			soci::use(curConferenceId);
+			" WHERE id = :chatRoomId", soci::use(lastUpdateTime),
+			soci::use(curChatRoomId);
 
 		if (eventLog->getType() == EventLog::Type::ConferenceTerminated)
-			*session << "UPDATE chat_room SET flags = 1, last_notify_id = 0 WHERE id = :conferenceId", soci::use(curConferenceId);
+			*session << "UPDATE chat_room SET flags = 1, last_notify_id = 0 WHERE id = :chatRoomId", soci::use(curChatRoomId);
 		else if (eventLog->getType() == EventLog::Type::ConferenceCreated)
-			*session << "UPDATE chat_room SET flags = 0 WHERE id = :conferenceId", soci::use(curConferenceId);
+			*session << "UPDATE chat_room SET flags = 0 WHERE id = :chatRoomId", soci::use(curChatRoomId);
 	}
 
-	if (conferenceId)
-		*conferenceId = curConferenceId;
+	if (chatRoomId)
+		*chatRoomId = curChatRoomId;
 
 	return eventId;
 }
@@ -874,9 +863,9 @@ void MainDbPrivate::updateConferenceChatMessageEvent (const shared_ptr<EventLog>
 			setChatMessageParticipantState(eventLog, participant->getAddress(), state, std::time(nullptr));
 }
 
-long long MainDbPrivate::insertConferenceNotifiedEvent (const shared_ptr<EventLog> &eventLog, long long *conferenceId) {
-	long long curConferenceId;
-	const long long &eventId = insertConferenceEvent(eventLog, &curConferenceId);
+long long MainDbPrivate::insertConferenceNotifiedEvent (const shared_ptr<EventLog> &eventLog, long long *chatRoomId) {
+	long long curChatRoomId;
+	const long long &eventId = insertConferenceEvent(eventLog, &curChatRoomId);
 	if (eventId < 0)
 		return -1;
 
@@ -885,21 +874,21 @@ long long MainDbPrivate::insertConferenceNotifiedEvent (const shared_ptr<EventLo
 	soci::session *session = dbSession.getBackendSession();
 	*session << "INSERT INTO conference_notified_event (event_id, notify_id)"
 		" VALUES (:eventId, :notifyId)", soci::use(eventId), soci::use(lastNotifyId);
-	*session << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :conferenceId",
-		soci::use(lastNotifyId), soci::use(curConferenceId);
+	*session << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :chatRoomId",
+		soci::use(lastNotifyId), soci::use(curChatRoomId);
 
-	if (conferenceId)
-		*conferenceId = curConferenceId;
+	if (chatRoomId)
+		*chatRoomId = curChatRoomId;
 
 	return eventId;
 }
 
 long long MainDbPrivate::insertConferenceParticipantEvent (
 	const shared_ptr<EventLog> &eventLog,
-	long long *conferenceId
+	long long *chatRoomId
 ) {
-	long long curConferenceId;
-	const long long &eventId = insertConferenceNotifiedEvent(eventLog, &curConferenceId);
+	long long curChatRoomId;
+	const long long &eventId = insertConferenceNotifiedEvent(eventLog, &curChatRoomId);
 	if (eventId < 0)
 		return -1;
 
@@ -918,26 +907,26 @@ long long MainDbPrivate::insertConferenceParticipantEvent (
 		case EventLog::Type::ConferenceParticipantAdded:
 		case EventLog::Type::ConferenceParticipantSetAdmin:
 		case EventLog::Type::ConferenceParticipantUnsetAdmin:
-			insertChatRoomParticipant(curConferenceId, participantAddressId, isAdmin);
+			insertChatRoomParticipant(curChatRoomId, participantAddressId, isAdmin);
 			break;
 
 		case EventLog::Type::ConferenceParticipantRemoved:
-			deleteChatRoomParticipant(curConferenceId, participantAddressId);
+			deleteChatRoomParticipant(curChatRoomId, participantAddressId);
 			break;
 
 		default:
 			break;
 	}
 
-	if (conferenceId)
-		*conferenceId = curConferenceId;
+	if (chatRoomId)
+		*chatRoomId = curChatRoomId;
 
 	return eventId;
 }
 
 long long MainDbPrivate::insertConferenceParticipantDeviceEvent (const shared_ptr<EventLog> &eventLog) {
-	long long conferenceId;
-	const long long &eventId = insertConferenceParticipantEvent(eventLog, &conferenceId);
+	long long chatRoomId;
+	const long long &eventId = insertConferenceParticipantEvent(eventLog, &chatRoomId);
 	if (eventId < 0)
 		return -1;
 
@@ -950,9 +939,9 @@ long long MainDbPrivate::insertConferenceParticipantDeviceEvent (const shared_pt
 		lError() << "Unable to find sip address id of: `" << participantAddress << "`.";
 		return -1;
 	}
-	const long long &participantId = selectChatRoomParticipantId(conferenceId, participantAddressId);
+	const long long &participantId = selectChatRoomParticipantId(chatRoomId, participantAddressId);
 	if (participantId < 0) {
-		lError() << "Unable to find valid participant id in database with chat room id = " << conferenceId <<
+		lError() << "Unable to find valid participant id in database with chat room id = " << chatRoomId <<
 		" and participant address id = " << participantAddressId;
 		return -1;
 	}
@@ -980,8 +969,8 @@ long long MainDbPrivate::insertConferenceParticipantDeviceEvent (const shared_pt
 }
 
 long long MainDbPrivate::insertConferenceSecurityEvent (const shared_ptr<EventLog> &eventLog) {
-	long long conferenceId;
-	const long long &eventId = insertConferenceEvent(eventLog, &conferenceId);
+	long long chatRoomId;
+	const long long &eventId = insertConferenceEvent(eventLog, &chatRoomId);
 	if (eventId < 0)
 		return -1;
 
@@ -997,8 +986,8 @@ long long MainDbPrivate::insertConferenceSecurityEvent (const shared_ptr<EventLo
 }
 
 long long MainDbPrivate::insertConferenceSubjectEvent (const shared_ptr<EventLog> &eventLog) {
-	long long conferenceId;
-	const long long &eventId = insertConferenceNotifiedEvent(eventLog, &conferenceId);
+	long long chatRoomId;
+	const long long &eventId = insertConferenceNotifiedEvent(eventLog, &chatRoomId);
 	if (eventId < 0)
 		return -1;
 
@@ -1009,7 +998,7 @@ long long MainDbPrivate::insertConferenceSubjectEvent (const shared_ptr<EventLog
 		" VALUES (:eventId, :subject)", soci::use(eventId), soci::use(subject);
 
 	*session << "UPDATE chat_room SET subject = :subject"
-		" WHERE id = :conferenceId", soci::use(subject), soci::use(conferenceId);
+		" WHERE id = :chatRoomId", soci::use(subject), soci::use(chatRoomId);
 
 	return eventId;
 }
@@ -1077,8 +1066,8 @@ void MainDbPrivate::cache (const shared_ptr<ChatMessage> &chatMessage, long long
 	L_ASSERT(dChatMessage->dbKey.isValid());
 }
 
-void MainDbPrivate::invalidConferenceEventsFromQuery (const string &query, long long conferenceId) {
-	soci::rowset<soci::row> rows = (dbSession.getBackendSession()->prepare << query, soci::use(conferenceId));
+void MainDbPrivate::invalidConferenceEventsFromQuery (const string &query, long long chatRoomId) {
+	soci::rowset<soci::row> rows = (dbSession.getBackendSession()->prepare << query, soci::use(chatRoomId));
 	for (const auto &row : rows) {
 		long long eventId = dbSession.resolveId(row, 0);
 		shared_ptr<EventLog> eventLog = getEventFromCache(eventId);
@@ -1400,7 +1389,7 @@ void MainDbPrivate::importLegacyHistory (DbSession &inDbSession) {
 			const long long &remoteSipAddressId = insertSipAddress(
 				IdentityAddress(message.get<string>(LegacyMessageColRemoteAddress)).asString()
 			);
-			const long long &conferenceId = insertOrUpdateImportedBasicChatRoom(
+			const long long &chatRoomId = insertOrUpdateImportedBasicChatRoom(
 				remoteSipAddressId,
 				localSipAddressId,
 				creationTime
@@ -1410,7 +1399,7 @@ void MainDbPrivate::importLegacyHistory (DbSession &inDbSession) {
 			const int displayNotificationRequired = 0;
 
 			*session << "INSERT INTO conference_event (event_id, chat_room_id)"
-				" VALUES (:eventId, :conferenceId)", soci::use(eventId), soci::use(conferenceId);
+				" VALUES (:eventId, :chatRoomId)", soci::use(eventId), soci::use(chatRoomId);
 
 			*session << "INSERT INTO conference_chat_message_event ("
 				"  event_id, from_sip_address_id, to_sip_address_id,"
@@ -1426,7 +1415,7 @@ void MainDbPrivate::importLegacyHistory (DbSession &inDbSession) {
 
 			if (content)
 				insertContent(eventId, *content);
-			insertChatRoomParticipant(conferenceId, remoteSipAddressId, false);
+			insertChatRoomParticipant(chatRoomId, remoteSipAddressId, false);
 			insertChatMessageParticipant(eventId, remoteSipAddressId, state, std::time(nullptr));
 		}
 		tr.commit();
@@ -1996,12 +1985,12 @@ list<shared_ptr<EventLog>> MainDb::getConferenceNotifiedEvents (
 
 		soci::session *session = d->dbSession.getBackendSession();
 
-		const long long &dbConferenceId = d->selectChatRoomId(conferenceId);
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
 
 		list<shared_ptr<EventLog>> events;
-		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbConferenceId), soci::use(lastNotifyId));
+		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId), soci::use(lastNotifyId));
 		for (const auto &row : rows)
-			events.push_back(d->selectGenericConferenceNotifiedEvent(conferenceId, row));
+			events.push_back(d->selectConferenceInfoEvent(conferenceId, row));
 		return events;
 	};
 }
@@ -2024,11 +2013,11 @@ int MainDb::getChatMessageCount (const ConferenceId &conferenceId) const {
 			*session << query, soci::into(count);
 		else {
 			query += " WHERE event_id IN ("
-				"  SELECT event_id FROM conference_event WHERE chat_room_id = :conferenceId"
+				"  SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
 				")";
 
-			const long long &dbConferenceId = d->selectChatRoomId(conferenceId);
-			*session << query, soci::use(dbConferenceId), soci::into(count);
+			const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+			*session << query, soci::use(dbChatRoomId), soci::into(count);
 		}
 
 		return count;
@@ -2045,7 +2034,7 @@ int MainDb::getUnreadChatMessageCount (const ConferenceId &conferenceId) const {
 	string query = "SELECT COUNT(*) FROM conference_chat_message_event WHERE";
 	if (conferenceId.isValid())
 		query += " event_id IN ("
-			"  SELECT event_id FROM conference_event WHERE chat_room_id = :conferenceId"
+			"  SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
 			") AND";
 
 	query += " direction = " + Utils::toString(int(ChatMessage::Direction::Incoming)) +
@@ -2064,8 +2053,8 @@ int MainDb::getUnreadChatMessageCount (const ConferenceId &conferenceId) const {
 		if (!conferenceId.isValid())
 			*session << query, soci::into(count);
 		else {
-			const long long &dbConferenceId = d->selectChatRoomId(conferenceId);
-			*session << query, soci::use(dbConferenceId), soci::into(count);
+			const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+			*session << query, soci::use(dbChatRoomId), soci::into(count);
 		}
 
 		d->unreadChatMessageCountCache.insert(conferenceId, count);
@@ -2080,7 +2069,7 @@ void MainDb::markChatMessagesAsRead (const ConferenceId &conferenceId) const {
 	static const string query = "UPDATE conference_chat_message_event"
 		"  SET state = " + Utils::toString(int(ChatMessage::State::Displayed)) +
 		"  WHERE event_id IN ("
-		"    SELECT event_id FROM conference_event WHERE chat_room_id = :conferenceId"
+		"    SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
 		") AND direction = " + Utils::toString(int(ChatMessage::Direction::Incoming));
 
 	DurationLogger durationLogger(
@@ -2091,8 +2080,8 @@ void MainDb::markChatMessagesAsRead (const ConferenceId &conferenceId) const {
 	L_DB_TRANSACTION {
 		L_D();
 
-		const long long &dbConferenceId = d->selectChatRoomId(conferenceId);
-		*d->dbSession.getBackendSession() << query, soci::use(dbConferenceId);
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+		*d->dbSession.getBackendSession() << query, soci::use(dbChatRoomId);
 
 		tr.commit();
 		d->unreadChatMessageCountCache.insert(conferenceId, 0);
@@ -2115,13 +2104,13 @@ list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ConferenceId 
 
 		soci::session *session = d->dbSession.getBackendSession();
 
-		long long dbConferenceId = d->selectChatRoomId(conferenceId);
+		long long dbChatRoomId = d->selectChatRoomId(conferenceId);
 		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 		list<shared_ptr<ChatMessage>> chatMessages;
 		if (!chatRoom)
 			return chatMessages;
 
-		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbConferenceId));
+		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 		for (const auto &row : rows) {
 			shared_ptr<EventLog> event = d->selectGenericConferenceEvent(
 				chatRoom,
@@ -2249,9 +2238,9 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessages (
 		if (!chatRoom)
 			return chatMessages;
 
-		const long long &dbConferenceId = d->selectChatRoomId(conferenceId);
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
 		soci::rowset<soci::row> rows = (
-			d->dbSession.getBackendSession()->prepare << query, soci::use(dbConferenceId), soci::use(imdnMessageId)
+			d->dbSession.getBackendSession()->prepare << query, soci::use(dbChatRoomId), soci::use(imdnMessageId)
 		);
 		for (const auto &row : rows) {
 			shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
@@ -2284,10 +2273,10 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered (
 		if (!chatRoom)
 			return chatMessages;
 
-		const long long &dbConferenceId = d->selectChatRoomId(conferenceId);
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
 		const int &direction = int(ChatMessage::Direction::Incoming);
 		soci::rowset<soci::row> rows = (
-			d->dbSession.getBackendSession()->prepare << query, soci::use(dbConferenceId), soci::use(direction)
+			d->dbSession.getBackendSession()->prepare << query, soci::use(dbChatRoomId), soci::use(direction)
 		);
 		for (const auto &row : rows) {
 			shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
@@ -2348,8 +2337,8 @@ list<shared_ptr<EventLog>> MainDb::getHistoryRange (
 		if (!chatRoom)
 			return events;
 
-		const long long &dbConferenceId = d->selectChatRoomId(conferenceId);
-		soci::rowset<soci::row> rows = (d->dbSession.getBackendSession()->prepare << query, soci::use(dbConferenceId));
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+		soci::rowset<soci::row> rows = (d->dbSession.getBackendSession()->prepare << query, soci::use(dbChatRoomId));
 		for (const auto &row : rows) {
 			shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
 			if (event)
@@ -2362,7 +2351,7 @@ list<shared_ptr<EventLog>> MainDb::getHistoryRange (
 
 int MainDb::getHistorySize (const ConferenceId &conferenceId, FilterMask mask) const {
 	const string query = "SELECT COUNT(*) FROM event, conference_event"
-		"  WHERE chat_room_id = :conferenceId"
+		"  WHERE chat_room_id = :chatRoomId"
 		"  AND event_id = event.id" + buildSqlEventFilter({
 			ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter, ConferenceInfoNoDeviceFilter
 		}, mask, "AND");
@@ -2371,8 +2360,8 @@ int MainDb::getHistorySize (const ConferenceId &conferenceId, FilterMask mask) c
 		L_D();
 
 		int count;
-		const long long &dbConferenceId = d->selectChatRoomId(conferenceId);
-		*d->dbSession.getBackendSession() << query, soci::into(count), soci::use(dbConferenceId);
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+		*d->dbSession.getBackendSession() << query, soci::into(count), soci::use(dbChatRoomId);
 
 		return count;
 	};
@@ -2380,7 +2369,7 @@ int MainDb::getHistorySize (const ConferenceId &conferenceId, FilterMask mask) c
 
 
 void MainDb::cleanHistory (const ConferenceId &conferenceId, FilterMask mask) {
-	const string query = "SELECT event_id FROM conference_event WHERE chat_room_id = :conferenceId" +
+	const string query = "SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId" +
 		buildSqlEventFilter({
 			ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter, ConferenceInfoNoDeviceFilter
 		}, mask);
@@ -2394,10 +2383,10 @@ void MainDb::cleanHistory (const ConferenceId &conferenceId, FilterMask mask) {
 	L_DB_TRANSACTION {
 		L_D();
 
-		const long long &dbConferenceId = d->selectChatRoomId(conferenceId);
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
 
-		d->invalidConferenceEventsFromQuery(query, dbConferenceId);
-		*d->dbSession.getBackendSession() << "DELETE FROM event WHERE id IN (" + query + ")", soci::use(dbConferenceId);
+		d->invalidConferenceEventsFromQuery(query, dbChatRoomId);
+		*d->dbSession.getBackendSession() << "DELETE FROM event WHERE id IN (" + query + ")", soci::use(dbChatRoomId);
 
 		tr.commit();
 
@@ -2556,15 +2545,15 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 			} else if (capabilities & ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Conference)) {
 				list<shared_ptr<Participant>> participants;
 
-				const long long &dbConferenceId = d->dbSession.resolveId(row, 0);
+				const long long &dbChatRoomId = d->dbSession.resolveId(row, 0);
 				static const string query = "SELECT chat_room_participant.id, sip_address.value, is_admin"
 					" FROM sip_address, chat_room, chat_room_participant"
-					" WHERE chat_room.id = :conferenceId"
+					" WHERE chat_room.id = :chatRoomId"
 					" AND sip_address.id = chat_room_participant.participant_sip_address_id"
 					" AND chat_room_participant.chat_room_id = chat_room.id";
 
 				// Fetch participants.
-				soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbConferenceId));
+				soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 				shared_ptr<Participant> me;
 				for (const auto &row : rows) {
 					shared_ptr<Participant> participant = make_shared<Participant>(nullptr, IdentityAddress(row.get<string>(1)));
@@ -2668,14 +2657,14 @@ void MainDb::deleteChatRoom (const ConferenceId &conferenceId) {
 	L_DB_TRANSACTION {
 		L_D();
 
-		const long long &dbConferenceId = d->selectChatRoomId(conferenceId);
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
 
 		d->invalidConferenceEventsFromQuery(
-			"SELECT event_id FROM conference_event WHERE chat_room_id = :conferenceId",
-			dbConferenceId
+			"SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId",
+			dbChatRoomId
 		);
 
-		*d->dbSession.getBackendSession() << "DELETE FROM chat_room WHERE id = :conferenceId", soci::use(dbConferenceId);
+		*d->dbSession.getBackendSession() << "DELETE FROM chat_room WHERE id = :chatRoomId", soci::use(dbChatRoomId);
 
 		tr.commit();
 		d->unreadChatMessageCountCache.insert(conferenceId, 0);
@@ -2693,7 +2682,7 @@ void MainDb::migrateBasicToClientGroupChatRoom (
 		L_D();
 
 		// TODO: Update events and chat messages. (Or wait signals.)
-		const long long &dbConferenceId = d->selectChatRoomId(basicChatRoom->getConferenceId());
+		const long long &dbChatRoomId = d->selectChatRoomId(basicChatRoom->getConferenceId());
 
 		const ConferenceId &newConferenceId = clientGroupChatRoom->getConferenceId();
 		const long long &peerSipAddressId = d->insertSipAddress(newConferenceId.getPeerAddress().asString());
@@ -2704,12 +2693,12 @@ void MainDb::migrateBasicToClientGroupChatRoom (
 			" SET capabilities = :capabilities,"
 			" peer_sip_address_id = :peerSipAddressId,"
 			" local_sip_address_id = :localSipAddressId"
-			" WHERE id = :conferenceId", soci::use(capabilities), soci::use(peerSipAddressId),
-			soci::use(localSipAddressId), soci::use(dbConferenceId);
+			" WHERE id = :chatRoomId", soci::use(capabilities), soci::use(peerSipAddressId),
+			soci::use(localSipAddressId), soci::use(dbChatRoomId);
 
 		shared_ptr<Participant> me = clientGroupChatRoom->getMe();
 		long long meId = d->insertChatRoomParticipant(
-			dbConferenceId,
+			dbChatRoomId,
 			d->insertSipAddress(me->getAddress().asString()),
 			true
 		);
@@ -2718,7 +2707,7 @@ void MainDb::migrateBasicToClientGroupChatRoom (
 
 		for (const auto &participant : clientGroupChatRoom->getParticipants()) {
 			long long participantId = d->insertChatRoomParticipant(
-				dbConferenceId,
+				dbChatRoomId,
 				d->insertSipAddress(participant->getAddress().asString()),
 				true
 			);
@@ -2745,15 +2734,15 @@ IdentityAddress MainDb::findMissingOneToOneConferenceChatRoomParticipantAddress 
 		string participantASipAddress;
 		string participantBSipAddress;
 
-		const long long &conferenceId = d->selectChatRoomId(chatRoom->getConferenceId());
-		L_ASSERT(conferenceId != -1);
+		const long long &chatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
+		L_ASSERT(chatRoomId != -1);
 
 		*d->dbSession.getBackendSession() << "SELECT participant_a_sip_address.value, participant_b_sip_address.value"
 			" FROM one_to_one_chat_room, sip_address AS participant_a_sip_address, sip_address AS participant_b_sip_address"
-			" WHERE chat_room_id = :conferenceId"
+			" WHERE chat_room_id = :chatRoomId"
 			" AND participant_a_sip_address_id = participant_a_sip_address.id"
 			" AND participant_b_sip_address_id = participant_b_sip_address.id",
-			soci::into(participantASipAddress), soci::into(participantBSipAddress), soci::use(conferenceId);
+			soci::into(participantASipAddress), soci::into(participantBSipAddress), soci::use(chatRoomId);
 
 		string presentParticipantAddress(presentParticipantAddr.asString());
 		if (presentParticipantAddress == participantASipAddress)
@@ -2778,13 +2767,13 @@ IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 		if (participantASipAddressId == -1 || participantBSipAddressId == -1)
 			return IdentityAddress();
 
-		const long long &conferenceId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId, encrypted);
+		const long long &chatRoomId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId, encrypted);
 
 		string chatRoomAddress;
 		*d->dbSession.getBackendSession() << "SELECT sip_address.value"
 			" FROM chat_room, sip_address"
-			" WHERE chat_room.id = :conferenceId AND peer_sip_address_id = sip_address.id",
-			soci::use(conferenceId), soci::into(chatRoomAddress);
+			" WHERE chat_room.id = :chatRoomId AND peer_sip_address_id = sip_address.id",
+			soci::use(chatRoomId), soci::into(chatRoomAddress);
 
 		return IdentityAddress(chatRoomAddress);
 	};
@@ -2803,11 +2792,11 @@ void MainDb::insertOneToOneConferenceChatRoom (const shared_ptr<AbstractChatRoom
 		L_ASSERT(participantASipAddressId != -1);
 		L_ASSERT(participantBSipAddressId != -1);
 
-		long long conferenceId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId, encrypted);
-		if (conferenceId == -1) {
-			conferenceId = d->selectChatRoomId(chatRoom->getConferenceId());
+		long long chatRoomId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId, encrypted);
+		if (chatRoomId == -1) {
+			chatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
 			*d->dbSession.getBackendSession() << Statements::get(Statements::InsertOneToOneChatRoom, getBackend()),
-				soci::use(conferenceId), soci::use(participantASipAddressId), soci::use(participantBSipAddressId);
+				soci::use(chatRoomId), soci::use(participantASipAddressId), soci::use(participantBSipAddressId);
 		}
 
 		tr.commit();
@@ -2820,17 +2809,17 @@ void MainDb::enableChatRoomMigration (const ConferenceId &conferenceId, bool ena
 
 		soci::session *session = d->dbSession.getBackendSession();
 
-		const long long &dbConferenceId = d->selectChatRoomId(conferenceId);
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
 
 		int capabilities = 0;
-		*session << "SELECT capabilities FROM chat_room WHERE id = :conferenceId",
-			soci::use(dbConferenceId), soci::into(capabilities);
+		*session << "SELECT capabilities FROM chat_room WHERE id = :chatRoomId",
+			soci::use(dbChatRoomId), soci::into(capabilities);
 		if (enable)
 			capabilities |= int(ChatRoom::Capabilities::Migratable);
 		else
 			capabilities &= ~int(ChatRoom::Capabilities::Migratable);
-		*session << "UPDATE chat_room SET capabilities = :capabilities WHERE id = :conferenceId",
-			soci::use(capabilities), soci::use(dbConferenceId);
+		*session << "UPDATE chat_room SET capabilities = :capabilities WHERE id = :chatRoomId",
+			soci::use(capabilities), soci::use(dbChatRoomId);
 
 		tr.commit();
 	};
@@ -2843,9 +2832,9 @@ void MainDb::updateChatRoomParticipantDevice (
 	L_DB_TRANSACTION {
 		L_D();
 
-		const long long &dbConferenceId = d->selectChatRoomId(chatRoom->getConferenceId());
+		const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
 		const long long &participantSipAddressId = d->selectSipAddressId(device->getParticipant()->getAddress().asString());
-		const long long &participantId = d->selectChatRoomParticipantId(dbConferenceId, participantSipAddressId);
+		const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
 		const long long &participantSipDeviceAddressId = d->selectSipAddressId(device->getAddress().asString());
 		unsigned int state = static_cast<unsigned int>(device->getState());
 		*d->dbSession.getBackendSession() << "UPDATE chat_room_participant_device SET state = :state"
