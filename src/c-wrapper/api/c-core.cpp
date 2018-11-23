@@ -24,7 +24,7 @@
 
 #include "private_structs.h"
 
-#include "chat/encryption/lime-legacy-encryption-engine.h"
+#include "chat/encryption/encryption-engine.h"
 
 // =============================================================================
 

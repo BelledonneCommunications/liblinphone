@@ -1,5 +1,5 @@
 /*
- * lime-legacy-encryption-engine.h
+ * legacy-encryption-engine.h
  * Copyright (C) 2010-2018 Belledonne Communications SARL
  *
  * This program is free software; you can redistribute it and/or
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _L_LIME_LEGACY_ENCRYPTION_ENGINE_H_
-#define _L_LIME_LEGACY_ENCRYPTION_ENGINE_H_
+#ifndef _L_LEGACY_ENCRYPTION_ENGINE_H_
+#define _L_LEGACY_ENCRYPTION_ENGINE_H_
 
 #include "encryption-engine.h"
 
@@ -26,9 +26,9 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LimeLegacyEncryptionEngine : public EncryptionEngine {
+class LegacyEncryptionEngine : public EncryptionEngine {
 public:
-	LimeLegacyEncryptionEngine (const std::shared_ptr<Core> &core);
+	LegacyEncryptionEngine (const std::shared_ptr<Core> &core);
 
 	ChatMessageModifier::Result processIncomingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
 	ChatMessageModifier::Result processOutgoingMessage (const std::shared_ptr<ChatMessage> &message, int &errorCode) override;
@@ -40,4 +40,4 @@ public:
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_LIME_LEGACY_ENCRYPTION_ENGINE_H_
+#endif // ifndef _L_LEGACY_ENCRYPTION_ENGINE_H_
