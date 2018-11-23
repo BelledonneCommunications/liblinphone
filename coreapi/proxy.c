@@ -487,34 +487,23 @@ void linphone_proxy_config_stop_refreshing(LinphoneProxyConfig * cfg){
 	}
 }
 
-static void guess_contact_for_register (LinphoneProxyConfig *cfg) {
-	if (cfg->contact_address)
-		linphone_address_unref(cfg->contact_address);
-	cfg->contact_address = nullptr;
-
-	if (cfg->contact_address_without_params)
-		linphone_address_unref(cfg->contact_address_without_params);
-	cfg->contact_address_without_params = nullptr;
-
+static LinphoneAddress *guess_contact_for_register (LinphoneProxyConfig *cfg) {
+	LinphoneAddress *result = nullptr;
 	LinphoneAddress *proxy = linphone_address_new(cfg->reg_proxy);
 	if (!proxy)
-		return;
+		return nullptr;
 	const char *host = linphone_address_get_domain(proxy);
 	if (host) {
-		cfg->contact_address_without_params = linphone_address_clone(cfg->identity_address);
-		linphone_address_clean(cfg->contact_address_without_params);
-		linphone_address_set_port(cfg->contact_address_without_params, -1);
-		linphone_address_set_domain(cfg->contact_address_without_params, nullptr);
-		linphone_address_set_display_name(cfg->contact_address_without_params, nullptr);
-		cfg->contact_address = linphone_address_clone(cfg->contact_address_without_params);
+		result = linphone_address_clone(cfg->identity_address);
 		if (cfg->contact_params) {
 			// We want to add a list of contacts params to the linphone address
-			linphone_address_set_params(cfg->contact_address, cfg->contact_params);
+			linphone_address_set_params(result, cfg->contact_params);
 		}
 		if (cfg->contact_uri_params)
-			linphone_address_set_uri_params(cfg->contact_address, cfg->contact_uri_params);
+			linphone_address_set_uri_params(result, cfg->contact_uri_params);
 	}
 	linphone_address_unref(proxy);
+	return result;
 }
 
 void _linphone_proxy_config_unregister(LinphoneProxyConfig *obj) {
@@ -538,9 +527,14 @@ static void linphone_proxy_config_register(LinphoneProxyConfig *cfg){
 
 		linphone_configure_op(cfg->lc, cfg->op, cfg->identity_address, cfg->sent_headers, FALSE);
 
-		guess_contact_for_register(cfg);
-		if (cfg->contact_address)
-			cfg->op->setContactAddress(L_GET_PRIVATE_FROM_C_OBJECT(cfg->contact_address)->getInternalAddress());
+		LinphoneAddress *contactAddress = guess_contact_for_register(cfg);
+		if (contactAddress) {
+			cfg->op->setContactAddress(L_GET_PRIVATE_FROM_C_OBJECT(contactAddress)->getInternalAddress());
+			if (!cfg->contact_address) {
+				cfg->contact_address = linphone_address_clone(contactAddress);
+			}
+			linphone_address_unref(contactAddress);
+		}
 		cfg->op->setUserPointer(cfg);
 
 		if (cfg->op->sendRegister(
@@ -1365,6 +1359,11 @@ void linphone_proxy_config_set_state(LinphoneProxyConfig *cfg, LinphoneRegistrat
 					linphone_registration_state_to_string(cfg->state),
 					linphone_registration_state_to_string(state),
 					cfg->lc);
+		if (state == LinphoneRegistrationOk) {
+			const SalAddress *salAddr = cfg->op->getContactAddress();
+			if (salAddr)
+				L_GET_PRIVATE_FROM_C_OBJECT(cfg->contact_address)->setInternalAddress(const_cast<SalAddress *>(salAddr));
+		}
 		if (linphone_core_should_subscribe_friends_only_when_registered(lc) && cfg->state!=state && state == LinphoneRegistrationOk){
 			ms_message("Updating friends for identity [%s] on core [%p]",cfg->reg_identity,cfg->lc);
 			/* state must be updated before calling linphone_core_update_friends_subscriptions*/
@@ -1509,24 +1508,21 @@ uint8_t linphone_proxy_config_get_avpf_rr_interval(const LinphoneProxyConfig *cf
 }
 
 const LinphoneAddress *linphone_proxy_config_get_contact (const LinphoneProxyConfig *cfg) {
-	// Warning : Do not remove, the op can change its contact_address
-	if (!cfg->op)
-		return NULL;
-	const SalAddress *salAddr = cfg->op->getContactAddress();
-	if (!salAddr)
-		return NULL;
-	if (cfg->contact_address)
-		L_GET_PRIVATE_FROM_C_OBJECT(cfg->contact_address)->setInternalAddress(const_cast<SalAddress *>(salAddr));
-	else {
-		char *buf = sal_address_as_string(salAddr);
-		const_cast<LinphoneProxyConfig *>(cfg)->contact_address = linphone_address_new(buf);
-		ms_free(buf);
-	}
-
 	return cfg->contact_address;
 }
 
 const LinphoneAddress *_linphone_proxy_config_get_contact_without_params (const LinphoneProxyConfig *cfg) {
+	if (cfg->contact_address_without_params) {
+		linphone_address_unref(cfg->contact_address_without_params);
+		const_cast<LinphoneProxyConfig *>(cfg)->contact_address_without_params = nullptr;
+	}
+	if (cfg->contact_address) {
+		const_cast<LinphoneProxyConfig *>(cfg)->contact_address_without_params = linphone_address_clone(cfg->contact_address);
+		linphone_address_clean(cfg->contact_address_without_params);
+		linphone_address_set_port(cfg->contact_address_without_params, -1);
+		linphone_address_set_domain(cfg->contact_address_without_params, nullptr);
+		linphone_address_set_display_name(cfg->contact_address_without_params, nullptr);
+	}
 	return cfg->contact_address_without_params;
 }
 
