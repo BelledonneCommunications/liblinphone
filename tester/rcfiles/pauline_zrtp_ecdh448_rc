@@ -1,6 +1,3 @@
-[misc]
-xmlrpc_server_url=http://subscribe.example.org/flexisip-account-manager/xmlrpc.php
-
 [sip]
 sip_port=-1
 sip_tcp_port=-1

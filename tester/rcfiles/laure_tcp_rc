@@ -1,6 +1,3 @@
-[misc]
-xmlrpc_server_url=http://subscribe.example.org/flexisip-account-manager/xmlrpc.php
-
 [lime]
 lime_v2=0
 

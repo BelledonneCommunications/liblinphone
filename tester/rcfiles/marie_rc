@@ -1,7 +1,6 @@
 [misc]
 enable_basic_to_client_group_chat_room_migration=1
 basic_to_client_group_chat_room_migration_timer=180
-xmlrpc_server_url=http://subscribe.example.org/flexisip-account-manager/xmlrpc.php
 
 [sip]
 sip_port=-1

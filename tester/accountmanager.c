@@ -348,7 +348,12 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 		if (liblinphonetester_no_account_creator) {
 			account_create_on_server(account, cfg, phone_alias);
 		} else {
-			const char *xmlrpc_url = linphone_config_get_string(linphone_core_get_config(lc), "misc", "xmlrpc_server_url", "http://subscribe.example.org/flexisip-account-manager/xmlrpc.php");
+			const char *xmlrpc_url = linphone_config_get_string(
+				linphone_core_get_config(lc),
+				"misc",
+				"xmlrpc_server_url",
+				"http://subscribe.example.org/flexisip-account-manager/xmlrpc.php"
+			);
 			account_create_in_db(account, cfg, xmlrpc_url);
 		}
 	}
