@@ -138,7 +138,6 @@ static ortp_mutex_t liblinphone_log_collection_mutex;
 static FILE * liblinphone_log_collection_file = NULL;
 static size_t liblinphone_log_collection_file_size = 0;
 static bool_t liblinphone_serialize_logs = FALSE;
-static void set_network_reachable(LinphoneCore* lc,bool_t isReachable, time_t curtime);
 static void set_sip_network_reachable(LinphoneCore* lc,bool_t isReachable, time_t curtime);
 static void set_media_network_reachable(LinphoneCore* lc,bool_t isReachable);
 static void linphone_core_run_hooks(LinphoneCore *lc);
