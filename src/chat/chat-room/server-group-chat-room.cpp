@@ -485,8 +485,7 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 		q->addParticipants(compatibleParticipants, nullptr, false);
 		if ((capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && (q->getParticipantCount() == 2)) {
 			// Insert the one-to-one chat room in Db if participants count is 2.
-			bool encrypted = (capabilities & ServerGroupChatRoom::Capabilities::Encrypted);
-			q->getCore()->getPrivate()->mainDb->insertOneToOneConferenceChatRoom(q->getSharedFromThis(), encrypted);
+			q->getCore()->getPrivate()->mainDb->insertOneToOneConferenceChatRoom(q->getSharedFromThis());
 		}
 	}
 }

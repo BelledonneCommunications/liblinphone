@@ -228,7 +228,7 @@ void Core::enableLimeX3dh (bool enable) {
 
 bool Core::limeX3dhEnabled () const {
 	L_D();
-	if (d->imee && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3DH)
+	if (d->imee && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3dh)
 		return true;
 	return false;
 }

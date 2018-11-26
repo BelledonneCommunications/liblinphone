@@ -123,7 +123,7 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 	belle_http_provider_t *prov,
 	const shared_ptr<Core> core
 ) : EncryptionEngine(core) {
-	engineType = EncryptionEngine::EngineType::LimeX3DH;
+	engineType = EncryptionEngine::EngineType::LimeX3dh;
 	curve = lime::CurveId::c25519; // c448
 	_dbAccess = dbAccess;
 	auto cCore = core->getCCore();
@@ -799,7 +799,8 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 		lastLimeUpdate = ms_time(NULL);
 		lp_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 	} catch (const exception &e) {
-		lInfo() << e.what() << " while creating lime user";
+// 		lInfo() << e.what() << " while creating lime user";
+		lInfo() << "LIME X3DH user already exists or the creation went wrong";
 
 		// update keys if necessary
 		int limeUpdateThreshold = lp_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s

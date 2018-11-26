@@ -41,7 +41,7 @@ class EncryptionEngine : public CoreAccessor {
 public:
 	enum class EngineType {
 		Undefined = -1,
-		LimeX3DH = 0,
+		LimeX3dh = 0,
 	};
 
 	virtual ~EncryptionEngine () = default;

@@ -108,9 +108,7 @@ static void call_received(SalCallOp *h) {
 					h->release();
 					return;
 				}
-				string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted"));
-				bool encrypted = (endToEndEncrypted == "true");
-				IdentityAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front(), encrypted);
+				IdentityAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front());
 				if (confAddr.isValid()) {
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ConferenceId(confAddr, confAddr));
 					L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmRecreation(h);
@@ -852,10 +850,8 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
 						ConferenceId(addr, IdentityAddress(op->getTo()))
 					);
-					if (!chatRoom) {
-						bool encrypted = false;
-						chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom("", addr.asString(), Content(), false, encrypted);
-					}
+					if (!chatRoom)
+						chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom("", addr.asString(), Content(), false, false);
 					chatRoom->join();
 					static_cast<SalReferOp *>(op)->reply(SalReasonNone);
 					return;
