@@ -56,7 +56,7 @@ class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor {
 	friend class MainDbPrivate;
 	friend class RealTimeTextChatRoomPrivate;
 	friend class ServerGroupChatRoomPrivate;
-	friend class LimeX3DHEncryptionEngine;
+	friend class LimeX3dhEncryptionEngine;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ChatMessage);

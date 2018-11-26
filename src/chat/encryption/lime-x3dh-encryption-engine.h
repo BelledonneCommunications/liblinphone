@@ -55,9 +55,9 @@ inline std::vector<uint8_t> decodeBase64 (const std::string &input) {
 	return output;
 }
 
-class BelleSipLimeManager : public lime::LimeManager {
+class LimeManager : public lime::LimeManager {
 public:
-	BelleSipLimeManager (const std::string &db_access, belle_http_provider_t *prov, LinphoneCore *lc);
+	LimeManager (const std::string &db_access, belle_http_provider_t *prov, std::shared_ptr<Core> core); // LinphoneCore *lc
 
 private:
 	static void processIoError (void *data, const belle_sip_io_error_event_t *event) noexcept;
@@ -65,15 +65,15 @@ private:
 	static void processAuthRequested (void *data, belle_sip_auth_event_t *event) noexcept;
 };
 
-class LimeX3DHEncryptionEngine : public EncryptionEngine, public CoreListener {
+class LimeX3dhEncryptionEngine : public EncryptionEngine, public CoreListener {
 public:
-	LimeX3DHEncryptionEngine (
+	LimeX3dhEncryptionEngine (
 		const std::string &db_access,
 		belle_http_provider_t *prov,
 		const std::shared_ptr<Core> core
 	);
 
-	std::shared_ptr<BelleSipLimeManager> getLimeManager ();
+	std::shared_ptr<LimeManager> getLimeManager ();
 	lime::limeCallback setLimeCallback (std::string operation);
 	std::string getX3dhServerUrl () const;
 	lime::CurveId getCurveId () const;
@@ -162,7 +162,7 @@ public:
 	) override;
 
 private:
-	std::shared_ptr<BelleSipLimeManager> belleSipLimeManager;
+	std::shared_ptr<LimeManager> limeManager;
 	std::time_t lastLimeUpdate;
 	std::string x3dhServerUrl;
 	std::string _dbAccess;

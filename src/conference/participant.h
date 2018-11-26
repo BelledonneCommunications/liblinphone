@@ -42,7 +42,7 @@ class Participant : public Object {
 	friend class ClientGroupChatRoom;
 	friend class ClientGroupChatRoomPrivate;
 	friend class Conference;
-	friend class LimeX3DHEncryptionEngine;
+	friend class LimeX3dhEncryptionEngine;
 	friend class LocalConference;
 	friend class LocalConferenceCall;
 	friend class LocalConferenceCallPrivate;

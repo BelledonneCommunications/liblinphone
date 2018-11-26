@@ -213,13 +213,13 @@ void Core::enableLimeX3dh (bool enable) {
 		d->imee.release();
 
 	if (d->imee == nullptr) {
-		LimeX3DHEncryptionEngine *engine;
+		LimeX3dhEncryptionEngine *engine;
 		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
 		string filename = lp_config_get_string(lpconfig, "lime", "x3dh_db_path", "x3dh.c25519.sqlite3");
 		string dbAccess = getDataPath() + filename;
 
 		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
-		engine = new LimeX3DHEncryptionEngine(dbAccess, prov, getSharedFromThis());
+		engine = new LimeX3dhEncryptionEngine(dbAccess, prov, getSharedFromThis());
 
 		setEncryptionEngine(engine);
 		d->registerListener(engine);
