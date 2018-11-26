@@ -178,6 +178,8 @@ public:
 
 	static bool isValidStateTransition (ChatMessage::State currentState, ChatMessage::State newState);
 
+	void restoreFileTransferContentAsFileContent();
+
 private:
 	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir);
 

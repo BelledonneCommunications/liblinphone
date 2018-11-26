@@ -158,7 +158,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
 
 	// 3. Specific case, change to displayed after transfer.
-	if (state == ChatMessage::State::FileTransferDone) {
+	if (state == ChatMessage::State::FileTransferDone && q->getDirection() == ChatMessage::Direction::Incoming) {
 		setState(ChatMessage::State::Displayed);
 		return;
 	}
@@ -651,6 +651,22 @@ LinphoneReason ChatMessagePrivate::receive () {
 	return reason;
 }
 
+void ChatMessagePrivate::restoreFileTransferContentAsFileContent() {
+	// Restore FileContents and remove FileTransferContents
+	list<Content*>::iterator it = contents.begin();
+	while (it != contents.end()) {
+		Content *content = *it;
+		if (content->isFileTransfer()) {
+			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
+			it = contents.erase(it);
+			addContent(fileTransferContent->getFileContent());
+			delete fileTransferContent;
+		} else {
+			it++;
+		}
+	}
+}
+
 void ChatMessagePrivate::send () {
 	L_Q();
 	SalOp *op = salOp;
@@ -761,6 +777,7 @@ void ChatMessagePrivate::send () {
 					setState(ChatMessage::State::NotDelivered);
 					// Remove current step so we go through all modifiers if message is re-sent
 					currentSendStep = ChatMessagePrivate::Step::None;
+					restoreFileTransferContentAsFileContent();
 					return;
 				} else if (result == ChatMessageModifier::Result::Suspended) {
 					return;
@@ -807,19 +824,7 @@ void ChatMessagePrivate::send () {
 		msgOp->sendMessage(internalContent);
 	}
 
-	// Restore FileContents and remove FileTransferContents
-	list<Content*>::iterator it = contents.begin();
-	while (it != contents.end()) {
-		Content *content = *it;
-		if (content->isFileTransfer()) {
-			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
-			it = contents.erase(it);
-			addContent(fileTransferContent->getFileContent());
-			delete fileTransferContent;
-		} else {
-			it++;
-		}
-	}
+	restoreFileTransferContentAsFileContent();
 
 	// Remove internal content as it is not needed anymore and will confuse some old methods like getContentType()
 	internalContent.setBody("");
