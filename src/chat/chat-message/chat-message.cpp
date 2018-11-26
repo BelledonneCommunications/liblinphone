@@ -158,7 +158,8 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
 
 	// 3. Specific case, change to displayed after transfer.
-	if (state == ChatMessage::State::FileTransferDone && q->getDirection() == ChatMessage::Direction::Incoming) {
+	// TODO: Check if there is other file still not downloaded. If not, set state to display
+	if (state == ChatMessage::State::FileTransferDone && direction == ChatMessage::Direction::Incoming) {
 		setState(ChatMessage::State::Displayed);
 		return;
 	}
@@ -774,10 +775,10 @@ void ChatMessagePrivate::send () {
 				ChatMessageModifier::Result result = ecmm.encode(q->getSharedFromThis(), errorCode);
 				if (result == ChatMessageModifier::Result::Error) {
 					sal_error_info_set((SalErrorInfo *)op->getErrorInfo(), SalReasonNotAcceptable, "SIP", errorCode, "Unable to encrypt IM", nullptr);
-					setState(ChatMessage::State::NotDelivered);
 					// Remove current step so we go through all modifiers if message is re-sent
 					currentSendStep = ChatMessagePrivate::Step::None;
 					restoreFileTransferContentAsFileContent();
+					setState(ChatMessage::State::NotDelivered); // Do it after the restore to have the correct message in db
 					return;
 				} else if (result == ChatMessageModifier::Result::Suspended) {
 					return;
