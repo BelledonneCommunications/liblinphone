@@ -802,7 +802,7 @@ void CallSessionPrivate::repairIfBroken () {
 	L_Q();
 	LinphoneCore *lc = q->getCore()->getCCore();
 	LinphoneConfig *config = linphone_core_get_config(lc);
-	if (!lp_config_get_int(config, "sip", "repair_broken_calls", 1) || !lc->media_network_reachable || !broken)
+	if (!lp_config_get_int(config, "sip", "repair_broken_calls", 1) || !lc->media_network_state.global_state || !broken)
 		return;
 
 	// If we are registered and this session has been broken due to a past network disconnection,

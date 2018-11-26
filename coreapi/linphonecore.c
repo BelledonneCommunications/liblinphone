@@ -2361,9 +2361,11 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 #endif
 
 	lc->network_last_status = FALSE;
-	lc->network_reachable_user = TRUE;
-	lc->sip_network_reachable = FALSE;
-	lc->media_network_reachable = FALSE;
+	
+	lc->sip_network_state.global_state = FALSE;
+	lc->sip_network_state.user_state = TRUE;
+	lc->media_network_state.global_state = FALSE;
+	lc->media_network_state.user_state = TRUE;
 
 	/* Create the http provider in dual stack mode (ipv4 and ipv6.
 	 * If this creates problem, we may need to implement parallel ipv6/ ipv4 http requests in belle-sip.
@@ -3241,8 +3243,8 @@ static void notify_network_reachable_change (LinphoneCore *lc) {
 		return;
 
 	lc->network_reachable_to_be_notified = FALSE;
-	linphone_core_notify_network_reachable(lc, lc->sip_network_reachable);
-	if (lc->sip_network_reachable)
+	linphone_core_notify_network_reachable(lc, lc->sip_network_state.global_state);
+	if (lc->sip_network_state.global_state)
 		linphone_core_resolve_stun_server(lc);
 }
 
@@ -3410,7 +3412,7 @@ void linphone_core_iterate(LinphoneCore *lc){
 	linphone_core_run_hooks(lc);
 	linphone_core_do_plugin_tasks(lc);
 
-	if (lc->sip_network_reachable && lc->netup_time!=0 && (current_real_time-lc->netup_time)>=2){
+	if (lc->sip_network_state.global_state && lc->netup_time!=0 && (current_real_time-lc->netup_time)>=2){
 		/*not do that immediately, take your time.*/
 		linphone_core_send_initial_subscribes(lc);
 	}
@@ -5963,7 +5965,7 @@ void sip_config_uninit(LinphoneCore *lc)
 	lp_config_set_int(lc->config,"sip","register_only_when_network_is_up",config->register_only_when_network_is_up);
 	lp_config_set_int(lc->config,"sip","register_only_when_upnp_is_ok",config->register_only_when_upnp_is_ok);
 
-	if (lc->sip_network_reachable) {
+	if (lc->sip_network_state.global_state) {
 		for(elem=config->proxies;elem!=NULL;elem=bctbx_list_next(elem)){
 			LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)(elem->data);
 			_linphone_proxy_config_unpublish(cfg);	/* to unpublish without changing the stored flag enable_publish */
@@ -6294,7 +6296,7 @@ static void set_sip_network_reachable(LinphoneCore* lc,bool_t is_sip_reachable, 
 	// second get the list of available proxies
 	const bctbx_list_t *elem = NULL;
 
-	if (lc->sip_network_reachable==is_sip_reachable) return; // no change, ignore.
+	if (lc->sip_network_state.global_state==is_sip_reachable) return; // no change, ignore.
 	lc->network_reachable_to_be_notified=TRUE;
 
 	if (is_sip_reachable){
@@ -6313,36 +6315,31 @@ static void set_sip_network_reachable(LinphoneCore* lc,bool_t is_sip_reachable, 
 	}
 
 	lc->netup_time=curtime;
-	lc->sip_network_reachable=is_sip_reachable;
+	lc->sip_network_state.global_state=is_sip_reachable;
 
-	if (!lc->sip_network_reachable){
+	if (!lc->sip_network_state.global_state){
 		linphone_core_invalidate_friend_subscriptions(lc);
 		lc->sal->resetTransports();
 	}
 }
 
 static void set_media_network_reachable(LinphoneCore* lc, bool_t is_media_reachable){
-	if (lc->media_network_reachable==is_media_reachable) return; // no change, ignore.
+	if (lc->media_network_state.global_state==is_media_reachable) return; // no change, ignore.
 	lc->network_reachable_to_be_notified=TRUE;
 
 	ms_message("Media network reachability state is now [%s]",is_media_reachable?"UP":"DOWN");
-	lc->media_network_reachable=is_media_reachable;
+	lc->media_network_state.global_state=is_media_reachable;
 
-	if (lc->media_network_reachable){
+	if (lc->media_network_state.global_state){
 		if (lc->bw_controller){
 			ms_bandwidth_controller_reset_state(lc->bw_controller);
 		}
 	}
 }
 
-static void set_network_reachable(LinphoneCore *lc, bool_t is_network_reachable, time_t curtime){
-	set_sip_network_reachable(lc, is_network_reachable, curtime);
-	set_media_network_reachable(lc, is_network_reachable);
-}
-
 void linphone_core_refresh_registers(LinphoneCore* lc) {
 	const bctbx_list_t *elem;
-	if (!lc->sip_network_reachable) {
+	if (!lc->sip_network_state.global_state) {
 		ms_warning("Refresh register operation not available (network unreachable)");
 		return;
 	}
@@ -6357,7 +6354,8 @@ void linphone_core_refresh_registers(LinphoneCore* lc) {
 
 void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_reachable) {
 	if (lc->auto_net_state_mon) {
-		set_network_reachable(lc, lc->network_reachable_user && is_reachable, ms_time(NULL));
+		set_sip_network_reachable(lc, lc->sip_network_state.user_state && is_reachable, ms_time(NULL));
+		set_media_network_reachable(lc, lc->media_network_state.user_state && is_reachable);
 		notify_network_reachable_change(lc);
 	}
 }
@@ -6365,25 +6363,40 @@ void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_re
 void linphone_core_set_network_reachable(LinphoneCore *lc, bool_t is_reachable) {
 	bool_t reachable = is_reachable;
 
+	lc->sip_network_state.user_state = is_reachable;
+	lc->media_network_state.user_state = is_reachable;
+
 	if (lc->auto_net_state_mon) reachable = reachable && getPlatformHelpers(lc)->isNetworkReachable();
 
-	lc->network_reachable_user = is_reachable;
-	set_network_reachable(lc, reachable, ms_time(NULL));
+	set_sip_network_reachable(lc, reachable, ms_time(NULL));
+	set_media_network_reachable(lc, reachable);
 	notify_network_reachable_change(lc);
 }
 
 void linphone_core_set_media_network_reachable(LinphoneCore *lc, bool_t is_reachable){
-	set_media_network_reachable(lc, is_reachable);
+	bool_t reachable = is_reachable;
+
+	lc->media_network_state.user_state = is_reachable;
+
+	if (lc->auto_net_state_mon) reachable = reachable && getPlatformHelpers(lc)->isNetworkReachable();
+
+	set_media_network_reachable(lc, reachable);
 	notify_network_reachable_change(lc);
 }
 
 void linphone_core_set_sip_network_reachable(LinphoneCore *lc, bool_t is_reachable){
-	set_sip_network_reachable(lc, is_reachable, ms_time(NULL));
+	bool_t reachable = is_reachable;
+
+	lc->sip_network_state.user_state = is_reachable;
+
+	if (lc->auto_net_state_mon) reachable = reachable && getPlatformHelpers(lc)->isNetworkReachable();
+
+	set_sip_network_reachable(lc, reachable, ms_time(NULL));
 	notify_network_reachable_change(lc);
 }
 
 bool_t linphone_core_is_network_reachable(LinphoneCore* lc) {
-	return lc->sip_network_reachable;
+	return lc->sip_network_state.global_state;
 }
 
 ortp_socket_t linphone_core_get_sip_socket(LinphoneCore *lc){

@@ -37,6 +37,8 @@ typedef struct rtp_config rtp_config_t;
 
 typedef struct net_config net_config_t;
 
+typedef struct net_state net_state_t;
+
 typedef struct sound_config sound_config_t;
 
 typedef struct codecs_config codecs_config_t;
