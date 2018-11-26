@@ -941,6 +941,10 @@ LINPHONE_PUBLIC void sal_enable_unconditional_answer (Sal *sal, bool_t value) {
 	sal->enableUnconditionalAnswer(value);
 }
 
+LINPHONE_PUBLIC void sal_set_client_bind_port(Sal *sal, int port){
+	sal->setClientBindPort(port);
+}
+
 LINPHONE_PUBLIC void sal_set_dns_timeout (Sal* sal, int timeout) {
 	sal->setDnsTimeout(timeout);
 }

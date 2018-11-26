@@ -132,6 +132,7 @@ public:
 
 	void setSendError (int value) { belle_sip_stack_set_send_error(mStack, value); }
 	void setRecvError (int value) { belle_sip_provider_set_recv_error(mProvider, value); }
+	void setClientBindPort(int port){ belle_sip_stack_set_client_bind_port(mStack, port); }
 
 
 	// ---------------------------------------------------------------------------
