@@ -782,7 +782,7 @@ void ChatMessagePrivate::send () {
 		}
 	}
 
-	// If message already sent by LIMEv2 synchronous encryption, do not send another one
+	// If message already sent by LIME X3DH synchronous encryption, do not send another one
 	if ((currentSendStep &ChatMessagePrivate::Step::Sent) == ChatMessagePrivate::Step::Sent) {
 		lInfo() << "Send step already done, skipping";
 		return;

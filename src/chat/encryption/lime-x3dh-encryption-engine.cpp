@@ -128,7 +128,7 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 	_dbAccess = dbAccess;
 	auto cCore = core->getCCore();
 	limeManager = unique_ptr<LimeManager>(new LimeManager(dbAccess, prov, core));
-	lastLimeUpdate = linphone_config_get_int(cCore->config, "lime", "last_lime_update_time", 0);
+	lastLimeUpdate = linphone_config_get_int(cCore->config, "lime", "last_update_time", 0);
 	x3dhServerUrl = linphone_config_get_string(linphone_core_get_config(cCore), "lime", "x3dh_server_url", "");
 	if (x3dhServerUrl.empty())
 		lError() << "LIME X3DH server URL unavailable for encryption engine";
@@ -290,7 +290,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 					delete content;
 				}
 			} else {
-				lError() << "Lime operation failed: " << errorMessage;
+				lError() << "LIME X3DH operation failed: " << errorMessage;
 				errorCode = 503; // IO Error
 				*result = ChatMessageModifier::Result::Error;
 			}
@@ -416,7 +416,7 @@ void LimeX3dhEncryptionEngine::update () {
 
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCore()->getCCore());
 	limeManager->update(callback);
-	lp_config_set_int(lpconfig, "lime", "last_lime_update_time", (int)lastLimeUpdate);
+	lp_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 }
 
 bool LimeX3dhEncryptionEngine::isEncryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom> &chatRoom) {
@@ -791,13 +791,13 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	lime::limeCallback callback = setLimeCallback(operation.str());
 
 	LinphoneConfig *lpconfig = linphone_core_get_config(linphone_proxy_config_get_core(cfg));
-	lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_lime_update_time", -1);
+	lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_update_time", -1);
 
 	try {
 		// create user if not exist
 		limeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
 		lastLimeUpdate = ms_time(NULL);
-		lp_config_set_int(lpconfig, "lime", "last_lime_update_time", (int)lastLimeUpdate);
+		lp_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 	} catch (const exception &e) {
 		lInfo() << e.what() << " while creating lime user";
 
