@@ -1435,6 +1435,27 @@ static void update_contact_private_ip_address(void) {
 	linphone_core_manager_destroy(lcm);
 }
 
+static void register_with_specific_client_port(void){
+#ifdef __linux
+	
+	LinphoneCoreManager *lcm1 = linphone_core_manager_new2("pauline_tcp_rc", FALSE);
+	
+	sal_set_client_bind_port(linphone_core_get_sal(lcm1->lc), 12088);
+	linphone_core_manager_start(lcm1, TRUE);
+	linphone_core_manager_destroy(lcm1);
+	
+	/*create a another one to make sure that port is reusable*/
+	lcm1 = linphone_core_manager_new2("pauline_tcp_rc", FALSE);
+	
+	sal_set_client_bind_port(linphone_core_get_sal(lcm1->lc), 12088);
+	linphone_core_manager_start(lcm1, TRUE);
+	
+	linphone_core_manager_destroy(lcm1);
+#else
+	ms_message("Test skipped, can only run on Linux");
+#endif
+}
+
 
 test_t register_tests[] = {
 	TEST_NO_TAG("Simple register", simple_register),
@@ -1487,7 +1508,8 @@ test_t register_tests[] = {
 	TEST_NO_TAG("AuthInfo TLS client certificate authentication in callback 2", tls_auth_info_client_cert_cb_2),
 	TEST_NO_TAG("Register get GRUU", register_get_gruu),
 	TEST_NO_TAG("Register get GRUU for multi device", multi_devices_register_with_gruu),
-	TEST_NO_TAG("Update contact private IP address", update_contact_private_ip_address)
+	TEST_NO_TAG("Update contact private IP address", update_contact_private_ip_address),
+	TEST_NO_TAG("Register with specific client port", register_with_specific_client_port)
 };
 
 test_suite_t register_test_suite = {"Register", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
