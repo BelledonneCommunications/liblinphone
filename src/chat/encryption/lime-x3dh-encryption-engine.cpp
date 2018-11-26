@@ -97,10 +97,13 @@ LimeManager::LimeManager (
 	belle_http_request_t *req;
 	belle_sip_memory_body_handler_t *bh;
 
+	stringstream userAgent;
+	userAgent << "Linphone/" << linphone_core_get_version() << " (Lime)" << " Belle-sip/" << belle_sip_version_to_string();
+
 	bh = belle_sip_memory_body_handler_new_copy_from_buffer(message.data(), message.size(), NULL, NULL);
 	uri=belle_generic_uri_parse(url.data());
 	req=belle_http_request_create("POST", uri,
-			belle_http_header_create("User-Agent", "lime"),
+			belle_http_header_create("User-Agent", userAgent.str().c_str()),
 			belle_http_header_create("Content-type", "x3dh/octet-stream"),
 			belle_http_header_create("From", from.data()),
 			NULL);
