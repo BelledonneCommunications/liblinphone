@@ -68,16 +68,21 @@ typedef struct _AccountManager AccountManager;
 
 static AccountManager *the_am=NULL;
 
+static void account_manager_generate_unique_id(AccountManager * am) {
+	const int tokenLength = 6;
+	if (am->unique_id)
+		ms_free(am->unique_id);
+	am->unique_id=sal_get_random_token(tokenLength);
+	
+	ms_message("Using lowercase random token for test username.");
+	for (int i=0; i<tokenLength; i++) {
+		am->unique_id[i] = tolower(the_am->unique_id[i]);
+	}
+}
 AccountManager *account_manager_get(void){
 	if (the_am==NULL){
 		the_am=ms_new0(AccountManager,1);
-		const int tokenLength = 6;
-		the_am->unique_id=sal_get_random_token(tokenLength);
-
-		ms_message("Using lowercase random token for test username.");
-		for (int i=0; i<tokenLength; i++) {
-			the_am->unique_id[i] = tolower(the_am->unique_id[i]);
-		}
+		account_manager_generate_unique_id(the_am);
 	}
 	return the_am;
 }
@@ -333,6 +338,7 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 			m->accounts = bctbx_list_remove(m->accounts, account);
 			account_destroy(account);
 		}
+		account_manager_generate_unique_id(m); //change unique id to make sure we really create a new one
 		account = account_new(id_addr, m->unique_id);
 		account->phone_alias = ms_strdup(phone_alias);
 		ms_message("No account for %s exists, going to create one.", identity);
