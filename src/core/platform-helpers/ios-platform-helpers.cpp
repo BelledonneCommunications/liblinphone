@@ -76,8 +76,10 @@ IosPlatformHelpers::IosPlatformHelpers (LinphoneCore *lc, void *system_context) 
 	mCpuLockTaskId = 0;
 
 	string rootCaPath = getResourcePath(CFSTR("org.linphone.linphone"), CFSTR("rootca.pem"));
-	if (!rootCaPath.empty())
-		linphone_core_set_root_ca(lc, rootCaPath.c_str());
+	if (!rootCaPath.empty()) {
+		// fix workaround rootca reset
+		//linphone_core_set_root_ca(lc, rootCaPath.c_str());
+	}
 	else
 		lError() << "IosPlatformHelpers did not find rootca.pem resource";
 
