@@ -41,4 +41,10 @@ string SysPaths::getConfigPath (PlatformHelpers *platformHelpers) {
 	return platformHelpers->getConfigPath();
 }
 
+string SysPaths::getDownloadPath (PlatformHelpers *platformHelpers) {
+	if (!platformHelpers)
+		return "";
+	return platformHelpers->getDownloadPath();
+}
+
 LINPHONE_END_NAMESPACE

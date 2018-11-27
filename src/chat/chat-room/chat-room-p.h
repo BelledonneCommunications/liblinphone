@@ -57,6 +57,9 @@ public:
 	void addTransientEvent (const std::shared_ptr<EventLog> &eventLog) override;
 	void removeTransientEvent (const std::shared_ptr<EventLog> &eventLog) override;
 
+	void addTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override;
+	void removeTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override;
+
 	std::shared_ptr<ChatMessage> createChatMessage (ChatMessage::Direction direction);
 	std::shared_ptr<ImdnMessage> createImdnMessage (
 		const std::list<std::shared_ptr<ChatMessage>> &deliveredMessages,
@@ -91,6 +94,7 @@ public:
 
 	std::list<IdentityAddress> remoteIsComposing;
 	std::list<std::shared_ptr<EventLog>> transientEvents;
+	std::list<std::shared_ptr<ChatMessage>> transientMessages;
 
 	ConferenceId conferenceId;
 
