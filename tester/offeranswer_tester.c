@@ -35,8 +35,8 @@ static int get_codec_position(const MSList *l, const char *mime_type, int rate){
 
 /*check basic things about codecs at startup: order and enablement*/
 static void start_with_no_config(void){
-	LinphoneCore *lc=linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, NULL, NULL, system_context);
-	const MSList *codecs=linphone_core_get_audio_codecs(lc);
+	LinphoneCoreManager* mgr = linphone_core_manager_new2("empty_rc", FALSE);
+	const MSList *codecs=linphone_core_get_audio_codecs(mgr->lc);
 	int opus_codec_pos;
 	int speex_codec_pos=get_codec_position(codecs, "speex", 8000);
 	int speex16_codec_pos=get_codec_position(codecs, "speex", 16000);
@@ -45,12 +45,12 @@ static void start_with_no_config(void){
 	if (opus_codec_pos!=-1) BC_ASSERT_EQUAL(opus_codec_pos,0,int, "%d");
 	BC_ASSERT_LOWER(speex16_codec_pos,speex_codec_pos,int,"%d");
 
-	pt=linphone_core_find_payload_type(lc, "speex", 16000, 1);
+	pt=linphone_core_find_payload_type(mgr->lc, "speex", 16000, 1);
 	BC_ASSERT_PTR_NOT_NULL(pt);
 	if (pt) {
-		BC_ASSERT_TRUE(linphone_core_payload_type_enabled(lc, pt));
+		BC_ASSERT_TRUE(linphone_core_payload_type_enabled(mgr->lc, pt));
 	}
-	linphone_core_unref(lc);
+	linphone_core_manager_destroy(mgr);
 }
 
 static void check_payload_type_numbers(LinphoneCall *call1, LinphoneCall *call2, int expected_number){
