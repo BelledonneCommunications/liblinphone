@@ -46,6 +46,8 @@ public:
 	void releaseCpuLock () override;
 	string getDataPath () override;
 	string getConfigPath () override;
+	void setVideoWindow (void *windowId) override;
+	void setVideoPreviewWindow (void *windowId) override;
 
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
