@@ -124,13 +124,13 @@ static void linphone_version_test(void){
 }
 
 static void core_init_test(void) {
-	LinphoneCore* lc;
-	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL,NULL, NULL, system_context);
+	LinphoneCoreManager* mgr = linphone_core_manager_new2("empty_rc",FALSE);
 
 	/* until we have good certificates on our test server... */
-	linphone_core_verify_server_certificates(lc,FALSE);
-	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
-		linphone_core_unref(lc);
+	linphone_core_verify_server_certificates(mgr->lc, FALSE);
+	if (BC_ASSERT_PTR_NOT_NULL(mgr->lc)) {
+		//linphone_core_unref(mgr->lc);
+		linphone_core_manager_destroy(mgr);
 	}
 }
 
@@ -150,11 +150,11 @@ static void linphone_address_test(void) {
 }
 
 static void core_sip_transport_test(void) {
-	LinphoneCore* lc;
 	LCSipTransports tr;
-	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL,NULL, NULL, system_context);
+	LinphoneCoreManager* mgr = linphone_core_manager_new2(NULL, FALSE);
+	LinphoneCore* lc = mgr->lc;
 	if (!BC_ASSERT_PTR_NOT_NULL(lc)) return;
-	linphone_core_get_sip_transports(lc,&tr);
+	linphone_core_get_sip_transports(mgr->lc,&tr);
 	BC_ASSERT_EQUAL(tr.udp_port,5060, int, "%d"); /*default config*/
 	BC_ASSERT_EQUAL(tr.tcp_port,5060, int, "%d"); /*default config*/
 
@@ -172,7 +172,7 @@ static void core_sip_transport_test(void) {
 	BC_ASSERT_EQUAL(lp_config_get_int(linphone_core_get_config(lc),"sip","sip_tcp_port",-2),LC_SIP_TRANSPORT_RANDOM, int, "%d");
 	BC_ASSERT_EQUAL(lp_config_get_int(linphone_core_get_config(lc),"sip","sip_tls_port",-2),LC_SIP_TRANSPORT_RANDOM, int, "%d");
 
-	linphone_core_unref(lc);
+	linphone_core_manager_destroy(mgr);
 }
 
 static void linphone_interpret_url_test(void) {
@@ -181,7 +181,9 @@ static void linphone_interpret_url_test(void) {
 	LinphoneAddress* address;
 	LinphoneProxyConfig *proxy_config;
 	char *tmp;
-	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL,NULL, NULL, system_context);
+	LinphoneCoreManager* mgr = linphone_core_manager_new2("empty_rc",FALSE);
+	lc = mgr->lc;
+
 	if (!BC_ASSERT_PTR_NOT_NULL( lc )) return;
 
 	proxy_config =linphone_core_create_proxy_config(lc);
@@ -222,7 +224,7 @@ static void linphone_interpret_url_test(void) {
 	linphone_address_unref(address);
 	ms_free(tmp);
 
-	linphone_core_unref(lc);
+	linphone_core_manager_destroy(mgr);
 }
 
 static void linphone_lpconfig_from_buffer(void){
@@ -373,11 +375,10 @@ void linphone_proxy_config_is_server_config_changed_test(void) {
 }
 
 static void chat_room_test(void) {
-	LinphoneCore* lc;
-	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL,NULL, NULL, system_context);
-	if (!BC_ASSERT_PTR_NOT_NULL(lc)) return;
-	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room_from_uri(lc,"sip:toto@titi.com"));
-	linphone_core_unref(lc);
+	LinphoneCoreManager* mgr = linphone_core_manager_new2("empty_rc",FALSE);
+	if (!BC_ASSERT_PTR_NOT_NULL(mgr->lc)) return;
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room_from_uri(mgr->lc,"sip:toto@titi.com"));
+	linphone_core_manager_destroy(mgr);
 }
 
 static void devices_reload_test(void) {

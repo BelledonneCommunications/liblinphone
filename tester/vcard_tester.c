@@ -357,7 +357,9 @@ end:
 }
 
 static void friends_sqlite_store_lot_of_friends(void) {
-	LinphoneCore* lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, NULL, NULL, system_context);
+	LinphoneCoreManager* mgr = linphone_core_manager_new2("empty_rc",FALSE);
+	LinphoneCore* lc = mgr->lc;
+
 	sqlite3 *db;
 	int i;
 	char* errmsg = NULL;
@@ -423,11 +425,12 @@ static void friends_sqlite_store_lot_of_friends(void) {
 	ret = sqlite3_exec(db,"END",0,0,&errmsg);
 	BC_ASSERT_TRUE(ret ==SQLITE_OK);
 	sqlite3_close(db);
-	linphone_core_unref(lc);
+	(void)lc;
+	linphone_core_manager_destroy(mgr);
 }
 
 static void friends_sqlite_find_friend_in_lot_of_friends(void) {
-	LinphoneCore* lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, NULL, NULL, system_context);
+	LinphoneCoreManager* mgr = linphone_core_manager_new2("empty_rc",FALSE);
 	sqlite3 *db;
 	int i;
 	char* errmsg = NULL;
@@ -507,7 +510,7 @@ static void friends_sqlite_find_friend_in_lot_of_friends(void) {
 	ret = sqlite3_exec(db,"END",0,0,&errmsg);
 	BC_ASSERT_TRUE(ret ==SQLITE_OK);
 	sqlite3_close(db);
-	linphone_core_unref(lc);
+	linphone_core_manager_destroy(mgr);
 }
 
 typedef struct _LinphoneCardDAVStats {
