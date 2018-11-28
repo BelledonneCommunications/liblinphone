@@ -241,6 +241,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			FileTransferContent *fileTransferContent = new FileTransferContent();
 			fileTransferContent->setContentType(ContentType::FileTransfer);
 			fileTransferContent->setFileSize(currentFileContentToTransfer->getFileSize()); // Copy file size information
+			fileTransferContent->setFilePath(currentFileContentToTransfer->getFilePath()); // Copy file path information
 			message->getPrivate()->addContent(fileTransferContent);
 
 			// shall we encrypt the file

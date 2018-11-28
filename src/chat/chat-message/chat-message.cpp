@@ -700,6 +700,7 @@ void ChatMessagePrivate::send () {
 	int errorCode = 0;
 
 	currentSendStep |= ChatMessagePrivate::Step::Started;
+	q->getChatRoom()->getPrivate()->addTransientChatMessage(q->getSharedFromThis());
 
 	if (toBeStored && currentSendStep == (ChatMessagePrivate::Step::Started | ChatMessagePrivate::Step::None))
 		storeInDb();
@@ -804,6 +805,7 @@ void ChatMessagePrivate::send () {
 					currentSendStep = ChatMessagePrivate::Step::None;
 					restoreFileTransferContentAsFileContent();
 					setState(ChatMessage::State::NotDelivered); // Do it after the restore to have the correct message in db
+					q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 					return;
 				} else if (result == ChatMessageModifier::Result::Suspended) {
 					return;
@@ -851,6 +853,7 @@ void ChatMessagePrivate::send () {
 	}
 
 	restoreFileTransferContentAsFileContent();
+	q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 
 	// Remove internal content as it is not needed anymore and will confuse some old methods like getContentType()
 	internalContent.setBody("");
