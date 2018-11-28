@@ -31,6 +31,8 @@
 #include "lime-x3dh-encryption-engine.h"
 #include "private.h"
 
+#include <algorithm>
+
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
@@ -245,6 +247,12 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	try {
 		limeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, result, &errorCode] (lime::CallbackReturn returnCode, string errorMessage) {
 			if (returnCode == lime::CallbackReturn::success) {
+				// Ignore device which do not have keys on the X3DH server
+				// The message will still be sent to them but they will not be able to decrypt it
+				recipients->erase(remove_if(recipients->begin(), recipients->end(), [](const lime::RecipientData &recipient) {
+					return recipient.peerStatus == lime::PeerDeviceStatus::fail;
+				}), recipients->end());
+
 				list<Content *> contents;
 
 				// ---------------------------------------------- SIPFRAG
@@ -315,7 +323,6 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 	const string &recipientUserId = chatRoom->getPeerAddress().getAddressWithoutGruu().asString();
-	lime::PeerDeviceStatus peerDeviceStatus = lime::PeerDeviceStatus::fail;
 
 	const Content *internalContent;
 	if (!message->getInternalContent().isEmpty())
@@ -356,7 +363,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 	}
 
 	// Discard incoming messages from unsafe peer devices
-	peerDeviceStatus = limeManager->get_peerDeviceStatus(senderDeviceId);
+	lime::PeerDeviceStatus peerDeviceStatus = limeManager->get_peerDeviceStatus(senderDeviceId);
 	if (peerDeviceStatus == lime::PeerDeviceStatus::unsafe) {
 		lWarning() << "LIME X3DH discard incoming message from unsafe sender device " << senderDeviceId;
 		errorCode = 488; // Not Acceptable
