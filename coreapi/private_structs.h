@@ -604,6 +604,7 @@ struct _LinphonePlayer{
 	void (*destroy)(LinphonePlayer *player);
 	void *impl;
 	LinphonePlayerCbs *callbacks;
+	LinphoneCore *core;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphonePlayer);

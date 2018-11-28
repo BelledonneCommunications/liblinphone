@@ -33,7 +33,7 @@ static void _local_player_destroy(LinphonePlayer *obj);
 static void _local_player_eof_callback(void *user_data);
 
 LinphonePlayer *linphone_core_create_local_player(LinphoneCore *lc, const char *sound_card_name, const char *video_display_name, void *window_id) {
-	LinphonePlayer *obj = linphone_player_new();
+	LinphonePlayer *obj = linphone_player_new(lc);
 	MSSndCard *snd_card;
 	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(lc->factory);
 	if (sound_card_name == NULL) sound_card_name = linphone_core_get_ringer_device(lc);
