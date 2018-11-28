@@ -32,9 +32,10 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphonePlayer, belle_sip_object_t,
 	FALSE
 );
 
-LinphonePlayer * linphone_player_new(void) {
+LinphonePlayer * linphone_player_new(LinphoneCore *core) {
 	LinphonePlayer *player = belle_sip_object_new(LinphonePlayer);
 	player->callbacks = linphone_player_cbs_new();
+	player->core = core;
 	return player;
 }
 
@@ -57,6 +58,10 @@ void linphone_player_set_user_data(LinphonePlayer *player, void *ud) {
 
 LinphonePlayerCbs * linphone_player_get_callbacks(const LinphonePlayer *player) {
 	return player->callbacks;
+}
+
+LinphoneCore *linphone_player_get_core(const LinphonePlayer *player){
+	return player->core;
 }
 
 LinphoneStatus linphone_player_open(LinphonePlayer *obj, const char *filename){
@@ -197,7 +202,7 @@ static void on_call_destroy(void *obj, belle_sip_object_t *call_being_destroyed)
 }
 
 LinphonePlayer *linphone_call_build_player(LinphoneCall *call){
-	LinphonePlayer *obj = linphone_player_new();
+	LinphonePlayer *obj = linphone_player_new(linphone_call_get_core(call));
 	obj->open=call_player_open;
 	obj->close=call_player_close;
 	obj->start=call_player_start;
@@ -207,10 +212,6 @@ LinphonePlayer *linphone_call_build_player(LinphoneCall *call){
 	obj->impl=call;
 	belle_sip_object_weak_ref(call,on_call_destroy,obj);
 	return obj;
-}
-
-LinphoneCore *linphone_player_get_core(const LinphonePlayer *player){
-	return linphone_call_get_core((LinphoneCall *)player->impl);
 }
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphonePlayerCbs);

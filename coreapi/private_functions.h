@@ -444,7 +444,7 @@ LINPHONE_PUBLIC int linphone_remote_provisioning_load_file( LinphoneCore* lc, co
  ****************************************************************************/
 
 LinphonePlayerCbs *linphone_player_cbs_new(void);
-LinphonePlayer * linphone_player_new(void);
+LinphonePlayer * linphone_player_new(LinphoneCore *core);
 void _linphone_player_destroy(LinphonePlayer *player);
 
 
