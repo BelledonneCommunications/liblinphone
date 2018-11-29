@@ -1211,6 +1211,9 @@ static void sound_config_read(LinphoneCore *lc)
 	devid=lp_config_get_string(lc->config,"sound","capture_dev_id",NULL);
 	linphone_core_set_capture_device(lc,devid);
 
+	devid=lp_config_get_string(lc->config,"sound","media_dev_id",NULL);
+	linphone_core_set_media_device(lc,devid);
+
 /*
 	tmp=lp_config_get_int(lc->config,"sound","play_lev",80);
 	linphone_core_set_play_level(lc,tmp);
@@ -4192,6 +4195,10 @@ int linphone_core_get_rec_level(LinphoneCore *lc) {
 	return lc->sound_conf.rec_lev;
 }
 
+int linphone_core_get_media_level(LinphoneCore *lc) {
+	return lc->sound_conf.media_lev;
+}
+
 void linphone_core_set_ring_level(LinphoneCore *lc, int level){
 	MSSndCard *sndcard;
 	lc->sound_conf.ring_lev = (char)level;
@@ -4256,6 +4263,13 @@ void linphone_core_set_rec_level(LinphoneCore *lc, int level) {
 	if (sndcard) ms_snd_card_set_level(sndcard,MS_SND_CARD_CAPTURE,level);
 }
 
+void linphone_core_set_media_level(LinphoneCore *lc, int level) {
+	MSSndCard *sndcard;
+	lc->sound_conf.media_lev = (char)level;
+	sndcard=lc->sound_conf.media_sndcard;
+	if (sndcard) ms_snd_card_set_level(sndcard,MS_SND_CARD_PLAYBACK,level);
+}
+
 static MSSndCard *get_card_from_string_id(const char *devid, unsigned int cap, MSFactory *f){
 	MSSndCard *sndcard=NULL;
 	if (devid!=NULL){
@@ -4318,6 +4332,14 @@ LinphoneStatus linphone_core_set_capture_device(LinphoneCore *lc, const char * d
 	return 0;
 }
 
+LinphoneStatus linphone_core_set_media_device(LinphoneCore *lc, const char * devid){
+	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
+	lc->sound_conf.media_sndcard=card;
+	if (card &&  linphone_core_ready(lc))
+		lp_config_set_string(lc->config,"sound","media_dev_id",ms_snd_card_get_string_id(card));
+	return 0;
+}
+
 const char * linphone_core_get_ringer_device(LinphoneCore *lc) {
 	if (lc->sound_conf.ring_sndcard) return ms_snd_card_get_string_id(lc->sound_conf.ring_sndcard);
 	return NULL;
@@ -4329,6 +4351,10 @@ const char * linphone_core_get_playback_device(LinphoneCore *lc) {
 
 const char * linphone_core_get_capture_device(LinphoneCore *lc) {
 	return lc->sound_conf.capt_sndcard ? ms_snd_card_get_string_id(lc->sound_conf.capt_sndcard) : NULL;
+}
+
+const char * linphone_core_get_media_device(LinphoneCore *lc) {
+	return lc->sound_conf.media_sndcard ? ms_snd_card_get_string_id(lc->sound_conf.media_sndcard) : NULL;
 }
 
 const char**  linphone_core_get_sound_devices(LinphoneCore *lc){

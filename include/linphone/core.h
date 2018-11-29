@@ -2925,6 +2925,14 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED int linphone_core_get_play_level(LinphoneCor
 LINPHONE_PUBLIC LINPHONE_DEPRECATED int linphone_core_get_rec_level(LinphoneCore *lc);
 
 /**
+ * Get sound media level in 0-100 scale.
+ * @ingroup media_parameters
+ * @deprecated
+ * @donotwrap
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED int linphone_core_get_media_level(LinphoneCore *lc);
+
+/**
  * Set sound ring level in 0-100 scale.
  * @ingroup media_parameters
  * @deprecated
@@ -2947,6 +2955,14 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_play_level(LinphoneCo
  * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_rec_level(LinphoneCore *lc, int level);
+
+/**
+ * Set sound media level in 0-100 scale.
+ * @deprecated
+ * @ingroup media_parameters
+ * @donotwrap
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_media_level(LinphoneCore *lc, int level);
 
 LINPHONE_DEPRECATED char linphone_core_get_sound_source(LinphoneCore *lc);
 
@@ -3009,6 +3025,14 @@ LINPHONE_PUBLIC const char * linphone_core_get_playback_device(LinphoneCore *lc)
 LINPHONE_PUBLIC const char * linphone_core_get_capture_device(LinphoneCore *lc);
 
 /**
+ * Gets the name of the currently assigned sound device for media.
+ * @param[in] lc #LinphoneCore object
+ * @return The name of the currently assigned sound device for capture
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC const char * linphone_core_get_media_device(LinphoneCore *lc);
+
+/**
  * Sets the sound device used for ringing.
  * @param[in] lc #LinphoneCore object
  * @param[in] devid The device name as returned by linphone_core_get_sound_devices()
@@ -3034,6 +3058,15 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_playback_device(LinphoneCore *l
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC LinphoneStatus linphone_core_set_capture_device(LinphoneCore *lc, const char * devid);
+
+/**
+ * Sets the sound device used for media.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] devid The device name as returned by linphone_core_get_sound_devices()
+ * @return 0
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC LinphoneStatus linphone_core_set_media_device(LinphoneCore *lc, const char * devid);
 
 /**
  * Whenever the liblinphone is playing a ring to advertise an incoming call or ringback of an outgoing call, this function stops
