@@ -341,11 +341,11 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	}
 
 	BC_ASSERT_PTR_NULL(linphone_call_get_remote_params(caller_call)); /*assert that remote params are NULL when no response is received yet*/
-
-	did_receive_call = wait_for(callee_mgr->lc
+        // test ios simulator needs more time, 3s plus for connectng the network 
+	did_receive_call = wait_for_until(callee_mgr->lc
 				,caller_mgr->lc
 				,&callee_mgr->stat.number_of_LinphoneCallIncomingReceived
-				,initial_callee.number_of_LinphoneCallIncomingReceived+1);
+				,initial_callee.number_of_LinphoneCallIncomingReceived+1, 12000);
 	BC_ASSERT_EQUAL(did_receive_call, !callee_test_params->sdp_simulate_error, int, "%d");
 
 	sal_default_set_sdp_handling(linphone_core_get_sal(caller_mgr->lc), SalOpSDPNormal);
