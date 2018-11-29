@@ -30,10 +30,11 @@
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/real-time-text-chat-room-p.h"
 #include "chat/notification/imdn.h"
+#include "conference/participant-imdn-state.h"
+#include "conference/participant.h"
 #include "content/content-type.h"
 #include "content/content.h"
-#include "conference/participant.h"
-#include "conference/participant-imdn-state.h"
+#include "core/core-p.h"
 
 // =============================================================================
 
@@ -110,6 +111,10 @@ LinphoneChatMessageCbs *linphone_chat_message_get_callbacks(const LinphoneChatMe
 // =============================================================================
 // Getter and setters
 // =============================================================================
+
+LINPHONE_PUBLIC LinphoneCore *linphone_chat_message_get_core (const LinphoneChatMessage *msg) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getCore()->getCCore();
+}
 
 LinphoneChatRoom *linphone_chat_message_get_chat_room (const LinphoneChatMessage *msg) {
 	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getChatRoom());

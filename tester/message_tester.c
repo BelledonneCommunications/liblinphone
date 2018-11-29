@@ -84,12 +84,12 @@ void file_transfer_received(LinphoneChatMessage *msg, const LinphoneContent* con
 		file = fopen(receive_file,"wb");
 		linphone_chat_message_set_user_data(msg,(void*)file); /*store fd for next chunks*/
 	}
-	
+
 	file = (FILE*)linphone_chat_message_get_user_data(msg);
 	BC_ASSERT_PTR_NOT_NULL(file);
 	if (linphone_buffer_is_empty(buffer)) { /* tranfer complete */
 		struct stat st;
-		
+
 		linphone_chat_message_set_user_data(msg, NULL);
 		fclose(file);
 		BC_ASSERT_TRUE(stat(receive_file, &st)==0);
@@ -138,13 +138,18 @@ LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *msg, const Linph
  * function invoked to report file transfer progress.
  * */
 void file_transfer_progress_indication(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total) {
-	LinphoneChatRoom *cr = linphone_chat_message_get_chat_room(msg);
-	LinphoneCore *lc = linphone_chat_room_get_core(cr);
-	const LinphoneAddress* from_address = linphone_chat_message_get_from_address(msg);
-	const LinphoneAddress* to_address = linphone_chat_message_get_to_address(msg);
-	char *address = linphone_chat_message_is_outgoing(msg)?linphone_address_as_string(to_address):linphone_address_as_string(from_address);
-	stats* counters = get_stats(lc);
+	const LinphoneAddress *from_address = linphone_chat_message_get_from_address(msg);
+	const LinphoneAddress *to_address = linphone_chat_message_get_to_address(msg);
 	int progress = (int)((offset * 100)/total);
+	LinphoneCore *lc = linphone_chat_message_get_core(msg);
+	LinphoneChatRoom *cr = linphone_chat_message_get_chat_room(msg);
+	stats *counters = get_stats(lc);
+	char *address;
+
+	if (!cr) return;
+
+	address = linphone_chat_message_is_outgoing(msg)?linphone_address_as_string(to_address):linphone_address_as_string(from_address);
+
 	ms_message(" File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n", progress
 																	,(linphone_chat_message_is_outgoing(msg)?"sent":"received")
 																	, linphone_content_get_type(content)
@@ -1845,7 +1850,7 @@ static void real_time_text(
 			const char* message = "Be l3l";
 			size_t i;
 			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			
+
 
 			for (i = 0; i < strlen(message); i++) {
 				BC_ASSERT_FALSE(linphone_chat_message_put_char(rtt_message, message[i]));
@@ -2182,7 +2187,7 @@ static void real_time_text_copy_paste(void) {
 			const char* message = "Be l3l";
 			size_t i;
 			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			
+
 
 			for (i = 1; i <= strlen(message); i++) {
 				linphone_chat_message_put_char(rtt_message, message[i-1]);

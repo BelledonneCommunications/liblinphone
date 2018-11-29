@@ -428,7 +428,7 @@ std::string ChatMessagePrivate::createFakeFileTransferFromUrl(const std::string 
 
 void ChatMessagePrivate::setChatRoom (const shared_ptr<AbstractChatRoom> &cr) {
 	chatRoom = cr;
-	conferenceId = cr->getConferenceId();
+	const ConferenceId &conferenceId(cr->getConferenceId());
 	if (direction == ChatMessage::Direction::Outgoing) {
 		fromAddress = conferenceId.getLocalAddress();
 		toAddress = conferenceId.getPeerAddress();
@@ -906,14 +906,9 @@ ChatMessage::~ChatMessage () {
 shared_ptr<AbstractChatRoom> ChatMessage::getChatRoom () const {
 	L_D();
 
-	shared_ptr<AbstractChatRoom> chatRoom = d->chatRoom.lock();
-	if (!chatRoom) {
-		chatRoom = getCore()->getOrCreateBasicChatRoom(d->conferenceId);
-		if (!chatRoom) {
-			lError() << "Unable to get valid chat room instance.";
-			throw logic_error("Unable to get chat room of chat message.");
-		}
-	}
+	shared_ptr<AbstractChatRoom> chatRoom(d->chatRoom.lock());
+	if (!chatRoom)
+		lError() << "Unable to get valid chat room instance.";
 
 	return chatRoom;
 }
