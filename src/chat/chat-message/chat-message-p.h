@@ -211,7 +211,6 @@ private:
 	// Do not expose.
 
 	std::weak_ptr<AbstractChatRoom> chatRoom;
-	ConferenceId conferenceId;
 	IdentityAddress fromAddress;
 	IdentityAddress toAddress;
 
