@@ -31,8 +31,6 @@
 #include "lime-x3dh-encryption-engine.h"
 #include "private.h"
 
-#include <algorithm>
-
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
@@ -247,11 +245,6 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	try {
 		limeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, result, &errorCode] (lime::CallbackReturn returnCode, string errorMessage) {
 			if (returnCode == lime::CallbackReturn::success) {
-				// Ignore device which do not have keys on the X3DH server
-				// The message will still be sent to them but they will not be able to decrypt it
-				recipients->erase(remove_if(recipients->begin(), recipients->end(), [](const lime::RecipientData &recipient) {
-					return recipient.peerStatus == lime::PeerDeviceStatus::fail;
-				}), recipients->end());
 
 				list<Content *> contents;
 
