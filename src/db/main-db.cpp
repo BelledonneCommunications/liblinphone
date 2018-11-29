@@ -518,6 +518,7 @@ shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceEvent (
 	const shared_ptr<AbstractChatRoom> &chatRoom,
 	const soci::row &row
 ) const {
+	L_ASSERT(chatRoom);
 	EventLog::Type type = EventLog::Type(row.get<int>(1));
 	if (type == EventLog::Type::ConferenceChatMessage) {
 		long long eventId = getConferenceEventIdFromRow(row);

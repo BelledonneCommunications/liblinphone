@@ -33,6 +33,7 @@ import metaname
 
 CORE_ACCESSOR_LIST = [
     'Call',
+    'ChatMessage',
     'ChatRoom',
     'Event',
     'Friend',
