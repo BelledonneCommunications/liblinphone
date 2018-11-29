@@ -296,7 +296,8 @@ struct sound_config
 {
 	struct _MSSndCard * ring_sndcard;	/* the playback sndcard currently used */
 	struct _MSSndCard * play_sndcard;	/* the playback sndcard currently used */
-	struct _MSSndCard * capt_sndcard; /* the capture sndcard currently used */
+	struct _MSSndCard * capt_sndcard; 	/* the capture sndcard currently used */
+	struct _MSSndCard * media_sndcard; 	/* the media sndcard currently used */
 	struct _MSSndCard * lsd_card; /* dummy playback card for Linphone Sound Daemon extension */
 	const char **cards;
 	int latency;	/* latency in samples of the current used sound device */
@@ -305,6 +306,7 @@ struct sound_config
 	char rec_lev;
 	char play_lev;
 	char ring_lev;
+	char media_lev;
 	char source;
 	char *local_ring;
 	char *remote_ring;
