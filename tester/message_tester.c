@@ -84,12 +84,12 @@ void file_transfer_received(LinphoneChatMessage *msg, const LinphoneContent* con
 		file = fopen(receive_file,"wb");
 		linphone_chat_message_set_user_data(msg,(void*)file); /*store fd for next chunks*/
 	}
-	
+
 	file = (FILE*)linphone_chat_message_get_user_data(msg);
 	BC_ASSERT_PTR_NOT_NULL(file);
 	if (linphone_buffer_is_empty(buffer)) { /* tranfer complete */
 		struct stat st;
-		
+
 		linphone_chat_message_set_user_data(msg, NULL);
 		fclose(file);
 		BC_ASSERT_TRUE(stat(receive_file, &st)==0);
@@ -138,19 +138,22 @@ LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *msg, const Linph
  * function invoked to report file transfer progress.
  * */
 void file_transfer_progress_indication(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total) {
-	LinphoneChatRoom *cr = linphone_chat_message_get_chat_room(msg);
-	LinphoneCore *lc = linphone_chat_room_get_core(cr);
-	const LinphoneAddress* from_address = linphone_chat_message_get_from_address(msg);
-	const LinphoneAddress* to_address = linphone_chat_message_get_to_address(msg);
-	char *address = linphone_chat_message_is_outgoing(msg)?linphone_address_as_string(to_address):linphone_address_as_string(from_address);
-	stats* counters = get_stats(lc);
+	const LinphoneAddress *from_address = linphone_chat_message_get_from_address(msg);
+	const LinphoneAddress *to_address = linphone_chat_message_get_to_address(msg);
 	int progress = (int)((offset * 100)/total);
-	ms_message(" File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n", progress
-																	,(linphone_chat_message_is_outgoing(msg)?"sent":"received")
-																	, linphone_content_get_type(content)
-																	, linphone_content_get_subtype(content)
-																	,(linphone_chat_message_is_outgoing(msg)?"to":"from")
-																	, address);
+	LinphoneCore *lc = linphone_chat_message_get_core(msg);
+	stats *counters = get_stats(lc);
+	char *address = linphone_address_as_string(linphone_chat_message_is_outgoing(msg) ? to_address : from_address);
+
+	bctbx_message(
+		"File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n",
+		progress,
+		linphone_chat_message_is_outgoing(msg) ? "sent" : "received",
+		linphone_content_get_type(content),
+		linphone_content_get_subtype(content),
+		linphone_chat_message_is_outgoing(msg) ? "to" : "from",
+		address
+	);
 	counters->progress_of_LinphoneFileTransfer = progress;
 	if (progress == 100) {
 		counters->number_of_LinphoneFileTransferDownloadSuccessful++;
@@ -172,9 +175,8 @@ void liblinphone_tester_chat_message_state_change(LinphoneChatMessage* msg,Linph
 }
 
 void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state) {
-	LinphoneChatRoom *cr = linphone_chat_message_get_chat_room(msg);
-	LinphoneCore *lc = linphone_chat_room_get_core(cr);
-	stats* counters = get_stats(lc);
+	LinphoneCore *lc = linphone_chat_message_get_core(msg);
+	stats *counters = get_stats(lc);
 	switch (state) {
 		case LinphoneChatMessageStateIdle:
 			return;
@@ -1728,7 +1730,7 @@ static void file_transfer_not_sent_if_invalid_url(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-void file_transfer_io_error_base(char *server_url, bool_t destroy_room) {
+void file_transfer_io_error_base(char *server_url) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:Jehan@sip.linphone.org>");
 	LinphoneChatMessage *msg = create_message_from_sintel_trailer(chatroom);
@@ -1737,26 +1739,34 @@ void file_transfer_io_error_base(char *server_url, bool_t destroy_room) {
 	linphone_core_set_file_transfer_server(marie->lc, server_url);
 	linphone_chat_message_send(msg);
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageInProgress, 1, 1000));
-	if (destroy_room) {
-		linphone_core_delete_chat_room(marie->lc, chatroom);
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageNotDelivered, 1, 1000));
-	} else {
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageNotDelivered, 1, 3000));
-	}
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageNotDelivered, 1, 3000));
 	linphone_chat_message_unref(msg);
 	linphone_core_manager_destroy(marie);
 }
 
 static void file_transfer_not_sent_if_host_not_found(void) {
-	file_transfer_io_error_base("https://not-existing-url.com", FALSE);
+	file_transfer_io_error_base("https://not-existing-url.com");
 }
 
 static void file_transfer_not_sent_if_url_moved_permanently(void) {
-	file_transfer_io_error_base("http://linphone.org/toto.php", FALSE);
+	file_transfer_io_error_base("http://linphone.org/toto.php");
 }
 
-static void file_transfer_io_error_after_destroying_chatroom(void) {
-	file_transfer_io_error_base("https://www.linphone.org:444/lft.php", TRUE);
+static void file_transfer_success_after_destroying_chatroom(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:Jehan@sip.linphone.org>");
+	LinphoneChatMessage *msg = create_message_from_sintel_trailer(chatroom);
+	linphone_chat_message_cbs_set_msg_state_changed(
+		linphone_chat_message_get_callbacks(msg),
+		liblinphone_tester_chat_message_msg_state_changed
+	);
+	linphone_core_set_file_transfer_server(marie->lc, "https://www.linphone.org:444/lft.php");
+	linphone_chat_message_send(msg);
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageInProgress, 1, 1000));
+	linphone_core_delete_chat_room(marie->lc, chatroom);
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageDisplayed, 1, 3000));
+	linphone_chat_message_unref(msg);
+	linphone_core_manager_destroy(marie);
 }
 
 static void real_time_text(
@@ -1845,7 +1855,7 @@ static void real_time_text(
 			const char* message = "Be l3l";
 			size_t i;
 			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			
+
 
 			for (i = 0; i < strlen(message); i++) {
 				BC_ASSERT_FALSE(linphone_chat_message_put_char(rtt_message, message[i]));
@@ -2182,7 +2192,7 @@ static void real_time_text_copy_paste(void) {
 			const char* message = "Be l3l";
 			size_t i;
 			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			
+
 
 			for (i = 1; i <= strlen(message); i++) {
 				linphone_chat_message_put_char(rtt_message, message[i-1]);
@@ -2582,7 +2592,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Info message with body", info_message_with_body),
 	TEST_NO_TAG("Crash during file transfer", crash_during_file_transfer),
 	TEST_NO_TAG("Text status after destroying chat room", text_status_after_destroying_chat_room),
-	TEST_NO_TAG("Transfer io error after destroying chatroom", file_transfer_io_error_after_destroying_chatroom),
+	TEST_NO_TAG("Transfer success after destroying chatroom", file_transfer_success_after_destroying_chatroom),
 	TEST_NO_TAG("Migration from messages db", migration_from_messages_db)
 };
 

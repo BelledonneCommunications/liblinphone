@@ -70,6 +70,11 @@ LINPHONE_PUBLIC void linphone_chat_message_set_user_data (LinphoneChatMessage *m
 
 // =============================================================================
 
+/**
+ * Returns back pointer to #LinphoneCore object.
+**/
+LINPHONE_PUBLIC LinphoneCore *linphone_chat_message_get_core (const LinphoneChatMessage *msg);
+
 LINPHONE_PUBLIC const char *linphone_chat_message_get_external_body_url (const LinphoneChatMessage *msg);
 
 LINPHONE_PUBLIC void linphone_chat_message_set_external_body_url (LinphoneChatMessage *msg, const char *external_body_url);
