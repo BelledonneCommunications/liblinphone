@@ -246,6 +246,16 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 		limeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, result, &errorCode] (lime::CallbackReturn returnCode, string errorMessage) {
 			if (returnCode == lime::CallbackReturn::success) {
 
+				// Ignore devices which do not have keys on the X3DH server
+				// The message will still be sent to them but they will not be able to decrypt it
+				vector<lime::RecipientData> filteredRecipients;
+				filteredRecipients.reserve(recipients->size());
+				for (const lime::RecipientData recipient : *recipients) {
+					if (recipient.peerStatus != lime::PeerDeviceStatus::fail) {
+						filteredRecipients.push_back(recipient);
+					}
+				}
+
 				list<Content *> contents;
 
 				// ---------------------------------------------- SIPFRAG
