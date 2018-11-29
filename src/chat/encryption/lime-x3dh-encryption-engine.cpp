@@ -267,7 +267,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 
 				// ---------------------------------------------- HEADERS
 
-				for (const auto &recipient : *recipients) {
+				for (const auto &recipient : filteredRecipients) {
 					string cipherHeaderB64 = encodeBase64(recipient.DRmessage);
 					Content *cipherHeader = new Content();
 					cipherHeader->setBody(cipherHeaderB64);
