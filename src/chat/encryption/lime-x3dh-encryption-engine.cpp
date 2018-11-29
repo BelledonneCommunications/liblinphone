@@ -249,10 +249,12 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 			if (returnCode == lime::CallbackReturn::success) {
 				// Ignore device which do not have keys on the X3DH server
 				// The message will still be sent to them but they will not be able to decrypt it
-				recipients->erase(remove_if(recipients->begin(), recipients->end(), [](const lime::RecipientData &recipient) {
-					return recipient.peerStatus == lime::PeerDeviceStatus::fail;
-				}), recipients->end());
-
+				auto filteredRecipients = make_shared<vector<lime::RecipientData>>();
+				for (const lime::RecipientData recipient : *recipients) {
+					if (recipient.peerStatus == lime::PeerDeviceStatus::fail) {
+						filteredRecipients->push_back(recipient);
+					}
+				}
 				list<Content *> contents;
 
 				// ---------------------------------------------- SIPFRAG
@@ -264,7 +266,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 
 				// ---------------------------------------------- HEADERS
 
-				for (const auto &recipient : *recipients) {
+				for (const auto &recipient : *filteredRecipients) {
 					string cipherHeaderB64 = encodeBase64(recipient.DRmessage);
 					Content *cipherHeader = new Content();
 					cipherHeader->setBody(cipherHeaderB64);
