@@ -250,7 +250,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 				// The message will still be sent to them but they will not be able to decrypt it
 				vector<lime::RecipientData> filteredRecipients;
 				filteredRecipients.reserve(recipients->size());
-				for (const lime::RecipientData recipient : *recipients) {
+				for (const lime::RecipientData &recipient : *recipients) {
 					if (recipient.peerStatus != lime::PeerDeviceStatus::fail) {
 						filteredRecipients.push_back(recipient);
 					}
@@ -267,7 +267,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 
 				// ---------------------------------------------- HEADERS
 
-				for (const auto &recipient : filteredRecipients) {
+				for (const lime::RecipientData &recipient : filteredRecipients) {
 					string cipherHeaderB64 = encodeBase64(recipient.DRmessage);
 					Content *cipherHeader = new Content();
 					cipherHeader->setBody(cipherHeaderB64);
