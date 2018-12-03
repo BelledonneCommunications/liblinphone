@@ -720,7 +720,10 @@ belle_sip_header_contact_t *SalOp::createContact () {
 	if (!mRoot->mLinphoneSpecs.empty()
 		&& !belle_sip_parameters_has_parameter(BELLE_SIP_PARAMETERS(contactHeader), "+org.linphone.specs")
 	) {
-		belle_sip_parameters_set_parameter(BELLE_SIP_PARAMETERS(contactHeader), "+org.linphone.specs", mRoot->mLinphoneSpecs.c_str());
+		stringstream ss;
+		ss << "\"" << mRoot->mLinphoneSpecs << "\"";
+		string specs = ss.str();
+		belle_sip_parameters_set_parameter(BELLE_SIP_PARAMETERS(contactHeader), "+org.linphone.specs", specs.c_str());
 	}
 	return contactHeader;
 }
