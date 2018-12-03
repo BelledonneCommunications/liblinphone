@@ -861,12 +861,12 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 	is_remote_conf = (strcmp(lp_config_get_string(linphone_core_get_config(marie->lc), "misc", "conference_type", "local"), "remote") == 0);
 	if(is_remote_conf) BC_ASSERT_PTR_NOT_NULL(focus);
 
-	BC_ASSERT_TRUE(call(marie,pauline));
+	if (!BC_ASSERT_TRUE(call(marie,pauline))) goto end;
 	marie_call_pauline=linphone_core_get_current_call(marie->lc);
 	pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie));
 
-	BC_ASSERT_TRUE(call(marie,laure));
+	if (!BC_ASSERT_TRUE(call(marie,laure))) goto end;
 	initial_marie_stat=marie->stat;
 	initial_pauline_stat=pauline->stat;
 	initial_laure_stat=laure->stat;
