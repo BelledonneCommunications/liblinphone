@@ -31,6 +31,12 @@ Group chat rooms allow more than one peer user and require a conference server. 
 
 	LinphoneChatRoom *chatRoom = linphone_core_create_client_group_chat_room(lc, "Colleagues", FALSE);
 
+Participants can be invited to the chat room using :cpp:func:`linphone_chat_room_add_participants <linphone_chat_room_add_participants>`.
+
+.. code-block:: c
+
+	linphone_chat_room_add_participants(chatRoom, participantsAddressList);
+
 LIME X3DH end-to-end encryption for instant messages are enabled in "Encrypted" chat rooms, which can be created with :cpp:func:`linphone_core_create_client_group_chat_room_2 <linphone_core_create_client_group_chat_room_2>`.
 
 .. code-block:: c
