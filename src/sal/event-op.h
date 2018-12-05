@@ -44,6 +44,7 @@ public:
 private:
 	void fillCallbacks () override;
 	void handleNotify (belle_sip_request_t *request, const char *eventName, SalBodyHandler *bodyHandler);
+	void handleSubscribeResponse (unsigned int statusCode, const char *reasonPhrase, int willRetry);
 
 	static void subscribeProcessIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event);
 	static void subscribeResponseEventCb (void *userCtx, const belle_sip_response_event_t *event);
