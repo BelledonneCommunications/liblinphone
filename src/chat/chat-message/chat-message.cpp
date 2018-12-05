@@ -158,7 +158,6 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
 
 	// 3. Specific case, change to displayed after transfer.
-	// TODO: Check if there is other file still not downloaded. If not, set state to display
 	if (state == ChatMessage::State::FileTransferDone && direction == ChatMessage::Direction::Incoming) {
 		setState(ChatMessage::State::Displayed);
 		return;
@@ -166,8 +165,10 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 
 	// 4. Send notification and update in database if necessary.
 	if (state != ChatMessage::State::FileTransferError && state != ChatMessage::State::InProgress) {
-		if ((state == ChatMessage::State::Displayed) && (direction == ChatMessage::Direction::Incoming))
+		if ((state == ChatMessage::State::Displayed) && (direction == ChatMessage::Direction::Incoming) && (!hasFileTransferContent())) {
+			// Wait until all files are downloaded before sending displayed IMDN
 			static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
+		}
 		updateInDb();
 	}
 }
