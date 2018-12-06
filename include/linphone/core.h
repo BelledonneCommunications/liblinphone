@@ -4265,7 +4265,22 @@ LINPHONE_PUBLIC const char *linphone_core_get_zrtp_secrets_file(LinphoneCore *lc
  * @return An sqlite3 pointer cast to a void one or NULL if cache is not available(not enabled at compile or access failed)
  * @ingroup initializing
  */
-LINPHONE_PUBLIC void *linphone_core_get_zrtp_cache_db(LinphoneCore *lc);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void *linphone_core_get_zrtp_cache_db(LinphoneCore *lc);
+
+struct _zrtpCacheAccess{
+	void *db; /**< points to the zrtp cache sqlite database, is cast into a void * to support cacheless build */
+	bctbx_mutex_t *dbMutex; /**< the mutex used to prevent conflicting access to the database */
+};
+typedef struct _zrtpCacheAccess zrtpCacheAccess;
+
+/**
+ * Get a pointer to a structure holding pointers to access zrtp/lime cache.
+ * The structure will hold a sqlite db pointer and a bctoolbox mutex pointer
+ *
+ * @param[in] lc #LinphoneCore object.
+ * @return a structure holding db pointer(NULL is cache is not available by built or runtime error) and the mutex associated to it
+ */
+LINPHONE_PUBLIC  zrtpCacheAccess linphone_core_get_zrtp_cache_access(LinphoneCore *lc);
 
 /**
  * Set the path to the directory storing the user's x509 certificates (used by dtls)

@@ -2440,10 +2440,14 @@ void MediaSessionPrivate::initializeAudioStream () {
 			char *selfUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(selfAddr)
 														, linphone_address_get_username(selfAddr)
 														, linphone_address_get_domain(selfAddr));
+
 			MSZrtpParams params;
+			zrtpCacheAccess zrtpCacheInfo = linphone_core_get_zrtp_cache_access(q->getCore()->getCCore());
+
 			memset(&params, 0, sizeof(MSZrtpParams));
 			/* media encryption of current params will be set later when zrtp is activated */
-			params.zidCacheDB = linphone_core_get_zrtp_cache_db(q->getCore()->getCCore());
+			params.zidCacheDB = zrtpCacheInfo.db;
+			params.zidCacheDBMutex = zrtpCacheInfo.dbMutex;
 			params.peerUri = peerUri;
 			params.selfUri = selfUri;
 			/* Get key lifespan from config file, default is 0:forever valid */
