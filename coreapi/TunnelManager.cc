@@ -420,8 +420,9 @@ void TunnelManager::onIterate(){
 }
 
 /*invoked from linphone_core_iterate() */
-void TunnelManager::sOnIterate(TunnelManager *zis){
+bool_t TunnelManager::sOnIterate(TunnelManager *zis){
 	zis->onIterate();
+	return TRUE;
 }
 
 LinphoneTunnelMode TunnelManager::getMode() const {
