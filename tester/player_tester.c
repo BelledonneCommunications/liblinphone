@@ -20,26 +20,18 @@
 #include "tester_utils.h"
 #include <mediastreamer2/mediastream.h>
 
-static bool_t wait_for_eof(bool_t *eof, int *time,int time_refresh, int timeout) {
-	while(*time < timeout && !*eof) {
-		ms_usleep(time_refresh * 1000U);
-		*time += time_refresh;
-	}
-	return *time < timeout;
-}
-
 static void eof_callback(LinphonePlayer *player) {
 	LinphonePlayerCbs *cbs = linphone_player_get_callbacks(player);
-	bool_t *eof = (bool_t *)linphone_player_cbs_get_user_data(cbs);
-	*eof = TRUE;
+	int *eof = (int *)linphone_player_cbs_get_user_data(cbs);
+	*eof = 1;
 }
 
 static void play_file(const char *filename, bool_t supported_format, const char *audio_mime, const char *video_mime) {
 	LinphoneCoreManager *lc_manager = linphone_core_manager_new("marie_rc");
 	LinphonePlayer *player;
 	LinphonePlayerCbs *cbs;
-	int res, timer = 0;
-	bool_t eof = FALSE;
+	int res;
+	int eof = 0;
 
 	bool_t audio_codec_supported = (audio_mime && ms_factory_get_decoder(linphone_core_get_ms_factory((void *)lc_manager->lc), audio_mime));
 	bool_t video_codec_supported = (video_mime && ms_factory_get_decoder(linphone_core_get_ms_factory((void *)lc_manager->lc), video_mime));
@@ -61,7 +53,7 @@ static void play_file(const char *filename, bool_t supported_format, const char 
 	BC_ASSERT_EQUAL(res, 0, int, "%d");
 	if(res == -1) goto fail;
 
-	BC_ASSERT_TRUE(wait_for_eof(&eof, &timer, 100, (int)(linphone_player_get_duration(player) * 1.05)));
+	BC_ASSERT_TRUE(wait_for_until(lc_manager->lc, NULL, &eof, 1, (int)(linphone_player_get_duration(player) * 1.05)));
 
 	linphone_player_close(player);
 
