@@ -43,6 +43,8 @@ public:
 	LocalConferenceEventHandler (LocalConference *localConference, unsigned int notify = 0);
 
 	void subscribeReceived (LinphoneEvent *lev, bool oneToOne = false);
+	void subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state);
+
 	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (const Address &addr);
 	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (const Address &addr);
 	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (const Address &addr, bool isAdmin);
