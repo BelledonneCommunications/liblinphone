@@ -57,7 +57,10 @@ shared_ptr<Core> ParticipantDevice::getCore () const {
 void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
 	if (mConferenceSubscribeEvent)
 		linphone_event_unref(mConferenceSubscribeEvent);
-	mConferenceSubscribeEvent = linphone_event_ref(ev);
+	if (ev)
+		mConferenceSubscribeEvent = linphone_event_ref(ev);
+	else
+		mConferenceSubscribeEvent = nullptr;
 }
 
 ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
