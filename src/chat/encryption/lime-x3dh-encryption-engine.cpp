@@ -650,6 +650,7 @@ void LimeX3dhEncryptionEngine::authenticationVerified (
 			lInfo() << "SAS verified and Ik exchange successful";
 			limeManager->set_peerDeviceStatus(peerDeviceId, remoteIk, lime::PeerDeviceStatus::trusted);
 		} catch (const exception &e) {
+			lInfo() << "LIME X3DH exception" << e.what();
 			// Ik error occured, the stored Ik is different from this Ik
 			lime::PeerDeviceStatus status = limeManager->get_peerDeviceStatus(peerDeviceId);
 			switch (status) {
