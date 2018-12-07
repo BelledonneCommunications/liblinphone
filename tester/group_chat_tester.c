@@ -5979,7 +5979,7 @@ static void group_chat_lime_x3dh_update_keys (void) {
 	// Set the last time a lime update was performed to an recent date
 	LinphoneConfig *config = linphone_core_get_config(marie->lc);
 	time_t recentUpdateTime = ms_time(NULL)-22000; // 6 hours = 21600 ms
-	linphone_config_set_int(config, "misc", "last_update_time", recentUpdateTime);
+	linphone_config_set_int(config, "misc", "last_update_time", (int)recentUpdateTime);
 
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	wait_for_list(coresList, &dummy, 1, 2000);
@@ -5990,11 +5990,11 @@ static void group_chat_lime_x3dh_update_keys (void) {
 
 	// Check that we have not performed an update
 	int newUpdateTime = linphone_config_get_int(config, "misc", "last_update_time", -1);
-	BC_ASSERT_EQUAL(newUpdateTime, recentUpdateTime, int, "%d");
+	BC_ASSERT_EQUAL(newUpdateTime, (int)recentUpdateTime, int, "%d");
 
 	// Set the last time a lime update was performed to an old date
 	time_t oldUpdateTime = ms_time(NULL)-88000; // 24 hours = 86400 ms
-	linphone_config_set_int(config, "misc", "last_update_time", oldUpdateTime);
+	linphone_config_set_int(config, "misc", "last_update_time", (int)oldUpdateTime);
 
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	wait_for_list(coresList, &dummy, 1, 2000);
@@ -6008,7 +6008,7 @@ static void group_chat_lime_x3dh_update_keys (void) {
 
 	// Check that we correctly performed an update
 	newUpdateTime = linphone_config_get_int(config, "misc", "last_update_time", -1);
-	BC_ASSERT_GREATER(newUpdateTime, oldUpdateTime, int, "%d");
+	BC_ASSERT_GREATER(newUpdateTime, (int)oldUpdateTime, int, "%d");
 
 end:
 	// Clean local LIME X3DH databases
