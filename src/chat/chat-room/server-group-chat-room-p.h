@@ -55,6 +55,7 @@ public:
 	void dispatchQueuedMessages ();
 
 	void subscribeReceived (LinphoneEvent *event);
+	void subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state);
 
 	bool update (SalCallOp *op);
 
