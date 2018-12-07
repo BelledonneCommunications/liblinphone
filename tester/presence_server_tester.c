@@ -870,7 +870,7 @@ static const char* random_phone_number(void) {
 	static char phone[11];
 	int i;
 	phone[0] = '+';
-	srand (time(NULL));
+	srand ((unsigned int)time(NULL));
 	for (i = 1; i < 10; i++) {
 		phone[i] = '0' + rand() % 10;
 	}
