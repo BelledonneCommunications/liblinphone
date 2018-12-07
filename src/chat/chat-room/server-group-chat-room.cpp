@@ -336,6 +336,11 @@ void ServerGroupChatRoomPrivate::subscribeReceived (LinphoneEvent *event) {
 	qConference->getPrivate()->eventHandler->subscribeReceived(event, !!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne));
 }
 
+void ServerGroupChatRoomPrivate::subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state) {
+	L_Q_T(LocalConference, qConference);
+	qConference->getPrivate()->eventHandler->subscriptionStateChanged(event, state);
+}
+
 bool ServerGroupChatRoomPrivate::update (SalCallOp *op) {
 	L_Q();
 	if (sal_custom_header_find(op->getRecvCustomHeaders(), "Subject")) {

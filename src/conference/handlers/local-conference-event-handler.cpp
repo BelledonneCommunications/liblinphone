@@ -439,8 +439,29 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev, bool on
 				d->conf->getConferenceAddress() <<
 				"] should not be higher than last notify sent by server [" << d->lastNotify << "]";
 		}
-	} else if (linphone_event_get_subscription_state(lev) == LinphoneSubscriptionTerminated)
+	}
+}
+
+void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state) {
+	L_D();
+	if (state == LinphoneSubscriptionTerminated) {
+		const LinphoneAddress *lAddr = linphone_event_get_from(lev);
+		char *addrStr = linphone_address_as_string(lAddr);
+		shared_ptr<Participant> participant = d->conf->findParticipant(Address(addrStr));
+		bctbx_free(addrStr);
+		if (!participant)
+			return;
+		const LinphoneAddress *lContactAddr = linphone_event_get_remote_contact(lev);
+		char *contactAddrStr = linphone_address_as_string(lContactAddr);
+		IdentityAddress contactAddr(contactAddrStr);
+		bctbx_free(contactAddrStr);
+		shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(contactAddr);
+		if (!device)
+			return;
+		lInfo() << "End of subscription for device [" << device->getAddress()
+			<< "] of conference [" << d->conf->getConferenceAddress() << "]";
 		device->setConferenceSubscribeEvent(nullptr);
+	}
 }
 
 shared_ptr<ConferenceParticipantEvent> LocalConferenceEventHandler::notifyParticipantAdded (const Address &addr) {
