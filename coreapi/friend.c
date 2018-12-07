@@ -1725,3 +1725,7 @@ const char * linphone_friend_sip_uri_to_phone_number(LinphoneFriend *lf, const c
 void linphone_friend_clear_presence_models(LinphoneFriend *lf) {
 	lf->presence_models = bctbx_list_free_with_data(lf->presence_models, (bctbx_list_free_func)free_friend_presence);
 }
+
+LinphoneFriendCapabilities linphone_friend_get_capabilities(const LinphoneFriend *lf) {
+	return lf->capabilities;
+}
