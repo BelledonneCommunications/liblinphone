@@ -442,7 +442,7 @@ void LimeX3dhEncryptionEngine::generateFileTransferKey (
 	const shared_ptr<AbstractChatRoom> &chatRoom,
 	const shared_ptr<ChatMessage> &message
 ) {
-	size_t FILE_TRANSFER_KEY_SIZE = 32;
+#define FILE_TRANSFER_KEY_SIZE 32
 	char keyBuffer [FILE_TRANSFER_KEY_SIZE];// temporary storage of generated key: 192 bits of key + 64 bits of initial vector
 	// generate a random 192 bits key + 64 bits of initial vector and store it into the file_transfer_information->key field of the msg
     sal_get_random_bytes((unsigned char *)keyBuffer, FILE_TRANSFER_KEY_SIZE);
