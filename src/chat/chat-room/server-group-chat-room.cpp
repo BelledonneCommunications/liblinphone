@@ -535,8 +535,11 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 		lInfo() << q << ": Adding participant device that is currently in state [" << device->getState() << "]";
 		switch (device->getState()) {
 			case ParticipantDevice::State::Joining:
-			case ParticipantDevice::State::Left:
 				inviteDevice(device);
+				break;
+			case ParticipantDevice::State::Left:
+				if (!findFilteredParticipant(participant->getAddress()))
+					inviteDevice(device);
 				break;
 			case ParticipantDevice::State::Leaving:
 				byeDevice(device);
