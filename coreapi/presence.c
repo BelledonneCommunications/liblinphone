@@ -808,7 +808,7 @@ bctbx_list_t * linphone_presence_service_get_service_descriptions(const Linphone
 LinphoneStatus linphone_presence_service_set_service_descriptions(LinphonePresenceService *service, bctbx_list_t *descriptions) {
 	if (!service) return -1;
 	if (service->service_descriptions)
-		bctbx_list_free_with_data(service->service_descriptions, ms_free);
+		bctbx_list_free_with_data(service->service_descriptions, bctbx_free);
 
 	service->service_descriptions = descriptions;
 	return 0;

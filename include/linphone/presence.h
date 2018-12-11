@@ -362,7 +362,7 @@ LINPHONE_PUBLIC char * linphone_presence_service_get_contact(const LinphonePrese
 LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_contact(LinphonePresenceService *service, const char *contact);
 
 /**
- * Gets the services descriptions of a presence service.
+ * Gets the service descriptions of a presence service.
  * @param[in] service The #LinphonePresenceService object to get the contact from.
  * @return A \bctbx_list{char *} containing the services descriptions.
  *

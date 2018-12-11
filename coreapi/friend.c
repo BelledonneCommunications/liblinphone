@@ -1733,7 +1733,7 @@ int linphone_friend_get_capabilities(const LinphoneFriend *lf) {
 namespace {
 	const std::unordered_map<std::string, LinphoneFriendCapability> StringToCapability{
 		{ "groupchat", LinphoneFriendCapabilityGroupChat },
-		{ "lime", LinphoneFriendCapabilityLimeX3DH }
+		{ "lime", LinphoneFriendCapabilityLimeX3dh }
 	};
 }
 void linphone_friend_add_capability(LinphoneFriend *lf, const char *capability_name) {
