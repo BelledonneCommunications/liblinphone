@@ -354,7 +354,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_basic_status(Linpho
 LINPHONE_PUBLIC char * linphone_presence_service_get_contact(const LinphonePresenceService *service);
 
 /**
- * Sets the service descriptions of a presence service.
+ * Sets the contact of a presence service.
  * @param[in] service The #LinphonePresenceService object for which to set the contact.
  * @param[in] contact The contact string to set.
  * @return 0 if successful, a value < 0 in case of error.
@@ -362,7 +362,7 @@ LINPHONE_PUBLIC char * linphone_presence_service_get_contact(const LinphonePrese
 LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_contact(LinphonePresenceService *service, const char *contact);
 
 /**
- * Gets the contact of a presence service.
+ * Gets the services descriptions of a presence service.
  * @param[in] service The #LinphonePresenceService object to get the contact from.
  * @return A \bctbx_list{char *} containing the services descriptions.
  *
@@ -371,12 +371,12 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_contact(LinphonePre
 LINPHONE_PUBLIC bctbx_list_t * linphone_presence_service_get_service_descriptions(const LinphonePresenceService *service);
 
 /**
- * Sets the contact of a presence service.
+ * Sets the service descriptions of a presence service.
  * @param[in] service The #LinphonePresenceService object for which to set the contact.
- * @param[in] services \bctbx_list{char *} The service descriptions.
+ * @param[in] descriptions \bctbx_list{char *} The service descriptions.
  * @return 0 if successful, a value < 0 in case of error.
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_service_descriptions(LinphonePresenceService *service, bctbx_list_t *services);
+LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_service_descriptions(LinphonePresenceService *service, bctbx_list_t *descriptions);
 
 /**
  * Gets the number of notes included in the presence service.

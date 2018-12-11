@@ -805,12 +805,12 @@ bctbx_list_t * linphone_presence_service_get_service_descriptions(const Linphone
 	return service->service_descriptions;
 }
 
-LinphoneStatus linphone_presence_service_set_service_descriptions(LinphonePresenceService *service, bctbx_list_t *services) {
+LinphoneStatus linphone_presence_service_set_service_descriptions(LinphonePresenceService *service, bctbx_list_t *descriptions) {
 	if (!service) return -1;
 	if (service->service_descriptions)
 		bctbx_list_free_with_data(service->service_descriptions, ms_free);
 
-	service->service_descriptions = services;
+	service->service_descriptions = descriptions;
 	return 0;
 }
 
@@ -1276,7 +1276,6 @@ static int process_pidf_xml_presence_services(xmlparsing_context_t *xml_ctx, Lin
 	char *contact_str;
 	LinphonePresenceBasicStatus basic_status;
 	int i;
-	int j;
 	xmlXPathObjectPtr service_descriptions;
 
 	service_object = linphone_get_xml_xpath_object_for_node_list(xml_ctx, service_prefix);
@@ -1319,12 +1318,13 @@ static int process_pidf_xml_presence_services(xmlparsing_context_t *xml_ctx, Lin
 			service_descriptions = linphone_get_xml_xpath_object_for_node_list(xml_ctx, xpath_str);
 			bctbx_list_t *services = nullptr;
 			if (service_descriptions && service_descriptions->nodesetval) {
-				for (j = 1; j <= service_descriptions->nodesetval->nodeNr; j++) {
-					char *service_id = NULL;
+				for (int j = 1; j <= service_descriptions->nodesetval->nodeNr; j++) {
+					char *service_id = nullptr;
 					linphone_xml_xpath_context_set_node(xml_ctx, xmlXPathNodeSetItem(service_descriptions->nodesetval, j-1));
 					service_id = linphone_get_xml_text_content(xml_ctx, "./oma-pres:service-id");
 					if (service_id) {
-						services = bctbx_list_append(services, service_id);
+						services = bctbx_list_append(services, ms_strdup(service_id));
+						linphone_free_xml_text_content(service_id);
 					}
 				}
 			}
@@ -1332,7 +1332,7 @@ static int process_pidf_xml_presence_services(xmlparsing_context_t *xml_ctx, Lin
 			if (service) {
 				if (timestamp_str) presence_service_set_timestamp(service, parse_timestamp(timestamp_str));
 				if (contact_str) linphone_presence_service_set_contact(service, contact_str);
-				if (services)	linphone_presence_service_set_service_descriptions(service, services);
+				if (services) linphone_presence_service_set_service_descriptions(service, services);
 				process_pidf_xml_presence_service_notes(xml_ctx, service, (unsigned int)i);
 				linphone_presence_model_add_service(model, service);
 				linphone_presence_service_unref(service);
@@ -1340,7 +1340,6 @@ static int process_pidf_xml_presence_services(xmlparsing_context_t *xml_ctx, Lin
 			if (timestamp_str) linphone_free_xml_text_content(timestamp_str);
 			if (contact_str) linphone_free_xml_text_content(contact_str);
 			if (service_id_str) linphone_free_xml_text_content(service_id_str);
-			//if (services) bctbx_list_free_with_data(services, bctbx_free);
 			linphone_free_xml_text_content(basic_status_str);
 		}
 	}
