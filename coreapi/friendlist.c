@@ -294,8 +294,7 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 							if (lf) {
 								const char *phone_number = linphone_friend_sip_uri_to_phone_number(lf, uri);
 								unsigned int nb_services = linphone_presence_model_get_nb_services((LinphonePresenceModel *)presence);
-								unsigned int i;
-								for (i = 0; i < nb_services; i++) {
+								for (unsigned int i = 0; i < nb_services; i++) {
 									LinphonePresenceService *service = linphone_presence_model_get_nth_service((LinphonePresenceModel *)presence, i);
 									bctbx_list_t *services_descriptions = linphone_presence_service_get_service_descriptions(service);
 									while (services_descriptions) {
