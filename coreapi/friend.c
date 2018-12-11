@@ -1739,9 +1739,9 @@ namespace {
 void linphone_friend_add_capability(LinphoneFriend *lf, const char *capability_name) {
 	auto it = StringToCapability.find(capability_name);
 	if (it == StringToCapability.cend()) {
-		ms_error("Invalid capability %s for friend [%p]", capability_name, lf);
+		bctbx_error("Invalid capability %s for friend [%p]", capability_name, lf);
 	} else {
-		ms_debug("Adding capability %s to friend [%p]", capability_name, lf);
+		bctbx_debug("Adding capability %s to friend [%p]", capability_name, lf);
 		lf->capabilities |= it->second;
 	}
 }
