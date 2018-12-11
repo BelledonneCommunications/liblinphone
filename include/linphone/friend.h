@@ -338,6 +338,12 @@ LINPHONE_PUBLIC	LinphoneFriend *linphone_friend_new_from_vcard(LinphoneVcard *vc
 LINPHONE_PUBLIC void linphone_friend_save(LinphoneFriend *fr, LinphoneCore *lc);
 
 /**
+ * Returns the capabilities associated to this friend
+ * @param[in] fr #LinphoneFriend object
+ */
+LINPHONE_PUBLIC int linphone_friend_get_capabilities(const LinphoneFriend *lf);
+
+/**
  * @}
  */
 

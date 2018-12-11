@@ -187,6 +187,7 @@ struct _LinphoneFriend{
 	unsigned int storage_id;
 	LinphoneFriendList *friend_list;
 	LinphoneSubscriptionState out_sub_state;
+	int capabilities = LinphoneFriendCapabilityNone;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriend);

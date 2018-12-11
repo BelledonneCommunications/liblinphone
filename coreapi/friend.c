@@ -1725,3 +1725,23 @@ const char * linphone_friend_sip_uri_to_phone_number(LinphoneFriend *lf, const c
 void linphone_friend_clear_presence_models(LinphoneFriend *lf) {
 	lf->presence_models = bctbx_list_free_with_data(lf->presence_models, (bctbx_list_free_func)free_friend_presence);
 }
+
+int linphone_friend_get_capabilities(const LinphoneFriend *lf) {
+	return lf->capabilities;
+}
+
+namespace {
+	const std::unordered_map<std::string, LinphoneFriendCapability> StringToCapability{
+		{ "groupchat", LinphoneFriendCapabilityGroupChat },
+		{ "lime", LinphoneFriendCapabilityLimeX3dh }
+	};
+}
+void linphone_friend_add_capability(LinphoneFriend *lf, const char *capability_name) {
+	auto it = StringToCapability.find(capability_name);
+	if (it == StringToCapability.cend()) {
+		bctbx_error("Invalid capability %s for friend [%p]", capability_name, lf);
+	} else {
+		bctbx_debug("Adding capability %s to friend [%p]", capability_name, lf);
+		lf->capabilities |= it->second;
+	}
+}
