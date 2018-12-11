@@ -118,7 +118,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_model_set_presentity(LinphonePr
  *
  */
 LINPHONE_PUBLIC const LinphoneAddress * linphone_presence_model_get_presentity(const LinphonePresenceModel *model);
-	
+
 /**
  * Gets the first activity of a presence model (there is usually only one).
  * @param[in] model The #LinphonePresenceModel object to get the activity from.
@@ -354,12 +354,29 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_basic_status(Linpho
 LINPHONE_PUBLIC char * linphone_presence_service_get_contact(const LinphonePresenceService *service);
 
 /**
- * Sets the contact of a presence service.
+ * Sets the service descriptions of a presence service.
  * @param[in] service The #LinphonePresenceService object for which to set the contact.
  * @param[in] contact The contact string to set.
  * @return 0 if successful, a value < 0 in case of error.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_contact(LinphonePresenceService *service, const char *contact);
+
+/**
+ * Gets the contact of a presence service.
+ * @param[in] service The #LinphonePresenceService object to get the contact from.
+ * @return A \bctbx_list{char *} containing the services descriptions.
+ *
+ * The returned string is to be freed.
+ */
+LINPHONE_PUBLIC bctbx_list_t * linphone_presence_service_get_service_descriptions(const LinphonePresenceService *service);
+
+/**
+ * Sets the contact of a presence service.
+ * @param[in] service The #LinphonePresenceService object for which to set the contact.
+ * @param[in] services \bctbx_list{char *} The service descriptions.
+ * @return 0 if successful, a value < 0 in case of error.
+ */
+LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_service_descriptions(LinphonePresenceService *service, bctbx_list_t *services);
 
 /**
  * Gets the number of notes included in the presence service.

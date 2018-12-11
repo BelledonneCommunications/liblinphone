@@ -451,11 +451,11 @@ typedef struct _LinphoneFriend LinphoneFriend;
 * Enum describing the status of a LinphoneFriendList operation.
 * @ingroup buddy_list
 **/
-typedef enum _LinphoneFriendCapabilities {
-	LinphoneFriendCapabilitiesNone = 0,
-	LinphoneFriendCapabilitiesGroupChat = 1 << 0,
-	LinphoneFriendCapabilitiesLimeX3DH = 1 << 1
-} LinphoneFriendCapabilities;
+typedef enum _LinphoneFriendCapability {
+	LinphoneFriendCapabilityNone = 0,
+	LinphoneFriendCapabilityGroupChat = 1 << 0,
+	LinphoneFriendCapabilityLimeX3DH = 1 << 1
+} LinphoneFriendCapability;
 
 /**
  * The #LinphoneFriendList object representing a list of friends.
