@@ -1852,18 +1852,22 @@ static void multiple_bodyless_list_subscription_with_rc(void) {
 static void notify_friend_capabilities(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager *pauline2 = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
-	LinphoneCoreManager *laure2 = linphone_core_manager_create("laure_tcp_rc");
 	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
+	LinphoneCoreManager *chloe2 = linphone_core_manager_create("chloe_rc");
 
 	linphone_core_set_linphone_specs(pauline->lc, "groupchat");
-	linphone_core_set_linphone_specs(laure->lc, "groupchat, lime");
+	linphone_core_set_linphone_specs(pauline2->lc, "lime");
+	linphone_core_set_linphone_specs(laure->lc, "groupchat");
+	linphone_core_set_linphone_specs(chloe->lc, "groupchat, lime");
 
 	linphone_core_manager_start(marie, TRUE);
 	linphone_core_manager_start(pauline, TRUE);
+	linphone_core_manager_start(pauline2, TRUE);
 	linphone_core_manager_start(laure, TRUE);
-	linphone_core_manager_start(laure2, TRUE);
 	linphone_core_manager_start(chloe, TRUE);
+	linphone_core_manager_start(chloe2, TRUE);
 
 	LinphoneFriendList *friendList = linphone_core_get_default_friend_list(marie->lc);
 	LinphoneFriend* paulineFriend = linphone_core_create_friend_with_address(marie->lc, get_identity(pauline));
@@ -1874,7 +1878,10 @@ static void notify_friend_capabilities(void) {
 	bctbx_list_t *lcs = NULL;
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
+	lcs = bctbx_list_append(lcs, pauline2->lc);
 	lcs = bctbx_list_append(lcs, laure->lc);
+	lcs = bctbx_list_append(lcs, chloe->lc);
+	lcs = bctbx_list_append(lcs, chloe2->lc);
 
 	linphone_core_set_user_agent(marie->lc, "full-presence-support", NULL);
 	linphone_core_set_user_agent(marie->lc, "full-presence-support-bypass", NULL);
@@ -1894,11 +1901,13 @@ static void notify_friend_capabilities(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_NotifyPresenceReceived, 1, 5000));
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(paulineFriend) & LinphoneFriendCapabilityGroupChat);
-	BC_ASSERT_FALSE(linphone_friend_get_capabilities(paulineFriend) & LinphoneFriendCapabilityLimeX3DH);
+	BC_ASSERT_TRUE(linphone_friend_get_capabilities(paulineFriend) & LinphoneFriendCapabilityLimeX3dh);
+
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(laureFriend) & LinphoneFriendCapabilityGroupChat);
-	BC_ASSERT_TRUE(linphone_friend_get_capabilities(laureFriend) & LinphoneFriendCapabilityLimeX3DH);
-	BC_ASSERT_FALSE(linphone_friend_get_capabilities(chloeFriend) & LinphoneFriendCapabilityGroupChat);
-	BC_ASSERT_FALSE(linphone_friend_get_capabilities(chloeFriend) & LinphoneFriendCapabilityLimeX3DH);
+	BC_ASSERT_FALSE(linphone_friend_get_capabilities(laureFriend) & LinphoneFriendCapabilityLimeX3dh);
+
+	BC_ASSERT_TRUE(linphone_friend_get_capabilities(chloeFriend) & LinphoneFriendCapabilityGroupChat);
+	BC_ASSERT_TRUE(linphone_friend_get_capabilities(chloeFriend) & LinphoneFriendCapabilityLimeX3dh);
 
 	linphone_friend_unref(paulineFriend);
 	linphone_friend_unref(laureFriend);
@@ -1910,14 +1919,17 @@ static void notify_friend_capabilities(void) {
 	linphone_core_manager_stop(pauline);
 	linphone_core_manager_destroy(pauline);
 
+	linphone_core_manager_stop(pauline2);
+	linphone_core_manager_destroy(pauline2);
+
 	linphone_core_manager_stop(laure);
 	linphone_core_manager_destroy(laure);
 
-	linphone_core_manager_stop(laure2);
-	linphone_core_manager_destroy(laure2);
-
 	linphone_core_manager_stop(chloe);
 	linphone_core_manager_destroy(chloe);
+
+	linphone_core_manager_stop(chloe2);
+	linphone_core_manager_destroy(chloe2);
 
 	bctbx_list_free(lcs);
 }
