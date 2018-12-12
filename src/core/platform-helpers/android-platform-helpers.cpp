@@ -211,7 +211,6 @@ string AndroidPlatformHelpers::getDownloadPath () {
 	return downloadPath + "/";
 } 
 
-int AndroidPlatformHelpers::callVoidMethod (jmethodID id) {
 string AndroidPlatformHelpers::getDataPath () const {
 	JNIEnv *env = ms_get_jni_env();
 	jstring jdata_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetDataPathId);
