@@ -339,9 +339,18 @@ LINPHONE_PUBLIC void linphone_friend_save(LinphoneFriend *fr, LinphoneCore *lc);
 
 /**
  * Returns the capabilities associated to this friend
- * @param[in] fr #LinphoneFriend object
+ * @param[in] lf #LinphoneFriend object
+ * @return an int representing the capabilities of the friend
  */
 LINPHONE_PUBLIC int linphone_friend_get_capabilities(const LinphoneFriend *lf);
+
+/**
+ * Returns whether or not a friend has a capbility
+ * @param[in] lf #LinphoneFriend object
+ * @param[in] capability #LinphoneFriendCapability object
+ * @return whether or not a friend has a capbility
+ */
+LINPHONE_PUBLIC bool_t linphone_friend_has_capability(const LinphoneFriend *lf, const LinphoneFriendCapability capability);
 
 /**
  * @}
