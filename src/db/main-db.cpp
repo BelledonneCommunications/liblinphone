@@ -1134,6 +1134,21 @@ void MainDbPrivate::updateSchema () {
 		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN display_notification_required BOOLEAN NOT NULL DEFAULT 0";
 	}
 	if (version < makeVersion(1, 0, 5)) {
+		const string queryDelivery = "UPDATE conference_chat_message_event"
+			"  SET delivery_notification_required = 0"
+			"  WHERE direction = " + Utils::toString(int(ChatMessage::Direction::Incoming)) +
+			"  AND state = " + Utils::toString(int(ChatMessage::State::Delivered));
+
+		*session << queryDelivery;
+
+		const string queryDisplay = "UPDATE conference_chat_message_event"
+			"  SET delivery_notification_required = 0, display_notification_required = 0"
+			"  WHERE direction = " + Utils::toString(int(ChatMessage::Direction::Incoming)) +
+			"  AND state = " + Utils::toString(int(ChatMessage::State::Displayed));
+
+		*session << queryDisplay;
+	}
+	if (version < makeVersion(1, 0, 6)) {
 		*session << "DROP VIEW IF EXISTS conference_event_view";
 
 		string query;
@@ -1151,21 +1166,6 @@ void MainDbPrivate::updateSchema () {
 			"  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
 			"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
 			"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
-	}
-	if (version < makeVersion(1, 0, 6)) {
-		const string queryDelivery = "UPDATE conference_chat_message_event"
-			"  SET delivery_notification_required = 0"
-			"  WHERE direction = " + Utils::toString(int(ChatMessage::Direction::Incoming)) +
-			"  AND state = " + Utils::toString(int(ChatMessage::State::Delivered));
-
-		*session << queryDelivery;
-
-		const string queryDisplay = "UPDATE conference_chat_message_event"
-			"  SET delivery_notification_required = 0, display_notification_required = 0"
-			"  WHERE direction = " + Utils::toString(int(ChatMessage::Direction::Incoming)) +
-			"  AND state = " + Utils::toString(int(ChatMessage::State::Displayed));
-
-		*session << queryDisplay;
 	}
 }
 
