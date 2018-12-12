@@ -1736,7 +1736,7 @@ int linphone_friend_get_capabilities(const LinphoneFriend *lf) {
 }
 
 bool_t linphone_friend_has_capability(const LinphoneFriend *lf, const LinphoneFriendCapability capability) {
-	return lf->capabilities & capability;
+	return static_cast<bool_t>(lf->capabilities & capability);
 }
 
 namespace {
