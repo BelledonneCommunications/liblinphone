@@ -168,11 +168,19 @@ SalPresenceModel *SalPresenceOp::processPresenceNotification (belle_sip_request_
 }
 
 void SalPresenceOp::handleNotify (belle_sip_request_t *request, belle_sip_dialog_t *dialog) {
+	belle_sip_response_t *response = nullptr;
+	
 	if (strcmp("NOTIFY", belle_sip_request_get_method(request)) != 0)
 		return;
 
 	if (mDialog && (dialog != mDialog)) {
 		lWarning() << "Receiving a NOTIFY from a dialog we haven't stored (op->dialog=" << mDialog << " dialog=" << dialog;
+	}
+	if (dialog == nullptr){
+		lError() << "Out of dialog presence notify are not allowed.";
+		response = createResponseFromRequest(request, 481);
+		belle_sip_server_transaction_send_response(mPendingServerTransaction, response);
+		return;
 	}
 
 	SalSubscribeStatus subscriptionState;
@@ -190,7 +198,7 @@ void SalPresenceOp::handleNotify (belle_sip_request_t *request, belle_sip_dialog
 	}
 
 	ref(); // Take a ref because the notify_presence callback may release the op
-	belle_sip_response_t *response = nullptr;
+	
 	const char *body = belle_sip_message_get_body(BELLE_SIP_MESSAGE(request));
 	auto presenceModel = processPresenceNotification(request);
 	if (presenceModel || !body) {

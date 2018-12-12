@@ -19,7 +19,7 @@
 
 #include <algorithm>
 #include <comutil.h>
-#include <ShlObj_core.h>
+#include <ShlObj.h>
 
 #pragma comment(lib, "comsuppw.lib")
 #pragma comment(lib, "kernel32.lib")

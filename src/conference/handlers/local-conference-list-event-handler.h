@@ -20,7 +20,6 @@
 #ifndef _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
 #define _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
 
-#include <memory>
 #include <list>
 
 #include "conference/conference-id.h"
@@ -53,4 +52,3 @@ private:
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
-

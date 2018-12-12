@@ -167,7 +167,6 @@ void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) 
 
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
 	auto it = chatRoomsById.find(conferenceId);
-
 	// Chat room not exist or yes but with the same pointer!
 	L_ASSERT(it == chatRoomsById.end() || it->second == chatRoom);
 	if (it == chatRoomsById.end()) {

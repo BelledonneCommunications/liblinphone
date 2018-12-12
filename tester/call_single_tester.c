@@ -109,35 +109,42 @@ static void rtcp_received(stats* counters, mblk_t *packet) {
 }
 
 void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *lstats) {
-	stats* counters = get_stats(lc);
+	const int updated = _linphone_call_stats_get_updated(lstats);
+	stats *counters = get_stats(lc);
+
 	counters->number_of_LinphoneCallStatsUpdated++;
-	if (_linphone_call_stats_get_updated(lstats) & LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE) {
+	if (updated & LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE) {
 		counters->number_of_rtcp_received++;
 		if (_linphone_call_stats_rtcp_received_via_mux(lstats)){
 			counters->number_of_rtcp_received_via_mux++;
 		}
 		rtcp_received(counters, _linphone_call_stats_get_received_rtcp(lstats));
 	}
-	if (_linphone_call_stats_get_updated(lstats) & LINPHONE_CALL_STATS_SENT_RTCP_UPDATE ) {
+	if (updated & LINPHONE_CALL_STATS_SENT_RTCP_UPDATE ) {
 		counters->number_of_rtcp_sent++;
 	}
-	if (_linphone_call_stats_get_updated(lstats) & LINPHONE_CALL_STATS_PERIODICAL_UPDATE ) {
-		int tab_size = sizeof (counters->audio_download_bandwidth)/sizeof(int);
-		int index = (counters->current_bandwidth_index[linphone_call_stats_get_type(lstats)]++) % tab_size;
-		LinphoneCallStats *audio_stats, *video_stats;
-		audio_stats = linphone_call_get_audio_stats(call);
-		video_stats = linphone_call_get_video_stats(call);
-		if (linphone_call_stats_get_type(lstats) == LINPHONE_CALL_STATS_AUDIO) {
-			counters->audio_download_bandwidth[index] = (int)linphone_call_stats_get_download_bandwidth(audio_stats);
-			counters->audio_upload_bandwidth[index] = (int)linphone_call_stats_get_upload_bandwidth(audio_stats);
-		} else {
-			counters->video_download_bandwidth[index] = (int)linphone_call_stats_get_download_bandwidth(video_stats);
-			counters->video_upload_bandwidth[index] = (int)linphone_call_stats_get_upload_bandwidth(video_stats);
-		}
-		linphone_call_stats_unref(audio_stats);
-		linphone_call_stats_unref(video_stats);
-	}
+	if (updated & LINPHONE_CALL_STATS_PERIODICAL_UPDATE ) {
+		const int tab_size = sizeof counters->audio_download_bandwidth / sizeof(int);
 
+		LinphoneCallStats *call_stats;
+		int index;
+
+		int type = linphone_call_stats_get_type(lstats);
+		if (type != LINPHONE_CALL_STATS_AUDIO && type != LINPHONE_CALL_STATS_VIDEO)
+			return; // Avoid out of bounds if type is TEXT.
+
+		index = (counters->current_bandwidth_index[type]++) % tab_size;
+		if (type == LINPHONE_CALL_STATS_AUDIO) {
+			call_stats = linphone_call_get_audio_stats(call);
+			counters->audio_download_bandwidth[index] = (int)linphone_call_stats_get_download_bandwidth(call_stats);
+			counters->audio_upload_bandwidth[index] = (int)linphone_call_stats_get_upload_bandwidth(call_stats);
+		} else {
+			call_stats = linphone_call_get_video_stats(call);
+			counters->video_download_bandwidth[index] = (int)linphone_call_stats_get_download_bandwidth(call_stats);
+			counters->video_upload_bandwidth[index] = (int)linphone_call_stats_get_upload_bandwidth(call_stats);
+		}
+		linphone_call_stats_unref(call_stats);
+	}
 }
 
 void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token) {
@@ -5121,6 +5128,39 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void recovered_call_on_network_switch_in_early_state_5(void) {
+	LinphoneCall *incoming_call;
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
+	linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
+	
+	linphone_core_invite_address(marie->lc, pauline->identity);
+	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1))) goto end;
+	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1))) goto end;
+	
+	/*simulate a general socket error*/
+	sal_set_recv_error(linphone_core_get_sal(pauline->lc), 0);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneRegistrationProgress, pauline->stat.number_of_LinphoneRegistrationProgress +1));
+	/*restart normal behavior*/
+	sal_set_recv_error(linphone_core_get_sal(pauline->lc), 1);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneRegistrationOk, pauline->stat.number_of_LinphoneRegistrationOk +1));
+	
+	wait_for_until(marie->lc, pauline->lc, NULL, 1, 2000);
+	incoming_call = linphone_core_get_current_call(pauline->lc);
+	linphone_call_accept(incoming_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	liblinphone_tester_check_rtcp(marie,pauline);
+	end_call(marie,pauline);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void recovered_call_on_network_switch_during_reinvite_1(void) {
 	LinphoneCall *incoming_call;
 	LinphoneCall *outgoing_call;
@@ -6647,6 +6687,7 @@ test_t call_tests[] = {
 	TEST_ONE_TAG("Recovered call on network switch in early state 2", recovered_call_on_network_switch_in_early_state_2, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch in early state 3", recovered_call_on_network_switch_in_early_state_3, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch in early state 4", recovered_call_on_network_switch_in_early_state_4, "CallRecovery"),
+	TEST_ONE_TAG("Recovered call on network switch in early state 5", recovered_call_on_network_switch_in_early_state_5, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch during re-invite 1", recovered_call_on_network_switch_during_reinvite_1, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch during re-invite 2", recovered_call_on_network_switch_during_reinvite_2, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch during re-invite 3", recovered_call_on_network_switch_during_reinvite_3, "CallRecovery"),

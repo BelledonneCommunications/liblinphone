@@ -138,7 +138,6 @@ static ortp_mutex_t liblinphone_log_collection_mutex;
 static FILE * liblinphone_log_collection_file = NULL;
 static size_t liblinphone_log_collection_file_size = 0;
 static bool_t liblinphone_serialize_logs = FALSE;
-static void set_network_reachable(LinphoneCore* lc,bool_t isReachable, time_t curtime);
 static void set_sip_network_reachable(LinphoneCore* lc,bool_t isReachable, time_t curtime);
 static void set_media_network_reachable(LinphoneCore* lc,bool_t isReachable);
 static void linphone_core_run_hooks(LinphoneCore *lc);
@@ -1148,29 +1147,24 @@ static void build_sound_devices_table(LinphoneCore *lc){
 	if (old!=NULL) ms_free((void *)old);
 }
 
-static char *get_default_local_ring(LinphoneCore * lc) {
-	LinphoneFactory *factory = linphone_factory_get();
+static string get_default_local_ring(LinphoneCore * lc) {
 	if (linphone_core_file_format_supported(lc, "mkv")) {
-		return bctbx_strdup_printf("%s/%s", linphone_factory_get_ring_resources_dir(factory), LOCAL_RING_MKV);
+		return static_cast<PlatformHelpers *>(lc->platform_helper)->getRingResource(LOCAL_RING_MKV);
 	}
-	return bctbx_strdup_printf("%s/%s", linphone_factory_get_ring_resources_dir(factory), LOCAL_RING_WAV);
+	return static_cast<PlatformHelpers *>(lc->platform_helper)->getRingResource(LOCAL_RING_WAV);
 }
 
-static char *get_default_onhold_music(LinphoneCore * lc) {
-	LinphoneFactory *factory = linphone_factory_get();
+static string get_default_onhold_music(LinphoneCore * lc) {
 	if (linphone_core_file_format_supported(lc, "mkv")) {
-		return bctbx_strdup_printf("%s/%s", linphone_factory_get_sound_resources_dir(factory), HOLD_MUSIC_MKV);
+		return static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(HOLD_MUSIC_MKV);
 	}
-	return bctbx_strdup_printf("%s/%s", linphone_factory_get_sound_resources_dir(factory), HOLD_MUSIC_WAV);
+	return static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(HOLD_MUSIC_WAV);
 }
 
-static void sound_config_read(LinphoneCore *lc)
-{
+static void sound_config_read(LinphoneCore *lc) {
 	int tmp;
-	char *default_remote_ring;
 	const char *tmpbuf;
 	const char *devid;
-	LinphoneFactory *factory = linphone_factory_get();
 
 #ifdef __linux
 	/*alsadev let the user use custom alsa device within linphone*/
@@ -1233,23 +1227,19 @@ static void sound_config_read(LinphoneCore *lc)
 			ms_warning("'%s' ring file does not exist", tmpbuf);
 		}
 	} else {
-		char *default_local_ring = get_default_local_ring(lc);
-		linphone_core_set_ring(lc, default_local_ring);
-		bctbx_free(default_local_ring);
+		linphone_core_set_ring(lc, get_default_local_ring(lc).c_str());
 	}
 
-	default_remote_ring = bctbx_strdup_printf("%s/%s", linphone_factory_get_sound_resources_dir(factory), REMOTE_RING_WAV);
-	tmpbuf = default_remote_ring;
-	tmpbuf = lp_config_get_string(lc->config, "sound", "remote_ring", tmpbuf);
+	string defaultRemoteRing = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(REMOTE_RING_WAV);
+	tmpbuf = lp_config_get_string(lc->config, "sound", "remote_ring", defaultRemoteRing.c_str());
 	if (bctbx_file_exist(tmpbuf) == -1){
-		tmpbuf = default_remote_ring;
+		tmpbuf = defaultRemoteRing.c_str();
 	}
 	if (strstr(tmpbuf, ".wav") == NULL) {
 		/* It currently uses old sound files, so replace them */
-		tmpbuf = default_remote_ring;
+		tmpbuf = defaultRemoteRing.c_str();
 	}
 	linphone_core_set_ringback(lc, tmpbuf);
-	bctbx_free(default_remote_ring);
 
 	tmpbuf = lp_config_get_string(lc->config, "sound", "hold_music", NULL);
 	if (tmpbuf) {
@@ -1259,9 +1249,7 @@ static void sound_config_read(LinphoneCore *lc)
 			ms_warning("'%s' on-hold music file does not exist", tmpbuf);
 		}
 	} else {
-		char *default_onhold_music = get_default_onhold_music(lc);
-		linphone_core_set_play_file(lc, default_onhold_music);
-		bctbx_free(default_onhold_music);
+		linphone_core_set_play_file(lc, get_default_onhold_music(lc).c_str());
 	}
 
 	lc->sound_conf.latency=0;
@@ -1316,26 +1304,24 @@ static int _linphone_core_tls_postcheck_callback(void *data, const bctbx_x509_ce
 }
 
 static void certificates_config_read(LinphoneCore *lc) {
-	LinphoneFactory *factory = linphone_factory_get();
-	const char *data_dir = linphone_factory_get_data_resources_dir(factory);
-	char *root_ca_path = bctbx_strdup_printf("%s/rootca.pem", data_dir);
-	const char *rootca = lp_config_get_string(lc->config,"sip","root_ca", NULL);
+	string rootCaPath = static_cast<PlatformHelpers *>(lc->platform_helper)->getDataResource("rootca.pem");
+	const char *rootca = lp_config_get_string(lc->config, "sip", "root_ca", nullptr);
 
 	// If rootca is not existing anymore, we try data_resources_dir/rootca.pem else default from belle-sip
-	if (rootca == NULL  || ((bctbx_file_exist(rootca) != 0 && !bctbx_directory_exists(rootca)))) {
-		//Check root_ca_path
-		if ((bctbx_file_exist(root_ca_path) == 0) || bctbx_directory_exists(root_ca_path))
-			rootca = root_ca_path;
+	if (!rootca || ((bctbx_file_exist(rootca) != 0) && !bctbx_directory_exists(rootca))) {
+		// Check root_ca_path
+		if ((bctbx_file_exist(rootCaPath.c_str()) == 0) || bctbx_directory_exists(rootCaPath.c_str()))
+			rootca = rootCaPath.c_str();
 		else
-			rootca = NULL;
+			rootca = nullptr;
 	}
 
 	if (rootca)
-		linphone_core_set_root_ca(lc,rootca);
-		/*else use default value from belle-sip*/
-	linphone_core_verify_server_certificates(lc, !!lp_config_get_int(lc->config,"sip","verify_server_certs",TRUE));
-	linphone_core_verify_server_cn(lc, !!lp_config_get_int(lc->config,"sip","verify_server_cn",TRUE));
-	bctbx_free(root_ca_path);
+		linphone_core_set_root_ca(lc, rootca);
+	// else use default value from belle-sip
+
+	linphone_core_verify_server_certificates(lc, !!lp_config_get_int(lc->config, "sip", "verify_server_certs", TRUE));
+	linphone_core_verify_server_cn(lc, !!lp_config_get_int(lc->config, "sip", "verify_server_cn", TRUE));
 
 	lc->sal->setTlsPostcheckCallback(_linphone_core_tls_postcheck_callback, lc);
 }
@@ -2263,9 +2249,21 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc, Linphone
 	}
 }
 
+static void _linphone_core_conference_subscription_state_changed (LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
+	const LinphoneAddress *resource = linphone_event_get_resource(lev);
+	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
+		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+	));
+	if (chatRoom)
+		L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(lev, state);
+}
+
 static void linphone_core_internal_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
 	if (strcasecmp(linphone_event_get_name(lev), "Presence") == 0) {
 		linphone_friend_list_subscription_state_changed(lc, lev, state);
+	} else if (strcmp(linphone_event_get_name(lev), "conference") == 0) {
+		_linphone_core_conference_subscription_state_changed(lc, lev, state);
 	}
 }
 
@@ -2336,7 +2334,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc, system_context);
 #endif
 	if (lc->platform_helper == NULL)
-		lc->platform_helper = new LinphonePrivate::StubbedPlatformHelpers(lc);
+		lc->platform_helper = new LinphonePrivate::GenericPlatformHelpers(lc);
 
 	msplugins_dir = linphone_factory_get_msplugins_dir(lfactory);
 	image_resources_dir = linphone_factory_get_image_resources_dir(lfactory);
@@ -2376,8 +2374,12 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->tunnel=linphone_core_tunnel_new(lc);
 #endif
 
-	lc->network_last_check = 0;
 	lc->network_last_status = FALSE;
+	
+	lc->sip_network_state.global_state = FALSE;
+	lc->sip_network_state.user_state = TRUE;
+	lc->media_network_state.global_state = FALSE;
+	lc->media_network_state.user_state = TRUE;
 
 	/* Create the http provider in dual stack mode (ipv4 and ipv6.
 	 * If this creates problem, we may need to implement parallel ipv6/ ipv4 http requests in belle-sip.
@@ -2433,6 +2435,8 @@ void linphone_core_start (LinphoneCore *lc) {
 		belle_tls_crypto_config_set_root_ca(lc->http_crypto_config, lc->sal->getRootCa().c_str());
 		belle_http_provider_set_tls_crypto_config(lc->http_provider, lc->http_crypto_config);
 	}
+
+	getPlatformHelpers(lc)->onLinphoneCoreStart(!!lc->auto_net_state_mon);
 
 	linphone_core_set_state(lc, LinphoneGlobalConfiguring, "Configuring");
 
@@ -3242,6 +3246,17 @@ void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val){
 	}
 }
 
+bool_t linphone_core_wifi_only_enabled(LinphoneCore *lc) {
+	return (bool_t)lp_config_get_int(lc->config, "net", "wifi_only", 0);
+}
+
+void linphone_core_enable_wifi_only(LinphoneCore *lc, bool_t val) {
+	if (linphone_core_ready(lc)) {
+		lp_config_set_int(lc->config, "net", "wifi_only", (int)val);
+		getPlatformHelpers(lc)->onWifiOnlyEnabled(!!val);
+	}
+}
+
 bool_t linphone_core_content_encoding_supported(const LinphoneCore *lc, const char *content_encoding) {
 	const char *handle_content_encoding = lp_config_get_string(lc->config, "sip", "handle_content_encoding", "deflate");
 	return (strcmp(handle_content_encoding, content_encoding) == 0) && lc->sal->isContentEncodingAvailable(content_encoding);
@@ -3252,41 +3267,9 @@ static void notify_network_reachable_change (LinphoneCore *lc) {
 		return;
 
 	lc->network_reachable_to_be_notified = FALSE;
-	linphone_core_notify_network_reachable(lc, lc->sip_network_reachable);
-	if (lc->sip_network_reachable)
+	linphone_core_notify_network_reachable(lc, lc->sip_network_state.global_state);
+	if (lc->sip_network_state.global_state)
 		linphone_core_resolve_stun_server(lc);
-}
-
-static void monitor_network_state(LinphoneCore *lc, time_t curtime){
-	bool_t new_status=lc->network_last_status;
-	char newip[LINPHONE_IPADDR_SIZE];
-
-	// only do the network up checking every five seconds
-	if (lc->network_last_check==0 || (curtime-lc->network_last_check)>=5){
-		linphone_core_get_local_ip(lc,AF_UNSPEC,NULL,newip);
-		if (strcmp(newip,"::1")!=0 && strcmp(newip,"127.0.0.1")!=0){
-			new_status=TRUE;
-		}else new_status=FALSE; //no network
-
-		if (new_status==lc->network_last_status && new_status==TRUE && strcmp(newip,lc->localip)!=0){
-			//IP address change detected
-			ms_message("IP address change detected.");
-			set_network_reachable(lc,FALSE,curtime);
-			lc->network_last_status=FALSE;
-		}
-		strncpy(lc->localip,newip,sizeof(lc->localip));
-
-		if (new_status!=lc->network_last_status) {
-			if (new_status){
-				ms_message("New local ip address is %s",lc->localip);
-			}
-			set_network_reachable(lc,new_status, curtime);
-			lc->network_last_status=new_status;
-		}
-		lc->network_last_check=curtime;
-	}
-
-	notify_network_reachable_change(lc);
 }
 
 static void proxy_update(LinphoneCore *lc){
@@ -3433,7 +3416,6 @@ void linphone_core_iterate(LinphoneCore *lc){
 
 	lc->sal->iterate();
 	if (lc->msevq) ms_event_queue_pump(lc->msevq);
-	if (lc->auto_net_state_mon) monitor_network_state(lc, current_real_time);
 
 	proxy_update(lc);
 
@@ -3454,7 +3436,7 @@ void linphone_core_iterate(LinphoneCore *lc){
 	linphone_core_run_hooks(lc);
 	linphone_core_do_plugin_tasks(lc);
 
-	if (lc->sip_network_reachable && lc->netup_time!=0 && (current_real_time-lc->netup_time)>=2){
+	if (lc->sip_network_state.global_state && lc->netup_time!=0 && (current_real_time-lc->netup_time)>=2){
 		/*not do that immediately, take your time.*/
 		linphone_core_send_initial_subscribes(lc);
 	}
@@ -3708,6 +3690,11 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 	LinphoneAddress *parsed_url2=NULL;
 	LinphoneCall *call;
 	LinphoneCallParams *cp;
+
+	if (!addr) {
+		ms_error("Can't invite a NULL address");
+		return NULL;
+	}
 
 	if (!(!linphone_call_params_audio_enabled(params) ||
 		linphone_call_params_get_audio_direction(params) == LinphoneMediaDirectionInactive ||
@@ -6034,7 +6021,7 @@ void sip_config_uninit(LinphoneCore *lc)
 	lp_config_set_int(lc->config,"sip","register_only_when_network_is_up",config->register_only_when_network_is_up);
 	lp_config_set_int(lc->config,"sip","register_only_when_upnp_is_ok",config->register_only_when_upnp_is_ok);
 
-	if (lc->sip_network_reachable) {
+	if (lc->sip_network_state.global_state) {
 		for(elem=config->proxies;elem!=NULL;elem=bctbx_list_next(elem)){
 			LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)(elem->data);
 			_linphone_proxy_config_unpublish(cfg);	/* to unpublish without changing the stored flag enable_publish */
@@ -6365,7 +6352,7 @@ static void set_sip_network_reachable(LinphoneCore* lc,bool_t is_sip_reachable, 
 	// second get the list of available proxies
 	const bctbx_list_t *elem = NULL;
 
-	if (lc->sip_network_reachable==is_sip_reachable) return; // no change, ignore.
+	if (lc->sip_network_state.global_state==is_sip_reachable) return; // no change, ignore.
 	lc->network_reachable_to_be_notified=TRUE;
 
 	if (is_sip_reachable){
@@ -6384,36 +6371,31 @@ static void set_sip_network_reachable(LinphoneCore* lc,bool_t is_sip_reachable, 
 	}
 
 	lc->netup_time=curtime;
-	lc->sip_network_reachable=is_sip_reachable;
+	lc->sip_network_state.global_state=is_sip_reachable;
 
-	if (!lc->sip_network_reachable){
+	if (!lc->sip_network_state.global_state){
 		linphone_core_invalidate_friend_subscriptions(lc);
 		lc->sal->resetTransports();
 	}
 }
 
 static void set_media_network_reachable(LinphoneCore* lc, bool_t is_media_reachable){
-	if (lc->media_network_reachable==is_media_reachable) return; // no change, ignore.
+	if (lc->media_network_state.global_state==is_media_reachable) return; // no change, ignore.
 	lc->network_reachable_to_be_notified=TRUE;
 
 	ms_message("Media network reachability state is now [%s]",is_media_reachable?"UP":"DOWN");
-	lc->media_network_reachable=is_media_reachable;
+	lc->media_network_state.global_state=is_media_reachable;
 
-	if (lc->media_network_reachable){
+	if (lc->media_network_state.global_state){
 		if (lc->bw_controller){
 			ms_bandwidth_controller_reset_state(lc->bw_controller);
 		}
 	}
 }
 
-static void set_network_reachable(LinphoneCore *lc, bool_t is_network_reachable, time_t curtime){
-	set_sip_network_reachable(lc, is_network_reachable, curtime);
-	set_media_network_reachable(lc, is_network_reachable);
-}
-
 void linphone_core_refresh_registers(LinphoneCore* lc) {
 	const bctbx_list_t *elem;
-	if (!lc->sip_network_reachable) {
+	if (!lc->sip_network_state.global_state) {
 		ms_warning("Refresh register operation not available (network unreachable)");
 		return;
 	}
@@ -6426,33 +6408,51 @@ void linphone_core_refresh_registers(LinphoneCore* lc) {
 	}
 }
 
-static void disable_internal_network_reachability_detection(LinphoneCore *lc){
+void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_reachable) {
 	if (lc->auto_net_state_mon) {
-		ms_message("Disabling automatic network state monitoring");
-		lc->auto_net_state_mon=FALSE;
+		set_sip_network_reachable(lc, lc->sip_network_state.user_state && is_reachable, ms_time(NULL));
+		set_media_network_reachable(lc, lc->media_network_state.user_state && is_reachable);
+		notify_network_reachable_change(lc);
 	}
 }
 
-void linphone_core_set_network_reachable(LinphoneCore *lc, bool_t isReachable) {
-	disable_internal_network_reachability_detection(lc);
-	set_network_reachable(lc, isReachable, ms_time(NULL));
+void linphone_core_set_network_reachable(LinphoneCore *lc, bool_t is_reachable) {
+	bool_t reachable = is_reachable;
+
+	lc->sip_network_state.user_state = is_reachable;
+	lc->media_network_state.user_state = is_reachable;
+
+	if (lc->auto_net_state_mon) reachable = reachable && getPlatformHelpers(lc)->isNetworkReachable();
+
+	set_sip_network_reachable(lc, reachable, ms_time(NULL));
+	set_media_network_reachable(lc, reachable);
 	notify_network_reachable_change(lc);
 }
 
 void linphone_core_set_media_network_reachable(LinphoneCore *lc, bool_t is_reachable){
-	disable_internal_network_reachability_detection(lc);
-	set_media_network_reachable(lc, is_reachable);
+	bool_t reachable = is_reachable;
+
+	lc->media_network_state.user_state = is_reachable;
+
+	if (lc->auto_net_state_mon) reachable = reachable && getPlatformHelpers(lc)->isNetworkReachable();
+
+	set_media_network_reachable(lc, reachable);
 	notify_network_reachable_change(lc);
 }
 
 void linphone_core_set_sip_network_reachable(LinphoneCore *lc, bool_t is_reachable){
-	disable_internal_network_reachability_detection(lc);
-	set_sip_network_reachable(lc, is_reachable, ms_time(NULL));
+	bool_t reachable = is_reachable;
+
+	lc->sip_network_state.user_state = is_reachable;
+
+	if (lc->auto_net_state_mon) reachable = reachable && getPlatformHelpers(lc)->isNetworkReachable();
+
+	set_sip_network_reachable(lc, reachable, ms_time(NULL));
 	notify_network_reachable_change(lc);
 }
 
 bool_t linphone_core_is_network_reachable(LinphoneCore* lc) {
-	return lc->sip_network_reachable;
+	return lc->sip_network_state.global_state;
 }
 
 ortp_socket_t linphone_core_get_sip_socket(LinphoneCore *lc){
@@ -6755,13 +6755,22 @@ const char *linphone_core_get_zrtp_secrets_file(LinphoneCore *lc){
 
 zrtpCacheAccess linphone_core_get_zrtp_cache_access(LinphoneCore *lc){
 	zrtpCacheAccess ret;
+#ifdef SQLITE_STORAGE_ENABLED
 	ret.db = (void *)lc->zrtp_cache_db;
 	ret.dbMutex = &(lc->zrtp_cache_db_mutex);
+#else /* SQITE_STORAGE_ENABLED */
+	ret.db = NULL;
+	ret.dbMutex = NULL;
+#endif /* SQLITE_STORAGE_ENABLED */
 	return ret;
 }
 
 void *linphone_core_get_zrtp_cache_db(LinphoneCore *lc){
-	return (void *)lc->zrtp_cache_db;
+#ifdef SQLITE_STORAGE_ENABLED
+	return (void *)lc->zrtp_cache_db
+#else /* SQLITE_STORAGE_ENABLED */
+	return NULL;
+#endif /* SQLITE_STORAGE_ENABLED */
 }
 
 LinphoneZrtpPeerStatus linphone_core_get_zrtp_status(LinphoneCore *lc, const char *peerUri) {
@@ -7164,12 +7173,18 @@ void linphone_core_set_http_proxy_host(LinphoneCore *lc, const char *host) {
 		lc->sal->setHttpProxyHost(host);
 		lc->sal->setHttpProxyPort(linphone_core_get_http_proxy_port(lc)); /*to make sure default value is set*/
 	}
+	if (lc->tunnel){
+		linphone_tunnel_set_http_proxy(lc->tunnel, host, linphone_core_get_http_proxy_port(lc), NULL, NULL);
+	}
 }
 
 void linphone_core_set_http_proxy_port(LinphoneCore *lc, int port) {
 	lp_config_set_int(lc->config,"sip","http_proxy_port",port);
 	if (lc->sal)
 		lc->sal->setHttpProxyPort(port);
+	if (lc->tunnel){
+		linphone_tunnel_set_http_proxy(lc->tunnel, linphone_core_get_http_proxy_host(lc), port, NULL, NULL);
+	}
 }
 
 const char *linphone_core_get_http_proxy_host(const LinphoneCore *lc) {

@@ -37,17 +37,30 @@ public:
 	AndroidPlatformHelpers (LinphoneCore *lc, void *systemContext);
 	~AndroidPlatformHelpers ();
 
-	void setDnsServers () override;
 	void acquireWifiLock () override;
 	void releaseWifiLock () override;
 	void acquireMcastLock () override;
 	void releaseMcastLock () override;
 	void acquireCpuLock () override;
 	void releaseCpuLock () override;
-	string getDataPath () override;
-	string getConfigPath () override;
-	void setVideoWindow (void *windowId) override;
+
+	string getConfigPath () const override;
+	string getDataPath () const override;
+	string getDataResource (const string &filename) const override;
+	string getImageResource (const string &filename) const override;
+	string getRingResource (const string &filename) const override;
+	string getSoundResource (const string &filename) const override;
+
 	void setVideoPreviewWindow (void *windowId) override;
+	void setVideoWindow (void *windowId) override;
+
+	bool isNetworkReachable () override;
+	void onWifiOnlyEnabled (bool enabled) override;
+	void setDnsServers () override;
+	void setNetworkReachable (bool reachable) override;
+	void setHttpProxy (string host, int port) override;
+
+	void onLinphoneCoreStart (bool monitoringEnabled) override;
 
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
@@ -57,6 +70,7 @@ private:
 	int callVoidMethod (jmethodID id);
 	static jmethodID getMethodId (JNIEnv *env, jclass klass, const char *method, const char *signature);
 	string getNativeLibraryDir();
+
 	jobject mJavaHelper;
 	jmethodID mWifiLockAcquireId;
 	jmethodID mWifiLockReleaseId;
@@ -72,8 +86,13 @@ private:
 	jmethodID mGetNativeLibraryDirId;
 	jmethodID mSetNativeVideoWindowId;
 	jmethodID mSetNativePreviewVideoWindowId;
+	jmethodID mUpdateNetworkReachabilityId;
+	jmethodID mOnLinphoneCoreStartId;
+	jmethodID mOnWifiOnlyEnabledId;
 	jobject mPreviewVideoWindow;
 	jobject mVideoWindow;
+
+	bool mNetworkReachable;
 };
 
 static const char *GetStringUTFChars (JNIEnv *env, jstring string) {
@@ -98,8 +117,8 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 	if (!klass)
 		lFatal() << "Could not find java AndroidPlatformHelper class.";
 
-	jmethodID ctor = env->GetMethodID(klass, "<init>", "(JLjava/lang/Object;)V");
-	mJavaHelper = env->NewObject(klass, ctor, this, (jobject)systemContext);
+	jmethodID ctor = env->GetMethodID(klass, "<init>", "(JLjava/lang/Object;Z)V");
+	mJavaHelper = env->NewObject(klass, ctor, (jlong)this, (jobject)systemContext, (jboolean)linphone_core_wifi_only_enabled(lc));
 	if (!mJavaHelper) {
 		lError() << "Could not instanciate AndroidPlatformHelper object.";
 		return;
@@ -120,6 +139,9 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 	mGetNativeLibraryDirId = getMethodId(env, klass, "getNativeLibraryDir", "()Ljava/lang/String;");
 	mSetNativeVideoWindowId = getMethodId(env, klass, "setVideoRenderingView", "(Ljava/lang/Object;)V");
 	mSetNativePreviewVideoWindowId = getMethodId(env, klass, "setVideoPreviewView", "(Ljava/lang/Object;)V");
+	mUpdateNetworkReachabilityId = getMethodId(env, klass, "updateNetworkReachability", "()V");
+	mOnLinphoneCoreStartId = getMethodId(env, klass, "onLinphoneCoreStart", "(Z)V");
+	mOnWifiOnlyEnabledId = getMethodId(env, klass, "onWifiOnlyEnabled", "(Z)V");
 
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
 	belle_sip_wake_lock_init(env, pm);
@@ -130,6 +152,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 
 	mPreviewVideoWindow = nullptr;
 	mVideoWindow = nullptr;
+	mNetworkReachable = false;
 }
 
 AndroidPlatformHelpers::~AndroidPlatformHelpers () {
@@ -140,6 +163,134 @@ AndroidPlatformHelpers::~AndroidPlatformHelpers () {
 		mJavaHelper = nullptr;
 	}
 	lInfo() << "AndroidPlatformHelpers has been destroyed.";
+}
+
+// -----------------------------------------------------------------------------
+
+void AndroidPlatformHelpers::acquireWifiLock () {
+	callVoidMethod(mWifiLockAcquireId);
+}
+
+void AndroidPlatformHelpers::releaseWifiLock () {
+	callVoidMethod(mWifiLockReleaseId);
+}
+
+void AndroidPlatformHelpers::acquireMcastLock () {
+	callVoidMethod(mMcastLockAcquireId);
+}
+
+void AndroidPlatformHelpers::releaseMcastLock () {
+	callVoidMethod(mMcastLockReleaseId);
+}
+
+void AndroidPlatformHelpers::acquireCpuLock () {
+	callVoidMethod(mCpuLockAcquireId);
+}
+
+void AndroidPlatformHelpers::releaseCpuLock () {
+	callVoidMethod(mCpuLockReleaseId);
+}
+
+// -----------------------------------------------------------------------------
+
+string AndroidPlatformHelpers::getConfigPath () const {
+	JNIEnv *env = ms_get_jni_env();
+	jstring jconfig_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetConfigPathId);
+	const char *config_path = GetStringUTFChars(env, jconfig_path);
+	string configPath = config_path;
+	ReleaseStringUTFChars(env, jconfig_path, config_path);
+	return configPath + "/";
+}
+
+string AndroidPlatformHelpers::getDownloadPath () {
+	JNIEnv *env = ms_get_jni_env();
+	jstring jdownload_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetDownloadPathId);
+	const char *download_path = GetStringUTFChars(env, jdownload_path);
+	string downloadPath = download_path;
+	ReleaseStringUTFChars(env, jdownload_path, download_path);
+	return downloadPath + "/";
+} 
+
+int AndroidPlatformHelpers::callVoidMethod (jmethodID id) {
+string AndroidPlatformHelpers::getDataPath () const {
+	JNIEnv *env = ms_get_jni_env();
+	jstring jdata_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetDataPathId);
+	const char *data_path = GetStringUTFChars(env, jdata_path);
+	string dataPath = data_path;
+	ReleaseStringUTFChars(env, jdata_path, data_path);
+	return dataPath + "/";
+}
+
+string AndroidPlatformHelpers::getDataResource (const string &filename) const {
+	return getFilePath(
+		linphone_factory_get_data_resources_dir(linphone_factory_get()),
+		filename
+	);
+}
+
+string AndroidPlatformHelpers::getImageResource (const string &filename) const {
+	return getFilePath(
+		linphone_factory_get_image_resources_dir(linphone_factory_get()),
+		filename
+	);
+}
+
+string AndroidPlatformHelpers::getRingResource (const string &filename) const {
+	return getFilePath(
+		linphone_factory_get_ring_resources_dir(linphone_factory_get()),
+		filename
+	);
+}
+
+string AndroidPlatformHelpers::getSoundResource (const string &filename) const {
+	return getFilePath(
+		linphone_factory_get_sound_resources_dir(linphone_factory_get()),
+		filename
+	);
+}
+
+// -----------------------------------------------------------------------------
+
+void AndroidPlatformHelpers::setVideoPreviewWindow (void *windowId) {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()));
+		if (windowId && (displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
+			env->CallVoidMethod(mJavaHelper, mSetNativePreviewVideoWindowId, (jobject)windowId);
+		} else {
+			_setPreviewVideoWindow((jobject)windowId);
+		}
+	}
+}
+
+void AndroidPlatformHelpers::setVideoWindow (void *windowId) {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()));
+		if (windowId && (displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
+			env->CallVoidMethod(mJavaHelper, mSetNativeVideoWindowId, (jobject)windowId);
+		} else {
+			_setVideoWindow((jobject)windowId);
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+bool AndroidPlatformHelpers::isNetworkReachable() {
+	return mNetworkReachable;
+}
+
+void AndroidPlatformHelpers::onWifiOnlyEnabled(bool enabled) {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		env->CallVoidMethod(mJavaHelper, mOnWifiOnlyEnabledId, (jboolean)enabled);
+	}
+}
+
+void AndroidPlatformHelpers::setHttpProxy(string host, int port) {
+	linphone_core_set_http_proxy_host(mCore, host.c_str());
+	linphone_core_set_http_proxy_port(mCore, port);
 }
 
 void AndroidPlatformHelpers::setDnsServers () {
@@ -176,105 +327,21 @@ void AndroidPlatformHelpers::setDnsServers () {
 	}
 }
 
-void AndroidPlatformHelpers::acquireWifiLock () {
-	callVoidMethod(mWifiLockAcquireId);
+void AndroidPlatformHelpers::setNetworkReachable(bool reachable) {
+	mNetworkReachable = reachable;
+	linphone_core_set_network_reachable_internal(mCore, reachable ? 1 : 0);
 }
 
-void AndroidPlatformHelpers::releaseWifiLock () {
-	callVoidMethod(mWifiLockReleaseId);
-}
+// -----------------------------------------------------------------------------
 
-void AndroidPlatformHelpers::acquireMcastLock () {
-	callVoidMethod(mMcastLockAcquireId);
-}
-
-void AndroidPlatformHelpers::releaseMcastLock () {
-	callVoidMethod(mMcastLockReleaseId);
-}
-
-void AndroidPlatformHelpers::acquireCpuLock () {
-	callVoidMethod(mCpuLockAcquireId);
-}
-
-void AndroidPlatformHelpers::releaseCpuLock () {
-	callVoidMethod(mCpuLockReleaseId);
-}
-
-string AndroidPlatformHelpers::getDataPath () {
-	JNIEnv *env = ms_get_jni_env();
-	jstring jdata_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetDataPathId);
-	const char *data_path = GetStringUTFChars(env, jdata_path);
-	string dataPath = data_path;
-	ReleaseStringUTFChars(env, jdata_path, data_path);
-	return dataPath + "/";
-}
-
-string AndroidPlatformHelpers::getNativeLibraryDir () {
-	JNIEnv *env = ms_get_jni_env();
-	string libPath;
-	jstring jlib_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetNativeLibraryDirId);
-	if (jlib_path){
-		const char *lib_path = GetStringUTFChars(env, jlib_path);
-		libPath = lib_path;
-		ReleaseStringUTFChars(env, jlib_path, lib_path);
-	}
-	return libPath;
-}
-
-string AndroidPlatformHelpers::getConfigPath () {
-	JNIEnv *env = ms_get_jni_env();
-	jstring jconfig_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetConfigPathId);
-	const char *config_path = GetStringUTFChars(env, jconfig_path);
-	string configPath = config_path;
-	ReleaseStringUTFChars(env, jconfig_path, config_path);
-	return configPath + "/";
-}
-
-string AndroidPlatformHelpers::getDownloadPath () {
-	JNIEnv *env = ms_get_jni_env();
-	jstring jdownload_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetDownloadPathId);
-	const char *download_path = GetStringUTFChars(env, jdownload_path);
-	string downloadPath = download_path;
-	ReleaseStringUTFChars(env, jdownload_path, download_path);
-	return downloadPath + "/";
-} 
-
-int AndroidPlatformHelpers::callVoidMethod (jmethodID id) {
+void AndroidPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	JNIEnv *env = ms_get_jni_env();
 	if (env && mJavaHelper) {
-		env->CallVoidMethod(mJavaHelper, id);
-		if (env->ExceptionCheck()) {
-			env->ExceptionClear();
-			return -1;
-		} else
-			return 0;
-	} else
-		return -1;
-}
-
-void AndroidPlatformHelpers::setVideoPreviewWindow (void *windowId) {
-	JNIEnv *env = ms_get_jni_env();
-	if (env && mJavaHelper) {
-		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()));
-		if (windowId && (displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
-			env->CallVoidMethod(mJavaHelper, mSetNativePreviewVideoWindowId, (jobject)windowId);
-		} else {
-			_setPreviewVideoWindow((jobject)windowId);
-		}
+		env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStartId, (jboolean)monitoringEnabled);
 	}
 }
 
-void AndroidPlatformHelpers::setVideoWindow (void *windowId) {
-	JNIEnv *env = ms_get_jni_env();
-	if (env && mJavaHelper) {
-		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()));
-		if (windowId && (displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
-			env->CallVoidMethod(mJavaHelper, mSetNativeVideoWindowId, (jobject)windowId);
-		} else {
-			_setVideoWindow((jobject)windowId);
-		}
-	}
-}
+// -----------------------------------------------------------------------------
 
 void AndroidPlatformHelpers::_setPreviewVideoWindow(jobject window) {
 	JNIEnv *env = ms_get_jni_env();
@@ -306,6 +373,33 @@ void AndroidPlatformHelpers::_setVideoWindow(jobject window) {
 	_linphone_core_set_native_video_window_id(lc, (void *)mVideoWindow);
 }
 
+// -----------------------------------------------------------------------------
+
+int AndroidPlatformHelpers::callVoidMethod (jmethodID id) {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		env->CallVoidMethod(mJavaHelper, id);
+		if (env->ExceptionCheck()) {
+			env->ExceptionClear();
+			return -1;
+		} else
+			return 0;
+	} else
+		return -1;
+}
+
+string AndroidPlatformHelpers::getNativeLibraryDir () {
+	JNIEnv *env = ms_get_jni_env();
+	string libPath;
+	jstring jlib_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetNativeLibraryDirId);
+	if (jlib_path){
+		const char *lib_path = GetStringUTFChars(env, jlib_path);
+		libPath = lib_path;
+		ReleaseStringUTFChars(env, jlib_path, lib_path);
+	}
+	return libPath;
+}
+
 PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext) {
 	return new AndroidPlatformHelpers(lc, systemContext);
 }
@@ -318,6 +412,17 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	AndroidPlatformHelpers *androidPlatformHelper = (AndroidPlatformHelpers *)ptr;
 	androidPlatformHelper->_setVideoWindow(id);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNetworkReachable(JNIEnv* env, jobject thiz, jlong ptr, jboolean reachable) {
+	AndroidPlatformHelpers *androidPlatformHelper = (AndroidPlatformHelpers *)ptr;
+	androidPlatformHelper->setNetworkReachable(reachable);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setHttpProxy(JNIEnv* env, jobject thiz, jlong ptr, jstring host, jint port) {
+	AndroidPlatformHelpers *androidPlatformHelper = (AndroidPlatformHelpers *)ptr;
+	const char *hostC = GetStringUTFChars(env, host);
+	androidPlatformHelper->setHttpProxy(hostC, port);
 }
 
 LINPHONE_END_NAMESPACE

@@ -997,6 +997,27 @@ LINPHONE_PUBLIC SalMediaDescription *sal_call_get_final_media_description (SalOp
 	return callOp->getFinalMediaDescription();
 }
 
+LINPHONE_PUBLIC const char *sal_call_get_local_tag (SalOp *op) {
+	auto callOp = dynamic_cast<SalCallOp *>(op);
+	if (!callOp)
+		return nullptr;
+	return callOp->getLocalTag();
+}
+
+LINPHONE_PUBLIC const char *sal_call_get_remote_tag (SalOp *op) {
+	auto callOp = dynamic_cast<SalCallOp *>(op);
+	if (!callOp)
+		return nullptr;
+	return callOp->getRemoteTag();
+}
+
+LINPHONE_PUBLIC void sal_call_set_replaces (SalOp *op, const char *callId, const char *fromTag, const char *toTag) {
+	auto callOp = dynamic_cast<SalCallOp *>(op);
+	if (!callOp)
+		return;
+	callOp->setReplaces(callId, fromTag, toTag);
+}
+
 LINPHONE_PUBLIC belle_sip_resolver_context_t *sal_resolve_a (Sal *sal, const char *name, int port, int family, belle_sip_resolver_callback_t cb, void *data) {
 	return sal->resolveA(name, port, family, cb, data);
 }

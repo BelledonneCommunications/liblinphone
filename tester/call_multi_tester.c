@@ -1163,6 +1163,53 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 	linphone_core_manager_destroy(laure);
 }
 
+void no_auto_answer_on_fake_call_with_replaces_header (void) {
+	LinphoneCoreManager *marie1 = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *marie2 = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+
+	bctbx_list_t *lcs = bctbx_list_append(NULL, marie1->lc);
+	lcs = bctbx_list_append(lcs, marie2->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	LinphoneCallParams *params = linphone_core_create_call_params(marie1->lc, NULL);
+	linphone_call_params_set_privacy(params, LinphonePrivacyId);
+	LinphoneCall *call1 = linphone_core_invite_address_with_params(marie1->lc, pauline->identity, params);
+	linphone_call_params_unref(params);
+	BC_ASSERT_PTR_NOT_NULL(call1);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1, 2000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie1->stat.number_of_LinphoneCallOutgoingRinging, 1, 2000));
+
+	reset_counters(&marie1->stat);
+	reset_counters(&marie2->stat);
+	reset_counters(&pauline->stat);
+
+	const char *callId = linphone_call_log_get_call_id(linphone_call_get_call_log(call1));
+	BC_ASSERT_PTR_NOT_NULL(callId);
+	SalOp *op = linphone_call_get_op_as_sal_op(call1);
+	const char *fromTag = sal_call_get_local_tag(op);
+	const char *toTag = sal_call_get_remote_tag(op);
+	BC_ASSERT_PTR_NOT_NULL(fromTag);
+	BC_ASSERT_PTR_NOT_NULL(toTag);
+
+	params = linphone_core_create_call_params(marie2->lc, NULL);
+	char *headerValue = bctbx_strdup_printf("%s;from-tag=%s;to-tag=%s", callId, fromTag, toTag);
+	linphone_call_params_add_custom_header(params, "Replaces", headerValue);
+	bctbx_free(headerValue);
+	LinphoneCall *call2 = linphone_core_invite_address_with_params(marie2->lc, pauline->identity, params);
+	linphone_call_params_unref(params);
+	BC_ASSERT_PTR_NOT_NULL(call2);
+	BC_ASSERT_EQUAL(marie2->stat.number_of_LinphoneCallOutgoingProgress, 1, int, "%d");
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1, 2000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallOutgoingRinging, 1, 2000));
+	BC_ASSERT_FALSE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallConnected, 1, 2000));
+
+	linphone_core_manager_destroy(marie1);
+	linphone_core_manager_destroy(marie2);
+	linphone_core_manager_destroy(pauline);
+	bctbx_list_free(lcs);
+}
+
 test_t multi_call_tests[] = {
 	TEST_NO_TAG("Call waiting indication", call_waiting_indication),
 	TEST_NO_TAG("Call waiting indication with privacy", call_waiting_indication_with_privacy),
@@ -1188,6 +1235,7 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Simple remote conference with shut down focus", simple_remote_conference_shut_down_focus),
 	TEST_NO_TAG("Eject from 3 participants in remote conference", eject_from_3_participants_remote_conference),
 	TEST_NO_TAG("Do not stop ringing when declining one of two incoming calls", do_not_stop_ringing_when_declining_one_of_two_incoming_calls),
+	TEST_NO_TAG("No auto answer on fake call with Replaces header", no_auto_answer_on_fake_call_with_replaces_header)
 };
 
 test_suite_t multi_call_test_suite = {"Multi call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

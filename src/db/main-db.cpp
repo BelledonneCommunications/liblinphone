@@ -253,9 +253,9 @@ shared_ptr<AbstractChatRoom> MainDbPrivate::findChatRoom (const ConferenceId &co
 // -----------------------------------------------------------------------------
 
 long long MainDbPrivate::insertSipAddress (const string &sipAddress) {
-	long long id = selectSipAddressId(sipAddress);
-	if (id >= 0)
-		return id;
+	long long sipAddressId = selectSipAddressId(sipAddress);
+	if (sipAddressId >= 0)
+		return sipAddressId;
 
 	lInfo() << "Insert new sip address in database: `" << sipAddress << "`.";
 	*dbSession.getBackendSession() << "INSERT INTO sip_address (value) VALUES (:sipAddress)", soci::use(sipAddress);
@@ -291,10 +291,10 @@ void MainDbPrivate::insertContent (long long chatMessageId, const Content &conte
 long long MainDbPrivate::insertContentType (const string &contentType) {
 	soci::session *session = dbSession.getBackendSession();
 
-	long long id;
-	*session << "SELECT id FROM content_type WHERE value = :contentType", soci::use(contentType), soci::into(id);
+	long long contentTypeId;
+	*session << "SELECT id FROM content_type WHERE value = :contentType", soci::use(contentType), soci::into(contentTypeId);
 	if (session->got_data())
-		return id;
+		return contentTypeId;
 
 	lInfo() << "Insert new content type in database: `" << contentType << "`.";
 	*session << "INSERT INTO content_type (value) VALUES (:contentType)", soci::use(contentType);
@@ -308,11 +308,11 @@ long long MainDbPrivate::insertOrUpdateImportedBasicChatRoom (
 ) {
 	soci::session *session = dbSession.getBackendSession();
 
-	long long id = selectChatRoomId(peerSipAddressId, localSipAddressId);
-	if (id >= 0) {
-		*session << "UPDATE chat_room SET last_update_time = :lastUpdateTime WHERE id = :id",
-			soci::use(creationTime), soci::use(id);
-		return id;
+	long long chatRoomId = selectChatRoomId(peerSipAddressId, localSipAddressId);
+	if (chatRoomId >= 0) {
+		*session << "UPDATE chat_room SET last_update_time = :lastUpdateTime WHERE id = :chatRoomId",
+			soci::use(creationTime), soci::use(chatRoomId);
+		return chatRoomId;
 	}
 
 	const int capabilities = ChatRoom::CapabilitiesMask(
@@ -334,12 +334,12 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 	const long long &peerSipAddressId = insertSipAddress(conferenceId.getPeerAddress().asString());
 	const long long &localSipAddressId = insertSipAddress(conferenceId.getLocalAddress().asString());
 
-	long long id = selectChatRoomId(peerSipAddressId, localSipAddressId);
-	if (id >= 0) {
+	long long chatRoomId = selectChatRoomId(peerSipAddressId, localSipAddressId);
+	if (chatRoomId >= 0) {
 		// The chat room is already stored in DB, but still update the notify id that might have changed
 		*dbSession.getBackendSession() << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :chatRoomId",
-			soci::use(notifyId), soci::use(id);
-		return id;
+			soci::use(notifyId), soci::use(chatRoomId);
+		return chatRoomId;
 	}
 
 	lInfo() << "Insert new chat room in database: " << conferenceId << ".";
@@ -362,13 +362,13 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime),
 		soci::use(lastUpdateTime), soci::use(capabilities), soci::use(subject), soci::use(flags), soci::use(notifyId);
 
-	id = dbSession.getLastInsertId();
+	chatRoomId = dbSession.getLastInsertId();
 
 	// Do not add 'me' when creating a server-group-chat-room.
 	if (conferenceId.getLocalAddress() != conferenceId.getPeerAddress()) {
 		shared_ptr<Participant> me = chatRoom->getMe();
 		long long meId = insertChatRoomParticipant(
-			id,
+			chatRoomId,
 			insertSipAddress(me->getAddress().asString()),
 			me->isAdmin()
 		);
@@ -378,7 +378,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 
 	for (const auto &participant : chatRoom->getParticipants()) {
 		long long participantId = insertChatRoomParticipant(
-			id,
+			chatRoomId,
 			insertSipAddress(participant->getAddress().asString()),
 			participant->isAdmin()
 		);
@@ -386,7 +386,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 			insertChatRoomParticipantDevice(participantId, insertSipAddress(device->getAddress().asString()));
 	}
 
-	return id;
+	return chatRoomId;
 }
 
 long long MainDbPrivate::insertChatRoomParticipant (
@@ -395,12 +395,12 @@ long long MainDbPrivate::insertChatRoomParticipant (
 	bool isAdmin
 ) {
 	soci::session *session = dbSession.getBackendSession();
-	long long id = selectChatRoomParticipantId(chatRoomId, participantSipAddressId);
-	if (id >= 0) {
+	long long chatRoomParticipantId = selectChatRoomParticipantId(chatRoomId, participantSipAddressId);
+	if (chatRoomParticipantId >= 0) {
 		// See: https://stackoverflow.com/a/15299655 (cast to reference)
-		*session << "UPDATE chat_room_participant SET is_admin = :isAdmin WHERE id = :id",
-			soci::use(static_cast<const int &>(isAdmin)), soci::use(id);
-		return id;
+		*session << "UPDATE chat_room_participant SET is_admin = :isAdmin WHERE id = :chatRoomParticipantId",
+			soci::use(static_cast<const int &>(isAdmin)), soci::use(chatRoomParticipantId);
+		return chatRoomParticipantId;
 	}
 
 	*session << "INSERT INTO chat_room_participant (chat_room_id, participant_sip_address_id, is_admin)"
@@ -439,23 +439,23 @@ void MainDbPrivate::insertChatMessageParticipant (long long chatMessageId, long 
 // -----------------------------------------------------------------------------
 
 long long MainDbPrivate::selectSipAddressId (const string &sipAddress) const {
-	long long id;
+	long long sipAddressId;
 
 	soci::session *session = dbSession.getBackendSession();
 	*session << Statements::get(Statements::SelectSipAddressId),
-		soci::use(sipAddress), soci::into(id);
+		soci::use(sipAddress), soci::into(sipAddressId);
 
-	return session->got_data() ? id : -1;
+	return session->got_data() ? sipAddressId : -1;
 }
 
 long long MainDbPrivate::selectChatRoomId (long long peerSipAddressId, long long localSipAddressId) const {
-	long long id;
+	long long chatRoomId;
 
 	soci::session *session = dbSession.getBackendSession();
 	*session << Statements::get(Statements::SelectChatRoomId),
-		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::into(id);
+		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::into(chatRoomId);
 
-	return session->got_data() ? id : -1;
+	return session->got_data() ? chatRoomId : -1;
 }
 
 long long MainDbPrivate::selectChatRoomId (const ConferenceId &conferenceId) const {
@@ -471,25 +471,27 @@ long long MainDbPrivate::selectChatRoomId (const ConferenceId &conferenceId) con
 }
 
 long long MainDbPrivate::selectChatRoomParticipantId (long long chatRoomId, long long participantSipAddressId) const {
-	long long id;
+	long long chatRoomParticipantId;
 
 	soci::session *session = dbSession.getBackendSession();
 	*session << Statements::get(Statements::SelectChatRoomParticipantId),
-		soci::use(chatRoomId), soci::use(participantSipAddressId), soci::into(id);
+		soci::use(chatRoomId), soci::use(participantSipAddressId), soci::into(chatRoomParticipantId);
 
-	return session->got_data() ? id : -1;
+	return session->got_data() ? chatRoomParticipantId : -1;
 }
 
-long long MainDbPrivate::selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB) const {
-	long long id;
+long long MainDbPrivate::selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB, bool encrypted) const {
+	long long chatRoomId;
+	const int encryptedCapability = int(ChatRoom::Capabilities::Encrypted);
+	const int expectedCapabilities = encrypted ? encryptedCapability : 0;
 
 	soci::session *session = dbSession.getBackendSession();
 	*session << Statements::get(Statements::SelectOneToOneChatRoomId),
-		soci::use(sipAddressIdA), soci::use(sipAddressIdB),
-		soci::use(sipAddressIdA), soci::use(sipAddressIdB),
-		soci::into(id);
+		soci::use(sipAddressIdA, "1"), soci::use(sipAddressIdB, "2"),
+		soci::use(encryptedCapability, "3"), soci::use(expectedCapabilities, "4"),
+		soci::into(chatRoomId);
 
-	return session->got_data() ? id : -1;
+	return session->got_data() ? chatRoomId : -1;
 }
 
 // -----------------------------------------------------------------------------
@@ -523,6 +525,7 @@ shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceEvent (
 	const shared_ptr<AbstractChatRoom> &chatRoom,
 	const soci::row &row
 ) const {
+	L_ASSERT(chatRoom);
 	EventLog::Type type = EventLog::Type(row.get<int>(1));
 	if (type == EventLog::Type::ConferenceChatMessage) {
 		long long eventId = getConferenceEventIdFromRow(row);
@@ -2753,7 +2756,8 @@ IdentityAddress MainDb::findMissingOneToOneConferenceChatRoomParticipantAddress 
 
 IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 	const IdentityAddress &participantA,
-	const IdentityAddress &participantB
+	const IdentityAddress &participantB,
+	bool encrypted
 ) const {
 	return L_DB_TRANSACTION {
 		L_D();
@@ -2763,7 +2767,9 @@ IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 		if (participantASipAddressId == -1 || participantBSipAddressId == -1)
 			return IdentityAddress();
 
-		const long long &chatRoomId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId);
+		const long long &chatRoomId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId, encrypted);
+		if (chatRoomId == -1)
+			return IdentityAddress();
 
 		string chatRoomAddress;
 		*d->dbSession.getBackendSession() << "SELECT sip_address.value"
@@ -2775,7 +2781,7 @@ IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 	};
 }
 
-void MainDb::insertOneToOneConferenceChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) {
+void MainDb::insertOneToOneConferenceChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom, bool encrypted) {
 	L_ASSERT(linphone_core_conference_server_enabled(chatRoom->getCore()->getCCore()));
 	L_ASSERT(chatRoom->getCapabilities() & ChatRoom::Capabilities::OneToOne);
 
@@ -2788,7 +2794,7 @@ void MainDb::insertOneToOneConferenceChatRoom (const shared_ptr<AbstractChatRoom
 		L_ASSERT(participantASipAddressId != -1);
 		L_ASSERT(participantBSipAddressId != -1);
 
-		long long chatRoomId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId);
+		long long chatRoomId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId, encrypted);
 		if (chatRoomId == -1) {
 			chatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
 			*d->dbSession.getBackendSession() << Statements::get(Statements::InsertOneToOneChatRoom, getBackend()),

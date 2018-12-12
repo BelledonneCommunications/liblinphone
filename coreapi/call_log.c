@@ -668,6 +668,45 @@ bctbx_list_t * linphone_core_get_call_history_for_address(LinphoneCore *lc, cons
 	return clsres.result;
 }
 
+bctbx_list_t *linphone_core_get_call_history_2(
+	LinphoneCore *lc,
+	const LinphoneAddress *peer_addr,
+	const LinphoneAddress *local_addr
+) {
+	char *buf;
+	char *peer_addr_str;
+	char *local_addr_str;
+	uint64_t begin, end;
+	CallLogStorageResult clsres;
+
+	if (!lc || !lc->logs_db || !peer_addr || !local_addr) return NULL;
+
+	peer_addr_str = bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr)->asStringUriOnly().c_str());
+	local_addr_str = bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(local_addr)->asStringUriOnly().c_str());
+	buf = sqlite3_mprintf(
+		"SELECT * FROM call_history WHERE "
+		"(caller LIKE '%%%q%%' AND callee LIKE '%%%q%%' AND direction = 0) OR "
+		"(caller LIKE '%%%q%%' AND callee LIKE '%%%q%%' AND direction = 1) "
+		"ORDER BY id DESC",
+		local_addr_str,
+		peer_addr_str,
+		peer_addr_str,
+		local_addr_str
+	);
+
+	clsres.core = lc;
+	clsres.result = NULL;
+	begin = ortp_get_cur_time_ms();
+	linphone_sql_request_call_log(lc->logs_db, buf, &clsres);
+	end = ortp_get_cur_time_ms();
+	bctbx_message("%s(): completed in %i ms", __FUNCTION__, (int)(end - begin));
+	sqlite3_free(buf);
+	bctbx_free(peer_addr_str);
+	bctbx_free(local_addr_str);
+
+	return clsres.result;
+}
+
 LinphoneCallLog * linphone_core_get_last_outgoing_call_log(LinphoneCore *lc) {
 	char *buf;
 	uint64_t begin,end;

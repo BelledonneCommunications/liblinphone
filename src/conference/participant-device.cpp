@@ -61,7 +61,7 @@ shared_ptr<Core> ParticipantDevice::getCore () const {
 void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
 	if (mConferenceSubscribeEvent)
 		linphone_event_unref(mConferenceSubscribeEvent);
-	mConferenceSubscribeEvent = linphone_event_ref(ev);
+	mConferenceSubscribeEvent = ev ? linphone_event_ref(ev) : nullptr;
 }
 
 AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {

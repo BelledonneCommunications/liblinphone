@@ -189,6 +189,7 @@ struct _LinphoneFriend{
 	unsigned int storage_id;
 	LinphoneFriendList *friend_list;
 	LinphoneSubscriptionState out_sub_state;
+	int capabilities = LinphoneFriendCapabilityNone;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriend);
@@ -290,6 +291,12 @@ struct net_config
 	int mtu;
 	OrtpNetworkSimulatorParams netsim_params;
 	bool_t nat_sdp_only;
+};
+
+struct net_state
+{
+	bool_t global_state;
+	bool_t user_state;
 };
 
 struct sound_config
@@ -774,7 +781,6 @@ namespace LinphonePrivate {
 	char* zrtp_secrets_cache; \
 	char* user_certificates_path; \
 	LinphoneVideoPolicy video_policy; \
-	time_t network_last_check; \
 	LinphoneNatPolicy *nat_policy; \
 	LinphoneImNotifPolicy *im_notif_policy; \
 	bool_t use_files; \
@@ -783,8 +789,8 @@ namespace LinphonePrivate {
 	bool_t bl_refresh; \
 	bool_t preview_finished; \
 	bool_t auto_net_state_mon; \
-	bool_t sip_network_reachable; \
-	bool_t media_network_reachable; \
+	net_state_t sip_network_state; \
+	net_state_t media_network_state; \
 	bool_t network_reachable_to_be_notified; \
 	bool_t use_preview_window; \
 	bool_t network_last_status; \

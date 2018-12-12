@@ -1576,6 +1576,22 @@ LINPHONE_PUBLIC bool_t linphone_core_ipv6_enabled(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val);
 
 /**
+ * Tells whether Wifi only mode is enabled or not
+ * @param[in] lc #LinphoneCore object
+ * @return A boolean value telling whether Wifi only mode is enabled or not
+ * @ingroup network_parameters
+**/
+LINPHONE_PUBLIC bool_t linphone_core_wifi_only_enabled(LinphoneCore *lc);
+
+/**
+ * Turns Wifi only mode on or off
+ * @param[in] lc #LinphoneCore object
+ * @param[in] val A boolean value telling whether to enable IPv6 support
+ * @ingroup network_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_enable_wifi_only(LinphoneCore *lc, bool_t val);
+
+/**
  * Same as linphone_core_get_primary_contact() but the result is a #LinphoneAddress object
  * instead of const char *.
  *
@@ -3313,8 +3329,22 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_call_logs(LinphoneCore *l
  * @param[in] lc #LinphoneCore object
  * @param[in] addr #LinphoneAddress object
  * @return \bctbx_list{LinphoneCallLog} \onTheFlyList
+ * @deprecated Use #linphone_core_get_call_history_2 instead. Deprecated since 2018-10-29.
 **/
 LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_call_history_for_address(LinphoneCore *lc, const LinphoneAddress *addr);
+
+/**
+ * Get the list of call logs (past calls).
+ * At the contrary of linphone_core_get_call_logs, it is your responsibility to unref the logs and free this list once you are done using it.
+ * @param[in] lc #LinphoneCore object.
+ * @param[in] peer_addr A #LinphoneAddress object.
+ * @return \bctbx_list{LinphoneCallLog} \onTheFlyList
+**/
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_call_history_2(
+	LinphoneCore *lc,
+	const LinphoneAddress *peer_addr,
+	const LinphoneAddress *local_addr
+);
 
 /**
  * Get the latest outgoing call log.

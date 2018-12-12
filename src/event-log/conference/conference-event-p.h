@@ -20,8 +20,8 @@
 #ifndef _L_CONFERENCE_EVENT_P_H_
 #define _L_CONFERENCE_EVENT_P_H_
 
-#include "conference/conference-id.h"
 #include "conference-event.h"
+#include "conference/conference-id.h"
 #include "event-log/event-log-p.h"
 
 // =============================================================================

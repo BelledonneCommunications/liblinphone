@@ -511,6 +511,22 @@ void CallSessionPrivate::accept (const CallSessionParams *csp) {
 	setState(CallSession::State::Connected, "Connected");
 }
 
+void CallSessionPrivate::acceptOrTerminateReplacedSessionInIncomingNotification () {
+	L_Q();
+	CallSession *replacedSession = nullptr;
+	if (op->getReplaces())
+		replacedSession = reinterpret_cast<CallSession *>(op->getReplaces()->getUserPointer());
+	if (replacedSession) {
+		if ((replacedSession->getState() == CallSession::State::Connected) || (replacedSession->getState() == CallSession::State::StreamsRunning)) {
+			if (lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "auto_answer_replacing_calls", 1)) {
+				q->accept();
+			}
+		} else {
+			replacedSession->terminate();
+		}
+	}
+}
+
 LinphoneStatus CallSessionPrivate::acceptUpdate (const CallSessionParams *csp, CallSession::State nextState, const string &stateInfo) {
 	return startAcceptUpdate(nextState, stateInfo);
 }
@@ -541,13 +557,11 @@ LinphoneStatus CallSessionPrivate::checkForAcceptation () {
 }
 
 void CallSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
-	L_Q();
 	/* Try to be best-effort in giving real local or routable contact address for 100Rel case */
 	setContactOp();
 	if (notifyRinging)
 		op->notifyRinging(false);
-	if (op->getReplaces() && lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "auto_answer_replacing_calls", 1))
-		q->accept();
+	acceptOrTerminateReplacedSessionInIncomingNotification();
 }
 
 bool CallSessionPrivate::isReadyForInvite () const {
@@ -802,7 +816,7 @@ void CallSessionPrivate::repairIfBroken () {
 	L_Q();
 	LinphoneCore *lc = q->getCore()->getCCore();
 	LinphoneConfig *config = linphone_core_get_config(lc);
-	if (!lp_config_get_int(config, "sip", "repair_broken_calls", 1) || !lc->media_network_reachable || !broken)
+	if (!lp_config_get_int(config, "sip", "repair_broken_calls", 1) || !lc->media_network_state.global_state || !broken)
 		return;
 
 	// If we are registered and this session has been broken due to a past network disconnection,

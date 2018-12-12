@@ -81,20 +81,24 @@ const IdentityAddress &BasicChatRoom::getConferenceAddress () const {
 	return Utils::getEmptyConstRefObject<IdentityAddress>();
 }
 
-void BasicChatRoom::addParticipant (const IdentityAddress &, const CallSessionParams *, bool) {
+bool BasicChatRoom::addParticipant (const IdentityAddress &, const CallSessionParams *, bool) {
 	lError() << "addParticipant() is not allowed on a BasicChatRoom";
+	return false;
 }
 
-void BasicChatRoom::addParticipants (const list<IdentityAddress> &, const CallSessionParams *, bool) {
+bool BasicChatRoom::addParticipants (const list<IdentityAddress> &, const CallSessionParams *, bool) {
 	lError() << "addParticipants() is not allowed on a BasicChatRoom";
+	return false;
 }
 
-void BasicChatRoom::removeParticipant (const shared_ptr<Participant> &) {
+bool BasicChatRoom::removeParticipant (const shared_ptr<Participant> &) {
 	lError() << "removeParticipant() is not allowed on a BasicChatRoom";
+	return false;
 }
 
-void BasicChatRoom::removeParticipants (const list<shared_ptr<Participant>> &) {
+bool BasicChatRoom::removeParticipants (const list<shared_ptr<Participant>> &) {
 	lError() << "removeParticipants() is not allowed on a BasicChatRoom";
+	return false;
 }
 
 shared_ptr<Participant> BasicChatRoom::findParticipant (const IdentityAddress &) const {

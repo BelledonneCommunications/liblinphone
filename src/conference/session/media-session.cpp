@@ -579,18 +579,8 @@ void MediaSessionPrivate::setRemoteParams (MediaSessionParams *msp) {
 	remoteParams = msp;
 }
 
-MediaStream * MediaSessionPrivate::getMediaStream (LinphoneStreamType type) const {
-	switch (type) {
-		case LinphoneStreamTypeAudio:
-			return &audioStream->ms;
-		case LinphoneStreamTypeVideo:
-			return &videoStream->ms;
-		case LinphoneStreamTypeText:
-			return &textStream->ms;
-		case LinphoneStreamTypeUnknown:
-		default:
-			return nullptr;
-	}
+MediaStream *MediaSessionPrivate::getMediaStream (LinphoneStreamType type) const {
+	return getMediaStream(int(type));
 }
 
 int MediaSessionPrivate::getRtcpPort (LinphoneStreamType type) const  {
@@ -1062,13 +1052,13 @@ unsigned int MediaSessionPrivate::getMediaStartCount () const {
 	return mediaStartCount;
 }
 
-MediaStream * MediaSessionPrivate::getMediaStream (int streamIndex) const {
+MediaStream *MediaSessionPrivate::getMediaStream (int streamIndex) const {
 	if (streamIndex == mainAudioStreamIndex)
-		return &audioStream->ms;
+		return audioStream ? &audioStream->ms : nullptr;
 	if (streamIndex == mainVideoStreamIndex)
-		return &videoStream->ms;
+		return videoStream ? &videoStream->ms : nullptr;
 	if (streamIndex == mainTextStreamIndex)
-		return &textStream->ms;
+		return textStream ? &textStream->ms : nullptr;
 	lError() << "getMediaStream(): no stream index " << streamIndex;
 	return nullptr;
 }
@@ -2349,8 +2339,8 @@ void MediaSessionPrivate::handleIceEvents (OrtpEvent *ev) {
 
 void MediaSessionPrivate::handleStreamEvents (int streamIndex) {
 	L_Q();
-	MediaStream *ms = (streamIndex == mainAudioStreamIndex) ? &audioStream->ms :
-		(streamIndex == mainVideoStreamIndex ? &videoStream->ms : &textStream->ms);
+
+	MediaStream *ms = getMediaStream(streamIndex);
 	if (ms) {
 		/* Ensure there is no dangling ICE check list */
 		if (!iceAgent->hasSession())
@@ -3639,6 +3629,7 @@ void MediaSessionPrivate::abort (const string &errorMsg) {
 
 void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 	L_Q();
+
 	/* Try to be best-effort in giving real local or routable contact address for 100Rel case */
 	setContactOp();
 	bool proposeEarlyMedia = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "incoming_calls_early_media", false);
@@ -3646,8 +3637,8 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 		q->acceptEarlyMedia();
 	else
 		op->notifyRinging(false);
-	if (op->getReplaces() && !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "auto_answer_replacing_calls", 1))
-		q->accept();
+
+	acceptOrTerminateReplacedSessionInIncomingNotification();
 }
 
 bool MediaSessionPrivate::isReadyForInvite () const {

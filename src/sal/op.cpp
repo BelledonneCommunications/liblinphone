@@ -203,6 +203,10 @@ void SalOp::killDialog () {
 }
 
 void SalOp::release () {
+	if (mOpReleased){
+		lError() << "op [" << this << "]: double release detected and ignored.";
+		return;
+	}
 	// If in terminating state, keep this state because it means we are waiting for a response to be able to terminate the operation
 	if (mState != State::Terminating)
 		mState = State::Terminated;

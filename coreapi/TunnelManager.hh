@@ -205,7 +205,7 @@ namespace belledonnecomm {
 		static int customRecvfrom(struct _RtpTransport *t, mblk_t *msg, int flags, struct sockaddr *from, socklen_t *fromlen);
 		static void tunnelCallback(bool connected, void *zis);
 		static void tunnelCallback2(TunnelDirection direction, bool connected, void *zis);
-		static void sOnIterate(TunnelManager *zis);
+		static bool_t sOnIterate(TunnelManager *zis);
 		static void sUdpMirrorClientCallback(bool result, void* data);
 		static void networkReachableCb(LinphoneCore *lc, bool_t reachable);
 

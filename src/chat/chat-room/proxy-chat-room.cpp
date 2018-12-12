@@ -213,11 +213,11 @@ const IdentityAddress &ProxyChatRoom::getConferenceAddress () const {
 // -----------------------------------------------------------------------------
 
 void ProxyChatRoom::allowCpim (bool value) {
-	
+
 }
 
 void ProxyChatRoom::allowMultipart (bool value) {
-	
+
 }
 
 bool ProxyChatRoom::canHandleCpim () const {
@@ -235,7 +235,7 @@ bool ProxyChatRoom::canHandleParticipants () const {
 	return d->chatRoom->canHandleParticipants();
 }
 
-void ProxyChatRoom::addParticipant (
+bool ProxyChatRoom::addParticipant (
 	const IdentityAddress &participantAddress,
 	const CallSessionParams *params,
 	bool hasMedia
@@ -244,7 +244,7 @@ void ProxyChatRoom::addParticipant (
 	return d->chatRoom->addParticipant(participantAddress, params, hasMedia);
 }
 
-void ProxyChatRoom::addParticipants (
+bool ProxyChatRoom::addParticipants (
 	const list<IdentityAddress> &addresses,
 	const CallSessionParams *params,
 	bool hasMedia
@@ -253,14 +253,14 @@ void ProxyChatRoom::addParticipants (
 	return d->chatRoom->addParticipants(addresses, params, hasMedia);
 }
 
-void ProxyChatRoom::removeParticipant (const shared_ptr<Participant> &participant) {
+bool ProxyChatRoom::removeParticipant (const shared_ptr<Participant> &participant) {
 	L_D();
-	d->chatRoom->removeParticipant(participant);
+	return d->chatRoom->removeParticipant(participant);
 }
 
-void ProxyChatRoom::removeParticipants (const list<shared_ptr<Participant>> &participants) {
+bool ProxyChatRoom::removeParticipants (const list<shared_ptr<Participant>> &participants) {
 	L_D();
-	d->chatRoom->removeParticipants(participants);
+	return d->chatRoom->removeParticipants(participants);
 }
 
 shared_ptr<Participant> ProxyChatRoom::findParticipant (const IdentityAddress &participantAddress) const {

@@ -106,9 +106,9 @@ static char* _get_identity(const LinphoneAccountCreator *creator) {
 		LinphoneAddress* addr;
 
 		addr = linphone_proxy_config_normalize_sip_uri(proxy, creator->username ? creator->username : creator->phone_number);
-		if (addr == NULL) {
-			if (creator->username && creator->domain) {
-				char *url = ms_strdup_printf("sip:%s@%s", creator->username, creator->domain);
+		if (addr == NULL || (creator->domain && strcmp(linphone_address_get_domain(addr), creator->domain) != 0)) {
+			if ((creator->username || creator->phone_number) && creator->domain) {
+                char *url = ms_strdup_printf("sip:%s@%s", creator->username ? creator->username : creator->phone_number, creator->domain);
 				addr = linphone_address_new(url);
 				ms_free(url);
 				if (addr == NULL) {
@@ -1332,6 +1332,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone(L
 		}
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
+	bctbx_free(identity);
 
 	if (creator->xmlrpc_session) {
 		const char *username = creator->username ? creator->username : creator->phone_number;

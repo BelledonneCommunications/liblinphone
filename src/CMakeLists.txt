@@ -87,11 +87,11 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	call/remote-conference-call.h
 	chat/chat-message/chat-message-p.h
 	chat/chat-message/chat-message.h
-	chat/chat-message/imdn-message.h
 	chat/chat-message/imdn-message-p.h
+	chat/chat-message/imdn-message.h
 	chat/chat-message/is-composing-message.h
-	chat/chat-message/notification-message.h
 	chat/chat-message/notification-message-p.h
+	chat/chat-message/notification-message.h
 	chat/chat-room/abstract-chat-room-p.h
 	chat/chat-room/abstract-chat-room.h
 	chat/chat-room/basic-chat-room-p.h
@@ -144,8 +144,8 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/params/media-session-params-p.h
 	conference/params/media-session-params.h
 	conference/participant-device.h
-	conference/participant-imdn-state.h
 	conference/participant-imdn-state-p.h
+	conference/participant-imdn-state.h
 	conference/participant-p.h
 	conference/participant.h
 	conference/remote-conference-p.h
@@ -163,9 +163,9 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	content/content.h
 	content/file-content.h
 	content/file-transfer-content.h
-	content/header/header.h
 	content/header/header-p.h
 	content/header/header-param.h
+	content/header/header.h
 	core/core-accessor.h
 	core/core-listener.h
 	core/core-p.h
@@ -244,14 +244,15 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-chat-message.cpp
 	c-wrapper/api/c-chat-room-cbs.cpp
 	c-wrapper/api/c-chat-room.cpp
-	c-wrapper/api/c-core.cpp
 	c-wrapper/api/c-content.cpp
+	c-wrapper/api/c-core.cpp
 	c-wrapper/api/c-dial-plan.cpp
 	c-wrapper/api/c-event-log.cpp
 	c-wrapper/api/c-magic-search.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-participant-device.cpp
 	c-wrapper/api/c-participant-imdn-state.cpp
+	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
@@ -305,8 +306,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	content/content.cpp
 	content/file-content.cpp
 	content/file-transfer-content.cpp
-	content/header/header.cpp
 	content/header/header-param.cpp
+	content/header/header.cpp
 	core/core-accessor.cpp
 	core/core-call.cpp
 	core/core-chat-room.cpp
@@ -394,7 +395,7 @@ foreach (header ${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES})
 endforeach ()
 set(LINPHONE_PRIVATE_HEADER_FILES ${LINPHONE_PRIVATE_HEADER_FILES} PARENT_SCOPE)
 
-if (ANDROID AND CMAKE_C_COMPILER_ID STREQUAL "GNU") 
+if (ANDROID AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
 	list(APPEND STRICT_OPTIONS_CXX "-Wno-attributes")
 endif()
 bc_apply_compile_flags(LINPHONE_CXX_OBJECTS_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
@@ -440,11 +441,6 @@ if(ENABLE_SHARED)
 			MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
 			RESOURCE "${LINPHONE_RESOURCES}"
 		)
-	endif()
-	if(BELCARD_FOUND)
-		if(APPLE)
-			set_target_properties(linphone PROPERTIES LINK_FLAGS "-stdlib=libc++")
-		endif()
 	endif()
 
 	set_target_properties(linphone PROPERTIES LINKER_LANGUAGE CXX)

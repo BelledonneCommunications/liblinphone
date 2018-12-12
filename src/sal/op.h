@@ -123,6 +123,7 @@ public:
 	}
 	int refresh ();
 	void killDialog ();
+	//Release means let the op finish its life but we don't want to use it anymore, and don't want to be called in callbacks for this op
 	void release ();
 
 	virtual void authenticate (const SalAuthInfo *info) { 

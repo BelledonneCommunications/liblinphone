@@ -34,7 +34,7 @@ public:
 	ConferenceId (const IdentityAddress &peerAddress, const IdentityAddress &localAddress);
 	ConferenceId (const ConferenceId &other);
 
-	ConferenceId* clone () const override {
+	ConferenceId *clone () const override {
 		return new ConferenceId(*this);
 	}
 

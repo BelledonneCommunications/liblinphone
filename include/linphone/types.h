@@ -458,6 +458,16 @@ typedef enum _LinphoneFirewallPolicy {
 typedef struct _LinphoneFriend LinphoneFriend;
 
 /**
+* Enum describing the status of a LinphoneFriendList operation.
+* @ingroup buddy_list
+**/
+typedef enum _LinphoneFriendCapability {
+	LinphoneFriendCapabilityNone = 0,
+	LinphoneFriendCapabilityGroupChat = 1 << 0,
+	LinphoneFriendCapabilityLimeX3dh = 1 << 1
+} LinphoneFriendCapability;
+
+/**
  * The #LinphoneFriendList object representing a list of friends.
  * @ingroup buddy_list
 **/

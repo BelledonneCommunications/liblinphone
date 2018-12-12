@@ -108,7 +108,10 @@ static void call_received(SalCallOp *h) {
 					h->release();
 					return;
 				}
-				IdentityAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front());
+				const char *endToEndEncryptedStr = sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted");
+				bool encrypted = endToEndEncryptedStr && strcmp(endToEndEncryptedStr, "true") == 0;
+
+				IdentityAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front(), encrypted);
 				if (confAddr.isValid()) {
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ConferenceId(confAddr, confAddr));
 					L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmRecreation(h);
@@ -119,7 +122,9 @@ static void call_received(SalCallOp *h) {
 		}
 		// TODO: handle media conference creation if the "text" feature tag is not present
 		return;
-	} else if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
+	}
+
+	if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
 		linphone_address_unref(toAddr);
 		linphone_address_unref(fromAddr);
 		if (linphone_core_conference_server_enabled(lc)) {
@@ -623,7 +628,7 @@ static LinphoneChatMessageState chatStatusSal2Linphone(SalMessageDeliveryStatus 
 static void message_delivery_update(SalOp *op, SalMessageDeliveryStatus status) {
 	auto lc = reinterpret_cast<LinphoneCore *>(op->getSal()->getUserPointer());
 	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
-		static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
+		static_cast<SalMessageOp *>(op)->reply(SalReasonDeclined);
 		return;
 	}
 

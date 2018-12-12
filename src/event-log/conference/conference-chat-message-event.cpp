@@ -28,6 +28,10 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+static inline ConferenceId getSafeConferenceId (const shared_ptr<const AbstractChatRoom> chatRoom) {
+	return chatRoom ? chatRoom->getConferenceId() : ConferenceId();
+}
+
 // -----------------------------------------------------------------------------
 
 class ConferenceChatMessageEventPrivate : public ConferenceEventPrivate {
@@ -44,7 +48,7 @@ ConferenceChatMessageEvent::ConferenceChatMessageEvent (
 	*new ConferenceChatMessageEventPrivate,
 	EventLog::Type::ConferenceChatMessage,
 	creationTime,
-	chatMessage->getChatRoom()->getConferenceId()
+	getSafeConferenceId(chatMessage->getChatRoom())
 ) {
 	L_D();
 	L_ASSERT(chatMessage);

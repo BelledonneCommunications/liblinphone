@@ -430,7 +430,7 @@ std::string ChatMessagePrivate::createFakeFileTransferFromUrl(const std::string 
 
 void ChatMessagePrivate::setChatRoom (const shared_ptr<AbstractChatRoom> &cr) {
 	chatRoom = cr;
-	conferenceId = cr->getConferenceId();
+	const ConferenceId &conferenceId(cr->getConferenceId());
 	if (direction == ChatMessage::Direction::Outgoing) {
 		fromAddress = conferenceId.getLocalAddress();
 		toAddress = conferenceId.getPeerAddress();
@@ -696,12 +696,17 @@ void ChatMessagePrivate::restoreFileTransferContentAsFileContent() {
 
 void ChatMessagePrivate::send () {
 	L_Q();
+
+	shared_ptr<AbstractChatRoom> chatRoom(q->getChatRoom());
+	if (!chatRoom) return;
+
 	SalOp *op = salOp;
 	LinphoneCall *lcall = nullptr;
 	int errorCode = 0;
 
 	currentSendStep |= ChatMessagePrivate::Step::Started;
 	q->getChatRoom()->getPrivate()->addTransientChatMessage(q->getSharedFromThis());
+	imdnId.clear();
 
 	if (toBeStored && currentSendStep == (ChatMessagePrivate::Step::Started | ChatMessagePrivate::Step::None))
 		storeInDb();
@@ -771,7 +776,7 @@ void ChatMessagePrivate::send () {
 
 	if (applyModifiers) {
 		// Do not multipart or encapsulate with CPIM in an old ChatRoom to maintain backward compatibility
-		if (q->getChatRoom()->canHandleMultipart()) {
+		if (chatRoom->canHandleMultipart()) {
 			if ((currentSendStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
 				lInfo() << "Multipart step already done, skipping";
 			} else {
@@ -783,7 +788,7 @@ void ChatMessagePrivate::send () {
 			}
 		}
 
-		if (q->getChatRoom()->canHandleCpim()) {
+		if (chatRoom->canHandleCpim()) {
 			if ((currentSendStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
 				lInfo() << "Cpim step already done, skipping";
 			} else {
@@ -862,6 +867,7 @@ void ChatMessagePrivate::send () {
 
 	if (imdnId.empty())
 		setImdnMessageId(op->getCallId());   /* must be known at that time */
+	updateInDb(); // Update IMDN message ID in DB, TODO: update only the message ID, do not rewrite the contents
 
 	if (lcall && linphone_call_get_op(lcall) == op) {
 		/* In this case, chat delivery status is not notified, so unrefing chat message right now */
@@ -884,22 +890,28 @@ void ChatMessagePrivate::storeInDb () {
 
 	if (dbKey.isValid()) {
 		updateInDb();
-	} else {
-		shared_ptr<EventLog> eventLog = make_shared<ConferenceChatMessageEvent>(time, q->getSharedFromThis());
+		return;
+	}
 
-		// Avoid transaction in transaction if contents are not loaded.
-		loadContentsFromDatabase();
-		q->getChatRoom()->getPrivate()->addEvent(eventLog);
+	shared_ptr<EventLog> eventLog = make_shared<ConferenceChatMessageEvent>(time, q->getSharedFromThis());
 
-		if (direction == ChatMessage::Direction::Incoming) {
-			if (hasFileTransferContent()) {
-				// Keep the event in the transient list, message storage can be updated in near future
-				q->getChatRoom()->getPrivate()->addTransientEvent(eventLog);
-			}
-		} else {
-			// Keep event in transient to be able to store in database state changes
-			q->getChatRoom()->getPrivate()->addTransientEvent(eventLog);
+	// Avoid transaction in transaction if contents are not loaded.
+	loadContentsFromDatabase();
+
+	shared_ptr<AbstractChatRoom> chatRoom(q->getChatRoom());
+	if (!chatRoom) return;
+
+	AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
+	dChatRoom->addEvent(eventLog);
+
+	if (direction == ChatMessage::Direction::Incoming) {
+		if (hasFileTransferContent()) {
+			// Keep the event in the transient list, message storage can be updated in near future
+			dChatRoom->addTransientEvent(eventLog);
 		}
+	} else {
+		// Keep event in transient to be able to store in database state changes
+		dChatRoom->addTransientEvent(eventLog);
 	}
 }
 
@@ -975,14 +987,9 @@ ChatMessage::~ChatMessage () {
 shared_ptr<AbstractChatRoom> ChatMessage::getChatRoom () const {
 	L_D();
 
-	shared_ptr<AbstractChatRoom> chatRoom = d->chatRoom.lock();
-	if (!chatRoom) {
-		chatRoom = getCore()->getOrCreateBasicChatRoom(d->conferenceId);
-		if (!chatRoom) {
-			lError() << "Unable to get valid chat room instance.";
-			throw logic_error("Unable to get chat room of chat message.");
-		}
-	}
+	shared_ptr<AbstractChatRoom> chatRoom(d->chatRoom.lock());
+	if (!chatRoom)
+		lError() << "Unable to get valid chat room instance.";
 
 	return chatRoom;
 }

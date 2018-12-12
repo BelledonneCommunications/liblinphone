@@ -21,10 +21,13 @@
 #define _L_PLATFORM_HELPERS_H_
 
 #include <string>
+#include <sstream>
 
 #include "linphone/utils/general.h"
 
 // =============================================================================
+
+typedef struct belle_sip_source belle_sip_source_t;
 
 L_DECL_C_STRUCT(LinphoneCore);
 
@@ -38,44 +41,85 @@ class PlatformHelpers {
 public:
 	virtual ~PlatformHelpers () = default;
 
-	LinphoneCore *getCore() { return mCore; }
+	LinphoneCore *getCore() const { return mCore; }
 
-	// This method shall retrieve DNS server list from the platform and assign it to the core.
-	virtual void setDnsServers () = 0;
 	virtual void acquireWifiLock () = 0;
 	virtual void releaseWifiLock () = 0;
 	virtual void acquireMcastLock () = 0;
 	virtual void releaseMcastLock () = 0;
 	virtual void acquireCpuLock () = 0;
 	virtual void releaseCpuLock () = 0;
-	virtual std::string getDataPath () = 0;
-	virtual std::string getConfigPath () = 0;
-	virtual void setVideoWindow (void *windowId) = 0;
+
+	virtual std::string getConfigPath () const = 0;
+	virtual std::string getDataPath () const = 0;
+	virtual std::string getDataResource (const std::string &filename) const = 0;
+	virtual std::string getImageResource (const std::string &filename) const = 0;
+	virtual std::string getRingResource (const std::string &filename) const = 0;
+	virtual std::string getSoundResource (const std::string &filename) const = 0;
+
 	virtual void setVideoPreviewWindow (void *windowId) = 0;
 	virtual std::string getDownloadPath () = 0;
+	virtual void setVideoWindow (void *windowId) = 0;
+
+	// This method shall retrieve DNS server list from the platform and assign it to the core.
+	virtual bool isNetworkReachable () = 0;
+	virtual void onWifiOnlyEnabled (bool enabled) = 0;
+	virtual void setDnsServers () = 0;
+	virtual void setHttpProxy (std::string host, int port) = 0;
+	virtual void setNetworkReachable (bool reachable) = 0;
+
+	virtual void onLinphoneCoreStart (bool monitoringEnabled) = 0;
 
 protected:
 	inline explicit PlatformHelpers (LinphoneCore *lc) : mCore(lc) {}
 
+	inline std::string getFilePath (const std::string &directory, const std::string &filename) const {
+		std::ostringstream oss;
+		oss << directory << "/" << filename;
+		return oss.str();
+	}
+
 	LinphoneCore *mCore;
 };
 
-class StubbedPlatformHelpers : public PlatformHelpers {
+class GenericPlatformHelpers : public PlatformHelpers {
 public:
-	explicit StubbedPlatformHelpers (LinphoneCore *lc);
-	virtual ~StubbedPlatformHelpers () = default;
+	explicit GenericPlatformHelpers (LinphoneCore *lc);
+	~GenericPlatformHelpers ();
 
-	void setDnsServers () override;
 	void acquireWifiLock () override;
 	void releaseWifiLock () override;
 	void acquireMcastLock () override;
 	void releaseMcastLock () override;
 	void acquireCpuLock () override;
 	void releaseCpuLock () override;
-	std::string getDataPath () override;
-	std::string getConfigPath () override;
-	void setVideoWindow (void *windowId) override;
+
+	std::string getConfigPath () const override;
+	std::string getDataPath () const override;
+	std::string getDataResource (const std::string &filename) const override;
+	std::string getImageResource (const std::string &filename) const override;
+	std::string getRingResource (const std::string &filename) const override;
+	std::string getSoundResource (const std::string &filename) const override;
+
 	void setVideoPreviewWindow (void *windowId) override;
+	void setVideoWindow (void *windowId) override;
+
+	bool isNetworkReachable () override;
+	void onWifiOnlyEnabled (bool enabled) override;
+	void setDnsServers () override;
+	void setHttpProxy (std::string host, int port) override;
+	void setNetworkReachable (bool reachable) override;
+
+	void onLinphoneCoreStart (bool monitoringEnabled) override;
+
+private:
+	static int monitorTimerExpired (void *data, unsigned int revents);
+
+private:
+	static constexpr int DefaultMonitorTimeout = 5;
+
+	belle_sip_source_t *mMonitorTimer;
+	bool mNetworkReachable = false;
 	std::string getDownloadPath () override;
 };
 

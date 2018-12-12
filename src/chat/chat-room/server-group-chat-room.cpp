@@ -336,6 +336,11 @@ void ServerGroupChatRoomPrivate::subscribeReceived (LinphoneEvent *event) {
 	qConference->getPrivate()->eventHandler->subscribeReceived(event, !!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne));
 }
 
+void ServerGroupChatRoomPrivate::subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state) {
+	L_Q_T(LocalConference, qConference);
+	qConference->getPrivate()->eventHandler->subscriptionStateChanged(event, state);
+}
+
 bool ServerGroupChatRoomPrivate::update (SalCallOp *op) {
 	L_Q();
 	if (sal_custom_header_find(op->getRecvCustomHeaders(), "Subject")) {
@@ -485,7 +490,8 @@ void ServerGroupChatRoomPrivate::addCompatibleParticipants (const IdentityAddres
 		q->addParticipants(compatibleParticipants, nullptr, false);
 		if ((capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && (q->getParticipantCount() == 2)) {
 			// Insert the one-to-one chat room in Db if participants count is 2.
-			q->getCore()->getPrivate()->mainDb->insertOneToOneConferenceChatRoom(q->getSharedFromThis());
+			bool encrypted = ((capabilities & ServerGroupChatRoom::Capabilities::Encrypted) != 0);
+			q->getCore()->getPrivate()->mainDb->insertOneToOneConferenceChatRoom(q->getSharedFromThis(), encrypted);
 		}
 	}
 }
@@ -529,8 +535,11 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 		lInfo() << q << ": Adding participant device that is currently in state [" << device->getState() << "]";
 		switch (device->getState()) {
 			case ParticipantDevice::State::Joining:
-			case ParticipantDevice::State::Left:
 				inviteDevice(device);
+				break;
+			case ParticipantDevice::State::Left:
+				if (!findFilteredParticipant(participant->getAddress()))
+					inviteDevice(device);
 				break;
 			case ParticipantDevice::State::Leaving:
 				byeDevice(device);
@@ -892,17 +901,17 @@ bool ServerGroupChatRoom::hasBeenLeft () const {
 
 // -----------------------------------------------------------------------------
 
-void ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
+bool ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
 	L_D();
 	L_D_T(LocalConference, dConference);
 	if (d->findFilteredParticipant(addr)) {
 		lInfo() << this << ": Not adding participant '" << addr.asString() << "' because it is already a participant";
-		return;
+		return false;
 	}
 
 	if ((d->capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && (getParticipantCount() == 2)) {
 		lInfo() << this << ": Not adding participant '" << addr.asString() << "' because this OneToOne chat room already has 2 participants";
-		return;
+		return false;
 	}
 
 	lInfo() << this << ": Adding participant '" << addr.asString() << "'";
@@ -916,10 +925,12 @@ void ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const Cal
 	LinphoneAddress *laddr = linphone_address_new(addr.asString().c_str());
 	CALL_CHAT_ROOM_CBS(cr, ParticipantDeviceFetchRequested, participant_device_fetch_requested, cr, laddr);
 	linphone_address_unref(laddr);
+
+	return true;
 }
 
-void ServerGroupChatRoom::addParticipants (const list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) {
-	LocalConference::addParticipants(addresses, params, hasMedia);
+bool ServerGroupChatRoom::addParticipants (const list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) {
+	return LocalConference::addParticipants(addresses, params, hasMedia);
 }
 
 bool ServerGroupChatRoom::canHandleParticipants () const {
@@ -968,7 +979,7 @@ void ServerGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	}
 }
 
-void ServerGroupChatRoom::removeParticipant (const shared_ptr<Participant> &participant) {
+bool ServerGroupChatRoom::removeParticipant (const shared_ptr<Participant> &participant) {
 	L_D();
 	for (const auto &device : participant->getPrivate()->getDevices()) {
 		if ((d->getParticipantDeviceState(device) == ParticipantDevice::State::Leaving)
@@ -980,10 +991,11 @@ void ServerGroupChatRoom::removeParticipant (const shared_ptr<Participant> &part
 		d->byeDevice(device);
 	}
 	d->removeParticipant(participant);
+	return true;
 }
 
-void ServerGroupChatRoom::removeParticipants (const list<shared_ptr<Participant>> &participants) {
-	LocalConference::removeParticipants(participants);
+bool ServerGroupChatRoom::removeParticipants (const list<shared_ptr<Participant>> &participants) {
+	return LocalConference::removeParticipants(participants);
 }
 
 void ServerGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participant> &participant, bool isAdmin) {

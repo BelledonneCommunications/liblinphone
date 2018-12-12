@@ -22,7 +22,6 @@
 
 #include <list>
 #include <map>
-#include <memory>
 
 #include "linphone/types.h"
 #include "linphone/utils/general.h"

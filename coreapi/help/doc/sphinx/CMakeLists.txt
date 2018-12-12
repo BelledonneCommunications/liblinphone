@@ -25,6 +25,7 @@ if (ENABLE_DOC)
 	set(doc_output_dir ${CMAKE_CURRENT_BINARY_DIR}/build)
 	set(reference_doc_source_dir ${doc_source_dir}/reference)
 	set(static_documentation_files
+		guides/android_portability.rst
 		guides/authentication.rst
 		guides/buddy_list.rst
 		guides/call_control.rst

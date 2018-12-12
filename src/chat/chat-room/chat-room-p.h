@@ -27,6 +27,7 @@
 #include "chat-room.h"
 #include "chat/notification/imdn.h"
 #include "chat/notification/is-composing.h"
+#include "conference/conference-id.h"
 
 // =============================================================================
 

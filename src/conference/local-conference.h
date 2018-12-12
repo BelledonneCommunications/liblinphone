@@ -36,8 +36,8 @@ public:
 	virtual ~LocalConference ();
 
 	/* ConferenceInterface */
-	void addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
-	void removeParticipant (const std::shared_ptr<Participant> &participant) override;
+	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
+	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 
 private:
 	L_DECLARE_PRIVATE(LocalConference);

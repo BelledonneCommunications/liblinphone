@@ -52,8 +52,8 @@ public:
 	std::shared_ptr<ParticipantDevice> findParticipantDevice (const std::shared_ptr<const CallSession> &session) const;
 
 	/* ConferenceInterface */
-	void addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
-	void addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
+	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
+	bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
 	bool canHandleParticipants () const override;
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &addr) const override;
 	const IdentityAddress &getConferenceAddress () const override;
@@ -63,8 +63,8 @@ public:
 	const std::string &getSubject () const override;
 	void join () override;
 	void leave () override;
-	void removeParticipant (const std::shared_ptr<Participant> &participant) override;
-	void removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
+	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
+	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	void setSubject (const std::string &subject) override;
 

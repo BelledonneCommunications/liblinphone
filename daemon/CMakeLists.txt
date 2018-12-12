@@ -121,10 +121,12 @@ add_executable(linphone-daemon ${DAEMON_SOURCE_FILES})
 target_include_directories(linphone-daemon PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(linphone-daemon ${LINPHONE_LIBS_FOR_TOOLS} ${MEDIASTREAMER2_LIBRARIES} ${ORTP_LIBRARIES} ${BCTOOLBOX_CORE_LIBRARIES} ${XSD_LIBRARIES})
 set_target_properties(linphone-daemon PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+set_target_properties(linphone-daemon PROPERTIES LINKER_LANGUAGE CXX)
 
 add_executable(linphone-daemon-pipetest ${DAEMON_PIPETEST_SOURCE_FILES})
 target_link_libraries(linphone-daemon-pipetest ${LINPHONE_LIBS_FOR_TOOLS} ${ORTP_LIBRARIES} ${BCTOOLBOX_CORE_LIBRARIES})
 set_target_properties(linphone-daemon-pipetest PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+set_target_properties(linphone-daemon-pipetest PROPERTIES LINKER_LANGUAGE CXX)
 
 set(INSTALL_TARGETS linphone-daemon linphone-daemon-pipetest)
 

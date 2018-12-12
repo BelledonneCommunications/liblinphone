@@ -181,6 +181,8 @@ void account_create_on_server(Account *account, const LinphoneProxyConfig *refcf
 	linphone_address_unref(server_addr);
 	linphone_proxy_config_set_expires(cfg,3*3600); // accounts are valid 3 hours
 
+	linphone_core_set_network_reachable_internal(lc, TRUE);
+
 	linphone_core_add_proxy_config(lc,cfg);
 	/*wait 25 seconds, since the DNS SRV resolution may take a while - and
 	especially if router does NOT support DNS SRV and we have to wait its timeout*/

@@ -223,4 +223,3 @@ const list<LocalConferenceEventHandler *> &LocalConferenceListEventHandler::getH
 }
 
 LINPHONE_END_NAMESPACE
-

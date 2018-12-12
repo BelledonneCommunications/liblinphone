@@ -195,6 +195,7 @@ LINPHONE_PUBLIC void linphone_account_creator_cbs_set_get_confirmation_key(Linph
  * @donotwrap Exists for tests purposes only
 **/
 LINPHONE_PUBLIC void linphone_core_delete_local_encryption_db(const LinphoneCore *lc);
+LINPHONE_PUBLIC void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_reachable);
 
 #ifndef __cplusplus
 LINPHONE_PUBLIC Sal *linphone_core_get_sal(const LinphoneCore *lc);
@@ -226,6 +227,9 @@ LINPHONE_PUBLIC const SalErrorInfo *sal_op_get_error_info(const SalOp *op);
 LINPHONE_PUBLIC bool_t sal_call_dialog_request_pending(const SalOp *op);
 LINPHONE_PUBLIC void sal_call_set_sdp_handling(SalOp *h, SalOpSDPHandling handling);
 LINPHONE_PUBLIC SalMediaDescription * sal_call_get_final_media_description(SalOp *h);
+LINPHONE_PUBLIC const char *sal_call_get_local_tag (SalOp *op);
+LINPHONE_PUBLIC const char *sal_call_get_remote_tag (SalOp *op);
+LINPHONE_PUBLIC void sal_call_set_replaces (SalOp *op, const char *callId, const char *fromTag, const char *toTag);
 
 LINPHONE_PUBLIC belle_sip_resolver_context_t *sal_resolve_a(Sal *sal, const char *name, int port, int family, belle_sip_resolver_callback_t cb, void *data);
 

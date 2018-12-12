@@ -17,7 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include "logger/logger.h"
 #include "platform-helpers.h"
+
+// TODO: Remove me.
+#include "private.h"
 
 // =============================================================================
 
@@ -25,39 +29,135 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-StubbedPlatformHelpers::StubbedPlatformHelpers (LinphoneCore *lc) : PlatformHelpers(lc) {}
+GenericPlatformHelpers::GenericPlatformHelpers (LinphoneCore *lc) : PlatformHelpers(lc), mMonitorTimer(nullptr) {}
 
-void StubbedPlatformHelpers::setDnsServers () {}
+GenericPlatformHelpers::~GenericPlatformHelpers () {
+	if (mMonitorTimer) {
+		if (mCore && mCore->sal) mCore->sal->cancelTimer(mMonitorTimer);
+		belle_sip_object_unref(mMonitorTimer);
+		mMonitorTimer = nullptr;
+	}
+}
 
-void StubbedPlatformHelpers::acquireWifiLock () {}
 
-void StubbedPlatformHelpers::releaseWifiLock () {}
+void GenericPlatformHelpers::acquireWifiLock () {}
 
-void StubbedPlatformHelpers::acquireMcastLock () {}
+void GenericPlatformHelpers::releaseWifiLock () {}
 
-void StubbedPlatformHelpers::releaseMcastLock () {}
+void GenericPlatformHelpers::acquireMcastLock () {}
 
-void StubbedPlatformHelpers::acquireCpuLock () {}
+void GenericPlatformHelpers::releaseMcastLock () {}
 
-void StubbedPlatformHelpers::releaseCpuLock () {}
+void GenericPlatformHelpers::acquireCpuLock () {}
 
-string StubbedPlatformHelpers::getDataPath () {
+void GenericPlatformHelpers::releaseCpuLock () {}
+
+
+string GenericPlatformHelpers::getConfigPath () const {
 	return "";
 }
 
-string StubbedPlatformHelpers::getConfigPath () {
+string GenericPlatformHelpers::getDataPath () const {
 	return "";
 }
 
-void StubbedPlatformHelpers::setVideoPreviewWindow (void *windowId) {
-
+string GenericPlatformHelpers::getDataResource (const string &filename) const {
+	return getFilePath(
+		linphone_factory_get_data_resources_dir(linphone_factory_get()),
+		filename
+	);
 }
 
-void StubbedPlatformHelpers::setVideoWindow (void *windowId) {
-
+string GenericPlatformHelpers::getImageResource (const string &filename) const {
+	return getFilePath(
+		linphone_factory_get_image_resources_dir(linphone_factory_get()),
+		filename
+	);
 }
 
-string StubbedPlatformHelpers::getDownloadPath () {
+string GenericPlatformHelpers::getRingResource (const string &filename) const {
+	return getFilePath(
+		linphone_factory_get_ring_resources_dir(linphone_factory_get()),
+		filename
+	);
+}
+
+string GenericPlatformHelpers::getSoundResource (const string &filename) const {
+	return getFilePath(
+		linphone_factory_get_sound_resources_dir(linphone_factory_get()),
+		filename
+	);
+}
+
+
+void GenericPlatformHelpers::setVideoPreviewWindow (void *windowId) {}
+
+void GenericPlatformHelpers::setVideoWindow (void *windowId) {}
+
+
+bool GenericPlatformHelpers::isNetworkReachable () {
+	return mNetworkReachable;
+}
+
+void GenericPlatformHelpers::onWifiOnlyEnabled (bool enabled) {}
+
+void GenericPlatformHelpers::setDnsServers () {}
+
+void GenericPlatformHelpers::setHttpProxy (string host, int port) {}
+
+void GenericPlatformHelpers::setNetworkReachable (bool reachable) {
+	mNetworkReachable = reachable;
+	linphone_core_set_network_reachable_internal(mCore, reachable);
+}
+
+
+void GenericPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
+	if (!monitoringEnabled) return;
+
+	if (!mMonitorTimer) {
+		mMonitorTimer = mCore->sal->createTimer(
+			monitorTimerExpired,
+			this,
+			DefaultMonitorTimeout * 1000,
+			"monitor network timeout"
+		);
+	} else {
+		belle_sip_source_set_timeout(mMonitorTimer, DefaultMonitorTimeout * 1000);
+	}
+
+	// Get ip right now to avoid waiting for 5s
+	monitorTimerExpired(this, 0);
+}
+
+
+int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revents) {
+	GenericPlatformHelpers *helper = static_cast<GenericPlatformHelpers *>(data);
+	LinphoneCore *core = helper->getCore();
+
+	char newIp[LINPHONE_IPADDR_SIZE];
+	linphone_core_get_local_ip(core, AF_UNSPEC, nullptr, newIp);
+
+	bool status = strcmp(newIp,"::1") != 0 && strcmp(newIp,"127.0.0.1") != 0;
+	if (status && core->network_last_status && strcmp(newIp, core->localip) != 0) {
+		lInfo() << "IP address change detected";
+		helper->setNetworkReachable(false);
+		core->network_last_status = FALSE;
+	}
+
+	strncpy(core->localip, newIp, sizeof core->localip);
+
+	if (bool_t(status) != core->network_last_status) {
+		if (status) {
+			lInfo() << "New local ip address is " << core->localip;
+		}
+		helper->setNetworkReachable(status);
+		core->network_last_status = status;
+	}
+
+	return BELLE_SIP_CONTINUE;
+}
+
+string GenericPlatformHelpers::getDownloadPath () {
 	return "";
 }
 

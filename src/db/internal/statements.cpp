@@ -76,8 +76,14 @@ namespace Statements {
 		/* SelectOneToOneChatRoomId */ R"(
 			SELECT chat_room_id
 			FROM one_to_one_chat_room
+			LEFT JOIN chat_room ON chat_room.id = chat_room_id
 			WHERE participant_a_sip_address_id IN (:1, :2)
-			AND participant_b_sip_address_id IN (:3, :4)
+			AND participant_b_sip_address_id IN (:1, :2)
+			AND (
+				(participant_a_sip_address_id <> participant_b_sip_address_id AND :1 <> :2) OR
+				(participant_a_sip_address_id = participant_b_sip_address_id AND :1 = :2)
+			)
+			AND (capabilities & :3) = :4
 		)",
 
 		/* SelectConferenceEvent */ R"(
