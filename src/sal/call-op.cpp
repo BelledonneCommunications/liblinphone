@@ -24,9 +24,6 @@
 #include <bctoolbox/defs.h>
 #include <belle-sip/provider.h>
 
-#include "content/content-disposition.h"
-#include "content/content-type.h"
-
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
@@ -111,45 +108,6 @@ belle_sip_header_allow_t *SalCallOp::createAllow (bool enableUpdate) {
 	if (enableUpdate)
 		oss << ", UPDATE";
 	return belle_sip_header_allow_create(oss.str().c_str());
-}
-
-int SalCallOp::setCustomBody (belle_sip_message_t *msg, const Content &body) {
-	auto bodyBuffer = body.getBody();
-	size_t bodySize = bodyBuffer.size();
-	if (bodySize > SIP_MESSAGE_BODY_LIMIT) {
-		lError() << "Trying to add a body greater than " << (SIP_MESSAGE_BODY_LIMIT / 1024) << "kB to message [" << msg << "]";
-		return -1;
-	}
-
-	auto contentType = body.getContentType();
-	if (contentType.isValid()) {
-		auto contentTypeHeader = belle_sip_header_content_type_create(
-			contentType.getType().c_str(),
-			contentType.getSubType().c_str()
-		);
-		belle_sip_message_add_header(msg, BELLE_SIP_HEADER(contentTypeHeader));
-	}
-	auto contentDisposition = body.getContentDisposition();
-	if (contentDisposition.isValid()) {
-		auto contentDispositionHeader = belle_sip_header_content_disposition_create(
-			contentDisposition.asString().c_str()
-		);
-		belle_sip_message_add_header(msg, BELLE_SIP_HEADER(contentDispositionHeader));
-	}
-	string contentEncoding = body.getContentEncoding();
-	if (!contentEncoding.empty())
-		belle_sip_message_add_header(msg, belle_sip_header_create("Content-Encoding", contentEncoding.c_str()));
-	auto contentLengthHeader = belle_sip_header_content_length_create(bodySize);
-	belle_sip_message_add_header(msg, BELLE_SIP_HEADER(contentLengthHeader));
-
-	if (bodySize > 0) {
-		char *buffer = bctbx_new(char, bodySize + 1);
-		memcpy(buffer, bodyBuffer.data(), bodySize);
-		buffer[bodySize] = '\0';
-		belle_sip_message_assign_body(msg, buffer, bodySize);
-	}
-
-	return 0;
 }
 
 std::vector<char> SalCallOp::marshalMediaDescription (belle_sdp_session_description_t *sessionDesc, belle_sip_error_code &error) {

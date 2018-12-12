@@ -22,6 +22,40 @@
 #include "linphone/lpconfig.h"
 #include "tester_utils.h"
 
+static void dest_server_server_resolved(void *data, belle_sip_resolver_results_t *results) {
+	belle_sip_object_ref(results);
+	*(belle_sip_resolver_results_t **)data = results;
+}
+
+LinphoneAddress * linphone_core_manager_resolve(LinphoneCoreManager *mgr, const LinphoneAddress *source) {
+	char ipstring [INET6_ADDRSTRLEN];
+	belle_sip_resolver_results_t *results = NULL;
+	const struct addrinfo *ai = NULL;
+	LinphoneAddress *dest;
+	int err;
+	int port = linphone_address_get_port(source);
+	
+	sal_resolve_a(
+				  linphone_core_get_sal(mgr->lc),
+				  linphone_address_get_domain(source),
+				  linphone_address_get_port(source),
+				  AF_INET,
+				  dest_server_server_resolved,
+				  &results
+				  );
+	wait_for_until(mgr->lc, mgr->lc, (int*)&results, 1,2000);
+	
+	ai = belle_sip_resolver_results_get_addrinfos(results);
+	err = bctbx_getnameinfo((struct sockaddr*)ai->ai_addr, ai->ai_addrlen, ipstring, INET6_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST);
+	if (err != 0)
+		ms_error("linphone_core_manager_resolve(): getnameinfo error %s", gai_strerror(err));
+	dest = linphone_address_new(NULL);
+	linphone_address_set_domain(dest, ipstring);
+	if (port > 0)
+		linphone_address_set_port(dest, port);
+	
+	return dest;
+}
 
 #if HAVE_SIPP
 
@@ -95,42 +129,6 @@ static FILE *sip_start_recv(const char *senario) {
 	ms_free(command);
 	return file;
 }
-
-static void dest_server_server_resolved(void *data, belle_sip_resolver_results_t *results) {
-	belle_sip_object_ref(results);
-	*(belle_sip_resolver_results_t **)data = results;
-}
-
-LinphoneAddress * linphone_core_manager_resolve(LinphoneCoreManager *mgr, const LinphoneAddress *source) {
-	char ipstring [INET6_ADDRSTRLEN];
-	belle_sip_resolver_results_t *results = NULL;
-	const struct addrinfo *ai = NULL;
-	LinphoneAddress *dest;
-	int err;
-	int port = linphone_address_get_port(source);
-
-	sal_resolve_a(
-		linphone_core_get_sal(mgr->lc),
-		linphone_address_get_domain(source),
-		linphone_address_get_port(source),
-		AF_INET,
-		dest_server_server_resolved,
-		&results
-	);
-	wait_for_until(mgr->lc, mgr->lc, (int*)&results, 1,2000);
-
-	ai = belle_sip_resolver_results_get_addrinfos(results);
-	err = bctbx_getnameinfo((struct sockaddr*)ai->ai_addr, ai->ai_addrlen, ipstring, INET6_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST);
-	if (err != 0)
-		ms_error("linphone_core_manager_resolve(): getnameinfo error %s", gai_strerror(err));
-	dest = linphone_address_new(NULL);
-	linphone_address_set_domain(dest, ipstring);
-	if (port > 0)
-		linphone_address_set_port(dest, port);
-
-	return dest;
-}
-
 
 static void sip_update_within_icoming_reinvite_with_no_sdp(void) {
 	LinphoneCoreManager *mgr;

@@ -141,7 +141,9 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 		istringstream data(xmlBody);
 		unique_ptr<Xsd::ConferenceInfo::ConferenceType> confInfo = Xsd::ConferenceInfo::parseConferenceInfo(data, Xsd::XmlSchema::Flags::dont_validate);
 
-		RemoteConferenceEventHandler *handler = findHandler(ConferenceId(IdentityAddress(confInfo->getEntity().c_str()), local));
+		IdentityAddress entityAddress(confInfo->getEntity().c_str());
+		ConferenceId id(entityAddress, local);
+		RemoteConferenceEventHandler *handler = findHandler(id);
 		if (!handler)
 			return;
 
@@ -168,7 +170,9 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 		if (it == addresses.cend())
 			continue;
 
-		RemoteConferenceEventHandler *handler = findHandler(ConferenceId(it->second, local));
+		IdentityAddress peer = it->second;
+		ConferenceId id(peer, local);
+		RemoteConferenceEventHandler *handler = findHandler(id);
 		if (!handler)
 			continue;
 

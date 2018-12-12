@@ -71,6 +71,7 @@ private:
 	void fileUploadBeginBackgroundTask ();
 	void fileUploadEndBackgroundTask ();
 
+	void onDownloadFailed ();
 	void releaseHttpRequest ();
 
 	std::weak_ptr<ChatMessage> chatMessage;

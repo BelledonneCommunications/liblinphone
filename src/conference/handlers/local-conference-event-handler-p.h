@@ -20,6 +20,8 @@
 #ifndef _L_LOCAL_CONFERENCE_EVENT_HANDLER_P_H_
 #define _L_LOCAL_CONFERENCE_EVENT_HANDLER_P_H_
 
+#include <string>
+
 #include "conference/conference-id.h"
 #include "local-conference-event-handler.h"
 #include "object/object-p.h"

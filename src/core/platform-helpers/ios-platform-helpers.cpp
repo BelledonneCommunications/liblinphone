@@ -61,6 +61,7 @@ public:
 	string getSoundResource (const string &filename) const override;
 
 	void setVideoPreviewWindow (void *windowId) override {}
+	string getDownloadPath () override {return Utils::getEmptyConstRefObject<string>();}
 	void setVideoWindow (void *windowId) override {}
 
 	bool isNetworkReachable () override { return false; }

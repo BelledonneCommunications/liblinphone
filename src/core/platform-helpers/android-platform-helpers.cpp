@@ -64,6 +64,7 @@ public:
 
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
+	string getDownloadPath() override;
 
 private:
 	int callVoidMethod (jmethodID id);
@@ -81,6 +82,7 @@ private:
 	jmethodID mGetPowerManagerId;
 	jmethodID mGetDataPathId;
 	jmethodID mGetConfigPathId;
+	jmethodID mGetDownloadPathId;
 	jmethodID mGetNativeLibraryDirId;
 	jmethodID mSetNativeVideoWindowId;
 	jmethodID mSetNativePreviewVideoWindowId;
@@ -133,6 +135,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 	mGetPowerManagerId = getMethodId(env, klass, "getPowerManager", "()Ljava/lang/Object;");
 	mGetDataPathId = getMethodId(env, klass, "getDataPath", "()Ljava/lang/String;");
 	mGetConfigPathId = getMethodId(env, klass, "getConfigPath", "()Ljava/lang/String;");
+	mGetDownloadPathId = getMethodId(env, klass, "getDownloadPath", "()Ljava/lang/String;");
 	mGetNativeLibraryDirId = getMethodId(env, klass, "getNativeLibraryDir", "()Ljava/lang/String;");
 	mSetNativeVideoWindowId = getMethodId(env, klass, "setVideoRenderingView", "(Ljava/lang/Object;)V");
 	mSetNativePreviewVideoWindowId = getMethodId(env, klass, "setVideoPreviewView", "(Ljava/lang/Object;)V");
@@ -198,6 +201,15 @@ string AndroidPlatformHelpers::getConfigPath () const {
 	ReleaseStringUTFChars(env, jconfig_path, config_path);
 	return configPath + "/";
 }
+
+string AndroidPlatformHelpers::getDownloadPath () {
+	JNIEnv *env = ms_get_jni_env();
+	jstring jdownload_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetDownloadPathId);
+	const char *download_path = GetStringUTFChars(env, jdownload_path);
+	string downloadPath = download_path;
+	ReleaseStringUTFChars(env, jdownload_path, download_path);
+	return downloadPath + "/";
+} 
 
 string AndroidPlatformHelpers::getDataPath () const {
 	JNIEnv *env = ms_get_jni_env();

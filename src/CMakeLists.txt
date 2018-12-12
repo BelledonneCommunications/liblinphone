@@ -32,6 +32,9 @@ set(LIBS
 if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	list(APPEND LIBS "Ws2_32")
 endif()
+if(LIME_FOUND)
+	list(APPEND LIBS ${LIME_LIBRARIES})
+endif()
 if(ENABLE_LIME)
 	list(APPEND LIBS ${BZRTP_LIBRARIES})
 endif()
@@ -113,6 +116,9 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/cpim/header/cpim-header.h
 	chat/cpim/message/cpim-message.h
 	chat/cpim/parser/cpim-parser.h
+	chat/encryption/encryption-engine.h
+	chat/encryption/legacy-encryption-engine.h
+	chat/encryption/lime-x3dh-encryption-engine.h
 	chat/modifier/chat-message-modifier.h
 	chat/modifier/cpim-chat-message-modifier.h
 	chat/modifier/encryption-chat-message-modifier.h
@@ -188,6 +194,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	event-log/conference/conference-participant-device-event.h
 	event-log/conference/conference-participant-event-p.h
 	event-log/conference/conference-participant-event.h
+	event-log/conference/conference-security-event.h
 	event-log/conference/conference-subject-event.h
 	event-log/event-log-p.h
 	event-log/event-log.h
@@ -242,6 +249,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-dial-plan.cpp
 	c-wrapper/api/c-event-log.cpp
 	c-wrapper/api/c-magic-search.cpp
+	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-participant-device.cpp
 	c-wrapper/api/c-participant-imdn-state.cpp
 	c-wrapper/api/c-participant.cpp
@@ -269,6 +277,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/cpim/header/cpim-header.cpp
 	chat/cpim/message/cpim-message.cpp
 	chat/cpim/parser/cpim-parser.cpp
+	chat/encryption/legacy-encryption-engine.cpp
+	chat/encryption/lime-x3dh-encryption-engine.cpp
 	chat/modifier/cpim-chat-message-modifier.cpp
 	chat/modifier/encryption-chat-message-modifier.cpp
 	chat/modifier/file-transfer-chat-message-modifier.cpp
@@ -318,6 +328,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	event-log/conference/conference-notified-event.cpp
 	event-log/conference/conference-participant-device-event.cpp
 	event-log/conference/conference-participant-event.cpp
+	event-log/conference/conference-security-event.cpp
 	event-log/conference/conference-subject-event.cpp
 	event-log/event-log.cpp
 	hacks/hacks.cpp
