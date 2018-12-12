@@ -298,7 +298,7 @@ LinphoneChatRoomCapabilitiesMask linphone_chat_room_get_capabilities (const Linp
 }
 
 bool_t linphone_chat_room_has_capability(const LinphoneChatRoom *cr, int mask) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCapabilities() & mask;
+	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCapabilities() & mask;
 }
 
 const LinphoneAddress *linphone_chat_room_get_conference_address (const LinphoneChatRoom *cr) {
