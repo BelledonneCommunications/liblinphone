@@ -23,6 +23,7 @@
 #include "object/object-p.h"
 
 #include "conference/participant.h"
+#include "conference/participant-device.h"
 #include "conference/session/call-session.h"
 #include "conference/session/call-session-listener.h"
 #include "conference/params/call-session-params.h"

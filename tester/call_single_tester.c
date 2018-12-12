@@ -348,11 +348,11 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	}
 
 	BC_ASSERT_PTR_NULL(linphone_call_get_remote_params(caller_call)); /*assert that remote params are NULL when no response is received yet*/
-
-	did_receive_call = wait_for(callee_mgr->lc
+        // test ios simulator needs more time, 3s plus for connectng the network 
+	did_receive_call = wait_for_until(callee_mgr->lc
 				,caller_mgr->lc
 				,&callee_mgr->stat.number_of_LinphoneCallIncomingReceived
-				,initial_callee.number_of_LinphoneCallIncomingReceived+1);
+				,initial_callee.number_of_LinphoneCallIncomingReceived+1, 12000);
 	BC_ASSERT_EQUAL(did_receive_call, !callee_test_params->sdp_simulate_error, int, "%d");
 
 	sal_default_set_sdp_handling(linphone_core_get_sal(caller_mgr->lc), SalOpSDPNormal);
@@ -5855,49 +5855,37 @@ static void call_logs_sqlite_storage(void) {
 }
 
 static void call_with_http_proxy(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_rc");
+	LinphoneCoreManager* marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_create("pauline_rc");
 	bool_t call_ok;
 	LinphoneCall *marie_call;
 	LinphoneAddress *contact_addr;
-	struct addrinfo *res=NULL;
-	struct addrinfo hints = {0};
-	char ip[NI_MAXHOST];
-	int err;
 
 	if (!transport_supported(LinphoneTransportTls)) {
 		ms_message("Test skipped because no tls support");
 		goto end;
 	}
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-
-	err = getaddrinfo("sip.linphone.org","8888", &hints, &res);
-	if (err !=0){
-		ms_error("call_with_http_proxy(): getaddrinfo() error: %s", gai_strerror(err));
-	}
-	BC_ASSERT_PTR_NOT_NULL(res);
-	if (!res) goto end;
-
-	BC_ASSERT_EQUAL(err=bctbx_getnameinfo(res->ai_addr, (socklen_t)res->ai_addrlen, ip, sizeof(ip)-1, NULL, 0, NI_NUMERICHOST), 0, int, "%i");
-	if (err != 0){
-		ms_error("call_with_http_proxy(): getnameinfo() error: %s", gai_strerror(err));
-		goto end;
-	}
-
-	freeaddrinfo(res);
-
-	linphone_core_set_http_proxy_host(pauline->lc,"sip.linphone.org");
-	linphone_core_set_network_reachable(pauline->lc, FALSE); /*to make sure channel is restarted*/
-	linphone_core_set_network_reachable(pauline->lc, TRUE);
+	linphone_core_remove_supported_tag(pauline->lc,"gruu"); /*with gruu, we have no access to the "public IP from contact*/
+	linphone_core_remove_supported_tag(marie->lc,"gruu");
+	linphone_core_manager_start(marie, TRUE);
+	LinphoneAddress *http_proxy_example_org_ip;
+	LinphoneAddress *http_proxy_fqdn = linphone_address_new("sip:http-proxy.example.org:8888");
+	
+	//fixme, will not work with docker under ipv4 because http proxy is natted
+	http_proxy_example_org_ip = linphone_core_manager_resolve(marie, http_proxy_fqdn);
+	
+	linphone_core_set_http_proxy_host(pauline->lc,"http-proxy.example.org");
+	linphone_core_manager_start(pauline, TRUE);
 
 	BC_ASSERT_TRUE((call_ok=call(pauline,marie)));
 	if (!call_ok) goto end;
 
 	marie_call = linphone_core_get_current_call(marie->lc);
 	contact_addr = linphone_address_new(linphone_call_get_remote_contact(marie_call));
-	BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(contact_addr),ip);
+	BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(contact_addr), linphone_address_get_domain(http_proxy_example_org_ip));
 	linphone_address_unref(contact_addr);
+	linphone_address_unref(http_proxy_fqdn);
+	linphone_address_unref(http_proxy_example_org_ip);
 	end_call(marie, pauline);
 end:
 	linphone_core_manager_destroy(marie);

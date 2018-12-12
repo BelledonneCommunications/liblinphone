@@ -114,6 +114,8 @@ struct _LinphoneProxyConfig
 	bool_t publish;
 	bool_t dial_escape_plus;
 
+	bool_t lime_x3dh;
+
 	bool_t send_publish;
 	bool_t quality_reporting_enabled;
 	uint8_t avpf_rr_interval;
@@ -301,7 +303,8 @@ struct sound_config
 {
 	struct _MSSndCard * ring_sndcard;	/* the playback sndcard currently used */
 	struct _MSSndCard * play_sndcard;	/* the playback sndcard currently used */
-	struct _MSSndCard * capt_sndcard; /* the capture sndcard currently used */
+	struct _MSSndCard * capt_sndcard; 	/* the capture sndcard currently used */
+	struct _MSSndCard * media_sndcard; 	/* the media sndcard currently used */
 	struct _MSSndCard * lsd_card; /* dummy playback card for Linphone Sound Daemon extension */
 	const char **cards;
 	int latency;	/* latency in samples of the current used sound device */
@@ -310,6 +313,7 @@ struct sound_config
 	char rec_lev;
 	char play_lev;
 	char ring_lev;
+	char media_lev;
 	char source;
 	char *local_ring;
 	char *remote_ring;
@@ -641,7 +645,7 @@ struct _LinphoneImEncryptionEngineCbs {
 	LinphoneImEncryptionEngineCbsOutgoingMessageCb process_outgoing_message;
 	LinphoneImEncryptionEngineCbsIsEncryptionEnabledForFileTransferCb is_encryption_enabled_for_file_transfer;
 	LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb generate_file_transfer_key;
-	LinphoneImEncryptionEngineCbsDownloadingFileCb process_downlading_file;
+	LinphoneImEncryptionEngineCbsDownloadingFileCb process_downloading_file;
 	LinphoneImEncryptionEngineCbsUploadingFileCb process_uploading_file;
 };
 
@@ -826,6 +830,7 @@ namespace LinphonePrivate {
 	bctbx_list_t *chat_rooms; \
 	bctbx_list_t *callsCache; \
 	bool_t dns_set_by_app; \
+	int auto_download_incoming_files_max_size; \
 
 #define LINPHONE_CORE_STRUCT_FIELDS \
 	LINPHONE_CORE_STRUCT_BASE_FIELDS \

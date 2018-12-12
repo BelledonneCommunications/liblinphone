@@ -1,30 +1,35 @@
 # Don't warn stuff that we are not "proguarding", warnings would make the build fail.
 -dontwarn org.linphone.**
 
+-keepparameternames 
+-keepattributes Exceptions,InnerClasses,Signature,Deprecated,SourceFile,LineNumberTable,*Annotation*,EnclosingMethod
+
 # The following interfaces and classes are referenced from JNI
 {{#classes}}
 -keep interface {{package}}.{{className}} {*;}
+-keep class {{package}}.{{className}} {*;}
 -keep class {{package}}.{{classImplName}} {*;}
 {{/classes}}
 
-# The following enums are referenced from JNI
 {{#enums}}
--keep class {{package}}.{{className}} {*;}
+-keep enum {{package}}.{{className}} {*;}
 {{/enums}}
 
-# The following listeners are referenced from JNI
 {{#listeners}}
 -keep class {{package}}.{{className}} {*;}
+-keep class {{package}}.{{className}}Stub {*;}
 {{/listeners}}
+
+# Wrapper classes
+-keep class org.linphone.core.CoreException {*;}
+-keep class org.linphone.core.Utils {*;}
 
 # Liblinphone tools
 -keep class org.linphone.core.tools.* {*;}
 
 # Mediastreamer classes
--keep class org.linphone.mediastream.Factory {*;}
--keep class org.linphone.mediastream.MediastreamerAndroidContext {*;}
--keep class org.linphone.mediastream.video.capture.AndroidVideoApi9JniWrapper {*;}
--keep class org.linphone.mediastream.video.capture.AndroidVideoApi8JniWrapper {*;}
--keep class org.linphone.mediastream.video.capture.AndroidVideoApi5JniWrapper {*;}
--keep class org.linphone.mediastream.video.AndroidVideoWindowImpl {*;}
--keep class org.linphone.mediastream.Version {*;}
+-keep class org.linphone.mediastream.* {*;}
+-keep class org.linphone.mediastream.video.* {*;}
+-keep class org.linphone.mediastream.video.capture.* {*;}
+-keep class org.linphone.mediastream.video.capture.hwconf.* {*;}
+-keep class org.linphone.mediastream.video.display.* {*;}

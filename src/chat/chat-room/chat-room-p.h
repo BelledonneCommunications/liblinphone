@@ -23,6 +23,7 @@
 #include <ctime>
 
 #include "abstract-chat-room-p.h"
+#include "conference/conference-id.h"
 #include "chat-room.h"
 #include "chat/notification/imdn.h"
 #include "chat/notification/is-composing.h"
@@ -56,6 +57,9 @@ public:
 
 	void addTransientEvent (const std::shared_ptr<EventLog> &eventLog) override;
 	void removeTransientEvent (const std::shared_ptr<EventLog> &eventLog) override;
+
+	void addTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override;
+	void removeTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override;
 
 	std::shared_ptr<ChatMessage> createChatMessage (ChatMessage::Direction direction);
 	std::shared_ptr<ImdnMessage> createImdnMessage (
@@ -91,6 +95,7 @@ public:
 
 	std::list<IdentityAddress> remoteIsComposing;
 	std::list<std::shared_ptr<EventLog>> transientEvents;
+	std::list<std::shared_ptr<ChatMessage>> transientMessages;
 
 	ConferenceId conferenceId;
 

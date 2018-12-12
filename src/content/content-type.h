@@ -65,15 +65,19 @@ public:
 
 	static const ContentType ConferenceInfo;
 	static const ContentType Cpim;
+	static const ContentType Encrypted;
 	static const ContentType ExternalBody;
 	static const ContentType FileTransfer;
 	static const ContentType Imdn;
 	static const ContentType ImIsComposing;
+	static const ContentType LimeKey;
 	static const ContentType Multipart;
+	static const ContentType OctetStream;
 	static const ContentType PlainText;
 	static const ContentType ResourceLists;
 	static const ContentType Rlmi;
 	static const ContentType Sdp;
+	static const ContentType SipFrag;
 
 private:
 	L_DECLARE_PRIVATE(ContentType);

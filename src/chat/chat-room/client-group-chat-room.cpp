@@ -23,6 +23,7 @@
 
 #include "address/address-p.h"
 #include "basic-to-client-group-chat-room.h"
+#include "chat/encryption/lime-x3dh-encryption-engine.h"
 #include "c-wrapper/c-wrapper.h"
 #include "client-group-chat-room-p.h"
 #include "conference/handlers/remote-conference-event-handler-p.h"
@@ -68,6 +69,8 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	csp.addCustomContactParameter("text");
 	if (capabilities & ClientGroupChatRoom::Capabilities::OneToOne)
 		csp.addCustomHeader("One-To-One-Chat-Room", "true");
+	if (capabilities & ClientGroupChatRoom::Capabilities::Encrypted)
+		csp.addCustomHeader("End-To-End-Encrypted", "true");
 
 	ParticipantPrivate *dFocus = qConference->getPrivate()->focus->getPrivate();
 	shared_ptr<CallSession> session = dFocus->createSession(*q, &csp, false, callSessionListener);
@@ -247,9 +250,11 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	const string &uri,
 	const IdentityAddress &me,
 	const string &subject,
-	const Content &content
+	const Content &content,
+	bool encrypted
 ) : ChatRoom(*new ClientGroupChatRoomPrivate, core, ConferenceId(IdentityAddress(), me)),
 RemoteConference(core, me, nullptr) {
+	L_D();
 	L_D_T(RemoteConference, dConference);
 
 	IdentityAddress focusAddr(uri);
@@ -259,6 +264,9 @@ RemoteConference(core, me, nullptr) {
 	list<IdentityAddress> identAddresses = Conference::parseResourceLists(content);
 	for (const auto &addr : identAddresses)
 		dConference->participants.push_back(make_shared<Participant>(this, addr));
+
+	if (encrypted)
+		d->capabilities |= ClientGroupChatRoom::Capabilities::Encrypted;
 }
 
 ClientGroupChatRoom::ClientGroupChatRoom (
@@ -276,6 +284,7 @@ RemoteConference(core, me->getAddress(), nullptr) {
 	L_D_T(RemoteConference, dConference);
 
 	d->capabilities |= capabilities & ClientGroupChatRoom::Capabilities::OneToOne;
+	d->capabilities |= capabilities & ClientGroupChatRoom::Capabilities::Encrypted;
 	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
 	dConference->focus = make_shared<Participant>(this, peerAddress);
 	dConference->focus->getPrivate()->addDevice(peerAddress);
@@ -329,6 +338,38 @@ ClientGroupChatRoom::CapabilitiesMask ClientGroupChatRoom::getCapabilities () co
 	return d->capabilities;
 }
 
+ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
+	L_D();
+	if (!(d->capabilities & ClientGroupChatRoom::Capabilities::Encrypted)) {
+		return AbstractChatRoom::SecurityLevel::ClearText;
+	}
+
+	bool isSafe = true;
+	for (const auto &participant : getParticipants()) {
+		auto level = participant->getSecurityLevel();
+		switch (level) {
+			case AbstractChatRoom::SecurityLevel::Unsafe:
+				lInfo() << "Chatroom SecurityLevel = Unsafe";
+				return level; // if one device is Unsafe the whole participant is Unsafe
+			case AbstractChatRoom::SecurityLevel::ClearText:
+				lInfo() << "Chatroom securityLevel = ClearText";
+				return level; // if one device is ClearText the whole participant is ClearText
+			case AbstractChatRoom::SecurityLevel::Encrypted:
+				isSafe = false; // if one device is Encrypted the whole participant is Encrypted
+				break;
+			case AbstractChatRoom::SecurityLevel::Safe:
+				break; // if all devices are Safe the whole participant is Safe
+		}
+	}
+	if (isSafe) {
+		lInfo() << "Chatroom SecurityLevel = Safe";
+		return AbstractChatRoom::SecurityLevel::Safe;
+	} else {
+		lInfo() << "Chatroom SecurityLevel = Encrypted";
+		return AbstractChatRoom::SecurityLevel::Encrypted;
+	}
+}
+
 bool ClientGroupChatRoom::hasBeenLeft () const {
 	return (getState() != State::Created);
 }
@@ -349,6 +390,29 @@ void ClientGroupChatRoom::deleteFromDb () {
 		return;
 	}
 	d->chatRoomListener->onChatRoomDeleteRequested(getSharedFromThis());
+}
+
+list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistory (int nLast) const {
+	L_D();
+	return getCore()->getPrivate()->mainDb->getHistory(
+		getConferenceId(),
+		nLast,
+		(d->capabilities & Capabilities::OneToOne) ?
+			MainDb::Filter::ConferenceChatMessageSecurityFilter :
+			MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter})
+	);
+}
+
+list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistoryRange (int begin, int end) const {
+	L_D();
+	return getCore()->getPrivate()->mainDb->getHistoryRange(
+		getConferenceId(),
+		begin,
+		end,
+		(d->capabilities & Capabilities::OneToOne) ?
+			MainDb::Filter::ConferenceChatMessageSecurityFilter :
+			MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter})
+	);
 }
 
 bool ClientGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
@@ -409,11 +473,12 @@ bool ClientGroupChatRoom::addParticipants (
 			"misc", "one_to_one_chat_room_enabled", TRUE))
 	) {
 		d->capabilities |= ClientGroupChatRoom::Capabilities::OneToOne;
-		const IdentityAddress &me = getMe()->getAddress();
 		const IdentityAddress &participant = addresses.front();
-		auto existingChatRoom = getCore()->findOneToOneChatRoom(getLocalAddress(), participant);
+		bool encrypted = getCapabilities() & ClientGroupChatRoom::Capabilities::Encrypted;
+		auto existingChatRoom = getCore()->findOneToOneChatRoom(getLocalAddress(), participant, encrypted);
 		if (existingChatRoom) {
-			lError() << "Trying to create already existing one-to-one chatroom with participants: " <<
+			const IdentityAddress &me = getMe()->getAddress();
+			lError() << "Trying to create already existing " << (encrypted ? "" : "non-") << "encrypted one-to-one chatroom with participants: " <<
 				me << ", " << participant;
 			return false;
 		}
@@ -610,10 +675,9 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 
 	bool performMigration = false;
 	shared_ptr<AbstractChatRoom> chatRoom;
-	if (getParticipantCount() == 1) {
-		chatRoom = getCore()->findChatRoom(
-			ConferenceId(getParticipants().front()->getAddress(), getMe()->getAddress())
-		);
+	if (getParticipantCount() == 1 && d->capabilities & ClientGroupChatRoom::Capabilities::OneToOne) {
+		ConferenceId id(getParticipants().front()->getAddress(), getMe()->getAddress());
+		chatRoom = getCore()->findChatRoom(id);
 		if (chatRoom && (chatRoom->getCapabilities() & ChatRoom::Capabilities::Basic))
 			performMigration = true;
 	}
@@ -710,6 +774,28 @@ void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferencePart
 	_linphone_chat_room_notify_participant_admin_status_changed(cr, L_GET_C_BACK_PTR(event));
 }
 
+void ClientGroupChatRoom::onSecurityEvent (const shared_ptr<ConferenceSecurityEvent> &event) {
+	L_D();
+	shared_ptr<ConferenceSecurityEvent> finalEvent = nullptr;
+	shared_ptr<ConferenceSecurityEvent> cleanEvent = nullptr;
+
+	// Remove faulty device if its address is invalid
+	IdentityAddress faultyDevice = event->getFaultyDeviceAddress();
+	if (!faultyDevice.isValid()) {
+		cleanEvent = make_shared<ConferenceSecurityEvent>(
+			event->getCreationTime(),
+			event->getConferenceId(),
+			event->getSecurityEventType()
+		);
+	}
+	finalEvent = cleanEvent ? cleanEvent : event;
+
+	d->addEvent(event);
+
+	LinphoneChatRoom *cr = d->getCChatRoom();
+	_linphone_chat_room_notify_security_event(cr, L_GET_C_BACK_PTR(event));
+}
+
 void ClientGroupChatRoom::onSubjectChanged (const shared_ptr<ConferenceSubjectEvent> &event, bool isFullState) {
 	L_D();
 
@@ -739,12 +825,23 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 		lWarning() << "Participant " << addr.asString() << " added a device but is not in the list of participants!";
 		return;
 	}
+
+	ChatRoom::SecurityLevel currentSecurityLevel = getSecurityLevel();
 	participant->getPrivate()->addDevice(event->getDeviceAddress());
+
+	// Check if new device degrades the chatroom security level and return corresponding security event
+	shared_ptr<ConferenceSecurityEvent> securityEvent = nullptr;
+
+	auto encryptionEngine = getCore()->getEncryptionEngine();
+	if (encryptionEngine)
+		securityEvent = encryptionEngine->onDeviceAdded(event->getDeviceAddress(), participant, getSharedFromThis(), currentSecurityLevel);
 
 	if (isFullState)
 		return;
 
 	d->addEvent(event);
+
+	if (securityEvent) onSecurityEvent(securityEvent);
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_participant_device_added(cr, L_GET_C_BACK_PTR(event));

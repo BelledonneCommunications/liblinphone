@@ -17,9 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include "chat/encryption/encryption-engine.h"
 #include "object/object-p.h"
 #include "participant-device.h"
 #include "participant-p.h"
+#include "core/core.h"
 
 #include "linphone/event.h"
 
@@ -28,6 +30,8 @@ using namespace std;
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
+
+class Core;
 
 class ParticipantDevicePrivate : public ObjectPrivate {
 private:
@@ -58,6 +62,14 @@ void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
 	if (mConferenceSubscribeEvent)
 		linphone_event_unref(mConferenceSubscribeEvent);
 	mConferenceSubscribeEvent = ev ? linphone_event_ref(ev) : nullptr;
+}
+
+AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
+	auto encryptionEngine = getCore()->getEncryptionEngine();
+	if (encryptionEngine)
+		return encryptionEngine->getSecurityLevel(mGruu.asString());
+	lWarning() << "Asking device security level but there is no encryption engine enabled";
+	return AbstractChatRoom::SecurityLevel::ClearText;
 }
 
 ostream &operator<< (ostream &stream, ParticipantDevice::State state) {

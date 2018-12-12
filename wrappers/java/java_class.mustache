@@ -45,7 +45,7 @@ import org.linphone.core.tools.OpenH264DownloadHelper;
 {{/doc}}
 public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphoneFactory}}interface{{/isNotLinphoneFactory}} {{className}} {
 {{#enums}}
-    enum {{{className}}} {
+    public enum {{{className}}} {
     {{#values}}
         {{#doc}}
         /**

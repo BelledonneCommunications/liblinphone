@@ -99,7 +99,9 @@ set(ENUMS_HEADER_FILES
 	call-enums.h
 	chat-message-enums.h
 	chat-room-enums.h
+	encryption-engine-enums.h
 	event-log-enums.h
+	security-event-enums.h
 )
 
 set(UTILS_HEADER_FILES

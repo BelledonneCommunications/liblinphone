@@ -55,3 +55,6 @@ const LinphoneAddress *linphone_participant_device_get_address(const LinphonePar
 	participant_device->addressCache = linphone_address_new(addr.asString().c_str());
 	return participant_device->addressCache;
 }
+LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (const LinphoneParticipantDevice *participant_device) {
+    return (LinphoneChatRoomSecurityLevel)L_GET_CPP_PTR_FROM_C_OBJECT(participant_device)->getSecurityLevel();
+}

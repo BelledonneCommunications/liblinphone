@@ -34,6 +34,7 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsParticipantDeviceRemovedCb participantDeviceRemovedCb;
 	LinphoneChatRoomCbsParticipantAdminStatusChangedCb participantAdminStatusChangedCb;
 	LinphoneChatRoomCbsStateChangedCb stateChangedCb;
+	LinphoneChatRoomCbsSecurityEventCb securityEventCb;
 	LinphoneChatRoomCbsSubjectChangedCb subjectChangedCb;
 	LinphoneChatRoomCbsConferenceJoinedCb conferenceJoinedCb;
 	LinphoneChatRoomCbsConferenceLeftCb conferenceLeftCb;
@@ -144,6 +145,14 @@ LinphoneChatRoomCbsStateChangedCb linphone_chat_room_cbs_get_state_changed (cons
 
 void linphone_chat_room_cbs_set_state_changed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsStateChangedCb cb) {
 	cbs->stateChangedCb = cb;
+}
+
+LinphoneChatRoomCbsSecurityEventCb linphone_chat_room_cbs_get_security_event (const LinphoneChatRoomCbs *cbs) {
+	return cbs->securityEventCb;
+}
+
+void linphone_chat_room_cbs_set_security_event (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsSecurityEventCb cb) {
+	cbs->securityEventCb = cb;
 }
 
 LinphoneChatRoomCbsSubjectChangedCb linphone_chat_room_cbs_get_subject_changed (const LinphoneChatRoomCbs *cbs) {

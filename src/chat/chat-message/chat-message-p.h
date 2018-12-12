@@ -23,6 +23,7 @@
 #include <belle-sip/types.h>
 
 #include "chat/chat-message/chat-message.h"
+#include "conference/conference-id.h"
 #include "chat/modifier/file-transfer-chat-message-modifier.h"
 #include "chat/notification/imdn.h"
 #include "conference/conference-id.h"
@@ -55,6 +56,8 @@ public:
 		Cpim = 1 << 4,
 		Started = 1 << 5,
 		FileDownload = 1 << 6,
+		AutoFileDownload = 1 << 7,
+		Sent = 1 << 6,
 	};
 
 	void setApplyModifiers (bool value) { applyModifiers = value; }
@@ -73,6 +76,10 @@ public:
 	void setIsReadOnly (bool readOnly);
 
 	void setImdnMessageId (const std::string &imdnMessageId);
+
+	void setAuthenticatedFromAddress (const IdentityAddress &authenticatedFromAddress) {
+		this->authenticatedFromAddress = authenticatedFromAddress;
+	}
 
 	void forceFromAddress (const IdentityAddress &fromAddress) {
 		this->fromAddress = fromAddress;
@@ -96,6 +103,14 @@ public:
 	const std::list<Content* > &getContents () const {
 		loadContentsFromDatabase();
 		return contents;
+	}
+
+	void setAutoFileTransferDownloadHappened(bool yesno) {
+		isAutoDownloadAttachedFilesHappened = yesno;
+	}
+
+	bool isAutoFileTransferDownloadHappened() const {
+		return isAutoDownloadAttachedFilesHappened;
 	}
 
 	belle_http_request_t *getHttpRequest () const;
@@ -128,6 +143,14 @@ public:
 
 	void setEncryptionPrevented (bool value) { encryptionPrevented = value; }
 
+	void doNotRetryAutoDownload() {
+		currentRecvStep |= ChatMessagePrivate::Step::AutoFileDownload;
+	}
+	void enableSenderAuthentication (bool value) { senderAuthenticationEnabled = value; }
+
+	void setUnencryptedContentWarning (bool value) { unencryptedContentWarning = value; }
+	bool getUnencryptedContentWarning () { return unencryptedContentWarning; }
+
 	// -----------------------------------------------------------------------------
 	// Deprecated methods only used for C wrapper, to be removed some day...
 	// -----------------------------------------------------------------------------
@@ -148,11 +171,11 @@ public:
 	void setExternalBodyUrl (const std::string &url);
 
 	bool hasTextContent () const;
-	const Content* getTextContent () const;
+	const Content *getTextContent () const;
 
 	bool hasFileTransferContent () const;
-	const Content* getFileTransferContent () const;
-	const Content* getFileTransferInformation () const;
+	const Content *getFileTransferContent () const;
+	const Content *getFileTransferInformation () const;
 
 	void addContent (Content *content);
 	void removeContent (Content *content);
@@ -167,6 +190,8 @@ public:
 	void updateInDb ();
 
 	static bool isValidStateTransition (ChatMessage::State currentState, ChatMessage::State newState);
+
+	void restoreFileTransferContentAsFileContent();
 
 private:
 	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir);
@@ -190,11 +215,12 @@ private:
 	bool isSecured = false;
 	mutable bool isReadOnly = false;
 	Content internalContent;
+	bool isAutoDownloadAttachedFilesHappened = false;
 
 	// TODO: to replace salCustomheaders
 	std::unordered_map<std::string, std::string> customHeaders;
 
-	mutable LinphoneErrorInfo * errorInfo = nullptr;
+	mutable LinphoneErrorInfo *errorInfo = nullptr;
 	SalOp *salOp = nullptr;
 	SalCustomHeader *salCustomHeaders = nullptr;
 	unsigned char currentSendStep = Step::None;
@@ -211,13 +237,17 @@ private:
 	// Do not expose.
 
 	std::weak_ptr<AbstractChatRoom> chatRoom;
+	ConferenceId conferenceId;
 	IdentityAddress fromAddress;
+	IdentityAddress authenticatedFromAddress;
+	bool senderAuthenticationEnabled = true;
+	bool unencryptedContentWarning = false;
 	IdentityAddress toAddress;
 
 	ChatMessage::State state = ChatMessage::State::Idle;
 	ChatMessage::Direction direction = ChatMessage::Direction::Incoming;
 
-	std::list<Content* > contents;
+	std::list<Content *> contents;
 
 	bool encryptionPrevented = false;
 	mutable bool contentsNotLoadedFromDatabase = false;

@@ -108,6 +108,16 @@ typedef enum _LinphoneAccountCreatorLanguageStatus {
 	LinphoneAccountCreatorLanguageStatusOk /**< Language ok */
 } LinphoneAccountCreatorLanguageStatus;
 
+
+/**
+ * Enum algorithm checking.
+ * @ingroup account_creator
+ **/
+typedef enum _LinphoneAccountCreatorAlgoStatus {
+	LinphoneAccountCreatorAlgoStatusOk, /**< Algorithm ok */
+	LinphoneAccountCreatorAlgoStatusNotSupported /**< Algorithm not supported */
+} LinphoneAccountCreatorAlgoStatus;
+
 /**
  * Enum describing Activation code checking.
  * @ingroup account_creator
@@ -596,6 +606,16 @@ typedef enum _LinphoneMediaEncryption {
 	LinphoneMediaEncryptionZRTP, /**< Use ZRTP media encryption */
 	LinphoneMediaEncryptionDTLS /**< Use DTLS media encryption */
 } LinphoneMediaEncryption;
+
+/**
+ * Enum describing the ZRTP SAS validation status of a peer URI
+ * @ingroup media_parameters
+**/
+typedef enum _LinphoneZrtpPeerStatus {
+	LinphoneZrtpPeerStatusUnknown, /**< Peer URI unkown or never validated/invalidated the SAS */
+	LinphoneZrtpPeerStatusInvalid, /**< Peer URI SAS rejected in database */
+	LinphoneZrtpPeerStatusValid /**< Peer URI SAS validated in database */
+} LinphoneZrtpPeerStatus;
 
 /**
  * Policy to use to pass through NATs/firewalls.

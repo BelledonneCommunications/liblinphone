@@ -1991,10 +1991,12 @@ static void deal_with_jwe_auth_module(const char *jwe, bool_t invalid_jwe, bool_
 	if (n_expected_calls) {
 		if (gandalf_call)
 			linphone_call_terminate(gandalf_call);
-		BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallEnd, 1, 1000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 1000));
 	}
-
+	//fixme should not be needed, but  without it, we sometime have memory leaks
+	linphone_core_terminate_all_calls(gandalf->lc);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallEnd, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 1000));
+	
 	linphone_core_manager_destroy(gandalf);
 	linphone_core_manager_destroy(pauline);
 
