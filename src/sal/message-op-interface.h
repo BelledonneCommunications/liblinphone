@@ -20,6 +20,7 @@
 #ifndef _L_SAL_MESSAGE_OP_INTERFACE_H_
 #define _L_SAL_MESSAGE_OP_INTERFACE_H_
 
+#include "sal/op.h"
 #include <ctime>
 
 #include "content/content.h"

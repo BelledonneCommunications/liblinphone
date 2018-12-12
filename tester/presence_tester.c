@@ -68,7 +68,7 @@ void notify_presence_received(LinphoneCore *lc, LinphoneFriend * lf) {
 	} else {
 		ms_error("Unexpected basic status [%i]",linphone_presence_model_get_basic_status(counters->last_received_presence));
 	}
-	if (linphone_presence_model_get_nb_activities(counters->last_received_presence) > 0) {
+	if (counters->last_received_presence && linphone_presence_model_get_nb_activities(counters->last_received_presence) > 0) {
 		for (i=0;counters->last_received_presence&&i<linphone_presence_model_get_nb_activities(counters->last_received_presence); i++) {
 			LinphonePresenceActivity *activity = linphone_presence_model_get_nth_activity(counters->last_received_presence, i);
 			switch (linphone_presence_activity_get_type(activity)) {

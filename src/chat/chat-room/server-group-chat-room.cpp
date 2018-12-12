@@ -827,9 +827,11 @@ LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_
 	const char *oneToOneChatRoomStr = sal_custom_header_find(op->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 	if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
 		d->capabilities |= ServerGroupChatRoom::Capabilities::OneToOne;
-	const char *endToEndEncryptedStr = sal_custom_header_find(op->getRecvCustomHeaders(), "End-To-End-Encrypted");
-	if (endToEndEncryptedStr && (strcmp(endToEndEncryptedStr, "true") == 0))
+
+	string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "End-To-End-Encrypted"));
+	if (endToEndEncrypted == "true")
 		d->capabilities |= ServerGroupChatRoom::Capabilities::Encrypted;
+
 	shared_ptr<CallSession> session = getMe()->getPrivate()->createSession(*this, nullptr, false, d);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 	getCore()->getPrivate()->localListEventHandler->addHandler(dConference->eventHandler.get());

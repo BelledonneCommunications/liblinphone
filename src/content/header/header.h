@@ -52,6 +52,7 @@ public:
 
 	void setValue (const std::string &value);
 	std::string getValue () const;
+	std::string getValueWithParams () const;
 
 	void cleanParameters ();
 	const std::list<HeaderParam> &getParameters () const;

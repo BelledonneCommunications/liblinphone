@@ -150,6 +150,11 @@ const LinphoneAddress *_linphone_proxy_config_get_contact_without_params (const 
 void linphone_friend_list_invalidate_subscriptions(LinphoneFriendList *list);
 void linphone_friend_list_notify_presence_received(LinphoneFriendList *list, LinphoneEvent *lev, const LinphoneContent *body);
 void linphone_friend_list_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state);
+/**
+ * Removes all bodyless friend lists.
+ * @param[in] lc #LinphoneCore object
+ */
+void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc);
 void _linphone_friend_list_release(LinphoneFriendList *list);
 /*get rls either from list or core if any*/
 const LinphoneAddress * _linphone_friend_list_get_rls_address(const LinphoneFriendList *list);
@@ -307,6 +312,7 @@ void _linphone_chat_room_notify_participant_device_added(LinphoneChatRoom *cr, c
 void _linphone_chat_room_notify_participant_device_removed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_participant_admin_status_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_state_changed(LinphoneChatRoom *cr, LinphoneChatRoomState newState);
+void _linphone_chat_room_notify_security_event(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_subject_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_conference_joined(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_conference_left(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);

@@ -23,6 +23,7 @@
 #include "bctoolbox/crypto.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
+#include "chat/encryption/encryption-engine.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "content/content-type.h"
 #include "content/content.h"
@@ -174,24 +175,19 @@ int FileTransferChatMessageModifier::onSendBody (
 		}
 	}
 
-	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(message->getCore()->getCCore());
+	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
 	if (imee) {
-		LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
-		LinphoneImEncryptionEngineCbsUploadingFileCb cb_process_uploading_file =
-			linphone_im_encryption_engine_cbs_get_process_uploading_file(imee_cbs);
-		if (cb_process_uploading_file) {
-			size_t max_size = *size;
-			uint8_t *encrypted_buffer = (uint8_t *)ms_malloc0(max_size);
-			retval = cb_process_uploading_file(imee, msg, offset, (const uint8_t *)buffer, size, encrypted_buffer);
-			if (retval == 0) {
-				if (*size > max_size) {
-					lError() << "IM encryption engine process upload file callback returned a size bigger than the size of the buffer, so it will be truncated !";
-					*size = max_size;
-				}
-				memcpy(buffer, encrypted_buffer, *size);
+		size_t max_size = *size;
+		uint8_t *encrypted_buffer = (uint8_t *)ms_malloc0(max_size);
+		retval = imee->uploadingFile(L_GET_CPP_PTR_FROM_C_OBJECT(msg), offset, buffer, size, encrypted_buffer);
+		if (retval == 0) {
+			if (*size > max_size) {
+				lError() << "IM encryption engine process upload file callback returned a size bigger than the size of the buffer, so it will be truncated !";
+				*size = max_size;
 			}
-			ms_free(encrypted_buffer);
+			memcpy(buffer, encrypted_buffer, *size);
 		}
+		ms_free(encrypted_buffer);
 	}
 
 	return retval <= 0 ? BELLE_SIP_CONTINUE : BELLE_SIP_STOP;
@@ -207,13 +203,9 @@ void FileTransferChatMessageModifier::onSendEnd (belle_sip_user_body_handler_t *
 	if (!message)
 		return;
 
-	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(message->getCore()->getCCore());
+	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
 	if (imee) {
-		LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
-		LinphoneImEncryptionEngineCbsUploadingFileCb cb_process_uploading_file = linphone_im_encryption_engine_cbs_get_process_uploading_file(imee_cbs);
-		if (cb_process_uploading_file) {
-			cb_process_uploading_file(imee, L_GET_C_BACK_PTR(message), 0, nullptr, nullptr, nullptr);
-		}
+		imee->uploadingFile(message, 0, nullptr, 0, nullptr);
 	}
 }
 
@@ -241,37 +233,25 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			string first_part_header;
 			belle_sip_body_handler_t *first_part_bh;
 
-			bool is_file_encryption_enabled = false;
-			LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(message->getCore()->getCCore());
-			if (imee && message->getChatRoom()) {
-				LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
-				LinphoneImEncryptionEngineCbsIsEncryptionEnabledForFileTransferCb is_encryption_enabled_for_file_transfer_cb =
-					linphone_im_encryption_engine_cbs_get_is_encryption_enabled_for_file_transfer(imee_cbs);
-				if (is_encryption_enabled_for_file_transfer_cb) {
-					is_file_encryption_enabled = !!is_encryption_enabled_for_file_transfer_cb(imee, L_GET_C_BACK_PTR(message->getChatRoom()));
-				}
-			}
+			bool isFileEncryptionEnabled = false;
+			EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
+			if (imee)
+				isFileEncryptionEnabled = imee->isEncryptionEnabledForFileTransfer(message->getChatRoom());
 
 			FileTransferContent *fileTransferContent = new FileTransferContent();
 			fileTransferContent->setContentType(ContentType::FileTransfer);
 			fileTransferContent->setFileSize(currentFileContentToTransfer->getFileSize()); // Copy file size information
+			fileTransferContent->setFilePath(currentFileContentToTransfer->getFilePath()); // Copy file path information
 			message->getPrivate()->addContent(fileTransferContent);
 
 			// shall we encrypt the file
-			if (is_file_encryption_enabled && message->getChatRoom()) {
+			if (isFileEncryptionEnabled && message->getChatRoom()) {
 				// temporary storage for the Content-disposition header value : use a generic filename to not leak it
-				// Actual filename stored in msg->file_transfer_information->name will be set in encrypted msg
-				// sended to the
+				// actual filename stored in msg->file_transfer_information->name will be set in encrypted msg
 				first_part_header = "form-data; name=\"File\"; filename=\"filename.txt\"";
 
-				LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
-				LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb generate_file_transfer_key_cb =
-					linphone_im_encryption_engine_cbs_get_generate_file_transfer_key(imee_cbs);
-				if (generate_file_transfer_key_cb) {
-					generate_file_transfer_key_cb(imee, L_GET_C_BACK_PTR(message->getChatRoom()), L_GET_C_BACK_PTR(message));
-				}
+				imee->generateFileTransferKey(message->getChatRoom(), message);
 			} else {
-				// temporary storage for the Content-disposition header value
 				first_part_header = "form-data; name=\"File\"; filename=\"" + currentFileContentToTransfer->getFileName() + "\"";
 			}
 
@@ -743,18 +723,14 @@ void FileTransferChatMessageModifier::onRecvBody (belle_sip_user_body_handler_t 
 		return;
 
 	int retval = -1;
-	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(message->getCore()->getCCore());
+	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
 	if (imee) {
-		LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
-		LinphoneImEncryptionEngineCbsDownloadingFileCb cb_process_downloading_file = linphone_im_encryption_engine_cbs_get_process_downloading_file(imee_cbs);
-		if (cb_process_downloading_file) {
-			uint8_t *decrypted_buffer = (uint8_t *)ms_malloc0(size);
-			retval = cb_process_downloading_file(imee, L_GET_C_BACK_PTR(message), offset, (const uint8_t *)buffer, size, decrypted_buffer);
-			if (retval == 0) {
-				memcpy(buffer, decrypted_buffer, size);
-			}
-			ms_free(decrypted_buffer);
+		uint8_t *decrypted_buffer = (uint8_t *)ms_malloc0(size);
+		retval = imee->downloadingFile(message, offset, buffer, size, decrypted_buffer);
+		if (retval == 0) {
+			memcpy(buffer, decrypted_buffer, size);
 		}
+		ms_free(decrypted_buffer);
 	}
 
 	if (retval <= 0) {
@@ -787,14 +763,12 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 	if (!message)
 		return;
 
+	shared_ptr<Core> core = message->getCore();
+
 	int retval = -1;
-	LinphoneImEncryptionEngine *imee = linphone_core_get_im_encryption_engine(message->getCore()->getCCore());
+	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
 	if (imee) {
-		LinphoneImEncryptionEngineCbs *imee_cbs = linphone_im_encryption_engine_get_callbacks(imee);
-		LinphoneImEncryptionEngineCbsDownloadingFileCb cb_process_downloading_file = linphone_im_encryption_engine_cbs_get_process_downloading_file(imee_cbs);
-		if (cb_process_downloading_file) {
-			retval = cb_process_downloading_file(imee, L_GET_C_BACK_PTR(message), 0, nullptr, 0, nullptr);
-		}
+		retval = imee->downloadingFile(message, 0, nullptr, 0, nullptr);
 	}
 
 	if (retval <= 0) {
@@ -808,7 +782,7 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 				linphone_buffer_unref(lb);
 			} else {
 				// Legacy: call back given by application level
-				linphone_core_notify_file_transfer_recv(message->getCore()->getCCore(), msg, content, nullptr, 0);
+				linphone_core_notify_file_transfer_recv(core->getCCore(), msg, content, nullptr, 0);
 			}
 		}
 	}
@@ -827,7 +801,12 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 				}
 			}
 		}
-		message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
+		if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
+			releaseHttpRequest();
+			message->getPrivate()->receive();
+		} else {
+			message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
+		}
 	}
 }
 
@@ -909,6 +888,20 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile (const b
 	}
 }
 
+void FileTransferChatMessageModifier::onDownloadFailed() {
+	shared_ptr<ChatMessage> message = chatMessage.lock();
+	if (!message)
+		return;
+	if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
+		message->getPrivate()->doNotRetryAutoDownload();
+		releaseHttpRequest();
+		message->getPrivate()->receive();
+	} else {
+		message->getPrivate()->setState(ChatMessage::State::FileTransferError);
+		releaseHttpRequest();
+	}
+}
+
 static void _chat_message_process_auth_requested_download (void *data, belle_sip_auth_event *event) {
 	FileTransferChatMessageModifier *d = (FileTransferChatMessageModifier *)data;
 	d->processAuthRequestedDownload(event);
@@ -916,11 +909,7 @@ static void _chat_message_process_auth_requested_download (void *data, belle_sip
 
 void FileTransferChatMessageModifier::processAuthRequestedDownload (const belle_sip_auth_event *event) {
 	lError() << "Error during file download : auth requested for msg [" << this << "]";
-	shared_ptr<ChatMessage> message = chatMessage.lock();
-	if (!message)
-		return;
-	message->getPrivate()->setState(ChatMessage::State::FileTransferError);
-	releaseHttpRequest();
+	onDownloadFailed();
 }
 
 static void _chat_message_process_io_error_download (void *data, const belle_sip_io_error_event_t *event) {
@@ -930,11 +919,7 @@ static void _chat_message_process_io_error_download (void *data, const belle_sip
 
 void FileTransferChatMessageModifier::processIoErrorDownload (const belle_sip_io_error_event_t *event) {
 	lError() << "I/O Error during file download msg [" << this << "]";
-	shared_ptr<ChatMessage> message = chatMessage.lock();
-	if (!message)
-		return;
-	message->getPrivate()->setState(ChatMessage::State::FileTransferError);
-	releaseHttpRequest();
+	onDownloadFailed();
 }
 
 static void _chat_message_process_response_from_get_file (void *data, const belle_http_response_event_t *event) {
@@ -952,11 +937,10 @@ void FileTransferChatMessageModifier::processResponseFromGetFile (const belle_ht
 		int code = belle_http_response_get_status_code(event->response);
 		if (code >= 400 && code < 500) {
 			lWarning() << "File transfer failed with code " << code;
-			message->getPrivate()->setState(ChatMessage::State::FileTransferError);
+			onDownloadFailed();
 		} else if (code != 200) {
 			lWarning() << "Unhandled HTTP code response " << code << " for file transfer";
 		}
-		releaseHttpRequest();
 	}
 }
 

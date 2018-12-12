@@ -21,13 +21,16 @@
 #include <math.h>
 
 #include "address/address-p.h"
-#include "c-wrapper/c-wrapper.h"
-#include "conference/session/media-session-p.h"
+#include "bzrtp/bzrtp.h"
 #include "call/call-p.h"
-#include "conference/participant-p.h"
+#include "chat/chat-room/client-group-chat-room.h"
 #include "conference/params/media-session-params-p.h"
+#include "conference/participant-p.h"
+#include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
 #include "core/core-p.h"
+#include "c-wrapper/c-wrapper.h"
+#include "sal/call-op.h"
 #include "sal/sal.h"
 #include "utils/payload-type-handler.h"
 
@@ -1558,6 +1561,7 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 	setupEncryptionKeys(md);
 	setupDtlsKeys(md);
 	setupZrtpHash(md);
+	setupImEncryptionEngineParameters(md);
 	setupRtcpFb(md);
 	setupRtcpXr(md);
 	if (stunClient)
@@ -1688,6 +1692,21 @@ void MediaSessionPrivate::setupZrtpHash (SalMediaDescription *md) {
 			} else
 				md->streams[i].haveZrtpHash = 0;
 		}
+	}
+}
+
+void MediaSessionPrivate::setupImEncryptionEngineParameters (SalMediaDescription *md) {
+	L_Q();
+	auto encryptionEngine = q->getCore()->getEncryptionEngine();
+	if (!encryptionEngine)
+		return;
+
+	list<EncryptionParameter> paramList = encryptionEngine->getEncryptionParameters();
+
+	// Loop over IM Encryption Engine parameters and append them to the SDP
+	for (const auto &param : paramList) {
+		lInfo() << "Appending " << param.first << " parameter to SDP attributes";
+		md->custom_sdp_attributes = sal_custom_sdp_attribute_append(md->custom_sdp_attributes, param.first.c_str(), param.second.c_str());
 	}
 }
 
@@ -2822,11 +2841,22 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 			const SalStreamDescription *remoteStream = sal_media_description_find_best_stream(remote, SalAudio);
 			if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), LinphoneMediaEncryptionZRTP)
 				&& ((getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream->haveZrtpHash == 1))) {
+
+				// Perform mutual authentication if instant messaging encryption is enabled
+				auto encryptionEngine = q->getCore()->getEncryptionEngine();
+				if (encryptionEngine)
+					encryptionEngine->mutualAuthentication(
+						audioStream->ms.sessions.zrtp_context,
+						op->getLocalMediaDescription(),
+						op->getRemoteMediaDescription(),
+						this->getPublic()->CallSession::getDirection()
+					);
+
 				audio_stream_start_zrtp(audioStream);
 				if (remoteStream->haveZrtpHash == 1) {
 					int retval = ms_zrtp_setPeerHelloHash(audioStream->ms.sessions.zrtp_context, (uint8_t *)remoteStream->zrtphash, strlen((const char *)(remoteStream->zrtphash)));
 					if (retval != 0)
-						lError() << "Zrtp hash mismatch 0x" << hex << retval;
+						lError() << "ZRTP hash mismatch 0x" << hex << retval;
 				}
 			}
 		}
@@ -3096,37 +3126,39 @@ void MediaSessionPrivate::startVideoStream (CallSession::State targetState) {
 
 void MediaSessionPrivate::stopAudioStream () {
 	L_Q();
-	if (audioStream) {
-		if (listener)
-			listener->onUpdateMediaInfoForReporting(q->getSharedFromThis(), LINPHONE_CALL_STATS_AUDIO);
-		media_stream_reclaim_sessions(&audioStream->ms, &sessions[mainAudioStreamIndex]);
-		if (audioStream->ec) {
-			char *stateStr = nullptr;
-			ms_filter_call_method(audioStream->ec, MS_ECHO_CANCELLER_GET_STATE_STRING, &stateStr);
-			if (stateStr) {
-				lInfo() << "Writing echo canceler state, " << (int)strlen(stateStr) << " bytes";
-				lp_config_write_relative_file(linphone_core_get_config(q->getCore()->getCCore()), ecStateStore.c_str(), stateStr);
-			}
+	if (!audioStream)
+		return;
+
+	if (listener)
+		listener->onUpdateMediaInfoForReporting(q->getSharedFromThis(), LINPHONE_CALL_STATS_AUDIO);
+	media_stream_reclaim_sessions(&audioStream->ms, &sessions[mainAudioStreamIndex]);
+	if (audioStream->ec) {
+		char *stateStr = nullptr;
+		ms_filter_call_method(audioStream->ec, MS_ECHO_CANCELLER_GET_STATE_STRING, &stateStr);
+		if (stateStr) {
+			lInfo() << "Writing echo canceler state, " << (int)strlen(stateStr) << " bytes";
+			lp_config_write_relative_file(linphone_core_get_config(q->getCore()->getCCore()), ecStateStore.c_str(), stateStr);
 		}
-		audio_stream_get_local_rtp_stats(audioStream, &log->local_stats);
-		fillLogStats(&audioStream->ms);
-		if (listener)
-			listener->onCallSessionConferenceStreamStopping(q->getSharedFromThis());
-		ms_bandwidth_controller_remove_stream(q->getCore()->getCCore()->bw_controller, &audioStream->ms);
-		audio_stream_stop(audioStream);
-		updateRtpStats(audioStats, mainAudioStreamIndex);
-		audioStream = nullptr;
-		handleStreamEvents(mainAudioStreamIndex);
-		rtp_session_unregister_event_queue(sessions[mainAudioStreamIndex].rtp_session, audioStreamEvQueue);
-		ortp_ev_queue_flush(audioStreamEvQueue);
-		ortp_ev_queue_destroy(audioStreamEvQueue);
-		audioStreamEvQueue = nullptr;
-
-		getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
-
-		currentCaptureCard = nullptr;
-		currentPlayCard = nullptr;
 	}
+	audio_stream_get_local_rtp_stats(audioStream, &log->local_stats);
+	fillLogStats(&audioStream->ms);
+	if (listener)
+		listener->onCallSessionConferenceStreamStopping(q->getSharedFromThis());
+	ms_bandwidth_controller_remove_stream(q->getCore()->getCCore()->bw_controller, &audioStream->ms);
+	audio_stream_stop(audioStream);
+	updateRtpStats(audioStats, mainAudioStreamIndex);
+	audioStream = nullptr;
+	handleStreamEvents(mainAudioStreamIndex);
+	rtp_session_unregister_event_queue(sessions[mainAudioStreamIndex].rtp_session, audioStreamEvQueue);
+	ortp_ev_queue_flush(audioStreamEvQueue);
+	ortp_ev_queue_destroy(audioStreamEvQueue);
+	audioStreamEvQueue = nullptr;
+
+	getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
+
+	currentCaptureCard = nullptr;
+	currentPlayCard = nullptr;
+
 }
 
 void MediaSessionPrivate::stopTextStream () {
@@ -3468,6 +3500,7 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 			/* Otherwise it must be DTLS as SDES doesn't go through this function */
 			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionDTLS);
 		}
+
 		lInfo() << "All streams are encrypted, key exchanged using "
 			<< ((q->getCurrentParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) ? "ZRTP"
 				: (q->getCurrentParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS) ? "DTLS" : "Unknown mechanism");
@@ -4849,10 +4882,31 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 		lError() << "MediaSession::setAuthenticationTokenVerified(): No zrtp context";
 		return;
 	}
-	if (!d->authTokenVerified && value)
+
+	char *peerDeviceId = nullptr;
+	auto encryptionEngine = getCore()->getEncryptionEngine();
+	if (encryptionEngine) {
+		const SalAddress *remoteAddress = d->getOp()->getRemoteContactAddress();
+		peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
+	}
+
+	// SAS verified
+	if (value) {
 		ms_zrtp_sas_verified(d->audioStream->ms.sessions.zrtp_context);
-	else if (d->authTokenVerified && !value)
+
+		if (encryptionEngine)
+			encryptionEngine->authenticationVerified(d->audioStream->ms.sessions.zrtp_context, d->op->getRemoteMediaDescription(), peerDeviceId);
+	}
+
+	// SAS rejected
+	else {
 		ms_zrtp_sas_reset_verified(d->audioStream->ms.sessions.zrtp_context);
+
+		if (encryptionEngine)
+			encryptionEngine->authenticationRejected(d->op->getRemoteMediaDescription(), peerDeviceId);
+	}
+
+	ms_free(peerDeviceId);
 	d->authTokenVerified = value;
 	d->propagateEncryptionChanged();
 }

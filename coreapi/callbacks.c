@@ -93,8 +93,8 @@ static void call_received(SalCallOp *h) {
 		linphone_address_unref(toAddr);
 		linphone_address_unref(fromAddr);
 		if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
-			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
-			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0)) {
+			string oneToOneChatRoom = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room"));
+			if (oneToOneChatRoom == "true") {
 				bool_t oneToOneChatRoomEnabled = linphone_config_get_bool(linphone_core_get_config(lc), "misc", "enable_one_to_one_chat_room", TRUE);
 				if (!oneToOneChatRoomEnabled) {
 					h->decline(SalReasonNotAcceptable);
@@ -147,10 +147,13 @@ static void call_received(SalCallOp *h) {
 				chatRoom->deleteFromDb();
 				chatRoom.reset();
 			}
-			if (!chatRoom)
+			if (!chatRoom) {
+				string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted"));
+				bool encrypted = (endToEndEncrypted == "true");
 				chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom(
-					h->getSubject(), h->getRemoteContact(), h->getRemoteBody(), false
+					h->getSubject(), h->getRemoteContact(), h->getRemoteBody(), false, encrypted
 				);
+			}
 
 			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
@@ -853,7 +856,7 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 						ConferenceId(addr, IdentityAddress(op->getTo()))
 					);
 					if (!chatRoom)
-						chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom("", addr.asString(), Content(), false);
+						chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom("", addr.asString(), Content(), false, false);
 					chatRoom->join();
 					static_cast<SalReferOp *>(op)->reply(SalReasonNone);
 					return;

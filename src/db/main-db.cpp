@@ -157,8 +157,9 @@ namespace {
 		// TODO: Find a workaround to deal with StaticString concatenation!!!
 		constexpr char ConferenceCallFilter[] = "3,4";
 		constexpr char ConferenceChatMessageFilter[] = "5";
-		constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12";
+		constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12,13";
 		constexpr char ConferenceInfoFilter[] = "1,2,6,7,8,9,10,11,12";
+		constexpr char ConferenceChatMessageSecurityFilter[] = "5,13";
 	#else
 		constexpr auto ConferenceCallFilter = SqlEventFilterBuilder<
 			EventLog::Type::ConferenceCallStart,
@@ -174,12 +175,17 @@ namespace {
 			EventLog::Type::ConferenceParticipantRemoved,
 			EventLog::Type::ConferenceParticipantSetAdmin,
 			EventLog::Type::ConferenceParticipantUnsetAdmin,
-			EventLog::Type::ConferenceSubjectChanged
+			EventLog::Type::ConferenceSubjectChanged,
+			EventLog::Type::ConferenceSecurityEvent
 		>::get();
 
 		constexpr auto ConferenceInfoFilter = ConferenceInfoNoDeviceFilter + "," + SqlEventFilterBuilder<
 			EventLog::Type::ConferenceParticipantDeviceAdded,
 			EventLog::Type::ConferenceParticipantDeviceRemoved
+		>::get();
+
+		constexpr auto ConferenceChatMessageSecurityFilter = ConferenceChatMessageFilter + "," + SqlEventFilterBuilder<
+			EventLog::Type::ConferenceSecurityEvent
 		>::get();
 	#endif // ifdef _WIN32
 
@@ -187,7 +193,8 @@ namespace {
 		{ MainDb::ConferenceCallFilter, ConferenceCallFilter },
 		{ MainDb::ConferenceChatMessageFilter, ConferenceChatMessageFilter },
 		{ MainDb::ConferenceInfoNoDeviceFilter, ConferenceInfoNoDeviceFilter },
-		{ MainDb::ConferenceInfoFilter, ConferenceInfoFilter }
+		{ MainDb::ConferenceInfoFilter, ConferenceInfoFilter },
+		{ MainDb::ConferenceChatMessageSecurityFilter, ConferenceChatMessageSecurityFilter }
 	};
 }
 
@@ -531,10 +538,10 @@ shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceEvent (
 		return eventLog;
 	}
 
-	return selectGenericConferenceNotifiedEvent(chatRoom->getConferenceId(), row);
+	return selectConferenceInfoEvent(chatRoom->getConferenceId(), row);
 }
 
-shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceNotifiedEvent (
+shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 	const ConferenceId &conferenceId,
 	const soci::row &row
 ) const {
@@ -573,6 +580,10 @@ shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceNotifiedEvent (
 
 		case EventLog::Type::ConferenceSubjectChanged:
 			eventLog = selectConferenceSubjectEvent(conferenceId, type, row);
+			break;
+
+		case EventLog::Type::ConferenceSecurityEvent:
+			eventLog = selectConferenceSecurityEvent(conferenceId, type, row);
 			break;
 	}
 
@@ -673,6 +684,19 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantDeviceEvent (
 	);
 }
 
+shared_ptr<EventLog> MainDbPrivate::selectConferenceSecurityEvent (
+	const ConferenceId &conferenceId,
+	EventLog::Type type,
+	const soci::row &row
+) const {
+	return make_shared<ConferenceSecurityEvent>(
+		getConferenceEventCreationTimeFromRow(row),
+		conferenceId,
+		static_cast<ConferenceSecurityEvent::SecurityEventType>(row.get<int>(16)),
+		IdentityAddress(row.get<string>(17))
+	);
+}
+
 shared_ptr<EventLog> MainDbPrivate::selectConferenceSubjectEvent (
 	const ConferenceId &conferenceId,
 	EventLog::Type type,
@@ -701,11 +725,11 @@ long long MainDbPrivate::insertConferenceEvent (const shared_ptr<EventLog> &even
 	shared_ptr<ConferenceEvent> conferenceEvent = static_pointer_cast<ConferenceEvent>(eventLog);
 
 	long long eventId = -1;
-	const long long &curChatRoomId = selectChatRoomId(conferenceEvent->getConferenceId());
+	const ConferenceId &conferenceId = conferenceEvent->getConferenceId();
+	const long long &curChatRoomId = selectChatRoomId(conferenceId);
 	if (curChatRoomId < 0) {
 		// A conference event can be inserted in database only if chat room exists.
 		// Otherwise it's an error.
-		const ConferenceId &conferenceId = conferenceEvent->getConferenceId();
 		lError() << "Unable to find chat room storage id of: " << conferenceId << ".";
 	} else {
 		eventId = insertEvent(eventLog);
@@ -944,6 +968,23 @@ long long MainDbPrivate::insertConferenceParticipantDeviceEvent (const shared_pt
 	return eventId;
 }
 
+long long MainDbPrivate::insertConferenceSecurityEvent (const shared_ptr<EventLog> &eventLog) {
+	long long chatRoomId;
+	const long long &eventId = insertConferenceEvent(eventLog, &chatRoomId);
+	if (eventId < 0)
+		return -1;
+
+	const int &securityEventType = int(static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getSecurityEventType());
+	const string &faultyDevice = static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getFaultyDeviceAddress().asString();
+
+	// insert security event into new table "conference_security_event"
+	soci::session *session = dbSession.getBackendSession();
+	*session << "INSERT INTO conference_security_event (event_id, security_alert, faulty_device)"
+		" VALUES (:eventId, :securityEventType, :faultyDevice)", soci::use(eventId), soci::use(securityEventType), soci::use(faultyDevice);
+
+	return eventId;
+}
+
 long long MainDbPrivate::insertConferenceSubjectEvent (const shared_ptr<EventLog> &eventLog) {
 	long long chatRoomId;
 	const long long &eventId = insertConferenceNotifiedEvent(eventLog, &chatRoomId);
@@ -1091,23 +1132,6 @@ void MainDbPrivate::updateSchema () {
 	if (version < makeVersion(1, 0, 4)) {
 		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN delivery_notification_required BOOLEAN NOT NULL DEFAULT 0";
 		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN display_notification_required BOOLEAN NOT NULL DEFAULT 0";
-
-		*session << "DROP VIEW IF EXISTS conference_event_view";
-
-		string query;
-		if (q->getBackend() == AbstractDb::Backend::Mysql)
-			query = "CREATE OR REPLACE VIEW conference_event_view AS";
-		else
-			query = "CREATE VIEW IF NOT EXISTS conference_event_view AS";
-		*session << query +
-			"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required"
-			"  FROM event"
-			"  LEFT JOIN conference_event ON conference_event.event_id = event.id"
-			"  LEFT JOIN conference_chat_message_event ON conference_chat_message_event.event_id = event.id"
-			"  LEFT JOIN conference_notified_event ON conference_notified_event.event_id = event.id"
-			"  LEFT JOIN conference_participant_device_event ON conference_participant_device_event.event_id = event.id"
-			"  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
-			"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id";
 	}
 	if (version < makeVersion(1, 0, 5)) {
 		const string queryDelivery = "UPDATE conference_chat_message_event"
@@ -1123,6 +1147,19 @@ void MainDbPrivate::updateSchema () {
 			"  AND state = " + Utils::toString(int(ChatMessage::State::Displayed));
 
 		*session << queryDisplay;
+	}
+	if (version < makeVersion(1, 0, 6)) {
+		*session << "DROP VIEW IF EXISTS conference_event_view";
+		*session << "CREATE VIEW conference_event_view AS"
+			"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device"
+			"  FROM event"
+			"  LEFT JOIN conference_event ON conference_event.event_id = event.id"
+			"  LEFT JOIN conference_chat_message_event ON conference_chat_message_event.event_id = event.id"
+			"  LEFT JOIN conference_notified_event ON conference_notified_event.event_id = event.id"
+			"  LEFT JOIN conference_participant_device_event ON conference_participant_device_event.event_id = event.id"
+			"  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
+			"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
+			"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
 	}
 }
 
@@ -1558,6 +1595,18 @@ void MainDb::init () {
 		") " + charset;
 
 	*session <<
+		"CREATE TABLE IF NOT EXISTS conference_security_event ("
+		"  event_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
+
+		"  security_alert TINYINT UNSIGNED NOT NULL,"
+		"  faulty_device VARCHAR(255) NOT NULL,"
+
+		"  FOREIGN KEY (event_id)"
+		"    REFERENCES conference_event(event_id)"
+		"    ON DELETE CASCADE"
+		") " + charset;
+
+	*session <<
 		"CREATE TABLE IF NOT EXISTS conference_subject_event ("
 		"  event_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 
@@ -1768,6 +1817,10 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 				eventId = d->insertConferenceParticipantDeviceEvent(eventLog);
 				break;
 
+			case EventLog::Type::ConferenceSecurityEvent:
+				eventId = d->insertConferenceSecurityEvent(eventLog);
+				break;
+
 			case EventLog::Type::ConferenceSubjectChanged:
 				eventId = d->insertConferenceSubjectEvent(eventLog);
 				break;
@@ -1814,6 +1867,7 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceParticipantUnsetAdmin:
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
+			case EventLog::Type::ConferenceSecurityEvent:
 			case EventLog::Type::ConferenceSubjectChanged:
 				return false;
 		}
@@ -1897,9 +1951,8 @@ shared_ptr<EventLog> MainDb::getEventFromKey (const MainDbKey &dbKey) {
 		*d->dbSession.getBackendSession() << Statements::get(Statements::SelectConferenceEvent),
 			soci::into(row), soci::use(eventId);
 
-		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(
-			ConferenceId(IdentityAddress(row.get<string>(16)), IdentityAddress(row.get<string>(17)))
-		);
+		ConferenceId conferenceId(IdentityAddress(row.get<string>(16)), IdentityAddress(row.get<string>(17)));
+		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 		if (!chatRoom)
 			return shared_ptr<EventLog>();
 
@@ -1931,7 +1984,7 @@ list<shared_ptr<EventLog>> MainDb::getConferenceNotifiedEvents (
 		list<shared_ptr<EventLog>> events;
 		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId), soci::use(lastNotifyId));
 		for (const auto &row : rows)
-			events.push_back(d->selectGenericConferenceNotifiedEvent(conferenceId, row));
+			events.push_back(d->selectConferenceInfoEvent(conferenceId, row));
 		return events;
 	};
 }
@@ -2462,10 +2515,10 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 
 		soci::rowset<soci::row> rows = (session->prepare << query);
 		for (const auto &row : rows) {
-			ConferenceId conferenceId{
+			ConferenceId conferenceId = ConferenceId(
 				IdentityAddress(row.get<string>(1)),
 				IdentityAddress(row.get<string>(2))
-			};
+			);
 			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
 			if (chatRoom) {
 				chatRooms.push_back(chatRoom);
@@ -2625,9 +2678,9 @@ void MainDb::migrateBasicToClientGroupChatRoom (
 		// TODO: Update events and chat messages. (Or wait signals.)
 		const long long &dbChatRoomId = d->selectChatRoomId(basicChatRoom->getConferenceId());
 
-		const ConferenceId &newChatRoomId = clientGroupChatRoom->getConferenceId();
-		const long long &peerSipAddressId = d->insertSipAddress(newChatRoomId.getPeerAddress().asString());
-		const long long &localSipAddressId = d->insertSipAddress(newChatRoomId.getLocalAddress().asString());
+		const ConferenceId &newConferenceId = clientGroupChatRoom->getConferenceId();
+		const long long &peerSipAddressId = d->insertSipAddress(newConferenceId.getPeerAddress().asString());
+		const long long &localSipAddressId = d->insertSipAddress(newConferenceId.getLocalAddress().asString());
 		const int &capabilities = clientGroupChatRoom->getCapabilities();
 
 		*d->dbSession.getBackendSession() << "UPDATE chat_room"

@@ -167,6 +167,10 @@ static bool isConferenceSubjectType (LinphoneEventLogType type) {
 	return false;
 }
 
+static bool isConferenceSecurityType (LinphoneEventLogType type) {
+	return (type == LinphoneEventLogTypeConferenceSecurityEvent);
+}
+
 // -----------------------------------------------------------------------------
 // EventLog.
 // -----------------------------------------------------------------------------
@@ -303,6 +307,31 @@ const LinphoneAddress *linphone_event_log_get_device_address (const LinphoneEven
 		);
 
 	return event_log->deviceAddressCache;
+}
+
+// -----------------------------------------------------------------------------
+// ConferenceSecurityEvent.
+// -----------------------------------------------------------------------------
+
+LINPHONE_PUBLIC LinphoneSecurityEventType linphone_event_log_get_security_event_type (const LinphoneEventLog *event_log) {
+	if (!isConferenceSecurityType(linphone_event_log_get_type(event_log)))
+		return LinphoneSecurityEventTypeNone;
+
+	const auto securityEvent = static_pointer_cast<const LinphonePrivate::ConferenceSecurityEvent>(
+		L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
+	);
+	return static_cast<LinphoneSecurityEventType>(securityEvent->getSecurityEventType());
+}
+
+LINPHONE_PUBLIC LinphoneAddress *linphone_event_log_get_security_event_faulty_device_address (const LinphoneEventLog *event_log) {
+	if (!isConferenceSecurityType(linphone_event_log_get_type(event_log)))
+		return nullptr;
+
+	return linphone_address_new(
+		static_pointer_cast<const LinphonePrivate::ConferenceSecurityEvent>(
+			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
+		)->getFaultyDeviceAddress().asString().c_str()
+	);
 }
 
 // -----------------------------------------------------------------------------

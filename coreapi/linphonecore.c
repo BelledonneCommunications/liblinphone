@@ -1205,6 +1205,9 @@ static void sound_config_read(LinphoneCore *lc) {
 	devid=lp_config_get_string(lc->config,"sound","capture_dev_id",NULL);
 	linphone_core_set_capture_device(lc,devid);
 
+	devid=lp_config_get_string(lc->config,"sound","media_dev_id",NULL);
+	linphone_core_set_media_device(lc,devid);
+
 /*
 	tmp=lp_config_get_int(lc->config,"sound","play_lev",80);
 	linphone_core_set_play_level(lc,tmp);
@@ -1324,37 +1327,33 @@ static void certificates_config_read(LinphoneCore *lc) {
 }
 
 static void bodyless_config_read(LinphoneCore *lc) {
-	const char *lists = lp_config_get_string(lc->config, "sip", "bodyless_lists", NULL);
-	if (!lists)
-		return;
+	// Clean previous friend lists
+	linphone_core_clear_bodyless_friend_lists(lc);
 
-	char tmp[256] = {0};
-	char name[256];
-	char *p, *n;
-	strncpy(tmp, lists, sizeof(tmp)-1);
-	for(p = tmp; *p != '\0'; p++) {
-		if (*p==' ')
-			continue;
-
-		n = strchr(p,',');
-		if (n)
-			*n = '\0';
-		sscanf(p, "%s", name);
+	bctbx_list_t *bodyless_lists = linphone_config_get_string_list(lc->config, "sip", "bodyless_lists", NULL);
+	while (bodyless_lists) {
+		char *name = (char *)bctbx_list_get_data(bodyless_lists);
+		bodyless_lists = bctbx_list_next(bodyless_lists);
 		LinphoneAddress *addr = linphone_address_new(name);
-		if(!addr)
+		if(!addr) {
+			bctbx_free(name);
 			continue;
+		}
 
 		ms_message("Found bodyless friendlist %s", name);
+		bctbx_free(name);
 		LinphoneFriendList *friendList = linphone_core_create_friend_list(lc);
-		linphone_friend_list_set_rls_uri(friendList, name);
-		linphone_friend_list_set_display_name(friendList, linphone_address_get_username(addr));
+		linphone_friend_list_set_rls_address(friendList, addr);
+		linphone_friend_list_set_display_name(
+			friendList,
+			linphone_address_get_display_name(addr)
+				? linphone_address_get_display_name(addr)
+				: linphone_address_get_username(addr)
+		);
 		linphone_address_unref(addr);
 		linphone_friend_list_set_subscription_bodyless(friendList, TRUE);
 		linphone_core_add_friend_list(lc, friendList);
-		if (!n)
-			break;
-
-		p = n;
+		linphone_friend_list_unref(friendList);
 	}
 }
 
@@ -1433,6 +1432,8 @@ static void sip_config_read(LinphoneCore *lc) {
 	tmp=lp_config_get_int(lc->config,"sip","delayed_timeout",4);
 	linphone_core_set_delayed_timeout(lc,tmp);
 
+	tmp=lp_config_get_int(lc->config,"app","auto_download_incoming_files_max_size",-1);
+	linphone_core_set_max_size_for_auto_download_incoming_files(lc, tmp);
 
 	/*In case of remote provisionning, function sip_config_read is initialy called in core_init, then in state ConfiguringSuccessfull*/
 	/*Accordingly, to avoid proxy_config to be added twice, it is mandatory to reset proxy config list from LinphoneCore*/
@@ -2285,7 +2286,9 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	service->account_creator_service_constructor_cb = linphone_account_creator_constructor_linphone;
 	service->account_creator_service_destructor_cb = NULL;
 	service->create_account_request_cb = linphone_account_creator_create_account_linphone;
+	service->delete_account_request_cb = linphone_account_creator_delete_account_linphone;
 	service->is_account_exist_request_cb = linphone_account_creator_is_account_exist_linphone;
+	service->get_confirmation_key_request_cb = linphone_account_creator_get_confirmation_key_linphone;
 	service->activate_account_request_cb = linphone_account_creator_activate_account_linphone;
 	service->is_account_activated_request_cb = linphone_account_creator_is_account_activated_linphone;
 	service->link_account_request_cb = linphone_account_creator_link_phone_number_with_account_linphone;
@@ -2761,6 +2764,16 @@ void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list
 	list->lc = NULL;
 	linphone_friend_list_unref(list);
 	lc->friends_lists = bctbx_list_erase_link(lc->friends_lists, elem);
+}
+
+void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc) {
+	bctbx_list_t *copy = bctbx_list_copy(linphone_core_get_friends_lists((const LinphoneCore *)lc));
+	for (auto it = copy; it; it = bctbx_list_next(it)) {
+		LinphoneFriendList *friends = (LinphoneFriendList *)bctbx_list_get_data(copy);
+		if (linphone_friend_list_is_subscription_bodyless(friends))
+			linphone_core_remove_friend_list(lc, (LinphoneFriendList *)bctbx_list_get_data(copy));
+	}
+	bctbx_list_free(copy);
 }
 
 void linphone_core_add_friend_list(LinphoneCore *lc, LinphoneFriendList *list) {
@@ -3957,6 +3970,15 @@ void linphone_core_set_delayed_timeout(LinphoneCore *lc, int seconds){
 	lc->sip_conf.delayed_timeout=seconds;
 }
 
+int linphone_core_get_max_size_for_auto_download_incoming_files(LinphoneCore *lc) {
+	return lc->auto_download_incoming_files_max_size;
+}
+
+void linphone_core_set_max_size_for_auto_download_incoming_files(LinphoneCore *lc, int size) {
+	lc->auto_download_incoming_files_max_size = size;
+	lp_config_set_int(lc->config, "app", "auto_download_incoming_files_max_size", size);
+}
+
 void linphone_core_set_presence_info(LinphoneCore *lc, int minutes_away, const char *contact, LinphoneOnlineStatus os) {
 	LinphonePresenceModel *presence = NULL;
 	LinphonePresenceActivity *activity = NULL;
@@ -4160,6 +4182,10 @@ int linphone_core_get_rec_level(LinphoneCore *lc) {
 	return lc->sound_conf.rec_lev;
 }
 
+int linphone_core_get_media_level(LinphoneCore *lc) {
+	return lc->sound_conf.media_lev;
+}
+
 void linphone_core_set_ring_level(LinphoneCore *lc, int level){
 	MSSndCard *sndcard;
 	lc->sound_conf.ring_lev = (char)level;
@@ -4224,6 +4250,13 @@ void linphone_core_set_rec_level(LinphoneCore *lc, int level) {
 	if (sndcard) ms_snd_card_set_level(sndcard,MS_SND_CARD_CAPTURE,level);
 }
 
+void linphone_core_set_media_level(LinphoneCore *lc, int level) {
+	MSSndCard *sndcard;
+	lc->sound_conf.media_lev = (char)level;
+	sndcard=lc->sound_conf.media_sndcard;
+	if (sndcard) ms_snd_card_set_level(sndcard,MS_SND_CARD_PLAYBACK,level);
+}
+
 static MSSndCard *get_card_from_string_id(const char *devid, unsigned int cap, MSFactory *f){
 	MSSndCard *sndcard=NULL;
 	if (devid!=NULL){
@@ -4286,6 +4319,14 @@ LinphoneStatus linphone_core_set_capture_device(LinphoneCore *lc, const char * d
 	return 0;
 }
 
+LinphoneStatus linphone_core_set_media_device(LinphoneCore *lc, const char * devid){
+	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
+	lc->sound_conf.media_sndcard=card;
+	if (card &&  linphone_core_ready(lc))
+		lp_config_set_string(lc->config,"sound","media_dev_id",ms_snd_card_get_string_id(card));
+	return 0;
+}
+
 const char * linphone_core_get_ringer_device(LinphoneCore *lc) {
 	if (lc->sound_conf.ring_sndcard) return ms_snd_card_get_string_id(lc->sound_conf.ring_sndcard);
 	return NULL;
@@ -4297,6 +4338,10 @@ const char * linphone_core_get_playback_device(LinphoneCore *lc) {
 
 const char * linphone_core_get_capture_device(LinphoneCore *lc) {
 	return lc->sound_conf.capt_sndcard ? ms_snd_card_get_string_id(lc->sound_conf.capt_sndcard) : NULL;
+}
+
+const char * linphone_core_get_media_device(LinphoneCore *lc) {
+	return lc->sound_conf.media_sndcard ? ms_snd_card_get_string_id(lc->sound_conf.media_sndcard) : NULL;
 }
 
 const char**  linphone_core_get_sound_devices(LinphoneCore *lc){
@@ -6728,6 +6773,23 @@ void *linphone_core_get_zrtp_cache_db(LinphoneCore *lc){
 #endif /* SQLITE_STORAGE_ENABLED */
 }
 
+LinphoneZrtpPeerStatus linphone_core_get_zrtp_status(LinphoneCore *lc, const char *peerUri) {
+	int status = MS_ZRTP_PEER_STATUS_UNKNOWN;
+	if (lc->zrtp_cache_db) {
+		status = ms_zrtp_get_peer_status(lc->zrtp_cache_db, peerUri, &(lc->zrtp_cache_db_mutex));
+	}
+	switch (status) {
+		case MS_ZRTP_PEER_STATUS_UNKNOWN:
+			return LinphoneZrtpPeerStatusUnknown;
+		case MS_ZRTP_PEER_STATUS_INVALID:
+			return LinphoneZrtpPeerStatusInvalid;
+		case MS_ZRTP_PEER_STATUS_VALID:
+			return LinphoneZrtpPeerStatusValid;
+		default:
+			return LinphoneZrtpPeerStatusUnknown;
+	}
+}
+
 static void linphone_core_zrtp_cache_close(LinphoneCore *lc) {
 	if (lc->zrtp_cache_db) {
 		sqlite3_close(lc->zrtp_cache_db);
@@ -7350,17 +7412,6 @@ const char *linphone_core_get_tls_cert_path(const LinphoneCore *lc) {
 const char *linphone_core_get_tls_key_path(const LinphoneCore *lc) {
 	const char *tls_key_path = lp_config_get_string(lc->config, "sip", "client_cert_key", NULL);
 	return tls_key_path;
-}
-
-void linphone_core_set_im_encryption_engine(LinphoneCore *lc, LinphoneImEncryptionEngine *imee) {
-	if (lc->im_encryption_engine) {
-		linphone_im_encryption_engine_unref(lc->im_encryption_engine);
-		lc->im_encryption_engine = NULL;
-	}
-	if (imee) {
-		imee->lc = lc;
-		lc->im_encryption_engine = linphone_im_encryption_engine_ref(imee);
-	}
 }
 
 LinphoneImEncryptionEngine *linphone_core_get_im_encryption_engine(const LinphoneCore *lc) {

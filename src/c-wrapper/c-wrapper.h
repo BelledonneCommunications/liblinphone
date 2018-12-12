@@ -43,8 +43,8 @@
 	F(MagicSearch, MagicSearch) \
 	F(MediaSessionParams, CallParams) \
 	F(Participant, Participant) \
-	F(ParticipantImdnState, ParticipantImdnState) \
 	F(ParticipantDevice, ParticipantDevice) \
+	F(ParticipantImdnState, ParticipantImdnState) \
 	F(SearchResult, SearchResult)
 
 #define L_REGISTER_SUBTYPES(F) \
@@ -63,6 +63,7 @@
 	F(EventLog, ConferenceNotifiedEvent) \
 	F(EventLog, ConferenceParticipantDeviceEvent) \
 	F(EventLog, ConferenceParticipantEvent) \
+	F(EventLog, ConferenceSecurityEvent) \
 	F(EventLog, ConferenceSubjectEvent)
 
 // =============================================================================

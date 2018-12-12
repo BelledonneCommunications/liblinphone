@@ -153,6 +153,13 @@ LINPHONE_PUBLIC void *linphone_account_creator_get_user_data(const LinphoneAccou
 LINPHONE_PUBLIC void linphone_account_creator_set_user_data(LinphoneAccountCreator *creator, void *ud);
 
 /**
+ * Assign a proxy config pointer to the LinphoneAccountCreator.
+ * @param[in] creator LinphoneAccountCreator object.
+ * @param[in] cfg The LinphoneProxyConfig to associate with the LinphoneAccountCreator.
+**/
+LINPHONE_PUBLIC void linphone_account_creator_set_proxy_config(LinphoneAccountCreator *creator, LinphoneProxyConfig *cfg);
+
+/**
  * Set the username.
  * @param[in] creator #LinphoneAccountCreator object
  * @param[in] username The username to set
@@ -235,6 +242,14 @@ LINPHONE_PUBLIC const char * linphone_account_creator_get_activation_code(const 
  * @return #LinphoneAccountCreatorLanguageStatusOk if everything is OK, or a specific error otherwise.
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorLanguageStatus linphone_account_creator_set_language(LinphoneAccountCreator *creator, const char *lang);
+
+/**
+* Set the supported algorithm.
+* @param[in] creator LinphoneAccountCreator object
+* @param[in] algorithm The algorithm to use
+* @return LinphoneAccountCreatorAlgoStatusOk if everything is OK, or a specific error otherwise.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorAlgoStatus linphone_account_creator_set_algorithm(LinphoneAccountCreator *creator, const char *algorithm);
 
 /**
  * Get the language use in email of SMS.

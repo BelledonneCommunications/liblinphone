@@ -61,6 +61,9 @@ bool_t linphone_participant_is_admin (const LinphoneParticipant *participant) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(participant)->isAdmin();
 }
 
+LinphoneChatRoomSecurityLevel linphone_participant_get_security_level (const LinphoneParticipant *participant) {
+	return (LinphoneChatRoomSecurityLevel)L_GET_CPP_PTR_FROM_C_OBJECT(participant)->getSecurityLevel();
+}
 bctbx_list_t *linphone_participant_get_devices (const LinphoneParticipant *participant) {
 	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_PRIVATE_FROM_C_OBJECT(participant)->getDevices());
 }
