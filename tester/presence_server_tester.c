@@ -1901,13 +1901,19 @@ static void notify_friend_capabilities(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_NotifyPresenceReceived, 1, 5000));
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(paulineFriend) & LinphoneFriendCapabilityGroupChat);
+	BC_ASSERT_TRUE(linphone_friend_has_capability(paulineFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(paulineFriend) & LinphoneFriendCapabilityLimeX3dh);
+	BC_ASSERT_TRUE(linphone_friend_has_capability(paulineFriend, LinphoneFriendCapabilityLimeX3dh));
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(laureFriend) & LinphoneFriendCapabilityGroupChat);
+	BC_ASSERT_TRUE(linphone_friend_has_capability(laureFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_FALSE(linphone_friend_get_capabilities(laureFriend) & LinphoneFriendCapabilityLimeX3dh);
+	BC_ASSERT_FALSE(linphone_friend_has_capability(laureFriend, LinphoneFriendCapabilityLimeX3dh));
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(chloeFriend) & LinphoneFriendCapabilityGroupChat);
+	BC_ASSERT_TRUE(linphone_friend_has_capability(chloeFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(chloeFriend) & LinphoneFriendCapabilityLimeX3dh);
+	BC_ASSERT_TRUE(linphone_friend_has_capability(chloeFriend, LinphoneFriendCapabilityLimeX3dh));
 
 	linphone_friend_unref(paulineFriend);
 	linphone_friend_unref(laureFriend);
