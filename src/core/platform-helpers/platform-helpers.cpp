@@ -157,4 +157,8 @@ int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revent
 	return BELLE_SIP_CONTINUE;
 }
 
+string GenericPlatformHelpers::getDownloadPath () {
+	return "";
+}
+
 LINPHONE_END_NAMESPACE

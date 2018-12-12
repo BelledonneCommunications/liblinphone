@@ -158,15 +158,17 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
 
 	// 3. Specific case, change to displayed after transfer.
-	if (state == ChatMessage::State::FileTransferDone) {
+	if (state == ChatMessage::State::FileTransferDone && direction == ChatMessage::Direction::Incoming) {
 		setState(ChatMessage::State::Displayed);
 		return;
 	}
 
 	// 4. Send notification and update in database if necessary.
 	if (state != ChatMessage::State::FileTransferError && state != ChatMessage::State::InProgress) {
-		if ((state == ChatMessage::State::Displayed) && (direction == ChatMessage::Direction::Incoming))
+		if ((state == ChatMessage::State::Displayed) && (direction == ChatMessage::Direction::Incoming) && (!hasFileTransferContent())) {
+			// Wait until all files are downloaded before sending displayed IMDN
 			static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
+		}
 		updateInDb();
 	}
 }
@@ -533,6 +535,20 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::Encryption;
 	}
 
+	// Sender Authentication
+	// In secured chat rooms, the authenticatedFromAddress is already the decrypted CPIM From Address
+	// In plain text basic chat rooms, the authenticatedFromAddress must be set here as the SIP From Address
+	// In plain text group chat rooms the sender authentication is disabled
+	if (!(q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Encrypted)) {
+		if (q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Basic) {
+			IdentityAddress sipFromAddress = q->getSharedFromThis()->getFromAddress();
+			setAuthenticatedFromAddress(sipFromAddress);
+		} else {
+			lInfo() << "Sender authentication disabled for clear text group chat";
+			senderAuthenticationEnabled = false;
+		}
+	}
+
 	if ((currentRecvStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
 		lInfo() << "Cpim step already done, skipping";
 	} else {
@@ -541,6 +557,18 @@ LinphoneReason ChatMessagePrivate::receive () {
 			ccmm.decode(q->getSharedFromThis(), errorCode);
 		}
 		currentRecvStep |= ChatMessagePrivate::Step::Cpim;
+	}
+
+	// Check if incoming message was flagged as unencrypted in an encrypted context
+	if (getUnencryptedContentWarning()) {
+		lWarning() << "Unencrypted content warning raised by encryption engine";
+
+		// Allow error IMDN exclusively
+		if (q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::Imdn && !Imdn::isError(q->getSharedFromThis())) {
+			lWarning() << "Discarding message of type " << q->getSharedFromThis()->getInternalContent().getContentType();
+			errorCode = 415;
+			return linphone_error_code_to_reason(errorCode);
+		}
 	}
 
 	if ((currentRecvStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
@@ -557,6 +585,27 @@ LinphoneReason ChatMessagePrivate::receive () {
 		// This will check if internal content is FileTransfer and make the appropriate changes
 		loadFileTransferUrlFromBodyToContent();
 		currentRecvStep |= ChatMessagePrivate::Step::FileDownload;
+	}
+
+	if ((currentRecvStep & ChatMessagePrivate::Step::AutoFileDownload) == ChatMessagePrivate::Step::AutoFileDownload) {
+		lInfo() << "Auto file download step already done, skipping";
+	} else {
+		for (Content *c : contents) {
+			if (c->isFileTransfer()) {
+				int max_size = linphone_core_get_max_size_for_auto_download_incoming_files(q->getCore()->getCCore());
+				if (max_size >= 0) {
+					FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
+					if (max_size == 0 || ftc->getFileSize() <= (size_t)max_size) {
+						ftc->setFilePath(q->getCore()->getDownloadPath() + ftc->getFileName());
+						setAutoFileTransferDownloadHappened(true);
+						q->downloadFile(ftc);
+						return LinphoneReasonNone;
+					}
+				}
+			}
+		}
+		currentRecvStep |= ChatMessagePrivate::Step::AutoFileDownload;
+		q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 	}
 
 	if (contents.size() == 0) {
@@ -579,7 +628,9 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	setState(ChatMessage::State::Delivered);
 
-	if (errorCode <= 0) {
+	if (errorCode <= 0 && !isAutoFileTransferDownloadHappened()) { 
+		// if auto download happened and message contains only file transfer, 
+		// the following will state that the content type of the file is unsupported
 		bool foundSupportContentType = false;
 		for (Content *c : contents) {
 			ContentType ct(c->getContentType());
@@ -596,6 +647,8 @@ LinphoneReason ChatMessagePrivate::receive () {
 			lError() << "No content-type in the contents list is supported...";
 		}
 	}
+	// If auto download failed, reset this flag so the user can normally download the file later
+	setAutoFileTransferDownloadHappened(false);
 
 	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
 	if (
@@ -625,6 +678,22 @@ LinphoneReason ChatMessagePrivate::receive () {
 	return reason;
 }
 
+void ChatMessagePrivate::restoreFileTransferContentAsFileContent() {
+	// Restore FileContents and remove FileTransferContents
+	list<Content*>::iterator it = contents.begin();
+	while (it != contents.end()) {
+		Content *content = *it;
+		if (content->isFileTransfer()) {
+			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
+			it = contents.erase(it);
+			addContent(fileTransferContent->getFileContent());
+			delete fileTransferContent;
+		} else {
+			it++;
+		}
+	}
+}
+
 void ChatMessagePrivate::send () {
 	L_Q();
 
@@ -636,6 +705,7 @@ void ChatMessagePrivate::send () {
 	int errorCode = 0;
 
 	currentSendStep |= ChatMessagePrivate::Step::Started;
+	q->getChatRoom()->getPrivate()->addTransientChatMessage(q->getSharedFromThis());
 	imdnId.clear();
 
 	if (toBeStored && currentSendStep == (ChatMessagePrivate::Step::Started | ChatMessagePrivate::Step::None))
@@ -647,6 +717,8 @@ void ChatMessagePrivate::send () {
 		ChatMessageModifier::Result result = fileTransferChatMessageModifier.encode(q->getSharedFromThis(), errorCode);
 		if (result == ChatMessageModifier::Result::Error) {
 			setState(ChatMessage::State::NotDelivered);
+			// Remove current step so we go through all modifiers if message is re-sent
+			currentSendStep = ChatMessagePrivate::Step::None;
 			return;
 		}
 		if (result == ChatMessageModifier::Result::Suspended) {
@@ -730,18 +802,21 @@ void ChatMessagePrivate::send () {
 			lInfo() << "Encryption step already done, skipping";
 		} else {
 			if (!encryptionPrevented) {
+				currentSendStep |= ChatMessagePrivate::Step::Encryption;
 				EncryptionChatMessageModifier ecmm;
 				ChatMessageModifier::Result result = ecmm.encode(q->getSharedFromThis(), errorCode);
 				if (result == ChatMessageModifier::Result::Error) {
 					sal_error_info_set((SalErrorInfo *)op->getErrorInfo(), SalReasonNotAcceptable, "SIP", errorCode, "Unable to encrypt IM", nullptr);
-					setState(ChatMessage::State::NotDelivered);
+					// Remove current step so we go through all modifiers if message is re-sent
+					currentSendStep = ChatMessagePrivate::Step::None;
+					restoreFileTransferContentAsFileContent();
+					setState(ChatMessage::State::NotDelivered); // Do it after the restore to have the correct message in db
+					q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 					return;
 				} else if (result == ChatMessageModifier::Result::Suspended) {
-					currentSendStep |= ChatMessagePrivate::Step::Encryption;
 					return;
 				}
 			}
-			currentSendStep |= ChatMessagePrivate::Step::Encryption;
 		}
 	}
 
@@ -758,41 +833,37 @@ void ChatMessagePrivate::send () {
 		}
 	}
 
+	// If message already sent by LIME X3DH synchronous encryption, do not send another one
+	if ((currentSendStep &ChatMessagePrivate::Step::Sent) == ChatMessagePrivate::Step::Sent) {
+		lInfo() << "Send step already done, skipping";
+		return;
+	}
+
 	auto msgOp = dynamic_cast<SalMessageOpInterface *>(op);
+
 	if (!externalBodyUrl.empty()) {
 		Content content;
 		ContentType contentType(ContentType::ExternalBody);
 		contentType.addParameter("access-type", "URL");
 		contentType.addParameter("URL", "\"" + externalBodyUrl + "\"");
 		content.setContentType(contentType);
+		currentSendStep |= ChatMessagePrivate::Step::Sent;
 		msgOp->sendMessage(content);
 	} else {
 		if (!internalContent.getContentType().isValid())
 			internalContent.setContentType(ContentType::PlainText);
 		if (!contentEncoding.empty())
 			internalContent.setContentEncoding(contentEncoding);
+		currentSendStep |= ChatMessagePrivate::Step::Sent;
 		msgOp->sendMessage(internalContent);
 	}
 
-	// Restore FileContents and remove FileTransferContents
-	list<Content*>::iterator it = contents.begin();
-	while (it != contents.end()) {
-		Content *content = *it;
-		if (content->isFileTransfer()) {
-			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
-			it = contents.erase(it);
-			addContent(fileTransferContent->getFileContent());
-			delete fileTransferContent;
-		} else {
-			it++;
-		}
-	}
+	restoreFileTransferContentAsFileContent();
+	q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 
 	// Remove internal content as it is not needed anymore and will confuse some old methods like getContentType()
 	internalContent.setBody("");
 	internalContent.setContentType(ContentType(""));
-	// Also remove current step so we go through all modifiers if message is re-sent
-	currentSendStep = ChatMessagePrivate::Step::None;
 
 	if (imdnId.empty())
 		setImdnMessageId(op->getCallId());   /* must be known at that time */
@@ -985,6 +1056,11 @@ bool ChatMessage::isRead () const {
 		return true;
 
 	return d->state == State::Delivered || d->state == State::Displayed || d->state == State::DeliveredToUser;
+}
+
+const IdentityAddress &ChatMessage::getAuthenticatedFromAddress () const {
+	L_D();
+	return d->authenticatedFromAddress;
 }
 
 const IdentityAddress &ChatMessage::getFromAddress () const {

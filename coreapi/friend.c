@@ -866,7 +866,12 @@ LinphoneFriend * linphone_core_create_friend_with_address(LinphoneCore *lc, cons
 #endif
 
 void linphone_core_add_friend(LinphoneCore *lc, LinphoneFriend *lf) {
-	if (linphone_friend_list_add_friend(linphone_core_get_default_friend_list(lc), lf) != LinphoneFriendListOK) return;
+	LinphoneFriendList *friendList = linphone_core_get_default_friend_list(lc);
+	if (!friendList) {
+		friendList = linphone_core_create_friend_list(lc);
+		linphone_core_add_friend_list(lc, friendList);
+	}
+	if (linphone_friend_list_add_friend(friendList, lf) != LinphoneFriendListOK) return;
 	if (bctbx_list_find(lc->subscribers, lf)) {
 		/*if this friend was in the pending subscriber list, now remove it from this list*/
 		lc->subscribers = bctbx_list_remove(lc->subscribers, lf);

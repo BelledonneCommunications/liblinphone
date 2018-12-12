@@ -26,10 +26,14 @@
 
 #include "c-wrapper/internal/c-sal.h"
 #include "content/content.h"
+#include "content/content-type.h"
+#include "content/content-disposition.h"
 #include "logger/logger.h"
 #include "sal/sal.h"
 
 LINPHONE_BEGIN_NAMESPACE
+
+class SalMessageOpInterface;
 
 class SalOp {
 public:
@@ -156,6 +160,8 @@ protected:
 		Refer // For out of dialog refer only
 	};
 
+	static const size_t SIP_MESSAGE_BODY_LIMIT = 16*1024; // 16kB
+
 	static std::string toString (const Type type);
 
 	using ReleaseCb = void (*) (SalOp *op);
@@ -205,6 +211,8 @@ protected:
 	void processIncomingMessage (const belle_sip_request_event_t *event);
 	int replyMessage (SalReason reason);
 	void addMessageAccept (belle_sip_message_t *message);
+
+	static int setCustomBody(belle_sip_message_t *msg, const Content &body);
 
 	static bool isExternalBody (belle_sip_header_content_type_t* contentType);
 
@@ -268,6 +276,7 @@ protected:
 	bool mOpReleased = false;
 
 	friend class Sal;
+	friend class SalMessageOpInterface;
 };
 
 LINPHONE_END_NAMESPACE

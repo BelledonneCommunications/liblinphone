@@ -82,6 +82,11 @@ ProxyChatRoom::CapabilitiesMask ProxyChatRoom::getCapabilities () const {
 	return d->chatRoom->getCapabilities() | ProxyChatRoom::Capabilities::Proxy;
 }
 
+ProxyChatRoom::SecurityLevel ProxyChatRoom::getSecurityLevel () const {
+	L_D();
+	return d->chatRoom->getSecurityLevel();
+}
+
 ProxyChatRoom::State ProxyChatRoom::getState () const {
 	L_D();
 	return d->chatRoom->getState();

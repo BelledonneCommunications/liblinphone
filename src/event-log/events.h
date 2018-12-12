@@ -23,6 +23,7 @@
 #include "conference/conference-call-event.h"
 #include "conference/conference-chat-message-event.h"
 #include "conference/conference-participant-device-event.h"
+#include "conference/conference-security-event.h"
 #include "conference/conference-subject-event.h"
 
 #endif // ifndef _L_EVENTS_H_

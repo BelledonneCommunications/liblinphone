@@ -33,6 +33,7 @@ class PlatformHelpers;
 namespace SysPaths {
 	LINPHONE_PUBLIC std::string getDataPath (PlatformHelpers *platformHelpers);
 	LINPHONE_PUBLIC std::string getConfigPath (PlatformHelpers *platformHelpers);
+	LINPHONE_PUBLIC std::string getDownloadPath (PlatformHelpers *platformHelpers);
 }
 
 LINPHONE_END_NAMESPACE

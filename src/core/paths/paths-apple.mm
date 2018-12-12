@@ -63,4 +63,22 @@ std::string SysPaths::getConfigPath (PlatformHelpers *) {
 	return fullPath.UTF8String;
 }
 
+std::string SysPaths::getDownloadPath (PlatformHelpers *) {
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+	NSString *configPath = [paths objectAtIndex:0];
+	NSString *fullPath = [configPath stringByAppendingString:@"/"];
+	if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
+		NSError *error;
+		lInfo() << "Download path " << fullPath.UTF8String << " does not exist, creating it.";
+		if (![[NSFileManager defaultManager] createDirectoryAtPath:fullPath
+									   withIntermediateDirectories:YES
+														attributes:nil
+															 error:&error]) {
+			lError() << "Create download path directory error: " << error.description;
+		}
+	}
+
+	return fullPath.UTF8String;
+}
+
 LINPHONE_END_NAMESPACE

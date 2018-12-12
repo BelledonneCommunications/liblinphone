@@ -58,6 +58,7 @@ public:
 	virtual std::string getSoundResource (const std::string &filename) const = 0;
 
 	virtual void setVideoPreviewWindow (void *windowId) = 0;
+	virtual std::string getDownloadPath () = 0;
 	virtual void setVideoWindow (void *windowId) = 0;
 
 	// This method shall retrieve DNS server list from the platform and assign it to the core.
@@ -119,6 +120,7 @@ private:
 
 	belle_sip_source_t *mMonitorTimer;
 	bool mNetworkReachable = false;
+	std::string getDownloadPath () override;
 };
 
 PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext);

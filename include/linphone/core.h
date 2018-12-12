@@ -1458,7 +1458,6 @@ LINPHONE_PUBLIC LinphoneCall *linphone_core_get_call_by_remote_address(const Lin
  */
 LINPHONE_PUBLIC LinphoneCall *linphone_core_get_call_by_remote_address2(const LinphoneCore *lc, const LinphoneAddress *remote_address);
 
-
 /**
  * @brief Send the specified dtmf.
  *
@@ -1521,7 +1520,6 @@ LINPHONE_PUBLIC bool_t linphone_core_get_guess_hostname(LinphoneCore *lc);
  */
 LINPHONE_PUBLIC void linphone_core_enable_lime(LinphoneCore *lc, LinphoneLimeState val);
 
-
 /**
  * Returns the lime state
  * @param[in] lc #LinphoneCore object
@@ -1530,13 +1528,35 @@ LINPHONE_PUBLIC void linphone_core_enable_lime(LinphoneCore *lc, LinphoneLimeSta
 **/
 LINPHONE_PUBLIC LinphoneLimeState linphone_core_lime_enabled(const LinphoneCore *lc);
 
-
 /**
  * Tells if lime is available
  * @param[in] lc #LinphoneCore object
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC bool_t linphone_core_lime_available(const LinphoneCore *lc);
+
+/**
+ * Tells to LinphoneCore to use LIME X3DH
+ * @param[in] lc LinphoneCore object
+ * @param[in] enable A boolean value telling whether to enable or disable LIME X3DH
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_enable_lime_x3dh(LinphoneCore *lc, bool_t enable);
+
+/**
+ * Tells wether LIME X3DH is enabled or not
+ * @param[in] lc LinphoneCore object
+ * @return The current lime state
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_enabled(const LinphoneCore *lc);
+
+/**
+ * Tells if LIME X3DH is available
+ * @param[in] lc LinphoneCore object
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_available(const LinphoneCore *lc);
 
 /**
  * Tells whether IPv6 is enabled or not.
@@ -2921,6 +2941,14 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED int linphone_core_get_play_level(LinphoneCor
 LINPHONE_PUBLIC LINPHONE_DEPRECATED int linphone_core_get_rec_level(LinphoneCore *lc);
 
 /**
+ * Get sound media level in 0-100 scale.
+ * @ingroup media_parameters
+ * @deprecated
+ * @donotwrap
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED int linphone_core_get_media_level(LinphoneCore *lc);
+
+/**
  * Set sound ring level in 0-100 scale.
  * @ingroup media_parameters
  * @deprecated
@@ -2943,6 +2971,14 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_play_level(LinphoneCo
  * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_rec_level(LinphoneCore *lc, int level);
+
+/**
+ * Set sound media level in 0-100 scale.
+ * @deprecated
+ * @ingroup media_parameters
+ * @donotwrap
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_media_level(LinphoneCore *lc, int level);
 
 LINPHONE_DEPRECATED char linphone_core_get_sound_source(LinphoneCore *lc);
 
@@ -3005,6 +3041,14 @@ LINPHONE_PUBLIC const char * linphone_core_get_playback_device(LinphoneCore *lc)
 LINPHONE_PUBLIC const char * linphone_core_get_capture_device(LinphoneCore *lc);
 
 /**
+ * Gets the name of the currently assigned sound device for media.
+ * @param[in] lc #LinphoneCore object
+ * @return The name of the currently assigned sound device for capture
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC const char * linphone_core_get_media_device(LinphoneCore *lc);
+
+/**
  * Sets the sound device used for ringing.
  * @param[in] lc #LinphoneCore object
  * @param[in] devid The device name as returned by linphone_core_get_sound_devices()
@@ -3030,6 +3074,15 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_playback_device(LinphoneCore *l
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC LinphoneStatus linphone_core_set_capture_device(LinphoneCore *lc, const char * devid);
+
+/**
+ * Sets the sound device used for media.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] devid The device name as returned by linphone_core_get_sound_devices()
+ * @return 0
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC LinphoneStatus linphone_core_set_media_device(LinphoneCore *lc, const char * devid);
 
 /**
  * Whenever the liblinphone is playing a ring to advertise an incoming call or ringback of an outgoing call, this function stops
@@ -4260,7 +4313,7 @@ LINPHONE_PUBLIC void linphone_core_set_zrtp_secrets_file(LinphoneCore *lc, const
 LINPHONE_PUBLIC const char *linphone_core_get_zrtp_secrets_file(LinphoneCore *lc);
 
 /**
- * Get a pointer to the sqlite db holding zrtp/lime cache
+ * Get a pointer to the sqlite db holding zrtp/lime cache.
  * @param[in] lc #LinphoneCore object.
  * @return An sqlite3 pointer cast to a void one or NULL if cache is not available(not enabled at compile or access failed)
  * @ingroup initializing
@@ -4281,6 +4334,18 @@ typedef struct _zrtpCacheAccess zrtpCacheAccess;
  * @return a structure holding db pointer(NULL is cache is not available by built or runtime error) and the mutex associated to it
  */
 LINPHONE_PUBLIC  zrtpCacheAccess linphone_core_get_zrtp_cache_access(LinphoneCore *lc);
+
+/**
+ * Get the zrtp sas validation status for a peer uri.
+ * Once the SAS has been validated or rejected, the status will never return to Unknown (unless you delete your cache)
+ * @param[in] lc #LinphoneCore object.
+ * @param[in] addr the peer uri
+ * @ingroup media_parameters
+ * @return  - LinphoneZrtpPeerStatusUnknown: this uri is not present in cache OR during calls with the active device, SAS never was validated or rejected
+ *  		- LinphoneZrtpPeerStatusValid: the active device status is set to valid
+ *  		- LinphoneZrtpPeerStatusInvalid: the active peer device status is set to invalid
+ */
+LINPHONE_PUBLIC LinphoneZrtpPeerStatus linphone_core_get_zrtp_status(LinphoneCore *lc, const char *addr);
 
 /**
  * Set the path to the directory storing the user's x509 certificates (used by dtls)
@@ -5162,6 +5227,18 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC const char *linphone_core_get_chat_database_
 LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_create_client_group_chat_room(LinphoneCore *lc, const char *subject, bool_t fallback);
 
 /**
+ * Create a client-side group chat room. When calling this function the chat room is only created
+ * at the client-side and is empty. You need to call linphone_chat_room_add_participants() to
+ * create at the server side and add participants to it.
+ * @param[in] lc A #LinphoneCore object
+ * @param[in] subject The subject of the group chat room
+ * @param[in] fallback Boolean value telling whether we should plan on being able to fallback to a basic chat room if the client-side group chat room creation fails
+ * @param[in] encrypted Boolean value telling whether we should apply encryption or not on chat messages sent and received on this room.
+ * @return The newly created client-side group chat room.
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_client_group_chat_room_2 (LinphoneCore *lc, const char *subject, bool_t fallback, bool_t encrypted);
+
+/**
  * Get a basic chat room whose peer is the supplied address. If it does not exist yet, it will be created.
  * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
  * @param lc the linphone core
@@ -5214,11 +5291,28 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_find_chat_room (
  * @param local_addr a linphone address.
  * @param participant_addr a linphone address.
  * @return #LinphoneChatRoom where messaging can take place.
+ * @deprecated Use linphone_core_find_one_to_one_chat_room_2 instead
 **/
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_find_one_to_one_chat_room (
 	const LinphoneCore *lc,
 	const LinphoneAddress *local_addr,
 	const LinphoneAddress *participant_addr
+);
+
+/**
+ * Find a one to one chat room.
+ * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * @param lc the linphone core
+ * @param local_addr a linphone address.
+ * @param participant_addr a linphone address.
+ * @param encrypted whether to look for an encrypted chat room or not
+ * @return #LinphoneChatRoom where messaging can take place.
+**/
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_find_one_to_one_chat_room_2 (
+	const LinphoneCore *lc,
+	const LinphoneAddress *local_addr,
+	const LinphoneAddress *participant_addr,
+	bool_t encrypted
 );
 
 /**
@@ -5644,7 +5738,21 @@ LINPHONE_PUBLIC void linphone_core_notify_notify_presence_received(LinphoneCore 
  */
 LINPHONE_PUBLIC void linphone_core_notify_notify_presence_received_for_uri_or_tel(LinphoneCore *lc, LinphoneFriend *lf, const char *uri_or_tel, const LinphonePresenceModel *presence_model);
 
+/**
+ * Sets the size under which incoming files in chat messages will be downloaded automatically.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] size The size in bytes, -1 to disable the autodownload feature, 0 to download them all no matter the size
+ * @ingroup chat
+**/
+LINPHONE_PUBLIC void linphone_core_set_max_size_for_auto_download_incoming_files(LinphoneCore *lc, int size);
 
+/**
+ * Gets the size under which incoming files in chat messages will be downloaded automatically.
+ * @param[in] lc #LinphoneCore object
+ * @return The size in bytes, -1 if autodownload feature is disabled, 0 to download them all no matter the size
+ * @ingroup chat
+**/
+LINPHONE_PUBLIC int linphone_core_get_max_size_for_auto_download_incoming_files(LinphoneCore *lc);
 
 /**
  * @}

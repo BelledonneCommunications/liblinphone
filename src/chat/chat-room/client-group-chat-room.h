@@ -28,12 +28,15 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class ClientGroupChatRoomPrivate;
+enum class SecurityLevel;
 
 class LINPHONE_PUBLIC ClientGroupChatRoom : public ChatRoom, public RemoteConference {
 	friend class BasicToClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
 	friend class Core;
 	friend class CorePrivate;
+	friend class LimeX3dhEncryptionEngine;
+	friend class MediaSessionPrivate;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ClientGroupChatRoom);
@@ -44,7 +47,8 @@ public:
 		const std::string &factoryUri,
 		const IdentityAddress &me,
 		const std::string &subject,
-		const Content &content
+		const Content &content,
+		bool encrypted = false
 	);
 
 	ClientGroupChatRoom (
@@ -68,6 +72,7 @@ public:
 	bool canHandleMultipart () const override;
 
 	CapabilitiesMask getCapabilities () const override;
+	ChatRoom::SecurityLevel getSecurityLevel () const override;
 	bool hasBeenLeft () const override;
 
 	const IdentityAddress &getConferenceAddress () const override;
@@ -75,6 +80,9 @@ public:
 	bool canHandleParticipants () const override;
 
 	void deleteFromDb () override;
+
+	std::list<std::shared_ptr<EventLog>> getHistory (int nLast) const override;
+	std::list<std::shared_ptr<EventLog>> getHistoryRange (int begin, int end) const override;
 
 	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
 	bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
@@ -103,6 +111,7 @@ private:
 	void onConferenceCreated (const IdentityAddress &addr) override;
 	void onConferenceKeywordsChanged (const std::vector<std::string> &keywords) override;
 	void onConferenceTerminated (const IdentityAddress &addr) override;
+	void onSecurityEvent (const std::shared_ptr<ConferenceSecurityEvent> &event) override;
 	void onFirstNotifyReceived (const IdentityAddress &addr) override;
 	void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
 	void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) override;

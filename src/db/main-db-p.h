@@ -98,7 +98,7 @@ private:
 		const soci::row &row
 	) const;
 
-	std::shared_ptr<EventLog> selectGenericConferenceNotifiedEvent (
+	std::shared_ptr<EventLog> selectConferenceInfoEvent (
 		const ConferenceId &conferenceId,
 		const soci::row &row
 	) const;
@@ -133,6 +133,12 @@ private:
 		const soci::row &row
 	) const;
 
+	std::shared_ptr<EventLog> selectConferenceSecurityEvent (
+		const ConferenceId &conferenceId,
+		EventLog::Type type,
+		const soci::row &row
+	) const;
+
 	std::shared_ptr<EventLog> selectConferenceSubjectEvent (
 		const ConferenceId &conferenceId,
 		EventLog::Type type,
@@ -148,6 +154,7 @@ private:
 	long long insertConferenceParticipantEvent (const std::shared_ptr<EventLog> &eventLog, long long *chatRoomId = nullptr);
 	long long insertConferenceParticipantDeviceEvent (const std::shared_ptr<EventLog> &eventLog);
 	long long insertConferenceSubjectEvent (const std::shared_ptr<EventLog> &eventLog);
+	long long insertConferenceSecurityEvent (const std::shared_ptr<EventLog> &eventLog);
 
 	void setChatMessageParticipantState (
 		const std::shared_ptr<EventLog> &eventLog,

@@ -15,19 +15,19 @@ This library is used by Linphone. It's source code is available at *linphone-des
 * **BcToolbox[2]:** portability layer
 * **BelleSIP[3]:** SIP stack
 * **Mediastreamer2[4]:** multimedia engine
-* **Belcard[5]:** VCard support
+* **Belcard[5]:** VCard4 support
 * **libxml2**
 * **zlib**
-* **libsqlite3:** user data storage (disablable)
-* **gettext** and **libintl**: internationalization support (disablable)
-* **python interpreter** and **pystache**, **six** python module (needed for C++ wrapper and API documentaiton)
+* **libsqlite3:** user data storage (can be disabled)
+* **gettext** and **libintl**: internationalization support (can be disabled)
+* **python interpreter** and **pystache**, **six** python module (needed for C++/C#/Java wrappers and API documentation)
 * **doxygen** and **dot** (needed for C++ wrapper and API documentation)
 
 
 ## Optional dependencies
 
-* **Bzrtp[6]**: zrtp stack used for Linphone Instant Messaging Encryption.
-* For API documentatino generation: **sphinx**, **javasphinx**, **sphinx_csharp** python modules are needed.
+* **Bzrtp[6]**: zrtp stack used to secure calls and for LIME (Linphone Instant Messaging Encryption).
+* For API documentation generation: **sphinx**, **javasphinx**, **sphinx_csharp** python modules are needed.
 
 
 ## Build instructions
@@ -47,9 +47,9 @@ This library is used by Linphone. It's source code is available at *linphone-des
 * **`ENABLE_STRICT=NO`**              : build without strict compilation flags (-Wall -Werror)
 * **`ENABLE_DOC=YES`**                : Make the reference documentation of liblinphone to generated
 * **`ENABLE_UNIT_TESTS=NO`**          : do not build testing binaries
-* **`ENABLE_VCARD=NO`**               : disable VCard support
+* **`ENABLE_VCARD=NO`**               : disable VCard4 support
 * **`ENABLE_TOOLS=NO`**               : do not build tool binaries
-* **`ENABLE_LIME=YES`**               : disable Linphone Instant Messaging Encryption
+* **`ENABLE_LIME=NO`**                : disable Linphone Instant Messaging Encryption
 
 ## Note for packagers
 

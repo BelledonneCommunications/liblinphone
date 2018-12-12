@@ -20,8 +20,8 @@
 #include <cstring>
 
 #include "c-wrapper/internal/c-tools.h"
-#include "sal/op.h"
 #include "bellesip_sal/sal_impl.h"
+#include "sal/op.h"
 
 using namespace std;
 
@@ -664,6 +664,9 @@ int SalOp::sendRequestAndCreateRefresher (belle_sip_request_t *request, int expi
 		belle_sip_refresher_stop(mRefresher);
 		belle_sip_object_unref(mRefresher);
 	}
+	
+	//As stated a few lines below, "we should remove our context from the transaction", including op
+	belle_sip_transaction_set_application_data(BELLE_SIP_TRANSACTION(mPendingClientTransaction), nullptr);
 	mRefresher = belle_sip_client_transaction_create_refresher(mPendingClientTransaction);
 	if (!mRefresher)
 		return -1;
@@ -936,6 +939,42 @@ int SalOp::unsubscribe () {
 	auto lastRequest = belle_sip_transaction_get_request(transaction);
 	belle_sip_message_set_body(BELLE_SIP_MESSAGE(lastRequest), nullptr, 0);
 	belle_sip_refresher_refresh(mRefresher, 0);
+	return 0;
+}
+
+int SalOp::setCustomBody(belle_sip_message_t *msg, const Content &body) {
+	ContentType contentType = body.getContentType();
+	auto contentDisposition = body.getContentDisposition();
+	string contentEncoding = body.getContentEncoding();
+	size_t bodySize = body.getBody().size();
+
+	if (bodySize > SIP_MESSAGE_BODY_LIMIT) {
+		bctbx_error("trying to add a body greater than %lukB to message [%p]", (unsigned long)SIP_MESSAGE_BODY_LIMIT/1024, msg);
+		return -1;
+	}
+
+	if (contentType.isValid()) {
+		belle_sip_header_content_type_t *content_type = belle_sip_header_content_type_create(contentType.getType().c_str(), contentType.getSubType().c_str());
+		belle_sip_message_add_header(msg, BELLE_SIP_HEADER(content_type));
+	}
+	if (contentDisposition.isValid()) {
+		belle_sip_header_content_disposition_t *contentDispositionHeader = belle_sip_header_content_disposition_create(
+			contentDisposition.asString().c_str()
+		);
+		belle_sip_message_add_header(msg, BELLE_SIP_HEADER(contentDispositionHeader));
+	}
+	if (!contentEncoding.empty())
+		belle_sip_message_add_header(msg, belle_sip_header_create("Content-Encoding", contentEncoding.c_str()));
+	belle_sip_header_content_length_t *content_length = belle_sip_header_content_length_create(bodySize);
+	belle_sip_message_add_header(msg, BELLE_SIP_HEADER(content_length));
+
+	if (bodySize > 0) {
+		char *buffer = bctbx_new(char, bodySize + 1);
+		memcpy(buffer, body.getBody().data(), bodySize);
+		buffer[bodySize] = '\0';
+		belle_sip_message_assign_body(msg, buffer, bodySize);
+	}
+
 	return 0;
 }
 

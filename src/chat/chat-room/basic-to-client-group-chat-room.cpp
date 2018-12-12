@@ -78,10 +78,11 @@ public:
 		}
 		migrationRealTime = currentRealTime;
 		clientGroupChatRoom = static_pointer_cast<ClientGroupChatRoom>(
-			chatRoom->getCore()->getPrivate()->createClientGroupChatRoom(chatRoom->getSubject(), "", Content(), false)
+			chatRoom->getCore()->getPrivate()->createClientGroupChatRoom(chatRoom->getSubject(), "", Content(), false, false)
 		);
 		clientGroupChatRoom->getPrivate()->setCallSessionListener(this);
 		clientGroupChatRoom->getPrivate()->setChatRoomListener(this);
+		clientGroupChatRoom->getPrivate()->addOneToOneCapability(); //make sure to have a one2one chatroom
 		clientGroupChatRoom->addParticipant(chatRoom->getPeerAddress(), nullptr, false);
 	}
 

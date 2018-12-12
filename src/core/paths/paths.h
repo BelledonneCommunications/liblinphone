@@ -32,7 +32,8 @@ class PlatformHelpers;
 namespace Paths {
 	enum Type {
 		Data,
-		Config
+		Config,
+		Download
 	};
 
 	LINPHONE_PUBLIC std::string getPath (Type type, PlatformHelpers *platformHelpers);
