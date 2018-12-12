@@ -1150,13 +1150,7 @@ void MainDbPrivate::updateSchema () {
 	}
 	if (version < makeVersion(1, 0, 6)) {
 		*session << "DROP VIEW IF EXISTS conference_event_view";
-
-		string query;
-		if (q->getBackend() == AbstractDb::Backend::Mysql)
-			query = "CREATE VIEW conference_event_view AS";
-		else
-			query = "CREATE VIEW conference_event_view AS";
-		*session << query +
+		*session << "CREATE VIEW conference_event_view AS"
 			"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device"
 			"  FROM event"
 			"  LEFT JOIN conference_event ON conference_event.event_id = event.id"
