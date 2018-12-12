@@ -1735,6 +1735,10 @@ int linphone_friend_get_capabilities(const LinphoneFriend *lf) {
 	return lf->capabilities;
 }
 
+bool_t linphone_friend_has_capability(const LinphoneFriend *lf, const LinphoneFriendCapability capability) {
+	return lf->capabilities & capability;
+}
+
 namespace {
 	const std::unordered_map<std::string, LinphoneFriendCapability> StringToCapability{
 		{ "groupchat", LinphoneFriendCapabilityGroupChat },
