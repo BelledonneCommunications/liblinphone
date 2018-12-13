@@ -267,9 +267,9 @@ LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneCh
 	linphone_content_set_type(content,"video");
 	linphone_content_set_subtype(content,"mkv");
 	linphone_content_set_name(content,"sintel_trailer_opus_h264.mkv");
+	linphone_content_set_file_path(content, send_filepath);
 
 	msg = linphone_chat_room_create_file_transfer_message(chat_room, content);
-	linphone_chat_message_set_file_transfer_filepath(msg, send_filepath);
 	cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_file_transfer_send(cbs, tester_file_transfer_send);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
@@ -504,8 +504,8 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 		if (marie->stat.last_received_chat_message) {
 			LinphoneChatRoom *marie_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
 			linphone_chat_room_mark_as_read(marie_room);
-			// We shoudln't get displayed IMDN until file has been downloaded
-			BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+			// We should get display notification even if the file has not been downloaded yet
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
 
 			LinphoneChatMessage *recv_msg;
 			if (download_from_history) {
@@ -532,7 +532,6 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 				belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), -1);
 				BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageNotDelivered,1, 10000));
 				belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), 0);
-				BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
 			} else {
 				/* wait for a long time in case the DNS SRV resolution takes times - it should be immediate though */
 				if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,1,55000))) {
