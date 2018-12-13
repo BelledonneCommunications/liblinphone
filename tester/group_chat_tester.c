@@ -228,6 +228,8 @@ static void _send_file(LinphoneChatRoom* cr, const char *sendFilepath) {
 	_send_file_plus_text(cr, sendFilepath, NULL);
 }
 
+#define MAX_DOWNLOAD_TIME 30000 //can take up to 30s under low bandwidth network
+
 static void _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *receiverStats, const char *receive_filepath, const char *sendFilepath) {
 	if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneMessageReceivedWithFile, receiverStats->number_of_LinphoneMessageReceivedWithFile + 1, 10000))) {
 		LinphoneChatMessageCbs *cbs;
@@ -243,7 +245,7 @@ static void _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, sta
 		linphone_content_set_file_path(fileTransferContent, receive_filepath);
 		linphone_chat_message_download_content(msg, fileTransferContent);
 
-		if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneFileTransferDownloadSuccessful,receiverStats->number_of_LinphoneFileTransferDownloadSuccessful + 1, 20000))) {
+		if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneFileTransferDownloadSuccessful,receiverStats->number_of_LinphoneFileTransferDownloadSuccessful + 1, MAX_DOWNLOAD_TIME))) {
 			compare_files(sendFilepath, receive_filepath);
 		}
 	}
@@ -267,7 +269,7 @@ static void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager
 		linphone_content_set_file_path(fileTransferContent, receive_filepath);
 		linphone_chat_message_download_content(msg, fileTransferContent);
 
-		if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneFileTransferDownloadSuccessful,receiverStats->number_of_LinphoneFileTransferDownloadSuccessful + 1, 20000))) {
+		if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneFileTransferDownloadSuccessful,receiverStats->number_of_LinphoneFileTransferDownloadSuccessful + 1, MAX_DOWNLOAD_TIME))) {
 			compare_files(sendFilepath, receive_filepath);
 		}
 	}
