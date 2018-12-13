@@ -118,7 +118,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/cpim/parser/cpim-parser.h
 	chat/encryption/encryption-engine.h
 	chat/encryption/legacy-encryption-engine.h
-	chat/encryption/lime-x3dh-encryption-engine.h
 	chat/modifier/chat-message-modifier.h
 	chat/modifier/cpim-chat-message-modifier.h
 	chat/modifier/encryption-chat-message-modifier.h
@@ -278,7 +277,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/cpim/message/cpim-message.cpp
 	chat/cpim/parser/cpim-parser.cpp
 	chat/encryption/legacy-encryption-engine.cpp
-	chat/encryption/lime-x3dh-encryption-engine.cpp
 	chat/modifier/cpim-chat-message-modifier.cpp
 	chat/modifier/encryption-chat-message-modifier.cpp
 	chat/modifier/file-transfer-chat-message-modifier.cpp
@@ -380,6 +378,11 @@ elseif (UNIX)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES core/paths/paths-linux.cpp)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-linux.h)
 endif ()
+
+if(LIME_FOUND)
+	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES chat/encryption/lime-x3dh-encryption-engine.h)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES chat/encryption/lime-x3dh-encryption-engine.cpp)
+endif()
 
 set(LINPHONE_CXX_OBJECTS_INCLUDE_DIRS
 	${BELR_INCLUDE_DIRS}
