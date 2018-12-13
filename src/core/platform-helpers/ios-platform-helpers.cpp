@@ -174,12 +174,16 @@ string IosPlatformHelpers::getResourceDirPath (const string &framework, const st
 	CFStringRef cfResource = CFStringCreateWithCString(nullptr, resource.c_str(), encodingMethod);
 	CFBundleRef bundle = CFBundleGetBundleWithIdentifier(cfFramework);
 	CFURLRef resourceUrl = CFBundleCopyResourceURL(bundle, cfResource, nullptr, nullptr);
-	CFURLRef resourceUrlDirectory = CFURLCreateCopyDeletingLastPathComponent(nullptr, resourceUrl);
-	CFStringRef resourcePath = CFURLCopyFileSystemPath(resourceUrlDirectory, kCFURLPOSIXPathStyle);
-	string path(CFStringGetCStringPtr(resourcePath, encodingMethod));
-	CFRelease(resourcePath);
-	CFRelease(resourceUrlDirectory);
-	CFRelease(resourceUrl);
+	string path("");
+	if (resourceUrl) {
+		CFURLRef resourceUrlDirectory = CFURLCreateCopyDeletingLastPathComponent(nullptr, resourceUrl);
+		CFStringRef resourcePath = CFURLCopyFileSystemPath(resourceUrlDirectory, kCFURLPOSIXPathStyle);
+		path = CFStringGetCStringPtr(resourcePath, encodingMethod);
+		CFRelease(resourcePath);
+		CFRelease(resourceUrlDirectory);
+		CFRelease(resourceUrl);
+	}
+
 	CFRelease(cfResource);
 	CFRelease(cfFramework);
 	return path;
