@@ -1266,7 +1266,7 @@ static void test_list_subscribe_wrong_body(void) {
 	LinphoneAddress *sub_addr = linphone_address_new("sip:rls@sip.example.com");
 
 	lev=linphone_core_create_subscribe(marie->lc,sub_addr,"presence",60);
-
+	linphone_event_ref(lev);
 	linphone_event_add_custom_header(lev,"Supported","eventlist");
 	linphone_event_add_custom_header(lev,"Accept","application/pidf+xml, application/rlmi+xml");
 	linphone_event_add_custom_header(lev,"Content-Disposition", "recipient-list");
@@ -1279,6 +1279,7 @@ static void test_list_subscribe_wrong_body(void) {
 	BC_ASSERT_FALSE(wait_for_until(marie->lc,NULL,&marie->stat.number_of_LinphoneSubscriptionActive,1,2000));
 
 	linphone_event_terminate(lev);
+	linphone_event_unref(lev);
 	linphone_core_manager_destroy(marie);
 	linphone_address_unref(sub_addr);
 }
