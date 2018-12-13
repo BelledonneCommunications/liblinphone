@@ -21,7 +21,6 @@
 #include <math.h>
 
 #include "address/address-p.h"
-#include "bzrtp/bzrtp.h"
 #include "call/call-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
 #include "conference/params/media-session-params-p.h"
