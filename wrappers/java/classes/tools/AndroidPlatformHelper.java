@@ -163,6 +163,10 @@ public class AndroidPlatformHelper {
 		postNetworkUpdateRunner();
 	}
 
+	public void onLinphoneCoreStop() {
+		mMainHandler.removeCallbacks(mNetworkUpdateRunner);
+	}
+
 	public void onWifiOnlyEnabled(boolean enabled) {
 		mWifiOnly = enabled;
 		postNetworkUpdateRunner();

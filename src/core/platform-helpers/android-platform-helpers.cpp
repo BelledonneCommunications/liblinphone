@@ -61,6 +61,7 @@ public:
 	void setHttpProxy (string host, int port) override;
 
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
+	void onLinphoneCoreStop () override;
 
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
@@ -88,6 +89,7 @@ private:
 	jmethodID mSetNativePreviewVideoWindowId;
 	jmethodID mUpdateNetworkReachabilityId;
 	jmethodID mOnLinphoneCoreStartId;
+	jmethodID mOnLinphoneCoreStopId;
 	jmethodID mOnWifiOnlyEnabledId;
 	jobject mPreviewVideoWindow;
 	jobject mVideoWindow;
@@ -141,6 +143,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 	mSetNativePreviewVideoWindowId = getMethodId(env, klass, "setVideoPreviewView", "(Ljava/lang/Object;)V");
 	mUpdateNetworkReachabilityId = getMethodId(env, klass, "updateNetworkReachability", "()V");
 	mOnLinphoneCoreStartId = getMethodId(env, klass, "onLinphoneCoreStart", "(Z)V");
+	mOnLinphoneCoreStopId = getMethodId(env, klass, "onLinphoneCoreStop", "()V");
 	mOnWifiOnlyEnabledId = getMethodId(env, klass, "onWifiOnlyEnabled", "(Z)V");
 
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
@@ -337,6 +340,13 @@ void AndroidPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	JNIEnv *env = ms_get_jni_env();
 	if (env && mJavaHelper) {
 		env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStartId, (jboolean)monitoringEnabled);
+	}
+}
+
+void AndroidPlatformHelpers::onLinphoneCoreStop() {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStopId);
 	}
 }
 

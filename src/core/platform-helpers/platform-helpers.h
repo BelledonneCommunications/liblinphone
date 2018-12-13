@@ -69,6 +69,7 @@ public:
 	virtual void setNetworkReachable (bool reachable) = 0;
 
 	virtual void onLinphoneCoreStart (bool monitoringEnabled) = 0;
+	virtual void onLinphoneCoreStop () = 0;
 
 protected:
 	inline explicit PlatformHelpers (LinphoneCore *lc) : mCore(lc) {}
@@ -111,6 +112,7 @@ public:
 	void setNetworkReachable (bool reachable) override;
 
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
+	void onLinphoneCoreStop () override;
 
 private:
 	static int monitorTimerExpired (void *data, unsigned int revents);
