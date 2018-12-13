@@ -1005,7 +1005,7 @@ int SalCallOp::decline (SalReason reason, const string &redirectionUri) {
 			if (strstr(redirectionUri.c_str(), "sip:") != 0)
 				status = 302;
 			else
-				status=380;
+				status = 380;
 			contactHeader = belle_sip_header_contact_new();
 			belle_sip_header_address_set_uri(BELLE_SIP_HEADER_ADDRESS(contactHeader), belle_sip_uri_parse(redirectionUri.c_str()));
 		} else {

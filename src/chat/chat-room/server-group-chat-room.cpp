@@ -165,7 +165,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	Address contactAddr(op->getRemoteContact());
 	if (contactAddr.getUriParamValue("gr").empty()) {
 		lError() << q << ": Declining INVITE because the contact does not have a 'gr' uri parameter [" << contactAddr.asString() << "]";
-		op->decline(SalReasonDeclined, nullptr);
+		op->decline(SalReasonDeclined, "");
 		joiningPendingAfterCreation = false;
 		return;
 	}
@@ -190,7 +190,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		participant = q->findParticipant(IdentityAddress(op->getFrom()));
 		if (!participant) {
 			lError() << q << ": Declining INVITE coming from someone that is not a participant";
-			op->decline(SalReasonDeclined, nullptr);
+			op->decline(SalReasonDeclined, "");
 			joiningPendingAfterCreation = false;
 			return;
 		}
@@ -216,7 +216,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		if (!res) {
 			if (joiningPendingAfterCreation) {
 				lError() << q << ": Declining INVITE because we expected a non-empty list of participants to invite";
-				op->decline(SalReasonNotAcceptable, nullptr);
+				op->decline(SalReasonNotAcceptable, "");
 				chatRoomListener->onChatRoomDeleteRequested(q->getSharedFromThis());
 			} else {
 				acceptSession(session);
