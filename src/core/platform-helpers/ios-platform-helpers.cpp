@@ -71,6 +71,7 @@ public:
 	void setNetworkReachable (bool reachable) override {}
 
 	void onLinphoneCoreStart (bool monitoringEnabled) override {}
+	void onLinphoneCoreStop () override {}
 
 private:
 	void bgTaskTimeout ();

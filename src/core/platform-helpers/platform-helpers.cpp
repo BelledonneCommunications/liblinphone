@@ -129,6 +129,8 @@ void GenericPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
 	monitorTimerExpired(this, 0);
 }
 
+void GenericPlatformHelpers::onLinphoneCoreStop () {}
+
 
 int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revents) {
 	GenericPlatformHelpers *helper = static_cast<GenericPlatformHelpers *>(data);
