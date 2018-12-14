@@ -153,18 +153,26 @@ public class AndroidPlatformHelper {
 		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mDozeIntentFilter = new IntentFilter();
-            mDozeIntentFilter.addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED);
-            mDozeReceiver = new DozeReceiver(this);
-            dozeModeEnabled = ((PowerManager) mContext.getSystemService(Context.POWER_SERVICE)).isDeviceIdleMode();
-            mContext.registerReceiver(mDozeReceiver, mDozeIntentFilter);
+			mDozeIntentFilter = new IntentFilter();
+			mDozeIntentFilter.addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED);
+			mDozeReceiver = new DozeReceiver(this);
+			dozeModeEnabled = ((PowerManager) mContext.getSystemService(Context.POWER_SERVICE)).isDeviceIdleMode();
+			mContext.registerReceiver(mDozeReceiver, mDozeIntentFilter);
 		}
 
 		postNetworkUpdateRunner();
 	}
 
 	public synchronized void onLinphoneCoreStop() {
-		mNetworkManagerAbove21.unregisterNetworkCallbacks(mConnectivityManager);
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+			mContext.unregisterReceiver(mNetworkReceiver);
+		} else {
+			mNetworkManagerAbove21.unregisterNetworkCallbacks(mConnectivityManager);
+		}
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			mContext.unregisterReceiver(mDozeReceiver);
+		}
 
 		mNativePtr = 0;
 		mMainHandler.removeCallbacks(mNetworkUpdateRunner);
