@@ -1746,7 +1746,6 @@ static void publish_with_network_state_changes(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-#if 0
 static void simple_bodyless_list_subscription(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneFriendList *friendList = linphone_core_create_friend_list(marie->lc);
@@ -1756,6 +1755,7 @@ static void simple_bodyless_list_subscription(void) {
 	linphone_friend_list_set_subscription_bodyless(friendList, TRUE);
 
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_NotifyPresenceReceived, 4, 15000));
+	ms_error("*********************** presence received : %d", marie->stat.number_of_NotifyPresenceReceived);
 	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(friendList)), 4, int, "%d");
 	LinphoneFriend *friend1 = linphone_friend_list_find_friend_by_uri(friendList, "sip:friend1@sip.example.org");
 	if (!BC_ASSERT_PTR_NOT_NULL(friend1))
@@ -1792,7 +1792,7 @@ static void multiple_bodyless_list_subscription(void) {
 	linphone_friend_list_set_display_name(broList, "Bros");
 	linphone_friend_list_set_subscription_bodyless(broList, TRUE);
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_NotifyPresenceReceived, 8, 8000));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_NotifyPresenceReceived, 8, 15000));
 
 	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(friendList)), 4, int, "%d");
 	LinphoneFriend *friend1 = linphone_friend_list_find_friend_by_uri(friendList, "sip:friend1@sip.example.org");
@@ -1824,7 +1824,7 @@ end:
 static void multiple_bodyless_list_subscription_with_rc(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_bodyless_rc");
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_NotifyPresenceReceived, 9, 8000));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_NotifyPresenceReceived, 8, 15000));
 
 	LinphoneFriendList *friendList = linphone_core_get_friend_list_by_name(marie->lc, "Friends of Marie");
 	LinphoneFriendList *buddyList = linphone_core_get_friend_list_by_name(marie->lc, "buddies");
@@ -1857,7 +1857,6 @@ static void multiple_bodyless_list_subscription_with_rc(void) {
 end:
 	linphone_core_manager_destroy(marie);
 }
-#endif
 
 static void notify_friend_capabilities(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
@@ -1980,11 +1979,9 @@ test_t presence_server_tests[] = {
 	TEST_NO_TAG("Extended notify only when both side subscribed to each other 2", extended_notify_only_both_side_subscribed2),
 	TEST_NO_TAG("Extended notify only when subscribe then unsubscribe then re-subscribe", extended_notify_sub_unsub_sub),
 	TEST_NO_TAG("Extended notify only when subscribe then unsubscribe then re-subscribe 2", extended_notify_sub_unsub_sub2),
-#if 0
 	TEST_ONE_TAG("Simple bodyless list subscription", simple_bodyless_list_subscription, "bodyless"),
 	TEST_ONE_TAG("Multiple bodyless list subscription", multiple_bodyless_list_subscription, "bodyless"),
 	TEST_ONE_TAG("Multiple bodyless list subscription with rc", multiple_bodyless_list_subscription_with_rc, "bodyless"),
-#endif
 	TEST_NO_TAG("Notify LinphoneFriend capabilities", notify_friend_capabilities),
 };
 
