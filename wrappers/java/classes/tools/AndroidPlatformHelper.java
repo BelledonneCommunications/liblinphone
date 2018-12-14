@@ -164,6 +164,8 @@ public class AndroidPlatformHelper {
 	}
 
 	public synchronized void onLinphoneCoreStop() {
+		mNetworkManagerAbove21.unregisterNetworkCallbacks(mConnectivityManager);
+
 		mNativePtr = 0;
 		mMainHandler.removeCallbacks(mNetworkUpdateRunner);
 	}

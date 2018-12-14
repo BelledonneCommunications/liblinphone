@@ -34,28 +34,32 @@ import org.linphone.core.tools.AndroidPlatformHelper;
  * Intercept network state changes and update linphone core.
  */
 public class NetworkManagerAbove21 {
-    private AndroidPlatformHelper mHelper;
+	private ConnectivityManager.NetworkCallback mNetworkCallback;
 
-    public NetworkManagerAbove21(AndroidPlatformHelper helper) {
-        mHelper = helper;
-    }
+	public NetworkManagerAbove21(final AndroidPlatformHelper helper) {
+		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
+			@Override
+			public void onAvailable(Network network) {
+				helper.postNetworkUpdateRunner();
+			}
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+			@Override
+			public void onLost(Network network) {
+				helper.postNetworkUpdateRunner();
+			}
+		};
+	}
+
+	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 	public void registerNetworkCallbacks(ConnectivityManager connectivityManager) {
 		connectivityManager.registerNetworkCallback(
 			new NetworkRequest.Builder().build(),
-			new ConnectivityManager.NetworkCallback() {
-				@Override
-				public void onAvailable(Network network) {
-					mHelper.postNetworkUpdateRunner();
-				}
-
-				@Override
-				public void onLost(Network network) {
-					mHelper.postNetworkUpdateRunner();
-				}
-			}
+			mNetworkCallback
 		);
 	}
 
+	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
+	public void unregisterNetworkCallbacks(ConnectivityManager connectivityManager) {
+		connectivityManager.unregisterNetworkCallback(mNetworkCallback);
+	}
 }
