@@ -163,7 +163,8 @@ public class AndroidPlatformHelper {
 		postNetworkUpdateRunner();
 	}
 
-	public void onLinphoneCoreStop() {
+	public synchronized void onLinphoneCoreStop() {
+		mNativePtr = 0;
 		mMainHandler.removeCallbacks(mNetworkUpdateRunner);
 	}
 
@@ -341,7 +342,7 @@ public class AndroidPlatformHelper {
 		}
 	}
 
-	public void setVideoPreviewView(Object view) {
+	public synchronized void setVideoPreviewView(Object view) {
 		if (!(view instanceof TextureView)) {
 			throw new RuntimeException("Preview window id is not an instance of TextureView. " +
 				"Please update your UI layer so that the preview video view is a TextureView (or an instance of it)" +
@@ -379,7 +380,7 @@ public class AndroidPlatformHelper {
 		}
 	}
 
-	public void setVideoRenderingView(Object view) {
+	public synchronized void setVideoRenderingView(Object view) {
 		if (!(view instanceof TextureView)) {
 			throw new RuntimeException("Rendering window id is not an instance of TextureView." +
 				"Please update your UI layer so that the video rendering view is a TextureView (or an instance of it)" +
@@ -423,8 +424,11 @@ public class AndroidPlatformHelper {
 		mMainHandler.post(mNetworkUpdateRunner);
 	}
 
-	public void updateNetworkReachability() {
+	public synchronized void updateNetworkReachability() {
 		if (mConnectivityManager == null) return;
+		if (mNativePtr == 0) {
+			return;
+		}
 
 		boolean usingHttpProxyBefore = mUsingHttpProxy;
 		boolean connected = false;
