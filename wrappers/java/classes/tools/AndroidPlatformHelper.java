@@ -90,6 +90,7 @@ public class AndroidPlatformHelper {
 	private NetworkManagerAbove21 mNetworkManagerAbove21;
 	private Handler mMainHandler;
 	private Runnable mNetworkUpdateRunner;
+	private boolean mMonitoringEnabled;
 
 	private native void setNativePreviewWindowId(long nativePtr, Object view);
 	private native void setNativeVideoWindowId(long nativePtr, Object view);
@@ -141,38 +142,12 @@ public class AndroidPlatformHelper {
 	}
 
 	public void onLinphoneCoreStart(boolean monitoringEnabled) {
-		if (!monitoringEnabled) return;
-		
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-			mNetworkReceiver = new NetworkManager(this);
-			mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-			mContext.registerReceiver(mNetworkReceiver, mNetworkIntentFilter);
-		} else {
-			mNetworkManagerAbove21 = new NetworkManagerAbove21(this);
-			mNetworkManagerAbove21.registerNetworkCallbacks(mConnectivityManager);
-		}
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			mDozeIntentFilter = new IntentFilter();
-			mDozeIntentFilter.addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED);
-			mDozeReceiver = new DozeReceiver(this);
-			dozeModeEnabled = ((PowerManager) mContext.getSystemService(Context.POWER_SERVICE)).isDeviceIdleMode();
-			mContext.registerReceiver(mDozeReceiver, mDozeIntentFilter);
-		}
-
-		postNetworkUpdateRunner();
+		mMonitoringEnabled = monitoringEnabled;
+		startNetworkMonitoring();
 	}
 
 	public synchronized void onLinphoneCoreStop() {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-			mContext.unregisterReceiver(mNetworkReceiver);
-		} else {
-			mNetworkManagerAbove21.unregisterNetworkCallbacks(mConnectivityManager);
-		}
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			mContext.unregisterReceiver(mDozeReceiver);
-		}
+		stopNetworkMonitoring();
 
 		mNativePtr = 0;
 		mMainHandler.removeCallbacks(mNetworkUpdateRunner);
@@ -488,6 +463,45 @@ public class AndroidPlatformHelper {
 
 	public void setDozeModeEnabled(boolean b) {
 		dozeModeEnabled = b;
+	}
+
+	private void startNetworkMonitoring() {
+		if (!mMonitoringEnabled) return;
+		
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+			mNetworkReceiver = new NetworkManager(this);
+			mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+			mContext.registerReceiver(mNetworkReceiver, mNetworkIntentFilter);
+		} else {
+			mNetworkManagerAbove21 = new NetworkManagerAbove21(this);
+			mNetworkManagerAbove21.registerNetworkCallbacks(mConnectivityManager);
+		}
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			mDozeIntentFilter = new IntentFilter();
+			mDozeIntentFilter.addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED);
+			mDozeReceiver = new DozeReceiver(this);
+			dozeModeEnabled = ((PowerManager) mContext.getSystemService(Context.POWER_SERVICE)).isDeviceIdleMode();
+			mContext.registerReceiver(mDozeReceiver, mDozeIntentFilter);
+		}
+
+		postNetworkUpdateRunner();
+	}
+
+	private void stopNetworkMonitoring() {
+		if (!mMonitoringEnabled) return;
+		
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+			mContext.unregisterReceiver(mNetworkReceiver);
+		} else {
+			mNetworkManagerAbove21.unregisterNetworkCallbacks(mConnectivityManager);
+		}
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			mContext.unregisterReceiver(mDozeReceiver);
+		}
+
+		mMonitoringEnabled = false;
 	}
 };
 
