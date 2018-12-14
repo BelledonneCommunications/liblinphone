@@ -6257,6 +6257,9 @@ void _linphone_core_uninit(LinphoneCore *lc)
 	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
 
 	linphone_core_set_state(lc,LinphoneGlobalShutdown,"Shutting down");
+
+	getPlatformHelpers(lc)->onLinphoneCoreStop();
+
 #ifdef VIDEO_ENABLED
 	if (lc->previewstream!=NULL){
 		video_preview_stop(lc->previewstream);
