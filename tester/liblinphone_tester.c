@@ -36,6 +36,40 @@ static const char* LogDomain = "liblinphone_tester";
 
 int main(int argc, char** argv);
 
+static jstring get_jstring_from_char(JNIEnv *env, const char* cString) {
+    int len;
+    jmethodID constructorString;
+    jbyteArray bytesArray = NULL;
+    jstring javaString = NULL;
+    jclass classString = (*env)->FindClass(env, "java/lang/String");
+    if (classString == NULL) {
+        bctbx_error("Cannot find java.lang.String class.\n");
+        goto error;
+    }
+
+    constructorString = (*env)->GetMethodID(env, classString, "<init>", "([BLjava/lang/String;)V");
+    if (constructorString == NULL) {
+        bctbx_error("Cannot find String <init> method.\n");
+        goto error;
+    }
+
+    len = (int)strlen(cString);
+    bytesArray = (*env)->NewByteArray(env, len);
+
+    if (bytesArray) {
+        (*env)->SetByteArrayRegion(env, bytesArray, 0, len, (jbyte *)cString);
+        jstring UTF8 = (*env)->NewStringUTF(env, "UTF8");
+        javaString = (jstring)(*env)->NewObject(env, classString, constructorString, bytesArray, UTF8);
+        (*env)->DeleteLocalRef(env, bytesArray);
+        (*env)->DeleteLocalRef(env, UTF8);
+    }
+
+    error:
+    if (classString) (*env)->DeleteLocalRef(env, classString);
+
+    return javaString;
+}
+
 void liblinphone_android_log_handler(int prio, const char *fmt, va_list args) {
 	char str[4096];
 	char *current;
@@ -140,6 +174,11 @@ JNIEXPORT void JNICALL Java_org_linphone_tester_Tester_keepAccounts(JNIEnv *env,
 
 JNIEXPORT void JNICALL Java_org_linphone_tester_Tester_clearAccounts(JNIEnv *env, jclass c) {
 	liblinphone_tester_clear_accounts();
+}
+
+JNIEXPORT jstring JNICALL Java_org_linphone_tester_Tester_getFailedAsserts(JNIEnv *env, jclass c) {
+	char *failed_asserts = bc_tester_get_failed_asserts();
+	return get_jstring_from_char(env, failed_asserts);
 }
 #endif /* __ANDROID__ */
 
