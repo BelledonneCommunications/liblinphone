@@ -1755,7 +1755,6 @@ static void simple_bodyless_list_subscription(void) {
 	linphone_friend_list_set_subscription_bodyless(friendList, TRUE);
 
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_NotifyPresenceReceived, 4, 15000));
-	ms_error("*********************** presence received : %d", marie->stat.number_of_NotifyPresenceReceived);
 	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(friendList)), 4, int, "%d");
 	LinphoneFriend *friend1 = linphone_friend_list_find_friend_by_uri(friendList, "sip:friend1@sip.example.org");
 	if (!BC_ASSERT_PTR_NOT_NULL(friend1))
