@@ -6758,22 +6758,13 @@ const char *linphone_core_get_zrtp_secrets_file(LinphoneCore *lc){
 
 zrtpCacheAccess linphone_core_get_zrtp_cache_access(LinphoneCore *lc){
 	zrtpCacheAccess ret;
-#ifdef SQLITE_STORAGE_ENABLED
 	ret.db = (void *)lc->zrtp_cache_db;
 	ret.dbMutex = &(lc->zrtp_cache_db_mutex);
-#else /* SQITE_STORAGE_ENABLED */
-	ret.db = NULL;
-	ret.dbMutex = NULL;
-#endif /* SQLITE_STORAGE_ENABLED */
 	return ret;
 }
 
 void *linphone_core_get_zrtp_cache_db(LinphoneCore *lc){
-#ifdef SQLITE_STORAGE_ENABLED
-	return (void *)lc->zrtp_cache_db
-#else /* SQLITE_STORAGE_ENABLED */
-	return NULL;
-#endif /* SQLITE_STORAGE_ENABLED */
+	return (void *)lc->zrtp_cache_db;
 }
 
 LinphoneZrtpPeerStatus linphone_core_get_zrtp_status(LinphoneCore *lc, const char *peerUri) {
