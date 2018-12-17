@@ -245,28 +245,42 @@ void ClientGroupChatRoomPrivate::acceptSession (const shared_ptr<CallSession> &s
 // =============================================================================
 
 ClientGroupChatRoom::ClientGroupChatRoom (
-	const shared_ptr<Core> &core,
-	const string &uri,
-	const IdentityAddress &me,
-	const string &subject,
+	const std::shared_ptr<Core> &core,
+	const IdentityAddress &focus,
+	const ConferenceId &conferenceId,
+	const std::string &subject,
 	const Content &content,
 	bool encrypted
-) : ChatRoom(*new ClientGroupChatRoomPrivate, core, ConferenceId(IdentityAddress(), me)),
-RemoteConference(core, me, nullptr) {
+) :
+ChatRoom(*new ClientGroupChatRoomPrivate, core, conferenceId),
+RemoteConference(core, conferenceId.getLocalAddress(), nullptr) {
 	L_D();
 	L_D_T(RemoteConference, dConference);
-
-	IdentityAddress focusAddr(uri);
-	dConference->focus = make_shared<Participant>(this, focusAddr);
-	dConference->focus->getPrivate()->addDevice(focusAddr);
 	RemoteConference::setSubject(subject);
-	list<IdentityAddress> identAddresses = Conference::parseResourceLists(content);
-	for (const auto &addr : identAddresses)
+	for (const auto &addr : Conference::parseResourceLists(content))
 		dConference->participants.push_back(make_shared<Participant>(this, addr));
 
 	if (encrypted)
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Encrypted;
+
+	dConference->focus = make_shared<Participant>(this, focus);
+	dConference->focus->getPrivate()->addDevice(focus);
 }
+
+ClientGroupChatRoom::ClientGroupChatRoom (
+	const shared_ptr<Core> &core,
+	const string &factoryUri,
+	const IdentityAddress &me,
+	const string &subject,
+	bool encrypted
+) : ClientGroupChatRoom(
+	core,
+	IdentityAddress(factoryUri),
+	ConferenceId(IdentityAddress(), me),
+	subject,
+	Content(),
+	encrypted
+) {}
 
 ClientGroupChatRoom::ClientGroupChatRoom (
 	const shared_ptr<Core> &core,
@@ -282,8 +296,9 @@ RemoteConference(core, me->getAddress(), nullptr) {
 	L_D();
 	L_D_T(RemoteConference, dConference);
 
-	d->capabilities |= capabilities & ClientGroupChatRoom::Capabilities::OneToOne;
-	d->capabilities |= capabilities & ClientGroupChatRoom::Capabilities::Encrypted;
+	d->capabilities |=
+		(capabilities & ClientGroupChatRoom::Capabilities::OneToOne) |
+		(capabilities & ClientGroupChatRoom::Capabilities::Encrypted);
 	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
 	dConference->focus = make_shared<Participant>(this, peerAddress);
 	dConference->focus->getPrivate()->addDevice(peerAddress);
