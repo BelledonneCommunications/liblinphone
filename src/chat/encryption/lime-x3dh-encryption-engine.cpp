@@ -239,7 +239,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
 	try {
-		limeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, result, &errorCode] (lime::CallbackReturn returnCode, string errorMessage) {
+		errorCode = 0; //no need to specify error code because not used later
+		limeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, result] (lime::CallbackReturn returnCode, string errorMessage) {
 			if (returnCode == lime::CallbackReturn::success) {
 
 				// Ignore devices which do not have keys on the X3DH server
@@ -305,13 +306,11 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 				}
 			} else {
 				lError() << "LIME X3DH operation failed: " << errorMessage;
-				errorCode = 503; // IO Error
 				*result = ChatMessageModifier::Result::Error;
 			}
 		}, lime::EncryptionPolicy::cipherMessage);
 	} catch (const exception &e) {
 		lError() << e.what() << " while encrypting message";
-		errorCode = 503; // IO Error
 		*result = ChatMessageModifier::Result::Error;
 	}
 	return *result;
