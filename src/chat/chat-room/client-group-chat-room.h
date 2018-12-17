@@ -33,34 +33,12 @@ enum class SecurityLevel;
 class LINPHONE_PUBLIC ClientGroupChatRoom : public ChatRoom, public RemoteConference {
 	friend class BasicToClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
-	friend class Core;
 	friend class CorePrivate;
 	friend class LimeX3dhEncryptionEngine;
-	friend class MediaSessionPrivate;
+	friend class MainDb;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ClientGroupChatRoom);
-
-	// TODO: Make me private.
-	ClientGroupChatRoom (
-		const std::shared_ptr<Core> &core,
-		const std::string &factoryUri,
-		const IdentityAddress &me,
-		const std::string &subject,
-		const Content &content,
-		bool encrypted = false
-	);
-
-	ClientGroupChatRoom (
-		const std::shared_ptr<Core> &core,
-		const ConferenceId &conferenceId,
-		std::shared_ptr<Participant> &me,
-		AbstractChatRoom::CapabilitiesMask capabilities,
-		const std::string &subject,
-		std::list<std::shared_ptr<Participant>> &&participants,
-		unsigned int lastNotifyId,
-		bool hasBeenLeft = false
-	);
 
 	~ClientGroupChatRoom ();
 
@@ -105,6 +83,35 @@ public:
 	void leave () override;
 
 private:
+	ClientGroupChatRoom (
+		const std::shared_ptr<Core> &core,
+		const IdentityAddress &focus,
+		const ConferenceId &conferenceId,
+		const std::string &subject,
+		const Content &content,
+		bool encrypted
+	);
+
+	ClientGroupChatRoom (
+		const std::shared_ptr<Core> &core,
+		const std::string &factoryUri,
+		const IdentityAddress &me,
+		const std::string &subject,
+		bool encrypted
+	);
+
+	// Create a chat room from the main database.
+	ClientGroupChatRoom (
+		const std::shared_ptr<Core> &core,
+		const ConferenceId &conferenceId,
+		std::shared_ptr<Participant> &me,
+		AbstractChatRoom::CapabilitiesMask capabilities,
+		const std::string &subject,
+		std::list<std::shared_ptr<Participant>> &&participants,
+		unsigned int lastNotifyId,
+		bool hasBeenLeft = false
+	);
+
 	// TODO: Move me in ClientGroupChatRoomPrivate.
 	// ALL METHODS AFTER THIS POINT.
 
