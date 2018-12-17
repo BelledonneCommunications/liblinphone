@@ -2582,7 +2582,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 							", local=" + conferenceId.getLocalAddress().asString() + ").";
 						continue;
 					}
-					auto clientGroupChatRoom = make_shared<ClientGroupChatRoom>(
+					shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(
 						core,
 						conferenceId,
 						me,
@@ -2591,7 +2591,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						move(participants),
 						lastNotifyId,
 						hasBeenLeft
-					);
+					));
 					chatRoom = clientGroupChatRoom;
 					conference = clientGroupChatRoom.get();
 					AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();

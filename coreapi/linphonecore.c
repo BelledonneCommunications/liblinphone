@@ -2250,6 +2250,9 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc, Linphone
 }
 
 static void _linphone_core_conference_subscription_state_changed (LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
+	if (!linphone_core_conference_server_enabled(lc))
+		return;
+
 	const LinphoneAddress *resource = linphone_event_get_resource(lev);
 	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
 		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
@@ -2375,7 +2378,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 #endif
 
 	lc->network_last_status = FALSE;
-	
+
 	lc->sip_network_state.global_state = FALSE;
 	lc->sip_network_state.user_state = TRUE;
 	lc->media_network_state.global_state = FALSE;
