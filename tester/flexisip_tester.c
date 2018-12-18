@@ -1213,7 +1213,7 @@ static void test_list_subscribe (void) {
 	/*dummy wait to avoid derred notify*/
 	wait_for_list(lcs,&dummy,1,2000);
 	int initial_number_of_notify = marie->stat.number_of_NotifyReceived;
-	
+
 	setPublish(linphone_core_get_default_proxy_config(pauline->lc), TRUE);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,initial_number_of_notify + 1,5000));
@@ -1496,8 +1496,10 @@ static void register_without_regid(void) {
 	LinphoneProxyConfig *cfg=linphone_core_get_default_proxy_config(marie->lc);
 	if(cfg) {
 		const LinphoneAddress *addr = linphone_proxy_config_get_contact(cfg);
+		char *addrStr = linphone_address_as_string_uri_only(addr);
 		BC_ASSERT_PTR_NOT_NULL(addr);
-		BC_ASSERT_PTR_NULL(strstr(linphone_address_as_string_uri_only(addr), "regid"));
+		BC_ASSERT_PTR_NULL(strstr(addrStr, "regid"));
+		if (addrStr) ms_free(addrStr);
 	}
 	linphone_core_manager_destroy(marie);
 }
@@ -1997,7 +1999,7 @@ static void deal_with_jwe_auth_module(const char *jwe, bool_t invalid_jwe, bool_
 	linphone_core_terminate_all_calls(gandalf->lc);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallEnd, 1, 1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 1000));
-	
+
 	linphone_core_manager_destroy(gandalf);
 	linphone_core_manager_destroy(pauline);
 
