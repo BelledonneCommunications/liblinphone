@@ -23,6 +23,67 @@
 
 static FILE * log_file = NULL;
 
+static const char* liblinphone_helper =
+		"\t\t\t--domain <test sip domain>\n"
+		"\t\t\t--auth-domain <test auth domain>\n"
+		"\t\t\t--dns-hosts </etc/hosts -like file to used to override DNS names (default: tester_hosts)>\n"
+		"\t\t\t--keep-recorded-files\n"
+		"\t\t\t--disable-leak-detector\n"
+		"\t\t\t--disable-tls-support\n"
+		"\t\t\t--no-ipv6 (turn off IPv6 in LinphoneCore, tests requiring IPv6 will be skipped)\n"
+		"\t\t\t--show-account-manager-logs (show temporary test account creation logs)\n"
+		"\t\t\t--no-account-creator (use file database flexisip for account creation)\n"
+		;
+
+static int liblinphone_tester_start(int argc, char *argv[]) {
+	int i;
+	int ret;
+
+	liblinphone_tester_init(NULL);
+	linphone_core_set_log_level(ORTP_ERROR);
+
+	for(i = 1; i < argc; ++i) {
+		if (strcmp(argv[i],"--domain")==0){
+			CHECK_ARG("--domain", ++i, argc);
+			test_domain=argv[i];
+		} else if (strcmp(argv[i],"--auth-domain")==0){
+			CHECK_ARG("--auth-domain", ++i, argc);
+			auth_domain=argv[i];
+		}else if (strcmp(argv[i],"--dns-hosts")==0){
+			CHECK_ARG("--dns-hosts", ++i, argc);
+			userhostsfile=argv[i];
+		} else if (strcmp(argv[i],"--keep-recorded-files")==0){
+			liblinphone_tester_keep_recorded_files(TRUE);
+		} else if (strcmp(argv[i],"--disable-leak-detector")==0){
+			liblinphone_tester_disable_leak_detector(TRUE);
+		} else if (strcmp(argv[i],"--disable-tls-support")==0){
+			liblinphone_tester_tls_support_disabled = TRUE;
+		} else if (strcmp(argv[i],"--no-ipv6")==0){
+			liblinphonetester_ipv6 = FALSE;
+		} else if (strcmp(argv[i],"--show-account-manager-logs")==0){
+			liblinphonetester_show_account_manager_logs=TRUE;
+		} else if (strcmp(argv[i],"--no-account-creator")==0){
+			liblinphonetester_no_account_creator=TRUE;
+		} else {
+			int bret = bc_tester_parse_args(argc, argv, i);
+			if (bret>0) {
+				i += bret - 1;
+				continue;
+			} else if (bret<0) {
+				bc_tester_helper(argv[0], liblinphone_helper);
+			}
+			return bret;
+		}
+	}
+
+	ret = bc_tester_start(argv[0]);
+	return ret;
+}
+
+static void liblinphone_tester_stop() {
+	liblinphone_tester_uninit();
+}
+
 #ifdef __ANDROID__
 
 #include <android/log.h>
@@ -158,7 +219,7 @@ JNIEXPORT jint JNICALL Java_org_linphone_tester_Tester_run(JNIEnv *env, jobject 
 	current_env = env;
 	current_obj = obj;
 	bc_set_trace_handler(bcunit_android_trace_handler);
-	ret = main(argc, argv);
+	ret = main(argc, argv);	
 	current_env = NULL;
 	bc_set_trace_handler(NULL);
 	for (i=0; i<argc; i++) {
@@ -168,17 +229,45 @@ JNIEXPORT jint JNICALL Java_org_linphone_tester_Tester_run(JNIEnv *env, jobject 
 	return ret;
 }
 
+JNIEXPORT jstring JNICALL Java_org_linphone_tester_Tester_run2(JNIEnv *env, jobject obj, jobjectArray stringArray) {
+	int i, ret;
+	int argc = (*env)->GetArrayLength(env, stringArray);
+	char **argv = (char**) malloc(sizeof(char*) * argc);
+
+	for (i=0; i<argc; i++) {
+		jstring string = (jstring) (*env)->GetObjectArrayElement(env, stringArray, i);
+		const char *rawString = (const char *) (*env)->GetStringUTFChars(env, string, 0);
+		argv[i] = strdup(rawString);
+		(*env)->ReleaseStringUTFChars(env, string, rawString);
+	}
+	current_env = env;
+	current_obj = obj;
+	bc_set_trace_handler(bcunit_android_trace_handler);
+	ret = liblinphone_tester_start(argc, argv);
+
+	jstring failedAsserts = NULL;
+	if (ret != 0) {
+		char *failed_asserts = bc_tester_get_failed_asserts();
+		failedAsserts = get_jstring_from_char(env, failed_asserts);
+		free(failed_asserts);
+	}
+
+	liblinphone_tester_stop();
+	current_env = NULL;
+	bc_set_trace_handler(NULL);
+	for (i=0; i<argc; i++) {
+		free(argv[i]);
+	}
+	free(argv);
+	return failedAsserts;
+}
+
 JNIEXPORT void JNICALL Java_org_linphone_tester_Tester_keepAccounts(JNIEnv *env, jclass c, jboolean keep) {
 	liblinphone_tester_keep_accounts((int)keep);
 }
 
 JNIEXPORT void JNICALL Java_org_linphone_tester_Tester_clearAccounts(JNIEnv *env, jclass c) {
 	liblinphone_tester_clear_accounts();
-}
-
-JNIEXPORT jstring JNICALL Java_org_linphone_tester_Tester_getFailedAsserts(JNIEnv *env, jclass c) {
-	char *failed_asserts = bc_tester_get_failed_asserts();
-	return get_jstring_from_char(env, failed_asserts);
 }
 #endif /* __ANDROID__ */
 
@@ -251,64 +340,11 @@ int liblinphone_tester_set_log_file(const char *filename) {
 
 #if !TARGET_OS_IPHONE && !(defined(LINPHONE_WINDOWS_PHONE) || defined(LINPHONE_WINDOWS_UNIVERSAL))
 
-static const char* liblinphone_helper =
-		"\t\t\t--domain <test sip domain>\n"
-		"\t\t\t--auth-domain <test auth domain>\n"
-		"\t\t\t--dns-hosts </etc/hosts -like file to used to override DNS names (default: tester_hosts)>\n"
-		"\t\t\t--keep-recorded-files\n"
-		"\t\t\t--disable-leak-detector\n"
-		"\t\t\t--disable-tls-support\n"
-		"\t\t\t--no-ipv6 (turn off IPv6 in LinphoneCore, tests requiring IPv6 will be skipped)\n"
-		"\t\t\t--show-account-manager-logs (show temporary test account creation logs)\n"
-		"\t\t\t--no-account-creator (use file database flexisip for account creation)\n"
-		;
-
 int main (int argc, char *argv[])
 {
-	int i;
-	int ret;
-
-	liblinphone_tester_init(NULL);
-	linphone_core_set_log_level(ORTP_ERROR);
-
-	for(i = 1; i < argc; ++i) {
-		if (strcmp(argv[i],"--domain")==0){
-			CHECK_ARG("--domain", ++i, argc);
-			test_domain=argv[i];
-		} else if (strcmp(argv[i],"--auth-domain")==0){
-			CHECK_ARG("--auth-domain", ++i, argc);
-			auth_domain=argv[i];
-		}else if (strcmp(argv[i],"--dns-hosts")==0){
-			CHECK_ARG("--dns-hosts", ++i, argc);
-			userhostsfile=argv[i];
-		} else if (strcmp(argv[i],"--keep-recorded-files")==0){
-			liblinphone_tester_keep_recorded_files(TRUE);
-		} else if (strcmp(argv[i],"--disable-leak-detector")==0){
-			liblinphone_tester_disable_leak_detector(TRUE);
-		} else if (strcmp(argv[i],"--disable-tls-support")==0){
-			liblinphone_tester_tls_support_disabled = TRUE;
-		} else if (strcmp(argv[i],"--no-ipv6")==0){
-			liblinphonetester_ipv6 = FALSE;
-		} else if (strcmp(argv[i],"--show-account-manager-logs")==0){
-			liblinphonetester_show_account_manager_logs=TRUE;
-		} else if (strcmp(argv[i],"--no-account-creator")==0){
-			liblinphonetester_no_account_creator=TRUE;
-		} else {
-			int bret = bc_tester_parse_args(argc, argv, i);
-			if (bret>0) {
-				i += bret - 1;
-				continue;
-			} else if (bret<0) {
-				bc_tester_helper(argv[0], liblinphone_helper);
-			}
-			return bret;
-		}
-	}
-
-	ret = bc_tester_start(argv[0]);
-	liblinphone_tester_uninit();
+	int ret = liblinphone_tester_start(argc, argv);
+	liblinphone_tester_stop();
 	return ret;
 }
-
 
 #endif
