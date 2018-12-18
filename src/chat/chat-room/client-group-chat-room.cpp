@@ -692,8 +692,18 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	if (getParticipantCount() == 1 && d->capabilities & ClientGroupChatRoom::Capabilities::OneToOne) {
 		ConferenceId id(getParticipants().front()->getAddress(), getMe()->getAddress());
 		chatRoom = getCore()->findChatRoom(id);
-		if (chatRoom && (chatRoom->getCapabilities() & ChatRoom::Capabilities::Basic))
-			performMigration = true;
+		if (chatRoom) {
+			auto capabilities = chatRoom->getCapabilities();
+			bool migrationEnabled = !!linphone_config_get_int(
+				linphone_core_get_config(getCore()->getCCore()),
+				"misc",
+				"enable_basic_to_client_group_chat_room_migration",
+				FALSE
+			);
+			if (migrationEnabled && (capabilities & ChatRoom::Capabilities::Basic) && (capabilities & ChatRoom::Capabilities::Migratable)) {
+				performMigration = true;
+			}
+		}
 	}
 
 	if (performMigration)
