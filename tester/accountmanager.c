@@ -73,7 +73,7 @@ static void account_manager_generate_unique_id(AccountManager * am) {
 	if (am->unique_id)
 		ms_free(am->unique_id);
 	am->unique_id=sal_get_random_token(tokenLength);
-	
+
 	ms_message("Using lowercase random token for test username.");
 	for (int i=0; i<tokenLength; i++) {
 		am->unique_id[i] = tolower(the_am->unique_id[i]);
@@ -291,7 +291,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 
 	linphone_account_creator_create_account(creator);
 
-	if (wait_for_until(lc, NULL, (int*)&creator->account_created, TRUE, 3000) == FALSE)
+	if (wait_for_until(lc, NULL, &creator->account_created, TRUE, 3000) == FALSE)
 		ms_fatal("Could not create account %s on db", linphone_proxy_config_get_identity(cfg));
 
 	LinphoneAuthInfo *ai = linphone_auth_info_new(username, NULL, password, NULL, domain, domain);
@@ -302,7 +302,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	linphone_account_creator_cbs_set_get_confirmation_key(creator_cbs, get_confirmation_key_cb);
 	linphone_account_creator_get_confirmation_key(creator);
 
-	if (wait_for_until(lc, NULL, (int*)&creator->confirmation_key_received, TRUE, 3000) == FALSE)
+	if (wait_for_until(lc, NULL, &creator->confirmation_key_received, TRUE, 3000) == FALSE)
 		ms_fatal("Could not get confirmation key for account %s", linphone_proxy_config_get_identity(cfg));
 
 	// activate account
@@ -311,8 +311,8 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 		linphone_account_creator_activate_account_linphone(creator);
 	else
 		linphone_account_creator_activate_email_account_linphone(creator);
-	
-	if (wait_for_until(lc, NULL, (int*)&creator->account_activated, TRUE, 3000) == FALSE)
+
+	if (wait_for_until(lc, NULL, &creator->account_activated, TRUE, 3000) == FALSE)
 		ms_fatal("Could not activate account %s", linphone_proxy_config_get_identity(cfg));
 
 	// TODO workaround

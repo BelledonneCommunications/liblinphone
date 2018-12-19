@@ -104,9 +104,10 @@ struct _LinphoneAccountCreator {
 	LinphoneTransportType transport; /**< Transport used */
 
 	// test
-	bool_t account_created;
-	bool_t confirmation_key_received;
-	bool_t account_activated;
+	// Do not use bool_t here because wait_for_until supports only int parameters for counters.
+	int account_created;
+	int confirmation_key_received;
+	int account_activated;
 
 	/* Deprecated */
 	char *route;
