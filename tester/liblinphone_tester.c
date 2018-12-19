@@ -80,7 +80,7 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 	return ret;
 }
 
-static void liblinphone_tester_stop() {
+static void liblinphone_tester_stop(void) {
 	liblinphone_tester_uninit();
 }
 
