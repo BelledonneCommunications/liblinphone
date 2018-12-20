@@ -20,6 +20,7 @@
 #ifndef _L_CONFERENCE_LISTENER_H_
 #define _L_CONFERENCE_LISTENER_H_
 
+#include <unordered_map>
 #include <vector>
 
 #include "event-log/events.h"
@@ -44,6 +45,8 @@ public:
 	virtual void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event, bool isFullState) {}
 	virtual void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {}
 	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {}
+
+	virtual void onParticipantsCleared () {}
 };
 
 LINPHONE_END_NAMESPACE
