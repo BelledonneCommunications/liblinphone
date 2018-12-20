@@ -883,4 +883,25 @@ void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<Conferenc
 	_linphone_chat_room_notify_participant_device_removed(cr, L_GET_C_BACK_PTR(event));
 }
 
+void ClientGroupChatRoom::onParticipantsOverriden (const ParticipantMap &participantAddressToDevices) {
+	L_D_T(RemoteConference, dConference);
+
+	auto &participants = dConference->participants;
+
+	const auto end = participants.end();
+	for (auto it = participants.begin(); it != end;) {
+		auto it2 = participantAddressToDevices.find((*it)->getAddress());
+		if (it2 == participantAddressToDevices.cend())
+			it = participants.erase(it);
+		else {
+			ParticipantPrivate *dParticipant = (*it)->getPrivate();
+			dParticipant->clearDevices();
+			for (const IdentityAddress &gruu : it2->second)
+				dParticipant->addDevice(gruu);
+
+			++it;
+		}
+	}
+}
+
 LINPHONE_END_NAMESPACE

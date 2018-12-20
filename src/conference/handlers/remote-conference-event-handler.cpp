@@ -96,8 +96,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 	}
 
 	auto &users = confInfo->getUsers();
-	if (!users.present())
-		return;
+	if (!users.present()) goto end;
 
 	// 4. Notify changes on users.
 	for (auto &user : users->getUser()) {
@@ -150,7 +149,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 
 		for (const auto &endpoint : user.getEndpoint()) {
 			if (!endpoint.getEntity().present())
-				break;
+				continue;
 
 			Address gruu(endpoint.getEntity().get());
 			StateType state = endpoint.getState();
@@ -183,8 +182,20 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 		}
 	}
 
-	if (isFullState)
+end:
+	if (isFullState) {
+		ConferenceListener::ParticipantMap participantAddressToDevices;
+		if (users.present())
+			for (const auto &user : users->getUser()) {
+				IdentityAddress address(conf->getCore()->interpretUrl(user.getEntity().get()));
+				for (const auto &endpoint : user.getEndpoint())
+					if (endpoint.getEntity().present())
+						participantAddressToDevices[address].push_back(IdentityAddress(endpoint.getEntity().get()));
+			}
+
+		confListener->onParticipantsOverriden(participantAddressToDevices);
 		confListener->onFirstNotifyReceived(conferenceId.getPeerAddress());
+	}
 }
 
 // -----------------------------------------------------------------------------

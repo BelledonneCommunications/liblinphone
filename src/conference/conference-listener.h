@@ -20,6 +20,7 @@
 #ifndef _L_CONFERENCE_LISTENER_H_
 #define _L_CONFERENCE_LISTENER_H_
 
+#include <unordered_map>
 #include <vector>
 
 #include "event-log/events.h"
@@ -30,6 +31,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC ConferenceListener {
 public:
+	using ParticipantMap = std::unordered_map<IdentityAddress, std::vector<IdentityAddress>>;
+
 	virtual ~ConferenceListener () = default;
 
 	virtual void onConferenceCreated (const IdentityAddress &addr) {}
@@ -44,6 +47,8 @@ public:
 	virtual void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event, bool isFullState) {}
 	virtual void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {}
 	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {}
+
+	virtual void onParticipantsOverriden (const ParticipantMap &participantAddressToDevices) {}
 };
 
 LINPHONE_END_NAMESPACE
