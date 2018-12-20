@@ -95,9 +95,11 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 		}
 	}
 
+	if (isFullState)
+		confListener->onParticipantsCleared();
+
 	auto &users = confInfo->getUsers();
-	if (!users.present())
-		return;
+	if (!users.present()) return;
 
 	// 4. Notify changes on users.
 	for (auto &user : users->getUser()) {
@@ -156,7 +158,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 
 		for (const auto &endpoint : user.getEndpoint()) {
 			if (!endpoint.getEntity().present())
-				break;
+				continue;
 
 			Address gruu(endpoint.getEntity().get());
 			StateType state = endpoint.getState();

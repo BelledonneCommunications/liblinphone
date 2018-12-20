@@ -44,6 +44,8 @@ public:
 	virtual void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event, bool isFullState) {}
 	virtual void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {}
 	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {}
+
+	virtual void onParticipantsCleared () {}
 };
 
 LINPHONE_END_NAMESPACE

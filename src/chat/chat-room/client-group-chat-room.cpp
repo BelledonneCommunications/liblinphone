@@ -839,4 +839,9 @@ void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<Conferenc
 	_linphone_chat_room_notify_participant_device_removed(cr, L_GET_C_BACK_PTR(event));
 }
 
+void ClientGroupChatRoom::onParticipantsCleared () {
+	L_D_T(RemoteConference, dConference);
+	dConference->participants.clear();
+}
+
 LINPHONE_END_NAMESPACE

@@ -119,6 +119,8 @@ private:
 	void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
 	void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event, bool isFullState) override;
 
+	void onParticipantsCleared () override;
+
 	L_DECLARE_PRIVATE(ClientGroupChatRoom);
 	L_DISABLE_COPY(ClientGroupChatRoom);
 };
