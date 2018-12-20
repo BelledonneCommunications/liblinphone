@@ -152,6 +152,8 @@ public:
 	int getUnreadChatMessageCount (const IdentityAddress &localAddress) const;
 	int getUnreadChatMessageCountFromActiveLocals () const;
 
+	Address interpretUrl (const std::string &url) const;
+
 private:
 	Core ();
 

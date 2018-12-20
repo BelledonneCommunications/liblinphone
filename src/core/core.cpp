@@ -292,4 +292,19 @@ int Core::getUnreadChatMessageCountFromActiveLocals () const {
 	return count;
 }
 
+// -----------------------------------------------------------------------------
+
+Address Core::interpretUrl (const std::string &url) const {
+	LinphoneAddress *cAddress = linphone_core_interpret_url(getCCore(), url.c_str());
+	if (!cAddress) return Address();
+
+	char *str = linphone_address_as_string(cAddress);
+	linphone_address_unref(cAddress);
+
+	Address address(str);
+	bctbx_free(str);
+
+	return address;
+}
+
 LINPHONE_END_NAMESPACE

@@ -101,13 +101,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 
 	// 4. Notify changes on users.
 	for (auto &user : users->getUser()) {
-		LinphoneAddress *cAddr = linphone_core_interpret_url(conf->getCore()->getCCore(), user.getEntity()->c_str());
-		char *cAddrStr = linphone_address_as_string(cAddr);
-		linphone_address_unref(cAddr);
-
-		Address addr(cAddrStr);
-		bctbx_free(cAddrStr);
-
+		Address address(conf->getCore()->interpretUrl(user.getEntity().get()));
 		StateType state = user.getState();
 
 		if (state == StateType::deleted) {
@@ -117,7 +111,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 					creationTime,
 					conferenceId,
 					lastNotify,
-					addr
+					address
 				),
 				isFullState
 			);
@@ -132,7 +126,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 					creationTime,
 					conferenceId,
 					lastNotify,
-					addr
+					address
 				),
 				isFullState
 			);
@@ -148,7 +142,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 					creationTime,
 					conferenceId,
 					lastNotify,
-					addr
+					address
 				),
 				isFullState
 			);
@@ -168,7 +162,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 						creationTime,
 						conferenceId,
 						lastNotify,
-						addr,
+						address,
 						gruu
 					),
 					isFullState
@@ -180,7 +174,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 						creationTime,
 						conferenceId,
 						lastNotify,
-						addr,
+						address,
 						gruu
 					),
 					isFullState

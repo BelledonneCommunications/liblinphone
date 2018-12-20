@@ -1051,17 +1051,13 @@ void CallSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 }
 
 LinphoneStatus CallSession::redirect (const string &redirectUri) {
-	LinphoneAddress *realParsedAddr = linphone_core_interpret_url(getCore()->getCCore(), redirectUri.c_str());
-	if (!realParsedAddr) {
+	Address address(getCore()->interpretUrl(redirectUri));
+	if (!address.isValid()) {
 		/* Bad url */
 		lError() << "Bad redirect URI: " << redirectUri;
 		return -1;
 	}
-	char *realParsedUri = linphone_address_as_string(realParsedAddr);
-	Address redirectAddr(realParsedUri);
-	bctbx_free(realParsedUri);
-	linphone_address_unref(realParsedAddr);
-	return redirect(redirectAddr);
+	return redirect(address);
 }
 
 LinphoneStatus CallSession::redirect (const Address &redirectAddr) {
@@ -1174,13 +1170,10 @@ LinphoneStatus CallSession::transfer (const shared_ptr<CallSession> &dest) {
 
 LinphoneStatus CallSession::transfer (const string &dest) {
 	L_D();
-	LinphoneAddress *destAddr = linphone_core_interpret_url(getCore()->getCCore(), dest.c_str());
-	if (!destAddr)
+	Address address(getCore()->interpretUrl(dest));
+	if (!address.isValid())
 		return -1;
-	char *addrStr = linphone_address_as_string(destAddr);
-	d->op->refer(addrStr);
-	bctbx_free(addrStr);
-	linphone_address_unref(destAddr);
+	d->op->refer(address.asString().c_str());
 	d->setTransferState(CallSession::State::OutgoingInit);
 	return 0;
 }

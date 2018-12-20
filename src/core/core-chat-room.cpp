@@ -332,15 +332,12 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddre
 }
 
 shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoomFromUri (const string &peerAddress, bool isRtt) {
-	LinphoneAddress *address = linphone_core_interpret_url(getCCore(), L_STRING_TO_C(peerAddress));
-	if (!address) {
+	Address address(interpretUrl(peerAddress));
+	if (!address.isValid()) {
 		lError() << "Cannot make a valid address with: `" << peerAddress << "`.";
 		return nullptr;
 	}
-
-	shared_ptr<AbstractChatRoom> chatRoom = getOrCreateBasicChatRoom(*L_GET_CPP_PTR_FROM_C_OBJECT(address), isRtt);
-	linphone_address_unref(address);
-	return chatRoom;
+	return getOrCreateBasicChatRoom(address, isRtt);
 }
 
 void Core::deleteChatRoom (const shared_ptr<const AbstractChatRoom> &chatRoom) {
