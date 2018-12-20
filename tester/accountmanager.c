@@ -59,13 +59,11 @@ void account_destroy(Account *obj){
 	ms_free(obj);
 }
 
-struct _AccountCreatorState{
-	int account_created;
-	int confirmation_key_received;
-	int account_activated;
-};
-
-typedef struct _AccountCreatorState AccountCreatorState;
+typedef struct {
+    int account_created;
+    int confirmation_key_received;
+    int account_activated;
+} AccountCreatorState;
 
 struct _AccountManager{
 	char *unique_id;
