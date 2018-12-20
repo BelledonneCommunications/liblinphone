@@ -67,15 +67,6 @@ struct _AccountCreatorState{
 
 typedef struct _AccountCreatorState AccountCreatorState;
 
-static AccountCreatorState *account_creator_state_new(void){
-	AccountCreatorState *obj=ms_new0(AccountCreatorState,1);
-
-	obj->account_created = 0;
-	obj->confirmation_key_received = 0;
-	obj->account_activated = 0;
-	return obj;
-};
-
 struct _AccountManager{
 	char *unique_id;
 	bctbx_list_t *accounts;
@@ -298,7 +289,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 
 	char *email = bctbx_strdup_printf("%s@%s", username, domain);
 
-	AccountCreatorState *state = account_creator_state_new();
+	AccountCreatorState *state = bctbx_new0(AccountCreatorState, 1);
 
 	// create account
 	linphone_account_creator_cbs_set_create_account(creator_cbs, account_created_in_db_cb);
