@@ -103,12 +103,6 @@ struct _LinphoneAccountCreator {
 	char *algorithm; /**< Digest authentication algorithm */
 	LinphoneTransportType transport; /**< Transport used */
 
-	// test
-	// Do not use bool_t here because wait_for_until supports only int parameters for counters.
-	int account_created;
-	int confirmation_key_received;
-	int account_activated;
-
 	/* Deprecated */
 	char *route;
 };
