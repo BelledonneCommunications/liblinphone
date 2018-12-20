@@ -161,7 +161,7 @@ void ClientGroupChatRoomPrivate::onChatRoomInsertInDatabaseRequested (const shar
 
 void ClientGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	L_Q();
-	q->getCore()->deleteChatRoom(q->getSharedFromThis());
+	q->getCore()->deleteChatRoom(chatRoom);
 	setState(ClientGroupChatRoom::State::Deleted);
 }
 
@@ -403,7 +403,7 @@ void ClientGroupChatRoom::deleteFromDb () {
 		leave();
 		return;
 	}
-	d->chatRoomListener->onChatRoomDeleteRequested(getSharedFromThis());
+	d->chatRoomListener->onChatRoomDeleteRequested(d->proxyChatRoom ? d->proxyChatRoom->getSharedFromThis() : getSharedFromThis());
 }
 
 list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistory (int nLast) const {
@@ -674,7 +674,7 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 
 	if (d->deletionOnTerminationEnabled) {
 		d->deletionOnTerminationEnabled = false;
-		d->chatRoomListener->onChatRoomDeleteRequested(getSharedFromThis());
+		d->chatRoomListener->onChatRoomDeleteRequested(d->proxyChatRoom ? d->proxyChatRoom->getSharedFromThis() : getSharedFromThis());
 	}
 }
 
@@ -692,8 +692,18 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	if (getParticipantCount() == 1 && d->capabilities & ClientGroupChatRoom::Capabilities::OneToOne) {
 		ConferenceId id(getParticipants().front()->getAddress(), getMe()->getAddress());
 		chatRoom = getCore()->findChatRoom(id);
-		if (chatRoom && (chatRoom->getCapabilities() & ChatRoom::Capabilities::Basic))
-			performMigration = true;
+		if (chatRoom) {
+			auto capabilities = chatRoom->getCapabilities();
+			bool migrationEnabled = !!linphone_config_get_int(
+				linphone_core_get_config(getCore()->getCCore()),
+				"misc",
+				"enable_basic_to_client_group_chat_room_migration",
+				FALSE
+			);
+			if (migrationEnabled && (capabilities & ChatRoom::Capabilities::Basic) && (capabilities & ChatRoom::Capabilities::Migratable)) {
+				performMigration = true;
+			}
+		}
 	}
 
 	if (performMigration)

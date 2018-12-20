@@ -55,7 +55,7 @@ private:
 };
 
 inline std::ostream &operator<< (std::ostream &os, const ConferenceId &conferenceId) {
-	os << "ConferenceId(" << conferenceId.getPeerAddress() << ", local=" << conferenceId.getLocalAddress() << ")";
+	os << "ConferenceId(peer=" << conferenceId.getPeerAddress() << ", local=" << conferenceId.getLocalAddress() << ")";
 	return os;
 }
 

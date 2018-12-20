@@ -99,9 +99,10 @@ public:
 
 	ConferenceId conferenceId;
 
-private:
+protected:
 	AbstractChatRoom *proxyChatRoom = nullptr;
 
+private:
 	ChatRoom::State state = ChatRoom::State::None;
 
 	time_t creationTime = std::time(nullptr);
