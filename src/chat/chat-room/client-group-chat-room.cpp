@@ -161,7 +161,7 @@ void ClientGroupChatRoomPrivate::onChatRoomInsertInDatabaseRequested (const shar
 
 void ClientGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	L_Q();
-	q->getCore()->deleteChatRoom(q->getSharedFromThis());
+	q->getCore()->deleteChatRoom(chatRoom);
 	setState(ClientGroupChatRoom::State::Deleted);
 }
 
@@ -403,7 +403,7 @@ void ClientGroupChatRoom::deleteFromDb () {
 		leave();
 		return;
 	}
-	d->chatRoomListener->onChatRoomDeleteRequested(getSharedFromThis());
+	d->chatRoomListener->onChatRoomDeleteRequested(d->proxyChatRoom ? d->proxyChatRoom->getSharedFromThis() : getSharedFromThis());
 }
 
 list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistory (int nLast) const {
@@ -674,7 +674,7 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 
 	if (d->deletionOnTerminationEnabled) {
 		d->deletionOnTerminationEnabled = false;
-		d->chatRoomListener->onChatRoomDeleteRequested(getSharedFromThis());
+		d->chatRoomListener->onChatRoomDeleteRequested(d->proxyChatRoom ? d->proxyChatRoom->getSharedFromThis() : getSharedFromThis());
 	}
 }
 

@@ -2386,10 +2386,10 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 	linphone_core_manager_reinit(pauline);
 	tmpCoresManagerList = bctbx_list_append(NULL, pauline);
 	tmpCoresList = init_core_for_conference(tmpCoresManagerList);
+	lp_config_set_int(linphone_core_get_config(pauline->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
 	bctbx_list_free(tmpCoresManagerList);
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
 	linphone_core_manager_start(pauline, TRUE);
-
 	paulineCr = linphone_core_get_chat_room(pauline->lc, linphone_chat_room_get_local_address(marieCr));
 
 	// Send a new message to initiate chat room migration
@@ -2437,6 +2437,7 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 
 	linphone_address_unref(paulineAddr);
 	bctbx_list_free(coresList);
@@ -2500,17 +2501,6 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
 	linphone_core_manager_start(marie, TRUE);
 
-	// Enable chat room migration and restart core for Pauline
-	_linphone_chat_room_enable_migration(paulineCr, TRUE);
-	linphone_chat_room_unref(paulineCr);
-	coresList = bctbx_list_remove(coresList, pauline->lc);
-	linphone_core_manager_reinit(pauline);
-	tmpCoresManagerList = bctbx_list_append(NULL, pauline);
-	tmpCoresList = init_core_for_conference(tmpCoresManagerList);
-	bctbx_list_free(tmpCoresManagerList);
-	coresList = bctbx_list_concat(coresList, tmpCoresList);
-	linphone_core_manager_start(pauline, TRUE);
-
 	// Send a new message to initiate chat room migration
 	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
 	marieCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
@@ -2554,7 +2544,19 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 
 		// Activate groupchat on Pauline's side and wait for 5 seconds, the migration should now be done on next message sending
 		lp_config_set_int(linphone_core_get_config(marie->lc), "misc", "basic_to_client_group_chat_room_migration_timer", 5);
+		_linphone_chat_room_enable_migration(paulineCr, TRUE);
+		linphone_chat_room_unref(paulineCr);
+		coresList = bctbx_list_remove(coresList, pauline->lc);
+		linphone_core_manager_reinit(pauline);
+		tmpCoresManagerList = bctbx_list_append(NULL, pauline);
+		tmpCoresList = init_core_for_conference(tmpCoresManagerList);
+		lp_config_set_int(linphone_core_get_config(pauline->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
 		linphone_core_set_linphone_specs(pauline->lc, "groupchat");
+		bctbx_list_free(tmpCoresManagerList);
+		coresList = bctbx_list_concat(coresList, tmpCoresList);
+		linphone_core_manager_start(pauline, TRUE);
+		paulineCr = linphone_core_get_chat_room(pauline->lc, linphone_chat_room_get_local_address(marieCr));
+
 		linphone_core_set_network_reachable(pauline->lc, FALSE);
 		wait_for_list(coresList, &dummy, 1, 1000);
 		linphone_core_set_network_reachable(pauline->lc, TRUE);
@@ -2572,14 +2574,16 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomStateCreationPending, initialPaulineStats.number_of_LinphoneChatRoomStateCreationPending + 1, 3000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomStateCreated, initialPaulineStats.number_of_LinphoneChatRoomStateCreated + 1, 3000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, initialPaulineStats.number_of_LinphoneChatRoomConferenceJoined + 1, 3000));
-		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineCr) & LinphoneChatRoomCapabilitiesConference);
-		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 1, int, "%d");
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 3, 1000));
-		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 5, int, "%d");
+		if (paulineCr) {
+			BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineCr) & LinphoneChatRoomCapabilitiesConference);
+			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 1, int, "%d");
+			BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 5, int, "%d");
+		}
 	}
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
@@ -6191,7 +6195,7 @@ test_t group_chat_tests[] = {
 	TEST_ONE_TAG("Fallback to basic chat room", group_chat_room_fallback_to_basic_chat_room, "LeaksMemory"),
 	TEST_NO_TAG("Group chat room creation fails if invited participants don't support it", group_chat_room_creation_fails_if_invited_participants_dont_support_it),
 	TEST_NO_TAG("Group chat room creation successful if at least one invited participant supports it", group_chat_room_creation_successful_if_at_least_one_invited_participant_supports_it),
-	TEST_TWO_TAGS("Migrate basic chat room to client group chat room", group_chat_room_migrate_from_basic_chat_room, "LeaksMemory", "Migration"),
+	TEST_ONE_TAG("Migrate basic chat room to client group chat room", group_chat_room_migrate_from_basic_chat_room, "Migration"),
 	TEST_TWO_TAGS("Migrate basic chat room to client group chat room failure", group_chat_room_migrate_from_basic_to_client_fail, "LeaksMemory", "Migration"),
 	TEST_ONE_TAG("Migrate basic chat room to client group chat room not needed", group_chat_donot_room_migrate_from_basic_chat_room, "Migration"),
 	TEST_NO_TAG("Send file", group_chat_room_send_file),

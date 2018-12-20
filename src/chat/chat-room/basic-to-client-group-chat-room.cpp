@@ -143,6 +143,7 @@ void BasicToClientGroupChatRoom::migrate(const std::shared_ptr<ClientGroupChatRo
 		shared_ptr<BasicToClientGroupChatRoom> btcgcr = static_pointer_cast<BasicToClientGroupChatRoom>(chatRoom);
 		btcgcr->getCore()->getPrivate()->replaceChatRoom(chatRoom, clientGroupChatRoom);
 		btcgcr->getPrivate()->chatRoom = clientGroupChatRoom;
+		btcgcr->getPrivate()->setupProxy();
 	} else {
 		LinphoneChatRoom *lcr = L_GET_C_BACK_PTR(chatRoom);
 		L_SET_CPP_PTR_FROM_C_OBJECT(lcr, clientGroupChatRoom);

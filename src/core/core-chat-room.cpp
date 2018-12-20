@@ -201,7 +201,7 @@ void CorePrivate::replaceChatRoom (const shared_ptr<AbstractChatRoom> &replacedC
 	const ConferenceId &newConferenceId = newChatRoom->getConferenceId();
 	if (replacedChatRoom->getCapabilities() & ChatRoom::Capabilities::Proxy) {
 		chatRooms.remove(newChatRoom);
-		chatRoomsById.erase(newConferenceId);
+		chatRoomsById.erase(replacedConferenceId);
 		chatRoomsById[newConferenceId] = replacedChatRoom;
 	} else {
 		chatRooms.remove(replacedChatRoom);
