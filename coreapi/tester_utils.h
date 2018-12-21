@@ -123,6 +123,7 @@ LINPHONE_PUBLIC bctbx_list_t **linphone_friend_list_get_friends_attribute(Linpho
 LINPHONE_PUBLIC const bctbx_list_t *linphone_friend_list_get_dirty_friends_to_update(const LinphoneFriendList *lfl);
 LINPHONE_PUBLIC int linphone_friend_list_get_revision(const LinphoneFriendList *lfl);
 
+LINPHONE_PUBLIC void linphone_friend_set_capabilities(LinphoneFriend *lf, int capabilities);
 LINPHONE_PUBLIC int linphone_remote_provisioning_load_file( LinphoneCore* lc, const char* file_path);
 
 /**
