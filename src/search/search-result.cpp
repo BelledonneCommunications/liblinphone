@@ -54,9 +54,9 @@ void SearchResultPrivate::updateCapabilities () {
 	} else {
 		presenceModel = linphone_friend_get_presence_model_for_uri_or_tel(mFriend, mPhoneNumber.c_str());
 	}
-	if (!presenceModel) return;
 
-	capabilities = linphone_presence_model_get_capabilities(presenceModel);
+	if (presenceModel)
+		capabilities = linphone_presence_model_get_capabilities(presenceModel);
 }
 
 // ------------------------------------------------------------------------------
