@@ -37,7 +37,7 @@ private:
 	const LinphoneFriend *mFriend;
 	const LinphoneAddress *mAddress;
 	std::string mPhoneNumber;
-	int capabilities = LinphoneFriendCapabilityNone;
+	int mCapabilities = LinphoneFriendCapabilityNone;
 	unsigned int mWeight;
 
 	L_DECLARE_PUBLIC(SearchResult);
@@ -56,7 +56,7 @@ void SearchResultPrivate::updateCapabilities () {
 	}
 
 	if (presenceModel)
-		capabilities = linphone_presence_model_get_capabilities(presenceModel);
+		mCapabilities = linphone_presence_model_get_capabilities(presenceModel);
 }
 
 // ------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ SearchResult::SearchResult (const SearchResult &sr) : ClonableObject(*new Search
 	if (d->mAddress) linphone_address_ref(const_cast<LinphoneAddress *>(d->mAddress));
 	d->mPhoneNumber = sr.getPhoneNumber();
 	d->mFriend = sr.getFriend();
-	d->capabilities = sr.getCapabilities();
+	d->mCapabilities = sr.getCapabilities();
 }
 
 SearchResult::~SearchResult () {
@@ -125,7 +125,7 @@ const string &SearchResult::getPhoneNumber () const {
 
 int SearchResult::getCapabilities () const {
 	L_D();
-	return d->capabilities;
+	return d->mCapabilities;
 }
 
 unsigned int SearchResult::getWeight () const {
