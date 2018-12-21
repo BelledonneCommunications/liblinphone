@@ -343,12 +343,14 @@ list<SearchResult> *MagicSearch::continueSearch (const string &filter, const str
 	list<SearchResult> *resultList = new list<SearchResult>();
 	const list <SearchResult> *cacheList = getSearchCache();
 
+	const LinphoneFriend *previousFriend = nullptr;
 	for (const auto sr : *cacheList) {
 		if (sr.getAddress() || !sr.getPhoneNumber().empty()) {
-			if (sr.getFriend()) {
+			if (sr.getFriend() && (!previousFriend || sr.getFriend() != previousFriend)) {
 				list<SearchResult> results = searchInFriend(sr.getFriend(), filter, withDomain);
 				addResultsToResultsList(results, *resultList);
-			} else {
+				previousFriend = sr.getFriend();
+			} else if (!sr.getFriend()) {
 				unsigned int weight = searchInAddress(sr.getAddress(), filter, withDomain);
 				if (weight > getMinWeight()) {
 					resultList->push_back(SearchResult(weight, sr.getAddress(), sr.getPhoneNumber(), nullptr));
