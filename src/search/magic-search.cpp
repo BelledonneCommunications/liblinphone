@@ -551,16 +551,20 @@ void MagicSearch::addResultsToResultsList (std::list<SearchResult> &results, std
 list<SearchResult> *MagicSearch::uniqueItemsList (list<SearchResult> &list) const {
 	auto lc = this->getCore();
 	list.unique([lc](const SearchResult& lsr, const SearchResult& rsr){
-		string left = getAddressFromSearchResult(lsr, lc);
-		string right = getAddressFromSearchResult(rsr, lc);
+		bool sip_addresses = false;
+		const LinphoneAddress *left = lsr.getAddress();
+		const LinphoneAddress *right = rsr.getAddress();
+		if (left == nullptr && right == nullptr) {
+			sip_addresses = true;
+		} else if (left != nullptr && right != nullptr) {
+			sip_addresses = linphone_address_weak_equal(left, right);
+		}
 
-		const char phonePattern[] = ";user=phone";
-		size_t i = left.find(phonePattern);
-		if (i != string::npos) left.erase(i, sizeof phonePattern - 1);
-		i = right.find(phonePattern);
-		if (i != string::npos) right.erase(i, sizeof phonePattern - 1);
+		bool phone_numbers = lsr.getPhoneNumber() == rsr.getPhoneNumber();
+		bool capabilities = lsr.getCapabilities() == rsr.getCapabilities();
+		bool friends = lsr.getFriend() == rsr.getFriend();
 
-		return (!left.empty() || !right.empty()) && left == right;
+		return sip_addresses && phone_numbers && capabilities && friends;
 	});
 	return &list;
 }
