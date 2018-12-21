@@ -656,6 +656,13 @@ LINPHONE_PUBLIC void linphone_presence_model_set_user_data(LinphonePresenceModel
 LINPHONE_PUBLIC void * linphone_presence_model_get_user_data(const LinphonePresenceModel *model);
 
 /**
+ * Gets the presence model capabilities.
+ * @param[in] service The #LinphonePresenceModel object for which to set the contact.
+ * @return the capabilities.
+ */
+int linphone_presence_model_get_capabilities(const LinphonePresenceModel *model);
+
+/**
  * Increase the reference count of the #LinphonePresenceService object.
  * @param[in] service The #LinphonePresenceService object for which the reference count is to be increased.
  * @return The #LinphonePresenceService object with the increased reference count.
