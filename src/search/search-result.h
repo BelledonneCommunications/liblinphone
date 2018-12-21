@@ -68,6 +68,11 @@ public:
 	int getCapabilities () const;
 
 	/**
+	 * @return whether or not the search results has a capability
+	 **/
+	bool hasCapability (const LinphoneFriendCapability capability) const;
+
+	/**
 	 * @return the result weight
 	 **/
 	unsigned int getWeight () const;
