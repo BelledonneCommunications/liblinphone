@@ -47,6 +47,10 @@ int linphone_search_result_get_capabilities (const LinphoneSearchResult *searchR
 	return L_GET_CPP_PTR_FROM_C_OBJECT(searchResult)->getCapabilities();
 }
 
+bool_t linphone_search_result_has_capability (const LinphoneSearchResult *searchResult, const LinphoneFriendCapability capability) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(searchResult)->hasCapability(capability);
+}
+
 unsigned int linphone_search_result_get_weight (const LinphoneSearchResult *searchResult) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(searchResult)->getWeight();
 }

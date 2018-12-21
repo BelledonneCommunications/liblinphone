@@ -128,6 +128,11 @@ int SearchResult::getCapabilities () const {
 	return d->mCapabilities;
 }
 
+bool SearchResult::hasCapability (const LinphoneFriendCapability capability) const {
+	L_D();
+	return static_cast<bool>(d->mCapabilities & capability);
+}
+
 unsigned int SearchResult::getWeight () const {
 	L_D();
 	return d->mWeight;
