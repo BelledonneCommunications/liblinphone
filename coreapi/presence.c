@@ -1164,9 +1164,7 @@ namespace {
 }
 static LinphoneFriendCapability get_capability_from_string (const std::string &capabilityName) {
 	auto it = StringToCapability.find(capabilityName);
-	if (it == StringToCapability.cend()) return LinphoneFriendCapabilityNone;
-
-	return it->second;
+	return (it == StringToCapability.cend()) ? LinphoneFriendCapabilityNone : it->second;
 }
 int linphone_presence_model_get_capabilities(const LinphonePresenceModel *model) {
 	unsigned int nbServices = linphone_presence_model_get_nb_services(model);
