@@ -538,7 +538,7 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 				inviteDevice(device);
 				break;
 			case ParticipantDevice::State::Left:
-				if (!findFilteredParticipant(participant->getAddress()))
+				if (findFilteredParticipant(participant->getAddress()))
 					inviteDevice(device);
 				break;
 			case ParticipantDevice::State::Leaving:
