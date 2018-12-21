@@ -31,8 +31,6 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC ConferenceListener {
 public:
-	using ParticipantMap = std::unordered_map<IdentityAddress, std::vector<IdentityAddress>>;
-
 	virtual ~ConferenceListener () = default;
 
 	virtual void onConferenceCreated (const IdentityAddress &addr) {}
@@ -48,7 +46,7 @@ public:
 	virtual void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {}
 	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {}
 
-	virtual void onParticipantsOverriden (const ParticipantMap &participantAddressToDevices) {}
+	virtual void onParticipantsCleared () {}
 };
 
 LINPHONE_END_NAMESPACE
