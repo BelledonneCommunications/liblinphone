@@ -275,7 +275,6 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	LinphoneAccountCreator *creator = linphone_account_creator_new(lc, xmlrpc_url);
 	LinphoneAccountCreatorCbs *creator_cbs = linphone_account_creator_get_callbacks(creator);
 
-	// TODO workaround
 	LinphoneProxyConfig *default_cfg = linphone_core_get_default_proxy_config(lc);
 	linphone_account_creator_set_proxy_config(creator, cfg);
 
@@ -287,7 +286,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 
 	char *email = bctbx_strdup_printf("%s@%s", username, domain);
 
-	AccountCreatorState *state = bctbx_new0(AccountCreatorState, 1);
+	AccountCreatorState state = {0};
 
 	// create account
 	linphone_account_creator_cbs_set_create_account(creator_cbs, account_created_in_db_cb);
@@ -295,7 +294,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	linphone_account_creator_set_password(creator, password);
 	linphone_account_creator_set_domain(creator, domain);
 	linphone_account_creator_set_email(creator, email);
-	linphone_account_creator_set_user_data(creator, state);
+	linphone_account_creator_set_user_data(creator, &state);
 
 	if (account->phone_alias) {
 		linphone_account_creator_set_phone_number(creator, account->phone_alias, "33");
@@ -303,7 +302,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 
 	linphone_account_creator_create_account(creator);
 
-	if (wait_for_until(lc, NULL, &state->account_created, TRUE, 3000) == FALSE)
+	if (wait_for_until(lc, NULL, &state.account_created, TRUE, 3000) == FALSE)
 		ms_fatal("Could not create account %s on db", linphone_proxy_config_get_identity(cfg));
 
 	LinphoneAuthInfo *ai = linphone_auth_info_new(username, NULL, password, NULL, domain, domain);
@@ -314,7 +313,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	linphone_account_creator_cbs_set_get_confirmation_key(creator_cbs, get_confirmation_key_cb);
 	linphone_account_creator_get_confirmation_key(creator);
 
-	if (wait_for_until(lc, NULL, &state->confirmation_key_received, TRUE, 3000) == FALSE)
+	if (wait_for_until(lc, NULL, &state.confirmation_key_received, TRUE, 3000) == FALSE)
 		ms_fatal("Could not get confirmation key for account %s", linphone_proxy_config_get_identity(cfg));
 
 	// activate account
@@ -324,12 +323,9 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	else
 		linphone_account_creator_activate_email_account_linphone(creator);
 
-	if (wait_for_until(lc, NULL, &state->account_activated, TRUE, 3000) == FALSE)
+	if (wait_for_until(lc, NULL, &state.account_activated, TRUE, 3000) == FALSE)
 		ms_fatal("Could not activate account %s", linphone_proxy_config_get_identity(cfg));
 
-	ms_free(state);
-
-	// TODO workaround
 	linphone_account_creator_set_proxy_config(creator, default_cfg);
 
 	bctbx_free(email);
