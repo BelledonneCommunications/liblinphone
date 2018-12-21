@@ -1185,6 +1185,10 @@ int linphone_presence_model_get_capabilities(const LinphonePresenceModel *model)
 	return capabilities;
 }
 
+bool_t linphone_presence_model_has_capability(const LinphonePresenceModel *model, const LinphoneFriendCapability capability) {
+	return static_cast<bool_t>(linphone_presence_model_get_capabilities(model) & capability);
+}
+
 LinphonePresenceService * linphone_presence_service_ref(LinphonePresenceService *service) {
 	return (LinphonePresenceService *)belle_sip_object_ref(service);
 }

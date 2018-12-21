@@ -656,11 +656,19 @@ LINPHONE_PUBLIC void linphone_presence_model_set_user_data(LinphonePresenceModel
 LINPHONE_PUBLIC void * linphone_presence_model_get_user_data(const LinphonePresenceModel *model);
 
 /**
- * Gets the presence model capabilities.
- * @param[in] service The #LinphonePresenceModel object for which to set the contact.
+ * Gets the capabilities of a #LinphonePresenceModel object.
+ * @param[in] model The #LinphonePresenceModel object for which to set the contact.
  * @return the capabilities.
  */
-int linphone_presence_model_get_capabilities(const LinphonePresenceModel *model);
+LINPHONE_PUBLIC int linphone_presence_model_get_capabilities(const LinphonePresenceModel *model);
+
+/**
+ * Returns whether or not the #LinphonePresenceModel object has a given capability.
+ * @param[in] model The #LinphonePresenceModel object for which to set the contact.
+ * @param[in] capability The capability to test.
+ * @return whether or not the #LinphonePresenceModel object has a given capability.
+ */
+LINPHONE_PUBLIC bool_t linphone_presence_model_has_capability(const LinphonePresenceModel *model, const LinphoneFriendCapability capability);
 
 /**
  * Increase the reference count of the #LinphonePresenceService object.
