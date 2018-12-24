@@ -57,6 +57,8 @@ private:
 	L_DISABLE_COPY(AbstractDb);
 };
 
+std::ostream& operator<<(std::ostream& os, AbstractDb::Backend b);
+
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_ABSTRACT_DB_H_

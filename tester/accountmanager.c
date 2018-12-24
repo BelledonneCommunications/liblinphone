@@ -266,7 +266,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	linphone_core_cbs_set_registration_state_changed(cbs, account_created_on_server_cb);
 	LinphoneCore *lc = configure_lc_from(cbs, bc_tester_get_resource_dir_prefix(), NULL, account);
 	linphone_core_cbs_unref(cbs);
-	LinphoneSipTransports tr;
+	LinphoneSipTransports tr = {0};
 	tr.udp_port = LC_SIP_TRANSPORT_RANDOM;
 	tr.tcp_port = LC_SIP_TRANSPORT_RANDOM;
 	tr.tls_port = LC_SIP_TRANSPORT_RANDOM;
@@ -302,7 +302,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 
 	linphone_account_creator_create_account(creator);
 
-	if (wait_for_until(lc, NULL, &state.account_created, TRUE, 3000) == FALSE)
+	if (wait_for_until(lc, NULL, &state.account_created, TRUE, 15000) == FALSE)
 		ms_fatal("Could not create account %s on db", linphone_proxy_config_get_identity(cfg));
 
 	LinphoneAuthInfo *ai = linphone_auth_info_new(username, NULL, password, NULL, domain, domain);
@@ -313,7 +313,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	linphone_account_creator_cbs_set_get_confirmation_key(creator_cbs, get_confirmation_key_cb);
 	linphone_account_creator_get_confirmation_key(creator);
 
-	if (wait_for_until(lc, NULL, &state.confirmation_key_received, TRUE, 3000) == FALSE)
+	if (wait_for_until(lc, NULL, &state.confirmation_key_received, TRUE, 15000) == FALSE)
 		ms_fatal("Could not get confirmation key for account %s", linphone_proxy_config_get_identity(cfg));
 
 	// activate account
@@ -323,7 +323,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	else
 		linphone_account_creator_activate_email_account_linphone(creator);
 
-	if (wait_for_until(lc, NULL, &state.account_activated, TRUE, 3000) == FALSE)
+	if (wait_for_until(lc, NULL, &state.account_activated, TRUE, 15000) == FALSE)
 		ms_fatal("Could not activate account %s", linphone_proxy_config_get_identity(cfg));
 
 	linphone_account_creator_set_proxy_config(creator, default_cfg);

@@ -264,7 +264,7 @@ static void friends_sqlite_storage(void) {
 	cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_friend_list_created(cbs, friend_list_created_cb);
 	linphone_core_cbs_set_friend_list_removed(cbs, friend_list_removed_cb);
-	lc = linphone_factory_create_core_2(linphone_factory_get(), cbs, NULL, NULL, NULL, system_context);
+	lc = linphone_factory_create_core_2(linphone_factory_get(), cbs, NULL, liblinphone_tester_get_empty_rc(), NULL, system_context);
 	linphone_core_cbs_unref(cbs);
 	friends = linphone_friend_list_get_friends(linphone_core_get_default_friend_list(lc));
 	lfl = linphone_core_create_friend_list(lc);
@@ -357,7 +357,7 @@ end:
 }
 
 static void friends_sqlite_store_lot_of_friends(void) {
-	LinphoneCore* lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, NULL, NULL, system_context);
+	LinphoneCore* lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, liblinphone_tester_get_empty_rc(), NULL, system_context);
 	sqlite3 *db;
 	int i;
 	char* errmsg = NULL;
@@ -427,7 +427,7 @@ static void friends_sqlite_store_lot_of_friends(void) {
 }
 
 static void friends_sqlite_find_friend_in_lot_of_friends(void) {
-	LinphoneCore* lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, NULL, NULL, system_context);
+	LinphoneCore* lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, liblinphone_tester_get_empty_rc(), NULL, system_context);
 	sqlite3 *db;
 	int i;
 	char* errmsg = NULL;
