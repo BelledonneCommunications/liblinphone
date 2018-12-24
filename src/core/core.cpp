@@ -62,11 +62,13 @@ void CorePrivate::init () {
 		uri = q->getDataPath() + LINPHONE_DB;
 	}
 
-	lInfo() << "Opening linphone database: " << uri;
-	if (!mainDb->connect(backend, uri))
-		lFatal() << "Unable to open linphone database.";
+	if (uri != "null"){ //special uri "null" means don't open database. We need this for tests.
+		lInfo() << "Opening linphone database " << uri << " with backend " << backend;
+		if (!mainDb->connect(backend, uri))
+			lFatal() << "Unable to open linphone database with uri " << uri << " and backend " << backend;
 
-	loadChatRooms();
+		loadChatRooms();
+	}else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
 }
 
 void CorePrivate::registerListener (CoreListener *listener) {

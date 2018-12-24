@@ -35,6 +35,7 @@ extern jobject system_context;
 void *system_context=0;
 #endif
 
+static char *liblinphone_tester_empty_rc_path = NULL;
 static int liblinphone_tester_keep_accounts_flag = 0;
 static bool_t liblinphone_tester_keep_record_files = FALSE;
 static bool_t liblinphone_tester_leak_detector_disabled = FALSE;
@@ -153,7 +154,8 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, const ch
 		lp_config_set_string(config, "sip",   "root_ca"    , rootcapath);
 		lc = linphone_factory_create_core_with_config_3(linphone_factory_get(), config, system_context);
 	} else {
-		lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, (filepath && (filepath[0] != '\0')) ? filepath : NULL, system_context);
+		lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, (filepath && (filepath[0] != '\0')) ? filepath : 
+			liblinphone_tester_get_empty_rc(), system_context);
 		linphone_core_set_ring(lc, ringpath);
 		linphone_core_set_ringback(lc, ringbackpath);
 		linphone_core_set_root_ca(lc,rootcapath);
@@ -1051,3 +1053,11 @@ void linphone_conference_server_destroy(LinphoneConferenceServer *conf_srv) {
 	linphone_core_cbs_unref(conf_srv->cbs);
 	linphone_core_manager_destroy((LinphoneCoreManager *)conf_srv);
 }
+
+const char *liblinphone_tester_get_empty_rc(void){
+	if (liblinphone_tester_empty_rc_path == NULL){
+		liblinphone_tester_empty_rc_path = bc_tester_res("rcfiles/empty_rc");
+	}
+	return liblinphone_tester_empty_rc_path;
+}
+
