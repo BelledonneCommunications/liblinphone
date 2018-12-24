@@ -75,7 +75,7 @@ bool AbstractDb::connect (Backend backend, const string &parameters) {
 		try {
 			d->safeInit();
 		} catch (const exception &e) {
-			lWarning() << "Unable to init database: " << e.what();
+			lError() << "Unable to init database: " << e.what();
 
 			// Reset session.
 			d->dbSession = DbSession();
@@ -136,6 +136,18 @@ bool AbstractDb::import (Backend, const string &) {
 
 void AbstractDb::init () {
 	// Nothing.
+}
+
+std::ostream& operator<<(std::ostream& os, AbstractDb::Backend b){
+	switch(b){
+		case AbstractDb::Mysql:
+			os<<"Mysql";
+		break;
+		case AbstractDb::Sqlite3:
+			os<<"Sqlite3";
+		break;
+	}
+	return os;
 }
 
 LINPHONE_END_NAMESPACE

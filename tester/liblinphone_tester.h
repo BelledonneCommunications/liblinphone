@@ -465,6 +465,9 @@ FILE *sip_start(const char *senario, const char* dest_username, const char *pass
 void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice );
 void linphone_conf_event_notify(LinphoneEvent *lev);
 
+/*Convenience function providing the path to the "empty_rc" config file*/
+const char *liblinphone_tester_get_empty_rc(void);
+
 #ifdef __cplusplus
 };
 #endif
