@@ -184,12 +184,13 @@ void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) 
 
 void CorePrivate::insertChatRoomWithDb (const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
 	L_ASSERT(chatRoom->getState() == ChatRoom::State::Created);
-	mainDb->insertChatRoom(chatRoom, notifyId);
+	if (mainDb->isInitialized()) mainDb->insertChatRoom(chatRoom, notifyId);
 }
 
 void CorePrivate::loadChatRooms () {
 	chatRooms.clear();
 	chatRoomsById.clear();
+	if (!mainDb->isInitialized()) return;
 	for (auto &chatRoom : mainDb->getChatRooms()) {
 		insertChatRoom(chatRoom);
 		chatRoom->getPrivate()->sendDeliveryNotifications();
@@ -351,7 +352,7 @@ void Core::deleteChatRoom (const shared_ptr<const AbstractChatRoom> &chatRoom) {
 		L_ASSERT(chatRoomsIt != d->chatRooms.end());
 		d->chatRooms.erase(chatRoomsIt);
 		d->chatRoomsById.erase(chatRoomsByIdIt);
-		d->mainDb->deleteChatRoom(conferenceId);
+		if (d->mainDb->isInitialized()) d->mainDb->deleteChatRoom(conferenceId);
 	} else
 		L_ASSERT(find(d->chatRooms, chatRoom) == d->chatRooms.end());
 }

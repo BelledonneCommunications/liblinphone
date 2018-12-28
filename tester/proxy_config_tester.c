@@ -252,8 +252,8 @@ static void single_route(void) {
 	BC_ASSERT_PTR_NOT_NULL(routes);
 	BC_ASSERT_EQUAL(bctbx_list_size(routes), 1, int, "%d");
 	const char *route = (const char *)bctbx_list_get_data(routes);
-	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_route(marie_cfg), "sip:sip.example.org;transport=tcp;lr");
-	BC_ASSERT_STRING_EQUAL(route, "sip:sip.example.org;transport=tcp;lr");
+	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_route(marie_cfg), "<sip:sip.example.org;transport=tcp>");
+	BC_ASSERT_STRING_EQUAL(route, "<sip:sip.example.org;transport=tcp>");
 
 	linphone_proxy_config_set_route(marie_cfg, "sip.linphone.org");
 	routes = linphone_proxy_config_get_routes(marie_cfg);

@@ -111,7 +111,7 @@ static void register_with_refresh_base_3_for_algo(
 	linphone_core_set_default_proxy(lc,proxy_cfg);
 
 	while (counters->number_of_LinphoneRegistrationOk<1+(refresh!=0)
-			&& retry++ <(1100 /*only wait 11 s if final state is progress*/+(expected_final_state==LinphoneRegistrationProgress?0:2000))) {
+			&& retry++ <(7000 /*only wait 7 s if final state is progress*/+(expected_final_state==LinphoneRegistrationProgress?0:4000))) {
 		linphone_core_iterate(lc);
 		if (counters->number_of_auth_info_requested>0 && linphone_proxy_config_get_state(proxy_cfg) == LinphoneRegistrationFailed && late_auth_info) {
 			if (!linphone_core_get_auth_info_list(lc)) {

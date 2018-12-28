@@ -373,7 +373,7 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 				linphone_core_get_config(lc),
 				"misc",
 				"xmlrpc_server_url",
-				"http://subscribe.example.org/flexisip-account-manager/xmlrpc.php"
+				"http://subscribe.example.org:8082/flexisip-account-manager/xmlrpc.php"
 			);
 			account_create_in_db(account, cfg, xmlrpc_url);
 		}

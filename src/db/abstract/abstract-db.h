@@ -47,6 +47,7 @@ public:
 
 	virtual bool import (Backend backend, const std::string &parameters);
 
+	bool isInitialized() const;
 protected:
 	explicit AbstractDb (AbstractDbPrivate &p);
 

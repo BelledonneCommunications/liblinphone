@@ -36,6 +36,7 @@ private:
 	void safeInit ();
 
 	AbstractDb::Backend backend;
+	bool initialized = false;
 
 	L_DECLARE_PUBLIC(AbstractDb);
 };

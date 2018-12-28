@@ -253,6 +253,7 @@ static void friends_sqlite_storage(void) {
 	LinphoneFriend *lf2 = NULL;
 	LinphoneVcard *lvc = linphone_factory_create_vcard(linphone_factory_get());
 	LinphoneAddress *addr = linphone_address_new("sip:sylvain@sip.linphone.org");
+	LinphoneCoreManager *lcm;
 	const bctbx_list_t *friends = NULL;
 	bctbx_list_t *friends_from_db = NULL;
 	bctbx_list_t *friends_lists_from_db = NULL;
@@ -264,7 +265,9 @@ static void friends_sqlite_storage(void) {
 	cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_friend_list_created(cbs, friend_list_created_cb);
 	linphone_core_cbs_set_friend_list_removed(cbs, friend_list_removed_cb);
-	lc = linphone_factory_create_core_2(linphone_factory_get(), cbs, NULL, liblinphone_tester_get_empty_rc(), NULL, system_context);
+	lcm = linphone_core_manager_new2("stun_rc",FALSE);
+	lc = lcm->lc;
+	linphone_core_add_callbacks(lc, cbs);
 	linphone_core_cbs_unref(cbs);
 	friends = linphone_friend_list_get_friends(linphone_core_get_default_friend_list(lc));
 	lfl = linphone_core_create_friend_list(lc);
@@ -351,9 +354,9 @@ static void friends_sqlite_storage(void) {
 end:
 	ms_free(stats);
 	linphone_address_unref(addr);
-	linphone_core_unref(lc);
 	unlink(friends_db);
 	bc_free(friends_db);
+	linphone_core_manager_destroy(lcm);
 }
 
 static void friends_sqlite_store_lot_of_friends(void) {

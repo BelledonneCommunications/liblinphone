@@ -48,6 +48,7 @@ void AbstractDbPrivate::safeInit () {
 	dbSession.enableForeignKeys(false);
 	q->init();
 	dbSession.enableForeignKeys(true);
+	initialized = true;
 }
 
 AbstractDb::AbstractDb (AbstractDbPrivate &p) : Object(p) {}
@@ -136,6 +137,11 @@ bool AbstractDb::import (Backend, const string &) {
 
 void AbstractDb::init () {
 	// Nothing.
+}
+
+bool AbstractDb::isInitialized() const{
+	L_D();
+	return d->initialized;
 }
 
 std::ostream& operator<<(std::ostream& os, AbstractDb::Backend b){
