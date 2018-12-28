@@ -227,6 +227,13 @@ LinphoneEvent *linphone_core_create_subscribe(LinphoneCore *lc, const LinphoneAd
 	return lev;
 }
 
+LinphoneEvent *linphone_core_create_subscribe_2(LinphoneCore *lc, const LinphoneAddress *resource, LinphoneProxyConfig *cfg, const char *event, int expires){
+	LinphoneEvent *lev=linphone_event_new(lc, LinphoneSubscriptionOutgoing, event, expires);
+	linphone_configure_op_with_proxy(lc,lev->op,resource,NULL,TRUE,cfg);
+	lev->op->setManualRefresherMode(!lp_config_get_int(lc->config,"sip","refresh_generic_subscribe",1));
+	return lev;
+}
+
 LinphoneEvent *linphone_core_create_notify(LinphoneCore *lc, const LinphoneAddress *resource, const char *event){
 	LinphoneEvent *lev=linphone_event_new(lc, LinphoneSubscriptionIncoming, event, -1);
 	linphone_configure_op(lc,lev->op,resource,NULL,TRUE);

@@ -196,16 +196,18 @@ void RemoteConferenceEventHandlerPrivate::subscribe () {
 		return; // Already subscribed or application did not request subscription
 
 	const string &peerAddress = conferenceId.getPeerAddress().asString();
-	LinphoneAddress *lAddr = linphone_address_new(peerAddress.c_str());
+	const string &localAddress = conferenceId.getLocalAddress().asString();
+	LinphoneAddress *lAddr = linphone_address_new(localAddress.c_str());
 	LinphoneCore *lc = conf->getCore()->getCCore();
-	LinphoneProxyConfig *cfg = linphone_core_lookup_known_proxy(lc, lAddr);
+	LinphoneProxyConfig *cfg = linphone_core_lookup_proxy_by_identity(lc, lAddr);
+
 	if (!cfg || (linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk)) {
 		linphone_address_unref(lAddr);
 		return;
 	}
 
-	lev = linphone_core_create_subscribe(conf->getCore()->getCCore(), lAddr, "conference", 600);
-	lev->op->setFrom(conferenceId.getLocalAddress().asString().c_str());
+	lev = linphone_core_create_subscribe_2(conf->getCore()->getCCore(), lAddr, cfg, "conference", 600);
+	lev->op->setFrom(localAddress);
 	const string &lastNotifyStr = Utils::toString(lastNotify);
 	linphone_event_add_custom_header(lev, "Last-Notify-Version", lastNotifyStr.c_str());
 	linphone_address_unref(lAddr);
