@@ -53,7 +53,7 @@ LinphoneAddress * linphone_core_manager_resolve(LinphoneCoreManager *mgr, const 
 	linphone_address_set_domain(dest, ipstring);
 	if (port > 0)
 		linphone_address_set_port(dest, port);
-	
+	if (results) belle_sip_object_unref(results);
 	return dest;
 }
 
