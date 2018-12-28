@@ -23,8 +23,8 @@ realm=sip.example.org
 
 [proxy_0]
 realm=sip.example.org
-reg_proxy=sip2.linphone.org;transport=tls
-reg_route=sip2.linphone.org;transport=tls
+reg_proxy=<sip:sip.example.org;transport=tls>
+reg_route=<sip:sip.example.org;transport=tls>
 reg_identity=sip:chloe@sip.example.org
 reg_expires=3600
 reg_sendregister=1

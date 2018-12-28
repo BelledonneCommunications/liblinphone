@@ -11,12 +11,12 @@ composing_idle_timeout=1
 username=marie
 userid=marie
 passwd=secret
-realm=sip2.linphone.org
+realm=sip.example.org
 
 
 [proxy_0]
-reg_proxy=sips:sip2.linphone.org
-reg_route=sips:sip2.linphone.org
+reg_proxy=sips:sip.example.org
+reg_route=sips:sip.example.org
 reg_identity="Super Marie" <sips:marie@sip.example.org>
 reg_expires=3600
 reg_sendregister=1
@@ -24,7 +24,7 @@ publish=0
 dial_escape_plus=0
 
 [friend_0]
-url="Paupoche" <sip:pauline@sip2.linphone.org>
+url="Paupoche" <sip:pauline@sip.example.org>
 pol=accept
 subscribe=0
 
