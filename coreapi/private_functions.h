@@ -263,6 +263,7 @@ LinphoneFriend * linphone_friend_new_from_config_file(struct _LinphoneCore *lc, 
 
 void linphone_proxy_config_update(LinphoneProxyConfig *cfg);
 LinphoneProxyConfig * linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri);
+LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, const LinphoneAddress *uri);
 const char *linphone_core_find_best_identity(LinphoneCore *lc, const LinphoneAddress *to);
 LINPHONE_PUBLIC void linphone_core_get_local_ip(LinphoneCore *lc, int af, const char *dest, char *result);
 
