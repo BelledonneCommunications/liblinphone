@@ -3559,6 +3559,36 @@ static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const Lin
 	return ret;
 }
 
+/*
+ * Returns a proxy config matching the given identity address
+ * Prefers registered, then first registering matching, otherwise first matching
+ */
+LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, const LinphoneAddress *uri){
+	LinphoneProxyConfig *found_cfg = NULL;
+	LinphoneProxyConfig *found_reg_cfg = NULL;
+	LinphoneProxyConfig *found_noreg_cfg = NULL;
+	LinphoneProxyConfig *default_cfg=lc->default_proxy;
+	const bctbx_list_t *elem;
+
+	for (elem=linphone_core_get_proxy_config_list(lc);elem!=NULL;elem=elem->next){
+		LinphoneProxyConfig *cfg = (LinphoneProxyConfig*)elem->data;
+		if (linphone_address_weak_equal(uri, linphone_proxy_config_get_identity_address(cfg))) {
+			if (linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk) {
+				found_cfg=cfg;
+				break;
+			} else if (!found_reg_cfg && linphone_proxy_config_register_enabled(cfg)) {
+				found_reg_cfg=cfg;
+			} else if (!found_noreg_cfg) {
+				found_noreg_cfg=cfg;
+			}
+		}
+	}
+	if (!found_cfg && found_reg_cfg)    found_cfg = found_reg_cfg;
+	else if (!found_cfg && found_noreg_cfg) found_cfg = found_noreg_cfg;
+	if (!found_cfg) found_cfg=default_cfg; /*when no matching proxy config is found, use the default proxy config*/
+	return found_cfg;
+}
+
 LinphoneProxyConfig * linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri){
 	const bctbx_list_t *elem;
 	LinphoneProxyConfig *found_cfg=NULL;
