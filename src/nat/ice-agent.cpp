@@ -489,7 +489,6 @@ bool IceAgent::checkForIceRestartAndSetRemoteCredentials (const SalMediaDescript
 					iceRestarted = true;
 				}
 				ice_check_list_set_remote_credentials(cl, stream->ice_ufrag, stream->ice_pwd);
-				break;
 			}
 		}
 	}
