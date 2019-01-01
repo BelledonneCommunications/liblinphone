@@ -1,6 +1,6 @@
 
-[sip]
-sip_random_port=1
+#[sip]
+#sip_random_port=1
 
 [storage]
 #this will explicitely request to not use database. We need this for a few tests where multiple cores are instanciated, so that they don't 
