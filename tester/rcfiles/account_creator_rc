@@ -11,3 +11,10 @@ xmlrpc_url=https://sip2.linphone.org:446/wizard.php
 reg_proxy=<sip:sip2.linphone.org:5072>
 realm=sip.accounttest.org
 reg_identity=sip:user@sip.accounttest.org
+
+#set random port in order to avoid port conflicts with other tests running in parallel
+#and receive unsollicited SIP messages.
+[sip]
+sip_port=-1
+sip_tcp_port=-1
+sip_tls_port=-1

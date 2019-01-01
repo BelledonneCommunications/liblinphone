@@ -165,7 +165,15 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
-static void recovered_call_on_network_switch_in_early_state_5(void) {
+/* This test simulates a socket disconnection (like broken pipe, connection reset by peer etc...) during an incoming call in ringing state,
+ * but WITHOUT the network being down/up.
+ * This case is unhandled in the library and results in the call being totally lost.
+ * Uncomment this test when this is implemented in the library.
+ * The issue is tracked by ticket #5802 in bug tracker.
+ */
+#if 0
+
+static void recovered_call_on_socket_disconnection_in_early_state(void) {
 	LinphoneCall *incoming_call;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -197,6 +205,8 @@ end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+
+#endif
 
 static void recovered_call_on_network_switch_during_reinvite_1(void) {
 	LinphoneCall *incoming_call;
@@ -729,7 +739,9 @@ static test_t call_recovery_tests[] = {
 	TEST_ONE_TAG("Recovered call on network switch in early state 2", recovered_call_on_network_switch_in_early_state_2, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch in early state 3", recovered_call_on_network_switch_in_early_state_3, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch in early state 4", recovered_call_on_network_switch_in_early_state_4, "CallRecovery"),
-	TEST_ONE_TAG("Recovered call on network switch in early state 5", recovered_call_on_network_switch_in_early_state_5, "CallRecovery"),
+#if 0 /*enable this test when library has support for it*/	
+	TEST_ONE_TAG("Recovered call on socket disconnection in early state", recovered_call_on_socket_disconnection_in_early_state, "CallRecovery"),
+#endif
 	TEST_ONE_TAG("Recovered call on network switch during re-invite 1", recovered_call_on_network_switch_during_reinvite_1, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch during re-invite 2", recovered_call_on_network_switch_during_reinvite_2, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch during re-invite 3", recovered_call_on_network_switch_during_reinvite_3, "CallRecovery"),
