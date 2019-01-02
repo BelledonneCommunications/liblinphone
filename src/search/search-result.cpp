@@ -37,7 +37,7 @@ private:
 	const LinphoneFriend *mFriend;
 	const LinphoneAddress *mAddress;
 	std::string mPhoneNumber;
-	int mCapabilities = LinphoneFriendCapabilityNone;
+	int mCapabilities = LinphoneFriendCapabilityGroupChat | LinphoneFriendCapabilityLimeX3dh;
 	unsigned int mWeight;
 
 	L_DECLARE_PUBLIC(SearchResult);
@@ -46,7 +46,9 @@ private:
 void SearchResultPrivate::updateCapabilities () {
 	if (!mFriend) return;
 
+	mCapabilities = LinphoneFriendCapabilityNone;
 	const LinphonePresenceModel *presenceModel = nullptr;
+	
 	if (mAddress) {
 		char *addressString = linphone_address_as_string_uri_only(mAddress);
 		presenceModel = linphone_friend_get_presence_model_for_uri_or_tel(mFriend, addressString);
