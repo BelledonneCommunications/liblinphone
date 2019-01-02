@@ -57,6 +57,16 @@ LINPHONE_PUBLIC const LinphoneAddress* linphone_search_result_get_address(const 
 LINPHONE_PUBLIC const char* linphone_search_result_get_phone_number(const LinphoneSearchResult *searchResult);
 
 /**
+ * @return the capabilities associated to the search result
+ **/
+LINPHONE_PUBLIC int linphone_search_result_get_capabilities(const LinphoneSearchResult *searchResult);
+
+/**
+ * @return whether a search result has a given capability
+ **/
+LINPHONE_PUBLIC bool_t linphone_search_result_has_capability(const LinphoneSearchResult *searchResult, const LinphoneFriendCapability capability);
+
+/**
  * @return the result weight
  **/
 LINPHONE_PUBLIC unsigned int linphone_search_result_get_weight(const LinphoneSearchResult *searchResult);

@@ -1156,6 +1156,39 @@ void * linphone_presence_model_get_user_data(const LinphonePresenceModel *model)
 	return model->user_data;
 }
 
+namespace {
+	const std::unordered_map<std::string, LinphoneFriendCapability> StringToCapability{
+		{ "groupchat", LinphoneFriendCapabilityGroupChat },
+		{ "lime", LinphoneFriendCapabilityLimeX3dh }
+	};
+}
+static LinphoneFriendCapability get_capability_from_string (const std::string &capabilityName) {
+	auto it = StringToCapability.find(capabilityName);
+	return (it == StringToCapability.cend()) ? LinphoneFriendCapabilityNone : it->second;
+}
+int linphone_presence_model_get_capabilities(const LinphonePresenceModel *model) {
+	unsigned int nbServices = linphone_presence_model_get_nb_services(model);
+	int capabilities = 0;
+	for (unsigned int i = 0; i < nbServices; i++) {
+		LinphonePresenceService *service = linphone_presence_model_get_nth_service(model, i);
+		if (!service) continue;
+
+		bctbx_list_t *services_descriptions = linphone_presence_service_get_service_descriptions(service);
+		while (services_descriptions) {
+			char *description = (char *)bctbx_list_get_data(services_descriptions);
+			LinphoneFriendCapability capability = get_capability_from_string(description);
+			if (capability != 0) capabilities |= capability;
+			services_descriptions = bctbx_list_next(services_descriptions);
+		}
+	}
+
+	return capabilities;
+}
+
+bool_t linphone_presence_model_has_capability(const LinphonePresenceModel *model, const LinphoneFriendCapability capability) {
+	return static_cast<bool_t>(linphone_presence_model_get_capabilities(model) & capability);
+}
+
 LinphonePresenceService * linphone_presence_service_ref(LinphonePresenceService *service) {
 	return (LinphonePresenceService *)belle_sip_object_ref(service);
 }

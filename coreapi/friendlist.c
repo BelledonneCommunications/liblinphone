@@ -322,20 +322,10 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 								linphone_friend_unref(lf);
 							}
 							if (lf) {
-								const char *phone_number = linphone_friend_sip_uri_to_phone_number(lf, uri);
-								unsigned int nb_services = linphone_presence_model_get_nb_services((LinphonePresenceModel *)presence);
-								for (unsigned int i = 0; i < nb_services; i++) {
-									LinphonePresenceService *service = linphone_presence_model_get_nth_service((LinphonePresenceModel *)presence, i);
-									bctbx_list_t *services_descriptions = linphone_presence_service_get_service_descriptions(service);
-									while (services_descriptions) {
-										char *description = (char *)bctbx_list_get_data(services_descriptions);
-										linphone_friend_add_capability(lf, description);
-										services_descriptions = bctbx_list_next(services_descriptions);
-									}
-								}
+								linphone_friend_set_capabilities(lf, linphone_presence_model_get_capabilities((LinphonePresenceModel *)presence));
 
 								lf->presence_received = TRUE;
-
+								const char *phone_number = linphone_friend_sip_uri_to_phone_number(lf, uri);
 								if (phone_number) {
 									char *presence_address = linphone_presence_model_get_contact((LinphonePresenceModel *)presence);
 									bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(presence_address, linphone_friend_ref(lf));

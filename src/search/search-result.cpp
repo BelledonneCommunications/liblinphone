@@ -18,82 +18,122 @@
  */
 
 #include "linphone/api/c-address.h"
+#include "linphone/friend.h"
+#include "linphone/presence.h"
 
 #include "object/clonable-object-p.h"
 #include "search-result.h"
 
 // =============================================================================
 
+using namespace std;
+
 LINPHONE_BEGIN_NAMESPACE
 
 class SearchResultPrivate : public ClonableObjectPrivate {
 private:
+	void updateCapabilities ();
+
 	const LinphoneFriend *mFriend;
 	const LinphoneAddress *mAddress;
 	std::string mPhoneNumber;
+	int mCapabilities = LinphoneFriendCapabilityNone;
 	unsigned int mWeight;
 
 	L_DECLARE_PUBLIC(SearchResult);
 };
 
-using namespace std;
+void SearchResultPrivate::updateCapabilities () {
+	if (!mFriend) return;
 
-SearchResult::SearchResult(const unsigned int weight, const LinphoneAddress *a, const string &pn, const LinphoneFriend *f) : ClonableObject(*new SearchResultPrivate) {
-	L_D();
-	d->mWeight = weight;
-	d->mAddress = a;
-	if (d->mAddress) linphone_address_ref(const_cast<LinphoneAddress *>(d->mAddress));
-	d->mFriend = f;
-	d->mPhoneNumber = pn;
+	const LinphonePresenceModel *presenceModel = nullptr;
+	if (mAddress) {
+		char *addressString = linphone_address_as_string_uri_only(mAddress);
+		presenceModel = linphone_friend_get_presence_model_for_uri_or_tel(mFriend, addressString);
+		bctbx_free(addressString);
+	} else {
+		presenceModel = linphone_friend_get_presence_model_for_uri_or_tel(mFriend, mPhoneNumber.c_str());
+	}
+
+	if (presenceModel)
+		mCapabilities = linphone_presence_model_get_capabilities(presenceModel);
 }
 
-SearchResult::SearchResult(const SearchResult &sr) : ClonableObject(*new SearchResultPrivate) {
+// ------------------------------------------------------------------------------
+
+SearchResult::SearchResult (
+	const unsigned int weight,
+	const LinphoneAddress *address,
+	const string &phoneNumber,
+	const LinphoneFriend *linphoneFriend
+) : ClonableObject(*new SearchResultPrivate) {
+	L_D();
+	d->mWeight = weight;
+	d->mAddress = address;
+	if (d->mAddress) linphone_address_ref(const_cast<LinphoneAddress *>(d->mAddress));
+	d->mPhoneNumber = phoneNumber;
+	d->mFriend = linphoneFriend;
+	d->updateCapabilities();
+}
+
+SearchResult::SearchResult (const SearchResult &sr) : ClonableObject(*new SearchResultPrivate) {
 	L_D();
 	d->mWeight = sr.getWeight();
 	d->mAddress = sr.getAddress();
 	if (d->mAddress) linphone_address_ref(const_cast<LinphoneAddress *>(d->mAddress));
-	d->mFriend = sr.getFriend();
 	d->mPhoneNumber = sr.getPhoneNumber();
+	d->mFriend = sr.getFriend();
+	d->mCapabilities = sr.getCapabilities();
 }
 
-SearchResult::~SearchResult() {
+SearchResult::~SearchResult () {
 	L_D();
 	// FIXME: Ugly temporary workaround to solve weak. Remove me later.
 	if (d->mAddress) linphone_address_unref(const_cast<LinphoneAddress *>(d->mAddress));
 };
 
-bool SearchResult::operator<(const SearchResult &other) const {
+bool SearchResult::operator< (const SearchResult &other) const {
 	return getWeight() < other.getWeight();
 }
 
-bool SearchResult::operator>(const SearchResult &other) const {
+bool SearchResult::operator> (const SearchResult &other) const {
 	return getWeight() > other.getWeight();
 }
 
-bool SearchResult::operator>=(const SearchResult &other) const {
+bool SearchResult::operator>= (const SearchResult &other) const {
 	return getWeight() >= other.getWeight();
 }
 
-bool SearchResult::operator=(const SearchResult &other) const {
+bool SearchResult::operator= (const SearchResult &other) const {
 	return getWeight() == other.getWeight();
 }
 
-const LinphoneFriend *SearchResult::getFriend() const {
+const LinphoneFriend *SearchResult::getFriend () const {
 	L_D();
 	return d->mFriend;
 }
 
-const LinphoneAddress *SearchResult::getAddress() const {
+const LinphoneAddress *SearchResult::getAddress () const {
 	L_D();
 	return d->mAddress;
 }
 
-const string &SearchResult::getPhoneNumber() const {
+const string &SearchResult::getPhoneNumber () const {
 	L_D();
 	return d->mPhoneNumber;
 }
 
-unsigned int SearchResult::getWeight() const {
+int SearchResult::getCapabilities () const {
+	L_D();
+	return d->mCapabilities;
+}
+
+bool SearchResult::hasCapability (const LinphoneFriendCapability capability) const {
+	L_D();
+	return static_cast<bool>(d->mCapabilities & capability);
+}
+
+unsigned int SearchResult::getWeight () const {
 	L_D();
 	return d->mWeight;
 }

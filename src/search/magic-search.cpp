@@ -268,37 +268,13 @@ static string getDisplayNameFromSearchResult (const SearchResult &sr) {
 list<SearchResult> MagicSearch::getFriends (const string &withDomain) const {
 	list<SearchResult> returnList;
 	list<SearchResult> clResults;
+	list<SearchResult> friendResults;
 	LinphoneFriendList *list = linphone_core_get_default_friend_list(this->getCore()->getCCore());
 
 	for (bctbx_list_t *f = list->friends ; f != nullptr ; f = bctbx_list_next(f)) {
-		LinphoneAddress *phoneAddress = nullptr;
 		const LinphoneFriend *lFriend = reinterpret_cast<LinphoneFriend*>(f->data);
-		const LinphoneAddress *lAddress = linphone_friend_get_address(lFriend);
-		bctbx_list_t *lPhoneNumbers = linphone_friend_get_phone_numbers(lFriend);
-		string lPhoneNumber = (lPhoneNumbers != nullptr) ? static_cast<const char*>(lPhoneNumbers->data) : "";
-		const LinphonePresenceModel *presence = linphone_friend_get_presence_model(lFriend);
-		if (lPhoneNumbers) bctbx_list_free(lPhoneNumbers);
-
-		if (presence && !lAddress) {
-			char *contact = linphone_presence_model_get_contact(presence);
-			if (contact) {
-				phoneAddress = linphone_core_create_address(this->getCore()->getCCore(), contact);
-				bctbx_free(contact);
-			}
-		}
-
-		if (!withDomain.empty()) {
-			if (!lAddress && !phoneAddress)
-				continue;
-			if (withDomain != "*" &&
-				withDomain != ((lAddress) ? linphone_address_get_domain(lAddress) : "") &&
-				withDomain != ((phoneAddress) ? linphone_address_get_domain(phoneAddress) : ""))
-				continue;
-		}
-
-		if (phoneAddress) linphone_address_unref(phoneAddress);
-
-		returnList.push_back(SearchResult(1, lAddress, lPhoneNumber, lFriend));
+		friendResults = searchInFriend(lFriend, "", withDomain);
+		addResultsToResultsList(friendResults, returnList);
 	}
 
 	clResults = getAddressFromCallLog("", withDomain, clResults);
@@ -367,12 +343,14 @@ list<SearchResult> *MagicSearch::continueSearch (const string &filter, const str
 	list<SearchResult> *resultList = new list<SearchResult>();
 	const list <SearchResult> *cacheList = getSearchCache();
 
+	const LinphoneFriend *previousFriend = nullptr;
 	for (const auto sr : *cacheList) {
 		if (sr.getAddress() || !sr.getPhoneNumber().empty()) {
-			if (sr.getFriend()) {
+			if (sr.getFriend() && (!previousFriend || sr.getFriend() != previousFriend)) {
 				list<SearchResult> results = searchInFriend(sr.getFriend(), filter, withDomain);
 				addResultsToResultsList(results, *resultList);
-			} else {
+				previousFriend = sr.getFriend();
+			} else if (!sr.getFriend()) {
 				unsigned int weight = searchInAddress(sr.getAddress(), filter, withDomain);
 				if (weight > getMinWeight()) {
 					resultList->push_back(SearchResult(weight, sr.getAddress(), sr.getPhoneNumber(), nullptr));
@@ -419,7 +397,6 @@ list<SearchResult> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, c
 	bctbx_list_t *begin, *phoneNumbers = linphone_friend_get_phone_numbers(lFriend);
 	begin = phoneNumbers;
 	while (phoneNumbers && phoneNumbers->data) {
-		bool domainOk = (withDomain.empty());
 		string number = static_cast<const char*>(phoneNumbers->data);
 		const LinphonePresenceModel *presence = linphone_friend_get_presence_model_for_uri_or_tel(lFriend, number.c_str());
 		phoneNumber = number;
@@ -434,25 +411,22 @@ list<SearchResult> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, c
 		if (presence) {
 			char *contact = linphone_presence_model_get_contact(presence);
 			if (contact) {
-				if (!domainOk) {
-					LinphoneAddress *tmpAdd = linphone_core_create_address(this->getCore()->getCCore(), contact);
-					if (tmpAdd) {
-						string tmpDomain = linphone_address_get_domain(tmpAdd);
-						domainOk = (tmpDomain == withDomain) || withDomain == "*";
+				LinphoneAddress *tmpAdd = linphone_core_create_address(this->getCore()->getCCore(), contact);
+				if (tmpAdd) {
+					if (withDomain.empty() || withDomain == "*" || strcmp(linphone_address_get_domain(tmpAdd), withDomain.c_str()) == 0) {
+						weightNumber += getWeight(contact, filter) * 2;
+						if ((weightNumber + weight) > getMinWeight()) {
+							friendResult.push_back(SearchResult(weight + weightNumber, tmpAdd, phoneNumber, lFriend));
+						}
 						linphone_address_unref(tmpAdd);
+						bctbx_free(contact);
 					}
 				}
-				weightNumber += getWeight(contact, filter) * 2;
-				bctbx_free(contact);
 			}
-		}
-		if ((weightNumber + weight) > getMinWeight()) {
-			if (!domainOk && linphone_friend_get_address(lFriend)) {
-				string tmpDomain = linphone_address_get_domain(linphone_friend_get_address(lFriend));
-				domainOk = (tmpDomain == withDomain) || withDomain == "*";
+		} else {
+			if ((weightNumber + weight) > getMinWeight() && withDomain.empty()) {
+				friendResult.push_back(SearchResult(weight + weightNumber, nullptr, phoneNumber, lFriend));
 			}
-			if (domainOk)
-				friendResult.push_back(SearchResult(weight + weightNumber, linphone_friend_get_address(lFriend), phoneNumber, lFriend));
 		}
 		phoneNumbers = phoneNumbers->next;
 	}
@@ -551,16 +525,19 @@ void MagicSearch::addResultsToResultsList (std::list<SearchResult> &results, std
 list<SearchResult> *MagicSearch::uniqueItemsList (list<SearchResult> &list) const {
 	auto lc = this->getCore();
 	list.unique([lc](const SearchResult& lsr, const SearchResult& rsr){
-		string left = getAddressFromSearchResult(lsr, lc);
-		string right = getAddressFromSearchResult(rsr, lc);
+		bool sip_addresses = false;
+		const LinphoneAddress *left = lsr.getAddress();
+		const LinphoneAddress *right = rsr.getAddress();
+		if (left == nullptr && right == nullptr) {
+			sip_addresses = true;
+		} else if (left != nullptr && right != nullptr) {
+			sip_addresses = linphone_address_weak_equal(left, right);
+		}
 
-		const char phonePattern[] = ";user=phone";
-		size_t i = left.find(phonePattern);
-		if (i != string::npos) left.erase(i, sizeof phonePattern - 1);
-		i = right.find(phonePattern);
-		if (i != string::npos) right.erase(i, sizeof phonePattern - 1);
+		bool phone_numbers = lsr.getPhoneNumber() == rsr.getPhoneNumber();
+		bool capabilities = lsr.getCapabilities() == rsr.getCapabilities();
 
-		return (!left.empty() || !right.empty()) && left == right;
+		return sip_addresses && phone_numbers && capabilities;
 	});
 	return &list;
 }

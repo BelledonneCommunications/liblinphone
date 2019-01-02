@@ -20,8 +20,8 @@
 #ifndef _L_SEARCH_RESULT_H_
 #define _L_SEARCH_RESULT_H_
 
-#include "linphone/utils/general.h"
 #include "linphone/types.h"
+#include "linphone/utils/general.h"
 
 #include "object/clonable-object.h"
 
@@ -34,38 +34,48 @@ class SearchResultPrivate;
 class LINPHONE_PUBLIC SearchResult : public ClonableObject {
 public:
 	// TODO: Use C++ Address! Not LinphoneAddress.
-	SearchResult(const unsigned int weight, const LinphoneAddress *a, const std::string &pn, const LinphoneFriend *f = nullptr);
-	SearchResult(const SearchResult &other);
-	~SearchResult();
+	SearchResult (const unsigned int weight, const LinphoneAddress *a, const std::string &pn, const LinphoneFriend *f = nullptr);
+	SearchResult (const SearchResult &other);
+	~SearchResult ();
 
 	SearchResult* clone () const override {
 		return new SearchResult(*this);
 	}
 
-	bool operator<(const SearchResult &other) const;
-	bool operator>(const SearchResult &other) const;
-	bool operator>=(const SearchResult &other) const;
-	bool operator=(const SearchResult &other) const;
+	bool operator< (const SearchResult &other) const;
+	bool operator> (const SearchResult &other) const;
+	bool operator>= (const SearchResult &other) const;
+	bool operator= (const SearchResult &other) const;
 
 	/**
 	 * @return LinphoneFriend associed
 	 **/
-	const LinphoneFriend *getFriend()const;
+	const LinphoneFriend *getFriend ()const;
 
 	/**
 	 * @return LinphoneAddress associed
 	 **/
-	const LinphoneAddress *getAddress() const;
+	const LinphoneAddress *getAddress () const;
 
 	/**
 	 * @return Phone Number associed
 	 **/
-	const std::string &getPhoneNumber() const;
+	const std::string &getPhoneNumber () const;
+
+	/**
+	 * @return a capability mask associated to the search result
+	 **/
+	int getCapabilities () const;
+
+	/**
+	 * @return whether or not the search results has a capability
+	 **/
+	bool hasCapability (const LinphoneFriendCapability capability) const;
 
 	/**
 	 * @return the result weight
 	 **/
-	unsigned int getWeight() const;
+	unsigned int getWeight () const;
 
 private:
 	L_DECLARE_PRIVATE(SearchResult);
