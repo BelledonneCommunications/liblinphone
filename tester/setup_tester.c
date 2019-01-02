@@ -825,10 +825,9 @@ static void search_friend_with_phone_number(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "33", "*");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 3, int, "%d");
+		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[11], NULL);//"sip:+33655667788@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[10], NULL);//"sip:+111223344@sip.example.org"
-		_check_friend_result_list(manager->lc, resultList, 2, sFriends[5], NULL);//"sip:marie@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
 
@@ -1042,12 +1041,13 @@ static void search_friend_in_call_log_already_exist(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "ch", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 5, int, "%d");
+		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 6, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, chloeSipUri, NULL);//"sip:chloe@sip.example.org"
-		_check_friend_result_list(manager->lc, resultList, 1, sFriends[0], NULL);//"sip:charu@sip.test.org"
-		_check_friend_result_list(manager->lc, resultList, 2, sFriends[1], NULL);//"sip:charette@sip.example.org"
-		_check_friend_result_list(manager->lc, resultList, 3, "sip:pauline@sip.example.org", NULL);//In the linphonerc "sip:pauline@sip.example.org"
-		_check_friend_result_list(manager->lc, resultList, 4,"sip:ch@sip.example.org", NULL);//"sip:ch@sip.example.org"
+		_check_friend_result_list(manager->lc, resultList, 1, chloeSipUri, NULL);//"sip:chloe@sip.example.org"
+		_check_friend_result_list(manager->lc, resultList, 2, sFriends[0], NULL);//"sip:charu@sip.test.org"
+		_check_friend_result_list(manager->lc, resultList, 3, sFriends[1], NULL);//"sip:charette@sip.example.org"
+		_check_friend_result_list(manager->lc, resultList, 4, "sip:pauline@sip.example.org", NULL);//In the linphonerc "sip:pauline@sip.example.org"
+		_check_friend_result_list(manager->lc, resultList, 5,"sip:ch@sip.example.org", NULL);//"sip:ch@sip.example.org"
 		const LinphoneSearchResult *sr = bctbx_list_nth_data(resultList, 0);
 		if (BC_ASSERT_PTR_NOT_NULL(sr)) {
 			const LinphoneFriend *lf = linphone_search_result_get_friend(sr);
