@@ -413,15 +413,19 @@ list<SearchResult> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, c
 			char *contact = linphone_presence_model_get_contact(presence);
 			if (contact) {
 				LinphoneAddress *tmpAdd = linphone_core_create_address(this->getCore()->getCCore(), contact);
-				if (tmpAdd && !domainOk) {
-					string tmpDomain = linphone_address_get_domain(tmpAdd);
-					domainOk = (tmpDomain == withDomain);
-				}
-				if (tmpAdd && domainOk) {
-					weightNumber += getWeight(contact, filter) * 2;
-					friendResult.push_back(SearchResult(weight + weightNumber, tmpAdd, phoneNumber, lFriend));
-					linphone_address_unref(tmpAdd);
-					bctbx_free(contact);
+				if (tmpAdd) {
+					if (!domainOk) {
+						string tmpDomain = linphone_address_get_domain(tmpAdd);
+						domainOk = (tmpDomain == withDomain);
+					}
+					if (domainOk) {
+						weightNumber += getWeight(contact, filter) * 2;
+						if ((weightNumber + weight) > getMinWeight()) {
+							friendResult.push_back(SearchResult(weight + weightNumber, tmpAdd, phoneNumber, lFriend));
+						}
+						linphone_address_unref(tmpAdd);
+						bctbx_free(contact);
+					}
 				}
 			}
 		} else {
