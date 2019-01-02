@@ -1731,14 +1731,33 @@ void linphone_friend_clear_presence_models(LinphoneFriend *lf) {
 	lf->presence_models = bctbx_list_free_with_data(lf->presence_models, (bctbx_list_free_func)free_friend_presence);
 }
 
-void linphone_friend_set_capabilities(LinphoneFriend *lf, int capabilities) {
-	lf->capabilities = capabilities;
-}
-
 int linphone_friend_get_capabilities(const LinphoneFriend *lf) {
-	return lf->capabilities;
+	int capabilities = 0;
+	const LinphonePresenceModel *presence = NULL;
+	const bctbx_list_t* addrs = linphone_friend_get_addresses(lf);
+	bctbx_list_t* phones = linphone_friend_get_phone_numbers(lf);
+	bctbx_list_t *it;
+
+	for (it = (bctbx_list_t *)addrs; it!= NULL; it = it->next) {
+		LinphoneAddress *addr = (LinphoneAddress*)it->data;
+		char *uri = linphone_address_as_string_uri_only(addr);
+		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, uri);
+		ms_free(uri);
+
+		if (!presence) continue;
+		capabilities |= linphone_presence_model_get_capabilities(presence);
+	}
+	for (it = phones; it!= NULL; it = it->next) {
+		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, reinterpret_cast<const char *>(it->data));
+
+		if (!presence) continue;
+		capabilities |= linphone_presence_model_get_capabilities(presence);
+	}
+	bctbx_list_free(phones);
+
+	return capabilities;
 }
 
 bool_t linphone_friend_has_capability(const LinphoneFriend *lf, const LinphoneFriendCapability capability) {
-	return static_cast<bool_t>(lf->capabilities & capability);
+	return static_cast<bool_t>(linphone_friend_get_capabilities(lf) & capability);
 }

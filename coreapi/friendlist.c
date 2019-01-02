@@ -322,8 +322,6 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 								linphone_friend_unref(lf);
 							}
 							if (lf) {
-								linphone_friend_set_capabilities(lf, linphone_presence_model_get_capabilities((LinphonePresenceModel *)presence));
-
 								lf->presence_received = TRUE;
 								const char *phone_number = linphone_friend_sip_uri_to_phone_number(lf, uri);
 								if (phone_number) {
