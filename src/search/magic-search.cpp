@@ -397,7 +397,6 @@ list<SearchResult> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, c
 	bctbx_list_t *begin, *phoneNumbers = linphone_friend_get_phone_numbers(lFriend);
 	begin = phoneNumbers;
 	while (phoneNumbers && phoneNumbers->data) {
-		bool domainOk = (withDomain.empty() || withDomain == "*");
 		string number = static_cast<const char*>(phoneNumbers->data);
 		const LinphonePresenceModel *presence = linphone_friend_get_presence_model_for_uri_or_tel(lFriend, number.c_str());
 		phoneNumber = number;
@@ -414,11 +413,7 @@ list<SearchResult> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, c
 			if (contact) {
 				LinphoneAddress *tmpAdd = linphone_core_create_address(this->getCore()->getCCore(), contact);
 				if (tmpAdd) {
-					if (!domainOk) {
-						string tmpDomain = linphone_address_get_domain(tmpAdd);
-						domainOk = (tmpDomain == withDomain);
-					}
-					if (domainOk) {
+					if (withDomain.empty() || withDomain == "*" || strcmp(linphone_address_get_domain(tmpAdd), withDomain.c_str()) == 0) {
 						weightNumber += getWeight(contact, filter) * 2;
 						if ((weightNumber + weight) > getMinWeight()) {
 							friendResult.push_back(SearchResult(weight + weightNumber, tmpAdd, phoneNumber, lFriend));
@@ -429,7 +424,7 @@ list<SearchResult> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, c
 				}
 			}
 		} else {
-			if ((weightNumber + weight) > getMinWeight() && domainOk) {
+			if ((weightNumber + weight) > getMinWeight() && withDomain.empty()) {
 				friendResult.push_back(SearchResult(weight + weightNumber, nullptr, phoneNumber, lFriend));
 			}
 		}
@@ -541,9 +536,8 @@ list<SearchResult> *MagicSearch::uniqueItemsList (list<SearchResult> &list) cons
 
 		bool phone_numbers = lsr.getPhoneNumber() == rsr.getPhoneNumber();
 		bool capabilities = lsr.getCapabilities() == rsr.getCapabilities();
-		bool friends = lsr.getFriend() == rsr.getFriend();
 
-		return sip_addresses && phone_numbers && capabilities && friends;
+		return sip_addresses && phone_numbers && capabilities;
 	});
 	return &list;
 }
