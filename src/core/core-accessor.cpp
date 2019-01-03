@@ -40,12 +40,6 @@ CoreAccessor::CoreAccessor (const shared_ptr<Core> &core) {
 	mPrivate->core = core;
 }
 
-CoreAccessor::CoreAccessor (const shared_ptr<Core> &&core) {
-	L_ASSERT(core);
-	mPrivate = new CoreAccessorPrivate();
-	mPrivate->core = move(core);
-}
-
 CoreAccessor::~CoreAccessor () {
 	delete mPrivate;
 }
