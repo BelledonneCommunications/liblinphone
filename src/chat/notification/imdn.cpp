@@ -208,8 +208,12 @@ bool Imdn::aggregationEnabled () const {
 }
 
 void Imdn::send () {
-	if (!linphone_core_is_network_reachable(chatRoom->getCore()->getCCore()))
-		return;
+	try {
+		if (!linphone_core_is_network_reachable(chatRoom->getCore()->getCCore()))
+			return;
+	} catch (const bad_weak_ptr &) {
+		return; // Cannot send imdn if core is destroyed.
+	}
 
 	if (!deliveredMessages.empty() || !displayedMessages.empty()) {
 		auto imdnMessage = chatRoom->getPrivate()->createImdnMessage(deliveredMessages, displayedMessages);
