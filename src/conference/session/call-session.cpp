@@ -66,8 +66,8 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 	if (state != newState){
 		prevState = state;
 
-		/* Make sanity checks with call state changes. Any bad transition can result in unpredictable results
-		   or irrecoverable errors in the application. */
+		// Make sanity checks with call state changes. Any bad transition can result in unpredictable results
+		// or irrecoverable errors in the application.
 		if ((state == CallSession::State::End) || (state == CallSession::State::Error)) {
 			if (newState != CallSession::State::Released) {
 				lFatal() << "Abnormal call resurection from " << Utils::toString(state) <<
@@ -81,8 +81,8 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 		lInfo() << "CallSession [" << q << "] moving from state " << Utils::toString(state) << " to " << Utils::toString(newState);
 
 		if (newState != CallSession::State::Referred) {
-			/* CallSession::State::Referred is rather an event, not a state.
-			   Indeed it does not change the state of the call (still paused or running). */
+			// CallSession::State::Referred is rather an event, not a state.
+			// Indeed it does not change the state of the call (still paused or running).
 			state = newState;
 		}
 
@@ -814,10 +814,15 @@ void CallSessionPrivate::repairByInviteWithReplaces () {
 
 void CallSessionPrivate::repairIfBroken () {
 	L_Q();
-	LinphoneCore *lc = q->getCore()->getCCore();
-	LinphoneConfig *config = linphone_core_get_config(lc);
-	if (!lp_config_get_int(config, "sip", "repair_broken_calls", 1) || !lc->media_network_state.global_state || !broken)
-		return;
+
+	try {
+		LinphoneCore *lc = q->getCore()->getCCore();
+		LinphoneConfig *config = linphone_core_get_config(lc);
+		if (!lp_config_get_int(config, "sip", "repair_broken_calls", 1) || !lc->media_network_state.global_state || !broken)
+			return;
+	} catch (const bad_weak_ptr &) {
+		return; // Cannot repair if core is destroyed.
+	}
 
 	// If we are registered and this session has been broken due to a past network disconnection,
 	// attempt to repair it
@@ -1029,7 +1034,7 @@ bool CallSession::initiateOutgoing () {
 	d->log->start_date_time = ms_time(nullptr);
 	if (!d->destProxy)
 		defer = d->startPing();
- 	return defer;
+	return defer;
 }
 
 void CallSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
@@ -1117,8 +1122,8 @@ int CallSession::startInvite (const Address *destination, const string &subject,
 	ms_free(from);
 	if (result < 0) {
 		if ((d->state != CallSession::State::Error) && (d->state != CallSession::State::Released)) {
-			/* sal_call() may invoke call_failure() and call_released() SAL callbacks synchronously,
-			   in which case there is no need to perform a state change here. */
+			// sal_call() may invoke call_failure() and call_released() SAL callbacks synchronously,
+			// in which case there is no need to perform a state change here.
 			d->setState(CallSession::State::Error, "Call failed");
 		}
 	} else {
