@@ -178,23 +178,14 @@ void MagicSearch::setSearchCache (list<SearchResult> *cache) const {
 }
 
 static bool findAddress (const list<SearchResult> &list, const LinphoneAddress *addr) {
-	bool returnValue = false;
-	char *charAddr = linphone_address_as_string_uri_only(addr);
-	string sAddr = charAddr;
 	for (auto r : list) {
 		if (r.getAddress()) {
-			char *charTmp = linphone_address_as_string_uri_only(r.getAddress());
-			string tmp = charTmp;
-			if (sAddr == tmp){
-				returnValue = true;
-				if (charTmp) bctbx_free(charTmp);
-				break;
+			if (linphone_address_weak_equal(r.getAddress(), addr)) {
+				return true;
 			}
-			if (charTmp) bctbx_free(charTmp);
 		}
 	}
-	if (charAddr) bctbx_free(charAddr);
-	return returnValue;
+	return false;
 }
 
 list<SearchResult> MagicSearch::getAddressFromCallLog (
