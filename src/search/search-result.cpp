@@ -75,6 +75,7 @@ SearchResult::SearchResult (
 	if (d->mAddress) linphone_address_ref(const_cast<LinphoneAddress *>(d->mAddress));
 	d->mPhoneNumber = phoneNumber;
 	d->mFriend = linphoneFriend;
+	if (d->mFriend) linphone_friend_ref(const_cast<LinphoneFriend *>(d->mFriend));
 	d->updateCapabilities();
 }
 
@@ -85,6 +86,7 @@ SearchResult::SearchResult (const SearchResult &sr) : ClonableObject(*new Search
 	if (d->mAddress) linphone_address_ref(const_cast<LinphoneAddress *>(d->mAddress));
 	d->mPhoneNumber = sr.getPhoneNumber();
 	d->mFriend = sr.getFriend();
+	if (d->mFriend) linphone_friend_ref(const_cast<LinphoneFriend *>(d->mFriend));
 	d->mCapabilities = sr.getCapabilities();
 }
 
@@ -92,6 +94,7 @@ SearchResult::~SearchResult () {
 	L_D();
 	// FIXME: Ugly temporary workaround to solve weak. Remove me later.
 	if (d->mAddress) linphone_address_unref(const_cast<LinphoneAddress *>(d->mAddress));
+	if (d->mFriend) linphone_friend_unref(const_cast<LinphoneFriend *>(d->mFriend));
 };
 
 bool SearchResult::operator< (const SearchResult &other) const {
