@@ -3451,6 +3451,9 @@ void linphone_core_iterate(LinphoneCore *lc){
 	lc->sal->iterate();
 	if (lc->msevq) ms_event_queue_pump(lc->msevq);
 	if (lc->auto_net_state_mon) monitor_network_state(lc, current_real_time);
+	if (linphone_core_get_global_state(lc) == LinphoneGlobalConfiguring)
+		// Avoid registration before getting remote configuration results
+		return;
 
 	proxy_update(lc);
 
