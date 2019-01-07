@@ -554,6 +554,10 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters () {
 
 	// Get local device Id from local contact address
 	const LinphoneAddress *contactAddress = linphone_proxy_config_get_contact(proxy);
+	if (!contactAddress) {
+		lWarning() << "No contactAddress available, unable to setup LIMEv2 identity key for ZRTP auxiliary shared secret";
+		return {};
+	}
 	IdentityAddress identityAddress = IdentityAddress(linphone_address_as_string(contactAddress));
 	string localDeviceId = identityAddress.asString();
 	vector<uint8_t> Ik;
