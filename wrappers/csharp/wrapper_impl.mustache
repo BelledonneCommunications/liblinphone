@@ -292,6 +292,17 @@ namespace Linphone
 		{
 			ms_factory_enable_filter_from_name(nativePtr, name, enabled ? (char)1 : (char)0);
 		}
+
+                [DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+                static extern void ms_devices_info_add(IntPtr devices_info, string manufacturer, string model, string platform, uint flags, int delay, int recommended_rate);
+
+                [DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+                static extern IntPtr ms_factory_get_devices_info(IntPtr factory);
+
+                public void addDevicesInfo(string manufacturer, string model, string platform, uint flags, int delay, int recommended_rate)
+                {
+                        ms_devices_info_add(ms_factory_get_devices_info(nativePtr), manufacturer, model, platform, flags, delay, recommended_rate);
+                }
 	}
 #endregion
 
