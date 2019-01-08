@@ -280,6 +280,19 @@ namespace Linphone
 		}
 	}
 #endif
+
+	public class MediastreamerFactory
+	{
+		public IntPtr nativePtr;
+
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern int ms_factory_enable_filter_from_name(IntPtr nativePtr, string name, char enabled);
+
+		public void enableFilterFromName(string name, bool enabled)
+		{
+			ms_factory_enable_filter_from_name(nativePtr, name, enabled ? (char)1 : (char)0);
+		}
+	}
 #endregion
 
 #region Enums
@@ -405,6 +418,19 @@ namespace Linphone
 		}
 		{{/isLinphoneCall}}
 		{{#isLinphoneCore}}
+
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern IntPtr linphone_core_get_ms_factory(IntPtr thiz);
+
+		public MediastreamerFactory MsFactory {
+			get
+			{
+				IntPtr ptr = linphone_core_get_ms_factory(nativePtr);
+		                MediastreamerFactory factory = new MediastreamerFactory();
+				factory.nativePtr = ptr;
+		                return factory;
+			}
+		}
 
 		/// Get the native window handle of the video window.
 		public string NativeVideoWindowIdString
