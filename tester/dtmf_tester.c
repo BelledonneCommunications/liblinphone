@@ -19,13 +19,6 @@
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 
-void dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf) {
-	stats* counters = get_stats(lc);
-	char** dst = &counters->dtmf_list_received;
-	*dst = *dst ? ms_strcat_printf(*dst, "%c", dtmf) : ms_strdup_printf("%c", dtmf);
-	counters->dtmf_count++;
-}
-
 void send_dtmf_base(LinphoneCoreManager **pmarie, LinphoneCoreManager **ppauline, bool_t use_rfc2833, bool_t use_sipinfo, char dtmf, char* dtmf_seq, bool_t use_opus) {
 	char* expected = NULL;
 	int dtmf_count_prev;

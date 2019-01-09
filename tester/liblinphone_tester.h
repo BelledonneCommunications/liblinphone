@@ -360,8 +360,10 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr);
 void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr);
 void linphone_core_manager_destroy(LinphoneCoreManager* mgr);
 void linphone_core_manager_delete_chat_room (LinphoneCoreManager *mgr, LinphoneChatRoom *cr, bctbx_list_t *coresList);
+bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList);
+void start_core_for_conference(bctbx_list_t *coreManagerList);
 
-void reset_counters( stats* counters);
+void reset_counters(stats* counters);
 
 void registration_state_changed(struct _LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const char *message);
 void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg);
@@ -371,6 +373,7 @@ void notify_presence_received_for_uri_or_tel(LinphoneCore *lc, LinphoneFriend *l
 void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage* message);
 void file_transfer_received(LinphoneChatMessage *message, const LinphoneContent* content, const LinphoneBuffer *buffer);
 LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t size);
+LinphoneChatMessage *_send_message(LinphoneChatRoom *chatRoom, const char *message);
 LinphoneBuffer * tester_memory_file_transfer_send(LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t size);
 void file_transfer_progress_indication(LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t total);
 void is_composing_received(LinphoneCore *lc, LinphoneChatRoom *room);
@@ -418,6 +421,8 @@ const char *liblinphone_tester_get_subscribe_content(void);
 const char *liblinphone_tester_get_notify_content(void);
 void liblinphone_tester_chat_message_state_change(LinphoneChatMessage* msg,LinphoneChatMessageState state,void* ud);
 void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state);
+void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state);
+
 void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreManager* callee);
 void liblinphone_tester_clock_start(MSTimeSpec *start);
 bool_t liblinphone_tester_clock_elapsed(const MSTimeSpec *start, int value_ms);
@@ -425,6 +430,7 @@ void linphone_core_manager_check_accounts(LinphoneCoreManager *m);
 void account_manager_destroy(void);
 LinphoneAddress *account_manager_get_identity_with_modified_identity(const LinphoneAddress *modified_identity);
 LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, const char *file, void *user_data);
+void configure_core_for_callbacks(LinphoneCoreManager *lcm, LinphoneCoreCbs *cbs);
 
 void liblinphone_tester_set_next_video_frame_decoded_cb(LinphoneCall *call);
 void call_paused_resumed_base(bool_t multicast,bool_t with_losses);
@@ -438,6 +444,14 @@ void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, MSList*
 void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie, bool_t caller_with_ice, bool_t callee_with_ice, bool_t random_ports, bool_t forced_relay);
 int check_nb_media_starts(LinphoneCoreManager *caller, LinphoneCoreManager *callee, unsigned int caller_nb_media_starts, unsigned int callee_nb_media_starts);
 void record_call(const char *filename, bool_t enableVideo, const char *video_codec);
+
+void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManager* mgr);
+
+LinphoneChatRoom * create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, bool_t encrypted);
+LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin);
+void configure_core_for_conference (LinphoneCore *core, const char* username, const LinphoneAddress *factoryAddr, bool_t server);
+void _start_core(LinphoneCoreManager *lcm);
+
 
 /*
  * this function return max value in the last 3 seconds*/
