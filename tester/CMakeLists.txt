@@ -147,6 +147,8 @@ set(RC_FILES
 	rcfiles/stun_rc
 	rcfiles/zero_length_params_rc
 	rcfiles/marie_bodyless_rc
+	rcfiles/groupchat_rc
+	rcfiles/groupchat_lime_x3dh_rc
 )
 
 set(IMAGE_FILES
@@ -234,14 +236,30 @@ if(APPLE)
 	endif()
 endif()
 
+set(GROUP_CHAT_BENCHMARK_SOURCE_C
+	accountmanager.c
+	tester.c
+	group_chat_tester.c
+	group_chat_benchmark.c
+)
+
+set(GROUP_CHAT_BENCHMARK_HEADERS
+	liblinphone_tester.h
+	tools/tester.h
+)
+
+
 # TODO: Remove me later!
 list(REMOVE_ITEM STRICT_OPTIONS_CPP "-Wconversion" "-Werror=conversion" "-Wcast-align" "-Werror=cast-align")
 if (ANDROID AND CMAKE_C_COMPILER_ID STREQUAL "GNU") #restrict to Android as it seems to break reguler linux
 	list (APPEND STRICT_OPTIONS_C "-std=c99")
 endif()
+
 bc_apply_compile_flags(SOURCE_FILES_C STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
 bc_apply_compile_flags(SOURCE_FILES_CXX STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
 bc_apply_compile_flags(SOURCE_FILES_OBJC STRICT_OPTIONS_CPP STRICT_OPTIONS_OBJC)
+
+bc_apply_compile_flags(GROUP_CHAT_BENCHMARK_SOURCE_C STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
 
 add_definitions("-DLINPHONE_TESTER")
 
@@ -339,6 +357,21 @@ if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 			ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 		)
+
+		add_executable(groupchat_benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C})
+		set_target_properties(groupchat_benchmark PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+		set_target_properties(groupchat_benchmark PROPERTIES LINKER_LANGUAGE CXX)
+		set_target_properties(groupchat_benchmark PROPERTIES C_STANDARD 99)
+		target_include_directories(groupchat_benchmark PUBLIC ${BCTOOLBOX_TESTER_INCLUDE_DIRS})
+		target_link_libraries(groupchat_benchmark ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
+
+		install(TARGETS groupchat_benchmark
+			RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+			LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+			ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+		)
+
 	endif()
 	install(FILES ${CERTIFICATE_ALT_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone_tester/certificates/altname")
 	install(FILES ${CERTIFICATE_CLIENT_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone_tester/certificates/client")
