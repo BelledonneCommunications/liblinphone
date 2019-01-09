@@ -311,6 +311,7 @@ class CsharpTranslator(object):
 		methodDict['getter_nativePtr'] = 'nativePtr'
 		methodDict['getter_c_name'] = c_name
 		methodDict['is_class'] = True
+		methodDict['addListener'] = True
 
 		return methodDict
 
@@ -327,6 +328,8 @@ class CsharpTranslator(object):
 		methodDict['impl']['args'] = classname + ' cbs'
 		methodDict['impl']['c_args'] = 'cbs != null ? cbs.nativePtr : IntPtr.Zero'
 		methodDict['is_generic'] = True
+		methodDict['impl']['addListener'] = True
+		methodDict['impl']['removeListener'] = False
 
 		return methodDict
 
@@ -343,6 +346,8 @@ class CsharpTranslator(object):
 		methodDict['impl']['args'] = classname + ' cbs'
 		methodDict['impl']['c_args'] = 'cbs != null ? cbs.nativePtr : IntPtr.Zero'
 		methodDict['is_generic'] = True
+		methodDict['impl']['addListener'] = False
+		methodDict['impl']['removeListener'] = True
 
 		return methodDict
 
@@ -433,6 +438,9 @@ class CsharpTranslator(object):
 
 		interfaceDict = {}
 		interfaceDict['interfaceName'] = interface.name.translate(self.nameTranslator)
+		interfaceDict['set_user_data_name'] = interface.listenedClass.name.to_snake_case(fullName=True) + '_cbs_set_user_data'
+		interfaceDict['get_user_data_name'] = interface.listenedClass.name.to_snake_case(fullName=True) + '_cbs_get_user_data'
+
 		interfaceDict['methods'] = []
 		for method in interface.instanceMethods:
 			interfaceDict['methods'].append(self.translate_listener(interface, method))

@@ -293,16 +293,16 @@ namespace Linphone
 			ms_factory_enable_filter_from_name(nativePtr, name, enabled ? (char)1 : (char)0);
 		}
 
-                [DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-                static extern void ms_devices_info_add(IntPtr devices_info, string manufacturer, string model, string platform, uint flags, int delay, int recommended_rate);
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern void ms_devices_info_add(IntPtr devices_info, string manufacturer, string model, string platform, uint flags, int delay, int recommended_rate);
 
-                [DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-                static extern IntPtr ms_factory_get_devices_info(IntPtr factory);
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern IntPtr ms_factory_get_devices_info(IntPtr factory);
 
-                public void addDevicesInfo(string manufacturer, string model, string platform, uint flags, int delay, int recommended_rate)
-                {
-                        ms_devices_info_add(ms_factory_get_devices_info(nativePtr), manufacturer, model, platform, flags, delay, recommended_rate);
-                }
+		public void addDevicesInfo(string manufacturer, string model, string platform, uint flags, int delay, int recommended_rate)
+		{
+				ms_devices_info_add(ms_factory_get_devices_info(nativePtr), manufacturer, model, platform, flags, delay, recommended_rate);
+		}
 	}
 #endregion
 
@@ -336,6 +336,12 @@ namespace Linphone
 	[StructLayout(LayoutKind.Sequential)]
 	public class {{interfaceName}} : LinphoneObject
 	{
+        [DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+        static extern void {{set_user_data_name}}(IntPtr thiz, IntPtr listener);
+
+        [DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+        static extern IntPtr {{get_user_data_name}}(IntPtr thiz);
+
 		{{#methods}}
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		{{#cb_setter}}
@@ -385,6 +391,37 @@ namespace Linphone
 		}
 		{{/delegate}}
 		{{/methods}}
+
+		internal void register() {
+			IntPtr listener = {{get_user_data_name}}(nativePtr);
+			if (listener == IntPtr.Zero)
+			{
+				GCHandle _handle = GCHandle.Alloc(this, GCHandleType.Normal);
+				listener = GCHandle.ToIntPtr(_handle);
+			} else
+			{
+				GCHandle _handle = GCHandle.FromIntPtr(listener);
+				if (_handle.Target == this)
+				{
+					return;
+				} else
+				{
+					_handle.Free();
+					_handle = GCHandle.Alloc(this, GCHandleType.Normal);
+					listener = GCHandle.ToIntPtr(_handle);
+				}
+			}
+			{{set_user_data_name}}(nativePtr, listener);
+		}
+
+		internal void unregister() {
+			IntPtr listener = {{get_user_data_name}}(nativePtr);
+			{{set_user_data_name}}(nativePtr, IntPtr.Zero);
+			if (listener != IntPtr.Zero)
+			{
+				GCHandle.FromIntPtr(listener).Free();
+			}
+		}
 	}
 
 	{{/interface}}
@@ -497,7 +534,11 @@ namespace Linphone
 				{{/is_bool}}
 				{{#is_class}}
 				IntPtr ptr = {{getter_c_name}}({{getter_nativePtr}});
-				return fromNativePtr<{{return}}>(ptr, {{takeRef}});
+				{{{property_return}}} obj = fromNativePtr<{{return}}>(ptr, {{takeRef}});
+				{{#addListener}}
+				obj.register();
+				{{/addListener}}
+				return obj;
 				{{/is_class}}
 				{{#is_enum}}
 				return {{getter_c_name}}({{getter_nativePtr}});
@@ -557,6 +598,12 @@ namespace Linphone
 		{{/doc}}
 		public {{static}}{{override}}{{{type}}} {{name}}({{{args}}})
 		{
+			{{#addListener}}
+			cbs.register();
+			{{/addListener}}
+			{{#removeListener}}
+			cbs.unregister();
+			{{/removeListener}}
 			{{#is_string}}
 			IntPtr stringPtr = {{c_name}}({{nativePtr}}{{c_args}});
 			return Marshal.PtrToStringAuto(stringPtr);
