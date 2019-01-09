@@ -306,6 +306,51 @@ int logfile_arg_func(const char *arg) {
 	return 0;
 }
 
+void liblinphone_tester_add_suites() {
+	bc_tester_add_suite(&setup_test_suite);
+	bc_tester_add_suite(&register_test_suite);
+	bc_tester_add_suite(&tunnel_test_suite);
+	bc_tester_add_suite(&offeranswer_test_suite);
+	bc_tester_add_suite(&call_test_suite);
+#ifdef VIDEO_ENABLED
+	bc_tester_add_suite(&call_video_test_suite);
+#endif // ifdef VIDEO_ENABLED
+	bc_tester_add_suite(&audio_bypass_suite);
+	bc_tester_add_suite(&multi_call_test_suite);
+	bc_tester_add_suite(&message_test_suite);
+	bc_tester_add_suite(&presence_test_suite);
+	bc_tester_add_suite(&presence_server_test_suite);
+	bc_tester_add_suite(&account_creator_test_suite);
+	bc_tester_add_suite(&stun_test_suite);
+	bc_tester_add_suite(&event_test_suite);
+	bc_tester_add_suite(&conference_event_test_suite);
+	bc_tester_add_suite(&contents_test_suite);
+	bc_tester_add_suite(&flexisip_test_suite);
+	bc_tester_add_suite(&remote_provisioning_test_suite);
+	bc_tester_add_suite(&quality_reporting_test_suite);
+	bc_tester_add_suite(&log_collection_test_suite);
+	bc_tester_add_suite(&player_test_suite);
+	bc_tester_add_suite(&dtmf_test_suite);
+	bc_tester_add_suite(&cpim_test_suite);
+	bc_tester_add_suite(&multipart_test_suite);
+	bc_tester_add_suite(&clonable_object_test_suite);
+	bc_tester_add_suite(&main_db_test_suite);
+	bc_tester_add_suite(&property_container_test_suite);
+	#ifdef VIDEO_ENABLED
+		bc_tester_add_suite(&video_test_suite);
+#endif // ifdef VIDEO_ENABLED
+	bc_tester_add_suite(&multicast_call_test_suite);
+	bc_tester_add_suite(&proxy_config_test_suite);
+#if HAVE_SIPP
+	bc_tester_add_suite(&complex_sip_call_test_suite);
+#endif
+#ifdef VCARD_ENABLED
+	bc_tester_add_suite(&vcard_test_suite);
+#endif
+	bc_tester_add_suite(&group_chat_test_suite);
+	bc_tester_add_suite(&utils_test_suite);
+}
+
 void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, va_list args)) {
 	bctbx_init_logger(FALSE);
 	if (! log_file) {

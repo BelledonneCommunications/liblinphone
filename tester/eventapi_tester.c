@@ -24,8 +24,8 @@
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 
-static const char *subscribe_content="<somexml>blabla</somexml>";
 static const char *notify_content="<somexml2>blabla</somexml2>";
+static const char *subscribe_content="<somexml>blabla</somexml>";
 
 const char *liblinphone_tester_get_subscribe_content(void){
 	return subscribe_content;
@@ -33,102 +33,6 @@ const char *liblinphone_tester_get_subscribe_content(void){
 
 const char *liblinphone_tester_get_notify_content(void){
 	return notify_content;
-}
-
-void linphone_notify_received(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content){
-	LinphoneCoreManager *mgr;
-	const char * ua = linphone_event_get_custom_header(lev, "User-Agent");
-	if (!BC_ASSERT_PTR_NOT_NULL(content)) return;
-	if (!linphone_content_is_multipart(content) && (!ua ||  !strstr(ua, "flexisip"))) { /*disable check for full presence server support*/
-		/*hack to disable content checking for list notify */
-		BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), notify_content);
-	}
-	mgr = get_manager(lc);
-	mgr->stat.number_of_NotifyReceived++;
-}
-
-void linphone_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content) {
-	LinphoneCoreManager *mgr = get_manager(lc);
-	if (!mgr->decline_subscribe)
-		linphone_event_accept_subscription(lev);
-	else
-		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
-}
-
-void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
-	stats* counters = get_stats(lc);
-	LinphoneCoreManager *mgr=get_manager(lc);
-	LinphoneContent* content;
-	const LinphoneAddress* from_addr = linphone_event_get_from(lev);
-	char* from = linphone_address_as_string(from_addr);
-	content = linphone_core_create_content(lc);
-	linphone_content_set_type(content,"application");
-	linphone_content_set_subtype(content,"somexml2");
-	linphone_content_set_buffer(content,(const uint8_t *)notify_content,strlen(notify_content));
-
-	ms_message("Subscription state [%s] from [%s]",linphone_subscription_state_to_string(state),from);
-	ms_free(from);
-
-	switch(state){
-		case LinphoneSubscriptionNone:
-		break;
-		case LinphoneSubscriptionIncomingReceived:
-			counters->number_of_LinphoneSubscriptionIncomingReceived++;
-			mgr->lev=lev;
-		break;
-		case LinphoneSubscriptionOutgoingProgress:
-			counters->number_of_LinphoneSubscriptionOutgoingProgress++;
-		break;
-		case LinphoneSubscriptionPending:
-			counters->number_of_LinphoneSubscriptionPending++;
-		break;
-		case LinphoneSubscriptionActive:
-			counters->number_of_LinphoneSubscriptionActive++;
-			if (linphone_event_get_subscription_dir(lev)==LinphoneSubscriptionIncoming){
-				mgr->lev=lev;
-				if(strcmp(linphone_event_get_name(lev), "conference") == 0) {
-					// TODO : Get LocalConfEventHandler and call handler->subscribeReceived(lev)
-				} else {
-					linphone_event_notify(lev,content);
-				}
-			}
-		break;
-		case LinphoneSubscriptionTerminated:
-			counters->number_of_LinphoneSubscriptionTerminated++;
-			mgr->lev=NULL;
-		break;
-		case LinphoneSubscriptionError:
-			counters->number_of_LinphoneSubscriptionError++;
-			mgr->lev=NULL;
-		break;
-		case LinphoneSubscriptionExpiring:
-			counters->number_of_LinphoneSubscriptionExpiring++;
-			mgr->lev=NULL;
-		break;
-	}
-	linphone_content_unref(content);
-}
-
-void linphone_publish_state_changed(LinphoneCore *lc, LinphoneEvent *ev, LinphonePublishState state){
-	stats* counters = get_stats(lc);
-	const LinphoneAddress* from_addr = linphone_event_get_from(ev);
-	char* from = linphone_address_as_string(from_addr);
-	ms_message("Publish state [%s] from [%s]",linphone_publish_state_to_string(state),from);
-	ms_free(from);
-	switch(state){
-		case LinphonePublishProgress: counters->number_of_LinphonePublishProgress++; break;
-		case LinphonePublishOk:
-			/*make sure custom header access API is working*/
-			BC_ASSERT_PTR_NOT_NULL(linphone_event_get_custom_header(ev,"From"));
-			counters->number_of_LinphonePublishOk++;
-			break;
-		case LinphonePublishError: counters->number_of_LinphonePublishError++; break;
-		case LinphonePublishExpiring: counters->number_of_LinphonePublishExpiring++; break;
-		case LinphonePublishCleared: counters->number_of_LinphonePublishCleared++;break;
-		default:
-		break;
-	}
-
 }
 
 static void subscribe_test_declined(void) {

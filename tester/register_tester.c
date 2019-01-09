@@ -46,24 +46,6 @@ static LinphoneCoreManager* create_lcm(void) {
 	return create_lcm_with_auth(0);
 }
 
-void registration_state_changed(struct _LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const char *message){
-		stats* counters;
-		ms_message("New registration state %s for user id [%s] at proxy [%s]\n"
-				,linphone_registration_state_to_string(cstate)
-				,linphone_proxy_config_get_identity(cfg)
-				,linphone_proxy_config_get_addr(cfg));
-		counters = get_stats(lc);
-		switch (cstate) {
-		case LinphoneRegistrationNone:counters->number_of_LinphoneRegistrationNone++;break;
-		case LinphoneRegistrationProgress:counters->number_of_LinphoneRegistrationProgress++;break;
-		case LinphoneRegistrationOk:counters->number_of_LinphoneRegistrationOk++;break;
-		case LinphoneRegistrationCleared:counters->number_of_LinphoneRegistrationCleared++;break;
-		case LinphoneRegistrationFailed:counters->number_of_LinphoneRegistrationFailed++;break;
-		default:
-			BC_FAIL("unexpected event");break;
-		}
-}
-
 static void register_with_refresh_base_3_for_algo(
 	LinphoneCore* lc,
 	bool_t refresh,
