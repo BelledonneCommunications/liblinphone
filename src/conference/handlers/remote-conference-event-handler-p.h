@@ -32,11 +32,11 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class RemoteConferenceEventHandlerPrivate : public ObjectPrivate, public CoreListener {
-	friend class ClientGroupChatRoom;
-private:
+public:
 	void simpleNotifyReceived (const std::string &xmlBody);
 	void subscribe ();
 	void unsubscribe ();
+	void invalidateSubscription ();
 
 	// CoreListener
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
@@ -53,9 +53,6 @@ private:
 	bool subscriptionWanted = false;
 
 	L_DECLARE_PUBLIC(RemoteConferenceEventHandler);
-
-public:
-	void invalidateSubscription ();
 };
 
 LINPHONE_END_NAMESPACE
