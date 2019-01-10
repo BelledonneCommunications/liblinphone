@@ -63,6 +63,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "chat/chat-room/server-group-chat-room-p.h"
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/handlers/remote-conference-event-handler.h"
+#include "conference/handlers/remote-conference-event-handler-p.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
@@ -2209,9 +2210,10 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 	if (strcmp(notified_event, "Presence") == 0) {
 		for (const bctbx_list_t *it = linphone_core_get_friends_lists(lc); it; it = bctbx_list_next(it)) {
 			LinphoneFriendList *list = reinterpret_cast<LinphoneFriendList *>(bctbx_list_get_data(it));
+			if (list->event != lev) continue;
+
 			ms_message("Notify presence for list %p", list);
-			if (list->event == lev)
-				linphone_friend_list_notify_presence_received(list, lev, body);
+			linphone_friend_list_notify_presence_received(list, lev, body);
 		}
 	} else if (strcmp(notified_event, "conference") == 0) {
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
@@ -2277,9 +2279,29 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc, Linphone
 	}
 }
 
+static void _linphone_core_conference_subscription_state_changed (LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
+	if (!linphone_core_conference_server_enabled(lc)) {
+		RemoteConferenceEventHandlerPrivate *thiz = static_cast<RemoteConferenceEventHandlerPrivate *>(linphone_event_get_user_data(lev));
+		if (state == LinphoneSubscriptionError)
+			thiz->invalidateSubscription();
+
+		return;
+	}
+
+	const LinphoneAddress *resource = linphone_event_get_resource(lev);
+	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
+		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+	));
+	if (chatRoom)
+		L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(lev, state);
+}
+
 static void linphone_core_internal_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
 	if (strcasecmp(linphone_event_get_name(lev), "Presence") == 0) {
 		linphone_friend_list_subscription_state_changed(lc, lev, state);
+	} else if (strcmp(linphone_event_get_name(lev), "conference") == 0) {
+		_linphone_core_conference_subscription_state_changed(lc, lev, state);
 	}
 }
 
