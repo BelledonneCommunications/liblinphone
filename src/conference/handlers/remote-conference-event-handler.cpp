@@ -247,6 +247,10 @@ void RemoteConferenceEventHandlerPrivate::onEnteringForeground () {
 	subscribe();
 }
 
+void RemoteConferenceEventHandlerPrivate::invalidateSubscription () {
+	lev = nullptr;
+}
+
 // -----------------------------------------------------------------------------
 
 RemoteConferenceEventHandler::RemoteConferenceEventHandler (RemoteConference *remoteConference) :
