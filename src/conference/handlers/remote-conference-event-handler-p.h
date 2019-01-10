@@ -53,6 +53,9 @@ private:
 	bool subscriptionWanted = false;
 
 	L_DECLARE_PUBLIC(RemoteConferenceEventHandler);
+
+public:
+	void invalidateSubscription ();
 };
 
 LINPHONE_END_NAMESPACE
