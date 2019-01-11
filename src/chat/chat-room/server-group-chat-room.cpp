@@ -734,7 +734,7 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 			break;
 		}
 	}
-	if (allDevicesLeft) {
+	if (allDevicesLeft && !findFilteredParticipant(participant->getAddress())) {
 		lInfo() << q << ": Removing participant '" << participant->getAddress().asString() << "' since it has no device left";
 
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
@@ -744,6 +744,13 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 
 		qConference->getPrivate()->participants.remove(participant);
 		filteredParticipants.remove(participant);
+	} else if (findFilteredParticipant(participant->getAddress())) {
+		lInfo() << q << ": Removing last device for participant '" << participant->getAddress().asString()
+			<< "' that is still in the chatroom, fetch devices to reinvite them";
+		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
+		LinphoneAddress *laddr = linphone_address_new(participant->getAddress().asString().c_str());
+		CALL_CHAT_ROOM_CBS(cr, ParticipantDeviceFetchRequested, participant_device_fetch_requested, cr, laddr);
+		linphone_address_unref(laddr);
 	}
 
 	if (qConference->getPrivate()->participants.size() == 0) {

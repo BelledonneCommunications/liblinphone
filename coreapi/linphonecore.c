@@ -61,6 +61,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "chat/chat-room/server-group-chat-room-p.h"
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/handlers/remote-conference-event-handler.h"
+#include "conference/handlers/remote-conference-event-handler-p.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
@@ -2181,9 +2182,10 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 	if (strcmp(notified_event, "Presence") == 0) {
 		for (const bctbx_list_t *it = linphone_core_get_friends_lists(lc); it; it = bctbx_list_next(it)) {
 			LinphoneFriendList *list = reinterpret_cast<LinphoneFriendList *>(bctbx_list_get_data(it));
+			if (list->event != lev) continue;
+
 			ms_message("Notify presence for list %p", list);
-			if (list->event == lev)
-				linphone_friend_list_notify_presence_received(list, lev, body);
+			linphone_friend_list_notify_presence_received(list, lev, body);
 		}
 	} else if (strcmp(notified_event, "conference") == 0) {
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
@@ -2250,8 +2252,13 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc, Linphone
 }
 
 static void _linphone_core_conference_subscription_state_changed (LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
-	if (!linphone_core_conference_server_enabled(lc))
+	if (!linphone_core_conference_server_enabled(lc)) {
+		RemoteConferenceEventHandlerPrivate *thiz = static_cast<RemoteConferenceEventHandlerPrivate *>(linphone_event_get_user_data(lev));
+		if (state == LinphoneSubscriptionError)
+			thiz->invalidateSubscription();
+
 		return;
+	}
 
 	const LinphoneAddress *resource = linphone_event_get_resource(lev);
 	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
@@ -3419,6 +3426,9 @@ void linphone_core_iterate(LinphoneCore *lc){
 
 	lc->sal->iterate();
 	if (lc->msevq) ms_event_queue_pump(lc->msevq);
+	if (linphone_core_get_global_state(lc) == LinphoneGlobalConfiguring)
+		// Avoid registration before getting remote configuration results
+		return;
 
 	proxy_update(lc);
 
@@ -3557,6 +3567,36 @@ static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const Lin
 		}else sal_address_unref(proxy_addr);
 	}
 	return ret;
+}
+
+/*
+ * Returns a proxy config matching the given identity address
+ * Prefers registered, then first registering matching, otherwise first matching
+ */
+LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, const LinphoneAddress *uri){
+	LinphoneProxyConfig *found_cfg = NULL;
+	LinphoneProxyConfig *found_reg_cfg = NULL;
+	LinphoneProxyConfig *found_noreg_cfg = NULL;
+	LinphoneProxyConfig *default_cfg=lc->default_proxy;
+	const bctbx_list_t *elem;
+
+	for (elem=linphone_core_get_proxy_config_list(lc);elem!=NULL;elem=elem->next){
+		LinphoneProxyConfig *cfg = (LinphoneProxyConfig*)elem->data;
+		if (linphone_address_weak_equal(uri, linphone_proxy_config_get_identity_address(cfg))) {
+			if (linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk) {
+				found_cfg=cfg;
+				break;
+			} else if (!found_reg_cfg && linphone_proxy_config_register_enabled(cfg)) {
+				found_reg_cfg=cfg;
+			} else if (!found_noreg_cfg) {
+				found_noreg_cfg=cfg;
+			}
+		}
+	}
+	if (!found_cfg && found_reg_cfg)    found_cfg = found_reg_cfg;
+	else if (!found_cfg && found_noreg_cfg) found_cfg = found_noreg_cfg;
+	if (!found_cfg) found_cfg=default_cfg; /*when no matching proxy config is found, use the default proxy config*/
+	return found_cfg;
 }
 
 LinphoneProxyConfig * linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri){

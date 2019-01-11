@@ -33,8 +33,6 @@ class CoreAccessorPrivate;
 class LINPHONE_PUBLIC CoreAccessor {
 public:
 	CoreAccessor (const std::shared_ptr<Core> &core);
-	CoreAccessor (const std::shared_ptr<Core> &&core);
-
 	virtual ~CoreAccessor () = 0;
 
 	// Returns a valid core instance. Or throw one std::bad_weak_ptr exception if core is destroyed.

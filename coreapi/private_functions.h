@@ -169,7 +169,6 @@ void linphone_friend_add_incoming_subscription(LinphoneFriend *lf, LinphonePriva
 void linphone_friend_remove_incoming_subscription(LinphoneFriend *lf, LinphonePrivate::SalOp *op);
 const char * linphone_friend_phone_number_to_sip_uri(LinphoneFriend *lf, const char *phone_number);
 const char * linphone_friend_sip_uri_to_phone_number(LinphoneFriend *lf, const char *uri);
-void linphone_friend_add_capability(LinphoneFriend *lf, const char *capability_name);
 void linphone_friend_clear_presence_models(LinphoneFriend *lf);
 LinphoneFriend *linphone_friend_list_find_friend_by_inc_subscribe(const LinphoneFriendList *list, LinphonePrivate::SalOp *op);
 LinphoneFriend *linphone_friend_list_find_friend_by_out_subscribe(const LinphoneFriendList *list, LinphonePrivate::SalOp *op);
@@ -263,6 +262,7 @@ LinphoneFriend * linphone_friend_new_from_config_file(struct _LinphoneCore *lc, 
 
 void linphone_proxy_config_update(LinphoneProxyConfig *cfg);
 LinphoneProxyConfig * linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri);
+LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, const LinphoneAddress *uri);
 const char *linphone_core_find_best_identity(LinphoneCore *lc, const LinphoneAddress *to);
 LINPHONE_PUBLIC void linphone_core_get_local_ip(LinphoneCore *lc, int af, const char *dest, char *result);
 
