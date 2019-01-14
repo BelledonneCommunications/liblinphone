@@ -21,11 +21,17 @@
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 
+
 static LinphoneCoreManager* presence_linphone_core_manager_new_with_rc_name(char* username, char * rc_name) {
 	LinphoneCoreManager* mgr= linphone_core_manager_new2( rc_name, FALSE);
+	LinphoneSipTransports tr = {0};
+	tr.udp_port = -1; /*random port*/
+	linphone_core_set_sip_transports(mgr->lc, &tr);
+	linphone_core_get_sip_transports_used(mgr->lc, &tr);
 	char* identity_char;
 	mgr->identity= linphone_core_get_primary_contact_parsed(mgr->lc);
 	linphone_address_set_username(mgr->identity,username);
+	linphone_address_set_port(mgr->identity, tr.udp_port);
 	identity_char=linphone_address_as_string(mgr->identity);
 	linphone_core_set_primary_contact(mgr->lc,identity_char);
 	ms_free(identity_char);
@@ -39,6 +45,10 @@ static LinphoneCoreManager* presence_linphone_core_manager_new(char* username) {
 void new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char *url){
 	stats* counters;
 	const LinphoneAddress *addr = linphone_friend_get_address(lf);
+	struct addrinfo *ai;
+	const char *domain;
+	char *ipaddr;
+	
 	if (addr != NULL) {
 		char* from=linphone_address_as_string(addr);
 		ms_message("New subscription request from [%s] url [%s]",from,url);
@@ -46,6 +56,21 @@ void new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char
 	}
 	counters = get_stats(lc);
 	counters->number_of_NewSubscriptionRequest++;
+	
+	domain = linphone_address_get_domain(addr);
+	if (domain[0] == '['){
+		ipaddr = ms_strdup(domain+1);
+		ipaddr[strlen(ipaddr)] = '\0';
+	}else ipaddr = ms_strdup(domain);
+	ai = bctbx_ip_address_to_addrinfo(strchr(domain, ':') != NULL ? AF_INET6 : AF_INET, SOCK_DGRAM, ipaddr, 4444);
+	ms_free(ipaddr);
+	if (ai){/* this SUBSCRIBE comes from friend without registered SIP account, don't attempt to subscribe, it will fail*/
+		ms_message("Disabling subscription because friend has numeric host.");
+		linphone_friend_enable_subscribes(lf, FALSE);
+		bctbx_freeaddrinfo(ai);
+	}
+	
+	
 	linphone_core_add_friend(lc,lf); /*accept subscription*/
 }
 
@@ -146,7 +171,7 @@ static bool_t subscribe_to_callee_presence(LinphoneCoreManager* caller_mgr,Linph
 	stats initial_caller=caller_mgr->stat;
 	stats initial_callee=callee_mgr->stat;
 	bool_t result=FALSE;
-	char* identity=linphone_address_as_string_uri_only(callee_mgr->identity);
+	char* identity=linphone_address_as_string(callee_mgr->identity);
 
 
 	LinphoneFriend* friend=linphone_core_create_friend_with_address(caller_mgr->lc,identity);
@@ -249,9 +274,10 @@ static void simple_subscribe_with_early_notify(void) {
 
 	/*to simulate pending state.*/
 
-	linphone_address_set_port(marie_identity_addr,0);
+	linphone_address_set_port(marie_identity_addr, 0); /*we remove the port because friends aren't supposed to have port numbers*/
 	marie_identity=linphone_address_as_string_uri_only(marie_identity_addr);
 	pauline_s_friend=linphone_core_create_friend_with_address(pauline->lc,marie_identity);
+	linphone_friend_enable_subscribes(pauline_s_friend, FALSE);
 	linphone_core_add_friend(pauline->lc,pauline_s_friend);
 
 	ms_free(marie_identity);

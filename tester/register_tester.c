@@ -74,13 +74,13 @@ static void register_with_refresh_base_3_for_algo(
 	LinphoneRegistrationState expected_final_state,
 	const char* username
 ) {
-	int retry=0;
 	char* addr;
 	LinphoneProxyConfig* proxy_cfg;
 	stats* counters;
 	LinphoneAddress *from;
 	const char* server_addr;
 	LinphoneAuthInfo *info;
+	uint64_t time_begin;
 
 	BC_ASSERT_PTR_NOT_NULL(lc);
 	if (!lc) return;
@@ -110,8 +110,9 @@ static void register_with_refresh_base_3_for_algo(
 	linphone_core_add_proxy_config(lc,proxy_cfg);
 	linphone_core_set_default_proxy(lc,proxy_cfg);
 
+	time_begin = bctbx_get_cur_time_ms();
 	while (counters->number_of_LinphoneRegistrationOk<1+(refresh!=0)
-			&& retry++ <(7000 /*only wait 7 s if final state is progress*/+(expected_final_state==LinphoneRegistrationProgress?0:4000))) {
+			&& (bctbx_get_cur_time_ms() - time_begin) < (7000 /*only wait 7 s if final state is progress*/+(expected_final_state==LinphoneRegistrationProgress?0:4000))) {
 		linphone_core_iterate(lc);
 		if (counters->number_of_auth_info_requested>0 && linphone_proxy_config_get_state(proxy_cfg) == LinphoneRegistrationFailed && late_auth_info) {
 			if (!linphone_core_get_auth_info_list(lc)) {
@@ -124,7 +125,7 @@ static void register_with_refresh_base_3_for_algo(
 		if (linphone_proxy_config_get_error(proxy_cfg) == LinphoneReasonBadCredentials
 				|| (counters->number_of_auth_info_requested>2 &&linphone_proxy_config_get_error(proxy_cfg) == LinphoneReasonUnauthorized)) /*no need to continue if auth cannot be found*/
 			break; /*no need to continue*/
-		ms_usleep(10000);
+		ms_usleep(20000);
 	}
 
 	BC_ASSERT_EQUAL(linphone_proxy_config_is_registered(proxy_cfg), expected_final_state == LinphoneRegistrationOk, int, "%d");
@@ -434,7 +435,7 @@ static void authenticated_register_with_late_credentials(void){
 	counters = get_stats(lcm->lc);
 	register_with_refresh_base_2(lcm->lc,FALSE,auth_domain,route,TRUE,transport);
 	linphone_transports_unref(transport);
-	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,1, int, "%d");
+	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,1+1, int, "%d"); /*about +1: see note auth_info_failures in this file*/
 	linphone_core_manager_destroy(lcm);
 }
 
@@ -511,6 +512,14 @@ static void authenticated_register_with_provided_credentials_and_username_with_s
 	linphone_core_manager_destroy(lcm);
 }
 
+/*
+ * auth_info_failures
+ * The auth_requested callback supplies a single LinphoneAuthInfo corresponding to a server challenge.
+ * In the case where the server supports MD5 and SHA256, there will be two challenges, hence two auth_requested() calls.
+ * A new callback auth_requested2() supporting a list of LinphoneAuthInfo to fill up must be implemented to solve this issue.
+ * This is tracked by issue 5864 on our bug tracker.
+**/
+
 static void authenticated_register_with_wrong_late_credentials(void){
 	LinphoneCoreManager *lcm;
 	stats* counters;
@@ -533,7 +542,7 @@ static void authenticated_register_with_wrong_late_credentials(void){
 	counters = get_stats(lcm->lc);
 	register_with_refresh_base_3(lcm->lc,FALSE,auth_domain,route,TRUE,transport,LinphoneRegistrationFailed);
 	linphone_transports_unref(transport);
-	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,2, int, "%d");
+	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,2 + 1, int, "%d"); /* +1 : see note auth_info_failures above */
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationFailed,2, int, "%d");
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationProgress,2, int, "%d");
 	test_password=saved_test_passwd;
