@@ -464,6 +464,7 @@ FILE *sip_start(const char *senario, const char* dest_username, const char *pass
 
 void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice );
 void linphone_conf_event_notify(LinphoneEvent *lev);
+void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone);
 
 #ifdef __cplusplus
 };

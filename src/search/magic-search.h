@@ -141,14 +141,28 @@ private:
 	void setSearchCache (std::list<SearchResult> *cache) const;
 
 	/**
-	 * Get all address from call log
+	 * Get all addresses from call log
 	 * @param[in] filter word we search
 	 * @param[in] withDomain domain which we want to search only
 	 * @param[in] currentList current list where we will check if address already exist
-	 * @return all address from call log which match in a SearchResult list
+	 * @return all addresses from call log which match in a SearchResult list
 	 * @private
 	 **/
 	std::list<SearchResult> getAddressFromCallLog (
+		const std::string &filter,
+		const std::string &withDomain,
+		const std::list<SearchResult> &currentList
+	) const;
+
+	/**
+	 * Get all addresses from chat rooms participants
+	 * @param[in] filter word we search
+	 * @param[in] withDomain domain which we want to search only
+	 * @param[in] currentList current list where we will check if address already exist
+	 * @return all address from chat rooms participants which match in a SearchResult list
+	 * @private
+	 **/
+	std::list<SearchResult> getAddressFromGroupChatRoomParticipants (
 		const std::string &filter,
 		const std::string &withDomain,
 		const std::list<SearchResult> &currentList
