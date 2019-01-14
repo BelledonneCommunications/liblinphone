@@ -382,7 +382,6 @@ void send_messages(LinphoneCoreManager *mgr, bctbx_list_t *coresList, uint32_t m
 	const bctbx_list_t *coreChatRooms = linphone_core_get_chat_rooms(mgr->lc);
 	uint32_t i;
 	const bctbx_list_t *it;
-	LinphoneChatRoom *chatRoom;
 	bctbx_list_t *messagesList;
 	const LinphoneAddress *coreAddr = linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(mgr->lc));
 	stats stats = mgr->stat;
@@ -415,7 +414,7 @@ void send_messages(LinphoneCoreManager *mgr, bctbx_list_t *coresList, uint32_t m
 	}
 }
 
-void groupchat_benchmark() {
+void groupchat_benchmark(void) {
 	bctbx_list_t *coresList = NULL;
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
@@ -475,7 +474,7 @@ void groupchat_benchmark_init(void(*ftester_printf)(int level, const char *fmt, 
 	bc_tester_init(ftester_printf, ORTP_MESSAGE, ORTP_ERROR, "rcfiles");
 }
 
-void groupchat_benchmark_uninit() {
+void groupchat_benchmark_uninit(void) {
 	bc_tester_uninit();
 	bctbx_uninit_logger();
 }
