@@ -242,7 +242,7 @@ bctbx_list_t *create_conference_cores(bctbx_list_t *participantsAddresses) {
 		addr = (LinphoneAddress *) bctbx_list_get_data(it);
 
 		linphone_proxy_config_set_identity_address(proxy_config, addr);
-		linphone_proxy_config_set_server_addr(proxy_config, "sip:sip.example.org");
+		linphone_proxy_config_set_server_addr(proxy_config, "sip:sip.example.org;transport=tcp");
 		linphone_proxy_config_enable_register(proxy_config, TRUE);
 		linphone_proxy_config_enable_lime_x3dh(proxy_config, enable_limex3dh);
 
@@ -282,25 +282,31 @@ void wait_participants(LinphoneCoreManager *mgr, bctbx_list_t* coresList, bctbx_
 		linphone_friend_unref(friend);
 	}
 
-	BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphonePresenceActivityOnline, stats.number_of_LinphonePresenceActivityOnline + nb_instances - 1, nb_instances * 15000));
-
+	BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphonePresenceActivityOnline, stats.number_of_LinphonePresenceActivityOnline + nb_instances - 1, nb_participants * 2000));
+	linphone_friend_list_enable_subscriptions(linphone_core_get_default_friend_list(mgr->lc), FALSE);
 }
 
 //Wait for chatroom creator to be online before waiting	for chatroom invites
 void wait_creator(LinphoneCoreManager *mgr, bctbx_list_t* coresList) {
-	const char *identity = "sip:u_0@sip.example.org";
+	uint32_t tmpStartId = start_identity;
+	start_identity = 0;
+	bctbx_list_t *participants = create_participants_addresses(nb_instance_participants), *it;
+	start_identity = tmpStartId;
 	stats stats = mgr->stat;
 
-	LinphoneFriend* friend = linphone_core_create_friend_with_address(mgr->lc, identity);
-	linphone_friend_edit(friend);
-	linphone_friend_enable_subscribes(friend, TRUE);
-	linphone_friend_done(friend);
+	for (it = participants;	it; it = it->next) {
+		LinphoneAddress *addr = bctbx_list_get_data(it);
+		char *identity = linphone_address_as_string_uri_only(addr);
+		LinphoneFriend* friend = linphone_core_create_friend_with_address(mgr->lc, identity);
+		linphone_friend_edit(friend);
+		linphone_friend_enable_subscribes(friend, TRUE);
+		linphone_friend_done(friend);
 
-	linphone_core_add_friend(mgr->lc, friend);
-	linphone_friend_unref(friend);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphonePresenceActivityOnline, stats.number_of_LinphonePresenceActivityOnline + 1, 15000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyPresenceReceived, stats.number_of_NotifyPresenceReceived + 1, 15000));
-
+		linphone_core_add_friend(mgr->lc, friend);
+		linphone_friend_unref(friend);
+	}
+	BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyPresenceReceived, stats.number_of_NotifyPresenceReceived + nb_instance_participants, nb_instance_participants * 10000));
+	linphone_friend_list_enable_subscriptions(linphone_core_get_default_friend_list(mgr->lc), FALSE);
 }
 
 int create_chat_room(bctbx_list_t* coresList, LinphoneCoreManager *mgr, const char *subject, bctbx_list_t *participantsAddresses) {
@@ -317,14 +323,11 @@ int create_chat_room(bctbx_list_t* coresList, LinphoneCoreManager *mgr, const ch
 		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(chatRoom) & LinphoneChatRoomCapabilitiesEncrypted);
 	}
 
-	//Removes chatroom creator from invited participants
+	//Remove chatroom creator from invited participants
 	linphone_chat_room_add_participants(chatRoom, participantsAddresses->next);
 
-	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreationPending, initialStats.number_of_LinphoneChatRoomStateCreationPending + nb_instance_participants, nb_instance_participants * 4000));
-	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated, initialStats.number_of_LinphoneChatRoomStateCreated + nb_instance_participants, nb_instance_participants * 4000));
-
-	int dummy = 0;
-	wait_for_list(coresList, &dummy, nb_participants - 1, nb_participants * 500);
+	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreationPending, initialStats.number_of_LinphoneChatRoomStateCreationPending + nb_instance_participants, nb_participants * 2000));
+	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated, initialStats.number_of_LinphoneChatRoomStateCreated + nb_instance_participants, nb_participants * 2000));
 
 	if (linphone_chat_room_get_nb_participants(chatRoom) != (int) nb_participants - 1) {
 		ret = 1;
@@ -342,10 +345,10 @@ int wait_chat_room_creation(bctbx_list_t *coresList, LinphoneCoreManager *mgr, c
 	int ret = 0;
 	stats initialStats = mgr->stat;
 
-	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreationPending, initialStats.number_of_LinphoneChatRoomStateCreationPending + nb_instance_participants, nb_instance_participants * 4000));
+	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreationPending, initialStats.number_of_LinphoneChatRoomStateCreationPending + nb_instance_participants, nb_participants * 2000));
 
 	//Wait as long as needed to join the chat room
-	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated, initialStats.number_of_LinphoneChatRoomStateCreated + nb_instance_participants, nb_instance_participants * 4000));
+	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated, initialStats.number_of_LinphoneChatRoomStateCreated + nb_instance_participants, nb_participants * 2000));
 
 	return ret;
 }
@@ -417,6 +420,8 @@ void groupchat_benchmark() {
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 
+	liblinphonetester_no_account_creator = TRUE; //Explicitly disable automatic account creator
+
 	participantsAddresses = create_participants_addresses(nb_participants);
 
 	coresManagerList = create_conference_cores(participantsAddresses);
@@ -477,12 +482,13 @@ void groupchat_benchmark_uninit() {
 
 #if !TARGET_OS_IPHONE && !(defined(LINPHONE_WINDOWS_PHONE) || defined(LINPHONE_WINDOWS_UNIVERSAL))
 
+//See https://wiki.linphone.org/xwiki/bin/view/Engineering/Benchmark%20Flexisip%20-%20ChatRooms/ for more details
 static const char* groupchat_benchmark_helper =
 	"\t\t\t--chat-rooms <nb_chat_rooms> (Number of chat rooms to create)\n"
 	"\t\t\t--participants <nb_participants> (Total number of participants)\n"
 	"\t\t\t--instance-participants <participants> (Number of participants handled by this instance)\n"
 	"\t\t\t--start-identity <index> (Index of the first identity of participants, between 0 and <participants>)\n"
-	"\t\t\t--messages <nb_messages> (Number of messages each participant will send)\n"
+	"\t\t\t--messages <nb_messages> (Number of messages this instance will send to each chatroom)\n"
 	"\t\t\t--lime (Enable lime x3dh encrypted chat rooms)\n"
 	"\t\t\t--domain <test sip domain>\n"
 	"\t\t\t--auth-domain <test auth domain>\n"
