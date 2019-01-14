@@ -385,9 +385,10 @@ void send_messages(LinphoneCoreManager *mgr, bctbx_list_t *coresList, uint32_t m
 	bctbx_list_t *messagesList;
 	const LinphoneAddress *coreAddr = linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(mgr->lc));
 	stats stats = mgr->stat;
+	LinphoneChatRoom *chatRoom;
 
 	for (it = coreChatRooms; it; it = it->next) {
-		chatRoom = it->data;
+		chatRoom = (LinphoneChatRoom *) it->data;
 
 		if (!linphone_address_weak_equal(coreAddr, linphone_chat_room_get_local_address(it->data))) {
 			//Only send messages from default identity
