@@ -6367,7 +6367,7 @@ test_t group_chat_tests[] = {
 	TEST_TWO_TAGS("LIME X3DH messages while network unreachable", group_chat_lime_x3dh_message_while_network_unreachable, "LimeX3DH", "LeaksMemory"),
 	TEST_TWO_TAGS("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH", "LeaksMemory"),
 	TEST_ONE_TAG("Group chat room subscription denied", group_chat_room_subscription_denied, "LeaksMemory"),
-	TEST_ONE_TAG("Search friend result chat room participants", search_friend_chat_room_participants, "MagicSearch", "LeaksMemory"),
+	TEST_TWO_TAGS("Search friend result chat room participants", search_friend_chat_room_participants, "MagicSearch", "LeaksMemory"),
 };
 
 test_suite_t group_chat_test_suite = {

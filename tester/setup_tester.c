@@ -1453,6 +1453,32 @@ static void search_friend_get_capabilities(void) {
 	linphone_core_manager_destroy(manager);
 }
 
+static void search_friend_chat_room_remote(void) {
+	LinphoneMagicSearch *magicSearch = NULL;
+	bctbx_list_t *resultList = NULL;
+
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneChatRoom *room = linphone_core_get_chat_room(marie->lc, pauline->identity);
+	BC_ASSERT_PTR_NOT_NULL(room);
+
+	char *addr = linphone_address_as_string_uri_only(pauline->identity);
+	magicSearch = linphone_magic_search_new(marie->lc);
+	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
+	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
+		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		_check_friend_result_list(marie->lc, resultList, 0, addr, NULL);
+		_check_friend_result_list(marie->lc, resultList, 1, "sip:pauline@sip.example.org", NULL); // marie_rc has an hardcoded friend for pauline
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
+	}
+	ms_free(addr);
+	linphone_magic_search_reset_search_cache(magicSearch);
+	linphone_magic_search_unref(magicSearch);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 /*the webrtc AEC implementation is brought to mediastreamer2 by a plugin.
  * We finally check here that if the plugin is correctly loaded and the right choice of echo canceller implementation is made*/
 static void echo_canceller_check(void){
@@ -1519,7 +1545,8 @@ test_t setup_tests[] = {
 	TEST_ONE_TAG("Search friend with multiple sip address", search_friend_with_multiple_sip_address, "MagicSearch"),
 	TEST_ONE_TAG("Search friend with same address", search_friend_with_same_address, "MagicSearch"),
 	TEST_ONE_TAG("Search friend in large friends database", search_friend_large_database, "MagicSearch"),
-	TEST_ONE_TAG("Search friend result has capabilities", search_friend_get_capabilities, "MagicSearch")
+	TEST_ONE_TAG("Search friend result has capabilities", search_friend_get_capabilities, "MagicSearch"),
+	TEST_ONE_TAG("Search friend result chat room remote", search_friend_chat_room_remote, "MagicSearch")
 };
 
 test_suite_t setup_test_suite = {"Setup", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
