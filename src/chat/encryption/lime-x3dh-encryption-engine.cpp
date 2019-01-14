@@ -133,7 +133,7 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 		linphone_core_get_config(cCore),
 		"lime",
 		"x3dh_server_url",
-		"http://x3dh.linphone.org/flexisip-account-manager/x3dh-25519.php"
+		""
 	);
 	if (x3dhServerUrl.empty())
 		lError() << "LIME X3DH server URL unavailable for encryption engine";
