@@ -441,8 +441,7 @@ void groupchat_benchmark(void) {
 	}
 	bctbx_list_free(coresList);
 	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func) linphone_address_unref);
-	linphone_core_manager_destroy(coresManagerList->data);
-	bctbx_list_free(coresManagerList);
+	bctbx_list_free_with_data(coresManagerList, (bctbx_list_free_func) linphone_core_manager_destroy);
 }
 
 int check_params(void) {
