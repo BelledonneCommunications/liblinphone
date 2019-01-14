@@ -65,7 +65,7 @@ static void _remove_friends_from_list(LinphoneFriendList *list, const char *frie
 	}
 }
 
-static void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone) {
+void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone) {
 	if (index >= bctbx_list_size(resultList)) {
 		ms_error("Attempt to access result to an outbound index");
 		return;
