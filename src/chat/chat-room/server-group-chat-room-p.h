@@ -60,7 +60,7 @@ public:
 	bool update (SalCallOp *op);
 
 	void setConferenceAddress (const IdentityAddress &conferenceAddress);
-	void setParticipantDevices (const IdentityAddress &addr, const std::list<IdentityAddress> &devices);
+	void setParticipantDevices (const IdentityAddress &addr, const std::list<Address> &devices);
 	void addCompatibleParticipants (const IdentityAddress &deviceAddr, const std::list<IdentityAddress> &compatibleParticipants);
 	void checkCompatibleParticipants (const IdentityAddress &deviceAddr, const std::list<IdentityAddress> &addressesToCheck);
 
@@ -91,7 +91,7 @@ private:
 
 	static void copyMessageHeaders (const std::shared_ptr<Message> &fromMessage, const std::shared_ptr<ChatMessage> &toMessage);
 
-	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const IdentityAddress &deviceAddress);
+	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const Address &deviceAddress);
 	void byeDevice (const std::shared_ptr<ParticipantDevice> &device);
 	void designateAdmin ();
 	void dispatchMessage (const std::shared_ptr<Message> &message, const std::string &uri);

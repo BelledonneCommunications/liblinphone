@@ -42,8 +42,8 @@ private:
 
 ParticipantDevice::ParticipantDevice () : Object(*new ParticipantDevicePrivate) {}
 
-ParticipantDevice::ParticipantDevice (Participant *participant, const IdentityAddress &gruu)
-	:  Object(*new ParticipantDevicePrivate), mParticipant(participant), mGruu(gruu) {}
+ParticipantDevice::ParticipantDevice (Participant *participant, const Address &address)
+	:  Object(*new ParticipantDevicePrivate), mParticipant(participant), mAddress(address) {}
 
 ParticipantDevice::~ParticipantDevice () {
 	if (mConferenceSubscribeEvent)
@@ -51,7 +51,7 @@ ParticipantDevice::~ParticipantDevice () {
 }
 
 bool ParticipantDevice::operator== (const ParticipantDevice &device) const {
-	return (mGruu == device.getAddress());
+	return (mAddress == device.getAddress());
 }
 
 shared_ptr<Core> ParticipantDevice::getCore () const {
@@ -67,7 +67,7 @@ void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
 AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
 	auto encryptionEngine = getCore()->getEncryptionEngine();
 	if (encryptionEngine)
-		return encryptionEngine->getSecurityLevel(mGruu.asString());
+		return encryptionEngine->getSecurityLevel(mAddress.asString());
 	lWarning() << "Asking device security level but there is no encryption engine enabled";
 	return AbstractChatRoom::SecurityLevel::ClearText;
 }

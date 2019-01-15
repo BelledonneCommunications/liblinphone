@@ -417,7 +417,7 @@ void ServerGroupChatRoomPrivate::setConferenceAddress (const IdentityAddress &co
 	finalizeCreation();
 }
 
-void ServerGroupChatRoomPrivate::setParticipantDevices(const IdentityAddress &participantAddress, const list<IdentityAddress> &devices) {
+void ServerGroupChatRoomPrivate::setParticipantDevices(const IdentityAddress &participantAddress, const list<Address> &devices) {
 	L_Q();
 	shared_ptr<Participant> participant = q->findParticipant(participantAddress);
 	if (!participant)
@@ -527,7 +527,7 @@ void ServerGroupChatRoomPrivate::copyMessageHeaders (const shared_ptr<Message> &
 	}
 }
 
-void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Participant> &participant, const IdentityAddress &deviceAddress) {
+void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Participant> &participant, const Address &deviceAddress) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddress);

@@ -22,7 +22,7 @@
 
 #include <string>
 
-#include "address/identity-address.h"
+#include "address/address.h"
 #include "chat/chat-room/abstract-chat-room.h"
 #include "chat/encryption/encryption-engine.h"
 
@@ -49,14 +49,15 @@ public:
 	};
 
 	ParticipantDevice ();
-	explicit ParticipantDevice (Participant *participant, const IdentityAddress &gruu);
+	explicit ParticipantDevice (Participant *participant, const Address &address);
 	virtual ~ParticipantDevice ();
 
 	bool operator== (const ParticipantDevice &device) const;
 
 	std::shared_ptr<Core> getCore () const;
 
-	inline const IdentityAddress &getAddress () const { return mGruu; }
+	inline const Address &getAddress () const { return mAddress; }
+	inline const std::string &getName () const { return mAddress.getDisplayName(); }
 	Participant *getParticipant () const { return mParticipant; }
 	inline std::shared_ptr<CallSession> getSession () const { return mSession; }
 	inline void setSession (std::shared_ptr<CallSession> session) { mSession = session; }
@@ -68,13 +69,13 @@ public:
 	LinphoneEvent *getConferenceSubscribeEvent () const { return mConferenceSubscribeEvent; }
 	void setConferenceSubscribeEvent (LinphoneEvent *ev);
 
-	bool isValid () const { return mGruu.isValid(); }
+	bool isValid () const { return mAddress.isValid(); }
 
 private:
 	L_OVERRIDE_SHARED_FROM_THIS(ParticipantDevice);
 
 	Participant *mParticipant = nullptr;
-	IdentityAddress mGruu;
+	Address mAddress;
 	std::shared_ptr<CallSession> mSession;
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
