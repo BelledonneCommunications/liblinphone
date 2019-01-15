@@ -243,11 +243,35 @@ list<SearchResult> *MagicSearch::beginNewSearch (const string &filter, const str
 	clResults = getAddressFromCallLog(filter, withDomain, *resultList);
 	addResultsToResultsList(clResults, *resultList);
 
-	resultList->sort([](const SearchResult& lsr, const SearchResult& rsr){
-		unsigned int cpt = 0;
+	resultList->sort([](const SearchResult& lsr, const SearchResult& rsr) {
 		string name1 = getDisplayNameFromSearchResult(lsr);
 		string name2 = getDisplayNameFromSearchResult(rsr);
 
+		// Check in order: Friend's display name, address username, address domain, phone number
+		if (name1 == name2) {
+			if (lsr.getAddress() && rsr.getAddress()) {
+				int usernameComp = strcmp(linphone_address_get_username(lsr.getAddress()), linphone_address_get_username(rsr.getAddress()));
+				if (usernameComp == 0) {
+					int domainComp = strcmp(linphone_address_get_domain(lsr.getAddress()), linphone_address_get_domain(rsr.getAddress()));
+					if (domainComp == 0) {
+						if (!lsr.getPhoneNumber().empty() && !rsr.getPhoneNumber().empty()) {
+							int phoneComp = strcmp(lsr.getPhoneNumber().c_str(), rsr.getPhoneNumber().c_str());
+							if (phoneComp == 0) {
+								return true;
+							} else {
+								return phoneComp < 0;
+							}
+						}
+					} else {
+						return domainComp < 0;
+					}
+				} else {
+					return usernameComp < 0;
+				}
+			}
+		}
+
+		unsigned int cpt = 0;
 		while (name1.size() > cpt && name2.size() > cpt) {
 			int char1 = tolower(name1.at(cpt));
 			int char2 = tolower(name2.at(cpt));
