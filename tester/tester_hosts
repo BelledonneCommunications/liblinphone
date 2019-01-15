@@ -1,4 +1,4 @@
-54.36.232.93  http-proxy.example.org x3dh.linphone.org subscribe.example.org sip2.linphone.org sip.example.org sipopen.example.org auth.example.org auth1.example.org auth2.example.org altname.linphone.org sip.wildcard1.linphone.org altname.wildcard2.linphone.org sipv4.example.org
+54.36.232.93  http-proxy.example.org x3dh.example.org subscribe.example.org sip2.linphone.org sip.example.org sipopen.example.org auth.example.org auth1.example.org auth2.example.org altname.linphone.org sip.wildcard1.linphone.org altname.wildcard2.linphone.org sipv4.example.org
 2001:41d0:700:789:1::4 sip2.linphone.org sip.example.org sipopen.example.org auth.example.org auth1.example.org auth2.example.org altname.linphone.org sip.wildcard1.linphone.org altname.wildcard2.linphone.org
 2001:41d0:700:789:1::5 x3dh.linphone.org subscribe.example.org
 2001:41d0:700:789:1::6 http-proxy.example.org 
