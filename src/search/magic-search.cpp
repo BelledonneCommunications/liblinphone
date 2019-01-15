@@ -239,11 +239,11 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 
 	// For all call log or when we reach the search limit
 	for (const bctbx_list_t *f = chatRooms ; f != nullptr ; f = bctbx_list_next(f)) {
-		LinphoneChatRoom *room = reinterpret_cast<LinphoneChatRoom*>(f->data);
+		LinphoneChatRoom *room = static_cast<LinphoneChatRoom*>(f->data);
 		if (linphone_chat_room_get_capabilities(room) & LinphoneChatRoomCapabilitiesConference) {
 			bctbx_list_t *participants = linphone_chat_room_get_participants(room);
 			for (const bctbx_list_t *p = participants ; p != nullptr ; p = bctbx_list_next(p)) {
-				LinphoneParticipant *participant = reinterpret_cast<LinphoneParticipant*>(p->data);
+				LinphoneParticipant *participant = static_cast<LinphoneParticipant*>(p->data);
 				const LinphoneAddress *addr = linphone_participant_get_address(participant);
 				if (filter.empty()) {
 					if (findAddress(currentList, addr)) continue;
