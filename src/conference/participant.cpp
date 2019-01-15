@@ -60,9 +60,9 @@ void ParticipantPrivate::clearDevices () {
 	devices.clear();
 }
 
-shared_ptr<ParticipantDevice> ParticipantPrivate::findDevice (const Address &address) const {
+shared_ptr<ParticipantDevice> ParticipantPrivate::findDevice (const IdentityAddress &address) const {
 	for (const auto &device : devices) {
-		if (device->getAddress() == address)
+		if (IdentityAddress(device->getAddress()) == address)
 			return device;
 	}
 	return nullptr;

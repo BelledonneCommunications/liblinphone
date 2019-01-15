@@ -46,7 +46,7 @@ public:
 
 	std::shared_ptr<ParticipantDevice> addDevice (const Address &address);
 	void clearDevices ();
-	std::shared_ptr<ParticipantDevice> findDevice (const Address &address) const;
+	std::shared_ptr<ParticipantDevice> findDevice (const IdentityAddress &address) const;
 	std::shared_ptr<ParticipantDevice> findDevice (const std::shared_ptr<const CallSession> &session);
 	const std::list<std::shared_ptr<ParticipantDevice>> &getDevices () const;
 	void removeDevice (const IdentityAddress &gruu);
