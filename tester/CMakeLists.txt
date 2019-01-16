@@ -186,6 +186,8 @@ set(SOURCE_FILES_C
 	call_multi_tester.c
 	call_single_tester.c
 	call_video_tester.c
+	call_recovery.c
+	call_ice.c
 	complex_sip_case_tester.c
 	dtmf_tester.c
 	eventapi_tester.c

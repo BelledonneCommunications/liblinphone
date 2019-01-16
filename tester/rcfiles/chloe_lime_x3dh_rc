@@ -5,6 +5,7 @@ lime_update_threshold=86400
 max_nb_device_per_participant=1
 allow_message_in_unsafe_chatroom=0
 unsafe_if_sas_refused=1
+x3dh_server_url=http://x3dh.example.org:8082/flexisip-account-manager/x3dh-25519.php
 
 [sip]
 sip_port=-1
@@ -23,8 +24,8 @@ realm=sip.example.org
 
 [proxy_0]
 realm=sip.example.org
-reg_proxy=sip2.linphone.org;transport=tls
-reg_route=sip2.linphone.org;transport=tls
+reg_proxy=<sip:sip.example.org;transport=tls>
+reg_route=<sip:sip.example.org;transport=tls>
 reg_identity=sip:chloe@sip.example.org
 reg_expires=3600
 reg_sendregister=1

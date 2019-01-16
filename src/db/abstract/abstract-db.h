@@ -47,6 +47,7 @@ public:
 
 	virtual bool import (Backend backend, const std::string &parameters);
 
+	bool isInitialized() const;
 protected:
 	explicit AbstractDb (AbstractDbPrivate &p);
 
@@ -56,6 +57,8 @@ private:
 	L_DECLARE_PRIVATE(AbstractDb);
 	L_DISABLE_COPY(AbstractDb);
 };
+
+std::ostream& operator<<(std::ostream& os, AbstractDb::Backend b);
 
 LINPHONE_END_NAMESPACE
 

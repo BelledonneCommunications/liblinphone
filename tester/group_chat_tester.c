@@ -4661,9 +4661,15 @@ static void group_chat_lime_x3dh_reject_sas_before_message (void) {
 	const char *initialSubject = "Friends";
 	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+	
+	if (BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
+	if (BC_ASSERT_PTR_NOT_NULL(confAddr)) goto end;
+	
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+	
+	if (BC_ASSERT_PTR_NOT_NULL(paulineCr)) goto end;
 
 	// Check LIME X3DH and ZRTP status
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
@@ -4774,10 +4780,14 @@ static void group_chat_lime_x3dh_message_before_verify_sas (void) {
 	const char *initialSubject = "Friends";
 	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+	
+	if (BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
+	if (BC_ASSERT_PTR_NOT_NULL(confAddr)) goto end;
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
-
+	if (BC_ASSERT_PTR_NOT_NULL(paulineCr)) goto end;
+	
 	// Check LIME X3DH and ZRTP status
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
@@ -4863,6 +4873,7 @@ static void group_chat_lime_x3dh_message_before_reject_sas (void) {
 	stats initialPaulineStats = pauline->stat;
 	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
+	LinphoneChatRoom *paulineCr = NULL;
 
 	// Wait for lime users to be created on X3DH server
 	wait_for_list(coresList, &dummy, 1, x3dhServerDelay);
@@ -4893,10 +4904,14 @@ static void group_chat_lime_x3dh_message_before_reject_sas (void) {
 	const char *initialSubject = "Friends";
 	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+	
+	if (BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
+	if (BC_ASSERT_PTR_NOT_NULL(confAddr)) goto end;
 
 	// Check that the chat room is correctly created on Pauline's side
-	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
-
+	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+	if (BC_ASSERT_PTR_NOT_NULL(paulineCr)) goto end;
+	
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hi Pauline, how are you ?";
 	_send_message(marieCr, marieMessage);

@@ -54,7 +54,7 @@ void CorePrivate::init () {
 	AbstractDb::Backend backend;
 	string uri = L_C_TO_STRING(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
 	if (!uri.empty())
-		backend = strcmp(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "backend", nullptr), "mysql") == 0
+		backend = strcmp(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "backend", "sqlite3"), "mysql") == 0
 			? MainDb::Mysql
 			: MainDb::Sqlite3;
 	else {
@@ -62,11 +62,13 @@ void CorePrivate::init () {
 		uri = q->getDataPath() + LINPHONE_DB;
 	}
 
-	lInfo() << "Opening linphone database: " << uri;
-	if (!mainDb->connect(backend, uri))
-		lFatal() << "Unable to open linphone database.";
+	if (uri != "null"){ //special uri "null" means don't open database. We need this for tests.
+		lInfo() << "Opening linphone database " << uri << " with backend " << backend;
+		if (!mainDb->connect(backend, uri))
+			lFatal() << "Unable to open linphone database with uri " << uri << " and backend " << backend;
 
-	loadChatRooms();
+		loadChatRooms();
+	}else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
 }
 
 void CorePrivate::registerListener (CoreListener *listener) {
