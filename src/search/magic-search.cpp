@@ -229,8 +229,54 @@ list<SearchResult> MagicSearch::getAddressFromCallLog (
 	return resultList;
 }
 
+list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
+	const string &filter,
+	const string &withDomain,
+	const list<SearchResult> &currentList
+) const {
+	list<SearchResult> resultList;
+	const bctbx_list_t *chatRooms = linphone_core_get_chat_rooms(this->getCore()->getCCore());
+
+	// For all call log or when we reach the search limit
+	for (const bctbx_list_t *f = chatRooms ; f != nullptr ; f = bctbx_list_next(f)) {
+		LinphoneChatRoom *room = static_cast<LinphoneChatRoom*>(f->data);
+		if (linphone_chat_room_get_capabilities(room) & LinphoneChatRoomCapabilitiesConference) {
+			bctbx_list_t *participants = linphone_chat_room_get_participants(room);
+			for (const bctbx_list_t *p = participants ; p != nullptr ; p = bctbx_list_next(p)) {
+				LinphoneParticipant *participant = static_cast<LinphoneParticipant*>(p->data);
+				const LinphoneAddress *addr = linphone_participant_get_address(participant);
+				if (filter.empty()) {
+					if (findAddress(currentList, addr)) continue;
+					resultList.push_back(SearchResult(0, addr, "", nullptr));
+				} else {
+					unsigned int weight = searchInAddress(addr, filter, withDomain);
+					if (weight > getMinWeight()) {
+						if (findAddress(currentList, addr)) continue;
+						resultList.push_back(SearchResult(weight, addr, "", nullptr));
+					}
+				}
+			}
+			bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
+		} else if (linphone_chat_room_get_capabilities(room) & LinphoneChatRoomCapabilitiesBasic) {
+			const LinphoneAddress *addr = linphone_chat_room_get_peer_address(room);
+			if (filter.empty()) {
+				if (findAddress(currentList, addr)) continue;
+				resultList.push_back(SearchResult(0, addr, "", nullptr));
+			} else {
+				unsigned int weight = searchInAddress(addr, filter, withDomain);
+				if (weight > getMinWeight()) {
+					if (findAddress(currentList, addr)) continue;
+					resultList.push_back(SearchResult(weight, addr, "", nullptr));
+				}
+			}
+		}
+	}
+
+	return resultList;
+}
+
 list<SearchResult> *MagicSearch::beginNewSearch (const string &filter, const string &withDomain) const {
-	list<SearchResult> clResults;
+	list<SearchResult> clResults, crResults;
 	list<SearchResult> *resultList = new list<SearchResult>();
 	LinphoneFriendList *fList = linphone_core_get_default_friend_list(this->getCore()->getCCore());
 
@@ -242,6 +288,8 @@ list<SearchResult> *MagicSearch::beginNewSearch (const string &filter, const str
 
 	clResults = getAddressFromCallLog(filter, withDomain, *resultList);
 	addResultsToResultsList(clResults, *resultList);
+	crResults = getAddressFromGroupChatRoomParticipants(filter, withDomain, *resultList);
+	addResultsToResultsList(crResults, *resultList);
 
 	resultList->sort([](const SearchResult& lsr, const SearchResult& rsr) {
 		string name1 = getDisplayNameFromSearchResult(lsr);
