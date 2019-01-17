@@ -270,7 +270,7 @@ string LocalConferenceEventHandlerPrivate::createNotifyParticipantDeviceAdded (c
 	user.setState(StateType::partial);
 
 	EndpointType endpoint = EndpointType();
-	endpoint.setEntity(gruu.asStringUriOnly());
+	endpoint.setEntity(gruu.asString());
 	endpoint.setState(StateType::full);
 	user.getEndpoint().push_back(endpoint);
 
