@@ -20,6 +20,7 @@
 #ifndef _L_CONFERENCE_PARTICIPANT_DEVICE_EVENT_H_
 #define _L_CONFERENCE_PARTICIPANT_DEVICE_EVENT_H_
 
+#include "address/address.h"
 #include "conference-participant-event.h"
 
 // =============================================================================
@@ -36,10 +37,12 @@ public:
 		const ConferenceId &conferenceId,
 		unsigned int notifyId,
 		const IdentityAddress &participantAddress,
-		const IdentityAddress &deviceAddress
+		const Address &deviceAddress,
+		const std::string &name = ""
 	);
 
-	const IdentityAddress &getDeviceAddress () const;
+	const Address &getDeviceAddress () const;
+	const std::string &getDeviceName () const;
 
 private:
 	L_DECLARE_PRIVATE(ConferenceParticipantDeviceEvent);

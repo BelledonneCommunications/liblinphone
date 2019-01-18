@@ -90,10 +90,14 @@ string LocalConferenceEventHandlerPrivate::createNotifyFullState (int notifyId, 
 		user.setState(StateType::full);
 
 		for (const auto &device : participant->getPrivate()->getDevices()) {
-			const string &gruu = device->getAddress().asString();
+			const Address deviceAddress = device->getAddress();
 			EndpointType endpoint = EndpointType();
-			endpoint.setEntity(gruu);
+			endpoint.setEntity(deviceAddress.asStringUriOnly());
 			endpoint.setState(StateType::full);
+			const string &displayName = device->getName();
+			if (!displayName.empty())
+				endpoint.setDisplayText(displayName);
+
 			user.getEndpoint().push_back(endpoint);
 		}
 
@@ -209,10 +213,14 @@ string LocalConferenceEventHandlerPrivate::createNotifyParticipantAdded (const A
 	shared_ptr<Participant> p = conf->findParticipant(addr);
 	if (p) {
 		for (const auto &device : p->getPrivate()->getDevices()) {
-			const string &gruu = device->getAddress().asString();
+			const Address deviceAddress = device->getAddress();
 			EndpointType endpoint = EndpointType();
-			endpoint.setEntity(gruu);
+			endpoint.setEntity(deviceAddress.asStringUriOnly());
 			endpoint.setState(StateType::full);
+			const string &displayName = device->getName();
+			if (!displayName.empty())
+				endpoint.setDisplayText(displayName);
+
 			user.getEndpoint().push_back(endpoint);
 		}
 	}
@@ -272,6 +280,10 @@ string LocalConferenceEventHandlerPrivate::createNotifyParticipantDeviceAdded (c
 	EndpointType endpoint = EndpointType();
 	endpoint.setEntity(gruu.asString());
 	endpoint.setState(StateType::full);
+	const string &displayName = gruu.getDisplayName();
+	if (!displayName.empty())
+		endpoint.setDisplayText(displayName);
+
 	user.getEndpoint().push_back(endpoint);
 
 	confInfo.getUsers()->getUser().push_back(user);

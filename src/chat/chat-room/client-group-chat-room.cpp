@@ -851,7 +851,10 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 	}
 
 	ChatRoom::SecurityLevel currentSecurityLevel = getSecurityLevel();
-	participant->getPrivate()->addDevice(event->getDeviceAddress());
+	shared_ptr<ParticipantDevice> device = participant->getPrivate()->addDevice(event->getDeviceAddress());
+	const string &deviceName = event->getDeviceName();
+	if (!deviceName.empty())
+		device->setName(deviceName);
 
 	// Check if new device degrades the chatroom security level and return corresponding security event
 	shared_ptr<ConferenceSecurityEvent> securityEvent = nullptr;

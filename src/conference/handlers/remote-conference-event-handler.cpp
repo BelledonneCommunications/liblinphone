@@ -156,6 +156,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 
 			Address gruu(endpoint.getEntity().get());
 			StateType state = endpoint.getState();
+			const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
 
 			if (state == StateType::deleted) {
 				confListener->onParticipantDeviceRemoved(
@@ -177,7 +178,8 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 						conferenceId,
 						lastNotify,
 						address,
-						gruu
+						gruu,
+						name
 					),
 					isFullState
 				);

@@ -43,7 +43,11 @@ private:
 ParticipantDevice::ParticipantDevice () : Object(*new ParticipantDevicePrivate) {}
 
 ParticipantDevice::ParticipantDevice (Participant *participant, const Address &address)
-	:  Object(*new ParticipantDevicePrivate), mParticipant(participant), mAddress(address) {}
+	:  Object(*new ParticipantDevicePrivate), mParticipant(participant), mAddress(address) {
+		const string &name = mAddress.getDisplayName();
+		if (!name.empty())
+			mName = name;
+	}
 
 ParticipantDevice::~ParticipantDevice () {
 	if (mConferenceSubscribeEvent)

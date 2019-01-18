@@ -57,7 +57,8 @@ public:
 	std::shared_ptr<Core> getCore () const;
 
 	inline const Address &getAddress () const { return mAddress; }
-	inline const std::string &getName () const { return mAddress.getDisplayName(); }
+	inline const std::string &getName () const { return mName; }
+	inline void setName (std::string name) { mName = name; }
 	Participant *getParticipant () const { return mParticipant; }
 	inline std::shared_ptr<CallSession> getSession () const { return mSession; }
 	inline void setSession (std::shared_ptr<CallSession> session) { mSession = session; }
@@ -79,6 +80,7 @@ private:
 	std::shared_ptr<CallSession> mSession;
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
+	std::string mName = "";
 
 	L_DECLARE_PRIVATE(ParticipantDevice);
 	L_DISABLE_COPY(ParticipantDevice);

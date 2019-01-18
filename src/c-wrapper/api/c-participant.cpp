@@ -70,5 +70,8 @@ bctbx_list_t *linphone_participant_get_devices (const LinphoneParticipant *parti
 }
 
 LinphoneParticipantDevice *linphone_participant_find_device (const LinphoneParticipant *participant, const LinphoneAddress *address) {
-	return L_GET_C_BACK_PTR(L_GET_PRIVATE_FROM_C_OBJECT(participant)->findDevice(L_GET_CPP_PTR_FROM_C_OBJECT(participant)->getAddress()));
+	char *addrStr = linphone_address_as_string(address);
+	LinphonePrivate::Address deviceAddress(addrStr);
+	bctbx_free(addrStr);
+	return L_GET_C_BACK_PTR(L_GET_PRIVATE_FROM_C_OBJECT(participant)->findDevice(deviceAddress));
 }
