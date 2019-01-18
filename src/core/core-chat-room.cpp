@@ -132,7 +132,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const strin
 	if (!proxy)
 		return nullptr;
 
-	const LinphoneAddress *contactAddr = linphone_proxy_config_get_contact(proxy);
+	const LinphoneAddress *contactAddr = linphone_proxy_config_get_identity_address(proxy);
 	const Address *me = L_GET_CPP_PTR_FROM_C_OBJECT(contactAddr
 		? contactAddr
 		: linphone_proxy_config_get_identity_address(proxy)

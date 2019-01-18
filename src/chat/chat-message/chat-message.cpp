@@ -628,8 +628,8 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	setState(ChatMessage::State::Delivered);
 
-	if (errorCode <= 0 && !isAutoFileTransferDownloadHappened()) { 
-		// if auto download happened and message contains only file transfer, 
+	if (errorCode <= 0 && !isAutoFileTransferDownloadHappened()) {
+		// if auto download happened and message contains only file transfer,
 		// the following will state that the content type of the file is unsupported
 		bool foundSupportContentType = false;
 		for (Content *c : contents) {
@@ -768,7 +768,8 @@ void ChatMessagePrivate::send () {
 		linphone_address_unref(peer);
 	}
 	op->setFrom(fromAddress.asString().c_str());
-	op->setTo(toAddress.asString().c_str());
+	lInfo() << "ALLOALLO " << fromAddress.asString();
+	op->setTo(toAddress.asStringUriOnly().c_str());
 
 	// ---------------------------------------
 	// Start of message modification

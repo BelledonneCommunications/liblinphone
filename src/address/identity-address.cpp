@@ -37,6 +37,7 @@ class IdentityAddressPrivate : public ClonableObjectPrivate {
 public:
 	std::string scheme;
 	std::string username;
+	std::string displayName;
 	std::string domain;
 	std::string gruu;
 };
@@ -49,6 +50,7 @@ IdentityAddress::IdentityAddress (const string &address) : ClonableObject(*new I
 	if (tmpAddress.isValid() && ((tmpAddress.getScheme() == "sip") || (tmpAddress.getScheme() == "sips"))) {
 		d->scheme = tmpAddress.getScheme();
 		d->username = tmpAddress.getUsername();
+		d->displayName = tmpAddress.getDisplayName();
 		d->domain = tmpAddress.getDomain();
 		d->gruu = tmpAddress.getUriParamValue("gr");
 	}
@@ -58,6 +60,7 @@ IdentityAddress::IdentityAddress (const Address &address) : ClonableObject(*new 
 	L_D();
 	d->scheme = address.getScheme();
 	d->username = address.getUsername();
+	d->displayName = address.getDisplayName();
 	d->domain = address.getDomain();
 	if (address.hasUriParam("gr"))
 		d->gruu = address.getUriParamValue("gr");
@@ -67,6 +70,7 @@ IdentityAddress::IdentityAddress (const IdentityAddress &other) : ClonableObject
 	L_D();
 	d->scheme = other.getScheme();
 	d->username = other.getUsername();
+	d->displayName = other.getDisplayName();
 	d->domain = other.getDomain();
 	d->gruu = other.getGruu();
 }
@@ -76,6 +80,7 @@ IdentityAddress &IdentityAddress::operator= (const IdentityAddress &other) {
 	if (this != &other) {
 		d->scheme = other.getScheme();
 		d->username = other.getUsername();
+		d->displayName = other.getDisplayName();
 		d->domain = other.getDomain();
 		d->gruu = other.getGruu();
 	}
@@ -115,6 +120,17 @@ bool IdentityAddress::setUsername (const string &username) {
 	return true;
 }
 
+const string &IdentityAddress::getDisplayName () const {
+	L_D();
+	return d->displayName;
+}
+
+bool IdentityAddress::setDisplayName (const string &displayname) {
+	L_D();
+	d->displayName = displayname;
+	return true;
+}
+
 const string &IdentityAddress::getDomain () const {
 	L_D();
 	return d->domain;
@@ -148,9 +164,15 @@ IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
 	return address;
 }
 
-string IdentityAddress::asString () const {
+string IdentityAddress::asStringUriOnly () const {
 	Address tmpAddress(*this);
 	return tmpAddress.asStringUriOnly();
+}
+
+string IdentityAddress::asString () const {
+	Address tmpAddress(*this);
+	//lInfo() << "ALLOALLO test " << tmpAddress.asString();
+	return tmpAddress.asString();
 }
 
 LINPHONE_END_NAMESPACE

@@ -56,6 +56,9 @@ public:
 	const std::string &getUsername () const;
 	bool setUsername (const std::string &username);
 
+	const std::string &getDisplayName () const;
+	bool setDisplayName (const std::string &displayname);
+
 	const std::string &getDomain () const;
 	bool setDomain (const std::string &domain);
 
@@ -65,6 +68,7 @@ public:
 
 	IdentityAddress getAddressWithoutGruu () const;
 
+	virtual std::string asStringUriOnly () const;
 	virtual std::string asString () const;
 
 private:
