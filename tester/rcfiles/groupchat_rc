@@ -1,0 +1,10 @@
+[sip]
+sip_port=-1
+sip_tcp_port=-1
+sip_tls_port=-1
+default_proxy=0
+ping_with_options=0
+composing_idle_timeout=1
+
+[net]
+dns_srv_enabled=0 #no srv needed in general

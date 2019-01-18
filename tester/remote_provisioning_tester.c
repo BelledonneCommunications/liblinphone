@@ -21,20 +21,6 @@
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 
-void linphone_configuration_status(LinphoneCore *lc, LinphoneConfiguringState status, const char *message) {
-	stats* counters;
-	ms_message("Configuring state = %i with message %s", status, message?message:"");
-
-	counters = get_stats(lc);
-	if (status == LinphoneConfiguringSkipped) {
-		counters->number_of_LinphoneConfiguringSkipped++;
-	} else if (status == LinphoneConfiguringFailed) {
-		counters->number_of_LinphoneConfiguringFailed++;
-	} else if (status == LinphoneConfiguringSuccessful) {
-		counters->number_of_LinphoneConfiguringSuccessful++;
-	}
-}
-
 static void remote_provisioning_skipped(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_rc", FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSkipped,1));

@@ -65,51 +65,6 @@ static void _remove_friends_from_list(LinphoneFriendList *list, const char *frie
 	}
 }
 
-void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone) {
-	if (index >= bctbx_list_size(resultList)) {
-		ms_error("Attempt to access result to an outbound index");
-		return;
-	}
-	const LinphoneSearchResult *sr = bctbx_list_nth_data(resultList, index);
-	const LinphoneFriend *lf = linphone_search_result_get_friend(sr);
-	if (lf || linphone_search_result_get_address(sr)) {
-		const LinphoneAddress *la = (linphone_search_result_get_address(sr)) ?
-			linphone_search_result_get_address(sr) : linphone_friend_get_address(lf);
-		if (la) {
-			char* fa = linphone_address_as_string(la);
-			BC_ASSERT_STRING_EQUAL(fa , uri);
-			free(fa);
-			return;
-		} else if (phone) {
-			const LinphonePresenceModel *presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, phone);
-			if (BC_ASSERT_PTR_NOT_NULL(presence)) {
-				char *contact = linphone_presence_model_get_contact(presence);
-				BC_ASSERT_STRING_EQUAL(contact, uri);
-				free(contact);
-				return;
-			}
-		}
-	} else {
-		const bctbx_list_t *callLog = linphone_core_get_call_logs(lc);
-		const bctbx_list_t *f;
-		for (f = callLog ; f != NULL ; f = bctbx_list_next(f)) {
-			LinphoneCallLog *log = (LinphoneCallLog*)(f->data);
-			const LinphoneAddress *addr = (linphone_call_log_get_dir(log) == LinphoneCallIncoming) ?
-			linphone_call_log_get_from_address(log) : linphone_call_log_get_to_address(log);
-			if (addr) {
-				char *addrUri = linphone_address_as_string_uri_only(addr);
-				if (addrUri && strcmp(addrUri, uri) == 0) {
-					bctbx_free(addrUri);
-					return;
-				}
-				if (addrUri) bctbx_free(addrUri);
-			}
-		}
-	}
-	BC_ASSERT(FALSE);
-	ms_error("Address NULL and Presence NULL");
-}
-
 static void _create_call_log(LinphoneCore *lc, LinphoneAddress *addrFrom, LinphoneAddress *addrTo) {
 	linphone_call_log_unref(
 		linphone_core_create_call_log(lc, addrFrom, addrTo, LinphoneCallOutgoing, 100, time(NULL), time(NULL), LinphoneCallSuccess, FALSE, 1.0)

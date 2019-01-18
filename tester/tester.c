@@ -58,6 +58,8 @@ bool_t liblinphonetester_no_account_creator = FALSE;
 int liblinphonetester_transport_timeout = 9000; /*milliseconds. it is set to such low value to workaround a problem with our Freebox v6 when connecting to Ipv6 addresses.
 			It was found that the freebox sometimes block SYN-ACK packets, which prevents connection to be succesful.
 			Thanks to the timeout, it will fallback to IPv4*/
+char* message_external_body_url=NULL;
+static const char *notify_content="<somexml2>blabla</somexml2>";
 
 const char *liblinphone_tester_mire_id="Mire: Mire (synthetic moving picture)";
 const char *liblinphone_tester_static_image_id="StaticImage: Static picture";
@@ -652,53 +654,6 @@ void liblinphone_tester_clear_accounts(void){
 	account_manager_destroy();
 }
 
-void liblinphone_tester_add_suites() {
-	bc_tester_add_suite(&setup_test_suite);
-	bc_tester_add_suite(&register_test_suite);
-	bc_tester_add_suite(&tunnel_test_suite);
-	bc_tester_add_suite(&offeranswer_test_suite);
-	bc_tester_add_suite(&call_test_suite);
-	bc_tester_add_suite(&call_recovery_test_suite);
-	bc_tester_add_suite(&call_with_ice_test_suite);
-	#ifdef VIDEO_ENABLED
-		bc_tester_add_suite(&call_video_test_suite);
-	#endif // ifdef VIDEO_ENABLED
-	bc_tester_add_suite(&audio_bypass_suite);
-	bc_tester_add_suite(&multi_call_test_suite);
-	bc_tester_add_suite(&message_test_suite);
-	bc_tester_add_suite(&presence_test_suite);
-	bc_tester_add_suite(&presence_server_test_suite);
-	bc_tester_add_suite(&account_creator_test_suite);
-	bc_tester_add_suite(&stun_test_suite);
-	bc_tester_add_suite(&event_test_suite);
-	bc_tester_add_suite(&conference_event_test_suite);
-	bc_tester_add_suite(&contents_test_suite);
-	bc_tester_add_suite(&flexisip_test_suite);
-	bc_tester_add_suite(&remote_provisioning_test_suite);
-	bc_tester_add_suite(&quality_reporting_test_suite);
-	bc_tester_add_suite(&log_collection_test_suite);
-	bc_tester_add_suite(&player_test_suite);
-	bc_tester_add_suite(&dtmf_test_suite);
-	bc_tester_add_suite(&cpim_test_suite);
-	bc_tester_add_suite(&multipart_test_suite);
-	bc_tester_add_suite(&clonable_object_test_suite);
-	bc_tester_add_suite(&main_db_test_suite);
-	bc_tester_add_suite(&property_container_test_suite);
-	#ifdef VIDEO_ENABLED
-		bc_tester_add_suite(&video_test_suite);
-	#endif // ifdef VIDEO_ENABLED
-	bc_tester_add_suite(&multicast_call_test_suite);
-	bc_tester_add_suite(&proxy_config_test_suite);
-#if HAVE_SIPP
-	bc_tester_add_suite(&complex_sip_call_test_suite);
-#endif
-#ifdef VCARD_ENABLED
-	bc_tester_add_suite(&vcard_test_suite);
-#endif
-	bc_tester_add_suite(&group_chat_test_suite);
-	bc_tester_add_suite(&utils_test_suite);
-}
-
 static int linphone_core_manager_get_max_audio_bw_base(const int array[],int array_size) {
 	int i,result=0;
 	for (i=0; i<array_size; i++) {
@@ -965,6 +920,885 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 	if (video_enabled) global_success = global_success && video_success;
 	if (realtime_text_enabled) global_success = global_success && text_success;
 	return global_success;
+}
+
+void compare_files(const char *path1, const char *path2) {
+	size_t size1;
+	size_t size2;
+	uint8_t *buf1;
+	uint8_t *buf2;
+
+	buf1 = (uint8_t*)ms_load_path_content(path1, &size1);
+	buf2 = (uint8_t*)ms_load_path_content(path2, &size2);
+	BC_ASSERT_PTR_NOT_NULL(buf1);
+	BC_ASSERT_PTR_NOT_NULL(buf2);
+	if (buf1 && buf2){
+		BC_ASSERT_EQUAL(memcmp(buf1, buf2, size1), 0, int, "%d");
+	}
+	BC_ASSERT_EQUAL((uint8_t)size2, (uint8_t)size1, uint8_t, "%u");
+
+	if (buf1) ms_free(buf1);
+	if (buf2) ms_free(buf2);
+}
+
+void registration_state_changed(struct _LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const char *message){
+	stats* counters;
+	ms_message("New registration state %s for user id [%s] at proxy [%s]\n"
+		   ,linphone_registration_state_to_string(cstate)
+		   ,linphone_proxy_config_get_identity(cfg)
+		   ,linphone_proxy_config_get_addr(cfg));
+	counters = get_stats(lc);
+	switch (cstate) {
+	case LinphoneRegistrationNone:counters->number_of_LinphoneRegistrationNone++;break;
+	case LinphoneRegistrationProgress:counters->number_of_LinphoneRegistrationProgress++;break;
+	case LinphoneRegistrationOk:counters->number_of_LinphoneRegistrationOk++;break;
+	case LinphoneRegistrationCleared:counters->number_of_LinphoneRegistrationCleared++;break;
+	case LinphoneRegistrationFailed:counters->number_of_LinphoneRegistrationFailed++;break;
+	default:
+		BC_FAIL("unexpected event");break;
+	}
+}
+
+void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg){
+	LinphoneCallLog *calllog = linphone_call_get_call_log(call);
+	char* to=linphone_address_as_string(linphone_call_log_get_to(calllog));
+	char* from=linphone_address_as_string(linphone_call_log_get_from(calllog));
+	stats* counters;
+
+
+	const LinphoneAddress *to_addr = linphone_call_get_to_address(call);
+	const LinphoneAddress *remote_addr = linphone_call_get_remote_address(call);
+	//const LinphoneAddress *from_addr = linphone_call_get_from_address(call);
+	BC_ASSERT_PTR_NOT_NULL(to_addr);
+	//BC_ASSERT_PTR_NOT_NULL(from_addr);
+	BC_ASSERT_PTR_NOT_NULL(remote_addr);
+
+	ms_message(" %s call from [%s] to [%s], new state is [%s]"	,linphone_call_log_get_dir(calllog)==LinphoneCallIncoming?"Incoming":"Outgoing"
+																,from
+																,to
+																,linphone_call_state_to_string(cstate));
+	ms_free(to);
+	ms_free(from);
+	counters = get_stats(lc);
+	switch (cstate) {
+	case LinphoneCallIncomingReceived:counters->number_of_LinphoneCallIncomingReceived++;break;
+	case LinphoneCallOutgoingInit :counters->number_of_LinphoneCallOutgoingInit++;break;
+	case LinphoneCallOutgoingProgress :counters->number_of_LinphoneCallOutgoingProgress++;break;
+	case LinphoneCallOutgoingRinging :counters->number_of_LinphoneCallOutgoingRinging++;break;
+	case LinphoneCallOutgoingEarlyMedia :counters->number_of_LinphoneCallOutgoingEarlyMedia++;break;
+	case LinphoneCallConnected :counters->number_of_LinphoneCallConnected++;break;
+	case LinphoneCallStreamsRunning :counters->number_of_LinphoneCallStreamsRunning++;break;
+	case LinphoneCallPausing :counters->number_of_LinphoneCallPausing++;break;
+	case LinphoneCallPaused :counters->number_of_LinphoneCallPaused++;break;
+	case LinphoneCallResuming :counters->number_of_LinphoneCallResuming++;break;
+	case LinphoneCallRefered :counters->number_of_LinphoneCallRefered++;break;
+	case LinphoneCallError :counters->number_of_LinphoneCallError++;break;
+	case LinphoneCallEnd :counters->number_of_LinphoneCallEnd++;break;
+	case LinphoneCallPausedByRemote :counters->number_of_LinphoneCallPausedByRemote++;break;
+	case LinphoneCallUpdatedByRemote :counters->number_of_LinphoneCallUpdatedByRemote++;break;
+	case LinphoneCallIncomingEarlyMedia :counters->number_of_LinphoneCallIncomingEarlyMedia++;break;
+	case LinphoneCallUpdating :counters->number_of_LinphoneCallUpdating++;break;
+	case LinphoneCallReleased :counters->number_of_LinphoneCallReleased++;break;
+	case LinphoneCallEarlyUpdating: counters->number_of_LinphoneCallEarlyUpdating++;break;
+	case LinphoneCallEarlyUpdatedByRemote: counters->number_of_LinphoneCallEarlyUpdatedByRemote++;break;
+	default:
+		BC_FAIL("unexpected event");break;
+	}
+}
+
+void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage* msg) {
+	char* from=linphone_address_as_string(linphone_chat_message_get_from_address(msg));
+	stats* counters;
+	const char *text=linphone_chat_message_get_text(msg);
+	const char *external_body_url=linphone_chat_message_get_external_body_url(msg);
+	ms_message("Message from [%s]  is [%s] , external URL [%s]",from?from:""
+																,text?text:""
+																,external_body_url?external_body_url:"");
+	ms_free(from);
+	counters = get_stats(lc);
+	counters->number_of_LinphoneMessageReceived++;
+	if (counters->last_received_chat_message) {
+		linphone_chat_message_unref(counters->last_received_chat_message);
+	}
+	counters->last_received_chat_message=linphone_chat_message_ref(msg);
+	LinphoneContent * content = linphone_chat_message_get_file_transfer_information(msg);
+	if (content)
+		counters->number_of_LinphoneMessageReceivedWithFile++;
+	else if (linphone_chat_message_get_external_body_url(msg)) {
+		counters->number_of_LinphoneMessageExtBodyReceived++;
+		if (message_external_body_url) {
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_external_body_url(msg),message_external_body_url);
+			message_external_body_url=NULL;
+		}
+	}
+}
+
+void is_composing_received(LinphoneCore *lc, LinphoneChatRoom *room) {
+	stats *counters = get_stats(lc);
+	if (linphone_chat_room_is_remote_composing(room)) {
+		counters->number_of_LinphoneIsComposingActiveReceived++;
+	} else {
+		counters->number_of_LinphoneIsComposingIdleReceived++;
+	}
+}
+
+void new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char *url){
+	stats* counters;
+	const LinphoneAddress *addr = linphone_friend_get_address(lf);
+	struct addrinfo *ai;
+	const char *domain;
+	char *ipaddr;
+
+	if (addr != NULL) {
+		char* from=linphone_address_as_string(addr);
+		ms_message("New subscription request from [%s] url [%s]",from,url);
+		ms_free(from);
+	}
+	counters = get_stats(lc);
+	counters->number_of_NewSubscriptionRequest++;
+
+	domain = linphone_address_get_domain(addr);
+	if (domain[0] == '['){
+		ipaddr = ms_strdup(domain+1);
+		ipaddr[strlen(ipaddr)] = '\0';
+	}else ipaddr = ms_strdup(domain);
+	ai = bctbx_ip_address_to_addrinfo(strchr(domain, ':') != NULL ? AF_INET6 : AF_INET, SOCK_DGRAM, ipaddr, 4444);
+	ms_free(ipaddr);
+	if (ai){/* this SUBSCRIBE comes from friend without registered SIP account, don't attempt to subscribe, it will fail*/
+		ms_message("Disabling subscription because friend has numeric host.");
+		linphone_friend_enable_subscribes(lf, FALSE);
+		bctbx_freeaddrinfo(ai);
+	}
+
+
+	linphone_core_add_friend(lc,lf); /*accept subscription*/
+}
+
+void notify_presence_received(LinphoneCore *lc, LinphoneFriend * lf) {
+	stats* counters;
+	unsigned int i;
+	const LinphoneAddress *addr = linphone_friend_get_address(lf);
+	if (addr != NULL) {
+		char* from=linphone_address_as_string(addr);
+		ms_message("New Notify request from [%s] ",from);
+		ms_free(from);
+	}
+	counters = get_stats(lc);
+	counters->number_of_NotifyPresenceReceived++;
+	counters->last_received_presence = linphone_friend_get_presence_model(lf);
+	if (linphone_presence_model_get_basic_status(counters->last_received_presence) == LinphonePresenceBasicStatusOpen) {
+		counters->number_of_LinphonePresenceBasicStatusOpen++;
+	} else if (linphone_presence_model_get_basic_status(counters->last_received_presence) == LinphonePresenceBasicStatusClosed) {
+		counters->number_of_LinphonePresenceBasicStatusClosed++;
+	} else {
+		ms_error("Unexpected basic status [%i]",linphone_presence_model_get_basic_status(counters->last_received_presence));
+	}
+	if (counters->last_received_presence && linphone_presence_model_get_nb_activities(counters->last_received_presence) > 0) {
+		for (i=0;counters->last_received_presence&&i<linphone_presence_model_get_nb_activities(counters->last_received_presence); i++) {
+			LinphonePresenceActivity *activity = linphone_presence_model_get_nth_activity(counters->last_received_presence, i);
+			switch (linphone_presence_activity_get_type(activity)) {
+				case LinphonePresenceActivityAppointment:
+					counters->number_of_LinphonePresenceActivityAppointment++; break;
+				case LinphonePresenceActivityAway:
+					counters->number_of_LinphonePresenceActivityAway++; break;
+				case LinphonePresenceActivityBreakfast:
+					counters->number_of_LinphonePresenceActivityBreakfast++; break;
+				case LinphonePresenceActivityBusy:
+					counters->number_of_LinphonePresenceActivityBusy++; break;
+				case LinphonePresenceActivityDinner:
+					counters->number_of_LinphonePresenceActivityDinner++; break;
+				case LinphonePresenceActivityHoliday:
+					counters->number_of_LinphonePresenceActivityHoliday++; break;
+				case LinphonePresenceActivityInTransit:
+					counters->number_of_LinphonePresenceActivityInTransit++; break;
+				case LinphonePresenceActivityLookingForWork:
+					counters->number_of_LinphonePresenceActivityLookingForWork++; break;
+				case LinphonePresenceActivityLunch:
+					counters->number_of_LinphonePresenceActivityLunch++; break;
+				case LinphonePresenceActivityMeal:
+					counters->number_of_LinphonePresenceActivityMeal++; break;
+				case LinphonePresenceActivityMeeting:
+					counters->number_of_LinphonePresenceActivityMeeting++; break;
+				case LinphonePresenceActivityOnThePhone:
+					counters->number_of_LinphonePresenceActivityOnThePhone++; break;
+				case LinphonePresenceActivityOther:
+					counters->number_of_LinphonePresenceActivityOther++; break;
+				case LinphonePresenceActivityPerformance:
+					counters->number_of_LinphonePresenceActivityPerformance++; break;
+				case LinphonePresenceActivityPermanentAbsence:
+					counters->number_of_LinphonePresenceActivityPermanentAbsence++; break;
+				case LinphonePresenceActivityPlaying:
+					counters->number_of_LinphonePresenceActivityPlaying++; break;
+				case LinphonePresenceActivityPresentation:
+					counters->number_of_LinphonePresenceActivityPresentation++; break;
+				case LinphonePresenceActivityShopping:
+					counters->number_of_LinphonePresenceActivityShopping++; break;
+				case LinphonePresenceActivitySleeping:
+					counters->number_of_LinphonePresenceActivitySleeping++; break;
+				case LinphonePresenceActivitySpectator:
+					counters->number_of_LinphonePresenceActivitySpectator++; break;
+				case LinphonePresenceActivitySteering:
+					counters->number_of_LinphonePresenceActivitySteering++; break;
+				case LinphonePresenceActivityTravel:
+					counters->number_of_LinphonePresenceActivityTravel++; break;
+				case LinphonePresenceActivityTV:
+					counters->number_of_LinphonePresenceActivityTV++; break;
+				case LinphonePresenceActivityUnknown:
+					counters->number_of_LinphonePresenceActivityUnknown++; break;
+				case LinphonePresenceActivityVacation:
+					counters->number_of_LinphonePresenceActivityVacation++; break;
+				case LinphonePresenceActivityWorking:
+					counters->number_of_LinphonePresenceActivityWorking++; break;
+				case LinphonePresenceActivityWorship:
+					counters->number_of_LinphonePresenceActivityWorship++; break;
+			}
+		}
+	} else {
+		if (linphone_presence_model_get_basic_status(counters->last_received_presence) == LinphonePresenceBasicStatusOpen)
+			counters->number_of_LinphonePresenceActivityOnline++;
+		else
+			counters->number_of_LinphonePresenceActivityOffline++;
+	}
+}
+
+void notify_presence_received_for_uri_or_tel(LinphoneCore *lc, LinphoneFriend *lf, const char *uri_or_tel, const LinphonePresenceModel *presence) {
+	stats *counters = get_stats(lc);
+	ms_message("Presence notification for URI or phone number [%s]", uri_or_tel);
+	counters->number_of_NotifyPresenceReceivedForUriOrTel++;
+}
+
+void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone) {
+	if (index >= bctbx_list_size(resultList)) {
+		ms_error("Attempt to access result to an outbound index");
+		return;
+	}
+	const LinphoneSearchResult *sr = bctbx_list_nth_data(resultList, index);
+	const LinphoneFriend *lf = linphone_search_result_get_friend(sr);
+	if (lf || linphone_search_result_get_address(sr)) {
+		const LinphoneAddress *la = (linphone_search_result_get_address(sr)) ?
+			linphone_search_result_get_address(sr) : linphone_friend_get_address(lf);
+		if (la) {
+			char* fa = linphone_address_as_string(la);
+			BC_ASSERT_STRING_EQUAL(fa , uri);
+			free(fa);
+			return;
+		} else if (phone) {
+			const LinphonePresenceModel *presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, phone);
+			if (BC_ASSERT_PTR_NOT_NULL(presence)) {
+				char *contact = linphone_presence_model_get_contact(presence);
+				BC_ASSERT_STRING_EQUAL(contact, uri);
+				free(contact);
+				return;
+			}
+		}
+	} else {
+		const bctbx_list_t *callLog = linphone_core_get_call_logs(lc);
+		const bctbx_list_t *f;
+		for (f = callLog ; f != NULL ; f = bctbx_list_next(f)) {
+			LinphoneCallLog *log = (LinphoneCallLog*)(f->data);
+			const LinphoneAddress *addr = (linphone_call_log_get_dir(log) == LinphoneCallIncoming) ?
+			linphone_call_log_get_from_address(log) : linphone_call_log_get_to_address(log);
+			if (addr) {
+				char *addrUri = linphone_address_as_string_uri_only(addr);
+				if (addrUri && strcmp(addrUri, uri) == 0) {
+					bctbx_free(addrUri);
+					return;
+				}
+				if (addrUri) bctbx_free(addrUri);
+			}
+		}
+	}
+	BC_ASSERT(FALSE);
+	ms_error("Address NULL and Presence NULL");
+}
+
+void linphone_transfer_state_changed(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) {
+	LinphoneCallLog *clog = linphone_call_get_call_log(transfered);
+	char* to=linphone_address_as_string(linphone_call_log_get_to(clog));
+	char* from=linphone_address_as_string(linphone_call_log_get_to(clog));
+	stats* counters;
+	ms_message("Transferred call from [%s] to [%s], new state is [%s]",from,to,linphone_call_state_to_string(new_call_state));
+	ms_free(to);
+	ms_free(from);
+
+	counters = get_stats(lc);
+	switch (new_call_state) {
+	case LinphoneCallOutgoingInit :counters->number_of_LinphoneTransferCallOutgoingInit++;break;
+	case LinphoneCallOutgoingProgress :counters->number_of_LinphoneTransferCallOutgoingProgress++;break;
+	case LinphoneCallOutgoingRinging :counters->number_of_LinphoneTransferCallOutgoingRinging++;break;
+	case LinphoneCallOutgoingEarlyMedia :counters->number_of_LinphoneTransferCallOutgoingEarlyMedia++;break;
+	case LinphoneCallConnected :counters->number_of_LinphoneTransferCallConnected++;break;
+	case LinphoneCallStreamsRunning :counters->number_of_LinphoneTransferCallStreamsRunning++;break;
+	case LinphoneCallError :counters->number_of_LinphoneTransferCallError++;break;
+	default:
+		BC_FAIL("unexpected event");break;
+	}
+}
+
+void info_message_received(LinphoneCore *lc, LinphoneCall* call, const LinphoneInfoMessage *msg){
+	stats* counters = get_stats(lc);
+
+	if (counters->last_received_info_message) {
+		linphone_info_message_unref(counters->last_received_info_message);
+	}
+	counters->last_received_info_message=linphone_info_message_copy(msg);
+	counters->number_of_inforeceived++;
+}
+
+void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
+	stats* counters = get_stats(lc);
+	LinphoneCoreManager *mgr=get_manager(lc);
+	LinphoneContent* content;
+	const LinphoneAddress* from_addr = linphone_event_get_from(lev);
+	char* from = linphone_address_as_string(from_addr);
+	content = linphone_core_create_content(lc);
+	linphone_content_set_type(content,"application");
+	linphone_content_set_subtype(content,"somexml2");
+	linphone_content_set_buffer(content,(const uint8_t *)notify_content,strlen(notify_content));
+
+	ms_message("Subscription state [%s] from [%s]",linphone_subscription_state_to_string(state),from);
+	ms_free(from);
+
+	switch(state){
+		case LinphoneSubscriptionNone:
+		break;
+		case LinphoneSubscriptionIncomingReceived:
+			counters->number_of_LinphoneSubscriptionIncomingReceived++;
+			mgr->lev=lev;
+		break;
+		case LinphoneSubscriptionOutgoingProgress:
+			counters->number_of_LinphoneSubscriptionOutgoingProgress++;
+		break;
+		case LinphoneSubscriptionPending:
+			counters->number_of_LinphoneSubscriptionPending++;
+		break;
+		case LinphoneSubscriptionActive:
+			counters->number_of_LinphoneSubscriptionActive++;
+			if (linphone_event_get_subscription_dir(lev)==LinphoneSubscriptionIncoming){
+				mgr->lev=lev;
+				if(strcmp(linphone_event_get_name(lev), "conference") == 0) {
+					// TODO : Get LocalConfEventHandler and call handler->subscribeReceived(lev)
+				} else {
+					linphone_event_notify(lev,content);
+				}
+			}
+		break;
+		case LinphoneSubscriptionTerminated:
+			counters->number_of_LinphoneSubscriptionTerminated++;
+			mgr->lev=NULL;
+		break;
+		case LinphoneSubscriptionError:
+			counters->number_of_LinphoneSubscriptionError++;
+			mgr->lev=NULL;
+		break;
+		case LinphoneSubscriptionExpiring:
+			counters->number_of_LinphoneSubscriptionExpiring++;
+			mgr->lev=NULL;
+		break;
+	}
+	linphone_content_unref(content);
+}
+
+void linphone_notify_received(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content){
+	LinphoneCoreManager *mgr;
+	const char * ua = linphone_event_get_custom_header(lev, "User-Agent");
+	if (!BC_ASSERT_PTR_NOT_NULL(content)) return;
+	if (!linphone_content_is_multipart(content) && (!ua ||  !strstr(ua, "flexisip"))) { /*disable check for full presence server support*/
+		/*hack to disable content checking for list notify */
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), notify_content);
+	}
+	mgr = get_manager(lc);
+	mgr->stat.number_of_NotifyReceived++;
+}
+
+void linphone_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content) {
+	LinphoneCoreManager *mgr = get_manager(lc);
+	if (!mgr->decline_subscribe)
+		linphone_event_accept_subscription(lev);
+	else
+		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
+}
+
+void linphone_publish_state_changed(LinphoneCore *lc, LinphoneEvent *ev, LinphonePublishState state) {
+	stats* counters = get_stats(lc);
+	const LinphoneAddress* from_addr = linphone_event_get_from(ev);
+	char* from = linphone_address_as_string(from_addr);
+	ms_message("Publish state [%s] from [%s]",linphone_publish_state_to_string(state),from);
+	ms_free(from);
+	switch(state){
+	case LinphonePublishProgress: counters->number_of_LinphonePublishProgress++; break;
+	case LinphonePublishOk:
+		/*make sure custom header access API is working*/
+		BC_ASSERT_PTR_NOT_NULL(linphone_event_get_custom_header(ev,"From"));
+		counters->number_of_LinphonePublishOk++;
+		break;
+	case LinphonePublishError: counters->number_of_LinphonePublishError++; break;
+	case LinphonePublishExpiring: counters->number_of_LinphonePublishExpiring++; break;
+	case LinphonePublishCleared: counters->number_of_LinphonePublishCleared++;break;
+	default:
+		break;
+	}
+
+}
+
+void linphone_configuration_status(LinphoneCore *lc, LinphoneConfiguringState status, const char *message) {
+	stats* counters;
+	ms_message("Configuring state = %i with message %s", status, message?message:"");
+
+	counters = get_stats(lc);
+	if (status == LinphoneConfiguringSkipped) {
+		counters->number_of_LinphoneConfiguringSkipped++;
+	} else if (status == LinphoneConfiguringFailed) {
+		counters->number_of_LinphoneConfiguringFailed++;
+	} else if (status == LinphoneConfiguringSuccessful) {
+		counters->number_of_LinphoneConfiguringSuccessful++;
+	}
+}
+
+void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token) {
+	LinphoneCallLog *calllog = linphone_call_get_call_log(call);
+	char* to=linphone_address_as_string(linphone_call_log_get_to(calllog));
+	char* from=linphone_address_as_string(linphone_call_log_get_from(calllog));
+	stats* counters;
+	ms_message(" %s call from [%s] to [%s], is now [%s]",linphone_call_log_get_dir(calllog)==LinphoneCallIncoming?"Incoming":"Outgoing"
+		   ,from
+		   ,to
+		   ,(on?"encrypted":"unencrypted"));
+	ms_free(to);
+	ms_free(from);
+	counters = get_stats(lc);
+	if (on)
+		counters->number_of_LinphoneCallEncryptedOn++;
+	else
+		counters->number_of_LinphoneCallEncryptedOff++;
+}
+
+void dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf) {
+	stats* counters = get_stats(lc);
+	char** dst = &counters->dtmf_list_received;
+	*dst = *dst ? ms_strcat_printf(*dst, "%c", dtmf) : ms_strdup_printf("%c", dtmf);
+	counters->dtmf_count++;
+}
+
+bool_t rtcp_is_type(const mblk_t *m, rtcp_type_t type){
+	const rtcp_common_header_t *ch=rtcp_get_common_header(m);
+	return (ch!=NULL && rtcp_common_header_get_packet_type(ch)==type);
+}
+
+void rtcp_received(stats* counters, mblk_t *packet) {
+	do{
+		if (rtcp_is_type(packet, RTCP_RTPFB)){
+			if (rtcp_RTPFB_get_type(packet) ==  RTCP_RTPFB_TMMBR) {
+				counters->number_of_tmmbr_received++;
+				counters->last_tmmbr_value_received = (int)rtcp_RTPFB_tmmbr_get_max_bitrate(packet);
+			}
+		}
+	}while (rtcp_next_packet(packet));
+	rtcp_rewind(packet);
+}
+
+
+void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *lstats) {
+	const int updated = _linphone_call_stats_get_updated(lstats);
+	stats *counters = get_stats(lc);
+
+	counters->number_of_LinphoneCallStatsUpdated++;
+	if (updated & LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE) {
+		counters->number_of_rtcp_received++;
+		if (_linphone_call_stats_rtcp_received_via_mux(lstats)){
+			counters->number_of_rtcp_received_via_mux++;
+		}
+		rtcp_received(counters, _linphone_call_stats_get_received_rtcp(lstats));
+	}
+	if (updated & LINPHONE_CALL_STATS_SENT_RTCP_UPDATE ) {
+		counters->number_of_rtcp_sent++;
+	}
+	if (updated & LINPHONE_CALL_STATS_PERIODICAL_UPDATE ) {
+		const int tab_size = sizeof counters->audio_download_bandwidth / sizeof(int);
+
+		LinphoneCallStats *call_stats;
+		int index;
+
+		int type = linphone_call_stats_get_type(lstats);
+		if (type != LINPHONE_CALL_STATS_AUDIO && type != LINPHONE_CALL_STATS_VIDEO)
+			return; // Avoid out of bounds if type is TEXT.
+
+		index = (counters->current_bandwidth_index[type]++) % tab_size;
+		if (type == LINPHONE_CALL_STATS_AUDIO) {
+			call_stats = linphone_call_get_audio_stats(call);
+			counters->audio_download_bandwidth[index] = (int)linphone_call_stats_get_download_bandwidth(call_stats);
+			counters->audio_upload_bandwidth[index] = (int)linphone_call_stats_get_upload_bandwidth(call_stats);
+		} else {
+			call_stats = linphone_call_get_video_stats(call);
+			counters->video_download_bandwidth[index] = (int)linphone_call_stats_get_download_bandwidth(call_stats);
+			counters->video_upload_bandwidth[index] = (int)linphone_call_stats_get_upload_bandwidth(call_stats);
+		}
+		linphone_call_stats_unref(call_stats);
+	}
+}
+
+void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state) {
+	LinphoneCore *lc = linphone_chat_message_get_core(msg);
+	stats *counters = get_stats(lc);
+	switch (state) {
+		case LinphoneChatMessageStateIdle:
+			return;
+		case LinphoneChatMessageStateDelivered:
+			counters->number_of_LinphoneMessageDelivered++;
+			return;
+		case LinphoneChatMessageStateNotDelivered:
+			counters->number_of_LinphoneMessageNotDelivered++;
+			return;
+		case LinphoneChatMessageStateInProgress:
+			counters->number_of_LinphoneMessageInProgress++;
+			return;
+		case LinphoneChatMessageStateFileTransferError:
+			counters->number_of_LinphoneMessageNotDelivered++;
+			counters->number_of_LinphoneMessageFileTransferError++;
+			return;
+		case LinphoneChatMessageStateFileTransferDone:
+			counters->number_of_LinphoneMessageFileTransferDone++;
+			return;
+		case LinphoneChatMessageStateDeliveredToUser:
+			counters->number_of_LinphoneMessageDeliveredToUser++;
+			return;
+		case LinphoneChatMessageStateDisplayed:
+			counters->number_of_LinphoneMessageDisplayed++;
+			return;
+	}
+	ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
+}
+
+/*
+ * function called when the file transfer is initiated. file content should be feed into object LinphoneContent
+ * */
+LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t size){
+	LinphoneBuffer *lb;
+	size_t file_size;
+	size_t size_to_send;
+	uint8_t *buf;
+	FILE *file_to_send = linphone_chat_message_get_user_data(msg);
+
+	// If a file path is set, we should NOT call the on_send callback !
+	BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
+
+	BC_ASSERT_PTR_NOT_NULL(file_to_send);
+	if (file_to_send == NULL){
+		return NULL;
+	}
+	fseek(file_to_send, 0, SEEK_END);
+	file_size = ftell(file_to_send);
+	fseek(file_to_send, (long)offset, SEEK_SET);
+	size_to_send = MIN(size, file_size - offset);
+	buf = ms_malloc(size_to_send);
+	if (fread(buf, sizeof(uint8_t), size_to_send, file_to_send) != size_to_send){
+		// reaching end of file, close it
+		fclose(file_to_send);
+		linphone_chat_message_set_user_data(msg, NULL);
+	}
+	lb = linphone_buffer_new_from_data(buf, size_to_send);
+	ms_free(buf);
+	return lb;
+}
+
+/**
+ * function invoked to report file transfer progress.
+ * */
+void file_transfer_progress_indication(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total) {
+	const LinphoneAddress *from_address = linphone_chat_message_get_from_address(msg);
+	const LinphoneAddress *to_address = linphone_chat_message_get_to_address(msg);
+	int progress = (int)((offset * 100)/total);
+	LinphoneCore *lc = linphone_chat_message_get_core(msg);
+	stats *counters = get_stats(lc);
+	char *address = linphone_address_as_string(linphone_chat_message_is_outgoing(msg) ? to_address : from_address);
+
+	bctbx_message(
+		"File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n",
+		progress,
+		linphone_chat_message_is_outgoing(msg) ? "sent" : "received",
+		linphone_content_get_type(content),
+		linphone_content_get_subtype(content),
+		linphone_chat_message_is_outgoing(msg) ? "to" : "from",
+		address
+	);
+	counters->progress_of_LinphoneFileTransfer = progress;
+	if (progress == 100) {
+		counters->number_of_LinphoneFileTransferDownloadSuccessful++;
+	}
+	free(address);
+}
+
+/**
+ * function invoked when a file transfer is received.
+ * */
+void file_transfer_received(LinphoneChatMessage *msg, const LinphoneContent* content, const LinphoneBuffer *buffer){
+	FILE* file=NULL;
+	char *receive_file = NULL;
+
+	// If a file path is set, we should NOT call the on_recv callback !
+	BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
+
+	receive_file = bc_tester_file("receive_file.dump");
+	if (!linphone_chat_message_get_user_data(msg)) {
+		/*first chunk, creating file*/
+		file = fopen(receive_file,"wb");
+		linphone_chat_message_set_user_data(msg,(void*)file); /*store fd for next chunks*/
+	}
+
+	file = (FILE*)linphone_chat_message_get_user_data(msg);
+	BC_ASSERT_PTR_NOT_NULL(file);
+	if (linphone_buffer_is_empty(buffer)) { /* tranfer complete */
+		struct stat st;
+
+		linphone_chat_message_set_user_data(msg, NULL);
+		fclose(file);
+		BC_ASSERT_TRUE(stat(receive_file, &st)==0);
+		BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), (int)st.st_size, int, "%i");
+	} else { /* store content on a file*/
+		if (fwrite(linphone_buffer_get_content(buffer),linphone_buffer_get_size(buffer),1,file)==0){
+			ms_error("file_transfer_received(): write() failed: %s",strerror(errno));
+		}
+	}
+	bc_free(receive_file);
+}
+
+void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManager* mgr ){
+	if( params->sdp_removal ){
+		sal_default_set_sdp_handling(linphone_core_get_sal(mgr->lc), SalOpSDPSimulateRemove);
+	} else if( params->sdp_simulate_error ){
+		sal_default_set_sdp_handling(linphone_core_get_sal(mgr->lc), SalOpSDPSimulateError);
+	}
+}
+
+/*
+ * CAUTION this function is error prone. you should not use it anymore in new tests.
+ * Creating callee call params before the call is actually received is not the good way
+ * to use the Liblinphone API. Indeed, call params used for receiving calls shall be created by linphone_core_create_call_params() by passing
+ * the call object for which params are to be created.
+ * This function should be used only in test case where the programmer exactly knows the caller params, and then can deduce how
+ * callee params will be set by linphone_core_create_call_params().
+ * This function was developped at a time where the use of the API about incoming params was not yet clarified.
+ * Tests relying on this function are then not testing the correct way to use the api (through linphone_core_create_call_params()), and so
+ * it is not a so good idea to build new tests based on this function.
+**/
+bool_t call_with_params2(LinphoneCoreManager* caller_mgr
+						,LinphoneCoreManager* callee_mgr
+						, const LinphoneCallTestParams *caller_test_params
+						, const LinphoneCallTestParams *callee_test_params
+						, bool_t build_callee_params) {
+	int retry=0;
+	stats initial_caller=caller_mgr->stat;
+	stats initial_callee=callee_mgr->stat;
+	bool_t result=FALSE;
+	LinphoneCallParams *caller_params = caller_test_params->base;
+	LinphoneCallParams *callee_params = callee_test_params->base;
+	bool_t did_receive_call;
+	LinphoneCall *callee_call=NULL;
+	LinphoneCall *caller_call=NULL;
+
+	/* TODO: This should be handled correctly inside the liblinphone library but meanwhile handle this here. */
+	linphone_core_manager_wait_for_stun_resolution(caller_mgr);
+	linphone_core_manager_wait_for_stun_resolution(callee_mgr);
+
+	setup_sdp_handling(caller_test_params, caller_mgr);
+	setup_sdp_handling(callee_test_params, callee_mgr);
+
+	if (!caller_params){
+		BC_ASSERT_PTR_NOT_NULL((caller_call=linphone_core_invite_address(caller_mgr->lc,callee_mgr->identity)));
+	}else{
+		BC_ASSERT_PTR_NOT_NULL((caller_call=linphone_core_invite_address_with_params(caller_mgr->lc,callee_mgr->identity,caller_params)));
+	}
+
+	BC_ASSERT_PTR_NULL(linphone_call_get_remote_params(caller_call)); /*assert that remote params are NULL when no response is received yet*/
+        // test ios simulator needs more time, 3s plus for connectng the network
+	did_receive_call = wait_for_until(callee_mgr->lc
+				,caller_mgr->lc
+				,&callee_mgr->stat.number_of_LinphoneCallIncomingReceived
+				,initial_callee.number_of_LinphoneCallIncomingReceived+1, 12000);
+	BC_ASSERT_EQUAL(did_receive_call, !callee_test_params->sdp_simulate_error, int, "%d");
+
+	sal_default_set_sdp_handling(linphone_core_get_sal(caller_mgr->lc), SalOpSDPNormal);
+	sal_default_set_sdp_handling(linphone_core_get_sal(caller_mgr->lc), SalOpSDPNormal);
+
+	if (!did_receive_call) return 0;
+
+
+	if (linphone_core_get_calls_nb(callee_mgr->lc)<=1)
+		BC_ASSERT_TRUE(linphone_core_is_incoming_invite_pending(callee_mgr->lc));
+	BC_ASSERT_EQUAL(caller_mgr->stat.number_of_LinphoneCallOutgoingProgress,initial_caller.number_of_LinphoneCallOutgoingProgress+1, int, "%d");
+
+
+	while (caller_mgr->stat.number_of_LinphoneCallOutgoingRinging!=(initial_caller.number_of_LinphoneCallOutgoingRinging + 1)
+			&& caller_mgr->stat.number_of_LinphoneCallOutgoingEarlyMedia!=(initial_caller.number_of_LinphoneCallOutgoingEarlyMedia +1)
+			&& retry++ < 100) {
+			linphone_core_iterate(caller_mgr->lc);
+			linphone_core_iterate(callee_mgr->lc);
+			ms_usleep(20000);
+	}
+
+
+	BC_ASSERT_TRUE((caller_mgr->stat.number_of_LinphoneCallOutgoingRinging==initial_caller.number_of_LinphoneCallOutgoingRinging+1)
+							||(caller_mgr->stat.number_of_LinphoneCallOutgoingEarlyMedia==initial_caller.number_of_LinphoneCallOutgoingEarlyMedia+1));
+
+
+	if (linphone_core_get_calls_nb(callee_mgr->lc) == 1)
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call_remote_address(callee_mgr->lc)); /*only relevant if one call, otherwise, not always set*/
+	callee_call=linphone_core_get_call_by_remote_address2(callee_mgr->lc,caller_mgr->identity);
+
+	if(!linphone_core_get_current_call(caller_mgr->lc) || (!callee_call && !linphone_core_get_current_call(callee_mgr->lc)) /*for privacy case*/) {
+		return 0;
+	} else if (caller_mgr->identity){
+		LinphoneAddress* callee_from=linphone_address_clone(caller_mgr->identity);
+		linphone_address_set_port(callee_from,0); /*remove port because port is never present in from header*/
+
+		if (linphone_call_params_get_privacy(linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc))) == LinphonePrivacyNone) {
+			/*don't check in case of p asserted id*/
+			if (!lp_config_get_int(linphone_core_get_config(callee_mgr->lc),"sip","call_logs_use_asserted_id_instead_of_from",0))
+				BC_ASSERT_TRUE(linphone_address_weak_equal(callee_from,linphone_call_get_remote_address(callee_call)));
+		} else {
+			BC_ASSERT_FALSE(linphone_address_weak_equal(callee_from,linphone_call_get_remote_address(linphone_core_get_current_call(callee_mgr->lc))));
+		}
+		linphone_address_unref(callee_from);
+	}
+
+
+	if (callee_params){
+		linphone_call_accept_with_params(callee_call,callee_params);
+	}else if (build_callee_params){
+		LinphoneCallParams *default_params=linphone_core_create_call_params(callee_mgr->lc,callee_call);
+		ms_message("Created default call params with video=%i", linphone_call_params_video_enabled(default_params));
+		linphone_call_accept_with_params(callee_call,default_params);
+		linphone_call_params_unref(default_params);
+	}else if (callee_call) {
+		linphone_call_accept(callee_call);
+	} else {
+		linphone_call_accept(linphone_core_get_current_call(callee_mgr->lc));
+	}
+
+	BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallConnected,initial_callee.number_of_LinphoneCallConnected+1));
+	BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallConnected,initial_caller.number_of_LinphoneCallConnected+1));
+
+	result = wait_for_until(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+1, 2000)
+			&&
+			wait_for_until(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+1, 2000);
+
+	if (linphone_core_get_media_encryption(caller_mgr->lc) != LinphoneMediaEncryptionNone
+		|| linphone_core_get_media_encryption(callee_mgr->lc) != LinphoneMediaEncryptionNone) {
+		/*wait for encryption to be on, in case of zrtp or dtls, it can take a few seconds*/
+		if (	(linphone_core_get_media_encryption(caller_mgr->lc) == LinphoneMediaEncryptionZRTP)
+				|| (linphone_core_get_media_encryption(callee_mgr->lc) == LinphoneMediaEncryptionZRTP) /* if callee is ZRTP, wait for it */
+				|| (linphone_core_get_media_encryption(caller_mgr->lc) == LinphoneMediaEncryptionDTLS))
+			wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallEncryptedOn,initial_caller.number_of_LinphoneCallEncryptedOn+1);
+		if ((linphone_core_get_media_encryption(callee_mgr->lc) == LinphoneMediaEncryptionZRTP)
+			|| (linphone_core_get_media_encryption(callee_mgr->lc) == LinphoneMediaEncryptionDTLS)
+			|| (linphone_core_get_media_encryption(caller_mgr->lc) == LinphoneMediaEncryptionZRTP)
+			|| (linphone_core_get_media_encryption(caller_mgr->lc) == LinphoneMediaEncryptionDTLS) /*also take care of caller policy*/ )
+			wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallEncryptedOn,initial_callee.number_of_LinphoneCallEncryptedOn+1);
+
+		/* when caller is encryptionNone but callee is ZRTP, we expect ZRTP to take place */
+		if ((linphone_core_get_media_encryption(caller_mgr->lc) == LinphoneMediaEncryptionNone)
+			&& (linphone_core_get_media_encryption(callee_mgr->lc) == LinphoneMediaEncryptionZRTP)
+			&& linphone_core_media_encryption_supported(caller_mgr->lc, LinphoneMediaEncryptionZRTP)) {
+			const LinphoneCallParams* call_param = linphone_call_get_current_params(callee_call);
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param), LinphoneMediaEncryptionZRTP, int, "%d");
+			call_param = linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc));
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param), LinphoneMediaEncryptionZRTP, int, "%d");
+		}else { /* otherwise, final status shall stick to caller core parameter */
+			const LinphoneCallParams* call_param = linphone_call_get_current_params(callee_call);
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param),linphone_core_get_media_encryption(caller_mgr->lc), int, "%d");
+			call_param = linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc));
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param),linphone_core_get_media_encryption(caller_mgr->lc), int, "%d");
+
+		}
+	}
+	/*wait ice re-invite*/
+	if (linphone_core_get_firewall_policy(caller_mgr->lc) == LinphonePolicyUseIce
+			&& linphone_core_get_firewall_policy(callee_mgr->lc) == LinphonePolicyUseIce
+			&& !linphone_core_sdp_200_ack_enabled(caller_mgr->lc) /*ice does not work with sdp less invite*/
+			&& lp_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
+			&& lp_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
+			&& linphone_core_get_media_encryption(caller_mgr->lc) != LinphoneMediaEncryptionDTLS /*no ice-reinvite with DTLS*/) {
+		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2));
+		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2));
+
+	} else if (linphone_core_get_firewall_policy(caller_mgr->lc) == LinphonePolicyUseIce) {
+		/* check no ice re-invite received*/
+		BC_ASSERT_FALSE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2,2000));
+		BC_ASSERT_FALSE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2,2000));
+
+	}
+	if (linphone_core_get_media_encryption(caller_mgr->lc) == LinphoneMediaEncryptionDTLS ) {
+		LinphoneCall *call = linphone_core_get_current_call(caller_mgr->lc);
+		AudioStream *astream = (AudioStream *)linphone_call_get_stream(call, LinphoneStreamTypeAudio);
+#ifdef VIDEO_ENABLED
+		VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
+#endif
+		if (astream)
+			BC_ASSERT_TRUE(ms_media_stream_sessions_get_encryption_mandatory(&astream->ms.sessions));
+#ifdef VIDEO_ENABLED
+		if (vstream && video_stream_started(vstream))
+			BC_ASSERT_TRUE(ms_media_stream_sessions_get_encryption_mandatory(&vstream->ms.sessions));
+#endif
+
+	}
+	return result;
+}
+
+/*
+ * CAUTION this function is error prone. you should not use it anymore in new tests.
+ * Creating callee call params before the call is actually received is not the good way
+ * to use the Liblinphone API. Indeed, call params used for receiving calls shall be created by linphone_core_create_call_params() by passing
+ * the call object for which params are to be created.
+ * This function should be used only in test case where the programmer exactly knows the caller params, and then can deduce how
+ * callee params will be set by linphone_core_create_call_params().
+ * This function was developped at a time where the use of the API about incoming params was not yet clarified.
+ * Tests relying on this function are then not testing the correct way to use the api (through linphone_core_create_call_params()), and so
+ * it is not a so good idea to build new tests based on this function.
+**/
+bool_t call_with_params(LinphoneCoreManager* caller_mgr
+						,LinphoneCoreManager* callee_mgr
+						,const LinphoneCallParams *caller_params
+						,const LinphoneCallParams *callee_params){
+	LinphoneCallTestParams caller_test_params = {0}, callee_test_params =  {0};
+	caller_test_params.base = (LinphoneCallParams*)caller_params;
+	callee_test_params.base = (LinphoneCallParams*)callee_params;
+	return call_with_params2(caller_mgr,callee_mgr,&caller_test_params,&callee_test_params,FALSE);
+}
+
+/*
+ * CAUTION this function is error prone. you should not use it anymore in new tests.
+ * Creating callee call params before the call is actually received is not the good way
+ * to use the Liblinphone API. Indeed, call params used for receiving calls shall be created by linphone_core_create_call_params() by passing
+ * the call object for which params are to be created.
+ * This function should be used only in test case where the programmer exactly knows the caller params, and then can deduce how
+ * callee params will be set by linphone_core_create_call_params().
+ * This function was developped at a time where the use of the API about incoming params was not yet clarified.
+ * Tests relying on this function are then not testing the correct way to use the api (through linphone_core_create_call_params()), and so
+ * it is not a so good idea to build new tests based on this function.
+**/
+bool_t call_with_test_params(LinphoneCoreManager* caller_mgr
+				,LinphoneCoreManager* callee_mgr
+				,const LinphoneCallTestParams *caller_test_params
+				,const LinphoneCallTestParams *callee_test_params){
+	return call_with_params2(caller_mgr,callee_mgr,caller_test_params,callee_test_params,FALSE);
+}
+
+bool_t call_with_caller_params(LinphoneCoreManager* caller_mgr,LinphoneCoreManager* callee_mgr, const LinphoneCallParams *params) {
+	return call_with_params(caller_mgr,callee_mgr,params,NULL);
+}
+
+bool_t call(LinphoneCoreManager* caller_mgr,LinphoneCoreManager* callee_mgr){
+	return call_with_params(caller_mgr,callee_mgr,NULL,NULL);
+}
+
+void end_call(LinphoneCoreManager *m1, LinphoneCoreManager *m2){
+	int previous_count_1 = m1->stat.number_of_LinphoneCallEnd;
+	int previous_count_2 = m2->stat.number_of_LinphoneCallEnd;
+	linphone_core_terminate_all_calls(m1->lc);
+	BC_ASSERT_TRUE(wait_for(m1->lc,m2->lc,&m1->stat.number_of_LinphoneCallEnd,previous_count_1+1));
+	BC_ASSERT_TRUE(wait_for(m1->lc,m2->lc,&m2->stat.number_of_LinphoneCallEnd,previous_count_2+1));
+	BC_ASSERT_TRUE(wait_for(m1->lc,m2->lc,&m1->stat.number_of_LinphoneCallReleased,previous_count_1+1));
+	BC_ASSERT_TRUE(wait_for(m1->lc,m2->lc,&m2->stat.number_of_LinphoneCallReleased,previous_count_2+1));
 }
 
 static void linphone_conference_server_call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg) {
