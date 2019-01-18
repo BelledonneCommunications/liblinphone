@@ -278,7 +278,7 @@ string LocalConferenceEventHandlerPrivate::createNotifyParticipantDeviceAdded (c
 	user.setState(StateType::partial);
 
 	EndpointType endpoint = EndpointType();
-	endpoint.setEntity(gruu.asString());
+	endpoint.setEntity(gruu.asStringUriOnly());
 	endpoint.setState(StateType::full);
 	const string &displayName = gruu.getDisplayName();
 	if (!displayName.empty())
