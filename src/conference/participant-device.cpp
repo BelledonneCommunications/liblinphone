@@ -45,6 +45,7 @@ ParticipantDevice::ParticipantDevice () : Object(*new ParticipantDevicePrivate) 
 ParticipantDevice::ParticipantDevice (Participant *participant, const Address &address)
 	:  Object(*new ParticipantDevicePrivate), mParticipant(participant), mAddress(address) {
 		const string &name = mAddress.getDisplayName();
+		mAddress.setDisplayName("");
 		if (!name.empty())
 			mName = name;
 	}
