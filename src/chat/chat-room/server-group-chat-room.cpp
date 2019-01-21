@@ -269,7 +269,7 @@ void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {
 		for (const auto &device : participant->getPrivate()->getDevices()) {
 			if (getParticipantDeviceState(device) != ParticipantDevice::State::Present)
 				continue;
-			string uri(device->getAddress().asString());
+			string uri(device->getAddress().asStringUriOnly());
 			size_t nbMessages = queuedMessages[uri].size();
 			if (nbMessages > 0)
 				lInfo() << q << ": Dispatching " << nbMessages << " queued message(s) for '" << uri << "'";
