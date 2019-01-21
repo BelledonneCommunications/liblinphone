@@ -471,6 +471,8 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 
 /*Convenience function providing the path to the "empty_rc" config file*/
 const char *liblinphone_tester_get_empty_rc(void);
+    
+int liblinphone_tester_copy_file(const char *from, const char *to);
 
 #ifdef __cplusplus
 };
