@@ -1431,7 +1431,7 @@ static void lime_unit(void) {
  * Destination file is truncated if existing.
  * Return 0 on success, positive value on error.
  */
-static int message_tester_copy_file(const char *from, const char *to)
+int liblinphone_tester_copy_file(const char *from, const char *to)
 {
 	FILE *in, *out;
 	char buf[256];
@@ -2354,7 +2354,7 @@ static void migration_from_messages_db (void) {
 	char *src_db = bc_tester_res("db/messages.db");
 	char *tmp_db  = bc_tester_file("tmp.db");
 
-	BC_ASSERT_EQUAL(message_tester_copy_file(src_db, tmp_db), 0, int, "%d");
+	BC_ASSERT_EQUAL(liblinphone_tester_copy_file(src_db, tmp_db), 0, int, "%d");
 
 	// The messages.db has 10000 dummy messages with the very first DB scheme.
 	// This will test the migration procedure
