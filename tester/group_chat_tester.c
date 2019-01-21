@@ -295,25 +295,29 @@ static void start_core_for_conference(bctbx_list_t *coreManagerList) {
 	bctbx_list_for_each(coreManagerList, (void (*)(void *))_start_core);
 }
 
-static LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin) {
+static LinphoneChatRoom * check_has_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin) {
+    char *deviceIdentity = linphone_core_get_device_identity(lcm->lc);
+    LinphoneAddress *localAddr = linphone_address_new(deviceIdentity);
+    bctbx_free(deviceIdentity);
+    LinphoneChatRoom *chatRoom = linphone_core_find_chat_room(lcm->lc, confAddr, localAddr);
+    linphone_address_unref(localAddr);
+    BC_ASSERT_PTR_NOT_NULL(chatRoom);
+    if (chatRoom) {
+        BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chatRoom), participantNumber, int, "%d");
+        LinphoneParticipant *participant = linphone_chat_room_get_me(chatRoom);
+        BC_ASSERT_PTR_NOT_NULL(participant);
+        if (!(linphone_chat_room_get_capabilities(chatRoom) & LinphoneChatRoomCapabilitiesOneToOne))
+            BC_ASSERT(isAdmin == linphone_participant_is_admin(participant));
+        BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(chatRoom), subject);
+    }
+    return chatRoom;
+}
+
+static inphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateCreationPending, initialStats->number_of_LinphoneChatRoomStateCreationPending + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateCreated, initialStats->number_of_LinphoneChatRoomStateCreated + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomConferenceJoined, initialStats->number_of_LinphoneChatRoomConferenceJoined + 1, 3000));
-	char *deviceIdentity = linphone_core_get_device_identity(lcm->lc);
-	LinphoneAddress *localAddr = linphone_address_new(deviceIdentity);
-	bctbx_free(deviceIdentity);
-	LinphoneChatRoom *chatRoom = linphone_core_find_chat_room(lcm->lc, confAddr, localAddr);
-	linphone_address_unref(localAddr);
-	BC_ASSERT_PTR_NOT_NULL(chatRoom);
-	if (chatRoom) {
-		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chatRoom), participantNumber, int, "%d");
-		LinphoneParticipant *participant = linphone_chat_room_get_me(chatRoom);
-		BC_ASSERT_PTR_NOT_NULL(participant);
-		if (!(linphone_chat_room_get_capabilities(chatRoom) & LinphoneChatRoomCapabilitiesOneToOne))
-			BC_ASSERT(isAdmin == linphone_participant_is_admin(participant));
-		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(chatRoom), subject);
-	}
-	return chatRoom;
+    return check_has_chat_room_client_side(lcs, lcm, initialStats, confAddr, subject, participantNumber, isAdmin);
 }
 
 static LinphoneChatRoom * create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, int expectedParticipantSize) {
@@ -5917,6 +5921,7 @@ test_t group_chat_tests[] = {
 	TEST_NO_TAG("Remove participant", group_chat_room_remove_participant),
 	TEST_NO_TAG("Send message with a participant removed", group_chat_room_send_message_with_participant_removed),
 	TEST_NO_TAG("Leave group chat room", group_chat_room_leave),
+    TEST_NO_TAG("Delete group chat room successful if it's already removed by server", group_chat_room_delete_twice),
 	TEST_NO_TAG("Come back on a group chat room after a disconnection", group_chat_room_come_back_after_disconnection),
 	TEST_ONE_TAG("Create chat room with disconnected friends", group_chat_room_create_room_with_disconnected_friends, "LeaksMemory"),
 	TEST_ONE_TAG("Create chat room with disconnected friends and initial message", group_chat_room_create_room_with_disconnected_friends_and_initial_message, "LeaksMemory"),
