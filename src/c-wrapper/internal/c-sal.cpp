@@ -476,8 +476,18 @@ char * sal_media_description_print_differences(int result){
 }
 
 int sal_media_description_equals(const SalMediaDescription *md1, const SalMediaDescription *md2) {
-	int result = SAL_MEDIA_DESCRIPTION_UNCHANGED;
+	int result = sal_media_description_global_equals(md1, md2);
 	int i;
+
+	for(i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; ++i){
+		if (!sal_stream_description_active(&md1->streams[i]) && !sal_stream_description_active(&md2->streams[i])) continue;
+		result |= sal_stream_description_equals(&md1->streams[i], &md2->streams[i]);
+	}
+	return result;
+}
+
+int sal_media_description_global_equals(const SalMediaDescription *md1, const SalMediaDescription *md2) {
+	int result = SAL_MEDIA_DESCRIPTION_UNCHANGED;
 
 	if (strcmp(md1->addr, md2->addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
 	if (md1->addr[0]!='\0' && md2->addr[0]!='\0' && ms_is_multicast(md1->addr) != ms_is_multicast(md2->addr))
@@ -489,10 +499,6 @@ int sal_media_description_equals(const SalMediaDescription *md1, const SalMediaD
 	if (strcmp(md1->ice_ufrag, md2->ice_ufrag) != 0 && md2->ice_ufrag[0] != '\0') result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
 	if (strcmp(md1->ice_pwd, md2->ice_pwd) != 0 && md2->ice_pwd[0] != '\0') result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
 
-	for(i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; ++i){
-		if (!sal_stream_description_active(&md1->streams[i]) && !sal_stream_description_active(&md2->streams[i])) continue;
-		result |= sal_stream_description_equals(&md1->streams[i], &md2->streams[i]);
-	}
 	return result;
 }
 

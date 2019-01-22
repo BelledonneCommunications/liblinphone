@@ -597,6 +597,61 @@ void MediaSessionPrivate::initializeStreams () {
 	initializeTextStream();
 }
 
+void MediaSessionPrivate::stopStream (SalStreamDescription *streamDesc) {
+	L_Q();
+
+	if (streamDesc->type == SalAudio && audioStream) {
+		if (videoStream)
+			audio_stream_unlink_video(audioStream, videoStream);
+		stopAudioStream();
+
+		if (q->getCore()->getCCore()->msevq)
+			ms_event_queue_skip(q->getCore()->getCCore()->msevq);
+
+		if (audioProfile) {
+			rtp_profile_destroy(audioProfile);
+			audioProfile = nullptr;
+			unsetRtpProfile(mainAudioStreamIndex);
+		}
+
+		if (rtpIoAudioProfile) {
+			rtp_profile_destroy(rtpIoAudioProfile);
+			rtpIoAudioProfile = nullptr;
+		}
+
+		q->getCore()->soundcardHintCheck();
+	} else if (streamDesc->type == SalVideo && videoStream) {
+		if (audioStream)
+			audio_stream_unlink_video(audioStream, videoStream);
+		stopVideoStream();
+
+		if (q->getCore()->getCCore()->msevq)
+			ms_event_queue_skip(q->getCore()->getCCore()->msevq);
+
+		if (videoProfile) {
+			rtp_profile_destroy(videoProfile);
+			videoProfile = nullptr;
+			unsetRtpProfile(mainVideoStreamIndex);
+		}
+
+		if (rtpIoVideoProfile) {
+			rtp_profile_destroy(rtpIoVideoProfile);
+			rtpIoVideoProfile = nullptr;
+		}
+	} else if (streamDesc->type == SalText && textStream) {
+		stopTextStream();
+
+		if (q->getCore()->getCCore()->msevq)
+			ms_event_queue_skip(q->getCore()->getCCore()->msevq);
+
+		if (textProfile) {
+			rtp_profile_destroy(textProfile);
+			textProfile = nullptr;
+			unsetRtpProfile(mainTextStreamIndex);
+		}
+	}
+}
+
 void MediaSessionPrivate::stopStreams () {
 	L_Q();
 	if (audioStream || videoStream || textStream) {
@@ -634,6 +689,52 @@ void MediaSessionPrivate::stopStreams () {
 	}
 
 	q->getCore()->soundcardHintCheck();
+}
+
+void MediaSessionPrivate::restartStream (SalStreamDescription *streamDesc, int streamIndex, int sdChanged, CallSession::State targetState) {
+	L_Q();
+	string streamTypeName = sal_stream_description_get_type_as_string(streamDesc);
+
+	stopStream(streamDesc);
+
+	if (streamDesc->type == SalAudio) {
+		if (sdChanged & SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED) {
+			lInfo() << "Media ip type has changed, destroying sessions context on CallSession [" << q << "] for " << streamTypeName << " stream";
+			ms_media_stream_sessions_uninit(&sessions[mainAudioStreamIndex]);
+		}
+
+		initializeAudioStream();
+	} else if (streamDesc->type == SalVideo) {
+		if (sdChanged & SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED) {
+			lInfo() << "Media ip type has changed, destroying sessions context on CallSession [" << q << "] for " << streamTypeName << " stream";
+			ms_media_stream_sessions_uninit(&sessions[mainVideoStreamIndex]);
+		}
+
+		initializeVideoStream();
+	} else if (streamDesc->type == SalText) {
+		if (sdChanged & SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED) {
+			lInfo() << "Media ip type has changed, destroying sessions context on CallSession [" << q << "] for " << streamTypeName << " stream";
+			ms_media_stream_sessions_uninit(&sessions[mainTextStreamIndex]);
+		}
+
+		initializeTextStream();
+	}
+
+	if (getParams()->earlyMediaSendingEnabled() && (state == CallSession::State::OutgoingEarlyMedia)) {
+		if (streamDesc->type == SalAudio && audioStream)
+			rtp_session_set_symmetric_rtp(audioStream->ms.sessions.rtp_session, false);
+		else if (streamDesc->type == SalVideo && videoStream)
+			rtp_session_set_symmetric_rtp(videoStream->ms.sessions.rtp_session, false);
+	}
+
+	startStream(streamDesc, streamIndex, targetState);
+
+	if (streamDesc->type == SalAudio && audioStream) {
+		if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1))
+			linphone_core_play_named_tone(q->getCore()->getCCore(), LinphoneToneCallOnHold);
+	}
+
+	updateStreamFrozenPayloads(streamDesc, &localDesc->streams[streamIndex]);
 }
 
 // -----------------------------------------------------------------------------
@@ -1721,21 +1822,51 @@ void MediaSessionPrivate::setDtlsFingerprint (MSMediaStreamSessions *sessions, c
 	}
 }
 
-void MediaSessionPrivate::setDtlsFingerprintOnAllStreams () {
+void MediaSessionPrivate::setDtlsFingerprintOnAudioStream () {
 	SalMediaDescription *remote = op->getRemoteMediaDescription();
 	SalMediaDescription *result = op->getFinalMediaDescription();
+
 	if (!remote || !result) {
 		/* This can happen in some tricky cases (early-media without SDP in the 200). In that case, simply skip DTLS code */
 		return;
 	}
+
 	if (audioStream && (media_stream_get_state(&audioStream->ms) == MSStreamStarted))
 		setDtlsFingerprint(&audioStream->ms.sessions, sal_media_description_find_best_stream(result, SalAudio), sal_media_description_find_best_stream(remote, SalAudio));
+}
+
+void MediaSessionPrivate::setDtlsFingerprintOnVideoStream () {
 #if VIDEO_ENABLED
+	SalMediaDescription *remote = op->getRemoteMediaDescription();
+	SalMediaDescription *result = op->getFinalMediaDescription();
+
+	if (!remote || !result) {
+		/* This can happen in some tricky cases (early-media without SDP in the 200). In that case, simply skip DTLS code */
+		return;
+	}
+	
 	if (videoStream && (media_stream_get_state(&videoStream->ms) == MSStreamStarted))
 		setDtlsFingerprint(&videoStream->ms.sessions, sal_media_description_find_best_stream(result, SalVideo), sal_media_description_find_best_stream(remote, SalVideo));
 #endif
+}
+
+void MediaSessionPrivate::setDtlsFingerprintOnTextStream () {
+	SalMediaDescription *remote = op->getRemoteMediaDescription();
+	SalMediaDescription *result = op->getFinalMediaDescription();
+
+	if (!remote || !result) {
+		/* This can happen in some tricky cases (early-media without SDP in the 200). In that case, simply skip DTLS code */
+		return;
+	}
+
 	if (textStream && (media_stream_get_state(&textStream->ms) == MSStreamStarted))
 		setDtlsFingerprint(&textStream->ms.sessions, sal_media_description_find_best_stream(result, SalText), sal_media_description_find_best_stream(remote, SalText));
+}
+
+void MediaSessionPrivate::setDtlsFingerprintOnAllStreams () {
+	setDtlsFingerprintOnAudioStream();
+	setDtlsFingerprintOnVideoStream();
+	setDtlsFingerprintOnTextStream();
 }
 
 void MediaSessionPrivate::setupDtlsParams (MediaStream *ms) {
@@ -1834,45 +1965,102 @@ void MediaSessionPrivate::startDtls (MSMediaStreamSessions *sessions, const SalS
 	}
 }
 
-void MediaSessionPrivate::startDtlsOnAllStreams () {
+void MediaSessionPrivate::startDtlsOnAudioStream () {
 	SalMediaDescription *remote = op->getRemoteMediaDescription();
 	SalMediaDescription *result = op->getFinalMediaDescription();
+
 	if (!remote || !result) {
 		/* This can happen in some tricky cases (early-media without SDP in the 200). In that case, simply skip DTLS code */
 		return;
 	}
+
 	if (audioStream && (media_stream_get_state(&audioStream->ms) == MSStreamStarted))
 		startDtls(&audioStream->ms.sessions, sal_media_description_find_best_stream(result, SalAudio), sal_media_description_find_best_stream(remote, SalAudio));
-#if VIDEO_ENABLED
+}
+
+void MediaSessionPrivate::startDtlsOnVideoStream () {
+#ifdef VIDEO_ENABLED
+	SalMediaDescription *remote = op->getRemoteMediaDescription();
+	SalMediaDescription *result = op->getFinalMediaDescription();
+
+	if (!remote || !result) {
+		/* This can happen in some tricky cases (early-media without SDP in the 200). In that case, simply skip DTLS code */
+		return;
+	}
+
 	if (videoStream && (media_stream_get_state(&videoStream->ms) == MSStreamStarted))
 		startDtls(&videoStream->ms.sessions, sal_media_description_find_best_stream(result, SalVideo), sal_media_description_find_best_stream(remote, SalVideo));
 #endif
+}
+
+void MediaSessionPrivate::startDtlsOnTextStream () {
+	SalMediaDescription *remote = op->getRemoteMediaDescription();
+	SalMediaDescription *result = op->getFinalMediaDescription();
+
+	if (!remote || !result) {
+		/* This can happen in some tricky cases (early-media without SDP in the 200). In that case, simply skip DTLS code */
+		return;
+	}
+
 	if (textStream && (media_stream_get_state(&textStream->ms) == MSStreamStarted))
 		startDtls(&textStream->ms.sessions, sal_media_description_find_best_stream(result, SalText), sal_media_description_find_best_stream(remote, SalText));
 }
 
-void MediaSessionPrivate::updateCryptoParameters (SalMediaDescription *oldMd, SalMediaDescription *newMd) {
+void MediaSessionPrivate::startDtlsOnAllStreams () {
+	startDtlsOnAudioStream();
+	startDtlsOnVideoStream();
+	startDtlsOnTextStream();
+}
+
+void MediaSessionPrivate::updateStreamCryptoParameters (SalStreamDescription *oldStream, SalStreamDescription *newStream) {
+	if (!oldStream || !newStream || oldStream->type != newStream->type)
+		return;
+
+	const SalStreamDescription *localStreamDesc = sal_media_description_find_secure_stream_of_type(localDesc, newStream->type);
+	if (newStream->type == SalAudio) {
+		if (audioStream && localStreamDesc) {
+			updateCryptoParameters(localStreamDesc, oldStream, newStream, &audioStream->ms);
+			startDtlsOnAudioStream();
+		}
+	}
+#ifdef VIDEO_ENABLED
+	else if (newStream->type == SalVideo) {
+		if (videoStream && localStreamDesc) {
+			updateCryptoParameters(localStreamDesc, oldStream, newStream, &videoStream->ms);
+			startDtlsOnVideoStream();
+		}
+	}
+#endif
+	else if (newStream->type == SalText) {
+		if (textStream && localStreamDesc) {
+			updateCryptoParameters(localStreamDesc, oldStream, newStream, &textStream->ms);
+			startDtlsOnTextStream();
+		}
+	}
+}
+
+void MediaSessionPrivate::updateStreamsCryptoParameters (SalMediaDescription *oldMd, SalMediaDescription *newMd) {
 	const SalStreamDescription *localStreamDesc = sal_media_description_find_secure_stream_of_type(localDesc, SalAudio);
 	SalStreamDescription *oldStream = sal_media_description_find_secure_stream_of_type(oldMd, SalAudio);
 	SalStreamDescription *newStream = sal_media_description_find_secure_stream_of_type(newMd, SalAudio);
 	if (audioStream && localStreamDesc && oldStream && newStream)
-		updateStreamCryptoParameters(localStreamDesc, oldStream, newStream, &audioStream->ms);
+		updateCryptoParameters(localStreamDesc, oldStream, newStream, &audioStream->ms);
 #ifdef VIDEO_ENABLED
 	localStreamDesc = sal_media_description_find_secure_stream_of_type(localDesc, SalVideo);
 	oldStream = sal_media_description_find_secure_stream_of_type(oldMd, SalVideo);
 	newStream = sal_media_description_find_secure_stream_of_type(newMd, SalVideo);
 	if (videoStream && localStreamDesc && oldStream && newStream)
-		updateStreamCryptoParameters(localStreamDesc, oldStream, newStream, &videoStream->ms);
+		updateCryptoParameters(localStreamDesc, oldStream, newStream, &videoStream->ms);
 #endif
 	localStreamDesc = sal_media_description_find_secure_stream_of_type(localDesc, SalText);
 	oldStream = sal_media_description_find_secure_stream_of_type(oldMd, SalText);
 	newStream = sal_media_description_find_secure_stream_of_type(newMd, SalText);
 	if (textStream && localStreamDesc && oldStream && newStream)
-		updateStreamCryptoParameters(localStreamDesc, oldStream, newStream, &textStream->ms);
+		updateCryptoParameters(localStreamDesc, oldStream, newStream, &textStream->ms);
 	startDtlsOnAllStreams();
 }
 
-bool MediaSessionPrivate::updateStreamCryptoParameters (const SalStreamDescription *localStreamDesc, SalStreamDescription *oldStream, SalStreamDescription *newStream, MediaStream *ms) {
+bool MediaSessionPrivate::updateCryptoParameters (const SalStreamDescription *localStreamDesc, SalStreamDescription *oldStream, SalStreamDescription *newStream, MediaStream *ms) {
 	int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(newStream->crypto_local_tag));
 	if (cryptoIdx >= 0) {
 		if (localDescChanged & SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED)
@@ -2598,10 +2786,14 @@ void MediaSessionPrivate::postConfigureAudioStreams (bool muted) {
 
 void MediaSessionPrivate::setSymmetricRtp (bool value) {
 	for (int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
-		MSMediaStreamSessions *mss = &sessions[i];
-		if (mss->rtp_session)
-			rtp_session_set_symmetric_rtp(mss->rtp_session, value);
+		setStreamSymmetricRtp(value, i);
 	}
+}
+
+void MediaSessionPrivate::setStreamSymmetricRtp(bool value, int streamIndex) {
+	MSMediaStreamSessions *mss = &sessions[streamIndex];
+	if (mss->rtp_session)
+		rtp_session_set_symmetric_rtp(mss->rtp_session, value);
 }
 
 void MediaSessionPrivate::setupRingbackPlayer () {
@@ -2611,7 +2803,7 @@ void MediaSessionPrivate::setupRingbackPlayer () {
 	ms_filter_call_method(audioStream->soundread, MS_FILE_PLAYER_LOOP, &pauseTime);
 }
 
-void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool videoWillBeUsed) {
+void MediaSessionPrivate::startAudioStream (CallSession::State targetState) {
 	L_Q();
 	const SalStreamDescription *stream = sal_media_description_find_best_stream(resultDesc, SalAudio);
 	if (stream && (stream->dir != SalStreamInactive) && (stream->rtp_port != 0)) {
@@ -2695,6 +2887,14 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 			}
 			configureRtpSessionForRtcpFb(stream);
 			configureRtpSessionForRtcpXr(SalAudio);
+			bool videoWillBeUsed = false;
+#if defined(VIDEO_ENABLED)
+			const SalStreamDescription *vstream = sal_media_description_find_best_stream(resultDesc, SalVideo);
+			if (vstream && (vstream->dir != SalStreamInactive) && vstream->payloads) {
+				/* When video is used, do not make adaptive rate control on audio, it is stupid */
+				videoWillBeUsed = true;
+			}
+#endif
 			configureAdaptiveRateControl(&audioStream->ms, getCurrentParams()->getUsedAudioCodec(), videoWillBeUsed);
 			if (isMulticast)
 				rtp_session_set_multicast_ttl(audioStream->ms.sessions.rtp_session, stream->ttl);
@@ -2804,19 +3004,11 @@ void MediaSessionPrivate::startStreams (CallSession::State targetState) {
 	}
 
 	mediaStartCount++;
-	bool videoWillBeUsed = false;
-#if defined(VIDEO_ENABLED)
-	const SalStreamDescription *vstream = sal_media_description_find_best_stream(resultDesc, SalVideo);
-	if (vstream && (vstream->dir != SalStreamInactive) && vstream->payloads) {
-		/* When video is used, do not make adaptive rate control on audio, it is stupid */
-		videoWillBeUsed = true;
-	}
-#endif
 	lInfo() << "startStreams() CallSession=[" << q << "] local upload_bandwidth=[" << linphone_core_get_upload_bandwidth(q->getCore()->getCCore())
 		<< "] kbit/s; local download_bandwidth=[" << linphone_core_get_download_bandwidth(q->getCore()->getCCore()) << "] kbit/s";
 	getCurrentParams()->enableAudio(false);
 	if (audioStream)
-		startAudioStream(targetState, videoWillBeUsed);
+		startAudioStream(targetState);
 	else
 		lWarning() << "startStreams(): no audio stream!";
 	getCurrentParams()->enableVideo(false);
@@ -2834,20 +3026,111 @@ void MediaSessionPrivate::startStreams (CallSession::State targetState) {
 			ms_filter_call_method_noarg(player, MS_PLAYER_START);
 		}
 	}
-	upBandwidth = linphone_core_get_upload_bandwidth(q->getCore()->getCCore());
 	if (getParams()->realtimeTextEnabled())
 		startTextStream();
 
 	setDtlsFingerprintOnAllStreams();
 	if (!iceAgent->hasCompleted()) {
-		if (getParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS) {
-			getCurrentParams()->getPrivate()->setUpdateCallWhenIceCompleted(false);
-			lInfo() << "Disabling update call when ice completed on call [" << q << "]";
-		}
 		iceAgent->startConnectivityChecks();
 	} else {
 		/* Should not start dtls until ice is completed */
 		startDtlsOnAllStreams();
+	}
+}
+
+void MediaSessionPrivate::startStream (SalStreamDescription *streamDesc, int streamIndex, CallSession::State targetState) {
+	L_Q();
+	string streamTypeName = sal_stream_description_get_type_as_string(streamDesc);
+
+	if (streamDesc->type == SalAudio) {
+		switch (targetState) {
+			case CallSession::State::IncomingEarlyMedia:
+				if (listener)
+					listener->onRingbackToneRequested(q->getSharedFromThis(), true);
+				BCTBX_NO_BREAK;
+			case CallSession::State::OutgoingEarlyMedia:
+				if (!getParams()->earlyMediaSendingEnabled())
+					allMuted = true;
+				break;
+			default:
+				if (listener)
+					listener->onRingbackToneRequested(q->getSharedFromThis(), false);
+				allMuted = false;
+				break;
+		}
+
+		getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
+
+		if (!audioStream) {
+			lFatal() << "startStream() for audio stream called without prior init!";
+			return;
+		}
+	} else if (streamDesc->type == SalVideo) {
+		getCurrentParams()->getPrivate()->setUsedVideoCodec(nullptr);
+
+		if (!videoStream) {
+			lFatal() << "startStream() for video stream called without prior init!";
+			return;
+		}
+	} else if (streamDesc->type == SalText) {
+		getCurrentParams()->getPrivate()->setUsedRealtimeTextCodec(nullptr);
+	}
+
+	if (iceAgent->hasSession()) {
+		/* If there is an ICE session when we are about to start streams, then ICE will conduct the media path checking and authentication properly.
+		 * Symmetric RTP must be turned off */
+		setStreamSymmetricRtp(false, streamIndex);
+	}
+
+	lInfo() << "startStream() for " << streamTypeName << " stream CallSession=[" << q << "] local upload_bandwidth=[" << linphone_core_get_upload_bandwidth(q->getCore()->getCCore())
+		<< "] kbit/s; local download_bandwidth=[" << linphone_core_get_download_bandwidth(q->getCore()->getCCore()) << "] kbit/s";
+
+	if (streamDesc->type == SalAudio) {
+		audioStartCount++;
+
+		getCurrentParams()->enableAudio(false);
+		if (audioStream)
+			startAudioStream(targetState);
+		else
+			lWarning() << "startStreams(): no audio stream!";
+
+		postProcessHooks.push_back([this] {
+			/* The on-hold file is to be played once both audio and video are ready */
+			if (!onHoldFile.empty() && !getParams()->getPrivate()->getInConference() && audioStream) {
+				MSFilter *player = audio_stream_open_remote_play(audioStream, onHoldFile.c_str());
+				if (player) {
+					int pauseTime = 500;
+					ms_filter_call_method(player, MS_PLAYER_SET_LOOP, &pauseTime);
+					ms_filter_call_method_noarg(player, MS_PLAYER_START);
+				}
+			}
+		});
+
+		setDtlsFingerprintOnAudioStream();
+		if (iceAgent->hasCompleted())
+			startDtlsOnAudioStream();
+	} else if (streamDesc->type == SalVideo) {
+		videoStartCount++;
+
+		getCurrentParams()->enableVideo(false);
+		if (videoStream) {
+			if (audioStream)
+				audio_stream_link_video(audioStream, videoStream);
+			startVideoStream(targetState);
+		}
+
+		setDtlsFingerprintOnVideoStream();
+		if (iceAgent->hasCompleted())
+			startDtlsOnVideoStream();
+	} else if (streamDesc->type == SalText) {
+		textStartCount++;
+
+		if (getParams()->realtimeTextEnabled())
+			startTextStream();
+
+		setDtlsFingerprintOnTextStream();
+		if (iceAgent->hasCompleted())
+			startDtlsOnTextStream();
 	}
 }
 
@@ -3137,33 +3420,46 @@ void MediaSessionPrivate::tryEarlyMediaForking (SalMediaDescription *md) {
 	}
 }
 
-void MediaSessionPrivate::updateFrozenPayloads (SalMediaDescription *result) {
+void MediaSessionPrivate::updateStreamFrozenPayloads (SalStreamDescription *resultDesc, SalStreamDescription *localStreamDesc) {
 	L_Q();
-	for (int i = 0; i < result->nb_streams; i++) {
-		for (bctbx_list_t *elem = result->streams[i].payloads; elem != nullptr; elem = bctbx_list_next(elem)) {
-			OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(elem));
-			if (PayloadTypeHandler::isPayloadTypeNumberAvailable(localDesc->streams[i].already_assigned_payloads, payload_type_get_number(pt), nullptr)) {
-				/* New codec, needs to be added to the list */
-				localDesc->streams[i].already_assigned_payloads = bctbx_list_append(localDesc->streams[i].already_assigned_payloads, payload_type_clone(pt));
-				lInfo() << "CallSession[" << q << "] : payload type " << payload_type_get_number(pt) << " " << pt->mime_type << "/" << pt->clock_rate
-					<< " fmtp=" << L_C_TO_STRING(pt->recv_fmtp) << " added to frozen list";
-			}
+	for (bctbx_list_t *elem = resultDesc->payloads; elem != nullptr; elem = bctbx_list_next(elem)) {
+		OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(elem));
+		if (PayloadTypeHandler::isPayloadTypeNumberAvailable(localStreamDesc->already_assigned_payloads, payload_type_get_number(pt), nullptr)) {
+			/* New codec, needs to be added to the list */
+			localStreamDesc->already_assigned_payloads = bctbx_list_append(localStreamDesc->already_assigned_payloads, payload_type_clone(pt));
+			lInfo() << "CallSession[" << q << "] : payload type " << payload_type_get_number(pt) << " " << pt->mime_type << "/" << pt->clock_rate
+				<< " fmtp=" << L_C_TO_STRING(pt->recv_fmtp) << " added to frozen list";
 		}
+	}
+}
+
+void MediaSessionPrivate::updateFrozenPayloads (SalMediaDescription *result) {
+	for (int i = 0; i < result->nb_streams; i++) {
+		updateStreamFrozenPayloads(&result->streams[i], &localDesc->streams[i]);
 	}
 }
 
 void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession::State targetState) {
 	L_Q();
+
 	if (!((state == CallSession::State::IncomingEarlyMedia) && linphone_core_get_ring_during_incoming_early_media(q->getCore()->getCCore())))
 		linphone_core_stop_ringing(q->getCore()->getCCore());
+
 	if (!newMd) {
 		lError() << "updateStreams() called with null media description";
 		return;
 	}
+
 	updateBiggestDesc(localDesc);
 	sal_media_description_ref(newMd);
 	SalMediaDescription *oldMd = resultDesc;
 	resultDesc = newMd;
+
+	if (getParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS) {
+		getCurrentParams()->getPrivate()->setUpdateCallWhenIceCompleted(false);
+		lInfo() << "Disabling update call when ice completed on call [" << q << "]";
+	}
+
 	if ((audioStream && (audioStream->ms.state == MSStreamStarted)) || (videoStream && (videoStream->ms.state == MSStreamStarted))) {
 		clearEarlyMediaDestinations();
 
@@ -3173,46 +3469,108 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 			mdChanged = mediaParametersChanged(oldMd, newMd);
 			/* Might not be mandatory to restart stream for each ice restart as it leads bad user experience, specially in video. See 0002495 for better background on this */
 			if (mdChanged & (SAL_MEDIA_DESCRIPTION_CODEC_CHANGED
-				| SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED
 				| SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED
 				| SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED
-				| SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION))
+				| SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION)
+			) {
 				lInfo() << "Media descriptions are different, need to restart the streams";
-			else if (listener && listener->isPlayingRingbackTone(q->getSharedFromThis()))
+			} else if (listener && listener->isPlayingRingbackTone(q->getSharedFromThis())) {
 				lInfo() << "Playing ringback tone, will restart the streams";
-			else {
-				if (allMuted && (targetState == CallSession::State::StreamsRunning)) {
-					lInfo() << "Early media finished, unmuting inputs...";
-					/* We were in early media, now we want to enable real media */
-					allMuted = false;
-					if (audioStream)
-						linphone_core_enable_mic(q->getCore()->getCCore(), linphone_core_mic_enabled(q->getCore()->getCCore()));
+			} else {
+				for(int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; ++i) {
+					if (!sal_stream_description_active(&oldMd->streams[i]) && !sal_stream_description_active(&newMd->streams[i])) continue;
+					string streamTypeName = sal_stream_description_get_type_as_string(&newMd->streams[i]);
+
+					/* If there was a change in the streams then newMd should have more streams */
+					if (mdChanged & SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED && i >= oldMd->nb_streams) {
+						lInfo() << "New " << streamTypeName << " stream detected, starting the stream";
+
+						if (newMd->streams[i].type == SalAudio) {
+							initializeAudioStream();
+						} else if (newMd->streams[i].type == SalVideo) {
+							initializeVideoStream();
+						} else if (newMd->streams[i].type == SalText) {
+							initializeTextStream();
+						}
+
+						if (getParams()->earlyMediaSendingEnabled() && (state == CallSession::State::OutgoingEarlyMedia)) {
+							if (newMd->streams[i].type == SalAudio && audioStream)
+								rtp_session_set_symmetric_rtp(audioStream->ms.sessions.rtp_session, false);
+							else if (newMd->streams[i].type == SalVideo && videoStream)
+								rtp_session_set_symmetric_rtp(videoStream->ms.sessions.rtp_session, false);
+						}
+
+						startStream(&newMd->streams[i], i, targetState);
+
+						if (newMd->streams[i].type == SalAudio && audioStream) {
+							if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1))
+								linphone_core_play_named_tone(q->getCore()->getCCore(), LinphoneToneCallOnHold);
+						}
+
+						updateStreamFrozenPayloads(&newMd->streams[i], &localDesc->streams[i]);
+
+						continue;
+					}
+
+					int sdChanged = sal_stream_description_equals(&oldMd->streams[i], &newMd->streams[i]);
+					if (sdChanged & (SAL_MEDIA_DESCRIPTION_CODEC_CHANGED
+						| SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED
+						| SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED)
+					) {
+						lInfo() << "Stream descriptions are different, need to restart the " << streamTypeName << " stream";
+						restartStream(&newMd->streams[i], i, sdChanged, targetState);
+					} else {
+						sdChanged |= mdChanged;
+
+						if (allMuted && (targetState == CallSession::State::StreamsRunning)) {
+							if (newMd->streams[i].type == SalAudio && audioStream) {
+								linphone_core_enable_mic(q->getCore()->getCCore(), linphone_core_mic_enabled(q->getCore()->getCCore()));
+							}
 #ifdef VIDEO_ENABLED
-					if (videoStream && cameraEnabled)
-						q->enableCamera(q->cameraEnabled());
+							if (newMd->streams[i].type == SalVideo && videoStream && cameraEnabled) {
+								q->enableCamera(q->cameraEnabled());
+							}
 #endif
-				}
-				if (mdChanged == SAL_MEDIA_DESCRIPTION_UNCHANGED) {
-					/* FIXME ZRTP, might be restarted in any cases? */
-					lInfo() << "No need to restart streams, SDP is unchanged";
-					if (oldMd)
-						sal_media_description_unref(oldMd);
-					return;
-				} else {
-					if (mdChanged & SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED) {
-						lInfo() << "Network parameters have changed, update them";
-						updateStreamsDestinations(oldMd, newMd);
+						}
+
+						if (sdChanged == SAL_MEDIA_DESCRIPTION_UNCHANGED) {
+							/* FIXME ZRTP, might be restarted in any cases? */
+							lInfo() << "No need to restart the " << streamTypeName << " stream, SDP is unchanged";
+						} else {
+							if (sdChanged & SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED) {
+								lInfo() << "Network parameters have changed for the " << streamTypeName << " stream, update it";
+								if (newMd->streams[i].type == SalAudio || newMd->streams[i].type == SalVideo) {
+									updateStreamDestination(newMd, &newMd->streams[i]);
+								}
+							}
+							if (sdChanged & SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED) {
+								lInfo() << "Crypto parameters have changed for the " << streamTypeName << " stream, update it";
+								updateStreamCryptoParameters(&oldMd->streams[i], &newMd->streams[i]);
+							}
+						}
 					}
-					if (mdChanged & SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED) {
-						lInfo() << "Crypto parameters have changed, update them";
-						updateCryptoParameters(oldMd, newMd);
-					}
-					if (oldMd)
-						sal_media_description_unref(oldMd);
-					return;
 				}
+
+				if (allMuted && (targetState == CallSession::State::StreamsRunning)) {
+					allMuted = false;
+				}
+
+				for (const auto &hook : postProcessHooks) {
+					hook();
+				}
+				postProcessHooks.clear();
+
+				if (!iceAgent->hasCompleted()) {
+					iceAgent->startConnectivityChecks();
+				}
+
+				if (oldMd)
+					sal_media_description_unref(oldMd);
+
+				return;
 			}
 		}
+
 		stopStreams();
 		if (mdChanged & SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED) {
 			lInfo() << "Media ip type has changed, destroying sessions context on CallSession [" << q << "]";
@@ -3230,13 +3588,42 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 
 	if (getParams()->earlyMediaSendingEnabled() && (state == CallSession::State::OutgoingEarlyMedia))
 		prepareEarlyMediaForking();
+
 	startStreams(targetState);
+
 	if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1))
 		linphone_core_play_named_tone(q->getCore()->getCCore(), LinphoneToneCallOnHold);
+
 	updateFrozenPayloads(newMd);
+
+	upBandwidth = linphone_core_get_upload_bandwidth(q->getCore()->getCCore());
 
 	if (oldMd)
 		sal_media_description_unref(oldMd);
+}
+
+void MediaSessionPrivate::updateStreamDestination (SalMediaDescription *newMd, SalStreamDescription *newDesc) {
+	if (!sal_stream_description_active(newDesc))
+		return;
+
+	if (newDesc && newDesc->type == SalAudio) {
+		if (audioStream) {
+			const char *rtpAddr = (newDesc->rtp_addr[0] != '\0') ? newDesc->rtp_addr : newMd->addr;
+			const char *rtcpAddr = (newDesc->rtcp_addr[0] != '\0') ? newDesc->rtcp_addr : newMd->addr;
+			lInfo() << "Change audio stream destination: RTP=" << rtpAddr << ":" << newDesc->rtp_port << " RTCP=" << rtcpAddr << ":" << newDesc->rtcp_port;
+			rtp_session_set_remote_addr_full(audioStream->ms.sessions.rtp_session, rtpAddr, newDesc->rtp_port, rtcpAddr, newDesc->rtcp_port);
+		}
+	}
+#ifdef VIDEO_ENABLED
+	else if (newDesc && newDesc->type == SalVideo) {
+		if (videoStream) {
+			const char *rtpAddr = (newDesc->rtp_addr[0] != '\0') ? newDesc->rtp_addr : newMd->addr;
+			const char *rtcpAddr = (newDesc->rtcp_addr[0] != '\0') ? newDesc->rtcp_addr : newMd->addr;
+			lInfo() << "Change video stream destination: RTP=" << rtpAddr << ":" << newDesc->rtp_port << " RTCP=" << rtcpAddr << ":" << newDesc->rtcp_port;
+			rtp_session_set_remote_addr_full(videoStream->ms.sessions.rtp_session, rtpAddr, newDesc->rtp_port, rtcpAddr, newDesc->rtcp_port);
+		}
+	}
+#endif
 }
 
 void MediaSessionPrivate::updateStreamsDestinations (SalMediaDescription *oldMd, SalMediaDescription *newMd) {
@@ -3257,19 +3644,10 @@ void MediaSessionPrivate::updateStreamsDestinations (SalMediaDescription *oldMd,
 				newVideoDesc = &newMd->streams[i];
 		#endif
 	}
-	if (audioStream && newAudioDesc) {
-		const char *rtpAddr = (newAudioDesc->rtp_addr[0] != '\0') ? newAudioDesc->rtp_addr : newMd->addr;
-		const char *rtcpAddr = (newAudioDesc->rtcp_addr[0] != '\0') ? newAudioDesc->rtcp_addr : newMd->addr;
-		lInfo() << "Change audio stream destination: RTP=" << rtpAddr << ":" << newAudioDesc->rtp_port << " RTCP=" << rtcpAddr << ":" << newAudioDesc->rtcp_port;
-		rtp_session_set_remote_addr_full(audioStream->ms.sessions.rtp_session, rtpAddr, newAudioDesc->rtp_port, rtcpAddr, newAudioDesc->rtcp_port);
-	}
+
+	updateStreamDestination(newMd, newAudioDesc);
 #ifdef VIDEO_ENABLED
-	if (videoStream && newVideoDesc) {
-		const char *rtpAddr = (newVideoDesc->rtp_addr[0] != '\0') ? newVideoDesc->rtp_addr : newMd->addr;
-		const char *rtcpAddr = (newVideoDesc->rtcp_addr[0] != '\0') ? newVideoDesc->rtcp_addr : newMd->addr;
-		lInfo() << "Change video stream destination: RTP=" << rtpAddr << ":" << newVideoDesc->rtp_port << " RTCP=" << rtcpAddr << ":" << newVideoDesc->rtcp_port;
-		rtp_session_set_remote_addr_full(videoStream->ms.sessions.rtp_session, rtpAddr, newVideoDesc->rtp_port, rtcpAddr, newVideoDesc->rtcp_port);
-	}
+	updateStreamDestination(newMd, newVideoDesc);
 #endif
 }
 
@@ -3370,6 +3748,10 @@ bool MediaSessionPrivate::isEncryptionMandatory () const {
 
 int MediaSessionPrivate::mediaParametersChanged (SalMediaDescription *oldMd, SalMediaDescription *newMd) {
 	L_Q();
+	if (forceStreamsReconstruction) {
+		forceStreamsReconstruction = false;
+		return SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION;
+	}
 	if (getParams()->getPrivate()->getInConference() != getCurrentParams()->getPrivate()->getInConference())
 		return SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION;
 	if (upBandwidth != linphone_core_get_upload_bandwidth(q->getCore()->getCCore()))
@@ -3379,7 +3761,7 @@ int MediaSessionPrivate::mediaParametersChanged (SalMediaDescription *oldMd, Sal
 		lInfo() << "Local description has changed: " << differences;
 		ms_free(differences);
 	}
-	int otherDescChanged = sal_media_description_equals(oldMd, newMd);
+	int otherDescChanged = sal_media_description_global_equals(oldMd, newMd);
 	if (otherDescChanged) {
 		char *differences = sal_media_description_print_differences(otherDescChanged);
 		lInfo() << "Other description has changed: " << differences;

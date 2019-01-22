@@ -338,6 +338,7 @@ SalMediaDescription * sal_media_description_ref(SalMediaDescription *md);
 void sal_media_description_unref(SalMediaDescription *md);
 bool_t sal_media_description_empty(const SalMediaDescription *md);
 int sal_media_description_equals(const SalMediaDescription *md1, const SalMediaDescription *md2);
+int sal_media_description_global_equals(const SalMediaDescription *md1, const SalMediaDescription *md2);
 char * sal_media_description_print_differences(int result);
 bool_t sal_media_description_has_dir(const SalMediaDescription *md, SalStreamDir dir);
 LINPHONE_PUBLIC SalStreamDescription *sal_media_description_find_stream(SalMediaDescription *md, SalMediaProto proto, SalStreamType type);
@@ -346,6 +347,7 @@ SalStreamDescription * sal_media_description_get_active_stream_of_type(SalMediaD
 SalStreamDescription * sal_media_description_find_secure_stream_of_type(SalMediaDescription *md, SalStreamType type);
 SalStreamDescription * sal_media_description_find_best_stream(SalMediaDescription *md, SalStreamType type);
 void sal_media_description_set_dir(SalMediaDescription *md, SalStreamDir stream_dir);
+int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStreamDescription *sd2);
 bool_t sal_stream_description_active(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_avpf(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_implicit_avpf(const SalStreamDescription *sd);
