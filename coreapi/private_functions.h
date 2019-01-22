@@ -55,6 +55,7 @@ void linphone_call_notify_next_video_frame_decoded(LinphoneCall *call);
 LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, const LinphoneCallParams *params, LinphoneProxyConfig *cfg);
 LinphoneCall * linphone_call_new_incoming(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op);
 LINPHONE_PUBLIC LinphoneCallLog *linphone_call_log_new(LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress * to);
+void linphone_call_log_set_call_id(LinphoneCallLog *cl, const char *call_id);
 LinphonePlayer *linphone_call_build_player(LinphoneCall*call);
 
 LinphonePrivate::SalCallOp *linphone_call_get_op(const LinphoneCall *call);

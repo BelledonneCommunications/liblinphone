@@ -959,7 +959,7 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 				linphone_core_get_config(getCore()->getCCore()), "sip", "cnx_ip_to_0000_if_sendonly_enabled", 0
 			)
 		);
-		d->log->call_id = ms_strdup(op->getCallId().c_str()); /* Must be known at that time */
+		linphone_call_log_set_call_id(d->log, op->getCallId().c_str()); /* Must be known at that time */
 	}
 
 	if (direction == LinphoneCallOutgoing) {
@@ -1127,7 +1127,7 @@ int CallSession::startInvite (const Address *destination, const string &subject,
 			d->setState(CallSession::State::Error, "Call failed");
 		}
 	} else {
-		d->log->call_id = ms_strdup(d->op->getCallId().c_str()); /* Must be known at that time */
+		linphone_call_log_set_call_id(d->log, d->op->getCallId().c_str()); /* Must be known at that time */
 		d->setState(CallSession::State::OutgoingProgress, "Outgoing call in progress");
 	}
 	return result;
