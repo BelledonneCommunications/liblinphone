@@ -65,7 +65,7 @@ static void _remove_friends_from_list(LinphoneFriendList *list, const char *frie
 	}
 }
 
-static void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone) {
+void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone) {
 	if (index >= bctbx_list_size(resultList)) {
 		ms_error("Attempt to access result to an outbound index");
 		return;
@@ -1381,7 +1381,7 @@ static void echo_canceller_check(void){
 	const char *expected_filter = "MSSpeexEC";
 	AudioStream *as = audio_stream_new2(factory, NULL, 43000, 43001);
 	const char *ec_filter = NULL;
-	
+
 	BC_ASSERT_PTR_NOT_NULL(as);
 	if (as){
 		MSFilter *ecf = as->ec;
