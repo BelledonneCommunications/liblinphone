@@ -192,8 +192,11 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 		setState(ChatRoom::State::TerminationPending);
 	} else if (newState == CallSession::State::Released) {
 		if (q->getState() == ChatRoom::State::TerminationPending) {
-			if (session->getReason() == LinphoneReasonNone) {
-				// Everything is fine, the chat room has been left on the server side
+			if (session->getReason() == LinphoneReasonNone
+                || session->getReason() ==  LinphoneReasonDeclined) {
+				// Everything is fine, the chat room has been left on the server side.
+                // Or received 603 Declined, the chat room has been left on the server side but
+                // remains local.
 				q->onConferenceTerminated(q->getConferenceAddress());
 			} else {
 				// Go to state TerminationFailed and then back to Created since it has not been terminated

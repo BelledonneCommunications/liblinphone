@@ -1411,7 +1411,7 @@ static void group_chat_room_delete_twice (void) {
     // Save db
     const char *uri = lp_config_get_string(linphone_core_get_config(laure->lc), "storage", "uri", "");
     char *uriCopy = bc_tester_file("linphone_tester.db");
-    BC_ASSERT_TRUE(liblinphone_tester_copy_file(uri, uriCopy));
+    BC_ASSERT_FALSE(liblinphone_tester_copy_file(uri, uriCopy));
     
     // Clean db from chat room
     linphone_core_manager_delete_chat_room(laure, laureCr, coresList);
@@ -1419,20 +1419,21 @@ static void group_chat_room_delete_twice (void) {
     // Reset db
     laure->database_path = uriCopy;
     coresList = bctbx_list_remove(coresList, laure->lc);
-    linphone_core_manager_restart(laure, TRUE);
+    linphone_core_manager_reinit(laure);
     bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, laure);
-    init_core_for_conference(tmpCoresManagerList);
+    bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
     bctbx_list_free(tmpCoresManagerList);
-    coresList = bctbx_list_append(coresList, laure->lc);
+    coresList = bctbx_list_concat(coresList, tmpCoresList);
+    linphone_core_manager_start(laure, TRUE);
 
     // Check that the chat room has correctly created on Laure's side and that the participants are added
     laureCr = check_has_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, FALSE);
     
     // Clean db from chat room again
+    linphone_core_manager_delete_chat_room(laure, laureCr, coresList);
     linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
     linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
-    linphone_core_manager_delete_chat_room(laure, laureCr, coresList);
-    
+       
     bctbx_list_free(coresList);
     bctbx_list_free(coresManagerList);
     linphone_core_manager_destroy(marie);
