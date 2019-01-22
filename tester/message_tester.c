@@ -1426,52 +1426,6 @@ static void lime_unit(void) {
 	}
 }
 
-/*
- * Copy file "from" to file "to".
- * Destination file is truncated if existing.
- * Return 0 on success, positive value on error.
- */
-int liblinphone_tester_copy_file(const char *from, const char *to)
-{
-	FILE *in, *out;
-	char buf[256];
-	size_t n;
-
-	/* Open "from" file for reading */
-	in=fopen(from, "rb");
-	if ( in == NULL )
-	{
-		ms_error("Can't open %s for reading: %s\n",from,strerror(errno));
-		return 1;
-	}
-
-	/* Open "to" file for writing (will truncate existing files) */
-	out=fopen(to, "wb");
-	if ( out == NULL )
-	{
-		ms_error("Can't open %s for writing: %s\n",to,strerror(errno));
-		fclose(in);
-		return 2;
-	}
-
-	/* Copy data from "in" to "out" */
-	while ( (n=fread(buf, sizeof(char), sizeof(buf), in)) > 0 )
-	{
-		if ( ! fwrite(buf, 1, n, out) )
-		{
-			ms_error("Could not write in %s: %s\n",to,strerror(errno));
-			fclose(in);
-			fclose(out);
-			return 3;
-		}
-	}
-
-	fclose(in);
-	fclose(out);
-
-	return 0;
-}
-
 int check_no_strange_time(void* data,int argc, char** argv,char** cNames) {
 	BC_ASSERT_EQUAL(argc, 1, int, "%d");
 	BC_ASSERT_STRING_EQUAL(cNames[0], "COUNT(*)"); // count of non updated messages should be 0
