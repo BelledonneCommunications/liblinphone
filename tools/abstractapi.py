@@ -366,6 +366,10 @@ class Method(DocumentableObject):
 	def returnType(self, returnType):
 		self._returnType = returnType
 		returnType.parent = self
+
+	@property
+	def returnAllocatedObject(self):
+		return self.name.words[0] in ['create', 'new', 'clone']
 	
 	def translate_as_prototype(self, translator, **params):
 		return translator.translate_method_as_prototype(self, **params)
