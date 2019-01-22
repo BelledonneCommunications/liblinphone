@@ -101,15 +101,12 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 	IdentityAddress deviceAddr(deviceAddrStr);
 	bctbx_free(deviceAddrStr);
 
-	list<Content *> contents;
-	Content *rlmiContent = new Content();
-	rlmiContent->setContentType(ContentType::Rlmi);
-
 	// Create Rlmi body
 	Xsd::Rlmi::List::ResourceSequence resources;
 
 	// Parse resource list
 	bool noContent = true;
+	list<Content> contents;
 	istringstream data(xmlBody);
 	unique_ptr<Xsd::ResourceLists::ResourceLists> rl(Xsd::ResourceLists::parseResourceLists(
 		data,
@@ -150,20 +147,20 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 				continue;
 
 			noContent = false;
-			Content *content = new Content();
+			Content content;
 			if (notifyId > 0) {
 				ContentType contentType(ContentType::Multipart);
 				contentType.addParameter("boundary", string(MultipartBoundary));
-				content->setContentType(contentType);
+				content.setContentType(contentType);
 			} else
-				content->setContentType(ContentType::ConferenceInfo);
+				content.setContentType(ContentType::ConferenceInfo);
 
-			content->setBodyFromUtf8(notifyBody);
+			content.setBodyFromUtf8(notifyBody);
 			char token[17];
 			belle_sip_random_token(token, sizeof(token));
-			content->addHeader("Content-Id", token);
-			content->addHeader("Content-Length", Utils::toString(notifyBody.size()));
-			contents.push_back(content);
+			content.addHeader("Content-Id", token);
+			content.addHeader("Content-Length", Utils::toString(notifyBody.size()));
+			contents.push_back(move(content));
 
 			// Add entry into the Rlmi content of the notify body
 			Xsd::Rlmi::Resource resource(addr.asStringUriOnly());
@@ -178,15 +175,23 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 	if (noContent)
 		return;
 
-	Xsd::Rlmi::List list("", 0, TRUE);
-	list.setResource(resources);
+	Xsd::Rlmi::List _list("", 0, TRUE);
+	_list.setResource(resources);
 	Xsd::XmlSchema::NamespaceInfomap map;
 	stringstream rlmiBody;
-	Xsd::Rlmi::serializeList(rlmiBody, list, map);
-	rlmiContent->setBodyFromUtf8(rlmiBody.str());
+	Xsd::Rlmi::serializeList(rlmiBody, _list, map);
 
-	contents.push_front(rlmiContent);
-	Content multipart = ContentManager::contentListToMultipart(contents, MultipartBoundaryListEventHandler);
+	Content rlmiContent;
+	rlmiContent.setContentType(ContentType::Rlmi);
+	rlmiContent.setBodyFromUtf8(rlmiBody.str());
+
+	list<Content *> contentsAsPtr;
+	contentsAsPtr.push_back(&rlmiContent);
+	for (Content &content : contents) {
+		contentsAsPtr.push_back(&content);
+	}
+
+	Content multipart = ContentManager::contentListToMultipart(contentsAsPtr, MultipartBoundaryListEventHandler);
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate"))
 		multipart.setContentEncoding("deflate");
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&multipart);
@@ -194,7 +199,6 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 	linphone_event_cbs_set_user_data(cbs, this);
 	linphone_event_cbs_set_notify_response(cbs, notifyResponseCb);
 	linphone_event_notify(lev, cContent);
-	contents.clear();
 }
 
 // -----------------------------------------------------------------------------
