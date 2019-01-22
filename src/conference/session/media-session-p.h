@@ -20,6 +20,9 @@
 #ifndef _L_MEDIA_SESSION_P_H_
 #define _L_MEDIA_SESSION_P_H_
 
+#include <vector>
+#include <functional>
+
 #include "call-session-p.h"
 
 #include "media-session.h"
@@ -84,7 +87,9 @@ public:
 
 	SalMediaDescription *getLocalDesc () const { return localDesc; }
 
-	unsigned int getMediaStartCount () const;
+	unsigned int getAudioStartCount () const;
+	unsigned int getVideoStartCount () const;
+	unsigned int getTextStartCount () const;
 	MediaStream *getMediaStream (LinphoneStreamType type) const;
 	LinphoneNatPolicy *getNatPolicy () const { return natPolicy; }
 
@@ -98,6 +103,8 @@ public:
 
 	void initializeStreams ();
 	void stopStreams ();
+	void stopStream (SalStreamDescription *streamDesc);
+	void restartStream (SalStreamDescription *streamDesc, int streamIndex, int sdChanged, CallSession::State targetState);
 
 	// Methods used by testers
 	void addLocalDescChangedFlag (int flag) { localDescChanged |= flag; }
@@ -177,14 +184,21 @@ private:
 	void configureRtpSession(RtpSession *session, LinphoneStreamType type);
 	void setDtlsFingerprint (MSMediaStreamSessions *sessions, const SalStreamDescription *sd, const SalStreamDescription *remote);
 	void setDtlsFingerprintOnAllStreams ();
+	void setDtlsFingerprintOnAudioStream ();
+	void setDtlsFingerprintOnVideoStream ();
+	void setDtlsFingerprintOnTextStream ();
 	void setupDtlsParams (MediaStream *ms);
 	void setZrtpCryptoTypesParameters (MSZrtpParams *params);
 	void startDtls (MSMediaStreamSessions *sessions, const SalStreamDescription *sd, const SalStreamDescription *remote);
 	//To give a chance for auxilary secret to be used, primary channel (I.E audio) should be started either on 200ok if ZRTP is signaled by a zrtp-hash or when ACK is received in case calling side does not have zrtp-hash.
 	void startZrtpPrimaryChannel (const SalStreamDescription *remote);
 	void startDtlsOnAllStreams ();
-	void updateCryptoParameters (SalMediaDescription *oldMd, SalMediaDescription *newMd);
-	bool updateStreamCryptoParameters (const SalStreamDescription *localStreamDesc, SalStreamDescription *oldStream, SalStreamDescription *newStream, MediaStream *ms);
+	void startDtlsOnAudioStream ();
+	void startDtlsOnTextStream ();
+	void startDtlsOnVideoStream ();
+	void updateStreamCryptoParameters (SalStreamDescription *oldStream, SalStreamDescription *newStream);
+	void updateStreamsCryptoParameters (SalMediaDescription *oldMd, SalMediaDescription *newMd);
+	bool updateCryptoParameters (const SalStreamDescription *localStreamDesc, SalStreamDescription *oldStream, SalStreamDescription *newStream, MediaStream *ms);
 
 	int getIdealAudioBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc);
 	int getVideoBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc);
@@ -209,17 +223,24 @@ private:
 	void prepareEarlyMediaForking ();
 	void postConfigureAudioStreams (bool muted);
 	void setSymmetricRtp (bool value);
+	void setStreamSymmetricRtp(bool value, int streamIndex);
 	void setupRingbackPlayer ();
-	void startAudioStream (CallSession::State targetState, bool videoWillBeUsed);
+	void startAudioStream (CallSession::State targetState);
 	void startStreams (CallSession::State targetState);
+	void startStream (SalStreamDescription *streamDesc, int streamIndex, CallSession::State targetState);
 	void startTextStream ();
 	void startVideoStream (CallSession::State targetState);
 	void stopAudioStream ();
 	void stopTextStream ();
 	void stopVideoStream ();
 	void tryEarlyMediaForking (SalMediaDescription *md);
+	void updateStreamFrozenPayloads (SalStreamDescription *resultDesc, SalStreamDescription *localStreamDesc);
 	void updateFrozenPayloads (SalMediaDescription *result);
+	void updateAudioStream (SalMediaDescription *newMd, CallSession::State targetState);
 	void updateStreams (SalMediaDescription *newMd, CallSession::State targetState);
+	void updateTextStream (SalMediaDescription *newMd, CallSession::State targetState);
+	void updateVideoStream (SalMediaDescription *newMd, CallSession::State targetState);
+	void updateStreamDestination (SalMediaDescription *newMd, SalStreamDescription *newDesc);
 	void updateStreamsDestinations (SalMediaDescription *oldMd, SalMediaDescription *newMd);
 
 	bool allStreamsAvpfEnabled () const;
@@ -300,6 +321,8 @@ private:
 	std::unique_ptr<StunClient> stunClient;
 	std::unique_ptr<IceAgent> iceAgent;
 
+	std::vector<std::function<void()>> postProcessHooks;
+
 	// The address family to prefer for RTP path, guessed from signaling path.
 	int af;
 
@@ -325,7 +348,11 @@ private:
 	bool authTokenVerified = false;
 	std::string dtlsCertificateFingerprint;
 
-	unsigned int mediaStartCount = 0;
+	bool forceStreamsReconstruction = false;
+
+	unsigned int audioStartCount = 0;
+	unsigned int videoStartCount = 0;
+	unsigned int textStartCount = 0;
 
 	// Upload bandwidth setting at the time the call is started. Used to detect if it changes during a call.
 	int upBandwidth = 0;
@@ -336,7 +363,8 @@ private:
 	bool speakerMuted = false;
 	bool microphoneMuted = false;
 
-	bool allMuted = false;
+	bool audioMuted = false;
+	bool videoMuted = false;
 	bool automaticallyPaused = false;
 	bool pausedByApp = false;
 	bool recordActive = false;

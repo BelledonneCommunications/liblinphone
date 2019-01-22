@@ -997,7 +997,7 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 	bool_t video_added_by_caller, bool_t video_added_by_callee, bool_t video_removed_by_caller, bool_t video_removed_by_callee, bool_t video_only) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	unsigned int nb_media_starts = 1;
+	unsigned int nb_audio_starts = 1, nb_video_starts = 1;
 	const LinphoneCallParams *marie_remote_params;
 	const LinphoneCallParams *pauline_current_params;
 
@@ -1062,7 +1062,7 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 		BC_ASSERT_FALSE(linphone_call_params_video_enabled(marie_remote_params));
 	}
 	BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateHostConnection));
-	BC_ASSERT_TRUE(check_nb_media_starts(pauline, marie, nb_media_starts, nb_media_starts));
+	BC_ASSERT_TRUE(check_nb_media_starts(AUDIO_START, pauline, marie, nb_audio_starts, nb_audio_starts));
 
 
 	if (caller_policy.automatically_initiate && callee_policy.automatically_accept && (video_added_by_caller || video_added_by_callee)){
@@ -1080,8 +1080,8 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 				BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 4)
 					&& wait_for(pauline->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 4));
 				/*the video addon should have triggered a media start, but the ICE reINVITE shall not*/
-				nb_media_starts++;
-				BC_ASSERT_TRUE(check_nb_media_starts(pauline, marie, nb_media_starts, nb_media_starts));
+				nb_video_starts++;
+				BC_ASSERT_TRUE(check_nb_media_starts(VIDEO_START, pauline, marie, nb_video_starts, nb_video_starts));
 			}
 		}
 	}
@@ -1093,8 +1093,8 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 	}
 	if (video_removed_by_caller || video_removed_by_callee) {
 		BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateHostConnection));
-		nb_media_starts++;
-		BC_ASSERT_TRUE(check_nb_media_starts(pauline, marie, nb_media_starts, nb_media_starts));
+		nb_video_starts++;
+		BC_ASSERT_TRUE(check_nb_media_starts(VIDEO_START, pauline, marie, nb_video_starts, nb_video_starts));
 
 	}
 
