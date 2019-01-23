@@ -80,6 +80,7 @@ public class AndroidPlatformHelper {
 	private String mGrammarVcardFile ;
 	private String mUserCertificatePath;
 	private Surface mSurface;
+	private SurfaceTexture mSurfaceTexture;
 	private boolean dozeModeEnabled;
 	private BroadcastReceiver mDozeReceiver;
 	private BroadcastReceiver mNetworkReceiver;
@@ -377,7 +378,8 @@ public class AndroidPlatformHelper {
 			@Override
 			public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
 				Log.i("Rendering window surface is available");
-				mSurface = new Surface(surface);
+				mSurfaceTexture = surface;
+				mSurface = new Surface(mSurfaceTexture);
 				setNativeVideoWindowId(mNativePtr, mSurface);
 			}
 
@@ -388,8 +390,11 @@ public class AndroidPlatformHelper {
 
 			@Override
 			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-				Log.i("Rendering window surface is no longer available");
-				setNativeVideoWindowId(mNativePtr, null);
+				if (mSurfaceTexture == surface) {
+					Log.i("Rendering window surface is no longer available");
+					setNativeVideoWindowId(mNativePtr, null);
+					mSurfaceTexture = null;
+				}
 				return false;
 			}
 
@@ -400,7 +405,8 @@ public class AndroidPlatformHelper {
 		});
 		if (textureView.isAvailable()) {
 			Log.i("Rendering window surface is available");
-			mSurface = new Surface(textureView.getSurfaceTexture());
+			mSurfaceTexture = textureView.getSurfaceTexture();
+			mSurface = new Surface(mSurfaceTexture);
 			setNativeVideoWindowId(mNativePtr, mSurface);
 		}
 	}
