@@ -31,6 +31,7 @@ LINPHONE_BEGIN_NAMESPACE
 class ConferenceParticipantDeviceEventPrivate : public ConferenceParticipantEventPrivate {
 public:
 	IdentityAddress deviceAddress;
+	string deviceName;
 };
 
 // -----------------------------------------------------------------------------
@@ -41,7 +42,8 @@ ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent (
 	const ConferenceId &conferenceId,
 	unsigned int notifyId,
 	const IdentityAddress &participantAddress,
-	const IdentityAddress &deviceAddress
+	const IdentityAddress &deviceAddress,
+	const string &name
 ) : ConferenceParticipantEvent(
 	*new ConferenceParticipantDeviceEventPrivate,
 	type,
@@ -56,11 +58,17 @@ ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent (
 		type == Type::ConferenceParticipantDeviceRemoved
 	);
 	d->deviceAddress = deviceAddress;
+	d->deviceName = name;
 }
 
 const IdentityAddress &ConferenceParticipantDeviceEvent::getDeviceAddress () const {
 	L_D();
 	return d->deviceAddress;
+}
+
+const string &ConferenceParticipantDeviceEvent::getDeviceName () const {
+	L_D();
+	return d->deviceName;
 }
 
 LINPHONE_END_NAMESPACE
