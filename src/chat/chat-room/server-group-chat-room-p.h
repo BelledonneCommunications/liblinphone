@@ -26,13 +26,37 @@
 
 #include "chat-room-p.h"
 #include "server-group-chat-room.h"
+
 #include "conference/participant-device.h"
+#include "object/clonable-object.h"
+#include "object/clonable-object-p.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
 class ParticipantDevice;
+
+class ParticipantDeviceIdentityPrivate : public ClonableObjectPrivate {
+public:
+	Address deviceAddress;
+	std::string deviceName;
+};
+
+class ParticipantDeviceIdentity : public ClonableObject {
+public:
+	ParticipantDeviceIdentity (const Address &address, const std::string &name);
+	ParticipantDeviceIdentity (const ParticipantDeviceIdentity &other);
+
+	ParticipantDeviceIdentity* clone () const override {
+		return new ParticipantDeviceIdentity(*this);
+	}
+
+	const Address &getDeviceAddress () const;
+	const std::string &getDeviceName () const;
+private:
+	L_DECLARE_PRIVATE(ParticipantDeviceIdentity);
+};
 
 class ServerGroupChatRoomPrivate : public ChatRoomPrivate {
 public:
@@ -60,7 +84,7 @@ public:
 	bool update (SalCallOp *op);
 
 	void setConferenceAddress (const IdentityAddress &conferenceAddress);
-	void setParticipantDevices (const IdentityAddress &addr, const std::list<IdentityAddress> &devices);
+	void setParticipantDevices (const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
 	void addCompatibleParticipants (const IdentityAddress &deviceAddr, const std::list<IdentityAddress> &compatibleParticipants);
 	void checkCompatibleParticipants (const IdentityAddress &deviceAddr, const std::list<IdentityAddress> &addressesToCheck);
 
@@ -91,7 +115,7 @@ private:
 
 	static void copyMessageHeaders (const std::shared_ptr<Message> &fromMessage, const std::shared_ptr<ChatMessage> &toMessage);
 
-	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const IdentityAddress &deviceAddress);
+	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const IdentityAddress &deviceAddress, const std::string &name = "");
 	void byeDevice (const std::shared_ptr<ParticipantDevice> &device);
 	void designateAdmin ();
 	void dispatchMessage (const std::shared_ptr<Message> &message, const std::string &uri);
