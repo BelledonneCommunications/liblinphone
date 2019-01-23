@@ -621,7 +621,7 @@ int MediaSessionPrivate::getStreamIndex (MediaStream *ms) const {
 MSWebCam * MediaSessionPrivate::getVideoDevice () const {
 	L_Q();
 	bool paused = (state == CallSession::State::Pausing) || (state == CallSession::State::Paused);
-	if (paused || allMuted || !cameraEnabled)
+	if (paused || videoMuted || !cameraEnabled)
 #ifdef VIDEO_ENABLED
 		return ms_web_cam_manager_get_cam(ms_factory_get_web_cam_manager(q->getCore()->getCCore()->factory),
 			"StaticImage: Static picture");
@@ -3019,7 +3019,7 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState) {
 					(linphone_core_rtcp_enabled(q->getCore()->getCCore()) && !isMulticast) ? (stream->rtcp_port ? stream->rtcp_port : stream->rtp_port + 1) : 0,
 					usedPt, &io);
 				if (err == 0)
-					postConfigureAudioStreams((allMuted || microphoneMuted) && (listener && !listener->isPlayingRingbackTone(q->getSharedFromThis())));
+					postConfigureAudioStreams((audioMuted || microphoneMuted) && (listener && !listener->isPlayingRingbackTone(q->getSharedFromThis())));
 			}
 			ms_media_stream_sessions_set_encryption_mandatory(&audioStream->ms.sessions, isEncryptionMandatory());
 			if ((targetState == CallSession::State::Paused) && !captcard && !playfile.empty()) {
@@ -3070,13 +3070,16 @@ void MediaSessionPrivate::startStreams (CallSession::State targetState) {
 				listener->onRingbackToneRequested(q->getSharedFromThis(), true);
 			BCTBX_NO_BREAK;
 		case CallSession::State::OutgoingEarlyMedia:
-			if (!getParams()->earlyMediaSendingEnabled())
-				allMuted = true;
+			if (!getParams()->earlyMediaSendingEnabled()) {
+				audioMuted = true;
+				videoMuted = true;
+			}
 			break;
 		default:
 			if (listener)
 				listener->onRingbackToneRequested(q->getSharedFromThis(), false);
-			allMuted = false;
+			audioMuted = false;
+			videoMuted = false;
 			break;
 	}
 
@@ -3141,12 +3144,12 @@ void MediaSessionPrivate::startStream (SalStreamDescription *streamDesc, int str
 				BCTBX_NO_BREAK;
 			case CallSession::State::OutgoingEarlyMedia:
 				if (!getParams()->earlyMediaSendingEnabled())
-					allMuted = true;
+					audioMuted = true;
 				break;
 			default:
 				if (listener)
 					listener->onRingbackToneRequested(q->getSharedFromThis(), false);
-				allMuted = false;
+				audioMuted = false;
 				break;
 		}
 
@@ -3157,6 +3160,16 @@ void MediaSessionPrivate::startStream (SalStreamDescription *streamDesc, int str
 			return;
 		}
 	} else if (streamDesc->type == SalVideo) {
+		switch (targetState) {
+			case CallSession::State::OutgoingEarlyMedia:
+				if (!getParams()->earlyMediaSendingEnabled())
+					videoMuted = true;
+				break;
+			default:
+				videoMuted = false;
+				break;
+		}
+
 		getCurrentParams()->getPrivate()->setUsedVideoCodec(nullptr);
 
 		if (!videoStream) {
@@ -3618,12 +3631,23 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 					} else {
 						sdChanged |= mdChanged;
 
-						if (allMuted && (targetState == CallSession::State::StreamsRunning)) {
-							if (newMd->streams[i].type == SalAudio && audioStream) {
+						if (newMd->streams[i].type == SalAudio && audioMuted && (targetState == CallSession::State::StreamsRunning)) {
+							lInfo() << "Early media finished, unmuting audio input...";
+							/* We were in early media, now we want to enable real media */
+							audioMuted = false;
+
+							if (audioStream) {
 								linphone_core_enable_mic(q->getCore()->getCCore(), linphone_core_mic_enabled(q->getCore()->getCCore()));
 							}
+						}
+
 #ifdef VIDEO_ENABLED
-							if (newMd->streams[i].type == SalVideo && videoStream && cameraEnabled) {
+						if (newMd->streams[i].type == SalVideo && videoMuted && (targetState == CallSession::State::StreamsRunning)) {
+							lInfo() << "Early media finished, unmuting video input...";
+							/* We were in early media, now we want to enable real media */
+							videoMuted = false;
+
+							if (videoStream && cameraEnabled) {
 								q->enableCamera(q->cameraEnabled());
 							}
 #endif
@@ -3645,10 +3669,6 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 							}
 						}
 					}
-				}
-
-				if (allMuted && (targetState == CallSession::State::StreamsRunning)) {
-					allMuted = false;
 				}
 
 				for (const auto &hook : postProcessHooks) {
@@ -5002,7 +5022,9 @@ void MediaSession::enableEchoLimiter (bool value) {
 
 bool MediaSession::getAllMuted () const {
 	L_D();
-	return d->allMuted;
+	if (d->audioStream && d->videoStream) return d->audioMuted && d->videoMuted;
+	if (d->audioStream) return d->audioMuted;
+	return d->videoMuted;
 }
 
 LinphoneCallStats * MediaSession::getAudioStats () const {

@@ -359,7 +359,8 @@ private:
 	bool speakerMuted = false;
 	bool microphoneMuted = false;
 
-	bool allMuted = false;
+	bool audioMuted = false;
+	bool videoMuted = false;
 	bool automaticallyPaused = false;
 	bool pausedByApp = false;
 	bool recordActive = false;
