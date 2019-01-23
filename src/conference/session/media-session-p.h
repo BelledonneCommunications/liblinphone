@@ -349,8 +349,11 @@ private:
 	// Upload bandwidth used by audio.
 	int audioBandwidth = 0;
 
-	bool allMuted = false;
+	bool speakerMuted = false;
+	bool microphoneMuted = false;
+
 	bool audioMuted = false;
+	bool videoMuted = false;
 	bool automaticallyPaused = false;
 	bool pausedByApp = false;
 	bool recordActive = false;
