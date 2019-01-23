@@ -3209,6 +3209,9 @@ void MediaSessionPrivate::startStream (SalStreamDescription *streamDesc, int str
 	string streamTypeName = sal_stream_description_get_type_as_string(streamDesc);
 
 	if (streamDesc->type == SalAudio) {
+		if (audioStream && audioStream->ms.state != MSStreamInitialized)
+			audio_stream_unprepare_sound(audioStream);
+
 		switch (targetState) {
 			case CallSession::State::IncomingEarlyMedia:
 				if (listener)
@@ -3232,6 +3235,9 @@ void MediaSessionPrivate::startStream (SalStreamDescription *streamDesc, int str
 			return;
 		}
 	} else if (streamDesc->type == SalVideo) {
+		if (videoStream && videoStream->ms.state != MSStreamInitialized)
+			video_stream_unprepare_video(videoStream);
+
 		switch (targetState) {
 			case CallSession::State::OutgoingEarlyMedia:
 				if (!getParams()->earlyMediaSendingEnabled())
@@ -3249,6 +3255,9 @@ void MediaSessionPrivate::startStream (SalStreamDescription *streamDesc, int str
 			return;
 		}
 	} else if (streamDesc->type == SalText) {
+		if (textStream && textStream->ms.state != MSStreamInitialized)
+			text_stream_unprepare_text(textStream);
+
 		getCurrentParams()->getPrivate()->setUsedRealtimeTextCodec(nullptr);
 	}
 
