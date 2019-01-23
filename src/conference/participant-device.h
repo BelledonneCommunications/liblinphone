@@ -58,6 +58,7 @@ public:
 
 	inline const IdentityAddress &getAddress () const { return mGruu; }
 	inline const std::string &getName () const { return mName; }
+	inline void setName (const std::string &name) { mName = name; }
 	Participant *getParticipant () const { return mParticipant; }
 	inline std::shared_ptr<CallSession> getSession () const { return mSession; }
 	inline void setSession (std::shared_ptr<CallSession> session) { mSession = session; }
