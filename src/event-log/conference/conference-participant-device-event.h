@@ -20,6 +20,8 @@
 #ifndef _L_CONFERENCE_PARTICIPANT_DEVICE_EVENT_H_
 #define _L_CONFERENCE_PARTICIPANT_DEVICE_EVENT_H_
 
+#include <string>
+
 #include "conference-participant-event.h"
 
 // =============================================================================
