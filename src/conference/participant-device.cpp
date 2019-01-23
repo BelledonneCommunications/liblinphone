@@ -42,8 +42,8 @@ private:
 
 ParticipantDevice::ParticipantDevice () : Object(*new ParticipantDevicePrivate) {}
 
-ParticipantDevice::ParticipantDevice (Participant *participant, const IdentityAddress &gruu)
-	:  Object(*new ParticipantDevicePrivate), mParticipant(participant), mGruu(gruu) {}
+ParticipantDevice::ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const string &name)
+	:  Object(*new ParticipantDevicePrivate), mParticipant(participant), mGruu(gruu), mName(name) {}
 
 ParticipantDevice::~ParticipantDevice () {
 	if (mConferenceSubscribeEvent)

@@ -181,6 +181,11 @@ typedef struct _LinphoneParticipantImdnState LinphoneParticipantImdnState;
 typedef struct _LinphoneParticipantDevice LinphoneParticipantDevice;
 
 /**
+ * @ingroup misc
+ */
+typedef struct _LinphoneParticipantDeviceIdentity LinphoneParticipantDeviceIdentity;
+
+/**
  * The LinphoneSearchResult object represents a result of a search
  * @ingroup misc
  */
