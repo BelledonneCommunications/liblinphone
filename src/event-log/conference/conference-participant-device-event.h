@@ -36,10 +36,12 @@ public:
 		const ConferenceId &conferenceId,
 		unsigned int notifyId,
 		const IdentityAddress &participantAddress,
-		const IdentityAddress &deviceAddress
+		const IdentityAddress &deviceAddress,
+		const std::string &name = ""
 	);
 
 	const IdentityAddress &getDeviceAddress () const;
+	const std::string &getDeviceName () const;
 
 private:
 	L_DECLARE_PRIVATE(ConferenceParticipantDeviceEvent);

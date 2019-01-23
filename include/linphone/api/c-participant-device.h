@@ -63,13 +63,20 @@ LINPHONE_PUBLIC void linphone_participant_device_set_user_data(LinphoneParticipa
  * @return The address of the participant's device
  */
 LINPHONE_PUBLIC const LinphoneAddress * linphone_participant_device_get_address (const LinphoneParticipantDevice *participant_device);
-        
+
 /**
  * Get the security level of a participant's device.
  * @param[in] participant_device A #LinphoneParticipantDevice object
  * @return The security level of the device
 */
 LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Return the name of the device or NULL.
+ * @param[in] participant_device A #LinphoneParticipantDevice object
+ * @return the name of the device or NULL
+ */
+LINPHONE_PUBLIC const char *linphone_participant_device_get_name (const LinphoneParticipantDevice *LinphoneParticipantDevice);
 
 /**
  * @}
