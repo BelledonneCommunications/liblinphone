@@ -88,7 +88,7 @@ IdentityAddress &IdentityAddress::operator= (const IdentityAddress &other) {
 }
 
 bool IdentityAddress::operator== (const IdentityAddress &other) const {
-	return asString() == other.asString();
+	return asStringUriOnly() == other.asStringUriOnly();
 }
 
 bool IdentityAddress::operator!= (const IdentityAddress &other) const {
@@ -96,7 +96,7 @@ bool IdentityAddress::operator!= (const IdentityAddress &other) const {
 }
 
 bool IdentityAddress::operator< (const IdentityAddress &other) const {
-	return asString() < other.asString();
+	return asStringUriOnly() < other.asStringUriOnly();
 }
 
 bool IdentityAddress::isValid () const {
@@ -171,7 +171,6 @@ string IdentityAddress::asStringUriOnly () const {
 
 string IdentityAddress::asString () const {
 	Address tmpAddress(*this);
-	//lInfo() << "ALLOALLO test " << tmpAddress.asString();
 	return tmpAddress.asString();
 }
 

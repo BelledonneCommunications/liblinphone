@@ -88,7 +88,7 @@ namespace std {
 	struct hash<LinphonePrivate::IdentityAddress> {
 		std::size_t operator() (const LinphonePrivate::IdentityAddress &identityAddress) const {
 			if (!identityAddress.isValid()) return std::size_t(-1);
-			return hash<string>()(identityAddress.asString());
+			return hash<string>()(identityAddress.asStringUriOnly());
 		}
 	};
 }

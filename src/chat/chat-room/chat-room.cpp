@@ -237,7 +237,7 @@ void ChatRoomPrivate::notifyIsComposingReceived (const Address &remoteAddress, b
 	}
 
 	LinphoneChatRoom *cr = getCChatRoom();
-	LinphoneAddress *lAddr = linphone_address_new(remoteAddress.asString().c_str());
+	LinphoneAddress *lAddr = linphone_address_new(remoteAddress.asStringUriOnly().c_str());
 	_linphone_chat_room_notify_is_composing_received(cr, lAddr, !!isComposing);
 	linphone_address_unref(lAddr);
 	// Legacy notification
@@ -316,7 +316,7 @@ void ChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMessage> &chat
 	if ((chatMessage->getPrivate()->getContentType() != ContentType::ImIsComposing)
 		&& (chatMessage->getPrivate()->getContentType() != ContentType::Imdn)
 	) {
-		isComposingHandler->stopRemoteRefreshTimer(fromAddress.asString());
+		isComposingHandler->stopRemoteRefreshTimer(fromAddress.asStringUriOnly());
 		notifyIsComposingReceived(fromAddress, false);
 	}
 	chatMessage->getPrivate()->notifyReceiving();

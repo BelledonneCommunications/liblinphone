@@ -2834,6 +2834,9 @@ static void group_chat_room_unique_one_to_one_chat_room (void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
+	const LinphoneAddress *messageFromAddress;
+	char *messageFromStr = NULL;
+	char *identityStr = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
@@ -2859,6 +2862,14 @@ static void group_chat_room_unique_one_to_one_chat_room (void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), textMessage);
+	messageFromAddress = linphone_chat_message_get_from_address(pauline->stat.last_received_chat_message);
+	if (BC_ASSERT_PTR_NOT_NULL(messageFromAddress)) {
+		messageFromStr = linphone_address_as_string(messageFromAddress);
+		identityStr = linphone_address_as_string(marie->identity);
+		BC_ASSERT_STRING_EQUAL(messageFromStr, identityStr);
+		bctbx_free(messageFromStr);
+		bctbx_free(identityStr);
+	}
 	linphone_chat_message_unref(message);
 
 	// Marie deletes the chat room

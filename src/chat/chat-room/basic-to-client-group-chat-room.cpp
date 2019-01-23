@@ -58,7 +58,7 @@ public:
 		const char *specs = linphone_core_get_linphone_specs(chatMessage->getCore()->getCCore());
 		time_t currentRealTime = ms_time(nullptr);
 		LinphoneAddress *lAddr = linphone_address_new(
-			chatMessage->getChatRoom()->getConferenceId().getLocalAddress().asString().c_str()
+			chatMessage->getChatRoom()->getConferenceId().getLocalAddress().asStringUriOnly().c_str()
 		);
 		LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(q->getCore()->getCCore(), lAddr);
 		linphone_address_unref(lAddr);

@@ -49,7 +49,7 @@ LINPHONE_BEGIN_NAMESPACE
 static IdentityAddress getDefaultLocalAddress (const shared_ptr<Core> &core, const IdentityAddress &peerAddress) {
 	LinphoneCore *cCore = core->getCCore();
 
-	LinphoneAddress *cPeerAddress = linphone_address_new(peerAddress.asString().c_str());
+	LinphoneAddress *cPeerAddress = linphone_address_new(peerAddress.asStringUriOnly().c_str());
 	LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(cCore, cPeerAddress);
 	linphone_address_unref(cPeerAddress);
 
@@ -78,7 +78,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 		chatRoom.reset(new RealTimeTextChatRoom(q->getSharedFromThis(), conferenceId));
 	else {
 		BasicChatRoom *basicChatRoom = new BasicChatRoom(q->getSharedFromThis(), conferenceId);
-		LinphoneAddress *lAddr = linphone_address_new(conferenceId.getLocalAddress().asString().c_str());
+		LinphoneAddress *lAddr = linphone_address_new(conferenceId.getLocalAddress().asStringUriOnly().c_str());
 		LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(q->getCCore(), lAddr);
 		linphone_address_unref(lAddr);
 		const char *conferenceFactoryUri = nullptr;
