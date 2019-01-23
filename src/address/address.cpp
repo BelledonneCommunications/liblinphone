@@ -148,7 +148,7 @@ Address &Address::operator= (const Address &other) {
 }
 
 bool Address::operator== (const Address &other) const {
-	return asString() == other.asString();
+	return asStringUriOnly() == other.asStringUriOnly();
 }
 
 bool Address::operator!= (const Address &other) const {
@@ -156,7 +156,7 @@ bool Address::operator!= (const Address &other) const {
 }
 
 bool Address::operator< (const Address &other) const {
-	return asString() < other.asString();
+	return asStringUriOnly() < other.asStringUriOnly();
 }
 
 bool Address::isValid () const {

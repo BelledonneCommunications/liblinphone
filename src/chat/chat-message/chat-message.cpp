@@ -730,7 +730,7 @@ void ChatMessagePrivate::send () {
 
 	shared_ptr<Core> core = q->getCore();
 	if (lp_config_get_int(core->getCCore()->config, "sip", "chat_use_call_dialogs", 0) != 0) {
-		lcall = linphone_core_get_call_by_remote_address(core->getCCore(), toAddress.asString().c_str());
+		lcall = linphone_core_get_call_by_remote_address(core->getCCore(), toAddress.asStringUriOnly().c_str());
 		if (lcall) {
 			shared_ptr<Call> call = L_GET_CPP_PTR_FROM_C_OBJECT(lcall);
 			if ((call->getState() == CallSession::State::Connected)
@@ -743,7 +743,7 @@ void ChatMessagePrivate::send () {
 				op = call->getPrivate()->getOp();
 				string identity = linphone_core_find_best_identity(core->getCCore(), linphone_call_get_remote_address(lcall));
 				if (identity.empty()) {
-					LinphoneAddress *addr = linphone_address_new(toAddress.asString().c_str());
+					LinphoneAddress *addr = linphone_address_new(toAddress.asStringUriOnly().c_str());
 					LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(core->getCCore(), addr);
 					if (proxy) {
 						identity = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_proxy_config_get_identity_address(proxy))->asString();
@@ -757,7 +757,7 @@ void ChatMessagePrivate::send () {
 	}
 
 	if (!op) {
-		LinphoneAddress *peer = linphone_address_new(toAddress.asString().c_str());
+		LinphoneAddress *peer = linphone_address_new(toAddress.asStringUriOnly().c_str());
 		/* Sending out of call */
 		salOp = op = new SalMessageOp(core->getCCore()->sal);
 		linphone_configure_op(
@@ -768,7 +768,7 @@ void ChatMessagePrivate::send () {
 		linphone_address_unref(peer);
 	}
 	op->setFrom(fromAddress.asString().c_str());
-	lInfo() << "ALLOALLO " << fromAddress.asString();
+	//lInfo() << "ALLOALLO " << fromAddress.asString();
 	op->setTo(toAddress.asStringUriOnly().c_str());
 
 	// ---------------------------------------
