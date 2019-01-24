@@ -87,7 +87,9 @@ public:
 
 	SalMediaDescription *getLocalDesc () const { return localDesc; }
 
-	unsigned int getMediaStartCount () const;
+	unsigned int getAudioStartCount () const;
+	unsigned int getVideoStartCount () const;
+	unsigned int getTextStartCount () const;
 	MediaStream *getMediaStream (LinphoneStreamType type) const;
 	LinphoneNatPolicy *getNatPolicy () const { return natPolicy; }
 
@@ -348,7 +350,6 @@ private:
 
 	bool forceStreamsReconstruction = false;
 
-	unsigned int mediaStartCount = 0;
 	unsigned int audioStartCount = 0;
 	unsigned int videoStartCount = 0;
 	unsigned int textStartCount = 0;
