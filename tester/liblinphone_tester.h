@@ -458,8 +458,12 @@ bool_t pause_call_1(LinphoneCoreManager* mgr_1,LinphoneCall* call_1,LinphoneCore
 void compare_files(const char *path1, const char *path2);
 void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, MSList* lcs,LinphoneMediaDirection audio_dir, LinphoneMediaDirection video_dir);
 void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie, bool_t caller_with_ice, bool_t callee_with_ice, bool_t random_ports, bool_t forced_relay);
-int check_nb_media_starts(LinphoneCoreManager *caller, LinphoneCoreManager *callee, unsigned int caller_nb_media_starts, unsigned int callee_nb_media_starts);
 void record_call(const char *filename, bool_t enableVideo, const char *video_codec);
+
+#define AUDIO_START	0
+#define VIDEO_START	1
+#define TEXT_START	2
+int check_nb_media_starts(unsigned int media_type, LinphoneCoreManager *caller, LinphoneCoreManager *callee, unsigned int caller_nb_media_starts, unsigned int callee_nb_media_starts);
 
 void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManager* mgr);
 

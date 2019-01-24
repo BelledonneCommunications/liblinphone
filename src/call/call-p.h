@@ -52,7 +52,9 @@ public:
 
 	LinphoneProxyConfig *getDestProxy () const;
 	IceSession *getIceSession () const;
-	unsigned int getMediaStartCount () const;
+	unsigned int getAudioStartCount () const;
+	unsigned int getVideoStartCount () const;
+	unsigned int getTextStartCount () const;
 	MediaStream *getMediaStream (LinphoneStreamType type) const;
 	SalCallOp *getOp () const;
 

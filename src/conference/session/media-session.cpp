@@ -1165,8 +1165,16 @@ OrtpEvQueue * MediaSessionPrivate::getEventQueue (int streamIndex) const {
 	return nullptr;
 }
 
-unsigned int MediaSessionPrivate::getMediaStartCount () const {
-	return mediaStartCount;
+unsigned int MediaSessionPrivate::getAudioStartCount () const {
+	return audioStartCount;
+}
+
+unsigned int MediaSessionPrivate::getVideoStartCount () const {
+	return videoStartCount;
+}
+
+unsigned int MediaSessionPrivate::getTextStartCount () const {
+	return textStartCount;
 }
 
 MediaStream *MediaSessionPrivate::getMediaStream (int streamIndex) const {
@@ -3168,7 +3176,10 @@ void MediaSessionPrivate::startStreams (CallSession::State targetState) {
 		setSymmetricRtp(false);
 	}
 
-	mediaStartCount++;
+	if (audioStream) audioStartCount++;
+	if (videoStream) videoStartCount++;
+	if (textStream) textStartCount++;
+
 	lInfo() << "startStreams() CallSession=[" << q << "] local upload_bandwidth=[" << linphone_core_get_upload_bandwidth(q->getCore()->getCCore())
 		<< "] kbit/s; local download_bandwidth=[" << linphone_core_get_download_bandwidth(q->getCore()->getCCore()) << "] kbit/s";
 	getCurrentParams()->enableAudio(false);
