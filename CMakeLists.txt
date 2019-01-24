@@ -206,7 +206,7 @@ if(NOT WIN32)
 endif()
 if(ANDROID)
 	find_package(CpuFeatures REQUIRED)
-	find_package(Support REQUIRED)
+	find_package(Support)
 endif()
 
 set(LINPHONE_LDFLAGS "${BELLESIP_LDFLAGS} ${MEDIASTREAMER2_LDFLAGS}")
