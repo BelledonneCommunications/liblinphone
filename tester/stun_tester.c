@@ -177,7 +177,7 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
 	BC_ASSERT_TRUE(check_ice(pauline, marie, expected_ice_state));
-	check_nb_media_starts(pauline, marie, 1, 1);
+	check_nb_media_starts(AUDIO_START, pauline, marie, 1, 1);
 	check_media_direction(marie, linphone_core_get_current_call(marie->lc), lcs, LinphoneMediaDirectionSendRecv, expected_video_dir);
 	check_media_direction(pauline, linphone_core_get_current_call(pauline->lc), lcs, LinphoneMediaDirectionSendRecv, expected_video_dir);
 	liblinphone_tester_check_rtcp(marie, pauline);
