@@ -107,8 +107,16 @@ int linphone_friend_list_get_revision(const LinphoneFriendList *lfl) {
 	return lfl->revision;
 }
 
-unsigned int _linphone_call_get_nb_media_starts (const LinphoneCall *call) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStartCount();
+unsigned int _linphone_call_get_nb_audio_starts (const LinphoneCall *call) {
+	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getAudioStartCount();
+}
+
+unsigned int _linphone_call_get_nb_video_starts (const LinphoneCall *call) {
+	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getVideoStartCount();
+}
+
+unsigned int _linphone_call_get_nb_text_starts (const LinphoneCall *call) {
+	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getTextStartCount();
 }
 
 belle_sip_source_t *_linphone_call_get_dtmf_timer (const LinphoneCall *call) {

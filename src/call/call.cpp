@@ -51,8 +51,16 @@ IceSession *CallPrivate::getIceSession () const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getIceSession();
 }
 
-unsigned int CallPrivate::getMediaStartCount () const {
-	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getMediaStartCount();
+unsigned int CallPrivate::getAudioStartCount () const {
+	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getAudioStartCount();
+}
+
+unsigned int CallPrivate::getVideoStartCount () const {
+	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getVideoStartCount();
+}
+
+unsigned int CallPrivate::getTextStartCount () const {
+	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getTextStartCount();
 }
 
 MediaStream *CallPrivate::getMediaStream (LinphoneStreamType type) const {

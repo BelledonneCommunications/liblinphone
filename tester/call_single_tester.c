@@ -1191,22 +1191,33 @@ static void call_with_no_sdp_ack_without_sdp(void){
 	linphone_core_manager_destroy(pauline);
 }
 
-int check_nb_media_starts(LinphoneCoreManager *caller, LinphoneCoreManager *callee, unsigned int caller_nb_media_starts, unsigned int callee_nb_media_starts) {
+int check_nb_media_starts(unsigned int media_type, LinphoneCoreManager *caller, LinphoneCoreManager *callee, unsigned int caller_nb_media_starts, unsigned int callee_nb_media_starts) {
+	unsigned int c1_starts = 0, c2_starts = 0;
 	int c1_ret = FALSE, c2_ret = FALSE;
 	LinphoneCall *c1 = linphone_core_get_current_call(caller->lc);
 	LinphoneCall *c2 = linphone_core_get_current_call(callee->lc);
 	BC_ASSERT_PTR_NOT_NULL(c1);
 	BC_ASSERT_PTR_NOT_NULL(c2);
 	if (!c1 || !c2) return FALSE;
+	if (media_type > 2) return FALSE;
 
-	if (c1) {
-		c1_ret = (_linphone_call_get_nb_media_starts(c1) == caller_nb_media_starts) ? TRUE : FALSE;
-		BC_ASSERT_EQUAL(_linphone_call_get_nb_media_starts(c1), caller_nb_media_starts, unsigned int, "%u");
+	if (media_type == AUDIO_START) {
+		c1_starts = _linphone_call_get_nb_audio_starts(c1);
+		c2_starts = _linphone_call_get_nb_audio_starts(c2);
+	} else if (media_type == VIDEO_START) {
+		c1_starts = _linphone_call_get_nb_video_starts(c1);
+		c2_starts = _linphone_call_get_nb_video_starts(c2);
+	} else {
+		c1_starts = _linphone_call_get_nb_text_starts(c1);
+		c2_starts = _linphone_call_get_nb_text_starts(c2);
 	}
-	if (c2) {
-		c2_ret = (_linphone_call_get_nb_media_starts(c2) == callee_nb_media_starts) ? TRUE : FALSE;
-		BC_ASSERT_EQUAL(_linphone_call_get_nb_media_starts(c2), callee_nb_media_starts, unsigned int, "%u");
-	}
+
+	c1_ret = (c1_starts == caller_nb_media_starts) ? TRUE : FALSE;
+	BC_ASSERT_EQUAL(c1_starts, caller_nb_media_starts, unsigned int, "%u");
+
+	c2_ret = (c2_starts == callee_nb_media_starts) ? TRUE : FALSE;
+	BC_ASSERT_EQUAL(c2_starts, callee_nb_media_starts, unsigned int, "%u");
+
 	return c1_ret && c2_ret;
 }
 
@@ -1249,7 +1260,7 @@ void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie
 		} else {
 			BC_ASSERT_TRUE(check_ice(pauline,marie,LinphoneIceStateHostConnection));
 		}
-		check_nb_media_starts(pauline, marie, 1, 1);
+		check_nb_media_starts(AUDIO_START, pauline, marie, 1, 1);
 	}
 
 	liblinphone_tester_check_rtcp(marie,pauline);
