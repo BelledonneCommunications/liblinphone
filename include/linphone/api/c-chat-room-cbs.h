@@ -285,6 +285,8 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsConferenceAddressGenerationCb linphone_chat_r
  */
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_conference_address_generation (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceAddressGenerationCb cb);
 
+#if 0
+
 /**
  * Get the participant device fetching callback.
  * @param[in] cbs #LinphoneChatRoomCbs object
@@ -299,6 +301,8 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsParticipantDeviceFetchRequestedCb linphone_ch
  */
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_participant_device_fetch_requested (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceFetchRequestedCb cb);
 
+
+
 /**
  * Get the participants capabilities callback.
  * @param[in] cbs #LinphoneChatRoomCbs object
@@ -312,6 +316,8 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb linphone_ch
  * @param[in] cb The participants capabilities callback to be used
  */
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_participants_capabilities_checked (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb cb);
+
+#endif
 
 /**
  * Get the participant registration subscription callback.
