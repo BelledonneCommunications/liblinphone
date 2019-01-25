@@ -76,6 +76,11 @@ install -p -m 0644 build/rpm/lp-autoanswer.service $RPM_BUILD_ROOT/lib/systemd/s
 install -p -m 0644 build/rpm/lp-autoanswer.conf $RPM_BUILD_ROOT/etc/sysconfig
 mv $RPM_BUILD_ROOT/etc/sysconfig/lp-autoanswer.conf $RPM_BUILD_ROOT/etc/sysconfig/lp-autoanswer
 
+# Dirty workaround to give exec rights for all shared libraries. Debian packaging needs this
+# TODO : set CMAKE_INSTALL_SO_NO_EXE for a cleaner workaround
+chmod +x `find %{buildroot} *.so.*`
+
+
 %check
 #%{ctest_name} -V %{?_smp_mflags}
 
