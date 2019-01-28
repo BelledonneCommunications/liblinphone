@@ -382,15 +382,12 @@ void linphone_chat_room_set_conference_address (LinphoneChatRoom *cr, const Linp
 		bctbx_free(addrStr);
 }
 
-void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const LinphoneAddress *partAddr, const bctbx_list_t *partDevices) {
+void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const LinphoneAddress *partAddr, const bctbx_list_t *deviceIdentities) {
 	char *addrStr = linphone_address_as_string(partAddr);
-	list<LinphonePrivate::Address> lDevices = L_GET_RESOLVED_CPP_LIST_FROM_C_LIST(partDevices, Address);
-	list<LinphonePrivate::IdentityAddress> lIdentAddr;
-	for (const auto &addr : lDevices)
-		lIdentAddr.push_back(LinphonePrivate::IdentityAddress(addr));
+	list<LinphonePrivate::ParticipantDeviceIdentity> lDevicesIdentities = L_GET_RESOLVED_CPP_LIST_FROM_C_LIST(deviceIdentities, ParticipantDeviceIdentity);
 	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr = dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
 	if (sgcr)
-		sgcr->setParticipantDevices(LinphonePrivate::IdentityAddress(addrStr), lIdentAddr);
+		sgcr->setParticipantDevices(LinphonePrivate::IdentityAddress(addrStr), lDevicesIdentities);
 	bctbx_free(addrStr);
 }
 

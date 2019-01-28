@@ -86,11 +86,12 @@ LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel linphone_participant_get_security_
 LINPHONE_PUBLIC bctbx_list_t *linphone_participant_get_devices (const LinphoneParticipant *participant);
 
 /**
- * Gets the list of devices from a chat room's participant.
+ * Find a device in the list of devices from a chat room's participant.
  * @param[in] participant A #LinphoneParticipant object
- * @return \bctbx_list{LinphoneParticipantDevice}
+ * @param[in] address A #LinphoneAddress object
+ * @return a #LinphoneParticipantDevice or NULL if not found
  */
-LINPHONE_PUBLIC bctbx_list_t *linphone_participant_get_devices (const LinphoneParticipant *participant);
+LINPHONE_PUBLIC LinphoneParticipantDevice *linphone_participant_find_device (const LinphoneParticipant *participant, const LinphoneAddress *address);
 
 /**
  * @}

@@ -201,6 +201,19 @@ LINPHONE_PUBLIC LinphoneCoreCbs *linphone_factory_create_core_cbs(const Linphone
 LINPHONE_PUBLIC LinphoneAddress *linphone_factory_create_address(const LinphoneFactory *factory, const char *addr);
 
 /**
+ * Create a #LinphoneParticipantDeviceIdentity object.
+ * @param factory The #LinphoneFactory singleton.
+ * @param address #LinphoneAddress object.
+ * @param name the name given to the device.
+ * @return A new #LinphoneParticipantDeviceIdentity.
+ */
+LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_factory_create_participant_device_identity(
+	const LinphoneFactory *factory,
+	const LinphoneAddress *address,
+	const char *name
+);
+
+/**
  * Creates a #LinphoneAuthInfo object.
  * The object can be created empty, that is with all arguments set to NULL.
  * Username, userid, password, realm and domain can be set later using specific methods.
