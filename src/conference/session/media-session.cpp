@@ -3700,8 +3700,6 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 				| SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION)
 			) {
 				lInfo() << "Media descriptions are different, need to restart the streams";
-			} else if (listener && listener->isPlayingRingbackTone(q->getSharedFromThis())) {
-				lInfo() << "Playing ringback tone, will restart the streams";
 			} else {
 				for(int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; ++i) {
 					if (!sal_stream_description_active(&oldMd->streams[i]) && !sal_stream_description_active(&newMd->streams[i])) continue;
@@ -3739,9 +3737,16 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 					}
 
 					int sdChanged = sal_stream_description_equals(&oldMd->streams[i], &newMd->streams[i]);
+
+					if (newMd->streams[i].type == SalAudio && listener && listener->isPlayingRingbackTone(q->getSharedFromThis())) {
+						lInfo() << "Playing ringback tone, will restart the audio stream";
+						sdChanged |= SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION;
+					}
+
 					if (sdChanged & (SAL_MEDIA_DESCRIPTION_CODEC_CHANGED
 						| SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED
-						| SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED)
+						| SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED
+						| SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION)
 					) {
 						lInfo() << "Stream descriptions are different, need to restart the " << streamTypeName << " stream";
 						restartStream(&newMd->streams[i], i, sdChanged, targetState);
