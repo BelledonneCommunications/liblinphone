@@ -203,7 +203,7 @@ PlatformHelpers *createIosPlatformHelpers (LinphoneCore *lc, void *system_contex
 void IosPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
 	// workaround
 	LinphoneCore *lc = getCore();
-	linphone_core_set_network_reachable(lc, monitoringEnabled);
+	linphone_core_set_network_reachable_internal(lc, monitoringEnabled);
 }
 
 LINPHONE_END_NAMESPACE
