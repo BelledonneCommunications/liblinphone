@@ -768,7 +768,6 @@ void ChatMessagePrivate::send () {
 		linphone_address_unref(peer);
 	}
 	op->setFrom(fromAddress.asString().c_str());
-	//lInfo() << "ALLOALLO " << fromAddress.asString();
 	op->setTo(toAddress.asStringUriOnly().c_str());
 
 	// ---------------------------------------
