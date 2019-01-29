@@ -23,6 +23,7 @@
 #include <chrono>
 #include <queue>
 #include <unordered_map>
+#include <map>
 
 #include "chat-room-p.h"
 #include "server-group-chat-room.h"
@@ -58,15 +59,22 @@ public:
 	void subscribeReceived (LinphoneEvent *event);
 	void subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state);
 
-	bool initializeParticipants(SalCallOp *op);
-	void subscribeRegistrationForParticipants(const std::list<IdentityAddress> &participants);
+	bool initializeParticipants(const std::shared_ptr<Participant> & initiator, SalCallOp *op);
+	void resumeParticipant(const std::shared_ptr<Participant> &participant);
+	bool subscribeRegistrationForParticipants(const std::list<IdentityAddress> &participants);
+	void unSubscribeRegistrationForParticipant(const IdentityAddress &identAddresses);
 	void handleSubjectChange(SalCallOp *op);
 
 	void setConferenceAddress (const IdentityAddress &conferenceAddress);
 	void updateParticipantDevices (const IdentityAddress &addr, const std::list<IdentityAddress> &devices);
 	void setParticipantDevicesAtCreation (const IdentityAddress &addr, const std::list<IdentityAddress> &devices);
-
+	
+	void updateParticipantDeviceSession(const std::shared_ptr<ParticipantDevice> &device, bool freslyRegistered = false);
+	void updateParticipantsSessions();
+	void conclude();
+	void requestDeletion();
 	LinphoneReason onSipMessageReceived (SalOp *op, const SalMessage *message) override;
+	
 	/*These are the two methods called by the registration subscription module*/
 	void setParticipantDevices (const IdentityAddress &addr, const std::list<IdentityAddress> &devices);
 	void notifyParticipantDeviceRegistration(const IdentityAddress &participantDevice);
@@ -97,11 +105,12 @@ private:
 	static void copyMessageHeaders (const std::shared_ptr<Message> &fromMessage, const std::shared_ptr<ChatMessage> &toMessage);
 
 	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const IdentityAddress &deviceAddress);
-	void byeDevice (const std::shared_ptr<ParticipantDevice> &device);
 	void designateAdmin ();
 	void dispatchMessage (const std::shared_ptr<Message> &message, const std::string &uri);
 	void finalizeCreation ();
+	std::shared_ptr<CallSession> makeSession(const std::shared_ptr<ParticipantDevice> &device);
 	void inviteDevice (const std::shared_ptr<ParticipantDevice> &device);
+	void byeDevice (const std::shared_ptr<ParticipantDevice> &device);
 	bool isAdminLeft () const;
 	void queueMessage (const std::shared_ptr<Message> &message);
 	void queueMessage (const std::shared_ptr<Message> &msg, const IdentityAddress &deviceAddress);
@@ -121,12 +130,19 @@ private:
 		const std::string &message
 	) override;
 	void onCallSessionSetReleased (const std::shared_ptr<CallSession> &session) override;
-
+	void onAckReceived (const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers) override;
+	struct RegistrationSubscriptionContext{
+		bool notified = false;
+		void *context = nullptr; // TODO: unused currently, but can store a context pointer from the implementation of reginfo subscription.
+					 // This will remove the need for a map in conference server for holding subscriptions.
+	};
+	
 	std::list<std::shared_ptr<Participant>> authorizedParticipants; /*list of participant authorized to send messages to the chatroom.
 					This typically excludes participants that in the process of being removed.*/
 	ChatRoomListener *chatRoomListener = this;
 	ServerGroupChatRoom::CapabilitiesMask capabilities = ServerGroupChatRoom::Capabilities::Conference;
-	std::list<IdentityAddress> pendingRegistrationSubscriptions; /*registration subscriptions awaiting their first notify*/ 
+	std::map<std::string, RegistrationSubscriptionContext> registrationSubscriptions; /*map of registrationSubscriptions for each participant*/
+	int unnotifiedRegistrationSubscriptions = 0; /*count of not-yet notified registration subscriptions*/
 	std::shared_ptr<ParticipantDevice> mInitiatorDevice; /*pointer to the ParticipantDevice that is creating the chat room*/
 	bool joiningPendingAfterCreation = false;
 	std::unordered_map<std::string, std::queue<std::shared_ptr<Message>>> queuedMessages;

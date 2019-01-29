@@ -74,10 +74,14 @@ AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
 
 ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
 	switch (state) {
+		case ParticipantDevice::State::ScheduledForJoining:
+			return stream << "ScheduledForJoining";
 		case ParticipantDevice::State::Joining:
 			return stream << "Joining";
 		case ParticipantDevice::State::Present:
 			return stream << "Present";
+		case ParticipantDevice::State::ScheduledForLeaving:
+			return stream << "ScheduledForLeaving";
 		case ParticipantDevice::State::Leaving:
 			return stream << "Leaving";
 		case ParticipantDevice::State::Left:
