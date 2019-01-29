@@ -64,13 +64,13 @@ public:
 	string getDownloadPath () override {return Utils::getEmptyConstRefObject<string>();}
 	void setVideoWindow (void *windowId) override {}
 
-	bool isNetworkReachable () override { return false; }
+	bool isNetworkReachable () override { return true; }
 	void onWifiOnlyEnabled (bool enabled) override {}
 	void setDnsServers () override {}
 	void setHttpProxy (string host, int port) override {}
 	void setNetworkReachable (bool reachable) override {}
 
-	void onLinphoneCoreStart (bool monitoringEnabled) override {}
+	void onLinphoneCoreStart (bool monitoringEnabled) override;
 	void onLinphoneCoreStop () override {}
 
 private:
@@ -198,6 +198,12 @@ string IosPlatformHelpers::getResourcePath (const string &framework, const strin
 
 PlatformHelpers *createIosPlatformHelpers (LinphoneCore *lc, void *system_context) {
 	return new IosPlatformHelpers(lc, system_context);
+}
+
+void IosPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
+	// workaround
+	LinphoneCore *lc = getCore();
+	linphone_core_set_network_reachable(lc, monitoringEnabled);
 }
 
 LINPHONE_END_NAMESPACE
