@@ -109,7 +109,9 @@ public class AndroidPlatformHelper {
 		mNetworkUpdateRunner = new Runnable() {
 			@Override
 			public void run() {
-				updateNetworkReachability();
+				synchronized(AndroidPlatformHelper.this) {
+					updateNetworkReachability();
+				}
 			}
 		};
 
@@ -142,28 +144,27 @@ public class AndroidPlatformHelper {
 		}
 	}
 
-	public void onLinphoneCoreStart(boolean monitoringEnabled) {
+	public synchronized void onLinphoneCoreStart(boolean monitoringEnabled) {
 		mMonitoringEnabled = monitoringEnabled;
 		startNetworkMonitoring();
 	}
 
 	public synchronized void onLinphoneCoreStop() {
-		stopNetworkMonitoring();
-
 		mNativePtr = 0;
-		mMainHandler.removeCallbacks(mNetworkUpdateRunner);
+		mMainHandler.removeCallbacksAndMessages(null);
+		stopNetworkMonitoring();
 	}
 
-	public void onWifiOnlyEnabled(boolean enabled) {
+	public synchronized void onWifiOnlyEnabled(boolean enabled) {
 		mWifiOnly = enabled;
 		postNetworkUpdateRunner();
 	}
 
-	public Object getPowerManager() {
+	public synchronized Object getPowerManager() {
 		return mPowerManager;
 	}
 
-	public String[] getDnsServers() {
+	public synchronized String[] getDnsServers() {
 		if (mConnectivityManager == null || Build.VERSION.SDK_INT < Version.API23_MARSHMALLOW_60)
 			return null;
 
@@ -243,10 +244,10 @@ public class AndroidPlatformHelper {
 	private int getResourceIdentifierFromName(String name) {
 		int resId = mResources.getIdentifier(name, "raw", mContext.getPackageName());
 		if (resId == 0) {
-			Log.d("App doesn't seem to embed resource " + name + "in it's res/raw/ directory, use linphone's instead");
+			Log.d("App doesn't seem to embed resource " + name + " in it's res/raw/ directory, use linphone's instead");
 			resId = mResources.getIdentifier(name, "raw", "org.linphone");
 			if (resId == 0) {
-				Log.i("App doesn't seem to embed resource " + name + "in it's res/raw/ directory. Make sure this file is either brought as an asset or a resource");
+				Log.i("App doesn't seem to embed resource " + name + " in it's res/raw/ directory. Make sure this file is either brought as an asset or a resource");
 			}
 		}
 		return resId;
@@ -411,7 +412,8 @@ public class AndroidPlatformHelper {
 		}
 	}
 
-	public void postNetworkUpdateRunner() {
+	public synchronized void postNetworkUpdateRunner() {
+		mMainHandler.removeCallbacksAndMessages(null);
 		mMainHandler.post(mNetworkUpdateRunner);
 	}
 
@@ -467,11 +469,11 @@ public class AndroidPlatformHelper {
 		}
 	}
 
-	public void setDozeModeEnabled(boolean b) {
+	public synchronized void setDozeModeEnabled(boolean b) {
 		dozeModeEnabled = b;
 	}
 
-	private void startNetworkMonitoring() {
+	private synchronized void startNetworkMonitoring() {
 		if (!mMonitoringEnabled) return;
 		
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
@@ -494,7 +496,7 @@ public class AndroidPlatformHelper {
 		postNetworkUpdateRunner();
 	}
 
-	private void stopNetworkMonitoring() {
+	private synchronized void stopNetworkMonitoring() {
 		if (!mMonitoringEnabled) return;
 		
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
