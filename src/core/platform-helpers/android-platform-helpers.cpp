@@ -120,7 +120,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 		lFatal() << "Could not find java AndroidPlatformHelper class.";
 
 	jmethodID ctor = env->GetMethodID(klass, "<init>", "(JLjava/lang/Object;Z)V");
-	mJavaHelper = env->NewObject(klass, ctor, (jlong)this, (jobject)systemContext, (jboolean)linphone_core_wifi_only_enabled(lc));
+	mJavaHelper = env->NewObject(klass, ctor, (jlong)this, (jobject)systemContext, (jboolean)linphone_core_wifi_only_enabled(getCore()));
 	if (!mJavaHelper) {
 		lError() << "Could not instanciate AndroidPlatformHelper object.";
 		return;
@@ -291,17 +291,19 @@ void AndroidPlatformHelpers::onWifiOnlyEnabled(bool enabled) {
 }
 
 void AndroidPlatformHelpers::setHttpProxy(string host, int port) {
-	linphone_core_set_http_proxy_host(mCore, host.c_str());
-	linphone_core_set_http_proxy_port(mCore, port);
+	linphone_core_set_http_proxy_host(getCore(), host.c_str());
+	linphone_core_set_http_proxy_port(getCore(), port);
 }
 
 void AndroidPlatformHelpers::setDnsServers () {
-	if (!mJavaHelper || linphone_core_get_dns_set_by_app(mCore)) {
+	if (!mJavaHelper) {
 		lError() << "AndroidPlatformHelpers' mJavaHelper is null.";
 		return;
 	}
+	if (linphone_core_get_dns_set_by_app(getCore())) return;
+
 	JNIEnv *env = ms_get_jni_env();
-	if (env && mJavaHelper) {
+	if (env) {
 		jobjectArray jservers = (jobjectArray)env->CallObjectMethod(mJavaHelper, mGetDnsServersId);
 		bctbx_list_t *l = nullptr;
 		if (env->ExceptionCheck()) {
@@ -323,15 +325,16 @@ void AndroidPlatformHelpers::setDnsServers () {
 			}
 		} else {
 			lError() << "AndroidPlatformHelpers::setDnsServers() failed to get DNS servers list";
+			return;
 		}
-		linphone_core_set_dns_servers(mCore, l);
+		linphone_core_set_dns_servers(getCore(), l);
 		bctbx_list_free_with_data(l, ms_free);
 	}
 }
 
 void AndroidPlatformHelpers::setNetworkReachable(bool reachable) {
 	mNetworkReachable = reachable;
-	linphone_core_set_network_reachable_internal(mCore, reachable ? 1 : 0);
+	linphone_core_set_network_reachable_internal(getCore(), reachable ? 1 : 0);
 }
 
 // -----------------------------------------------------------------------------
