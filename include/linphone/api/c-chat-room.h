@@ -489,19 +489,6 @@ LINPHONE_PUBLIC void linphone_chat_room_set_participant_devices (LinphoneChatRoo
  */
 LINPHONE_PUBLIC void linphone_chat_room_notify_participant_device_registration(LinphoneChatRoom *cr, const LinphoneAddress *participant_device);
 
-
-#if 0
-/**
- * Set the participant device. This function needs to be called from the
- * #LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb callback and only there.
- * @param[in] cr A #LinphoneChatRoom object
- * @param[in] deviceAddr The device address
- * @param[in] participantsCompatible \bctbx_list{LinphoneAddress}
- */
-LINPHONE_PUBLIC void linphone_chat_room_add_compatible_participants (LinphoneChatRoom *cr, const LinphoneAddress *deviceAddr, const bctbx_list_t *participantsCompatible);
-
-#endif
-
 /**
  * Returns back pointer to #LinphoneCore object.
  * @deprecated use linphone_chat_room_get_core()
