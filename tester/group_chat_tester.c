@@ -6041,6 +6041,90 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	linphone_core_manager_destroy(pauline);
 }
 
+static void participant_removed_then_added (void) {
+	LinphoneCoreManager *marie1 = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline1 = linphone_core_manager_create("pauline_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie1);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline1);
+	coresManagerList = bctbx_list_append(coresManagerList, laure);
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline1->lc)));
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(laure->lc)));
+	stats initialMarie1Stats = marie1->stat;
+	stats initialPauline1Stats = pauline1->stat;
+	stats initialLaureStats = laure->stat;
+	
+	
+	
+	// Marie creates a new group chat room
+	const char *initialSubject = "Colleagues";
+	LinphoneChatRoom *marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE);
+	participantsAddresses = NULL;
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marie1Cr);
+	
+	// Check that the chat room is correctly created on Pauline1
+	LinphoneChatRoom *pauline1Cr = check_creation_chat_room_client_side(coresList, pauline1, &initialPauline1Stats, confAddr, initialSubject, 2, FALSE);
+	
+	// Check that the chat room is correctly created on Laure's side and that the participants are added
+	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, FALSE);
+
+
+	
+	// Pauline restart to make use of liste subscription :::this part (core restart) is leaking  memory
+	coresList = bctbx_list_remove(coresList, pauline1->lc);
+	linphone_core_manager_reinit(pauline1);
+	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, pauline1);
+	bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
+	bctbx_list_free(tmpCoresManagerList);
+	coresList = bctbx_list_concat(coresList, tmpCoresList);
+	linphone_core_manager_start(pauline1, TRUE);
+	
+	// Check that the chat room has correctly created on Laure's side and that the participants are added
+	pauline1Cr = check_has_chat_room_client_side(coresList, pauline1, &initialPauline1Stats, confAddr, initialSubject, 2, FALSE);
+
+	//wait for first notify to be received by pauline
+	wait_for_list(coresList, NULL, 0, 1000);
+
+	//Pauline leaving but keeping a ref like a Java GC can do, this is the key part of this test.
+	linphone_chat_room_ref(pauline1Cr);
+	
+	linphone_core_delete_chat_room(pauline1->lc, pauline1Cr);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_LinphoneChatRoomStateDeleted, initialPauline1Stats.number_of_LinphoneChatRoomStateDeleted + 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie1->stat.number_of_participants_removed, initialMarie1Stats.number_of_participants_removed + 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participants_removed, initialLaureStats.number_of_participants_removed + 1, 1000));
+
+	
+	// Marie1 adds Pauline back to the chat room
+	initialPauline1Stats = pauline1->stat;
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline1->lc)));
+	linphone_chat_room_add_participants(marie1Cr, participantsAddresses);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie1->stat.number_of_participants_added, initialMarie1Stats.number_of_participants_added + 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participants_added, initialLaureStats.number_of_participants_added + 1, 1000));
+	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marie1Cr), 2, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(laureCr), 2, int, "%d");
+	LinphoneChatRoom *newPauline1Cr = check_creation_chat_room_client_side(coresList, pauline1, &initialPauline1Stats, confAddr, initialSubject, 2, FALSE);
+	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(newPauline1Cr), 2, int, "%d");
+	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(newPauline1Cr), initialSubject);
+	
+	// Clean db from chat room
+	linphone_core_manager_delete_chat_room(marie1, marie1Cr, coresList);
+	linphone_core_manager_delete_chat_room(pauline1, newPauline1Cr, coresList);
+	linphone_core_manager_delete_chat_room(laure, laureCr, coresList);
+	
+	//now GC is cleaning old chatroom
+	//linphone_chat_room_unref(pauline1Cr);
+	
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	//bctbx_list_free_with_data(participantsAddresses,(bctbx_list_free_func)linphone_address_unref);
+	linphone_core_manager_destroy(marie1);
+	linphone_core_manager_destroy(pauline1);
+	linphone_core_manager_destroy(laure);
+}
 
 test_t group_chat_tests[] = {
 	TEST_NO_TAG("Group chat room creation server", group_chat_room_creation_server),
@@ -6116,6 +6200,7 @@ test_t group_chat_tests[] = {
 	TEST_TWO_TAGS("LIMEv2 update keys", group_chat_lime_v2_update_keys, "CreateUserInDb", "LeaksMemory"),
 	TEST_ONE_TAG("Group chat room subscription denied", group_chat_room_subscription_denied, "LeaksMemory"),
     TEST_ONE_TAG("Check  if participant device are removed", group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_notified, "LeaksMemory" /*due to core restart*/)
+	TEST_ONE_TAG("Participant removed then added", participant_removed_then_added, "LeaksMemory" /*due to core restart*/)
 };
 
 test_suite_t group_chat_test_suite = {

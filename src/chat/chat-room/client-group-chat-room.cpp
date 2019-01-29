@@ -621,6 +621,10 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 
 	dConference->eventHandler->unsubscribe();
 	dConference->eventHandler->resetLastNotify();
+	//remove event handler from list event handler if present
+	if (getCore()->getPrivate()->remoteListEventHandler)
+		getCore()->getPrivate()->remoteListEventHandler->removeHandler(dConference->eventHandler.get());
+	
 	d->setState(ChatRoom::State::Terminated);
 
 	auto event = make_shared<ConferenceEvent>(

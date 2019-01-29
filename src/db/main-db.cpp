@@ -339,7 +339,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 		// The chat room is already stored in DB, but still update the notify id that might have changed
 		lInfo() << "Update chat room in database: " << conferenceId << ".";
 		*dbSession.getBackendSession() << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :chatRoomId",
-			soci::use(notifyId), soci::use(chatRoomId);
+			soci::use(notifyId), soci::use(id);
 	} else {
 		
 		lInfo() << "Insert new chat room in database: " << conferenceId << ".";
@@ -362,8 +362,8 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime),
 		soci::use(lastUpdateTime), soci::use(capabilities), soci::use(subject), soci::use(flags), soci::use(notifyId);
 
-        id = dbSession.getLastInsertId();
-
+        	id = dbSession.getLastInsertId();
+	}
 	// Do not add 'me' when creating a server-group-chat-room.
 	if (conferenceId.getLocalAddress() != conferenceId.getPeerAddress()) {
 		shared_ptr<Participant> me = chatRoom->getMe();
@@ -390,6 +390,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 }
 
 long long MainDbPrivate::insertChatRoomParticipant (
+
 	long long conferenceId,
 	long long participantSipAddressId,
 	bool isAdmin
