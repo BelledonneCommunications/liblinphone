@@ -310,6 +310,8 @@ RemoteConference(core, me->getAddress(), nullptr) {
 	dConference->participants = move(participants);
 
 	getMe()->getPrivate()->setAdmin(me->isAdmin());
+	for (const auto &device : me->getPrivate()->getDevices())
+		getMe()->getPrivate()->addDevice(device->getAddress(), device->getName());
 
 	dConference->eventHandler->setConferenceId(conferenceId);
 	dConference->eventHandler->setLastNotify(lastNotifyId);

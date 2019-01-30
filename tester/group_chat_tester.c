@@ -6404,12 +6404,12 @@ static void group_chat_room_participant_devices_name (void) {
 	LinphoneAddress *paulineAddress = linphone_address_ref(linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	LinphoneAddress *laureAddress = linphone_address_ref(linphone_address_new(linphone_core_get_identity(laure->lc)));
 	LinphoneAddress *chloeAddress = linphone_address_new(linphone_core_get_identity(chloe->lc));
-	const LinphoneAddress *marieDeviceAddress =  linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(marie->lc));
-	const LinphoneAddress *paulineDeviceAddress1 =  linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(pauline->lc));
-	const LinphoneAddress *paulineDeviceAddress2 =  linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(pauline2->lc));
-	const LinphoneAddress *laureDeviceAddress =  linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(laure->lc));
-	const LinphoneAddress *chloeDeviceAddress1 =  linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(chloe->lc));
-	const LinphoneAddress *chloeDeviceAddress2 =  linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(chloe2->lc));
+	LinphoneAddress *marieDeviceAddress =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(marie->lc)));
+	LinphoneAddress *paulineDeviceAddress1 =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(pauline->lc)));
+	LinphoneAddress *paulineDeviceAddress2 =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(pauline2->lc)));
+	LinphoneAddress *laureDeviceAddress =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(laure->lc)));
+	LinphoneAddress *chloeDeviceAddress1 =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(chloe->lc)));
+	LinphoneAddress *chloeDeviceAddress2 =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(chloe2->lc)));
 	participantsAddresses = bctbx_list_append(participantsAddresses, paulineAddress);
 	participantsAddresses = bctbx_list_append(participantsAddresses, laureAddress);
 	stats initialMarieStats = marie->stat;
@@ -6424,7 +6424,7 @@ static void group_chat_room_participant_devices_name (void) {
 	const char *initialSubject = "Colleagues";
 	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
 
-	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
@@ -6594,7 +6594,7 @@ static void group_chat_room_participant_devices_name (void) {
 	coresList = bctbx_list_append(coresList, chloe3->lc);
 	linphone_core_set_user_agent(chloe3->lc, "blabla (Chloe device 3) blibli/blublu (bloblo)", NULL);
 	start_core_for_conference(coresManagerList);
-	const LinphoneAddress *chloeDeviceAddress3 =  linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(chloe3->lc));
+	LinphoneAddress *chloeDeviceAddress3 =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(chloe3->lc)));
 	LinphoneChatRoom *chloeCr3 = check_creation_chat_room_client_side(coresList, chloe3, &initialChloeStats3, confAddr, initialSubject, 3, 0);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participant_devices_added, initialMarieStats.number_of_participant_devices_added + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participant_devices_added, initialPaulineStats.number_of_participant_devices_added + 1, 3000));
@@ -6654,10 +6654,217 @@ static void group_chat_room_participant_devices_name (void) {
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
 	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
+	// Still works after restart
+	linphone_core_manager_restart(marie, TRUE);
+	linphone_core_manager_restart(pauline, TRUE);
+	linphone_core_manager_restart(pauline2, TRUE);
+	linphone_core_manager_restart(laure, TRUE);
+	linphone_core_manager_restart(chloe, TRUE);
+	linphone_core_manager_restart(chloe2, TRUE);
+	linphone_core_manager_restart(chloe3, TRUE);
+	coresList = NULL;
+	coresList = bctbx_list_append(coresList, marie->lc);
+	coresList = bctbx_list_append(coresList, pauline->lc);
+	coresList = bctbx_list_append(coresList, pauline2->lc);
+	coresList = bctbx_list_append(coresList, laure->lc);
+	coresList = bctbx_list_append(coresList, chloe->lc);
+	coresList = bctbx_list_append(coresList, chloe2->lc);
+	coresList = bctbx_list_append(coresList, chloe3->lc);
+
+	// Marie
+	marieCr = linphone_core_find_chat_room(marie->lc, confAddr, marieDeviceAddress);
+	LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+	linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
+	linphone_chat_room_add_callbacks(marieCr, cbs);
+	linphone_chat_room_cbs_unref(cbs);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+	marieParticipant = linphone_chat_room_get_me(marieCr);
+	paulineParticipant = linphone_chat_room_find_participant(marieCr, paulineAddress);
+	laureParticipant = linphone_chat_room_find_participant(marieCr, laureAddress);
+	chloeParticipant = linphone_chat_room_find_participant(marieCr, chloeAddress);
+	marieDevice = linphone_participant_find_device(marieParticipant, marieDeviceAddress);
+	paulineDevice = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress1);
+	paulineDevice2 = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress2);
+	laureDevice = linphone_participant_find_device(laureParticipant, laureDeviceAddress);
+	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
+	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
+	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+
+	// Pauline1
+	paulineCr = linphone_core_find_chat_room(pauline->lc, confAddr, paulineDeviceAddress1);
+	cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+	linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
+	linphone_chat_room_add_callbacks(paulineCr, cbs);
+	linphone_chat_room_cbs_unref(cbs);
+	BC_ASSERT_PTR_NOT_NULL(paulineCr);
+	marieParticipant = linphone_chat_room_find_participant(paulineCr, marieAddress);
+	paulineParticipant = linphone_chat_room_get_me(paulineCr);
+	laureParticipant = linphone_chat_room_find_participant(paulineCr, laureAddress);
+	chloeParticipant = linphone_chat_room_find_participant(paulineCr, chloeAddress);
+	marieDevice = linphone_participant_find_device(marieParticipant, marieDeviceAddress);
+	paulineDevice = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress1);
+	paulineDevice2 = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress2);
+	laureDevice = linphone_participant_find_device(laureParticipant, laureDeviceAddress);
+	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
+	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
+	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+
+	// Pauline2
+	paulineCr2 = linphone_core_find_chat_room(pauline2->lc, confAddr, paulineDeviceAddress2);
+	cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+	linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
+	linphone_chat_room_add_callbacks(paulineCr2, cbs);
+	linphone_chat_room_cbs_unref(cbs);
+	BC_ASSERT_PTR_NOT_NULL(paulineCr2);
+	marieParticipant = linphone_chat_room_find_participant(paulineCr2, marieAddress);
+	paulineParticipant = linphone_chat_room_get_me(paulineCr2);
+	laureParticipant = linphone_chat_room_find_participant(paulineCr2, laureAddress);
+	chloeParticipant = linphone_chat_room_find_participant(paulineCr2, chloeAddress);
+	marieDevice = linphone_participant_find_device(marieParticipant, marieDeviceAddress);
+	paulineDevice = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress1);
+	paulineDevice2 = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress2);
+	laureDevice = linphone_participant_find_device(laureParticipant, laureDeviceAddress);
+	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
+	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
+	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+
+	// Laure
+	laureCr = linphone_core_find_chat_room(laure->lc, confAddr, laureDeviceAddress);
+	cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+	linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
+	linphone_chat_room_add_callbacks(laureCr, cbs);
+	linphone_chat_room_cbs_unref(cbs);
+	BC_ASSERT_PTR_NOT_NULL(laureCr);
+	marieParticipant = linphone_chat_room_find_participant(laureCr, marieAddress);
+	paulineParticipant = linphone_chat_room_find_participant(laureCr, paulineAddress);
+	laureParticipant = linphone_chat_room_get_me(laureCr);
+	chloeParticipant = linphone_chat_room_find_participant(laureCr, chloeAddress);
+	marieDevice = linphone_participant_find_device(marieParticipant, marieDeviceAddress);
+	paulineDevice = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress1);
+	paulineDevice2 = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress2);
+	laureDevice = linphone_participant_find_device(laureParticipant, laureDeviceAddress);
+	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
+	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
+	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+
+	// Chloe1
+	chloeCr = linphone_core_find_chat_room(chloe->lc, confAddr, chloeDeviceAddress1);
+	cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+	linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
+	linphone_chat_room_add_callbacks(chloeCr, cbs);
+	linphone_chat_room_cbs_unref(cbs);
+	BC_ASSERT_PTR_NOT_NULL(chloeCr);
+	marieParticipant = linphone_chat_room_find_participant(chloeCr, marieAddress);
+	paulineParticipant = linphone_chat_room_find_participant(chloeCr, paulineAddress);
+	laureParticipant = linphone_chat_room_find_participant(chloeCr, laureAddress);
+	chloeParticipant = linphone_chat_room_get_me(chloeCr);
+	marieDevice = linphone_participant_find_device(marieParticipant, marieDeviceAddress);
+	paulineDevice = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress1);
+	paulineDevice2 = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress2);
+	laureDevice = linphone_participant_find_device(laureParticipant, laureDeviceAddress);
+	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
+	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
+	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+
+	// Chloe2
+	chloeCr2 = linphone_core_find_chat_room(chloe2->lc, confAddr, chloeDeviceAddress2);
+	cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+	linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
+	linphone_chat_room_add_callbacks(chloeCr2, cbs);
+	linphone_chat_room_cbs_unref(cbs);
+	BC_ASSERT_PTR_NOT_NULL(chloeCr2);
+	marieParticipant = linphone_chat_room_find_participant(chloeCr2, marieAddress);
+	paulineParticipant = linphone_chat_room_find_participant(chloeCr2, paulineAddress);
+	laureParticipant = linphone_chat_room_find_participant(chloeCr2, laureAddress);
+	chloeParticipant = linphone_chat_room_get_me(chloeCr2);
+	marieDevice = linphone_participant_find_device(marieParticipant, marieDeviceAddress);
+	paulineDevice = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress1);
+	paulineDevice2 = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress2);
+	laureDevice = linphone_participant_find_device(laureParticipant, laureDeviceAddress);
+	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
+	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
+	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+
+	// Chloe3
+	chloeCr3 = linphone_core_find_chat_room(chloe3->lc, confAddr, chloeDeviceAddress3);
+	cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+	linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
+	linphone_chat_room_add_callbacks(chloeCr3, cbs);
+	linphone_chat_room_cbs_unref(cbs);
+	BC_ASSERT_PTR_NOT_NULL(chloeCr3);
+	marieParticipant = linphone_chat_room_find_participant(chloeCr3, marieAddress);
+	paulineParticipant = linphone_chat_room_find_participant(chloeCr3, paulineAddress);
+	laureParticipant = linphone_chat_room_find_participant(chloeCr3, laureAddress);
+	chloeParticipant = linphone_chat_room_get_me(chloeCr3);
+	marieDevice = linphone_participant_find_device(marieParticipant, marieDeviceAddress);
+	paulineDevice = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress1);
+	paulineDevice2 = linphone_participant_find_device(paulineParticipant, paulineDeviceAddress2);
+	laureDevice = linphone_participant_find_device(laureParticipant, laureDeviceAddress);
+	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
+	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
+	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+
 	linphone_address_unref(marieAddress);
 	linphone_address_unref(paulineAddress);
 	linphone_address_unref(laureAddress);
 	linphone_address_unref(chloeAddress);
+	linphone_address_unref(confAddr);
+	linphone_address_unref(marieDeviceAddress);
+	linphone_address_unref(paulineDeviceAddress1);
+	linphone_address_unref(paulineDeviceAddress2);
+	linphone_address_unref(laureDeviceAddress);
+	linphone_address_unref(chloeDeviceAddress1);
+	linphone_address_unref(chloeDeviceAddress2);
+	linphone_address_unref(chloeDeviceAddress3);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(laure, laureCr, coresList);
@@ -6757,7 +6964,7 @@ test_t group_chat_tests[] = {
 	TEST_TWO_TAGS("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH", "LeaksMemory"),
 	TEST_ONE_TAG("Group chat room subscription denied", group_chat_room_subscription_denied, "LeaksMemory"),
 	TEST_TWO_TAGS("Search friend result chat room participants", search_friend_chat_room_participants, "MagicSearch", "LeaksMemory"),
-	TEST_NO_TAG("Group chat room notify participant devices name", group_chat_room_participant_devices_name),
+	TEST_ONE_TAG("Group chat room notify participant devices name", group_chat_room_participant_devices_name, "LeaksMemory" /* Core restarts */),
 };
 
 test_suite_t group_chat_test_suite = {
