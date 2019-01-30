@@ -122,6 +122,7 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const Identi
 	return participant;
 }
 
+/* This function is used to re-join devices of a participant that has left previously. Its device are still referenced until they 're all left. */
 void ServerGroupChatRoomPrivate::resumeParticipant(const std::shared_ptr<Participant> &participant){
 	addParticipant(participant->getAddress());
 	for (auto device : participant->getPrivate()->getDevices()){
@@ -463,6 +464,7 @@ bool ServerGroupChatRoomPrivate::initializeParticipants (const shared_ptr<Partic
 	}
 	identAddresses.push_back(initiator->getAddress());
 	if (initiator->getPrivate()->getDevices().size() > 1){
+		/* This happens only for one to one chatrooms, when a participant has left and then resumes the chatroom.*/
 		resumeParticipant(initiator);
 	}
 	if (!subscribeRegistrationForParticipants(identAddresses)){
