@@ -170,6 +170,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 					isFullState
 				);
 			} else if (state == StateType::full) {
+				const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
 				confListener->onParticipantDeviceAdded(
 					make_shared<ConferenceParticipantDeviceEvent>(
 						EventLog::Type::ConferenceParticipantDeviceAdded,
@@ -177,7 +178,8 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 						conferenceId,
 						lastNotify,
 						address,
-						gruu
+						gruu,
+						name
 					),
 					isFullState
 				);

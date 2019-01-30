@@ -44,7 +44,7 @@ public:
 	inline void setAddress (const IdentityAddress &newAddr) { addr = newAddr; }
 	inline void setAdmin (bool isAdmin) { this->isAdmin = isAdmin; }
 
-	std::shared_ptr<ParticipantDevice> addDevice (const IdentityAddress &gruu);
+	std::shared_ptr<ParticipantDevice> addDevice (const IdentityAddress &gruu, const std::string &name = "");
 	void clearDevices ();
 	std::shared_ptr<ParticipantDevice> findDevice (const IdentityAddress &gruu) const;
 	std::shared_ptr<ParticipantDevice> findDevice (const std::shared_ptr<const CallSession> &session);

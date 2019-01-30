@@ -48,7 +48,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 namespace {
-	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 5);
+	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 7);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -373,7 +373,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 			me->isAdmin()
 		);
 		for (const auto &device : me->getPrivate()->getDevices())
-			insertChatRoomParticipantDevice(meId, insertSipAddress(device->getAddress().asString()));
+			insertChatRoomParticipantDevice(meId, insertSipAddress(device->getAddress().asString()), device->getName());
 	}
 
 	for (const auto &participant : chatRoom->getParticipants()) {
@@ -383,7 +383,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 			participant->isAdmin()
 		);
 		for (const auto &device : participant->getPrivate()->getDevices())
-			insertChatRoomParticipantDevice(participantId, insertSipAddress(device->getAddress().asString()));
+			insertChatRoomParticipantDevice(participantId, insertSipAddress(device->getAddress().asString()), device->getName());
 	}
 
 	return chatRoomId;
@@ -412,7 +412,8 @@ long long MainDbPrivate::insertChatRoomParticipant (
 
 void MainDbPrivate::insertChatRoomParticipantDevice (
 	long long participantId,
-	long long participantDeviceSipAddressId
+	long long participantDeviceSipAddressId,
+	const string &deviceName
 ) {
 	soci::session *session = dbSession.getBackendSession();
 	long long count;
@@ -423,9 +424,9 @@ void MainDbPrivate::insertChatRoomParticipantDevice (
 	if (count)
 		return;
 
-	*session << "INSERT INTO chat_room_participant_device (chat_room_participant_id, participant_device_sip_address_id)"
-		" VALUES (:participantId, :participantDeviceSipAddressId)",
-		soci::use(participantId), soci::use(participantDeviceSipAddressId);
+	*session << "INSERT INTO chat_room_participant_device (chat_room_participant_id, participant_device_sip_address_id, name)"
+		" VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceName)",
+		soci::use(participantId), soci::use(participantDeviceSipAddressId), soci::use(deviceName);
 }
 
 void MainDbPrivate::insertChatMessageParticipant (long long chatMessageId, long long sipAddressId, int state, time_t stateChangeTime) {
@@ -954,7 +955,7 @@ long long MainDbPrivate::insertConferenceParticipantDeviceEvent (const shared_pt
 
 	switch (eventLog->getType()) {
 		case EventLog::Type::ConferenceParticipantDeviceAdded:
-			insertChatRoomParticipantDevice(participantId, deviceAddressId);
+			insertChatRoomParticipantDevice(participantId, deviceAddressId, participantDeviceEvent->getDeviceName());
 			break;
 
 		case EventLog::Type::ConferenceParticipantDeviceRemoved:
@@ -1160,6 +1161,9 @@ void MainDbPrivate::updateSchema () {
 			"  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
 			"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
 			"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
+	}
+	if (version < makeVersion(1, 0, 7)) {
+		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN name VARCHAR(255)";
 	}
 }
 
@@ -2557,13 +2561,13 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 					// Fetch devices.
 					{
 						const long long &participantId = d->dbSession.resolveId(row, 0);
-						static const string query = "SELECT sip_address.value, state FROM chat_room_participant_device, sip_address"
+						static const string query = "SELECT sip_address.value, state, name FROM chat_room_participant_device, sip_address"
 							" WHERE chat_room_participant_id = :participantId"
 							" AND participant_device_sip_address_id = sip_address.id";
 
 						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(participantId));
 						for (const auto &row : rows) {
-							shared_ptr<ParticipantDevice> device = dParticipant->addDevice(IdentityAddress(row.get<string>(0)));
+							shared_ptr<ParticipantDevice> device = dParticipant->addDevice(IdentityAddress(row.get<string>(0)), row.get<string>(2, ""));
 							device->setState(ParticipantDevice::State(static_cast<unsigned int>(row.get<int>(1, 0))));
 						}
 					}
@@ -2697,7 +2701,7 @@ void MainDb::migrateBasicToClientGroupChatRoom (
 			true
 		);
 		for (const auto &device : me->getPrivate()->getDevices())
-			d->insertChatRoomParticipantDevice(meId, d->insertSipAddress(device->getAddress().asString()));
+			d->insertChatRoomParticipantDevice(meId, d->insertSipAddress(device->getAddress().asString()), device->getName());
 
 		for (const auto &participant : clientGroupChatRoom->getParticipants()) {
 			long long participantId = d->insertChatRoomParticipant(
@@ -2706,7 +2710,7 @@ void MainDb::migrateBasicToClientGroupChatRoom (
 				true
 			);
 			for (const auto &device : participant->getPrivate()->getDevices())
-				d->insertChatRoomParticipantDevice(participantId, d->insertSipAddress(device->getAddress().asString()));
+				d->insertChatRoomParticipantDevice(participantId, d->insertSipAddress(device->getAddress().asString()), device->getName());
 		}
 
 		tr.commit();
@@ -2833,9 +2837,9 @@ void MainDb::updateChatRoomParticipantDevice (
 		const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
 		const long long &participantSipDeviceAddressId = d->selectSipAddressId(device->getAddress().asString());
 		unsigned int state = static_cast<unsigned int>(device->getState());
-		*d->dbSession.getBackendSession() << "UPDATE chat_room_participant_device SET state = :state"
+		*d->dbSession.getBackendSession() << "UPDATE chat_room_participant_device SET state = :state, name = :name"
 			" WHERE chat_room_participant_id = :participantId AND participant_device_sip_address_id = :participantSipDeviceAddressId",
-			soci::use(state), soci::use(participantId), soci::use(participantSipDeviceAddressId);
+			soci::use(state), soci::use(device->getName()), soci::use(participantId), soci::use(participantSipDeviceAddressId);
 
 		tr.commit();
 	};

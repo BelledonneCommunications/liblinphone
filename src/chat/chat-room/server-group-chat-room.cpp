@@ -47,6 +47,32 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+// -----------------------------------------------------------------------------
+
+ParticipantDeviceIdentity::ParticipantDeviceIdentity (const Address &address, const string &name) : ClonableObject(*new ParticipantDeviceIdentityPrivate) {
+	L_D();
+	d->deviceAddress = address;
+	d->deviceName = name;
+}
+
+ParticipantDeviceIdentity::ParticipantDeviceIdentity (const ParticipantDeviceIdentity &other) : ClonableObject(*new ParticipantDeviceIdentityPrivate) {
+	L_D();
+	d->deviceAddress = other.getAddress();
+	d->deviceName = other.getName();
+}
+
+const Address &ParticipantDeviceIdentity::getAddress () const {
+	L_D();
+	return d->deviceAddress;
+}
+
+const string &ParticipantDeviceIdentity::getName () const {
+	L_D();
+	return d->deviceName;
+}
+
+// -----------------------------------------------------------------------------
+
 #define CALL_CHAT_ROOM_CBS(cr, cbName, functionName, ...) \
 	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_chat_room_get_callbacks_list(cr)); \
 	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
@@ -131,7 +157,6 @@ void ServerGroupChatRoomPrivate::resumeParticipant(const std::shared_ptr<Partici
 			case ParticipantDevice::State::Left:
 			case ParticipantDevice::State::ScheduledForLeaving:
 				device->setState(ParticipantDevice::State::ScheduledForJoining);
-				addParticipantDevice(participant, device->getAddress());
 				updateParticipantDeviceSession(device);
 			break;
 			default:
@@ -535,7 +560,8 @@ void ServerGroupChatRoomPrivate::setConferenceAddress (const IdentityAddress &co
 	finalizeCreation();
 }
 
-void ServerGroupChatRoomPrivate::updateParticipantDevices(const IdentityAddress &participantAddress, const list<IdentityAddress> &devices){
+
+void ServerGroupChatRoomPrivate::updateParticipantDevices(const IdentityAddress &participantAddress, const list<ParticipantDeviceIdentity> &devices){
 	L_Q();
 	bool newParticipantReginfo = false;
 	
@@ -565,7 +591,10 @@ void ServerGroupChatRoomPrivate::updateParticipantDevices(const IdentityAddress 
 		// Remove devices that are in the chatroom but no longer in the given list
 		list<shared_ptr<ParticipantDevice>> devicesToRemove;
 		for (const auto &device : participant->getPrivate()->getDevices()) {
-			auto it = find(devices.cbegin(), devices.cend(), device->getAddress());
+			auto predicate = [device] (const ParticipantDeviceIdentity & deviceIdentity) {
+				return device->getAddress() == deviceIdentity.getAddress();
+			};
+			auto it = find_if(devices.cbegin(), devices.cend(), predicate);
 			if (it == devices.cend()){
 				lInfo() << q << "Device " << device << " is no longer registered, it will be removed from the chatroom.";
 				devicesToRemove.push_back(device);
@@ -575,8 +604,8 @@ void ServerGroupChatRoomPrivate::updateParticipantDevices(const IdentityAddress 
 			removeParticipantDevice(participant, device->getAddress());
 
 		// Add all the devices in the given list, if already present they will be ignored
-		for (const auto &deviceAddress : devices)
-			addParticipantDevice(participant, deviceAddress);
+		for (const auto &device : devices)
+			addParticipantDevice(participant, device);
 	}else{
 		if (newParticipantReginfo){
 			lInfo() << q << participantAddress << " has no compatible devices.";
@@ -607,7 +636,7 @@ void ServerGroupChatRoomPrivate::conclude(){
 	}
 }
 
-void ServerGroupChatRoomPrivate::setParticipantDevicesAtCreation(const IdentityAddress &participantAddress, const list<IdentityAddress> &devices) {
+void ServerGroupChatRoomPrivate::setParticipantDevicesAtCreation(const IdentityAddress &participantAddress, const list<ParticipantDeviceIdentity> &devices) {
 	
 	updateParticipantDevices(participantAddress, devices);
 	if (unnotifiedRegistrationSubscriptions == 0){
@@ -615,7 +644,7 @@ void ServerGroupChatRoomPrivate::setParticipantDevicesAtCreation(const IdentityA
 	}
 }
 
-void ServerGroupChatRoomPrivate::setParticipantDevices(const IdentityAddress &participantAddress, const list<IdentityAddress> &devices) {
+void ServerGroupChatRoomPrivate::setParticipantDevices(const IdentityAddress &participantAddress, const list<ParticipantDeviceIdentity> &devices) {
 	
 	if (joiningPendingAfterCreation){
 		setParticipantDevicesAtCreation(participantAddress, devices);
@@ -679,23 +708,20 @@ void ServerGroupChatRoomPrivate::updateParticipantsSessions(){
 	}
 }
 
-void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Participant> &participant, const IdentityAddress &deviceAddress) {
+void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Participant> &participant, const ParticipantDeviceIdentity &deviceInfo) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
-	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddress);
-	bool toAdd = false;
+	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceInfo.getAddress());
+	
 	if (device) {
 		// Nothing to do.
 	} else if (findAuthorizedParticipant(participant->getAddress())) {
 		/*
 		 * This is a really new device.
 		 */
-		device = participant->getPrivate()->addDevice(deviceAddress);
-		toAdd = true;
-	}
-	if (toAdd){
+		device = participant->getPrivate()->addDevice(deviceInfo.getAddress(), deviceInfo.getName());
 		setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
-		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantDeviceAdded(participant->getAddress(), deviceAddress);
+		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantDeviceAdded(participant->getAddress(), deviceInfo.getAddress());
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
 	}
 }

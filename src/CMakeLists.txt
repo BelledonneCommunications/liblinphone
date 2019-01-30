@@ -250,6 +250,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-magic-search.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-participant-device.cpp
+	c-wrapper/api/c-participant-device-identity.cpp
 	c-wrapper/api/c-participant-imdn-state.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-search-result.cpp
@@ -464,7 +465,11 @@ if(ENABLE_SHARED)
 			set_target_properties(linphone PROPERTIES PREFIX "lib")
 		endif()
 	elseif(ANDROID)
-		target_link_libraries(linphone PUBLIC "log" ${SUPPORT_LIBRARIES} ${CPUFEATURES_LIBRARIES})
+		if (SUPPORT_FOUND)
+			target_link_libraries(linphone PUBLIC "log" ${SUPPORT_LIBRARIES} ${CPUFEATURES_LIBRARIES})
+		else()
+			target_link_libraries(linphone PUBLIC "log" ${CPUFEATURES_LIBRARIES})
+		endif()
 	endif()
 	if(MSVC)
 		if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")

@@ -44,6 +44,7 @@
 	F(MediaSessionParams, CallParams) \
 	F(Participant, Participant) \
 	F(ParticipantDevice, ParticipantDevice) \
+	F(ParticipantDeviceIdentity, ParticipantDeviceIdentity) \
 	F(ParticipantImdnState, ParticipantImdnState) \
 	F(SearchResult, SearchResult)
 

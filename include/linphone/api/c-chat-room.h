@@ -477,9 +477,11 @@ LINPHONE_PUBLIC void linphone_chat_room_set_conference_address (LinphoneChatRoom
  * Set the list of participant devices in the form of SIP URIs with GRUUs for a given participant.
  * This function is meaningful only for server implementation of chatroom, and shall not by used by client applications.
  * @param[in] cr A #LinphoneChatRoom object
- * @param[in] partDevices \bctbx_list{LinphoneAddress} list of the participant devices to be used by the group chat room
+ * @param[in] partAddr The participant address
+ * @param[in] deviceIdentities \bctbx_list{LinphoneParticipantDeviceIdentity} list of the participant devices to be used by the group chat room
  */
-LINPHONE_PUBLIC void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const LinphoneAddress *participant, const bctbx_list_t *partDevices);
+LINPHONE_PUBLIC void linphone_chat_room_set_participant_devices(LinphoneChatRoom *cr, const LinphoneAddress *partAddr, const bctbx_list_t *deviceIdentities);
+
 
 /**
  * Notify the chatroom that a participant device has just registered.

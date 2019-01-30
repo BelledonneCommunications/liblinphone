@@ -27,13 +27,37 @@
 
 #include "chat-room-p.h"
 #include "server-group-chat-room.h"
+
 #include "conference/participant-device.h"
+#include "object/clonable-object.h"
+#include "object/clonable-object-p.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
 class ParticipantDevice;
+
+class ParticipantDeviceIdentityPrivate : public ClonableObjectPrivate {
+public:
+	Address deviceAddress;
+	std::string deviceName;
+};
+
+class ParticipantDeviceIdentity : public ClonableObject {
+public:
+	ParticipantDeviceIdentity (const Address &address, const std::string &name);
+	ParticipantDeviceIdentity (const ParticipantDeviceIdentity &other);
+
+	ParticipantDeviceIdentity* clone () const override {
+		return new ParticipantDeviceIdentity(*this);
+	}
+
+	const Address &getAddress () const;
+	const std::string &getName () const;
+private:
+	L_DECLARE_PRIVATE(ParticipantDeviceIdentity);
+};
 
 class ServerGroupChatRoomPrivate : public ChatRoomPrivate {
 public:
@@ -66,17 +90,17 @@ public:
 	void handleSubjectChange(SalCallOp *op);
 
 	void setConferenceAddress (const IdentityAddress &conferenceAddress);
-	void updateParticipantDevices (const IdentityAddress &addr, const std::list<IdentityAddress> &devices);
-	void setParticipantDevicesAtCreation (const IdentityAddress &addr, const std::list<IdentityAddress> &devices);
-	
+	void updateParticipantDevices (const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
+	void setParticipantDevicesAtCreation(const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
 	void updateParticipantDeviceSession(const std::shared_ptr<ParticipantDevice> &device, bool freslyRegistered = false);
 	void updateParticipantsSessions();
 	void conclude();
 	void requestDeletion();
+
 	LinphoneReason onSipMessageReceived (SalOp *op, const SalMessage *message) override;
 	
 	/*These are the two methods called by the registration subscription module*/
-	void setParticipantDevices (const IdentityAddress &addr, const std::list<IdentityAddress> &devices);
+	void setParticipantDevices(const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
 	void notifyParticipantDeviceRegistration(const IdentityAddress &participantDevice);
 
 private:
@@ -104,7 +128,7 @@ private:
 
 	static void copyMessageHeaders (const std::shared_ptr<Message> &fromMessage, const std::shared_ptr<ChatMessage> &toMessage);
 
-	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const IdentityAddress &deviceAddress);
+	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const ParticipantDeviceIdentity &deviceInfo);
 	void designateAdmin ();
 	void dispatchMessage (const std::shared_ptr<Message> &message, const std::string &uri);
 	void finalizeCreation ();

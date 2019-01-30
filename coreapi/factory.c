@@ -234,6 +234,14 @@ LinphoneAddress *linphone_factory_create_address(const LinphoneFactory *factory,
 	return linphone_address_new(addr);
 }
 
+LinphoneParticipantDeviceIdentity *linphone_factory_create_participant_device_identity(
+	const LinphoneFactory *factory,
+	const LinphoneAddress *address,
+	const char *name
+) {
+	return linphone_participant_device_identity_new(address, name);
+}
+
 LinphoneAuthInfo *linphone_factory_create_auth_info(const LinphoneFactory *factory, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain) {
 	return linphone_auth_info_new(username, userid, passwd, ha1, realm, domain);
 }
