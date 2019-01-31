@@ -103,13 +103,20 @@ void GenericPlatformHelpers::onWifiOnlyEnabled (bool enabled) {}
 
 void GenericPlatformHelpers::setDnsServers () {}
 
-void GenericPlatformHelpers::setHttpProxy (string host, int port) {}
+void GenericPlatformHelpers::setHttpProxy (const string &host, int port) {}
+
+string GenericPlatformHelpers::getWifiSSID() { return mCurrentSSID; }
+
+void GenericPlatformHelpers::setWifiSSID(const string &ssid) { mCurrentSSID = ssid; }
 
 void GenericPlatformHelpers::setNetworkReachable (bool reachable) {
 	mNetworkReachable = reachable;
 	linphone_core_set_network_reachable_internal(mCore, reachable);
 }
 
+bool GenericPlatformHelpers::startNetworkMonitoring() { return true; }
+
+void GenericPlatformHelpers::stopNetworkMonitoring() {}
 
 void GenericPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
 	if (!monitoringEnabled) return;

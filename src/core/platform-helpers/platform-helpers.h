@@ -57,6 +57,9 @@ public:
 	virtual std::string getRingResource (const std::string &filename) const = 0;
 	virtual std::string getSoundResource (const std::string &filename) const = 0;
 
+	virtual std::string getWifiSSID() = 0;
+	virtual void setWifiSSID(const std::string &ssid) = 0;
+
 	virtual void setVideoPreviewWindow (void *windowId) = 0;
 	virtual std::string getDownloadPath () = 0;
 	virtual void setVideoWindow (void *windowId) = 0;
@@ -65,8 +68,11 @@ public:
 	virtual bool isNetworkReachable () = 0;
 	virtual void onWifiOnlyEnabled (bool enabled) = 0;
 	virtual void setDnsServers () = 0;
-	virtual void setHttpProxy (std::string host, int port) = 0;
+	virtual void setHttpProxy (const std::string &host, int port) = 0;
 	virtual void setNetworkReachable (bool reachable) = 0;
+
+	virtual bool startNetworkMonitoring() = 0;
+	virtual void stopNetworkMonitoring() = 0;
 
 	virtual void onLinphoneCoreStart (bool monitoringEnabled) = 0;
 	virtual void onLinphoneCoreStop () = 0;
@@ -102,26 +108,38 @@ public:
 	std::string getRingResource (const std::string &filename) const override;
 	std::string getSoundResource (const std::string &filename) const override;
 
+	std::string getWifiSSID() override;
+	void setWifiSSID(const std::string &ssid) override;
+
 	void setVideoPreviewWindow (void *windowId) override;
 	void setVideoWindow (void *windowId) override;
 
 	bool isNetworkReachable () override;
 	void onWifiOnlyEnabled (bool enabled) override;
 	void setDnsServers () override;
-	void setHttpProxy (std::string host, int port) override;
+	void setHttpProxy (const std::string &host, int port) override;
 	void setNetworkReachable (bool reachable) override;
+
+	bool startNetworkMonitoring() override;
+	void stopNetworkMonitoring() override;
 
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
 	void onLinphoneCoreStop () override;
 
+protected:
+	std::string mCurrentSSID;
+	bool mNetworkReachable = true;
+	bool mWifiOnly = false;
+	std::string mHttpProxyHost;
+	int mHttpProxyPort;
+	bool mHttpProxyEnabled = false;
+
+	bool mNetworkMonitoringEnabled;
+
 private:
 	static int monitorTimerExpired (void *data, unsigned int revents);
-
-private:
 	static constexpr int DefaultMonitorTimeout = 5;
-
 	belle_sip_source_t *mMonitorTimer;
-	bool mNetworkReachable = false;
 	std::string getDownloadPath () override;
 };
 
