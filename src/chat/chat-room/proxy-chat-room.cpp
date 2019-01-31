@@ -53,6 +53,11 @@ const ConferenceId &ProxyChatRoom::getConferenceId () const {
 	return d->chatRoom->getConferenceId();
 }
 
+void ProxyChatRoom::setConferenceId (const ConferenceId &conferenceId) {
+    L_D();
+    return d->chatRoom->setConferenceId(conferenceId);
+}
+
 const IdentityAddress &ProxyChatRoom::getPeerAddress () const {
 	L_D();
 	return d->chatRoom->getPeerAddress();

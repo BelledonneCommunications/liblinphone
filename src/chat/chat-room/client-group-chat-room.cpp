@@ -499,6 +499,17 @@ bool ClientGroupChatRoom::addParticipants (
 				me << ", " << participant;
 			return false;
 		}
+        
+        bool isPending = getCore()->findOneToOnePendingChatRoom(getLocalAddress(), participant, encrypted);
+        if (isPending) {
+            const IdentityAddress &me = getMe()->getAddress();
+            lError() << "Trying to create already creationpending " << (encrypted ? "" : "non-") << "encrypted one-to-one chatroom with participants: " <<
+            me << ", " << participant;
+            return false;
+        }
+        
+        shared_ptr<AbstractChatRoom> chatRoom = getSharedFromThis();
+        getCore()->setPeerAddressInPendingChatroom(chatRoom,participant);
 	}
 
 	if (getState() == ChatRoom::State::Instantiated) {

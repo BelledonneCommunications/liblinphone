@@ -283,6 +283,42 @@ shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 	return nullptr;
 }
 
+bool Core::findOneToOnePendingChatRoom (const IdentityAddress &localAddress,
+                                        const IdentityAddress &participantAddress,
+                                        bool encrypted
+                                        ) const {
+    L_D();
+    for (const auto &chatRoom : d->noCreatedClientGroupChatRooms) {
+        ChatRoom::CapabilitiesMask capabilities = chatRoom.second->getCapabilities();
+        
+        // We are looking for a one to one chatroom
+        // Do not return a group chat room that everyone except one person has left
+        if (!(capabilities & ChatRoom::Capabilities::OneToOne))
+            continue;
+        
+        if (encrypted != bool(capabilities & ChatRoom::Capabilities::Encrypted))
+            continue;
+        
+        // One to one client group chat room
+        // The only participant's address must match the participantAddress argument
+        if (
+            (capabilities & ChatRoom::Capabilities::Conference) &&
+            localAddress == chatRoom.second->getLocalAddress() &&
+            participantAddress == chatRoom.second->getPeerAddress()
+            )
+            return true;
+    }
+    return FALSE;
+}
+
+void Core::setPeerAddressInPendingChatroom(shared_ptr<AbstractChatRoom> &chatRoom,const IdentityAddress &participantAddress) {
+    L_D();
+    auto search = d->noCreatedClientGroupChatRooms.find(chatRoom.get());
+    if (search != d->noCreatedClientGroupChatRooms.end()) {
+        chatRoom->setConferenceId(ConferenceId(participantAddress, chatRoom->getLocalAddress()));
+    }
+}
+
 shared_ptr<AbstractChatRoom> Core::createClientGroupChatRoom (const string &subject, bool fallback, bool encrypted) {
 	L_D();
 	return d->createClientGroupChatRoom(subject, fallback, encrypted);

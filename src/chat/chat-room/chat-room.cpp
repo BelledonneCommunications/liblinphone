@@ -377,6 +377,11 @@ const ConferenceId &ChatRoom::getConferenceId () const {
 	return d->conferenceId;
 }
 
+void ChatRoom::setConferenceId (const ConferenceId &conferenceId)  {
+    L_D();
+    d->conferenceId = conferenceId;
+}
+
 const IdentityAddress &ChatRoom::getPeerAddress () const {
 	L_D();
 	return d->conferenceId.getPeerAddress();

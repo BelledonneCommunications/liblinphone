@@ -113,8 +113,14 @@ public:
 		const IdentityAddress &participantAddress,
 		bool encrypted
 	) const;
+    bool findOneToOnePendingChatRoom (
+        const IdentityAddress &localAddress,
+        const IdentityAddress &participantAddress,
+        bool encrypted
+    ) const;
 
 	// TODO add createClientGroupChatRoom with local address
+    void setPeerAddressInPendingChatroom(std::shared_ptr<AbstractChatRoom> &chatRoom,const IdentityAddress &participantAddress);
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, bool fallback = true, bool encrypted = false);
 
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt = false);

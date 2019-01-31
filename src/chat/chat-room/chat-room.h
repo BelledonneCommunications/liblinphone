@@ -40,7 +40,7 @@ public:
 	~ChatRoom ();
 
 	const ConferenceId &getConferenceId () const override;
-
+    void setConferenceId (const ConferenceId &conferenceId) override;
 	const IdentityAddress &getPeerAddress () const override;
 	const IdentityAddress &getLocalAddress () const override;
 
