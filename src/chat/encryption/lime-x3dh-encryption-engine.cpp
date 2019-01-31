@@ -371,10 +371,12 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 
 	// Discard incoming messages from unsafe peer devices
 	lime::PeerDeviceStatus peerDeviceStatus = limeManager->get_peerDeviceStatus(senderDeviceId);
-	if (peerDeviceStatus == lime::PeerDeviceStatus::unsafe) {
-		lWarning() << "LIME X3DH discard incoming message from unsafe sender device " << senderDeviceId;
-		errorCode = 488; // Not Acceptable
-		return ChatMessageModifier::Result::Error;
+	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
+		if (peerDeviceStatus == lime::PeerDeviceStatus::unsafe) {
+			lWarning() << "LIME X3DH discard incoming message from unsafe sender device " << senderDeviceId;
+			errorCode = 488; // Not Acceptable
+			return ChatMessageModifier::Result::Error;
+		}
 	}
 
 	// ---------------------------------------------- HEADERS
