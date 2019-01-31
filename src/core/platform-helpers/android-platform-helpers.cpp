@@ -72,29 +72,29 @@ private:
 	static jmethodID getMethodId (JNIEnv *env, jclass klass, const char *method, const char *signature);
 	string getNativeLibraryDir();
 
-	jobject mJavaHelper;
-	jmethodID mWifiLockAcquireId;
-	jmethodID mWifiLockReleaseId;
-	jmethodID mMcastLockAcquireId;
-	jmethodID mMcastLockReleaseId;
-	jmethodID mCpuLockAcquireId;
-	jmethodID mCpuLockReleaseId;
-	jmethodID mGetDnsServersId;
-	jmethodID mGetPowerManagerId;
-	jmethodID mGetDataPathId;
-	jmethodID mGetConfigPathId;
-	jmethodID mGetDownloadPathId;
-	jmethodID mGetNativeLibraryDirId;
-	jmethodID mSetNativeVideoWindowId;
-	jmethodID mSetNativePreviewVideoWindowId;
-	jmethodID mUpdateNetworkReachabilityId;
-	jmethodID mOnLinphoneCoreStartId;
-	jmethodID mOnLinphoneCoreStopId;
-	jmethodID mOnWifiOnlyEnabledId;
-	jobject mPreviewVideoWindow;
-	jobject mVideoWindow;
+	jobject mJavaHelper = nullptr;
+	jmethodID mWifiLockAcquireId = nullptr;
+	jmethodID mWifiLockReleaseId = nullptr;
+	jmethodID mMcastLockAcquireId = nullptr;
+	jmethodID mMcastLockReleaseId = nullptr;
+	jmethodID mCpuLockAcquireId = nullptr;
+	jmethodID mCpuLockReleaseId = nullptr;
+	jmethodID mGetDnsServersId = nullptr;
+	jmethodID mGetPowerManagerId = nullptr;
+	jmethodID mGetDataPathId = nullptr;
+	jmethodID mGetConfigPathId = nullptr;
+	jmethodID mGetDownloadPathId = nullptr;
+	jmethodID mGetNativeLibraryDirId = nullptr;
+	jmethodID mSetNativeVideoWindowId = nullptr;
+	jmethodID mSetNativePreviewVideoWindowId = nullptr;
+	jmethodID mUpdateNetworkReachabilityId = nullptr;
+	jmethodID mOnLinphoneCoreStartId = nullptr;
+	jmethodID mOnLinphoneCoreStopId = nullptr;
+	jmethodID mOnWifiOnlyEnabledId = nullptr;
+	jobject mPreviewVideoWindow = nullptr;
+	jobject mVideoWindow = nullptr;
 
-	bool mNetworkReachable;
+	bool mNetworkReachable = false;
 };
 
 static const char *GetStringUTFChars (JNIEnv *env, jstring string) {
@@ -120,7 +120,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemCo
 		lFatal() << "Could not find java AndroidPlatformHelper class.";
 
 	jmethodID ctor = env->GetMethodID(klass, "<init>", "(JLjava/lang/Object;Z)V");
-	mJavaHelper = env->NewObject(klass, ctor, (jlong)this, (jobject)systemContext, (jboolean)linphone_core_wifi_only_enabled(lc));
+	mJavaHelper = env->NewObject(klass, ctor, (jlong)this, (jobject)systemContext, (jboolean)linphone_core_wifi_only_enabled(getCore()));
 	if (!mJavaHelper) {
 		lError() << "Could not instanciate AndroidPlatformHelper object.";
 		return;
@@ -212,7 +212,7 @@ string AndroidPlatformHelpers::getDownloadPath () {
 	string downloadPath = download_path;
 	ReleaseStringUTFChars(env, jdownload_path, download_path);
 	return downloadPath + "/";
-} 
+}
 
 string AndroidPlatformHelpers::getDataPath () const {
 	JNIEnv *env = ms_get_jni_env();
@@ -291,17 +291,19 @@ void AndroidPlatformHelpers::onWifiOnlyEnabled(bool enabled) {
 }
 
 void AndroidPlatformHelpers::setHttpProxy(const string &host, int port) {
-	linphone_core_set_http_proxy_host(mCore, host.c_str());
-	linphone_core_set_http_proxy_port(mCore, port);
+	linphone_core_set_http_proxy_host(getCore(), host.c_str());
+	linphone_core_set_http_proxy_port(getCore(), port);
 }
 
 void AndroidPlatformHelpers::setDnsServers () {
-	if (!mJavaHelper || linphone_core_get_dns_set_by_app(mCore)) {
+	if (!mJavaHelper) {
 		lError() << "AndroidPlatformHelpers' mJavaHelper is null.";
 		return;
 	}
+	if (linphone_core_get_dns_set_by_app(getCore())) return;
+
 	JNIEnv *env = ms_get_jni_env();
-	if (env && mJavaHelper) {
+	if (env) {
 		jobjectArray jservers = (jobjectArray)env->CallObjectMethod(mJavaHelper, mGetDnsServersId);
 		bctbx_list_t *l = nullptr;
 		if (env->ExceptionCheck()) {
@@ -314,24 +316,25 @@ void AndroidPlatformHelpers::setDnsServers () {
 
 			for (int i = 0; i < count; i++) {
 				jstring jserver = (jstring)env->GetObjectArrayElement(jservers, i);
-				const char *str = env->GetStringUTFChars(jserver, nullptr);
+				const char *str = GetStringUTFChars(env, jserver);
 				if (str) {
 					lInfo() << "AndroidPlatformHelpers found DNS server " << str;
 					l = bctbx_list_append(l, ms_strdup(str));
-					env->ReleaseStringUTFChars(jserver, str);
+					ReleaseStringUTFChars(env, jserver, str);
 				}
 			}
 		} else {
 			lError() << "AndroidPlatformHelpers::setDnsServers() failed to get DNS servers list";
+			return;
 		}
-		linphone_core_set_dns_servers(mCore, l);
+		linphone_core_set_dns_servers(getCore(), l);
 		bctbx_list_free_with_data(l, ms_free);
 	}
 }
 
 void AndroidPlatformHelpers::setNetworkReachable(bool reachable) {
 	mNetworkReachable = reachable;
-	linphone_core_set_network_reachable_internal(mCore, reachable ? 1 : 0);
+	linphone_core_set_network_reachable_internal(getCore(), reachable ? 1 : 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -414,24 +417,25 @@ PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemCon
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativePreviewWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
-	AndroidPlatformHelpers *androidPlatformHelper = (AndroidPlatformHelpers *)ptr;
+	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	androidPlatformHelper->_setPreviewVideoWindow(id);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
-	AndroidPlatformHelpers *androidPlatformHelper = (AndroidPlatformHelpers *)ptr;
+	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	androidPlatformHelper->_setVideoWindow(id);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNetworkReachable(JNIEnv* env, jobject thiz, jlong ptr, jboolean reachable) {
-	AndroidPlatformHelpers *androidPlatformHelper = (AndroidPlatformHelpers *)ptr;
+	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	androidPlatformHelper->setNetworkReachable(reachable);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setHttpProxy(JNIEnv* env, jobject thiz, jlong ptr, jstring host, jint port) {
-	AndroidPlatformHelpers *androidPlatformHelper = (AndroidPlatformHelpers *)ptr;
+	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	const char *hostC = GetStringUTFChars(env, host);
 	androidPlatformHelper->setHttpProxy(hostC, port);
+	ReleaseStringUTFChars(env, host, hostC);
 }
 
 LINPHONE_END_NAMESPACE
