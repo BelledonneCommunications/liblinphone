@@ -6710,8 +6710,6 @@ static void participant_removed_then_added (void) {
 	// Check that the chat room is correctly created on Laure's side and that the participants are added
 	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, FALSE);
 
-
-	
 	// Pauline restart to make use of liste subscription :::this part (core restart) is leaking  memory
 	coresList = bctbx_list_remove(coresList, pauline1->lc);
 	linphone_core_manager_reinit(pauline1);
@@ -6754,11 +6752,11 @@ static void participant_removed_then_added (void) {
 	linphone_core_manager_delete_chat_room(laure, laureCr, coresList);
 	
 	//now GC is cleaning old chatroom
-	//linphone_chat_room_unref(pauline1Cr);
+	linphone_chat_room_unref(pauline1Cr);
 	
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
-	//bctbx_list_free_with_data(participantsAddresses,(bctbx_list_free_func)linphone_address_unref);
+	bctbx_list_free_with_data(participantsAddresses,(bctbx_list_free_func)linphone_address_unref);
 	linphone_core_manager_destroy(marie1);
 	linphone_core_manager_destroy(pauline1);
 	linphone_core_manager_destroy(laure);
