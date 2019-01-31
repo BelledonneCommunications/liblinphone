@@ -337,22 +337,22 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 	long long id = selectChatRoomId(peerSipAddressId, localSipAddressId);
 	if (id >= 0) {
 		// The chat room is already stored in DB, but still update the notify id that might have changed
-		*dbSession.getBackendSession() << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :conferenceId",
-			soci::use(notifyId), soci::use(id);
-		return id;
-	}
-
-	lInfo() << "Insert new chat room in database: " << conferenceId << ".";
-
-	const tm &creationTime = Utils::getTimeTAsTm(chatRoom->getCreationTime());
-	const tm &lastUpdateTime = Utils::getTimeTAsTm(chatRoom->getLastUpdateTime());
-
-	// Remove capabilities like `Proxy`.
-	const int &capabilities = chatRoom->getCapabilities() & ~ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Proxy);
-
-	const string &subject = chatRoom->getSubject();
-	const int &flags = chatRoom->hasBeenLeft();
-	*dbSession.getBackendSession() << "INSERT INTO chat_room ("
+		lInfo() << "Update chat room in database: " << conferenceId << ".";
+		*dbSession.getBackendSession() << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :chatRoomId",
+			soci::use(notifyId), soci::use(chatRoomId);
+	} else {
+		
+		lInfo() << "Insert new chat room in database: " << conferenceId << ".";
+		
+		const tm &creationTime = Utils::getTimeTAsTm(chatRoom->getCreationTime());
+		const tm &lastUpdateTime = Utils::getTimeTAsTm(chatRoom->getLastUpdateTime());
+		
+		// Remove capabilities like `Proxy`.
+		const int &capabilities = chatRoom->getCapabilities() & ~ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Proxy);
+		
+		const string &subject = chatRoom->getSubject();
+		const int &flags = chatRoom->hasBeenLeft();
+		*dbSession.getBackendSession() << "INSERT INTO chat_room ("
 		"  peer_sip_address_id, local_sip_address_id, creation_time,"
 		"  last_update_time, capabilities, subject, flags, last_notify_id"
 		") VALUES ("
@@ -362,7 +362,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime),
 		soci::use(lastUpdateTime), soci::use(capabilities), soci::use(subject), soci::use(flags), soci::use(notifyId);
 
-	id = dbSession.getLastInsertId();
+        id = dbSession.getLastInsertId();
 
 	// Do not add 'me' when creating a server-group-chat-room.
 	if (conferenceId.getLocalAddress() != conferenceId.getPeerAddress()) {
@@ -2851,6 +2851,27 @@ void MainDb::updateChatRoomParticipantDevice (
 	};
 }
 
+void MainDb::deleteChatRoomParticipant (
+	const std::shared_ptr<AbstractChatRoom> &chatRoom,
+	const IdentityAddress &participant
+){
+	L_D();
+	const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
+	const long long &participantSipAddressId = d->selectSipAddressId(participant.asString());
+	d->deleteChatRoomParticipant(dbChatRoomId, participantSipAddressId);
+}
+
+void MainDb::deleteChatRoomParticipantDevice (
+	const shared_ptr<AbstractChatRoom> &chatRoom,
+	const shared_ptr<ParticipantDevice> &device
+) {
+	L_D();
+	const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
+	const long long &participantSipAddressId = d->selectSipAddressId(device->getParticipant()->getAddress().asString());
+	const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
+	d->deleteChatRoomParticipantDevice(participantId, participantSipAddressId);
+}
+	
 // -----------------------------------------------------------------------------
 
 bool MainDb::import (Backend, const string &parameters) {

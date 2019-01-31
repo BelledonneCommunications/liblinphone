@@ -290,7 +290,11 @@ RemoteConference(core, me->getAddress(), nullptr) {
 	getMe()->getPrivate()->setAdmin(me->isAdmin());
 
 	dConference->eventHandler->setConferenceId(conferenceId);
-	dConference->eventHandler->setLastNotify(lastNotifyId);
+	
+	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state",FALSE );
+	dConference->eventHandler->setLastNotify(forceFullState?0:lastNotifyId);
+	lInfo() << "Last notify set to [" << dConference->eventHandler->getLastNotify() << "] for conference [" << dConference << "]";
+
 	if (!hasBeenLeft)
 		getCore()->getPrivate()->remoteListEventHandler->addHandler(dConference->eventHandler.get());
 }
@@ -662,7 +666,8 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 		time(nullptr),
 		d->conferenceId
 	);
-	d->addEvent(event);
+	//to be moved into invite transaction
+	//d->addEvent(event);
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_conference_joined(cr, L_GET_C_BACK_PTR(event));
@@ -841,7 +846,14 @@ void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<Conferenc
 
 void ClientGroupChatRoom::onParticipantsCleared () {
 	L_D_T(RemoteConference, dConference);
+	//clear from db as well
+	for (const auto &participant : dConference->participants) {
+		getCore()->getPrivate()->mainDb->deleteChatRoomParticipant(getSharedFromThis(), participant->getAddress());
+		for (const auto &device : participant->getPrivate()->getDevices())
+			getCore()->getPrivate()->mainDb->deleteChatRoomParticipantDevice(getSharedFromThis(), device);
+	}
 	dConference->participants.clear();
+	
 }
 
 LINPHONE_END_NAMESPACE

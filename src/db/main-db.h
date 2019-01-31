@@ -189,6 +189,16 @@ public:
 		const std::shared_ptr<ParticipantDevice> &device
 	);
 
+	void deleteChatRoomParticipant (
+		const std::shared_ptr<AbstractChatRoom> &chatRoom,
+		const IdentityAddress &participant
+	);
+	
+	void deleteChatRoomParticipantDevice (
+		const std::shared_ptr<AbstractChatRoom> &chatRoom,
+		const std::shared_ptr<ParticipantDevice> &device
+	);
+
 	// ---------------------------------------------------------------------------
 	// Other.
 	// ---------------------------------------------------------------------------
