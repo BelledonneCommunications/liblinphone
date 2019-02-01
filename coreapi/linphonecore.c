@@ -2427,9 +2427,9 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 		linphone_core_start(lc);
 	}
 
-	LinphoneProxyConfig *proxy=linphone_core_get_default_proxy_config(lc);
-	if (proxy)
-		linphone_core_enable_lime_x3dh(lc, proxy->lime_x3dh);
+	LinphoneConfig *lpconfig = linphone_core_get_config(lc);
+	bool enableLime = lp_config_get_int(lpconfig, "lime", "enable_lime_x3dh", 1);
+	linphone_core_enable_lime_x3dh(lc, enableLime);
 }
 
 void linphone_core_start (LinphoneCore *lc) {
