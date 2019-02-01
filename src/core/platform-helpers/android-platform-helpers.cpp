@@ -32,7 +32,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-class AndroidPlatformHelpers : public PlatformHelpers {
+class AndroidPlatformHelpers : public GenericPlatformHelpers {
 public:
 	AndroidPlatformHelpers (LinphoneCore *lc, void *systemContext);
 	~AndroidPlatformHelpers ();
