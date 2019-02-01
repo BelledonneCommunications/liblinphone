@@ -2426,6 +2426,10 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	if (automatically_start) {
 		linphone_core_start(lc);
 	}
+
+	LinphoneProxyConfig *proxy=linphone_core_get_default_proxy_config(lc);
+	if (proxy)
+		linphone_core_enable_lime_x3dh(lc, proxy->lime_x3dh);
 }
 
 void linphone_core_start (LinphoneCore *lc) {
