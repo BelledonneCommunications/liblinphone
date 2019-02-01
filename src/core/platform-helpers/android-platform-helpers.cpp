@@ -113,7 +113,7 @@ jmethodID AndroidPlatformHelpers::getMethodId (JNIEnv *env, jclass klass, const 
 	return id;
 }
 
-AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemContext) : PlatformHelpers(lc) {
+AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemContext) : GenericPlatformHelpers(lc) {
 	JNIEnv *env = ms_get_jni_env();
 	jclass klass = env->FindClass("org/linphone/core/tools/AndroidPlatformHelper");
 	if (!klass)
