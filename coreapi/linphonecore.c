@@ -3495,21 +3495,6 @@ const char * linphone_core_get_identity(LinphoneCore *lc){
 	return from;
 }
 
-char * linphone_core_get_device_identity(LinphoneCore *lc) {
-	char *identity = NULL;
-	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(lc);
-	if (proxy) {
-		const LinphoneAddress *contactAddr = linphone_proxy_config_get_contact(proxy);
-		if (contactAddr)
-			identity = linphone_address_as_string(contactAddr);
-		else
-			identity = bctbx_strdup(linphone_proxy_config_get_identity(proxy));
-	} else {
-		identity = bctbx_strdup(linphone_core_get_primary_contact(lc));
-	}
-	return identity;
-}
-
 const char * linphone_core_get_route(LinphoneCore *lc){
 	LinphoneProxyConfig *proxy=linphone_core_get_default_proxy_config(lc);
 	const char *route=NULL;

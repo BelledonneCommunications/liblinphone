@@ -594,8 +594,6 @@ void _linphone_core_set_log_handler(OrtpLogFunc logfunc);
 void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id);
 void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id);
 
-/*Not very useful, but used by tests*/
-LINPHONE_PUBLIC char *linphone_core_get_device_identity(LinphoneCore *lc);
 
 #ifdef __cplusplus
 }
