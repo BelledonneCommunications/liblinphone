@@ -714,7 +714,8 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceInfo.getAddress());
 	
 	if (device) {
-		// Nothing to do.
+		// Nothing to do, but set the name because the user-agent is not known for the initiator device.
+		device->setName(deviceInfo.getName());
 	} else if (findAuthorizedParticipant(participant->getAddress())) {
 		/*
 		 * This is a really new device.
@@ -1122,6 +1123,12 @@ bool ServerGroupChatRoom::hasBeenLeft () const {
 
 bool ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
 	L_D();
+	
+	if (addr.hasGruu()){
+		lInfo() << this << ": Not adding participant '" << addr.asString() << "' because it is a gruu address.";
+		return false;
+	}
+	
 	if (d->findAuthorizedParticipant(addr)) {
 		lInfo() << this << ": Not adding participant '" << addr.asString() << "' because it is already a participant";
 		return false;

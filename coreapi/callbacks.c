@@ -828,7 +828,7 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 						Address fromAddr(op->getFrom());
 						shared_ptr<Participant> participant = chatRoom->findParticipant(fromAddr);
 						if (!participant || !participant->isAdmin()) {
-							static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
+							static_cast<SalReferOp *>(op)->reply(SalReasonForbidden);
 							return;
 						}
 						if (addr.hasParam("admin")) {
