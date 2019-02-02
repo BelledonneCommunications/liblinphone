@@ -3855,6 +3855,7 @@ static void group_chat_room_complex_participant_removal_scenario (void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
+	LinphoneAddress *laureDeviceAddress;
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
@@ -3882,9 +3883,7 @@ static void group_chat_room_complex_participant_removal_scenario (void) {
 
 	// Restart Laure core
 	linphone_core_set_network_reachable(laure->lc, FALSE);
-	char *laureIdentity = linphone_core_get_device_identity(laure->lc);
-	LinphoneAddress *laureAddr = linphone_address_new(laureIdentity);
-	bctbx_free(laureIdentity);
+	LinphoneAddress *laureAddr = linphone_address_clone(laure->identity);
 	coresList = bctbx_list_remove(coresList, laure->lc);
 	linphone_core_manager_reinit(laure);
 	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, laure);
@@ -3921,11 +3920,11 @@ static void group_chat_room_complex_participant_removal_scenario (void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomConferenceJoined, initialLaureStats.number_of_LinphoneChatRoomConferenceJoined + 1, 3000));
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 2, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
-	laureIdentity = linphone_core_get_device_identity(laure->lc);
-	laureAddr = linphone_address_new(laureIdentity);
+	char *laureIdentity = linphone_core_get_device_identity(laure->lc);
+	laureDeviceAddress = linphone_address_new(laureIdentity);
 	bctbx_free(laureIdentity);
-	LinphoneChatRoom *newLaureCr = linphone_core_find_chat_room(laure->lc, confAddr, laureAddr);
-	linphone_address_unref(laureAddr);
+	LinphoneChatRoom *newLaureCr = linphone_core_find_chat_room(laure->lc, confAddr, laureDeviceAddress);
+	linphone_address_unref(laureDeviceAddress);
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(newLaureCr), 2, int, "%d");
 	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(newLaureCr), initialSubject);
 	BC_ASSERT_FALSE(linphone_chat_room_has_been_left(newLaureCr));
