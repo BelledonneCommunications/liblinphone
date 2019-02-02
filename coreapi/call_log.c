@@ -188,6 +188,11 @@ const char *linphone_call_log_get_call_id(const LinphoneCallLog *cl){
 	return cl->call_id;
 }
 
+void linphone_call_log_set_call_id(LinphoneCallLog *cl, const char *call_id) {
+	if (cl->call_id) bctbx_free(cl->call_id);
+	cl->call_id = call_id ? bctbx_strdup(call_id) : NULL;
+}
+
 LinphoneCallDir linphone_call_log_get_dir(const LinphoneCallLog *cl){
 	return cl->dir;
 }
