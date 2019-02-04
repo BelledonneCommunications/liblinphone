@@ -175,3 +175,20 @@ LinphoneChatMessage * _linphone_chat_room_get_first_transient_message (const Lin
 	);
 	return L_GET_C_BACK_PTR(event->getChatMessage());
 }
+
+char * linphone_core_get_device_identity(LinphoneCore *lc) {
+	char *identity = NULL;
+	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(lc);
+	if (proxy) {
+		const LinphoneAddress *contactAddr = linphone_proxy_config_get_contact(proxy);
+		if (contactAddr)
+			identity = linphone_address_as_string(contactAddr);
+		else
+			identity = bctbx_strdup(linphone_proxy_config_get_identity(proxy));
+	} else {
+		identity = bctbx_strdup(linphone_core_get_primary_contact(lc));
+	}
+	return identity;
+}
+
+
