@@ -125,6 +125,8 @@ LINPHONE_PUBLIC int linphone_friend_list_get_revision(const LinphoneFriendList *
 
 LINPHONE_PUBLIC int linphone_remote_provisioning_load_file( LinphoneCore* lc, const char* file_path);
 
+LINPHONE_PUBLIC char *linphone_core_get_device_identity(LinphoneCore *lc);
+
 /**
  * Send an XML-RPC request to delete a Linphone account.
  * @param[in] creator LinphoneAccountCreator object
@@ -243,6 +245,7 @@ LINPHONE_PUBLIC void sal_op_send_refer(SalOp *sal_refer_op, SalAddress* refer_to
 LINPHONE_PUBLIC void sal_set_user_pointer(Sal *sal, void *user_pointer);
 LINPHONE_PUBLIC void *sal_get_user_pointer(Sal *sal);
 LINPHONE_PUBLIC void sal_set_call_refer_callback(Sal *sal, void (*OnReferCb)(SalOp *op, const SalAddress *referto));
+
 #endif
 
 #ifdef __cplusplus
