@@ -4108,6 +4108,10 @@ MediaSession::~MediaSession () {
 
 // -----------------------------------------------------------------------------
 
+void MediaSession::acceptDefault(){
+	accept();
+}
+
 LinphoneStatus MediaSession::accept (const MediaSessionParams *msp) {
 	L_D();
 	LinphoneStatus result = d->checkForAcceptation();

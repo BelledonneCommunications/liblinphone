@@ -42,6 +42,7 @@ public:
 	MediaSession (const std::shared_ptr<Core> &core, std::shared_ptr<Participant> me, const CallSessionParams *params, CallSessionListener *listener);
 	~MediaSession ();
 
+	virtual void acceptDefault() override;
 	LinphoneStatus accept (const MediaSessionParams *msp = nullptr);
 	LinphoneStatus acceptEarlyMedia (const MediaSessionParams *msp = nullptr);
 	LinphoneStatus acceptUpdate (const MediaSessionParams *msp);

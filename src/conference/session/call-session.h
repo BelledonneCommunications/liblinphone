@@ -56,6 +56,8 @@ public:
 	CallSession (const std::shared_ptr<Core> &core, const CallSessionParams *params, CallSessionListener *listener);
 	~CallSession ();
 
+	// This virtual is a dirty hack until CallSession/MediaSession are refactored.
+	virtual void acceptDefault();
 	LinphoneStatus accept (const CallSessionParams *csp = nullptr);
 	LinphoneStatus acceptUpdate (const CallSessionParams *csp = nullptr);
 	virtual void configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg, SalCallOp *op, const Address &from, const Address &to);

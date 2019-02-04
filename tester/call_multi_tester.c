@@ -606,25 +606,25 @@ static void unattended_call_transfer(void) {
 	reset_counters(&laure->stat);
 
 	linphone_call_transfer(pauline_called_by_marie,laure_identity);
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallRefered,1,2000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallRefered,1,3000));
 
 	/*marie ends the call  */
 	linphone_call_terminate(pauline_called_by_marie);
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,2000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,3000));
 
 	/*Pauline starts the transfer*/
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingInit,1,2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingProgress,1,2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallIncomingReceived,1,2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingRinging,1,2000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingInit,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingProgress,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallIncomingReceived,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingRinging,1,3000));
 	linphone_call_accept(linphone_core_get_current_call(laure->lc));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallConnected,1,2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,1,2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,2000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallConnected,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,3000));
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,2000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,3000));
 
 	end_call(laure, pauline);
 	linphone_core_manager_destroy(marie);
@@ -675,7 +675,7 @@ static void unattended_call_transfer_with_error(void) {
 }
 
 
-static void call_transfer_existing_call(bool_t outgoing_call) {
+static void call_transfer_existing_call(bool_t outgoing_call, bool_t auto_answer_replacing_calls) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
@@ -689,6 +689,9 @@ static void call_transfer_existing_call(bool_t outgoing_call) {
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,laure->lc);
+	
+	if (!auto_answer_replacing_calls)
+		linphone_config_set_int(linphone_core_get_config(laure->lc), "sip", "auto_answer_replacing_calls", 0);
 
 	/*marie call pauline*/
 	BC_ASSERT_TRUE((call_ok=call(marie,pauline)));
@@ -739,12 +742,14 @@ static void call_transfer_existing_call(bool_t outgoing_call) {
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneTransferCallOutgoingProgress,1,2000));
 
 		/*laure accept call*/
-		for(calls=linphone_core_get_calls(laure->lc);calls!=NULL;calls=calls->next) {
-			lcall = (LinphoneCall*)calls->data;
-			if (linphone_call_get_state(lcall) == LinphoneCallIncomingReceived) {
-				BC_ASSERT_PTR_EQUAL(linphone_call_get_replaced_call(lcall),laure_called_by_marie);
-				linphone_call_accept(lcall);
-				break;
+		if (!auto_answer_replacing_calls){
+			for(calls=linphone_core_get_calls(laure->lc);calls!=NULL;calls=calls->next) {
+				lcall = (LinphoneCall*)calls->data;
+				if (linphone_call_get_state(lcall) == LinphoneCallIncomingReceived) {
+					BC_ASSERT_PTR_EQUAL(linphone_call_get_replaced_call(lcall),laure_called_by_marie);
+					linphone_call_accept(lcall);
+					break;
+				}
 			}
 		}
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallConnected,1,2000));
@@ -768,11 +773,15 @@ end:
 }
 
 static void call_transfer_existing_call_outgoing_call(void) {
-	call_transfer_existing_call(TRUE);
+	call_transfer_existing_call(TRUE, TRUE);
+}
+
+static void call_transfer_existing_call_outgoing_call_no_auto_answer(void) {
+	call_transfer_existing_call(TRUE, FALSE);
 }
 
 static void call_transfer_existing_call_incoming_call(void) {
-	call_transfer_existing_call(FALSE);
+	call_transfer_existing_call(FALSE, TRUE);
 }
 
 static void call_transfer_existing_ringing_call(void) {
@@ -783,6 +792,7 @@ static void call_transfer_existing_ringing_call(void) {
 	LinphoneCall *pauline_called_by_marie;
 	LinphoneCall *marie_call_laure;
 	LinphoneCall *lcall;
+	LinphoneCall *laure_call;
 	bool_t call_ok = TRUE;
 	const bctbx_list_t *calls;
 	stats initial_marie_stats;
@@ -802,6 +812,9 @@ static void call_transfer_existing_ringing_call(void) {
 		BC_ASSERT_PTR_NOT_NULL((marie_call_laure = linphone_core_invite_address(marie->lc, laure->identity)));
 		if (!marie_call_laure) goto end;
 		BC_ASSERT_TRUE(wait_for(marie->lc, laure->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, initial_marie_stats.number_of_LinphoneCallOutgoingRinging + 1));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallIncomingReceived, 1, 2000));
+		laure_call = linphone_core_get_current_call(laure->lc);
+		
 		linphone_call_transfer_to_another(marie_call_pauline, marie_call_laure);
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallRefered, 1, 2000));
 
@@ -811,13 +824,16 @@ static void call_transfer_existing_ringing_call(void) {
 		/* pauline calling laure */
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingProgress, 1, 2000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneTransferCallOutgoingInit, 1, 2000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallIncomingReceived, 1, 2000));
+		
+		
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingRinging, 1, 2000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneTransferCallOutgoingProgress, 1, 2000));
 
-		/* laure accepts call */
+		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallIncomingReceived, 2, 2000));
+		/* laure accepts the new (replacing) call */
 		for (calls = linphone_core_get_calls(laure->lc); calls != NULL; calls = calls->next) {
 			lcall = (LinphoneCall*)calls->data;
+			if (lcall == laure_call) continue;
 			if (linphone_call_get_state(lcall) == LinphoneCallIncomingReceived) {
 				linphone_call_accept(lcall);
 				break;
@@ -1228,8 +1244,9 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Simple call transfer", simple_call_transfer),
 	TEST_NO_TAG("Unattended call transfer", unattended_call_transfer),
 	TEST_NO_TAG("Unattended call transfer with error", unattended_call_transfer_with_error),
-	TEST_NO_TAG("Call transfer existing call outgoing call", call_transfer_existing_call_outgoing_call),
-	TEST_NO_TAG("Call transfer existing call incoming call", call_transfer_existing_call_incoming_call),
+	TEST_NO_TAG("Call transfer existing outgoing call", call_transfer_existing_call_outgoing_call),
+	TEST_NO_TAG("Call transfer existing outgoing call without auto answer of replacing call", call_transfer_existing_call_outgoing_call_no_auto_answer),
+	TEST_NO_TAG("Call transfer existing incoming call", call_transfer_existing_call_incoming_call),
 	TEST_NO_TAG("Call transfer existing ringing call", call_transfer_existing_ringing_call),
 	TEST_NO_TAG("Simple remote conference", simple_remote_conference),
 	TEST_NO_TAG("Simple remote conference with shut down focus", simple_remote_conference_shut_down_focus),

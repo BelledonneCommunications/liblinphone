@@ -378,13 +378,16 @@ void CallSessionPrivate::replaceOp (SalCallOp *newOp) {
 		case CallSession::State::IncomingReceived:
 			oldOp->setUserPointer(nullptr); // In order for the call session to not get terminated by terminating this op
 			// Do not terminate a forked INVITE
-			if (op->getReplaces())
+			lInfo() << "CallSessionPrivate::replaceOp(): terminating old session in early state.";
+			if (op->getReplaces()){
 				oldOp->terminate();
-			else
+			}else{
 				oldOp->killDialog();
+			}
 			break;
 		case CallSession::State::Connected:
 		case CallSession::State::StreamsRunning:
+			lInfo() << "CallSessionPrivate::replaceOp(): terminating old session in running state.";
 			oldOp->terminate();
 			oldOp->killDialog();
 			break;
@@ -514,15 +517,23 @@ void CallSessionPrivate::accept (const CallSessionParams *csp) {
 void CallSessionPrivate::acceptOrTerminateReplacedSessionInIncomingNotification () {
 	L_Q();
 	CallSession *replacedSession = nullptr;
-	if (op->getReplaces())
-		replacedSession = reinterpret_cast<CallSession *>(op->getReplaces()->getUserPointer());
-	if (replacedSession) {
-		if ((replacedSession->getState() == CallSession::State::Connected) || (replacedSession->getState() == CallSession::State::StreamsRunning)) {
-			if (lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "auto_answer_replacing_calls", 1)) {
-				q->accept();
+	if (lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "auto_answer_replacing_calls", 1)) {
+		if (op->getReplaces())
+			replacedSession = reinterpret_cast<CallSession *>(op->getReplaces()->getUserPointer());
+		if (replacedSession) {
+			switch (replacedSession->getState()){
+				/* If the replaced call is already accepted, then accept automatic replacement. */
+				case CallSession::State::StreamsRunning:
+				case CallSession::State::Connected:
+				case CallSession::State::Paused:
+				case CallSession::State::PausedByRemote:
+				case CallSession::State::Pausing:
+					lInfo() << " auto_answer_replacing_calls is true, replacing call is going to be accepted and replaced call terminated.";
+					q->acceptDefault();
+				break;
+				default:
+				break;
 			}
-		} else {
-			replacedSession->terminate();
 		}
 	}
 }
@@ -920,6 +931,10 @@ CallSession::~CallSession () {
 }
 
 // -----------------------------------------------------------------------------
+
+void CallSession::acceptDefault(){
+	accept();
+}
 
 LinphoneStatus CallSession::accept (const CallSessionParams *csp) {
 	L_D();
