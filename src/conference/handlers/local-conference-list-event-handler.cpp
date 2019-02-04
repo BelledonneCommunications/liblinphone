@@ -108,10 +108,17 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 	bool noContent = true;
 	list<Content> contents;
 	istringstream data(xmlBody);
-	unique_ptr<Xsd::ResourceLists::ResourceLists> rl(Xsd::ResourceLists::parseResourceLists(
-		data,
-		Xsd::XmlSchema::Flags::dont_validate
-	));
+	unique_ptr<Xsd::ResourceLists::ResourceLists> rl;
+	try {
+		rl = Xsd::ResourceLists::parseResourceLists(
+			data,
+			Xsd::XmlSchema::Flags::dont_validate
+		);
+	} catch (const exception &) {
+		lError() << "Error while parsing subscribe body for conferences asked by: " << participantAddr;
+		return;
+	}
+
 	for (const auto &l : rl->getList()) {
 		for (const auto &entry : l.getEntry()) {
 			Address addr(entry.getUri());
