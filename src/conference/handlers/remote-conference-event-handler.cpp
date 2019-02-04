@@ -46,7 +46,13 @@ using namespace Xsd::ConferenceInfo;
 
 void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xmlBody) {
 	istringstream data(xmlBody);
-	unique_ptr<ConferenceType> confInfo = parseConferenceInfo(data, Xsd::XmlSchema::Flags::dont_validate);
+	unique_ptr<ConferenceType> confInfo;
+	try {
+		confInfo = parseConferenceInfo(data, Xsd::XmlSchema::Flags::dont_validate);
+	} catch (const exception &) {
+		lError() << "Error while parsing conference notify for: " << conferenceId;
+		return;
+	}
 
 	IdentityAddress entityAddress(confInfo->getEntity().c_str());
 	if (entityAddress != conferenceId.getPeerAddress())

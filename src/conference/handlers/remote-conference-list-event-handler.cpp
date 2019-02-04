@@ -139,7 +139,16 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 		// Simple notify received directly from a chat-room
 		const string &xmlBody = notifyContent->getBodyAsUtf8String();
 		istringstream data(xmlBody);
-		unique_ptr<Xsd::ConferenceInfo::ConferenceType> confInfo = Xsd::ConferenceInfo::parseConferenceInfo(data, Xsd::XmlSchema::Flags::dont_validate);
+		unique_ptr<Xsd::ConferenceInfo::ConferenceType> confInfo;
+		try {
+			confInfo = Xsd::ConferenceInfo::parseConferenceInfo(
+				data,
+				Xsd::XmlSchema::Flags::dont_validate
+			);
+		} catch (const exception &) {
+			lError() << "Error while parsing conference-info in conferences notify";
+			return;
+		}
 
 		IdentityAddress entityAddress(confInfo->getEntity().c_str());
 		ConferenceId id(entityAddress, local);
@@ -210,11 +219,17 @@ void RemoteConferenceListEventHandler::removeHandler (RemoteConferenceEventHandl
 
 map<string, IdentityAddress> RemoteConferenceListEventHandler::parseRlmi (const string &xmlBody) const {
 	istringstream data(xmlBody);
-	unique_ptr<Xsd::Rlmi::List> rlmi(Xsd::Rlmi::parseList(
-		data,
-		Xsd::XmlSchema::Flags::dont_validate
-	));
 	map<string, IdentityAddress> addresses;
+	unique_ptr<Xsd::Rlmi::List> rlmi;
+	try {
+		rlmi = Xsd::Rlmi::parseList(
+			data,
+			Xsd::XmlSchema::Flags::dont_validate
+		);
+	} catch (const exception &) {
+		lError() << "Error while parsing RLMI in conferences notify";
+		return addresses;
+	}
 	for (const auto &resource : rlmi->getResource()) {
 		if (resource.getInstance().empty())
 			continue;
