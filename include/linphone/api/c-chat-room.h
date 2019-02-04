@@ -467,28 +467,29 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_chat_room_get_composing_addresses(
 /**
  * Set the conference address of a group chat room. This function needs to be called from the
  * #LinphoneChatRoomCbsConferenceAddressGenerationCb callback and only there.
+ * This function is meaningful only for server implementation of chatroom, and shall not by used by client applications.
  * @param[in] cr A #LinphoneChatRoom object
  * @param[in] confAddr The conference address to be used by the group chat room
  */
 LINPHONE_PUBLIC void linphone_chat_room_set_conference_address (LinphoneChatRoom *cr, const LinphoneAddress *confAddr);
 
 /**
- * Set the participant device. This function needs to be called from the
- * #LinphoneChatRoomCbsParticipantDeviceFetchRequestedCb callback and only there.
+ * Set the list of participant devices in the form of SIP URIs with GRUUs for a given participant.
+ * This function is meaningful only for server implementation of chatroom, and shall not by used by client applications.
  * @param[in] cr A #LinphoneChatRoom object
  * @param[in] partAddr The participant address
  * @param[in] deviceIdentities \bctbx_list{LinphoneParticipantDeviceIdentity} list of the participant devices to be used by the group chat room
  */
-LINPHONE_PUBLIC void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const LinphoneAddress *partAddr, const bctbx_list_t *deviceIdentities);
+LINPHONE_PUBLIC void linphone_chat_room_set_participant_devices(LinphoneChatRoom *cr, const LinphoneAddress *partAddr, const bctbx_list_t *deviceIdentities);
+
 
 /**
- * Set the participant device. This function needs to be called from the
- * #LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb callback and only there.
+ * Notify the chatroom that a participant device has just registered.
+ * This function is meaningful only for server implementation of chatroom, and shall not by used by client applications.
  * @param[in] cr A #LinphoneChatRoom object
- * @param[in] deviceAddr The device address
- * @param[in] participantsCompatible \bctbx_list{LinphoneAddress}
+ * @param[in] partDevice list of the participant devices to be used by the group chat room
  */
-LINPHONE_PUBLIC void linphone_chat_room_add_compatible_participants (LinphoneChatRoom *cr, const LinphoneAddress *deviceAddr, const bctbx_list_t *participantsCompatible);
+LINPHONE_PUBLIC void linphone_chat_room_notify_participant_device_registration(LinphoneChatRoom *cr, const LinphoneAddress *participant_device);
 
 /**
  * Returns back pointer to #LinphoneCore object.

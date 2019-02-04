@@ -828,7 +828,7 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 						Address fromAddr(op->getFrom());
 						shared_ptr<Participant> participant = chatRoom->findParticipant(fromAddr);
 						if (!participant || !participant->isAdmin()) {
-							static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
+							static_cast<SalReferOp *>(op)->reply(SalReasonForbidden);
 							return;
 						}
 						if (addr.hasParam("admin")) {
@@ -840,15 +840,11 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 								return;
 							}
 						} else {
-							participant = L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->findFilteredParticipant(addr);
+							participant = L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->findAuthorizedParticipant(addr);
 							if (!participant) {
-								list<IdentityAddress> identAddresses;
-								identAddresses.push_back(addr);
-								L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->checkCompatibleParticipants(
-									IdentityAddress(op->getRemoteContact()),
-									identAddresses
-								);
-								static_cast<SalReferOp *>(op)->reply(SalReasonNone);
+								bool ret = static_pointer_cast<ServerGroupChatRoom>(chatRoom)->addParticipant(
+									IdentityAddress(addr), nullptr, false);
+								static_cast<SalReferOp *>(op)->reply(ret ? SalReasonNone : SalReasonNotAcceptable);
 								return;
 							}
 						}

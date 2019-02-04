@@ -23,6 +23,7 @@
 #include <chrono>
 #include <queue>
 #include <unordered_map>
+#include <map>
 
 #include "chat-room-p.h"
 #include "server-group-chat-room.h"
@@ -52,8 +53,8 @@ public:
 		return new ParticipantDeviceIdentity(*this);
 	}
 
-	const Address &getDeviceAddress () const;
-	const std::string &getDeviceName () const;
+	const Address &getAddress () const;
+	const std::string &getName () const;
 private:
 	L_DECLARE_PRIVATE(ParticipantDeviceIdentity);
 };
@@ -65,13 +66,14 @@ public:
 	std::shared_ptr<Participant> addParticipant (const IdentityAddress &participantAddress);
 	void removeParticipant (const std::shared_ptr<const Participant> &participant);
 
-	std::shared_ptr<Participant> findFilteredParticipant (const std::shared_ptr<const CallSession> &session) const;
-	std::shared_ptr<Participant> findFilteredParticipant (const IdentityAddress &participantAddress) const;
+	std::shared_ptr<Participant> findAuthorizedParticipant (const std::shared_ptr<const CallSession> &session) const;
+	std::shared_ptr<Participant> findAuthorizedParticipant (const IdentityAddress &participantAddress) const;
 
 	ParticipantDevice::State getParticipantDeviceState (const std::shared_ptr<const ParticipantDevice> &device) const;
 	void setParticipantDeviceState (const std::shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state);
 
 	void acceptSession (const std::shared_ptr<CallSession> &session);
+	// we go here when receiving the first INVITE, the one that will redirect to newly allocated conference URI.
 	void confirmCreation ();
 	void confirmJoining (SalCallOp *op);
 	void confirmRecreation (SalCallOp *op);
@@ -81,14 +83,25 @@ public:
 	void subscribeReceived (LinphoneEvent *event);
 	void subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state);
 
-	bool update (SalCallOp *op);
+	bool initializeParticipants(const std::shared_ptr<Participant> & initiator, SalCallOp *op);
+	void resumeParticipant(const std::shared_ptr<Participant> &participant);
+	bool subscribeRegistrationForParticipants(const std::list<IdentityAddress> &participants);
+	void unSubscribeRegistrationForParticipant(const IdentityAddress &identAddresses);
+	void handleSubjectChange(SalCallOp *op);
 
 	void setConferenceAddress (const IdentityAddress &conferenceAddress);
-	void setParticipantDevices (const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
-	void addCompatibleParticipants (const IdentityAddress &deviceAddr, const std::list<IdentityAddress> &compatibleParticipants);
-	void checkCompatibleParticipants (const IdentityAddress &deviceAddr, const std::list<IdentityAddress> &addressesToCheck);
+	void updateParticipantDevices (const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
+	void setParticipantDevicesAtCreation(const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
+	void updateParticipantDeviceSession(const std::shared_ptr<ParticipantDevice> &device, bool freslyRegistered = false);
+	void updateParticipantsSessions();
+	void conclude();
+	void requestDeletion();
 
 	LinphoneReason onSipMessageReceived (SalOp *op, const SalMessage *message) override;
+	
+	/*These are the two methods called by the registration subscription module*/
+	void setParticipantDevices(const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
+	void notifyParticipantDeviceRegistration(const IdentityAddress &participantDevice);
 
 private:
 	struct Message {
@@ -115,12 +128,13 @@ private:
 
 	static void copyMessageHeaders (const std::shared_ptr<Message> &fromMessage, const std::shared_ptr<ChatMessage> &toMessage);
 
-	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const IdentityAddress &deviceAddress, const std::string &name = "");
-	void byeDevice (const std::shared_ptr<ParticipantDevice> &device);
+	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const ParticipantDeviceIdentity &deviceInfo);
 	void designateAdmin ();
 	void dispatchMessage (const std::shared_ptr<Message> &message, const std::string &uri);
 	void finalizeCreation ();
+	std::shared_ptr<CallSession> makeSession(const std::shared_ptr<ParticipantDevice> &device);
 	void inviteDevice (const std::shared_ptr<ParticipantDevice> &device);
+	void byeDevice (const std::shared_ptr<ParticipantDevice> &device);
 	bool isAdminLeft () const;
 	void queueMessage (const std::shared_ptr<Message> &message);
 	void queueMessage (const std::shared_ptr<Message> &msg, const IdentityAddress &deviceAddress);
@@ -140,10 +154,20 @@ private:
 		const std::string &message
 	) override;
 	void onCallSessionSetReleased (const std::shared_ptr<CallSession> &session) override;
-
-	std::list<std::shared_ptr<Participant>> filteredParticipants;
+	void onAckReceived (const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers) override;
+	struct RegistrationSubscriptionContext{
+		bool notified = false;
+		void *context = nullptr; // TODO: unused currently, but can store a context pointer from the implementation of reginfo subscription.
+					 // This will remove the need for a map in conference server for holding subscriptions.
+	};
+	
+	std::list<std::shared_ptr<Participant>> authorizedParticipants; /*list of participant authorized to send messages to the chatroom.
+					This typically excludes participants that in the process of being removed.*/
 	ChatRoomListener *chatRoomListener = this;
 	ServerGroupChatRoom::CapabilitiesMask capabilities = ServerGroupChatRoom::Capabilities::Conference;
+	std::map<std::string, RegistrationSubscriptionContext> registrationSubscriptions; /*map of registrationSubscriptions for each participant*/
+	int unnotifiedRegistrationSubscriptions = 0; /*count of not-yet notified registration subscriptions*/
+	std::shared_ptr<ParticipantDevice> mInitiatorDevice; /*pointer to the ParticipantDevice that is creating the chat room*/
 	bool joiningPendingAfterCreation = false;
 	std::unordered_map<std::string, std::queue<std::shared_ptr<Message>>> queuedMessages;
 

@@ -42,10 +42,12 @@ class ParticipantDevicePrivate;
 class ParticipantDevice : public Object {
 public:
 	enum class State {
-		Joining,
-		Present,
-		Leaving,
-		Left
+		Joining, //an INVITE has been sent
+		Present, //the SIP session has been concluded, participant is part of the conference
+		Leaving, //A BYE is pending
+		Left, //The Session is terminated
+		ScheduledForJoining, //Initial state for the server group chatroom, when the participant has not yet been INVITEd.
+		ScheduledForLeaving, //Transitional state for a participant that will receive a BYE shortly.
 	};
 
 	ParticipantDevice ();

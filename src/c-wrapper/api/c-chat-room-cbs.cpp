@@ -42,8 +42,6 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsChatMessageReceivedCb chatMessageReceivedCb;
 	LinphoneChatRoomCbsChatMessageSentCb chatMessageSentCb;
 	LinphoneChatRoomCbsConferenceAddressGenerationCb conferenceAddressGenerationCb;
-	LinphoneChatRoomCbsParticipantDeviceFetchRequestedCb participantDeviceFetchRequestedCb;
-	LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb participantsCapabilitiesChecked;
 	LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb participantRegistrationSubscriptionRequestedCb;
 	LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequestedCb participantRegistrationUnsubscriptionRequestedCb;
 	LinphoneChatRoomCbsShouldChatMessageBeStoredCb shouldMessageBeStoredCb;
@@ -209,22 +207,6 @@ LinphoneChatRoomCbsConferenceAddressGenerationCb linphone_chat_room_cbs_get_conf
 
 void linphone_chat_room_cbs_set_conference_address_generation (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceAddressGenerationCb cb) {
 	cbs->conferenceAddressGenerationCb = cb;
-}
-
-LinphoneChatRoomCbsParticipantDeviceFetchRequestedCb linphone_chat_room_cbs_get_participant_device_fetch_requested (const LinphoneChatRoomCbs *cbs) {
-	return cbs->participantDeviceFetchRequestedCb;
-}
-
-void linphone_chat_room_cbs_set_participant_device_fetch_requested (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceFetchRequestedCb cb) {
-	cbs->participantDeviceFetchRequestedCb = cb;
-}
-
-LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb linphone_chat_room_cbs_get_participants_capabilities_checked (const LinphoneChatRoomCbs *cbs) {
-	return cbs->participantsCapabilitiesChecked;
-}
-
-void linphone_chat_room_cbs_set_participants_capabilities_checked (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantsCapabilitiesCheckedCb cb) {
-	cbs->participantsCapabilitiesChecked = cb;
 }
 
 LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb linphone_chat_room_cbs_get_participant_registration_subscription_requested (const LinphoneChatRoomCbs *cbs) {
