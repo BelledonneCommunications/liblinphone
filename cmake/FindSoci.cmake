@@ -23,7 +23,12 @@
 #
 ### Global Configuration Section
 #
+if(ANDROID)
+SET(_SOCI_ALL_PLUGINS    sqlite3)
+else()
 SET(_SOCI_ALL_PLUGINS    mysql sqlite3)
+endif()
+
 SET(_SOCI_REQUIRED_VARS  SOCI_INCLUDE_DIRS SOCI_LIBRARIES)
 SET(_SOCI_VERSION "_4_0")
 
