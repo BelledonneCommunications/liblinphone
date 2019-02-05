@@ -1453,10 +1453,10 @@ static void echo_canceller_check(void){
 	}
 	BC_ASSERT_PTR_NOT_NULL(ec_filter);
 
-#if defined(__linux) || (defined(__APPLE__) && !TARGET_OS_IPHONE) || defined(_WIN32)
-	expected_filter = "MSWebRTCAEC";
-#elif defined(__ANDROID__)
+#if defined(ANDROID)
 	expected_filter = "MSWebRTCAECM";
+#elif defined(__linux) || (defined(__APPLE__) && !TARGET_OS_IPHONE) || defined(_WIN32)
+	expected_filter = "MSWebRTCAEC";
 #endif
 	if (ec_filter){
 		BC_ASSERT_STRING_EQUAL(ec_filter, expected_filter);
