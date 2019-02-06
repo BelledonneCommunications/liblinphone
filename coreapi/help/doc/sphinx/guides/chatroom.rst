@@ -83,3 +83,5 @@ Encrypted chat rooms only allow encrypted messages and files to transit (except 
 	LinphoneChatRoomSecurityLevel securityLevel = linphone_chat_room_get_security_level(securedChatRoom);
 
 .. seealso:: <point to basic LIME X3DH test and LIME helloworld test>.
+
+.. warning:: LIME X3DH encryption activation at linphone core level requires a server. Make sure the configuration entry `lime/x3dh_server_url` is defined or call :cpp:func:`linphone_core_set_lime_x3dh_server_url()` after core initialisation.
