@@ -2832,17 +2832,26 @@ static void group_chat_room_send_file_plus_text (void) {
 	group_chat_room_send_file_with_or_without_text(TRUE);
 }
 
-static void group_chat_room_unique_one_to_one_chat_room (void) {
+static void group_chat_room_unique_one_to_one_chat_room_base(bool_t secondDeviceForSender) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *marie2 = NULL;
+	if (secondDeviceForSender)
+		marie2 = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	if (secondDeviceForSender)
+		coresManagerList = bctbx_list_append(coresManagerList, marie2);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	stats initialMarieStats = marie->stat;
+	stats initialMarie2Stats;
+	memset(&initialMarie2Stats,0, sizeof(initialMarie2Stats));
+	if (secondDeviceForSender)
+		initialMarie2Stats = marie2->stat;
 	stats initialPaulineStats = pauline->stat;
 
 	// Marie creates a new group chat room
@@ -2855,7 +2864,11 @@ static void group_chat_room_unique_one_to_one_chat_room (void) {
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineCr) & LinphoneChatRoomCapabilitiesOneToOne);
-
+	
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *marie2Cr = NULL;
+	if (secondDeviceForSender)
+		marie2Cr = check_creation_chat_room_client_side(coresList, marie2, &initialMarie2Stats, confAddr, initialSubject, 1, FALSE);
 	// Marie sends a message
 	const char *textMessage = "Hello";
 	LinphoneChatMessage *message = _send_message(marieCr, textMessage);
@@ -2864,6 +2877,8 @@ static void group_chat_room_unique_one_to_one_chat_room (void) {
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), textMessage);
 	linphone_chat_message_unref(message);
 
+	if (secondDeviceForSender)
+		linphone_core_set_network_reachable(marie2->lc,FALSE);
 	// Marie deletes the chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	wait_for_list(coresList, 0, 1, 2000);
@@ -2874,7 +2889,7 @@ static void group_chat_room_unique_one_to_one_chat_room (void) {
 	initialPaulineStats = pauline->stat;
 	participantsAddresses = bctbx_list_append(NULL, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
-
+	
 	// Marie sends a new message
 	textMessage = "Hey again";
 	message = _send_message(marieCr, textMessage);
@@ -2889,13 +2904,27 @@ static void group_chat_room_unique_one_to_one_chat_room (void) {
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	if (secondDeviceForSender) {
+		linphone_core_set_network_reachable(marie2->lc,FALSE);
+		linphone_core_delete_chat_room(marie2->lc, marie2Cr);
+	}
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 
 	linphone_address_unref(confAddr);
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
+	if (secondDeviceForSender) 
+		linphone_core_manager_destroy(marie2);
 	linphone_core_manager_destroy(pauline);
+}
+
+static void group_chat_room_unique_one_to_one_chat_room (void) {
+	group_chat_room_unique_one_to_one_chat_room_base(FALSE);
+}
+
+static void group_chat_room_unique_one_to_one_chat_room_dual_sender_device (void) {
+	group_chat_room_unique_one_to_one_chat_room_base(TRUE);
 }
 
 static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message_base (bool_t with_app_restart) {
@@ -6977,6 +7006,7 @@ test_t group_chat_tests[] = {
 	TEST_NO_TAG("Send file", group_chat_room_send_file),
 	TEST_NO_TAG("Send file + text", group_chat_room_send_file_plus_text),
 	TEST_NO_TAG("Unique one-to-one chatroom", group_chat_room_unique_one_to_one_chat_room),
+	TEST_NO_TAG("Unique one-to-one chatroom with dual sender device", group_chat_room_unique_one_to_one_chat_room_dual_sender_device),
 	TEST_NO_TAG("Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message),
 	TEST_ONE_TAG("Unique one-to-one chatroom recreated from message with app restart", group_chat_room_unique_one_to_one_chat_room_recreated_from_message_with_app_restart, "LeaksMemory"),
 	TEST_NO_TAG("Join one-to-one chat room with a new device", group_chat_room_join_one_to_one_chat_room_with_a_new_device),
