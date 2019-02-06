@@ -1,5 +1,4 @@
 [lime]
-lime_v2=1
 x3dh_db_path=chloe.x3dh.sqlite3
 lime_update_threshold=86400
 max_nb_device_per_participant=1
