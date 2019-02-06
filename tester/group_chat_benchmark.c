@@ -244,7 +244,6 @@ bctbx_list_t *create_conference_cores(bctbx_list_t *participantsAddresses) {
 		linphone_proxy_config_set_identity_address(proxy_config, addr);
 		linphone_proxy_config_set_server_addr(proxy_config, "sip:sip.example.org;transport=tcp");
 		linphone_proxy_config_enable_register(proxy_config, TRUE);
-		linphone_proxy_config_enable_lime_x3dh(proxy_config, enable_limex3dh);
 
 		BC_ASSERT_EQUAL(linphone_core_add_proxy_config(mgr->lc, proxy_config), 0, int, "%d");
 		if (i == 0) {
