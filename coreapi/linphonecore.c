@@ -1424,6 +1424,11 @@ static void sip_config_read(LinphoneCore *lc) {
 	tmp=lp_config_get_int(lc->config,"sip","lime",LinphoneLimeDisabled);
 	linphone_core_enable_lime(lc,static_cast<LinphoneLimeState>(tmp));
 
+	if (linphone_core_lime_x3dh_available()) {
+		//Always try to enable x3dh. Will actually be enabled only if there is a server url configured
+		linphone_core_enable_lime_x3dh(lc, true);
+	}
+
 	tmp=lp_config_get_int(lc->config,"sip","inc_timeout",30);
 	linphone_core_set_inc_timeout(lc,tmp);
 
@@ -2426,10 +2431,6 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	if (automatically_start) {
 		linphone_core_start(lc);
 	}
-
-	LinphoneConfig *lpconfig = linphone_core_get_config(lc);
-	bool enableLime = linphone_config_get_bool(lpconfig, "lime", "enable_lime_x3dh", TRUE);
-	linphone_core_enable_lime_x3dh(lc, enableLime);
 }
 
 void linphone_core_start (LinphoneCore *lc) {
