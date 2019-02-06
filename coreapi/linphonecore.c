@@ -2644,6 +2644,7 @@ bool_t linphone_core_get_guess_hostname(LinphoneCore *lc){
 	return lc->sip_conf.guess_hostname;
 }
 
+//Deprecated
 void linphone_core_enable_lime(LinphoneCore *lc, LinphoneLimeState val){
 	LinphoneImEncryptionEngine *imee = linphone_im_encryption_engine_new();
 	LinphoneImEncryptionEngineCbs *cbs = linphone_im_encryption_engine_get_callbacks(imee);
@@ -2673,14 +2674,17 @@ void linphone_core_enable_lime(LinphoneCore *lc, LinphoneLimeState val){
 	linphone_im_encryption_engine_unref(imee);
 }
 
+//Deprecated
 bool_t linphone_core_lime_available(const LinphoneCore *lc){
 	return lime_is_available();
 }
 
+//Deprecated
 LinphoneLimeState linphone_core_lime_enabled(const LinphoneCore *lc){
 	return linphone_core_lime_available(lc) ? static_cast<LinphoneLimeState>(lp_config_get_int(lc->config,"sip", "lime", LinphoneLimeDisabled)) : LinphoneLimeDisabled;
 }
 
+//Deprecated
 LinphoneLimeState linphone_core_lime_for_file_sharing_enabled(const LinphoneCore *lc){
 	LinphoneLimeState s = linphone_core_lime_enabled(lc);
 	if (s != LinphoneLimeDisabled) {
