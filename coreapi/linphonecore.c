@@ -1424,7 +1424,7 @@ static void sip_config_read(LinphoneCore *lc) {
 	tmp=lp_config_get_int(lc->config,"sip","lime",LinphoneLimeDisabled);
 	linphone_core_enable_lime(lc,static_cast<LinphoneLimeState>(tmp));
 
-	if (linphone_core_lime_x3dh_available()) {
+	if (linphone_core_lime_x3dh_available(lc)) {
 		//Always try to enable x3dh. Will actually be enabled only if there is a server url configured
 		linphone_core_enable_lime_x3dh(lc, true);
 	}
