@@ -361,20 +361,9 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_contact_parameters(LinphoneProxyC
 LINPHONE_PUBLIC void linphone_proxy_config_set_contact_uri_parameters(LinphoneProxyConfig *cfg, const char *contact_uri_params);
 
 /**
- * @return TRUE if LIME X3DH is enabled.
-**/
-LINPHONE_PUBLIC bool_t linphone_proxy_config_lime_x3dh_enabled(const LinphoneProxyConfig *cfg);
-
-/**
  * @return previously set contact URI parameters.
 **/
 LINPHONE_PUBLIC const char* linphone_proxy_config_get_contact_uri_parameters(const LinphoneProxyConfig *cfg);
-
-/**
- * @param[in] cfg #LinphoneProxyConfig object.
- * @param val if TRUE LIME X3DH will be enabled for this proxy config
-**/
-LINPHONE_PUBLIC void linphone_proxy_config_enable_lime_x3dh(LinphoneProxyConfig *cfg, const bool_t val);
 
 /**
  * Get the #LinphoneCore object to which is associated the #LinphoneProxyConfig.
