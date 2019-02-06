@@ -137,6 +137,15 @@ void CorePrivate::notifyEnteringForeground () {
 		listener->onEnteringForeground();
 }
 
+belle_sip_main_loop_t *CorePrivate::getMainLoop(){
+	L_Q();
+	return belle_sip_stack_get_main_loop(static_cast<belle_sip_stack_t*>(q->getCCore()->sal->getStackImpl()));
+}
+
+void CorePrivate::doLater(const std::function<void ()> &something){
+	belle_sip_main_loop_cpp_do_later(getMainLoop(), something);
+}
+
 // =============================================================================
 
 Core::Core () : Object(*new CorePrivate) {
@@ -308,5 +317,10 @@ Address Core::interpretUrl (const std::string &url) const {
 
 	return address;
 }
+
+void Core::doLater(const std::function<void ()> &something){
+	getPrivate()->doLater(something);
+}
+
 
 LINPHONE_END_NAMESPACE

@@ -78,6 +78,8 @@ public:
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, bool fallback, bool encrypted);
 
 	void replaceChatRoom (const std::shared_ptr<AbstractChatRoom> &replacedChatRoom, const std::shared_ptr<AbstractChatRoom> &newChatRoom);
+	void doLater(const std::function<void ()> &something);
+	belle_sip_main_loop_t *getMainLoop();
 
 	std::unique_ptr<MainDb> mainDb;
 	std::unique_ptr<RemoteConferenceListEventHandler> remoteListEventHandler;

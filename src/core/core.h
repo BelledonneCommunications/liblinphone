@@ -21,6 +21,7 @@
 #define _L_CORE_H_
 
 #include <list>
+#include <functional>
 
 #include "object/object.h"
 
@@ -153,6 +154,9 @@ public:
 	int getUnreadChatMessageCountFromActiveLocals () const;
 
 	Address interpretUrl (const std::string &url) const;
+	// Execute specified lambda later in main loop. This method can be used from any thread to execute something later on main thread.
+	void doLater(const std::function<void ()> &something);
+	
 
 private:
 	Core ();
