@@ -2426,6 +2426,10 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	if (automatically_start) {
 		linphone_core_start(lc);
 	}
+
+	LinphoneConfig *lpconfig = linphone_core_get_config(lc);
+	bool enableLime = linphone_config_get_bool(lpconfig, "lime", "enable_lime_x3dh", TRUE);
+	linphone_core_enable_lime_x3dh(lc, enableLime);
 }
 
 void linphone_core_start (LinphoneCore *lc) {
