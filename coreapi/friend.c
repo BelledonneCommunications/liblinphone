@@ -1821,7 +1821,7 @@ float linphone_friend_get_capability_version(const LinphoneFriend *lf, const Lin
 	const bctbx_list_t* addrs = linphone_friend_get_addresses(lf);
 	bctbx_list_t* phones = linphone_friend_get_phone_numbers(lf);
 	bctbx_list_t *it;
-	float version = 0.0;
+	float version = -1.0;
 
 	for (it = (bctbx_list_t *)addrs; it!= NULL; it = it->next) {
 		LinphoneAddress *addr = (LinphoneAddress*)it->data;

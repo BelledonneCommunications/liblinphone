@@ -17,8 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include <map>
-#include <utility>
+#include <bctoolbox/map.h>
 
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
@@ -52,7 +51,7 @@ struct _LinphonePresenceService {
 	bctbx_list_t *notes;				/**< A list of _LinphonePresenceNote structures. */
 	time_t timestamp;
 	bctbx_list_t *service_descriptions;
-	std::map<std::string, std::string> capabilities;
+	bctbx_map_t *capabilities;
 };
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphonePresenceService);
@@ -142,6 +141,7 @@ static LinphonePresenceService * presence_service_new(const char *id, LinphonePr
 	}
 	service->status = status;
 	service->timestamp = time(NULL);
+	service->capabilities = bctbx_mmap_cchar_new();
 	return service;
 }
 
@@ -154,6 +154,7 @@ static void presence_service_uninit(LinphonePresenceService *service) {
 	}
 	bctbx_list_for_each(service->notes, presence_note_unref);
 	bctbx_list_free(service->notes);
+	bctbx_mmap_cchar_delete_with_data(service->capabilities, bctbx_free);
 };
 
 static void presence_service_unref(void *service) {
@@ -828,15 +829,15 @@ static std::string capability_to_string (const LinphoneFriendCapability capabili
 	const auto &it = CapabilityToString.find(static_cast<int>(capability));
 	return (it == CapabilityToString.cend()) ? "none" : it->second;
 }
-static const float EPSILON = 0.01f;
+static const float EPSILON = 0.1f;
 bool_t linphone_presence_service_has_capability_with_version(
 	const LinphonePresenceService *service,
 	const LinphoneFriendCapability capability,
 	float version
 ) {
-	const auto &it = service->capabilities.find(capability_to_string(capability));
-	if (it != service->capabilities.cend())
-		return static_cast<bool_t>(fabs(std::stof(it->second) - version) < EPSILON);
+	const auto &it = bctbx_map_cchar_find_key(service->capabilities, capability_to_string(capability).c_str());
+	if (!bctbx_iterator_equals(it, bctbx_map_cchar_end(service->capabilities)))
+		return static_cast<bool_t>(fabs(std::stof(std::string((const char *)bctbx_pair_cchar_get_second(bctbx_iterator_cchar_get_pair(it)))) - version) < EPSILON);
 
 	return FALSE;
 }
@@ -846,24 +847,24 @@ bool_t linphone_presence_service_has_capability_with_version_or_more(
 	const LinphoneFriendCapability capability,
 	float version
 ) {
-	const auto &it = service->capabilities.find(capability_to_string(capability));
-	if (it != service->capabilities.cend())
-		return static_cast<bool_t>(std::stof(it->second) >= version);
+	const auto &it = bctbx_map_cchar_find_key(service->capabilities, capability_to_string(capability).c_str());
+	if (!bctbx_iterator_equals(it, bctbx_map_cchar_end(service->capabilities)))
+		return static_cast<bool_t>(std::stof(std::string((const char *)bctbx_pair_cchar_get_second(bctbx_iterator_cchar_get_pair(it)))) >= version);
 
 	return FALSE;
 }
 
 float linphone_presence_service_get_capability_version(const LinphonePresenceService *service, const LinphoneFriendCapability capability) {
-	const auto &it = service->capabilities.find(capability_to_string(capability));
-	if (it != service->capabilities.cend())
-		return std::stof(it->second);
+	const auto &it = bctbx_map_cchar_find_key(service->capabilities, capability_to_string(capability).c_str());
+	if (!bctbx_iterator_equals(it, bctbx_map_cchar_end(service->capabilities)))
+		return std::stof(std::string((const char *)bctbx_pair_cchar_get_second(bctbx_iterator_cchar_get_pair(it))));
 
-	return 0.0;
+	return -1.0;
 }
 
 void linphone_presence_service_add_capability(LinphonePresenceService *service, const char *capability_name, const char *version) {
-	const auto &it = make_pair(std::string(capability_name), std::string(version));
-	service->capabilities.insert(it);
+	const bctbx_pair_cchar_t *pair = bctbx_pair_cchar_new(capability_name, (void *)version);
+	bctbx_map_cchar_insert(service->capabilities, (const bctbx_pair_t *)pair);
 }
 
 unsigned int linphone_presence_service_get_nb_notes(const LinphonePresenceService *service) {
@@ -1274,7 +1275,7 @@ bool_t linphone_presence_model_has_capability_with_version_or_more(
 }
 
 float linphone_presence_model_get_capability_version(const LinphonePresenceModel *model, const LinphoneFriendCapability capability) {
-	float version = 0.0;
+	float version = -1.0;
 	unsigned int nbServices = linphone_presence_model_get_nb_services(model);
 	for (unsigned int i = 0; i < nbServices; i++) {
 		LinphonePresenceService *service = linphone_presence_model_get_nth_service(model, i);
@@ -1458,7 +1459,7 @@ static int process_pidf_xml_presence_services(xmlparsing_context_t *xml_ctx, Lin
 						version = linphone_get_xml_text_content(xml_ctx, "./oma-pres:version");
 						services = bctbx_list_append(services, ms_strdup(service_id));
 
-						if (service) linphone_presence_service_add_capability(service, service_id, version);
+						if (service) linphone_presence_service_add_capability(service, ms_strdup(service_id), ms_strdup(version));
 
 						linphone_free_xml_text_content(service_id);
 						linphone_free_xml_text_content(version);

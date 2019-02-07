@@ -700,7 +700,7 @@ LINPHONE_PUBLIC bool_t linphone_presence_model_has_capability_with_version_or_mo
  * Returns the version of the capability of a #LinphonePresenceModel.
  * @param[in] model The #LinphonePresenceModel object for which to set the contact.
  * @param[in] capability The capability to test.
- * @return the version of the capability of a #LinphonePresenceModel or 0.0 if the model has not the capability.
+ * @return the version of the capability of a #LinphonePresenceModel or -1.0 if the model has not the capability.
  */
 LINPHONE_PUBLIC float linphone_presence_model_get_capability_version(const LinphonePresenceModel *model, const LinphoneFriendCapability capability);
 

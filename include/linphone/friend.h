@@ -358,7 +358,7 @@ LINPHONE_PUBLIC bool_t linphone_friend_has_capability(const LinphoneFriend *lf, 
  * @param[in] lf #LinphoneFriend object
  * @param[in] capability #LinphoneFriendCapability object
  * @param[in] version the version to test
- * @return whether or not a friend has a capbility with a given version.
+ * @return whether or not a friend has a capbility with a given version or -1.0 if friend has not capability.
  */
 LINPHONE_PUBLIC bool_t linphone_friend_has_capability_with_version(const LinphoneFriend *lf, const LinphoneFriendCapability capability, float version);
 
