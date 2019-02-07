@@ -1761,3 +1761,86 @@ int linphone_friend_get_capabilities(const LinphoneFriend *lf) {
 bool_t linphone_friend_has_capability(const LinphoneFriend *lf, const LinphoneFriendCapability capability) {
 	return static_cast<bool_t>(linphone_friend_get_capabilities(lf) & capability);
 }
+
+bool_t linphone_friend_has_capability_with_version(const LinphoneFriend *lf, const LinphoneFriendCapability capability, float version) {
+	const LinphonePresenceModel *presence = NULL;
+	const bctbx_list_t* addrs = linphone_friend_get_addresses(lf);
+	bctbx_list_t* phones = linphone_friend_get_phone_numbers(lf);
+	bctbx_list_t *it;
+	bool_t result = FALSE;
+
+	for (it = (bctbx_list_t *)addrs; it!= NULL; it = it->next) {
+		LinphoneAddress *addr = (LinphoneAddress*)it->data;
+		char *uri = linphone_address_as_string_uri_only(addr);
+		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, uri);
+		ms_free(uri);
+
+		if (!presence) continue;
+		result |= linphone_presence_model_has_capability_with_version(presence, capability, version);
+	}
+	for (it = phones; it!= NULL; it = it->next) {
+		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, reinterpret_cast<const char *>(it->data));
+
+		if (!presence) continue;
+		result |= linphone_presence_model_has_capability_with_version(presence, capability, version);
+	}
+	bctbx_list_free(phones);
+
+	return result;
+}
+
+bool_t linphone_friend_has_capability_with_version_or_more(const LinphoneFriend *lf, const LinphoneFriendCapability capability, float version) {
+	const LinphonePresenceModel *presence = NULL;
+	const bctbx_list_t* addrs = linphone_friend_get_addresses(lf);
+	bctbx_list_t* phones = linphone_friend_get_phone_numbers(lf);
+	bctbx_list_t *it;
+	bool_t result = FALSE;
+
+	for (it = (bctbx_list_t *)addrs; it!= NULL; it = it->next) {
+		LinphoneAddress *addr = (LinphoneAddress*)it->data;
+		char *uri = linphone_address_as_string_uri_only(addr);
+		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, uri);
+		ms_free(uri);
+
+		if (!presence) continue;
+		result |= linphone_presence_model_has_capability_with_version_or_more(presence, capability, version);
+	}
+	for (it = phones; it!= NULL; it = it->next) {
+		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, reinterpret_cast<const char *>(it->data));
+
+		if (!presence) continue;
+		result |= linphone_presence_model_has_capability_with_version_or_more(presence, capability, version);
+	}
+	bctbx_list_free(phones);
+
+	return result;
+}
+
+float linphone_friend_get_capability_version(const LinphoneFriend *lf, const LinphoneFriendCapability capability) {
+	const LinphonePresenceModel *presence = NULL;
+	const bctbx_list_t* addrs = linphone_friend_get_addresses(lf);
+	bctbx_list_t* phones = linphone_friend_get_phone_numbers(lf);
+	bctbx_list_t *it;
+	float version = 0.0;
+
+	for (it = (bctbx_list_t *)addrs; it!= NULL; it = it->next) {
+		LinphoneAddress *addr = (LinphoneAddress*)it->data;
+		char *uri = linphone_address_as_string_uri_only(addr);
+		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, uri);
+		ms_free(uri);
+
+		if (!presence) continue;
+		float presence_version = linphone_presence_model_get_capability_version(presence, capability);
+		if (presence_version > version) version = presence_version;
+	}
+	for (it = phones; it!= NULL; it = it->next) {
+		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, reinterpret_cast<const char *>(it->data));
+
+		if (!presence) continue;
+		float presence_version = linphone_presence_model_get_capability_version(presence, capability);
+		if (presence_version > version) version = presence_version;
+	}
+	bctbx_list_free(phones);
+
+	return version;
+}

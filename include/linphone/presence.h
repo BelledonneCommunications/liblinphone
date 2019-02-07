@@ -671,6 +671,40 @@ LINPHONE_PUBLIC int linphone_presence_model_get_capabilities(const LinphonePrese
 LINPHONE_PUBLIC bool_t linphone_presence_model_has_capability(const LinphonePresenceModel *model, const LinphoneFriendCapability capability);
 
 /**
+ * Returns whether or not the #LinphonePresenceModel object has a given capability with a certain version.
+ * @param[in] model The #LinphonePresenceModel object for which to set the contact.
+ * @param[in] capability The capability to test.
+ * @param[in] version The wanted version to test.
+ * @return whether or not the #LinphonePresenceModel object has a given capability with a certain version.
+ */
+LINPHONE_PUBLIC bool_t linphone_presence_model_has_capability_with_version(
+	const LinphonePresenceModel *model,
+	const LinphoneFriendCapability capability,
+	float version
+);
+
+/**
+ * Returns whether or not the #LinphonePresenceModel object has a given capability with a certain version or more.
+ * @param[in] model The #LinphonePresenceModel object for which to set the contact.
+ * @param[in] capability The capability to test.
+ * @param[in] version The wanted version to test.
+ * @return whether or not the #LinphonePresenceModel object has a given capability with a certain version or more.
+ */
+LINPHONE_PUBLIC bool_t linphone_presence_model_has_capability_with_version_or_more(
+	const LinphonePresenceModel *model,
+	const LinphoneFriendCapability capability,
+	float version
+);
+
+/**
+ * Returns the version of the capability of a #LinphonePresenceModel.
+ * @param[in] model The #LinphonePresenceModel object for which to set the contact.
+ * @param[in] capability The capability to test.
+ * @return the version of the capability of a #LinphonePresenceModel or 0.0 if the model has not the capability.
+ */
+LINPHONE_PUBLIC float linphone_presence_model_get_capability_version(const LinphonePresenceModel *model, const LinphoneFriendCapability capability);
+
+/**
  * Increase the reference count of the #LinphonePresenceService object.
  * @param[in] service The #LinphonePresenceService object for which the reference count is to be increased.
  * @return The #LinphonePresenceService object with the increased reference count.
