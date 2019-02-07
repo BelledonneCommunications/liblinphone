@@ -1776,13 +1776,13 @@ bool_t linphone_friend_has_capability_with_version(const LinphoneFriend *lf, con
 		ms_free(uri);
 
 		if (!presence) continue;
-		result |= linphone_presence_model_has_capability_with_version(presence, capability, version);
+		if(linphone_presence_model_has_capability_with_version(presence, capability, version)) result = TRUE;
 	}
 	for (it = phones; it!= NULL; it = it->next) {
 		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, reinterpret_cast<const char *>(it->data));
 
 		if (!presence) continue;
-		result |= linphone_presence_model_has_capability_with_version(presence, capability, version);
+		if(linphone_presence_model_has_capability_with_version(presence, capability, version)) result = TRUE;
 	}
 	bctbx_list_free(phones);
 
@@ -1803,13 +1803,13 @@ bool_t linphone_friend_has_capability_with_version_or_more(const LinphoneFriend 
 		ms_free(uri);
 
 		if (!presence) continue;
-		result |= linphone_presence_model_has_capability_with_version_or_more(presence, capability, version);
+		if (linphone_presence_model_has_capability_with_version_or_more(presence, capability, version)) result = TRUE;
 	}
 	for (it = phones; it!= NULL; it = it->next) {
 		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, reinterpret_cast<const char *>(it->data));
 
 		if (!presence) continue;
-		result |= linphone_presence_model_has_capability_with_version_or_more(presence, capability, version);
+		if (linphone_presence_model_has_capability_with_version_or_more(presence, capability, version)) result = TRUE;
 	}
 	bctbx_list_free(phones);
 
