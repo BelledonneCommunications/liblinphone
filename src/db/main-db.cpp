@@ -1162,6 +1162,12 @@ void MainDbPrivate::updateSchema () {
 			"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
 			"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
 	}
+	if (version < makeVersion(1, 0, 6)
+		&& linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "lime", "migrate_to_secured_room",FALSE)) {
+		*session << "UPDATE chat_room "
+		"SET capabilities = capabilities | " +  Utils::toString(int(ChatRoom::Capabilities::Encrypted));
+	}
+		
 	if (version < makeVersion(1, 0, 7)) {
 		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN name VARCHAR(255)";
 	}

@@ -293,7 +293,9 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 				// Insert protocol param before boundary for flexisip
 				ContentType contentType(finalContent.getContentType());
 				contentType.removeParameter("boundary");
-				contentType.addParameter("protocol", "\"application/lime\"");
+				if (!linphone_config_get_bool(linphone_core_get_config(message->getCore()->getCCore()), "lime", "preserve_backward_compatibility",FALSE)) {
+					contentType.addParameter("protocol", "\"application/lime\"");
+				}
 				contentType.addParameter("boundary", MultipartBoundary);
 				finalContent.setContentType(contentType);
 
@@ -338,8 +340,10 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 	ContentType expectedContentType = ContentType::Encrypted;
 	expectedContentType.addParameter("protocol", "\"application/lime\"");
 	expectedContentType.addParameter("boundary", MultipartBoundary);
+	ContentType legacyContentType = ContentType::Encrypted; //for backward compatibility with limev2 early access
+	legacyContentType.addParameter("boundary", MultipartBoundary);
 
-	if (incomingContentType != expectedContentType) {
+	if (incomingContentType != expectedContentType && incomingContentType != legacyContentType) {
 		lError() << "LIME X3DH unexpected content-type: " << incomingContentType;
 		// Set unencrypted content warning flag because incoming message type is unexpected
 		message->getPrivate()->setUnencryptedContentWarning(true);
