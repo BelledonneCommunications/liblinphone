@@ -4401,6 +4401,7 @@ static void group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_k
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
 	int dummy = 0;
 
+	linphone_core_enable_lime_x3dh(laure->lc, FALSE);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
