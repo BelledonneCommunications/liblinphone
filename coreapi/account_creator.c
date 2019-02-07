@@ -976,6 +976,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_lin
 		linphone_xml_rpc_request_add_string_arg(request, creator->username);
 		linphone_xml_rpc_request_add_string_arg(request, creator->activation_code);
 		linphone_xml_rpc_request_add_string_arg(request, _get_domain(creator));
+        linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request), _activate_account_cb_custom);
 		linphone_xml_rpc_session_send_request(creator->xmlrpc_session, request);
@@ -1063,6 +1064,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated_linph
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "is_account_activated");
 		linphone_xml_rpc_request_add_string_arg(request, creator->username ? creator->username : creator->phone_number);
 		linphone_xml_rpc_request_add_string_arg(request, _get_domain(creator));
+        linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request), _is_account_activated_cb_custom);
 		linphone_xml_rpc_session_send_request(creator->xmlrpc_session, request);
