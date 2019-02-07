@@ -74,9 +74,8 @@ extern "C" {
  * @param[in,out]	associatedKeys	Structure containing the self and peer URI. After this call contains all key material associated to the given URI. Must be then freed through lime_freeKeys function
  *
  * @return 0 on success(at least one valid key found), error code otherwise
- * @deprecated Use lime-x3dh instead. Deprecated since 2019-02-04
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED int lime_getCachedSndKeysByURI(void *cachedb, limeURIKeys_t *associatedKeys);
+LINPHONE_PUBLIC int lime_getCachedSndKeysByURI(void *cachedb, limeURIKeys_t *associatedKeys);
 
 /**
  * @brief Get the receiver key associated to the ZID given in the associatedKey parameter
@@ -87,9 +86,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED int lime_getCachedSndKeysByURI(void *cachedb
  * @param[in]		peerURI			The destination URI
  *
  * @return 0 on success, error code otherwise
- * @deprecated Use lime-x3dh instead. Deprecated since 2019-02-04
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED int lime_getCachedRcvKeyByZid(void *cachedb, limeKey_t *associatedKey, const char *selfURI, const char *peerURI);
+LINPHONE_PUBLIC int lime_getCachedRcvKeyByZid(void *cachedb, limeKey_t *associatedKey, const char *selfURI, const char *peerURI);
 
 /**
  * @brief Set in cache the given key material, association is made by ZID contained in the associatedKey parameter
@@ -100,9 +98,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED int lime_getCachedRcvKeyByZid(void *cachedb,
  * @param[in]		validityTimeSpan	If not 0, set the <valid> tag to now+validityTimeSpan (in seconds)
  *
  * @return 0 on success, error code otherwise
- * @deprecated Use lime-x3dh instead. Deprecated since 2019-02-04
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED int lime_setCachedKey(void *cachedb, limeKey_t *associatedKey, uint8_t role, uint64_t validityTimeSpan);
+LINPHONE_PUBLIC int lime_setCachedKey(void *cachedb, limeKey_t *associatedKey, uint8_t role, uint64_t validityTimeSpan);
 
 /**
  * @brief Free all allocated data in the associated keys structure
@@ -110,9 +107,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED int lime_setCachedKey(void *cachedb, limeKey
  * This does not free the memory area pointed by associatedKeys.
  *
  * @param[in,out]	associatedKeys	The structure to be cleaned
- * @deprecated Use lime-x3dh instead. Deprecated since 2019-02-04
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void lime_freeKeys(limeURIKeys_t *associatedKeys);
+LINPHONE_PUBLIC void lime_freeKeys(limeURIKeys_t *associatedKeys);
 
 /**
  * @brief encrypt a message with the given key
@@ -125,9 +121,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void lime_freeKeys(limeURIKeys_t *associated
  * 									Authentication tag is set at the begining of the encrypted Message
  *
  * @return 0 on success, error code otherwise
- * @deprecated Use lime-x3dh instead. Deprecated since 2019-02-04
  */
-LINPHONE_PUBLIC  LINPHONE_DEPRECATED int lime_encryptMessage(limeKey_t *key, const uint8_t *plainMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *encryptedMessage);
+LINPHONE_PUBLIC int lime_encryptMessage(limeKey_t *key, const uint8_t *plainMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *encryptedMessage);
 
 /**
  * @brief Encrypt a file before transfering it to the server, encryption is done in several call, first one will be done with cryptoContext null, last one with length = 0
@@ -139,9 +134,8 @@ LINPHONE_PUBLIC  LINPHONE_DEPRECATED int lime_encryptMessage(limeKey_t *key, con
  * @param[out]		cipher				Output to a buffer allocated by caller, at least length bytes available
  *
  * @return 0 on success, error code otherwise
- * @deprecated Use lime-x3dh instead. Deprecated since 2019-02-04
  */
-LINPHONE_PUBLIC  LINPHONE_DEPRECATED int lime_encryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher);
+LINPHONE_PUBLIC int lime_encryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher);
 
 /**
  * @brief Decrypt a file retrieved from server, decryption is done in several call, first one will be done with cryptoContext null, last one with length = 0
@@ -153,9 +147,8 @@ LINPHONE_PUBLIC  LINPHONE_DEPRECATED int lime_encryptFile(void **cryptoContext, 
  * @param[in]		cipher				Cipher text to be decrypted(length bytes)
  *
  * @return 0 on success, error code otherwise
- * @deprecated Use lime-x3dh instead. Deprecated since 2019-02-04
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED int lime_decryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher);
+LINPHONE_PUBLIC int lime_decryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher);
 
 /**
  * @brief decrypt and authentify a message with the given key
@@ -168,10 +161,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED int lime_decryptFile(void **cryptoContext, u
  * 									Authentication tag is retrieved at the begining of the encrypted Message
  *
  * @return 0 on success, error code otherwise
- * @deprecated Use lime-x3dh instead. Deprecated since 2019-02-04
  */
 
-LINPHONE_PUBLIC LINPHONE_DEPRECATED int lime_decryptMessage(limeKey_t *key, uint8_t *encryptedMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *plainMessage);
+LINPHONE_PUBLIC int lime_decryptMessage(limeKey_t *key, uint8_t *encryptedMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *plainMessage);
 
 /**
  * @brief create the encrypted multipart xml message from plain text and destination URI
@@ -184,9 +176,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED int lime_decryptMessage(limeKey_t *key, uint
  * @param[in]		peerURI			The destination URI, associated keys will be found in cache
  * @param[out]		output			The output buffer, allocated and set with the encrypted message xml body(null terminated string). Must be freed by caller
  * @return 	0 on success, error code otherwise
- * @deprecated Use lime-x3dh instead. Deprecated since 2019-02-04
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED int lime_createMultipartMessage(void *cachedb, const char *contentType, uint8_t *message, const char *selfURI, const char *peerURI, uint8_t **output);
+LINPHONE_PUBLIC int lime_createMultipartMessage(void *cachedb, const char *contentType, uint8_t *message, const char *selfURI, const char *peerURI, uint8_t **output);
 
 /**
  * @brief decrypt a multipart xml message
@@ -200,25 +191,22 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED int lime_createMultipartMessage(void *cached
  * @param[out]		content_type	The content type of the decrypted message
  * @param[in]		validityTimeSpan	If not 0, update the <valid> tag associated to sender to now+validityTimeSpan (in seconds)
  * @return 	0 on success, error code otherwise
- * @deprecated Use lime-x3dh instead. Deprecated since 2019-02-04
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED int lime_decryptMultipartMessage(void *cachedb, uint8_t *message, const char *selfURI, const char *peerURI, uint8_t **output, char **content_type, uint64_t validityTimeSpan);
+LINPHONE_PUBLIC int lime_decryptMultipartMessage(void *cachedb, uint8_t *message, const char *selfURI, const char *peerURI, uint8_t **output, char **content_type, uint64_t validityTimeSpan);
 
 /**
  * @brief given a readable version of error code generated by Lime functions
  * @param[in]	errorCode	The error code
  * @return a string containing the error description
- * @deprecated Use lime-x3dh instead. Deprecated since 2019-02-04
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *lime_error_code_to_string(int errorCode);
+LINPHONE_PUBLIC const char *lime_error_code_to_string(int errorCode);
 
 /**
  * @brief Check if Lime was enabled at build time
  *
  * @return TRUE if Lime is available, FALSE if not
- * @depreacted  Use linphone_core_lime_x3dh_available instead. Depreacted since 2019-02-04
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t lime_is_available(void);
+LINPHONE_PUBLIC bool_t lime_is_available(void);
 
 int lime_im_encryption_engine_process_incoming_message_cb(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room, LinphoneChatMessage *msg);
 
