@@ -1985,116 +1985,116 @@ static void notify_friend_capabilities(void) {
 	BC_ASSERT_TRUE(linphone_friend_has_capability(mPaulineFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(mPaulineFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(mPaulineFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mPaulineFriend, LinphoneFriendCapabilityGroupChat, 1.1));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mPaulineFriend, LinphoneFriendCapabilityLimeX3dh, 1.0));
-	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mPaulineFriend, LinphoneFriendCapabilityGroupChat) - 1.1 < 0.1);
-	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mPaulineFriend, LinphoneFriendCapabilityLimeX3dh) - 1.0 < 0.1);
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mPaulineFriend, LinphoneFriendCapabilityGroupChat, 1.1f));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mPaulineFriend, LinphoneFriendCapabilityLimeX3dh, 1.0f));
+	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mPaulineFriend, LinphoneFriendCapabilityGroupChat) - 1.1f < 0.1f);
+	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mPaulineFriend, LinphoneFriendCapabilityLimeX3dh) - 1.0f < 0.1f);
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(mLaureFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(mLaureFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_FALSE(linphone_friend_get_capabilities(mLaureFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_FALSE(linphone_friend_has_capability(mLaureFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mLaureFriend, LinphoneFriendCapabilityGroupChat, 2.0));
-	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(mLaureFriend, LinphoneFriendCapabilityLimeX3dh, 1.0));
-	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mLaureFriend, LinphoneFriendCapabilityGroupChat) - 2.0 < 0.1);
-	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mLaureFriend, LinphoneFriendCapabilityLimeX3dh) - (-1.0) < 0.1);
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mLaureFriend, LinphoneFriendCapabilityGroupChat, 2.0f));
+	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(mLaureFriend, LinphoneFriendCapabilityLimeX3dh, 1.0f));
+	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mLaureFriend, LinphoneFriendCapabilityGroupChat) - 2.0f < 0.1f);
+	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mLaureFriend, LinphoneFriendCapabilityLimeX3dh) - (-1.0f) < 0.1f);
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(mChloeFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(mChloeFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(mChloeFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(mChloeFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mChloeFriend, LinphoneFriendCapabilityGroupChat, 2.1));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mChloeFriend, LinphoneFriendCapabilityLimeX3dh, 1.7));
-	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mChloeFriend, LinphoneFriendCapabilityGroupChat) - 2.1 < 0.1);
-	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mChloeFriend, LinphoneFriendCapabilityLimeX3dh) - 1.7 < 0.1);
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mChloeFriend, LinphoneFriendCapabilityGroupChat, 2.1f));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mChloeFriend, LinphoneFriendCapabilityLimeX3dh, 1.7f));
+	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mChloeFriend, LinphoneFriendCapabilityGroupChat) - 2.1f < 0.1f);
+	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mChloeFriend, LinphoneFriendCapabilityLimeX3dh) - 1.7f < 0.1f);
 
 	// Pauline's received presence
 	BC_ASSERT_FALSE(linphone_friend_get_capabilities(p1MarieFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_FALSE(linphone_friend_has_capability(p1MarieFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_FALSE(linphone_friend_get_capabilities(p1MarieFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_FALSE(linphone_friend_has_capability(p1MarieFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(p1MarieFriend, LinphoneFriendCapabilityGroupChat, 1.0));
-	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(p1MarieFriend, LinphoneFriendCapabilityLimeX3dh, 1.0));
+	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(p1MarieFriend, LinphoneFriendCapabilityGroupChat, 1.0f));
+	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(p1MarieFriend, LinphoneFriendCapabilityLimeX3dh, 1.0f));
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(p1LaureFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(p1LaureFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_FALSE(linphone_friend_get_capabilities(p1LaureFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_FALSE(linphone_friend_has_capability(p1LaureFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p1LaureFriend, LinphoneFriendCapabilityGroupChat, 2.0));
-	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(p1LaureFriend, LinphoneFriendCapabilityLimeX3dh, 1.0));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p1LaureFriend, LinphoneFriendCapabilityGroupChat, 2.0f));
+	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(p1LaureFriend, LinphoneFriendCapabilityLimeX3dh, 1.0f));
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(p1ChloeFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(p1ChloeFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(p1ChloeFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(p1ChloeFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p1ChloeFriend, LinphoneFriendCapabilityGroupChat, 2.1));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p1ChloeFriend, LinphoneFriendCapabilityLimeX3dh, 1.7));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p1ChloeFriend, LinphoneFriendCapabilityGroupChat, 2.1f));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p1ChloeFriend, LinphoneFriendCapabilityLimeX3dh, 1.7f));
 
 	// Pauline2's received presence
 	BC_ASSERT_FALSE(linphone_friend_get_capabilities(p2MarieFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_FALSE(linphone_friend_has_capability(p2MarieFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_FALSE(linphone_friend_get_capabilities(p2MarieFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_FALSE(linphone_friend_has_capability(p2MarieFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(p2MarieFriend, LinphoneFriendCapabilityGroupChat, 1.0));
-	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(p2MarieFriend, LinphoneFriendCapabilityLimeX3dh, 1.0));
+	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(p2MarieFriend, LinphoneFriendCapabilityGroupChat, 1.0f));
+	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(p2MarieFriend, LinphoneFriendCapabilityLimeX3dh, 1.0f));
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(p2LaureFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(p2LaureFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_FALSE(linphone_friend_get_capabilities(p2LaureFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_FALSE(linphone_friend_has_capability(p2LaureFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p2LaureFriend, LinphoneFriendCapabilityGroupChat, 2.0));
-	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(p2LaureFriend, LinphoneFriendCapabilityLimeX3dh, 1.0));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p2LaureFriend, LinphoneFriendCapabilityGroupChat, 2.0f));
+	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(p2LaureFriend, LinphoneFriendCapabilityLimeX3dh, 1.0f));
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(p2ChloeFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(p2ChloeFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(p2ChloeFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(p2ChloeFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p2ChloeFriend, LinphoneFriendCapabilityGroupChat, 2.1));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p2ChloeFriend, LinphoneFriendCapabilityLimeX3dh, 1.7));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p2ChloeFriend, LinphoneFriendCapabilityGroupChat, 2.1f));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p2ChloeFriend, LinphoneFriendCapabilityLimeX3dh, 1.7f));
 
 	// Laure's received presence
 	BC_ASSERT_FALSE(linphone_friend_get_capabilities(lMarieFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_FALSE(linphone_friend_has_capability(lMarieFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_FALSE(linphone_friend_get_capabilities(lMarieFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_FALSE(linphone_friend_has_capability(lMarieFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(lMarieFriend, LinphoneFriendCapabilityGroupChat, 1.0));
-	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(lMarieFriend, LinphoneFriendCapabilityLimeX3dh, 1.0));
+	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(lMarieFriend, LinphoneFriendCapabilityGroupChat, 1.0f));
+	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(lMarieFriend, LinphoneFriendCapabilityLimeX3dh, 1.0f));
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(lPaulineFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(lPaulineFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(lPaulineFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(lPaulineFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(lPaulineFriend, LinphoneFriendCapabilityGroupChat, 1.1));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(lPaulineFriend, LinphoneFriendCapabilityLimeX3dh, 1.0));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(lPaulineFriend, LinphoneFriendCapabilityGroupChat, 1.1f));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(lPaulineFriend, LinphoneFriendCapabilityLimeX3dh, 1.0f));
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(lChloeFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(lChloeFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(lChloeFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(lChloeFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(lChloeFriend, LinphoneFriendCapabilityGroupChat, 2.1));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(lChloeFriend, LinphoneFriendCapabilityLimeX3dh, 1.7));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(lChloeFriend, LinphoneFriendCapabilityGroupChat, 2.1f));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(lChloeFriend, LinphoneFriendCapabilityLimeX3dh, 1.7f));
 
 	// Chloe's received presence
 	BC_ASSERT_FALSE(linphone_friend_get_capabilities(cMarieFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_FALSE(linphone_friend_has_capability(cMarieFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_FALSE(linphone_friend_get_capabilities(cMarieFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_FALSE(linphone_friend_has_capability(cMarieFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(cMarieFriend, LinphoneFriendCapabilityGroupChat, 1.0));
-	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(cMarieFriend, LinphoneFriendCapabilityLimeX3dh, 1.0));
+	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(cMarieFriend, LinphoneFriendCapabilityGroupChat, 1.0f));
+	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(cMarieFriend, LinphoneFriendCapabilityLimeX3dh, 1.0f));
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(cPaulineFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(cPaulineFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(cPaulineFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(cPaulineFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(cPaulineFriend, LinphoneFriendCapabilityGroupChat, 1.1));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(cPaulineFriend, LinphoneFriendCapabilityLimeX3dh, 1.0));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(cPaulineFriend, LinphoneFriendCapabilityGroupChat, 1.1f));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(cPaulineFriend, LinphoneFriendCapabilityLimeX3dh, 1.0f));
 
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(cLaureFriend) & LinphoneFriendCapabilityGroupChat);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(cLaureFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_FALSE(linphone_friend_get_capabilities(cLaureFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_FALSE(linphone_friend_has_capability(cLaureFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(cLaureFriend, LinphoneFriendCapabilityGroupChat, 2.0));
-	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(cLaureFriend, LinphoneFriendCapabilityLimeX3dh, 1.0));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(cLaureFriend, LinphoneFriendCapabilityGroupChat, 2.0f));
+	BC_ASSERT_FALSE(linphone_friend_has_capability_with_version(cLaureFriend, LinphoneFriendCapabilityLimeX3dh, 1.0f));
 
 	linphone_friend_unref(mPaulineFriend);
 	linphone_friend_unref(mLaureFriend);
