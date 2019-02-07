@@ -1568,7 +1568,8 @@ static void file_transfer_success_after_destroying_chatroom(void) {
 	linphone_chat_message_send(msg);
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageInProgress, 1, 1000));
 	linphone_core_delete_chat_room(marie->lc, chatroom);
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageDisplayed, 1, 3000));
+    //As of today (2019/02/07), chat message can no longer be sent without chatroom
+	BC_ASSERT_FALSE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageDisplayed, 1, 1000));
 	linphone_chat_message_unref(msg);
 	linphone_core_manager_destroy(marie);
 }
