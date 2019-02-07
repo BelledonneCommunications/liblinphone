@@ -354,6 +354,32 @@ LINPHONE_PUBLIC int linphone_friend_get_capabilities(const LinphoneFriend *lf);
 LINPHONE_PUBLIC bool_t linphone_friend_has_capability(const LinphoneFriend *lf, const LinphoneFriendCapability capability);
 
 /**
+ * Returns whether or not a friend has a capbility with a given version.
+ * @param[in] lf #LinphoneFriend object
+ * @param[in] capability #LinphoneFriendCapability object
+ * @param[in] version the version to test
+ * @return whether or not a friend has a capbility with a given version or -1.0 if friend has not capability.
+ */
+LINPHONE_PUBLIC bool_t linphone_friend_has_capability_with_version(const LinphoneFriend *lf, const LinphoneFriendCapability capability, float version);
+
+/**
+ * Returns whether or not a friend has a capbility with a given version or more.
+ * @param[in] lf #LinphoneFriend object
+ * @param[in] capability #LinphoneFriendCapability object
+ * @param[in] version the version to test
+ * @return whether or not a friend has a capbility with a given version or more.
+ */
+LINPHONE_PUBLIC bool_t linphone_friend_has_capability_with_version_or_more(const LinphoneFriend *lf, const LinphoneFriendCapability capability, float version);
+
+/**
+ * Returns the version of a friend's capbility.
+ * @param[in] lf #LinphoneFriend object
+ * @param[in] capability #LinphoneFriendCapability object
+ * @return the version of a friend's capbility.
+ */
+LINPHONE_PUBLIC float linphone_friend_get_capability_version(const LinphoneFriend *lf, const LinphoneFriendCapability capability);
+
+/**
  * @}
  */
 
