@@ -2905,8 +2905,9 @@ static void group_chat_room_unique_one_to_one_chat_room_base(bool_t secondDevice
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	if (secondDeviceForSender) {
-		linphone_core_set_network_reachable(marie2->lc,FALSE);
+		linphone_core_set_network_reachable(marie2->lc,TRUE);
 		linphone_core_delete_chat_room(marie2->lc, marie2Cr);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie2->stat.number_of_LinphoneChatRoomStateTerminated, initialMarie2Stats.number_of_LinphoneChatRoomStateTerminated + 1, 3000));
 	}
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 
@@ -4400,6 +4401,7 @@ static void group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_k
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
 	int dummy = 0;
 
+	linphone_core_enable_lime_x3dh(laure->lc, FALSE);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
@@ -6984,7 +6986,7 @@ test_t group_chat_tests[] = {
 	TEST_NO_TAG("Remove participant", group_chat_room_remove_participant),
 	TEST_NO_TAG("Send message with a participant removed", group_chat_room_send_message_with_participant_removed),
 	TEST_NO_TAG("Leave group chat room", group_chat_room_leave),
-    TEST_NO_TAG("Delete group chat room successful if it's already removed by server", group_chat_room_delete_twice),
+	TEST_NO_TAG("Delete group chat room successful if it's already removed by server", group_chat_room_delete_twice),
 	TEST_NO_TAG("Come back on a group chat room after a disconnection", group_chat_room_come_back_after_disconnection),
 	TEST_NO_TAG("Create chat room with disconnected friends", group_chat_room_create_room_with_disconnected_friends),
 	TEST_NO_TAG("Create chat room with disconnected friends and initial message", group_chat_room_create_room_with_disconnected_friends_and_initial_message),
