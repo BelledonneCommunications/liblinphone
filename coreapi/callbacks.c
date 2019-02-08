@@ -445,7 +445,7 @@ static void message_received(SalOp *op, const SalMessage *msg){
 	LinphoneCall *call=(LinphoneCall*)op->getUserPointer();
 	LinphoneReason reason = lc->chat_deny_code;
 	if (reason == LinphoneReasonNone) {
-		linphone_core_message_received(lc, op, msg);
+		reason = linphone_core_message_received(lc, op, msg);
 	}
 	auto messageOp = dynamic_cast<SalMessageOpInterface *>(op);
 	messageOp->reply(linphone_reason_to_sal(reason));
