@@ -6289,7 +6289,7 @@ void _linphone_core_uninit(LinphoneCore *lc)
 	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
 
 	//no longer call LinphoneGlobalShutdown because it cause LinphoneCore revival in case of managed languages like Java
-    getPlatformHelpers(lc)->onLinphoneCoreStop();
+	getPlatformHelpers(lc)->onLinphoneCoreStop();
 
 #ifdef VIDEO_ENABLED
 	if (lc->previewstream!=NULL){
