@@ -418,24 +418,40 @@ PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemCon
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativePreviewWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
-	androidPlatformHelper->_setPreviewVideoWindow(id);
+	belle_sip_main_loop_t *loop = belle_sip_stack_get_main_loop(static_cast<belle_sip_stack_t*>(androidPlatformHelper->getCore()->sal->getStackImpl()));
+	std::function<void(void)> fun = [androidPlatformHelper, id]() {
+		androidPlatformHelper->_setPreviewVideoWindow(id);
+	};
+	belle_sip_main_loop_cpp_do_later(loop, fun);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
-	androidPlatformHelper->_setVideoWindow(id);
+	belle_sip_main_loop_t *loop = belle_sip_stack_get_main_loop(static_cast<belle_sip_stack_t*>(androidPlatformHelper->getCore()->sal->getStackImpl()));
+	std::function<void(void)> fun = [androidPlatformHelper, id]() {
+		androidPlatformHelper->_setVideoWindow(id);
+	};
+	belle_sip_main_loop_cpp_do_later(loop, fun);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNetworkReachable(JNIEnv* env, jobject thiz, jlong ptr, jboolean reachable) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
-	androidPlatformHelper->setNetworkReachable(reachable);
+	belle_sip_main_loop_t *loop = belle_sip_stack_get_main_loop(static_cast<belle_sip_stack_t*>(androidPlatformHelper->getCore()->sal->getStackImpl()));
+	std::function<void(void)> fun = [androidPlatformHelper, reachable]() {
+		androidPlatformHelper->setNetworkReachable(reachable);
+	};
+	belle_sip_main_loop_cpp_do_later(loop, fun);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setHttpProxy(JNIEnv* env, jobject thiz, jlong ptr, jstring host, jint port) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
-	const char *hostC = GetStringUTFChars(env, host);
-	androidPlatformHelper->setHttpProxy(hostC, port);
-	ReleaseStringUTFChars(env, host, hostC);
+	belle_sip_main_loop_t *loop = belle_sip_stack_get_main_loop(static_cast<belle_sip_stack_t*>(androidPlatformHelper->getCore()->sal->getStackImpl()));
+	std::function<void(void)> fun = [androidPlatformHelper, env, host, port]() {
+		const char *hostC = GetStringUTFChars(env, host);
+		androidPlatformHelper->setHttpProxy(hostC, port);
+		ReleaseStringUTFChars(env, host, hostC);
+	};
+	belle_sip_main_loop_cpp_do_later(loop, fun);
 }
 
 LINPHONE_END_NAMESPACE
