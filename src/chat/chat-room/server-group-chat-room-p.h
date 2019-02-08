@@ -69,7 +69,6 @@ public:
 	std::shared_ptr<Participant> findAuthorizedParticipant (const std::shared_ptr<const CallSession> &session) const;
 	std::shared_ptr<Participant> findAuthorizedParticipant (const IdentityAddress &participantAddress) const;
 
-	ParticipantDevice::State getParticipantDeviceState (const std::shared_ptr<const ParticipantDevice> &device) const;
 	void setParticipantDeviceState (const std::shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state);
 
 	void acceptSession (const std::shared_ptr<CallSession> &session);
@@ -127,10 +126,10 @@ private:
 	};
 
 	static void copyMessageHeaders (const std::shared_ptr<Message> &fromMessage, const std::shared_ptr<ChatMessage> &toMessage);
-
+	static bool allDevicesLeft(const std::shared_ptr<Participant> &participant);
 	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const ParticipantDeviceIdentity &deviceInfo);
 	void designateAdmin ();
-	void dispatchMessage (const std::shared_ptr<Message> &message, const std::string &uri);
+	void sendMessage (const std::shared_ptr<Message> &message, const IdentityAddress &deviceAddr);
 	void finalizeCreation ();
 	std::shared_ptr<CallSession> makeSession(const std::shared_ptr<ParticipantDevice> &device);
 	void inviteDevice (const std::shared_ptr<ParticipantDevice> &device);
