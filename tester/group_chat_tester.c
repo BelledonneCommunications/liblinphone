@@ -7109,7 +7109,7 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	coresManagerList = bctbx_list_remove(coresManagerList, marie1);
 	coresList = bctbx_list_remove(coresList, marie1->lc);
 	initialPaulineStats = pauline->stat;
-	linphone_core_manager_destroy(marie1);
+	linphone_core_manager_stop(marie1);
 	//force flexisip to publish on marie topic
 	linphone_core_refresh_registers(marie2->lc);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participant_devices_removed, initialPaulineStats.number_of_participant_devices_removed + 1, 3000));
@@ -7176,13 +7176,24 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	linphone_chat_message_unref(message);
 	
 	// Clean db from chat room
+	linphone_core_manager_reinit(marie1);
+	tmpCoresManagerList = bctbx_list_append(NULL, marie1);
+	tmpCoresList = init_core_for_conference(tmpCoresManagerList);
+	bctbx_list_free(tmpCoresManagerList);
+	coresList = bctbx_list_concat(coresList, tmpCoresList);
+	linphone_core_manager_start(marie1,TRUE);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie1->stat.number_of_LinphoneChatRoomStateCreated, initialMarie1Stats.number_of_LinphoneChatRoomStateCreated + 1, 3000));
+	wait_for_list(coresList, NULL, 0, 1000);
+	marie1Cr = check_has_chat_room_client_side(coresList, marie1, &initialMarie1Stats, confAddr, initialSubject, 1, FALSE);
 	
+	linphone_core_manager_delete_chat_room(marie1, marie1Cr, coresList);
 	linphone_core_manager_delete_chat_room(marie2, marie2Cr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 	
 	linphone_address_unref(confAddr);
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie1);
 	linphone_core_manager_destroy(marie2);
 	linphone_core_manager_destroy(pauline);
 }
