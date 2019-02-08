@@ -62,6 +62,7 @@ extern test_suite_t event_test_suite;
 extern test_suite_t main_db_test_suite;
 extern test_suite_t flexisip_test_suite;
 extern test_suite_t group_chat_test_suite;
+extern test_suite_t secure_group_chat_test_suite;
 extern test_suite_t log_collection_test_suite;
 extern test_suite_t message_test_suite;
 extern test_suite_t multi_call_test_suite;
@@ -377,6 +378,11 @@ void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMess
 void file_transfer_received(LinphoneChatMessage *message, const LinphoneContent* content, const LinphoneBuffer *buffer);
 LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t size);
 LinphoneChatMessage *_send_message(LinphoneChatRoom *chatRoom, const char *message);
+void _send_file_plus_text(LinphoneChatRoom* cr, const char *sendFilepath, const char *text);
+void _send_file(LinphoneChatRoom* cr, const char *sendFilepath);
+void _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *receiverStats, const char *receive_filepath, const char *sendFilepath);
+void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *receiverStats, const char *receive_filepath, const char *sendFilepath, const char *text);
+
 LinphoneBuffer * tester_memory_file_transfer_send(LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t size);
 void file_transfer_progress_indication(LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t total);
 void is_composing_received(LinphoneCore *lc, LinphoneChatRoom *room);

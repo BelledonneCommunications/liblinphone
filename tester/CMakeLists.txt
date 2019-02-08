@@ -195,6 +195,7 @@ set(SOURCE_FILES_C
 	eventapi_tester.c
 	flexisip_tester.c
 	group_chat_tester.c
+	group_chat_secure.c
 	liblinphone_tester.c
 	log_collection_tester.c
 	message_tester.c

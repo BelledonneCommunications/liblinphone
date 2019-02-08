@@ -309,6 +309,8 @@ int logfile_arg_func(const char *arg) {
 void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&setup_test_suite);
 	bc_tester_add_suite(&register_test_suite);
+	bc_tester_add_suite(&group_chat_test_suite);
+	bc_tester_add_suite(&secure_group_chat_test_suite);
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
 	bc_tester_add_suite(&call_test_suite);
@@ -349,7 +351,6 @@ void liblinphone_tester_add_suites() {
 #ifdef VCARD_ENABLED
 	bc_tester_add_suite(&vcard_test_suite);
 #endif
-	bc_tester_add_suite(&group_chat_test_suite);
 	bc_tester_add_suite(&utils_test_suite);
 }
 
