@@ -437,11 +437,14 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setHttpProxy(JNIEnv* env, jobject thiz, jlong ptr, jstring host, jint port) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
+	const char *hostC = GetStringUTFChars(env, host);
+	char * httpProxyHost = ms_strdup(hostC);
+	ReleaseStringUTFChars(env, host, hostC);
+
 	belle_sip_main_loop_t *loop = belle_sip_stack_get_main_loop(static_cast<belle_sip_stack_t*>(androidPlatformHelper->getCore()->sal->getStackImpl()));
-	std::function<void(void)> fun = [androidPlatformHelper, env, host, port]() {
-		const char *hostC = GetStringUTFChars(env, host);
-		androidPlatformHelper->setHttpProxy(hostC, port);
-		ReleaseStringUTFChars(env, host, hostC);
+	std::function<void(void)> fun = [androidPlatformHelper, httpProxyHost, port]() {
+		androidPlatformHelper->setHttpProxy(httpProxyHost, port);
+		ms_free(httpProxyHost);
 	};
 	belle_sip_main_loop_cpp_do_later(loop, fun);
 }
