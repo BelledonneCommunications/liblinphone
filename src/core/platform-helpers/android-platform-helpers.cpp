@@ -34,7 +34,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class AndroidPlatformHelpers : public PlatformHelpers {
 public:
-	AndroidPlatformHelpers (LinphoneCore *lc, void *systemContext);
+	AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
 	~AndroidPlatformHelpers ();
 
 	void acquireWifiLock () override;
@@ -113,14 +113,14 @@ jmethodID AndroidPlatformHelpers::getMethodId (JNIEnv *env, jclass klass, const 
 	return id;
 }
 
-AndroidPlatformHelpers::AndroidPlatformHelpers (LinphoneCore *lc, void *systemContext) : PlatformHelpers(lc) {
+AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : PlatformHelpers(core) {
 	JNIEnv *env = ms_get_jni_env();
 	jclass klass = env->FindClass("org/linphone/core/tools/AndroidPlatformHelper");
 	if (!klass)
 		lFatal() << "Could not find java AndroidPlatformHelper class.";
 
 	jmethodID ctor = env->GetMethodID(klass, "<init>", "(JLjava/lang/Object;Z)V");
-	mJavaHelper = env->NewObject(klass, ctor, (jlong)this, (jobject)systemContext, (jboolean)linphone_core_wifi_only_enabled(getCore()));
+	mJavaHelper = env->NewObject(klass, ctor, (jlong)this, (jobject)systemContext, (jboolean)linphone_core_wifi_only_enabled(getCore()->getCCore()));
 	if (!mJavaHelper) {
 		lError() << "Could not instanciate AndroidPlatformHelper object.";
 		return;
@@ -256,7 +256,7 @@ string AndroidPlatformHelpers::getSoundResource (const string &filename) const {
 void AndroidPlatformHelpers::setVideoPreviewWindow (void *windowId) {
 	JNIEnv *env = ms_get_jni_env();
 	if (env && mJavaHelper) {
-		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()));
+		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()->getCCore()));
 		if (windowId && (displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
 			env->CallVoidMethod(mJavaHelper, mSetNativePreviewVideoWindowId, (jobject)windowId);
 		} else {
@@ -268,7 +268,7 @@ void AndroidPlatformHelpers::setVideoPreviewWindow (void *windowId) {
 void AndroidPlatformHelpers::setVideoWindow (void *windowId) {
 	JNIEnv *env = ms_get_jni_env();
 	if (env && mJavaHelper) {
-		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()));
+		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()->getCCore()));
 		if (windowId && (displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
 			env->CallVoidMethod(mJavaHelper, mSetNativeVideoWindowId, (jobject)windowId);
 		} else {
@@ -291,8 +291,8 @@ void AndroidPlatformHelpers::onWifiOnlyEnabled(bool enabled) {
 }
 
 void AndroidPlatformHelpers::setHttpProxy(string host, int port) {
-	linphone_core_set_http_proxy_host(getCore(), host.c_str());
-	linphone_core_set_http_proxy_port(getCore(), port);
+	linphone_core_set_http_proxy_host(getCore()->getCCore(), host.c_str());
+	linphone_core_set_http_proxy_port(getCore()->getCCore(), port);
 }
 
 void AndroidPlatformHelpers::setDnsServers () {
@@ -300,7 +300,7 @@ void AndroidPlatformHelpers::setDnsServers () {
 		lError() << "AndroidPlatformHelpers' mJavaHelper is null.";
 		return;
 	}
-	if (linphone_core_get_dns_set_by_app(getCore())) return;
+	if (linphone_core_get_dns_set_by_app(getCore()->getCCore())) return;
 
 	JNIEnv *env = ms_get_jni_env();
 	if (env) {
@@ -327,14 +327,14 @@ void AndroidPlatformHelpers::setDnsServers () {
 			lError() << "AndroidPlatformHelpers::setDnsServers() failed to get DNS servers list";
 			return;
 		}
-		linphone_core_set_dns_servers(getCore(), l);
+		linphone_core_set_dns_servers(getCore()->getCCore(), l);
 		bctbx_list_free_with_data(l, ms_free);
 	}
 }
 
 void AndroidPlatformHelpers::setNetworkReachable(bool reachable) {
 	mNetworkReachable = reachable;
-	linphone_core_set_network_reachable_internal(getCore(), reachable ? 1 : 0);
+	linphone_core_set_network_reachable_internal(getCore()->getCCore(), reachable ? 1 : 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -357,7 +357,7 @@ void AndroidPlatformHelpers::onLinphoneCoreStop() {
 
 void AndroidPlatformHelpers::_setPreviewVideoWindow(jobject window) {
 	JNIEnv *env = ms_get_jni_env();
-	LinphoneCore *lc = getCore();
+	LinphoneCore *lc = getCore()->getCCore();
 	if (window != nullptr && window != mPreviewVideoWindow) {
 		if (mPreviewVideoWindow != nullptr) {
 			env->DeleteGlobalRef(mPreviewVideoWindow);
@@ -372,7 +372,7 @@ void AndroidPlatformHelpers::_setPreviewVideoWindow(jobject window) {
 
 void AndroidPlatformHelpers::_setVideoWindow(jobject window) {
 	JNIEnv *env = ms_get_jni_env();
-	LinphoneCore *lc = getCore();
+	LinphoneCore *lc = getCore()->getCCore();
 	if (window != nullptr && window != mVideoWindow) {
 		if (mVideoWindow != nullptr) {
 			env->DeleteGlobalRef(mVideoWindow);
@@ -412,8 +412,8 @@ string AndroidPlatformHelpers::getNativeLibraryDir () {
 	return libPath;
 }
 
-PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext) {
-	return new AndroidPlatformHelpers(lc, systemContext);
+PlatformHelpers *createAndroidPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) {
+	return new AndroidPlatformHelpers(core, systemContext);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativePreviewWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
@@ -428,11 +428,10 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNetworkReachable(JNIEnv* env, jobject thiz, jlong ptr, jboolean reachable) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
-	belle_sip_main_loop_t *loop = belle_sip_stack_get_main_loop(static_cast<belle_sip_stack_t*>(androidPlatformHelper->getCore()->sal->getStackImpl()));
-	std::function<void(void)> fun = [androidPlatformHelper, reachable]() {
+	const std::function<void ()> fun = [androidPlatformHelper, reachable]() {
 		androidPlatformHelper->setNetworkReachable(reachable);
 	};
-	belle_sip_main_loop_cpp_do_later(loop, fun);
+	androidPlatformHelper->getCore()->doLater(fun);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setHttpProxy(JNIEnv* env, jobject thiz, jlong ptr, jstring host, jint port) {
@@ -441,12 +440,11 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 	char * httpProxyHost = ms_strdup(hostC);
 	ReleaseStringUTFChars(env, host, hostC);
 
-	belle_sip_main_loop_t *loop = belle_sip_stack_get_main_loop(static_cast<belle_sip_stack_t*>(androidPlatformHelper->getCore()->sal->getStackImpl()));
-	std::function<void(void)> fun = [androidPlatformHelper, httpProxyHost, port]() {
+	const std::function<void ()> fun = [androidPlatformHelper, httpProxyHost, port]() {
 		androidPlatformHelper->setHttpProxy(httpProxyHost, port);
 		ms_free(httpProxyHost);
 	};
-	belle_sip_main_loop_cpp_do_later(loop, fun);
+	androidPlatformHelper->getCore()->doLater(fun);
 }
 
 LINPHONE_END_NAMESPACE
