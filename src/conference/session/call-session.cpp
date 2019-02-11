@@ -1226,7 +1226,7 @@ LinphoneCallDir CallSession::getDirection () const {
 
 const Address& CallSession::getDiversionAddress () const {
 	L_D();
-	if (d->op) {
+	if (d->op && d->op->getDiversionAddress()) {
 		char *addrStr = sal_address_as_string(d->op->getDiversionAddress());
 		d->diversionAddress = Address(addrStr);
 		bctbx_free(addrStr);
