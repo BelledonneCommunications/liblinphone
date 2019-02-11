@@ -120,21 +120,17 @@ LimeManager::LimeManager (
 
 LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 	const std::string &dbAccess,
+	const std::string &serverUrl,
 	belle_http_provider_t *prov,
 	const shared_ptr<Core> core
 ) : EncryptionEngine(core) {
 	engineType = EncryptionEngine::EngineType::LimeX3dh;
 	curve = lime::CurveId::c25519; // c448
 	_dbAccess = dbAccess;
+	x3dhServerUrl = serverUrl;
 	auto cCore = core->getCCore();
 	limeManager = unique_ptr<LimeManager>(new LimeManager(dbAccess, prov, core));
 	lastLimeUpdate = linphone_config_get_int(cCore->config, "lime", "last_update_time", 0);
-	x3dhServerUrl = linphone_config_get_string(
-		linphone_core_get_config(cCore),
-		"lime",
-		"x3dh_server_url",
-		""
-	);
 	if (x3dhServerUrl.empty())
 		lError() << "LIME X3DH server URL unavailable for encryption engine";
 }

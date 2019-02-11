@@ -1515,23 +1515,26 @@ LINPHONE_PUBLIC bool_t linphone_core_get_guess_hostname(LinphoneCore *lc);
  * @param[in] lc #LinphoneCore object
  * @param[in] val The new lime state
  * @ingroup network_parameters
+ * @deprecated  Use linphone_core_enable_lime_x3dh instead. Depreacted since 2019-02-04
  */
-LINPHONE_PUBLIC void linphone_core_enable_lime(LinphoneCore *lc, LinphoneLimeState val);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_enable_lime(LinphoneCore *lc, LinphoneLimeState val);
 
 /**
  * Returns the lime state
  * @param[in] lc #LinphoneCore object
  * @return The current lime state
  * @ingroup network_parameters
+ * @deprecated Use linphone_core_lime_x3dh_enabled instead. Depreacted since 2019-02-04
 **/
-LINPHONE_PUBLIC LinphoneLimeState linphone_core_lime_enabled(const LinphoneCore *lc);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneLimeState linphone_core_lime_enabled(const LinphoneCore *lc);
 
 /**
  * Tells if lime is available
  * @param[in] lc #LinphoneCore object
  * @ingroup network_parameters
+ * @deprecated Use linphone_core_lime_x3dh_available instead. Depreacted since 2019-02-04
 **/
-LINPHONE_PUBLIC bool_t linphone_core_lime_available(const LinphoneCore *lc);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_lime_available(const LinphoneCore *lc);
 
 /**
  * Tells to LinphoneCore to use LIME X3DH
@@ -1548,6 +1551,16 @@ LINPHONE_PUBLIC void linphone_core_enable_lime_x3dh(LinphoneCore *lc, bool_t ena
  * @ingroup misc
 **/
 LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_enabled(const LinphoneCore *lc);
+
+/**
+ * Set the x3dh server url.
+ * If empty, this function will disable LIME X3DH from core.
+ * Otherwise, or if different from the existing value, this will (re-)initialize the LIME X3DH engine.
+ * @param[in] lc LinphoneCore object
+ * @param[in] url The x3dh server url
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC void linphone_core_set_lime_x3dh_server_url(LinphoneCore *lc, const char *url);
 
 /**
  * Tells if LIME X3DH is available

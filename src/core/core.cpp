@@ -230,20 +230,40 @@ void Core::enableLimeX3dh (bool enable) {
 		d->imee.release();
 
 	if (d->imee == nullptr) {
-		LimeX3dhEncryptionEngine *engine;
 		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
+		string serverUrl = lp_config_get_string(lpconfig, "lime", "x3dh_server_url", "");
+		if (serverUrl.empty()) {
+			//Do not enable encryption engine if url is undefined
+			return;
+		}
 		string filename = lp_config_get_string(lpconfig, "lime", "x3dh_db_path", "x3dh.c25519.sqlite3");
 		string dbAccess = getDataPath() + filename;
-
 		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
-		engine = new LimeX3dhEncryptionEngine(dbAccess, prov, getSharedFromThis());
 
+		LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, serverUrl, prov, getSharedFromThis());
 		setEncryptionEngine(engine);
 		d->registerListener(engine);
 	}
 #else
 	lWarning() << "Lime X3DH support is not available";
 #endif
+}
+
+//Note: this will re-initialise	or start x3dh encryption engine if url is different from existing one
+void Core::setX3dhServerUrl(const std::string &url) {
+	if (!limeX3dhAvailable()) {
+		return;
+	}
+	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
+	string prevUrl = lp_config_get_string(lpconfig, "lime", "x3dh_server_url", "");
+	lp_config_set_string(lpconfig, "lime", "x3dh_server_url", url.c_str());
+	if (url.empty()) {
+		enableLimeX3dh(false);
+	} else if (url.compare(prevUrl)) {
+		//Force re-initialisation
+		enableLimeX3dh(false);
+		enableLimeX3dh(true);
+	}
 }
 
 bool Core::limeX3dhEnabled () const {

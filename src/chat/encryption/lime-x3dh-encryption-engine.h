@@ -69,6 +69,7 @@ class LimeX3dhEncryptionEngine : public EncryptionEngine, public CoreListener {
 public:
 	LimeX3dhEncryptionEngine (
 		const std::string &db_access,
+		const std::string &server_url,
 		belle_http_provider_t *prov,
 		const std::shared_ptr<Core> core
 	);

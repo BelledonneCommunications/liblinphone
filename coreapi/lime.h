@@ -107,7 +107,6 @@ LINPHONE_PUBLIC int lime_setCachedKey(void *cachedb, limeKey_t *associatedKey, u
  * This does not free the memory area pointed by associatedKeys.
  *
  * @param[in,out]	associatedKeys	The structure to be cleaned
- *
  */
 LINPHONE_PUBLIC void lime_freeKeys(limeURIKeys_t *associatedKeys);
 
@@ -122,9 +121,34 @@ LINPHONE_PUBLIC void lime_freeKeys(limeURIKeys_t *associatedKeys);
  * 									Authentication tag is set at the begining of the encrypted Message
  *
  * @return 0 on success, error code otherwise
- *
  */
 LINPHONE_PUBLIC int lime_encryptMessage(limeKey_t *key, const uint8_t *plainMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *encryptedMessage);
+
+/**
+ * @brief Encrypt a file before transfering it to the server, encryption is done in several call, first one will be done with cryptoContext null, last one with length = 0
+ *
+ * @param[in,out]	cryptoContext		The context used to encrypt the file using AES-GCM. Is created at first call(if null)
+ * @param[in]		key					256 bits : 192 bits of key || 64 bits of Initial Vector
+ * @param[in]		length				Length of data to be encrypted, if 0 it will conclude the encryption
+ * @param[in]		plain				Plain data to be encrypted (length bytes)
+ * @param[out]		cipher				Output to a buffer allocated by caller, at least length bytes available
+ *
+ * @return 0 on success, error code otherwise
+ */
+LINPHONE_PUBLIC int lime_encryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher);
+
+/**
+ * @brief Decrypt a file retrieved from server, decryption is done in several call, first one will be done with cryptoContext null, last one with length = 0
+ *
+ * @param[in,out]	cryptoContext		The context used to decrypt the file using AES-GCM. Is created at first call(if null)
+ * @param[in]		key					256 bits : 192 bits of key || 64 bits of Initial Vector
+ * @param[in]		length				Length of data to be decrypted, if 0 it will conclude the decryption
+ * @param[out]		plain				Output to a buffer allocated by caller, at least length bytes available
+ * @param[in]		cipher				Cipher text to be decrypted(length bytes)
+ *
+ * @return 0 on success, error code otherwise
+ */
+LINPHONE_PUBLIC int lime_decryptFile(void **cryptoContext, unsigned char *key, size_t length, char *plain, char *cipher);
 
 /**
  * @brief decrypt and authentify a message with the given key
@@ -137,7 +161,6 @@ LINPHONE_PUBLIC int lime_encryptMessage(limeKey_t *key, const uint8_t *plainMess
  * 									Authentication tag is retrieved at the begining of the encrypted Message
  *
  * @return 0 on success, error code otherwise
- *
  */
 
 LINPHONE_PUBLIC int lime_decryptMessage(limeKey_t *key, uint8_t *encryptedMessage, uint32_t messageLength, uint8_t selfZID[12], uint8_t *plainMessage);
@@ -152,7 +175,6 @@ LINPHONE_PUBLIC int lime_decryptMessage(limeKey_t *key, uint8_t *encryptedMessag
  * @param[in]		selfURI			The source URI
  * @param[in]		peerURI			The destination URI, associated keys will be found in cache
  * @param[out]		output			The output buffer, allocated and set with the encrypted message xml body(null terminated string). Must be freed by caller
- *
  * @return 	0 on success, error code otherwise
  */
 LINPHONE_PUBLIC int lime_createMultipartMessage(void *cachedb, const char *contentType, uint8_t *message, const char *selfURI, const char *peerURI, uint8_t **output);
