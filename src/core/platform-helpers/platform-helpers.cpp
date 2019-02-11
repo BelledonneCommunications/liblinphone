@@ -33,7 +33,7 @@ GenericPlatformHelpers::GenericPlatformHelpers (std::shared_ptr<LinphonePrivate:
 
 GenericPlatformHelpers::~GenericPlatformHelpers () {
 	if (mMonitorTimer) {
-		if (mCore && mCore->sal) mCore->sal->cancelTimer(mMonitorTimer);
+		if (getCore()->getCCore() && getCore()->getCCore()->sal) getCore()->getCCore()->sal->cancelTimer(mMonitorTimer);
 		belle_sip_object_unref(mMonitorTimer);
 		mMonitorTimer = nullptr;
 	}
@@ -111,7 +111,7 @@ void GenericPlatformHelpers::setWifiSSID(const string &ssid) { mCurrentSSID = ss
 
 void GenericPlatformHelpers::setNetworkReachable (bool reachable) {
 	mNetworkReachable = reachable;
-	linphone_core_set_network_reachable_internal(mCore, reachable);
+	linphone_core_set_network_reachable_internal(getCore()->getCCore(), reachable);
 }
 
 bool GenericPlatformHelpers::startNetworkMonitoring() { return true; }
@@ -122,7 +122,7 @@ void GenericPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
 	if (!monitoringEnabled) return;
 
 	if (!mMonitorTimer) {
-		mMonitorTimer = mCore->sal->createTimer(
+		mMonitorTimer = getCore()->getCCore()->sal->createTimer(
 			monitorTimerExpired,
 			this,
 			DefaultMonitorTimeout * 1000,
