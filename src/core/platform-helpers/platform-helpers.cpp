@@ -29,7 +29,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-GenericPlatformHelpers::GenericPlatformHelpers (LinphoneCore *lc) : PlatformHelpers(lc), mMonitorTimer(nullptr) {}
+GenericPlatformHelpers::GenericPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : PlatformHelpers(core), mMonitorTimer(nullptr) {}
 
 GenericPlatformHelpers::~GenericPlatformHelpers () {
 	if (mMonitorTimer) {
@@ -141,7 +141,7 @@ void GenericPlatformHelpers::onLinphoneCoreStop () {}
 
 int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revents) {
 	GenericPlatformHelpers *helper = static_cast<GenericPlatformHelpers *>(data);
-	LinphoneCore *core = helper->getCore();
+	LinphoneCore *core = helper->getCore()->getCCore();
 
 	char newIp[LINPHONE_IPADDR_SIZE];
 	linphone_core_get_local_ip(core, AF_UNSPEC, nullptr, newIp);

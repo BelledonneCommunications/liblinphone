@@ -431,7 +431,6 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 		androidPlatformHelper->setNetworkReachable(reachable);
 	};
 	androidPlatformHelper->getCore()->doLater(fun);
-
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setHttpProxy(JNIEnv* env, jobject thiz, jlong ptr, jstring host, jint port) {
