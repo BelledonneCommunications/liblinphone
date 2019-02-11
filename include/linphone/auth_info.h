@@ -110,6 +110,13 @@ LINPHONE_PUBLIC void linphone_auth_info_set_password(LinphoneAuthInfo *info, con
 LINPHONE_PUBLIC void linphone_auth_info_set_username(LinphoneAuthInfo *info, const char *username);
 
 /**
+ * Sets the algorithm.
+ * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] algorithm The algorithm.
+**/
+LINPHONE_PUBLIC void linphone_auth_info_set_algorithm(LinphoneAuthInfo *info, const char *algorithm);
+
+/**
  * Sets the userid.
  * @param[in] info The #LinphoneAuthInfo object
  * @param[in] userid The userid.
@@ -173,6 +180,13 @@ LINPHONE_PUBLIC void linphone_auth_info_set_tls_key_path(LinphoneAuthInfo *info,
  * @return The username.
  */
 LINPHONE_PUBLIC const char *linphone_auth_info_get_username(const LinphoneAuthInfo *info);
+
+/**
+ * Gets the algorithm.
+ * @param[in] info The #LinphoneAuthInfo object
+ * @return The algorithm.
+ */
+LINPHONE_PUBLIC const char *linphone_auth_info_get_algorithm(const LinphoneAuthInfo *info);
 
 /**
  * Gets the password.
