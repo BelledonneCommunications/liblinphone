@@ -1371,7 +1371,8 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	lc->sal->useNoInitialRoute(!!lp_config_get_int(lc->config,"sip","use_no_initial_route",0));
 	lc->sal->useRport(!!lp_config_get_int(lc->config,"sip","use_rport",1));
-	lc->sal->setContactLinphoneSpecs(lp_config_get_string(lc->config, "sip", "linphone_specs", ""));
+
+	linphone_core_set_linphone_specs(lc, lp_config_get_string(lc->config, "sip", "linphone_specs", ""));
 
 	if (!lp_config_get_int(lc->config,"sip","ipv6_migration_done",FALSE) && lp_config_has_entry(lc->config,"sip","use_ipv6")) {
 		lp_config_clean_entry(lc->config,"sip","use_ipv6");
@@ -7637,13 +7638,4 @@ bool_t linphone_core_has_crappy_opengl(LinphoneCore *lc) {
 	if (sound_description == NULL) return FALSE;
 	if (sound_description->flags & DEVICE_HAS_CRAPPY_OPENGL) return TRUE;
 	return FALSE;
-}
-
-const char *linphone_core_get_linphone_specs (const LinphoneCore *core) {
-	return lp_config_get_string(linphone_core_get_config(core), "sip", "linphone_specs", NULL);
-}
-
-void linphone_core_set_linphone_specs (LinphoneCore *core, const char *specs) {
-	lp_config_set_string(linphone_core_get_config(core), "sip", "linphone_specs", specs);
-	core->sal->setContactLinphoneSpecs(L_C_TO_STRING(specs));
 }

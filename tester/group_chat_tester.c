@@ -185,7 +185,6 @@ void configure_core_for_conference (LinphoneCore *core, const char* username, co
 	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(core);
 	linphone_proxy_config_set_conference_factory_uri(proxy, factoryUri);
 	bctbx_free(factoryUri);
-	linphone_core_set_linphone_specs(core, linphone_core_lime_x3dh_available(core) ? "groupchat,lime" : "groupchat");
 }
 
 void _configure_core_for_conference (LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr) {
@@ -545,7 +544,7 @@ static void group_chat_room_add_participant (void) {
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
 	coresManagerList = bctbx_list_append(coresManagerList, chloe);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
-	linphone_core_set_linphone_specs(chloe->lc, ""); // Disable group chat for Chloe
+	linphone_core_remove_linphone_spec(chloe->lc, "groupchat");
 
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(marie->lc)));
@@ -2294,7 +2293,7 @@ static void group_chat_room_fallback_to_basic_chat_room (void) {
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
-	linphone_core_set_linphone_specs(pauline->lc, NULL);
+	linphone_core_remove_linphone_spec(pauline->lc, "groupchat");
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	stats initialMarieStats = marie->stat;
@@ -2349,8 +2348,8 @@ static void group_chat_room_creation_fails_if_invited_participants_dont_support_
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
-	linphone_core_set_linphone_specs(pauline->lc, NULL);
-	linphone_core_set_linphone_specs(laure->lc, NULL);
+	linphone_core_remove_linphone_spec(pauline->lc, "groupchat");
+	linphone_core_remove_linphone_spec(laure->lc, "groupchat");
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(laure->lc)));
@@ -2390,7 +2389,7 @@ static void group_chat_room_creation_successful_if_at_least_one_invited_particip
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
-	linphone_core_set_linphone_specs(laure->lc, NULL);
+	linphone_core_remove_linphone_spec(laure->lc, "groupchat");
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(laure->lc)));
@@ -2536,7 +2535,7 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
-	linphone_core_set_linphone_specs(pauline->lc, NULL);
+	linphone_core_remove_linphone_spec(pauline->lc, "groupchat");
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	stats initialMarieStats = marie->stat;
@@ -2632,7 +2631,7 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 		tmpCoresManagerList = bctbx_list_append(NULL, pauline);
 		tmpCoresList = init_core_for_conference(tmpCoresManagerList);
 		lp_config_set_int(linphone_core_get_config(pauline->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
-		linphone_core_set_linphone_specs(pauline->lc, "groupchat");
+		linphone_core_add_linphone_spec(pauline->lc, "groupchat");
 		bctbx_list_free(tmpCoresManagerList);
 		coresList = bctbx_list_concat(coresList, tmpCoresList);
 		linphone_core_manager_start(pauline, TRUE);

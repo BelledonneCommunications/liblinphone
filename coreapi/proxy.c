@@ -155,7 +155,7 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 			ms_error("Cannot create default nat policy with ref [%s] for proxy config [%p]",nat_policy_ref,cfg);
 		}
 	}
-	cfg->conference_factory_uri = conference_factory_uri ? ms_strdup(conference_factory_uri) : NULL;
+	linphone_proxy_config_set_conference_factory_uri(cfg, conference_factory_uri ? ms_strdup(conference_factory_uri) : NULL);
 }
 
 LinphoneProxyConfig *linphone_proxy_config_new() {
@@ -1584,8 +1584,10 @@ void linphone_proxy_config_set_conference_factory_uri(LinphoneProxyConfig *cfg, 
 		bctbx_free(cfg->conference_factory_uri);
 		cfg->conference_factory_uri = nullptr;
 	}
-	if (uri)
+	if (uri) {
 		cfg->conference_factory_uri = bctbx_strdup(uri);
+		linphone_core_add_linphone_spec(cfg->lc, "groupchat");
+	}
 }
 
 const char * linphone_proxy_config_get_conference_factory_uri(const LinphoneProxyConfig *cfg) {

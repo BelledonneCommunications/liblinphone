@@ -110,10 +110,15 @@ namespace Utils {
 	template<typename S, typename T>
 	inline std::string join (const std::vector<T>& elems, const S& delim) {
 		std::stringstream ss;
-		auto e = elems.begin();
-		ss << *e++;
-		for (; e != elems.end(); ++e)
-			ss << delim << *e;
+
+		for (auto e = elems.begin(); e != elems.end();) {
+			if (e != elems.end()) {
+				ss << *e;
+			}
+			if (++e != elems.end()) {
+				ss << delim;
+			}
+		}
 		return ss.str();
 	}
 	LINPHONE_PUBLIC std::string trim (const std::string &str);
@@ -122,6 +127,21 @@ namespace Utils {
 	inline const T &getEmptyConstRefObject () {
 		static const T object{};
 		return object;
+	}
+
+	template<class Container>
+	inline std::vector<typename Container::value_type> toVector(const Container &l) {
+		std::vector<typename Container::value_type> v;
+		v.reserve(l.size());
+		std::copy(std::begin(l), std::end(l), std::back_inserter(v));
+		return v;
+	}
+
+	template<class Container>
+	inline std::list<typename Container::value_type> toList(const Container &l) {
+		std::list<typename Container::value_type> v;
+		std::copy(std::begin(l), std::end(l), std::back_inserter(v));
+		return v;
 	}
 
 	LINPHONE_PUBLIC std::tm getTimeTAsTm (time_t t);

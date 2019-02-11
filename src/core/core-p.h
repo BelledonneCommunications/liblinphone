@@ -99,6 +99,8 @@ private:
 
 	std::unique_ptr<EncryptionEngine> imee;
 
+	std::list<std::string> specs;
+
 	// Ugly cache to deal with C code.
 	std::unordered_map<const AbstractChatRoom *, std::shared_ptr<const AbstractChatRoom>> noCreatedClientGroupChatRooms;
 
