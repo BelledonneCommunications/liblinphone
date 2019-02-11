@@ -5182,22 +5182,6 @@ LINPHONE_PUBLIC bool_t linphone_core_is_content_type_supported(const LinphoneCor
 LINPHONE_PUBLIC void linphone_core_add_content_type_support(LinphoneCore *lc, const char *content_type);
 
 /**
- * Get the linphone specs value telling what functionalities the linphone client supports.
- * @param[in] core #LinphoneCore object
- * @return The linphone specs telling what functionalities the linphone client supports
- * @ingroup initializing
- */
-LINPHONE_PUBLIC const char *linphone_core_get_linphone_specs (const LinphoneCore *core);
-
-/**
- * Set the linphone specs value telling what functionalities the linphone client supports.
- * @param[in] core #LinphoneCore object
- * @param[in] specs The linphone specs to set
- * @ingroup initializing
- */
-LINPHONE_PUBLIC void linphone_core_set_linphone_specs (LinphoneCore *core, const char *specs);
-
-/**
  * Remove support for the specified content type.
  * It is the application responsibility to handle it correctly afterwards.
  * @param[in] lc LinphoneCore object
@@ -5205,6 +5189,55 @@ LINPHONE_PUBLIC void linphone_core_set_linphone_specs (LinphoneCore *core, const
  */
 LINPHONE_PUBLIC void linphone_core_remove_content_type_support(LinphoneCore *lc, const char *content_type);
 
+/**
+ * Get the linphone specs value telling what functionalities the linphone client supports.
+ * @param[in] core #LinphoneCore object
+ * @return The linphone specs telling what functionalities the linphone client supports
+ * @ingroup initializing
+ * @deprecated Use linphone_core_get_linphone_specs_list instead. Deprecated since 2019-02-07
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_linphone_specs (const LinphoneCore *core);
+
+/**
+ * Set the linphone specs value telling what functionalities the linphone client supports.
+ * @param[in] core #LinphoneCore object
+ * @param[in] specs The linphone specs to set
+ * @ingroup initializing
+ * @deprecated Use linphone_core_set_linphone_specs_list or linphone_core_add_linphone_spec instead. Deprecated since 2019-02-07
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_linphone_specs (LinphoneCore *core, const char *specs);
+
+/**
+ * Set the linphone specs list value telling what functionalities the linphone client supports.
+ * @param[in] core #LinphoneCore object
+ * @param[in] specs \bctbx_list{char *} The list of string specs to set
+ * @ingroup initializing
+ */
+LINPHONE_PUBLIC void linphone_core_set_linphone_specs_list (LinphoneCore *core, const bctbx_list_t *specs);
+
+/**
+ * Add the given linphone specs to the list of functionalities the linphone client supports.
+ * @param[in] core #LinphoneCore object
+ * @param[in] spec The spec to add
+ * @ingroup initializing
+ */
+LINPHONE_PUBLIC void linphone_core_add_linphone_spec (LinphoneCore *core, const char *spec);
+
+/**
+ * Remove the given linphone specs from the list of functionalities the linphone client supports.
+ * @param[in] core #LinphoneCore object
+ * @param[in] spec The spec to remove
+ * @ingroup initializing
+ */
+LINPHONE_PUBLIC void linphone_core_remove_linphone_spec (LinphoneCore *core, const char *spec);
+
+/**
+ * Get the list of linphone specs string values representing what functionalities the linphone client supports
+ * @param[in] core #LinphoneCore object
+ * @return \bctbx_list{char *} a list of supported specs. The list must be freed with bctbx_list_free() after usage
+ * @ingroup initializing
+ */
+LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_linphone_specs_list (LinphoneCore *core);
 
 /**
  * @addtogroup chatroom

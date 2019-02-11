@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#include <algorithm>
 #include <mediastreamer2/mscommon.h>
 #include <xercesc/util/PlatformUtils.hpp>
 
@@ -32,6 +33,9 @@
 #include "core/core-p.h"
 #include "logger/logger.h"
 #include "paths/paths.h"
+#include "linphone/utils/utils.h"
+#include "linphone/utils/algorithm.h"
+#include "linphone/lpconfig.h"
 
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
@@ -220,6 +224,7 @@ void Core::enableLimeX3dh (bool enable) {
 	if (!enable) {
 		if (d->imee != nullptr)
 			d->imee.release();
+		removeSpec("lime");
 		return;
 	}
 
@@ -243,6 +248,7 @@ void Core::enableLimeX3dh (bool enable) {
 		LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, serverUrl, prov, getSharedFromThis());
 		setEncryptionEngine(engine);
 		d->registerListener(engine);
+		addSpec("lime");
 	}
 #else
 	lWarning() << "Lime X3DH support is not available";
@@ -281,6 +287,56 @@ bool Core::limeX3dhAvailable() const {
 #else
 	return false;
 #endif
+}
+
+// -----------------------------------------------------------------------------
+// Specs.
+// -----------------------------------------------------------------------------
+void Core::setSpecsList (const std::list<std::string> &specsList) {
+	L_D();
+	d->specs = specsList;
+	d->specs.unique();
+	const string tmpSpecs = getSpecs();
+	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
+	linphone_config_set_string(lpconfig, "sip", "linphone_specs", tmpSpecs.c_str());
+	getCCore()->sal->setContactLinphoneSpecs(tmpSpecs);
+	//lInfo() << "DEBUG SETTING LINPHONE SPECS LIST::::: ["  << tmpSpecs << "]" << d->specs.size() << std::endl;
+}
+
+void Core::addSpec (const std::string &spec) {
+	L_D();
+	d->specs.push_back(spec);
+	setSpecsList(d->specs);
+}
+
+void Core::removeSpec(const std::string &pSpec) {
+	L_D();
+	d->specs.remove_if([&pSpec](const std::string &spec) { return spec.compare(pSpec) == 0; });
+	setSpecsList(d->specs);
+
+}
+
+const std::list<std::string> &Core::getSpecsList () const {
+	L_D();
+	return d->specs;
+}
+
+//Deprecated
+void Core::setSpecs (const std::string &pSpecs) {
+	L_D();
+	if (pSpecs.empty()) {
+		d->specs.clear();
+		setSpecsList(d->specs);
+	} else {
+		//Assume a list of coma-separated values
+		setSpecsList(Utils::toList(Utils::split(pSpecs, ",")));
+	}
+}
+
+//Initial use of the public API of this function has been deprecated, but will still be kept as utility function for setSpecsList()
+std::string Core::getSpecs() const {
+	L_D();
+	return Utils::join(Utils::toVector(d->specs), ",");
 }
 
 // -----------------------------------------------------------------------------

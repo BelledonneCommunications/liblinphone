@@ -10,6 +10,7 @@ allow_message_in_unsafe_chatroom=0
 unsafe_if_sas_refused=1
 x3dh_server_url=http://x3dh.example.org:8082/flexisip-account-manager/x3dh-25519.php
 
+
 [sip]
 sip_port=-1
 sip_tcp_port=-1

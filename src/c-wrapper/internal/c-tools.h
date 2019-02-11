@@ -533,25 +533,32 @@ public:
 	// ---------------------------------------------------------------------------
 
 	template<typename T>
-	static inline bctbx_list_t *getCListFromCppList (const std::list<T *> &cppList) {
+	static inline bctbx_list_t *getCListFromCppList (const std::list<T> &cppList) {
 		bctbx_list_t *result = nullptr;
 		for (const auto &value : cppList)
 			result = bctbx_list_append(result, value);
 		return result;
 	}
 
-	template<typename T>
-	static inline std::list<T *> getCppListFromCList (const bctbx_list_t *cList) {
-		std::list<T> result;
+	//Specialization for string lists
+	static inline bctbx_list_t *getCListFromCppList (const std::list<std::string> &cppList) {
+		bctbx_list_t *result = nullptr;
+		for (const auto &value : cppList)
+			result = bctbx_list_append(result, static_cast<void *>(bctbx_strdup(value.c_str())));
+		return result;
+	}
+
+	template<typename CType, typename CppType>
+	static inline std::list<CppType> getCppListFromCList (const bctbx_list_t *cList) {
+		std::list<CppType> result;
 		for (auto it = cList; it; it = bctbx_list_next(it))
-			result.push_back(static_cast<T>(bctbx_list_get_data(it)));
+			result.push_back(CppType(static_cast<CType>(bctbx_list_get_data(it))));
 		return result;
 	}
 
 	// ---------------------------------------------------------------------------
 	// Resolved list conversions.
 	// ---------------------------------------------------------------------------
-
 	template<
 		typename CppType,
 		typename = typename std::enable_if<IsDefinedBaseCppObject<CppType>::value, CppType>::type
@@ -855,8 +862,8 @@ LINPHONE_END_NAMESPACE
 // Transforms cpp list and c list.
 #define L_GET_C_LIST_FROM_CPP_LIST(CPP_LIST) \
 	LinphonePrivate::Wrapper::getCListFromCppList(CPP_LIST)
-#define L_GET_CPP_LIST_FROM_C_LIST(C_LIST, TYPE) \
-	LinphonePrivate::Wrapper::getCppListFromCList<TYPE>(C_LIST)
+#define L_GET_CPP_LIST_FROM_C_LIST(C_LIST, CTYPE, CPPTYPE) 	\
+	LinphonePrivate::Wrapper::getCppListFromCList<CTYPE, CPPTYPE>(C_LIST)
 
 // Transforms cpp list and c list and convert cpp object to c object.
 #define L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(CPP_LIST) \

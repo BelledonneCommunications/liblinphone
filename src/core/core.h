@@ -147,6 +147,17 @@ public:
 	bool limeX3dhAvailable () const;
 
 	// ---------------------------------------------------------------------------
+	// Specs.
+	// ---------------------------------------------------------------------------
+
+	void setSpecsList(const std::list<std::string> &specsList);
+	void addSpec (const std::string &spec);
+	void removeSpec (const std::string &spec);
+	const std::list<std::string> &getSpecsList () const;
+	void setSpecs (const std::string &specs);
+	std::string getSpecs() const;
+
+	// ---------------------------------------------------------------------------
 	// Misc.
 	// ---------------------------------------------------------------------------
 
