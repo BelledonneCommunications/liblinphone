@@ -71,6 +71,17 @@ abstract public class LinphoneCoreFactory {
 	abstract public LinphoneAuthInfo createAuthInfo(String username, String userid, String passwd, String ha1, String realm, String domain);
 
 	/**
+	 * create  {@link LinphoneAuthInfo}
+	 * @param username
+	 * @param userid user id as set in auth header
+	 * @param passwd
+	 * @param ha1
+	 * @param realm
+	 * @param algorithm
+	 * */
+	abstract public LinphoneAuthInfo createAuthInfo(String username, String userid, String passwd, String ha1, String realm, String domain, String algorithm);
+
+	/**
 	 * Create a LinphoneCore object. The LinphoneCore is the root for all liblinphone operations. You need only one per application.
 	 * @param listener listener to receive notifications from the core
 	 * @param userConfig path where to read/write configuration (optional)
