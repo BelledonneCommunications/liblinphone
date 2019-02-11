@@ -2337,14 +2337,14 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 #ifdef __ANDROID__
 	if (system_context)
-		lc->platform_helper = LinphonePrivate::createAndroidPlatformHelpers(lc, system_context);
+		lc->platform_helper = LinphonePrivate::createAndroidPlatformHelpers(lc->cppPtr, system_context);
 	else
 		ms_fatal("You must provide the Android's app context when creating the core!");
 #elif TARGET_OS_IPHONE
-	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc, system_context);
+	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc->cppPtr, system_context);
 #endif
 	if (lc->platform_helper == NULL)
-		lc->platform_helper = new LinphonePrivate::GenericPlatformHelpers(lc);
+		lc->platform_helper = new LinphonePrivate::GenericPlatformHelpers(lc->cppPtr);
 
 	msplugins_dir = linphone_factory_get_msplugins_dir(lfactory);
 	image_resources_dir = linphone_factory_get_image_resources_dir(lfactory);

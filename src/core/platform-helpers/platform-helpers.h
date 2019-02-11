@@ -24,6 +24,7 @@
 #include <sstream>
 
 #include "linphone/utils/general.h"
+#include "core/core-accessor.h"
 
 // =============================================================================
 
@@ -37,11 +38,9 @@ LINPHONE_BEGIN_NAMESPACE
  * This interface aims at abstracting some features offered by the platform, most often mobile platforms.
  * A per platform implementation is to be made to implement these features, if available on the platform.
  */
-class PlatformHelpers {
+class PlatformHelpers: public CoreAccessor {
 public:
 	virtual ~PlatformHelpers () = default;
-
-	LinphoneCore *getCore() const { return mCore; }
 
 	virtual void acquireWifiLock () = 0;
 	virtual void releaseWifiLock () = 0;
@@ -72,20 +71,18 @@ public:
 	virtual void onLinphoneCoreStop () = 0;
 
 protected:
-	inline explicit PlatformHelpers (LinphoneCore *lc) : mCore(lc) {}
+	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
 
 	inline std::string getFilePath (const std::string &directory, const std::string &filename) const {
 		std::ostringstream oss;
 		oss << directory << "/" << filename;
 		return oss.str();
 	}
-
-	LinphoneCore *mCore;
 };
 
 class GenericPlatformHelpers : public PlatformHelpers {
 public:
-	explicit GenericPlatformHelpers (LinphoneCore *lc);
+	explicit GenericPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core);
 	~GenericPlatformHelpers ();
 
 	void acquireWifiLock () override;

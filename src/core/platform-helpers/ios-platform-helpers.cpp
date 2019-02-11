@@ -43,7 +43,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class IosPlatformHelpers : public PlatformHelpers {
 public:
-	IosPlatformHelpers (LinphoneCore *lc, void *system_context);
+	IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *system_context);
 	~IosPlatformHelpers () = default;
 
 	void acquireWifiLock () override {}
@@ -89,7 +89,7 @@ private:
 
 const string IosPlatformHelpers::Framework = "org.linphone.linphone";
 
-IosPlatformHelpers::IosPlatformHelpers (LinphoneCore *lc, void *system_context) : PlatformHelpers(lc) {
+IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *system_context) : PlatformHelpers(core) {
 	mCpuLockCount = 0;
 	mCpuLockTaskId = 0;
 
@@ -196,13 +196,13 @@ string IosPlatformHelpers::getResourcePath (const string &framework, const strin
 
 // -----------------------------------------------------------------------------
 
-PlatformHelpers *createIosPlatformHelpers (LinphoneCore *lc, void *system_context) {
-	return new IosPlatformHelpers(lc, system_context);
+PlatformHelpers *createIosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *system_context) {
+	return new IosPlatformHelpers(core, system_context);
 }
 
 void IosPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
 	// workaround
-	LinphoneCore *lc = getCore();
+	LinphoneCore *lc = getCore()->getCCore();
 	linphone_core_set_network_reachable_internal(lc, monitoringEnabled);
 }
 
