@@ -18,7 +18,7 @@
  */
 
 #include "linphone/wrapper_utils.h"
-
+#include "linphone/utils/utils.h"
 #include "c-wrapper/c-wrapper.h"
 #include "core/core.h"
 
@@ -82,4 +82,30 @@ void linphone_core_delete_local_encryption_db (const LinphoneCore *lc) {
 	auto encryptionEngine = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getEncryptionEngine();
 	if (encryptionEngine)
 		encryptionEngine->cleanDb();
+}
+
+//Deprecated
+const char *linphone_core_get_linphone_specs (const LinphoneCore *lc) {
+	return lp_config_get_string(linphone_core_get_config(lc), "sip", "linphone_specs", NULL);
+}
+
+//Deprecated
+void linphone_core_set_linphone_specs (LinphoneCore *lc, const char *specs) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setSpecs(Utils::cStringToCppString(specs));
+}
+
+void linphone_core_set_linphone_specs_list (LinphoneCore *lc, const bctbx_list_t *specs) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setSpecsList(L_GET_CPP_LIST_FROM_C_LIST(specs, const char *, string));
+}
+
+void linphone_core_add_linphone_spec (LinphoneCore *lc, const char *spec) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->addSpec(Utils::cStringToCppString(spec));
+}
+
+void linphone_core_remove_linphone_spec (LinphoneCore *lc, const char *spec) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->removeSpec(Utils::cStringToCppString(spec));
+}
+
+const bctbx_list_t *linphone_core_get_linphone_specs_list (LinphoneCore *lc) {
+	return L_GET_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getSpecsList());
 }

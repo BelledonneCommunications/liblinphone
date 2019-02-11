@@ -26,6 +26,8 @@
 #include "core/core-p.h"
 #include "c-wrapper/c-wrapper.h"
 
+#include "linphone/utils/algorithm.h"
+
 // =============================================================================
 
 using namespace std;
@@ -55,7 +57,7 @@ public:
 	void sendChatMessage (const shared_ptr<ChatMessage> &chatMessage) override {
 		L_Q();
 		ProxyChatRoomPrivate::sendChatMessage(chatMessage);
-		const char *specs = linphone_core_get_linphone_specs(chatMessage->getCore()->getCCore());
+		const list<string> &specs = chatMessage->getCore()->getSpecsList();
 		time_t currentRealTime = ms_time(nullptr);
 		LinphoneAddress *lAddr = linphone_address_new(
 			chatMessage->getChatRoom()->getConferenceId().getLocalAddress().asString().c_str()
@@ -68,7 +70,7 @@ public:
 		if (!conferenceFactoryUri
 			|| (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference)
 			|| clientGroupChatRoom
-			|| !specs || !strstr(specs, "groupchat")
+			|| findIf(specs, [] (const string &spec) { return spec.find("groupchat") != string::npos;}) == specs.cend()
 			|| ((currentRealTime - migrationRealTime) <
 				linphone_config_get_int(linphone_core_get_config(chatMessage->getCore()->getCCore()),
 					"misc", "basic_to_client_group_chat_room_migration_timer", 86400) // Try migration every 24 hours

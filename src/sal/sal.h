@@ -182,7 +182,6 @@ public:
 
 	void setContactLinphoneSpecs (const std::string &value) { mLinphoneSpecs = value; }
 
-
 	// ---------------------------------------------------------------------------
 	// Network parameters
 	// ---------------------------------------------------------------------------

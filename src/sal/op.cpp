@@ -664,7 +664,7 @@ int SalOp::sendRequestAndCreateRefresher (belle_sip_request_t *request, int expi
 		belle_sip_refresher_stop(mRefresher);
 		belle_sip_object_unref(mRefresher);
 	}
-	
+
 	//As stated a few lines below, "we should remove our context from the transaction", including op
 	belle_sip_transaction_set_application_data(BELLE_SIP_TRANSACTION(mPendingClientTransaction), nullptr);
 	mRefresher = belle_sip_client_transaction_create_refresher(mPendingClientTransaction);
@@ -721,7 +721,7 @@ belle_sip_header_contact_t *SalOp::createContact () {
 		}
 	}
 	if (!mRoot->mLinphoneSpecs.empty()
-		&& !belle_sip_parameters_has_parameter(BELLE_SIP_PARAMETERS(contactHeader), "+org.linphone.specs")
+	    && !belle_sip_parameters_has_parameter(BELLE_SIP_PARAMETERS(contactHeader), "+org.linphone.specs")
 	) {
 		stringstream ss;
 		ss << "\"" << mRoot->mLinphoneSpecs << "\"";

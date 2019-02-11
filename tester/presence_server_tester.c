@@ -1866,9 +1866,9 @@ static void notify_friend_capabilities(void) {
 	LinphoneCoreManager *chloe2 = linphone_core_manager_create("chloe_rc");
 	LinphoneCoreManager *chloe3 = linphone_core_manager_create("chloe_rc");
 
-	linphone_core_set_linphone_specs(pauline->lc, "groupchat/1.1");
-	linphone_core_set_linphone_specs(pauline2->lc, "lime");
-	linphone_core_set_linphone_specs(laure->lc, "groupchat/2.0");
+	linphone_core_add_linphone_spec(pauline->lc, "groupchat/1.1");
+	linphone_core_add_linphone_spec(pauline2->lc, "lime");
+	linphone_core_add_linphone_spec(laure->lc, "groupchat/2.0");
 	linphone_core_set_linphone_specs(chloe->lc, "groupchat/2.1, lime/1.5");
 	linphone_core_set_linphone_specs(chloe3->lc, "groupchat/2.1, lime/1.7");
 
