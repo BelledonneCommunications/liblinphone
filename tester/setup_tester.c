@@ -50,6 +50,7 @@ static void _create_friends_from_tab(LinphoneCore *lc, LinphoneFriendList *list,
 	unsigned int i;
 	for (i = 0 ; i < size ; i++) {
 		LinphoneFriend *fr = linphone_core_create_friend_with_address(lc, friends[i]);
+		linphone_friend_enable_subscribes(fr, FALSE);
 		linphone_friend_list_add_friend(list, fr);
 	}
 }
