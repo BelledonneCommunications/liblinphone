@@ -3009,11 +3009,11 @@ extern "C" void  Java_org_linphone_core_LinphoneProxyConfigImpl_pauseRegister(JN
 }
 
 //Auth Info
-
 extern "C" jlong Java_org_linphone_core_LinphoneAuthInfoImpl_newLinphoneAuthInfo(JNIEnv* env
 		, jobject thiz ) {
-	return (jlong)linphone_auth_info_new(NULL,NULL,NULL,NULL,NULL,NULL);
+	return (jlong)linphone_auth_info_new_for_algorithm(NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 }
+
 extern "C" void Java_org_linphone_core_LinphoneAuthInfoImpl_delete(JNIEnv* env
 		, jobject thiz
 		, jlong ptr) {
@@ -3080,6 +3080,21 @@ extern "C" jstring  Java_org_linphone_core_LinphoneAuthInfoImpl_getUsername
 
 /*
  * Class:     org_linphone_core_LinphoneAuthInfoImpl
+ * Method:    getAlgoorithm
+ * Signature: (J)Ljava/lang/String;
+ */
+extern "C" jstring  Java_org_linphone_core_LinphoneAuthInfoImpl_getAlgorithm
+(JNIEnv *env , jobject, jlong auth_info) {
+	const char* algorithm = linphone_auth_info_get_algorithm((LinphoneAuthInfo*)auth_info);
+	if (algorithm) {
+		return env->NewStringUTF(algorithm);
+	} else {
+		return NULL;
+	}
+}
+
+/*
+ * Class:     org_linphone_core_LinphoneAuthInfoImpl
  * Method:    setPassword
  * Signature: (JLjava/lang/String;)V
  */
@@ -3124,6 +3139,18 @@ extern "C" void  Java_org_linphone_core_LinphoneAuthInfoImpl_setUsername
 	const char* username = GetStringUTFChars(env, jusername);
 	linphone_auth_info_set_username((LinphoneAuthInfo*)auth_info,username);
 	ReleaseStringUTFChars(env, jusername, username);
+}
+
+/*
+ * Class:     org_linphone_core_LinphoneAuthInfoImpl
+ * Method:    setAlgorithm
+ * Signature: (JLjava/lang/String;)V
+ */
+extern "C" void  Java_org_linphone_core_LinphoneAuthInfoImpl_setAlgorithm
+(JNIEnv *env, jobject, jlong auth_info, jstring jalgorithm) {
+	const char* username = GetStringUTFChars(env, jalgorithm);
+	linphone_auth_info_set_algorithm((LinphoneAuthInfo*)auth_info,algorithm);
+	ReleaseStringUTFChars(env, jalgorithm, algorithm);
 }
 
 /*

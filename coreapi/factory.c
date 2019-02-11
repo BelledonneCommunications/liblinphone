@@ -238,6 +238,10 @@ LinphoneAuthInfo *linphone_factory_create_auth_info(const LinphoneFactory *facto
 	return linphone_auth_info_new(username, userid, passwd, ha1, realm, domain);
 }
 
+LinphoneAuthInfo *linphone_factory_create_auth_info_for_algorithm(const LinphoneFactory *factory, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain, const char *algorithm) {
+	return linphone_auth_info_new_for_algorithm(username, userid, passwd, ha1, realm, domain, algorithm);
+}
+
 LinphoneCallCbs * linphone_factory_create_call_cbs(const LinphoneFactory *factory) {
 	return _linphone_call_cbs_new();
 }

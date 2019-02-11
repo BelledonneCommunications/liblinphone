@@ -218,6 +218,24 @@ LINPHONE_PUBLIC LinphoneAddress *linphone_factory_create_address(const LinphoneF
 LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info(const LinphoneFactory *factory, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain);
 
 /**
+ * Creates a #LinphoneAuthInfo object.
+ * The object can be created empty, that is with all arguments set to NULL.
+ * Username, userid, password, realm and domain can be set later using specific methods.
+ * At the end, username and passwd (or ha1) are required.
+ * @param factory The #LinphoneFactory singleton.
+ * @param username The username that needs to be authenticated
+ * @param userid The userid used for authenticating (use NULL if you don't know what it is)
+ * @param passwd The password in clear text
+ * @param ha1 The ha1-encrypted password if password is not given in clear text.
+ * @param realm The authentication domain (which can be larger than the sip domain. Unfortunately many SIP servers don't use this parameter.
+ * @param domain The SIP domain for which this authentication information is valid, if it has to be restricted for a single SIP domain.
+ * @param algorithm The algorithm for encrypting password.
+ * @return A #LinphoneAuthInfo object. linphone_auth_info_destroy() must be used to destroy it when no longer needed. The #LinphoneCore makes a copy of #LinphoneAuthInfo
+ * passed through linphone_core_add_auth_info().
+ */
+LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info_for_algorithm(const LinphoneFactory *factory, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain, const char *algorithm);
+
+/**
  * Create a #LinphoneCallCbs object that holds callbacks for events happening on a call.
  * @param[in] factory #LinphoneFactory singletion object
  * @return A new #LinphoneCallCbs object

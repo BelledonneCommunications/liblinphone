@@ -187,6 +187,13 @@ public class LinphoneCoreFactoryImpl extends LinphoneCoreFactory {
 	}
 
 	@Override
+	public LinphoneAuthInfo createAuthInfo(String username, String userid,
+										   String passwd, String ha1, String realm, String domain,
+										   String algorithm) {
+		return new LinphoneAuthInfoImpl(username, userid, passwd, ha1, realm, domain, algorithm);
+	}
+
+	@Override
 	public LinphoneContent createLinphoneContent(String type, String subType,
 			byte [] data, String encoding) {
 		return new LinphoneContentImpl(type,subType,data,encoding);
