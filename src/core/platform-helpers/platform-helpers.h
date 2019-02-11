@@ -25,6 +25,7 @@
 
 #include "linphone/utils/general.h"
 #include "core/core-accessor.h"
+#include "core/core.h"
 
 // =============================================================================
 
@@ -122,8 +123,8 @@ private:
 	std::string getDownloadPath () override;
 };
 
-PlatformHelpers *createAndroidPlatformHelpers (LinphoneCore *lc, void *systemContext);
-PlatformHelpers *createIosPlatformHelpers (LinphoneCore *lc, void *systemContext);
+PlatformHelpers *createAndroidPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
+PlatformHelpers *createIosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
 
 LINPHONE_END_NAMESPACE
 
