@@ -732,6 +732,7 @@ class GenWrapper(object):
             'linphone_factory_create_core',
             'linphone_factory_create_core_2',
             'linphone_factory_create_core_with_config_2',
+            'linphone_factory_create_auth_info_2',
             'linphone_vcard_get_belcard',
             'linphone_core_get_current_vtable',
             'linphone_factory_get',
