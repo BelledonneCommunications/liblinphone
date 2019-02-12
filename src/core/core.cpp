@@ -321,7 +321,7 @@ const std::list<std::string> &Core::getSpecsList () const {
 	return d->specs;
 }
 
-//Deprecated
+//Used to set specs from linphone_config
 void Core::setSpecs (const std::string &pSpecs) {
 	L_D();
 	if (pSpecs.empty()) {
