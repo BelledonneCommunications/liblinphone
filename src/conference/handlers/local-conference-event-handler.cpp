@@ -286,9 +286,6 @@ string LocalConferenceEventHandlerPrivate::createNotifyParticipantDeviceAdded (c
 			const string &displayName = device->getName();
 			if (!displayName.empty())
 				endpoint.setDisplayText(displayName);
-
-			endpoint.setState(StateType::full);
-			user.getEndpoint().push_back(endpoint);
 		}
 	}
 	endpoint.setState(StateType::full);
