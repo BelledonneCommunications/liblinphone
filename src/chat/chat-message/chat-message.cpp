@@ -628,8 +628,8 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	setState(ChatMessage::State::Delivered);
 
-	if (errorCode <= 0 && !isAutoFileTransferDownloadHappened()) { 
-		// if auto download happened and message contains only file transfer, 
+	if (errorCode <= 0 && !isAutoFileTransferDownloadHappened()) {
+		// if auto download happened and message contains only file transfer,
 		// the following will state that the content type of the file is unsupported
 		bool foundSupportContentType = false;
 		for (Content *c : contents) {
@@ -767,8 +767,20 @@ void ChatMessagePrivate::send () {
 		op->setUserPointer(q);     /* If out of call, directly store msg */
 		linphone_address_unref(peer);
 	}
-	op->setFrom(fromAddress.asString().c_str());
-	op->setTo(toAddress.asString().c_str());
+	// Get display name from proxy config
+	string fromString = fromAddress.asString();
+	for (const bctbx_list_t *prxList = linphone_core_get_proxy_config_list(core->getCCore());
+		  prxList != nullptr ; prxList = bctbx_list_next(prxList)) {
+		LinphoneProxyConfig *prx = static_cast<LinphoneProxyConfig*>(bctbx_list_get_data(prxList));
+		if (prx) {
+			char* tmpAddr = linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(prx));
+			string prxAddr = tmpAddr;
+			ms_free(tmpAddr);
+			if (prxAddr.compare(fromAddress.asString()) == 0) fromString = linphone_proxy_config_get_identity(prx);
+		}
+	}
+	op->setFrom(fromString);
+	op->setTo(toAddress.asString());
 
 	// ---------------------------------------
 	// Start of message modification
