@@ -174,7 +174,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 
 	// Add participants to the recipient list
 	bool tooManyDevices = FALSE;
-	int maxNbDevicePerParticipant = linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "max_nb_device_per_participant", 1);
+	int maxNbDevicePerParticipant = linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "max_nb_device_per_participant", INT_MAX);
 	auto recipients = make_shared<vector<lime::RecipientData>>();
 	const list<shared_ptr<Participant>> participants = chatRoom->getParticipants();
 	for (const shared_ptr<Participant> &participant : participants) {
@@ -737,7 +737,7 @@ shared_ptr<ConferenceSecurityEvent> LimeX3dhEncryptionEngine::onDeviceAdded (
 	ChatRoom::SecurityLevel currentSecurityLevel
 ) {
 	lime::PeerDeviceStatus newDeviceStatus = limeManager->get_peerDeviceStatus(newDeviceAddr.asString());
-	int maxNbDevicesPerParticipant = linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())), "lime", "max_nb_device_per_participant", 1);
+	int maxNbDevicesPerParticipant = linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())), "lime", "max_nb_device_per_participant", INT_MAX);
 	int nbDevice = int(participant->getPrivate()->getDevices().size());
 	shared_ptr<ConferenceSecurityEvent> securityEvent = nullptr;
 
