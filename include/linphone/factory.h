@@ -246,7 +246,7 @@ LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info(const Linpho
  * @return A #LinphoneAuthInfo object. linphone_auth_info_destroy() must be used to destroy it when no longer needed. The #LinphoneCore makes a copy of #LinphoneAuthInfo
  * passed through linphone_core_add_auth_info().
  */
-LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info_for_algorithm(const LinphoneFactory *factory, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain, const char *algorithm);
+LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info_2(const LinphoneFactory *factory, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain, const char *algorithm);
 
 /**
  * Create a #LinphoneCallCbs object that holds callbacks for events happening on a call.

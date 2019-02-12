@@ -2201,23 +2201,9 @@ LINPHONE_PUBLIC void linphone_core_set_default_proxy_config(LinphoneCore *lc, Li
  * @param[in] domain String containing the SIP domain for which this authentication information is valid, if it has to be restricted for a single SIP domain.
  * @return #LinphoneAuthInfo with default values set
  * @ingroup authentication
+ * @deprecated use linphone_factory_create_auth_info() instead.
  */
 LINPHONE_PUBLIC LinphoneAuthInfo * linphone_core_create_auth_info(LinphoneCore *lc, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain);
-
-/**
- * Create an authentication information with default values from Linphone core.
- * @param[in] lc #LinphoneCore object
- * @param[in] username String containing the username part of the authentication credentials
- * @param[in] userid String containing the username to use to calculate the authentication digest (optional)
- * @param[in] passwd String containing the password of the authentication credentials (optional, either passwd or ha1 must be set)
- * @param[in] ha1 String containing a ha1 hash of the password (optional, either passwd or ha1 must be set)
- * @param[in] realm String used to discriminate different SIP authentication domains (optional)
- * @param[in] domain String containing the SIP domain for which this authentication information is valid, if it has to be restricted for a single SIP domain.
- * @param[in] algorithm String the method for encrypting the password
- * @return #LinphoneAuthInfo with default values set
- * @ingroup authentication
- */
-LINPHONE_PUBLIC LinphoneAuthInfo * linphone_core_create_auth_info_for_algorithm(LinphoneCore *lc, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain, const char *algorithm);
 
 /**
  * Adds authentication information to the #LinphoneCore.
