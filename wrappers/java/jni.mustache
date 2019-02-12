@@ -496,6 +496,30 @@ jobject Java_{{jni_package}}CoreImpl_getMediastreamerFactory(JNIEnv *env, jobjec
 // Manually wrapped
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+extern "C" jobject Java_org_linphone_core_FactoryImpl_createAuthInfo2(JNIEnv *env, jobject thiz, jlong ptr, jstring username, jstring userid, jstring passwd, jstring ha1, jstring realm, jstring domain, jstring algorithm) {
+	LinphoneFactory *cptr = (LinphoneFactory*)ptr;
+	cptr = linphone_factory_get();
+	if (cptr == 0) {
+		return 0;
+	}	
+	const char* c_username = GetStringUTFChars(env, username);
+	const char* c_userid = GetStringUTFChars(env, userid);
+	const char* c_passwd = GetStringUTFChars(env, passwd);
+	const char* c_ha1 = GetStringUTFChars(env, ha1);
+	const char* c_realm = GetStringUTFChars(env, realm);
+	const char* c_domain = GetStringUTFChars(env, domain);
+	const char* c_algorithm = GetStringUTFChars(env, algorithm);
+	jobject jni_result = (jobject)getAuthInfo(env, (LinphoneAuthInfo *)linphone_factory_create_auth_info_2(cptr, c_username, c_userid, c_passwd, c_ha1, c_realm, c_domain, c_algorithm));
+	ReleaseStringUTFChars(env, username, c_username);
+	ReleaseStringUTFChars(env, userid, c_userid);
+	ReleaseStringUTFChars(env, passwd, c_passwd);
+	ReleaseStringUTFChars(env, ha1, c_ha1);
+	ReleaseStringUTFChars(env, realm, c_realm);
+	ReleaseStringUTFChars(env, domain, c_domain);
+	ReleaseStringUTFChars(env, algorithm, c_algorithm);
+	return jni_result;
+}
+
 void Java_org_linphone_core_CallImpl_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	LinphoneCall *cptr = (LinphoneCall*)ptr;
 	jobject oldWindow = (jobject) linphone_call_get_native_video_window_id(cptr);

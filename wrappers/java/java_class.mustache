@@ -104,6 +104,11 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
 
     abstract public Core getCore(long ptr);
 
+    /**
+      * Creates a #LinphoneAuthInfo object. 
+      */
+    abstract public AuthInfo createAuthInfo(String username, String userid, String passwd, String ha1, String realm, String domain, String algorithm);
+
 {{/isLinphoneFactory}}
 {{#isLinphoneCore}}
     /**
@@ -180,6 +185,13 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
 	public Core getCore(long ptr) {
 	    return getCore(nativePtr, ptr);
 	}
+
+    private native AuthInfo createAuthInfo2(long nativePtr, String username, String userid, String passwd, String ha1, String realm, String domain, String algorithm);
+    @Override
+    synchronized public AuthInfo createAuthInfo(String username, String userid, String passwd, String ha1, String realm, String domain, String algorithm)  {
+        
+        return (AuthInfo)createAuthInfo2(nativePtr, username, userid, passwd, ha1, realm, domain, algorithm);
+    }
 
     @Override
 	public LoggingService getLoggingService() {
