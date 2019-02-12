@@ -1584,9 +1584,13 @@ void linphone_proxy_config_set_conference_factory_uri(LinphoneProxyConfig *cfg, 
 		bctbx_free(cfg->conference_factory_uri);
 		cfg->conference_factory_uri = nullptr;
 	}
-	if (uri) {
+	if (uri && strlen(uri) > 0) {
 		cfg->conference_factory_uri = bctbx_strdup(uri);
-		linphone_core_add_linphone_spec(cfg->lc, "groupchat");
+		if (cfg->lc) {
+			linphone_core_add_linphone_spec(cfg->lc, "groupchat");
+		}
+	} else if (cfg->lc) {
+		linphone_core_remove_linphone_spec(cfg->lc, "groupchat");
 	}
 }
 

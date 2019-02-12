@@ -296,11 +296,10 @@ void Core::setSpecsList (const std::list<std::string> &specsList) {
 	L_D();
 	d->specs = specsList;
 	d->specs.unique();
-	const string tmpSpecs = getSpecs();
+	const string &tmpSpecs = getSpecs();
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
 	linphone_config_set_string(lpconfig, "sip", "linphone_specs", tmpSpecs.c_str());
 	getCCore()->sal->setContactLinphoneSpecs(tmpSpecs);
-	//lInfo() << "DEBUG SETTING LINPHONE SPECS LIST::::: ["  << tmpSpecs << "]" << d->specs.size() << std::endl;
 }
 
 void Core::addSpec (const std::string &spec) {
@@ -313,7 +312,6 @@ void Core::removeSpec(const std::string &pSpec) {
 	L_D();
 	d->specs.remove_if([&pSpec](const std::string &spec) { return spec.compare(pSpec) == 0; });
 	setSpecsList(d->specs);
-
 }
 
 const std::list<std::string> &Core::getSpecsList () const {
@@ -321,7 +319,7 @@ const std::list<std::string> &Core::getSpecsList () const {
 	return d->specs;
 }
 
-//Used to set specs from linphone_config
+//Used to set specs for linphone_config
 void Core::setSpecs (const std::string &pSpecs) {
 	L_D();
 	if (pSpecs.empty()) {

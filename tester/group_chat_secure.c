@@ -107,7 +107,7 @@ static void group_chat_lime_x3dh_change_server_url(void) {
 	wait_for_list(coresList, &dummy, 1, x3dhServerDelay);
 
 	//Now create an encrypted chatroom to check that marie can
-	// Marie creates an encrypted chatroom
+	//Marie creates an encrypted chatroom
 	const char *initialSubject = "Encrypted Friends";
 	participantsAddresses = bctbx_list_append(NULL, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	marieEncryptedCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
@@ -512,6 +512,8 @@ static void group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_k
 	int dummy = 0;
 
 	linphone_core_enable_lime_x3dh(laure->lc, FALSE);
+	linphone_core_add_linphone_spec(laure->lc, "lime"); //Forcing lime_x3dh spec even if encryption engine is disabled
+
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
@@ -527,6 +529,7 @@ static void group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_k
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 	BC_ASSERT_FALSE(linphone_core_lime_x3dh_enabled(laure->lc));
+
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
