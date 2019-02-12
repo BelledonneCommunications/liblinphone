@@ -470,11 +470,7 @@ static void write_auth_infos(LinphoneCore *lc){
 }
 
 LinphoneAuthInfo * linphone_core_create_auth_info(LinphoneCore *lc, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain) {
-	return linphone_core_create_auth_info_for_algorithm(lc, username, userid, passwd, ha1, realm, domain, NULL);
-}
-
-LinphoneAuthInfo * linphone_core_create_auth_info_for_algorithm(LinphoneCore *lc, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain, const char *algorithm) {
-	return linphone_auth_info_new_for_algorithm(username, userid, passwd, ha1, realm, domain, algorithm);
+	return linphone_auth_info_new(username, userid, passwd, ha1, realm, domain);
 }
 
 void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info){
