@@ -1,0 +1,15 @@
+from distutils.core import setup
+from distutils.extension import Extension
+from Cython.Build import cythonize
+
+linphone_extension = Extension(
+    name="pylinphone",
+    sources=["pylinphone.pyx"],
+    libraries=["linphone"],
+    library_dirs=["{{{lib_dir}}}"],
+    include_dirs=["{{{include_dir}}}"]
+)
+
+setup(
+    ext_modules = cythonize([linphone_extension])
+)
