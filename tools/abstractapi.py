@@ -493,16 +493,13 @@ class Interface(Namespace):
 
 class CParser(object):
 	def __init__(self, cProject, classBlAppend=[]):
+		self.allow_method_overload = True # If true, _2, _3 etc... suffix will be removed from methods name
 		self.cBaseType = ['void', 'bool_t', 'char', 'short', 'int', 'long', 'size_t', 'time_t', 'float', 'double', 'LinphoneStatus']
 		self.cListType = 'bctbx_list_t'
 		self.regexFixedSizeInteger = '^(u?)int(\d?\d)_t$'
 		self.methodBl = ['ref', 'unref', 'new', 'destroy', 'getCurrentCallbacks', 'setUserData', 'getUserData']
-		self.functionBl = [
-					   'linphone_factory_create_core', # manually wrapped
-					   'linphone_factory_create_core_2', # manually wrapped
-					   'linphone_factory_create_core_with_config', # manually wrapped
-					   'linphone_factory_create_core_with_config_2', # manually wrapped
-					   'linphone_vcard_get_belcard'] # manually wrapped
+		self.functionBl = ['linphone_vcard_get_belcard'] # manually wrapped
+		self.forceFunctionRename = {}
 
 		self.classBl = ['LpConfig']  # temporarly blacklisted
 		for bl in classBlAppend:
@@ -853,7 +850,7 @@ class CParser(object):
 	
 	def _parse_listener_property(self, property, listener, events):
 		methodName = metaname.MethodName()
-		methodName.from_snake_case(property.name)
+		methodName.from_snake_case(property.name, self.allow_method_overload)
 		methodName.words.insert(0, 'on')
 		methodName.prev = listener.name
 		
@@ -883,7 +880,13 @@ class CParser(object):
 	
 	def parse_method(self, cfunction, namespace, type=Method.Type.Instance):
 		name = metaname.MethodName()
-		name.from_snake_case(cfunction.name, namespace=namespace)
+		cfunctionName = cfunction.name
+
+		if (cfunctionName in self.forceFunctionRename):
+			print("Force renaming {0} to {1}".format(cfunctionName, self.forceFunctionRename[cfunctionName]))
+			cfunctionName = self.forceFunctionRename[cfunctionName]
+
+		name.from_snake_case(cfunctionName, namespace=namespace, allow_overload=self.allow_method_overload)
 		
 		try:
 			if self._is_blacklisted(name):
@@ -905,7 +908,7 @@ class CParser(object):
 					absArg = Argument(argName, aType, maybenil=arg.maybenil, notnil=arg.notnil)
 					method.add_arguments(absArg)
 			
-			self.methodsIndex[cfunction.name] = method
+			self.methodsIndex[cfunctionName] = method
 			return method
 		except ParsingError as e:
 			raise ParsingError(e, name)
@@ -1503,4 +1506,51 @@ class CSharpLangTranslator(CLikeLangTranslator):
 			returnType = (method.returnType.translate(self, dllImport=False, namespace=namespace) + ' ') if not hideReturnType else '',
 			name       = method.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace)),
 			args       = ', '.join([arg.translate(self, dllImport=False, namespace=namespace) for arg in method.args]) if not hideArguments else ''
+		)
+
+class PythonLangTranslator(CLangTranslator):
+	def __init__(self):
+		self.nameTranslator = metaname.Translator.get('Python')
+		self.nilToken = 'None'
+		self.falseConstantToken = 'False'
+		self.trueConstantToken = 'True'
+	
+	def translate_base_type(self, _ctype):
+		_type = _ctype.name
+		if _ctype.name == 'boolean':
+			_type = 'bint'
+		elif _ctype.name == 'integer':
+			_type = 'int'
+		elif _ctype.name == 'floatant':
+			_type = 'float'
+		elif _ctype.name == 'size':
+			_type = 'size_t'
+		elif _ctype.name == 'status':
+			_type = 'bint'
+		elif _ctype.name == 'string':
+			_type = 'char*'
+		elif _ctype.name == 'character':
+			_type = 'char'
+		elif _ctype.name == 'time':
+			_type = 'time_t'
+		
+		if _ctype.isUnsigned:
+			_type = 'unsigned ' + _type
+		if _ctype.isconst:
+			_type = 'const ' + _type
+		if _ctype.isref:
+			_type += '*'
+		return _type
+	
+	def translate_argument(self, argument, hideArgName=False, namespace=None):
+		ret = argument.type.translate(self)
+		if not hideArgName:
+			ret += (' ' + argument.name.translate(self.nameTranslator))
+		return ret
+
+	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideArgTypes=False, hideReturnType=False, stripDeclarators=False, namespace=None):
+		return 'def {name}({static}{args})'.format(
+			static     = '' if method.type == Method.Type.Class and not stripDeclarators else 'self, ',
+			name       = method.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace)),
+			args       = ', '.join([arg.translate(self) for arg in method.args]) if not hideArguments else ''
 		)

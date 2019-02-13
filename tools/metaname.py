@@ -185,11 +185,11 @@ class MethodName(Name):
 	def __init__(self):
 		self.overloadRef = 0
 	
-	def from_snake_case(self, name, namespace=None):
+	def from_snake_case(self, name, allow_overload, namespace=None,):
 		Name.from_snake_case(self, name, namespace=namespace)
 		if len(self.words) > 0:
 			suffix = self.words[-1]
-			if MethodName.regex.match(suffix) is not None:
+			if MethodName.regex.match(suffix) is not None and allow_overload:
 				self.overloadRef = int(suffix)
 				del self.words[-1]
 	
@@ -357,7 +357,6 @@ class CppTranslator(JavaTranslator):
 		self.nsSep = '::'
 		self.keyWordEscapes = {'new' : '_new'}
 
-
 class CSharpTranslator(JavaTranslator):
 	def __init__(self):
 		JavaTranslator.__init__(self)
@@ -373,3 +372,55 @@ class CSharpTranslator(JavaTranslator):
 	
 	def translate_property_name(self, name):
 		return name.to_camel_case()
+
+class PythonTranslator(JavaTranslator):
+	def __init__(self):
+		JavaTranslator.__init__(self)
+		self.keyWordEscapes = {
+			'type' : '_type',
+			'file'  : '_file',
+			'list'    : '_list',
+			'from'  : '_from',
+			'id'    : '_id',
+			'filter' : '_filter',
+			'dir'  : '_dir',
+			'max'    : '_max',
+			'min'  : '_min',
+			'range'  : '_range',
+		}
+		self.lowerMethodNames = True
+		self.lowerNamespaceNames = False
+	
+	def translate_method_name(self, name, recursive=False, topAncestor=None):
+		translatedName = name.to_snake_case()
+		translatedName = self._escape_keyword(translatedName)
+		
+		if name.prev is None or not recursive or name.prev is topAncestor:
+			# TODO to remove, should be handled by translate_property_name instead
+			if translatedName[:4] == 'get_' or translatedName[:4] == 'set_':
+				translatedName = translatedName[4:]
+			elif translatedName[:7] == 'enable_':
+				translatedName = translatedName[7:] + '_enabled'
+			return translatedName
+		else:
+			params = {'recursive': recursive, 'topAncestor': topAncestor}
+			return name.prev.translate(self, **params) + self.nsSep + translatedName
+	
+	def translate_property_name(self, name, **params):
+		translatedName = name.to_snake_case()
+		translatedName = self._escape_keyword(translatedName)
+		
+		if translatedName[:4] == 'get_' or translatedName[:4] == 'set_':
+			translatedName = translatedName[4:]
+		elif translatedName[:7] == 'enable_':
+			translatedName = translatedName[7:] + '_enabled'
+		return translatedName
+
+	def translate_argument_name(self, name):
+		argname = name.to_snake_case()
+		return self._escape_keyword(argname)
+	
+	def translate_arg_name(self, name):
+		if name in self.keyWordEscapes:
+			return '_' + name
+		return name
