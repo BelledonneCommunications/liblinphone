@@ -216,8 +216,8 @@ class JavaTranslator(object):
         methodDict['name'] = _method.name.to_camel_case(lower=True)
         methodDict['name_native'] = methodDict['name']
 
-        if _method.name.to_c()[-1] == '2':
-            methodDict['name_native'] += "2"
+        if _method.name.to_c()[-1].isdigit():
+            methodDict['name_native'] += _method.name.to_c()[-1]
 
         methodDict['isNotGetCore'] = not methodDict['name'] == 'getCore'
         methodDict['hasCoreAccessor'] = _hasCoreAccessor
@@ -263,8 +263,8 @@ class JavaTranslator(object):
         methodDict['isConstList'] = _method.returnType.isconst
         methodDict['isNotConstList'] = not _method.returnType.isconst
 
-        if _method.name.to_c()[-1] == '2':
-            methodDict['name'] += "2"
+        if _method.name.to_c()[-1].isdigit():
+            methodDict['name'] += _method.name.to_c()[-1]
 
         if _method.name.to_c() == 'linphone_factory_create_core':
             methodDict['c_name'] = 'linphone_factory_create_core_3'
