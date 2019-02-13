@@ -337,7 +337,10 @@ class Parser:
 		
 		match = self.constants_regex.search(text)
 		while match is not None:
-			if match.start(1)-lastIndex > 0:
+			if match.start(1) == 0 and lastIndex == 0:
+				# Special case when text starts by constant
+				parts.append(self._parse_constant(text[match.start(1):match.end(1)]))
+			elif match.start(1)-lastIndex > 0:
 				parts.append(TextPart(text[lastIndex:match.start(1)]))
 				parts.append(self._parse_constant(text[match.start(1):match.end(1)]))
 			lastIndex = match.end(1)
@@ -682,6 +685,15 @@ class SphinxTranslator(Translator):
 			self.methodDeclarator = 'class_method'
 			self.enumDeclarator = 'enum'
 			self.enumeratorDeclarator = 'enum_case'
+		elif langCode == 'Python':
+			self.domain = 'python'
+			self.classDeclarator = 'class'
+			self.interfaceDeclarator = self.classDeclarator
+			self.methodDeclarator = 'method'
+			self.enumDeclarator = 'type'
+			self.enumeratorDeclarator = 'field'
+			self.namespaceDeclarator = 'package'
+			self.methodReferencer = 'meth'
 		else:
 			raise ValueError('invalid language code: {0}'.format(langCode))
 	
@@ -788,3 +800,33 @@ class SandCastleTranslator(Translator):
 	def translate_class_reference(self, ref):
 		refStr = Translator.translate_reference(self, ref, absName=True)
 		return '<see cref="{0}" />'.format(refStr)
+
+class PythonTranslator(DoxygenTranslator):
+	def __init__(self):
+		DoxygenTranslator.__init__(self, 'Python')
+
+	def _tag_as_brief(self, lines):
+		pass
+
+	def translate_function_reference(self, ref):
+		refStr = Translator.translate_reference(self, ref)
+		return refStr
+
+	def translate_class_reference(self, ref):
+		refStr = Translator.translate_reference(self, ref)
+		return refStr
+	
+	def _translate_section(self, section):
+		return '{0} {1}'.format(
+			section.kind,
+			self._translate_paragraph(section.paragraph)
+		)
+
+	def _translate_parameter_list(self, parameterList):
+		text = ''
+		for paramDesc in parameterList.parameters:
+			if self.displaySelfParam or not paramDesc.is_self_parameter():
+				desc = self._translate_description(paramDesc.desc)
+				desc = desc[0] if len(desc) > 0 else ''
+				text += ('{0} -- {1}\n'.format(paramDesc.name.translate(self.nameTranslator), desc))
+		return text
