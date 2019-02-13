@@ -58,16 +58,17 @@ LinphoneAuthInfo *linphone_auth_info_new_for_algorithm(const char *username, con
 	if (realm!=NULL && (strlen(realm)>0)) obj->realm=ms_strdup(realm);
 	if (domain!=NULL && (strlen(domain)>0)) obj->domain=ms_strdup(domain);
 
-	if (!algorithm)
+	if (!algorithm) {
 		obj->algorithm = ms_strdup("MD5");
+		return obj;
+	}
 
 	if(algorithm && strcasecmp(algorithm, "MD5") && strcasecmp(algorithm, "SHA-256")){
 		ms_error("Given algorithm %s is not correct.", algorithm);
 		return NULL;
 	}
 
-	if(algorithm)
-		obj->algorithm=ms_strdup(algorithm);
+	obj->algorithm=ms_strdup(algorithm);
 	return obj;
 }
 
@@ -99,6 +100,10 @@ void linphone_auth_info_unref(LinphoneAuthInfo *obj) {
 
 const char *linphone_auth_info_get_username(const LinphoneAuthInfo *i) {
 	return i->username;
+}
+
+const char *linphone_auth_info_get_algorithm(const LinphoneAuthInfo *i) {
+	return i->algorithm;
 }
 
 const char *linphone_auth_info_get_passwd(const LinphoneAuthInfo *i) {
@@ -159,6 +164,24 @@ void linphone_auth_info_set_username(LinphoneAuthInfo *info, const char *usernam
 		info->username = NULL;
 	}
 	if (username && strlen(username) > 0) info->username = ms_strdup(username);
+}
+
+void linphone_auth_info_set_algorithm(LinphoneAuthInfo *info, const char *algorithm) {
+	if (info->algorithm) {
+		ms_free(info->algorithm);
+		info->algorithm = NULL;
+	}
+	if (!algorithm) {
+    	info->algorithm = ms_strdup("MD5");
+    	return;
+    }
+
+    if(algorithm && strcasecmp(algorithm, "MD5") && strcasecmp(algorithm, "SHA-256")){
+    	ms_error("Given algorithm %s is not correct. Set algorithm failed", algorithm);
+    	return;
+    }
+
+    info->algorithm = ms_strdup(algorithm);
 }
 
 void linphone_auth_info_set_userid(LinphoneAuthInfo *info, const char *userid) {

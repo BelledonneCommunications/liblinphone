@@ -2201,6 +2201,7 @@ LINPHONE_PUBLIC void linphone_core_set_default_proxy_config(LinphoneCore *lc, Li
  * @param[in] domain String containing the SIP domain for which this authentication information is valid, if it has to be restricted for a single SIP domain.
  * @return #LinphoneAuthInfo with default values set
  * @ingroup authentication
+ * @deprecated use linphone_factory_create_auth_info() instead.
  */
 LINPHONE_PUBLIC LinphoneAuthInfo * linphone_core_create_auth_info(LinphoneCore *lc, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain);
 

@@ -25,9 +25,11 @@ class LinphoneAuthInfoImpl implements LinphoneAuthInfo {
 	private native String getPassword(long ptr);
 	private native String getRealm(long ptr);
 	private native String getUsername(long ptr);
+	private native String getAlgorithm(long ptr);
 	private native void setPassword(long ptr, String password);
 	private native void setRealm(long ptr, String realm);
 	private native void setUsername(long ptr, String username);
+	private native void setAlgorithm(long ptr, String algorithm);
 	private native void setUserId(long ptr, String username);
 	private native void setHa1(long ptr, String ha1);
 	private native void setDomain(long ptr, String domain);
@@ -48,6 +50,9 @@ class LinphoneAuthInfoImpl implements LinphoneAuthInfo {
 		this(username, null, password, null, realm, domain);
 	}
 	protected LinphoneAuthInfoImpl(String username, String userid, String passwd, String ha1, String realm, String domain)  {
+		this(username, userid, passwd, ha1, realm, domain, null);
+	}
+	protected LinphoneAuthInfoImpl(String username, String userid, String passwd, String ha1, String realm, String domain, String algorithm)  {
 		nativePtr = newLinphoneAuthInfo();
 		this.setUsername(username);
 		this.setUserId(userid);
@@ -55,6 +60,7 @@ class LinphoneAuthInfoImpl implements LinphoneAuthInfo {
 		this.setHa1(ha1);
 		this.setDomain(domain);
 		this.setRealm(realm);
+		this.setAlgorithm(algorithm);
 		ownPtr = true;
 	}
 	protected LinphoneAuthInfoImpl(long aNativePtr)  {
@@ -73,6 +79,7 @@ class LinphoneAuthInfoImpl implements LinphoneAuthInfo {
 	public String getUsername() {
 		return getUsername (nativePtr);
 	}
+	public String getAlgorithm() { return  getAlgorithm (nativePtr); }
 	public void setPassword(String password) {
 		setPassword(nativePtr,password);
 	}
@@ -82,6 +89,7 @@ class LinphoneAuthInfoImpl implements LinphoneAuthInfo {
 	public void setUsername(String username) {
 		setUsername(nativePtr,username);
 	}
+	public void setAlgorithm(String algorithm) { setAlgorithm(nativePtr,algorithm); }
 	@Override
 	public String getUserId() {
 		return getUserId(nativePtr);
@@ -116,7 +124,8 @@ class LinphoneAuthInfoImpl implements LinphoneAuthInfo {
 				getPassword(), 
 				getHa1(), 
 				getRealm(), 
-				getDomain());
+				getDomain(),
+				getAlgorithm());
 		return clone;
 	}
 	

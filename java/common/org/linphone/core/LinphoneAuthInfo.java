@@ -93,6 +93,18 @@ public interface LinphoneAuthInfo {
 	 * @return the domain
 	 */
 	String getDomain();
+
+	/**
+	 * Sets the algorithm
+	 * @param algorithm
+	 */
+	void setAlgorithm(String algorithm);
+
+	/**
+	 * Gets the algorithm
+	 * @return the algorithm
+	 */
+	String getAlgorithm();
 	
 	/**
 	 * Clones a current auth info
