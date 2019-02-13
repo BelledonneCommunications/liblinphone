@@ -1,0 +1,421 @@
+# cython: c_string_type=unicode, c_string_encoding=utf8
+
+# pylinphone.pyx
+# Copyright(C) 2019 Belledonne Communications SARL
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+import cython
+import weakref
+
+from libc.time cimport time, time_t
+from cpython cimport Py_INCREF, Py_DECREF
+
+cdef extern from "bctoolbox/list.h":
+    ctypedef struct bctbx_list_t:
+        pass
+
+    bctbx_list_t * bctbx_list_next(const bctbx_list_t * elem)
+    void * bctbx_list_get_data(const bctbx_list_t * elem)
+    bctbx_list_t * bctbx_list_append(bctbx_list_t * elem, void * data)
+    bctbx_list_t * bctbx_list_free(bctbx_list_t * elem)
+    size_t bctbx_list_size(const bctbx_list_t * first)
+    void * bctbx_list_nth_data(const bctbx_list_t * _list, int index)
+
+cdef class BctbxList:
+    cdef bctbx_list_t * ptr
+    cdef ownPtr
+
+    def __dealloc__(self):
+        if self.ptr is not NULL and self.ownPtr:
+            bctbx_list_free(self.ptr)
+        self.ptr = NULL
+
+    @staticmethod
+    cdef BctbxList from_ptr(bctbx_list_t * _ptr, _own=False):
+        cdef BctbxList this = BctbxList.__new__(BctbxList)
+        this.ptr = _ptr
+        this.ownPtr = _own
+        return this
+
+    @staticmethod
+    cdef BctbxList from_string_array(list _array):
+        cdef bctbx_list_t * bctbx_list = NULL
+        for elem in _array or []:
+            elem_ptr = <char *>elem
+            bctbx_list = bctbx_list_append(bctbx_list, elem_ptr)
+
+        cdef BctbxList this
+        this = BctbxList.__new__(BctbxList)
+        this.ptr = bctbx_list
+        this.ownPtr = True
+        return this
+
+    @property
+    def size(self):
+        return bctbx_list_size(self.ptr)
+
+    cdef void * elem_at(self, i):
+        cdef void * elem = bctbx_list_nth_data(self.ptr, i)
+        return elem
+
+    cdef append(self, void * data):
+        self.ptr = bctbx_list_append(self.ptr, data)
+
+    def to_string_array(self):
+        plist = []
+        it = self.ptr
+        while it is not NULL:
+            elem = <char *>bctbx_list_get_data(it)
+            if elem is not None:
+                plist.append(elem)
+            it = bctbx_list_next(it)
+        return plist
+
+cdef extern from "belle-sip/object.h":
+    ctypedef struct belle_sip_object_t:
+        pass
+
+    ctypedef void(*belle_sip_data_destroy)(void * data)
+
+    void belle_sip_object_unref(belle_sip_object_t * obj)
+    belle_sip_object_t * belle_sip_object_ref(belle_sip_object_t * obj)
+    void * belle_sip_object_data_get(belle_sip_object_t * obj, const char * name)
+    int belle_sip_object_data_set(belle_sip_object_t * obj, const char * name, void * data, belle_sip_data_destroy destroy_func)
+    void belle_sip_object_data_remove(belle_sip_object_t * obj, const char * name)
+
+cdef extern from "linphone/core.h":
+    {{#c_classes}}
+    ctypedef struct {{c_class_name}}:
+        pass
+
+    {{/c_classes}}
+    {{#c_callbacks}}
+    ctypedef void(*{{c_name}})({{c_params}})
+
+    {{/c_callbacks}}
+    {{#c_methods}}
+    {{c_prototype}}
+    {{/c_methods}}
+
+{{#enums}}
+"""
+{{#briefDoc}}
+{{#lines}}
+{{{line}}}
+{{/lines}}
+{{/briefDoc}}
+{{#detailedDoc}}
+{{#lines}}
+{{{line}}}
+{{/lines}}
+{{/detailedDoc}}
+"""
+cpdef enum {{name}}:
+    {{#values}}
+    #{{#briefDoc}}{{#lines}}{{{line}}} {{/lines}}{{/briefDoc}}
+    {{name}}{{value_name}} = {{value}}
+    {{/values}}
+
+{{/enums}}
+
+{{#objects}}
+"""
+{{#briefDoc}}
+{{#lines}}
+{{{line}}}
+{{/lines}}
+{{/briefDoc}}
+{{#detailedDoc}}
+{{#lines}}
+{{{line}}}
+{{/lines}}
+{{/detailedDoc}}
+"""
+cdef class {{python_name}}:
+    cdef object __weakref__
+    cdef {{c_name}}* ptr
+    cpdef wref
+    cdef _user_data
+    {{#callbacks}}
+    cpdef _{{callback_var_name}}
+    {{/callbacks}}
+
+    {{#is_factory}}
+    @staticmethod
+    def get():
+        return Factory()
+    {{/is_factory}}
+    {{#is_not_factory}}
+    def __dealloc__(self):
+        if self.ptr is not NULL:
+            belle_sip_object_data_remove(<belle_sip_object_t *>self.ptr, 'python_user_data')
+            belle_sip_object_unref(<belle_sip_object_t *>self.ptr)
+        self.ptr = NULL
+
+    {{/is_not_factory}}
+    @property
+    def user_data(self):
+        return self._user_data
+
+    @user_data.setter
+    def user_data(self, value):
+        self._user_data = value
+
+    @staticmethod
+    cdef {{python_name}} from_ptr({{c_name}} * _ptr, take_ref=True):
+        cdef {{python_name}} this
+        if _ptr is NULL:
+            return None
+        user_data = belle_sip_object_data_get(<belle_sip_object_t *>_ptr, 'python_user_data')
+
+        if user_data is not NULL:
+            tmp_wref = <object>user_data
+            this = tmp_wref()
+            if this is None:
+                this = {{python_name}}.__new__({{python_name}})
+                this.ptr = <{{c_name}} *>belle_sip_object_ref(<belle_sip_object_t *>_ptr) if take_ref else _ptr
+        else:
+            this = {{python_name}}.__new__({{python_name}})
+            this.ptr = <{{c_name}} *>belle_sip_object_ref(<belle_sip_object_t *>_ptr) if take_ref else _ptr
+
+        this.wref = weakref.ref(this)
+        belle_sip_object_data_set(<belle_sip_object_t *>_ptr, 'python_user_data', <void *>this.wref, NULL)
+        {{#callbacks}}
+        {{callback_setter}}(this.ptr, &{{python_name}}.{{callback_internal_name}})
+        {{/callbacks}}
+
+        return this
+
+    {{#callbacks}}
+    @staticmethod
+    cdef void {{callback_internal_name}}({{c_params}}):
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        {{#params}}
+        {{#is_obj_list}}
+        bctbx_list = BctbxList.from_ptr({{python_param_name}})
+        {{python_param_name}}_list = []
+        for i in range(0, bctbx_list.size):
+            pt = {{python_param_type}}.from_ptr(<{{param_c_type}}>bctbx_list.elem_at(i){{#dont_ref_list_elem}}, False{{/dont_ref_list_elem}})
+            {{python_param_name}}_list.append(pt)
+        {{/is_obj_list}}
+        {{#is_string_list}}
+        bctbx_list = BctbxList.from_ptr({{python_param_name}})
+        {{python_param_name}}_list = bctbx_list.to_string_array()
+        {{/is_string_list}}
+        {{#is_obj}}
+        {{python_param_name}}_obj = {{python_param_type}}.from_ptr({{python_param_name}})
+        {{/is_obj}}
+        {{#is_bool}}
+        {{python_param_name}}_b = {{python_param_name}} == 1
+        {{/is_bool}}
+        {{/params}}
+
+        {{#is_multi_listener}}
+        callbacks = {{first_python_param_name}}_obj.current_callbacks
+        {{/is_multi_listener}}
+        if callbacks.{{callback_var_name}} is not None:
+            callbacks.{{callback_var_name}}({{computed_params}})
+
+    @property
+    def {{callback_var_name}}(self):
+        return self._{{callback_var_name}}
+
+    @{{callback_var_name}}.setter
+    def {{callback_var_name}}(self, cb):
+        self._{{callback_var_name}} = cb
+
+    {{/callbacks}}
+    {{#properties}}
+    {{#getter}}
+    @property
+    def {{python_name}}(self):
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        {{#write_only}}
+        raise AttributeError('Unreadable attribute')
+        {{/write_only}}
+        {{#is_return_obj_list}}
+        _list = {{c_name}}(self.ptr)
+        bctbx_list = BctbxList.from_ptr(_list)
+        plist = []
+        for i in range(0, bctbx_list.size):
+            pt = {{python_return_type}}.from_ptr(<{{c_return_type}} *>bctbx_list.elem_at(i){{#dont_ref_list_elem}}, False{{/dont_ref_list_elem}})
+            plist.append(pt)
+        return plist
+        {{/is_return_obj_list}}
+        {{#is_return_string_list}}
+        bctbx_list = {{c_name}}(self.ptr)
+        return BctbxList.from_ptr(bctbx_list).to_string_array()
+        {{/is_return_string_list}}
+        {{#is_return_obj}}
+        return {{python_return_type}}.from_ptr({{c_name}}(self.ptr))
+        {{/is_return_obj}}
+        {{#is_return_bool}}
+        return True if {{c_name}}(self.ptr) == 1 else False
+        {{/is_return_bool}}
+        {{#is_return_void_ptr}}
+        return <object>{{c_name}}(self.ptr)
+        {{/is_return_void_ptr}}
+        {{#is_simple_return}}
+        return {{c_name}}(self.ptr)
+        {{/is_simple_return}}
+    {{/getter}}
+
+    {{#setter}}
+    @{{python_name}}.setter
+    def {{python_name}}(self, value):
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        {{#is_value_obj_list}}
+        cdef BctbxList bctbx_list = BctbxList.__new__(BctbxList)
+        for elem in value or []:
+            pt = <{{python_value_type}}>elem
+            bctbx_list.append(pt.ptr)
+        {{c_name}}(self.ptr, bctbx_list.ptr)
+        {{/is_value_obj_list}}
+        {{#is_value_string_list}}
+        bctbx_list = BctbxList.from_string_array(value)
+        {{c_name}}(self.ptr, bctbx_list.ptr)
+        {{/is_value_string_list}}
+        {{#is_value_obj}}
+        _value = <{{python_value_type}}>value
+        {{c_name}}(self.ptr, _value.ptr)
+        {{/is_value_obj}}
+        {{#is_value_bool}}
+        {{c_name}}(self.ptr, 1 if value else 0)
+        {{/is_value_bool}}
+        {{#is_value_void_ptr}}
+        {{c_name}}(self.ptr, <void*>value)
+        {{/is_value_void_ptr}}
+        {{#is_value_string}}
+        cdef char* value_s = NULL
+        if value is not None:
+            value_s = value
+        {{c_name}}(self.ptr, value_s)
+        {{/is_value_string}}
+        {{#is_simple_value}}
+        {{c_name}}(self.ptr, value)
+        {{/is_simple_value}}
+    {{/setter}}
+
+    {{/properties}}
+    {{#methods}}
+    {{#is_static}}@staticmethod{{/is_static}}
+    def {{python_name}}({{#is_not_static}}self{{/is_not_static}}{{python_params}}):
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        {{#params}}
+        {{#is_obj_list}}
+        cdef BctbxList bctbx_list = BctbxList.__new__(BctbxList)
+        for elem in {{python_param_name}} or []:
+            pt = <{{python_param_type}}>elem
+            bctbx_list.append(pt.ptr)
+        {{python_param_name}}_list = bctbx_list.ptr
+        {{/is_obj_list}}
+        {{#is_string_list}}
+        bctbx_list = BctbxList.from_string_array({{python_param_name}})
+        {{python_param_name}}_list = bctbx_list.ptr
+        {{/is_string_list}}
+        {{#is_obj}}
+        _{{python_param_name}} = <{{python_param_type}}>{{python_param_name}}
+        {{python_param_name}}_ptr = _{{python_param_name}}.ptr if _{{python_param_name}} is not None else NULL
+        {{#is_add_listener}}
+        Py_INCREF({{python_param_name}})
+        {{/is_add_listener}}
+        {{#is_remove_listener}}
+        Py_DECREF({{python_param_name}})
+        {{/is_remove_listener}}
+        {{/is_obj}}
+        {{#is_bool}}
+        {{python_param_name}}_b = 1 if {{python_param_name}} else 0
+        {{/is_bool}}
+        {{#is_void_ptr}}
+        {{python_param_name}}_vptr = <void*>{{python_param_name}}
+        {{/is_void_ptr}}
+        {{#is_string}}
+        cdef char* {{python_param_name}}_s = NULL
+        if {{python_param_name}} is not None:
+            {{python_param_name}}_s = {{python_param_name}}
+        {{/is_string}}
+        {{/params}}
+        {{#has_return}}ret = {{/has_return}}{{c_name}}({{#is_not_static}}self.ptr{{/is_not_static}}{{computed_params}})
+        {{#has_return_obj_list}}
+        bctbx_list = BctbxList.from_ptr(ret)
+        plist = []
+        for i in range(0, bctbx_list.size):
+            pt = {{return_python_type}}.from_ptr(<{{return_c_type}} *>bctbx_list.elem_at(i){{#dont_ref_list_elem}}, False{{/dont_ref_list_elem}})
+            plist.append(pt)
+        return plist
+        {{/has_return_obj_list}}
+        {{#has_return_string_list}}
+        return BctbxList.from_ptr(ret).to_string_array()
+        {{/has_return_string_list}}
+        {{#has_return_obj}}
+        return {{return_python_type}}.from_ptr(ret{{#constructor}}, False{{/constructor}})
+        {{/has_return_obj}}
+        {{#has_return_bool}}
+        return True if ret == 1 else False
+        {{/has_return_bool}}
+        {{#has_return_void_vptr}}
+        return <object>ret
+        {{/has_return_void_vptr}}
+        {{#has_simple_return}}
+        return ret
+        {{/has_simple_return}}
+
+    {{/methods}}
+{{/objects}}
