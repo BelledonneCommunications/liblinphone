@@ -195,8 +195,9 @@ void ChatMessagePrivate::disableDeliveryNotificationRequiredInDatabase () {
 void ChatMessagePrivate::disableDisplayNotificationRequiredInDatabase () {
 	L_Q();
 	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
-	if (dbKey.isValid())
-		mainDb->disableDisplayNotificationRequired(mainDb->getEventFromKey(dbKey));
+	const std::shared_ptr<const EventLog> &eventLog = mainDb->getEventFromKey(dbKey);
+	if (dbKey.isValid() && eventLog)
+		mainDb->disableDisplayNotificationRequired(eventLog);
 }
 
 // -----------------------------------------------------------------------------
@@ -706,7 +707,7 @@ void ChatMessagePrivate::send () {
 
 	currentSendStep |= ChatMessagePrivate::Step::Started;
 	q->getChatRoom()->getPrivate()->addTransientChatMessage(q->getSharedFromThis());
-	imdnId.clear();
+	//imdnId.clear(); //moved into  ChatRoomPrivate::sendChatMessage
 
 	if (toBeStored && currentSendStep == (ChatMessagePrivate::Step::Started | ChatMessagePrivate::Step::None))
 		storeInDb();
@@ -918,12 +919,18 @@ void ChatMessagePrivate::storeInDb () {
 void ChatMessagePrivate::updateInDb () {
 	L_Q();
 
-	if (!dbKey.isValid())
+	if (!dbKey.isValid()) {
+		lError() << "Invalid db key [" << &dbKey << "] associated to message [" << this <<"]";
 		return;
+	}
 
 	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
 	shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(dbKey);
 
+	if (!eventLog) {
+		lError() << "cannot find eventLog for db key [" << &dbKey << "] associated to message [" << this <<"]";
+		return;
+	}
 	// Avoid transaction in transaction if contents are not loaded.
 	loadContentsFromDatabase();
 	mainDb->updateEvent(eventLog);

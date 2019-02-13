@@ -2374,6 +2374,117 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void imdn_for_group_chat_room (void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
+	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_lime_x3dh_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	coresManagerList = bctbx_list_append(coresManagerList, chloe);
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(chloe->lc)));
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+	stats initialChloeStats = chloe->stat;
+	time_t initialTime = ms_time(NULL);
+	
+	// Enable IMDN
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(chloe->lc));
+	
+	
+	// Wait for lime user creation
+	wait_for_list(coresList, NULL, 1, 2*x3dhServerDelay);
+
+	
+	// Marie creates a new group chat room
+	const char *initialSubject = "Colleagues";
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+	
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
+	
+	// Check that the chat room is correctly created on Chloe's side and that the participants are added
+	LinphoneChatRoom *chloeCr = check_creation_chat_room_client_side(coresList, chloe, &initialChloeStats, confAddr, initialSubject, 2, FALSE);
+	
+	// Chloe begins composing a message
+	const char *chloeTextMessage = "Hello";
+	LinphoneChatMessage *chloeMessage = _send_message(chloeCr, chloeTextMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
+	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
+		goto end;
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), chloeTextMessage);
+	LinphoneAddress *chloeAddr = linphone_address_new(linphone_core_get_identity(chloe->lc));
+	BC_ASSERT_TRUE(linphone_address_weak_equal(chloeAddr, linphone_chat_message_get_from_address(marieLastMsg)));
+	linphone_address_unref(chloeAddr);
+	
+	// Check that the message has been delivered to Marie and Pauline
+	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDeliveredToUser, initialChloeStats.number_of_LinphoneMessageDeliveredToUser + 1, 3000));
+	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDisplayed));
+	bctbx_list_t *participantsThatReceivedChloeMessage = linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDeliveredToUser);
+	if (BC_ASSERT_PTR_NOT_NULL(participantsThatReceivedChloeMessage)) {
+		BC_ASSERT_EQUAL((int)bctbx_list_size(participantsThatReceivedChloeMessage), 2, int, "%d");
+		for (bctbx_list_t *item = participantsThatReceivedChloeMessage; item; item = bctbx_list_next(item)) {
+			LinphoneParticipantImdnState *state = (LinphoneParticipantImdnState *)bctbx_list_get_data(item);
+			BC_ASSERT_GREATER((int)linphone_participant_imdn_state_get_state_change_time(state), (int)initialTime, int, "%d");
+			BC_ASSERT_EQUAL(linphone_participant_imdn_state_get_state(state), LinphoneChatMessageStateDeliveredToUser, int, "%d");
+			BC_ASSERT_PTR_NOT_NULL(linphone_participant_imdn_state_get_participant(state));
+		}
+		bctbx_list_free_with_data(participantsThatReceivedChloeMessage, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+	}
+	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDelivered));
+	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateNotDelivered));
+	
+	// Marie marks the message as read, check that the state is not yet displayed on Chloe's side
+	linphone_chat_room_mark_as_read(marieCr);
+	BC_ASSERT_FALSE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDisplayed, initialChloeStats.number_of_LinphoneMessageDisplayed + 1, 3000));
+	bctbx_list_t *participantsThatDisplayedChloeMessage = linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDisplayed);
+	if (BC_ASSERT_PTR_NOT_NULL(participantsThatDisplayedChloeMessage)) {
+		BC_ASSERT_EQUAL((int)bctbx_list_size(participantsThatDisplayedChloeMessage), 1, int, "%d");
+		bctbx_list_free_with_data(participantsThatDisplayedChloeMessage, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+	}
+	participantsThatReceivedChloeMessage = linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDeliveredToUser);
+	if (BC_ASSERT_PTR_NOT_NULL(participantsThatReceivedChloeMessage)) {
+		BC_ASSERT_EQUAL((int)bctbx_list_size(participantsThatReceivedChloeMessage), 1, int, "%d");
+		bctbx_list_free_with_data(participantsThatReceivedChloeMessage, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+	}
+	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDelivered));
+	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateNotDelivered));
+	
+	// Pauline also marks the message as read, check that the state is now displayed on Chloe's side
+	linphone_chat_room_mark_as_read(paulineCr);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDisplayed, initialChloeStats.number_of_LinphoneMessageDisplayed + 1, 3000));
+	participantsThatDisplayedChloeMessage = linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDisplayed);
+	if (BC_ASSERT_PTR_NOT_NULL(participantsThatDisplayedChloeMessage)) {
+		BC_ASSERT_EQUAL((int)bctbx_list_size(participantsThatDisplayedChloeMessage), 2, int, "%d");
+		bctbx_list_free_with_data(participantsThatDisplayedChloeMessage, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+	}
+	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDeliveredToUser));
+	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDelivered));
+	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateNotDelivered));
+	
+	linphone_chat_message_unref(chloeMessage);
+	
+end:
+	// Clean db from chat room
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(chloe, chloeCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+	
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(chloe);
+}
 
 test_t secure_group_chat_tests[] = {
 	TEST_ONE_TAG("LIME X3DH create lime user", group_chat_lime_x3dh_create_lime_user, "LimeX3DH"),
@@ -2401,7 +2512,8 @@ test_t secure_group_chat_tests[] = {
 	TEST_TWO_TAGS("LIME X3DH plain message to enabled LIME X3DH", group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh, "LimeX3DH", "LeaksMemory"),
 	TEST_TWO_TAGS("LIME X3DH message to multidevice participants", group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants, "LimeX3DH", "LeaksMemory"),
 	TEST_TWO_TAGS("LIME X3DH messages while network unreachable", group_chat_lime_x3dh_message_while_network_unreachable, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH", "LeaksMemory")
+	TEST_TWO_TAGS("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH", "LeaksMemory"),
+	TEST_ONE_TAG("Imdn", imdn_for_group_chat_room, "LimeX3DH")
 };
 
 test_suite_t secure_group_chat_test_suite = {
