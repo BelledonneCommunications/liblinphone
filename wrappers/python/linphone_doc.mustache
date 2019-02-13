@@ -1,0 +1,149 @@
+from enum import Enum
+
+{{#enums}}
+class {{name}}(Enum):
+    """
+    {{#briefDoc}}
+    {{#lines}}
+    {{{line}}}
+    {{/lines}}
+    {{/briefDoc}}
+    {{#detailedDoc}}
+    {{#lines}}
+    {{{line}}}
+    {{/lines}}
+    {{/detailedDoc}}
+    """
+    
+    {{#values}}
+    #{{#briefDoc}}{{#lines}}{{{line}}} {{/lines}}{{/briefDoc}}
+    {{name}}{{value_name}} = {{value}}
+    {{/values}}
+
+{{/enums}}
+
+{{#objects}}
+class {{python_name}}:
+    """
+    {{#briefDoc}}
+    {{#lines}}
+    {{{line}}}
+    {{/lines}}
+    {{/briefDoc}}
+    {{#detailedDoc}}
+    {{#lines}}
+    {{{line}}}
+    {{/lines}}
+    {{/detailedDoc}}
+    """
+
+    {{#is_factory}}
+    @staticmethod
+    def get():
+        raise NotImplementedError
+    {{/is_factory}}
+	
+    @property
+    def user_data(self):
+        return self._user_data
+
+    @user_data.setter
+    def user_data(self, value):
+        self._user_data = value
+
+    {{#callbacks}}
+    @property
+    def {{callback_var_name}}(self):
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        raise AttributeError('Unreadable attribute')
+
+    @{{callback_var_name}}.setter
+    def {{callback_var_name}}(self, cb):
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        raise AttributeError('Unreadable attribute')
+
+    {{/callbacks}}
+    {{#properties}}
+    {{#getter}}
+    @property
+    def {{python_name}}(self):
+        {{#write_only}}
+        raise AttributeError('Unreadable attribute')
+        {{/write_only}}
+        {{^write_only}}
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        raise NotImplementedError
+        {{/write_only}}
+    {{/getter}}
+
+    {{#setter}}
+    @{{python_name}}.setter
+    def {{python_name}}(self, value):
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        raise NotImplementedError
+    {{/setter}}
+
+    {{/properties}}
+    {{#methods}}
+    {{#is_static}}@staticmethod{{/is_static}}
+    def {{python_name}}({{^is_static}}self{{/is_static}}{{python_params}}):
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        raise NotImplementedError
+
+    {{/methods}}
+{{/objects}}

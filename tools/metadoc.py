@@ -430,7 +430,12 @@ class Translator:
 		
 		translatedDoc = {'lines': []}
 		for line in lines:
-			translatedDoc['lines'].append({'line': line})
+			strippedLine = line.strip()
+			# Prevents multiple continuous blank lines
+			if len(strippedLine) == 0 and len(translatedDoc['lines']) > 0 and len(translatedDoc['lines'][-1]['line']) == 0:
+				continue
+
+			translatedDoc['lines'].append({'line': strippedLine})
 		
 		return translatedDoc
 	
@@ -636,148 +641,6 @@ class SwiftDocTranslator(JavaDocTranslator):
 				text += ('- Parameter {0}: {1}\n'.format(paramDesc.name.translate(self.nameTranslator), desc))
 		return text
 
-class SphinxTranslator(Translator):
-	def __init__(self, langCode):
-		Translator.__init__(self, langCode)
-		if langCode == 'C':
-			self.domain = 'cpp'
-			self.classDeclarator = 'type'
-			self.interfaceDeclarator = self.classDeclarator
-			self.methodDeclarator = 'function'
-			self.enumDeclarator = 'enum'
-			self.enumeratorDeclarator = 'enumerator'
-			self.methodReferencer = 'func'
-		elif langCode == 'Cpp':
-			self.domain = 'cpp'
-			self.classDeclarator = 'class'
-			self.interfaceDeclarator = self.classDeclarator
-			self.methodDeclarator = 'function'
-			self.enumDeclarator = 'enum'
-			self.enumeratorDeclarator = 'enumerator'
-			self.namespaceDeclarator = 'namespace'
-			self.methodReferencer = 'func'
-		elif langCode == 'CSharp':
-			self.domain = 'csharp'
-			self.classDeclarator = 'class'
-			self.interfaceDeclarator = self.classDeclarator
-			self.methodDeclarator = 'method'
-			self.enumDeclarator = 'enum'
-			self.enumeratorDeclarator = 'value'
-			self.namespaceDeclarator = 'namespace'
-			self.classReferencer = 'type'
-			self.interfaceReferencer = self.classReferencer
-			self.enumReferencer = 'type'
-			self.enumeratorReferencer = 'enum'
-			self.methodReferencer = 'meth'
-		elif langCode == 'Java':
-			self.domain = 'java'
-			self.classDeclarator = 'type'
-			self.interfaceDeclarator = self.classDeclarator
-			self.methodDeclarator = 'method'
-			self.enumDeclarator = 'type'
-			self.enumeratorDeclarator = 'field'
-			self.namespaceDeclarator = 'package'
-			self.methodReferencer = 'meth'
-		elif langCode == 'Swift':
-			self.domain = 'swift'
-			self.classDeclarator = 'class'
-			self.interfaceDeclarator = self.classDeclarator
-			self.methodDeclarator = 'class_method'
-			self.enumDeclarator = 'enum'
-			self.enumeratorDeclarator = 'enum_case'
-		else:
-			raise ValueError('invalid language code: {0}'.format(langCode))
-	
-	def get_declarator(self, typeName):
-		try:
-			attrName = typeName + 'Declarator'
-			declarator = getattr(self, attrName)
-			return '{0}:{1}'.format(self.domain, declarator)
-		except AttributeError:
-			raise ValueError("'{0}' declarator type not supported".format(typeName))
-	
-	def get_referencer(self, typeName):
-		try:
-			attrName = typeName + 'Referencer'
-			if attrName in dir(self):
-				referencer = getattr(self, attrName)
-				return '{0}:{1}'.format(self.domain, referencer)
-			else:
-				return self.get_declarator(typeName)
-		except AttributeError:
-			raise ValueError("'{0}' referencer type not supported".format(typeName))
-
-	def translate_class_reference(self, ref, label=None, namespace=None):
-		refStr = Translator.translate_reference(self, ref, absName=True)
-		tag = self._sphinx_ref_tag(ref)
-
-		return ':{tag}:`{label} <{ref}>`'.format(
-			tag=tag,
-			label=label if label is not None else Translator.translate_reference(self, ref, namespace=namespace),
-			ref=tag.split(':')[1] + " " + refStr if self.domain == 'swift' else refStr
-		)
-
-	def translate_function_reference(self, ref, label=None, useNamespace=True, namespace=None):
-		if self.domain == 'csharp':
-			refStr = ref.relatedObject.name.translate(self.nameTranslator, **abstractapi.Translator._namespace_to_name_translator_params(namespace))
-		else:
-			refStr = ref.relatedObject.translate_as_prototype(self.langTranslator,
-				hideArguments=self.domain not in ['java', 'swift'],
-				hideArgNames=self.domain == 'java',
-				hideArgTypes=self.domain == 'swift',
-				hideReturnType=True,
-				stripDeclarators=True,
-				namespace=namespace
-			)
-		return ':{tag}:`{label} <{ref}>`'.format(
-			tag   = self._sphinx_ref_tag(ref),
-			label = label if label is not None else '{0}()'.format(Translator.translate_reference(self, ref, namespace=namespace)),
-			ref   = "static " + refStr if self.domain == 'swift' and ref.relatedObject.type == abstractapi.Method.Type.Class else refStr
-		)
-	
-	def translate_keyword(self, keyword):
-		translatedKeyword = Translator.translate_keyword(self, keyword)
-		return '``{0}``'.format(translatedKeyword)
-	
-	def _translate_section(self, section):
-		strPara = self._translate_paragraph(section.paragraph)
-		if section.kind == 'deprecated':
-			return '**Deprecated:** {0}\n'.format(strPara)
-		else:
-			if section.kind == 'see':
-				kind = 'seealso'
-			else:
-				kind = section.kind
-			
-			if section.kind == 'return':
-				return ':return: {0}'.format(strPara)
-			else:
-				return '.. {0}::\n\t\n\t{1}\n\n'.format(kind, strPara)
-	
-	def _translate_parameter_list(self, parameterList):
-		text = ''
-		for paramDesc in parameterList.parameters:
-			if self.displaySelfParam or not paramDesc.is_self_parameter():
-				desc = self._translate_description(paramDesc.desc)
-				desc = desc[0] if len(desc) > 0 else ''
-				text += (':param {0}: {1}\n'.format(paramDesc.name.translate(self.nameTranslator), desc))
-		text += '\n'
-		return text
-	
-	def _sphinx_ref_tag(self, ref):
-		typeName = type(ref.relatedObject).__name__.lower()
-		return self.get_referencer(typeName)
-	
-	isParamDescRegex = re.compile('\t*:(?:param\s+\w+|return):')
-	
-	def _split_line(self, line, width):
-		if SphinxTranslator.isParamDescRegex.match(line) is not None:
-			lines = Translator._split_line(self, line, width, indent=True)
-			return lines
-		else:
-			return Translator._split_line(self, line, width)
-
-
 class SandCastleTranslator(Translator):
 	def _tag_as_brief(self, lines):
 		if len(lines) > 0:
@@ -791,3 +654,45 @@ class SandCastleTranslator(Translator):
 	def translate_class_reference(self, ref):
 		refStr = Translator.translate_reference(self, ref, absName=True)
 		return '<see cref="{0}" />'.format(refStr)
+
+class PythonTranslator(DoxygenTranslator):
+	def __init__(self):
+		DoxygenTranslator.__init__(self, 'Python')
+
+	def _tag_as_brief(self, lines):
+		pass
+
+	def translate_function_reference(self, ref):
+		className = ref.relatedObject.name.prev.translate(self.nameTranslator)
+		methodName = ref.relatedObject.name.translate(self.nameTranslator)
+		return ':meth:`{0}.{1}`'.format(className, methodName)
+
+	def translate_class_reference(self, ref):
+		refStr = Translator.translate_reference(self, ref)
+		return ':class:`{0}`'.format(refStr)
+	
+	def _translate_section(self, section):
+		if section.kind == 'see':
+			return '\n.. seealso:: {0}'.format(self._translate_paragraph(section.paragraph))
+		elif section.kind == 'note':
+			return '\n.. note:: {0}'.format(self._translate_paragraph(section.paragraph))
+		elif section.kind == 'warning':
+			return '\n.. warning:: {0}'.format(self._translate_paragraph(section.paragraph))
+		elif section.kind == 'return':
+			return '\n:returns: {0}'.format(self._translate_paragraph(section.paragraph))
+		elif section.kind == 'deprecated':
+			return '\n.. deprecated:: \n\t{0}'.format(self._translate_paragraph(section.paragraph))
+		else:
+			return '{0} {1}'.format(
+				section.kind,
+				self._translate_paragraph(section.paragraph)
+			)
+
+	def _translate_parameter_list(self, parameterList):
+		text = '\n'
+		for paramDesc in parameterList.parameters:
+			if self.displaySelfParam or not paramDesc.is_self_parameter():
+				desc = self._translate_description(paramDesc.desc)
+				desc = desc[0] if len(desc) > 0 else ''
+				text += (':param {0}: {1}\n'.format(paramDesc.name.translate(self.nameTranslator), desc))
+		return text
