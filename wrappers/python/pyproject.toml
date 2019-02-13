@@ -1,0 +1,8 @@
+[build-system]
+requires = [
+  "setuptools",
+  "pystache",
+  "six",
+  "wheel",
+  "cython"
+]
