@@ -221,15 +221,31 @@ LINPHONE_PUBLIC const char *linphone_event_get_name(const LinphoneEvent *linphon
  * Get the "from" address of the subscription.
  * @param linphone_event #LinphoneEvent object @notnil
  * @return the from #LinphoneAddress. @notnil
+ * @deprecated 19/07/2020 use linphone_event_get_from_address() instead
 **/
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_from(const LinphoneEvent *linphone_event);
 
 /**
+ * Get the "from" address of the subscription.
+ * @param linphone_event #LinphoneEvent object @notnil
+ * @return the from #LinphoneAddress. @notnil
+**/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_from_address(const LinphoneEvent *linphone_event);
+
+/**
  * Get the "to" address of the subscription.
  * @param linphone_event #LinphoneEvent object @notnil
- * @return the "to" #LinphoneAddress. @notnil
+ * @return the to #LinphoneAddress. @notnil
+ * @deprecated 19/07/2020 use linphone_event_get_to_address() instead
 **/
-LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_to(const LinphoneEvent *lev);
+LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_to(const LinphoneEvent *linphone_event);
+
+/**
+ * Get the "to" address of the subscription.
+ * @param linphone_event #LinphoneEvent object @notnil
+ * @return the to #LinphoneAddress. @notnil
+**/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_to_address(const LinphoneEvent *linphone_event);
 
 /**
  * Get the resource address of the subscription or publish.

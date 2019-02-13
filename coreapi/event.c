@@ -544,14 +544,22 @@ static const LinphoneAddress *_linphone_event_cache_remote_contact (const Linpho
 	return lev->remote_contact_address;
 }
 
-const LinphoneAddress *linphone_event_get_to (const LinphoneEvent *lev) {
-	return _linphone_event_cache_to(lev);
-}
-
-const LinphoneAddress *linphone_event_get_from (const LinphoneEvent *lev) {
+const LinphoneAddress *linphone_event_get_from_address (const LinphoneEvent *lev) {
 	if (lev->is_out_of_dialog_op && lev->dir == LinphoneSubscriptionOutgoing)
 		return _linphone_event_cache_to(lev);
 	return _linphone_event_cache_from(lev);
+}
+
+const LinphoneAddress *linphone_event_get_from (const LinphoneEvent *lev) {
+	return linphone_event_get_from_address(lev);
+}
+
+const LinphoneAddress *linphone_event_get_to_address (const LinphoneEvent *lev) {
+	return _linphone_event_cache_to(lev);
+}
+
+const LinphoneAddress *linphone_event_get_to (const LinphoneEvent *lev) {
+	return linphone_event_get_to_address(lev);
 }
 
 const LinphoneAddress *linphone_event_get_resource(const LinphoneEvent *lev){
