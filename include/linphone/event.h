@@ -218,6 +218,11 @@ LINPHONE_PUBLIC const char *linphone_event_get_name(const LinphoneEvent *linphon
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_from(const LinphoneEvent *linphone_event);
 
 /**
+ * Get the "from" address of the subscription.
+**/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_from_address(const LinphoneEvent *lev);
+
+/**
  * Get the resource address of the subscription or publish.
  * @param linphone_event #LinphoneEvent object @notnil
  * @return the resource #LinphoneAddress. @notnil
