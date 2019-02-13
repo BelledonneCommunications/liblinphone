@@ -184,8 +184,14 @@ LINPHONE_PUBLIC const char *linphone_event_get_name(const LinphoneEvent *lev);
 
 /**
  * Get the "from" address of the subscription.
+ * @deprecated use linphone_event_get_from_address instead
 **/
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_from(const LinphoneEvent *lev);
+
+/**
+ * Get the "from" address of the subscription.
+**/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_from_address(const LinphoneEvent *lev);
 
 /**
  * Get the resource address of the subscription or publish.
