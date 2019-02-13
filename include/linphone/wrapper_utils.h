@@ -66,6 +66,7 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_room_get_callbacks_list(const 
  * Sets the current LinphoneChatRoomCbs.
  * @param[in] cr LinphoneChatRoom object
  * @param[in] cbs LinphoneChatRoomCbs object
+ * @donotwrap
  */
 LINPHONE_PUBLIC void linphone_chat_room_set_current_callbacks(LinphoneChatRoom *cr, LinphoneChatRoomCbs *cbs);
 
