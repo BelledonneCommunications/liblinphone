@@ -357,7 +357,6 @@ class CppTranslator(JavaTranslator):
 		self.nsSep = '::'
 		self.keyWordEscapes = {'new' : '_new'}
 
-
 class CSharpTranslator(JavaTranslator):
 	def __init__(self):
 		JavaTranslator.__init__(self)
@@ -373,3 +372,47 @@ class CSharpTranslator(JavaTranslator):
 	
 	def translate_property_name(self, name):
 		return name.to_camel_case()
+
+class PythonTranslator(JavaTranslator):
+	def __init__(self):
+		JavaTranslator.__init__(self)
+		self.keyWordEscapes = {
+			'type' : '_type',
+			'file'  : '_file',
+			'list'    : '_list',
+			'from'  : '_from',
+			'id'    : '_id',
+			'filter' : '_filter',
+			'dir'  : '_dir',
+			'max'    : '_max',
+			'min'  : '_min',
+			'range'  : '_range',
+		}
+		self.lowerMethodNames = True
+		self.lowerNamespaceNames = False
+	
+	def translate_method_name(self, name, recursive=False, topAncestor=None):
+		translatedName = name.to_snake_case()
+		translatedName = self._escape_keyword(translatedName)
+		
+		if name.prev is None or not recursive or name.prev is topAncestor:
+			if translatedName[:4] == 'get_' or translatedName[:4] == 'set_':
+				translatedName = translatedName[4:]
+			elif translatedName[:7] == 'enable_':
+				translatedName = translatedName[7:] + '_enabled'
+			return translatedName
+		else:
+			params = {'recursive': recursive, 'topAncestor': topAncestor}
+			return name.prev.translate(self, **params) + self.nsSep + translatedName
+	
+	def translate_property_name(self, name, **params):
+		return name.to_snake_case()
+
+	def translate_argument_name(self, name):
+		argname = name.to_snake_case()
+		return self._escape_keyword(argname)
+	
+	def translate_arg_name(self, name):
+		if name in self.keyWordEscapes:
+			return '_' + name
+		return name
