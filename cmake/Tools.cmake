@@ -31,3 +31,15 @@ function(check_python_module module_name)
 		message(FATAL_ERROR "'${module_name}' python module not found")
 	endif()
 endfunction()
+
+function(check_python3_module module_name)
+	execute_process(COMMAND ${Python3_EXECUTABLE} -c "import ${module_name}"
+		RESULT_VARIABLE result
+		OUTPUT_QUIET
+		ERROR_QUIET)
+	if(result EQUAL 0)
+		message(STATUS "'${module_name}' python3 module found")
+	else()
+		message(FATAL_ERROR "'${module_name}' python3 module not found")
+	endif()
+endfunction()
