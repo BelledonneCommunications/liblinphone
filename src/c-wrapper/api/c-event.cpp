@@ -464,12 +464,22 @@ const char *linphone_event_get_name(const LinphoneEvent *linphone_event) {
 
 const LinphoneAddress *linphone_event_get_from(const LinphoneEvent *linphone_event) {
 	EventLogContextualizer logContextualizer(linphone_event);
+	return linphone_event_get_from_address(linphone_event);
+}
+
+const LinphoneAddress *linphone_event_get_to(const LinphoneEvent *linphone_event) {
+	EventLogContextualizer logContextualizer(linphone_event);
+	return linphone_event_get_to_address(linphone_event);
+}
+
+const LinphoneAddress *linphone_event_get_from_address(const LinphoneEvent *linphone_event) {
+	EventLogContextualizer logContextualizer(linphone_event);
 	return Event::toCpp(linphone_event)->getFrom()->toC();
 }
 
-const LinphoneAddress *linphone_event_get_to(const LinphoneEvent *lev) {
-	EventLogContextualizer logContextualizer(lev);
-	return Event::toCpp(lev)->getTo()->toC();
+const LinphoneAddress *linphone_event_get_to_address(const LinphoneEvent *linphone_event) {
+	EventLogContextualizer logContextualizer(linphone_event);
+	return Event::toCpp(linphone_event)->getTo()->toC();
 }
 
 const LinphoneAddress *linphone_event_get_resource(const LinphoneEvent *linphone_event) {

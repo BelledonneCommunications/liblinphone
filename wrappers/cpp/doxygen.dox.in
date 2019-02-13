@@ -24,7 +24,7 @@ namespace linphone{
  * - Swift (https://download.linphone.org/@LINPHONESDK_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/swift)
  * - Java (https://download.linphone.org/@LINPHONESDK_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/java)
  * - C# (https://download.linphone.org/@LINPHONESDK_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/cs)
- * - Python (coming soon)
+ * - Python (https://download.linphone.org/@LINPHONESDK_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/python)
  *
  *
  * Tutorials (code examples) are available on our gitlab repository (https://gitlab.linphone.org/BC/public/tutorials) for Swift, Java/Kotlin, and C#.

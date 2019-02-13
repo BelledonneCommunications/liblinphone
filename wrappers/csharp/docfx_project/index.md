@@ -39,7 +39,7 @@ You can find a step by step tutorial to use liblinphone in C# [here](https://git
  - Swift (https://download.linphone.org/@LINPHONESDK_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/swift)
  - Java (https://download.linphone.org/@LINPHONESDK_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/java)
  - C# (https://download.linphone.org/@LINPHONESDK_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/cs)
- - Python (coming soon)
+ - Python (https://download.linphone.org/@LINPHONESDK_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/python)
 
 ## See also
 http://www.linphone.org

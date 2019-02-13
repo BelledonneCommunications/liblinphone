@@ -180,7 +180,7 @@ class FunctionReference(Reference):
 		try:
 			self.relatedObject = api.methodsIndex[self.cname]
 		except KeyError:
-			logging.warning('doc reference pointing on an unknown object ({0})'.format(self.cname))
+			logging.warning('doc reference pointing on an unknown function object ({0})'.format(self.cname))
 
 
 class Paragraph(MultiChildTreeNode):
@@ -656,6 +656,51 @@ class SwiftDocTranslator(Translator):
 				text += ('- Parameter {0}: {1}\n'.format(paramDesc.name.translate(self.nameTranslator), desc))
 		return text
 
+
+class PythonTranslator(DoxygenTranslator):
+	def __init__(self):
+		DoxygenTranslator.__init__(self, 'Python')
+		self.crop_lines = False
+
+	def _tag_as_brief(self, lines):
+		pass
+
+	def translate_function_reference(self, ref):
+		className = ref.relatedObject.name.prev.translate(self.nameTranslator)
+		methodName = ref.relatedObject.name.translate(self.nameTranslator)
+		return '`{0}.{1}`'.format(className, methodName)
+
+	def translate_class_reference(self, ref):
+		refStr = Translator.translate_reference(self, ref)
+		return '`{0}`'.format(refStr)
+	
+	def _translate_section(self, section):
+		if section.kind == 'see':
+			return '\n.. seealso:: {0}'.format(self._translate_paragraph(section.paragraph))
+		elif section.kind == 'note':
+			return '\n.. note:: {0}'.format(self._translate_paragraph(section.paragraph))
+		elif section.kind == 'warning':
+			return '\n.. warning:: {0}'.format(self._translate_paragraph(section.paragraph))
+		elif section.kind == 'deprecated':
+			return '\n.. deprecated:: {0}'.format(self._translate_paragraph(section.paragraph))
+		elif section.kind == 'return':
+			return '\n:return: {0}'.format(self._translate_paragraph(section.paragraph))
+		else:
+			return '{0} {1}'.format(
+				section.kind,
+				self._translate_paragraph(section.paragraph)
+			)
+
+	def _translate_parameter_list(self, parameterList):
+		text = ''
+		for paramDesc in parameterList.parameters:
+			if self.displaySelfParam or not paramDesc.is_self_parameter():
+				desc = self._translate_description(paramDesc.desc)
+				desc = desc[0] if len(desc) > 0 else ''
+				text += ('\n:param {0}: {1}'.format(paramDesc.name.translate(self.nameTranslator), desc))
+		return text
+
+
 class SphinxTranslator(Translator):
 	def __init__(self, langCode):
 		Translator.__init__(self, langCode)
@@ -843,7 +888,6 @@ class SandCastleTranslator(Translator):
 	def translate_class_reference(self, ref):
 		refStr = Translator.translate_reference(self, ref, absName=True)
 		return '<see cref="{0}">{0}</see>'.format(refStr)
-	
 
 	def _translate_parameter_list(self, parameterList):
 		text = ''

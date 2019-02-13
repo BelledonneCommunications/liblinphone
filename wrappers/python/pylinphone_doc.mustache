@@ -1,0 +1,163 @@
+# -*- coding: utf-8 -*-
+
+# pylinphone.py
+# Copyright (c) 2010-2024 Belledonne Communications SARL.
+#
+# This file is part of Liblinphone 
+# (see https://gitlab.linphone.org/BC/public/liblinphone).
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+"""
+.. include:: ./README.md
+"""
+
+from enum import Enum
+
+{{#enums}}
+class {{name}}(Enum):
+    """
+    {{#briefDoc}}
+    {{#lines}}
+    {{{line}}}
+    {{/lines}}
+    {{/briefDoc}}
+    {{#detailedDoc}}
+    {{#lines}}
+    {{{line}}}
+    {{/lines}}
+    {{/detailedDoc}}
+    """
+
+    {{#values}}
+    {{name}}{{value_name}} = {{value}}
+    """{{#briefDoc}}{{#lines}}{{{line}}}{{/lines}}{{/briefDoc}}"""
+    {{/values}}
+
+{{/enums}}
+
+{{#objects}}
+class {{python_name}}:
+    pass
+{{/objects}}
+
+{{#objects}}
+class {{python_name}}:
+    """
+    {{#briefDoc}}
+    {{#lines}}
+    {{{line}}}
+    {{/lines}}
+    {{/briefDoc}}
+    {{#detailedDoc}}
+    {{#lines}}
+    {{{line}}}
+    {{/lines}}
+    {{/detailedDoc}}
+    """
+
+    {{#is_factory}}
+    def get():
+        pass
+    {{/is_factory}}
+    {{#callbacks}}
+    @property
+    def {{callback_var_name}}(self):
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        pass
+
+    @{{callback_var_name}}.setter
+    def {{callback_var_name}}(self, cb):
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        pass
+
+    {{/callbacks}}
+    {{#properties}}
+    {{#getter}}
+    @property
+    def {{python_name}}(self) -> {{doc_return_type}}:
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        pass
+
+    {{/getter}}
+    {{#setter}}
+    @{{python_name}}.setter
+    def {{python_name}}(self, value: {{doc_value_type}}):
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        pass
+
+    {{/setter}}
+    {{/properties}}
+    {{#methods}}
+    def {{python_name}}({{^is_static}}self{{/is_static}}{{doc_python_params}}):
+        """
+        {{#briefDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        {{#lines}}
+        {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
+        """
+        pass
+
+    {{/methods}}
+{{/objects}}
