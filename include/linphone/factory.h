@@ -263,6 +263,13 @@ LINPHONE_PUBLIC LinphoneCallCbs * linphone_factory_create_call_cbs(const Linphon
 LINPHONE_PUBLIC LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(const LinphoneFactory *factory);
 
 /**
+ * Create a LinphoneChatMessageCbs object that holds callbacks for events happening on a chat message.
+ * @param[in] factory LinphoneFactory singletion object
+ * @return A new LinphoneChatMessageCbs object
+ */
+LINPHONE_PUBLIC LinphoneChatMessageCbs * linphone_factory_create_chat_message_cbs(const LinphoneFactory *factory);
+
+/**
  * Create an empty #LinphoneVcard.
  * @return a new #LinphoneVcard.
  * @ingroup initializing
