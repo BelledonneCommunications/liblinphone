@@ -71,6 +71,22 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_room_get_callbacks_list(const 
 LINPHONE_PUBLIC void linphone_chat_room_set_current_callbacks(LinphoneChatRoom *cr, LinphoneChatRoomCbs *cbs);
 
 /**
+ * @brief Gets the list of listener in the chat mesasge.
+ * @param[in] msg #LinphoneChatMessage object.
+ * @return The list of #LinphoneChatMessageCbs.
+ * @donotwrap
+ */
+LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_message_get_callbacks_list(const LinphoneChatMessage *msg);
+
+/**
+ * Sets the current LinphoneChatMessageCbs.
+ * @param[in] msg LinphoneChatMessage object
+ * @param[in] cbs LinphoneChatMessageCbs object
+ * @donotwrap
+ */
+LINPHONE_PUBLIC void linphone_chat_message_set_current_callbacks(LinphoneChatMessage *msg, LinphoneChatMessageCbs *cbs);
+
+/**
  * Send a message to peer member of this chat room.
  *
  * The state of the sending message will be notified via the callbacks defined in the #LinphoneChatMessageCbs object that can be obtained
