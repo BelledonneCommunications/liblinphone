@@ -254,6 +254,10 @@ LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(const LinphoneFactor
 	return _linphone_chat_room_cbs_new();
 }
 
+LinphoneChatMessageCbs * linphone_factory_create_chat_message_cbs(const LinphoneFactory *factory) {
+	return linphone_chat_message_cbs_new();
+}
+
 LinphoneVcard *linphone_factory_create_vcard(LinphoneFactory *factory) {
 	return _linphone_vcard_new();
 }

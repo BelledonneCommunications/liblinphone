@@ -89,13 +89,14 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
+	auto participant = q->getChatRoom()->findParticipant(participantAddress);
+	ParticipantImdnState imdnState(participant, newState, stateChangeTime);
 	if (cbs && linphone_chat_message_cbs_get_participant_imdn_state_changed(cbs)) {
-		auto participant = q->getChatRoom()->findParticipant(participantAddress);
-		ParticipantImdnState imdnState(participant, newState, stateChangeTime);
 		linphone_chat_message_cbs_get_participant_imdn_state_changed(cbs)(msg,
 			_linphone_participant_imdn_state_from_cpp_obj(imdnState)
 		);
 	}
+	_linphone_chat_message_notify_participant_imdn_state_changed(msg, _linphone_participant_imdn_state_from_cpp_obj(imdnState));
 
 	if (linphone_config_get_bool(linphone_core_get_config(q->getChatRoom()->getCore()->getCCore()),
 			"misc", "enable_simple_group_chat_message_state", FALSE
@@ -156,6 +157,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	if (cbs && linphone_chat_message_cbs_get_msg_state_changed(cbs))
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
+	_linphone_chat_message_notify_msg_state_changed(msg, (LinphoneChatMessageState)state);
 
 	// 3. Specific case, change to displayed after transfer.
 	if (state == ChatMessage::State::FileTransferDone && direction == ChatMessage::Direction::Incoming) {
