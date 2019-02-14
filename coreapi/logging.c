@@ -228,6 +228,7 @@ static const char *_linphone_logging_service_log_domains[] = {
 	"mediastreamer",
 	"bzrtp",
 	"tunnel",
+	"lime",
 	BCTBX_LOG_DOMAIN,  /* which is "liblinphone", set from CMakeList.txt*/
 	NULL
 };

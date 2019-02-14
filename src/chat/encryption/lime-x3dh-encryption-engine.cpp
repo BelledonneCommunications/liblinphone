@@ -396,7 +396,13 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 			cipherMessage = content.getBodyAsUtf8String();
 		}
 	}
-
+	
+	if (cipherHeader.empty()) {
+		lError() << "No key found for [" << localDeviceId << "] for message [" << message <<"]";
+		errorCode = 488; // Not Acceptable
+		return ChatMessageModifier::Result::Done;
+	}
+	
 	vector<uint8_t> decodedCipherHeader = decodeBase64(cipherHeader);
 	vector<uint8_t> decodedCipherMessage = decodeBase64(cipherMessage);
 	vector<uint8_t> plainMessage{};
