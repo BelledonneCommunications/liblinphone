@@ -915,7 +915,9 @@ CallSession::CallSession (CallSessionPrivate &p, const shared_ptr<Core> &core) :
 
 CallSession::~CallSession () {
 	L_D();
-	getCore()->getPrivate()->unregisterListener(d);
+	try { //getCore may no longuer be available when deleting, specially in case of managed enviroment like java
+		getCore()->getPrivate()->unregisterListener(d);
+	} catch (const bad_weak_ptr &) {}
 	if (d->currentParams)
 		delete d->currentParams;
 	if (d->params)
