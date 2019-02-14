@@ -18,9 +18,9 @@
  */
 
 #include "linphone/api/c-chat-message.h"
+#include "linphone/wrapper_utils.h"
 #include "linphone/api/c-content.h"
 #include "linphone/utils/utils.h"
-#include "linphone/wrapper_utils.h"
 
 #include "ortp/b64.h"
 
@@ -47,7 +47,9 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(ChatMessage,
 	_linphone_chat_message_constructor,
 	_linphone_chat_message_destructor,
 
-	LinphoneChatMessageCbs *cbs;
+	LinphoneChatMessageCbs *cbs; // Deprecated, use a list of Cbs instead
+	bctbx_list_t *callbacks;
+	LinphoneChatMessageCbs *currentCbs;
 	LinphoneChatMessageStateChangedCb message_state_changed_cb;
 	void *message_state_changed_user_data;
 
@@ -80,6 +82,7 @@ static void _linphone_chat_message_constructor (LinphoneChatMessage *msg) {
 static void _linphone_chat_message_destructor (LinphoneChatMessage *msg) {
 	linphone_chat_message_cbs_unref(msg->cbs);
 	msg->cbs = nullptr;
+	_linphone_chat_message_clear_callbacks(msg);
 	msg->cache.~Cache();
 }
 
@@ -106,6 +109,63 @@ void linphone_chat_message_set_user_data (LinphoneChatMessage *msg, void *ud) {
 
 LinphoneChatMessageCbs *linphone_chat_message_get_callbacks(const LinphoneChatMessage *msg) {
 	return msg->cbs;
+}
+
+void _linphone_chat_message_clear_callbacks (LinphoneChatMessage *msg) {
+	bctbx_list_free_with_data(msg->callbacks, (bctbx_list_free_func)linphone_chat_message_cbs_unref);
+	msg->callbacks = nullptr;
+}
+
+void linphone_chat_message_add_callbacks(LinphoneChatMessage *msg, LinphoneChatMessageCbs *cbs) {
+	msg->callbacks = bctbx_list_append(msg->callbacks, linphone_chat_message_cbs_ref(cbs));
+}
+
+void linphone_chat_message_remove_callbacks(LinphoneChatMessage *msg, LinphoneChatMessageCbs *cbs) {
+	msg->callbacks = bctbx_list_remove(msg->callbacks, cbs);
+	linphone_chat_message_cbs_unref(cbs);
+}
+
+LinphoneChatMessageCbs *linphone_chat_message_get_current_callbacks(const LinphoneChatMessage *msg) {
+	return msg->currentCbs;
+}
+
+void linphone_chat_message_set_current_callbacks(LinphoneChatMessage *msg, LinphoneChatMessageCbs *cbs) {
+	msg->currentCbs = cbs;
+}
+
+const bctbx_list_t *linphone_chat_message_get_callbacks_list(const LinphoneChatMessage *msg) {
+	return msg->callbacks;
+}
+
+#define NOTIFY_IF_EXIST(cbName, functionName, ...) \
+	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_chat_message_get_callbacks_list(msg)); \
+	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
+		linphone_chat_message_set_current_callbacks(msg, reinterpret_cast<LinphoneChatMessageCbs *>(bctbx_list_get_data(it))); \
+		LinphoneChatMessageCbs ## cbName ## Cb cb = linphone_chat_message_cbs_get_ ## functionName (linphone_chat_message_get_current_callbacks(msg)); \
+		if (cb) \
+			cb(__VA_ARGS__); \
+	} \
+	linphone_chat_message_set_current_callbacks(msg, nullptr); \
+	bctbx_list_free(callbacksCopy);
+
+void _linphone_chat_message_notify_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state) {
+	NOTIFY_IF_EXIST(MsgStateChanged, msg_state_changed, msg, state)
+}
+
+void _linphone_chat_message_notify_participant_imdn_state_changed(LinphoneChatMessage* msg, const LinphoneParticipantImdnState *state) {
+	NOTIFY_IF_EXIST(ParticipantImdnStateChanged, participant_imdn_state_changed, msg, state)
+}
+
+void _linphone_chat_message_notify_file_transfer_recv(LinphoneChatMessage *msg, const LinphoneContent* content, const LinphoneBuffer *buffer) {
+	NOTIFY_IF_EXIST(FileTransferRecv, file_transfer_recv, msg, content, buffer)
+}
+
+void _linphone_chat_message_notify_file_transfer_send(LinphoneChatMessage *msg,  const LinphoneContent* content, size_t offset, size_t size) {
+	NOTIFY_IF_EXIST(FileTransferSend, file_transfer_send, msg, content, offset, size)
+}
+
+void _linphone_chat_message_notify_file_transfer_progress_indication(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total) {
+	NOTIFY_IF_EXIST(FileTransferProgressIndication, file_transfer_progress_indication, msg, content, offset, total)
 }
 
 // =============================================================================

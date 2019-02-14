@@ -111,12 +111,14 @@ void FileTransferChatMessageModifier::fileTransferOnProgress (
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(message);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	LinphoneContent *content = L_GET_C_BACK_PTR((Content *)currentFileContentToTransfer);
+	// Deprecated: use list of callbacks now
 	if (linphone_chat_message_cbs_get_file_transfer_progress_indication(cbs)) {
 		linphone_chat_message_cbs_get_file_transfer_progress_indication(cbs)(msg, content, offset, total);
 	} else {
 		// Legacy: call back given by application level.
 		linphone_core_notify_file_transfer_progress_indication(message->getCore()->getCCore(), msg, content, offset, total);
 	}
+	_linphone_chat_message_notify_file_transfer_progress_indication(msg, content, offset, total);
 }
 
 static int _chat_message_on_send_body (
@@ -160,6 +162,7 @@ int FileTransferChatMessageModifier::onSendBody (
 		LinphoneChatMessageCbsFileTransferSendCb file_transfer_send_cb =
 			linphone_chat_message_cbs_get_file_transfer_send(cbs);
 		LinphoneContent *content = L_GET_C_BACK_PTR((Content *)currentFileContentToTransfer);
+		// Deprecated: use list of callbacks now
 		if (file_transfer_send_cb) {
 			LinphoneBuffer *lb = file_transfer_send_cb(msg, content, offset, *size);
 			if (lb) {
@@ -173,6 +176,7 @@ int FileTransferChatMessageModifier::onSendBody (
 			// Legacy
 			linphone_core_notify_file_transfer_send(message->getCore()->getCCore(), msg, content, (char *)buffer, size);
 		}
+		_linphone_chat_message_notify_file_transfer_send(msg, content, offset, *size);
 	}
 
 	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
@@ -738,14 +742,16 @@ void FileTransferChatMessageModifier::onRecvBody (belle_sip_user_body_handler_t 
 			LinphoneChatMessage *msg = L_GET_C_BACK_PTR(message);
 			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 			LinphoneContent *content = L_GET_C_BACK_PTR((Content *)currentFileContentToTransfer);
+			LinphoneBuffer *lb = linphone_buffer_new_from_data(buffer, size);
+			// Deprecated: use list of callbacks now
 			if (linphone_chat_message_cbs_get_file_transfer_recv(cbs)) {
-				LinphoneBuffer *lb = linphone_buffer_new_from_data(buffer, size);
 				linphone_chat_message_cbs_get_file_transfer_recv(cbs)(msg, content, lb);
-				linphone_buffer_unref(lb);
 			} else {
 				// Legacy: call back given by application level
 				linphone_core_notify_file_transfer_recv(message->getCore()->getCCore(), msg, content, (const char *)buffer, size);
 			}
+			_linphone_chat_message_notify_file_transfer_recv(msg, content, lb);
+			linphone_buffer_unref(lb);
 		}
 	} else {
 		lWarning() << "File transfer decrypt failed with code " << (int)retval;
@@ -776,14 +782,16 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 			LinphoneChatMessage *msg = L_GET_C_BACK_PTR(message);
 			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 			LinphoneContent *content = L_GET_C_BACK_PTR((Content *)currentFileContentToTransfer);
-			if (linphone_chat_message_cbs_get_file_transfer_recv(cbs)) {
 				LinphoneBuffer *lb = linphone_buffer_new();
+			// Deprecated: use list of callbacks now
+			if (linphone_chat_message_cbs_get_file_transfer_recv(cbs)) {
 				linphone_chat_message_cbs_get_file_transfer_recv(cbs)(msg, content, lb);
-				linphone_buffer_unref(lb);
 			} else {
 				// Legacy: call back given by application level
 				linphone_core_notify_file_transfer_recv(core->getCCore(), msg, content, nullptr, 0);
 			}
+			_linphone_chat_message_notify_file_transfer_recv(msg, content, lb);
+			linphone_buffer_unref(lb);
 		}
 	}
 
