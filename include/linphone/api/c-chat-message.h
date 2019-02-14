@@ -360,8 +360,31 @@ LINPHONE_PUBLIC LinphoneStatus linphone_chat_message_put_char (LinphoneChatMessa
  * Get the #LinphoneChatMessageCbs object associated with the LinphoneChatMessage.
  * @param[in] msg #LinphoneChatMessage object.
  * @return The #LinphoneChatMessageCbs object associated with the LinphoneChatMessage.
+ * @deprecated
  */
 LINPHONE_PUBLIC LinphoneChatMessageCbs *linphone_chat_message_get_callbacks (const LinphoneChatMessage *msg);
+
+/**
+ * Add a listener in order to be notified of #LinphoneChatMessage events.
+ * @param[in] msg #LinphoneChatMessage object to monitor.
+ * @param[in] cbs A #LinphoneChatMessageCbs object holding the callbacks you need.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_add_callbacks(LinphoneChatMessage *msg, LinphoneChatMessageCbs *cbs);
+
+/**
+ * Remove a listener from a #LinphoneChatMessage
+ * @param[in] msg #LinphoneChatMessage object
+ * @param[in] cbs #LinphoneChatMessageCbs object to remove.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_remove_callbacks(LinphoneChatMessage *msg, LinphoneChatMessageCbs *cbs);
+
+/**
+ * Gets the current LinphoneChatMessageCbs.
+ * This is meant only to be called from a callback to be able to get the user_data associated with the #LinphoneChatMessageCbs that is calling the callback.
+ * @param[in] msg #LinphoneChatMessage object
+ * @return The #LinphoneChatMessageCbs that has called the last callback
+ */
+LINPHONE_PUBLIC LinphoneChatMessageCbs *linphone_chat_message_get_current_callbacks(const LinphoneChatMessage *msg);
 
 /**
  * Adds a file content to the ChatMessage.
