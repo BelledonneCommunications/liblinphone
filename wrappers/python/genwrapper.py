@@ -254,7 +254,7 @@ class PythonTranslator(object):
 		listenedClass = _method.find_first_ancestor_by_type(AbsApi.Interface).listenedClass
 		callbackDict['callback_setter'] = listenedClass.name.to_snake_case(fullName=True) + '_cbs_set_' + _method.name.to_snake_case()[3:]
 
-		callbackDict['is_single_listener'] = not listenedClass.multilistener
+		callbackDict['is_single_listener'] = listenedClass.singlelistener
 		callbackDict['is_multi_listener'] = listenedClass.multilistener
 
 		callbackDict['params'] = []
@@ -427,7 +427,7 @@ class PythonTranslator(object):
 				if _obj.multilistener:
 					objDict['methods'].append(self.create_add_callbacks_method(_obj))
 					objDict['methods'].append(self.create_remove_callbacks_method(_obj))
-				else:
+				if _obj.singlelistener:
 					objDict['properties'].append(self.create_get_callbacks_method(_obj))
 
 			for _method in _obj.classMethods:
@@ -471,7 +471,7 @@ class Pylinphone(object):
 					self.c_methods.append(translator.create_c_add_callback_for_interface(_class))
 					self.c_methods.append(translator.create_c_remove_callback_for_interface(_class))
 					self.factory_constructors.append(translator.create_listener_constructor(_class))
-				else:
+				if _class.singlelistener:
 					self.c_methods.append(translator.create_c_get_callbacks_for_interface(_class))
 				self.c_methods.append(translator.create_c_listener_constructor(_class))
 
