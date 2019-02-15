@@ -193,11 +193,13 @@ cdef class {{python_name}}:
         {{/is_bool}}
         {{/params}}
 
+        callbacks = None
         {{#is_multi_listener}}
         callbacks = {{first_python_param_name}}_obj.current_callbacks
         {{/is_multi_listener}}
         {{#is_single_listener}}
-        callbacks = {{first_python_param_name}}_obj.listener
+        if callbacks is None:
+            callbacks = {{first_python_param_name}}_obj.listener
         {{/is_single_listener}}
         if callbacks.{{callback_var_name}} is not None:
             callbacks.{{callback_var_name}}({{computed_params}})
