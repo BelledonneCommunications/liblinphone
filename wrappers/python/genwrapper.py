@@ -198,6 +198,7 @@ class PythonTranslator(object):
 		methodDict['is_not_static'] = True
 		methodDict['c_name'] = _obj.name.to_snake_case(fullName=True) + '_add_callbacks'
 		methodDict['python_name'] = 'add_listener'
+		methodDict['is_add_listener'] = True
 
 		methodDict['params'] = []
 		methodDict['python_params'] = ', listener'
@@ -217,6 +218,7 @@ class PythonTranslator(object):
 		methodDict['is_not_static'] = True
 		methodDict['c_name'] = _obj.name.to_snake_case(fullName=True) + '_remove_callbacks'
 		methodDict['python_name'] = 'remove_listener'
+		methodDict['is_remove_listener'] = True
 
 		methodDict['params'] = []
 		methodDict['python_params'] = ', listener'
