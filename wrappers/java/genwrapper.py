@@ -389,11 +389,10 @@ class JavaTranslator(object):
 
         islistenable = _class.listenerInterface is not None
         if islistenable:
-            isMultiListener = (_class.multilistener)
-            if isMultiListener:
+            if _class.multilistener:
                 classDict['methods'].append(self.generate_add_listener(_class))
                 classDict['methods'].append(self.generate_remove_listener(_class))
-            else:
+            if _class.singlelistener:
                 classDict['methods'].append(self.generate_set_listener(_class))
 
         return classDict
