@@ -19,7 +19,9 @@
 
 import cython
 import weakref
+
 from libc.time cimport time, time_t
+from cpython cimport Py_INCREF, Py_DECREF
 
 cdef extern from "bctoolbox/list.h":
     ctypedef struct bctbx_list_t:
@@ -289,6 +291,12 @@ cdef class {{python_name}}:
         {{#is_obj}}
         _{{python_param_name}} = <{{python_param_type}}>{{python_param_name}}
         {{python_param_name}}_ptr = _{{python_param_name}}.ptr if _{{python_param_name}} is not None else NULL
+        {{#is_add_listener}}
+        Py_INCREF({{python_param_name}})
+        {{/is_add_listener}}
+        {{#is_remove_listener}}
+        Py_DECREF({{python_param_name}})
+        {{/is_remove_listener}}
         {{/is_obj}}
         {{#is_bool}}
         {{python_param_name}}_b = 1 if {{python_param_name}} else 0
