@@ -319,13 +319,19 @@ static {{return}} {{callbackName}}({{params}}) {
 		return{{returnIfFail}};
 	}
 
-	{{#isSingleListener}}
-	{{classCName}} *cbs = {{cPrefix}}_get_callbacks({{firstParam}});
-	{{/isSingleListener}}
+	jobject jlistener = nullptr;
 	{{#isMultiListener}}
-	{{classCName}} *cbs = {{cPrefix}}_get_current_callbacks({{firstParam}});
+	{{classCName}} *multi_cbs = {{cPrefix}}_get_current_callbacks({{firstParam}});
+	if (multi_cbs != nullptr) {
+		jlistener = (jobject) {{cPrefix}}_cbs_get_user_data(multi_cbs);
+	}
 	{{/isMultiListener}}
-	jobject jlistener = (jobject) {{cPrefix}}_cbs_get_user_data(cbs);
+	{{#isSingleListener}}
+	if (jlistener == nullptr) {
+		{{classCName}} *single_cbs = {{cPrefix}}_get_callbacks({{firstParam}});
+		jlistener = (jobject) {{cPrefix}}_cbs_get_user_data(single_cbs);
+	}
+	{{/isSingleListener}}
 
 	if (jlistener == nullptr) {
 		bctbx_warning("{{callbackName}}() notification without listener");

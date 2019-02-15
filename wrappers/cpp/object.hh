@@ -148,6 +148,30 @@ namespace linphone {
 		static std::string sListenerListName;
 	};
 
+	class DualListenableObject: public Object {
+		friend class Factory;
+
+	public:
+		static std::shared_ptr<Listener> & getListenerFromObject(void *object);
+
+	protected:
+		DualListenableObject(void *ptr, bool takeRef=true);
+		void setListener(const std::shared_ptr<Listener> &listener);
+		virtual ~DualListenableObject() {};
+
+	protected:
+		void addListener(const std::shared_ptr<Listener> &listener);
+		void removeListener(const std::shared_ptr<Listener> &listener);
+		std::list<std::shared_ptr<Listener> > &getListeners() const;
+
+	private:
+		static void deleteListenerPtr(std::shared_ptr<Listener> *ptr) {delete ptr;}
+		static void deleteListenerList(std::list<std::shared_ptr<Listener> > *listeners) {delete listeners;}
+
+	private:
+		static std::string sListenerDataName;
+		static std::string sListenerListName;
+	};
 };
 
 #endif // _LINPHONE_OBJECT_HH
