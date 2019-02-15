@@ -18,6 +18,8 @@
  */
 
 #include <algorithm>
+#include <iterator>
+
 #include <mediastreamer2/mscommon.h>
 #include <xercesc/util/PlatformUtils.hpp>
 

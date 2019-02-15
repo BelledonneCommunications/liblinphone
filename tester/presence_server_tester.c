@@ -1869,8 +1869,10 @@ static void notify_friend_capabilities(void) {
 	linphone_core_add_linphone_spec(pauline->lc, "groupchat/1.1");
 	linphone_core_add_linphone_spec(pauline2->lc, "lime");
 	linphone_core_add_linphone_spec(laure->lc, "groupchat/2.0");
-	linphone_core_set_linphone_specs(chloe->lc, "groupchat/2.1, lime/1.5");
-	linphone_core_set_linphone_specs(chloe3->lc, "groupchat/2.1, lime/1.7");
+	linphone_core_add_linphone_spec(chloe->lc, "groupchat/2.1");
+	linphone_core_add_linphone_spec(chloe->lc, "lime/1.7");
+	linphone_core_add_linphone_spec(chloe3->lc, "groupchat/2.6");
+	linphone_core_add_linphone_spec(chloe3->lc, "lime/1.2");
 
 	linphone_core_manager_start(marie, TRUE);
 	linphone_core_manager_start(pauline, TRUE);
@@ -2003,9 +2005,9 @@ static void notify_friend_capabilities(void) {
 	BC_ASSERT_TRUE(linphone_friend_has_capability(mChloeFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(mChloeFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(mChloeFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mChloeFriend, LinphoneFriendCapabilityGroupChat, 2.1f));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mChloeFriend, LinphoneFriendCapabilityGroupChat, 2.6f));
 	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mChloeFriend, LinphoneFriendCapabilityLimeX3dh, 1.7f));
-	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mChloeFriend, LinphoneFriendCapabilityGroupChat) - 2.1f < 0.1f);
+	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mChloeFriend, LinphoneFriendCapabilityGroupChat) - 2.6f < 0.1f);
 	BC_ASSERT_TRUE(linphone_friend_get_capability_version(mChloeFriend, LinphoneFriendCapabilityLimeX3dh) - 1.7f < 0.1f);
 
 	// Pauline's received presence
@@ -2027,7 +2029,7 @@ static void notify_friend_capabilities(void) {
 	BC_ASSERT_TRUE(linphone_friend_has_capability(p1ChloeFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(p1ChloeFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(p1ChloeFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p1ChloeFriend, LinphoneFriendCapabilityGroupChat, 2.1f));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p1ChloeFriend, LinphoneFriendCapabilityGroupChat, 2.6f));
 	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p1ChloeFriend, LinphoneFriendCapabilityLimeX3dh, 1.7f));
 
 	// Pauline2's received presence
@@ -2049,7 +2051,7 @@ static void notify_friend_capabilities(void) {
 	BC_ASSERT_TRUE(linphone_friend_has_capability(p2ChloeFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(p2ChloeFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(p2ChloeFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p2ChloeFriend, LinphoneFriendCapabilityGroupChat, 2.1f));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p2ChloeFriend, LinphoneFriendCapabilityGroupChat, 2.6f));
 	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(p2ChloeFriend, LinphoneFriendCapabilityLimeX3dh, 1.7f));
 
 	// Laure's received presence
@@ -2071,7 +2073,7 @@ static void notify_friend_capabilities(void) {
 	BC_ASSERT_TRUE(linphone_friend_has_capability(lChloeFriend, LinphoneFriendCapabilityGroupChat));
 	BC_ASSERT_TRUE(linphone_friend_get_capabilities(lChloeFriend) & LinphoneFriendCapabilityLimeX3dh);
 	BC_ASSERT_TRUE(linphone_friend_has_capability(lChloeFriend, LinphoneFriendCapabilityLimeX3dh));
-	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(lChloeFriend, LinphoneFriendCapabilityGroupChat, 2.1f));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(lChloeFriend, LinphoneFriendCapabilityGroupChat, 2.6f));
 	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(lChloeFriend, LinphoneFriendCapabilityLimeX3dh, 1.7f));
 
 	// Chloe's received presence
@@ -2140,6 +2142,115 @@ static void notify_friend_capabilities(void) {
 	bctbx_list_free(lcs);
 }
 
+static void notify_friend_capabilities_after_publish(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager *pauline2 = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneProxyConfig* proxy;
+	LinphonePresenceModel* presence;
+	LinphoneCoreCbs *cbs;
+	LinphoneProxyConfig* proxy2;
+	LinphonePresenceModel* presence2;
+	LinphoneCoreCbs *cbs2;
+	bctbx_list_t *lcs = NULL;
+	bctbx_list_t *specs = NULL;
+
+	specs = bctbx_list_append(specs, "groupchat/1.1");
+	specs = bctbx_list_append(specs, "lime/1.5");
+	linphone_core_set_linphone_specs_list(pauline->lc, specs);
+
+	linphone_core_manager_start(marie, TRUE);
+	linphone_core_manager_start(pauline, TRUE);
+	linphone_core_manager_start(pauline2, TRUE);
+
+	lcs = bctbx_list_append(lcs, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	lcs = bctbx_list_append(lcs, pauline2->lc);
+
+	cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	cbs2 = linphone_factory_create_core_cbs(linphone_factory_get());
+
+	linphone_core_cbs_set_publish_state_changed(cbs, linphone_publish_state_changed);
+	_linphone_core_add_callbacks(pauline->lc, cbs, TRUE);
+	linphone_core_cbs_unref(cbs);
+
+	linphone_core_cbs_set_publish_state_changed(cbs2, linphone_publish_state_changed);
+	_linphone_core_add_callbacks(pauline2->lc, cbs2, TRUE);
+	linphone_core_cbs_unref(cbs2);
+
+	proxy = linphone_core_get_default_proxy_config(pauline->lc);
+	linphone_proxy_config_edit(proxy);
+	linphone_proxy_config_enable_publish(proxy, TRUE);
+	linphone_proxy_config_done(proxy);
+
+	proxy2 = linphone_core_get_default_proxy_config(pauline2->lc);
+	linphone_proxy_config_edit(proxy2);
+	linphone_proxy_config_enable_publish(proxy2, TRUE);
+	linphone_proxy_config_done(proxy2);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishProgress, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphonePublishOk, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline2->stat.number_of_LinphonePublishProgress, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline2->stat.number_of_LinphonePublishOk, 1, 5000));
+
+	presence = linphone_presence_model_new_with_activity(LinphonePresenceActivityVacation, NULL);
+	linphone_presence_model_set_basic_status(presence, LinphonePresenceBasicStatusOpen);
+	linphone_core_set_presence_model(pauline->lc, presence);
+	linphone_presence_model_unref(presence);
+
+	presence2 = linphone_presence_model_new_with_activity(LinphonePresenceActivityTV, NULL);
+	linphone_presence_model_set_basic_status(presence2, LinphonePresenceBasicStatusOpen);
+	linphone_core_set_presence_model(pauline2->lc, presence2);
+	linphone_presence_model_unref(presence2);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs ,&pauline->stat.number_of_LinphonePublishProgress, 2, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs ,&pauline->stat.number_of_LinphonePublishOk, 2, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs ,&pauline2->stat.number_of_LinphonePublishProgress, 2, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs ,&pauline2->stat.number_of_LinphonePublishOk, 2, 5000));
+
+	LinphoneFriendList *mFriendList = linphone_core_get_default_friend_list(marie->lc);
+	LinphoneFriend *mPaulineFriend = linphone_core_create_friend_with_address(marie->lc, get_identity(pauline));
+
+	linphone_core_set_user_agent(marie->lc, "full-presence-support", NULL);
+	linphone_core_set_user_agent(marie->lc, "full-presence-support-bypass", NULL);
+
+	linphone_core_set_user_agent(pauline->lc, "full-presence-support", NULL);
+	linphone_core_set_user_agent(pauline->lc, "full-presence-support-bypass", NULL);
+
+	linphone_core_set_user_agent(pauline2->lc, "full-presence-support", NULL);
+	linphone_core_set_user_agent(pauline2->lc, "full-presence-support-bypass", NULL);
+
+	linphone_friend_list_enable_subscriptions(mFriendList, FALSE);
+	linphone_friend_list_set_rls_uri(mFriendList, "sip:rls@sip.example.org");
+
+	linphone_friend_list_add_friend(mFriendList, mPaulineFriend);
+
+	linphone_friend_list_enable_subscriptions(mFriendList, TRUE);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_NotifyPresenceReceived, 1, 5000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePresenceActivityVacation, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphonePresenceActivityTV, 1, 1000));
+
+	BC_ASSERT_TRUE(linphone_friend_has_capability(mPaulineFriend, LinphoneFriendCapabilityGroupChat));
+	BC_ASSERT_TRUE(linphone_friend_has_capability(mPaulineFriend, LinphoneFriendCapabilityLimeX3dh));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mPaulineFriend, LinphoneFriendCapabilityGroupChat, 1.1f));
+	BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(mPaulineFriend, LinphoneFriendCapabilityLimeX3dh, 1.5f));
+
+	linphone_friend_unref(mPaulineFriend);
+
+	linphone_core_manager_stop(marie);
+	linphone_core_manager_destroy(marie);
+
+	linphone_core_manager_stop(pauline);
+	linphone_core_manager_destroy(pauline);
+
+	linphone_core_manager_stop(pauline2);
+	linphone_core_manager_destroy(pauline2);
+
+	bctbx_list_free(lcs);
+}
+
 test_t presence_server_tests[] = {
 	TEST_NO_TAG("Simple Publish", simple_publish),
 	TEST_NO_TAG("Publish with 2 identities", publish_with_dual_identity),
@@ -2174,6 +2285,7 @@ test_t presence_server_tests[] = {
 	TEST_ONE_TAG("Multiple bodyless list subscription", multiple_bodyless_list_subscription, "bodyless"),
 	TEST_ONE_TAG("Multiple bodyless list subscription with rc", multiple_bodyless_list_subscription_with_rc, "bodyless"),
 	TEST_NO_TAG("Notify LinphoneFriend capabilities", notify_friend_capabilities),
+	TEST_NO_TAG("Notify LinphoneFriend capabilities after PUBLISH", notify_friend_capabilities_after_publish)
 };
 
 test_suite_t presence_server_test_suite = {"Presence using server", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
