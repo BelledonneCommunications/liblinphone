@@ -67,7 +67,7 @@ class CppTranslator(object):
 	
 	def translate_class(self, _class):
 		islistenable = _class.listenerInterface is not None
-		ismonolistenable = (islistenable and not _class.multilistener)
+		ismonolistenable = (islistenable and _class.singlelistener)
 		ismultilistenable = (islistenable and _class.multilistener)
 		
 		classDict = {
