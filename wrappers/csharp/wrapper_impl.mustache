@@ -366,9 +366,11 @@ namespace Linphone
 		private static void {{cb_name}}({{params_private}})
 		{
 			{{interfaceClassName}} thiz = fromNativePtr<{{interfaceClassName}}>({{first_param}});
-			{{#isSimpleListener}}{{interfaceName}} listener = thiz.Listener;{{/isSimpleListener}}
-			{{#isMultiListener}}{{interfaceName}} listener = thiz.CurrentCallbacks;{{/isMultiListener}}
-			listener.{{var_public}}?.Invoke({{{params}}});
+			{{#isSimpleListener}}{{interfaceName}} single_listener = thiz.Listener;
+			single_listener.{{var_public}}?.Invoke({{{params}}});
+			{{/isSimpleListener}}
+			{{#isMultiListener}}{{interfaceName}} multi_listener = thiz.CurrentCallbacks;
+			multi_listener.{{var_public}}?.Invoke({{{params}}});{{/isMultiListener}}
 		}
 
 		public {{name_public}} {{name}}
