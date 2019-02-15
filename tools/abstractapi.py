@@ -410,6 +410,7 @@ class Class(Namespace):
 		self.instanceMethods = []
 		self.classMethods = []
 		self._listenerInterface = None
+		self.singlelistener = False
 		self.multilistener = False
 		self.refcountable = False
 
@@ -744,6 +745,7 @@ class CParser(object):
 					absProperty = self._parse_property(cproperty, namespace=name)
 					_class.add_property(absProperty)
 				else:
+					_class.singlelistener = True
 					_class.listenerInterface = self.interfacesIndex[cproperty.getter.returnArgument.ctype]
 			except BlacklistedSymbolError as e:
 				logger.debug(e)
