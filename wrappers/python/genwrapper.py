@@ -61,10 +61,6 @@ class PythonTranslator(object):
 			if _ctype.isref:
 				_type += '*'
 			return _type
-		elif isinstance(_ctype, AbsApi.OnTheFlyListType):
-			if _ctype.isconst:
-				return 'const bctbx_list_t*'
-			return 'bctbx_list_t*'
 		elif isinstance(_ctype, AbsApi.ListType):
 			if _ctype.isconst:
 				return 'const bctbx_list_t*'
@@ -284,6 +280,7 @@ class PythonTranslator(object):
 			if paramDict['is_obj_list'] or paramDict['is_string_list']:
 				callbackDict['computed_params'] += '_list'
 				if paramDict['is_obj_list']:
+					paramDict['dont_ref_list_elem'] = isinstance(arg.type, AbsApi.OnTheFlyListType)
 					paramDict['param_c_type'] = self.translate_c_type(arg.type.containedTypeDesc)
 					paramDict['python_param_type'] = arg.type.containedTypeDesc.desc.name.to_camel_case()
 			elif paramDict['is_obj']:
@@ -319,6 +316,7 @@ class PythonTranslator(object):
 			if getterDict['is_return_obj']:
 				getterDict['python_return_type'] = getter.returnType.desc.name.to_camel_case()
 			if getterDict['is_return_obj_list']:
+				getterDict['dont_ref_list_elem'] = isinstance(getter.returnType, AbsApi.OnTheFlyListType)
 				getterDict['python_return_type'] = getter.returnType.containedTypeDesc.desc.name.to_camel_case()
 				getterDict['c_return_type'] = getter.returnType.containedTypeDesc.name
 		else:
@@ -368,6 +366,7 @@ class PythonTranslator(object):
 		if methodDict['has_return_obj']:
 			methodDict['return_python_type'] = _method.returnType.desc.name.to_camel_case()
 		elif methodDict['has_return_obj_list']:
+			methodDict['dont_ref_list_elem'] = isinstance(_method.returnType, AbsApi.OnTheFlyListType)
 			methodDict['return_python_type'] = _method.returnType.containedTypeDesc.desc.name.to_camel_case()
 			methodDict['return_c_type'] = _method.returnType.containedTypeDesc.name
 
