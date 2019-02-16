@@ -30,37 +30,16 @@ import metaname
 
 class PythonTranslator(object):
 	def __init__(self):
+		self.docTranslator = metadoc.PythonTranslator('Python')
+		self.nameTranslator = metaname.Translator.get('Python')
+		self.langTranslator = AbsApi.Translator.get('Python')
 		self.forbidden_keywords = ['type', 'file', 'list', 'from', 'id', 'filter', 'dir', 'max', 'range', 'min']
 
 	def translate_c_type(self, _ctype):
 		if isinstance(_ctype, AbsApi.ClassType):
 			return _ctype.name + '*'
 		elif isinstance(_ctype, AbsApi.BaseType):
-			_type = _ctype.name
-			if _ctype.name == 'boolean':
-				_type = 'bint'
-			elif _ctype.name == 'integer':
-				_type = 'int'
-			elif _ctype.name == 'floatant':
-				_type = 'float'
-			elif _ctype.name == 'size':
-				_type = 'size_t'
-			elif _ctype.name == 'status':
-				_type = 'bint'
-			elif _ctype.name == 'string':
-				_type = 'char*'
-			elif _ctype.name == 'character':
-				_type = 'char'
-			elif _ctype.name == 'time':
-				_type = 'time_t'
-			
-			if _ctype.isUnsigned:
-				_type = 'unsigned ' + _type
-			if _ctype.isconst:
-				_type = 'const ' + _type
-			if _ctype.isref:
-				_type += '*'
-			return _type
+			return self.langTranslator.translate_base_type(_ctype)
 		elif isinstance(_ctype, AbsApi.ListType):
 			if _ctype.isconst:
 				return 'const bctbx_list_t*'
@@ -69,9 +48,7 @@ class PythonTranslator(object):
 			return 'int'
 
 	def translate_arg_name(self, _name):
-		if _name in self.forbidden_keywords:
-			return '_' + _name
-		return _name
+		return self.nameTranslator.translate_arg_name(_name)
 
 ###############################################################################
 
@@ -149,6 +126,7 @@ class PythonTranslator(object):
 
 	def translate_enum(self, _enum):
 		enumDict = {}
+		enumDict['doc'] = _enum.briefDescription.translate(self.docTranslator)
 		enumDict['name'] = _enum.name.to_camel_case()
 		enumDict['values'] = []
 
@@ -156,6 +134,7 @@ class PythonTranslator(object):
 		lastValue = None
 		for enumValue in _enum.enumerators:
 			enumValDict = {}
+			enumValDict['doc'] = enumValue.briefDescription.translate(self.docTranslator)
 			enumValDict['value_name'] = enumValue.name.to_camel_case()
 
 			if isinstance(enumValue.value, int):
@@ -256,6 +235,7 @@ class PythonTranslator(object):
 		callbackDict['is_multi_listener'] = listenedClass.multilistener
 
 		callbackDict['params'] = []
+		callbackDict['doc'] = _method.briefDescription.translate(self.docTranslator)
 		callbackDict['c_params'] = ''
 		callbackDict['first_python_param_name'] = ''
 		callbackDict['computed_params'] = ''
@@ -305,6 +285,7 @@ class PythonTranslator(object):
 		getterDict['python_name'] = propertyDict['python_name']
 		if getter is not None:
 			getterDict['c_name'] = getter.name.to_c()
+			getterDict['doc'] = getter.briefDescription.translate(self.docTranslator)
 
 			translated_type = self.translate_c_type(getter.returnType)
 			getterDict['is_return_obj_list'] = 'bctbx_list_t*' in translated_type and isinstance(getter.returnType.containedTypeDesc, AbsApi.ClassType)
@@ -328,6 +309,7 @@ class PythonTranslator(object):
 			setterDict = {}
 			setterDict['c_name'] = setter.name.to_c()
 			setterDict['python_name'] = propertyDict['python_name']
+			setterDict['doc'] = setter.briefDescription.translate(self.docTranslator)
 
 			translated_arg_type = self.translate_c_type(setter.args[0].type)
 			setterDict['is_value_obj_list'] = 'bctbx_list_t*' in translated_arg_type and isinstance(setter.args[0].type.containedTypeDesc, AbsApi.ClassType)
@@ -353,6 +335,7 @@ class PythonTranslator(object):
 
 		methodDict['c_name'] = _method.name.to_c()
 		methodDict['python_name'] = _method.name.to_snake_case()
+		methodDict['doc'] = _method.briefDescription.translate(self.docTranslator)
 
 		translated_type = self.translate_c_type(_method.returnType)
 		methodDict['has_return'] = translated_type is not 'void'
@@ -412,6 +395,7 @@ class PythonTranslator(object):
 	def translate_object(self, _obj, is_interface=False):
 		objDict = {}
 
+		objDict['doc'] = _obj.briefDescription.translate(self.docTranslator)
 		objDict['c_name'] = _obj.name.to_c()
 		objDict['python_name'] = _obj.name.to_camel_case()
 		objDict['unref'] = _obj.name.to_snake_case(fullName=True) + '_unref'

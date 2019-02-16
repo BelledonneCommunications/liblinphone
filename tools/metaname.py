@@ -351,3 +351,26 @@ class CSharpTranslator(JavaTranslator):
 	
 	def translate_property_name(self, name):
 		return name.to_camel_case()
+
+class PythonTranslator(JavaTranslator):
+	def __init__(self):
+		JavaTranslator.__init__(self)
+		self.keyWordEscapes = {
+			'type' : '_type',
+			'file'  : '_file',
+			'list'    : '_list',
+			'from'  : '_from',
+			'id'    : '_id',
+			'filter' : '_filter',
+			'dir'  : '_dir',
+			'max'    : '_max',
+			'min'  : '_min',
+			'range'  : '_range',
+		}
+		self.lowerMethodNames = True
+		self.lowerNamespaceNames = False
+	
+	def translate_arg_name(self, name):
+		if name in self.keyWordEscapes:
+			return '_' + name
+		return name

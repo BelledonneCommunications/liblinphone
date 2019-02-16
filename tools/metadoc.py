@@ -594,6 +594,15 @@ class SphinxTranslator(Translator):
 			self.enumeratorDeclarator = 'field'
 			self.namespaceDeclarator = 'package'
 			self.methodReferencer = 'meth'
+		elif langCode == 'Python':
+			self.domain = 'python'
+			self.classDeclarator = 'class'
+			self.interfaceDeclarator = self.classDeclarator
+			self.methodDeclarator = 'method'
+			self.enumDeclarator = 'type'
+			self.enumeratorDeclarator = 'field'
+			self.namespaceDeclarator = 'package'
+			self.methodReferencer = 'meth'
 		else:
 			raise ValueError('invalid language code: {0}'.format(langCode))
 	
@@ -696,3 +705,15 @@ class SandCastleTranslator(Translator):
 	def translate_class_reference(self, ref):
 		refStr = Translator.translate_reference(self, ref, absName=True)
 		return '<see cref="{0}" />'.format(refStr)
+
+class PythonTranslator(Translator):
+	def _tag_as_brief(self, lines):
+		pass
+
+	def translate_function_reference(self, ref):
+		refStr = Translator.translate_reference(self, ref, absName=True)
+		return refStr
+
+	def translate_class_reference(self, ref):
+		refStr = Translator.translate_reference(self, ref, absName=True)
+		return refStr
