@@ -171,7 +171,8 @@ class LangInfo:
 		'C'     : 'C',
 		'Cpp'   : 'C++',
 		'Java'  : 'Java',
-		'CSharp': 'C#'
+		'CSharp': 'C#',
+		'Python': 'Python'
 	}
 
 
@@ -449,7 +450,8 @@ class DocGenerator:
 			LangInfo('C'),
 			LangInfo('Cpp'),
 			LangInfo('Java'),
-			LangInfo('CSharp')
+			LangInfo('CSharp'),
+			LangInfo('Python')
 		]
 	
 	def generate(self, outputdir):
