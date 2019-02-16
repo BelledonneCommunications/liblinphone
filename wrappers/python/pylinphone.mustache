@@ -180,7 +180,7 @@ cdef class {{python_name}}:
         bctbx_list = BctbxList.from_ptr({{python_param_name}})
         {{python_param_name}}_list = []
         for i in range(0, bctbx_list.size):
-            pt = {{python_param_type}}.from_ptr(<{{param_c_type}}>bctbx_list.elem_at(i))
+            pt = {{python_param_type}}.from_ptr(<{{param_c_type}}>bctbx_list.elem_at(i){{#dont_ref_list_elem}}, False{{/dont_ref_list_elem}})
             {{python_param_name}}_list.append(pt)
         {{/is_obj_list}}
         {{#is_string_list}}
@@ -227,7 +227,7 @@ cdef class {{python_name}}:
         bctbx_list = BctbxList.from_ptr(_list)
         plist = []
         for i in range(0, bctbx_list.size):
-            pt = {{python_return_type}}.from_ptr(<{{c_return_type}} *>bctbx_list.elem_at(i))
+            pt = {{python_return_type}}.from_ptr(<{{c_return_type}} *>bctbx_list.elem_at(i){{#dont_ref_list_elem}}, False{{/dont_ref_list_elem}})
             plist.append(pt)
         return plist
         {{/is_return_obj_list}}
@@ -307,7 +307,7 @@ cdef class {{python_name}}:
         bctbx_list = BctbxList.from_ptr(ret)
         plist = []
         for i in range(0, bctbx_list.size):
-            pt = {{return_python_type}}.from_ptr(<{{return_c_type}} *>bctbx_list.elem_at(i))
+            pt = {{return_python_type}}.from_ptr(<{{return_c_type}} *>bctbx_list.elem_at(i){{#dont_ref_list_elem}}, False{{/dont_ref_list_elem}})
             plist.append(pt)
         return plist
         {{/has_return_obj_list}}
