@@ -254,6 +254,9 @@ cdef class {{python_name}}:
         {{#is_return_bool}}
         return True if {{c_name}}(self.ptr) == 1 else False
         {{/is_return_bool}}
+        {{#is_return_void_ptr}}
+        return <object>{{c_name}}(self.ptr)
+        {{/is_return_void_ptr}}
         {{#is_simple_return}}
         return {{c_name}}(self.ptr)
         {{/is_simple_return}}
@@ -283,6 +286,9 @@ cdef class {{python_name}}:
         {{#is_value_bool}}
         {{c_name}}(self.ptr, 1 if value else 0)
         {{/is_value_bool}}
+        {{#is_value_void_ptr}}
+        {{c_name}}(self.ptr, <void*>value)
+        {{/is_value_void_ptr}}
         {{#is_simple_value}}
         {{c_name}}(self.ptr, value)
         {{/is_simple_value}}
@@ -320,6 +326,9 @@ cdef class {{python_name}}:
         {{#is_bool}}
         {{python_param_name}}_b = 1 if {{python_param_name}} else 0
         {{/is_bool}}
+        {{#is_void_ptr}}
+        {{python_param_name}}_vptr = <void*>{{python_param_name}}
+        {{/is_void_ptr}}
         {{/params}}
         {{#has_return}}ret = {{/has_return}}{{c_name}}({{#is_not_static}}self.ptr{{/is_not_static}}{{computed_params}})
         {{#has_return_obj_list}}
@@ -339,6 +348,9 @@ cdef class {{python_name}}:
         {{#has_return_bool}}
         return True if ret == 1 else False
         {{/has_return_bool}}
+        {{#has_return_void_vptr}}
+        return <object>ret
+        {{/has_return_void_vptr}}
         {{#has_simple_return}}
         return ret
         {{/has_simple_return}}
