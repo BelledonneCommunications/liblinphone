@@ -524,23 +524,24 @@ if __name__ == '__main__':
 	project.check()
 
 	parser = AbsApi.CParser(project)
-	# Some of the following take as param or return void * or unsigned int * etc...
 	parser.functionBl = \
 		['linphone_factory_clean',\
-		'linphone_factory_get',\
-		'linphone_event_get_from',\
 		'linphone_vcard_get_belcard',\
 		'linphone_core_get_current_vtable',\
+		'linphone_core_get_zrtp_cache_db',\
+		# Will be wrapped as from property which is a python keyword. linphone_event_get_from_address does the same thing
+		'linphone_event_get_from',\
+		# It will never be called due to the same number of args as linphone_factory_create_core()
+		'linphone_factory_create_core_3',\
+		# The following return or use as parameter a pointer towards a basic type, not yet supported
 		'linphone_config_get_range',\
 		'linphone_call_zoom_video',\
 		'linphone_buffer_set_content',\
 		'linphone_buffer_new_from_data',\
 		'linphone_content_set_buffer',\
 		'linphone_factory_create_buffer_from_data',\
-		'linphone_core_create_local_player',\
 		'linphone_buffer_get_content',\
-		'linphone_content_get_buffer',\
-		'linphone_core_get_zrtp_cache_db',]
+		'linphone_content_get_buffer',]
 	parser.classBl += 'LinphoneCoreVTable'
 	parser.methodBl.remove('getCurrentCallbacks')
 	parser.enum_relocations = {} # No nested enums
