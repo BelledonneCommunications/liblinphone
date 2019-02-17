@@ -37,7 +37,8 @@ add_custom_command(OUTPUT pylinphone.so
 	setup.py)
 
 add_custom_command(OUTPUT pylinphone*.whl
-	COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_wheel --dist-dir .)
+	COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_wheel --dist-dir .
+	DEPENDS pylinphone.so)
 
 add_custom_target(pylinphone ALL DEPENDS pylinphone.pyx setup.py pylinphone.so pylinphone*.whl)
 

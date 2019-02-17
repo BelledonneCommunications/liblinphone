@@ -134,7 +134,12 @@ cdef class {{python_name}}:
     {{#callbacks}}
     cpdef _{{callback_var_name}}
     {{/callbacks}}
-    
+
+    {{#is_factory}}
+    @staticmethod
+    def get():
+        return Factory()
+    {{/is_factory}}
     {{#is_not_factory}}
     def __dealloc__(self):
         if self.ptr is not NULL:
@@ -284,6 +289,12 @@ cdef class {{python_name}}:
         {{#is_value_void_ptr}}
         {{c_name}}(self.ptr, <void*>value)
         {{/is_value_void_ptr}}
+        {{#is_value_string}}
+        cdef char* value_s = NULL
+        if value is not None:
+            value_s = value
+        {{c_name}}(self.ptr, value_s)
+        {{/is_value_string}}
         {{#is_simple_value}}
         {{c_name}}(self.ptr, value)
         {{/is_simple_value}}
@@ -324,6 +335,11 @@ cdef class {{python_name}}:
         {{#is_void_ptr}}
         {{python_param_name}}_vptr = <void*>{{python_param_name}}
         {{/is_void_ptr}}
+        {{#is_string}}
+        cdef char* {{python_param_name}}_s = NULL
+        if {{python_param_name}} is not None:
+            {{python_param_name}}_s = {{python_param_name}}
+        {{/is_string}}
         {{/params}}
         {{#has_return}}ret = {{/has_return}}{{c_name}}({{#is_not_static}}self.ptr{{/is_not_static}}{{computed_params}})
         {{#has_return_obj_list}}

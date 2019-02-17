@@ -318,7 +318,8 @@ class PythonTranslator(object):
 			setterDict['is_value_obj'] = isinstance(setter.args[0].type, AbsApi.ClassType)
 			setterDict['is_value_bool'] = translated_arg_type == 'bint'
 			setterDict['is_value_void_ptr'] = translated_arg_type == 'void*'
-			setterDict['is_simple_value'] = not setterDict['is_value_obj_list'] and not setterDict['is_value_string_list'] and not setterDict['is_value_obj'] and not setterDict['is_value_bool'] and not setterDict['is_value_void_ptr']
+			setterDict['is_value_string'] = setter.args[0].type.name == 'string'
+			setterDict['is_simple_value'] = not setterDict['is_value_obj_list'] and not setterDict['is_value_string_list'] and not setterDict['is_value_obj'] and not setterDict['is_value_bool'] and not setterDict['is_value_void_ptr'] and not setterDict['is_value_string']
 
 			if setterDict['is_value_obj']:
 				setterDict['python_value_type'] = setter.args[0].type.desc.name.to_camel_case()
@@ -380,6 +381,7 @@ class PythonTranslator(object):
 			paramDict['is_obj'] = isinstance(arg.type, AbsApi.ClassType)
 			paramDict['is_bool'] = translated_arg_type == 'bint'
 			paramDict['is_void_ptr'] = translated_arg_type == 'void*'
+			paramDict['is_string'] = arg.type.name == 'string'
 
 			if paramDict['is_obj_list'] or paramDict['is_string_list']:
 				methodDict['computed_params'] += '_list'
@@ -393,6 +395,8 @@ class PythonTranslator(object):
 				methodDict['computed_params'] += '_b'
 			elif paramDict['is_void_ptr']:
 				methodDict['computed_params'] += '_vptr'
+			elif paramDict['is_string']:
+				methodDict['computed_params'] += '_s'
 
 			methodDict['params'].append(paramDict)
 
@@ -525,7 +529,8 @@ if __name__ == '__main__':
 
 	parser = AbsApi.CParser(project)
 	parser.functionBl = \
-		['linphone_factory_clean',\
+		['linphone_factory_get',\
+		'linphone_factory_clean',\
 		'linphone_vcard_get_belcard',\
 		'linphone_core_get_current_vtable',\
 		'linphone_core_get_zrtp_cache_db',\
