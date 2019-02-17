@@ -479,7 +479,8 @@ class Pylinphone(object):
 				break
 
 class Setup(object):
-	def __init__(self, lib, include):
+	def __init__(self, version, lib, include):
+		self.version = version
 		self.lib_dir = lib
 		self.include_dir = include
 
@@ -551,7 +552,7 @@ if __name__ == '__main__':
 	renderer = pystache.Renderer()
 
 	wrapper = Pylinphone(parser)
-	setup = Setup(args.lib_dir, args.include_dir)
+	setup = Setup(git_version, args.lib_dir, args.include_dir)
 
 	render(renderer, wrapper, args.outputdir + '/pylinphone.pyx')
 	render(renderer, setup, args.outputdir + '/setup.py')
