@@ -292,7 +292,8 @@ class PythonTranslator(object):
 			getterDict['is_return_string_list'] = 'bctbx_list_t*' in translated_type and getter.returnType.containedTypeDesc.name == 'string'
 			getterDict['is_return_obj'] = isinstance(getter.returnType, AbsApi.ClassType)
 			getterDict['is_return_bool'] = translated_type == 'bint'
-			getterDict['is_simple_return'] = not getterDict['is_return_obj_list'] and not getterDict['is_return_string_list'] and not getterDict['is_return_obj'] and not getterDict['is_return_bool']
+			getterDict['is_return_void_ptr'] = translated_type == 'void*'
+			getterDict['is_simple_return'] = not getterDict['is_return_obj_list'] and not getterDict['is_return_string_list'] and not getterDict['is_return_obj'] and not getterDict['is_return_bool'] and not getterDict['is_return_void_ptr']
 
 			if getterDict['is_return_obj']:
 				getterDict['python_return_type'] = getter.returnType.desc.name.to_camel_case()
@@ -316,7 +317,8 @@ class PythonTranslator(object):
 			setterDict['is_value_string_list'] = 'bctbx_list_t*' in translated_arg_type and setter.args[0].type.containedTypeDesc.name == 'string'
 			setterDict['is_value_obj'] = isinstance(setter.args[0].type, AbsApi.ClassType)
 			setterDict['is_value_bool'] = translated_arg_type == 'bint'
-			setterDict['is_simple_value'] = not setterDict['is_value_obj_list'] and not setterDict['is_value_string_list'] and not setterDict['is_value_obj'] and not setterDict['is_value_bool']
+			setterDict['is_value_void_ptr'] = translated_arg_type == 'void*'
+			setterDict['is_simple_value'] = not setterDict['is_value_obj_list'] and not setterDict['is_value_string_list'] and not setterDict['is_value_obj'] and not setterDict['is_value_bool'] and not setterDict['is_value_void_ptr']
 
 			if setterDict['is_value_obj']:
 				setterDict['python_value_type'] = setter.args[0].type.desc.name.to_camel_case()
@@ -343,7 +345,8 @@ class PythonTranslator(object):
 		methodDict['has_return_string_list'] = 'bctbx_list_t*' in translated_type and _method.returnType.containedTypeDesc.name == 'string'
 		methodDict['has_return_obj'] = isinstance(_method.returnType, AbsApi.ClassType)
 		methodDict['has_return_bool'] = translated_type == 'bint'
-		methodDict['has_simple_return'] = methodDict['has_return'] and not methodDict['has_return_obj_list'] and not methodDict['has_return_string_list'] and not methodDict['has_return_obj'] and not methodDict['has_return_bool']
+		methodDict['has_return_void_vptr'] = translated_type == 'void*'
+		methodDict['has_simple_return'] = methodDict['has_return'] and not methodDict['has_return_obj_list'] and not methodDict['has_return_string_list'] and not methodDict['has_return_obj'] and not methodDict['has_return_bool'] and not methodDict['has_return_void_vptr']
 		methodDict['constructor'] = False
 		
 		if methodDict['has_return_obj']:
@@ -376,6 +379,7 @@ class PythonTranslator(object):
 			paramDict['is_string_list'] = 'bctbx_list_t*' in translated_arg_type and arg.type.containedTypeDesc.name == 'string'
 			paramDict['is_obj'] = isinstance(arg.type, AbsApi.ClassType)
 			paramDict['is_bool'] = translated_arg_type == 'bint'
+			paramDict['is_void_ptr'] = translated_arg_type == 'void*'
 
 			if paramDict['is_obj_list'] or paramDict['is_string_list']:
 				methodDict['computed_params'] += '_list'
@@ -387,6 +391,8 @@ class PythonTranslator(object):
 				paramDict['python_param_type'] = arg.type.desc.name.to_camel_case()
 			elif paramDict['is_bool']:
 				methodDict['computed_params'] += '_b'
+			elif paramDict['is_void_ptr']:
+				methodDict['computed_params'] += '_vptr'
 
 			methodDict['params'].append(paramDict)
 
@@ -531,19 +537,9 @@ if __name__ == '__main__':
 		'linphone_buffer_new_from_data',\
 		'linphone_content_set_buffer',\
 		'linphone_factory_create_buffer_from_data',\
-		'linphone_factory_create_core_2',\
-		'linphone_factory_create_core_3',\
-		'linphone_factory_create_core_with_config_2',\
-		'linphone_factory_create_core_with_config_3',\
 		'linphone_core_create_local_player',\
 		'linphone_buffer_get_content',\
-		'linphone_call_get_native_video_window_id',\
-		'linphone_call_set_native_video_window_id',\
-		'linphone_core_get_native_video_window_id',\
-		'linphone_core_set_native_video_window_id',\
 		'linphone_content_get_buffer',\
-		'linphone_core_get_native_preview_window_id',\
-		'linphone_core_set_native_preview_window_id',\
 		'linphone_core_get_zrtp_cache_db',]
 	parser.classBl += 'LinphoneCoreVTable'
 	parser.methodBl.remove('getCurrentCallbacks')
