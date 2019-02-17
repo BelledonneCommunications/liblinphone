@@ -134,20 +134,15 @@ cdef class {{python_name}}:
     {{#callbacks}}
     cpdef _{{callback_var_name}}
     {{/callbacks}}
-
-    {{#is_factory}}
-    @staticmethod
-    def get():
-        return Factory()
-    {{/is_factory}}
+    
     {{#is_not_factory}}
     def __dealloc__(self):
         if self.ptr is not NULL:
             belle_sip_object_data_remove(<belle_sip_object_t *>self.ptr, 'python_user_data')
             belle_sip_object_unref(<belle_sip_object_t *>self.ptr)
         self.ptr = NULL
-    {{/is_not_factory}}
 
+    {{/is_not_factory}}
     @property
     def user_data(self):
         return self._user_data
