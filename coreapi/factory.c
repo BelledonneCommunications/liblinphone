@@ -467,3 +467,7 @@ LinphoneLoggingServiceCbs *linphone_factory_create_logging_service_cbs(LinphoneF
 LinphonePlayerCbs *linphone_factory_create_player_cbs(LinphoneFactory *factory) {
 	return linphone_player_cbs_new();
 }
+
+LinphoneEventCbs *linphone_factory_create_event_cbs(LinphoneFactory *factory) {
+	return linphone_event_cbs_new();
+}

@@ -425,9 +425,12 @@ SalBodyHandler *sal_body_handler_from_content(const LinphoneContent *content, bo
 SalReason linphone_reason_to_sal(LinphoneReason reason);
 LinphoneReason linphone_reason_from_sal(SalReason reason);
 void linphone_error_info_to_sal(const LinphoneErrorInfo* ei, SalErrorInfo* sei);
+LinphoneEventCbs *linphone_event_cbs_new(void);
 LinphoneEvent *linphone_event_new(LinphoneCore *lc, LinphoneSubscriptionDir dir, const char *name, int expires);
 LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc, LinphonePrivate::SalEventOp *op, LinphoneSubscriptionDir dir, const char *name);
 void linphone_event_unpublish(LinphoneEvent *lev);
+void linphone_event_set_current_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
+const bctbx_list_t *linphone_event_get_callbacks_list(const LinphoneEvent *ev);
 /**
  * Useful for out of dialog notify
  * */
@@ -436,7 +439,7 @@ void linphone_event_set_internal(LinphoneEvent *lev, bool_t internal);
 bool_t linphone_event_is_internal(LinphoneEvent *lev);
 void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState state);
 void linphone_event_set_publish_state(LinphoneEvent *lev, LinphonePublishState state);
-void _linphone_event_notify_notify_response(const LinphoneEvent *lev);
+void _linphone_event_notify_notify_response(LinphoneEvent *lev);
 LinphoneSubscriptionState linphone_subscription_state_from_sal(SalSubscribeStatus ss);
 LinphoneContent *linphone_content_from_sal_body_handler(const SalBodyHandler *ref, bool parseMultipart = true);
 void linphone_core_invalidate_friend_subscriptions(LinphoneCore *lc);

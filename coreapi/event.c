@@ -86,7 +86,7 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneEventCbs, belle_sip_object_t,
 	FALSE
 );
 
-static LinphoneEventCbs *linphone_event_cbs_new(void) {
+LinphoneEventCbs *linphone_event_cbs_new(void) {
 	return belle_sip_object_new(LinphoneEventCbs);
 }
 
@@ -497,6 +497,8 @@ static void linphone_event_destroy(LinphoneEvent *lev){
 	if (lev->from_address) linphone_address_unref(lev->from_address);
 	if (lev->remote_contact_address) linphone_address_unref(lev->remote_contact_address);
 	linphone_event_cbs_unref(lev->callbacks);
+	bctbx_list_free_with_data(lev->callbacks_list, (bctbx_list_free_func)linphone_event_cbs_unref);
+	lev->callbacks_list = nullptr;
 
 	ms_free(lev->name);
 }
@@ -574,14 +576,46 @@ static belle_sip_error_code _linphone_event_marshall(belle_sip_object_t *obj, ch
 	return err;
 }
 
-void _linphone_event_notify_notify_response(const LinphoneEvent *lev) {
+void _linphone_event_notify_notify_response(LinphoneEvent *lev) {
 	LinphoneEventCbsNotifyResponseCb cb = linphone_event_cbs_get_notify_response(lev->callbacks);
 	if (cb)
 		cb(lev);
+	
+	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_event_get_callbacks_list(lev));
+	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) {
+		linphone_event_set_current_callbacks(lev, reinterpret_cast<LinphoneEventCbs *>(bctbx_list_get_data(it)));
+		LinphoneEventCbsNotifyResponseCb callback = linphone_event_cbs_get_notify_response(linphone_event_get_current_callbacks(lev));
+		if (callback) {
+			callback(lev);
+		}
+	}
+	linphone_event_set_current_callbacks(lev, nullptr);
+	bctbx_list_free(callbacksCopy);
 }
 
 LinphoneEventCbs *linphone_event_get_callbacks(const LinphoneEvent *ev) {
 	return ev->callbacks;
+}
+
+void linphone_event_add_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs) {
+	ev->callbacks_list = bctbx_list_append(ev->callbacks_list, linphone_event_cbs_ref(cbs));
+}
+
+void linphone_event_remove_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs) {
+	ev->callbacks_list = bctbx_list_remove(ev->callbacks_list, cbs);
+	linphone_event_cbs_unref(cbs);
+}
+
+LinphoneEventCbs *linphone_event_get_current_callbacks(const LinphoneEvent *ev) {
+	return ev->currentCbs;
+}
+
+void linphone_event_set_current_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs) {
+	ev->currentCbs = cbs;
+}
+
+const bctbx_list_t *linphone_event_get_callbacks_list(const LinphoneEvent *ev) {
+	return ev->callbacks_list;
 }
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneEvent);
