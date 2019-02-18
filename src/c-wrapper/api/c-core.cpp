@@ -75,7 +75,7 @@ bool_t linphone_core_lime_x3dh_available (const LinphoneCore *lc) {
 }
 
 void linphone_core_set_lime_x3dh_server_url(LinphoneCore *lc, const char *url) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setX3dhServerUrl(url);
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setX3dhServerUrl(L_C_TO_STRING(url));
 }
 
 void linphone_core_delete_local_encryption_db (const LinphoneCore *lc) {
