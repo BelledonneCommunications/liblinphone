@@ -459,3 +459,7 @@ void linphone_factory_enable_log_collection(LinphoneFactory *factory, LinphoneLo
 LinphoneTunnelConfig *linphone_factory_create_tunnel_config(LinphoneFactory *factory) {
 	return linphone_tunnel_config_new();
 }
+
+LinphoneLoggingServiceCbs *linphone_factory_create_logging_service_cbs(LinphoneFactory *factory) {
+	return linphone_logging_service_cbs_new();
+}

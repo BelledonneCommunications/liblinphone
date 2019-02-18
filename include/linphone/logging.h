@@ -91,8 +91,30 @@ LINPHONE_PUBLIC void linphone_logging_service_unref(LinphoneLoggingService *serv
 
 /**
  * @brief Gets the logging service listener.
+ * @deprecated Use add_callbacks / remove_callbacks instead
  */
 LINPHONE_PUBLIC LinphoneLoggingServiceCbs *linphone_logging_service_get_callbacks(const LinphoneLoggingService *log_service);
+
+/**
+ * Adds a callback object to the list of listeners
+ * @param log_service the LinphoneLoggingService object
+ * @param cbs the LinphoneLoggingServiceCbs to add
+ */
+LINPHONE_PUBLIC void linphone_logging_service_add_callbacks(LinphoneLoggingService *log_service, LinphoneLoggingServiceCbs *cbs);
+
+/**
+ * Removes a callback object from the list of listeners
+ * @param log_service the LinphoneLoggingService object
+ * @param cbs the LinphoneLoggingServiceCbs to remove
+ */
+LINPHONE_PUBLIC void linphone_logging_service_remove_callbacks(LinphoneLoggingService *log_service, LinphoneLoggingServiceCbs *cbs);
+
+/**
+ * Returns the current callbacks being called while iterating on callbacks
+ * @param log_service the LinphoneLoggingService object
+ * @return A pointer to the current LinphoneLoggingServiceCbs object
+ */
+LINPHONE_PUBLIC LinphoneLoggingServiceCbs *linphone_logging_service_get_current_callbacks(const LinphoneLoggingService *log_service);
 
 /**
  * @brief Set the verbosity of the log.
@@ -127,10 +149,6 @@ LINPHONE_PUBLIC unsigned int linphone_logging_service_get_log_level_mask(const L
  * each time the currently opened log part reach that limit.
  */
 LINPHONE_PUBLIC void linphone_logging_service_set_log_file(const LinphoneLoggingService *service, const char *dir, const char *filename, size_t max_size);
-
-
-
-
 
 /**
  * @brief Increases the reference counter.

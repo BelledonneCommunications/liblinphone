@@ -354,6 +354,7 @@ void linphone_task_list_free(LinphoneTaskList *t);
 LinphoneCoreCbs * _linphone_core_cbs_new(void);
 void _linphone_core_cbs_set_v_table(LinphoneCoreCbs *cbs, LinphoneCoreVTable *vtable, bool_t autorelease);
 
+LinphoneLoggingServiceCbs *linphone_logging_service_cbs_new(void);
 
 LinphoneTunnel *linphone_core_tunnel_new(LinphoneCore *lc);
 void linphone_tunnel_configure(LinphoneTunnel *tunnel);
