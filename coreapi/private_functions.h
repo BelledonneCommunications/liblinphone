@@ -464,6 +464,8 @@ LINPHONE_PUBLIC int linphone_remote_provisioning_load_file( LinphoneCore* lc, co
 LinphonePlayerCbs *linphone_player_cbs_new(void);
 LinphonePlayer * linphone_player_new(LinphoneCore *core);
 void _linphone_player_destroy(LinphonePlayer *player);
+void linphone_player_set_current_callbacks(LinphonePlayer *player, LinphonePlayerCbs *cbs);
+const bctbx_list_t *linphone_player_get_callbacks_list(const LinphonePlayer *player);
 
 
 /*****************************************************************************

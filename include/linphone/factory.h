@@ -520,6 +520,13 @@ LINPHONE_PUBLIC LinphoneTunnelConfig *linphone_factory_create_tunnel_config(Linp
 LINPHONE_PUBLIC LinphoneLoggingServiceCbs *linphone_factory_create_logging_service_cbs(LinphoneFactory *factory);
 
 /**
+ * Creates an object #LinphonePlayerCbs
+ * @param[in] factory the #LinphoneFactory
+ * @return a #LinphonePlayerCbs
+ */
+LINPHONE_PUBLIC LinphonePlayerCbs *linphone_factory_create_player_cbs(LinphoneFactory *factory);
+
+/**
  * @}
  */
 

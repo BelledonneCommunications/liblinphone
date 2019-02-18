@@ -612,8 +612,10 @@ struct _LinphonePlayer{
 	void (*close)(LinphonePlayer* player);
 	void (*destroy)(LinphonePlayer *player);
 	void *impl;
-	LinphonePlayerCbs *callbacks;
+	LinphonePlayerCbs *callbacks; // Deprecated, use a list of Cbs instead
 	LinphoneCore *core;
+	bctbx_list_t *callbacks_list;
+	LinphonePlayerCbs *currentCbs;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphonePlayer);
