@@ -71,8 +71,15 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 	// 2. Update last notify.
 	{
 		auto &version = confInfo->getVersion();
-		if (version.present())
+		if (version.present()) {
+			unsigned int notifyVersion = version.get();
+			if (lastNotify >= notifyVersion) {
+				lWarning() << "Ignoring conference notify for: " << conferenceId << ", notify version received is: "
+					<< notifyVersion << ", should be stricly more than last notify id of chat-room: " << lastNotify;
+				return;
+			}
 			lastNotify = version.get();
+		}
 	}
 
 	bool isFullState = confInfo->getState() == StateType::full;

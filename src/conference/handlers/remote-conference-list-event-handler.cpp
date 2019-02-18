@@ -208,7 +208,7 @@ const list<RemoteConferenceEventHandler *> &RemoteConferenceListEventHandler::ge
 }
 
 void RemoteConferenceListEventHandler::addHandler (RemoteConferenceEventHandler *handler) {
-	if (handler)
+	if (handler && !findHandler(handler->getConferenceId()))
 		handlers.push_back(handler);
 }
 

@@ -211,7 +211,7 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 // -----------------------------------------------------------------------------
 
 void LocalConferenceListEventHandler::addHandler (LocalConferenceEventHandler *handler) {
-	if (handler)
+	if (handler && !findHandler(handler->getConferenceId()))
 		handlers.push_back(handler);
 }
 
