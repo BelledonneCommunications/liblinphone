@@ -190,7 +190,6 @@ LINPHONE_PUBLIC MSList* linphone_core_fetch_friends_lists_from_db(LinphoneCore *
 LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_import_friend(LinphoneFriendList *list, LinphoneFriend *lf, bool_t synchronize);
 LinphoneFriendListCbs * linphone_friend_list_cbs_new(void);
 void linphone_friend_list_set_current_callbacks(LinphoneFriendList *friend_list, LinphoneFriendListCbs *cbs);
-LINPHONE_PUBLIC const bctbx_list_t *linphone_friend_list_get_callbacks_list(const LinphoneFriendList *friend_list);
 
 int linphone_parse_host_port(const char *input, char *host, size_t hostlen, int *port);
 int parse_hostname_to_addr(const char *server, struct sockaddr_storage *ss, socklen_t *socklen, int default_port);
@@ -433,7 +432,6 @@ LinphoneEvent *linphone_event_new(LinphoneCore *lc, LinphoneSubscriptionDir dir,
 LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc, LinphonePrivate::SalEventOp *op, LinphoneSubscriptionDir dir, const char *name);
 void linphone_event_unpublish(LinphoneEvent *lev);
 void linphone_event_set_current_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
-LINPHONE_PUBLIC const bctbx_list_t *linphone_event_get_callbacks_list(const LinphoneEvent *ev);
 /**
  * Useful for out of dialog notify
  * */
@@ -471,7 +469,6 @@ LinphonePlayerCbs *linphone_player_cbs_new(void);
 LinphonePlayer * linphone_player_new(LinphoneCore *core);
 void _linphone_player_destroy(LinphonePlayer *player);
 void linphone_player_set_current_callbacks(LinphonePlayer *player, LinphonePlayerCbs *cbs);
-LINPHONE_PUBLIC const bctbx_list_t *linphone_player_get_callbacks_list(const LinphonePlayer *player);
 
 
 /*****************************************************************************
@@ -614,10 +611,8 @@ void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id);
 
 LinphoneAccountCreatorCbs * linphone_account_creator_cbs_new(void);
 void linphone_account_creator_set_current_callbacks(LinphoneAccountCreator *creator, LinphoneAccountCreatorCbs *cbs);
-LINPHONE_PUBLIC const bctbx_list_t *linphone_account_creator_get_callbacks_list(const LinphoneAccountCreator *creator);
 LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_cbs_new(void);
 void linphone_xml_rpc_request_set_current_callbacks(LinphoneXmlRpcRequest *request, LinphoneXmlRpcRequestCbs *cbs);
-LINPHONE_PUBLIC const bctbx_list_t *linphone_xml_rpc_request_get_callbacks_list(const LinphoneXmlRpcRequest *request);
 
 #ifdef __cplusplus
 }
