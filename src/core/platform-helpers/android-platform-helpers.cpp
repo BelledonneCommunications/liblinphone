@@ -113,7 +113,7 @@ jmethodID AndroidPlatformHelpers::getMethodId (JNIEnv *env, jclass klass, const 
 	return id;
 }
 
-AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : PlatformHelpers(core) {
+AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
 	JNIEnv *env = ms_get_jni_env();
 	jclass klass = env->FindClass("org/linphone/core/tools/AndroidPlatformHelper");
 	if (!klass)
@@ -291,8 +291,8 @@ void AndroidPlatformHelpers::onWifiOnlyEnabled(bool enabled) {
 }
 
 void AndroidPlatformHelpers::setHttpProxy(const string &host, int port) {
-	linphone_core_set_http_proxy_host(getCore(), host.c_str());
-	linphone_core_set_http_proxy_port(getCore(), port);
+	linphone_core_set_http_proxy_host(getCore().getCCore(), host.c_str());
+	linphone_core_set_http_proxy_port(getCore().getCCore(), port);
 }
 
 void AndroidPlatformHelpers::setDnsServers () {
