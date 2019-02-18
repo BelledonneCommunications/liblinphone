@@ -310,7 +310,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	linphone_auth_info_unref(ai);
 
 	// get confirmation key
-	linphone_account_creator_cbs_set_get_confirmation_key(creator_cbs, get_confirmation_key_cb);
+	linphone_account_creator_cbs_set_confirmation_key(creator_cbs, get_confirmation_key_cb);
 	linphone_account_creator_get_confirmation_key(creator);
 
 	if (wait_for_until(lc, NULL, &state.confirmation_key_received, TRUE, 15000) == FALSE)
