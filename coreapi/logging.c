@@ -32,7 +32,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 struct _LinphoneLoggingService {
 	belle_sip_object_t base;
-	LinphoneLoggingServiceCbs *cbs;
+	LinphoneLoggingServiceCbs *cbs; // Deprecated, use a list of Cbs instead
+	bctbx_list_t *callbacks;
+	LinphoneLoggingServiceCbs *currentCbs;
 	bctbx_log_handler_t *log_handler;
 };
 
@@ -123,6 +125,19 @@ static void _log_handler_on_message_written_cb(void *info,const char *domain, Bc
 		service->cbs->message_event_cb(service, domain, _bctbx_log_level_to_linphone_log_level(lev), message);
 		bctbx_free(message);
 	}
+
+	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_logging_service_get_callbacks_list(service));
+	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) {
+		linphone_logging_service_set_current_callbacks(service, reinterpret_cast<LinphoneLoggingServiceCbs *>(bctbx_list_get_data(it)));
+		LinphoneLoggingServiceCbsLogMessageWrittenCb cb = linphone_logging_service_cbs_get_log_message_written(linphone_logging_service_get_current_callbacks(service));
+		if (cb) {
+			char *message = bctbx_strdup_vprintf(fmt, args);
+			cb(service, domain, _bctbx_log_level_to_linphone_log_level(lev), message);
+			bctbx_free(message);
+		}
+	}
+	linphone_logging_service_set_current_callbacks(service, nullptr);
+	bctbx_list_free(callbacksCopy);
 }
 
 static void _log_handler_destroy_cb(bctbx_log_handler_t *handler) {
@@ -165,6 +180,7 @@ void linphone_logging_service_unref(LinphoneLoggingService *service) {
 static void _linphone_logging_service_uninit(LinphoneLoggingService *log_service) {
 	if (log_service->log_handler)
 		bctbx_remove_log_handler(log_service->log_handler);
+	_linphone_logging_service_clear_callbacks(log_service);
 	linphone_logging_service_cbs_unref(log_service->cbs);
 }
 
@@ -177,6 +193,32 @@ void linphone_logging_service_release_instance(void) {
 
 LinphoneLoggingServiceCbs *linphone_logging_service_get_callbacks(const LinphoneLoggingService *log_service) {
 	return log_service->cbs;
+}
+
+void linphone_logging_service_add_callbacks(LinphoneLoggingService *log_service, LinphoneLoggingServiceCbs *cbs) {
+	log_service->callbacks = bctbx_list_append(log_service->callbacks, linphone_logging_service_cbs_ref(cbs));
+}
+
+void linphone_logging_service_remove_callbacks(LinphoneLoggingService *log_service, LinphoneLoggingServiceCbs *cbs) {
+	log_service->callbacks = bctbx_list_remove(log_service->callbacks, cbs);
+	linphone_logging_service_cbs_unref(cbs);
+}
+
+LinphoneLoggingServiceCbs *linphone_logging_service_get_current_callbacks(const LinphoneLoggingService *log_service) {
+	return log_service->currentCbs;
+}
+
+void linphone_logging_service_set_current_callbacks(LinphoneLoggingService *log_service, LinphoneLoggingServiceCbs *cbs) {
+	log_service->currentCbs = cbs;
+}
+
+const bctbx_list_t *linphone_logging_service_get_callbacks_list(const LinphoneLoggingService *log_service) {
+	return log_service->callbacks;
+}
+
+void _linphone_logging_service_clear_callbacks (LinphoneLoggingService *log_service) {
+	bctbx_list_free_with_data(log_service->callbacks, (bctbx_list_free_func)linphone_logging_service_cbs_unref);
+	log_service->callbacks = nullptr;
 }
 
 static const char *_linphone_logging_service_log_domains[] = {
@@ -230,6 +272,10 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneLoggingService, belle_sip_object_t,
 
 static LinphoneLoggingServiceCbs *_linphone_logging_service_cbs_new(void) {
 	return belle_sip_object_new(LinphoneLoggingServiceCbs);
+}
+
+LinphoneLoggingServiceCbs *linphone_logging_service_cbs_new(void) {
+	return _linphone_logging_service_cbs_new();
 }
 
 LinphoneLoggingServiceCbs *linphone_logging_service_cbs_ref(LinphoneLoggingServiceCbs *cbs) {

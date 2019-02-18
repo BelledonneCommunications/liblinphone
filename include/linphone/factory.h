@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define LINPHONE_FACTORY_H
 
 #include "linphone/types.h"
+#include "logging.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -510,6 +511,13 @@ LINPHONE_PUBLIC void linphone_factory_enable_log_collection(LinphoneFactory *fac
  * @return a #LinphoneTunnelConfig
  */
 LINPHONE_PUBLIC LinphoneTunnelConfig *linphone_factory_create_tunnel_config(LinphoneFactory *factory);
+
+/**
+ * Creates an object #LinphoneLoggingServiceCbs
+ * @param[in] factory the #LinphoneFactory
+ * @return a #LinphoneLoggingServiceCbs
+ */
+LINPHONE_PUBLIC LinphoneLoggingServiceCbs *linphone_factory_create_logging_service_cbs(LinphoneFactory *factory);
 
 /**
  * @}
