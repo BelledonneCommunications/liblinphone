@@ -66,8 +66,30 @@ LINPHONE_PUBLIC void linphone_player_set_user_data(LinphonePlayer *player, void 
  * Get the #LinphonePlayerCbs object associated with the LinphonePlayer.
  * @param[in] player #LinphonePlayer object
  * @return The #LinphonePlayerCbs object associated with the LinphonePlayer.
+ * @deprecated use add_callbacks / remove_callbacks instead
  */
 LINPHONE_PUBLIC LinphonePlayerCbs * linphone_player_get_callbacks(const LinphonePlayer *player);
+
+/**
+ * Adds a #LinphonePlayerCbs object associated to the LinphonePlayer.
+ * @param[in] player #LinphonePlayer object
+ * @param[in] cbs The #LinphonePlayerCbs object to be added to the LinphonePlayer.
+ */
+LINPHONE_PUBLIC void linphone_player_add_callbacks(LinphonePlayer *player, LinphonePlayerCbs *cbs);
+
+/**
+ * Removes a #LinphonePlayerCbs object associated to the LinphonePlayer.
+ * @param[in] player #LinphonePlayer object
+ * @param[in] cbs The #LinphonePlayerCbs object to be removed from the LinphonePlayer.
+ */
+LINPHONE_PUBLIC void linphone_player_remove_callbacks(LinphonePlayer *player, LinphonePlayerCbs *cbs);
+
+/**
+ * Returns the current LinphonePlayerCbsCbs object
+ * @param[in] player #LinphonePlayer object
+ * @return The current #LinphonePlayerCbs object
+ */
+LINPHONE_PUBLIC LinphonePlayerCbs *linphone_player_get_current_callbacks(const LinphonePlayer *player);
 
 /**
  * Open a file for playing.

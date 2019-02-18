@@ -463,3 +463,7 @@ LinphoneTunnelConfig *linphone_factory_create_tunnel_config(LinphoneFactory *fac
 LinphoneLoggingServiceCbs *linphone_factory_create_logging_service_cbs(LinphoneFactory *factory) {
 	return linphone_logging_service_cbs_new();
 }
+
+LinphonePlayerCbs *linphone_factory_create_player_cbs(LinphoneFactory *factory) {
+	return linphone_player_cbs_new();
+}

@@ -60,6 +60,27 @@ LinphonePlayerCbs * linphone_player_get_callbacks(const LinphonePlayer *player) 
 	return player->callbacks;
 }
 
+void linphone_player_add_callbacks(LinphonePlayer *player, LinphonePlayerCbs *cbs) {
+	player->callbacks_list = bctbx_list_append(player->callbacks_list, linphone_player_cbs_ref(cbs));
+}
+
+void linphone_player_remove_callbacks(LinphonePlayer *player, LinphonePlayerCbs *cbs) {
+	player->callbacks_list = bctbx_list_remove(player->callbacks_list, cbs);
+	linphone_player_cbs_unref(cbs);
+}
+
+LinphonePlayerCbs *linphone_player_get_current_callbacks(const LinphonePlayer *player) {
+	return player->currentCbs;
+}
+
+void linphone_player_set_current_callbacks(LinphonePlayer *player, LinphonePlayerCbs *cbs) {
+	player->currentCbs = cbs;
+}
+
+const bctbx_list_t *linphone_player_get_callbacks_list(const LinphonePlayer *player) {
+	return player->callbacks_list;
+}
+
 LinphoneCore *linphone_player_get_core(const LinphonePlayer *player){
 	return player->core;
 }
@@ -111,6 +132,8 @@ void linphone_player_destroy(LinphonePlayer *obj) {
 void _linphone_player_destroy(LinphonePlayer *player) {
 	if(player->destroy) player->destroy(player);
 	linphone_player_cbs_unref(player->callbacks);
+	bctbx_list_free_with_data(player->callbacks_list, (bctbx_list_free_func)linphone_player_cbs_unref);
+	player->callbacks_list = nullptr;
 }
 
 
@@ -144,6 +167,17 @@ static void on_eof(void *user_data, MSFilter *f, unsigned int event_id, void *ar
 			LinphonePlayerCbs *cbs = linphone_player_get_callbacks(player);
 			LinphonePlayerCbsEofReachedCb cb = linphone_player_cbs_get_eof_reached(cbs);
 			if (cb) cb(player);
+
+			bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_player_get_callbacks_list(player));
+			for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) {
+				linphone_player_set_current_callbacks(player, reinterpret_cast<LinphonePlayerCbs *>(bctbx_list_get_data(it)));
+				LinphonePlayerCbsEofReachedCb callback = linphone_player_cbs_get_eof_reached(linphone_player_get_current_callbacks(player));
+				if (callback) {
+					callback(player);
+				}
+			}
+			linphone_player_set_current_callbacks(player, nullptr);
+			bctbx_list_free(callbacksCopy);
 		break;
 	}
 }
