@@ -541,6 +541,20 @@ LINPHONE_PUBLIC LinphoneEventCbs *linphone_factory_create_event_cbs(LinphoneFact
 LINPHONE_PUBLIC LinphoneFriendListCbs *linphone_factory_create_friend_list_cbs(LinphoneFactory *factory);
 
 /**
+ * Creates an object #LinphoneAccountCreatorCbs
+ * @param[in] factory the #LinphoneFactory
+ * @return a #LinphoneAccountCreatorCbs
+ */
+LINPHONE_PUBLIC LinphoneAccountCreatorCbs *linphone_factory_create_account_creator_cbs(LinphoneFactory *factory);
+
+/**
+ * Creates an object #LinphoneXmlRpcRequestCbs
+ * @param[in] factory the #LinphoneFactory
+ * @return a #LinphoneXmlRpcRequestCbs
+ */
+LINPHONE_PUBLIC LinphoneXmlRpcRequestCbs *linphone_factory_create_xml_rpc_request_cbs(LinphoneFactory *factory);
+
+/**
  * @}
  */
 

@@ -37,7 +37,7 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneXmlRpcRequestCbs, belle_sip_object_t,
 	FALSE
 );
 
-static LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_cbs_new(void) {
+LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_cbs_new(void) {
 	return belle_sip_object_new(LinphoneXmlRpcRequestCbs);
 }
 
@@ -66,6 +66,16 @@ void linphone_xml_rpc_request_cbs_set_response(LinphoneXmlRpcRequestCbs *cbs, Li
 	cbs->response = cb;
 }
 
+#define NOTIFY_IF_EXIST(cbName, functionName, ...) \
+	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_xml_rpc_request_get_callbacks_list(request)); \
+	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
+		linphone_xml_rpc_request_set_current_callbacks(request, reinterpret_cast<LinphoneXmlRpcRequestCbs *>(bctbx_list_get_data(it))); \
+		LinphoneXmlRpcRequestCbs ## cbName ## Cb cb = linphone_xml_rpc_request_cbs_get_ ## functionName (linphone_xml_rpc_request_get_current_callbacks(request)); \
+		if (cb) \
+			cb(__VA_ARGS__); \
+	} \
+	linphone_xml_rpc_request_set_current_callbacks(request, nullptr); \
+	bctbx_list_free(callbacksCopy);
 
 static void format_request(LinphoneXmlRpcRequest *request) {
 	char si[64];
@@ -173,9 +183,10 @@ static void process_io_error_from_post_xml_rpc_request(void *data, const belle_s
 	ms_error("I/O Error during XML-RPC request sending");
 	if (!linphone_xml_rpc_request_aborted(request)){
 		request->status = LinphoneXmlRpcStatusFailed;
-			if (request->callbacks->response != NULL) {
+		if (request->callbacks->response != NULL) {
 			request->callbacks->response(request);
 		}
+		NOTIFY_IF_EXIST(Response, response, request)
 	}
 	linphone_xml_rpc_request_unref(request);
 }
@@ -202,6 +213,7 @@ static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_s
 			if (request->callbacks->response != NULL) {
 				request->callbacks->response(request);
 			}
+			NOTIFY_IF_EXIST(Response, response, request)
 		}
 		linphone_xml_rpc_request_unref(request);
 	}
@@ -242,6 +254,7 @@ end:
 	if (request->callbacks->response != NULL) {
 		request->callbacks->response(request);
 	}
+	NOTIFY_IF_EXIST(Response, response, request)
 }
 
 static void notify_xml_rpc_error(LinphoneXmlRpcRequest *request) {
@@ -249,6 +262,7 @@ static void notify_xml_rpc_error(LinphoneXmlRpcRequest *request) {
 	if (request->callbacks->response != NULL) {
 		request->callbacks->response(request);
 	}
+	NOTIFY_IF_EXIST(Response, response, request)
 }
 
 static void process_response_from_post_xml_rpc_request(void *data, const belle_http_response_event_t *event) {
@@ -299,6 +313,8 @@ static void _linphone_xml_rpc_request_destroy(LinphoneXmlRpcRequest *request) {
 	if (request->content) belle_sip_free(request->content);
 	belle_sip_free(request->method);
 	linphone_xml_rpc_request_cbs_unref(request->callbacks);
+	bctbx_list_free_with_data(request->callbacks_list, (bctbx_list_free_func)linphone_xml_rpc_request_cbs_unref);
+	request->callbacks_list = nullptr;
 }
 
 static void _linphone_xml_rpc_session_destroy(LinphoneXmlRpcSession *session) {
@@ -358,6 +374,27 @@ void linphone_xml_rpc_request_add_string_arg(LinphoneXmlRpcRequest *request, con
 
 LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_get_callbacks(const LinphoneXmlRpcRequest *request) {
 	return request->callbacks;
+}
+
+void linphone_xml_rpc_request_add_callbacks(LinphoneXmlRpcRequest *request, LinphoneXmlRpcRequestCbs *cbs) {
+	request->callbacks_list = bctbx_list_append(request->callbacks_list, linphone_xml_rpc_request_cbs_ref(cbs));
+}
+
+void linphone_xml_rpc_request_remove_callbacks(LinphoneXmlRpcRequest *request, LinphoneXmlRpcRequestCbs *cbs) {
+	request->callbacks_list = bctbx_list_remove(request->callbacks_list, cbs);
+	linphone_xml_rpc_request_cbs_unref(cbs);
+}
+
+LinphoneXmlRpcRequestCbs *linphone_xml_rpc_request_get_current_callbacks(const LinphoneXmlRpcRequest *request) {
+	return request->currentCbs;
+}
+
+void linphone_xml_rpc_request_set_current_callbacks(LinphoneXmlRpcRequest *request, LinphoneXmlRpcRequestCbs *cbs) {
+	request->currentCbs = cbs;
+}
+
+const bctbx_list_t *linphone_xml_rpc_request_get_callbacks_list(const LinphoneXmlRpcRequest *request) {
+	return request->callbacks_list;
 }
 
 const char * linphone_xml_rpc_request_get_content(const LinphoneXmlRpcRequest *request) {

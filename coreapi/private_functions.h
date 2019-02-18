@@ -612,6 +612,12 @@ void _linphone_core_set_log_handler(OrtpLogFunc logfunc);
 void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id);
 void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id);
 
+LinphoneAccountCreatorCbs * linphone_account_creator_cbs_new(void);
+void linphone_account_creator_set_current_callbacks(LinphoneAccountCreator *creator, LinphoneAccountCreatorCbs *cbs);
+const bctbx_list_t *linphone_account_creator_get_callbacks_list(const LinphoneAccountCreator *creator);
+LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_cbs_new(void);
+void linphone_xml_rpc_request_set_current_callbacks(LinphoneXmlRpcRequest *request, LinphoneXmlRpcRequestCbs *cbs);
+const bctbx_list_t *linphone_xml_rpc_request_get_callbacks_list(const LinphoneXmlRpcRequest *request);
 
 #ifdef __cplusplus
 }

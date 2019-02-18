@@ -475,3 +475,11 @@ LinphoneEventCbs *linphone_factory_create_event_cbs(LinphoneFactory *factory) {
 LinphoneFriendListCbs *linphone_factory_create_friend_list_cbs(LinphoneFactory *factory) {
 	return linphone_friend_list_cbs_new();
 }
+
+LinphoneAccountCreatorCbs *linphone_factory_create_account_creator_cbs(LinphoneFactory *factory) {
+	return linphone_account_creator_cbs_new();
+}
+
+LinphoneXmlRpcRequestCbs *linphone_factory_create_xml_rpc_request_cbs(LinphoneFactory *factory) {
+	return linphone_xml_rpc_request_cbs_new();
+}
