@@ -210,10 +210,32 @@ LINPHONE_PUBLIC void linphone_friend_list_update_revision(LinphoneFriendList *li
 
 /**
  * Get the #LinphoneFriendListCbs object associated with a LinphoneFriendList.
- * @param[in] list #LinphoneFriendList object
+ * @param[in] friend_list #LinphoneFriendList object
  * @return The #LinphoneFriendListCbs object associated with the LinphoneFriendList.
+ * @deprecated use add_callbacks / remove_callbacks instead
 **/
-LINPHONE_PUBLIC LinphoneFriendListCbs * linphone_friend_list_get_callbacks(const LinphoneFriendList *list);
+LINPHONE_PUBLIC LinphoneFriendListCbs * linphone_friend_list_get_callbacks(const LinphoneFriendList *friend_list);
+
+/**
+ * Adds the #LinphoneFriendListCbs object associated with a LinphoneFriendList.
+ * @param[in] friend_list #LinphoneFriendList object
+ * @param[in] cbs The current #LinphoneFriendListCbs object to be added to the LinphoneFriendList.
+**/
+LINPHONE_PUBLIC void linphone_friend_list_add_callbacks(LinphoneFriendList *friend_list, LinphoneFriendListCbs *cbs);
+
+/**
+ * Removes the #LinphoneFriendListCbs object associated with a LinphoneFriendList.
+ * @param[in] friend_list #LinphoneFriendList object
+ * @param[in] cbs The current #LinphoneFriendListCbs object to be remove from the LinphoneFriendList.
+**/
+LINPHONE_PUBLIC void linphone_friend_list_remove_callbacks(LinphoneFriendList *friend_list, LinphoneFriendListCbs *cbs);
+
+/**
+ * Get the current #LinphoneFriendListCbs object associated with a LinphoneFriendList.
+ * @param[in] friend_list #LinphoneFriendList object
+ * @return The current #LinphoneFriendListCbs object associated with the LinphoneFriendList.
+**/
+LINPHONE_PUBLIC LinphoneFriendListCbs *linphone_friend_list_get_current_callbacks(const LinphoneFriendList *friend_list);
 
 /**
  * Acquire a reference to a #LinphoneFriendListCbs object.
