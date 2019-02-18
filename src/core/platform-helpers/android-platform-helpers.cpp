@@ -291,8 +291,8 @@ void AndroidPlatformHelpers::onWifiOnlyEnabled(bool enabled) {
 }
 
 void AndroidPlatformHelpers::setHttpProxy(const string &host, int port) {
-	linphone_core_set_http_proxy_host(getCore().getCCore(), host.c_str());
-	linphone_core_set_http_proxy_port(getCore().getCCore(), port);
+	linphone_core_set_http_proxy_host(getCore()->getCCore(), host.c_str());
+	linphone_core_set_http_proxy_port(getCore()->getCCore(), port);
 }
 
 void AndroidPlatformHelpers::setDnsServers () {
