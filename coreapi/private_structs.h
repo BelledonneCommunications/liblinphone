@@ -223,7 +223,9 @@ struct _LinphoneFriendList {
 	char *uri;
 	MSList *dirty_friends_to_update;
 	int revision;
-	LinphoneFriendListCbs *cbs;
+	LinphoneFriendListCbs *cbs; // Deprecated, use a list of Cbs instead
+	bctbx_list_t *callbacks;
+	LinphoneFriendListCbs *currentCbs;
 	bool_t enable_subscriptions;
 	bool_t bodyless_subscription;
 };

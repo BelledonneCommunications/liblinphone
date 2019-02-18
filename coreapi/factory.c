@@ -471,3 +471,7 @@ LinphonePlayerCbs *linphone_factory_create_player_cbs(LinphoneFactory *factory) 
 LinphoneEventCbs *linphone_factory_create_event_cbs(LinphoneFactory *factory) {
 	return linphone_event_cbs_new();
 }
+
+LinphoneFriendListCbs *linphone_factory_create_friend_list_cbs(LinphoneFactory *factory) {
+	return linphone_friend_list_cbs_new();
+}
