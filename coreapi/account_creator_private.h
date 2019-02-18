@@ -81,7 +81,9 @@ struct _LinphoneAccountCreator {
 
 	/* AccountCreator */
 	LinphoneAccountCreatorService *service; /**< Account creator service */
-	LinphoneAccountCreatorCbs *cbs; /**< Account creator cbs */
+	LinphoneAccountCreatorCbs *cbs; /**< Account creator cbs, deprecated, use a list of Cbs instead */
+	bctbx_list_t *callbacks;
+	LinphoneAccountCreatorCbs *currentCbs;
 	LinphoneXmlRpcSession *xmlrpc_session; /**< XML-RPC session */
 	LinphoneProxyConfig *proxy_cfg; /**< Default proxy config */
 

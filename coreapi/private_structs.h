@@ -538,7 +538,9 @@ BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneXmlRpcRequestCbs);
 struct _LinphoneXmlRpcRequest {
 	belle_sip_object_t base;
 	void *user_data;
-	LinphoneXmlRpcRequestCbs *callbacks;
+	LinphoneXmlRpcRequestCbs *callbacks; // Deprecated, use a list of Cbs instead
+	bctbx_list_t *callbacks_list;
+	LinphoneXmlRpcRequestCbs *currentCbs;
 	belle_sip_list_t *arg_list;
 	char *content;	/**< The string representation of the XML-RPC request */
 	char *method;
