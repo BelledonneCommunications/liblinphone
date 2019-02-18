@@ -58,7 +58,7 @@ void _linphone_logging_service_clear_callbacks (LinphoneLoggingService *log_serv
 
 void linphone_logging_service_set_current_callbacks(LinphoneLoggingService *log_service, LinphoneLoggingServiceCbs *cbs);
 
-const bctbx_list_t *linphone_logging_service_get_callbacks_list(const LinphoneLoggingService *log_service);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_logging_service_get_callbacks_list(const LinphoneLoggingService *log_service);
 
 #ifdef __cplusplus
 }
