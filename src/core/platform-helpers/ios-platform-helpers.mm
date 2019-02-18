@@ -45,7 +45,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class IosPlatformHelpers : public GenericPlatformHelpers {
 public:
-	IosPlatformHelpers (LinphoneCore *lc, void *system_context);
+	IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
 	~IosPlatformHelpers () = default;
 
 	void acquireWifiLock () override {}
@@ -111,7 +111,7 @@ static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observe
 
 const string IosPlatformHelpers::Framework = "org.linphone.linphone";
 
-IosPlatformHelpers::IosPlatformHelpers (LinphoneCore *lc, void *system_context) : GenericPlatformHelpers(lc) {
+IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
 	mCpuLockCount = 0;
 	mCpuLockTaskId = 0;
 
@@ -268,8 +268,8 @@ void IosPlatformHelpers::setDnsServers () {
 
 //Set proxy settings on core
 void IosPlatformHelpers::setHttpProxy (const string &host, int port) {
-	linphone_core_set_http_proxy_host(mCore, host.c_str());
-	linphone_core_set_http_proxy_port(mCore, port);
+	linphone_core_set_http_proxy_host(getCore()->getCCore(), host.c_str());
+	linphone_core_set_http_proxy_port(getCore()->getCCore(), port);
 }
 
 //Get global proxy settings from system and set variables mHttpProxy{Host,Port,Enabled}.
@@ -313,7 +313,7 @@ void IosPlatformHelpers::getHttpProxySettings(void) {
 }
 
 void IosPlatformHelpers::setNetworkReachable(bool reachable) {
-	linphone_core_set_network_reachable(mCore, reachable);
+	linphone_core_set_network_reachable(getCore()->getCCore(), reachable);
 }
 
 static void showNetworkFlags(SCNetworkReachabilityFlags flags) {
@@ -347,7 +347,7 @@ bool IosPlatformHelpers::startNetworkMonitoring(void) {
 	//Trying to reach captive.apple.com by default.	Apple uses it already to check if wifi is a captive network
 	//See /Library/Preferences/SystemConfiguration/CaptiveNetworkSupport/Settings.plist for more URL examples
 	string reachabilityTargetHost = "captive.apple.com";
-	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(mCore);
+	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(getCore()->getCCore());
 
 	//Try to reach default proxy config server if defined
 	if (proxy) {
@@ -419,9 +419,9 @@ void IosPlatformHelpers::networkChangeCallback() {
 	} else {
 		ms_message("Updated HTTP proxy settings: no proxy");
 	}
-	const char *currentProxyHostCstr = linphone_core_get_http_proxy_host(mCore);
+	const char *currentProxyHostCstr = linphone_core_get_http_proxy_host(getCore()->getCCore());
 	string currentProxyHost;
-	int currentProxyPort = linphone_core_get_http_proxy_port(mCore);
+	int currentProxyPort = linphone_core_get_http_proxy_port(getCore()->getCCore());
 	if (currentProxyHostCstr) {
 		currentProxyHost = currentProxyHostCstr;
 	}
@@ -449,7 +449,7 @@ bool IosPlatformHelpers::isReachable(SCNetworkReachabilityFlags flags) {
 		if (!(flags & kSCNetworkReachabilityFlagsReachable)) {
 			return false;
 		}
-		bool isWifiOnly = linphone_core_wifi_only_enabled(mCore);
+		bool isWifiOnly = linphone_core_wifi_only_enabled(getCore()->getCCore());
 		if (isWifiOnly && (flags & kSCNetworkReachabilityFlagsIsWWAN)) {
 			return false;
 		}
@@ -563,8 +563,8 @@ string IosPlatformHelpers::getWifiSSID(void) {
 
 // -----------------------------------------------------------------------------
 
-PlatformHelpers *createIosPlatformHelpers (LinphoneCore *lc, void *system_context) {
-	return new IosPlatformHelpers(lc, system_context);
+PlatformHelpers *createIosPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) {
+	return new IosPlatformHelpers(core, systemContext);
 }
 
 LINPHONE_END_NAMESPACE
