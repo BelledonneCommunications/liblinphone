@@ -410,7 +410,11 @@ struct _LinphoneEvent{
 	LinphonePublishState publish_state;
 	void *userdata;
 	char *name;
-	LinphoneEventCbs *callbacks;
+
+	LinphoneEventCbs *callbacks; // Deprecated, use a list of Cbs instead
+	bctbx_list_t *callbacks_list;
+	LinphoneEventCbs *currentCbs;
+
 	int expires;
 	bool_t terminating;
 	bool_t is_out_of_dialog_op; /*used for out of dialog notify*/
