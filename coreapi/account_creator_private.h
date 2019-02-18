@@ -35,7 +35,7 @@ struct _LinphoneAccountCreatorService {
 	LinphoneAccountCreatorRequestFunc create_account_request_cb; /**< Request to create account */
 	LinphoneAccountCreatorRequestFunc delete_account_request_cb; /**< Request to delete account */
 	LinphoneAccountCreatorRequestFunc is_account_exist_request_cb; /**< Request to know if account exist */
-	LinphoneAccountCreatorRequestFunc get_confirmation_key_request_cb; /**< Request to get the confirmation key */
+	LinphoneAccountCreatorRequestFunc confirmation_key_request_cb; /**< Request to get the confirmation key */
 
 	LinphoneAccountCreatorRequestFunc activate_account_request_cb; /**< Request to activate account */
 	LinphoneAccountCreatorRequestFunc is_account_activated_request_cb; /**< Request to know if account is activated */
@@ -61,7 +61,7 @@ struct _LinphoneAccountCreatorCbs {
 
 	LinphoneAccountCreatorCbsStatusCb activate_account_response_cb; /**< Response of activate_account request */
 	LinphoneAccountCreatorCbsStatusCb is_account_activated_response_cb; /**< Response of is_account_activated request */
-	LinphoneAccountCreatorCbsStatusCb get_confirmation_key_response_cb; /**< Response of get_confirmation_key request */
+	LinphoneAccountCreatorCbsStatusCb confirmation_key_response_cb; /**< Response of get_confirmation_key request */
 
 	LinphoneAccountCreatorCbsStatusCb link_account_response_cb; /**< Response of link_account request */
 	LinphoneAccountCreatorCbsStatusCb activate_alias_response_cb; /**< Response of activation alias */
