@@ -2304,7 +2304,7 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	service->create_account_request_cb = linphone_account_creator_create_account_linphone;
 	service->delete_account_request_cb = linphone_account_creator_delete_account_linphone;
 	service->is_account_exist_request_cb = linphone_account_creator_is_account_exist_linphone;
-	service->get_confirmation_key_request_cb = linphone_account_creator_get_confirmation_key_linphone;
+	service->confirmation_key_request_cb = linphone_account_creator_get_confirmation_key_linphone;
 	service->activate_account_request_cb = linphone_account_creator_activate_account_linphone;
 	service->is_account_activated_request_cb = linphone_account_creator_is_account_activated_linphone;
 	service->link_account_request_cb = linphone_account_creator_link_phone_number_with_account_linphone;
