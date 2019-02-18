@@ -5283,6 +5283,15 @@ LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_create_client_group_chat_room(L
  */
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_client_group_chat_room_2 (LinphoneCore *lc, const char *subject, bool_t fallback, bool_t encrypted);
 
+
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room(LinphoneCore *lc, LinphoneChatRoomParams *params, const char *subject, const bctbx_list_t *participants);
+
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_2(LinphoneCore *lc, const char *subject, const bctbx_list_t *participants);
+
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_3(LinphoneCore *lc, LinphoneChatRoomParams *params, const LinphoneAddress *participant);
+
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_4(LinphoneCore *lc, const LinphoneAddress *participant);
+
 /**
  * Get a basic chat room whose peer is the supplied address. If it does not exist yet, it will be created.
  * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
