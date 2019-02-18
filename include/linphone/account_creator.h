@@ -337,8 +337,30 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC const char * linphone_account_creator_get_ro
  * Get the #LinphoneAccountCreatorCbs object associated with a LinphoneAccountCreator.
  * @param[in] creator #LinphoneAccountCreator object
  * @return The #LinphoneAccountCreatorCbs object associated with the LinphoneAccountCreator.
+ * @deprecated use add_callbacks / remove_callbacks instead
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorCbs * linphone_account_creator_get_callbacks(const LinphoneAccountCreator *creator);
+
+/**
+ * Add the #LinphoneAccountCreatorCbs object to a LinphoneAccountCreator.
+ * @param[in] creator #LinphoneAccountCreator object
+ * @param[in] cbs The #LinphoneAccountCreatorCbs object to add to the LinphoneAccountCreator.
+**/
+LINPHONE_PUBLIC void linphone_account_creator_add_callbacks(LinphoneAccountCreator *creator, LinphoneAccountCreatorCbs *cbs);
+
+/**
+ * Removes the #LinphoneAccountCreatorCbs object from a LinphoneAccountCreator.
+ * @param[in] creator #LinphoneAccountCreator object
+ * @param[in] cbs The #LinphoneAccountCreatorCbs object to remove from the LinphoneAccountCreator.
+**/
+LINPHONE_PUBLIC void linphone_account_creator_remove_callbacks(LinphoneAccountCreator *creator, LinphoneAccountCreatorCbs *cbs);
+
+/**
+ * Get the current #LinphoneAccountCreatorCbs object associated with a LinphoneAccountCreator.
+ * @param[in] creator #LinphoneAccountCreator object
+ * @return The current #LinphoneAccountCreatorCbs object associated with the LinphoneAccountCreator.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorCbs *linphone_account_creator_get_current_callbacks(const LinphoneAccountCreator *creator);
 
 /**
  * Get the #LinphoneAccountCreatorService object associated with a LinphoneAccountCreator.
