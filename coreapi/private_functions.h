@@ -188,6 +188,9 @@ void linphone_core_remove_friends_list_from_db(LinphoneCore *lc, LinphoneFriendL
 LINPHONE_PUBLIC MSList* linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFriendList *list);
 LINPHONE_PUBLIC MSList* linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc);
 LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_import_friend(LinphoneFriendList *list, LinphoneFriend *lf, bool_t synchronize);
+LinphoneFriendListCbs * linphone_friend_list_cbs_new(void);
+void linphone_friend_list_set_current_callbacks(LinphoneFriendList *friend_list, LinphoneFriendListCbs *cbs);
+const bctbx_list_t *linphone_friend_list_get_callbacks_list(const LinphoneFriendList *friend_list);
 
 int linphone_parse_host_port(const char *input, char *host, size_t hostlen, int *port);
 int parse_hostname_to_addr(const char *server, struct sockaddr_storage *ss, socklen_t *socklen, int default_port);

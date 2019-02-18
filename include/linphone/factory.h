@@ -534,6 +534,13 @@ LINPHONE_PUBLIC LinphonePlayerCbs *linphone_factory_create_player_cbs(LinphoneFa
 LINPHONE_PUBLIC LinphoneEventCbs *linphone_factory_create_event_cbs(LinphoneFactory *factory);
 
 /**
+ * Creates an object #LinphoneFriendListCbs
+ * @param[in] factory the #LinphoneFactory
+ * @return a #LinphoneFriendListCbs
+ */
+LINPHONE_PUBLIC LinphoneFriendListCbs *linphone_factory_create_friend_list_cbs(LinphoneFactory *factory);
+
+/**
  * @}
  */
 

@@ -36,13 +36,45 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneFriendListCbs, belle_sip_object_t,
 	FALSE
 );
 
-static LinphoneFriendListCbs * linphone_friend_list_cbs_new(void) {
+LinphoneFriendListCbs * linphone_friend_list_cbs_new(void) {
 	return belle_sip_object_new(LinphoneFriendListCbs);
 }
 
-LinphoneFriendListCbs * linphone_friend_list_get_callbacks(const LinphoneFriendList *list) {
-	return list->cbs;
+LinphoneFriendListCbs * linphone_friend_list_get_callbacks(const LinphoneFriendList *friend_list) {
+	return friend_list->cbs;
 }
+
+void linphone_friend_list_add_callbacks(LinphoneFriendList *friend_list, LinphoneFriendListCbs *cbs) {
+	friend_list->callbacks = bctbx_list_append(friend_list->callbacks, linphone_friend_list_cbs_ref(cbs));
+}
+
+void linphone_friend_list_remove_callbacks(LinphoneFriendList *friend_list, LinphoneFriendListCbs *cbs) {
+	friend_list->callbacks = bctbx_list_remove(friend_list->callbacks, cbs);
+	linphone_friend_list_cbs_unref(cbs);
+}
+
+LinphoneFriendListCbs *linphone_friend_list_get_current_callbacks(const LinphoneFriendList *friend_list) {
+	return friend_list->currentCbs;
+}
+
+void linphone_friend_list_set_current_callbacks(LinphoneFriendList *friend_list, LinphoneFriendListCbs *cbs) {
+	friend_list->currentCbs = cbs;
+}
+
+const bctbx_list_t *linphone_friend_list_get_callbacks_list(const LinphoneFriendList *friend_list) {
+	return friend_list->callbacks;
+}
+
+#define NOTIFY_IF_EXIST(cbName, functionName, ...) \
+	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_friend_list_get_callbacks_list(list)); \
+	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
+		linphone_friend_list_set_current_callbacks(list, reinterpret_cast<LinphoneFriendListCbs *>(bctbx_list_get_data(it))); \
+		LinphoneFriendListCbs ## cbName ## Cb cb = linphone_friend_list_cbs_get_ ## functionName (linphone_friend_list_get_current_callbacks(list)); \
+		if (cb) \
+			cb(__VA_ARGS__); \
+	} \
+	linphone_friend_list_set_current_callbacks(list, nullptr); \
+	bctbx_list_free(callbacksCopy);
 
 LinphoneFriendListCbs * linphone_friend_list_cbs_ref(LinphoneFriendListCbs *cbs) {
 	belle_sip_object_ref(cbs);
@@ -355,8 +387,12 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 				}
 			}
 			// Notify list with all friends for which we received presence information
-			if (bctbx_list_size(list_friends_presence_received) > 0 && list_cbs && linphone_friend_list_cbs_get_presence_received(list_cbs)) {
-				linphone_friend_list_cbs_get_presence_received(list_cbs)(list, list_friends_presence_received);
+			if (bctbx_list_size(list_friends_presence_received) > 0) {
+				if (list_cbs && linphone_friend_list_cbs_get_presence_received(list_cbs)) {
+					linphone_friend_list_cbs_get_presence_received(list_cbs)(list, list_friends_presence_received);
+				}
+
+				NOTIFY_IF_EXIST(PresenceReceived, presence_received, list, list_friends_presence_received)
 			}
 			bctbx_list_free(list_friends_presence_received);
 		}
@@ -398,8 +434,12 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 				}
 			}
 			// Notify list with all friends for which we received presence information
-			if (bctbx_list_size(list_friends_presence_received) > 0 && list_cbs && linphone_friend_list_cbs_get_presence_received(list_cbs)) {
-				linphone_friend_list_cbs_get_presence_received(list_cbs)(list, list_friends_presence_received);
+			if (bctbx_list_size(list_friends_presence_received) > 0) {
+				if (list_cbs && linphone_friend_list_cbs_get_presence_received(list_cbs)) {
+					linphone_friend_list_cbs_get_presence_received(list_cbs)(list, list_friends_presence_received);
+				}
+				
+				NOTIFY_IF_EXIST(PresenceReceived, presence_received, list, list_friends_presence_received)
 			}
 			bctbx_list_free(list_friends_presence_received);
 		}
@@ -449,6 +489,8 @@ static void linphone_friend_list_destroy(LinphoneFriendList *list) {
 	}
 	if (list->uri != NULL) ms_free(list->uri);
 	if (list->cbs) linphone_friend_list_cbs_unref(list->cbs);
+	bctbx_list_free_with_data(list->callbacks, (bctbx_list_free_func)linphone_friend_list_cbs_unref);
+	list->callbacks = nullptr;
 	if (list->dirty_friends_to_update) list->dirty_friends_to_update = bctbx_list_free_with_data(list->dirty_friends_to_update, (void (*)(void *))linphone_friend_unref);
 	if (list->friends) list->friends = bctbx_list_free_with_data(list->friends, (void (*)(void *))_linphone_friend_release);
 	if (list->friends_map) bctbx_mmap_cchar_delete_with_data(list->friends_map, (void (*)(void *))linphone_friend_unref);
@@ -665,9 +707,11 @@ LinphoneFriendListStatus linphone_friend_list_import_friend(LinphoneFriendList *
 }
 
 static void carddav_done(LinphoneCardDavContext *cdc, bool_t success, const char *msg) {
+	LinphoneFriendList *list = cdc->friend_list;
 	if (cdc && cdc->friend_list->cbs && cdc->friend_list->cbs->sync_state_changed_cb) {
 		cdc->friend_list->cbs->sync_state_changed_cb(cdc->friend_list, success ? LinphoneFriendListSyncSuccessful : LinphoneFriendListSyncFailure, msg);
 	}
+	NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, success ? LinphoneFriendListSyncSuccessful : LinphoneFriendListSyncFailure, msg)
 	linphone_carddav_context_destroy(cdc);
 }
 
@@ -691,6 +735,7 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 				if (cdc->friend_list->cbs->sync_state_changed_cb) {
 					cdc->friend_list->cbs->sync_state_changed_cb(cdc->friend_list, LinphoneFriendListSyncStarted, NULL);
 				}
+				NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncStarted, NULL)
 				linphone_carddav_delete_vcard(cdc, lf);
 			}
 		}
@@ -771,6 +816,7 @@ void linphone_friend_list_update_dirty_friends(LinphoneFriendList *list) {
 				if (cdc->friend_list->cbs->sync_state_changed_cb) {
 					cdc->friend_list->cbs->sync_state_changed_cb(cdc->friend_list, LinphoneFriendListSyncStarted, NULL);
 				}
+				NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncStarted, NULL)
 				linphone_carddav_put_vcard(cdc, lf);
 			}
 		}
@@ -781,36 +827,39 @@ void linphone_friend_list_update_dirty_friends(LinphoneFriendList *list) {
 
 static void carddav_created(LinphoneCardDavContext *cdc, LinphoneFriend *lf) {
 	if (cdc) {
-		LinphoneFriendList *lfl = cdc->friend_list;
-		linphone_friend_list_import_friend(lfl, lf, FALSE);
+		LinphoneFriendList *list = cdc->friend_list;
+		linphone_friend_list_import_friend(list, lf, FALSE);
 		if (cdc->friend_list->cbs->contact_created_cb) {
-			cdc->friend_list->cbs->contact_created_cb(lfl, lf);
+			cdc->friend_list->cbs->contact_created_cb(list, lf);
 		}
+		NOTIFY_IF_EXIST(ContactCreated, contact_created, list, lf)
 	}
 }
 
 static void carddav_removed(LinphoneCardDavContext *cdc, LinphoneFriend *lf) {
 	if (cdc) {
-		LinphoneFriendList *lfl = cdc->friend_list;
-		_linphone_friend_list_remove_friend(lfl, lf, FALSE);
+		LinphoneFriendList *list = cdc->friend_list;
+		_linphone_friend_list_remove_friend(list, lf, FALSE);
 		if (cdc->friend_list->cbs->contact_deleted_cb) {
-			cdc->friend_list->cbs->contact_deleted_cb(lfl, lf);
+			cdc->friend_list->cbs->contact_deleted_cb(list, lf);
 		}
+		NOTIFY_IF_EXIST(ContactDeleted, contact_deleted, list, lf)
 	}
 }
 
 static void carddav_updated(LinphoneCardDavContext *cdc, LinphoneFriend *lf_new, LinphoneFriend *lf_old) {
 	if (cdc) {
-		LinphoneFriendList *lfl = cdc->friend_list;
-		bctbx_list_t *elem = bctbx_list_find(lfl->friends, lf_old);
+		LinphoneFriendList *list = cdc->friend_list;
+		bctbx_list_t *elem = bctbx_list_find(list->friends, lf_old);
 		if (elem) {
 			elem->data = linphone_friend_ref(lf_new);
 		}
 		linphone_core_store_friend_in_db(lf_new->lc, lf_new);
 
 		if (cdc->friend_list->cbs->contact_updated_cb) {
-			cdc->friend_list->cbs->contact_updated_cb(lfl, lf_new, lf_old);
+			cdc->friend_list->cbs->contact_updated_cb(list, lf_new, lf_old);
 		}
+		NOTIFY_IF_EXIST(ContactUpdated, contact_updated, list, lf_new, lf_old)
 		linphone_friend_unref(lf_old);
 	}
 }
@@ -832,6 +881,7 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 		if (cdc && cdc->friend_list->cbs->sync_state_changed_cb) {
 			cdc->friend_list->cbs->sync_state_changed_cb(cdc->friend_list, LinphoneFriendListSyncStarted, NULL);
 		}
+		NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncStarted, NULL)
 		linphone_carddav_synchronize(cdc);
 	}
 }
