@@ -231,12 +231,12 @@ void linphone_account_creator_cbs_set_is_account_exist(LinphoneAccountCreatorCbs
 	cbs->is_account_exist_response_cb = cb;
 }
 
-LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_get_confirmation_key(const LinphoneAccountCreatorCbs *cbs) {
-	return cbs->get_confirmation_key_response_cb;
+LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_confirmation_key(const LinphoneAccountCreatorCbs *cbs) {
+	return cbs->confirmation_key_response_cb;
 }
 
-void linphone_account_creator_cbs_set_get_confirmation_key(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb) {
-	cbs->get_confirmation_key_response_cb = cb;
+void linphone_account_creator_cbs_set_confirmation_key(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb) {
+	cbs->confirmation_key_response_cb = cb;
 }
 
 LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_activate_account(const LinphoneAccountCreatorCbs *cbs) {
@@ -671,12 +671,12 @@ LinphoneAccountCreatorStatus linphone_account_creator_delete_account(LinphoneAcc
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key(LinphoneAccountCreator *creator) {
-	if (creator->service->get_confirmation_key_request_cb == NULL
-		|| creator->cbs->get_confirmation_key_response_cb == NULL) {
+	if (creator->service->confirmation_key_request_cb == NULL
+		|| creator->cbs->confirmation_key_response_cb == NULL) {
 		return LinphoneAccountCreatorStatusMissingCallbacks;
 	}
 
-	return creator->service->get_confirmation_key_request_cb(creator);
+	return creator->service->confirmation_key_request_cb(creator);
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated(LinphoneAccountCreator *creator) {
@@ -1048,22 +1048,22 @@ static void get_linphone_confirmation_key_response_cb(LinphoneXmlRpcRequest *req
 			set_string(&creator->activation_code, resp, FALSE);
 		}
 	}
-	if (creator->cbs->get_confirmation_key_response_cb != NULL) {
-		creator->cbs->get_confirmation_key_response_cb(creator, status, resp);
+	if (creator->cbs->confirmation_key_response_cb != NULL) {
+		creator->cbs->confirmation_key_response_cb(creator, status, resp);
 	}
-	NOTIFY_IF_EXIST(Status, get_confirmation_key, creator, status, resp)
+	NOTIFY_IF_EXIST(Status, confirmation_key, creator, status, resp)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key_linphone(LinphoneAccountCreator *creator) {
 	if (!creator->username || !creator->password) {
-		if (creator->cbs->get_confirmation_key_response_cb != NULL) {
-			creator->cbs->get_confirmation_key_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
+		if (creator->cbs->confirmation_key_response_cb != NULL) {
+			creator->cbs->confirmation_key_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST(Status, get_confirmation_key, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST(Status, confirmation_key, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
-	ms_debug("Account creator: get_confirmation_key (username=%s, password=%s, domain=%s)",
+	ms_debug("Account creator: confirmation_key (username=%s, password=%s, domain=%s)",
 		creator->username,
 		creator->password,
 		linphone_proxy_config_get_domain(creator->proxy_cfg));
