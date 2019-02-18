@@ -6462,6 +6462,8 @@ void linphone_core_set_network_reachable(LinphoneCore *lc, bool_t is_reachable) 
 	lc->sip_network_state.user_state = is_reachable;
 	lc->media_network_state.user_state = is_reachable;
 
+	if (lc->auto_net_state_mon) reachable = reachable && getPlatformHelpers(lc)->isNetworkReachable();
+
 	set_sip_network_reachable(lc, reachable, ms_time(NULL));
 	set_media_network_reachable(lc, reachable);
 	notify_network_reachable_change(lc);
@@ -6472,6 +6474,8 @@ void linphone_core_set_media_network_reachable(LinphoneCore *lc, bool_t is_reach
 
 	lc->media_network_state.user_state = is_reachable;
 
+	if (lc->auto_net_state_mon) reachable = reachable && getPlatformHelpers(lc)->isNetworkReachable();
+
 	set_media_network_reachable(lc, reachable);
 	notify_network_reachable_change(lc);
 }
@@ -6480,6 +6484,8 @@ void linphone_core_set_sip_network_reachable(LinphoneCore *lc, bool_t is_reachab
 	bool_t reachable = is_reachable;
 
 	lc->sip_network_state.user_state = is_reachable;
+
+	if (lc->auto_net_state_mon) reachable = reachable && getPlatformHelpers(lc)->isNetworkReachable();
 
 	set_sip_network_reachable(lc, reachable, ms_time(NULL));
 	notify_network_reachable_change(lc);

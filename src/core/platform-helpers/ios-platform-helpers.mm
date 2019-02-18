@@ -87,7 +87,7 @@ public:
 	void onNetworkChanged(bool reachable, bool force);
 
 private:
-	char *toUTF8CString(CFStringRef str);
+	string toUTF8String(CFStringRef str);
 	void kickOffConnectivity();
 	void getHttpProxySettings(void);
 
@@ -132,20 +132,23 @@ IosPlatformHelpers::IosPlatformHelpers (LinphoneCore *lc, void *system_context) 
 	ms_message("IosPlatformHelpers is fully initialised");
 }
 
-//Safely get an UTF-8 c-string from the given CFStringRef
-char *IosPlatformHelpers::toUTF8CString(CFStringRef str) {
-	if (str == NULL) {
-		return NULL;
-	}
+//Safely get an UTF-8 string from the given CFStringRef
+string IosPlatformHelpers::toUTF8String(CFStringRef str) {
+	string ret;
 
+	if (str == NULL) {
+		return ret;
+	}
 	CFIndex length = CFStringGetLength(str);
 	CFIndex maxSize = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
 	char *buffer = (char *) malloc((size_t) maxSize);
-	if (CFStringGetCString(str, buffer, maxSize, kCFStringEncodingUTF8)) {
-		return buffer;
+	if (buffer) {
+		if (CFStringGetCString(str, buffer, maxSize, kCFStringEncodingUTF8)) {
+			ret = buffer;
+		}
+		free(buffer);
 	}
-	free(buffer); // If we failed
-	return NULL;
+	return ret;
 }
 
 // -----------------------------------------------------------------------------
@@ -283,11 +286,8 @@ void IosPlatformHelpers::getHttpProxySettings(void) {
 		if (mHttpProxyEnabled) {
 			CFStringRef proxyHost = (CFStringRef) CFDictionaryGetValue(proxySettings, kCFNetworkProxiesHTTPProxy);
 			if (proxyHost != NULL) {
-				char *tmpHost = toUTF8CString(proxyHost);
-				if (tmpHost) {
-					mHttpProxyHost = tmpHost;
-					free(tmpHost);
-				} else {
+				mHttpProxyHost = toUTF8String(proxyHost);
+				if (mHttpProxyHost.empty()) {
 					mHttpProxyEnabled = false;
 				}
 			} else {
@@ -546,11 +546,9 @@ string IosPlatformHelpers::getWifiSSID(void) {
 			if (ifaceInfo && CFDictionaryGetCount(ifaceInfo) > 0) {
 				CFStringRef ifaceSSID = (CFStringRef) CFDictionaryGetValue(ifaceInfo, kCNNetworkInfoKeySSID);
 				if (ifaceSSID != NULL) {
-					char *tmpSSID = toUTF8CString(ifaceSSID);
-					if (tmpSSID) {
-						ssid = tmpSSID;
+					ssid = toUTF8String(ifaceSSID);
+					if (!ssid.empty()) {
 						CFRelease(ifaceInfo);
-						free(tmpSSID);
 						break;
 					}
 				}
