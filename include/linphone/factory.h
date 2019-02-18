@@ -527,6 +527,13 @@ LINPHONE_PUBLIC LinphoneLoggingServiceCbs *linphone_factory_create_logging_servi
 LINPHONE_PUBLIC LinphonePlayerCbs *linphone_factory_create_player_cbs(LinphoneFactory *factory);
 
 /**
+ * Creates an object #LinphoneEventCbs
+ * @param[in] factory the #LinphoneFactory
+ * @return a #LinphoneEventCbs
+ */
+LINPHONE_PUBLIC LinphoneEventCbs *linphone_factory_create_event_cbs(LinphoneFactory *factory);
+
+/**
  * @}
  */
 
