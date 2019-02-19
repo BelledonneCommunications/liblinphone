@@ -1089,12 +1089,11 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId
-) : ChatRoom(*new ServerGroupChatRoomPrivate, core, ConferenceId(peerAddress, peerAddress)),
+) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, ConferenceId(peerAddress, peerAddress)),
 LocalConference(getCore(), peerAddress, nullptr) {
 	L_D();
 	L_D_T(LocalConference, dConference);
 
-	d->capabilities |= capabilities & ServerGroupChatRoom::Capabilities::OneToOne;
 	dConference->subject = subject;
 	dConference->participants = move(participants);
 	dConference->conferenceAddress = peerAddress;

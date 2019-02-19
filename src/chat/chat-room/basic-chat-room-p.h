@@ -28,6 +28,10 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class BasicChatRoomPrivate : public ChatRoomPrivate {
+public:
+	BasicChatRoomPrivate()
+	: ChatRoomPrivate({ ChatRoom::Capabilities::Basic, ChatRoom::Capabilities::OneToOne}) {};
+	
 private:
 	std::string subject;
 	std::shared_ptr<Participant> me;

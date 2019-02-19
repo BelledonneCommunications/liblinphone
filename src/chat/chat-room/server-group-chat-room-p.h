@@ -61,6 +61,10 @@ private:
 
 class ServerGroupChatRoomPrivate : public ChatRoomPrivate {
 public:
+	ServerGroupChatRoomPrivate(void) : ChatRoomPrivate(AbstractChatRoom::CapabilitiesMask({ChatRoom::Capabilities::Conference})) {};
+	ServerGroupChatRoomPrivate(AbstractChatRoom::CapabilitiesMask value) : ChatRoomPrivate((value | ChatRoom::Capabilities::Conference)) {};
+
+	
 	void setState (ChatRoom::State state) override;
 
 	std::shared_ptr<Participant> addParticipant (const IdentityAddress &participantAddress);
@@ -163,7 +167,6 @@ private:
 	std::list<std::shared_ptr<Participant>> authorizedParticipants; /*list of participant authorized to send messages to the chatroom.
 					This typically excludes participants that in the process of being removed.*/
 	ChatRoomListener *chatRoomListener = this;
-	ServerGroupChatRoom::CapabilitiesMask capabilities = ServerGroupChatRoom::Capabilities::Conference;
 	std::map<std::string, RegistrationSubscriptionContext> registrationSubscriptions; /*map of registrationSubscriptions for each participant*/
 	int unnotifiedRegistrationSubscriptions = 0; /*count of not-yet notified registration subscriptions*/
 	std::shared_ptr<ParticipantDevice> mInitiatorDevice; /*pointer to the ParticipantDevice that is creating the chat room*/
