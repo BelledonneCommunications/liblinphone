@@ -1039,6 +1039,7 @@ belle_sip_header_reason_t *SalCallOp::makeReasonHeader (const SalErrorInfo *info
 
 int SalCallOp::declineWithErrorInfo (const SalErrorInfo *info, const SalAddress *redirectionAddr) {
 	belle_sip_header_contact_t *contactHeader = nullptr;
+	belle_sip_header_retry_after_t *retryAfterHeader = nullptr;
 	int status = info->protocol_code;
 
 	if (info->reason == SalReasonRedirect) {
@@ -1058,11 +1059,17 @@ int SalCallOp::declineWithErrorInfo (const SalErrorInfo *info, const SalAddress 
 	}
 	auto response = createResponseFromRequest(belle_sip_transaction_get_request(transaction), status);
 	auto reasonHeader = makeReasonHeader(info->sub_sei);
+	if (info->retry_after > 0)
+		retryAfterHeader = belle_sip_header_retry_after_create(info->retry_after);
+
 	if (reasonHeader)
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(reasonHeader));
 
 	if (contactHeader)
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(contactHeader));
+
+	if (retryAfterHeader)
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(retryAfterHeader));
 	belle_sip_server_transaction_send_response(BELLE_SIP_SERVER_TRANSACTION(transaction), response);
 	return 0;
 }
