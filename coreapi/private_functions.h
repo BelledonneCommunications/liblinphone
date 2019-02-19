@@ -188,6 +188,8 @@ void linphone_core_remove_friends_list_from_db(LinphoneCore *lc, LinphoneFriendL
 LINPHONE_PUBLIC MSList* linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFriendList *list);
 LINPHONE_PUBLIC MSList* linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc);
 LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_import_friend(LinphoneFriendList *list, LinphoneFriend *lf, bool_t synchronize);
+LinphoneFriendListCbs * linphone_friend_list_cbs_new(void);
+void linphone_friend_list_set_current_callbacks(LinphoneFriendList *friend_list, LinphoneFriendListCbs *cbs);
 
 int linphone_parse_host_port(const char *input, char *host, size_t hostlen, int *port);
 int parse_hostname_to_addr(const char *server, struct sockaddr_storage *ss, socklen_t *socklen, int default_port);
@@ -327,6 +329,15 @@ void _linphone_chat_room_notify_participant_registration_subscription_requested(
 void _linphone_chat_room_notify_participant_registration_unsubscription_requested(LinphoneChatRoom *cr, const LinphoneAddress *participantAddr);
 void _linphone_chat_room_notify_chat_message_should_be_stored(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
 void _linphone_chat_room_clear_callbacks (LinphoneChatRoom *cr);
+
+void _linphone_chat_message_notify_msg_state_changed(LinphoneChatMessage* msg, LinphoneChatMessageState state);
+void _linphone_chat_message_notify_participant_imdn_state_changed(LinphoneChatMessage* msg, const LinphoneParticipantImdnState *state);
+void _linphone_chat_message_notify_file_transfer_recv(LinphoneChatMessage *msg, const LinphoneContent* content, const LinphoneBuffer *buffer);
+void _linphone_chat_message_notify_file_transfer_send(LinphoneChatMessage *msg,  const LinphoneContent* content, size_t offset, size_t size);
+void _linphone_chat_message_notify_file_transfer_progress_indication(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total);
+void _linphone_chat_message_clear_callbacks (LinphoneChatMessage *msg);
+
+
 const LinphoneParticipantImdnState *_linphone_participant_imdn_state_from_cpp_obj (const LinphonePrivate::ParticipantImdnState &state);
 
 LinphoneToneDescription * linphone_tone_description_new(LinphoneReason reason, LinphoneToneID id, const char *audiofile);
@@ -345,6 +356,7 @@ void linphone_task_list_free(LinphoneTaskList *t);
 LinphoneCoreCbs * _linphone_core_cbs_new(void);
 void _linphone_core_cbs_set_v_table(LinphoneCoreCbs *cbs, LinphoneCoreVTable *vtable, bool_t autorelease);
 
+LinphoneLoggingServiceCbs *linphone_logging_service_cbs_new(void);
 
 LinphoneTunnel *linphone_core_tunnel_new(LinphoneCore *lc);
 void linphone_tunnel_configure(LinphoneTunnel *tunnel);
@@ -415,9 +427,11 @@ SalBodyHandler *sal_body_handler_from_content(const LinphoneContent *content, bo
 SalReason linphone_reason_to_sal(LinphoneReason reason);
 LinphoneReason linphone_reason_from_sal(SalReason reason);
 void linphone_error_info_to_sal(const LinphoneErrorInfo* ei, SalErrorInfo* sei);
+LinphoneEventCbs *linphone_event_cbs_new(void);
 LinphoneEvent *linphone_event_new(LinphoneCore *lc, LinphoneSubscriptionDir dir, const char *name, int expires);
 LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc, LinphonePrivate::SalEventOp *op, LinphoneSubscriptionDir dir, const char *name);
 void linphone_event_unpublish(LinphoneEvent *lev);
+void linphone_event_set_current_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
 /**
  * Useful for out of dialog notify
  * */
@@ -426,7 +440,7 @@ void linphone_event_set_internal(LinphoneEvent *lev, bool_t internal);
 bool_t linphone_event_is_internal(LinphoneEvent *lev);
 void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState state);
 void linphone_event_set_publish_state(LinphoneEvent *lev, LinphonePublishState state);
-void _linphone_event_notify_notify_response(const LinphoneEvent *lev);
+void _linphone_event_notify_notify_response(LinphoneEvent *lev);
 LinphoneSubscriptionState linphone_subscription_state_from_sal(SalSubscribeStatus ss);
 LinphoneContent *linphone_content_from_sal_body_handler(const SalBodyHandler *ref, bool parseMultipart = true);
 void linphone_core_invalidate_friend_subscriptions(LinphoneCore *lc);
@@ -454,6 +468,7 @@ LINPHONE_PUBLIC int linphone_remote_provisioning_load_file( LinphoneCore* lc, co
 LinphonePlayerCbs *linphone_player_cbs_new(void);
 LinphonePlayer * linphone_player_new(LinphoneCore *core);
 void _linphone_player_destroy(LinphonePlayer *player);
+void linphone_player_set_current_callbacks(LinphonePlayer *player, LinphonePlayerCbs *cbs);
 
 
 /*****************************************************************************
@@ -594,6 +609,10 @@ void _linphone_core_set_log_handler(OrtpLogFunc logfunc);
 void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id);
 void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id);
 
+LinphoneAccountCreatorCbs * linphone_account_creator_cbs_new(void);
+void linphone_account_creator_set_current_callbacks(LinphoneAccountCreator *creator, LinphoneAccountCreatorCbs *cbs);
+LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_cbs_new(void);
+void linphone_xml_rpc_request_set_current_callbacks(LinphoneXmlRpcRequest *request, LinphoneXmlRpcRequestCbs *cbs);
 
 #ifdef __cplusplus
 }

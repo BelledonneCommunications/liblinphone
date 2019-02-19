@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define LINPHONE_FACTORY_H
 
 #include "linphone/types.h"
+#include "logging.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -263,6 +264,13 @@ LINPHONE_PUBLIC LinphoneCallCbs * linphone_factory_create_call_cbs(const Linphon
 LINPHONE_PUBLIC LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(const LinphoneFactory *factory);
 
 /**
+ * Create a LinphoneChatMessageCbs object that holds callbacks for events happening on a chat message.
+ * @param[in] factory LinphoneFactory singletion object
+ * @return A new LinphoneChatMessageCbs object
+ */
+LINPHONE_PUBLIC LinphoneChatMessageCbs * linphone_factory_create_chat_message_cbs(const LinphoneFactory *factory);
+
+/**
  * Create an empty #LinphoneVcard.
  * @return a new #LinphoneVcard.
  * @ingroup initializing
@@ -503,6 +511,48 @@ LINPHONE_PUBLIC void linphone_factory_enable_log_collection(LinphoneFactory *fac
  * @return a #LinphoneTunnelConfig
  */
 LINPHONE_PUBLIC LinphoneTunnelConfig *linphone_factory_create_tunnel_config(LinphoneFactory *factory);
+
+/**
+ * Creates an object #LinphoneLoggingServiceCbs
+ * @param[in] factory the #LinphoneFactory
+ * @return a #LinphoneLoggingServiceCbs
+ */
+LINPHONE_PUBLIC LinphoneLoggingServiceCbs *linphone_factory_create_logging_service_cbs(LinphoneFactory *factory);
+
+/**
+ * Creates an object #LinphonePlayerCbs
+ * @param[in] factory the #LinphoneFactory
+ * @return a #LinphonePlayerCbs
+ */
+LINPHONE_PUBLIC LinphonePlayerCbs *linphone_factory_create_player_cbs(LinphoneFactory *factory);
+
+/**
+ * Creates an object #LinphoneEventCbs
+ * @param[in] factory the #LinphoneFactory
+ * @return a #LinphoneEventCbs
+ */
+LINPHONE_PUBLIC LinphoneEventCbs *linphone_factory_create_event_cbs(LinphoneFactory *factory);
+
+/**
+ * Creates an object #LinphoneFriendListCbs
+ * @param[in] factory the #LinphoneFactory
+ * @return a #LinphoneFriendListCbs
+ */
+LINPHONE_PUBLIC LinphoneFriendListCbs *linphone_factory_create_friend_list_cbs(LinphoneFactory *factory);
+
+/**
+ * Creates an object #LinphoneAccountCreatorCbs
+ * @param[in] factory the #LinphoneFactory
+ * @return a #LinphoneAccountCreatorCbs
+ */
+LINPHONE_PUBLIC LinphoneAccountCreatorCbs *linphone_factory_create_account_creator_cbs(LinphoneFactory *factory);
+
+/**
+ * Creates an object #LinphoneXmlRpcRequestCbs
+ * @param[in] factory the #LinphoneFactory
+ * @return a #LinphoneXmlRpcRequestCbs
+ */
+LINPHONE_PUBLIC LinphoneXmlRpcRequestCbs *linphone_factory_create_xml_rpc_request_cbs(LinphoneFactory *factory);
 
 /**
  * @}

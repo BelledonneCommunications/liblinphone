@@ -223,7 +223,9 @@ struct _LinphoneFriendList {
 	char *uri;
 	MSList *dirty_friends_to_update;
 	int revision;
-	LinphoneFriendListCbs *cbs;
+	LinphoneFriendListCbs *cbs; // Deprecated, use a list of Cbs instead
+	bctbx_list_t *callbacks;
+	LinphoneFriendListCbs *currentCbs;
 	bool_t enable_subscriptions;
 	bool_t bodyless_subscription;
 };
@@ -410,7 +412,11 @@ struct _LinphoneEvent{
 	LinphonePublishState publish_state;
 	void *userdata;
 	char *name;
-	LinphoneEventCbs *callbacks;
+
+	LinphoneEventCbs *callbacks; // Deprecated, use a list of Cbs instead
+	bctbx_list_t *callbacks_list;
+	LinphoneEventCbs *currentCbs;
+
 	int expires;
 	bool_t terminating;
 	bool_t is_out_of_dialog_op; /*used for out of dialog notify*/
@@ -532,7 +538,9 @@ BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneXmlRpcRequestCbs);
 struct _LinphoneXmlRpcRequest {
 	belle_sip_object_t base;
 	void *user_data;
-	LinphoneXmlRpcRequestCbs *callbacks;
+	LinphoneXmlRpcRequestCbs *callbacks; // Deprecated, use a list of Cbs instead
+	bctbx_list_t *callbacks_list;
+	LinphoneXmlRpcRequestCbs *currentCbs;
 	belle_sip_list_t *arg_list;
 	char *content;	/**< The string representation of the XML-RPC request */
 	char *method;
@@ -612,8 +620,10 @@ struct _LinphonePlayer{
 	void (*close)(LinphonePlayer* player);
 	void (*destroy)(LinphonePlayer *player);
 	void *impl;
-	LinphonePlayerCbs *callbacks;
+	LinphonePlayerCbs *callbacks; // Deprecated, use a list of Cbs instead
 	LinphoneCore *core;
+	bctbx_list_t *callbacks_list;
+	LinphonePlayerCbs *currentCbs;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphonePlayer);

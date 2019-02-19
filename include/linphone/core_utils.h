@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define LINPHONE_CORE_UTILS_H_
 
 
+#include "linphone/logging.h"
 #include "linphone/types.h"
 #include "linphone/callbacks.h"
 
@@ -127,6 +128,13 @@ typedef bool_t (*LinphoneCoreIterateHook)(void *data);
 LINPHONE_PUBLIC void linphone_core_add_iterate_hook(LinphoneCore *lc, LinphoneCoreIterateHook hook, void *hook_data);
 
 LINPHONE_PUBLIC void linphone_core_remove_iterate_hook(LinphoneCore *lc, LinphoneCoreIterateHook hook, void *hook_data);
+
+LINPHONE_PUBLIC const bctbx_list_t *linphone_player_get_callbacks_list(const LinphonePlayer *player);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_event_get_callbacks_list(const LinphoneEvent *ev);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_friend_list_get_callbacks_list(const LinphoneFriendList *friend_list);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_logging_service_get_callbacks_list(const LinphoneLoggingService *log_service);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_account_creator_get_callbacks_list(const LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_xml_rpc_request_get_callbacks_list(const LinphoneXmlRpcRequest *request);
 
 #ifdef __cplusplus
 }

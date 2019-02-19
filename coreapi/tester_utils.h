@@ -189,7 +189,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_g
  * @param[in] cb The get confirmation key request to be used.
  * @donotwrap Exists for tests purposes only
 **/
-LINPHONE_PUBLIC void linphone_account_creator_cbs_set_get_confirmation_key(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
+LINPHONE_PUBLIC void linphone_account_creator_cbs_set_confirmation_key(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
 
 /**
  * Deletes local LIME X3DH database

@@ -253,7 +253,7 @@ class CsharpTranslator(object):
 		listenerDict['delegate']['name'] = method.name.translate(self.nameTranslator)
 
 		listenerDict['delegate']['interfaceClassName'] = listenedClass.name.translate(self.nameTranslator)
-		listenerDict['delegate']['isSimpleListener'] = not listenedClass.multilistener
+		listenerDict['delegate']['isSimpleListener'] = listenedClass.singlelistener
 		listenerDict['delegate']['isMultiListener'] = listenedClass.multilistener
 
 		listenerDict['delegate']['params_public'] = ""
@@ -394,12 +394,11 @@ class CsharpTranslator(object):
 		classDict['dllImports'] = []
 
 		islistenable = _class.listenerInterface is not None
-		ismonolistenable = (islistenable and not _class.multilistener)
 		if islistenable:
 			listenerName = _class.listenerInterface.name.translate(self.nameTranslator)
-			if ismonolistenable:
+			if _class.singlelistener:
 				classDict['dllImports'].append(self.generate_getter_for_listener_callbacks(_class, listenerName))
-			else:
+			if _class.multilistener:
 				classDict['dllImports'].append(self.generate_add_for_listener_callbacks(_class, listenerName))
 				classDict['dllImports'].append(self.generate_remove_for_listener_callbacks(_class, listenerName))
 

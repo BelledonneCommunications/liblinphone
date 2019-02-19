@@ -32,11 +32,6 @@ using namespace {{{namespace}}};
 
 {{#wrapperCbs}}
 static {{{returnType}}} {{{cbName}}}({{{declArgs}}}) {
-	{{#ismonolistenable}}
-	std::shared_ptr<{{{cppListenerName}}}> listener = std::static_pointer_cast<{{{cppListenerName}}},Listener>(ListenableObject::getListenerFromObject((::belle_sip_object_t *){{{firstArgName}}}));
-	{{#hasReturnValue}}return {{/hasReturnValue}}{{{cppMethodCallingLine}}};
-	{{/ismonolistenable}}
-	
 	{{#ismultilistenable}}
 	{{{cListenerName}}} *cbs = {{{currentCallbacksGetter}}}({{{firstArgName}}});
 	std::list<std::shared_ptr<Listener> > listeners = *(std::list<std::shared_ptr<Listener> > *){{{userDataGetter}}}(cbs);
@@ -45,6 +40,10 @@ static {{{returnType}}} {{{cbName}}}({{{declArgs}}}) {
 		{{{cppMethodCallingLine}}};
 	}
 	{{/ismultilistenable}}
+	{{#ismonolistenable}}
+	std::shared_ptr<{{{cppListenerName}}}> listener = std::static_pointer_cast<{{{cppListenerName}}},Listener>(ListenableObject::getListenerFromObject((::belle_sip_object_t *){{{firstArgName}}}));
+	{{#hasReturnValue}}return {{/hasReturnValue}}{{{cppMethodCallingLine}}};
+	{{/ismonolistenable}}
 }
 {{/wrapperCbs}}
 
@@ -80,7 +79,7 @@ static {{{returnType}}} {{{cbName}}}({{{declArgs}}}) {
 
 {{#ismonolistenable}}
 void {{{namespace}}}::{{{className}}}::setListener(const std::shared_ptr<{{{listenerClassName}}}> & listener) {
-	ListenableObject::setListener(std::static_pointer_cast<Listener>(listener));
+	{{{parentClassName}}}::setListener(std::static_pointer_cast<Listener>(listener));
 	{{{cListenerName}}} *cbs = {{{cCbsGetter}}}(({{{cClassName}}} *)mPrivPtr);
 	if (listener == nullptr) {
 		{{#wrapperCbs}}
@@ -101,11 +100,11 @@ void {{{namespace}}}::{{{className}}}::setListener(const std::shared_ptr<{{{list
 }
 
 void {{{className}}}::addListener(const std::shared_ptr<{{{listenerClassName}}}> &listener) {
-	MultiListenableObject::addListener(std::static_pointer_cast<Listener,{{{listenerClassName}}}>(listener));
+	{{{parentClassName}}}::addListener(std::static_pointer_cast<Listener,{{{listenerClassName}}}>(listener));
 }
 
 void {{{className}}}::removeListener(const std::shared_ptr<{{{listenerClassName}}}> &listener) {
-	MultiListenableObject::removeListener(std::static_pointer_cast<Listener,{{{listenerClassName}}}>(listener));
+	{{{parentClassName}}}::removeListener(std::static_pointer_cast<Listener,{{{listenerClassName}}}>(listener));
 }
 
 void *{{{className}}}::createCallbacks(void *userData) {

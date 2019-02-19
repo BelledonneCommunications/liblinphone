@@ -54,6 +54,10 @@ unsigned int _linphone_log_mask_to_bctbx_log_mask(unsigned int mask);
  */
 void _linphone_logging_service_clean(void);
 
+void _linphone_logging_service_clear_callbacks (LinphoneLoggingService *log_service);
+
+void linphone_logging_service_set_current_callbacks(LinphoneLoggingService *log_service, LinphoneLoggingServiceCbs *cbs);
+
 #ifdef __cplusplus
 }
 #endif

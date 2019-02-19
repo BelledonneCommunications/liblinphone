@@ -258,6 +258,10 @@ LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(const LinphoneFactor
 	return _linphone_chat_room_cbs_new();
 }
 
+LinphoneChatMessageCbs * linphone_factory_create_chat_message_cbs(const LinphoneFactory *factory) {
+	return linphone_chat_message_cbs_new();
+}
+
 LinphoneVcard *linphone_factory_create_vcard(LinphoneFactory *factory) {
 	return _linphone_vcard_new();
 }
@@ -454,4 +458,28 @@ void linphone_factory_enable_log_collection(LinphoneFactory *factory, LinphoneLo
 
 LinphoneTunnelConfig *linphone_factory_create_tunnel_config(LinphoneFactory *factory) {
 	return linphone_tunnel_config_new();
+}
+
+LinphoneLoggingServiceCbs *linphone_factory_create_logging_service_cbs(LinphoneFactory *factory) {
+	return linphone_logging_service_cbs_new();
+}
+
+LinphonePlayerCbs *linphone_factory_create_player_cbs(LinphoneFactory *factory) {
+	return linphone_player_cbs_new();
+}
+
+LinphoneEventCbs *linphone_factory_create_event_cbs(LinphoneFactory *factory) {
+	return linphone_event_cbs_new();
+}
+
+LinphoneFriendListCbs *linphone_factory_create_friend_list_cbs(LinphoneFactory *factory) {
+	return linphone_friend_list_cbs_new();
+}
+
+LinphoneAccountCreatorCbs *linphone_factory_create_account_creator_cbs(LinphoneFactory *factory) {
+	return linphone_account_creator_cbs_new();
+}
+
+LinphoneXmlRpcRequestCbs *linphone_factory_create_xml_rpc_request_cbs(LinphoneFactory *factory) {
+	return linphone_xml_rpc_request_cbs_new();
 }

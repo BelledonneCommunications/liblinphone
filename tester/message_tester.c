@@ -2029,7 +2029,7 @@ void file_transfer_with_http_proxy(void) {
 		lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
-		linphone_core_set_http_proxy_host(marie->lc, "sip.linphone.org");
+		linphone_core_set_http_proxy_host(marie->lc, "http-proxy.example.org");
 		transfer_message_base2(marie,pauline,FALSE,FALSE,FALSE,FALSE,FALSE,-1);
 		linphone_core_manager_destroy(pauline);
 		linphone_core_manager_destroy(marie);

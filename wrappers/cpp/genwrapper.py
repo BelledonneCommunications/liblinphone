@@ -67,7 +67,7 @@ class CppTranslator(object):
 	
 	def translate_class(self, _class):
 		islistenable = _class.listenerInterface is not None
-		ismonolistenable = (islistenable and not _class.multilistener)
+		ismonolistenable = (islistenable and _class.singlelistener)
 		ismultilistenable = (islistenable and _class.multilistener)
 		
 		classDict = {
@@ -110,8 +110,11 @@ class CppTranslator(object):
 		if ismonolistenable:
 			classDict['cCbsGetter'] = _class.name.to_snake_case(fullName=True) + '_get_callbacks'
 			classDict['parentClassName'] = 'ListenableObject'
-		elif ismultilistenable:
-			classDict['parentClassName'] = 'MultiListenableObject'
+		if ismultilistenable:
+			if ismonolistenable:
+				classDict['parentClassName'] = 'DualListenableObject'
+			else:
+				classDict['parentClassName'] = 'MultiListenableObject'
 			classDict['listenerCreator'] = 'linphone_factory_create_' + _class.listenerInterface.name.to_snake_case()[:-len('_listener')] + '_cbs'
 			classDict['callbacksAdder'] = _class.name.to_snake_case(fullName=True)+ '_add_callbacks'
 			classDict['callbacksRemover'] = _class.name.to_snake_case(fullName=True)+ '_remove_callbacks'

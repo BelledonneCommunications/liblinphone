@@ -87,8 +87,30 @@ LINPHONE_PUBLIC void linphone_xml_rpc_request_add_string_arg(LinphoneXmlRpcReque
  * Get the #LinphoneXmlRpcRequestCbs object associated with a LinphoneXmlRpcRequest.
  * @param[in] request #LinphoneXmlRpcRequest object
  * @return The #LinphoneXmlRpcRequestCbs object associated with the LinphoneXmlRpcRequest.
+ * @deprecated use add_callbacks / remove_callbacks instead
 **/
 LINPHONE_PUBLIC LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_get_callbacks(const LinphoneXmlRpcRequest *request);
+
+/**
+ * Add the current #LinphoneXmlRpcRequestCbs object to a LinphoneXmlRpcRequest.
+ * @param[in] request #LinphoneXmlRpcRequest object
+ * @param[in] cbs The #LinphoneXmlRpcRequestCbs object to add to the LinphoneXmlRpcRequest.
+**/
+LINPHONE_PUBLIC void linphone_xml_rpc_request_add_callbacks(LinphoneXmlRpcRequest *request, LinphoneXmlRpcRequestCbs *cbs);
+
+/**
+ * Remove the current #LinphoneXmlRpcRequestCbs object from a LinphoneXmlRpcRequest.
+ * @param[in] request #LinphoneXmlRpcRequest object
+ * @param[in] cbs The #LinphoneXmlRpcRequestCbs object to remove from the LinphoneXmlRpcRequest.
+**/
+LINPHONE_PUBLIC void linphone_xml_rpc_request_remove_callbacks(LinphoneXmlRpcRequest *request, LinphoneXmlRpcRequestCbs *cbs);
+
+/**
+ * Get the current #LinphoneXmlRpcRequestCbs object associated with a LinphoneXmlRpcRequest.
+ * @param[in] request #LinphoneXmlRpcRequest object
+ * @return The current #LinphoneXmlRpcRequestCbs object associated with the LinphoneXmlRpcRequest.
+**/
+LINPHONE_PUBLIC LinphoneXmlRpcRequestCbs *linphone_xml_rpc_request_get_current_callbacks(const LinphoneXmlRpcRequest *request);
 
 /**
  * Get the content of the XML-RPC request.
