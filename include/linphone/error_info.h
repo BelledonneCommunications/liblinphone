@@ -56,6 +56,13 @@ LINPHONE_PUBLIC LinphoneErrorInfo *linphone_error_info_ref(LinphoneErrorInfo *ei
 LINPHONE_PUBLIC void linphone_error_info_unref(LinphoneErrorInfo *ei);
 
 /**
+* Get Retry-After delay second from the error info.
+* @param[in] ei ErrorInfo object
+* @return The Retry-After delay second
+**/
+LINPHONE_PUBLIC int linphone_error_info_get_retry_after(const LinphoneErrorInfo *ei);
+
+/**
  * Get reason code from the error info.
  * @param[in] ei ErrorInfo object
  * @return A #LinphoneReason
@@ -120,6 +127,13 @@ LINPHONE_PUBLIC void linphone_error_info_set(LinphoneErrorInfo *ei, const char *
  * @param[in] appended_ei #LinphoneErrorInfo to append 
  */
 LINPHONE_PUBLIC void linphone_error_info_set_sub_error_info(LinphoneErrorInfo *ei, LinphoneErrorInfo *appended_ei);
+
+/**
+* Assign retry-after value to a #LinphoneErrorInfo object.
+* @param[in] ei     ErrorInfo object
+* @param[in] retry_after the retry-after value
+*/
+LINPHONE_PUBLIC void linphone_error_info_set_retry_after(LinphoneErrorInfo *ei, int retry_after);
 
 /**
  * Assign reason #LinphoneReason to a #LinphoneErrorInfo object.

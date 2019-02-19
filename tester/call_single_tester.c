@@ -1108,6 +1108,67 @@ static void call_declined_with_error(void) {
 	linphone_core_manager_destroy(caller_mgr);
 }
 
+static void call_declined_with_retry_after(void) {
+	LinphoneCoreManager* callee_mgr = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* caller_mgr = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	
+	LinphoneCall* in_call = NULL;
+	LinphoneCall* out_call = linphone_core_invite_address(caller_mgr->lc,callee_mgr->identity);
+	LinphoneFactory* factory = linphone_factory_get();
+	const LinphoneErrorInfo* rcvd_ei;
+	const LinphoneErrorInfo* sub_rcvd_ei;
+	
+	LinphoneErrorInfo *ei = linphone_factory_create_error_info(factory);
+	LinphoneErrorInfo *reason_ei = linphone_factory_create_error_info(factory);
+	
+	linphone_error_info_set(ei, "SIP", LinphoneReasonDeclined,  603, "Decline", NULL); //ordre des arguments à vérifier
+	linphone_error_info_set(reason_ei, "hardware", LinphoneReasonDeclined,  66, "J'ai plus de batterie", NULL);
+	
+	BC_ASSERT_TRUE(linphone_error_code_is_retry_after(linphone_error_info_get_protocol_code(ei)));
+	linphone_error_info_set_retry_after(ei, 120);
+	
+	linphone_error_info_set_sub_error_info(ei, reason_ei);
+	
+	BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallIncomingReceived,1));
+	BC_ASSERT_PTR_NOT_NULL(in_call=linphone_core_get_current_call(callee_mgr->lc));
+	
+	linphone_call_ref(out_call);
+	BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallOutgoingRinging,1));
+	BC_ASSERT_PTR_NOT_NULL(in_call=linphone_core_get_current_call(callee_mgr->lc));
+	if (in_call) {
+		linphone_call_ref(in_call);
+		linphone_call_decline_with_error_info(in_call, ei);
+		
+		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallEnd,1));
+		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallEnd,1));
+		
+		rcvd_ei = linphone_call_get_error_info(out_call);
+		sub_rcvd_ei = linphone_error_info_get_sub_error_info(rcvd_ei);
+		
+		BC_ASSERT_STRING_EQUAL(linphone_error_info_get_phrase(rcvd_ei), "Decline");
+		BC_ASSERT_STRING_EQUAL(linphone_error_info_get_protocol(rcvd_ei), "SIP");
+		BC_ASSERT_STRING_EQUAL(linphone_error_info_get_phrase(sub_rcvd_ei), "J'ai plus de batterie");
+		BC_ASSERT_STRING_EQUAL(linphone_error_info_get_protocol(sub_rcvd_ei), "hardware");
+		BC_ASSERT_GREATER(linphone_error_info_get_retry_after(rcvd_ei), 0, int, "%d");
+		
+		BC_ASSERT_EQUAL(linphone_call_get_reason(in_call),LinphoneReasonDeclined, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(in_call)),LinphoneCallDeclined, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_get_reason(out_call),LinphoneReasonDeclined, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(out_call)),LinphoneCallDeclined, int, "%d");
+		
+		
+		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallReleased,1));
+		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallReleased,1));
+		linphone_call_unref(in_call);
+	}
+	linphone_call_unref(out_call);
+	linphone_error_info_unref(reason_ei);
+	linphone_error_info_unref(ei);
+	
+	linphone_core_manager_destroy(callee_mgr);
+	linphone_core_manager_destroy(caller_mgr);
+}
+
 static void call_declined_base(bool_t use_timeout) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -5141,6 +5202,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call declined", call_declined),
 	TEST_NO_TAG("Call declined on timeout",call_declined_on_timeout),
 	TEST_NO_TAG("Call declined with error", call_declined_with_error),
+	TEST_NO_TAG("Call declined with retry after", call_declined_with_retry_after),
 	TEST_NO_TAG("Cancelled call", cancelled_call),
 	TEST_NO_TAG("Early cancelled call", early_cancelled_call),
 	TEST_NO_TAG("Call with DNS timeout", call_with_dns_time_out),
