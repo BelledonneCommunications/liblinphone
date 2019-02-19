@@ -707,6 +707,7 @@ struct _LinphoneErrorInfo{
 	char *phrase; /*from SIP response*/
 	char *warnings; /*from SIP response*/
 	char *full_string; /*concatenation of status_string + warnings*/
+	int retry_after;
 	struct _LinphoneErrorInfo *sub_ei;
 };
 
