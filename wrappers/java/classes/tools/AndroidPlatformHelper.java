@@ -140,7 +140,7 @@ public class AndroidPlatformHelper {
 		try {
 			copyAssetsFromPackage();
 		} catch (IOException e) {
-			Log.e("AndroidPlatformHelper(): failed to install some resources.");
+			Log.e("[Platform Helper] failed to install some resources.");
 		}
 	}
 
@@ -181,7 +181,7 @@ public class AndroidPlatformHelper {
 		for (InetAddress address : inetServers) {
 			servers[i++] = address.getHostAddress();
 		}
-		Log.i("getDnsServers() returning");
+		Log.i("[Platform Helper] getDnsServers() returning");
 		return servers;
 	}
 
@@ -198,6 +198,14 @@ public class AndroidPlatformHelper {
 	}
 
 	public String getDownloadPath() {
+		if (Build.VERSION.SDK_INT >= 23) {
+			// This check seems mandatory for auto download to work...
+			int write_permission = mContext.getPackageManager().checkPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, mContext.getPackageName());
+			Log.i("[Platform Helper] WRITE_EXTERNAL_STORAGE permission is " + (write_permission == android.content.pm.PackageManager.PERMISSION_GRANTED ? "granted" : "denied"));
+		}
+		if (!Environment.getExternalStorageDirectory().canWrite()) {
+			Log.w("[Platform Helper] We aren't allowed to write in external storage directory !");
+		}
 		String downloadPath = Environment.getExternalStorageDirectory() + "/" + mContext.getString(mResources.getIdentifier("app_name", "string", mContext.getPackageName()));
 		File dir = new File(downloadPath);
 		if (!dir.exists()) {
@@ -212,52 +220,52 @@ public class AndroidPlatformHelper {
 	}
 
 	public void acquireWifiLock() {
-		Log.i("acquireWifiLock()");
+		Log.i("[Platform Helper] acquireWifiLock()");
 		mWifiLock.acquire();
 	}
 
 	public void releaseWifiLock() {
-		Log.i("releaseWifiLock()");
+		Log.i("[Platform Helper] releaseWifiLock()");
 		mWifiLock.release();
 	}
 
 	public void acquireMcastLock() {
-		Log.i("acquireMcastLock()");
+		Log.i("[Platform Helper] acquireMcastLock()");
 		mMcastLock.acquire();
 	}
 
 	public void releaseMcastLock() {
-		Log.i("releaseMcastLock()");
+		Log.i("[Platform Helper] releaseMcastLock()");
 		mMcastLock.release();
 	}
 
 	public void acquireCpuLock() {
-		Log.i("acquireCpuLock()");
+		Log.i("[Platform Helper] acquireCpuLock()");
 		mWakeLock.acquire();
 	}
 
 	public void releaseCpuLock() {
-		Log.i("releaseCpuLock()");
+		Log.i("[Platform Helper] releaseCpuLock()");
 		mWakeLock.release();
 	}
 
 	private int getResourceIdentifierFromName(String name) {
 		int resId = mResources.getIdentifier(name, "raw", mContext.getPackageName());
 		if (resId == 0) {
-			Log.d("App doesn't seem to embed resource " + name + " in it's res/raw/ directory, use linphone's instead");
+			Log.d("[Platform Helper] App doesn't seem to embed resource " + name + " in it's res/raw/ directory, use linphone's instead");
 			resId = mResources.getIdentifier(name, "raw", "org.linphone");
 			if (resId == 0) {
-				Log.i("App doesn't seem to embed resource " + name + " in it's res/raw/ directory. Make sure this file is either brought as an asset or a resource");
+				Log.i("[Platform Helper] App doesn't seem to embed resource " + name + " in it's res/raw/ directory. Make sure this file is either brought as an asset or a resource");
 			}
 		}
 		return resId;
 	}
 
 	private void copyAssetsFromPackage() throws IOException {
-		Log.i("Starting copy from assets to application files directory");
+		Log.i("[Platform Helper] Starting copy from assets to application files directory");
 		copyAssetsFromPackage(mContext, "org.linphone.core",".");
-		Log.i("Copy from assets done");
-		Log.i("Starting copy from legacy  resources to application files directory");
+		Log.i("[Platform Helper] Copy from assets done");
+		Log.i("[Platform Helper] Starting copy from legacy  resources to application files directory");
 		/*legacy code for 3.X*/
 		copyEvenIfExists(getResourceIdentifierFromName("cpim_grammar"), mGrammarCpimFile);
 		copyEvenIfExists(getResourceIdentifierFromName("vcard_grammar"), mGrammarVcardFile);
@@ -266,7 +274,7 @@ public class AndroidPlatformHelper {
 		copyEvenIfExists(getResourceIdentifierFromName("ringback"), mRingbackSoundFile);
 		copyEvenIfExists(getResourceIdentifierFromName("hold"), mPauseSoundFile);
 		copyEvenIfExists(getResourceIdentifierFromName("incoming_chat"), mErrorToneFile);
-		Log.i("Copy from legacy resources done");
+		Log.i("[Platform Helper] Copy from legacy resources done");
 	}
 
 	public void copyEvenIfExists(int ressourceId, String target) throws IOException {
@@ -283,7 +291,7 @@ public class AndroidPlatformHelper {
 
 	public void copyFromPackage(int ressourceId, File target) throws IOException {
 		if (ressourceId == 0) {
-			Log.i("Resource identifier null for target ["+target.getName()+"]");
+			Log.i("[Platform Helper] Resource identifier null for target ["+target.getName()+"]");
 			return;
 		}
 		if (!target.getParentFile().exists())
@@ -331,7 +339,7 @@ public class AndroidPlatformHelper {
 
 	public synchronized void setVideoPreviewView(Object view) {
 		if (!(view instanceof TextureView)) {
-			throw new RuntimeException("Preview window id is not an instance of TextureView. " +
+			throw new RuntimeException("[Platform Helper] Preview window id is not an instance of TextureView. " +
 				"Please update your UI layer so that the preview video view is a TextureView (or an instance of it)" +
 				"or enable compatibility mode by setting displaytype=MSAndroidOpenGLDisplay in the [video] section your linphonerc factory configuration file" +
 				"so you can keep using your existing application code for managing video views.");
@@ -340,7 +348,7 @@ public class AndroidPlatformHelper {
 		textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
 			@Override
 			public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-				Log.i("Preview window surface is available");
+				Log.i("[Platform Helper] Preview window surface is available");
 				setNativePreviewWindowId(mNativePtr, surface);
 			}
 
@@ -351,7 +359,7 @@ public class AndroidPlatformHelper {
 
 			@Override
 			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-				Log.i("Preview window surface is no longer available");
+				Log.i("[Platform Helper] Preview window surface is no longer available");
 				setNativePreviewWindowId(mNativePtr, null);
 				return false;
 			}
@@ -362,14 +370,14 @@ public class AndroidPlatformHelper {
 			}
 		});
 		if (textureView.isAvailable()) {
-			Log.i("Preview window surface is available");
+			Log.i("[Platform Helper] Preview window surface is available");
 			setNativePreviewWindowId(mNativePtr, textureView.getSurfaceTexture());
 		}
 	}
 
 	public synchronized void setVideoRenderingView(Object view) {
 		if (!(view instanceof TextureView)) {
-			throw new RuntimeException("Rendering window id is not an instance of TextureView." +
+			throw new RuntimeException("[Platform Helper] Rendering window id is not an instance of TextureView." +
 				"Please update your UI layer so that the video rendering view is a TextureView (or an instance of it)" +
 				"or enable compatibility mode by setting displaytype=MSAndroidOpenGLDisplay in the [video] section your linphonerc factory configuration file" +
 				"so you can keep using your existing application code for managing video views.");
@@ -378,7 +386,7 @@ public class AndroidPlatformHelper {
 		textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
 			@Override
 			public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-				Log.i("Rendering window surface is available");
+				Log.i("[Platform Helper] Rendering window surface is available");
 				mSurfaceTexture = surface;
 				mSurface = new Surface(mSurfaceTexture);
 				setNativeVideoWindowId(mNativePtr, mSurface);
@@ -392,7 +400,7 @@ public class AndroidPlatformHelper {
 			@Override
 			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
 				if (mSurfaceTexture == surface) {
-					Log.i("Rendering window surface is no longer available");
+					Log.i("[Platform Helper] Rendering window surface is no longer available");
 					setNativeVideoWindowId(mNativePtr, null);
 					mSurfaceTexture = null;
 				}
@@ -405,7 +413,7 @@ public class AndroidPlatformHelper {
 			}
 		});
 		if (textureView.isAvailable()) {
-			Log.i("Rendering window surface is available");
+			Log.i("[Platform Helper] Rendering window surface is available");
 			mSurfaceTexture = textureView.getSurfaceTexture();
 			mSurface = new Surface(mSurfaceTexture);
 			setNativeVideoWindowId(mNativePtr, mSurface);
@@ -431,7 +439,7 @@ public class AndroidPlatformHelper {
 		if (connected && Build.VERSION.SDK_INT >= Version.API23_MARSHMALLOW_60){
 			ProxyInfo proxy = mConnectivityManager.getDefaultProxy();
 			if (proxy != null && proxy.getHost() != null){
-				Log.i("The active network is using an http proxy: " + proxy.toString());
+				Log.i("[Platform Helper] The active network is using an http proxy: " + proxy.toString());
 				setHttpProxy(mNativePtr, proxy.getHost(), proxy.getPort());
 				mUsingHttpProxy = true;
 			}else{
@@ -441,17 +449,17 @@ public class AndroidPlatformHelper {
 		}
 
 		if (networkInfo == null || !connected) {
-			Log.i("No connectivity: setting network unreachable");
+			Log.i("[Platform Helper] No connectivity: setting network unreachable");
 			setNetworkReachable(mNativePtr, false);
 		} else if (dozeModeEnabled) {
-			Log.i("Doze Mode enabled: shutting down network");
+			Log.i("[Platform Helper] Doze Mode enabled: shutting down network");
 			setNetworkReachable(mNativePtr, false);
 		} else if (connected) {
 			if (mWifiOnly) {
 				if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
 					setNetworkReachable(mNativePtr, true);
 				} else {
-					Log.i("Wifi-only mode, setting network not reachable");
+					Log.i("[Platform Helper] Wifi-only mode, setting network not reachable");
 					setNetworkReachable(mNativePtr, false);
 				}
 			} else {
@@ -460,7 +468,7 @@ public class AndroidPlatformHelper {
 				if (curtype != mLastNetworkType || mUsingHttpProxy != usingHttpProxyBefore) {
 					//if kind of network has changed, we need to notify network_reachable(false) to make sure all current connections are destroyed.
 					//they will be re-created during setNetworkReachable(true).
-					Log.i("Connectivity has changed.");
+					Log.i("[Platform Helper] Connectivity has changed.");
 					setNetworkReachable(mNativePtr, false);
 				}
 				setNetworkReachable(mNativePtr, true);
