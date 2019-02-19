@@ -38,6 +38,8 @@ class IsComposingMessage;
 
 class ChatRoomPrivate : public AbstractChatRoomPrivate, public IsComposingListener {
 public:
+	ChatRoomPrivate (AbstractChatRoom::CapabilitiesMask value) { capabilities = value; }
+	
 	inline void setProxyChatRoom (AbstractChatRoom *value) { proxyChatRoom = value; }
 
 	inline void setCreationTime (time_t creationTime) override {
@@ -101,6 +103,7 @@ public:
 
 protected:
 	AbstractChatRoom *proxyChatRoom = nullptr;
+	AbstractChatRoom::CapabilitiesMask capabilities;
 
 private:
 	ChatRoom::State state = ChatRoom::State::None;

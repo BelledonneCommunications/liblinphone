@@ -294,14 +294,10 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId,
 	bool hasBeenLeft
-) : ChatRoom(*new ClientGroupChatRoomPrivate, core, conferenceId),
+) : ChatRoom(*new ClientGroupChatRoomPrivate(capabilities), core, conferenceId),
 RemoteConference(core, me->getAddress(), nullptr) {
-	L_D();
 	L_D_T(RemoteConference, dConference);
 
-	d->capabilities |=
-		(capabilities & ClientGroupChatRoom::Capabilities::OneToOne) |
-		(capabilities & ClientGroupChatRoom::Capabilities::Encrypted);
 	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
 	dConference->focus = make_shared<Participant>(this, peerAddress);
 	dConference->focus->getPrivate()->addDevice(peerAddress);
