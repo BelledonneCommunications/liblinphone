@@ -217,21 +217,21 @@ LINPHONE_PUBLIC LinphoneEventCbs *linphone_event_get_callbacks(const LinphoneEve
  * @param[in] ev LinphoneEvent object
  * @param[in] cbs The LinphoneEventCbs object to add
 **/
-void linphone_event_add_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
+LINPHONE_PUBLIC void linphone_event_add_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
 
 /**
  * Removes a LinphoneEventCbs object associated with a LinphoneEvent.
  * @param[in] ev LinphoneEvent object
  * @param[in] cbs The LinphoneEventCbs object to remove
 **/
-void linphone_event_remove_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
+LINPHONE_PUBLIC void linphone_event_remove_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
 
 /**
  * Get the current LinphoneEventCbs object associated with a LinphoneEvent.
  * @param[in] ev LinphoneEvent object
  * @return The current LinphoneEventCbs object associated with the LinphoneEvent.
 **/
-LinphoneEventCbs *linphone_event_get_current_callbacks(const LinphoneEvent *ev);
+LINPHONE_PUBLIC LinphoneEventCbs *linphone_event_get_current_callbacks(const LinphoneEvent *ev);
 
 /**
  * Acquire a reference to a LinphoneEventCbs object.
