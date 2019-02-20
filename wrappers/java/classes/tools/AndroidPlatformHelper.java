@@ -24,7 +24,7 @@ import org.linphone.core.Core;
 import org.linphone.core.tools.DozeReceiver;
 import org.linphone.core.tools.NetworkManager;
 import org.linphone.core.tools.NetworkManagerAbove21;
-import org.linphone.mediastream.Log;
+import org.linphone.core.tools.Log;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.Version;
 
