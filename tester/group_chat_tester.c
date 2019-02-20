@@ -2866,7 +2866,11 @@ static void group_chat_room_unique_one_to_one_chat_room_base(bool_t secondDevice
 	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
 
-	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
+	const LinphoneAddress *tmpConfAddr = linphone_chat_room_get_conference_address(marieCr);
+	if (!tmpConfAddr) {
+		goto end;
+	}
+	LinphoneAddress *confAddr = linphone_address_clone(tmpConfAddr);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
@@ -2919,6 +2923,7 @@ static void group_chat_room_unique_one_to_one_chat_room_base(bool_t secondDevice
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 
 	linphone_address_unref(confAddr);
+end:
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
