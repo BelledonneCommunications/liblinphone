@@ -4,7 +4,7 @@ package org.linphone.core.tools;
 import android.os.Build;
 
 import org.linphone.core.Core;
-import org.linphone.mediastream.Log;
+import org.linphone.core.tools.Log;
 
 /**
  * Created by brieucviel on 09/12/2016.

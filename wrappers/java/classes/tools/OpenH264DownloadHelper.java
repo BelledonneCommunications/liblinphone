@@ -32,7 +32,7 @@ import java.util.ArrayList;
 
 import org.apache.commons.compress.compressors.bzip2.*;
 import org.linphone.core.tools.OpenH264DownloadHelperListener;
-import org.linphone.mediastream.Log;
+import org.linphone.core.tools.Log;
 
 /**
  * @author Erwan Croze
