@@ -33,7 +33,9 @@
 	F(TerminationFailed /**< The chat room termination failed */) \
 	F(Deleted /**< Chat room was deleted on the server */)
 
+//To be deprecated
 #define L_ENUM_VALUES_CHAT_ROOM_CAPABILITIES(F) \
+	F(None /**< No capabilities. */, 0) \
 	F(Basic /**< No server. It&apos;s a direct communication */, 1 << 0) \
 	F(RealTimeText /**< Supports RTT */, 1 << 1) \
 	F(Conference /**< Use server (supports group chat) */, 1 << 2) \
@@ -41,5 +43,13 @@
 	F(Migratable /**< Chat room migratable from Basic to Conference */, 1 << 4) \
 	F(OneToOne /**< A communication between two participants (can be Basic or Conference) */, 1 << 5) \
 	F(Encrypted /**< Chat room is encrypted */, 1 << 6)
+
+#define L_ENUM_VALUES_CHAT_ROOM_IMPL(F) \
+	F(Basic /**< Basic (client-to-client) chat room. */, 1 << 0) \
+	F(FlexisipChat /**< Server-based chat room. */, 1 << 1)
+
+#define L_ENUM_VALUES_CHAT_ROOM_ENCRYPTION_IMPL(F) \
+	F(None /**< No encryption. */, 0) \
+	F(Lime /**< Lime x3dh encryption. */, 1 << 0)
 
 #endif // ifndef _L_CHAT_ROOM_ENUMS_H_

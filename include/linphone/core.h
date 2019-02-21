@@ -5292,7 +5292,49 @@ LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_create_client_group_chat_room(L
  * @param[in] encrypted Boolean value telling whether we should apply encryption or not on chat messages sent and received on this room.
  * @return The newly created client-side group chat room.
  */
-LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_client_group_chat_room_2 (LinphoneCore *lc, const char *subject, bool_t fallback, bool_t encrypted);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_create_client_group_chat_room_2(LinphoneCore *lc, const char *subject, bool_t fallback, bool_t encrypted);
+
+//TO DELETE
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_client_group_chat_room_3(LinphoneCore *lc, const char *subject, LinphoneChatRoomCapabilitiesMask capabilities, bool_t fallback);
+
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_client_group_chat_room_4(LinphoneCore *lc, const char *subject, const LinphoneAddress *localAddress, LinphoneChatRoomCapabilitiesMask capabilities);
+
+/**
+ * Create a chat room.
+ *
+ * @param[in] lc A #LinphoneCore object
+ * @param[in] params The chat room creation parameters #LinphoneChatRoomParams
+ * @param[in] subject The subject of the group chat room
+ * @param[in] participants \bctbx_list{char *} The initial list of participants of the chat room
+ * @return The newly created chat room.
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room(LinphoneCore *lc, const LinphoneChatRoomParams *params, const char *subject, const bctbx_list_t *participants);
+
+/**
+ *
+ * @param[in] lc A #LinphoneCore object
+ * @param[in] subject The subject of the group chat room
+ * @param[in] participants \bctbx_list{char *} The initial list of participants of the chat room
+ * @return The newly created chat room.
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_2(LinphoneCore *lc, const char *subject, const bctbx_list_t *participants);
+
+/**
+ *
+ * @param[in] lc A #LinphoneCore object
+ * @param[in] params The chat room creation parameters #LinphoneChatRoomParams
+ * @param[in] participant #LinphoneAddress representing the initial participant to add to the chat room
+ * @return The newly created chat room.
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_3(LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *participant);
+
+/**
+ *
+ * @param[in] lc A #LinphoneCore object
+ * @param[in] participant #LinphoneAddress representing the initial participant to add to the chat room
+ * @return The newly created chat room.
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_4(LinphoneCore *lc, const LinphoneAddress *participant);
 
 /**
  * Get a basic chat room whose peer is the supplied address. If it does not exist yet, it will be created.

@@ -20,6 +20,7 @@
 #ifndef _L_CHAT_ROOM_H_
 #define _L_CHAT_ROOM_H_
 
+#include "chat-room-params.h"
 #include "abstract-chat-room.h"
 
 // =============================================================================
@@ -80,6 +81,8 @@ public:
 	) const override;
 
 	void markAsRead () override;
+
+	const ChatRoomParams *getCurrentParams() const override;
 
 protected:
 	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId);

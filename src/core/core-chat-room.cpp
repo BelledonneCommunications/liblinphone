@@ -22,6 +22,7 @@
 #include "linphone/utils/algorithm.h"
 
 #include "address/identity-address.h"
+#include "chat/chat-room/abstract-chat-room.h"
 #include "chat/chat-room/basic-chat-room.h"
 #include "chat/chat-room/basic-to-client-group-chat-room.h"
 #include "chat/chat-room/chat-room-p.h"
@@ -103,11 +104,13 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 	return chatRoom;
 }
 
+
+///
 shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	const string &subject,
 	const ConferenceId &conferenceId,
 	const Content &content,
-	bool encrypted
+	ChatRoom::CapabilitiesMask capabilities
 ) {
 	L_Q();
 
@@ -117,7 +120,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 		conferenceId,
 		subject,
 		content,
-		encrypted
+		capabilities
 	));
 
 	clientGroupChatRoom->getPrivate()->setState(ChatRoom::State::Instantiated);
@@ -126,7 +129,11 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	return clientGroupChatRoom;
 }
 
-shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const string &subject, bool fallback, bool encrypted) {
+shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom(const string &subject, bool fallback) {
+	return createClientGroupChatRoom(subject, ChatRoom::Capabilities::None, fallback);
+}
+
+shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const string &subject, ChatRoom::CapabilitiesMask capabilities, bool fallback) {
 	L_Q();
 
 	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(q->getCCore());
@@ -138,7 +145,19 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const strin
 		? contactAddr
 		: linphone_proxy_config_get_identity_address(proxy)
 	);
+	if (!me)
+		return nullptr;
+	return createClientGroupChatRoom(subject, me, capabilities, fallback);
+}
 
+shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const string &subject, const Address *localAddress, ChatRoom::CapabilitiesMask capabilities, bool fallback) {
+	L_Q();
+
+	if (!localAddress)
+		return nullptr; //Or return with default proxy config like above ?
+	LinphoneProxyConfig *proxy = linphone_core_lookup_proxy_by_identity(q->getCCore(), L_GET_C_BACK_PTR(localAddress));
+	if (!proxy)
+		return nullptr;
 	const char *conferenceFactoryUri = linphone_proxy_config_get_conference_factory_uri(proxy);
 	if (!conferenceFactoryUri)
 		return nullptr;
@@ -146,13 +165,13 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const strin
 	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(
 		q->getSharedFromThis(),
 		conferenceFactoryUri,
-		IdentityAddress(*me),
+		*localAddress,
 		subject,
-		encrypted
+		capabilities
 	));
 
 	shared_ptr<AbstractChatRoom> chatRoom;
-	if (fallback) {
+	if (fallback && (clientGroupChatRoom->getCapabilities() & ClientGroupChatRoom::Capabilities::OneToOne)) {
 		// Create a ClientGroupToBasicChatRoom to handle fallback from ClientGroupChatRoom to BasicGroupChatRoom if
 		// only one participant is invited and that it does not support group chat.
 		chatRoom = make_shared<ClientGroupToBasicChatRoom>(clientGroupChatRoom);
@@ -165,6 +184,26 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (const strin
 	chatRoom->getPrivate()->setState(ChatRoom::State::Instantiated);
 	noCreatedClientGroupChatRooms[chatRoom.get()] = chatRoom;
 	return chatRoom;
+}
+
+shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const ChatRoomParams *params, const std::string &subject, const std::list<Address> &participants) {
+	//TODO
+	return nullptr;
+}
+
+shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const std::string &subject, const std::list<Address> &participants) {
+	//TODO
+	return nullptr;
+}
+
+shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const ChatRoomParams *params, const IdentityAddress &participant) {
+	//TODO
+	return nullptr;
+}
+
+shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const IdentityAddress &participant) {
+	//TODO
+	return nullptr;
 }
 
 void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) {
@@ -287,10 +326,44 @@ shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 	return nullptr;
 }
 
-shared_ptr<AbstractChatRoom> Core::createClientGroupChatRoom (const string &subject, bool fallback, bool encrypted) {
-	L_D();
-	return d->createClientGroupChatRoom(subject, fallback, encrypted);
+shared_ptr<AbstractChatRoom> Core::createClientGroupChatRoom (const std::string &subject, bool fallback) {
+	return Core::createClientGroupChatRoom(subject, L_GET_ENUM_VALUE(ChatRoom::Capabilities::None), fallback);
 }
+
+shared_ptr<AbstractChatRoom> Core::createClientGroupChatRoom (const std::string &subject, LinphoneChatRoomCapabilitiesMask capabilities, bool fallback) {
+	L_D();
+
+	return d->createClientGroupChatRoom(subject, capabilities, fallback);
+}
+
+shared_ptr<AbstractChatRoom> Core::createClientGroupChatRoom (const std::string &subject, const Address *localAddress, LinphoneChatRoomCapabilitiesMask capabilities, bool fallback) {
+	L_D();
+	return d->createClientGroupChatRoom(subject, localAddress, capabilities, fallback);
+}
+
+//Start WIP
+
+// shared_ptr<AbstractChatRoom> Core::createChatRoom(const ChatRoomParams &params, const std::string &subject, const std::list<IdentityAddress> &participants) {
+// 	L_D();
+// 	return d->createChatRoom(params, subject, participants);
+// }
+
+// shared_ptr<AbstractChatRoom> Core::createChatRoom(const std::string &subject, const std::list<IdentityAddress> &participants) {
+// 	L_D();
+// 	return d->createChatRoom(subject, participants);
+// }
+
+// shared_ptr<AbstractChatRoom> Core::createChatRoom(const ChatRoomParams &params, const IdentityAddress &participant) {
+// 	L_D();
+// 	return d->createChatRoom(params, participant);
+// }
+
+// shared_ptr<AbstractChatRoom> Core::createChatRoom(const IdentityAddress &participant) {
+// 	L_D();
+// 	return d->createChatRoom(participant);
+// }
+
+//End WIP
 
 shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt) {
 	L_D();
