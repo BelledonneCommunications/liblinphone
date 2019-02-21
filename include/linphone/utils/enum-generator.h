@@ -85,6 +85,15 @@ struct IsDefinedEnum {
 	enum { value = sizeof(getEnumValueAsString(std::declval<T>())) == sizeof(const char *) };
 };
 
+//Explicit conversion from enum type to underlying type
+template<typename T>
+constexpr auto to_integral(T e) -> typename std::underlying_type<T>::type
+{
+	return static_cast<typename std::underlying_type<T>::type>(e);
+}
+
+#define L_GET_ENUM_VALUE(VALUE)	to_integral(VALUE)
+
 #endif
 
 #define L_C_ENUM_PREFIX Linphone
