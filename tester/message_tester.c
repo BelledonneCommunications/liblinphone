@@ -261,10 +261,10 @@ static void text_message_with_send_error(void) {
 	const char *message_id_2 = linphone_chat_message_get_message_id(msg);
 	BC_ASSERT_STRING_NOT_EQUAL(message_id_2, "");
 
+	BC_ASSERT_STRING_EQUAL(message_id, message_id_2);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageDelivered,1));
 	/*BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageInProgress,1, int, "%d");*/
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageReceived, 1, int, "%d");
-	BC_ASSERT_STRING_NOT_EQUAL(message_id, message_id_2);
 
 	/*give a chance to register again to allow linphone_core_manager_destroy to properly unregister*/
 	linphone_core_refresh_registers(marie->lc);

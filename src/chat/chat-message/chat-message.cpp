@@ -146,6 +146,14 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		" to " << Utils::toString(newState);
 	state = newState;
 
+	if (state == ChatMessage::State::NotDelivered) {
+		if (salOp) {
+			salOp->setUserPointer(nullptr);
+			salOp->unref();
+			salOp = nullptr;
+		}
+	}
+
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
 	if (linphone_chat_message_get_message_state_changed_cb(msg))
 		linphone_chat_message_get_message_state_changed_cb(msg)(
@@ -706,6 +714,8 @@ void ChatMessagePrivate::send () {
 	SalOp *op = salOp;
 	LinphoneCall *lcall = nullptr;
 	int errorCode = 0;
+	// Remove the sent flag so the message will be sent by the OP in case of resend
+	currentSendStep &= (unsigned char)~ChatMessagePrivate::Step::Sent;
 
 	currentSendStep |= ChatMessagePrivate::Step::Started;
 	q->getChatRoom()->getPrivate()->addTransientChatMessage(q->getSharedFromThis());
