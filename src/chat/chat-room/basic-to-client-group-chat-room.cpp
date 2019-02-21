@@ -20,6 +20,7 @@
 #include "basic-to-client-group-chat-room.h"
 #include "proxy-chat-room-p.h"
 #include "client-group-chat-room-p.h"
+#include "chat-room-params.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "conference/participant.h"
 #include "conference/session/call-session.h"
@@ -56,6 +57,7 @@ public:
 
 	void sendChatMessage (const shared_ptr<ChatMessage> &chatMessage) override {
 		L_Q();
+
 		ProxyChatRoomPrivate::sendChatMessage(chatMessage);
 		const list<string> &specs = chatMessage->getCore()->getSpecsList();
 		time_t currentRealTime = ms_time(nullptr);
@@ -65,27 +67,29 @@ public:
 		LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(q->getCore()->getCCore(), lAddr);
 		linphone_address_unref(lAddr);
 		const char *conferenceFactoryUri = nullptr;
-		if (proxy)
+		if (proxy) {
 			conferenceFactoryUri = linphone_proxy_config_get_conference_factory_uri(proxy);
+		}
 		if (!conferenceFactoryUri
-			|| (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference)
-			|| clientGroupChatRoom
-			|| findIf(specs, [] (const string &spec) { return spec.find("groupchat") != string::npos;}) == specs.cend()
-			|| ((currentRealTime - migrationRealTime) <
-				linphone_config_get_int(linphone_core_get_config(chatMessage->getCore()->getCCore()),
-					"misc", "basic_to_client_group_chat_room_migration_timer", 86400) // Try migration every 24 hours
-				)
-		) {
+		    || (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference)
+		    || clientGroupChatRoom
+		    || findIf(specs, [] (const string &spec) { return spec.find("groupchat") != string::npos;}) == specs.cend()
+		    || ((currentRealTime - migrationRealTime) <
+			linphone_config_get_int(linphone_core_get_config(chatMessage->getCore()->getCCore()),
+						"misc", "basic_to_client_group_chat_room_migration_timer", 86400) // Try migration every 24 hours
+			)
+   	        ) {
 			return;
 		}
 		migrationRealTime = currentRealTime;
 		clientGroupChatRoom = static_pointer_cast<ClientGroupChatRoom>(
-			chatRoom->getCore()->getPrivate()->createClientGroupChatRoom(chatRoom->getSubject(), false, false)
+		       //make sure to have a one2one chatroom
+		       chatRoom->getCore()->getPrivate()->createChatRoom(
+			   ChatRoomParams::create(chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted, false, ChatRoomParams::ChatRoomBackend::FlexisipChat), chatRoom->getLocalAddress(), chatRoom->getSubject(), {Address(chatRoom->getPeerAddress())}
+		       )
 		);
 		clientGroupChatRoom->getPrivate()->setCallSessionListener(this);
 		clientGroupChatRoom->getPrivate()->setChatRoomListener(this);
-		clientGroupChatRoom->getPrivate()->addOneToOneCapability(); //make sure to have a one2one chatroom
-		clientGroupChatRoom->addParticipant(chatRoom->getPeerAddress(), nullptr, false);
 	}
 
 	void onCallSessionStateChanged (
@@ -121,8 +125,11 @@ BasicToClientGroupChatRoom::CapabilitiesMask BasicToClientGroupChatRoom::getCapa
 	L_D();
 	CapabilitiesMask capabilities = d->chatRoom->getCapabilities();
 	capabilities.set(Capabilities::Proxy);
-	if (capabilities.isSet(Capabilities::Basic))
+	if (capabilities.isSet(Capabilities::Basic)) {
 		capabilities.set(Capabilities::Migratable);
+	} else {
+		capabilities.set(Capabilities::Conference);
+	}
 	return capabilities;
 }
 

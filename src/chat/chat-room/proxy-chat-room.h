@@ -114,6 +114,8 @@ public:
 	void join () override;
 	void leave () override;
 
+	const std::shared_ptr<ChatRoomParams> &getCurrentParams() const override;
+
 	const std::shared_ptr<AbstractChatRoom> &getProxiedChatRoom () const;
 
 protected:

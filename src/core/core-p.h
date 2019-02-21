@@ -68,16 +68,41 @@ public:
 	void loadChatRooms ();
 	void insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
 	void insertChatRoomWithDb (const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
-	std::shared_ptr<AbstractChatRoom> createBasicChatRoom (const ConferenceId &conferenceId, AbstractChatRoom::CapabilitiesMask capabilities);
+	std::shared_ptr<AbstractChatRoom> createBasicChatRoom (const ConferenceId &conferenceId, AbstractChatRoom::CapabilitiesMask capabilities, const std::shared_ptr<ChatRoomParams> &params);
 
+	//Base
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (
 		const std::string &subject,
+		const IdentityAddress &conferenceFactoryUri,
 		const ConferenceId &conferenceId,
 		const Content &content,
-		bool encrypted
+		AbstractChatRoom::CapabilitiesMask capabilities,
+		const std::shared_ptr<ChatRoomParams> &params,
+		bool fallback
 	);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject,
+								     const IdentityAddress &conferenceFactoryUri,
+								     const ConferenceId &conferenceId,
+								     const Content &content,
+								     bool encrypted);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject,
+								     const ConferenceId &conferenceId,
+								     const Content &content,
+								     bool encrypted);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject, bool fallback, bool encrypted);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject, const Address *localAddress, AbstractChatRoom::CapabilitiesMask capabilities, bool fallback);
 
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, bool fallback, bool encrypted);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
+							 const IdentityAddress &localAddr,
+							 const std::string &subject,
+							 const std::list<IdentityAddress> &participants);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
+							 const std::string &subject,
+							 const std::list<IdentityAddress> &participants);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::string &subject,
+							 const std::list<IdentityAddress> &participants);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params, const IdentityAddress &localAddr, const IdentityAddress &participant);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const IdentityAddress &participant);
 
 	void replaceChatRoom (const std::shared_ptr<AbstractChatRoom> &replacedChatRoom, const std::shared_ptr<AbstractChatRoom> &newChatRoom);
 	void doLater(const std::function<void ()> &something);
@@ -104,7 +129,8 @@ private:
 
 	std::list<std::string> specs;
 
-	// Ugly cache to deal with C code.
+	// This is to keep a ref on a clientGroupChatRoom while it is being created
+	// Otherwise the chatRoom will be freed() before it is inserted
 	std::unordered_map<const AbstractChatRoom *, std::shared_ptr<const AbstractChatRoom>> noCreatedClientGroupChatRooms;
 
 	L_DECLARE_PUBLIC(Core);

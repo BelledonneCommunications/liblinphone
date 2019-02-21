@@ -355,10 +355,11 @@ LinphoneChatRoom *ChatRoomPrivate::getCChatRoom () const {
 
 // =============================================================================
 
-ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ConferenceId &conferenceId) :
+ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params) :
 	AbstractChatRoom(p, core) {
 	L_D();
 
+	d->params = params;
 	d->conferenceId = conferenceId;
 	d->imdnHandler.reset(new Imdn(this));
 	d->isComposingHandler.reset(new IsComposing(core->getCCore(), d));
@@ -367,6 +368,9 @@ ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const Conf
 ChatRoom::~ChatRoom () {
 	L_D();
 
+	if (d->params) {
+		d->params.reset();
+	}
 	d->imdnHandler.reset();
 }
 
@@ -533,6 +537,12 @@ void ChatRoom::markAsRead () {
 		chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
 
 	dCore->mainDb->markChatMessagesAsRead(d->conferenceId);
+}
+
+const std::shared_ptr<ChatRoomParams> &ChatRoom::getCurrentParams() const {
+	L_D();
+
+	return d->params;
 }
 
 LINPHONE_END_NAMESPACE

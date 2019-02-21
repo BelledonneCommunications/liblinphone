@@ -103,8 +103,7 @@ static void group_chat_lime_x3dh_change_server_url(void) {
 	//Wait for lime users to be created on X3DH server
 	wait_for_list(coresList, &dummy, 1, x3dhServerDelay);
 
-	//Now create an encrypted chatroom to check that marie can
-	//Marie creates an encrypted chatroom
+	//Now create an encrypted chatroom to check that marie can create an encrypted chatroom
 	const char *initialSubject = "Encrypted Friends";
 	participantsAddresses = bctbx_list_append(NULL, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	marieEncryptedCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
@@ -119,6 +118,7 @@ static void group_chat_lime_x3dh_change_server_url(void) {
 	if (marieEncryptedCr) linphone_core_manager_delete_chat_room(marie, marieEncryptedCr, coresList);
 	if (paulineEncryptedCr) linphone_core_manager_delete_chat_room(pauline, paulineEncryptedCr, coresList);
 
+	linphone_address_unref(encryptedConfAddr);
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);

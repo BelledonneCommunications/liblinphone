@@ -310,7 +310,10 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 		};
 	}
 
-	linphone_account_creator_create_account(creator);
+
+	if (linphone_account_creator_create_account(creator) ==	LinphoneAccountCreatorStatusMissingCallbacks) {
+		ms_fatal("Could not create account %s on db (missing callbacks)", linphone_proxy_config_get_identity(cfg));
+	}
 
 	if (wait_for_until(lc, NULL, &state.account_created, TRUE, 15000) == FALSE)
 		ms_fatal("Could not create account %s on db", linphone_proxy_config_get_identity(cfg));
