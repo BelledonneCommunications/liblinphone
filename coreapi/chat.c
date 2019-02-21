@@ -37,6 +37,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
+#include "chat/chat-room/chat-room-params.h"
 #include "chat/chat-room/basic-chat-room.h"
 #include "chat/chat-room/client-group-chat-room.h"
 #include "chat/chat-room/client-group-to-basic-chat-room.h"
@@ -44,6 +45,7 @@
 #include "chat/chat-room/real-time-text-chat-room.h"
 #include "content/content-type.h"
 #include "core/core-p.h"
+#include "linphone/api/c-chat-room-params.h"
 
 using namespace std;
 
@@ -95,13 +97,46 @@ LinphoneChatRoom *linphone_core_get_chat_room_2 (
 	)));
 }
 
-LinphoneChatRoom *linphone_core_create_client_group_chat_room (LinphoneCore *lc, const char *subject, bool_t fallback) {
-	return L_GET_C_BACK_PTR(L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom(L_C_TO_STRING(subject), !!fallback, false));
+//Deprecated
+LinphoneChatRoom *linphone_core_create_client_group_chat_room(LinphoneCore *lc, const char *subject, bool_t fallback) {
+	return linphone_core_create_chat_room_2(lc, subject, NULL);
 }
 
-LinphoneChatRoom *linphone_core_create_client_group_chat_room_2 (LinphoneCore *lc, const char *subject, bool_t fallback, bool_t encrypted) {
-	return L_GET_C_BACK_PTR(L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom(L_C_TO_STRING(subject), !!fallback, !!encrypted));
+//Deprecated
+LinphoneChatRoom *linphone_core_create_client_group_chat_room_2(LinphoneCore *lc, const char *subject, bool_t fallback, bool_t encrypted) {
+	LinphoneChatRoomParams *params = linphone_core_get_default_chat_room_params(lc);
+
+	linphone_chat_room_params_enable_encryption(params, encrypted);
+	return linphone_core_create_chat_room(lc, params, subject, NULL);
 }
+
+//start WIP
+
+LinphoneChatRoom *linphone_core_create_chat_room(LinphoneCore *lc, const LinphoneChatRoomParams *params, const char *subject, const bctbx_list_t *participants) {
+	return L_GET_C_BACK_PTR(L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(LinphonePrivate::ChatRoomParams::toCpp(params), L_C_TO_STRING(subject), L_GET_RESOLVED_CPP_LIST_FROM_C_LIST(participants, Address)));
+}
+
+LinphoneChatRoom *linphone_core_create_chat_room_2(LinphoneCore *lc, const char *subject, const bctbx_list_t *participants) {
+	return L_GET_C_BACK_PTR(L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(L_C_TO_STRING(subject), L_GET_RESOLVED_CPP_LIST_FROM_C_LIST(participants, Address)));
+}
+
+LinphoneChatRoom *linphone_core_create_chat_room_3(LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *participant) {
+	return L_GET_C_BACK_PTR(L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(LinphonePrivate::ChatRoomParams::toCpp(params), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(participant))));
+}
+
+LinphoneChatRoom *linphone_core_create_chat_room_4(LinphoneCore *lc, const LinphoneAddress *participant) {
+	return L_GET_C_BACK_PTR(L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(participant))));
+}
+
+LinphoneChatRoomParams *linphone_core_get_default_chat_room_params(LinphoneCore *lc) {
+	(void) lc; //Unused for now - Maybe init default with enabled capacities of core (for encryption/group chat)
+	LinphoneChatRoomParams *defaults = linphone_chat_room_params_new(); //Default constructor inits params with defaults
+
+	//(LinphonePrivate::ChatRoomParams::toCpp(defaults))->initDefault();
+	return defaults;
+}
+
+//End WIP
 
 LinphoneChatRoom *_linphone_core_create_server_group_chat_room (LinphoneCore *lc, LinphonePrivate::SalCallOp *op) {
 	return _linphone_server_group_chat_room_new(lc, op);
@@ -155,9 +190,9 @@ LinphoneReason linphone_core_message_received(LinphoneCore *lc, LinphonePrivate:
 	LinphoneReason reason = LinphoneReasonNotAcceptable;
 	std::string peerAddress;
 	std::string localAddress;
-	
+
 	const char *session_mode = sal_custom_header_find(op->getRecvCustomHeaders(), "Session-mode");
-	
+
 	if (linphone_core_conference_server_enabled(lc)) {
 		localAddress = peerAddress = op->getTo();
 	} else {
