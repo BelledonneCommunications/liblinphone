@@ -83,6 +83,10 @@ static list<LinphonePrivate::IdentityAddress> _get_identity_address_list_from_ad
 // Public functions.
 // =============================================================================
 
+const LinphoneChatRoomParams *linphone_chat_room_get_current_params(LinphoneChatRoom *cr) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCurrentParams()->toC();
+}
+
 void linphone_chat_room_send_message (LinphoneChatRoom *cr, const char *msg) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createChatMessage(msg)->send();
 }

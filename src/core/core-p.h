@@ -74,10 +74,20 @@ public:
 		const std::string &subject,
 		const ConferenceId &conferenceId,
 		const Content &content,
-		bool encrypted
+		AbstractChatRoom::CapabilitiesMask capabilities
 	);
 
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, bool fallback, bool encrypted);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject, bool fallback);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject, AbstractChatRoom::CapabilitiesMask capabilities, bool fallback);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject, const Address *localAddress, AbstractChatRoom::CapabilitiesMask capabilities, bool fallback);
+
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const ChatRoomParams *params,
+							 const std::string &subject,
+							 const std::list<Address> &participants);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::string &subject,
+							 const std::list<Address> &participants);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const ChatRoomParams *params, const IdentityAddress &participant);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const IdentityAddress &participant);
 
 	void replaceChatRoom (const std::shared_ptr<AbstractChatRoom> &replacedChatRoom, const std::shared_ptr<AbstractChatRoom> &newChatRoom);
 	void doLater(const std::function<void ()> &something);

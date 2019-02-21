@@ -46,7 +46,12 @@ extern "C" {
 **/
 LINPHONE_PUBLIC const bctbx_list_t* linphone_core_get_chat_rooms(LinphoneCore *lc);
 
-
+/**
+ * Returns the default chat room parameters.
+ * @param[in] lc #LinphoneCore object
+ * @return LinphoneChatRoomParams
+**/
+LINPHONE_PUBLIC LinphoneChatRoomParams *linphone_core_get_default_chat_room_params(LinphoneCore *lc);
 
 /**
  * @}
