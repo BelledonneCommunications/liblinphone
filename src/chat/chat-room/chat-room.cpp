@@ -536,4 +536,9 @@ void ChatRoom::markAsRead () {
 	dCore->mainDb->markChatMessagesAsRead(d->conferenceId);
 }
 
+const ChatRoomParams *ChatRoom::getCurrentParams() const {
+	L_D();
+	return d->params;
+}
+
 LINPHONE_END_NAMESPACE

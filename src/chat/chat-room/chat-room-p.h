@@ -98,6 +98,7 @@ public:
 	std::list<std::shared_ptr<ChatMessage>> transientMessages;
 
 	ConferenceId conferenceId;
+	ChatRoomParams *params;
 
 protected:
 	AbstractChatRoom *proxyChatRoom = nullptr;

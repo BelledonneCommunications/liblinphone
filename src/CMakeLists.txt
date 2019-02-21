@@ -92,6 +92,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/chat-message/is-composing-message.h
 	chat/chat-message/notification-message-p.h
 	chat/chat-message/notification-message.h
+	chat/chat-room/chat-room-params.h
 	chat/chat-room/abstract-chat-room-p.h
 	chat/chat-room/abstract-chat-room.h
 	chat/chat-room/basic-chat-room-p.h
@@ -241,6 +242,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-call.cpp
 	c-wrapper/api/c-chat-message-cbs.cpp
 	c-wrapper/api/c-chat-message.cpp
+	c-wrapper/api/c-chat-room-params.cpp
 	c-wrapper/api/c-chat-room-cbs.cpp
 	c-wrapper/api/c-chat-room.cpp
 	c-wrapper/api/c-content.cpp

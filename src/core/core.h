@@ -33,6 +33,7 @@ L_DECL_C_STRUCT(LinphoneCore);
 
 LINPHONE_BEGIN_NAMESPACE
 
+class ChatRoomParams;
 class AbstractChatRoom;
 class Address;
 class Call;
@@ -115,12 +116,28 @@ public:
 		bool encrypted
 	) const;
 
-	// TODO add createClientGroupChatRoom with local address
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, bool fallback = true, bool encrypted = false);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject, bool fallback = true);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject,
+								     LinphoneChatRoomCapabilitiesMask capabilities,
+								     bool fallback = true);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject,
+								     const Address *localAddress,
+								     LinphoneChatRoomCapabilitiesMask capabilities,
+								     bool fallback = true);
+
+
+	/* std::shared_ptr<AbstractChatRoom> createChatRoom(const ChatRoomParams *params, */
+	/* 						 const std::string &subject, */
+	/* 						 const std::list<Address> &participants); */
+	/* std::shared_ptr<AbstractChatRoom> createChatRoom(const std::string &subject, */
+	/* 						 const std::list<Address> &participants); */
+	/* std::shared_ptr<AbstractChatRoom> createChatRoom(const ChatRoomParams *params, const IdentityAddress &participant); */
+	/* std::shared_ptr<AbstractChatRoom> createChatRoom(const IdentityAddress &participant); */
+
 
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt = false);
 
-	// TODO: Remove me in the future, a chatroom is identified by a local and peer address now!
+	//TODO: Remove me in the future, a chatroom is identified by a local and peer address now!
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const IdentityAddress &peerAddress, bool isRtt = false);
 
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoomFromUri (const std::string &uri, bool isRtt = false);
@@ -168,7 +185,6 @@ public:
 	Address interpretUrl (const std::string &url) const;
 	// Execute specified lambda later in main loop. This method can be used from any thread to execute something later on main thread.
 	void doLater(const std::function<void ()> &something);
-	
 
 private:
 	Core ();
