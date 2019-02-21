@@ -33,6 +33,7 @@ LINPHONE_BEGIN_NAMESPACE
 class AbstractChatRoomPrivate;
 class ConferenceId;
 class EventLog;
+class ChatRoomParams;
 
 class LINPHONE_PUBLIC AbstractChatRoom : public Object, public CoreAccessor, public ConferenceInterface {
 	friend class ChatMessage;
@@ -100,6 +101,8 @@ public:
 	) const = 0;
 
 	virtual void markAsRead () = 0;
+
+	virtual const ChatRoomParams *getCurrentParams() const = 0;
 
 protected:
 	explicit AbstractChatRoom (AbstractChatRoomPrivate &p, const std::shared_ptr<Core> &core);

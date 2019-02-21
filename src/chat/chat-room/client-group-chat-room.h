@@ -89,7 +89,7 @@ private:
 		const ConferenceId &conferenceId,
 		const std::string &subject,
 		const Content &content,
-		bool encrypted
+		CapabilitiesMask capabilities
 	);
 
 	ClientGroupChatRoom (
@@ -97,7 +97,7 @@ private:
 		const std::string &factoryUri,
 		const IdentityAddress &me,
 		const std::string &subject,
-		bool encrypted
+		CapabilitiesMask capabilities
 	);
 
 	// Create a chat room from the main database.
