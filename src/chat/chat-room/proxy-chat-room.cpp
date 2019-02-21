@@ -39,7 +39,7 @@ void ProxyChatRoomPrivate::teardownProxy () {
 
 // -----------------------------------------------------------------------------
 
- ProxyChatRoom::ProxyChatRoom (ProxyChatRoomPrivate &p, const shared_ptr<ChatRoom> &chatRoom) :
+ProxyChatRoom::ProxyChatRoom (ProxyChatRoomPrivate &p, const shared_ptr<ChatRoom> &chatRoom) :
 	AbstractChatRoom(p, chatRoom->getCore()) {
 	L_D();
 	d->chatRoom = chatRoom;
@@ -317,6 +317,11 @@ void ProxyChatRoom::leave () {
 const shared_ptr<AbstractChatRoom> &ProxyChatRoom::getProxiedChatRoom () const {
 	L_D();
 	return d->chatRoom;
+}
+
+const ChatRoomParams *ProxyChatRoom::getCurrentParams() const {
+	L_D();
+	return d->chatRoom->getCurrentParams();
 }
 
 LINPHONE_END_NAMESPACE
