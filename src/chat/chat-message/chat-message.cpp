@@ -144,6 +144,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	// 2. Update state and notify changes.
 	lInfo() << "Chat message " << this << ": moving from " << Utils::toString(state) <<
 		" to " << Utils::toString(newState);
+	ChatMessage::State oldState = state;
 	state = newState;
 
 	if (state == ChatMessage::State::NotDelivered) {
@@ -178,6 +179,14 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		if ((state == ChatMessage::State::Displayed) && (direction == ChatMessage::Direction::Incoming) && (!hasFileTransferContent())) {
 			// Wait until all files are downloaded before sending displayed IMDN
 			static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
+		}
+		if (state == ChatMessage::State::Delivered && oldState == ChatMessage::State::Idle 
+			&& direction == ChatMessage::Direction::Incoming && !dbKey.isValid()) {
+			// If we're here it's because message is because we're in the middle of the receive() method and
+			// we won't have a valid dbKey until the chat room callback asking if message should be store will be called
+			// and that's happen in the notifyReceiving() called at the of the receive() method we're in.
+			// This prevents the error log: Invalid db key [%p] associated to message [%p]
+			return;
 		}
 		updateInDb();
 	}
@@ -915,7 +924,7 @@ void ChatMessagePrivate::storeInDb () {
 	if (!chatRoom) return;
 
 	AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
-	dChatRoom->addEvent(eventLog);
+	dChatRoom->addEvent(eventLog); // From this point forward the chat message will have a valid dbKey
 
 	if (direction == ChatMessage::Direction::Incoming) {
 		if (hasFileTransferContent()) {
