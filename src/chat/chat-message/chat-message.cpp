@@ -77,6 +77,11 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 	if (!dbKey.isValid())
 		return;
 
+	if (q->getChatRoom()->getCapabilities().isSet(ChatRoom::Capabilities::Basic)) {
+		// Basic Chat Room doesn't support participant state
+		return;
+	}
+
 	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
 	shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(dbKey);
 	ChatMessage::State currentState = mainDb->getChatMessageParticipantState(eventLog, participantAddress);
