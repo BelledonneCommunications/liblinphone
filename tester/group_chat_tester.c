@@ -31,7 +31,7 @@
 #pragma warning(disable : 4996)
 #endif
 
-static const char sFactoryUri[] = "sip:conference-factory@conf.example.org";
+const char * sFactoryUri = "sip:conference-factory@conf.example.org";
 
 static void chat_room_is_composing_received (LinphoneChatRoom *cr, const LinphoneAddress *remoteAddr, bool_t isComposing) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
