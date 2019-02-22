@@ -887,9 +887,14 @@ void ChatMessagePrivate::send () {
 	internalContent.setBody("");
 	internalContent.setContentType(ContentType(""));
 
-	if (imdnId.empty())
+	if (imdnId.empty()) {
 		setImdnMessageId(op->getCallId());   /* must be known at that time */
-	updateInDb(); // Update IMDN message ID in DB, TODO: update only the message ID, do not rewrite the contents
+	}
+	
+	if (toBeStored) {
+		// Composing messages and IMDN aren't stored in DB so do not try, it will log an error message Invalid db key for nothing.
+		updateInDb();
+	}
 
 	if (lcall && linphone_call_get_op(lcall) == op) {
 		/* In this case, chat delivery status is not notified, so unrefing chat message right now */
