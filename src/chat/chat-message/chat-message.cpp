@@ -79,6 +79,7 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 
 	if (q->getChatRoom()->getCapabilities().isSet(ChatRoom::Capabilities::Basic)) {
 		// Basic Chat Room doesn't support participant state
+		setState(newState);
 		return;
 	}
 
