@@ -28,6 +28,7 @@
 #include "chat/chat-room/client-group-chat-room-p.h"
 #include "chat/chat-room/client-group-to-basic-chat-room.h"
 #include "chat/chat-room/real-time-text-chat-room.h"
+#include "conference/handlers/remote-conference-list-event-handler.h"
 #include "conference/participant.h"
 #include "core-p.h"
 #include "logger/logger.h"
@@ -190,6 +191,9 @@ void CorePrivate::insertChatRoomWithDb (const shared_ptr<AbstractChatRoom> &chat
 void CorePrivate::loadChatRooms () {
 	chatRooms.clear();
 	chatRoomsById.clear();
+	if (remoteListEventHandler)
+		remoteListEventHandler->clearHandlers();
+
 	if (!mainDb->isInitialized()) return;
 	for (auto &chatRoom : mainDb->getChatRooms()) {
 		insertChatRoom(chatRoom);
