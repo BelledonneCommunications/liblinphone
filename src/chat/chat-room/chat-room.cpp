@@ -53,7 +53,6 @@ void ChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> &chatMessag
 
 	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 	dChatMessage->setTime(ms_time(0));
-	dChatMessage->setImdnMessageId(""); // in case of "message resent"
 	dChatMessage->send();
 
 	LinphoneChatRoom *cr = getCChatRoom();

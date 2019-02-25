@@ -240,6 +240,8 @@ static void text_message_with_send_error(void) {
 	sal_set_send_error(linphone_core_get_sal(marie->lc), -1);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);
+	const char *message_id = linphone_chat_message_get_message_id(msg);
+	BC_ASSERT_STRING_NOT_EQUAL(message_id, "");
 
 	/* check transient msg list: the msg should be in it, and should be the only one */
 	BC_ASSERT_EQUAL(_linphone_chat_room_get_transient_message_count(chat_room), 1, int, "%d");
@@ -253,6 +255,16 @@ static void text_message_with_send_error(void) {
 	BC_ASSERT_EQUAL(_linphone_chat_room_get_transient_message_count(chat_room), 0, int, "%d");
 
 	sal_set_send_error(linphone_core_get_sal(marie->lc), 0);
+
+	// resend the message
+	linphone_chat_message_send(msg);
+	const char *message_id_2 = linphone_chat_message_get_message_id(msg);
+	BC_ASSERT_STRING_NOT_EQUAL(message_id_2, "");
+
+	BC_ASSERT_STRING_EQUAL(message_id, message_id_2);
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageDelivered,1));
+	/*BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageInProgress,1, int, "%d");*/
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageReceived, 1, int, "%d");
 
 	/*give a chance to register again to allow linphone_core_manager_destroy to properly unregister*/
 	linphone_core_refresh_registers(marie->lc);
@@ -415,6 +427,8 @@ void transfer_message_base(
 		linphone_core_set_max_size_for_auto_download_incoming_files(marie->lc, auto_download);
 
 		transfer_message_base2(marie,pauline,upload_error,download_error, use_file_body_handler_in_upload, use_file_body_handler_in_download, download_from_history, auto_download);
+		// Give some time for IMDN's 200 OK to be received so it doesn't leak
+		wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
 		linphone_core_manager_destroy(pauline);
 		linphone_core_manager_destroy(marie);
 	}

@@ -77,6 +77,12 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 	if (!dbKey.isValid())
 		return;
 
+	if (q->getChatRoom()->getCapabilities().isSet(ChatRoom::Capabilities::Basic)) {
+		// Basic Chat Room doesn't support participant state
+		setState(newState);
+		return;
+	}
+
 	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
 	shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(dbKey);
 	ChatMessage::State currentState = mainDb->getChatMessageParticipantState(eventLog, participantAddress);
@@ -144,7 +150,16 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	// 2. Update state and notify changes.
 	lInfo() << "Chat message " << this << ": moving from " << Utils::toString(state) <<
 		" to " << Utils::toString(newState);
+	ChatMessage::State oldState = state;
 	state = newState;
+
+	if (state == ChatMessage::State::NotDelivered) {
+		if (salOp) {
+			salOp->setUserPointer(nullptr);
+			salOp->unref();
+			salOp = nullptr;
+		}
+	}
 
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
 	if (linphone_chat_message_get_message_state_changed_cb(msg))
@@ -170,6 +185,14 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		if ((state == ChatMessage::State::Displayed) && (direction == ChatMessage::Direction::Incoming) && (!hasFileTransferContent())) {
 			// Wait until all files are downloaded before sending displayed IMDN
 			static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
+		}
+		if (state == ChatMessage::State::Delivered && oldState == ChatMessage::State::Idle 
+			&& direction == ChatMessage::Direction::Incoming && !dbKey.isValid()) {
+			// If we're here it's because message is because we're in the middle of the receive() method and
+			// we won't have a valid dbKey until the chat room callback asking if message should be store will be called
+			// and that's happen in the notifyReceiving() called at the of the receive() method we're in.
+			// This prevents the error log: Invalid db key [%p] associated to message [%p]
+			return;
 		}
 		updateInDb();
 	}
@@ -706,6 +729,8 @@ void ChatMessagePrivate::send () {
 	SalOp *op = salOp;
 	LinphoneCall *lcall = nullptr;
 	int errorCode = 0;
+	// Remove the sent flag so the message will be sent by the OP in case of resend
+	currentSendStep &= (unsigned char)~ChatMessagePrivate::Step::Sent;
 
 	currentSendStep |= ChatMessagePrivate::Step::Started;
 	q->getChatRoom()->getPrivate()->addTransientChatMessage(q->getSharedFromThis());
@@ -868,9 +893,14 @@ void ChatMessagePrivate::send () {
 	internalContent.setBody("");
 	internalContent.setContentType(ContentType(""));
 
-	if (imdnId.empty())
+	if (imdnId.empty()) {
 		setImdnMessageId(op->getCallId());   /* must be known at that time */
-	updateInDb(); // Update IMDN message ID in DB, TODO: update only the message ID, do not rewrite the contents
+	}
+	
+	if (toBeStored) {
+		// Composing messages and IMDN aren't stored in DB so do not try, it will log an error message Invalid db key for nothing.
+		updateInDb();
+	}
 
 	if (lcall && linphone_call_get_op(lcall) == op) {
 		/* In this case, chat delivery status is not notified, so unrefing chat message right now */
@@ -905,7 +935,7 @@ void ChatMessagePrivate::storeInDb () {
 	if (!chatRoom) return;
 
 	AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
-	dChatRoom->addEvent(eventLog);
+	dChatRoom->addEvent(eventLog); // From this point forward the chat message will have a valid dbKey
 
 	if (direction == ChatMessage::Direction::Incoming) {
 		if (hasFileTransferContent()) {
