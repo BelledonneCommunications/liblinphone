@@ -48,6 +48,7 @@ public:
 	void notifyReceived (const Content *notifyContent);
 	void addHandler (RemoteConferenceEventHandler *handler);
 	void removeHandler (RemoteConferenceEventHandler *handler);
+	void clearHandlers ();
 	RemoteConferenceEventHandler *findHandler (const ConferenceId &conferenceId) const;
 	const std::list<RemoteConferenceEventHandler *> &getHandlers () const;
 
