@@ -229,6 +229,7 @@ static const char *_linphone_logging_service_log_domains[] = {
 	"bzrtp",
 	"tunnel",
 	"lime",
+	"linphone-android", // Used by Log.java in every java code + android app
 	BCTBX_LOG_DOMAIN,  /* which is "liblinphone", set from CMakeList.txt*/
 	NULL
 };

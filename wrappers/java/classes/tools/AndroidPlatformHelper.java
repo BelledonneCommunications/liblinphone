@@ -104,6 +104,7 @@ public class AndroidPlatformHelper {
 		mWifiOnly = wifiOnly;
 		mResources = mContext.getResources();
 		MediastreamerAndroidContext.setContext(mContext);
+		Log.i("[Platform Helper] Created");
 
 		mMainHandler = new Handler(mContext.getMainLooper());
 		mNetworkUpdateRunner = new Runnable() {
@@ -145,11 +146,13 @@ public class AndroidPlatformHelper {
 	}
 
 	public synchronized void onLinphoneCoreStart(boolean monitoringEnabled) {
+		Log.i("[Platform Helper] onLinphoneCoreStart, network monitoring is " + monitoringEnabled);
 		mMonitoringEnabled = monitoringEnabled;
 		startNetworkMonitoring();
 	}
 
 	public synchronized void onLinphoneCoreStop() {
+		Log.i("[Platform Helper] onLinphoneCoreStop, network monitoring is " + mMonitoringEnabled);
 		mNativePtr = 0;
 		mMainHandler.removeCallbacksAndMessages(null);
 		stopNetworkMonitoring();
@@ -428,6 +431,7 @@ public class AndroidPlatformHelper {
 	public synchronized void updateNetworkReachability() {
 		if (mConnectivityManager == null) return;
 		if (mNativePtr == 0) {
+			Log.w("[Platform Helper] Native pointer has been reset, stopping there");
 			return;
 		}
 
@@ -479,6 +483,7 @@ public class AndroidPlatformHelper {
 
 	public synchronized void setDozeModeEnabled(boolean b) {
 		dozeModeEnabled = b;
+		Log.i("[Platform Helper] Doze state is " + dozeModeEnabled);
 	}
 
 	private synchronized void startNetworkMonitoring() {
@@ -487,9 +492,11 @@ public class AndroidPlatformHelper {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
 			mNetworkReceiver = new NetworkManager(this);
 			mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+			Log.i("[Platform Helper] Registering network receiver");
 			mContext.registerReceiver(mNetworkReceiver, mNetworkIntentFilter);
 		} else {
 			mNetworkManagerAbove21 = new NetworkManagerAbove21(this);
+			Log.i("[Platform Helper] Registering network callbacks");
 			mNetworkManagerAbove21.registerNetworkCallbacks(mConnectivityManager);
 		}
 
@@ -498,23 +505,31 @@ public class AndroidPlatformHelper {
 			mDozeIntentFilter.addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED);
 			mDozeReceiver = new DozeReceiver(this);
 			dozeModeEnabled = ((PowerManager) mContext.getSystemService(Context.POWER_SERVICE)).isDeviceIdleMode();
+			Log.i("[Platform Helper] Registering doze receiver, current doze state is " + dozeModeEnabled);
 			mContext.registerReceiver(mDozeReceiver, mDozeIntentFilter);
 		}
 
 		postNetworkUpdateRunner();
 	}
 
-	private synchronized void stopNetworkMonitoring() {
-		if (!mMonitoringEnabled) return;
-		
+	private synchronized void stopNetworkMonitoring() {		
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-			mContext.unregisterReceiver(mNetworkReceiver);
+			if (mNetworkReceiver != null) {
+				Log.i("[Platform Helper] Unregistering network receiver");
+				mContext.unregisterReceiver(mNetworkReceiver);
+			}
 		} else {
-			mNetworkManagerAbove21.unregisterNetworkCallbacks(mConnectivityManager);
+			if (mConnectivityManager != null) {
+				Log.i("[Platform Helper] Unregistering network callbacks");
+				mNetworkManagerAbove21.unregisterNetworkCallbacks(mConnectivityManager);
+			}
 		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			mContext.unregisterReceiver(mDozeReceiver);
+			if (mDozeReceiver != null) {
+				Log.i("[Platform Helper] Unregistering doze receiver");
+				mContext.unregisterReceiver(mDozeReceiver);
+			}
 		}
 
 		mMonitoringEnabled = false;
