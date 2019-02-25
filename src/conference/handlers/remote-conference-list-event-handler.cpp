@@ -105,8 +105,11 @@ void RemoteConferenceListEventHandler::subscribe () {
 		return;
 
 	const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(cfg);
-	if (!factoryUri)
+	if (!factoryUri) {
+		lError() << "Couldn't send chat room list subscription because there's no conference factory uri";
 		return;
+	}
+
 	LinphoneAddress *rlsAddr = linphone_address_new(factoryUri);
 
 	lev = linphone_core_create_subscribe(lc, rlsAddr, "conference", 600);
