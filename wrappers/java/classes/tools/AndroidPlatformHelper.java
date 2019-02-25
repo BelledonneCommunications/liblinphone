@@ -461,6 +461,7 @@ public class AndroidPlatformHelper {
 		} else if (connected) {
 			if (mWifiOnly) {
 				if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+					Log.i("[Platform Helper] Network available through WiFi, network is reachable");
 					setNetworkReachable(mNativePtr, true);
 				} else {
 					Log.i("[Platform Helper] Wifi-only mode, setting network not reachable");
@@ -468,11 +469,12 @@ public class AndroidPlatformHelper {
 				}
 			} else {
 				int curtype = networkInfo.getType();
+				Log.i("[Platform Helper] Network type is " + networkInfo.getTypeName());
 
-				if (curtype != mLastNetworkType || mUsingHttpProxy != usingHttpProxyBefore) {
+				if ((curtype != mLastNetworkType && mLastNetworkType != -1) || mUsingHttpProxy != usingHttpProxyBefore) {
 					//if kind of network has changed, we need to notify network_reachable(false) to make sure all current connections are destroyed.
 					//they will be re-created during setNetworkReachable(true).
-					Log.i("[Platform Helper] Connectivity has changed.");
+					Log.i("[Platform Helper] Connectivity has changed, disable/enable network to force re-creating connections.");
 					setNetworkReachable(mNativePtr, false);
 				}
 				setNetworkReachable(mNativePtr, true);
@@ -483,7 +485,7 @@ public class AndroidPlatformHelper {
 
 	public synchronized void setDozeModeEnabled(boolean b) {
 		dozeModeEnabled = b;
-		Log.i("[Platform Helper] Doze state is " + dozeModeEnabled);
+		Log.i("[Platform Helper] Doze mode enabled: " + dozeModeEnabled);
 	}
 
 	private synchronized void startNetworkMonitoring() {

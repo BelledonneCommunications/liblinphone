@@ -40,11 +40,13 @@ public class NetworkManagerAbove21 {
 		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 			@Override
 			public void onAvailable(Network network) {
+				Log.i("[Platform Helper] Network is available");
 				helper.postNetworkUpdateRunner();
 			}
 
 			@Override
 			public void onLost(Network network) {
+				Log.i("[Platform Helper] Network is lost");
 				helper.postNetworkUpdateRunner();
 			}
 		};

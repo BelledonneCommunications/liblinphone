@@ -41,6 +41,7 @@ public class DozeReceiver extends android.content.BroadcastReceiver {
         PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             boolean dozeM = pm.isDeviceIdleMode();
+            Log.i("[Platform Helper] Doze mode enabled: " + dozeM);
             if (mHelper != null) {
                 mHelper.setDozeModeEnabled(dozeM);
                 mHelper.postNetworkUpdateRunner();

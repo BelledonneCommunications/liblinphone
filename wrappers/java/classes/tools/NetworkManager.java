@@ -40,6 +40,7 @@ public class NetworkManager extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         Boolean lNoConnectivity = intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
+        Log.i("[Platform Helper] Network connectivity disabled: " + lNoConnectivity);
         if (mHelper != null) {
             mHelper.postNetworkUpdateRunner();
         }
