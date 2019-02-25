@@ -263,7 +263,8 @@ RemoteConference(core, conferenceId.getLocalAddress(), nullptr) {
 	for (const auto &addr : Conference::parseResourceLists(content))
 		dConference->participants.push_back(make_shared<Participant>(this, addr));
 
-	if (encrypted)
+	//if preserve_backward_compatibility, force creation of secure room in all cases
+	if (encrypted || linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "lime", "preserve_backward_compatibility",FALSE))
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Encrypted;
 
 	dConference->focus = make_shared<Participant>(this, focus);
