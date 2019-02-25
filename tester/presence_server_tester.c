@@ -2251,6 +2251,67 @@ static void notify_friend_capabilities_after_publish(void) {
 	bctbx_list_free(lcs);
 }
 
+static void notify_friend_capabilities_with_alias(void) {
+	if (linphone_core_vcard_supported()) {
+		const LinphoneDialPlan *dialPlan;
+		const LinphoneDialPlan *genericDialPlan = linphone_dial_plan_by_ccc(NULL);
+
+		char phone[20];
+		char *e164;
+		size_t i;
+		LinphoneProxyConfig *proxy_config;
+		LinphoneFriend* friend2;
+		LinphoneCoreManager *marie = NULL;
+		char *identity = NULL;
+		bctbx_list_t *specs = NULL;
+
+		while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random() % 900)) == genericDialPlan);
+		/*now with have a dialplan*/
+		for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phone) - 1); i++) {
+			phone[i] = '0' + rand() % 10;
+		}
+		phone[i] = '\0';
+
+		e164 = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phone);
+
+		marie = linphone_core_manager_create2("marie_rc", e164);
+		linphone_core_set_user_agent(marie->lc, "full-presence-support-bypass", NULL);
+		specs = bctbx_list_append(specs, "groupchat/1.1");
+		specs = bctbx_list_append(specs, "lime/1.5");
+		linphone_core_set_linphone_specs_list(marie->lc, specs);
+		linphone_core_manager_start(marie, TRUE);
+		identity = linphone_address_as_string_uri_only(marie->identity);
+
+		LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+		linphone_core_set_user_agent(pauline->lc, "full-presence-support-bypass", NULL);
+
+		friend2 = linphone_core_create_friend(pauline->lc);
+		linphone_friend_add_phone_number(friend2, phone);
+		linphone_core_add_friend(pauline->lc, friend2);
+
+		linphone_friend_list_set_rls_uri(linphone_core_get_default_friend_list(pauline->lc), "sip:rls@sip.example.org");
+		proxy_config = linphone_core_get_default_proxy_config(pauline->lc);
+		linphone_proxy_config_edit(proxy_config);
+		linphone_proxy_config_set_dial_prefix(proxy_config, linphone_dial_plan_get_country_calling_code(dialPlan));
+		linphone_proxy_config_done(proxy_config);
+		linphone_friend_list_enable_subscriptions(linphone_core_get_default_friend_list(pauline->lc), TRUE);
+
+		BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphonePresenceActivityAway,1));
+		BC_ASSERT_TRUE(linphone_friend_has_capability(friend2, LinphoneFriendCapabilityGroupChat));
+		BC_ASSERT_TRUE(linphone_friend_has_capability(friend2, LinphoneFriendCapabilityLimeX3dh));
+		BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(friend2, LinphoneFriendCapabilityGroupChat, 1.1f));
+		BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(friend2, LinphoneFriendCapabilityLimeX3dh, 1.5f));
+
+		linphone_friend_unref(friend2);
+		belle_sip_object_remove_from_leak_detector((void*)dialPlan); //because mostCommon dial plan is a static object freed at the end of the process. This f is only to avoid wrong leak detection.
+		belle_sip_object_remove_from_leak_detector((void*)genericDialPlan);
+		linphone_core_manager_destroy(pauline);
+		ms_free(e164);
+		ms_free(identity);
+		linphone_core_manager_destroy(marie);
+	} else ms_warning("Test skipped, no vcard support");
+}
+
 test_t presence_server_tests[] = {
 	TEST_NO_TAG("Simple Publish", simple_publish),
 	TEST_NO_TAG("Publish with 2 identities", publish_with_dual_identity),
@@ -2285,7 +2346,8 @@ test_t presence_server_tests[] = {
 	TEST_ONE_TAG("Multiple bodyless list subscription", multiple_bodyless_list_subscription, "bodyless"),
 	TEST_ONE_TAG("Multiple bodyless list subscription with rc", multiple_bodyless_list_subscription_with_rc, "bodyless"),
 	TEST_NO_TAG("Notify LinphoneFriend capabilities", notify_friend_capabilities),
-	TEST_NO_TAG("Notify LinphoneFriend capabilities after PUBLISH", notify_friend_capabilities_after_publish)
+	TEST_NO_TAG("Notify LinphoneFriend capabilities after PUBLISH", notify_friend_capabilities_after_publish),
+	TEST_NO_TAG("Notify LinphoneFriend capabilities with alias", notify_friend_capabilities_with_alias)
 };
 
 test_suite_t presence_server_test_suite = {"Presence using server", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
