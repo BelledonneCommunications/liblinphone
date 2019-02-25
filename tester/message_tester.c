@@ -427,6 +427,8 @@ void transfer_message_base(
 		linphone_core_set_max_size_for_auto_download_incoming_files(marie->lc, auto_download);
 
 		transfer_message_base2(marie,pauline,upload_error,download_error, use_file_body_handler_in_upload, use_file_body_handler_in_download, download_from_history, auto_download);
+		// Give some time for IMDN's 200 OK to be received so it doesn't leak
+		wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
 		linphone_core_manager_destroy(pauline);
 		linphone_core_manager_destroy(marie);
 	}
