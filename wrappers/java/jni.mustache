@@ -539,6 +539,16 @@ JNIEXPORT jobject JNICALL Java_{{jni_package}}CoreImpl_getMediastreamerFactory(J
 {{#notEmpty}}
 JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 	{{#notStatic}}{{classCName}} *cptr = ({{classCName}}*)ptr;
+	{{#isLinphoneCore}}if (linphone_core_get_global_state(cptr) == LinphoneGlobalOff) {
+		{{#isNotLinphoneCoreStart}}env->ThrowNew(env->FindClass("org/linphone/core/CoreException"), "Core object has been stopped. Either start it again or create a new one.");
+		if (env->ExceptionCheck()) {
+			env->ExceptionDescribe();
+			env->ExceptionClear();
+		}
+		bctbx_error("Core is stopped, aborting {{c_name}} method call");{{/isNotLinphoneCoreStart}}
+	} else if (linphone_core_get_global_state(cptr) == LinphoneGlobalDestroyed) {
+		bctbx_fatal("Core has been completely destroyed, you shouldn't be here !");
+	}{{/isLinphoneCore}}
 	{{#isLinphoneFactory}}cptr = linphone_factory_get();{{/isLinphoneFactory}}
 	if (cptr == nullptr) {
 		bctbx_error("{{name}}'s {{classCName}} C ptr is null!");
