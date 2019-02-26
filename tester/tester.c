@@ -543,7 +543,8 @@ void linphone_core_manager_reinit(LinphoneCoreManager *mgr) {
 }
 
 void linphone_core_manager_restart(LinphoneCoreManager *mgr, bool_t check_for_proxies) {
-	linphone_core_manager_reinit(mgr);
+	//linphone_core_manager_reinit(mgr);
+	linphone_core_stop(mgr->lc);
 	linphone_core_manager_start(mgr, check_for_proxies);
 }
 
