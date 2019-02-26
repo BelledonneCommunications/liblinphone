@@ -86,6 +86,51 @@ static void core_init_test(void) {
 	/* until we have good certificates on our test server... */
 	linphone_core_verify_server_certificates(lc,FALSE);
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+		linphone_core_unref(lc);
+	}
+}
+
+static void core_init_stop_test(void) {
+	LinphoneCore* lc;
+	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL,liblinphone_tester_get_empty_rc(), NULL, system_context);
+
+	/* until we have good certificates on our test server... */
+	linphone_core_verify_server_certificates(lc,FALSE);
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+		linphone_core_stop(lc);
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOff, int, "%i");
+	}
+
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		linphone_core_unref(lc);
+	}
+}
+
+static void core_init_stop_start_test(void) {
+	LinphoneCore* lc;
+	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL,liblinphone_tester_get_empty_rc(), NULL, system_context);
+
+	/* until we have good certificates on our test server... */
+	linphone_core_verify_server_certificates(lc, FALSE);
+	const char *uuid = lp_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
+	BC_ASSERT_STRING_NOT_EQUAL(uuid, "");
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+		linphone_core_stop(lc);
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOff, int, "%i");
+	}
+
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		linphone_core_start(lc);
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+	}
+	const char *uuid2 = lp_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
+	BC_ASSERT_STRING_NOT_EQUAL(uuid2, "");
+	BC_ASSERT_STRING_EQUAL(uuid, uuid2);
+
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
 		linphone_core_unref(lc);
 	}
 }
@@ -1472,6 +1517,8 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Linphone proxy config address equal (internal api)", linphone_proxy_config_address_equal_test),
 	TEST_NO_TAG("Linphone proxy config server address change (internal api)", linphone_proxy_config_is_server_config_changed_test),
 	TEST_NO_TAG("Linphone core init/uninit", core_init_test),
+	TEST_NO_TAG("Linphone core init/stop/uninit", core_init_stop_test),
+	TEST_NO_TAG("Linphone core init/stop/start/uninit", core_init_stop_start_test),
 	TEST_NO_TAG("Linphone random transport port",core_sip_transport_test),
 	TEST_NO_TAG("Linphone interpret url", linphone_interpret_url_test),
 	TEST_NO_TAG("LPConfig from buffer", linphone_lpconfig_from_buffer),

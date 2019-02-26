@@ -509,7 +509,9 @@ typedef enum _LinphoneGlobalState {
 	LinphoneGlobalStartup,
 	LinphoneGlobalOn,
 	LinphoneGlobalShutdown,
-	LinphoneGlobalConfiguring
+	LinphoneGlobalConfiguring,
+	LinphoneGlobalReady,
+	LinphoneGlobalDestroyed
 } LinphoneGlobalState;
 
 /**
