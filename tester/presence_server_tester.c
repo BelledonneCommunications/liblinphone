@@ -2256,38 +2256,53 @@ static void notify_friend_capabilities_with_alias(void) {
 		const LinphoneDialPlan *dialPlan;
 		const LinphoneDialPlan *genericDialPlan = linphone_dial_plan_by_ccc(NULL);
 
-		char phone[20];
-		char *e164;
+		char phoneMarie[20];
+		char phoneLaure[20];
+		char *e164Marie;
+		char *e164Laure;
 		size_t i;
 		LinphoneProxyConfig *proxy_config;
-		LinphoneFriend* friend2;
+		LinphoneFriend* marieFriend;
+		LinphoneFriend* laureFriend;
 		LinphoneCoreManager *marie = NULL;
-		char *identity = NULL;
+		LinphoneCoreManager *laure = NULL;
 		bctbx_list_t *specs = NULL;
 
 		while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random() % 900)) == genericDialPlan);
 		/*now with have a dialplan*/
-		for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phone) - 1); i++) {
-			phone[i] = '0' + rand() % 10;
+		for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phoneMarie) - 1); i++) {
+			phoneMarie[i] = '0' + rand() % 10;
 		}
-		phone[i] = '\0';
+		phoneMarie[i] = '\0';
+		e164Marie = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phoneMarie);
 
-		e164 = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phone);
+		for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phoneLaure) - 1); i++) {
+			phoneLaure[i] = '0' + rand() % 10;
+		}
+		phoneLaure[i] = '\0';
+		e164Laure = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phoneLaure);
 
-		marie = linphone_core_manager_create2("marie_rc", e164);
+		marie = linphone_core_manager_create2("marie_rc", e164Marie);
 		linphone_core_set_user_agent(marie->lc, "full-presence-support-bypass", NULL);
 		specs = bctbx_list_append(specs, "groupchat/1.1");
 		specs = bctbx_list_append(specs, "lime/1.5");
 		linphone_core_set_linphone_specs_list(marie->lc, specs);
 		linphone_core_manager_start(marie, TRUE);
-		identity = linphone_address_as_string_uri_only(marie->identity);
+
+		laure = linphone_core_manager_create2("marie_rc", e164Laure);
+		linphone_core_set_user_agent(laure->lc, "full-presence-support-bypass", NULL);
+		linphone_core_manager_start(laure, TRUE);
 
 		LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 		linphone_core_set_user_agent(pauline->lc, "full-presence-support-bypass", NULL);
 
-		friend2 = linphone_core_create_friend(pauline->lc);
-		linphone_friend_add_phone_number(friend2, phone);
-		linphone_core_add_friend(pauline->lc, friend2);
+		marieFriend = linphone_core_create_friend(pauline->lc);
+		linphone_friend_add_phone_number(marieFriend, phoneMarie);
+		linphone_core_add_friend(pauline->lc, marieFriend);
+
+		laureFriend = linphone_core_create_friend(pauline->lc);
+		linphone_friend_add_phone_number(laureFriend, phoneLaure);
+		linphone_core_add_friend(pauline->lc, laureFriend);
 
 		linphone_friend_list_set_rls_uri(linphone_core_get_default_friend_list(pauline->lc), "sip:rls@sip.example.org");
 		proxy_config = linphone_core_get_default_proxy_config(pauline->lc);
@@ -2296,18 +2311,22 @@ static void notify_friend_capabilities_with_alias(void) {
 		linphone_proxy_config_done(proxy_config);
 		linphone_friend_list_enable_subscriptions(linphone_core_get_default_friend_list(pauline->lc), TRUE);
 
-		BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphonePresenceActivityAway,1));
-		BC_ASSERT_TRUE(linphone_friend_has_capability(friend2, LinphoneFriendCapabilityGroupChat));
-		BC_ASSERT_TRUE(linphone_friend_has_capability(friend2, LinphoneFriendCapabilityLimeX3dh));
-		BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(friend2, LinphoneFriendCapabilityGroupChat, 1.1f));
-		BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(friend2, LinphoneFriendCapabilityLimeX3dh, 1.5f));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, NULL, &pauline->stat.number_of_LinphonePresenceActivityAway, 2));
+		BC_ASSERT_TRUE(linphone_friend_has_capability(marieFriend, LinphoneFriendCapabilityGroupChat));
+		BC_ASSERT_TRUE(linphone_friend_has_capability(marieFriend, LinphoneFriendCapabilityLimeX3dh));
+		BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(marieFriend, LinphoneFriendCapabilityGroupChat, 1.1f));
+		BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(marieFriend, LinphoneFriendCapabilityLimeX3dh, 1.5f));
+		BC_ASSERT_FALSE(linphone_friend_has_capability(laureFriend, LinphoneFriendCapabilityGroupChat));
+		BC_ASSERT_FALSE(linphone_friend_has_capability(laureFriend, LinphoneFriendCapabilityLimeX3dh));
 
-		linphone_friend_unref(friend2);
+		linphone_friend_unref(marieFriend);
+		linphone_friend_unref(laureFriend);
 		belle_sip_object_remove_from_leak_detector((void*)dialPlan); //because mostCommon dial plan is a static object freed at the end of the process. This f is only to avoid wrong leak detection.
 		belle_sip_object_remove_from_leak_detector((void*)genericDialPlan);
 		linphone_core_manager_destroy(pauline);
-		ms_free(e164);
-		ms_free(identity);
+		ms_free(e164Laure);
+		linphone_core_manager_destroy(laure);
+		ms_free(e164Marie);
 		linphone_core_manager_destroy(marie);
 	} else ms_warning("Test skipped, no vcard support");
 }
