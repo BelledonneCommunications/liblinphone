@@ -1004,11 +1004,20 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_core_new(const Linpho
 LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_core_new_with_config(const LinphoneCoreVTable *vtable, LpConfig *config, void *userdata);
 
 /**
- * Start a #LinphoneCore object after it has been instantiated.
+ * Start a #LinphoneCore object after it has been instantiated and not automatically started.
+ * Also re-initialize a #LinphoneCore object that has been stopped using linphone_core_stop().
  * @ingroup initializing
  * @param[in] core The #LinphoneCore object to be started
  */
 LINPHONE_PUBLIC void linphone_core_start (LinphoneCore *core);
+
+/**
+ * Stop a #LinphoneCore object after it has been instantiated and started.
+ * If stopped, it can be started again using linphone_core_start().
+ * @ingroup initializing
+ * @param[in] core The #LinphoneCore object to be stopped
+ */
+LINPHONE_PUBLIC void linphone_core_stop (LinphoneCore *core);
 
 /**
  * Increment the reference counter of a #LinphoneCore object.
