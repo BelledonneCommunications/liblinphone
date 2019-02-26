@@ -250,6 +250,8 @@ class JavaTranslator(object):
         methodDict['className'] = className
         methodDict['classImplName'] = className + 'Impl'
         methodDict['isLinphoneFactory'] = (className == 'Factory')
+        methodDict['isLinphoneCore'] = (className == 'Core')
+        methodDict['isNotLinphoneCoreStart'] = (_method.name.to_c() != 'linphone_core_start')
         methodDict['jniPath'] = self.jni_path
 
         methodDict['return'] = _method.returnType.translate(self.langTranslator, jni=True, isReturn=True, namespace=namespace)
