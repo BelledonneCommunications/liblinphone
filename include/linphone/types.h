@@ -505,7 +505,7 @@ typedef enum _LinphoneFriendListSyncStatus {
  * @ingroup initializing
 **/
 typedef enum _LinphoneGlobalState {
-	/** Default state of the #LinphoneCore, will go in Ready state when either init or started */
+	/** State in which we're in after linphone_core_stop(). Do not call any method while in this state except for linphone_core_start() */
 	LinphoneGlobalOff,
 	/** Transient state for when we call linphone_core_start() */
 	LinphoneGlobalStartup,
@@ -515,7 +515,7 @@ typedef enum _LinphoneGlobalState {
 	LinphoneGlobalShutdown,
 	/** Transient state between Startup and On if there is a remote provisionning URI configured */
 	LinphoneGlobalConfiguring,
-	/** #LinphoneCore state at the end of the linphone_core_init(), generally followed by a call to linphone_core_start() */
+	/** #LinphoneCore state after being created by linphone_factory_create_core(), generally followed by a call to linphone_core_start() */
 	LinphoneGlobalReady
 } LinphoneGlobalState;
 
