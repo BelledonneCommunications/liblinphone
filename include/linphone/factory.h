@@ -109,6 +109,8 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_2
  * The #LinphoneCore object is the primary handle for doing all phone actions. It should be unique within your
  * application.
  * The #LinphoneCore object is not started automatically, you need to call linphone_core_start() to that effect.
+ * The returned #LinphoneCore will be in #LinphoneGlobalState Ready.
+ * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected languages.
  * @param[in] factory The #LinphoneFactory singleton.
  * @param[in] config_path A path to a config file. If it does not exists it will be created. The config file is used to
  * store all settings, proxies... so that all these settings become persistent over the life of the #LinphoneCore object.
@@ -175,6 +177,8 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_w
  * The #LinphoneCore object is the primary handle for doing all phone actions. It should be unique within your
  * application.
  * The #LinphoneCore object is not started automatically, you need to call linphone_core_start() to that effect.
+ * The returned #LinphoneCore will be in #LinphoneGlobalState Ready.
+ * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected languages.
  * @param[in] factory The #LinphoneFactory singleton.
  * @param[in] config A #LinphoneConfig object holding the configuration for the #LinphoneCore to be instantiated.
  * @param[in] system_context A pointer to a system object required by the core to operate. Currently it is required to

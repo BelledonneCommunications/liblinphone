@@ -1006,6 +1006,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_core_new_with_config(
 /**
  * Start a #LinphoneCore object after it has been instantiated and not automatically started.
  * Also re-initialize a #LinphoneCore object that has been stopped using linphone_core_stop().
+ * Must be called only if #LinphoneGlobalState is either Ready of Off. State will changed to Startup, Configuring and then On.
  * @ingroup initializing
  * @param[in] core The #LinphoneCore object to be started
  */
@@ -1014,6 +1015,7 @@ LINPHONE_PUBLIC void linphone_core_start (LinphoneCore *core);
 /**
  * Stop a #LinphoneCore object after it has been instantiated and started.
  * If stopped, it can be started again using linphone_core_start().
+ * Must be called only if #LinphoneGlobalState is either On. State will changed to Shutdown and then Off.
  * @ingroup initializing
  * @param[in] core The #LinphoneCore object to be stopped
  */

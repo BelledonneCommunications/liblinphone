@@ -2457,7 +2457,10 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 }
 
 void linphone_core_start (LinphoneCore *lc) {
-	if (lc->state == LinphoneGlobalShutdown) {
+	if (lc->state == LinphoneGlobalOn) {
+		bctbx_warning("Core is already started, skipping...");
+		return;
+	} else if (lc->state == LinphoneGlobalShutdown) {
 		bctbx_error("Can't start a Core that is stopping, wait for Off state");
 		return;
 	} else if (lc->state == LinphoneGlobalOff) {
