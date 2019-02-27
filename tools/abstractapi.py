@@ -1293,13 +1293,7 @@ class CSharpLangTranslator(CLikeLangTranslator):
 			else:
 				res = 'int'
 		elif _type.name == 'string':
-			if dllImport:
-				if type(_type.parent) is Argument:
-					return 'string'
-				else:
-					res = 'IntPtr' # Return as IntPtr and get string with Marshal.PtrToStringAnsi()
-			else:
-				return 'string'
+			return 'string'
 		elif _type.name == 'character':
 			if _type.isUnsigned:
 				res = 'byte'
