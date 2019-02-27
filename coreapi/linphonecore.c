@@ -6305,15 +6305,19 @@ LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(LinphoneCore *lc, c
 	return linphone_xml_rpc_session_new(lc, url);
 }
 
-void linphone_core_stop(LinphoneCore *lc) {
+static void _linphone_core_stop(LinphoneCore *lc, bool_t notify_global_state) {
 	bctbx_list_t *elem = NULL;
 	int i=0;
 	bool_t wait_until_unsubscribe = FALSE;
 	linphone_task_list_free(&lc->hooks);
 	lc->video_conf.show_local = FALSE;
 
-	// Now that we have a proper uninit method called by application we can use again the callbacks
-	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
+	if (notify_global_state) {
+		// Now that we have a proper uninit method called by application we can use again the callbacks
+		linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
+	} else {
+		lc->state = LinphoneGlobalShutdown;
+	}
 
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->uninit();
 
@@ -6418,17 +6422,24 @@ void linphone_core_stop(LinphoneCore *lc) {
 
 	if (lc->platform_helper) delete getPlatformHelpers(lc);
 	lc->platform_helper = NULL;
-	// Now that we have a proper uninit method called by application we can use again the callbacks
-	linphone_core_set_state(lc, LinphoneGlobalOff, "Off");
+	if (notify_global_state) {
+		// Now that we have a proper uninit method called by application we can use again the callbacks
+		linphone_core_set_state(lc, LinphoneGlobalOff, "Off");
+	} else {
+		lc->state = LinphoneGlobalOff;
+	}
+}
+
+void linphone_core_stop(LinphoneCore *lc) {
+	_linphone_core_stop(lc, TRUE);
 }
 
 void _linphone_core_uninit(LinphoneCore *lc)
 {
 	if (lc->state != LinphoneGlobalOff) {
-		linphone_core_stop(lc);
+		_linphone_core_stop(lc, FALSE);
 	}
 	
-	lc->state = LinphoneGlobalDestroyed;
 	lp_config_unref(lc->config);
 	lc->config = NULL;
 
@@ -6648,8 +6659,6 @@ const char *linphone_global_state_to_string(LinphoneGlobalState gs){
 			return "LinphoneGlobalShutdown";
 		case LinphoneGlobalConfiguring:
 			return "LinphoneGlobalConfiguring";
-		case LinphoneGlobalDestroyed:
-			return "LinphoneGlobalDestroyed";
 		case LinphoneGlobalReady:
 			return "LinphoneGlobalReady";
 		break;
