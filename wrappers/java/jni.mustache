@@ -546,8 +546,6 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 			env->ExceptionClear();
 		}
 		bctbx_error("Core is stopped, aborting {{c_name}} method call");{{/isNotLinphoneCoreStart}}
-	} else if (linphone_core_get_global_state(cptr) == LinphoneGlobalDestroyed) {
-		bctbx_fatal("Core has been completely destroyed, you shouldn't be here !");
 	}{{/isLinphoneCore}}
 	{{#isLinphoneFactory}}cptr = linphone_factory_get();{{/isLinphoneFactory}}
 	if (cptr == nullptr) {
