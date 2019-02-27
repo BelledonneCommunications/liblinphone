@@ -870,6 +870,7 @@ void linphone_core_add_friend(LinphoneCore *lc, LinphoneFriend *lf) {
 	if (!friendList) {
 		friendList = linphone_core_create_friend_list(lc);
 		linphone_core_add_friend_list(lc, friendList);
+		linphone_friend_list_unref(friendList);
 	}
 	if (linphone_friend_list_add_friend(friendList, lf) != LinphoneFriendListOK) return;
 	if (bctbx_list_find(lc->subscribers, lf)) {
