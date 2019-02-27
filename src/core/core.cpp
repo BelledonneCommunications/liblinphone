@@ -98,6 +98,10 @@ void CorePrivate::uninit () {
 	chatRooms.clear();
 	chatRoomsById.clear();
 	noCreatedClientGroupChatRooms.clear();
+	listeners.clear();
+	if (q->limeX3dhEnabled()) {
+		q->enableLimeX3dh(false);
+	}
 
 	remoteListEventHandler = nullptr;
 	localListEventHandler = nullptr;
