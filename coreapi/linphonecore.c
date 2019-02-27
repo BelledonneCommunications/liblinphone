@@ -2436,7 +2436,11 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->bw_controller = ms_bandwidth_controller_new();
 
 	getPlatformHelpers(lc)->setDnsServers();
-	
+
+	LinphoneFriendList *list = linphone_core_create_friend_list(lc);
+	linphone_friend_list_set_display_name(list, "_default");
+	linphone_core_add_friend_list(lc, list);
+	linphone_friend_list_unref(list);
 	lc->presence_model = linphone_presence_model_new();
 	linphone_presence_model_set_basic_status(lc->presence_model, LinphonePresenceBasicStatusOpen);
 
@@ -2466,14 +2470,6 @@ void linphone_core_start (LinphoneCore *lc) {
 	}
 
 	linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
-
-	// This will cause a callback on the core to be called, we have to ensure global state to be != Off
-	if (bctbx_list_size(lc->friends_lists) == 0) {
-		LinphoneFriendList *list = linphone_core_create_friend_list(lc);
-		linphone_friend_list_set_display_name(list, "_default");
-		linphone_core_add_friend_list(lc, list);
-		linphone_friend_list_unref(list);
-	}
 
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
 
