@@ -522,6 +522,7 @@ void linphone_core_manager_stop(LinphoneCoreManager *mgr){
 				unlink(record_file);
 			}
 		}
+		linphone_core_stop(mgr->lc);
 		linphone_core_unref(mgr->lc);
 		mgr->lc = NULL;
 	}
