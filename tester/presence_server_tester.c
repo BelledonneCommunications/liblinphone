@@ -2364,9 +2364,9 @@ test_t presence_server_tests[] = {
 	TEST_ONE_TAG("Simple bodyless list subscription", simple_bodyless_list_subscription, "bodyless"),
 	TEST_ONE_TAG("Multiple bodyless list subscription", multiple_bodyless_list_subscription, "bodyless"),
 	TEST_ONE_TAG("Multiple bodyless list subscription with rc", multiple_bodyless_list_subscription_with_rc, "bodyless"),
-	TEST_NO_TAG("Notify LinphoneFriend capabilities", notify_friend_capabilities),
-	TEST_NO_TAG("Notify LinphoneFriend capabilities after PUBLISH", notify_friend_capabilities_after_publish),
-	TEST_NO_TAG("Notify LinphoneFriend capabilities with alias", notify_friend_capabilities_with_alias)
+	TEST_ONE_TAG("Notify LinphoneFriend capabilities", notify_friend_capabilities, "capabilities"),
+	TEST_ONE_TAG("Notify LinphoneFriend capabilities after PUBLISH", notify_friend_capabilities_after_publish, "capabilities"),
+	TEST_ONE_TAG("Notify LinphoneFriend capabilities with alias", notify_friend_capabilities_with_alias, "capabilities")
 };
 
 test_suite_t presence_server_test_suite = {"Presence using server", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
