@@ -2347,7 +2347,6 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	lc->config=lp_config_ref(config);
 	lc->data=userdata;
-	lc->system_context = system_context;
 	lc->ringstream_autorelease=TRUE;
 
 	// We need the Sal on the Android platform helper init
@@ -2360,12 +2359,23 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->sal->setCallbacks(&linphone_sal_callbacks);
 
 #ifdef __ANDROID__
-	if (system_context)
-		lc->platform_helper = LinphonePrivate::createAndroidPlatformHelpers(lc->cppPtr, system_context);
+	if (system_context) {
+		JNIEnv *env = ms_get_jni_env();
+		if (lc->system_context) {
+			env->DeleteGlobalRef((jobject)lc->system_context);
+		}
+		lc->system_context = (jobject)env->NewGlobalRef((jobject)system_context);
+	}
+	if (lc->system_context) {
+		lc->platform_helper = LinphonePrivate::createAndroidPlatformHelpers(lc->cppPtr, lc->system_context);
+	}
 	else
 		ms_fatal("You must provide the Android's app context when creating the core!");
 #elif TARGET_OS_IPHONE
-	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc->cppPtr, system_context);
+	if (system_context) {
+		lc->system_context = system_context;
+	}
+	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc->cppPtr, lc->system_context);
 #endif
 	if (lc->platform_helper == NULL)
 		lc->platform_helper = new LinphonePrivate::GenericPlatformHelpers(lc->cppPtr);
@@ -2465,7 +2475,7 @@ void linphone_core_start (LinphoneCore *lc) {
 		return;
 	} else if (lc->state == LinphoneGlobalOff) {
 		bctbx_warning("Core was stopped, before starting it again we need to init it");
-		linphone_core_init(lc, NULL, lc->config, lc->data, lc->system_context, FALSE);
+		linphone_core_init(lc, NULL, lc->config, lc->data, NULL, FALSE);
 
 		// Decrement refs to avoid leaking
 		lp_config_unref(lc->config);
@@ -6459,7 +6469,14 @@ void _linphone_core_uninit(LinphoneCore *lc)
 	
 	lp_config_unref(lc->config);
 	lc->config = NULL;
-
+#ifdef __ANDROID__
+	if (lc->system_context) {
+		JNIEnv *env = ms_get_jni_env();
+		env->DeleteGlobalRef((jobject)lc->system_context);
+	}
+#endif
+	lc->system_context = NULL;
+	
 	linphone_core_deactivate_log_serialization_if_needed();
 	bctbx_list_free_with_data(lc->vtable_refs,(void (*)(void *))v_table_reference_destroy);
 	bctbx_uninit_logger();
