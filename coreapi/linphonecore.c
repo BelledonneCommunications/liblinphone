@@ -2077,6 +2077,20 @@ static void _linphone_core_read_config(LinphoneCore * lc) {
 	lc->auto_net_state_mon=lc->sip_conf.auto_net_state_mon;
 }
 
+void linphone_core_load_config_from_xml(LinphoneCore *lc, const char * xml_uri) {
+	// As for today assume the URI is a local file
+	const char *error = linphone_config_load_from_xml_file(lc->config, xml_uri);
+	if (error) {
+		bctbx_error("Couldn't load config from xml: %s", error);
+		return;
+	}
+
+	// We should call _linphone_core_read_config(lc); in the future but currently this is dangerous
+	if (linphone_core_lime_x3dh_available(lc)) {
+		linphone_core_enable_lime_x3dh(lc, true);
+	}
+}
+
 void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState state, const char *message) {
 	linphone_core_notify_configuring_status(lc, state, message);
 

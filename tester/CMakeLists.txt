@@ -97,6 +97,7 @@ set(RC_FILES
 	rcfiles/laure_lime_x3dh_rc
 	rcfiles/laure_rc_udp
 	rcfiles/laure_tcp_rc
+	rcfiles/lime_x3dh_xml_rc
 	rcfiles/marie_early_rc
 	rcfiles/marie_h264_rc
 	rcfiles/marie_lime_x3dh_rc

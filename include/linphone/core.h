@@ -5852,6 +5852,14 @@ LINPHONE_PUBLIC LinphoneAccountCreator * linphone_core_create_account_creator(Li
 **/
 LINPHONE_PUBLIC LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(LinphoneCore *lc, const char *url);
 
+/**
+ * Update current config with the content of a xml config file
+ * @param[in] lc The #LinphoneCore to update
+ * @param[in] xml_uri the path to the xml file
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *lc, const char * xml_uri);
+
 
 #ifdef __cplusplus
 }
