@@ -2803,9 +2803,9 @@ void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list
 void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc) {
 	bctbx_list_t *copy = bctbx_list_copy(linphone_core_get_friends_lists((const LinphoneCore *)lc));
 	for (auto it = copy; it; it = bctbx_list_next(it)) {
-		LinphoneFriendList *friends = (LinphoneFriendList *)bctbx_list_get_data(copy);
+		LinphoneFriendList *friends = (LinphoneFriendList *)bctbx_list_get_data(it);
 		if (linphone_friend_list_is_subscription_bodyless(friends))
-			linphone_core_remove_friend_list(lc, (LinphoneFriendList *)bctbx_list_get_data(copy));
+			linphone_core_remove_friend_list(lc, (LinphoneFriendList *)bctbx_list_get_data(it));
 	}
 	bctbx_list_free(copy);
 }
