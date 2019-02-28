@@ -520,7 +520,7 @@ public class AndroidPlatformHelper {
 				mContext.unregisterReceiver(mNetworkReceiver);
 			}
 		} else {
-			if (mConnectivityManager != null) {
+			if (mNetworkManagerAbove21 != null && mConnectivityManager != null) {
 				Log.i("[Platform Helper] Unregistering network callbacks");
 				mNetworkManagerAbove21.unregisterNetworkCallbacks(mConnectivityManager);
 			}
