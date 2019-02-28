@@ -74,7 +74,9 @@ void CorePrivate::init () {
 			lFatal() << "Unable to open linphone database with uri " << uri << " and backend " << backend;
 
 		loadChatRooms();
-	}else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
+	} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
+
+	isFriendListSubscriptionEnabled = !!lp_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "net", "friendlist_subscription_enabled", 1);
 }
 
 void CorePrivate::registerListener (CoreListener *listener) {
@@ -131,6 +133,9 @@ void CorePrivate::notifyEnteringBackground () {
 	auto listenersCopy = listeners; // Allow removable of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringBackground();
+
+	if (isFriendListSubscriptionEnabled)
+		enableFriendListsSubscription(false);
 }
 
 void CorePrivate::notifyEnteringForeground () {
@@ -141,6 +146,9 @@ void CorePrivate::notifyEnteringForeground () {
 	auto listenersCopy = listeners; // Allow removable of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringForeground();
+
+	if (isFriendListSubscriptionEnabled)
+		enableFriendListsSubscription(true);	
 }
 
 belle_sip_main_loop_t *CorePrivate::getMainLoop(){
@@ -150,6 +158,17 @@ belle_sip_main_loop_t *CorePrivate::getMainLoop(){
 
 void CorePrivate::doLater(const std::function<void ()> &something){
 	belle_sip_main_loop_cpp_do_later(getMainLoop(), something);
+}
+
+void CorePrivate::enableFriendListsSubscription(bool enable) {
+	L_Q();
+
+	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
+	bctbx_list_t *elem;
+	for (elem = lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
+		LinphoneFriendList *list = (LinphoneFriendList *)elem->data;
+		linphone_friend_list_enable_subscriptions(list, enable);
+	}
 }
 
 // =============================================================================
@@ -338,6 +357,24 @@ void Core::setSpecs (const std::string &pSpecs) {
 std::string Core::getSpecs() const {
 	L_D();
 	return Utils::join(Utils::toVector(d->specs), ",");
+}
+
+// ---------------------------------------------------------------------------
+// Friends.
+// ---------------------------------------------------------------------------
+
+void Core::enableFriendListSubscription (bool enable) {
+	L_D();
+	if (d->isFriendListSubscriptionEnabled != enable) {
+		d->isFriendListSubscriptionEnabled = enable;
+		lp_config_set_int(linphone_core_get_config(getCCore()), "net", "friendlist_subscription_enabled", enable ? 1 : 0);
+	}
+	d->enableFriendListsSubscription(enable);
+}
+
+bool Core::isFriendListSubscriptionEnabled () const {
+	L_D();
+	return d->isFriendListSubscriptionEnabled;
 }
 
 // -----------------------------------------------------------------------------

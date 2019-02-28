@@ -5860,6 +5860,22 @@ LINPHONE_PUBLIC LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(Lin
 **/
 LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *lc, const char * xml_uri);
 
+/**
+ * Sets whether or not to start friend lists subscription when in foreground
+ * @param[in] lc The #LinphoneCore
+ * @param[in] enable whether or not to enable the feature
+ * @ingroup friends
+**/
+LINPHONE_PUBLIC void linphone_core_enable_friend_list_subscription(LinphoneCore *lc, bool_t enable);
+
+/**
+ * Returns whether or not friend lists subscription are enabled
+ * @param[in] lc The #LinphoneCore
+ * @return whether or not the feature is enabled
+ * @ingroup friends
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_friend_list_subscription_enabled(LinphoneCore *lc);
+
 
 #ifdef __cplusplus
 }

@@ -109,3 +109,11 @@ void linphone_core_remove_linphone_spec (LinphoneCore *lc, const char *spec) {
 const bctbx_list_t *linphone_core_get_linphone_specs_list (LinphoneCore *lc) {
 	return L_GET_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getSpecsList());
 }
+
+void linphone_core_enable_friend_list_subscription(LinphoneCore *lc, bool_t enable) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->enableFriendListSubscription(enable == TRUE ? true : false);
+}
+
+bool_t linphone_core_is_friend_list_subscription_enabled(LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->isFriendListSubscriptionEnabled() ? TRUE : FALSE;
+}
