@@ -949,7 +949,7 @@ static void long_term_presence_list(void) {
 	}else ms_warning("Test skipped, no vcard support");
 }
 
-static void long_term_presence_with_e164_phone_without_sip(void) {
+static void long_term_presence_with_e164_phone_without_sip_base(bool_t background_foreground_changes) {
 	if (linphone_core_vcard_supported()){
 		LinphoneCoreManager *marie = linphone_core_manager_new3("marie_rc", TRUE, random_phone_number());
 		linphone_core_set_user_agent(marie->lc, "bypass", NULL);
@@ -966,8 +966,9 @@ static void long_term_presence_with_e164_phone_without_sip(void) {
 		linphone_friend_add_phone_number(friend2, marie->phone_alias);
 		linphone_core_add_friend(pauline->lc,friend2);
 
-		linphone_friend_list_set_rls_uri(linphone_core_get_default_friend_list(pauline->lc), "sip:rls@sip.example.org");
-		linphone_friend_list_enable_subscriptions(linphone_core_get_default_friend_list(pauline->lc), TRUE);
+		LinphoneFriendList *pauline_default_friend_list = linphone_core_get_default_friend_list(pauline->lc);
+		linphone_friend_list_set_rls_uri(pauline_default_friend_list, "sip:rls@sip.example.org");
+		linphone_friend_list_enable_subscriptions(pauline_default_friend_list, TRUE);
 		linphone_core_refresh_registers(pauline->lc);
 
 		BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphonePresenceActivityAway,1));
@@ -980,6 +981,16 @@ static void long_term_presence_with_e164_phone_without_sip(void) {
 				ms_free(presence_contact);
 			}
 		}
+		if (background_foreground_changes) {
+			BC_ASSERT_TRUE(linphone_friend_list_subscriptions_enabled(pauline_default_friend_list));
+			linphone_core_enter_background(pauline->lc);
+			BC_ASSERT_FALSE(linphone_friend_list_subscriptions_enabled(pauline_default_friend_list));
+			linphone_core_enter_foreground(pauline->lc);
+			BC_ASSERT_TRUE(linphone_friend_list_subscriptions_enabled(pauline_default_friend_list));
+			BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphonePresenceActivityAway,2));
+			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphonePresenceActivityAway, 2, int, "%d");
+		}
+		
 		linphone_friend_unref(friend2);
 		linphone_core_manager_destroy(pauline);
 
@@ -988,6 +999,14 @@ static void long_term_presence_with_e164_phone_without_sip(void) {
 		linphone_address_unref(phone_addr);
 		linphone_core_manager_destroy(marie);
 	}else ms_warning("Test skipped, no vcard support");
+}
+
+static void long_term_presence_with_e164_phone_without_sip(void) {
+	long_term_presence_with_e164_phone_without_sip_base(FALSE);
+}
+
+static void long_term_presence_with_e164_phone_without_sip_background_foreground(void) {
+	long_term_presence_with_e164_phone_without_sip_base(TRUE);
 }
 
 static void long_term_presence_with_phone_without_sip(void) {
@@ -2376,6 +2395,7 @@ test_t presence_server_tests[] = {
 	TEST_ONE_TAG("Long term presence phone alias 2",long_term_presence_phone_alias2, "longterm"),
 	TEST_ONE_TAG("Long term presence list",long_term_presence_list, "longterm"),
 	TEST_ONE_TAG("Long term presence with +164 phone, without sip",long_term_presence_with_e164_phone_without_sip, "longterm"),
+	TEST_ONE_TAG("Long term presence with +164 phone, without sip and background/foreground changes", long_term_presence_with_e164_phone_without_sip_background_foreground, "longterm"),
 	TEST_ONE_TAG("Long term presence with phone, without sip",long_term_presence_with_phone_without_sip, "longterm"),
 	TEST_ONE_TAG("Long term presence with cross references", long_term_presence_with_crossed_references,"longterm"),
 	TEST_ONE_TAG("Long term presence with large number of subs", long_term_presence_large_number_of_subs,"longterm"),
