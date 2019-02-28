@@ -5702,6 +5702,20 @@ LINPHONE_PUBLIC LinphoneFriendList * linphone_core_get_default_friend_list(const
 LINPHONE_PUBLIC LinphoneFriendList* linphone_core_get_friend_list_by_name(const LinphoneCore *lc, const char *name);
 
 /**
+ * Sets whether or not to start friend lists subscription when in foreground
+ * @param[in] lc The #LinphoneCore
+ * @param[in] enable whether or not to enable the feature
+**/
+LINPHONE_PUBLIC void linphone_core_enable_friend_list_subscription(LinphoneCore *lc, bool_t enable);
+
+/**
+ * Returns whether or not friend lists subscription are enabled
+ * @param[in] lc The #LinphoneCore
+ * @return whether or not the feature is enabled
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_friend_list_subscription_enabled(LinphoneCore *lc);
+
+/**
  * Retrieves a list of #LinphoneAddress sort and filter
  * @param[in] lc #LinphoneCore object
  * @param[in] filter Chars used for the filter*

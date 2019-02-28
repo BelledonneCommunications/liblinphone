@@ -48,6 +48,8 @@ public:
 	void notifyEnteringBackground ();
 	void notifyEnteringForeground ();
 
+	void enableFriendListsSubscription (bool enable);
+
 	int addCall (const std::shared_ptr<Call> &call);
 	bool canWeAddCall () const;
 	bool hasCalls () const { return !calls.empty(); }
@@ -87,6 +89,7 @@ public:
 
 private:
 	bool isInBackground = false;
+	bool isFriendListSubscriptionEnabled = false;
 
 	std::list<CoreListener *> listeners;
 
