@@ -453,6 +453,20 @@ static void custom_tones_setup(void){
 	linphone_core_manager_destroy(mgr);
 }
 
+static void lime_x3dh_setup(void) {
+	LinphoneCoreManager *mgr = linphone_core_manager_new2("empty_rc", FALSE);
+	char* xml_path = bc_tester_res("rcfiles/lime_x3dh_xml_rc");
+
+	if (linphone_core_lime_x3dh_available(mgr->lc)) {
+		BC_ASSERT_FALSE(linphone_core_lime_x3dh_enabled(mgr->lc));
+		linphone_core_load_config_from_xml(mgr->lc, xml_path);
+		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(mgr->lc));
+	}
+
+	ms_free(xml_path);
+	linphone_core_manager_destroy(mgr);
+}
+
 static void search_friend_in_alphabetical_order(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
@@ -1483,6 +1497,7 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Codec usability", codec_usability_test),
 	TEST_NO_TAG("Codec setup", codec_setup),
 	TEST_NO_TAG("Custom tones setup", custom_tones_setup),
+	TEST_NO_TAG("Lime X3DH setup", lime_x3dh_setup),
 	TEST_NO_TAG("Appropriate software echo canceller check", echo_canceller_check),
 	TEST_ONE_TAG("Return friend list in alphabetical order", search_friend_in_alphabetical_order, "MagicSearch"),
 	TEST_ONE_TAG("Search friend without filter and domain", search_friend_without_filter, "MagicSearch"),
