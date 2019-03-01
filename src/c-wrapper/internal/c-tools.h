@@ -21,6 +21,7 @@
 #define _L_C_TOOLS_H_
 
 #include <list>
+#include <functional>
 
 #include <belle-sip/types.h>
 
@@ -556,6 +557,15 @@ public:
 		return result;
 	}
 
+	//Apply func on	CType to get CppType
+	template<typename CType, typename CppType>
+	static inline std::list<CppType> getCppListFromCList (const bctbx_list_t *cList, const std::function<CppType (CType)> &func) {
+		std::list<CppType> result;
+		for (auto it = cList; it; it = bctbx_list_next(it))
+			result.push_back(func(static_cast<CType>(bctbx_list_get_data(it))));
+		return result;
+	}
+
 	// ---------------------------------------------------------------------------
 	// Resolved list conversions.
 	// ---------------------------------------------------------------------------
@@ -864,6 +874,8 @@ LINPHONE_END_NAMESPACE
 	LinphonePrivate::Wrapper::getCListFromCppList(CPP_LIST)
 #define L_GET_CPP_LIST_FROM_C_LIST(C_LIST, CTYPE, CPPTYPE) 	\
 	LinphonePrivate::Wrapper::getCppListFromCList<CTYPE, CPPTYPE>(C_LIST)
+#define L_GET_CPP_LIST_FROM_C_LIST_2(C_LIST, CTYPE, CPPTYPE, FUNC) \
+	LinphonePrivate::Wrapper::getCppListFromCList<CTYPE, CPPTYPE>(C_LIST, FUNC)
 
 // Transforms cpp list and c list and convert cpp object to c object.
 #define L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(CPP_LIST) \
