@@ -251,6 +251,12 @@ class JavaTranslator(object):
         methodDict['classImplName'] = className + 'Impl'
         methodDict['isLinphoneFactory'] = (className == 'Factory')
         methodDict['jniPath'] = self.jni_path
+        methodDict['isLinphoneCore'] = (className == 'Core')
+        methodDict['isNotLinphoneCoreStart'] = (_method.name.to_c() != 'linphone_core_start')
+        hasCoreAccessor = class_.name.to_camel_case() in CORE_ACCESSOR_LIST
+        methodDict['hasCoreAccessor'] = hasCoreAccessor
+        if hasCoreAccessor:
+            methodDict['c_core_accessor'] = 'linphone_' + class_.name.to_snake_case() + '_get_core'
 
         methodDict['return'] = _method.returnType.translate(self.langTranslator, jni=True, isReturn=True, namespace=namespace)
         methodDict['hasListReturn'] = methodDict['return'] == 'jobjectArray'

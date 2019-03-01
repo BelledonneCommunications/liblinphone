@@ -42,6 +42,7 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(
 )
 
 static void _linphone_core_constructor (LinphoneCore *lc) {
+	lc->state = LinphoneGlobalOff;
 }
 
 static void _linphone_core_destructor (LinphoneCore *lc) {

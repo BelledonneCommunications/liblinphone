@@ -2032,6 +2032,9 @@ static void linphone_core_free_payload_types(LinphoneCore *lc){
 	bctbx_list_free_with_data(lc->default_audio_codecs, (void (*)(void*))payload_type_destroy);
 	bctbx_list_free_with_data(lc->default_video_codecs, (void (*)(void*))payload_type_destroy);
 	bctbx_list_free_with_data(lc->default_text_codecs, (void (*)(void*))payload_type_destroy);
+	lc->default_audio_codecs = NULL;
+	lc->default_video_codecs = NULL;
+	lc->default_text_codecs = NULL;
 }
 
 void linphone_core_set_state(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message){
@@ -2356,12 +2359,23 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->sal->setCallbacks(&linphone_sal_callbacks);
 
 #ifdef __ANDROID__
-	if (system_context)
-		lc->platform_helper = LinphonePrivate::createAndroidPlatformHelpers(lc->cppPtr, system_context);
+	if (system_context) {
+		JNIEnv *env = ms_get_jni_env();
+		if (lc->system_context) {
+			env->DeleteGlobalRef((jobject)lc->system_context);
+		}
+		lc->system_context = (jobject)env->NewGlobalRef((jobject)system_context);
+	}
+	if (lc->system_context) {
+		lc->platform_helper = LinphonePrivate::createAndroidPlatformHelpers(lc->cppPtr, lc->system_context);
+	}
 	else
 		ms_fatal("You must provide the Android's app context when creating the core!");
 #elif TARGET_OS_IPHONE
-	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc->cppPtr, system_context);
+	if (system_context) {
+		lc->system_context = system_context;
+	}
+	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc->cppPtr, lc->system_context);
 #endif
 	if (lc->platform_helper == NULL)
 		lc->platform_helper = new LinphonePrivate::GenericPlatformHelpers(lc->cppPtr);
@@ -2382,7 +2396,9 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	linphone_core_cbs_set_subscribe_received(internal_cbs, linphone_core_internal_subscribe_received);
 	linphone_core_cbs_set_subscription_state_changed(internal_cbs, linphone_core_internal_subscription_state_changed);
 	linphone_core_cbs_set_publish_state_changed(internal_cbs, linphone_core_internal_publish_state_changed);
-	_linphone_core_add_callbacks(lc, internal_cbs, TRUE);
+	if (lc->vtable_refs == NULL) { // Do not add a new listener upon restart
+		_linphone_core_add_callbacks(lc, internal_cbs, TRUE);
+	}
 	belle_sip_object_unref(internal_cbs);
 
 	if (cbs != NULL) {
@@ -2443,13 +2459,31 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	linphone_presence_model_set_basic_status(lc->presence_model, LinphonePresenceBasicStatusOpen);
 
 	_linphone_core_read_config(lc);
+	linphone_core_set_state(lc, LinphoneGlobalReady, "Ready");
+
 	if (automatically_start) {
 		linphone_core_start(lc);
 	}
 }
 
 void linphone_core_start (LinphoneCore *lc) {
-	linphone_core_set_state(lc,LinphoneGlobalStartup,"Starting up");
+	if (lc->state == LinphoneGlobalOn) {
+		bctbx_warning("Core is already started, skipping...");
+		return;
+	} else if (lc->state == LinphoneGlobalShutdown) {
+		bctbx_error("Can't start a Core that is stopping, wait for Off state");
+		return;
+	} else if (lc->state == LinphoneGlobalOff) {
+		bctbx_warning("Core was stopped, before starting it again we need to init it");
+		linphone_core_init(lc, NULL, lc->config, lc->data, NULL, FALSE);
+
+		// Decrement refs to avoid leaking
+		lp_config_unref(lc->config);
+		linphone_core_deactivate_log_serialization_if_needed();
+		bctbx_uninit_logger();
+	}
+
+	linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
 
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
 
@@ -6056,6 +6090,7 @@ void net_config_uninit(LinphoneCore *lc)
 		linphone_nat_policy_unref(lc->nat_policy);
 		lc->nat_policy = NULL;
 	}
+	lc->net_conf = {0};
 }
 
 void sip_config_uninit(LinphoneCore *lc)
@@ -6108,6 +6143,7 @@ void sip_config_uninit(LinphoneCore *lc)
 
 	if (lc->vcard_context) {
 		linphone_vcard_context_destroy(lc->vcard_context);
+		lc->vcard_context = NULL;
 	}
 
 	lc->sal->resetTransports();
@@ -6135,14 +6171,22 @@ void sip_config_uninit(LinphoneCore *lc)
 	lc->sal=NULL;
 
 
-	if (lc->sip_conf.guessed_contact)
+	if (lc->sip_conf.guessed_contact) {
 		ms_free(lc->sip_conf.guessed_contact);
-	if (config->contact)
+		lc->sip_conf.guessed_contact = NULL;
+	}
+	if (config->contact) {
 		ms_free(config->contact);
-	if (lc->default_rls_addr)
+		config->contact = NULL;
+	}
+	if (lc->default_rls_addr) {
 		linphone_address_unref(lc->default_rls_addr);
+		lc->default_rls_addr = NULL;
+	}
 
 	linphone_im_notif_policy_unref(lc->im_notif_policy);
+	lc->im_notif_policy = NULL;
+	lc->sip_conf = {0};
 }
 
 void rtp_config_uninit(LinphoneCore *lc)
@@ -6171,6 +6215,7 @@ void rtp_config_uninit(LinphoneCore *lc)
 	ms_free(lc->rtp_conf.audio_multicast_addr);
 	ms_free(lc->rtp_conf.video_multicast_addr);
 	ms_free(config->srtp_suites);
+	lc->rtp_conf = {0};
 }
 
 static void sound_config_uninit(LinphoneCore *lc)
@@ -6185,6 +6230,7 @@ static void sound_config_uninit(LinphoneCore *lc)
 	if (config->local_ring) ms_free(config->local_ring);
 	if (config->remote_ring) ms_free(config->remote_ring);
 	lc->tones=bctbx_list_free_with_data(lc->tones, (void (*)(void*))linphone_tone_description_destroy);
+	lc->sound_conf = {0};
 }
 
 static void video_config_uninit(LinphoneCore *lc)
@@ -6197,6 +6243,7 @@ static void video_config_uninit(LinphoneCore *lc)
 		ms_free((void *)lc->video_conf.cams);
 	if (lc->video_conf.vdef) linphone_video_definition_unref(lc->video_conf.vdef);
 	if (lc->video_conf.preview_vdef) linphone_video_definition_unref(lc->video_conf.preview_vdef);
+	lc->video_conf = {0};
 }
 
 void _linphone_core_codec_config_write(LinphoneCore *lc){
@@ -6240,6 +6287,7 @@ static void codecs_config_uninit(LinphoneCore *lc)
 	bctbx_list_free(lc->codecs_conf.audio_codecs);
 	bctbx_list_free(lc->codecs_conf.video_codecs);
 	bctbx_list_free(lc->codecs_conf.text_codecs);
+	lc->codecs_conf = {0};
 }
 
 void friends_config_uninit(LinphoneCore* lc)
@@ -6284,16 +6332,20 @@ LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(LinphoneCore *lc, c
 	return linphone_xml_rpc_session_new(lc, url);
 }
 
-void _linphone_core_uninit(LinphoneCore *lc)
-{
+static void _linphone_core_stop(LinphoneCore *lc, bool_t notify_global_state) {
 	bctbx_list_t *elem = NULL;
 	int i=0;
 	bool_t wait_until_unsubscribe = FALSE;
 	linphone_task_list_free(&lc->hooks);
 	lc->video_conf.show_local = FALSE;
-	
-	//no longer call LinphoneGlobalShutdown because it cause LinphoneCore revival in case of managed languages like Java
-	lc->state = LinphoneGlobalShutdown;
+
+	if (notify_global_state) {
+		// Now that we have a proper uninit method called by application we can use again the callbacks
+		linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
+	} else {
+		lc->state = LinphoneGlobalShutdown;
+	}
+
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->uninit();
 
 	for (elem = lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
@@ -6334,60 +6386,99 @@ void _linphone_core_uninit(LinphoneCore *lc)
 	sip_setup_unregister_all();
 
 	if (lp_config_needs_commit(lc->config)) lp_config_sync(lc->config);
-	lp_config_destroy(lc->config);
-	lc->config = NULL; /* Mark the config as NULL to block further calls */
 
 	bctbx_list_for_each(lc->call_logs,(void (*)(void*))linphone_call_log_unref);
 	lc->call_logs=bctbx_list_free(lc->call_logs);
 
 	if(lc->zrtp_secrets_cache != NULL) {
 		ms_free(lc->zrtp_secrets_cache);
+		lc->zrtp_secrets_cache = NULL;
 	}
 
 	if(lc->user_certificates_path != NULL) {
 		ms_free(lc->user_certificates_path);
+		lc->user_certificates_path = NULL;
 	}
 	if(lc->play_file!=NULL){
 		ms_free(lc->play_file);
+		lc->play_file = NULL;
 	}
 	if(lc->rec_file!=NULL){
 		ms_free(lc->rec_file);
+		lc->rec_file = NULL;
 	}
 	if (lc->logs_db_file) {
 		ms_free(lc->logs_db_file);
+		lc->logs_db_file = NULL;
 	}
 	if (lc->friends_db_file) {
 		ms_free(lc->friends_db_file);
+		lc->friends_db_file = NULL;
 	}
 	if (lc->tls_key){
 		ms_free(lc->tls_key);
+		lc->tls_key = NULL;
 	}
 	if (lc->tls_cert){
 		ms_free(lc->tls_cert);
+		lc->tls_cert = NULL;
 	}
 	if (lc->ringtoneplayer) {
 		linphone_ringtoneplayer_destroy(lc->ringtoneplayer);
+		lc->ringtoneplayer = NULL;
 	}
 	if (lc->im_encryption_engine) {
 		linphone_im_encryption_engine_unref(lc->im_encryption_engine);
+		lc->im_encryption_engine = NULL;
 	}
 	if (lc->default_ac_service) {
 		linphone_account_creator_service_unref(lc->default_ac_service);
+		lc->default_ac_service = NULL;
 	}
 
 	linphone_core_free_payload_types(lc);
 	if (lc->supported_formats) ms_free((void *)lc->supported_formats);
+	lc->supported_formats = NULL;
 	linphone_core_call_log_storage_close(lc);
 	linphone_core_friends_storage_close(lc);
 	linphone_core_zrtp_cache_close(lc);
+	ms_bandwidth_controller_destroy(lc->bw_controller);
+	lc->bw_controller = NULL;
+	ms_factory_destroy(lc->factory);
+	lc->factory = NULL;
 
-	//no longer call LinphoneGlobalOff because it cause LinphoneCore revival in case of managed languages like Java
-	lc->state = LinphoneGlobalOff;
+	if (lc->platform_helper) delete getPlatformHelpers(lc);
+	lc->platform_helper = NULL;
+	if (notify_global_state) {
+		// Now that we have a proper uninit method called by application we can use again the callbacks
+		linphone_core_set_state(lc, LinphoneGlobalOff, "Off");
+	} else {
+		lc->state = LinphoneGlobalOff;
+	}
+}
+
+void linphone_core_stop(LinphoneCore *lc) {
+	_linphone_core_stop(lc, TRUE);
+}
+
+void _linphone_core_uninit(LinphoneCore *lc)
+{
+	if (lc->state != LinphoneGlobalOff) {
+		_linphone_core_stop(lc, FALSE);
+	}
+	
+	lp_config_unref(lc->config);
+	lc->config = NULL;
+#ifdef __ANDROID__
+	if (lc->system_context) {
+		JNIEnv *env = ms_get_jni_env();
+		env->DeleteGlobalRef((jobject)lc->system_context);
+	}
+#endif
+	lc->system_context = NULL;
+	
 	linphone_core_deactivate_log_serialization_if_needed();
 	bctbx_list_free_with_data(lc->vtable_refs,(void (*)(void *))v_table_reference_destroy);
-	ms_bandwidth_controller_destroy(lc->bw_controller);
-	ms_factory_destroy(lc->factory);
-	if (lc->platform_helper) delete getPlatformHelpers(lc);
 	bctbx_uninit_logger();
 }
 
@@ -6582,13 +6673,10 @@ const char* linphone_configuring_state_to_string(LinphoneConfiguringState cs){
 	switch(cs){
 		case LinphoneConfiguringSuccessful:
 			return "LinphoneConfiguringSuccessful";
-		break;
 		case LinphoneConfiguringFailed:
 			return "LinphoneConfiguringFailed";
-		break;
 		case LinphoneConfiguringSkipped:
 			return "LinphoneConfiguringSkipped";
-		break;
 	}
 	return NULL;
 }
@@ -6597,17 +6685,16 @@ const char *linphone_global_state_to_string(LinphoneGlobalState gs){
 	switch(gs){
 		case LinphoneGlobalOff:
 			return "LinphoneGlobalOff";
-		break;
 		case LinphoneGlobalOn:
 			return "LinphoneGlobalOn";
-		break;
 		case LinphoneGlobalStartup:
 			return "LinphoneGlobalStartup";
-		break;
 		case LinphoneGlobalShutdown:
 			return "LinphoneGlobalShutdown";
 		case LinphoneGlobalConfiguring:
 			return "LinphoneGlobalConfiguring";
+		case LinphoneGlobalReady:
+			return "LinphoneGlobalReady";
 		break;
 	}
 	return NULL;
