@@ -321,6 +321,7 @@ bool Core::limeX3dhAvailable() const {
 void Core::setSpecsList (const std::list<std::string> &specsList) {
 	L_D();
 	d->specs = specsList;
+	d->specs.sort();
 	d->specs.unique();
 	const string &tmpSpecs = getSpecs();
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
