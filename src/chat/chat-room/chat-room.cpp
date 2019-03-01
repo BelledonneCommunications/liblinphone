@@ -356,10 +356,12 @@ LinphoneChatRoom *ChatRoomPrivate::getCChatRoom () const {
 
 // =============================================================================
 
-ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ConferenceId &conferenceId) :
+ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params) :
 	AbstractChatRoom(p, core) {
 	L_D();
 
+	d->params = params;
+	params->ref();
 	d->conferenceId = conferenceId;
 	d->imdnHandler.reset(new Imdn(this));
 	d->isComposingHandler.reset(new IsComposing(core->getCCore(), d));
@@ -536,8 +538,9 @@ void ChatRoom::markAsRead () {
 	dCore->mainDb->markChatMessagesAsRead(d->conferenceId);
 }
 
-const ChatRoomParams *ChatRoom::getCurrentParams() const {
+const std::shared_ptr<ChatRoomParams> &ChatRoom::getCurrentParams() const {
 	L_D();
+
 	return d->params;
 }
 

@@ -505,7 +505,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneCore* linphone_chat_room_get_lc(cons
  * @param cr the #LinphoneChatRoom object
  * @return the chat room current parameters.
 **/
-LINPHONE_PUBLIC const LinphoneChatRoomParams *linphone_chat_room_get_current_params(LinphoneChatRoom *cr);
+LINPHONE_PUBLIC const LinphoneChatRoomParams *linphone_chat_room_get_current_params(const LinphoneChatRoom *cr);
 
 /**
  * @}

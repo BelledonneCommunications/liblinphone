@@ -48,15 +48,17 @@ LINPHONE_BEGIN_NAMESPACE
 //Also removes gru from kept addresses
 list<IdentityAddress> ClientGroupChatRoomPrivate::cleanAddressesList (const list<IdentityAddress> &addresses) const {
 	L_Q();
-	list<IdentityAddress> cleanedList;
+	list<IdentityAddress> cleanedList(addresses);
 
-	for (auto it = addresses.begin(); it != addresses.end();) {
-		if (!q->findParticipant(*it) && (q->getMe()->getAddress() != *it)) {
-			cleanedList.push_back(it->getAddressWithoutGruu());
-		}
-	}
 	cleanedList.sort();
 	cleanedList.unique();
+	for (auto it = addresses.begin(); it != addresses.end();) {
+		if (q->findParticipant(*it) || (q->getMe()->getAddress() == *it)) {
+			it = cleanedList.erase(it);
+		} else {
+			++it;
+		}
+	}
 	return cleanedList;
 }
 
@@ -196,8 +198,8 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 			if (session->getReason() == LinphoneReasonNone
                 || session->getReason() ==  LinphoneReasonDeclined) {
 				// Everything is fine, the chat room has been left on the server side.
-                // Or received 603 Declined, the chat room has been left on the server side but
-                // remains local.
+				// Or received 603 Declined, the chat room has been left on the server side but
+				// remains local.
 				q->onConferenceTerminated(q->getConferenceAddress());
 			} else {
 				// Go to state TerminationFailed and then back to Created since it has not been terminated
@@ -210,7 +212,7 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 			setState(ChatRoom::State::CreationFailed);
 		else if (q->getState() == ChatRoom::State::TerminationPending) {
 			if (session->getReason() == LinphoneReasonNotFound) {
-				// Somehow the chat room is no longer know on the server, so terminate it
+				// Somehow the chat room is no longer known on the server, so terminate it
 				q->onConferenceTerminated(q->getConferenceAddress());
 			} else {
 				// Go to state TerminationFailed and then back to Created since it has not been terminated
@@ -254,9 +256,10 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	const ConferenceId &conferenceId,
 	const string &subject,
 	const Content &content,
-	CapabilitiesMask capabilities
+	CapabilitiesMask capabilities,
+	const std::shared_ptr<ChatRoomParams> &params
 ) :
-ChatRoom(*new ClientGroupChatRoomPrivate, core, conferenceId),
+ChatRoom(*new ClientGroupChatRoomPrivate, core, conferenceId, params),
 RemoteConference(core, conferenceId.getLocalAddress(), nullptr) {
 	L_D();
 	L_D_T(RemoteConference, dConference);
@@ -277,14 +280,16 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	const string &factoryUri,
 	const IdentityAddress &me,
 	const string &subject,
-	CapabilitiesMask capabilities
+	CapabilitiesMask capabilities,
+	const std::shared_ptr<ChatRoomParams> &params
 ) : ClientGroupChatRoom(
 	core,
 	IdentityAddress(factoryUri),
 	ConferenceId(IdentityAddress(), me),
 	subject,
 	Content(),
-	capabilities
+	capabilities,
+	params
 ) {}
 
 ClientGroupChatRoom::ClientGroupChatRoom (
@@ -292,11 +297,12 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	const ConferenceId &conferenceId,
 	shared_ptr<Participant> &me,
 	AbstractChatRoom::CapabilitiesMask capabilities,
+	const std::shared_ptr<ChatRoomParams> &params,
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId,
 	bool hasBeenLeft
-) : ChatRoom(*new ClientGroupChatRoomPrivate(capabilities), core, conferenceId),
+) : ChatRoom(*new ClientGroupChatRoomPrivate(capabilities), core, conferenceId, params),
 RemoteConference(core, me->getAddress(), nullptr) {
 	L_D_T(RemoteConference, dConference);
 
@@ -696,7 +702,7 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 		time(nullptr),
 		d->conferenceId
 	);
-	
+
 	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state",FALSE );
 	if (!forceFullState) //to avoid this event to be repeated for each full state
 		d->addEvent(event);

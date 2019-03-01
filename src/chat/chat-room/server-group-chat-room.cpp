@@ -1064,7 +1064,7 @@ void ServerGroupChatRoomPrivate::onAckReceived (const std::shared_ptr<CallSessio
 // =============================================================================
 
 ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallOp *op)
-: ChatRoom(*new ServerGroupChatRoomPrivate, core, ConferenceId()),
+	: ChatRoom(*new ServerGroupChatRoomPrivate, core, ConferenceId(), ChatRoomParams::getDefaults(core)),
 LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(core->getCCore()))), nullptr) {
 	L_D();
 	L_D_T(LocalConference, dConference);
@@ -1077,6 +1077,8 @@ LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_
 	if (endToEndEncrypted == "true")
 		d->capabilities |= ServerGroupChatRoom::Capabilities::Encrypted;
 
+	d->params = ChatRoomParams::fromCapabilities(d->capabilities);
+
 	shared_ptr<CallSession> session = getMe()->getPrivate()->createSession(*this, nullptr, false, d);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 	getCore()->getPrivate()->localListEventHandler->addHandler(dConference->eventHandler.get());
@@ -1086,10 +1088,11 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &peerAddress,
 	AbstractChatRoom::CapabilitiesMask capabilities,
+	const shared_ptr<ChatRoomParams> &params,
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId
-) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, ConferenceId(peerAddress, peerAddress)),
+) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, ConferenceId(peerAddress, peerAddress), params),
 LocalConference(getCore(), peerAddress, nullptr) {
 	L_D();
 	L_D_T(LocalConference, dConference);

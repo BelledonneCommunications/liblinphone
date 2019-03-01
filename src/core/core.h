@@ -33,7 +33,6 @@ L_DECL_C_STRUCT(LinphoneCore);
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ChatRoomParams;
 class AbstractChatRoom;
 class Address;
 class Call;
@@ -124,16 +123,6 @@ public:
 								     const Address *localAddress,
 								     LinphoneChatRoomCapabilitiesMask capabilities,
 								     bool fallback = true);
-
-
-	/* std::shared_ptr<AbstractChatRoom> createChatRoom(const ChatRoomParams *params, */
-	/* 						 const std::string &subject, */
-	/* 						 const std::list<Address> &participants); */
-	/* std::shared_ptr<AbstractChatRoom> createChatRoom(const std::string &subject, */
-	/* 						 const std::list<Address> &participants); */
-	/* std::shared_ptr<AbstractChatRoom> createChatRoom(const ChatRoomParams *params, const IdentityAddress &participant); */
-	/* std::shared_ptr<AbstractChatRoom> createChatRoom(const IdentityAddress &participant); */
-
 
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt = false);
 
