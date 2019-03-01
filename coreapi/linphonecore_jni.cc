@@ -3148,7 +3148,7 @@ extern "C" void  Java_org_linphone_core_LinphoneAuthInfoImpl_setUsername
  */
 extern "C" void  Java_org_linphone_core_LinphoneAuthInfoImpl_setAlgorithm
 (JNIEnv *env, jobject, jlong auth_info, jstring jalgorithm) {
-	const char* username = GetStringUTFChars(env, jalgorithm);
+	const char* algorithm = GetStringUTFChars(env, jalgorithm);
 	linphone_auth_info_set_algorithm((LinphoneAuthInfo*)auth_info,algorithm);
 	ReleaseStringUTFChars(env, jalgorithm, algorithm);
 }
