@@ -274,6 +274,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/chat-room/proxy-chat-room.cpp
 	chat/chat-room/real-time-text-chat-room.cpp
 	chat/chat-room/server-group-chat-room.cpp
+	chat/chat-room/chat-room-params.cpp
 	chat/cpim/header/cpim-core-headers.cpp
 	chat/cpim/header/cpim-generic-header.cpp
 	chat/cpim/header/cpim-header.cpp

@@ -67,10 +67,10 @@ public:
 
 
 protected:
-	explicit BasicChatRoom (BasicChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId);
+	explicit BasicChatRoom (BasicChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);
 
 private:
-	BasicChatRoom (const std::shared_ptr<Core> &core, const ConferenceId &conferenceId);
+	BasicChatRoom (const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);
 
 	L_DECLARE_PRIVATE(BasicChatRoom);
 	L_DISABLE_COPY(BasicChatRoom);

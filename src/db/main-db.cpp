@@ -2544,8 +2544,9 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 				? row.get<unsigned int>(7, 0)
 				: static_cast<unsigned int>(row.get<int>(7, 0));
 
+			shared_ptr<ChatRoomParams> params = ChatRoomParams::fromCapabilities(capabilities);
 			if (capabilities & ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Basic)) {
-				chatRoom = core->getPrivate()->createBasicChatRoom(conferenceId, capabilities);
+				chatRoom = core->getPrivate()->createBasicChatRoom(conferenceId, capabilities, params);
 				chatRoom->setSubject(subject);
 			} else if (capabilities & ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Conference)) {
 				list<shared_ptr<Participant>> participants;
@@ -2598,6 +2599,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						conferenceId,
 						me,
 						capabilities,
+						params,
 						subject,
 						move(participants),
 						lastNotifyId,
@@ -2612,10 +2614,11 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						: ChatRoom::State::Created
 					);
 				} else {
-					auto serverGroupChatRoom = make_shared<ServerGroupChatRoom>(
+					auto serverGroupChatRoom = std::make_shared<ServerGroupChatRoom>(
 						core,
 						conferenceId.getPeerAddress(),
 						capabilities,
+						params,
 						subject,
 						move(participants),
 						lastNotifyId

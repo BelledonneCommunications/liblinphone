@@ -82,10 +82,10 @@ public:
 
 	void markAsRead () override;
 
-	const ChatRoomParams *getCurrentParams() const override;
+	const std::shared_ptr<ChatRoomParams> &getCurrentParams() const override;
 
 protected:
-	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId);
+	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);
 
 private:
 	L_DECLARE_PRIVATE(ChatRoom);
