@@ -20,6 +20,7 @@
 #include "basic-to-client-group-chat-room.h"
 #include "proxy-chat-room-p.h"
 #include "client-group-chat-room-p.h"
+#include "chat-room-params.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "conference/participant.h"
 #include "conference/session/call-session.h"
@@ -80,12 +81,12 @@ public:
 		}
 		migrationRealTime = currentRealTime;
 		clientGroupChatRoom = static_pointer_cast<ClientGroupChatRoom>(
-		        //make sure to have a one2one chatroom
-	    		chatRoom->getCore()->getPrivate()->createClientGroupChatRoom(chatRoom->getSubject(), ChatRoom::Capabilities::OneToOne, false)
+		       //make sure to have a one2one chatroom
+		       chatRoom->getCore()->getPrivate()->createChatRoom(
+			 ChatRoomParams::create(chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted, false, ChatRoomParams::ChatRoomImpl::FlexisipChat), chatRoom->getLocalAddress(), chatRoom->getSubject(), {Address(chatRoom->getPeerAddress())})
 		);
 		clientGroupChatRoom->getPrivate()->setCallSessionListener(this);
 		clientGroupChatRoom->getPrivate()->setChatRoomListener(this);
-		clientGroupChatRoom->addParticipant(chatRoom->getPeerAddress(), nullptr, false);
 	}
 
 	void onCallSessionStateChanged (
