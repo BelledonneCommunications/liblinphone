@@ -741,7 +741,7 @@ bool_t linphone_config_get_skip_flag_for_section(const LpConfig *lpconfig, const
 }
 
 void linphone_config_set_string(LpConfig *lpconfig,const char *section, const char *key, const char *value){
-	LpItem *item;
+	 LpItem *item;
 	LpSection *sec=linphone_config_find_section(lpconfig,section);
 	if (sec!=NULL){
 		item=lp_section_find_item(sec,key);

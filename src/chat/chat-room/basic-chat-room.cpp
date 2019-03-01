@@ -31,15 +31,18 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-BasicChatRoom::BasicChatRoom (const shared_ptr<Core> &core, const ConferenceId &conferenceId) :
-	BasicChatRoom(*new BasicChatRoomPrivate, core, conferenceId) {}
+BasicChatRoom::BasicChatRoom (const shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params) :
+	BasicChatRoom(*new BasicChatRoomPrivate, core, conferenceId, params) {
+}
 
 BasicChatRoom::BasicChatRoom (
 	BasicChatRoomPrivate &p,
 	const std::shared_ptr<Core> &core,
-	const ConferenceId &conferenceId
-) : ChatRoom(p, core, conferenceId) {
+	const ConferenceId &conferenceId,
+	const std::shared_ptr<ChatRoomParams> &params
+) : ChatRoom(p, core, conferenceId, params) {
 	L_D();
+
 	d->me = make_shared<Participant>(nullptr, getLocalAddress());
 	d->participants.push_back(make_shared<Participant>(nullptr, getPeerAddress()));
 }
