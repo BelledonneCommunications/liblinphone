@@ -20,7 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.linphone.core.tools;
 
-import org.linphone.core.Core;
 import org.linphone.core.tools.DozeReceiver;
 import org.linphone.core.tools.NetworkManager;
 import org.linphone.core.tools.NetworkManagerAbove21;
