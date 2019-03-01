@@ -102,7 +102,7 @@ public:
 
 	virtual void markAsRead () = 0;
 
-	virtual const ChatRoomParams *getCurrentParams() const = 0;
+	virtual const std::shared_ptr<ChatRoomParams> &getCurrentParams() const = 0;
 
 protected:
 	explicit AbstractChatRoom (AbstractChatRoomPrivate &p, const std::shared_ptr<Core> &core);

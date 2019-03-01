@@ -22,63 +22,61 @@
 
 #include <belle-sip/object++.hh>
 #include "linphone/api/c-types.h"
-//#include "c-wrapper/c-wrapper.h"
+#include "abstract-chat-room.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
 class ChatRoom;
 
-class LINPHONE_PUBLIC ChatRoomParams : public bellesip::HybridObject<LinphoneChatRoomParams, ChatRoomParams>, public std::enable_shared_from_this<ChatRoomParams> {
+class LINPHONE_PUBLIC ChatRoomParams : public bellesip::HybridObject<LinphoneChatRoomParams, ChatRoomParams> {
 public:
 	friend class ChatRoom;
 
 	L_DECLARE_ENUM(ChatRoomImpl, L_ENUM_VALUES_CHAT_ROOM_IMPL);
 	L_DECLARE_ENUM(ChatRoomEncryptionImpl, L_ENUM_VALUES_CHAT_ROOM_ENCRYPTION_IMPL);
 
-	ChatRoomParams() {
-		mChatRoomImpl =	ChatRoomImpl::Basic;
-		mChatRoomEncryptionImpl = ChatRoomEncryptionImpl::None;
-		mEncrypted = false;
-		mGroup = false;
-		mRtt = false;
+	template <typename... _Args>
+	static inline std::shared_ptr<ChatRoomParams> create(_Args&&... __args) {
+		return std::shared_ptr<ChatRoomParams>(new ChatRoomParams(std::forward<_Args>(__args)...), std::mem_fun(&bellesip::Object::unref));
 	}
 
-	ChatRoomParams(const ChatRoomParams &params) {
-		mChatRoomImpl = params.mChatRoomImpl;
-		mChatRoomEncryptionImpl = params.mChatRoomEncryptionImpl;
-		mEncrypted = params.mEncrypted;
-		mGroup = params.mGroup;
-		mRtt = params.mRtt;
-	}
+	static AbstractChatRoom::CapabilitiesMask toCapabilities(const std::shared_ptr<ChatRoomParams> &params);
+	static std::shared_ptr<ChatRoomParams> fromCapabilities(AbstractChatRoom::CapabilitiesMask capabilities);
+	static std::shared_ptr<ChatRoomParams> getDefaults();
+	static std::shared_ptr<ChatRoomParams> getDefaults(const std::shared_ptr<Core> &core);
 
+	bool isValid() const;
+
+	std::string toString() const;
+
+	ChatRoomImpl getChatRoomImpl() const;
+	ChatRoomEncryptionImpl getChatRoomEncryptionImpl() const;
+	bool isEncrypted() const;
+	bool isGroup() const;
+	bool isRealTimeText() const;
+
+	void setChatRoomImpl(ChatRoomImpl impl);
+	void setChatRoomEncryptionImpl(ChatRoomEncryptionImpl impl);
+	void setEncrypted(bool encrypted);
+	void setGroup(bool group);
+	void setRealTimeText(bool rtt);
+
+protected:
+	//TODO Make all constructors private
+	ChatRoomParams();
+	ChatRoomParams(const ChatRoomParams &params);
+	//Convenience constructor
+	ChatRoomParams(bool encrypted, bool group, ChatRoomImpl impl);
 	~ChatRoomParams() = default;
-
-	ChatRoomParams *clone() const override {
-		return new ChatRoomParams(*this);
-	}
-
-	ChatRoomImpl getChatRoomImpl() { return mChatRoomImpl; }
-	ChatRoomEncryptionImpl getChatRoomEncryptionImpl() { return mChatRoomEncryptionImpl; }
-	bool isEncrypted() { return mEncrypted; }
-	bool isGroup() { return mGroup; }
-	bool isRealTimeText() { return mRtt; }
-
-	void setChatRoomImpl(ChatRoomImpl impl) { mChatRoomImpl = impl; }
-	void setChatRoomEncryptionImpl(ChatRoomEncryptionImpl impl) { mChatRoomEncryptionImpl = impl; }
-	void setEncrypted(bool encrypted) { mEncrypted = encrypted; }
-	void setGroup(bool group) { mGroup = group; }
-	void setRealTimeText(bool rtt) { mRtt = rtt; }
 
 private:
 	ChatRoomImpl mChatRoomImpl;
 	ChatRoomEncryptionImpl mChatRoomEncryptionImpl;
-	bool mEncrypted;
-	bool mGroup;
-	bool mRtt;//Real Time Text
+	bool mEncrypted = false;
+	bool mGroup = false; //one to one
+	bool mRtt = false; //Real Time Text
 };
 
 LINPHONE_END_NAMESPACE
-
-//L_DECLARE_C_HYBRID_OBJECT(ChatRoomParams);
 
 #endif // ifndef _L_CHAT_ROOM_PARAMS_H_

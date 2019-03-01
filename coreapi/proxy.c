@@ -1574,7 +1574,6 @@ void linphone_proxy_config_notify_publish_state_changed(LinphoneProxyConfig *cfg
 				break;
 			default:
 				break;
-
 		}
 	}
 }
