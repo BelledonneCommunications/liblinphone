@@ -156,7 +156,7 @@ void ServerGroupChatRoomPrivate::resumeParticipant(const std::shared_ptr<Partici
 			case ParticipantDevice::State::Leaving:
 			case ParticipantDevice::State::Left:
 			case ParticipantDevice::State::ScheduledForLeaving:
-				device->setState(ParticipantDevice::State::ScheduledForJoining);
+				setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
 				updateParticipantDeviceSession(device);
 			break;
 			default:
@@ -707,9 +707,11 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 		 * This is a really new device.
 		 */
 		device = participant->getPrivate()->addDevice(deviceInfo.getAddress(), deviceInfo.getName());
-		setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
+		
 		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantDeviceAdded(participant->getAddress(), deviceInfo.getAddress());
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
+		
+		setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
 	}
 }
 
@@ -802,7 +804,7 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 		lInfo() << q << "outgoing INVITE already in progress.";
 		return;
 	}
-	device->setState(ParticipantDevice::State::Joining);
+	setParticipantDeviceState(device, ParticipantDevice::State::Joining);
 	if (session && session->getState() == CallSession::State::IncomingReceived){
 		lInfo() << q << "incoming INVITE in progress.";
 		return;
@@ -826,7 +828,7 @@ void ServerGroupChatRoomPrivate::byeDevice (const std::shared_ptr<ParticipantDev
 	L_Q();
 	
 	lInfo() << q << ": Asking device '" << device->getAddress().asString() << "' to leave";
-	device->setState(ParticipantDevice::State::Leaving);
+	setParticipantDeviceState(device, ParticipantDevice::State::Leaving);
 	shared_ptr<CallSession> session = makeSession(device);
 	switch(session->getState()){
 		case CallSession::State::OutgoingInit:
@@ -853,7 +855,8 @@ void ServerGroupChatRoomPrivate::notifyParticipantDeviceRegistration(const Ident
 	}
 	shared_ptr<ParticipantDevice> pd = participant->getPrivate()->findDevice(participantDevice);
 	if (!pd){
-		lError() << q << ": device " << participantDevice << " is not part of any participant of the chatroom.";
+		/* A device that does not have the required capabilities may be notified. */
+		lInfo() << q << ": device " << participantDevice << " is not part of any participant of the chatroom.";
 		return;
 	}
 	updateParticipantDeviceSession(pd, true);
