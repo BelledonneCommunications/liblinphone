@@ -122,26 +122,13 @@ void reset_counters( stats* counters) {
 	memset(counters,0,sizeof(stats));
 }
 
-LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, const char *file, void *user_data) {
+LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, LinphoneConfig *config, void *user_data) {
 	LinphoneCore *lc;
-	LinphoneConfig *config = NULL;
-	char *filepath         = NULL;
 	char *ringpath         = NULL;
 	char *ringbackpath     = NULL;
 	char *rootcapath       = NULL;
 	char *dnsuserhostspath = NULL;
 	char *nowebcampath     = NULL;
-
-	if (!path)
-		path = ".";
-
-	if (file){
-		filepath = bctbx_strdup_printf("%s/%s", path, file);
-		if (bctbx_file_exist(filepath) != 0) {
-			ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", file, path);
-		}
-		config = lp_config_new_with_factory(NULL, filepath);
-	}
 
 	// setup dynamic-path assets
 	ringpath         = ms_strdup_printf("%s/sounds/oldphone.wav",path);
@@ -156,8 +143,7 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, const ch
 		lp_config_set_string(config, "sip",   "root_ca"    , rootcapath);
 		lc = linphone_factory_create_core_with_config_3(linphone_factory_get(), config, system_context);
 	} else {
-		lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, (filepath && (filepath[0] != '\0')) ? filepath : 
-			liblinphone_tester_get_empty_rc(), system_context);
+		lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, 	liblinphone_tester_get_empty_rc(), system_context);
 		linphone_core_set_ring(lc, ringpath);
 		linphone_core_set_ringback(lc, ringbackpath);
 		linphone_core_set_root_ca(lc,rootcapath);
@@ -180,13 +166,6 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, const ch
 	ms_free(nowebcampath);
 	ms_free(rootcapath);
 	ms_free(dnsuserhostspath);
-
-	if (filepath)
-		bctbx_free(filepath);
-
-	if (config)
-		linphone_config_unref(config);
-
 	return lc;
 }
 
@@ -317,8 +296,17 @@ static void avoid_pulseaudio_hack(LinphoneCoreManager *mgr){
 void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	LinphoneImNotifPolicy *im_notif_policy;
 	char *hellopath = bc_tester_res("sounds/hello8000.wav");
-
-	mgr->lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), mgr->rc_path, mgr);
+	const char * filepath = mgr->rc_path?bctbx_strdup_printf("%s/%s", bc_tester_get_resource_dir_prefix() ,mgr->rc_path):NULL;
+	if (filepath && bctbx_file_exist(filepath) != 0) {
+		ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", mgr->rc_path, bc_tester_get_resource_dir_prefix());
+	}
+	LinphoneConfig * config = linphone_factory_create_config_with_factory(linphone_factory_get(), NULL, filepath);
+	linphone_config_set_string(config, "storage", "backend", "sqlite3");
+	linphone_config_set_string(config, "storage", "uri", mgr->database_path);
+	linphone_config_set_string(config, "lime", "x3dh_db_path", mgr->lime_database_path);
+	mgr->lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), config, mgr);
+	linphone_config_unref(config);
+	
 	linphone_core_manager_check_accounts(mgr);
 	im_notif_policy = linphone_core_get_im_notif_policy(mgr->lc);
 	if (im_notif_policy != NULL) {
@@ -374,9 +362,6 @@ void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	/*for now, we need the periodical updates facility to compute bandwidth measurements correctly during tests*/
 	linphone_core_enable_send_call_stats_periodical_updates(mgr->lc, TRUE);
 
-	LinphoneConfig *config = linphone_core_get_config(mgr->lc);
-	linphone_config_set_string(config, "storage", "backend", "sqlite3");
-	linphone_config_set_string(config, "storage", "uri", mgr->database_path);
 }
 
 static void generate_random_database_path (LinphoneCoreManager *mgr) {
@@ -384,6 +369,9 @@ static void generate_random_database_path (LinphoneCoreManager *mgr) {
 	belle_sip_random_token(random_id, sizeof random_id);
 	char *database_path_format = bctbx_strdup_printf("linphone_%s.db", random_id);
 	mgr->database_path = bc_tester_file(database_path_format);
+	bctbx_free(database_path_format);
+	database_path_format = bctbx_strdup_printf("lime_%s.db", random_id);
+	mgr->lime_database_path = bc_tester_file(database_path_format);
 	bctbx_free(database_path_format);
 }
 
@@ -567,7 +555,11 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 		bctbx_free(mgr->rc_path);
 	if (mgr->database_path) {
 		unlink(mgr->database_path);
-		bctbx_free(mgr->database_path);
+		bc_free(mgr->database_path);
+	}
+	if (mgr->lime_database_path) {
+		unlink(mgr->lime_database_path);
+		bc_free(mgr->lime_database_path);
 	}
 
 	if (mgr->cbs)

@@ -3,10 +3,8 @@ enable_basic_to_client_group_chat_room_migration=1
 basic_to_client_group_chat_room_migration_timer=180
 
 [lime]
-x3dh_db_path=marie.x3dh.sqlite3
 lime_update_threshold=86400
 x3dh_server_url=http://x3dh.example.org:8082/flexisip-account-manager/x3dh-25519.php
-
 
 [sip]
 sip_port=-1

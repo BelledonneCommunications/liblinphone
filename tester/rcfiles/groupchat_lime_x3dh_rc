@@ -1,5 +1,4 @@
 [lime]
-#x3dh_db_path=groupchat.x3dh.sqlite3
 lime_update_threshold=86400
 max_nb_device_per_participant=1000
 allow_message_in_unsafe_chatroom=0
