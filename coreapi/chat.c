@@ -208,15 +208,15 @@ LinphoneReason linphone_core_message_received(LinphoneCore *lc, LinphonePrivate:
 		reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
 	else if (!linphone_core_conference_server_enabled(lc)) {
 		/* Client mode but check that it is really for basic chatroom before creating it.*/
-		if (session_mode && strcasecmp(session_mode, "true") == 0){
+		if (session_mode && strcasecmp(session_mode, "true") == 0) {
 			lError() << "Message is received in the context of a client chatroom for which we have no context.";
 			reason = LinphoneReasonNotAcceptable;
-		}else{
+		} else {
 			chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getOrCreateBasicChatRoom(conferenceId);
 			if (chatRoom)
 				reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
 		}
-	}else{
+	} else {
 		/* Server mode but chatroom not found. */
 		reason = LinphoneReasonNotFound;
 	}

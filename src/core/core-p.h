@@ -73,6 +73,7 @@ public:
 	//Base
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (
 		const std::string &subject,
+		const IdentityAddress &conferenceFactoryUri,
 		const ConferenceId &conferenceId,
 		const Content &content,
 		AbstractChatRoom::CapabilitiesMask capabilities,
@@ -80,9 +81,14 @@ public:
 		bool fallback
 	);
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject,
-										  const ConferenceId &conferenceId,
-										  const Content &content,
-										  bool encrypted);
+								     const IdentityAddress &conferenceFactoryUri,
+								     const ConferenceId &conferenceId,
+								     const Content &content,
+								     bool encrypted);
+	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject,
+								     const ConferenceId &conferenceId,
+								     const Content &content,
+								     bool encrypted);
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject, bool fallback, bool encrypted);
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject, const Address *localAddress, AbstractChatRoom::CapabilitiesMask capabilities, bool fallback);
 
