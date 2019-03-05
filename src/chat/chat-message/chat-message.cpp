@@ -1071,6 +1071,7 @@ void ChatMessagePrivate::setImdnMessageId (const string &id) {
 
 void ChatMessagePrivate::loadContentsFromDatabase () const {
 	L_Q();
+
 	if (contentsNotLoadedFromDatabase) {
 		isReadOnly = false;
 		contentsNotLoadedFromDatabase = false;
