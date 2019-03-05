@@ -47,7 +47,7 @@ LINPHONE_BEGIN_NAMESPACE
 // Helpers.
 // -----------------------------------------------------------------------------
 
-// Return the better local address to talk with peer address.
+// Return the better local address to talk with peer address. Result address must contain gru
 static IdentityAddress getDefaultLocalAddress(const shared_ptr<Core> &core, const IdentityAddress *peerAddress) {
 	LinphoneCore *cCore = core->getCCore();
 	LinphoneProxyConfig *proxy = nullptr;
@@ -62,7 +62,7 @@ static IdentityAddress getDefaultLocalAddress(const shared_ptr<Core> &core, cons
 
 	IdentityAddress localAddress;
 	if (proxy) {
-		char *identity = linphone_address_as_string(linphone_proxy_config_get_identity_address(proxy));
+		char *identity = linphone_address_as_string(linphone_proxy_config_get_contact(proxy));
 		localAddress = IdentityAddress(identity);
 		bctbx_free(identity);
 	} else
@@ -71,11 +71,28 @@ static IdentityAddress getDefaultLocalAddress(const shared_ptr<Core> &core, cons
 	return localAddress;
 }
 
+//
+static string getConferenceFactoryUri(const shared_ptr<Core> &core, const IdentityAddress &localAddress) {
+	Address	addr(localAddress);
+	LinphoneProxyConfig *proxy = linphone_core_lookup_proxy_by_identity(core->getCCore(), L_GET_C_BACK_PTR(&addr));
+
+	if (!proxy) {
+		lWarning() << "No proxy configuration found for local address: [" << localAddress.asString() << "]";
+		return string();
+	}
+	const char *uri = linphone_proxy_config_get_conference_factory_uri(proxy);
+	if (uri) {
+		return uri;
+	}
+	return string();
+}
+
 // -----------------------------------------------------------------------------
 
 //Base client group chat room creator
 shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	const std::string &subject,
+	const IdentityAddress &conferenceFactoryUri,
 	const ConferenceId &conferenceId,
 	const Content &content,
 	AbstractChatRoom::CapabilitiesMask capabilities,
@@ -89,7 +106,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 		return nullptr;
 	}
 	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(q->getSharedFromThis(),
-										    conferenceId.getPeerAddress(),
+										    conferenceFactoryUri,
 										    conferenceId,
 										    subject,
 										    content,
@@ -119,10 +136,22 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	const Content &content,
 	bool encrypted
 ) {
-	//std::shared_ptr<ChatRoomParams> params = bellesip::make_shared(encrypted, true, ChatRoomParams::ChatRoomImpl::FlexisipChat);
-	std::shared_ptr<ChatRoomParams> params = ChatRoomParams::create(encrypted, true, ChatRoomParams::ChatRoomImpl::FlexisipChat);
-	params->ref();
-	return createClientGroupChatRoom(subject, conferenceId, content, ChatRoomParams::toCapabilities(params), params, false);
+	L_Q();
+
+	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(encrypted, true, ChatRoomParams::ChatRoomImpl::FlexisipChat);
+	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(
+										    q->getSharedFromThis(),
+										    conferenceId.getPeerAddress(),
+										    conferenceId,
+										    subject,
+										    content,
+										    ChatRoomParams::toCapabilities(params),
+										    params
+										    ));
+
+	clientGroupChatRoom->getPrivate()->setState(ChatRoom::State::Instantiated);
+	noCreatedClientGroupChatRooms[clientGroupChatRoom.get()] = clientGroupChatRoom;
+	return clientGroupChatRoom;
 }
 
 //From deprecated public API
@@ -130,8 +159,10 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom(const string
 	L_Q();
 
 	IdentityAddress defaultLocalAddress = getDefaultLocalAddress(q->getSharedFromThis(), nullptr);
+	IdentityAddress conferenceFactoryUri(getConferenceFactoryUri(q->getSharedFromThis(), defaultLocalAddress));
+	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(encrypted, !fallback, ChatRoomParams::ChatRoomImpl::FlexisipChat);
 
-	return createClientGroupChatRoom(subject, ConferenceId(IdentityAddress(), defaultLocalAddress), Content(), encrypted);
+	return createClientGroupChatRoom(subject, conferenceFactoryUri, ConferenceId(IdentityAddress(), defaultLocalAddress), Content(), ChatRoomParams::toCapabilities(params), params, fallback);
 }
 
 shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
@@ -146,23 +177,18 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 		chatRoom.reset(new RealTimeTextChatRoom(q->getSharedFromThis(), conferenceId, params));
 	else {
 		BasicChatRoom *basicChatRoom = new BasicChatRoom(q->getSharedFromThis(), conferenceId, params);
-		LinphoneAddress *lAddr = linphone_address_new(conferenceId.getLocalAddress().asString().c_str());
-		LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(q->getCCore(), lAddr);
-		linphone_address_unref(lAddr);
-		const char *conferenceFactoryUri = nullptr;
-		if (proxy)
-			conferenceFactoryUri = linphone_proxy_config_get_conference_factory_uri(proxy);
-		if (
-			capabilities & ChatRoom::Capabilities::Migratable &&
-			conferenceFactoryUri &&
-			linphone_config_get_bool(linphone_core_get_config(q->getCCore()),
-				"misc", "enable_basic_to_client_group_chat_room_migration", FALSE)
-		)
+		string conferenceFactoryUri = getConferenceFactoryUri(q->getSharedFromThis(), conferenceId.getLocalAddress());
+		if (capabilities & ChatRoom::Capabilities::Migratable &&
+		    !conferenceFactoryUri.empty() &&
+		    linphone_config_get_bool(linphone_core_get_config(q->getCCore()),
+					     "misc", "enable_basic_to_client_group_chat_room_migration", FALSE)
+		    ) {
 			chatRoom.reset(new BasicToClientGroupChatRoom(shared_ptr<BasicChatRoom>(basicChatRoom)));
-		else
+		}
+		else {
 			chatRoom.reset(basicChatRoom);
+		}
 	}
-
 	AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
 	dChatRoom->setState(ChatRoom::State::Instantiated);
 	dChatRoom->setState(ChatRoom::State::Created);
@@ -179,22 +205,16 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 		lWarning() << "Trying to create chat room with invalid parameters " << params->toString();
 		return nullptr;
 	}
-	Address	tmpAddr = Address(localAddr);
-	LinphoneProxyConfig *proxy = linphone_core_lookup_proxy_by_identity(q->getCCore(), L_GET_C_BACK_PTR(&tmpAddr));
-
-	if (!proxy) {
-		lWarning() << "Trying to create chat room with local address [" << localAddr.asString() << "] not associated to any proxy configuration";
-		return nullptr;
-	}
 
 	shared_ptr<AbstractChatRoom> chatRoom;
 	if (params->getChatRoomImpl() == ChatRoomParams::ChatRoomImpl::FlexisipChat) {
-		const char *conferenceFactoryUri = linphone_proxy_config_get_conference_factory_uri(proxy);
-		if (!conferenceFactoryUri)
+		string conferenceFactoryUri = getConferenceFactoryUri(q->getSharedFromThis(), localAddr);
+		if (conferenceFactoryUri.empty())
 			return nullptr;
 
 		chatRoom = createClientGroupChatRoom(subject,
-						     ConferenceId(IdentityAddress(conferenceFactoryUri), localAddr),
+						     IdentityAddress(conferenceFactoryUri),
+						     ConferenceId(IdentityAddress(), localAddr),
 						     Content(),
 						     ChatRoomParams::toCapabilities(params),
 						     params,
@@ -280,6 +300,7 @@ void CorePrivate::loadChatRooms () {
 void CorePrivate::replaceChatRoom (const shared_ptr<AbstractChatRoom> &replacedChatRoom, const shared_ptr<AbstractChatRoom> &newChatRoom) {
 	const ConferenceId &replacedConferenceId = replacedChatRoom->getConferenceId();
 	const ConferenceId &newConferenceId = newChatRoom->getConferenceId();
+
 	if (replacedChatRoom->getCapabilities() & ChatRoom::Capabilities::Proxy) {
 		chatRooms.remove(newChatRoom);
 		chatRoomsById.erase(replacedConferenceId);
@@ -376,9 +397,12 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId 
 		return chatRoom;
 	}
 
-	ChatRoom::CapabilitiesMask capabilities;
+	ChatRoom::CapabilitiesMask capabilities(ChatRoom::Capabilities::OneToOne);
 	if (isRtt) {
 		capabilities |=	ChatRoom::Capabilities::RealTimeText;
+	}
+	if (linphone_config_get_bool(linphone_core_get_config(getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE)) {
+		capabilities |= ChatRoom::Capabilities::Migratable;
 	}
 	chatRoom = d->createBasicChatRoom(conferenceId, capabilities, ChatRoomParams::fromCapabilities(capabilities));
 	d->insertChatRoom(chatRoom);
@@ -391,7 +415,7 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddre
 	L_D();
 
 	list<shared_ptr<AbstractChatRoom>> chatRooms = findChatRooms(peerAddress);
-	if (!chatRooms.empty()){
+	if (!chatRooms.empty()) {
 		shared_ptr<AbstractChatRoom> ret = chatRooms.front();
 		if (isRtt && !(ret->getCapabilities() & ChatRoom::Capabilities::RealTimeText)) {
 			lError() << "Found chatroom but without RealTimeText capability. This is a bug, fixme";
@@ -400,9 +424,12 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddre
 		return ret;
 	}
 
-	ChatRoom::CapabilitiesMask capabilities;
+	ChatRoom::CapabilitiesMask capabilities(ChatRoom::Capabilities::OneToOne);
 	if (isRtt) {
 		capabilities |=	ChatRoom::Capabilities::RealTimeText;
+	}
+	if (linphone_config_get_bool(linphone_core_get_config(getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE)) {
+		capabilities |= ChatRoom::Capabilities::Migratable;
 	}
 	shared_ptr<AbstractChatRoom> chatRoom = d->createBasicChatRoom(
 	       ConferenceId(peerAddress, getDefaultLocalAddress(getSharedFromThis(), &peerAddress)),

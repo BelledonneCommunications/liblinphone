@@ -111,7 +111,7 @@ ChatRoom::CapabilitiesMask ChatRoomParams::toCapabilities(const std::shared_ptr<
 		mask |= ChatRoom::Capabilities::Basic;
 		mask |= ChatRoom::Capabilities::OneToOne;
 	} else if (params->getChatRoomImpl() == ChatRoomImpl::FlexisipChat) {
-		//mask |= ChatRoom::Capabilities::Conference;
+		mask |= ChatRoom::Capabilities::Conference;
 		if (!params->isGroup()) {
 			mask |= ChatRoom::Capabilities::OneToOne;
 		}
