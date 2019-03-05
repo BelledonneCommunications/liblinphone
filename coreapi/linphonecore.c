@@ -7572,7 +7572,6 @@ void linphone_core_remove_content_type_support(LinphoneCore *lc, const char *con
 	lc->sal->removeContentTypeSupport(content_type);
 }
 
-#ifdef ENABLE_UPDATE_CHECK
 static void update_check_process_terminated(LinphoneCore *lc, LinphoneVersionUpdateCheckResult result, const char *version, const char *url) {
 	linphone_core_notify_version_update_check_result_received(lc, result, version, url);
 	if (lc->update_check_http_listener) {
@@ -7668,10 +7667,8 @@ static void update_check_process_auth_requested(void *ctx, belle_sip_auth_event_
 	LinphoneCore *lc = (LinphoneCore *)ctx;
 	update_check_process_terminated(lc, LinphoneVersionUpdateCheckError, NULL, NULL);
 }
-#endif /* ENABLE_UPDATE_CHECK */
 
 void linphone_core_check_for_update(LinphoneCore *lc, const char *current_version) {
-#ifdef ENABLE_UPDATE_CHECK
 	int err;
 	bool_t is_desktop = FALSE;
 	const char *platform = NULL;
@@ -7717,7 +7714,6 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 		request = belle_http_request_create("GET", uri, belle_sip_header_create("User-Agent", linphone_core_get_user_agent(lc)), NULL);
 		err = belle_http_provider_send_request(lc->http_provider, request, lc->update_check_http_listener);
 	}
-#endif
 }
 
 int linphone_core_get_unread_chat_message_count (const LinphoneCore *lc) {

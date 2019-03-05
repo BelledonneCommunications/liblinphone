@@ -107,6 +107,9 @@ void CorePrivate::uninit () {
 	localListEventHandler = nullptr;
 
 	AddressPrivate::clearSipAddressesCache();
+	if (mainDb != nullptr) {
+		mainDb->disconnect();
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -263,7 +266,7 @@ void Core::enableLimeX3dh (bool enable) {
 		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
 		string serverUrl = lp_config_get_string(lpconfig, "lime", "x3dh_server_url", "");
 		if (serverUrl.empty()) {
-			lError() << "Lime X3DH server URL not set, can't enable";
+			lInfo() << "Lime X3DH server URL not set, can't enable";
 			//Do not enable encryption engine if url is undefined
 			return;
 		}
