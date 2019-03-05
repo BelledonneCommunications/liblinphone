@@ -259,7 +259,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	CapabilitiesMask capabilities,
 	const std::shared_ptr<ChatRoomParams> &params
 ) :
-ChatRoom(*new ClientGroupChatRoomPrivate(capabilities), core, conferenceId, params),
+ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ChatRoom::Capabilities::Conference), core, conferenceId, params),
 RemoteConference(core, conferenceId.getLocalAddress(), nullptr) {
 	L_D();
 	L_D_T(RemoteConference, dConference);
@@ -268,9 +268,8 @@ RemoteConference(core, conferenceId.getLocalAddress(), nullptr) {
 		dConference->participants.push_back(make_shared<Participant>(this, addr));
 
 	//if preserve_backward_compatibility, force creation of secure room in all cases
-	if (encrypted || linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "lime", "preserve_backward_compatibility",FALSE))
+	if (params->isEncrypted() || linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "lime", "preserve_backward_compatibility",FALSE))
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Encrypted;
-
 	dConference->focus = make_shared<Participant>(this, focus);
 	dConference->focus->getPrivate()->addDevice(focus);
 }
@@ -302,7 +301,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId,
 	bool hasBeenLeft
-) : ChatRoom(*new ClientGroupChatRoomPrivate(capabilities), core, conferenceId, params),
+) : ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ClientGroupChatRoom::Capabilities::Conference), core, conferenceId, params),
 RemoteConference(core, me->getAddress(), nullptr) {
 	L_D_T(RemoteConference, dConference);
 
@@ -319,8 +318,8 @@ RemoteConference(core, me->getAddress(), nullptr) {
 
 	dConference->eventHandler->setConferenceId(conferenceId);
 
-	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state",FALSE );
-	dConference->eventHandler->setLastNotify(forceFullState?0:lastNotifyId);
+	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state", FALSE);
+	dConference->eventHandler->setLastNotify(forceFullState ? 0 : lastNotifyId);
 	lInfo() << "Last notify set to [" << dConference->eventHandler->getLastNotify() << "] for conference [" << dConference << "]";
 
 	if (!hasBeenLeft)
@@ -694,8 +693,9 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 
 	if (performMigration)
 		BasicToClientGroupChatRoom::migrate(getSharedFromThis(), chatRoom);
-	else
+	else {
 		d->chatRoomListener->onChatRoomInsertInDatabaseRequested(getSharedFromThis());
+	}
 
 	auto event = make_shared<ConferenceEvent>(
 		EventLog::Type::ConferenceCreated,
