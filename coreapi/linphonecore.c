@@ -7669,7 +7669,6 @@ static void update_check_process_auth_requested(void *ctx, belle_sip_auth_event_
 }
 
 void linphone_core_check_for_update(LinphoneCore *lc, const char *current_version) {
-	int err;
 	bool_t is_desktop = FALSE;
 	const char *platform = NULL;
 	const char *mobilePlatform = NULL;
@@ -7712,7 +7711,7 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 		lc->update_check_current_version = bctbx_strdup(current_version);
 		lc->update_check_http_listener = belle_http_request_listener_create_from_callbacks(&belle_request_listener, lc);
 		request = belle_http_request_create("GET", uri, belle_sip_header_create("User-Agent", linphone_core_get_user_agent(lc)), NULL);
-		err = belle_http_provider_send_request(lc->http_provider, request, lc->update_check_http_listener);
+		belle_http_provider_send_request(lc->http_provider, request, lc->update_check_http_listener);
 	}
 }
 
