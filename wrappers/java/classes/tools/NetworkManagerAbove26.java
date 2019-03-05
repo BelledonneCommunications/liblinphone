@@ -1,6 +1,6 @@
 /*
-NetworkManagerAbove21.java
-Copyright (C) 2017 Belledonne Communications, Grenoble, France
+NetworkManagerAbove26.java
+Copyright (C) 2019 Belledonne Communications, Grenoble, France
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -33,32 +33,29 @@ import org.linphone.core.tools.AndroidPlatformHelper;
 /**
  * Intercept network state changes and update linphone core.
  */
-public class NetworkManagerAbove21 implements NetworkManagerInterface {
+public class NetworkManagerAbove26 implements NetworkManagerInterface {
 	private AndroidPlatformHelper mHelper;
 	private ConnectivityManager.NetworkCallback mNetworkCallback;
 
-	public NetworkManagerAbove21(final AndroidPlatformHelper helper) {
+	public NetworkManagerAbove26(final AndroidPlatformHelper helper) {
 		mHelper = helper;
 		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 			@Override
 			public void onAvailable(Network network) {
-				Log.i("[Platform Helper] Network is available (21)");
-				mHelper.postNetworkUpdateRunner();
+				Log.i("[Platform Helper] Network is available (26)");
+				mHelper.updateNetworkReachability();
 			}
 
 			@Override
 			public void onLost(Network network) {
-				Log.i("[Platform Helper] Network is lost (21)");
-				mHelper.postNetworkUpdateRunner();
+				Log.i("[Platform Helper] Network is lost (26)");
+				mHelper.updateNetworkReachability();
 			}
 		};
 	}
 
 	public void registerNetworkCallbacks(ConnectivityManager connectivityManager) {
-		connectivityManager.registerNetworkCallback(
-			new NetworkRequest.Builder().build(),
-			mNetworkCallback
-		);
+		connectivityManager.registerDefaultNetworkCallback(mNetworkCallback, mHelper.getHandler());
 	}
 
 	public void unregisterNetworkCallbacks(ConnectivityManager connectivityManager) {
