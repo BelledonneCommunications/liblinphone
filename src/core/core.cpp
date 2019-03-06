@@ -146,10 +146,19 @@ void CorePrivate::notifyEnteringBackground () {
 }
 
 void CorePrivate::notifyEnteringForeground () {
+	L_Q();
 	if (!isInBackground)
 		return;
 
 	isInBackground = false;
+
+	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
+	LinphoneProxyConfig *lpc = linphone_core_get_default_proxy_config(lc);
+	if (lpc && linphone_proxy_config_get_state(lpc) == LinphoneRegistrationFailed) {
+		// This is to ensure an app bring to foreground that isn't registered correctly will try to fix that and not show a red registration dot to the user
+		linphone_core_refresh_registers(lc);
+	}
+
 	auto listenersCopy = listeners; // Allow removable of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringForeground();
