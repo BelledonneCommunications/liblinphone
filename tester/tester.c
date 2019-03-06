@@ -122,12 +122,25 @@ void reset_counters( stats* counters) {
 	memset(counters,0,sizeof(stats));
 }
 
+void configure_lc(LinphoneCore *lc, const char *path, void *user_data) {
+	char *dnsuserhostspath = NULL;
+	dnsuserhostspath = userhostsfile[0]=='/' ? ms_strdup(userhostsfile) : ms_strdup_printf("%s/%s", path, userhostsfile);
+
+	linphone_core_set_user_data(lc, user_data);
+
+	linphone_core_enable_ipv6(lc, liblinphonetester_ipv6);
+	linphone_core_set_sip_transport_timeout(lc, liblinphonetester_transport_timeout);
+
+	sal_enable_test_features(linphone_core_get_sal(lc),TRUE);
+	sal_set_dns_user_hosts_file(linphone_core_get_sal(lc), dnsuserhostspath);
+	ms_free(dnsuserhostspath);
+}
+
 LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, LinphoneConfig *config, void *user_data) {
 	LinphoneCore *lc;
 	char *ringpath         = NULL;
 	char *ringbackpath     = NULL;
 	char *rootcapath       = NULL;
-	char *dnsuserhostspath = NULL;
 	char *nowebcampath     = NULL;
 
 	// setup dynamic-path assets
@@ -135,7 +148,6 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, Linphone
 	ringbackpath     = ms_strdup_printf("%s/sounds/ringback.wav", path);
 	nowebcampath     = ms_strdup_printf("%s/images/nowebcamCIF.jpg", path);
 	rootcapath       = ms_strdup_printf("%s/certificates/cn/cafile.pem", path);
-	dnsuserhostspath = userhostsfile[0]=='/' ? ms_strdup(userhostsfile) : ms_strdup_printf("%s/%s", path, userhostsfile);
 
 	if (config) {
 		lp_config_set_string(config, "sound", "remote_ring", ringbackpath);
@@ -148,27 +160,19 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, Linphone
 		linphone_core_set_ringback(lc, ringbackpath);
 		linphone_core_set_root_ca(lc,rootcapath);
 	}
-	linphone_core_set_user_data(lc, user_data);
 	if (cbs)
 		linphone_core_add_callbacks(lc, cbs);
-
-	linphone_core_enable_ipv6(lc, liblinphonetester_ipv6);
-	linphone_core_set_sip_transport_timeout(lc, liblinphonetester_transport_timeout);
-
-	sal_enable_test_features(linphone_core_get_sal(lc),TRUE);
-	sal_set_dns_user_hosts_file(linphone_core_get_sal(lc), dnsuserhostspath);
 #ifdef VIDEO_ENABLED
 	linphone_core_set_static_picture(lc,nowebcampath);
 #endif
+	configure_lc(lc, path, user_data);
 
 	ms_free(ringpath);
 	ms_free(ringbackpath);
 	ms_free(nowebcampath);
 	ms_free(rootcapath);
-	ms_free(dnsuserhostspath);
 	return lc;
 }
-
 
 bool_t wait_for_until(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value,int timout) {
 	bctbx_list_t* lcs=NULL;
@@ -531,10 +535,25 @@ void linphone_core_manager_reinit(LinphoneCoreManager *mgr) {
 		bctbx_free(uuid);
 }
 
+static void core_restart_global_state_changed(LinphoneCore *lc, LinphoneGlobalState state, const char *message) {
+	if (state == LinphoneGlobalReady) {
+		LinphoneCoreCbs *cbs = linphone_core_get_current_callbacks(lc);
+		LinphoneCoreManager *mgr = (LinphoneCoreManager *)linphone_core_cbs_get_user_data(cbs);
+		configure_lc(lc, bc_tester_get_resource_dir_prefix(), mgr);
+	}
+}
+
 void linphone_core_manager_restart(LinphoneCoreManager *mgr, bool_t check_for_proxies) {
 	//linphone_core_manager_reinit(mgr);
 	if (mgr->lc) {
 		linphone_core_stop(mgr->lc);
+
+		// This listener will wait for the core to be ready again and then re-apply the tester specifics like DNS hosts etc...
+		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+		linphone_core_cbs_set_user_data(cbs, mgr);
+		linphone_core_cbs_set_global_state_changed(cbs, core_restart_global_state_changed);
+		linphone_core_add_callbacks(mgr->lc, cbs);
+		linphone_core_cbs_unref(cbs);
 	} else {
 		linphone_core_manager_configure(mgr);
 	}
