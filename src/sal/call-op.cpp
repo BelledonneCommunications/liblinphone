@@ -405,19 +405,21 @@ void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event
 						}
 					}
 				} else if ((code >= 180) && (code < 200)) {
-					auto previousResponse = reinterpret_cast<belle_sip_response_t *>(
+					auto *previousResponse = dialog ? static_cast<belle_sip_response_t *>(
 						belle_sip_object_data_get(BELLE_SIP_OBJECT(dialog), "early_response")
-					);
-					if (!previousResponse || (code > belle_sip_response_get_status_code(previousResponse))) {
+					) : nullptr;
+					if (previousResponse == nullptr || (code > belle_sip_response_get_status_code(previousResponse))) {
 						op->handleBodyFromResponse(response);
 						op->mRoot->mCallbacks.call_ringing(op);
 					}
-					belle_sip_object_data_set(
-						BELLE_SIP_OBJECT(dialog),
-						"early_response",
-						belle_sip_object_ref(response),
-						belle_sip_object_unref
-					);
+					if (dialog) {
+						belle_sip_object_data_set(
+							BELLE_SIP_OBJECT(dialog),
+							"early_response",
+							belle_sip_object_ref(response),
+							belle_sip_object_unref
+						);
+					}
 				} else if (code >= 300) {
 					op->setError(response, true);
 					if (!op->mDialog)
