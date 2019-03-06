@@ -91,7 +91,7 @@ LimeManager::LimeManager (
 	belle_http_provider_t *prov,
 	shared_ptr<Core> core
 ) : lime::LimeManager(dbAccess, [prov, core](const string &url, const string &from, const vector<uint8_t> &message, const lime::limeX3DHServerResponseProcess &responseProcess) {
-	belle_http_request_listener_callbacks_t cbs= {};
+	belle_http_request_listener_callbacks_t cbs= { 0 };
 	belle_http_request_listener_t *l;
 	belle_generic_uri_t *uri;
 	belle_http_request_t *req;
@@ -395,13 +395,13 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 			cipherMessage = content.getBodyAsUtf8String();
 		}
 	}
-	
+
 	if (cipherHeader.empty()) {
 		lError() << "No key found for [" << localDeviceId << "] for message [" << message <<"]";
 		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Done;
 	}
-	
+
 	vector<uint8_t> decodedCipherHeader = decodeBase64(cipherHeader);
 	vector<uint8_t> decodedCipherMessage = decodeBase64(cipherMessage);
 	vector<uint8_t> plainMessage{};
