@@ -188,8 +188,7 @@ static char * create_resource_list_xml(const LinphoneFriendList *list) {
 	if (list->friends == NULL) return NULL;
 	bctbx_list_t* entries = uri_list(list);
 	if (entries == NULL) {
-		ms_error("%s: Error proxy config has not registered yet", __FUNCTION__);
-		bctbx_list_free_with_data(entries, ms_free);
+		ms_warning("%s: Empty list in subscription, ignored.", __FUNCTION__);
 		return NULL;
 	}
 
