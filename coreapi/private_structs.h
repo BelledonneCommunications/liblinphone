@@ -850,6 +850,7 @@ namespace LinphonePrivate {
 	sqlite3 *logs_db; \
 	sqlite3 *friends_db; \
 	bool_t debug_storage; \
-	void *system_context;
+	void *system_context; \
+	bool_t is_unreffing;
 
 #endif /* _PRIVATE_STRUCTS_H_ */
