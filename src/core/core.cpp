@@ -279,8 +279,10 @@ void Core::enableLimeX3dh (bool enable) {
 			//Do not enable encryption engine if url is undefined
 			return;
 		}
-		string filename = lp_config_get_string(lpconfig, "lime", "x3dh_db_path", "x3dh.c25519.sqlite3");
-		string dbAccess = getDataPath() + filename;
+		string dbAccess = lp_config_get_string(lpconfig, "lime", "x3dh_db_path", "");
+		if (dbAccess.empty()) {
+			dbAccess = getDataPath() + "x3dh.c25519.sqlite3";
+		}
 		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
 
 		LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, serverUrl, prov, getSharedFromThis());
