@@ -977,6 +977,36 @@ static void early_cancelled_call(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_called_without_any_response(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_rc",FALSE);
+
+	LinphoneCall* out_call = linphone_core_invite_address(pauline->lc,marie->identity);
+
+	/* we don't schedule marie, because we want NO response at all.*/
+	BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneCallOutgoingInit,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneCallOutgoingProgress,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneCallOutgoingProgress,1));
+
+	/* Wait a bit. */
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc,NULL,NULL,0,2000));
+	/* Cancel the call. */
+	linphone_call_terminate(out_call);
+	
+	BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneCallEnd,1));
+	
+	/* Now schedule marie. */
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallIncomingReceived,1));
+	/* The call should end shortly because the proxy will cancel it*/
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1));
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1));
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void cancelled_ringing_call(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -5204,6 +5234,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call declined with error", call_declined_with_error),
 	TEST_NO_TAG("Call declined with retry after", call_declined_with_retry_after),
 	TEST_NO_TAG("Cancelled call", cancelled_call),
+	TEST_NO_TAG("Call cancelled without response", call_called_without_any_response),
 	TEST_NO_TAG("Early cancelled call", early_cancelled_call),
 	TEST_NO_TAG("Call with DNS timeout", call_with_dns_time_out),
 	TEST_NO_TAG("Cancelled ringing call", cancelled_ringing_call),
