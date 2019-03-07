@@ -66,7 +66,7 @@ public:
 	// CoreListener
 	void onGlobalStateChanged (LinphoneGlobalState state) override;
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
-
+	void onRegistrationStateChanged(LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) override;
 	bool aggregationEnabled () const;
 
 	static std::string createXml (const std::string &id, time_t time, Imdn::Type imdnType, LinphoneReason reason);
@@ -74,6 +74,7 @@ public:
 	static bool isError (const std::shared_ptr<ChatMessage> &chatMessage);
 
 private:
+	LinphoneProxyConfig *getRelatedProxyConfig();
 	static int timerExpired (void *data, unsigned int revents);
 
 	void send ();
