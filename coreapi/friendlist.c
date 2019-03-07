@@ -186,6 +186,11 @@ static char * create_resource_list_xml(const LinphoneFriendList *list) {
 	int err;
 
 	if (list->friends == NULL) return NULL;
+	bctbx_list_t* entries = uri_list(list);
+	if (entries == NULL) {
+		ms_warning("%s: Empty list in subscription, ignored.", __FUNCTION__);
+		return NULL;
+	}
 
 	buf = xmlBufferCreate();
 	if (buf == NULL) {
@@ -213,7 +218,6 @@ static char * create_resource_list_xml(const LinphoneFriendList *list) {
 	}
 
 	{
-		bctbx_list_t* entries = uri_list(list);
 		bctbx_list_t* it;
 		for(it = entries; it != NULL; it = it->next){
 			err = add_uri_entry(writer, err, reinterpret_cast<const char *>(it->data));
