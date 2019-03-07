@@ -2345,6 +2345,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	ms_message("Initializing LinphoneCore %s", linphone_core_get_version());
 
+	lc->is_unreffing = FALSE;
 	lc->config=lp_config_ref(config);
 	lc->data=userdata;
 	lc->ringstream_autorelease=TRUE;
@@ -6332,19 +6333,14 @@ LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(LinphoneCore *lc, c
 	return linphone_xml_rpc_session_new(lc, url);
 }
 
-static void _linphone_core_stop(LinphoneCore *lc, bool_t notify_global_state) {
+static void _linphone_core_stop(LinphoneCore *lc) {
 	bctbx_list_t *elem = NULL;
 	int i=0;
 	bool_t wait_until_unsubscribe = FALSE;
 	linphone_task_list_free(&lc->hooks);
 	lc->video_conf.show_local = FALSE;
 
-	if (notify_global_state) {
-		// Now that we have a proper uninit method called by application we can use again the callbacks
-		linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
-	} else {
-		lc->state = LinphoneGlobalShutdown;
-	}
+	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
 
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->uninit();
 
@@ -6449,22 +6445,18 @@ static void _linphone_core_stop(LinphoneCore *lc, bool_t notify_global_state) {
 
 	if (lc->platform_helper) delete getPlatformHelpers(lc);
 	lc->platform_helper = NULL;
-	if (notify_global_state) {
-		// Now that we have a proper uninit method called by application we can use again the callbacks
-		linphone_core_set_state(lc, LinphoneGlobalOff, "Off");
-	} else {
-		lc->state = LinphoneGlobalOff;
-	}
+	linphone_core_set_state(lc, LinphoneGlobalOff, "Off");
 }
 
 void linphone_core_stop(LinphoneCore *lc) {
-	_linphone_core_stop(lc, TRUE);
+	_linphone_core_stop(lc);
 }
 
 void _linphone_core_uninit(LinphoneCore *lc)
 {
+	lc->is_unreffing = TRUE;
 	if (lc->state != LinphoneGlobalOff) {
-		_linphone_core_stop(lc, FALSE);
+		_linphone_core_stop(lc);
 	}
 	
 	lp_config_unref(lc->config);

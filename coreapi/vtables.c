@@ -63,6 +63,7 @@ static void cleanup_dead_vtable_refs(LinphoneCore *lc){
 }
 
 #define NOTIFY_IF_EXIST(function_name, ...) \
+	if (lc->is_unreffing) return; /* This is to prevent someone from taking a ref in a callback called while the Core is being destroyed after last unref */ \
 	bctbx_list_t* iterator; \
 	VTableReference *ref; \
 	bool_t has_cb = FALSE; \
