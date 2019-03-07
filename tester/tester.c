@@ -535,29 +535,8 @@ void linphone_core_manager_reinit(LinphoneCoreManager *mgr) {
 		bctbx_free(uuid);
 }
 
-static void core_restart_global_state_changed(LinphoneCore *lc, LinphoneGlobalState state, const char *message) {
-	if (state == LinphoneGlobalReady) {
-		LinphoneCoreCbs *cbs = linphone_core_get_current_callbacks(lc);
-		LinphoneCoreManager *mgr = (LinphoneCoreManager *)linphone_core_cbs_get_user_data(cbs);
-		configure_lc(lc, bc_tester_get_resource_dir_prefix(), mgr);
-	}
-}
-
 void linphone_core_manager_restart(LinphoneCoreManager *mgr, bool_t check_for_proxies) {
-	//linphone_core_manager_reinit(mgr);
-	if (mgr->lc) {
-		linphone_core_stop(mgr->lc);
-
-		// This listener will wait for the core to be ready again and then re-apply the tester specifics like DNS hosts etc...
-		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-		linphone_core_cbs_set_user_data(cbs, mgr);
-		linphone_core_cbs_set_global_state_changed(cbs, core_restart_global_state_changed);
-		linphone_core_add_callbacks(mgr->lc, cbs);
-		linphone_core_cbs_unref(cbs);
-	} else {
-		linphone_core_manager_configure(mgr);
-	}
-	reset_counters(&mgr->stat);
+	linphone_core_manager_reinit(mgr);
 	linphone_core_manager_start(mgr, check_for_proxies);
 }
 
