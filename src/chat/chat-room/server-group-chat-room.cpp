@@ -289,7 +289,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	if (participant->isAdmin()) {
 		if (joiningPendingAfterCreation){
 			if (!initializeParticipants(participant, op)){
- 				op->decline(SalReasonNotAcceptable, nullptr);
+ 				op->decline(SalReasonNotAcceptable, "");
  				requestDeletion();
  			}
 			/* we don't accept the session yet: initializeParticipants() has launched queries for device information
@@ -314,7 +314,7 @@ void ServerGroupChatRoomPrivate::confirmRecreation (SalCallOp *op) {
 	auto participant = q->findParticipant(Address(op->getFrom()));
 	if (!participant){
 		lError() << q << " bug - " << op->getFrom() << " is not a participant.";
-		op->decline(SalReasonInternalError, nullptr);
+		op->decline(SalReasonInternalError, "");
 		return;
 	}
 	
