@@ -343,21 +343,25 @@ void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {
 		 */
 		
 		for (const auto &device : participant->getPrivate()->getDevices()) {
-			if ( (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && device->getState() == ParticipantDevice::State::Left){
-				inviteDevice(device);
-				continue;
-			}
 			
-			if (device->getState() != ParticipantDevice::State::Present)
-				continue;
 			string uri(device->getAddress().asString());
-			size_t nbMessages = queuedMessages[uri].size();
-			if (nbMessages > 0)
+			auto & msgQueue = queuedMessages[uri];
+			
+			if (!msgQueue.empty()){
+				if ( (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && device->getState() == ParticipantDevice::State::Left){
+					lInfo() << "There is a message to transmit to a participant in left state in a one to one chatroom, so inviting first.";
+					inviteDevice(device);
+					continue;
+				}
+				if (device->getState() != ParticipantDevice::State::Present)
+					continue;
+				size_t nbMessages = msgQueue.size();
 				lInfo() << q << ": Dispatching " << nbMessages << " queued message(s) for '" << uri << "'";
-			while (!queuedMessages[uri].empty()) {
-				shared_ptr<Message> msg = queuedMessages[uri].front();
-				sendMessage(msg, device->getAddress());
-				queuedMessages[uri].pop();
+				while (!msgQueue.empty()) {
+					shared_ptr<Message> msg = msgQueue.front();
+					sendMessage(msg, device->getAddress());
+					msgQueue.pop();
+				}
 			}
 		}
 	}
