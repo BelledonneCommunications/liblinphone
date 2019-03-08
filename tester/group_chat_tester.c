@@ -5155,7 +5155,7 @@ static void subscribe_test_after_set_chat_database_path(void) {
 	laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(laureCr)) goto end;
 
-	linphone_core_manager_restart(pauline, TRUE);
+	linphone_core_manager_reinit(pauline);
 	coresList = NULL;
 	coresList = bctbx_list_append(coresList, marie->lc);
 	coresList = bctbx_list_append(coresList, pauline->lc);
@@ -5168,6 +5168,7 @@ static void subscribe_test_after_set_chat_database_path(void) {
 	linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
 	configure_core_for_callbacks(pauline, cbs);
 	linphone_core_cbs_unref(cbs);
+	linphone_core_manager_start(pauline, TRUE);
 
 	LinphoneAddress *paulineAddress = linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(pauline->lc)));
 	paulineCr = linphone_core_find_chat_room(pauline->lc, confAddr, paulineAddress);
