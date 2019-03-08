@@ -74,7 +74,7 @@ ChatMessageModifier::Result FileTransferChatMessageModifier::encode (const share
 		return ChatMessageModifier::Result::Skipped;
 
 	/* Open a transaction with the server and send an empty request(RCS5.1 section 3.5.4.8.3.1) */
-	if (uploadFile() == 0)
+	if (uploadFile(nullptr) == 0)
 		return ChatMessageModifier::Result::Suspended;
 
 	return ChatMessageModifier::Result::Error;
@@ -288,8 +288,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 
 			releaseHttpRequest();
 			fileUploadBeginBackgroundTask();
-			uploadFile();
-			belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(httpRequest), BELLE_SIP_BODY_HANDLER(bh));
+			uploadFile(BELLE_SIP_BODY_HANDLER(bh));
 		} else if (code == 200) {     // file has been uploaded correctly, get server reply and send it
 			FileTransferContent *fileTransferContent = nullptr;
 			for (Content *c : message->getPrivate()->getContents()) {
@@ -449,15 +448,18 @@ void FileTransferChatMessageModifier::processAuthRequestedUpload (const belle_si
 	releaseHttpRequest();
 }
 
-int FileTransferChatMessageModifier::uploadFile () {
+int FileTransferChatMessageModifier::uploadFile (belle_sip_body_handler_t *bh) {
 	if (httpRequest) {
+		if (bh) belle_sip_object_unref(bh);
 		lError() << "Unable to upload file: there is already an upload in progress.";
 		return -1;
 	}
 
 	shared_ptr<ChatMessage> message = chatMessage.lock();
-	if (!message)
+	if (!message){
+		if (bh) belle_sip_object_unref(bh);
 		return -1;
+	}
 
 	// THIS IS ONLY FOR BACKWARD C API COMPAT
 	if (currentFileContentToTransfer->getFilePath().empty() && !message->getPrivate()->getFileTransferFilepath().empty()) {
@@ -470,15 +472,16 @@ int FileTransferChatMessageModifier::uploadFile () {
 	cbs.process_auth_requested = _chat_message_process_auth_requested_upload;
 
 	const char *url = linphone_core_get_file_transfer_server(message->getCore()->getCCore());
-	return startHttpTransfer(url ? url : "", "POST", &cbs);
+	return startHttpTransfer(url ? url : "", "POST", bh, &cbs);
 }
 
-int FileTransferChatMessageModifier::startHttpTransfer (const string &url, const string &action, belle_http_request_listener_callbacks_t *cbs) {
+int FileTransferChatMessageModifier::startHttpTransfer (const string &url, const string &action, belle_sip_body_handler_t *bh, belle_http_request_listener_callbacks_t *cbs) {
 	belle_generic_uri_t *uri = nullptr;
 
 	shared_ptr<ChatMessage> message = chatMessage.lock();
-	if (!message)
-		return -1;
+	if (!message){
+		goto error;
+	}
 
 	if (url.empty()) {
 		lWarning() << "Cannot process file transfer msg [" << this << "]: no file remote URI configured.";
@@ -502,6 +505,7 @@ int FileTransferChatMessageModifier::startHttpTransfer (const string &url, const
 		lWarning() << "Could not create http request for uri " << url;
 		goto error;
 	}
+	if (bh) belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(httpRequest), BELLE_SIP_BODY_HANDLER(bh));
 	// keep a reference to the http request to be able to cancel it during upload
 	belle_sip_object_ref(httpRequest);
 
@@ -514,6 +518,7 @@ error:
 	if (uri) {
 		belle_sip_object_unref(uri);
 	}
+	if (bh) belle_sip_object_unref(bh);
 	return -1;
 }
 
@@ -984,7 +989,7 @@ bool FileTransferChatMessageModifier::downloadFile (
 	cbs.process_response = _chat_message_process_response_from_get_file;
 	cbs.process_io_error = _chat_message_process_io_error_download;
 	cbs.process_auth_requested = _chat_message_process_auth_requested_download;
-	int err = startHttpTransfer(fileTransferContent->getFileUrl(), "GET", &cbs); // File URL has been set by createFileTransferInformationsFromVndGsmaRcsFtHttpXml
+	int err = startHttpTransfer(fileTransferContent->getFileUrl(), "GET", nullptr, &cbs); // File URL has been set by createFileTransferInformationsFromVndGsmaRcsFtHttpXml
 	if (err == -1)
 		return false;
 	// start the download, status is In Progress

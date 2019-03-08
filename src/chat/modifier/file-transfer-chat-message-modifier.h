@@ -66,8 +66,10 @@ public:
 	std::string createFakeFileTransferFromUrl (const std::string &url);
 
 private:
-	int uploadFile ();
-	int startHttpTransfer (const std::string &url, const std::string &action, belle_http_request_listener_callbacks_t *cbs);
+	// Body handler is optional, but if set this method takes owneship of it, even in error cases.
+	int uploadFile (belle_sip_body_handler_t *bh);
+	// Body handler is optional, but if set this method takes owneship of it, even in error cases.
+	int startHttpTransfer (const std::string &url, const std::string &action, belle_sip_body_handler_t *bh, belle_http_request_listener_callbacks_t *cbs);
 	void fileUploadBeginBackgroundTask ();
 	void fileUploadEndBackgroundTask ();
 
