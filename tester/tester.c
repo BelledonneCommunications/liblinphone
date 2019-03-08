@@ -263,7 +263,9 @@ bool_t transport_supported(LinphoneTransportType transport) {
 	}
 }
 
-#ifdef __linux
+
+
+#ifdef SKIP_PULSEAUDIO
 static void avoid_pulseaudio_hack(LinphoneCoreManager *mgr){
 	bctbx_list_t *cards = linphone_core_get_sound_devices_list(mgr->lc);
 	bctbx_list_t *it;
@@ -325,7 +327,7 @@ void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	linphone_core_set_ringback(mgr->lc, NULL);
 #elif __QNX__
 	linphone_core_set_playback_device(mgr->lc, "QSA: voice");
-#elif defined(__linux)
+#elif defined(SKIP_PULSEAUDIO)
 	{
 		/* Special trick for linux. Pulseaudio has random hangs, deadlocks or abort while executing test suites.
 		 * It never happens in the linphone app.
