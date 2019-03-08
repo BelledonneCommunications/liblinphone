@@ -1937,7 +1937,7 @@ static void group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh (v
 	_send_message(marieCr, marieMessage);
 
 	// Check that the message is discarded and that an undecipherable message error IMDN is returned to Marie
-	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 1000));
+	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
 
 	// Check the chatrooms security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
