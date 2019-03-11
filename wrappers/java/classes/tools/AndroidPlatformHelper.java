@@ -23,6 +23,8 @@ package org.linphone.core.tools;
 import org.linphone.core.tools.DozeReceiver;
 import org.linphone.core.tools.NetworkManager;
 import org.linphone.core.tools.NetworkManagerAbove21;
+import org.linphone.core.tools.NetworkManagerAbove24;
+import org.linphone.core.tools.NetworkManagerAbove26;
 import org.linphone.core.tools.Log;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.Version;
@@ -34,6 +36,7 @@ import android.net.wifi.WifiManager.MulticastLock;
 import android.net.wifi.WifiManager.WifiLock;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.net.ConnectivityManager;
@@ -80,22 +83,25 @@ public class AndroidPlatformHelper {
 	private String mUserCertificatePath;
 	private Surface mSurface;
 	private SurfaceTexture mSurfaceTexture;
-	private boolean dozeModeEnabled;
+	private boolean mDozeModeEnabled;
 	private BroadcastReceiver mDozeReceiver;
-	private BroadcastReceiver mNetworkReceiver;
 	private IntentFilter mDozeIntentFilter;
-	private IntentFilter mNetworkIntentFilter;
 	private boolean mWifiOnly;
 	private boolean mUsingHttpProxy;
-	private NetworkManagerAbove21 mNetworkManagerAbove21;
+	private NetworkManagerInterface mNetworkManager;
 	private Handler mMainHandler;
 	private Runnable mNetworkUpdateRunner;
 	private boolean mMonitoringEnabled;
+	private boolean mIsInInteractiveMode;
+	private InteractivityReceiver mInteractivityReceiver;
+	private IntentFilter mInteractivityIntentFilter;
 
 	private native void setNativePreviewWindowId(long nativePtr, Object view);
 	private native void setNativeVideoWindowId(long nativePtr, Object view);
 	private native void setNetworkReachable(long nativePtr, boolean reachable);
 	private native void setHttpProxy(long nativePtr, String host, int port);
+	private native boolean isInBackground(long nativePtr);
+	private native void enableKeepAlive(long nativePtr, boolean enable);
 
 	public AndroidPlatformHelper(long nativePtr, Object ctx_obj, boolean wifiOnly) {
 		mNativePtr = nativePtr;
@@ -142,6 +148,8 @@ public class AndroidPlatformHelper {
 		} catch (IOException e) {
 			Log.e("[Platform Helper] failed to install some resources.");
 		}
+
+		mIsInInteractiveMode = true;
 	}
 
 	public synchronized void onLinphoneCoreStart(boolean monitoringEnabled) {
@@ -423,114 +431,159 @@ public class AndroidPlatformHelper {
 	}
 
 	public synchronized void postNetworkUpdateRunner() {
-		mMainHandler.removeCallbacksAndMessages(null);
 		mMainHandler.post(mNetworkUpdateRunner);
 	}
 
+	public synchronized Handler getHandler() {
+		return mMainHandler;
+	}
+
+	public synchronized boolean isInBackground() {
+		return isInBackground(mNativePtr);
+	}
+
+	private String networkTypeToString(int type) {
+		switch (type) {
+			case ConnectivityManager.TYPE_BLUETOOTH:
+				return "BLUETOOTH";
+			case ConnectivityManager.TYPE_ETHERNET:
+				return "ETHERNET";
+			case ConnectivityManager.TYPE_MOBILE:
+				return "MOBILE";
+			case ConnectivityManager.TYPE_WIFI:
+				return "WIFI";
+			case ConnectivityManager.TYPE_VPN:
+				return "VPN";
+			default:
+				return String.valueOf(type);
+		}
+	}
+
 	public synchronized void updateNetworkReachability() {
-		if (mConnectivityManager == null) return;
 		if (mNativePtr == 0) {
 			Log.w("[Platform Helper] Native pointer has been reset, stopping there");
 			return;
 		}
 
-		boolean usingHttpProxyBefore = mUsingHttpProxy;
-		boolean connected = false;
-		NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
-		connected = networkInfo != null && networkInfo.isConnected();
-
-		if (connected && Build.VERSION.SDK_INT >= Version.API23_MARSHMALLOW_60){
-			ProxyInfo proxy = mConnectivityManager.getDefaultProxy();
-			if (proxy != null && proxy.getHost() != null){
-				Log.i("[Platform Helper] The active network is using an http proxy: " + proxy.toString());
-				setHttpProxy(mNativePtr, proxy.getHost(), proxy.getPort());
-				mUsingHttpProxy = true;
-			}else{
-				setHttpProxy(mNativePtr, "", 0);
-				mUsingHttpProxy = false;
-			}
-		}
-
-		if (networkInfo == null || !connected) {
+		boolean connected = mNetworkManager.isCurrentlyConnected(mContext, mConnectivityManager, mWifiOnly);
+		if (!connected) {
 			Log.i("[Platform Helper] No connectivity: setting network unreachable");
 			setNetworkReachable(mNativePtr, false);
-		} else if (dozeModeEnabled) {
-			Log.i("[Platform Helper] Doze Mode enabled: shutting down network");
+		} else if (mDozeModeEnabled) {
+			Log.i("[Platform Helper] Device in idle mode: shutting down network");
 			setNetworkReachable(mNativePtr, false);
-		} else if (connected) {
-			if (mWifiOnly) {
-				if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-					Log.i("[Platform Helper] Network available through WiFi, network is reachable");
-					setNetworkReachable(mNativePtr, true);
-				} else {
-					Log.i("[Platform Helper] Wifi-only mode, setting network not reachable");
+		} else {
+			if (mNetworkManager.hasHttpProxy(mContext, mConnectivityManager)) {
+				String host = mNetworkManager.getProxyHost(mContext, mConnectivityManager);
+				int port = mNetworkManager.getProxyPort(mContext, mConnectivityManager);
+				setHttpProxy(mNativePtr, host, port);
+				if (!mUsingHttpProxy) {
+					Log.i("[Platform Helper] Proxy wasn't set before, disable network reachability first");
 					setNetworkReachable(mNativePtr, false);
 				}
+				mUsingHttpProxy = true;
 			} else {
-				int curtype = networkInfo.getType();
-				Log.i("[Platform Helper] Network type is " + networkInfo.getTypeName());
-
-				if ((curtype != mLastNetworkType && mLastNetworkType != -1) || mUsingHttpProxy != usingHttpProxyBefore) {
-					//if kind of network has changed, we need to notify network_reachable(false) to make sure all current connections are destroyed.
-					//they will be re-created during setNetworkReachable(true).
-					Log.i("[Platform Helper] Connectivity has changed, disable/enable network to force re-creating connections.");
+				setHttpProxy(mNativePtr, "", 0);
+				if (mUsingHttpProxy) {
+					Log.i("[Platform Helper] Proxy was set before, disable network reachability first");
 					setNetworkReachable(mNativePtr, false);
 				}
-				setNetworkReachable(mNativePtr, true);
-				mLastNetworkType = curtype;
+				mUsingHttpProxy = false;
 			}
+
+			Log.i("[Platform Helper] Network should be reachable");
+			NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
+			if (networkInfo == null) {
+				Log.e("[Platform Helper] getActiveNetworkInfo() returned null !");
+				setNetworkReachable(mNativePtr, false);
+				return;
+			}
+
+			Log.i("[Platform Helper] Active network type is " + networkInfo.getTypeName());
+			if (!networkInfo.isAvailable()) {
+				Log.e("[Platform Helper] getActiveNetwork() isn't available !");
+				setNetworkReachable(mNativePtr, false);
+				return;
+			}
+			if (!networkInfo.isConnected()) {
+				Log.e("[Platform Helper] getActiveNetwork() isn't connected !");
+				setNetworkReachable(mNativePtr, false);
+				return;
+			}
+
+			Log.i("[Platform Helper] Active network state " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
+			int currentNetworkType = networkInfo.getType();
+			if (mLastNetworkType != -1 && mLastNetworkType != currentNetworkType) {
+				Log.i("[Platform Helper] Network type has changed (last one was " + networkTypeToString(mLastNetworkType) + "), disable network reachability first");
+				setNetworkReachable(mNativePtr, false);
+			}
+
+			mLastNetworkType = currentNetworkType;
+			setNetworkReachable(mNativePtr, true);
 		}
 	}
 
 	public synchronized void setDozeModeEnabled(boolean b) {
-		dozeModeEnabled = b;
-		Log.i("[Platform Helper] Doze mode enabled: " + dozeModeEnabled);
+		mDozeModeEnabled = b;
+		Log.i("[Platform Helper] Device idle mode: " + mDozeModeEnabled);
+	}
+
+	public synchronized void setInteractiveMode(boolean b) {
+		mIsInInteractiveMode = b;
+		Log.i("[Platform Helper] Device interactive mode: " + mIsInInteractiveMode);
+		enableKeepAlive(mNativePtr, mIsInInteractiveMode);
 	}
 
 	private synchronized void startNetworkMonitoring() {
 		if (!mMonitoringEnabled) return;
 		
+		mNetworkManager = new NetworkManager(this);
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-			mNetworkReceiver = new NetworkManager(this);
-			mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-			Log.i("[Platform Helper] Registering network receiver");
-			mContext.registerReceiver(mNetworkReceiver, mNetworkIntentFilter);
+			mNetworkManager = new NetworkManager(this);
+		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+			mNetworkManager = new NetworkManagerAbove21(this);
+		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+			mNetworkManager = new NetworkManagerAbove24(this);
 		} else {
-			mNetworkManagerAbove21 = new NetworkManagerAbove21(this);
-			Log.i("[Platform Helper] Registering network callbacks");
-			mNetworkManagerAbove21.registerNetworkCallbacks(mConnectivityManager);
+			mNetworkManager = new NetworkManagerAbove26(this);
 		}
+		Log.i("[Platform Helper] Registering network callbacks");
+		mNetworkManager.registerNetworkCallbacks(mContext, mConnectivityManager);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			mDozeIntentFilter = new IntentFilter();
 			mDozeIntentFilter.addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED);
 			mDozeReceiver = new DozeReceiver(this);
-			dozeModeEnabled = ((PowerManager) mContext.getSystemService(Context.POWER_SERVICE)).isDeviceIdleMode();
-			Log.i("[Platform Helper] Registering doze receiver, current doze state is " + dozeModeEnabled);
+			Log.i("[Platform Helper] Registering doze receiver");
 			mContext.registerReceiver(mDozeReceiver, mDozeIntentFilter);
 		}
+
+		mInteractivityReceiver = new InteractivityReceiver(this);
+		mInteractivityIntentFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        mInteractivityIntentFilter.addAction(Intent.ACTION_SCREEN_OFF);
+		Log.i("[Platform Helper] Registering interactivity receiver");
+		mContext.registerReceiver(mInteractivityReceiver, mInteractivityIntentFilter);
 
 		postNetworkUpdateRunner();
 	}
 
 	private synchronized void stopNetworkMonitoring() {		
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-			if (mNetworkReceiver != null) {
-				Log.i("[Platform Helper] Unregistering network receiver");
-				mContext.unregisterReceiver(mNetworkReceiver);
-			}
-		} else {
-			if (mNetworkManagerAbove21 != null && mConnectivityManager != null) {
-				Log.i("[Platform Helper] Unregistering network callbacks");
-				mNetworkManagerAbove21.unregisterNetworkCallbacks(mConnectivityManager);
-			}
+		if (mInteractivityReceiver != null) {
+			Log.i("[Platform Helper] Unregistering interactivity receiver");
+			mContext.unregisterReceiver(mInteractivityReceiver);
+			mInteractivityReceiver = null;
 		}
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			if (mDozeReceiver != null) {
-				Log.i("[Platform Helper] Unregistering doze receiver");
-				mContext.unregisterReceiver(mDozeReceiver);
-			}
+		if (mNetworkManager != null && mConnectivityManager != null) {
+			Log.i("[Platform Helper] Unregistering network callbacks");
+			mNetworkManager.unregisterNetworkCallbacks(mContext, mConnectivityManager);
+			mNetworkManager = null;
+		}
+
+		if (mDozeReceiver != null) {
+			Log.i("[Platform Helper] Unregistering doze receiver");
+			mContext.unregisterReceiver(mDozeReceiver);
+			mDozeReceiver = null;
 		}
 
 		mMonitoringEnabled = false;
