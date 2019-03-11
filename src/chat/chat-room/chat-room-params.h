@@ -30,23 +30,23 @@ class ChatRoom;
 
 class LINPHONE_PUBLIC ChatRoomParams : public bellesip::HybridObject<LinphoneChatRoomParams, ChatRoomParams> {
 public:
-	friend class ChatRoom;
 
 	L_DECLARE_ENUM(ChatRoomImpl, L_ENUM_VALUES_CHAT_ROOM_IMPL);
 	L_DECLARE_ENUM(ChatRoomEncryptionImpl, L_ENUM_VALUES_CHAT_ROOM_ENCRYPTION_IMPL);
-
-	template <typename... _Args>
-	static inline std::shared_ptr<ChatRoomParams> create(_Args&&... __args) {
-		return std::shared_ptr<ChatRoomParams>(new ChatRoomParams(std::forward<_Args>(__args)...), std::mem_fun(&bellesip::Object::unref));
-	}
 
 	static AbstractChatRoom::CapabilitiesMask toCapabilities(const std::shared_ptr<ChatRoomParams> &params);
 	static std::shared_ptr<ChatRoomParams> fromCapabilities(AbstractChatRoom::CapabilitiesMask capabilities);
 	static std::shared_ptr<ChatRoomParams> getDefaults();
 	static std::shared_ptr<ChatRoomParams> getDefaults(const std::shared_ptr<Core> &core);
 
-	bool isValid() const;
+	//Derived HybridObject constructors have to be public to allow construction from factory-like `bellesip::HybridObject::create` method
+	//Base constructor is protected	anyways to prevent unmanaged creation.
+	ChatRoomParams();
+	ChatRoomParams(const ChatRoomParams &params);
+	//Convenience constructor
+	ChatRoomParams(bool encrypted, bool group, ChatRoomImpl impl);
 
+	bool isValid() const;
 	std::string toString() const;
 
 	ChatRoomImpl getChatRoomImpl() const;
@@ -62,11 +62,6 @@ public:
 	void setRealTimeText(bool rtt);
 
 protected:
-	//TODO Make all constructors private
-	ChatRoomParams();
-	ChatRoomParams(const ChatRoomParams &params);
-	//Convenience constructor
-	ChatRoomParams(bool encrypted, bool group, ChatRoomImpl impl);
 	~ChatRoomParams() = default;
 
 private:

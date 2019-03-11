@@ -27,11 +27,7 @@ using namespace LinphonePrivate;
 // =============================================================================
 
 LinphoneChatRoomParams *linphone_chat_room_params_new(void) {
-	auto p = ChatRoomParams::create();
-	p->ref();
-	//This ref will be used for all shared_ptr pointing to *p
-	//This is mandatory to avoid object' destruction when the shared_ptr is destroyed
-	return p->toC();
+	return ChatRoomParams::createCObject();
 }
 
 LinphoneChatRoomParams *linphone_chat_room_params_ref(LinphoneChatRoomParams *params) {
