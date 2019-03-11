@@ -446,4 +446,9 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 	androidPlatformHelper->getCore()->doLater(fun);
 }
 
+extern "C" JNIEXPORT jboolean JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_isInBackground(JNIEnv *env, jobject thiz, jlong ptr) {
+	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
+	return androidPlatformHelper->getCore()->isInBackground();
+}
+
 LINPHONE_END_NAMESPACE

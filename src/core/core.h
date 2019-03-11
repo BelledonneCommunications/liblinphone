@@ -79,6 +79,7 @@ public:
 
 	void enterBackground ();
 	void enterForeground ();
+	bool isInBackground ();
 
 	// ---------------------------------------------------------------------------
 	// C-Core.

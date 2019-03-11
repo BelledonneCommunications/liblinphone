@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.Network;
+import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.os.Build;
 
@@ -42,26 +43,56 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 			@Override
 			public void onAvailable(Network network) {
-				Log.i("[Platform Helper] Network is available (21)");
+				Log.i("[Network Manager 21] A network is available");
 				mHelper.postNetworkUpdateRunner();
 			}
 
 			@Override
 			public void onLost(Network network) {
-				Log.i("[Platform Helper] Network is lost (21)");
+				Log.i("[Network Manager 21] A network is lost");
 				mHelper.postNetworkUpdateRunner();
 			}
 		};
 	}
 
-	public void registerNetworkCallbacks(ConnectivityManager connectivityManager) {
+	public void registerNetworkCallbacks(Context context, ConnectivityManager connectivityManager) {
 		connectivityManager.registerNetworkCallback(
 			new NetworkRequest.Builder().build(),
 			mNetworkCallback
 		);
 	}
 
-	public void unregisterNetworkCallbacks(ConnectivityManager connectivityManager) {
+	public void unregisterNetworkCallbacks(Context context, ConnectivityManager connectivityManager) {
 		connectivityManager.unregisterNetworkCallback(mNetworkCallback);
 	}
+
+    public boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly) {
+		Network[] networks = connectivityManager.getAllNetworks();
+		boolean connected = false;
+		for (Network network : networks) {
+			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
+			Log.i("[Network Manager 21] Found network type: " + networkInfo.getTypeName());
+			if (networkInfo.isAvailable() && networkInfo.isConnected()) {
+				Log.i("[Network Manager 21] Network is available");
+				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
+					Log.i("[Network Manager 21] Wifi only mode enabled, skipping");
+				} else {
+					connected = true;
+				}
+			}
+		}
+		return connected;
+    }
+
+    public boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager) {
+        return false;
+    }
+
+    public String getProxyHost(Context context, ConnectivityManager connectivityManager) {
+        return null;
+    }
+
+    public int getProxyPort(Context context, ConnectivityManager connectivityManager) {
+        return 0;
+    }
 }

@@ -19,10 +19,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.linphone.core.tools;
 
+import android.content.Context;
 import android.net.ConnectivityManager;
 
 public interface NetworkManagerInterface {
-    public void registerNetworkCallbacks(ConnectivityManager connectivityManager);
+    void registerNetworkCallbacks(Context context, ConnectivityManager connectivityManager);
 
-	public void unregisterNetworkCallbacks(ConnectivityManager connectivityManager);
+	void unregisterNetworkCallbacks(Context context, ConnectivityManager connectivityManager);
+
+    boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly);
+
+    boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager);
+
+    String getProxyHost(Context context, ConnectivityManager connectivityManager);
+
+    int getProxyPort(Context context, ConnectivityManager connectivityManager);
 }
