@@ -19,13 +19,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package org.linphone.core.tools;
 
-import android.annotation.TargetApi;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
+import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkInfo;
+import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.os.Build;
 
@@ -49,8 +49,28 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 
 			@Override
 			public void onLost(Network network) {
-				Log.i("[Platform Helper] [Network Manager 21] A network is lost");
+				Log.i("[Platform Helper] [Network Manager 21] A network has been lost");
 				mHelper.postNetworkUpdateRunner();
+			}
+
+			@Override
+			public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
+				Log.i("[Platform Helper] [Network Manager 21] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
+			}
+
+			@Override
+			public void onLinkPropertiesChanged(Network network, LinkProperties linkProperties) {
+				Log.i("[Platform Helper] [Network Manager 21] onLinkPropertiesChanged " + network.toString() + ", " + linkProperties.toString());
+			}
+
+			@Override
+			public void onLosing(Network network, int maxMsToLive) {
+				Log.i("[Platform Helper] [Network Manager 21] onLosing " + network.toString());
+			}
+
+			@Override
+			public void onUnavailable() {
+				Log.i("[Platform Helper] [Network Manager 21] onUnavailable");
 			}
 		};
 	}
