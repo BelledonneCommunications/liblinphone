@@ -61,6 +61,7 @@ public class NetworkManager extends BroadcastReceiver implements NetworkManagerI
 
     public boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly) {
         NetworkInfo[] networkInfos = connectivityManager.getAllNetworkInfo();
+		boolean connected = false;
         for (NetworkInfo networkInfo : networkInfos) {
             Log.i("[Platform Helper] [Network Manager] Found network type: " + networkInfo.getTypeName());
 			if (networkInfo.isAvailable() && networkInfo.isConnected()) {
@@ -68,11 +69,11 @@ public class NetworkManager extends BroadcastReceiver implements NetworkManagerI
 				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
 					Log.i("[Platform Helper] [Network Manager] Wifi only mode enabled, skipping");
 				} else {
-					return true;
+					connected = true;
 				}
 			}
         }
-        return false;
+        return connected;
     }
 
     public boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager) {
