@@ -41,11 +41,9 @@ public class InteractivityReceiver extends BroadcastReceiver {
         if (action.equalsIgnoreCase(Intent.ACTION_SCREEN_ON)) {
             Log.i("[Platform Helper] Device is in interactive mode");
             mHelper.setInteractiveMode(true);
-            mHelper.postNetworkUpdateRunner();
         } else if (action.equalsIgnoreCase(Intent.ACTION_SCREEN_OFF)) {
             Log.i("[Platform Helper] Device is not in interactive mode");
             mHelper.setInteractiveMode(false);
-            mHelper.postNetworkUpdateRunner();
         }
     }
 }

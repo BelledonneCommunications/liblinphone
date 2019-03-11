@@ -511,7 +511,7 @@ public class AndroidPlatformHelper {
 				return;
 			}
 
-            Log.i("[Platform Helper] Active network state " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
+			Log.i("[Platform Helper] Active network state " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
 			int currentNetworkType = networkInfo.getType();
 			if (mLastNetworkType != -1 && mLastNetworkType != currentNetworkType) {
 				Log.i("[Platform Helper] Network type has changed (last one was " + networkTypeToString(mLastNetworkType) + "), disable network reachability first");

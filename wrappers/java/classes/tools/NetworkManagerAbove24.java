@@ -108,11 +108,17 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
 			Log.i("[Platform Helper] [Network Manager 24] Found network type: " + networkInfo.getTypeName());
 			if (networkInfo.isAvailable() && networkInfo.isConnected()) {
-				Log.i("[Platform Helper] [Network Manager 24] Network is available");
+				Log.i("[Platform Helper] [Network Manager 24] Network is available and connected");
 				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
 					Log.i("[Platform Helper] [Network Manager 24] Wifi only mode enabled, skipping");
 				} else {
-					connected = true;
+					NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
+					if (capabilities != null) {
+						Log.i("[Platform Helper] [Network Manager 24] Network capabilities are " + capabilities.toString());
+						connected = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) 
+							&& capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
+							&& capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+					}
 				}
 			}
 		}
