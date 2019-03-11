@@ -53,39 +53,45 @@ LINPHONE_PUBLIC LinphoneChatRoomParams *linphone_chat_room_params_ref(LinphoneCh
 LINPHONE_PUBLIC void linphone_chat_room_params_unref(LinphoneChatRoomParams *params);
 
 /**
+ * @param[in] params The chat room params.
+ * @return TRUE if the given parameters are valid, FALSE otherwise
+ **/
+LINPHONE_PUBLIC bool_t linphone_chat_room_params_is_valid(const LinphoneChatRoomParams *params);
+
+/**
  * Get the backend implementation of the chat room associated with the given parameters.
  * @param[in] params The chat room params.
  * @return LinphoneChatRoomImpl
 **/
-LINPHONE_PUBLIC LinphoneChatRoomImpl linphone_chat_room_params_get_impl(LinphoneChatRoomParams *params);
+LINPHONE_PUBLIC LinphoneChatRoomImpl linphone_chat_room_params_get_impl(const LinphoneChatRoomParams *params);
 
 /**
  * Get the encryption implementation of the chat room associated with the given parameters.
  * @param[in] params The chat room params.
  * @return LinphoneChatRoomEncryptionImpl
 **/
-LINPHONE_PUBLIC LinphoneChatRoomEncryptionImpl linphone_chat_room_params_get_encryption_impl(LinphoneChatRoomParams *params);
+LINPHONE_PUBLIC LinphoneChatRoomEncryptionImpl linphone_chat_room_params_get_encryption_impl(const LinphoneChatRoomParams *params);
 
 /**
  * Get the group chat status of the chat room associated with the given parameters.
  * @param[in] params The chat room params.
  * @return TRUE if group chat is enabled, FALSE if one-to-one
 **/
-LINPHONE_PUBLIC bool_t linphone_chat_room_params_group_enabled(LinphoneChatRoomParams *params);
+LINPHONE_PUBLIC bool_t linphone_chat_room_params_group_enabled(const LinphoneChatRoomParams *params);
 
 /**
  * Get the encryption status of the chat room associated with the given parameters.
  * @param[in] params The chat room params.
  * @return TRUE if encryption is enabled, FALSE otherwise
 **/
-LINPHONE_PUBLIC bool_t linphone_chat_room_params_encryption_enabled(LinphoneChatRoomParams *params);
+LINPHONE_PUBLIC bool_t linphone_chat_room_params_encryption_enabled(const LinphoneChatRoomParams *params);
 
 /**
  * Get the real time text status of the chat room associated with the given parameters.
  * @param[in] params The chat room params.
  * @return TRUE if real time text is enabled, FALSE otherwise
 **/
-LINPHONE_PUBLIC bool_t linphone_chat_room_params_rtt_enabled(LinphoneChatRoomParams *params);
+LINPHONE_PUBLIC bool_t linphone_chat_room_params_rtt_enabled(const LinphoneChatRoomParams *params);
 
 /**
  * Set the backend implementation of these chat room parameters.
