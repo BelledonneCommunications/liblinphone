@@ -20,8 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 package org.linphone.core.tools;
 
 import android.Manifest;
-import android.annotation.TargetApi;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -54,18 +52,28 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 
 			@Override
 			public void onLost(Network network) {
-				Log.i("[Platform Helper] [Network Manager 26] A network is lost");
+				Log.i("[Platform Helper] [Network Manager 26] A network has been lost");
 				mHelper.updateNetworkReachability();
 			}
 
 			@Override
 			public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
-				Log.i("[Platform Helper] [Network Manager 26] A network capabilities has changed: " + network.toString() + " : " + networkCapabilities.toString() + " (" + networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) + ")");
+				Log.i("[Platform Helper] [Network Manager 26] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
 			}
 
 			@Override
 			public void onLinkPropertiesChanged(Network network, LinkProperties linkProperties) {
-				Log.i("[Platform Helper] [Network Manager 26] A network link properties has changed: " + network.toString() + " : " + linkProperties.toString());
+				Log.i("[Platform Helper] [Network Manager 26] onLinkPropertiesChanged " + network.toString() + ", " + linkProperties.toString());
+			}
+
+			@Override
+			public void onLosing(Network network, int maxMsToLive) {
+				Log.i("[Platform Helper] [Network Manager 26] onLosing " + network.toString());
+			}
+
+			@Override
+			public void onUnavailable() {
+				Log.i("[Platform Helper] [Network Manager 26] onUnavailable");
 			}
 		};
 	}

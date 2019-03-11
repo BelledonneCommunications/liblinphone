@@ -44,6 +44,7 @@ public class NetworkManager extends BroadcastReceiver implements NetworkManagerI
     @Override
     public void onReceive(Context context, Intent intent) {
         mConnectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        Log.i("[Platform Helper] [Network Manager] Broadcast receiver called");
         if (mHelper != null) {
             mHelper.postNetworkUpdateRunner();
         }
