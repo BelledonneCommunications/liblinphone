@@ -1,6 +1,6 @@
 /*
 NetworkManager.java
-Copyright (C) 2017  Belledonne Communications, Grenoble, France
+Copyright (C) 2017 Belledonne Communications, Grenoble, France
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -22,15 +22,20 @@ package org.linphone.core.tools;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkInfo;
 
 import org.linphone.core.tools.AndroidPlatformHelper;
 
 /**
  * Intercept network state changes and update linphone core.
  */
-public class NetworkManager extends BroadcastReceiver {
+public class NetworkManager extends BroadcastReceiver implements NetworkManagerInterface {
     private AndroidPlatformHelper mHelper;
+	private IntentFilter mNetworkIntentFilter;
+    private ConnectivityManager mConnectivityManager;
 
     public NetworkManager(AndroidPlatformHelper helper) {
         mHelper = helper;
@@ -38,12 +43,46 @@ public class NetworkManager extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        Boolean lNoConnectivity = intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
-        Log.i("[Platform Helper] Network connectivity disabled: " + lNoConnectivity);
+        mConnectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (mHelper != null) {
             mHelper.postNetworkUpdateRunner();
         }
     }
 
+	public void registerNetworkCallbacks(Context context, ConnectivityManager connectivityManager) {
+		mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        context.registerReceiver(this, mNetworkIntentFilter);
+	}
+
+	public void unregisterNetworkCallbacks(Context context, ConnectivityManager connectivityManager) {
+        context.unregisterReceiver(this);
+	}
+
+    public boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly) {
+        NetworkInfo[] networkInfos = connectivityManager.getAllNetworkInfo();
+        for (NetworkInfo networkInfo : networkInfos) {
+            Log.i("[Network Manager] Found network type: " + networkInfo.getTypeName());
+			if (networkInfo.isAvailable() && networkInfo.isConnected()) {
+				Log.i("[Network Manager] Network is available");
+				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
+					Log.i("[Network Manager] Wifi only mode enabled, skipping");
+				} else {
+					return true;
+				}
+			}
+        }
+        return false;
+    }
+
+    public boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager) {
+        return false;
+    }
+
+    public String getProxyHost(Context context, ConnectivityManager connectivityManager) {
+        return null;
+    }
+
+    public int getProxyPort(Context context, ConnectivityManager connectivityManager) {
+        return 0;
+    }
 }

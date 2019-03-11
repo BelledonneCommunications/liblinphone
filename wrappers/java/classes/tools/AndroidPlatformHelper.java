@@ -85,9 +85,7 @@ public class AndroidPlatformHelper {
 	private SurfaceTexture mSurfaceTexture;
 	private boolean mDozeModeEnabled;
 	private BroadcastReceiver mDozeReceiver;
-	private BroadcastReceiver mNetworkReceiver;
 	private IntentFilter mDozeIntentFilter;
-	private IntentFilter mNetworkIntentFilter;
 	private boolean mWifiOnly;
 	private boolean mUsingHttpProxy;
 	private NetworkManagerInterface mNetworkManager;
@@ -102,6 +100,7 @@ public class AndroidPlatformHelper {
 	private native void setNativeVideoWindowId(long nativePtr, Object view);
 	private native void setNetworkReachable(long nativePtr, boolean reachable);
 	private native void setHttpProxy(long nativePtr, String host, int port);
+	private native boolean isInBackground(long nativePtr);
 
 	public AndroidPlatformHelper(long nativePtr, Object ctx_obj, boolean wifiOnly) {
 		mNativePtr = nativePtr;
@@ -438,61 +437,71 @@ public class AndroidPlatformHelper {
 		return mMainHandler;
 	}
 
+	public synchronized boolean isInBackground() {
+		return isInBackground(mNativePtr);
+	}
+
 	public synchronized void updateNetworkReachability() {
-		if (mConnectivityManager == null) return;
 		if (mNativePtr == 0) {
 			Log.w("[Platform Helper] Native pointer has been reset, stopping there");
 			return;
 		}
 
-		boolean usingHttpProxyBefore = mUsingHttpProxy;
-		boolean connected = false;
-		NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
-		connected = networkInfo != null && networkInfo.isConnectedOrConnecting();
-
-		if (connected && Build.VERSION.SDK_INT >= Version.API23_MARSHMALLOW_60){
-			ProxyInfo proxy = mConnectivityManager.getDefaultProxy();
-			if (proxy != null && proxy.getHost() != null){
-				Log.i("[Platform Helper] The active network is using an http proxy: " + proxy.toString());
-				setHttpProxy(mNativePtr, proxy.getHost(), proxy.getPort());
-				mUsingHttpProxy = true;
-			}else{
-				setHttpProxy(mNativePtr, "", 0);
-				mUsingHttpProxy = false;
-			}
-		}
-
-		if (networkInfo == null || !connected) {
+		boolean connected = mNetworkManager.isCurrentlyConnected(mContext, mConnectivityManager, mWifiOnly);
+		if (!connected) {
 			Log.i("[Platform Helper] No connectivity: setting network unreachable");
 			setNetworkReachable(mNativePtr, false);
 		} else if (mDozeModeEnabled) {
 			Log.i("[Platform Helper] Device in idle mode: shutting down network");
 			setNetworkReachable(mNativePtr, false);
-		} else if (!mIsInInteractiveMode) {
-			Log.i("[Platform Helper] Device in non interactive mode: shutting down network");
-			setNetworkReachable(mNativePtr, false);
 		} else {
-			if (mWifiOnly) {
-				if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-					Log.i("[Platform Helper] Network available through WiFi, network is reachable");
-					setNetworkReachable(mNativePtr, true);
-				} else {
-					Log.i("[Platform Helper] Wifi-only mode, setting network not reachable");
+			if (mNetworkManager.hasHttpProxy(mContext, mConnectivityManager)) {
+				String host = mNetworkManager.getProxyHost(mContext, mConnectivityManager);
+				int port = mNetworkManager.getProxyPort(mContext, mConnectivityManager);
+				setHttpProxy(mNativePtr, host, port);
+				if (!mUsingHttpProxy) {
+					Log.i("[Platform Helper] Proxy wasn't set before, disable network reachability first");
 					setNetworkReachable(mNativePtr, false);
 				}
+				mUsingHttpProxy = true;
 			} else {
-				int curtype = networkInfo.getType();
-				Log.i("[Platform Helper] Network type is " + networkInfo.getTypeName());
-
-				if ((curtype != mLastNetworkType && mLastNetworkType != -1) || mUsingHttpProxy != usingHttpProxyBefore) {
-					//if kind of network has changed, we need to notify network_reachable(false) to make sure all current connections are destroyed.
-					//they will be re-created during setNetworkReachable(true).
-					Log.i("[Platform Helper] Connectivity has changed, disable/enable network to force re-creating connections.");
+				setHttpProxy(mNativePtr, "", 0);
+				if (mUsingHttpProxy) {
+					Log.i("[Platform Helper] Proxy was set before, disable network reachability first");
 					setNetworkReachable(mNativePtr, false);
 				}
-				setNetworkReachable(mNativePtr, true);
-				mLastNetworkType = curtype;
+				mUsingHttpProxy = false;
 			}
+
+			Log.i("[Platform Helper] Network should be reachable");
+			Network network = mConnectivityManager.getActiveNetwork();
+			if (network == null) {
+				Log.e("[Platform Helper] getActiveNetwork() returned null !");
+				setNetworkReachable(mNativePtr, false);
+				return;
+			}
+
+			NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(network);
+			Log.i("[Platform Helper] Active network type is " + networkInfo.getTypeName());
+			if (!networkInfo.isAvailable()) {
+				Log.e("[Platform Helper] getActiveNetwork() isn't available !");
+				setNetworkReachable(mNativePtr, false);
+				return;
+			}
+			if (!networkInfo.isConnected()) {
+				Log.e("[Platform Helper] getActiveNetwork() isn't connected !");
+				setNetworkReachable(mNativePtr, false);
+				return;
+			}
+
+			int currentNetworkType = networkInfo.getType();
+			if (mLastNetworkType != -1 && mLastNetworkType != currentNetworkType) {
+				Log.i("[Platform Helper] Network type has changed (last one was " + mLastNetworkType + "), disable network reachability first");
+				setNetworkReachable(mNativePtr, false);
+			}
+
+			mLastNetworkType = currentNetworkType;
+			setNetworkReachable(mNativePtr, true);
 		}
 	}
 
@@ -504,27 +513,23 @@ public class AndroidPlatformHelper {
 	public synchronized void setInteractiveMode(boolean b) {
 		mIsInInteractiveMode = b;
 		Log.i("[Platform Helper] Device interactive mode: " + mIsInInteractiveMode);
+		//TODO: disable/enable keep alive
 	}
 
 	private synchronized void startNetworkMonitoring() {
 		if (!mMonitoringEnabled) return;
 		
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-			mNetworkReceiver = new NetworkManager(this);
-			mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-			Log.i("[Platform Helper] Registering network receiver");
-			mContext.registerReceiver(mNetworkReceiver, mNetworkIntentFilter);
+			mNetworkManager = new NetworkManager(this);
+		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+			mNetworkManager = new NetworkManagerAbove21(this);
+		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+			mNetworkManager = new NetworkManagerAbove24(this);
 		} else {
-			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-				mNetworkManager = new NetworkManagerAbove21(this);
-			} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-				mNetworkManager = new NetworkManagerAbove24(this);
-			} else {
-				mNetworkManager = new NetworkManagerAbove26(this);
-			}
-			Log.i("[Platform Helper] Registering network callbacks");
-			mNetworkManager.registerNetworkCallbacks(mConnectivityManager);
+			mNetworkManager = new NetworkManagerAbove26(this);
 		}
+		Log.i("[Platform Helper] Registering network callbacks");
+		mNetworkManager.registerNetworkCallbacks(mContext, mConnectivityManager);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			mDozeIntentFilter = new IntentFilter();
@@ -544,24 +549,22 @@ public class AndroidPlatformHelper {
 	}
 
 	private synchronized void stopNetworkMonitoring() {		
-		if (mNetworkReceiver != null) {
-			Log.i("[Platform Helper] Unregistering network receiver");
-			mContext.unregisterReceiver(mNetworkReceiver);
-		}
-
 		if (mInteractivityReceiver != null) {
 			Log.i("[Platform Helper] Unregistering interactivity receiver");
 			mContext.unregisterReceiver(mInteractivityReceiver);
+			mInteractivityReceiver = null;
 		}
 
 		if (mNetworkManager != null && mConnectivityManager != null) {
 			Log.i("[Platform Helper] Unregistering network callbacks");
-			mNetworkManager.unregisterNetworkCallbacks(mConnectivityManager);
+			mNetworkManager.unregisterNetworkCallbacks(mContext, mConnectivityManager);
+			mNetworkManager = null;
 		}
 
 		if (mDozeReceiver != null) {
 			Log.i("[Platform Helper] Unregistering doze receiver");
 			mContext.unregisterReceiver(mDozeReceiver);
+			mDozeReceiver = null;
 		}
 
 		mMonitoringEnabled = false;

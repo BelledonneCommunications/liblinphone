@@ -212,6 +212,11 @@ void Core::enterForeground () {
 	d->notifyEnteringForeground();
 }
 
+bool Core::isInBackground () {
+	L_D();
+	return d->isInBackground;
+}
+
 // ---------------------------------------------------------------------------
 // C-Core.
 // ---------------------------------------------------------------------------
