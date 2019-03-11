@@ -451,4 +451,9 @@ extern "C" JNIEXPORT jboolean JNICALL Java_org_linphone_core_tools_AndroidPlatfo
 	return androidPlatformHelper->getCore()->isInBackground();
 }
 
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_enableKeepAlive(JNIEnv *env, jobject thiz, jlong ptr, jboolean enable) {
+	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
+	linphone_core_enable_keep_alive(androidPlatformHelper->getCore()->getCCore(), enable ? TRUE : FALSE);
+}
+
 LINPHONE_END_NAMESPACE
