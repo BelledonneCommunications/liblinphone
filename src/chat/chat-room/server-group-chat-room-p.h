@@ -88,7 +88,7 @@ public:
 
 	bool initializeParticipants(const std::shared_ptr<Participant> & initiator, SalCallOp *op);
 	void resumeParticipant(const std::shared_ptr<Participant> &participant);
-	bool subscribeRegistrationForParticipants(const std::list<IdentityAddress> &participants);
+	bool subscribeRegistrationForParticipants(const std::list<IdentityAddress> &participants, bool newInvited);
 	void unSubscribeRegistrationForParticipant(const IdentityAddress &identAddresses);
 	void handleSubjectChange(SalCallOp *op);
 
@@ -159,13 +159,13 @@ private:
 	void onCallSessionSetReleased (const std::shared_ptr<CallSession> &session) override;
 	void onAckReceived (const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers) override;
 	struct RegistrationSubscriptionContext{
-		bool notified = false;
 		void *context = nullptr; // TODO: unused currently, but can store a context pointer from the implementation of reginfo subscription.
 					 // This will remove the need for a map in conference server for holding subscriptions.
 	};
 	
 	std::list<std::shared_ptr<Participant>> authorizedParticipants; /*list of participant authorized to send messages to the chatroom.
 					This typically excludes participants that in the process of being removed.*/
+	std::list<IdentityAddress> invitedParticipants; // participants in the process of being added to the chatroom, while for registration information.
 	ChatRoomListener *chatRoomListener = this;
 	std::map<std::string, RegistrationSubscriptionContext> registrationSubscriptions; /*map of registrationSubscriptions for each participant*/
 	int unnotifiedRegistrationSubscriptions = 0; /*count of not-yet notified registration subscriptions*/
