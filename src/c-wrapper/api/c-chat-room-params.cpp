@@ -39,7 +39,11 @@ void linphone_chat_room_params_unref(LinphoneChatRoomParams *params) {
 	ChatRoomParams::toCpp(params)->unref();
 }
 
-LinphoneChatRoomImpl linphone_chat_room_params_get_impl(LinphoneChatRoomParams *params) {
+bool_t linphone_chat_room_params_is_valid(const LinphoneChatRoomParams *params) {
+	return ChatRoomParams::toCpp(params)->isValid();
+}
+
+LinphoneChatRoomImpl linphone_chat_room_params_get_impl(const LinphoneChatRoomParams *params) {
 	return static_cast<LinphoneChatRoomImpl>(ChatRoomParams::toCpp(params)->getChatRoomImpl());
 }
 
@@ -47,15 +51,15 @@ LinphoneChatRoomEncryptionImpl linphone_chat_room_params_get_encryption_impl(Lin
 	return static_cast<LinphoneChatRoomEncryptionImpl>(ChatRoomParams::toCpp(params)->getChatRoomEncryptionImpl());
 }
 
-bool_t linphone_chat_room_params_group_enabled(LinphoneChatRoomParams *params) {
+bool_t linphone_chat_room_params_group_enabled(const LinphoneChatRoomParams *params) {
 	return ChatRoomParams::toCpp(params)->isGroup();
 }
 
-bool_t linphone_chat_room_params_encryption_enabled(LinphoneChatRoomParams *params) {
+bool_t linphone_chat_room_params_encryption_enabled(const LinphoneChatRoomParams *params) {
 	return ChatRoomParams::toCpp(params)->isEncrypted();
 }
 
-bool_t linphone_chat_room_params_rtt_enabled(LinphoneChatRoomParams *params) {
+bool_t linphone_chat_room_params_rtt_enabled(const LinphoneChatRoomParams *params) {
 	return ChatRoomParams::toCpp(params)->isRealTimeText();
 }
 
