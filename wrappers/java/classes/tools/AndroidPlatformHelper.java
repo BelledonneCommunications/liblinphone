@@ -474,14 +474,13 @@ public class AndroidPlatformHelper {
 			}
 
 			Log.i("[Platform Helper] Network should be reachable");
-			Network network = mConnectivityManager.getActiveNetwork();
-			if (network == null) {
-				Log.e("[Platform Helper] getActiveNetwork() returned null !");
+			NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
+			if (networkInfo == null) {
+				Log.e("[Platform Helper] getActiveNetworkInfo() returned null !");
 				setNetworkReachable(mNativePtr, false);
 				return;
 			}
 
-			NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(network);
 			Log.i("[Platform Helper] Active network type is " + networkInfo.getTypeName());
 			if (!networkInfo.isAvailable()) {
 				Log.e("[Platform Helper] getActiveNetwork() isn't available !");
@@ -494,6 +493,7 @@ public class AndroidPlatformHelper {
 				return;
 			}
 
+            Log.i("[Platform Helper] Active network state " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
 			int currentNetworkType = networkInfo.getType();
 			if (mLastNetworkType != -1 && mLastNetworkType != currentNetworkType) {
 				Log.i("[Platform Helper] Network type has changed (last one was " + mLastNetworkType + "), disable network reachability first");
@@ -519,6 +519,7 @@ public class AndroidPlatformHelper {
 	private synchronized void startNetworkMonitoring() {
 		if (!mMonitoringEnabled) return;
 		
+		mNetworkManager = new NetworkManager(this);
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
 			mNetworkManager = new NetworkManager(this);
 		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
