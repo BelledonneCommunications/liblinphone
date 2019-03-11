@@ -175,7 +175,7 @@ const list<DialPlan> DialPlanPrivate::DialPlans = {
 	{ "Monaco", "MC", "377", 8, "00" },
 	{ "Mongolia", "MN", "976", 8, "001" },
 	{ "Montenegro", "ME", "382", 8, "00" },
-	{ "Montserrat", "MS", "664", 10, "011" },
+	{ "Montserrat", "MS", "1", 10, "011" },
 	{ "Morocco", "MA", "212", 9, "00" },
 	{ "Mozambique", "MZ", "258", 9, "00" },
 	{ "Myanmar", "MM", "95", 10, "00" },

@@ -297,7 +297,17 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	linphone_account_creator_set_user_data(creator, &state);
 
 	if (account->phone_alias) {
-		linphone_account_creator_set_phone_number(creator, account->phone_alias, "33");
+		LinphoneAccountCreatorPhoneNumberStatusMask err = 0;
+		const char* country_code;
+		if (account->phone_alias[0] == '+') {
+			const LinphoneDialPlan * ccc = linphone_dial_plan_by_ccc_as_int(linphone_dial_plan_lookup_ccc_from_e164(account->phone_alias));
+			country_code  = linphone_dial_plan_get_country_calling_code(ccc);
+		}
+		if ((err = linphone_account_creator_set_phone_number(creator, account->phone_alias, country_code)) != LinphoneAccountCreatorPhoneNumberStatusOk) {
+			ms_fatal("Could not set phone alias [%s] for account [%s], error [%i]"	, account->phone_alias
+					 																, linphone_proxy_config_get_identity(cfg)
+					 																, err);
+		};
 	}
 
 	linphone_account_creator_create_account(creator);

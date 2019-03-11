@@ -7624,6 +7624,7 @@ static void update_check_process_response_event(void *ctx, const belle_http_resp
 		char *url = strchr(body, '\t');
 		char *ptr;
 		if (url == NULL) {
+			ms_error("Bad format for update check answer, cannot find TAB between version and URL");
 			update_check_process_terminated(lc, LinphoneVersionUpdateCheckError, NULL, NULL);
 			bctbx_free(body);
 			return;

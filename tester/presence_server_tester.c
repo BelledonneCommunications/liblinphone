@@ -47,6 +47,28 @@ static void enable_deflate_content_encoding(LinphoneCoreManager *mgr, bool_t ena
 		lp_config_set_string(linphone_core_get_config(lc), "sip", "handle_content_encoding", "none");
 }
 
+static char * generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *dialPlan) {
+	char phone[64];
+	size_t i;
+	/*now with have a dialplan*/
+	for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan),sizeof(phone)-1); i++) {
+		phone[i] = '0' + rand() % 10;
+	}
+	phone[i]='\0';
+	
+	return ms_strdup_printf("+%s%s",linphone_dial_plan_get_country_calling_code(dialPlan),phone);
+}
+char* generate_random_e164_phone(void) {
+	const LinphoneDialPlan *dialPlan;
+	const LinphoneDialPlan *genericDialPlan = linphone_dial_plan_by_ccc(NULL);
+
+	while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random()%900)) == genericDialPlan);
+	belle_sip_object_remove_from_leak_detector((void*)genericDialPlan);
+	belle_sip_object_remove_from_leak_detector((void*)dialPlan); //because mostCommon dial plan is a static object freed at the end of the process. This f is only to avoid wrong leak detection.
+
+	return generate_random_e164_phone_from_dial_plan(dialPlan);
+}
+
 static void simple(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -866,20 +888,9 @@ static void long_term_presence_phone_alias(void) {
 	long_term_presence_base("sip:+33123456789@sip.example.org", TRUE, "sip:liblinphone_tester@sip.example.org");
 }
 
-static const char* random_phone_number(void) {
-	static char phone[11];
-	int i;
-	phone[0] = '+';
-	srand ((unsigned int)time(NULL));
-	for (i = 1; i < 10; i++) {
-		phone[i] = '0' + rand() % 10;
-	}
-	phone[10] = '\0';
-	return phone;
-}
-
 static void long_term_presence_phone_alias2(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new3("marie_rc", TRUE, random_phone_number());
+	char* marie_e164;
+	LinphoneCoreManager *marie = linphone_core_manager_new3("marie_rc", TRUE, marie_e164 = generate_random_e164_phone());
 	linphone_core_set_user_agent(marie->lc, "bypass", NULL);
 	char * identity = linphone_address_as_string_uri_only(marie->identity);
 	LinphoneAddress * phone_addr = linphone_core_interpret_url(marie->lc, marie->phone_alias);
@@ -887,6 +898,7 @@ static void long_term_presence_phone_alias2(void) {
 	long_term_presence_base(phone_addr_uri, TRUE, identity);
 	ms_free(identity);
 	ms_free(phone_addr_uri);
+	bc_free(marie_e164);
 	linphone_address_unref(phone_addr);
 	linphone_core_manager_destroy(marie);
 }
@@ -951,7 +963,8 @@ static void long_term_presence_list(void) {
 
 static void long_term_presence_with_e164_phone_without_sip_base(bool_t background_foreground_changes) {
 	if (linphone_core_vcard_supported()){
-		LinphoneCoreManager *marie = linphone_core_manager_new3("marie_rc", TRUE, random_phone_number());
+		char* marie_e164;
+		LinphoneCoreManager *marie = linphone_core_manager_new3("marie_rc", TRUE, marie_e164 = generate_random_e164_phone());
 		linphone_core_set_user_agent(marie->lc, "bypass", NULL);
 		char * identity = linphone_address_as_string_uri_only(marie->identity);
 		LinphoneAddress * phone_addr = linphone_core_interpret_url(marie->lc, marie->phone_alias);
@@ -961,7 +974,8 @@ static void long_term_presence_with_e164_phone_without_sip_base(bool_t backgroun
 		char *presence_contact;
 		LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 		linphone_core_set_user_agent(pauline->lc, "full-presence-support-bypass", NULL);
-
+		bc_free(marie_e164);
+		
 		friend2=linphone_core_create_friend(pauline->lc);
 		linphone_friend_add_phone_number(friend2, marie->phone_alias);
 		linphone_core_add_friend(pauline->lc,friend2);
@@ -1085,17 +1099,6 @@ static void long_term_presence_with_phone_without_sip(void) {
 	}else ms_warning("Test skipped, no vcard support");
 }
 
-static char * generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *dialPlan) {
-	char phone[64];
-	size_t i;
-	/*now with have a dialplan*/
-	for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan),sizeof(phone)-1); i++) {
-		phone[i] = '0' + rand() % 10;
-	}
-	phone[i]='\0';
-
-	return ms_strdup_printf("+%s%s",linphone_dial_plan_get_country_calling_code(dialPlan),phone);
-}
 /* use case:
   I have a friend, I invite him to use Linphone for the first time.
   This friend is already in my addressbook, with his phone number.
@@ -1105,16 +1108,12 @@ static char * generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *
   */
 static void long_term_presence_with_crossed_references(void) {
 	if (linphone_core_vcard_supported()){
-		const LinphoneDialPlan *dialPlan;
 		char *e164_marie, *e164_pauline, *e164_laure;
 		LinphoneFriend* friend2;
 
-
-		while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random()%900)) == linphone_dial_plan_by_ccc(NULL));
-
-		ms_message("Marie's phone number is %s", e164_marie=generate_random_e164_phone_from_dial_plan(dialPlan));
-		ms_message("Pauline's phone number is %s", e164_pauline=generate_random_e164_phone_from_dial_plan(dialPlan));
-		ms_message("Laure's phone number is %s", e164_laure=generate_random_e164_phone_from_dial_plan(dialPlan));
+		ms_message("Marie's phone number is %s", e164_marie=generate_random_e164_phone());
+		ms_message("Pauline's phone number is %s", e164_pauline=generate_random_e164_phone());
+		ms_message("Laure's phone number is %s", e164_laure=generate_random_e164_phone());
 
 		/*pauline has marie as friend*/
 		LinphoneCoreManager *pauline = linphone_core_manager_new3("pauline_tcp_rc",TRUE,e164_pauline);
@@ -1167,7 +1166,6 @@ static void long_term_presence_with_crossed_references(void) {
 
 		BC_ASSERT_TRUE(wait_for_until(pauline->lc,pauline->lc,&pauline->stat.number_of_LinphonePresenceActivityAway,1,4000));
 
-		belle_sip_object_remove_from_leak_detector((void*)dialPlan); //because mostCommon dial plan is a static object freed at the end of the process. This f is only to avoid wrong leak detection.
 		linphone_core_manager_destroy(pauline);
 		linphone_core_manager_destroy(marie);
 		linphone_core_manager_destroy(laure);
