@@ -48,31 +48,31 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 			@Override
 			public void onAvailable(Network network) {
-				Log.i("[Network Manager 26] A network is available");
+				Log.i("[Platform Helper] [Network Manager 26] A network is available");
 				mHelper.updateNetworkReachability();
 			}
 
 			@Override
 			public void onLost(Network network) {
-				Log.i("[Network Manager 26] A network is lost");
+				Log.i("[Platform Helper] [Network Manager 26] A network is lost");
 				mHelper.updateNetworkReachability();
 			}
 
 			@Override
 			public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
-				Log.i("[Network Manager 26] A network capabilities has changed: " + network.toString() + " : " + networkCapabilities.toString() + " (" + networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) + ")");
+				Log.i("[Platform Helper] [Network Manager 26] A network capabilities has changed: " + network.toString() + " : " + networkCapabilities.toString() + " (" + networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) + ")");
 			}
 
 			@Override
 			public void onLinkPropertiesChanged(Network network, LinkProperties linkProperties) {
-				Log.i("[Network Manager 26] A network link properties has changed: " + network.toString() + " : " + linkProperties.toString());
+				Log.i("[Platform Helper] [Network Manager 26] A network link properties has changed: " + network.toString() + " : " + linkProperties.toString());
 			}
 		};
 	}
 
 	public void registerNetworkCallbacks(Context context, ConnectivityManager connectivityManager) {
 		int permissionGranted = context.getPackageManager().checkPermission(Manifest.permission.ACCESS_NETWORK_STATE, context.getPackageName());
-		Log.i("[Network Manager 26] ACCESS_NETWORK_STATE permission is " + (permissionGranted == PackageManager.PERMISSION_GRANTED ? "granted" : "denied"));
+		Log.i("[Platform Helper] [Network Manager 26] ACCESS_NETWORK_STATE permission is " + (permissionGranted == PackageManager.PERMISSION_GRANTED ? "granted" : "denied"));
 		if (permissionGranted == PackageManager.PERMISSION_GRANTED) {
 			connectivityManager.registerDefaultNetworkCallback(mNetworkCallback, mHelper.getHandler());
 		}
@@ -87,9 +87,9 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 		if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) {
 			// Device is restricting metered network activity while application is running on background.
 			// In this state, application should not try to use the network while running on background, because it would be denied.
-			Log.w("[Network Manager 26] Device is restricting metered network activity while application is running on background");
+			Log.w("[Platform Helper] [Network Manager 26] Device is restricting metered network activity while application is running on background");
 			if (mHelper.isInBackground()) {
-				Log.w("[Network Manager 26] Device is in background, returning false");
+				Log.w("[Platform Helper] [Network Manager 26] Device is in background, returning false");
 				return false;
 			}
 		}
@@ -98,11 +98,11 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 		boolean connected = false;
 		for (Network network : networks) {
 			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
-			Log.i("[Network Manager 26] Found network type: " + networkInfo.getTypeName());
+			Log.i("[Platform Helper] [Network Manager 26] Found network type: " + networkInfo.getTypeName());
 			if (networkInfo.isAvailable() && networkInfo.isConnected()) {
-				Log.i("[Network Manager 26] Network is available");
+				Log.i("[Platform Helper] [Network Manager 26] Network is available");
 				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
-					Log.i("[Network Manager 26] Wifi only mode enabled, skipping");
+					Log.i("[Platform Helper] [Network Manager 26] Wifi only mode enabled, skipping");
 				} else {
 					connected = true;
 				}
@@ -114,7 +114,7 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
     public boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager) {
 		ProxyInfo proxy = connectivityManager.getDefaultProxy();
 		if (proxy != null && proxy.getHost() != null){
-			Log.i("[Network Manager 26] The active network is using an http proxy: " + proxy.toString());
+			Log.i("[Platform Helper] [Network Manager 26] The active network is using an http proxy: " + proxy.toString());
 			return true;
 		}
 		return false;

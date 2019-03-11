@@ -46,13 +46,13 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 			@Override
 			public void onAvailable(Network network) {
-				Log.i("[Network Manager 24] A network is available");
+				Log.i("[Platform Helper] [Network Manager 24] A network is available");
 				mHelper.postNetworkUpdateRunner();
 			}
 
 			@Override
 			public void onLost(Network network) {
-				Log.i("[Network Manager 24] A network is lost");
+				Log.i("[Platform Helper] [Network Manager 24] A network is lost");
 				mHelper.postNetworkUpdateRunner();
 			}
 		};
@@ -60,7 +60,7 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 
 	public void registerNetworkCallbacks(Context context, ConnectivityManager connectivityManager) {
 		int permissionGranted = context.getPackageManager().checkPermission(Manifest.permission.ACCESS_NETWORK_STATE, context.getPackageName());
-		Log.i("[Network Manager 24] ACCESS_NETWORK_STATE permission is " + (permissionGranted == PackageManager.PERMISSION_GRANTED ? "granted" : "denied"));
+		Log.i("[Platform Helper] [Network Manager 24] ACCESS_NETWORK_STATE permission is " + (permissionGranted == PackageManager.PERMISSION_GRANTED ? "granted" : "denied"));
 		if (permissionGranted == PackageManager.PERMISSION_GRANTED) {
 			connectivityManager.registerDefaultNetworkCallback(mNetworkCallback);
 		}
@@ -75,9 +75,9 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 		if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) {
 			// Device is restricting metered network activity while application is running on background.
 			// In this state, application should not try to use the network while running on background, because it would be denied.
-			Log.w("[Network Manager 24] Device is restricting metered network activity while application is running on background");
+			Log.w("[Platform Helper] [Network Manager 24] Device is restricting metered network activity while application is running on background");
 			if (mHelper.isInBackground()) {
-				Log.w("[Network Manager 26] Device is in background, returning false");
+				Log.w("[Platform Helper] [Network Manager 26] Device is in background, returning false");
 				return false;
 			}
 		}
@@ -86,11 +86,11 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 		boolean connected = false;
 		for (Network network : networks) {
 			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
-			Log.i("[Network Manager 24] Found network type: " + networkInfo.getTypeName());
+			Log.i("[Platform Helper] [Network Manager 24] Found network type: " + networkInfo.getTypeName());
 			if (networkInfo.isAvailable() && networkInfo.isConnected()) {
-				Log.i("[Network Manager 24] Network is available");
+				Log.i("[Platform Helper] [Network Manager 24] Network is available");
 				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
-					Log.i("[Network Manager 24] Wifi only mode enabled, skipping");
+					Log.i("[Platform Helper] [Network Manager 24] Wifi only mode enabled, skipping");
 				} else {
 					connected = true;
 				}
@@ -102,10 +102,10 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
     public boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager) {
 		ProxyInfo proxy = connectivityManager.getDefaultProxy();
 		if (proxy != null && proxy.getHost() != null) {
-			Log.i("[Network Manager 24] The active network is using a http proxy: " + proxy.toString());
+			Log.i("[Platform Helper] [Network Manager 24] The active network is using a http proxy: " + proxy.toString());
 			return true;
 		}
-		Log.i("[Network Manager 24] The active network isn't using a http proxy: " + proxy.toString());
+		Log.i("[Platform Helper] [Network Manager 24] The active network isn't using a http proxy: " + proxy.toString());
 		return false;
     }
 
