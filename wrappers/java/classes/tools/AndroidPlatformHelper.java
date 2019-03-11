@@ -101,6 +101,7 @@ public class AndroidPlatformHelper {
 	private native void setNetworkReachable(long nativePtr, boolean reachable);
 	private native void setHttpProxy(long nativePtr, String host, int port);
 	private native boolean isInBackground(long nativePtr);
+	private native void enableKeepAlive(long nativePtr, boolean enable);
 
 	public AndroidPlatformHelper(long nativePtr, Object ctx_obj, boolean wifiOnly) {
 		mNativePtr = nativePtr;
@@ -441,6 +442,23 @@ public class AndroidPlatformHelper {
 		return isInBackground(mNativePtr);
 	}
 
+	private String networkTypeToString(int type) {
+		switch (type) {
+			case ConnectivityManager.TYPE_BLUETOOTH:
+				return "BLUETOOTH";
+			case ConnectivityManager.TYPE_ETHERNET:
+				return "ETHERNET";
+			case ConnectivityManager.TYPE_MOBILE:
+				return "MOBILE";
+			case ConnectivityManager.TYPE_WIFI:
+				return "WIFI";
+			case ConnectivityManager.TYPE_VPN:
+				return "VPN";
+			default:
+				return String.valueOf(type);
+		}
+	}
+
 	public synchronized void updateNetworkReachability() {
 		if (mNativePtr == 0) {
 			Log.w("[Platform Helper] Native pointer has been reset, stopping there");
@@ -496,7 +514,7 @@ public class AndroidPlatformHelper {
             Log.i("[Platform Helper] Active network state " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
 			int currentNetworkType = networkInfo.getType();
 			if (mLastNetworkType != -1 && mLastNetworkType != currentNetworkType) {
-				Log.i("[Platform Helper] Network type has changed (last one was " + mLastNetworkType + "), disable network reachability first");
+				Log.i("[Platform Helper] Network type has changed (last one was " + networkTypeToString(mLastNetworkType) + "), disable network reachability first");
 				setNetworkReachable(mNativePtr, false);
 			}
 
@@ -513,7 +531,7 @@ public class AndroidPlatformHelper {
 	public synchronized void setInteractiveMode(boolean b) {
 		mIsInInteractiveMode = b;
 		Log.i("[Platform Helper] Device interactive mode: " + mIsInInteractiveMode);
-		//TODO: disable/enable keep alive
+		enableKeepAlive(mNativePtr, mIsInInteractiveMode);
 	}
 
 	private synchronized void startNetworkMonitoring() {
