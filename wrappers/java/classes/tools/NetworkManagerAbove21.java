@@ -43,13 +43,13 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 			@Override
 			public void onAvailable(Network network) {
-				Log.i("[Network Manager 21] A network is available");
+				Log.i("[Platform Helper] [Network Manager 21] A network is available");
 				mHelper.postNetworkUpdateRunner();
 			}
 
 			@Override
 			public void onLost(Network network) {
-				Log.i("[Network Manager 21] A network is lost");
+				Log.i("[Platform Helper] [Network Manager 21] A network is lost");
 				mHelper.postNetworkUpdateRunner();
 			}
 		};
@@ -71,11 +71,11 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 		boolean connected = false;
 		for (Network network : networks) {
 			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
-			Log.i("[Network Manager 21] Found network type: " + networkInfo.getTypeName());
+			Log.i("[Platform Helper] [Network Manager 21] Found network type: " + networkInfo.getTypeName());
 			if (networkInfo.isAvailable() && networkInfo.isConnected()) {
-				Log.i("[Network Manager 21] Network is available");
+				Log.i("[Platform Helper] [Network Manager 21] Network is available");
 				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
-					Log.i("[Network Manager 21] Wifi only mode enabled, skipping");
+					Log.i("[Platform Helper] [Network Manager 21] Wifi only mode enabled, skipping");
 				} else {
 					connected = true;
 				}
