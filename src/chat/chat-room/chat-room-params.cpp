@@ -69,9 +69,7 @@ void ChatRoomParams::setGroup(bool group) { mGroup = group; }
 void ChatRoomParams::setRealTimeText(bool rtt) { mRtt = rtt; }
 
 shared_ptr<ChatRoomParams> ChatRoomParams::getDefaults() {
-	auto p = create();
-	p->ref();
-	return p;
+	return ChatRoomParams::create();
 }
 
 //Later define default params from core specs (group chat enabled, lime enabled, ...)
@@ -142,7 +140,6 @@ bool ChatRoomParams::isValid() const {
 	return true;
 }
 
-//Just for debug, but we could keep it
 std::string ChatRoomParams::toString() const {
 	std::ostringstream ss;
 
