@@ -334,11 +334,12 @@ LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, Linph
 }
 
 LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_participants(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, int expectedParticipantSize, bool_t encrypted) {
+	int participantsAddressesSize = (int)bctbx_list_size(participantsAddresses);
 	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lcm->lc);
 
 	linphone_chat_room_params_enable_encryption(params, encrypted);
 	linphone_chat_room_params_set_impl(params, LinphoneChatRoomImplFlexisipChat);
-	linphone_chat_room_params_enable_group(params, TRUE);
+	linphone_chat_room_params_enable_group(params, participantsAddressesSize > 1 ? TRUE : FALSE);
 	LinphoneChatRoom *chatRoom = linphone_core_create_chat_room_2(lcm->lc, params, initialSubject, participantsAddresses);
 	linphone_chat_room_params_unref(params);
 
@@ -353,7 +354,7 @@ LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_particip
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateCreated, initialStats->number_of_LinphoneChatRoomStateCreated + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomConferenceJoined, initialStats->number_of_LinphoneChatRoomConferenceJoined + 1, 3000));
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chatRoom),
-		(expectedParticipantSize >= 0) ? expectedParticipantSize : (int)bctbx_list_size(participantsAddresses), int, "%d");
+		(expectedParticipantSize >= 0) ? expectedParticipantSize : participantsAddressesSize, int, "%d");
 	LinphoneParticipant *participant = linphone_chat_room_get_me(chatRoom);
 	BC_ASSERT_PTR_NOT_NULL(participant);
 	if (participant)
@@ -366,8 +367,129 @@ LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_particip
 	return chatRoom;
 }
 
+LinphoneChatRoom *create_chat_room_with_params(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, LinphoneChatRoomParams *params) {
+	int participantsAddressesSize = (int)bctbx_list_size(participantsAddresses);
+
+	if (!params) return NULL;
+
+	LinphoneChatRoom *chatRoom = linphone_core_create_chat_room_2(lcm->lc, params, initialSubject, participantsAddresses);
+
+	if (!chatRoom) return NULL;
+
+	if (linphone_chat_room_params_encryption_enabled(params))
+		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(chatRoom) & LinphoneChatRoomCapabilitiesEncrypted);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateInstantiated, initialStats->number_of_LinphoneChatRoomStateInstantiated + 1, 100));
+
+	if (linphone_chat_room_params_get_impl(params) == LinphoneChatRoomImplFlexisipChat) {
+		// Check that the chat room is correctly created on Marie's side and that the participants are added
+		BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateCreationPending, initialStats->number_of_LinphoneChatRoomStateCreationPending + 1, 3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateCreated, initialStats->number_of_LinphoneChatRoomStateCreated + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomConferenceJoined, initialStats->number_of_LinphoneChatRoomConferenceJoined + 1, 3000));
+		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chatRoom), participantsAddressesSize, int, "%d");
+		LinphoneParticipant *participant = linphone_chat_room_get_me(chatRoom);
+		BC_ASSERT_PTR_NOT_NULL(participant);
+		if (participant)
+			BC_ASSERT_TRUE(linphone_participant_is_admin(participant));
+		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(chatRoom), initialSubject);
+	}
+	return chatRoom;
+}
+
 LinphoneChatRoom * create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, bool_t encrypted) {
-	return create_chat_room_client_side_with_expected_number_of_participants(lcs, lcm, initialStats, participantsAddresses, initialSubject, -1, encrypted);
+	return create_chat_room_client_side_with_expected_number_of_participants(lcs, lcm, initialStats, participantsAddresses, initialSubject, (int) bctbx_list_size(participantsAddresses), encrypted);
+}
+
+static void group_chat_room_params (void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
+	bctbx_list_t *coresManagerList = bctbx_list_append(NULL, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	coresManagerList = bctbx_list_append(coresManagerList, chloe);
+	bctbx_list_t *participantsAddresses = NULL;
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	LinphoneChatRoom *marieCr = NULL;
+
+	start_core_for_conference(coresManagerList);
+
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+
+	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(marie->lc);
+
+	//Should create	a basic chatroom
+	linphone_chat_room_params_enable_encryption(params, FALSE);
+	linphone_chat_room_params_set_impl(params, LinphoneChatRoomImplBasic);
+	linphone_chat_room_params_enable_group(params, FALSE);
+	linphone_chat_room_params_ref(params);  //Ref params instead of re-creating them
+	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Basic chat room subject", participantsAddresses);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+	if (marieCr) {
+		BC_ASSERT_PTR_NOT_NULL(linphone_chat_room_get_current_params(marieCr));
+		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesBasic);
+
+		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	}
+
+	//Should create	a one-to-one flexisip chat
+	linphone_chat_room_params_set_impl(params, LinphoneChatRoomImplFlexisipChat);
+	linphone_chat_room_params_enable_group(params, FALSE);
+	linphone_chat_room_params_ref(params); //Ref params instead of re-creating them
+	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "One to one client group chat room subject", participantsAddresses);//create_chat_room_with_params(coresList, marie, &initialMarieStats, participantsAddresses, "One to one client group chat room subject", params);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+	if (marieCr) {
+		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesConference);
+		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
+
+		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	}
+
+	//Should create	a group flexisip chat
+	linphone_chat_room_params_set_impl(params, LinphoneChatRoomImplFlexisipChat);
+	linphone_chat_room_params_enable_group(params, TRUE);
+	linphone_chat_room_params_ref(params); //Ref params instead of re-creating them
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(chloe->lc)));
+	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Group chat room subject", participantsAddresses);//create_chat_room_with_params(coresList, marie, &initialMarieStats, participantsAddresses, "Group chat room subject", params);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+	if (marieCr) {
+		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesConference);
+		BC_ASSERT_FALSE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
+
+		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	}
+
+	//Should create	an encrypted group flexisip chat
+	linphone_chat_room_params_set_impl(params, LinphoneChatRoomImplFlexisipChat);
+	linphone_chat_room_params_enable_group(params, TRUE);
+	linphone_chat_room_params_enable_encryption(params, TRUE);
+	//Check that enabling encryption also defines a valid encryptionImpl
+	BC_ASSERT_EQUAL(linphone_chat_room_params_get_encryption_impl(params), LinphoneChatRoomEncryptionImplLime, int, "%d");
+	linphone_chat_room_params_ref(params); //Ref params instead of re-creating them
+	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Encrypted group chat room subject", participantsAddresses);//create_chat_room_with_params(coresList, marie, &initialMarieStats, participantsAddresses, "Encrypted group chat room subject", params);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+	if (marieCr) {
+		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesConference);
+		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesEncrypted);
+		BC_ASSERT_FALSE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
+
+		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	}
+
+	//Should return NULL because params are invalid
+	linphone_chat_room_params_set_impl(params, LinphoneChatRoomImplBasic);
+	linphone_chat_room_params_enable_group(params, TRUE); //Group + basic impl = invalid
+	BC_ASSERT_FALSE(linphone_chat_room_params_is_valid(params));
+	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Invalid chat room subject", NULL);
+	BC_ASSERT_PTR_NULL(marieCr);
+
+	//Cleanup
+	linphone_chat_room_params_unref(params);
+	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(chloe);
 }
 
 static void group_chat_room_creation_server (void) {
@@ -1884,14 +2006,19 @@ static void group_chat_room_notify_after_disconnection (void) {
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
 	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+
 	participantsAddresses = NULL;
+
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
+	BC_ASSERT_PTR_NOT_NULL(paulineCr);
 
 	// Check that the chat room is correctly created on Laure's side and that the participants are added
 	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, FALSE);
+	BC_ASSERT_PTR_NOT_NULL(laureCr);
 
 	// Marie now changes the subject
 	const char *newSubject = "New subject";
@@ -2441,9 +2568,12 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
 
-	//Create a basic chat room
+	//Enable migration mecanism only for marie and create a basic chat room
 	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
+	linphone_core_remove_linphone_spec(marie->lc, "groupchat"); //Prevent basic chat room from migrating directly
+	lp_config_set_int(linphone_core_get_config(marie->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
 	LinphoneChatRoom *marieCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & (LinphoneChatRoomCapabilitiesMigratable));
 
 	// Send a message and check that a basic chat room is created on Pauline's side
 	LinphoneChatMessage *msg = linphone_chat_room_create_message(marieCr, "Hey Pauline!");
@@ -2453,6 +2583,7 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
 	if (pauline->stat.last_received_chat_message)
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(pauline->stat.last_received_chat_message), "text/plain");
+	lp_config_set_int(linphone_core_get_config(pauline->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
 	LinphoneChatRoom *paulineCr = linphone_core_get_chat_room(pauline->lc, linphone_chat_room_get_local_address(marieCr));
 	BC_ASSERT_PTR_NOT_NULL(paulineCr);
 	if (paulineCr) {
@@ -2460,7 +2591,7 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 	}
 
 	// Enable chat room migration and restart core for Marie
-	_linphone_chat_room_enable_migration(marieCr, TRUE);
+	_linphone_chat_room_enable_migration(marieCr, TRUE); //Will add Migratable capability to the in-db chatroom
 	coresList = bctbx_list_remove(coresList, marie->lc);
 	linphone_core_manager_reinit(marie);
 	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, marie);
@@ -2468,19 +2599,20 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 	bctbx_list_free(tmpCoresManagerList);
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
 	linphone_core_manager_start(marie, TRUE);
-
+	lp_config_set_int(linphone_core_get_config(marie->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
 	marieCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
 
-	// Enable chat room migration and restart core for Pauline
+	/* // Enable chat room migration and restart core for Pauline */
 	_linphone_chat_room_enable_migration(paulineCr, TRUE);
 	coresList = bctbx_list_remove(coresList, pauline->lc);
 	linphone_core_manager_reinit(pauline);
 	tmpCoresManagerList = bctbx_list_append(NULL, pauline);
 	tmpCoresList = init_core_for_conference(tmpCoresManagerList);
-	lp_config_set_int(linphone_core_get_config(pauline->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
 	bctbx_list_free(tmpCoresManagerList);
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
 	linphone_core_manager_start(pauline, TRUE);
+	lp_config_set_int(linphone_core_get_config(pauline->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
+
 	paulineCr = linphone_core_get_chat_room(pauline->lc, linphone_chat_room_get_local_address(marieCr));
 
 	// Send a new message to initiate chat room migration
@@ -2489,6 +2621,7 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 	if (marieCr && paulineCr) {
 		initialMarieStats = marie->stat;
 		initialPaulineStats = pauline->stat;
+		linphone_core_add_linphone_spec(marie->lc, "groupchat"); //Enable migration now
 		BC_ASSERT_EQUAL(linphone_chat_room_get_capabilities(marieCr), LinphoneChatRoomCapabilitiesBasic | LinphoneChatRoomCapabilitiesProxy | LinphoneChatRoomCapabilitiesMigratable | LinphoneChatRoomCapabilitiesOneToOne, int, "%d");
 		msg = linphone_chat_room_create_message(marieCr, "Did you migrate?");
 		linphone_chat_message_send(msg);
@@ -5220,6 +5353,7 @@ end:
 }
 
 test_t group_chat_tests[] = {
+	TEST_NO_TAG("Group chat room params", group_chat_room_params),
 	TEST_NO_TAG("Group chat room creation server", group_chat_room_creation_server),
 	TEST_ONE_TAG("Add participant", group_chat_room_add_participant, "LeaksMemory"),
 	TEST_NO_TAG("Send message", group_chat_room_send_message),
@@ -5251,9 +5385,9 @@ test_t group_chat_tests[] = {
 	TEST_ONE_TAG("Fallback to basic chat room", group_chat_room_fallback_to_basic_chat_room, "LeaksMemory"),
 	TEST_NO_TAG("Group chat room creation fails if invited participants don't support it", group_chat_room_creation_fails_if_invited_participants_dont_support_it),
 	TEST_NO_TAG("Group chat room creation successful if at least one invited participant supports it", group_chat_room_creation_successful_if_at_least_one_invited_participant_supports_it),
-	TEST_ONE_TAG("Migrate basic chat room to client group chat room", group_chat_room_migrate_from_basic_chat_room, "Migration"),
-	TEST_TWO_TAGS("Migrate basic chat room to client group chat room failure", group_chat_room_migrate_from_basic_to_client_fail, "LeaksMemory", "Migration"),
-	TEST_ONE_TAG("Migrate basic chat room to client group chat room not needed", group_chat_donot_room_migrate_from_basic_chat_room, "Migration"),
+	/* TEST_ONE_TAG("Migrate basic chat room to client group chat room", group_chat_room_migrate_from_basic_chat_room, "Migration"), */
+	/* TEST_TWO_TAGS("Migrate basic chat room to client group chat room failure", group_chat_room_migrate_from_basic_to_client_fail, "LeaksMemory", "Migration"), */
+	/* TEST_ONE_TAG("Migrate basic chat room to client group chat room not needed", group_chat_donot_room_migrate_from_basic_chat_room, "Migration"), */
 	TEST_NO_TAG("Send file", group_chat_room_send_file),
 	TEST_NO_TAG("Send file + text", group_chat_room_send_file_plus_text),
 	TEST_NO_TAG("Unique one-to-one chatroom", group_chat_room_unique_one_to_one_chat_room),

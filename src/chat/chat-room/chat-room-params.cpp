@@ -62,7 +62,12 @@ void ChatRoomParams::setChatRoomImpl(ChatRoomParams::ChatRoomImpl impl) { mChatR
 
 void ChatRoomParams::setChatRoomEncryptionImpl(ChatRoomParams::ChatRoomEncryptionImpl impl) { mChatRoomEncryptionImpl = impl; }
 
-void ChatRoomParams::setEncrypted(bool encrypted) { mEncrypted = encrypted; }
+void ChatRoomParams::setEncrypted(bool encrypted) {
+	mEncrypted = encrypted;
+	if (encrypted) {
+		mChatRoomEncryptionImpl = ChatRoomEncryptionImpl::Lime;
+	}
+}
 
 void ChatRoomParams::setGroup(bool group) { mGroup = group; }
 
