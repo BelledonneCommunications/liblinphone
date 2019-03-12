@@ -90,7 +90,7 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 		connectivityManager.unregisterNetworkCallback(mNetworkCallback);
 	}
 
-    public boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly) {
+	public boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly) {
 		int restrictBackgroundStatus = connectivityManager.getRestrictBackgroundStatus();
 		if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) {
 			// Device is restricting metered network activity while application is running on background.
@@ -123,24 +123,24 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 			}
 		}
 		return connected;
-    }
+	}
 
-    public boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager) {
+	public boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager) {
 		ProxyInfo proxy = connectivityManager.getDefaultProxy();
 		if (proxy != null && proxy.getHost() != null){
 			Log.i("[Platform Helper] [Network Manager 26] The active network is using an http proxy: " + proxy.toString());
 			return true;
 		}
 		return false;
-    }
+	}
 
-    public String getProxyHost(Context context, ConnectivityManager connectivityManager) {
+	public String getProxyHost(Context context, ConnectivityManager connectivityManager) {
 		ProxyInfo proxy = connectivityManager.getDefaultProxy();
 		return proxy.getHost();
-    }
+	}
 
-    public int getProxyPort(Context context, ConnectivityManager connectivityManager) {
-        ProxyInfo proxy = connectivityManager.getDefaultProxy();
+	public int getProxyPort(Context context, ConnectivityManager connectivityManager) {
+		ProxyInfo proxy = connectivityManager.getDefaultProxy();
 		return proxy.getPort();
-    }
+	}
 }
