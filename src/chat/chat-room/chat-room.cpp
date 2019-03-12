@@ -360,7 +360,6 @@ ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const Conf
 	L_D();
 
 	d->params = params;
-	params->ref();
 	d->conferenceId = conferenceId;
 	d->imdnHandler.reset(new Imdn(this));
 	d->isComposingHandler.reset(new IsComposing(core->getCCore(), d));
@@ -369,6 +368,9 @@ ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const Conf
 ChatRoom::~ChatRoom () {
 	L_D();
 
+	if (d->params) {
+		d->params.reset();
+	}
 	d->imdnHandler.reset();
 }
 
