@@ -1,7 +1,3 @@
-[misc]
-enable_basic_to_client_group_chat_room_migration=1
-basic_to_client_group_chat_room_migration_timer=180
-
 [sip]
 sip_port=-1
 sip_tcp_port=-1
