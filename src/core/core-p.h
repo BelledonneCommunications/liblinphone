@@ -129,7 +129,8 @@ private:
 
 	std::list<std::string> specs;
 
-	// Ugly cache to deal with C code.
+	// This is to keep a ref on a clientGroupChatRoom while it is being created
+	// Otherwise the chatRoom will be freed() before it is inserted
 	std::unordered_map<const AbstractChatRoom *, std::shared_ptr<const AbstractChatRoom>> noCreatedClientGroupChatRooms;
 
 	L_DECLARE_PUBLIC(Core);

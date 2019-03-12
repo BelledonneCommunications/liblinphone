@@ -82,8 +82,8 @@ LinphoneChatRoom *_linphone_core_create_chat_room_from_call(LinphoneCall *call){
 	return cr;
 }
 
-LinphoneChatRoom *linphone_core_get_chat_room (LinphoneCore *lc, const LinphoneAddress *addr) {
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getOrCreateBasicChatRoom(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)));
+LinphoneChatRoom *linphone_core_get_chat_room (LinphoneCore *lc, const LinphoneAddress *peerAddr) {
+	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getOrCreateBasicChatRoom(*L_GET_CPP_PTR_FROM_C_OBJECT(peerAddr)));
 }
 
 LinphoneChatRoom *linphone_core_get_chat_room_2 (
