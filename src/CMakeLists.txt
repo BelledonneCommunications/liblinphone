@@ -436,8 +436,7 @@ if(ENABLE_SHARED)
 		$<TARGET_OBJECTS:linphone-coreapi>
 	)
 	target_compile_definitions(linphone PRIVATE "-DLINPHONE_EXPORTS")
-	#TODO: replace by if(APPLE) when we want to make apple framework on linphone-desktop too
-	if(IOS)
+	if(APPLE)
 		if(IOS)
 			set(MIN_OS ${LINPHONE_IOS_DEPLOYMENT_TARGET})
 		else()
