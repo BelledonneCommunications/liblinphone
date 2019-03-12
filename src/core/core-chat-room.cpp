@@ -178,11 +178,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 	else {
 		BasicChatRoom *basicChatRoom = new BasicChatRoom(q->getSharedFromThis(), conferenceId, params);
 		string conferenceFactoryUri = getConferenceFactoryUri(q->getSharedFromThis(), conferenceId.getLocalAddress());
-		if (capabilities & ChatRoom::Capabilities::Migratable &&
-		    !conferenceFactoryUri.empty() &&
-		    linphone_config_get_bool(linphone_core_get_config(q->getCCore()),
-					     "misc", "enable_basic_to_client_group_chat_room_migration", FALSE)
-		    ) {
+		if ((capabilities & ChatRoom::Capabilities::Migratable) && !conferenceFactoryUri.empty()) {
 			chatRoom.reset(new BasicToClientGroupChatRoom(shared_ptr<BasicChatRoom>(basicChatRoom)));
 		}
 		else {
@@ -199,8 +195,10 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRoomParams> &params, const IdentityAddress &localAddr, const std::string &subject, const std::list<IdentityAddress> &participants) {
 	L_Q();
 
-	if (!params)
+	if (!params) {
+		lWarning() << "Trying to create chat room with null parameters";
 		return nullptr;
+	}
 	if (!params->isValid()) {
 		lWarning() << "Trying to create chat room with invalid parameters " << params->toString();
 		return nullptr;
@@ -225,9 +223,15 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 			lWarning() << "Trying to create BasicChatRoom with zero or more than one participant";
 			return nullptr;
 		}
+		ChatRoom::CapabilitiesMask capabilities = ChatRoomParams::toCapabilities(params);
+		if (!!linphone_config_get_bool(linphone_core_get_config(q->getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE)) {
+			capabilities |= ChatRoom::Capabilities::Migratable;
+		}
 		chatRoom = createBasicChatRoom(ConferenceId(IdentityAddress(participants.front()), localAddr),
-					       ChatRoomParams::toCapabilities(params),
+					       capabilities,
 					       params);
+		insertChatRoom(chatRoom);
+		insertChatRoomWithDb(chatRoom);
 	}
 	return chatRoom;
 }
@@ -389,19 +393,18 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId 
 	L_D();
 
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
-	if (chatRoom){
-		if (isRtt && !(chatRoom->getCapabilities() & ChatRoom::Capabilities::RealTimeText)){
+	if (chatRoom) {
+		if (isRtt && !(chatRoom->getCapabilities() & ChatRoom::Capabilities::RealTimeText)) {
 			lError() << "Found chatroom but without RealTimeText capability. This is a bug, fixme";
 			return nullptr;
 		}
 		return chatRoom;
 	}
-
 	ChatRoom::CapabilitiesMask capabilities(ChatRoom::Capabilities::OneToOne);
 	if (isRtt) {
 		capabilities |=	ChatRoom::Capabilities::RealTimeText;
 	}
-	if (linphone_config_get_bool(linphone_core_get_config(getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE)) {
+	if (!!linphone_config_get_bool(linphone_core_get_config(getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE)) {
 		capabilities |= ChatRoom::Capabilities::Migratable;
 	}
 	chatRoom = d->createBasicChatRoom(conferenceId, capabilities, ChatRoomParams::fromCapabilities(capabilities));
@@ -428,7 +431,7 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddre
 	if (isRtt) {
 		capabilities |=	ChatRoom::Capabilities::RealTimeText;
 	}
-	if (linphone_config_get_bool(linphone_core_get_config(getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE)) {
+	if (!!linphone_config_get_bool(linphone_core_get_config(getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE)) {
 		capabilities |= ChatRoom::Capabilities::Migratable;
 	}
 	shared_ptr<AbstractChatRoom> chatRoom = d->createBasicChatRoom(

@@ -47,7 +47,7 @@ LinphoneChatRoomImpl linphone_chat_room_params_get_impl(const LinphoneChatRoomPa
 	return static_cast<LinphoneChatRoomImpl>(ChatRoomParams::toCpp(params)->getChatRoomImpl());
 }
 
-LinphoneChatRoomEncryptionImpl linphone_chat_room_params_get_encryption_impl(LinphoneChatRoomParams *params) {
+LinphoneChatRoomEncryptionImpl linphone_chat_room_params_get_encryption_impl(const LinphoneChatRoomParams *params) {
 	return static_cast<LinphoneChatRoomEncryptionImpl>(ChatRoomParams::toCpp(params)->getChatRoomEncryptionImpl());
 }
 
