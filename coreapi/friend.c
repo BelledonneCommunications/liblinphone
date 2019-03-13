@@ -1198,7 +1198,7 @@ static void linphone_create_friends_table(sqlite3* db) {
 						");",
 			0, 0, &errmsg);
 	if (ret != SQLITE_OK) {
-		ms_error("Error in creation: %s.\n", errmsg);
+		ms_error("Error in creation: %s.", errmsg);
 		sqlite3_free(errmsg);
 	}
 
@@ -1211,7 +1211,7 @@ static void linphone_create_friends_table(sqlite3* db) {
 						");",
 			0, 0, &errmsg);
 	if (ret != SQLITE_OK) {
-		ms_error("Error in creation: %s.\n", errmsg);
+		ms_error("Error in creation: %s.", errmsg);
 		sqlite3_free(errmsg);
 	}
 }
@@ -1250,7 +1250,7 @@ static bool_t linphone_update_friends_table(sqlite3* db) {
 			"PRAGMA user_version = 3100;\n"
 			"COMMIT;", 0, 0, &errmsg);
 		if (ret != SQLITE_OK) {
-			ms_error("Error altering table friends: %s.\n", errmsg);
+			ms_error("Error altering table friends: %s.", errmsg);
 			sqlite3_free(errmsg);
 			return FALSE;
 		}
@@ -1270,7 +1270,7 @@ void linphone_core_friends_storage_init(LinphoneCore *lc) {
 	ret = _linphone_sqlite3_open(lc->friends_db_file, &db);
 	if (ret != SQLITE_OK) {
 		errmsg = sqlite3_errmsg(db);
-		ms_error("Error in the opening: %s.\n", errmsg);
+		ms_error("Error in the opening: %s.", errmsg);
 		sqlite3_close(db);
 		return;
 	}

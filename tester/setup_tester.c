@@ -1358,8 +1358,12 @@ static void search_friend_with_same_address(void) {
 }
 
 static void search_friend_large_database(void) {
-	char *dbPath = bc_tester_res("db/friends.db");
+	char *roDbPath = bc_tester_res("db/friends.db");
+	char *dbPath = bc_tester_file("search_friend_large_database.db");
 	char *searchedFriend = "6295103032641994169";
+	
+	liblinphone_tester_copy_file(roDbPath, dbPath);
+	
 	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
 	linphone_core_set_friends_database_path(manager->lc, dbPath);
 	LinphoneMagicSearch *magicSearch = linphone_magic_search_new(manager->lc);
@@ -1384,7 +1388,8 @@ static void search_friend_large_database(void) {
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
-	free(dbPath);
+	bc_free(roDbPath);
+	bc_free(dbPath);
 }
 
 static void search_friend_get_capabilities(void) {
