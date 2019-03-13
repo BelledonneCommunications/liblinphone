@@ -1264,7 +1264,9 @@ LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(LinphoneCore* lc
 		cfg->nat_policy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
 	}
 
-	CONFIGURE_STRING_VALUE(cfg, config, key, conference_factory_uri, "conference_factory_uri");
+	//Needed instead of just CONFIGURE_STRING_VALUE to conditionally add groupchat spec to the core
+	const char *conference_factory_uri = lc ? lp_config_get_default_string(lc->config, "proxy", "conference_factory_uri", NULL) : NULL;
+	linphone_proxy_config_set_conference_factory_uri(cfg, conference_factory_uri ? ms_strdup(conference_factory_uri) : NULL);
 
 	return cfg;
 }
@@ -1574,7 +1576,6 @@ void linphone_proxy_config_notify_publish_state_changed(LinphoneProxyConfig *cfg
 				break;
 			default:
 				break;
-
 		}
 	}
 }
