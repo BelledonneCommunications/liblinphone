@@ -1066,7 +1066,7 @@ LinphoneStatus linphone_core_add_proxy_config(LinphoneCore *lc, LinphoneProxyCon
 
 void linphone_core_remove_proxy_config(LinphoneCore *lc, LinphoneProxyConfig *cfg){
 	/* check this proxy config is in the list before doing more*/
-	if (bctbx_list_find(lc->sip_conf.proxies,cfg)==NULL){
+	if (bctbx_list_find(lc->sip_conf.proxies,cfg)==NULL) {
 		ms_error("linphone_core_remove_proxy_config: LinphoneProxyConfig [%p] is not known by LinphoneCore (programming error?)",cfg);
 		return;
 	}
@@ -1264,9 +1264,7 @@ LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(LinphoneCore* lc
 		cfg->nat_policy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
 	}
 
-	//Needed instead of just CONFIGURE_STRING_VALUE to conditionally add groupchat spec to the core
-	const char *conference_factory_uri = lc ? lp_config_get_default_string(lc->config, "proxy", "conference_factory_uri", NULL) : NULL;
-	linphone_proxy_config_set_conference_factory_uri(cfg, conference_factory_uri ? ms_strdup(conference_factory_uri) : NULL);
+	CONFIGURE_STRING_VALUE(cfg, config, key, conference_factory_uri, "conference_factory_uri");
 
 	return cfg;
 }
@@ -1591,7 +1589,21 @@ void linphone_proxy_config_set_conference_factory_uri(LinphoneProxyConfig *cfg, 
 			linphone_core_add_linphone_spec(cfg->lc, "groupchat");
 		}
 	} else if (cfg->lc) {
-		linphone_core_remove_linphone_spec(cfg->lc, "groupchat");
+		bool_t remove = TRUE;
+		//Check that no other proxy config needs the specs before removing it
+		bctbx_list_t *it = NULL;
+		for (it = cfg->lc->sip_conf.proxies; it; it = it->next) {
+			if (it->data != cfg) {
+				const char *confUri = linphone_proxy_config_get_conference_factory_uri((LinphoneProxyConfig *) it->data);
+				if (confUri && strlen(confUri)) {
+					remove = FALSE;
+					break;
+				}
+			}
+		}
+		if (remove) {
+			linphone_core_remove_linphone_spec(cfg->lc, "groupchat");
+		}
 	}
 }
 
