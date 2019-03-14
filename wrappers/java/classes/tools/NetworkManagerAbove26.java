@@ -107,9 +107,9 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 		boolean connected = false;
 		for (Network network : networks) {
 			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
-			Log.i("[Platform Helper] [Network Manager 26] Found network type: " + networkInfo.getTypeName());
-			if (networkInfo.isAvailable() && networkInfo.isConnected()) {
-				Log.i("[Platform Helper] [Network Manager 26] Network is available and connected");
+			Log.i("[Platform Helper] [Network Manager 26] Found network type: " + networkInfo.getTypeName() + ", isAvailable() = " + networkInfo.isAvailable() + ", isConnected() = " + networkInfo.isConnected());
+			if (networkInfo.isAvailable()) {
+				Log.i("[Platform Helper] [Network Manager 26] Network is available");
 				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
 					Log.i("[Platform Helper] [Network Manager 26] Wifi only mode enabled, skipping");
 				} else {

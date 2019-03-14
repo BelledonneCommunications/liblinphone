@@ -505,11 +505,6 @@ public class AndroidPlatformHelper {
 				setNetworkReachable(mNativePtr, false);
 				return;
 			}
-			if (!networkInfo.isConnected()) {
-				Log.e("[Platform Helper] getActiveNetwork() isn't connected !");
-				setNetworkReachable(mNativePtr, false);
-				return;
-			}
 
 			Log.i("[Platform Helper] Active network state " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
 			int currentNetworkType = networkInfo.getType();
