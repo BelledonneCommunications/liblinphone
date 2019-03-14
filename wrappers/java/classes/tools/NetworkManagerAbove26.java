@@ -59,6 +59,7 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 			@Override
 			public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
 				Log.i("[Platform Helper] [Network Manager 26] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
+				mHelper.updateNetworkReachability();
 			}
 
 			@Override

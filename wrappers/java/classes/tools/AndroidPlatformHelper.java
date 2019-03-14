@@ -564,7 +564,7 @@ public class AndroidPlatformHelper {
 		Log.i("[Platform Helper] Registering interactivity receiver");
 		mContext.registerReceiver(mInteractivityReceiver, mInteractivityIntentFilter);
 
-		postNetworkUpdateRunner();
+		updateNetworkReachability();
 	}
 
 	private synchronized void stopNetworkMonitoring() {		
