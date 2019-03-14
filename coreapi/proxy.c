@@ -1089,7 +1089,12 @@ void linphone_core_remove_proxy_config(LinphoneCore *lc, LinphoneProxyConfig *cf
 		linphone_proxy_config_set_state(cfg, LinphoneRegistrationNone,"Registration disabled");
 	}
 	linphone_proxy_config_write_all_to_config_file(lc);
+
+	//Update the associated linphone specs on the core
+	linphone_proxy_config_set_conference_factory_uri(cfg, NULL);
 }
+
+
 
 void linphone_core_clear_proxy_config(LinphoneCore *lc){
 	bctbx_list_t* list=bctbx_list_copy(linphone_core_get_proxy_config_list((const LinphoneCore*)lc));
@@ -1574,7 +1579,6 @@ void linphone_proxy_config_notify_publish_state_changed(LinphoneProxyConfig *cfg
 				break;
 			default:
 				break;
-
 		}
 	}
 }
