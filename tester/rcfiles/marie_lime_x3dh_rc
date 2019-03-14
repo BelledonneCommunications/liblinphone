@@ -4,7 +4,7 @@ basic_to_client_group_chat_room_migration_timer=180
 
 [lime]
 lime_update_threshold=86400
-x3dh_server_url=http://x3dh.example.org:8082/flexisip-account-manager/x3dh-25519.php
+lime_server_url=https://lime.wildcard1.linphone.org:8443/lime-server/lime-server.php
 
 [sip]
 sip_port=-1

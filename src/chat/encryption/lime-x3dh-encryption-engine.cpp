@@ -813,28 +813,32 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	if (contactAddress)
 		ms_free(contactAddress);
 
-	stringstream operation;
-	operation << "create user " << localDeviceId;
-	lime::limeCallback callback = setLimeCallback(operation.str());
 
 	LinphoneConfig *lpconfig = linphone_core_get_config(linphone_proxy_config_get_core(cfg));
 	lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_update_time", -1);
 
 	try {
-		// create user if not exist
-		limeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+		
+		if (!limeManager->is_user(localDeviceId)) {
+			// create user if not exist
+			lime::limeCallback callback = setLimeCallback("creating user" + localDeviceId);
+			limeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+		} else {
+			
+			limeManager->set_x3dhServerUrl(localDeviceId,x3dhServerUrl);
+			// update keys if necessary
+			int limeUpdateThreshold = lp_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
+			if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {
+				update();
+				lastLimeUpdate = ms_time(NULL);
+			}
+		}
 		lastLimeUpdate = ms_time(NULL);
 		lp_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 	} catch (const exception &e) {
-		lInfo() << "LIME X3DH user already exists or the creation went wrong" << e.what();
-
-		// update keys if necessary
-		int limeUpdateThreshold = lp_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
-		if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {
-			update();
-			lastLimeUpdate = ms_time(NULL);
-		}
+		lError()<< "LIME user for id [" << localDeviceId<<"] cannot be created" << e.what();
 	}
+	
 }
 
 LINPHONE_END_NAMESPACE
