@@ -434,7 +434,11 @@ string SalOp::getDialogId () const {
 	if (!mDialog)
 		return string();
 	stringstream ss;
-	ss << mCallId << ";to-tag=" << belle_sip_dialog_get_remote_tag(mDialog) << ";from-tag=" << belle_sip_dialog_get_local_tag(mDialog);
+	const char *to_tag = belle_sip_dialog_is_server(mDialog) ? belle_sip_dialog_get_local_tag(mDialog) : belle_sip_dialog_get_remote_tag(mDialog);
+	const char *from_tag = belle_sip_dialog_is_server(mDialog) ? belle_sip_dialog_get_remote_tag(mDialog) : belle_sip_dialog_get_local_tag(mDialog);
+	if (!to_tag) to_tag = "";
+	if (!from_tag) from_tag = ""; /* Not having from-tag should never happen.*/
+	ss << mCallId << ";to-tag=" << to_tag << ";from-tag=" << from_tag;
 	return ss.str();
 }
 
