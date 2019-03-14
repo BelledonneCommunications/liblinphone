@@ -207,8 +207,10 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 	shared_ptr<AbstractChatRoom> chatRoom;
 	if (params->getChatRoomImpl() == ChatRoomParams::ChatRoomImpl::FlexisipChat) {
 		string conferenceFactoryUri = getConferenceFactoryUri(q->getSharedFromThis(), localAddr);
-		if (conferenceFactoryUri.empty())
+		if (conferenceFactoryUri.empty()) {
+			lWarning() << "Not creating group chat room: no conference factory uri for local address [" << localAddr << "]";
 			return nullptr;
+		}
 
 		chatRoom = createClientGroupChatRoom(subject,
 						     IdentityAddress(conferenceFactoryUri),
@@ -352,6 +354,7 @@ list<shared_ptr<AbstractChatRoom>> Core::findChatRooms (const IdentityAddress &p
 shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 	const IdentityAddress &localAddress,
 	const IdentityAddress &participantAddress,
+	bool basicOnly,
 	bool encrypted
 ) const {
 	L_D();
@@ -370,7 +373,8 @@ shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 		// One to one client group chat room
 		// The only participant's address must match the participantAddress argument
 		if (
-			(capabilities & ChatRoom::Capabilities::Conference) &&
+			!basicOnly &&
+		        (capabilities & ChatRoom::Capabilities::Conference) &&
 			!chatRoom->getParticipants().empty() &&
 			localAddress == curLocalAddress &&
 			participantAddress.getAddressWithoutGruu() == chatRoom->getParticipants().front()->getAddress()

@@ -113,6 +113,7 @@ public:
 	std::shared_ptr<AbstractChatRoom> findOneToOneChatRoom (
 		const IdentityAddress &localAddress,
 		const IdentityAddress &participantAddress,
+		bool basicOnly,
 		bool encrypted
 	) const;
 
