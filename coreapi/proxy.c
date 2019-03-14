@@ -1066,7 +1066,7 @@ LinphoneStatus linphone_core_add_proxy_config(LinphoneCore *lc, LinphoneProxyCon
 
 void linphone_core_remove_proxy_config(LinphoneCore *lc, LinphoneProxyConfig *cfg){
 	/* check this proxy config is in the list before doing more*/
-	if (bctbx_list_find(lc->sip_conf.proxies,cfg)==NULL){
+	if (bctbx_list_find(lc->sip_conf.proxies,cfg)==NULL) {
 		ms_error("linphone_core_remove_proxy_config: LinphoneProxyConfig [%p] is not known by LinphoneCore (programming error?)",cfg);
 		return;
 	}
@@ -1089,7 +1089,12 @@ void linphone_core_remove_proxy_config(LinphoneCore *lc, LinphoneProxyConfig *cf
 		linphone_proxy_config_set_state(cfg, LinphoneRegistrationNone,"Registration disabled");
 	}
 	linphone_proxy_config_write_all_to_config_file(lc);
+
+	//Update the associated linphone specs on the core
+	linphone_proxy_config_set_conference_factory_uri(cfg, NULL);
 }
+
+
 
 void linphone_core_clear_proxy_config(LinphoneCore *lc){
 	bctbx_list_t* list=bctbx_list_copy(linphone_core_get_proxy_config_list((const LinphoneCore*)lc));
@@ -1574,7 +1579,6 @@ void linphone_proxy_config_notify_publish_state_changed(LinphoneProxyConfig *cfg
 				break;
 			default:
 				break;
-
 		}
 	}
 }
@@ -1590,7 +1594,21 @@ void linphone_proxy_config_set_conference_factory_uri(LinphoneProxyConfig *cfg, 
 			linphone_core_add_linphone_spec(cfg->lc, "groupchat");
 		}
 	} else if (cfg->lc) {
-		linphone_core_remove_linphone_spec(cfg->lc, "groupchat");
+		bool_t remove = TRUE;
+		//Check that no other proxy config needs the specs before removing it
+		bctbx_list_t *it = NULL;
+		for (it = cfg->lc->sip_conf.proxies; it; it = it->next) {
+			if (it->data != cfg) {
+				const char *confUri = linphone_proxy_config_get_conference_factory_uri((LinphoneProxyConfig *) it->data);
+				if (confUri && strlen(confUri)) {
+					remove = FALSE;
+					break;
+				}
+			}
+		}
+		if (remove) {
+			linphone_core_remove_linphone_spec(cfg->lc, "groupchat");
+		}
 	}
 }
 
