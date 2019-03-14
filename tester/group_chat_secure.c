@@ -96,7 +96,7 @@ static void group_chat_lime_x3dh_change_server_url(void) {
 
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 
-	linphone_core_set_lime_x3dh_server_url(marie->lc, "http://x3dh.example.org:8082/flexisip-account-manager/x3dh-25519.php");
+	linphone_core_set_lime_x3dh_server_url(marie->lc, "https://lime.wildcard1.linphone.org:8443/lime-server/lime-server.php");
 
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc)); //should be true now
 

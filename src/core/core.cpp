@@ -278,7 +278,7 @@ void Core::enableLimeX3dh (bool enable) {
 
 	if (d->imee == nullptr) {
 		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
-		string serverUrl = lp_config_get_string(lpconfig, "lime", "x3dh_server_url", "");
+		string serverUrl = lp_config_get_string(lpconfig, "lime", "lime_server_url", lp_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
 		if (serverUrl.empty()) {
 			lInfo() << "Lime X3DH server URL not set, can't enable";
 			//Do not enable encryption engine if url is undefined
@@ -306,8 +306,9 @@ void Core::setX3dhServerUrl(const std::string &url) {
 		return;
 	}
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
-	string prevUrl = lp_config_get_string(lpconfig, "lime", "x3dh_server_url", "");
-	lp_config_set_string(lpconfig, "lime", "x3dh_server_url", url.c_str());
+	string prevUrl = lp_config_get_string(lpconfig, "lime", "lime_server_url", lp_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
+	lp_config_set_string(lpconfig, "lime", "lime_server_url", url.c_str());
+	lp_config_clean_entry(lpconfig, "lime", "x3dh_server_url");
 	if (url.empty()) {
 		enableLimeX3dh(false);
 	} else if (url.compare(prevUrl)) {
