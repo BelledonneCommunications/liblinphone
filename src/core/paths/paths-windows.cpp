@@ -30,6 +30,13 @@
 
 using namespace std;
 
+static bool dirExists(const std::string& dirName) {
+  DWORD ftyp = GetFileAttributesA(dirName.c_str());
+  if (ftyp == INVALID_FILE_ATTRIBUTES) return false;
+  if (ftyp & FILE_ATTRIBUTE_DIRECTORY) return true;
+  return false;
+}
+
 LINPHONE_BEGIN_NAMESPACE
 
 static string getPath (const GUID &id) {
@@ -42,7 +49,9 @@ static string getPath (const GUID &id) {
 		CoTaskMemFree(path);
 	}
 
-	return strPath.append("/linphone/");
+	strPath = strPath.append("/linphone/");
+	if (!dirExists(strPath)) CreateDirectoryA(strPath.c_str(), nullptr);
+	return strPath;
 }
 
 
