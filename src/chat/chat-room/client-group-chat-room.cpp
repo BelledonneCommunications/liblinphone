@@ -56,7 +56,7 @@ list<IdentityAddress> ClientGroupChatRoomPrivate::cleanAddressesList (const list
 		if (q->findParticipant(*it) || (q->getMe()->getAddress() == *it)) {
 			it = cleanedList.erase(it);
 		} else {
-			++it;
+			it++;
 		}
 	}
 	return cleanedList;
