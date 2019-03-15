@@ -52,7 +52,7 @@ list<IdentityAddress> ClientGroupChatRoomPrivate::cleanAddressesList (const list
 
 	cleanedList.sort();
 	cleanedList.unique();
-	for (auto it = addresses.begin(); it != addresses.end();) {
+	for (auto it = cleanedList.begin(); it != cleanedList.end();) {
 		if (q->findParticipant(*it) || (q->getMe()->getAddress() == *it)) {
 			it = cleanedList.erase(it);
 		} else {
