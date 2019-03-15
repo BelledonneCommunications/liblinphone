@@ -38,7 +38,7 @@ This pseudo code demonstrates basic registration operations:
 	linphone_core_add_proxy_config(lc,proxy_cfg); /*add proxy config to linphone core*/
 	linphone_core_set_default_proxy(lc,proxy_cfg); /*set to default proxy*/
 
-Registration sate call back:
+Registration state call back:
 
 .. code-block:: c
 
