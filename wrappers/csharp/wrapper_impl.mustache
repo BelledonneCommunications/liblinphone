@@ -207,7 +207,7 @@ namespace Linphone
 					{
 						break;
 					}
-					string key = Marshal.PtrToStringAuto(dataPtr);
+					string key = Marshal.PtrToStringAnsi(dataPtr);
 					yield return key;
 					ptr = bctbx_list_next(ptr);
 				}
@@ -459,11 +459,11 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringAuto(linphone_call_get_native_video_window_id(nativePtr));
+				return Marshal.PtrToStringAnsi(linphone_call_get_native_video_window_id(nativePtr));
 			}
 			set
 			{
-				linphone_call_set_native_video_window_id(nativePtr, Marshal.StringToHGlobalUni(value));
+				linphone_call_set_native_video_window_id(nativePtr, Marshal.StringToHGlobalAnsi(value));
 			}
 		}
 		{{/isLinphoneCall}}
@@ -487,11 +487,11 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringAuto(linphone_core_get_native_video_window_id(nativePtr));
+				return Marshal.PtrToStringAnsi(linphone_core_get_native_video_window_id(nativePtr));
 			}
 			set
 			{
-				linphone_core_set_native_video_window_id(nativePtr, Marshal.StringToHGlobalUni(value));
+				linphone_core_set_native_video_window_id(nativePtr, Marshal.StringToHGlobalAnsi(value));
 			}
 		}
 
@@ -500,11 +500,11 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringAuto(linphone_core_get_native_preview_window_id(nativePtr));
+				return Marshal.PtrToStringAnsi(linphone_core_get_native_preview_window_id(nativePtr));
 			}
 			set
 			{
-				linphone_core_set_native_preview_window_id(nativePtr, Marshal.StringToHGlobalUni(value));
+				linphone_core_set_native_preview_window_id(nativePtr, Marshal.StringToHGlobalAnsi(value));
 			}
 		}
 		{{/isLinphoneCore}}
@@ -529,7 +529,7 @@ namespace Linphone
 			{
 				{{#is_string}}
 				IntPtr stringPtr = {{getter_c_name}}({{getter_nativePtr}});
-				return Marshal.PtrToStringAuto(stringPtr);
+				return Marshal.PtrToStringAnsi(stringPtr);
 				{{/is_string}}
 				{{#is_bool}}
 				return {{getter_c_name}}({{getter_nativePtr}}) != 0;
@@ -608,7 +608,7 @@ namespace Linphone
 			{{/removeListener}}
 			{{#is_string}}
 			IntPtr stringPtr = {{c_name}}({{nativePtr}}{{c_args}});
-			return Marshal.PtrToStringAuto(stringPtr);
+			return Marshal.PtrToStringAnsi(stringPtr);
 			{{/is_string}}
 			{{#is_bool}}
 			{{return}}{{c_name}}({{nativePtr}}{{c_args}}) == (char)0 ? false : true;
