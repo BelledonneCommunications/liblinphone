@@ -32,14 +32,6 @@ ChatRoomParams::ChatRoomParams() {
 	mRtt = false;
 }
 
-ChatRoomParams::ChatRoomParams(const ChatRoomParams &params) {
-	mChatRoomImpl = params.mChatRoomImpl;
-	mChatRoomEncryptionImpl = params.mChatRoomEncryptionImpl;
-	mEncrypted = params.mEncrypted;
-	mGroup = params.mGroup;
-	mRtt = params.mRtt;
-}
-
 ChatRoomParams::ChatRoomParams(bool encrypted, bool group, ChatRoomImpl impl)
 	: mChatRoomImpl(impl), mEncrypted(encrypted), mGroup(group) {
 	if (encrypted) {

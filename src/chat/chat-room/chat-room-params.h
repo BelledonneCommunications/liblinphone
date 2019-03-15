@@ -42,7 +42,7 @@ public:
 	//Derived HybridObject constructors have to be public to allow construction from factory-like `bellesip::HybridObject::create` method
 	//Base constructor is protected	anyways to prevent unmanaged creation.
 	ChatRoomParams();
-	ChatRoomParams(const ChatRoomParams &params);
+	ChatRoomParams(const ChatRoomParams &params) = default;
 	//Convenience constructor
 	ChatRoomParams(bool encrypted, bool group, ChatRoomImpl impl);
 
