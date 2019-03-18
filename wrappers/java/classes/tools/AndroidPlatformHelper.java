@@ -90,11 +90,11 @@ public class AndroidPlatformHelper {
 	private boolean mUsingHttpProxy;
 	private NetworkManagerInterface mNetworkManager;
 	private Handler mMainHandler;
-	private Runnable mNetworkUpdateRunner;
 	private boolean mMonitoringEnabled;
 	private boolean mIsInInteractiveMode;
 	private InteractivityReceiver mInteractivityReceiver;
 	private IntentFilter mInteractivityIntentFilter;
+	private String[] mDnsServers;
 
 	private native void setNativePreviewWindowId(long nativePtr, Object view);
 	private native void setNativeVideoWindowId(long nativePtr, Object view);
@@ -107,19 +107,12 @@ public class AndroidPlatformHelper {
 		mNativePtr = nativePtr;
 		mContext = (Context) ctx_obj;
 		mWifiOnly = wifiOnly;
+		mDnsServers = null;
 		mResources = mContext.getResources();
+		mMainHandler = new Handler(mContext.getMainLooper());
+
 		MediastreamerAndroidContext.setContext(mContext);
 		Log.i("[Platform Helper] Created");
-
-		mMainHandler = new Handler(mContext.getMainLooper());
-		mNetworkUpdateRunner = new Runnable() {
-			@Override
-			public void run() {
-				synchronized(AndroidPlatformHelper.this) {
-					updateNetworkReachability();
-				}
-			}
-		};
 
 		WifiManager wifiMgr = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
 		mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
@@ -167,7 +160,7 @@ public class AndroidPlatformHelper {
 
 	public synchronized void onWifiOnlyEnabled(boolean enabled) {
 		mWifiOnly = enabled;
-		postNetworkUpdateRunner();
+		updateNetworkReachability(null);
 	}
 
 	public synchronized Object getPowerManager() {
@@ -175,24 +168,13 @@ public class AndroidPlatformHelper {
 	}
 
 	public synchronized String[] getDnsServers() {
-		if (mConnectivityManager == null || Build.VERSION.SDK_INT < Version.API23_MARSHMALLOW_60)
-			return null;
-
-		if (mConnectivityManager.getActiveNetwork() == null
-				|| mConnectivityManager.getLinkProperties(mConnectivityManager.getActiveNetwork()) == null)
-			return null;
-
-		int i = 0;
-		List<InetAddress> inetServers = null;
-		inetServers = mConnectivityManager.getLinkProperties(mConnectivityManager.getActiveNetwork()).getDnsServers();
-
-		String[] servers = new String[inetServers.size()];
-
-		for (InetAddress address : inetServers) {
-			servers[i++] = address.getHostAddress();
+		String dnsList = "";
+		for (String dns : mDnsServers) {
+			dnsList += dns;
+			dnsList += ", ";
 		}
-		Log.i("[Platform Helper] getDnsServers() returning");
-		return servers;
+		Log.i("[Platform Helper] getDnsServers() returning " + dnsList);
+		return mDnsServers;
 	}
 
 	public String getDataPath() {
@@ -430,10 +412,6 @@ public class AndroidPlatformHelper {
 		}
 	}
 
-	public synchronized void postNetworkUpdateRunner() {
-		mMainHandler.post(mNetworkUpdateRunner);
-	}
-
 	public synchronized Handler getHandler() {
 		return mMainHandler;
 	}
@@ -459,18 +437,48 @@ public class AndroidPlatformHelper {
 		}
 	}
 
-	public synchronized void updateNetworkReachability() {
+	private synchronized void storeDnsServers(Network activeNetwork) {
+		mDnsServers = null;
+
+		if (activeNetwork == null || mConnectivityManager.getLinkProperties(activeNetwork) == null) {
+			Log.e("[Platform Helper] Active network is null or we can't get it's link properties");
+			return;
+		}
+
+		int i = 0;
+		List<InetAddress> inetServers = null;
+		inetServers = mConnectivityManager.getLinkProperties(activeNetwork).getDnsServers();
+
+		String[] servers = new String[inetServers.size()];
+		for (InetAddress address : inetServers) {
+			String host = address.getHostAddress();
+			servers[i++] = host;
+			Log.i("[Platform Helper] Adding " + host + " to DNS servers list");
+		}
+
+		mDnsServers = servers;
+	}
+
+	public synchronized void updateNetworkReachability(Network activeNetwork) {
 		if (mNativePtr == 0) {
 			Log.w("[Platform Helper] Native pointer has been reset, stopping there");
 			return;
+		}
+	
+		if (mDozeModeEnabled) {
+			Log.i("[Platform Helper] Device in idle mode: shutting down network");
+			setNetworkReachable(mNativePtr, false);
+			return;
+		}
+
+		NetworkInfo activeNetworkInfo = activeNetwork == null ? null : mConnectivityManager.getNetworkInfo(activeNetwork);
+		if (activeNetworkInfo != null) {
+			Log.i("[Platform Helper] Notified network state " + activeNetworkInfo.getState() + " / " + activeNetworkInfo.getDetailedState() + ", isAvailable() " + activeNetworkInfo.isAvailable());
 		}
 
 		boolean connected = mNetworkManager.isCurrentlyConnected(mContext, mConnectivityManager, mWifiOnly);
 		if (!connected) {
 			Log.i("[Platform Helper] No connectivity: setting network unreachable");
-			setNetworkReachable(mNativePtr, false);
-		} else if (mDozeModeEnabled) {
-			Log.i("[Platform Helper] Device in idle mode: shutting down network");
 			setNetworkReachable(mNativePtr, false);
 		} else {
 			if (mNetworkManager.hasHttpProxy(mContext, mConnectivityManager)) {
@@ -492,21 +500,38 @@ public class AndroidPlatformHelper {
 			}
 
 			Log.i("[Platform Helper] Network should be reachable");
-			NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
+			NetworkInfo networkInfo = mNetworkManager.getActiveNetworkInfo(mConnectivityManager);
 			if (networkInfo == null) {
 				Log.e("[Platform Helper] getActiveNetworkInfo() returned null !");
 				setNetworkReachable(mNativePtr, false);
 				return;
 			}
+			Network network = mNetworkManager.getActiveNetwork(mConnectivityManager);
 
 			Log.i("[Platform Helper] Active network type is " + networkInfo.getTypeName());
-			if (!networkInfo.isAvailable()) {
-				Log.e("[Platform Helper] getActiveNetwork() isn't available !");
-				setNetworkReachable(mNativePtr, false);
-				return;
+			Log.i("[Platform Helper] Active network state " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
+			if (networkInfo.getState() == NetworkInfo.State.DISCONNECTED && networkInfo.getDetailedState() == NetworkInfo.DetailedState.BLOCKED) {
+				Log.w("[Platform Helper] Active network is in bad state, try to use the one notified by the system");
+				if (activeNetwork != null) {
+					if (activeNetworkInfo.isAvailable() && !(activeNetworkInfo.getState() == NetworkInfo.State.DISCONNECTED && activeNetworkInfo.getDetailedState() == NetworkInfo.DetailedState.BLOCKED)) {
+						Log.i("[Platform Helper] Using notified network instead");
+						networkInfo = activeNetworkInfo;
+						network = activeNetwork;
+					} else {
+						Log.e("[Platform Helper] Notified network seems in bad state as well, set reachability to false");
+						setNetworkReachable(mNativePtr, false);
+						return;
+					}
+				} else {
+					Log.e("[Platform Helper] No network was passed to this updateNetworkReachability call, set reachability to false");
+					setNetworkReachable(mNativePtr, false);
+					return;
+				}
 			}
 
-			Log.i("[Platform Helper] Active network state " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
+			// Update DNS servers lists
+			storeDnsServers(network);
+
 			int currentNetworkType = networkInfo.getType();
 			if (mLastNetworkType != -1 && mLastNetworkType != currentNetworkType) {
 				Log.i("[Platform Helper] Network type has changed (last one was " + networkTypeToString(mLastNetworkType) + "), disable network reachability first");
@@ -535,8 +560,10 @@ public class AndroidPlatformHelper {
 		mNetworkManager = new NetworkManager(this);
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
 			mNetworkManager = new NetworkManager(this);
-		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
 			mNetworkManager = new NetworkManagerAbove21(this);
+		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+			mNetworkManager = new NetworkManagerAbove23(this);
 		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
 			mNetworkManager = new NetworkManagerAbove24(this);
 		} else {
@@ -559,7 +586,7 @@ public class AndroidPlatformHelper {
 		Log.i("[Platform Helper] Registering interactivity receiver");
 		mContext.registerReceiver(mInteractivityReceiver, mInteractivityIntentFilter);
 
-		updateNetworkReachability();
+		updateNetworkReachability(null);
 	}
 
 	private synchronized void stopNetworkMonitoring() {		

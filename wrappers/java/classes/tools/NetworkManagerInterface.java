@@ -21,6 +21,8 @@ package org.linphone.core.tools;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkInfo;
 
 public interface NetworkManagerInterface {
     void registerNetworkCallbacks(Context context, ConnectivityManager connectivityManager);
@@ -28,6 +30,10 @@ public interface NetworkManagerInterface {
 	void unregisterNetworkCallbacks(Context context, ConnectivityManager connectivityManager);
 
     boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly);
+
+    NetworkInfo getActiveNetworkInfo(ConnectivityManager connectivityManager);
+
+    Network getActiveNetwork(ConnectivityManager connectivityManager);
 
     boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager);
 

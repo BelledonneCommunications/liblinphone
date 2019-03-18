@@ -1,6 +1,6 @@
 /*
-NetworkManagerAbove21.java
-Copyright (C) 2017 Belledonne Communications, Grenoble, France
+NetworkManagerAbove23.java
+Copyright (C) 2019 Belledonne Communications, Grenoble, France
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -34,44 +34,44 @@ import org.linphone.core.tools.AndroidPlatformHelper;
 /**
  * Intercept network state changes and update linphone core.
  */
-public class NetworkManagerAbove21 implements NetworkManagerInterface {
+public class NetworkManagerAbove23 implements NetworkManagerInterface {
 	private AndroidPlatformHelper mHelper;
 	private ConnectivityManager.NetworkCallback mNetworkCallback;
 
-	public NetworkManagerAbove21(final AndroidPlatformHelper helper) {
+	public NetworkManagerAbove23(final AndroidPlatformHelper helper) {
 		mHelper = helper;
 		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 			@Override
 			public void onAvailable(Network network) {
-				Log.i("[Platform Helper] [Network Manager 21] A network is available");
+				Log.i("[Platform Helper] [Network Manager 23] A network is available");
 				mHelper.updateNetworkReachability(network);
 			}
 
 			@Override
 			public void onLost(Network network) {
-				Log.i("[Platform Helper] [Network Manager 21] A network has been lost");
+				Log.i("[Platform Helper] [Network Manager 23] A network has been lost");
 				mHelper.updateNetworkReachability(null);
 			}
 
 			@Override
 			public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
-				Log.i("[Platform Helper] [Network Manager 21] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
+				Log.i("[Platform Helper] [Network Manager 23] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
 				mHelper.updateNetworkReachability(network);
 			}
 
 			@Override
 			public void onLinkPropertiesChanged(Network network, LinkProperties linkProperties) {
-				Log.i("[Platform Helper] [Network Manager 21] onLinkPropertiesChanged " + network.toString() + ", " + linkProperties.toString());
+				Log.i("[Platform Helper] [Network Manager 23] onLinkPropertiesChanged " + network.toString() + ", " + linkProperties.toString());
 			}
 
 			@Override
 			public void onLosing(Network network, int maxMsToLive) {
-				Log.i("[Platform Helper] [Network Manager 21] onLosing " + network.toString());
+				Log.i("[Platform Helper] [Network Manager 23] onLosing " + network.toString());
 			}
 
 			@Override
 			public void onUnavailable() {
-				Log.i("[Platform Helper] [Network Manager 21] onUnavailable");
+				Log.i("[Platform Helper] [Network Manager 23] onUnavailable");
 			}
 		};
 	}
@@ -88,11 +88,16 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 	}
 
     public NetworkInfo getActiveNetworkInfo(ConnectivityManager connectivityManager) {
+        Network network = connectivityManager.getActiveNetwork();
+		if (network != null) {
+			return connectivityManager.getNetworkInfo(network);
+		}
+		Log.i("[Platform Helper] [Network Manager 23] getActiveNetwork() returned null, using getActiveNetworkInfo() instead");
         return connectivityManager.getActiveNetworkInfo();
     }
 
     public Network getActiveNetwork(ConnectivityManager connectivityManager) {
-        return null;
+        return connectivityManager.getActiveNetwork();
     }
 
     public boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly) {
@@ -100,15 +105,15 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 		boolean connected = false;
 		for (Network network : networks) {
 			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
-			Log.i("[Platform Helper] [Network Manager 21] Found network type: " + networkInfo.getTypeName() + ", isAvailable() = " + networkInfo.isAvailable() + ", isConnected() = " + networkInfo.isConnected());
+			Log.i("[Platform Helper] [Network Manager 23] Found network type: " + networkInfo.getTypeName() + ", isAvailable() = " + networkInfo.isAvailable() + ", isConnected() = " + networkInfo.isConnected());
 			if (networkInfo.isAvailable()) {
-				Log.i("[Platform Helper] [Network Manager 21] Network is available, state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
+				Log.i("[Platform Helper] [Network Manager 23] Network is available, state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
 				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
-					Log.i("[Platform Helper] [Network Manager 21] Wifi only mode enabled, skipping");
+					Log.i("[Platform Helper] [Network Manager 23] Wifi only mode enabled, skipping");
 				} else {
 					NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
 					if (capabilities != null) {
-						Log.i("[Platform Helper] [Network Manager 21] Network capabilities are " + capabilities.toString());
+						Log.i("[Platform Helper] [Network Manager 23] Network capabilities are " + capabilities.toString());
 						connected = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) 
 							&& capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED);
 					}
