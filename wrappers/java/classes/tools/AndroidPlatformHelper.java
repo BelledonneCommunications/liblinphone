@@ -142,6 +142,15 @@ public class AndroidPlatformHelper {
 			Log.e("[Platform Helper] failed to install some resources.");
 		}
 
+		if (DeviceUtils.isAppUserRestricted(mContext)) {
+            Log.w("[Platform Helper] Device has been restricted by user (Android 9+), push notifications won't work !");
+        }
+
+        int bucket = DeviceUtils.getAppStandbyBucket(mContext);
+        if (bucket > 0) {
+            Log.w("[Platform Helper] Device is in bucket " + DeviceUtils.getAppStandbyBucketNameFromValue(bucket));
+        }
+
 		mIsInInteractiveMode = true;
 	}
 
