@@ -932,7 +932,6 @@ void disable_all_video_codecs_except_one(LinphoneCore *lc, const char *mime) {
 static void call_with_dns_time_out(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new2( "empty_rc", FALSE);
 	LinphoneSipTransports transport = {9773,0,0,0};
-	int i;
 
 	linphone_core_set_sip_transports(marie->lc,&transport);
 	linphone_core_iterate(marie->lc);
