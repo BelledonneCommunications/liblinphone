@@ -31,8 +31,8 @@ class ChatRoom;
 class LINPHONE_PUBLIC ChatRoomParams : public bellesip::HybridObject<LinphoneChatRoomParams, ChatRoomParams> {
 public:
 
-	L_DECLARE_ENUM(ChatRoomImpl, L_ENUM_VALUES_CHAT_ROOM_IMPL);
-	L_DECLARE_ENUM(ChatRoomEncryptionImpl, L_ENUM_VALUES_CHAT_ROOM_ENCRYPTION_IMPL);
+	L_DECLARE_ENUM(ChatRoomBackend, L_ENUM_VALUES_CHAT_ROOM_BACKEND);
+	L_DECLARE_ENUM(ChatRoomEncryptionBackend, L_ENUM_VALUES_CHAT_ROOM_ENCRYPTION_BACKEND);
 
 	static AbstractChatRoom::CapabilitiesMask toCapabilities(const std::shared_ptr<ChatRoomParams> &params);
 	static std::shared_ptr<ChatRoomParams> fromCapabilities(AbstractChatRoom::CapabilitiesMask capabilities);
@@ -44,19 +44,19 @@ public:
 	ChatRoomParams();
 	ChatRoomParams(const ChatRoomParams &params) = default;
 	//Convenience constructor
-	ChatRoomParams(bool encrypted, bool group, ChatRoomImpl impl);
+	ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backend);
 
 	bool isValid() const;
 	std::string toString() const;
 
-	ChatRoomImpl getChatRoomImpl() const;
-	ChatRoomEncryptionImpl getChatRoomEncryptionImpl() const;
+	ChatRoomBackend getChatRoomBackend() const;
+	ChatRoomEncryptionBackend getChatRoomEncryptionBackend() const;
 	bool isEncrypted() const;
 	bool isGroup() const;
 	bool isRealTimeText() const;
 
-	void setChatRoomImpl(ChatRoomImpl impl);
-	void setChatRoomEncryptionImpl(ChatRoomEncryptionImpl impl);
+	void setChatRoomBackend(ChatRoomBackend backend);
+	void setChatRoomEncryptionBackend(ChatRoomEncryptionBackend backend);
 	void setEncrypted(bool encrypted);
 	void setGroup(bool group);
 	void setRealTimeText(bool rtt);
@@ -65,8 +65,8 @@ protected:
 	~ChatRoomParams() = default;
 
 private:
-	ChatRoomImpl mChatRoomImpl;
-	ChatRoomEncryptionImpl mChatRoomEncryptionImpl;
+	ChatRoomBackend mChatRoomBackend;
+	ChatRoomEncryptionBackend mChatRoomEncryptionBackend;
 	bool mEncrypted = false;
 	bool mGroup = false; //one to one
 	bool mRtt = false; //Real Time Text

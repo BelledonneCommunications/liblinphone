@@ -338,7 +338,7 @@ LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_particip
 	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lcm->lc);
 
 	linphone_chat_room_params_enable_encryption(params, encrypted);
-	linphone_chat_room_params_set_impl(params, LinphoneChatRoomImplFlexisipChat);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
 	linphone_chat_room_params_enable_group(params, participantsAddressesSize > 1 ? TRUE : FALSE);
 	LinphoneChatRoom *chatRoom = linphone_core_create_chat_room_2(lcm->lc, params, initialSubject, participantsAddresses);
 	linphone_chat_room_params_unref(params);
@@ -381,7 +381,7 @@ LinphoneChatRoom *create_chat_room_with_params(bctbx_list_t *lcs, LinphoneCoreMa
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateInstantiated, initialStats->number_of_LinphoneChatRoomStateInstantiated + 1, 100));
 
-	if (linphone_chat_room_params_get_impl(params) == LinphoneChatRoomImplFlexisipChat) {
+	if (linphone_chat_room_params_get_backend(params) == LinphoneChatRoomBackendFlexisipChat) {
 		// Check that the chat room is correctly created on Marie's side and that the participants are added
 		BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateCreationPending, initialStats->number_of_LinphoneChatRoomStateCreationPending + 1, 3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateCreated, initialStats->number_of_LinphoneChatRoomStateCreated + 1, 5000));
@@ -419,7 +419,7 @@ static void group_chat_room_params (void) {
 
 	//Should create	a basic chatroom
 	linphone_chat_room_params_enable_encryption(params, FALSE);
-	linphone_chat_room_params_set_impl(params, LinphoneChatRoomImplBasic);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
 	linphone_chat_room_params_enable_group(params, FALSE);
 	linphone_chat_room_params_ref(params);  //Ref params instead of re-creating them
 	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Basic chat room subject", participantsAddresses);
@@ -432,7 +432,7 @@ static void group_chat_room_params (void) {
 	}
 
 	//Should create	a one-to-one flexisip chat
-	linphone_chat_room_params_set_impl(params, LinphoneChatRoomImplFlexisipChat);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
 	linphone_chat_room_params_enable_group(params, FALSE);
 	linphone_chat_room_params_ref(params); //Ref params instead of re-creating them
 	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "One to one client group chat room subject", participantsAddresses);//create_chat_room_with_params(coresList, marie, &initialMarieStats, participantsAddresses, "One to one client group chat room subject", params);
@@ -445,7 +445,7 @@ static void group_chat_room_params (void) {
 	}
 
 	//Should create	a group flexisip chat
-	linphone_chat_room_params_set_impl(params, LinphoneChatRoomImplFlexisipChat);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
 	linphone_chat_room_params_enable_group(params, TRUE);
 	linphone_chat_room_params_ref(params); //Ref params instead of re-creating them
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(chloe->lc)));
@@ -459,11 +459,11 @@ static void group_chat_room_params (void) {
 	}
 
 	//Should create	an encrypted group flexisip chat
-	linphone_chat_room_params_set_impl(params, LinphoneChatRoomImplFlexisipChat);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
 	linphone_chat_room_params_enable_group(params, TRUE);
 	linphone_chat_room_params_enable_encryption(params, TRUE);
-	//Check that enabling encryption also defines a valid encryptionImpl
-	BC_ASSERT_EQUAL(linphone_chat_room_params_get_encryption_impl(params), LinphoneChatRoomEncryptionImplLime, int, "%d");
+	//Check that enabling encryption also defines a valid encryptionBackend
+	BC_ASSERT_EQUAL(linphone_chat_room_params_get_encryption_backend(params), LinphoneChatRoomEncryptionBackendLime, int, "%d");
 	linphone_chat_room_params_ref(params); //Ref params instead of re-creating them
 	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Encrypted group chat room subject", participantsAddresses);//create_chat_room_with_params(coresList, marie, &initialMarieStats, participantsAddresses, "Encrypted group chat room subject", params);
 	BC_ASSERT_PTR_NOT_NULL(marieCr);
@@ -476,8 +476,8 @@ static void group_chat_room_params (void) {
 	}
 
 	//Should return NULL because params are invalid
-	linphone_chat_room_params_set_impl(params, LinphoneChatRoomImplBasic);
-	linphone_chat_room_params_enable_group(params, TRUE); //Group + basic impl = invalid
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
+	linphone_chat_room_params_enable_group(params, TRUE); //Group + basic backend = invalid
 	BC_ASSERT_FALSE(linphone_chat_room_params_is_valid(params));
 	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Invalid chat room subject", NULL);
 	BC_ASSERT_PTR_NULL(marieCr);

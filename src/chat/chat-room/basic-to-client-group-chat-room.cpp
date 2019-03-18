@@ -85,7 +85,7 @@ public:
 		clientGroupChatRoom = static_pointer_cast<ClientGroupChatRoom>(
 		       //make sure to have a one2one chatroom
 		       chatRoom->getCore()->getPrivate()->createChatRoom(
-			   ChatRoomParams::create(chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted, false, ChatRoomParams::ChatRoomImpl::FlexisipChat), chatRoom->getLocalAddress(), chatRoom->getSubject(), {Address(chatRoom->getPeerAddress())}
+			   ChatRoomParams::create(chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted, false, ChatRoomParams::ChatRoomBackend::FlexisipChat), chatRoom->getLocalAddress(), chatRoom->getSubject(), {Address(chatRoom->getPeerAddress())}
 		       )
 		);
 		clientGroupChatRoom->getPrivate()->setCallSessionListener(this);

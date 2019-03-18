@@ -25,23 +25,23 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 ChatRoomParams::ChatRoomParams() {
-	mChatRoomImpl =	ChatRoomImpl::Basic;
-	mChatRoomEncryptionImpl = ChatRoomEncryptionImpl::None;
+	mChatRoomBackend =	ChatRoomBackend::Basic;
+	mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::None;
 	mEncrypted = false;
 	mGroup = false;
 	mRtt = false;
 }
 
-ChatRoomParams::ChatRoomParams(bool encrypted, bool group, ChatRoomImpl impl)
-	: mChatRoomImpl(impl), mEncrypted(encrypted), mGroup(group) {
+ChatRoomParams::ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backend)
+	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group) {
 	if (encrypted) {
-		mChatRoomEncryptionImpl = ChatRoomEncryptionImpl::Lime;
+		mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::Lime;
 	}
 }
 
-ChatRoomParams::ChatRoomImpl ChatRoomParams::getChatRoomImpl() const { return mChatRoomImpl; }
+ChatRoomParams::ChatRoomBackend ChatRoomParams::getChatRoomBackend() const { return mChatRoomBackend; }
 
-ChatRoomParams::ChatRoomEncryptionImpl ChatRoomParams::getChatRoomEncryptionImpl() const { return mChatRoomEncryptionImpl; }
+ChatRoomParams::ChatRoomEncryptionBackend ChatRoomParams::getChatRoomEncryptionBackend() const { return mChatRoomEncryptionBackend; }
 
 bool ChatRoomParams::isEncrypted() const { return mEncrypted; }
 
@@ -50,14 +50,14 @@ bool ChatRoomParams::isGroup() const { return mGroup; }
 bool ChatRoomParams::isRealTimeText() const { return mRtt; }
 
 
-void ChatRoomParams::setChatRoomImpl(ChatRoomParams::ChatRoomImpl impl) { mChatRoomImpl = impl; }
+void ChatRoomParams::setChatRoomBackend(ChatRoomParams::ChatRoomBackend backend) { mChatRoomBackend = backend; }
 
-void ChatRoomParams::setChatRoomEncryptionImpl(ChatRoomParams::ChatRoomEncryptionImpl impl) { mChatRoomEncryptionImpl = impl; }
+void ChatRoomParams::setChatRoomEncryptionBackend(ChatRoomParams::ChatRoomEncryptionBackend backend) { mChatRoomEncryptionBackend = backend; }
 
 void ChatRoomParams::setEncrypted(bool encrypted) {
 	mEncrypted = encrypted;
 	if (encrypted) {
-		mChatRoomEncryptionImpl = ChatRoomEncryptionImpl::Lime;
+		mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::Lime;
 	}
 }
 
@@ -79,21 +79,21 @@ shared_ptr<ChatRoomParams> ChatRoomParams::fromCapabilities(ChatRoom::Capabiliti
 
 	if (capabilities & ChatRoom::Capabilities::Basic) {
 		params->setGroup(false);
-		params->setChatRoomImpl(ChatRoomImpl::Basic);
+		params->setChatRoomBackend(ChatRoomBackend::Basic);
 	}
 	if (capabilities & ChatRoom::Capabilities::Conference) {
 		params->setGroup(true);
-		params->setChatRoomImpl(ChatRoomImpl::FlexisipChat);
+		params->setChatRoomBackend(ChatRoomBackend::FlexisipChat);
 	}
 	if (capabilities & ChatRoom::Capabilities::RealTimeText) {
 		params->setRealTimeText(true);
 	}
 	if (capabilities & ChatRoom::Capabilities::Encrypted) {
 		params->setEncrypted(true);
-		params->setChatRoomEncryptionImpl(ChatRoomEncryptionImpl::Lime);
+		params->setChatRoomEncryptionBackend(ChatRoomEncryptionBackend::Lime);
 	} else {
 		params->setEncrypted(false);
-		params->setChatRoomEncryptionImpl(ChatRoomEncryptionImpl::None);
+		params->setChatRoomEncryptionBackend(ChatRoomEncryptionBackend::None);
 	}
 	params->setGroup(~capabilities & ChatRoom::Capabilities::OneToOne);
 	return params;
@@ -102,16 +102,16 @@ shared_ptr<ChatRoomParams> ChatRoomParams::fromCapabilities(ChatRoom::Capabiliti
 ChatRoom::CapabilitiesMask ChatRoomParams::toCapabilities(const std::shared_ptr<ChatRoomParams> &params) {
 	ChatRoom::CapabilitiesMask mask;
 
-	if (params->getChatRoomImpl() == ChatRoomImpl::Basic) {
+	if (params->getChatRoomBackend() == ChatRoomBackend::Basic) {
 		mask |= ChatRoom::Capabilities::Basic;
 		mask |= ChatRoom::Capabilities::OneToOne;
-	} else if (params->getChatRoomImpl() == ChatRoomImpl::FlexisipChat) {
+	} else if (params->getChatRoomBackend() == ChatRoomBackend::FlexisipChat) {
 		mask |= ChatRoom::Capabilities::Conference;
 		if (!params->isGroup()) {
 			mask |= ChatRoom::Capabilities::OneToOne;
 		}
 	}
-	if (params->isEncrypted() && params->getChatRoomEncryptionImpl() != ChatRoomEncryptionImpl::None) {
+	if (params->isEncrypted() && params->getChatRoomEncryptionBackend() != ChatRoomEncryptionBackend::None) {
 		mask |= ChatRoom::Capabilities::Encrypted;
 	}
 	if (params->isRealTimeText()) {
@@ -122,16 +122,16 @@ ChatRoom::CapabilitiesMask ChatRoomParams::toCapabilities(const std::shared_ptr<
 
 //Returns false	if there are any inconsistencies between parameters
 bool ChatRoomParams::isValid() const {
-	if (mEncrypted && mChatRoomEncryptionImpl != ChatRoomEncryptionImpl::Lime) {
+	if (mEncrypted && mChatRoomEncryptionBackend != ChatRoomEncryptionBackend::Lime) {
 		return false;
 	}
-	if (mEncrypted && mChatRoomImpl == ChatRoomImpl::Basic) {
+	if (mEncrypted && mChatRoomBackend == ChatRoomBackend::Basic) {
 		return false;
 	}
-	if (mGroup && mChatRoomImpl != ChatRoomImpl::FlexisipChat) {
+	if (mGroup && mChatRoomBackend != ChatRoomBackend::FlexisipChat) {
 		return false;
 	}
-	if (mRtt && mChatRoomImpl == ChatRoomImpl::FlexisipChat) {
+	if (mRtt && mChatRoomBackend == ChatRoomBackend::FlexisipChat) {
 		return false;
 	}
 	return true;
@@ -143,12 +143,12 @@ std::string ChatRoomParams::toString() const {
 	ss << "Encrypted[" << mEncrypted << "];";
 	ss << "Group[" << mGroup << "];";
 	ss << "Rtt[" << mRtt << "];";
-	ss << "Impl[";
-	if (mChatRoomImpl == ChatRoomImpl::Basic)
+	ss << "Backend[";
+	if (mChatRoomBackend == ChatRoomBackend::Basic)
 		ss << "Basic];";
 	else
 		ss << "FlexisipChat];";
-	ss << "EncryptionImpl[" << ((mChatRoomEncryptionImpl == ChatRoomEncryptionImpl::None) ? "None" : "Lime X3DH")  << "];";
+	ss << "EncryptionBackend[" << ((mChatRoomEncryptionBackend == ChatRoomEncryptionBackend::None) ? "None" : "Lime X3DH")  << "];";
 	ss << std::endl;
 
 	return ss.str();

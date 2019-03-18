@@ -19,13 +19,13 @@ Chat rooms creation and behavior can be controlled with the use of :cpp:type:`Li
 
 Default parameters will create an un-encrypted basic chat room (See next section).
 
-You can change parameters prior to chat room creation. Possible types are :cpp:enumerator:`LinphoneChatRoomImplBasic` and :cpp:enumerator:`LinphoneChatRoomImplFlexisipChat`
+You can change parameters prior to chat room creation. Possible types are :cpp:enumerator:`LinphoneChatRoomBackendBasic` and :cpp:enumerator:`LinphoneChatRoomBackendFlexisipChat`
 
 .. code-block:: c
 
 	//Change chat room type
-        linphone_chat_room_params_set_impl(params, LinphoneChatRoomBasic);
-	linphone_chat_room_params_set_impl(params, LinphoneChatRoomFlexisipChat);
+        linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
 	//Enable encryption
 	linphone_chat_room_params_enable_encryption(params, TRUE);
 	//Enable group chat (valid only with LinphoneChatRoomFlexisipChat)
@@ -45,7 +45,7 @@ The full list of parameters includes a :cpp:type:`LinphoneChatRoomParams` object
 
 Convenience methods are provided to ease chat room creation by passing only minimum required parameters.
 Non-provided parameters will be created and default values will be used.
-Functions accepting a list of participants with a size greater than 1 will create a group chat room (unless LinphoneChatRoomImplBasic is used in parameters, in which case the chat room creation will fail). 
+Functions accepting a list of participants with a size greater than 1 will create a group chat room (unless LinphoneChatRoomBackendBasic is used in parameters, in which case the chat room creation will fail). 
 
 * :cpp:func:`linphone_core_create_chat_room_2 <linphone_core_create_chat_room_2>`
 

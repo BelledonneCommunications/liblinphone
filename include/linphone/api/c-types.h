@@ -258,16 +258,16 @@ L_DECLARE_C_ENUM(ChatMessageState, L_ENUM_VALUES_CHAT_MESSAGE_STATE);
 L_DECLARE_C_ENUM_FIXED_VALUES(ChatRoomCapabilities, L_ENUM_VALUES_CHAT_ROOM_CAPABILITIES);
 
 /**
- * #LinphoneChatRoomImpl is used to indicate the backend implementation of a chat room.
+ * #LinphoneChatRoomBackend is used to indicate the backend implementation of a chat room.
  * @ingroup chatroom
  */
-L_DECLARE_C_ENUM_FIXED_VALUES(ChatRoomImpl, L_ENUM_VALUES_CHAT_ROOM_IMPL);
+L_DECLARE_C_ENUM_FIXED_VALUES(ChatRoomBackend, L_ENUM_VALUES_CHAT_ROOM_BACKEND);
 
 /**
- * #LinphoneChatRoomEncryptionImpl is used to indicate the encryption engine used by a chat room.
+ * #LinphoneChatRoomEncryptionBackend is used to indicate the encryption engine used by a chat room.
  * @ingroup chatroom
  */
-L_DECLARE_C_ENUM_FIXED_VALUES(ChatRoomEncryptionImpl, L_ENUM_VALUES_CHAT_ROOM_ENCRYPTION_IMPL);
+L_DECLARE_C_ENUM_FIXED_VALUES(ChatRoomEncryptionBackend, L_ENUM_VALUES_CHAT_ROOM_ENCRYPTION_BACKEND);
 
 /**
  * TODO move to encryption engine object when available

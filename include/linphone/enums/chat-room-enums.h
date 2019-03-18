@@ -44,11 +44,11 @@
 	F(OneToOne /**< A communication between two participants (can be Basic or Conference) */, 1 << 5) \
 	F(Encrypted /**< Chat room is encrypted */, 1 << 6)
 
-#define L_ENUM_VALUES_CHAT_ROOM_IMPL(F) \
+#define L_ENUM_VALUES_CHAT_ROOM_BACKEND(F) \
 	F(Basic /**< Basic (client-to-client) chat room. */, 1 << 0) \
 	F(FlexisipChat /**< Server-based chat room. */, 1 << 1)
 
-#define L_ENUM_VALUES_CHAT_ROOM_ENCRYPTION_IMPL(F) \
+#define L_ENUM_VALUES_CHAT_ROOM_ENCRYPTION_BACKEND(F) \
 	F(None /**< No encryption. */, 0) \
 	F(Lime /**< Lime x3dh encryption. */, 1 << 0)
 

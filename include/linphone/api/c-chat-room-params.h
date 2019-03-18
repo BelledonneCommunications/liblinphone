@@ -61,16 +61,16 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_params_is_valid(const LinphoneChatRoom
 /**
  * Get the backend implementation of the chat room associated with the given parameters.
  * @param[in] params The chat room params.
- * @return LinphoneChatRoomImpl
+ * @return LinphoneChatRoomBackend
 **/
-LINPHONE_PUBLIC LinphoneChatRoomImpl linphone_chat_room_params_get_impl(const LinphoneChatRoomParams *params);
+LINPHONE_PUBLIC LinphoneChatRoomBackend linphone_chat_room_params_get_backend(const LinphoneChatRoomParams *params);
 
 /**
  * Get the encryption implementation of the chat room associated with the given parameters.
  * @param[in] params The chat room params.
- * @return LinphoneChatRoomEncryptionImpl
+ * @return LinphoneChatRoomEncryptionBackend
 **/
-LINPHONE_PUBLIC LinphoneChatRoomEncryptionImpl linphone_chat_room_params_get_encryption_impl(const LinphoneChatRoomParams *params);
+LINPHONE_PUBLIC LinphoneChatRoomEncryptionBackend linphone_chat_room_params_get_encryption_backend(const LinphoneChatRoomParams *params);
 
 /**
  * Get the group chat status of the chat room associated with the given parameters.
@@ -96,16 +96,16 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_params_rtt_enabled(const LinphoneChatR
 /**
  * Set the backend implementation of these chat room parameters.
  * @param[in] params The chat room params.
- * @param[in] impl The #LinphoneChatRoomImpl enum value
+ * @param[in] backend The #LinphoneChatRoomBackend enum value
 **/
-LINPHONE_PUBLIC void linphone_chat_room_params_set_impl(LinphoneChatRoomParams *params, LinphoneChatRoomImpl impl);
+LINPHONE_PUBLIC void linphone_chat_room_params_set_backend(LinphoneChatRoomParams *params, LinphoneChatRoomBackend backend);
 
 /**
  * Set the encryption backend implementation of these chat room parameters.
  * @param[in] params The chat room params.
- * @param[in] impl The #LinphoneChatRoomEncryptionImpl enum value
+ * @param[in] backend The #LinphoneChatRoomEncryptionBackend enum value
 **/
-LINPHONE_PUBLIC void linphone_chat_room_params_set_encryption_impl(LinphoneChatRoomParams *params, LinphoneChatRoomEncryptionImpl impl);
+LINPHONE_PUBLIC void linphone_chat_room_params_set_encryption_backend(LinphoneChatRoomParams *params, LinphoneChatRoomEncryptionBackend backend);
 
 /**
  * Enables or disables group chat for the chat room associated with the given parameters.

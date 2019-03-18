@@ -138,7 +138,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 ) {
 	L_Q();
 
-	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(encrypted, true, ChatRoomParams::ChatRoomImpl::FlexisipChat);
+	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(encrypted, true, ChatRoomParams::ChatRoomBackend::FlexisipChat);
 	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(
 										    q->getSharedFromThis(),
 										    conferenceId.getPeerAddress(),
@@ -160,7 +160,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom(const string
 
 	IdentityAddress defaultLocalAddress = getDefaultLocalAddress(q->getSharedFromThis(), nullptr);
 	IdentityAddress conferenceFactoryUri(getConferenceFactoryUri(q->getSharedFromThis(), defaultLocalAddress));
-	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(encrypted, !fallback, ChatRoomParams::ChatRoomImpl::FlexisipChat);
+	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(encrypted, !fallback, ChatRoomParams::ChatRoomBackend::FlexisipChat);
 
 	return createClientGroupChatRoom(subject, conferenceFactoryUri, ConferenceId(IdentityAddress(), defaultLocalAddress), Content(), ChatRoomParams::toCapabilities(params), params, fallback);
 }
@@ -205,7 +205,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 	}
 
 	shared_ptr<AbstractChatRoom> chatRoom;
-	if (params->getChatRoomImpl() == ChatRoomParams::ChatRoomImpl::FlexisipChat) {
+	if (params->getChatRoomBackend() == ChatRoomParams::ChatRoomBackend::FlexisipChat) {
 		string conferenceFactoryUri = getConferenceFactoryUri(q->getSharedFromThis(), localAddr);
 		if (conferenceFactoryUri.empty()) {
 			lWarning() << "Not creating group chat room: no conference factory uri for local address [" << localAddr << "]";
@@ -253,9 +253,9 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const std::string &subj
 	shared_ptr<ChatRoomParams> params = ChatRoomParams::getDefaults(q->getSharedFromThis());
 	if (participants.size() > 1) {
 		//Try to infer chat room type based on requested participants number
-		params->setChatRoomImpl(ChatRoomParams::ChatRoomImpl::FlexisipChat);
+		params->setChatRoomBackend(ChatRoomParams::ChatRoomBackend::FlexisipChat);
 	} else {
-		params->setChatRoomImpl(ChatRoomParams::ChatRoomImpl::Basic);
+		params->setChatRoomBackend(ChatRoomParams::ChatRoomBackend::Basic);
 	}
 	return createChatRoom(params, defaultLocalAddress, subject, participants);
 }
