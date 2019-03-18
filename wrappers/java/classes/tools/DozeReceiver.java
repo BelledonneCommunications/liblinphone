@@ -44,7 +44,7 @@ public class DozeReceiver extends android.content.BroadcastReceiver {
             Log.i("[Platform Helper] Doze mode enabled: " + dozeM);
             if (mHelper != null) {
                 mHelper.setDozeModeEnabled(dozeM);
-                mHelper.postNetworkUpdateRunner();
+                mHelper.updateNetworkReachability(null);
             }
         }
     }

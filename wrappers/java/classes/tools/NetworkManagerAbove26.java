@@ -47,19 +47,19 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 			@Override
 			public void onAvailable(Network network) {
 				Log.i("[Platform Helper] [Network Manager 26] A network is available");
-				mHelper.updateNetworkReachability();
+				mHelper.updateNetworkReachability(network);
 			}
 
 			@Override
 			public void onLost(Network network) {
 				Log.i("[Platform Helper] [Network Manager 26] A network has been lost");
-				mHelper.updateNetworkReachability();
+				mHelper.updateNetworkReachability(null);
 			}
 
 			@Override
 			public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
 				Log.i("[Platform Helper] [Network Manager 26] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
-				mHelper.updateNetworkReachability();
+				mHelper.updateNetworkReachability(network);
 			}
 
 			@Override
@@ -91,6 +91,19 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 		connectivityManager.unregisterNetworkCallback(mNetworkCallback);
 	}
 
+    public NetworkInfo getActiveNetworkInfo(ConnectivityManager connectivityManager) {
+        Network network = connectivityManager.getActiveNetwork();
+		if (network != null) {
+			return connectivityManager.getNetworkInfo(network);
+		}
+		Log.i("[Platform Helper] [Network Manager 26] getActiveNetwork() returned null, using getActiveNetworkInfo() instead");
+        return connectivityManager.getActiveNetworkInfo();
+    }
+
+    public Network getActiveNetwork(ConnectivityManager connectivityManager) {
+        return connectivityManager.getActiveNetwork();
+    }
+
 	public boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly) {
 		int restrictBackgroundStatus = connectivityManager.getRestrictBackgroundStatus();
 		if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) {
@@ -109,7 +122,7 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
 			Log.i("[Platform Helper] [Network Manager 26] Found network type: " + networkInfo.getTypeName() + ", isAvailable() = " + networkInfo.isAvailable() + ", isConnected() = " + networkInfo.isConnected());
 			if (networkInfo.isAvailable()) {
-				Log.i("[Platform Helper] [Network Manager 26] Network is available");
+				Log.i("[Platform Helper] [Network Manager 26] Network is available, state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
 				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
 					Log.i("[Platform Helper] [Network Manager 26] Wifi only mode enabled, skipping");
 				} else {

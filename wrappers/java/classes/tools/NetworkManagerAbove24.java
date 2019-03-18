@@ -47,19 +47,19 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 			@Override
 			public void onAvailable(Network network) {
 				Log.i("[Platform Helper] [Network Manager 24] A network is available");
-				mHelper.postNetworkUpdateRunner();
+				mHelper.updateNetworkReachability(network);
 			}
 
 			@Override
 			public void onLost(Network network) {
 				Log.i("[Platform Helper] [Network Manager 24] A network has been lost");
-				mHelper.postNetworkUpdateRunner();
+				mHelper.updateNetworkReachability(null);
 			}
 
 			@Override
 			public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
 				Log.i("[Platform Helper] [Network Manager 24] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
-				mHelper.postNetworkUpdateRunner();
+				mHelper.updateNetworkReachability(network);
 			}
 
 			@Override
@@ -91,6 +91,19 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 		connectivityManager.unregisterNetworkCallback(mNetworkCallback);
 	}
 
+    public NetworkInfo getActiveNetworkInfo(ConnectivityManager connectivityManager) {
+        Network network = connectivityManager.getActiveNetwork();
+		if (network != null) {
+			return connectivityManager.getNetworkInfo(network);
+		}
+		Log.i("[Platform Helper] [Network Manager 24] getActiveNetwork() returned null, using getActiveNetworkInfo() instead");
+        return connectivityManager.getActiveNetworkInfo();
+    }
+
+    public Network getActiveNetwork(ConnectivityManager connectivityManager) {
+        return connectivityManager.getActiveNetwork();
+    }
+
 	public boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly) {
 		int restrictBackgroundStatus = connectivityManager.getRestrictBackgroundStatus();
 		if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) {
@@ -98,7 +111,7 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 			// In this state, application should not try to use the network while running on background, because it would be denied.
 			Log.w("[Platform Helper] [Network Manager 24] Device is restricting metered network activity while application is running on background");
 			if (mHelper.isInBackground()) {
-				Log.w("[Platform Helper] [Network Manager 26] Device is in background, returning false");
+				Log.w("[Platform Helper] [Network Manager 24] Device is in background, returning false");
 				return false;
 			}
 		}
@@ -109,7 +122,7 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
 			Log.i("[Platform Helper] [Network Manager 24] Found network type: " + networkInfo.getTypeName() + ", isAvailable() = " + networkInfo.isAvailable() + ", isConnected() = " + networkInfo.isConnected());
 			if (networkInfo.isAvailable()) {
-				Log.i("[Platform Helper] [Network Manager 24] Network is available");
+				Log.i("[Platform Helper] [Network Manager 24] Network is available, state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
 				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
 					Log.i("[Platform Helper] [Network Manager 24] Wifi only mode enabled, skipping");
 				} else {
