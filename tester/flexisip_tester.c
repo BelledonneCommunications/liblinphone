@@ -1043,7 +1043,7 @@ static void dos_module_trigger(void) {
 	time_begin = bctbx_get_cur_time_ms();
 	do {
 		time_current = bctbx_get_cur_time_ms();
-		message_to_send_index = ((time_current - time_begin) * message_rate) / 1000;
+		message_to_send_index = (int)(((time_current - time_begin) * message_rate) / 1000);
 		if (message_to_send_index >  message_sent_index){
 			char msg[128] = { 0 };
 			snprintf(msg, sizeof(msg)-1, "Flood message number %i", message_sent_index);
