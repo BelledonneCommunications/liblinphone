@@ -28,7 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ChatRoom;
 
-class LINPHONE_PUBLIC ChatRoomParams : public bellesip::HybridObject<LinphoneChatRoomParams, ChatRoomParams> {
+class ChatRoomParams : public bellesip::HybridObject<LinphoneChatRoomParams, ChatRoomParams> {
 public:
 
 	L_DECLARE_ENUM(ChatRoomBackend, L_ENUM_VALUES_CHAT_ROOM_BACKEND);
