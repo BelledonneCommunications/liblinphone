@@ -93,27 +93,32 @@ void ServerGroupChatRoomPrivate::setState (ChatRoom::State state) {
 		list<IdentityAddress> participantAddresses;
 		for (const auto &participant : qConference->getPrivate()->participants) {
 			participantAddresses.emplace_back(participant->getAddress());
-			bool atLeastOneDeviceJoining = false;
-			bool atLeastOneDevicePresent = false;
-			for (const auto &device : participant->getPrivate()->getDevices()) {
-				switch (device->getState()) {
-					case ParticipantDevice::State::ScheduledForLeaving:
-					case ParticipantDevice::State::Leaving:
-						break;
-					case ParticipantDevice::State::ScheduledForJoining:
-					case ParticipantDevice::State::Joining:
-						atLeastOneDeviceJoining = true;
-						break;
-					case ParticipantDevice::State::Present:
-						atLeastOneDevicePresent = true;
-						break;
-					case ParticipantDevice::State::Left:
-						break;
-				}
-			}
-
-			if (atLeastOneDevicePresent || atLeastOneDeviceJoining){
+			
+			if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne){
+				// Even if devices can BYE and get rid of their session, actually no one can leave a one to one chatroom.
 				authorizedParticipants.push_back(participant);
+			}else{
+				bool atLeastOneDeviceJoining = false;
+				bool atLeastOneDevicePresent = false;
+				for (const auto &device : participant->getPrivate()->getDevices()) {
+					switch (device->getState()) {
+						case ParticipantDevice::State::ScheduledForLeaving:
+						case ParticipantDevice::State::Leaving:
+							break;
+						case ParticipantDevice::State::ScheduledForJoining:
+						case ParticipantDevice::State::Joining:
+							atLeastOneDeviceJoining = true;
+							break;
+						case ParticipantDevice::State::Present:
+							atLeastOneDevicePresent = true;
+							break;
+						case ParticipantDevice::State::Left:
+							break;
+					}
+				}
+				if (atLeastOneDevicePresent || atLeastOneDeviceJoining){
+					authorizedParticipants.push_back(participant);
+				}
 			}
 		}
 		updateParticipantsSessions();
@@ -811,12 +816,12 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 	shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 	shared_ptr<CallSession> session = makeSession(device);
 	if (device->getState() == ParticipantDevice::State::Joining && session->getState() == CallSession::State::OutgoingProgress){
-		lInfo() << q << "outgoing INVITE already in progress.";
+		lInfo() << q << ": outgoing INVITE already in progress.";
 		return;
 	}
 	setParticipantDeviceState(device, ParticipantDevice::State::Joining);
 	if (session && session->getState() == CallSession::State::IncomingReceived){
-		lInfo() << q << "incoming INVITE in progress.";
+		lInfo() << q << ": incoming INVITE in progress.";
 		return;
 	}
 		
@@ -825,6 +830,12 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 		if (invitedParticipant != participant)
 			addressesList.push_back(invitedParticipant->getAddress());
 	}
+	if (addressesList.empty()){
+		// Having an empty participant list shall never happen, but should this happen don't spread the bug to clients.
+		lError() << q << ": empty participant list, this should never happen, INVITE not sent.";
+		return;
+	}
+	
 	Content content;
 	content.setBody(q->getResourceLists(addressesList));
 	content.setContentType(ContentType::ResourceLists);
