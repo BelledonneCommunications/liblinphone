@@ -938,14 +938,11 @@ static void call_with_dns_time_out(void) {
 	linphone_core_iterate(marie->lc);
 	sal_set_dns_timeout(linphone_core_get_sal(marie->lc),0);
 	linphone_core_invite(marie->lc,"\"t\x8et\x8e\" <sip:toto@toto.com>"); /*just to use non ascii values*/
-	for(i=0;i<10;i++){
-		ms_usleep(200000);
-		linphone_core_iterate(marie->lc);
-	}
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallOutgoingInit,1, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallOutgoingProgress,1, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallError,1, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallReleased,1, int, "%d");
+	
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallOutgoingInit,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallOutgoingProgress,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallError,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallReleased,1));
 	linphone_core_manager_destroy(marie);
 }
 
