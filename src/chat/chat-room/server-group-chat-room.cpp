@@ -718,6 +718,7 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 		// Nothing to do, but set the name because the user-agent is not known for the initiator device.
 		device->setName(deviceInfo.getName());
 	} else if (findAuthorizedParticipant(participant->getAddress())) {
+		bool allDevLeft = !participant->getPrivate()->getDevices().empty() && allDevicesLeft(participant);
 		/*
 		 * This is a really new device.
 		 */
@@ -726,7 +727,12 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantDeviceAdded(participant->getAddress(), deviceInfo.getAddress());
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
 		
-		setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
+		if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne && allDevLeft){
+			/* If all other devices have left, let this new device to left state too, it will be invited to join if a message is sent to it. */
+			setParticipantDeviceState(device, ParticipantDevice::State::Left);
+		}else{
+			setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
+		}
 	}
 }
 
