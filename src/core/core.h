@@ -151,6 +151,7 @@ public:
 	void setEncryptionEngine (EncryptionEngine *imee);
 	void enableLimeX3dh (bool enable);
 	void setX3dhServerUrl (const std::string &url);
+	std::string getX3dhServerUrl () const;
 	bool limeX3dhEnabled () const;
 	bool limeX3dhAvailable () const;
 

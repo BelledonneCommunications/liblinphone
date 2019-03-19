@@ -79,6 +79,10 @@ void linphone_core_set_lime_x3dh_server_url(LinphoneCore *lc, const char *url) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setX3dhServerUrl(L_C_TO_STRING(url));
 }
 
+const char *linphone_core_get_lime_x3dh_server_url(LinphoneCore *lc) {
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getX3dhServerUrl());
+}
+
 //Deprecated
 const char *linphone_core_get_linphone_specs (const LinphoneCore *lc) {
 	return lp_config_get_string(linphone_core_get_config(lc), "sip", "linphone_specs", NULL);

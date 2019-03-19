@@ -318,6 +318,12 @@ void Core::setX3dhServerUrl(const std::string &url) {
 	}
 }
 
+std::string Core::getX3dhServerUrl() const {
+	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
+	string serverUrl = lp_config_get_string(lpconfig, "lime", "lime_server_url", lp_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
+	return serverUrl;
+}
+
 bool Core::limeX3dhEnabled () const {
 #ifdef HAVE_LIME_X3DH
 	L_D();
