@@ -61,7 +61,12 @@ void ChatRoomParams::setEncrypted(bool encrypted) {
 	}
 }
 
-void ChatRoomParams::setGroup(bool group) { mGroup = group; }
+void ChatRoomParams::setGroup(bool group) {
+	mGroup = group;
+	if (group) {
+		mChatRoomBackend = ChatRoomBackend::FlexisipChat;
+	}
+}
 
 void ChatRoomParams::setRealTimeText(bool rtt) { mRtt = rtt; }
 

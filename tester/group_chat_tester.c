@@ -476,8 +476,8 @@ static void group_chat_room_params (void) {
 	}
 
 	//Should return NULL because params are invalid
-	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
-	linphone_chat_room_params_enable_group(params, TRUE); //Group + basic backend = invalid
+	linphone_chat_room_params_enable_group(params, TRUE);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);  //Group + basic backend = invalid
 	BC_ASSERT_FALSE(linphone_chat_room_params_is_valid(params));
 	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Invalid chat room subject", NULL);
 	BC_ASSERT_PTR_NULL(marieCr);
