@@ -1654,6 +1654,8 @@ extern "C" jlong Java_org_linphone_core_LinphoneCoreImpl_newLinphoneCore(JNIEnv*
 	ljb->setCore(core);
 	LinphoneCore *lc = linphone_factory_create_core_2(linphone_factory_get(), cbs, userConfig, factoryConfig, ljb, context);
 
+	ms_warning("This app is currently using the legacy java wrapper");
+
 	jlong nativePtr = (jlong)lc;
 	ReleaseStringUTFChars(env, juserConfig, userConfig);
 	ReleaseStringUTFChars(env, jfactoryConfig, factoryConfig);
