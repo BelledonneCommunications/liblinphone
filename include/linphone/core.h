@@ -1574,6 +1574,14 @@ LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_enabled(const LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_set_lime_x3dh_server_url(LinphoneCore *lc, const char *url);
 
 /**
+ * Get the x3dh server url.
+ * @param[in] lc LinphoneCore object
+ * return The x3dh server url
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char *linphone_core_get_lime_x3dh_server_url(LinphoneCore *lc);
+
+/**
  * Tells if LIME X3DH is available
  * @param[in] lc LinphoneCore object
  * @ingroup misc
