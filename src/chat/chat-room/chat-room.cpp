@@ -89,7 +89,16 @@ void ChatRoomPrivate::addEvent (const shared_ptr<EventLog> &eventLog) {
 	L_Q();
 
 	q->getCore()->getPrivate()->mainDb->addEvent(eventLog);
-	setLastUpdateTime(eventLog->getCreationTime());
+	
+	EventLog::Type type = eventLog->getType();
+	if (type == EventLog::Type::ConferenceParticipantDeviceAdded
+		|| type == EventLog::Type::ConferenceParticipantDeviceRemoved) {
+		// Do not update last event time on the chat room for those events
+		// because they are invisible and will cause the chat room to move
+		// up in the list and the user won't know why
+	} else {
+		setLastUpdateTime(eventLog->getCreationTime());
+	}
 }
 
 void ChatRoomPrivate::addTransientEvent (const shared_ptr<EventLog> &eventLog) {
