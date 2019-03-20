@@ -44,19 +44,19 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 			@Override
 			public void onAvailable(Network network) {
 				Log.i("[Platform Helper] [Network Manager 21] A network is available");
-				mHelper.updateNetworkReachability(network);
+				mHelper.updateNetworkReachability();
 			}
 
 			@Override
 			public void onLost(Network network) {
 				Log.i("[Platform Helper] [Network Manager 21] A network has been lost");
-				mHelper.updateNetworkReachability(null);
+				mHelper.updateNetworkReachability();
 			}
 
 			@Override
 			public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
 				Log.i("[Platform Helper] [Network Manager 21] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
-				mHelper.updateNetworkReachability(network);
+				mHelper.updateNetworkReachability();
 			}
 
 			@Override
@@ -100,9 +100,9 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 		boolean connected = false;
 		for (Network network : networks) {
 			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
-			Log.i("[Platform Helper] [Network Manager 21] Found network type: " + networkInfo.getTypeName() + ", isAvailable() = " + networkInfo.isAvailable() + ", isConnected() = " + networkInfo.isConnected());
-			if (networkInfo.isAvailable()) {
-				Log.i("[Platform Helper] [Network Manager 21] Network is available, state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
+			Log.i("[Platform Helper] [Network Manager 21] Found network type: " + networkInfo.getTypeName() + ", isConnectedOrConnecting() = " + networkInfo.isConnectedOrConnecting());
+			if (networkInfo.isConnectedOrConnecting()) {
+				Log.i("[Platform Helper] [Network Manager 21] Network state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
 				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
 					Log.i("[Platform Helper] [Network Manager 21] Wifi only mode enabled, skipping");
 				} else {

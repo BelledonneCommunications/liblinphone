@@ -46,7 +46,7 @@ public class NetworkManager extends BroadcastReceiver implements NetworkManagerI
         mConnectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         Log.i("[Platform Helper] [Network Manager] Broadcast receiver called");
         if (mHelper != null) {
-            mHelper.updateNetworkReachability(null);
+            mHelper.updateNetworkReachability();
         }
     }
 
@@ -71,9 +71,9 @@ public class NetworkManager extends BroadcastReceiver implements NetworkManagerI
         NetworkInfo[] networkInfos = connectivityManager.getAllNetworkInfo();
 		boolean connected = false;
         for (NetworkInfo networkInfo : networkInfos) {
-            Log.i("[Platform Helper] [Network Manager] Found network type: " + networkInfo.getTypeName() + ", isAvailable() = " + networkInfo.isAvailable() + ", isConnected() = " + networkInfo.isConnected());
-			if (networkInfo.isAvailable()) {
-				Log.i("[Platform Helper] [Network Manager] Network is available, state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
+            Log.i("[Platform Helper] [Network Manager] Found network type: " + networkInfo.getTypeName() + ", isConnectedOrConnecting() = " + networkInfo.isConnectedOrConnecting());
+			if (networkInfo.isConnectedOrConnecting()) {
+				Log.i("[Platform Helper] [Network Manager] Network state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
 				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
 					Log.i("[Platform Helper] [Network Manager] Wifi only mode enabled, skipping");
 				} else {

@@ -169,7 +169,7 @@ public class AndroidPlatformHelper {
 
 	public synchronized void onWifiOnlyEnabled(boolean enabled) {
 		mWifiOnly = enabled;
-		updateNetworkReachability(null);
+		updateNetworkReachability();
 	}
 
 	public synchronized Object getPowerManager() {
@@ -468,7 +468,7 @@ public class AndroidPlatformHelper {
 		mDnsServers = servers;
 	}
 
-	public synchronized void updateNetworkReachability(Network activeNetwork) {
+	public synchronized void updateNetworkReachability() {
 		if (mNativePtr == 0) {
 			Log.w("[Platform Helper] Native pointer has been reset, stopping there");
 			return;
@@ -478,11 +478,6 @@ public class AndroidPlatformHelper {
 			Log.i("[Platform Helper] Device in idle mode: shutting down network");
 			setNetworkReachable(mNativePtr, false);
 			return;
-		}
-
-		NetworkInfo activeNetworkInfo = activeNetwork == null ? null : mConnectivityManager.getNetworkInfo(activeNetwork);
-		if (activeNetworkInfo != null) {
-			Log.i("[Platform Helper] Notified network state " + activeNetworkInfo.getState() + " / " + activeNetworkInfo.getDetailedState() + ", isAvailable() " + activeNetworkInfo.isAvailable());
 		}
 
 		boolean connected = mNetworkManager.isCurrentlyConnected(mContext, mConnectivityManager, mWifiOnly);
@@ -495,14 +490,14 @@ public class AndroidPlatformHelper {
 				int port = mNetworkManager.getProxyPort(mContext, mConnectivityManager);
 				setHttpProxy(mNativePtr, host, port);
 				if (!mUsingHttpProxy) {
-					Log.i("[Platform Helper] Proxy wasn't set before, disable network reachability first");
+					Log.i("[Platform Helper] Proxy wasn't set before, disabling network reachability first");
 					setNetworkReachable(mNativePtr, false);
 				}
 				mUsingHttpProxy = true;
 			} else {
 				setHttpProxy(mNativePtr, "", 0);
 				if (mUsingHttpProxy) {
-					Log.i("[Platform Helper] Proxy was set before, disable network reachability first");
+					Log.i("[Platform Helper] Proxy was set before, disabling network reachability first");
 					setNetworkReachable(mNativePtr, false);
 				}
 				mUsingHttpProxy = false;
@@ -517,25 +512,9 @@ public class AndroidPlatformHelper {
 			}
 			Network network = mNetworkManager.getActiveNetwork(mConnectivityManager);
 
-			Log.i("[Platform Helper] Active network type is " + networkInfo.getTypeName());
-			Log.i("[Platform Helper] Active network state " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
+			Log.i("[Platform Helper] Active network type is " + networkInfo.getTypeName() + ", state " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
 			if (networkInfo.getState() == NetworkInfo.State.DISCONNECTED && networkInfo.getDetailedState() == NetworkInfo.DetailedState.BLOCKED) {
-				Log.w("[Platform Helper] Active network is in bad state, try to use the one notified by the system");
-				if (activeNetwork != null) {
-					if (activeNetworkInfo.isAvailable() && !(activeNetworkInfo.getState() == NetworkInfo.State.DISCONNECTED && activeNetworkInfo.getDetailedState() == NetworkInfo.DetailedState.BLOCKED)) {
-						Log.i("[Platform Helper] Using notified network instead");
-						networkInfo = activeNetworkInfo;
-						network = activeNetwork;
-					} else {
-						Log.e("[Platform Helper] Notified network seems in bad state as well, set reachability to false");
-						setNetworkReachable(mNativePtr, false);
-						return;
-					}
-				} else {
-					Log.e("[Platform Helper] No network was passed to this updateNetworkReachability call, set reachability to false");
-					setNetworkReachable(mNativePtr, false);
-					return;
-				}
+				Log.w("[Platform Helper] Active network is in bad state...");
 			}
 
 			// Update DNS servers lists
@@ -543,11 +522,12 @@ public class AndroidPlatformHelper {
 
 			int currentNetworkType = networkInfo.getType();
 			if (mLastNetworkType != -1 && mLastNetworkType != currentNetworkType) {
-				Log.i("[Platform Helper] Network type has changed (last one was " + networkTypeToString(mLastNetworkType) + "), disable network reachability first");
+				Log.i("[Platform Helper] Network type has changed (last one was " + networkTypeToString(mLastNetworkType) + "), disabling network reachability first");
 				setNetworkReachable(mNativePtr, false);
 			}
 
 			mLastNetworkType = currentNetworkType;
+			Log.i("[Platform Helper] Network reachability enabled");
 			setNetworkReachable(mNativePtr, true);
 		}
 	}
@@ -595,7 +575,7 @@ public class AndroidPlatformHelper {
 		Log.i("[Platform Helper] Registering interactivity receiver");
 		mContext.registerReceiver(mInteractivityReceiver, mInteractivityIntentFilter);
 
-		updateNetworkReachability(null);
+		updateNetworkReachability();
 	}
 
 	private synchronized void stopNetworkMonitoring() {		
