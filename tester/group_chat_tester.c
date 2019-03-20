@@ -873,7 +873,7 @@ static int im_encryption_engine_process_outgoing_message_cb(LinphoneImEncryption
 	return -1;
 }
 
-static void group_chat_room_message (bool_t encrypt) {
+static void group_chat_room_message (bool_t encrypt, bool_t sal_error) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
@@ -963,6 +963,25 @@ static void group_chat_room_message (bool_t encrypt) {
 	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineAddr, linphone_chat_message_get_from_address(marieLastMsg)));
 	linphone_address_unref(paulineAddr);
 
+	if (sal_error) {
+		sal_set_send_error(linphone_core_get_sal(marie->lc), -1);
+		LinphoneChatMessage* msg = _send_message(marieCr, "Bli bli bli");
+		const char *message_id = linphone_chat_message_get_message_id(msg);
+		BC_ASSERT_STRING_NOT_EQUAL(message_id, "");
+
+		wait_for_list(coresList, NULL, 0, 1000);
+		
+		sal_set_send_error(linphone_core_get_sal(marie->lc), 0);
+		linphone_chat_message_send(msg);
+		const char *message_id_2 = linphone_chat_message_get_message_id(msg);
+		BC_ASSERT_STRING_NOT_EQUAL(message_id_2, "");
+		BC_ASSERT_STRING_EQUAL(message_id, message_id_2);
+
+		wait_for_list(coresList, NULL, 0, 1000);
+
+		linphone_chat_message_unref(msg);
+	}
+
 end:
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -980,11 +999,15 @@ end:
 }
 
 static void group_chat_room_send_message(void) {
-	group_chat_room_message(FALSE);
+	group_chat_room_message(FALSE, FALSE);
 }
 
 static void group_chat_room_send_message_encrypted(void) {
-	group_chat_room_message(TRUE);
+	group_chat_room_message(TRUE, FALSE);
+}
+
+static void group_chat_room_send_message_with_error(void) {
+	group_chat_room_message(FALSE, TRUE);
 }
 
 static void group_chat_room_invite_multi_register_account (void) {
@@ -5419,6 +5442,7 @@ test_t group_chat_tests[] = {
 	TEST_ONE_TAG("Add participant", group_chat_room_add_participant, "LeaksMemory"),
 	TEST_NO_TAG("Send message", group_chat_room_send_message),
 	TEST_NO_TAG("Send encrypted message", group_chat_room_send_message_encrypted),
+	TEST_NO_TAG("Send message with error", group_chat_room_send_message_with_error),
 	TEST_NO_TAG("Send invite on a multi register account", group_chat_room_invite_multi_register_account),
 	TEST_NO_TAG("Add admin", group_chat_room_add_admin),
 	TEST_NO_TAG("Add admin lately notified", group_chat_room_add_admin_lately_notified),

@@ -1220,6 +1220,11 @@ void ChatMessage::send () {
 		return;
 	}
 
+	// Remove the modifiers flag so the message will go through CPIM, Multipart and Encryption again in case of resent
+	d->currentSendStep &= (unsigned char)~ChatMessagePrivate::Step::Multipart;
+	d->currentSendStep &= (unsigned char)~ChatMessagePrivate::Step::Cpim;
+	d->currentSendStep &= (unsigned char)~ChatMessagePrivate::Step::Encryption;
+
 	d->loadContentsFromDatabase();
 	getChatRoom()->getPrivate()->sendChatMessage(getSharedFromThis());
 }
