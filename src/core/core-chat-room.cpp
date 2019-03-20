@@ -62,7 +62,7 @@ static IdentityAddress getDefaultLocalAddress(const shared_ptr<Core> &core, cons
 
 	IdentityAddress localAddress;
 	if (proxy) {
-		char *identity = linphone_address_as_string(linphone_proxy_config_get_contact(proxy));
+		char *identity = linphone_address_as_string(linphone_proxy_config_get_identity_address(proxy));
 		localAddress = IdentityAddress(identity);
 		bctbx_free(identity);
 	} else

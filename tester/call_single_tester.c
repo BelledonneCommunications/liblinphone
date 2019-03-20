@@ -2819,7 +2819,7 @@ static void call_established_with_rejected_info(void) {
 		im1 = linphone_core_create_info_message(pauline->lc);
 		linphone_call_send_info_message(linphone_core_get_current_call(pauline->lc),im1);
 
-		wait_for_until(marie->lc,pauline->lc,&dummy,1,1000); /*just to sleep while iterating 1s*/
+		wait_for_until(marie->lc,pauline->lc,&dummy,1,3000); /*just to sleep while iterating 1s*/
 		linphone_info_message_unref(im1);
 
 		sal_enable_unconditional_answer(linphone_core_get_sal(marie->lc),FALSE);

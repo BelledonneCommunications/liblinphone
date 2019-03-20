@@ -1499,18 +1499,19 @@ void crash_during_file_transfer(void) {
 			linphone_core_manager_restart(marie, TRUE);
 			LinphoneChatRoom *marie_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
 			bctbx_list_t *msg_list_2 = linphone_chat_room_get_history(marie_room,1);
-			BC_ASSERT_PTR_NOT_NULL(msg_list_2);
-			LinphoneChatMessage *recv_msg = (LinphoneChatMessage *)msg_list_2->data;
-			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(recv_msg);
-			linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-			linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
-			linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
-			linphone_chat_message_download_file(recv_msg);
-			/* wait for a long time in case the DNS SRV resolution takes times - it should be immediate though */
-			if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,1,55000))) {
-				BC_ASSERT_PTR_NULL(linphone_chat_message_get_external_body_url(recv_msg));
+			if (BC_ASSERT_PTR_NOT_NULL(msg_list_2)){
+				LinphoneChatMessage *recv_msg = (LinphoneChatMessage *)msg_list_2->data;
+				LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(recv_msg);
+				linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+				linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
+				linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+				linphone_chat_message_download_file(recv_msg);
+				/* wait for a long time in case the DNS SRV resolution takes times - it should be immediate though */
+				if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,1,55000))) {
+					BC_ASSERT_PTR_NULL(linphone_chat_message_get_external_body_url(recv_msg));
+				}
+				bctbx_list_free_with_data(msg_list_2, (bctbx_list_free_func)linphone_chat_message_unref);
 			}
-			bctbx_list_free_with_data(msg_list_2, (bctbx_list_free_func)linphone_chat_message_unref);
 		}
 	}
 

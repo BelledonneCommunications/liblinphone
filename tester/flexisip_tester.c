@@ -1065,6 +1065,7 @@ static void dos_module_trigger(void) {
 	reset_counters(&pauline->stat);
 	chat_msg = linphone_chat_room_create_message(chat_room, passmsg);
 	linphone_chat_message_send(chat_msg);
+	linphone_chat_message_unref(chat_msg);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived, 1));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageReceived, 1, int, "%d");
 	if (marie->stat.last_received_chat_message) {

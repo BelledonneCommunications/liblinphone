@@ -25,6 +25,8 @@
 #include <bctoolbox/tester.h>
 #include "tester_utils.h"
 
+#define SKIP_PULSEAUDIO 1
+
 #if _WIN32
 #define unlink _unlink
 #endif

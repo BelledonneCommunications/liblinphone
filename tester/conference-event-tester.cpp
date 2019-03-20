@@ -148,7 +148,7 @@ static const char *participant_added_notify = \
 "   <conference-info"\
 "    xmlns=\"urn:ietf:params:xml:ns:conference-info\""\
 "    entity=\"%s\""\
-"    state=\"partial\" version=\"1\">"\
+"    state=\"partial\" version=\"2\">"\
 "   <!--"\
 "     CONFERENCE INFO"\
 "   -->"\
@@ -205,7 +205,7 @@ static const char *participant_not_added_notify = \
 "   <conference-info"\
 "    xmlns=\"urn:ietf:params:xml:ns:conference-info\""\
 "    entity=\"%s\""\
-"    state=\"partial\" version=\"1\">"\
+"    state=\"partial\" version=\"2\">"\
 "   <!--"\
 "     CONFERENCE INFO"\
 "   -->"\
@@ -262,7 +262,7 @@ static const char *participant_deleted_notify = \
 "   <conference-info"\
 "    xmlns=\"urn:ietf:params:xml:ns:conference-info\""\
 "    entity=\"%s\""\
-"    state=\"partial\" version=\"1\">"\
+"    state=\"partial\" version=\"2\">"\
 "   <!--"\
 "     CONFERENCE INFO"\
 "   -->"\
@@ -319,7 +319,7 @@ static const char *participant_admined_notify = \
 "   <conference-info"\
 "    xmlns=\"urn:ietf:params:xml:ns:conference-info\""\
 "    entity=\"%s\""\
-"    state=\"partial\" version=\"1\">"\
+"    state=\"partial\" version=\"2\">"\
 "   <!--"\
 "     CONFERENCE INFO"\
 "   -->"\
@@ -380,7 +380,7 @@ static const char *participant_unadmined_notify = \
 "   <conference-info"\
 "    xmlns=\"urn:ietf:params:xml:ns:conference-info\""\
 "    entity=\"%s\""\
-"    state=\"partial\" version=\"1\">"\
+"    state=\"partial\" version=\"2\">"\
 "   <!--"\
 "     CONFERENCE INFO"\
 "   -->"\
