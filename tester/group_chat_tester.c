@@ -421,7 +421,7 @@ static void group_chat_room_params (void) {
 	linphone_chat_room_params_enable_encryption(params, FALSE);
 	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
 	linphone_chat_room_params_enable_group(params, FALSE);
-	linphone_chat_room_params_ref(params);  //Ref params instead of re-creating them
+	linphone_chat_room_params_ref(params); //Ref params instead of re-creating them
 	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Basic chat room subject", participantsAddresses);
 	BC_ASSERT_PTR_NOT_NULL(marieCr);
 	if (marieCr) {
@@ -481,6 +481,11 @@ static void group_chat_room_params (void) {
 	BC_ASSERT_FALSE(linphone_chat_room_params_is_valid(params));
 	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Invalid chat room subject", NULL);
 	BC_ASSERT_PTR_NULL(marieCr);
+
+	//Should set FlexisipChat as backend if encryption is enabled.
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
+	linphone_chat_room_params_enable_encryption(params, TRUE);
+	BC_ASSERT_EQUAL(linphone_chat_room_params_get_backend(params), LinphoneChatRoomBackendFlexisipChat, int, "%d");
 
 	//Cleanup
 	linphone_chat_room_params_unref(params);

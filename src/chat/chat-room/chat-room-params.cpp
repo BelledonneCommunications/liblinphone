@@ -58,6 +58,7 @@ void ChatRoomParams::setEncrypted(bool encrypted) {
 	mEncrypted = encrypted;
 	if (encrypted) {
 		mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::Lime;
+		mChatRoomBackend = ChatRoomBackend::FlexisipChat;
 	}
 }
 
