@@ -387,6 +387,7 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	int dummy = 0;
+	LinphoneChatMessage* msg;
 
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
@@ -417,7 +418,8 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 
 	// Marie sends the message
 	const char *marieMessage = "Hey ! What's up ?";
-	_send_message(marieCr, marieMessage);
+	msg = _send_message(marieCr, marieMessage);
+	linphone_chat_message_unref(msg);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
@@ -438,7 +440,8 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 
 		// Pauline sends the response
 		const char *paulineMessage = "I'm fine thank you ! And you ?";
-		_send_message(paulineCr, paulineMessage);
+		msg = _send_message(paulineCr, paulineMessage);
+		linphone_chat_message_unref(msg);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 10000));
 		LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
 		if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
@@ -457,7 +460,7 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 
 	if (sal_error) {
 		sal_set_send_error(linphone_core_get_sal(marie->lc), -1);
-		LinphoneChatMessage* msg = _send_message(marieCr, "Bli bli bli");
+		msg = _send_message(marieCr, "Bli bli bli");
 		const char *message_id = linphone_chat_message_get_message_id(msg);
 		BC_ASSERT_STRING_NOT_EQUAL(message_id, "");
 
@@ -470,6 +473,9 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 		BC_ASSERT_STRING_EQUAL(message_id, message_id_2);
 
 		wait_for_list(coresList, NULL, 0, 1000);
+		
+		linphone_core_refresh_registers(marie->lc);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneRegistrationOk, initialMarieStats.number_of_LinphoneRegistrationOk + 1, 10000));
 
 		linphone_chat_message_unref(msg);
 	}
@@ -2551,11 +2557,11 @@ test_t secure_group_chat_tests[] = {
 	TEST_TWO_TAGS("LIME X3DH change server url", group_chat_lime_x3dh_change_server_url, "LimeX3DH", "LeaksMemory"),
 	TEST_TWO_TAGS("LIME X3DH encrypted chatrooms", group_chat_lime_x3dh_encrypted_chatrooms, "LimeX3DH", "LeaksMemory"),
 	TEST_TWO_TAGS("LIME X3DH basic chatrooms", group_chat_lime_x3dh_basic_chat_rooms, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH message", group_chat_lime_x3dh_send_encrypted_message, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH message with error", group_chat_lime_x3dh_send_encrypted_message_with_error, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH message with composing", group_chat_lime_x3dh_send_encrypted_message_with_composing, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH message with response", group_chat_lime_x3dh_send_encrypted_message_with_response, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH message with response and composing", group_chat_lime_x3dh_send_encrypted_message_with_response_and_composing, "LimeX3DH", "LeaksMemory"),
+	TEST_ONE_TAG("LIME X3DH message", group_chat_lime_x3dh_send_encrypted_message, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH message with error", group_chat_lime_x3dh_send_encrypted_message_with_error, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH message with composing", group_chat_lime_x3dh_send_encrypted_message_with_composing, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH message with response", group_chat_lime_x3dh_send_encrypted_message_with_response, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH message with response and composing", group_chat_lime_x3dh_send_encrypted_message_with_response_and_composing, "LimeX3DH"),
 	TEST_TWO_TAGS("LIME X3DH message to devices with and without keys on server", group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys, "LimeX3DH", "LeaksMemory"),
 	TEST_ONE_TAG("LIME X3DH send encrypted file", group_chat_lime_x3dh_send_encrypted_file, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH send encrypted file + text", group_chat_lime_x3dh_send_encrypted_file_plus_text, "LimeX3DH"),
