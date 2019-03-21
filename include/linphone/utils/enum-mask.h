@@ -26,6 +26,13 @@
 
 // =============================================================================
 
+/*
+ * The purpose of this class seems to be able to manipulate flag values that are declared as part of an enum.
+ * The C++ compiler forbids OR/AND operator on enums, however this can be easily workaround by either not using enum for mask but constexpr
+ * or by doing a basic cast to unsigned int.
+ * There are below 130 hardly readable lines of code for class doing this, but ~operator doesn't work as expected.
+ * (just try a &= EnumValue; to convince). TODO: question the interest of keeping this class and switch to simple const unsigned int.
+ */
 LINPHONE_BEGIN_NAMESPACE
 
 template<typename T>
@@ -58,7 +65,7 @@ public:
 	}
 
 	inline EnumMask &unset (T value) {
-		*this &= ~value;
+		*this &= ~StorageType(value);
 		return *this;
 	}
 
