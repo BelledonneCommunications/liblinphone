@@ -103,10 +103,11 @@ public:
 							 const std::list<IdentityAddress> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params, const IdentityAddress &localAddr, const IdentityAddress &participant);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const IdentityAddress &participant);
-
+	
 	void replaceChatRoom (const std::shared_ptr<AbstractChatRoom> &replacedChatRoom, const std::shared_ptr<AbstractChatRoom> &newChatRoom);
 	void doLater(const std::function<void ()> &something);
 	belle_sip_main_loop_t *getMainLoop();
+
 
 	std::unique_ptr<MainDb> mainDb;
 	std::unique_ptr<RemoteConferenceListEventHandler> remoteListEventHandler;
@@ -115,6 +116,7 @@ public:
 private:
 	bool isInBackground = false;
 	bool isFriendListSubscriptionEnabled = false;
+	bool basicToFlexisipChatroomMigrationEnabled;
 
 	std::list<CoreListener *> listeners;
 

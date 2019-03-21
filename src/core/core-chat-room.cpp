@@ -178,6 +178,12 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 	else {
 		BasicChatRoom *basicChatRoom = new BasicChatRoom(q->getSharedFromThis(), conferenceId, params);
 		string conferenceFactoryUri = getConferenceFactoryUri(q->getSharedFromThis(), conferenceId.getLocalAddress());
+		if (basicToFlexisipChatroomMigrationEnabled) {
+			capabilities.set(ChatRoom::Capabilities::Migratable);
+		}else{
+			capabilities.unset(ChatRoom::Capabilities::Migratable);
+		}
+		
 		if ((capabilities & ChatRoom::Capabilities::Migratable) && !conferenceFactoryUri.empty()) {
 			chatRoom.reset(new BasicToClientGroupChatRoom(shared_ptr<BasicChatRoom>(basicChatRoom)));
 		}
@@ -191,6 +197,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 
 	return chatRoom;
 }
+
 
 shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRoomParams> &params, const IdentityAddress &localAddr, const std::string &subject, const std::list<IdentityAddress> &participants) {
 	L_Q();
@@ -226,9 +233,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 			return nullptr;
 		}
 		ChatRoom::CapabilitiesMask capabilities = ChatRoomParams::toCapabilities(params);
-		if (!!linphone_config_get_bool(linphone_core_get_config(q->getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE)) {
-			capabilities |= ChatRoom::Capabilities::Migratable;
-		}
+		
 		chatRoom = createBasicChatRoom(ConferenceId(IdentityAddress(participants.front()), localAddr),
 					       capabilities,
 					       params);

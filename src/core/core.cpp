@@ -56,6 +56,8 @@ void CorePrivate::init () {
 	mainDb.reset(new MainDb(q->getSharedFromThis()));
 	remoteListEventHandler = makeUnique<RemoteConferenceListEventHandler>(q->getSharedFromThis());
 	localListEventHandler = makeUnique<LocalConferenceListEventHandler>(q->getSharedFromThis());
+	
+	basicToFlexisipChatroomMigrationEnabled = linphone_config_get_bool(linphone_core_get_config(q->getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE);
 
 	AbstractDb::Backend backend;
 	string uri = L_C_TO_STRING(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
