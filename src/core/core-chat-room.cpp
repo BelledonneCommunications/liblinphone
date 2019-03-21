@@ -47,8 +47,13 @@ LINPHONE_BEGIN_NAMESPACE
 // Helpers.
 // -----------------------------------------------------------------------------
 
-// Return the better local address to talk with peer address. Result address must contain gru
-static IdentityAddress getDefaultLocalAddress(const shared_ptr<Core> &core, const IdentityAddress *peerAddress) {
+/*
+ * Returns the best local address to talk with peer address.
+ * If peerAddress is not defined, returns the local address of the default proxy config.
+ * If withGruu is true, returns the local address with its gruu parameter. FlexisipChat kind of chatroom (also refered as ClientGroupChatRoom)
+ * require a local address with gruu, unlike basic chatrooms.
+ */
+static IdentityAddress getDefaultLocalAddress(const shared_ptr<Core> &core, const IdentityAddress *peerAddress, bool withGruu) {
 	LinphoneCore *cCore = core->getCCore();
 	LinphoneProxyConfig *proxy = nullptr;
 
@@ -62,7 +67,8 @@ static IdentityAddress getDefaultLocalAddress(const shared_ptr<Core> &core, cons
 
 	IdentityAddress localAddress;
 	if (proxy) {
-		char *identity = linphone_address_as_string(linphone_proxy_config_get_identity_address(proxy));
+		char *identity = linphone_address_as_string(
+			withGruu ? linphone_proxy_config_get_contact(proxy) : linphone_proxy_config_get_identity_address(proxy));
 		localAddress = IdentityAddress(identity);
 		bctbx_free(identity);
 	} else
@@ -103,6 +109,10 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 
 	if (!params || !params->isValid()) {
 		lWarning() << "Invalid chat room parameters given for client group chat room creation";
+		return nullptr;
+	}
+	if (!conferenceId.getLocalAddress().hasGruu()){
+		lError() << "createClientGroupChatRoom(): local address must have a gruu.";
 		return nullptr;
 	}
 	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(q->getSharedFromThis(),
@@ -158,7 +168,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom(const string &subject, bool fallback, bool encrypted) {
 	L_Q();
 
-	IdentityAddress defaultLocalAddress = getDefaultLocalAddress(q->getSharedFromThis(), nullptr);
+	IdentityAddress defaultLocalAddress = getDefaultLocalAddress(q->getSharedFromThis(), nullptr, true);
 	IdentityAddress conferenceFactoryUri(getConferenceFactoryUri(q->getSharedFromThis(), defaultLocalAddress));
 	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(encrypted, !fallback, ChatRoomParams::ChatRoomBackend::FlexisipChat);
 
@@ -178,7 +188,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 	else {
 		BasicChatRoom *basicChatRoom = new BasicChatRoom(q->getSharedFromThis(), conferenceId, params);
 		string conferenceFactoryUri = getConferenceFactoryUri(q->getSharedFromThis(), conferenceId.getLocalAddress());
-		if (basicToFlexisipChatroomMigrationEnabled) {
+		if (basicToFlexisipChatroomMigrationEnabled()) {
 			capabilities.set(ChatRoom::Capabilities::Migratable);
 		}else{
 			capabilities.unset(ChatRoom::Capabilities::Migratable);
@@ -210,7 +220,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 		lWarning() << "Trying to create chat room with invalid parameters " << params->toString();
 		return nullptr;
 	}
-
+	
 	shared_ptr<AbstractChatRoom> chatRoom;
 	if (params->getChatRoomBackend() == ChatRoomParams::ChatRoomBackend::FlexisipChat) {
 		string conferenceFactoryUri = getConferenceFactoryUri(q->getSharedFromThis(), localAddr);
@@ -245,16 +255,14 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 
 shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRoomParams> &params, const std::string &subject, const std::list<IdentityAddress> &participants) {
 	L_Q();
-
-	IdentityAddress defaultLocalAddress = getDefaultLocalAddress(q->getSharedFromThis(), nullptr);
-
+	IdentityAddress defaultLocalAddress = getDefaultLocalAddress(q->getSharedFromThis(), nullptr,
+				params->getChatRoomBackend() == ChatRoomParams::ChatRoomBackend::FlexisipChat);
 	return createChatRoom(params, defaultLocalAddress, subject, participants);
 }
 
 shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const std::string &subject, const std::list<IdentityAddress> &participants) {
 	L_Q();
 
-	IdentityAddress defaultLocalAddress = getDefaultLocalAddress(q->getSharedFromThis(), nullptr);
 	shared_ptr<ChatRoomParams> params = ChatRoomParams::getDefaults(q->getSharedFromThis());
 	if (participants.size() > 1) {
 		//Try to infer chat room type based on requested participants number
@@ -262,6 +270,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const std::string &subj
 	} else {
 		params->setChatRoomBackend(ChatRoomParams::ChatRoomBackend::Basic);
 	}
+	IdentityAddress defaultLocalAddress = getDefaultLocalAddress(q->getSharedFromThis(), nullptr,
+					params->getChatRoomBackend() == ChatRoomParams::ChatRoomBackend::FlexisipChat);
 	return createChatRoom(params, defaultLocalAddress, subject, participants);
 }
 
@@ -413,7 +423,7 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId 
 	if (isRtt) {
 		capabilities |=	ChatRoom::Capabilities::RealTimeText;
 	}
-	if (!!linphone_config_get_bool(linphone_core_get_config(getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE)) {
+	if (d->basicToFlexisipChatroomMigrationEnabled()) {
 		capabilities |= ChatRoom::Capabilities::Migratable;
 	}
 	chatRoom = d->createBasicChatRoom(conferenceId, capabilities, ChatRoomParams::fromCapabilities(capabilities));
@@ -440,11 +450,11 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddre
 	if (isRtt) {
 		capabilities |=	ChatRoom::Capabilities::RealTimeText;
 	}
-	if (!!linphone_config_get_bool(linphone_core_get_config(getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE)) {
+	if (d->basicToFlexisipChatroomMigrationEnabled()) {
 		capabilities |= ChatRoom::Capabilities::Migratable;
 	}
 	shared_ptr<AbstractChatRoom> chatRoom = d->createBasicChatRoom(
-	       ConferenceId(peerAddress, getDefaultLocalAddress(getSharedFromThis(), &peerAddress)),
+	       ConferenceId(peerAddress, getDefaultLocalAddress(getSharedFromThis(), &peerAddress, false)),
 	       capabilities,
 	       ChatRoomParams::fromCapabilities(capabilities)
 	);

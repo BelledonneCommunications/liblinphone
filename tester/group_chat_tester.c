@@ -2678,8 +2678,8 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 	bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
 	bctbx_list_free(tmpCoresManagerList);
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
-	linphone_core_manager_start(marie, TRUE);
 	lp_config_set_int(linphone_core_get_config(marie->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
+	linphone_core_manager_start(marie, TRUE);
 	marieCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
 
 	/* // Enable chat room migration and restart core for Pauline */
@@ -2690,9 +2690,9 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 	tmpCoresList = init_core_for_conference(tmpCoresManagerList);
 	bctbx_list_free(tmpCoresManagerList);
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
-	linphone_core_manager_start(pauline, TRUE);
 	lp_config_set_int(linphone_core_get_config(pauline->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
-
+	linphone_core_manager_start(pauline, TRUE);
+	
 	paulineCr = linphone_core_get_chat_room(pauline->lc, linphone_chat_room_get_local_address(marieCr));
 
 	// Send a new message to initiate chat room migration
@@ -2804,11 +2804,11 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 	bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
 	bctbx_list_free(tmpCoresManagerList);
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
-	linphone_core_manager_start(marie, TRUE);
-
 	// Send a new message to initiate chat room migration
 	lp_config_set_int(linphone_core_get_config(marie->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
 	lp_config_set_int(linphone_core_get_config(marie->lc), "misc", "basic_to_client_group_chat_room_migration_timer", 5);
+	linphone_core_manager_start(marie, TRUE);
+
 	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
 	marieCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
 	linphone_address_unref(paulineAddr);

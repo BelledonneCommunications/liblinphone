@@ -107,8 +107,7 @@ public:
 	void replaceChatRoom (const std::shared_ptr<AbstractChatRoom> &replacedChatRoom, const std::shared_ptr<AbstractChatRoom> &newChatRoom);
 	void doLater(const std::function<void ()> &something);
 	belle_sip_main_loop_t *getMainLoop();
-
-
+	bool basicToFlexisipChatroomMigrationEnabled()const;
 	std::unique_ptr<MainDb> mainDb;
 	std::unique_ptr<RemoteConferenceListEventHandler> remoteListEventHandler;
 	std::unique_ptr<LocalConferenceListEventHandler> localListEventHandler;
@@ -116,7 +115,6 @@ public:
 private:
 	bool isInBackground = false;
 	bool isFriendListSubscriptionEnabled = false;
-	bool basicToFlexisipChatroomMigrationEnabled;
 
 	std::list<CoreListener *> listeners;
 

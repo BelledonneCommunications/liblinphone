@@ -105,7 +105,7 @@ static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTes
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionActive,1,1000));
 
 	/*make sure marie receives first notification before terminating*/
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,1,5000));
 
 	if (refresh_type==AutoRefresh){
 		wait_for_list(lcs,NULL,0,6000);
@@ -116,7 +116,7 @@ static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTes
 	}else if (refresh_type==ManualRefresh){
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionExpiring,1,4000));
 		linphone_event_update_subscribe(lev,NULL);
-		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionActive,2,2000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionActive,2,5000));
 	}
 
 	if (terminated_by_subscriber){
@@ -126,8 +126,8 @@ static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTes
 		linphone_event_terminate(pauline->lev);
 	}
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
 
 	bctbx_list_free(lcs);
 	linphone_event_unref(lev);
