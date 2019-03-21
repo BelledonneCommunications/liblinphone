@@ -39,6 +39,14 @@ ChatRoomParams::ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backe
 	}
 }
 
+ChatRoomParams::ChatRoomParams(const ChatRoomParams &other) : HybridObject(other) {
+	mChatRoomBackend = other.mChatRoomBackend;
+	mChatRoomEncryptionBackend = other.mChatRoomEncryptionBackend;
+	mEncrypted = other.mEncrypted;
+	mGroup = other.mGroup;
+	mRtt = other.mRtt;
+}
+
 ChatRoomParams::ChatRoomBackend ChatRoomParams::getChatRoomBackend() const { return mChatRoomBackend; }
 
 ChatRoomParams::ChatRoomEncryptionBackend ChatRoomParams::getChatRoomEncryptionBackend() const { return mChatRoomEncryptionBackend; }
@@ -155,8 +163,6 @@ std::string ChatRoomParams::toString() const {
 	else
 		ss << "FlexisipChat];";
 	ss << "EncryptionBackend[" << ((mChatRoomEncryptionBackend == ChatRoomEncryptionBackend::None) ? "None" : "Lime X3DH")  << "];";
-	ss << std::endl;
-
 	return ss.str();
 }
 

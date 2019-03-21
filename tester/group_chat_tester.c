@@ -16,8 +16,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-
 #include "linphone/core.h"
 #include "linphone/api/c-types.h"
 #include "linphone/api/c-chat-room-params.h"
@@ -421,7 +419,6 @@ static void group_chat_room_params (void) {
 	linphone_chat_room_params_enable_encryption(params, FALSE);
 	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
 	linphone_chat_room_params_enable_group(params, FALSE);
-	linphone_chat_room_params_ref(params); //Ref params instead of re-creating them
 	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Basic chat room subject", participantsAddresses);
 	BC_ASSERT_PTR_NOT_NULL(marieCr);
 	if (marieCr) {
@@ -434,8 +431,7 @@ static void group_chat_room_params (void) {
 	//Should create	a one-to-one flexisip chat
 	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
 	linphone_chat_room_params_enable_group(params, FALSE);
-	linphone_chat_room_params_ref(params); //Ref params instead of re-creating them
-	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "One to one client group chat room subject", participantsAddresses);//create_chat_room_with_params(coresList, marie, &initialMarieStats, participantsAddresses, "One to one client group chat room subject", params);
+	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "One to one client group chat room subject", participantsAddresses);
 	BC_ASSERT_PTR_NOT_NULL(marieCr);
 	if (marieCr) {
 		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesConference);
@@ -447,9 +443,8 @@ static void group_chat_room_params (void) {
 	//Should create	a group flexisip chat
 	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
 	linphone_chat_room_params_enable_group(params, TRUE);
-	linphone_chat_room_params_ref(params); //Ref params instead of re-creating them
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(chloe->lc)));
-	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Group chat room subject", participantsAddresses);//create_chat_room_with_params(coresList, marie, &initialMarieStats, participantsAddresses, "Group chat room subject", params);
+	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Group chat room subject", participantsAddresses);
 	BC_ASSERT_PTR_NOT_NULL(marieCr);
 	if (marieCr) {
 		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesConference);
@@ -464,8 +459,7 @@ static void group_chat_room_params (void) {
 	linphone_chat_room_params_enable_encryption(params, TRUE);
 	//Check that enabling encryption also defines a valid encryptionBackend
 	BC_ASSERT_EQUAL(linphone_chat_room_params_get_encryption_backend(params), LinphoneChatRoomEncryptionBackendLime, int, "%d");
-	linphone_chat_room_params_ref(params); //Ref params instead of re-creating them
-	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Encrypted group chat room subject", participantsAddresses);//create_chat_room_with_params(coresList, marie, &initialMarieStats, participantsAddresses, "Encrypted group chat room subject", params);
+	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Encrypted group chat room subject", participantsAddresses);
 	BC_ASSERT_PTR_NOT_NULL(marieCr);
 	if (marieCr) {
 		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesConference);
@@ -527,7 +521,6 @@ static void group_chat_room_creation_with_given_identity(void) {
 	const LinphoneAddress *localAddr = linphone_chat_room_get_local_address(marieCr);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(localAddr, marieAddr));
 
-	linphone_chat_room_params_ref(params);
 	LinphoneChatRoom *secondMarieCr = linphone_core_create_chat_room(marie->lc, params, marieSecondAddr, "second chat room", participantsAddresses);
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomStateCreated, initialMarieStats.number_of_LinphoneChatRoomStateCreated + 1, 5000));
