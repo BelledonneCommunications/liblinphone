@@ -1931,7 +1931,7 @@ int MainDb::getEventCount (FilterMask mask) const {
 			mask
 		);
 
-	DurationLogger durationLogger("Get event count with mask=" + Utils::toString(mask) + ".");
+	//DurationLogger durationLogger("Get event count with mask=" + Utils::toString(mask) + ".");
 
 	return L_DB_TRANSACTION {
 		L_D();
@@ -1979,11 +1979,13 @@ list<shared_ptr<EventLog>> MainDb::getConferenceNotifiedEvents (
 	const string query = Statements::get(Statements::SelectConferenceEvents) +
 		string(" AND notify_id > :lastNotifyId");
 
+	/*
 	DurationLogger durationLogger(
 		"Get conference notified events of: (peer=" + conferenceId.getPeerAddress().asString() +
 		", local=" + conferenceId.getLocalAddress().asString() +
 		", lastNotifyId=" + Utils::toString(lastNotifyId) + ")."
 	);
+	*/
 
 	return L_DB_TRANSACTION {
 		L_D();
@@ -2001,10 +2003,12 @@ list<shared_ptr<EventLog>> MainDb::getConferenceNotifiedEvents (
 }
 
 int MainDb::getChatMessageCount (const ConferenceId &conferenceId) const {
+	/*
 	DurationLogger durationLogger(
 		"Get chat messages count of: (peer=" + conferenceId.getPeerAddress().asString() +
 		", local=" + conferenceId.getLocalAddress().asString() + ")."
 	);
+	*/
 
 	return L_DB_TRANSACTION {
 		L_D();
@@ -2045,10 +2049,12 @@ int MainDb::getUnreadChatMessageCount (const ConferenceId &conferenceId) const {
 	query += " direction = " + Utils::toString(int(ChatMessage::Direction::Incoming)) +
 		+ " AND state <> " + Utils::toString(int(ChatMessage::State::Displayed));
 
+	/*
 	DurationLogger durationLogger(
 		"Get unread chat messages count of: (peer=" + conferenceId.getPeerAddress().asString() +
 		", local=" + conferenceId.getLocalAddress().asString() + ")."
 	);
+	*/
 
 	return L_DB_TRANSACTION {
 		int count = 0;
@@ -2077,10 +2083,12 @@ void MainDb::markChatMessagesAsRead (const ConferenceId &conferenceId) const {
 		"    SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
 		") AND direction = " + Utils::toString(int(ChatMessage::Direction::Incoming));
 
+	/*
 	DurationLogger durationLogger(
 		"Mark chat messages as read of: (peer=" + conferenceId.getPeerAddress().asString() +
 		", local=" + conferenceId.getLocalAddress().asString() + ")."
 	);
+	*/
 
 	L_DB_TRANSACTION {
 		L_D();
@@ -2230,11 +2238,12 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessages (
 	static const string query = Statements::get(Statements::SelectConferenceEvents) +
 		string(" AND imdn_message_id = :imdnMessageId");
 
+	/*
 	DurationLogger durationLogger(
 		"Find chat messages: (peer=" + conferenceId.getPeerAddress().asString() +
 		", local=" + conferenceId.getLocalAddress().asString() + ")."
 	);
-
+	*/
 	return L_DB_TRANSACTION {
 		L_D();
 
@@ -2265,10 +2274,12 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered (
 	static const string query = Statements::get(Statements::SelectConferenceEvents) +
 		string(" AND direction = :direction AND delivery_notification_required <> 0");
 
+	/*
 	DurationLogger durationLogger(
 		"Find chat messages to be notified as delivered: (peer=" + conferenceId.getPeerAddress().asString() +
 		", local=" + conferenceId.getLocalAddress().asString() + ")."
 	);
+	*/
 
 	return L_DB_TRANSACTION {
 		L_D();
@@ -2329,11 +2340,13 @@ list<shared_ptr<EventLog>> MainDb::getHistoryRange (
 	if (begin > 0)
 		query += " OFFSET " + Utils::toString(begin);
 
+	/*
 	DurationLogger durationLogger(
 		"Get history range of: (peer=" + conferenceId.getPeerAddress().asString() +
 		", local=" + conferenceId.getLocalAddress().asString() +
 		", begin=" + Utils::toString(begin) + ", end=" + Utils::toString(end) + ")."
 	);
+	*/
 
 	return L_DB_TRANSACTION {
 		L_D();
@@ -2379,11 +2392,13 @@ void MainDb::cleanHistory (const ConferenceId &conferenceId, FilterMask mask) {
 			ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter, ConferenceInfoNoDeviceFilter
 		}, mask);
 
+	/*
 	DurationLogger durationLogger(
 		"Clean history of: (peer=" + conferenceId.getPeerAddress().asString() +
 		", local=" + conferenceId.getLocalAddress().asString() +
 		", mask=" + Utils::toString(mask) + ")."
 	);
+	*/
 
 	L_DB_TRANSACTION {
 		L_D();

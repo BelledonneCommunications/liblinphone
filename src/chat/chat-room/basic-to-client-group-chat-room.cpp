@@ -82,10 +82,13 @@ public:
 			return;
 		}
 		migrationRealTime = currentRealTime;
+		char *tmp = linphone_address_as_string(linphone_proxy_config_get_contact(proxy)); //get the gruu address
+		IdentityAddress localAddress(tmp);
+		bctbx_free(tmp);
 		clientGroupChatRoom = static_pointer_cast<ClientGroupChatRoom>(
 		       //make sure to have a one2one chatroom
 		       chatRoom->getCore()->getPrivate()->createChatRoom(
-			   ChatRoomParams::create(chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted, false, ChatRoomParams::ChatRoomBackend::FlexisipChat), chatRoom->getLocalAddress(), chatRoom->getSubject(), {Address(chatRoom->getPeerAddress())}
+			   ChatRoomParams::create(chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted, false, ChatRoomParams::ChatRoomBackend::FlexisipChat), localAddress, chatRoom->getSubject(), {Address(chatRoom->getPeerAddress())}
 		       )
 		);
 		clientGroupChatRoom->getPrivate()->setCallSessionListener(this);

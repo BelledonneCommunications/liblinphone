@@ -187,6 +187,12 @@ void CorePrivate::enableFriendListsSubscription(bool enable) {
 	}
 }
 
+bool CorePrivate::basicToFlexisipChatroomMigrationEnabled()const{
+	L_Q();
+	return linphone_config_get_bool(linphone_core_get_config(q->getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE);
+}
+
+
 // =============================================================================
 
 Core::Core () : Object(*new CorePrivate) {

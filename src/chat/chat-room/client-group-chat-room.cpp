@@ -680,13 +680,8 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 
 		if (chatRoom) {
 			auto capabilities = chatRoom->getCapabilities();
-			bool migrationEnabled = !!linphone_config_get_int(
-				linphone_core_get_config(getCore()->getCCore()),
-				"misc",
-				"enable_basic_to_client_group_chat_room_migration",
-				FALSE
-			);
-			if (migrationEnabled && (capabilities & ChatRoom::Capabilities::Basic) && (capabilities & ChatRoom::Capabilities::Migratable)) {
+			
+			if (getCore()->getPrivate()->basicToFlexisipChatroomMigrationEnabled() && (capabilities & ChatRoom::Capabilities::Basic) && (capabilities & ChatRoom::Capabilities::Migratable)) {
 				performMigration = true;
 			}
 		}
