@@ -1243,7 +1243,8 @@ void ChatMessage::cancelFileTransfer () {
 	L_D();
 	if (d->fileTransferChatMessageModifier.isFileTransferInProgressAndValid()) {
 		if (d->state == State::InProgress) {
-			d->setState(State::NotDelivered);
+			// Workaround: avoid change not displyed state to displayed stae twice
+			d->setState(State::Displayed);
 		}
 		d->fileTransferChatMessageModifier.cancelFileTransfer();
 	} else {
