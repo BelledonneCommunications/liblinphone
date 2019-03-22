@@ -39,20 +39,24 @@ import org.linphone.core.tools.AndroidPlatformHelper;
  */
 public class NetworkManagerAbove24 implements NetworkManagerInterface {
 	private AndroidPlatformHelper mHelper;
+	private boolean mIsNetworkAvailable;
 	private ConnectivityManager.NetworkCallback mNetworkCallback;
 
 	public NetworkManagerAbove24(final AndroidPlatformHelper helper) {
 		mHelper = helper;
+		mIsNetworkAvailable = false;
 		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 			@Override
 			public void onAvailable(Network network) {
 				Log.i("[Platform Helper] [Network Manager 24] A network is available");
+				mIsNetworkAvailable = true;
 				mHelper.updateNetworkReachability();
 			}
 
 			@Override
 			public void onLost(Network network) {
 				Log.i("[Platform Helper] [Network Manager 24] A network has been lost");
+				mIsNetworkAvailable = false;
 				mHelper.updateNetworkReachability();
 			}
 
@@ -116,7 +120,7 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 			}
 		}
 
-		Network[] networks = connectivityManager.getAllNetworks();
+		/*Network[] networks = connectivityManager.getAllNetworks();
 		boolean connected = false;
 		for (Network network : networks) {
 			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
@@ -135,8 +139,8 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 					}
 				}
 			}
-		}
-		return connected;
+		}*/
+		return mIsNetworkAvailable;
 	}
 
 	public boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager) {

@@ -510,14 +510,14 @@ public class AndroidPlatformHelper {
 				setNetworkReachable(mNativePtr, false);
 				return;
 			}
-			Network network = mNetworkManager.getActiveNetwork(mConnectivityManager);
 
 			Log.i("[Platform Helper] Active network type is " + networkInfo.getTypeName() + ", state " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
 			if (networkInfo.getState() == NetworkInfo.State.DISCONNECTED && networkInfo.getDetailedState() == NetworkInfo.DetailedState.BLOCKED) {
 				Log.w("[Platform Helper] Active network is in bad state...");
 			}
-
+			
 			// Update DNS servers lists
+			Network network = mNetworkManager.getActiveNetwork(mConnectivityManager);
 			storeDnsServers(network);
 
 			int currentNetworkType = networkInfo.getType();
