@@ -30,7 +30,8 @@
 	F(FileTransferError /**< Message was received and acknowledged but cannot get file from server */) \
 	F(FileTransferDone /**< File transfer has been completed successfully */) \
 	F(DeliveredToUser /**< Message successfully delivered an acknowledged by the remote user */) \
-	F(Displayed /**< Message successfully displayed to the remote user */)
+	F(Displayed /**< Message successfully displayed to the remote user */) \
+	F(FileTransferInProgress /** <File transfer is in progress. If message is incoming it's a download, otherwise it's an upload. */)
 
 #define L_ENUM_VALUES_CHAT_MESSAGE_DIRECTION(F) \
 	F(Incoming /**< Incoming message */) \

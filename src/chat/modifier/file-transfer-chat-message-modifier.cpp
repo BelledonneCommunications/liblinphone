@@ -993,7 +993,7 @@ bool FileTransferChatMessageModifier::downloadFile (
 	if (err == -1)
 		return false;
 	// start the download, status is In Progress
-	message->getPrivate()->setState(ChatMessage::State::InProgress);
+	message->getPrivate()->setState(ChatMessage::State::FileTransferInProgress);
 	return true;
 }
 

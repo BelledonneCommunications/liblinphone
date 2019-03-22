@@ -542,8 +542,13 @@ void ChatRoom::markAsRead () {
 	L_D();
 
 	CorePrivate *dCore = getCore()->getPrivate();
-	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->conferenceId))
-		chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
+	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->conferenceId)) {
+		chatMessage->getPrivate()->markAsRead();
+		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
+		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
+			chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
+		}
+	}
 
 	dCore->mainDb->markChatMessagesAsRead(d->conferenceId);
 }

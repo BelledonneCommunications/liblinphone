@@ -75,6 +75,10 @@ public:
 
 	void setIsReadOnly (bool readOnly);
 
+	void markAsRead ();
+
+	bool isMarkedAsRead () const;
+
 	void setImdnMessageId (const std::string &imdnMessageId);
 
 	void setAuthenticatedFromAddress (const IdentityAddress &authenticatedFromAddress) {
@@ -214,6 +218,7 @@ private:
 	std::string externalBodyUrl;
 	bool isSecured = false;
 	mutable bool isReadOnly = false;
+	bool markedAsRead = false;
 	Content internalContent;
 	bool isAutoDownloadAttachedFilesHappened = false;
 

@@ -71,6 +71,14 @@ void ChatMessagePrivate::setIsReadOnly (bool readOnly) {
 	isReadOnly = readOnly;
 }
 
+void ChatMessagePrivate::markAsRead () {
+	markedAsRead = true;
+}
+
+bool ChatMessagePrivate::isMarkedAsRead () const {
+	return markedAsRead;
+}
+
 void ChatMessagePrivate::setParticipantState (const IdentityAddress &participantAddress, ChatMessage::State newState, time_t stateChangeTime) {
 	L_Q();
 
@@ -174,26 +182,32 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
 	_linphone_chat_message_notify_msg_state_changed(msg, (LinphoneChatMessageState)state);
 
-	// 3. Specific case, change to displayed after transfer.
+	// 3. Specific case, change to displayed once all file transfers haven been downloaded.
 	if (state == ChatMessage::State::FileTransferDone && direction == ChatMessage::Direction::Incoming) {
-		setState(ChatMessage::State::Displayed);
+		if (!hasFileTransferContent()) {
+			setState(ChatMessage::State::Displayed);
+			return;
+		}
+	}
+
+	// 4. Specific case, upon reception do not attempt to store in db before asking the user if he wants to do so or not
+	if (state == ChatMessage::State::Delivered && oldState == ChatMessage::State::Idle 
+		&& direction == ChatMessage::Direction::Incoming && !dbKey.isValid()) {
+		// If we're here it's because message is because we're in the middle of the receive() method and
+		// we won't have a valid dbKey until the chat room callback asking if message should be store will be called
+		// and that's happen in the notifyReceiving() called at the of the receive() method we're in.
+		// This prevents the error log: Invalid db key [%p] associated to message [%p]
 		return;
 	}
 
-	// 4. Send notification and update in database if necessary.
-	if (state != ChatMessage::State::FileTransferError && state != ChatMessage::State::InProgress) {
-		if ((state == ChatMessage::State::Displayed) && (direction == ChatMessage::Direction::Incoming) && (!hasFileTransferContent())) {
-			// Wait until all files are downloaded before sending displayed IMDN
-			static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
-		}
-		if (state == ChatMessage::State::Delivered && oldState == ChatMessage::State::Idle 
-			&& direction == ChatMessage::Direction::Incoming && !dbKey.isValid()) {
-			// If we're here it's because message is because we're in the middle of the receive() method and
-			// we won't have a valid dbKey until the chat room callback asking if message should be store will be called
-			// and that's happen in the notifyReceiving() called at the of the receive() method we're in.
-			// This prevents the error log: Invalid db key [%p] associated to message [%p]
-			return;
-		}
+	// 5. Send notification
+	if ((state == ChatMessage::State::Displayed) && (direction == ChatMessage::Direction::Incoming)) {
+		// Wait until all files are downloaded before sending displayed IMDN
+		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
+	}
+
+	// 6. Update in database if necessary.
+	if (state != ChatMessage::State::InProgress && state != ChatMessage::State::FileTransferError && state != ChatMessage::State::FileTransferInProgress) {
 		updateInDb();
 	}
 }
@@ -726,6 +740,7 @@ void ChatMessagePrivate::send () {
 	shared_ptr<AbstractChatRoom> chatRoom(q->getChatRoom());
 	if (!chatRoom) return;
 
+	markAsRead();
 	SalOp *op = salOp;
 	LinphoneCall *lcall = nullptr;
 	int errorCode = 0;
@@ -750,7 +765,7 @@ void ChatMessagePrivate::send () {
 			return;
 		}
 		if (result == ChatMessageModifier::Result::Suspended) {
-			setState(ChatMessage::State::InProgress);
+			setState(ChatMessage::State::FileTransferInProgress);
 			return;
 		}
 		currentSendStep |= ChatMessagePrivate::Step::FileUpload;
@@ -1215,7 +1230,7 @@ void ChatMessage::send () {
 
 	// Do not allow sending a message that is already being sent or that has been correctly delivered/displayed
 	if ((d->state == State::InProgress) || (d->state == State::Delivered) || (d->state == State::FileTransferDone) ||
-			(d->state == State::DeliveredToUser) || (d->state == State::Displayed)) {
+			(d->state == State::DeliveredToUser) || (d->state == State::Displayed)|| (d->state == State::FileTransferInProgress)) {
 		lWarning() << "Cannot send chat message in state " << Utils::toString(d->state);
 		return;
 	}
@@ -1242,7 +1257,7 @@ bool ChatMessage::isFileTransferInProgress () const {
 void ChatMessage::cancelFileTransfer () {
 	L_D();
 	if (d->fileTransferChatMessageModifier.isFileTransferInProgressAndValid()) {
-		if (d->state == State::InProgress) {
+		if (d->state == State::FileTransferInProgress) {
 			d->setState(State::NotDelivered);
 		}
 		d->fileTransferChatMessageModifier.cancelFileTransfer();
