@@ -971,6 +971,9 @@ static void group_chat_room_message (bool_t encrypt, bool_t sal_error) {
 		BC_ASSERT_STRING_EQUAL(message_id, message_id_2);
 
 		wait_for_list(coresList, NULL, 0, 1000);
+		
+		linphone_core_refresh_registers(marie->lc);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneRegistrationOk, initialMarieStats.number_of_LinphoneRegistrationOk + 1, 10000));
 
 		linphone_chat_message_unref(msg);
 	}
