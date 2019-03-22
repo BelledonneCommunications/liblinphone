@@ -1466,6 +1466,9 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 		case LinphoneChatMessageStateDisplayed:
 			counters->number_of_LinphoneMessageDisplayed++;
 			return;
+		case LinphoneChatMessageStateFileTransferInProgress:
+			counters->number_of_LinphoneMessageFileTransferInProgress++;
+			return;
 	}
 	ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
 }
@@ -1482,6 +1485,7 @@ LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *msg, const Linph
 
 	// If a file path is set, we should NOT call the on_send callback !
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
+	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 
 	BC_ASSERT_PTR_NOT_NULL(file_to_send);
 	if (file_to_send == NULL){
@@ -1513,6 +1517,7 @@ void file_transfer_progress_indication(LinphoneChatMessage *msg, const LinphoneC
 	stats *counters = get_stats(lc);
 	char *address = linphone_address_as_string(linphone_chat_message_is_outgoing(msg) ? to_address : from_address);
 
+	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 	bctbx_message(
 		"File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n",
 		progress,
@@ -1538,6 +1543,7 @@ void file_transfer_received(LinphoneChatMessage *msg, const LinphoneContent* con
 
 	// If a file path is set, we should NOT call the on_recv callback !
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
+	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 
 	receive_file = bc_tester_file("receive_file.dump");
 	if (!linphone_chat_message_get_user_data(msg)) {

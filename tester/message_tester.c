@@ -323,7 +323,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 		if (chat_room_size == 1) {
 			history = linphone_chat_room_get_history(chat_room, 0);
 			LinphoneChatMessage *sent_msg = (LinphoneChatMessage *)bctbx_list_get_data(history);
-			BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(sent_msg), (int)LinphoneChatMessageStateInProgress, int, "%d");
+			BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(sent_msg), (int)LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 			bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
 		}
 		sal_set_send_error(linphone_core_get_sal(pauline->lc), -1);
@@ -373,6 +373,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 					linphone_chat_message_set_file_transfer_filepath(recv_msg, receive_filepath);
 				}
 				linphone_chat_message_download_file(recv_msg);
+				BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
 
 				if (download_error) {
 					/* wait for file to be 50% downloaded */
@@ -399,8 +400,9 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 				compare_files(send_filepath, linphone_content_get_file_path(content));
 			}
 		}
-		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress,2, int, "%d"); //sent twice because of file transfer
-		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered,1, int, "%d");
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 1, int, "%d");
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 1, int, "%d");
 	}
 end:
 	linphone_chat_message_unref(msg);
@@ -493,10 +495,10 @@ static void transfer_message_upload_cancelled(void) {
 		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.progress_of_LinphoneFileTransfer, 25, 60000));
 		linphone_chat_message_cancel_file_transfer(msg);
 
-		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageNotDelivered,1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageNotDelivered, 1));
 
-		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageNotDelivered,1, int, "%d");
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,0, int, "%d");
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageNotDelivered, 1, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
 
 		linphone_chat_message_unref(msg);
 		linphone_core_manager_destroy(pauline);
@@ -531,10 +533,11 @@ static void transfer_message_download_cancelled(void) {
 		linphone_chat_message_cancel_file_transfer(marie->stat.last_received_chat_message);
 	}
 
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress,2, int, "%d");
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered,1, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,0, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageNotDelivered,1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 1, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageNotDelivered, 1, int, "%d");
 
 	linphone_chat_message_unref(msg);
 	linphone_core_manager_destroy(marie);
@@ -570,9 +573,9 @@ static void file_transfer_2_messages_simultaneously(void) {
 		if (bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)) == 0) {
 			linphone_chat_message_send(msg);
 			linphone_chat_message_send(msg2);
-			if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000))) {
+			if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 60000))) {
 				LinphoneChatMessage *recvMsg = linphone_chat_message_ref(marie->stat.last_received_chat_message);
-				BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,2, 60000));
+				BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile, 2, 60000));
 				LinphoneChatMessage *recvMsg2 = marie->stat.last_received_chat_message;
 				BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)), 1, unsigned int, "%u");
 				if (bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)) != 1) {
@@ -600,8 +603,9 @@ static void file_transfer_2_messages_simultaneously(void) {
 
 				BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,2,50000));
 
-				BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress,4, int, "%d");
-				BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered,2, int, "%d");
+				BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 2, int, "%d");
+				BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 2, int, "%d");
+				BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 2, int, "%d");
 				compare_files(send_filepath, receive_filepath);
 
 				linphone_chat_message_unref(recvMsg);
@@ -1557,7 +1561,7 @@ void file_transfer_io_error_base(char *server_url) {
 	linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
 	linphone_core_set_file_transfer_server(marie->lc, server_url);
 	linphone_chat_message_send(msg);
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageInProgress, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageFileTransferInProgress, 1, 1000));
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageNotDelivered, 1, 3000));
 	linphone_chat_message_unref(msg);
 	linphone_core_manager_destroy(marie);
@@ -1581,7 +1585,7 @@ static void file_transfer_success_after_destroying_chatroom(void) {
 	);
 	linphone_core_set_file_transfer_server(marie->lc, "https://www.linphone.org:444/lft.php");
 	linphone_chat_message_send(msg);
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageInProgress, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageFileTransferInProgress, 1, 1000));
 	linphone_core_delete_chat_room(marie->lc, chatroom);
     //As of today (2019/02/07), chat message can no longer be sent without chatroom
 	BC_ASSERT_FALSE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneMessageDisplayed, 1, 1000));

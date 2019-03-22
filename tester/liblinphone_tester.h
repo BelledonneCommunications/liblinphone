@@ -193,6 +193,7 @@ typedef struct _stats {
 	int number_of_LinphoneMessageUndecryptable;
 	int number_of_LinphoneMessageFileTransferDone;
 	int number_of_LinphoneMessageFileTransferError;
+	int number_of_LinphoneMessageFileTransferInProgress;
 	int number_of_LinphoneMessageDeliveredToUser;
 	int number_of_LinphoneMessageDisplayed;
 	int number_of_LinphoneIsComposingActiveReceived;
