@@ -821,7 +821,9 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 	lInfo() << q << ": Inviting device '" << device->getAddress().asString() << "'";
 	shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 	shared_ptr<CallSession> session = makeSession(device);
-	if (device->getState() == ParticipantDevice::State::Joining && session->getState() == CallSession::State::OutgoingProgress){
+	if (device->getState() == ParticipantDevice::State::Joining && (
+		session->getState() == CallSession::State::OutgoingProgress
+		|| session->getState() == CallSession::State::Connected)){
 		lInfo() << q << ": outgoing INVITE already in progress.";
 		return;
 	}
