@@ -869,9 +869,6 @@ LinphoneStatus linphone_proxy_config_done(LinphoneProxyConfig *cfg)
 	if (linphone_proxy_config_compute_publish_params_hash(cfg)) {
 		ms_message("Publish params have changed on proxy config [%p]",cfg);
 		if (cfg->presence_publish_event) {
-			if (cfg->publish) {
-				linphone_proxy_config_set_etag(cfg, linphone_event_get_custom_header(cfg->presence_publish_event, "SIP-ETag"));
-			}
 			/*publish is terminated*/
 			linphone_event_terminate(cfg->presence_publish_event);
 		}
