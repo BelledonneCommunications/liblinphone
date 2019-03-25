@@ -44,7 +44,7 @@ MARK_AS_ADVANCED(SOCI_INCLUDE_DIRS)
 #
 FIND_LIBRARY(SOCI_LIBRARIES
     NAMES soci_core soci_core${_SOCI_VERSION}
-    PATH_SUFFIXES lib lib64)
+    PATH_SUFFIXES Frameworks lib lib64)
 MARK_AS_ADVANCED(SOCI_LIBRARIES)
 
 GET_FILENAME_COMPONENT(SOCI_LIBRARY_DIR ${SOCI_LIBRARIES} PATH)
@@ -61,7 +61,7 @@ IF(SOCI_INCLUDE_DIRS AND SOCI_LIBRARIES)
         FIND_LIBRARY(
             SOCI_${plugin}_PLUGIN
             NAMES soci_${plugin} soci_${plugin}${_SOCI_VERSION}
-            PATH_SUFFIXES lib lib64)
+            PATH_SUFFIXES Frameworks lib lib64)
         MARK_AS_ADVANCED(SOCI_${plugin}_PLUGIN)
 
         IF(SOCI_${plugin}_PLUGIN)
