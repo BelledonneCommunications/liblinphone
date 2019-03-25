@@ -1887,19 +1887,19 @@ void sequential_forking_with_fallback_route(void) {
 	/*we set pauline2 and marie to another test server that is configured with a fallback route*/
 	linphone_proxy_config_set_server_addr(
 		linphone_core_get_default_proxy_config(pauline2->lc),
-		"sip:sip2.linphone.org:5071;transport=tls");
+		"sip:sip.example.org:5069;transport=tls");
 
 	linphone_proxy_config_set_route(
 		linphone_core_get_default_proxy_config(pauline2->lc),
-		"sip:sip2.linphone.org:5071;transport=tls");
+		"sip:sip.example.org:5069;transport=tls");
 
 	linphone_proxy_config_set_server_addr(
 		linphone_core_get_default_proxy_config(marie->lc),
-		"sip:sip2.linphone.org:5070;transport=tcp");
+		"sip:sip.example.org:5068;transport=tcp");
 
 	linphone_proxy_config_set_route(
 		linphone_core_get_default_proxy_config(marie->lc),
-		"sip:sip2.linphone.org:5070;transport=tcp;lr");
+		"sip:sip.example.org:5068;transport=tcp;lr");
 
 	linphone_core_manager_start(pauline2, TRUE);
 	linphone_core_manager_start(marie, TRUE);
@@ -1930,10 +1930,10 @@ void sequential_forking_with_fallback_route(void) {
 
 	/*pauline accepts the call*/
 	linphone_call_accept(call);
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallConnected,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallConnected,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,10000));
 
 	linphone_call_terminate(linphone_core_get_current_call(marie->lc));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,3000));
