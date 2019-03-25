@@ -132,6 +132,9 @@ static void phone_normalization_with_proxy(void) {
 	linphone_proxy_config_set_dial_prefix(proxy, "52");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "+5217227718184"), "+5217227718184"); /*this is a mobile phone number */
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "+528127718184"), "+528127718184"); /*this is a landline phone number from Monterrey*/
+	
+	BC_ASSERT_EQUAL(linphone_dial_plan_lookup_ccc_from_e164("+522824713146"), 52, int, "%i"); /*this is a landline phone number*/
+	
 
 	// Phone normalization for myanmar dial plans
 	linphone_proxy_config_set_dial_prefix(proxy, "95");
