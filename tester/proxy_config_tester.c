@@ -294,9 +294,6 @@ static void dependent_proxy_config(void) {
 	const LinphoneAddress *marie_cfg_contact = linphone_proxy_config_get_contact(marie_cfg);
 	const LinphoneAddress *marie_dependent_cfg_contact = linphone_proxy_config_get_contact(marie_dependent_cfg);
 
-	ms_message("NMN DEBUG: TESTER. marie_cfg contact = [%s]", linphone_address_as_string(marie_cfg_contact));
-	ms_message("NMN DEBUG: TESTER. marie_dependent_cfg contact = [%s]", linphone_address_as_string(marie_dependent_cfg_contact));
-
 	BC_ASSERT_TRUE(linphone_proxy_config_address_equal(marie_cfg_contact, marie_dependent_cfg_contact) == LinphoneProxyConfigAddressEqual);
 
 	//Cut link for dependent proxy config, then call its identity address and check that we receive the call
