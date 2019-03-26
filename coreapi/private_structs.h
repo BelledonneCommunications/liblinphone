@@ -111,6 +111,8 @@ struct _LinphoneProxyConfig
 
 	bool_t commit;
 	bool_t reg_sendregister;
+	/* Used to completely disable registration on a dependent proxy config. (Won't be enabled back even if it's 'master' proxy config state goes to LinphoneRegistrationOk) */
+	bool_t reg_dependent_disabled;
 	bool_t publish;
 	bool_t dial_escape_plus;
 
@@ -134,6 +136,7 @@ struct _LinphoneProxyConfig
 
 	char *refkey;
 	char *sip_etag; /*publish context*/
+	char *depends_on; /* NULL or points to another proxy_config->refkey */
 	char *conference_factory_uri;
 
 	bool_t push_notification_allowed;

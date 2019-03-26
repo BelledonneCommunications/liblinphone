@@ -106,6 +106,7 @@ set(RC_FILES
 	rcfiles/marie_quality_reporting_rc
 	rcfiles/marie_rc
 	rcfiles/marie_dual_proxy_rc
+	rcfiles/marie_dependent_proxy_rc
 	rcfiles/marie2_rc
 	rcfiles/marie_rc_rtcp_xr
 	rcfiles/marie_remote_404_rc

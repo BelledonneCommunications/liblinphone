@@ -350,7 +350,7 @@ void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	linphone_config_set_string(config, "lime", "x3dh_db_path", mgr->lime_database_path);
 	mgr->lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), config, mgr);
 	linphone_config_unref(config);
-	
+
 	linphone_core_manager_check_accounts(mgr);
 	im_notif_policy = linphone_core_get_im_notif_policy(mgr->lc);
 	if (im_notif_policy != NULL) {
@@ -1653,7 +1653,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	}
 
 	BC_ASSERT_PTR_NULL(linphone_call_get_remote_params(caller_call)); /*assert that remote params are NULL when no response is received yet*/
-        // test ios simulator needs more time, 3s plus for connectng the network
+	//test ios simulator needs more time, 3s plus for connectng the network
 	did_receive_call = wait_for_until(callee_mgr->lc
 				,caller_mgr->lc
 				,&callee_mgr->stat.number_of_LinphoneCallIncomingReceived
@@ -1768,7 +1768,6 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		/* check no ice re-invite received*/
 		BC_ASSERT_FALSE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2,2000));
 		BC_ASSERT_FALSE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2,2000));
-
 	}
 	if (linphone_core_get_media_encryption(caller_mgr->lc) == LinphoneMediaEncryptionDTLS ) {
 		LinphoneCall *call = linphone_core_get_current_call(caller_mgr->lc);
