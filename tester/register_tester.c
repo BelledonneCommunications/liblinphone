@@ -904,7 +904,6 @@ static void io_recv_error_late_recovery(void){
 		counters=&lcm->stat;
 		BC_ASSERT_TRUE(wait_for(lcm->lc,lcm->lc,&counters->number_of_LinphoneRegistrationOk,(int)bctbx_list_size(linphone_core_get_proxy_config_list(lcm->lc))));
 
-
 		counters = get_stats(lc);
 		register_ok=counters->number_of_LinphoneRegistrationOk;
 		number_of_udp_proxy=get_number_of_udp_proxy(lc);

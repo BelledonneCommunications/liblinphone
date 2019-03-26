@@ -19,6 +19,8 @@
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 
+void linphone_proxy_config_stop_refreshing(LinphoneProxyConfig *obj);
+
 #include <stdlib.h>
 
 const char* phone_normalization(LinphoneProxyConfig *proxy, const char* in) {
@@ -269,13 +271,141 @@ static void single_route(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+/*
+ * Dependent proxy config scenario: pauline@example.org, marie@example.org and marie@sip2.linphone.org
+ * marie@sip2.linphone.org is marked 'Dependent' on marie@example.org.
+ * Once all registered, we cut the marie@sip2.linphone.org connection.
+ * A call from pauline@example.org to marie@sip2.linphone.org should work (and go through example.org instead of sip2.linphone.org)
+ */
+static void dependent_proxy_config(void) {
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_dependent_proxy_rc");
+	LinphoneProxyConfig *marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
+	LinphoneProxyConfig *marie_dependent_cfg = (LinphoneProxyConfig *) linphone_core_get_proxy_config_list(marie->lc)->next->data;
+	BC_ASSERT_PTR_NOT_NULL(marie_cfg);
+	BC_ASSERT_PTR_NOT_NULL(marie_dependent_cfg);
+
+	BC_ASSERT_STRING_EQUAL("master", linphone_proxy_config_get_depends_on(marie_dependent_cfg));
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc, NULL, &pauline->stat.number_of_LinphoneRegistrationOk, 1));
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 2));
+
+	const LinphoneAddress *marie_cfg_contact = linphone_proxy_config_get_contact(marie_cfg);
+	const LinphoneAddress *marie_dependent_cfg_contact = linphone_proxy_config_get_contact(marie_dependent_cfg);
+
+	ms_message("NMN DEBUG: TESTER. marie_cfg contact = [%s]", linphone_address_as_string(marie_cfg_contact));
+	ms_message("NMN DEBUG: TESTER. marie_dependent_cfg contact = [%s]", linphone_address_as_string(marie_dependent_cfg_contact));
+
+	BC_ASSERT_TRUE(linphone_proxy_config_address_equal(marie_cfg_contact, marie_dependent_cfg_contact) == LinphoneProxyConfigAddressEqual);
+
+	//Cut link for dependent proxy config, then call its identity address and check that we receive the call
+	//(which would be received through the 'master' proxy config server)
+	linphone_core_set_network_reachable(marie->lc, FALSE);
+	linphone_proxy_config_edit(marie_dependent_cfg);
+	linphone_proxy_config_enable_register(marie_dependent_cfg, FALSE);
+	linphone_proxy_config_done(marie_dependent_cfg);
+ 	linphone_core_set_network_reachable(marie->lc, TRUE);
+
+	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneRegistrationOk, 3); //One more time for 'master' proxy config
+
+	LinphoneAddress *marie_dependent_addr = linphone_address_new(linphone_proxy_config_get_identity(marie_dependent_cfg));
+
+	linphone_core_invite_address(pauline->lc, marie_dependent_addr);
+
+	if (BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived, 1, 10000))) {
+
+		linphone_call_accept(linphone_core_get_current_call(marie->lc));
+
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+
+		end_call(pauline, marie);
+	}
+
+	linphone_address_unref(marie_dependent_addr);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
+//Dependent proxy config should not register if its dependency is not in a LinphoneRegistrationOk state
+static void proxy_config_dependent_register(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_dependent_proxy_rc");
+	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
+	LinphoneProxyConfig *master = (LinphoneProxyConfig *) proxyConfigs->data;
+
+	linphone_proxy_config_edit(master);
+	linphone_proxy_config_set_server_addr(master, "sip:cannotberesol.ved");
+	linphone_proxy_config_done(master);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 0));
+
+	linphone_core_manager_destroy(marie);
+}
+
+
+//Dependent proxy config pointing to inexistant other proxy configuration.
+static void invalid_dependent_proxy_config(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_dependent_proxy_rc");
+	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
+	LinphoneProxyConfig *master = (LinphoneProxyConfig *) proxyConfigs->data;
+	LinphoneProxyConfig *dependent = (LinphoneProxyConfig *) proxyConfigs->next->data;
+
+	linphone_core_remove_proxy_config(marie->lc, dependent);
+	linphone_core_remove_proxy_config(marie->lc, master);
+
+	proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
+
+	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 0, int, "%d");
+
+	linphone_proxy_config_set_ref_key(master, "invalid");
+
+	linphone_core_add_proxy_config(marie->lc, master);
+
+	//Adding a dependent proxy config linking to inexistent	refkey should fail
+	BC_ASSERT_EQUAL(linphone_core_add_proxy_config(marie->lc, dependent), -1, int, "%d");
+
+	proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
+
+	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 1, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+}
+
+//A dependent proxy config should behave as a normal one after removal of dependency
+static void dependent_proxy_dependency_removal(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_dependent_proxy_rc");
+	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
+	LinphoneProxyConfig *master = (LinphoneProxyConfig *) proxyConfigs->data;
+
+	linphone_core_set_network_reachable(marie->lc, FALSE);
+
+	linphone_core_remove_proxy_config(marie->lc, master);
+
+	proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
+
+	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 1, int, "%d");
+
+	linphone_core_set_network_reachable(marie->lc, TRUE);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 1));
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRegistrationOk, 1, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+}
+
 test_t proxy_config_tests[] = {
 	TEST_NO_TAG("Phone normalization without proxy", phone_normalization_without_proxy),
 	TEST_NO_TAG("Phone normalization with proxy", phone_normalization_with_proxy),
 	TEST_NO_TAG("Phone normalization with dial escape plus", phone_normalization_with_dial_escape_plus),
 	TEST_NO_TAG("SIP URI normalization", sip_uri_normalization),
 	TEST_NO_TAG("Load new default value for proxy config", load_dynamic_proxy_config),
-	TEST_NO_TAG("Single route", single_route)
+	TEST_NO_TAG("Single route", single_route),
+	TEST_NO_TAG("Proxy dependency", dependent_proxy_config),
+	TEST_NO_TAG("Invalid dependent proxy", invalid_dependent_proxy_config),
+	TEST_NO_TAG("Dependent proxy dependency register", proxy_config_dependent_register),
+	TEST_NO_TAG("Dependent proxy dependency removal", dependent_proxy_dependency_removal)
 };
 
 test_suite_t proxy_config_test_suite = {"Proxy config", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
