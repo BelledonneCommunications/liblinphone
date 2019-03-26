@@ -74,3 +74,32 @@ This pseudo code shows how to unregister a user associated to a #LinphoneProxyCo
 
 .. seealso:: A complete tutorial can be found at: :ref:`"Basic registration" <basic_registration_code_sample>` source code.
 
+
+Proxies dependency
+------------------
+
+As an example, a practical use case of dependent proxies could be as follows:
+
+On a mobile device app, a proxy configuration is registered to a non-modifiable server that does not support push notifications, thus being unreachable most of the time.
+
+To enable push notifications, we could add another proxy configuration and mark the initial one 'dependent' on a proxy pointing to a push-enabled server (refered to as 'master' or 'dependency').
+
+The proxy configuration will wait for successful registration on its dependency before triggering its own.
+
+Once registered, both proxy configurations will share the same contact address (the 'master' one). Meaning that calls to the dependent address will go through the push-enabled master server.
+
+This mecanism must be enabled before the proxy configuration is added to the core (before :cpp:func:`linphone_core_add_proxy_config`).
+
+
+.. code-block:: c
+
+
+	LinphoneProxyConfig* dependent_proxy_cfg;
+	LinphoneProxyConfig* master_proxy_cfg;
+	linphone_proxy_config_set_ref_key(master_proxy_cfg, "unique-proxy-id");
+	linphone_proxy_config_set_depends_on(dependent_proxy_cfg, "unique-proxy-id");
+	//Add master first
+	linphone_core_add_proxy_config(lc, master_proxy_cfg);
+	linphone_core_add_proxy_config(lc, dependent_proxy_cfg);
+
+Note that this mecanism is atypical and should rarely be used.

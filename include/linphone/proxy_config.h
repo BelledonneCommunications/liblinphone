@@ -117,7 +117,7 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_expires(LinphoneProxyConfig *cfg,
 #define linphone_proxy_config_expires linphone_proxy_config_set_expires
 
 /**
- * @brief Indicates  either or not, REGISTRATION must be issued for this #LinphoneProxyConfig .
+ * @brief Indicates  either or not, REGISTRATION must be issued for this #LinphoneProxyConfig.
  *
  * In case this #LinphoneProxyConfig has been added to #LinphoneCore, follows the linphone_proxy_config_edit() rule.
  * @param[in] cfg #LinphoneProxyConfig object.
@@ -585,6 +585,31 @@ LINPHONE_PUBLIC const char * linphone_proxy_config_get_ref_key(const LinphonePro
  * @param[in] refkey The reference key string to associate to the proxy config.
 **/
 LINPHONE_PUBLIC void linphone_proxy_config_set_ref_key(LinphoneProxyConfig *cfg, const char *refkey);
+
+/**
+ * Get the refkey of a #LinphoneProxyConfig this proxy config is dependent on.
+ *
+ * @param[in] cfg #LinphoneProxyConfig object.
+ * @return The reference key string this proxy config is dependent on, or NULL if not marked dependent
+ **/
+const char *linphone_proxy_config_get_depends_on(LinphoneProxyConfig *cfg);
+
+/**
+ * Mark	this proxy configuration as being dependent on another.
+ * The depends_on string must refer to a refkey of a proxy configuration previously added to the core.
+ *
+ * @see linphone_proxy_config_set_ref_key()
+ *
+ * The proxy configuration marked as dependent will wait for successful registration on its dependency before triggering its own.
+ *
+ * Once registered, both proxy configurations will share the same contact address (the 'master' one).
+ *
+ * This mecanism must be enabled before the proxy configuration is added to the core
+ *
+ * @param[in] cfg #LinphoneProxyConfig object.
+ * @param[in] depends_on The reference key of a master #LinphoneProxyConfig
+ **/
+void linphone_proxy_config_set_depends_on(LinphoneProxyConfig *cfg, const char *depends_on);
 
 /**
  * Get The policy that is used to pass through NATs/firewalls when using this proxy config.

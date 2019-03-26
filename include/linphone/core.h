@@ -2181,6 +2181,12 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_proxy_config_list(const Li
 LINPHONE_PUBLIC void linphone_core_set_default_proxy_index(LinphoneCore *lc, int index);
 
 /**
+ * @param[in] refkey An	arbitrary reference key	associated to a	proxy configuration
+ * @return the proxy configuration for the given refkey, or NULL if none found
+ **/
+LINPHONE_PUBLIC LinphoneProxyConfig *linphone_core_get_proxy_config_by_refkey(LinphoneCore *lc, const char *refkey);
+
+/**
  * @return the default proxy configuration, that is the one used to determine the current identity.
  * @deprecated Use linphone_core_get_default_proxy_config() instead.
  * @donotwrap
