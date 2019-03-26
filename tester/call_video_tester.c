@@ -2046,29 +2046,26 @@ static void video_call_with_thin_congestion(void){
 	linphone_core_set_video_policy(marie->lc, &pol);
 	linphone_core_set_video_policy(pauline->lc, &pol);
 
+	/*set the video preset to custom so the video quality controller won't update the video size*/
+	linphone_core_set_video_preset(marie->lc, "custom");
 	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga"); /*It will result in approxy 350kbit/s VP8 output*/
+
 	simparams.mode = OrtpNetworkSimulatorOutbound;
 	simparams.enabled = TRUE;
 	simparams.max_bandwidth = 300000;  /*we limit to 300kbit/s*/
 	simparams.max_buffer_size = (int)simparams.max_bandwidth;
 	simparams.latency = 60;
-
 	linphone_core_set_network_simulator_params(marie->lc, &simparams);
 
 	if (BC_ASSERT_TRUE(call(marie, pauline))){
 		LinphoneCall *call = linphone_core_get_current_call(pauline->lc);
-		int first_tmmbr;
 
 		/*A congestion is expected, which will result in a TMMBR to be emitted by pauline*/
 		/*wait for the TMMBR*/
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 10000));
-		BC_ASSERT_GREATER((float)marie->stat.last_tmmbr_value_received, 180000.f, float, "%f");
-		BC_ASSERT_LOWER((float)marie->stat.last_tmmbr_value_received, 280000.f, float, "%f");
-		first_tmmbr = marie->stat.last_tmmbr_value_received;
+		BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 170000, 280000, 15000));
 
 		/*another tmmbr with a greater value is expected once the congestion is resolved*/
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, first_tmmbr + 1, 15000));
-		BC_ASSERT_GREATER((float)marie->stat.last_tmmbr_value_received, 250000.f, float, "%f");
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 250000, 50000));
 		BC_ASSERT_GREATER(linphone_call_get_current_quality(call), 4.f, float, "%f");
 
 		end_call(marie, pauline);
@@ -2115,13 +2112,14 @@ static void video_call_with_high_bandwidth_available(void) {
 	linphone_core_set_video_policy(marie->lc, &pol);
 	linphone_core_set_video_policy(pauline->lc, &pol);
 
+	linphone_core_set_video_preset(marie->lc, "custom");
 	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
+
 	simparams.mode = OrtpNetworkSimulatorOutbound;
 	simparams.enabled = TRUE;
 	simparams.max_bandwidth = 1000000;
 	simparams.max_buffer_size = (int)simparams.max_bandwidth;
 	simparams.latency = 60;
-
 	linphone_core_set_network_simulator_params(marie->lc, &simparams);
 
 	linphone_core_cbs_set_call_created(core_cbs, call_created);
@@ -2206,9 +2204,9 @@ static void video_call_expected_fps_for_specified_bandwidth(int bandwidth, int f
 **/
 static void video_call_expected_fps_for_low_bandwidth(void) {
 #if defined(__ANDROID__) || (TARGET_OS_IPHONE == 1) || defined(__arm__) || defined(_M_ARM)
-	video_call_expected_fps_for_specified_bandwidth(80000, 10, "qvga");
+	video_call_expected_fps_for_specified_bandwidth(100000, 10, "qvga");
 #else
-	video_call_expected_fps_for_specified_bandwidth(250000, 15, "vga");
+	video_call_expected_fps_for_specified_bandwidth(350000, 15, "vga");
 #endif
 }
 
@@ -2239,6 +2237,173 @@ static void video_call_expected_fps_for_high_bandwidth(void) {
 	video_call_expected_fps_for_specified_bandwidth(400000, 12, "qcif");
 #else
 	video_call_expected_fps_for_specified_bandwidth(5000000, 30, "vga");
+#endif
+}
+
+static void video_call_expected_size_for_specified_bandwidth_with_congestion(int bandwidth, int width, int height, const char *resolution, const char *video_codec) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	LinphoneVideoPolicy pol = {0};
+	OrtpNetworkSimulatorParams simparams = { 0 };
+
+	if (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc)) >= 2) {
+		if (linphone_core_find_payload_type(marie->lc, video_codec, -1, -1) != NULL) {
+			linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+			linphone_core_enable_video_capture(marie->lc, TRUE);
+			linphone_core_enable_video_display(marie->lc, TRUE);
+			linphone_core_enable_video_capture(pauline->lc, TRUE);
+			linphone_core_enable_video_display(pauline->lc, TRUE);
+
+			disable_all_video_codecs_except_one(marie->lc, video_codec);
+
+			pol.automatically_accept = TRUE;
+			pol.automatically_initiate = TRUE;
+			linphone_core_set_video_policy(marie->lc, &pol);
+			linphone_core_set_video_policy(pauline->lc, &pol);
+
+			linphone_core_set_preferred_video_size_by_name(marie->lc, resolution);
+
+			simparams.mode = OrtpNetworkSimulatorOutbound;
+			simparams.enabled = TRUE;
+			simparams.max_bandwidth = (float)bandwidth;
+			simparams.max_buffer_size = bandwidth;
+			simparams.latency = 60;
+			linphone_core_set_network_simulator_params(marie->lc, &simparams);
+
+			if (BC_ASSERT_TRUE(call(marie, pauline))){
+				LinphoneCall *call = linphone_core_get_current_call(marie->lc);
+				VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
+				MSVideoConfiguration vconf;
+
+				BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 0.7*bandwidth, 50000));
+
+				ms_filter_call_method(vstream->ms.encoder, MS_VIDEO_ENCODER_GET_CONFIGURATION, &vconf);
+				BC_ASSERT_EQUAL(vconf.vsize.width*vconf.vsize.height, width*height, int, "%d");
+
+				end_call(marie, pauline);
+			}
+		} else {
+			BC_PASS("Cannot find provided video codec");
+		}
+	} else {
+		BC_PASS("Test requires at least a dual core");
+	}
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void video_call_expected_size_for_specified_bandwidth(int bandwidth, int width, int height, const char *resolution, const char *video_codec) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	LinphoneVideoPolicy pol = {0};
+	OrtpNetworkSimulatorParams simparams = { 0 };
+
+	if (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc)) >= 2) {
+		if (linphone_core_find_payload_type(marie->lc, video_codec, -1, -1) != NULL) {
+			linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+			linphone_core_enable_video_capture(marie->lc, TRUE);
+			linphone_core_enable_video_display(marie->lc, TRUE);
+			linphone_core_enable_video_capture(pauline->lc, TRUE);
+			linphone_core_enable_video_display(pauline->lc, TRUE);
+
+			disable_all_video_codecs_except_one(marie->lc, video_codec);
+
+			pol.automatically_accept = TRUE;
+			pol.automatically_initiate = TRUE;
+			linphone_core_set_video_policy(marie->lc, &pol);
+			linphone_core_set_video_policy(pauline->lc, &pol);
+
+			linphone_core_set_preferred_video_size_by_name(marie->lc, resolution);
+
+			simparams.mode = OrtpNetworkSimulatorOutbound;
+			simparams.enabled = TRUE;
+			simparams.max_bandwidth = (float)bandwidth;
+			simparams.max_buffer_size = bandwidth;
+			simparams.latency = 60;
+			linphone_core_set_network_simulator_params(marie->lc, &simparams);
+
+			if (BC_ASSERT_TRUE(call(marie, pauline))){
+				LinphoneCall *call = linphone_core_get_current_call(marie->lc);
+				VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
+				MSVideoConfiguration vconf;
+
+				wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 50000);
+
+				marie->stat.last_tmmbr_value_received = 0;
+				/* Wait until the last TMMBR was reached 10 second ago. */
+				while (wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 10000)) {
+					marie->stat.last_tmmbr_value_received = 0;
+				}
+
+				ms_filter_call_method(vstream->ms.encoder, MS_VIDEO_ENCODER_GET_CONFIGURATION, &vconf);
+
+				BC_ASSERT_EQUAL(vconf.vsize.width*vconf.vsize.height, width*height, int, "%d");
+
+				end_call(marie, pauline);
+			}
+		} else {
+			BC_PASS("Cannot find provided video codec");
+		}
+	} else {
+		BC_PASS("Test requires at least a dual core");
+	}
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void video_call_expected_size_for_low_bandwith_vp8(void) {
+	video_call_expected_size_for_specified_bandwidth_with_congestion(200000, 320, 240, "vga", "vp8");
+}
+
+static void video_call_expected_size_for_regular_bandwith_vp8(void) {
+	video_call_expected_size_for_specified_bandwidth(500000, 640, 480, "vga", "vp8");
+}
+
+static void video_call_expected_size_for_high_bandwith_vp8(void) {
+	video_call_expected_size_for_specified_bandwidth(5000000, 1600, 1200, "vga", "vp8");
+}
+
+static void video_call_expected_size_for_low_bandwith_h264(void) {
+	video_call_expected_size_for_specified_bandwidth_with_congestion(200000, 320, 240, "vga", "h264");
+}
+
+static void video_call_expected_size_for_regular_bandwith_h264(void) {
+	video_call_expected_size_for_specified_bandwidth(500000, 640, 480, "vga", "h264");
+}
+
+static void video_call_expected_size_for_high_bandwith_h264(void) {
+#if TARGET_OS_IPHONE == 1
+	video_call_expected_size_for_specified_bandwidth(5000000, 1280, 960, "vga", "h264");
+#else
+	video_call_expected_size_for_specified_bandwidth(5000000, 1600, 1200, "vga", "h264");
+#endif
+}
+
+static void video_call_expected_size_for_low_bandwith_h265(void) {
+#if defined(__ANDROID__) || (TARGET_OS_IPHONE == 1) || defined(__arm__) || defined(_M_ARM)
+	video_call_expected_size_for_specified_bandwidth_with_congestion(200000, 320, 240, "vga", "h265");
+#else
+	BC_PASS("H265 is not yet implemented on platforms other than mobile");
+#endif
+}
+
+static void video_call_expected_size_for_regular_bandwith_h265(void) {
+#if defined(__ANDROID__) || (TARGET_OS_IPHONE == 1) || defined(__arm__) || defined(_M_ARM)
+	video_call_expected_size_for_specified_bandwidth(500000, 640, 480, "vga", "h265");
+#else
+	BC_PASS("H265 is not yet implemented on platforms other than mobile");
+#endif
+}
+
+static void video_call_expected_size_for_high_bandwith_h265(void) {
+#if defined(__ANDROID__) || defined(__arm__) || defined(_M_ARM)
+	video_call_expected_size_for_specified_bandwidth(5000000, 1600, 1200, "vga", "h265");
+#elif TARGET_OS_IPHONE == 1
+	video_call_expected_size_for_specified_bandwidth(5000000, 1280, 960, "vga", "h265");
+#else
+	BC_PASS("H265 is not yet implemented on platforms other than mobile");
 #endif
 }
 
@@ -2313,7 +2478,16 @@ test_t call_video_tests[] = {
 	TEST_NO_TAG("Video call with high bandwidth available", video_call_with_high_bandwidth_available),
 	TEST_NO_TAG("Video call expected FPS for low bandwidth", video_call_expected_fps_for_low_bandwidth),
 	TEST_NO_TAG("Video call expected FPS for regular bandwidth", video_call_expected_fps_for_regular_bandwidth),
-	TEST_NO_TAG("Video call expected FPS for high bandwidth", video_call_expected_fps_for_high_bandwidth)
+	TEST_NO_TAG("Video call expected FPS for high bandwidth", video_call_expected_fps_for_high_bandwidth),
+	TEST_NO_TAG("Video call expected size for low bandwidth (VP8)", video_call_expected_size_for_low_bandwith_vp8),
+	TEST_NO_TAG("Video call expected size for regular bandwidth (VP8)", video_call_expected_size_for_regular_bandwith_vp8),
+	TEST_NO_TAG("Video call expected size for high bandwidth (VP8)", video_call_expected_size_for_high_bandwith_vp8),
+	TEST_NO_TAG("Video call expected size for low bandwidth (H264)", video_call_expected_size_for_low_bandwith_h264),
+	TEST_NO_TAG("Video call expected size for regular bandwidth (H264)", video_call_expected_size_for_regular_bandwith_h264),
+	TEST_NO_TAG("Video call expected size for high bandwidth (H264)", video_call_expected_size_for_high_bandwith_h264),
+	TEST_NO_TAG("Video call expected size for low bandwidth (H265)", video_call_expected_size_for_low_bandwith_h265),
+	TEST_NO_TAG("Video call expected size for regular bandwidth (H265)", video_call_expected_size_for_regular_bandwith_h265),
+	TEST_NO_TAG("Video call expected size for high bandwidth (H265)", video_call_expected_size_for_high_bandwith_h265),
 };
 
 test_suite_t call_video_test_suite = {"Video Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
