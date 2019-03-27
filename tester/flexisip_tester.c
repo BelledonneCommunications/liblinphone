@@ -1008,9 +1008,10 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 		}
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageFileTransferDone,1));
 
-		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress,2, int, "%d");
-		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered,1, int, "%d");
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageReceivedWithFile,1, int, "%d");
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 1, int, "%d");
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 1, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, int, "%d");
 		compare_files(send_filepath, receive_filepath);
 
 		linphone_chat_message_unref(message);
