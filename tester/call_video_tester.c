@@ -2275,7 +2275,7 @@ static void video_call_expected_size_for_specified_bandwidth_with_congestion(int
 				VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
 				MSVideoConfiguration vconf;
 
-				BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 0.7*bandwidth, 50000));
+				BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, (int)(0.7*bandwidth), 50000));
 
 				ms_filter_call_method(vstream->ms.encoder, MS_VIDEO_ENCODER_GET_CONFIGURATION, &vconf);
 				BC_ASSERT_EQUAL(vconf.vsize.width*vconf.vsize.height, width*height, int, "%d");
