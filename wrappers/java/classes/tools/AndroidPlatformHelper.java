@@ -111,6 +111,9 @@ public class AndroidPlatformHelper {
 		mResources = mContext.getResources();
 		mMainHandler = new Handler(mContext.getMainLooper());
 
+		mIsInInteractiveMode = true;
+		mDozeModeEnabled = false;
+
 		MediastreamerAndroidContext.setContext(mContext);
 		Log.i("[Platform Helper] Created");
 
@@ -151,7 +154,12 @@ public class AndroidPlatformHelper {
             Log.w("[Platform Helper] Device is in bucket " + DeviceUtils.getAppStandbyBucketNameFromValue(bucket));
         }
 
-		mIsInInteractiveMode = true;
+		// Update DNS servers lists
+		NetworkManagerInterface nm = createNetworkManager();
+		Network network = nm.getActiveNetwork(mConnectivityManager);
+		if (network != null) {
+			storeDnsServers(network);
+		}
 	}
 
 	public synchronized void onLinphoneCoreStart(boolean monitoringEnabled) {
@@ -543,21 +551,26 @@ public class AndroidPlatformHelper {
 		enableKeepAlive(mNativePtr, mIsInInteractiveMode);
 	}
 
+	private NetworkManagerInterface createNetworkManager() {
+		NetworkManagerInterface networkManager = null;
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+			networkManager = new NetworkManager(this);
+		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+			networkManager = new NetworkManagerAbove21(this);
+		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+			networkManager = new NetworkManagerAbove23(this);
+		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+			networkManager = new NetworkManagerAbove24(this);
+		} else {
+			networkManager = new NetworkManagerAbove26(this);
+		}
+		return networkManager;
+	}
+
 	private synchronized void startNetworkMonitoring() {
 		if (!mMonitoringEnabled) return;
 		
-		mNetworkManager = new NetworkManager(this);
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-			mNetworkManager = new NetworkManager(this);
-		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-			mNetworkManager = new NetworkManagerAbove21(this);
-		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-			mNetworkManager = new NetworkManagerAbove23(this);
-		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-			mNetworkManager = new NetworkManagerAbove24(this);
-		} else {
-			mNetworkManager = new NetworkManagerAbove26(this);
-		}
+		mNetworkManager = createNetworkManager();
 		Log.i("[Platform Helper] Registering network callbacks");
 		mNetworkManager.registerNetworkCallbacks(mContext, mConnectivityManager);
 
