@@ -592,7 +592,7 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_ref_key(LinphoneProxyConfig *cfg,
  * @param[in] cfg #LinphoneProxyConfig object.
  * @return The reference key string this proxy config is dependent on, or NULL if not marked dependent
  **/
-const char *linphone_proxy_config_get_depends_on(LinphoneProxyConfig *cfg);
+LINPHONE_PUBLIC const char *linphone_proxy_config_get_depends_on(LinphoneProxyConfig *cfg);
 
 /**
  * Mark	this proxy configuration as being dependent on another.
@@ -609,7 +609,7 @@ const char *linphone_proxy_config_get_depends_on(LinphoneProxyConfig *cfg);
  * @param[in] cfg #LinphoneProxyConfig object.
  * @param[in] depends_on The reference key of a master #LinphoneProxyConfig
  **/
-void linphone_proxy_config_set_depends_on(LinphoneProxyConfig *cfg, const char *depends_on);
+LINPHONE_PUBLIC void linphone_proxy_config_set_depends_on(LinphoneProxyConfig *cfg, const char *depends_on);
 
 /**
  * Get The policy that is used to pass through NATs/firewalls when using this proxy config.
