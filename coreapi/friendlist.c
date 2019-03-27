@@ -147,47 +147,17 @@ static int add_uri_entry(xmlTextWriterPtr writer, int err, const char *uri) {
 	return err;
 }
 
-static bctbx_list_t * uri_list(const LinphoneFriendList *list) {
-	bctbx_list_t * uri_list = NULL;
-	bctbx_list_t * elem = NULL;
-	for (elem = list->friends; elem != NULL; elem = bctbx_list_next(elem)) {
-		LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(elem);
-		bctbx_list_t *iterator;
-		const bctbx_list_t *addresses = linphone_friend_get_addresses(lf);
-		bctbx_list_t *numbers = linphone_friend_get_phone_numbers(lf);
-		iterator = (bctbx_list_t *)addresses;
-		while (iterator) {
-			LinphoneAddress *addr = (LinphoneAddress *)bctbx_list_get_data(iterator);
-			if (addr) {
-				char *uri = linphone_address_as_string_uri_only(addr);
-				if (uri) {
-					uri_list = bctbx_list_prepend(uri_list, uri);
-				}
-			}
-			iterator = bctbx_list_next(iterator);
-		}
-		iterator = numbers;
-		while (iterator) {
-			const char *number = (const char *)bctbx_list_get_data(iterator);
-			const char *uri = linphone_friend_phone_number_to_sip_uri(lf, number);
-			if (uri) {
-				uri_list = bctbx_list_prepend(uri_list, ms_strdup(uri));
-			}
-			iterator = bctbx_list_next(iterator);
-		}
-	}
-	return uri_list;
-}
-
 static char * create_resource_list_xml(const LinphoneFriendList *list) {
 	char *xml_content = NULL;
 	xmlBufferPtr buf;
 	xmlTextWriterPtr writer;
 	int err;
 
-	if (list->friends == NULL) return NULL;
-	bctbx_list_t* entries = uri_list(list);
-	if (entries == NULL) {
+	if (list->friends_map_uri == NULL) return NULL;
+
+	bctbx_iterator_t* it = bctbx_map_cchar_begin(list->friends_map_uri);
+	bctbx_iterator_t* end = bctbx_map_cchar_end(list->friends_map_uri);
+	if (it == end) {
 		ms_warning("%s: Empty list in subscription, ignored.", __FUNCTION__);
 		return NULL;
 	}
@@ -217,13 +187,13 @@ static char * create_resource_list_xml(const LinphoneFriendList *list) {
 		err = xmlTextWriterStartElement(writer, (const xmlChar *)"list");
 	}
 
-	{
-		bctbx_list_t* it;
-		for(it = entries; it != NULL; it = it->next){
-			err = add_uri_entry(writer, err, reinterpret_cast<const char *>(it->data));
-		}
-		bctbx_list_free_with_data(entries, ms_free);
+	while (!bctbx_iterator_cchar_equals(it, end)) {
+		const bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
+		const char *uri = bctbx_pair_cchar_get_first(reinterpret_cast<const bctbx_pair_cchar_t*>(pair));
+		err = add_uri_entry(writer, err, uri);
+		it = bctbx_iterator_cchar_get_next(it);
 	}
+
 	if (err >= 0) {
 		/* Close the "list" element. */
 		err = xmlTextWriterEndElement(writer);
@@ -683,9 +653,13 @@ LinphoneFriendListStatus linphone_friend_list_import_friend(LinphoneFriendList *
 	while (iterator) {
 		const char *number = (const char *)bctbx_list_get_data(iterator);
 		const char *uri = linphone_friend_phone_number_to_sip_uri(lf, number);
-		if(uri) {
-			bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(uri, linphone_friend_ref(lf));
-			bctbx_map_cchar_insert_and_delete(list->friends_map_uri, pair);
+		if (uri) {
+			bctbx_iterator_t * it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
+			// Do not insert different friends for the same uri
+			if (bctbx_iterator_cchar_equals(it, bctbx_map_cchar_end(list->friends_map_uri))) {
+				bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(uri, linphone_friend_ref(lf));
+				bctbx_map_cchar_insert_and_delete(list->friends_map_uri, pair);
+			}
 		}
 		iterator = bctbx_list_next(iterator);
 	}
@@ -696,9 +670,13 @@ LinphoneFriendListStatus linphone_friend_list_import_friend(LinphoneFriendList *
 	while (iterator) {
 		LinphoneAddress *lfaddr = (LinphoneAddress *)bctbx_list_get_data(iterator);
 		char *uri = linphone_address_as_string_uri_only(lfaddr);
-		if(uri) {
-			bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(uri, linphone_friend_ref(lf));
-			bctbx_map_cchar_insert_and_delete(list->friends_map_uri, pair);
+		if (uri) {
+			bctbx_iterator_t * it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
+			// Do not insert different friends for the same uri
+			if (bctbx_iterator_cchar_equals(it, bctbx_map_cchar_end(list->friends_map_uri))) {
+				bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(uri, linphone_friend_ref(lf));
+				bctbx_map_cchar_insert_and_delete(list->friends_map_uri, pair);
+			}
 			ms_free(uri);
 		}
 		iterator = bctbx_list_next(iterator);
