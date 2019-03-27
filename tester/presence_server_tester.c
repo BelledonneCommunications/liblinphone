@@ -424,6 +424,7 @@ static void test_presence_list_base(bool_t enable_compression) {
 	const char *rls_uri = "sip:rls@sip.example.org";
 	LinphoneFriendList *lfl;
 	LinphoneFriend *lf;
+	LinphoneFriend *pauline1, *pauline2;
 	const char *laure_identity;
 	const char *marie_identity;
 	const char *pauline_identity;
@@ -452,12 +453,13 @@ static void test_presence_list_base(bool_t enable_compression) {
 	lf = linphone_core_create_friend_with_address(laure->lc, marie_identity);
 	linphone_friend_list_add_friend(lfl, lf);
 	linphone_friend_unref(lf);
-	lf = linphone_core_create_friend_with_address(laure->lc, pauline_identity);
-	linphone_friend_list_add_friend(lfl, lf);
-	linphone_friend_unref(lf);
+	pauline1 = linphone_core_create_friend_with_address(laure->lc, pauline_identity);
+	linphone_friend_list_add_friend(lfl, pauline1);
 	lf = linphone_core_create_friend_with_address(laure->lc, "sip:michelle@sip.inexistentdomain.com");
 	linphone_friend_list_add_friend(lfl, lf);
 	linphone_friend_unref(lf);
+	pauline2 = linphone_core_create_friend_with_address(laure->lc, pauline_identity);
+	linphone_friend_list_add_friend(lfl, pauline2);
 	linphone_core_remove_friend_list(laure->lc, linphone_core_get_default_friend_list(laure->lc));
 	linphone_core_add_friend_list(laure->lc, lfl);
 	linphone_friend_list_unref(lfl);
@@ -479,9 +481,12 @@ static void test_presence_list_base(bool_t enable_compression) {
 	if (!BC_ASSERT_PTR_NOT_NULL(lf)) goto end;
 	BC_ASSERT_EQUAL(linphone_friend_get_status(lf), LinphoneStatusBusy, int, "%d");
 	if (!BC_ASSERT_TRUE(linphone_friend_is_presence_received(lf))) goto end;
-	lf = linphone_friend_list_find_friend_by_address(linphone_core_get_default_friend_list(laure->lc), get_identity_address(pauline));
-	BC_ASSERT_EQUAL(linphone_friend_get_status(lf), LinphoneStatusVacation, int, "%d");
-	if (!BC_ASSERT_TRUE(linphone_friend_is_presence_received(lf))) goto end;
+
+	BC_ASSERT_EQUAL(linphone_friend_get_status(pauline1), LinphoneStatusVacation, int, "%d");
+	BC_ASSERT_EQUAL(linphone_friend_get_status(pauline2), LinphoneStatusVacation, int, "%d");
+	if (!BC_ASSERT_TRUE(linphone_friend_is_presence_received(pauline1))) goto end;
+	if (!BC_ASSERT_TRUE(linphone_friend_is_presence_received(pauline2))) goto end;
+
 	lf = linphone_friend_list_find_friend_by_uri(linphone_core_get_default_friend_list(laure->lc), "sip:michelle@sip.inexistentdomain.com");
 	BC_ASSERT_EQUAL(linphone_friend_get_status(lf), LinphoneStatusOffline, int, "%d");
 	BC_ASSERT_FALSE(linphone_friend_is_presence_received(lf));
@@ -574,6 +579,8 @@ static void test_presence_list_base(bool_t enable_compression) {
 					, LinphonePresenceActivityOnline, int, "%d"); fixme, should be LinphonePresenceActivityUnknown*/
 
 end:
+	linphone_friend_unref(pauline1);
+	linphone_friend_unref(pauline2);
 	bctbx_list_free(lcs);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(marie);
