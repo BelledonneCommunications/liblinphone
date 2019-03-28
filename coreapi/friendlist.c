@@ -323,6 +323,7 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 								it = bctbx_iterator_cchar_get_next(it);
 							}
 							linphone_content_unref(presence_part);
+							linphone_presence_model_unref((LinphonePresenceModel *)presence);
 						}
 					}
 					linphone_free_xml_text_content(cid);

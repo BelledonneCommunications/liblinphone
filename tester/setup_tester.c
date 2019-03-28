@@ -664,6 +664,7 @@ static void search_friend_with_domain_without_filter(void) {
 	linphone_friend_list_remove_friend(lfl, fr);
 
 	if (chloeFriend) linphone_friend_unref(chloeFriend);
+	linphone_presence_model_unref(chloePresence);
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
@@ -945,6 +946,7 @@ static void search_friend_with_presence(void) {
 	LinphoneFriend *fr = linphone_friend_list_find_friend_by_uri(lfl, chloeSipUri);
 	linphone_friend_list_remove_friend(lfl, fr);
 
+	linphone_presence_model_unref(chloePresence);
 	if (chloeFriend) linphone_friend_unref(chloeFriend);
 
 	linphone_magic_search_unref(magicSearch);
@@ -1065,6 +1067,7 @@ static void search_friend_in_call_log_already_exist(void) {
 
 	if (chloeAddress) linphone_address_unref(chloeAddress);
 	if (ronanAddress) linphone_address_unref(ronanAddress);
+	linphone_presence_model_unref(chloePresence);
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
@@ -1369,7 +1372,92 @@ static void search_friend_large_database(void) {
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
-	free(dbPath);
+	bc_free(roDbPath);
+	bc_free(dbPath);
+}
+
+static void search_friend_get_capabilities(void) {
+	LinphoneMagicSearch *magicSearch = NULL;
+	bctbx_list_t *resultList = NULL;
+	bctbx_list_t *copy = NULL;
+	LinphoneCoreManager* manager = linphone_core_manager_new2("marie_rc", FALSE);
+	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
+	LinphoneFriend *no_one_fr;
+	LinphoneFriend *group_chat_fr;
+	LinphoneFriend *lime_fr;
+	LinphonePresenceService *group_chat_service;
+	LinphonePresenceService *lime_service;
+	LinphonePresenceModel *group_chat_model = linphone_presence_model_new();
+	LinphonePresenceModel *lime_model = linphone_presence_model_new();
+	bctbx_list_t *group_chat_descriptions = NULL;
+	bctbx_list_t *lime_descriptions = NULL;
+
+	char *addr = "sip:noone@sip.linphone.org";
+	no_one_fr = linphone_core_create_friend_with_address(manager->lc, addr);
+	linphone_friend_list_add_friend(lfl, no_one_fr);
+
+	addr = "sip:groupchat@sip.linphone.org";
+	group_chat_fr = linphone_core_create_friend_with_address(manager->lc, addr);
+	group_chat_service = linphone_presence_service_new(NULL, LinphonePresenceBasicStatusOpen, NULL);
+	group_chat_descriptions = bctbx_list_append(group_chat_descriptions, "groupchat");
+	linphone_presence_service_set_service_descriptions(group_chat_service, group_chat_descriptions);
+	linphone_presence_model_add_service(group_chat_model, group_chat_service);
+	linphone_friend_set_presence_model_for_uri_or_tel(group_chat_fr, addr, group_chat_model);
+	linphone_friend_list_add_friend(lfl, group_chat_fr);
+
+	addr = "sip:lime@sip.linphone.org";
+	lime_fr = linphone_core_create_friend_with_address(manager->lc, addr);
+	lime_service = linphone_presence_service_new(NULL, LinphonePresenceBasicStatusOpen, NULL);
+	lime_descriptions = bctbx_list_append(lime_descriptions, "groupchat");
+	lime_descriptions = bctbx_list_append(lime_descriptions, "lime");
+	linphone_presence_service_set_service_descriptions(lime_service, lime_descriptions);
+	linphone_presence_model_add_service(lime_model, lime_service);
+	linphone_friend_set_presence_model_for_uri_or_tel(lime_fr, addr, lime_model);
+	linphone_friend_list_add_friend(lfl, lime_fr);
+
+	magicSearch = linphone_magic_search_new(manager->lc);
+	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
+	copy = resultList;
+	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
+		bool_t noOneFound = FALSE;
+		bool_t groupChatFound = FALSE;
+		bool_t limeFound = FALSE;
+		while (resultList) {
+			LinphoneSearchResult *result = (LinphoneSearchResult *)resultList->data;
+			if (linphone_search_result_get_friend(result) == no_one_fr) {
+				noOneFound = TRUE;
+				BC_ASSERT_FALSE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityGroupChat);
+				BC_ASSERT_FALSE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityLimeX3dh);
+			} else if (linphone_search_result_get_friend(result) == group_chat_fr) {
+				groupChatFound = TRUE;
+				BC_ASSERT_TRUE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityGroupChat);
+				BC_ASSERT_FALSE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityLimeX3dh);
+			} else if (linphone_search_result_get_friend(result) == lime_fr) {
+				limeFound = TRUE;
+				BC_ASSERT_TRUE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityGroupChat);
+				BC_ASSERT_TRUE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityLimeX3dh);
+			}
+
+			resultList = bctbx_list_next(resultList);
+		}
+		BC_ASSERT_TRUE(noOneFound);
+		BC_ASSERT_TRUE(groupChatFound);
+		BC_ASSERT_TRUE(limeFound);
+		bctbx_list_free_with_data(copy, (bctbx_list_free_func)linphone_magic_search_unref);
+	}
+
+	linphone_presence_service_unref(group_chat_service);
+	linphone_presence_service_unref(lime_service);
+
+	linphone_presence_model_unref(group_chat_model);
+	linphone_presence_model_unref(lime_model);
+
+	linphone_friend_unref(no_one_fr);
+	linphone_friend_unref(group_chat_fr);
+	linphone_friend_unref(lime_fr);
+
+	linphone_magic_search_unref(magicSearch);
+	linphone_core_manager_destroy(manager);
 }
 
 
