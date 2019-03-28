@@ -5579,8 +5579,10 @@ void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 		LinphoneCall *call=linphone_core_get_current_call(lc);
 		if (call) {
 			VideoStream *vstream = reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo));
-			if (vstream)
+			if (vstream) {
 				video_stream_set_device_rotation(vstream,rotation);
+				video_stream_change_camera_skip_bitrate(vstream, vstream->cam);
+			}
 		}
 	}
 #endif
