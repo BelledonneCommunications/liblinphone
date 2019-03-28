@@ -459,11 +459,11 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringAnsi(linphone_call_get_native_video_window_id(nativePtr));
+				return Marshal.PtrToStringUni(linphone_call_get_native_video_window_id(nativePtr));
 			}
 			set
 			{
-				linphone_call_set_native_video_window_id(nativePtr, Marshal.StringToHGlobalAnsi(value));
+				linphone_call_set_native_video_window_id(nativePtr, Marshal.StringToHGlobalUni(value));
 			}
 		}
 		{{/isLinphoneCall}}
@@ -487,11 +487,11 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringAnsi(linphone_core_get_native_video_window_id(nativePtr));
+				return Marshal.PtrToStringUni(linphone_core_get_native_video_window_id(nativePtr));
 			}
 			set
 			{
-				linphone_core_set_native_video_window_id(nativePtr, Marshal.StringToHGlobalAnsi(value));
+				linphone_core_set_native_video_window_id(nativePtr, Marshal.StringToHGlobalUni(value));
 			}
 		}
 
@@ -500,11 +500,11 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringAnsi(linphone_core_get_native_preview_window_id(nativePtr));
+				return Marshal.PtrToStringUni(linphone_core_get_native_preview_window_id(nativePtr));
 			}
 			set
 			{
-				linphone_core_set_native_preview_window_id(nativePtr, Marshal.StringToHGlobalAnsi(value));
+				linphone_core_set_native_preview_window_id(nativePtr, Marshal.StringToHGlobalUni(value));
 			}
 		}
 		{{/isLinphoneCore}}
