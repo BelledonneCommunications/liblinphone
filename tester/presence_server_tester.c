@@ -472,9 +472,9 @@ static void test_presence_list_base(bool_t enable_compression) {
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 
-	wait_for_list(lcs, &laure->stat.number_of_NotifyPresenceReceived, 4, 4000); // one event by known friend by notify, 4 if test is started independently in
+	wait_for_list(lcs, &laure->stat.number_of_NotifyPresenceReceived, 6, 4000); // one event by known friend by notify, 4 if test is started independently in
 	BC_ASSERT_GREATER(laure->stat.number_of_NotifyPresenceReceived, 2, int, "%d");
-	BC_ASSERT_LOWER(laure->stat.number_of_NotifyPresenceReceived, 4, int, "%d");
+	BC_ASSERT_LOWER(laure->stat.number_of_NotifyPresenceReceived, 6, int, "%d");
 	BC_ASSERT_GREATER(linphone_friend_list_get_expected_notification_version(linphone_core_get_default_friend_list(laure->lc)), 1, int, "%d");
 	BC_ASSERT_LOWER(linphone_friend_list_get_expected_notification_version(linphone_core_get_default_friend_list(laure->lc)), 2, int, "%d");
 	lf = linphone_friend_list_find_friend_by_address(linphone_core_get_default_friend_list(laure->lc), get_identity_address(marie));
