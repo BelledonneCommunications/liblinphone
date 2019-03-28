@@ -2155,6 +2155,7 @@ void linphone_notify_recv(LinphoneCore *lc, SalOp *op, SalSubscribeStatus ss, Sa
 			ms_free(tmp);
 		}
 		linphone_friend_set_presence_model(lf, presence);
+		linphone_presence_model_unref(presence);
 		lf->subscribe_active=TRUE;
 		lf->presence_received = TRUE;
 		lf->out_sub_state = linphone_subscription_state_from_sal(ss);

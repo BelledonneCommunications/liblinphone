@@ -679,6 +679,7 @@ static void search_friend_with_domain_without_filter(void) {
 	linphone_friend_list_remove_friend(lfl, fr);
 
 	if (chloeFriend) linphone_friend_unref(chloeFriend);
+	linphone_presence_model_unref(chloePresence);
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
@@ -959,6 +960,7 @@ static void search_friend_with_presence(void) {
 	LinphoneFriend *fr = linphone_friend_list_find_friend_by_uri(lfl, chloeSipUri);
 	linphone_friend_list_remove_friend(lfl, fr);
 
+	linphone_presence_model_unref(chloePresence);
 	if (chloeFriend) linphone_friend_unref(chloeFriend);
 
 	linphone_magic_search_unref(magicSearch);
@@ -1080,6 +1082,7 @@ static void search_friend_in_call_log_already_exist(void) {
 
 	if (chloeAddress) linphone_address_unref(chloeAddress);
 	if (ronanAddress) linphone_address_unref(ronanAddress);
+	linphone_presence_model_unref(chloePresence);
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
@@ -1464,6 +1467,9 @@ static void search_friend_get_capabilities(void) {
 
 	linphone_presence_service_unref(group_chat_service);
 	linphone_presence_service_unref(lime_service);
+
+	linphone_presence_model_unref(group_chat_model);
+	linphone_presence_model_unref(lime_model);
 
 	linphone_friend_unref(no_one_fr);
 	linphone_friend_unref(group_chat_fr);
