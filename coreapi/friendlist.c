@@ -236,7 +236,7 @@ static void linphone_friend_presence_received(LinphoneFriendList *list, Linphone
 		while (!found_friend_with_phone && !bctbx_iterator_cchar_equals(it, end)) {
 			bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
 			const char *key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
-			if (!key || strcmp(uri, key) != 0) break;
+			if (!key || strcmp(presence_address, key) != 0) break;
 			LinphoneFriend *lf2 = (LinphoneFriend*) bctbx_pair_cchar_get_second(pair);
 			if (lf2 == lf) {
 				found_friend_with_phone = TRUE;
