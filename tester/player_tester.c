@@ -37,7 +37,7 @@ static void play_file(const char *filename, bool_t supported_format, const char 
 	bool_t video_codec_supported = (video_mime && ms_factory_get_decoder(linphone_core_get_ms_factory((void *)lc_manager->lc), video_mime));
 	int expected_res = (supported_format && (audio_codec_supported || video_codec_supported)) ? 0 : -1;
 
-	player = linphone_core_create_local_player(lc_manager->lc, linphone_core_get_ringer_device(lc_manager->lc), video_stream_get_default_video_renderer(), 0);
+	player = linphone_core_create_local_player(lc_manager->lc, linphone_core_get_ringer_device(lc_manager->lc), video_stream_get_default_video_renderer(NULL), 0);
 	BC_ASSERT_PTR_NOT_NULL(player);
 	if(player == NULL) goto fail;
 

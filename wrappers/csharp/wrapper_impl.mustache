@@ -207,7 +207,7 @@ namespace Linphone
 					{
 						break;
 					}
-					string key = Marshal.PtrToStringAuto(dataPtr);
+					string key = Marshal.PtrToStringAnsi(dataPtr);
 					yield return key;
 					ptr = bctbx_list_next(ptr);
 				}
@@ -459,7 +459,7 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringAuto(linphone_call_get_native_video_window_id(nativePtr));
+				return Marshal.PtrToStringUni(linphone_call_get_native_video_window_id(nativePtr));
 			}
 			set
 			{
@@ -487,7 +487,7 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringAuto(linphone_core_get_native_video_window_id(nativePtr));
+				return Marshal.PtrToStringUni(linphone_core_get_native_video_window_id(nativePtr));
 			}
 			set
 			{
@@ -500,7 +500,7 @@ namespace Linphone
 		{
 			get
 			{
-				return Marshal.PtrToStringAuto(linphone_core_get_native_preview_window_id(nativePtr));
+				return Marshal.PtrToStringUni(linphone_core_get_native_preview_window_id(nativePtr));
 			}
 			set
 			{
@@ -529,7 +529,7 @@ namespace Linphone
 			{
 				{{#is_string}}
 				IntPtr stringPtr = {{getter_c_name}}({{getter_nativePtr}});
-				return Marshal.PtrToStringAuto(stringPtr);
+				return Marshal.PtrToStringAnsi(stringPtr);
 				{{/is_string}}
 				{{#is_bool}}
 				return {{getter_c_name}}({{getter_nativePtr}}) != 0;
@@ -607,14 +607,14 @@ namespace Linphone
 			cbs.unregister();
 			{{/removeListener}}
 			{{#is_string}}
-			IntPtr stringPtr = {{c_name}}({{nativePtr}}{{c_args}});
-			return Marshal.PtrToStringAuto(stringPtr);
+			IntPtr stringPtr = {{c_name}}({{nativePtr}}{{{c_args}}});
+			return Marshal.PtrToStringAnsi(stringPtr);
 			{{/is_string}}
 			{{#is_bool}}
-			{{return}}{{c_name}}({{nativePtr}}{{c_args}}) == (char)0 ? false : true;
+			{{return}}{{c_name}}({{nativePtr}}{{{c_args}}}) == (char)0 ? false : true;
 			{{/is_bool}}
 			{{#is_class}}
-			IntPtr ptr = {{c_name}}({{nativePtr}}{{c_args}});
+			IntPtr ptr = {{c_name}}({{nativePtr}}{{{c_args}}});
 			return fromNativePtr<{{type}}>(ptr, {{takeRef}});
 			{{/is_class}}
 			{{#is_enum}}
@@ -626,10 +626,10 @@ namespace Linphone
 			{{#exception}}if (exception_result != 0) throw new LinphoneException("{{name}} returned value" + exception_result);{{/exception}}
 			{{/is_generic}}
 			{{#is_string_list}}
-			return MarshalStringArray({{c_name}}({{nativePtr}}{{c_args}}));
+			return MarshalStringArray({{c_name}}({{nativePtr}}{{{c_args}}}));
 			{{/is_string_list}}
 			{{#is_class_list}}
-			return MarshalBctbxList<{{{list_type}}}>({{c_name}}({{nativePtr}}{{c_args}}));
+			return MarshalBctbxList<{{{list_type}}}>({{c_name}}({{nativePtr}}{{{c_args}}}));
 			{{/is_class_list}}
 		}
 		{{/impl}}
