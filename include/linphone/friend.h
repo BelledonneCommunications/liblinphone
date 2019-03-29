@@ -260,8 +260,6 @@ LINPHONE_PUBLIC void linphone_friend_set_user_data(LinphoneFriend *lf, void *dat
 **/
 LINPHONE_PUBLIC void* linphone_friend_get_user_data(const LinphoneFriend *lf);
 
-LINPHONE_PUBLIC BuddyInfo * linphone_friend_get_info(const LinphoneFriend *lf);
-
 /**
  * Set the reference key of a friend.
  * @param[in] lf #LinphoneFriend object.
