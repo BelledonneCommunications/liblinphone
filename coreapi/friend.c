@@ -530,7 +530,7 @@ static void linphone_friend_unsubscribe(LinphoneFriend *lf){
 
 void linphone_friend_invalidate_subscription(LinphoneFriend *lf){
 	bctbx_list_t *iterator;
-	LinphoneCore *lc=lf->lc;
+	LinphoneCore *lc = lf->lc;
 
 	if (lf->outsub!=NULL) {
 		lf->outsub->release();
@@ -550,9 +550,10 @@ void linphone_friend_invalidate_subscription(LinphoneFriend *lf){
 		linphone_core_notify_notify_presence_received_for_uri_or_tel(lc, lf, lfp->uri_or_tel, lfp->presence);
 		iterator = bctbx_list_next(iterator);
 	}
-	if (bctbx_list_size(lf->presence_models) > 0)
+	if (bctbx_list_size(lf->presence_models) > 0) {
+		// Deprecated
 		linphone_core_notify_notify_presence_received(lc, lf);
-
+	}
 	lf->initial_subscribes_sent=FALSE;
 }
 
