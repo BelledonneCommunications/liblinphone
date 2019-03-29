@@ -1372,8 +1372,7 @@ static void search_friend_large_database(void) {
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
-	bc_free(roDbPath);
-	bc_free(dbPath);
+	free(dbPath);
 }
 
 /*the webrtc AEC implementation is brought to mediastreamer2 by a plugin.
