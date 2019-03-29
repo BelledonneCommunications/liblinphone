@@ -5289,6 +5289,8 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC const char *linphone_core_get_chat_database_
  * Create a client-side group chat room. When calling this function the chat room is only created
  * at the client-side and is empty. You need to call linphone_chat_room_add_participants() to
  * create at the server side and add participants to it.
+ * Also, the created chat room will not be a one-to-one chat room even if linphone_chat_room_add_participants() is called with only one participant.
+ *
  * @param[in] lc A #LinphoneCore object
  * @param[in] subject The subject of the group chat room
  * @param[in] fallback Boolean value telling whether we should plan on being able to fallback to a basic chat room if the client-side group chat room creation fails
@@ -5300,6 +5302,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom * linphone_core_create_clie
  * Create a client-side group chat room. When calling this function the chat room is only created
  * at the client-side and is empty. You need to call linphone_chat_room_add_participants() to
  * create at the server side and add participants to it.
+ * Also, the created chat room will not be a one-to-one chat room even if linphone_chat_room_add_participants() is called with only one participant.
+ *
  * @param[in] lc A #LinphoneCore object
  * @param[in] subject The subject of the group chat room
  * @param[in] fallback Boolean value telling whether we should plan on being able to fallback to a basic chat room if the client-side group chat room creation fails
@@ -5325,7 +5329,6 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room(LinphoneCore *l
  *
  * @param[in] lc A #LinphoneCore object
  * @param[in] params The chat room creation parameters #LinphoneChatRoomParams
- * @param[in] subject The subject of the group chat room
  * @param[in] participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
  * @return The newly created chat room.
  */
