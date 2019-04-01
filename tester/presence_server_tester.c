@@ -478,7 +478,21 @@ static void test_presence_list_base(bool_t enable_compression) {
 	linphone_core_add_friend_list(laure->lc, lfl);
 	
 	linphone_friend_list_update_subscriptions(lfl);
+
+	bctbx_list_t *paulines = linphone_friend_list_find_friends_by_uri(lfl, pauline_identity);
+	BC_ASSERT_PTR_NOT_NULL(paulines);
+	BC_ASSERT_EQUAL(bctbx_list_size(paulines), 2, int, "%d");
+	bctbx_list_free_with_data(paulines, (void(*)(void *))linphone_friend_unref);
+
 	linphone_friend_list_unref(lfl);
+
+	LinphoneAddress *pauline_identity_addr = linphone_address_new(pauline_identity);
+	paulines = linphone_core_find_friends(laure->lc, pauline_identity_addr);
+	BC_ASSERT_PTR_NOT_NULL(paulines);
+	BC_ASSERT_EQUAL(bctbx_list_size(paulines), 2, int, "%d");
+	bctbx_list_free_with_data(paulines, (void(*)(void *))linphone_friend_unref);
+	linphone_address_unref(pauline_identity_addr);
+
 	presence = linphone_presence_model_new();
 	linphone_presence_model_set_basic_status(presence, LinphonePresenceBasicStatusOpen);
 	linphone_core_set_presence_model(laure->lc, presence);

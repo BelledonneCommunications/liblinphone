@@ -980,6 +980,27 @@ LinphoneFriend *linphone_core_find_friend(const LinphoneCore *lc, const Linphone
 	return lf;
 }
 
+bctbx_list_t *linphone_core_find_friends(const LinphoneCore *lc, const LinphoneAddress *addr) {
+	bctbx_list_t *result = NULL;
+	bctbx_list_t *lists = lc->friends_lists;
+	while (lists) {
+		LinphoneFriendList *list = (LinphoneFriendList *)bctbx_list_get_data(lists);
+		bctbx_list_t *list_result = linphone_friend_list_find_friends_by_address(list, addr);
+		if (list_result) {
+			bctbx_list_t *elem;
+			for (elem = list_result; elem != NULL; elem = bctbx_list_next(elem)) {
+				LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(elem);
+				if (lf) {
+					result = bctbx_list_append(result, linphone_friend_ref(lf));
+				}
+			}
+			bctbx_list_free_with_data(list_result, (void(*)(void *))linphone_friend_unref);
+		}
+		lists = bctbx_list_next(lists);
+	}
+	return result;
+}
+
 LinphoneFriend *linphone_core_get_friend_by_address(const LinphoneCore *lc, const char *uri) {
 	bctbx_list_t *lists = lc->friends_lists;
 	LinphoneFriend *lf = NULL;
