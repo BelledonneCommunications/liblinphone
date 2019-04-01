@@ -5703,6 +5703,14 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneFriend *linphone_core_get_friend_by_
 LINPHONE_PUBLIC LinphoneFriend *linphone_core_find_friend(const LinphoneCore *lc, const LinphoneAddress *addr);
 
 /**
+ * Search all #LinphoneFriend matching an address.
+ * @param[in] lc #LinphoneCore object.
+ * @param[in] addr The address to use to search the friends.
+ * @return \bctbx_list{LinphoneFriend} a list of #LinphoneFriend corresponding to the given address.
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_find_friends(const LinphoneCore *lc, const LinphoneAddress *addr);
+
+/**
  * Search a #LinphoneFriend by its reference key.
  * @param[in] lc #LinphoneCore object.
  * @param[in] key The reference key to use to search the friend.
