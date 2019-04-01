@@ -857,6 +857,19 @@ LinphoneFriend * linphone_friend_list_find_friend_by_address(const LinphoneFrien
 	return lf;
 }
 
+bctbx_list_t * linphone_friend_list_find_friends_by_address(const LinphoneFriendList *list, const LinphoneAddress *address) {
+	LinphoneAddress *clean_addr = linphone_address_clone(address);
+	bctbx_list_t *result = NULL;
+	if (linphone_address_has_uri_param(clean_addr, "gr")) {
+		linphone_address_remove_uri_param(clean_addr, "gr");
+	}
+	char *uri = linphone_address_as_string_uri_only(clean_addr);
+	result = linphone_friend_list_find_friends_by_uri(list, uri);
+	bctbx_free(uri);
+	linphone_address_unref(clean_addr);
+	return result;
+}
+
 LinphoneFriend * linphone_friend_list_find_friend_by_uri(const LinphoneFriendList *list, const char *uri) {
 	LinphoneFriend *result = NULL;
 	bctbx_iterator_t *it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
@@ -864,6 +877,28 @@ LinphoneFriend * linphone_friend_list_find_friend_by_uri(const LinphoneFriendLis
 	if (!bctbx_iterator_cchar_equals(it, end)) {
 		bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
 		result = (LinphoneFriend *)bctbx_pair_cchar_get_second(pair);
+	}
+	bctbx_iterator_cchar_delete(end);
+	bctbx_iterator_cchar_delete(it);
+	return result;
+}
+
+bctbx_list_t * linphone_friend_list_find_friends_by_uri(const LinphoneFriendList *list, const char *uri) {
+	bctbx_list_t *result = NULL;
+	bctbx_iterator_t *it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
+	bctbx_iterator_t *end = bctbx_map_cchar_end(list->friends_map_uri);
+	if (!bctbx_iterator_cchar_equals(it, end)) {
+		while (!bctbx_iterator_cchar_equals(it, end)) {
+			const bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
+			const char *friend_uri = bctbx_pair_cchar_get_first(reinterpret_cast<const bctbx_pair_cchar_t*>(pair));
+			if (uri && friend_uri && strcmp(friend_uri, uri) == 0) {
+				LinphoneFriend *lf = (LinphoneFriend *)bctbx_pair_cchar_get_second(pair);
+				result = bctbx_list_prepend(result, linphone_friend_ref(lf));
+			} else {
+				break;
+			}
+			it = bctbx_iterator_cchar_get_next(it);
+		}
 	}
 	bctbx_iterator_cchar_delete(end);
 	bctbx_iterator_cchar_delete(it);
