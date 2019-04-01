@@ -577,6 +577,14 @@ void linphone_proxy_config_set_dial_prefix(LinphoneProxyConfig *cfg, const char 
 		cfg->dial_prefix=NULL;
 	}
 	if (prefix && prefix[0]!='\0') cfg->dial_prefix=ms_strdup(prefix);
+	
+	if (cfg->lc) {
+		bctbx_list_t *elem;
+		for (elem = cfg->lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
+			LinphoneFriendList *list = (LinphoneFriendList *)bctbx_list_get_data(elem);
+			linphone_friend_list_invalidate_friends_maps(list);
+		}
+	}
 }
 
 const char *linphone_proxy_config_get_dial_prefix(const LinphoneProxyConfig *cfg){

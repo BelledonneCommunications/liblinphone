@@ -633,48 +633,30 @@ LinphoneFriendListStatus linphone_friend_list_add_local_friend(LinphoneFriendLis
 	return _linphone_friend_list_add_friend(list, lf, FALSE);
 }
 
+void linphone_friend_list_invalidate_friends_maps(LinphoneFriendList *list) {
+	if (list->friends_map) bctbx_mmap_cchar_delete_with_data(list->friends_map, (void (*)(void *))linphone_friend_unref);
+	list->friends_map = bctbx_mmap_cchar_new();
+	if (list->friends_map_uri) bctbx_mmap_cchar_delete_with_data(list->friends_map_uri, (void (*)(void *))linphone_friend_unref);
+	list->friends_map_uri = bctbx_mmap_cchar_new();
+	
+	const bctbx_list_t *elem;
+	for (elem = list->friends; elem != NULL; elem = bctbx_list_next(elem)) {
+		LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(elem);
+		linphone_friend_add_addresses_and_numbers_into_maps(lf, list);
+	}
+}
+
 LinphoneFriendListStatus linphone_friend_list_import_friend(LinphoneFriendList *list, LinphoneFriend *lf, bool_t synchronize) {
-	bctbx_list_t *iterator;
-	bctbx_list_t *phone_numbers;
-	const bctbx_list_t *addresses;
 	if (lf->friend_list) {
 		if (lf->friend_list)
 			ms_error("linphone_friend_list_add_friend(): invalid friend, already in list");
 		return LinphoneFriendListInvalidFriend;
 	}
+	
 	lf->friend_list = list;
 	lf->lc = list->lc;
 	list->friends = bctbx_list_prepend(list->friends, linphone_friend_ref(lf));
-	if (lf->refkey) {
-		bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(lf->refkey, linphone_friend_ref(lf));
-		bctbx_map_cchar_insert_and_delete(list->friends_map, pair);
-	}
-
-	phone_numbers = linphone_friend_get_phone_numbers(lf);
-	iterator = phone_numbers;
-	while (iterator) {
-		const char *number = (const char *)bctbx_list_get_data(iterator);
-		const char *uri = linphone_friend_phone_number_to_sip_uri(lf, number);
-		if (uri) {
-			bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(uri, linphone_friend_ref(lf));
-			bctbx_map_cchar_insert_and_delete(list->friends_map_uri, pair);
-		}
-		iterator = bctbx_list_next(iterator);
-	}
-	bctbx_list_free(phone_numbers);
-
-	addresses = linphone_friend_get_addresses(lf);
-	iterator = (bctbx_list_t *)addresses;
-	while (iterator) {
-		LinphoneAddress *lfaddr = (LinphoneAddress *)bctbx_list_get_data(iterator);
-		char *uri = linphone_address_as_string_uri_only(lfaddr);
-		if (uri) {
-			bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(uri, linphone_friend_ref(lf));
-			bctbx_map_cchar_insert_and_delete(list->friends_map_uri, pair);
-			ms_free(uri);
-		}
-		iterator = bctbx_list_next(iterator);
-	}
+	linphone_friend_add_addresses_and_numbers_into_maps(lf, list);
 
 	if (synchronize) {
 		list->dirty_friends_to_update = bctbx_list_prepend(list->dirty_friends_to_update, linphone_friend_ref(lf));
