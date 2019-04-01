@@ -143,6 +143,48 @@ static void linphone_android_ortp_log_handler(const char *domain, OrtpLogLevel l
     bctbx_free(str);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Logger
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+extern "C" {
+
+static void java_log(JNIEnv* env, BctbxLogLevel loglevel, jstring jdomain, jstring jmsg) {
+	const char* domain = jdomain ? env->GetStringUTFChars(jdomain, NULL) : NULL;
+	const char* msg = jmsg ? env->GetStringUTFChars(jmsg, NULL) : NULL;
+	BCTBX_SLOG(domain, loglevel) << msg;
+	if (msg) env->ReleaseStringUTFChars(jmsg, msg);
+	if (domain) env->ReleaseStringUTFChars(jdomain, domain);
+}
+
+JNIEXPORT void JNICALL Java_org_linphone_core_tools_Log_d(JNIEnv* env, jobject thiz, jstring jdomain, jstring jmsg) {
+	java_log(env, BCTBX_LOG_DEBUG, jdomain, jmsg);
+}
+
+JNIEXPORT void JNICALL Java_org_linphone_core_tools_Log_i(JNIEnv* env, jobject thiz, jstring jdomain, jstring jmsg) {
+    java_log(env, BCTBX_LOG_MESSAGE, jdomain, jmsg);
+}
+
+JNIEXPORT void JNICALL Java_org_linphone_core_tools_Log_w(JNIEnv* env, jobject thiz, jstring jdomain, jstring jmsg) {
+    java_log(env, BCTBX_LOG_WARNING, jdomain, jmsg);
+}
+
+JNIEXPORT void JNICALL Java_org_linphone_core_tools_Log_e(JNIEnv* env, jobject thiz, jstring jdomain, jstring jmsg) {
+	java_log(env, BCTBX_LOG_ERROR, jdomain, jmsg);
+}
+
+JNIEXPORT void JNICALL Java_org_linphone_core_tools_Log_f(JNIEnv* env, jobject thiz, jstring jdomain, jstring jmsg) {
+	java_log(env, BCTBX_LOG_FATAL, jdomain, jmsg);
+}
+
+JNIEXPORT void JNICALL Java_org_linphone_core_tools_Log_setDomain(JNIEnv* env, jobject thiz, jstring jdomain) {
+	const char* domain = jdomain ? env->GetStringUTFChars(jdomain, NULL) : NULL;
+	bctbx_set_log_level_mask(domain, (int)bctbx_get_log_level_mask(BCTBX_LOG_DOMAIN));
+	if (domain) env->ReleaseStringUTFChars(jdomain, domain);
+}
+
+} // extern C
+
 int dumbMethodForAllowingUsageOfCpuFeaturesFromStaticLibMediastream() {
 	return (android_getCpuFamily() == ANDROID_CPU_FAMILY_ARM && (android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_NEON) != 0);
 }

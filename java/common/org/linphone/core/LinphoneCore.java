@@ -58,6 +58,10 @@ public interface LinphoneCore {
 		 * Configuring
 		 */
 		static public GlobalState GlobalConfiguring = new GlobalState(4,"GlobalConfiguring");
+		/**
+		 * Ready
+		 */
+		static public GlobalState GlobalReady = new GlobalState(5,"GlobalReady");
 
 		private final int mValue;
 		private final String mStringValue;
