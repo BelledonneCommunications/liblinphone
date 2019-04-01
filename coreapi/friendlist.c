@@ -870,6 +870,28 @@ LinphoneFriend * linphone_friend_list_find_friend_by_uri(const LinphoneFriendLis
 	return result;
 }
 
+bctbx_list_t * linphone_friend_list_find_friends_by_uri(const LinphoneFriendList *list, const char *uri) {
+	bctbx_list_t *result = NULL;
+	bctbx_iterator_t *it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
+	bctbx_iterator_t *end = bctbx_map_cchar_end(list->friends_map_uri);
+	if (!bctbx_iterator_cchar_equals(it, end)) {
+		while (!bctbx_iterator_cchar_equals(it, end)) {
+			const bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
+			const char *friend_uri = bctbx_pair_cchar_get_first(reinterpret_cast<const bctbx_pair_cchar_t*>(pair));
+			if (uri && friend_uri && strcmp(friend_uri, uri) == 0) {
+				LinphoneFriend *lf = (LinphoneFriend *)bctbx_pair_cchar_get_second(pair);
+				result = bctbx_list_prepend(result, linphone_friend_ref(lf));
+			} else {
+				break;
+			}
+			it = bctbx_iterator_cchar_get_next(it);
+		}
+	}
+	bctbx_iterator_cchar_delete(end);
+	bctbx_iterator_cchar_delete(it);
+	return result;
+}
+
 LinphoneFriend *linphone_friend_list_find_friend_by_ref_key (const LinphoneFriendList *list, const char *ref_key) {
 	LinphoneFriend *result = NULL;
 	if (list) {

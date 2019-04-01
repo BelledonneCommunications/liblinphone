@@ -152,6 +152,14 @@ LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_address(con
 LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_uri(const LinphoneFriendList *list, const char *uri);
 
 /**
+ * Find all friends in the friend list using an URI string.
+ * @param[in] list #LinphoneFriendList object.
+ * @param[in] uri A string containing the URI of the friends we want to search for.
+ * @return \bctbx_list{LinphoneFriend} as a list of #LinphoneFriend if found, NULL otherwise.
+**/
+LINPHONE_PUBLIC bctbx_list_t * linphone_friend_list_find_friends_by_uri(const LinphoneFriendList *list, const char *uri);
+
+/**
  * Find a friend in the friend list using a ref key.
  * @param[in] list #LinphoneFriendList object.
  * @param[in] ref_key The ref key string of the friend we want to search for.
