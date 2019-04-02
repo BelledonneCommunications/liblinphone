@@ -138,7 +138,7 @@ const list<DialPlan> DialPlanPrivate::DialPlans = {
 	{ "Jamaica", "JM", "1", 10, "011" },
 	{ "Japan", "JP", "81", 10, "010" },
 	{ "Jordan", "JO", "962", 9, "00" },
-	{ "Kazakhstan", "KZ", "7", 10, "00" },
+	/*{ "Kazakhstan", "KZ", "7", 10, "00" }, rusia*/
 	{ "Kenya", "KE", "254", 9, "000" },
 	{ "Kiribati", "KI", "686", 5, "00" },
 	{ "Korea, North", "KP", "850", 12, "99" },
@@ -166,10 +166,10 @@ const list<DialPlan> DialPlanPrivate::DialPlans = {
 	{ "Martinique", "MQ", "596", 9, "00" },
 	{ "Mauritania", "MR", "222", 8, "00" },
 	{ "Mauritius", "MU", "230", 7, "00" },
-	{ "Mayotte Island", "YT", "262", 9, "00" },
-	{ "Mexico", "MX", "52", 10, "00" },
+	/*{ "Mayotte Island", "YT", "262", 9, "00" }, réunion*/
+	{ "Mexico", "MX", "52", 11, "00" },
 	/*The following is a pseudo dial plan for Mexican mobile phones. See https://en.wikipedia.org/wiki/Telephone_numbers_in_Mexico*/
-	{ "Mexico", "MX", "521", 10, "00" },
+	/*{ "Mexico", "MX", "521", 10, "00" },*/
 	{ "Micronesia", "FM", "691", 7, "011" },
 	{ "Moldova", "MD", "373", 8, "00" },
 	{ "Monaco", "MC", "377", 8, "00" },
@@ -181,7 +181,7 @@ const list<DialPlan> DialPlanPrivate::DialPlans = {
 	{ "Myanmar", "MM", "95", 10, "00" },
 	{ "Namibia", "NA", "264", 9, "00" },
 	{ "Nauru", "NR", "674", 7, "00" },
-	{ "Nepal", "NP", "43", 10, "00" },
+	{ "Nepal", "NP", "977", 8, "00" },
 	{ "Netherlands", "NL", "31", 9, "00" },
 	{ "New Caledonia", "NC", "687", 6, "00" },
 	{ "New Zealand", "NZ", "64", 8, "00" },

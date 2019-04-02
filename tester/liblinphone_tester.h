@@ -499,7 +499,8 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 const char *liblinphone_tester_get_empty_rc(void);
     
 int liblinphone_tester_copy_file(const char *from, const char *to);
-
+char * generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *dialPlan);
+	
 #ifdef __cplusplus
 };
 #endif
