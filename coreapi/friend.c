@@ -326,18 +326,17 @@ static void remove_friend_from_list_map_if_already_in_it(LinphoneFriend *lf, con
 
 	bctbx_iterator_t *it = bctbx_map_cchar_find_key(lf->friend_list->friends_map_uri, uri);
 	bctbx_iterator_t *end = bctbx_map_cchar_end(lf->friend_list->friends_map_uri);
-	bool_t found = FALSE;
 
 	// Map is sorted, check if next entry matches key otherwise stop
-	while (!found && !bctbx_iterator_cchar_equals(it, end)) {
+	while (!bctbx_iterator_cchar_equals(it, end)) {
 		bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
 		const char *key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
 		if (!key || strcmp(uri, key) != 0) break;
 		LinphoneFriend *lf2 = (LinphoneFriend*) bctbx_pair_cchar_get_second(pair);
 		if (lf2 == lf) {
-			linphone_friend_unref((LinphoneFriend*)bctbx_pair_cchar_get_second(bctbx_iterator_cchar_get_pair(it)));
+			linphone_friend_unref(lf2);
 			bctbx_map_cchar_erase(lf->friend_list->friends_map_uri, it);
-			found = TRUE;
+			break;
 		}
 		it = bctbx_iterator_cchar_get_next(it);
 	}
