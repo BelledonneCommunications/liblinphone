@@ -699,7 +699,7 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 		}
 	}
 	list->friends = bctbx_list_erase_link(list->friends, elem);
-	if(lf->refkey) {
+	if (lf->refkey) {
 		bctbx_iterator_t * it = bctbx_map_cchar_find_key(list->friends_map, lf->refkey);
 		bctbx_iterator_t * end = bctbx_map_cchar_end(list->friends_map);
 		if (!bctbx_iterator_cchar_equals(it, end)){
@@ -715,7 +715,7 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 	while (iterator) {
 		const char *number = (const char *)bctbx_list_get_data(iterator);
 		const char *uri = linphone_friend_phone_number_to_sip_uri(lf, number);
-		if(uri) {
+		if (uri) {
 			bctbx_iterator_t * it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
 			bctbx_iterator_t * end = bctbx_map_cchar_end(list->friends_map_uri);
 			if (!bctbx_iterator_cchar_equals(it, end)){
@@ -734,7 +734,7 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 	while (iterator) {
 		LinphoneAddress *lfaddr = (LinphoneAddress *)bctbx_list_get_data(iterator);
 		char *uri = linphone_address_as_string_uri_only(lfaddr);
-		if(uri) {
+		if (uri) {
 			bctbx_iterator_t * it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
 			bctbx_iterator_t * end = bctbx_map_cchar_end(list->friends_map_uri);
 			if (!bctbx_iterator_cchar_equals(it, end)){
