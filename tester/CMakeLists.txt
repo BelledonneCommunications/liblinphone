@@ -135,6 +135,7 @@ set(RC_FILES
 	rcfiles/pauline_lime_x3dh_rc
 	rcfiles/pauline_nat64_rc
 	rcfiles/pauline_rc
+	rcfiles/pauline_sip2_rc
 	rcfiles/pauline_rc_rtcp_xr
 	rcfiles/pauline_sips_rc
 	rcfiles/pauline_tcp_rc
