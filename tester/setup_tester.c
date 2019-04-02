@@ -1536,6 +1536,25 @@ static void echo_canceller_check(void){
 	linphone_core_manager_destroy(manager);
 }
 
+static void dial_plan(void) {
+	const bctbx_list_t *it;
+	for ( it = linphone_dial_plan_get_all_list(); it != NULL; it = it->next) {
+		const LinphoneDialPlan *dialplan = (LinphoneDialPlan *)it->data;
+		belle_sip_object_remove_from_leak_detector((void*)dialplan);
+		char *e164 = generate_random_e164_phone_from_dial_plan(dialplan);
+		if (BC_ASSERT_PTR_NOT_NULL(e164)) {
+		const char *calling_code = linphone_dial_plan_get_country_calling_code(dialplan);
+		BC_ASSERT_EQUAL((strlen(e164)-strlen(calling_code) -1) ,linphone_dial_plan_get_national_number_length(dialplan),int,"%i");
+		BC_ASSERT_EQUAL(	  linphone_dial_plan_lookup_ccc_from_e164(e164)
+							, strtol(calling_code, NULL,10)
+							, int
+							, "%i");
+		ms_free(e164);
+		} else {
+			ms_error("cannot generate e164 number for [%s]",linphone_dial_plan_get_country(dialplan));
+		}
+	}
+}
 test_t setup_tests[] = {
 	TEST_NO_TAG("Version check", linphone_version_test),
 	TEST_NO_TAG("Linphone Address", linphone_address_test),
@@ -1575,7 +1594,8 @@ test_t setup_tests[] = {
 	TEST_ONE_TAG("Search friend with same address", search_friend_with_same_address, "MagicSearch"),
 	TEST_ONE_TAG("Search friend in large friends database", search_friend_large_database, "MagicSearch"),
 	TEST_ONE_TAG("Search friend result has capabilities", search_friend_get_capabilities, "MagicSearch"),
-	TEST_ONE_TAG("Search friend result chat room remote", search_friend_chat_room_remote, "MagicSearch")
+	TEST_ONE_TAG("Search friend result chat room remote", search_friend_chat_room_remote, "MagicSearch"),
+	TEST_NO_TAG("Dialplan", dial_plan)
 };
 
 test_suite_t setup_test_suite = {"Setup", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

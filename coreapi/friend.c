@@ -929,6 +929,8 @@ void linphone_core_update_friends_subscriptions(LinphoneCore *lc) {
 		linphone_friend_list_update_subscriptions(list);
 		lists = bctbx_list_next(lists);
 	}
+	//done here to avoid double initial subscribtion if triggered by proxy or from the app.
+	lc->initial_subscribes_sent=TRUE;
 }
 
 bool_t linphone_core_should_subscribe_friends_only_when_registered(const LinphoneCore *lc){
@@ -938,8 +940,6 @@ bool_t linphone_core_should_subscribe_friends_only_when_registered(const Linphon
 void linphone_core_send_initial_subscribes(LinphoneCore *lc) {
 
 	if (lc->initial_subscribes_sent) return;
-	lc->initial_subscribes_sent=TRUE;
-
 	linphone_core_update_friends_subscriptions(lc);
 }
 
