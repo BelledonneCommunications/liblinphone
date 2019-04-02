@@ -278,7 +278,7 @@ static void single_route(void) {
  * A call from pauline@example.org to marie@sip2.linphone.org should work (and go through example.org instead of sip2.linphone.org)
  */
 static void dependent_proxy_config(void) {
-	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_sip2_rc");
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_dependent_proxy_rc");
 	LinphoneProxyConfig *marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
 	LinphoneProxyConfig *marie_dependent_cfg = (LinphoneProxyConfig *) linphone_core_get_proxy_config_list(marie->lc)->next->data;
