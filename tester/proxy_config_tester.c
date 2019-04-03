@@ -340,6 +340,40 @@ static void proxy_config_dependent_register(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+//Dependent proxy config should	mirror the state of its 'parent'
+static void proxy_config_dependent_register_state_changed(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_dependent_proxy_rc");
+	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
+	LinphoneProxyConfig *master = (LinphoneProxyConfig *) proxyConfigs->data;
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 2));
+
+	linphone_proxy_config_edit(master);
+	char *keep_server_addr = bctbx_strdup(linphone_proxy_config_get_server_addr(master));
+	linphone_proxy_config_set_server_addr(master, "sip:cannotberesol.ved");
+	linphone_proxy_config_done(master);
+
+	//Both configs should now be in 'LinphoneRegistrationFailed' state
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationFailed, 2));
+
+	marie->stat.number_of_LinphoneRegistrationOk = 0;
+	linphone_proxy_config_edit(master);
+	linphone_proxy_config_set_server_addr(master, keep_server_addr);
+	linphone_proxy_config_done(master);
+
+	//Ok again.
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 2));
+
+	linphone_proxy_config_edit(master);
+	linphone_proxy_config_enable_register(master, FALSE);
+	linphone_proxy_config_done(master);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationCleared, 2));
+
+	bctbx_free(keep_server_addr);
+	linphone_core_manager_destroy(marie);
+}
+
 
 //Dependent proxy config pointing to inexistant other proxy configuration.
 static void invalid_dependent_proxy_config(void) {
@@ -402,6 +436,7 @@ test_t proxy_config_tests[] = {
 	TEST_NO_TAG("Proxy dependency", dependent_proxy_config),
 	TEST_NO_TAG("Invalid dependent proxy", invalid_dependent_proxy_config),
 	TEST_NO_TAG("Dependent proxy dependency register", proxy_config_dependent_register),
+	TEST_NO_TAG("Dependent proxy state changed", proxy_config_dependent_register_state_changed),
 	TEST_NO_TAG("Dependent proxy dependency removal", dependent_proxy_dependency_removal)
 };
 
