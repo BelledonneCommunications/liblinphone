@@ -1440,13 +1440,13 @@ void linphone_proxy_config_set_user_data(LinphoneProxyConfig *cfg, void *ud) {
 	cfg->user_data = ud;
 }
 
-void * linphone_proxy_config_get_user_data(const LinphoneProxyConfig *cfg) {
+void *linphone_proxy_config_get_user_data(const LinphoneProxyConfig *cfg) {
 	return cfg->user_data;
 }
 
 //Enable register on proxy config dependent on the given one (if any).
 //Also force contact address of dependent proxy	config to the given one
-void _linphone_update_dependent_proxy_config(LinphoneProxyConfig *cfg) {
+void _linphone_update_dependent_proxy_config(LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const char *message) {
 	if (!cfg || !cfg->lc) return;
 	bctbx_list_t *it = cfg->lc->sip_conf.proxies;
 
@@ -1455,11 +1455,22 @@ void _linphone_update_dependent_proxy_config(LinphoneProxyConfig *cfg) {
 		if (tmp != cfg && tmp->depends_on && strcmp(tmp->depends_on, cfg->refkey) == 0) {
 			if (tmp->reg_dependent_disabled) continue;
 			linphone_proxy_config_edit(tmp);
-			linphone_proxy_config_enable_register(tmp, TRUE);
-			const SalAddress *salAddr = cfg->op->getContactAddress();
+			if (state == LinphoneRegistrationOk) {
+				linphone_proxy_config_enable_register(tmp, TRUE);
+				const SalAddress *salAddr = cfg->op->getContactAddress();
 
-			if (salAddr) {
-				tmp->contact_address = linphone_address_new(sal_address_as_string(salAddr));
+				if (salAddr) {
+					if (tmp->contact_address) {
+						linphone_address_unref(tmp->contact_address);
+					}
+					char *sal_addr = sal_address_as_string(salAddr);
+					tmp->contact_address = linphone_address_new(sal_addr);
+					bctbx_free(sal_addr);
+				}
+			} else if (state == LinphoneRegistrationCleared || state == LinphoneRegistrationFailed) {
+				linphone_proxy_config_pause_register(tmp);
+				tmp->reg_sendregister = FALSE;
+				linphone_proxy_config_set_state(tmp, state, message);
 			}
 			linphone_proxy_config_done(tmp);
 			linphone_proxy_config_update(tmp);
@@ -1478,12 +1489,9 @@ void linphone_proxy_config_set_state(LinphoneProxyConfig *cfg, LinphoneRegistrat
 					linphone_registration_state_to_string(state),
 					cfg->lc);
 		if (state == LinphoneRegistrationOk) {
-			if (!cfg->depends_on) {
-				const SalAddress *salAddr = cfg->op->getContactAddress();
-				if (salAddr)
-					L_GET_PRIVATE_FROM_C_OBJECT(cfg->contact_address)->setInternalAddress(salAddr);
-				_linphone_update_dependent_proxy_config(cfg);
-			}
+			const SalAddress *salAddr = cfg->op->getContactAddress();
+			if (salAddr)
+				L_GET_PRIVATE_FROM_C_OBJECT(cfg->contact_address)->setInternalAddress(salAddr);
 		}
 		if (linphone_core_should_subscribe_friends_only_when_registered(lc) && cfg->state!=state && state == LinphoneRegistrationOk) {
 			ms_message("Updating friends for identity [%s] on core [%p]",cfg->reg_identity,cfg->lc);
@@ -1492,11 +1500,14 @@ void linphone_proxy_config_set_state(LinphoneProxyConfig *cfg, LinphoneRegistrat
 			linphone_core_update_friends_subscriptions(lc);
 		} else {
 			/*at this point state must be updated*/
-			cfg->state=state;
+			cfg->state = state;
 		}
-
-		if (lc)
+		if (!cfg->depends_on) {
+			_linphone_update_dependent_proxy_config(cfg, state, message);
+		}
+		if (lc) {
 			linphone_core_notify_registration_state_changed(lc,cfg,state,message);
+		}
 	} else {
 		/*state already reported*/
 	}
