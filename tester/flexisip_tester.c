@@ -1878,29 +1878,30 @@ end:
 	bctbx_list_free(lcs);
 }
 
+//This test requires 2 flexisip
 void sequential_forking_with_fallback_route(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCoreManager* pauline2 = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCoreManager* marie = linphone_core_manager_create("marie_rc");
 
-	bctbx_list_t* lcs=bctbx_list_append(NULL,pauline->lc);
+	bctbx_list_t *lcs = bctbx_list_append(NULL, pauline->lc);
 
 	/*we set pauline2 and marie to another test server that is configured with a fallback route*/
 	linphone_proxy_config_set_server_addr(
 		linphone_core_get_default_proxy_config(pauline2->lc),
-		"sip:sip.example.org:5069;transport=tls");
+		"sip:sip2.linphone.org:5069;transport=tls");
 
 	linphone_proxy_config_set_route(
 		linphone_core_get_default_proxy_config(pauline2->lc),
-		"sip:sip.example.org:5069;transport=tls");
+		"sip:sip2.linphone.org:5069;transport=tls");
 
 	linphone_proxy_config_set_server_addr(
 		linphone_core_get_default_proxy_config(marie->lc),
-		"sip:sip.example.org:5068;transport=tcp");
+		"sip:sip2.linphone.org:5068;transport=tcp");
 
 	linphone_proxy_config_set_route(
 		linphone_core_get_default_proxy_config(marie->lc),
-		"sip:sip.example.org:5068;transport=tcp;lr");
+		"sip:sip2.linphone.org:5068;transport=tcp");
 
 	linphone_core_manager_start(pauline2, TRUE);
 	linphone_core_manager_start(marie, TRUE);
@@ -1915,8 +1916,8 @@ void sequential_forking_with_fallback_route(void) {
 	/*set pauline2 not reachable*/
 	linphone_core_set_network_reachable(pauline2->lc,FALSE);
 
-	/*marie invites pauline2 on the other server*/
-	linphone_core_invite_address(marie->lc,pauline2->identity);
+	/* marie invites pauline2 on the other server */
+	linphone_core_invite_address(marie->lc, pauline2->identity);
 
 	/*the call should be routed to the first server with pauline account*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,13000));
