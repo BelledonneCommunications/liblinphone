@@ -137,7 +137,13 @@ find_package(LibXsd REQUIRED)
 find_package(Sqlite3 REQUIRED)
 find_package(XML2 REQUIRED)
 
-find_package(Soci)
+#APPLE platform does not use dlopen for soci backend
+if (APPLE)  
+	find_package(Soci REQUIRED)
+else()
+	find_package(Soci REQUIRED COMPONENTS sqlite3)
+endif()
+
 find_package(ZLIB)
 
 if(ENABLE_TUNNEL)
