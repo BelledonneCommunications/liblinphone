@@ -21,9 +21,9 @@
 	#include <TargetConditionals.h>
 #endif // ifdef __APPLE__
 
-#if (TARGET_OS_IPHONE || defined(__ANDROID__))
+#if (__APPLE__ || defined(__ANDROID__))
 	#include <sqlite3.h>
-#endif // if (TARGET_OS_IPHONE || defined(__ANDROID__))
+#endif // if (__APPLE__ || defined(__ANDROID__))
 
 #include "abstract-db-p.h"
 #include "logger/logger.h"
@@ -34,7 +34,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-#if (TARGET_OS_IPHONE || defined(__ANDROID__))
+#if (__APPLE__ || defined(__ANDROID__))
 	// Force static sqlite3 linking for IOS and Android.
 	extern "C" void register_factory_sqlite3();
 
@@ -56,7 +56,7 @@ AbstractDb::AbstractDb (AbstractDbPrivate &p) : Object(p) {}
 bool AbstractDb::connect (Backend backend, const string &parameters) {
 	L_D();
 
-	#if (TARGET_OS_IPHONE || defined(__ANDROID__))
+	#if (__APPLE__ || defined(__ANDROID__))
 		if (backend == Sqlite3) {
 			static bool registered = false;
 			if (!registered) {
