@@ -951,20 +951,27 @@ void MediaSessionPrivate::initializeParamsAccordingToIncomingCallParams () {
  */
 void MediaSessionPrivate::setCompatibleIncomingCallParams (SalMediaDescription *md) {
 	L_Q();
+	LinphoneCore *lc = q->getCore()->getCCore();
 	/* Handle AVPF, SRTP and DTLS */
 	getParams()->enableAvpf(!!sal_media_description_has_avpf(md));
 	if (destProxy)
 		getParams()->setAvpfRrInterval(static_cast<uint16_t>(linphone_proxy_config_get_avpf_rr_interval(destProxy) * 1000));
 	else
-		getParams()->setAvpfRrInterval(static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(q->getCore()->getCCore()) * 1000));
-	if (sal_media_description_has_zrtp(md) && linphone_core_media_encryption_supported(q->getCore()->getCCore(), LinphoneMediaEncryptionZRTP))
-		getParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
-	else if (sal_media_description_has_dtls(md) && media_stream_dtls_supported())
-		getParams()->setMediaEncryption(LinphoneMediaEncryptionDTLS);
-	else if (sal_media_description_has_srtp(md) && ms_srtp_supported())
-		getParams()->setMediaEncryption(LinphoneMediaEncryptionSRTP);
-	else if (getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP)
-		getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
+		getParams()->setAvpfRrInterval(static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(lc) * 1000));
+	bool_t mandatory = linphone_core_is_media_encryption_mandatory(lc);
+	if (sal_media_description_has_zrtp(md) && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionZRTP)) {
+		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionZRTP))
+			getParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
+	} else if (sal_media_description_has_dtls(md) && media_stream_dtls_supported()) {
+		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionDTLS))
+			getParams()->setMediaEncryption(LinphoneMediaEncryptionDTLS);
+	} else if (sal_media_description_has_srtp(md) && ms_srtp_supported()) {
+		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionSRTP))
+			getParams()->setMediaEncryption(LinphoneMediaEncryptionSRTP);
+	} else if (getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) {
+		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionNone))
+			getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
+	}
 	/* In case of nat64, even ipv4 addresses are reachable from v6. Should be enhanced to manage stream by stream connectivity (I.E v6 or v4) */
 	/*if (!sal_media_description_has_ipv6(md)){
 		lInfo() << "The remote SDP doesn't seem to offer any IPv6 connectivity, so disabling IPv6 for this call";
