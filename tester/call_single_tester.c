@@ -34,8 +34,6 @@
 #endif
 #endif
 
-static void srtp_call(void);
-
 // prototype definition for call_recording()
 #ifdef __ANDROID__
 #ifdef HAVE_OPENH264
@@ -2228,105 +2226,6 @@ static void call_with_privacy2(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void srtp_call(void) {
-	call_base(LinphoneMediaEncryptionSRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE);
-}
-
-/*
- *Purpose of this test is to check that even if caller and callee does not have exactly the same crypto suite configured, the matching crypto suite is used.
- */
-static void srtp_call_with_different_crypto_suite(void) {
-	call_base_with_configfile(LinphoneMediaEncryptionSRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "laure_tcp_rc", "marie_rc");
-}
-
-static void zrtp_call(void) {
-	call_base(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE);
-}
-
-static void zrtp_sas_call(void) {
-	call_base_with_configfile(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "marie_zrtp_b256_rc", "pauline_zrtp_b256_rc");
-	call_base_with_configfile(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "marie_zrtp_b256_rc", "pauline_tcp_rc");
-}
-
-static void zrtp_cipher_call(void) {
-	call_base_with_configfile(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "marie_zrtp_srtpsuite_aes256_rc", "pauline_zrtp_srtpsuite_aes256_rc");
-	call_base_with_configfile(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "marie_zrtp_aes256_rc", "pauline_zrtp_aes256_rc");
-	call_base_with_configfile(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "marie_zrtp_aes256_rc", "pauline_tcp_rc");
-}
-
-static void zrtp_key_agreement_call(void) {
-	call_base_with_configfile(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "marie_zrtp_ecdh255_rc", "pauline_zrtp_ecdh255_rc");
-	call_base_with_configfile(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "marie_zrtp_ecdh448_rc", "pauline_zrtp_ecdh448_rc");
-}
-
-static void dtls_srtp_call(void) {
-	call_base(LinphoneMediaEncryptionDTLS,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE);
-}
-
-static void dtls_srtp_call_with_media_realy(void) {
-	call_base(LinphoneMediaEncryptionDTLS,FALSE,TRUE,LinphonePolicyNoFirewall,FALSE);
-}
-
-
-static void call_with_declined_srtp(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	if (linphone_core_media_encryption_supported(marie->lc,LinphoneMediaEncryptionSRTP)) {
-		linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionSRTP);
-
-		BC_ASSERT_TRUE(call(pauline,marie));
-
-		end_call(marie, pauline);
-	} else {
-		ms_warning ("not tested because srtp not available");
-	}
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-}
-
-static void call_srtp_paused_and_resumed(void) {
-	/*
-	 * This test was made to evidence a bug due to internal usage of current_params while not yet filled by linphone_call_get_current_params().
-	 * As a result it must not use the call() function because it calls linphone_call_get_current_params().
-	 */
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	const LinphoneCallParams *params;
-	LinphoneCall *pauline_call;
-
-	if (!linphone_core_media_encryption_supported(marie->lc,LinphoneMediaEncryptionSRTP)) goto end;
-	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionSRTP);
-
-	linphone_core_invite_address(pauline->lc, marie->identity);
-
-	if (!BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallIncomingReceived,1))) goto end;
-	pauline_call = linphone_core_get_current_call(pauline->lc);
-	linphone_call_accept(linphone_core_get_current_call(marie->lc));
-
-	if (!BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,1))) goto end;
-	if (!BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,1))) goto end;
-
-	linphone_call_pause(pauline_call);
-
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPaused,1));
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallPausedByRemote,1));
-
-	linphone_call_resume(pauline_call);
-	if (!BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2))) goto end;
-	if (!BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2))) goto end;
-
-	/*assert that after pause and resume, SRTP is still being used*/
-	params = linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc));
-	BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionSRTP, int, "%d");
-	params = linphone_call_get_current_params(linphone_core_get_current_call(marie->lc));
-	BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionSRTP, int, "%d");
-
-	end_call(pauline, marie);
-end:
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-}
-
 static void on_eof(LinphonePlayer *player){
 	LinphonePlayerCbs *cbs = linphone_player_get_callbacks(player);
 	LinphoneCoreManager *marie=(LinphoneCoreManager*)linphone_player_cbs_get_user_data(cbs);
@@ -2613,15 +2512,14 @@ void call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enable_video
 	_call_base_with_configfile(mode, enable_video, enable_relay, policy, enable_tunnel, marie_rc, pauline_rc, FALSE);
 }
 
+void call_base_with_configfile_play_nothing(LinphoneMediaEncryption mode, bool_t enable_video,bool_t enable_relay,LinphoneFirewallPolicy policy,bool_t enable_tunnel, const char *marie_rc, const char *pauline_rc){
+	_call_base_with_configfile(mode, enable_video, enable_relay, policy, enable_tunnel, marie_rc, pauline_rc, TRUE);
+}
 
 void call_base(LinphoneMediaEncryption mode, bool_t enable_video,bool_t enable_relay,LinphoneFirewallPolicy policy,bool_t enable_tunnel) {
 	call_base_with_configfile(mode, enable_video, enable_relay, policy, enable_tunnel, "marie_rc", "pauline_tcp_rc");
 }
 
-
-static void zrtp_silent_call(void) {
-	_call_base_with_configfile(LinphoneMediaEncryptionZRTP,FALSE,TRUE,LinphonePolicyNoFirewall,FALSE,  "marie_rc", "pauline_tcp_rc", TRUE);
-}
 
 static void early_media_call(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_early_rc");
@@ -4770,164 +4668,6 @@ static void call_with_rtcp_mux_not_accepted(void){
 	_call_with_rtcp_mux(TRUE, FALSE, FALSE,TRUE);
 }
 
-
-static void call_with_zrtp_configured_calling_base(LinphoneCoreManager *marie, LinphoneCoreManager *pauline) {
-	if (ms_zrtp_available()) {
-
-		linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
-		if (BC_ASSERT_TRUE(call(pauline,marie))){
-
-			liblinphone_tester_check_rtcp(marie,pauline);
-
-			LinphoneCall *call = linphone_core_get_current_call(marie->lc);
-			if (!BC_ASSERT_PTR_NOT_NULL(call)) return;
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(call))
-						, LinphoneMediaEncryptionZRTP, int, "%i");
-
-			call = linphone_core_get_current_call(pauline->lc);
-			if (!BC_ASSERT_PTR_NOT_NULL(call)) return;
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(call))
-						, LinphoneMediaEncryptionZRTP, int, "%i");
-			end_call(pauline, marie);
-		}
-	} else {
-		ms_warning("Test skipped, ZRTP not available");
-	}
-
-}
-
-static void call_with_zrtp_configured_callee_base(LinphoneCoreManager *marie, LinphoneCoreManager *pauline) {
-	if (ms_zrtp_available()) {
-
-		linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP);
-		if (BC_ASSERT_TRUE(call(pauline,marie))){
-
-			liblinphone_tester_check_rtcp(marie,pauline);
-
-			LinphoneCall *call = linphone_core_get_current_call(marie->lc);
-			if (!BC_ASSERT_PTR_NOT_NULL(call)) return;
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(call))
-						, LinphoneMediaEncryptionZRTP, int, "%i");
-
-			call = linphone_core_get_current_call(pauline->lc);
-			if (!BC_ASSERT_PTR_NOT_NULL(call)) return;
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(call))
-						, LinphoneMediaEncryptionZRTP, int, "%i");
-			end_call(pauline, marie);
-		}
-	} else {
-		ms_warning("Test skipped, ZRTP not available");
-	}
-}
-
-
-
-static void call_with_zrtp_configured_calling_side(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-
-	call_with_zrtp_configured_calling_base(marie,pauline);
-
-	/* now set other encryptions mode for receiver(marie), we shall always fall back to caller preference: ZRTP */
-	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionDTLS);
-	call_with_zrtp_configured_calling_base(marie,pauline);
-
-	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionSRTP);
-	call_with_zrtp_configured_calling_base(marie,pauline);
-
-
-	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionNone);
-
-	linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
-	linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
-	call_with_zrtp_configured_calling_base(marie,pauline);
-
-	linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
-	linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
-	call_with_zrtp_configured_calling_base(marie,pauline);
-
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-
-
-}
-
-static void call_with_zrtp_configured_callee_side(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-
-	call_with_zrtp_configured_callee_base(marie,pauline);
-
-	linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
-	linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
-	call_with_zrtp_configured_callee_base(marie,pauline);
-
-	linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
-	linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
-	call_with_zrtp_configured_callee_base(marie,pauline);
-
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-}
-
-static bool_t quick_call(LinphoneCoreManager *m1, LinphoneCoreManager *m2){
-	linphone_core_invite_address(m1->lc, m2->identity);
-	if (!BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m2->stat.number_of_LinphoneCallIncomingReceived, 1)))
-		return FALSE;
-	linphone_call_accept(linphone_core_get_current_call(m2->lc));
-	if (!BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m2->stat.number_of_LinphoneCallStreamsRunning, 1)))
-		return FALSE;
-	if (!BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m1->stat.number_of_LinphoneCallStreamsRunning, 1)))
-		return FALSE;
-	return TRUE;
-}
-
-static void call_with_encryption_mandatory(bool_t caller_has_encryption_mandatory){
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneCallStats *marie_stats, *pauline_stats;
-	/*marie doesn't support ZRTP at all*/
-	// marie->lc->zrtp_not_available_simulation=1;
-	linphone_core_set_zrtp_not_available_simulation(marie->lc, TRUE);
-
-	/*pauline requests encryption to be mandatory*/
-	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
-	linphone_core_set_media_encryption_mandatory(pauline->lc, TRUE);
-
-	if (!caller_has_encryption_mandatory){
-		if (!BC_ASSERT_TRUE(quick_call(marie, pauline))) goto end;
-	}else{
-		if (!BC_ASSERT_TRUE(quick_call(pauline, marie))) goto end;
-	}
-	wait_for_until(pauline->lc, marie->lc, NULL, 0, 2000);
-
-	/*assert that no RTP packets have been sent or received by Pauline*/
-	/*testing packet_sent doesn't work, because packets dropped by the transport layer are counted as if they were sent.*/
-#if 0
-	BC_ASSERT_EQUAL(linphone_call_get_audio_stats(linphone_core_get_current_call(pauline->lc))->rtp_stats.packet_sent, 0, int, "%i");
-#endif
-	/*however we can trust packet_recv from the other party instead */
-	marie_stats = linphone_call_get_audio_stats(linphone_core_get_current_call(marie->lc));
-	pauline_stats = linphone_call_get_audio_stats(linphone_core_get_current_call(pauline->lc));
-	BC_ASSERT_EQUAL((int)linphone_call_stats_get_rtp_stats(marie_stats)->packet_recv, 0, int, "%i");
-	BC_ASSERT_EQUAL((int)linphone_call_stats_get_rtp_stats(pauline_stats)->packet_recv, 0, int, "%i");
-	linphone_call_stats_unref(marie_stats);
-	linphone_call_stats_unref(pauline_stats);
-	end_call(marie, pauline);
-
-	end:
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-}
-
-static void call_from_plain_rtp_to_zrtp(void){
-	call_with_encryption_mandatory(FALSE);
-}
-
-static void call_from_zrtp_to_plain_rtp(void){
-	call_with_encryption_mandatory(TRUE);
-}
-
 static void v6_to_v4_call_without_relay(void){
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
@@ -5010,93 +4750,6 @@ static void call_with_network_reachable_down_in_callback(void){
 
 	linphone_core_cbs_unref(cbs);
 	linphone_core_manager_destroy(marie);
-}
-
-static void recreate_zrtpdb_when_corrupted(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
-
-	if (BC_ASSERT_TRUE(linphone_core_media_encryption_supported(marie->lc,LinphoneMediaEncryptionZRTP))) {
-		void *db;
-		const char* db_file;
-		const char *filepath;
-		const char *filepath2;
-		const char *corrupt = "corrupt mwahahahaha";
-		FILE *f;
-
-		remove(bc_tester_file("tmpZIDCacheMarie.sqlite"));
-		filepath = bc_tester_file("tmpZIDCacheMarie.sqlite");
-		remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
-		filepath2 = bc_tester_file("tmpZIDCachePauline.sqlite");
-		linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionZRTP);
-		linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionZRTP);
-		linphone_core_set_zrtp_secrets_file(marie->lc, filepath);
-		linphone_core_set_zrtp_secrets_file(pauline->lc, filepath2);
-
-		BC_ASSERT_TRUE(call(pauline,marie));
-		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(marie->lc), TRUE);
-		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(pauline->lc), TRUE);
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
-		end_call(marie, pauline);
-
-		db = linphone_core_get_zrtp_cache_db(marie->lc);
-		BC_ASSERT_PTR_NOT_NULL(db);
-
-		BC_ASSERT_TRUE(call(pauline,marie));
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
-		end_call(marie, pauline);
-
-		//Corrupt db file
-		db_file = linphone_core_get_zrtp_secrets_file(marie->lc);
-		BC_ASSERT_PTR_NOT_NULL(db_file);
-
-		f = fopen(db_file, "wb");
-		fwrite(corrupt, 1, sizeof(corrupt), f);
-		fclose(f);
-
-		//Simulate relaunch of linphone core marie
-		linphone_core_set_zrtp_secrets_file(marie->lc, filepath);
-		db = linphone_core_get_zrtp_cache_db(marie->lc);
-		BC_ASSERT_PTR_NULL(db);
-
-		BC_ASSERT_TRUE(call(pauline,marie));
-		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(marie->lc), TRUE);
-		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(pauline->lc), TRUE);
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
-		end_call(marie, pauline);
-
-		BC_ASSERT_TRUE(call(pauline,marie));
-		BC_ASSERT_FALSE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
-		BC_ASSERT_FALSE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
-		end_call(marie, pauline);
-
-		//Db file should be recreated after corruption
-		//Simulate relaunch of linphone core marie
-		linphone_core_set_zrtp_secrets_file(marie->lc, filepath);
-
-		BC_ASSERT_TRUE(call(pauline,marie));
-		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(marie->lc), TRUE);
-		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(pauline->lc), TRUE);
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
-		end_call(marie, pauline);
-
-		db = linphone_core_get_zrtp_cache_db(marie->lc);
-		BC_ASSERT_PTR_NOT_NULL(db);
-		db_file = linphone_core_get_zrtp_secrets_file(marie->lc);
-		BC_ASSERT_PTR_NOT_NULL(db_file);
-
-		BC_ASSERT_TRUE(call(pauline,marie));
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
-		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
-		end_call(marie, pauline);
-	}
-
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
 }
 
 static void simple_call_with_gruu(void) {
@@ -5274,17 +4927,6 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call paused by both parties", call_paused_by_both),
 	TEST_NO_TAG("Call paused resumed with loss", call_paused_resumed_with_loss),
 	TEST_NO_TAG("Call paused resumed from callee", call_paused_resumed_from_callee),
-	TEST_NO_TAG("SRTP call", srtp_call),
-	TEST_NO_TAG("SRTP call with different crypto suite", srtp_call_with_different_crypto_suite),
-	TEST_NO_TAG("ZRTP call", zrtp_call),
-	TEST_NO_TAG("ZRTP silent call", zrtp_silent_call),
-	TEST_NO_TAG("ZRTP SAS call", zrtp_sas_call),
-	TEST_NO_TAG("ZRTP Cipher call", zrtp_cipher_call),
-	TEST_NO_TAG("ZRTP Key Agreement call", zrtp_key_agreement_call),
-	TEST_ONE_TAG("DTLS SRTP call", dtls_srtp_call, "DTLS"),
-	TEST_ONE_TAG("DTLS SRTP call with media relay", dtls_srtp_call_with_media_realy, "DTLS"),
-	TEST_NO_TAG("SRTP call with declined srtp", call_with_declined_srtp),
-	TEST_NO_TAG("SRTP call paused and resumed", call_srtp_paused_and_resumed),
 	TEST_NO_TAG("Call with file player", call_with_file_player),
 	TEST_NO_TAG("Call with mkv file player", call_with_mkv_file_player),
 	TEST_NO_TAG("Call with privacy", call_with_privacy),
@@ -5334,18 +4976,13 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call record with custom RTP Modifier", call_record_with_custom_rtp_modifier),
 	TEST_NO_TAG("Call with rtcp-mux", call_with_rtcp_mux),
 	TEST_NO_TAG("Call with rtcp-mux not accepted", call_with_rtcp_mux_not_accepted),
-	TEST_NO_TAG("Call with ZRTP configured calling side only", call_with_zrtp_configured_calling_side),
-	TEST_NO_TAG("Call with ZRTP configured receiver side only", call_with_zrtp_configured_callee_side),
-	TEST_NO_TAG("Call from plain RTP to ZRTP mandatory should be silent", call_from_plain_rtp_to_zrtp),
-	TEST_NO_TAG("Call ZRTP mandatory to plain RTP should be silent", call_from_zrtp_to_plain_rtp),
 	TEST_NO_TAG("Call with network reachable down in callback", call_with_network_reachable_down_in_callback),
 	TEST_NO_TAG("Call terminated with reason", terminate_call_with_error),
 	TEST_NO_TAG("Call cancelled with reason", cancel_call_with_error),
 	TEST_NO_TAG("Call accepted, other ringing device receive CANCEL with reason", cancel_other_device_after_accept),
 	TEST_NO_TAG("Call declined, other ringing device receive CANCEL with reason", cancel_other_device_after_decline),
-	TEST_NO_TAG("Recreate ZRTP db file when corrupted", recreate_zrtpdb_when_corrupted),
 	TEST_NO_TAG("Simple call with GRUU", simple_call_with_gruu),
-	TEST_NO_TAG("Simple call with GRUU only one device ring", simple_call_with_gruu_only_one_device_ring)
+	TEST_NO_TAG("Simple call with GRUU only one device ring", simple_call_with_gruu_only_one_device_ring),
 };
 
 test_suite_t call_test_suite = {"Single Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

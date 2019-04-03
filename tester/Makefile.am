@@ -130,6 +130,7 @@ liblinphonetester_la_SOURCES = \
 				call_multicast_tester.c \
 				call_single_tester.c \
 				call_video_tester.c \
+				call_secure_tester.c \
 				complex_sip_case_tester.c \
 				dtmf_tester.c \
 				eventapi_tester.c \
