@@ -6809,79 +6809,16 @@ int _linphone_sqlite3_open(const char *db_file, sqlite3 **db) {
 }
 
 // =============================================================================
-
+//migration code remove in april 2019, 2 years after switching from xml based zrtp cache to sqlite
 void linphone_core_set_zrtp_secrets_file(LinphoneCore *lc, const char* file){
-	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(lc);
 	if (lc->zrtp_secrets_cache != NULL) {
 		ms_free(lc->zrtp_secrets_cache);
+		linphone_core_zrtp_cache_close(lc);
+		lc->zrtp_secrets_cache = NULL;
 	}
-
-	lc->zrtp_secrets_cache=file ? ms_strdup(file) : NULL;
-
-	/* shall we perform cache migration ? */
-	if (proxy && !lp_config_get_int(lc->config,"sip","zrtp_cache_migration_done",FALSE)) {
-		char *tmpFile = reinterpret_cast<char *>(bctbx_malloc(strlen(file)+6));
-		/* check we have a valid xml cache file given in path */
-		FILE *CACHEFD = NULL;
-		/* load the xml cache */
-		if (file != NULL) {
-			int ret=0;
-			CACHEFD = fopen(file, "rb+");
-			xmlDocPtr cacheXml = NULL;
-			if (CACHEFD) {
-				size_t cacheSize;
-				char *cacheString = ms_load_file_content(CACHEFD, &cacheSize);
-				if (!cacheString) {
-					ms_warning("Unable to load content of ZRTP ZID cache");
-					bctbx_free(tmpFile);
-					return;
-				}
-				cacheString[cacheSize] = '\0';
-				cacheSize += 1;
-				fclose(CACHEFD);
-				cacheXml = xmlParseDoc((xmlChar*)cacheString);
-				ms_free(cacheString);
-			}
-
-			/* create a temporary file for the sqlite base and initialise it */
-			sprintf(tmpFile,"%s.tmp", file);
-			linphone_core_zrtp_cache_db_init(lc, tmpFile);
-
-			/* migrate */
-			char *bkpFile = reinterpret_cast<char *>(bctbx_malloc(strlen(file)+6));
-			sprintf(bkpFile,"%s.bkp", file);
-			char *selfURI = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(proxy));
-			zrtpCacheAccess zrtpCacheInfo = linphone_core_get_zrtp_cache_access(lc);
-			if ((ret = ms_zrtp_cache_migration((void *)cacheXml, zrtpCacheInfo.db, selfURI)) == 0) {
-				ms_message("LIME/ZRTP cache migration successfull, obsolete xml file kept as backup in %s", bkpFile);
-			} else {
-				ms_error("LIME/ZRTP cache migration failed(returned -%x), start with a fresh cache, old one kept as backup in %s", -ret, bkpFile);
-			}
-			ms_free(selfURI);
-
-			/* rename the newly created sqlite3 file in to the given file name */
-			rename(file, bkpFile);
-
-#ifdef _WIN32
-			/* We first have to close the file before renaming it */
-			sqlite3_close(lc->zrtp_cache_db);
-#endif
-
-			if (rename(tmpFile, file)==0) { /* set the flag if we were able to set the sqlite file in the correct place (even if migration failed) */
-				lp_config_set_int(lc->config, "sip", "zrtp_cache_migration_done", TRUE);
-			}
-
-#ifdef _WIN32
-			/* Then reopen it */
-			_linphone_sqlite3_open(file, &lc->zrtp_cache_db);
-#endif
-
-			/* clean up */
-			bctbx_free(bkpFile);
-			xmlFreeDoc(cacheXml);
-		}
-		bctbx_free(tmpFile);
-	} else {
+	
+	if (file) {
+		lc->zrtp_secrets_cache = ms_strdup(file);
 		linphone_core_zrtp_cache_db_init(lc, file);
 	}
 }

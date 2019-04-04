@@ -126,7 +126,6 @@ public:
 	) override;
 
 	void authenticationRejected (
-		SalMediaDescription *remoteMediaDescription,
 		const char *peerDeviceId
 	) override;
 

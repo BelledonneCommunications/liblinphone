@@ -3495,6 +3495,14 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 		if (!authToken.empty()) {
 			/* ZRTP only is using auth_token */
 			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
+			char *peerDeviceId = nullptr;
+			auto encryptionEngine = q->getCore()->getEncryptionEngine();
+			if (encryptionEngine && authTokenVerified) {
+				const SalAddress *remoteAddress = getOp()->getRemoteContactAddress();
+				peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
+				encryptionEngine->authenticationVerified(audioStream->ms.sessions.zrtp_context, op->getRemoteMediaDescription(), peerDeviceId);
+				ms_free(peerDeviceId);
+			}
 		} else {
 			/* Otherwise it must be DTLS as SDES doesn't go through this function */
 			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionDTLS);
@@ -4885,31 +4893,20 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 		lError() << "MediaSession::setAuthenticationTokenVerified(): No zrtp context";
 		return;
 	}
-
-	char *peerDeviceId = nullptr;
-	auto encryptionEngine = getCore()->getEncryptionEngine();
-	if (encryptionEngine) {
-		const SalAddress *remoteAddress = d->getOp()->getRemoteContactAddress();
-		peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
-	}
-
 	// SAS verified
 	if (value) {
 		ms_zrtp_sas_verified(d->audioStream->ms.sessions.zrtp_context);
-
-		if (encryptionEngine)
-			encryptionEngine->authenticationVerified(d->audioStream->ms.sessions.zrtp_context, d->op->getRemoteMediaDescription(), peerDeviceId);
-	}
-
-	// SAS rejected
-	else {
+	} else { // SAS rejected
 		ms_zrtp_sas_reset_verified(d->audioStream->ms.sessions.zrtp_context);
-
-		if (encryptionEngine)
-			encryptionEngine->authenticationRejected(d->op->getRemoteMediaDescription(), peerDeviceId);
+		char *peerDeviceId = nullptr;
+		auto encryptionEngine = getCore()->getEncryptionEngine();
+		if (encryptionEngine) { //inform lime that zrtp no longuer guaranty the trust
+			const SalAddress *remoteAddress = d->getOp()->getRemoteContactAddress();
+			peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
+			encryptionEngine->authenticationRejected(peerDeviceId);
+			ms_free(peerDeviceId);
+		}
 	}
-
-	ms_free(peerDeviceId);
 	d->authTokenVerified = value;
 	d->propagateEncryptionChanged();
 }

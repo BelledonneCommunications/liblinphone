@@ -30,6 +30,7 @@
 #include "event-log/conference/conference-security-event.h"
 #include "lime-x3dh-encryption-engine.h"
 #include "private.h"
+#include "bctoolbox/exception.hh"
 
 using namespace std;
 
@@ -660,15 +661,15 @@ void LimeX3dhEncryptionEngine::authenticationVerified (
 	vector<uint8_t> remoteIk = decodeBase64(remoteIkB64);
 	const IdentityAddress peerDeviceAddr = IdentityAddress(peerDeviceId);
 
-	if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 2) {
+	if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 2 /*BZRTP_AUXSECRET_UNSET*/) {
 		lInfo() << "[LIME] No auxiliary shared secret exchange because LIME disabled";
 	}
 	// SAS is verified and the auxiliary secret matches so we can trust this peer device
-	else if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 0) {
+	else if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 0 /*BZRTP_AUXSECRET_MATCH*/) {
 		try {
 			lInfo() << "[LIME] SAS verified and Ik exchange successful";
 			limeManager->set_peerDeviceStatus(peerDeviceId, remoteIk, lime::PeerDeviceStatus::trusted);
-		} catch (const exception &e) {
+		} catch (const BctbxException &e) {
 			lInfo() << "[LIME] exception" << e.what();
 			// Ik error occured, the stored Ik is different from this Ik
 			lime::PeerDeviceStatus status = limeManager->get_peerDeviceStatus(peerDeviceId);
@@ -683,20 +684,25 @@ void LimeX3dhEncryptionEngine::authenticationVerified (
 					break;
 				case lime::PeerDeviceStatus::trusted:
 					lError() << "[LIME] peer device " << peerDeviceId << " is already trusted but its identity key has changed";
+					addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::EncryptionIdentityKeyChanged);
 					break;
 				case lime::PeerDeviceStatus::unknown:
 				case lime::PeerDeviceStatus::fail:
 					lError() << "[LIME] peer device " << peerDeviceId << " is unknown but its identity key has changed";
 					break;
 			}
-
 			// Delete current peer device data and replace it with the new Ik and a trusted status
 			limeManager->delete_peerDevice(peerDeviceId);
 			limeManager->set_peerDeviceStatus(peerDeviceId, remoteIk, lime::PeerDeviceStatus::trusted);
 		}
+		catch (const exception &e) {
+			lError() << "[LIME] exception" << e.what();
+			return;
+		}
 	}
 	// SAS is verified but the auxiliary secret mismatches
-	else {
+	else /*BZRTP_AUXSECRET_MISMATCH*/{
+		lError() << "[LIME] SAS is verified but the auxiliary secret mismatches, removing trust";
 		ms_zrtp_sas_reset_verified(zrtpContext);
 		limeManager->set_peerDeviceStatus(peerDeviceId, lime::PeerDeviceStatus::unsafe);
 		addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected);
@@ -704,24 +710,24 @@ void LimeX3dhEncryptionEngine::authenticationVerified (
 }
 
 void LimeX3dhEncryptionEngine::authenticationRejected (
-	SalMediaDescription *remoteMediaDescription,
 	const char *peerDeviceId
 ) {
 	// Get peer's Ik
-	string remoteIkB64;
-	const char *sdpRemoteIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik");
-	if (sdpRemoteIk)
-		remoteIkB64 = sdpRemoteIk;
-	vector<uint8_t> remoteIk = decodeBase64(remoteIkB64);
-
 	// Warn the user that rejecting the SAS reveals a man-in-the-middle
 	const IdentityAddress peerDeviceAddr = IdentityAddress(peerDeviceId);
-	addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected);
+
+	if (limeManager->get_peerDeviceStatus(peerDeviceId) == lime::PeerDeviceStatus::trusted) {
+		addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::SecurityLevelDowngraded);
+	}
 
 	// Set peer device to untrusted or unsafe depending on configuration
 	LinphoneConfig *lp_config = linphone_core_get_config(getCore()->getCCore());
-	lime::PeerDeviceStatus statusIfSASrefused = lp_config_get_int(lp_config, "lime", "unsafe_if_sas_refused", 1) ? lime::PeerDeviceStatus::unsafe : lime::PeerDeviceStatus::untrusted;
-	limeManager->set_peerDeviceStatus(peerDeviceId, remoteIk, statusIfSASrefused);
+	lime::PeerDeviceStatus statusIfSASrefused = lp_config_get_int(lp_config, "lime", "unsafe_if_sas_refused", 0) ? lime::PeerDeviceStatus::unsafe : lime::PeerDeviceStatus::untrusted;
+	if (statusIfSASrefused == lime::PeerDeviceStatus::unsafe) {
+		addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected);
+	}
+
+	limeManager->set_peerDeviceStatus(peerDeviceId, statusIfSASrefused);
 }
 
 void LimeX3dhEncryptionEngine::addSecurityEventInChatrooms (
@@ -730,7 +736,7 @@ void LimeX3dhEncryptionEngine::addSecurityEventInChatrooms (
 ) {
 	const list<shared_ptr<AbstractChatRoom>> chatRooms = getCore()->getChatRooms();
 	for (const auto &chatRoom : chatRooms) {
-		if (chatRoom->findParticipant(peerDeviceAddr)) {
+		if (chatRoom->findParticipant(peerDeviceAddr) && (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) ) {
 			shared_ptr<ConferenceSecurityEvent> securityEvent = make_shared<ConferenceSecurityEvent>(
 				time(nullptr),
 				chatRoom->getConferenceId(),

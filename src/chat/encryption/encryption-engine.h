@@ -95,7 +95,6 @@ public:
 	) {}
 
 	virtual void authenticationRejected (
-		SalMediaDescription *remoteMediaDescription,
 		const char *peerDeviceId
 	) {}
 

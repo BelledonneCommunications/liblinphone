@@ -770,12 +770,16 @@ static void group_chat_lime_x3dh_verify_sas_before_message (void) {
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
 
 	// ZRTP verification call Marie rejects the SAS
+	initialMarieStats = marie->stat;
+	
 	call_ok = FALSE;
 	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, FALSE, TRUE)));
 	if (!call_ok) goto end;
 
-	// Check LIME X3DH and ZRTP status
-	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
+	// Check LIME status degraded to encrypted and ZRTP status
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_SecurityLevelDowngraded, initialMarieStats.number_of_SecurityLevelDowngraded + 1, 10000));
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusInvalid, int , "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
@@ -814,6 +818,9 @@ static void group_chat_lime_x3dh_reject_sas_before_message (void) {
 	LinphoneChatRoom *paulineCr = NULL;
 	int dummy = 0;
 
+	lp_config_set_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 1);
+	lp_config_set_int(linphone_core_get_config(marie->lc), "lime", "unsafe_if_sas_refused", 1);
+	
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
@@ -1055,6 +1062,9 @@ static void group_chat_lime_x3dh_message_before_reject_sas (void) {
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	int dummy = 0;
+	
+	lp_config_set_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 1);
+	lp_config_set_int(linphone_core_get_config(marie->lc), "lime", "unsafe_if_sas_refused", 1);
 
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
@@ -1525,7 +1535,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrt
 	// Check the chat room security level got downgraded for Pauline
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
-	if (lp_config_get_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 1) == 1) {
+	if (lp_config_get_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 0) == 1) {
 		BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
 	} else {
 		BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
@@ -1776,7 +1786,7 @@ static void group_chat_lime_x3dh_call_security_alert (void) {
 
 	// Check chatroom security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
-	if (lp_config_get_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 1) == 1) {
+	if (lp_config_get_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 0) == 1) {
 		BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
 	} else {
 		BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
