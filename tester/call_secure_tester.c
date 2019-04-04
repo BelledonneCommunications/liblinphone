@@ -374,21 +374,27 @@ static void recreate_zrtpdb_when_corrupted(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_declined_encryption_mandatory(LinphoneMediaEncryption enc1, bool_t mandatory1, LinphoneMediaEncryption enc2, bool_t mandatory2) {
+/*
+ * This test verifies that when a user with a specific media encryption (mandatory or not) calls another
+ * with a different mandatory media encryption, the call should be in error and the reason should be
+ * 488 Not Acceptable.
+ */
+static void call_declined_encryption_mandatory(LinphoneMediaEncryption enc1, LinphoneMediaEncryption enc2, bool_t mandatory) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_rc");
 
 	if (!linphone_core_media_encryption_supported(marie->lc, enc1)) goto end;
 	linphone_core_set_media_encryption(marie->lc, enc1);
-	linphone_core_set_media_encryption_mandatory(marie->lc, mandatory1);
+	linphone_core_set_media_encryption_mandatory(marie->lc, TRUE);
 
 	if (!linphone_core_media_encryption_supported(pauline->lc, enc2)) goto end;
 	linphone_core_set_media_encryption(pauline->lc, enc2);
-	linphone_core_set_media_encryption_mandatory(pauline->lc, mandatory2);
+	linphone_core_set_media_encryption_mandatory(pauline->lc, mandatory);
 
 	LinphoneCall* out_call = linphone_core_invite_address(pauline->lc,marie->identity);
 	linphone_call_ref(out_call);
 
+	/* We expect a 488 Not Acceptable */
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallError, 1));
 	BC_ASSERT_EQUAL(linphone_call_get_reason(out_call), LinphoneReasonNotAcceptable, int, "%d");
 	
@@ -400,25 +406,25 @@ end:
 }
 
 static void call_declined_encryption_mandatory_both_sides(void) {
-	/* It is important to have SRTP second to test that there is no reinvite */
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionZRTP, TRUE, LinphoneMediaEncryptionSRTP, TRUE);
+	/* If SRTP wasn't mandatory then the call would not error, so it's a good case to test both mandatory */
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionSRTP, TRUE);
 }
 
 static void zrtp_mandatory_called_by_non_zrtp(void) {
-	/* We do not try with None as it will accept the call and then set the media to ZRTP or SRTP since it will do a reinvite */
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionZRTP, TRUE, LinphoneMediaEncryptionDTLS, FALSE);
+	/* We do not try with None or SRTP as it will accept the call and then set the media to ZRTP */
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionDTLS, FALSE);
 }
 
 static void srtp_mandatory_called_by_non_srtp(void) {
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, TRUE, LinphoneMediaEncryptionNone, FALSE);
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, TRUE, LinphoneMediaEncryptionZRTP, FALSE);
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, TRUE, LinphoneMediaEncryptionDTLS, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionNone, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionZRTP, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionDTLS, FALSE);
 }
 
 static void srtp_dtls_mandatory_called_by_non_srtp_dtls(void) {
-	/* We do not try with SRTP since it will do a reinvite */
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionDTLS, TRUE, LinphoneMediaEncryptionNone, FALSE);
-	call_declined_encryption_mandatory(LinphoneMediaEncryptionDTLS, TRUE, LinphoneMediaEncryptionZRTP, FALSE);
+	/* We do not try with SRTP as it will accept the call and then set the media to DTLS */
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionNone, FALSE);
+	call_declined_encryption_mandatory(LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionZRTP, FALSE);
 }
 
 static void zrtp_mandatory_called_by_srtp(void) {
@@ -439,12 +445,18 @@ static void zrtp_mandatory_called_by_srtp(void) {
 		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallEncryptedOn, 1));
 
 		wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
+
+		/*
+		 * Marie is in ZRTP mandatory and Pauline in SRTP not mandatory.
+		 * Declining SRTP with a 488 provokes a retry without SRTP, so the call should be in ZRTP.
+		 */
 		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(call))
 					, LinphoneMediaEncryptionZRTP, int, "%i");
 
 		LinphoneCallParams *params = linphone_core_create_call_params(pauline->lc, linphone_core_get_current_call(pauline->lc));
 		if (!BC_ASSERT_PTR_NOT_NULL(params)) goto end;
 
+		/* We test that a reinvite with SRTP is still not acceptable and thus do not change the encryption. */
 		linphone_call_params_set_media_encryption(params, LinphoneMediaEncryptionSRTP);
 		linphone_call_update(linphone_core_get_current_call(pauline->lc), params);
 

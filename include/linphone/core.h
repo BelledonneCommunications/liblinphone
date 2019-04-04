@@ -4616,17 +4616,19 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_media_encryption(LinphoneCore *
 LINPHONE_PUBLIC LinphoneMediaEncryption linphone_core_get_media_encryption(LinphoneCore *lc);
 
 /**
- * Get behaviour when encryption parameters negociation fails on outgoing call.
+ * Check if the configured media encryption is mandatory or not.
  * @param[in] lc #LinphoneCore object.
- * @return TRUE means the call will fail; FALSE means an INVITE will be resent with encryption disabled.
+ * @return TRUE if media encryption is mandatory; FALSE otherwise.
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bool_t linphone_core_is_media_encryption_mandatory(LinphoneCore *lc);
 
 /**
- * Define behaviour when encryption parameters negociation fails on outgoing call.
+ * Define whether the configured media encryption is mandatory, if it is and the negotation cannot result 
+ * in the desired media encryption then the call will fail. If not an INVITE will be resent with encryption
+ * disabled.
  * @param[in] lc #LinphoneCore object.
- * @param[in] m If set to TRUE call will fail; if set to FALSE will resend an INVITE with encryption disabled.
+ * @param[in] m TRUE to set it mandatory; FALSE otherwise.
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m);
