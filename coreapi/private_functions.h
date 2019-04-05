@@ -433,6 +433,7 @@ void linphone_error_info_to_sal(const LinphoneErrorInfo* ei, SalErrorInfo* sei);
 LinphoneEventCbs *linphone_event_cbs_new(void);
 LinphoneEvent *linphone_event_new(LinphoneCore *lc, LinphoneSubscriptionDir dir, const char *name, int expires);
 LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc, LinphonePrivate::SalEventOp *op, LinphoneSubscriptionDir dir, const char *name);
+LinphoneEvent *_linphone_core_create_publish(LinphoneCore *core, LinphoneProxyConfig *cfg, const LinphoneAddress *resource, const char *event, int expires);
 void linphone_event_unpublish(LinphoneEvent *lev);
 void linphone_event_set_current_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
 /**

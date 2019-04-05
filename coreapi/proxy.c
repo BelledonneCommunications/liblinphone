@@ -1634,3 +1634,11 @@ int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConf
 		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(cfg->identity_address))
 	);
 }
+
+LinphoneEvent *linphone_proxy_config_create_publish(LinphoneProxyConfig *cfg, const char *event, int expires) {
+	if (!cfg->lc){
+		ms_error("Cannot create publish from proxy config [%p] not attached to any core",cfg);
+		return NULL;
+	}
+	return _linphone_core_create_publish(cfg->lc, cfg, NULL, event, expires);
+}
