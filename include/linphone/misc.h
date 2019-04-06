@@ -152,6 +152,14 @@ LINPHONE_PUBLIC const char* linphone_transport_to_string(LinphoneTransportType t
 LINPHONE_PUBLIC LinphoneTransportType linphone_transport_parse(const char* transport);
 
 /**
+* Check whether an error code is in Retry-After field.
+* @param[in] err An error code
+* @return TRUE if it is in Retry-After field
+* @ingroup misc
+**/
+LINPHONE_PUBLIC bool_t linphone_error_code_is_retry_after(int err);
+
+/**
  * Converts an error code to a LinphoneReason.
  * @param[in] err An error code
  * @return The #LinphoneReason corresponding to the specified error code

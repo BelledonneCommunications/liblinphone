@@ -577,6 +577,14 @@ void linphone_proxy_config_set_dial_prefix(LinphoneProxyConfig *cfg, const char 
 		cfg->dial_prefix=NULL;
 	}
 	if (prefix && prefix[0]!='\0') cfg->dial_prefix=ms_strdup(prefix);
+	
+	if (cfg->lc) {
+		bctbx_list_t *elem;
+		for (elem = cfg->lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
+			LinphoneFriendList *list = (LinphoneFriendList *)bctbx_list_get_data(elem);
+			linphone_friend_list_invalidate_friends_maps(list);
+		}
+	}
 }
 
 const char *linphone_proxy_config_get_dial_prefix(const LinphoneProxyConfig *cfg){
@@ -869,9 +877,6 @@ LinphoneStatus linphone_proxy_config_done(LinphoneProxyConfig *cfg)
 	if (linphone_proxy_config_compute_publish_params_hash(cfg)) {
 		ms_message("Publish params have changed on proxy config [%p]",cfg);
 		if (cfg->presence_publish_event) {
-			if (cfg->publish) {
-				linphone_proxy_config_set_etag(cfg, linphone_event_get_custom_header(cfg->presence_publish_event, "SIP-ETag"));
-			}
 			/*publish is terminated*/
 			linphone_event_terminate(cfg->presence_publish_event);
 		}
@@ -1066,7 +1071,7 @@ LinphoneStatus linphone_core_add_proxy_config(LinphoneCore *lc, LinphoneProxyCon
 
 void linphone_core_remove_proxy_config(LinphoneCore *lc, LinphoneProxyConfig *cfg){
 	/* check this proxy config is in the list before doing more*/
-	if (bctbx_list_find(lc->sip_conf.proxies,cfg)==NULL){
+	if (bctbx_list_find(lc->sip_conf.proxies,cfg)==NULL) {
 		ms_error("linphone_core_remove_proxy_config: LinphoneProxyConfig [%p] is not known by LinphoneCore (programming error?)",cfg);
 		return;
 	}
@@ -1089,7 +1094,12 @@ void linphone_core_remove_proxy_config(LinphoneCore *lc, LinphoneProxyConfig *cf
 		linphone_proxy_config_set_state(cfg, LinphoneRegistrationNone,"Registration disabled");
 	}
 	linphone_proxy_config_write_all_to_config_file(lc);
+
+	//Update the associated linphone specs on the core
+	linphone_proxy_config_set_conference_factory_uri(cfg, NULL);
 }
+
+
 
 void linphone_core_clear_proxy_config(LinphoneCore *lc){
 	bctbx_list_t* list=bctbx_list_copy(linphone_core_get_proxy_config_list((const LinphoneCore*)lc));
@@ -1574,7 +1584,6 @@ void linphone_proxy_config_notify_publish_state_changed(LinphoneProxyConfig *cfg
 				break;
 			default:
 				break;
-
 		}
 	}
 }
@@ -1590,7 +1599,21 @@ void linphone_proxy_config_set_conference_factory_uri(LinphoneProxyConfig *cfg, 
 			linphone_core_add_linphone_spec(cfg->lc, "groupchat");
 		}
 	} else if (cfg->lc) {
-		linphone_core_remove_linphone_spec(cfg->lc, "groupchat");
+		bool_t remove = TRUE;
+		//Check that no other proxy config needs the specs before removing it
+		bctbx_list_t *it = NULL;
+		for (it = cfg->lc->sip_conf.proxies; it; it = it->next) {
+			if (it->data != cfg) {
+				const char *confUri = linphone_proxy_config_get_conference_factory_uri((LinphoneProxyConfig *) it->data);
+				if (confUri && strlen(confUri)) {
+					remove = FALSE;
+					break;
+				}
+			}
+		}
+		if (remove) {
+			linphone_core_remove_linphone_spec(cfg->lc, "groupchat");
+		}
 	}
 }
 

@@ -62,6 +62,7 @@ static void on_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageSt
 		case LinphoneChatMessageStateFileTransferDone:
 		case LinphoneChatMessageStateFileTransferError:
 		case LinphoneChatMessageStateIdle:
+		case LinphoneChatMessageStateFileTransferInProgress:
 		break;
 	}
 }

@@ -46,6 +46,13 @@ target_compile_definitions(linphone++ PRIVATE "-DLINPHONECXX_EXPORTS")
 target_link_libraries(linphone++
 	PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} ${BELLESIP_LIBRARIES} linphone
 )
+
+set_target_properties(linphone++ PROPERTIES
+	FRAMEWORK TRUE
+	MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphone++
+	MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
+)
+
 target_include_directories(linphone++
 	PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include
 	PRIVATE ${PROJECT_BINARY_DIR}/include
@@ -60,6 +67,7 @@ install(TARGETS linphone++ EXPORT LinphoneCxxTargets
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	FRAMEWORK DESTINATION Frameworks
 )
 install(FILES object.hh
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/linphone++

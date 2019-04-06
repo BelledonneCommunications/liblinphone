@@ -39,6 +39,7 @@ static void error_info_clone(LinphoneErrorInfo *ei, const LinphoneErrorInfo *oth
 	ei->warnings = bctbx_strdup(other->warnings);
 	ei->full_string = bctbx_strdup(other->full_string);
 	ei->protocol_code = other->protocol_code;
+	ei->retry_after = other->retry_after;
 }
 
 BELLE_SIP_INSTANCIATE_VPTR(LinphoneErrorInfo, belle_sip_object_t,
@@ -137,6 +138,23 @@ static const error_code_reason_map_t error_code_reason_map[] = {
 	{ 603, LinphoneReasonDeclined }
 };
 
+static const error_code_reason_map_t retry_after_code_reason_map[] = {
+	{ 404, LinphoneReasonNotFound },
+	{ 480, LinphoneReasonTemporarilyUnavailable },
+	{ 486, LinphoneReasonBusy },
+	{ 503, LinphoneReasonIOError },
+	{ 600, LinphoneReasonDoNotDisturb },
+	{ 603, LinphoneReasonDeclined }
+};
+
+bool_t linphone_error_code_is_retry_after(int err) {
+	size_t i;
+	for (i = 0; i < (sizeof(retry_after_code_reason_map) / sizeof(retry_after_code_reason_map[0])); i++) {
+		if (retry_after_code_reason_map[i].error_code == err) return true;
+	}
+	return false;
+}
+
 LinphoneReason linphone_error_code_to_reason(int err) {
 	size_t i;
 	for (i = 0; i < (sizeof(error_code_reason_map) / sizeof(error_code_reason_map[0])); i++) {
@@ -160,6 +178,7 @@ static void linphone_error_info_reset(LinphoneErrorInfo *ei){
 	STRING_RESET(ei->full_string);
 	STRING_RESET(ei->warnings);
 	ei->protocol_code = 0;
+	ei->retry_after = 0;
 	if (ei->sub_ei) {
 		linphone_error_info_unref(ei->sub_ei);
 		ei->sub_ei = NULL;
@@ -172,6 +191,7 @@ void linphone_error_info_from_sal(LinphoneErrorInfo *ei, const SalErrorInfo *sei
 	ei->full_string = bctbx_strdup(sei->full_string);
 	ei->warnings = bctbx_strdup(sei->warnings);
 	ei->protocol_code = sei->protocol_code;
+	ei->retry_after = sei->retry_after;
 	ei->protocol = bctbx_strdup(sei->protocol);
 }
 
@@ -220,6 +240,7 @@ void linphone_error_info_fields_to_sal(const LinphoneErrorInfo* ei, SalErrorInfo
 	sei->full_string = bctbx_strdup(ei->full_string);
 	sei->warnings = bctbx_strdup(ei->warnings);
 	sei->protocol_code = ei->protocol_code;
+	sei->retry_after = ei->retry_after;
 	sei->protocol = bctbx_strdup(ei->protocol);
 }
 
@@ -242,6 +263,9 @@ void linphone_error_info_set(LinphoneErrorInfo *ei, const char *protocol, Linpho
 	ei->warnings = bctbx_strdup(warning);
 }
 
+int linphone_error_info_get_retry_after(const LinphoneErrorInfo *ei){
+	return ei->retry_after;
+}
 
 LinphoneReason linphone_error_info_get_reason(const LinphoneErrorInfo *ei) {
 	return ei->reason;
@@ -270,6 +294,10 @@ int linphone_error_info_get_protocol_code(const LinphoneErrorInfo *ei) {
 
 LinphoneErrorInfo * linphone_error_info_get_sub_error_info(const LinphoneErrorInfo *ei){
 	return ei->sub_ei;
+}
+
+void linphone_error_info_set_retry_after(LinphoneErrorInfo *ei, int retry_after){
+	ei->retry_after = retry_after;
 }
 
 void linphone_error_info_set_reason(LinphoneErrorInfo *ei, LinphoneReason reason){

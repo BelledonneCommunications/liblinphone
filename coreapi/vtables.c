@@ -63,6 +63,7 @@ static void cleanup_dead_vtable_refs(LinphoneCore *lc){
 }
 
 #define NOTIFY_IF_EXIST(function_name, ...) \
+	if (lc->is_unreffing) return; /* This is to prevent someone from taking a ref in a callback called while the Core is being destroyed after last unref */ \
 	bctbx_list_t* iterator; \
 	VTableReference *ref; \
 	bool_t has_cb = FALSE; \
@@ -110,13 +111,17 @@ void linphone_core_notify_registration_state_changed(LinphoneCore *lc, LinphoneP
 }
 
 void linphone_core_notify_notify_presence_received(LinphoneCore *lc, LinphoneFriend * lf) {
-	NOTIFY_IF_EXIST(notify_presence_received, lc, lf);
-	cleanup_dead_vtable_refs(lc);
+	if (linphone_config_get_int(lc->config, "misc", "notify_each_friend_individually_when_presence_received", 1)) {
+		NOTIFY_IF_EXIST(notify_presence_received, lc, lf);
+		cleanup_dead_vtable_refs(lc);
+	}
 }
 
 void linphone_core_notify_notify_presence_received_for_uri_or_tel(LinphoneCore *lc, LinphoneFriend *lf, const char *uri_or_tel, const LinphonePresenceModel *presence_model) {
-	NOTIFY_IF_EXIST(notify_presence_received_for_uri_or_tel, lc, lf, uri_or_tel, presence_model);
-	cleanup_dead_vtable_refs(lc);
+	if (linphone_config_get_int(lc->config, "misc", "notify_each_friend_individually_when_presence_received", 1)) {
+		NOTIFY_IF_EXIST(notify_presence_received_for_uri_or_tel, lc, lf, uri_or_tel, presence_model);
+		cleanup_dead_vtable_refs(lc);
+	}
 }
 
 void linphone_core_notify_new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char *url) {

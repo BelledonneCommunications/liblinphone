@@ -1,16 +1,73 @@
 Chat room and messaging
 =======================
 
-There are different types of chat rooms. Basic chat rooms are simple chat rooms between two participants, they do not require a conference server and are considered as one-to-one chat rooms. Group chat rooms allow more than one peer user and require a conference server. Group chat rooms can also be considered as one-to-one if they have only one peer participant at the time of their creation and if the parameter "enable_one_to_one_chat_room" is set to true, otherwise a basic chat room will be created instead. Secured chat rooms are group chat rooms where LIME X3DH end-to-end encryption is enabled, they can be either group chat rooms or one-to-one chat rooms but not basic chat rooms.
+There are different types of chat rooms. Basic chat rooms are simple chat rooms between two participants, they do not require a conference server and are considered as one-to-one chat rooms.
+
+Group chat rooms allow more than one peer user and require a conference server.
+Group chat rooms can also be considered as one-to-one if they have only one peer participant at the time of their creation and if the parameter "enable_one_to_one_chat_room" is set to true, otherwise a basic chat room will be created instead.
+
+Secured chat rooms are group chat rooms where LIME X3DH end-to-end encryption is enabled, they can be either group chat rooms or one-to-one chat rooms but not basic chat rooms.
+
+Chat rooms parameters
+---------------------
+
+Chat rooms creation and behavior can be controlled with the use of :cpp:type:`LinphoneChatRoomParams`.
+
+.. code-block:: c
+
+	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(linphoneCore);
+
+Default parameters will create an un-encrypted basic chat room (See next section).
+
+You can change parameters prior to chat room creation. Possible types are :cpp:enumerator:`LinphoneChatRoomBackendBasic` and :cpp:enumerator:`LinphoneChatRoomBackendFlexisipChat`
+
+.. code-block:: c
+
+	//Change chat room type
+        linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
+	//Enable encryption
+	linphone_chat_room_params_enable_encryption(params, TRUE);
+	//Enable group chat (valid only with LinphoneChatRoomFlexisipChat)
+	linphone_chat_room_params_enable_group(params, TRUE);
+	//Enable real time text (valid only with LinphoneChatRoomBasic)
+	linphone_chat_room_params_enable_rtt(params, TRUE);
+	//Check that parameters are valid
+	assert(linphone_chat_room_params_is_valid(params));
+
+.. _chat-room-creation:
+
+Chat room creation
+------------------
+
+Chat rooms can be created with :cpp:func:`linphone_core_create_chat_room <linphone_core_create_chat_room>`.
+The full list of parameters includes a :cpp:type:`LinphoneChatRoomParams` object, a subject, a local sip address to use and a list of participants.
+
+Convenience methods are provided to ease chat room creation by passing only minimum required parameters.
+Non-provided parameters will be created and default values will be used.
+Functions accepting a list of participants with a size greater than 1 will create a group chat room (unless LinphoneChatRoomBackendBasic is used in parameters, in which case the chat room creation will fail). 
+
+* :cpp:func:`linphone_core_create_chat_room_2 <linphone_core_create_chat_room_2>`
+
+* :cpp:func:`linphone_core_create_chat_room_3 <linphone_core_create_chat_room_3>`
+
+* :cpp:func:`linphone_core_create_chat_room_4 <linphone_core_create_chat_room_4>`
+
+* :cpp:func:`linphone_core_create_chat_room_5 <linphone_core_create_chat_room_5>`
+
+NULL will be returned if the chat room creation failed.
 
 Basic chat rooms
 ----------------
 
-Basic chat rooms can be created with :cpp:func:`linphone_core_get_chat_room <linphone_core_get_chat_room>` using a peer sip uri.
+See :ref:`chat-room-creation` for creating basic chat rooms.
 
 .. code-block:: c
 
-	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(linphoneCore, "sip:joe@sip.linphone.org");
+	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(linphoneCore);
+	LinphoneChatRoom* chat_room = linphone_core_create_chat_room_2(linphoneCore, params, "Subject", "sip:joe@sip.linphone.org");
+	//Or more simply:
+	LinphoneChatRoom* chat_room = linphone_core_create_chat_room_5(linphoneCore, "sip:joe@sip.linphone.org");
 
 Once created, messages are sent using :cpp:func:`linphone_chat_room_send_message`.
 
@@ -29,19 +86,16 @@ Incoming message are received through callbacks which can be set after the chat 
 Group chat rooms
 ----------------
 
-Group chat rooms can be created with :cpp:func:`linphone_core_create_client_group_chat_room <linphone_core_create_client_group_chat_room>`. The third argument is a "fallback" boolean which is taken into account when creating a group chat room with only one peer which does not support group chat. In this case and if this argument is true, a basic chat room will be created instead of not being able to create a group chat room.
-
-.. code-block:: c
-
-	LinphoneChatRoom *chatRoom = linphone_core_create_client_group_chat_room(linphoneCore, "Colleagues", FALSE);
+See :ref:`chat-room-creation` for creating group chat rooms.
+A "fallback" mecanism exists when creating a group chat room with only one peer which does not support group chat. A basic chat room will be created instead. This mecanism is disabled by default and not accessible through normal creation functions. If you want to enable it, use :cpp:func:`linphone_core_create_client_group_chat_room` with `TRUE` as third argument to create the chat room.
 
 Participants can be invited to the chat room using :cpp:func:`linphone_chat_room_add_participant <linphone_chat_room_add_participant>` or :cpp:func:`linphone_chat_room_add_participants <linphone_chat_room_add_participants>`. Participants can be removed using :cpp:func:`linphone_chat_room_remove_participant <linphone_chat_room_remove_participant>`.
 
 .. code-block:: c
 
-	linphone_chat_room_add_participants(chatRoom, participantsAddressList);
-	linphone_chat_room_remove_participant(marieChatRoom, laureParticipant); // remove Laure from Marie's chat room
-
+        LinphoneChatRoomParams *params; //Create parameters
+	LinphoneChatRoom *chatRoom = linphone_core_create_chat_room(linphoneCore, params, "Subject", participantsAddressList);
+	linphone_chat_room_remove_participant(chatRoom, laureParticipant); // remove Laure from chat room
 
 The list of participants of a chat room can be obtained with :cpp:func:`linphone_chat_room_get_participants <linphone_chat_room_get_participants>`. Note that Marie is not considered as a participant in Marie's chat rooms, one's own participant can be obtained with :cpp:func:`linphone_chat_room_get_me <linphone_chat_room_get_me>`.
 
@@ -70,11 +124,14 @@ Concerning admins, events, history and instant message disposition notifications
 Secured chat rooms
 ------------------
 
-LIME X3DH end-to-end encryption for instant messages are enabled in secured chat rooms, also known as encrypted chat rooms, which can be created with :cpp:func:`linphone_core_create_client_group_chat_room_2 <linphone_core_create_client_group_chat_room_2>`. Secured chat rooms and regular chat rooms can coexist, even if they have exactly the same participants.
+LIME X3DH end-to-end encryption for instant messages are enabled in secured chat rooms, also known as encrypted chat rooms.
+Secured chat rooms and regular chat rooms can coexist, even if they have exactly the same participants.
 
 .. code-block:: c
 
-	LinphoneChatRoom *securedChatRoom = linphone_core_create_client_group_chat_room_2(linphoneCore, "Secured Conversation", FALSE, TRUE);
+	LinphoneChatRoomParams *params; //Create parameters
+	linphone_chat_room_params_enable_encryption(params, TRUE); //Enable encryption
+	LinphoneChatRoom *securedChatRoom = linphone_core_create_chat_room_2(linphoneCore, params, "Secured Conversation", participants);
 
 Encrypted chat rooms only allow encrypted messages and files to transit (except for error IMDNs in case a message was incorrectly decrypted). Encrypted chat rooms have a concept of security level based on LIME X3DH trust level of each participant device in the conference. The current security level of a chat room can be obtained with :cpp:func:`linphone_chat_room_get_security_level <linphone_chat_room_get_security_level>`.
 

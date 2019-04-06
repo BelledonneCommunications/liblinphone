@@ -107,11 +107,11 @@ static const char *person_prefix = "/pidf:presence/dm:person";
  * PRIVATE FUNCTIONS                                                         *
  ****************************************************************************/
 
-/* Defined in http://www.w3.org/TR/REC-xml/ */
+/* Defined in https://www.w3.org/TR/REC-xml-names/#NT-NCName */
 static char presence_id_valid_characters[] = "0123456789abcdefghijklmnopqrstuvwxyz-.";
 
 /* NameStartChar (NameChar)* */
-static char presence_id_valid_start_characters[] = ":_abcdefghijklmnopqrstuvwxyz";
+static char presence_id_valid_start_characters[] = "_abcdefghijklmnopqrstuvwxyz";
 
 static char * generate_presence_id(void) {
 	char id[7];
@@ -2155,6 +2155,7 @@ void linphone_notify_recv(LinphoneCore *lc, SalOp *op, SalSubscribeStatus ss, Sa
 			ms_free(tmp);
 		}
 		linphone_friend_set_presence_model(lf, presence);
+		linphone_presence_model_unref(presence);
 		lf->subscribe_active=TRUE;
 		lf->presence_received = TRUE;
 		lf->out_sub_state = linphone_subscription_state_from_sal(ss);

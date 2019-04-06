@@ -717,6 +717,7 @@ struct _LinphoneErrorInfo{
 	char *phrase; /*from SIP response*/
 	char *warnings; /*from SIP response*/
 	char *full_string; /*concatenation of status_string + warnings*/
+	int retry_after;
 	struct _LinphoneErrorInfo *sub_ei;
 };
 
@@ -840,7 +841,7 @@ namespace LinphonePrivate {
 	bctbx_list_t *chat_rooms; \
 	bctbx_list_t *callsCache; \
 	bool_t dns_set_by_app; \
-	int auto_download_incoming_files_max_size; \
+	int auto_download_incoming_files_max_size;
 
 #define LINPHONE_CORE_STRUCT_FIELDS \
 	LINPHONE_CORE_STRUCT_BASE_FIELDS \
@@ -848,6 +849,8 @@ namespace LinphonePrivate {
 	bctbx_mutex_t zrtp_cache_db_mutex; \
 	sqlite3 *logs_db; \
 	sqlite3 *friends_db; \
-	bool_t debug_storage;
+	bool_t debug_storage; \
+	void *system_context; \
+	bool_t is_unreffing;
 
 #endif /* _PRIVATE_STRUCTS_H_ */

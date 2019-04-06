@@ -84,6 +84,7 @@ set(C_API_HEADER_FILES
 	c-chat-message.h
 	c-chat-room-cbs.h
 	c-chat-room.h
+	c-chat-room-params.h
 	c-content.h
 	c-dial-plan.h
 	c-event-log.h
@@ -139,7 +140,7 @@ set(LINPHONE_HEADER_FILES ${ROOT_HEADER_FILES} ${C_API_HEADER_FILES} ${ENUMS_HEA
 set(LINPHONE_HEADER_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}" PARENT_SCOPE)
 
 # ------------------------------------------------------------------------------
-if (IOS AND ENABLE_SHARED)
+if (APPLE AND ENABLE_SHARED)
 	#cmake 3.10 seems not able to handle subdirectories for PUBLIC_HEADER. My be rework in the futur
 	set(DEST_ROOT_DIRECTORY "${CMAKE_INSTALL_PREFIX}/Frameworks/linphone.framework/Headers")
 else()

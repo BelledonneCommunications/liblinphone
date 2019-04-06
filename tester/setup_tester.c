@@ -86,6 +86,51 @@ static void core_init_test(void) {
 	/* until we have good certificates on our test server... */
 	linphone_core_verify_server_certificates(lc,FALSE);
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+		linphone_core_unref(lc);
+	}
+}
+
+static void core_init_stop_test(void) {
+	LinphoneCore* lc;
+	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL,liblinphone_tester_get_empty_rc(), NULL, system_context);
+
+	/* until we have good certificates on our test server... */
+	linphone_core_verify_server_certificates(lc,FALSE);
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+		linphone_core_stop(lc);
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOff, int, "%i");
+	}
+
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		linphone_core_unref(lc);
+	}
+}
+
+static void core_init_stop_start_test(void) {
+	LinphoneCore* lc;
+	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL,liblinphone_tester_get_empty_rc(), NULL, system_context);
+
+	/* until we have good certificates on our test server... */
+	linphone_core_verify_server_certificates(lc, FALSE);
+	const char *uuid = lp_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
+	BC_ASSERT_STRING_NOT_EQUAL(uuid, "");
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+		linphone_core_stop(lc);
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOff, int, "%i");
+	}
+
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		linphone_core_start(lc);
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+	}
+	const char *uuid2 = lp_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
+	BC_ASSERT_STRING_NOT_EQUAL(uuid2, "");
+	BC_ASSERT_STRING_EQUAL(uuid, uuid2);
+
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
 		linphone_core_unref(lc);
 	}
 }
@@ -453,6 +498,20 @@ static void custom_tones_setup(void){
 	linphone_core_manager_destroy(mgr);
 }
 
+static void lime_x3dh_setup(void) {
+	LinphoneCoreManager *mgr = linphone_core_manager_new2("empty_rc", FALSE);
+	char* xml_path = bc_tester_res("rcfiles/lime_x3dh_xml_rc");
+
+	if (linphone_core_lime_x3dh_available(mgr->lc)) {
+		BC_ASSERT_FALSE(linphone_core_lime_x3dh_enabled(mgr->lc));
+		linphone_core_load_config_from_xml(mgr->lc, xml_path);
+		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(mgr->lc));
+	}
+
+	ms_free(xml_path);
+	linphone_core_manager_destroy(mgr);
+}
+
 static void search_friend_in_alphabetical_order(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
@@ -620,6 +679,7 @@ static void search_friend_with_domain_without_filter(void) {
 	linphone_friend_list_remove_friend(lfl, fr);
 
 	if (chloeFriend) linphone_friend_unref(chloeFriend);
+	linphone_presence_model_unref(chloePresence);
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
@@ -900,6 +960,7 @@ static void search_friend_with_presence(void) {
 	LinphoneFriend *fr = linphone_friend_list_find_friend_by_uri(lfl, chloeSipUri);
 	linphone_friend_list_remove_friend(lfl, fr);
 
+	linphone_presence_model_unref(chloePresence);
 	if (chloeFriend) linphone_friend_unref(chloeFriend);
 
 	linphone_magic_search_unref(magicSearch);
@@ -1021,6 +1082,7 @@ static void search_friend_in_call_log_already_exist(void) {
 
 	if (chloeAddress) linphone_address_unref(chloeAddress);
 	if (ronanAddress) linphone_address_unref(ronanAddress);
+	linphone_presence_model_unref(chloePresence);
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
@@ -1299,8 +1361,12 @@ static void search_friend_with_same_address(void) {
 }
 
 static void search_friend_large_database(void) {
-	char *dbPath = bc_tester_res("db/friends.db");
+	char *roDbPath = bc_tester_res("db/friends.db");
+	char *dbPath = bc_tester_file("search_friend_large_database.db");
 	char *searchedFriend = "6295103032641994169";
+	
+	liblinphone_tester_copy_file(roDbPath, dbPath);
+	
 	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
 	linphone_core_set_friends_database_path(manager->lc, dbPath);
 	LinphoneMagicSearch *magicSearch = linphone_magic_search_new(manager->lc);
@@ -1325,7 +1391,8 @@ static void search_friend_large_database(void) {
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
-	free(dbPath);
+	bc_free(roDbPath);
+	bc_free(dbPath);
 }
 
 static void search_friend_get_capabilities(void) {
@@ -1401,6 +1468,9 @@ static void search_friend_get_capabilities(void) {
 	linphone_presence_service_unref(group_chat_service);
 	linphone_presence_service_unref(lime_service);
 
+	linphone_presence_model_unref(group_chat_model);
+	linphone_presence_model_unref(lime_model);
+
 	linphone_friend_unref(no_one_fr);
 	linphone_friend_unref(group_chat_fr);
 	linphone_friend_unref(lime_fr);
@@ -1472,6 +1542,8 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Linphone proxy config address equal (internal api)", linphone_proxy_config_address_equal_test),
 	TEST_NO_TAG("Linphone proxy config server address change (internal api)", linphone_proxy_config_is_server_config_changed_test),
 	TEST_NO_TAG("Linphone core init/uninit", core_init_test),
+	TEST_NO_TAG("Linphone core init/stop/uninit", core_init_stop_test),
+	TEST_NO_TAG("Linphone core init/stop/start/uninit", core_init_stop_start_test),
 	TEST_NO_TAG("Linphone random transport port",core_sip_transport_test),
 	TEST_NO_TAG("Linphone interpret url", linphone_interpret_url_test),
 	TEST_NO_TAG("LPConfig from buffer", linphone_lpconfig_from_buffer),
@@ -1483,6 +1555,7 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Codec usability", codec_usability_test),
 	TEST_NO_TAG("Codec setup", codec_setup),
 	TEST_NO_TAG("Custom tones setup", custom_tones_setup),
+	TEST_NO_TAG("Lime X3DH setup", lime_x3dh_setup),
 	TEST_NO_TAG("Appropriate software echo canceller check", echo_canceller_check),
 	TEST_ONE_TAG("Return friend list in alphabetical order", search_friend_in_alphabetical_order, "MagicSearch"),
 	TEST_ONE_TAG("Search friend without filter and domain", search_friend_without_filter, "MagicSearch"),

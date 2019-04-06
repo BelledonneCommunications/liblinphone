@@ -55,12 +55,19 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 		const string imdnNamespace = "imdn";
 		cpimMessage.addMessageHeader(Cpim::NsHeader("urn:ietf:params:imdn", imdnNamespace));
 
-		char token[13];
-		belle_sip_random_token(token, sizeof(token));
-		cpimMessage.addMessageHeader(
-			Cpim::GenericHeader("Message-ID", token) // TODO: Replace by imdnNamespace + ".Message-ID");
-		);
-		message->getPrivate()->setImdnMessageId(token);
+		const string &previousToken = message->getImdnMessageId();
+		if (previousToken.empty()) {
+			char token[13];
+			belle_sip_random_token(token, sizeof(token));
+			cpimMessage.addMessageHeader(
+				Cpim::GenericHeader("Message-ID", token) // TODO: Replace by imdnNamespace + ".Message-ID");
+			);
+			message->getPrivate()->setImdnMessageId(token);
+		} else {
+			cpimMessage.addMessageHeader(
+				Cpim::GenericHeader("Message-ID", previousToken) // TODO: Replace by imdnNamespace + ".Message-ID");
+			);
+		}
 
 		vector<string> dispositionNotificationValues;
 		if (message->getPrivate()->getPositiveDeliveryNotificationRequired())

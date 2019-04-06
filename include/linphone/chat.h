@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "linphone/api/c-types.h"
 #include "linphone/api/c-chat-message.h"
 #include "linphone/api/c-chat-message-cbs.h"
+#include "linphone/api/c-chat-room-params.h"
 #include "linphone/api/c-chat-room.h"
 #include "linphone/api/c-chat-room-cbs.h"
 
@@ -46,7 +47,12 @@ extern "C" {
 **/
 LINPHONE_PUBLIC const bctbx_list_t* linphone_core_get_chat_rooms(LinphoneCore *lc);
 
-
+/**
+ * Creates and returns the default chat room parameters.
+ * @param[in] lc #LinphoneCore object
+ * @return LinphoneChatRoomParams
+**/
+LINPHONE_PUBLIC LinphoneChatRoomParams *linphone_core_create_default_chat_room_params(LinphoneCore *lc);
 
 /**
  * @}

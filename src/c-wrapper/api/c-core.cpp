@@ -42,6 +42,7 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(
 )
 
 static void _linphone_core_constructor (LinphoneCore *lc) {
+	lc->state = LinphoneGlobalOff;
 }
 
 static void _linphone_core_destructor (LinphoneCore *lc) {
@@ -78,10 +79,8 @@ void linphone_core_set_lime_x3dh_server_url(LinphoneCore *lc, const char *url) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setX3dhServerUrl(L_C_TO_STRING(url));
 }
 
-void linphone_core_delete_local_encryption_db (const LinphoneCore *lc) {
-	auto encryptionEngine = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getEncryptionEngine();
-	if (encryptionEngine)
-		encryptionEngine->cleanDb();
+const char *linphone_core_get_lime_x3dh_server_url(LinphoneCore *lc) {
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getX3dhServerUrl());
 }
 
 //Deprecated
@@ -108,4 +107,12 @@ void linphone_core_remove_linphone_spec (LinphoneCore *lc, const char *spec) {
 
 const bctbx_list_t *linphone_core_get_linphone_specs_list (LinphoneCore *lc) {
 	return L_GET_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getSpecsList());
+}
+
+void linphone_core_enable_friend_list_subscription(LinphoneCore *lc, bool_t enable) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->enableFriendListSubscription(enable == TRUE ? true : false);
+}
+
+bool_t linphone_core_is_friend_list_subscription_enabled(LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->isFriendListSubscriptionEnabled() ? TRUE : FALSE;
 }

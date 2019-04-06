@@ -2032,6 +2032,9 @@ static void linphone_core_free_payload_types(LinphoneCore *lc){
 	bctbx_list_free_with_data(lc->default_audio_codecs, (void (*)(void*))payload_type_destroy);
 	bctbx_list_free_with_data(lc->default_video_codecs, (void (*)(void*))payload_type_destroy);
 	bctbx_list_free_with_data(lc->default_text_codecs, (void (*)(void*))payload_type_destroy);
+	lc->default_audio_codecs = NULL;
+	lc->default_video_codecs = NULL;
+	lc->default_text_codecs = NULL;
 }
 
 void linphone_core_set_state(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message){
@@ -2075,6 +2078,20 @@ static void _linphone_core_read_config(LinphoneCore * lc) {
 #endif
 
 	lc->auto_net_state_mon=lc->sip_conf.auto_net_state_mon;
+}
+
+void linphone_core_load_config_from_xml(LinphoneCore *lc, const char * xml_uri) {
+	// As for today assume the URI is a local file
+	const char *error = linphone_config_load_from_xml_file(lc->config, xml_uri);
+	if (error) {
+		bctbx_error("Couldn't load config from xml: %s", error);
+		return;
+	}
+
+	// We should call _linphone_core_read_config(lc); in the future but currently this is dangerous
+	if (linphone_core_lime_x3dh_available(lc)) {
+		linphone_core_enable_lime_x3dh(lc, true);
+	}
 }
 
 void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState state, const char *message) {
@@ -2328,6 +2345,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	ms_message("Initializing LinphoneCore %s", linphone_core_get_version());
 
+	lc->is_unreffing = FALSE;
 	lc->config=lp_config_ref(config);
 	lc->data=userdata;
 	lc->ringstream_autorelease=TRUE;
@@ -2342,12 +2360,23 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->sal->setCallbacks(&linphone_sal_callbacks);
 
 #ifdef __ANDROID__
-	if (system_context)
-		lc->platform_helper = LinphonePrivate::createAndroidPlatformHelpers(lc->cppPtr, system_context);
+	if (system_context) {
+		JNIEnv *env = ms_get_jni_env();
+		if (lc->system_context) {
+			env->DeleteGlobalRef((jobject)lc->system_context);
+		}
+		lc->system_context = (jobject)env->NewGlobalRef((jobject)system_context);
+	}
+	if (lc->system_context) {
+		lc->platform_helper = LinphonePrivate::createAndroidPlatformHelpers(lc->cppPtr, lc->system_context);
+	}
 	else
 		ms_fatal("You must provide the Android's app context when creating the core!");
 #elif TARGET_OS_IPHONE
-	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc->cppPtr, system_context);
+	if (system_context) {
+		lc->system_context = system_context;
+	}
+	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc->cppPtr, lc->system_context);
 #endif
 	if (lc->platform_helper == NULL)
 		lc->platform_helper = new LinphonePrivate::GenericPlatformHelpers(lc->cppPtr);
@@ -2368,7 +2397,9 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	linphone_core_cbs_set_subscribe_received(internal_cbs, linphone_core_internal_subscribe_received);
 	linphone_core_cbs_set_subscription_state_changed(internal_cbs, linphone_core_internal_subscription_state_changed);
 	linphone_core_cbs_set_publish_state_changed(internal_cbs, linphone_core_internal_publish_state_changed);
-	_linphone_core_add_callbacks(lc, internal_cbs, TRUE);
+	if (lc->vtable_refs == NULL) { // Do not add a new listener upon restart
+		_linphone_core_add_callbacks(lc, internal_cbs, TRUE);
+	}
 	belle_sip_object_unref(internal_cbs);
 
 	if (cbs != NULL) {
@@ -2429,13 +2460,31 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	linphone_presence_model_set_basic_status(lc->presence_model, LinphonePresenceBasicStatusOpen);
 
 	_linphone_core_read_config(lc);
+	linphone_core_set_state(lc, LinphoneGlobalReady, "Ready");
+
 	if (automatically_start) {
 		linphone_core_start(lc);
 	}
 }
 
 void linphone_core_start (LinphoneCore *lc) {
-	linphone_core_set_state(lc,LinphoneGlobalStartup,"Starting up");
+	if (lc->state == LinphoneGlobalOn) {
+		bctbx_warning("Core is already started, skipping...");
+		return;
+	} else if (lc->state == LinphoneGlobalShutdown) {
+		bctbx_error("Can't start a Core that is stopping, wait for Off state");
+		return;
+	} else if (lc->state == LinphoneGlobalOff) {
+		bctbx_warning("Core was stopped, before starting it again we need to init it");
+		linphone_core_init(lc, NULL, lc->config, lc->data, NULL, FALSE);
+
+		// Decrement refs to avoid leaking
+		lp_config_unref(lc->config);
+		linphone_core_deactivate_log_serialization_if_needed();
+		bctbx_uninit_logger();
+	}
+
+	linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
 
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
 
@@ -2789,9 +2838,9 @@ void linphone_core_remove_friend_list(LinphoneCore *lc, LinphoneFriendList *list
 void linphone_core_clear_bodyless_friend_lists(LinphoneCore *lc) {
 	bctbx_list_t *copy = bctbx_list_copy(linphone_core_get_friends_lists((const LinphoneCore *)lc));
 	for (auto it = copy; it; it = bctbx_list_next(it)) {
-		LinphoneFriendList *friends = (LinphoneFriendList *)bctbx_list_get_data(copy);
+		LinphoneFriendList *friends = (LinphoneFriendList *)bctbx_list_get_data(it);
 		if (linphone_friend_list_is_subscription_bodyless(friends))
-			linphone_core_remove_friend_list(lc, (LinphoneFriendList *)bctbx_list_get_data(copy));
+			linphone_core_remove_friend_list(lc, (LinphoneFriendList *)bctbx_list_get_data(it));
 	}
 	bctbx_list_free(copy);
 }
@@ -5530,8 +5579,10 @@ void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 		LinphoneCall *call=linphone_core_get_current_call(lc);
 		if (call) {
 			VideoStream *vstream = reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo));
-			if (vstream)
+			if (vstream) {
 				video_stream_set_device_rotation(vstream,rotation);
+				video_stream_change_camera_skip_bitrate(vstream, vstream->cam);
+			}
 		}
 	}
 #endif
@@ -6042,6 +6093,7 @@ void net_config_uninit(LinphoneCore *lc)
 		linphone_nat_policy_unref(lc->nat_policy);
 		lc->nat_policy = NULL;
 	}
+	lc->net_conf = {0};
 }
 
 void sip_config_uninit(LinphoneCore *lc)
@@ -6094,6 +6146,7 @@ void sip_config_uninit(LinphoneCore *lc)
 
 	if (lc->vcard_context) {
 		linphone_vcard_context_destroy(lc->vcard_context);
+		lc->vcard_context = NULL;
 	}
 
 	lc->sal->resetTransports();
@@ -6121,14 +6174,22 @@ void sip_config_uninit(LinphoneCore *lc)
 	lc->sal=NULL;
 
 
-	if (lc->sip_conf.guessed_contact)
+	if (lc->sip_conf.guessed_contact) {
 		ms_free(lc->sip_conf.guessed_contact);
-	if (config->contact)
+		lc->sip_conf.guessed_contact = NULL;
+	}
+	if (config->contact) {
 		ms_free(config->contact);
-	if (lc->default_rls_addr)
+		config->contact = NULL;
+	}
+	if (lc->default_rls_addr) {
 		linphone_address_unref(lc->default_rls_addr);
+		lc->default_rls_addr = NULL;
+	}
 
 	linphone_im_notif_policy_unref(lc->im_notif_policy);
+	lc->im_notif_policy = NULL;
+	lc->sip_conf = {0};
 }
 
 void rtp_config_uninit(LinphoneCore *lc)
@@ -6157,6 +6218,7 @@ void rtp_config_uninit(LinphoneCore *lc)
 	ms_free(lc->rtp_conf.audio_multicast_addr);
 	ms_free(lc->rtp_conf.video_multicast_addr);
 	ms_free(config->srtp_suites);
+	lc->rtp_conf = {0};
 }
 
 static void sound_config_uninit(LinphoneCore *lc)
@@ -6171,6 +6233,7 @@ static void sound_config_uninit(LinphoneCore *lc)
 	if (config->local_ring) ms_free(config->local_ring);
 	if (config->remote_ring) ms_free(config->remote_ring);
 	lc->tones=bctbx_list_free_with_data(lc->tones, (void (*)(void*))linphone_tone_description_destroy);
+	lc->sound_conf = {0};
 }
 
 static void video_config_uninit(LinphoneCore *lc)
@@ -6183,6 +6246,7 @@ static void video_config_uninit(LinphoneCore *lc)
 		ms_free((void *)lc->video_conf.cams);
 	if (lc->video_conf.vdef) linphone_video_definition_unref(lc->video_conf.vdef);
 	if (lc->video_conf.preview_vdef) linphone_video_definition_unref(lc->video_conf.preview_vdef);
+	lc->video_conf = {0};
 }
 
 void _linphone_core_codec_config_write(LinphoneCore *lc){
@@ -6226,6 +6290,7 @@ static void codecs_config_uninit(LinphoneCore *lc)
 	bctbx_list_free(lc->codecs_conf.audio_codecs);
 	bctbx_list_free(lc->codecs_conf.video_codecs);
 	bctbx_list_free(lc->codecs_conf.text_codecs);
+	lc->codecs_conf = {0};
 }
 
 void friends_config_uninit(LinphoneCore* lc)
@@ -6270,13 +6335,14 @@ LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(LinphoneCore *lc, c
 	return linphone_xml_rpc_session_new(lc, url);
 }
 
-void _linphone_core_uninit(LinphoneCore *lc)
-{
+static void _linphone_core_stop(LinphoneCore *lc) {
 	bctbx_list_t *elem = NULL;
 	int i=0;
 	bool_t wait_until_unsubscribe = FALSE;
 	linphone_task_list_free(&lc->hooks);
 	lc->video_conf.show_local = FALSE;
+
+	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
 
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->uninit();
 
@@ -6294,7 +6360,6 @@ void _linphone_core_uninit(LinphoneCore *lc)
 
 	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
 
-	//no longer call LinphoneGlobalShutdown because it cause LinphoneCore revival in case of managed languages like Java
 	getPlatformHelpers(lc)->onLinphoneCoreStop();
 
 #ifdef VIDEO_ENABLED
@@ -6319,59 +6384,95 @@ void _linphone_core_uninit(LinphoneCore *lc)
 	sip_setup_unregister_all();
 
 	if (lp_config_needs_commit(lc->config)) lp_config_sync(lc->config);
-	lp_config_destroy(lc->config);
-	lc->config = NULL; /* Mark the config as NULL to block further calls */
 
 	bctbx_list_for_each(lc->call_logs,(void (*)(void*))linphone_call_log_unref);
 	lc->call_logs=bctbx_list_free(lc->call_logs);
 
 	if(lc->zrtp_secrets_cache != NULL) {
 		ms_free(lc->zrtp_secrets_cache);
+		lc->zrtp_secrets_cache = NULL;
 	}
 
 	if(lc->user_certificates_path != NULL) {
 		ms_free(lc->user_certificates_path);
+		lc->user_certificates_path = NULL;
 	}
 	if(lc->play_file!=NULL){
 		ms_free(lc->play_file);
+		lc->play_file = NULL;
 	}
 	if(lc->rec_file!=NULL){
 		ms_free(lc->rec_file);
+		lc->rec_file = NULL;
 	}
 	if (lc->logs_db_file) {
 		ms_free(lc->logs_db_file);
+		lc->logs_db_file = NULL;
 	}
 	if (lc->friends_db_file) {
 		ms_free(lc->friends_db_file);
+		lc->friends_db_file = NULL;
 	}
 	if (lc->tls_key){
 		ms_free(lc->tls_key);
+		lc->tls_key = NULL;
 	}
 	if (lc->tls_cert){
 		ms_free(lc->tls_cert);
+		lc->tls_cert = NULL;
 	}
 	if (lc->ringtoneplayer) {
 		linphone_ringtoneplayer_destroy(lc->ringtoneplayer);
+		lc->ringtoneplayer = NULL;
 	}
 	if (lc->im_encryption_engine) {
 		linphone_im_encryption_engine_unref(lc->im_encryption_engine);
+		lc->im_encryption_engine = NULL;
 	}
 	if (lc->default_ac_service) {
 		linphone_account_creator_service_unref(lc->default_ac_service);
+		lc->default_ac_service = NULL;
 	}
 
 	linphone_core_free_payload_types(lc);
 	if (lc->supported_formats) ms_free((void *)lc->supported_formats);
+	lc->supported_formats = NULL;
 	linphone_core_call_log_storage_close(lc);
 	linphone_core_friends_storage_close(lc);
 	linphone_core_zrtp_cache_close(lc);
+	ms_bandwidth_controller_destroy(lc->bw_controller);
+	lc->bw_controller = NULL;
+	ms_factory_destroy(lc->factory);
+	lc->factory = NULL;
 
-	//linphone_core_set_state(NULL,LinphoneGlobalOff,"Off");
+	if (lc->platform_helper) delete getPlatformHelpers(lc);
+	lc->platform_helper = NULL;
+	linphone_core_set_state(lc, LinphoneGlobalOff, "Off");
+}
+
+void linphone_core_stop(LinphoneCore *lc) {
+	_linphone_core_stop(lc);
+}
+
+void _linphone_core_uninit(LinphoneCore *lc)
+{
+	lc->is_unreffing = TRUE;
+	if (lc->state != LinphoneGlobalOff) {
+		_linphone_core_stop(lc);
+	}
+	
+	lp_config_unref(lc->config);
+	lc->config = NULL;
+#ifdef __ANDROID__
+	if (lc->system_context) {
+		JNIEnv *env = ms_get_jni_env();
+		env->DeleteGlobalRef((jobject)lc->system_context);
+	}
+#endif
+	lc->system_context = NULL;
+	
 	linphone_core_deactivate_log_serialization_if_needed();
 	bctbx_list_free_with_data(lc->vtable_refs,(void (*)(void *))v_table_reference_destroy);
-	ms_bandwidth_controller_destroy(lc->bw_controller);
-	ms_factory_destroy(lc->factory);
-	if (lc->platform_helper) delete getPlatformHelpers(lc);
 	bctbx_uninit_logger();
 }
 
@@ -6566,13 +6667,10 @@ const char* linphone_configuring_state_to_string(LinphoneConfiguringState cs){
 	switch(cs){
 		case LinphoneConfiguringSuccessful:
 			return "LinphoneConfiguringSuccessful";
-		break;
 		case LinphoneConfiguringFailed:
 			return "LinphoneConfiguringFailed";
-		break;
 		case LinphoneConfiguringSkipped:
 			return "LinphoneConfiguringSkipped";
-		break;
 	}
 	return NULL;
 }
@@ -6581,17 +6679,16 @@ const char *linphone_global_state_to_string(LinphoneGlobalState gs){
 	switch(gs){
 		case LinphoneGlobalOff:
 			return "LinphoneGlobalOff";
-		break;
 		case LinphoneGlobalOn:
 			return "LinphoneGlobalOn";
-		break;
 		case LinphoneGlobalStartup:
 			return "LinphoneGlobalStartup";
-		break;
 		case LinphoneGlobalShutdown:
 			return "LinphoneGlobalShutdown";
 		case LinphoneGlobalConfiguring:
 			return "LinphoneGlobalConfiguring";
+		case LinphoneGlobalReady:
+			return "LinphoneGlobalReady";
 		break;
 	}
 	return NULL;
@@ -7469,7 +7566,6 @@ void linphone_core_remove_content_type_support(LinphoneCore *lc, const char *con
 	lc->sal->removeContentTypeSupport(content_type);
 }
 
-#ifdef ENABLE_UPDATE_CHECK
 static void update_check_process_terminated(LinphoneCore *lc, LinphoneVersionUpdateCheckResult result, const char *version, const char *url) {
 	linphone_core_notify_version_update_check_result_received(lc, result, version, url);
 	if (lc->update_check_http_listener) {
@@ -7530,6 +7626,7 @@ static void update_check_process_response_event(void *ctx, const belle_http_resp
 		char *url = strchr(body, '\t');
 		char *ptr;
 		if (url == NULL) {
+			ms_error("Bad format for update check answer, cannot find TAB between version and URL");
 			update_check_process_terminated(lc, LinphoneVersionUpdateCheckError, NULL, NULL);
 			bctbx_free(body);
 			return;
@@ -7565,11 +7662,8 @@ static void update_check_process_auth_requested(void *ctx, belle_sip_auth_event_
 	LinphoneCore *lc = (LinphoneCore *)ctx;
 	update_check_process_terminated(lc, LinphoneVersionUpdateCheckError, NULL, NULL);
 }
-#endif /* ENABLE_UPDATE_CHECK */
 
 void linphone_core_check_for_update(LinphoneCore *lc, const char *current_version) {
-#ifdef ENABLE_UPDATE_CHECK
-	int err;
 	bool_t is_desktop = FALSE;
 	const char *platform = NULL;
 	const char *mobilePlatform = NULL;
@@ -7612,9 +7706,8 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 		lc->update_check_current_version = bctbx_strdup(current_version);
 		lc->update_check_http_listener = belle_http_request_listener_create_from_callbacks(&belle_request_listener, lc);
 		request = belle_http_request_create("GET", uri, belle_sip_header_create("User-Agent", linphone_core_get_user_agent(lc)), NULL);
-		err = belle_http_provider_send_request(lc->http_provider, request, lc->update_check_http_listener);
+		belle_http_provider_send_request(lc->http_provider, request, lc->update_check_http_listener);
 	}
-#endif
 }
 
 int linphone_core_get_unread_chat_message_count (const LinphoneCore *lc) {

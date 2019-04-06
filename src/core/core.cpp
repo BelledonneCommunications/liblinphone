@@ -74,7 +74,9 @@ void CorePrivate::init () {
 			lFatal() << "Unable to open linphone database with uri " << uri << " and backend " << backend;
 
 		loadChatRooms();
-	}else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
+	} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
+
+	isFriendListSubscriptionEnabled = !!lp_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "net", "friendlist_subscription_enabled", 1);
 }
 
 void CorePrivate::registerListener (CoreListener *listener) {
@@ -96,11 +98,18 @@ void CorePrivate::uninit () {
 	chatRooms.clear();
 	chatRoomsById.clear();
 	noCreatedClientGroupChatRooms.clear();
+	listeners.clear();
+	if (q->limeX3dhEnabled()) {
+		q->enableLimeX3dh(false);
+	}
 
 	remoteListEventHandler = nullptr;
 	localListEventHandler = nullptr;
 
 	AddressPrivate::clearSipAddressesCache();
+	if (mainDb != nullptr) {
+		mainDb->disconnect();
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -131,16 +140,31 @@ void CorePrivate::notifyEnteringBackground () {
 	auto listenersCopy = listeners; // Allow removable of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringBackground();
+
+	if (isFriendListSubscriptionEnabled)
+		enableFriendListsSubscription(false);
 }
 
 void CorePrivate::notifyEnteringForeground () {
+	L_Q();
 	if (!isInBackground)
 		return;
 
 	isInBackground = false;
+
+	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
+	LinphoneProxyConfig *lpc = linphone_core_get_default_proxy_config(lc);
+	if (lpc && linphone_proxy_config_get_state(lpc) == LinphoneRegistrationFailed) {
+		// This is to ensure an app bring to foreground that isn't registered correctly will try to fix that and not show a red registration dot to the user
+		linphone_core_refresh_registers(lc);
+	}
+
 	auto listenersCopy = listeners; // Allow removable of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringForeground();
+
+	if (isFriendListSubscriptionEnabled)
+		enableFriendListsSubscription(true);	
 }
 
 belle_sip_main_loop_t *CorePrivate::getMainLoop(){
@@ -151,6 +175,23 @@ belle_sip_main_loop_t *CorePrivate::getMainLoop(){
 void CorePrivate::doLater(const std::function<void ()> &something){
 	belle_sip_main_loop_cpp_do_later(getMainLoop(), something);
 }
+
+void CorePrivate::enableFriendListsSubscription(bool enable) {
+	L_Q();
+
+	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
+	bctbx_list_t *elem;
+	for (elem = lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
+		LinphoneFriendList *list = (LinphoneFriendList *)elem->data;
+		linphone_friend_list_enable_subscriptions(list, enable);
+	}
+}
+
+bool CorePrivate::basicToFlexisipChatroomMigrationEnabled()const{
+	L_Q();
+	return linphone_config_get_bool(linphone_core_get_config(q->getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE);
+}
+
 
 // =============================================================================
 
@@ -184,6 +225,11 @@ void Core::enterBackground () {
 void Core::enterForeground () {
 	L_D();
 	d->notifyEnteringForeground();
+}
+
+bool Core::isInBackground () {
+	L_D();
+	return d->isInBackground;
 }
 
 // ---------------------------------------------------------------------------
@@ -238,13 +284,16 @@ void Core::enableLimeX3dh (bool enable) {
 
 	if (d->imee == nullptr) {
 		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
-		string serverUrl = lp_config_get_string(lpconfig, "lime", "x3dh_server_url", "");
+		string serverUrl = lp_config_get_string(lpconfig, "lime", "lime_server_url", lp_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
 		if (serverUrl.empty()) {
+			lInfo() << "Lime X3DH server URL not set, can't enable";
 			//Do not enable encryption engine if url is undefined
 			return;
 		}
-		string filename = lp_config_get_string(lpconfig, "lime", "x3dh_db_path", "x3dh.c25519.sqlite3");
-		string dbAccess = getDataPath() + filename;
+		string dbAccess = lp_config_get_string(lpconfig, "lime", "x3dh_db_path", "");
+		if (dbAccess.empty()) {
+			dbAccess = getDataPath() + "x3dh.c25519.sqlite3";
+		}
 		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
 
 		LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, serverUrl, prov, getSharedFromThis());
@@ -263,8 +312,9 @@ void Core::setX3dhServerUrl(const std::string &url) {
 		return;
 	}
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
-	string prevUrl = lp_config_get_string(lpconfig, "lime", "x3dh_server_url", "");
-	lp_config_set_string(lpconfig, "lime", "x3dh_server_url", url.c_str());
+	string prevUrl = lp_config_get_string(lpconfig, "lime", "lime_server_url", lp_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
+	lp_config_set_string(lpconfig, "lime", "lime_server_url", url.c_str());
+	lp_config_clean_entry(lpconfig, "lime", "x3dh_server_url");
 	if (url.empty()) {
 		enableLimeX3dh(false);
 	} else if (url.compare(prevUrl)) {
@@ -272,6 +322,12 @@ void Core::setX3dhServerUrl(const std::string &url) {
 		enableLimeX3dh(false);
 		enableLimeX3dh(true);
 	}
+}
+
+std::string Core::getX3dhServerUrl() const {
+	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
+	string serverUrl = lp_config_get_string(lpconfig, "lime", "lime_server_url", lp_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
+	return serverUrl;
 }
 
 bool Core::limeX3dhEnabled () const {
@@ -297,6 +353,7 @@ bool Core::limeX3dhAvailable() const {
 void Core::setSpecsList (const std::list<std::string> &specsList) {
 	L_D();
 	d->specs = specsList;
+	d->specs.sort();
 	d->specs.unique();
 	const string &tmpSpecs = getSpecs();
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
@@ -337,6 +394,24 @@ void Core::setSpecs (const std::string &pSpecs) {
 std::string Core::getSpecs() const {
 	L_D();
 	return Utils::join(Utils::toVector(d->specs), ",");
+}
+
+// ---------------------------------------------------------------------------
+// Friends.
+// ---------------------------------------------------------------------------
+
+void Core::enableFriendListSubscription (bool enable) {
+	L_D();
+	if (d->isFriendListSubscriptionEnabled != enable) {
+		d->isFriendListSubscriptionEnabled = enable;
+		lp_config_set_int(linphone_core_get_config(getCCore()), "net", "friendlist_subscription_enabled", enable ? 1 : 0);
+	}
+	d->enableFriendListsSubscription(enable);
+}
+
+bool Core::isFriendListSubscriptionEnabled () const {
+	L_D();
+	return d->isFriendListSubscriptionEnabled;
 }
 
 // -----------------------------------------------------------------------------

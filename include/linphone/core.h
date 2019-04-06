@@ -1004,11 +1004,22 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_core_new(const Linpho
 LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_core_new_with_config(const LinphoneCoreVTable *vtable, LpConfig *config, void *userdata);
 
 /**
- * Start a #LinphoneCore object after it has been instantiated.
+ * Start a #LinphoneCore object after it has been instantiated and not automatically started.
+ * Also re-initialize a #LinphoneCore object that has been stopped using linphone_core_stop().
+ * Must be called only if #LinphoneGlobalState is either Ready of Off. State will changed to Startup, Configuring and then On.
  * @ingroup initializing
  * @param[in] core The #LinphoneCore object to be started
  */
 LINPHONE_PUBLIC void linphone_core_start (LinphoneCore *core);
+
+/**
+ * Stop a #LinphoneCore object after it has been instantiated and started.
+ * If stopped, it can be started again using linphone_core_start().
+ * Must be called only if #LinphoneGlobalState is either On. State will changed to Shutdown and then Off.
+ * @ingroup initializing
+ * @param[in] core The #LinphoneCore object to be stopped
+ */
+LINPHONE_PUBLIC void linphone_core_stop (LinphoneCore *core);
 
 /**
  * Increment the reference counter of a #LinphoneCore object.
@@ -1561,6 +1572,14 @@ LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_enabled(const LinphoneCore *lc);
  * @ingroup misc
 **/
 LINPHONE_PUBLIC void linphone_core_set_lime_x3dh_server_url(LinphoneCore *lc, const char *url);
+
+/**
+ * Get the x3dh server url.
+ * @param[in] lc LinphoneCore object
+ * return The x3dh server url
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char *linphone_core_get_lime_x3dh_server_url(LinphoneCore *lc);
 
 /**
  * Tells if LIME X3DH is available
@@ -5269,7 +5288,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC const char *linphone_core_get_chat_database_
  * @param[in] fallback Boolean value telling whether we should plan on being able to fallback to a basic chat room if the client-side group chat room creation fails
  * @return The newly created client-side group chat room.
  */
-LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_create_client_group_chat_room(LinphoneCore *lc, const char *subject, bool_t fallback);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom * linphone_core_create_client_group_chat_room(LinphoneCore *lc, const char *subject, bool_t fallback);
 
 /**
  * Create a client-side group chat room. When calling this function the chat room is only created
@@ -5281,7 +5300,57 @@ LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_create_client_group_chat_room(L
  * @param[in] encrypted Boolean value telling whether we should apply encryption or not on chat messages sent and received on this room.
  * @return The newly created client-side group chat room.
  */
-LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_client_group_chat_room_2 (LinphoneCore *lc, const char *subject, bool_t fallback, bool_t encrypted);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_create_client_group_chat_room_2(LinphoneCore *lc, const char *subject, bool_t fallback, bool_t encrypted);
+
+/**
+ * Create a chat room.
+ *
+ * @param[in] lc A #LinphoneCore object
+ * @param[in] params The chat room creation parameters #LinphoneChatRoomParams
+ * @param[in] localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation
+ * @param[in] subject The subject of the group chat room
+ * @param[in] participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
+ * @return The newly created chat room.
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room(LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const char *subject, const bctbx_list_t *participants);
+
+/**
+ * Create a chat room.
+ *
+ * @param[in] lc A #LinphoneCore object
+ * @param[in] params The chat room creation parameters #LinphoneChatRoomParams
+ * @param[in] subject The subject of the group chat room
+ * @param[in] participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
+ * @return The newly created chat room.
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_2(LinphoneCore *lc, const LinphoneChatRoomParams *params, const char *subject, const bctbx_list_t *participants);
+
+/**
+ *
+ * @param[in] lc A #LinphoneCore object
+ * @param[in] subject The subject of the group chat room
+ * @param[in] participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
+ * @return The newly created chat room.
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_3(LinphoneCore *lc, const char *subject, const bctbx_list_t *participants);
+
+/**
+ *
+ * @param[in] lc A #LinphoneCore object
+ * @param[in] params The chat room creation parameters #LinphoneChatRoomParams
+ * @param[in] localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation
+ * @param[in] participant #LinphoneAddress representing the initial participant to add to the chat room
+ * @return The newly created chat room.
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_4(LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *participant);
+
+/**
+ *
+ * @param[in] lc A #LinphoneCore object
+ * @param[in] participant #LinphoneAddress representing the initial participant to add to the chat room
+ * @return The newly created chat room.
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_5(LinphoneCore *lc, const LinphoneAddress *participant);
 
 /**
  * Get a basic chat room whose peer is the supplied address. If it does not exist yet, it will be created.
@@ -5702,6 +5771,20 @@ LINPHONE_PUBLIC LinphoneFriendList * linphone_core_get_default_friend_list(const
 LINPHONE_PUBLIC LinphoneFriendList* linphone_core_get_friend_list_by_name(const LinphoneCore *lc, const char *name);
 
 /**
+ * Sets whether or not to start friend lists subscription when in foreground
+ * @param[in] lc The #LinphoneCore
+ * @param[in] enable whether or not to enable the feature
+**/
+LINPHONE_PUBLIC void linphone_core_enable_friend_list_subscription(LinphoneCore *lc, bool_t enable);
+
+/**
+ * Returns whether or not friend lists subscription are enabled
+ * @param[in] lc The #LinphoneCore
+ * @return whether or not the feature is enabled
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_friend_list_subscription_enabled(LinphoneCore *lc);
+
+/**
  * Retrieves a list of #LinphoneAddress sort and filter
  * @param[in] lc #LinphoneCore object
  * @param[in] filter Chars used for the filter*
@@ -5851,6 +5934,14 @@ LINPHONE_PUBLIC LinphoneAccountCreator * linphone_core_create_account_creator(Li
  * @ingroup misc
 **/
 LINPHONE_PUBLIC LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(LinphoneCore *lc, const char *url);
+
+/**
+ * Update current config with the content of a xml config file
+ * @param[in] lc The #LinphoneCore to update
+ * @param[in] xml_uri the path to the xml file
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *lc, const char * xml_uri);
 
 
 #ifdef __cplusplus

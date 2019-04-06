@@ -53,7 +53,6 @@ void ChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> &chatMessag
 
 	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 	dChatMessage->setTime(ms_time(0));
-	dChatMessage->setImdnMessageId(""); // in case of "message resent"
 	dChatMessage->send();
 
 	LinphoneChatRoom *cr = getCChatRoom();
@@ -90,7 +89,16 @@ void ChatRoomPrivate::addEvent (const shared_ptr<EventLog> &eventLog) {
 	L_Q();
 
 	q->getCore()->getPrivate()->mainDb->addEvent(eventLog);
-	setLastUpdateTime(eventLog->getCreationTime());
+	
+	EventLog::Type type = eventLog->getType();
+	if (type == EventLog::Type::ConferenceParticipantDeviceAdded
+		|| type == EventLog::Type::ConferenceParticipantDeviceRemoved) {
+		// Do not update last event time on the chat room for those events
+		// because they are invisible and will cause the chat room to move
+		// up in the list and the user won't know why
+	} else {
+		setLastUpdateTime(eventLog->getCreationTime());
+	}
 }
 
 void ChatRoomPrivate::addTransientEvent (const shared_ptr<EventLog> &eventLog) {
@@ -356,10 +364,11 @@ LinphoneChatRoom *ChatRoomPrivate::getCChatRoom () const {
 
 // =============================================================================
 
-ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ConferenceId &conferenceId) :
+ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params) :
 	AbstractChatRoom(p, core) {
 	L_D();
 
+	d->params = params;
 	d->conferenceId = conferenceId;
 	d->imdnHandler.reset(new Imdn(this));
 	d->isComposingHandler.reset(new IsComposing(core->getCCore(), d));
@@ -368,6 +377,9 @@ ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const Conf
 ChatRoom::~ChatRoom () {
 	L_D();
 
+	if (d->params) {
+		d->params.reset();
+	}
 	d->imdnHandler.reset();
 }
 
@@ -530,10 +542,21 @@ void ChatRoom::markAsRead () {
 	L_D();
 
 	CorePrivate *dCore = getCore()->getPrivate();
-	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->conferenceId))
-		chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
+	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->conferenceId)) {
+		chatMessage->getPrivate()->markAsRead();
+		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
+		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
+			chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
+		}
+	}
 
 	dCore->mainDb->markChatMessagesAsRead(d->conferenceId);
+}
+
+const std::shared_ptr<ChatRoomParams> &ChatRoom::getCurrentParams() const {
+	L_D();
+
+	return d->params;
 }
 
 LINPHONE_END_NAMESPACE

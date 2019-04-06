@@ -85,7 +85,6 @@ const string &ParticipantDeviceIdentity::getName () const {
 	bctbx_list_free(callbacksCopy);
 
 void ServerGroupChatRoomPrivate::setState (ChatRoom::State state) {
-	L_Q();
 	L_Q_T(LocalConference, qConference);
 	ChatRoomPrivate::setState(state);
 	if (state == ChatRoom::State::Created) {
@@ -94,38 +93,37 @@ void ServerGroupChatRoomPrivate::setState (ChatRoom::State state) {
 		list<IdentityAddress> participantAddresses;
 		for (const auto &participant : qConference->getPrivate()->participants) {
 			participantAddresses.emplace_back(participant->getAddress());
-			bool atLeastOneDeviceLeaving = false;
-			bool atLeastOneDeviceJoining = false;
-			bool atLeastOneDevicePresent = false;
-			for (const auto &device : participant->getPrivate()->getDevices()) {
-				switch (device->getState()) {
-					case ParticipantDevice::State::ScheduledForLeaving:
-					case ParticipantDevice::State::Leaving:
-						atLeastOneDeviceLeaving = true;
-						break;
-					case ParticipantDevice::State::ScheduledForJoining:
-					case ParticipantDevice::State::Joining:
-						atLeastOneDeviceJoining = true;
-						break;
-					case ParticipantDevice::State::Present:
-						atLeastOneDevicePresent = true;
-						break;
-					case ParticipantDevice::State::Left:
-						break;
+			
+			if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne){
+				// Even if devices can BYE and get rid of their session, actually no one can leave a one to one chatroom.
+				authorizedParticipants.push_back(participant);
+			}else{
+				bool atLeastOneDeviceJoining = false;
+				bool atLeastOneDevicePresent = false;
+				for (const auto &device : participant->getPrivate()->getDevices()) {
+					switch (device->getState()) {
+						case ParticipantDevice::State::ScheduledForLeaving:
+						case ParticipantDevice::State::Leaving:
+							break;
+						case ParticipantDevice::State::ScheduledForJoining:
+						case ParticipantDevice::State::Joining:
+							atLeastOneDeviceJoining = true;
+							break;
+						case ParticipantDevice::State::Present:
+							atLeastOneDevicePresent = true;
+							break;
+						case ParticipantDevice::State::Left:
+							break;
+					}
 				}
-			}
-
-			if (atLeastOneDeviceLeaving) {
-				q->removeParticipant(participant);
-			} else {
-				if (atLeastOneDevicePresent || atLeastOneDeviceJoining)
+				if (atLeastOneDevicePresent || atLeastOneDeviceJoining){
 					authorizedParticipants.push_back(participant);
+				}
 			}
 		}
 		updateParticipantsSessions();
-		
 		// Subscribe to the registration events from the proxy
-		subscribeRegistrationForParticipants(participantAddresses);
+		subscribeRegistrationForParticipants(participantAddresses, false);
 	}
 }
 
@@ -156,7 +154,7 @@ void ServerGroupChatRoomPrivate::resumeParticipant(const std::shared_ptr<Partici
 			case ParticipantDevice::State::Leaving:
 			case ParticipantDevice::State::Left:
 			case ParticipantDevice::State::ScheduledForLeaving:
-				device->setState(ParticipantDevice::State::ScheduledForJoining);
+				setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
 				updateParticipantDeviceSession(device);
 			break;
 			default:
@@ -289,7 +287,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	if (participant->isAdmin()) {
 		if (joiningPendingAfterCreation){
 			if (!initializeParticipants(participant, op)){
- 				op->decline(SalReasonNotAcceptable, nullptr);
+ 				op->decline(SalReasonNotAcceptable, "");
  				requestDeletion();
  			}
 			/* we don't accept the session yet: initializeParticipants() has launched queries for device information
@@ -314,7 +312,7 @@ void ServerGroupChatRoomPrivate::confirmRecreation (SalCallOp *op) {
 	auto participant = q->findParticipant(Address(op->getFrom()));
 	if (!participant){
 		lError() << q << " bug - " << op->getFrom() << " is not a participant.";
-		op->decline(SalReasonInternalError, nullptr);
+		op->decline(SalReasonInternalError, "");
 		return;
 	}
 	
@@ -343,21 +341,25 @@ void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {
 		 */
 		
 		for (const auto &device : participant->getPrivate()->getDevices()) {
-			if ( (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && device->getState() == ParticipantDevice::State::Left){
-				inviteDevice(device);
-				continue;
-			}
 			
-			if (device->getState() != ParticipantDevice::State::Present)
-				continue;
 			string uri(device->getAddress().asString());
-			size_t nbMessages = queuedMessages[uri].size();
-			if (nbMessages > 0)
+			auto & msgQueue = queuedMessages[uri];
+			
+			if (!msgQueue.empty()){
+				if ( (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && device->getState() == ParticipantDevice::State::Left){
+					lInfo() << "There is a message to transmit to a participant in left state in a one to one chatroom, so inviting first.";
+					inviteDevice(device);
+					continue;
+				}
+				if (device->getState() != ParticipantDevice::State::Present)
+					continue;
+				size_t nbMessages = msgQueue.size();
 				lInfo() << q << ": Dispatching " << nbMessages << " queued message(s) for '" << uri << "'";
-			while (!queuedMessages[uri].empty()) {
-				shared_ptr<Message> msg = queuedMessages[uri].front();
-				sendMessage(msg, device->getAddress());
-				queuedMessages[uri].pop();
+				while (!msgQueue.empty()) {
+					shared_ptr<Message> msg = msgQueue.front();
+					sendMessage(msg, device->getAddress());
+					msgQueue.pop();
+				}
 			}
 		}
 	}
@@ -433,8 +435,11 @@ void ServerGroupChatRoomPrivate::handleSubjectChange(SalCallOp *op){
 /*
  * This function setups registration subscriptions if not already there.
  * If no registration subscription is started (because they were all running already), it returns false.
+ * newInvited specifies whether these participants are in the process of being invited, in which case they will be
+ * automatically added to the invitedParticipants list, so that when registration info arrives, they
+ * will be added.
  */
-bool ServerGroupChatRoomPrivate::subscribeRegistrationForParticipants(const std::list<IdentityAddress> &identAddresses){
+bool ServerGroupChatRoomPrivate::subscribeRegistrationForParticipants(const std::list<IdentityAddress> &identAddresses, bool newInvited){
 	L_Q();
 	std::list<IdentityAddress> requestedAddresses;
 	bool subscriptionsPending = false;
@@ -443,6 +448,7 @@ bool ServerGroupChatRoomPrivate::subscribeRegistrationForParticipants(const std:
 	for (const auto &addr : identAddresses) {
 		if (registrationSubscriptions.find(addr.asString()) == registrationSubscriptions.end()){
 			requestedAddresses.emplace_back(addr);
+			if (newInvited) invitedParticipants.emplace_back(addr);
 			unnotifiedRegistrationSubscriptions++;
 			subscriptionsPending = true;
 		}
@@ -492,7 +498,7 @@ bool ServerGroupChatRoomPrivate::initializeParticipants (const shared_ptr<Partic
 		}
 	}
 	identAddresses.push_back(initiator->getAddress());
-	if (!subscribeRegistrationForParticipants(identAddresses)){
+	if (!subscribeRegistrationForParticipants(identAddresses, true)){
 		/* If we are not waiting for any registration information, then we can conclude immediately. */
 		conclude();
 	}
@@ -557,47 +563,56 @@ void ServerGroupChatRoomPrivate::updateParticipantDevices(const IdentityAddress 
 	* added to the chatroom
 	*/
 	if (it == registrationSubscriptions.end()){
-			lError() << "updateParticipantDevices(): " << participantAddress << " registration info was not requested.";
+		lError() << "updateParticipantDevices(): " << participantAddress << " registration info was not requested.";
+		return;
 	}else{
-		// Mark this registration subscription as being notified if not already the case.
-		if ( !(*it).second.notified) {
-			(*it).second.notified = true;
-			newParticipantReginfo = true;
+		// Check if this registration information is for a participant in the process of being added.
+		auto it = find(invitedParticipants.begin(), invitedParticipants.end(), participantAddress);
+		if (it != invitedParticipants.end()){
+			invitedParticipants.erase(it);
 			unnotifiedRegistrationSubscriptions--;
+			newParticipantReginfo = true;
 		}
 	}
-		
-	if (!devices.empty()){
-		shared_ptr<Participant> participant = addParticipant(participantAddress);
-		
-		lInfo() << q << ": Setting " << devices.size() << " participant device(s) for " << participantAddress.asString();
-
-		// Remove devices that are in the chatroom but no longer in the given list
-		list<shared_ptr<ParticipantDevice>> devicesToRemove;
-		for (const auto &device : participant->getPrivate()->getDevices()) {
-			auto predicate = [device] (const ParticipantDeviceIdentity & deviceIdentity) {
-				return device->getAddress() == deviceIdentity.getAddress();
-			};
-			auto it = find_if(devices.cbegin(), devices.cend(), predicate);
-			if (it == devices.cend()){
-				lInfo() << q << "Device " << device << " is no longer registered, it will be removed from the chatroom.";
-				devicesToRemove.push_back(device);
-			}
-		}
-		// Add all the devices in the given list, if already present they will be ignored
-		for (const auto &device : devices)
-			addParticipantDevice(participant, device);
-		
-		// Remove all devices that are no longer existing.
-		for (auto &device : devicesToRemove)
-			removeParticipantDevice(participant, device->getAddress());
-
-	}else{
-		if (newParticipantReginfo){
+	shared_ptr<Participant> participant;
+	
+	if (newParticipantReginfo){
+		if (!devices.empty()){
+			participant = addParticipant(participantAddress);
+		}else{
 			lInfo() << q << participantAddress << " has no compatible devices.";
 			unSubscribeRegistrationForParticipant(participantAddress);
+			return;
+		}
+	}else{
+		participant = q->findParticipant(participantAddress);
+	}
+		
+	if (!participant){
+		lError() << q << " participant devices updated for unknown participant, ignored.";
+		return;
+	}
+	lInfo() << q << ": Setting " << devices.size() << " participant device(s) for " << participantAddress.asString();
+
+	// Remove devices that are in the chatroom but no longer in the given list
+	list<shared_ptr<ParticipantDevice>> devicesToRemove;
+	for (const auto &device : participant->getPrivate()->getDevices()) {
+		auto predicate = [device] (const ParticipantDeviceIdentity & deviceIdentity) {
+			return device->getAddress() == deviceIdentity.getAddress();
+		};
+		auto it = find_if(devices.cbegin(), devices.cend(), predicate);
+		if (it == devices.cend()){
+			lInfo() << q << "Device " << device << " is no longer registered, it will be removed from the chatroom.";
+			devicesToRemove.push_back(device);
 		}
 	}
+	// Add all the devices in the given list, if already present they will be ignored
+	for (const auto &device : devices)
+		addParticipantDevice(participant, device);
+	
+	// Remove all devices that are no longer existing.
+	for (auto &device : devicesToRemove)
+		removeParticipantDevice(participant, device->getAddress());
 }
 
 void ServerGroupChatRoomPrivate::conclude(){
@@ -703,13 +718,21 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 		// Nothing to do, but set the name because the user-agent is not known for the initiator device.
 		device->setName(deviceInfo.getName());
 	} else if (findAuthorizedParticipant(participant->getAddress())) {
+		bool allDevLeft = !participant->getPrivate()->getDevices().empty() && allDevicesLeft(participant);
 		/*
 		 * This is a really new device.
 		 */
 		device = participant->getPrivate()->addDevice(deviceInfo.getAddress(), deviceInfo.getName());
-		setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
+		
 		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->getPrivate()->eventHandler->notifyParticipantDeviceAdded(participant->getAddress(), deviceInfo.getAddress());
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
+		
+		if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne && allDevLeft){
+			/* If all other devices have left, let this new device to left state too, it will be invited to join if a message is sent to it. */
+			setParticipantDeviceState(device, ParticipantDevice::State::Left);
+		}else{
+			setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
+		}
 	}
 }
 
@@ -798,13 +821,15 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 	lInfo() << q << ": Inviting device '" << device->getAddress().asString() << "'";
 	shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 	shared_ptr<CallSession> session = makeSession(device);
-	if (device->getState() == ParticipantDevice::State::Joining && session->getState() == CallSession::State::OutgoingProgress){
-		lInfo() << q << "outgoing INVITE already in progress.";
+	if (device->getState() == ParticipantDevice::State::Joining && (
+		session->getState() == CallSession::State::OutgoingProgress
+		|| session->getState() == CallSession::State::Connected)){
+		lInfo() << q << ": outgoing INVITE already in progress.";
 		return;
 	}
-	device->setState(ParticipantDevice::State::Joining);
+	setParticipantDeviceState(device, ParticipantDevice::State::Joining);
 	if (session && session->getState() == CallSession::State::IncomingReceived){
-		lInfo() << q << "incoming INVITE in progress.";
+		lInfo() << q << ": incoming INVITE in progress.";
 		return;
 	}
 		
@@ -813,6 +838,12 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 		if (invitedParticipant != participant)
 			addressesList.push_back(invitedParticipant->getAddress());
 	}
+	if (addressesList.empty()){
+		// Having an empty participant list shall never happen, but should this happen don't spread the bug to clients.
+		lError() << q << ": empty participant list, this should never happen, INVITE not sent.";
+		return;
+	}
+	
 	Content content;
 	content.setBody(q->getResourceLists(addressesList));
 	content.setContentType(ContentType::ResourceLists);
@@ -826,7 +857,7 @@ void ServerGroupChatRoomPrivate::byeDevice (const std::shared_ptr<ParticipantDev
 	L_Q();
 	
 	lInfo() << q << ": Asking device '" << device->getAddress().asString() << "' to leave";
-	device->setState(ParticipantDevice::State::Leaving);
+	setParticipantDeviceState(device, ParticipantDevice::State::Leaving);
 	shared_ptr<CallSession> session = makeSession(device);
 	switch(session->getState()){
 		case CallSession::State::OutgoingInit:
@@ -853,7 +884,8 @@ void ServerGroupChatRoomPrivate::notifyParticipantDeviceRegistration(const Ident
 	}
 	shared_ptr<ParticipantDevice> pd = participant->getPrivate()->findDevice(participantDevice);
 	if (!pd){
-		lError() << q << ": device " << participantDevice << " is not part of any participant of the chatroom.";
+		/* A device that does not have the required capabilities may be notified. */
+		lInfo() << q << ": device " << participantDevice << " is not part of any participant of the chatroom.";
 		return;
 	}
 	updateParticipantDeviceSession(pd, true);
@@ -1064,7 +1096,7 @@ void ServerGroupChatRoomPrivate::onAckReceived (const std::shared_ptr<CallSessio
 // =============================================================================
 
 ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallOp *op)
-: ChatRoom(*new ServerGroupChatRoomPrivate, core, ConferenceId()),
+	: ChatRoom(*new ServerGroupChatRoomPrivate, core, ConferenceId(), ChatRoomParams::getDefaults(core)),
 LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(core->getCCore()))), nullptr) {
 	L_D();
 	L_D_T(LocalConference, dConference);
@@ -1077,6 +1109,8 @@ LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_
 	if (endToEndEncrypted == "true")
 		d->capabilities |= ServerGroupChatRoom::Capabilities::Encrypted;
 
+	d->params = ChatRoomParams::fromCapabilities(d->capabilities);
+
 	shared_ptr<CallSession> session = getMe()->getPrivate()->createSession(*this, nullptr, false, d);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 	getCore()->getPrivate()->localListEventHandler->addHandler(dConference->eventHandler.get());
@@ -1086,15 +1120,15 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &peerAddress,
 	AbstractChatRoom::CapabilitiesMask capabilities,
+	const shared_ptr<ChatRoomParams> &params,
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId
-) : ChatRoom(*new ServerGroupChatRoomPrivate, core, ConferenceId(peerAddress, peerAddress)),
+) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, ConferenceId(peerAddress, peerAddress), params),
 LocalConference(getCore(), peerAddress, nullptr) {
 	L_D();
 	L_D_T(LocalConference, dConference);
 
-	d->capabilities |= capabilities & ServerGroupChatRoom::Capabilities::OneToOne;
 	dConference->subject = subject;
 	dConference->participants = move(participants);
 	dConference->conferenceAddress = peerAddress;
@@ -1175,7 +1209,7 @@ bool ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const Cal
 		lInfo() << this << ": Requested to add participant '" << addr.asString() << "', checking capabilities first.";
 		list<IdentityAddress> participantsList;
 		participantsList.push_back(addr);
-		d->subscribeRegistrationForParticipants(participantsList);
+		d->subscribeRegistrationForParticipants(participantsList, true);
 	}
 	return true;
 }

@@ -121,6 +121,13 @@ typedef struct _LinphoneChatMessageCbs LinphoneChatMessageCbs;
 typedef struct _LinphoneChatRoom LinphoneChatRoom;
 
 /**
+ * An object to handle a chat room parameters.
+ * Can be created with linphone_core_get_default_chat_room_params() or linphone_chat_room_params_new().
+ * @ingroup chatroom
+ */
+typedef struct _LinphoneChatRoomParams LinphoneChatRoomParams;
+
+/**
  * A mask of #LinphoneChatRoomCapabilities
  * @ingroup chatroom
  */
@@ -249,6 +256,18 @@ L_DECLARE_C_ENUM(ChatMessageState, L_ENUM_VALUES_CHAT_MESSAGE_STATE);
  * @ingroup chatroom
  */
 L_DECLARE_C_ENUM_FIXED_VALUES(ChatRoomCapabilities, L_ENUM_VALUES_CHAT_ROOM_CAPABILITIES);
+
+/**
+ * #LinphoneChatRoomBackend is used to indicate the backend implementation of a chat room.
+ * @ingroup chatroom
+ */
+L_DECLARE_C_ENUM_FIXED_VALUES(ChatRoomBackend, L_ENUM_VALUES_CHAT_ROOM_BACKEND);
+
+/**
+ * #LinphoneChatRoomEncryptionBackend is used to indicate the encryption engine used by a chat room.
+ * @ingroup chatroom
+ */
+L_DECLARE_C_ENUM_FIXED_VALUES(ChatRoomEncryptionBackend, L_ENUM_VALUES_CHAT_ROOM_ENCRYPTION_BACKEND);
 
 /**
  * TODO move to encryption engine object when available

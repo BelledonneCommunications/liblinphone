@@ -193,6 +193,7 @@ typedef struct _stats {
 	int number_of_LinphoneMessageUndecryptable;
 	int number_of_LinphoneMessageFileTransferDone;
 	int number_of_LinphoneMessageFileTransferError;
+	int number_of_LinphoneMessageFileTransferInProgress;
 	int number_of_LinphoneMessageDeliveredToUser;
 	int number_of_LinphoneMessageDisplayed;
 	int number_of_LinphoneIsComposingActiveReceived;
@@ -330,6 +331,7 @@ typedef struct _LinphoneCoreManager {
 	char *phone_alias;
 	char *rc_path;
 	char *database_path;
+	char *lime_database_path;
 } LinphoneCoreManager;
 
 typedef struct _LinphoneConferenceServer {
@@ -401,7 +403,9 @@ LinphoneAddress * create_linphone_address(const char * domain);
 LinphoneAddress * create_linphone_address_for_algo(const char * domain, const char * username);
 bool_t wait_for(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value);
 bool_t wait_for_list(MSList* lcs,int* counter,int value,int timeout_ms);
+bool_t wait_for_list_interval(MSList* lcs,int* counter,int min,int max,int timeout_ms);
 bool_t wait_for_until(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value,int timout_ms);
+bool_t wait_for_until_interval(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int min,int max,int timout_ms);
 
 bool_t call_with_params(LinphoneCoreManager* caller_mgr
 						,LinphoneCoreManager* callee_mgr
@@ -438,7 +442,7 @@ bool_t liblinphone_tester_clock_elapsed(const MSTimeSpec *start, int value_ms);
 void linphone_core_manager_check_accounts(LinphoneCoreManager *m);
 void account_manager_destroy(void);
 LinphoneAddress *account_manager_get_identity_with_modified_identity(const LinphoneAddress *modified_identity);
-LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, const char *file, void *user_data);
+LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, LinphoneConfig *config, void *user_data);
 void configure_core_for_callbacks(LinphoneCoreManager *lcm, LinphoneCoreCbs *cbs);
 
 void liblinphone_tester_set_next_video_frame_decoded_cb(LinphoneCall *call);
@@ -460,8 +464,9 @@ void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManage
 LinphoneChatRoom * create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, bool_t encrypted);
 LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin);
 void configure_core_for_conference (LinphoneCore *core, const char* username, const LinphoneAddress *factoryAddr, bool_t server);
+void _configure_core_for_conference (LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr);
 void _start_core(LinphoneCoreManager *lcm);
-
+extern const char *sFactoryUri;
 
 /*
  * this function return max value in the last 3 seconds*/

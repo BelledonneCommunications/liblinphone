@@ -1008,9 +1008,10 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 		}
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageFileTransferDone,1));
 
-		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress,2, int, "%d");
-		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered,1, int, "%d");
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageReceivedWithFile,1, int, "%d");
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 1, int, "%d");
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 1, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, int, "%d");
 		compare_files(send_filepath, receive_filepath);
 
 		linphone_chat_message_unref(message);
@@ -1024,36 +1025,48 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 
 static void dos_module_trigger(void) {
 	LinphoneChatRoom *chat_room;
-	int i = 0;
 	int dummy = 0;
 	const char* passmsg = "This one should pass through";
-	int number_of_messge_to_send = 100;
 	LinphoneChatMessage * chat_msg = NULL;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-
+	int message_rate = 20;
+	int flood_duration_ms = 8000;
+	uint64_t time_begin, time_current;
+	int message_sent_index = 0;
+	int message_to_send_index = 0;
+	
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
 
 	chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
 
+	time_begin = bctbx_get_cur_time_ms();
 	do {
-		char msg[128];
-		sprintf(msg, "Flood message number %i", i);
-		chat_msg = linphone_chat_room_create_message(chat_room, msg);
-		linphone_chat_message_send(chat_msg);
-		wait_for_until(marie->lc, pauline->lc, &dummy, 1, 10);
-		i++;
-	} while (i < number_of_messge_to_send);
+		time_current = bctbx_get_cur_time_ms();
+		message_to_send_index = (int)(((time_current - time_begin) * message_rate) / 1000);
+		if (message_to_send_index >  message_sent_index){
+			char msg[128] = { 0 };
+			snprintf(msg, sizeof(msg)-1, "Flood message number %i", message_sent_index);
+			chat_msg = linphone_chat_room_create_message(chat_room, msg);
+			linphone_chat_message_send(chat_msg);
+			message_sent_index++;
+		}else{
+			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 20);
+		}
+		time_current = bctbx_get_cur_time_ms();
+	} while (time_current - time_begin < (uint64_t)flood_duration_ms);
 	// At this point we should be banned for a minute
-
-	wait_for_until(marie->lc, pauline->lc, &dummy, 1, 65000);; // Wait several seconds to ensure we are not banned anymore
-	BC_ASSERT_LOWER_STRICT(marie->stat.number_of_LinphoneMessageReceived, number_of_messge_to_send, int, "%d");
-
+	BC_ASSERT_GREATER(message_sent_index, message_rate, int, "%d");
+	BC_ASSERT_LOWER_STRICT(marie->stat.number_of_LinphoneMessageReceived, message_sent_index - message_rate, int, "%d");
+	
+	wait_for_until(marie->lc, pauline->lc, &dummy, 1, 65000); // Wait several seconds to ensure we are not banned anymore
+	
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
 	chat_msg = linphone_chat_room_create_message(chat_room, passmsg);
 	linphone_chat_message_send(chat_msg);
+	linphone_chat_message_unref(chat_msg);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived, 1));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageReceived, 1, int, "%d");
 	if (marie->stat.last_received_chat_message) {
@@ -1637,17 +1650,19 @@ void sequential_forking(void) {
 
 	/*marie accepts the call on its second device*/
 	linphone_call_accept(call);
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallConnected,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallConnected,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,10000));
 
 	/*second device should have received nothing*/
 	BC_ASSERT_EQUAL(marie2->stat.number_of_LinphoneCallEnd, 0, int, "%d");
 
 	linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,5000));
 
 end:
 	linphone_core_manager_destroy(pauline);
@@ -1704,17 +1719,20 @@ void sequential_forking_with_timeout_for_highest_priority(void) {
 
 	/*marie accepts the call on her third device*/
 	linphone_call_accept(call);
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallConnected,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallStreamsRunning,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallConnected,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallStreamsRunning,1,10000));
 
 	/*second device should stop ringing*/
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallEnd,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallEnd,1,10000));
 
 	linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallEnd,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallEnd,1,10000));
+	
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallReleased,1,10000));
 
 	/*first device should have received nothing*/
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallEnd, 0, int, "%d");
@@ -1768,17 +1786,19 @@ void sequential_forking_with_no_response_for_highest_priority(void) {
 
 	/*marie accepts the call on her second device*/
 	linphone_call_accept(call);
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallConnected,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallStreamsRunning,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallConnected,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallStreamsRunning,1,10000));
 
 	/*the first device should finish*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd, 1, 3000));
 
 	linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallEnd,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallEnd,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallReleased,1,1000));
 
 end:
 	linphone_core_manager_destroy(pauline);
@@ -1839,11 +1859,13 @@ void sequential_forking_with_insertion_of_higher_priority(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallStreamsRunning,1,1000));
 
 	/*second device should stop ringing*/
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallEnd,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallEnd,1,3000));
 
 	linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallEnd,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallEnd,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallReleased,1,5000));
 
 	/*first device should have received nothing*/
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallEnd, 0, int, "%d");
@@ -1866,19 +1888,19 @@ void sequential_forking_with_fallback_route(void) {
 	/*we set pauline2 and marie to another test server that is configured with a fallback route*/
 	linphone_proxy_config_set_server_addr(
 		linphone_core_get_default_proxy_config(pauline2->lc),
-		"sip:sip2.linphone.org:5071;transport=tls");
+		"sip:sip.example.org:5069;transport=tls");
 
 	linphone_proxy_config_set_route(
 		linphone_core_get_default_proxy_config(pauline2->lc),
-		"sip:sip2.linphone.org:5071;transport=tls");
+		"sip:sip.example.org:5069;transport=tls");
 
 	linphone_proxy_config_set_server_addr(
 		linphone_core_get_default_proxy_config(marie->lc),
-		"sip:sip2.linphone.org:5070;transport=tcp");
+		"sip:sip.example.org:5068;transport=tcp");
 
 	linphone_proxy_config_set_route(
 		linphone_core_get_default_proxy_config(marie->lc),
-		"sip:sip2.linphone.org:5070;transport=tcp;lr");
+		"sip:sip.example.org:5068;transport=tcp;lr");
 
 	linphone_core_manager_start(pauline2, TRUE);
 	linphone_core_manager_start(marie, TRUE);
@@ -1909,14 +1931,16 @@ void sequential_forking_with_fallback_route(void) {
 
 	/*pauline accepts the call*/
 	linphone_call_accept(call);
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallConnected,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallConnected,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,10000));
 
 	linphone_call_terminate(linphone_core_get_current_call(marie->lc));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,3000));
 
 	/*first device should have received nothing*/
 	BC_ASSERT_EQUAL(pauline2->stat.number_of_LinphoneCallEnd, 0, int, "%d");
@@ -1975,8 +1999,14 @@ static void deal_with_jwe_auth_module(const char *jwe, bool_t invalid_jwe, bool_
 	linphone_call_params_unref(gandalf_params);
 
 	int n_expected_calls = invalid_jwe || invalid_oid ? 0 : 1;
-	BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallOutgoingRinging, n_expected_calls, 3000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived, n_expected_calls, 3000));
+	
+	if (n_expected_calls){
+		BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallOutgoingRinging, 1, 3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1, 3000));
+	}else{
+		BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallError, 1, 3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallReleased, 1, 3000));
+	}
 
 	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
 	if (!n_expected_calls)
@@ -1992,13 +2022,15 @@ static void deal_with_jwe_auth_module(const char *jwe, bool_t invalid_jwe, bool_
 
 	LinphoneCall *gandalf_call = linphone_core_get_current_call(gandalf->lc);
 	if (n_expected_calls) {
-		if (gandalf_call)
+		BC_ASSERT_PTR_NOT_NULL(gandalf_call);
+		if (gandalf_call){
 			linphone_call_terminate(gandalf_call);
+			BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallEnd, 1, 3000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, n_expected_calls, 3000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallReleased, 1, 3000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased, 1, 3000));
+		}
 	}
-	//fixme should not be needed, but  without it, we sometime have memory leaks
-	linphone_core_terminate_all_calls(gandalf->lc);
-	BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallEnd, 1, 1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 1000));
 
 	linphone_core_manager_destroy(gandalf);
 	linphone_core_manager_destroy(pauline);

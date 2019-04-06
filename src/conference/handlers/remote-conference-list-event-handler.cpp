@@ -79,8 +79,10 @@ void RemoteConferenceListEventHandler::subscribe () {
 	for (const auto &handler : handlers) {
 		const ConferenceId &conferenceId = handler->getConferenceId();
 		shared_ptr<AbstractChatRoom> cr = getCore()->findChatRoom(conferenceId);
-		if (!cr)
+		if (!cr) {
+			lError() << "Couldn't add chat room " << conferenceId << "in the chat room list subscription because chat room couldn't be found";
 			continue;
+		}
 
 		if (cr->hasBeenLeft())
 			continue;
@@ -103,8 +105,11 @@ void RemoteConferenceListEventHandler::subscribe () {
 		return;
 
 	const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(cfg);
-	if (!factoryUri)
+	if (!factoryUri) {
+		lError() << "Couldn't send chat room list subscription because there's no conference factory uri";
 		return;
+	}
+
 	LinphoneAddress *rlsAddr = linphone_address_new(factoryUri);
 
 	lev = linphone_core_create_subscribe(lc, rlsAddr, "conference", 600);
@@ -211,13 +216,28 @@ const list<RemoteConferenceEventHandler *> &RemoteConferenceListEventHandler::ge
 }
 
 void RemoteConferenceListEventHandler::addHandler (RemoteConferenceEventHandler *handler) {
-	if (handler && !findHandler(handler->getConferenceId()))
-		handlers.push_back(handler);
+	if (!handler) {
+		lWarning() << "Trying to insert null handler in the remote conference handler list";
+		return;
+	}
+
+	ConferenceId confId(handler->getConferenceId());
+	if(findHandler(confId)) {
+		lWarning() << "Trying to insert an already present handler in the remote conference handler list: " << confId;
+		return;
+	}
+
+	handlers.push_back(handler);
 }
 
 void RemoteConferenceListEventHandler::removeHandler (RemoteConferenceEventHandler *handler) {
 	if (handler)
 		handlers.remove(handler);
+}
+
+
+void RemoteConferenceListEventHandler::clearHandlers () {
+	handlers.clear();
 }
 
 map<string, IdentityAddress> RemoteConferenceListEventHandler::parseRlmi (const string &xmlBody) const {

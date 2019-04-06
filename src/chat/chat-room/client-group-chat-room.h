@@ -89,7 +89,8 @@ private:
 		const ConferenceId &conferenceId,
 		const std::string &subject,
 		const Content &content,
-		bool encrypted
+		CapabilitiesMask capabilities,
+		const std::shared_ptr<ChatRoomParams> &params
 	);
 
 	ClientGroupChatRoom (
@@ -97,7 +98,8 @@ private:
 		const std::string &factoryUri,
 		const IdentityAddress &me,
 		const std::string &subject,
-		bool encrypted
+		CapabilitiesMask capabilities,
+		const std::shared_ptr<ChatRoomParams> &params
 	);
 
 	// Create a chat room from the main database.
@@ -106,6 +108,7 @@ private:
 		const ConferenceId &conferenceId,
 		std::shared_ptr<Participant> &me,
 		AbstractChatRoom::CapabilitiesMask capabilities,
+		const std::shared_ptr<ChatRoomParams> &params,
 		const std::string &subject,
 		std::list<std::shared_ptr<Participant>> &&participants,
 		unsigned int lastNotifyId,

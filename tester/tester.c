@@ -25,6 +25,8 @@
 #include <bctoolbox/tester.h>
 #include "tester_utils.h"
 
+#define SKIP_PULSEAUDIO 1
+
 #if _WIN32
 #define unlink _unlink
 #endif
@@ -122,33 +124,32 @@ void reset_counters( stats* counters) {
 	memset(counters,0,sizeof(stats));
 }
 
-LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, const char *file, void *user_data) {
+void configure_lc(LinphoneCore *lc, const char *path, void *user_data) {
+	char *dnsuserhostspath = NULL;
+	dnsuserhostspath = userhostsfile[0]=='/' ? ms_strdup(userhostsfile) : ms_strdup_printf("%s/%s", path, userhostsfile);
+
+	linphone_core_set_user_data(lc, user_data);
+
+	linphone_core_enable_ipv6(lc, liblinphonetester_ipv6);
+	linphone_core_set_sip_transport_timeout(lc, liblinphonetester_transport_timeout);
+
+	sal_enable_test_features(linphone_core_get_sal(lc),TRUE);
+	sal_set_dns_user_hosts_file(linphone_core_get_sal(lc), dnsuserhostspath);
+	ms_free(dnsuserhostspath);
+}
+
+LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, LinphoneConfig *config, void *user_data) {
 	LinphoneCore *lc;
-	LinphoneConfig *config = NULL;
-	char *filepath         = NULL;
 	char *ringpath         = NULL;
 	char *ringbackpath     = NULL;
 	char *rootcapath       = NULL;
-	char *dnsuserhostspath = NULL;
 	char *nowebcampath     = NULL;
-
-	if (!path)
-		path = ".";
-
-	if (file){
-		filepath = bctbx_strdup_printf("%s/%s", path, file);
-		if (bctbx_file_exist(filepath) != 0) {
-			ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", file, path);
-		}
-		config = lp_config_new_with_factory(NULL, filepath);
-	}
 
 	// setup dynamic-path assets
 	ringpath         = ms_strdup_printf("%s/sounds/oldphone.wav",path);
 	ringbackpath     = ms_strdup_printf("%s/sounds/ringback.wav", path);
 	nowebcampath     = ms_strdup_printf("%s/images/nowebcamCIF.jpg", path);
 	rootcapath       = ms_strdup_printf("%s/certificates/cn/cafile.pem", path);
-	dnsuserhostspath = userhostsfile[0]=='/' ? ms_strdup(userhostsfile) : ms_strdup_printf("%s/%s", path, userhostsfile);
 
 	if (config) {
 		lp_config_set_string(config, "sound", "remote_ring", ringbackpath);
@@ -156,40 +157,36 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, const ch
 		lp_config_set_string(config, "sip",   "root_ca"    , rootcapath);
 		lc = linphone_factory_create_core_with_config_3(linphone_factory_get(), config, system_context);
 	} else {
-		lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, (filepath && (filepath[0] != '\0')) ? filepath : 
-			liblinphone_tester_get_empty_rc(), system_context);
+		lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, 	liblinphone_tester_get_empty_rc(), system_context);
 		linphone_core_set_ring(lc, ringpath);
 		linphone_core_set_ringback(lc, ringbackpath);
 		linphone_core_set_root_ca(lc,rootcapath);
 	}
-	linphone_core_set_user_data(lc, user_data);
 	if (cbs)
 		linphone_core_add_callbacks(lc, cbs);
-
-	linphone_core_enable_ipv6(lc, liblinphonetester_ipv6);
-	linphone_core_set_sip_transport_timeout(lc, liblinphonetester_transport_timeout);
-
-	sal_enable_test_features(linphone_core_get_sal(lc),TRUE);
-	sal_set_dns_user_hosts_file(linphone_core_get_sal(lc), dnsuserhostspath);
 #ifdef VIDEO_ENABLED
 	linphone_core_set_static_picture(lc,nowebcampath);
 #endif
+	configure_lc(lc, path, user_data);
 
 	ms_free(ringpath);
 	ms_free(ringbackpath);
 	ms_free(nowebcampath);
 	ms_free(rootcapath);
-	ms_free(dnsuserhostspath);
-
-	if (filepath)
-		bctbx_free(filepath);
-
-	if (config)
-		linphone_config_unref(config);
-
 	return lc;
 }
 
+bool_t wait_for_until_interval(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int min,int max,int timout) {
+	bctbx_list_t* lcs=NULL;
+	bool_t result;
+	if (lc_1)
+		lcs=bctbx_list_append(lcs,lc_1);
+	if (lc_2)
+		lcs=bctbx_list_append(lcs,lc_2);
+	result=wait_for_list_interval(lcs,counter,min,max,timout);
+	bctbx_list_free(lcs);
+	return result;
+}
 
 bool_t wait_for_until(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value,int timout) {
 	bctbx_list_t* lcs=NULL;
@@ -205,6 +202,30 @@ bool_t wait_for_until(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int va
 
 bool_t wait_for(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value) {
 	return wait_for_until(lc_1, lc_2,counter,value,10000);
+}
+
+bool_t wait_for_list_interval(bctbx_list_t* lcs,int* counter,int min, int max,int timeout_ms) {
+	bctbx_list_t* iterator;
+	MSTimeSpec start;
+
+	liblinphone_tester_clock_start(&start);
+	while ((counter==NULL || *counter<min || *counter>max) && !liblinphone_tester_clock_elapsed(&start,timeout_ms)) {
+		for (iterator=lcs;iterator!=NULL;iterator=iterator->next) {
+			linphone_core_iterate((LinphoneCore*)(iterator->data));
+		}
+#ifdef LINPHONE_WINDOWS_DESKTOP
+		{
+			MSG msg;
+			while (PeekMessage(&msg, NULL, 0, 0,1)){
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+		}
+#endif
+		ms_usleep(20000);
+	}
+	if(counter && (*counter<min || *counter>max)) return FALSE;
+	else return TRUE;
 }
 
 bool_t wait_for_list(bctbx_list_t* lcs,int* counter,int value,int timeout_ms) {
@@ -280,7 +301,9 @@ bool_t transport_supported(LinphoneTransportType transport) {
 	}
 }
 
-#ifdef __linux
+
+
+#ifdef SKIP_PULSEAUDIO
 static void avoid_pulseaudio_hack(LinphoneCoreManager *mgr){
 	bctbx_list_t *cards = linphone_core_get_sound_devices_list(mgr->lc);
 	bctbx_list_t *it;
@@ -317,8 +340,17 @@ static void avoid_pulseaudio_hack(LinphoneCoreManager *mgr){
 void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	LinphoneImNotifPolicy *im_notif_policy;
 	char *hellopath = bc_tester_res("sounds/hello8000.wav");
-
-	mgr->lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), mgr->rc_path, mgr);
+	const char * filepath = mgr->rc_path?bctbx_strdup_printf("%s/%s", bc_tester_get_resource_dir_prefix() ,mgr->rc_path):NULL;
+	if (filepath && bctbx_file_exist(filepath) != 0) {
+		ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", mgr->rc_path, bc_tester_get_resource_dir_prefix());
+	}
+	LinphoneConfig * config = linphone_factory_create_config_with_factory(linphone_factory_get(), NULL, filepath);
+	linphone_config_set_string(config, "storage", "backend", "sqlite3");
+	linphone_config_set_string(config, "storage", "uri", mgr->database_path);
+	linphone_config_set_string(config, "lime", "x3dh_db_path", mgr->lime_database_path);
+	mgr->lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), config, mgr);
+	linphone_config_unref(config);
+	
 	linphone_core_manager_check_accounts(mgr);
 	im_notif_policy = linphone_core_get_im_notif_policy(mgr->lc);
 	if (im_notif_policy != NULL) {
@@ -333,7 +365,7 @@ void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	linphone_core_set_ringback(mgr->lc, NULL);
 #elif __QNX__
 	linphone_core_set_playback_device(mgr->lc, "QSA: voice");
-#elif defined(__linux)
+#elif defined(SKIP_PULSEAUDIO)
 	{
 		/* Special trick for linux. Pulseaudio has random hangs, deadlocks or abort while executing test suites.
 		 * It never happens in the linphone app.
@@ -374,9 +406,6 @@ void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	/*for now, we need the periodical updates facility to compute bandwidth measurements correctly during tests*/
 	linphone_core_enable_send_call_stats_periodical_updates(mgr->lc, TRUE);
 
-	LinphoneConfig *config = linphone_core_get_config(mgr->lc);
-	linphone_config_set_string(config, "storage", "backend", "sqlite3");
-	linphone_config_set_string(config, "storage", "uri", mgr->database_path);
 }
 
 static void generate_random_database_path (LinphoneCoreManager *mgr) {
@@ -384,6 +413,9 @@ static void generate_random_database_path (LinphoneCoreManager *mgr) {
 	belle_sip_random_token(random_id, sizeof random_id);
 	char *database_path_format = bctbx_strdup_printf("linphone_%s.db", random_id);
 	mgr->database_path = bc_tester_file(database_path_format);
+	bctbx_free(database_path_format);
+	database_path_format = bctbx_strdup_printf("lime_%s.db", random_id);
+	mgr->lime_database_path = bc_tester_file(database_path_format);
 	bctbx_free(database_path_format);
 }
 
@@ -522,6 +554,7 @@ void linphone_core_manager_stop(LinphoneCoreManager *mgr){
 				unlink(record_file);
 			}
 		}
+		linphone_core_stop(mgr->lc);
 		linphone_core_unref(mgr->lc);
 		mgr->lc = NULL;
 	}
@@ -560,7 +593,11 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 		bctbx_free(mgr->rc_path);
 	if (mgr->database_path) {
 		unlink(mgr->database_path);
-		bctbx_free(mgr->database_path);
+		bc_free(mgr->database_path);
+	}
+	if (mgr->lime_database_path) {
+		unlink(mgr->lime_database_path);
+		bc_free(mgr->lime_database_path);
 	}
 
 	if (mgr->cbs)
@@ -1465,6 +1502,9 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 		case LinphoneChatMessageStateDisplayed:
 			counters->number_of_LinphoneMessageDisplayed++;
 			return;
+		case LinphoneChatMessageStateFileTransferInProgress:
+			counters->number_of_LinphoneMessageFileTransferInProgress++;
+			return;
 	}
 	ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
 }
@@ -1481,6 +1521,7 @@ LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *msg, const Linph
 
 	// If a file path is set, we should NOT call the on_send callback !
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
+	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 
 	BC_ASSERT_PTR_NOT_NULL(file_to_send);
 	if (file_to_send == NULL){
@@ -1512,6 +1553,7 @@ void file_transfer_progress_indication(LinphoneChatMessage *msg, const LinphoneC
 	stats *counters = get_stats(lc);
 	char *address = linphone_address_as_string(linphone_chat_message_is_outgoing(msg) ? to_address : from_address);
 
+	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 	bctbx_message(
 		"File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n",
 		progress,
@@ -1537,6 +1579,7 @@ void file_transfer_received(LinphoneChatMessage *msg, const LinphoneContent* con
 
 	// If a file path is set, we should NOT call the on_recv callback !
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
+	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 
 	receive_file = bc_tester_file("receive_file.dump");
 	if (!linphone_chat_message_get_user_data(msg)) {

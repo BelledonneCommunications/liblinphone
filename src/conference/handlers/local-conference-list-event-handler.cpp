@@ -211,8 +211,18 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 // -----------------------------------------------------------------------------
 
 void LocalConferenceListEventHandler::addHandler (LocalConferenceEventHandler *handler) {
-	if (handler && !findHandler(handler->getConferenceId()))
-		handlers.push_back(handler);
+	if (!handler) {
+		lWarning() << "Trying to insert null handler in the local conference handler list";
+		return;
+	}
+
+	ConferenceId confId(handler->getConferenceId());
+	if(findHandler(confId)) {
+		lWarning() << "Trying to insert an already present handler in the local conference handler list: " << confId;
+		return;
+	}
+
+	handlers.push_back(handler);
 }
 
 void LocalConferenceListEventHandler::removeHandler (LocalConferenceEventHandler *handler) {

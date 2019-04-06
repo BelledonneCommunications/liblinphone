@@ -499,6 +499,15 @@ LINPHONE_PUBLIC void linphone_chat_room_notify_participant_device_registration(L
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneCore* linphone_chat_room_get_lc(const LinphoneChatRoom *cr);
 
 /**
+ * Returns current parameters associated with the chat room.
+ * This is typically the parameters passed at chat room creation to linphone_core_create_chat_room() or some default
+ * parameters if no #LinphoneChatRoomParams was explicitely passed during chat room creation.
+ * @param cr the #LinphoneChatRoom object
+ * @return the chat room current parameters.
+**/
+LINPHONE_PUBLIC const LinphoneChatRoomParams *linphone_chat_room_get_current_params(const LinphoneChatRoom *cr);
+
+/**
  * @}
  */
 

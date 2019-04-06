@@ -112,13 +112,23 @@ void Imdn::onGlobalStateChanged (LinphoneGlobalState state) {
 	}
 }
 
-void Imdn::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
-	if (sipNetworkReachable) {
-		// When the SIP network gets up, retry notification
+void Imdn::onRegistrationStateChanged(LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message){
+	if (state == LinphoneRegistrationOk && cfg == getRelatedProxyConfig()){
+		// When we are registered to the proxy, then send pending notification if any.
 		sentImdnMessages.clear();
 		send();
 	}
 }
+
+void Imdn::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
+	if (sipNetworkReachable && getRelatedProxyConfig() == nullptr) {
+		// When the SIP network gets up and this chatroom isn't related to any proxy configuration, retry notification
+		sentImdnMessages.clear();
+		send();
+	}
+}
+
+
 
 // -----------------------------------------------------------------------------
 
@@ -226,8 +236,21 @@ bool Imdn::aggregationEnabled () const {
 	return (chatRoom->canHandleCpim() && linphone_config_get_bool(config, "misc", "aggregate_imdn", TRUE));
 }
 
+LinphoneProxyConfig * Imdn::getRelatedProxyConfig(){
+	LinphoneAddress *addr = linphone_address_new(chatRoom->getLocalAddress().asString().c_str());
+	LinphoneProxyConfig *cfg = linphone_core_lookup_proxy_by_identity(chatRoom->getCore()->getCCore(), addr);
+	linphone_address_unref(addr);
+	return cfg;
+}
+
 void Imdn::send () {
 	try {
+		LinphoneProxyConfig *cfg = getRelatedProxyConfig();
+		if (cfg && linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk){
+			lInfo() << "Proxy config not registered, will wait to send pending IMDNs";
+			return;
+		}
+		
 		if (!linphone_core_is_network_reachable(chatRoom->getCore()->getCCore()))
 			return;
 	} catch (const bad_weak_ptr &) {

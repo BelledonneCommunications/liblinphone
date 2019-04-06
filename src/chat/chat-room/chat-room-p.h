@@ -38,6 +38,8 @@ class IsComposingMessage;
 
 class ChatRoomPrivate : public AbstractChatRoomPrivate, public IsComposingListener {
 public:
+	ChatRoomPrivate (AbstractChatRoom::CapabilitiesMask value) { capabilities = value; }
+
 	inline void setProxyChatRoom (AbstractChatRoom *value) { proxyChatRoom = value; }
 
 	inline void setCreationTime (time_t creationTime) override {
@@ -98,9 +100,11 @@ public:
 	std::list<std::shared_ptr<ChatMessage>> transientMessages;
 
 	ConferenceId conferenceId;
+	std::shared_ptr<ChatRoomParams> params;
 
 protected:
 	AbstractChatRoom *proxyChatRoom = nullptr;
+	AbstractChatRoom::CapabilitiesMask capabilities;
 
 private:
 	ChatRoom::State state = ChatRoom::State::None;

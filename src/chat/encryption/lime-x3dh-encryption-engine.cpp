@@ -132,7 +132,7 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 	limeManager = unique_ptr<LimeManager>(new LimeManager(dbAccess, prov, core));
 	lastLimeUpdate = linphone_config_get_int(cCore->config, "lime", "last_update_time", 0);
 	if (x3dhServerUrl.empty())
-		lError() << "LIME X3DH server URL unavailable for encryption engine";
+		lError() << "[LIME] server URL unavailable for encryption engine";
 }
 
 string LimeX3dhEncryptionEngine::getX3dhServerUrl () const {
@@ -157,9 +157,9 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	// Check if chatroom is encrypted or not
 	shared_ptr<ClientGroupChatRoom> cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 	if (cgcr->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
-		lInfo() << "LIME X3DH this chatroom is encrypted, proceed to encrypt outgoing message";
+		lInfo() << "[LIME] this chatroom is encrypted, proceed to encrypt outgoing message";
 	} else {
-		lWarning() << "LIME X3DH this chatroom is not encrypted, no need encrypt outgoing message";
+		lInfo() << "[LIME] this chatroom is not encrypted, no need to encrypt outgoing message";
 		return ChatMessageModifier::Result::Skipped;
 	}
 
@@ -200,14 +200,14 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 
 	// Check if there is at least one recipient
 	if (recipients->empty()) {
-		lError() << "LIME X3DH encrypting message with no recipient";
+		lError() << "[LIME] encrypting message with no recipient";
 		errorCode = 488;
 		return ChatMessageModifier::Result::Error;
 	}
 
 	// If too many devices for a participant, throw a local security alert event
 	if (tooManyDevices) {
-		lWarning() << "LIME X3DH encrypting message for excessive number of devices, message discarded";
+		lWarning() << "[LIME] encrypting message for excessive number of devices, message discarded";
 
 		// Check the last 2 events for security alerts before sending a new security event
 		bool recentSecurityAlert = false;
@@ -239,7 +239,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	shared_ptr<vector<uint8_t>> cipherMessage = make_shared<vector<uint8_t>>();
 
 	try {
-		limeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, result, &errorCode] (lime::CallbackReturn returnCode, string errorMessage) {
+		errorCode = 0; //no need to specify error code because not used later
+		limeManager->encrypt(localDeviceId, recipientUserId, recipients, plainMessage, cipherMessage, [localDeviceId, recipients, cipherMessage, message, result] (lime::CallbackReturn returnCode, string errorMessage) {
 			if (returnCode == lime::CallbackReturn::success) {
 
 				// Ignore devices which do not have keys on the X3DH server
@@ -304,14 +305,12 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 					delete content;
 				}
 			} else {
-				lError() << "LIME X3DH operation failed: " << errorMessage;
-				errorCode = 503; // IO Error
+				lError() << "[LIME] operation failed: " << errorMessage;
 				*result = ChatMessageModifier::Result::Error;
 			}
 		}, lime::EncryptionPolicy::cipherMessage);
 	} catch (const exception &e) {
 		lError() << e.what() << " while encrypting message";
-		errorCode = 503; // IO Error
 		*result = ChatMessageModifier::Result::Error;
 	}
 	return *result;
@@ -324,6 +323,14 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 	const string &recipientUserId = chatRoom->getPeerAddress().getAddressWithoutGruu().asString();
+
+	// Check if chatroom is encrypted or not
+	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
+		lInfo() << "[LIME] this chatroom is encrypted, proceed to decrypt incoming message";
+	} else {
+		lInfo() << "[LIME] this chatroom is not encrypted, no need to decrypt incoming message";
+		return ChatMessageModifier::Result::Skipped;
+	}
 
 	const Content *internalContent;
 	if (!message->getInternalContent().isEmpty())
@@ -340,7 +347,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 	legacyContentType.addParameter("boundary", MultipartBoundary);
 
 	if (incomingContentType != expectedContentType && incomingContentType != legacyContentType) {
-		lError() << "LIME X3DH unexpected content-type: " << incomingContentType;
+		lError() << "[LIME] unexpected content-type: " << incomingContentType;
 		// Set unencrypted content warning flag because incoming message type is unexpected
 		message->getPrivate()->setUnencryptedContentWarning(true);
 		// Disable sender authentication otherwise the unexpected message will always be discarded
@@ -369,7 +376,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 	lime::PeerDeviceStatus peerDeviceStatus = limeManager->get_peerDeviceStatus(senderDeviceId);
 	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
 		if (peerDeviceStatus == lime::PeerDeviceStatus::unsafe) {
-			lWarning() << "LIME X3DH discard incoming message from unsafe sender device " << senderDeviceId;
+			lWarning() << "[LIME] discard incoming message from unsafe sender device " << senderDeviceId;
 			errorCode = 488; // Not Acceptable
 			return ChatMessageModifier::Result::Error;
 		}
@@ -396,7 +403,13 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 			cipherMessage = content.getBodyAsUtf8String();
 		}
 	}
-
+	
+	if (cipherHeader.empty()) {
+		lError() << "No key found for [" << localDeviceId << "] for message [" << message <<"]";
+		errorCode = 488; // Not Acceptable
+		return ChatMessageModifier::Result::Done;
+	}
+	
 	vector<uint8_t> decodedCipherHeader = decodeBase64(cipherHeader);
 	vector<uint8_t> decodedCipherMessage = decodeBase64(cipherMessage);
 	vector<uint8_t> plainMessage{};
@@ -437,7 +450,7 @@ void LimeX3dhEncryptionEngine::update () {
 }
 
 bool LimeX3dhEncryptionEngine::isEncryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom> &chatRoom) {
-	return true;
+	return (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted);
 }
 
 void LimeX3dhEncryptionEngine::generateFileTransferKey (
@@ -550,14 +563,14 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters () {
 	// Get proxy config
 	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(getCore()->getCCore());
 	if (!proxy) {
-		lWarning() << "No proxy config available, unable to setup LIME X3DH identity key for ZRTP auxiliary shared secret";
+		lWarning() << "[LIME] No proxy config available, unable to setup identity key for ZRTP auxiliary shared secret";
 		return {};
 	}
 
 	// Get local device Id from local contact address
 	const LinphoneAddress *contactAddress = linphone_proxy_config_get_contact(proxy);
 	if (!contactAddress) {
-		lWarning() << "No contactAddress available, unable to setup LIMEv2 identity key for ZRTP auxiliary shared secret";
+		lWarning() << "[LIME] No contactAddress available, unable to setup identity key for ZRTP auxiliary shared secret";
 		return {};
 	}
 	IdentityAddress identityAddress = IdentityAddress(linphone_address_as_string(contactAddress));
@@ -567,12 +580,12 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters () {
 	try {
 		limeManager->get_selfIdentityKey(localDeviceId, Ik);
 	} catch (const exception &e) {
-		lInfo() << e.what() << " while setting up lime identity key for ZRTP auxiliary secret";
+		lInfo() << "[LIME] " << e.what() << " while setting up identity key for ZRTP auxiliary secret";
 		return {};
 	}
 
 	if (Ik.empty()) {
-		lWarning() << "No identity key available, unable to setup lime identity key for ZRTP auxiliary shared secret";
+		lWarning() << "[LIME] No identity key available, unable to setup identity key for ZRTP auxiliary shared secret";
 		return {};
 	}
 
@@ -595,7 +608,7 @@ void LimeX3dhEncryptionEngine::mutualAuthentication (
 
 	// If LIME X3DH is disabled there might not be identity keys
 	if (!charLocalIk || !charRemoteIk) {
-		lError() << "Missing identity keys for mutual authentication";
+		lError() << "[LIME] Missing identity keys for mutual authentication";
 		return;
 	}
 
@@ -615,22 +628,22 @@ void LimeX3dhEncryptionEngine::mutualAuthentication (
 		remoteIk.insert(remoteIk.end(), localIk.begin(), localIk.end());
 		vectorAuxSharedSecret = remoteIk;
 	} else {
-		lError() << "Unknown call direction for mutual authentication";
+		lError() << "[LIME] Unknown call direction for mutual authentication";
 		return;
 	}
 
 	if (vectorAuxSharedSecret.empty()) {
-		lError() << "Empty auxiliary shared secret for mutual authentication";
+		lError() << "[LIME] Empty auxiliary shared secret for mutual authentication";
 		return;
 	}
 
 	// Set the auxiliary shared secret in ZRTP
 	size_t auxSharedSecretLength = vectorAuxSharedSecret.size();
 	const uint8_t *auxSharedSecret = vectorAuxSharedSecret.data();
-	lInfo() << "Setting ZRTP auxiliary shared secret after identity key concatenation";
+	lInfo() << "[LIME] Setting ZRTP auxiliary shared secret after identity key concatenation";
 	int retval = ms_zrtp_setAuxiliarySharedSecret(zrtpContext, auxSharedSecret, auxSharedSecretLength);
 	if (retval != 0)
-		lError() << "ZRTP auxiliary shared secret mismatch 0x" << hex << retval;
+		lError() << "[LIME] ZRTP auxiliary shared secret mismatch 0x" << hex << retval;
 }
 
 void LimeX3dhEncryptionEngine::authenticationVerified (
@@ -648,32 +661,32 @@ void LimeX3dhEncryptionEngine::authenticationVerified (
 	const IdentityAddress peerDeviceAddr = IdentityAddress(peerDeviceId);
 
 	if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 2) {
-		lInfo() << "No auxiliary shared secret exchange because LIME X3DH disabled";
+		lInfo() << "[LIME] No auxiliary shared secret exchange because LIME disabled";
 	}
 	// SAS is verified and the auxiliary secret matches so we can trust this peer device
 	else if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 0) {
 		try {
-			lInfo() << "SAS verified and Ik exchange successful";
+			lInfo() << "[LIME] SAS verified and Ik exchange successful";
 			limeManager->set_peerDeviceStatus(peerDeviceId, remoteIk, lime::PeerDeviceStatus::trusted);
 		} catch (const exception &e) {
-			lInfo() << "LIME X3DH exception" << e.what();
+			lInfo() << "[LIME] exception" << e.what();
 			// Ik error occured, the stored Ik is different from this Ik
 			lime::PeerDeviceStatus status = limeManager->get_peerDeviceStatus(peerDeviceId);
 			switch (status) {
 				case lime::PeerDeviceStatus::unsafe:
-					lWarning() << "LIME X3DH peer device " << peerDeviceId << " is unsafe and its lime identity key has changed";
+					lWarning() << "[LIME] peer device " << peerDeviceId << " is unsafe and its identity key has changed";
 					break;
 				case lime::PeerDeviceStatus::untrusted:
-					lWarning() << "LIME X3DH peer device " << peerDeviceId << " is untrusted and its lime identity key has changed";
+					lWarning() << "[LIME] peer device " << peerDeviceId << " is untrusted and its identity key has changed";
 					// TODO specific alert to warn the user that previous messages are compromised
 					addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::EncryptionIdentityKeyChanged);
 					break;
 				case lime::PeerDeviceStatus::trusted:
-					lError() << "LIME X3DH peer device " << peerDeviceId << " is already trusted but its lime identity key has changed";
+					lError() << "[LIME] peer device " << peerDeviceId << " is already trusted but its identity key has changed";
 					break;
 				case lime::PeerDeviceStatus::unknown:
 				case lime::PeerDeviceStatus::fail:
-					lError() << "LIME X3DH peer device " << peerDeviceId << " is unknown but its lime identity key has changed";
+					lError() << "[LIME] peer device " << peerDeviceId << " is unknown but its identity key has changed";
 					break;
 			}
 
@@ -743,7 +756,7 @@ shared_ptr<ConferenceSecurityEvent> LimeX3dhEncryptionEngine::onDeviceAdded (
 
 	// Check if the new participant device is unexpected in which case a security alert is created
 	if (nbDevice > maxNbDevicesPerParticipant) {
-		lWarning() << "LIME X3DH maximum number of devices exceeded for " << participant->getAddress();
+		lWarning() << "[LIME] maximum number of devices exceeded for " << participant->getAddress();
 		securityEvent = make_shared<ConferenceSecurityEvent>(
 			time(nullptr),
 			chatRoom->getConferenceId(),
@@ -756,7 +769,7 @@ shared_ptr<ConferenceSecurityEvent> LimeX3dhEncryptionEngine::onDeviceAdded (
 	// Otherwise if the chatroom security level was degraded a corresponding security event is created
 	else {
 		if ((currentSecurityLevel == ChatRoom::SecurityLevel::Safe) && (newDeviceStatus != lime::PeerDeviceStatus::trusted)) {
-			lInfo() << "LIME X3DH chat room security level degraded by " << newDeviceAddr.asString();
+			lInfo() << "[LIME] chat room security level degraded by " << newDeviceAddr.asString();
 			securityEvent = make_shared<ConferenceSecurityEvent>(
 				time(nullptr),
 				chatRoom->getConferenceId(),
@@ -779,9 +792,9 @@ std::shared_ptr<LimeManager> LimeX3dhEncryptionEngine::getLimeManager () {
 lime::limeCallback LimeX3dhEncryptionEngine::setLimeCallback (string operation) {
 	lime::limeCallback callback([operation](lime::CallbackReturn returnCode, string anythingToSay) {
 		if (returnCode == lime::CallbackReturn::success) {
-			lInfo() << "LIME X3DH operation successful: " << operation;
+			lInfo() << "[LIME] operation successful: " << operation;
 		} else {
-			lInfo() << "LIME X3DH operation failed: " << operation;
+			lInfo() << "[LIME] operation failed: " << operation;
 		}
 	});
 	return callback;
@@ -798,7 +811,7 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 		return;
 
 	if (x3dhServerUrl.empty()) {
-		lError() << "LIME X3DH server URL unavailable for encryption engine: can't create lime user";
+		lError() << "[LIME] server URL unavailable for encryption engine: can't create user";
 		return;
 	}
 
@@ -808,28 +821,32 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	if (contactAddress)
 		ms_free(contactAddress);
 
-	stringstream operation;
-	operation << "create user " << localDeviceId;
-	lime::limeCallback callback = setLimeCallback(operation.str());
 
 	LinphoneConfig *lpconfig = linphone_core_get_config(linphone_proxy_config_get_core(cfg));
 	lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_update_time", -1);
 
 	try {
-		// create user if not exist
-		limeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+		
+		if (!limeManager->is_user(localDeviceId)) {
+			// create user if not exist
+			lime::limeCallback callback = setLimeCallback("creating user" + localDeviceId);
+			limeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+		} else {
+			
+			limeManager->set_x3dhServerUrl(localDeviceId,x3dhServerUrl);
+			// update keys if necessary
+			int limeUpdateThreshold = lp_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
+			if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {
+				update();
+				lastLimeUpdate = ms_time(NULL);
+			}
+		}
 		lastLimeUpdate = ms_time(NULL);
 		lp_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 	} catch (const exception &e) {
-		lInfo() << "LIME X3DH user already exists or the creation went wrong" << e.what();
-
-		// update keys if necessary
-		int limeUpdateThreshold = lp_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
-		if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {
-			update();
-			lastLimeUpdate = ms_time(NULL);
-		}
+		lError()<< "[LIME] user for id [" << localDeviceId<<"] cannot be created" << e.what();
 	}
+	
 }
 
 LINPHONE_END_NAMESPACE

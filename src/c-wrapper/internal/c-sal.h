@@ -400,6 +400,7 @@ typedef struct SalErrorInfo{
 	char *warnings;
 	char *protocol;
 	char *full_string; /*concatenation of status_string + warnings*/
+	int retry_after;
 	struct SalErrorInfo *sub_sei;
 }SalErrorInfo;
 

@@ -39,9 +39,12 @@ class MainDbProvider {
 public:
 	MainDbProvider () {
 		mCoreManager = linphone_core_manager_create("marie_rc");
-		char *dbPath = bc_tester_res("db/linphone.db");
-		linphone_config_set_string(linphone_core_get_config(mCoreManager->lc), "storage", "uri", dbPath);
-		bctbx_free(dbPath);
+		char *roDbPath = bc_tester_res("db/linphone.db");
+		char *rwDbPath = bc_tester_file("linphone.db");
+		BC_ASSERT_FALSE(liblinphone_tester_copy_file(roDbPath, rwDbPath));
+		linphone_config_set_string(linphone_core_get_config(mCoreManager->lc), "storage", "uri", rwDbPath);
+		bc_free(roDbPath);
+		bc_free(rwDbPath);
 		linphone_core_manager_start(mCoreManager, false);
 	}
 

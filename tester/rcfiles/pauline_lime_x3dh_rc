@@ -1,10 +1,6 @@
 [lime]
-x3dh_db_path=pauline.x3dh.sqlite3
 lime_update_threshold=86400
-max_nb_device_per_participant=1
-allow_message_in_unsafe_chatroom=0
-unsafe_if_sas_refused=1
-x3dh_server_url=http://x3dh.example.org:8082/flexisip-account-manager/x3dh-25519.php
+lime_server_url=https://lime.wildcard1.linphone.org:8443/lime-server/lime-server.php
 
 [sip]
 sip_port=-1
@@ -30,7 +26,6 @@ reg_expires=3600
 reg_sendregister=1
 publish=0
 dial_escape_plus=0
-
 #[friend_0]
 #url="Mariette" <sip:marie@sip.example.org>
 #pol=accept
