@@ -48,12 +48,14 @@ void SearchResultPrivate::updateCapabilities () {
 
 	mCapabilities = LinphoneFriendCapabilityNone;
 	const LinphonePresenceModel *presenceModel = nullptr;
-	
+
 	if (mAddress) {
 		char *addressString = linphone_address_as_string_uri_only(mAddress);
 		presenceModel = linphone_friend_get_presence_model_for_uri_or_tel(mFriend, addressString);
 		bctbx_free(addressString);
-	} else {
+	}
+
+	if (!presenceModel && !mPhoneNumber.empty()) {
 		presenceModel = linphone_friend_get_presence_model_for_uri_or_tel(mFriend, mPhoneNumber.c_str());
 	}
 

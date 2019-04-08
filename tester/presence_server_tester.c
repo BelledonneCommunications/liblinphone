@@ -2101,7 +2101,7 @@ static void notify_friend_capabilities_with_alias(void) {
 		BC_ASSERT_TRUE(linphone_friend_has_capability_with_version(marieFriend, LinphoneFriendCapabilityLimeX3dh, 1.5f));
 		BC_ASSERT_FALSE(linphone_friend_has_capability(laureFriend, LinphoneFriendCapabilityGroupChat));
 		BC_ASSERT_FALSE(linphone_friend_has_capability(laureFriend, LinphoneFriendCapabilityLimeX3dh));
-
+	
 		bctbx_list_t *lcs = NULL;
 		lcs = bctbx_list_append(lcs, marie->lc);
 		lcs = bctbx_list_append(lcs, pauline->lc);
@@ -2119,6 +2119,87 @@ static void notify_friend_capabilities_with_alias(void) {
 		linphone_core_manager_destroy(pauline);
 		ms_free(e164Laure);
 		linphone_core_manager_destroy(laure);
+		ms_free(e164Marie);
+		linphone_core_manager_destroy(marie);
+		bctbx_list_free(lcs);
+	} else ms_warning("Test skipped, no vcard support");
+}
+
+static void notify_search_result_capabilities_with_alias(void) {
+	if (linphone_core_vcard_supported()) {
+		const LinphoneDialPlan *dialPlan;
+		const LinphoneDialPlan *genericDialPlan = linphone_dial_plan_by_ccc(NULL);
+		char phoneMarie[20];
+		char *e164Marie;
+		size_t i;
+		LinphoneProxyConfig *proxy_config;
+		LinphoneFriend* marieFriend;
+		LinphoneCoreManager *marie = NULL;
+		bctbx_list_t *specs = NULL;
+		LinphoneMagicSearch *magicSearch = NULL;
+		bctbx_list_t *resultList = NULL;
+		
+		while ((dialPlan = linphone_dial_plan_by_ccc_as_int(bctbx_random() % 900)) == genericDialPlan);
+		/*now with have a dialplan*/
+		for (i = 0; i < MIN((size_t)linphone_dial_plan_get_national_number_length(dialPlan), sizeof(phoneMarie) - 1); i++) {
+			phoneMarie[i] = '0' + rand() % 10;
+		}
+		phoneMarie[i] = '\0';
+		e164Marie = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phoneMarie);
+
+		marie = linphone_core_manager_create2("marie_rc", e164Marie);
+		linphone_core_set_user_agent(marie->lc, "full-presence-support-bypass", NULL);
+		specs = bctbx_list_append(specs, "groupchat/1.1");
+		specs = bctbx_list_append(specs, "lime/1.5");
+		linphone_core_set_linphone_specs_list(marie->lc, specs);
+		linphone_core_manager_start(marie, TRUE);
+
+		LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+		linphone_core_set_user_agent(pauline->lc, "full-presence-support-bypass", NULL);
+
+		marieFriend = linphone_core_create_friend(pauline->lc);
+		linphone_friend_add_phone_number(marieFriend, phoneMarie);
+		linphone_core_add_friend(pauline->lc, marieFriend);
+
+		linphone_friend_list_set_rls_uri(linphone_core_get_default_friend_list(pauline->lc), "sip:rls@sip.example.org");
+		proxy_config = linphone_core_get_default_proxy_config(pauline->lc);
+		linphone_proxy_config_edit(proxy_config);
+		linphone_proxy_config_set_dial_prefix(proxy_config, linphone_dial_plan_get_country_calling_code(dialPlan));
+		linphone_proxy_config_done(proxy_config);
+		linphone_friend_list_update_subscriptions(linphone_core_get_default_friend_list(pauline->lc));
+		
+		BC_ASSERT_TRUE(wait_for(pauline->lc, NULL, &pauline->stat.number_of_LinphonePresenceActivityAway, 1));
+		BC_ASSERT_TRUE(linphone_friend_has_capability(marieFriend, LinphoneFriendCapabilityGroupChat));
+		BC_ASSERT_TRUE(linphone_friend_has_capability(marieFriend, LinphoneFriendCapabilityLimeX3dh));
+
+		magicSearch = linphone_magic_search_new(pauline->lc);
+		resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
+
+		if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
+			BC_ASSERT_EQUAL(bctbx_list_size(resultList), 1, int, "%d");
+			const LinphoneSearchResult *sr = bctbx_list_nth_data(resultList, 0);
+			BC_ASSERT_TRUE(linphone_search_result_has_capability(sr, LinphoneFriendCapabilityGroupChat));
+			BC_ASSERT_TRUE(linphone_search_result_has_capability(sr, LinphoneFriendCapabilityLimeX3dh));
+			
+			bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
+		}
+		linphone_magic_search_reset_search_cache(magicSearch);
+		linphone_magic_search_unref(magicSearch);
+		
+		bctbx_list_t *lcs = NULL;
+		lcs = bctbx_list_append(lcs, marie->lc);
+		lcs = bctbx_list_append(lcs, pauline->lc);
+		linphone_friend_list_enable_subscriptions(linphone_core_get_default_friend_list(marie->lc), FALSE);
+		linphone_friend_list_enable_subscriptions(linphone_core_get_default_friend_list(pauline->lc), FALSE);
+
+		wait_for_list(lcs,NULL, 0, 2000); // wait for unsubscritptions
+		
+		linphone_friend_unref(marieFriend);
+
+		belle_sip_object_remove_from_leak_detector((void*)dialPlan); //because mostCommon dial plan is a static object freed at the end of the process. This f is only to avoid wrong leak detection.
+		belle_sip_object_remove_from_leak_detector((void*)genericDialPlan);
+		linphone_core_manager_destroy(pauline);
+
 		ms_free(e164Marie);
 		linphone_core_manager_destroy(marie);
 		bctbx_list_free(lcs);
@@ -2158,7 +2239,8 @@ test_t presence_server_tests[] = {
 	TEST_ONE_TAG("Multiple bodyless list subscription with rc", multiple_bodyless_list_subscription_with_rc, "bodyless"),
 	TEST_ONE_TAG("Notify LinphoneFriend capabilities", notify_friend_capabilities, "capabilities"),
 	TEST_ONE_TAG("Notify LinphoneFriend capabilities after PUBLISH", notify_friend_capabilities_after_publish, "capabilities"),
-	TEST_ONE_TAG("Notify LinphoneFriend capabilities with alias", notify_friend_capabilities_with_alias, "capabilities")
+	TEST_ONE_TAG("Notify LinphoneFriend capabilities with alias", notify_friend_capabilities_with_alias, "capabilities"),
+	TEST_ONE_TAG("Notify search result capabilities with alias", notify_search_result_capabilities_with_alias, "capabilities")
 };
 
 test_suite_t presence_server_test_suite = {"Presence using server", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
