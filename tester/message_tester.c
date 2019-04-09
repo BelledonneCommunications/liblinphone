@@ -107,9 +107,11 @@ LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneCh
 	return msg;
 }
 
-void text_message_base(LinphoneCoreManager* marie, LinphoneCoreManager* pauline) {
-	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc,marie->identity);
-	LinphoneChatMessage* msg = linphone_chat_room_create_message(room,"Bli bli bli \n blu");
+void text_message_base_with_text(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, const char* text, const char* content_type) {
+	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc,/*linphone_address_new("sip:jehan-iphone@sip.linphone.org")*/marie->identity);
+	
+	LinphoneChatMessage* msg = linphone_chat_room_create_message(room, text);
+	linphone_chat_message_set_content_type(msg, content_type);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);
@@ -118,11 +120,34 @@ void text_message_base(LinphoneCoreManager* marie, LinphoneCoreManager* pauline)
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived,1));
 	BC_ASSERT_PTR_NOT_NULL(marie->stat.last_received_chat_message);
 	if (marie->stat.last_received_chat_message != NULL) {
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(marie->stat.last_received_chat_message), "text/plain");
+		LinphoneContent *content = (LinphoneContent *)(linphone_chat_message_get_contents(marie->stat.last_received_chat_message)->data);
+		char* content_type_header = ms_strdup_printf("Content-Type: %s",content_type);
+		belle_sip_header_content_type_t *belle_sip_content_type = belle_sip_header_content_type_parse(content_type_header);
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), belle_sip_header_content_type_get_type(belle_sip_content_type));
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), belle_sip_header_content_type_get_subtype(belle_sip_content_type));
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), text);
+		ms_free(content_type_header);
+		LinphoneChatRoom *marieCr = linphone_core_get_chat_room(marie->lc, pauline->identity);
+		if (!marieCr) {
+			//next try in case of private message
+			marieCr = linphone_chat_message_get_chat_room(marie->stat.last_received_chat_message);
+		}
+		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int," %i");
+		if (linphone_chat_room_get_history_size(marieCr) > 0) {
+			bctbx_list_t *history = linphone_chat_room_get_history(marieCr, 1);
+			LinphoneChatMessage *recv_msg = (LinphoneChatMessage *)(history->data);
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recv_msg), text);
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(recv_msg),text);
+			bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
+		}
 	}
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room(marie->lc,pauline->identity));
 	linphone_chat_message_unref(msg);
+}
+
+void text_message_base(LinphoneCoreManager* marie, LinphoneCoreManager* pauline) {
+	text_message_base_with_text(marie,pauline, "Bli bli bli \n blu", "text/plain");
 }
 
 /****************************** Tests starting below ******************************/
@@ -133,6 +158,16 @@ static void text_message(void) {
 
 	text_message_base(marie, pauline);
 
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void text_message_with_utf8(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	
+	text_message_base_with_text(marie, pauline, "Salut Fran\xc3\xa7ois", "text/plain;charset=UTF-8");
+	
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2345,6 +2380,7 @@ static void migration_from_messages_db (void) {
 
 test_t message_tests[] = {
 	TEST_NO_TAG("Text message", text_message),
+	TEST_NO_TAG("Text message UTF8", text_message_with_utf8),
 	TEST_NO_TAG("Text message with credentials from auth callback", text_message_with_credential_from_auth_callback),
 	TEST_NO_TAG("Text message with privacy", text_message_with_privacy),
 	TEST_NO_TAG("Text message compatibility mode", text_message_compatibility_mode),

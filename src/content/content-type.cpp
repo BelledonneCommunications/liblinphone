@@ -133,12 +133,12 @@ ContentType &ContentType::operator= (const ContentType &other) {
 	return *this;
 }
 
-bool ContentType::weakEqual (const ContentType &other) const {
+bool ContentType::operator== (const ContentType &other) const {
 	return (getType() == other.getType()) && (getSubType() == other.getSubType());
 }
 
-bool ContentType::operator== (const ContentType &other) const {
-	if (!weakEqual(other))
+bool ContentType::strongEqual(const ContentType &other) const {
+	if ( *this != other)
 		return false;
 	if (getParameters().size() != other.getParameters().size())
 		return false;

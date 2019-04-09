@@ -204,7 +204,7 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 
 bool Imdn::isError (const shared_ptr<ChatMessage> &chatMessage) {
 	for (const auto &content : chatMessage->getPrivate()->getContents()) {
-		if (!content->getContentType().weakEqual(ContentType::Imdn))
+		if (content->getContentType() != ContentType::Imdn)
 			continue;
 		istringstream data(content->getBodyAsString());
 		unique_ptr<Xsd::Imdn::Imdn> imdn(Xsd::Imdn::parseImdn(data, Xsd::XmlSchema::Flags::dont_validate));
