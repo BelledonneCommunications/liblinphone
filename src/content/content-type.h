@@ -40,8 +40,10 @@ public:
 
 	ContentType &operator= (const ContentType &other);
 
-	bool weakEqual (const ContentType &other) const;
+	bool strongEqual (const ContentType &other) const;
+	/*does not check parameters*/
 	bool operator== (const ContentType &other) const;
+	/*does not check parameters*/
 	bool operator!= (const ContentType &other) const;
 
 	// Delete these operators to prevent putting complicated content-type strings

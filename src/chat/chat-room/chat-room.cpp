@@ -283,7 +283,7 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 	);
 
 	Content content;
-	if (message->url && (ContentType(message->content_type).weakEqual(ContentType::ExternalBody))) {
+	if (message->url && ContentType(message->content_type) == ContentType::ExternalBody) {
 		lInfo() << "Received a message with an external body URL " << message->url;
 		content.setContentType(ContentType::FileTransfer);
 		content.setBody(msg->getPrivate()->createFakeFileTransferFromUrl(message->url));
