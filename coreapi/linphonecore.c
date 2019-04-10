@@ -2406,7 +2406,6 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 		_linphone_core_add_callbacks(lc, cbs, FALSE);
 	}
 
-	ortp_set_log_handler(NULL); /*remove ortp default log handler*/
 	ortp_init();
 
 	linphone_core_activate_log_serialization_if_needed();

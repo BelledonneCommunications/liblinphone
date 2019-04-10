@@ -24,41 +24,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #endif
 
 
-void sal_enable_log(){
-	sal_set_log_level(ORTP_MESSAGE);
-}
-
-void sal_disable_log() {
-	sal_set_log_level(ORTP_ERROR);
-}
-
-void sal_set_log_level(OrtpLogLevel level) {
-	belle_sip_log_level  belle_sip_level = BELLE_SIP_LOG_MESSAGE;
-	if ((level&ORTP_FATAL) != 0) {
-		belle_sip_level = BELLE_SIP_LOG_FATAL;
-	}
-	if ((level&ORTP_ERROR) != 0) {
-		belle_sip_level = BELLE_SIP_LOG_ERROR;
-	}
-	if ((level&ORTP_WARNING) != 0) {
-		belle_sip_level = BELLE_SIP_LOG_WARNING;
-	}
-	if ((level&ORTP_MESSAGE) != 0) {
-		belle_sip_level = BELLE_SIP_LOG_MESSAGE;
-	}
-	if (((level&ORTP_DEBUG) != 0) || ((level&ORTP_TRACE) != 0)) {
-		belle_sip_level = BELLE_SIP_LOG_DEBUG;
-	}
-
-	belle_sip_set_log_level(belle_sip_level);
-}
-static BctbxLogFunc _belle_sip_log_handler = bctbx_logv_out;
-
-void sal_set_log_handler(BctbxLogFunc log_handler) {
-	_belle_sip_log_handler = log_handler;
-	belle_sip_set_log_handler(log_handler);
-}
-
 SalAuthInfo* sal_auth_info_create(belle_sip_auth_event_t* event) {
 	SalAuthInfo* auth_info = sal_auth_info_new();
 	auth_info->realm = ms_strdup(belle_sip_auth_event_get_realm(event));
