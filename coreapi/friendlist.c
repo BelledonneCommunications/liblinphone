@@ -446,7 +446,7 @@ static bool_t linphone_friend_list_has_subscribe_inactive(const LinphoneFriendLi
 static LinphoneFriendList * linphone_friend_list_new(void) {
 	LinphoneFriendList *list = belle_sip_object_new(LinphoneFriendList);
 	list->cbs = linphone_friend_list_cbs_new();
-	list->enable_subscriptions = TRUE;
+	list->enable_subscriptions = FALSE;
 	list->friends_map = bctbx_mmap_cchar_new();
 	list->friends_map_uri = bctbx_mmap_cchar_new();
 	list->bodyless_subscription = FALSE;
@@ -486,6 +486,10 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneFriendList, belle_sip_object_t,
 LinphoneFriendList * linphone_core_create_friend_list(LinphoneCore *lc) {
 	LinphoneFriendList *list = linphone_friend_list_new();
 	list->lc = lc;
+	if (lc) { // Will be NULL if created from database
+		// We can't use linphone_core_is_friend_list_subscription_enabled because this will be called before the C++ core is initialized
+		list->enable_subscriptions = !!lp_config_get_int(linphone_core_get_config(lc), "net", "friendlist_subscription_enabled", 1);
+	}
 	return list;
 }
 
@@ -1062,7 +1066,7 @@ void linphone_friend_list_update_subscriptions(LinphoneFriendList *list) {
 		if (list->enable_subscriptions) {
 			if (should_send_list_subscribe){
 				linphone_friend_list_send_list_subscription(list);
-			}else{
+			} else {
 				if (list->event){
 					linphone_event_terminate(list->event);
 					linphone_event_unref(list->event);
