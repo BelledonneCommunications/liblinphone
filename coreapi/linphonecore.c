@@ -5700,7 +5700,7 @@ typedef enum{
 	LinphoneLocalPlayer
 }LinphoneAudioResourceType;
 
-static MSFilter *get_audio_resource(LinphoneCore *lc, LinphoneAudioResourceType rtype, MSSndCard *card) {
+static MSFilter *get_audio_resource(LinphoneCore *lc, LinphoneAudioResourceType rtype, MSSndCard *card, bool_t create) {
 	LinphoneCall *call=linphone_core_get_current_call(lc);
 	AudioStream *stream=NULL;
 	RingStream *ringstream;
@@ -5728,6 +5728,8 @@ static MSFilter *get_audio_resource(LinphoneCore *lc, LinphoneAudioResourceType 
 
 		if (ringcard == NULL)
 			return NULL;
+		
+		if (!create) return NULL;
 
 		ringstream=lc->ringstream=ring_start(lc->factory, NULL,0,ringcard);
 		ms_filter_call_method(lc->ringstream->gendtmf,MS_DTMF_GEN_SET_DEFAULT_AMPLITUDE,&amp);
@@ -5743,7 +5745,7 @@ static MSFilter *get_audio_resource(LinphoneCore *lc, LinphoneAudioResourceType 
 }
 
 static MSFilter *get_dtmf_gen(LinphoneCore *lc, MSSndCard *card) {
-	return get_audio_resource(lc,LinphoneToneGenerator, card);
+	return get_audio_resource(lc,LinphoneToneGenerator, card, TRUE);
 }
 
 void linphone_core_play_dtmf(LinphoneCore *lc, char dtmf, int duration_ms){
@@ -5762,7 +5764,7 @@ void linphone_core_play_dtmf(LinphoneCore *lc, char dtmf, int duration_ms){
 }
 
 LinphoneStatus _linphone_core_play_local(LinphoneCore *lc, const char *audiofile, MSSndCard *card) {
-	MSFilter *f=get_audio_resource(lc,LinphoneLocalPlayer, card);
+	MSFilter *f=get_audio_resource(lc,LinphoneLocalPlayer, card, TRUE);
 	int loopms=-1;
 	if (!f) return -1;
 	ms_filter_call_method(f,MS_PLAYER_SET_LOOP,&loopms);
@@ -5836,7 +5838,7 @@ void linphone_core_play_call_error_tone(LinphoneCore *lc, LinphoneReason reason)
 }
 
 void linphone_core_stop_dtmf(LinphoneCore *lc){
-	MSFilter *f=get_dtmf_gen(lc, NULL);
+	MSFilter *f=get_audio_resource(lc, LinphoneToneGenerator, NULL, FALSE);
 	if (f!=NULL)
 		ms_filter_call_method_noarg (f, MS_DTMF_GEN_STOP);
 }
