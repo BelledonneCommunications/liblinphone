@@ -97,10 +97,10 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 				linphone_tunnel_config_set_port(config, 443);
 				linphone_tunnel_config_set_remote_udp_mirror_port(config, 12345);
 			} else {
-				linphone_tunnel_config_set_host(config, "94.23.19.176");
-				linphone_tunnel_config_set_port(config, 4443);
-				linphone_tunnel_config_set_host2(config, "188.165.40.171");
-				linphone_tunnel_config_set_port2(config, 4443);
+				linphone_tunnel_config_set_host(config, "91.121.209.194");
+				linphone_tunnel_config_set_port(config, 443);
+				linphone_tunnel_config_set_host2(config, "178.32.112.28");
+				linphone_tunnel_config_set_port2(config, 443);
 				linphone_tunnel_config_set_remote_udp_mirror_port(config, -1);
 				linphone_tunnel_enable_dual_mode(tunnel, TRUE);
 			}
@@ -130,7 +130,7 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 					if (!dual_socket) {
 						BC_ASSERT_STRING_EQUAL(public_ip, tunnel_ip);
 					} else {
-						BC_ASSERT_STRING_EQUAL(public_ip, "94.23.19.176");
+						BC_ASSERT_STRING_EQUAL(public_ip, "91.121.209.194");
 					}
 				}
 			} else {
@@ -152,7 +152,7 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 			/* make sure the call from pauline arrived from the tunnel by checking the contact address*/
 			marie_call = linphone_core_get_current_call(marie->lc);
 			BC_ASSERT_PTR_NOT_NULL(marie_call);
-			if (marie_call){
+			if (marie_call && !gruu){
 				const char *remote_contact = linphone_call_get_remote_contact(marie_call);
 				BC_ASSERT_PTR_NOT_NULL(remote_contact);
 				if (remote_contact){
@@ -162,7 +162,7 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 						if (!dual_socket) {
 							BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(tmp), tunnel_ip);
 						} else {
-							BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(tmp), "94.23.19.176");
+							BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(tmp), "91.121.209.194");
 						}
 						linphone_address_unref(tmp);
 					}
@@ -278,6 +278,8 @@ static void register_on_second_tunnel(void) {
 		LinphoneTunnelConfig *config2 = linphone_tunnel_config_new();
 		char tunnel_ip[64];
 		char* public_ip;
+
+		linphone_core_remove_supported_tag(pauline->lc,"gruu"); /*with gruu, we have no access to the "public IP from contact*/
 
 		BC_ASSERT_FALSE(get_ip_from_hostname("tunnel.linphone.org",tunnel_ip,sizeof(tunnel_ip)));
 		linphone_tunnel_simulate_udp_loss(tunnel, TRUE);
