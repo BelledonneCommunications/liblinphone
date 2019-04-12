@@ -667,7 +667,7 @@ static void file_transfer_external_body_url(bool_t use_file_body_handler_in_down
 	if (use_invalid_url) {
 		linphone_chat_message_set_external_body_url(msg, "https://linphone.org:444/download/0aa00aaa00a0a_a0000d00aaa0a0aaaa00.jpg");
 	} else {
-		linphone_chat_message_set_external_body_url(msg, "https://www.linphone.org/img/linphone-open-source-voip-projectX2.png");
+		linphone_chat_message_set_external_body_url(msg, "https://www.linphone.org/sites/default/files/backgroundstory.png");
 	}
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);

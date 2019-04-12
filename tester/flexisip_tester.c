@@ -604,6 +604,8 @@ static void call_forking_with_push_notification_double_contact(void){
 		linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,5000));
 	}
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
@@ -1050,6 +1052,7 @@ static void dos_module_trigger(void) {
 			snprintf(msg, sizeof(msg)-1, "Flood message number %i", message_sent_index);
 			chat_msg = linphone_chat_room_create_message(chat_room, msg);
 			linphone_chat_message_send(chat_msg);
+			linphone_chat_message_unref(chat_msg);
 			message_sent_index++;
 		}else{
 			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 20);
