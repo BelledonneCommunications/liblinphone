@@ -1898,6 +1898,16 @@ void MediaSessionPrivate::setZrtpCryptoTypesParameters (MSZrtpParams *params) {
 		params->authTagsCount = authTagsCount; /* Use zrtp_auth_suites config only when present, keep config from srtp_crypto_suite otherwise */
 	params->sasTypesCount = linphone_core_get_zrtp_sas_suites(q->getCore()->getCCore(), params->sasTypes);
 	params->keyAgreementsCount = linphone_core_get_zrtp_key_agreement_suites(q->getCore()->getCCore(), params->keyAgreements);
+	
+	bool haveRemoteZrtpHash = false;
+	if (op && op->getRemoteMediaDescription()) {
+		const SalStreamDescription *remoteStream = sal_media_description_find_best_stream(op->getRemoteMediaDescription(), SalAudio);
+		if (remoteStream) {
+			haveRemoteZrtpHash = remoteStream->haveZrtpHash;
+		}
+	}
+	
+	params->autoStart =  (getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) && (haveRemoteZrtpHash == false) ;
 }
 
 void MediaSessionPrivate::startDtls (MSMediaStreamSessions *sessions, const SalStreamDescription *sd, const SalStreamDescription *remote) {
