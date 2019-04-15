@@ -454,18 +454,13 @@ public class AndroidPlatformHelper {
 		}
 	}
 
-	private synchronized void storeDnsServers(Network activeNetwork) {
-		mDnsServers = null;
-
-		if (activeNetwork == null || mConnectivityManager.getLinkProperties(activeNetwork) == null) {
-			Log.e("[Platform Helper] Active network is null or we can't get it's link properties");
+	public synchronized void updateDnsServers(List<InetAddress> inetServers) {
+		if (inetServers == null) {
+			Log.e("[Platform Helper] inet servers list is null, don't update DNS servers");
 			return;
 		}
 
 		int i = 0;
-		List<InetAddress> inetServers = null;
-		inetServers = mConnectivityManager.getLinkProperties(activeNetwork).getDnsServers();
-
 		String[] servers = new String[inetServers.size()];
 		for (InetAddress address : inetServers) {
 			String host = address.getHostAddress();
@@ -474,6 +469,19 @@ public class AndroidPlatformHelper {
 		}
 
 		mDnsServers = servers;
+	}
+
+	private synchronized void storeDnsServers(Network activeNetwork) {
+		mDnsServers = null;
+
+		if (activeNetwork == null || mConnectivityManager.getLinkProperties(activeNetwork) == null) {
+			Log.e("[Platform Helper] Active network is null or we can't get it's link properties");
+			return;
+		}
+
+		List<InetAddress> inetServers = null;
+		inetServers = mConnectivityManager.getLinkProperties(activeNetwork).getDnsServers();
+		updateDnsServers(inetServers);
 	}
 
 	public synchronized void updateNetworkReachability() {

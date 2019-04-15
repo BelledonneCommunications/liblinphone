@@ -38,15 +38,18 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 	private AndroidPlatformHelper mHelper;
 	private boolean mIsNetworkAvailable;
 	private ConnectivityManager.NetworkCallback mNetworkCallback;
+	private Network mNetworkAvailable;
 
 	public NetworkManagerAbove21(final AndroidPlatformHelper helper) {
 		mHelper = helper;
 		mIsNetworkAvailable = false;
+		mNetworkAvailable = null;
 		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 			@Override
 			public void onAvailable(Network network) {
 				Log.i("[Platform Helper] [Network Manager 21] A network is available");
 				mIsNetworkAvailable = true;
+				mNetworkAvailable = network;
 				mHelper.updateNetworkReachability();
 			}
 
@@ -54,6 +57,9 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 			public void onLost(Network network) {
 				Log.i("[Platform Helper] [Network Manager 21] A network has been lost");
 				mIsNetworkAvailable = false;
+				if (mNetworkAvailable != null && mNetworkAvailable.equals(network)) {
+					mNetworkAvailable = null;
+				}
 				mHelper.updateNetworkReachability();
 			}
 
@@ -66,6 +72,7 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 			@Override
 			public void onLinkPropertiesChanged(Network network, LinkProperties linkProperties) {
 				Log.i("[Platform Helper] [Network Manager 21] onLinkPropertiesChanged " + network.toString() + ", " + linkProperties.toString());
+				mHelper.updateDnsServers(linkProperties.getDnsServers());
 			}
 
 			@Override
@@ -92,11 +99,15 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 	}
 
     public NetworkInfo getActiveNetworkInfo(ConnectivityManager connectivityManager) {
+        if (mNetworkAvailable != null) {
+			return connectivityManager.getNetworkInfo(mNetworkAvailable);
+		}
+
         return connectivityManager.getActiveNetworkInfo();
     }
 
     public Network getActiveNetwork(ConnectivityManager connectivityManager) {
-        return null;
+        return mNetworkAvailable;
     }
 
     public boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly) {
