@@ -41,15 +41,18 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 	private AndroidPlatformHelper mHelper;
 	private boolean mIsNetworkAvailable;
 	private ConnectivityManager.NetworkCallback mNetworkCallback;
+	private Network mNetworkAvailable;
 
 	public NetworkManagerAbove26(final AndroidPlatformHelper helper) {
 		mHelper = helper;
 		mIsNetworkAvailable = false;
+		mNetworkAvailable = null;
 		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 			@Override
 			public void onAvailable(Network network) {
 				Log.i("[Platform Helper] [Network Manager 26] A network is available");
 				mIsNetworkAvailable = true;
+				mNetworkAvailable = network;
 				mHelper.updateNetworkReachability();
 			}
 
@@ -57,6 +60,9 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 			public void onLost(Network network) {
 				Log.i("[Platform Helper] [Network Manager 26] A network has been lost");
 				mIsNetworkAvailable = false;
+				if (mNetworkAvailable != null && mNetworkAvailable.equals(network)) {
+					mNetworkAvailable = null;
+				}
 				mHelper.updateNetworkReachability();
 			}
 
@@ -69,6 +75,7 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 			@Override
 			public void onLinkPropertiesChanged(Network network, LinkProperties linkProperties) {
 				Log.i("[Platform Helper] [Network Manager 26] onLinkPropertiesChanged " + network.toString() + ", " + linkProperties.toString());
+				mHelper.updateDnsServers(linkProperties.getDnsServers());
 			}
 
 			@Override
@@ -96,6 +103,10 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 	}
 
     public NetworkInfo getActiveNetworkInfo(ConnectivityManager connectivityManager) {
+        if (mNetworkAvailable != null) {
+			return connectivityManager.getNetworkInfo(mNetworkAvailable);
+		}
+
         Network network = connectivityManager.getActiveNetwork();
 		if (network != null) {
 			return connectivityManager.getNetworkInfo(network);
@@ -105,6 +116,10 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
     }
 
     public Network getActiveNetwork(ConnectivityManager connectivityManager) {
+        if (mNetworkAvailable != null) {
+			return mNetworkAvailable;
+		}
+
         return connectivityManager.getActiveNetwork();
     }
 
