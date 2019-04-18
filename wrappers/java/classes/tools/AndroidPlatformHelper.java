@@ -102,6 +102,7 @@ public class AndroidPlatformHelper {
 	private native void setHttpProxy(long nativePtr, String host, int port);
 	private native boolean isInBackground(long nativePtr);
 	private native void enableKeepAlive(long nativePtr, boolean enable);
+	private native boolean useSystemHttpProxy(long nativePtr);
 
 	public AndroidPlatformHelper(long nativePtr, Object ctx_obj, boolean wifiOnly) {
 		mNativePtr = nativePtr;
@@ -502,14 +503,18 @@ public class AndroidPlatformHelper {
 			setNetworkReachable(mNativePtr, false);
 		} else {
 			if (mNetworkManager.hasHttpProxy(mContext, mConnectivityManager)) {
-				String host = mNetworkManager.getProxyHost(mContext, mConnectivityManager);
-				int port = mNetworkManager.getProxyPort(mContext, mConnectivityManager);
-				setHttpProxy(mNativePtr, host, port);
-				if (!mUsingHttpProxy) {
-					Log.i("[Platform Helper] Proxy wasn't set before, disabling network reachability first");
-					setNetworkReachable(mNativePtr, false);
+				if (useSystemHttpProxy(mNativePtr)) {
+					String host = mNetworkManager.getProxyHost(mContext, mConnectivityManager);
+					int port = mNetworkManager.getProxyPort(mContext, mConnectivityManager);
+					setHttpProxy(mNativePtr, host, port);
+					if (!mUsingHttpProxy) {
+						Log.i("[Platform Helper] Proxy wasn't set before, disabling network reachability first");
+						setNetworkReachable(mNativePtr, false);
+					}
+					mUsingHttpProxy = true;
+				} else {
+					Log.w("[Platform Helper] Proxy available but forbidden by linphone core [sip] use_system_http_proxy setting");
 				}
-				mUsingHttpProxy = true;
 			} else {
 				setHttpProxy(mNativePtr, "", 0);
 				if (mUsingHttpProxy) {
