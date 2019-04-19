@@ -763,7 +763,7 @@ static void _create_account_cb_custom(LinphoneXmlRpcRequest *request) {
 	const char* resp = linphone_xml_rpc_request_get_string_response(request);
 	if (linphone_xml_rpc_request_get_status(request) == LinphoneXmlRpcStatusOk) {
 		status = (strcmp(resp, "OK") == 0) ? LinphoneAccountCreatorStatusAccountCreated
-		: (strcmp(resp, "ERROR_CANNOT_SEND_SMS") == 0) ? LinphoneAccountCreatorStatusServerError
+		: (strcmp(resp, "ERROR_CANNOT_SEND_SMS") == 0) ? LinphoneAccountCreatorStatusPhoneNumberInvalid
 		: (strcmp(resp, "ERROR_ACCOUNT_ALREADY_IN_USE") == 0) ? LinphoneAccountCreatorStatusAccountExist
 		: (strcmp(resp, "ERROR_ALIAS_ALREADY_IN_USE") == 0) ? LinphoneAccountCreatorStatusAccountExistWithAlias
 		: LinphoneAccountCreatorStatusAccountNotCreated;
@@ -896,6 +896,8 @@ static void _activate_account_cb_custom(LinphoneXmlRpcRequest *request) {
 	if (linphone_xml_rpc_request_get_status(request) == LinphoneXmlRpcStatusOk) {
 		if (strcmp(resp, "ERROR_ACCOUNT_ALREADY_ACTIVATED") == 0) {
 			status = LinphoneAccountCreatorStatusAccountAlreadyActivated;
+		} else if (strcmp(resp, "ERROR_KEY_DOESNT_MATCH") == 0) {
+			status = LinphoneAccountCreatorStatusWrongActivationCode;
 		} else if (strstr(resp, "ERROR_") == resp) {
 			status = LinphoneAccountCreatorStatusAccountNotActivated;
 		} else {
