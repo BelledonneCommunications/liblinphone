@@ -180,8 +180,9 @@ typedef enum _LinphoneAccountCreatorStatus {
 	/** Server **/
 	LinphoneAccountCreatorStatusServerError, /**< Error server */
 
-	LinphoneAccountCreatorStatusPhoneNumberInvalid, /** Error cannot send SMS */
-	LinphoneAccountCreatorStatusWrongActivationCode, /** Error key doesn't match */
+	LinphoneAccountCreatorStatusPhoneNumberInvalid, /**< Error cannot send SMS */
+	LinphoneAccountCreatorStatusWrongActivationCode, /**< Error key doesn't match */
+	LinphoneAccountCreatorStatusPhoneNumberOverused, /**< Error too many SMS sent */
 } LinphoneAccountCreatorStatus;
 
 /**

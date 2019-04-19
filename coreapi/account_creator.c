@@ -764,6 +764,7 @@ static void _create_account_cb_custom(LinphoneXmlRpcRequest *request) {
 	if (linphone_xml_rpc_request_get_status(request) == LinphoneXmlRpcStatusOk) {
 		status = (strcmp(resp, "OK") == 0) ? LinphoneAccountCreatorStatusAccountCreated
 		: (strcmp(resp, "ERROR_CANNOT_SEND_SMS") == 0) ? LinphoneAccountCreatorStatusPhoneNumberInvalid
+		: (strcmp(resp, "ERROR_MAX_SMS_EXCEEDED") == 0) ? LinphoneAccountCreatorStatusPhoneNumberOverused
 		: (strcmp(resp, "ERROR_ACCOUNT_ALREADY_IN_USE") == 0) ? LinphoneAccountCreatorStatusAccountExist
 		: (strcmp(resp, "ERROR_ALIAS_ALREADY_IN_USE") == 0) ? LinphoneAccountCreatorStatusAccountExistWithAlias
 		: LinphoneAccountCreatorStatusAccountNotCreated;
@@ -1260,8 +1261,10 @@ static void _recover_phone_account_cb_custom(LinphoneXmlRpcRequest *request) {
 	const char* resp = linphone_xml_rpc_request_get_string_response(request);
 	if (linphone_xml_rpc_request_get_status(request) == LinphoneXmlRpcStatusOk) {
 		if (strstr(resp, "ERROR_") == resp) {
-			status = (strstr(resp, "ERROR_CANNOT_SEND_SMS") == resp) ? LinphoneAccountCreatorStatusServerError
-				: (strstr(resp, "ERROR_ACCOUNT_DOESNT_EXIST") == resp) ? LinphoneAccountCreatorStatusAccountNotExist
+			status = (strcmp(resp, "ERROR_CANNOT_SEND_SMS") == 0) ? LinphoneAccountCreatorStatusServerError
+				: (strcmp(resp, "ERROR_CANNOT_SEND_SMS") == 0) ? LinphoneAccountCreatorStatusPhoneNumberInvalid
+				: (strcmp(resp, "ERROR_MAX_SMS_EXCEEDED") == 0) ? LinphoneAccountCreatorStatusPhoneNumberOverused
+				: (strcmp(resp, "ERROR_ACCOUNT_DOESNT_EXIST") == 0) ? LinphoneAccountCreatorStatusAccountNotExist
 				: LinphoneAccountCreatorStatusRequestFailed;
 		} else {
 			status = LinphoneAccountCreatorStatusRequestOk;
