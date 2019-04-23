@@ -39,27 +39,31 @@ import org.linphone.core.tools.AndroidPlatformHelper;
  */
 public class NetworkManagerAbove26 implements NetworkManagerInterface {
 	private AndroidPlatformHelper mHelper;
-	private boolean mIsNetworkAvailable;
+	private ConnectivityManager mConnectivityManager;
 	private ConnectivityManager.NetworkCallback mNetworkCallback;
 	private Network mNetworkAvailable;
+    private boolean mWifiOnly;
 
-	public NetworkManagerAbove26(final AndroidPlatformHelper helper) {
+	public NetworkManagerAbove26(final AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly) {
 		mHelper = helper;
-		mIsNetworkAvailable = false;
+		mConnectivityManager = cm;
+		mWifiOnly = wifiOnly;
 		mNetworkAvailable = null;
 		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 			@Override
 			public void onAvailable(Network network) {
-				Log.i("[Platform Helper] [Network Manager 26] A network is available");
-				mIsNetworkAvailable = true;
-				mNetworkAvailable = network;
-				mHelper.updateNetworkReachability();
+				Log.i("[Platform Helper] [Network Manager 26] A network is available: " + mConnectivityManager.getNetworkInfo(network).getType() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
+				if (!mWifiOnly || mConnectivityManager.getNetworkInfo(network).getType() == ConnectivityManager.TYPE_WIFI) {
+					mNetworkAvailable = network;
+					mHelper.updateNetworkReachability();
+				} else {
+					Log.i("[Platform Helper] [Network Manager 26] Network isn't wifi and wifi only mode is enabled");
+				}
 			}
 
 			@Override
 			public void onLost(Network network) {
 				Log.i("[Platform Helper] [Network Manager 26] A network has been lost");
-				mIsNetworkAvailable = false;
 				if (mNetworkAvailable != null && mNetworkAvailable.equals(network)) {
 					mNetworkAvailable = null;
 				}
@@ -90,41 +94,52 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 		};
 	}
 
-	public void registerNetworkCallbacks(Context context, ConnectivityManager connectivityManager) {
+    public void setWifiOnly(boolean isWifiOnlyEnabled) {
+		mWifiOnly = isWifiOnlyEnabled;
+		if (mWifiOnly && mNetworkAvailable != null) {
+			NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(mNetworkAvailable);
+			if (networkInfo != null && networkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
+				Log.i("[Platform Helper] [Network Manager 26] Wifi only mode enabled and current network isn't wifi");
+				mNetworkAvailable = null;
+			}
+		}
+	}
+
+	public void registerNetworkCallbacks(Context context) {
 		int permissionGranted = context.getPackageManager().checkPermission(Manifest.permission.ACCESS_NETWORK_STATE, context.getPackageName());
 		Log.i("[Platform Helper] [Network Manager 26] ACCESS_NETWORK_STATE permission is " + (permissionGranted == PackageManager.PERMISSION_GRANTED ? "granted" : "denied"));
 		if (permissionGranted == PackageManager.PERMISSION_GRANTED) {
-			connectivityManager.registerDefaultNetworkCallback(mNetworkCallback, mHelper.getHandler());
+			mConnectivityManager.registerDefaultNetworkCallback(mNetworkCallback, mHelper.getHandler());
 		}
 	}
 
-	public void unregisterNetworkCallbacks(Context context, ConnectivityManager connectivityManager) {
-		connectivityManager.unregisterNetworkCallback(mNetworkCallback);
+	public void unregisterNetworkCallbacks(Context context) {
+		mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
 	}
 
-    public NetworkInfo getActiveNetworkInfo(ConnectivityManager connectivityManager) {
+    public NetworkInfo getActiveNetworkInfo() {
         if (mNetworkAvailable != null) {
-			return connectivityManager.getNetworkInfo(mNetworkAvailable);
+			return mConnectivityManager.getNetworkInfo(mNetworkAvailable);
 		}
 
-        Network network = connectivityManager.getActiveNetwork();
+        Network network = mConnectivityManager.getActiveNetwork();
 		if (network != null) {
-			return connectivityManager.getNetworkInfo(network);
+			return mConnectivityManager.getNetworkInfo(network);
 		}
 		Log.i("[Platform Helper] [Network Manager 26] getActiveNetwork() returned null, using getActiveNetworkInfo() instead");
-        return connectivityManager.getActiveNetworkInfo();
+        return mConnectivityManager.getActiveNetworkInfo();
     }
 
-    public Network getActiveNetwork(ConnectivityManager connectivityManager) {
+    public Network getActiveNetwork() {
         if (mNetworkAvailable != null) {
 			return mNetworkAvailable;
 		}
 
-        return connectivityManager.getActiveNetwork();
+        return mConnectivityManager.getActiveNetwork();
     }
 
-	public boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly) {
-		int restrictBackgroundStatus = connectivityManager.getRestrictBackgroundStatus();
+	public boolean isCurrentlyConnected(Context context) {
+		int restrictBackgroundStatus = mConnectivityManager.getRestrictBackgroundStatus();
 		if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) {
 			// Device is restricting metered network activity while application is running on background.
 			// In this state, application should not try to use the network while running on background, because it would be denied.
@@ -134,32 +149,11 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 				return false;
 			}
 		}
-
-		/*Network[] networks = connectivityManager.getAllNetworks();
-		boolean connected = false;
-		for (Network network : networks) {
-			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
-			Log.i("[Platform Helper] [Network Manager 26] Found network type: " + networkInfo.getTypeName() + ", isConnectedOrConnecting() = " + networkInfo.isConnectedOrConnecting());
-			if (networkInfo.isConnectedOrConnecting()) {
-				Log.i("[Platform Helper] [Network Manager 26] Network is state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
-				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
-					Log.i("[Platform Helper] [Network Manager 26] Wifi only mode enabled, skipping");
-				} else {
-					NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
-					if (capabilities != null) {
-						Log.i("[Platform Helper] [Network Manager 26] Network capabilities are " + capabilities.toString());
-						connected = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) 
-							&& capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
-							&& capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
-					}
-				}
-			}
-		}*/
-		return mIsNetworkAvailable;
+		return mNetworkAvailable != null;
 	}
 
-	public boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager) {
-		ProxyInfo proxy = connectivityManager.getDefaultProxy();
+	public boolean hasHttpProxy(Context context) {
+		ProxyInfo proxy = mConnectivityManager.getDefaultProxy();
 		if (proxy != null && proxy.getHost() != null){
 			Log.i("[Platform Helper] [Network Manager 26] The active network is using an http proxy: " + proxy.toString());
 			return true;
@@ -167,13 +161,13 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 		return false;
 	}
 
-	public String getProxyHost(Context context, ConnectivityManager connectivityManager) {
-		ProxyInfo proxy = connectivityManager.getDefaultProxy();
+	public String getProxyHost(Context context) {
+		ProxyInfo proxy = mConnectivityManager.getDefaultProxy();
 		return proxy.getHost();
 	}
 
-	public int getProxyPort(Context context, ConnectivityManager connectivityManager) {
-		ProxyInfo proxy = connectivityManager.getDefaultProxy();
+	public int getProxyPort(Context context) {
+		ProxyInfo proxy = mConnectivityManager.getDefaultProxy();
 		return proxy.getPort();
 	}
 }
