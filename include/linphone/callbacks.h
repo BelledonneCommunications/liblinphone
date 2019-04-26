@@ -195,9 +195,24 @@ typedef void (*LinphoneCoreTextMessageReceivedCb)(LinphoneCore *lc, LinphoneChat
 typedef void (*LinphoneCoreCbsMessageReceivedCb)(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
 
 /**
+ * Chat message callback prototype
+ * @param lc #LinphoneCore object
+ * @param room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room.
+ * @param #LinphoneChatMessage outgoing message
+ */
+typedef void (*LinphoneCoreCbsMessageSentCb)(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
+
+/**
  * Old name of #LinphoneCoreCbsMessageReceivedCb.
  */
 typedef LinphoneCoreCbsMessageReceivedCb LinphoneCoreMessageReceivedCb;
+
+/**
+ * Chat room marked as read callback
+ * @param lc #LinphoneCore object
+ * @param room #LinphoneChatRoom that has been marked as read.
+ */
+typedef void (*LinphoneCoreCbsChatRoomReadCb)(LinphoneCore *lc, LinphoneChatRoom *room);
 
 /**
  * Chat message not decrypted callback prototype

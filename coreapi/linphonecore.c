@@ -280,6 +280,22 @@ void linphone_core_cbs_set_call_log_updated(LinphoneCoreCbs *cbs, LinphoneCoreCb
 	cbs->vtable->call_log_updated = cb;
 }
 
+LinphoneCoreCbsChatRoomReadCb linphone_core_cbs_get_chat_room_read(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->chat_room_read;
+}
+
+void linphone_core_cbs_set_chat_room_read(LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomReadCb cb) {
+	cbs->vtable->chat_room_read = cb;
+}
+
+LinphoneCoreCbsMessageReceivedCb linphone_core_cbs_get_message_sent(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->message_sent;
+}
+
+void linphone_core_cbs_set_message_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsMessageReceivedCb cb) {
+	cbs->vtable->message_sent = cb;
+}
+
 LinphoneCoreCbsMessageReceivedCb linphone_core_cbs_get_message_received(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->message_received;
 }

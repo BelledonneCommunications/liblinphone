@@ -229,6 +229,8 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsEcCalibrationResultCb ec_calibration_result;
 	LinphoneCoreCbsEcCalibrationAudioInitCb ec_calibration_audio_init;
 	LinphoneCoreCbsEcCalibrationAudioUninitCb ec_calibration_audio_uninit;
+	LinphoneCoreCbsMessageReceivedCb message_sent;
+	LinphoneCoreCbsChatRoomReadCb chat_room_read;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -424,6 +426,34 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_message_received(LinphoneCoreCbs *cbs
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsMessageReceivedCb linphone_core_cbs_get_message_received(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the #LinphoneCoreCbsMessageSentCb callback.
+ * @param[in] cbs A #LinphoneCoreCbs.
+ * @param[in] cb The callback.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_message_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsMessageSentCb cb);
+
+/**
+ * Get the #LinphoneCoreCbsMessageSentCb callback.
+ * @param[in] cbs A #LinphoneCoreCbs.
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsMessageSentCb linphone_core_cbs_get_message_sent(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the #LinphoneCoreCbsChatRoomReadCb callback.
+ * @param[in] cbs A #LinphoneCoreCbs.
+ * @param[in] cb The callback.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_read(LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomReadCb cb);
+
+/**
+ * Get the #LinphoneCoreCbsChatRoomReadCb callback.
+ * @param[in] cbs A #LinphoneCoreCbs.
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsChatRoomReadCb linphone_core_cbs_get_chat_room_read(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsMessageReceivedUnableDecryptCb callback.
