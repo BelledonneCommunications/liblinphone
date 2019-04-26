@@ -162,7 +162,17 @@ void linphone_core_notify_text_message_received(LinphoneCore *lc, LinphoneChatRo
 #endif
 
 void linphone_core_notify_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message){
-	NOTIFY_IF_EXIST(message_received, lc,room,message);
+	NOTIFY_IF_EXIST(message_received, lc, room, message);
+	cleanup_dead_vtable_refs(lc);
+}
+
+void linphone_core_notify_message_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message){
+	NOTIFY_IF_EXIST(message_sent, lc, room, message);
+	cleanup_dead_vtable_refs(lc);
+}
+
+void linphone_core_notify_chat_room_read(LinphoneCore *lc, LinphoneChatRoom *room){
+	NOTIFY_IF_EXIST(chat_room_read, lc, room);
 	cleanup_dead_vtable_refs(lc);
 }
 
