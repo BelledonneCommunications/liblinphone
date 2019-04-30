@@ -179,6 +179,8 @@ private:
 	void setupDtlsParams (MediaStream *ms);
 	void setZrtpCryptoTypesParameters (MSZrtpParams *params);
 	void startDtls (MSMediaStreamSessions *sessions, const SalStreamDescription *sd, const SalStreamDescription *remote);
+	//To give a chance for auxilary secret to be used, primary channel (I.E audio) should be started either on 200ok if ZRTP is signaled by a zrtp-hash or when ACK is received in case calling side does not have zrtp-hash.
+	void startZrtpPrimaryChannel (const SalStreamDescription *remote);
 	void startDtlsOnAllStreams ();
 	void updateCryptoParameters (SalMediaDescription *oldMd, SalMediaDescription *newMd);
 	bool updateStreamCryptoParameters (const SalStreamDescription *localStreamDesc, SalStreamDescription *oldStream, SalStreamDescription *newStream, MediaStream *ms);
