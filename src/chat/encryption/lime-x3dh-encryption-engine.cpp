@@ -607,9 +607,9 @@ void LimeX3dhEncryptionEngine::mutualAuthentication (
 	const char *charLocalIk = sal_custom_sdp_attribute_find(localMediaDescription->custom_sdp_attributes, "Ik");
 	const char *charRemoteIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik");
 
-	// If LIME X3DH is disabled there might not be identity keys
+	// This sdp might be from a non lime aware device
 	if (!charLocalIk || !charRemoteIk) {
-		lError() << "[LIME] Missing identity keys for mutual authentication";
+		lInfo() << "[LIME] Missing identity keys for mutual authentication, do not set auxiliary secret from identity keys";
 		return;
 	}
 
@@ -643,8 +643,8 @@ void LimeX3dhEncryptionEngine::mutualAuthentication (
 	const uint8_t *auxSharedSecret = vectorAuxSharedSecret.data();
 	lInfo() << "[LIME] Setting ZRTP auxiliary shared secret after identity key concatenation";
 	int retval = ms_zrtp_setAuxiliarySharedSecret(zrtpContext, auxSharedSecret, auxSharedSecretLength);
-	if (retval != 0)
-		lError() << "[LIME] ZRTP auxiliary shared secret mismatch 0x" << hex << retval;
+	if (retval != 0) //not an error as most of the time reason is already set (I.E re-invite case)
+		lWarning() << "[LIME] ZRTP auxiliary shared secret cannot be set 0x" << hex << retval;
 }
 
 void LimeX3dhEncryptionEngine::authenticationVerified (
@@ -662,7 +662,7 @@ void LimeX3dhEncryptionEngine::authenticationVerified (
 	const IdentityAddress peerDeviceAddr = IdentityAddress(peerDeviceId);
 
 	if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 2 /*BZRTP_AUXSECRET_UNSET*/) {
-		lInfo() << "[LIME] No auxiliary shared secret exchange because LIME disabled";
+		lInfo() << "[LIME] No auxiliary shared secret exchanged check from SDP if Ik were exchanged";
 	}
 	// SAS is verified and the auxiliary secret matches so we can trust this peer device
 	else if (ms_zrtp_getAuxiliarySharedSecretMismatch(zrtpContext) == 0 /*BZRTP_AUXSECRET_MATCH*/) {
