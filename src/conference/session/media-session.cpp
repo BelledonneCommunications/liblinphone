@@ -179,6 +179,7 @@ void MediaSessionPrivate::accepted () {
 }
 
 void MediaSessionPrivate::ackReceived (LinphoneHeaders *headers) {
+	L_Q();
 	CallSessionPrivate::ackReceived(headers);
 	if (expectMediaInAck) {
 		switch (state) {
@@ -190,6 +191,15 @@ void MediaSessionPrivate::ackReceived (LinphoneHeaders *headers) {
 				break;
 		}
 		accepted();
+	}
+	if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), LinphoneMediaEncryptionZRTP)) {
+		SalMediaDescription *remote = op->getRemoteMediaDescription();
+		const SalStreamDescription *remoteStream = remote?sal_media_description_find_best_stream(remote, SalAudio):NULL;
+		//Start zrtp if remote has not offered it but local is configured for zrtp and not offerer
+		if (remoteStream && getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP && !op->isOfferer() && remoteStream->haveZrtpHash == 0) {
+			lInfo() << "Starting zrtp late";
+			startZrtpPrimaryChannel(remoteStream);
+		}
 	}
 }
 
@@ -1939,7 +1949,21 @@ void MediaSessionPrivate::startDtlsOnAllStreams () {
 	if (textStream && (media_stream_get_state(&textStream->ms) == MSStreamStarted))
 		startDtls(&textStream->ms.sessions, sal_media_description_find_best_stream(result, SalText), sal_media_description_find_best_stream(remote, SalText));
 }
-
+//might be the same interface as startDtls if audio_stream_start_zrtp is replaced by audio_streamsessions_start_zrtp
+void MediaSessionPrivate::startZrtpPrimaryChannel(const SalStreamDescription *remote) {
+	if (remote->type != SalAudio) {
+		lError() << "Cannot start primary zrtp channel for stream type ["
+		<< sal_stream_type_to_string(remote->type) << "]";
+		return;
+	}
+	audio_stream_start_zrtp(audioStream);
+	if (remote->haveZrtpHash == 1) {
+		int retval = ms_zrtp_setPeerHelloHash(audioStream->ms.sessions.zrtp_context, (uint8_t *)remote->zrtphash, strlen((const char *)(remote->zrtphash)));
+		if (retval != 0)
+			lError() << "ZRTP hash mismatch 0x" << hex << retval;
+	}
+	return;
+}
 void MediaSessionPrivate::updateCryptoParameters (SalMediaDescription *oldMd, SalMediaDescription *newMd) {
 	const SalStreamDescription *localStreamDesc = sal_media_description_find_secure_stream_of_type(localDesc, SalAudio);
 	SalStreamDescription *oldStream = sal_media_description_find_secure_stream_of_type(oldMd, SalAudio);
@@ -2855,24 +2879,23 @@ void MediaSessionPrivate::startAudioStream (CallSession::State targetState, bool
 			// Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute
 			SalMediaDescription *remote = op->getRemoteMediaDescription();
 			const SalStreamDescription *remoteStream = sal_media_description_find_best_stream(remote, SalAudio);
-			if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), LinphoneMediaEncryptionZRTP)
-				&& ((getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream->haveZrtpHash == 1))) {
-
+			if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), LinphoneMediaEncryptionZRTP)) {
 				// Perform mutual authentication if instant messaging encryption is enabled
 				auto encryptionEngine = q->getCore()->getEncryptionEngine();
-				if (encryptionEngine)
+				//Is call direction really relevant ? might be linked to offerer/answerer rather than call direction ?
+				LinphoneCallDir direction = this->getPublic()->CallSession::getDirection();
+				if (encryptionEngine && audioStream->ms.sessions.zrtp_context) {
 					encryptionEngine->mutualAuthentication(
-						audioStream->ms.sessions.zrtp_context,
-						op->getLocalMediaDescription(),
-						op->getRemoteMediaDescription(),
-						this->getPublic()->CallSession::getDirection()
-					);
-
-				audio_stream_start_zrtp(audioStream);
-				if (remoteStream->haveZrtpHash == 1) {
-					int retval = ms_zrtp_setPeerHelloHash(audioStream->ms.sessions.zrtp_context, (uint8_t *)remoteStream->zrtphash, strlen((const char *)(remoteStream->zrtphash)));
-					if (retval != 0)
-						lError() << "ZRTP hash mismatch 0x" << hex << retval;
+														   audioStream->ms.sessions.zrtp_context,
+														   op->getLocalMediaDescription(),
+														   op->getRemoteMediaDescription(),
+														   direction
+														   );
+				}
+				
+				//Start zrtp if remote has offered it or if local is configured for zrtp and is the offerrer. If not, defered when ACK is received
+				if ((getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP && op->isOfferer()) || (remoteStream->haveZrtpHash == 1)) {
+					startZrtpPrimaryChannel(remoteStream);
 				}
 			}
 		}
