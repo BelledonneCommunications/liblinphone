@@ -25,19 +25,21 @@ import android.net.Network;
 import android.net.NetworkInfo;
 
 public interface NetworkManagerInterface {
-    void registerNetworkCallbacks(Context context, ConnectivityManager connectivityManager);
+    void registerNetworkCallbacks(Context context);
 
-	void unregisterNetworkCallbacks(Context context, ConnectivityManager connectivityManager);
+	void unregisterNetworkCallbacks(Context context);
 
-    boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly);
+    boolean isCurrentlyConnected(Context context);
 
-    NetworkInfo getActiveNetworkInfo(ConnectivityManager connectivityManager);
+    NetworkInfo getActiveNetworkInfo();
 
-    Network getActiveNetwork(ConnectivityManager connectivityManager);
+    Network getActiveNetwork();
 
-    boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager);
+    boolean hasHttpProxy(Context context);
 
-    String getProxyHost(Context context, ConnectivityManager connectivityManager);
+    String getProxyHost(Context context);
 
-    int getProxyPort(Context context, ConnectivityManager connectivityManager);
+    int getProxyPort(Context context);
+
+    void setWifiOnly(boolean isWifiOnlyEnabled);
 }

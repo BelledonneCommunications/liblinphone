@@ -36,63 +36,69 @@ public class NetworkManager extends BroadcastReceiver implements NetworkManagerI
     private AndroidPlatformHelper mHelper;
 	private IntentFilter mNetworkIntentFilter;
     private ConnectivityManager mConnectivityManager;
+    private boolean mWifiOnly;
 
-    public NetworkManager(AndroidPlatformHelper helper) {
+    public NetworkManager(AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly) {
+        mConnectivityManager = cm;
+        mWifiOnly = wifiOnly;
         mHelper = helper;
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        mConnectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         Log.i("[Platform Helper] [Network Manager] Broadcast receiver called");
         if (mHelper != null) {
             mHelper.updateNetworkReachability();
         }
     }
 
-	public void registerNetworkCallbacks(Context context, ConnectivityManager connectivityManager) {
+    public void setWifiOnly(boolean isWifiOnlyEnabled) {
+		mWifiOnly = isWifiOnlyEnabled;
+	}
+
+	public void registerNetworkCallbacks(Context context) {
 		mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         context.registerReceiver(this, mNetworkIntentFilter);
 	}
 
-	public void unregisterNetworkCallbacks(Context context, ConnectivityManager connectivityManager) {
+	public void unregisterNetworkCallbacks(Context context) {
         context.unregisterReceiver(this);
 	}
 
-    public NetworkInfo getActiveNetworkInfo(ConnectivityManager connectivityManager) {
-        return connectivityManager.getActiveNetworkInfo();
+    public NetworkInfo getActiveNetworkInfo() {
+        return mConnectivityManager.getActiveNetworkInfo();
     }
 
-    public Network getActiveNetwork(ConnectivityManager connectivityManager) {
+    public Network getActiveNetwork() {
         return null;
     }
 
-    public boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly) {
-        NetworkInfo[] networkInfos = connectivityManager.getAllNetworkInfo();
+    public boolean isCurrentlyConnected(Context context) {
+        NetworkInfo[] networkInfos = mConnectivityManager.getAllNetworkInfo();
 		boolean connected = false;
         for (NetworkInfo networkInfo : networkInfos) {
             Log.i("[Platform Helper] [Network Manager] Found network type: " + networkInfo.getTypeName() + ", isConnectedOrConnecting() = " + networkInfo.isConnectedOrConnecting());
 			if (networkInfo.isConnectedOrConnecting()) {
 				Log.i("[Platform Helper] [Network Manager] Network state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
-				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
+				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && mWifiOnly) {
 					Log.i("[Platform Helper] [Network Manager] Wifi only mode enabled, skipping");
 				} else {
-					connected = true;
+					return true;
 				}
 			}
         }
         return connected;
     }
 
-    public boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager) {
+    public boolean hasHttpProxy(Context context) {
         return false;
     }
 
-    public String getProxyHost(Context context, ConnectivityManager connectivityManager) {
+    public String getProxyHost(Context context) {
         return null;
     }
 
-    public int getProxyPort(Context context, ConnectivityManager connectivityManager) {
+    public int getProxyPort(Context context) {
         return 0;
     }
 }

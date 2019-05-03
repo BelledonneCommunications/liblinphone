@@ -2466,6 +2466,7 @@ void MediaSessionPrivate::handleStreamEvents (int streamIndex) {
 
 void MediaSessionPrivate::initializeAudioStream () {
 	L_Q();
+	
 	if (audioStream)
 		return;
 	if (!sessions[mainAudioStreamIndex].rtp_session) {
@@ -2522,6 +2523,13 @@ void MediaSessionPrivate::initializeAudioStream () {
 		media_stream_reclaim_sessions(&audioStream->ms, &sessions[mainAudioStreamIndex]);
 	} else {
 		audioStream = audio_stream_new_with_sessions(q->getCore()->getCCore()->factory, &sessions[mainAudioStreamIndex]);
+	}
+	
+	MSSndCard *playcard = q->getCore()->getCCore()->sound_conf.lsd_card ? q->getCore()->getCCore()->sound_conf.lsd_card : q->getCore()->getCCore()->sound_conf.play_sndcard;
+	if (playcard) {
+		// Set the stream type immediately, as on iOS AudioUnit is instanciated very early because it is 
+		// otherwise too slow to start.
+		ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
 	}
 
 	if (mediaPorts[mainAudioStreamIndex].rtpPort == -1)

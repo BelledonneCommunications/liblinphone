@@ -116,7 +116,7 @@ public class AndroidPlatformHelper {
 		mDozeModeEnabled = false;
 
 		MediastreamerAndroidContext.setContext(mContext);
-		Log.i("[Platform Helper] Created");
+		Log.i("[Platform Helper] Created, wifi only mode is " + (mWifiOnly ? "enabled" : "disabled"));
 
 		WifiManager wifiMgr = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
 		mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
@@ -157,7 +157,7 @@ public class AndroidPlatformHelper {
 
 		// Update DNS servers lists
 		NetworkManagerInterface nm = createNetworkManager();
-		Network network = nm.getActiveNetwork(mConnectivityManager);
+		Network network = nm.getActiveNetwork();
 		if (network != null) {
 			storeDnsServers(network);
 		}
@@ -178,7 +178,11 @@ public class AndroidPlatformHelper {
 
 	public synchronized void onWifiOnlyEnabled(boolean enabled) {
 		mWifiOnly = enabled;
-		updateNetworkReachability();
+		Log.i("[Platform Helper] Wifi only mode is now " + (mWifiOnly ? "enabled" : "disabled"));
+		if (mNetworkManager != null) {
+			mNetworkManager.setWifiOnly(mWifiOnly);
+		}
+ 		updateNetworkReachability();
 	}
 
 	public synchronized Object getPowerManager() {
@@ -497,15 +501,15 @@ public class AndroidPlatformHelper {
 			return;
 		}
 
-		boolean connected = mNetworkManager.isCurrentlyConnected(mContext, mConnectivityManager, mWifiOnly);
+		boolean connected = mNetworkManager.isCurrentlyConnected(mContext);
 		if (!connected) {
 			Log.i("[Platform Helper] No connectivity: setting network unreachable");
 			setNetworkReachable(mNativePtr, false);
 		} else {
-			if (mNetworkManager.hasHttpProxy(mContext, mConnectivityManager)) {
+			if (mNetworkManager.hasHttpProxy(mContext)) {
 				if (useSystemHttpProxy(mNativePtr)) {
-					String host = mNetworkManager.getProxyHost(mContext, mConnectivityManager);
-					int port = mNetworkManager.getProxyPort(mContext, mConnectivityManager);
+					String host = mNetworkManager.getProxyHost(mContext);
+					int port = mNetworkManager.getProxyPort(mContext);
 					setHttpProxy(mNativePtr, host, port);
 					if (!mUsingHttpProxy) {
 						Log.i("[Platform Helper] Proxy wasn't set before, disabling network reachability first");
@@ -524,8 +528,7 @@ public class AndroidPlatformHelper {
 				mUsingHttpProxy = false;
 			}
 
-			Log.i("[Platform Helper] Network should be reachable");
-			NetworkInfo networkInfo = mNetworkManager.getActiveNetworkInfo(mConnectivityManager);
+			NetworkInfo networkInfo = mNetworkManager.getActiveNetworkInfo();
 			if (networkInfo == null) {
 				Log.e("[Platform Helper] getActiveNetworkInfo() returned null !");
 				setNetworkReachable(mNativePtr, false);
@@ -538,7 +541,7 @@ public class AndroidPlatformHelper {
 			}
 			
 			// Update DNS servers lists
-			Network network = mNetworkManager.getActiveNetwork(mConnectivityManager);
+			Network network = mNetworkManager.getActiveNetwork();
 			storeDnsServers(network);
 
 			int currentNetworkType = networkInfo.getType();
@@ -567,15 +570,15 @@ public class AndroidPlatformHelper {
 	private NetworkManagerInterface createNetworkManager() {
 		NetworkManagerInterface networkManager = null;
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-			networkManager = new NetworkManager(this);
+			networkManager = new NetworkManager(this, mConnectivityManager, mWifiOnly);
 		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-			networkManager = new NetworkManagerAbove21(this);
+			networkManager = new NetworkManagerAbove21(this, mConnectivityManager, mWifiOnly);
 		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-			networkManager = new NetworkManagerAbove23(this);
+			networkManager = new NetworkManagerAbove23(this, mConnectivityManager, mWifiOnly);
 		} else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-			networkManager = new NetworkManagerAbove24(this);
+			networkManager = new NetworkManagerAbove24(this, mConnectivityManager, mWifiOnly);
 		} else {
-			networkManager = new NetworkManagerAbove26(this);
+			networkManager = new NetworkManagerAbove26(this, mConnectivityManager, mWifiOnly);
 		}
 		return networkManager;
 	}
@@ -585,7 +588,7 @@ public class AndroidPlatformHelper {
 		
 		mNetworkManager = createNetworkManager();
 		Log.i("[Platform Helper] Registering network callbacks");
-		mNetworkManager.registerNetworkCallbacks(mContext, mConnectivityManager);
+		mNetworkManager.registerNetworkCallbacks(mContext);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			mDozeIntentFilter = new IntentFilter();
@@ -613,7 +616,7 @@ public class AndroidPlatformHelper {
 
 		if (mNetworkManager != null && mConnectivityManager != null) {
 			Log.i("[Platform Helper] Unregistering network callbacks");
-			mNetworkManager.unregisterNetworkCallbacks(mContext, mConnectivityManager);
+			mNetworkManager.unregisterNetworkCallbacks(mContext);
 			mNetworkManager = null;
 		}
 

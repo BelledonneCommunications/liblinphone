@@ -36,27 +36,31 @@ import org.linphone.core.tools.AndroidPlatformHelper;
  */
 public class NetworkManagerAbove23 implements NetworkManagerInterface {
 	private AndroidPlatformHelper mHelper;
-	private boolean mIsNetworkAvailable;
+	private ConnectivityManager mConnectivityManager;
 	private ConnectivityManager.NetworkCallback mNetworkCallback;
 	private Network mNetworkAvailable;
+    private boolean mWifiOnly;
 
-	public NetworkManagerAbove23(final AndroidPlatformHelper helper) {
+	public NetworkManagerAbove23(final AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly) {
 		mHelper = helper;
-		mIsNetworkAvailable = false;
+		mConnectivityManager = cm;
+		mWifiOnly = wifiOnly;
 		mNetworkAvailable = null;
 		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 			@Override
 			public void onAvailable(Network network) {
-				Log.i("[Platform Helper] [Network Manager 23] A network is available");
-				mIsNetworkAvailable = true;
-				mNetworkAvailable = network;
-				mHelper.updateNetworkReachability();
+				Log.i("[Platform Helper] [Network Manager 23] A network is available: " + mConnectivityManager.getNetworkInfo(network).getType() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
+				if (!mWifiOnly || mConnectivityManager.getNetworkInfo(network).getType() == ConnectivityManager.TYPE_WIFI) {
+					mNetworkAvailable = network;
+					mHelper.updateNetworkReachability();
+				} else {
+					Log.i("[Platform Helper] [Network Manager 23] Network isn't wifi and wifi only mode is enabled");
+				}
 			}
 
 			@Override
 			public void onLost(Network network) {
 				Log.i("[Platform Helper] [Network Manager 23] A network has been lost");
-				mIsNetworkAvailable = false;
 				if (mNetworkAvailable != null && mNetworkAvailable.equals(network)) {
 					mNetworkAvailable = null;
 				}
@@ -87,71 +91,63 @@ public class NetworkManagerAbove23 implements NetworkManagerInterface {
 		};
 	}
 
-	public void registerNetworkCallbacks(Context context, ConnectivityManager connectivityManager) {
-		connectivityManager.registerNetworkCallback(
+    public void setWifiOnly(boolean isWifiOnlyEnabled) {
+		mWifiOnly = isWifiOnlyEnabled;
+		if (mWifiOnly && mNetworkAvailable != null) {
+			NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(mNetworkAvailable);
+			if (networkInfo != null && networkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
+				Log.i("[Platform Helper] [Network Manager 23] Wifi only mode enabled and current network isn't wifi");
+				mNetworkAvailable = null;
+			}
+		}
+	}
+
+	public void registerNetworkCallbacks(Context context) {
+		mConnectivityManager.registerNetworkCallback(
 			new NetworkRequest.Builder().build(),
 			mNetworkCallback
 		);
 	}
 
-	public void unregisterNetworkCallbacks(Context context, ConnectivityManager connectivityManager) {
-		connectivityManager.unregisterNetworkCallback(mNetworkCallback);
+	public void unregisterNetworkCallbacks(Context context) {
+		mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
 	}
 
-    public NetworkInfo getActiveNetworkInfo(ConnectivityManager connectivityManager) {
+    public NetworkInfo getActiveNetworkInfo() {
         if (mNetworkAvailable != null) {
-			return connectivityManager.getNetworkInfo(mNetworkAvailable);
+			return mConnectivityManager.getNetworkInfo(mNetworkAvailable);
 		}
 
-        Network network = connectivityManager.getActiveNetwork();
+        Network network = mConnectivityManager.getActiveNetwork();
 		if (network != null) {
-			return connectivityManager.getNetworkInfo(network);
+			return mConnectivityManager.getNetworkInfo(network);
 		}
 
 		Log.i("[Platform Helper] [Network Manager 23] getActiveNetwork() returned null, using getActiveNetworkInfo() instead");
-        return connectivityManager.getActiveNetworkInfo();
+        return mConnectivityManager.getActiveNetworkInfo();
     }
 
-    public Network getActiveNetwork(ConnectivityManager connectivityManager) {
+    public Network getActiveNetwork() {
         if (mNetworkAvailable != null) {
 			return mNetworkAvailable;
 		}
 
-        return connectivityManager.getActiveNetwork();
+        return mConnectivityManager.getActiveNetwork();
     }
 
-    public boolean isCurrentlyConnected(Context context, ConnectivityManager connectivityManager, boolean wifiOnly) {
-		/*Network[] networks = connectivityManager.getAllNetworks();
-		boolean connected = false;
-		for (Network network : networks) {
-			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
-			Log.i("[Platform Helper] [Network Manager 23] Found network type: " + networkInfo.getTypeName() + ", isConnectedOrConnecting() = " + networkInfo.isConnectedOrConnecting());
-			if (networkInfo.isConnectedOrConnecting()) {
-				Log.i("[Platform Helper] [Network Manager 23] Network state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
-				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && wifiOnly) {
-					Log.i("[Platform Helper] [Network Manager 23] Wifi only mode enabled, skipping");
-				} else {
-					NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
-					if (capabilities != null) {
-						Log.i("[Platform Helper] [Network Manager 23] Network capabilities are " + capabilities.toString());
-						connected = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) 
-							&& capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED);
-					}
-				}
-			}
-		}*/
-		return mIsNetworkAvailable;
+    public boolean isCurrentlyConnected(Context context) {
+		return mNetworkAvailable != null;
     }
 
-    public boolean hasHttpProxy(Context context, ConnectivityManager connectivityManager) {
+    public boolean hasHttpProxy(Context context) {
         return false;
     }
 
-    public String getProxyHost(Context context, ConnectivityManager connectivityManager) {
+    public String getProxyHost(Context context) {
         return null;
     }
 
-    public int getProxyPort(Context context, ConnectivityManager connectivityManager) {
+    public int getProxyPort(Context context) {
         return 0;
     }
 }
