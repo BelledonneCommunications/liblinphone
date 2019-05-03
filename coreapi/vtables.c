@@ -81,8 +81,9 @@ static void cleanup_dead_vtable_refs(LinphoneCore *lc){
 	bctbx_list_t* iterator; \
 	VTableReference *ref; \
 	lc->vtable_notify_recursion++;\
+	bool_t internal_val_evaluation = (internal_val); \
 	for (iterator=lc->vtable_refs; iterator!=NULL; iterator=iterator->next){\
-		if ((ref=(VTableReference*)iterator->data)->valid && (lc->current_cbs=ref->cbs)->vtable->function_name && (ref->internal == internal_val)) {\
+		if ((ref=(VTableReference*)iterator->data)->valid && (lc->current_cbs=ref->cbs)->vtable->function_name && (ref->internal == internal_val_evaluation)) {\
 			lc->current_cbs->vtable->function_name(__VA_ARGS__);\
 		}\
 	}\
