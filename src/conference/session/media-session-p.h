@@ -174,6 +174,7 @@ private:
 	SalMulticastRole getMulticastRole (SalStreamType type);
 	void joinMulticastGroup (int streamIndex, MediaStream *ms);
 
+	void configureRtpSession(RtpSession *session, LinphoneStreamType type);
 	void setDtlsFingerprint (MSMediaStreamSessions *sessions, const SalStreamDescription *sd, const SalStreamDescription *remote);
 	void setDtlsFingerprintOnAllStreams ();
 	void setupDtlsParams (MediaStream *ms);
