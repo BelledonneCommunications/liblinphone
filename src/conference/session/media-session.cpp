@@ -1829,8 +1829,8 @@ void MediaSessionPrivate::setDtlsFingerprintOnAllStreams () {
 void MediaSessionPrivate::setupDtlsParams (MediaStream *ms) {
 	L_Q();
 	if (getParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS) {
-		MSDtlsSrtpParams dtlsParams;
-		memset(&dtlsParams, 0, sizeof(MSDtlsSrtpParams));
+		MSDtlsSrtpParams dtlsParams = { 0 };
+		
 		/* TODO : search for a certificate with CNAME=sip uri(retrieved from variable me) or default : linphone-dtls-default-identity */
 		/* This will parse the directory to find a matching fingerprint or generate it if not found */
 		/* returned string must be freed */
@@ -1921,10 +1921,17 @@ void MediaSessionPrivate::setZrtpCryptoTypesParameters (MSZrtpParams *params) {
 }
 
 void MediaSessionPrivate::startDtls (MSMediaStreamSessions *sessions, const SalStreamDescription *sd, const SalStreamDescription *remote) {
+	L_Q();
+	
 	if (sal_stream_description_has_dtls(sd)) {
 		if (sd->dtls_role == SalDtlsRoleInvalid)
 			lWarning() << "Unable to start DTLS engine on stream session [" << sessions << "], Dtls role in resulting media description is invalid";
-		else { /* If DTLS is available at both end points */
+		else { 
+			/* Workaround for buggy openssl versions that send DTLS packets bigger than the MTU. We need to increase the recv buf size of the RtpSession.*/
+			int recv_buf_size = lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()),"rtp", "dtls_recv_buf_size", 5000);
+			rtp_session_set_recv_buf_size(sessions->rtp_session, recv_buf_size);
+			
+			/* If DTLS is available at both end points */
 			/* Give the peer certificate fingerprint to dtls context */
 			ms_dtls_srtp_set_peer_fingerprint(sessions->dtls_context, remote->dtls_fingerprint);
 			ms_dtls_srtp_set_role(sessions->dtls_context, (sd->dtls_role == SalDtlsRoleIsClient) ? MSDtlsSrtpRoleIsClient : MSDtlsSrtpRoleIsServer); /* Set the role to client */
@@ -2135,7 +2142,7 @@ void MediaSessionPrivate::applyJitterBufferParams (RtpSession *session, Linphone
 			params.adaptive = linphone_core_video_adaptive_jittcomp_enabled(q->getCore()->getCCore());
 			break;
 		case LinphoneStreamTypeUnknown:
-			lFatal() << "applyJitterBufferParams: should not happen";
+			lError() << "applyJitterBufferParams: should not happen";
 			break;
 	}
 	params.enabled = params.nom_size > 0;
@@ -2464,6 +2471,23 @@ void MediaSessionPrivate::handleStreamEvents (int streamIndex) {
 	}
 }
 
+void MediaSessionPrivate::configureRtpSession(RtpSession *session, LinphoneStreamType streamType){
+	L_Q();
+	
+	rtp_session_enable_network_simulation(session, &q->getCore()->getCCore()->net_conf.netsim_params);
+	applyJitterBufferParams(session, streamType);
+	string userAgent = linphone_core_get_user_agent(q->getCore()->getCCore());
+	rtp_session_set_source_description(session, getMe()->getAddress().asString().c_str(), NULL, NULL, NULL, NULL, userAgent.c_str(), NULL);
+	rtp_session_set_symmetric_rtp(session, linphone_core_symmetric_rtp_enabled(q->getCore()->getCCore()));
+	
+	if (streamType == LinphoneStreamTypeVideo){
+		int videoRecvBufSize = lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "video", "recv_buf_size", 0);
+		if (videoRecvBufSize > 0)
+			rtp_session_set_recv_buf_size(videoStream->ms.sessions.rtp_session, videoRecvBufSize);
+	}
+}
+
+
 void MediaSessionPrivate::initializeAudioStream () {
 	L_Q();
 	
@@ -2483,11 +2507,8 @@ void MediaSessionPrivate::initializeAudioStream () {
 			(multicastRole ==  SalMulticastReceiver) ? 0 /* Disabled for now */ : mediaPorts[mainAudioStreamIndex].rtcpPort);
 		if (multicastRole == SalMulticastReceiver)
 			joinMulticastGroup(mainAudioStreamIndex, &audioStream->ms);
-		rtp_session_enable_network_simulation(audioStream->ms.sessions.rtp_session, &q->getCore()->getCCore()->net_conf.netsim_params);
-		applyJitterBufferParams(audioStream->ms.sessions.rtp_session, LinphoneStreamTypeAudio);
-		string userAgent = linphone_core_get_user_agent(q->getCore()->getCCore());
-		audio_stream_set_rtcp_information(audioStream, getMe()->getAddress().asString().c_str(), userAgent.c_str());
-		rtp_session_set_symmetric_rtp(audioStream->ms.sessions.rtp_session, linphone_core_symmetric_rtp_enabled(q->getCore()->getCCore()));
+		
+		configureRtpSession(audioStream->ms.sessions.rtp_session, LinphoneStreamTypeAudio);
 		setupDtlsParams(&audioStream->ms);
 
 		/* Initialize zrtp even if we didn't explicitely set it, just in case peer offers it */
@@ -2606,9 +2627,8 @@ void MediaSessionPrivate::initializeTextStream () {
 			(multicastRole ==  SalMulticastReceiver) ? 0 /* Disabled for now */ : mediaPorts[mainTextStreamIndex].rtcpPort);
 		if (multicastRole == SalMulticastReceiver)
 			joinMulticastGroup(mainTextStreamIndex, &textStream->ms);
-		rtp_session_enable_network_simulation(textStream->ms.sessions.rtp_session, &q->getCore()->getCCore()->net_conf.netsim_params);
-		applyJitterBufferParams(textStream->ms.sessions.rtp_session, LinphoneStreamTypeText);
-		rtp_session_set_symmetric_rtp(textStream->ms.sessions.rtp_session, linphone_core_symmetric_rtp_enabled(q->getCore()->getCCore()));
+		
+		configureRtpSession(textStream->ms.sessions.rtp_session, LinphoneStreamTypeText);
 		setupDtlsParams(&textStream->ms);
 		media_stream_reclaim_sessions(&textStream->ms, &sessions[mainTextStreamIndex]);
 	} else
@@ -2650,11 +2670,8 @@ void MediaSessionPrivate::initializeVideoStream () {
 			(multicastRole ==  SalMulticastReceiver) ?  0 /* Disabled for now */ : mediaPorts[mainVideoStreamIndex].rtcpPort);
 		if (multicastRole == SalMulticastReceiver)
 			joinMulticastGroup(mainVideoStreamIndex, &videoStream->ms);
-		rtp_session_enable_network_simulation(videoStream->ms.sessions.rtp_session, &q->getCore()->getCCore()->net_conf.netsim_params);
-		applyJitterBufferParams(videoStream->ms.sessions.rtp_session, LinphoneStreamTypeVideo);
-		string userAgent = linphone_core_get_user_agent(q->getCore()->getCCore());
-		video_stream_set_rtcp_information(videoStream, getMe()->getAddress().asString().c_str(), userAgent.c_str());
-		rtp_session_set_symmetric_rtp(videoStream->ms.sessions.rtp_session, linphone_core_symmetric_rtp_enabled(q->getCore()->getCCore()));
+		
+		configureRtpSession(videoStream->ms.sessions.rtp_session, LinphoneStreamTypeVideo);
 		setupDtlsParams(&videoStream->ms);
 		/* Initialize zrtp even if we didn't explicitely set it, just in case peer offers it */
 		if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), LinphoneMediaEncryptionZRTP))
@@ -2673,9 +2690,6 @@ void MediaSessionPrivate::initializeVideoStream () {
 		videoStream,
 		!!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "video", "display_filter_auto_rotate", 0)
 	);
-	int videoRecvBufSize = lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "video", "recv_buf_size", 0);
-	if (videoRecvBufSize > 0)
-		rtp_session_set_recv_buf_size(videoStream->ms.sessions.rtp_session, videoRecvBufSize);
 
 	const char *displayFilter = linphone_core_get_video_display_filter(q->getCore()->getCCore());
 	if (displayFilter)
