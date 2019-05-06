@@ -67,16 +67,10 @@ class CppTranslator(object):
 	
 	def translate_class(self, _class):
 		islistenable = _class.listenerInterface is not None
-		ismonolistenable = (islistenable and _class.singlelistener)
-		ismultilistenable = (islistenable and _class.multilistener)
 		
 		classDict = {
 			'islistenable'        : islistenable,
 			'isnotlistenable'     : not islistenable,
-			'ismonolistenable'    : ismonolistenable,
-			'ismultilistenable'   : ismultilistenable,
-			'isrefcountable'      : _class.refcountable,
-			'isnotrefcountable'   : not _class.refcountable,
 			'isNotListener'       : True,
 			'isListener'          : False,
 			'isVcard'             : (_class.name.to_c() == 'LinphoneVcard'),
@@ -106,15 +100,7 @@ class CppTranslator(object):
 			classDict['cppListenerName'] = _class.listenerInterface.name.translate(self.nameTranslator)
 			for method in _class.listenerInterface.instanceMethods:
 				classDict['wrapperCbs'].append(self._generate_wrapper_callback(_class, method))
-		
-		if ismonolistenable:
-			classDict['cCbsGetter'] = _class.name.to_snake_case(fullName=True) + '_get_callbacks'
-			classDict['parentClassName'] = 'ListenableObject'
-		if ismultilistenable:
-			if ismonolistenable:
-				classDict['parentClassName'] = 'DualListenableObject'
-			else:
-				classDict['parentClassName'] = 'MultiListenableObject'
+			classDict['parentClassName'] = 'MultiListenableObject'
 			classDict['listenerCreator'] = 'linphone_factory_create_' + _class.listenerInterface.name.to_snake_case()[:-len('_listener')] + '_cbs'
 			classDict['callbacksAdder'] = _class.name.to_snake_case(fullName=True)+ '_add_callbacks'
 			classDict['callbacksRemover'] = _class.name.to_snake_case(fullName=True)+ '_remove_callbacks'

@@ -94,28 +94,14 @@ namespace linphone {
 			{{/enums}}
 
 			{{#isNotListener}}
-			{{#isrefcountable}}
 			{{{className}}}(void *ptr, bool takeRef=true);
-			{{/isrefcountable}}
-			{{#isnotrefcountable}}
-			LINPHONECXX_PUBLIC {{{className}}}();
-			LINPHONECXX_PUBLIC {{{className}}}(const {{{className}}} &src);
-			{{{className}}}(const void *src);
-			LINPHONECXX_PUBLIC ~{{{className}}}();
-			LINPHONECXX_PUBLIC const void *c_struct() const {return mPrivPtr;}
-			{{/isnotrefcountable}}
 			LINPHONECXX_PUBLIC {{{privCClassName}}} *cPtr() {return ({{{privCClassName}}} *)mPrivPtr;}
 			{{/isNotListener}}
-			
-			{{#ismonolistenable}}
-			LINPHONECXX_PUBLIC void setListener(const std::shared_ptr<{{{listenerClassName}}}> &listener);
-			{{/ismonolistenable}}
 
-			{{#ismultilistenable}}
-			LINPHONECXX_PUBLIC virtual ~{{{className}}}();
+			{{#islistenable}}
 			LINPHONECXX_PUBLIC void addListener(const std::shared_ptr<{{{listenerClassName}}}> &listener);
 			LINPHONECXX_PUBLIC void removeListener(const std::shared_ptr<{{{listenerClassName}}}> &listener);
-			{{/ismultilistenable}}
+			{{/islistenable}}
 	
 		public:
 			{{#isVcard}}
@@ -158,21 +144,10 @@ namespace linphone {
 			
 			{{/staticMethods}}
 
-		{{#ismultilistenable}}
+		{{#islistenable}}
 		private:
-			static void *createCallbacks(void *userData);
-		{{/ismultilistenable}}
-		
-		
-		{{#ismultilistenable}}
-		private:
-			void *mCallbacks;
-		{{/ismultilistenable}}
-		
-		{{#isnotrefcountable}}
-		private:
-			void *mPrivPtr;
-		{{/isnotrefcountable}}
+			void *createCallbacks() override;
+		{{/islistenable}}
 	};
 	{{/_class}}
 

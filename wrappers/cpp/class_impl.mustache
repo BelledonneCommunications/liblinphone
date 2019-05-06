@@ -32,92 +32,43 @@ using namespace {{{namespace}}};
 
 {{#wrapperCbs}}
 static {{{returnType}}} {{{cbName}}}({{{declArgs}}}) {
-	{{#ismultilistenable}}
 	{{{cListenerName}}} *cbs = {{{currentCallbacksGetter}}}({{{firstArgName}}});
 	if (cbs) {
-		std::list<std::shared_ptr<Listener> > listeners = *(std::list<std::shared_ptr<Listener> > *){{{userDataGetter}}}(cbs);
+		auto &listeners = *static_cast<std::list<std::shared_ptr<Listener> > *>(belle_sip_object_data_get((::belle_sip_object_t *)cbs, MultiListenableObject::sListenerListName));
 		for(auto it=listeners.begin(); it!=listeners.end(); it++) {
 			std::shared_ptr<{{{cppListenerName}}}> listener = std::static_pointer_cast<{{{cppListenerName}}},Listener>(*it);
 			{{{cppMethodCallingLine}}};
 		}
 	}
-	{{/ismultilistenable}}
-	{{#ismonolistenable}}
-	std::shared_ptr<{{{cppListenerName}}}> listener = std::static_pointer_cast<{{{cppListenerName}}},Listener>(ListenableObject::getListenerFromObject((::belle_sip_object_t *){{{firstArgName}}}));
-	{{#hasReturnValue}}return {{/hasReturnValue}}{{{cppMethodCallingLine}}};
-	{{/ismonolistenable}}
 }
 {{/wrapperCbs}}
 
 {{#isNotListener}}
-{{#isrefcountable}}
 {{{namespace}}}::{{{className}}}::{{{className}}}(void *ptr, bool takeRef): {{{parentClassName}}}(ptr, takeRef) {
-	{{#ismultilistenable}}
-	mCallbacks = ({{{cListenerName}}} *)createCallbacks(&getListeners());
-	{{{callbacksAdder}}}(({{{cClassName}}} *)mPrivPtr, ({{{cListenerName}}} *)mCallbacks);
-	{{/ismultilistenable}}
 }
-{{/isrefcountable}}
-
-{{#isnotrefcountable}}
-{{{namespace}}}::{{{className}}}::{{{className}}}() {
-	mPrivPtr = new {{{cClassName}}};
-	memset(mPrivPtr, 0, sizeof({{{cClassName}}}));
-}
-
-{{{namespace}}}::{{{className}}}::{{{className}}}(const {{{className}}} &src) {
-	mPrivPtr = new {{{cClassName}}}(*({{{cClassName}}} *)src.mPrivPtr);
-}
-
-{{{namespace}}}::{{{className}}}::{{{className}}}(const void *src) {
-	mPrivPtr = new {{{cClassName}}}(*({{{cClassName}}} *)src);
-}
-
-{{{namespace}}}::{{{className}}}::~{{{className}}}() {
-	delete ({{{cClassName}}} *)mPrivPtr;
-}
-{{/isnotrefcountable}}
 {{/isNotListener}}
 
-{{#ismonolistenable}}
-void {{{namespace}}}::{{{className}}}::setListener(const std::shared_ptr<{{{listenerClassName}}}> & listener) {
-	{{{parentClassName}}}::setListener(std::static_pointer_cast<Listener>(listener));
-	{{{cListenerName}}} *cbs = {{{cCbsGetter}}}(({{{cClassName}}} *)mPrivPtr);
-	if (listener == nullptr) {
-		{{#wrapperCbs}}
-		{{{callbackSetter}}}(cbs, NULL);
-		{{/wrapperCbs}}
-	} else {
-		{{#wrapperCbs}}
-		{{{callbackSetter}}}(cbs, {{{cbName}}});
-		{{/wrapperCbs}}
-	}
-}
-{{/ismonolistenable}}
-
-{{#ismultilistenable}}
-{{{className}}}::~{{{className}}}() {
-	{{{callbacksRemover}}}(({{{cClassName}}} *)mPrivPtr, ({{{cListenerName}}} *)mCallbacks);
-	belle_sip_object_unref(mCallbacks);
-}
-
+{{#islistenable}}
 void {{{className}}}::addListener(const std::shared_ptr<{{{listenerClassName}}}> &listener) {
-	{{{parentClassName}}}::addListener(std::static_pointer_cast<Listener,{{{listenerClassName}}}>(listener));
+	MultiListenableObject::addListener(std::static_pointer_cast<Listener,{{{listenerClassName}}}>(listener));
 }
 
 void {{{className}}}::removeListener(const std::shared_ptr<{{{listenerClassName}}}> &listener) {
-	{{{parentClassName}}}::removeListener(std::static_pointer_cast<Listener,{{{listenerClassName}}}>(listener));
+	MultiListenableObject::removeListener(std::static_pointer_cast<Listener,{{{listenerClassName}}}>(listener));
 }
 
-void *{{{className}}}::createCallbacks(void *userData) {
+void *{{{className}}}::createCallbacks() {
 	{{{cListenerName}}} *cbs = {{{listenerCreator}}}(linphone_factory_get());
 	{{#wrapperCbs}}
 	{{{callbackSetter}}}(cbs, {{{cbName}}});
 	{{/wrapperCbs}}
-	{{{userDataSetter}}}(cbs, userData);
+	belle_sip_object_data_set((::belle_sip_object_t *)(cbs), MultiListenableObject::sListenerListName, new list<shared_ptr<Listener>>(), (::belle_sip_data_destroy)deleteListenerList);
+	belle_sip_object_data_set((::belle_sip_object_t *)(mPrivPtr), MultiListenableObject::sCbsPtrName, cbs, nullptr);
+	{{{callbacksAdder}}}(static_cast<{{{cClassName}}} *>(mPrivPtr), cbs);
+	belle_sip_object_unref((::belle_sip_object_t *)cbs);
 	return cbs;
 }
-{{/ismultilistenable}}
+{{/islistenable}}
 
 {{#isVcard}}
 std::shared_ptr<belcard::BelCard> &Vcard::getVcard() {
