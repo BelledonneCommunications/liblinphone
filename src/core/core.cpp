@@ -225,6 +225,15 @@ void Core::enterBackground () {
 void Core::enterForeground () {
 	L_D();
 	d->notifyEnteringForeground();
+
+	LinphoneProxyConfig *proxy_config = linphone_core_get_default_proxy_config(getCCore());
+	if (proxy_config) {
+		LinphoneRegistrationState state = linphone_proxy_config_get_state(proxy_config);
+		if (state == LinphoneRegistrationState::LinphoneRegistrationFailed) {
+			lWarning() << "Default proxy config state is failed when entering foreground, refreshing registers";
+			linphone_core_refresh_registers(getCCore());
+		}
+	}
 }
 
 bool Core::isInBackground () {
