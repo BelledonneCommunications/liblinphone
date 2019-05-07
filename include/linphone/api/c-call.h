@@ -740,6 +740,13 @@ LINPHONE_PUBLIC void linphone_call_start_recording(LinphoneCall *call);
 LINPHONE_PUBLIC void linphone_call_stop_recording(LinphoneCall *call);
 
 /**
+ * Returns whether or not the call is currently being recorded
+ * @param call LinphoneCall for which we can to know the recording state
+ * @return true if recording is in progress, false otherwise
+**/
+LINPHONE_PUBLIC bool_t linphone_call_is_recording(LinphoneCall *call);
+
+/**
  * Get a player associated with the call to play a local file and stream it to the remote peer.
  * @param[in] call #LinphoneCall object
  * @return A #LinphonePlayer object

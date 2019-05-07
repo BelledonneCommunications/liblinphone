@@ -61,6 +61,7 @@ public:
 	void sendVfuRequest ();
 	void startRecording ();
 	void stopRecording ();
+	bool isRecording ();
 	LinphoneStatus takePreviewSnapshot (const std::string &file);
 	LinphoneStatus takeVideoSnapshot (const std::string &file);
 	LinphoneStatus terminate (const LinphoneErrorInfo *ei = nullptr);

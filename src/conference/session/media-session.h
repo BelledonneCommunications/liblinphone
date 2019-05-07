@@ -61,6 +61,7 @@ public:
 	int startInvite (const Address *destination, const std::string &subject = "", const Content *content = nullptr) override;
 	void startRecording ();
 	void stopRecording ();
+	bool isRecording ();
 	void terminateBecauseOfLostMedia ();
 	LinphoneStatus update (const MediaSessionParams *msp, const std::string &subject = "");
 

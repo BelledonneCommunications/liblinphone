@@ -610,6 +610,11 @@ void Call::stopRecording () {
 	static_pointer_cast<MediaSession>(d->getActiveSession())->stopRecording();
 }
 
+bool Call::isRecording () {
+	L_D();
+	return static_pointer_cast<MediaSession>(d->getActiveSession())->isRecording();
+}
+
 LinphoneStatus Call::takePreviewSnapshot (const string &file) {
 	L_D();
 	return static_pointer_cast<MediaSession>(d->getActiveSession())->takePreviewSnapshot(file);

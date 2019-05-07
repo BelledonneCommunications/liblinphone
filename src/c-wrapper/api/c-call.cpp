@@ -573,6 +573,10 @@ void linphone_call_stop_recording (LinphoneCall *call) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(call)->stopRecording();
 }
 
+bool_t linphone_call_is_recording (LinphoneCall *call) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->isRecording();
+}
+
 LinphonePlayer *linphone_call_get_player (LinphoneCall *call) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getPlayer();
 }

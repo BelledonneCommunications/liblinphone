@@ -4476,6 +4476,11 @@ void MediaSession::stopRecording () {
 	d->recordActive = false;
 }
 
+bool MediaSession::isRecording () {
+	L_D();
+	return d->recordActive;
+}
+
 void MediaSession::terminateBecauseOfLostMedia () {
 	L_D();
 	d->nonOpError = true;
