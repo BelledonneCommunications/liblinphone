@@ -298,27 +298,34 @@ class Enum(DocumentableObject):
 	def __init__(self, name):
 		DocumentableObject.__init__(self, name)
 		self.enumerators = []
-	
+
 	def add_enumerator(self, enumerator):
 		self.enumerators.append(enumerator)
 		enumerator.parent = self
-	
+
 	def set_from_c(self, cEnum, namespace=None):
 		Object.set_from_c(self, cEnum, namespace=namespace)
-		
+
 		if 'associatedTypedef' in dir(cEnum):
 			name = cEnum.associatedTypedef.name
 		else:
 			name = cEnum.name
-		
+
 		self.name = metaname.EnumName()
 		self.name.prev = None if namespace is None else namespace.name
 		self.name.set_from_c(name)
-		
+
 		for cEnumValue in cEnum.values:
 			aEnumValue = Enumerator()
 			aEnumValue.set_from_c(cEnumValue, namespace=self)
 			self.add_enumerator(aEnumValue)
+
+	@property
+	def isUnsigned(self):
+		for enumerator in self.enumerators:
+			if isinstance(enumerator.value, int) and enumerator.value < 0:
+				return False
+		return True
 
 
 class Argument(DocumentableObject):
@@ -1263,6 +1270,113 @@ class JavaLangTranslator(CLikeLangTranslator):
 			methodName=method.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace)),
 			arguments=', '.join([arg.translate(self, hideArgName=hideArgNames, namespace=namespace) for arg in method.args]) if not hideArguments else ''
 		)
+
+class SwiftLangTranslator(CLikeLangTranslator):
+	def __init__(self):
+		self.nameTranslator = metaname.Translator.get('Swift')
+		self.nilToken = 'null'
+		self.falseConstantToken = 'false'
+		self.trueConstantToken = 'true'
+
+	def translate_base_type(self, _type, dllImport=True, namespace=None):
+		if _type.name == 'void':
+				if _type.isref:
+					return 'UnsafeMutableRawPointer'
+				return 'void'
+		elif _type.name == 'status':
+			if dllImport:
+				return 'int'
+			else:
+				return 'void'
+		elif _type.name == 'boolean':
+			if dllImport:
+				res = 'char'
+			else:
+				res = 'Bool'
+		elif _type.name == 'integer':
+
+			if _type.isUnsigned:
+				if _type.size is not None and _type.isref:
+					res = 'UnsafePointer<UInt8>'
+				else:
+					res = 'UInt'
+			else:
+				res = 'Int'
+		elif _type.name == 'string':
+			if dllImport:
+				if type(_type.parent) is Argument:
+					return 'String'
+				else:
+					res = 'IntPtr' # Return as IntPtr and get string with Marshal.PtrToStringAnsi()
+			else:
+				return 'String'
+		elif _type.name == 'character':
+			if _type.isUnsigned:
+				res = 'byte'
+			else:
+				res = 'CChar'
+		elif _type.name == 'time':
+			res = 'Int' #TODO check
+		elif _type.name == 'size':
+			res = 'Int' #TODO check
+		elif _type.name == 'floatant':
+			if _type.size is not None and _type.isref:
+				return 'UnsafeMutablePointer<Float>'
+			else:
+				return 'Float'
+
+		elif _type.name == 'string_array':
+			if dllImport or type(_type.parent) is Argument:
+				return 'IntPtr'
+			else:
+				return '[String]'
+		else:
+			raise TranslationError('\'{0}\' is not a base abstract type'.format(_type.name))
+
+		return res
+
+	def translate_enum_type(self, _type, dllImport=True, namespace=None):
+		if dllImport and type(_type.parent) is Argument:
+			return 'int'
+		else:
+			return _type.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
+
+	def translate_class_type(self, _type, dllImport=True, namespace=None):
+		return "IntPtr" if dllImport else _type.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
+
+	def translate_list_type(self, _type, dllImport=True, namespace=None):
+		if dllImport:
+			return 'IntPtr'
+		else:
+			if type(_type.containedTypeDesc) is BaseType:
+				if _type.containedTypeDesc.name == 'string':
+					return '[String]'
+				else:
+					raise TranslationError('translation of bctbx_list_t of basic C types is not supported')
+			elif type(_type.containedTypeDesc) is ClassType:
+				ptrType = _type.containedTypeDesc.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
+				return '[' + ptrType + ']'
+			else:
+				if _type.containedTypeDesc:
+					raise TranslationError('translation of bctbx_list_t of enums')
+				else:
+					raise TranslationError('translation of bctbx_list_t of unknow type !')
+
+	def translate_argument(self, arg, dllImport=True, namespace=None):
+		return '{0} {1}'.format(
+			arg.type.translate(self, dllImport=dllImport, namespace=None),
+			arg.name.translate(self.nameTranslator)
+		)
+
+	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideReturnType=False, stripDeclarators=False, namespace=None):
+		return '{static}{override}{returnType}{name}({args})'.format(
+			static     = 'static ' if method.type == Method.Type.Class and not stripDeclarators else '',
+			override   = 'override ' if method.name.translate(self.nameTranslator) == 'ToString' and not stripDeclarators else '',
+			returnType = (method.returnType.translate(self, dllImport=False, namespace=namespace) + ' ') if not hideReturnType else '',
+			name       = method.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace)),
+			args       = ', '.join([arg.translate(self, dllImport=False, namespace=namespace) for arg in method.args]) if not hideArguments else ''
+		)
+
 
 
 class CSharpLangTranslator(CLikeLangTranslator):
