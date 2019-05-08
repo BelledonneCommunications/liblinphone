@@ -67,8 +67,8 @@ void LocalConferenceListEventHandler::notifyResponseCb (const LinphoneEvent *ev)
 	if (linphone_event_get_reason(ev) != LinphoneReasonNone)
 		return;
 
-	for (const auto &handler : listHandler->handlers) {
-		linphone_event_cbs_set_user_data(cbs, handler->getPrivate());
+	for (const auto &p : listHandler->handlers) {
+		linphone_event_cbs_set_user_data(cbs, p.second->getPrivate());
 		LocalConferenceEventHandlerPrivate::notifyResponseCb(ev);
 	}
 	linphone_event_cbs_set_user_data(cbs, nullptr);
@@ -212,35 +212,37 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 
 void LocalConferenceListEventHandler::addHandler (LocalConferenceEventHandler *handler) {
 	if (!handler) {
-		lWarning() << "Trying to insert null handler in the local conference handler list";
+		lError() << "Trying to insert null handler in the local conference handler list";
 		return;
 	}
 
-	ConferenceId confId(handler->getConferenceId());
-	if(findHandler(confId)) {
-		lWarning() << "Trying to insert an already present handler in the local conference handler list: " << confId;
+	if(findHandler(handler->getConferenceId())) {
+		lError() << "Trying to insert an already present handler in the local conference handler list: " << handler->getConferenceId();
 		return;
 	}
 
-	handlers.push_back(handler);
+	handlers[handler->getConferenceId()] = handler;
 }
 
 void LocalConferenceListEventHandler::removeHandler (LocalConferenceEventHandler *handler) {
-	if (handler)
-		handlers.remove(handler);
+	if (handler){
+		auto it = handlers.find(handler->getConferenceId());
+		if (it != handlers.end()){
+			handlers.erase(it);
+			lInfo() << "Handler removed.";
+		}else{
+			lError() << "Handler not found in LocalConferenceListEventHandler.";
+		}
+	}else{
+		lError() << "Handler is null !";
+	}
 }
 
 LocalConferenceEventHandler *LocalConferenceListEventHandler::findHandler (const ConferenceId &conferenceId) const {
-	for (const auto &handler : handlers) {
-		if (handler->getConferenceId() == conferenceId)
-			return handler;
-	}
-
+	auto it = handlers.find(conferenceId);
+	if (it != handlers.end()) return (*it).second;
 	return nullptr;
 }
 
-const list<LocalConferenceEventHandler *> &LocalConferenceListEventHandler::getHandlers () const {
-	return handlers;
-}
 
 LINPHONE_END_NAMESPACE

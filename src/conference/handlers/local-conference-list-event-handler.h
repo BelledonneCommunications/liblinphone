@@ -20,7 +20,7 @@
 #ifndef _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
 #define _L_LOCAL_CONFERENCE_LIST_EVENT_HANDLER_H_
 
-#include <list>
+#include <unordered_map>
 
 #include "conference/conference-id.h"
 #include "core/core-accessor.h"
@@ -40,12 +40,11 @@ public:
 	void addHandler (LocalConferenceEventHandler *handler);
 	void removeHandler (LocalConferenceEventHandler *handler);
 	LocalConferenceEventHandler *findHandler (const ConferenceId &conferenceId) const;
-	const std::list<LocalConferenceEventHandler *> &getHandlers () const;
 
 	static void notifyResponseCb (const LinphoneEvent *ev);
 
 private:
-	std::list<LocalConferenceEventHandler *> handlers;
+	std::unordered_map<ConferenceId, LocalConferenceEventHandler *> handlers;
 
 };
 

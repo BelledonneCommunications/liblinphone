@@ -572,7 +572,7 @@ void LocalConferenceEventHandler::setConferenceId (const ConferenceId &conferenc
 	d->conferenceId = conferenceId;
 }
 
-ConferenceId LocalConferenceEventHandler::getConferenceId () const {
+const ConferenceId &LocalConferenceEventHandler::getConferenceId () const {
 	L_D();
 	return d->conferenceId;
 }
