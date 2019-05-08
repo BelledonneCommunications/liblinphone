@@ -54,7 +54,7 @@ public:
 
 	void setLastNotify (unsigned int lastNotify);
 	void setConferenceId (const ConferenceId &conferenceId);
-	ConferenceId getConferenceId () const;
+	const ConferenceId &getConferenceId () const;
 
 	std::string getNotifyForId (int notifyId, bool oneToOne = false);
 

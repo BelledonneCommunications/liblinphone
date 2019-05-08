@@ -68,7 +68,7 @@ void RemoteConferenceListEventHandler::subscribe () {
 		lev = nullptr;
 	}
 
-	if (handlers.size() == 0)
+	if (handlers.empty())
 		return;
 
 	Content content;
@@ -76,7 +76,8 @@ void RemoteConferenceListEventHandler::subscribe () {
 
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
 	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
-	for (const auto &handler : handlers) {
+	for (const auto &p : handlers) {
+		RemoteConferenceEventHandler *handler = p.second;
 		const ConferenceId &conferenceId = handler->getConferenceId();
 		shared_ptr<AbstractChatRoom> cr = getCore()->findChatRoom(conferenceId);
 		if (!cr) {
@@ -203,16 +204,11 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 // -----------------------------------------------------------------------------
 
 RemoteConferenceEventHandler *RemoteConferenceListEventHandler::findHandler (const ConferenceId &conferenceId) const {
-	for (const auto &handler : handlers) {
-		if (handler->getConferenceId() == conferenceId)
-			return handler;
+	const auto it = handlers.find(conferenceId);
+	if (it != handlers.end()){
+		return (*it).second;
 	}
-
 	return nullptr;
-}
-
-const list<RemoteConferenceEventHandler *> &RemoteConferenceListEventHandler::getHandlers () const {
-	return handlers;
 }
 
 void RemoteConferenceListEventHandler::addHandler (RemoteConferenceEventHandler *handler) {
@@ -220,19 +216,34 @@ void RemoteConferenceListEventHandler::addHandler (RemoteConferenceEventHandler 
 		lWarning() << "Trying to insert null handler in the remote conference handler list";
 		return;
 	}
-
-	ConferenceId confId(handler->getConferenceId());
-	if(findHandler(confId)) {
-		lWarning() << "Trying to insert an already present handler in the remote conference handler list: " << confId;
+	if (!handler->getConferenceId().isValid()){
+		lError() << "RemoteConferenceListEventHandler::addHandler invalid handler.";
 		return;
 	}
-
-	handlers.push_back(handler);
+	
+	if(findHandler(handler->getConferenceId())) {
+		lWarning() << "Trying to insert an already present handler in the remote conference handler list: " << handler->getConferenceId();
+		return;
+	}
+	handlers[handler->getConferenceId()] = handler;
 }
 
 void RemoteConferenceListEventHandler::removeHandler (RemoteConferenceEventHandler *handler) {
-	if (handler)
-		handlers.remove(handler);
+	if (!handler->getConferenceId().isValid()){
+		lError() << "RemoteConferenceListEventHandler::removeHandler() invalid handler.";
+		return;
+	}
+	if (handler){
+		auto it = handlers.find(handler->getConferenceId());
+		if (it != handlers.end()){
+			handlers.erase(it);
+			lInfo() << "Handler removed.";
+		}else{
+			lError() << "Handler not found in RemoteConferenceListEventHandler.";
+		}
+	}else{
+		lError() << "Handler is null !";
+	}
 }
 
 

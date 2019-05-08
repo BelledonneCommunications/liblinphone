@@ -83,7 +83,9 @@ IdentityAddress &IdentityAddress::operator= (const IdentityAddress &other) {
 }
 
 bool IdentityAddress::operator== (const IdentityAddress &other) const {
-	return asString() == other.asString();
+	L_D();
+	/* Scheme is not used for comparison. sip:toto@sip.linphone.org and sips:toto@sip.linphone.org refer to the same person. */
+	return d->username == other.getUsername() && d->domain == other.getDomain() && d->gruu == other.getGruu();
 }
 
 bool IdentityAddress::operator!= (const IdentityAddress &other) const {
@@ -91,12 +93,21 @@ bool IdentityAddress::operator!= (const IdentityAddress &other) const {
 }
 
 bool IdentityAddress::operator< (const IdentityAddress &other) const {
-	return asString() < other.asString();
+	L_D();
+	
+	int diff = d->username.compare(other.getUsername());
+	if (diff == 0){
+		diff = d->domain.compare(other.getDomain());
+		if (diff == 0){
+			diff = d->gruu.compare(other.getGruu());
+		}
+	}
+	return diff < 0;
 }
 
 bool IdentityAddress::isValid () const {
-	Address tmpAddress(*this);
-	return tmpAddress.isValid();
+	L_D();
+	return !d->scheme.empty() && !d->domain.empty();
 }
 
 const string &IdentityAddress::getScheme () const {
@@ -149,8 +160,17 @@ IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
 }
 
 string IdentityAddress::asString () const {
-	Address tmpAddress(*this);
-	return tmpAddress.asStringUriOnly();
+	L_D();
+	ostringstream res;
+	res << d->scheme << ":";
+	if (!d->username.empty()){
+		res << d->username << "@";
+	}
+	res << d->domain;
+	if (!d->gruu.empty()){
+		res << ";gr=" << d->gruu;
+	}
+	return res.str();
 }
 
 LINPHONE_END_NAMESPACE

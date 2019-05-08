@@ -20,8 +20,8 @@
 #ifndef _L_REMOTE_CONFERENCE_LIST_EVENT_HANDLER_H_
 #define _L_REMOTE_CONFERENCE_LIST_EVENT_HANDLER_H_
 
-#include <list>
 #include <map>
+#include <unordered_map>
 
 #include "linphone/types.h"
 #include "linphone/utils/general.h"
@@ -50,10 +50,9 @@ public:
 	void removeHandler (RemoteConferenceEventHandler *handler);
 	void clearHandlers ();
 	RemoteConferenceEventHandler *findHandler (const ConferenceId &conferenceId) const;
-	const std::list<RemoteConferenceEventHandler *> &getHandlers () const;
 
 private:
-	std::list<RemoteConferenceEventHandler *> handlers;
+	std::unordered_map<ConferenceId, RemoteConferenceEventHandler *> handlers;
 	LinphoneEvent *lev = nullptr;
 
 	std::map<std::string, IdentityAddress> parseRlmi (const std::string &xmlBody) const;
