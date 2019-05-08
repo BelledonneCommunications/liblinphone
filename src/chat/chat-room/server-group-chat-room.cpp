@@ -207,7 +207,16 @@ void ServerGroupChatRoomPrivate::requestDeletion(){
 	for (auto participant : q->getParticipants()){
 		unSubscribeRegistrationForParticipant(participant->getAddress());
 	}
+	if (registrationSubscriptions.size() > 0){
+		lError() << q << " still " << registrationSubscriptions.size() << " registration subscriptions pending while deletion is requested.";
+	}
 	chatRoomListener->onChatRoomDeleteRequested(q->getSharedFromThis());
+	/*
+	 * The LinphoneChatRoom (C object) is also built when the ServerGroupChatRoom is created, which is unnecessary here, but
+	 * this is consistent with other kind of chatrooms. Consequence is that we have to free it in order to remove the last reference
+	 * to the C++ object. */
+	LinphoneChatRoom * cChatRoom = L_GET_C_BACK_PTR(q);
+	if (cChatRoom) linphone_chat_room_unref(cChatRoom);
 }
 
 /*
@@ -764,6 +773,7 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	IdentityAddress confAddr(qConference->getPrivate()->conferenceAddress);
 	conferenceId = ConferenceId(confAddr, confAddr);
 	qConference->getPrivate()->eventHandler->setConferenceId(conferenceId);
+	q->getCore()->getPrivate()->localListEventHandler->addHandler(qConference->getPrivate()->eventHandler.get());
 	lInfo() << q << " created";
 	// Let the SIP stack set the domain and the port
 	shared_ptr<Participant> me = q->getMe();
@@ -1099,7 +1109,6 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 	: ChatRoom(*new ServerGroupChatRoomPrivate, core, ConferenceId(), ChatRoomParams::getDefaults(core)),
 LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(core->getCCore()))), nullptr) {
 	L_D();
-	L_D_T(LocalConference, dConference);
 
 	LocalConference::setSubject(op->getSubject());
 	const char *oneToOneChatRoomStr = sal_custom_header_find(op->getRecvCustomHeaders(), "One-To-One-Chat-Room");
@@ -1113,7 +1122,6 @@ LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_
 
 	shared_ptr<CallSession> session = getMe()->getPrivate()->createSession(*this, nullptr, false, d);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
-	getCore()->getPrivate()->localListEventHandler->addHandler(dConference->eventHandler.get());
 }
 
 ServerGroupChatRoom::ServerGroupChatRoom (
@@ -1139,12 +1147,14 @@ LocalConference(getCore(), peerAddress, nullptr) {
 
 ServerGroupChatRoom::~ServerGroupChatRoom () {
 	L_D_T(LocalConference, dConference);
-
-	try {
-		if (getCore()->getPrivate()->localListEventHandler)
-			getCore()->getPrivate()->localListEventHandler->removeHandler(dConference->eventHandler.get());
-	} catch (const bad_weak_ptr &) {
-		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
+	lInfo() << this << " destroyed.";
+	if (dConference->eventHandler->getConferenceId().isValid()){
+		try {
+			if (getCore()->getPrivate()->localListEventHandler)
+				getCore()->getPrivate()->localListEventHandler->removeHandler(dConference->eventHandler.get());
+		} catch (const bad_weak_ptr &) {
+			// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
+		}
 	}
 };
 
