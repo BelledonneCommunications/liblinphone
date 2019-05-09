@@ -99,7 +99,8 @@ class CppTranslator(object):
 			classDict['cListenerName'] = _class.listenerInterface.name.to_c()
 			classDict['cppListenerName'] = _class.listenerInterface.name.translate(self.nameTranslator)
 			for method in _class.listenerInterface.instanceMethods:
-				classDict['wrapperCbs'].append(self._generate_wrapper_callback(_class, method))
+				if method.returnType.cDecl == 'void':
+					classDict['wrapperCbs'].append(self._generate_wrapper_callback(_class, method))
 			classDict['parentClassName'] = 'MultiListenableObject'
 			classDict['listenerCreator'] = 'linphone_factory_create_' + _class.listenerInterface.name.to_snake_case()[:-len('_listener')] + '_cbs'
 			classDict['callbacksAdder'] = _class.name.to_snake_case(fullName=True)+ '_add_callbacks'
@@ -143,8 +144,6 @@ class CppTranslator(object):
 		wrapperCbDict['declArgs'] = params['params']
 		wrapperCbDict['firstArgName'] = method.args[0].name.to_c()
 		wrapperCbDict['returnType'] = params['returnType']
-		wrapperCbDict['hasReturnValue'] = (params['returnType'] != 'void')
-		wrapperCbDict['hasNotReturnValue'] = not wrapperCbDict['hasReturnValue']
 		wrapperCbDict['callbackSetter'] = listenedClass.name.to_snake_case(fullName=True) + '_cbs_set_' + method.name.to_snake_case()[3:]
 		wrapperCbDict['cppMethodCallingLine'] = 'listener->{methodName}({wrappedArgs})'.format(
 			methodName=method.name.to_camel_case(lower=True),
