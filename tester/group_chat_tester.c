@@ -5404,6 +5404,7 @@ static void subscribe_test_after_set_chat_database_path(void) {
 
 	linphone_core_set_network_reachable(pauline->lc, FALSE);
 	const char *path = "";
+	// set_chat_database_path() will cause a reload of the database, with re-creation of chatrooms.
 	linphone_core_set_chat_database_path(pauline->lc, path);
 	linphone_chat_room_unref(paulineCr);
 	paulineCr = linphone_core_find_chat_room(pauline->lc, confAddr, paulineAddress);
