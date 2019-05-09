@@ -108,7 +108,7 @@ LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneCh
 }
 
 void text_message_base_with_text(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, const char* text, const char* content_type) {
-	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc,/*linphone_address_new("sip:jehan-iphone@sip.linphone.org")*/marie->identity);
+	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marie->identity);
 	
 	LinphoneChatMessage* msg = linphone_chat_room_create_message(room, text);
 	linphone_chat_message_set_content_type(msg, content_type);
@@ -127,10 +127,14 @@ void text_message_base_with_text(LinphoneCoreManager* marie, LinphoneCoreManager
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), belle_sip_header_content_type_get_subtype(belle_sip_content_type));
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), text);
 		ms_free(content_type_header);
-		LinphoneChatRoom *marieCr = linphone_core_get_chat_room(marie->lc, pauline->identity);
-		if (!marieCr) {
-			//next try in case of private message
+		LinphoneChatRoom *marieCr;
+		
+		const LinphoneAddress *msg_from = linphone_chat_message_get_from_address(marie->stat.last_received_chat_message);
+		/* We have special case for anonymous message, that of course won't come in the chatroom to pauline.*/
+		if (strcasecmp(linphone_address_get_username(msg_from), "anonymous") == 0){
 			marieCr = linphone_chat_message_get_chat_room(marie->stat.last_received_chat_message);
+		}else{
+			marieCr = linphone_core_get_chat_room(marie->lc, pauline->identity);
 		}
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int," %i");
 		if (linphone_chat_room_get_history_size(marieCr) > 0) {
