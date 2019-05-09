@@ -348,6 +348,7 @@ LinphoneAuthInfo *linphone_auth_info_new_from_config_file(LpConfig * config, int
 	ret = linphone_auth_info_new(username, userid, passwd, ha1, realm, domain);
 	linphone_auth_info_set_tls_cert_path(ret, tls_cert_path);
 	linphone_auth_info_set_tls_key_path(ret, tls_key_path);
+	linphone_auth_info_set_algorithm(ret, lp_config_get_string(config, key, "algorithm", "MD5"));
 	return ret;
 }
 
