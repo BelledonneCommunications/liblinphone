@@ -62,6 +62,7 @@ private:
 	CallSessionListener *callSessionListener = this;
 	ChatRoomListener *chatRoomListener = this;
 	bool deletionOnTerminationEnabled = false;
+	bool listHandlerUsed = false;
 	BackgroundTask bgTask { "Subscribe/notify of full state conference" };
 	L_DECLARE_PUBLIC(ClientGroupChatRoom);
 };
