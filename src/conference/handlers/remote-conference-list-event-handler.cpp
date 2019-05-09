@@ -235,7 +235,7 @@ void RemoteConferenceListEventHandler::removeHandler (RemoteConferenceEventHandl
 	}
 	if (handler){
 		auto it = handlers.find(handler->getConferenceId());
-		if (it != handlers.end()){
+		if (it != handlers.end() && handler == (*it).second){
 			handlers.erase(it);
 			lInfo() << "Handler removed.";
 		}else{

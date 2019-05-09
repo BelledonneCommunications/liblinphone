@@ -304,6 +304,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 ) : ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ClientGroupChatRoom::Capabilities::Conference), core, conferenceId, params),
 RemoteConference(core, me->getAddress(), nullptr) {
 	L_D_T(RemoteConference, dConference);
+	L_D();
 
 	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
 	dConference->focus = make_shared<Participant>(this, peerAddress);
@@ -322,8 +323,10 @@ RemoteConference(core, me->getAddress(), nullptr) {
 	dConference->eventHandler->setLastNotify(forceFullState ? 0 : lastNotifyId);
 	lInfo() << "Last notify set to [" << dConference->eventHandler->getLastNotify() << "] for conference [" << dConference << "]";
 
-	if (!hasBeenLeft)
+	if (!hasBeenLeft){
 		getCore()->getPrivate()->remoteListEventHandler->addHandler(dConference->eventHandler.get());
+		d->listHandlerUsed = true;
+	}
 }
 
 ClientGroupChatRoom::~ClientGroupChatRoom () {
@@ -331,8 +334,9 @@ ClientGroupChatRoom::~ClientGroupChatRoom () {
 	L_D_T(RemoteConference, dConference);
 
 	try {
-		if (getCore()->getPrivate()->remoteListEventHandler)
+		if (getCore()->getPrivate()->remoteListEventHandler && d->listHandlerUsed){
 			getCore()->getPrivate()->remoteListEventHandler->removeHandler(dConference->eventHandler.get());
+		}
 	} catch (const bad_weak_ptr &) {
 		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
 	}
@@ -641,8 +645,8 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 
 	dConference->eventHandler->unsubscribe();
 	dConference->eventHandler->resetLastNotify();
-	//remove event handler from list event handler if present
-	if (getCore()->getPrivate()->remoteListEventHandler)
+	//remove event handler from list event handler if used
+	if (d->listHandlerUsed && getCore()->getPrivate()->remoteListEventHandler)
 		getCore()->getPrivate()->remoteListEventHandler->removeHandler(dConference->eventHandler.get());
 	
 	d->setState(ChatRoom::State::Terminated);
