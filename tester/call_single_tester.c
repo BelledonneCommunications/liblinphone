@@ -944,28 +944,60 @@ static void call_with_dns_time_out(void) {
 }
 
 static void early_cancelled_call(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new2( "empty_rc",FALSE);
+	LinphoneCoreManager* marie;
+	LinphoneCoreManager* pauline;
+	LinphoneSipTransports pauline_transports;
+	LinphoneAddress* pauline_dest = linphone_address_new("sip:127.0.0.1;transport=tcp");
+	LinphoneCall* out_call;
+	
+	marie = linphone_core_manager_new( "marie_rc");
+	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
-	LinphoneCall* out_call = linphone_core_invite_address(pauline->lc,marie->identity);
+	linphone_core_set_default_proxy_config(marie->lc,NULL);
+	linphone_core_set_default_proxy_config(pauline->lc, NULL);
 
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallOutgoingInit,1));
+	linphone_core_get_sip_transports_used(pauline->lc,&pauline_transports);
+	linphone_address_set_port(pauline_dest,pauline_transports.tcp_port);
+		
+	out_call = linphone_core_invite_address(marie->lc,pauline_dest);
+	linphone_address_unref(pauline_dest);
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallOutgoingInit,1));
 	const char *callID = linphone_call_log_get_call_id(linphone_call_get_call_log(out_call));
 	BC_ASSERT_PTR_NOT_NULL(callID);
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallOutgoingProgress,1));
+	/* 
+	 * Wait for pauline to receive the call. Since the call is almost immediately notified, pauline hasn't received
+	 * yet the provisionnal response.
+	 * In the following loop, marie is not scheduled after the call is received by pauline.
+	 */
+	int i = 0;
+	while(i < 300){
+		linphone_core_iterate(pauline->lc);
+		if (pauline->stat.number_of_LinphoneCallIncomingReceived == 0){
+			linphone_core_iterate(marie->lc);
+		}else break;
+		ms_usleep(20000);
+		i++;
+	}
+	
+	BC_ASSERT_TRUE(pauline->stat.number_of_LinphoneCallIncomingReceived == 1);
+	/* This asserts that the 180 is not received: */
+	BC_ASSERT_TRUE(linphone_call_get_state(out_call) == LinphoneCallOutgoingProgress);
+	/* 
+	 * Immediately terminate the call. Since no response is received, no CANCEL can be sent.
+	 * It will ring at Pauline's side.
+	 * We want to verify that the CANCEL is automatically sent when the provisionnal response from Marie is received.
+	 */
 	linphone_call_terminate(out_call);
 
-	/*since everything is executed in a row, no response can be received from the server, thus the CANCEL cannot be sent.
-	 It will ring at Marie's side.*/
-
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallEnd,1));
-
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallEnd,1, int, "%d");
-
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallIncomingReceived,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1));
+	
 	/* now the CANCEL should have been sent and the the call at marie's side should terminate*/
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1));
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1));
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
