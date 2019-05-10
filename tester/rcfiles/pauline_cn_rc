@@ -13,7 +13,7 @@ realm=sip.example.org
 
 
 [proxy_0]
-reg_proxy=<sip:altname.linphone.org:5062;transport=tls>
+reg_proxy=<sip:cn.example.org:5062;transport=tls>
 reg_identity=sip:pauline@sip.example.org
 reg_expires=3600
 reg_sendregister=1

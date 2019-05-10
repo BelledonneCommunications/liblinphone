@@ -129,7 +129,7 @@ set(RC_FILES
 	rcfiles/marie_zrtp_ecdh448_rc
 	rcfiles/michelle_rc_udp
 	rcfiles/multi_account_rc
-	rcfiles/pauline_alt_rc
+	rcfiles/pauline_cn_rc
 	rcfiles/pauline_as_friend_rc
 	rcfiles/pauline_h264_rc
 	rcfiles/pauline_lime_x3dh_rc

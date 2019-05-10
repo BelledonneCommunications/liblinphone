@@ -994,7 +994,7 @@ static void tls_certificate_subject_check(void){
 		LinphoneCoreManager* lcm;
 		LinphoneCore *lc;
 		char *rootcapath = bc_tester_res("certificates/cn/cafile.pem");
-		lcm=linphone_core_manager_new2("pauline_alt_rc",FALSE);
+		lcm=linphone_core_manager_new2("pauline_rc",FALSE);
 		lc=lcm->lc;
 		linphone_core_set_root_ca(lc, rootcapath);
 		/*let's search for a subject that is not in the certificate, it should fail*/
@@ -1009,7 +1009,7 @@ static void tls_certificate_subject_check(void){
 		linphone_core_set_network_reachable(lc,FALSE);
 		
 		/*let's search for a subject (in subjectAltNames and CN) that exist in the certificate, it should pass*/
-		lp_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "Jehan Monnier");
+		lp_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "See altname for DNS name");
 		linphone_core_set_network_reachable(lc,TRUE);
 		BC_ASSERT_TRUE(wait_for(lc,lc,&lcm->stat.number_of_LinphoneRegistrationOk,2));
 		
@@ -1092,13 +1092,13 @@ static void tls_with_non_tls_server(void){
 	}
 }
 
-static void tls_alt_name_register(void){
+static void tls_common_name_register(void){
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager* lcm;
 		LinphoneCore *lc;
 		char *rootcapath = bc_tester_res("certificates/cn/cafile.pem");
 
-		lcm=linphone_core_manager_new2("pauline_alt_rc",FALSE);
+		lcm=linphone_core_manager_new2("pauline_cn_rc",FALSE);
 		lc=lcm->lc;
 		linphone_core_set_root_ca(lc,rootcapath);
 		linphone_core_refresh_registers(lc);
@@ -1454,7 +1454,7 @@ test_t register_tests[] = {
 	TEST_NO_TAG("Register with custom headers", register_with_custom_headers),
 	TEST_NO_TAG("TCP register compatibility mode", simple_tcp_register_compatibility_mode),
 	TEST_NO_TAG("TLS register", simple_tls_register),
-	TEST_NO_TAG("TLS register with alt. name certificate", tls_alt_name_register),
+	TEST_NO_TAG("TLS register with Common Name in the Subject field", tls_common_name_register),
 	TEST_NO_TAG("TLS register with wildcard certificate", tls_wildcard_register),
 	TEST_NO_TAG("TLS certificate not verified",tls_certificate_failure),
 	TEST_NO_TAG("TLS certificate subjects check",tls_certificate_subject_check),
