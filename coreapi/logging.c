@@ -253,7 +253,7 @@ unsigned int linphone_logging_service_get_log_level_mask(const LinphoneLoggingSe
 }
 
 void linphone_logging_service_set_log_file(const LinphoneLoggingService *service, const char *dir, const char *filename, size_t max_size) {
-	bctbx_log_handler_t *log_handler = bctbx_create_file_log_handler((uint64_t)max_size, dir, filename, NULL);
+	bctbx_log_handler_t *log_handler = bctbx_create_file_log_handler((uint64_t)max_size, dir, filename);
 	bctbx_add_log_handler(log_handler);
 }
 
