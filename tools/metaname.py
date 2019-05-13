@@ -332,7 +332,7 @@ class SwiftTranslator(JavaTranslator):
 	def __init__(self):
 		JavaTranslator.__init__(self)
 		self.nsSep = '::'
-		self.keyWordEscapes = {'new' : '_new'}
+		self.keyWordEscapes = {'protocol' : 'proto'}
 
 	def translate_class_name(self, name, recursive=False, topAncestor=None):
 		return name.to_camel_case()

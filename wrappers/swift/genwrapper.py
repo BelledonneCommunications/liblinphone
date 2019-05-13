@@ -91,8 +91,10 @@ class SwiftTranslator(object):
 			methodDict['impl']['static'] = 'static ' if static else ''
 			methodDict['impl']['exception'] = self.throws_exception(method.returnType)
 			methodDict['impl']['type'] = method.returnType.translate(self.langTranslator, dllImport=False)
+			methodDict['impl']['return'] = '' if methodDict['impl']['type'] == "void" else 'return '
 			methodDict['impl']['name'] = method.name.translate(self.nameTranslator)
 			methodDict['impl']['c_name'] = method.name.to_c()
+			methodDict['impl']['cPtr'] = '' if static else ('cPtr, ' if len(method.args) > 0 else 'cPtr')
 
 			methodDict['list_type'] = self.get_class_array_type(methodDict['impl']['type'])
 			methodDict['is_string_list'] = methodDict['list_type'] == 'String'
@@ -103,32 +105,47 @@ class SwiftTranslator(object):
 			methodDict['is_class'] = self.is_linphone_type(method.returnType, False, False) and type(method.returnType) is AbsApi.ClassType
 			methodDict['is_enum'] = self.is_linphone_type(method.returnType, False, False) and type(method.returnType) is AbsApi.EnumType
 			methodDict['is_generic'] = self.is_generic(methodDict)
+			methodDict['isNotConstList'] = not method.returnType.isconst
 
 			methodDict['impl']['args'] = ''
 			methodDict['impl']['c_args'] = ''
 			for arg in method.args:
+				argType = arg.type.translate(self.langTranslator, dllImport=False)
+				argName = arg.name.translate(self.nameTranslator)
+				if argType.endswith('Listener'):
+				    argType = argType[0:len(argType)-8] + "Delegate"
+				    argName = "delegate"
 				if arg is not method.args[0]:
 					methodDict['impl']['args'] += ', '
 					methodDict['impl']['c_args'] += ', '
 				if self.is_linphone_type(arg.type, False, False):
-					argname = arg.name.translate(self.nameTranslator)
 					if isinstance(arg.type, AbsApi.ClassType):
-						methodDict['impl']['c_args'] += argname + ".cPtr"
+						methodDict['impl']['c_args'] += argName + ".cPtr"
 					elif isinstance(arg.type, AbsApi.EnumType):
-						methodDict['impl']['c_args'] += "Linphone" + arg.type.translate(self.langTranslator, dllImport=False) + "(rawValue: CInt(" + argname + ".rawValue))"
+						if methodDict['impl']['type'] == "Int":
+						    methodDict['impl']['c_args'] += "Linphone" + argType + "(rawValue: CInt(" + argName + ".rawValue))"
+						else:
+						    methodDict['impl']['c_args'] += "Linphone" + argType + "(rawValue: CUnsignedInt(" + argName + ".rawValue))"
 					else:
-						methodDict['impl']['c_args'] += argname
-				elif arg.type.translate(self.langTranslator, dllImport=False) == "Bool":
-					methodDict['impl']['c_args'] += arg.name.translate(self.nameTranslator) + " ? (char)1 : (char)0"
+						methodDict['impl']['c_args'] += argName
+				elif arg.type.name == "size":
+				    methodDict['impl']['c_args'] += argName
+				elif argType == "Int":
+				    methodDict['impl']['c_args'] += "CInt(" + argName + ")"
+				elif argType == "UInt":
+				    methodDict['impl']['c_args'] += "CUnsignedInt(" + argName + ")"
+				elif argType == "Bool":
+					methodDict['impl']['c_args'] += argName + "==true ? 1:0"
 				elif self.get_class_array_type(arg.type.translate(self.langTranslator, dllImport=False)) is not None:
 					listtype = self.get_class_array_type(arg.type.translate(self.langTranslator, dllImport=False))
 					if listtype == 'String':
-						methodDict['impl']['c_args'] += "StringArrayToBctbxList(" + arg.name.translate(self.nameTranslator) + ")"
+						methodDict['impl']['c_args'] += "StringArrayToBctbxList(list:" + argName + ")"
 					else:
-						methodDict['impl']['c_args'] += "ObjectArrayToBctbxList<" + listtype + ">(" + arg.name.translate(self.nameTranslator) + ")"
+						methodDict['impl']['c_args'] += "ObjectArrayToBctbxList(list: " + argName + ")"
 				else:
-					methodDict['impl']['c_args'] += arg.name.translate(self.nameTranslator)
-				methodDict['impl']['args'] += arg.name.translate(self.nameTranslator) + ":" + arg.type.translate(self.langTranslator, dllImport=False)
+					methodDict['impl']['c_args'] += argName
+
+				methodDict['impl']['args'] += argName + ":" + argType
 
 		return methodDict
 
@@ -374,8 +391,9 @@ class SwiftTranslator(object):
 		methodDict['is_int'] = methodDict['return'] == "Int" or methodDict['return'] == "UInt"
 		methodDict['is_class'] = self.is_linphone_type(prop.returnType, False, False) and type(prop.returnType) is AbsApi.ClassType
 		methodDict['is_enum'] = self.is_linphone_type(prop.returnType, False, False) and type(prop.returnType) is AbsApi.EnumType
-		methodDict['enum_type'] = "CUnsignedInt" if methodDict['is_enum'] and prop.args[0].type.desc.isUnsigned else "CInt"
 		methodDict['is_generic'] = self.is_generic(methodDict)
+		methodDict['cPtr'] = '' if static else 'cPtr'
+		methodDict['isNotConstList'] = not prop.returnType.isconst
 
 		if methodDict['is_string'] or methodDict['is_class'] or methodDict['is_void']:
 		    methodDict['return_default'] = "?"
@@ -401,15 +419,18 @@ class SwiftTranslator(object):
 		methodDict['is_bool'] = methodDict['return'] == "Bool"
 		methodDict['is_void'] = methodDict['return'] == "UnsafeMutableRawPointer"
 		methodDict['is_int'] = methodDict['return'] == "Int" or methodDict['return'] == "UInt"
+		methodDict['int_method'] = "" if prop.args[0].type.name == "size" else ("CInt" if methodDict['return'] == "Int" else "CUnsignedInt") 
 		methodDict['is_class'] = self.is_linphone_type(prop.args[0].type, True, False) and type(prop.args[0].type) is AbsApi.ClassType
 		methodDict['is_enum'] = self.is_linphone_type(prop.args[0].type, True, False) and type(prop.args[0].type) is AbsApi.EnumType
 		methodDict['enum_type'] = "CUnsignedInt" if methodDict['is_enum'] and prop.args[0].type.desc.isUnsigned else "CInt"
 		methodDict['is_generic'] = self.is_generic(methodDict)
 
-		if methodDict['is_string'] or methodDict['is_class'] or methodDict['is_void']:
+		if methodDict['is_string'] or methodDict['is_class'] or methodDict['is_void'] or methodDict['is_bool']:
 		    methodDict['return_default'] = "?"
-		elif methodDict['is_generic']:
+		elif methodDict['is_generic'] or methodDict['is_int']:
 		    methodDict['return_default'] = " = 0"
+		elif methodDict['is_string_list']:
+		    methodDict['return_default'] = " = []"
 
 		return methodDict
 
@@ -423,6 +444,8 @@ class SwiftTranslator(object):
 		methodDict['has_getter'] = True
 		methodDict['exception'] = methodDictSet['exception']
 		methodDict['setter_c_name'] = methodDictSet['setter_c_name']
+		methodDict['enum_type'] = methodDictSet['enum_type']
+		methodDict['int_method'] = methodDictSet['int_method']
 
 		return methodDict
 
