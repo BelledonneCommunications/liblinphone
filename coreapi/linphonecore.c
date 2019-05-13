@@ -5103,6 +5103,7 @@ static void toggle_video_preview(LinphoneCore *lc, bool_t val){
 			}
 			lc->previewstream = video_preview_new(lc->factory);
 			video_preview_set_size(lc->previewstream,vsize);
+			video_stream_set_device_rotation(lc->previewstream, lc->device_rotation);
 			if (display_filter)
 				video_preview_set_display_filter_name(lc->previewstream,display_filter);
 			if (lc->preview_window_id != NULL)
@@ -5592,12 +5593,15 @@ void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 #ifdef VIDEO_ENABLED
 	{
 		LinphoneCall *call=linphone_core_get_current_call(lc);
+		VideoStream *vstream = NULL;
 		if (call) {
-			VideoStream *vstream = reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo));
-			if (vstream) {
-				video_stream_set_device_rotation(vstream,rotation);
-				video_stream_change_camera_skip_bitrate(vstream, vstream->cam);
-			}
+			vstream = reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo));
+			video_stream_set_device_rotation(vstream, rotation);
+			video_stream_change_camera_skip_bitrate(vstream, vstream->cam);
+		} else if (linphone_core_video_preview_enabled(lc)) {
+			vstream = lc->previewstream;
+			video_stream_set_device_rotation(vstream, rotation);
+			video_preview_update_video_params(vstream);
 		}
 	}
 #endif
