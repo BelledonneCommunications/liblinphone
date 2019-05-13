@@ -5086,9 +5086,9 @@ LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore *lc, const char 
 
 static void toggle_video_preview(LinphoneCore *lc, bool_t val){
 #ifdef VIDEO_ENABLED
-	if (val){
-		if (lc->previewstream==NULL){
-			const char *display_filter=linphone_core_get_video_display_filter(lc);
+	if (val) {
+		if (lc->previewstream == NULL) {
+			const char *display_filter = linphone_core_get_video_display_filter(lc);
 			MSVideoSize vsize = { 0 };
 			const LinphoneVideoDefinition *vdef = linphone_core_get_preview_video_definition(lc);
 			if (!vdef || linphone_video_definition_is_undefined(vdef)) {
@@ -5102,27 +5102,30 @@ static void toggle_video_preview(LinphoneCore *lc, bool_t val){
 				vsize.height = (int)linphone_video_definition_get_height(vdef);
 			}
 			lc->previewstream = video_preview_new(lc->factory);
-			video_preview_set_size(lc->previewstream,vsize);
-			if (display_filter)
-				video_preview_set_display_filter_name(lc->previewstream,display_filter);
-			if (lc->preview_window_id != NULL)
-				video_preview_set_native_window_id(lc->previewstream,lc->preview_window_id);
-			video_preview_set_fps(lc->previewstream,linphone_core_get_preferred_framerate(lc));
+			video_preview_set_size(lc->previewstream, vsize);
+			video_stream_set_device_rotation(lc->previewstream, lc->device_rotation);
+			if (display_filter) {
+				video_preview_set_display_filter_name(lc->previewstream, display_filter);
+			}
+			if (lc->preview_window_id != NULL) {
+				video_preview_set_native_window_id(lc->previewstream, lc->preview_window_id);
+			}			
+			video_preview_set_fps(lc->previewstream, linphone_core_get_preferred_framerate(lc));
 			if (linphone_core_qrcode_video_preview_enabled(lc)) {
 				video_preview_enable_qrcode(lc->previewstream, TRUE);
 				if (lc->qrcode_rect.w != 0 && lc->qrcode_rect.h != 0) {
 					video_preview_set_decode_rect(lc->previewstream, lc->qrcode_rect);
 				}
 			}
-			video_preview_start(lc->previewstream,lc->video_conf.device);
+			video_preview_start(lc->previewstream, lc->video_conf.device);
 			if (video_preview_qrcode_enabled(lc->previewstream)) {
 				ms_filter_add_notify_callback(lc->previewstream->qrcode, video_filter_callback, lc, TRUE);
 			}
 		}
-	}else{
-		if (lc->previewstream!=NULL){
+	} else {
+		if (lc->previewstream != NULL) {
 			video_preview_stop(lc->previewstream);
-			lc->previewstream=NULL;
+			lc->previewstream = NULL;
 		}
 	}
 #endif
@@ -5592,11 +5595,18 @@ void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 #ifdef VIDEO_ENABLED
 	{
 		LinphoneCall *call=linphone_core_get_current_call(lc);
+		VideoStream *vstream = NULL;
 		if (call) {
-			VideoStream *vstream = reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo));
+			vstream = reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo));
 			if (vstream) {
-				video_stream_set_device_rotation(vstream,rotation);
+				video_stream_set_device_rotation(vstream, rotation);
 				video_stream_change_camera_skip_bitrate(vstream, vstream->cam);
+			}
+		} else if (linphone_core_video_preview_enabled(lc)) {
+			vstream = lc->previewstream;
+			if (vstream) {
+				video_stream_set_device_rotation(vstream, rotation);
+				video_preview_update_video_params(vstream);
 			}
 		}
 	}
