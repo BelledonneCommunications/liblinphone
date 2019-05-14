@@ -147,7 +147,7 @@ const list<DialPlan> DialPlanPrivate::DialPlans = {
 	{ "Kyrgyzstan", "KG", "996", 9, "00" },
 	{ "Laos", "LA", "856", 10, "00" },
 	{ "Latvia", "LV", "371", 8, "00" },
-	{ "Lebanon", "LB", "961", 7, "00" },
+	{ "Lebanon", "LB", "961", 8, "00" },
 	{ "Lesotho", "LS", "266", 8, "00" },
 	{ "Liberia", "LR", "231", 8, "00" },
 	{ "Libya", "LY", "218", 8, "00" },
