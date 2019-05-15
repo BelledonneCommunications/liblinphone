@@ -587,18 +587,18 @@ LINPHONE_PUBLIC const char * linphone_proxy_config_get_ref_key(const LinphonePro
 LINPHONE_PUBLIC void linphone_proxy_config_set_ref_key(LinphoneProxyConfig *cfg, const char *refkey);
 
 /**
- * Get the refkey of a #LinphoneProxyConfig this proxy config is dependent on.
+ * Get the depends_on property of a #LinphoneProxyConfig.
  *
  * @param[in] cfg #LinphoneProxyConfig object.
- * @return The reference key string this proxy config is dependent on, or NULL if not marked dependent
+ * @return The idkey string this proxy config is dependent upon, or NULL if not marked dependent
  **/
 LINPHONE_PUBLIC const char *linphone_proxy_config_get_depends_on(LinphoneProxyConfig *cfg);
 
 /**
  * Mark	this proxy configuration as being dependent on another.
- * The depends_on string must refer to a refkey of a proxy configuration previously added to the core.
+ * The depends_on string must refer to an idkey of a proxy configuration previously added to the core.
  *
- * @see linphone_proxy_config_set_ref_key()
+ * @see linphone_proxy_config_set_idkey()
  *
  * The proxy configuration marked as dependent will wait for successful registration on its dependency before triggering its own.
  *
@@ -610,6 +610,24 @@ LINPHONE_PUBLIC const char *linphone_proxy_config_get_depends_on(LinphoneProxyCo
  * @param[in] depends_on The reference key of a master #LinphoneProxyConfig
  **/
 LINPHONE_PUBLIC void linphone_proxy_config_set_depends_on(LinphoneProxyConfig *cfg, const char *depends_on);
+
+/**
+ * Get the idkey property of a #LinphoneProxyConfig.
+ *
+ * @param[in] cfg #LinphoneProxyConfig object.
+ * @return The idkey string, or NULL
+ **/
+LINPHONE_PUBLIC const char *linphone_proxy_config_get_idkey(LinphoneProxyConfig *cfg);
+
+/**
+ * Set the idkey property on the given proxy configuration.
+ * This property can the be referenced by another proxy config 'depends_on' to create a dependency relation between them.
+ * @see linphone_proxy_config_set_depends_on()
+ *
+ * @param[in] cfg #LinphoneProxyConfig object.
+ * @param[in] idkey The idkey string to associate to the given #LinphoneProxyConfig
+ **/
+LINPHONE_PUBLIC void linphone_proxy_config_set_idkey(LinphoneProxyConfig *cfg, const char *idkey);
 
 /**
  * Get The policy that is used to pass through NATs/firewalls when using this proxy config.

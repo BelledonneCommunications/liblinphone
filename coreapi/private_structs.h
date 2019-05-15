@@ -136,7 +136,8 @@ struct _LinphoneProxyConfig
 
 	char *refkey;
 	char *sip_etag; /*publish context*/
-	char *depends_on; /* NULL or points to another proxy_config->refkey */
+	char *depends_on; /* NULL or points to another proxy_config->dependency */
+	char *idkey; /* NULL or referenced by another proxy_config->depends_on */
 	char *conference_factory_uri;
 
 	bool_t push_notification_allowed;

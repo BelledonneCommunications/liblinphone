@@ -311,7 +311,6 @@ static void dependent_proxy_config(void) {
 	linphone_core_invite_address(pauline->lc, marie_dependent_addr);
 
 	if (BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived, 1, 10000))) {
-
 		linphone_call_accept(linphone_core_get_current_call(marie->lc));
 
 		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
@@ -389,11 +388,11 @@ static void invalid_dependent_proxy_config(void) {
 
 	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 0, int, "%d");
 
-	linphone_proxy_config_set_ref_key(master, "invalid");
+	linphone_proxy_config_set_idkey(master, "invalid");
 
 	linphone_core_add_proxy_config(marie->lc, master);
 
-	//Adding a dependent proxy config linking to inexistent	refkey should fail
+	//Adding a dependent proxy config linking to inexistent	dependency should fail
 	BC_ASSERT_EQUAL(linphone_core_add_proxy_config(marie->lc, dependent), -1, int, "%d");
 
 	proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
