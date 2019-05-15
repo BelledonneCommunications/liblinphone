@@ -82,8 +82,6 @@ class SwiftTranslator(object):
 
 		methodDict = {}
 		methodDict['doc'] = method.briefDescription.translate(self.docTranslator, tagAsBrief=True)
-        # TODO: remove it when abstractapi.py has fixed. We do not need to wrapper get_current_callbacks
-		methodDict['getCurrentCallbacks'] = True if 'get_current_callbacks' in method.name.to_c() else False
 
 		if genImpl:
 			methodDict['impl'] = {}
@@ -105,7 +103,7 @@ class SwiftTranslator(object):
 			methodDict['is_class'] = self.is_linphone_type(method.returnType, False, False) and type(method.returnType) is AbsApi.ClassType
 			methodDict['is_enum'] = self.is_linphone_type(method.returnType, False, False) and type(method.returnType) is AbsApi.EnumType
 			methodDict['is_generic'] = self.is_generic(methodDict)
-			methodDict['isNotConstList'] = not method.returnType.isconst
+			methodDict['isNotConst'] = not method.returnType.isconst
 
 			methodDict['impl']['args'] = ''
 			methodDict['impl']['c_args'] = ''
@@ -128,7 +126,7 @@ class SwiftTranslator(object):
 						    methodDict['impl']['c_args'] += "Linphone" + argType + "(rawValue: CUnsignedInt(" + argName + ".rawValue))"
 					else:
 						methodDict['impl']['c_args'] += argName
-				elif arg.type.name == "size":
+				elif arg.type.name == "size" or arg.type.name == "time":
 				    methodDict['impl']['c_args'] += argName
 				elif argType == "Int":
 				    methodDict['impl']['c_args'] += "CInt(" + argName + ")"
@@ -144,6 +142,8 @@ class SwiftTranslator(object):
 						methodDict['impl']['c_args'] += "ObjectArrayToBctbxList(list: " + argName + ")"
 				else:
 					methodDict['impl']['c_args'] += argName
+				if argType == "UnsafePointer<Int>" and not arg.type.isconst:
+				    argType = "UnsafeMutablePointer<Int32>"
 
 				methodDict['impl']['args'] += argName + ":" + argType
 
@@ -179,6 +179,7 @@ class SwiftTranslator(object):
 		listenerDict['delegate']['params_public'] = ""
 		listenerDict['delegate']['params_private'] = ""
 		listenerDict['delegate']['params'] = ""
+		listenerDict['delegate']['classLists'] = {}
 		for arg in method.args:
 			dllImportType = arg.type.translate(self.langTranslator, dllImport=True)
 			normalType = arg.type.translate(self.langTranslator, dllImport=False)
@@ -189,29 +190,34 @@ class SwiftTranslator(object):
 				listenerDict['delegate']['params_private'] += ', '
 				listenerDict['delegate']['params'] += ', '
 
-				if normalType == dllImportType:
-					listenerDict['delegate']['params'] += argName
-				else:
-					if normalType == "bool":
-						listenerDict['delegate']['params'] += argName + " == 0"
-					elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.ClassType:
-						listenerDict['delegate']['params'] += "fromNativePtr<" + normalType + ">(" + argName + ")"
-					elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.EnumType:
-						listenerDict['delegate']['params'] += "(" + normalType + ")" + argName + ""
-					elif isinstance(arg.type, AbsApi.ListType):
-						if normalType == "string":
-							listenerDict['delegate']['params'] += "MarshalStringArray(" + argName + ")"
-						else:
-							listenerDict['delegate']['params'] += "MarshalBctbxList<" + self.get_class_array_type(normalType) + ">(" + argName + ")"
+				#if normalType == dllImportType:
+				#	listenerDict['delegate']['params'] += argName + ": " + argName
+				#else:
+				if normalType == "Bool":
+					listenerDict['delegate']['params'] += argName + ": " + argName + ">0"
+				elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.ClassType:
+				    listenerDict['delegate']['params'] += argName + ": " + normalType + ".getSobject(cObject: " + argName + ")!"
+				elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.EnumType:
+				    ends = "" if arg.type.desc.isFlag else "!"
+				    listenerDict['delegate']['params'] += argName + ": " + normalType + "(rawValue: Int(" + argName + ".rawValue))" + ends
+				elif isinstance(arg.type, AbsApi.ListType):
+					if normalType == "String":
+						listenerDict['delegate']['params'] += "BctbxListToStringArray(list: " + argName + ")"
 					else:
-						print 'Not supported yet: ' + delegate_name_public
-						return {}
+						listenerDict['delegate']['classLists']['classType'] = self.get_class_array_type(normalType)
+						listenerDict['delegate']['classLists']['argName'] = argName
+						listenerDict['delegate']['params'] += argName + ": " + argName + "sList"
+				elif normalType == "String":
+						listenerDict['delegate']['params'] += argName + ": charArrayToString(charPointer: " + argName +")!"
+				else:
+					print 'Not supported yet: ' + delegate_name_public
+					return {}
 			else:
 				listenerDict['delegate']['first_param'] = argName
-				listenerDict['delegate']['params'] = 'thiz'
+				listenerDict['delegate']['params'] = argName + ": sObject!"
 
-			listenerDict['delegate']['params_public'] += normalType + " " + argName
-			listenerDict['delegate']['params_private'] += dllImportType + " " + argName
+			listenerDict['delegate']['params_public'] += argName + ": " + normalType
+			listenerDict['delegate']['params_private'] += argName
 
 		listenerDict['delegate']["c_name_setter"] = c_name_setter
 		return listenerDict
@@ -222,6 +228,7 @@ class SwiftTranslator(object):
 		#methodDict['prototype'] = "static extern IntPtr {c_name}(IntPtr thiz);".format(classname = classname, c_name = c_name)
 
 		methodDict['listener'] = True
+		methodDict['getListener'] = True
 		#methodDict['has_property'] = FALSE
 		methodDict['property_static'] = ''
 		methodDict['property_return'] = classname
@@ -360,8 +367,9 @@ class SwiftTranslator(object):
 
 		interfaceDict = {}
 		interfaceDict['interfaceName'] = interface.name.translate(self.nameTranslator)
-		interfaceDict['set_user_data_name'] = interface.listenedClass.name.to_snake_case(fullName=True) + '_cbs_set_user_data'
-		interfaceDict['get_user_data_name'] = interface.listenedClass.name.to_snake_case(fullName=True) + '_cbs_get_user_data'
+		if interfaceDict['interfaceName'].endswith('Listener'):
+		    interfaceDict['interfaceName'] = interfaceDict['interfaceName'][0:len(interfaceDict['interfaceName'])-8] + "Delegate"
+		interfaceDict['create_user_data_name'] = 'linphone_factory_create' + interface.listenedClass.name.to_snake_case(fullName=True).lstrip('linphone') + '_cbs'
 
 		interfaceDict['methods'] = []
 		for method in interface.instanceMethods:
@@ -378,6 +386,9 @@ class SwiftTranslator(object):
 		methodDict['has_getter'] = True
 		methodDict['has_setter'] = False
 		methodDict['return'] = prop.returnType.translate(self.langTranslator, dllImport=False)
+		if methodDict['return'].endswith('Listener'):
+		    methodDict['return'] = methodDict['return'][0:len(methodDict['return'])-8] + "Delegate"
+		    methodDict['is_callbacks'] = True
 		methodDict['exception'] = self.throws_exception(prop.returnType)
 		methodDict['getter_c_name'] = prop.name.to_c()
 
@@ -393,7 +404,8 @@ class SwiftTranslator(object):
 		methodDict['is_enum'] = self.is_linphone_type(prop.returnType, False, False) and type(prop.returnType) is AbsApi.EnumType
 		methodDict['is_generic'] = self.is_generic(methodDict)
 		methodDict['cPtr'] = '' if static else 'cPtr'
-		methodDict['isNotConstList'] = not prop.returnType.isconst
+		methodDict['isNotConst'] = not prop.returnType.isconst
+		methodDict['isFlag'] = methodDict['is_enum'] and prop.returnType.desc.isFlag
 
 		if methodDict['is_string'] or methodDict['is_class'] or methodDict['is_void']:
 		    methodDict['return_default'] = "?"
@@ -419,13 +431,13 @@ class SwiftTranslator(object):
 		methodDict['is_bool'] = methodDict['return'] == "Bool"
 		methodDict['is_void'] = methodDict['return'] == "UnsafeMutableRawPointer"
 		methodDict['is_int'] = methodDict['return'] == "Int" or methodDict['return'] == "UInt"
-		methodDict['int_method'] = "" if prop.args[0].type.name == "size" else ("CInt" if methodDict['return'] == "Int" else "CUnsignedInt") 
+		methodDict['int_method'] = "" if prop.args[0].type.name == "size" else ("CInt" if methodDict['return'] == "Int" else "CUnsignedInt")
 		methodDict['is_class'] = self.is_linphone_type(prop.args[0].type, True, False) and type(prop.args[0].type) is AbsApi.ClassType
 		methodDict['is_enum'] = self.is_linphone_type(prop.args[0].type, True, False) and type(prop.args[0].type) is AbsApi.EnumType
 		methodDict['enum_type'] = "CUnsignedInt" if methodDict['is_enum'] and prop.args[0].type.desc.isUnsigned else "CInt"
 		methodDict['is_generic'] = self.is_generic(methodDict)
 
-		if methodDict['is_string'] or methodDict['is_class'] or methodDict['is_void'] or methodDict['is_bool']:
+		if methodDict['is_string'] or methodDict['is_class'] or methodDict['is_void'] or methodDict['is_bool'] or methodDict['is_enum']:
 		    methodDict['return_default'] = "?"
 		elif methodDict['is_generic'] or methodDict['is_int']:
 		    methodDict['return_default'] = " = 0"
