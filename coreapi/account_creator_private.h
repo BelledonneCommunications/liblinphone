@@ -105,6 +105,11 @@ struct _LinphoneAccountCreator {
 	char *algorithm; /**< Digest authentication algorithm */
 	LinphoneTransportType transport; /**< Transport used */
 
+	char *depends_on; /**< Triggers proxy config depdendency mecanism if not NULL  */
+	char *idkey; /**< Unique identification key */
+
+	bool_t set_as_default; /**< Set proxy config as the default one */
+
 	/* Deprecated */
 	char *route;
 };
