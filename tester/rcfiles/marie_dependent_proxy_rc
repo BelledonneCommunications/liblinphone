@@ -20,7 +20,7 @@ reg_expires=3600
 reg_sendregister=1
 publish=0
 dial_escape_plus=0
-refkey=master
+idkey=master
 
 [proxy_1]
 reg_proxy=<sip:sip2.linphone.org:5069;transport=tls>

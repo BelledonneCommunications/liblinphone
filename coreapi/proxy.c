@@ -122,6 +122,7 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 	const char *contact_params = lc ? lp_config_get_default_string(lc->config, "proxy", "contact_parameters", NULL) : NULL;
 	const char *contact_uri_params = lc ? lp_config_get_default_string(lc->config, "proxy", "contact_uri_parameters", NULL) : NULL;
 	const char *refkey = lc ? lp_config_get_default_string(lc->config, "proxy", "refkey", NULL) : NULL;
+	const char *idkey = lc ? lp_config_get_default_string(lc->config, "proxy", "idkey", NULL) : NULL;
 	const char *depends_on = lc ? lp_config_get_default_string(lc->config, "proxy", "depends_on", NULL) : NULL;
 	const char *nat_policy_ref = lc ? lp_config_get_default_string(lc->config, "proxy", "nat_policy_ref", NULL):NULL;
 	const char *conference_factory_uri = lc ? lp_config_get_default_string(lc->config, "proxy", "conference_factory_uri", NULL):NULL;
@@ -158,6 +159,7 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 		}
 	}
 	cfg->depends_on = depends_on ? ms_strdup(depends_on) : NULL;
+	cfg->idkey = idkey ? ms_strdup(idkey) : NULL;
 	linphone_proxy_config_set_conference_factory_uri(cfg, conference_factory_uri ? ms_strdup(conference_factory_uri) : NULL);
 }
 
@@ -261,6 +263,7 @@ void _linphone_proxy_config_destroy(LinphoneProxyConfig *cfg){
 	if (cfg->pending_contact) linphone_address_unref(cfg->pending_contact);
 	if (cfg->refkey) ms_free(cfg->refkey);
 	if (cfg->depends_on) ms_free(cfg->depends_on);
+	if (cfg->idkey) ms_free(cfg->idkey);
 	if (cfg->nat_policy != NULL) {
 		linphone_nat_policy_unref(cfg->nat_policy);
 	}
@@ -422,11 +425,10 @@ bool_t linphone_proxy_config_check(LinphoneCore *lc, LinphoneProxyConfig *cfg){
 		return FALSE;
 	if (cfg->identity_address==NULL)
 		return FALSE;
-	if (cfg->depends_on != NULL && linphone_core_get_proxy_config_by_refkey(lc, cfg->depends_on) == NULL) {
-		ms_message("LinphoneProxyConfig marked as dependent but no proxy configuration found for refkey [%s]", cfg->depends_on);
+	if (cfg->depends_on != NULL && linphone_core_get_proxy_config_by_idkey(lc, cfg->depends_on) == NULL) {
+		ms_message("LinphoneProxyConfig marked as dependent but no proxy configuration found for idkey [%s]", cfg->depends_on);
 		return FALSE;
 	}
-
 	return TRUE;
 }
 
@@ -467,7 +469,7 @@ void linphone_proxy_config_apply(LinphoneProxyConfig *cfg, LinphoneCore *lc){
 	cfg->lc=lc;
 	if (cfg->depends_on != NULL) {
 		//disable register if master cfg is not yet registered
-		LinphoneProxyConfig *masterCfg = linphone_core_get_proxy_config_by_refkey(lc, cfg->depends_on);
+		LinphoneProxyConfig *masterCfg = linphone_core_get_proxy_config_by_idkey(lc, cfg->depends_on);
 		if (masterCfg && masterCfg->state != LinphoneRegistrationOk) {
 			if (cfg->reg_sendregister != FALSE) {
 				cfg->register_changed = TRUE;
@@ -516,7 +518,7 @@ static LinphoneAddress *guess_contact_for_register (LinphoneProxyConfig *cfg) {
 
 	if (cfg->depends_on) {
 		//In case of dependent proxy config, force contact of 'master' proxy config, but only after a successful register
-		LinphoneProxyConfig *master = linphone_core_get_proxy_config_by_refkey(cfg->lc, cfg->depends_on);
+		LinphoneProxyConfig *master = linphone_core_get_proxy_config_by_idkey(cfg->lc, cfg->depends_on);
 		//if (master) ref = master;
 		return linphone_address_clone(master->contact_address);
 	}
@@ -1097,6 +1099,18 @@ void linphone_proxy_config_set_depends_on(LinphoneProxyConfig *cfg, const char *
 	}
 }
 
+const char *linphone_proxy_config_get_idkey(LinphoneProxyConfig *cfg) {
+	return cfg->idkey;
+}
+
+void linphone_proxy_config_set_idkey(LinphoneProxyConfig *cfg, const char *idkey) {
+	if (cfg) {
+		if (cfg->idkey) ms_free(cfg->idkey);
+		cfg->idkey = ms_strdup(idkey);
+	}
+}
+
+
 LinphoneStatus linphone_core_add_proxy_config(LinphoneCore *lc, LinphoneProxyConfig *cfg){
 	if (!linphone_proxy_config_check(lc,cfg)) {
 		return -1;
@@ -1116,8 +1130,8 @@ void linphone_core_remove_dependent_proxy_config(LinphoneCore *lc, LinphoneProxy
 
 	for (;it;it = it->next) {
 		LinphoneProxyConfig *tmp = reinterpret_cast<LinphoneProxyConfig *>(it->data);
-		if (tmp != cfg && tmp->depends_on && strcmp(tmp->depends_on, cfg->refkey) == 0) {
-		 	ms_message("Updating dependent proxy config [%p] caused by removal of 'master' proxy config refkey[%s]", tmp, cfg->refkey);
+		if (tmp != cfg && tmp->depends_on && strcmp(tmp->depends_on, cfg->idkey) == 0) {
+		 	ms_message("Updating dependent proxy config [%p] caused by removal of 'master' proxy config idkey[%s]", tmp, cfg->idkey);
 			bctbx_free(tmp->depends_on);
 			tmp->depends_on = NULL;
 			linphone_proxy_config_edit(tmp);
@@ -1182,12 +1196,12 @@ int linphone_core_get_default_proxy_config_index(LinphoneCore *lc) {
 	return pos;
 }
 
-LinphoneProxyConfig *linphone_core_get_proxy_config_by_refkey(LinphoneCore *lc, const char *refkey) {
-	if (refkey == NULL || lc == NULL) return NULL;
+LinphoneProxyConfig *linphone_core_get_proxy_config_by_idkey(LinphoneCore *lc, const char *idkey) {
+	if (idkey == NULL || lc == NULL) return NULL;
 	bctbx_list_t *list = lc->sip_conf.proxies;
 	for (;list!=NULL;list=list->next) {
 		LinphoneProxyConfig *tmp = reinterpret_cast<LinphoneProxyConfig *>(list->data);
-		if (tmp && tmp->refkey && strcmp(refkey, tmp->refkey) == 0) {
+		if (tmp && tmp->idkey && strcmp(idkey, tmp->idkey) == 0) {
 			return tmp;
 		}
 	}
@@ -1272,6 +1286,7 @@ void linphone_proxy_config_write_to_config_file(LpConfig *config, LinphoneProxyC
 	lp_config_set_int(config, key, "push_notification_allowed", (int)cfg->push_notification_allowed);
 	if (cfg->refkey) lp_config_set_string(config, key, "refkey", cfg->refkey);
 	if (cfg->depends_on) lp_config_set_string(config, key, "depends_on", cfg->depends_on);
+	if (cfg->idkey) lp_config_set_string(config, key, "idkey", cfg->idkey);
 	lp_config_set_int(config, key, "publish_expires", cfg->publish_expires);
 
 	if (cfg->nat_policy != NULL) {
@@ -1344,6 +1359,7 @@ LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(LinphoneCore* lc
 
 	CONFIGURE_STRING_VALUE(cfg, config, key, ref_key, "refkey")
 	CONFIGURE_STRING_VALUE(cfg, config, key, depends_on, "depends_on")
+	CONFIGURE_STRING_VALUE(cfg, config, key, idkey, "idkey")
 	CONFIGURE_INT_VALUE(cfg, config, key, publish_expires, "publish_expires", int)
 
 	nat_policy_ref = lp_config_get_string(config, key, "nat_policy_ref", NULL);
@@ -1399,7 +1415,7 @@ static bool_t can_register(LinphoneProxyConfig *cfg){
 		return FALSE;
 	}
 	if (cfg->depends_on) {
-		LinphoneProxyConfig *masterCfg = linphone_core_get_proxy_config_by_refkey(lc, cfg->depends_on);
+		LinphoneProxyConfig *masterCfg = linphone_core_get_proxy_config_by_idkey(lc, cfg->depends_on);
 		return masterCfg && linphone_proxy_config_get_state(masterCfg) == LinphoneRegistrationOk && !cfg->reg_dependent_disabled;
 	}
 	return TRUE;
@@ -1452,7 +1468,7 @@ void _linphone_update_dependent_proxy_config(LinphoneProxyConfig *cfg, LinphoneR
 
 	for (;it;it = it->next) {
 		LinphoneProxyConfig *tmp = reinterpret_cast<LinphoneProxyConfig *>(it->data);
-		if (tmp != cfg && tmp->depends_on && strcmp(tmp->depends_on, cfg->refkey) == 0) {
+		if (tmp != cfg && tmp->depends_on && strcmp(tmp->depends_on, cfg->idkey) == 0) {
 			if (tmp->reg_dependent_disabled) continue;
 			linphone_proxy_config_edit(tmp);
 			if (state == LinphoneRegistrationOk) {

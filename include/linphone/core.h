@@ -2211,10 +2211,10 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_proxy_config_list(const Li
 LINPHONE_PUBLIC void linphone_core_set_default_proxy_index(LinphoneCore *lc, int index);
 
 /**
- * @param[in] refkey An	arbitrary reference key	associated to a	proxy configuration
- * @return the proxy configuration for the given refkey, or NULL if none found
+ * @param[in] idkey An arbitrary idkey string associated to a proxy configuration
+ * @return the proxy configuration for the given idkey value, or NULL if none found
  **/
-LINPHONE_PUBLIC LinphoneProxyConfig *linphone_core_get_proxy_config_by_refkey(LinphoneCore *lc, const char *refkey);
+LINPHONE_PUBLIC LinphoneProxyConfig *linphone_core_get_proxy_config_by_idkey(LinphoneCore *lc, const char *idkey);
 
 /**
  * @return the default proxy configuration, that is the one used to determine the current identity.
