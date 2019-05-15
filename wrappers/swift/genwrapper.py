@@ -157,24 +157,10 @@ class SwiftTranslator(object):
 		listenerDict = {}
 		c_name_setter = listenedClass.name.to_snake_case(fullName=True) + '_cbs_set_' + method.name.to_snake_case()[3:]
 		delegate_name_public = method.name.translate(self.nameTranslator) + "Delegate"
-		delegate_name_private = delegate_name_public + "Private"
-		listenerDict['cb_setter'] = {}
-		listenerDict['cb_setter']['name'] = c_name_setter
-		listenerDict['name_private'] = delegate_name_private
 
 		listenerDict['delegate'] = {}
-		listenerDict['delegate']['name_public'] = delegate_name_public
-		listenerDict['delegate']['name_private'] = delegate_name_private
-		var_name_public = method.name.to_snake_case() + '_public'
-		var_name_private = method.name.to_snake_case() + '_private'
-		listenerDict['delegate']['var_public'] = var_name_public
-		listenerDict['delegate']['var_private'] = var_name_private
 		listenerDict['delegate']['cb_name'] = method.name.to_snake_case()
-		listenerDict['delegate']['name'] = method.name.translate(self.nameTranslator)
-
 		listenerDict['delegate']['interfaceClassName'] = listenedClass.name.translate(self.nameTranslator)
-		listenerDict['delegate']['isSimpleListener'] = listenedClass.singlelistener
-		listenerDict['delegate']['isMultiListener'] = listenedClass.multilistener
 
 		listenerDict['delegate']['params_public'] = ""
 		listenerDict['delegate']['params_private'] = ""
@@ -190,9 +176,6 @@ class SwiftTranslator(object):
 				listenerDict['delegate']['params_private'] += ', '
 				listenerDict['delegate']['params'] += ', '
 
-				#if normalType == dllImportType:
-				#	listenerDict['delegate']['params'] += argName + ": " + argName
-				#else:
 				if normalType == "Bool":
 					listenerDict['delegate']['params'] += argName + ": " + argName + ">0"
 				elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.ClassType:
@@ -209,6 +192,8 @@ class SwiftTranslator(object):
 						listenerDict['delegate']['params'] += argName + ": " + argName + "sList"
 				elif normalType == "String":
 						listenerDict['delegate']['params'] += argName + ": charArrayToString(charPointer: " + argName +")!"
+				elif normalType == "Int":
+				        listenerDict['delegate']['params'] += argName + ": Int(" + argName + ")"
 				else:
 					print 'Not supported yet: ' + delegate_name_public
 					return {}
@@ -225,20 +210,14 @@ class SwiftTranslator(object):
     def generate_getter_for_listener_callbacks(self, _class, classname):
 		methodDict = self.init_method_dict()
 		c_name = _class.name.to_snake_case(fullName=True) + '_get_callbacks'
-		#methodDict['prototype'] = "static extern IntPtr {c_name}(IntPtr thiz);".format(classname = classname, c_name = c_name)
 
 		methodDict['listener'] = True
 		methodDict['getListener'] = True
-		#methodDict['has_property'] = FALSE
-		methodDict['property_static'] = ''
 		methodDict['property_return'] = classname
-		methodDict['impl']['name'] = 'getDelegate'
-		methodDict['impl']['args'] = ''
-		methodDict['has_getter'] = True
-		methodDict['impl']['return'] = classname + 'Cbs'
+		methodDict['name'] = 'getDelegate'
+		methodDict['args'] = ''
 
-		methodDict['impl']['c_name'] = c_name
-		methodDict['is_class'] = True
+		methodDict['c_name'] = c_name
 		methodDict['addListener'] = False
 
 		return methodDict
@@ -247,37 +226,28 @@ class SwiftTranslator(object):
     def generate_add_for_listener_callbacks(self, _class, classname):
 		methodDict = self.init_method_dict()
 		c_name = _class.name.to_snake_case(fullName=True) + '_add_callbacks'
-		#methodDict['prototype'] = "static extern void {c_name}(IntPtr thiz, IntPtr cbs);".format(classname = classname, c_name = c_name)
+
 		methodDict['listener'] = True
-		methodDict['impl']['static'] = ''
-		methodDict['impl']['type'] = 'void'
-		methodDict['impl']['name'] = 'addDelegate'
-		#methodDict['impl']['return'] = ''
-		methodDict['impl']['c_name'] = c_name
-		methodDict['impl']['nativePtr'] = 'nativePtr, '
-		methodDict['impl']['args'] = 'delegate: ' + classname + 'Delegate'
-		methodDict['impl']['c_args'] = 'cbs != null ? cbs.nativePtr : IntPtr.Zero'
-		methodDict['impl']['addListener'] = True
-		methodDict['impl']['removeListener'] = False
+		methodDict['name'] = 'addDelegate'
+
+		methodDict['c_name'] = c_name
+		methodDict['args'] = 'delegate: ' + classname + 'Delegate'
+		methodDict['addListener'] = True
+		methodDict['removeListener'] = False
 
 		return methodDict
 
     def generate_remove_for_listener_callbacks(self, _class, classname):
 		methodDict = self.init_method_dict()
 		c_name = _class.name.to_snake_case(fullName=True) + '_remove_callbacks'
-		#methodDict['prototype'] = "static extern void {c_name}(IntPtr thiz, IntPtr cbs);".format(classname = classname, c_name = c_name)
-		methodDict['impl']['static'] = ''
+
 		methodDict['listener'] = True
-		methodDict['impl']['type'] = 'void'
-		methodDict['impl']['name'] = 'removeDelegate'
-		#methodDict['impl']['return'] = ''
-		methodDict['impl']['c_name'] = c_name
-		methodDict['impl']['nativePtr'] = 'nativePtr, '
-		methodDict['impl']['args'] = 'delegate: ' + classname + 'Delegate'
-		methodDict['impl']['c_args'] = 'cbs != null ? cbs.nativePtr : IntPtr.Zero'
+		methodDict['name'] = 'removeDelegate'
+
+		methodDict['c_name'] = c_name
+		methodDict['args'] = 'delegate: ' + classname + 'Delegate'
 		methodDict['removeListener'] = True
-		methodDict['impl']['addListener'] = False
-		methodDict['impl']['removeListener'] = True
+		methodDict['addListener'] = False
 
 		return methodDict
 
@@ -416,6 +386,7 @@ class SwiftTranslator(object):
 		methodDict = self.translate_method(prop, static, False)
 
 		methodDict['property_name'] = name
+		methodDict['func_name'] = "set" + name.capitalize()
 		methodDict['has_property'] = True
 		methodDict['has_getter'] = False
 		methodDict['has_setter'] = True
@@ -458,6 +429,7 @@ class SwiftTranslator(object):
 		methodDict['setter_c_name'] = methodDictSet['setter_c_name']
 		methodDict['enum_type'] = methodDictSet['enum_type']
 		methodDict['int_method'] = methodDictSet['int_method']
+		methodDict['func_name'] = methodDictSet['func_name']
 
 		return methodDict
 

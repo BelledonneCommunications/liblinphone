@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import Foundation
 import linphone
 
-//////////////////// region enums ////////////////////
+// MARK: region enums
 {{#enums}}
 {{#enum}}
 {{#doc}}
@@ -64,7 +64,7 @@ public enum {{enumName}}:Int
 {{/enums}}
 
 
-//////////////////// region utils ////////////////////
+// MARK: region utils
 func charArrayToString(charPointer: UnsafePointer<CChar>?) -> String? {
 	return charPointer != nil ? String(cString: charPointer!) : nil
 }
@@ -78,6 +78,7 @@ public class LinphoneObject {
 	}
 
 	deinit {
+		belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  nil, nil)
 		belle_sip_object_unref(UnsafeMutableRawPointer(cPtr))
 	}
 }
@@ -94,7 +95,7 @@ func StringArrayToBctbxList(list: [String]) -> UnsafeMutablePointer<bctbx_list_t
 func BctbxListToStringArray(list: UnsafeMutablePointer<bctbx_list_t>) -> [String]? {
 	var sList = [String]()
 	var cList = list
-	while (cList != nil) {
+	while (cList.pointee.data != nil) {
 		sList.append(String(cString: unsafeBitCast(cList.pointee.data, to: UnsafePointer<CChar>.self)))
 		cList = UnsafeMutablePointer<bctbx_list_t>(cList.pointee.next)
 	}
@@ -113,8 +114,11 @@ protocol LinphoneObjectDelegate {
 	var cPtr: OpaquePointer {get set}
 }
 
+enum LinphoneError: Error {
+	case exception(result: String)
+}
 
-//////////////////// region Delegates ////////////////////
+// MARK: region Delegates
 {{#interfaces}}
 {{#interface}}
 
@@ -146,6 +150,11 @@ public class {{interfaceName}} : LinphoneObjectDelegate
 		{{/methods}}
 	}
 
+	deinit {
+		belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  nil, nil)
+		belle_sip_object_unref(UnsafeMutableRawPointer(cPtr))
+	}
+
 	{{#methods}}
 	{{#delegate}}
 	func {{cb_name}}({{{params_public}}}){}
@@ -156,7 +165,7 @@ public class {{interfaceName}} : LinphoneObjectDelegate
 {{/interfaces}}
 
 
-//////////////////// region classes ////////////////////
+// MARK: region classes
 {{#classes}}
 {{#_class}}
 
@@ -261,8 +270,10 @@ public class {{className}} : LinphoneObject
 	{
 	{{#has_getter}}
 	{{#has_setter}}
+	{{^exception}}
 		get
 		{
+	{{/exception}}
 	{{/has_setter}}
 			{{#is_callbacks}}
 			let cObject = {{getter_c_name}}(cPtr)
@@ -312,10 +323,13 @@ public class {{className}} : LinphoneObject
 			{{/is_class_list}}
 			{{/is_callbacks}}
 	{{#has_setter}}
+	{{^exception}}
 		}
+	{{/exception}}
   {{/has_setter}}
 	{{/has_getter}}
 	{{#has_setter}}
+	{{^exception}}
 	{{#has_getter}}
 		set
 	{{/has_getter}}
@@ -324,22 +338,22 @@ public class {{className}} : LinphoneObject
 	{{/has_getter}}
 		{
 			{{#is_string}}
-			{{#exception}}let exception_result = {{/exception}}{{setter_c_name}}(cPtr, newValue)
+			{{setter_c_name}}(cPtr, newValue)
 			{{/is_string}}
 			{{#is_bool}}
-			{{#exception}}let exception_result = {{/exception}}{{setter_c_name}}(cPtr, newValue==true ? 1:0)
+			{{setter_c_name}}(cPtr, newValue==true ? 1:0)
 			{{/is_bool}}
 			{{#is_class}}
-			{{#exception}}let exception_result = {{/exception}}{{setter_c_name}}(cPtr, newValue?.cPtr)
+			{{setter_c_name}}(cPtr, newValue?.cPtr)
 			{{/is_class}}
 			{{#is_enum}}
-			{{#exception}}let exception_result = {{/exception}}{{setter_c_name}}(cPtr, Linphone{{{return}}}(rawValue: {{enum_type}}(newValue{{^has_getter}}!{{/has_getter}}.rawValue)))
+			{{setter_c_name}}(cPtr, Linphone{{{return}}}(rawValue: {{enum_type}}(newValue{{^has_getter}}!{{/has_getter}}.rawValue)))
 			{{/is_enum}}
 			{{#is_int}}
-			{{#exception}}let exception_result = {{/exception}}{{setter_c_name}}(cPtr, {{int_method}}(newValue))
+			{{setter_c_name}}(cPtr, {{int_method}}(newValue))
 			{{/is_int}}
 			{{#is_generic}}
-			{{#exception}}let exception_result = {{/exception}}{{setter_c_name}}(cPtr, newValue)
+			{{setter_c_name}}(cPtr, newValue)
 			{{/is_generic}}
 			{{#is_string_list}}
 			var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
@@ -347,27 +361,66 @@ public class {{className}} : LinphoneObject
 				let sData:NSString = data as NSString
 				cList = bctbx_list_append(cList, unsafeBitCast(sData.utf8String, to: UnsafeMutablePointer<CChar>.self))
 			}
-			{{#exception}}let exception_result = {{/exception}}{{setter_c_name}}(cPtr, cList)
+			{{setter_c_name}}(cPtr, cList)
 			{{/is_string_list}}
 			{{#is_class_list}}
 			var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
 			for data in newValue {
 				cList = bctbx_list_append(cList, UnsafeMutableRawPointer(data.cPtr))
 			}
-			{{#exception}}let exception_result = {{/exception}}{{setter_c_name}}(cPtr, cList)
+			{{setter_c_name}}(cPtr, cList)
 			{{/is_class_list}}
-			{{#exception}}
-			if (exception_result != 0) {
-				print("{{property_name}} setter returned value \(exception_result)")
-			}
-			{{/exception}}
 		}
+	{{/exception}}
 	{{/has_setter}}
 	}
+	{{#has_setter}}
+	{{#exception}}
+
+	func {{func_name}}(newValue: {{{return}}}) throws
+	{
+		{{#is_string}}
+		let exception_result = {{setter_c_name}}(cPtr, newValue)
+		{{/is_string}}
+		{{#is_bool}}
+		let exception_result = {{setter_c_name}}(cPtr, newValue==true ? 1:0)
+		{{/is_bool}}
+		{{#is_class}}
+		let exception_result = {{setter_c_name}}(cPtr, newValue.cPtr)
+		{{/is_class}}
+		{{#is_enum}}
+		let exception_result = {{setter_c_name}}(cPtr, Linphone{{{return}}}(rawValue: {{enum_type}}(newValue{{^has_getter}}!{{/has_getter}}.rawValue)))
+		{{/is_enum}}
+		{{#is_int}}
+		let exception_result = {{setter_c_name}}(cPtr, {{int_method}}(newValue))
+		{{/is_int}}
+		{{#is_generic}}
+		let exception_result = {{setter_c_name}}(cPtr, newValue)
+		{{/is_generic}}
+		{{#is_string_list}}
+		var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
+		for data in newValue {
+			let sData:NSString = data as NSString
+			cList = bctbx_list_append(cList, unsafeBitCast(sData.utf8String, to: UnsafeMutablePointer<CChar>.self))
+		}
+		let exception_result = {{setter_c_name}}(cPtr, cList)
+		{{/is_string_list}}
+		{{#is_class_list}}
+		var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
+		for data in newValue {
+			cList = bctbx_list_append(cList, UnsafeMutableRawPointer(data.cPtr))
+		}
+		let exception_result = {{setter_c_name}}(cPtr, cList)
+		{{/is_class_list}}
+		guard exception_result == 0 else {
+			throw LinphoneError.exception(result: "username setter returned value \(exception_result)")
+		}
+	}
+	{{/exception}}
+	{{/has_setter}}
 	{{/has_property}}
 	{{#listener}}
-	{{#impl}}
-	func {{name}}({{#args}}delegate: {{className}}Delegate{{/args}}){{#return}} -> {{className}}Delegate?{{/return}}
+	func {{name}}({{#args}}delegate: {{className}}Delegate{{/args}}){{#property_return}} -> {{className}}Delegate?{{/property_return}}
 	{
 		{{#getListener}}
 		let cObject = {{c_name}}(cPtr)
@@ -384,16 +437,14 @@ public class {{className}} : LinphoneObject
 		{{c_name}}(cPtr, delegate.cPtr)
 		{{/removeListener}}
 	}
-	{{/impl}}
 	{{/listener}}
-	{{^listener}}
 	{{#impl}}
 	{{#doc}}
 	{{#lines}}
 	/// {{{line}}}
 	{{/lines}}
 	{{/doc}}
-	{{static}} func {{name}}({{{args}}}) {{#return}}-> {{{type}}}{{#is_string}}?{{/is_string}}{{/return}}
+	{{static}} func {{name}}({{{args}}}){{#exception}} throws{{/exception}} {{#return}}-> {{{type}}}{{#is_string}}?{{/is_string}}{{/return}}
 	{
 		{{#is_string}}
 		{{return}}charArrayToString(charPointer: {{c_name}}({{cPtr}}{{{c_args}}}))
@@ -407,24 +458,24 @@ public class {{className}} : LinphoneObject
 		{{#is_enum}}
 		{{#exception}}let exception_result = {{/exception}}{{#return}}{{return}}{{{type}}}(rawValue: Int({{/return}}{{c_name}}({{cPtr}}{{{c_args}}}){{#return}}.rawValue))!{{/return}}
 		{{#exception}}
-		if (exception_result != 0) {
-			print("{{name}} returned value \(exception_result)")
+		guard exception_result == 0 else {
+			throw LinphoneError.exception(result: "{{name}} returned value \(exception_result)")
 		}
 		{{/exception}}
 		{{/is_enum}}
 		{{#is_int}}
 		{{#exception}}let exception_result = {{/exception}}{{return}}{{{type}}}({{c_name}}({{cPtr}}{{{c_args}}}))
 		{{#exception}}
-		if (exception_result != 0) {
-			print("{{name}} returned value \(exception_result)")
+		guard exception_result == 0 else {
+			throw LinphoneError.exception(result: "{{name}} returned value \(exception_result)")
 		}
 		{{/exception}}
 		{{/is_int}}
 		{{#is_generic}}
 		{{#exception}}let exception_result = {{/exception}}{{return}}{{c_name}}({{cPtr}}{{{c_args}}})
 		{{#exception}}
-		if (exception_result != 0) {
-			print("{{name}} returned value \(exception_result)")
+		guard exception_result == 0 else {
+			throw LinphoneError.exception(result: "{{name}} returned value \(exception_result)")
 		}
 		{{/exception}}
 		{{/is_generic}}
@@ -449,7 +500,6 @@ public class {{className}} : LinphoneObject
 		{{/is_class_list}}
 	}
 	{{/impl}}
-	{{/listener}}
 	{{/dllImports}}
 }
 {{/_class}}
