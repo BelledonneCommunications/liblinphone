@@ -1314,7 +1314,7 @@ class SwiftLangTranslator(CLikeLangTranslator):
 				if type(_type.parent) is Argument:
 					return 'String'
 				else:
-					res = 'IntPtr' # Return as IntPtr and get string with Marshal.PtrToStringAnsi()
+					res = 'IntPtr' # TODO check
 			else:
 				return 'String'
 		elif _type.name == 'character':
@@ -1323,9 +1323,9 @@ class SwiftLangTranslator(CLikeLangTranslator):
 			else:
 				res = 'CChar'
 		elif _type.name == 'time':
-			res = 'Int' #TODO check
+			res = 'Int'
 		elif _type.name == 'size':
-			res = 'Int' #TODO check
+			res = 'Int'
 		elif _type.name == 'floatant':
 			if _type.size is not None and _type.isref:
 				return 'UnsafeMutablePointer<Float>'
@@ -1334,7 +1334,7 @@ class SwiftLangTranslator(CLikeLangTranslator):
 
 		elif _type.name == 'string_array':
 			if dllImport or type(_type.parent) is Argument:
-				return 'IntPtr'
+				return 'IntPtr' # TODO:check
 			else:
 				return '[String]'
 		else:
