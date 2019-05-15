@@ -327,6 +327,12 @@ class Enum(DocumentableObject):
 				return False
 		return True
 
+	@property
+	def isFlag(self):
+		for enumerator in self.enumerators:
+			if isinstance(enumerator.value, Flag):
+				return True
+		return False
 
 class Argument(DocumentableObject):
 	def __init__(self, name, argType, optional=False, default=None):
@@ -1294,14 +1300,15 @@ class SwiftLangTranslator(CLikeLangTranslator):
 			else:
 				res = 'Bool'
 		elif _type.name == 'integer':
-
-			if _type.isUnsigned:
-				if _type.size is not None and _type.isref:
-					res = 'UnsafePointer<UInt8>'
-				else:
-					res = 'UInt'
-			else:
+			if _type.size is None:
 				res = 'Int'
+			else:
+				res = 'Int{0}'.format(_type.size)
+			if _type.isUnsigned:
+				res = 'U' + res
+			if _type.isref:
+				res = 'UnsafePointer<' + res + '>'
+
 		elif _type.name == 'string':
 			if dllImport:
 				if type(_type.parent) is Argument:
