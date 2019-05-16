@@ -162,6 +162,10 @@ class SwiftTranslator(object):
 		listenerDict['delegate']['cb_name'] = method.name.to_snake_case()
 		listenerDict['delegate']['interfaceClassName'] = listenedClass.name.translate(self.nameTranslator)
 
+		listenerDict['delegate']['type'] = method.returnType.translate(self.langTranslator, dllImport=False)
+		listenerDict['delegate']['return_class'] = type(method.returnType) is AbsApi.ClassType
+		listenerDict['delegate']['return'] = "OpaquePointer?" if listenerDict['delegate']['return_class'] else "Void"
+
 		listenerDict['delegate']['params_public'] = ""
 		listenerDict['delegate']['params_private'] = ""
 		listenerDict['delegate']['params'] = ""
