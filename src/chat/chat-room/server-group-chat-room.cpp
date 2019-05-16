@@ -100,10 +100,12 @@ void ServerGroupChatRoomPrivate::setState (ChatRoom::State state) {
 			}else{
 				bool atLeastOneDeviceJoining = false;
 				bool atLeastOneDevicePresent = false;
+				bool atLeastOneDeviceLeaving = false;
 				for (const auto &device : participant->getPrivate()->getDevices()) {
 					switch (device->getState()) {
 						case ParticipantDevice::State::ScheduledForLeaving:
 						case ParticipantDevice::State::Leaving:
+							atLeastOneDeviceLeaving = true;
 							break;
 						case ParticipantDevice::State::ScheduledForJoining:
 						case ParticipantDevice::State::Joining:
@@ -116,7 +118,10 @@ void ServerGroupChatRoomPrivate::setState (ChatRoom::State state) {
 							break;
 					}
 				}
-				if (atLeastOneDevicePresent || atLeastOneDeviceJoining){
+				//Basically the only case where this participant is not authorized is in case it was removed from the room but not all
+				//its devices were "BYEed" yet. This is what the line below is testing. Might be better to add a new state in the participant Class,
+				// but it's not the case yet.
+				if (atLeastOneDevicePresent || atLeastOneDeviceJoining || atLeastOneDeviceLeaving == false ){
 					authorizedParticipants.push_back(participant);
 				}
 			}
@@ -227,9 +232,14 @@ void ServerGroupChatRoomPrivate::requestDeletion(){
 	 * to the C++ object.
 	 * The destruction is defered to next main loop iteration, in order to make the self-destruction outside of the call stack that leaded to it.
 	 */
-	q->getCore()->doLater([q](){
-		LinphoneChatRoom * cChatRoom = L_GET_C_BACK_PTR(q);
-		if (cChatRoom) linphone_chat_room_unref(cChatRoom);
+	//just in case ServerGroupChatRoom is destroyed before lambda is executed
+	std::weak_ptr<ChatRoom> cppChatRoom(q->getSharedFromThis());
+	q->getCore()->doLater([cppChatRoom](){
+		auto obj = cppChatRoom.lock();
+		if (obj) {
+			LinphoneChatRoom * cChatRoom = L_GET_C_BACK_PTR(obj);
+			if (cChatRoom) linphone_chat_room_unref(cChatRoom);
+		}
 	});
 }
 
@@ -403,6 +413,7 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<const Parti
 	
 	for (const auto &p : authorizedParticipants) {
 		if (participant->getAddress() == p->getAddress()) {
+			lInfo() << q <<" 'participant ' "<< p->getAddress() <<" no more authorized'";
 			authorizedParticipants.remove(p);
 			break;
 		}
@@ -756,6 +767,8 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 		}else{
 			setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
 		}
+	} else {
+		lWarning()<< q << ": Participant device " << participant << " cannot be added because not authorized";
 	}
 }
 
@@ -987,42 +1000,27 @@ bool ServerGroupChatRoomPrivate::allDevicesLeft(const std::shared_ptr<Participan
 
 void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<ParticipantDevice> &device) {
 	L_Q();
-	L_Q_T(LocalConference, qConference);
 
 	lInfo() << q << ": Participant device '" << device->getAddress().asString() << "' left";
 	
 	if (! (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) ){
 		shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
-
-		if (allDevicesLeft(participant)) {
-			/* Handle the case where a participant is removed forcibly because all its devices have been retired. */
-			if (findAuthorizedParticipant(participant->getAddress()) != nullptr) {
-				lInfo() << q << ": Removing participant '" << participant->getAddress().asString() << "' since it has no device left";
-				q->removeParticipant(participant);
-			}
-			/* When all devices have left, we can get rid of our reginfo subscription. */
+		if (allDevicesLeft(participant) && findAuthorizedParticipant(participant->getAddress()) == nullptr) {
+			lInfo() << q << ": Participant '" << participant->getAddress().asString() << "'removed and last device left, unsubscribing";
 			unSubscribeRegistrationForParticipant(participant->getAddress());
-			/* And remove the existence of this participant in the chatroom*/
-			q->LocalConference::removeParticipant(participant);
 		}
-
-		if (qConference->getPrivate()->participants.size() == 0) {
-			lInfo() << q << ": No participant left, deleting the chat room";
-			requestDeletion();
+	}
+	/* if all devices of participants are left we'll delete the chatroom*/
+	bool allLeft = true;
+	for (const auto &participant : q->LocalConference::getParticipants()){
+		if (!allDevicesLeft(participant)){
+			allLeft = false;
+			break;
 		}
-	}else{
-		/* For 1 to 1 chatrooms, if all devices of both participants are left we'll delete the chatroom*/
-		bool allLeft = true;
-		for (const auto &participant : q->getParticipants()){
-			if (!allDevicesLeft(participant)){
-				allLeft = false;
-				break;
-			}
-		}
-		if (allLeft){
-			lInfo() << q << ": No participant left, deleting the chat room";
-			requestDeletion();
-		}
+	}
+	if (allLeft){
+		lInfo() << q << ": No participant left, deleting the chat room";
+		requestDeletion();
 	}
 }
 
