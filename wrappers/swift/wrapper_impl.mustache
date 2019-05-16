@@ -122,11 +122,11 @@ enum LinphoneError: Error {
 {{#interfaces}}
 {{#interface}}
 
-public class {{interfaceName}} : LinphoneObjectDelegate
+open class {{interfaceName}} : LinphoneObjectDelegate
 {
 	var cPtr: OpaquePointer
 
-	init() {
+	public init() {
 		self.cPtr = {{create_user_data_name}}(linphone_factory_get())
 		belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()), nil)
 		{{#methods}}
@@ -157,7 +157,7 @@ public class {{interfaceName}} : LinphoneObjectDelegate
 
 	{{#methods}}
 	{{#delegate}}
-	func {{cb_name}}({{{params_public}}}){{#return_class}} -> {{type}}? {return nil}{{/return_class}}{{^return_class}} {}{{/return_class}}
+	open func {{cb_name}}({{{params_public}}}){{#return_class}} -> {{type}}? {return nil}{{/return_class}}{{^return_class}} {}{{/return_class}}
 	{{/delegate}}
 	{{/methods}}
 }
@@ -192,17 +192,6 @@ public class {{className}} : LinphoneObject
 		}
 	}
 
-	{{#isLinphoneFactory}}
-	static var Instance:Factory?
-
-	static func get() -> Factory {
-		if Instance == nil {
-			Instance = Factory(cPointer: linphone_factory_get())
-		}
-		return Instance!
-	}
-
-	{{/isLinphoneFactory}}
 	{{#isLinphoneCall}}
 	/// Get the native window handle of the video window, casted as an unsigned long.
 	/*public var nativeVideoWindowId: UnsafeMutableRawPointer?
@@ -266,7 +255,7 @@ public class {{className}} : LinphoneObject
 	/// {{{line}}}
 	{{/lines}}
 	{{/doc}}
-	public var {{property_name}}: {{{return}}}{{{return_default}}}
+	{{static}}public var {{property_name}}: {{{return}}}{{{return_default}}}
 	{
 	{{#has_getter}}
 	{{#has_setter}}
@@ -377,7 +366,7 @@ public class {{className}} : LinphoneObject
 	{{#has_setter}}
 	{{#exception}}
 
-	func {{func_name}}(newValue: {{{return}}}) throws
+	public func {{func_name}}(newValue: {{{return}}}) throws
 	{
 		{{#is_string}}
 		let exception_result = {{setter_c_name}}(cPtr, newValue)
@@ -420,7 +409,7 @@ public class {{className}} : LinphoneObject
 	{{/has_setter}}
 	{{/has_property}}
 	{{#listener}}
-	func {{name}}({{#args}}delegate: {{className}}Delegate{{/args}}){{#property_return}} -> {{className}}Delegate?{{/property_return}}
+	public func {{name}}({{#args}}delegate: {{className}}Delegate{{/args}}){{#property_return}} -> {{className}}Delegate?{{/property_return}}
 	{
 		{{#getListener}}
 		let cObject = {{c_name}}(cPtr)
@@ -444,7 +433,7 @@ public class {{className}} : LinphoneObject
 	/// {{{line}}}
 	{{/lines}}
 	{{/doc}}
-	{{static}} func {{name}}({{{args}}}){{#exception}} throws{{/exception}} {{#return}}-> {{{type}}}{{#is_string}}?{{/is_string}}{{/return}}
+	{{static}}public func {{name}}({{{args}}}){{#exception}} throws{{/exception}} {{#return}}-> {{{type}}}{{#is_string}}?{{/is_string}}{{/return}}
 	{
 		{{#is_string}}
 		{{return}}charArrayToString(charPointer: {{c_name}}({{cPtr}}{{{c_args}}}))
