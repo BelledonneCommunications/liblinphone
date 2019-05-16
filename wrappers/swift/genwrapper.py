@@ -355,7 +355,7 @@ class SwiftTranslator(object):
     def translate_property_getter(self, prop, name, static=False):
 		methodDict = self.translate_method(prop, static, False)
 
-		methodDict['property_name'] = name
+		methodDict['property_name'] = "Instance" if name == "get" else name
 		methodDict['has_property'] = True
 		methodDict['has_getter'] = True
 		methodDict['has_setter'] = False
@@ -378,6 +378,7 @@ class SwiftTranslator(object):
 		methodDict['is_enum'] = self.is_linphone_type(prop.returnType, False, False) and type(prop.returnType) is AbsApi.EnumType
 		methodDict['is_generic'] = self.is_generic(methodDict)
 		methodDict['cPtr'] = '' if static else 'cPtr'
+		methodDict['static'] = 'static ' if static else ''
 		methodDict['isNotConst'] = not prop.returnType.isconst
 		methodDict['isFlag'] = methodDict['is_enum'] and prop.returnType.desc.isFlag
 
