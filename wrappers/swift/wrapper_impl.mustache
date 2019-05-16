@@ -132,7 +132,7 @@ public class {{interfaceName}} : LinphoneObjectDelegate
 		{{#methods}}
 		{{#delegate}}
 
-		{{c_name_setter}}(cPtr, { ({{{params_private}}}) -> Void in
+		{{c_name_setter}}(cPtr, { ({{{params_private}}}) -> {{return}} in
 			let sObject = {{interfaceClassName}}.getSobject(cObject: {{first_param}})
 			let delegate = sObject?.currentCallbacks
 			{{#classLists}}
@@ -144,7 +144,7 @@ public class {{interfaceName}} : LinphoneObjectDelegate
 				{{argName}}cList = UnsafePointer<bctbx_list_t>({{argName}}cList!.pointee.next)
 			}
 			{{/classLists}}
-			delegate?.{{cb_name}}({{{params}}})
+			{{#return_class}}return {{/return_class}}delegate?.{{cb_name}}({{{params}}}){{#return_class}}?.cPtr{{/return_class}}
 		})
 		{{/delegate}}
 		{{/methods}}
@@ -157,7 +157,7 @@ public class {{interfaceName}} : LinphoneObjectDelegate
 
 	{{#methods}}
 	{{#delegate}}
-	func {{cb_name}}({{{params_public}}}){}
+	func {{cb_name}}({{{params_public}}}){{#return_class}} -> {{type}}? {return nil}{{/return_class}}{{^return_class}} {}{{/return_class}}
 	{{/delegate}}
 	{{/methods}}
 }
