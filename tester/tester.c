@@ -125,17 +125,19 @@ void reset_counters( stats* counters) {
 }
 
 void configure_lc(LinphoneCore *lc, const char *path, void *user_data) {
-	char *dnsuserhostspath = NULL;
-	dnsuserhostspath = userhostsfile[0]=='/' ? ms_strdup(userhostsfile) : ms_strdup_printf("%s/%s", path, userhostsfile);
-
-	linphone_core_set_user_data(lc, user_data);
-
 	linphone_core_enable_ipv6(lc, liblinphonetester_ipv6);
 	linphone_core_set_sip_transport_timeout(lc, liblinphonetester_transport_timeout);
+	linphone_core_set_user_data(lc, user_data);
 
-	sal_enable_test_features(linphone_core_get_sal(lc),TRUE);
-	sal_set_dns_user_hosts_file(linphone_core_get_sal(lc), dnsuserhostspath);
-	ms_free(dnsuserhostspath);
+	sal_enable_test_features(linphone_core_get_sal(lc), TRUE);
+
+	if (strcmp(userhostsfile, "none") != 0) {
+		char *dnsuserhostspath = strchr(userhostsfile, '/') ? ms_strdup(userhostsfile) : ms_strdup_printf("%s/%s", path, userhostsfile);
+		sal_set_dns_user_hosts_file(linphone_core_get_sal(lc), dnsuserhostspath);
+		ms_free(dnsuserhostspath);
+	} else {
+		bctbx_message("no dns-hosts file used");
+	}
 }
 
 LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, LinphoneConfig *config, void *user_data) {
