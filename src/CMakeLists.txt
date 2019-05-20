@@ -434,6 +434,7 @@ if(ENABLE_SHARED)
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/cpim_grammar"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/rootca.pem"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ringback.wav"
+		"${CMAKE_CURRENT_SOURCE_DIR}/../share/Modules"
 	) # Keep it relative to current dir to allow CMakeList inclusion
 	add_library(linphone SHARED ${LINPHONE_RESOURCES} ${LINPHONE_HEADER_FILES}
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
