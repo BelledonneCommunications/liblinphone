@@ -14,24 +14,37 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU General Public Liscense
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
+set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
+enable_language(Swift)
 
-add_custom_command(OUTPUT LinphoneWrapper.cs
+add_custom_command(OUTPUT LinphoneWrapper.swift
 	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/genwrapper.py" "${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml"
 	DEPENDS ${PROJECT_SOURCE_DIR}/tools/genapixml.py
 	${PROJECT_SOURCE_DIR}/tools/metadoc.py
+	${PROJECT_SOURCE_DIR}/tools/metaname.py
 	${PROJECT_SOURCE_DIR}/tools/abstractapi.py
+	${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml/index.xml
 	genwrapper.py
 	wrapper_impl.mustache
 	linphone-doc
 )
 
-add_custom_target(linphonecs ALL DEPENDS LinphoneWrapper.cs)
+add_library(linphonesw SHARED
+	LinphoneWrapper.swift
+)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.cs
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/linphonecs
+target_link_libraries(linphonesw
+	PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} linphone
+)
+
+set_target_properties(linphonesw PROPERTIES
+	FRAMEWORK TRUE
+	LINKER_LANGUAGE SWIFT
+	MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphonesw
+	MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
 )

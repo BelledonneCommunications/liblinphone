@@ -1,0 +1,6 @@
+module linphone {
+	umbrella header "Modules/include.h"
+
+	export *
+	module * { export * }
+}
