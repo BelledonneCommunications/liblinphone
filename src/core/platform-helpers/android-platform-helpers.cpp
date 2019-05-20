@@ -53,6 +53,7 @@ public:
 
 	void setVideoPreviewWindow (void *windowId) override;
 	void setVideoWindow (void *windowId) override;
+	void resizeVideoPreview (int width, int height) override;
 
 	bool isNetworkReachable () override;
 	void onWifiOnlyEnabled (bool enabled) override;
@@ -87,6 +88,7 @@ private:
 	jmethodID mGetNativeLibraryDirId = nullptr;
 	jmethodID mSetNativeVideoWindowId = nullptr;
 	jmethodID mSetNativePreviewVideoWindowId = nullptr;
+	jmethodID mResizeVideoPreview = nullptr;
 	jmethodID mOnLinphoneCoreStartId = nullptr;
 	jmethodID mOnLinphoneCoreStopId = nullptr;
 	jmethodID mOnWifiOnlyEnabledId = nullptr;
@@ -140,6 +142,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 	mGetNativeLibraryDirId = getMethodId(env, klass, "getNativeLibraryDir", "()Ljava/lang/String;");
 	mSetNativeVideoWindowId = getMethodId(env, klass, "setVideoRenderingView", "(Ljava/lang/Object;)V");
 	mSetNativePreviewVideoWindowId = getMethodId(env, klass, "setVideoPreviewView", "(Ljava/lang/Object;)V");
+	mResizeVideoPreview = getMethodId(env, klass, "resizeVideoPreview", "(II)V");
 	mOnLinphoneCoreStartId = getMethodId(env, klass, "onLinphoneCoreStart", "(Z)V");
 	mOnLinphoneCoreStopId = getMethodId(env, klass, "onLinphoneCoreStop", "()V");
 	mOnWifiOnlyEnabledId = getMethodId(env, klass, "onWifiOnlyEnabled", "(Z)V");
@@ -271,6 +274,16 @@ void AndroidPlatformHelpers::setVideoWindow (void *windowId) {
 			env->CallVoidMethod(mJavaHelper, mSetNativeVideoWindowId, (jobject)windowId);
 		} else {
 			_setVideoWindow((jobject)windowId);
+		}
+	}
+}
+
+void AndroidPlatformHelpers::resizeVideoPreview (int width, int height) {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()->getCCore()));
+		if ((displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
+			env->CallVoidMethod(mJavaHelper, mResizeVideoPreview, width, height);
 		}
 	}
 }
