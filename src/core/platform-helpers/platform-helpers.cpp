@@ -94,6 +94,7 @@ void GenericPlatformHelpers::setVideoPreviewWindow (void *windowId) {}
 
 void GenericPlatformHelpers::setVideoWindow (void *windowId) {}
 
+void GenericPlatformHelpers::resizeVideoPreview (int width, int height) {}
 
 bool GenericPlatformHelpers::isNetworkReachable () {
 	return mNetworkReachable;

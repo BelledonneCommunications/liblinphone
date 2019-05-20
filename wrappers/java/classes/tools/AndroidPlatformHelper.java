@@ -50,6 +50,7 @@ import android.os.PowerManager.WakeLock;
 import android.os.Build;
 import android.view.Surface;
 import android.view.TextureView;
+import android.view.ViewGroup;
 
 import java.lang.Runnable;
 import java.net.InetAddress;
@@ -83,6 +84,7 @@ public class AndroidPlatformHelper {
 	private String mUserCertificatePath;
 	private Surface mSurface;
 	private SurfaceTexture mSurfaceTexture;
+	private TextureView mPreviewTextureView;
 	private boolean mDozeModeEnabled;
 	private BroadcastReceiver mDozeReceiver;
 	private IntentFilter mDozeIntentFilter;
@@ -358,8 +360,9 @@ public class AndroidPlatformHelper {
 				"or enable compatibility mode by setting displaytype=MSAndroidOpenGLDisplay in the [video] section your linphonerc factory configuration file" +
 				"so you can keep using your existing application code for managing video views.");
 		}
-		TextureView textureView = (TextureView)view;
-		textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+		mPreviewTextureView = (TextureView)view;
+		ViewGroup.LayoutParams lp = mPreviewTextureView.getLayoutParams();
+		mPreviewTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
 			@Override
 			public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
 				Log.i("[Platform Helper] Preview window surface is available");
@@ -368,13 +371,14 @@ public class AndroidPlatformHelper {
 
 			@Override
 			public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-
+				
 			}
 
 			@Override
 			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
 				Log.i("[Platform Helper] Preview window surface is no longer available");
 				setNativePreviewWindowId(mNativePtr, null);
+				mPreviewTextureView = null;
 				return false;
 			}
 
@@ -383,9 +387,9 @@ public class AndroidPlatformHelper {
 
 			}
 		});
-		if (textureView.isAvailable()) {
+		if (mPreviewTextureView.isAvailable()) {
 			Log.i("[Platform Helper] Preview window surface is available");
-			setNativePreviewWindowId(mNativePtr, textureView.getSurfaceTexture());
+			setNativePreviewWindowId(mNativePtr, mPreviewTextureView.getSurfaceTexture());
 		}
 	}
 
@@ -431,6 +435,61 @@ public class AndroidPlatformHelper {
 			mSurfaceTexture = textureView.getSurfaceTexture();
 			mSurface = new Surface(mSurfaceTexture);
 			setNativeVideoWindowId(mNativePtr, mSurface);
+		}
+	}
+
+	public synchronized void resizeVideoPreview(int width, int height) {
+		if (mPreviewTextureView != null) {
+			Log.i("[Platform Helper] Video preview size is now: " + width + "x" + height);
+			ViewGroup.LayoutParams lp = mPreviewTextureView.getLayoutParams();
+			Log.i("[Platform Helper] Preview layout params are: " + lp.width + ", " + lp.height);
+
+			int maxWidth, maxHeight;
+			if (lp.width == ViewGroup.LayoutParams.MATCH_PARENT) {
+				maxWidth = mPreviewTextureView.getWidth();
+			} else if (lp.width == ViewGroup.LayoutParams.WRAP_CONTENT) {
+				maxWidth = width;
+			} else {
+				maxWidth = lp.width;
+			}
+			if (lp.height == ViewGroup.LayoutParams.MATCH_PARENT) {
+				maxHeight = mPreviewTextureView.getHeight();
+			} else if (lp.height == ViewGroup.LayoutParams.WRAP_CONTENT) {
+				maxHeight = height;
+			} else {
+				maxHeight = lp.height;
+			}
+			Log.i("[Platform Helper] Preview max width: " + maxWidth + ", max height: " + maxHeight);
+
+			// A MATCH_PARENT will take over a WRAP_CONTENT or a fixed size and maintain ratio
+			if (lp.width == ViewGroup.LayoutParams.MATCH_PARENT && lp.height != ViewGroup.LayoutParams.MATCH_PARENT) {
+				lp.width = maxWidth;
+				lp.height = height * maxWidth / width;
+			} else if (lp.height == ViewGroup.LayoutParams.MATCH_PARENT && lp.width != ViewGroup.LayoutParams.MATCH_PARENT) {
+				lp.height = maxHeight;
+				lp.width = width * maxHeight / height;
+			}
+			// A WRAP_CONTENT won't be used if a fixed size is given for the other constraint 
+			else if (lp.width == ViewGroup.LayoutParams.WRAP_CONTENT && lp.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
+				lp.height = maxHeight;
+				lp.width = width * maxHeight / height;
+			} else if (lp.height == ViewGroup.LayoutParams.WRAP_CONTENT && lp.width != ViewGroup.LayoutParams.WRAP_CONTENT) {
+				lp.width = maxWidth;
+				lp.height = height * maxWidth / width;
+			} else {
+				if (width < height) {
+					lp.width = maxWidth;
+					lp.height = height * maxWidth / width;
+				} else {
+					lp.height = maxHeight;
+					lp.width = width * maxHeight / height;
+				}
+			}
+
+			Log.i("[Platform Helper] Preview layout params updated to: " + lp.width + ", " + lp.height);
+			mPreviewTextureView.setLayoutParams(lp);
+		} else {
+			Log.w("[Platform Helper] Couldn't resize video preview to: " + width + "x" + height + ", no texture view found");
 		}
 	}
 
