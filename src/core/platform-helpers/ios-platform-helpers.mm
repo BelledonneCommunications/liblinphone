@@ -68,6 +68,7 @@ public:
 	void setVideoPreviewWindow (void *windowId) override {}
 	string getDownloadPath () override {return Utils::getEmptyConstRefObject<string>();}
 	void setVideoWindow (void *windowId) override {}
+	void resizeVideoPreview (int width, int height) override {}
 
 	bool isNetworkReachable () override;
 	void onWifiOnlyEnabled (bool enabled) override;

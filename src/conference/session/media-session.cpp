@@ -3040,6 +3040,18 @@ void MediaSessionPrivate::startTextStream () {
 		lInfo() << "No valid text stream defined";
 }
 
+static void video_filter_callback(void *userdata, struct _MSFilter *f, unsigned int id, void *arg) {
+	switch(id) {
+		case MS_CAMERA_PREVIEW_SIZE_CHANGED: {
+			MSVideoSize size = *(MSVideoSize *)arg;
+			bctbx_message("Camera preview size changed: %ix%i", size.width, size.height);
+			LinphoneCore *lc = (LinphoneCore *)userdata;
+			linphone_core_resize_video_preview(lc, size.width, size.height);
+			break;
+		}
+	}
+}
+
 void MediaSessionPrivate::startVideoStream (CallSession::State targetState) {
 #ifdef VIDEO_ENABLED
 	L_Q();
@@ -3156,6 +3168,11 @@ void MediaSessionPrivate::startVideoStream (CallSession::State targetState) {
 							usedPt, &io);
 					}
 				}
+
+				MSVideoSize size = video_preview_get_current_size(videoStream);
+				linphone_core_resize_video_preview(q->getCore()->getCCore(), size.width, size.height);
+				ms_filter_add_notify_callback(videoStream->source, video_filter_callback, q->getCore()->getCCore(), TRUE);
+
 				ms_media_stream_sessions_set_encryption_mandatory(&videoStream->ms.sessions, isEncryptionMandatory());
 				if (listener)
 					listener->onResetFirstVideoFrameDecoded(q->getSharedFromThis());
@@ -4548,6 +4565,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 				video_stream_change_camera(d->videoStream, getCore()->getCCore()->video_conf.device);
 			else
 				video_stream_update_video_params(d->videoStream);
+			linphone_core_resize_video_preview(getCore()->getCCore(), vsize.width, vsize.height);
 		}
 	#endif
 	}

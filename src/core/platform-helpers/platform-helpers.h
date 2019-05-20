@@ -63,6 +63,7 @@ public:
 	virtual void setVideoPreviewWindow (void *windowId) = 0;
 	virtual std::string getDownloadPath () = 0;
 	virtual void setVideoWindow (void *windowId) = 0;
+	virtual void resizeVideoPreview (int width, int height) = 0;
 
 	// This method shall retrieve DNS server list from the platform and assign it to the core.
 	virtual bool isNetworkReachable () = 0;
@@ -111,6 +112,7 @@ public:
 
 	void setVideoPreviewWindow (void *windowId) override;
 	void setVideoWindow (void *windowId) override;
+	void resizeVideoPreview (int width, int height) override;
 
 	bool isNetworkReachable () override;
 	void onWifiOnlyEnabled (bool enabled) override;
