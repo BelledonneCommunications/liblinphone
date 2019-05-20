@@ -284,7 +284,7 @@ class CsharpTranslator(object):
 						else:
 							listenerDict['delegate']['params'] += "MarshalBctbxList<" + self.get_class_array_type(normalType) + ">(" + argName + ")"
 					else:
-						print 'Not supported yet: ' + delegate_name_public
+						print('Not supported yet: ' + delegate_name_public)
 						return {}
 			else:
 				listenerDict['delegate']['first_param'] = argName
