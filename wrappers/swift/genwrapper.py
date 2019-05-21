@@ -159,7 +159,7 @@ class SwiftTranslator(object):
 		delegate_name_public = method.name.translate(self.nameTranslator) + "Delegate"
 
 		listenerDict['delegate'] = {}
-		listenerDict['delegate']['cb_name'] = method.name.to_snake_case()
+		listenerDict['delegate']['cb_name'] = method.name.translate(self.nameTranslator)
 		listenerDict['delegate']['interfaceClassName'] = listenedClass.name.translate(self.nameTranslator)
 
 		listenerDict['delegate']['type'] = method.returnType.translate(self.langTranslator, dllImport=False)
@@ -195,7 +195,8 @@ class SwiftTranslator(object):
 						listenerDict['delegate']['classLists']['argName'] = argName
 						listenerDict['delegate']['params'] += argName + ": " + argName + "sList"
 				elif normalType == "String":
-						listenerDict['delegate']['params'] += argName + ": charArrayToString(charPointer: " + argName +")!"
+						listenerDict['delegate']['params'] += argName + ": charArrayToString(charPointer: " + argName +")"
+						normalType = "String?"
 				elif normalType == "Int":
 				        listenerDict['delegate']['params'] += argName + ": Int(" + argName + ")"
 				else:
