@@ -3169,9 +3169,11 @@ void MediaSessionPrivate::startVideoStream (CallSession::State targetState) {
 					}
 				}
 
-				MSVideoSize size = video_preview_get_current_size(videoStream);
-				linphone_core_resize_video_preview(q->getCore()->getCCore(), size.width, size.height);
-				ms_filter_add_notify_callback(videoStream->source, video_filter_callback, q->getCore()->getCCore(), FALSE);
+				if (videoStream->source) {
+					MSVideoSize size = video_preview_get_current_size(videoStream);
+					linphone_core_resize_video_preview(q->getCore()->getCCore(), size.width, size.height);
+					ms_filter_add_notify_callback(videoStream->source, video_filter_callback, q->getCore()->getCCore(), FALSE);
+				}
 
 				ms_media_stream_sessions_set_encryption_mandatory(&videoStream->ms.sessions, isEncryptionMandatory());
 				if (listener)

@@ -154,7 +154,16 @@ LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const Linphon
 		linphone_proxy_config_set_dial_prefix(cfg, buff);
 	}
 	if (linphone_proxy_config_get_server_addr(cfg) == NULL && creator->domain != NULL) {
-		linphone_proxy_config_set_server_addr(cfg, creator->domain);
+		char *url = ms_strdup_printf("sip:%s", creator->domain);
+		LinphoneAddress *proxy_addr = linphone_address_new(url);
+		if (proxy_addr) {
+			linphone_address_set_transport(proxy_addr, creator->transport);
+			linphone_proxy_config_set_server_addr(cfg, linphone_address_as_string_uri_only(proxy_addr));
+			linphone_address_unref(proxy_addr);
+		} else {
+			linphone_proxy_config_set_server_addr(cfg, creator->domain);
+		}
+		ms_free(url);
 	}
 
 	if (creator->idkey != NULL) {
@@ -435,7 +444,7 @@ LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_username(Linph
 		return LinphoneAccountCreatorUsernameStatusInvalid;
 	}
 
-	set_string(&creator->username, username, TRUE);
+	set_string(&creator->username, username, FALSE);
 	return LinphoneAccountCreatorUsernameStatusOk;
 }
 
@@ -480,7 +489,7 @@ LinphoneAccountCreatorPhoneNumberStatusMask linphone_account_creator_set_phone_n
 			}
 		}
 	}
-	set_string(&creator->phone_number, normalized_phone_number, TRUE);
+	set_string(&creator->phone_number, normalized_phone_number, FALSE);
 	return_status = LinphoneAccountCreatorPhoneNumberStatusOk;
 end:
 	ms_free(normalized_phone_number);
@@ -615,7 +624,7 @@ const char * linphone_account_creator_get_route(const LinphoneAccountCreator *cr
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_set_idkey(LinphoneAccountCreator *creator, const char *idkey) {
-	set_string(&creator->idkey, idkey, TRUE);
+	set_string(&creator->idkey, idkey, FALSE);
 	return LinphoneAccountCreatorStatusRequestOk;
 }
 
@@ -624,7 +633,7 @@ const char * linphone_account_creator_get_idkey(const LinphoneAccountCreator *cr
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_set_depends_on(LinphoneAccountCreator *creator, const char *depends_on) {
-	set_string(&creator->depends_on, depends_on, TRUE);
+	set_string(&creator->depends_on, depends_on, FALSE);
 	return LinphoneAccountCreatorStatusRequestOk;
 }
 
