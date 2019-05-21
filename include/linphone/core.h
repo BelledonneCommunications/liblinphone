@@ -1123,10 +1123,15 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_remove_listener(LinphoneC
 LINPHONE_PUBLIC void linphone_core_remove_callbacks(LinphoneCore *lc, const LinphoneCoreCbs *cbs);
 
 /**
- * Sets the user agent string used in SIP messages, ideally called just after linphone_core_new() or linphone_core_init().
- * @param[in] lc #LinphoneCore object
- * @param[in] ua_name The user agent name
- * @param[in] version The user agent version
+ * @brief Set the user agent string used in SIP messages.
+ *
+ * Set the user agent string used in SIP messages as "[ua_name]/[version]". No slash character will be printed if NULL is given to "version".
+ * If NULL is given to "ua_name" and "version" both, the User-agent header will be empty.
+ *
+ * This function should be called just after linphone_factory_create_core() ideally.
+ * @param[in] lc The core.
+ * @param[in] ua_name Name of the user agent.
+ * @param[in] version Version of the user agent.
  * @ingroup misc
 **/
 LINPHONE_PUBLIC void linphone_core_set_user_agent(LinphoneCore *lc, const char *ua_name, const char *version);

@@ -18,6 +18,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include <sstream>
+
 #include "linphone/api/c-content.h"
 #include "linphone/core_utils.h"
 #include "linphone/core.h"
@@ -3074,11 +3076,11 @@ static char _ua_name[64]="Linphone";
 static char _ua_version[64]=LIBLINPHONE_VERSION;
 
 void linphone_core_set_user_agent(LinphoneCore *lc, const char *name, const char *ver){
-	char ua_string[256];
-	snprintf(ua_string, sizeof(ua_string) - 1, "%s/%s", name?name:"", ver?ver:"");
+	ostringstream ua_string;
+	ua_string << (name ? name : "");
+	if (ver) ua_string << "/" << ver;
 	if (lc->sal) {
-		lc->sal->setUserAgent(ua_string);
-		lc->sal->appendStackStringToUserAgent();
+		lc->sal->setUserAgent(ua_string.str());
 	}
 }
 const char *linphone_core_get_user_agent(LinphoneCore *lc){
