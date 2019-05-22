@@ -129,7 +129,6 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 	cfg->lc = lc;
 	cfg->expires = lc ? lp_config_get_default_int(lc->config, "proxy", "reg_expires", 3600) : 3600;
 	cfg->reg_sendregister = lc ? !!lp_config_get_default_int(lc->config, "proxy", "reg_sendregister", 1) : 1;
-	cfg->reg_dependent_disabled = cfg->depends_on && !cfg->reg_sendregister;
 	cfg->dial_prefix = dial_prefix ? ms_strdup(dial_prefix) : NULL;
 	cfg->dial_escape_plus = lc ? !!lp_config_get_default_int(lc->config, "proxy", "dial_escape_plus", 0) : 0;
 	cfg->privacy = lc ? (LinphonePrivacyMask)lp_config_get_default_int(lc->config, "proxy", "privacy", LinphonePrivacyDefault) : (LinphonePrivacyMask)LinphonePrivacyDefault;
@@ -159,6 +158,7 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 		}
 	}
 	cfg->depends_on = depends_on ? ms_strdup(depends_on) : NULL;
+	cfg->reg_dependent_disabled = cfg->depends_on && !cfg->reg_sendregister;
 	if (idkey) {
 		cfg->idkey = ms_strdup(idkey);
 	} else {
@@ -269,9 +269,8 @@ void _linphone_proxy_config_destroy(LinphoneProxyConfig *cfg){
 	if (cfg->sent_headers != NULL) sal_custom_header_free(cfg->sent_headers);
 	if (cfg->pending_contact) linphone_address_unref(cfg->pending_contact);
 	if (cfg->refkey) ms_free(cfg->refkey);
-	if (cfg->depends_on) ms_free(cfg->depends_on);
-	if (cfg->dependency) cfg->dependency = NULL;
 	if (cfg->idkey) ms_free(cfg->idkey);
+	linphone_proxy_config_set_dependency(cfg, NULL);
 	if (cfg->nat_policy != NULL) {
 		linphone_nat_policy_unref(cfg->nat_policy);
 	}
@@ -433,13 +432,20 @@ bool_t linphone_proxy_config_check(LinphoneCore *lc, LinphoneProxyConfig *cfg){
 		return FALSE;
 	if (cfg->identity_address==NULL)
 		return FALSE;
-	if (cfg->depends_on != NULL) {
+	if (cfg->dependency != NULL && cfg->depends_on != NULL) {
+		if (linphone_core_get_proxy_config_by_idkey(lc, cfg->depends_on) != cfg->dependency) {
+			ms_warning("LinphoneProxyConfig as a dependency but idkeys do not match: [%s] != [%s]", cfg->depends_on, cfg->dependency->idkey);
+			return FALSE;
+		}
+	}
+	if (cfg->depends_on != NULL && cfg->dependency == NULL) {
 		LinphoneProxyConfig *dependency = linphone_core_get_proxy_config_by_idkey(lc, cfg->depends_on);
+
 		if (dependency == NULL) {
-			ms_message("LinphoneProxyConfig marked as dependent but no proxy configuration found for idkey [%s]", cfg->depends_on);
+			ms_warning("LinphoneProxyConfig marked as dependent but no proxy configuration found for idkey [%s]", cfg->depends_on);
 			return FALSE;
 		} else {
-			cfg->dependency = dependency;
+			cfg->dependency = linphone_proxy_config_ref(dependency);
 		}
 	}
 	return TRUE;
@@ -1098,17 +1104,20 @@ void linphone_proxy_config_set_custom_header(LinphoneProxyConfig *cfg, const cha
 	cfg->register_changed = TRUE;
 }
 
-const LinphoneProxyConfig *linphone_proxy_config_get_dependency(LinphoneProxyConfig *cfg) {
+LinphoneProxyConfig *linphone_proxy_config_get_dependency(LinphoneProxyConfig *cfg) {
 	return cfg->dependency;
 }
 
-void linphone_proxy_config_set_dependency(LinphoneProxyConfig *cfg, const LinphoneProxyConfig *dependency) {
+void linphone_proxy_config_set_dependency(LinphoneProxyConfig *cfg, LinphoneProxyConfig *dependency) {
 	if (cfg) {
 		if (cfg->depends_on) {
 			ms_free(cfg->depends_on);
 		}
+		if (cfg->dependency) {
+			linphone_proxy_config_unref(cfg->dependency);
+		}
 		if (dependency) {
-			cfg->dependency = dependency;
+			cfg->dependency = linphone_proxy_config_ref(dependency);
 			cfg->depends_on = ms_strdup(dependency->idkey);
 		} else {
 			cfg->dependency = NULL;
@@ -1129,7 +1138,7 @@ void linphone_proxy_config_set_idkey(LinphoneProxyConfig *cfg, const char *idkey
 }
 
 
-LinphoneStatus linphone_core_add_proxy_config(LinphoneCore *lc, LinphoneProxyConfig *cfg){
+LinphoneStatus linphone_core_add_proxy_config(LinphoneCore *lc, LinphoneProxyConfig *cfg) {
 	if (!linphone_proxy_config_check(lc,cfg)) {
 		return -1;
 	}

@@ -137,7 +137,7 @@ struct _LinphoneProxyConfig
 	char *refkey;
 	char *sip_etag; /*publish context*/
 	char *depends_on; /* NULL or points to another proxy_config->idkey */
-	const LinphoneProxyConfig *dependency; /* Points to another proxy config if depends_on is defined */
+	LinphoneProxyConfig *dependency; /* Points to another proxy config if depends_on is defined */
 	char *idkey; /* NULL or referenced by another proxy_config->depends_on */
 	char *conference_factory_uri;
 

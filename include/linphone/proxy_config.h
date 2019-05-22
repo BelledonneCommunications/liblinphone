@@ -592,7 +592,7 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_ref_key(LinphoneProxyConfig *cfg,
  * @param[in] cfg #LinphoneProxyConfig object.
  * @return The proxy config this one is dependent upon, or NULL if not marked dependent
  **/
-LINPHONE_PUBLIC const LinphoneProxyConfig *linphone_proxy_config_get_dependency(LinphoneProxyConfig *cfg);
+LINPHONE_PUBLIC LinphoneProxyConfig *linphone_proxy_config_get_dependency(LinphoneProxyConfig *cfg);
 
 /**
  * Mark	this proxy configuration as being dependent on the given one.
@@ -609,7 +609,7 @@ LINPHONE_PUBLIC const LinphoneProxyConfig *linphone_proxy_config_get_dependency(
  * @param[in] cfg #LinphoneProxyConfig object.
  * @param[in] depends_on The reference key of a master #LinphoneProxyConfig
  **/
-LINPHONE_PUBLIC void linphone_proxy_config_set_dependency(LinphoneProxyConfig *cfg, const LinphoneProxyConfig *dependency);
+LINPHONE_PUBLIC void linphone_proxy_config_set_dependency(LinphoneProxyConfig *cfg, LinphoneProxyConfig *dependency);
 
 /**
  * Get the idkey property of a #LinphoneProxyConfig.

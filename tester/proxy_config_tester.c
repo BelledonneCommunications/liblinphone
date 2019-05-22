@@ -312,16 +312,14 @@ static void dependent_proxy_config(void) {
 
 	if (BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived, 1, 10000))) {
 		linphone_call_accept(linphone_core_get_current_call(marie->lc));
-
 		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
-
 		end_call(pauline, marie);
 	}
 
 	linphone_address_unref(marie_dependent_addr);
-	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
 //Dependent proxy config should not register if its dependency is not in a LinphoneRegistrationOk state
@@ -388,9 +386,11 @@ static void invalid_dependent_proxy_config(void) {
 
 	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 0, int, "%d");
 
-	linphone_proxy_config_set_idkey(master, "invalid");
-
 	linphone_core_add_proxy_config(marie->lc, master);
+
+	linphone_proxy_config_set_dependency(dependent, master);
+
+	linphone_proxy_config_set_idkey(master, "invalid");
 
 	//Adding a dependent proxy config linking to inexistent	dependency should fail
 	BC_ASSERT_EQUAL(linphone_core_add_proxy_config(marie->lc, dependent), -1, int, "%d");
