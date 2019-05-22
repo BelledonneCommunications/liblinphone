@@ -621,6 +621,8 @@ void linphone_account_creator_set_current_callbacks(LinphoneAccountCreator *crea
 LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_cbs_new(void);
 void linphone_xml_rpc_request_set_current_callbacks(LinphoneXmlRpcRequest *request, LinphoneXmlRpcRequestCbs *cbs);
 
+void linphone_core_invalidate_friends_maps(LinphoneCore *lc);
+
 #ifdef __cplusplus
 }
 #endif

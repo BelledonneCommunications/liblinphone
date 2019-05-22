@@ -3040,6 +3040,7 @@ void MediaSessionPrivate::startTextStream () {
 		lInfo() << "No valid text stream defined";
 }
 
+#ifdef VIDEO_ENABLED
 static void video_filter_callback(void *userdata, struct _MSFilter *f, unsigned int id, void *arg) {
 	switch(id) {
 		case MS_CAMERA_PREVIEW_SIZE_CHANGED: {
@@ -3051,6 +3052,7 @@ static void video_filter_callback(void *userdata, struct _MSFilter *f, unsigned 
 		}
 	}
 }
+#endif
 
 void MediaSessionPrivate::startVideoStream (CallSession::State targetState) {
 #ifdef VIDEO_ENABLED

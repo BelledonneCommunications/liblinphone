@@ -157,7 +157,7 @@ static char * create_resource_list_xml(const LinphoneFriendList *list) {
 
 	bctbx_iterator_t* it = bctbx_map_cchar_begin(list->friends_map_uri);
 	bctbx_iterator_t* end = bctbx_map_cchar_end(list->friends_map_uri);
-	if (it == end) {
+	if (bctbx_iterator_cchar_equals(it, end)) {
 		ms_warning("%s: Empty list in subscription, ignored.", __FUNCTION__);
 		return NULL;
 	}
@@ -652,8 +652,7 @@ void linphone_friend_list_invalidate_friends_maps(LinphoneFriendList *list) {
 
 LinphoneFriendListStatus linphone_friend_list_import_friend(LinphoneFriendList *list, LinphoneFriend *lf, bool_t synchronize) {
 	if (lf->friend_list) {
-		if (lf->friend_list)
-			ms_error("linphone_friend_list_add_friend(): invalid friend, already in list");
+		ms_error("linphone_friend_list_add_friend(): invalid friend, already in list");
 		return LinphoneFriendListInvalidFriend;
 	}
 	
@@ -891,18 +890,16 @@ bctbx_list_t * linphone_friend_list_find_friends_by_uri(const LinphoneFriendList
 	bctbx_list_t *result = NULL;
 	bctbx_iterator_t *it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
 	bctbx_iterator_t *end = bctbx_map_cchar_end(list->friends_map_uri);
-	if (!bctbx_iterator_cchar_equals(it, end)) {
-		while (!bctbx_iterator_cchar_equals(it, end)) {
-			const bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
-			const char *friend_uri = bctbx_pair_cchar_get_first(reinterpret_cast<const bctbx_pair_cchar_t*>(pair));
-			if (uri && friend_uri && strcmp(friend_uri, uri) == 0) {
-				LinphoneFriend *lf = (LinphoneFriend *)bctbx_pair_cchar_get_second(pair);
-				result = bctbx_list_prepend(result, linphone_friend_ref(lf));
-			} else {
-				break;
-			}
-			it = bctbx_iterator_cchar_get_next(it);
+	while (!bctbx_iterator_cchar_equals(it, end)) {
+		const bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
+		const char *friend_uri = bctbx_pair_cchar_get_first(reinterpret_cast<const bctbx_pair_cchar_t*>(pair));
+		if (uri && friend_uri && strcmp(friend_uri, uri) == 0) {
+			LinphoneFriend *lf = (LinphoneFriend *)bctbx_pair_cchar_get_second(pair);
+			result = bctbx_list_prepend(result, linphone_friend_ref(lf));
+		} else {
+			break;
 		}
+		it = bctbx_iterator_cchar_get_next(it);
 	}
 	bctbx_iterator_cchar_delete(end);
 	bctbx_iterator_cchar_delete(it);
