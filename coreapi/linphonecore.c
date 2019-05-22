@@ -1374,6 +1374,15 @@ static void bodyless_config_read(LinphoneCore *lc) {
 	}
 }
 
+void linphone_core_invalidate_friends_maps(LinphoneCore *lc) {
+	bctbx_list_t *elem;
+	for (elem = lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
+		LinphoneFriendList *list = (LinphoneFriendList *)bctbx_list_get_data(elem);
+		ms_message("Invalidating friends maps for list [%p]", list);
+		linphone_friend_list_invalidate_friends_maps(list);
+	}
+}
+
 static void sip_config_read(LinphoneCore *lc) {
 	char *contact;
 	const char *tmpstr;
@@ -1477,6 +1486,9 @@ static void sip_config_read(LinphoneCore *lc) {
 	/* get the default proxy */
 	tmp=lp_config_get_int(lc->config,"sip","default_proxy",-1);
 	linphone_core_set_default_proxy_index(lc,tmp);
+
+	/* In case of remote provisioning, recompute the phone numbers in case the dial prefix of the default proxy config has changed */
+	linphone_core_invalidate_friends_maps(lc);
 
 	/* read authentication information */
 	for(i=0;; i++){
