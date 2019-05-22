@@ -460,6 +460,10 @@ public class AndroidPlatformHelper {
 				maxHeight = lp.height;
 			}
 			Log.i("[Platform Helper] Preview max width: " + maxWidth + ", max height: " + maxHeight);
+			if (maxWidth == 0 || maxHeight == 0) {
+				Log.w("[Platform Helper] Abort resizing preview so that it won't be visible");
+				return;
+			}
 
 			// A MATCH_PARENT will take over a WRAP_CONTENT or a fixed size and maintain ratio
 			if (lp.width == ViewGroup.LayoutParams.MATCH_PARENT && lp.height != ViewGroup.LayoutParams.MATCH_PARENT) {
@@ -485,7 +489,7 @@ public class AndroidPlatformHelper {
 					lp.width = width * maxHeight / height;
 				}
 			}
-
+			
 			Log.i("[Platform Helper] Preview layout params updated to: " + lp.width + ", " + lp.height);
 			mPreviewTextureView.setLayoutParams(lp);
 		} else {
