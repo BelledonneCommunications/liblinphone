@@ -166,13 +166,6 @@ LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const Linphon
 		ms_free(url);
 	}
 
-	if (creator->idkey != NULL) {
-		linphone_proxy_config_set_idkey(cfg, creator->idkey);
-	}
-	if (creator->depends_on != NULL) {
-		linphone_proxy_config_set_depends_on(cfg, creator->depends_on);
-	}
-
 	linphone_proxy_config_enable_register(cfg, TRUE);
 
 	info = linphone_auth_info_new(linphone_address_get_username(identity), // username
@@ -363,7 +356,6 @@ LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *core, const
 	if (domain) {
 		linphone_account_creator_set_domain(creator, domain);
 	}
-
 	creator->set_as_default = TRUE;
 	creator->proxy_cfg = linphone_core_create_proxy_config(core);
 
@@ -389,8 +381,6 @@ void linphone_account_creator_reset(LinphoneAccountCreator *creator) {
 	resetField(&creator->activation_code);
 	resetField(&creator->domain);
 	resetField(&creator->route);
-	resetField(&creator->idkey);
-	resetField(&creator->depends_on);
 }
 
 LinphoneAccountCreator * linphone_core_create_account_creator(LinphoneCore *core, const char *xmlrpc_url) {
@@ -621,24 +611,6 @@ LinphoneAccountCreatorStatus linphone_account_creator_set_route(LinphoneAccountC
 
 const char * linphone_account_creator_get_route(const LinphoneAccountCreator *creator) {
 	return creator->route;
-}
-
-LinphoneAccountCreatorStatus linphone_account_creator_set_idkey(LinphoneAccountCreator *creator, const char *idkey) {
-	set_string(&creator->idkey, idkey, FALSE);
-	return LinphoneAccountCreatorStatusRequestOk;
-}
-
-const char * linphone_account_creator_get_idkey(const LinphoneAccountCreator *creator) {
-	return creator->idkey;
-}
-
-LinphoneAccountCreatorStatus linphone_account_creator_set_depends_on(LinphoneAccountCreator *creator, const char *depends_on) {
-	set_string(&creator->depends_on, depends_on, FALSE);
-	return LinphoneAccountCreatorStatusRequestOk;
-}
-
-const char * linphone_account_creator_get_depends_on(const LinphoneAccountCreator *creator) {
-	return creator->depends_on;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_set_as_default(LinphoneAccountCreator *creator, bool_t set_as_default) {

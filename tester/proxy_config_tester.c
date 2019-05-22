@@ -285,7 +285,7 @@ static void dependent_proxy_config(void) {
 	BC_ASSERT_PTR_NOT_NULL(marie_cfg);
 	BC_ASSERT_PTR_NOT_NULL(marie_dependent_cfg);
 
-	BC_ASSERT_STRING_EQUAL("master", linphone_proxy_config_get_depends_on(marie_dependent_cfg));
+	BC_ASSERT_PTR_EQUAL(marie_cfg, linphone_proxy_config_get_dependency(marie_dependent_cfg));
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc, NULL, &pauline->stat.number_of_LinphoneRegistrationOk, 1));
 

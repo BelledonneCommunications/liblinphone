@@ -334,36 +334,6 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_accoun
 LINPHONE_DEPRECATED LINPHONE_PUBLIC const char * linphone_account_creator_get_route(const LinphoneAccountCreator *creator);
 
 /**
- * Set the idkey.
- * @param[in] creator #LinphoneAccountCreator object
- * @param[in] idkey The idkey to set
- * @return #LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
- **/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_set_idkey(LinphoneAccountCreator *creator, const char *idkey);
-
-/**
- * Get the idkey.
- * @param[in] creator #LinphoneAccountCreator object
- * @return The idkey of the #LinphoneAccountCreator
- **/
-LINPHONE_PUBLIC const char * linphone_account_creator_get_idkey(const LinphoneAccountCreator *creator);
-
-/**
- * Set the depends_on property.
- * @param[in] creator #LinphoneAccountCreator object
- * @param[in] depends_on The idkey to set
- * @return #LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
- **/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_set_depends_on(LinphoneAccountCreator *creator, const char *depends_on);
-
-/**
- * Get the depends_on property.
- * @param[in] creator #LinphoneAccountCreator object
- * @return The idkey of the #LinphoneAccountCreator
- **/
-LINPHONE_PUBLIC const char * linphone_account_creator_get_depends_on(const LinphoneAccountCreator *creator);
-
-/**
  * Set the set_as_default property.
  * @param[in] creator #LinphoneAccountCreator object
  * @param[in] set_as_default The set_as_default to set
