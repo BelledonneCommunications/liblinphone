@@ -508,7 +508,12 @@ namespace Cpim {
 
 	class ListHeaderNode :
 		public Node,
-		public list<shared_ptr<HeaderNode> > {};
+		public list<shared_ptr<HeaderNode> > {
+		public:
+		void push_back(const shared_ptr<HeaderNode> &node){
+			list<shared_ptr<HeaderNode>>::push_back(node);
+		}
+	};
 
 	// -------------------------------------------------------------------------
 
@@ -576,59 +581,53 @@ namespace Cpim {
 
 class Cpim::ParserPrivate : public ObjectPrivate {
 public:
-	shared_ptr<belr::Grammar> grammar;
+	
+	shared_ptr<belr::Parser<shared_ptr<Node> >> parser;
 };
 
 Cpim::Parser::Parser () : Singleton(*new ParserPrivate) {
 	L_D();
-	d->grammar = belr::GrammarLoader::get().load(CpimGrammar);
-	if (!d->grammar)
+	
+	shared_ptr<belr::Grammar> grammar = belr::GrammarLoader::get().load(CpimGrammar);
+	if (!grammar)
 		lFatal() << "Unable to load CPIM grammar.";
-}
-
-// -----------------------------------------------------------------------------
-
-shared_ptr<Cpim::Message> Cpim::Parser::parseMessage (const string &input) {
-	L_D();
-
-	typedef void (list<shared_ptr<HeaderNode> >::*pushPtr)(const shared_ptr<HeaderNode> &value);
-
-	belr::Parser<shared_ptr<Node> > parser(d->grammar);
-	parser.setHandler("Message", belr::make_fn(make_shared<MessageNode>))
+	d->parser = make_shared<belr::Parser<shared_ptr<Node>>>(grammar);
+	
+	d->parser->setHandler("Message", belr::make_fn(make_shared<MessageNode>))
 		->setCollector("Message-headers", belr::make_sfn(&MessageNode::addMessageHeaders))
 		->setCollector("Content-headers", belr::make_sfn(&MessageNode::addContentHeaders));
 
-	parser.setHandler("Message-headers", belr::make_fn(make_shared<ListHeaderNode>))
-		->setCollector("Header", belr::make_sfn(static_cast<pushPtr>(&ListHeaderNode::push_back)))
-		->setCollector("From-header", belr::make_sfn(static_cast<pushPtr>(&ListHeaderNode::push_back)))
-		->setCollector("To-header", belr::make_sfn(static_cast<pushPtr>(&ListHeaderNode::push_back)))
-		->setCollector("DateTime-header", belr::make_sfn(static_cast<pushPtr>(&ListHeaderNode::push_back)))
-		->setCollector("cc-header", belr::make_sfn(static_cast<pushPtr>(&ListHeaderNode::push_back)))
-		->setCollector("Subject-header", belr::make_sfn(static_cast<pushPtr>(&ListHeaderNode::push_back)))
-		->setCollector("NS-header", belr::make_sfn(static_cast<pushPtr>(&ListHeaderNode::push_back)))
-		->setCollector("Require-header", belr::make_sfn(static_cast<pushPtr>(&ListHeaderNode::push_back)));
+	d->parser->setHandler("Message-headers", belr::make_fn(make_shared<ListHeaderNode>))
+		->setCollector("Header", belr::make_sfn(&ListHeaderNode::push_back))
+		->setCollector("From-header", belr::make_sfn(&ListHeaderNode::push_back))
+		->setCollector("To-header", belr::make_sfn(&ListHeaderNode::push_back))
+		->setCollector("DateTime-header", belr::make_sfn(&ListHeaderNode::push_back))
+		->setCollector("cc-header", belr::make_sfn(&ListHeaderNode::push_back))
+		->setCollector("Subject-header", belr::make_sfn(&ListHeaderNode::push_back))
+		->setCollector("NS-header", belr::make_sfn(&ListHeaderNode::push_back))
+		->setCollector("Require-header", belr::make_sfn(&ListHeaderNode::push_back));
 
-	parser.setHandler("Content-headers", belr::make_fn(make_shared<ListHeaderNode>))
-		->setCollector("Header", belr::make_sfn(static_cast<pushPtr>(&ListHeaderNode::push_back)));
+	d->parser->setHandler("Content-headers", belr::make_fn(make_shared<ListHeaderNode>))
+		->setCollector("Header", belr::make_sfn(&ListHeaderNode::push_back));
 
-	parser.setHandler("Header", belr::make_fn(make_shared<HeaderNode>))
+	d->parser->setHandler("Header", belr::make_fn(make_shared<HeaderNode>))
 		->setCollector("Header-name", belr::make_sfn(&HeaderNode::setName))
 		->setCollector("Header-value", belr::make_sfn(&HeaderNode::setValue))
 		->setCollector("Header-parameters", belr::make_sfn(&HeaderNode::setParameters));
 
-	parser.setHandler("From-header", belr::make_fn(make_shared<FromHeaderNode>))
+	d->parser->setHandler("From-header", belr::make_fn(make_shared<FromHeaderNode>))
 		->setCollector("Formal-name", belr::make_sfn(&FromHeaderNode::setFormalName))
 		->setCollector("URI", belr::make_sfn(&FromHeaderNode::setUri));
 
-	parser.setHandler("To-header", belr::make_fn(make_shared<ToHeaderNode>))
+	d->parser->setHandler("To-header", belr::make_fn(make_shared<ToHeaderNode>))
 		->setCollector("Formal-name", belr::make_sfn(&ToHeaderNode::setFormalName))
 		->setCollector("URI", belr::make_sfn(&ToHeaderNode::setUri));
 
-	parser.setHandler("cc-header", belr::make_fn(make_shared<CcHeaderNode>))
+	d->parser->setHandler("cc-header", belr::make_fn(make_shared<CcHeaderNode>))
 		->setCollector("Formal-name", belr::make_sfn(&CcHeaderNode::setFormalName))
 		->setCollector("URI", belr::make_sfn(&CcHeaderNode::setUri));
 
-	parser.setHandler("DateTime-header", belr::make_fn(make_shared<DateTimeHeaderNode>))
+	d->parser->setHandler("DateTime-header", belr::make_fn(make_shared<DateTimeHeaderNode>))
 		->setCollector("date-fullyear", belr::make_sfn(&DateTimeHeaderNode::setYear))
 		->setCollector("date-month", belr::make_sfn(&DateTimeHeaderNode::setMonth))
 		->setCollector("date-mday", belr::make_sfn(&DateTimeHeaderNode::setMonthDay))
@@ -637,24 +636,30 @@ shared_ptr<Cpim::Message> Cpim::Parser::parseMessage (const string &input) {
 		->setCollector("time-second", belr::make_sfn(&DateTimeHeaderNode::setSecond))
 		->setCollector("time-offset", belr::make_sfn(&DateTimeHeaderNode::setOffset));
 
-	parser.setHandler("time-offset", belr::make_fn(make_shared<DateTimeOffsetNode>))
+	d->parser->setHandler("time-offset", belr::make_fn(make_shared<DateTimeOffsetNode>))
 		->setCollector("time-sign", belr::make_sfn(&DateTimeOffsetNode::setSign))
 		->setCollector("time-hour", belr::make_sfn(&DateTimeOffsetNode::setHour))
 		->setCollector("time-minute", belr::make_sfn(&DateTimeOffsetNode::setMinute));
 
-	parser.setHandler("Subject-header", belr::make_fn(make_shared<SubjectHeaderNode>))
+	d->parser->setHandler("Subject-header", belr::make_fn(make_shared<SubjectHeaderNode>))
 		->setCollector("Language-tag", belr::make_sfn(&SubjectHeaderNode::setLanguage))
 		->setCollector("Header-value", belr::make_sfn(&SubjectHeaderNode::setSubject));
 
-	parser.setHandler("Ns-header", belr::make_fn(make_shared<NsHeaderNode>))
+	d->parser->setHandler("Ns-header", belr::make_fn(make_shared<NsHeaderNode>))
 		->setCollector("Name-prefix", belr::make_sfn(&NsHeaderNode::setPrefixName))
 		->setCollector("URI", belr::make_sfn(&NsHeaderNode::setUri));
 
-	parser.setHandler("Require-header", belr::make_fn(make_shared<RequireHeaderNode>))
+	d->parser->setHandler("Require-header", belr::make_fn(make_shared<RequireHeaderNode>))
 		->setCollector("Require-header-value", belr::make_sfn(&RequireHeaderNode::setHeaderNames));
+}
+
+// -----------------------------------------------------------------------------
+
+shared_ptr<Cpim::Message> Cpim::Parser::parseMessage (const string &input) {
+	L_D();
 
 	size_t parsedSize;
-	shared_ptr<Node> node = parser.parseInput("Message", input, &parsedSize);
+	shared_ptr<Node> node = d->parser->parseInput("Message", input, &parsedSize);
 	if (!node) {
 		lWarning() << "Unable to parse message.";
 		return nullptr;
