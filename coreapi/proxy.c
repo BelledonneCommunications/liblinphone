@@ -611,12 +611,10 @@ void linphone_proxy_config_set_dial_prefix(LinphoneProxyConfig *cfg, const char 
 	}
 	if (prefix && prefix[0]!='\0') cfg->dial_prefix=ms_strdup(prefix);
 	
-	if (cfg->lc) {
-		bctbx_list_t *elem;
-		for (elem = cfg->lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
-			LinphoneFriendList *list = (LinphoneFriendList *)bctbx_list_get_data(elem);
-			linphone_friend_list_invalidate_friends_maps(list);
-		}
+	/* Ensure there is a default proxy config otherwise after invalidating friends maps we won't be able to recompute phone numbers */
+	/* Also it is useless to do it if the proxy config being edited isn't the default one */
+	if (cfg->lc && cfg == linphone_core_get_default_friend_list(cfg->lc)) {
+		linphone_core_invalidate_friends_maps(cfg->lc);
 	}
 }
 
@@ -1218,8 +1216,11 @@ void linphone_core_set_default_proxy_config(LinphoneCore *lc, LinphoneProxyConfi
 		}
 	}
 	lc->default_proxy=config;
-	if (linphone_core_ready(lc))
+	if (linphone_core_ready(lc)) {
 		lp_config_set_int(lc->config,"sip","default_proxy",linphone_core_get_default_proxy_config_index(lc));
+		/* Invalidate phone numbers in friends maps when default proxy config changes because the new one may have a different dial prefix */
+		linphone_core_invalidate_friends_maps(lc);
+	}
 }
 
 void linphone_core_set_default_proxy_index(LinphoneCore *lc, int index){
