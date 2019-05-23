@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
+cmake_minimum_required(VERSION 3.8)
 set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
 enable_language(Swift)
 
