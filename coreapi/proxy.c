@@ -42,6 +42,12 @@ Copyright (C) 2000  Simon MORLAT (simon.morlat@linphone.org)
 
 using namespace LinphonePrivate;
 
+static char *generate_proxy_config_id() {
+	char id[17] = {0};
+	belle_sip_random_token(id, 16);
+	return bctbx_concat("proxy_config_", id, NULL);
+}
+
 /*store current config related to server location*/
 static void linphone_proxy_config_store_server_config(LinphoneProxyConfig* cfg) {
 	if (cfg->saved_identity) linphone_address_unref(cfg->saved_identity);
@@ -162,9 +168,8 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 	if (idkey) {
 		cfg->idkey = ms_strdup(idkey);
 	} else {
-		char ref[17] = {0};
-		belle_sip_random_token(ref, 16);
-		cfg->idkey = ms_strdup(ref);
+		cfg->idkey = generate_proxy_config_id();
+		ms_warning("generated proxyconfig idkey = [%s]", cfg->idkey);
 	}
 
 	linphone_proxy_config_set_conference_factory_uri(cfg, conference_factory_uri ? ms_strdup(conference_factory_uri) : NULL);
@@ -1386,9 +1391,8 @@ LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(LinphoneCore* lc
 	CONFIGURE_STRING_VALUE(cfg, config, key, ref_key, "refkey")
 	CONFIGURE_STRING_VALUE(cfg, config, key, idkey, "idkey")
 	if (cfg->idkey == NULL) {
-		char ref[17] = {0};
-		belle_sip_random_token(ref, 16);
-		cfg->idkey = ms_strdup(ref);
+		cfg->idkey = generate_proxy_config_id();
+		ms_warning("generated proxyconfig idkey = [%s]", cfg->idkey);
 	}
 	const char *depends_on = lp_config_get_string(config, key, "depends_on", NULL);
 	if (cfg->depends_on) {
