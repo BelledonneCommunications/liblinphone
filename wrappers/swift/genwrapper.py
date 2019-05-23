@@ -36,7 +36,7 @@ class SwiftTranslator(object):
         self.ignore = []
         self.nameTranslator = metaname.Translator.get('Swift')
         self.langTranslator = AbsApi.Translator.get('Swift')
-        self.docTranslator = metadoc.SandCastleTranslator('Swift')
+        self.docTranslator = metadoc.JavaDocTranslator()
 
     def init_method_dict(self):
 		methodDict = {}
@@ -105,6 +105,10 @@ class SwiftTranslator(object):
 			methodDict['is_generic'] = self.is_generic(methodDict)
 			methodDict['isNotConst'] = not method.returnType.isconst
 
+			methodDict['impl']['create_method'] = 'create' in method.name.to_word_list()
+			if (methodDict['is_class'] and not methodDict['impl']['create_method']):
+			    methodDict['return_default'] = "?"
+			methodDict['throw_default'] = " throws" if methodDict['impl']['exception'] or methodDict['impl']['create_method'] else ""
 			methodDict['impl']['args'] = ''
 			methodDict['impl']['c_args'] = ''
 			for arg in method.args:
@@ -144,6 +148,8 @@ class SwiftTranslator(object):
 					methodDict['impl']['c_args'] += argName
 				if argType == "UnsafePointer<Int>" and not arg.type.isconst:
 				    argType = "UnsafeMutablePointer<Int32>"
+				elif argType == "UnsafeMutableRawPointer":
+					argType = "UnsafeMutableRawPointer?"
 
 				methodDict['impl']['args'] += argName + ":" + argType
 
@@ -181,9 +187,9 @@ class SwiftTranslator(object):
 				listenerDict['delegate']['params'] += ', '
 
 				if normalType == "Bool":
-					listenerDict['delegate']['params'] += argName + ": " + argName + ">0"
+					listenerDict['delegate']['params'] += argName + ": " + argName + " != 0"
 				elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.ClassType:
-				    listenerDict['delegate']['params'] += argName + ": " + normalType + ".getSobject(cObject: " + argName + ")!"
+				    listenerDict['delegate']['params'] += argName + ": " + normalType + ".getSobject(cObject: " + argName + "!)"
 				elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.EnumType:
 				    ends = "" if arg.type.desc.isFlag else "!"
 				    listenerDict['delegate']['params'] += argName + ": " + normalType + "(rawValue: Int(" + argName + ".rawValue))" + ends
@@ -196,7 +202,6 @@ class SwiftTranslator(object):
 						listenerDict['delegate']['params'] += argName + ": " + argName + "sList"
 				elif normalType == "String":
 						listenerDict['delegate']['params'] += argName + ": charArrayToString(charPointer: " + argName +")"
-						normalType = "String?"
 				elif normalType == "Int":
 				        listenerDict['delegate']['params'] += argName + ": Int(" + argName + ")"
 				else:
@@ -204,7 +209,7 @@ class SwiftTranslator(object):
 					return {}
 			else:
 				listenerDict['delegate']['first_param'] = argName
-				listenerDict['delegate']['params'] = argName + ": sObject!"
+				listenerDict['delegate']['params'] = argName + ": sObject"
 
 			listenerDict['delegate']['params_public'] += argName + ": " + normalType
 			listenerDict['delegate']['params_private'] += argName
@@ -357,6 +362,7 @@ class SwiftTranslator(object):
 		methodDict = self.translate_method(prop, static, False)
 
 		methodDict['property_name'] = "Instance" if name == "get" else name
+		methodDict['Instance'] = name == "get"
 		methodDict['has_property'] = True
 		methodDict['has_getter'] = True
 		methodDict['has_setter'] = False
@@ -383,7 +389,7 @@ class SwiftTranslator(object):
 		methodDict['isNotConst'] = not prop.returnType.isconst
 		methodDict['isFlag'] = methodDict['is_enum'] and prop.returnType.desc.isFlag
 
-		if methodDict['is_string'] or methodDict['is_class'] or methodDict['is_void']:
+		if (methodDict['is_class'] and name != "get") or methodDict['is_void']:
 		    methodDict['return_default'] = "?"
 
 		return methodDict
@@ -414,12 +420,14 @@ class SwiftTranslator(object):
 		methodDict['enum_type'] = "CUnsignedInt" if methodDict['is_enum'] and prop.args[0].type.desc.isUnsigned else "CInt"
 		methodDict['is_generic'] = self.is_generic(methodDict)
 
-		if methodDict['is_string'] or methodDict['is_class'] or methodDict['is_void'] or methodDict['is_bool'] or methodDict['is_enum']:
+		if methodDict['is_class'] or methodDict['is_void'] or methodDict['is_bool'] or methodDict['is_enum']:
 		    methodDict['return_default'] = "?"
 		elif methodDict['is_generic'] or methodDict['is_int']:
 		    methodDict['return_default'] = " = 0"
 		elif methodDict['is_string_list']:
 		    methodDict['return_default'] = " = []"
+		elif methodDict['is_string']:
+		    methodDict['return_default'] = ' = ""'
 
 		return methodDict
 
@@ -514,9 +522,43 @@ if __name__ == '__main__':
     project.check()
 
     parser = AbsApi.CParser(project)
-    parser.functionBl = \
-		['linphone_vcard_get_belcard',\
-		'linphone_core_get_current_vtable']
+
+    parser.functionBl += [
+    'linphone_account_creator_get_route',
+    'linphone_account_creator_set_route',
+    'linphone_account_creator_configure',
+    'linphone_core_get_log_level_mask',
+    'linphone_core_set_log_level_mask',
+    'linphone_core_get_chat_database_path',
+    'linphone_core_set_chat_database_path',
+    'linphone_core_get_linphone_specs',
+    'linphone_core_set_linphone_specs',
+    'linphone_core_accept_call',
+    'linphone_core_accept_call_update',
+    'linphone_core_accept_call_with_params',
+    'linphone_core_accept_early_media',
+    'linphone_core_accept_early_media_with_params',
+    'linphone_core_create_client_group_chat_room',
+    'linphone_core_create_client_group_chat_room_2',
+    'linphone_core_decline_call',
+    'linphone_core_defer_call_update',
+    'linphone_core_enable_lime',
+    'linphone_core_lime_available',
+    'linphone_core_lime_enabled',
+    'linphone_core_pause_call',
+    'linphone_core_redirect_call',
+    'linphone_core_resume_call',
+    'linphone_core_terminate_call',
+    'linphone_core_transfer_call',
+    'linphone_core_transfer_call_to_another',
+    'linphone_core_update_call',
+    'linphone_factory_create_core',
+    'linphone_factory_create_core_2',
+    'linphone_factory_create_core_with_config_2',
+    'linphone_factory_create_core_with_config',
+    'linphone_core_get_zrtp_cache_db'
+    ]
+
     parser.classBl += 'LinphoneCoreVTable'
     parser.methodBl.remove('getCurrentCallbacks')
     parser.enum_relocations = {} # No nested enums in C#, will cause ambiguousness between Call.State (the enum) and call.State (the property)

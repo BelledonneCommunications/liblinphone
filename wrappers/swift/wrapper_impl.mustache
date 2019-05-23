@@ -25,7 +25,7 @@ import linphone
 {{#enum}}
 {{#doc}}
 {{#lines}}
-/// {{{line}}}
+///{{{line}}}
 {{/lines}}
 {{/doc}}
 {{#isFlag}}
@@ -65,13 +65,22 @@ public enum {{enumName}}:Int
 
 
 // MARK: region utils
-func charArrayToString(charPointer: UnsafePointer<CChar>?) -> String? {
-	return charPointer != nil ? String(cString: charPointer!) : nil
+func charArrayToString(charPointer: UnsafePointer<CChar>?) -> String {
+	return charPointer != nil ? String(cString: charPointer!) : ""
 }
 
+/// Class basic linphone class
 public class LinphoneObject {
 	var cPtr:OpaquePointer?
 
+	/*!
+     Initializes a new LinphoneObject with the provided cPointer.
+
+     - Parameters:
+        - cPointer: The OpaquePointer of c lib
+
+     - Returns: new LinphoneObject
+  */
 	init(cPointer:OpaquePointer) {
 		cPtr = cPointer
 		belle_sip_object_ref(UnsafeMutableRawPointer(cPtr))
@@ -133,18 +142,22 @@ open class {{interfaceName}} : LinphoneObjectDelegate
 		{{#delegate}}
 
 		{{c_name_setter}}(cPtr, { ({{{params_private}}}) -> {{return}} in
-			let sObject = {{interfaceClassName}}.getSobject(cObject: {{first_param}})
-			let delegate = sObject?.currentCallbacks
-			{{#classLists}}
-			var {{argName}}sList = [{{classType}}]()
-			var {{argName}}cList = {{argName}}
-			while ({{argName}}cList != nil) {
-				let data = unsafeBitCast({{argName}}cList!.pointee.data, to: OpaquePointer.self)
-				{{argName}}sList.append({{classType}}.getSobject(cObject: data)!)
-				{{argName}}cList = UnsafePointer<bctbx_list_t>({{argName}}cList!.pointee.next)
-			}
-			{{/classLists}}
-			{{#return_class}}return {{/return_class}}delegate?.{{cb_name}}({{{params}}}){{#return_class}}?.cPtr{{/return_class}}
+			if ({{first_param}} != nil) {
+				let sObject = {{interfaceClassName}}.getSobject(cObject: {{first_param}}!)
+				let delegate = sObject.currentCallbacks
+				{{#classLists}}
+				var {{argName}}sList = [{{classType}}]()
+				var {{argName}}cList = {{argName}}
+				while ({{argName}}cList != nil) {
+					let data = unsafeBitCast({{argName}}cList!.pointee.data, to: OpaquePointer.self)
+					{{argName}}sList.append({{classType}}.getSobject(cObject: data))
+					{{argName}}cList = UnsafePointer<bctbx_list_t>({{argName}}cList!.pointee.next)
+				}
+				{{/classLists}}
+				{{#return_class}}return {{/return_class}}delegate?.{{cb_name}}({{{params}}}){{#return_class}}?.cPtr{{/return_class}}
+			}{{#return_class}} else {
+				return nil
+			}{{/return_class}}
 		})
 		{{/delegate}}
 		{{/methods}}
@@ -171,54 +184,24 @@ open class {{interfaceName}} : LinphoneObjectDelegate
 
 {{#doc}}
 {{#lines}}
-// {{{line}}}
+/// {{{line}}}
 {{/lines}}
 {{/doc}}
 public class {{className}} : LinphoneObject
 {
-	static func getSobject(cObject:OpaquePointer?) -> {{className}}? {
-		if cObject == nil {
-			return nil
-		} else {
-			let result = belle_sip_object_data_get(UnsafeMutablePointer(cObject), "swiftRef")
-			if (result != nil) {
-				return Unmanaged<{{className}}>.fromOpaque(result!).takeUnretainedValue()
-			}
-
-			let sObject = {{className}}(cPointer: cObject!)
-			belle_sip_object_data_set(UnsafeMutablePointer(cObject), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(sObject).toOpaque()), nil)
-
-			return sObject
+	static func getSobject(cObject:OpaquePointer) -> {{className}} {
+		let result = belle_sip_object_data_get(UnsafeMutablePointer(cObject), "swiftRef")
+		if (result != nil) {
+			return Unmanaged<{{className}}>.fromOpaque(result!).takeUnretainedValue()
 		}
+
+		let sObject = {{className}}(cPointer: cObject)
+		belle_sip_object_data_set(UnsafeMutablePointer(cObject), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(sObject).toOpaque()), nil)
+
+		return sObject
 	}
 
-	{{#isLinphoneCall}}
-	/// Get the native window handle of the video window, casted as an unsigned long.
-	/*public var nativeVideoWindowId: UnsafeMutableRawPointer?
-	{
-		get
-		{
-			return linphone_call_get_native_video_window_id(cPtr)
-		}
-		set
-		{
-			linphone_call_set_native_video_window_id(cPtr, newValue)
-		}
-	}*/
-	{{/isLinphoneCall}}
 	{{#isLinphoneCore}}
- ///static extern IntPtr linphone_core_get_ms_factory(IntPtr thiz);
-
-	/*public MediastreamerFactory MsFactory {
-		get
-		{
-			IntPtr ptr = linphone_core_get_ms_factory(nativePtr);
-									MediastreamerFactory factory = new MediastreamerFactory();
-			factory.nativePtr = ptr;
-									return factory;
-		}
-	}*/
-
 	/// Get the native window handle of the video window.
 	public var NativeVideoWindowIdString: String
 	{
@@ -228,7 +211,7 @@ public class {{className}} : LinphoneObject
 		}
 		set
 		{
-			let sValue:NSString = newValue as! NSString
+			let sValue:NSString = newValue as NSString
 			linphone_core_set_native_video_window_id(cPtr, unsafeBitCast(sValue.utf8String, to: UnsafeMutablePointer<CChar>.self))
 		}
 	}
@@ -242,7 +225,7 @@ public class {{className}} : LinphoneObject
 		}
 		set
 		{
-			let sValue:NSString = newValue as! NSString
+			let sValue:NSString = newValue as NSString
 			linphone_core_set_native_preview_window_id(cPtr, unsafeBitCast(sValue.utf8String, to: UnsafeMutablePointer<CChar>.self))
 		}
 	}
@@ -277,10 +260,14 @@ public class {{className}} : LinphoneObject
 			return charArrayToString(charPointer: {{getter_c_name}}({{cPtr}}))
 			{{/is_string}}
 			{{#is_bool}}
-			return {{getter_c_name}}({{cPtr}})>0
+			return {{getter_c_name}}({{cPtr}}) != 0
 			{{/is_bool}}
 			{{#is_class}}
-			return {{{return}}}.getSobject(cObject:{{getter_c_name}}({{cPtr}}))
+			{{^Instance}}let cPointer = {{getter_c_name}}({{cPtr}})
+			if (cPointer == nil) {
+				return nil
+			}
+			return {{{return}}}.getSobject(cObject:cPointer!){{/Instance}}{{#Instance}}return {{{return}}}.getSobject(cObject:{{getter_c_name}}({{cPtr}})){{/Instance}}
 			{{/is_class}}
 			{{#is_enum}}
 			return {{{return}}}(rawValue: Int({{getter_c_name}}({{cPtr}}).rawValue)){{^isFlag}}!{{/isFlag}}
@@ -305,7 +292,7 @@ public class {{className}} : LinphoneObject
 			var cList = {{getter_c_name}}({{cPtr}})
 			while (cList != nil) {
 				let data = unsafeBitCast(cList?.pointee.data, to: OpaquePointer.self)
-				swiftList.append({{{list_type}}}.getSobject(cObject: data)!)
+				swiftList.append({{{list_type}}}.getSobject(cObject: data))
 				cList = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(cList?.pointee.next)
 			}
 			return swiftList
@@ -429,20 +416,26 @@ public class {{className}} : LinphoneObject
 	{{/listener}}
 	{{#impl}}
 	{{#doc}}
+	/*!
 	{{#lines}}
-	/// {{{line}}}
+		{{{line}}}
 	{{/lines}}
+	*/
 	{{/doc}}
-	{{static}}public func {{name}}({{{args}}}){{#exception}} throws{{/exception}} {{#return}}-> {{{type}}}{{#is_string}}?{{/is_string}}{{/return}}
+	{{static}}public func {{name}}({{{args}}}){{throw_default}} {{#return}}-> {{{type}}}{{return_default}}{{/return}}
 	{
 		{{#is_string}}
 		{{return}}charArrayToString(charPointer: {{c_name}}({{cPtr}}{{{c_args}}}))
 		{{/is_string}}
 		{{#is_bool}}
-		{{return}}{{c_name}}({{cPtr}}{{{c_args}}})>0
+		{{return}}{{c_name}}({{cPtr}}{{{c_args}}}) != 0
 		{{/is_bool}}
 		{{#is_class}}
-		{{return}}{{{type}}}.getSobject(cObject: {{c_name}}({{cPtr}}{{{c_args}}}))!
+		let cPointer = {{c_name}}({{cPtr}}{{{c_args}}})
+		{{#return}}if (cPointer == nil) {
+			{{#create_method}}throw LinphoneError.exception(result: "create null {{type}} value"){{/create_method}}{{^create_method}}return nil{{/create_method}}
+		}{{/return}}
+		{{return}}{{{type}}}.getSobject(cObject: cPointer!)
 		{{/is_class}}
 		{{#is_enum}}
 		{{#exception}}let exception_result = {{/exception}}{{#return}}{{return}}{{{type}}}(rawValue: Int({{/return}}{{c_name}}({{cPtr}}{{{c_args}}}){{#return}}.rawValue))!{{/return}}
@@ -482,7 +475,7 @@ public class {{className}} : LinphoneObject
 		var cList = {{c_name}}({{cPtr}}{{{c_args}}})
 		while (cList != nil) {
 			let data = unsafeBitCast(cList?.pointee.data, to: OpaquePointer.self)
-			swiftList.append({{{list_type}}}.getSobject(cObject: data)!)
+			swiftList.append({{{list_type}}}.getSobject(cObject: data))
 			cList = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(cList?.pointee.next)
 		}
 		return swiftList
