@@ -587,29 +587,29 @@ LINPHONE_PUBLIC const char * linphone_proxy_config_get_ref_key(const LinphonePro
 LINPHONE_PUBLIC void linphone_proxy_config_set_ref_key(LinphoneProxyConfig *cfg, const char *refkey);
 
 /**
- * Get the depends_on property of a #LinphoneProxyConfig.
+ * Get the dependency of a #LinphoneProxyConfig.
  *
  * @param[in] cfg #LinphoneProxyConfig object.
- * @return The idkey string this proxy config is dependent upon, or NULL if not marked dependent
+ * @return The proxy config this one is dependent upon, or NULL if not marked dependent
  **/
-LINPHONE_PUBLIC const char *linphone_proxy_config_get_depends_on(LinphoneProxyConfig *cfg);
+LINPHONE_PUBLIC LinphoneProxyConfig *linphone_proxy_config_get_dependency(LinphoneProxyConfig *cfg);
 
 /**
- * Mark	this proxy configuration as being dependent on another.
- * The depends_on string must refer to an idkey of a proxy configuration previously added to the core.
+ * Mark	this proxy configuration as being dependent on the given one.
+ * The dependency must refer to a proxy config previously added to the core and which idkey property is defined.
  *
  * @see linphone_proxy_config_set_idkey()
  *
  * The proxy configuration marked as dependent will wait for successful registration on its dependency before triggering its own.
  *
- * Once registered, both proxy configurations will share the same contact address (the 'master' one).
+ * Once registered, both proxy configurations will share the same contact address (the 'dependency' one).
  *
  * This mecanism must be enabled before the proxy configuration is added to the core
  *
  * @param[in] cfg #LinphoneProxyConfig object.
  * @param[in] depends_on The reference key of a master #LinphoneProxyConfig
  **/
-LINPHONE_PUBLIC void linphone_proxy_config_set_depends_on(LinphoneProxyConfig *cfg, const char *depends_on);
+LINPHONE_PUBLIC void linphone_proxy_config_set_dependency(LinphoneProxyConfig *cfg, LinphoneProxyConfig *dependency);
 
 /**
  * Get the idkey property of a #LinphoneProxyConfig.

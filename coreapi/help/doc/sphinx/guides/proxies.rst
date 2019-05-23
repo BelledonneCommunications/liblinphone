@@ -96,8 +96,7 @@ This mecanism must be enabled before the proxy configuration is added to the cor
 
 	LinphoneProxyConfig* dependent_proxy_cfg;
 	LinphoneProxyConfig* master_proxy_cfg;
-	linphone_proxy_config_set_ref_key(master_proxy_cfg, "unique-proxy-id");
-	linphone_proxy_config_set_depends_on(dependent_proxy_cfg, "unique-proxy-id");
+	linphone_proxy_config_set_dependency(dependent_proxy_cfg, master_proxy_cfg);
 	//Add master first
 	linphone_core_add_proxy_config(lc, master_proxy_cfg);
 	linphone_core_add_proxy_config(lc, dependent_proxy_cfg);
