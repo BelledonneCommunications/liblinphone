@@ -28,8 +28,10 @@ set(LIBS
 	${XML2_LIBRARIES}
 	${BELR_LIBRARIES}
 	${LIBXSD_LIBRARIES}
-	"-framework CFNetwork"
 )
+if(APPLE)
+	list(APPEND LIBS "-framework CFNetwork")
+endif()
 if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	list(APPEND LIBS "Ws2_32")
 endif()
