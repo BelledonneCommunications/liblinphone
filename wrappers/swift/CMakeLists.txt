@@ -40,7 +40,7 @@ add_library(linphonesw SHARED
 )
 
 target_link_libraries(linphonesw
-	PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} linphone
+	PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} ${BELLESIP_LIBRARIES} linphone
 )
 
 set_target_properties(linphonesw PROPERTIES
