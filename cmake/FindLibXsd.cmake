@@ -38,8 +38,11 @@ if(LIBXSD_INCLUDE_DIRS)
 	list(APPEND LIBXSD_INCLUDE_DIRS ${XercesC_INCLUDE_DIRS})
 endif()
 
-set(LIBXSD_LIBRARIES ${XercesC_LIBRARIES} "-framework CoreServices")
-
+if(APPLE)
+	set(LIBXSD_LIBRARIES ${XercesC_LIBRARIES} "-framework CoreServices")
+else()
+	set(LIBXSD_LIBRARIES ${XercesC_LIBRARIES})
+endif()
 
 
 include(FindPackageHandleStandardArgs)
