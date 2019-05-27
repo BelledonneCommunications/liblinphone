@@ -61,6 +61,7 @@ static void call_received(SalCallOp *h) {
 	LinphoneCore *lc = reinterpret_cast<LinphoneCore *>(h->getSal()->getUserPointer());
 
 	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
+		ms_warning("Linphone core global state is not on. Please check if the core is started.");
 		h->decline(SalReasonServiceUnavailable);
 		h->release();
 		return;
@@ -438,6 +439,7 @@ static void message_received(SalOp *op, const SalMessage *msg){
 	LinphoneCore *lc=(LinphoneCore *)op->getSal()->getUserPointer();
 
 	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
+		ms_warning("Linphone core global state is not on. Please check if the core is started.");
 		static_cast<SalMessageOp *>(op)->reply(SalReasonServiceUnavailable);
 		return;
 	}
@@ -475,6 +477,7 @@ static void notify_presence(SalOp *op, SalSubscribeStatus ss, SalPresenceModel *
 static void subscribe_presence_received(SalPresenceOp *op, const char *from){
 	LinphoneCore *lc=(LinphoneCore *)op->getSal()->getUserPointer();
 	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
+		ms_warning("Linphone core global state is not on. Please check if the core is started.");
 		op->decline(SalReasonServiceUnavailable);
 		return;
 	}
@@ -696,6 +699,7 @@ static void subscribe_received(SalSubscribeOp *op, const char *eventname, const 
 	LinphoneCore *lc=(LinphoneCore *)op->getSal()->getUserPointer();
 
 	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
+		ms_warning("Linphone core global state is not on. Please check if the core is started.");
 		op->decline(SalReasonServiceUnavailable);
 		return;
 	}
