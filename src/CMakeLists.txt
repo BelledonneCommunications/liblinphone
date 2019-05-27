@@ -21,7 +21,7 @@
 ############################################################################
 
 set(LIBS
-	${BCTOOLBOX_CORE_LIBRARIES}
+	${BCTOOLBOX_LIBRARIES}
 	${BELLESIP_LIBRARIES}
 	${MEDIASTREAMER2_LIBRARIES}
 	${ORTP_LIBRARIES}
