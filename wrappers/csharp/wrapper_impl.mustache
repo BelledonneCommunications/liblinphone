@@ -336,6 +336,11 @@ namespace Linphone
 	[StructLayout(LayoutKind.Sequential)]
 	public class {{interfaceName}} : LinphoneObject
 	{
+        ~{{interfaceName}}()
+        {
+            unregister();
+        }
+
         [DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
         static extern void {{set_user_data_name}}(IntPtr thiz, IntPtr listener);
 
@@ -366,11 +371,11 @@ namespace Linphone
 		private static void {{cb_name}}({{params_private}})
 		{
 			{{interfaceClassName}} thiz = fromNativePtr<{{interfaceClassName}}>({{first_param}});
-			{{#isSimpleListener}}{{interfaceName}} single_listener = thiz.Listener;
-			single_listener.{{var_public}}?.Invoke({{{params}}});
-			{{/isSimpleListener}}
-			{{#isMultiListener}}{{interfaceName}} multi_listener = thiz.CurrentCallbacks;
-			multi_listener.{{var_public}}?.Invoke({{{params}}});{{/isMultiListener}}
+			{{interfaceName}} current_listener = thiz.CurrentCallbacks;
+			if (current_listener != null)
+			{
+				current_listener.{{var_public}}?.Invoke({{{params}}});
+			}
 		}
 
 		public {{name_public}} {{name}}
@@ -442,18 +447,7 @@ namespace Linphone
 	[StructLayout(LayoutKind.Sequential)]
 	public class {{className}} : LinphoneObject
 	{
-		{{#isLinphoneFactory}}
-		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern IntPtr linphone_factory_create_core_cbs(IntPtr factory);
-
-		public CoreListener CreateCoreListener()
-		{
-			IntPtr coreCbsPtr = linphone_factory_create_core_cbs(nativePtr);
-			return fromNativePtr<CoreListener>(coreCbsPtr, false);
-		}
-		{{/isLinphoneFactory}}
 		{{#isLinphoneCall}}
-
 		/// Get the native window handle of the video window, casted as an unsigned long.
 		public string NativeVideoWindowIdString
 		{
@@ -468,7 +462,6 @@ namespace Linphone
 		}
 		{{/isLinphoneCall}}
 		{{#isLinphoneCore}}
-
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr linphone_core_get_ms_factory(IntPtr thiz);
 
@@ -508,6 +501,42 @@ namespace Linphone
 			}
 		}
 		{{/isLinphoneCore}}
+
+		{{#listener}}
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern IntPtr linphone_factory_create_{{listener_constructor}}_cbs(IntPtr factory);
+
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern IntPtr linphone_{{listener_constructor}}_add_callbacks(IntPtr thiz, IntPtr cbs);
+
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern IntPtr linphone_{{listener_constructor}}_remove_callbacks(IntPtr thiz, IntPtr cbs);
+
+		~{{className}}() 
+		{
+			if (listener != null)
+			{
+				linphone_{{listener_constructor}}_remove_callbacks(nativePtr, listener.nativePtr);
+			}
+		}
+
+		private {{interfaceName}} listener;
+
+		public {{interfaceName}} Listener
+		{
+			get {
+				if (listener == null)
+				{
+					IntPtr nativeListener = linphone_factory_create_{{listener_constructor}}_cbs(IntPtr.Zero);
+					listener = fromNativePtr<{{interfaceName}}>(nativeListener, false);
+					linphone_{{listener_constructor}}_add_callbacks(nativePtr, nativeListener);
+					listener.register();
+				}
+				return listener;
+			}
+		}
+		{{/listener}}
+
 		{{#dllImports}}
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		{{{prototype}}}
@@ -537,9 +566,6 @@ namespace Linphone
 				{{#is_class}}
 				IntPtr ptr = {{getter_c_name}}({{getter_nativePtr}});
 				{{{property_return}}} obj = fromNativePtr<{{return}}>(ptr, {{takeRef}});
-				{{#addListener}}
-				obj.register();
-				{{/addListener}}
 				return obj;
 				{{/is_class}}
 				{{#is_enum}}
@@ -600,12 +626,6 @@ namespace Linphone
 		{{/doc}}
 		public {{static}}{{override}}{{{type}}} {{name}}({{{args}}})
 		{
-			{{#addListener}}
-			cbs.register();
-			{{/addListener}}
-			{{#removeListener}}
-			cbs.unregister();
-			{{/removeListener}}
 			{{#is_string}}
 			IntPtr stringPtr = {{c_name}}({{nativePtr}}{{{c_args}}});
 			return Marshal.PtrToStringAnsi(stringPtr);
