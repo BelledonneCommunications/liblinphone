@@ -253,7 +253,6 @@ class CsharpTranslator(object):
 		listenerDict['delegate']['name'] = method.name.translate(self.nameTranslator)
 
 		listenerDict['delegate']['interfaceClassName'] = listenedClass.name.translate(self.nameTranslator)
-		listenerDict['delegate']['isSimpleListener'] = listenedClass.singlelistener
 		listenerDict['delegate']['isMultiListener'] = listenedClass.multilistener
 
 		listenerDict['delegate']['params_public'] = ""
@@ -295,61 +294,6 @@ class CsharpTranslator(object):
 
 		listenerDict['delegate']["c_name_setter"] = c_name_setter
 		return listenerDict
-
-	def generate_getter_for_listener_callbacks(self, _class, classname):
-		methodDict = self.init_method_dict()
-		c_name = _class.name.to_snake_case(fullName=True) + '_get_callbacks'
-		methodDict['prototype'] = "static extern IntPtr {c_name}(IntPtr thiz);".format(classname = classname, c_name = c_name)
-
-		methodDict['has_impl'] = False
-		methodDict['has_property'] = True
-		methodDict['property_static'] = ''
-		methodDict['property_return'] = classname
-		methodDict['property_name'] = 'Listener'
-		methodDict['has_getter'] = True
-		methodDict['return'] = classname
-		methodDict['getter_nativePtr'] = 'nativePtr'
-		methodDict['getter_c_name'] = c_name
-		methodDict['is_class'] = True
-		methodDict['addListener'] = True
-
-		return methodDict
-
-	def generate_add_for_listener_callbacks(self, _class, classname):
-		methodDict = self.init_method_dict()
-		c_name = _class.name.to_snake_case(fullName=True) + '_add_callbacks'
-		methodDict['prototype'] = "static extern void {c_name}(IntPtr thiz, IntPtr cbs);".format(classname = classname, c_name = c_name)
-		methodDict['impl']['static'] = ''
-		methodDict['impl']['type'] = 'void'
-		methodDict['impl']['name'] = 'AddListener'
-		methodDict['impl']['return'] = ''
-		methodDict['impl']['c_name'] = c_name
-		methodDict['impl']['nativePtr'] = 'nativePtr, '
-		methodDict['impl']['args'] = classname + ' cbs'
-		methodDict['impl']['c_args'] = 'cbs != null ? cbs.nativePtr : IntPtr.Zero'
-		methodDict['is_generic'] = True
-		methodDict['impl']['addListener'] = True
-		methodDict['impl']['removeListener'] = False
-
-		return methodDict
-
-	def generate_remove_for_listener_callbacks(self, _class, classname):
-		methodDict = self.init_method_dict()
-		c_name = _class.name.to_snake_case(fullName=True) + '_remove_callbacks'
-		methodDict['prototype'] = "static extern void {c_name}(IntPtr thiz, IntPtr cbs);".format(classname = classname, c_name = c_name)
-		methodDict['impl']['static'] = ''
-		methodDict['impl']['type'] = 'void'
-		methodDict['impl']['name'] = 'RemoveListener'
-		methodDict['impl']['return'] = ''
-		methodDict['impl']['c_name'] = c_name
-		methodDict['impl']['nativePtr'] = 'nativePtr, '
-		methodDict['impl']['args'] = classname + ' cbs'
-		methodDict['impl']['c_args'] = 'cbs != null ? cbs.nativePtr : IntPtr.Zero'
-		methodDict['is_generic'] = True
-		methodDict['impl']['addListener'] = False
-		methodDict['impl']['removeListener'] = True
-
-		return methodDict
 
 ###########################################################################################################################################
 
@@ -396,11 +340,9 @@ class CsharpTranslator(object):
 		islistenable = _class.listenerInterface is not None
 		if islistenable:
 			listenerName = _class.listenerInterface.name.translate(self.nameTranslator)
-			if _class.singlelistener:
-				classDict['dllImports'].append(self.generate_getter_for_listener_callbacks(_class, listenerName))
-			if _class.multilistener:
-				classDict['dllImports'].append(self.generate_add_for_listener_callbacks(_class, listenerName))
-				classDict['dllImports'].append(self.generate_remove_for_listener_callbacks(_class, listenerName))
+			classDict['listener'] = {}
+			classDict['listener']['listener_constructor'] = _class.name.to_snake_case()
+			classDict['listener']['interfaceName'] = listenerName
 
 		for method in _class.classMethods:
 			try:
