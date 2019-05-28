@@ -569,7 +569,7 @@ LINPHONE_PUBLIC LinphoneProxyConfig * linphone_account_creator_create_proxy_conf
  * Configure an account (create a proxy config and authentication info for it).
  * @param[in] creator #LinphoneAccountCreator object
  * @return A #LinphoneProxyConfig object if successful, NULL otherwise
- * @deprecated
+ * @deprecated Use linphone_account_creator_create_proxy_config instead
 **/
 LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneProxyConfig * linphone_account_creator_configure(const LinphoneAccountCreator *creator);
 
