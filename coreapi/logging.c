@@ -54,7 +54,7 @@ static LinphoneLoggingServiceCbs *_linphone_logging_service_cbs_new(void);
 // Use a thread local variable so if two different threads are printing a log at the same time, it won't be a race condition on the currentCbs
 // causing it to be set to null by one thread while the second one is in the log callback and that will either cause a crash on the worst case scenario
 // or cause the log to be lost on the best case scenario.
-thread_local LinphoneLoggingServiceCbs* currentCbs = NULL; 
+static thread_local LinphoneLoggingServiceCbs* currentCbs = NULL; 
 
 
 
