@@ -48,45 +48,75 @@ public class NetworkManagerAbove23 implements NetworkManagerInterface {
 		mNetworkAvailable = null;
 		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 			@Override
-			public void onAvailable(Network network) {
-				Log.i("[Platform Helper] [Network Manager 23] A network is available: " + mConnectivityManager.getNetworkInfo(network).getType() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
-				if (!mWifiOnly || mConnectivityManager.getNetworkInfo(network).getType() == ConnectivityManager.TYPE_WIFI) {
-					mNetworkAvailable = network;
-					mHelper.updateNetworkReachability();
-				} else {
-					Log.i("[Platform Helper] [Network Manager 23] Network isn't wifi and wifi only mode is enabled");
-				}
+			public void onAvailable(final Network network) {
+				mHelper.getHandler().post(new Runnable() {
+					@Override
+					public void run() {
+						Log.i("[Platform Helper] [Network Manager 23] A network is available: " + mConnectivityManager.getNetworkInfo(network).getType() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
+						if (!mWifiOnly || mConnectivityManager.getNetworkInfo(network).getType() == ConnectivityManager.TYPE_WIFI) {
+							mNetworkAvailable = network;
+							mHelper.updateNetworkReachability();
+						} else {
+							Log.i("[Platform Helper] [Network Manager 23] Network isn't wifi and wifi only mode is enabled");
+						}
+					}
+				});
 			}
 
 			@Override
-			public void onLost(Network network) {
-				Log.i("[Platform Helper] [Network Manager 23] A network has been lost");
-				if (mNetworkAvailable != null && mNetworkAvailable.equals(network)) {
-					mNetworkAvailable = null;
-				}
-				mHelper.updateNetworkReachability();
+			public void onLost(final Network network) {
+				mHelper.getHandler().post(new Runnable() {
+					@Override
+					public void run() {
+						Log.i("[Platform Helper] [Network Manager 23] A network has been lost");
+						if (mNetworkAvailable != null && mNetworkAvailable.equals(network)) {
+							mNetworkAvailable = null;
+						}
+						mHelper.updateNetworkReachability();
+					}
+				});
 			}
 
 			@Override
-			public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
-				Log.i("[Platform Helper] [Network Manager 23] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
-				mHelper.updateNetworkReachability();
+			public void onCapabilitiesChanged(final Network network, final NetworkCapabilities networkCapabilities) {
+				mHelper.getHandler().post(new Runnable() {
+					@Override
+					public void run() {
+						Log.i("[Platform Helper] [Network Manager 23] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
+						mHelper.updateNetworkReachability();
+					}
+				});
 			}
 
 			@Override
-			public void onLinkPropertiesChanged(Network network, LinkProperties linkProperties) {
-				Log.i("[Platform Helper] [Network Manager 23] onLinkPropertiesChanged " + network.toString() + ", " + linkProperties.toString());
-				mHelper.updateDnsServers(linkProperties.getDnsServers());
+			public void onLinkPropertiesChanged(final Network network, final LinkProperties linkProperties) {
+				mHelper.getHandler().post(new Runnable() {
+					@Override
+					public void run() {
+						Log.i("[Platform Helper] [Network Manager 23] onLinkPropertiesChanged " + network.toString() + ", " + linkProperties.toString());
+						mHelper.updateDnsServers(linkProperties.getDnsServers());
+					}
+				});
 			}
 
 			@Override
-			public void onLosing(Network network, int maxMsToLive) {
-				Log.i("[Platform Helper] [Network Manager 23] onLosing " + network.toString());
+			public void onLosing(final Network network, final int maxMsToLive) {
+				mHelper.getHandler().post(new Runnable() {
+					@Override
+					public void run() {
+						Log.i("[Platform Helper] [Network Manager 23] onLosing " + network.toString());
+					}
+				});
 			}
 
 			@Override
 			public void onUnavailable() {
-				Log.i("[Platform Helper] [Network Manager 23] onUnavailable");
+				mHelper.getHandler().post(new Runnable() {
+					@Override
+					public void run() {
+						Log.i("[Platform Helper] [Network Manager 23] onUnavailable");
+					}
+				});
 			}
 		};
 	}
