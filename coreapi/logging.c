@@ -34,7 +34,6 @@ struct _LinphoneLoggingService {
 	belle_sip_object_t base;
 	LinphoneLoggingServiceCbs *cbs; // Deprecated, use a list of Cbs instead
 	bctbx_list_t *callbacks;
-	LinphoneLoggingServiceCbs *currentCbs;
 	bctbx_log_handler_t *log_handler;
 };
 
@@ -52,7 +51,10 @@ BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneLoggingServiceCbs);
 
 static LinphoneLoggingServiceCbs *_linphone_logging_service_cbs_new(void);
 
-
+// Use a thread local variable so if two different threads are printing a log at the same time, it won't be a race condition on the currentCbs
+// causing it to be set to null by one thread while the second one is in the log callback and that will either cause a crash on the worst case scenario
+// or cause the log to be lost on the best case scenario.
+thread_local LinphoneLoggingServiceCbs* currentCbs = NULL; 
 
 
 
@@ -205,11 +207,11 @@ void linphone_logging_service_remove_callbacks(LinphoneLoggingService *log_servi
 }
 
 LinphoneLoggingServiceCbs *linphone_logging_service_get_current_callbacks(const LinphoneLoggingService *log_service) {
-	return log_service->currentCbs;
+	return currentCbs;
 }
 
 void linphone_logging_service_set_current_callbacks(LinphoneLoggingService *log_service, LinphoneLoggingServiceCbs *cbs) {
-	log_service->currentCbs = cbs;
+	currentCbs = cbs;
 }
 
 const bctbx_list_t *linphone_logging_service_get_callbacks_list(const LinphoneLoggingService *log_service) {
