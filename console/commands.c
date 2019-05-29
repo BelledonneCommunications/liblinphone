@@ -422,6 +422,7 @@ linphonec_parse_command_line(LinphoneCore *lc, char *cl)
 			if (linphone_core_get_current_call(lc))
 				linphone_call_send_dtmf(linphone_core_get_current_call(lc), *cl);
 			linphone_core_play_dtmf (lc,*cl,100);
+			linphone_core_iterate(lc);
 			ms_sleep(1); // be nice
 			++cl;
 		}
