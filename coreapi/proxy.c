@@ -497,7 +497,6 @@ void linphone_proxy_config_apply(LinphoneProxyConfig *cfg, LinphoneCore *lc){
 			if (cfg->reg_sendregister != FALSE) {
 				cfg->register_changed = TRUE;
 			}
-			cfg->reg_sendregister = FALSE;
 			//We do not call linphone_proxy_config_enable_register on purpose here
 			//Explicitely disabling register on a dependent config puts it in a disabled state (see cfg->reg_dependent_disabled) to avoid automatic re-enable if masterCfg reach LinphoneRegistrationOk
 		}
@@ -1512,6 +1511,8 @@ void _linphone_update_dependent_proxy_config(LinphoneProxyConfig *cfg, LinphoneR
 			if (tmp->reg_dependent_disabled) continue;
 			linphone_proxy_config_edit(tmp);
 			if (state == LinphoneRegistrationOk) {
+				// Force dependent proxy config to re-register
+				tmp->reg_sendregister = FALSE;
 				linphone_proxy_config_enable_register(tmp, TRUE);
 				const SalAddress *salAddr = cfg->op->getContactAddress();
 
@@ -1525,7 +1526,6 @@ void _linphone_update_dependent_proxy_config(LinphoneProxyConfig *cfg, LinphoneR
 				}
 			} else if (state == LinphoneRegistrationCleared || state == LinphoneRegistrationFailed) {
 				linphone_proxy_config_pause_register(tmp);
-				tmp->reg_sendregister = FALSE;
 				linphone_proxy_config_set_state(tmp, state, message);
 			}
 			linphone_proxy_config_done(tmp);
