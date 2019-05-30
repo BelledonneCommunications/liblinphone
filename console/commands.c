@@ -419,11 +419,15 @@ linphonec_parse_command_line(LinphoneCore *lc, char *cl)
 	{
 		while ( isdigit(*cl) || *cl == '#' || *cl == '*' )
 		{
+			int i;
 			if (linphone_core_get_current_call(lc))
 				linphone_call_send_dtmf(linphone_core_get_current_call(lc), *cl);
 			linphone_core_play_dtmf (lc,*cl,100);
-			linphone_core_iterate(lc);
-			ms_sleep(1); // be nice
+			for (i = 0; i < 5; i++)
+			{
+				linphone_core_iterate(lc);
+				ms_usleep(200000); // be nice
+			}
 			++cl;
 		}
 
