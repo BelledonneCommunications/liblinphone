@@ -558,9 +558,8 @@ void IceAgent::createIceCheckListsAndParseIceAttributes (const SalMediaDescripti
 				if (remoteCandidate->addr[0] == '\0') break;
 				getIceDefaultAddrAndPort(static_cast<uint16_t>(componentID), md, stream, &addr, &port);
 
-				// If we receive a re-invite and we finished ICE processing on our side, use the candidates given by the remote.
-				if (j == 0)
-					ice_check_list_unselect_valid_pairs(cl);
+				// If we receive a re-invite with remote-candidates, supply these pairs to the ice check list.
+				// They might be valid pairs already selected, or losing pairs.
 
 				int remoteFamily = AF_INET;
 				if (strchr(remoteCandidate->addr, ':'))
