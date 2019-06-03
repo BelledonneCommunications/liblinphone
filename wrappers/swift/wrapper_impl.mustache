@@ -20,7 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import Foundation
 import linphone
 
-// MARK: region enums
 {{#enums}}
 {{#enum}}
 {{#doc}}
@@ -64,7 +63,6 @@ public enum {{enumName}}:Int
 {{/enums}}
 
 
-// MARK: region utils
 func charArrayToString(charPointer: UnsafePointer<CChar>?) -> String {
 	return charPointer != nil ? String(cString: charPointer!) : ""
 }
@@ -127,7 +125,6 @@ enum LinphoneError: Error {
 	case exception(result: String)
 }
 
-// MARK: region Delegates
 {{#interfaces}}
 {{#interface}}
 
@@ -177,8 +174,6 @@ open class {{interfaceName}} : LinphoneObjectDelegate
 {{/interface}}
 {{/interfaces}}
 
-
-// MARK: region classes
 {{#classes}}
 {{#_class}}
 
@@ -416,11 +411,9 @@ public class {{className}} : LinphoneObject
 	{{/listener}}
 	{{#impl}}
 	{{#doc}}
-	/*!
 	{{#lines}}
-		{{{line}}}
+	///	{{{line}}}
 	{{/lines}}
-	*/
 	{{/doc}}
 	{{static}}public func {{name}}({{{args}}}){{throw_default}} {{#return}}-> {{{type}}}{{return_default}}{{/return}}
 	{
