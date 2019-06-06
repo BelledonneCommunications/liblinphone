@@ -134,6 +134,8 @@ public:
 	int ping (const std::string &from, const std::string &to);
 	int sendInfo (const SalBodyHandler *bodyHandler);
 
+	int replyMessage (SalReason reason);
+
 protected:
 	enum class State {
 		Early = 0,
@@ -209,7 +211,6 @@ protected:
 	int unsubscribe ();
 
 	void processIncomingMessage (const belle_sip_request_event_t *event);
-	int replyMessage (SalReason reason);
 	void addMessageAccept (belle_sip_message_t *message);
 
 	static int setCustomBody(belle_sip_message_t *msg, const Content &body);
