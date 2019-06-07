@@ -83,6 +83,7 @@ public class AndroidPlatformHelper {
 	private String mUserCertificatePath;
 	private Surface mSurface;
 	private SurfaceTexture mSurfaceTexture;
+	private TextureView mPreviewTextureView, mVideoTextureView;
 	private boolean mDozeModeEnabled;
 	private BroadcastReceiver mDozeReceiver;
 	private IntentFilter mDozeIntentFilter;
@@ -352,14 +353,30 @@ public class AndroidPlatformHelper {
 	}
 
 	public synchronized void setVideoPreviewView(Object view) {
+		if (view == null) {
+			setNativePreviewWindowId(mNativePtr, null);
+			if (mPreviewTextureView != null) {
+				mPreviewTextureView.setSurfaceTextureListener(null);
+				mPreviewTextureView = null;
+			}
+			return;
+		}
+
+		if (view instanceof Surface) {
+			Surface surface = (Surface) view;
+			setNativePreviewWindowId(mNativePtr, surface);
+			return;
+		}
+		
 		if (!(view instanceof TextureView)) {
 			throw new RuntimeException("[Platform Helper] Preview window id is not an instance of TextureView. " +
 				"Please update your UI layer so that the preview video view is a TextureView (or an instance of it)" +
 				"or enable compatibility mode by setting displaytype=MSAndroidOpenGLDisplay in the [video] section your linphonerc factory configuration file" +
 				"so you can keep using your existing application code for managing video views.");
 		}
-		TextureView textureView = (TextureView)view;
-		textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+
+		mPreviewTextureView = (TextureView)view;
+		mPreviewTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
 			@Override
 			public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
 				Log.i("[Platform Helper] Preview window surface is available");
@@ -374,7 +391,10 @@ public class AndroidPlatformHelper {
 			@Override
 			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
 				Log.i("[Platform Helper] Preview window surface is no longer available");
-				setNativePreviewWindowId(mNativePtr, null);
+				if (mPreviewTextureView != null) {
+					setNativePreviewWindowId(mNativePtr, null);
+					mPreviewTextureView = null;
+				}
 				return false;
 			}
 
@@ -390,14 +410,30 @@ public class AndroidPlatformHelper {
 	}
 
 	public synchronized void setVideoRenderingView(Object view) {
+		if (view == null) {
+			setNativeVideoWindowId(mNativePtr, null);
+			if (mVideoTextureView != null) {
+				mVideoTextureView.setSurfaceTextureListener(null);
+				mVideoTextureView = null;
+			}
+			return;
+		}
+
+		if (view instanceof Surface) {
+			Surface surface = (Surface) view;
+			setNativeVideoWindowId(mNativePtr, surface);
+			return;
+		}
+		
 		if (!(view instanceof TextureView)) {
 			throw new RuntimeException("[Platform Helper] Rendering window id is not an instance of TextureView." +
 				"Please update your UI layer so that the video rendering view is a TextureView (or an instance of it)" +
 				"or enable compatibility mode by setting displaytype=MSAndroidOpenGLDisplay in the [video] section your linphonerc factory configuration file" +
 				"so you can keep using your existing application code for managing video views.");
 		}
-		TextureView textureView = (TextureView)view;
-		textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+
+		mVideoTextureView = (TextureView)view;
+		mVideoTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
 			@Override
 			public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
 				Log.i("[Platform Helper] Rendering window surface is available");
@@ -415,8 +451,11 @@ public class AndroidPlatformHelper {
 			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
 				if (mSurfaceTexture == surface) {
 					Log.i("[Platform Helper] Rendering window surface is no longer available");
-					setNativeVideoWindowId(mNativePtr, null);
-					mSurfaceTexture = null;
+					if (mVideoTextureView != null) {
+						setNativeVideoWindowId(mNativePtr, null);
+						mSurfaceTexture = null;
+						mVideoTextureView = null;
+					}
 				}
 				return false;
 			}
@@ -426,9 +465,10 @@ public class AndroidPlatformHelper {
 
 			}
 		});
-		if (textureView.isAvailable()) {
+		
+		if (mVideoTextureView.isAvailable()) {
 			Log.i("[Platform Helper] Rendering window surface is available");
-			mSurfaceTexture = textureView.getSurfaceTexture();
+			mSurfaceTexture = mVideoTextureView.getSurfaceTexture();
 			mSurface = new Surface(mSurfaceTexture);
 			setNativeVideoWindowId(mNativePtr, mSurface);
 		}

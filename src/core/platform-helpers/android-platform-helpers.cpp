@@ -255,7 +255,7 @@ void AndroidPlatformHelpers::setVideoPreviewWindow (void *windowId) {
 	JNIEnv *env = ms_get_jni_env();
 	if (env && mJavaHelper) {
 		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()->getCCore()));
-		if (windowId && (displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
+		if ((displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
 			env->CallVoidMethod(mJavaHelper, mSetNativePreviewVideoWindowId, (jobject)windowId);
 		} else {
 			_setPreviewVideoWindow((jobject)windowId);
@@ -267,7 +267,7 @@ void AndroidPlatformHelpers::setVideoWindow (void *windowId) {
 	JNIEnv *env = ms_get_jni_env();
 	if (env && mJavaHelper) {
 		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()->getCCore()));
-		if (windowId && (displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
+		if ((displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
 			env->CallVoidMethod(mJavaHelper, mSetNativeVideoWindowId, (jobject)windowId);
 		} else {
 			_setVideoWindow((jobject)windowId);
