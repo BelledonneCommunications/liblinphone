@@ -38,16 +38,26 @@ static void _linphone_core_destructor (LinphoneCore *lc);
 L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(
 	Core,
 	_linphone_core_constructor, _linphone_core_destructor,
-	LINPHONE_CORE_STRUCT_FIELDS
+	LINPHONE_CORE_STRUCT_FIELDS;
+
+	struct Cache {
+		~Cache () {
+			
+		}
+
+		string lime_server_url;
+	} mutable cache;
 )
 
 static void _linphone_core_constructor (LinphoneCore *lc) {
 	lc->state = LinphoneGlobalOff;
+	new(&lc->cache) LinphoneCore::Cache();
 }
 
 static void _linphone_core_destructor (LinphoneCore *lc) {
 	if (lc->callsCache)
 		bctbx_list_free_with_data(lc->callsCache, (bctbx_list_free_func)linphone_call_unref);
+	lc->cache.~Cache();
 	_linphone_core_uninit(lc);
 }
 
@@ -80,7 +90,8 @@ void linphone_core_set_lime_x3dh_server_url(LinphoneCore *lc, const char *url) {
 }
 
 const char *linphone_core_get_lime_x3dh_server_url(LinphoneCore *lc) {
-	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getX3dhServerUrl());
+	lc->cache.lime_server_url = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getX3dhServerUrl();
+	return L_STRING_TO_C(lc->cache.lime_server_url);
 }
 
 //Deprecated
