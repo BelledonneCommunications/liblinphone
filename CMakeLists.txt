@@ -195,6 +195,7 @@ if(ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAPPER OR ENABLE_
 		check_python_module(sphinx)
 		check_python_module(javasphinx)
 		check_python_module(sphinx_csharp)
+		check_python_module(swift_domain)
 	endif()
 endif()
 

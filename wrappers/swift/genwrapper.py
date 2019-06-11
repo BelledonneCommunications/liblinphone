@@ -115,8 +115,7 @@ class SwiftTranslator(object):
             for arg in method.args:
                 argType = arg.type.translate(self.langTranslator, dllImport=False)
                 argName = arg.name.translate(self.nameTranslator)
-                if argType.endswith('Listener'):
-                    argType = argType[0:len(argType)-8] + "Delegate"
+                if argType.endswith('Delegate'):
                     argName = "delegate"
                 if arg is not method.args[0]:
                     methodDict['impl']['args'] += ', '
@@ -348,8 +347,6 @@ class SwiftTranslator(object):
 
         interfaceDict = {}
         interfaceDict['interfaceName'] = interface.name.translate(self.nameTranslator)
-        if interfaceDict['interfaceName'].endswith('Listener'):
-            interfaceDict['interfaceName'] = interfaceDict['interfaceName'][0:len(interfaceDict['interfaceName'])-8] + "Delegate"
         interfaceDict['create_user_data_name'] = 'linphone_factory_create' + interface.listenedClass.name.to_snake_case(fullName=True).lstrip('linphone') + '_cbs'
 
         interfaceDict['methods'] = []
@@ -368,8 +365,7 @@ class SwiftTranslator(object):
         methodDict['has_getter'] = True
         methodDict['has_setter'] = False
         methodDict['return'] = prop.returnType.translate(self.langTranslator, dllImport=False)
-        if methodDict['return'].endswith('Listener'):
-            methodDict['return'] = methodDict['return'][0:len(methodDict['return'])-8] + "Delegate"
+        if methodDict['return'].endswith('Delegate'):
             methodDict['is_callbacks'] = True
         methodDict['exception'] = self.throws_exception(prop.returnType)
         methodDict['getter_c_name'] = prop.name.to_c()

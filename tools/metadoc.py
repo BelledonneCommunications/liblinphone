@@ -594,6 +594,13 @@ class SphinxTranslator(Translator):
 			self.enumeratorDeclarator = 'field'
 			self.namespaceDeclarator = 'package'
 			self.methodReferencer = 'meth'
+		elif langCode == 'Swift':
+			self.domain = 'swift'
+			self.classDeclarator = 'class'
+			self.interfaceDeclarator = self.classDeclarator
+			self.methodDeclarator = 'class_method'
+			self.enumDeclarator = 'enum'
+			self.enumeratorDeclarator = 'enum_case'
 		else:
 			raise ValueError('invalid language code: {0}'.format(langCode))
 	
@@ -617,10 +624,15 @@ class SphinxTranslator(Translator):
 			raise ValueError("'{0}' referencer type not supported".format(typeName))
 
 	def translate_class_reference(self, ref, label=None, namespace=None):
+		refStr = Translator.translate_reference(self, ref, absName=True)
+		tag = self._sphinx_ref_tag(ref)
+		if self.domain == 'swift':
+			refStr = tag.split(':')[1] + " " + refStr
+
 		return ':{tag}:`{label} <{ref}>`'.format(
-			tag=self._sphinx_ref_tag(ref),
+			tag=tag,
 			label=label if label is not None else Translator.translate_reference(self, ref, namespace=namespace),
-			ref=Translator.translate_reference(self, ref, absName=True)
+			ref= refStr
 		)
 
 	def translate_function_reference(self, ref, label=None, useNamespace=True, namespace=None):
@@ -628,16 +640,17 @@ class SphinxTranslator(Translator):
 			refStr = ref.relatedObject.name.translate(self.nameTranslator, **abstractapi.Translator._namespace_to_name_translator_params(namespace))
 		else:
 			refStr = ref.relatedObject.translate_as_prototype(self.langTranslator,
-				hideArguments=self.domain != 'java',
+				hideArguments=self.domain not in ['java', 'swift'],
 				hideArgNames=self.domain == 'java',
+				hideArgTypes=self.domain == 'swift',
 				hideReturnType=True,
 				stripDeclarators=True,
 				namespace=namespace
 			)
 		return ':{tag}:`{label} <{ref}>`'.format(
-			tag=self._sphinx_ref_tag(ref),
-			label=label if label is not None else '{0}()'.format(Translator.translate_reference(self, ref, namespace=namespace)),
-			ref=refStr
+			tag   = self._sphinx_ref_tag(ref),
+			label = label if label is not None else '{0}()'.format(Translator.translate_reference(self, ref, namespace=namespace)),
+			ref   = "static " + refStr if self.domain == 'swift' and ref.relatedObject.type == abstractapi.Method.Type.Class else refStr
 		)
 	
 	def translate_keyword(self, keyword):
