@@ -501,6 +501,9 @@ public class AndroidPlatformHelper {
 			if (maxWidth == 0 || maxHeight == 0) {
 				Log.w("[Platform Helper] Abort resizing preview so that it won't be visible");
 				return;
+			} else if (width == 0 || height == 0) {
+				Log.e("[Platform Helper] Abort resizing preview to prevent divide by zero crash, video size is " + width + "x" + height);
+				return;
 			}
 
 			// A MATCH_PARENT will take over a WRAP_CONTENT or a fixed size and maintain ratio
