@@ -1042,8 +1042,8 @@ class CLangTranslator(CLikeLangTranslator):
 			return '1<<{0}'.format(value.position)
 		else:
 			raise TypeError('invalid enumerator value type: {0}'.format(value))
-	
-	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideReturnType=False, stripDeclarators=False, namespace=None):
+
+	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideArgTypes=False, hideReturnType=False, stripDeclarators=False, namespace=None):
 		_class = method.find_first_ancestor_by_type(Class,Interface)
 		params = []
 		if not hideArguments:
@@ -1152,13 +1152,13 @@ class CppLangTranslator(CLikeLangTranslator):
 			res = _type.containedTypeDesc.translate(self)
 		else:
 			res = _type.containedTypeDesc.translate(self, namespace=namespace)
-			
+
 		if type(_type.parent) is Argument:
 			return 'const std::list<{0}> &'.format(res)
 		else:
 			return 'std::list<{0}>'.format(res)
-	
-	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideReturnType=False, stripDeclarators=False, namespace=None):
+
+	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideArgTypes=False, hideReturnType=False, stripDeclarators=False, namespace=None):
 		argsAsString = ', '.join([arg.translate(self, hideArgName=hideArgNames, namespace=namespace) for arg in method.args]) if not hideArguments else ''
 		return '{return_}{name}({args}){const}'.format(
 			return_=(method.returnType.translate(self, namespace=namespace) + ' ') if not hideReturnType else '',
@@ -1269,7 +1269,7 @@ class JavaLangTranslator(CLikeLangTranslator):
 			res += (' ' + arg.name.translate(self.nameTranslator))
 		return res
 
-	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideReturnType=False, stripDeclarators=False, namespace=None):
+	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideArgTypes=False, hideReturnType=False, stripDeclarators=False, namespace=None):
 		return '{public}{returnType}{methodName}({arguments})'.format(
 			public='public ' if not stripDeclarators else '',
 			returnType=(method.returnType.translate(self, isReturn=True, namespace=namespace) + ' ') if not hideReturnType else '',
@@ -1280,7 +1280,7 @@ class JavaLangTranslator(CLikeLangTranslator):
 class SwiftLangTranslator(CLikeLangTranslator):
 	def __init__(self):
 		self.nameTranslator = metaname.Translator.get('Swift')
-		self.nilToken = 'null'
+		self.nilToken = 'nil'
 		self.falseConstantToken = 'false'
 		self.trueConstantToken = 'true'
 
@@ -1349,7 +1349,7 @@ class SwiftLangTranslator(CLikeLangTranslator):
 			return _type.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
 
 	def translate_class_type(self, _type, dllImport=True, namespace=None):
-		return "IntPtr" if dllImport else _type.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
+		return _type.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
 
 	def translate_list_type(self, _type, dllImport=True, namespace=None):
 		if dllImport:
@@ -1375,13 +1375,30 @@ class SwiftLangTranslator(CLikeLangTranslator):
 			arg.name.translate(self.nameTranslator)
 		)
 
-	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideReturnType=False, stripDeclarators=False, namespace=None):
-		return '{static}{override}{returnType}{name}({args})'.format(
-			static     = 'static ' if method.type == Method.Type.Class and not stripDeclarators else '',
-			override   = 'override ' if method.name.translate(self.nameTranslator) == 'ToString' and not stripDeclarators else '',
-			returnType = (method.returnType.translate(self, dllImport=False, namespace=namespace) + ' ') if not hideReturnType else '',
+	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideArgTypes=False, hideReturnType=False, stripDeclarators=False, namespace=None):
+		params = []
+		if not hideArguments:
+			for arg in method.args:
+				argType = arg.type.translate(self, dllImport=False, namespace=None)
+				argName = arg.name.translate(self.nameTranslator)
+				if argType.endswith('Listener'):
+					argType = argType[0:len(argType)-8] + "Delegate"
+					argName = "delegate"
+				elif argType == "UnsafePointer<Int>" and not arg.type.isconst:
+					argType = "UnsafeMutablePointer<Int32>"
+				elif argType == "UnsafeMutableRawPointer":
+					argType = "UnsafeMutableRawPointer?"
+				params.append(argName + ":" + argType if not hideArgTypes else argName + ":")
+
+		returnType = method.returnType.translate(self, dllImport=False)
+		returnValue = ""
+		if returnType != "void":
+			returnValue = " -> " + returnType + '?' if type(method.returnType) is ClassType and 'create' in method.name.to_word_list() else " -> " + returnType
+
+		return '{name}({params}){returnValue}'.format(
 			name       = method.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace)),
-			args       = ', '.join([arg.translate(self, dllImport=False, namespace=namespace) for arg in method.args]) if not hideArguments else ''
+			params     = ', '.join(params) if not hideArgTypes else ''.join(params),
+			returnValue= returnValue if not hideArgTypes else ''
 		)
 
 
@@ -1468,14 +1485,14 @@ class CSharpLangTranslator(CLikeLangTranslator):
 					raise TranslationError('translation of bctbx_list_t of enums')
 				else:
 					raise TranslationError('translation of bctbx_list_t of unknow type !')
-	
+
 	def translate_argument(self, arg, dllImport=True, namespace=None):
 		return '{0} {1}'.format(
 			arg.type.translate(self, dllImport=dllImport, namespace=None),
 			arg.name.translate(self.nameTranslator)
 		)
-	
-	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideReturnType=False, stripDeclarators=False, namespace=None):
+
+	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideArgTypes=False, hideReturnType=False, stripDeclarators=False, namespace=None):
 		return '{static}{override}{returnType}{name}({args})'.format(
 			static     = 'static ' if method.type == Method.Type.Class and not stripDeclarators else '',
 			override   = 'override ' if method.name.translate(self.nameTranslator) == 'ToString' and not stripDeclarators else '',

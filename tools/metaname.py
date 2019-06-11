@@ -331,8 +331,21 @@ class JavaTranslator(Translator):
 class SwiftTranslator(JavaTranslator):
 	def __init__(self):
 		JavaTranslator.__init__(self)
-		self.nsSep = '::'
+		self.nsSep = '.'
 		self.keyWordEscapes = {'protocol' : 'proto'}
+
+	def translate_enum_name(self, name, recursive=False, topAncestor=None):
+		namespace = name
+		while namespace is not None and type(namespace) is not NamespaceName:
+			namespace = namespace.prev
+		nameCopy = name.copy()
+		if namespace is not None:
+			nameCopy.delete_prefix(namespace)
+		return nameCopy.to_camel_case(fullName=True)
+
+	def translate_interface_name(self, name, **params):
+		name = self.translate_class_name(name, **params)
+		return name[0:len(name)-8] + "Delegate"
 
 	def translate_class_name(self, name, recursive=False, topAncestor=None):
 		return name.to_camel_case()
