@@ -1641,6 +1641,20 @@ LINPHONE_PUBLIC bool_t linphone_core_ipv6_enabled(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val);
 
 /**
+ * Tells whether NACK context is enabled or not.
+ * @param[in] lc #LinphoneCore object
+ * @return A boolean value telling whether NACK context is enabled or not
+**/
+LINPHONE_PUBLIC bool_t linphone_core_nack_context_enabled(LinphoneCore *lc);
+
+/**
+ * Turns NACK context on or off.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] val A boolean value telling whether to enable NACK context
+**/
+LINPHONE_PUBLIC void linphone_core_enable_nack_context(LinphoneCore *lc, bool_t val);
+
+/**
  * Tells whether Wifi only mode is enabled or not
  * @param[in] lc #LinphoneCore object
  * @return A boolean value telling whether Wifi only mode is enabled or not
