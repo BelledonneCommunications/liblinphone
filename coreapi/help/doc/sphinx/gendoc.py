@@ -238,7 +238,10 @@ class SphinxPart(object):
 class EnumPart(SphinxPart):
 	def __init__(self, enum, lang, langs, namespace=None):
 		SphinxPart.__init__(self, lang, langs)
-		self.name = enum.name.translate(self.lang.nameTranslator)
+		if lang.langCode == 'Swift' and type(enum.parent) is abstractapi.Class :
+			self.name = enum.name.translate(self.lang.nameTranslator,recursive=True, topAncestor=namespace)
+		else:
+			self.name = enum.name.translate(self.lang.nameTranslator)
 		self.fullName = enum.name.translate(self.lang.nameTranslator, recursive=True)
 		self.briefDesc = enum.briefDescription.translate(self.docTranslator)
 		self.enumerators = [self._translate_enumerator(enumerator) for enumerator in enum.enumerators]

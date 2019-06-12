@@ -167,6 +167,16 @@ open class {{interfaceName}} : LinphoneObjectDelegate
 
 	{{#methods}}
 	{{#delegate}}
+	{{#doc}}
+	{{#lines}}
+	///	{{{line}}}
+	{{/lines}}
+	{{/doc}}
+	{{#detailedDoc}}
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/detailedDoc}}
 	open func {{cb_name}}({{{params_public}}}){{#return_class}} -> {{type}}? {return nil}{{/return_class}}{{^return_class}} {}{{/return_class}}
 	{{/delegate}}
 	{{/methods}}
@@ -182,6 +192,11 @@ open class {{interfaceName}} : LinphoneObjectDelegate
 /// {{{line}}}
 {{/lines}}
 {{/doc}}
+{{#detailedDoc}}
+{{#lines}}
+/// {{{line}}}
+{{/lines}}
+{{/detailedDoc}}
 public class {{className}} : LinphoneObject
 {
 	static func getSobject(cObject:OpaquePointer) -> {{className}} {
@@ -225,7 +240,47 @@ public class {{className}} : LinphoneObject
 		}
 	}
 	{{/isLinphoneCore}}
-	{{#dllImports}}
+	{{#classEnums}}
+
+	{{#doc}}
+	{{#lines}}
+	///{{{line}}}
+	{{/lines}}
+	{{/doc}}
+	{{#isFlag}}
+	public struct {{enumName}}:OptionSet
+	{
+		public let rawValue: Int
+
+		public init(rawValue: Int) {
+			self.rawValue = rawValue
+		}
+
+		{{#values}}
+		{{#doc}}
+		{{#lines}}
+		/// {{{line}}}
+		{{/lines}}
+		{{/doc}}
+		public static let {{name}} = {{enumName}}(rawValue: {{{value}}})
+		{{/values}}
+	}
+	{{/isFlag}}
+	{{^isFlag}}
+	public enum {{enumName}}:Int
+	{
+		{{#values}}
+		{{#doc}}
+		{{#lines}}
+		/// {{{line}}}
+		{{/lines}}
+		{{/doc}}
+		case {{name}} = {{{value}}}
+		{{/values}}
+	}
+	{{/isFlag}}
+	{{/classEnums}}
+	{{#properties}}
 	{{#has_property}}
 
 	{{#doc}}
@@ -233,6 +288,11 @@ public class {{className}} : LinphoneObject
 	/// {{{line}}}
 	{{/lines}}
 	{{/doc}}
+	{{#detailedDoc}}
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/detailedDoc}}
 	{{static}}public var {{property_name}}: {{{return}}}{{{return_default}}}
 	{
 	{{#has_getter}}
@@ -318,7 +378,7 @@ public class {{className}} : LinphoneObject
 			{{setter_c_name}}(cPtr, newValue?.cPtr)
 			{{/is_class}}
 			{{#is_enum}}
-			{{setter_c_name}}(cPtr, Linphone{{{return}}}(rawValue: {{enum_type}}(newValue{{^has_getter}}!{{/has_getter}}.rawValue)))
+			{{setter_c_name}}(cPtr, {{returnCType}}(rawValue: {{enum_type}}(newValue{{^has_getter}}!{{/has_getter}}.rawValue)))
 			{{/is_enum}}
 			{{#is_int}}
 			{{setter_c_name}}(cPtr, {{int_method}}(newValue))
@@ -360,7 +420,7 @@ public class {{className}} : LinphoneObject
 		let exception_result = {{setter_c_name}}(cPtr, newValue.cPtr)
 		{{/is_class}}
 		{{#is_enum}}
-		let exception_result = {{setter_c_name}}(cPtr, Linphone{{{return}}}(rawValue: {{enum_type}}(newValue{{^has_getter}}!{{/has_getter}}.rawValue)))
+		let exception_result = {{setter_c_name}}(cPtr, {{returnCType}}(rawValue: {{enum_type}}(newValue{{^has_getter}}!{{/has_getter}}.rawValue)))
 		{{/is_enum}}
 		{{#is_int}}
 		let exception_result = {{setter_c_name}}(cPtr, {{int_method}}(newValue))
@@ -415,6 +475,11 @@ public class {{className}} : LinphoneObject
 	///	{{{line}}}
 	{{/lines}}
 	{{/doc}}
+	{{#detailedDoc}}
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/detailedDoc}}
 	{{static}}public func {{name}}({{{args}}}){{throw_default}} {{#return}}-> {{{type}}}{{return_default}}{{/return}}
 	{
 		{{#is_string}}
@@ -475,7 +540,7 @@ public class {{className}} : LinphoneObject
 		{{/is_class_list}}
 	}
 	{{/impl}}
-	{{/dllImports}}
+	{{/properties}}
 }
 {{/_class}}
 {{/classes}}

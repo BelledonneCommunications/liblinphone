@@ -335,13 +335,11 @@ class SwiftTranslator(JavaTranslator):
 		self.keyWordEscapes = {'protocol' : 'proto'}
 
 	def translate_enum_name(self, name, recursive=False, topAncestor=None):
-		namespace = name
-		while namespace is not None and type(namespace) is not NamespaceName:
-			namespace = namespace.prev
-		nameCopy = name.copy()
-		if namespace is not None:
-			nameCopy.delete_prefix(namespace)
-		return nameCopy.to_camel_case(fullName=True)
+		if name.prev is None or not recursive or name.prev is topAncestor:
+			return name.to_camel_case()
+		else:
+			params = {'recursive': recursive, 'topAncestor': topAncestor}
+			return name.prev.translate(self, **params) + self.nsSep + name.to_camel_case()
 
 	def translate_interface_name(self, name, **params):
 		name = self.translate_class_name(name, **params)

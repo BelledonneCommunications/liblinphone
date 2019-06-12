@@ -37,7 +37,7 @@ class SwiftTranslator(object):
         self.ignore = []
         self.nameTranslator = metaname.Translator.get('Swift')
         self.langTranslator = AbsApi.Translator.get('Swift')
-        self.docTranslator = metadoc.JavaDocTranslator()
+        self.docTranslator = metadoc.SwiftDocTranslator()
 
     def init_method_dict(self):
         methodDict = {}
@@ -65,12 +65,6 @@ class SwiftTranslator(object):
     def is_generic(self, methodDict):
         return not methodDict['is_string'] and not methodDict['is_bool'] and not methodDict['is_class'] and not methodDict['is_enum'] and not methodDict['is_int'] and methodDict['list_type'] == None
 
-    def is_linphone_type(self, _type, isArg, dllImport=True):
-        if isinstance(_type, AbsApi.ClassType):
-            return False if dllImport else True
-        elif isinstance(_type, AbsApi.EnumType):
-            return False if dllImport else True
-
     def throws_exception(self, return_type):
         if isinstance(return_type, AbsApi.BaseType):
             if return_type.name == 'status':
@@ -82,14 +76,19 @@ class SwiftTranslator(object):
             raise AbsApi.Error('{0} has been escaped'.format(method.name.to_c()))
 
         methodDict = {}
-        methodDict['doc'] = method.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+        namespace = method.find_first_ancestor_by_type(AbsApi.Namespace)
+        try:
+            methodDict['doc'] = method.briefDescription.translate(self.docTranslator, tagAsBrief=True) if method.briefDescription is not None else None
+            methodDict['detailedDoc'] = method.detailedDescription.translate(self.docTranslator) if method.detailedDescription is not None else None
+        except metadoc.TranslationError as e:
+            logging.error(e.msg())
 
         if genImpl:
             methodDict['impl'] = {}
 
             methodDict['impl']['static'] = 'static ' if static else ''
             methodDict['impl']['exception'] = self.throws_exception(method.returnType)
-            methodDict['impl']['type'] = method.returnType.translate(self.langTranslator, dllImport=False)
+            methodDict['impl']['type'] = method.returnType.translate(self.langTranslator, namespace=namespace)
             methodDict['impl']['return'] = '' if methodDict['impl']['type'] == "void" else 'return '
             methodDict['impl']['name'] = method.name.translate(self.nameTranslator)
             methodDict['impl']['c_name'] = method.name.to_c()
@@ -101,8 +100,8 @@ class SwiftTranslator(object):
             methodDict['is_string'] = methodDict['impl']['type'] == "String"
             methodDict['is_bool'] = methodDict['impl']['type'] == "Bool"
             methodDict['is_int'] = methodDict['impl']['type'] == "Int" or methodDict['impl']['type'] == "UInt"
-            methodDict['is_class'] = self.is_linphone_type(method.returnType, False, False) and type(method.returnType) is AbsApi.ClassType
-            methodDict['is_enum'] = self.is_linphone_type(method.returnType, False, False) and type(method.returnType) is AbsApi.EnumType
+            methodDict['is_class'] = type(method.returnType) is AbsApi.ClassType
+            methodDict['is_enum'] = type(method.returnType) is AbsApi.EnumType
             methodDict['is_generic'] = self.is_generic(methodDict)
             methodDict['isNotConst'] = not method.returnType.isconst
 
@@ -112,24 +111,23 @@ class SwiftTranslator(object):
             methodDict['throw_default'] = " throws" if methodDict['impl']['exception'] or methodDict['impl']['create_method'] else ""
             methodDict['impl']['args'] = ''
             methodDict['impl']['c_args'] = ''
+
             for arg in method.args:
-                argType = arg.type.translate(self.langTranslator, dllImport=False)
+                argType = arg.type.translate(self.langTranslator)
                 argName = arg.name.translate(self.nameTranslator)
                 if argType.endswith('Delegate'):
                     argName = "delegate"
                 if arg is not method.args[0]:
                     methodDict['impl']['args'] += ', '
                     methodDict['impl']['c_args'] += ', '
-                if self.is_linphone_type(arg.type, False, False):
-                    if isinstance(arg.type, AbsApi.ClassType):
-                        methodDict['impl']['c_args'] += argName + ".cPtr"
-                    elif isinstance(arg.type, AbsApi.EnumType):
-                        if methodDict['impl']['type'] == "Int":
-                            methodDict['impl']['c_args'] += "Linphone" + argType + "(rawValue: CInt(" + argName + ".rawValue))"
-                        else:
-                            methodDict['impl']['c_args'] += "Linphone" + argType + "(rawValue: CUnsignedInt(" + argName + ".rawValue))"
+                if isinstance(arg.type, AbsApi.ClassType):
+                    methodDict['impl']['c_args'] += argName + ".cPtr"
+                elif isinstance(arg.type, AbsApi.EnumType):
+                    argType = arg.type.translate(self.langTranslator, namespace=namespace)
+                    if methodDict['impl']['type'] == "Int":
+                        methodDict['impl']['c_args'] += arg.type.name + "(rawValue: CInt(" + argName + ".rawValue))"
                     else:
-                        methodDict['impl']['c_args'] += argName
+                        methodDict['impl']['c_args'] += arg.type.name + "(rawValue: CUnsignedInt(" + argName + ".rawValue))"
                 elif arg.type.name == "size" or arg.type.name == "time":
                     methodDict['impl']['c_args'] += argName
                 elif argType == "Int":
@@ -138,8 +136,8 @@ class SwiftTranslator(object):
                     methodDict['impl']['c_args'] += "CUnsignedInt(" + argName + ")"
                 elif argType == "Bool":
                     methodDict['impl']['c_args'] += argName + "==true ? 1:0"
-                elif self.get_class_array_type(arg.type.translate(self.langTranslator, dllImport=False)) is not None:
-                    listtype = self.get_class_array_type(arg.type.translate(self.langTranslator, dllImport=False))
+                elif self.get_class_array_type(arg.type.translate(self.langTranslator)) is not None:
+                    listtype = self.get_class_array_type(arg.type.translate(self.langTranslator))
                     if listtype == 'String':
                         methodDict['impl']['c_args'] += "StringArrayToBctbxList(list:" + argName + ")"
                     else:
@@ -165,10 +163,15 @@ class SwiftTranslator(object):
         delegate_name_public = method.name.translate(self.nameTranslator) + "Delegate"
 
         listenerDict['delegate'] = {}
+        try:
+            listenerDict['delegate']['doc'] = method.briefDescription.translate(self.docTranslator, tagAsBrief=True) if method.briefDescription is not None else None
+            listenerDict['delegate']['detailedDoc'] = method.detailedDescription.translate(self.docTranslator) if method.detailedDescription is not None else None
+        except metadoc.TranslationError as e:
+            logging.error(e.msg())
         listenerDict['delegate']['cb_name'] = method.name.translate(self.nameTranslator)
         listenerDict['delegate']['interfaceClassName'] = listenedClass.name.translate(self.nameTranslator)
 
-        listenerDict['delegate']['type'] = method.returnType.translate(self.langTranslator, dllImport=False)
+        listenerDict['delegate']['type'] = method.returnType.translate(self.langTranslator)
         listenerDict['delegate']['return_class'] = type(method.returnType) is AbsApi.ClassType
         listenerDict['delegate']['return'] = "OpaquePointer?" if listenerDict['delegate']['return_class'] else "Void"
 
@@ -176,9 +179,10 @@ class SwiftTranslator(object):
         listenerDict['delegate']['params_private'] = ""
         listenerDict['delegate']['params'] = ""
         listenerDict['delegate']['classLists'] = {}
+        namespace = method.find_first_ancestor_by_type(AbsApi.Namespace)
         for arg in method.args:
-            dllImportType = arg.type.translate(self.langTranslator, dllImport=True)
-            normalType = arg.type.translate(self.langTranslator, dllImport=False)
+            referenceType = arg.type.translate(self.langTranslator, namespace = namespace)
+            normalType = arg.type.translate(self.langTranslator)
 
             argName = arg.name.translate(self.nameTranslator)
             if arg != method.args[0]:
@@ -188,11 +192,12 @@ class SwiftTranslator(object):
 
                 if normalType == "Bool":
                     listenerDict['delegate']['params'] += argName + ": " + argName + " != 0"
-                elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.ClassType:
+                elif type(arg.type) is AbsApi.ClassType:
                     listenerDict['delegate']['params'] += argName + ": " + normalType + ".getSobject(cObject: " + argName + "!)"
-                elif self.is_linphone_type(arg.type, True, dllImport=False) and type(arg.type) is AbsApi.EnumType:
+                elif type(arg.type) is AbsApi.EnumType:
                     ends = "" if arg.type.desc.isFlag else "!"
-                    listenerDict['delegate']['params'] += argName + ": " + normalType + "(rawValue: Int(" + argName + ".rawValue))" + ends
+                    listenerDict['delegate']['params'] += argName + ": " + referenceType + "(rawValue: Int(" + argName + ".rawValue))" + ends
+                    normalType = referenceType
                 elif isinstance(arg.type, AbsApi.ListType):
                     if normalType == "String":
                         listenerDict['delegate']['params'] += "BctbxListToStringArray(list: " + argName + ")"
@@ -300,18 +305,23 @@ class SwiftTranslator(object):
         classDict['isLinphoneFactory'] = classDict['className'] == "Factory"
         classDict['isLinphoneCall'] = _class.name.to_camel_case() == "Call"
         classDict['isLinphoneCore'] = _class.name.to_camel_case() == "Core"
-        classDict['doc'] = _class.briefDescription.translate(self.docTranslator, tagAsBrief=True)
-        classDict['dllImports'] = []
+        try:
+            classDict['doc'] = _class.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+            classDict['detailedDoc'] = _class.detailedDescription.translate(self.docTranslator)
+        except metadoc.TranslationError as e:
+            logging.error(e.msg())
+        classDict['properties'] = []
+        classDict['classEnums'] = []
 
         islistenable = _class.listenerInterface is not None
         if islistenable:
             classDict['hasListener'] = True
             listenerName = _class.listenerInterface.name.translate(self.nameTranslator)
             if _class.singlelistener:
-                classDict['dllImports'].append(self.generate_getter_for_listener_callbacks(_class, listenerName))
+                classDict['properties'].append(self.generate_getter_for_listener_callbacks(_class, listenerName))
             if _class.multilistener:
-                classDict['dllImports'].append(self.generate_add_for_listener_callbacks(_class, listenerName))
-                classDict['dllImports'].append(self.generate_remove_for_listener_callbacks(_class, listenerName))
+                classDict['properties'].append(self.generate_add_for_listener_callbacks(_class, listenerName))
+                classDict['properties'].append(self.generate_remove_for_listener_callbacks(_class, listenerName))
 
         for method in _class.classMethods:
             try:
@@ -323,22 +333,25 @@ class SwiftTranslator(object):
                 #	methodDict = self.translate_property_setter(method, method.name.to_camel_case(), True)
                 else:
                     methodDict = self.translate_method(method, static=True, genImpl=True)
-                classDict['dllImports'].append(methodDict)
+                classDict['properties'].append(methodDict)
             except AbsApi.Error as e:
                 logging.error('Could not translate {0}: {1}'.format(method.name.to_c(), e.args[0]))
 
         for prop in _class.properties:
             try:
-                classDict['dllImports'] += self.translate_property(prop)
+                classDict['properties'] += self.translate_property(prop)
             except AbsApi.Error as e:
                 logging.error('error while translating {0} property: {1}'.format(prop.name.to_c(), e.args[0]))
 
         for method in _class.instanceMethods:
             try:
                 methodDict = self.translate_method(method, static=False, genImpl=True)
-                classDict['dllImports'].append(methodDict)
+                classDict['properties'].append(methodDict)
             except AbsApi.Error as e:
                 logging.error('Could not translate {0}: {1}'.format(method.name.to_c(), e.args[0]))
+
+        for enum in _class.enums:
+            classDict['classEnums'].append(self.translate_enum(enum))
 
         return classDict
     def translate_interface(self, interface):
@@ -364,7 +377,8 @@ class SwiftTranslator(object):
         methodDict['has_property'] = True
         methodDict['has_getter'] = True
         methodDict['has_setter'] = False
-        methodDict['return'] = prop.returnType.translate(self.langTranslator, dllImport=False)
+        namespace = prop.find_first_ancestor_by_type(AbsApi.Namespace)
+        methodDict['return'] = prop.returnType.translate(self.langTranslator, namespace=namespace)
         if methodDict['return'].endswith('Delegate'):
             methodDict['is_callbacks'] = True
         methodDict['exception'] = self.throws_exception(prop.returnType)
@@ -378,8 +392,8 @@ class SwiftTranslator(object):
         methodDict['is_bool'] = methodDict['return'] == "Bool"
         methodDict['is_void'] = methodDict['return'] == "UnsafeMutableRawPointer"
         methodDict['is_int'] = methodDict['return'] == "Int" or methodDict['return'] == "UInt"
-        methodDict['is_class'] = self.is_linphone_type(prop.returnType, False, False) and type(prop.returnType) is AbsApi.ClassType
-        methodDict['is_enum'] = self.is_linphone_type(prop.returnType, False, False) and type(prop.returnType) is AbsApi.EnumType
+        methodDict['is_class'] = type(prop.returnType) is AbsApi.ClassType
+        methodDict['is_enum'] = type(prop.returnType) is AbsApi.EnumType
         methodDict['is_generic'] = self.is_generic(methodDict)
         methodDict['cPtr'] = '' if static else 'cPtr'
         methodDict['static'] = 'static ' if static else ''
@@ -399,7 +413,9 @@ class SwiftTranslator(object):
         methodDict['has_property'] = True
         methodDict['has_getter'] = False
         methodDict['has_setter'] = True
-        methodDict['return'] = prop.args[0].type.translate(self.langTranslator, dllImport=False)
+        namespace = prop.find_first_ancestor_by_type(AbsApi.Namespace)
+        methodDict['return'] = prop.args[0].type.translate(self.langTranslator, namespace=namespace)
+        methodDict['returnCType'] = prop.args[0].type.name
         methodDict['exception'] = self.throws_exception(prop.returnType)
         methodDict['setter_c_name'] = prop.name.to_c()
 
@@ -412,8 +428,8 @@ class SwiftTranslator(object):
         methodDict['is_void'] = methodDict['return'] == "UnsafeMutableRawPointer"
         methodDict['is_int'] = methodDict['return'] == "Int" or methodDict['return'] == "UInt"
         methodDict['int_method'] = "" if prop.args[0].type.name == "size" else ("CInt" if methodDict['return'] == "Int" else "CUnsignedInt")
-        methodDict['is_class'] = self.is_linphone_type(prop.args[0].type, True, False) and type(prop.args[0].type) is AbsApi.ClassType
-        methodDict['is_enum'] = self.is_linphone_type(prop.args[0].type, True, False) and type(prop.args[0].type) is AbsApi.EnumType
+        methodDict['is_class'] = type(prop.args[0].type) is AbsApi.ClassType
+        methodDict['is_enum'] = type(prop.args[0].type) is AbsApi.EnumType
         methodDict['enum_type'] = "CUnsignedInt" if methodDict['is_enum'] and prop.args[0].type.desc.isUnsigned else "CInt"
         methodDict['is_generic'] = self.is_generic(methodDict)
 
@@ -441,6 +457,7 @@ class SwiftTranslator(object):
         methodDict['enum_type'] = methodDictSet['enum_type']
         methodDict['int_method'] = methodDictSet['int_method']
         methodDict['func_name'] = methodDictSet['func_name']
+        methodDict['returnCType'] = methodDictSet['returnCType']
 
         return methodDict
 
@@ -556,9 +573,32 @@ if __name__ == '__main__':
     'linphone_core_get_zrtp_cache_db'
     ]
 
+
+
     parser.classBl += 'LinphoneCoreVTable'
     parser.methodBl.remove('getCurrentCallbacks')
-    parser.enum_relocations = {} # No nested enums in C#, will cause ambiguousness between Call.State (the enum) and call.State (the property)
+    parser.enum_relocations = {
+        'LinphoneAccountCreatorActivationCodeStatus' : 'LinphoneAccountCreator',
+        'LinphoneAccountCreatorDomainStatus'         : 'LinphoneAccountCreator',
+        'LinphoneAccountCreatorEmailStatus'          : 'LinphoneAccountCreator',
+        'LinphoneAccountCreatorLanguageStatus'       : 'LinphoneAccountCreator',
+        'LinphoneAccountCreatorPasswordStatus'       : 'LinphoneAccountCreator',
+        'LinphoneAccountCreatorPhoneNumberStatus'    : 'LinphoneAccountCreator',
+        'LinphoneAccountCreatorStatus'               : 'LinphoneAccountCreator',
+        'LinphoneAccountCreatorTransportStatus'      : 'LinphoneAccountCreator',
+        'LinphoneAccountCreatorUsernameStatus'       : 'LinphoneAccountCreator',
+        'LinphoneCallDir'                            : 'LinphoneCall',
+        'LinphoneCallState'                          : 'LinphoneCall',
+        'LinphoneCallStatus'                         : 'LinphoneCall',
+        'LinphoneChatRoomState'                      : 'LinphoneChatRoom',
+        'LinphoneChatMessageDirection'               : 'LinphoneChatMessage',
+        'LinphoneChatMessageState'                   : 'LinphoneChatMessage',
+        'LinphoneCoreLogCollectionUploadState'       : 'LinphoneCore',
+        'LinphoneFriendListStatus'                   : 'LinphoneFriendList',
+        'LinphoneFriendListSyncStatus'               : 'LinphoneFriendList',
+        'LinphonePlayerState'                        : 'LinphonePlayer',
+        'LinphoneTunnelMode'                         : 'LinphoneTunnel'
+    }
     parser.parse_all()
     translator = SwiftTranslator()
     renderer = pystache.Renderer()
@@ -575,9 +615,6 @@ if __name__ == '__main__':
     for _class in parser.namespace.classes:
         impl = ClassImpl(_class, translator)
         classes.append(impl)
-        for _enum in _class.enums:
-            enum_impl = EnumImpl(_enum, translator)
-            enums.append(enum_impl)
 
 
     wrapper = WrapperImpl(git_version, enums, interfaces, classes)

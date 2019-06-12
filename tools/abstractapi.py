@@ -1284,21 +1284,15 @@ class SwiftLangTranslator(CLikeLangTranslator):
 		self.falseConstantToken = 'false'
 		self.trueConstantToken = 'true'
 
-	def translate_base_type(self, _type, dllImport=True, namespace=None):
+	def translate_base_type(self, _type, namespace=None):
 		if _type.name == 'void':
-				if _type.isref:
-					return 'UnsafeMutableRawPointer'
-				return 'void'
+			if _type.isref:
+				return 'UnsafeMutableRawPointer'
+			return 'void'
 		elif _type.name == 'status':
-			if dllImport:
-				return 'int'
-			else:
-				return 'void'
+			return 'void'
 		elif _type.name == 'boolean':
-			if dllImport:
-				res = 'char'
-			else:
-				res = 'Bool'
+			return 'Bool'
 		elif _type.name == 'integer':
 			if _type.size is None:
 				res = 'Int'
@@ -1308,92 +1302,69 @@ class SwiftLangTranslator(CLikeLangTranslator):
 				res = 'U' + res
 			if _type.isref:
 				res = 'UnsafePointer<' + res + '>'
-
+			return res
 		elif _type.name == 'string':
-			if dllImport:
-				if type(_type.parent) is Argument:
-					return 'String'
-				else:
-					res = 'IntPtr' # TODO check
-			else:
-				return 'String'
+			return 'String'
 		elif _type.name == 'character':
 			if _type.isUnsigned:
-				res = 'byte'
+				return 'byte'
 			else:
-				res = 'CChar'
+				return 'CChar'
 		elif _type.name == 'time':
-			res = 'Int'
+			return 'Int'
 		elif _type.name == 'size':
-			res = 'Int'
+			return 'Int'
 		elif _type.name == 'floatant':
 			if _type.size is not None and _type.isref:
 				return 'UnsafeMutablePointer<Float>'
 			else:
 				return 'Float'
-
 		elif _type.name == 'string_array':
-			if dllImport or type(_type.parent) is Argument:
-				return 'IntPtr' # TODO:check
-			else:
-				return '[String]'
+			return '[String]'
 		else:
 			raise TranslationError('\'{0}\' is not a base abstract type'.format(_type.name))
 
-		return res
-
-	def translate_enum_type(self, _type, dllImport=True, namespace=None):
-		if dllImport and type(_type.parent) is Argument:
-			return 'int'
-		else:
-			return _type.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
-
-	def translate_class_type(self, _type, dllImport=True, namespace=None):
+	def translate_enum_type(self, _type, namespace=None):
 		return _type.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
 
-	def translate_list_type(self, _type, dllImport=True, namespace=None):
-		if dllImport:
-			return 'IntPtr'
-		else:
-			if type(_type.containedTypeDesc) is BaseType:
-				if _type.containedTypeDesc.name == 'string':
-					return '[String]'
-				else:
-					raise TranslationError('translation of bctbx_list_t of basic C types is not supported')
-			elif type(_type.containedTypeDesc) is ClassType:
-				ptrType = _type.containedTypeDesc.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
-				return '[' + ptrType + ']'
-			else:
-				if _type.containedTypeDesc:
-					raise TranslationError('translation of bctbx_list_t of enums')
-				else:
-					raise TranslationError('translation of bctbx_list_t of unknow type !')
+	def translate_class_type(self, _type, namespace=None):
+		return _type.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
 
-	def translate_argument(self, arg, dllImport=True, namespace=None):
-		return '{0} {1}'.format(
-			arg.type.translate(self, dllImport=dllImport, namespace=None),
-			arg.name.translate(self.nameTranslator)
-		)
+	def translate_list_type(self, _type, namespace=None):
+		if type(_type.containedTypeDesc) is BaseType:
+			if _type.containedTypeDesc.name == 'string':
+				return '[String]'
+			else:
+				raise TranslationError('translation of bctbx_list_t of basic C types is not supported')
+		elif type(_type.containedTypeDesc) is ClassType:
+			ptrType = _type.containedTypeDesc.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
+			return '[' + ptrType + ']'
+		else:
+			if _type.containedTypeDesc:
+				raise TranslationError('translation of bctbx_list_t of enums')
+			else:
+				raise TranslationError('translation of bctbx_list_t of unknow type !')
+
+	def translate_argument(self, arg, namespace=None):
+		argType = arg.type.translate(self, namespace=None)
+		if argType == 'UnsafePointer<Int>' and not arg.type.isconst:
+			argType = 'UnsafeMutablePointer<Int32>'
+		elif argType == 'UnsafeMutableRawPointer':
+			argType = 'UnsafeMutableRawPointer?'
+
+		return '{0}: {1}'.format(arg.name.translate(self.nameTranslator), argType)
 
 	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideArgTypes=False, hideReturnType=False, stripDeclarators=False, namespace=None):
 		params = []
 		if not hideArguments:
 			for arg in method.args:
-				argType = arg.type.translate(self, dllImport=False, namespace=None)
 				argName = arg.name.translate(self.nameTranslator)
-				if argType.endswith('Listener'):
-					argType = argType[0:len(argType)-8] + "Delegate"
-					argName = "delegate"
-				elif argType == "UnsafePointer<Int>" and not arg.type.isconst:
-					argType = "UnsafeMutablePointer<Int32>"
-				elif argType == "UnsafeMutableRawPointer":
-					argType = "UnsafeMutableRawPointer?"
-				params.append(argName + ":" + argType if not hideArgTypes else argName + ":")
+				params.append(arg.translate(self, namespace=namespace) if not hideArgTypes else argName + ':')
 
-		returnType = method.returnType.translate(self, dllImport=False)
-		returnValue = ""
-		if returnType != "void":
-			returnValue = " -> " + returnType + '?' if type(method.returnType) is ClassType and 'create' in method.name.to_word_list() else " -> " + returnType
+		returnType = method.returnType.translate(self)
+		returnValue = ''
+		if returnType != 'void':
+			returnValue = ' -> ' + returnType + ('?' if type(method.returnType) is ClassType and 'create' in method.name.to_word_list() else '')
 
 		return '{name}({params}){returnValue}'.format(
 			name       = method.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace)),
