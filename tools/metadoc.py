@@ -547,10 +547,45 @@ class DoxygenTranslator(Translator):
 class JavaDocTranslator(DoxygenTranslator):
 	def __init__(self):
 		DoxygenTranslator.__init__(self, 'C')
-	
+
 	def _tag_as_brief(self, lines):
 		pass
 
+class SwiftDocTranslator(JavaDocTranslator):
+	def __init__(self):
+		DoxygenTranslator.__init__(self, 'Swift')
+
+	def translate_class_reference(self, ref, **kargs):
+		if isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum)):
+			return '`{0}`'.format(Translator.translate_reference(self, ref))
+		else:
+			raise ReferenceTranslationError(ref.cname)
+
+	def _translate_section(self, section):
+		if section.kind == 'return':
+			section.kind = 'Returns'
+		elif section.kind == 'warning':
+			section.kind = 'Warning'
+		elif section.kind == 'note':
+			section.kind = 'Note'
+		elif section.kind == 'see':
+			section.kind = 'See also'
+		else:
+			logging.warning('doc translate section pointing on an unknown object ({0})'.format(section.kind))
+
+		return '- {0}: {1}'.format(
+			section.kind,
+			self._translate_paragraph(section.paragraph)
+		)
+
+	def _translate_parameter_list(self, parameterList):
+		text = ''
+		for paramDesc in parameterList.parameters:
+			if self.displaySelfParam or not paramDesc.is_self_parameter():
+				desc = self._translate_description(paramDesc.desc)
+				desc = desc[0] if len(desc) > 0 else ''
+				text += ('- Parameter {0}: {1}\n'.format(paramDesc.name.translate(self.nameTranslator), desc))
+		return text
 
 class SphinxTranslator(Translator):
 	def __init__(self, langCode):
@@ -626,13 +661,11 @@ class SphinxTranslator(Translator):
 	def translate_class_reference(self, ref, label=None, namespace=None):
 		refStr = Translator.translate_reference(self, ref, absName=True)
 		tag = self._sphinx_ref_tag(ref)
-		if self.domain == 'swift':
-			refStr = tag.split(':')[1] + " " + refStr
 
 		return ':{tag}:`{label} <{ref}>`'.format(
 			tag=tag,
 			label=label if label is not None else Translator.translate_reference(self, ref, namespace=namespace),
-			ref= refStr
+			ref=tag.split(':')[1] + " " + refStr if self.domain == 'swift' else refStr
 		)
 
 	def translate_function_reference(self, ref, label=None, useNamespace=True, namespace=None):
