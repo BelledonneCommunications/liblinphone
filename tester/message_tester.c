@@ -2022,6 +2022,107 @@ static void real_time_text_message_accented_chars(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void real_time_text_and_early_media(void) {
+	LinphoneChatRoom *pauline_chat_room;
+	LinphoneChatRoom *marie_chat_room;
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	LinphoneCallParams *marie_params = NULL, *pauline_params = NULL;
+	LinphoneCall *pauline_call, *marie_call;
+
+	marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_realtime_text(marie_params,TRUE);
+	linphone_call_params_enable_early_media_sending(marie_params, TRUE);
+	
+	linphone_core_invite_address_with_params(marie->lc, pauline->identity, marie_params);
+	linphone_call_params_unref(marie_params);
+	
+	if (!BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1))){
+		goto end;
+	}
+	
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	marie_call=linphone_core_get_current_call(marie->lc);
+	pauline_params = linphone_core_create_call_params(pauline->lc, pauline_call);
+	linphone_call_params_enable_realtime_text(pauline_params,TRUE);
+	linphone_call_accept_early_media_with_params(pauline_call, pauline_params);
+	
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia, 1));
+
+	BC_ASSERT_TRUE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(pauline_call)));
+
+	pauline_chat_room = linphone_call_get_chat_room(pauline_call);
+	marie_chat_room = linphone_call_get_chat_room(marie_call);
+	BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
+	BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
+	if (pauline_chat_room && marie_chat_room) {
+		LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
+		int i;
+		uint32_t message[8];
+		int message_len = 8;
+		int chars_received;
+
+		message[0] = 0xE3; // ã
+		message[1] = 0xE6; // æ
+		message[2] = 0xE7; // ç
+		message[3] = 0xE9; // é
+		message[4] = 0xEE; // î
+		message[5] = 0xF8; // ø
+		message[6] = 0xF9; // ù
+		message[7] = 0xFF; // ÿ
+		for (i = 0; i < message_len; i++) {
+			linphone_chat_message_put_char(rtt_message, message[i]);
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, i+1, 1000));
+			BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), message[i], unsigned long, "%lu");
+		}
+
+		linphone_chat_message_send(rtt_message);
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+		BC_ASSERT_PTR_NOT_NULL(marie->stat.last_received_chat_message);
+		if (marie->stat.last_received_chat_message) {
+			const char *text = linphone_chat_message_get_text(marie->stat.last_received_chat_message);
+			BC_ASSERT_PTR_NOT_NULL(text);
+			if (text)
+				BC_ASSERT_STRING_EQUAL(text, "ãæçéîøùÿ");
+		}
+		linphone_chat_message_unref(rtt_message);
+		
+		/* Disable audio when accepting the call, so that we force a restart of the streams. */
+		linphone_call_params_enable_audio(pauline_params, FALSE);
+		linphone_call_accept_with_params(pauline_call, pauline_params);
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+		linphone_call_params_unref(pauline_params);
+		chars_received = marie->stat.number_of_LinphoneIsComposingActiveReceived;
+		
+		/* Send RTT again once the call is established. */
+		rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
+		for (i = 0; i < message_len; i++) {
+			linphone_chat_message_put_char(rtt_message, message[i]);
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, chars_received + i + 1, 1000));
+			BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), message[i], unsigned long, "%lu");
+		}
+
+		linphone_chat_message_send(rtt_message);
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+		BC_ASSERT_PTR_NOT_NULL(marie->stat.last_received_chat_message);
+		if (marie->stat.last_received_chat_message) {
+			const char *text = linphone_chat_message_get_text(marie->stat.last_received_chat_message);
+			BC_ASSERT_PTR_NOT_NULL(text);
+			if (text)
+				BC_ASSERT_STRING_EQUAL(text, "ãæçéîøùÿ");
+		}
+		linphone_chat_message_unref(rtt_message);
+	}
+	end_call(marie, pauline);
+	
+	end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+
 static void real_time_text_message_different_text_codecs_payload_numbers_sender_side(void) {
 	real_time_text(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE);
 }
@@ -2449,6 +2550,7 @@ test_t message_tests[] = {
 	TEST_ONE_TAG("Real Time Text offer answer with different payload numbers (sender side)", real_time_text_message_different_text_codecs_payload_numbers_sender_side, "RTT"),
 	TEST_ONE_TAG("Real Time Text offer answer with different payload numbers (receiver side)", real_time_text_message_different_text_codecs_payload_numbers_receiver_side, "RTT"),
 	TEST_ONE_TAG("Real Time Text copy paste", real_time_text_copy_paste, "RTT"),
+	TEST_ONE_TAG("Real Time Text and early media", real_time_text_and_early_media, "RTT"),
 	TEST_NO_TAG("IM Encryption Engine custom headers", chat_message_custom_headers),
 	TEST_NO_TAG("Text message with custom content-type", text_message_with_custom_content_type),
 	TEST_ONE_TAG("Text message with custom content-type and lime", text_message_with_custom_content_type_and_lime, "LIME"),
