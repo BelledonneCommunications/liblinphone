@@ -547,10 +547,45 @@ class DoxygenTranslator(Translator):
 class JavaDocTranslator(DoxygenTranslator):
 	def __init__(self):
 		DoxygenTranslator.__init__(self, 'C')
-	
+
 	def _tag_as_brief(self, lines):
 		pass
 
+class SwiftDocTranslator(JavaDocTranslator):
+	def __init__(self):
+		DoxygenTranslator.__init__(self, 'Swift')
+
+	def translate_class_reference(self, ref, **kargs):
+		if isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum)):
+			return '`{0}`'.format(Translator.translate_reference(self, ref))
+		else:
+			raise ReferenceTranslationError(ref.cname)
+
+	def _translate_section(self, section):
+		if section.kind == 'return':
+			section.kind = 'Returns'
+		elif section.kind == 'warning':
+			section.kind = 'Warning'
+		elif section.kind == 'note':
+			section.kind = 'Note'
+		elif section.kind == 'see':
+			section.kind = 'See also'
+		else:
+			logging.warning('doc translate section pointing on an unknown object ({0})'.format(section.kind))
+
+		return '- {0}: {1}'.format(
+			section.kind,
+			self._translate_paragraph(section.paragraph)
+		)
+
+	def _translate_parameter_list(self, parameterList):
+		text = ''
+		for paramDesc in parameterList.parameters:
+			if self.displaySelfParam or not paramDesc.is_self_parameter():
+				desc = self._translate_description(paramDesc.desc)
+				desc = desc[0] if len(desc) > 0 else ''
+				text += ('- Parameter {0}: {1}\n'.format(paramDesc.name.translate(self.nameTranslator), desc))
+		return text
 
 class SphinxTranslator(Translator):
 	def __init__(self, langCode):
@@ -594,6 +629,13 @@ class SphinxTranslator(Translator):
 			self.enumeratorDeclarator = 'field'
 			self.namespaceDeclarator = 'package'
 			self.methodReferencer = 'meth'
+		elif langCode == 'Swift':
+			self.domain = 'swift'
+			self.classDeclarator = 'class'
+			self.interfaceDeclarator = self.classDeclarator
+			self.methodDeclarator = 'class_method'
+			self.enumDeclarator = 'enum'
+			self.enumeratorDeclarator = 'enum_case'
 		else:
 			raise ValueError('invalid language code: {0}'.format(langCode))
 	
@@ -617,10 +659,13 @@ class SphinxTranslator(Translator):
 			raise ValueError("'{0}' referencer type not supported".format(typeName))
 
 	def translate_class_reference(self, ref, label=None, namespace=None):
+		refStr = Translator.translate_reference(self, ref, absName=True)
+		tag = self._sphinx_ref_tag(ref)
+
 		return ':{tag}:`{label} <{ref}>`'.format(
-			tag=self._sphinx_ref_tag(ref),
+			tag=tag,
 			label=label if label is not None else Translator.translate_reference(self, ref, namespace=namespace),
-			ref=Translator.translate_reference(self, ref, absName=True)
+			ref=tag.split(':')[1] + " " + refStr if self.domain == 'swift' else refStr
 		)
 
 	def translate_function_reference(self, ref, label=None, useNamespace=True, namespace=None):
@@ -628,16 +673,17 @@ class SphinxTranslator(Translator):
 			refStr = ref.relatedObject.name.translate(self.nameTranslator, **abstractapi.Translator._namespace_to_name_translator_params(namespace))
 		else:
 			refStr = ref.relatedObject.translate_as_prototype(self.langTranslator,
-				hideArguments=self.domain != 'java',
+				hideArguments=self.domain not in ['java', 'swift'],
 				hideArgNames=self.domain == 'java',
+				hideArgTypes=self.domain == 'swift',
 				hideReturnType=True,
 				stripDeclarators=True,
 				namespace=namespace
 			)
 		return ':{tag}:`{label} <{ref}>`'.format(
-			tag=self._sphinx_ref_tag(ref),
-			label=label if label is not None else '{0}()'.format(Translator.translate_reference(self, ref, namespace=namespace)),
-			ref=refStr
+			tag   = self._sphinx_ref_tag(ref),
+			label = label if label is not None else '{0}()'.format(Translator.translate_reference(self, ref, namespace=namespace)),
+			ref   = "static " + refStr if self.domain == 'swift' and ref.relatedObject.type == abstractapi.Method.Type.Class else refStr
 		)
 	
 	def translate_keyword(self, keyword):

@@ -314,20 +314,39 @@ class JavaTranslator(Translator):
 		else:
 			params = {'recursive': recursive, 'topAncestor': topAncestor}
 			return name.prev.translate(self, **params) + self.nsSep + translatedName
-	
+
 	def translate_argument_name(self, name):
 		argname = name.to_camel_case(lower=True)
 		return self._escape_keyword(argname)
-	
+
 	def translate_property_name(self, name):
 		return self.translate_argument_name(name)
-	
+
 	def _escape_keyword(self, keyword):
 		try:
 			return self.keyWordEscapes[keyword]
 		except KeyError:
 			return keyword
 
+class SwiftTranslator(JavaTranslator):
+	def __init__(self):
+		JavaTranslator.__init__(self)
+		self.nsSep = '.'
+		self.keyWordEscapes = {'protocol' : 'proto'}
+
+	def translate_enum_name(self, name, recursive=False, topAncestor=None):
+		if name.prev is None or not recursive or name.prev is topAncestor:
+			return name.to_camel_case()
+		else:
+			params = {'recursive': recursive, 'topAncestor': topAncestor}
+			return name.prev.translate(self, **params) + self.nsSep + name.to_camel_case()
+
+	def translate_interface_name(self, name, **params):
+		name = self.translate_class_name(name, **params)
+		return name[0:len(name)-8] + "Delegate"
+
+	def translate_class_name(self, name, recursive=False, topAncestor=None):
+		return name.to_camel_case()
 
 class CppTranslator(JavaTranslator):
 	def __init__(self):

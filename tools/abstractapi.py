@@ -298,28 +298,41 @@ class Enum(DocumentableObject):
 	def __init__(self, name):
 		DocumentableObject.__init__(self, name)
 		self.enumerators = []
-	
+
 	def add_enumerator(self, enumerator):
 		self.enumerators.append(enumerator)
 		enumerator.parent = self
-	
+
 	def set_from_c(self, cEnum, namespace=None):
 		Object.set_from_c(self, cEnum, namespace=namespace)
-		
+
 		if 'associatedTypedef' in dir(cEnum):
 			name = cEnum.associatedTypedef.name
 		else:
 			name = cEnum.name
-		
+
 		self.name = metaname.EnumName()
 		self.name.prev = None if namespace is None else namespace.name
 		self.name.set_from_c(name)
-		
+
 		for cEnumValue in cEnum.values:
 			aEnumValue = Enumerator()
 			aEnumValue.set_from_c(cEnumValue, namespace=self)
 			self.add_enumerator(aEnumValue)
 
+	@property
+	def isUnsigned(self):
+		for enumerator in self.enumerators:
+			if isinstance(enumerator.value, int) and enumerator.value < 0:
+				return False
+		return True
+
+	@property
+	def isFlag(self):
+		for enumerator in self.enumerators:
+			if isinstance(enumerator.value, Flag):
+				return True
+		return False
 
 class Argument(DocumentableObject):
 	def __init__(self, name, argType, optional=False, default=None):
@@ -1029,8 +1042,8 @@ class CLangTranslator(CLikeLangTranslator):
 			return '1<<{0}'.format(value.position)
 		else:
 			raise TypeError('invalid enumerator value type: {0}'.format(value))
-	
-	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideReturnType=False, stripDeclarators=False, namespace=None):
+
+	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideArgTypes=False, hideReturnType=False, stripDeclarators=False, namespace=None):
 		_class = method.find_first_ancestor_by_type(Class,Interface)
 		params = []
 		if not hideArguments:
@@ -1139,13 +1152,13 @@ class CppLangTranslator(CLikeLangTranslator):
 			res = _type.containedTypeDesc.translate(self)
 		else:
 			res = _type.containedTypeDesc.translate(self, namespace=namespace)
-			
+
 		if type(_type.parent) is Argument:
 			return 'const std::list<{0}> &'.format(res)
 		else:
 			return 'std::list<{0}>'.format(res)
-	
-	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideReturnType=False, stripDeclarators=False, namespace=None):
+
+	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideArgTypes=False, hideReturnType=False, stripDeclarators=False, namespace=None):
 		argsAsString = ', '.join([arg.translate(self, hideArgName=hideArgNames, namespace=namespace) for arg in method.args]) if not hideArguments else ''
 		return '{return_}{name}({args}){const}'.format(
 			return_=(method.returnType.translate(self, namespace=namespace) + ' ') if not hideReturnType else '',
@@ -1256,13 +1269,109 @@ class JavaLangTranslator(CLikeLangTranslator):
 			res += (' ' + arg.name.translate(self.nameTranslator))
 		return res
 
-	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideReturnType=False, stripDeclarators=False, namespace=None):
+	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideArgTypes=False, hideReturnType=False, stripDeclarators=False, namespace=None):
 		return '{public}{returnType}{methodName}({arguments})'.format(
 			public='public ' if not stripDeclarators else '',
 			returnType=(method.returnType.translate(self, isReturn=True, namespace=namespace) + ' ') if not hideReturnType else '',
 			methodName=method.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace)),
 			arguments=', '.join([arg.translate(self, hideArgName=hideArgNames, namespace=namespace) for arg in method.args]) if not hideArguments else ''
 		)
+
+class SwiftLangTranslator(CLikeLangTranslator):
+	def __init__(self):
+		self.nameTranslator = metaname.Translator.get('Swift')
+		self.nilToken = 'nil'
+		self.falseConstantToken = 'false'
+		self.trueConstantToken = 'true'
+
+	def translate_base_type(self, _type, namespace=None):
+		if _type.name == 'void':
+			if _type.isref:
+				return 'UnsafeMutableRawPointer'
+			return 'void'
+		elif _type.name == 'status':
+			return 'void'
+		elif _type.name == 'boolean':
+			return 'Bool'
+		elif _type.name == 'integer':
+			if _type.size is None:
+				res = 'Int'
+			else:
+				res = 'Int{0}'.format(_type.size)
+			if _type.isUnsigned:
+				res = 'U' + res
+			if _type.isref:
+				res = 'UnsafePointer<' + res + '>'
+			return res
+		elif _type.name == 'string':
+			return 'String'
+		elif _type.name == 'character':
+			if _type.isUnsigned:
+				return 'byte'
+			else:
+				return 'CChar'
+		elif _type.name == 'time':
+			return 'Int'
+		elif _type.name == 'size':
+			return 'Int'
+		elif _type.name == 'floatant':
+			if _type.size is not None and _type.isref:
+				return 'UnsafeMutablePointer<Float>'
+			else:
+				return 'Float'
+		elif _type.name == 'string_array':
+			return '[String]'
+		else:
+			raise TranslationError('\'{0}\' is not a base abstract type'.format(_type.name))
+
+	def translate_enum_type(self, _type, namespace=None):
+		return _type.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
+
+	def translate_class_type(self, _type, namespace=None):
+		return _type.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
+
+	def translate_list_type(self, _type, namespace=None):
+		if type(_type.containedTypeDesc) is BaseType:
+			if _type.containedTypeDesc.name == 'string':
+				return '[String]'
+			else:
+				raise TranslationError('translation of bctbx_list_t of basic C types is not supported')
+		elif type(_type.containedTypeDesc) is ClassType:
+			ptrType = _type.containedTypeDesc.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
+			return '[' + ptrType + ']'
+		else:
+			if _type.containedTypeDesc:
+				raise TranslationError('translation of bctbx_list_t of enums')
+			else:
+				raise TranslationError('translation of bctbx_list_t of unknow type !')
+
+	def translate_argument(self, arg, namespace=None):
+		argType = arg.type.translate(self, namespace=None)
+		if argType == 'UnsafePointer<Int>' and not arg.type.isconst:
+			argType = 'UnsafeMutablePointer<Int32>'
+		elif argType == 'UnsafeMutableRawPointer':
+			argType = 'UnsafeMutableRawPointer?'
+
+		return '{0}: {1}'.format(arg.name.translate(self.nameTranslator), argType)
+
+	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideArgTypes=False, hideReturnType=False, stripDeclarators=False, namespace=None):
+		params = []
+		if not hideArguments:
+			for arg in method.args:
+				argName = arg.name.translate(self.nameTranslator)
+				params.append(arg.translate(self, namespace=namespace) if not hideArgTypes else argName + ':')
+
+		returnType = method.returnType.translate(self)
+		returnValue = ''
+		if returnType != 'void':
+			returnValue = ' -> ' + returnType + ('?' if type(method.returnType) is ClassType and 'create' in method.name.to_word_list() else '')
+
+		return '{name}({params}){returnValue}'.format(
+			name       = method.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace)),
+			params     = ', '.join(params) if not hideArgTypes else ''.join(params),
+			returnValue= returnValue if not hideArgTypes else ''
+		)
+
 
 
 class CSharpLangTranslator(CLikeLangTranslator):
@@ -1347,14 +1456,14 @@ class CSharpLangTranslator(CLikeLangTranslator):
 					raise TranslationError('translation of bctbx_list_t of enums')
 				else:
 					raise TranslationError('translation of bctbx_list_t of unknow type !')
-	
+
 	def translate_argument(self, arg, dllImport=True, namespace=None):
 		return '{0} {1}'.format(
 			arg.type.translate(self, dllImport=dllImport, namespace=None),
 			arg.name.translate(self.nameTranslator)
 		)
-	
-	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideReturnType=False, stripDeclarators=False, namespace=None):
+
+	def translate_method_as_prototype(self, method, hideArguments=False, hideArgNames=False, hideArgTypes=False, hideReturnType=False, stripDeclarators=False, namespace=None):
 		return '{static}{override}{returnType}{name}({args})'.format(
 			static     = 'static ' if method.type == Method.Type.Class and not stripDeclarators else '',
 			override   = 'override ' if method.name.translate(self.nameTranslator) == 'ToString' and not stripDeclarators else '',

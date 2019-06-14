@@ -171,7 +171,8 @@ class LangInfo:
 		'C'     : 'C',
 		'Cpp'   : 'C++',
 		'Java'  : 'Java',
-		'CSharp': 'C#'
+		'CSharp': 'C#',
+		'Swift' : 'Swift'
 	}
 
 
@@ -237,7 +238,10 @@ class SphinxPart(object):
 class EnumPart(SphinxPart):
 	def __init__(self, enum, lang, langs, namespace=None):
 		SphinxPart.__init__(self, lang, langs)
-		self.name = enum.name.translate(self.lang.nameTranslator)
+		if lang.langCode == 'Swift' and type(enum.parent) is abstractapi.Class :
+			self.name = enum.name.translate(self.lang.nameTranslator,recursive=True, topAncestor=namespace)
+		else:
+			self.name = enum.name.translate(self.lang.nameTranslator)
 		self.fullName = enum.name.translate(self.lang.nameTranslator, recursive=True)
 		self.briefDesc = enum.briefDescription.translate(self.docTranslator)
 		self.enumerators = [self._translate_enumerator(enumerator) for enumerator in enum.enumerators]
@@ -315,7 +319,7 @@ class EnumPage(SphinxPage):
 		filename = SphinxPage._classname_to_filename(enum.name)
 		SphinxPage.__init__(self, lang, langs, filename)
 		namespace = enum.find_first_ancestor_by_type(abstractapi.Namespace)
-		self.namespace = namespace.name.translate(lang.nameTranslator) if lang.langCode != 'C' else None
+		self.namespace = namespace.name.translate(lang.nameTranslator) if lang.langCode not in ['C', 'Swift'] else None
 		self.enum = EnumPart(enum, lang, langs, namespace=namespace)
 
 
@@ -368,15 +372,19 @@ class ClassPage(SphinxPage):
 			propertyAttr['ref_label'] += (property_.getter.name.to_snake_case(fullName=True) if property_.getter is not None else property_.setter.name.to_snake_case(fullName=True))
 			translatedProperties.append(propertyAttr)
 		return translatedProperties
-	
+
 	def _translate_methods(self, methods):
 		translatedMethods = []
 		for method in methods:
 			translatedMethods.append(self._translate_method(method))
 		return translatedMethods
-	
+
 	def _translate_method(self, method):
-		namespace = method.find_first_ancestor_by_type(abstractapi.Class,abstractapi.Interface)
+		if self.lang.langCode == 'Swift':
+			namespace = method.find_first_ancestor_by_type(abstractapi.Namespace)
+		else:
+			namespace = method.find_first_ancestor_by_type(abstractapi.Class,abstractapi.Interface)
+
 		methAttr = {
 			'prototype'    : method.translate_as_prototype(self.lang.langTranslator, namespace=namespace),
 			'briefDoc'     : method.briefDescription.translate(self.docTranslator),
@@ -385,7 +393,7 @@ class ClassPage(SphinxPage):
 		}
 		reference = metadoc.FunctionReference(None)
 		reference.relatedObject = method
-		methAttr['link'] = reference.translate(self.lang.docTranslator, namespace=method.find_first_ancestor_by_type(abstractapi.Class, abstractapi.Interface))
+		methAttr['link'] = reference.translate(self.lang.docTranslator, namespace=namespace)
 		return methAttr
 
 	@property
@@ -449,9 +457,10 @@ class DocGenerator:
 			LangInfo('C'),
 			LangInfo('Cpp'),
 			LangInfo('Java'),
-			LangInfo('CSharp')
+			LangInfo('CSharp'),
+			LangInfo('Swift')
 		]
-	
+
 	def generate(self, outputdir):
 		for lang in self.languages:
 			directory = os.path.join(args.outputdir, lang.directory)

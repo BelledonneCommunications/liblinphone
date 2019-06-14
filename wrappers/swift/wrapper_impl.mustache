@@ -1,0 +1,546 @@
+
+/*
+LinphoneEnums.swift
+Copyright (C) 2019 Belledonne Communications SARL
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+import Foundation
+import linphone
+
+{{#enums}}
+{{#enum}}
+{{#doc}}
+{{#lines}}
+///{{{line}}}
+{{/lines}}
+{{/doc}}
+{{#isFlag}}
+public struct {{enumName}}:OptionSet
+{
+	public let rawValue: Int
+
+	public init(rawValue: Int) {
+		self.rawValue = rawValue
+	}
+
+	{{#values}}
+	{{#doc}}
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/doc}}
+	public static let {{name}} = {{enumName}}(rawValue: {{{value}}})
+	{{/values}}
+}
+{{/isFlag}}
+{{^isFlag}}
+public enum {{enumName}}:Int
+{
+	{{#values}}
+	{{#doc}}
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/doc}}
+	case {{name}} = {{{value}}}
+	{{/values}}
+}
+{{/isFlag}}
+{{/enum}}
+{{/enums}}
+
+
+func charArrayToString(charPointer: UnsafePointer<CChar>?) -> String {
+	return charPointer != nil ? String(cString: charPointer!) : ""
+}
+
+/// Class basic linphone class
+public class LinphoneObject {
+	var cPtr:OpaquePointer?
+
+	/*!
+     Initializes a new LinphoneObject with the provided cPointer.
+
+     - Parameters:
+        - cPointer: The OpaquePointer of c lib
+
+     - Returns: new LinphoneObject
+  */
+	init(cPointer:OpaquePointer) {
+		cPtr = cPointer
+		belle_sip_object_ref(UnsafeMutableRawPointer(cPtr))
+	}
+
+	deinit {
+		belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  nil, nil)
+		belle_sip_object_unref(UnsafeMutableRawPointer(cPtr))
+	}
+}
+
+func StringArrayToBctbxList(list: [String]) -> UnsafeMutablePointer<bctbx_list_t>? {
+	var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
+	for data in list {
+		let sData:NSString = data as NSString
+		cList = bctbx_list_append(cList, unsafeBitCast(sData.utf8String, to: UnsafeMutablePointer<CChar>.self))
+	}
+	return cList
+}
+
+func BctbxListToStringArray(list: UnsafeMutablePointer<bctbx_list_t>) -> [String]? {
+	var sList = [String]()
+	var cList = list
+	while (cList.pointee.data != nil) {
+		sList.append(String(cString: unsafeBitCast(cList.pointee.data, to: UnsafePointer<CChar>.self)))
+		cList = UnsafeMutablePointer<bctbx_list_t>(cList.pointee.next)
+	}
+	return sList
+}
+
+func ObjectArrayToBctbxList<T:LinphoneObject>(list: [T]) -> UnsafeMutablePointer<bctbx_list_t>? {
+	var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
+	for data in list {
+		cList = bctbx_list_append(cList, UnsafeMutableRawPointer(data.cPtr))
+	}
+	return cList
+}
+
+protocol LinphoneObjectDelegate {
+	var cPtr: OpaquePointer {get set}
+}
+
+enum LinphoneError: Error {
+	case exception(result: String)
+}
+
+{{#interfaces}}
+{{#interface}}
+
+open class {{interfaceName}} : LinphoneObjectDelegate
+{
+	var cPtr: OpaquePointer
+
+	public init() {
+		self.cPtr = {{create_user_data_name}}(linphone_factory_get())
+		belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()), nil)
+		{{#methods}}
+		{{#delegate}}
+
+		{{c_name_setter}}(cPtr, { ({{{params_private}}}) -> {{return}} in
+			if ({{first_param}} != nil) {
+				let sObject = {{interfaceClassName}}.getSobject(cObject: {{first_param}}!)
+				let delegate = sObject.currentCallbacks
+				{{#classLists}}
+				var {{argName}}sList = [{{classType}}]()
+				var {{argName}}cList = {{argName}}
+				while ({{argName}}cList != nil) {
+					let data = unsafeBitCast({{argName}}cList!.pointee.data, to: OpaquePointer.self)
+					{{argName}}sList.append({{classType}}.getSobject(cObject: data))
+					{{argName}}cList = UnsafePointer<bctbx_list_t>({{argName}}cList!.pointee.next)
+				}
+				{{/classLists}}
+				{{#return_class}}return {{/return_class}}delegate?.{{cb_name}}({{{params}}}){{#return_class}}?.cPtr{{/return_class}}
+			}{{#return_class}} else {
+				return nil
+			}{{/return_class}}
+		})
+		{{/delegate}}
+		{{/methods}}
+	}
+
+	deinit {
+		belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  nil, nil)
+		belle_sip_object_unref(UnsafeMutableRawPointer(cPtr))
+	}
+
+	{{#methods}}
+	{{#delegate}}
+	{{#doc}}
+	{{#lines}}
+	///	{{{line}}}
+	{{/lines}}
+	{{/doc}}
+	{{#detailedDoc}}
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/detailedDoc}}
+	open func {{cb_name}}({{{params_public}}}){{#return_class}} -> {{type}}? {return nil}{{/return_class}}{{^return_class}} {}{{/return_class}}
+	{{/delegate}}
+	{{/methods}}
+}
+{{/interface}}
+{{/interfaces}}
+
+{{#classes}}
+{{#_class}}
+
+{{#doc}}
+{{#lines}}
+/// {{{line}}}
+{{/lines}}
+{{/doc}}
+{{#detailedDoc}}
+{{#lines}}
+/// {{{line}}}
+{{/lines}}
+{{/detailedDoc}}
+public class {{className}} : LinphoneObject
+{
+	static func getSobject(cObject:OpaquePointer) -> {{className}} {
+		let result = belle_sip_object_data_get(UnsafeMutablePointer(cObject), "swiftRef")
+		if (result != nil) {
+			return Unmanaged<{{className}}>.fromOpaque(result!).takeUnretainedValue()
+		}
+
+		let sObject = {{className}}(cPointer: cObject)
+		belle_sip_object_data_set(UnsafeMutablePointer(cObject), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(sObject).toOpaque()), nil)
+
+		return sObject
+	}
+
+	{{#isLinphoneCore}}
+	/// Get the native window handle of the video window.
+	public var NativeVideoWindowIdString: String
+	{
+		get
+		{
+			return String(cString: unsafeBitCast(linphone_core_get_native_video_window_id(cPtr), to: UnsafePointer<CChar>.self))
+		}
+		set
+		{
+			let sValue:NSString = newValue as NSString
+			linphone_core_set_native_video_window_id(cPtr, unsafeBitCast(sValue.utf8String, to: UnsafeMutablePointer<CChar>.self))
+		}
+	}
+
+	/// Get the native window handle of the video preview window.
+	public var NativePreviewWindowIdString: String
+	{
+		get
+		{
+			return String(cString: unsafeBitCast(linphone_core_get_native_preview_window_id(cPtr), to: UnsafePointer<CChar>.self))
+		}
+		set
+		{
+			let sValue:NSString = newValue as NSString
+			linphone_core_set_native_preview_window_id(cPtr, unsafeBitCast(sValue.utf8String, to: UnsafeMutablePointer<CChar>.self))
+		}
+	}
+	{{/isLinphoneCore}}
+	{{#classEnums}}
+
+	{{#doc}}
+	{{#lines}}
+	///{{{line}}}
+	{{/lines}}
+	{{/doc}}
+	{{#isFlag}}
+	public struct {{enumName}}:OptionSet
+	{
+		public let rawValue: Int
+
+		public init(rawValue: Int) {
+			self.rawValue = rawValue
+		}
+
+		{{#values}}
+		{{#doc}}
+		{{#lines}}
+		/// {{{line}}}
+		{{/lines}}
+		{{/doc}}
+		public static let {{name}} = {{enumName}}(rawValue: {{{value}}})
+		{{/values}}
+	}
+	{{/isFlag}}
+	{{^isFlag}}
+	public enum {{enumName}}:Int
+	{
+		{{#values}}
+		{{#doc}}
+		{{#lines}}
+		/// {{{line}}}
+		{{/lines}}
+		{{/doc}}
+		case {{name}} = {{{value}}}
+		{{/values}}
+	}
+	{{/isFlag}}
+	{{/classEnums}}
+	{{#properties}}
+	{{#has_property}}
+
+	{{#doc}}
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/doc}}
+	{{#detailedDoc}}
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/detailedDoc}}
+	{{static}}public var {{property_name}}: {{{return}}}{{{return_default}}}
+	{
+	{{#has_getter}}
+	{{#has_setter}}
+	{{^exception}}
+		get
+		{
+	{{/exception}}
+	{{/has_setter}}
+			{{#is_callbacks}}
+			let cObject = {{getter_c_name}}(cPtr)
+			let result = belle_sip_object_data_get(UnsafeMutablePointer(cObject), "swiftRef")
+			if (result != nil) {
+				return Unmanaged<{{{return}}}>.fromOpaque(result!).takeUnretainedValue()
+				}
+			return nil
+			{{/is_callbacks}}
+			{{^is_callbacks}}
+			{{#is_string}}
+			return charArrayToString(charPointer: {{getter_c_name}}({{cPtr}}))
+			{{/is_string}}
+			{{#is_bool}}
+			return {{getter_c_name}}({{cPtr}}) != 0
+			{{/is_bool}}
+			{{#is_class}}
+			{{^Instance}}let cPointer = {{getter_c_name}}({{cPtr}})
+			if (cPointer == nil) {
+				return nil
+			}
+			return {{{return}}}.getSobject(cObject:cPointer!){{/Instance}}{{#Instance}}return {{{return}}}.getSobject(cObject:{{getter_c_name}}({{cPtr}})){{/Instance}}
+			{{/is_class}}
+			{{#is_enum}}
+			return {{{return}}}(rawValue: Int({{getter_c_name}}({{cPtr}}).rawValue)){{^isFlag}}!{{/isFlag}}
+			{{/is_enum}}
+			{{#is_int}}
+			return {{{return}}}({{getter_c_name}}({{cPtr}}))
+			{{/is_int}}
+			{{#is_generic}}
+			return {{getter_c_name}}({{cPtr}})
+			{{/is_generic}}
+			{{#is_string_list}}
+			var swiftList = [String]()
+			var cList = {{getter_c_name}}({{cPtr}})
+			while (cList != nil) {
+				swiftList.append(String(cString: unsafeBitCast(cList!.pointee.data, to: UnsafePointer<CChar>.self)))
+				cList = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(cList!.pointee.next)
+			}
+			return swiftList
+			{{/is_string_list}}
+			{{#is_class_list}}
+			var swiftList = [{{{list_type}}}]()
+			var cList = {{getter_c_name}}({{cPtr}})
+			while (cList != nil) {
+				let data = unsafeBitCast(cList?.pointee.data, to: OpaquePointer.self)
+				swiftList.append({{{list_type}}}.getSobject(cObject: data))
+				cList = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(cList?.pointee.next)
+			}
+			return swiftList
+			{{/is_class_list}}
+			{{/is_callbacks}}
+	{{#has_setter}}
+	{{^exception}}
+		}
+	{{/exception}}
+  {{/has_setter}}
+	{{/has_getter}}
+	{{#has_setter}}
+	{{^exception}}
+	{{#has_getter}}
+		set
+	{{/has_getter}}
+	{{^has_getter}}
+		willSet
+	{{/has_getter}}
+		{
+			{{#is_string}}
+			{{setter_c_name}}(cPtr, newValue)
+			{{/is_string}}
+			{{#is_bool}}
+			{{setter_c_name}}(cPtr, newValue==true ? 1:0)
+			{{/is_bool}}
+			{{#is_class}}
+			{{setter_c_name}}(cPtr, newValue?.cPtr)
+			{{/is_class}}
+			{{#is_enum}}
+			{{setter_c_name}}(cPtr, {{returnCType}}(rawValue: {{enum_type}}(newValue{{^has_getter}}!{{/has_getter}}.rawValue)))
+			{{/is_enum}}
+			{{#is_int}}
+			{{setter_c_name}}(cPtr, {{int_method}}(newValue))
+			{{/is_int}}
+			{{#is_generic}}
+			{{setter_c_name}}(cPtr, newValue)
+			{{/is_generic}}
+			{{#is_string_list}}
+			var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
+			for data in newValue {
+				let sData:NSString = data as NSString
+				cList = bctbx_list_append(cList, unsafeBitCast(sData.utf8String, to: UnsafeMutablePointer<CChar>.self))
+			}
+			{{setter_c_name}}(cPtr, cList)
+			{{/is_string_list}}
+			{{#is_class_list}}
+			var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
+			for data in newValue {
+				cList = bctbx_list_append(cList, UnsafeMutableRawPointer(data.cPtr))
+			}
+			{{setter_c_name}}(cPtr, cList)
+			{{/is_class_list}}
+		}
+	{{/exception}}
+	{{/has_setter}}
+	}
+	{{#has_setter}}
+	{{#exception}}
+
+	public func {{func_name}}(newValue: {{{return}}}) throws
+	{
+		{{#is_string}}
+		let exception_result = {{setter_c_name}}(cPtr, newValue)
+		{{/is_string}}
+		{{#is_bool}}
+		let exception_result = {{setter_c_name}}(cPtr, newValue==true ? 1:0)
+		{{/is_bool}}
+		{{#is_class}}
+		let exception_result = {{setter_c_name}}(cPtr, newValue.cPtr)
+		{{/is_class}}
+		{{#is_enum}}
+		let exception_result = {{setter_c_name}}(cPtr, {{returnCType}}(rawValue: {{enum_type}}(newValue{{^has_getter}}!{{/has_getter}}.rawValue)))
+		{{/is_enum}}
+		{{#is_int}}
+		let exception_result = {{setter_c_name}}(cPtr, {{int_method}}(newValue))
+		{{/is_int}}
+		{{#is_generic}}
+		let exception_result = {{setter_c_name}}(cPtr, newValue)
+		{{/is_generic}}
+		{{#is_string_list}}
+		var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
+		for data in newValue {
+			let sData:NSString = data as NSString
+			cList = bctbx_list_append(cList, unsafeBitCast(sData.utf8String, to: UnsafeMutablePointer<CChar>.self))
+		}
+		let exception_result = {{setter_c_name}}(cPtr, cList)
+		{{/is_string_list}}
+		{{#is_class_list}}
+		var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
+		for data in newValue {
+			cList = bctbx_list_append(cList, UnsafeMutableRawPointer(data.cPtr))
+		}
+		let exception_result = {{setter_c_name}}(cPtr, cList)
+		{{/is_class_list}}
+		guard exception_result == 0 else {
+			throw LinphoneError.exception(result: "username setter returned value \(exception_result)")
+		}
+	}
+	{{/exception}}
+	{{/has_setter}}
+	{{/has_property}}
+	{{#listener}}
+	public func {{name}}({{#args}}delegate: {{className}}Delegate{{/args}}){{#property_return}} -> {{className}}Delegate?{{/property_return}}
+	{
+		{{#getListener}}
+		let cObject = {{c_name}}(cPtr)
+		let result = belle_sip_object_data_get(UnsafeMutablePointer(cObject), "swiftRef")
+		if (result != nil) {
+			return Unmanaged<{{className}}Delegate>.fromOpaque(result!).takeUnretainedValue()
+			}
+		return nil
+		{{/getListener}}
+		{{#addListener}}
+		{{c_name}}(cPtr, delegate.cPtr)
+		{{/addListener}}
+		{{#removeListener}}
+		{{c_name}}(cPtr, delegate.cPtr)
+		{{/removeListener}}
+	}
+	{{/listener}}
+	{{#impl}}
+	{{#doc}}
+	{{#lines}}
+	///	{{{line}}}
+	{{/lines}}
+	{{/doc}}
+	{{#detailedDoc}}
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/detailedDoc}}
+	{{static}}public func {{name}}({{{args}}}){{throw_default}} {{#return}}-> {{{type}}}{{return_default}}{{/return}}
+	{
+		{{#is_string}}
+		{{return}}charArrayToString(charPointer: {{c_name}}({{cPtr}}{{{c_args}}}))
+		{{/is_string}}
+		{{#is_bool}}
+		{{return}}{{c_name}}({{cPtr}}{{{c_args}}}) != 0
+		{{/is_bool}}
+		{{#is_class}}
+		let cPointer = {{c_name}}({{cPtr}}{{{c_args}}})
+		{{#return}}if (cPointer == nil) {
+			{{#create_method}}throw LinphoneError.exception(result: "create null {{type}} value"){{/create_method}}{{^create_method}}return nil{{/create_method}}
+		}{{/return}}
+		{{return}}{{{type}}}.getSobject(cObject: cPointer!)
+		{{/is_class}}
+		{{#is_enum}}
+		{{#exception}}let exception_result = {{/exception}}{{#return}}{{return}}{{{type}}}(rawValue: Int({{/return}}{{c_name}}({{cPtr}}{{{c_args}}}){{#return}}.rawValue))!{{/return}}
+		{{#exception}}
+		guard exception_result == 0 else {
+			throw LinphoneError.exception(result: "{{name}} returned value \(exception_result)")
+		}
+		{{/exception}}
+		{{/is_enum}}
+		{{#is_int}}
+		{{#exception}}let exception_result = {{/exception}}{{return}}{{{type}}}({{c_name}}({{cPtr}}{{{c_args}}}))
+		{{#exception}}
+		guard exception_result == 0 else {
+			throw LinphoneError.exception(result: "{{name}} returned value \(exception_result)")
+		}
+		{{/exception}}
+		{{/is_int}}
+		{{#is_generic}}
+		{{#exception}}let exception_result = {{/exception}}{{return}}{{c_name}}({{cPtr}}{{{c_args}}})
+		{{#exception}}
+		guard exception_result == 0 else {
+			throw LinphoneError.exception(result: "{{name}} returned value \(exception_result)")
+		}
+		{{/exception}}
+		{{/is_generic}}
+		{{#is_string_list}}
+		var swiftList = [String]()
+		var cList = {{c_name}}({{cPtr}}{{{c_args}}})
+		while (cList != nil) {
+			swiftList.append(String(cString: unsafeBitCast(cList!.pointee.data, to: UnsafePointer<CChar>.self)))
+			cList = cList!.pointee.next
+		}
+		return swiftList
+		{{/is_string_list}}
+		{{#is_class_list}}
+		var swiftList = [{{{list_type}}}]()
+		var cList = {{c_name}}({{cPtr}}{{{c_args}}})
+		while (cList != nil) {
+			let data = unsafeBitCast(cList?.pointee.data, to: OpaquePointer.self)
+			swiftList.append({{{list_type}}}.getSobject(cObject: data))
+			cList = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(cList?.pointee.next)
+		}
+		return swiftList
+		{{/is_class_list}}
+	}
+	{{/impl}}
+	{{/properties}}
+}
+{{/_class}}
+{{/classes}}
