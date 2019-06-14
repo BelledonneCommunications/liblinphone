@@ -266,8 +266,8 @@ class JavaTranslator(object):
         methodDict['hasNormalReturn'] = not methodDict['hasListReturn'] and not methodDict['hasStringReturn'] and not methodDict['hasByteArrayReturn']
         methodDict['name'] = 'Java_' + self.jni_package + className + 'Impl_' + _method.name.translate(self.nameTranslator)
         methodDict['notStatic'] = not static
-        methodDict['isConstList'] = _method.returnType.isconst
-        methodDict['isNotConstList'] = not _method.returnType.isconst
+        methodDict['isConst'] = _method.returnType.isconst
+        methodDict['isNotConst'] = not _method.returnType.isconst
 
         if _method.name.to_c()[-1].isdigit():
             methodDict['name'] += _method.name.to_c()[-1]
@@ -416,6 +416,7 @@ class JavaTranslator(object):
         methodDict['jniUpcallMethod'] = 'CallVoidMethod'
         methodDict['isJniUpcallBasicType'] = False
         methodDict['isJniUpcallObject'] = False
+
         if isinstance(_method.returnType, AbsApi.ClassType):
             methodDict['jniUpcallMethod'] = 'CallObjectMethod'
             methodDict['isJniUpcallObject'] = True
@@ -666,6 +667,8 @@ class Jni(object):
                 'cPrefix': jniInterface.cPrefix,
                 'jniPackage': self.jni_package,
                 'factoryName': javaClass.factoryName,
+                'isCore': jniInterface.cPrefix == 'linphone_core',
+                'isNotCore': not jniInterface.cPrefix == 'linphone_core',
                 'callbacksList': []
             }
             for callback in jniInterface.callbacks:
