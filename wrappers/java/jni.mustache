@@ -510,7 +510,7 @@ JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_removeListener(JNIEn
 		bctbx_error("Java_{{jniPackage}}{{className}}Impl_removeListener's {{classCName}} C ptr is null!");
 		return;
 	}
-	const bctbx_list_t *cbs_list = {{cPrefix}}_get_callbacks_list(cptr);
+	{{#isNotCore}}const {{/isNotCore}}bctbx_list_t *cbs_list = {{cPrefix}}_get_callbacks_list(cptr);
 	bctbx_list_t *it;
 	for (it = (bctbx_list_t *)cbs_list; it != nullptr; it = it->next) {
 		{{classCName}}Cbs *cbs = ({{classCName}}Cbs *)it->data;
@@ -522,6 +522,7 @@ JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_removeListener(JNIEn
 			break;
 		}
 	}
+	{{#isCore}}bctbx_list_free(cbs_list);{{/isCore}}
 }
 {{/isMultiListener}}
 {{/interfaces}}
@@ -575,7 +576,7 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 		{{/isObjList}}
 	}
 	{{/lists}}{{#hasListReturn}}
-	{{#isConstList}}const {{/isConstList}}bctbx_list_t *list = {{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}});
+	{{#isConst}}const {{/isConst}}bctbx_list_t *list = {{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}});
 	bctbx_list_t *list_it = (bctbx_list_t *)list;
 	size_t count = bctbx_list_size(list);
 	{{#isRealObjectArray}}
@@ -597,7 +598,7 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 		list_it = bctbx_list_next(list_it);
 		i += 1;
 	}
-	{{#isNotConstList}}bctbx_list_free(list);{{/isNotConstList}}
+	{{#isNotConst}}bctbx_list_free(list);{{/isNotConst}}
 	{{/hasListReturn}}{{#hasByteArrayReturn}}
 	{{c_type_return}} jni_result = {{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}});
 	if (!jni_result) return nullptr;
@@ -606,8 +607,9 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 	env->SetByteArrayRegion(array, 0, (int)jni_result_length, (const jbyte*)jni_result);
 	return array;
 	{{/hasByteArrayReturn}}{{#hasStringReturn}}
-	const char *c_string = {{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}}){{#returnObject}}){{/returnObject}};
+	{{#isConst}}const {{/isConst}}char *c_string = {{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}}){{#returnObject}}){{/returnObject}};
 	jstring jni_result = (c_string != nullptr) ? get_jstring_from_char(env, c_string) : nullptr;
+	{{#isNotConst}}bctbx_free(c_string);{{/isNotConst}}
 	{{/hasStringReturn}}{{#hasNormalReturn}}
 	{{#hasReturn}}{{return}} jni_result = ({{return}}){{#returnObject}}get{{returnClassName}}(env, (Linphone{{returnClassName}} *){{/returnObject}}{{/hasReturn}}{{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}}){{#returnObject}}, {{takeRefOnReturnedObject}}){{/returnObject}};
 	{{/hasNormalReturn}}{{#strings}}
