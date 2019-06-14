@@ -705,6 +705,7 @@ static void transport_dont_bind(void){
 	linphone_core_manager_destroy(pauline);
 }
 
+#if 0
 static void transport_busy(void){
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LCSipTransports tr;
@@ -729,6 +730,7 @@ static void transport_busy(void){
 
 	linphone_core_manager_destroy(pauline);
 }
+#endif
 
 static void proxy_transport_change(void){
 	LinphoneCoreManager* lcm = create_lcm();
@@ -1478,7 +1480,7 @@ test_t register_tests[] = {
 	TEST_NO_TAG("Multi account", multiple_proxy),
 	TEST_NO_TAG("Transport changes", transport_change),
 	TEST_NO_TAG("Transport configured with dontbind option", transport_dont_bind),
-	TEST_NO_TAG("Transport busy", transport_busy),
+	// TEST_NO_TAG("Transport busy", transport_busy),
 	TEST_NO_TAG("Proxy transport changes", proxy_transport_change),
 	TEST_NO_TAG("Proxy transport changes with wrong address at first", proxy_transport_change_with_wrong_port),
 	TEST_NO_TAG("Proxy transport changes with wrong address, giving up",proxy_transport_change_with_wrong_port_givin_up),

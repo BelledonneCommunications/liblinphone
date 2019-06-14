@@ -212,16 +212,22 @@ static void  simple_call_with_no_sip_transport(void){
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
 	LinphoneSipTransports tr={0};
+	LinphoneSipTransports oldTr;
 	LinphoneCall *call;
 
 	marie = linphone_core_manager_new( "marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
 	/*disable all transports so that the call will fail synchronously*/
+	linphone_core_get_sip_transports(marie->lc, &oldTr);
 	linphone_core_set_sip_transports(marie->lc, &tr);
 
 	call = linphone_core_invite_address(marie->lc, pauline->identity);
 	BC_ASSERT_PTR_NULL(call);
+
+	/* restore initial transports for Marie's core in order it be able to unregister */
+	linphone_core_set_sip_transports(marie->lc, &oldTr);
+
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
