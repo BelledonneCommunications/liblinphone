@@ -20,63 +20,73 @@
 #
 ############################################################################
 
-set(LIBS
-	${BCTOOLBOX_LIBRARIES}
-	${BELLESIP_LIBRARIES}
-	${MEDIASTREAMER2_LIBRARIES}
-	${ORTP_LIBRARIES}
-	${XML2_LIBRARIES}
-	${BELR_LIBRARIES}
+set(LINK_LIBS
+	bctoolbox
+	bellesip
+	belr
+	mediastreamer
+	ortp
 )
 if(ENABLE_ADVANCED_IM)
 	list(APPEND LIBS ${LIBXSD_LIBRARIES})
 endif()
 if(APPLE)
-	list(APPEND LIBS "-framework CFNetwork")
+	list(APPEND INTERFACE_LIBS "-framework CFNetwork")
 endif()
+set(INTERFACE_LIBS ${LINK_LIBS} xml2 xsd)
+
+list(APPEND LINK_LIBS ${XML2_LIBRARIES}	${LIBXSD_LIBRARIES})
+
 if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	list(APPEND LIBS "Ws2_32")
 endif()
 if(LIME_FOUND)
-	list(APPEND LIBS ${LIME_LIBRARIES})
+	list(APPEND INTERFACE_LIBS lime)
+	list(APPEND LINK_LIBS ${LIME_LIBRARIES})
 endif()
-if(ENABLE_LIME)
-	list(APPEND LIBS ${BZRTP_LIBRARIES})
+if(ENABLE_LIME OR ENABLE_LIME_X3DH)
+	list(APPEND INTERFACE_LIBS bzrtp)
+	list(APPEND LINK_LIBS ${BZRTP_LIBRARIES})
 endif()
 if(ZLIB_FOUND)
-	list(APPEND LIBS ${ZLIB_LIBRARIES})
+	list(APPEND INTERFACE_LIBS z)
+	list(APPEND LINK_LIBS ${ZLIB_LIBRARIES})
 endif()
 if (ENABLE_DB_STORAGE)
-	if(SOCI_FOUND)
-		list(APPEND LIBS ${SOCI_LIBRARIES})
+	if (SOCI_FOUND)
+		list(APPEND INTERFACE_LIBS soci)
+		list(APPEND LINK_LIBS ${SOCI_LIBRARIES})
 		if(APPLE)
-			list(APPEND LIBS ${SOCI_sqlite3_PLUGIN})
-		endif()
+			list(APPEND INTERFACE_LIBS ${SOCI_sqlite3_PLUGIN})
+			list(APPEND LINK_LIBS ${SOCI_sqlite3_PLUGIN})
+	      endif()
 	endif()
 endif()
 if(SQLITE3_FOUND)
-	list(APPEND LIBS ${SQLITE3_LIBRARIES})
+	list(APPEND INTERFACE_LIBS sqlite3)
+	list(APPEND LINK_LIBS ${SQLITE3_LIBRARIES})
 endif()
 if(ICONV_FOUND)
-	list(APPEND LIBS ${ICONV_LIBRARIES})
+	list(APPEND INTERFACE_LIBS iconv)
+	list(APPEND LINK_LIBS ${ICONV_LIBRARIES})
 endif()
 if(ENABLE_TUNNEL)
-	list(APPEND LIBS ${TUNNEL_LIBRARIES})
+	list(APPEND LINK_LIBS ${TUNNEL_LIBRARIES})
+  	add_definitions(-DTUNNEL_ENABLED)
 endif()
 if(MSVC AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-	list(APPEND LIBS ${LIBGCC} ${LIBMINGWEX})
+	list(APPEND LINK_LIBS ${LIBGCC} ${LIBMINGWEX})
 endif()
 if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-	list(APPEND LIBS shlwapi)
+	list(APPEND LINK_LIBS shlwapi)
 endif()
 if(INTL_FOUND)
-	list(APPEND LIBS ${INTL_LIBRARIES})
+	list(APPEND INTERFACE_LIBS intl)
+	list(APPEND LINK_LIBS ${INTL_LIBRARIES})
 endif()
 if(BELCARD_FOUND)
-	list(APPEND LIBS ${BELCARD_LIBRARIES})
-endif()
-if(ENABLE_TUNNEL)
-	add_definitions(-DTUNNEL_ENABLED)
+	list(APPEND INTERFACE_LIBS belcard)
+	list(APPEND LINK_LIBS belcard)
 endif()
 
 #define log domain for this part of code
@@ -421,7 +431,6 @@ if(LIME_FOUND)
 endif()
 
 set(LINPHONE_CXX_OBJECTS_INCLUDE_DIRS
-	${BELR_INCLUDE_DIRS}
 	${LIBXSD_INCLUDE_DIRS}
 	${SOCI_INCLUDE_DIRS}
 	${SOCI_MYSQL_INCLUDES}
@@ -438,6 +447,7 @@ if (ANDROID AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
 endif()
 bc_apply_compile_flags(LINPHONE_CXX_OBJECTS_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
 bc_apply_compile_flags(LINPHONE_OBJC_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_OBJC)
+
 if(CMAKE_COMPILER_IS_GNUCC)
 	set_property(SOURCE db/main-db.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-stringop-overflow")
 endif()
@@ -448,9 +458,16 @@ if(ENABLE_STATIC)
 		$<TARGET_OBJECTS:linphone-coreapi-static>
 	)
 	set_target_properties(linphone-static PROPERTIES OUTPUT_NAME linphone)
-	target_include_directories(linphone-static PUBLIC ${LINPHONE_INCLUDE_DIRS})
-	target_include_directories(linphone-static PRIVATE ${LINPHONE_CXX_OBJECTS_INCLUDE_DIRS})
-	target_link_libraries(linphone-static INTERFACE ${LIBS})
+
+	target_include_directories(linphone-static PUBLIC
+		$<INSTALL_INTERFACE:include/>
+		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/coreapi/>
+		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
+		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
+		PRIVATE ${LINPHONE_INCLUDE_DIRS}
+	)
+	target_link_libraries(linphone-static PRIVATE ${LINK_LIBS})
+
 	if(APPLE)
 		target_link_libraries(linphone-static INTERFACE "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration")
 	endif()
@@ -499,9 +516,16 @@ if(ENABLE_SHARED)
 		# Do not version shared library on Android
 		set_target_properties(linphone PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
 	endif()
-	target_include_directories(linphone PUBLIC ${LINPHONE_INCLUDE_DIRS})
-	target_include_directories(linphone PRIVATE ${LINPHONE_CXX_OBJECTS_INCLUDE_DIRS})
-	target_link_libraries(linphone PRIVATE ${LIBS})
+
+	target_include_directories(linphone PUBLIC
+		$<INSTALL_INTERFACE:include/>
+		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/coreapi/>
+		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
+		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
+		PRIVATE ${LINPHONE_INCLUDE_DIRS}
+	)
+	target_link_libraries(linphone PRIVATE ${LINK_LIBS})
+
 	if(APPLE)
 		target_link_libraries(linphone PRIVATE "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration")
 	endif()
