@@ -403,9 +403,9 @@ public class AndroidPlatformHelper {
 
 			}
 		});
-		if (textureView.isAvailable()) {
+		if (mPreviewTextureView.isAvailable()) {
 			Log.i("[Platform Helper] Preview window surface is available");
-			setNativePreviewWindowId(mNativePtr, textureView.getSurfaceTexture());
+			setNativePreviewWindowId(mNativePtr, mPreviewTextureView.getSurfaceTexture());
 		}
 	}
 
