@@ -103,13 +103,8 @@ endif()
 
 # find_package should be invoked here to check for libraries - however do NOT
 # call include_directories here (see below)
-
 if (ENABLE_VCARD)
-	if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
-		include("${EP_belcard_CONFIG_DIR}/BelcardConfig.cmake")
-	else()
-		find_package(Belcard)
-	endif()
+	find_package(belcard CONFIG)
 	if(NOT BELCARD_FOUND)
 		message(WARNING "Could not find the belcard library!")
 		set(ENABLE_VCARD OFF CACHE BOOL "Enable vcard support." FORCE)
@@ -118,20 +113,11 @@ if (ENABLE_VCARD)
 	endif()
 endif()
 
-if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
-	include("${EP_bellesip_CONFIG_DIR}/BelleSIPConfig.cmake")
-	include("${EP_ms2_CONFIG_DIR}/Mediastreamer2Config.cmake")
-	include("${EP_ortp_CONFIG_DIR}/ORTPConfig.cmake")
-	set(BcToolbox_FIND_COMPONENTS tester)
-	include("${EP_bctoolbox_CONFIG_DIR}/BcToolboxConfig.cmake")
-	include("${EP_belr_CONFIG_DIR}/BelrConfig.cmake")
-else()
-	find_package(BelleSIP REQUIRED)
-	find_package(Mediastreamer2 REQUIRED)
-	find_package(ORTP REQUIRED)
-	find_package(BcToolbox 0.0.3 REQUIRED OPTIONAL_COMPONENTS tester)
-	find_package(Belr REQUIRED)
-endif()
+find_package(BelleSIP CONFIG REQUIRED )
+find_package(Mediastreamer2 CONFIG REQUIRED)
+find_package(ortp CONFIG REQUIRED)
+find_package(bctoolbox 0.0.3 CONFIG REQUIRED OPTIONAL_COMPONENTS tester )
+find_package(belr CONFIG REQUIRED)
 
 find_package(LibXsd REQUIRED)
 find_package(Sqlite3 REQUIRED)
@@ -174,16 +160,12 @@ if(ENABLE_LIME AND ENABLE_LIME_X3DH)
 	set(ENABLE_LIME FALSE)
 endif()
 if(ENABLE_LIME_X3DH)
-	find_package(Lime REQUIRED)
+	find_package(lime REQUIRED CONFIG)
 	set(HAVE_LIME_X3DH TRUE)
 endif()
-if(ENABLE_LIME)
+if(ENABLE_LIME OR ENABLE_LIME_X3DH)
 	#bzrtp is only required for LIME
-	if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
-		include("${EP_bzrtp_CONFIG_DIR}/BZRTPConfig.cmake")
-	else()
-		find_package(BZRTP REQUIRED)
-	endif()
+	find_package(bzrtp REQUIRED CONFIG)
 	set(HAVE_LIME 1)
 endif()
 if(ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAPPER OR ENABLE_DOC)
@@ -220,29 +202,24 @@ set(LINPHONE_LDFLAGS "${BELLESIP_LDFLAGS} ${MEDIASTREAMER2_LDFLAGS}")
 # include_directories must be called only UNDER THIS LINE in order to use our
 # projects submodules first (we do NOT want to have system headers in first position)
 include_directories(
+	coreapi
+	include
+	src
 	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}/coreapi/
-	coreapi/
-	include/
-	src/
 )
 set(LINPHONE_INCLUDE_DIRS
-	${BELLESIP_INCLUDE_DIRS}
-	${MEDIASTREAMER2_INCLUDE_DIRS}
-	${BCTOOLBOX_CORE_INCLUDE_DIRS}
-	${BELR_INCLUDE_DIRS}
+ 	${BELLESIP_INCLUDE_DIRS}
+ 	${MEDIASTREAMER2_INCLUDE_DIRS}
+ 	${BCTOOLBOX_CORE_INCLUDE_DIRS}
+ 	${BELR_INCLUDE_DIRS}
 )
-if (BZRTP_FOUND)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${BZRTP_INCLUDE_DIRS})
-endif()
+
 if(ANDROID)
 	include_directories(${CMAKE_CURRENT_BINARY_DIR}/java)
 endif()
 if(ENABLE_TUNNEL)
 	list(APPEND LINPHONE_INCLUDE_DIRS ${TUNNEL_INCLUDE_DIRS})
-endif()
-if (ENABLE_VCARD)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${BELCARD_INCLUDE_DIRS})
 endif()
 
 list(APPEND LINPHONE_INCLUDE_DIRS ${XML2_INCLUDE_DIRS})
@@ -339,7 +316,7 @@ set(GETTEXT_PACKAGE "linphone")
 if(ENABLE_RELATIVE_PREFIX)
 	set(LINPHONE_DATA_DIR ".")
 else()
-	set(LINPHONE_DATA_DIR "${CMAKE_INSTALL_PREFIX}")
+	set(LINPHONE_DATA_DIR "${CMAKE_STAGING_PREFIX}")
 endif()
 set(LINPHONE_PLUGINS_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_LIBDIR}/liblinphone/plugins")
 if(WIN32)
@@ -395,6 +372,8 @@ if(ENABLE_CSHARP_WRAPPER)
 endif()
 
 include(CMakePackageConfigHelpers)
+set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Linphone/cmake")
+
 write_basic_package_version_file(
 	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneConfigVersion.cmake"
 	VERSION ${LINPHONE_VERSION}
@@ -403,12 +382,12 @@ write_basic_package_version_file(
 export(EXPORT ${EXPORT_TARGETS_NAME}Targets
 	FILE "${CMAKE_CURRENT_BINARY_DIR}/LinphoneTargets.cmake"
 )
-configure_file(cmake/LinphoneConfig.cmake.in
+configure_package_config_file(cmake/LinphoneConfig.cmake.in
 	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneConfig.cmake"
-	@ONLY
+	INSTALL_DESTINATION ${CONFIG_PACKAGE_LOCATION}
+	NO_SET_AND_CHECK_MACRO
 )
 
-set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Linphone/cmake")
 install(EXPORT ${EXPORT_TARGETS_NAME}Targets
 	FILE LinphoneTargets.cmake
 	DESTINATION ${CONFIG_PACKAGE_LOCATION}
