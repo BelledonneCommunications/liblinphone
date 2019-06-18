@@ -186,6 +186,14 @@ LINPHONE_PUBLIC void linphone_content_set_name (LinphoneContent *content, const 
 LINPHONE_PUBLIC bool_t linphone_content_is_multipart (const LinphoneContent *content);
 
 /**
+ * Get all the parts from a multipart content.
+ * @param[in] content #LinphoneContent object.
+ * @return A \bctbx_list{LinphoneContent} \onTheFlyList object holding the part if found, NULL otherwise.
+ */
+LINPHONE_PUBLIC 
+bctbx_list_t *linphone_content_get_parts (const LinphoneContent *content);
+
+/**
  * Get a part from a multipart content according to its index.
  * @param[in] content #LinphoneContent object.
  * @param[in] idx The index of the part to get.
