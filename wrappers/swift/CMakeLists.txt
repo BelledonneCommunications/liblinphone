@@ -20,7 +20,7 @@
 #
 ############################################################################
 cmake_minimum_required(VERSION 3.8)
-set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
+set(CMAKE_Swift_LANGUAGE_VERSION 4.0)
 enable_language(Swift)
 
 add_custom_command(OUTPUT LinphoneWrapper.swift
