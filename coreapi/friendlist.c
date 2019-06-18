@@ -341,6 +341,8 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 		if (name_object)
 			xmlXPathFreeObject(name_object);
 
+		bctbx_list_t *parts = linphone_content_get_parts(body);
+
 		resource_object = linphone_get_xml_xpath_object_for_node_list(xml_ctx, "/rlmi:list/rlmi:resource/rlmi:instance[@state=\"active\"]/..");
 		if (resource_object && resource_object->nodesetval) {
 			for (i = 1; i <= resource_object->nodesetval->nodeNr; i++) {
@@ -348,7 +350,20 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 				linphone_xml_xpath_context_set_node(xml_ctx, xmlXPathNodeSetItem(resource_object->nodesetval, i-1));
 				cid = linphone_get_xml_text_content(xml_ctx, "./rlmi:instance/@cid");
 				if (cid) {
-					presence_part = linphone_content_find_part_by_header(body, "Content-Id", cid);
+					presence_part = nullptr;
+					bctbx_list_t *it = parts;
+					while (it != nullptr)
+					{
+						LinphoneContent *content = (LinphoneContent *)it->data;
+						const char *header = linphone_content_get_custom_header(content, "Content-Id");
+						if (header && strcmp(header, cid) == 0)
+						{
+							presence_part = linphone_content_ref(content);
+							break;
+						}
+						it = bctbx_list_next(it);
+					}
+
 					if (!presence_part) {
 						ms_warning("rlmi+xml: Cannot find part with Content-Id: %s", cid);
 					} else {
@@ -417,6 +432,8 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 			}
 			bctbx_list_free(list_friends_presence_received);
 		}
+
+		bctbx_list_free_with_data(parts, (void (*)(void *))linphone_content_unref);
 		if (resource_object)
 			xmlXPathFreeObject(resource_object);
 	} else {
