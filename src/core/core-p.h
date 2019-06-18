@@ -121,8 +121,6 @@ private:
 	std::list<std::shared_ptr<Call>> calls;
 	std::shared_ptr<Call> currentCall;
 
-	std::list<std::shared_ptr<AbstractChatRoom>> chatRooms;
-
 	std::unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>> chatRoomsById;
 
 	std::unique_ptr<EncryptionEngine> imee;

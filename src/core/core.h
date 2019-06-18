@@ -105,7 +105,7 @@ public:
 	// ChatRoom.
 	// ---------------------------------------------------------------------------
 
-	const std::list<std::shared_ptr<AbstractChatRoom>> &getChatRooms () const;
+	std::list<std::shared_ptr<AbstractChatRoom>> getChatRooms () const;
 
 	std::shared_ptr<AbstractChatRoom> findChatRoom (const ConferenceId &conferenceId) const;
 	std::list<std::shared_ptr<AbstractChatRoom>> findChatRooms (const IdentityAddress &peerAddress) const;

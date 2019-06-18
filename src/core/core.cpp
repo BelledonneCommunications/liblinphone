@@ -95,7 +95,6 @@ void CorePrivate::uninit () {
 		ms_usleep(10000);
 	}
 
-	chatRooms.clear();
 	chatRoomsById.clear();
 	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();
@@ -435,9 +434,11 @@ int Core::getUnreadChatMessageCount () const {
 int Core::getUnreadChatMessageCount (const IdentityAddress &localAddress) const {
 	L_D();
 	int count = 0;
-	for (const auto &chatRoom : d->chatRooms)
+	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
+		const auto &chatRoom = it->second;
 		if (chatRoom->getLocalAddress() == localAddress)
 			count += chatRoom->getUnreadChatMessageCount();
+	}
 	return count;
 }
 
@@ -455,7 +456,8 @@ int Core::getUnreadChatMessageCountFromActiveLocals () const {
 		localAddresses.insert(*L_GET_CPP_PTR_FROM_C_OBJECT(static_cast<LinphoneProxyConfig *>(it->data)->identity_address));
 
 	int count = 0;
-	for (const auto &chatRoom : d->chatRooms) {
+	for (auto roomIt = d->chatRoomsById.begin(); roomIt != d->chatRoomsById.end(); roomIt++) {
+		const auto &chatRoom = roomIt->second;
 		auto it = localAddresses.find(chatRoom->getLocalAddress());
 		if (it != localAddresses.end())
 			count += chatRoom->getUnreadChatMessageCount();
