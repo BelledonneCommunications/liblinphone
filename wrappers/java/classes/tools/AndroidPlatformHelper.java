@@ -74,14 +74,6 @@ public class AndroidPlatformHelper {
 	private PowerManager mPowerManager;
 	private WakeLock mWakeLock;
 	private Resources mResources;
-	private String mLinphoneRootCaFile;
-	private String mRingSoundFile;
-	private String mRingbackSoundFile;
-	private String mPauseSoundFile;
-	private String mErrorToneFile;
-	private String mGrammarCpimFile;
-	private String mGrammarVcardFile ;
-	private String mUserCertificatePath;
 	private Surface mSurface;
 	private SurfaceTexture mSurfaceTexture;
 	private TextureView mPreviewTextureView, mVideoTextureView;
@@ -130,17 +122,6 @@ public class AndroidPlatformHelper {
 		mMcastLock.setReferenceCounted(true);
 		mWifiLock = wifiMgr.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "AndroidPlatformHelper");
 		mWifiLock.setReferenceCounted(true);
-
-		String basePath = mContext.getFilesDir().getAbsolutePath();
-		//make sure to follow same path as unix version of the sdk
-		mLinphoneRootCaFile = basePath + "/share/linphone/rootca.pem";
-		mRingSoundFile = basePath + "/share/sounds/linphone/rings/notes_of_the_optimistic.mkv";
-		mRingbackSoundFile = basePath + "/share/sounds/linphone/ringback.wav";
-		mPauseSoundFile = basePath + "/share/sounds/linphone/rings/dont_wait_too_long.mkv";
-		mErrorToneFile = basePath + "/share/sounds/linphone/incoming_chat.wav";
-		mGrammarCpimFile = basePath + "/share/belr/grammars/cpim_grammar";
-		mGrammarVcardFile = basePath + "/share/belr/grammars/vcard_grammar";
-		mUserCertificatePath = basePath;
 
 		try {
 			copyAssetsFromPackage();
@@ -271,7 +252,7 @@ public class AndroidPlatformHelper {
 			Log.d("[Platform Helper] App doesn't seem to embed resource " + name + " in it's res/raw/ directory, use linphone's instead");
 			resId = mResources.getIdentifier(name, "raw", "org.linphone");
 			if (resId == 0) {
-				Log.i("[Platform Helper] App doesn't seem to embed resource " + name + " in it's res/raw/ directory. Make sure this file is either brought as an asset or a resource");
+				Log.d("[Platform Helper] App doesn't seem to embed resource " + name + " in it's res/raw/ directory. Make sure this file is either brought as an asset or a resource");
 			}
 		}
 		return resId;
@@ -279,17 +260,34 @@ public class AndroidPlatformHelper {
 
 	private void copyAssetsFromPackage() throws IOException {
 		Log.i("[Platform Helper] Starting copy from assets to application files directory");
-		copyAssetsFromPackage(mContext, "org.linphone.core",".");
+		copyAssetsFromPackage(mContext, "org.linphone.core", ".");
 		Log.i("[Platform Helper] Copy from assets done");
-		Log.i("[Platform Helper] Starting copy from legacy  resources to application files directory");
+		
+		if (getResourceIdentifierFromName("cpim_grammar") != 0) {
+			copyLegacyAssets();
+		}
+	}
+
+	private void copyLegacyAssets() throws IOException {
+		Log.i("[Platform Helper] Starting to copy legacy assets");
 		/*legacy code for 3.X*/
+		String basePath = mContext.getFilesDir().getAbsolutePath();
+		//make sure to follow same path as unix version of the sdk
+		String mLinphoneRootCaFile = basePath + "/share/linphone/rootca.pem";
+		String mRingSoundFile = basePath + "/share/sounds/linphone/rings/notes_of_the_optimistic.mkv";
+		String mRingbackSoundFile = basePath + "/share/sounds/linphone/ringback.wav";
+		String mPauseSoundFile = basePath + "/share/sounds/linphone/rings/dont_wait_too_long.mkv";
+		String mErrorToneFile = basePath + "/share/sounds/linphone/incoming_chat.wav";
+		String mGrammarCpimFile = basePath + "/share/belr/grammars/cpim_grammar";
+		String mGrammarVcardFile = basePath + "/share/belr/grammars/vcard_grammar";
+
 		copyEvenIfExists(getResourceIdentifierFromName("cpim_grammar"), mGrammarCpimFile);
 		copyEvenIfExists(getResourceIdentifierFromName("vcard_grammar"), mGrammarVcardFile);
 		copyEvenIfExists(getResourceIdentifierFromName("rootca"), mLinphoneRootCaFile);
-		copyEvenIfExists(getResourceIdentifierFromName("notes_of_the_optimistic"), mRingSoundFile);
-		copyEvenIfExists(getResourceIdentifierFromName("ringback"), mRingbackSoundFile);
-		copyEvenIfExists(getResourceIdentifierFromName("hold"), mPauseSoundFile);
-		copyEvenIfExists(getResourceIdentifierFromName("incoming_chat"), mErrorToneFile);
+		copyIfNotExist(getResourceIdentifierFromName("notes_of_the_optimistic"), mRingSoundFile);
+		copyIfNotExist(getResourceIdentifierFromName("ringback"), mRingbackSoundFile);
+		copyIfNotExist(getResourceIdentifierFromName("hold"), mPauseSoundFile);
+		copyIfNotExist(getResourceIdentifierFromName("incoming_chat"), mErrorToneFile);
 		Log.i("[Platform Helper] Copy from legacy resources done");
 	}
 
@@ -325,27 +323,34 @@ public class AndroidPlatformHelper {
 		lInputStream.close();
 	}
 
-	public static void copyAssetsFromPackage(Context ctx,String fromPath, String toPath) throws IOException {
-		new File(ctx.getFilesDir().getPath()+"/"+toPath).mkdir();
+	public static void copyAssetsFromPackage(Context ctx, String fromPath, String toPath) throws IOException {
+		File asset = new File(ctx.getFilesDir().getPath() + "/" + toPath);
+		asset.mkdir();
 
-		for (String f :ctx.getAssets().list(fromPath)) {
-			String current_name = fromPath+"/"+f;
-			String current_dest = toPath+"/"+f;
+		for (String f : ctx.getAssets().list(fromPath)) {
+			String current_name = fromPath + "/" + f;
+			String current_dest = toPath + "/" + f;
+			File file = new File(ctx.getFilesDir().getPath() + "/" + current_dest);
 			InputStream lInputStream;
+
 			try {
+				if (file.exists() && (f.endsWith(".wav") || f.endsWith(".mkv"))) {
+					Log.i("[Platform Helper] Resource " + f + " already installed, skipping...");
+					continue;
+				}
 				lInputStream = ctx.getAssets().open(current_name);
 			} catch (IOException e) {
 				//probably a dir
-				copyAssetsFromPackage(ctx,current_name,current_dest);
+				copyAssetsFromPackage(ctx, current_name, current_dest);
 				continue;
 			}
-			FileOutputStream lOutputStream =  new FileOutputStream(new File(ctx.getFilesDir().getPath()+"/"+current_dest));//ctx.openFileOutput (fromPath+"/"+f, 0);
 
-
+			Log.i("[Platform Helper] Installing Resource " + f);
+			FileOutputStream lOutputStream =  new FileOutputStream(file);
 			int readByte;
 			byte[] buff = new byte[8048];
 			while (( readByte = lInputStream.read(buff)) != -1) {
-				lOutputStream.write(buff,0, readByte);
+				lOutputStream.write(buff, 0, readByte);
 			}
 			lOutputStream.flush();
 			lOutputStream.close();
