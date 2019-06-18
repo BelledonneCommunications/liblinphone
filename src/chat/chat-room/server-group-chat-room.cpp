@@ -207,7 +207,7 @@ void ServerGroupChatRoomPrivate::requestDeletion(){
 	for (auto participant : q->getParticipants()){
 		unSubscribeRegistrationForParticipant(participant->getAddress());
 	}
-	if (registrationSubscriptions.size() > 0){
+	if (!registrationSubscriptions.empty()){
 		lError() << q << " still " << registrationSubscriptions.size() << " registration subscriptions pending while deletion is requested.";
 	}
 	chatRoomListener->onChatRoomDeleteRequested(q->getSharedFromThis());

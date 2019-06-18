@@ -154,7 +154,7 @@ string Cpim::Message::asString () const {
 	L_D();
 
 	string output;
-	if (d->messageHeaders.size() > 0) {
+	if (!d->messageHeaders.empty()) {
 		for (const auto &entry : d->messageHeaders) {
 			auto list = entry.second;
 			for (const auto &messageHeader : *list) {
