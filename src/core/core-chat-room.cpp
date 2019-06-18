@@ -294,8 +294,6 @@ void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) 
 	if (it == chatRoomsById.end()) {
 		// Remove chat room from workaround cache.
 		noCreatedClientGroupChatRooms.erase(chatRoom.get());
-
-		chatRooms.push_back(chatRoom);
 		chatRoomsById[conferenceId] = chatRoom;
 	}
 }
@@ -306,7 +304,6 @@ void CorePrivate::insertChatRoomWithDb (const shared_ptr<AbstractChatRoom> &chat
 }
 
 void CorePrivate::loadChatRooms () {
-	chatRooms.clear();
 	chatRoomsById.clear();
 	if (remoteListEventHandler)
 		remoteListEventHandler->clearHandlers();
@@ -323,11 +320,9 @@ void CorePrivate::replaceChatRoom (const shared_ptr<AbstractChatRoom> &replacedC
 	const ConferenceId &newConferenceId = newChatRoom->getConferenceId();
 
 	if (replacedChatRoom->getCapabilities() & ChatRoom::Capabilities::Proxy) {
-		chatRooms.remove(newChatRoom);
 		chatRoomsById.erase(replacedConferenceId);
 		chatRoomsById[newConferenceId] = replacedChatRoom;
 	} else {
-		chatRooms.remove(replacedChatRoom);
 		chatRoomsById.erase(replacedConferenceId);
 		chatRoomsById[newConferenceId] = newChatRoom;
 	}
@@ -335,10 +330,15 @@ void CorePrivate::replaceChatRoom (const shared_ptr<AbstractChatRoom> &replacedC
 
 // -----------------------------------------------------------------------------
 
-const list<shared_ptr<AbstractChatRoom>> &Core::getChatRooms () const {
+list<shared_ptr<AbstractChatRoom>> Core::getChatRooms () const {
 	L_D();
 
-	return d->chatRooms;
+	list<shared_ptr<AbstractChatRoom>> rooms;
+	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
+		const auto &chatRoom = it->second;
+		rooms.push_front(chatRoom);
+	}
+	return rooms;
 }
 
 shared_ptr<AbstractChatRoom> Core::findChatRoom (const ConferenceId &conferenceId) const {
@@ -356,12 +356,12 @@ list<shared_ptr<AbstractChatRoom>> Core::findChatRooms (const IdentityAddress &p
 	L_D();
 
 	list<shared_ptr<AbstractChatRoom>> output;
-	copy_if(
-		d->chatRooms.begin(), d->chatRooms.end(),
-		back_inserter(output), [&peerAddress](const shared_ptr<AbstractChatRoom> &chatRoom) {
-			return chatRoom->getPeerAddress() == peerAddress;
+	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
+		const auto &chatRoom = it->second;
+		if (chatRoom->getPeerAddress() == peerAddress) {
+			output.push_front(chatRoom);
 		}
-	);
+	}
 
 	return output;
 }
@@ -373,7 +373,8 @@ shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 	bool encrypted
 ) const {
 	L_D();
-	for (const auto &chatRoom : d->chatRooms) {
+	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
+		const auto &chatRoom = it->second;
 		const IdentityAddress &curLocalAddress = chatRoom->getLocalAddress();
 		ChatRoom::CapabilitiesMask capabilities = chatRoom->getCapabilities();
 
@@ -480,13 +481,9 @@ void Core::deleteChatRoom (const shared_ptr<const AbstractChatRoom> &chatRoom) {
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
 	auto chatRoomsByIdIt = d->chatRoomsById.find(conferenceId);
 	if (chatRoomsByIdIt != d->chatRoomsById.end()) {
-		auto chatRoomsIt = find(d->chatRooms, chatRoom);
-		L_ASSERT(chatRoomsIt != d->chatRooms.end());
-		d->chatRooms.erase(chatRoomsIt);
 		d->chatRoomsById.erase(chatRoomsByIdIt);
 		if (d->mainDb->isInitialized()) d->mainDb->deleteChatRoom(conferenceId);
-	} else
-		L_ASSERT(find(d->chatRooms, chatRoom) == d->chatRooms.end());
+	}
 }
 
 LINPHONE_END_NAMESPACE
