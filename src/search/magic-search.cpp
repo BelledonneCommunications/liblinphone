@@ -516,7 +516,7 @@ bool MagicSearch::checkDomain (const LinphoneFriend *lFriend, const LinphoneAddr
 }
 
 void MagicSearch::addResultsToResultsList (std::list<SearchResult> &results, std::list<SearchResult> &srL) const {
-	if (results.size() > 0) {
+	if (!results.empty()) {
 		srL.splice(srL.end(), results);
 	}
 }
