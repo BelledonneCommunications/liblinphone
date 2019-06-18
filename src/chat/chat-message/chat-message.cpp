@@ -356,7 +356,7 @@ void ChatMessagePrivate::setExternalBodyUrl (const string &url) {
 const ContentType &ChatMessagePrivate::getContentType () const {
 	loadContentsFromDatabase();
 	if (direction == ChatMessage::Direction::Incoming) {
-		if (contents.size() > 0) {
+		if (!contents.empty()) {
 			Content *content = contents.front();
 			cContentType = content->getContentType();
 		} else {
@@ -366,7 +366,7 @@ const ContentType &ChatMessagePrivate::getContentType () const {
 		if (internalContent.getContentType().isValid()) {
 			cContentType = internalContent.getContentType();
 		} else {
-			if (contents.size() > 0) {
+			if (!contents.empty()) {
 				Content *content = contents.front();
 				cContentType = content->getContentType();
 			}
@@ -377,14 +377,14 @@ const ContentType &ChatMessagePrivate::getContentType () const {
 
 void ChatMessagePrivate::setContentType (const ContentType &contentType) {
 	loadContentsFromDatabase();
-	if (contents.size() > 0 && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
+	if (!contents.empty() && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
 		internalContent.setBody(contents.front()->getBody());
 	}
 	internalContent.setContentType(contentType);
 
 	if ((currentSendStep &ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
 		// if not started yet the sending also alter the first content
-		if (contents.size() > 0)
+		if (!contents.empty())
 			contents.front()->setContentType(contentType);
 	}
 }
@@ -394,7 +394,7 @@ const string &ChatMessagePrivate::getText () const {
 	if (direction == ChatMessage::Direction::Incoming) {
 		if (hasTextContent()) {
 			cText = getTextContent()->getBodyAsString();
-		} else if (contents.size() > 0) {
+		} else if (!contents.empty()) {
 			Content *content = contents.front();
 			cText = content->getBodyAsString();
 		} else {
@@ -404,7 +404,7 @@ const string &ChatMessagePrivate::getText () const {
 		if (!internalContent.isEmpty()) {
 			cText = internalContent.getBodyAsString();
 		} else {
-			if (contents.size() > 0) {
+			if (!contents.empty()) {
 				Content *content = contents.front();
 				cText = content->getBodyAsString();
 			}
@@ -415,14 +415,14 @@ const string &ChatMessagePrivate::getText () const {
 
 void ChatMessagePrivate::setText (const string &text) {
 	loadContentsFromDatabase();
-	if (contents.size() > 0 && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
+	if (!contents.empty() && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
 		internalContent.setContentType(contents.front()->getContentType());
 	}
 	internalContent.setBody(text);
 
 	if ((currentSendStep &ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
 		// if not started yet the sending also alter the first content
-		if (contents.size() > 0)
+		if (!contents.empty())
 			contents.front()->setBody(text);
 	}
 }
@@ -648,7 +648,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 		q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 	}
 
-	if (contents.size() == 0) {
+	if (contents.empty()) {
 		// All previous modifiers only altered the internal content, let's fill the content list
 		contents.push_back(new Content(internalContent));
 	}
@@ -868,7 +868,7 @@ void ChatMessagePrivate::send () {
 	// ---------------------------------------
 
 	if (internalContent.isEmpty()) {
-		if (contents.size() > 0) {
+		if (!contents.empty()) {
 			internalContent = *(contents.front());
 		} else if (externalBodyUrl.empty()) { // When using external body url, there is no content
 			lError() << "Trying to send a message without any content !";
