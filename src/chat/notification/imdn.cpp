@@ -238,6 +238,9 @@ bool Imdn::aggregationEnabled () const {
 
 LinphoneProxyConfig * Imdn::getRelatedProxyConfig(){
 	LinphoneAddress *addr = linphone_address_new(chatRoom->getLocalAddress().asString().c_str());
+	if (!addr) {
+		return NULL;
+	}
 	LinphoneProxyConfig *cfg = linphone_core_lookup_proxy_by_identity(chatRoom->getCore()->getCCore(), addr);
 	linphone_address_unref(addr);
 	return cfg;
