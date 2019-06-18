@@ -166,7 +166,13 @@ string IdentityAddress::asString () const {
 	if (!d->username.empty()){
 		res << d->username << "@";
 	}
-	res << d->domain;
+	
+	if (d->domain.find(":") != string::npos) {
+		res << "[" << d->domain << "]";
+	} else {
+		res << d->domain;
+	}
+	
 	if (!d->gruu.empty()){
 		res << ";gr=" << d->gruu;
 	}
