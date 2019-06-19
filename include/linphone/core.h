@@ -1039,8 +1039,9 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_core_new_with_config(
  * Must be called only if #LinphoneGlobalState is either Ready of Off. State will changed to Startup, Configuring and then On.
  * @ingroup initializing
  * @param[in] core The #LinphoneCore object to be started
+ * @return 0: success, -1: global failure, -2: could not connect database
  */
-LINPHONE_PUBLIC void linphone_core_start (LinphoneCore *core);
+LINPHONE_PUBLIC LinphoneStatus linphone_core_start(LinphoneCore *lc);
 
 /**
  * Stop a #LinphoneCore object after it has been instantiated and started.

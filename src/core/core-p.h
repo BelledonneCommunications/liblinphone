@@ -20,6 +20,8 @@
 #ifndef _L_CORE_P_H_
 #define _L_CORE_P_H_
 
+#include <stdexcept>
+
 #include "chat/chat-room/abstract-chat-room.h"
 #include "core.h"
 #include "db/main-db.h"
@@ -37,6 +39,12 @@ class RemoteConferenceListEventHandler;
 
 class CorePrivate : public ObjectPrivate {
 public:
+	class DatabaseConnectionFailure : public std::runtime_error {
+	public:
+		DatabaseConnectionFailure(const char *what) : std::runtime_error(what) {}
+		DatabaseConnectionFailure(const std::string &what) : std::runtime_error(what) {}
+	};
+
 	void init ();
 	void registerListener (CoreListener *listener);
 	void unregisterListener (CoreListener *listener);

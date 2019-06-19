@@ -70,8 +70,11 @@ void CorePrivate::init () {
 
 	if (uri != "null"){ //special uri "null" means don't open database. We need this for tests.
 		lInfo() << "Opening linphone database " << uri << " with backend " << backend;
-		if (!mainDb->connect(backend, uri))
-			lFatal() << "Unable to open linphone database with uri " << uri << " and backend " << backend;
+		if (!mainDb->connect(backend, uri)) {
+			ostringstream os;
+			os << "Unable to open linphone database with uri " << uri << " and backend " << backend;
+			throw DatabaseConnectionFailure(os.str());
+		}
 
 		loadChatRooms();
 	} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
