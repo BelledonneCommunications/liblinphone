@@ -20,7 +20,7 @@
 #
 ############################################################################
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 project(linphone VERSION 3.12.0 LANGUAGES C CXX)
 
 
@@ -118,10 +118,10 @@ if (ENABLE_VCARD)
 	endif()
 endif()
 
-find_package(BelleSIP CONFIG REQUIRED )
+find_package(BelleSIP CONFIG REQUIRED)
 find_package(Mediastreamer2 CONFIG REQUIRED)
 find_package(ortp CONFIG REQUIRED)
-find_package(bctoolbox 0.0.3 CONFIG REQUIRED OPTIONAL_COMPONENTS tester )
+find_package(bctoolbox 0.0.3 CONFIG REQUIRED OPTIONAL_COMPONENTS tester)
 find_package(belr CONFIG REQUIRED)
 
 if(ENABLE_ADVANCED_IM)
@@ -329,18 +329,21 @@ set(GETTEXT_PACKAGE "linphone")
 if(ENABLE_RELATIVE_PREFIX)
 	set(LINPHONE_DATA_DIR ".")
 else()
-	set(LINPHONE_DATA_DIR "${CMAKE_STAGING_PREFIX}")
+	set(LINPHONE_DATA_DIR "${CMAKE_INSTALL_PREFIX}")
 endif()
 set(LINPHONE_PLUGINS_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_LIBDIR}/liblinphone/plugins")
+
 if(WIN32)
 	set(LINPHONE_CONFIG_DIR "Linphone")
 endif()
+
 set(PACKAGE_LOCALE_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_DATADIR}/locale")
 set(PACKAGE_DATA_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_DATADIR}")
 set(PACKAGE_GRAMMAR_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_DATADIR}/belr/grammars")
 set(PACKAGE_SOUND_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_DATADIR}/sounds/linphone")
 set(PACKAGE_RING_DIR "${PACKAGE_SOUND_DIR}/rings")
 set(PACKAGE_FREEDESKTOP_DIR "${PACKAGE_DATA_DIR}/applications")
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/config.h PROPERTIES GENERATED ON)
 add_definitions(-DHAVE_CONFIG_H)
@@ -349,7 +352,6 @@ add_definitions(-DHAVE_CONFIG_H)
 if(ENABLE_VIDEO)
 	add_definitions(-DVIDEO_ENABLED)
 endif()
-
 
 if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
 	set(EXPORT_TARGETS_NAME "LinphoneBuilder")
@@ -374,7 +376,7 @@ endif()
 if(ENABLE_TOOLS)
 	add_subdirectory(tools)
 endif()
-if(ENABLE_UNIT_TESTS AND BCTOOLBOX_TESTER_FOUND)
+if(ENABLE_UNIT_TESTS)
 	add_subdirectory(tester)
 endif()
 if(ENABLE_CXX_WRAPPER)
