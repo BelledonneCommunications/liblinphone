@@ -457,8 +457,8 @@ class DocGenerator:
 			LangInfo('C'),
 			LangInfo('Cpp'),
 			LangInfo('Java'),
-			LangInfo('CSharp'),
-			LangInfo('Swift')
+			LangInfo('CSharp')#,
+			#LangInfo('Swift')
 		]
 
 	def generate(self, outputdir):
