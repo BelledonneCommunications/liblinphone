@@ -20,6 +20,8 @@
 #include "linphone/utils/utils.h"
 
 #include "address.h"
+#include "identity-address-parser.h"
+
 #include "c-wrapper/c-wrapper.h"
 #include "identity-address.h"
 #include "logger/logger.h"
@@ -45,12 +47,20 @@ public:
 
 IdentityAddress::IdentityAddress (const string &address) : ClonableObject(*new IdentityAddressPrivate) {
 	L_D();
-	Address tmpAddress(address);
-	if (tmpAddress.isValid() && ((tmpAddress.getScheme() == "sip") || (tmpAddress.getScheme() == "sips"))) {
-		d->scheme = tmpAddress.getScheme();
-		d->username = tmpAddress.getUsername();
-		d->domain = tmpAddress.getDomain();
-		d->gruu = tmpAddress.getUriParamValue("gr");
+	shared_ptr<IdentityAddress> parsedAddress = IdentityAddressParser::getInstance()->parseAddress(address);
+	if (parsedAddress != nullptr) {
+		d->scheme = parsedAddress->getScheme();
+		d->username = parsedAddress->getUsername();
+		d->domain = parsedAddress->getDomain();
+		d->gruu = parsedAddress->getGruu();
+	} else {
+		Address tmpAddress(address);
+		if (tmpAddress.isValid() && ((tmpAddress.getScheme() == "sip") || (tmpAddress.getScheme() == "sips"))) {
+			d->scheme = tmpAddress.getScheme();
+			d->username = tmpAddress.getUsername();
+			d->domain = tmpAddress.getDomain();
+			d->gruu = tmpAddress.getUriParamValue("gr");
+		}
 	}
 }
 
@@ -69,6 +79,10 @@ IdentityAddress::IdentityAddress (const IdentityAddress &other) : ClonableObject
 	d->username = other.getUsername();
 	d->domain = other.getDomain();
 	d->gruu = other.getGruu();
+}
+
+IdentityAddress::IdentityAddress () : ClonableObject(*new IdentityAddressPrivate) {
+	
 }
 
 IdentityAddress &IdentityAddress::operator= (const IdentityAddress &other) {
@@ -115,15 +129,19 @@ const string &IdentityAddress::getScheme () const {
 	return d->scheme;
 }
 
+void IdentityAddress::setScheme (const string &scheme) {
+	L_D();
+	d->scheme = scheme;
+}
+
 const string &IdentityAddress::getUsername () const {
 	L_D();
 	return d->username;
 }
 
-bool IdentityAddress::setUsername (const string &username) {
+void IdentityAddress::setUsername (const string &username) {
 	L_D();
 	d->username = username;
-	return true;
 }
 
 const string &IdentityAddress::getDomain () const {
@@ -131,10 +149,9 @@ const string &IdentityAddress::getDomain () const {
 	return d->domain;
 }
 
-bool IdentityAddress::setDomain (const string &domain) {
+void IdentityAddress::setDomain (const string &domain) {
 	L_D();
 	d->domain = domain;
-	return true;
 }
 
 bool IdentityAddress::hasGruu () const {
@@ -147,10 +164,9 @@ const string &IdentityAddress::getGruu () const {
 	return d->gruu;
 }
 
-bool IdentityAddress::setGruu (const string &gruu) {
+void IdentityAddress::setGruu (const string &gruu) {
 	L_D();
 	d->gruu = gruu;
-	return true;
 }
 
 IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
