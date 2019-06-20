@@ -33,9 +33,10 @@ class IdentityAddressPrivate;
 
 class LINPHONE_PUBLIC IdentityAddress : public ClonableObject {
 public:
-	explicit IdentityAddress (const std::string &address = "");
+	explicit IdentityAddress (const std::string &address);
 	IdentityAddress (const Address &address);
 	IdentityAddress (const IdentityAddress &other);
+	IdentityAddress ();
 	~IdentityAddress () = default;
 
 	IdentityAddress *clone () const override {
@@ -52,16 +53,17 @@ public:
 	bool isValid () const;
 
 	const std::string &getScheme () const;
+	void setScheme (const std::string &scheme);
 
 	const std::string &getUsername () const;
-	bool setUsername (const std::string &username);
+	void setUsername (const std::string &username);
 
 	const std::string &getDomain () const;
-	bool setDomain (const std::string &domain);
+	void setDomain (const std::string &domain);
 
 	bool hasGruu () const;
 	const std::string &getGruu () const;
-	bool setGruu (const std::string &gruu);
+	void setGruu (const std::string &gruu);
 
 	IdentityAddress getAddressWithoutGruu () const;
 
