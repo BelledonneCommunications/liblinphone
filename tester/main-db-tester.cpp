@@ -37,9 +37,11 @@ using namespace LinphonePrivate;
 
 class MainDbProvider {
 public:
-	MainDbProvider () {
+	MainDbProvider () : MainDbProvider("db/linphone.db") { }
+
+	MainDbProvider (const char *db_file) {
 		mCoreManager = linphone_core_manager_create("marie_rc");
-		char *roDbPath = bc_tester_res("db/linphone.db");
+		char *roDbPath = bc_tester_res(db_file);
 		char *rwDbPath = bc_tester_file("linphone.db");
 		BC_ASSERT_FALSE(liblinphone_tester_copy_file(roDbPath, rwDbPath));
 		linphone_config_set_string(linphone_core_get_config(mCoreManager->lc), "storage", "uri", rwDbPath);
@@ -62,7 +64,7 @@ private:
 
 // -----------------------------------------------------------------------------
 
-static void get_events_count () {
+static void get_events_count (void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
 	BC_ASSERT_EQUAL(mainDb.getEventCount(), 5175, int, "%d");
@@ -72,7 +74,7 @@ static void get_events_count () {
 	BC_ASSERT_EQUAL(mainDb.getEventCount(MainDb::NoFilter), 5175, int, "%d");
 }
 
-static void get_messages_count () {
+static void get_messages_count (void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
 	BC_ASSERT_EQUAL(mainDb.getChatMessageCount(), 5157, int, "%d");
@@ -84,7 +86,7 @@ static void get_messages_count () {
 	);
 }
 
-static void get_unread_messages_count () {
+static void get_unread_messages_count (void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
 	BC_ASSERT_EQUAL(mainDb.getUnreadChatMessageCount(), 2, int, "%d");
@@ -96,7 +98,7 @@ static void get_unread_messages_count () {
 	);
 }
 
-static void get_history () {
+static void get_history (void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
 	BC_ASSERT_EQUAL(
@@ -137,7 +139,7 @@ static void get_history () {
 	);
 }
 
-static void get_conference_notified_events () {
+static void get_conference_notified_events (void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
 	list<shared_ptr<EventLog>> events = mainDb.getConferenceNotifiedEvents(
@@ -185,12 +187,21 @@ static void get_conference_notified_events () {
 	}
 }
 
+static void load_a_lot_of_chatrooms(void) {
+	chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
+	MainDbProvider provider("db/chatrooms.db");
+	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
+	long ms = (long) chrono::duration_cast<chrono::milliseconds>(end - start).count();
+	BC_ASSERT_LOWER(ms, 1000, long, "%li");
+}
+
 test_t main_db_tests[] = {
 	TEST_NO_TAG("Get events count", get_events_count),
 	TEST_NO_TAG("Get messages count", get_messages_count),
 	TEST_NO_TAG("Get unread messages count", get_unread_messages_count),
 	TEST_NO_TAG("Get history", get_history),
-	TEST_NO_TAG("Get conference events", get_conference_notified_events)
+	TEST_NO_TAG("Get conference events", get_conference_notified_events),
+	TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms)
 };
 
 test_suite_t main_db_test_suite = {

@@ -72,7 +72,7 @@ set(CERTIFICATE_CLIENT_FILES
 	certificates/client/cert2.pem
 	certificates/client/key2.pem
 	certificates/client/cert3.pem
-        certificates/client/key3.pem
+	certificates/client/key3.pem
 	certificates/client/cert2-signed-by-other-ca.pem
 )
 
@@ -82,6 +82,7 @@ set(DB_FILES
 	db/friends.db
 	db/linphone.db
 	db/messages.db
+	db/chatrooms.db
 )
 
 set(RC_FILES
