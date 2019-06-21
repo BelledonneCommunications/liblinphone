@@ -36,6 +36,10 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+namespace {
+	string IdentityGrammar("identity_grammar");
+}
+
 // -----------------------------------------------------------------------------
 
 class IdentityAddressParserPrivate : public ObjectPrivate {
@@ -47,24 +51,7 @@ public:
 IdentityAddressParser::IdentityAddressParser () : Singleton(*new IdentityAddressParserPrivate) {
 	L_D();
 
-    const char *identityAddressGrammar =
-        "address = scheme \":\" [user] \"@\" host [ gruu-parameter ] \r\n"
-        "scheme = \"sip\" / \"sips\" \r\n"
-        "user = 1*( alphanum / escaped / \"-\" / \"+\" / \"_\" / \"~\" ) \r\n"
-        "escaped = \"%\" HEXDIG HEXDIG \r\n"
-        "host = *( domainlabel \".\" ) toplabel [ \".\" ] \r\n"
-        "domainlabel = alphanum / (alphanum *( alphanum / ( *(\"-\") alphanum) ) ) \r\n"
-        "toplabel = ALPHA / (ALPHA *( alphanum / (*(\"-\") alphanum ) ) ) \r\n"
-        "gruu-parameter = \";gr=\" gruu-value \r\n"
-        "gruu-value = 1*( alphanum / \"-\" / \"_\" / \":\" ) \r\n"
-        "alphanum = ALPHA / DIGIT \r\n";
-	
-	belr::ABNFGrammarBuilder builder;
-    shared_ptr<belr::Grammar> defaultGrammar = make_shared<belr::Grammar>("");
-    defaultGrammar->include(make_shared<belr::CoreRules>());
-    shared_ptr<belr::Grammar> grammar = builder.createFromAbnf(identityAddressGrammar, defaultGrammar);
-
-	//shared_ptr<belr::Grammar> grammar = belr::GrammarLoader::get().load(IdentityAddressGrammar);
+	shared_ptr<belr::Grammar> grammar = belr::GrammarLoader::get().load(IdentityGrammar);
 	if (!grammar)
 		lFatal() << "Unable to load Identity Address grammar.";
 	d->parser = make_shared<belr::Parser<shared_ptr<IdentityAddress>>>(grammar);
