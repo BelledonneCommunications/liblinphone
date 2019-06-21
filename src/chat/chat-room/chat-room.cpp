@@ -186,18 +186,11 @@ void ChatRoomPrivate::sendDeliveryNotification (const shared_ptr<ChatMessage> &c
 	}
 }
 
-void ChatRoomPrivate::sendDeliveryNotifications () {
-	L_Q();
-	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCore()->getCCore());
-	if (linphone_im_notif_policy_get_send_imdn_delivered(policy)) {
-		auto chatMessages = q->getCore()->getPrivate()->mainDb->findChatMessagesToBeNotifiedAsDelivered(q->getConferenceId());
-		for (const auto &chatMessage : chatMessages) {
-			ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
-			if (dChatMessage->getPositiveDeliveryNotificationRequired()) {
-				dChatMessage->setPositiveDeliveryNotificationRequired(false);
-				imdnHandler->notifyDelivery(chatMessage);
-			}
-		}
+void ChatRoomPrivate::sendDeliveryNotifications (const std::shared_ptr<ChatMessage> &chatMessage) {
+	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+	if (dChatMessage->getPositiveDeliveryNotificationRequired()) {
+		dChatMessage->setPositiveDeliveryNotificationRequired(false);
+		imdnHandler->notifyDelivery(chatMessage);
 	}
 }
 
