@@ -107,7 +107,7 @@ public:
 
 	std::list<std::shared_ptr<AbstractChatRoom>> getChatRooms () const;
 
-	std::shared_ptr<AbstractChatRoom> findChatRoom (const ConferenceId &conferenceId) const;
+	std::shared_ptr<AbstractChatRoom> findChatRoom (const ConferenceId &conferenceId, bool logIfNotFound = true) const;
 	std::list<std::shared_ptr<AbstractChatRoom>> findChatRooms (const IdentityAddress &peerAddress) const;
 
 	std::shared_ptr<AbstractChatRoom> findOneToOneChatRoom (

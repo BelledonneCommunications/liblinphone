@@ -352,14 +352,15 @@ list<shared_ptr<AbstractChatRoom>> Core::getChatRooms () const {
 	return rooms;
 }
 
-shared_ptr<AbstractChatRoom> Core::findChatRoom (const ConferenceId &conferenceId) const {
+shared_ptr<AbstractChatRoom> Core::findChatRoom (const ConferenceId &conferenceId, bool logIfNotFound) const {
 	L_D();
 
 	auto it = d->chatRoomsById.find(conferenceId);
 	if (it != d->chatRoomsById.cend())
 		return it->second;
 
-	lInfo() << "Unable to find chat room in RAM: " << conferenceId << ".";
+	if (logIfNotFound)
+		lInfo() << "Unable to find chat room in RAM: " << conferenceId << ".";
 	return nullptr;
 }
 

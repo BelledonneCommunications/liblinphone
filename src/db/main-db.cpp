@@ -2629,7 +2629,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 				IdentityAddress(row.get<string>(2))
 			);
 			
-			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
+			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
 			if (chatRoom) {
 				chatRooms.push_back(chatRoom);
 				continue;
@@ -2741,7 +2741,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 			dChatRoom->setCreationTime(creationTime);
 			dChatRoom->setLastUpdateTime(lastUpdateTime);
 
-			lInfo() << "Found chat room in DB: (peer=" <<
+			lDebug() << "Found chat room in DB: (peer=" <<
 				conferenceId.getPeerAddress().asString() << ", local=" << conferenceId.getLocalAddress().asString() << ").";
 
 			chatRooms.push_back(chatRoom);
