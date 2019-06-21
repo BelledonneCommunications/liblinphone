@@ -436,6 +436,7 @@ endif()
 if(ENABLE_SHARED)
 	set(LINPHONE_RESOURCES
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/cpim_grammar"
+		"${CMAKE_CURRENT_SOURCE_DIR}/../share/identity_grammar"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/rootca.pem"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ringback.wav"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/Modules"
