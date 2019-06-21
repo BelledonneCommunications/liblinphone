@@ -81,7 +81,7 @@ public:
 	virtual void deleteHistory () = 0;
 
 	virtual std::shared_ptr<ChatMessage> getLastChatMessageInHistory () const = 0;
-
+	virtual bool isEmpty () const = 0;
 	virtual int getChatMessageCount () const = 0;
 	virtual int getUnreadChatMessageCount () const = 0;
 
