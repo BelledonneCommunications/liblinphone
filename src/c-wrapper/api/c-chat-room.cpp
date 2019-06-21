@@ -208,6 +208,10 @@ int linphone_chat_room_get_history_size (LinphoneChatRoom *cr) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getChatMessageCount();
 }
 
+bool_t linphone_chat_room_is_empty (LinphoneChatRoom *cr) {
+	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->isEmpty();
+}
+
 void linphone_chat_room_delete_message (LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
 	shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(
 		L_GET_PRIVATE_FROM_C_OBJECT(msg)->dbKey

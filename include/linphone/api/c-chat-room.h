@@ -170,6 +170,13 @@ LINPHONE_PUBLIC void linphone_chat_room_delete_history(LinphoneChatRoom *cr);
 LINPHONE_PUBLIC int linphone_chat_room_get_history_size(LinphoneChatRoom *cr);
 
 /**
+ * Returns whether or not a #LinphoneChatRoom has at least one #LinphoneChatMessage or not.
+ * @param[in] cr The #LinphoneChatRoom object corresponding to the conversation
+ * @return true if there are no #LinphoneChatMessage, false otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_chat_room_is_empty (LinphoneChatRoom *cr);
+
+/**
  * Gets nb_message most recent messages from cr chat room, sorted from oldest to most recent.
  * @param[in] cr The #LinphoneChatRoom object corresponding to the conversation for which messages should be retrieved
  * @param[in] nb_message Number of message to retrieve. 0 means everything.

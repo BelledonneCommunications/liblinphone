@@ -140,6 +140,11 @@ shared_ptr<ChatMessage> ProxyChatRoom::getLastChatMessageInHistory () const {
 	return d->chatRoom->getLastChatMessageInHistory();
 }
 
+bool ProxyChatRoom::isEmpty () const {
+	L_D();
+	return d->chatRoom->isEmpty();
+}
+
 int ProxyChatRoom::getChatMessageCount () const {
 	L_D();
 	return d->chatRoom->getChatMessageCount();

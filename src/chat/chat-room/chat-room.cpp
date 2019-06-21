@@ -464,6 +464,10 @@ shared_ptr<ChatMessage> ChatRoom::getLastChatMessageInHistory () const {
 	return getCore()->getPrivate()->mainDb->getLastChatMessage(getConferenceId());
 }
 
+bool ChatRoom::isEmpty () const {
+	return getCore()->getPrivate()->mainDb->getLastChatMessage(getConferenceId()) == nullptr;
+}
+
 int ChatRoom::getChatMessageCount () const {
 	return getCore()->getPrivate()->mainDb->getChatMessageCount(getConferenceId());
 }

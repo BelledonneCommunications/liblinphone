@@ -56,7 +56,7 @@ public:
 	void deleteHistory () override;
 
 	std::shared_ptr<ChatMessage> getLastChatMessageInHistory () const override;
-
+	bool isEmpty () const override;
 	int getChatMessageCount () const override;
 	int getUnreadChatMessageCount () const override;
 
