@@ -36,13 +36,13 @@ class SmartTransaction {
 public:
 	SmartTransaction (soci::session *session, const char *name) :
 	mSession(session), mName(name), mIsCommitted(false) {
-		lInfo() << "Start transaction " << this << " in MainDb::" << mName << ".";
+		lDebug() << "Start transaction " << this << " in MainDb::" << mName << ".";
 		mSession->begin();
 	}
 
 	~SmartTransaction () {
 		if (!mIsCommitted) {
-			lInfo() << "Rollback transaction " << this << " in MainDb::" << mName << ".";
+			lDebug() << "Rollback transaction " << this << " in MainDb::" << mName << ".";
 			mSession->rollback();
 		}
 	}
@@ -53,7 +53,7 @@ public:
 			return;
 		}
 
-		lInfo() << "Commit transaction " << this << " in MainDb::" << mName << ".";
+		lDebug() << "Commit transaction " << this << " in MainDb::" << mName << ".";
 		mIsCommitted = true;
 		mSession->commit();
 	}
