@@ -245,9 +245,9 @@ long long DbSession::resolveId (const soci::row &row, int col) const {
 
 	switch (d->backend) {
 		case DbSessionPrivate::Backend::Mysql:
-			return static_cast<long long>(row.get<unsigned long long>(0));
+			return static_cast<long long>(row.get<unsigned long long>((std::size_t)col));
 		case DbSessionPrivate::Backend::Sqlite3:
-			return static_cast<long long>(row.get<int>(0));
+			return static_cast<long long>(row.get<int>((std::size_t)col));
 		case DbSessionPrivate::Backend::None:
 			return 0;
 	}

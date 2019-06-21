@@ -311,7 +311,18 @@ void CorePrivate::loadChatRooms () {
 	if (!mainDb->isInitialized()) return;
 	for (auto &chatRoom : mainDb->getChatRooms()) {
 		insertChatRoom(chatRoom);
-		chatRoom->getPrivate()->sendDeliveryNotifications();
+	}
+	sendDeliveryNotifications();
+}
+
+void CorePrivate::sendDeliveryNotifications () {
+	L_Q();
+	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCCore());
+	if (linphone_im_notif_policy_get_send_imdn_delivered(policy)) {
+		auto chatMessages = mainDb->findChatMessagesToBeNotifiedAsDelivered();
+		for (const auto &chatMessage : chatMessages) {
+			chatMessage->getChatRoom()->getPrivate()->sendDeliveryNotifications(chatMessage);
+		}
 	}
 }
 
