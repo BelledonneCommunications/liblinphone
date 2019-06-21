@@ -52,7 +52,9 @@ IdentityAddressParser::IdentityAddressParser () : Singleton(*new IdentityAddress
         "scheme = \"sip\" / \"sips\" \r\n"
         "user = 1*( alphanum / escaped / \"-\" / \"+\" / \"_\" / \"~\" ) \r\n"
         "escaped = \"%\" HEXDIG HEXDIG \r\n"
-        "host = 1*( alphanum / \".\" ) \r\n"
+        "host = *( domainlabel \".\" ) toplabel [ \".\" ] \r\n"
+        "domainlabel = alphanum / (alphanum *( alphanum / ( *(\"-\") alphanum) ) ) \r\n"
+        "toplabel = ALPHA / (ALPHA *( alphanum / (*(\"-\") alphanum ) ) ) \r\n"
         "gruu-parameter = \";gr=\" gruu-value \r\n"
         "gruu-value = 1*( alphanum / \"-\" / \"_\" / \":\" ) \r\n"
         "alphanum = ALPHA / DIGIT \r\n";

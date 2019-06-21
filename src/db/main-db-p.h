@@ -39,6 +39,7 @@ class MainDbPrivate : public AbstractDbPrivate {
 public:
 	mutable std::unordered_map<long long, std::weak_ptr<EventLog>> storageIdToEvent;
 	mutable std::unordered_map<long long, std::weak_ptr<ChatMessage>> storageIdToChatMessage;
+	mutable std::unordered_map<long long, ConferenceId> storageIdToConferenceId;
 
 private:
 	// ---------------------------------------------------------------------------
@@ -67,6 +68,7 @@ private:
 	long long selectSipAddressId (const std::string &sipAddress) const;
 	long long selectChatRoomId (long long peerSipAddressId, long long localSipAddressId) const;
 	long long selectChatRoomId (const ConferenceId &conferenceId) const;
+	ConferenceId selectConferenceId (const long long chatRoomId) const;
 	long long selectChatRoomParticipantId (long long chatRoomId, long long participantSipAddressId) const;
 	long long selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB, bool encrypted) const;
 
@@ -169,9 +171,11 @@ private:
 
 	void cache (const std::shared_ptr<EventLog> &eventLog, long long storageId) const;
 	void cache (const std::shared_ptr<ChatMessage> &chatMessage, long long storageId) const;
+	void cache (const ConferenceId &conferenceId, long long storageId) const;
 
 	std::shared_ptr<EventLog> getEventFromCache (long long storageId) const;
 	std::shared_ptr<ChatMessage> getChatMessageFromCache (long long storageId) const;
+	ConferenceId getConferenceIdFromCache(long long storageId) const;
 
 	void invalidConferenceEventsFromQuery (const std::string &query, long long chatRoomId);
 
