@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (C) 2014  Belledonne Communications, Grenoble France
+# Copyright (C) 2017  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -20,409 +20,501 @@
 #
 ############################################################################
 
-cmake_minimum_required(VERSION 3.0)
-project(linphone VERSION 3.12.0 LANGUAGES C CXX)
-
-
-set(LINPHONE_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
-set(LINPHONE_MINOR_VERSION ${PROJECT_VERSION_MINOR})
-set(LINPHONE_MICRO_VERSION ${PROJECT_VERSION_PATCH})
-set(LINPHONE_VERSION ${PROJECT_VERSION})
-set(LINPHONE_SO_VERSION "9")
-
-file(GLOB LINPHONE_PO_FILES RELATIVE "${CMAKE_CURRENT_LIST_DIR}/po" "${CMAKE_CURRENT_LIST_DIR}/po/*.po")
-string(REGEX REPLACE "([a-zA-Z_]+)\\.po" "\\1" LINPHONE_ALL_LANGS_LIST "${LINPHONE_PO_FILES}")
-string(REPLACE ";" " " LINPHONE_ALL_LANGS "${LINPHONE_ALL_LANGS_LIST}")
-
-include(CMakeDependentOption)
-include(cmake/Tools.cmake)
-
-option(ENABLE_SHARED "Build shared library." YES)
-option(ENABLE_STATIC "Build static library." YES)
-
-option(ENABLE_CONSOLE_UI "Turn on or off compilation of console interface." YES)
-option(ENABLE_CSHARP_WRAPPER "Build the C# wrapper for Liblinphone." OFF)
-option(ENABLE_CXX_WRAPPER "Build the C++ wrapper for Liblinphone." YES)
-option(ENABLE_SWIFT_WRAPPER "Build the swift wrapper for Liblinphone." OFF)
-option(ENABLE_JAZZY_DOC "Build the jazzy doc for swift module of Liblinphone." OFF)
-option(ENABLE_DAEMON "Enable the linphone daemon interface." YES)
-option(ENABLE_DATE "Use build date in internal version number." NO)
-option(ENABLE_DEBUG_LOGS "Turn on or off debug level logs." NO)
-option(ENABLE_DOC "Enable API documentation generation." NO)
-option(ENABLE_LIME_X3DH "Enable LIMEv2 and X3DH encryption protocol." YES)
-option(ENABLE_JAVA_WRAPPER "Build the Java wrapper for Liblinphone." OFF)
-option(ENABLE_JAVADOC "Add a target to generate documentation for Java API" NO)
-option(ENABLE_LDAP "Enable LDAP support." NO)
-option(ENABLE_LIME "Enable Instant Messaging Encryption." YES)
-option(ENABLE_RELATIVE_PREFIX "Find resources relatively to the installation directory." NO)
-option(ENABLE_STRICT "Build with strict compile options." YES)
-option(ENABLE_TOOLS "Turn on or off compilation of tools." YES)
-option(ENABLE_TUNNEL "Turn on compilation of tunnel support." NO)
-option(ENABLE_TUTORIALS "Enable compilation of tutorials." YES)
-option(ENABLE_UNIT_TESTS "Enable compilation of unit tests." YES)
-option(ENABLE_UPDATE_CHECK "Enable update check." NO)
-option(ENABLE_VCARD "Turn on compilation of vcard4 support." YES)
-option(ENABLE_VIDEO "Build with video support." YES)
-
-cmake_dependent_option(ENABLE_NOTIFY "Enable libnotify support." YES "ENABLE_GTK_UI;NOT APPLE" NO)
-cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_EXTENSIONS NO)
-
-if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "Release")
-endif()
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_definitions("-DDEBUG")
-endif()
-
-if(ENABLE_STATIC)
-	set(LINPHONE_LIBS_FOR_TOOLS linphone-static)
-else()
-	set(LINPHONE_LIBS_FOR_TOOLS linphone)
+set(LIBS
+	${BCTOOLBOX_CORE_LIBRARIES}
+	${BELLESIP_LIBRARIES}
+	${MEDIASTREAMER2_LIBRARIES}
+	${ORTP_LIBRARIES}
+	${XML2_LIBRARIES}
+	${BELR_LIBRARIES}
+	${LIBXSD_LIBRARIES}
+)
+if(APPLE)
+	list(APPEND LIBS "-framework CFNetwork")
 endif()
 if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-	list(APPEND LINPHONE_LIBS_FOR_TOOLS "Ws2_32")
+	list(APPEND LIBS "Ws2_32")
 endif()
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
-include(CheckSymbolExists)
-include(CMakePushCheckState)
-include(GNUInstallDirs)
-include(CheckCXXCompilerFlag)
-
-if(NOT CMAKE_INSTALL_RPATH AND CMAKE_INSTALL_PREFIX)
-	set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_FULL_LIBDIR})
-	message(STATUS "Setting install rpath to ${CMAKE_INSTALL_RPATH}")
-endif()
-
-set(MSVC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/MSVC")
-if(MSVC)
-	list(APPEND CMAKE_REQUIRED_INCLUDES "${MSVC_INCLUDE_DIR}")
-endif()
-
-# find_package should be invoked here to check for libraries - however do NOT
-# call include_directories here (see below)
-
-if (ENABLE_VCARD)
-	if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
-		include("${EP_belcard_CONFIG_DIR}/BelcardConfig.cmake")
-	else()
-		find_package(Belcard)
-	endif()
-	if(NOT BELCARD_FOUND)
-		message(WARNING "Could not find the belcard library!")
-		set(ENABLE_VCARD OFF CACHE BOOL "Enable vcard support." FORCE)
-	else()
-		add_definitions(-DVCARD_ENABLED)
-	endif()
-endif()
-
-if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
-	include("${EP_bellesip_CONFIG_DIR}/BelleSIPConfig.cmake")
-	include("${EP_ms2_CONFIG_DIR}/Mediastreamer2Config.cmake")
-	include("${EP_ortp_CONFIG_DIR}/ORTPConfig.cmake")
-	set(BcToolbox_FIND_COMPONENTS tester)
-	include("${EP_bctoolbox_CONFIG_DIR}/BcToolboxConfig.cmake")
-	include("${EP_belr_CONFIG_DIR}/BelrConfig.cmake")
-else()
-	find_package(BelleSIP REQUIRED)
-	find_package(Mediastreamer2 REQUIRED)
-	find_package(ORTP REQUIRED)
-	find_package(BcToolbox 0.0.3 REQUIRED OPTIONAL_COMPONENTS tester)
-	find_package(Belr REQUIRED)
-endif()
-
-find_package(LibXsd REQUIRED)
-find_package(Sqlite3 REQUIRED)
-find_package(XML2 REQUIRED)
-
-#APPLE platform does not use dlopen for soci backend
-if (APPLE)  
-	find_package(Soci REQUIRED COMPONENTS sqlite3)
-else()
-	find_package(Soci REQUIRED)
-endif()
-
-find_package(ZLIB)
-
-if(ENABLE_TUNNEL)
-	if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
-		include("${EP_tunnel_CONFIG_DIR}/TunnelConfig.cmake")
-	else()
-		find_package(Tunnel)
-	endif()
-	if(NOT TUNNEL_FOUND)
-		message(WARNING "Could not find the tunnel library!")
-		set(ENABLE_TUNNEL OFF CACHE BOOL "Enable tunnel support." FORCE)
-	endif()
-endif()
-if(ENABLE_NOTIFY)
-	find_package(Notify)
-	if(NOTIFY_FOUND)
-		set(HAVE_NOTIFY4 1)
-	else()
-		message(WARNING "Could not find the notify library!")
-		set(ENABLE_NOTIFY OFF CACHE BOOL "Enable libnotify support." FORCE)
-	endif()
-endif()
-if(ENABLE_ASSISTANT)
-	set(BUILD_WIZARD 1)
-endif()
-if(ENABLE_LIME AND ENABLE_LIME_X3DH)
-	message(WARNING "Lime V1 and V2 cannot be used simultaneously! Using Lime V2 only instead.")
-	set(ENABLE_LIME FALSE)
-endif()
-if(ENABLE_LIME_X3DH)
-	find_package(Lime REQUIRED)
-	set(HAVE_LIME_X3DH TRUE)
+if(LIME_FOUND)
+	list(APPEND LIBS ${LIME_LIBRARIES})
 endif()
 if(ENABLE_LIME)
-	#bzrtp is only required for LIME
-	if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
-		include("${EP_bzrtp_CONFIG_DIR}/BZRTPConfig.cmake")
-	else()
-		find_package(BZRTP REQUIRED)
-	endif()
-	set(HAVE_LIME 1)
+	list(APPEND LIBS ${BZRTP_LIBRARIES})
 endif()
-if(ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAPPER OR ENABLE_SWIFT_WRAPPER OR ENABLE_DOC)
-	find_package(PythonInterp REQUIRED)
-	check_python_module(pystache)
-	check_python_module(six)
-	if(ENABLE_DOC)
-		check_python_module(sphinx)
-		check_python_module(javasphinx)
-		check_python_module(sphinx_csharp)
-		#check_python_module(swift_domain)
+if(ZLIB_FOUND)
+	list(APPEND LIBS ${ZLIB_LIBRARIES})
+endif()
+if(SOCI_FOUND)
+	list(APPEND LIBS ${SOCI_LIBRARIES})
+	if(APPLE)
+		list(APPEND LIBS ${SOCI_sqlite3_PLUGIN})
 	endif()
 endif()
-
-if(UNIX AND NOT APPLE)
-	include(CheckIncludeFiles)
-	check_include_files(libudev.h HAVE_LIBUDEV_H)
+if(SQLITE3_FOUND)
+	list(APPEND LIBS ${SQLITE3_LIBRARIES})
 endif()
-
-if(MSVC AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-	find_library(LIBGCC NAMES gcc)
-	find_library(LIBMINGWEX NAMES mingwex)
-endif()
-
-if(NOT WIN32)
-	find_package(Iconv QUIET)
-endif()
-if(ANDROID)
-	find_package(CpuFeatures REQUIRED)
-	find_package(Support)
-endif()
-
-set(LINPHONE_LDFLAGS "${BELLESIP_LDFLAGS} ${MEDIASTREAMER2_LDFLAGS}")
-
-# include_directories must be called only UNDER THIS LINE in order to use our
-# projects submodules first (we do NOT want to have system headers in first position)
-include_directories(
-	${CMAKE_CURRENT_BINARY_DIR}
-	${CMAKE_CURRENT_BINARY_DIR}/coreapi/
-	coreapi/
-	include/
-	src/
-)
-set(LINPHONE_INCLUDE_DIRS
-	${BELLESIP_INCLUDE_DIRS}
-	${MEDIASTREAMER2_INCLUDE_DIRS}
-	${BCTOOLBOX_CORE_INCLUDE_DIRS}
-	${BELR_INCLUDE_DIRS}
-)
-if (BZRTP_FOUND)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${BZRTP_INCLUDE_DIRS})
-endif()
-if(ANDROID)
-	include_directories(${CMAKE_CURRENT_BINARY_DIR}/java)
+if(ICONV_FOUND)
+	list(APPEND LIBS ${ICONV_LIBRARIES})
 endif()
 if(ENABLE_TUNNEL)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${TUNNEL_INCLUDE_DIRS})
+	list(APPEND LIBS ${TUNNEL_LIBRARIES})
 endif()
-if (ENABLE_VCARD)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${BELCARD_INCLUDE_DIRS})
+if(MSVC AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+	list(APPEND LIBS ${LIBGCC} ${LIBMINGWEX})
 endif()
-
-list(APPEND LINPHONE_INCLUDE_DIRS ${XML2_INCLUDE_DIRS})
-list(APPEND LINPHONE_INCLUDE_DIRS ${SQLITE3_INCLUDE_DIRS})
-
-if(ZLIB_FOUND)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${ZLIB_INCLUDE_DIRS})
-	set(HAVE_ZLIB 1)
+if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+	list(APPEND LIBS shlwapi)
 endif()
 if(INTL_FOUND)
-	set(HAVE_INTL 1)
-	list(APPEND LINPHONE_INCLUDE_DIRS ${INTL_INCLUDE_DIRS})
+	list(APPEND LIBS ${INTL_LIBRARIES})
 endif()
-if(MSVC)
-	include_directories(${MSVC_INCLUDE_DIR})
+if(BELCARD_FOUND)
+	list(APPEND LIBS ${BELCARD_LIBRARIES})
+endif()
+if(ENABLE_TUNNEL)
+	add_definitions(-DTUNNEL_ENABLED)
 endif()
 
-set(LINPHONE_CPPFLAGS ${BELCARD_CPPFLAGS} ${BELLESIP_CPPFLAGS} ${MEDIASTREAMER2_CPPFLAGS} ${BCTOOLBOX_CPPFLAGS} ${BELR_CPPFLAGS})
+#define log domain for this part of code
+add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
+
+set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
+	address/address-p.h
+	address/address.h
+	address/identity-address.h
+	address/identity-address-parser.h
+	c-wrapper/c-wrapper.h
+	c-wrapper/internal/c-sal.h
+	c-wrapper/internal/c-tools.h
+	call/call-p.h
+	call/call.h
+	call/local-conference-call-p.h
+	call/local-conference-call.h
+	call/remote-conference-call-p.h
+	call/remote-conference-call.h
+	chat/chat-message/chat-message-p.h
+	chat/chat-message/chat-message.h
+	chat/chat-message/imdn-message-p.h
+	chat/chat-message/imdn-message.h
+	chat/chat-message/is-composing-message.h
+	chat/chat-message/notification-message-p.h
+	chat/chat-message/notification-message.h
+	chat/chat-room/chat-room-params.h
+	chat/chat-room/abstract-chat-room-p.h
+	chat/chat-room/abstract-chat-room.h
+	chat/chat-room/basic-chat-room-p.h
+	chat/chat-room/basic-chat-room.h
+	chat/chat-room/basic-to-client-group-chat-room.h
+	chat/chat-room/chat-room-listener.h
+	chat/chat-room/chat-room-p.h
+	chat/chat-room/chat-room.h
+	chat/chat-room/client-group-chat-room-p.h
+	chat/chat-room/client-group-chat-room.h
+	chat/chat-room/client-group-to-basic-chat-room.h
+	chat/chat-room/proxy-chat-room-p.h
+	chat/chat-room/proxy-chat-room.h
+	chat/chat-room/real-time-text-chat-room-p.h
+	chat/chat-room/real-time-text-chat-room.h
+	chat/chat-room/server-group-chat-room-p.h
+	chat/chat-room/server-group-chat-room.h
+	chat/cpim/cpim.h
+	chat/cpim/header/cpim-core-headers.h
+	chat/cpim/header/cpim-generic-header.h
+	chat/cpim/header/cpim-header-p.h
+	chat/cpim/header/cpim-header.h
+	chat/cpim/message/cpim-message.h
+	chat/cpim/parser/cpim-parser.h
+	chat/encryption/encryption-engine.h
+	chat/encryption/legacy-encryption-engine.h
+	chat/modifier/chat-message-modifier.h
+	chat/modifier/cpim-chat-message-modifier.h
+	chat/modifier/encryption-chat-message-modifier.h
+	chat/modifier/file-transfer-chat-message-modifier.h
+	chat/modifier/multipart-chat-message-modifier.h
+	chat/notification/imdn.h
+	chat/notification/is-composing-listener.h
+	chat/notification/is-composing.h
+	conference/conference-id.h
+	conference/conference-listener.h
+	conference/conference-p.h
+	conference/conference.h
+	conference/handlers/local-conference-event-handler-p.h
+	conference/handlers/local-conference-event-handler.h
+	conference/handlers/local-conference-list-event-handler.h
+	conference/handlers/remote-conference-event-handler-p.h
+	conference/handlers/remote-conference-event-handler.h
+	conference/handlers/remote-conference-list-event-handler.h
+	conference/local-conference-p.h
+	conference/local-conference.h
+	conference/params/call-session-params-p.h
+	conference/params/call-session-params.h
+	conference/params/media-session-params-p.h
+	conference/params/media-session-params.h
+	conference/participant-device.h
+	conference/participant-imdn-state-p.h
+	conference/participant-imdn-state.h
+	conference/participant-p.h
+	conference/participant.h
+	conference/remote-conference-p.h
+	conference/remote-conference.h
+	conference/session/call-session-listener.h
+	conference/session/call-session-p.h
+	conference/session/call-session.h
+	conference/session/media-session.h
+	conference/session/port-config.h
+	containers/lru-cache.h
+	content/content-disposition.h
+	content/content-manager.h
+	content/content-p.h
+	content/content-type.h
+	content/content.h
+	content/file-content.h
+	content/file-transfer-content.h
+	content/header/header-p.h
+	content/header/header-param.h
+	content/header/header.h
+	core/core-accessor.h
+	core/core-listener.h
+	core/core-p.h
+	core/core.h
+	core/paths/paths.h
+	core/platform-helpers/platform-helpers.h
+	db/abstract/abstract-db-p.h
+	db/abstract/abstract-db.h
+	db/internal/db-transaction.h
+	db/internal/statements.h
+	db/main-db-chat-message-key.h
+	db/main-db-event-key.h
+	db/main-db-key-p.h
+	db/main-db-key.h
+	db/main-db-p.h
+	db/main-db.h
+	db/session/db-session.h
+	dial-plan/dial-plan-p.h
+	dial-plan/dial-plan.h
+	enums.h
+	event-log/conference/conference-call-event.h
+	event-log/conference/conference-event-p.h
+	event-log/conference/conference-event.h
+	event-log/conference/conference-notified-event-p.h
+	event-log/conference/conference-notified-event.h
+	event-log/conference/conference-participant-device-event.h
+	event-log/conference/conference-participant-event-p.h
+	event-log/conference/conference-participant-event.h
+	event-log/conference/conference-security-event.h
+	event-log/conference/conference-subject-event.h
+	event-log/event-log-p.h
+	event-log/event-log.h
+	event-log/events.h
+	hacks/hacks.h
+	logger/logger.h
+	nat/ice-agent.h
+	nat/stun-client.h
+	object/app-data-container.h
+	object/base-object-p.h
+	object/base-object.h
+	object/clonable-object-p.h
+	object/clonable-object.h
+	object/clonable-shared-pointer.h
+	object/object-head-p.h
+	object/object-head.h
+	object/object-p.h
+	object/object.h
+	object/property-container.h
+	object/singleton.h
+	sal/sal.h
+	search/magic-search-p.h
+	search/magic-search.h
+	search/search-result.h
+	utils/background-task.h
+	utils/general-internal.h
+	utils/payload-type-handler.h
+	variant/variant.h
+	xml/conference-info.h
+	xml/imdn.h
+	xml/is-composing.h
+	xml/linphone-imdn.h
+	xml/resource-lists.h
+	xml/rlmi.h
+	xml/xml.h
+)
+
+set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
+	address/address.cpp
+	address/identity-address.cpp
+	address/identity-address-parser.cpp
+	c-wrapper/api/c-address.cpp
+	c-wrapper/api/c-call-cbs.cpp
+	c-wrapper/api/c-call-params.cpp
+	c-wrapper/api/c-call-stats.cpp
+	c-wrapper/api/c-call.cpp
+	c-wrapper/api/c-chat-message-cbs.cpp
+	c-wrapper/api/c-chat-message.cpp
+	c-wrapper/api/c-chat-room-params.cpp
+	c-wrapper/api/c-chat-room-cbs.cpp
+	c-wrapper/api/c-chat-room.cpp
+	c-wrapper/api/c-content.cpp
+	c-wrapper/api/c-core.cpp
+	c-wrapper/api/c-dial-plan.cpp
+	c-wrapper/api/c-event-log.cpp
+	c-wrapper/api/c-magic-search.cpp
+	c-wrapper/api/c-participant.cpp
+	c-wrapper/api/c-participant-device.cpp
+	c-wrapper/api/c-participant-device-identity.cpp
+	c-wrapper/api/c-participant-imdn-state.cpp
+	c-wrapper/api/c-participant.cpp
+	c-wrapper/api/c-search-result.cpp
+	c-wrapper/internal/c-sal.cpp
+	c-wrapper/internal/c-tools.cpp
+	call/call.cpp
+	call/local-conference-call.cpp
+	call/remote-conference-call.cpp
+	chat/chat-message/chat-message.cpp
+	chat/chat-message/imdn-message.cpp
+	chat/chat-message/is-composing-message.cpp
+	chat/chat-message/notification-message.cpp
+	chat/chat-room/abstract-chat-room.cpp
+	chat/chat-room/basic-chat-room.cpp
+	chat/chat-room/basic-to-client-group-chat-room.cpp
+	chat/chat-room/chat-room.cpp
+	chat/chat-room/client-group-chat-room.cpp
+	chat/chat-room/client-group-to-basic-chat-room.cpp
+	chat/chat-room/proxy-chat-room.cpp
+	chat/chat-room/real-time-text-chat-room.cpp
+	chat/chat-room/server-group-chat-room.cpp
+	chat/chat-room/chat-room-params.cpp
+	chat/cpim/header/cpim-core-headers.cpp
+	chat/cpim/header/cpim-generic-header.cpp
+	chat/cpim/header/cpim-header.cpp
+	chat/cpim/message/cpim-message.cpp
+	chat/cpim/parser/cpim-parser.cpp
+	chat/encryption/legacy-encryption-engine.cpp
+	chat/modifier/cpim-chat-message-modifier.cpp
+	chat/modifier/encryption-chat-message-modifier.cpp
+	chat/modifier/file-transfer-chat-message-modifier.cpp
+	chat/modifier/multipart-chat-message-modifier.cpp
+	chat/notification/imdn.cpp
+	chat/notification/is-composing.cpp
+	conference/conference-id.cpp
+	conference/conference.cpp
+	conference/handlers/local-conference-event-handler.cpp
+	conference/handlers/local-conference-list-event-handler.cpp
+	conference/handlers/remote-conference-event-handler.cpp
+	conference/handlers/remote-conference-list-event-handler.cpp
+	conference/local-conference.cpp
+	conference/params/call-session-params.cpp
+	conference/params/media-session-params.cpp
+	conference/participant-device.cpp
+	conference/participant-imdn-state.cpp
+	conference/participant.cpp
+	conference/remote-conference.cpp
+	conference/session/call-session.cpp
+	conference/session/media-session.cpp
+	content/content-disposition.cpp
+	content/content-manager.cpp
+	content/content-type.cpp
+	content/content.cpp
+	content/file-content.cpp
+	content/file-transfer-content.cpp
+	content/header/header-param.cpp
+	content/header/header.cpp
+	core/core-accessor.cpp
+	core/core-call.cpp
+	core/core-chat-room.cpp
+	core/core.cpp
+	core/paths/paths.cpp
+	core/platform-helpers/platform-helpers.cpp
+	db/abstract/abstract-db.cpp
+	db/internal/statements.cpp
+	db/main-db-chat-message-key.cpp
+	db/main-db-event-key.cpp
+	db/main-db-key.cpp
+	db/main-db.cpp
+	db/session/db-session.cpp
+	dial-plan/dial-plan.cpp
+	event-log/conference/conference-call-event.cpp
+	event-log/conference/conference-chat-message-event.cpp
+	event-log/conference/conference-event.cpp
+	event-log/conference/conference-notified-event.cpp
+	event-log/conference/conference-participant-device-event.cpp
+	event-log/conference/conference-participant-event.cpp
+	event-log/conference/conference-security-event.cpp
+	event-log/conference/conference-subject-event.cpp
+	event-log/event-log.cpp
+	hacks/hacks.cpp
+	logger/logger.cpp
+	nat/ice-agent.cpp
+	nat/stun-client.cpp
+	object/app-data-container.cpp
+	object/base-object.cpp
+	object/clonable-object.cpp
+	object/object.cpp
+	object/property-container.cpp
+	sal/call-op.cpp
+	sal/event-op.cpp
+	sal/message-op.cpp
+	sal/op.cpp
+	sal/presence-op.cpp
+	sal/refer-op.cpp
+	sal/register-op.cpp
+	sal/sal.cpp
+	search/magic-search.cpp
+	search/search-result.cpp
+	utils/background-task.cpp
+	utils/fs.cpp
+	utils/general.cpp
+	utils/payload-type-handler.cpp
+	utils/utils.cpp
+	variant/variant.cpp
+	xml/conference-info.cpp
+	xml/imdn.cpp
+	xml/is-composing.cpp
+	xml/linphone-imdn.cpp
+	xml/resource-lists.cpp
+	xml/rlmi.cpp
+	xml/xml.cpp
+)
+
+set(LINPHONE_OBJC_SOURCE_FILES)
+if (APPLE)
+	list(APPEND LINPHONE_OBJC_SOURCE_FILES core/paths/paths-apple.mm)
+	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-apple.h)
+	list(APPEND LINPHONE_OBJC_SOURCE_FILES core/platform-helpers/ios-platform-helpers.mm)
+elseif (ANDROID)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES core/paths/paths-android.cpp core/platform-helpers/android-platform-helpers.cpp)
+	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-android.h)
+elseif (WIN32)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES core/paths/paths-windows.cpp)
+	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-windows.h)
+elseif (UNIX)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES core/paths/paths-linux.cpp)
+	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-linux.h)
+endif ()
+
+if(LIME_FOUND)
+	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES chat/encryption/lime-x3dh-encryption-engine.h)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES chat/encryption/lime-x3dh-encryption-engine.cpp)
+endif()
+
+set(LINPHONE_CXX_OBJECTS_INCLUDE_DIRS
+	${BELR_INCLUDE_DIRS}
+	${LIBXSD_INCLUDE_DIRS}
+	${SOCI_INCLUDE_DIRS}
+	${SOCI_MYSQL_INCLUDES}
+)
+set(LINPHONE_CXX_OBJECTS_INCLUDE_DIRS ${BELR_INCLUDE_DIRS})
+
+set(LINPHONE_PRIVATE_HEADER_FILES)
+foreach (header ${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES})
+	list(APPEND LINPHONE_PRIVATE_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${header}")
+endforeach ()
+set(LINPHONE_PRIVATE_HEADER_FILES ${LINPHONE_PRIVATE_HEADER_FILES} PARENT_SCOPE)
+
+if (ANDROID AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
+	list(APPEND STRICT_OPTIONS_CXX "-Wno-attributes")
+endif()
+bc_apply_compile_flags(LINPHONE_CXX_OBJECTS_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
+bc_apply_compile_flags(LINPHONE_OBJC_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_OBJC)
+
+
 if(ENABLE_STATIC)
-	list(APPEND LINPHONE_CPPFLAGS "-DLINPHONE_STATIC")
-endif()
-if(LINPHONE_CPPFLAGS)
-	list(REMOVE_DUPLICATES LINPHONE_CPPFLAGS)
-	add_definitions(${LINPHONE_CPPFLAGS})
-endif()
-
-if(ENABLE_DEBUG_LOGS)
-	add_definitions("-DDEBUG_LOGS")
-endif()
-
-# Enable stdint.h limit macros on C++ files. (Windows only.)
-if(MSVC)
-	add_definitions("-D__STDC_LIMIT_MACROS")
-endif()
-
-set(STRICT_OPTIONS_CPP )
-set(STRICT_OPTIONS_C )
-set(STRICT_OPTIONS_CXX )
-set(STRICT_OPTIONS_OBJC )
-if(MSVC)
-	list(APPEND STRICT_OPTIONS_CPP "/wd4995") # Disable "name was marked as #pragma deprecated" warnings
-	list(APPEND STRICT_OPTIONS_CPP "/wd4996") # Disable deprecated function warnings
-	list(APPEND STRICT_OPTIONS_CPP "/wd4800") # Disable warning for cast from bool_t to bool
-	if(ENABLE_STRICT)
-		list(APPEND STRICT_OPTIONS_CPP "/WX")
-	endif()
-else()
-	list(APPEND STRICT_OPTIONS_CPP
-		"-Wall"
-		"-Wcast-align"
-		"-Wconversion"
-		"-Werror=return-type"
-		"-Wfloat-equal"
-		"-Winit-self"
-		"-Wno-error=deprecated-declarations"
-		"-Wpointer-arith"
-		"-Wuninitialized"
-		"-Wunused"
+	add_library(linphone-static STATIC ${LINPHONE_HEADER_FILES}
+		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
+		$<TARGET_OBJECTS:linphone-coreapi-static>
 	)
-	list(APPEND STRICT_OPTIONS_CXX
-		"-Wnon-virtual-dtor"
-		"-Woverloaded-virtual"
-	)
-	CHECK_CXX_COMPILER_FLAG("-Wsuggest-override" SUGGEST_OVERRIDE)
-	if (SUGGEST_OVERRIDE)
-		list(APPEND STRICT_OPTIONS_CXX "-Wsuggest-override" "-Wno-error=suggest-override" )
-	endif ()
-	list(APPEND STRICT_OPTIONS_C "-Wstrict-prototypes" "-Werror=strict-prototypes")
-	if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-		list(APPEND STRICT_OPTIONS_C "-fno-inline-small-functions")
-	endif()
-	if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-		list(APPEND STRICT_OPTIONS_CPP "-Qunused-arguments" "-Wno-array-bounds")
-	endif()
-	if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-		list(APPEND STRICT_OPTIONS_CXX "-x c++")
-	endif()
+	set_target_properties(linphone-static PROPERTIES OUTPUT_NAME linphone)
+	target_include_directories(linphone-static PUBLIC ${LINPHONE_INCLUDE_DIRS})
+	target_link_libraries(linphone-static INTERFACE ${LIBS})
 	if(APPLE)
-		list(APPEND STRICT_OPTIONS_CPP "-Wno-error=unknown-warning-option" "-Qunused-arguments" "-Wno-tautological-compare" "-Wno-unused-function" "-Wno-array-bounds")
+		target_link_libraries(linphone-static INTERFACE "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration")
 	endif()
-	if(ENABLE_STRICT)
-		list(APPEND STRICT_OPTIONS_C "-Werror" "-Wextra" "-Wno-unused-parameter" "-Wno-missing-field-initializers" "-fno-strict-aliasing")
-		list(APPEND STRICT_OPTIONS_CPP "-Werror" "-Wextra" "-Wno-unused-parameter" "-Wno-missing-field-initializers" "-fno-strict-aliasing")
+	install(TARGETS linphone-static EXPORT ${EXPORT_TARGETS_NAME}Targets
+		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+	)
+endif()
+if(ENABLE_SHARED)
+	set(LINPHONE_RESOURCES
+		"${CMAKE_CURRENT_SOURCE_DIR}/../share/cpim_grammar"
+		"${CMAKE_CURRENT_SOURCE_DIR}/../share/identity_grammar"
+		"${CMAKE_CURRENT_SOURCE_DIR}/../share/rootca.pem"
+		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ringback.wav"
+		"${CMAKE_CURRENT_SOURCE_DIR}/../share/Modules"
+	) # Keep it relative to current dir to allow CMakeList inclusion
+	add_library(linphone SHARED ${LINPHONE_RESOURCES} ${LINPHONE_HEADER_FILES}
+		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
+		$<TARGET_OBJECTS:linphone-coreapi>
+	)
+	target_compile_definitions(linphone PRIVATE "-DLINPHONE_EXPORTS")
+	if(APPLE)
+		if(IOS)
+			set(MIN_OS ${LINPHONE_IOS_DEPLOYMENT_TARGET})
+		else()
+			set(MIN_OS ${CMAKE_OSX_DEPLOYMENT_TARGET})
+		endif()
+		set_target_properties(linphone PROPERTIES
+			FRAMEWORK TRUE
+			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphone
+			MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
+			RESOURCE "${LINPHONE_RESOURCES}"
+		)
+	endif()
+
+	set_target_properties(linphone PROPERTIES LINKER_LANGUAGE CXX)
+	if(NOT ANDROID)
+		# Do not version shared library on Android
+		set_target_properties(linphone PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
+	endif()
+	target_include_directories(linphone PUBLIC ${LINPHONE_INCLUDE_DIRS})
+	target_link_libraries(linphone PRIVATE ${LIBS})
+	if(APPLE)
+		target_link_libraries(linphone PRIVATE "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration")
+	endif()
+	if(WIN32)
+		# Export Xerces and Soci symbols.
+		target_compile_definitions(linphone PRIVATE "-DDLL_EXPORT" "-DSOCI_DLL")
+		if(CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+			set_target_properties(linphone PROPERTIES PREFIX "lib")
+		endif()
+	elseif(ANDROID)
+		if (SUPPORT_FOUND)
+			target_link_libraries(linphone PUBLIC "log" ${SUPPORT_LIBRARIES} ${CPUFEATURES_LIBRARIES})
+		else()
+			target_link_libraries(linphone PUBLIC "log" ${CPUFEATURES_LIBRARIES})
+		endif()
+	endif()
+	if(MSVC)
+		if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+			install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/linphone.pdb
+				DESTINATION ${CMAKE_INSTALL_BINDIR}
+				PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+			)
+		endif()
+	endif()
+	install(TARGETS linphone EXPORT ${EXPORT_TARGETS_NAME}Targets
+		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		FRAMEWORK DESTINATION Frameworks
+		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+	)
+endif()
+
+if(ICONV_FOUND)
+	if(APPLE)
+		# Prevent conflict between the system iconv.h header and the one from macports.
+		if(ENABLE_STATIC)
+			target_compile_options(linphone-static PRIVATE "-include" "${ICONV_INCLUDE_DIRS}/iconv.h")
+		endif()
+		if(ENABLE_SHARED)
+			target_compile_options(linphone PRIVATE "-include" "${ICONV_INCLUDE_DIRS}/iconv.h")
+		endif()
+	else()
+		if(ENABLE_STATIC)
+			target_include_directories(linphone-static PRIVATE ${ICONV_INCLUDE_DIRS})
+		endif()
+		if(ENABLE_SHARED)
+			target_include_directories(linphone PRIVATE ${ICONV_INCLUDE_DIRS})
+		endif()
 	endif()
 endif()
-if(STRICT_OPTIONS_CPP)
-	list(REMOVE_DUPLICATES STRICT_OPTIONS_CPP)
-endif()
-if(STRICT_OPTIONS_C)
-	list(REMOVE_DUPLICATES STRICT_OPTIONS_C)
-endif()
-
-set(GETTEXT_PACKAGE "linphone")
-if(ENABLE_RELATIVE_PREFIX)
-	set(LINPHONE_DATA_DIR ".")
-else()
-	set(LINPHONE_DATA_DIR "${CMAKE_INSTALL_PREFIX}")
-endif()
-set(LINPHONE_PLUGINS_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_LIBDIR}/liblinphone/plugins")
-if(WIN32)
-	set(LINPHONE_CONFIG_DIR "Linphone")
-endif()
-set(PACKAGE_LOCALE_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_DATADIR}/locale")
-set(PACKAGE_DATA_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_DATADIR}")
-set(PACKAGE_GRAMMAR_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_DATADIR}/belr/grammars")
-set(PACKAGE_SOUND_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_DATADIR}/sounds/linphone")
-set(PACKAGE_RING_DIR "${PACKAGE_SOUND_DIR}/rings")
-set(PACKAGE_FREEDESKTOP_DIR "${PACKAGE_DATA_DIR}/applications")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/config.h PROPERTIES GENERATED ON)
-add_definitions(-DHAVE_CONFIG_H)
-
-
-if(ENABLE_VIDEO)
-	add_definitions(-DVIDEO_ENABLED)
-endif()
-
-
-if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
-	set(EXPORT_TARGETS_NAME "LinphoneBuilder")
-else()
-	set(EXPORT_TARGETS_NAME "Linphone")
-endif()
-
-add_subdirectory(include)
-add_subdirectory(java)
-if(ENABLE_JAVA_WRAPPER)
-	add_subdirectory(wrappers/java)
-endif()
-add_subdirectory(coreapi)
-add_subdirectory(src)
-add_subdirectory(share)
-if(ENABLE_CONSOLE_UI)
-	add_subdirectory(console)
-endif()
-if(ENABLE_DAEMON)
-	add_subdirectory(daemon)
-endif()
-if(ENABLE_TOOLS)
-	add_subdirectory(tools)
-endif()
-if(ENABLE_UNIT_TESTS AND BCTOOLBOX_TESTER_FOUND)
-	add_subdirectory(tester)
-endif()
-if(ENABLE_CXX_WRAPPER)
-	add_subdirectory(wrappers/cpp)
-endif()
-if(ENABLE_CSHARP_WRAPPER)
-	add_subdirectory(wrappers/csharp)
-endif()
-if(ENABLE_SWIFT_WRAPPER)
-	add_subdirectory(wrappers/swift)
-endif()
-
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneConfigVersion.cmake"
-	VERSION ${LINPHONE_VERSION}
-	COMPATIBILITY AnyNewerVersion
-)
-export(EXPORT ${EXPORT_TARGETS_NAME}Targets
-	FILE "${CMAKE_CURRENT_BINARY_DIR}/LinphoneTargets.cmake"
-)
-configure_file(cmake/LinphoneConfig.cmake.in
-	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneConfig.cmake"
-	@ONLY
-)
-
-set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Linphone/cmake")
-install(EXPORT ${EXPORT_TARGETS_NAME}Targets
-	FILE LinphoneTargets.cmake
-	DESTINATION ${CONFIG_PACKAGE_LOCATION}
-)
-install(FILES
-	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneConfig.cmake"
-	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneConfigVersion.cmake"
-	DESTINATION ${CONFIG_PACKAGE_LOCATION}
-)
-
-add_subdirectory(build)
