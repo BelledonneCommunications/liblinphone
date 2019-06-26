@@ -183,6 +183,7 @@ typedef enum _LinphoneAccountCreatorStatus {
 	LinphoneAccountCreatorStatusPhoneNumberInvalid, /**< Error cannot send SMS */
 	LinphoneAccountCreatorStatusWrongActivationCode, /**< Error key doesn't match */
 	LinphoneAccountCreatorStatusPhoneNumberOverused, /**< Error too many SMS sent */
+	LinphoneAccountCreatorStatusAlgoNotSupported, /** < Error algo isn't MD5 or SHA-256 */
 } LinphoneAccountCreatorStatus;
 
 /**
