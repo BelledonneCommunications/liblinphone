@@ -177,6 +177,7 @@ public:
 	// Misc.
 	// ---------------------------------------------------------------------------
 
+	void pushNotificationReceived () const;
 	int getUnreadChatMessageCount () const;
 	int getUnreadChatMessageCount (const IdentityAddress &localAddress) const;
 	int getUnreadChatMessageCountFromActiveLocals () const;
