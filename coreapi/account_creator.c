@@ -787,6 +787,7 @@ static void _create_account_cb_custom(LinphoneXmlRpcRequest *request) {
 		: (strcmp(resp, "ERROR_MAX_SMS_EXCEEDED") == 0) ? LinphoneAccountCreatorStatusPhoneNumberOverused
 		: (strcmp(resp, "ERROR_ACCOUNT_ALREADY_IN_USE") == 0) ? LinphoneAccountCreatorStatusAccountExist
 		: (strcmp(resp, "ERROR_ALIAS_ALREADY_IN_USE") == 0) ? LinphoneAccountCreatorStatusAccountExistWithAlias
+		: (strcmp(resp, "ERROR_ALGO_NOT_SUPPORTED") == 0) ? LinphoneAccountCreatorStatusAlgoNotSupported
 		: LinphoneAccountCreatorStatusAccountNotCreated;
 	}
 	if (creator->cbs->create_account_response_cb != NULL) {
@@ -872,6 +873,7 @@ static void _delete_linphone_account_response_cb(LinphoneXmlRpcRequest *request)
 		status = (strcmp(resp, "OK") == 0) ? LinphoneAccountCreatorStatusAccountCreated
 		: (strcmp(resp, "ERROR_USERNAME_PARAMETER_NOT_FOUND") == 0) ? LinphoneAccountCreatorStatusMissingArguments
 		: (strcmp(resp, "ERROR_ACCOUNT_DOESNT_EXIST") == 0) ? LinphoneAccountCreatorStatusAccountNotExist
+		: (strcmp(resp, "ERROR_ALGO_NOT_SUPPORTED") == 0) ? LinphoneAccountCreatorStatusAlgoNotSupported
 		: (strstr(resp, "ERROR_") == 0) ? LinphoneAccountCreatorStatusRequestFailed
 		: LinphoneAccountCreatorStatusAccountNotCreated;
 	}
@@ -919,6 +921,8 @@ static void _activate_account_cb_custom(LinphoneXmlRpcRequest *request) {
 			status = LinphoneAccountCreatorStatusAccountAlreadyActivated;
 		} else if (strcmp(resp, "ERROR_KEY_DOESNT_MATCH") == 0) {
 			status = LinphoneAccountCreatorStatusWrongActivationCode;
+		} else if (strcmp(resp, "ERROR_ALGO_NOT_SUPPORTED") == 0) {
+			status = LinphoneAccountCreatorStatusAlgoNotSupported;
 		} else if (strstr(resp, "ERROR_") == resp) {
 			status = LinphoneAccountCreatorStatusAccountNotActivated;
 		} else {
@@ -1003,6 +1007,8 @@ static void get_linphone_confirmation_key_response_cb(LinphoneXmlRpcRequest *req
 			status = LinphoneAccountCreatorStatusMissingArguments;
 		} else if (strcmp(resp, "ERROR_ACCOUNT_DOESNT_EXIST") == 0) {
 			status = LinphoneAccountCreatorStatusAccountNotExist;
+		} else if (strcmp(resp, "ERROR_ALGO_NOT_SUPPORTED") == 0) {
+			status = LinphoneAccountCreatorStatusAlgoNotSupported;
 		} else if (strstr(resp, "ERROR_") == resp) {
 			status = LinphoneAccountCreatorStatusRequestFailed;
 		} else {
@@ -1337,6 +1343,8 @@ static void _password_updated_cb_custom(LinphoneXmlRpcRequest *request) {
 	if (linphone_xml_rpc_request_get_status(request) == LinphoneXmlRpcStatusOk) {
 		if (strcmp(resp, "OK") == 0) {
 			status = LinphoneAccountCreatorStatusRequestOk;
+		} else if (strcmp(resp, "ERROR_ALGO_NOT_SUPPORTED") == 0) {
+			status = LinphoneAccountCreatorStatusAlgoNotSupported;
 		} else if (strcmp(resp, "ERROR_PASSWORD_DOESNT_MATCH") == 0) {
 			status = LinphoneAccountCreatorStatusAccountNotExist;
 		} else {
