@@ -430,6 +430,27 @@ bool Core::isFriendListSubscriptionEnabled () const {
 // Misc.
 // -----------------------------------------------------------------------------
 
+void Core::pushNotificationReceived () const {
+	LinphoneCore *lc = getCCore();
+	const bctbx_list_t *proxies = linphone_core_get_proxy_config_list(lc);
+	bctbx_list_t *it = (bctbx_list_t *)proxies;
+
+	lInfo() << "Push notification received";
+	while (it) {
+		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *) bctbx_list_get_data(it);
+		LinphoneRegistrationState state = linphone_proxy_config_get_state(proxy);
+		if (state == LinphoneRegistrationFailed) {
+			lInfo() << "Proxy config [" << proxy << "] is in failed state, refreshing REGISTER";
+			if (linphone_proxy_config_register_enabled(proxy) && linphone_proxy_config_get_expires(proxy) > 0) {
+				linphone_proxy_config_refresh_register(proxy);
+			}
+		} else if (state == LinphoneRegistrationOk) {
+			// TODO: send a keep-alive to ensure the socket isn't broken
+		}
+		it = bctbx_list_next(it);
+	}
+}
+
 int Core::getUnreadChatMessageCount () const {
 	L_D();
 	return d->mainDb->getUnreadChatMessageCount();

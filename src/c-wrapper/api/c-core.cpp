@@ -127,3 +127,7 @@ void linphone_core_enable_friend_list_subscription(LinphoneCore *lc, bool_t enab
 bool_t linphone_core_is_friend_list_subscription_enabled(LinphoneCore *lc) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->isFriendListSubscriptionEnabled() ? TRUE : FALSE;
 }
+
+void linphone_core_push_notification_received(LinphoneCore *lc) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pushNotificationReceived();
+}

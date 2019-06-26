@@ -5998,6 +5998,15 @@ LINPHONE_PUBLIC LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(Lin
 **/
 LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *lc, const char * xml_uri);
 
+/**
+ * Call this method when you receive a push notification.
+ * It will ensure the proxy configs are correctly registered to the proxy server,
+ * so the call or the message will be correctly delivered.
+ * @param[in] lc The #LinphoneCore
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC void linphone_core_push_notification_received(LinphoneCore *lc);
+
 
 #ifdef __cplusplus
 }
