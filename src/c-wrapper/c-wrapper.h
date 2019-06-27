@@ -38,7 +38,6 @@
 	F(AbstractChatRoom, ChatRoom) \
 	F(Core, Core) \
 	F(Content, Content) \
-	F(DialPlan, DialPlan) \
 	F(EventLog, EventLog) \
 	F(MagicSearch, MagicSearch) \
 	F(MediaSessionParams, CallParams) \
