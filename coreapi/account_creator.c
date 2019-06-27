@@ -463,15 +463,15 @@ LinphoneAccountCreatorPhoneNumberStatusMask linphone_account_creator_set_phone_n
 		}
 		// if phone is valid, we lastly want to check that length is OK in case phone_nunber was normilized
 		if (strcmp(normalized_phone_number,phone_number) != 0 || phone_number[0] != '+') {
-			const DialPlan &plan = DialPlan::findByCcc(creator->phone_country_code);
+			std::shared_ptr<DialPlan> plan = DialPlan::findByCcc(creator->phone_country_code);
 			int size = (int)strlen(phone_number);
-			if (plan.isGeneric()) {
+			if (plan->isGeneric()) {
 				return_status = LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode;
 			}
-			if (size < plan.getNationalNumberLength() - 1) {
+			if (size < plan->getNationalNumberLength() - 1) {
 				return_status += LinphoneAccountCreatorPhoneNumberStatusTooShort;
 				goto end;
-			} else if (size > plan.getNationalNumberLength() + 1) {
+			} else if (size > plan->getNationalNumberLength() + 1) {
 				return_status += LinphoneAccountCreatorPhoneNumberStatusTooLong;
 				goto end;
 			} else if (return_status & LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode) {
