@@ -1537,8 +1537,9 @@ static void echo_canceller_check(void){
 }
 
 static void dial_plan(void) {
-	const bctbx_list_t *it;
-	for ( it = linphone_dial_plan_get_all_list(); it != NULL; it = it->next) {
+	bctbx_list_t *dial_plans = linphone_dial_plan_get_all_list();
+	bctbx_list_t *it;
+	for (it = dial_plans; it != NULL; it = it->next) {
 		const LinphoneDialPlan *dialplan = (LinphoneDialPlan *)it->data;
 		belle_sip_object_remove_from_leak_detector((void*)dialplan);
 		char *e164 = generate_random_e164_phone_from_dial_plan(dialplan);
@@ -1554,6 +1555,7 @@ static void dial_plan(void) {
 			ms_error("cannot generate e164 number for [%s]",linphone_dial_plan_get_country(dialplan));
 		}
 	}
+	bctbx_list_free_with_data(dial_plans, (bctbx_list_free_func)linphone_dial_plan_unref);
 }
 test_t setup_tests[] = {
 	TEST_NO_TAG("Version check", linphone_version_test),

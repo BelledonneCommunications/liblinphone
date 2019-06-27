@@ -22,15 +22,14 @@
 
 #include <list>
 
-#include "object/clonable-object.h"
+#include <belle-sip/object++.hh>
+#include "linphone/api/c-types.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class DialPlanPrivate;
-
-class LINPHONE_PUBLIC DialPlan : public ClonableObject {
+class DialPlan : public bellesip::HybridObject<LinphoneDialPlan, DialPlan> {
 public:
 	DialPlan (
 		const std::string &country = "",
@@ -55,16 +54,22 @@ public:
 	const std::string &getInternationalCallPrefix () const;
 	bool isGeneric () const;
 
-	static const DialPlan MostCommon;
+	static const std::shared_ptr<DialPlan> MostCommon;
 
 	static int lookupCccFromE164 (const std::string &e164);
 	static int lookupCccFromIso (const std::string &iso);
-	static const DialPlan &findByCcc (int ccc);
-	static const DialPlan &findByCcc (const std::string &ccc);
-	static const std::list<DialPlan> &getAllDialPlans ();
+	static std::shared_ptr<DialPlan> findByCcc (int ccc);
+	static std::shared_ptr<DialPlan> findByCcc (const std::string &ccc);
+	static const std::list<std::shared_ptr<DialPlan>> &getAllDialPlans ();
 
 private:
-	L_DECLARE_PRIVATE(DialPlan);
+	std::string country;
+	std::string isoCountryCode; // ISO 3166-1 alpha-2 code, ex: FR for France.
+	std::string countryCallingCode; // Country calling code.
+	int nationalNumberLength = 0; // Maximum national number length.
+	std::string internationalCallPrefix; // International call prefix, ex: 00 in europe.
+
+	static const std::list<std::shared_ptr<DialPlan>> DialPlans;
 };
 
 LINPHONE_END_NAMESPACE

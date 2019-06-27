@@ -33,6 +33,16 @@
  * @{
  */
 
+/**
+ * Increases the reference counter of #LinphoneDialPlan objects.
+ */
+LINPHONE_PUBLIC LinphoneDialPlan *linphone_dial_plan_ref(LinphoneDialPlan *dp);
+
+/**
+ * Decreases the reference counter of #LinphoneDialPaln objects.
+ */
+LINPHONE_PUBLIC void linphone_dial_plan_unref(LinphoneDialPlan *dp);
+
  /**
   * Returns the country name of the dialplan
   * @return the country name
@@ -87,7 +97,7 @@ LINPHONE_PUBLIC const LinphoneDialPlan* linphone_dial_plan_get_all(void);
 /**
  * @return \bctbx_list{LinphoneDialPlan} of all known dial plans
 **/
-LINPHONE_PUBLIC const bctbx_list_t * linphone_dial_plan_get_all_list(void);
+LINPHONE_PUBLIC bctbx_list_t * linphone_dial_plan_get_all_list(void);
 
 /**
  * Find best match for given CCC
