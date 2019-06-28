@@ -1119,11 +1119,11 @@ int MediaSessionPrivate::selectRandomPort (int streamIndex, pair<int, int> portR
 	for (int nbTries = 0; nbTries < 100; nbTries++) {
 		bool alreadyUsed = false;
 		unsigned int rangeSize = static_cast<unsigned int>(portRange.second - portRange.first);
-		unsigned int randomInRangeSize = ortp_random() % rangeSize;
-		unsigned int mask = 1;
-		unsigned int realRandom = randomInRangeSize + static_cast<unsigned int >(portRange.first);
-		int triedPort = static_cast<int>(realRandom & ~mask);
-		if (triedPort < portRange.first) triedPort = portRange.first + 2;
+		unsigned int randomInRangeSize = (ortp_random() % rangeSize) & ~0x1; /* Select an even number */
+		int triedPort = ((int)randomInRangeSize) + portRange.first;
+		/*If portRange.first is even, the triedPort will be even too. The one who configures a port range that starts with an odd number will
+		 * get odd RTP port numbers.*/
+		
 		for (const bctbx_list_t *elem = linphone_core_get_calls(q->getCore()->getCCore()); elem != nullptr; elem = bctbx_list_next(elem)) {
 			LinphoneCall *lcall = reinterpret_cast<LinphoneCall *>(bctbx_list_get_data(elem));
 			shared_ptr<MediaSession> session = static_pointer_cast<MediaSession>(L_GET_CPP_PTR_FROM_C_OBJECT(lcall)->getPrivate()->getActiveSession());
