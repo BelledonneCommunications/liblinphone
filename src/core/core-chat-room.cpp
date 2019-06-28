@@ -341,14 +341,45 @@ void CorePrivate::replaceChatRoom (const shared_ptr<AbstractChatRoom> &replacedC
 
 // -----------------------------------------------------------------------------
 
+static bool compare_chat_room (const shared_ptr<AbstractChatRoom>& first, const shared_ptr<AbstractChatRoom>& second) {
+	return first->getLastUpdateTime() > second->getLastUpdateTime();
+}
+
 list<shared_ptr<AbstractChatRoom>> Core::getChatRooms () const {
 	L_D();
+
+	bool hideEmptyChatRooms = !!linphone_config_get_int(linphone_core_get_config(getCCore()), "misc", "hide_empty_chat_rooms", 1);
+	bool hideChatRoomsFromRemovedProxyConfig = !!linphone_config_get_int(linphone_core_get_config(getCCore()), "misc", "hide_chat_rooms_from_removed_proxies", 1);
 
 	list<shared_ptr<AbstractChatRoom>> rooms;
 	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
+		if (hideEmptyChatRooms) {
+			if (chatRoom->isEmpty()) {
+				continue;
+			}
+		}
+
+		if (hideChatRoomsFromRemovedProxyConfig) {
+			const bctbx_list_t *it;
+			bool found = false;
+			for (it = linphone_core_get_proxy_config_list(getCCore()); it != NULL; it = it->next) {
+				LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)it->data;
+				const LinphoneAddress *identityAddr = linphone_proxy_config_get_identity_address(cfg);
+				if (L_GET_CPP_PTR_FROM_C_OBJECT(identityAddr)->weakEqual(chatRoom->getLocalAddress())) {
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				continue;
+			}
+		}
+
 		rooms.push_front(chatRoom);
 	}
+
+	rooms.sort(compare_chat_room);
 	return rooms;
 }
 
