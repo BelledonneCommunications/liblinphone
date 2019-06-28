@@ -111,6 +111,17 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
       */
     public org.linphone.mediastream.Factory getMediastreamerFactory();
 {{/isLinphoneCore}}
+
+    /** 
+      * Returns the native pointer matching this object
+      */
+    {{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public long getNativePtr();
+
+    /** 
+      * Compares native pointer of two objects
+      */
+    {{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public boolean weakEquals({{className}} other);
+
 {{#methods}}
     {{#doc}}
     /**
@@ -143,6 +154,14 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
     protected {{classImplName}}(long ptr) {
         nativePtr = ptr;{{#hasCoreAccessor}}
         core = getCore();{{/hasCoreAccessor}}
+    }
+
+    public long getNativePtr() {
+        return nativePtr;
+    }
+
+    public boolean weakEquals({{className}} other) {
+        return nativePtr == other.getNativePtr();
     }
 
 {{#isLinphoneFactory}}
