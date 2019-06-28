@@ -341,14 +341,24 @@ void CorePrivate::replaceChatRoom (const shared_ptr<AbstractChatRoom> &replacedC
 
 // -----------------------------------------------------------------------------
 
+static bool compare_chat_room (const shared_ptr<AbstractChatRoom>& first, const shared_ptr<AbstractChatRoom>& second) {
+	return first->getLastUpdateTime() > second->getLastUpdateTime();
+}
+
 list<shared_ptr<AbstractChatRoom>> Core::getChatRooms () const {
 	L_D();
 
 	list<shared_ptr<AbstractChatRoom>> rooms;
 	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
+		if (!!linphone_config_get_int(linphone_core_get_config(getCCore()), "misc", "hide_empty_chat_rooms", 1)) {
+			if (chatRoom->isEmpty()) {
+				continue;
+			}
+		}
 		rooms.push_front(chatRoom);
 	}
+	rooms.sort(compare_chat_room);
 	return rooms;
 }
 
