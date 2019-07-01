@@ -55,3 +55,7 @@ stun_server=stun.linphone.org
 mime=VP8
 rate=90000
 enabled=1
+
+[misc]
+hide_chat_rooms_from_removed_proxies=0
+hide_empty_chat_rooms=0
