@@ -20,8 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef LINPHONE_AUTH_INFO_H
 #define LINPHONE_AUTH_INFO_H
 
-#include <mediastreamer2/mscommon.h>
-#include "linphone/types.h"
+#include "linphone/api/c-types.h"
 
 /**
  * @addtogroup authentication
@@ -31,34 +30,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 /**
  * Safely cast a belle_sip_object_t into #LinphoneAuthInfo
  */
-#define LINPHONE_AUTH_INFO(obj) BELLE_SIP_CAST(obj, LinphoneAuthInfo)
+//#define LINPHONE_AUTH_INFO(obj) BELLE_SIP_CAST(obj, LinphoneAuthInfo)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
- * Creates a #LinphoneAuthInfo object with supplied information.
- * The object can be created empty, that is with all arguments set to NULL.
- * Username, userid, password, realm and domain can be set later using specific methods.
- * At the end, username and passwd (or ha1) are required.
- * @param username The username that needs to be authenticated
- * @param userid The userid used for authenticating (use NULL if you don't know what it is)
- * @param passwd The password in clear text
- * @param ha1 The ha1-encrypted password if password is not given in clear text.
- * @param realm The authentication domain (which can be larger than the sip domain. Unfortunately many SIP servers don't use this parameter.
- * @param domain The SIP domain for which this authentication information is valid, if it has to be restricted for a single SIP domain.
- * @return A #LinphoneAuthInfo object. linphone_auth_info_destroy() must be used to destroy it when no longer needed. The #LinphoneCore makes a copy of #LinphoneAuthInfo
- * passed through linphone_core_add_auth_info().
-**/
 LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_new(
 	const char *username,
 	const char *userid,
 	const char *passwd,
 	const char *ha1,
 	const char *rfealm,
-	const char *domain
-);
+	const char *domain);
 
 LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_new_for_algorithm(
 	const char *username,
@@ -67,15 +51,13 @@ LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_new_for_algorithm(
 	const char *ha1,
 	const char *realm,
 	const char *domain,
-	const char *algorithm
-);
-
+	const char *algorithm);
 /**
  * Instantiates a new auth info with values from source.
  * @param[in] source The #LinphoneAuthInfo object to be cloned
  * @return The newly created #LinphoneAuthInfo object.
  */
-LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_clone(const LinphoneAuthInfo* source);
+LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_clone(const LinphoneAuthInfo *source);
 
 /**
  * Take a reference on a #LinphoneAuthInfo.
@@ -262,6 +244,10 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key_path(const LinphoneAu
 
 /* you don't need those function*/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_auth_info_destroy(LinphoneAuthInfo *info);
+
+void linphone_auth_info_write_config(LpConfig *config, LinphoneAuthInfo *obj, int pos);
+
+LinphoneAuthInfo *linphone_auth_info_new_from_config_file(LpConfig *config, int pos);
 
 /**
  * @}

@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "linphone/account_creator.h"
 #include "linphone/account_creator_service.h"
-#include "linphone/auth_info.h"
+
 #include "linphone/buffer.h"
 #include "linphone/call.h"
 #include "linphone/call_log.h"
