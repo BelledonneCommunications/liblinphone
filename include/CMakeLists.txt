@@ -23,7 +23,6 @@
 set(ROOT_HEADER_FILES
 	account_creator_service.h
 	account_creator.h
-	auth_info.h
 	buffer.h
 	call_log.h
 	call_params.h
@@ -75,6 +74,7 @@ set(ROOT_HEADER_FILES
 
 set(C_API_HEADER_FILES
 	c-address.h
+	c-auth-info.h
 	c-api.h
 	c-call-cbs.h
 	c-call-stats.h
