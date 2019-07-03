@@ -146,22 +146,6 @@ struct _LinphoneProxyConfig
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneProxyConfig);
 
-struct _LinphoneAuthInfo
-{
-	belle_sip_object_t base;
-	char *username;
-	char *realm;
-	char *userid;
-	char *passwd;
-	char *ha1;
-	char *domain;
-	char *tls_cert;
-	char *tls_key;
-	char *tls_cert_path;
-	char *tls_key_path;
-	char *algorithm;
-};
-
 struct _LinphoneFriendPresence {
 	char *uri_or_tel;
 	LinphonePresenceModel *presence;
