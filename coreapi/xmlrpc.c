@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "linphone/core.h"
 
 #include "c-wrapper/c-wrapper.h"
+#include "linphone/api/c-auth-info.h"
+
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
