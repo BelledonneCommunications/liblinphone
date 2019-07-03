@@ -86,10 +86,13 @@ static void call_received(SalCallOp *h) {
 			if (pAssertedIdAddr) {
 				ms_message("Using P-Asserted-Identity [%s] instead of from [%s] for op [%p]", pAssertedId, h->getFrom().c_str(), h);
 				fromAddr = pAssertedIdAddr;
-			} else
+			} else{
 				ms_warning("Unsupported P-Asserted-Identity header for op [%p] ", h);
-		} else
+			}
+				
+		} else{
 			ms_warning("No P-Asserted-Identity header found so cannot use it for op [%p] instead of from", h);
+		}
 	}
 
 	if (!fromAddr)
@@ -538,31 +541,31 @@ static bool_t fill_auth_info(LinphoneCore *lc, SalAuthInfo* sai) {
 			 * Compare algorithm of server(sai) with algorithm of client(ai), if they are not correspondant,
 			 * exit. The default algorithm is MD5 if it's NULL.
 			 */
-			if (sai->algorithm && ai->algorithm) {
-				if (strcasecmp(ai->algorithm, sai->algorithm))
-					return TRUE;
+			if (sai->algorithm && linphone_auth_info_get_algorithm(ai)) {
+				if (strcasecmp(linphone_auth_info_get_algorithm(ai), sai->algorithm))
+				return TRUE;
 			} else if (
-				(ai->algorithm && strcasecmp(ai->algorithm, "MD5")) ||
+				(linphone_auth_info_get_algorithm(ai) && strcasecmp(linphone_auth_info_get_algorithm(ai), "MD5")) ||
 				(sai->algorithm && strcasecmp(sai->algorithm, "MD5"))
 			)
 				return TRUE;
 
-			sai->userid = ms_strdup(ai->userid ? ai->userid : ai->username);
-			sai->password = ai->passwd?ms_strdup(ai->passwd) : NULL;
-			sai->ha1 = ai->ha1 ? ms_strdup(ai->ha1) : NULL;
+			sai->userid = ms_strdup(linphone_auth_info_get_userid(ai) ? linphone_auth_info_get_userid(ai) : linphone_auth_info_get_username(ai));
+			sai->password = linphone_auth_info_get_passwd(ai)?ms_strdup(linphone_auth_info_get_passwd(ai)) : NULL;
+			sai->ha1 = linphone_auth_info_get_ha1(ai) ? ms_strdup(linphone_auth_info_get_ha1(ai)) : NULL;
 		} else if (sai->mode == SalAuthModeTls) {
-			if (ai->tls_cert && ai->tls_key) {
-				sal_certificates_chain_parse(sai, ai->tls_cert, SAL_CERTIFICATE_RAW_FORMAT_PEM);
-				sal_signing_key_parse(sai, ai->tls_key, "");
-			} else if (ai->tls_cert_path && ai->tls_key_path) {
-				sal_certificates_chain_parse_file(sai, ai->tls_cert_path, SAL_CERTIFICATE_RAW_FORMAT_PEM);
-				sal_signing_key_parse_file(sai, ai->tls_key_path, "");
+			if (linphone_auth_info_get_tls_cert(ai) && linphone_auth_info_get_tls_key(ai)) {
+				sal_certificates_chain_parse(sai, linphone_auth_info_get_tls_cert(ai), SAL_CERTIFICATE_RAW_FORMAT_PEM);
+				sal_signing_key_parse(sai, linphone_auth_info_get_tls_key(ai), "");
+			} else if (linphone_auth_info_get_tls_cert_path(ai) && linphone_auth_info_get_tls_key_path(ai)) {
+				sal_certificates_chain_parse_file(sai, linphone_auth_info_get_tls_cert_path(ai), SAL_CERTIFICATE_RAW_FORMAT_PEM);
+				sal_signing_key_parse_file(sai, linphone_auth_info_get_tls_key_path(ai), "");
 			} else {
 				fill_auth_info_with_client_certificate(lc, sai);
 			}
 		}
 
-		if (sai->realm && !ai->realm){
+		if (sai->realm && !linphone_auth_info_get_realm(ai)){
 			/*if realm was not known, then set it so that ha1 may eventually be calculated and clear text password dropped*/
 			linphone_auth_info_set_realm(ai, sai->realm);
 			linphone_core_write_auth_info(lc, ai);
