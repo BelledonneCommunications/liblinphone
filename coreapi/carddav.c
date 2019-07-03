@@ -19,6 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "linphone/core.h"
 #include "private.h"
+#include "linphone/api/c-auth-info.h"
+
+
+
 
 LinphoneCardDavContext* linphone_carddav_context_new(LinphoneFriendList *lfl) {
 	LinphoneCardDavContext *carddav_context = NULL;
@@ -471,9 +475,10 @@ static void process_auth_requested_from_carddav_request(void *data, belle_sip_au
 	const char *domain = belle_generic_uri_get_host(uri);
 
 	if (cdc->auth_info) {
-		belle_sip_auth_event_set_username(event, cdc->auth_info->username);
-		belle_sip_auth_event_set_passwd(event, cdc->auth_info->passwd);
-		belle_sip_auth_event_set_ha1(event, cdc->auth_info->ha1);
+		belle_sip_auth_event_set_username(event, linphone_auth_info_get_username(cdc->auth_info));
+		//belle_sip_auth_event_set_username(event, linphone_auth_info_get_username(auth_info));
+		belle_sip_auth_event_set_passwd(event, linphone_auth_info_get_passwd(cdc->auth_info));
+		belle_sip_auth_event_set_ha1(event, linphone_auth_info_get_ha1(cdc->auth_info));
 	} else {
 		LinphoneCore *lc = cdc->friend_list->lc;
 		const bctbx_list_t *auth_infos = linphone_core_get_auth_info_list(lc);
@@ -481,11 +486,11 @@ static void process_auth_requested_from_carddav_request(void *data, belle_sip_au
 		ms_debug("Looking for auth info for domain %s and realm %s", domain, realm);
 		while (auth_infos) {
 			LinphoneAuthInfo *auth_info = (LinphoneAuthInfo *)auth_infos->data;
-			if (auth_info->domain && strcmp(domain, auth_info->domain) == 0) {
-				if (!auth_info->realm || strcmp(realm, auth_info->realm) == 0) {
-					belle_sip_auth_event_set_username(event, auth_info->username);
-					belle_sip_auth_event_set_passwd(event, auth_info->passwd);
-					belle_sip_auth_event_set_ha1(event, auth_info->ha1);
+			if (linphone_auth_info_get_domain(auth_info) && strcmp(domain, linphone_auth_info_get_domain(auth_info)) == 0) {
+				if (!linphone_auth_info_get_realm(auth_info) || strcmp(realm, linphone_auth_info_get_realm(auth_info)) == 0) {
+					belle_sip_auth_event_set_username(event, linphone_auth_info_get_username(auth_info));
+					belle_sip_auth_event_set_passwd(event, linphone_auth_info_get_passwd(auth_info));
+					belle_sip_auth_event_set_ha1(event, linphone_auth_info_get_ha1(auth_info));
 					cdc->auth_info = linphone_auth_info_clone(auth_info);
 					break;
 				}
