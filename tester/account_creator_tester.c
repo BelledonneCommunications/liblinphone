@@ -558,6 +558,30 @@ static void server_delete_account_test(void) {
 		(void*)LinphoneAccountCreatorStatusRequestOk);
 	linphone_account_creator_set_username(creator, "xxxtestuser_0");
 	linphone_account_creator_set_email(creator, "user_0@linphone.org");
+	linphone_account_creator_set_password(creator, "newpassword");
+	linphone_account_creator_set_algorithm(creator, "SHA-256");
+	
+	BC_ASSERT_EQUAL(
+		delete_account_cb(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+	
+	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+	
+	linphone_account_creator_unref(creator);
+
+	// Another attempt with previous password if previous suite crashed before the update
+	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	cbs = linphone_account_creator_get_callbacks(creator);
+	
+	linphone_account_creator_cbs_set_user_data(cbs, stats);
+	account_creator_reset_cb_done(cbs);
+	linphone_account_creator_service_set_user_data(
+		linphone_account_creator_get_service(creator),
+		(void*)LinphoneAccountCreatorStatusRequestOk);
+	linphone_account_creator_set_username(creator, "xxxtestuser_0");
+	linphone_account_creator_set_email(creator, "user_0@linphone.org");
 	linphone_account_creator_set_password(creator, "password");
 	linphone_account_creator_set_algorithm(creator, "SHA-256");
 	
