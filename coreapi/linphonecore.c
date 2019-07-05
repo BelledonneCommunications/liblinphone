@@ -1657,6 +1657,12 @@ static bool_t linphone_core_codec_supported(LinphoneCore *lc, SalStreamType type
 	} else if (type == SalText) {
 		return TRUE;
 	}
+	if (lc->video_conf.capture && !lc->video_conf.display) {
+		return ms_factory_has_encoder(lc->factory, mime);
+	}
+	if (lc->video_conf.display && !lc->video_conf.capture) {
+		return ms_factory_has_decoder(lc->factory, mime);
+	}
 	return ms_factory_codec_supported(lc->factory, mime);
 }
 
