@@ -6021,6 +6021,47 @@ LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *lc, const 
 **/
 LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *lc);
 
+/**
+ * Configure push notifications type & app id.
+ * @param[in] lc The #LinphoneCore
+ * @param[in] type The push notification type, for example firebase for Android
+ * @param[in] app_id The push notification application id.
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC void linphone_core_configure_push_notifications(LinphoneCore *lc, const char* type, const char *app_id);
+
+/**
+ * Get the currently set push notification type if any
+ * @param[in] lc The #LinphoneCore
+ * @return the push notification type
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char* linphone_core_get_push_notification_type(LinphoneCore *lc);
+
+/**
+ * Get the currently set push notification application id if any
+ * @param[in] lc The #LinphoneCore
+ * @return the push notification application id
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char* linphone_core_get_push_notification_application_id(LinphoneCore *lc);
+
+/**
+ * Get the currently set push notification token if any
+ * @param[in] lc The #LinphoneCore
+ * @return the push notification token
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char* linphone_core_get_push_notification_token(LinphoneCore *lc);
+
+/**
+ * Set the push notification token returned by Firebase or Pushkit.
+ * @param[in] lc The #LinphoneCore
+ * @param[in] token The push notification token
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC void linphone_core_set_push_notification_token(LinphoneCore *lc, const char* token);
+
 
 #ifdef __cplusplus
 }

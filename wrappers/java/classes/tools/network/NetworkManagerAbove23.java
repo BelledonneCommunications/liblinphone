@@ -1,6 +1,6 @@
 /*
-NetworkManagerAbove21.java
-Copyright (C) 2017 Belledonne Communications, Grenoble, France
+NetworkManagerAbove23.java
+Copyright (C) 2019 Belledonne Communications, Grenoble, France
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-package org.linphone.core.tools;
+package org.linphone.core.tools.network;
 
 import android.content.Context;
 import android.content.Intent;
@@ -30,18 +30,19 @@ import android.net.NetworkRequest;
 import android.os.Build;
 
 import org.linphone.core.tools.AndroidPlatformHelper;
+import org.linphone.core.tools.Log;
 
 /**
  * Intercept network state changes and update linphone core.
  */
-public class NetworkManagerAbove21 implements NetworkManagerInterface {
+public class NetworkManagerAbove23 implements NetworkManagerInterface {
 	private AndroidPlatformHelper mHelper;
 	private ConnectivityManager mConnectivityManager;
 	private ConnectivityManager.NetworkCallback mNetworkCallback;
 	private Network mNetworkAvailable;
     private boolean mWifiOnly;
 
-	public NetworkManagerAbove21(final AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly) {
+	public NetworkManagerAbove23(final AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly) {
 		mHelper = helper;
 		mConnectivityManager = cm;
 		mWifiOnly = wifiOnly;
@@ -52,12 +53,12 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 				mHelper.getHandler().post(new Runnable() {
 					@Override
 					public void run() {
-						Log.i("[Platform Helper] [Network Manager 21] A network is available: " + mConnectivityManager.getNetworkInfo(network).getType() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
+						Log.i("[Platform Helper] [Network Manager 23] A network is available: " + mConnectivityManager.getNetworkInfo(network).getType() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
 						if (!mWifiOnly || mConnectivityManager.getNetworkInfo(network).getType() == ConnectivityManager.TYPE_WIFI) {
 							mNetworkAvailable = network;
 							mHelper.updateNetworkReachability();
 						} else {
-							Log.i("[Platform Helper] [Network Manager 21] Network isn't wifi and wifi only mode is enabled");
+							Log.i("[Platform Helper] [Network Manager 23] Network isn't wifi and wifi only mode is enabled");
 						}
 					}
 				});
@@ -68,7 +69,7 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 				mHelper.getHandler().post(new Runnable() {
 					@Override
 					public void run() {
-						Log.i("[Platform Helper] [Network Manager 21] A network has been lost");
+						Log.i("[Platform Helper] [Network Manager 23] A network has been lost");
 						if (mNetworkAvailable != null && mNetworkAvailable.equals(network)) {
 							mNetworkAvailable = null;
 						}
@@ -82,7 +83,7 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 				mHelper.getHandler().post(new Runnable() {
 					@Override
 					public void run() {
-						Log.i("[Platform Helper] [Network Manager 21] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
+						Log.i("[Platform Helper] [Network Manager 23] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
 						mHelper.updateNetworkReachability();
 					}
 				});
@@ -93,7 +94,7 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 				mHelper.getHandler().post(new Runnable() {
 					@Override
 					public void run() {
-						Log.i("[Platform Helper] [Network Manager 21] onLinkPropertiesChanged " + network.toString() + ", " + linkProperties.toString());
+						Log.i("[Platform Helper] [Network Manager 23] onLinkPropertiesChanged " + network.toString() + ", " + linkProperties.toString());
 						mHelper.updateDnsServers(linkProperties.getDnsServers());
 					}
 				});
@@ -104,7 +105,7 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 				mHelper.getHandler().post(new Runnable() {
 					@Override
 					public void run() {
-						Log.i("[Platform Helper] [Network Manager 21] onLosing " + network.toString());
+						Log.i("[Platform Helper] [Network Manager 23] onLosing " + network.toString());
 					}
 				});
 			}
@@ -114,7 +115,7 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 				mHelper.getHandler().post(new Runnable() {
 					@Override
 					public void run() {
-						Log.i("[Platform Helper] [Network Manager 21] onUnavailable");
+						Log.i("[Platform Helper] [Network Manager 23] onUnavailable");
 					}
 				});
 			}
@@ -126,7 +127,7 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 		if (mWifiOnly && mNetworkAvailable != null) {
 			NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(mNetworkAvailable);
 			if (networkInfo != null && networkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
-				Log.i("[Platform Helper] [Network Manager 21] Wifi only mode enabled and current network isn't wifi");
+				Log.i("[Platform Helper] [Network Manager 23] Wifi only mode enabled and current network isn't wifi");
 				mNetworkAvailable = null;
 			}
 		}
@@ -148,11 +149,21 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 			return mConnectivityManager.getNetworkInfo(mNetworkAvailable);
 		}
 
+        Network network = mConnectivityManager.getActiveNetwork();
+		if (network != null) {
+			return mConnectivityManager.getNetworkInfo(network);
+		}
+
+		Log.i("[Platform Helper] [Network Manager 23] getActiveNetwork() returned null, using getActiveNetworkInfo() instead");
         return mConnectivityManager.getActiveNetworkInfo();
     }
 
     public Network getActiveNetwork() {
-        return mNetworkAvailable;
+        if (mNetworkAvailable != null) {
+			return mNetworkAvailable;
+		}
+
+        return mConnectivityManager.getActiveNetwork();
     }
 
     public boolean isCurrentlyConnected(Context context) {

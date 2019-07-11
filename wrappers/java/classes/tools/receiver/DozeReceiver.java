@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-package org.linphone.core.tools;
+package org.linphone.core.tools.receiver;
 
 import android.content.Context;
 import android.content.Intent;
@@ -25,6 +25,7 @@ import android.os.Build;
 import android.os.PowerManager;
 
 import org.linphone.core.tools.AndroidPlatformHelper;
+import org.linphone.core.tools.Log;
 
 /*
  * Purpose of this receiver is to disable keep alives when device is on idle

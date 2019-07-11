@@ -1,4 +1,4 @@
-package org.linphone.core.tools;
+package org.linphone.core.tools.h264;
 
 
 import android.os.Build;

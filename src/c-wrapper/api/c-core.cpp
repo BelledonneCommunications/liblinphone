@@ -131,3 +131,23 @@ bool_t linphone_core_is_friend_list_subscription_enabled(LinphoneCore *lc) {
 void linphone_core_ensure_registered(LinphoneCore *lc) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pushNotificationReceived();
 }
+
+void linphone_core_configure_push_notifications(LinphoneCore *lc, const char* type, const char *app_id) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->configurePushNotifications(L_C_TO_STRING(type), L_C_TO_STRING(app_id));
+}
+
+const char* linphone_core_get_push_notification_type(LinphoneCore *lc) {
+return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationType());
+}
+
+const char* linphone_core_get_push_notification_application_id(LinphoneCore *lc) {
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationApplicationId());
+}
+
+const char* linphone_core_get_push_notification_token(LinphoneCore *lc) {
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationToken());
+}
+
+void linphone_core_set_push_notification_token(LinphoneCore *lc, const char* token) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setPushNotificationToken(L_C_TO_STRING(token));
+}

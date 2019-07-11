@@ -6204,7 +6204,9 @@ void sip_config_uninit(LinphoneCore *lc)
 		for(elem=config->proxies;elem!=NULL;elem=bctbx_list_next(elem)){
 			LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)(elem->data);
 			_linphone_proxy_config_unpublish(cfg);	/* to unpublish without changing the stored flag enable_publish */
-			_linphone_proxy_config_unregister(cfg);	/* to unregister without changing the stored flag enable_register */
+			if (!linphone_proxy_config_is_push_notification_allowed(cfg)) {
+				_linphone_proxy_config_unregister(cfg);	/* to unregister without changing the stored flag enable_register */
+			}
 		}
 
 		ms_message("Unregistration started.");
@@ -6215,7 +6217,9 @@ void sip_config_uninit(LinphoneCore *lc)
 			for(elem=config->proxies;elem!=NULL;elem=bctbx_list_next(elem)){
 				LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)(elem->data);
 				LinphoneRegistrationState state = linphone_proxy_config_get_state(cfg);
-				still_registered = (state==LinphoneRegistrationOk||state==LinphoneRegistrationProgress);
+				if (!linphone_proxy_config_is_push_notification_allowed(cfg)) {
+					still_registered = (state==LinphoneRegistrationOk||state==LinphoneRegistrationProgress);
+				}
 			}
 			ms_usleep(100000);
 		}

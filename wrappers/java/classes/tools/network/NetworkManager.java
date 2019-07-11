@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-package org.linphone.core.tools;
+package org.linphone.core.tools.network;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -28,6 +28,7 @@ import android.net.Network;
 import android.net.NetworkInfo;
 
 import org.linphone.core.tools.AndroidPlatformHelper;
+import org.linphone.core.tools.Log;
 
 /**
  * Intercept network state changes and update linphone core.

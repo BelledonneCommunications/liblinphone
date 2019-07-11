@@ -1,4 +1,4 @@
-package org.linphone.core.tools;
+package org.linphone.core.tools.h264;
 /*
 CodecDownloader.java
 Copyright (C) 2016  Belledonne Communications, Grenoble, France
@@ -31,7 +31,7 @@ import java.net.URL;
 import java.util.ArrayList;
 
 import org.apache.commons.compress.compressors.bzip2.*;
-import org.linphone.core.tools.OpenH264DownloadHelperListener;
+import org.linphone.core.tools.h264.OpenH264DownloadHelperListener;
 import org.linphone.core.tools.Log;
 
 /**

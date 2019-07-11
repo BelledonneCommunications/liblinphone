@@ -425,6 +425,58 @@ bool Core::isFriendListSubscriptionEnabled () const {
 	return d->isFriendListSubscriptionEnabled;
 }
 
+// ---------------------------------------------------------------------------
+// Push notifications.
+// ---------------------------------------------------------------------------
+
+void Core::configurePushNotifications(const string& type, const string& appId) {
+	L_D();
+	d->pushNotificationType = type;
+	d->pushNotificationAppId = appId;
+	lInfo() << "Push notification token type set to [" << type << "], appId set to [" << appId << "]";
+}
+
+const string& Core::getPushNotificationType() const {
+	L_D();
+	return d->pushNotificationType;
+}
+
+const string& Core::getPushNotificationApplicationId() const {
+	L_D();
+	return d->pushNotificationAppId;
+}
+
+const string& Core::getPushNotificationToken() const {
+	L_D();
+	return d->pushNotificationToken;
+}
+
+void Core::setPushNotificationToken(const string& token) {
+	L_D();
+	bool newToken = d->pushNotificationToken.empty() || d->pushNotificationToken != token;
+	if (!newToken) {
+		return;
+	}
+
+	d->pushNotificationToken = token;
+	lInfo() << "Push notification token set: " << token;
+
+	if (d->pushNotificationType.empty() || d->pushNotificationAppId.empty() || d->pushNotificationToken.empty()) {
+		return;
+	}
+
+	LinphoneCore *lc = getCCore();
+	const bctbx_list_t *proxies = linphone_core_get_proxy_config_list(lc);
+	bctbx_list_t *it = (bctbx_list_t *)proxies;
+	while (it) {
+		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *) bctbx_list_get_data(it);
+		if (linphone_proxy_config_is_push_notification_allowed(proxy)) {
+			linphone_proxy_config_refresh_register(proxy);
+		}
+		it = bctbx_list_next(it);
+	}
+}
+
 // -----------------------------------------------------------------------------
 // Misc.
 // -----------------------------------------------------------------------------

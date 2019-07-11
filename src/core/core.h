@@ -174,6 +174,16 @@ public:
 	bool isFriendListSubscriptionEnabled () const;
 
 	// ---------------------------------------------------------------------------
+	// Push notifications.
+	// ---------------------------------------------------------------------------
+
+	void configurePushNotifications(const std::string& type, const std::string& appId);
+	const std::string& getPushNotificationType() const;
+	const std::string& getPushNotificationApplicationId() const;
+	const std::string& getPushNotificationToken() const;
+	void setPushNotificationToken(const std::string& token);
+
+	// ---------------------------------------------------------------------------
 	// Misc.
 	// ---------------------------------------------------------------------------
 

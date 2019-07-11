@@ -579,6 +579,21 @@ static void linphone_proxy_config_register(LinphoneProxyConfig *cfg){
 
 		linphone_configure_op(cfg->lc, cfg->op, cfg->identity_address, cfg->sent_headers, FALSE);
 
+		if (cfg->push_notification_allowed) {
+			const char *token = linphone_core_get_push_notification_token(cfg->lc);
+			const char *appId = linphone_core_get_push_notification_application_id(cfg->lc);
+			const char *type = linphone_core_get_push_notification_type(cfg->lc);
+			if (token && strlen(token) > 0 && appId && strlen(appId) > 0 && type && strlen(type) > 0) {
+				std::ostringstream ss;
+				ss <<  "app-id=" << appId;
+				ss << ";pn-type=" << type;
+        		ss <<  ";pn-timeout=0;pn-tok=" << token << ";pn-silent=1";
+				linphone_proxy_config_set_contact_uri_parameters(cfg, ss.str().c_str());
+			} else {
+				ms_warning("Push notifications are enabled but misconfigured");
+			}
+		}
+
 		LinphoneAddress *contactAddress = guess_contact_for_register(cfg);
 		if (contactAddress) {
 			cfg->op->setContactAddress(L_GET_PRIVATE_FROM_C_OBJECT(contactAddress)->getInternalAddress());
