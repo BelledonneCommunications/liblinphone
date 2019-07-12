@@ -574,7 +574,9 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters () {
 		lWarning() << "[LIME] No contactAddress available, unable to setup identity key for ZRTP auxiliary shared secret";
 		return {};
 	}
-	IdentityAddress identityAddress = IdentityAddress(linphone_address_as_string(contactAddress));
+	char *identity = linphone_address_as_string(contactAddress);
+	IdentityAddress identityAddress = IdentityAddress(identity);
+	ms_free(identity);
 	string localDeviceId = identityAddress.asString();
 	vector<uint8_t> Ik;
 

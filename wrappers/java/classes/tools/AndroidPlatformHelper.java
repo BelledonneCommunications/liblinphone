@@ -362,6 +362,7 @@ public class AndroidPlatformHelper {
 
 	public synchronized void setVideoPreviewView(Object view) {
 		if (view == null) {
+			Log.i("[Platform Helper] Preview window surface set to null");
 			setNativePreviewWindowId(mNativePtr, null);
 			if (mPreviewTextureView != null) {
 				mPreviewTextureView.setSurfaceTextureListener(null);
@@ -420,10 +421,13 @@ public class AndroidPlatformHelper {
 
 	public synchronized void setVideoRenderingView(Object view) {
 		if (view == null) {
+			Log.i("[Platform Helper] Video window surface set to null");
 			setNativeVideoWindowId(mNativePtr, null);
 			if (mVideoTextureView != null) {
 				mVideoTextureView.setSurfaceTextureListener(null);
 				mVideoTextureView = null;
+				mSurfaceTexture = null;
+				mSurface = null;
 			}
 			return;
 		}
@@ -463,6 +467,7 @@ public class AndroidPlatformHelper {
 					if (mVideoTextureView != null) {
 						setNativeVideoWindowId(mNativePtr, null);
 						mSurfaceTexture = null;
+						mSurface = null;
 						mVideoTextureView = null;
 					}
 				}
