@@ -73,3 +73,10 @@ if (NOT IOS)
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 		)
 endif()
+
+set(TEST_SOURCE_FILES sip_client.cpp)
+add_executable(sip_client ${TEST_SOURCE_FILES})
+
+target_link_libraries(sip_client ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer bellesip bctoolbox "-lpthread" ${XSD_LIBRARIES})
+set_target_properties(sip_client PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+set_target_properties(sip_client PROPERTIES LINKER_LANGUAGE CXX)
