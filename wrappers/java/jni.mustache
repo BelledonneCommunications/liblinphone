@@ -377,9 +377,16 @@ static {{return}} {{callbackName}}({{params}}) {
 		return{{returnIfFail}};
 	}
 
-	jclass jlistenerClass = (jclass) env->GetObjectClass(jlistener);
+	jobject up = env->NewLocalRef((jobject)jlistener);
+	if (up == nullptr) {
+		bctbx_warning("{{callbackName}}() listener in weak reference has been destroyed");
+		return{{returnIfFail}};
+	}
+
+	jclass jlistenerClass = (jclass) env->GetObjectClass(up);
 	jmethodID jcallback = env->GetMethodID(jlistenerClass, "{{jname}}", "{{jparams}}");
 	env->DeleteLocalRef(jlistenerClass);
+	env->DeleteLocalRef(up);
 
 	{{#jobjects}}
 	jobject j_{{objectName}} = get{{className}}(env, (Linphone{{className}} *){{objectName}}, TRUE);
@@ -494,7 +501,7 @@ JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_addListener(JNIEnv* 
 		bctbx_error("Java_{{jniPackage}}{{className}}Impl_addListener's {{classCName}} C ptr is null!");
 		return;
 	}
-	jobject listener = env->NewGlobalRef(jlistener);
+	jobject listener = env->NewWeakGlobalRef(jlistener);
 	{{classCName}}Cbs *cbs = linphone_factory_create_{{factoryName}}_cbs(nullptr);
 	{{cPrefix}}_cbs_set_user_data(cbs, listener);
 	{{#callbacksList}}
@@ -518,7 +525,7 @@ JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_removeListener(JNIEn
 		if (env->IsSameObject(listener, jlistener)) {
 			{{cPrefix}}_cbs_set_user_data(cbs, nullptr);
 			{{cPrefix}}_remove_callbacks(cptr, cbs);
-			env->DeleteGlobalRef(listener);
+			env->DeleteWeakGlobalRef(listener);
 			break;
 		}
 	}
