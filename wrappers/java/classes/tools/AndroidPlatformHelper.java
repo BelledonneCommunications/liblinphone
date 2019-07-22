@@ -611,7 +611,7 @@ public class AndroidPlatformHelper {
 			return;
 		}
 	
-		if (mDozeModeEnabled) {
+		if (mDozeModeEnabled && DeviceUtils.isAppBatteryOptimizationEnabled(mContext)) {
 			Log.i("[Platform Helper] Device in idle mode: shutting down network");
 			setNetworkReachable(mNativePtr, false);
 			return;

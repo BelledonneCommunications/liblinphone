@@ -43,4 +43,11 @@ public class DeviceUtils {
         }
         return null;
     }
+
+    public static boolean isAppBatteryOptimizationEnabled(Context context) {
+        if (Version.sdkAboveOrEqual(Version.API23_MARSHMALLOW_60)) {
+            return DeviceUtils23.isAppBatteryOptimizationEnabled(context);
+        }
+        return false;
+    }
 }
