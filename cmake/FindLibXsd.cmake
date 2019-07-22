@@ -26,8 +26,7 @@
 #  LIBXSD_INCLUDE_DIRS - the libxsd include directory
 #  LIBXSD_LIBRARIES - The libraries needed to use libxsd
 
-
-find_package(XercesC)
+find_library(XercesC_LIBRARIES XercesC NAMES xerces-c PATHS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
 find_path(LIBXSD_INCLUDE_DIRS
 	NAMES xsd/cxx/config.hxx
@@ -37,6 +36,7 @@ find_path(LIBXSD_INCLUDE_DIRS
 if(LIBXSD_INCLUDE_DIRS)
 	list(APPEND LIBXSD_INCLUDE_DIRS ${XercesC_INCLUDE_DIRS})
 endif()
+
 set(LIBXSD_LIBRARIES ${XercesC_LIBRARIES})
 
 include(FindPackageHandleStandardArgs)

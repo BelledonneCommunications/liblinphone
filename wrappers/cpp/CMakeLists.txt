@@ -76,6 +76,9 @@ install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/linphone++
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
+set(TARGET_NAME "LinphoneCxx")
+set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/${TARGET_NAME}")
+
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
 	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneCxxVersion.cmake"
@@ -85,7 +88,11 @@ write_basic_package_version_file(
 export(EXPORT LinphoneCxxTargets
 	FILE "${CMAKE_CURRENT_BINARY_DIR}/LinphoneCxxTargets.cmake"
 )
-configure_file(LinphoneCxxConfig.cmake.in LinphoneCxxConfig.cmake @ONLY)
+configure_package_config_file(LinphoneCxxConfig.cmake.in
+	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneCxxConfig.cmake"
+	INSTALL_DESTINATION ${CONFIG_PACKAGE_LOCATION}
+	NO_SET_AND_CHECK_MACRO
+)
 
 install(EXPORT LinphoneCxxTargets
 	FILE LinphoneCxxTargets.cmake
