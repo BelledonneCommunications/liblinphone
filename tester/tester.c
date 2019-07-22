@@ -342,7 +342,7 @@ static void avoid_pulseaudio_hack(LinphoneCoreManager *mgr){
 void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	LinphoneImNotifPolicy *im_notif_policy;
 	char *hellopath = bc_tester_res("sounds/hello8000.wav");
-	const char * filepath = mgr->rc_path?bctbx_strdup_printf("%s/%s", bc_tester_get_resource_dir_prefix() ,mgr->rc_path):NULL;
+	char *filepath = mgr->rc_path ? bctbx_strdup_printf("%s/%s", bc_tester_get_resource_dir_prefix(), mgr->rc_path) : NULL;
 	if (filepath && bctbx_file_exist(filepath) != 0) {
 		ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", mgr->rc_path, bc_tester_get_resource_dir_prefix());
 	}
@@ -408,6 +408,8 @@ void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	/*for now, we need the periodical updates facility to compute bandwidth measurements correctly during tests*/
 	linphone_core_enable_send_call_stats_periodical_updates(mgr->lc, TRUE);
 
+	// clean
+	if (filepath) bctbx_free(filepath);
 }
 
 static void generate_random_database_path (LinphoneCoreManager *mgr) {
