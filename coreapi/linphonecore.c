@@ -3999,6 +3999,10 @@ LinphoneStatus linphone_core_terminate_call(LinphoneCore *lc, LinphoneCall *call
 	return linphone_call_terminate(call);
 }
 
+void linphone_core_reset_sound_card(LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->resetSoundCard();
+}
+
 LinphoneStatus linphone_core_terminate_all_calls(LinphoneCore *lc) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->terminateAllCalls();
 }

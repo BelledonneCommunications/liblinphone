@@ -1376,6 +1376,11 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_decline_call(Li
 LINPHONE_PUBLIC LinphoneStatus linphone_core_terminate_all_calls(LinphoneCore *lc);
 
 /**
+ * reset the sound card.
+ * @param[in] lc #LinphoneCore object
+**/
+LINPHONE_PUBLIC void linphone_core_reset_sound_card(LinphoneCore *lc);
+/**
  * @brief Pauses the call. If a music file has been setup using linphone_core_set_play_file(),
  * this file will be played to the remote user.
  *

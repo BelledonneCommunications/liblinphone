@@ -100,6 +100,7 @@ public:
 	LinphoneStatus pauseAllCalls ();
 	void soundcardHintCheck ();
 	LinphoneStatus terminateAllCalls ();
+	void resetSoundCard ();
 
 	// ---------------------------------------------------------------------------
 	// ChatRoom.

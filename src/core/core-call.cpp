@@ -306,9 +306,14 @@ void Core::soundcardHintCheck () {
 	
 	if ((!d->hasCalls() || noNeedForSound)
 		&& (!L_GET_C_BACK_PTR(getSharedFromThis())->use_files && (!useRtpIo || (useRtpIo && useRtpIoEnableLocalOutput)))) {
-		lInfo() << "Notifying soundcard that we don't need it anymore for calls";
-		d->notifySoundcardUsage(false);
+		resetSoundCard();
 	}
+}
+
+void Core::resetSoundCard () {
+	L_D();
+	lInfo() << "Notifying soundcard that we don't need it anymore for calls";
+	d->notifySoundcardUsage(false);
 }
 
 LinphoneStatus Core::terminateAllCalls () {
