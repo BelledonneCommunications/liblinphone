@@ -163,7 +163,7 @@ char *Utils::utf8ToChar (uint32_t ic) {
 		result[1] = static_cast<char>(0x80 + ((ic & 0x3F)));
 		result[0] = static_cast<char>(0xC0 + ((ic >> 6) & 0x1F));
 		size = 2;
-	} else if (ic < 0x100000) {
+	} else if (ic < 0x10000) {
 		result[2] = static_cast<char>(0x80 + (ic & 0x3F));
 		result[1] = static_cast<char>(0x80 + ((ic >> 6) & 0x3F));
 		result[0] = static_cast<char>(0xE0 + ((ic >> 12) & 0xF));

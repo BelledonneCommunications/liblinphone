@@ -1986,18 +1986,9 @@ static void real_time_text_message_accented_chars(void) {
 		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
 		if (pauline_chat_room && marie_chat_room) {
 			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
+			uint32_t message[] = {0xe3/*ã*/, 0xe6/*æ*/, 0xe7/*ç*/, 0xe9/*é*/, 0xee/*î*/, 0xf8/*ø*/, 0xf9/*ù*/, 0xff/*ÿ*/, 0x2a7d/*⩽*/, 0x1f600/*😀*/};
+			const int message_len = sizeof(message) / sizeof(uint32_t);
 			int i;
-			uint32_t message[8];
-			int message_len = 8;
-
-			message[0] = 0xE3; // ã
-			message[1] = 0xE6; // æ
-			message[2] = 0xE7; // ç
-			message[3] = 0xE9; // é
-			message[4] = 0xEE; // î
-			message[5] = 0xF8; // ø
-			message[6] = 0xF9; // ù
-			message[7] = 0xFF; // ÿ
 			for (i = 0; i < message_len; i++) {
 				linphone_chat_message_put_char(rtt_message, message[i]);
 				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, i+1, 1000));
@@ -2011,7 +2002,7 @@ static void real_time_text_message_accented_chars(void) {
 				const char *text = linphone_chat_message_get_text(marie->stat.last_received_chat_message);
 				BC_ASSERT_PTR_NOT_NULL(text);
 				if (text)
-					BC_ASSERT_STRING_EQUAL(text, "ãæçéîøùÿ");
+					BC_ASSERT_STRING_EQUAL(text, "ãæçéîøùÿ⩽😀");
 			}
 			linphone_chat_message_unref(rtt_message);
 		}
