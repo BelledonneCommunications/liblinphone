@@ -35,9 +35,6 @@ include("${CMAKE_CURRENT_LIST_DIR}/LinphoneTargets.cmake")
 
 set(LINPHONE_TARGETNAME linphone)
 
-find_package(Mediastreamer2 REQUIRED)
-find_package(BelleSIP REQUIRED)
-
 if(@ENABLE_SHARED@)
 	set(LINPHONE_LIBRARIES ${LINPHONE_TARGETNAME})
 else()
