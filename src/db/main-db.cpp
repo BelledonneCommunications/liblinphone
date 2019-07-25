@@ -1509,7 +1509,7 @@ void MainDb::init () {
 
 	Backend backend = getBackend();
 
-	const string charset = backend == Mysql ? "DEFAULT CHARSET=utf8" : "";
+	const string charset = backend == Mysql ? "DEFAULT CHARSET=utf8mb4" : "";
 	soci::session *session = d->dbSession.getBackendSession();
 
 	using namespace placeholders;
