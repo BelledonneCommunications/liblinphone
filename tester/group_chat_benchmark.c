@@ -25,6 +25,7 @@ static FILE * log_file = NULL;
 
 static uint32_t nb_chatrooms = 1;
 static uint32_t nb_participants = 100;
+static uint32_t nb_participants_per_room = 100;
 static uint32_t nb_instance_participants = 20;
 static uint32_t nb_messages = 100;
 //The start user identity index (u_$start_identity@sip.exemple.org)
@@ -213,7 +214,7 @@ bctbx_list_t *create_participants_addresses(uint32_t participants) {
 		participants = nb_instance_participants;
 	}
 	for (i = start_identity; i < participants + start_identity; ++i) {
-		strAddr = bctbx_strdup_printf("sip:u_%d@sip.example.org", i);
+		strAddr = bctbx_strdup_printf("sip:user_%d@sip.example.org", i);
 		addr = linphone_address_new(strAddr);
 		addresses = bctbx_list_append(addresses, addr);
 		bctbx_free(strAddr);
@@ -243,6 +244,7 @@ bctbx_list_t *create_conference_cores(bctbx_list_t *participantsAddresses) {
 
 		linphone_proxy_config_set_identity_address(proxy_config, addr);
 		linphone_proxy_config_set_server_addr(proxy_config, "sip:sip.example.org;transport=tcp");
+		linphone_proxy_config_set_realm(proxy_config, "sip.exemple.org");
 		linphone_proxy_config_enable_register(proxy_config, TRUE);
 
 		BC_ASSERT_EQUAL(linphone_core_add_proxy_config(mgr->lc, proxy_config), 0, int, "%d");
@@ -254,8 +256,8 @@ bctbx_list_t *create_conference_cores(bctbx_list_t *participantsAddresses) {
 					    NULL,
 					    "secret",
 					    NULL,
-					    NULL,
-					    "sip.example.org");
+					    "sip.example.org",
+					    NULL);
 		linphone_core_add_auth_info(mgr->lc, ai);
 		linphone_auth_info_unref(ai);
 		linphone_proxy_config_unref(proxy_config);
@@ -313,7 +315,6 @@ int create_chat_room(bctbx_list_t* coresList, LinphoneCoreManager *mgr, const ch
 	stats initialStats = mgr->stat;
 	LinphoneChatRoom *chatRoom = linphone_core_create_client_group_chat_room_2(mgr->lc, subject, FALSE, enable_limex3dh);
 	belle_sip_object_ref(chatRoom);
-
 	if (!chatRoom) return -1;
 
 	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateInstantiated, initialStats.number_of_LinphoneChatRoomStateInstantiated + 1, 2000));
@@ -325,10 +326,10 @@ int create_chat_room(bctbx_list_t* coresList, LinphoneCoreManager *mgr, const ch
 	//Remove chatroom creator from invited participants
 	linphone_chat_room_add_participants(chatRoom, participantsAddresses->next);
 
-	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreationPending, initialStats.number_of_LinphoneChatRoomStateCreationPending + nb_instance_participants, nb_participants * 2000));
-	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated, initialStats.number_of_LinphoneChatRoomStateCreated + nb_instance_participants, nb_participants * 2000));
+	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreationPending, initialStats.number_of_LinphoneChatRoomStateCreationPending + 1, 1000));
+	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated, initialStats.number_of_LinphoneChatRoomStateCreated + 1, 1000));
 
-	if (linphone_chat_room_get_nb_participants(chatRoom) != (int) nb_participants - 1) {
+	if (linphone_chat_room_get_nb_participants(chatRoom) != (int) bctbx_list_size(participantsAddresses) - 1) {
 		ret = 1;
 	}
 
@@ -356,7 +357,7 @@ int get_or_create_chat_rooms(LinphoneCoreManager *mgr, bctbx_list_t *coresList, 
 	int ret = 0;
 	uint32_t i;
 
-	if (start_identity == 0) {
+	if (start_identity == 1) {
 		//Wait for other instances participants to be online
 		wait_participants(mgr, coresList, participantsAddresses);
 	} else {
@@ -366,9 +367,15 @@ int get_or_create_chat_rooms(LinphoneCoreManager *mgr, bctbx_list_t *coresList, 
 	for (i = 0; i < nb_chatrooms; ++i) {
 		char *subject =	bctbx_strdup_printf("Chat room %d subject", i);
 
-		if (start_identity == 0) {
+		if (start_identity == 1) {
 			//The instance handling u_0 identity is the creator of all chatrooms
-			ret &= create_chat_room(coresList, mgr, subject, participantsAddresses);
+			bctbx_list_t *participantsAddressesForThisRoom = NULL;
+			int index = bctbx_random()%nb_participants;
+			// select nb_participants_per_room participants starting from random position
+			for (unsigned int j = index; j < index + nb_participants_per_room; j++) {
+				participantsAddressesForThisRoom = bctbx_list_append(participantsAddressesForThisRoom, bctbx_list_nth_data(participantsAddresses, (index+j)%nb_participants));
+			}
+			ret &= create_chat_room(coresList, mgr, subject, participantsAddressesForThisRoom);
 		} else {
 			ret &= wait_chat_room_creation(coresList, mgr, subject);
 		}
@@ -400,12 +407,11 @@ void send_messages(LinphoneCoreManager *mgr, bctbx_list_t *coresList, uint32_t m
 
 		for (i = 0; i < messages; ++i) {
 			messagesList = bctbx_list_append(messagesList, _send_message(it->data, message));
-			ms_sleep(1);
 		}
 
 		bctbx_free(message);
 
-		wait_for_list(coresList, &mgr->stat.number_of_LinphoneMessageDelivered, stats.number_of_LinphoneMessageDelivered + messages, messages * 1000);
+		wait_for_list(coresList, &mgr->stat.number_of_LinphoneMessageDelivered, stats.number_of_LinphoneMessageDelivered + messages, 10000 + messages * 200);
 
 		bctbx_list_free_with_data(messagesList, (bctbx_list_free_func) belle_sip_object_unref);
 	}
@@ -480,6 +486,7 @@ void groupchat_benchmark_uninit(void) {
 //See https://wiki.linphone.org/xwiki/bin/view/Engineering/Benchmark%20Flexisip%20-%20ChatRooms/ for more details
 static const char* groupchat_benchmark_helper =
 	"\t\t\t--chat-rooms <nb_chat_rooms> (Number of chat rooms to create)\n"
+	"\t\t\t--participants-per-room <nb_participants_per_room> (Number of participant for each chat rooms created)\n"
 	"\t\t\t--participants <nb_participants> (Total number of participants)\n"
 	"\t\t\t--instance-participants <participants> (Number of participants handled by this instance)\n"
 	"\t\t\t--start-identity <index> (Index of the first identity of participants, between 0 and <participants>)\n"
@@ -515,6 +522,9 @@ int main (int argc, char *argv[])
 		} else if (strcmp(argv[i],"--participants")==0){
 			CHECK_ARG("--participants", ++i, argc);
 			nb_participants=atoi(argv[i]);
+		} else if (strcmp(argv[i],"--nb-participants-per-room")==0){
+			CHECK_ARG("--nb-participants-per-room", ++i, argc);
+			nb_participants_per_room=atoi(argv[i]);
 		} else if (strcmp(argv[i],"--instance-participants")==0){
 			CHECK_ARG("--instance-participants", ++i, argc);
 			nb_instance_participants=atoi(argv[i]);
