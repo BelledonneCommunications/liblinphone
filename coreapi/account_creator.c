@@ -168,12 +168,13 @@ LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const Linphon
 
 	linphone_proxy_config_enable_register(cfg, TRUE);
 
-	info = linphone_auth_info_new(linphone_address_get_username(identity), // username
+	info = linphone_auth_info_new_for_algorithm(linphone_address_get_username(identity), // username
 								NULL, //user id
 								creator->password, // passwd
 								creator->password ? NULL : creator->ha1,  // ha1
 								!creator->password && creator->ha1 ? linphone_address_get_domain(identity) : NULL,  // realm - assumed to be domain
-								linphone_address_get_domain(identity) // domain
+								linphone_address_get_domain(identity), // domain
+								creator->algorithm
 	);
 	linphone_core_add_auth_info(creator->core, info);
 	linphone_address_unref(identity);
@@ -345,7 +346,10 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneAccountCreator, belle_sip_object_t,
 
 LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *core, const char *xmlrpc_url) {
 	LinphoneAccountCreator *creator;
+	
 	const char* domain = lp_config_get_string(core->config, "assistant", "domain", NULL);
+	const char* algorithm = lp_config_get_string(core->config, "assistant", "algorithm", NULL);
+
 	creator = belle_sip_object_new(LinphoneAccountCreator);
 	creator->service = linphone_core_get_account_creator_service(core);
 	linphone_account_creator_service_ref(creator->service);
@@ -353,9 +357,14 @@ LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *core, const
 	creator->core = core;
 	creator->transport = LinphoneTransportTcp;
 	creator->xmlrpc_session = (xmlrpc_url) ? linphone_xml_rpc_session_new(core, xmlrpc_url) : NULL;
+
 	if (domain) {
 		linphone_account_creator_set_domain(creator, domain);
 	}
+	if (algorithm) {
+		linphone_account_creator_set_algorithm(creator, algorithm);
+	}
+
 	creator->set_as_default = TRUE;
 	creator->proxy_cfg = linphone_core_create_proxy_config(core);
 
