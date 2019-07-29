@@ -156,7 +156,7 @@ static void audio_bypass_snd_read_preprocess(MSFilter *f) {
 	return;
 }
 
-static void swap_bytes(unsigned char *bytes, int len){
+static void swap_bytes(unsigned char *bytes, ssize_t len){
 	int i;
 	unsigned char tmp;
 	for(i=0;i<len;i+=2){
@@ -169,7 +169,7 @@ static void swap_bytes(unsigned char *bytes, int len){
 static void audio_bypass_snd_read_process(MSFilter *f) {
 	PlayerData *d=(PlayerData*)f->data;
 	int nsamples=(f->ticker->interval*d->rate*d->nchannels)/1000;
-	int bytes;
+	ssize_t bytes;
 	/*send an even number of samples each tick. At 22050Hz the number of samples per 10 ms chunk is odd.
 	Odd size buffer of samples cause troubles to alsa. Fixing in alsa is difficult, so workaround here.
 	*/
@@ -184,7 +184,7 @@ static void audio_bypass_snd_read_process(MSFilter *f) {
 	ms_filter_lock(f);
 	if (d->state==MSPlayerPlaying){
 		{
-			int err;
+			ssize_t err;
 			mblk_t *om=allocb(bytes,0);
 			if (d->pause_time>0){
 				err=bytes;
@@ -221,7 +221,7 @@ static void audio_bypass_snd_read_process(MSFilter *f) {
 					}
 				}
 			}else{
-				ms_warning("Fail to read %i bytes: %s",bytes,strerror(errno));
+				ms_warning("Fail to read %zi bytes: %s",bytes,strerror(errno));
 			}
 		}
 	}
