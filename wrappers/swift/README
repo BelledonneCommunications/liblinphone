@@ -1,0 +1,21 @@
+Welcome to Linphone API's documentation!
+========================================
+What is liblinphone
+-------------------
+
+Liblinphone is a high level library for bringing SIP video call functionnality
+into an application. It aims at making easy the integration of the SIP
+video calls into any applications. All variants of linphone are directly based
+on it:
+
+* linphone (gtk interface)
+* linphonec (console interface)
+* linphone for iOS
+* linphone for Android
+
+Liblinphone is GPL (see COPYING file). Please understand the licencing details
+before using it!
+
+For any use of this library beyond the rights granted to you by the
+GPL license, please contact Belledonne Communications
+(contact@belledonne-communications.com).
