@@ -20,7 +20,7 @@
 #
 ############################################################################
 
-set(OTHER_LIBS_FOR_TESTER bctoolbox bctoolbox-tester ortp mediastreamer bellesip belr ${XML2_LIBRARIES} ${XSD_LIBRARIES})
+set(OTHER_LIBS_FOR_TESTER bctoolbox bctoolbox-tester ortp mediastreamer ${BELLESIP_TARGETNAME} belr ${XML2_LIBRARIES} ${XSD_LIBRARIES})
 
 if(INTL_FOUND)
 	list(APPEND OTHER_LIBS_FOR_TESTER ${INTL_LIBRARIES})
