@@ -22,7 +22,7 @@
 
 set(LINK_LIBS
 	bctoolbox
-	bellesip
+	${BELLESIP_TARGETNAME}
 	belr
 	mediastreamer
 	ortp
