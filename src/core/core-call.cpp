@@ -95,7 +95,7 @@ void CorePrivate::iterateCalls (time_t currentRealTime, bool oneSecondElapsed) c
 void CorePrivate::notifySoundcardUsage (bool used) {
 	L_Q();
 	MSSndCard *card = q->getCCore()->sound_conf.capt_sndcard;
-	if (card && (ms_snd_card_get_capabilities(card) & MS_SND_CARD_CAP_IS_SLOW))
+	if (!!lp_config_get_int(linphone_core_get_config(q->getCCore()),"sound","usage_hint",1) && card && (ms_snd_card_get_capabilities(card) & MS_SND_CARD_CAP_IS_SLOW))
 		ms_snd_card_set_usage_hint(card, used);
 }
 
