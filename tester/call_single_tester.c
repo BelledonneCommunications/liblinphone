@@ -582,7 +582,53 @@ end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+static void call_with_maxptime(void) {
+	
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	bool_t call_ok;
+	//to make sure bandwidth for ptime 20 is 80kbits/s
+	linphone_core_enable_ipv6(marie->lc,FALSE);
+	linphone_core_enable_ipv6(pauline->lc,FALSE);
+	linphone_core_manager_start(marie, TRUE);
+	linphone_core_manager_start(pauline, TRUE);
+	
+	/*Force marie to play from file: if soundcard is used and it is silient, then vbr mode will drop down the bitrate
+	 Note that a play file is already set by linphone_core_manager_new() (but not used)*/
+	linphone_core_set_use_files(marie->lc, TRUE);
+	
+	disable_all_audio_codecs_except_one(marie->lc, "PCMA", 8000);
+	disable_all_audio_codecs_except_one(pauline->lc, "PCMA", 8000);
+	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_add_custom_sdp_media_attribute(marie_params,LinphoneStreamTypeAudio, "maxptime","40");
+	LinphoneCallParams *pauline_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_add_custom_sdp_media_attribute(pauline_params,LinphoneStreamTypeAudio, "maxptime","40");
+	
+	linphone_core_set_upload_ptime(pauline->lc, 100);
+	linphone_core_set_upload_ptime(marie->lc, 100);
+	
+	BC_ASSERT_TRUE((call_ok=call_with_params(pauline,marie,pauline_params,marie_params)));
+	linphone_call_params_unref(marie_params);
+	linphone_call_params_unref(pauline_params);
+	
+	if (!call_ok) goto end;
+	liblinphone_tester_check_rtcp(marie,pauline);
+	/*wait a bit that bitstreams are stabilized*/
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 2000);
+	
+	//network-birate = ((codec-birate*ptime/8) + RTP header + UDP header + IP header)*8/ptime;
+	
+	BC_ASSERT_LOWER(linphone_core_manager_get_mean_audio_up_bw(pauline), 80, int, "%i");
+	BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_up_bw(pauline), 70, int, "%i"); //without maxptime=40, it should be 67
+	BC_ASSERT_LOWER(linphone_core_manager_get_mean_audio_up_bw(marie), 80, int, "%i");
+	BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_up_bw(marie), 70, int, "%i"); //without maxptime=40, it should be 67
+	
+	end_call(pauline, marie);
 
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
 
 void disable_all_codecs(const bctbx_list_t* elem, LinphoneCoreManager* call){
 
@@ -5002,6 +5048,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call established with rejected info during re-invite", call_established_with_rejected_info_during_reinvite),
 	TEST_NO_TAG("Call redirected by callee", call_redirect),
 	TEST_NO_TAG("Call with specified codec bitrate", call_with_specified_codec_bitrate),
+	TEST_NO_TAG("Call with maxptime", call_with_maxptime),
 	TEST_NO_TAG("Call with no audio codec", call_with_no_audio_codec),
 	TEST_NO_TAG("Call with in-dialog UPDATE request", call_with_in_dialog_update),
 	TEST_NO_TAG("Call with in-dialog very early call request", call_with_very_early_call_update),

@@ -259,6 +259,7 @@ typedef struct SalStreamDescription{
 	MSList *already_assigned_payloads; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
 	int bandwidth;
 	int ptime;
+	int maxptime;
 	SalStreamDir dir;
 	SalSrtpCryptoAlgo crypto[SAL_CRYPTO_ALGO_MAX];
 	unsigned int crypto_local_tag;
