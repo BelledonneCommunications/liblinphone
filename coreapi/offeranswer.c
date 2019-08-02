@@ -420,6 +420,7 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		result->rtcp_port=remote_answer->rtcp_port;
 		result->bandwidth=remote_answer->bandwidth;
 		result->ptime=remote_answer->ptime;
+		result->maxptime=remote_answer->maxptime;
 	}else{
 		result->rtp_port=0;
 	}
@@ -475,6 +476,7 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		result->rtcp_port=0; /* rtcp not supported yet*/
 		result->bandwidth=remote_offer->bandwidth;
 		result->ptime=remote_offer->ptime;
+		result->maxptime=remote_offer->maxptime;
 		result->ttl=remote_offer->ttl;
 		result->multicast_role = SalMulticastReceiver;
 	} else {
@@ -484,6 +486,7 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		result->rtcp_port=local_cap->rtcp_port;
 		result->bandwidth=local_cap->bandwidth;
 		result->ptime=local_cap->ptime;
+		result->maxptime=local_cap->maxptime;
 	}
 
 	if (sal_stream_description_has_srtp(result) == TRUE) {

@@ -2291,6 +2291,11 @@ RtpProfile * MediaSessionPrivate::makeProfile (const SalMediaDescription *md, co
 			pt->normal_bitrate = PayloadTypeHandler::getMinBandwidth(pt->normal_bitrate, bandwidth * 1000);
 		} else
 			pt->normal_bitrate = bandwidth * 1000;
+		if (desc->maxptime > 0) {// follow the same schema for maxptime as for ptime. (I.E add it to fmtp)
+			ostringstream os;
+			os << "maxptime=" << desc->maxptime;
+			payload_type_append_send_fmtp(pt, os.str().c_str());
+		}
 		if (desc->ptime > 0)
 			upPtime = desc->ptime;
 		if (upPtime > 0) {
