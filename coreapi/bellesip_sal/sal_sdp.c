@@ -477,6 +477,7 @@ static void sdp_parse_payload_types(belle_sdp_media_description_t *media_desc, S
 		payload_type_set_avpf_params(pt, avpf_params);
 		stream->payloads=bctbx_list_append ( stream->payloads,pt );
 		stream->ptime=belle_sdp_mime_parameter_get_ptime ( mime_param );
+		stream->maxptime=belle_sdp_mime_parameter_get_max_ptime ( mime_param );
 		ms_message ( "Found payload %s/%i fmtp=%s",pt->mime_type,pt->clock_rate,
 						pt->send_fmtp ? pt->send_fmtp : "" );
 	}

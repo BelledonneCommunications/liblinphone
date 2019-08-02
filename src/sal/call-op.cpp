@@ -307,6 +307,7 @@ void SalCallOp::sdpProcess () {
 			if (mResult->streams[i].rtp_port != 0) { // If the stream was accepted
 				strcpy(mResult->streams[i].rtp_addr, mRemoteMedia->streams[i].rtp_addr);
 				mResult->streams[i].ptime = mRemoteMedia->streams[i].ptime;
+				mResult->streams[i].maxptime = mRemoteMedia->streams[i].maxptime;
 				mResult->streams[i].bandwidth = mRemoteMedia->streams[i].bandwidth;
 				mResult->streams[i].rtp_port = mRemoteMedia->streams[i].rtp_port;
 				strcpy(mResult->streams[i].rtcp_addr, mRemoteMedia->streams[i].rtcp_addr);
