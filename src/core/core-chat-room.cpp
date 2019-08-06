@@ -357,7 +357,7 @@ list<shared_ptr<AbstractChatRoom>> Core::getChatRooms () const {
 	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		if (hideEmptyChatRooms) {
-			if (chatRoom->isEmpty()) {
+			if (chatRoom->isEmpty() && (chatRoom->getCapabilities() & LinphoneChatRoomCapabilitiesOneToOne)) {
 				continue;
 			}
 		}
