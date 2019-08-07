@@ -25,6 +25,7 @@
 #include <Foundation/Foundation.h>
 #include <SystemConfiguration/SystemConfiguration.h>
 #include <SystemConfiguration/CaptiveNetwork.h>
+#include  <notify_keys.h>
 
 #include <belr/grammarbuilder.h>
 
@@ -70,13 +71,10 @@ public:
 	void setVideoWindow (void *windowId) override {}
 	void resizeVideoPreview (int width, int height) override {}
 
-	bool isNetworkReachable () override;
 	void onWifiOnlyEnabled (bool enabled) override;
 	void setDnsServers () override;
 	void setHttpProxy (const string &host, int port) override;
-	void setNetworkReachable (bool reachable) override;
-
-        bool startNetworkMonitoring() override;
+	bool startNetworkMonitoring() override;
 	void stopNetworkMonitoring() override;
 
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
@@ -101,7 +99,7 @@ private:
 	int mCpuLockCount;
 
 	SCNetworkReachabilityRef reachabilityRef = NULL;
-	SCNetworkReachabilityFlags mCurrentFlags;
+	SCNetworkReachabilityFlags mCurrentFlags = 0 ;
 
 	static const string Framework;
 };
@@ -115,6 +113,7 @@ const string IosPlatformHelpers::Framework = "org.linphone.linphone";
 IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
 	mCpuLockCount = 0;
 	mCpuLockTaskId = 0;
+	mNetworkReachable = 0; // wait until monitor to give a status;
 
 	string cpimPath = getResourceDirPath(Framework, "cpim_grammar");
 	if (!cpimPath.empty())
@@ -255,13 +254,10 @@ void IosPlatformHelpers::onLinphoneCoreStop() {
 	}
 }
 
-bool IosPlatformHelpers::isNetworkReachable() {
-	return mNetworkReachable;
-}
 
 void IosPlatformHelpers::onWifiOnlyEnabled(bool enabled) {
 	mWifiOnly = enabled;
-	if (mNetworkReachable) {
+	if (isNetworkReachable()) {
 		//Nothing to do if we have no connection
 		if (enabled && (mCurrentFlags & kSCNetworkReachabilityFlagsIsWWAN)) {
 			onNetworkChanged(false, true);
@@ -319,10 +315,6 @@ void IosPlatformHelpers::getHttpProxySettings(void) {
 	}
 }
 
-void IosPlatformHelpers::setNetworkReachable(bool reachable) {
-	linphone_core_set_network_reachable(getCore()->getCCore(), reachable);
-}
-
 static void showNetworkFlags(SCNetworkReachabilityFlags flags) {
 	ms_message("Network connection flags:");
 
@@ -365,7 +357,7 @@ bool IosPlatformHelpers::startNetworkMonitoring(void) {
 	if (reachabilityRef == NULL) {
 		return false;
 	}
-	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), (void *) this, sNetworkChangeCallback, CFSTR("com.apple.system.config.network_change"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately /*Ignored*/);
+	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), (void *) this, sNetworkChangeCallback, CFSTR(kNotifySCNetworkChange), NULL, CFNotificationSuspensionBehaviorDeliverImmediately /*Ignored*/);
 
 	//Load and trigger initial state
 	networkChangeCallback();
@@ -396,14 +388,14 @@ void IosPlatformHelpers::networkChangeCallback() {
 	//We receive this notification multiple time for possibly unknown reasons
 	//So take actions only if state changed of our internal network-related properties
 
-	bool reachable = mNetworkReachable, changed = false, force = false;
+	bool reachable = isNetworkReachable(), changed = false, force = false;
 
 	SCNetworkReachabilityFlags flags;
 	if (SCNetworkReachabilityGetFlags(reachabilityRef, &flags)) {
 		showNetworkFlags(flags);
 
 		reachable = isReachable(flags);
-		if (flags != mCurrentFlags || reachable != mNetworkReachable) {
+		if (flags != mCurrentFlags || reachable != isNetworkReachable()) {
 			changed = true;
 			if (mCurrentFlags == 0) {
 				//Force reinit after network down
@@ -418,7 +410,7 @@ void IosPlatformHelpers::networkChangeCallback() {
 		changed = true;
 		//We possibly changed network, force reset of transports
 		force = true;
-		ms_message("New Wifi SSID detected: %s", mCurrentSSID.c_str());
+		ms_message("New Wifi SSID detected: %s", mCurrentSSID.empty()?"[none]":mCurrentSSID.c_str());
 	}
 	getHttpProxySettings();
 	if (mHttpProxyEnabled) {
@@ -468,11 +460,13 @@ bool IosPlatformHelpers::isReachable(SCNetworkReachabilityFlags flags) {
 
 //Method called when we detected actual network changes in callbacks
 void IosPlatformHelpers::onNetworkChanged(bool reachable, bool force) {
-	if (reachable != mNetworkReachable || force) {
+	if (reachable != isNetworkReachable() || force) {
 		ms_message("Global network status changed: reachable: [%d].", (int) reachable);
-		mNetworkReachable = reachable;
-
 		setHttpProxy(mHttpProxyHost, mHttpProxyPort);
+		if (force && reachable){
+			//mandatory to  trigger action from the core in case of switch from 3G to wifi (both up)
+			setNetworkReachable(FALSE);
+		}
 		setNetworkReachable(reachable);
 	}
 }
