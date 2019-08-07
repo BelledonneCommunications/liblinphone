@@ -34,6 +34,7 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneImNotifPolicy, belle_sip_object_t,
 );
 
 static void load_im_notif_policy_from_config(LinphoneImNotifPolicy *policy) {
+#ifdef HAVE_ADVANCED_IM
 	bctbx_list_t *default_list = bctbx_list_append(NULL, (void *)"all");
 	bctbx_list_t *values = lp_config_get_string_list(policy->lc->config, "sip", "im_notif_policy", default_list);
 	bctbx_list_t *elem;
@@ -72,9 +73,18 @@ static void load_im_notif_policy_from_config(LinphoneImNotifPolicy *policy) {
 		bctbx_list_free_with_data(values, ms_free);
 	}
 	bctbx_list_free(default_list);
+#else
+	policy->send_is_composing = FALSE;
+	policy->recv_is_composing = FALSE;
+	policy->send_imdn_delivered = FALSE;
+	policy->recv_imdn_delivered = FALSE;
+	policy->send_imdn_displayed = FALSE;
+	policy->recv_imdn_displayed = FALSE;
+#endif
 }
 
 static void save_im_notif_policy_to_config(LinphoneImNotifPolicy *policy) {
+#ifdef HAVE_ADVANCED_IM
 	bctbx_list_t *values = NULL;
 	if ((policy->send_is_composing == TRUE)
 		&& (policy->recv_is_composing == TRUE)
@@ -106,6 +116,7 @@ static void save_im_notif_policy_to_config(LinphoneImNotifPolicy *policy) {
 	}
 	lp_config_set_string_list(policy->lc->config, "sip", "im_notif_policy", values);
 	if (values != NULL) bctbx_list_free(values);
+#endif
 }
 
 LinphoneImNotifPolicy * linphone_im_notif_policy_ref(LinphoneImNotifPolicy *policy) {
@@ -137,6 +148,7 @@ void linphone_im_notif_policy_clear(LinphoneImNotifPolicy *policy) {
 }
 
 void linphone_im_notif_policy_enable_all(LinphoneImNotifPolicy *policy) {
+#ifdef HAVE_ADVANCED_IM
 	policy->send_is_composing = TRUE;
 	policy->recv_is_composing = TRUE;
 	policy->send_imdn_delivered = TRUE;
@@ -144,6 +156,9 @@ void linphone_im_notif_policy_enable_all(LinphoneImNotifPolicy *policy) {
 	policy->send_imdn_displayed = TRUE;
 	policy->recv_imdn_displayed = TRUE;
 	save_im_notif_policy_to_config(policy);
+#else
+	ms_warning("Cannot enable im policy because ENABLE_ADVANCED_IM is OFF");
+#endif
 }
 
 bool_t linphone_im_notif_policy_get_send_is_composing(const LinphoneImNotifPolicy *policy) {

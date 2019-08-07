@@ -24,15 +24,18 @@
 #include "address/identity-address.h"
 #include "chat/chat-room/abstract-chat-room.h"
 #include "chat/chat-room/basic-chat-room.h"
-#include "chat/chat-room/basic-to-client-group-chat-room.h"
 #include "chat/chat-room/chat-room-p.h"
-#include "chat/chat-room/client-group-chat-room-p.h"
-#include "chat/chat-room/client-group-to-basic-chat-room.h"
 #include "chat/chat-room/real-time-text-chat-room.h"
-#include "conference/handlers/remote-conference-list-event-handler.h"
 #include "conference/participant.h"
 #include "core-p.h"
 #include "logger/logger.h"
+
+#ifdef HAVE_ADVANCED_IM
+#include "chat/chat-room/basic-to-client-group-chat-room.h"
+#include "chat/chat-room/client-group-chat-room-p.h"
+#include "chat/chat-room/client-group-to-basic-chat-room.h"
+#include "conference/handlers/remote-conference-list-event-handler.h"
+#endif
 
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
@@ -105,6 +108,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	const std::shared_ptr<ChatRoomParams> &params,
 	bool fallback
 ) {
+#ifdef HAVE_ADVANCED_IM
 	L_Q();
 
 	if (!params || !params->isValid()) {
@@ -138,6 +142,10 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	chatRoom->getPrivate()->setState(ChatRoom::State::Instantiated);
 	noCreatedClientGroupChatRooms[chatRoom.get()] = chatRoom;
 	return chatRoom;
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+	return nullptr;
+#endif
 }
 
 shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
@@ -146,6 +154,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	const Content &content,
 	bool encrypted
 ) {
+#ifdef HAVE_ADVANCED_IM
 	L_Q();
 
 	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(encrypted, true, ChatRoomParams::ChatRoomBackend::FlexisipChat);
@@ -162,6 +171,10 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	clientGroupChatRoom->getPrivate()->setState(ChatRoom::State::Instantiated);
 	noCreatedClientGroupChatRooms[clientGroupChatRoom.get()] = clientGroupChatRoom;
 	return clientGroupChatRoom;
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+	return nullptr;
+#endif
 }
 
 //From deprecated public API
@@ -194,12 +207,16 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 			capabilities.unset(ChatRoom::Capabilities::Migratable);
 		}
 		
+#ifdef HAVE_ADVANCED_IM
 		if ((capabilities & ChatRoom::Capabilities::Migratable) && !conferenceFactoryUri.empty()) {
 			chatRoom.reset(new BasicToClientGroupChatRoom(shared_ptr<BasicChatRoom>(basicChatRoom)));
 		}
 		else {
+#endif
 			chatRoom.reset(basicChatRoom);
+#ifdef HAVE_ADVANCED_IM
 		}
+#endif
 	}
 	AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
 	dChatRoom->setState(ChatRoom::State::Instantiated);
@@ -210,7 +227,9 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 
 
 shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRoomParams> &params, const IdentityAddress &localAddr, const std::string &subject, const std::list<IdentityAddress> &participants) {
+#ifdef HAVE_ADVANCED_IM
 	L_Q();
+#endif
 
 	if (!params) {
 		lWarning() << "Trying to create chat room with null parameters";
@@ -220,9 +239,17 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 		lWarning() << "Trying to create chat room with invalid parameters " << params->toString();
 		return nullptr;
 	}
+	if (!linphone_factory_is_chatroom_backend_available(
+			linphone_factory_get(), 
+			static_cast<LinphoneChatRoomBackend>(params->getChatRoomBackend()))
+	) {
+		lWarning() << "Tying to create chat room with unavailable backend";
+		return nullptr;
+	}
 	
 	shared_ptr<AbstractChatRoom> chatRoom;
 	if (params->getChatRoomBackend() == ChatRoomParams::ChatRoomBackend::FlexisipChat) {
+#ifdef HAVE_ADVANCED_IM
 		string conferenceFactoryUri = getConferenceFactoryUri(q->getSharedFromThis(), localAddr);
 		if (conferenceFactoryUri.empty()) {
 			lWarning() << "Not creating group chat room: no conference factory uri for local address [" << localAddr << "]";
@@ -237,6 +264,10 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 						     params,
 						     false);
 		chatRoom->addParticipants(participants, nullptr, false);
+#else
+		lWarning() << "Advanced IM such as group chat is disabled!";
+		return nullptr;
+#endif
 	} else {
 		if (participants.size() != 1) {
 			lWarning() << "Trying to create BasicChatRoom with zero or more than one participant";
@@ -305,8 +336,10 @@ void CorePrivate::insertChatRoomWithDb (const shared_ptr<AbstractChatRoom> &chat
 
 void CorePrivate::loadChatRooms () {
 	chatRoomsById.clear();
+#ifdef HAVE_ADVANCED_IM
 	if (remoteListEventHandler)
 		remoteListEventHandler->clearHandlers();
+#endif
 
 	if (!mainDb->isInitialized()) return;
 	for (auto &chatRoom : mainDb->getChatRooms()) {

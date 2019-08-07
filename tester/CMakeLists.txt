@@ -224,7 +224,6 @@ set(SOURCE_FILES_C
 
 set(SOURCE_FILES_CXX
 	clonable-object-tester.cpp
-	conference-event-tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
 	main-db-tester.cpp
@@ -232,6 +231,10 @@ set(SOURCE_FILES_CXX
 	property-container-tester.cpp
 	utils-tester.cpp
 )
+
+if(ENABLE_ADVANCED_IM)
+	list(APPEND SOURCE_FILES_CXX conference-event-tester.cpp)
+endif()
 
 set(HEADER_FILES
 	liblinphone_tester.h

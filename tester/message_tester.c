@@ -393,7 +393,9 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 			linphone_chat_room_mark_as_read(marie_room);
 			if (auto_download == -1 || (auto_download > 0 && auto_download < file_transfer_size)) {
 				// We shoudln't get displayed IMDN until file has been downloaded
-				BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+					BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+				}
 
 				LinphoneChatMessage *recv_msg;
 				if (download_from_history) {
@@ -421,16 +423,22 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), -1);
 					BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageNotDelivered,1, 10000));
 					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), 0);
-					BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+					if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+						BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+					}
 				} else {
 					/* wait for a long time in case the DNS SRV resolution takes times - it should be immediate though */
 					if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,1,55000))) {
 						compare_files(send_filepath, receive_filepath);
 					}
-					BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+					if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+						BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+					}
 				}
 			} else {
-				BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+					BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+				}
 				contents = linphone_chat_message_get_contents(msg);
 				BC_ASSERT_PTR_NOT_NULL(contents);
 				BC_ASSERT_EQUAL(1, bctbx_list_size(contents), int, "%d");
@@ -861,6 +869,7 @@ static int enable_lime_for_message_test(LinphoneCoreManager *marie, LinphoneCore
 	return 0;
 }
 
+#ifdef HAVE_ADVANCED_IM
 static void _is_composing_notification(bool_t lime_enabled) {
 	LinphoneChatRoom* pauline_chat_room;
 	LinphoneChatRoom* marie_chat_room;
@@ -1095,6 +1104,7 @@ static void imdn_notifications_with_lime(void) {
 static void im_notification_policy_with_lime(void) {
 	_im_notification_policy(TRUE);
 }
+#endif
 
 static void _im_error_delivery_notification(bool_t online) {
 	LinphoneChatRoom *chat_room;
@@ -2500,14 +2510,18 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer using external body URL 2", file_transfer_using_external_body_url_2),
 	TEST_NO_TAG("Transfer using external body URL 404", file_transfer_using_external_body_url_404),
 	TEST_NO_TAG("Text message denied", text_message_denied),
+#ifdef HAVE_ADVANCED_IM
 	TEST_NO_TAG("IsComposing notification", is_composing_notification),
 	TEST_NO_TAG("IMDN notifications", imdn_notifications),
 	TEST_NO_TAG("IM notification policy", im_notification_policy),
+#endif
 	TEST_NO_TAG("Unread message count", unread_message_count),
 	TEST_NO_TAG("Unread message count in callback", unread_message_count_callback),
+#ifdef HAVE_ADVANCED_IM
 	TEST_ONE_TAG("IsComposing notification lime", is_composing_notification_with_lime, "LIME"),
 	TEST_ONE_TAG("IMDN notifications with lime", imdn_notifications_with_lime, "LIME"),
 	TEST_ONE_TAG("IM notification policy with lime", im_notification_policy_with_lime, "LIME"),
+#endif
 	TEST_ONE_TAG("IM error delivery notification online", im_error_delivery_notification_online, "LIME"),
 	TEST_ONE_TAG("IM error delivery notification offline", im_error_delivery_notification_offline, "LIME"),
 	TEST_ONE_TAG("Lime text message", lime_text_message, "LIME"),

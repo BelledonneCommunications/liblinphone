@@ -24,8 +24,10 @@
 
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
+#ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/client-group-chat-room.h"
 #include "chat/chat-room/server-group-chat-room.h"
+#endif
 #include "conference/participant-device.h"
 #include "conference/participant-p.h"
 #include "core/core-p.h"
@@ -2642,15 +2644,13 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 			time_t lastUpdateTime = d->dbSession.getTime(row, 4);
 			int capabilities = row.get<int>(5);
 			string subject = row.get<string>(6, "");
-			unsigned int lastNotifyId = getBackend() == Backend::Mysql
-				? row.get<unsigned int>(7, 0)
-				: static_cast<unsigned int>(row.get<int>(7, 0));
 
 			shared_ptr<ChatRoomParams> params = ChatRoomParams::fromCapabilities(capabilities);
 			if (capabilities & ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Basic)) {
 				chatRoom = core->getPrivate()->createBasicChatRoom(conferenceId, capabilities, params);
 				chatRoom->setSubject(subject);
 			} else if (capabilities & ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Conference)) {
+#ifdef HAVE_ADVANCED_IM
 				list<shared_ptr<Participant>> participants;
 
 				static const string query = "SELECT chat_room_participant.id, sip_address.value, is_admin"
@@ -2660,6 +2660,9 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 					" AND chat_room_participant.chat_room_id = chat_room.id";
 
 				// Fetch participants.
+				unsigned int lastNotifyId = getBackend() == Backend::Mysql
+					? row.get<unsigned int>(7, 0)
+					: static_cast<unsigned int>(row.get<int>(7, 0));
 				soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 				shared_ptr<Participant> me;
 				for (const auto &row : rows) {
@@ -2732,6 +2735,9 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 				}
 				for (auto participant : chatRoom->getParticipants())
 					participant->getPrivate()->setConference(conference);
+#else
+				lWarning() << "Advanced IM such as group chat is disabled!";
+#endif
 			}
 
 			if (!chatRoom)

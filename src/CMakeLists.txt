@@ -27,8 +27,10 @@ set(LIBS
 	${ORTP_LIBRARIES}
 	${XML2_LIBRARIES}
 	${BELR_LIBRARIES}
-	${LIBXSD_LIBRARIES}
 )
+if(ENABLE_ADVANCED_IM)
+	list(APPEND LIBS ${LIBXSD_LIBRARIES})
+endif()
 if(APPLE)
 	list(APPEND LIBS "-framework CFNetwork")
 endif()
@@ -105,19 +107,11 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/chat-room/abstract-chat-room.h
 	chat/chat-room/basic-chat-room-p.h
 	chat/chat-room/basic-chat-room.h
-	chat/chat-room/basic-to-client-group-chat-room.h
 	chat/chat-room/chat-room-listener.h
 	chat/chat-room/chat-room-p.h
 	chat/chat-room/chat-room.h
-	chat/chat-room/client-group-chat-room-p.h
-	chat/chat-room/client-group-chat-room.h
-	chat/chat-room/client-group-to-basic-chat-room.h
-	chat/chat-room/proxy-chat-room-p.h
-	chat/chat-room/proxy-chat-room.h
 	chat/chat-room/real-time-text-chat-room-p.h
 	chat/chat-room/real-time-text-chat-room.h
-	chat/chat-room/server-group-chat-room-p.h
-	chat/chat-room/server-group-chat-room.h
 	chat/cpim/cpim.h
 	chat/cpim/header/cpim-core-headers.h
 	chat/cpim/header/cpim-generic-header.h
@@ -139,12 +133,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/conference-listener.h
 	conference/conference-p.h
 	conference/conference.h
-	conference/handlers/local-conference-event-handler-p.h
-	conference/handlers/local-conference-event-handler.h
-	conference/handlers/local-conference-list-event-handler.h
-	conference/handlers/remote-conference-event-handler-p.h
-	conference/handlers/remote-conference-event-handler.h
-	conference/handlers/remote-conference-list-event-handler.h
 	conference/local-conference-p.h
 	conference/local-conference.h
 	conference/params/call-session-params-p.h
@@ -230,14 +218,34 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	utils/general-internal.h
 	utils/payload-type-handler.h
 	variant/variant.h
-	xml/conference-info.h
-	xml/imdn.h
-	xml/is-composing.h
-	xml/linphone-imdn.h
-	xml/resource-lists.h
-	xml/rlmi.h
-	xml/xml.h
 )
+
+if(ENABLE_ADVANCED_IM)
+	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
+		chat/chat-room/basic-to-client-group-chat-room.h
+		chat/chat-room/client-group-chat-room-p.h
+		chat/chat-room/client-group-chat-room.h
+		chat/chat-room/client-group-to-basic-chat-room.h
+		chat/chat-room/proxy-chat-room-p.h
+		chat/chat-room/proxy-chat-room.h
+		chat/chat-room/server-group-chat-room-p.h
+		chat/chat-room/server-group-chat-room.h
+		conference/handlers/local-conference-event-handler-p.h
+		conference/handlers/local-conference-event-handler.h
+		conference/handlers/local-conference-list-event-handler.h
+		conference/handlers/remote-conference-event-handler-p.h
+		conference/handlers/remote-conference-event-handler.h
+		conference/handlers/remote-conference-list-event-handler.h
+		xml/conference-info.h
+		xml/imdn.h
+		xml/is-composing.h
+		xml/linphone-imdn.h
+		xml/resource-lists.h
+		xml/rlmi.h
+		xml/xml.h
+	)
+	list(SORT LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES)
+endif()
 
 set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	address/address.cpp
@@ -261,7 +269,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-magic-search.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-participant-device.cpp
-	c-wrapper/api/c-participant-device-identity.cpp
 	c-wrapper/api/c-participant-imdn-state.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-search-result.cpp
@@ -277,13 +284,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/chat-message/notification-message.cpp
 	chat/chat-room/abstract-chat-room.cpp
 	chat/chat-room/basic-chat-room.cpp
-	chat/chat-room/basic-to-client-group-chat-room.cpp
 	chat/chat-room/chat-room.cpp
-	chat/chat-room/client-group-chat-room.cpp
-	chat/chat-room/client-group-to-basic-chat-room.cpp
-	chat/chat-room/proxy-chat-room.cpp
 	chat/chat-room/real-time-text-chat-room.cpp
-	chat/chat-room/server-group-chat-room.cpp
 	chat/chat-room/chat-room-params.cpp
 	chat/cpim/header/cpim-core-headers.cpp
 	chat/cpim/header/cpim-generic-header.cpp
@@ -299,10 +301,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/notification/is-composing.cpp
 	conference/conference-id.cpp
 	conference/conference.cpp
-	conference/handlers/local-conference-event-handler.cpp
-	conference/handlers/local-conference-list-event-handler.cpp
-	conference/handlers/remote-conference-event-handler.cpp
-	conference/handlers/remote-conference-list-event-handler.cpp
 	conference/local-conference.cpp
 	conference/params/call-session-params.cpp
 	conference/params/media-session-params.cpp
@@ -368,14 +366,30 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	utils/payload-type-handler.cpp
 	utils/utils.cpp
 	variant/variant.cpp
-	xml/conference-info.cpp
-	xml/imdn.cpp
-	xml/is-composing.cpp
-	xml/linphone-imdn.cpp
-	xml/resource-lists.cpp
-	xml/rlmi.cpp
-	xml/xml.cpp
 )
+
+if(ENABLE_ADVANCED_IM)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
+		c-wrapper/api/c-participant-device-identity.cpp
+		chat/chat-room/basic-to-client-group-chat-room.cpp
+		chat/chat-room/client-group-chat-room.cpp
+		chat/chat-room/client-group-to-basic-chat-room.cpp
+		chat/chat-room/proxy-chat-room.cpp
+		chat/chat-room/server-group-chat-room.cpp
+		conference/handlers/local-conference-event-handler.cpp
+		conference/handlers/local-conference-list-event-handler.cpp
+		conference/handlers/remote-conference-event-handler.cpp
+		conference/handlers/remote-conference-list-event-handler.cpp
+		xml/conference-info.cpp
+		xml/imdn.cpp
+		xml/is-composing.cpp
+		xml/linphone-imdn.cpp
+		xml/resource-lists.cpp
+		xml/rlmi.cpp
+		xml/xml.cpp
+	)
+	list(SORT LINPHONE_CXX_OBJECTS_SOURCE_FILES)
+endif()
 
 set(LINPHONE_OBJC_SOURCE_FILES)
 if (APPLE)

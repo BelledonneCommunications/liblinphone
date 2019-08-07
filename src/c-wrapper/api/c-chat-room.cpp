@@ -31,8 +31,10 @@
 #include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/real-time-text-chat-room-p.h"
+#ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/client-group-chat-room-p.h"
 #include "chat/chat-room/server-group-chat-room-p.h"
+#endif
 #include "conference/participant.h"
 #include "core/core-p.h"
 #include "event-log/event-log.h"
@@ -383,6 +385,7 @@ const bctbx_list_t *linphone_chat_room_get_composing_addresses (LinphoneChatRoom
 }
 
 void linphone_chat_room_set_conference_address (LinphoneChatRoom *cr, const LinphoneAddress *confAddr) {
+#ifdef HAVE_ADVANCED_IM
 	char *addrStr = confAddr ? linphone_address_as_string(confAddr) : nullptr;
 	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr = dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
 	if (sgcr) {
@@ -391,24 +394,35 @@ void linphone_chat_room_set_conference_address (LinphoneChatRoom *cr, const Linp
 	}
 	if (addrStr)
 		bctbx_free(addrStr);
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+#endif
 }
 
 void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const LinphoneAddress *partAddr, const bctbx_list_t *deviceIdentities) {
+#ifdef HAVE_ADVANCED_IM
 	char *addrStr = linphone_address_as_string(partAddr);
 	list<LinphonePrivate::ParticipantDeviceIdentity> lDevicesIdentities = L_GET_RESOLVED_CPP_LIST_FROM_C_LIST(deviceIdentities, ParticipantDeviceIdentity);
 	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr = dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
 	if (sgcr)
 		sgcr->setParticipantDevices(LinphonePrivate::IdentityAddress(addrStr), lDevicesIdentities);
 	bctbx_free(addrStr);
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+#endif
 }
 
 void linphone_chat_room_notify_participant_device_registration(LinphoneChatRoom *cr, const LinphoneAddress *participant_device){
+#ifdef HAVE_ADVANCED_IM
 	char *addrStr = linphone_address_as_string(participant_device);
 	list<LinphonePrivate::IdentityAddress> lIdentAddr;
 	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr = dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
 	if (sgcr)
 		sgcr->notifyParticipantDeviceRegistration(LinphonePrivate::IdentityAddress(addrStr));
 	bctbx_free(addrStr);
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+#endif
 }
 
 // =============================================================================
@@ -554,6 +568,7 @@ void linphone_chat_room_set_user_data (LinphoneChatRoom *cr, void *ud) {
 // =============================================================================
 
 LinphoneChatRoom *_linphone_server_group_chat_room_new (LinphoneCore *core, LinphonePrivate::SalCallOp *op) {
+#ifdef HAVE_ADVANCED_IM
 	LinphoneChatRoom *cr = L_INIT(ChatRoom);
 	L_SET_CPP_PTR_FROM_C_OBJECT(cr, make_shared<LinphonePrivate::ServerGroupChatRoom>(
 		L_GET_CPP_PTR_FROM_C_OBJECT(core),
@@ -562,4 +577,8 @@ LinphoneChatRoom *_linphone_server_group_chat_room_new (LinphoneCore *core, Linp
 	L_GET_PRIVATE_FROM_C_OBJECT(cr)->setState(LinphonePrivate::ChatRoom::State::Instantiated);
 	L_GET_PRIVATE_FROM_C_OBJECT(cr, ServerGroupChatRoom)->confirmCreation();
 	return cr;
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+	return NULL;
+#endif
 }
