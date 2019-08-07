@@ -25,7 +25,10 @@
 #include "content/content-type.h"
 #include "logger/logger.h"
 #include "participant-p.h"
+
+#ifdef HAVE_ADVANCED_IM
 #include "xml/resource-lists.h"
+#endif
 
 // =============================================================================
 
@@ -180,6 +183,7 @@ bool Conference::isMe (const IdentityAddress &addr) const {
 // -----------------------------------------------------------------------------
 
 string Conference::getResourceLists (const list<IdentityAddress> &addresses) const {
+#ifdef HAVE_ADVANCED_IM
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
 	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
 	for (const auto &addr : addresses) {
@@ -192,11 +196,16 @@ string Conference::getResourceLists (const list<IdentityAddress> &addresses) con
 	stringstream xmlBody;
 	serializeResourceLists(xmlBody, rl, map);
 	return xmlBody.str();
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+	return "";
+#endif
 }
 
 // -----------------------------------------------------------------------------
 
 list<IdentityAddress> Conference::parseResourceLists (const Content &content) {
+#ifdef HAVE_ADVANCED_IM
 	if ((content.getContentType() == ContentType::ResourceLists)
 		&& ((content.getContentDisposition().weakEqual(ContentDisposition::RecipientList))
 			|| (content.getContentDisposition().weakEqual(ContentDisposition::RecipientListHistory))
@@ -217,6 +226,10 @@ list<IdentityAddress> Conference::parseResourceLists (const Content &content) {
 		return addresses;
 	}
 	return list<IdentityAddress>();
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+	return list<IdentityAddress>();
+#endif
 }
 
 LINPHONE_END_NAMESPACE

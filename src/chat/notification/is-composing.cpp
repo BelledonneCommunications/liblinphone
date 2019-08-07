@@ -24,7 +24,10 @@
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/notification/is-composing.h"
 #include "logger/logger.h"
+
+#ifdef HAVE_ADVANCED_IM
 #include "xml/is-composing.h"
+#endif
 
 
 // =============================================================================
@@ -53,6 +56,7 @@ IsComposing::~IsComposing () {
 // -----------------------------------------------------------------------------
 
 string IsComposing::createXml (bool isComposing) {
+#ifdef HAVE_ADVANCED_IM
 	Xsd::IsComposing::IsComposing node(isComposing ? "active" : "idle");
 	if (isComposing)
 		node.setRefresh(static_cast<unsigned long long>(lp_config_get_int(core->config, "sip", "composing_refresh_timeout", defaultRefreshTimeout)));
@@ -62,9 +66,14 @@ string IsComposing::createXml (bool isComposing) {
 	map[""].name = "urn:ietf:params:xml:ns:im-iscomposing";
 	Xsd::IsComposing::serializeIsComposing(ss, node, map, "UTF-8", Xsd::XmlSchema::Flags::dont_pretty_print);
 	return ss.str();
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+	return "";
+#endif
 }
 
 void IsComposing::parse (const Address &remoteAddr, const string &text) {
+#ifdef HAVE_ADVANCED_IM
 	istringstream data(text);
 	unique_ptr<Xsd::IsComposing::IsComposing> node(Xsd::IsComposing::parseIsComposing(data, Xsd::XmlSchema::Flags::dont_validate));
 	if (!node)
@@ -80,6 +89,9 @@ void IsComposing::parse (const Address &remoteAddr, const string &text) {
 		stopRemoteRefreshTimer(remoteAddr.asStringUriOnly());
 		listener->onIsRemoteComposingStateChanged(remoteAddr, false);
 	}
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+#endif
 }
 
 void IsComposing::startIdleTimer () {

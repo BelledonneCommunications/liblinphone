@@ -17,11 +17,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <algorithm>
 #include <iterator>
 
 #include <mediastreamer2/mscommon.h>
+
+#ifdef HAVE_ADVANCED_IM
 #include <xercesc/util/PlatformUtils.hpp>
+#endif
 
 #include "address/address-p.h"
 #include "call/call.h"
@@ -29,8 +36,10 @@
 #ifdef HAVE_LIME_X3DH
 #include "chat/encryption/lime-x3dh-encryption-engine.h"
 #endif
+#ifdef HAVE_ADVANCED_IM
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
+#endif
 #include "core/core-listener.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
@@ -54,8 +63,10 @@ LINPHONE_BEGIN_NAMESPACE
 void CorePrivate::init () {
 	L_Q();
 	mainDb.reset(new MainDb(q->getSharedFromThis()));
+#ifdef HAVE_ADVANCED_IM
 	remoteListEventHandler = makeUnique<RemoteConferenceListEventHandler>(q->getSharedFromThis());
 	localListEventHandler = makeUnique<LocalConferenceListEventHandler>(q->getSharedFromThis());
+#endif
 
 	AbstractDb::Backend backend;
 	string uri = L_C_TO_STRING(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
@@ -109,8 +120,10 @@ void CorePrivate::uninit () {
 		q->enableLimeX3dh(false);
 	}
 
+#ifdef HAVE_ADVANCED_IM
 	remoteListEventHandler = nullptr;
 	localListEventHandler = nullptr;
+#endif
 
 	AddressPrivate::clearSipAddressesCache();
 	if (mainDb != nullptr) {
@@ -204,12 +217,16 @@ bool CorePrivate::basicToFlexisipChatroomMigrationEnabled()const{
 Core::Core () : Object(*new CorePrivate) {
 	L_D();
 	d->imee.reset();
+#ifdef HAVE_ADVANCED_IM
 	xercesc::XMLPlatformUtils::Initialize();
+#endif
 }
 
 Core::~Core () {
 	lInfo() << "Destroying core: " << this;
+#ifdef HAVE_ADVANCED_IM
 	xercesc::XMLPlatformUtils::Terminate();
+#endif
 }
 
 shared_ptr<Core> Core::create (LinphoneCore *cCore) {

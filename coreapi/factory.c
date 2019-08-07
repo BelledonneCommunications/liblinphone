@@ -239,7 +239,12 @@ LinphoneParticipantDeviceIdentity *linphone_factory_create_participant_device_id
 	const LinphoneAddress *address,
 	const char *name
 ) {
+#ifdef HAVE_ADVANCED_IM
 	return linphone_participant_device_identity_new(address, name);
+#else
+	ms_warning("Advanced IM such as group chat is disabled");
+	return NULL;
+#endif
 }
 
 LinphoneAuthInfo *linphone_factory_create_auth_info(const LinphoneFactory *factory, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain) {
@@ -482,4 +487,21 @@ LinphoneAccountCreatorCbs *linphone_factory_create_account_creator_cbs(LinphoneF
 
 LinphoneXmlRpcRequestCbs *linphone_factory_create_xml_rpc_request_cbs(LinphoneFactory *factory) {
 	return linphone_xml_rpc_request_cbs_new();
+}
+
+bool_t linphone_factory_is_chatroom_backend_available(LinphoneFactory *factory, LinphoneChatRoomBackend chatroom_backend) {
+#ifdef HAVE_ADVANCED_IM
+	return TRUE;
+#else
+	return (chatroom_backend != LinphoneChatRoomBackendFlexisipChat);
+#endif
+}
+
+
+bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory) {
+#ifdef HAVE_ADVANCED_IM
+	return TRUE;
+#else
+	return FALSE;
+#endif
 }

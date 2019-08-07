@@ -1626,6 +1626,7 @@ end:
 	linphone_core_manager_destroy(marie);
 }
 
+#ifdef HAVE_ADVANCED_IM
 static void notify_friend_capabilities(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -2205,6 +2206,7 @@ static void notify_search_result_capabilities_with_alias(void) {
 		bctbx_list_free(lcs);
 	} else ms_warning("Test skipped, no vcard support");
 }
+#endif
 
 test_t presence_server_tests[] = {
 	TEST_NO_TAG("Simple Publish", simple_publish),
@@ -2237,10 +2239,12 @@ test_t presence_server_tests[] = {
 	TEST_ONE_TAG("Simple bodyless list subscription", simple_bodyless_list_subscription, "bodyless"),
 	TEST_ONE_TAG("Multiple bodyless list subscription", multiple_bodyless_list_subscription, "bodyless"),
 	TEST_ONE_TAG("Multiple bodyless list subscription with rc", multiple_bodyless_list_subscription_with_rc, "bodyless"),
+#ifdef HAVE_ADVANCED_IM
 	TEST_ONE_TAG("Notify LinphoneFriend capabilities", notify_friend_capabilities, "capabilities"),
 	TEST_ONE_TAG("Notify LinphoneFriend capabilities after PUBLISH", notify_friend_capabilities_after_publish, "capabilities"),
 	TEST_ONE_TAG("Notify LinphoneFriend capabilities with alias", notify_friend_capabilities_with_alias, "capabilities"),
 	TEST_ONE_TAG("Notify search result capabilities with alias", notify_search_result_capabilities_with_alias, "capabilities")
+#endif
 };
 
 test_suite_t presence_server_test_suite = {"Presence using server", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

@@ -40,6 +40,7 @@ include(cmake/Tools.cmake)
 option(ENABLE_SHARED "Build shared library." YES)
 option(ENABLE_STATIC "Build static library." YES)
 
+option(ENABLE_ADVANCED_IM "Enable advanced instant messaging such as group chat." YES)
 option(ENABLE_CONSOLE_UI "Turn on or off compilation of console interface." YES)
 option(ENABLE_CSHARP_WRAPPER "Build the C# wrapper for Liblinphone." OFF)
 option(ENABLE_CXX_WRAPPER "Build the C++ wrapper for Liblinphone." YES)
@@ -135,7 +136,11 @@ else()
 	find_package(Belr REQUIRED)
 endif()
 
-find_package(LibXsd REQUIRED)
+if(ENABLE_ADVANCED_IM)
+	find_package(LibXsd REQUIRED)
+	set(HAVE_ADVANCED_IM 1)
+endif()
+
 find_package(Sqlite3 REQUIRED)
 find_package(XML2 REQUIRED)
 

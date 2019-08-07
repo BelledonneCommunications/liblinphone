@@ -31,7 +31,9 @@ class LocalConferenceEventHandler;
 
 class LocalConferencePrivate : public ConferencePrivate {
 public:
+#ifdef HAVE_ADVANCED_IM
 	std::unique_ptr<LocalConferenceEventHandler> eventHandler;
+#endif
 
 private:
 	L_DECLARE_PUBLIC(LocalConference);

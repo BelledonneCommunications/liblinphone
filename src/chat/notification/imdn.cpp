@@ -23,8 +23,11 @@
 #include "chat/chat-room/chat-room-p.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
+
+#ifdef HAVE_ADVANCED_IM
 #include "xml/imdn.h"
 #include "xml/linphone-imdn.h"
+#endif
 
 #include "imdn.h"
 
@@ -133,6 +136,7 @@ void Imdn::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReacha
 // -----------------------------------------------------------------------------
 
 string Imdn::createXml (const string &id, time_t timestamp, Imdn::Type imdnType, LinphoneReason reason) {
+#ifdef HAVE_ADVANCED_IM
 	char *datetime = linphone_timestamp_to_rfc3339_string(timestamp);
 	Xsd::Imdn::Imdn imdn(id, datetime);
 	ms_free(datetime);
@@ -167,9 +171,14 @@ string Imdn::createXml (const string &id, time_t timestamp, Imdn::Type imdnType,
 		map["imdn"].name = "http://www.linphone.org/xsds/imdn.xsd";
 	Xsd::Imdn::serializeImdn(ss, imdn, map, "UTF-8", Xsd::XmlSchema::Flags::dont_pretty_print);
 	return ss.str();
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+	return "";
+#endif
 }
 
 void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
+#ifdef HAVE_ADVANCED_IM
 	shared_ptr<AbstractChatRoom> cr = chatMessage->getChatRoom();
 	for (const auto &content : chatMessage->getPrivate()->getContents()) {
 		istringstream data(content->getBodyAsString());
@@ -200,9 +209,13 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 			}
 		}
 	}
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+#endif
 }
 
 bool Imdn::isError (const shared_ptr<ChatMessage> &chatMessage) {
+#ifdef HAVE_ADVANCED_IM
 	for (const auto &content : chatMessage->getPrivate()->getContents()) {
 		if (content->getContentType() != ContentType::Imdn)
 			continue;
@@ -218,6 +231,10 @@ bool Imdn::isError (const shared_ptr<ChatMessage> &chatMessage) {
 		}
 	}
 	return false;
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+	return false;
+#endif
 }
 
 // -----------------------------------------------------------------------------
