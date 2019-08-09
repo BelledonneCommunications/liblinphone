@@ -1116,9 +1116,10 @@ int MediaSessionPrivate::selectFixedPort (int streamIndex, pair<int, int> portRa
 
 int MediaSessionPrivate::selectRandomPort (int streamIndex, pair<int, int> portRange) {
 	L_Q();
+	unsigned int rangeSize = static_cast<unsigned int>(portRange.second - portRange.first);
+	
 	for (int nbTries = 0; nbTries < 100; nbTries++) {
 		bool alreadyUsed = false;
-		unsigned int rangeSize = static_cast<unsigned int>(portRange.second - portRange.first);
 		unsigned int randomInRangeSize = (ortp_random() % rangeSize) & (unsigned int)~0x1; /* Select an even number */
 		int triedPort = ((int)randomInRangeSize) + portRange.first;
 		/*If portRange.first is even, the triedPort will be even too. The one who configures a port range that starts with an odd number will
@@ -1133,6 +1134,7 @@ int MediaSessionPrivate::selectRandomPort (int streamIndex, pair<int, int> portR
 				break;
 			}
 		}
+		lInfo() << "Port " << triedPort << " randomly taken from range [ " << portRange.first << " , " << portRange.second << "]";
 		if (!alreadyUsed)
 			return triedPort;
 	}

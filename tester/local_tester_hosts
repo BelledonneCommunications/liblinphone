@@ -1,4 +1,4 @@
-127.0.0.1 sip2.linphone.org sip.example.org sipopen.example.org auth.example.org auth1.example.org auth2.example.org altname.linphone.org sip.wildcard1.linphone.org altname.wildcard2.linphone.org sipv4.example.org conf.example.org subscribe.example.org lime.wildcard1.linphone.org http-proxy.example.org
+127.0.0.1 sip2.linphone.org sip.example.org sipopen.example.org auth.example.org auth1.example.org auth2.example.org altname.linphone.org sip.wildcard1.linphone.org altname.wildcard2.linphone.org sipv4.example.org conf.example.org subscribe.example.org lime.wildcard1.linphone.org http-proxy.example.org stun.example.org
 
 ::1 lime.wildcard1.linphone.org sip2.linphone.org sip.example.org sipopen.example.org auth.example.org auth1.example.org auth2.example.org altname.linphone.org sip.wildcard1.linphone.org altname.wildcard2.linphone.org
 
