@@ -23,7 +23,7 @@
 #include "ortp/port.h"
 
 
-static const char *stun_address = "stun.linphone.org";
+static const char *stun_address = "stun.example.org";
 
 
 static size_t test_stun_encode(char **buffer)
@@ -98,11 +98,12 @@ static void configure_nat_policy(LinphoneCore *lc, bool_t turn_enabled) {
 	linphone_nat_policy_enable_ice(nat_policy, TRUE);
 	if (turn_enabled) {
 		linphone_nat_policy_enable_turn(nat_policy, TRUE);
-		linphone_nat_policy_set_stun_server(nat_policy, "sip1.linphone.org:3479");
+		linphone_nat_policy_set_stun_server(nat_policy, "sip1.linphone.org:3479"); // This is our unofficial turn server. 
+		/* When the turn server is incorporated in flexisip-tester, use turn.example.org . */
 		linphone_nat_policy_set_stun_server_username(nat_policy, username);
 	} else {
 		linphone_nat_policy_enable_stun(nat_policy, TRUE);
-		linphone_nat_policy_set_stun_server(nat_policy, "stun.linphone.org");
+		linphone_nat_policy_set_stun_server(nat_policy, "stun.example.org");
 	}
 	linphone_core_set_nat_policy(lc, nat_policy);
 	linphone_core_add_auth_info(lc, auth_info);

@@ -45,5 +45,5 @@ automatically_accept=0
 device=StaticImage: Static picture
 
 [net]
-stun_server=stun.linphone.org
+stun_server=stun.example.org
 

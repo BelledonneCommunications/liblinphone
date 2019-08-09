@@ -2018,10 +2018,10 @@ static void deal_with_jwe_auth_module(const char *jwe, bool_t invalid_jwe, bool_
 	else {
 		if (pauline_call)
 			linphone_call_accept(pauline_call);
-		BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallConnected, 1, 1000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallStreamsRunning, 1, 1000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallConnected, 1, 1000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallConnected, 1, 3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallStreamsRunning, 1, 3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallConnected, 1, 3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 3000));
 	}
 
 	LinphoneCall *gandalf_call = linphone_core_get_current_call(gandalf->lc);
