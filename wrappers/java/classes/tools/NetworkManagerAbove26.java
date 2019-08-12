@@ -72,19 +72,27 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 
 			@Override
 			public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
-				Log.i("[Platform Helper] [Network Manager 26] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
+				if (networkCapabilities == null) {
+					Log.e("[Platform Helper] [Network Manager 26] onCapabilitiesChanged called with null networkCapabilities, skipping...");
+					return;
+				}
+				Log.i("[Platform Helper] [Network Manager 26] onCapabilitiesChanged " + networkCapabilities.toString());
 				mHelper.updateNetworkReachability();
 			}
 
 			@Override
 			public void onLinkPropertiesChanged(Network network, LinkProperties linkProperties) {
-				Log.i("[Platform Helper] [Network Manager 26] onLinkPropertiesChanged " + network.toString() + ", " + linkProperties.toString());
+				if (linkProperties == null) {
+					Log.e("[Platform Helper] [Network Manager 26] onLinkPropertiesChanged called with null linkProperties, skipping...");
+					return;
+				}
+				Log.i("[Platform Helper] [Network Manager 26] onLinkPropertiesChanged " + linkProperties.toString());
 				mHelper.updateDnsServers(linkProperties.getDnsServers());
 			}
 
 			@Override
 			public void onLosing(Network network, int maxMsToLive) {
-				Log.i("[Platform Helper] [Network Manager 26] onLosing " + network.toString());
+				Log.i("[Platform Helper] [Network Manager 26] onLosing");
 			}
 
 			@Override

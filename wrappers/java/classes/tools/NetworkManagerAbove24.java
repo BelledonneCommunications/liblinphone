@@ -85,7 +85,11 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 					mHelper.getHandler().post(new Runnable() {
 						@Override
 						public void run() {
-							Log.i("[Platform Helper] [Network Manager 24] onCapabilitiesChanged " + network.toString() + ", " + networkCapabilities.toString());
+							if (networkCapabilities == null) {
+								Log.e("[Platform Helper] [Network Manager 24] onCapabilitiesChanged called with null networkCapabilities, skipping...");
+								return;
+							}
+							Log.i("[Platform Helper] [Network Manager 24] onCapabilitiesChanged " + networkCapabilities.toString());
 							mHelper.updateNetworkReachability();
 						}
 					});
@@ -96,7 +100,11 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 				mHelper.getHandler().post(new Runnable() {
 					@Override
 					public void run() {
-						Log.i("[Platform Helper] [Network Manager 24] onLinkPropertiesChanged " + network.toString() + ", " + linkProperties.toString());
+						if (linkProperties == null) {
+							Log.e("[Platform Helper] [Network Manager 24] onLinkPropertiesChanged called with null linkProperties, skipping...");
+							return;
+						}
+						Log.i("[Platform Helper] [Network Manager 24] onLinkPropertiesChanged " + linkProperties.toString());
 						mHelper.updateDnsServers(linkProperties.getDnsServers());
 					}
 				});
@@ -107,7 +115,7 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 				mHelper.getHandler().post(new Runnable() {
 					@Override
 					public void run() {
-						Log.i("[Platform Helper] [Network Manager 24] onLosing " + network.toString());
+						Log.i("[Platform Helper] [Network Manager 24] onLosing");
 					}
 				});
 			}

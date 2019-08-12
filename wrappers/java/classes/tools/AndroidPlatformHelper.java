@@ -40,6 +40,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.net.ConnectivityManager;
+import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.ProxyInfo;
@@ -594,14 +595,15 @@ public class AndroidPlatformHelper {
 
 	private synchronized void storeDnsServers(Network activeNetwork) {
 		mDnsServers = null;
+		LinkProperties properties = activeNetwork == null ? null : mConnectivityManager.getLinkProperties(activeNetwork);
 
-		if (activeNetwork == null || mConnectivityManager.getLinkProperties(activeNetwork) == null) {
+		if (properties == null) {
 			Log.e("[Platform Helper] Active network is null or we can't get it's link properties");
 			return;
 		}
 
 		List<InetAddress> inetServers = null;
-		inetServers = mConnectivityManager.getLinkProperties(activeNetwork).getDnsServers();
+		inetServers = properties.getDnsServers();
 		updateDnsServers(inetServers);
 	}
 
