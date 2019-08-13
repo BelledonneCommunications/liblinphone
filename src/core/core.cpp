@@ -439,6 +439,20 @@ void Core::pushNotificationReceived () const {
 	bctbx_list_t *it = (bctbx_list_t *)proxies;
 
 	lInfo() << "Push notification received";
+	/*
+	 * The following is a bit hacky. But sometimes 3 lines of code are better than
+	 * a heavy refactoring.
+	 * pushNotificationReceived() is a critical piece of code where any action to reconnect to the
+	 * SIP server must be taken immediately, which, thanks to belle-sip transactions automatically
+	 * starts a background task that prevents iOS and Android systems to suspend the process.
+	 */
+	linphone_core_iterate(lc); // First iterate to handle disconnection errors on sockets
+	linphone_core_iterate(lc); // Second iterate required by belle-sip to notify about disconnections
+	linphone_core_iterate(lc); // Third iterate required by refresher to restart a connection/registration if needed.
+	/*
+	 * Finally if any of the connection is already pending a retry, the following code will request an immediate
+	 * attempt to connect and register.
+	 */
 	while (it) {
 		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *) bctbx_list_get_data(it);
 		LinphoneRegistrationState state = linphone_proxy_config_get_state(proxy);
