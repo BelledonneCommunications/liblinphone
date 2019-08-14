@@ -76,7 +76,7 @@ public:
 	void setHttpProxy (const string &host, int port) override;
 	void setNetworkReachable (bool reachable) override;
 
-        bool startNetworkMonitoring() override;
+	bool startNetworkMonitoring() override;
 	void stopNetworkMonitoring() override;
 
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
@@ -99,10 +99,9 @@ private:
 
 	long int mCpuLockTaskId;
 	int mCpuLockCount;
-
 	SCNetworkReachabilityRef reachabilityRef = NULL;
-	SCNetworkReachabilityFlags mCurrentFlags;
-
+	SCNetworkReachabilityFlags mCurrentFlags = 0;
+	bool mNetworkMonitoringEnabled = false;
 	static const string Framework;
 };
 
@@ -320,7 +319,7 @@ void IosPlatformHelpers::getHttpProxySettings(void) {
 }
 
 void IosPlatformHelpers::setNetworkReachable(bool reachable) {
-	linphone_core_set_network_reachable(getCore()->getCCore(), reachable);
+	linphone_core_set_network_reachable_internal(getCore()->getCCore(), reachable);
 }
 
 static void showNetworkFlags(SCNetworkReachabilityFlags flags) {
