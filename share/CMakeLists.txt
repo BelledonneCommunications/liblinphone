@@ -44,10 +44,12 @@ set(SOUND_FILES
 	toy-mono.wav
 )
 
-install(FILES ${SOUND_FILES}
-	DESTINATION ${PACKAGE_SOUND_DIR}
-	PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-)
+if(ENABLE_ASSETS)
+	install(FILES ${SOUND_FILES}
+		DESTINATION ${PACKAGE_SOUND_DIR}
+		PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+	)
+endif()
 
 if(ENABLE_GTK_UI)
 	set(prefix "${CMAKE_INSTALL_PREFIX}")
@@ -65,4 +67,6 @@ if(ENABLE_GTK_UI)
 	)
 endif()
 
-add_subdirectory(rings)
+if(ENABLE_ASSETS)
+	add_subdirectory(rings)
+endif()
