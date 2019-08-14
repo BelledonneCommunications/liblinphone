@@ -63,6 +63,7 @@ option(ENABLE_UNIT_TESTS "Enable compilation of unit tests." YES)
 option(ENABLE_UPDATE_CHECK "Enable update check." NO)
 option(ENABLE_VCARD "Turn on compilation of vcard4 support." YES)
 option(ENABLE_VIDEO "Build with video support." YES)
+option(ENABLE_ASSETS "Package sound assets." YES)
 
 cmake_dependent_option(ENABLE_NOTIFY "Enable libnotify support." YES "ENABLE_GTK_UI;NOT APPLE" NO)
 cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
