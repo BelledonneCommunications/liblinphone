@@ -19,7 +19,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-cmake_minimum_required(VERSION 3.8)
+
+#Cmake 3.15 is required for swift wrapper compilation, otherwise have a build time errors.
+cmake_minimum_required(VERSION 3.15)
 set(CMAKE_Swift_LANGUAGE_VERSION 4.0)
 enable_language(Swift)
 

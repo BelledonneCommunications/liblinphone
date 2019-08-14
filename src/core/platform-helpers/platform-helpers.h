@@ -128,13 +128,11 @@ public:
 
 protected:
 	std::string mCurrentSSID;
-	bool mNetworkReachable = true;
-	bool mWifiOnly = false;
 	std::string mHttpProxyHost;
 	int mHttpProxyPort;
+	bool mNetworkReachable = true;
+	bool mWifiOnly = false;
 	bool mHttpProxyEnabled = false;
-
-	bool mNetworkMonitoringEnabled;
 
 private:
 	static int monitorTimerExpired (void *data, unsigned int revents);
