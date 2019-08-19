@@ -52,8 +52,14 @@ public class NetworkManagerAbove23 implements NetworkManagerInterface {
 				mHelper.getHandler().post(new Runnable() {
 					@Override
 					public void run() {
-						Log.i("[Platform Helper] [Network Manager 23] A network is available: " + mConnectivityManager.getNetworkInfo(network).getType() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
-						if (!mWifiOnly || mConnectivityManager.getNetworkInfo(network).getType() == ConnectivityManager.TYPE_WIFI) {
+						NetworkInfo info = mConnectivityManager.getNetworkInfo(network);
+						if (info == null) {
+							Log.e("[Platform Helper] [Network Manager 23] A network should be available but getNetworkInfo failed.");
+							return;
+						}
+
+						Log.i("[Platform Helper] [Network Manager 23] A network is available: " + info.getType() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
+						if (!mWifiOnly || info.getType() == ConnectivityManager.TYPE_WIFI) {
 							mNetworkAvailable = network;
 							mHelper.updateNetworkReachability();
 						} else {
