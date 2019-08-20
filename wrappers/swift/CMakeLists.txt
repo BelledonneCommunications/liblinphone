@@ -21,9 +21,12 @@
 ############################################################################
 
 #Cmake 3.15 is required for swift wrapper compilation, otherwise have a build time errors.
-cmake_minimum_required(VERSION 3.15)
+# https://forums.swift.org/t/announcing-swift-support-in-cmake/24792
+# https://github.com/compnerd/swift-cmake-demo
+
+cmake_minimum_required(VERSION 3.15.20190814)
 set(CMAKE_Swift_LANGUAGE_VERSION 4.0)
-enable_language(Swift)
+#enable_language(Swift)
 
 add_custom_command(OUTPUT LinphoneWrapper.swift
 	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/genwrapper.py" "${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml"
@@ -37,25 +40,45 @@ add_custom_command(OUTPUT LinphoneWrapper.swift
 	linphone-doc
 )
 
+add_custom_command(OUTPUT linphonesw.framework
+	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/make-framework.sh" "linphonesw" "-l" "${CMAKE_CURRENT_BINARY_DIR}/liblinphonesw.dylib" -o "${CMAKE_CURRENT_BINARY_DIR}"
+	DEPENDS linphonesw
+)
+
+add_custom_target(linphonesw-framework ALL
+		COMMAND echo "linphonesw.framework generated manually."
+		DEPENDS linphonesw.framework
+)
+
 add_library(linphonesw SHARED
-	LinphoneWrapper.swift
+	${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.swift
 )
 
 target_link_libraries(linphonesw
 	PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} ${BELLESIP_LIBRARIES} linphone
 )
 
-set_target_properties(linphonesw PROPERTIES
-	FRAMEWORK TRUE
-	LINKER_LANGUAGE SWIFT
-	MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphonesw
-	MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
+#Add -target and -sdk options to switfc command line otherwise you'll get obsucure errors.
+target_compile_options(linphonesw PRIVATE -target ${CMAKE_OSX_ARCHITECTURES}-apple-ios10 -sdk ${CMAKE_OSX_SYSROOT}) 
+
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/linphonesw.framework DESTINATION Frameworks
+        USE_SOURCE_PERMISSIONS
 )
 
-install(TARGETS linphonesw EXPORT ${EXPORT_TARGETS_NAME}Targets
-	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	FRAMEWORK DESTINATION Frameworks
-	PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-)
+#set_target_properties(linphonesw PROPERTIES
+#	FRAMEWORK TRUE
+#	LINKER_LANGUAGE SWIFT
+#	MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphonesw
+#	MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
+#)
+
+#install(TARGETS linphonesw EXPORT ${EXPORT_TARGETS_NAME}Targets
+#	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+#	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#	FRAMEWORK DESTINATION Frameworks
+#	PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+#)
+
+
+
