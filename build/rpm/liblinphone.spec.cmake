@@ -123,6 +123,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/Linphone/cmake/*.cmake
 %{_datadir}/LinphoneCxx/cmake/*.cmake
 %{_datadir}/belr/grammars/cpim_grammar
+%{_datadir}/belr/grammars/identity_grammar
 
 
 %changelog
