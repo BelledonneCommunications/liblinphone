@@ -1560,9 +1560,9 @@ end:
 	linphone_core_manager_destroy(chloe);
 }
 
-static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp (void) {
+static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg (const char *pauline_rc) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create(pauline_rc);
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_lime_x3dh_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
@@ -1675,6 +1675,13 @@ end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+}
+
+static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp (void) {
+	// First try without the unsafe_if_sas_refused flag on in pauline rc file
+	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg("pauline_lime_x3dh_rc");
+	// Second try with the unsafe_if_sas_refused flag on in pauline rc file
+	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg("pauline_lime_x3dh_unsafe_if_sas_refused_rc");
 }
 
 static void group_chat_lime_x3dh_chatroom_security_alert (void) {

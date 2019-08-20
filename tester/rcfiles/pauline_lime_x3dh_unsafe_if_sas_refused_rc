@@ -1,7 +1,7 @@
 [lime]
 lime_update_threshold=86400
 lime_server_url=https://lime.wildcard1.linphone.org:8443/lime-server/lime-server.php
-unsafe_if_sas_refused=0
+unsafe_if_sas_refused=1
 
 [sip]
 sip_port=-1
