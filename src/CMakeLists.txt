@@ -46,10 +46,12 @@ endif()
 if(ZLIB_FOUND)
 	list(APPEND LIBS ${ZLIB_LIBRARIES})
 endif()
-if(SOCI_FOUND)
-	list(APPEND LIBS ${SOCI_LIBRARIES})
-	if(APPLE)
-		list(APPEND LIBS ${SOCI_sqlite3_PLUGIN})
+if (ENABLE_DB_STORAGE)
+	if(SOCI_FOUND)
+		list(APPEND LIBS ${SOCI_LIBRARIES})
+		if(APPLE)
+			list(APPEND LIBS ${SOCI_sqlite3_PLUGIN})
+		endif()
 	endif()
 endif()
 if(SQLITE3_FOUND)
@@ -170,7 +172,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	core/platform-helpers/platform-helpers.h
 	db/abstract/abstract-db-p.h
 	db/abstract/abstract-db.h
-	db/internal/db-transaction.h
 	db/internal/statements.h
 	db/main-db-chat-message-key.h
 	db/main-db-event-key.h
@@ -178,7 +179,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	db/main-db-key.h
 	db/main-db-p.h
 	db/main-db.h
-	db/session/db-session.h
 	dial-plan/dial-plan.h
 	enums.h
 	event-log/conference/conference-call-event.h
@@ -244,7 +244,13 @@ if(ENABLE_ADVANCED_IM)
 		xml/rlmi.h
 		xml/xml.h
 	)
-	list(SORT LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES)
+endif()
+
+if(ENABLE_DB_STORAGE)
+	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
+		db/internal/db-transaction.h
+		db/session/db-session.h
+	)
 endif()
 
 set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
@@ -269,6 +275,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-magic-search.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-participant-device.cpp
+	c-wrapper/api/c-participant-device-identity.cpp
 	c-wrapper/api/c-participant-imdn-state.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-search-result.cpp
@@ -330,7 +337,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	db/main-db-event-key.cpp
 	db/main-db-key.cpp
 	db/main-db.cpp
-	db/session/db-session.cpp
 	dial-plan/dial-plan.cpp
 	event-log/conference/conference-call-event.cpp
 	event-log/conference/conference-chat-message-event.cpp
@@ -370,7 +376,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 
 if(ENABLE_ADVANCED_IM)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
-		c-wrapper/api/c-participant-device-identity.cpp
 		chat/chat-room/basic-to-client-group-chat-room.cpp
 		chat/chat-room/client-group-chat-room.cpp
 		chat/chat-room/client-group-to-basic-chat-room.cpp
@@ -388,7 +393,10 @@ if(ENABLE_ADVANCED_IM)
 		xml/rlmi.cpp
 		xml/xml.cpp
 	)
-	list(SORT LINPHONE_CXX_OBJECTS_SOURCE_FILES)
+endif()
+
+if (ENABLE_DB_STORAGE)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES db/session/db-session.cpp)
 endif()
 
 set(LINPHONE_OBJC_SOURCE_FILES)
@@ -498,7 +506,9 @@ if(ENABLE_SHARED)
 	endif()
 	if(WIN32)
 		# Export Xerces and Soci symbols.
-		target_compile_definitions(linphone PRIVATE "-DDLL_EXPORT" "-DSOCI_DLL")
+		if(ENABLE_DB_STORAGE)
+			target_compile_definitions(linphone PRIVATE "-DDLL_EXPORT" "-DSOCI_DLL")
+		endif()
 		if(CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 			set_target_properties(linphone PROPERTIES PREFIX "lib")
 		endif()

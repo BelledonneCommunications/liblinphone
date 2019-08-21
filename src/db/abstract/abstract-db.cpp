@@ -38,22 +38,27 @@ LINPHONE_BEGIN_NAMESPACE
 	// Force static sqlite3 linking for IOS and Android.
 	extern "C" void register_factory_sqlite3();
 
+#ifdef HAVE_DB_STORAGE
 	static void sqlite3Log (void *, int iErrCode, const char *zMsg) {
 		lInfo() << "[sqlite3][" << iErrCode << "]" << zMsg;
 	}
+#endif
 #endif // if (TARGET_OS_IPHONE || defined(__ANDROID__))
 
 void AbstractDbPrivate::safeInit () {
+#ifdef HAVE_DB_STORAGE
 	L_Q();
 	dbSession.enableForeignKeys(false);
 	q->init();
 	dbSession.enableForeignKeys(true);
 	initialized = true;
+#endif
 }
 
 AbstractDb::AbstractDb (AbstractDbPrivate &p) : Object(p) {}
 
 bool AbstractDb::connect (Backend backend, const string &parameters) {
+#ifdef HAVE_DB_STORAGE
 	L_D();
 
 	#if (__APPLE__ || defined(__ANDROID__))
@@ -84,14 +89,20 @@ bool AbstractDb::connect (Backend backend, const string &parameters) {
 	}
 
 	return d->dbSession;
+#else
+	return false;
+#endif
 }
 
 void AbstractDb::disconnect () {
+#ifdef HAVE_DB_STORAGE
 	L_D();
 	d->dbSession = DbSession();
+#endif
 }
 
 bool AbstractDb::forceReconnect () {
+#ifdef HAVE_DB_STORAGE
 	L_D();
 	if (!d->dbSession) {
 		lWarning() << "Unable to reconnect. Not a valid database session.";
@@ -120,7 +131,7 @@ bool AbstractDb::forceReconnect () {
 	}
 
 	lError() << "Database reconnection failed!";
-
+#endif
 	return false;
 }
 

@@ -136,13 +136,16 @@ void text_message_base_with_text(LinphoneCoreManager* marie, LinphoneCoreManager
 		}else{
 			marieCr = linphone_core_get_chat_room(marie->lc, pauline->identity);
 		}
-		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int," %i");
-		if (linphone_chat_room_get_history_size(marieCr) > 0) {
-			bctbx_list_t *history = linphone_chat_room_get_history(marieCr, 1);
-			LinphoneChatMessage *recv_msg = (LinphoneChatMessage *)(history->data);
-			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recv_msg), text);
-			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(recv_msg),text);
-			bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
+
+		if (linphone_factory_is_database_storage_available(linphone_factory_get())) {
+			BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int," %i");
+			if (linphone_chat_room_get_history_size(marieCr) > 0) {
+				bctbx_list_t *history = linphone_chat_room_get_history(marieCr, 1);
+				LinphoneChatMessage *recv_msg = (LinphoneChatMessage *)(history->data);
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recv_msg), text);
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(recv_msg),text);
+				bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
+			}
 		}
 	}
 
@@ -269,6 +272,11 @@ static void text_message_with_ack(void) {
 }
 
 static void text_message_with_send_error(void) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
@@ -317,6 +325,11 @@ static void text_message_with_send_error(void) {
 void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
 							bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download, bool_t download_from_history, 
 							int auto_download) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	char *send_filepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
 	char *receive_filepath = bc_tester_file("receive_file.dump");
 	LinphoneChatRoom* chat_room;
@@ -944,6 +957,11 @@ static void is_composing_notification_with_lime(void) {
 }
 
 static void _imdn_notifications(bool_t with_lime) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	lp_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
@@ -1002,6 +1020,11 @@ end:
 }
 
 static void _im_notification_policy(bool_t with_lime) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneImNotifPolicy *marie_policy = linphone_core_get_im_notif_policy(marie->lc);
@@ -1507,6 +1530,11 @@ void history_message_count_helper(LinphoneChatRoom* chatroom, int x, int y, unsi
 }
 
 void crash_during_file_transfer(void) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneChatRoom *chat_room;
@@ -1647,6 +1675,11 @@ static void real_time_text(
 	bool_t mess_with_pauline_payload_number, bool_t ice_enabled, bool_t sql_storage,
 	bool_t do_not_store_rtt_messages_in_sql_storage
 ) {
+	if (sql_storage && !linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneChatRoom *pauline_chat_room;
 	LinphoneChatRoom *marie_chat_room;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
@@ -2419,6 +2452,11 @@ void im_encryption_engine_b64_async(void) {
 }
 
 void unread_message_count(void) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 
@@ -2447,6 +2485,11 @@ static void message_received_callback(LinphoneCore *lc, LinphoneChatRoom *room, 
 }
 
 void unread_message_count_callback(void) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	int dummy = 0;
@@ -2465,6 +2508,11 @@ void unread_message_count_callback(void) {
 }
 
 static void migration_from_messages_db (void) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	char *src_db = bc_tester_res("db/messages.db");
 	char *tmp_db  = bc_tester_file("tmp.db");

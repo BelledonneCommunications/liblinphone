@@ -20,6 +20,10 @@
 #ifndef _L_LOCAL_CONFERENCE_P_H_
 #define _L_LOCAL_CONFERENCE_P_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "conference-p.h"
 #include "local-conference.h"
 

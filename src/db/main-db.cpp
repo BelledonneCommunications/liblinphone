@@ -34,8 +34,11 @@
 #include "event-log/event-log-p.h"
 #include "event-log/events.h"
 #include "main-db-key-p.h"
+#include "main-db-p.h"
 
+#ifdef HAVE_DB_STORAGE
 #include "internal/db-transaction.h"
+#endif
 #include "internal/statements.h"
 
 // =============================================================================
@@ -49,6 +52,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+#ifdef HAVE_DB_STORAGE
 namespace {
 	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 8);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
@@ -83,11 +87,12 @@ namespace {
 	constexpr int LegacyMessageColContentType = 13;
 	constexpr int LegacyMessageColIsSecured = 14;
 }
+#endif
 
 // -----------------------------------------------------------------------------
 // soci helpers.
 // -----------------------------------------------------------------------------
-
+#ifdef HAVE_DB_STORAGE
 static inline vector<char> blobToVector (soci::blob &in) {
 	size_t len = in.get_len();
 	if (!len)
@@ -116,6 +121,7 @@ static T getValueFromRow (const soci::row &row, int index, bool &isNull) {
 	}
 	return row.get<T>(size_t(index));
 }
+#endif
 
 // -----------------------------------------------------------------------------
 // Event filter tools.
@@ -255,6 +261,7 @@ shared_ptr<AbstractChatRoom> MainDbPrivate::findChatRoom (const ConferenceId &co
 // -----------------------------------------------------------------------------
 
 long long MainDbPrivate::insertSipAddress (const string &sipAddress) {
+#ifdef HAVE_DB_STORAGE
 	long long sipAddressId = selectSipAddressId(sipAddress);
 	if (sipAddressId >= 0)
 		return sipAddressId;
@@ -262,9 +269,13 @@ long long MainDbPrivate::insertSipAddress (const string &sipAddress) {
 	lInfo() << "Insert new sip address in database: `" << sipAddress << "`.";
 	*dbSession.getBackendSession() << "INSERT INTO sip_address (value) VALUES (:sipAddress)", soci::use(sipAddress);
 	return dbSession.getLastInsertId();
+#else
+	return -1;
+#endif
 }
 
 void MainDbPrivate::insertContent (long long chatMessageId, const Content &content) {
+#ifdef HAVE_DB_STORAGE
 	soci::session *session = dbSession.getBackendSession();
 
 	const long long &contentTypeId = insertContentType(content.getContentType().asString());
@@ -288,9 +299,11 @@ void MainDbPrivate::insertContent (long long chatMessageId, const Content &conte
 		*session << "INSERT INTO chat_message_content_app_data (chat_message_content_id, name, data) VALUES"
 			" (:chatMessageContentId, :name, :data)",
 			soci::use(chatMessageContentId), soci::use(appData.first), soci::use(appData.second);
+#endif
 }
 
 long long MainDbPrivate::insertContentType (const string &contentType) {
+#ifdef HAVE_DB_STORAGE
 	soci::session *session = dbSession.getBackendSession();
 
 	long long contentTypeId;
@@ -301,6 +314,9 @@ long long MainDbPrivate::insertContentType (const string &contentType) {
 	lInfo() << "Insert new content type in database: `" << contentType << "`.";
 	*session << "INSERT INTO content_type (value) VALUES (:contentType)", soci::use(contentType);
 	return dbSession.getLastInsertId();
+#else
+	return -1;
+#endif
 }
 
 long long MainDbPrivate::insertOrUpdateImportedBasicChatRoom (
@@ -308,6 +324,7 @@ long long MainDbPrivate::insertOrUpdateImportedBasicChatRoom (
 	long long localSipAddressId,
 	const tm &creationTime
 ) {
+#ifdef HAVE_DB_STORAGE
 	soci::session *session = dbSession.getBackendSession();
 
 	long long chatRoomId = selectChatRoomId(peerSipAddressId, localSipAddressId);
@@ -329,9 +346,13 @@ long long MainDbPrivate::insertOrUpdateImportedBasicChatRoom (
 		soci::use(capabilities);
 
 	return dbSession.getLastInsertId();
+#else
+	return -1;
+#endif
 }
 
 long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
+#ifdef HAVE_DB_STORAGE
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
 	const long long &peerSipAddressId = insertSipAddress(conferenceId.getPeerAddress().asString());
 	const long long &localSipAddressId = insertSipAddress(conferenceId.getLocalAddress().asString());
@@ -389,6 +410,9 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 	}
 
 	return chatRoomId;
+#else
+	return -1;
+#endif
 }
 
 long long MainDbPrivate::insertChatRoomParticipant (
@@ -396,6 +420,7 @@ long long MainDbPrivate::insertChatRoomParticipant (
 	long long participantSipAddressId,
 	bool isAdmin
 ) {
+#ifdef HAVE_DB_STORAGE
 	soci::session *session = dbSession.getBackendSession();
 	long long chatRoomParticipantId = selectChatRoomParticipantId(chatRoomId, participantSipAddressId);
 	if (chatRoomParticipantId >= 0) {
@@ -410,6 +435,9 @@ long long MainDbPrivate::insertChatRoomParticipant (
 		soci::use(chatRoomId), soci::use(participantSipAddressId), soci::use(static_cast<const int &>(isAdmin));
 
 	return dbSession.getLastInsertId();
+#else
+	return -1;
+#endif
 }
 
 void MainDbPrivate::insertChatRoomParticipantDevice (
@@ -417,6 +445,7 @@ void MainDbPrivate::insertChatRoomParticipantDevice (
 	long long participantDeviceSipAddressId,
 	const string &deviceName
 ) {
+#ifdef HAVE_DB_STORAGE
 	soci::session *session = dbSession.getBackendSession();
 	long long count;
 	*session << "SELECT COUNT(*) FROM chat_room_participant_device"
@@ -429,19 +458,23 @@ void MainDbPrivate::insertChatRoomParticipantDevice (
 	*session << "INSERT INTO chat_room_participant_device (chat_room_participant_id, participant_device_sip_address_id, name)"
 		" VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceName)",
 		soci::use(participantId), soci::use(participantDeviceSipAddressId), soci::use(deviceName);
+#endif
 }
 
 void MainDbPrivate::insertChatMessageParticipant (long long chatMessageId, long long sipAddressId, int state, time_t stateChangeTime) {
+#ifdef HAVE_DB_STORAGE
 	const tm &stateChangeTm = Utils::getTimeTAsTm(stateChangeTime);
 	*dbSession.getBackendSession() <<
 		"INSERT INTO chat_message_participant (event_id, participant_sip_address_id, state, state_change_time)"
 		" VALUES (:chatMessageId, :sipAddressId, :state, :stateChangeTm)",
 		soci::use(chatMessageId), soci::use(sipAddressId), soci::use(state), soci::use(stateChangeTm);
+#endif
 }
 
 // -----------------------------------------------------------------------------
 
 long long MainDbPrivate::selectSipAddressId (const string &sipAddress) const {
+#ifdef HAVE_DB_STORAGE
 	long long sipAddressId;
 
 	soci::session *session = dbSession.getBackendSession();
@@ -449,9 +482,13 @@ long long MainDbPrivate::selectSipAddressId (const string &sipAddress) const {
 		soci::use(sipAddress), soci::into(sipAddressId);
 
 	return session->got_data() ? sipAddressId : -1;
+#else
+	return -1;
+#endif
 }
 
 long long MainDbPrivate::selectChatRoomId (long long peerSipAddressId, long long localSipAddressId) const {
+#ifdef HAVE_DB_STORAGE
 	long long chatRoomId;
 
 	soci::session *session = dbSession.getBackendSession();
@@ -459,9 +496,13 @@ long long MainDbPrivate::selectChatRoomId (long long peerSipAddressId, long long
 		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::into(chatRoomId);
 
 	return session->got_data() ? chatRoomId : -1;
+#else
+	return -1;
+#endif
 }
 
 long long MainDbPrivate::selectChatRoomId (const ConferenceId &conferenceId) const {
+#ifdef HAVE_DB_STORAGE
 	long long peerSipAddressId = selectSipAddressId(conferenceId.getPeerAddress().asString());
 	if (peerSipAddressId < 0)
 		return -1;
@@ -476,9 +517,13 @@ long long MainDbPrivate::selectChatRoomId (const ConferenceId &conferenceId) con
 	}
 
 	return id;
+#else
+	return -1;
+#endif
 }
 
 ConferenceId MainDbPrivate::selectConferenceId (const long long chatRoomId) const {
+#ifdef HAVE_DB_STORAGE
 	string peerSipAddress;
 	string localSipAddress;
 
@@ -496,9 +541,13 @@ ConferenceId MainDbPrivate::selectConferenceId (const long long chatRoomId) cons
 	}
 
 	return conferenceId;
+#else
+	return ConferenceId();
+#endif
 }
 
 long long MainDbPrivate::selectChatRoomParticipantId (long long chatRoomId, long long participantSipAddressId) const {
+#ifdef HAVE_DB_STORAGE
 	long long chatRoomParticipantId;
 
 	soci::session *session = dbSession.getBackendSession();
@@ -506,9 +555,13 @@ long long MainDbPrivate::selectChatRoomParticipantId (long long chatRoomId, long
 		soci::use(chatRoomId), soci::use(participantSipAddressId), soci::into(chatRoomParticipantId);
 
 	return session->got_data() ? chatRoomParticipantId : -1;
+#else
+	return -1;
+#endif
 }
 
 long long MainDbPrivate::selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB, bool encrypted) const {
+#ifdef HAVE_DB_STORAGE
 	long long chatRoomId;
 	const int encryptedCapability = int(ChatRoom::Capabilities::Encrypted);
 	const int expectedCapabilities = encrypted ? encryptedCapability : 0;
@@ -520,35 +573,44 @@ long long MainDbPrivate::selectOneToOneChatRoomId (long long sipAddressIdA, long
 		soci::into(chatRoomId);
 
 	return session->got_data() ? chatRoomId : -1;
+#else
+	return -1;
+#endif
 }
 
 // -----------------------------------------------------------------------------
 
 void MainDbPrivate::deleteContents (long long chatMessageId) {
+#ifdef HAVE_DB_STORAGE
 	*dbSession.getBackendSession() << "DELETE FROM chat_message_content WHERE event_id = :chatMessageId",
 		soci::use(chatMessageId);
+#endif
 }
 
 void MainDbPrivate::deleteChatRoomParticipant (long long chatRoomId, long long participantSipAddressId) {
+#ifdef HAVE_DB_STORAGE
 	*dbSession.getBackendSession() << "DELETE FROM chat_room_participant"
 		" WHERE chat_room_id = :chatRoomId AND participant_sip_address_id = :participantSipAddressId",
 		soci::use(chatRoomId), soci::use(participantSipAddressId);
+#endif
 }
 
 void MainDbPrivate::deleteChatRoomParticipantDevice (
 	long long participantId,
 	long long participantDeviceSipAddressId
 ) {
+#ifdef HAVE_DB_STORAGE
 	*dbSession.getBackendSession() << "DELETE FROM chat_room_participant_device"
 		" WHERE chat_room_participant_id = :participantId"
 		" AND participant_device_sip_address_id = :participantDeviceSipAddressId",
 		soci::use(participantId), soci::use(participantDeviceSipAddressId);
+#endif
 }
 
 // -----------------------------------------------------------------------------
 // Events API.
 // -----------------------------------------------------------------------------
-
+#ifdef HAVE_DB_STORAGE
 shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceEvent (
 	const shared_ptr<AbstractChatRoom> &chatRoom,
 	const soci::row &row
@@ -744,19 +806,25 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceSubjectEvent (
 		row.get<string>(13)
 	);
 }
+#endif
 
 // -----------------------------------------------------------------------------
 
 long long MainDbPrivate::insertEvent (const shared_ptr<EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
 	const int &type = int(eventLog->getType());
 	const tm &creationTime = Utils::getTimeTAsTm(eventLog->getCreationTime());
 	*dbSession.getBackendSession() << "INSERT INTO event (type, creation_time) VALUES (:type, :creationTime)",
 		soci::use(type), soci::use(creationTime);
 
 	return dbSession.getLastInsertId();
+#else
+	return -1;
+#endif
 }
 
 long long MainDbPrivate::insertConferenceEvent (const shared_ptr<EventLog> &eventLog, long long *chatRoomId) {
+#ifdef HAVE_DB_STORAGE
 	shared_ptr<ConferenceEvent> conferenceEvent = static_pointer_cast<ConferenceEvent>(eventLog);
 
 	long long eventId = -1;
@@ -788,6 +856,9 @@ long long MainDbPrivate::insertConferenceEvent (const shared_ptr<EventLog> &even
 		*chatRoomId = curChatRoomId;
 
 	return eventId;
+#else
+	return -1;
+#endif
 }
 
 long long MainDbPrivate::insertConferenceCallEvent (const shared_ptr<EventLog> &eventLog) {
@@ -796,6 +867,7 @@ long long MainDbPrivate::insertConferenceCallEvent (const shared_ptr<EventLog> &
 }
 
 long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
 	const long long &eventId = insertConferenceEvent(eventLog);
 	if (eventId < 0)
 		return -1;
@@ -844,9 +916,13 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 	}
 
 	return eventId;
+#else
+	return -1;
+#endif
 }
 
 void MainDbPrivate::updateConferenceChatMessageEvent (const shared_ptr<EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
 	shared_ptr<ChatMessage> chatMessage = static_pointer_cast<ConferenceChatMessageEvent>(eventLog)->getChatMessage();
 
 	const EventLogPrivate *dEventLog = eventLog->getPrivate();
@@ -906,9 +982,11 @@ void MainDbPrivate::updateConferenceChatMessageEvent (const shared_ptr<EventLog>
 	if (isOutgoing && (state == ChatMessage::State::Delivered || state == ChatMessage::State::NotDelivered))
 		for (const auto &participant : chatRoom->getParticipants())
 			setChatMessageParticipantState(eventLog, participant->getAddress(), state, std::time(nullptr));
+#endif
 }
 
 long long MainDbPrivate::insertConferenceNotifiedEvent (const shared_ptr<EventLog> &eventLog, long long *chatRoomId) {
+#ifdef HAVE_DB_STORAGE
 	long long curChatRoomId;
 	const long long &eventId = insertConferenceEvent(eventLog, &curChatRoomId);
 	if (eventId < 0)
@@ -926,12 +1004,16 @@ long long MainDbPrivate::insertConferenceNotifiedEvent (const shared_ptr<EventLo
 		*chatRoomId = curChatRoomId;
 
 	return eventId;
+#else
+	return -1;
+#endif
 }
 
 long long MainDbPrivate::insertConferenceParticipantEvent (
 	const shared_ptr<EventLog> &eventLog,
 	long long *chatRoomId
 ) {
+#ifdef HAVE_DB_STORAGE
 	long long curChatRoomId;
 	const long long &eventId = insertConferenceNotifiedEvent(eventLog, &curChatRoomId);
 	if (eventId < 0)
@@ -967,9 +1049,13 @@ long long MainDbPrivate::insertConferenceParticipantEvent (
 		*chatRoomId = curChatRoomId;
 
 	return eventId;
+#else
+	return -1;
+#endif
 }
 
 long long MainDbPrivate::insertConferenceParticipantDeviceEvent (const shared_ptr<EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
 	long long chatRoomId;
 	const long long &eventId = insertConferenceParticipantEvent(eventLog, &chatRoomId);
 	if (eventId < 0)
@@ -1011,9 +1097,13 @@ long long MainDbPrivate::insertConferenceParticipantDeviceEvent (const shared_pt
 	}
 
 	return eventId;
+#else
+	return -1;
+#endif
 }
 
 long long MainDbPrivate::insertConferenceSecurityEvent (const shared_ptr<EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
 	long long chatRoomId;
 	const long long &eventId = insertConferenceEvent(eventLog, &chatRoomId);
 	if (eventId < 0)
@@ -1028,9 +1118,13 @@ long long MainDbPrivate::insertConferenceSecurityEvent (const shared_ptr<EventLo
 		" VALUES (:eventId, :securityEventType, :faultyDevice)", soci::use(eventId), soci::use(securityEventType), soci::use(faultyDevice);
 
 	return eventId;
+#else
+	return -1;
+#endif
 }
 
 long long MainDbPrivate::insertConferenceSubjectEvent (const shared_ptr<EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
 	long long chatRoomId;
 	const long long &eventId = insertConferenceNotifiedEvent(eventLog, &chatRoomId);
 	if (eventId < 0)
@@ -1046,6 +1140,9 @@ long long MainDbPrivate::insertConferenceSubjectEvent (const shared_ptr<EventLog
 		" WHERE id = :chatRoomId", soci::use(subject), soci::use(chatRoomId);
 
 	return eventId;
+#else
+	return -1;
+#endif
 }
 
 void MainDbPrivate::setChatMessageParticipantState (
@@ -1054,6 +1151,7 @@ void MainDbPrivate::setChatMessageParticipantState (
 	ChatMessage::State state,
 	time_t stateChangeTime
 ) {
+#ifdef HAVE_DB_STORAGE
 	const EventLogPrivate *dEventLog = eventLog->getPrivate();
 	MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
 	const long long &eventId = dEventKey->storageId;
@@ -1065,6 +1163,7 @@ void MainDbPrivate::setChatMessageParticipantState (
 		" state_change_time = :stateChangeTm"
 		" WHERE event_id = :eventId AND participant_sip_address_id = :participantSipAddressId",
 		soci::use(stateInt), soci::use(stateChangeTm), soci::use(eventId), soci::use(participantSipAddressId);
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1072,6 +1171,7 @@ void MainDbPrivate::setChatMessageParticipantState (
 // -----------------------------------------------------------------------------
 
 shared_ptr<EventLog> MainDbPrivate::getEventFromCache (long long storageId) const {
+#ifdef HAVE_DB_STORAGE
 	auto it = storageIdToEvent.find(storageId);
 	if (it == storageIdToEvent.cend())
 		return nullptr;
@@ -1079,9 +1179,13 @@ shared_ptr<EventLog> MainDbPrivate::getEventFromCache (long long storageId) cons
 	shared_ptr<EventLog> eventLog = it->second.lock();
 	L_ASSERT(eventLog);
 	return eventLog;
+#else
+	return nullptr;
+#endif
 }
 
 shared_ptr<ChatMessage> MainDbPrivate::getChatMessageFromCache (long long storageId) const {
+#ifdef HAVE_DB_STORAGE
 	auto it = storageIdToChatMessage.find(storageId);
 	if (it == storageIdToChatMessage.cend())
 		return nullptr;
@@ -1089,18 +1193,26 @@ shared_ptr<ChatMessage> MainDbPrivate::getChatMessageFromCache (long long storag
 	shared_ptr<ChatMessage> chatMessage = it->second.lock();
 	L_ASSERT(chatMessage);
 	return chatMessage;
+#else
+	return nullptr;
+#endif
 }
 
 ConferenceId MainDbPrivate::getConferenceIdFromCache(long long storageId) const {
+#ifdef HAVE_DB_STORAGE
 	auto it = storageIdToConferenceId.find(storageId);
 	if (it == storageIdToConferenceId.cend())
 		return ConferenceId();
 
 	ConferenceId conferenceId = it->second;
 	return conferenceId;
+#else
+	return ConferenceId();
+#endif
 }
 
 void MainDbPrivate::cache (const shared_ptr<EventLog> &eventLog, long long storageId) const {
+#ifdef HAVE_DB_STORAGE
 	L_Q();
 
 	EventLogPrivate *dEventLog = eventLog->getPrivate();
@@ -1108,9 +1220,11 @@ void MainDbPrivate::cache (const shared_ptr<EventLog> &eventLog, long long stora
 	dEventLog->dbKey = MainDbEventKey(q->getCore(), storageId);
 	storageIdToEvent[storageId] = eventLog;
 	L_ASSERT(dEventLog->dbKey.isValid());
+#endif
 }
 
 void MainDbPrivate::cache (const shared_ptr<ChatMessage> &chatMessage, long long storageId) const {
+#ifdef HAVE_DB_STORAGE
 	L_Q();
 
 	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
@@ -1118,14 +1232,18 @@ void MainDbPrivate::cache (const shared_ptr<ChatMessage> &chatMessage, long long
 	dChatMessage->dbKey = MainDbChatMessageKey(q->getCore(), storageId);
 	storageIdToChatMessage[storageId] = chatMessage;
 	L_ASSERT(dChatMessage->dbKey.isValid());
+#endif
 }
 
 void MainDbPrivate::cache (const ConferenceId &conferenceId, long long storageId) const {
+#ifdef HAVE_DB_STORAGE
 	L_ASSERT(conferenceId.isValid());
 	storageIdToConferenceId[storageId] = conferenceId;
+#endif
 }
 
 void MainDbPrivate::invalidConferenceEventsFromQuery (const string &query, long long chatRoomId) {
+#ifdef HAVE_DB_STORAGE
 	soci::rowset<soci::row> rows = (dbSession.getBackendSession()->prepare << query, soci::use(chatRoomId));
 	for (const auto &row : rows) {
 		long long eventId = dbSession.resolveId(row, 0);
@@ -1142,6 +1260,7 @@ void MainDbPrivate::invalidConferenceEventsFromQuery (const string &query, long 
 			dChatMessage->dbKey = MainDbChatMessageKey();
 		}
 	}
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1149,14 +1268,19 @@ void MainDbPrivate::invalidConferenceEventsFromQuery (const string &query, long 
 // -----------------------------------------------------------------------------
 
 unsigned int MainDbPrivate::getModuleVersion (const string &name) {
+#ifdef HAVE_DB_STORAGE
 	soci::session *session = dbSession.getBackendSession();
 
 	unsigned int version;
 	*session << "SELECT version FROM db_module_version WHERE name = :name", soci::into(version), soci::use(name);
 	return session->got_data() ? version : 0;
+#else
+	return 0;
+#endif
 }
 
 void MainDbPrivate::updateModuleVersion (const string &name, unsigned int version) {
+#ifdef HAVE_DB_STORAGE
 	unsigned int oldVersion = getModuleVersion(name);
 	if (version <= oldVersion)
 		return;
@@ -1164,9 +1288,11 @@ void MainDbPrivate::updateModuleVersion (const string &name, unsigned int versio
 	soci::session *session = dbSession.getBackendSession();
 	*session << "REPLACE INTO db_module_version (name, version) VALUES (:name, :version)",
 		soci::use(name), soci::use(version);
+#endif
 }
 
 void MainDbPrivate::updateSchema () {
+#ifdef HAVE_DB_STORAGE
 	L_Q();
 
 	soci::session *session = dbSession.getBackendSession();
@@ -1244,12 +1370,14 @@ void MainDbPrivate::updateSchema () {
 			"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
 			"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
 	}
+#endif
 }
 
 // -----------------------------------------------------------------------------
 // Import.
 // -----------------------------------------------------------------------------
 
+#ifdef HAVE_DB_STORAGE
 static inline bool checkLegacyTableExists (soci::session &session, const string &name) {
 	session << "SELECT name FROM sqlite_master WHERE type='table' AND name = :name", soci::use(name);
 	return session.got_data();
@@ -1262,7 +1390,9 @@ static inline bool checkLegacyFriendsTableExists (soci::session &session) {
 static inline bool checkLegacyHistoryTableExists (soci::session &session) {
 	return checkLegacyTableExists(session, "history");
 }
+#endif
 
+#ifdef HAVE_DB_STORAGE
 void MainDbPrivate::importLegacyFriends (DbSession &inDbSession) {
 	L_Q();
 	L_DB_TRANSACTION_C(q) {
@@ -1501,12 +1631,14 @@ void MainDbPrivate::importLegacyHistory (DbSession &inDbSession) {
 		lInfo() << "Successful import of legacy messages.";
 	};
 }
+#endif
 
 // =============================================================================
 
 MainDb::MainDb (const shared_ptr<Core> &core) : AbstractDb(*new MainDbPrivate), CoreAccessor(core) {}
 
 void MainDb::init () {
+#ifdef HAVE_DB_STORAGE
 	L_D();
 
 	Backend backend = getBackend();
@@ -1858,9 +1990,11 @@ void MainDb::init () {
 
 	d->updateModuleVersion("events", ModuleVersionEvents);
 	d->updateModuleVersion("friends", ModuleVersionFriends);
+#endif
 }
 
 bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
 	if (eventLog->getPrivate()->dbKey.isValid()) {
 		lWarning() << "Unable to add an event twice!!!";
 		return false;
@@ -1924,9 +2058,13 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 		lError() << "MainDb::addEvent() failed.";
 		return false;
 	};
+#else
+	return false;
+#endif
 }
 
 bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
 	if (!eventLog->getPrivate()->dbKey.isValid()) {
 		lWarning() << "Unable to update an event that wasn't inserted yet!!!";
 		return false;
@@ -1962,9 +2100,13 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 
 		return true;
 	};
+#else
+	return false;
+#endif
 }
 
 bool MainDb::deleteEvent (const shared_ptr<const EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
 	const EventLogPrivate *dEventLog = eventLog->getPrivate();
 	if (!dEventLog->dbKey.isValid()) {
 		lWarning() << "Unable to delete invalid event.";
@@ -1997,9 +2139,13 @@ bool MainDb::deleteEvent (const shared_ptr<const EventLog> &eventLog) {
 
 		return true;
 	};
+#else
+	return false;
+#endif
 }
 
 int MainDb::getEventCount (FilterMask mask) const {
+#ifdef HAVE_DB_STORAGE
 	const string query = "SELECT COUNT(*) FROM event" +
 		buildSqlEventFilter(
 			{ ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter, ConferenceInfoNoDeviceFilter },
@@ -2015,9 +2161,13 @@ int MainDb::getEventCount (FilterMask mask) const {
 		*d->dbSession.getBackendSession() << query, soci::into(count);
 		return count;
 	};
+#else
+	return 0;
+#endif
 }
 
 shared_ptr<EventLog> MainDb::getEventFromKey (const MainDbKey &dbKey) {
+#ifdef HAVE_DB_STORAGE
 	if (!dbKey.isValid()) {
 		lWarning() << "Unable to get event from invalid key.";
 		return nullptr;
@@ -2044,12 +2194,16 @@ shared_ptr<EventLog> MainDb::getEventFromKey (const MainDbKey &dbKey) {
 
 		return d->selectGenericConferenceEvent(chatRoom, row);
 	};
+#else
+	return nullptr;
+#endif
 }
 
 list<shared_ptr<EventLog>> MainDb::getConferenceNotifiedEvents (
 	const ConferenceId &conferenceId,
 	unsigned int lastNotifyId
 ) const {
+#ifdef HAVE_DB_STORAGE
 	// TODO: Optimize.
 	const string query = Statements::get(Statements::SelectConferenceEvents) +
 		string(" AND notify_id > :lastNotifyId");
@@ -2075,9 +2229,13 @@ list<shared_ptr<EventLog>> MainDb::getConferenceNotifiedEvents (
 			events.push_back(d->selectConferenceInfoEvent(conferenceId, row));
 		return events;
 	};
+#else
+	return list<shared_ptr<EventLog>>();
+#endif
 }
 
 int MainDb::getChatMessageCount (const ConferenceId &conferenceId) const {
+#ifdef HAVE_DB_STORAGE
 	/*
 	DurationLogger durationLogger(
 		"Get chat messages count of: (peer=" + conferenceId.getPeerAddress().asString() +
@@ -2106,9 +2264,13 @@ int MainDb::getChatMessageCount (const ConferenceId &conferenceId) const {
 
 		return count;
 	};
+#else
+	return 0;
+#endif
 }
 
 int MainDb::getUnreadChatMessageCount (const ConferenceId &conferenceId) const {
+#ifdef HAVE_DB_STORAGE
 	L_D();
 
 	const int *count = d->unreadChatMessageCountCache[conferenceId];
@@ -2146,9 +2308,13 @@ int MainDb::getUnreadChatMessageCount (const ConferenceId &conferenceId) const {
 		d->unreadChatMessageCountCache.insert(conferenceId, count);
 		return count;
 	};
+#else
+	return 0;
+#endif
 }
 
 void MainDb::markChatMessagesAsRead (const ConferenceId &conferenceId) const {
+#ifdef HAVE_DB_STORAGE
 	if (getUnreadChatMessageCount(conferenceId) == 0)
 		return;
 
@@ -2174,9 +2340,11 @@ void MainDb::markChatMessagesAsRead (const ConferenceId &conferenceId) const {
 		tr.commit();
 		d->unreadChatMessageCountCache.insert(conferenceId, 0);
 	};
+#endif
 }
 
 list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ConferenceId &conferenceId) const {
+#ifdef HAVE_DB_STORAGE
 	// TODO: Optimize.
 	static const string query = Statements::get(Statements::SelectConferenceEvents) +
 		string(" AND direction = ") + Utils::toString(int(ChatMessage::Direction::Incoming)) +
@@ -2211,12 +2379,16 @@ list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ConferenceId 
 
 		return chatMessages;
 	};
+#else
+	return list<shared_ptr<ChatMessage>>();
+#endif
 }
 
 list<MainDb::ParticipantState> MainDb::getChatMessageParticipantsByImdnState (
 	const shared_ptr<EventLog> &eventLog,
 	ChatMessage::State state
 ) const {
+#ifdef HAVE_DB_STORAGE
 	return L_DB_TRANSACTION {
 		L_D();
 
@@ -2238,9 +2410,13 @@ list<MainDb::ParticipantState> MainDb::getChatMessageParticipantsByImdnState (
 			result.emplace_back(IdentityAddress(row.get<string>(0)), state, d->dbSession.getTime(row, 1));
 		return result;
 	};
+#else
+	return list<MainDb::ParticipantState>();
+#endif
 }
 
 list<ChatMessage::State> MainDb::getChatMessageParticipantStates (const shared_ptr<EventLog> &eventLog) const {
+#ifdef HAVE_DB_STORAGE
 	return L_DB_TRANSACTION {
 		L_D();
 
@@ -2261,12 +2437,16 @@ list<ChatMessage::State> MainDb::getChatMessageParticipantStates (const shared_p
 
 		return states;
 	};
+#else
+	return list<ChatMessage::State>();
+#endif
 }
 
 ChatMessage::State MainDb::getChatMessageParticipantState (
 	const shared_ptr<EventLog> &eventLog,
 	const IdentityAddress &participantAddress
 ) const {
+#ifdef HAVE_DB_STORAGE
 	return L_DB_TRANSACTION {
 		L_D();
 
@@ -2282,6 +2462,9 @@ ChatMessage::State MainDb::getChatMessageParticipantState (
 
 		return ChatMessage::State(state);
 	};
+#else
+	return ChatMessage::State();
+#endif
 }
 
 void MainDb::setChatMessageParticipantState (
@@ -2290,25 +2473,32 @@ void MainDb::setChatMessageParticipantState (
 	ChatMessage::State state,
 	time_t stateChangeTime
 ) {
+#ifdef HAVE_DB_STORAGE
 	L_DB_TRANSACTION {
 		L_D();
 		d->setChatMessageParticipantState(eventLog, participantAddress, state, stateChangeTime);
 		tr.commit();
 	};
+#endif
 }
 
 shared_ptr<ChatMessage> MainDb::getLastChatMessage (const ConferenceId &conferenceId) const {
+#ifdef HAVE_DB_STORAGE
 	list<shared_ptr<EventLog>> chatList = getHistory(conferenceId, 1, Filter::ConferenceChatMessageFilter);
 	if (chatList.empty())
 		return nullptr;
 
 	return static_pointer_cast<ConferenceChatMessageEvent>(chatList.front())->getChatMessage();
+#else
+	return nullptr;
+#endif
 }
 
 list<shared_ptr<ChatMessage>> MainDb::findChatMessages (
 	const ConferenceId &conferenceId,
 	const string &imdnMessageId
 ) const {
+#ifdef HAVE_DB_STORAGE
 	// TODO: Optimize.
 	static const string query = Statements::get(Statements::SelectConferenceEvents) +
 		string(" AND imdn_message_id = :imdnMessageId");
@@ -2341,9 +2531,13 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessages (
 
 		return chatMessages;
 	};
+#else
+	return list<shared_ptr<ChatMessage>>();
+#endif
 }
 
 list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered () const {
+#ifdef HAVE_DB_STORAGE
 	static const string query = "SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, chat_room_id"
 			" FROM conference_event_view"
 			" LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
@@ -2389,10 +2583,17 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered ()
 
 		return chatMessages;
 	};
+#else
+	return list<shared_ptr<ChatMessage>>();
+#endif
 }
 
 list<shared_ptr<EventLog>> MainDb::getHistory (const ConferenceId &conferenceId, int nLast, FilterMask mask) const {
+#ifdef HAVE_DB_STORAGE
 	return getHistoryRange(conferenceId, 0, nLast, mask);
+#else
+	return list<shared_ptr<EventLog>>();
+#endif
 }
 
 list<shared_ptr<EventLog>> MainDb::getHistoryRange (
@@ -2401,6 +2602,7 @@ list<shared_ptr<EventLog>> MainDb::getHistoryRange (
 	int end,
 	FilterMask mask
 ) const {
+#ifdef HAVE_DB_STORAGE
 	L_D();
 
 	if (begin < 0)
@@ -2450,9 +2652,13 @@ list<shared_ptr<EventLog>> MainDb::getHistoryRange (
 
 		return events;
 	};
+#else
+	return list<shared_ptr<EventLog>>();
+#endif
 }
 
 int MainDb::getHistorySize (const ConferenceId &conferenceId, FilterMask mask) const {
+#ifdef HAVE_DB_STORAGE
 	const string query = "SELECT COUNT(*) FROM event, conference_event"
 		"  WHERE chat_room_id = :chatRoomId"
 		"  AND event_id = event.id" + buildSqlEventFilter({
@@ -2468,10 +2674,14 @@ int MainDb::getHistorySize (const ConferenceId &conferenceId, FilterMask mask) c
 
 		return count;
 	};
+#else
+	return 0;
+#endif
 }
 
 
 void MainDb::cleanHistory (const ConferenceId &conferenceId, FilterMask mask) {
+#ifdef HAVE_DB_STORAGE
 	const string query = "SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId" +
 		buildSqlEventFilter({
 			ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter, ConferenceInfoNoDeviceFilter
@@ -2498,10 +2708,12 @@ void MainDb::cleanHistory (const ConferenceId &conferenceId, FilterMask mask) {
 		if (!mask || (mask & ConferenceChatMessageFilter))
 			d->unreadChatMessageCountCache.insert(conferenceId, 0);
 	};
+#endif
 }
 
 // -----------------------------------------------------------------------------
 
+#ifdef HAVE_DB_STORAGE
 template<typename T>
 static void fetchContentAppData (soci::session *session, Content &content, long long contentId, T &data) {
 	static const string query = "SELECT name, data FROM chat_message_content_app_data"
@@ -2513,8 +2725,10 @@ static void fetchContentAppData (soci::session *session, Content &content, long 
 	while (statement.fetch())
 		content.setAppData(name, blobToString(data));
 }
+#endif
 
 void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage) {
+#ifdef HAVE_DB_STORAGE
 	L_DB_TRANSACTION {
 		L_D();
 
@@ -2576,11 +2790,13 @@ void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage
 		if (hasFileTransferContent)
 			dChatMessage->loadFileTransferUrlFromBodyToContent();
 	};
+#endif
 }
 
 // -----------------------------------------------------------------------------
 
 void MainDb::disableDeliveryNotificationRequired (const std::shared_ptr<const EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
 	shared_ptr<ChatMessage> chatMessage(static_pointer_cast<const ConferenceChatMessageEvent>(eventLog)->getChatMessage());
 	const long long &eventId = static_cast<MainDbKey &>(eventLog->getPrivate()->dbKey).getPrivate()->storageId;
 
@@ -2590,9 +2806,11 @@ void MainDb::disableDeliveryNotificationRequired (const std::shared_ptr<const Ev
 			" WHERE event_id = :eventId", soci::use(eventId);
 		tr.commit();
 	};
+#endif
 }
 
 void MainDb::disableDisplayNotificationRequired (const std::shared_ptr<const EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
 	shared_ptr<ChatMessage> chatMessage(static_pointer_cast<const ConferenceChatMessageEvent>(eventLog)->getChatMessage());
 	const long long &eventId = static_cast<MainDbKey &>(eventLog->getPrivate()->dbKey).getPrivate()->storageId;
 
@@ -2603,11 +2821,13 @@ void MainDb::disableDisplayNotificationRequired (const std::shared_ptr<const Eve
 			" WHERE event_id = :eventId", soci::use(eventId);
 		tr.commit();
 	};
+#endif
 }
 
 // -----------------------------------------------------------------------------
 
 list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
+#ifdef HAVE_DB_STORAGE
 	static const string query = "SELECT chat_room.id, peer_sip_address.value, local_sip_address.value,"
 		" creation_time, last_update_time, capabilities, subject, last_notify_id, flags"
 		" FROM chat_room, sip_address AS peer_sip_address, sip_address AS local_sip_address"
@@ -2757,18 +2977,24 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 
 		return chatRooms;
 	};
+#else
+	return list<shared_ptr<AbstractChatRoom>>();
+#endif
 }
 
 void MainDb::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
+#ifdef HAVE_DB_STORAGE
 	L_DB_TRANSACTION {
 		L_D();
 
 		d->insertChatRoom(chatRoom, notifyId);
 		tr.commit();
 	};
+#endif
 }
 
 void MainDb::deleteChatRoom (const ConferenceId &conferenceId) {
+#ifdef HAVE_DB_STORAGE
 	L_DB_TRANSACTION {
 		L_D();
 
@@ -2784,12 +3010,14 @@ void MainDb::deleteChatRoom (const ConferenceId &conferenceId) {
 		tr.commit();
 		d->unreadChatMessageCountCache.insert(conferenceId, 0);
 	};
+#endif
 }
 
 void MainDb::migrateBasicToClientGroupChatRoom (
 	const shared_ptr<AbstractChatRoom> &basicChatRoom,
 	const shared_ptr<AbstractChatRoom> &clientGroupChatRoom
 ) {
+#ifdef HAVE_DB_STORAGE
 	L_ASSERT(basicChatRoom->getCapabilities().isSet(ChatRoom::Capabilities::Basic));
 	L_ASSERT(clientGroupChatRoom->getCapabilities().isSet(ChatRoom::Capabilities::Conference));
 
@@ -2832,12 +3060,14 @@ void MainDb::migrateBasicToClientGroupChatRoom (
 
 		tr.commit();
 	};
+#endif
 }
 
 IdentityAddress MainDb::findMissingOneToOneConferenceChatRoomParticipantAddress (
 	const shared_ptr<AbstractChatRoom> &chatRoom,
 	const IdentityAddress &presentParticipantAddr
 ) {
+#ifdef HAVE_DB_STORAGE
 	L_ASSERT(linphone_core_conference_server_enabled(chatRoom->getCore()->getCCore()));
 	L_ASSERT(chatRoom->getCapabilities() & ChatRoom::Capabilities::OneToOne);
 	L_ASSERT(chatRoom->getParticipantCount() == 1);
@@ -2867,6 +3097,9 @@ IdentityAddress MainDb::findMissingOneToOneConferenceChatRoomParticipantAddress 
 
 		return IdentityAddress(missingParticipantAddress);
 	};
+#else
+	return IdentityAddress();
+#endif
 }
 
 IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
@@ -2874,6 +3107,7 @@ IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 	const IdentityAddress &participantB,
 	bool encrypted
 ) const {
+#ifdef HAVE_DB_STORAGE
 	return L_DB_TRANSACTION {
 		L_D();
 
@@ -2894,9 +3128,13 @@ IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 
 		return IdentityAddress(chatRoomAddress);
 	};
+#else
+	return IdentityAddress();
+#endif
 }
 
 void MainDb::insertOneToOneConferenceChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom, bool encrypted) {
+#ifdef HAVE_DB_STORAGE
 	L_ASSERT(linphone_core_conference_server_enabled(chatRoom->getCore()->getCCore()));
 	L_ASSERT(chatRoom->getCapabilities() & ChatRoom::Capabilities::OneToOne);
 
@@ -2918,9 +3156,11 @@ void MainDb::insertOneToOneConferenceChatRoom (const shared_ptr<AbstractChatRoom
 
 		tr.commit();
 	};
+#endif
 }
 
 void MainDb::enableChatRoomMigration (const ConferenceId &conferenceId, bool enable) {
+#ifdef HAVE_DB_STORAGE
 	L_DB_TRANSACTION {
 		L_D();
 
@@ -2940,12 +3180,14 @@ void MainDb::enableChatRoomMigration (const ConferenceId &conferenceId, bool ena
 
 		tr.commit();
 	};
+#endif
 }
 
 void MainDb::updateChatRoomParticipantDevice (
 	const shared_ptr<AbstractChatRoom> &chatRoom,
 	const shared_ptr<ParticipantDevice> &device
 ) {
+#ifdef HAVE_DB_STORAGE
 	L_DB_TRANSACTION {
 		L_D();
 
@@ -2960,32 +3202,38 @@ void MainDb::updateChatRoomParticipantDevice (
 
 		tr.commit();
 	};
+#endif
 }
 
 void MainDb::deleteChatRoomParticipant (
 	const std::shared_ptr<AbstractChatRoom> &chatRoom,
 	const IdentityAddress &participant
 ){
+#ifdef HAVE_DB_STORAGE
 	L_D();
 	const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
 	const long long &participantSipAddressId = d->selectSipAddressId(participant.asString());
 	d->deleteChatRoomParticipant(dbChatRoomId, participantSipAddressId);
+#endif
 }
 
 void MainDb::deleteChatRoomParticipantDevice (
 	const shared_ptr<AbstractChatRoom> &chatRoom,
 	const shared_ptr<ParticipantDevice> &device
 ) {
+#ifdef HAVE_DB_STORAGE
 	L_D();
 	const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
 	const long long &participantSipAddressId = d->selectSipAddressId(device->getParticipant()->getAddress().asString());
 	const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
 	d->deleteChatRoomParticipantDevice(participantId, participantSipAddressId);
+#endif
 }
 	
 // -----------------------------------------------------------------------------
 
 bool MainDb::import (Backend, const string &parameters) {
+#ifdef HAVE_DB_STORAGE
 	L_D();
 
 	// Backend is useless, it's sqlite3. (Only available legacy backend.)
@@ -3004,6 +3252,9 @@ bool MainDb::import (Backend, const string &parameters) {
 	d->importLegacyHistory(inDbSession);
 
 	return true;
+#else
+	return false;
+#endif
 }
 
 LINPHONE_END_NAMESPACE
