@@ -11,8 +11,8 @@
 #import "linphone/factory.h"
 #import "linphone/types.h"
 
-#import "linphone/auth_info.h"
 #import "linphone/core.h"
+#import "linphone/call.h"
 #import "linphone/tunnel.h"
 #import "linphone/wrapper_utils.h"
 #import "linphone/core_utils.h"

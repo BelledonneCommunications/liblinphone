@@ -20,13 +20,19 @@
 #
 ############################################################################
 
-#Cmake 3.15 is required for swift wrapper compilation, otherwise have a build time errors.
+# Cmake 3.15 is required for swift wrapper compilation, otherwise you have immediate build time errors.
+# However, cmake-1.15 swift support is not mature yet.
+# For example, creating a swift framework doesn't work with Ninja backend (only Xcode).
+# Fortunately, creating a swift shared library works. 
+# As a result, I had to create my own script to create a framework from a shared library, called make-framework.sh.
+
+# These two links are interesting:
 # https://forums.swift.org/t/announcing-swift-support-in-cmake/24792
 # https://github.com/compnerd/swift-cmake-demo
 
-cmake_minimum_required(VERSION 3.15.20190814)
+cmake_minimum_required(VERSION 3.15)
 set(CMAKE_Swift_LANGUAGE_VERSION 4.0)
-#enable_language(Swift)
+
 
 add_custom_command(OUTPUT LinphoneWrapper.swift
 	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/genwrapper.py" "${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml"
@@ -41,7 +47,10 @@ add_custom_command(OUTPUT LinphoneWrapper.swift
 )
 
 add_custom_command(OUTPUT linphonesw.framework
-	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/make-framework.sh" "linphonesw" "-l" "${CMAKE_CURRENT_BINARY_DIR}/liblinphonesw.dylib" -o "${CMAKE_CURRENT_BINARY_DIR}"
+	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/make-framework.sh" "linphonesw" 
+	"-b" "${CMAKE_CURRENT_BINARY_DIR}"
+	"-v" "${PROJECT_VERSION}"
+	-o "${CMAKE_CURRENT_BINARY_DIR}"
 	DEPENDS linphonesw
 )
 
@@ -58,8 +67,9 @@ target_link_libraries(linphonesw
 	PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} ${BELLESIP_LIBRARIES} linphone
 )
 
-#Add -target and -sdk options to switfc command line otherwise you'll get obsucure errors.
-target_compile_options(linphonesw PRIVATE -target ${CMAKE_OSX_ARCHITECTURES}-apple-ios10 -sdk ${CMAKE_OSX_SYSROOT}) 
+
+#Add -target and -sdk options to switfc command line otherwise you'll get obscure errors.
+target_compile_options(linphonesw PRIVATE -emit-objc-header -target ${CMAKE_OSX_ARCHITECTURES}-apple-ios10 -sdk ${CMAKE_OSX_SYSROOT}) 
 
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/linphonesw.framework DESTINATION Frameworks
         USE_SOURCE_PERMISSIONS

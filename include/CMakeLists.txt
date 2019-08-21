@@ -141,7 +141,7 @@ set(LINPHONE_HEADER_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}" PARENT_SCOPE)
 
 # ------------------------------------------------------------------------------
 if (APPLE AND ENABLE_SHARED)
-	#cmake 3.10 seems not able to handle subdirectories for PUBLIC_HEADER. My be rework in the futur
+	#cmake 3.10 seems not able to handle subdirectories for PUBLIC_HEADER. May be reworked in the future.
 	set(DEST_ROOT_DIRECTORY "${CMAKE_INSTALL_PREFIX}/Frameworks/linphone.framework/Headers")
 else()
 	set(DEST_ROOT_DIRECTORY "${CMAKE_INSTALL_INCLUDEDIR}/linphone")
@@ -165,3 +165,5 @@ install(FILES ${UTILS_HEADER_FILES}
 	DESTINATION "${DEST_ROOT_DIRECTORY}/utils"
 	PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
 )
+
+
