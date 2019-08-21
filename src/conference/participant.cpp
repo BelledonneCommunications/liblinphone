@@ -109,6 +109,10 @@ AbstractChatRoom::SecurityLevel Participant::getSecurityLevel () const {
 	bool isSafe = true;
 	for (const auto &device : d->getDevices()) {
 		auto level = device->getSecurityLevel();
+		// Note: the algorithm implemented is not actually doing what it says and we may exit on the first Unsafe device
+		// while we also have a ClearText one
+		// It actually never occurs because in a ciphered chatroom, no one can be set as ClearText except the local
+		// device when it turns off lime after joining the chatroom and this status is thus intercepted before landing here.
 		switch (level) {
 			case AbstractChatRoom::SecurityLevel::Unsafe:
 				return level; // if one device is Unsafe the whole participant is Unsafe
