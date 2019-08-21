@@ -438,14 +438,20 @@ if(ENABLE_STATIC)
 	)
 endif()
 if(ENABLE_SHARED)
+	set(SWIFT_MODULE_FILES
+		"${PROJECT_SOURCE_DIR}/wrappers/swift/Modules/module.modulemap"
+		"${PROJECT_SOURCE_DIR}/wrappers/swift/Modules/swift-umbrella.h"
+	)
 	set(LINPHONE_RESOURCES
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/cpim_grammar"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/identity_grammar"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/rootca.pem"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ringback.wav"
-		"${CMAKE_CURRENT_SOURCE_DIR}/../share/Modules"
 	) # Keep it relative to current dir to allow CMakeList inclusion
-	add_library(linphone SHARED ${LINPHONE_RESOURCES} ${LINPHONE_HEADER_FILES}
+	
+	set_source_files_properties(${SWIFT_MODULE_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Modules)
+	
+	add_library(linphone SHARED ${LINPHONE_RESOURCES} ${SWIFT_MODULE_FILES} ${LINPHONE_HEADER_FILES}
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi>
 	)
@@ -456,6 +462,8 @@ if(ENABLE_SHARED)
 		else()
 			set(MIN_OS ${CMAKE_OSX_DEPLOYMENT_TARGET})
 		endif()
+		
+		
 		set_target_properties(linphone PROPERTIES
 			FRAMEWORK TRUE
 			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphone
@@ -502,6 +510,7 @@ if(ENABLE_SHARED)
 		FRAMEWORK DESTINATION Frameworks
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	)
+	
 endif()
 
 if(ICONV_FOUND)

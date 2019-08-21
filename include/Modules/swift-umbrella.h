@@ -1,3 +1,5 @@
+// This file has a duplicate in wrappers/swift/Modules/.
+// Please see the note in wrappers/swift/Modules/module.modulemap.
 //
 //  include.h
 //  LinphoneSdk
@@ -12,6 +14,7 @@
 #import "linphone/types.h"
 
 #import "linphone/core.h"
+#import "linphone/call.h"
 #import "linphone/tunnel.h"
 #import "linphone/wrapper_utils.h"
 #import "linphone/core_utils.h"

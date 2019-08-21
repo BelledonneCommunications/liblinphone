@@ -1,0 +1,16 @@
+// This file goes to the linphone.framework, and is required for the linphonesw.framework (swift wrapper) 
+// to work in an application.
+// There is a similar file in linphone/include of source tree, that is required to build the linphonesw shared library.
+// They slightly differ - just adjusting the path the umbrella header to workaround some obsucure behaviors of Xcode
+// switft compiler. 
+// At some point you have to decide whether to live with this hack or spend two more weeks in understanding the 
+// internals of swift compiler.
+// At the time of writing this note, cmake 3.15 support of Swift is too minimalist.
+// -- SM in August 2019. REVISIT when cmake has decent swift support.
+
+module linphone {
+	umbrella header "Modules/swift-umbrella.h"
+
+	export *
+	module * { export * }
+}
