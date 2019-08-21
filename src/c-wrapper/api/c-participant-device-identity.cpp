@@ -17,18 +17,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/server-group-chat-room-p.h"
+#endif
 #include "c-wrapper/c-wrapper.h"
 
 // =============================================================================
 
+#ifdef HAVE_ADVANCED_IM
 L_DECLARE_C_CLONABLE_OBJECT_IMPL(ParticipantDeviceIdentity);
+#endif
 
 using namespace std;
 
 // =============================================================================
 
 LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_new (const LinphoneAddress *address, const char *name) {
+#ifdef HAVE_ADVANCED_IM
 	LinphonePrivate::ParticipantDeviceIdentity *cppPtr = new LinphonePrivate::ParticipantDeviceIdentity(
 		*L_GET_CPP_PTR_FROM_C_OBJECT(address),
 		L_C_TO_STRING(name)
@@ -37,17 +46,30 @@ LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_new (con
 	L_SET_CPP_PTR_FROM_C_OBJECT(object, cppPtr);
 
 	return object;
+#else
+	return NULL;
+#endif
 }
 
 LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_clone (const LinphoneParticipantDeviceIdentity *deviceIdentity) {
+#ifdef HAVE_ADVANCED_IM
 	return reinterpret_cast<LinphoneParticipantDeviceIdentity *>(belle_sip_object_clone(BELLE_SIP_OBJECT(deviceIdentity)));
+#else
+	return NULL;
+#endif
 }
 
 LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_ref (LinphoneParticipantDeviceIdentity *deviceIdentity) {
+#ifdef HAVE_ADVANCED_IM
 	belle_sip_object_ref(deviceIdentity);
 	return deviceIdentity;
+#else
+	return NULL;
+#endif
 }
 
 void linphone_participant_device_identity_unref (LinphoneParticipantDeviceIdentity *deviceIdentity) {
+#ifdef HAVE_ADVANCED_IM
 	belle_sip_object_unref(deviceIdentity);
+#endif
 }

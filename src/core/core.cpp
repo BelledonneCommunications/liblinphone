@@ -62,37 +62,40 @@ LINPHONE_BEGIN_NAMESPACE
 
 void CorePrivate::init () {
 	L_Q();
+
 	mainDb.reset(new MainDb(q->getSharedFromThis()));
 #ifdef HAVE_ADVANCED_IM
 	remoteListEventHandler = makeUnique<RemoteConferenceListEventHandler>(q->getSharedFromThis());
 	localListEventHandler = makeUnique<LocalConferenceListEventHandler>(q->getSharedFromThis());
 #endif
 
-	AbstractDb::Backend backend;
-	string uri = L_C_TO_STRING(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
-	if (!uri.empty())
-		backend = strcmp(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "backend", "sqlite3"), "mysql") == 0
-			? MainDb::Mysql
-			: MainDb::Sqlite3;
-	else {
-		backend = AbstractDb::Sqlite3;
-		uri = q->getDataPath() + LINPHONE_DB;
+	if (linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		AbstractDb::Backend backend;
+		string uri = L_C_TO_STRING(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
+		if (!uri.empty())
+			backend = strcmp(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "backend", "sqlite3"), "mysql") == 0
+				? MainDb::Mysql
+				: MainDb::Sqlite3;
+		else {
+			backend = AbstractDb::Sqlite3;
+			uri = q->getDataPath() + LINPHONE_DB;
+		}
+
+		if (uri != "null"){ //special uri "null" means don't open database. We need this for tests.
+			if (backend == MainDb::Mysql && uri.find("charset") == string::npos) {
+				lInfo() << "No charset defined forcing utf8 4 bytes specially for conference subjet storage";
+				uri += " charset=utf8mb4"; //
+			}
+			lInfo() << "Opening linphone database " << uri << " with backend " << backend;
+			if (!mainDb->connect(backend, uri)) {
+				ostringstream os;
+				os << "Unable to open linphone database with uri " << uri << " and backend " << backend;
+				throw DatabaseConnectionFailure(os.str());
+			}
+
+			loadChatRooms();
+		} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
 	}
-
-	if (uri != "null"){ //special uri "null" means don't open database. We need this for tests.
-		if (backend == MainDb::Mysql && uri.find("charset") == string::npos) {
-			lInfo() << "No charset defined forcing utf8 4 bytes specially for conference subjet storage";
-			uri += " charset=utf8mb4"; //
-		}
-		lInfo() << "Opening linphone database " << uri << " with backend " << backend;
-		if (!mainDb->connect(backend, uri)) {
-			ostringstream os;
-			os << "Unable to open linphone database with uri " << uri << " and backend " << backend;
-			throw DatabaseConnectionFailure(os.str());
-		}
-
-		loadChatRooms();
-	} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
 
 	isFriendListSubscriptionEnabled = !!lp_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "net", "friendlist_subscription_enabled", 1);
 }

@@ -226,7 +226,6 @@ set(SOURCE_FILES_CXX
 	clonable-object-tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
-	main-db-tester.cpp
 	multipart-tester.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
@@ -234,6 +233,10 @@ set(SOURCE_FILES_CXX
 
 if(ENABLE_ADVANCED_IM)
 	list(APPEND SOURCE_FILES_CXX conference-event-tester.cpp)
+endif()
+
+if(ENABLE_DB_STORAGE)
+	list(APPEND SOURCE_FILES_CXX main-db-tester.cpp)
 endif()
 
 set(HEADER_FILES

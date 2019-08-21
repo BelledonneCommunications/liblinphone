@@ -44,6 +44,7 @@ option(ENABLE_ADVANCED_IM "Enable advanced instant messaging such as group chat.
 option(ENABLE_CONSOLE_UI "Turn on or off compilation of console interface." YES)
 option(ENABLE_CSHARP_WRAPPER "Build the C# wrapper for Liblinphone." OFF)
 option(ENABLE_CXX_WRAPPER "Build the C++ wrapper for Liblinphone." YES)
+option(ENABLE_DB_STORAGE "Enable database storage." YES)
 option(ENABLE_SWIFT_WRAPPER "Build the swift wrapper for Liblinphone." OFF)
 option(ENABLE_JAZZY_DOC "Build the jazzy doc for swift module of Liblinphone." OFF)
 option(ENABLE_DAEMON "Enable the linphone daemon interface." YES)
@@ -144,11 +145,14 @@ endif()
 find_package(Sqlite3 REQUIRED)
 find_package(XML2 REQUIRED)
 
-#APPLE platform does not use dlopen for soci backend
-if (APPLE)  
-	find_package(Soci REQUIRED COMPONENTS sqlite3)
-else()
-	find_package(Soci REQUIRED)
+if (ENABLE_DB_STORAGE)
+	#APPLE platform does not use dlopen for soci backend
+	if (APPLE)
+		find_package(Soci REQUIRED COMPONENTS sqlite3)
+	else()
+		find_package(Soci REQUIRED)
+	endif()
+	set(HAVE_DB_STORAGE 1)
 endif()
 
 find_package(ZLIB)

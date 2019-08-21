@@ -80,6 +80,7 @@ private:
 	// Events API.
 	// ---------------------------------------------------------------------------
 
+#ifdef HAVE_DB_STORAGE
 	long long getConferenceEventIdFromRow (const soci::row &row) const {
 		return dbSession.resolveId(row, 0);
 	}
@@ -146,6 +147,7 @@ private:
 		EventLog::Type type,
 		const soci::row &row
 	) const;
+#endif
 
 	long long insertEvent (const std::shared_ptr<EventLog> &eventLog);
 	long long insertConferenceEvent (const std::shared_ptr<EventLog> &eventLog, long long *chatRoomId = nullptr);
@@ -191,8 +193,10 @@ private:
 	// Import.
 	// ---------------------------------------------------------------------------
 
+#ifdef HAVE_DB_STORAGE
 	void importLegacyFriends (DbSession &inDbSession);
 	void importLegacyHistory (DbSession &inDbSession);
+#endif
 
 	// ---------------------------------------------------------------------------
 

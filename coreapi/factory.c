@@ -497,6 +497,13 @@ bool_t linphone_factory_is_chatroom_backend_available(LinphoneFactory *factory, 
 #endif
 }
 
+bool_t linphone_factory_is_database_storage_available(LinphoneFactory *factory) {
+#ifdef HAVE_DB_STORAGE
+	return TRUE;
+#else
+	return FALSE;
+#endif
+}
 
 bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory) {
 #ifdef HAVE_ADVANCED_IM

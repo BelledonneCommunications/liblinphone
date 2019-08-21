@@ -350,7 +350,9 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&cpim_test_suite);
 	bc_tester_add_suite(&multipart_test_suite);
 	bc_tester_add_suite(&clonable_object_test_suite);
+#ifdef HAVE_DB_STORAGE
 	bc_tester_add_suite(&main_db_test_suite);
+#endif
 	bc_tester_add_suite(&property_container_test_suite);
 #ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&video_test_suite);
