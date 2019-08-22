@@ -316,8 +316,10 @@ int logfile_arg_func(const char *arg) {
 void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&setup_test_suite);
 	bc_tester_add_suite(&register_test_suite);
+#ifdef HAVE_ADVANCED_IM
 	bc_tester_add_suite(&group_chat_test_suite);
 	bc_tester_add_suite(&secure_group_chat_test_suite);
+#endif
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
 	bc_tester_add_suite(&call_test_suite);
@@ -335,7 +337,9 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&account_creator_test_suite);
 	bc_tester_add_suite(&stun_test_suite);
 	bc_tester_add_suite(&event_test_suite);
+#ifdef HAVE_ADVANCED_IM
 	bc_tester_add_suite(&conference_event_test_suite);
+#endif
 	bc_tester_add_suite(&contents_test_suite);
 	bc_tester_add_suite(&flexisip_test_suite);
 	bc_tester_add_suite(&remote_provisioning_test_suite);
@@ -346,7 +350,9 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&cpim_test_suite);
 	bc_tester_add_suite(&multipart_test_suite);
 	bc_tester_add_suite(&clonable_object_test_suite);
+#ifdef HAVE_DB_STORAGE
 	bc_tester_add_suite(&main_db_test_suite);
+#endif
 	bc_tester_add_suite(&property_container_test_suite);
 #ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&video_test_suite);

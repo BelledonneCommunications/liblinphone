@@ -20,8 +20,14 @@
 #ifndef _L_ABSTRACT_DB_P_H_
 #define _L_ABSTRACT_DB_P_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "abstract-db.h"
+#ifdef HAVE_DB_STORAGE
 #include "db/session/db-session.h"
+#endif
 #include "object/object-p.h"
 
 // =============================================================================
@@ -30,7 +36,9 @@ LINPHONE_BEGIN_NAMESPACE
 
 class AbstractDbPrivate : public ObjectPrivate {
 public:
+#ifdef HAVE_DB_STORAGE
 	DbSession dbSession;
+#endif
 
 private:
 	void safeInit ();

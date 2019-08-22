@@ -17,7 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_ADVANCED_IM
 #include "handlers/remote-conference-event-handler.h"
+#endif
 #include "logger/logger.h"
 #include "participant-p.h"
 #include "remote-conference-p.h"
@@ -33,8 +39,10 @@ RemoteConference::RemoteConference (
 	const IdentityAddress &myAddress,
 	CallSessionListener *listener
 ) : Conference(*new RemoteConferencePrivate, core, myAddress, listener) {
+#ifdef HAVE_ADVANCED_IM
 	L_D();
 	d->eventHandler.reset(new RemoteConferenceEventHandler(this));
+#endif
 }
 
 RemoteConference::~RemoteConference () {
@@ -75,8 +83,10 @@ bool RemoteConference::removeParticipant (const shared_ptr<Participant> &partici
 void RemoteConference::onConferenceCreated (const IdentityAddress &) {}
 
 void RemoteConference::onConferenceTerminated (const IdentityAddress &) {
+#ifdef HAVE_ADVANCED_IM
 	L_D();
 	d->eventHandler->unsubscribe();
+#endif
 }
 
 void RemoteConference::onFirstNotifyReceived (const IdentityAddress &) {}

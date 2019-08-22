@@ -636,8 +636,10 @@ void linphone_core_manager_destroy(LinphoneCoreManager* mgr) {
 
 void linphone_core_manager_delete_chat_room (LinphoneCoreManager *mgr, LinphoneChatRoom *cr, bctbx_list_t *coresList) {
 	stats mgrStats = mgr->stat;
-	linphone_core_delete_chat_room(mgr->lc, cr);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateDeleted, mgrStats.number_of_LinphoneChatRoomStateDeleted + 1, 10000));
+	if (cr) {
+		linphone_core_delete_chat_room(mgr->lc, cr);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateDeleted, mgrStats.number_of_LinphoneChatRoomStateDeleted + 1, 10000));
+	}
 }
 
 int liblinphone_tester_ipv6_available(void){

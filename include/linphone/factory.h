@@ -559,6 +559,28 @@ LINPHONE_PUBLIC LinphoneAccountCreatorCbs *linphone_factory_create_account_creat
 LINPHONE_PUBLIC LinphoneXmlRpcRequestCbs *linphone_factory_create_xml_rpc_request_cbs(LinphoneFactory *factory);
 
 /**
+ * Indicates if the given LinphoneChatRoomBackend is available
+ * @param[in] factory the #LinphoneFactory
+ * @param[in] chatroom_backend the #LinphoneChatRoomBackend
+ * @return TRUE if the chatroom backend is available, FALSE otherwise
+ */
+LINPHONE_PUBLIC bool_t linphone_factory_is_chatroom_backend_available(LinphoneFactory *factory, LinphoneChatRoomBackend chatroom_backend);
+
+/**
+ * Indicates if the storage in database is available
+ * @param[in] factory the #LinphoneFactory
+ * @return TRUE if the database storage is available, FALSE otherwise
+ */
+LINPHONE_PUBLIC bool_t linphone_factory_is_database_storage_available(LinphoneFactory *factory);
+
+/**
+ * Indicates if IMDN are available
+ * @param[in] factory the #LinphoneFactory
+ * @return TRUE if IDMN are available
+ */
+LINPHONE_PUBLIC bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory);
+
+/**
  * @}
  */
 

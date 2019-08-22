@@ -58,6 +58,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "bctoolbox/charconv.h"
 
+#ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/client-group-chat-room-p.h"
 #include "chat/chat-room/client-group-to-basic-chat-room.h"
 #include "chat/chat-room/server-group-chat-room-p.h"
@@ -65,6 +66,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "conference/handlers/remote-conference-event-handler.h"
 #include "conference/handlers/remote-conference-event-handler-p.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
+#endif
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core-p.h"
@@ -2249,6 +2251,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 			linphone_friend_list_notify_presence_received(list, lev, body);
 		}
 	} else if (strcmp(notified_event, "conference") == 0) {
+#ifdef HAVE_ADVANCED_IM
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
 		char *resourceAddrStr = linphone_address_as_string_uri_only(resource);
 		const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc));
@@ -2285,10 +2288,14 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 			}
 		} else
 			L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_string_buffer(body));
+#else
+		ms_message("Advanced IM such as group chat is disabled!");
+#endif
 	}
 }
 
 static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneContent *body) {
+#ifdef HAVE_ADVANCED_IM
 	if (body && linphone_event_get_custom_header(lev, "Content-Disposition") && strcasecmp(linphone_event_get_custom_header(lev, "Content-Disposition"), "recipient-list") == 0) {
 		// List subscription
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->localListEventHandler->subscribeReceived(lev, body);
@@ -2304,6 +2311,9 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 		L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscribeReceived(lev);
 	else
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
+#else
+	ms_warning("Advanced IM such as group chat is disabled!");
+#endif
 }
 
 static void linphone_core_internal_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const char *subscribe_event, const LinphoneContent *body) {
@@ -2313,6 +2323,7 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc, Linphone
 }
 
 static void _linphone_core_conference_subscription_state_changed (LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
+#ifdef HAVE_ADVANCED_IM
 	if (!linphone_core_conference_server_enabled(lc)) {
 		RemoteConferenceEventHandlerPrivate *thiz = static_cast<RemoteConferenceEventHandlerPrivate *>(linphone_event_get_user_data(lev));
 		if (state == LinphoneSubscriptionError)
@@ -2328,6 +2339,9 @@ static void _linphone_core_conference_subscription_state_changed (LinphoneCore *
 	));
 	if (chatRoom)
 		L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(lev, state);
+#else
+	ms_warning("Advanced IM such as group chat is disabled!");
+#endif
 }
 
 static void linphone_core_internal_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {

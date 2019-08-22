@@ -136,13 +136,16 @@ void text_message_base_with_text(LinphoneCoreManager* marie, LinphoneCoreManager
 		}else{
 			marieCr = linphone_core_get_chat_room(marie->lc, pauline->identity);
 		}
-		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int," %i");
-		if (linphone_chat_room_get_history_size(marieCr) > 0) {
-			bctbx_list_t *history = linphone_chat_room_get_history(marieCr, 1);
-			LinphoneChatMessage *recv_msg = (LinphoneChatMessage *)(history->data);
-			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recv_msg), text);
-			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(recv_msg),text);
-			bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
+
+		if (linphone_factory_is_database_storage_available(linphone_factory_get())) {
+			BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int," %i");
+			if (linphone_chat_room_get_history_size(marieCr) > 0) {
+				bctbx_list_t *history = linphone_chat_room_get_history(marieCr, 1);
+				LinphoneChatMessage *recv_msg = (LinphoneChatMessage *)(history->data);
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recv_msg), text);
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(recv_msg),text);
+				bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
+			}
 		}
 	}
 
@@ -269,6 +272,11 @@ static void text_message_with_ack(void) {
 }
 
 static void text_message_with_send_error(void) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
@@ -317,6 +325,11 @@ static void text_message_with_send_error(void) {
 void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
 							bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download, bool_t download_from_history, 
 							int auto_download) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	char *send_filepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
 	char *receive_filepath = bc_tester_file("receive_file.dump");
 	LinphoneChatRoom* chat_room;
@@ -393,7 +406,9 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 			linphone_chat_room_mark_as_read(marie_room);
 			if (auto_download == -1 || (auto_download > 0 && auto_download < file_transfer_size)) {
 				// We shoudln't get displayed IMDN until file has been downloaded
-				BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+					BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+				}
 
 				LinphoneChatMessage *recv_msg;
 				if (download_from_history) {
@@ -421,16 +436,22 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), -1);
 					BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageNotDelivered,1, 10000));
 					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), 0);
-					BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+					if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+						BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+					}
 				} else {
 					/* wait for a long time in case the DNS SRV resolution takes times - it should be immediate though */
 					if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,1,55000))) {
 						compare_files(send_filepath, receive_filepath);
 					}
-					BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+					if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+						BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+					}
 				}
 			} else {
-				BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+					BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+				}
 				contents = linphone_chat_message_get_contents(msg);
 				BC_ASSERT_PTR_NOT_NULL(contents);
 				BC_ASSERT_EQUAL(1, bctbx_list_size(contents), int, "%d");
@@ -861,6 +882,7 @@ static int enable_lime_for_message_test(LinphoneCoreManager *marie, LinphoneCore
 	return 0;
 }
 
+#ifdef HAVE_ADVANCED_IM
 static void _is_composing_notification(bool_t lime_enabled) {
 	LinphoneChatRoom* pauline_chat_room;
 	LinphoneChatRoom* marie_chat_room;
@@ -935,6 +957,11 @@ static void is_composing_notification_with_lime(void) {
 }
 
 static void _imdn_notifications(bool_t with_lime) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	lp_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
@@ -993,6 +1020,11 @@ end:
 }
 
 static void _im_notification_policy(bool_t with_lime) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneImNotifPolicy *marie_policy = linphone_core_get_im_notif_policy(marie->lc);
@@ -1095,6 +1127,7 @@ static void imdn_notifications_with_lime(void) {
 static void im_notification_policy_with_lime(void) {
 	_im_notification_policy(TRUE);
 }
+#endif
 
 static void _im_error_delivery_notification(bool_t online) {
 	LinphoneChatRoom *chat_room;
@@ -1497,6 +1530,11 @@ void history_message_count_helper(LinphoneChatRoom* chatroom, int x, int y, unsi
 }
 
 void crash_during_file_transfer(void) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneChatRoom *chat_room;
@@ -1637,6 +1675,11 @@ static void real_time_text(
 	bool_t mess_with_pauline_payload_number, bool_t ice_enabled, bool_t sql_storage,
 	bool_t do_not_store_rtt_messages_in_sql_storage
 ) {
+	if (sql_storage && !linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneChatRoom *pauline_chat_room;
 	LinphoneChatRoom *marie_chat_room;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
@@ -2409,6 +2452,11 @@ void im_encryption_engine_b64_async(void) {
 }
 
 void unread_message_count(void) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 
@@ -2437,6 +2485,11 @@ static void message_received_callback(LinphoneCore *lc, LinphoneChatRoom *room, 
 }
 
 void unread_message_count_callback(void) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	int dummy = 0;
@@ -2455,6 +2508,11 @@ void unread_message_count_callback(void) {
 }
 
 static void migration_from_messages_db (void) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	char *src_db = bc_tester_res("db/messages.db");
 	char *tmp_db  = bc_tester_file("tmp.db");
@@ -2500,14 +2558,18 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer using external body URL 2", file_transfer_using_external_body_url_2),
 	TEST_NO_TAG("Transfer using external body URL 404", file_transfer_using_external_body_url_404),
 	TEST_NO_TAG("Text message denied", text_message_denied),
+#ifdef HAVE_ADVANCED_IM
 	TEST_NO_TAG("IsComposing notification", is_composing_notification),
 	TEST_NO_TAG("IMDN notifications", imdn_notifications),
 	TEST_NO_TAG("IM notification policy", im_notification_policy),
+#endif
 	TEST_NO_TAG("Unread message count", unread_message_count),
 	TEST_NO_TAG("Unread message count in callback", unread_message_count_callback),
+#ifdef HAVE_ADVANCED_IM
 	TEST_ONE_TAG("IsComposing notification lime", is_composing_notification_with_lime, "LIME"),
 	TEST_ONE_TAG("IMDN notifications with lime", imdn_notifications_with_lime, "LIME"),
 	TEST_ONE_TAG("IM notification policy with lime", im_notification_policy_with_lime, "LIME"),
+#endif
 	TEST_ONE_TAG("IM error delivery notification online", im_error_delivery_notification_online, "LIME"),
 	TEST_ONE_TAG("IM error delivery notification offline", im_error_delivery_notification_offline, "LIME"),
 	TEST_ONE_TAG("Lime text message", lime_text_message, "LIME"),

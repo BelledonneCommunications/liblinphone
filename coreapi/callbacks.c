@@ -42,8 +42,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "call/call-p.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room.h"
+#ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/client-group-chat-room-p.h"
 #include "chat/chat-room/server-group-chat-room-p.h"
+#endif
 #include "conference/participant.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/call-session.h"
@@ -100,6 +102,7 @@ static void call_received(SalCallOp *h) {
 	LinphoneAddress *toAddr = linphone_address_new(h->getTo().c_str());
 
 	if (_linphone_core_is_conference_creation(lc, toAddr)) {
+#ifdef HAVE_ADVANCED_IM
 		linphone_address_unref(toAddr);
 		linphone_address_unref(fromAddr);
 		if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
@@ -132,9 +135,14 @@ static void call_received(SalCallOp *h) {
 		}
 		// TODO: handle media conference creation if the "text" feature tag is not present
 		return;
+#else
+		ms_warning("Advanced IM such as group chat is disabled!");
+		return;
+#endif
 	}
 
 	if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
+#ifdef HAVE_ADVANCED_IM
 		linphone_address_unref(toAddr);
 		linphone_address_unref(fromAddr);
 		if (linphone_core_conference_server_enabled(lc)) {
@@ -173,6 +181,10 @@ static void call_received(SalCallOp *h) {
 			L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->confirmJoining(h);
 		}
 		return;
+#else
+		ms_warning("Advanced IM such as group chat is disabled!");
+		return;
+#endif
 	} else {
 		// TODO: handle media conference joining if the "text" feature tag is not present
 	}
@@ -824,6 +836,7 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 				}
 			} else {
 				if (linphone_core_conference_server_enabled(lc)) {
+#ifdef HAVE_ADVANCED_IM
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
 						ConferenceId(IdentityAddress(op->getTo()), IdentityAddress(op->getTo()))
 					);
@@ -853,6 +866,9 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 							}
 						}
 					}
+#else
+					ms_warning("Advanced IM such as group chat is disabled!");
+#endif
 				}
 			}
 		}

@@ -118,8 +118,10 @@ public:
 	belle_sip_main_loop_t *getMainLoop();
 	bool basicToFlexisipChatroomMigrationEnabled()const;
 	std::unique_ptr<MainDb> mainDb;
+#ifdef HAVE_ADVANCED_IM
 	std::unique_ptr<RemoteConferenceListEventHandler> remoteListEventHandler;
 	std::unique_ptr<LocalConferenceListEventHandler> localListEventHandler;
+#endif
 
 private:
 	bool isInBackground = false;

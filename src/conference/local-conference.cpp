@@ -17,7 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_ADVANCED_IM
 #include "handlers/local-conference-event-handler.h"
+#endif
 #include "local-conference-p.h"
 #include "logger/logger.h"
 #include "participant-p.h"
@@ -30,13 +36,17 @@ LINPHONE_BEGIN_NAMESPACE
 
 LocalConference::LocalConference (const shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener)
 	: Conference(*new LocalConferencePrivate, core, myAddress, listener) {
+#ifdef HAVE_ADVANCED_IM
 	L_D();
 	d->eventHandler.reset(new LocalConferenceEventHandler(this));
+#endif
 }
 
 LocalConference::~LocalConference () {
+#ifdef HAVE_ADVANCED_IM
 	L_D();
 	d->eventHandler.reset();
+#endif
 }
 
 // -----------------------------------------------------------------------------

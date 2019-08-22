@@ -47,4 +47,6 @@
 #cmakedefine HAVE_LIBUDEV_H 0
 #cmakedefine HAVE_LIME
 #cmakedefine HAVE_LIME_X3DH
+#cmakedefine HAVE_ADVANCED_IM
+#cmakedefine HAVE_DB_STORAGE
 #cmakedefine ENABLE_UPDATE_CHECK 1

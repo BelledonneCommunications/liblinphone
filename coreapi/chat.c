@@ -39,8 +39,10 @@
 #include "call/call.h"
 #include "chat/chat-room/chat-room-params.h"
 #include "chat/chat-room/basic-chat-room.h"
+#ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/client-group-chat-room.h"
 #include "chat/chat-room/client-group-to-basic-chat-room.h"
+#endif
 #include "chat/chat-room/real-time-text-chat-room-p.h"
 #include "chat/chat-room/real-time-text-chat-room.h"
 #include "content/content-type.h"
