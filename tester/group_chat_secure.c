@@ -1560,9 +1560,9 @@ end:
 	linphone_core_manager_destroy(chloe);
 }
 
-static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg (const char *pauline_rc) {
+static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg (const bool_t unsafe_if_sas_refused) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create(pauline_rc);
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_lime_x3dh_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
@@ -1624,6 +1624,11 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrt
 	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
 	linphone_core_set_media_encryption(laure->lc, LinphoneMediaEncryptionZRTP);
 
+	// turn unsafe_if_sas_refused on according to parameter
+	if (unsafe_if_sas_refused) {
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 1);
+	}
+
 	// ZRTP verification call between Marie and Pauline
 	bool_t call_ok = FALSE;
 	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
@@ -1679,9 +1684,9 @@ end:
 
 static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp (void) {
 	// First try without the unsafe_if_sas_refused flag on in pauline rc file
-	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg("pauline_lime_x3dh_rc");
+	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(FALSE);
 	// Second try with the unsafe_if_sas_refused flag on in pauline rc file
-	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg("pauline_lime_x3dh_unsafe_if_sas_refused_rc");
+	group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp_arg(TRUE);
 }
 
 /**
@@ -1697,7 +1702,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrt
  */
 static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices (void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
-	LinphoneCoreManager *pauline1 = linphone_core_manager_create("pauline_lime_x3dh_unsafe_if_sas_refused_rc");
+	LinphoneCoreManager *pauline1 = linphone_core_manager_create("pauline_lime_x3dh_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_lime_x3dh_rc");
 	LinphoneCoreManager *pauline2 = NULL;
 	LinphoneChatRoom *pauline2Cr = NULL;
@@ -1707,6 +1712,8 @@ static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices (void
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline1);
 	int dummy = 0;
+	// pauline1 has unsafe_if_sas_refused turned on
+	linphone_config_set_int(linphone_core_get_config(pauline1->lc), "lime", "unsafe_if_sas_refused", 1);
 
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
