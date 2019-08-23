@@ -206,6 +206,7 @@ namespace {
 	};
 }
 
+#ifdef HAVE_DB_STORAGE
 static const char *mapEventFilterToSql (MainDb::Filter filter) {
 	return mapEnumToSql(
 		EventFilterToSql, sizeof EventFilterToSql / sizeof EventFilterToSql[0], filter
@@ -243,6 +244,7 @@ static string buildSqlEventFilter (
 
 	return sql;
 }
+#endif
 
 // -----------------------------------------------------------------------------
 // Misc helpers.
