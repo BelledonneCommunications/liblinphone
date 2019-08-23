@@ -365,10 +365,6 @@ public class AndroidPlatformHelper {
 		if (view == null) {
 			Log.i("[Platform Helper] Preview window surface set to null");
 			setNativePreviewWindowId(mNativePtr, null);
-			if (mPreviewTextureView != null) {
-				mPreviewTextureView.setSurfaceTextureListener(null);
-				mPreviewTextureView = null;
-			}
 			return;
 		}
 
@@ -400,12 +396,21 @@ public class AndroidPlatformHelper {
 
 			@Override
 			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-				Log.i("[Platform Helper] Preview window surface is no longer available");
+				Log.i("[Platform Helper] Preview surface texture destroyed");
+				
 				if (mPreviewTextureView != null) {
-					setNativePreviewWindowId(mNativePtr, null);
-					mPreviewTextureView = null;
+					if (surface.equals(mPreviewTextureView.getSurfaceTexture())) {
+						Log.i("[Platform Helper] Current preview surface texture is no longer available");
+						mPreviewTextureView = null;
+						setNativePreviewWindowId(mNativePtr, null);
+					}
 				}
-				return false;
+
+				if (!surface.isReleased()) {
+					Log.i("[Platform Helper] Releasing preview window surface");
+					surface.release();
+				}
+				return true;
 			}
 
 			@Override
@@ -424,12 +429,6 @@ public class AndroidPlatformHelper {
 		if (view == null) {
 			Log.i("[Platform Helper] Video window surface set to null");
 			setNativeVideoWindowId(mNativePtr, null);
-			if (mVideoTextureView != null) {
-				mVideoTextureView.setSurfaceTextureListener(null);
-				mVideoTextureView = null;
-				mSurfaceTexture = null;
-				mSurface = null;
-			}
 			return;
 		}
 
@@ -463,16 +462,24 @@ public class AndroidPlatformHelper {
 
 			@Override
 			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+				Log.i("[Platform Helper] Rendering surface texture destroyed");
+
 				if (mSurfaceTexture == surface) {
-					Log.i("[Platform Helper] Rendering window surface is no longer available");
 					if (mVideoTextureView != null) {
+						Log.i("[Platform Helper] Current rendering surface texture is no longer available");
 						setNativeVideoWindowId(mNativePtr, null);
 						mSurfaceTexture = null;
 						mSurface = null;
 						mVideoTextureView = null;
 					}
 				}
-				return false;
+
+				if (!surface.isReleased()) {
+					Log.i("[Platform Helper] Releasing window surface");
+					surface.release();
+				}
+
+				return true;
 			}
 
 			@Override
