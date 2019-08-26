@@ -823,7 +823,7 @@ void MediaSessionPrivate::videoStreamEventCb (void *userData, const MSFilter *f,
 #ifdef TEST_EXT_RENDERER
 void MediaSessionPrivate::extRendererCb (void *userData, const MSPicture *local, const MSPicture *remote) {
 	lInfo() << "extRendererCb, local buffer=" << local ? local->planes[0] : nullptr
-		<< ", remote buffer=" << remote ? remote->planes[0] : nullptr);
+		<< ", remote buffer=" << remote ? remote->planes[0] : nullptr;
 }
 #endif
 
@@ -3246,6 +3246,7 @@ void MediaSessionPrivate::startStream (SalStreamDescription *streamDesc, int str
 			return;
 		}
 	} else if (streamDesc->type == SalVideo) {
+#ifdef VIDEO_ENABLED
 		if (videoStream && videoStream->ms.state != MSStreamInitialized)
 			video_stream_unprepare_video(videoStream);
 
@@ -3265,6 +3266,7 @@ void MediaSessionPrivate::startStream (SalStreamDescription *streamDesc, int str
 			lFatal() << "startStream() for video stream called without prior init!";
 			return;
 		}
+#endif
 	} else if (streamDesc->type == SalText) {
 		if (textStream && textStream->ms.state != MSStreamInitialized)
 			text_stream_unprepare_text(textStream);
@@ -3772,8 +3774,8 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 							if (videoStream && cameraEnabled) {
 								q->enableCamera(q->cameraEnabled());
 							}
-#endif
 						}
+#endif
 
 						if (sdChanged == SAL_MEDIA_DESCRIPTION_UNCHANGED) {
 							/* FIXME ZRTP, might be restarted in any cases? */
