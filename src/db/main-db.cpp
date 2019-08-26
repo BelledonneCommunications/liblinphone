@@ -127,6 +127,7 @@ static T getValueFromRow (const soci::row &row, int index, bool &isNull) {
 // Event filter tools.
 // -----------------------------------------------------------------------------
 
+#ifdef HAVE_DB_STORAGE
 // Some tools to build filters at compile time.
 template<typename T>
 struct EnumToSql {
@@ -155,11 +156,13 @@ template<EventLog::Type Type>
 struct SqlEventFilterBuilder<Type> {
 	static constexpr auto get () L_AUTO_RETURN(StaticIntString<int(Type)>());
 };
+#endif
 
 // -----------------------------------------------------------------------------
 // Event filters.
 // -----------------------------------------------------------------------------
 
+#ifdef HAVE_DB_STORAGE
 namespace {
 	#ifdef _WIN32
 		// TODO: Find a workaround to deal with StaticString concatenation!!!
@@ -206,7 +209,6 @@ namespace {
 	};
 }
 
-#ifdef HAVE_DB_STORAGE
 static const char *mapEventFilterToSql (MainDb::Filter filter) {
 	return mapEnumToSql(
 		EventFilterToSql, sizeof EventFilterToSql / sizeof EventFilterToSql[0], filter
