@@ -82,10 +82,12 @@ void CorePrivate::init () {
 		}
 
 		if (uri != "null"){ //special uri "null" means don't open database. We need this for tests.
+#if 0 // Revert the following as mysql < 5.7 won't accept to create our tables because our VARCHAR(255) are too long.
 			if (backend == MainDb::Mysql && uri.find("charset") == string::npos) {
 				lInfo() << "No charset defined forcing utf8 4 bytes specially for conference subjet storage";
-				uri += " charset=utf8mb4"; //
+				uri += " charset=utf8mb4";
 			}
+#endif
 			lInfo() << "Opening linphone database " << uri << " with backend " << backend;
 			if (!mainDb->connect(backend, uri)) {
 				ostringstream os;
