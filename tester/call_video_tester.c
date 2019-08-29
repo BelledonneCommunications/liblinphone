@@ -2362,7 +2362,7 @@ static void video_call_expected_size_for_regular_bandwith_vp8(void) {
 }
 
 static void video_call_expected_size_for_high_bandwith_vp8(void) {
-	video_call_expected_size_for_specified_bandwidth(5000000, 1600, 1200, "vga", "vp8");
+	video_call_expected_size_for_specified_bandwidth(5000000, 1280, 720, "vga", "vp8");
 }
 
 static void video_call_expected_size_for_low_bandwith_h264(void) {
