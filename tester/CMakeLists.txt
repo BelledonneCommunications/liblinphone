@@ -364,7 +364,7 @@ if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 		set_target_properties(liblinphone_tester PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 		set_target_properties(liblinphone_tester PROPERTIES LINKER_LANGUAGE CXX)
 		set_target_properties(liblinphone_tester PROPERTIES C_STANDARD 99)
-		target_include_directories(liblinphone_tester PUBLIC ${BCTOOLBOX_TESTER_INCLUDE_DIRS})
+		target_include_directories(liblinphone_tester PUBLIC ${BCTOOLBOX_TESTER_INCLUDE_DIRS} ${LIBXSD_INCLUDE_DIRS})
 		target_link_libraries(liblinphone_tester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 
 		install(TARGETS liblinphone_tester
