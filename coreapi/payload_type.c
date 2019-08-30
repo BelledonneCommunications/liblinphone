@@ -243,7 +243,7 @@ const char *linphone_payload_type_get_send_fmtp(const LinphonePayloadType *pt) {
 
 void linphone_payload_type_set_send_fmtp(LinphonePayloadType *pt, const char *send_fmtp) {
 	if (pt->pt->send_fmtp != NULL) bctbx_free(pt->pt->send_fmtp);
-	if (send_fmtp != NULL) pt->pt->recv_fmtp = bctbx_strdup(send_fmtp);
+	if (send_fmtp != NULL) pt->pt->send_fmtp = bctbx_strdup(send_fmtp);
 	else send_fmtp = NULL;
 }
 
