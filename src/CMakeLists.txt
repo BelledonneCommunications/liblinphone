@@ -426,7 +426,6 @@ set(LINPHONE_CXX_OBJECTS_INCLUDE_DIRS
 	${SOCI_INCLUDE_DIRS}
 	${SOCI_MYSQL_INCLUDES}
 )
-set(LINPHONE_CXX_OBJECTS_INCLUDE_DIRS ${BELR_INCLUDE_DIRS})
 
 set(LINPHONE_PRIVATE_HEADER_FILES)
 foreach (header ${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES})
@@ -450,6 +449,7 @@ if(ENABLE_STATIC)
 	)
 	set_target_properties(linphone-static PROPERTIES OUTPUT_NAME linphone)
 	target_include_directories(linphone-static PUBLIC ${LINPHONE_INCLUDE_DIRS})
+	target_include_directories(linphone-static PRIVATE ${LINPHONE_CXX_OBJECTS_INCLUDE_DIRS})
 	target_link_libraries(linphone-static INTERFACE ${LIBS})
 	if(APPLE)
 		target_link_libraries(linphone-static INTERFACE "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration")
@@ -500,6 +500,7 @@ if(ENABLE_SHARED)
 		set_target_properties(linphone PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
 	endif()
 	target_include_directories(linphone PUBLIC ${LINPHONE_INCLUDE_DIRS})
+	target_include_directories(linphone PRIVATE ${LINPHONE_CXX_OBJECTS_INCLUDE_DIRS})
 	target_link_libraries(linphone PRIVATE ${LIBS})
 	if(APPLE)
 		target_link_libraries(linphone PRIVATE "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration")
