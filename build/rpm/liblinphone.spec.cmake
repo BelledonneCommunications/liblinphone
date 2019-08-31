@@ -101,8 +101,10 @@ rm -rf $RPM_BUILD_ROOT
 #%{_mandir}/*
 %{_datadir}/linphone
 %{_datadir}/sounds/linphone
+%{_datadir}/belr/grammars/*
 /etc/sysconfig/lp-autoanswer
 /lib/systemd/system/lp-autoanswer.service
+
 
 %files devel
 %defattr(-,root,root)
@@ -122,8 +124,6 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 %{_datadir}/Linphone/cmake/*.cmake
 %{_datadir}/LinphoneCxx/cmake/*.cmake
-%{_datadir}/belr/grammars/cpim_grammar
-%{_datadir}/belr/grammars/identity_grammar
 
 
 %changelog
