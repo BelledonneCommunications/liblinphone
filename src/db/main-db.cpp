@@ -54,7 +54,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 8);
+	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 9);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -879,6 +879,8 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 	shared_ptr<ChatMessage> chatMessage = static_pointer_cast<ConferenceChatMessageEvent>(eventLog)->getChatMessage();
 	const long long &fromSipAddressId = insertSipAddress(chatMessage->getFromAddress().asString());
 	const long long &toSipAddressId = insertSipAddress(chatMessage->getToAddress().asString());
+	const string &forwardInfo = chatMessage->getForwardInfo();
+	const long long &forwardId = forwardInfo.empty() ? -1 : insertSipAddress(forwardInfo);
 	const tm &messageTime = Utils::getTimeTAsTm(chatMessage->getTime());
 	const int &state = int(chatMessage->getState());
 	const int &direction = int(chatMessage->getDirection());
@@ -892,17 +894,17 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 		"  event_id, from_sip_address_id, to_sip_address_id,"
 		"  time, state, direction, imdn_message_id, is_secured,"
 		"  delivery_notification_required, display_notification_required,"
-		"  marked_as_read"
+		"  marked_as_read, forward_id"
 		") VALUES ("
 		"  :eventId, :localSipaddressId, :remoteSipaddressId,"
 		"  :time, :state, :direction, :imdnMessageId, :isSecured,"
 		"  :deliveryNotificationRequired, :displayNotificationRequired,"
-		"  :markedAsRead"
+		"  :markedAsRead, :forwardId"
 		")", soci::use(eventId), soci::use(fromSipAddressId), soci::use(toSipAddressId),
 		soci::use(messageTime), soci::use(state), soci::use(direction),
 		soci::use(imdnMessageId), soci::use(isSecured),
 		soci::use(deliveryNotificationRequired), soci::use(displayNotificationRequired),
-		soci::use(markedAsRead);
+		soci::use(markedAsRead), soci::use(forwardId);
 
 	for (const Content *content : chatMessage->getContents())
 		insertContent(eventId, *content);
@@ -1373,6 +1375,10 @@ void MainDbPrivate::updateSchema () {
 			"  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
 			"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
 			"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
+	}
+
+	if (version < makeVersion(1, 0, 9)) {
+		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN forward_id VARCHAR(255) NOT NULL DEFAULT -1";
 	}
 #endif
 }
@@ -2795,6 +2801,28 @@ void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage
 			dChatMessage->loadFileTransferUrlFromBodyToContent();
 	};
 #endif
+}
+
+void MainDb::loadChatMessageForwardInfo (const shared_ptr<ChatMessage> &chatMessage) {
+	L_DB_TRANSACTION {
+		L_D();
+		ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+		MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dChatMessage->dbKey).getPrivate();
+		const long long &eventId = dEventKey->storageId;
+		long long forward_id = -1;
+		string forward_info = "";
+		*d->dbSession.getBackendSession() << "SELECT forward_id"
+		" FROM conference_chat_message_event"
+		" WHERE event_id = :eventId",
+		soci::into(forward_id), soci::use(eventId);
+		if (forward_id >0)
+			*d->dbSession.getBackendSession() << "SELECT sip_address.value"
+			" FROM sip_address"
+			" WHERE sip_address.id = :forward_id",
+			soci::into(forward_info), soci::use(forward_id);
+		
+		chatMessage->setForwardInfo(forward_info);
+	};
 }
 
 // -----------------------------------------------------------------------------

@@ -251,6 +251,7 @@ private:
 
 	ChatMessage::State state = ChatMessage::State::Idle;
 	ChatMessage::Direction direction = ChatMessage::Direction::Incoming;
+	std::string forwardInfo;
 
 	std::list<Content *> contents;
 
