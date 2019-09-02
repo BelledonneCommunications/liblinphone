@@ -352,7 +352,14 @@ LINPHONE_PUBLIC void linphone_chat_message_set_file_transfer_filepath (LinphoneC
  * @param[in] msg #LinphoneChatMessage object.
  * @return true if it is a forward message, false otherwise
  */
-LINPHONE_PUBLIC bool_t linphone_chat_message_is_forward(LinphoneChatMessage *msg);
+LINPHONE_PUBLIC bool_t linphone_chat_message_is_forward (LinphoneChatMessage *msg);
+		
+/**
+ * Gets the forward info if available as a string
+ * @param[in] msg #LinphoneChatMessage object.
+ * @return the #LinphoneContent buffer if available, null otherwise
+ */
+LINPHONE_PUBLIC const char *linphone_chat_message_get_forward_info (const LinphoneChatMessage *msg);
 
 /**
  * Fulfill a chat message char by char. Message linked to a Real Time Text Call send char in realtime following RFC 4103/T.140
