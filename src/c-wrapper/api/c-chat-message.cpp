@@ -242,6 +242,10 @@ void linphone_chat_message_set_file_transfer_filepath (LinphoneChatMessage *msg,
 	L_GET_PRIVATE_FROM_C_OBJECT(msg)->setFileTransferFilepath(L_C_TO_STRING(filepath));
 }
 
+bool_t linphone_chat_message_is_forward(LinphoneChatMessage *msg) {
+	return !L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getForwardInfo().empty();
+}
+
 void linphone_chat_message_add_custom_header(
 	LinphoneChatMessage *msg,
 	const char *header_name,

@@ -163,6 +163,27 @@ LinphoneChatMessage *linphone_chat_room_create_message_2 (
 	return msg;
 }
 
+LinphoneChatMessage *linphone_chat_room_create_forward_message (LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
+	LinphoneChatMessage *fMsg = linphone_chat_room_create_empty_message(cr);
+	bctbx_list_t *contents;
+	for (contents=(bctbx_list_t*)linphone_chat_message_get_contents(msg);contents!=NULL;contents=contents->next) {
+		LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
+		if (linphone_content_is_file(content))
+			linphone_chat_message_add_file_content(fMsg, content);
+		else if (linphone_content_is_text(content))
+			linphone_chat_message_add_text_content(fMsg, linphone_chat_message_get_text(msg));
+	}
+	bctbx_list_free(contents);
+
+	// set forward info
+	if (!(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCapabilities() & LinphonePrivate::ChatRoom::Capabilities::Basic)) {
+		std::string fInfo = linphone_chat_message_is_forward(msg) ? L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getForwardInfo() : L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getFromAddress().asString();
+		L_GET_CPP_PTR_FROM_C_OBJECT(fMsg)->setForwardInfo(fInfo);
+	}
+
+	return fMsg;
+}
+
 void linphone_chat_room_send_chat_message_2 (LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
 	linphone_chat_message_ref(msg);
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->send();

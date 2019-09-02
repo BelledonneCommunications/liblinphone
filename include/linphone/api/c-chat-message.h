@@ -348,6 +348,13 @@ LINPHONE_PUBLIC const LinphoneErrorInfo *linphone_chat_message_get_error_info (c
 LINPHONE_PUBLIC void linphone_chat_message_set_file_transfer_filepath (LinphoneChatMessage *msg, const char *filepath);
 
 /**
+ * Returns true if the chat message is a forward message.
+ * @param[in] msg #LinphoneChatMessage object.
+ * @return true if it is a forward message, false otherwise
+ */
+LINPHONE_PUBLIC bool_t linphone_chat_message_is_forward(LinphoneChatMessage *msg);
+
+/**
  * Fulfill a chat message char by char. Message linked to a Real Time Text Call send char in realtime following RFC 4103/T.140
  * To commit a message, use #linphone_chat_room_send_message
  * @param[in] msg #LinphoneChatMessage object.
