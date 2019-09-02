@@ -246,6 +246,10 @@ bool_t linphone_chat_message_is_forward(LinphoneChatMessage *msg) {
 	return !L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getForwardInfo().empty();
 }
 
+const char *linphone_chat_message_get_forward_info (const LinphoneChatMessage *msg) {
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getForwardInfo());
+}
+
 void linphone_chat_message_add_custom_header(
 	LinphoneChatMessage *msg,
 	const char *header_name,
