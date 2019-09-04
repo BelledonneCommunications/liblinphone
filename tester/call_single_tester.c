@@ -153,12 +153,16 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 	linphone_call_unref(c2);
 }
 
-void simple_call_base(bool_t enable_multicast_recv_side) {
+void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcard) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
 	const LinphoneAddress *from;
 	LinphoneCall *pauline_call;
 	LinphoneProxyConfig* marie_cfg;
+
+	if (disable_soundcard) {
+		ms_snd_card_manager_bypass_soundcard_detection(TRUE);
+	}
 
 	marie = linphone_core_manager_new( "marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -204,7 +208,11 @@ void simple_call_base(bool_t enable_multicast_recv_side) {
 }
 
 static void simple_call(void) {
-	simple_call_base(FALSE);
+	simple_call_base(FALSE, FALSE);
+}
+
+static void simple_call_without_soundcard(void) {
+	simple_call_base(FALSE, TRUE);
 }
 
 /*This test is added to reproduce a crash when a call is failed synchronously*/
@@ -4948,6 +4956,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Simple call", simple_call),
 	TEST_NO_TAG("Simple call with no SIP transport", simple_call_with_no_sip_transport),
 	TEST_NO_TAG("Simple call with UDP", simple_call_with_udp),
+	TEST_NO_TAG("Simple call without soundcard", simple_call_without_soundcard),
 	TEST_ONE_TAG("Call terminated automatically by linphone_core_destroy", automatic_call_termination, "LeaksMemory"),
 	TEST_NO_TAG("Call with http proxy", call_with_http_proxy),
 	TEST_NO_TAG("Call with timed-out bye", call_with_timed_out_bye),
