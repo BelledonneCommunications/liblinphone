@@ -158,6 +158,11 @@ public class AndroidPlatformHelper {
 		mNativePtr = 0;
 		mMainHandler.removeCallbacksAndMessages(null);
 		stopNetworkMonitoring();
+		
+		// The following will prevent a crash if a video view hasn't been set to null before the Core stops
+		// The view listener will be called and the call to the native method will result in a crash in the Core accessor in the native PlatformHelper
+		setVideoPreviewView(null);
+		setVideoRenderingView(null);
 	}
 
 	public synchronized void onWifiOnlyEnabled(boolean enabled) {
