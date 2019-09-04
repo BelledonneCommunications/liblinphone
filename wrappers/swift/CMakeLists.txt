@@ -48,6 +48,21 @@ add_custom_command(OUTPUT LinphoneWrapper.swift
 	linphone-doc
 )
 
+if(NOT APPLE)
+add_custom_command(OUTPUT linphonesw.framework
+	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/make-framework.sh" "linphonesw"
+	"-b" "${CMAKE_CURRENT_BINARY_DIR}"
+	"-v" "${PROJECT_VERSION}"
+	-o "${CMAKE_CURRENT_BINARY_DIR}"
+	DEPENDS linphonesw
+	)
+
+add_custom_target(linphonesw-framework ALL
+	COMMAND echo "linphonesw.framework generated manually."
+	DEPENDS linphonesw.framework
+	)
+endif()
+
 add_library(linphonesw SHARED
 	${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.swift
 )
@@ -72,19 +87,6 @@ if(APPLE)
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 		)
 else()
-	add_custom_command(OUTPUT linphonesw.framework
-		COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/make-framework.sh" "linphonesw"
-		"-b" "${CMAKE_CURRENT_BINARY_DIR}"
-		"-v" "${PROJECT_VERSION}"
-		-o "${CMAKE_CURRENT_BINARY_DIR}"
-		DEPENDS linphonesw
-		)
-
-	add_custom_target(linphonesw-framework ALL
-		COMMAND echo "linphonesw.framework generated manually."
-		DEPENDS linphonesw.framework
-		)
-
 	#Add -target and -sdk options to switfc command line otherwise you'll get obscure errors.
 	target_compile_options(linphonesw PRIVATE -emit-objc-header -target ${CMAKE_OSX_ARCHITECTURES}-apple-ios10 -sdk ${CMAKE_OSX_SYSROOT})
 
