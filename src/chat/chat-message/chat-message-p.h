@@ -80,6 +80,8 @@ public:
 	bool isMarkedAsRead () const;
 
 	void setImdnMessageId (const std::string &imdnMessageId);
+	
+	void setForwardInfo (const std::string &fInfo);
 
 	void setAuthenticatedFromAddress (const IdentityAddress &authenticatedFromAddress) {
 		this->authenticatedFromAddress = authenticatedFromAddress;
