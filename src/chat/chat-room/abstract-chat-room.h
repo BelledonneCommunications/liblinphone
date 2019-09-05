@@ -93,6 +93,7 @@ public:
 	virtual std::shared_ptr<ChatMessage> createChatMessage (const std::string &text) = 0;
 
 	virtual std::shared_ptr<ChatMessage> createFileTransferMessage (FileContent *content) = 0;
+	virtual std::shared_ptr<ChatMessage> createForwardMessage (const std::shared_ptr<ChatMessage> &msg) = 0;
 
 	virtual std::shared_ptr<ChatMessage> findChatMessage (const std::string &messageId) const = 0;
 	virtual std::shared_ptr<ChatMessage> findChatMessage (
