@@ -68,6 +68,7 @@ public:
 	std::shared_ptr<ChatMessage> createChatMessage (const std::string &text) override;
 
 	std::shared_ptr<ChatMessage> createFileTransferMessage (FileContent *content) override;
+	std::shared_ptr<ChatMessage> createForwardMessage (const std::shared_ptr<ChatMessage> &msg) override;
 
 	std::shared_ptr<ChatMessage> findChatMessage (const std::string &messageId) const override;
 	std::shared_ptr<ChatMessage> findChatMessage (
