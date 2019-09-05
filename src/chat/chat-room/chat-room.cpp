@@ -520,6 +520,20 @@ shared_ptr<ChatMessage> ChatRoom::createFileTransferMessage (FileContent *conten
 	return chatMessage;
 }
 
+shared_ptr<ChatMessage> ChatRoom::createForwardMessage (const shared_ptr<ChatMessage> &msg) {
+	shared_ptr<ChatMessage> chatMessage = createChatMessage();
+	for (const Content *c : msg->getContents()) {
+		chatMessage->addContent(c->clone());
+	}
+
+	// set forward info
+	if (!(getCapabilities() & Capabilities::Basic)) {
+		std::string fInfo = msg->getForwardInfo().empty()? msg->getFromAddress().asString():msg->getForwardInfo();
+		chatMessage->setForwardInfo(fInfo);
+	}
+	
+	return chatMessage;
+}
 // -----------------------------------------------------------------------------
 
 shared_ptr<ChatMessage> ChatRoom::findChatMessage (const string &messageId) const {
