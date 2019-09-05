@@ -746,7 +746,8 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 		if (!!row.get<int>(18)) {
 			dChatMessage->markAsRead();
 		}
-
+		dChatMessage->setForwardInfo(row.get<string>(19));
+		
 		cache(chatMessage, eventId);
 	}
 
@@ -880,7 +881,6 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 	const long long &fromSipAddressId = insertSipAddress(chatMessage->getFromAddress().asString());
 	const long long &toSipAddressId = insertSipAddress(chatMessage->getToAddress().asString());
 	const string &forwardInfo = chatMessage->getForwardInfo();
-	const long long &forwardId = forwardInfo.empty() ? -1 : insertSipAddress(forwardInfo);
 	const tm &messageTime = Utils::getTimeTAsTm(chatMessage->getTime());
 	const int &state = int(chatMessage->getState());
 	const int &direction = int(chatMessage->getDirection());
@@ -894,17 +894,17 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 		"  event_id, from_sip_address_id, to_sip_address_id,"
 		"  time, state, direction, imdn_message_id, is_secured,"
 		"  delivery_notification_required, display_notification_required,"
-		"  marked_as_read, forward_id"
+		"  marked_as_read, forward_info"
 		") VALUES ("
 		"  :eventId, :localSipaddressId, :remoteSipaddressId,"
 		"  :time, :state, :direction, :imdnMessageId, :isSecured,"
 		"  :deliveryNotificationRequired, :displayNotificationRequired,"
-		"  :markedAsRead, :forwardId"
+		"  :markedAsRead, :forwardInfo"
 		")", soci::use(eventId), soci::use(fromSipAddressId), soci::use(toSipAddressId),
 		soci::use(messageTime), soci::use(state), soci::use(direction),
 		soci::use(imdnMessageId), soci::use(isSecured),
 		soci::use(deliveryNotificationRequired), soci::use(displayNotificationRequired),
-		soci::use(markedAsRead), soci::use(forwardId);
+		soci::use(markedAsRead), soci::use(forwardInfo);
 
 	for (const Content *content : chatMessage->getContents())
 		insertContent(eventId, *content);
@@ -1378,7 +1378,18 @@ void MainDbPrivate::updateSchema () {
 	}
 
 	if (version < makeVersion(1, 0, 9)) {
-		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN forward_id VARCHAR(255) NOT NULL DEFAULT -1";
+		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN forward_info VARCHAR(255) NOT NULL DEFAULT ''";
+		*session << "DROP VIEW IF EXISTS conference_event_view";
+		*session << "CREATE VIEW conference_event_view AS"
+		"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info"
+		"  FROM event"
+		"  LEFT JOIN conference_event ON conference_event.event_id = event.id"
+		"  LEFT JOIN conference_chat_message_event ON conference_chat_message_event.event_id = event.id"
+		"  LEFT JOIN conference_notified_event ON conference_notified_event.event_id = event.id"
+		"  LEFT JOIN conference_participant_device_event ON conference_participant_device_event.event_id = event.id"
+		"  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
+		"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
+		"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
 	}
 #endif
 }
@@ -2801,28 +2812,6 @@ void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage
 			dChatMessage->loadFileTransferUrlFromBodyToContent();
 	};
 #endif
-}
-
-void MainDb::loadChatMessageForwardInfo (const shared_ptr<ChatMessage> &chatMessage) {
-	L_DB_TRANSACTION {
-		L_D();
-		ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
-		MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dChatMessage->dbKey).getPrivate();
-		const long long &eventId = dEventKey->storageId;
-		long long forward_id = -1;
-		string forward_info = "";
-		*d->dbSession.getBackendSession() << "SELECT forward_id"
-		" FROM conference_chat_message_event"
-		" WHERE event_id = :eventId",
-		soci::into(forward_id), soci::use(eventId);
-		if (forward_id >0)
-			*d->dbSession.getBackendSession() << "SELECT sip_address.value"
-			" FROM sip_address"
-			" WHERE sip_address.id = :forward_id",
-			soci::into(forward_info), soci::use(forward_id);
-		
-		chatMessage->setForwardInfo(forward_info);
-	};
 }
 
 // -----------------------------------------------------------------------------

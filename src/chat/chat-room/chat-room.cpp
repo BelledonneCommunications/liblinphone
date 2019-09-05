@@ -529,7 +529,7 @@ shared_ptr<ChatMessage> ChatRoom::createForwardMessage (const shared_ptr<ChatMes
 	// set forward info
 	if (!(getCapabilities() & Capabilities::Basic)) {
 		std::string fInfo = msg->getForwardInfo().empty()? msg->getFromAddress().asString():msg->getForwardInfo();
-		chatMessage->setForwardInfo(fInfo);
+		chatMessage->getPrivate()->setForwardInfo(fInfo);
 	}
 	
 	return chatMessage;
