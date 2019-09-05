@@ -32,7 +32,7 @@ if(ENABLE_ADVANCED_IM)
 endif()
 #interface_libs is used in export cmake config file
 if(APPLE)
-	list(APPEND INTERFACE_LIBS "-framework CFNetwork")
+	list(APPEND INTERFACE_LIBS "-framework CFNetwork -framework Foundation -framework AVFoundation -framework SystemConfiguration")
 endif()
 set(INTERFACE_LIBS ${LINK_LIBS} xml2 xsd)
 
