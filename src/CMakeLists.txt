@@ -470,7 +470,7 @@ if(ENABLE_STATIC)
 	target_link_libraries(linphone-static PRIVATE ${LINK_LIBS})
 
 	if(APPLE)
-		target_link_libraries(linphone-static PUBLIC "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration")
+		target_link_libraries(linphone-static PUBLIC "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration -framework CFNetwork")
 	endif()
 	install(TARGETS linphone-static EXPORT ${EXPORT_TARGETS_NAME}Targets
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -528,7 +528,7 @@ if(ENABLE_SHARED)
 	target_link_libraries(linphone PRIVATE ${LINK_LIBS})
 
 	if(APPLE)
-		target_link_libraries(linphone PUBLIC "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration")
+		target_link_libraries(linphone PUBLIC "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration -framework CFNetwork")
 	endif()
 	if(WIN32)
 		# Export Xerces and Soci symbols.
