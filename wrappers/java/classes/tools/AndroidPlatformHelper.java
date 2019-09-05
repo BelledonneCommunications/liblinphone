@@ -155,14 +155,15 @@ public class AndroidPlatformHelper {
 
 	public synchronized void onLinphoneCoreStop() {
 		Log.i("[Platform Helper] onLinphoneCoreStop, network monitoring is " + mMonitoringEnabled);
-		mNativePtr = 0;
-		mMainHandler.removeCallbacksAndMessages(null);
-		stopNetworkMonitoring();
 		
 		// The following will prevent a crash if a video view hasn't been set to null before the Core stops
 		// The view listener will be called and the call to the native method will result in a crash in the Core accessor in the native PlatformHelper
 		setVideoPreviewView(null);
 		setVideoRenderingView(null);
+		
+		mNativePtr = 0;
+		mMainHandler.removeCallbacksAndMessages(null);
+		stopNetworkMonitoring();
 	}
 
 	public synchronized void onWifiOnlyEnabled(boolean enabled) {
