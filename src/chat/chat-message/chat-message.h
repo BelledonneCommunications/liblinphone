@@ -97,7 +97,7 @@ public:
 
 	bool getToBeStored () const;
 	virtual void setToBeStored (bool value);
-	void setForwardInfo (const std::string &fInfo);
+	
 
 	std::list<ParticipantImdnState> getParticipantsByImdnState (State state) const;
 

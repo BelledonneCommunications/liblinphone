@@ -204,7 +204,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 		}
 		auto forwardInfoHeader = cpimMessage->getMessageHeader("Forward-Info",imdnNamespace);
 		if (forwardInfoHeader) {
-			message->setForwardInfo(forwardInfoHeader->getValue());
+			message->getPrivate()->setForwardInfo(forwardInfoHeader->getValue());
 		}
 	}
 	if (messageIdHeader)
