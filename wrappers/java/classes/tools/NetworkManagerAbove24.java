@@ -30,7 +30,11 @@ import android.net.NetworkInfo;
 import android.net.NetworkCapabilities;
 import android.net.ProxyInfo;
 import android.net.NetworkRequest;
+import android.net.RouteInfo;
 import android.os.Build;
+import java.net.InetAddress;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.linphone.core.tools.AndroidPlatformHelper;
 
@@ -61,7 +65,7 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 							return;
 						}
 
-						Log.i("[Platform Helper] [Network Manager 24] A network is available: " + info.getType() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
+						Log.i("[Platform Helper] [Network Manager 24] A network is available: " + info.getTypeName() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
 						if (!mWifiOnly || info.getType() == ConnectivityManager.TYPE_WIFI) {
 							mNetworkAvailable = network;
 							mHelper.updateNetworkReachability();
@@ -111,7 +115,7 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 							return;
 						}
 						Log.i("[Platform Helper] [Network Manager 24] onLinkPropertiesChanged " + linkProperties.toString());
-						mHelper.updateDnsServers(linkProperties.getDnsServers());
+						updateDnsServers();
 					}
 				});
 			}
@@ -214,5 +218,56 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 	public int getProxyPort(Context context) {
 		ProxyInfo proxy = mConnectivityManager.getDefaultProxy();
 		return proxy.getPort();
+	}
+
+	private boolean hasLinkPropertiesDefaultRoute(LinkProperties linkProperties) {
+		if (linkProperties != null) {
+			for (RouteInfo route : linkProperties.getRoutes()) {
+				if (route.isDefaultRoute()) {
+					return true;
+				}
+			}
+		}
+        return false;
+    }
+
+	public void updateDnsServers() {
+		ArrayList<String> dnsServers = new ArrayList<>();
+		ArrayList<String> activeNetworkDnsServers = new ArrayList<>();
+
+		if (mConnectivityManager != null) {
+			Network activeNetwork = mConnectivityManager.getActiveNetwork();
+			for (Network network : mConnectivityManager.getAllNetworks()) {
+ 				NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(network);
+				if (networkInfo != null && networkInfo.isConnected()) {
+					LinkProperties linkProperties = mConnectivityManager.getLinkProperties(network);
+					if (linkProperties != null) {
+						List<InetAddress> dnsServersList = linkProperties.getDnsServers();
+						boolean prioritary = hasLinkPropertiesDefaultRoute(linkProperties);
+						for (InetAddress dnsServer : dnsServersList) {
+							String dnsHost = dnsServer.getHostAddress();
+							if (!dnsServers.contains(dnsHost) && !activeNetworkDnsServers.contains(dnsHost)) {
+								String networkType = networkInfo.getTypeName();
+								if (network.equals(activeNetwork)) {
+									Log.i("[Platform Helper] [Network Manager 24] Found DNS host " + dnsHost + " from active network " + networkType);
+									activeNetworkDnsServers.add(dnsHost);
+								} else {
+									if (prioritary) {
+										Log.i("[Platform Helper] [Network Manager 24] Found DNS host " + dnsHost + " from network " + networkType + " with default route");
+										dnsServers.add(0, dnsHost);
+									} else {
+										Log.i("[Platform Helper] [Network Manager 24] Found DNS host " + dnsHost + " from network " + networkType);
+										dnsServers.add(dnsHost);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		activeNetworkDnsServers.addAll(dnsServers);
+		mHelper.updateDnsServers(activeNetworkDnsServers);
 	}
 }

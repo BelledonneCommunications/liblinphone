@@ -26,6 +26,7 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
+import java.util.ArrayList;
 
 import org.linphone.core.tools.AndroidPlatformHelper;
 
@@ -101,4 +102,9 @@ public class NetworkManager extends BroadcastReceiver implements NetworkManagerI
     public int getProxyPort(Context context) {
         return 0;
     }
+
+	public void updateDnsServers() {
+		ArrayList<String> dnsServers = new ArrayList<>();
+		mHelper.updateDnsServers(dnsServers);
+	}
 }
