@@ -177,7 +177,7 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 							LinphoneChatMessage *recv_msg = linphone_chat_room_get_last_message_in_history(paulineCr);
 							BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recv_msg), text);
 							BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(recv_msg),text);
-							// basic chatroom does no support forward message
+							// basic chatroom as receiver, does no have forward information
 							BC_ASSERT_FALSE(linphone_chat_message_is_forward(recv_msg));
 							linphone_chat_message_unref(recv_msg);
 						}
