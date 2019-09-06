@@ -42,4 +42,6 @@ public interface NetworkManagerInterface {
     int getProxyPort(Context context);
 
     void setWifiOnly(boolean isWifiOnlyEnabled);
+
+    void updateDnsServers();
 }
