@@ -56,6 +56,7 @@ import android.view.ViewGroup;
 import java.lang.Runnable;
 import java.net.InetAddress;
 import java.util.List;
+import java.util.ArrayList;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -141,10 +142,7 @@ public class AndroidPlatformHelper {
 
 		// Update DNS servers lists
 		NetworkManagerInterface nm = createNetworkManager();
-		Network network = nm.getActiveNetwork();
-		if (network != null) {
-			storeDnsServers(network);
-		}
+		nm.updateDnsServers();
 	}
 
 	public synchronized void onLinphoneCoreStart(boolean monitoringEnabled) {
@@ -582,35 +580,9 @@ public class AndroidPlatformHelper {
 		}
 	}
 
-	public synchronized void updateDnsServers(List<InetAddress> inetServers) {
-		if (inetServers == null) {
-			Log.e("[Platform Helper] inet servers list is null, don't update DNS servers");
-			return;
-		}
-
-		int i = 0;
-		String[] servers = new String[inetServers.size()];
-		for (InetAddress address : inetServers) {
-			String host = address.getHostAddress();
-			servers[i++] = host;
-			Log.i("[Platform Helper] Adding " + host + " to DNS servers list");
-		}
-
-		mDnsServers = servers;
-	}
-
-	private synchronized void storeDnsServers(Network activeNetwork) {
-		mDnsServers = null;
-		LinkProperties properties = activeNetwork == null ? null : mConnectivityManager.getLinkProperties(activeNetwork);
-
-		if (properties == null) {
-			Log.e("[Platform Helper] Active network is null or we can't get it's link properties");
-			return;
-		}
-
-		List<InetAddress> inetServers = null;
-		inetServers = properties.getDnsServers();
-		updateDnsServers(inetServers);
+	public synchronized void updateDnsServers(ArrayList<String> dnsServers) {
+		mDnsServers = new String[dnsServers.size()];
+		dnsServers.toArray(mDnsServers);
 	}
 
 	public synchronized void updateNetworkReachability() {
@@ -666,7 +638,7 @@ public class AndroidPlatformHelper {
 			
 			// Update DNS servers lists
 			Network network = mNetworkManager.getActiveNetwork();
-			storeDnsServers(network);
+			mNetworkManager.updateDnsServers();
 
 			int currentNetworkType = networkInfo.getType();
 			if (mLastNetworkType != -1 && mLastNetworkType != currentNetworkType) {
