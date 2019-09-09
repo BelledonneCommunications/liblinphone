@@ -5482,7 +5482,7 @@ end:
 	linphone_core_manager_destroy(laure);
 }
 
-static void one_to_one_chat_room_send_forward_message () {
+static void one_to_one_chat_room_send_forward_message (void) {
 	group_chat_room_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(TRUE,TRUE);
 }
 
