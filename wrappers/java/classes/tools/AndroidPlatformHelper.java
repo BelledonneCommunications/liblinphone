@@ -76,8 +76,6 @@ public class AndroidPlatformHelper {
 	private PowerManager mPowerManager;
 	private WakeLock mWakeLock;
 	private Resources mResources;
-	private Surface mSurface;
-	private SurfaceTexture mSurfaceTexture;
 	private TextureView mPreviewTextureView, mVideoTextureView;
 	private boolean mDozeModeEnabled;
 	private BroadcastReceiver mDozeReceiver;
@@ -457,9 +455,7 @@ public class AndroidPlatformHelper {
 			@Override
 			public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
 				Log.i("[Platform Helper] Rendering window surface is available");
-				mSurfaceTexture = surface;
-				mSurface = new Surface(mSurfaceTexture);
-				setNativeVideoWindowId(mNativePtr, mSurface);
+				setNativeVideoWindowId(mNativePtr, surface);
 			}
 
 			@Override
@@ -471,10 +467,8 @@ public class AndroidPlatformHelper {
 			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
 				Log.i("[Platform Helper] Rendering surface texture destroyed");
 
-				if (mNativePtr != 0 && surface.equals(mSurfaceTexture)) {
+				if (mNativePtr != 0 && surface.equals(mVideoTextureView.getSurfaceTexture())) {
 					Log.i("[Platform Helper] Current rendering surface texture is no longer available");
-					mSurfaceTexture = null;
-					mSurface = null;
 					mVideoTextureView = null;
 					setNativeVideoWindowId(mNativePtr, null);
 				}
@@ -495,9 +489,7 @@ public class AndroidPlatformHelper {
 		
 		if (mVideoTextureView.isAvailable()) {
 			Log.i("[Platform Helper] Rendering window surface is available");
-			mSurfaceTexture = mVideoTextureView.getSurfaceTexture();
-			mSurface = new Surface(mSurfaceTexture);
-			setNativeVideoWindowId(mNativePtr, mSurface);
+			setNativeVideoWindowId(mNativePtr, mVideoTextureView.getSurfaceTexture());
 		}
 	}
 
