@@ -26,6 +26,7 @@ import org.linphone.core.tools.NetworkManagerAbove21;
 import org.linphone.core.tools.NetworkManagerAbove24;
 import org.linphone.core.tools.NetworkManagerAbove26;
 import org.linphone.core.tools.Log;
+import org.linphone.core.tools.AutoFitTextureView;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.Version;
 
@@ -470,14 +471,12 @@ public class AndroidPlatformHelper {
 			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
 				Log.i("[Platform Helper] Rendering surface texture destroyed");
 
-				if (mNativePtr != 0 && mSurfaceTexture == surface) {
-					if (mVideoTextureView != null) {
-						Log.i("[Platform Helper] Current rendering surface texture is no longer available");
-						setNativeVideoWindowId(mNativePtr, null);
-						mSurfaceTexture = null;
-						mSurface = null;
-						mVideoTextureView = null;
-					}
+				if (mNativePtr != 0 && surface.equals(mSurfaceTexture)) {
+					Log.i("[Platform Helper] Current rendering surface texture is no longer available");
+					mSurfaceTexture = null;
+					mSurface = null;
+					mVideoTextureView = null;
+					setNativeVideoWindowId(mNativePtr, null);
 				}
 
 				if (!surface.isReleased()) {
@@ -503,64 +502,10 @@ public class AndroidPlatformHelper {
 	}
 
 	public synchronized void resizeVideoPreview(int width, int height) {
-		if (mPreviewTextureView != null) {
-			Log.i("[Platform Helper] Video preview size is now: " + width + "x" + height);
-			ViewGroup.LayoutParams lp = mPreviewTextureView.getLayoutParams();
-			Log.i("[Platform Helper] Preview layout params are: " + lp.width + ", " + lp.height);
-
-			int maxWidth, maxHeight;
-			if (lp.width == ViewGroup.LayoutParams.MATCH_PARENT) {
-				maxWidth = mPreviewTextureView.getWidth();
-			} else if (lp.width == ViewGroup.LayoutParams.WRAP_CONTENT) {
-				maxWidth = width;
-			} else {
-				maxWidth = lp.width;
-			}
-			if (lp.height == ViewGroup.LayoutParams.MATCH_PARENT) {
-				maxHeight = mPreviewTextureView.getHeight();
-			} else if (lp.height == ViewGroup.LayoutParams.WRAP_CONTENT) {
-				maxHeight = height;
-			} else {
-				maxHeight = lp.height;
-			}
-			Log.i("[Platform Helper] Preview max width: " + maxWidth + ", max height: " + maxHeight);
-			if (maxWidth == 0 || maxHeight == 0) {
-				Log.w("[Platform Helper] Abort resizing preview so that it won't be visible");
-				return;
-			} else if (width == 0 || height == 0) {
-				Log.e("[Platform Helper] Abort resizing preview to prevent divide by zero crash, video size is " + width + "x" + height);
-				return;
-			}
-
-			// A MATCH_PARENT will take over a WRAP_CONTENT or a fixed size and maintain ratio
-			if (lp.width == ViewGroup.LayoutParams.MATCH_PARENT && lp.height != ViewGroup.LayoutParams.MATCH_PARENT) {
-				lp.width = maxWidth;
-				lp.height = height * maxWidth / width;
-			} else if (lp.height == ViewGroup.LayoutParams.MATCH_PARENT && lp.width != ViewGroup.LayoutParams.MATCH_PARENT) {
-				lp.height = maxHeight;
-				lp.width = width * maxHeight / height;
-			}
-			// A WRAP_CONTENT won't be used if a fixed size is given for the other constraint 
-			else if (lp.width == ViewGroup.LayoutParams.WRAP_CONTENT && lp.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
-				lp.height = maxHeight;
-				lp.width = width * maxHeight / height;
-			} else if (lp.height == ViewGroup.LayoutParams.WRAP_CONTENT && lp.width != ViewGroup.LayoutParams.WRAP_CONTENT) {
-				lp.width = maxWidth;
-				lp.height = height * maxWidth / width;
-			} else {
-				if (width < height) {
-					lp.width = maxWidth;
-					lp.height = height * maxWidth / width;
-				} else {
-					lp.height = maxHeight;
-					lp.width = width * maxHeight / height;
-				}
-			}
-			
-			Log.i("[Platform Helper] Preview layout params updated to: " + lp.width + ", " + lp.height);
-			mPreviewTextureView.setLayoutParams(lp);
-		} else {
-			Log.w("[Platform Helper] Couldn't resize video preview to: " + width + "x" + height + ", no texture view found");
+		Log.i("[Platform Helper] Video preview size is: " + width + "x" + height);
+		if (mPreviewTextureView != null && mPreviewTextureView instanceof AutoFitTextureView) {
+			Log.i("[Platform Helper] Found AutoFitTextureView, updating...");
+			((AutoFitTextureView)mPreviewTextureView).setAspectRatio(width, height);
 		}
 	}
 
