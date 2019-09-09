@@ -80,6 +80,8 @@ public:
 	bool isMarkedAsRead () const;
 
 	void setImdnMessageId (const std::string &imdnMessageId);
+	
+	void setForwardInfo (const std::string &fInfo);
 
 	void setAuthenticatedFromAddress (const IdentityAddress &authenticatedFromAddress) {
 		this->authenticatedFromAddress = authenticatedFromAddress;
@@ -251,6 +253,7 @@ private:
 
 	ChatMessage::State state = ChatMessage::State::Idle;
 	ChatMessage::Direction direction = ChatMessage::Direction::Incoming;
+	std::string forwardInfo;
 
 	std::list<Content *> contents;
 

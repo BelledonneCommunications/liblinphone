@@ -1084,6 +1084,10 @@ void ChatMessagePrivate::setImdnMessageId (const string &id) {
 	imdnId = id;
 }
 
+void ChatMessagePrivate::setForwardInfo (const string &fInfo) {
+	forwardInfo = fInfo;
+}
+
 void ChatMessagePrivate::loadContentsFromDatabase () const {
 	L_Q();
 
@@ -1093,6 +1097,7 @@ void ChatMessagePrivate::loadContentsFromDatabase () const {
 		q->getChatRoom()->getCore()->getPrivate()->mainDb->loadChatMessageContents(
 			const_pointer_cast<ChatMessage>(q->getSharedFromThis())
 		);
+		
 		isReadOnly = true;
 	}
 }
@@ -1126,6 +1131,11 @@ const IdentityAddress &ChatMessage::getFromAddress () const {
 const IdentityAddress &ChatMessage::getToAddress () const {
 	L_D();
 	return d->toAddress;
+}
+
+const std::string &ChatMessage::getForwardInfo () const {
+	L_D();
+	return d->forwardInfo;
 }
 
 bool ChatMessage::getToBeStored () const {

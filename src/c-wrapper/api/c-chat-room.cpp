@@ -163,6 +163,13 @@ LinphoneChatMessage *linphone_chat_room_create_message_2 (
 	return msg;
 }
 
+LinphoneChatMessage *linphone_chat_room_create_forward_message (LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
+	shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createForwardMessage(L_GET_CPP_PTR_FROM_C_OBJECT(msg));
+	LinphoneChatMessage *object = L_INIT(ChatMessage);
+	L_SET_CPP_PTR_FROM_C_OBJECT(object, cppPtr);
+	return object;
+}
+
 void linphone_chat_room_send_chat_message_2 (LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
 	linphone_chat_message_ref(msg);
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->send();

@@ -99,6 +99,14 @@ LINPHONE_PUBLIC LinphoneChatMessage* linphone_chat_room_create_message_2(Linphon
  */
 LINPHONE_PUBLIC LinphoneChatMessage* linphone_chat_room_create_file_transfer_message(LinphoneChatRoom *cr, LinphoneContent* initial_content);
 
+ /**
+ * Creates a forward message attached to a dedicated chat room with a particular message.
+ * @param cr the chat room.
+ * @param msg #LinphoneChatMessage message to be forwarded.
+ * @return a new #LinphoneChatMessage
+ */
+LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_create_forward_message (LinphoneChatRoom *cr, LinphoneChatMessage *msg);
+
 /**
  * get peer address \link linphone_core_get_chat_room() associated to \endlink this #LinphoneChatRoom
  * @param cr #LinphoneChatRoom object

@@ -107,7 +107,7 @@ LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneCh
 	return msg;
 }
 
-void text_message_base_with_text(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, const char* text, const char* content_type) {
+void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, const char* text, const char* content_type, bool_t forward_message) {
 	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marie->identity);
 	
 	LinphoneChatMessage* msg = linphone_chat_room_create_message(room, text);
@@ -144,6 +144,47 @@ void text_message_base_with_text(LinphoneCoreManager* marie, LinphoneCoreManager
 				LinphoneChatMessage *recv_msg = (LinphoneChatMessage *)(history->data);
 				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recv_msg), text);
 				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(recv_msg),text);
+			
+				if (forward_message) {
+					LinphoneChatMessage* fmsg = linphone_chat_room_create_forward_message(marieCr, recv_msg);
+					LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(fmsg);
+					linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+					linphone_chat_message_send(fmsg);
+					
+					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageDelivered,1));
+					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
+					BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
+					if (pauline->stat.last_received_chat_message != NULL) {
+						LinphoneContent *content = (LinphoneContent *)(linphone_chat_message_get_contents(pauline->stat.last_received_chat_message)->data);
+						char* content_type_header = ms_strdup_printf("Content-Type: %s",content_type);
+						belle_sip_header_content_type_t *belle_sip_content_type = belle_sip_header_content_type_parse(content_type_header);
+						BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), belle_sip_header_content_type_get_type(belle_sip_content_type));
+						BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), belle_sip_header_content_type_get_subtype(belle_sip_content_type));
+						BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), text);
+						ms_free(content_type_header);
+						LinphoneChatRoom *paulineCr;
+					
+						const LinphoneAddress *msg_from = linphone_chat_message_get_from_address(pauline->stat.last_received_chat_message);
+						/* We have special case for anonymous message, that of course won't come in the chatroom to pauline.*/
+						if (strcasecmp(linphone_address_get_username(msg_from), "anonymous") == 0){
+							paulineCr = linphone_chat_message_get_chat_room(pauline->stat.last_received_chat_message);
+						}else{
+							paulineCr = linphone_core_get_chat_room(pauline->lc, marie->identity);
+						}
+						BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 2, int," %i");
+					
+						if (linphone_chat_room_get_history_size(paulineCr) > 1) {
+							LinphoneChatMessage *recv_msg = linphone_chat_room_get_last_message_in_history(paulineCr);
+							BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recv_msg), text);
+							BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(recv_msg),text);
+							// basic chatroom as receiver, does no have forward information
+							BC_ASSERT_FALSE(linphone_chat_message_is_forward(recv_msg));
+							linphone_chat_message_unref(recv_msg);
+						}
+					}
+					linphone_chat_message_unref(fmsg);
+				}
+			
 				bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
 			}
 		}
@@ -151,6 +192,11 @@ void text_message_base_with_text(LinphoneCoreManager* marie, LinphoneCoreManager
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room(marie->lc,pauline->identity));
 	linphone_chat_message_unref(msg);
+
+}
+
+void text_message_base_with_text(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, const char* text, const char* content_type) {
+	text_message_base_with_text_and_forward(marie, pauline, text, content_type, FALSE);
 }
 
 void text_message_base(LinphoneCoreManager* marie, LinphoneCoreManager* pauline) {
@@ -164,6 +210,16 @@ static void text_message(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 
 	text_message_base(marie, pauline);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void text_forward_message(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	
+	text_message_base_with_text_and_forward(marie, pauline, "Bli bli bli \n blu", "text/plain", TRUE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -2534,6 +2590,7 @@ static void migration_from_messages_db (void) {
 
 test_t message_tests[] = {
 	TEST_NO_TAG("Text message", text_message),
+	TEST_NO_TAG("Transfer forward message", text_forward_message),
 	TEST_NO_TAG("Text message UTF8", text_message_with_utf8),
 	TEST_NO_TAG("Text message with credentials from auth callback", text_message_with_credential_from_auth_callback),
 	TEST_NO_TAG("Text message with privacy", text_message_with_privacy),

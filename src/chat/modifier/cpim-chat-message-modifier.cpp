@@ -68,6 +68,13 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 				Cpim::GenericHeader("Message-ID", previousToken) // TODO: Replace by imdnNamespace + ".Message-ID");
 			);
 		}
+		
+		const string &forwardInfo = message->getForwardInfo();
+		if (!forwardInfo.empty()) {
+			cpimMessage.addMessageHeader(
+				Cpim::GenericHeader(imdnNamespace + ".Forward-Info",forwardInfo)
+			);
+		}
 
 		vector<string> dispositionNotificationValues;
 		if (message->getPrivate()->getPositiveDeliveryNotificationRequired())
@@ -194,6 +201,10 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 				else
 					lError() << "Unknown Disposition-Notification value [" << trimmedValue << "]";
 			}
+		}
+		auto forwardInfoHeader = cpimMessage->getMessageHeader("Forward-Info",imdnNamespace);
+		if (forwardInfoHeader) {
+			message->getPrivate()->setForwardInfo(forwardInfoHeader->getValue());
 		}
 	}
 	if (messageIdHeader)

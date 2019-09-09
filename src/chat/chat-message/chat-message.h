@@ -87,6 +87,7 @@ public:
 	const IdentityAddress &getAuthenticatedFromAddress () const;
 	const IdentityAddress &getFromAddress () const;
 	const IdentityAddress &getToAddress () const;
+	const std::string &getForwardInfo () const;
 
 	// TODO: Return a cpp reference.
 	const LinphoneErrorInfo *getErrorInfo () const;
@@ -96,6 +97,7 @@ public:
 
 	bool getToBeStored () const;
 	virtual void setToBeStored (bool value);
+	
 
 	std::list<ParticipantImdnState> getParticipantsByImdnState (State state) const;
 

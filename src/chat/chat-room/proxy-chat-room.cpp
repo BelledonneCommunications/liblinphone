@@ -189,6 +189,10 @@ shared_ptr<ChatMessage> ProxyChatRoom::createFileTransferMessage (FileContent *c
 	return d->chatRoom->createFileTransferMessage(content);
 }
 
+shared_ptr<ChatMessage> ProxyChatRoom::createForwardMessage (const shared_ptr<ChatMessage> &msg) {
+	L_D();
+	return d->chatRoom->createForwardMessage(msg);
+}
 // -----------------------------------------------------------------------------
 
 shared_ptr<ChatMessage> ProxyChatRoom::findChatMessage (const string &messageId) const {
