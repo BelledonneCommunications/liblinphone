@@ -20,7 +20,8 @@
 #
 ############################################################################
 
-set(OTHER_LIBS_FOR_TESTER ${BCTOOLBOX_LIBRARIES} ${ORTP_LIBRARIES} ${MEDIASTREAMER2_LIBRARIES} ${BELLESIP_LIBRARIES} ${XML2_LIBRARIES} ${XSD_LIBRARIES} ${BELR_LIBRARIES})
+set(OTHER_LIBS_FOR_TESTER bctoolbox bctoolbox-tester ortp mediastreamer ${BELLESIP_TARGETNAME} belr ${XML2_LIBRARIES} ${XSD_LIBRARIES})
+
 if(INTL_FOUND)
 	list(APPEND OTHER_LIBS_FOR_TESTER ${INTL_LIBRARIES})
 endif()
@@ -300,7 +301,7 @@ endif()
 # on mobile platforms, we compile the tester as a library so that we can link with it directly from native applications
 if(ANDROID OR IOS)
 	add_library(linphonetester SHARED ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX})
-	target_include_directories(linphonetester PUBLIC ${BCTOOLBOX_TESTER_INCLUDE_DIRS})
+	target_include_directories(linphonetester PRIVATE ${LINPHONE_INCLUDE_DIRS})
 	target_link_libraries(linphonetester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 	#TODO: replace by if(APPLE) when we want to make apple framework on linphone-desktop too
 	if(IOS)
@@ -329,7 +330,7 @@ if(ANDROID OR IOS)
 	)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	add_library(linphone_tester_static STATIC ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX})
-	target_include_directories(linphone_tester_static PUBLIC ${BCTOOLBOX_TESTER_INCLUDE_DIRS})
+	target_include_directories(linphone_tester_static PRIVATE ${LINPHONE_INCLUDE_DIRS})
 	target_link_libraries(linphone_tester_static ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 
 	set(RUNTIME_COMPONENT_SOURCES
@@ -364,7 +365,7 @@ if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 		set_target_properties(liblinphone_tester PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 		set_target_properties(liblinphone_tester PROPERTIES LINKER_LANGUAGE CXX)
 		set_target_properties(liblinphone_tester PROPERTIES C_STANDARD 99)
-		target_include_directories(liblinphone_tester PUBLIC ${BCTOOLBOX_TESTER_INCLUDE_DIRS} ${LIBXSD_INCLUDE_DIRS})
+		target_include_directories(liblinphone_tester PRIVATE ${LINPHONE_INCLUDE_DIRS})
 		target_link_libraries(liblinphone_tester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 
 		install(TARGETS liblinphone_tester
@@ -378,7 +379,7 @@ if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 		set_target_properties(groupchat_benchmark PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 		set_target_properties(groupchat_benchmark PROPERTIES LINKER_LANGUAGE CXX)
 		set_target_properties(groupchat_benchmark PROPERTIES C_STANDARD 99)
-		target_include_directories(groupchat_benchmark PUBLIC ${BCTOOLBOX_TESTER_INCLUDE_DIRS})
+		target_include_directories(groupchat_benchmark PRIVATE ${LINPHONE_INCLUDE_DIRS})
 		target_link_libraries(groupchat_benchmark ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 
 		install(TARGETS groupchat_benchmark
