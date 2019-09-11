@@ -1,6 +1,6 @@
 /*
 AndroidPlatformHelper.java
-Copyright (C) 2017  Belledonne Communications, Grenoble, France
+Copyright (C) 2019 Belledonne Communications, Grenoble, France
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,7 +17,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-
 package org.linphone.core.tools;
 
 import org.linphone.core.tools.DozeReceiver;
@@ -26,9 +25,9 @@ import org.linphone.core.tools.NetworkManagerAbove21;
 import org.linphone.core.tools.NetworkManagerAbove24;
 import org.linphone.core.tools.NetworkManagerAbove26;
 import org.linphone.core.tools.Log;
-import org.linphone.core.tools.AutoFitTextureView;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.Version;
+import org.linphone.mediastream.video.capture.CaptureTextureView;
 
 import android.content.res.Resources;
 import android.graphics.SurfaceTexture;
@@ -391,7 +390,7 @@ public class AndroidPlatformHelper {
 			@Override
 			public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
 				Log.i("[Platform Helper] Preview window surface is available");
-				setNativePreviewWindowId(mNativePtr, surface);
+				setNativePreviewWindowId(mNativePtr, mPreviewTextureView);
 			}
 
 			@Override
@@ -426,7 +425,7 @@ public class AndroidPlatformHelper {
 
 		if (mPreviewTextureView.isAvailable()) {
 			Log.i("[Platform Helper] Preview window surface is available");
-			setNativePreviewWindowId(mNativePtr, mPreviewTextureView.getSurfaceTexture());
+			setNativePreviewWindowId(mNativePtr, mPreviewTextureView);
 		}
 	}
 
@@ -455,6 +454,7 @@ public class AndroidPlatformHelper {
 			@Override
 			public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
 				Log.i("[Platform Helper] Rendering window surface is available");
+				rotateVideoPreview();
 				setNativeVideoWindowId(mNativePtr, surface);
 			}
 
@@ -489,15 +489,22 @@ public class AndroidPlatformHelper {
 		
 		if (mVideoTextureView.isAvailable()) {
 			Log.i("[Platform Helper] Rendering window surface is available");
+			rotateVideoPreview();
 			setNativeVideoWindowId(mNativePtr, mVideoTextureView.getSurfaceTexture());
 		}
 	}
 
+	public synchronized void rotateVideoPreview() {
+		if (mPreviewTextureView != null && mPreviewTextureView instanceof CaptureTextureView) {
+			Log.i("[Platform Helper] Found CaptureTextureView, rotating...");
+			((CaptureTextureView)mPreviewTextureView).rotateToMatchDisplayOrientation();
+		}
+	}
+
 	public synchronized void resizeVideoPreview(int width, int height) {
-		Log.i("[Platform Helper] Video preview size is: " + width + "x" + height);
-		if (mPreviewTextureView != null && mPreviewTextureView instanceof AutoFitTextureView) {
-			Log.i("[Platform Helper] Found AutoFitTextureView, updating...");
-			((AutoFitTextureView)mPreviewTextureView).setAspectRatio(width, height);
+		if (mPreviewTextureView != null && mPreviewTextureView instanceof CaptureTextureView) {
+			Log.i("[Platform Helper] Found CaptureTextureView, setting video capture size to " + width + "x" + height);
+			((CaptureTextureView)mPreviewTextureView).setAspectRatio(width, height);
 		}
 	}
 
