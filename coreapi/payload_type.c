@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 struct _LinphonePayloadType {
 	belle_sip_object_t base;
 	OrtpPayloadType *pt;
+	bool_t own_ortp_payload_type;
 	LinphoneCore *lc;
 };
 
@@ -44,6 +45,24 @@ LinphonePayloadType *linphone_payload_type_new(LinphoneCore *lc, OrtpPayloadType
 	pt->pt = ortp_pt;
 	pt->lc = lc;
 	return pt;
+}
+
+LinphonePayloadType *linphone_payload_type_clone(const LinphonePayloadType *orig) {
+	return (LinphonePayloadType *)belle_sip_object_clone(BELLE_SIP_OBJECT(orig));
+}
+
+static void _payload_type_clone(LinphonePayloadType *obj, const LinphonePayloadType *orig) {
+	obj->pt = payload_type_clone(orig->pt);
+	obj->lc = orig->lc;
+	obj->own_ortp_payload_type = TRUE;
+}
+
+static void _payload_type_uninit(LinphonePayloadType *obj) {
+	if (obj->own_ortp_payload_type) {
+		payload_type_destroy(obj->pt);
+		obj->pt = NULL;
+		obj->own_ortp_payload_type = 0;
+	}
 }
 
 LinphonePayloadType *linphone_payload_type_ref(LinphonePayloadType *pt) {
@@ -290,12 +309,11 @@ OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *pt
 }
 
 BELLE_SIP_INSTANCIATE_VPTR(LinphonePayloadType, belle_sip_object_t,
-	NULL, // uninit
-	NULL, // clone
+	_payload_type_uninit , // uninit
+	_payload_type_clone , // clone
 	NULL, // marshale
 	TRUE // unown
 );
-
 
 void payload_type_set_enable(OrtpPayloadType *pt, bool_t value) {
 	if (value)
