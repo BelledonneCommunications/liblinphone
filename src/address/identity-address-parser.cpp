@@ -73,7 +73,7 @@ shared_ptr<IdentityAddress> IdentityAddressParser::parseAddress (const string &i
         size_t parsedSize;
         shared_ptr<IdentityAddress> identityAddress = d->parser->parseInput("Address", input, &parsedSize);
         if (!identityAddress) {
-            lWarning() << "Unable to parse identity address from " << input;
+            lDebug() << "Unable to parse identity address from " << input;
             return nullptr;
         }
         d->cache[input] = identityAddress;
