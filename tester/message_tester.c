@@ -368,7 +368,7 @@ static void text_message_with_send_error(void) {
 	const char *message_id_2 = linphone_chat_message_get_message_id(msg);
 	BC_ASSERT_STRING_NOT_EQUAL(message_id_2, "");
 
-	BC_ASSERT_STRING_EQUAL(message_id, message_id_2);
+	BC_ASSERT_STRING_NOT_EQUAL(message_id, message_id_2);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageDelivered,1));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageDeliveredToUser,1));	
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageReceived, 1, int, "%d");
@@ -2412,11 +2412,15 @@ static int im_encryption_engine_process_incoming_message_cb(LinphoneImEncryption
 	return 500;
 }
 
+static LinphoneChatMessage* pending_message=NULL; /*limited to one message at a time */
+static LinphoneChatMessage* incoming_pending_message=NULL; /*limited to one message at a time */
+
 static bool_t im_encryption_engine_process_incoming_message_async_impl(LinphoneChatMessage** msg) {
 	if (*msg) {
 		im_encryption_engine_process_incoming_message_cb(NULL,NULL,*msg);
 		linphone_chat_room_receive_chat_message(linphone_chat_message_get_chat_room(*msg), *msg);
 		linphone_chat_message_unref(*msg);
+		incoming_pending_message=NULL;
 		*msg=NULL;
 	}
 	return TRUE;
@@ -2448,10 +2452,10 @@ static bool_t im_encryption_engine_process_outgoing_message_async_impl(LinphoneC
 	return TRUE;
 }
 
-static LinphoneChatMessage* pending_message=NULL; /*limited to one message at a time */
-static LinphoneChatMessage* incoming_pending_message=NULL; /*limited to one message at a time */
 
 static int im_encryption_engine_process_outgoing_message_async(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
+	if (strcmp(linphone_chat_message_get_content_type(msg),"cipher/b64") == 0)
+		return 0; //already ciphered;
 	pending_message=msg;
 	linphone_chat_message_ref(pending_message);
 	linphone_core_add_iterate_hook(linphone_chat_room_get_core(room), (LinphoneCoreIterateHook)im_encryption_engine_process_outgoing_message_async_impl,&pending_message);

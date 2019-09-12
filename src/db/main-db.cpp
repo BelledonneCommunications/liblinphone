@@ -1664,7 +1664,7 @@ void MainDb::init () {
 
 	Backend backend = getBackend();
 
-	const string charset = backend == Mysql ? "DEFAULT CHARSET=utf8" : "";
+	const string charset = backend == Mysql ? "DEFAULT CHARSET=utf8mb4" : "";
 	soci::session *session = d->dbSession.getBackendSession();
 
 	using namespace placeholders;
@@ -1677,13 +1677,13 @@ void MainDb::init () {
 		"CREATE TABLE IF NOT EXISTS sip_address ("
 		"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 		"  value VARCHAR(255) UNIQUE NOT NULL"
-		") " + charset;
+	") " + (Mysql ? "DEFAULT CHARSET=ascii" : "");
 
 	*session <<
 		"CREATE TABLE IF NOT EXISTS content_type ("
 		"  id" + primaryKeyStr("SMALLINT UNSIGNED") + ","
 		"  value VARCHAR(255) UNIQUE NOT NULL"
-		") " + charset;
+		") "+ (Mysql ? "DEFAULT CHARSET=ascii" :"");
 
 	*session <<
 		"CREATE TABLE IF NOT EXISTS event ("
@@ -1933,7 +1933,7 @@ void MainDb::init () {
 		"CREATE TABLE IF NOT EXISTS chat_message_content_app_data ("
 		"  chat_message_content_id" + primaryKeyRefStr("BIGINT UNSIGNED") + ","
 
-		"  name VARCHAR(255),"
+		"  name VARCHAR(191)," //191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4
 		"  data BLOB NOT NULL,"
 
 		"  PRIMARY KEY (chat_message_content_id, name),"
@@ -1946,7 +1946,7 @@ void MainDb::init () {
 		"CREATE TABLE IF NOT EXISTS conference_message_crypto_data ("
 		"  event_id" + primaryKeyRefStr("BIGINT UNSIGNED") + ","
 
-		"  name VARCHAR(255),"
+		"  name VARCHAR(191)," //191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4
 		"  data BLOB NOT NULL,"
 
 		"  PRIMARY KEY (event_id, name),"
@@ -1959,7 +1959,7 @@ void MainDb::init () {
 		"CREATE TABLE IF NOT EXISTS friends_list ("
 		"  id" + primaryKeyStr("INT UNSIGNED") + ","
 
-		"  name VARCHAR(255) UNIQUE,"
+		"  name VARCHAR(191) UNIQUE,"  //191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4
 		"  rls_uri VARCHAR(2047),"
 		"  sync_uri VARCHAR(2047),"
 		"  revision INT UNSIGNED NOT NULL"
@@ -1992,7 +1992,7 @@ void MainDb::init () {
 		"CREATE TABLE IF NOT EXISTS friend_app_data ("
 		"  friend_id" + primaryKeyRefStr("INT UNSIGNED") + ","
 
-		"  name VARCHAR(255),"
+		"  name VARCHAR(191)," //191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4
 		"  data BLOB NOT NULL,"
 
 		"  PRIMARY KEY (friend_id, name),"
@@ -2003,7 +2003,7 @@ void MainDb::init () {
 
 	*session <<
 		"CREATE TABLE IF NOT EXISTS db_module_version ("
-		"  name" + varcharPrimaryKeyStr(255) + ","
+		"  name" + varcharPrimaryKeyStr(191) + "," //191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4
 		"  version INT UNSIGNED NOT NULL"
 		") " + charset;
 
