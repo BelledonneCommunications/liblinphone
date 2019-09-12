@@ -3603,7 +3603,7 @@ LINPHONE_PUBLIC bool_t linphone_core_video_display_enabled(LinphoneCore *lc);
  * @param[in] lc #LinphoneCore object
  * @param[in] policy The video policy to use
  * @ingroup media_parameters
- * @deprecated Deprecated since 2017-04-19.
+ * @deprecated Deprecated since 2017-04-19. Use linphone_video_activation_policy_set_automatically_accept instead
  * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_video_policy(LinphoneCore *lc, const LinphoneVideoPolicy *policy);
@@ -3614,7 +3614,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_video_policy(Linphone
  * @param[in] lc #LinphoneCore object
  * @return The video policy being used
  * @ingroup media_parameters
- * @deprecated Deprecated since 2017-04-19.
+ * @deprecated Deprecated since 2017-04-19. Use linphone_video_activation_policy_get_automatically_accept instead
  * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const LinphoneVideoPolicy *linphone_core_get_video_policy(const LinphoneCore *lc);

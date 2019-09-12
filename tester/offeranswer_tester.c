@@ -141,6 +141,199 @@ static void simple_call_with_fmtps(void){
 	linphone_core_manager_destroy(pauline);
 }
 
+#ifdef VIDEO_ENABLED
+static void h264_call_with_fmtps(void){
+ 	LinphoneCoreManager* marie;
+	LinphoneCoreManager* pauline;
+	LinphoneCall *pauline_call;
+	OrtpPayloadType *pt_1=NULL, *pt_2=NULL;
+	marie = linphone_core_manager_new( "marie_rc");
+	pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	
+	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	
+	
+	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+	
+	linphone_core_set_video_activation_policy(marie->lc,pol);
+	linphone_core_set_video_activation_policy(pauline->lc,pol);
+	linphone_video_activation_policy_unref(pol);
+	
+	if (!linphone_core_get_payload_type(marie->lc,"h264",90000,-1)) {
+		ms_warning ("H264 not available on this platform, skeeping");
+		goto end;
+	}
+	
+	disable_all_video_codecs_except_one(marie->lc,"H264");
+	disable_all_video_codecs_except_one(pauline->lc,"H264");
+	OrtpPayloadType *origin_h264_pt = linphone_core_find_payload_type(pauline->lc,"H264",90000,-1);
+	pt_1 = payload_type_clone(origin_h264_pt);
+	pt_2 = payload_type_clone(pt_1);
+	
+	payload_type_set_recv_fmtp(pt_1,"profile-level-id=42801F; packetization-mode=0");
+	payload_type_set_recv_fmtp(pt_2,"profile-level-id=42801F; packetization-mode=1");
+	
+	bctbx_list_t * video_codecs = bctbx_list_copy(linphone_core_get_video_codecs(marie->lc));
+	for (bctbx_list_t *it = video_codecs; it != NULL; it = bctbx_list_next(it)) {
+		OrtpPayloadType * pt = (OrtpPayloadType *)bctbx_list_get_data(it);
+		if (strcasecmp(payload_type_get_mime(pt),"H264") == 0) {
+			video_codecs = bctbx_list_remove(video_codecs, pt);
+			break; //one
+		}
+	}
+	video_codecs = bctbx_list_append(video_codecs, pt_1);
+	video_codecs = bctbx_list_append(video_codecs, pt_2);
+	linphone_core_set_video_codecs(marie->lc,video_codecs);
+	
+	/*marie set packetization-mode=1*/
+//	linphone_payload_type_set_recv_fmtp(linphone_core_get_payload_type(marie->lc, "h264", 90000, -1), "profile-level-id=42801F ");
+
+	BC_ASSERT_TRUE(call(marie,pauline));
+	pauline_call=linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	if (pauline_call){
+		LinphonePayloadType *pt = linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(pauline_call));
+		BC_ASSERT_PTR_NOT_NULL(pt);
+		if (pt){
+			BC_ASSERT_PTR_NOT_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt),"packetization-mode=1"));
+		}
+		pt = linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_PTR_NOT_NULL(pt);
+		if (pt){
+			ms_message("send_fmtp=%s, recv_fmtp=%s", linphone_payload_type_get_send_fmtp(pt), linphone_payload_type_get_recv_fmtp(pt));
+			BC_ASSERT_PTR_NOT_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt),"packetization-mode=1"));
+			BC_ASSERT_PTR_NOT_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt),"packetization-mode=1"));
+			
+		}
+	}
+	
+	end_call(marie,pauline);
+	
+	
+	
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	if (pt_1) payload_type_destroy(pt_1);
+	if (pt_2) payload_type_destroy(pt_2);
+}
+
+static void h264_call_receiver_with_no_h264_support(void){
+	LinphoneCoreManager* marie;
+	LinphoneCoreManager* pauline;
+	LinphoneCall *pauline_call;
+	marie = linphone_core_manager_new( "marie_rc");
+	pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	
+	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	
+	
+	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+	
+	linphone_core_set_video_activation_policy(marie->lc,pol);
+	linphone_core_set_video_activation_policy(pauline->lc,pol);
+	linphone_video_activation_policy_unref(pol);
+	
+	if (!linphone_core_get_payload_type(marie->lc,"h264",90000,-1)) {
+		ms_warning ("H264 not available on this platform, skeeping");
+		goto end;
+	}
+	
+	disable_all_video_codecs_except_one(marie->lc,"H264");
+	disable_all_video_codecs_except_one(pauline->lc,"VP8");
+
+	
+	BC_ASSERT_TRUE(call(marie,pauline));
+	pauline_call=linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	if (pauline_call){
+		LinphonePayloadType *pt = linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(pauline_call));
+		BC_ASSERT_PTR_NULL(pt);
+		pt = linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_PTR_NULL(pt);
+	}
+	
+	end_call(marie,pauline);
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+
+
+static void h264_call_without_packetization_mode(void){
+	LinphoneCoreManager* marie;
+	LinphoneCoreManager* pauline;
+	LinphoneCall *pauline_call;
+	OrtpPayloadType *pt_1=NULL, *pt_2=NULL;
+	marie = linphone_core_manager_new( "marie_rc");
+	pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	
+	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	
+	
+	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+	
+	linphone_core_set_video_activation_policy(marie->lc,pol);
+	linphone_core_set_video_activation_policy(pauline->lc,pol);
+	linphone_video_activation_policy_unref(pol);
+	
+	if (!linphone_core_get_payload_type(marie->lc,"h264",90000,-1)) {
+		ms_warning ("H264 not available on this platform, skeeping");
+		goto end;
+	}
+	
+	disable_all_video_codecs_except_one(marie->lc,"H264");
+	disable_all_video_codecs_except_one(pauline->lc,"H264");
+
+	BC_ASSERT_TRUE(call(marie,pauline));
+	pauline_call=linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	if (pauline_call){
+		LinphonePayloadType *pt = linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(pauline_call));
+		BC_ASSERT_PTR_NOT_NULL(pt);
+		if (pt){
+			BC_ASSERT_PTR_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt),"packetization-mode"));
+		}
+		pt = linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_PTR_NOT_NULL(pt);
+		if (pt){
+			ms_message("send_fmtp=%s, recv_fmtp=%s", linphone_payload_type_get_send_fmtp(pt), linphone_payload_type_get_recv_fmtp(pt));
+			BC_ASSERT_PTR_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt),"packetization-mode"));
+			BC_ASSERT_PTR_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt),"packetization-mode"));
+		}
+	}
+	
+	end_call(marie,pauline);
+	
+	
+	
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	if (pt_1) payload_type_destroy(pt_1);
+	if (pt_2) payload_type_destroy(pt_2);
+}
+#endif
+
 static void call_failed_because_of_codecs(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
@@ -578,7 +771,10 @@ static test_t offeranswer_tests[] = {
 	TEST_ONE_TAG("SAVPF/DTLS to AVPF video call", savpf_dtls_to_avpf_video_call, "DTLS"),
 
 	TEST_NO_TAG("Compatible AVPF features", compatible_avpf_features),
-	TEST_NO_TAG("Incompatible AVPF features", incompatible_avpf_features)
+	TEST_NO_TAG("Incompatible AVPF features", incompatible_avpf_features),
+	TEST_NO_TAG("H264 packetization-mode set to 1 on sender", h264_call_with_fmtps),
+	TEST_NO_TAG("H264 on sender, but not on receiver", h264_call_receiver_with_no_h264_support),
+	TEST_NO_TAG("H264 packetization-mode not set", h264_call_without_packetization_mode)
 #endif
 };
 
