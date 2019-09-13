@@ -50,4 +50,11 @@ public class DeviceUtils {
         }
         return false;
     }
+
+    public static boolean isSurfaceTextureReleased(SurfaceTexture surfaceTexture) {
+        if (Version.sdkAboveOrEqual(Version.API26_O_80)) {
+            return DeviceUtils26.isSurfaceReleased(surfaceTexture);
+        }
+        return false;
+    }
 }

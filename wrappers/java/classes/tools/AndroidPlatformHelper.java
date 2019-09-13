@@ -408,7 +408,7 @@ public class AndroidPlatformHelper {
 					}
 				}
 
-				if (!surface.isReleased()) {
+				if (!DeviceUtils.isSurfaceTextureReleased(surface)) {
 					Log.i("[Platform Helper] Releasing preview window surface");
 					surface.release();
 				}
@@ -471,7 +471,7 @@ public class AndroidPlatformHelper {
 					setNativeVideoWindowId(mNativePtr, null);
 				}
 
-				if (!surface.isReleased()) {
+				if (!DeviceUtils.isSurfaceTextureReleased(surface)) {
 					Log.i("[Platform Helper] Releasing window surface");
 					surface.release();
 				}
