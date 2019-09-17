@@ -53,6 +53,10 @@ void ChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> &chatMessag
 
 	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 	dChatMessage->setTime(ms_time(0));
+	if (!q->canHandleCpim()) {
+		//if not using cpim, ImdnMessageId = SIP Message call id, so should be computed each time, specially in case of resend.
+		dChatMessage->setImdnMessageId("");
+	}
 	dChatMessage->send();
 
 	LinphoneChatRoom *cr = getCChatRoom();
