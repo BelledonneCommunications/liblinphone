@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 package org.linphone.core.tools;
 
 import android.content.Context;
+import android.graphics.SurfaceTexture;
 import org.linphone.mediastream.Version;
 
 public class DeviceUtils {
