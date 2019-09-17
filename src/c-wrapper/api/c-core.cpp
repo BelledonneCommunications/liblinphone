@@ -25,6 +25,7 @@
 #include "private_structs.h"
 
 #include "chat/encryption/encryption-engine.h"
+#include "chat/encryption/legacy-encryption-engine.h"
 
 // =============================================================================
 
@@ -69,7 +70,9 @@ void linphone_core_set_im_encryption_engine (LinphoneCore *lc, LinphoneImEncrypt
 	if (imee) {
 		imee->lc = lc;
 		lc->im_encryption_engine = linphone_im_encryption_engine_ref(imee);
+		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setEncryptionEngine(new LegacyEncryptionEngine(L_GET_CPP_PTR_FROM_C_OBJECT(lc)));
 	}
+	
 }
 
 void linphone_core_enable_lime_x3dh (LinphoneCore *lc, bool_t enable) {
