@@ -74,6 +74,10 @@ public interface LinphoneChatMessage {
 		 * Message displayed to the remote user
 		 */
 		public final static State Displayed = new State(7,"Displayed");
+		/**
+		 * File transfer in progress
+		 */
+		public final static State FileTransferInProgress = new State(8, "FileTransferInProgress");
 
 		private State(int value,String stringValue) {
 			mValue = value;
