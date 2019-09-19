@@ -1372,10 +1372,12 @@ void MediaSessionPrivate::getLocalIp (const Address &remoteAddr) {
 			freeaddrinfo(res);
 	}
 
-	if (!dest.empty() || mediaLocalIp.empty() || needMediaLocalIpRefresh) {
-		needMediaLocalIpRefresh = false;
-		mediaLocalIp.reserve(LINPHONE_IPADDR_SIZE);
-		linphone_core_get_local_ip(q->getCore()->getCCore(), af, dest.c_str(), &mediaLocalIp[0]);
+	if (mediaLocalIp.empty() || needLocalIpRefresh) {
+		char tmp[LINPHONE_IPADDR_SIZE];
+		linphone_core_get_local_ip(q->getCore()->getCCore(), af, dest.c_str(), tmp);
+		mediaLocalIp.assign(tmp);
+		needLocalIpRefresh = false;
+		lInfo() << "Media local ip to reach " << (dest.empty() ? "default route" : dest) << " is :" << mediaLocalIp;
 	}
 }
 

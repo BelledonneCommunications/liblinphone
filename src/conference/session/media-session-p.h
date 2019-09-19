@@ -331,7 +331,6 @@ private:
 
 	std::string mediaLocalIp;
 	PortConfig mediaPorts[SAL_MEDIA_DESCRIPTION_MAX_STREAMS];
-	bool needMediaLocalIpRefresh = false;
 
 	// The rtp, srtp, zrtp contexts for each stream.
 	MSMediaStreamSessions sessions[SAL_MEDIA_DESCRIPTION_MAX_STREAMS];

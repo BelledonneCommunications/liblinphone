@@ -605,7 +605,7 @@ int IceAgent::gatherIceCandidates () {
 	ice_session_enable_short_turn_refresh(iceSession, core->short_turn_refresh);
 
 	// Gather local host candidates.
-	char localAddr[64];
+	char localAddr[LINPHONE_IPADDR_SIZE];
 	if (mediaSession.getPrivate()->getAf() == AF_INET6) {
 		if (linphone_core_get_local_ip_for(AF_INET6, nullptr, localAddr) < 0) {
 			lError() << "Fail to get local IPv6";
