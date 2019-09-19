@@ -115,6 +115,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/chat-message/is-composing-message.h
 	chat/chat-message/notification-message-p.h
 	chat/chat-message/notification-message.h
+	chat/chat-message/chat-message-killer.h
 	chat/chat-room/chat-room-params.h
 	chat/chat-room/abstract-chat-room-p.h
 	chat/chat-room/abstract-chat-room.h
@@ -300,6 +301,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/chat-message/imdn-message.cpp
 	chat/chat-message/is-composing-message.cpp
 	chat/chat-message/notification-message.cpp
+	chat/chat-message/chat-message-killer.cpp
 	chat/chat-room/abstract-chat-room.cpp
 	chat/chat-room/basic-chat-room.cpp
 	chat/chat-room/chat-room.cpp

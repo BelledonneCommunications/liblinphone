@@ -54,7 +54,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 9);
+	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 10);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -748,6 +748,11 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 		}
 		dChatMessage->setForwardInfo(row.get<string>(19));
 		
+		if (row.get_indicator(20) != soci::i_null) {
+			dChatMessage->enableEphemeralWithTime(row.get<double>(20));
+			dChatMessage->setEphemeralStartTime(dbSession.getTime(row, 21));
+		}
+		
 		cache(chatMessage, eventId);
 	}
 
@@ -889,6 +894,7 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 	const int &deliveryNotificationRequired = chatMessage->getPrivate()->getPositiveDeliveryNotificationRequired();
 	const int &displayNotificationRequired = chatMessage->getPrivate()->getDisplayNotificationRequired();
 	const int &markedAsRead = chatMessage->getPrivate()->isMarkedAsRead() ? 1 : 0;
+	const bool &isEphemeral = chatMessage->isEphemeral();
 
 	*dbSession.getBackendSession() << "INSERT INTO conference_chat_message_event ("
 		"  event_id, from_sip_address_id, to_sip_address_id,"
@@ -905,6 +911,16 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 		soci::use(imdnMessageId), soci::use(isSecured),
 		soci::use(deliveryNotificationRequired), soci::use(displayNotificationRequired),
 		soci::use(markedAsRead), soci::use(forwardInfo);
+	
+	if (isEphemeral) {
+		const double &ephemeralTime = chatMessage->getEphemeralTime();
+		const tm &startTime = Utils::getTimeTAsTm(chatMessage->getEphemeralStartTime());
+		*dbSession.getBackendSession() << "INSERT INTO chat_message_ephemeral_event ("
+			"  event_id, ephemeral_time, start_time"
+			") VALUES ("
+		"  :eventId, :time, :startTime"
+		")", soci::use(eventId), soci::use(ephemeralTime), soci::use(startTime);
+	}
 
 	for (const Content *content : chatMessage->getContents())
 		insertContent(eventId, *content);
@@ -1390,6 +1406,21 @@ void MainDbPrivate::updateSchema () {
 		"  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
 		"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
 		"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
+	}
+	
+	if (version < makeVersion(1, 0, 10)) {
+		*session << "DROP VIEW IF EXISTS conference_event_view";
+		*session << "CREATE VIEW conference_event_view AS"
+		"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_time, start_time"
+		"  FROM event"
+		"  LEFT JOIN conference_event ON conference_event.event_id = event.id"
+		"  LEFT JOIN conference_chat_message_event ON conference_chat_message_event.event_id = event.id"
+		"  LEFT JOIN conference_notified_event ON conference_notified_event.event_id = event.id"
+		"  LEFT JOIN conference_participant_device_event ON conference_participant_device_event.event_id = event.id"
+		"  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
+		"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
+		"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id"
+		"  LEFT JOIN chat_message_ephemeral_event ON chat_message_ephemeral_event.event_id = event.id";
 	}
 #endif
 }
@@ -2006,6 +2037,17 @@ void MainDb::init () {
 		"  name" + varcharPrimaryKeyStr(255) + ","
 		"  version INT UNSIGNED NOT NULL"
 		") " + charset;
+	
+	*session <<
+		"CREATE TABLE IF NOT EXISTS chat_message_ephemeral_event ("
+		"  event_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
+		"  ephemeral_time DOUBLE NOT NULL,"
+		"  start_time" + timestampType() + " NOT NULL,"
+	
+		"  FOREIGN KEY (event_id)"
+		"    REFERENCES conference_event(event_id)"
+		"    ON DELETE CASCADE"
+		") " + charset;
 
 	d->updateSchema();
 
@@ -2364,6 +2406,25 @@ void MainDb::markChatMessagesAsRead (const ConferenceId &conferenceId) const {
 #endif
 }
 
+void MainDb::setChatMessagesEphemeralStartTime (const ConferenceId &conferenceId, time_t &time) const {
+#ifdef HAVE_DB_STORAGE
+	static const string query = "UPDATE chat_message_ephemeral_event"
+	"  SET start_time = :startTime"
+	"  WHERE event_id IN ("
+	"    SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
+	")";
+	
+	L_DB_TRANSACTION {
+		L_D();
+		const tm &startTime = Utils::getTimeTAsTm(time);
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+		*d->dbSession.getBackendSession() << query, soci::use(dbChatRoomId), soci::use(startTime);
+		
+		tr.commit();
+	};
+#endif
+}
+
 list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ConferenceId &conferenceId) const {
 #ifdef HAVE_DB_STORAGE
 	// TODO: Optimize.
@@ -2404,6 +2465,35 @@ list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ConferenceId 
 	return list<shared_ptr<ChatMessage>>();
 #endif
 }
+
+void MainDb::updateEphemeralMessageKillers (std::unordered_map<MainDbEventKey, std::shared_ptr<ChatMessageKiller>> &messageKillers) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+		messageKillers.clear();
+
+		soci::rowset<soci::row> ephemeralMessages = (d->dbSession.getBackendSession()->prepare << "SELECT event_id, ephemeral_time, start_time FROM chat_message_ephemeral_event");
+
+		for (const auto &row : ephemeralMessages) {
+			const long long &eventId = d->dbSession.resolveId(row, 0);
+			const double &ephemeralTime = row.get<long>(1);
+			const time_t &startTime = d->dbSession.getTime(row, 2);
+
+			MainDbEventKey key = MainDbEventKey(getCore(), eventId);
+			shared_ptr<ChatMessageKiller> killer (new ChatMessageKiller(key));
+			messageKillers[key] = killer;
+
+			if (startTime > 0) {
+				// startTimer for delete ephemeral messages. If expired, set duration time 0.05s
+				double duration = difftime(ms_time(0), startTime) > ephemeralTime ? 0.05 : difftime(ms_time(0), startTime);
+				killer->setDuration(duration);
+				killer->startTimer();
+			}
+		}
+	};
+#endif
+}
+
 
 list<MainDb::ParticipantState> MainDb::getChatMessageParticipantsByImdnState (
 	const shared_ptr<EventLog> &eventLog,
@@ -2559,7 +2649,7 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessages (
 
 list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered () const {
 #ifdef HAVE_DB_STORAGE
-	static const string query = "SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, chat_room_id, forward_info"
+	static const string query = "SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, chat_room_id, forward_info, ephemeral_time, start_time"
 			" FROM conference_event_view"
 			" LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
 			" LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"

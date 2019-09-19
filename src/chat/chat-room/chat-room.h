@@ -82,6 +82,8 @@ public:
 	) const override;
 
 	void markAsRead () override;
+	void enableEphemeral (bool ephem) override;
+	void setEphemeralTime (double time) override;
 
 	const std::shared_ptr<ChatRoomParams> &getCurrentParams() const override;
 

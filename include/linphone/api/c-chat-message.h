@@ -362,6 +362,27 @@ LINPHONE_PUBLIC bool_t linphone_chat_message_is_forward (LinphoneChatMessage *ms
 LINPHONE_PUBLIC const char *linphone_chat_message_get_forward_info (const LinphoneChatMessage *msg);
 
 /**
+ * Returns true if the chat message is an ephemeral message.
+ * @param[in] msg #LinphoneChatMessage object.
+ * @return true if it is an ephemeral message, false otherwise
+ */
+LINPHONE_PUBLIC bool_t linphone_chat_message_is_ephemeral(LinphoneChatMessage *msg);
+
+/**
+ * Returns lifetime of an ephemeral message.
+ * @param[in] msg #LinphoneChatMessage object.
+ * @return the lifetime of an ephemeral message, by default 86400s.
+ */
+LINPHONE_PUBLIC double linphone_chat_message_get_ephemeral_time (LinphoneChatMessage *msg);
+
+/**
+ * Returns the time at which an ephemeral message is read and its lifetime will be counted.
+ * @param[in] msg #LinphoneChatMessage object.
+ * @return the time at which an ephemeral message is read. By default 0, means the message has not been read.
+ */
+LINPHONE_PUBLIC time_t linphone_chat_message_get_ephemeral_start_time (LinphoneChatMessage *msg);
+
+/**
  * Fulfill a chat message char by char. Message linked to a Real Time Text Call send char in realtime following RFC 4103/T.140
  * To commit a message, use #linphone_chat_room_send_message
  * @param[in] msg #LinphoneChatMessage object.

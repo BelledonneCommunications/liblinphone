@@ -41,4 +41,25 @@ MainDbEventKey::~MainDbEventKey () {
 		d->core.lock()->getPrivate()->mainDb->getPrivate()->storageIdToEvent.erase(d->storageId);
 }
 
+bool MainDbEventKey::operator== (const MainDbEventKey &other) const {
+	L_D();
+	const MainDbKeyPrivate *dKey = other.getPrivate();
+	return dKey->storageId == d->storageId;
+}
+
+bool MainDbEventKey::operator!= (const MainDbEventKey &other) const {
+	return !(*this == other);
+}
+
+bool MainDbEventKey::operator< (const MainDbEventKey &other) const {
+	L_D();
+	const MainDbKeyPrivate *dKey = other.getPrivate();
+	return d->storageId < dKey->storageId;
+}
+
+const long long &MainDbEventKey::getStorageId () const {
+	L_D();
+	return d->storageId;
+}
+
 LINPHONE_END_NAMESPACE

@@ -46,6 +46,8 @@
 
 #include "ortp/b64.h"
 
+#include "db/main-db-key-p.h"
+//#include "db/main-db-p.h"
 // =============================================================================
 
 using namespace std;
@@ -205,8 +207,19 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		// Wait until all files are downloaded before sending displayed IMDN
 		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
 	}
+	
+	// 6. update in database for ephemeral message if necessary.
+	if (isEphemeral && (state == ChatMessage::State::Displayed)) {
+		// set ephemeral start time
+		ephemeralStartTime = ::ms_time(NULL);
+		q->getChatRoom()->getCore()->getPrivate()->mainDb->setChatMessagesEphemeralStartTime(   q->getChatRoom()->getConferenceId(), ephemeralStartTime);
 
-	// 6. Update in database if necessary.
+		// start chat message killer for this message
+		MainDbEventKey key = MainDbEventKey(dbKey.getPrivate()->core.lock(), dbKey.getPrivate()->storageId);
+		q->getChatRoom()->getCore()->getPrivate()->startKillerWithMessage(key,ephemeralTime);
+	}
+
+	// 7. Update in database if necessary.
 	if (state != ChatMessage::State::InProgress && state != ChatMessage::State::FileTransferError && state != ChatMessage::State::FileTransferInProgress) {
 		updateInDb();
 	}
@@ -315,6 +328,10 @@ const string &ChatMessagePrivate::getFileTransferFilepath () const {
 
 void ChatMessagePrivate::setFileTransferFilepath (const string &path) {
 	fileTransferFilePath = path;
+}
+
+void ChatMessagePrivate::setEphemeralStartTime (time_t startTime) {
+	ephemeralStartTime = startTime;
 }
 
 const string &ChatMessagePrivate::getAppdata () const {
@@ -1088,6 +1105,11 @@ void ChatMessagePrivate::setForwardInfo (const string &fInfo) {
 	forwardInfo = fInfo;
 }
 
+void ChatMessagePrivate::enableEphemeralWithTime (double time) {
+	isEphemeral = TRUE;
+	ephemeralTime = time;
+}
+
 void ChatMessagePrivate::loadContentsFromDatabase () const {
 	L_Q();
 
@@ -1142,6 +1164,22 @@ bool ChatMessage::getToBeStored () const {
 	L_D();
 	return d->toBeStored;
 }
+
+bool ChatMessage::isEphemeral () const {
+	L_D();
+	return d->isEphemeral;
+}
+
+double ChatMessage::getEphemeralTime () const {
+	L_D();
+	return d->ephemeralTime;
+}
+
+time_t ChatMessage::getEphemeralStartTime () const {
+	L_D();
+	return d->ephemeralStartTime;
+}
+
 
 void ChatMessage::setToBeStored (bool value) {
 	L_D();

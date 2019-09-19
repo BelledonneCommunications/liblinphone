@@ -1315,7 +1315,9 @@ class SwiftLangTranslator(CLikeLangTranslator):
 		elif _type.name == 'size':
 			return 'Int'
 		elif _type.name == 'floatant':
-			if _type.size is not None and _type.isref:
+			if _type.size is not None and _type.size == 'double':
+				return 'Double'
+			elif _type.size is not None and _type.isref:
 				return 'UnsafeMutablePointer<Float>'
 			else:
 				return 'Float'

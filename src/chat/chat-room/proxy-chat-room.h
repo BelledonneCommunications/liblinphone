@@ -77,6 +77,8 @@ public:
 	) const override;
 
 	void markAsRead () override;
+	void enableEphemeral (bool ephem) override;
+	void setEphemeralTime (double time) override;
 
 	const IdentityAddress &getConferenceAddress () const override;
 

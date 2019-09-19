@@ -89,6 +89,10 @@ public:
 	const IdentityAddress &getToAddress () const;
 	const std::string &getForwardInfo () const;
 
+	bool isEphemeral () const;
+	double getEphemeralTime () const;
+	time_t getEphemeralStartTime () const;
+
 	// TODO: Return a cpp reference.
 	const LinphoneErrorInfo *getErrorInfo () const;
 

@@ -96,6 +96,7 @@ void CorePrivate::init () {
 			}
 
 			loadChatRooms();
+			initMessageKillers();
 		} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
 	}
 

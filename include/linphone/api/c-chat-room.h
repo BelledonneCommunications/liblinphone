@@ -157,6 +157,20 @@ LINPHONE_PUBLIC void linphone_chat_room_receive_chat_message (LinphoneChatRoom *
 LINPHONE_PUBLIC void linphone_chat_room_mark_as_read(LinphoneChatRoom *cr);
 
 /**
+ * Enable or disable the ephemeral message feature in the chat room.
+ * @param[in] cr #LinphoneChatRoom object
+ * @param[in] ephem TRUE if the message should be ephemeral, FALSE otherwise.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_enable_ephemeral (LinphoneChatRoom *cr, bool_t ephem);
+
+/**
+ * Set lifetime of ephemral message to the chat room. After the time elapsed since the message was read, the message will be deleted.
+ * @param[in] cr #LinphoneChatRoom object
+ * @param[in] time The ephemral time, default 24h, 86400s
+ */
+LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_time (LinphoneChatRoom *cr, double time);
+
+/**
  * Delete a message from the chat room history.
  * @param[in] cr The #LinphoneChatRoom object corresponding to the conversation.
  * @param[in] msg The #LinphoneChatMessage object to remove.

@@ -134,7 +134,11 @@ void ChatRoomPrivate::removeTransientChatMessage (const shared_ptr<ChatMessage> 
 
 shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage (ChatMessage::Direction direction) {
 	L_Q();
-	return shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
+	shared_ptr<ChatMessage> message = shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
+	if (isEphemeral) {
+		message->getPrivate()->enableEphemeralWithTime(ephemeralTime);
+	}
+	return message;
 }
 
 shared_ptr<ImdnMessage> ChatRoomPrivate::createImdnMessage (
@@ -572,6 +576,16 @@ const std::shared_ptr<ChatRoomParams> &ChatRoom::getCurrentParams() const {
 	L_D();
 
 	return d->params;
+}
+
+void ChatRoom::enableEphemeral (bool ephem) {
+	L_D();
+	d->isEphemeral = ephem;
+}
+
+void ChatRoom::setEphemeralTime (double time) {
+	L_D();
+	d->ephemeralTime = time;
 }
 
 LINPHONE_END_NAMESPACE

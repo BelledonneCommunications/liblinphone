@@ -27,6 +27,7 @@
 #include "db/main-db.h"
 #include "object/object-p.h"
 #include "sal/call-op.h"
+#include "chat/chat-message/chat-message-killer.h"
 
 // =============================================================================
 
@@ -74,6 +75,8 @@ public:
 	void setPlaybackGainDb (AudioStream *stream, float gain);
 
 	void loadChatRooms ();
+	void initMessageKillers ();
+	void startKillerWithMessage(MainDbEventKey key, double duration);
 	void sendDeliveryNotifications ();
 	void insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
 	void insertChatRoomWithDb (const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
@@ -133,6 +136,8 @@ private:
 	std::shared_ptr<Call> currentCall;
 
 	std::unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>> chatRoomsById;
+	
+	std::unordered_map<MainDbEventKey, std::shared_ptr<ChatMessageKiller>> messageKillers;
 
 	std::unique_ptr<EncryptionEngine> imee;
 

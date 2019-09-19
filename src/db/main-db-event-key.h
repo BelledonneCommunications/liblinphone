@@ -21,12 +21,14 @@
 #define _L_MAIN_DB_EVENT_KEY_H_
 
 #include "main-db-key.h"
+#include "main-db-key-p.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
 class MainDbEventKey : public MainDbKey {
+	friend class ChatMessageKiller;
 public:
 	MainDbEventKey ();
 	MainDbEventKey (const std::shared_ptr<Core> &core, long long storageId);
@@ -35,11 +37,27 @@ public:
 	MainDbEventKey* clone () const override {
 		return new MainDbEventKey(*this);
 	}
+	
+	bool operator== (const MainDbEventKey &other) const;
+	bool operator!= (const MainDbEventKey &other) const;
+	bool operator< (const MainDbEventKey &other) const;
+	
+	const long long &getStorageId () const;
 
 private:
 	L_DECLARE_PRIVATE(MainDbKey);
 };
 
 LINPHONE_END_NAMESPACE
+
+// Add map key support.
+namespace std {
+	template<>
+	struct hash<LinphonePrivate::MainDbEventKey> {
+		std::size_t operator() (const LinphonePrivate::MainDbEventKey &mainDbEventKey) const {
+			return hash<long long>()(mainDbEventKey.getStorageId());
+		}
+	};
+}
 
 #endif // ifndef _L_MAIN_DB_EVENT_KEY_H_

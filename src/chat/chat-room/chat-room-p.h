@@ -116,6 +116,8 @@ private:
 	std::unique_ptr<IsComposing> isComposingHandler;
 
 	bool isComposing = false;
+	bool isEphemeral = false;
+	double ephemeralTime = 86400;  //24 hours = 86400s
 
 	L_DECLARE_PUBLIC(ChatRoom);
 };

@@ -250,6 +250,18 @@ const char *linphone_chat_message_get_forward_info (const LinphoneChatMessage *m
 	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getForwardInfo());
 }
 
+bool_t linphone_chat_message_is_ephemeral (LinphoneChatMessage *msg) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isEphemeral();
+}
+
+double linphone_chat_message_get_ephemeral_time (LinphoneChatMessage *msg) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getEphemeralTime();
+}
+
+time_t linphone_chat_message_get_ephemeral_start_time (LinphoneChatMessage *msg) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getEphemeralStartTime();
+}
+
 void linphone_chat_message_add_custom_header(
 	LinphoneChatMessage *msg,
 	const char *header_name,
