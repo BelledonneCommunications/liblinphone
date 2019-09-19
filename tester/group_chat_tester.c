@@ -5661,7 +5661,7 @@ test_t group_chat_tests[] = {
 	TEST_ONE_TAG("Participant removed then added", participant_removed_then_added, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Check  if participant device are removed", group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_notified, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Subscribe successfull after set chat database path", subscribe_test_after_set_chat_database_path, "LeaksMemory" /*due to core restart*/),
-	TEST_ONE_TAG("Send forward message", one_to_one_chat_room_send_forward_message, "LeaksMemory" /*due to core restart*/)
+	TEST_ONE_TAG("Send forward message", one_to_one_chat_room_send_forward_message, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Send ephemeral messages", one_to_one_chat_room_send_ephemeral_messages, "LeaksMemory" /*due to core restart*/)
 };
 
