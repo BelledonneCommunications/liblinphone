@@ -172,7 +172,7 @@ void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info)
 	bool_t updating=FALSE;
 
 	if (!linphone_auth_info_get_tls_key(info) && !linphone_auth_info_get_tls_key_path(info) && !linphone_auth_info_get_ha1(info) && !linphone_auth_info_get_password(info) ){
-		ms_fatal("linphone_core_add_auth_info(): info supplied with empty password, ha1 or TLS client/key");
+		ms_error("linphone_core_add_auth_info(): info supplied with empty password, ha1 or TLS client/key");
 		return;
 	}
 	/* find if we are attempting to modify an existing auth info */
