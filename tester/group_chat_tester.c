@@ -5486,118 +5486,6 @@ static void one_to_one_chat_room_send_forward_message (void) {
 	group_chat_room_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(TRUE,TRUE);
 }
 
-static void one_to_one_chat_room_send_ephemeral_messages (void) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
-	bctbx_list_t *coresManagerList = NULL;
-	bctbx_list_t *participantsAddresses = NULL;
-	coresManagerList = bctbx_list_append(coresManagerList, marie);
-	coresManagerList = bctbx_list_append(coresManagerList, pauline);
-	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
-	start_core_for_conference(coresManagerList);
-	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
-	stats initialMarieStats = marie->stat;
-	stats initialPaulineStats = pauline->stat;
-	
-	// Enable IMDN
-	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
-	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
-	
-	// Marie creates a new group chat room
-	const char *initialSubject = "Pauline";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
-	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
-	// Marie enable ephemeral in the group chat room
-	linphone_chat_room_enable_ephemeral(marieCr, TRUE);
-	
-	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
-	
-	// Check that the chat room is correctly created on Pauline's side and that the participants are added
-	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
-	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineCr) & LinphoneChatRoomCapabilitiesOneToOne);
-	
-	// Marie reset the ephemeral time in the group chat room
-	linphone_chat_room_set_ephemeral_time(marieCr, 2);
-	// Marie sends a message
-	const char *textMessage = "Hello";
-	LinphoneChatMessage *message = _send_message(marieCr, textMessage);
-	//Marie sends second message
-	textMessage = "This is Marie";
-	LinphoneChatMessage *message2 = _send_message(marieCr, textMessage);
-
-	// Marie disable ephemeral in the group chat room
-	linphone_chat_room_enable_ephemeral(marieCr, FALSE);
-	// Marie sends third message
-	textMessage = "See you later";
-	LinphoneChatMessage *message3 = _send_message(marieCr, textMessage);
-	
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 3, 3000));
-	// Check that the message has been delivered to Pauline
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser, initialMarieStats.number_of_LinphoneMessageDeliveredToUser + 3, 3000));
-
-	// Pauline  marks the message as read, check that the state is now displayed on Marie's side
-	linphone_chat_room_mark_as_read(paulineCr);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDisplayed, initialMarieStats.number_of_LinphoneMessageDisplayed + 3, 3000));
-
-	// After 20s , there are only one messages
-	wait_for_list(coresList, NULL, 0, 20000);
-	
-	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int," %i");
-	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 1, int," %i");
-	
-	linphone_chat_message_unref(message);
-	linphone_chat_message_unref(message2);
-	linphone_chat_message_unref(message3);
-	
-	if (linphone_chat_room_get_history_size(paulineCr) > 0) {
-		LinphoneChatMessage *recv_msg = linphone_chat_room_get_last_message_in_history(paulineCr);
-		if (BC_ASSERT_PTR_NOT_NULL(recv_msg)) {
-			BC_ASSERT_FALSE(linphone_chat_message_is_ephemeral(recv_msg));
-			linphone_chat_message_unref(recv_msg);
-		}
-	}
-
-	{
-	 // To simulate dialog removal
-	 LinphoneAddress *paulineAddr = linphone_address_clone(linphone_chat_room_get_peer_address(paulineCr));
-	 linphone_core_set_network_reachable(pauline->lc, FALSE);
-	 coresList = bctbx_list_remove(coresList, pauline->lc);
-	 linphone_core_manager_reinit(pauline);
-	 bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, pauline);
-	 bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
-	 bctbx_list_free(tmpCoresManagerList);
-	 coresList = bctbx_list_concat(coresList, tmpCoresList);
-	 linphone_core_manager_start(pauline, TRUE);
-	 paulineCr = linphone_core_get_chat_room(pauline->lc, paulineAddr);
-	 linphone_address_unref(paulineAddr);
-	 }
-	 
-	 // read messages from db, there are only two messages
-	if (linphone_chat_room_get_history_size(paulineCr) > 0) {
-		LinphoneChatMessage *recv_msg = linphone_chat_room_get_last_message_in_history(paulineCr);
-		if (BC_ASSERT_PTR_NOT_NULL(recv_msg)) {
-			BC_ASSERT_FALSE(linphone_chat_message_is_ephemeral(recv_msg));
-			linphone_chat_message_unref(recv_msg);
-		}
-	}
-
-	// Clean db from chat room
-	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
-	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
-	
-	wait_for_list(coresList, 0, 1, 2000);
-	BC_ASSERT_EQUAL(linphone_core_get_call_history_size(marie->lc), 0, int,"%i");
-	BC_ASSERT_EQUAL(linphone_core_get_call_history_size(pauline->lc), 0, int,"%i");
-	BC_ASSERT_PTR_NULL(linphone_core_get_call_logs(marie->lc));
-	BC_ASSERT_PTR_NULL(linphone_core_get_call_logs(pauline->lc));
-	
-	linphone_address_unref(confAddr);
-	bctbx_list_free(coresList);
-	bctbx_list_free(coresManagerList);
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-}
-
 test_t group_chat_tests[] = {
 	TEST_NO_TAG("Chat room params", group_chat_room_params),
 	TEST_NO_TAG("Chat room with forced local identity", group_chat_room_creation_with_given_identity),
@@ -5661,8 +5549,7 @@ test_t group_chat_tests[] = {
 	TEST_ONE_TAG("Participant removed then added", participant_removed_then_added, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Check  if participant device are removed", group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_notified, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Subscribe successfull after set chat database path", subscribe_test_after_set_chat_database_path, "LeaksMemory" /*due to core restart*/),
-	TEST_ONE_TAG("Send forward message", one_to_one_chat_room_send_forward_message, "LeaksMemory" /*due to core restart*/),
-	TEST_ONE_TAG("Send ephemeral messages", one_to_one_chat_room_send_ephemeral_messages, "LeaksMemory" /*due to core restart*/)
+	TEST_ONE_TAG("Send forward message", one_to_one_chat_room_send_forward_message, "LeaksMemory" /*due to core restart*/)
 };
 
 test_suite_t group_chat_test_suite = {

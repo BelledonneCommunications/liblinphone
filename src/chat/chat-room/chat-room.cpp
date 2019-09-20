@@ -135,7 +135,7 @@ void ChatRoomPrivate::removeTransientChatMessage (const shared_ptr<ChatMessage> 
 shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage (ChatMessage::Direction direction) {
 	L_Q();
 	shared_ptr<ChatMessage> message = shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
-	if (isEphemeral) {
+	if (isEphemeral && capabilities & ChatRoom::Capabilities::Encrypted) {
 		message->getPrivate()->enableEphemeralWithTime(ephemeralTime);
 	}
 	return message;
