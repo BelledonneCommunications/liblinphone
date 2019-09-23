@@ -54,7 +54,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 9);
+	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 10);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -1391,6 +1391,11 @@ void MainDbPrivate::updateSchema () {
 		"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
 		"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id";
 	}
+
+	if (version < makeVersion(1, 0, 10)) {
+		*session << "CREATE INDEX incoming_not_delivered_index ON conference_chat_message_event (delivery_notification_required)";
+		*session << "CREATE INDEX incoming_unread_index ON conference_chat_message_event (marked_as_read)";
+	}
 #endif
 }
 
@@ -2304,8 +2309,7 @@ int MainDb::getUnreadChatMessageCount (const ConferenceId &conferenceId) const {
 			"  SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
 			") AND";
 
-	query += " direction = " + Utils::toString(int(ChatMessage::Direction::Incoming)) +
-		+ " AND marked_as_read == 0 ";
+	query += " marked_as_read == 0 ";
 
 	/*
 	DurationLogger durationLogger(
@@ -2341,9 +2345,10 @@ void MainDb::markChatMessagesAsRead (const ConferenceId &conferenceId) const {
 
 	static const string query = "UPDATE conference_chat_message_event"
 		"  SET marked_as_read = 1"
-		"  WHERE event_id IN ("
+		"  WHERE marked_as_read == 0"
+		"  AND event_id IN ("
 		"    SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
-		") AND direction = " + Utils::toString(int(ChatMessage::Direction::Incoming));
+		"  )";
 
 	/*
 	DurationLogger durationLogger(
@@ -2367,9 +2372,8 @@ void MainDb::markChatMessagesAsRead (const ConferenceId &conferenceId) const {
 list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ConferenceId &conferenceId) const {
 #ifdef HAVE_DB_STORAGE
 	// TODO: Optimize.
-	static const string query = Statements::get(Statements::SelectConferenceEvents) +
-		string(" AND direction = ") + Utils::toString(int(ChatMessage::Direction::Incoming)) +
-		" AND marked_as_read == 0";
+	static const string query = Statements::get(Statements::SelectConferenceEvents)
+		+ string(" AND marked_as_read == 0");
 
 	DurationLogger durationLogger(
 		"Get unread chat messages: (peer=" + conferenceId.getPeerAddress().asString() +
@@ -2566,7 +2570,7 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered ()
 			" LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"
 			" LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id"
 			" LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id"
-			" WHERE conference_event_view.id IN (SELECT event_id FROM conference_chat_message_event WHERE direction = :direction AND delivery_notification_required <> 0)";
+			" WHERE conference_event_view.id IN (SELECT event_id FROM conference_chat_message_event WHERE delivery_notification_required <> 0)";
 
 	/*
 	DurationLogger durationLogger(
@@ -2579,9 +2583,8 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered ()
 		L_D();
 
 		list<shared_ptr<ChatMessage>> chatMessages;
-		const int &direction = int(ChatMessage::Direction::Incoming);
 		soci::rowset<soci::row> rows = (
-			d->dbSession.getBackendSession()->prepare << query, soci::use(direction)
+			d->dbSession.getBackendSession()->prepare << query
 		);
 
 		for (const auto &row : rows) {

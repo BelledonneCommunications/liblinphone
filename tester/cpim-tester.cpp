@@ -151,13 +151,18 @@ static void parse_message_with_generic_header_parameters () {
 }
 
 static void build_message () {
-
 	Cpim::Message message;
 
 	// Set message headers.
 	Cpim::FromHeader fromHeader("im:piglet@100akerwood.com", "MR SANDERS");
+	BC_ASSERT_STRING_EQUAL(fromHeader.getName().c_str(), "From");
+	BC_ASSERT_STRING_EQUAL(fromHeader.getUri().c_str(), "im:piglet@100akerwood.com");
+	BC_ASSERT_STRING_EQUAL(fromHeader.getFormalName().c_str(), "MR SANDERS");
 
 	Cpim::ToHeader toHeader("im:eeyore@100akerwood.com", "Depressed Donkey");
+	BC_ASSERT_STRING_EQUAL(toHeader.getName().c_str(), "To");
+	BC_ASSERT_STRING_EQUAL(toHeader.getUri().c_str(), "im:eeyore@100akerwood.com");
+	BC_ASSERT_STRING_EQUAL(toHeader.getFormalName().c_str(), "Depressed Donkey");
 
 	// 976686000 is 2000-12-13T13:40:00-08:00
 	Cpim::DateTimeHeader dateTimeHeader(976686000);
@@ -175,35 +180,35 @@ static void build_message () {
 
 	Cpim::GenericHeader wackyMessageHeader("MyFeatures.WackyMessageOption", "Use-silly-font");
 
-	if (!BC_ASSERT_TRUE(message.addMessageHeader(fromHeader))) return;
-	if (!BC_ASSERT_TRUE(message.addMessageHeader(toHeader))) return;
-	if (!BC_ASSERT_TRUE(message.addMessageHeader(dateTimeHeader))) return;
-	if (!BC_ASSERT_TRUE(message.addMessageHeader(subjectHeader))) return;
-	if (!BC_ASSERT_TRUE(message.addMessageHeader(subjectWithLanguageHeader))) return;
-	if (!BC_ASSERT_TRUE(message.addMessageHeader(nsHeader))) return;
-	if (!BC_ASSERT_TRUE(message.addMessageHeader(requireHeader))) return;
-	if (!BC_ASSERT_TRUE(message.addMessageHeader(vitalMessageHeader))) return;
-	if (!BC_ASSERT_TRUE(message.addMessageHeader(wackyMessageHeader))) return;
+	BC_ASSERT_TRUE(message.addMessageHeader(fromHeader));
+	BC_ASSERT_TRUE(message.addMessageHeader(toHeader));
+	BC_ASSERT_TRUE(message.addMessageHeader(dateTimeHeader));
+	BC_ASSERT_TRUE(message.addMessageHeader(subjectHeader));
+	BC_ASSERT_TRUE(message.addMessageHeader(subjectWithLanguageHeader));
+	BC_ASSERT_TRUE(message.addMessageHeader(nsHeader));
+	BC_ASSERT_TRUE(message.addMessageHeader(requireHeader));
+	BC_ASSERT_TRUE(message.addMessageHeader(vitalMessageHeader));
+	BC_ASSERT_TRUE(message.addMessageHeader(wackyMessageHeader));
 
 	// Set Content headers.
     Cpim::GenericHeader contentTypeHeader("Content-Type", "text/xml; charset=utf-8");
-	if (!BC_ASSERT_TRUE(message.addContentHeader(contentTypeHeader))) return;
+	BC_ASSERT_TRUE(message.addContentHeader(contentTypeHeader));
 
 	Cpim::GenericHeader contentIdHeader("Content-ID", "<1234567890@foo.com>");
-	if (!BC_ASSERT_TRUE(message.addContentHeader(contentIdHeader))) return;
+	BC_ASSERT_TRUE(message.addContentHeader(contentIdHeader));
 
 	// Add a wrong message header and a wrong content header
 	Cpim::FromHeader wrongFromHeader("", "");
-	if (!BC_ASSERT_FALSE(message.addMessageHeader(wrongFromHeader))) return;
+	BC_ASSERT_FALSE(message.addMessageHeader(wrongFromHeader));
 
 	Cpim::GenericHeader wrongContentHeader("", "");
-	if (!BC_ASSERT_FALSE(message.addContentHeader(wrongContentHeader))) return;
+	BC_ASSERT_FALSE(message.addContentHeader(wrongContentHeader));
 
 	const string content = "<body>"
 		"Here is the text of my message."
 		"</body>";
 
-	if (!BC_ASSERT_TRUE(message.setContent(content))) return;
+	BC_ASSERT_TRUE(message.setContent(content));
 
 	const string strMessage = message.asString();
 	const string expectedMessage = "From: \"MR SANDERS\"<im:piglet@100akerwood.com>\r\n"
