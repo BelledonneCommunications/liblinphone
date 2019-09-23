@@ -119,6 +119,7 @@ public:
 		time_t stateChangeTime
 	);
 
+	bool isChatRoomEmpty (const ConferenceId &conferenceId) const;
 	std::shared_ptr<ChatMessage> getLastChatMessage (const ConferenceId &conferenceId) const;
 
 	std::list<std::shared_ptr<ChatMessage>> findChatMessages (
