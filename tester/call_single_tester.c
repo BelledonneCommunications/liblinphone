@@ -3153,8 +3153,15 @@ static void call_rejected_because_wrong_credentials_with_params(const char* user
 
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphoneCallError,1));
 	
+/*
+ * auth_info_failures
+ * The auth_requested callback supplies a single LinphoneAuthInfo corresponding to a server challenge.
+ * In the case where the server supports MD5 and SHA256, there will be two challenges, hence two auth_requested() calls.
+ * A new callback auth_requested2() supporting a list of LinphoneAuthInfo to fill up must be implemented to solve this issue.
+ * This is tracked by issue 5864 on our bug tracker.
+**/
 	if (enable_auth_req_cb) {
-		BC_ASSERT_EQUAL(marie->stat.number_of_auth_info_requested, 2, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_auth_info_requested,/*2*/ 3, int, "%d");
 	}
 	/*to make sure unregister will work*/
 	linphone_core_clear_all_auth_info(marie->lc);

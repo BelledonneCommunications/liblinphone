@@ -454,7 +454,7 @@ static void authenticated_register_with_late_credentials(void){
 	counters = get_stats(lcm->lc);
 	register_with_refresh_base_2(lcm->lc,FALSE,auth_domain,route,TRUE,transport);
 	linphone_transports_unref(transport);
-	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested, 1, int, "%d");
+	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,1+1, int, "%d"); /*about +1: see note auth_info_failures in this file*/
 	linphone_core_manager_destroy(lcm);
 }
 
@@ -531,6 +531,14 @@ static void authenticated_register_with_provided_credentials_and_username_with_s
 	linphone_core_manager_destroy(lcm);
 }
 
+/*
+ * auth_info_failures
+ * The auth_requested callback supplies a single LinphoneAuthInfo corresponding to a server challenge.
+ * In the case where the server supports MD5 and SHA256, there will be two challenges, hence two auth_requested() calls.
+ * A new callback auth_requested2() supporting a list of LinphoneAuthInfo to fill up must be implemented to solve this issue.
+ * This is tracked by issue 5864 on our bug tracker.
+**/
+
 static void authenticated_register_with_wrong_late_credentials(void){
 	LinphoneCoreManager *lcm;
 	stats* counters;
@@ -553,7 +561,7 @@ static void authenticated_register_with_wrong_late_credentials(void){
 	counters = get_stats(lcm->lc);
 	register_with_refresh_base_3(lcm->lc,FALSE,auth_domain,route,TRUE,transport,LinphoneRegistrationFailed);
 	linphone_transports_unref(transport);
-	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,2, int, "%d");
+	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,2 + 1, int, "%d"); /* +1 : see note auth_info_failures above */
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationFailed,2, int, "%d");
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationProgress,2, int, "%d");
 	test_password=saved_test_passwd;
