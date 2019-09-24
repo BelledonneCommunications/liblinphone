@@ -187,6 +187,21 @@ static void get_conference_notified_events (void) {
 	}
 }
 
+static void get_chat_rooms() {
+	MainDbProvider provider;
+	const MainDb &mainDb = provider.getMainDb();
+	list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
+	BC_ASSERT_EQUAL(chatRooms.size(), 86, int, "%d");
+	
+	list<shared_ptr<AbstractChatRoom>> emptyChatRooms;
+	for (const auto chatRoom : chatRooms) {
+		if (chatRoom->isEmpty()) {
+			emptyChatRooms.push_back(chatRoom);
+		}
+	}
+	BC_ASSERT_EQUAL(emptyChatRooms.size(), 4, int, "%d");
+}
+
 static void load_a_lot_of_chatrooms(void) {
 	chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 	MainDbProvider provider("db/chatrooms.db");
@@ -201,6 +216,7 @@ test_t main_db_tests[] = {
 	TEST_NO_TAG("Get unread messages count", get_unread_messages_count),
 	TEST_NO_TAG("Get history", get_history),
 	TEST_NO_TAG("Get conference events", get_conference_notified_events),
+	TEST_NO_TAG("Get chat rooms", get_chat_rooms),
 	TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms)
 };
 
