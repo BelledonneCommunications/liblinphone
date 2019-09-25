@@ -65,6 +65,10 @@ public:
 		chatRoom->getPrivate()->removeTransientChatMessage(message);
 	}
 
+	inline void setIsEmpty (const bool empty) override {
+		chatRoom->getPrivate()->setIsEmpty(empty);
+	}
+
 	inline void sendDeliveryNotifications (const std::shared_ptr<ChatMessage> &chatMessage) override {
 		chatRoom->getPrivate()->sendDeliveryNotifications(chatMessage);
 	}
