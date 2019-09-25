@@ -529,6 +529,14 @@ void _linphone_chat_room_notify_conference_left(LinphoneChatRoom *cr, const Linp
 	NOTIFY_IF_EXIST(ConferenceLeft, conference_left, cr, eventLog)
 }
 
+void _linphone_chat_room_notify_message_killer_started(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
+	NOTIFY_IF_EXIST(MessageKillerStarted, message_killer_started, cr, eventLog)
+}
+
+void _linphone_chat_room_notify_message_killer_finished(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
+	NOTIFY_IF_EXIST(MessageKillerFinished, message_killer_finished, cr, eventLog)
+}
+
 void _linphone_chat_room_notify_undecryptable_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
 	NOTIFY_IF_EXIST(UndecryptableMessageReceived, undecryptable_message_received, cr, msg)
 }

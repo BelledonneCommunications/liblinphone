@@ -121,6 +121,7 @@ public:
 	belle_sip_main_loop_t *getMainLoop();
 	bool basicToFlexisipChatroomMigrationEnabled()const;
 	std::unique_ptr<MainDb> mainDb;
+	std::unordered_map<MainDbEventKey, std::shared_ptr<ChatMessageKiller>> messageKillers;
 #ifdef HAVE_ADVANCED_IM
 	std::unique_ptr<RemoteConferenceListEventHandler> remoteListEventHandler;
 	std::unique_ptr<LocalConferenceListEventHandler> localListEventHandler;
@@ -136,8 +137,6 @@ private:
 	std::shared_ptr<Call> currentCall;
 
 	std::unordered_map<ConferenceId, std::shared_ptr<AbstractChatRoom>> chatRoomsById;
-	
-	std::unordered_map<MainDbEventKey, std::shared_ptr<ChatMessageKiller>> messageKillers;
 
 	std::unique_ptr<EncryptionEngine> imee;
 

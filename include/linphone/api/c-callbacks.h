@@ -276,6 +276,20 @@ typedef void (*LinphoneChatRoomCbsConferenceJoinedCb) (LinphoneChatRoom *cr, con
 typedef void (*LinphoneChatRoomCbsConferenceLeftCb) (LinphoneChatRoom *cr, const LinphoneEventLog *eventLog);
 
 /**
+ * Callback used to notify a chat room that a message killer has been started.
+ * @param[in] cr #LinphoneChatRoom object
+ * @param[in] event_log #LinphoneEventLog The event to be notified
+ */
+typedef void (*LinphoneChatRoomCbsMessageKillerStartedCb) (LinphoneChatRoom *cr, const LinphoneEventLog *eventLog);
+
+/**
+ * Callback used to notify a chat room that a message killer has been finished.
+ * @param[in] cr #LinphoneChatRoom object
+ * @param[in] event_log #LinphoneEventLog The event to be notified
+ */
+typedef void (*LinphoneChatRoomCbsMessageKillerFinishedCb) (LinphoneChatRoom *cr, const LinphoneEventLog *eventLog);
+
+/**
  * Callback used when a group chat room is created server-side to generate the address of the chat room.
  * The function linphone_chat_room_set_conference_address() needs to be called by this callback.
  * @param[in] cr #LinphoneChatRoom object

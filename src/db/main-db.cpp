@@ -41,6 +41,8 @@
 #endif
 #include "internal/statements.h"
 
+#include "c-wrapper/c-wrapper.h"
+
 // =============================================================================
 
 // See: http://soci.sourceforge.net/doc/3.2/exchange.html
@@ -2479,8 +2481,13 @@ void MainDb::updateEphemeralMessageKillers (std::unordered_map<MainDbEventKey, s
 			const double &ephemeralTime = row.get<long>(1);
 			const time_t &startTime = d->dbSession.getTime(row, 2);
 
+			soci::row rowf;
+			*d->dbSession.getBackendSession() << Statements::get(Statements::SelectConferenceEvent),
+			soci::into(rowf), soci::use(eventId);
+			ConferenceId conferenceId(IdentityAddress(rowf.get<string>(16)), IdentityAddress(rowf.get<string>(17)));
+
 			MainDbEventKey key = MainDbEventKey(getCore(), eventId);
-			shared_ptr<ChatMessageKiller> killer (new ChatMessageKiller(key));
+			shared_ptr<ChatMessageKiller> killer (new ChatMessageKiller(key, conferenceId));
 			messageKillers[key] = killer;
 
 			if (startTime > 0) {

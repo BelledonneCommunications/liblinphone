@@ -149,6 +149,18 @@ static void chat_room_conference_joined (LinphoneChatRoom *cr, const LinphoneEve
 	manager->stat.number_of_LinphoneChatRoomConferenceJoined++;
 }
 
+static void chat_room_message_killer_started (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	LinphoneCore *core = linphone_chat_room_get_core(cr);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_LinphoneChatRoomMessageKillerStarted++;
+}
+
+static void chat_room_message_killer_finished (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	LinphoneCore *core = linphone_chat_room_get_core(cr);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_LinphoneChatRoomMessageKillerFinished++;
+}
+
 void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state) {
 	if (state == LinphoneChatRoomStateInstantiated) {
 		LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
@@ -163,6 +175,8 @@ void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, Lin
 		linphone_chat_room_cbs_set_participant_device_removed(cbs, chat_room_participant_device_removed);
 		linphone_chat_room_cbs_set_undecryptable_message_received(cbs, undecryptable_message_received);
 		linphone_chat_room_cbs_set_conference_joined(cbs, chat_room_conference_joined);
+		linphone_chat_room_cbs_set_message_killer_started(cbs, chat_room_message_killer_started);
+		linphone_chat_room_cbs_set_message_killer_finished(cbs, chat_room_message_killer_finished);
 		linphone_chat_room_add_callbacks(cr, cbs);
 		linphone_chat_room_cbs_unref(cbs);
 	}

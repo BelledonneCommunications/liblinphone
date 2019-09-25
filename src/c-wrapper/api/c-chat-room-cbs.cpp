@@ -45,6 +45,8 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb participantRegistrationSubscriptionRequestedCb;
 	LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequestedCb participantRegistrationUnsubscriptionRequestedCb;
 	LinphoneChatRoomCbsShouldChatMessageBeStoredCb shouldMessageBeStoredCb;
+	LinphoneChatRoomCbsMessageKillerStartedCb messageKillerStartedCb;
+	LinphoneChatRoomCbsMessageKillerFinishedCb messageKillerFinishedCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatRoomCbs);
@@ -199,6 +201,22 @@ LinphoneChatRoomCbsConferenceLeftCb linphone_chat_room_cbs_get_conference_left (
 
 void linphone_chat_room_cbs_set_conference_left (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceLeftCb cb) {
 	cbs->conferenceLeftCb = cb;
+}
+
+LinphoneChatRoomCbsMessageKillerStartedCb linphone_chat_room_cbs_get_message_killer_started (const LinphoneChatRoomCbs *cbs) {
+	return cbs->messageKillerStartedCb;
+}
+
+void linphone_chat_room_cbs_set_message_killer_started (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsMessageKillerStartedCb cb) {
+	cbs->messageKillerStartedCb = cb;
+}
+
+LinphoneChatRoomCbsMessageKillerFinishedCb linphone_chat_room_cbs_get_message_killer_finished (const LinphoneChatRoomCbs *cbs) {
+	return cbs->messageKillerFinishedCb;
+}
+
+void linphone_chat_room_cbs_set_message_killer_finished (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsMessageKillerFinishedCb cb) {
+	cbs->messageKillerFinishedCb = cb;
 }
 
 LinphoneChatRoomCbsConferenceAddressGenerationCb linphone_chat_room_cbs_get_conference_address_generation (const LinphoneChatRoomCbs *cbs) {

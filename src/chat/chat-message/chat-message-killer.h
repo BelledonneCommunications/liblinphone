@@ -25,8 +25,8 @@
 
 #include "utils/background-task.h"
 #include "core/core-accessor.h"
-
 #include "db/main-db-event-key.h"
+#include "conference/conference-id.h"
 
 // =============================================================================
 
@@ -36,8 +36,8 @@ class ChatMessageKiller {
 	friend class MainDb;
 	friend class MainDbEventKey;
 public:
-	explicit ChatMessageKiller (MainDbEventKey dbKey);
-	explicit ChatMessageKiller (double duration, MainDbEventKey dbKey);
+	explicit ChatMessageKiller (MainDbEventKey dbKey, const ConferenceId &conferenceId);
+	explicit ChatMessageKiller (double duration, MainDbEventKey dbKey, const ConferenceId &conferenceId);
 	
 	static int timerExpired (void *data, unsigned int revents);
 	
@@ -49,6 +49,7 @@ private:
 	BackgroundTask bgTask;
 	double duration;
 	MainDbEventKey dbKey;
+	ConferenceId conferenceId;
 };
 
 LINPHONE_END_NAMESPACE

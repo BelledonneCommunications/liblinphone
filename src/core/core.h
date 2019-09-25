@@ -64,6 +64,7 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class RemoteConferenceListEventHandler;
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
+	friend class ChatMessageKiller;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(Core);

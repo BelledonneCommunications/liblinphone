@@ -210,6 +210,8 @@ typedef struct _stats {
 	int number_of_LinphoneChatRoomStateTerminated;
 	int number_of_LinphoneChatRoomStateTerminationFailed;
 	int number_of_LinphoneChatRoomStateDeleted;
+	int number_of_LinphoneChatRoomMessageKillerStarted;
+	int number_of_LinphoneChatRoomMessageKillerFinished;
 
 	int number_of_IframeDecoded;
 

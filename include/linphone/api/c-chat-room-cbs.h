@@ -272,6 +272,34 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsConferenceLeftCb linphone_chat_room_cbs_get_c
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_conference_left (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceLeftCb cb);
 
 /**
+ * Get the message killer started callback.
+ * @param[in] cbs LinphoneChatRoomCbs object.
+ * @return The current message killer started callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsMessageKillerStartedCb linphone_chat_room_cbs_get_message_killer_started (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the message killer started callback.
+ * @param[in] cbs LinphoneChatRoomCbs object.
+ * @param[in] cb The message killer started callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_message_killer_started (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsMessageKillerStartedCb cb);
+
+/**
+ * Get the message killer finished callback.
+ * @param[in] cbs LinphoneChatRoomCbs object.
+ * @return The current message killer finished callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsMessageKillerFinishedCb linphone_chat_room_cbs_get_message_killer_finished (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the message killer finished callback.
+ * @param[in] cbs LinphoneChatRoomCbs object.
+ * @param[in] cb The message killer finished callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_message_killer_finished (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsMessageKillerFinishedCb cb);
+
+/**
  * Get the conference address generation callback.
  * @param[in] cbs #LinphoneChatRoomCbs object
  * @return The current conference address generation callback

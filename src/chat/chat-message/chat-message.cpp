@@ -212,11 +212,22 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	if (isEphemeral && (state == ChatMessage::State::Displayed)) {
 		// set ephemeral start time
 		ephemeralStartTime = ::ms_time(NULL);
-		q->getChatRoom()->getCore()->getPrivate()->mainDb->setChatMessagesEphemeralStartTime(   q->getChatRoom()->getConferenceId(), ephemeralStartTime);
+		q->getChatRoom()->getCore()->getPrivate()->mainDb->setChatMessagesEphemeralStartTime(q->getChatRoom()->getConferenceId(), ephemeralStartTime);
 
 		// start chat message killer for this message
+		unordered_map<MainDbEventKey, shared_ptr<ChatMessageKiller>> &messageKillers = q->getChatRoom()->getCore()->getPrivate()->messageKillers;
+
 		MainDbEventKey key = MainDbEventKey(dbKey.getPrivate()->core.lock(), dbKey.getPrivate()->storageId);
-		q->getChatRoom()->getCore()->getPrivate()->startKillerWithMessage(key,ephemeralTime);
+		
+		auto it = messageKillers.find(key);
+		if (it == messageKillers.end()) {
+			shared_ptr<ChatMessageKiller> killer (new ChatMessageKiller(ephemeralTime, key, q->getChatRoom()->getConferenceId()));
+			messageKillers[key] = killer;
+			killer->startTimer();
+		} else {
+			shared_ptr<ChatMessageKiller> killer = it->second;
+			killer->startTimer();
+		}
 	}
 
 	// 7. Update in database if necessary.

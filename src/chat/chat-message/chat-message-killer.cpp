@@ -21,23 +21,26 @@
 #include "chat-message-killer.h"
 #include "event-log/event-log.h"
 #include "db/main-db.h"
+#include "db/main-db-p.h"
 #include "core/core-p.h"
 #include "core/core.h"
 #include "db/main-db-key-p.h"
 
 #include "private.h"
 
+#include "c-wrapper/c-wrapper.h"
+
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
-ChatMessageKiller::ChatMessageKiller (double duration, MainDbEventKey dbKey): duration(duration), dbKey(dbKey) {
+ChatMessageKiller::ChatMessageKiller (double duration, MainDbEventKey dbKey, const ConferenceId &conferenceId): duration(duration), dbKey(dbKey), conferenceId(conferenceId) {
 	timer = nullptr;
 	bgTask.setName("ephemeral message timeout");
 }
 
-ChatMessageKiller::ChatMessageKiller (MainDbEventKey dbKey) : ChatMessageKiller(86400, dbKey) {
+ChatMessageKiller::ChatMessageKiller (MainDbEventKey dbKey, const ConferenceId &conferenceId) : ChatMessageKiller(86400, dbKey, conferenceId) {
 }
 // -----------------------------------------------------------------------------
 int ChatMessageKiller::timerExpired (void *data, unsigned int revents) {
@@ -54,9 +57,11 @@ int ChatMessageKiller::timerExpired (void *data, unsigned int revents) {
 	d->bgTask.stop();
 	
 	// delete message in database for ephemral messag
-	shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(
-																						   d->dbKey
-																						   );
+	shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(d->dbKey);
+	shared_ptr<AbstractChatRoom> chatRoom = d->dbKey.getPrivate()->core.lock()->findChatRoom(d->conferenceId);
+	if (chatRoom && event) {
+		_linphone_chat_room_notify_message_killer_finished(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
+	}
 	if (event)
 		LinphonePrivate::EventLog::deleteFromDatabase(event);
 
@@ -66,6 +71,12 @@ int ChatMessageKiller::timerExpired (void *data, unsigned int revents) {
 
 void ChatMessageKiller::startTimer () {
 	auto core = dbKey.getPrivate()->core.lock();
+	shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId);
+	shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(dbKey);
+	if (chatRoom && event) {
+		_linphone_chat_room_notify_message_killer_started(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
+	}
+
 	if (!timer)
 		timer = core->getCCore()->sal->createTimer(timerExpired, this, (unsigned int)duration*1000, "ephemeral message timeout");
 	else

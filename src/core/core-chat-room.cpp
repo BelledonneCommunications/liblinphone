@@ -353,20 +353,6 @@ void CorePrivate::initMessageKillers () {
 	mainDb->updateEphemeralMessageKillers(messageKillers);
 }
 
-void CorePrivate::startKillerWithMessage(MainDbEventKey key, double duration) {
-	auto it = messageKillers.find(key);
-	
-	if (it != messageKillers.end()) {
-		// find
-		std::shared_ptr<ChatMessageKiller> &killer = it->second;
-		killer->startTimer();
-	} else {
-		shared_ptr<ChatMessageKiller> killer (new ChatMessageKiller(duration, key));
-		messageKillers[key] = killer;
-		killer->startTimer();
-	}
-}
-
 void CorePrivate::sendDeliveryNotifications () {
 	L_Q();
 	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCCore());

@@ -2893,7 +2893,7 @@ static void ephemeral_message_test (bool_t encrypted) {
 
 	// Marie reset the ephemeral time in the group chat room
 	linphone_chat_room_enable_ephemeral(marieCr, TRUE);
-	linphone_chat_room_set_ephemeral_time(marieCr, 2);
+	linphone_chat_room_set_ephemeral_time(marieCr, 1);
 	// Marie sends a message
 	LinphoneChatMessage *message = _send_message(marieCr, "Hello");
 	//Marie sends second message
@@ -2912,8 +2912,12 @@ static void ephemeral_message_test (bool_t encrypted) {
 	linphone_chat_room_mark_as_read(paulineCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDisplayed, initialMarieStats.number_of_LinphoneMessageDisplayed + 3, 3000));
 	
-	// After 10s , there are only one messages
-	wait_for_list(coresList, NULL, 0, 10000);
+	if (encrypted) {
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomMessageKillerStarted, initialMarieStats.number_of_LinphoneChatRoomMessageKillerStarted + 2, 3000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomMessageKillerStarted, initialPaulineStats.number_of_LinphoneChatRoomMessageKillerStarted + 2, 3000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomMessageKillerFinished, initialMarieStats.number_of_LinphoneChatRoomMessageKillerFinished + 2, 3000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomMessageKillerFinished, initialPaulineStats.number_of_LinphoneChatRoomMessageKillerFinished + 2, 3000));
+	}
 	
 	const int size = encrypted ? 1 : 3;
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), size, int," %i");
