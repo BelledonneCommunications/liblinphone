@@ -118,7 +118,7 @@ private:
 	std::unique_ptr<IsComposing> isComposingHandler;
 
 	bool isComposing = false;
-	bool isEmpty = false;
+	bool isEmpty = true;
 
 	L_DECLARE_PUBLIC(ChatRoom);
 };
