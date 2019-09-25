@@ -130,6 +130,10 @@ void ChatRoomPrivate::removeTransientChatMessage (const shared_ptr<ChatMessage> 
 		transientMessages.erase(it);
 }
 
+void ChatRoomPrivate::setIsEmpty (const bool empty) {
+	isEmpty = empty;
+}
+
 // -----------------------------------------------------------------------------
 
 shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage (ChatMessage::Direction direction) {
@@ -469,7 +473,9 @@ shared_ptr<ChatMessage> ChatRoom::getLastChatMessageInHistory () const {
 }
 
 bool ChatRoom::isEmpty () const {
-	return getCore()->getPrivate()->mainDb->isChatRoomEmpty(getConferenceId());
+	L_D();
+
+	return d->isEmpty;
 }
 
 int ChatRoom::getChatMessageCount () const {

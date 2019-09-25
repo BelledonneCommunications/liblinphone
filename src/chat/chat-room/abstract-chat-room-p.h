@@ -57,6 +57,8 @@ public:
 
 	virtual void addTransientChatMessage (const std::shared_ptr<ChatMessage> &message) = 0;
 	virtual void removeTransientChatMessage (const std::shared_ptr<ChatMessage> &message) = 0;
+
+	virtual void setIsEmpty (const bool empty) = 0;
 };
 
 LINPHONE_END_NAMESPACE

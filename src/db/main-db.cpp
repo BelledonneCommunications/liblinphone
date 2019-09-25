@@ -2876,7 +2876,8 @@ void MainDb::disableDisplayNotificationRequired (const std::shared_ptr<const Eve
 list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 #ifdef HAVE_DB_STORAGE
 	static const string query = "SELECT chat_room.id, peer_sip_address.value, local_sip_address.value,"
-		" creation_time, last_update_time, capabilities, subject, last_notify_id, flags"
+		" creation_time, last_update_time, capabilities, subject, last_notify_id, flags, "
+		" (SELECT EXISTS (SELECT 1 FROM conference_event_simple_view WHERE chat_room_id = chat_room.id AND type = 5 LIMIT 1))"
 		" FROM chat_room, sip_address AS peer_sip_address, sip_address AS local_sip_address"
 		" WHERE chat_room.peer_sip_address_id = peer_sip_address.id AND chat_room.local_sip_address_id = local_sip_address.id"
 		" ORDER BY last_update_time DESC";
@@ -2911,6 +2912,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 			time_t lastUpdateTime = d->dbSession.getTime(row, 4);
 			int capabilities = row.get<int>(5);
 			string subject = row.get<string>(6, "");
+			string empty = row.get<string>(9, "0");
 
 			shared_ptr<ChatRoomParams> params = ChatRoomParams::fromCapabilities(capabilities);
 			if (capabilities & ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Basic)) {
@@ -3013,6 +3015,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 			AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
 			dChatRoom->setCreationTime(creationTime);
 			dChatRoom->setLastUpdateTime(lastUpdateTime);
+			dChatRoom->setIsEmpty(empty == "0");
 
 			lDebug() << "Found chat room in DB: (peer=" <<
 				conferenceId.getPeerAddress().asString() << ", local=" << conferenceId.getLocalAddress().asString() << ").";
