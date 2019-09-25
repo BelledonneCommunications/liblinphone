@@ -63,6 +63,8 @@ public:
 	void addTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override;
 	void removeTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override;
 
+	void setIsEmpty (const bool empty) override;
+
 	std::shared_ptr<ChatMessage> createChatMessage (ChatMessage::Direction direction);
 	std::shared_ptr<ImdnMessage> createImdnMessage (
 		const std::list<std::shared_ptr<ChatMessage>> &deliveredMessages,
@@ -116,6 +118,7 @@ private:
 	std::unique_ptr<IsComposing> isComposingHandler;
 
 	bool isComposing = false;
+	bool isEmpty = false;
 
 	L_DECLARE_PUBLIC(ChatRoom);
 };

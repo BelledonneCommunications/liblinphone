@@ -993,6 +993,7 @@ void ChatMessagePrivate::updateInDb () {
 			q->getChatRoom()->getPrivate()->removeTransientEvent(eventLog);
 		}
 	}
+	q->getChatRoom()->getPrivate()->setIsEmpty(false);
 }
 
 // -----------------------------------------------------------------------------
