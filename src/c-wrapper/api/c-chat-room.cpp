@@ -222,11 +222,7 @@ bool_t linphone_chat_room_is_empty (LinphoneChatRoom *cr) {
 }
 
 void linphone_chat_room_delete_message (LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
-	shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(
-		L_GET_PRIVATE_FROM_C_OBJECT(msg)->dbKey
-	);
-	if (event)
-		LinphonePrivate::EventLog::deleteFromDatabase(event);
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->deleteMessageFromHistory(L_GET_CPP_PTR_FROM_C_OBJECT(msg));
 }
 
 void linphone_chat_room_delete_history (LinphoneChatRoom *cr) {

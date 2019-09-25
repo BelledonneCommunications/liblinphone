@@ -110,6 +110,11 @@ list<shared_ptr<EventLog>> ProxyChatRoom::getMessageHistoryRange (int begin, int
 	return d->chatRoom->getMessageHistoryRange(begin, end);
 }
 
+int ProxyChatRoom::getMessageHistorySize () const {
+	L_D();
+	return d->chatRoom->getMessageHistorySize();
+}
+
 list<shared_ptr<EventLog>> ProxyChatRoom::getHistory (int nLast) const {
 	L_D();
 	return d->chatRoom->getHistory(nLast);
@@ -133,6 +138,11 @@ void ProxyChatRoom::deleteFromDb () {
 void ProxyChatRoom::deleteHistory () {
 	L_D();
 	d->chatRoom->deleteHistory();
+}
+
+void ProxyChatRoom::deleteMessageFromHistory (const shared_ptr<ChatMessage> &message) {
+	L_D();
+	d->chatRoom->deleteMessageFromHistory(message);
 }
 
 shared_ptr<ChatMessage> ProxyChatRoom::getLastChatMessageInHistory () const {
