@@ -307,6 +307,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 				}
 			} else {
 				lError() << "[LIME] operation failed: " << errorMessage;
+				message->getPrivate()->setState(ChatMessage::State::NotDelivered);
 				*result = ChatMessageModifier::Result::Error;
 			}
 		}, lime::EncryptionPolicy::cipherMessage);
