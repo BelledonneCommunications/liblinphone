@@ -42,6 +42,7 @@ public:
 	MainDbKey &operator= (const MainDbKey &other);
 
 	bool isValid () const;
+	long long getStorageId () const;
 
 private:
 	L_DECLARE_PRIVATE(MainDbKey);

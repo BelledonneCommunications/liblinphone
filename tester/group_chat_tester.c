@@ -216,12 +216,21 @@ void _start_core(LinphoneCoreManager *lcm) {
 	linphone_core_manager_start(lcm, TRUE);
 }
 
-LinphoneChatMessage *_send_message(LinphoneChatRoom *chatRoom, const char *message) {
+LinphoneChatMessage *_send_message_ephemeral(LinphoneChatRoom *chatRoom, const char *message, bool_t isEphemeral) {
 	LinphoneChatMessage *msg = linphone_chat_room_create_message(chatRoom, message);
 	LinphoneChatMessageCbs *msgCbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(msgCbs, liblinphone_tester_chat_message_msg_state_changed);
+	if (isEphemeral) {
+		linphone_chat_message_cbs_set_message_killer_started(msgCbs, liblinphone_tester_chat_message_msg_killer_started);
+		linphone_chat_message_cbs_set_message_killer_finished(msgCbs, liblinphone_tester_chat_message_msg_killer_finished);
+		linphone_chat_message_configure_message_killer(msg);
+	}
 	linphone_chat_message_send(msg);
 	return msg;
+}
+
+LinphoneChatMessage *_send_message(LinphoneChatRoom *chatRoom, const char *message) {
+	return _send_message_ephemeral(chatRoom, message, FALSE);
 }
 
 void _send_file_plus_text(LinphoneChatRoom* cr, const char *sendFilepath, const char *text) {

@@ -170,6 +170,18 @@ typedef LinphoneBuffer * (*LinphoneChatMessageCbsFileTransferSendCb)(LinphoneCha
 typedef void (*LinphoneChatMessageCbsFileTransferProgressIndicationCb)(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total);
 
 /**
+ * Call back used to notify message killer started
+ * @param msg #LinphoneChatMessage object
+ */
+typedef void (*LinphoneChatMessageCbsMessageKillerStartedCb)(LinphoneChatMessage* msg);
+		
+/**
+ * Call back used to notify message killer finished
+ * @param msg #LinphoneChatMessage object
+ */
+typedef void (*LinphoneChatMessageCbsMessageKillerFinishedCb)(LinphoneChatMessage* msg);
+
+/**
  * Is composing notification callback prototype.
  * @param[in] cr #LinphoneChatRoom involved in the conversation
  * @param[in] remoteAddr The address that has sent the is-composing notification

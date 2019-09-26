@@ -122,6 +122,7 @@ public:
 	bool basicToFlexisipChatroomMigrationEnabled()const;
 	std::unique_ptr<MainDb> mainDb;
 	std::unordered_map<MainDbEventKey, std::shared_ptr<ChatMessageKiller>> messageKillers;
+	std::shared_ptr<ChatMessageKiller> getMessageKiller(std::shared_ptr<ChatMessage> message);
 #ifdef HAVE_ADVANCED_IM
 	std::unique_ptr<RemoteConferenceListEventHandler> remoteListEventHandler;
 	std::unique_ptr<LocalConferenceListEventHandler> localListEventHandler;

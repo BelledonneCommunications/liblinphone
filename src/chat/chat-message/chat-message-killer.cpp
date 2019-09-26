@@ -61,6 +61,13 @@ int ChatMessageKiller::timerExpired (void *data, unsigned int revents) {
 	shared_ptr<AbstractChatRoom> chatRoom = d->dbKey.getPrivate()->core.lock()->findChatRoom(d->conferenceId);
 	if (chatRoom && event) {
 		_linphone_chat_room_notify_message_killer_finished(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
+		if (d->chatMessage) {
+			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(L_GET_C_BACK_PTR(d->chatMessage));
+			if (cbs && linphone_chat_message_cbs_get_message_killer_finished(cbs))
+				linphone_chat_message_cbs_get_message_killer_finished(cbs)(L_GET_C_BACK_PTR(d->chatMessage));
+			_linphone_chat_message_notify_message_killer_finished(L_GET_C_BACK_PTR(d->chatMessage));
+			d->setChatMessage(NULL);
+		}
 	}
 	if (event)
 		LinphonePrivate::EventLog::deleteFromDatabase(event);
@@ -75,6 +82,12 @@ void ChatMessageKiller::startTimer () {
 	shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(dbKey);
 	if (chatRoom && event) {
 		_linphone_chat_room_notify_message_killer_started(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
+		if (chatMessage) {
+			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(L_GET_C_BACK_PTR(chatMessage));
+			if (cbs && linphone_chat_message_cbs_get_message_killer_started(cbs))
+				linphone_chat_message_cbs_get_message_killer_started(cbs)(L_GET_C_BACK_PTR(chatMessage));
+		_linphone_chat_message_notify_message_killer_started(L_GET_C_BACK_PTR(chatMessage));
+		}
 	}
 
 	if (!timer)
@@ -86,6 +99,10 @@ void ChatMessageKiller::startTimer () {
 
 void ChatMessageKiller::setDuration(double time) {
 	duration = time;
+}
+
+void ChatMessageKiller::setChatMessage (const shared_ptr<ChatMessage> &message) {
+	chatMessage = message;
 }
 
 LINPHONE_END_NAMESPACE

@@ -215,19 +215,8 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		q->getChatRoom()->getCore()->getPrivate()->mainDb->setChatMessagesEphemeralStartTime(q->getChatRoom()->getConferenceId(), ephemeralStartTime);
 
 		// start chat message killer for this message
-		unordered_map<MainDbEventKey, shared_ptr<ChatMessageKiller>> &messageKillers = q->getChatRoom()->getCore()->getPrivate()->messageKillers;
-
-		MainDbEventKey key = MainDbEventKey(dbKey.getPrivate()->core.lock(), dbKey.getPrivate()->storageId);
-		
-		auto it = messageKillers.find(key);
-		if (it == messageKillers.end()) {
-			shared_ptr<ChatMessageKiller> killer (new ChatMessageKiller(ephemeralTime, key, q->getChatRoom()->getConferenceId()));
-			messageKillers[key] = killer;
-			killer->startTimer();
-		} else {
-			shared_ptr<ChatMessageKiller> killer = it->second;
-			killer->startTimer();
-		}
+		shared_ptr<ChatMessageKiller> killer = q->getChatRoom()->getCore()->getPrivate()->getMessageKiller(q->getSharedFromThis());
+		killer->startTimer();
 	}
 
 	// 7. Update in database if necessary.
@@ -1135,6 +1124,12 @@ void ChatMessagePrivate::loadContentsFromDatabase () const {
 	}
 }
 
+long long ChatMessage::getStorageId () const {
+	L_D();
+
+	return d->dbKey.getStorageId();
+}
+
 bool ChatMessage::isRead () const {
 	L_D();
 
@@ -1191,6 +1186,9 @@ time_t ChatMessage::getEphemeralStartTime () const {
 	return d->ephemeralStartTime;
 }
 
+void ChatMessage::configureMessageKiller() {
+	getChatRoom()->getCore()->getPrivate()->getMessageKiller(getSharedFromThis());
+}
 
 void ChatMessage::setToBeStored (bool value) {
 	L_D();
@@ -1301,6 +1299,8 @@ void ChatMessage::send () {
 
 	d->loadContentsFromDatabase();
 	getChatRoom()->getPrivate()->sendChatMessage(getSharedFromThis());
+	if (isEphemeral())
+		configureMessageKiller();
 }
 
 bool ChatMessage::downloadFile(FileTransferContent *fileTransferContent) {

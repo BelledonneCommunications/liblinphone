@@ -64,4 +64,9 @@ bool MainDbKey::isValid () const {
 	return !d->core.expired() && d->storageId >= 0;
 }
 
+long long MainDbKey::getStorageId() const {
+	L_D();
+	return d->storageId;
+}
+
 LINPHONE_END_NAMESPACE

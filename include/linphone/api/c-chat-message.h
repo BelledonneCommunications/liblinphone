@@ -383,6 +383,12 @@ LINPHONE_PUBLIC double linphone_chat_message_get_ephemeral_time (LinphoneChatMes
 LINPHONE_PUBLIC time_t linphone_chat_message_get_ephemeral_start_time (LinphoneChatMessage *msg);
 
 /**
+ * Configure the message killer to receive notifications of ephemeral message. To add after #linphone_chat_message_cbs_set_message_killer_started and #linphone_chat_message_cbs_set_message_killer_finished.
+ * @param[in] msg #LinphoneChatMessage object.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_configure_message_killer (LinphoneChatMessage *msg);
+
+/**
  * Fulfill a chat message char by char. Message linked to a Real Time Text Call send char in realtime following RFC 4103/T.140
  * To commit a message, use #linphone_chat_room_send_message
  * @param[in] msg #LinphoneChatMessage object.

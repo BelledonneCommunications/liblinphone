@@ -168,6 +168,14 @@ void _linphone_chat_message_notify_file_transfer_progress_indication(LinphoneCha
 	NOTIFY_IF_EXIST(FileTransferProgressIndication, file_transfer_progress_indication, msg, content, offset, total)
 }
 
+void _linphone_chat_message_notify_message_killer_started(LinphoneChatMessage* msg) {
+	NOTIFY_IF_EXIST(MessageKillerStarted, message_killer_started, msg)
+}
+
+void _linphone_chat_message_notify_message_killer_finished(LinphoneChatMessage* msg) {
+	NOTIFY_IF_EXIST(MessageKillerFinished, message_killer_finished, msg)
+}
+
 // =============================================================================
 // Getter and setters
 // =============================================================================
@@ -260,6 +268,11 @@ double linphone_chat_message_get_ephemeral_time (LinphoneChatMessage *msg) {
 
 time_t linphone_chat_message_get_ephemeral_start_time (LinphoneChatMessage *msg) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getEphemeralStartTime();
+}
+
+void linphone_chat_message_configure_message_killer (LinphoneChatMessage *msg) {
+	if (L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getDirection() == LinphonePrivate::ChatMessage::Direction::Incoming)
+	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->configureMessageKiller();
 }
 
 void linphone_chat_message_add_custom_header(

@@ -92,6 +92,8 @@ public:
 	bool isEphemeral () const;
 	double getEphemeralTime () const;
 	time_t getEphemeralStartTime () const;
+	
+	void configureMessageKiller();
 
 	// TODO: Return a cpp reference.
 	const LinphoneErrorInfo *getErrorInfo () const;
@@ -119,6 +121,8 @@ public:
 
 	bool downloadFile (FileTransferContent *content);
 	bool isFileTransferInProgress () const;
+	
+	long long getStorageId () const;
 
 protected:
 	explicit ChatMessage (ChatMessagePrivate &p);

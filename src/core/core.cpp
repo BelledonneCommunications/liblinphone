@@ -217,6 +217,18 @@ bool CorePrivate::basicToFlexisipChatroomMigrationEnabled()const{
 	return linphone_config_get_bool(linphone_core_get_config(q->getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE);
 }
 
+shared_ptr<ChatMessageKiller> CorePrivate::getMessageKiller(shared_ptr<ChatMessage> message) {
+	MainDbEventKey key = MainDbEventKey(message->getCore(), message->getStorageId());
+	auto it = messageKillers.find(key);
+	if (it == messageKillers.end()) {
+		shared_ptr<ChatMessageKiller> killer (new ChatMessageKiller(message->getEphemeralTime(), key, message->getChatRoom()->getConferenceId()));
+		killer->setChatMessage(message);
+		messageKillers[key] = killer;
+		return killer;
+	} else {
+		return it->second;
+	}
+}
 
 // =============================================================================
 

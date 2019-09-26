@@ -31,6 +31,8 @@ struct _LinphoneChatMessageCbs {
 	LinphoneChatMessageCbsFileTransferSendCb file_transfer_send;
 	LinphoneChatMessageCbsFileTransferProgressIndicationCb file_transfer_progress_indication;
 	LinphoneChatMessageCbsParticipantImdnStateChangedCb participant_imdn_state_changed;
+	LinphoneChatMessageCbsMessageKillerStartedCb message_killer_started;
+	LinphoneChatMessageCbsMessageKillerFinishedCb message_killer_finished;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatMessageCbs);
@@ -130,4 +132,30 @@ void linphone_chat_message_cbs_set_participant_imdn_state_changed (
 	LinphoneChatMessageCbsParticipantImdnStateChangedCb cb
 ) {
 	cbs->participant_imdn_state_changed = cb;
+}
+
+LinphoneChatMessageCbsMessageKillerStartedCb linphone_chat_message_cbs_get_message_killer_started (
+	const LinphoneChatMessageCbs *cbs
+) {
+	return cbs->message_killer_started;
+}
+
+void linphone_chat_message_cbs_set_message_killer_started (
+	LinphoneChatMessageCbs *cbs,
+	LinphoneChatMessageCbsMessageKillerStartedCb cb
+) {
+	cbs->message_killer_started = cb;
+}
+
+LinphoneChatMessageCbsMessageKillerFinishedCb linphone_chat_message_cbs_get_message_killer_finished (
+	const LinphoneChatMessageCbs *cbs
+) {
+	return cbs->message_killer_finished;
+}
+
+void linphone_chat_message_cbs_set_message_killer_finished (
+	LinphoneChatMessageCbs *cbs,
+	LinphoneChatMessageCbsMessageKillerFinishedCb cb
+) {
+	cbs->message_killer_finished = cb;
 }

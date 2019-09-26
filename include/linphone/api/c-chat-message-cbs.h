@@ -134,6 +134,34 @@ LINPHONE_PUBLIC LinphoneChatMessageCbsParticipantImdnStateChangedCb linphone_cha
 LINPHONE_PUBLIC void linphone_chat_message_cbs_set_participant_imdn_state_changed (LinphoneChatMessageCbs *cbs, LinphoneChatMessageCbsParticipantImdnStateChangedCb cb);
 
 /**
+ * Get the message killer started callback.
+ * @param[in] cbs #LinphoneChatMessageCbs object.
+ * @return The current message killer started callback.
+ */
+LINPHONE_PUBLIC LinphoneChatMessageCbsMessageKillerStartedCb linphone_chat_message_cbs_get_message_killer_started (const LinphoneChatMessageCbs *cbs);
+
+/**
+ * Set the message killer started callback.
+ * @param[in] cbs LinphoneChatMessageCbs object.
+ * @param[in] cb The message killer started callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_cbs_set_message_killer_started (LinphoneChatMessageCbs *cbs, LinphoneChatMessageCbsMessageKillerStartedCb cb);
+		
+/**
+ * Get the message killer finished callback.
+ * @param[in] cbs #LinphoneChatMessageCbs object.
+ * @return The current message killer finished callback.
+ */
+LINPHONE_PUBLIC LinphoneChatMessageCbsMessageKillerFinishedCb linphone_chat_message_cbs_get_message_killer_finished (const LinphoneChatMessageCbs *cbs);
+		
+/**
+ * Set the message killer finished callback.
+ * @param[in] cbs LinphoneChatMessageCbs object.
+ * @param[in] cb The message killer finished callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_cbs_set_message_killer_finished (LinphoneChatMessageCbs *cbs, LinphoneChatMessageCbsMessageKillerFinishedCb cb);
+
+/**
  * @}
  */
 

@@ -1050,6 +1050,14 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 }
 
 void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage* msg) {
+	LinphoneChatMessageCbs *msgCbs = linphone_chat_message_get_callbacks(msg);
+	if (linphone_chat_message_is_ephemeral(msg)) {
+		linphone_chat_message_cbs_set_message_killer_started(msgCbs, liblinphone_tester_chat_message_msg_killer_started);
+		linphone_chat_message_cbs_set_message_killer_finished(msgCbs, liblinphone_tester_chat_message_msg_killer_finished);
+		linphone_chat_message_configure_message_killer(msg);
+		ms_message("[TEST] incoming message");
+	}
+	
 	char* from=linphone_address_as_string(linphone_chat_message_get_from_address(msg));
 	stats* counters;
 	const char *text=linphone_chat_message_get_text(msg);
@@ -1513,6 +1521,18 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 			return;
 	}
 	ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
+}
+
+void liblinphone_tester_chat_message_msg_killer_started (LinphoneChatMessage *msg) {
+	LinphoneCore *lc = linphone_chat_message_get_core(msg);
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneMessageMsgKillerStarted++;
+}
+
+void liblinphone_tester_chat_message_msg_killer_finished (LinphoneChatMessage *msg) {
+	LinphoneCore *lc = linphone_chat_message_get_core(msg);
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneMessageMsgKillerFinished++;
 }
 
 /*

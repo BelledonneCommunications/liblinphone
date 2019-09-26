@@ -338,6 +338,8 @@ void _linphone_chat_message_notify_participant_imdn_state_changed(LinphoneChatMe
 void _linphone_chat_message_notify_file_transfer_recv(LinphoneChatMessage *msg, const LinphoneContent* content, const LinphoneBuffer *buffer);
 void _linphone_chat_message_notify_file_transfer_send(LinphoneChatMessage *msg,  const LinphoneContent* content, size_t offset, size_t size);
 void _linphone_chat_message_notify_file_transfer_progress_indication(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total);
+void _linphone_chat_message_notify_message_killer_started(LinphoneChatMessage* msg);
+void _linphone_chat_message_notify_message_killer_finished(LinphoneChatMessage* msg);
 void _linphone_chat_message_clear_callbacks (LinphoneChatMessage *msg);
 
 

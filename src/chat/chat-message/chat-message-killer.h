@@ -27,6 +27,7 @@
 #include "core/core-accessor.h"
 #include "db/main-db-event-key.h"
 #include "conference/conference-id.h"
+#include "chat-message.h"
 
 // =============================================================================
 
@@ -43,6 +44,7 @@ public:
 	
 	void startTimer ();
 	void setDuration (double time);
+	void setChatMessage(const std::shared_ptr<ChatMessage> &message);
 
 private:
 	belle_sip_source_t *timer;
@@ -50,6 +52,7 @@ private:
 	double duration;
 	MainDbEventKey dbKey;
 	ConferenceId conferenceId;
+	std::shared_ptr<ChatMessage> chatMessage;
 };
 
 LINPHONE_END_NAMESPACE
