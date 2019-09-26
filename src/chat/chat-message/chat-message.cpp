@@ -636,10 +636,17 @@ LinphoneReason ChatMessagePrivate::receive () {
 				if (max_size >= 0) {
 					FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
 					if (max_size == 0 || ftc->getFileSize() <= (size_t)max_size) {
-						ftc->setFilePath(q->getCore()->getDownloadPath() + ftc->getFileName());
-						setAutoFileTransferDownloadHappened(true);
-						q->downloadFile(ftc);
-						return LinphoneReasonNone;
+						string downloadPath = q->getCore()->getDownloadPath();
+						if (!downloadPath.empty()) {
+							string filepath = downloadPath + ftc->getFileName();
+							lInfo() << "Downloading file to " << filepath;
+							ftc->setFilePath(filepath);
+							setAutoFileTransferDownloadHappened(true);
+							q->downloadFile(ftc);
+							return LinphoneReasonNone;
+						} else {
+							lError() << "Downloading path is empty, aborting auto download !";
+						}						
 					}
 				}
 			}

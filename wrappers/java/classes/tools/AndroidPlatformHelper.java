@@ -186,32 +186,46 @@ public class AndroidPlatformHelper {
 	}
 
 	public String getDataPath() {
-		return mContext.getFilesDir().getAbsolutePath();
+		return mContext.getFilesDir().getAbsolutePath() + "/";
 	}
 
 	public String getConfigPath() {
-		return mContext.getFilesDir().getAbsolutePath();
+		return mContext.getFilesDir().getAbsolutePath() + "/";
 	}
 
 	public String getCachePath() {
-		return mContext.getCacheDir().getAbsolutePath();
+		return mContext.getCacheDir().getAbsolutePath() + "/";
 	}
 
 	public String getDownloadPath() {
 		if (Build.VERSION.SDK_INT >= 23) {
 			// This check seems mandatory for auto download to work...
 			int write_permission = mContext.getPackageManager().checkPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, mContext.getPackageName());
-			Log.i("[Platform Helper] WRITE_EXTERNAL_STORAGE permission is " + (write_permission == android.content.pm.PackageManager.PERMISSION_GRANTED ? "granted" : "denied"));
+			boolean granted = write_permission == android.content.pm.PackageManager.PERMISSION_GRANTED;
+			Log.i("[Platform Helper] WRITE_EXTERNAL_STORAGE permission is " + (granted ? "granted" : "denied"));
+			if (!granted) {
+				return null;
+			}
 		}
+
 		if (!Environment.getExternalStorageDirectory().canWrite()) {
 			Log.w("[Platform Helper] We aren't allowed to write in external storage directory !");
+			return null;
 		}
+
 		String downloadPath = Environment.getExternalStorageDirectory() + "/" + mContext.getString(mResources.getIdentifier("app_name", "string", mContext.getPackageName()));
 		File dir = new File(downloadPath);
 		if (!dir.exists()) {
+			Log.w("[Platform Helper] Download directory doesn't exists, let's create it");
 			dir.mkdirs();
 		}
-		return downloadPath;
+		if (!dir.exists()) {
+			Log.e("[Platform Helper] Failed to create directory " + dir.getAbsolutePath());
+			return null;
+		}
+
+		Log.i("[Platform Helper] Download directory is " + downloadPath + "/");
+		return downloadPath + "/";
 	}
 	
 	public String getNativeLibraryDir(){

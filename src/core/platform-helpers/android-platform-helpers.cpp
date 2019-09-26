@@ -201,27 +201,27 @@ string AndroidPlatformHelpers::getConfigPath () const {
 	JNIEnv *env = ms_get_jni_env();
 	jstring jconfig_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetConfigPathId);
 	const char *config_path = GetStringUTFChars(env, jconfig_path);
-	string configPath = config_path;
+	string configPath = L_C_TO_STRING(config_path);
 	ReleaseStringUTFChars(env, jconfig_path, config_path);
-	return configPath + "/";
+	return configPath;
 }
 
 string AndroidPlatformHelpers::getDownloadPath () {
 	JNIEnv *env = ms_get_jni_env();
 	jstring jdownload_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetDownloadPathId);
 	const char *download_path = GetStringUTFChars(env, jdownload_path);
-	string downloadPath = download_path;
+	string downloadPath = L_C_TO_STRING(download_path);
 	ReleaseStringUTFChars(env, jdownload_path, download_path);
-	return downloadPath + "/";
+	return downloadPath;
 }
 
 string AndroidPlatformHelpers::getDataPath () const {
 	JNIEnv *env = ms_get_jni_env();
 	jstring jdata_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetDataPathId);
 	const char *data_path = GetStringUTFChars(env, jdata_path);
-	string dataPath = data_path;
+	string dataPath = L_C_TO_STRING(data_path);
 	ReleaseStringUTFChars(env, jdata_path, data_path);
-	return dataPath + "/";
+	return dataPath;
 }
 
 string AndroidPlatformHelpers::getDataResource (const string &filename) const {
