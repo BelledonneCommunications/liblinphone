@@ -138,6 +138,7 @@ private:
 	void setState (CallSession::State newState, const std::string &message) override;
 
 	void computeStreamsIndexes (const SalMediaDescription *md);
+	int getFirstActiveStreamWithType(const SalMediaDescription *md, SalStreamType type);
 	void fixCallParams (SalMediaDescription *rmd);
 	void initializeParamsAccordingToIncomingCallParams () override;
 	void setCompatibleIncomingCallParams (SalMediaDescription *md);
@@ -148,7 +149,7 @@ private:
 	void notifyStatsUpdated (int streamIndex);
 
 	OrtpEvQueue *getEventQueue (int streamIndex) const;
-	MediaStream *getMediaStream (int streamIndex) const;
+	MediaStream *getMediaStreamAtIndex (int streamIndex) const;
 
 	void fillMulticastMediaAddresses ();
 	int selectFixedPort (int streamIndex, std::pair<int, int> portRange);
