@@ -7711,6 +7711,11 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 	const char *mobilePlatform = NULL;
 	const char *version_check_url_root = lp_config_get_string(lc->config, "misc", "version_check_url_root", NULL);
 
+	if (current_version == NULL || strlen(current_version) == 0) {
+		bctbx_error("Can't check for a version newer than null or empty !");
+		return;
+	}
+
 	if (version_check_url_root != NULL) {
 		belle_http_request_listener_callbacks_t belle_request_listener = { 0 };
 		belle_http_request_t *request;
