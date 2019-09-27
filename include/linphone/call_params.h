@@ -520,6 +520,27 @@ LINPHONE_PUBLIC bctbx_list_t* linphone_call_params_get_custom_contents (const Li
 **/
 LINPHONE_PUBLIC void linphone_call_params_add_custom_content (LinphoneCallParams *params, LinphoneContent *content);
 
+/**
+ * Indicates whether RTP bundle mode (also known as Media Multiplexing) is enabled.
+ * See https://tools.ietf.org/html/draft-ietf-mmusic-sdp-bundle-negotiation-54 for more information.
+ * @param[in] params the #LinphoneCallParams
+ * @return a boolean indicating the enablement of rtp bundle mode.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_rtp_bundle_enabled(const LinphoneCallParams *params);
+
+/**
+ * Enables or disables RTP bundle mode (Media Multiplexing).
+ * See https://tools.ietf.org/html/draft-ietf-mmusic-sdp-bundle-negotiation-54 for more information about the feature.
+ * When enabled, liblinphone will try to negociate the use of a single port for all streams.
+ * It automatically enables rtcp-mux.
+ * @param[in] params the #LinphoneCallParams
+ * @param[in] value a boolean to indicate whether the feature is to be enabled.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_call_params_enable_rtp_bundle(LinphoneCallParams *params, bool_t value);
+
+
 /*******************************************************************************
  * DEPRECATED                                                                  *
  ******************************************************************************/

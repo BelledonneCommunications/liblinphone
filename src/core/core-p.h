@@ -73,11 +73,7 @@ public:
 	void notifySoundcardUsage (bool used);
 	int removeCall (const std::shared_ptr<Call> &call);
 	void setCurrentCall (const std::shared_ptr<Call> &call) { currentCall = call; }
-	void unsetVideoWindowId (bool preview, void *id);
-
-	void parameterizeEqualizer (AudioStream *stream);
-	void postConfigureAudioStream (AudioStream *stream, bool muted);
-	void setPlaybackGainDb (AudioStream *stream, float gain);
+	void setVideoWindowId (bool preview, void *id);
 
 	void loadChatRooms ();
 	void handleEphemeralMessages (time_t currentTime);

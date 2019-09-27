@@ -336,7 +336,7 @@ static SalStreamDir compute_dir_incoming(SalStreamDir local, SalStreamDir offere
 static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *local_offer,
 						const SalStreamDescription *remote_answer,
 						SalStreamDescription *result){
-	if (remote_answer->rtp_port!=0)
+	if (sal_stream_description_enabled(remote_answer))
 		result->payloads=match_payloads(factory, local_offer->payloads,remote_answer->payloads,TRUE,FALSE);
 	else {
 		ms_message("Local stream description [%p] rejected by peer",local_offer);
@@ -411,7 +411,18 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		result->dir=compute_dir_outgoing(local_offer->dir,remote_answer->dir);
 	}
 
-
+	if (remote_answer->mid[0] != '\0'){
+		if (local_offer->mid[0] != '\0'){
+			strncpy(result->mid, remote_answer->mid, sizeof(result->mid) - 1);
+			result->mid_rtp_ext_header_id = remote_answer->mid_rtp_ext_header_id;
+			result->bundle_only = remote_answer->bundle_only;
+			result->rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
+		}else{
+			ms_error("The remote has set a mid in an answer while we didn't offered it.");
+		}
+	}else{
+		result->rtcp_mux = remote_answer->rtcp_mux && local_offer->rtcp_mux;
+	}
 
 	if (result->payloads && !only_telephone_event(result->payloads)){
 		strcpy(result->rtp_addr,remote_answer->rtp_addr);
@@ -422,13 +433,14 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		result->ptime=remote_answer->ptime;
 		result->maxptime=remote_answer->maxptime;
 	}else{
-		result->rtp_port=0;
+		sal_stream_description_disable(result);
 	}
 	if (sal_stream_description_has_srtp(result) == TRUE) {
 		/* verify crypto algo */
 		memset(result->crypto, 0, sizeof(result->crypto));
-		if (!match_crypto_algo(local_offer->crypto, remote_answer->crypto, &result->crypto[0], &result->crypto_local_tag, FALSE))
-			result->rtp_port = 0;
+		if (!match_crypto_algo(local_offer->crypto, remote_answer->crypto, &result->crypto[0], &result->crypto_local_tag, FALSE)){
+			sal_stream_description_disable(result);
+		}
 	}
 	result->rtp_ssrc=local_offer->rtp_ssrc;
 	strncpy(result->rtcp_cname,local_offer->rtcp_cname,sizeof(result->rtcp_cname));
@@ -446,19 +458,19 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		result->dtls_fingerprint[0] = '\0';
 		result->dtls_role = SalDtlsRoleInvalid;
 	}
-	result->rtcp_mux = remote_answer->rtcp_mux && local_offer->rtcp_mux;
 	result->implicit_rtcp_fb = local_offer->implicit_rtcp_fb && remote_answer->implicit_rtcp_fb;
 }
 
 
 static void initiate_incoming(MSFactory *factory, const SalStreamDescription *local_cap,
 						const SalStreamDescription *remote_offer,
-						SalStreamDescription *result, bool_t one_matching_codec){
+						SalStreamDescription *result, bool_t one_matching_codec, const char *bundle_owner_mid){
 	result->payloads=match_payloads(factory, local_cap->payloads,remote_offer->payloads, FALSE, one_matching_codec);
 	result->proto=remote_offer->proto;
 	result->type=local_cap->type;
 	result->dir=compute_dir_incoming(local_cap->dir,remote_offer->dir);
-	if (!result->payloads || only_telephone_event(result->payloads) || remote_offer->rtp_port==0){
+	
+	if (!result->payloads || only_telephone_event(result->payloads) || !sal_stream_description_enabled(remote_offer)){
 		result->rtp_port=0;
 		return;
 	}
@@ -488,12 +500,28 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		result->ptime=local_cap->ptime;
 		result->maxptime=local_cap->maxptime;
 	}
+	
+	/* Handle RTP bundle negociation */
+	if (remote_offer->mid[0] != '\0' && bundle_owner_mid){
+		strncpy(result->mid, remote_offer->mid, sizeof(result->mid) - 1);
+		result->mid_rtp_ext_header_id = remote_offer->mid_rtp_ext_header_id;
+		
+		if (strcmp(bundle_owner_mid, remote_offer->mid) != 0){
+			/* The stream is a secondary one part of a bundle.
+			 * In this case it must set the bundle-only attribute, and set port to zero.*/
+			result->bundle_only = TRUE;
+			result->rtp_port = 0;
+		}
+		result->rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
+	}else {
+		result->rtcp_mux = remote_offer->rtcp_mux && local_cap->rtcp_mux;
+	}
 
 	if (sal_stream_description_has_srtp(result) == TRUE) {
 		/* select crypto algo */
 		memset(result->crypto, 0, sizeof(result->crypto));
 		if (!match_crypto_algo(local_cap->crypto, remote_offer->crypto, &result->crypto[0], &result->crypto_local_tag, TRUE)) {
-			result->rtp_port = 0;
+			sal_stream_description_disable(result);
 			ms_message("No matching crypto algo for remote stream's offer [%p]",remote_offer);
 		}
 
@@ -528,7 +556,6 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		result->dtls_fingerprint[0] = '\0';
 		result->dtls_role = SalDtlsRoleInvalid;
 	}
-	result->rtcp_mux = remote_offer->rtcp_mux && local_cap->rtcp_mux;
 	result->implicit_rtcp_fb = local_cap->implicit_rtcp_fb && remote_offer->implicit_rtcp_fb;
 }
 
@@ -567,6 +594,16 @@ int offer_answer_initiate_outgoing(MSFactory *factory, const SalMediaDescription
 	if ((local_offer->rtcp_xr.enabled == TRUE) && (remote_answer->rtcp_xr.enabled == FALSE)) {
 		result->rtcp_xr.enabled = FALSE;
 	}
+	/* TODO: check that the bundle answer is compliant with our offer.
+	 * For now, just check the presence of a bundle response. */
+	if (local_offer->bundles){
+		if (remote_answer->bundles){
+			/* Copy the bundle offering to the result media description. */
+			result->bundles = bctbx_list_copy_with_data(remote_answer->bundles, (bctbx_list_copy_func) sal_stream_bundle_clone);
+		}
+	}else if (remote_answer->bundles){
+		ms_error("Remote answerer is proposing bundles, which we did not offer.");
+	}
 
 	return 0;
 }
@@ -582,11 +619,23 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 	int i;
 	const SalStreamDescription *ls=NULL,*rs;
 
+	if (remote_offer->bundles && local_capabilities->accept_bundles){
+		/* Copy the bundle offering to the result media description. */
+		result->bundles = bctbx_list_copy_with_data(remote_offer->bundles, (bctbx_list_copy_func) sal_stream_bundle_clone);
+	}
+	
 	for(i=0;i<remote_offer->nb_streams;++i){
 		rs = &remote_offer->streams[i];
 		ls = &local_capabilities->streams[i];
 		if (ls && rs->type == ls->type && rs->proto == ls->proto){
-			initiate_incoming(factory, ls,rs,&result->streams[i],one_matching_codec);
+			const char *bundle_owner_mid = NULL;
+			if (local_capabilities->accept_bundles){
+				int owner_index = sal_media_description_get_index_of_transport_owner(remote_offer, rs);
+				if (owner_index != -1){
+					bundle_owner_mid = remote_offer->streams[owner_index].mid;
+				}
+			}
+			initiate_incoming(factory, ls,rs,&result->streams[i],one_matching_codec, bundle_owner_mid);
 			// Handle global RTCP FB attributes
 			result->streams[i].rtcp_fb.generic_nack_enabled = rs->rtcp_fb.generic_nack_enabled;
 			result->streams[i].rtcp_fb.tmmbr_enabled = rs->rtcp_fb.tmmbr_enabled;

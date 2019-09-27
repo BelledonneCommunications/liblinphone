@@ -88,6 +88,7 @@ extern test_suite_t video_test_suite;
 extern test_suite_t call_recovery_test_suite;
 extern test_suite_t call_with_ice_test_suite;
 extern test_suite_t call_secure_test_suite;
+extern test_suite_t call_with_rtp_bundle_test_suite;
 
 #ifdef VCARD_ENABLED
 	extern test_suite_t vcard_test_suite;

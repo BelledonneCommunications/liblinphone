@@ -71,6 +71,7 @@ void MediaSessionParamsPrivate::clone (const MediaSessionParamsPrivate *src) {
 		if (src->customSdpMediaAttributes[i])
 			customSdpMediaAttributes[i] = sal_custom_sdp_attribute_clone(src->customSdpMediaAttributes[i]);
 	}
+	rtpBundle = src->rtpBundle;
 }
 
 void MediaSessionParamsPrivate::clean () {
@@ -197,6 +198,13 @@ void MediaSessionParamsPrivate::setCustomSdpMediaAttributes (LinphoneStreamType 
 		customSdpMediaAttributes[lst] = sal_custom_sdp_attribute_clone(csa);
 }
 
+bool MediaSessionParamsPrivate::getUpdateCallWhenIceCompleted() const{
+	if (encryption == LinphoneMediaEncryptionDTLS){
+		return updateCallWhenIceCompletedWithDTLS;
+	}
+	return updateCallWhenIceCompleted;
+}
+
 // =============================================================================
 
 MediaSessionParams::MediaSessionParams () : CallSessionParams(*new MediaSessionParamsPrivate) {
@@ -225,15 +233,20 @@ MediaSessionParams &MediaSessionParams::operator= (const MediaSessionParams &oth
 
 // -----------------------------------------------------------------------------
 
-void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core) {
+void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core, LinphoneCallDir dir) {
 	L_D();
-	CallSessionParams::initDefault(core);
+	CallSessionParams::initDefault(core, dir);
 	LinphoneCore *cCore = core->getCCore();
 	d->audioEnabled = true;
-	d->videoEnabled = linphone_core_video_enabled(cCore) && cCore->video_policy.automatically_initiate;
-	if (!linphone_core_video_enabled(cCore) && cCore->video_policy.automatically_initiate) {
+	if (dir == LinphoneCallOutgoing){
+		d->videoEnabled = cCore->video_policy.automatically_initiate;
+	}else{
+		d->videoEnabled = cCore->video_policy.automatically_accept;
+	}
+	if (!linphone_core_video_enabled(cCore) && d->videoEnabled) {
 		lError() << "LinphoneCore has video disabled for both capture and display, but video policy is to start the call with video. "
 			"This is a possible mis-use of the API. In this case, video is disabled in default LinphoneCallParams";
+		d->videoEnabled = false;
 	}
 	d->realtimeTextEnabled = !!linphone_core_realtime_text_enabled(cCore);
 	d->realtimeTextKeepaliveInterval = linphone_core_realtime_text_get_keepalive_interval(cCore);
@@ -247,7 +260,16 @@ void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core) {
 	d->audioMulticastEnabled = !!linphone_core_audio_multicast_enabled(cCore);
 	d->videoMulticastEnabled = !!linphone_core_video_multicast_enabled(cCore);
 	d->updateCallWhenIceCompleted = !!lp_config_get_int(linphone_core_get_config(cCore), "sip", "update_call_when_ice_completed", true);
+	/*
+	 * At the time of WebRTC/JSSIP interoperability tests, it was found that the ICE re-INVITE was breaking communication.
+	 * The update_call_when_ice_completed_with_dtls property is hence set to false.
+	 * If this is no longer the case it should be changed to true.
+	 * Otherwise an application may decide to set to true as ICE reINVITE is mandatory per ICE RFC and unless from this WebRTC interoperability standpoint
+	 * there is no problem in having the ICE re-INVITE to be done when SRTP-DTLS is used.
+	 */
+	d->updateCallWhenIceCompletedWithDTLS = linphone_config_get_bool(linphone_core_get_config(cCore), "sip", "update_call_when_ice_completed_with_dtls", false);
 	d->mandatoryMediaEncryptionEnabled = !!linphone_core_is_media_encryption_mandatory(cCore);
+	d->rtpBundle = linphone_core_rtp_bundle_enabled(cCore);
 }
 
 // -----------------------------------------------------------------------------
@@ -265,8 +287,8 @@ bool MediaSessionParams::audioMulticastEnabled () const {
 void MediaSessionParams::enableAudio (bool value) {
 	L_D();
 	d->audioEnabled = value;
-	if (d->audioEnabled && (getAudioDirection() == LinphoneMediaDirectionInactive))
-		setAudioDirection(LinphoneMediaDirectionSendRecv);
+	//if (d->audioEnabled && (getAudioDirection() == LinphoneMediaDirectionInactive))
+	//	setAudioDirection(LinphoneMediaDirectionSendRecv);
 }
 
 void MediaSessionParams::enableAudioMulticast (bool value) {
@@ -309,8 +331,8 @@ void MediaSessionParams::setAudioDirection (LinphoneMediaDirection direction) {
 void MediaSessionParams::enableVideo (bool value) {
 	L_D();
 	d->videoEnabled = value;
-	if (d->videoEnabled && (getVideoDirection() == LinphoneMediaDirectionInactive))
-		setVideoDirection(LinphoneMediaDirectionSendRecv);
+	//if (d->videoEnabled && (getVideoDirection() == LinphoneMediaDirectionInactive))
+	//	setVideoDirection(LinphoneMediaDirectionSendRecv);
 }
 
 void MediaSessionParams::enableVideoMulticast (bool value) {
@@ -527,6 +549,16 @@ void MediaSessionParams::clearCustomSdpMediaAttributes (LinphoneStreamType lst) 
 const char * MediaSessionParams::getCustomSdpMediaAttribute (LinphoneStreamType lst, const string &attributeName) const {
 	L_D();
 	return sal_custom_sdp_attribute_find(d->customSdpMediaAttributes[lst], attributeName.c_str());
+}
+
+void MediaSessionParams::enableRtpBundle(bool value){
+	L_D();
+	d->rtpBundle = value;
+}
+
+bool MediaSessionParams::rtpBundleEnabled()const{
+	L_D();
+	return d->rtpBundle;
 }
 
 LINPHONE_END_NAMESPACE

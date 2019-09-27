@@ -67,6 +67,9 @@ public:
 	virtual void updating (bool isUpdate);
 
 	void setCallSessionListener (CallSessionListener *listener) { this->listener = listener; }
+	CallSessionListener *getCallSessionListener()const{
+		return listener;
+	}
 
 protected:
 	void init ();

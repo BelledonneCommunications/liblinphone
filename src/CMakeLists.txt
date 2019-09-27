@@ -164,8 +164,11 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/session/call-session-p.h
 	conference/session/call-session.h
 	conference/session/media-session.h
+	conference/session/streams.h
 	conference/session/port-config.h
 	conference/session/tone-manager.h
+	conference/session/ms2-streams.h
+	conference/session/media-description-renderer.h
 	containers/lru-cache.h
 	content/content-disposition.h
 	content/content-manager.h
@@ -210,7 +213,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	event-log/events.h
 	hacks/hacks.h
 	logger/logger.h
-	nat/ice-agent.h
+	nat/ice-service.h
 	nat/stun-client.h
 	object/app-data-container.h
 	object/base-object-p.h
@@ -231,6 +234,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	utils/background-task.h
 	utils/general-internal.h
 	utils/payload-type-handler.h
+	utils/if-addrs.h
 	variant/variant.h
 )
 
@@ -333,6 +337,14 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/session/call-session.cpp
 	conference/session/media-session.cpp
 	conference/session/tone-manager.cpp
+	conference/session/media-description-renderer.cpp
+	conference/session/stream.cpp
+	conference/session/streams-group.cpp
+	conference/session/ms2-stream.cpp
+	conference/session/audio-stream.cpp
+	conference/session/video-stream.cpp
+	conference/session/rtt-stream.cpp
+	conference/session/media-session.cpp
 	content/content-disposition.cpp
 	content/content-manager.cpp
 	content/content-type.cpp
@@ -366,7 +378,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	event-log/event-log.cpp
 	hacks/hacks.cpp
 	logger/logger.cpp
-	nat/ice-agent.cpp
+	nat/ice-service.cpp
 	nat/stun-client.cpp
 	object/app-data-container.cpp
 	object/base-object.cpp
@@ -388,6 +400,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	utils/general.cpp
 	utils/payload-type-handler.cpp
 	utils/utils.cpp
+	utils/if-addrs.cpp
 	variant/variant.cpp
 )
 

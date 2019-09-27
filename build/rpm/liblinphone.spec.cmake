@@ -89,7 +89,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%doc ChangeLog.md LICENSE.txt README.md
+%doc CHANGELOG.md LICENSE.txt README.md
 %if @ENABLE_DAEMON@ || @ENABLE_CONSOLE_UI@ || @ENABLE_TOOLS@
 %{_bindir}/*
 %endif

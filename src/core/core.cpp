@@ -656,9 +656,10 @@ void Core::doLater(const std::function<void ()> &something){
 	getPrivate()->doLater(something);
 }
 
-belle_sip_source_t *Core::createTimer(const std::function<bool ()> &something, unsigned int milliseconds){
-	return belle_sip_main_loop_create_cpp_timeout_2(getPrivate()->getMainLoop(), something, milliseconds, "");
+belle_sip_source_t *Core::createTimer(const std::function<bool ()> &something, int milliseconds, const string &name){
+	return belle_sip_main_loop_create_cpp_timeout_2(getPrivate()->getMainLoop(), something, (unsigned)milliseconds, name.c_str());
 }
+
 /* Stop and destroy a timer created by createTimer()*/
 void Core::destroyTimer(belle_sip_source_t *timer){
 	belle_sip_main_loop_remove_source(getPrivate()->getMainLoop(), timer);

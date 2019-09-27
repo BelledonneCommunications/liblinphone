@@ -53,7 +53,7 @@ public:
 	virtual void onIncomingCallSessionStarted (const std::shared_ptr<CallSession> &session) {}
 	virtual void onIncomingCallSessionTimeoutCheck (const std::shared_ptr<CallSession> &session, int elapsed, bool oneSecondElapsed) {}
 	virtual void onInfoReceived (const std::shared_ptr<CallSession> &session, const LinphoneInfoMessage *im) {}
-	virtual void onNoMediaTimeoutCheck (const std::shared_ptr<CallSession> &session, bool oneSecondElapsed) {}
+	virtual void onLossOfMediaDetected (const std::shared_ptr<CallSession> &session) {}
 	virtual void onTmmbrReceived (const std::shared_ptr<CallSession> &session, int streamIndex, int tmmbr) {}
 	virtual void onSnapshotTaken(const std::shared_ptr<CallSession> &session, const char *file_path) {}
 

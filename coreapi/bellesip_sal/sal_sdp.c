@@ -192,6 +192,20 @@ static belle_sdp_attribute_t * create_rtcp_xr_attribute(const OrtpRtcpXrConfigur
 	return BELLE_SDP_ATTRIBUTE(attribute);
 }
 
+static void add_mid_attributes(belle_sdp_media_description_t *media_desc, const SalStreamDescription *stream){
+	if (stream->mid[0] != '\0'){
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("mid", stream->mid));
+	}
+	if (stream->mid_rtp_ext_header_id){
+		char *value = bctbx_strdup_printf("%i urn:ietf:params:rtp-hdrext:sdes:mid", stream->mid_rtp_ext_header_id); 
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("extmap", value));
+		bctbx_free(value);
+	}
+	if (stream->bundle_only){
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("bundle-only", NULL));
+	}
+}
+
 static void stream_description_to_sdp ( belle_sdp_session_description_t *session_desc, const SalMediaDescription *md, const SalStreamDescription *stream ) {
 	belle_sdp_mime_parameter_t* mime_param;
 	belle_sdp_media_description_t* media_desc;
@@ -205,6 +219,7 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 	int rtp_port;
 	int rtcp_port;
 	bool_t different_rtp_and_rtcp_addr;
+	bool_t stream_enabled = sal_stream_description_enabled(stream);
 
 	rtp_addr=stream->rtp_addr;
 	rtcp_addr=stream->rtcp_addr;
@@ -318,7 +333,8 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 	if (stream->rtcp_mux){
 		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create ("rtcp-mux",NULL ) );
 	}
-
+	add_mid_attributes(media_desc, stream);
+	
 	if (rtp_port != 0) {
 		different_rtp_and_rtcp_addr = (rtcp_addr[0] != '\0') && (strcmp(rtp_addr, rtcp_addr) != 0);
 		if ((rtcp_port != (rtp_port + 1)) || (different_rtp_and_rtcp_addr == TRUE)) {
@@ -346,11 +362,11 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 		}
 	}
 
-	if ((rtp_port != 0) && (sal_stream_description_has_avpf(stream) || sal_stream_description_has_implicit_avpf(stream))) {
+	if (stream_enabled && (sal_stream_description_has_avpf(stream) || sal_stream_description_has_implicit_avpf(stream))) {
 		add_rtcp_fb_attributes(media_desc, md, stream);
 	}
 
-	if ((rtp_port != 0) && (stream->rtcp_xr.enabled == TRUE)) {
+	if (stream_enabled && (stream->rtcp_xr.enabled == TRUE)) {
 		char sastr[1024] = {0};
 		char mastr[1024] = {0};
 		size_t saoff = 0;
@@ -391,7 +407,25 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 	belle_sdp_session_description_add_media_description(session_desc, media_desc);
 }
 
-belle_sdp_session_description_t * media_description_to_sdp ( const SalMediaDescription *desc ) {
+static void bundles_to_sdp(const bctbx_list_t *bundles, belle_sdp_session_description_t *session_desc){
+	const bctbx_list_t *elem;
+	for (elem = bundles; elem != NULL; elem = elem->next){
+		SalStreamBundle *bundle = (SalStreamBundle*) elem->data;
+		const bctbx_list_t * id_iterator;
+		char *attr_value = ms_strdup("BUNDLE");
+		for (id_iterator = bundle->mids; id_iterator != NULL; id_iterator = id_iterator->next){
+			const char *mid = (const char*) id_iterator->data;
+			char *tmp = ms_strdup_printf("%s %s", attr_value, mid);
+			ms_free(attr_value);
+			attr_value = tmp;
+			
+		}
+		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("group", attr_value));
+		bctbx_free(attr_value);
+	}
+}
+
+belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescription *desc) {
 	belle_sdp_session_description_t* session_desc=belle_sdp_session_description_new();
 	bool_t inet6;
 	belle_sdp_origin_t* origin;
@@ -440,6 +474,10 @@ belle_sdp_session_description_t * media_description_to_sdp ( const SalMediaDescr
 	if (desc->rtcp_xr.enabled == TRUE) {
 		belle_sdp_session_description_add_attribute(session_desc, create_rtcp_xr_attribute(&desc->rtcp_xr));
 	}
+	
+	if (desc->bundles)
+		bundles_to_sdp(desc->bundles, session_desc);
+	
 	if (desc->custom_sdp_attributes) {
 		belle_sdp_session_description_t *custom_desc = (belle_sdp_session_description_t *)desc->custom_sdp_attributes;
 		belle_sip_list_t *l = belle_sdp_session_description_get_attributes(custom_desc);
@@ -807,6 +845,14 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	}
 
 	stream->rtcp_mux = belle_sdp_media_description_get_attribute(media_desc, "rtcp-mux") != NULL;
+	stream->bundle_only = belle_sdp_media_description_get_attribute(media_desc, "bundle-only") != NULL;
+	
+	attribute = belle_sdp_media_description_get_attribute(media_desc, "mid");
+	if (attribute){
+		value = belle_sdp_attribute_get_value(attribute);
+		if (value)
+			strncpy(stream->mid, value, sizeof(stream->mid) - 1);
+	}
 
 	/* Get media payload types */
 	sdp_parse_payload_types(media_desc, stream);
@@ -876,18 +922,45 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	stream->rtcp_xr = md->rtcp_xr;	// Use session parameters if no stream parameters are defined
 	sdp_parse_media_rtcp_xr_parameters(media_desc, &stream->rtcp_xr);
 
-	/* Get the custom attributes */
+	/* Get the custom attributes, and parse some 'extmap'*/
 	for (custom_attribute_it = belle_sdp_media_description_get_attributes(media_desc); custom_attribute_it != NULL; custom_attribute_it = custom_attribute_it->next) {
 		belle_sdp_attribute_t *attr = (belle_sdp_attribute_t *)custom_attribute_it->data;
-		stream->custom_sdp_attributes = sal_custom_sdp_attribute_append(stream->custom_sdp_attributes, belle_sdp_attribute_get_name(attr), belle_sdp_attribute_get_value(attr));
+		const char *attr_name = belle_sdp_attribute_get_name(attr);
+		const char *attr_value = belle_sdp_attribute_get_value(attr);
+		stream->custom_sdp_attributes = sal_custom_sdp_attribute_append(stream->custom_sdp_attributes, attr_name, attr_value);
+		
+		if (strcasecmp(attr_name, "extmap") == 0){
+			char *extmap_urn = (char*)bctbx_malloc0(strlen(attr_value) + 1);
+			int rtp_ext_header_id = 0;
+			if (sscanf(attr_value, "%i %s", &rtp_ext_header_id, extmap_urn) > 0
+				&& strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:sdes:mid") == 0){
+				stream->mid_rtp_ext_header_id = rtp_ext_header_id;
+			}
+			bctbx_free(extmap_urn);
+		}
 	}
 
 	md->nb_streams++;
 	return stream;
 }
 
+static void add_bundles(SalMediaDescription *desc, const char *ids){
+	char *tmp = (char*)ms_malloc0(strlen(ids) + 1);
+	int err;
+	SalStreamBundle *bundle = sal_media_description_add_new_bundle(desc);
+	do{
+		int consumed = 0;
+		err = sscanf(ids, "%s%n", tmp, &consumed);
+		if (err > 0){
+			bundle->mids = bctbx_list_append(bundle->mids, bctbx_strdup(tmp));
+			ids += consumed;
+		}else break;
+	}while( *ids != '\0');
+	ms_free(tmp);
+}
 
-int sdp_to_media_description ( belle_sdp_session_description_t  *session_desc, SalMediaDescription *desc ) {
+
+int sdp_to_media_description( belle_sdp_session_description_t  *session_desc, SalMediaDescription *desc ) {
 	belle_sdp_connection_t* cnx;
 	belle_sip_list_t* media_desc_it;
 	belle_sdp_media_description_t* media_desc;
@@ -954,10 +1027,17 @@ int sdp_to_media_description ( belle_sdp_session_description_t  *session_desc, S
 	/* Get session RTCP-XR attributes if any */
 	sdp_parse_session_rtcp_xr_parameters(session_desc, &desc->rtcp_xr);
 
-	/* Get the custom attributes */
+	/* Get the custom attributes, parse some of them that are relevant */
 	for (custom_attribute_it = belle_sdp_session_description_get_attributes(session_desc); custom_attribute_it != NULL; custom_attribute_it = custom_attribute_it->next) {
 		belle_sdp_attribute_t *attr = (belle_sdp_attribute_t *)custom_attribute_it->data;
 		desc->custom_sdp_attributes = sal_custom_sdp_attribute_append(desc->custom_sdp_attributes, belle_sdp_attribute_get_name(attr), belle_sdp_attribute_get_value(attr));
+		
+		if (strcasecmp(belle_sdp_attribute_get_name(attr), "group") == 0){
+			value = belle_sdp_attribute_get_value(attr);
+			if (value && strncasecmp(value, "BUNDLE", strlen("BUNDLE")) == 0){
+				add_bundles(desc, value + strlen("BUNDLE"));
+			}
+		}
 	}
 
 	for ( media_desc_it=belle_sdp_session_description_get_media_descriptions ( session_desc )

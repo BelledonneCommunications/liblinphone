@@ -243,6 +243,12 @@ typedef enum {
 	SalOpSDPSimulateRemove /** Will simulate no SDP in the op */
 } SalOpSDPHandling;
 
+#define SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED 65536
+
+typedef struct SalStreamBundle{
+	bctbx_list_t *mids; /* List of mids corresponding to streams associated in the bundle. The first one is the "tagged" one. */
+} SalStreamBundle;
+
 typedef struct SalStreamDescription{
 	char name[16]; /*unique name of stream, in order to ease offer/answer model algorithm*/
 	SalMediaProto proto;
@@ -264,7 +270,9 @@ typedef struct SalStreamDescription{
 	SalSrtpCryptoAlgo crypto[SAL_CRYPTO_ALGO_MAX];
 	unsigned int crypto_local_tag;
 	int max_rate;
+	bool_t bundle_only;
 	bool_t implicit_rtcp_fb;
+	bool_t pad[2]; /* Use me */
 	OrtpRtcpFbConfiguration rtcp_fb;
 	OrtpRtcpXrConfiguration rtcp_xr;
 	SalCustomSdpAttribute *custom_sdp_attributes;
@@ -272,14 +280,15 @@ typedef struct SalStreamDescription{
 	SalIceRemoteCandidate ice_remote_candidates[SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES];
 	char ice_ufrag[SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN];
 	char ice_pwd[SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN];
+	char mid[32]; /* Media line identifier for RTP bundle mode */
+	int mid_rtp_ext_header_id; /* Identifier for the MID field in the RTP extension header */
 	bool_t ice_mismatch;
 	bool_t set_nortpproxy; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 	bool_t rtcp_mux;
-	bool_t pad[1];
+	uint8_t haveZrtpHash; /**< flag for zrtp hash presence */
+	uint8_t zrtphash[128];
 	char dtls_fingerprint[256];
 	SalDtlsRole dtls_role;
-	uint8_t zrtphash[128];
-	uint8_t haveZrtpHash; /**< flag for zrtp hash presence */
 	int ttl; /*for multicast -1 to disable*/
 	SalMulticastRole multicast_role;
 } SalStreamDescription;
@@ -313,9 +322,11 @@ typedef struct SalMediaDescription{
 	OrtpRtcpXrConfiguration rtcp_xr;
 	char ice_ufrag[SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN];
 	char ice_pwd[SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN];
+	bctbx_list_t *bundles; /* list of SalStreamBundle */
 	bool_t ice_lite;
 	bool_t set_nortpproxy;
-	bool_t pad[2];
+	bool_t accept_bundles; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
+	bool_t pad[1];
 } SalMediaDescription;
 
 typedef struct SalMessage{
@@ -348,7 +359,12 @@ SalStreamDescription * sal_media_description_find_secure_stream_of_type(SalMedia
 SalStreamDescription * sal_media_description_find_best_stream(SalMediaDescription *md, SalStreamType type);
 void sal_media_description_set_dir(SalMediaDescription *md, SalStreamDir stream_dir);
 int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStreamDescription *sd2);
-bool_t sal_stream_description_active(const SalStreamDescription *sd);
+
+
+/* Enabled means that the stream exists and is accepted as part of the session: the port value is non-zero or the stream has bundle-only attribute.
+ *However, it may be marked with a=inactive, which is unrelated to the return value of this function.*/
+bool_t sal_stream_description_enabled(const SalStreamDescription *sd);
+void sal_stream_description_disable(SalStreamDescription *sd);
 bool_t sal_stream_description_has_avpf(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_implicit_avpf(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_srtp(const SalStreamDescription *sd);
@@ -361,6 +377,18 @@ bool_t sal_media_description_has_dtls(const SalMediaDescription *md);
 bool_t sal_media_description_has_zrtp(const SalMediaDescription *md);
 bool_t sal_media_description_has_ipv6(const SalMediaDescription *md);
 int sal_media_description_get_nb_active_streams(const SalMediaDescription *md);
+
+SalStreamBundle * sal_media_description_add_new_bundle(SalMediaDescription *md);
+/* Add stream to the bundle. The SalStreamDescription must be part of the SalMediaDescription in which the SalStreamBundle is added. */
+void sal_stream_bundle_add_stream(SalStreamBundle *bundle, SalStreamDescription *stream, const char *mid);
+void sal_stream_bundle_destroy(SalStreamBundle *bundle);
+SalStreamBundle *sal_stream_bundle_clone(const SalStreamBundle *bundle);
+int sal_stream_bundle_has_mid(const SalStreamBundle *bundle, const char *mid);
+const char *sal_stream_bundle_get_mid_of_transport_owner(const SalStreamBundle *bundle);
+
+int sal_media_description_lookup_mid(const SalMediaDescription *md, const char *mid);
+int sal_media_description_get_index_of_transport_owner(const SalMediaDescription *md, const SalStreamDescription *sd);
+
 
 #ifdef __cplusplus
 }

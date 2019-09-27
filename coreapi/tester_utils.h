@@ -112,6 +112,8 @@ LINPHONE_PUBLIC bool_t linphone_call_params_get_update_call_when_ice_completed(c
 LINPHONE_PUBLIC int _linphone_call_stats_get_updated(const LinphoneCallStats *stats);
 LINPHONE_PUBLIC bool_t _linphone_call_stats_rtcp_received_via_mux(const LinphoneCallStats *stats);
 LINPHONE_PUBLIC mblk_t *_linphone_call_stats_get_received_rtcp (const LinphoneCallStats *stats);
+LINPHONE_PUBLIC bool_t _linphone_call_stats_has_received_rtcp(const LinphoneCallStats *stats);
+LINPHONE_PUBLIC bool_t _linphone_call_stats_has_sent_rtcp(const LinphoneCallStats *stats);
 
 LINPHONE_PUBLIC LinphoneQualityReporting *linphone_call_log_get_quality_reporting(LinphoneCallLog *call_log);
 LINPHONE_PUBLIC reporting_session_report_t **linphone_quality_reporting_get_reports(LinphoneQualityReporting *qreporting);
@@ -213,6 +215,8 @@ LINPHONE_PUBLIC void linphone_account_creator_cbs_set_confirmation_key(LinphoneA
 **/
 LINPHONE_PUBLIC void linphone_core_delete_local_encryption_db(const LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_reachable);
+
+LINPHONE_PUBLIC bctbx_list_t *linphone_fetch_local_addresses(void);
 
 #ifndef __cplusplus
 LINPHONE_PUBLIC Sal *linphone_core_get_sal(const LinphoneCore *lc);

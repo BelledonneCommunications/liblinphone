@@ -236,7 +236,7 @@ void ToneManager::createTimerToCleanTonePlayer(unsigned int delay) {
 			return true;
 		};
 
-		mTimer = getCore()->createTimer(callback, delay);
+		mTimer = getCore()->createTimer(callback, delay, "Tone player cleanup");
 	}
 }
 
@@ -406,12 +406,6 @@ void ToneManager::doStartRingbackTone(const std::shared_ptr<CallSession> &sessio
 		return;
 
 	MSSndCard *ringCard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.play_sndcard;
-	int maxRate = std::static_pointer_cast<MediaSession>(session)->getPrivate()->getLocalDesc()->streams[0].max_rate;
-	if (maxRate > 0) ms_snd_card_set_preferred_sample_rate(ringCard, maxRate);
-
-	/* We release sound before playing ringback tone */
-	AudioStream *as = reinterpret_cast<AudioStream *>(std::static_pointer_cast<MediaSession>(session)->getPrivate()->getMediaStream(LinphoneStreamTypeAudio));
-	if (as) audio_stream_unprepare_sound(as);
 
 	if (lc->sound_conf.remote_ring) {
 		ms_snd_card_set_stream_type(ringCard, MS_SND_CARD_STREAM_VOICE);

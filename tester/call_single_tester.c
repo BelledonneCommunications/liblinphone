@@ -2857,7 +2857,7 @@ static void early_media_call_with_update_base(bool_t media_change){
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone, ringWithEarlyMedia ? 0 : 1, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_stopRingbackTone, 1, int, "%d");
 
-	pauline_params = linphone_call_params_copy(linphone_call_get_current_params(pauline_call));
+	pauline_params = linphone_core_create_call_params(pauline->lc, pauline_call);
 
 	if (media_change) {
 		disable_all_audio_codecs_except_one(marie->lc,"pcma",-1);
@@ -3304,7 +3304,11 @@ void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, bctbx_l
 			}
 			switch (video_dir) {
 			case LinphoneMediaDirectionInactive:
-				BC_ASSERT_LOWER((int)linphone_call_stats_get_upload_bandwidth(stats), 5, int, "%i");
+				if (stats){
+					BC_ASSERT_LOWER((int)linphone_call_stats_get_upload_bandwidth(stats), 5, int, "%i");
+				}else{
+					/* it is expected that there is no stats for an inactive stream.*/
+				}
 				break;
 			case LinphoneMediaDirectionSendOnly:
 				expected_recv_iframe = 0;
@@ -3319,7 +3323,7 @@ void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, bctbx_l
 			default:
 				break;
 			}
-			linphone_call_stats_unref(stats);
+			if (stats) linphone_call_stats_unref(stats);
 			BC_ASSERT_TRUE(wait_for_list(lcs, &mgr->stat.number_of_IframeDecoded,current_recv_iframe + expected_recv_iframe,10000));
 		}
 #endif
