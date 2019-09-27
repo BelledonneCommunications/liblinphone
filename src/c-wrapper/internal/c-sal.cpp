@@ -301,9 +301,9 @@ bool_t sal_media_description_has_srtp(const SalMediaDescription *md) {
 	if (md->nb_streams == 0) return FALSE;
 	for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
 		if (!sal_stream_description_active(&md->streams[i])) continue;
-		if (sal_stream_description_has_srtp(&md->streams[i]) != TRUE) return FALSE;
+		if (sal_stream_description_has_srtp(&md->streams[i])) return TRUE;
 	}
-	return TRUE;
+	return FALSE;
 }
 
 bool_t sal_media_description_has_dtls(const SalMediaDescription *md) {
