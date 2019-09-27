@@ -187,6 +187,79 @@ static void get_conference_notified_events (void) {
 	}
 }
 
+static void get_chat_rooms() {
+	MainDbProvider provider;
+	const MainDb &mainDb = provider.getMainDb();
+	list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
+	BC_ASSERT_EQUAL(chatRooms.size(), 86, int, "%d");
+	
+	list<shared_ptr<AbstractChatRoom>> emptyChatRooms;
+	shared_ptr<AbstractChatRoom> emptyMessageRoom = nullptr;
+	shared_ptr<AbstractChatRoom> oneMessageRoom = nullptr;
+	shared_ptr<AbstractChatRoom> multiMessageRoom = nullptr;
+	for (const auto chatRoom : chatRooms) {
+		if (emptyMessageRoom == nullptr && chatRoom->getMessageHistorySize() == 0) {
+			emptyMessageRoom = chatRoom;
+		}
+		if (oneMessageRoom == nullptr && chatRoom->getMessageHistorySize() == 1) {
+			oneMessageRoom = chatRoom;
+		}
+		if (multiMessageRoom == nullptr && chatRoom->getMessageHistorySize() > 1) {
+			multiMessageRoom = chatRoom;
+		}
+
+		shared_ptr<ChatMessage> lastMessage = chatRoom->getLastChatMessageInHistory();
+		if (chatRoom->isEmpty()) {
+			emptyChatRooms.push_back(chatRoom);
+			BC_ASSERT_PTR_NULL(lastMessage);
+		} else {
+			BC_ASSERT_PTR_NOT_NULL(lastMessage);
+		}
+	}
+	BC_ASSERT_EQUAL(emptyChatRooms.size(), 4, int, "%d");
+	
+	// Check an empty chat room last_message_id is updated after adding a message into it
+	BC_ASSERT_PTR_NOT_NULL(emptyMessageRoom);
+	if (emptyMessageRoom != nullptr) {
+		shared_ptr<ChatMessage> lastMessage = emptyMessageRoom->getLastChatMessageInHistory();
+		BC_ASSERT_PTR_NULL(lastMessage);
+		shared_ptr<ChatMessage> newMessage = emptyMessageRoom->createChatMessage("Hello world !");
+		newMessage->send();
+		lastMessage = emptyMessageRoom->getLastChatMessageInHistory();
+		BC_ASSERT_PTR_NOT_NULL(lastMessage);
+		BC_ASSERT_PTR_EQUAL(lastMessage, newMessage);
+	}
+
+	// Check last_message_id is updated to 0 if we remove the last message from a chat room with exactly 1 message
+	BC_ASSERT_PTR_NOT_NULL(oneMessageRoom);
+	if (oneMessageRoom != nullptr) {
+		shared_ptr<ChatMessage> lastMessage = oneMessageRoom->getLastChatMessageInHistory();
+		BC_ASSERT_PTR_NOT_NULL(lastMessage);
+		oneMessageRoom->deleteHistory();
+		lastMessage = oneMessageRoom->getLastChatMessageInHistory();
+		BC_ASSERT_PTR_NULL(lastMessage);
+	}
+
+	// Check last_message_id is updated to previous message id if we remove the last message from a chat room with more than 1 message
+	BC_ASSERT_PTR_NOT_NULL(multiMessageRoom);
+	if (multiMessageRoom != nullptr) {
+		shared_ptr<ChatMessage> lastMessage = multiMessageRoom->getLastChatMessageInHistory();
+		BC_ASSERT_PTR_NOT_NULL(lastMessage);
+		multiMessageRoom->deleteMessageFromHistory(lastMessage);
+		shared_ptr<ChatMessage> lastMessage2 = multiMessageRoom->getLastChatMessageInHistory();
+		BC_ASSERT_PTR_NOT_NULL(lastMessage2);
+		BC_ASSERT_PTR_NOT_EQUAL(lastMessage, lastMessage2);
+
+		// Check a non empty chat room last_message_id is updated after adding a message into it
+		shared_ptr<ChatMessage> newMessage = multiMessageRoom->createChatMessage("Hello world !");
+		newMessage->send();
+		lastMessage = multiMessageRoom->getLastChatMessageInHistory();
+		BC_ASSERT_PTR_NOT_NULL(lastMessage);
+		BC_ASSERT_PTR_EQUAL(lastMessage, newMessage);
+		BC_ASSERT_PTR_NOT_EQUAL(lastMessage, lastMessage2);
+	}
+}
+
 static void load_a_lot_of_chatrooms(void) {
 	chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 	MainDbProvider provider("db/chatrooms.db");
@@ -201,6 +274,7 @@ test_t main_db_tests[] = {
 	TEST_NO_TAG("Get unread messages count", get_unread_messages_count),
 	TEST_NO_TAG("Get history", get_history),
 	TEST_NO_TAG("Get conference events", get_conference_notified_events),
+	TEST_NO_TAG("Get chat rooms", get_chat_rooms),
 	TEST_NO_TAG("Load a lot of chatrooms", load_a_lot_of_chatrooms)
 };
 

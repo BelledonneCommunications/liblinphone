@@ -130,6 +130,10 @@ void ChatRoomPrivate::removeTransientChatMessage (const shared_ptr<ChatMessage> 
 		transientMessages.erase(it);
 }
 
+void ChatRoomPrivate::setIsEmpty (const bool empty) {
+	isEmpty = empty;
+}
+
 // -----------------------------------------------------------------------------
 
 shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage (ChatMessage::Direction direction) {
@@ -254,7 +258,12 @@ void ChatRoomPrivate::notifyIsComposingReceived (const Address &remoteAddress, b
 void ChatRoomPrivate::notifyStateChanged () {
 	L_Q();
 	LinphoneChatRoom *cr = getCChatRoom();
-	lInfo() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(state);
+	// Do not output this log while Core is starting up, a lot of them may happen
+	if (q->getCore()->getCCore()->state == LinphoneGlobalStartup) {
+		lDebug() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(state);
+	} else {
+		lInfo() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(state);
+	}
 	linphone_core_notify_chat_room_state_changed(q->getCore()->getCCore(), cr, (LinphoneChatRoomState)state);
 	_linphone_chat_room_notify_state_changed(cr, (LinphoneChatRoomState)state);
 }
@@ -431,6 +440,10 @@ list<shared_ptr<EventLog>> ChatRoom::getMessageHistoryRange (int begin, int end)
 	return getCore()->getPrivate()->mainDb->getHistoryRange(getConferenceId(), begin, end, MainDb::Filter::ConferenceChatMessageFilter);
 }
 
+int ChatRoom::getMessageHistorySize () const {
+	return getCore()->getPrivate()->mainDb->getHistorySize(getConferenceId(), MainDb::Filter::ConferenceChatMessageFilter);
+}
+
 list<shared_ptr<EventLog>> ChatRoom::getHistory (int nLast) const {
 	return getCore()->getPrivate()->mainDb->getHistory(
 		getConferenceId(),
@@ -461,7 +474,20 @@ void ChatRoom::deleteFromDb () {
 }
 
 void ChatRoom::deleteHistory () {
+	L_D();
 	getCore()->getPrivate()->mainDb->cleanHistory(getConferenceId());
+	d->setIsEmpty(true);
+}
+
+void ChatRoom::deleteMessageFromHistory (const shared_ptr<ChatMessage> &message) {
+	L_D();
+	shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(
+		message->getPrivate()->dbKey
+	);
+	if (event) {
+		LinphonePrivate::EventLog::deleteFromDatabase(event);
+		d->setIsEmpty(getCore()->getPrivate()->mainDb->isChatRoomEmpty(getConferenceId()));
+	}
 }
 
 shared_ptr<ChatMessage> ChatRoom::getLastChatMessageInHistory () const {
@@ -469,7 +495,9 @@ shared_ptr<ChatMessage> ChatRoom::getLastChatMessageInHistory () const {
 }
 
 bool ChatRoom::isEmpty () const {
-	return getCore()->getPrivate()->mainDb->getLastChatMessage(getConferenceId()) == nullptr;
+	L_D();
+
+	return d->isEmpty;
 }
 
 int ChatRoom::getChatMessageCount () const {

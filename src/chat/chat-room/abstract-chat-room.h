@@ -73,12 +73,14 @@ public:
 
 	virtual std::list<std::shared_ptr<EventLog>> getMessageHistory (int nLast) const = 0;
 	virtual std::list<std::shared_ptr<EventLog>> getMessageHistoryRange (int begin, int end) const = 0;
+	virtual int getMessageHistorySize () const = 0;
 	virtual std::list<std::shared_ptr<EventLog>> getHistory (int nLast) const = 0;
 	virtual std::list<std::shared_ptr<EventLog>> getHistoryRange (int begin, int end) const = 0;
 	virtual int getHistorySize () const = 0;
 
 	virtual void deleteFromDb () = 0;
 	virtual void deleteHistory () = 0;
+	virtual void deleteMessageFromHistory (const std::shared_ptr<ChatMessage> &message) = 0;
 
 	virtual std::shared_ptr<ChatMessage> getLastChatMessageInHistory () const = 0;
 	virtual bool isEmpty () const = 0;

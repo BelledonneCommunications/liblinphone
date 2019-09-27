@@ -53,12 +53,14 @@ public:
 
 	std::list<std::shared_ptr<EventLog>> getMessageHistory (int nLast) const override;
 	std::list<std::shared_ptr<EventLog>> getMessageHistoryRange (int begin, int end) const override;
+	int getMessageHistorySize () const override;
 	std::list<std::shared_ptr<EventLog>> getHistory (int nLast) const override;
 	std::list<std::shared_ptr<EventLog>> getHistoryRange (int begin, int end) const override;
 	int getHistorySize () const override;
 
 	void deleteFromDb () override;
 	void deleteHistory () override;
+	void deleteMessageFromHistory (const std::shared_ptr<ChatMessage> &message) override;
 
 	std::shared_ptr<ChatMessage> getLastChatMessageInHistory () const override;
 	bool isEmpty () const override;
