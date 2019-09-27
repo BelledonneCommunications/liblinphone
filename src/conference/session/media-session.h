@@ -38,6 +38,8 @@ class LINPHONE_PUBLIC MediaSession : public CallSession {
 	friend class CallPrivate;
 	friend class IceAgent;
 	friend class ToneManager;
+	friend class Stream;
+	friend class StreamsGroup;
 
 public:
 	MediaSession (const std::shared_ptr<Core> &core, std::shared_ptr<Participant> me, const CallSessionParams *params, CallSessionListener *listener);
@@ -90,6 +92,7 @@ public:
 	RtpTransport * getMetaRtpTransport (int streamIndex) const;
 	float getMicrophoneVolumeGain () const;
 	void * getNativeVideoWindowId () const;
+	void * getNativePreviewVideoWindowId () const;
 	const CallSessionParams *getParams () const override;
 	float getPlayVolume () const;
 	float getRecordVolume () const;
@@ -105,9 +108,9 @@ public:
 	void setAuthenticationTokenVerified (bool value);
 	void setMicrophoneVolumeGain (float value);
 	void setNativeVideoWindowId (void *id);
+	void setNativePreviewWindowId (void *id);
 	void setParams (const MediaSessionParams *msp);
 	void setSpeakerVolumeGain (float value);
-
 private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);

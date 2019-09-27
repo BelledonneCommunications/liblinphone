@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2020 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -17,26 +17,21 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_PORT_CONFIG_H_
-#define _L_PORT_CONFIG_H_
+#ifndef linphone_if_addrs_h
+#define linphone_if_addrs_h
 
+#include <list>
 #include <string>
-
-#include "linphone/utils/general.h"
-#include "c-wrapper/internal/c-sal.h"
-
-// =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-struct PortConfig {
-	SalMulticastRole multicastRole = SalMulticastInactive;
-	std::string multicastIp;
-	std::string multicastBindIp;
-	int rtpPort = -1;
-	int rtcpPort = -1;
+class IfAddrs{
+public:
+	static std::list<std::string> fetchLocalAddresses();
+private:
+	static std::list<std::string> fetchWithGetIfAddrs();
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_PORT_CONFIG_H_
+#endif

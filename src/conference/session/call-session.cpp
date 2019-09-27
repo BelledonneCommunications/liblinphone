@@ -989,7 +989,7 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 		d->startPing();
 	} else if (direction == LinphoneCallIncoming) {
 		d->setParams(new CallSessionParams());
-		d->params->initDefault(getCore());
+		d->params->initDefault(getCore(), LinphoneCallIncoming);
 	}
 }
 

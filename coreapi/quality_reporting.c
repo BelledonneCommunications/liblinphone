@@ -169,8 +169,11 @@ static bool_t media_report_enabled(LinphoneCall * call, int stats_type){
 	if (!quality_reporting_enabled(call))
 		return FALSE;
 
-	if (stats_type == LINPHONE_CALL_STATS_VIDEO && !linphone_call_params_video_enabled(linphone_call_get_current_params(call)))
-		return FALSE;
+	if (stats_type == LINPHONE_CALL_STATS_VIDEO){
+		if (!(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getLog()->reporting.was_video_running
+			|| linphone_call_params_video_enabled(linphone_call_get_current_params(call))) )
+			return FALSE;
+	}
 
 	if (stats_type == LINPHONE_CALL_STATS_TEXT && !linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(call)))
 		return FALSE;
@@ -413,7 +416,7 @@ static const SalStreamDescription * get_media_stream_for_desc(const SalMediaDesc
 	int count;
 	if (smd != NULL) {
 		for (count = 0; count < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; ++count) {
-			if (sal_stream_description_active(&smd->streams[count]) && smd->streams[count].type == sal_stream_type) {
+			if (sal_stream_description_enabled(&smd->streams[count]) && smd->streams[count].type == sal_stream_type) {
 				return &smd->streams[count];
 			}
 		}
@@ -480,7 +483,7 @@ static void qos_analyzer_on_action_suggested(void *user_data, int datac, const c
 		}
 	}
 
-	appendbuf=ms_strdup_printf("%s%d;", report->qos_analyzer.timestamp?report->qos_analyzer.timestamp:"", ms_time(0));
+	appendbuf=ms_strdup_printf("%s%llu;", report->qos_analyzer.timestamp?report->qos_analyzer.timestamp:"", (unsigned long long)ms_time(0));
 	STR_REASSIGN(report->qos_analyzer.timestamp,appendbuf);
 
 	STR_REASSIGN(report->qos_analyzer.input_leg, ms_strdup_printf("%s aenc_ptime aenc_br a_dbw a_ubw venc_br v_dbw v_ubw tenc_br t_dbw t_ubw", datav[0]));
@@ -741,10 +744,10 @@ void linphone_reporting_call_state_updated(LinphoneCall *call){
 				}
 			}
 			linphone_reporting_update_ip(call);
-			if (!media_report_enabled(call, LINPHONE_CALL_STATS_VIDEO) && log->reporting.was_video_running){
+			if (media_report_enabled(call, LINPHONE_CALL_STATS_VIDEO) && log->reporting.was_video_running){
 				send_report(call, log->reporting.reports[LINPHONE_CALL_STATS_VIDEO], "VQSessionReport");
 			}
-			log->reporting.was_video_running=media_report_enabled(call, LINPHONE_CALL_STATS_VIDEO);
+			log->reporting.was_video_running = linphone_call_params_video_enabled(linphone_call_get_current_params(call));
 			break;
 		}
 		case LinphoneCallEnd:{

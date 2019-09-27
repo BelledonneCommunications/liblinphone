@@ -998,7 +998,7 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 	bool_t video_added_by_caller, bool_t video_added_by_callee, bool_t video_removed_by_caller, bool_t video_removed_by_callee, bool_t video_only) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	unsigned int nb_audio_starts = 1, nb_video_starts = 1;
+	unsigned int nb_audio_starts = 1, nb_video_starts = 0;
 	const LinphoneCallParams *marie_remote_params;
 	const LinphoneCallParams *pauline_current_params;
 
@@ -1018,6 +1018,7 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 	if (video_only) {
 		linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMU", 8000, 1), FALSE); /* Disable PCMU */
 		linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMA", 8000, 1), TRUE); /* Enable PCMA */
+		nb_audio_starts = 0;
 	}
 
 	linphone_core_manager_wait_for_stun_resolution(marie);
@@ -1052,6 +1053,8 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 	if (pauline_current_params){
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(pauline_current_params) ==
 			(caller_policy.automatically_initiate && callee_policy.automatically_accept));
+		if (linphone_call_params_video_enabled(pauline_current_params))
+			nb_video_starts++;
 	}
 
 	/* Wait for ICE reINVITEs to complete. */
@@ -1064,6 +1067,7 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 	}
 	BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateHostConnection));
 	BC_ASSERT_TRUE(check_nb_media_starts(AUDIO_START, pauline, marie, nb_audio_starts, nb_audio_starts));
+	BC_ASSERT_TRUE(check_nb_media_starts(VIDEO_START, pauline, marie, nb_video_starts, nb_video_starts));
 
 
 	if (caller_policy.automatically_initiate && callee_policy.automatically_accept && (video_added_by_caller || video_added_by_callee)){
@@ -1094,7 +1098,6 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 	}
 	if (video_removed_by_caller || video_removed_by_callee) {
 		BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateHostConnection));
-		nb_video_starts++;
 		BC_ASSERT_TRUE(check_nb_media_starts(VIDEO_START, pauline, marie, nb_video_starts, nb_video_starts));
 
 	}

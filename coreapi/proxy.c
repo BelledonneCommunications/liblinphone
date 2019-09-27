@@ -165,7 +165,7 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 	cfg->avpf_rr_interval = lc ? !!lp_config_get_default_int(lc->config, "proxy", "avpf_rr_interval", 5) : 5;
 	cfg->publish_expires= lc ? lp_config_get_default_int(lc->config, "proxy", "publish_expires", -1) : -1;
 	cfg->publish = lc ? !!lp_config_get_default_int(lc->config, "proxy", "publish", FALSE) : FALSE;
-	cfg->push_notification_allowed = lc ? !!lp_config_get_default_int(lc->config, "proxy", "push_notification_allowed", TRUE) : TRUE;
+	cfg->push_notification_allowed = lc ? !!lp_config_get_default_int(lc->config, "proxy", "push_notification_allowed", FALSE) : FALSE;
 	cfg->refkey = refkey ? ms_strdup(refkey) : NULL;
 	if (nat_policy_ref) {
 		LinphoneNatPolicy *policy = linphone_config_create_nat_policy_from_section(lc->config,nat_policy_ref);
@@ -589,8 +589,7 @@ static LinphoneAddress *guess_contact_for_register (LinphoneProxyConfig *cfg) {
 
 void _linphone_proxy_config_unregister(LinphoneProxyConfig *obj) {
 	if (obj->op && (obj->state == LinphoneRegistrationOk ||
-					(obj->state == LinphoneRegistrationProgress && obj->expires != 0)) &&
-					!linphone_proxy_config_is_push_notification_allowed(obj)) {
+					(obj->state == LinphoneRegistrationProgress && obj->expires != 0))) {
 		obj->op->unregister();
 	}
 }
@@ -1815,6 +1814,7 @@ void linphone_proxy_config_set_conference_factory_uri(LinphoneProxyConfig *cfg, 
 		cfg->conference_factory_uri = bctbx_strdup(uri);
 		if (cfg->lc) {
 			linphone_core_add_linphone_spec(cfg->lc, "groupchat");
+			linphone_core_add_linphone_spec(cfg->lc, "ephemeral");
 		}
 	} else if (cfg->lc) {
 		bool_t remove = TRUE;
@@ -1831,6 +1831,7 @@ void linphone_proxy_config_set_conference_factory_uri(LinphoneProxyConfig *cfg, 
 		}
 		if (remove) {
 			linphone_core_remove_linphone_spec(cfg->lc, "groupchat");
+			linphone_core_remove_linphone_spec(cfg->lc, "ephemeral");
 		}
 	}
 }
