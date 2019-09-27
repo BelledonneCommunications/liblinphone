@@ -55,8 +55,12 @@ public:
 	void setDownPtime (int value) { downPtime = value; }
 	int getUpPtime () const { return upPtime; }
 	void setUpPtime (int value) { upPtime = value; }
-	bool getUpdateCallWhenIceCompleted () const { return updateCallWhenIceCompleted; }
-	void setUpdateCallWhenIceCompleted (bool value) { updateCallWhenIceCompleted = value; }
+	bool getUpdateCallWhenIceCompleted () const;
+	void setUpdateCallWhenIceCompleted(bool value){
+		/* apply to both case when set explicitely */
+		updateCallWhenIceCompleted = value;
+		updateCallWhenIceCompletedWithDTLS = value;
+	}
 
 	void setReceivedFps (float value) { receivedFps = value; }
 	void setReceivedVideoDefinition (LinphoneVideoDefinition *value);
@@ -102,6 +106,8 @@ public:
 
 	LinphoneMediaEncryption encryption = LinphoneMediaEncryptionNone;
 	bool mandatoryMediaEncryptionEnabled = false;
+	
+	bool rtpBundle = false;
 
 private:
 	bool _implicitRtcpFbEnabled = false;
@@ -110,6 +116,7 @@ private:
 	int downPtime = 0;
 	int upPtime = 0;
 	bool updateCallWhenIceCompleted = true;
+	bool updateCallWhenIceCompletedWithDTLS = false;
 	SalCustomSdpAttribute *customSdpAttributes = nullptr;
 	SalCustomSdpAttribute *customSdpMediaAttributes[LinphoneStreamTypeUnknown];
 

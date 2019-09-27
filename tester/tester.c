@@ -1498,9 +1498,11 @@ void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCall
 			counters->number_of_rtcp_received_via_mux++;
 		}
 		rtcp_received(counters, _linphone_call_stats_get_received_rtcp(lstats));
+		BC_ASSERT_TRUE(_linphone_call_stats_has_received_rtcp(lstats));
 	}
 	if (updated & LINPHONE_CALL_STATS_SENT_RTCP_UPDATE ) {
 		counters->number_of_rtcp_sent++;
+		BC_ASSERT_TRUE(_linphone_call_stats_has_sent_rtcp(lstats));
 	}
 	if (updated & LINPHONE_CALL_STATS_PERIODICAL_UPDATE ) {
 		const int tab_size = sizeof counters->audio_download_bandwidth / sizeof(int);
@@ -1861,7 +1863,6 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	/*wait ice re-invite*/
 	if (linphone_core_get_firewall_policy(caller_mgr->lc) == LinphonePolicyUseIce
 			&& linphone_core_get_firewall_policy(callee_mgr->lc) == LinphonePolicyUseIce
-			&& !linphone_core_sdp_200_ack_enabled(caller_mgr->lc) /*ice does not work with sdp less invite*/
 			&& lp_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
 			&& lp_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
 			&& linphone_core_get_media_encryption(caller_mgr->lc) != LinphoneMediaEncryptionDTLS /*no ice-reinvite with DTLS*/) {

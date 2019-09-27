@@ -69,6 +69,8 @@
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core-p.h"
+#include "conference/session/media-session.h"
+#include "conference/session/media-session-p.h"
 
 // For migration purpose.
 #include "address/address-p.h"
@@ -5590,48 +5592,20 @@ void * linphone_core_get_native_video_window_id(const LinphoneCore *lc){
 #ifdef VIDEO_ENABLED
 		/*case where it was not set but we want to get the one automatically created by mediastreamer2 (desktop versions only)*/
 		LinphoneCall *call=linphone_core_get_current_call (lc);
+		
 		if (call) {
-			VideoStream *vstream = reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo));
-			if (vstream)
-				return video_stream_get_native_window_id(vstream);
+			auto ms = dynamic_pointer_cast<LinphonePrivate::MediaSession>(L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession());
+			if (ms) return ms->getNativeVideoWindowId();
 		}
 #endif
 	}
 	return 0;
 }
 
-/* unsets the video id for all calls (indeed it may be kept by filters or videostream object itself by paused calls)*/
-static void unset_video_window_id(LinphoneCore *lc, bool_t preview, void *id){
-	if ((id != NULL)
-#ifndef _WIN32
-		&& ((unsigned long)id != (unsigned long)-1)
-#endif
-	){
-		ms_error("Invalid use of unset_video_window_id()");
-		return;
-	}
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->unsetVideoWindowId(!!preview, id);
-}
 
 void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
-	if ((id == NULL)
-#ifndef _WIN32
-		|| ((unsigned long)id == (unsigned long)-1)
-#endif
-	){
-		unset_video_window_id(lc,FALSE,id);
-	}
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->setVideoWindowId(false, id);
 	lc->video_window_id=id;
-#ifdef VIDEO_ENABLED
-	{
-		LinphoneCall *call=linphone_core_get_current_call(lc);
-		if (call) {
-			VideoStream *vstream = reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo));
-			if (vstream)
-				video_stream_set_native_window_id(vstream,id);
-		}
-	}
-#endif
 }
 
 void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
@@ -5650,10 +5624,10 @@ void * linphone_core_get_native_preview_window_id(const LinphoneCore *lc){
 		/*case where we want the id automatically created by mediastreamer2 (desktop versions only)*/
 #ifdef VIDEO_ENABLED
 		LinphoneCall *call=linphone_core_get_current_call(lc);
+		
 		if (call) {
-			VideoStream *vstream = reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo));
-			if (vstream)
-				return video_stream_get_native_preview_window_id(vstream);
+			auto ms = dynamic_pointer_cast<LinphonePrivate::MediaSession>(L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession());
+			if (ms) return ms->getNativePreviewVideoWindowId();
 		}
 		if (lc->previewstream)
 			return video_preview_get_native_window_id(lc->previewstream);
@@ -5663,24 +5637,11 @@ void * linphone_core_get_native_preview_window_id(const LinphoneCore *lc){
 }
 
 void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
-	if ((id == NULL)
-#ifndef _WIN32
-		|| ((unsigned long)id == (unsigned long)-1)
-#endif
-	) {
-		unset_video_window_id(lc,TRUE,id);
-	}
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->setVideoWindowId(true, id);
 	lc->preview_window_id=id;
 #ifdef VIDEO_ENABLED
-	{
-		LinphoneCall *call=linphone_core_get_current_call(lc);
-		if (call) {
-			VideoStream *vstream = reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo));
-			if (vstream)
-				video_stream_set_native_preview_window_id(vstream,id);
-		}else if (lc->previewstream){
-			video_preview_set_native_window_id(lc->previewstream,id);
-		}
+	if (lc->previewstream){
+		video_preview_set_native_window_id(lc->previewstream,id);
 	}
 #endif
 }
@@ -7146,7 +7107,7 @@ void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 }
 
 void linphone_core_init_default_params(LinphoneCore*lc, LinphoneCallParams *params) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(params)->initDefault(L_GET_CPP_PTR_FROM_C_OBJECT(lc));
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->initDefault(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing);
 }
 
 void linphone_core_set_device_identifier(LinphoneCore *lc,const char* device_id) {
@@ -7334,6 +7295,14 @@ void linphone_core_enable_video_multicast(LinphoneCore *lc, bool_t yesno) {
 
 bool_t linphone_core_video_multicast_enabled(const LinphoneCore *lc) {
 	return lc->rtp_conf.video_multicast_enabled;
+}
+
+bool_t linphone_core_rtp_bundle_enabled(const LinphoneCore *lc){
+	return linphone_config_get_bool(lc->config, "rtp", "bundle", FALSE);
+}
+
+void linphone_core_enable_rtp_bundle(LinphoneCore *lc, bool_t value){
+	linphone_config_set_bool(lc->config, "rtp", "bundle", value);
 }
 
 void linphone_core_set_video_preset(LinphoneCore *lc, const char *preset) {

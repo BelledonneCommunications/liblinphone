@@ -23,7 +23,8 @@
 
 // =============================================================================
 
-void _linphone_call_stats_clone (LinphoneCallStats *dst, const LinphoneCallStats *src);
+static void _linphone_call_stats_clone (LinphoneCallStats *dst, const LinphoneCallStats *src);
+static void _linphone_call_stats_uninit (LinphoneCallStats *stats);
 
 /**
  * The LinphoneCallStats objects carries various statistic informations regarding quality of audio or video streams.
@@ -53,8 +54,8 @@ struct _LinphoneCallStats {
 	rtp_stats_t rtp_stats; /**< RTP stats */
 	int rtp_remote_family; /**< Ip adress family of the remote destination */
 	int clockrate;  /*RTP clockrate of the stream, provided here for easily converting timestamp units expressed in RTCP packets in milliseconds*/
-	bool_t rtcp_received_via_mux; /*private flag, for non-regression test only*/
 	float estimated_download_bandwidth; /**<Estimated download bandwidth measurement of received stream, expressed in kbit/s, including IP/UDP/RTP headers*/
+	bool_t rtcp_received_via_mux; /*private flag, for non-regression test only*/
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneCallStats);
@@ -62,7 +63,7 @@ BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneCallStats);
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneCallStats);
 
 BELLE_SIP_INSTANCIATE_VPTR(LinphoneCallStats, belle_sip_object_t,
-	NULL, // destroy
+	_linphone_call_stats_uninit, // destroy
 	_linphone_call_stats_clone, // clone
 	NULL, // marshal
 	FALSE
@@ -77,7 +78,7 @@ LinphoneCallStats *_linphone_call_stats_new () {
 	return stats;
 }
 
-void _linphone_call_stats_uninit (LinphoneCallStats *stats) {
+static void _linphone_call_stats_uninit (LinphoneCallStats *stats) {
 	if (stats->received_rtcp) {
 		freemsg(stats->received_rtcp);
 		stats->received_rtcp=NULL;
@@ -88,16 +89,26 @@ void _linphone_call_stats_uninit (LinphoneCallStats *stats) {
 	}
 }
 
-void _linphone_call_stats_clone (LinphoneCallStats *dst, const LinphoneCallStats *src) {
-	/*
-	 * Save the belle_sip_object_t part, copy the entire structure and restore the belle_sip_object_t part
-	 */
-	belle_sip_object_t tmp = dst->base;
-	memcpy(dst, src, sizeof(LinphoneCallStats));
-	dst->base = tmp;
-
-	dst->received_rtcp = NULL;
-	dst->sent_rtcp = NULL;
+static void _linphone_call_stats_clone (LinphoneCallStats *dst, const LinphoneCallStats *src) {
+	dst->type = src->type;
+	dst->jitter_stats = src->jitter_stats;
+	dst->received_rtcp = src->received_rtcp ? dupmsg(src->received_rtcp) : nullptr;
+	dst->sent_rtcp = src->sent_rtcp ? dupmsg(src->sent_rtcp) : nullptr;
+	dst->round_trip_delay = src->round_trip_delay;
+	dst->ice_state = src->ice_state;
+	dst->upnp_state = src->upnp_state;
+	dst->download_bandwidth = src->download_bandwidth;
+	dst->upload_bandwidth = src->upload_bandwidth;
+	dst->local_late_rate = src->local_late_rate;
+	dst->local_loss_rate = src->local_loss_rate;
+	dst->updated = src->updated;
+	dst->rtcp_download_bandwidth = src->rtcp_download_bandwidth;
+	dst->rtcp_upload_bandwidth = src->rtcp_upload_bandwidth;
+	dst->rtp_stats = src->rtp_stats;
+	dst->rtp_remote_family = src->rtp_remote_family;
+	dst->clockrate = src->clockrate;
+	dst->rtcp_received_via_mux = src->rtcp_received_via_mux;
+	dst->estimated_download_bandwidth = src->estimated_download_bandwidth;
 }
 
 void _linphone_call_stats_set_ice_state (LinphoneCallStats *stats, LinphoneIceState state) {
@@ -158,6 +169,14 @@ void _linphone_call_stats_set_ip_family_of_remote (LinphoneCallStats *stats, Lin
 
 bool_t _linphone_call_stats_rtcp_received_via_mux (const LinphoneCallStats *stats) {
 	return stats->rtcp_received_via_mux;
+}
+
+bool_t _linphone_call_stats_has_received_rtcp(const LinphoneCallStats *stats){
+	return stats->received_rtcp != NULL;
+}
+
+bool_t _linphone_call_stats_has_sent_rtcp(const LinphoneCallStats *stats){
+	return stats->sent_rtcp != NULL;
 }
 
 // =============================================================================
@@ -226,8 +245,10 @@ LinphoneStreamType linphone_call_stats_get_type (const LinphoneCallStats *stats)
 float linphone_call_stats_get_sender_loss_rate (const LinphoneCallStats *stats) {
 	const report_block_t *srb = NULL;
 
-	if (!stats || !stats->sent_rtcp)
+	if (!stats->sent_rtcp){
+		ms_warning("linphone_call_stats_get_sender_loss_rate(): there is no RTCP packet sent.");
 		return 0.0;
+	}
 	/* Perform msgpullup() to prevent crashes in rtcp_is_SR() or rtcp_is_RR() if the RTCP packet is composed of several mblk_t structure */
 	if (stats->sent_rtcp->b_cont != NULL)
 		msgpullup(stats->sent_rtcp, (size_t)-1);
@@ -248,8 +269,10 @@ float linphone_call_stats_get_sender_loss_rate (const LinphoneCallStats *stats) 
 float linphone_call_stats_get_receiver_loss_rate (const LinphoneCallStats *stats) {
 	const report_block_t *rrb = NULL;
 
-	if (!stats || !stats->received_rtcp)
+	if (!stats->received_rtcp){
+		ms_warning("linphone_call_stats_get_receiver_loss_rate(): there is no RTCP packet received.");
 		return 0.0;
+	}
 	/* Perform msgpullup() to prevent crashes in rtcp_is_SR() or rtcp_is_RR() if the RTCP packet is composed of several mblk_t structure */
 	if (stats->received_rtcp->b_cont != NULL)
 		msgpullup(stats->received_rtcp, (size_t)-1);
@@ -278,8 +301,10 @@ float linphone_call_stats_get_local_late_rate (const LinphoneCallStats *stats) {
 float linphone_call_stats_get_sender_interarrival_jitter (const LinphoneCallStats *stats) {
 	const report_block_t *srb = NULL;
 
-	if (!stats || !stats->sent_rtcp)
+	if (!stats->sent_rtcp){
+		ms_warning("linphone_call_stats_get_sender_interarrival_jitter(): there is no RTCP packet sent.");
 		return 0.0;
+	}
 	/* Perform msgpullup() to prevent crashes in rtcp_is_SR() or rtcp_is_RR() if the RTCP packet is composed of several mblk_t structure */
 	if (stats->sent_rtcp->b_cont != NULL)
 		msgpullup(stats->sent_rtcp, (size_t)-1);
@@ -297,8 +322,10 @@ float linphone_call_stats_get_sender_interarrival_jitter (const LinphoneCallStat
 float linphone_call_stats_get_receiver_interarrival_jitter (const LinphoneCallStats *stats) {
 	const report_block_t *rrb = NULL;
 
-	if (!stats || !stats->received_rtcp)
+	if (!stats->received_rtcp){
+		ms_warning("linphone_call_stats_get_receiver_interarrival_jitter(): there is no RTCP packet received.");
 		return 0.0;
+	}
 	/* Perform msgpullup() to prevent crashes in rtcp_is_SR() or rtcp_is_RR() if the RTCP packet is composed of several mblk_t structure */
 	if (stats->received_rtcp->b_cont != NULL)
 		msgpullup(stats->received_rtcp, (size_t)-1);
@@ -364,3 +391,4 @@ float linphone_call_stats_get_estimated_download_bandwidth(const LinphoneCallSta
 void linphone_call_stats_set_estimated_download_bandwidth(LinphoneCallStats *stats, float estimated_value) {
 	stats->estimated_download_bandwidth = estimated_value;
 }
+

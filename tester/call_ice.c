@@ -223,9 +223,12 @@ static void call_with_ice_and_rtcp_mux_without_reinvite(void){
 	_call_with_rtcp_mux(TRUE, TRUE, TRUE,FALSE);
 }
 
-static bool_t is_matching_local_v4_or_v6(const char *ip, const char *localv4, const char *localv6){
+static bool_t is_matching_a_local_address(const char *ip, const bctbx_list_t *addresses){
 	if (strlen(ip)==0) return FALSE;
-	return strcmp(ip, localv4) == 0 || strcmp(ip, localv6) == 0;
+	for (; addresses != NULL; addresses = addresses->next){
+		if (strcmp(ip, (const char*)addresses->data) == 0) return TRUE;
+	}
+	return FALSE;
 }
 
 /*
@@ -237,6 +240,7 @@ static void call_with_ice_with_default_candidate_not_stun(void){
 	char localip[LINPHONE_IPADDR_SIZE]={0};
 	char localip6[LINPHONE_IPADDR_SIZE]={0};
 	bool_t call_ok;
+	bctbx_list_t *local_addresses = linphone_fetch_local_addresses();
 
 	lp_config_set_int(linphone_core_get_config(marie->lc), "net", "dont_default_to_stun_candidates", 1);
 	linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
@@ -246,14 +250,15 @@ static void call_with_ice_with_default_candidate_not_stun(void){
 	call_ok = call(marie, pauline);
 	if (call_ok){
 		check_ice(marie, pauline, LinphoneIceStateHostConnection);
-		BC_ASSERT_TRUE(is_matching_local_v4_or_v6(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->addr, localip, localip6));
-		BC_ASSERT_TRUE(is_matching_local_v4_or_v6(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->streams[0].rtp_addr, localip, localip6));
-		BC_ASSERT_TRUE(is_matching_local_v4_or_v6(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->streams[0].rtp_addr, localip, localip6));
-		BC_ASSERT_TRUE(is_matching_local_v4_or_v6(_linphone_call_get_result_desc(linphone_core_get_current_call(pauline->lc))->streams[0].rtp_addr, localip, localip6)
-				|| is_matching_local_v4_or_v6(_linphone_call_get_result_desc(linphone_core_get_current_call(pauline->lc))->addr, localip, localip6)
+		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->addr, local_addresses));
+		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->streams[0].rtp_addr, local_addresses));
+		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->streams[0].rtp_addr, local_addresses));
+		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_result_desc(linphone_core_get_current_call(pauline->lc))->streams[0].rtp_addr, local_addresses)
+				|| is_matching_a_local_address(_linphone_call_get_result_desc(linphone_core_get_current_call(pauline->lc))->addr, local_addresses)
 		);
 	}
 	end_call(marie, pauline);
+	bctbx_list_free_with_data(local_addresses, bctbx_free);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -330,7 +335,9 @@ static void call_with_ice_ipv6(void) {
 	}
 }
 
-/*ICE is not expected to work in this case, however this should not crash*/
+/*ICE is not expected to work in this case, however this should not crash.
+ Updated 08/01/2020: now ICE works also in the case of an INVITE without SDP.
+ */
 static void call_with_ice_no_sdp(void){
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
