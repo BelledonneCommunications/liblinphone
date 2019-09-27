@@ -1886,7 +1886,7 @@ static void video_config_read(LinphoneCore *lc){
 	linphone_core_enable_video_source_reuse(lc, !!lp_config_get_int(lc->config,"video","reuse_source",0));
 	linphone_core_set_video_policy(lc,&vpol);
 
-	lc->video_conf.nack_context_enabled = !!lp_config_get_int(lc->config,"video","nack_context_enabled",0);
+	lc->video_conf.retransmission_on_nack_enabled = !!lp_config_get_int(lc->config,"video","retransmission_on_nack_enabled",0);
 #endif
 }
 
