@@ -139,19 +139,19 @@ void CorePrivate::uninit () {
 // -----------------------------------------------------------------------------
 
 void CorePrivate::notifyGlobalStateChanged (LinphoneGlobalState state) {
-	auto listenersCopy = listeners; // Allow removable of a listener in its own call
+	auto listenersCopy = listeners; // Allow removal of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onGlobalStateChanged(state);
 }
 
 void CorePrivate::notifyNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
-	auto listenersCopy = listeners; // Allow removable of a listener in its own call
+	auto listenersCopy = listeners; // Allow removal of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onNetworkReachable(sipNetworkReachable, mediaNetworkReachable);
 }
 
 void CorePrivate::notifyRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const string &message) {
-	auto listenersCopy = listeners; // Allow removable of a listener in its own call
+	auto listenersCopy = listeners; // Allow removal of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onRegistrationStateChanged(cfg, state, message);
 }
@@ -161,7 +161,7 @@ void CorePrivate::notifyEnteringBackground () {
 		return;
 
 	isInBackground = true;
-	auto listenersCopy = listeners; // Allow removable of a listener in its own call
+	auto listenersCopy = listeners; // Allow removal of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringBackground();
 
@@ -183,7 +183,7 @@ void CorePrivate::notifyEnteringForeground () {
 		linphone_core_refresh_registers(lc);
 	}
 
-	auto listenersCopy = listeners; // Allow removable of a listener in its own call
+	auto listenersCopy = listeners; // Allow removal of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringForeground();
 
@@ -295,6 +295,10 @@ string Core::getDownloadPath() const {
 
 void Core::setEncryptionEngine (EncryptionEngine *imee) {
 	L_D();
+	CoreListener *listener = dynamic_cast<CoreListener *>(getEncryptionEngine());
+	if (listener) {
+		d->unregisterListener(listener);
+	}
 	d->imee.reset(imee);
 }
 
@@ -307,8 +311,13 @@ void Core::enableLimeX3dh (bool enable) {
 #ifdef HAVE_LIME_X3DH
 	L_D();
 	if (!enable) {
-		if (d->imee != nullptr)
+		if (d->imee != nullptr) {
+			CoreListener *listener = dynamic_cast<CoreListener *>(getEncryptionEngine());
+			if (listener) {
+				d->unregisterListener(listener);
+			}
 			d->imee.release();
+		}
 		removeSpec("lime");
 		return;
 	}
@@ -316,8 +325,14 @@ void Core::enableLimeX3dh (bool enable) {
 	if (limeX3dhEnabled())
 		return;
 
-	if (d->imee != nullptr)
+	if (d->imee != nullptr) {
+		lWarning() << "Enabling LIME X3DH over previous non LIME X3DH encryption engine";
+		CoreListener *listener = dynamic_cast<CoreListener *>(getEncryptionEngine());
+		if (listener) {
+			d->unregisterListener(listener);
+		}
 		d->imee.release();
+	}
 
 	if (d->imee == nullptr) {
 		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
