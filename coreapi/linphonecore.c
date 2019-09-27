@@ -1451,13 +1451,17 @@ static void sip_config_read(LinphoneCore *lc) {
 	tmp=lp_config_get_int(lc->config,"sip","guess_hostname",1);
 	linphone_core_set_guess_hostname(lc, !!tmp);
 
-	tmp=lp_config_get_int(lc->config,"sip","lime",LinphoneLimeDisabled);
-	linphone_core_enable_lime(lc,static_cast<LinphoneLimeState>(tmp));
-
 	if (linphone_core_lime_x3dh_available(lc)) {
 		//Always try to enable x3dh. Will actually be enabled only if there is a server url configured
 		linphone_core_enable_lime_x3dh(lc, true);
 	}
+
+	tmp=lp_config_get_int(lc->config,"sip", "lime", LinphoneLimeDisabled);
+	LinphoneLimeState limeState = static_cast<LinphoneLimeState>(tmp);
+	if (limeState != LinphoneLimeDisabled && linphone_core_lime_x3dh_enabled(lc)) {
+		bctbx_fatal("You can't have both LIME and LIME X3DH enabled at the same time !\nConflicting settings are [sip] lime and [lime] lime_server_url");
+	}
+	linphone_core_enable_lime(lc, limeState);
 
 	tmp=lp_config_get_int(lc->config,"sip","inc_timeout",30);
 	linphone_core_set_inc_timeout(lc,tmp);
