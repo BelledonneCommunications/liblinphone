@@ -3520,8 +3520,8 @@ void MediaSessionPrivate::startVideoStream (CallSession::State targetState) {
 					}
 				}
 
-				if (linphone_core_nack_context_enabled(q->getCore()->getCCore())) {
-					video_stream_enable_nack_context(videoStream);
+				if (linphone_core_retransmission_on_nack_enabled(q->getCore()->getCCore())) {
+					video_stream_enable_retransmission_on_nack(videoStream);
 				}
 			}
 		}

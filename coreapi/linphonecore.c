@@ -3373,16 +3373,16 @@ void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val){
 	}
 }
 
-bool_t linphone_core_nack_context_enabled(LinphoneCore *lc) {
-	return lc->video_conf.nack_context_enabled;
+bool_t linphone_core_retransmission_on_nack_enabled(LinphoneCore *lc) {
+	return lc->video_conf.retransmission_on_nack_enabled;
 }
 
-void linphone_core_enable_nack_context(LinphoneCore *lc, bool_t val) {
-	if (lc->video_conf.nack_context_enabled != val) {
-		lc->video_conf.nack_context_enabled = val;
+void linphone_core_enable_retransmission_on_nack(LinphoneCore *lc, bool_t val) {
+	if (lc->video_conf.retransmission_on_nack_enabled != val) {
+		lc->video_conf.retransmission_on_nack_enabled = val;
 
 		if (linphone_core_ready(lc)) {
-			lp_config_set_int(lc->config, "video", "nack_context_enabled", (int)val);
+			lp_config_set_int(lc->config, "video", "retransmission_on_nack_enabled", (int)val);
 		}
 	}
 }
