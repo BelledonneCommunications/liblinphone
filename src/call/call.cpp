@@ -47,8 +47,10 @@ LinphoneProxyConfig *CallPrivate::getDestProxy () const {
 	return getActiveSession()->getPrivate()->getDestProxy();
 }
 
+/* This a test-only method.*/
 IceSession *CallPrivate::getIceSession () const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getIceSession();
+	return nullptr;
 }
 
 unsigned int CallPrivate::getAudioStartCount () const {
@@ -64,7 +66,27 @@ unsigned int CallPrivate::getTextStartCount () const {
 }
 
 MediaStream *CallPrivate::getMediaStream (LinphoneStreamType type) const {
-	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getMediaStream(type);
+	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
+	StreamsGroup & sg = ms->getStreamsGroup();
+	MS2Stream *s = nullptr;
+	switch(type){
+		case LinphoneStreamTypeAudio:
+			s = sg.lookupMainStreamInterface<MS2Stream>(SalAudio);
+		break;
+		case LinphoneStreamTypeVideo:
+			s = sg.lookupMainStreamInterface<MS2Stream>(SalVideo);
+		break;
+		case LinphoneStreamTypeText:
+			s = sg.lookupMainStreamInterface<MS2Stream>(SalText);
+		break;
+		default:
+		break;
+	}
+	if (!s){
+		lError() << "CallPrivate::getMediaStream() : no stream with type " << type;
+		return nullptr;
+	}
+	return s->getMediaStream();
 }
 
 SalCallOp * CallPrivate::getOp () const {
@@ -129,7 +151,7 @@ shared_ptr<Call> CallPrivate::startReferredCall (const MediaSessionParams *param
 	if (params)
 		msp = *params;
 	else {
-		msp.initDefault(q->getCore());
+		msp.initDefault(q->getCore(), LinphoneCallOutgoing);
 		msp.enableAudio(q->getCurrentParams()->audioEnabled());
 		msp.enableVideo(q->getCurrentParams()->videoEnabled());
 	}
@@ -155,7 +177,7 @@ void CallPrivate::createPlayer () const {
 // -----------------------------------------------------------------------------
 
 void CallPrivate::initializeMediaStreams () {
-	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->initializeStreams();
+	
 }
 
 void CallPrivate::stopMediaStreams () {
@@ -172,13 +194,12 @@ void CallPrivate::startRemoteRing () {
 		return;
 
 	MSSndCard *ringCard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.play_sndcard;
-	int maxRate = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getLocalDesc()->streams[0].max_rate;
-	if (maxRate > 0)
-		ms_snd_card_set_preferred_sample_rate(ringCard, maxRate);
-	// We release sound before playing ringback tone
-	AudioStream *as = reinterpret_cast<AudioStream *>(getMediaStream(LinphoneStreamTypeAudio));
-	if (as)
-		audio_stream_unprepare_sound(as);
+	SalMediaDescription *md = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getLocalDesc();
+	if (md){
+		int maxRate = md->streams[0].max_rate;
+		if (maxRate > 0)
+			ms_snd_card_set_preferred_sample_rate(ringCard, maxRate);
+	}
 	if (lc->sound_conf.remote_ring) {
 		ms_snd_card_set_stream_type(ringCard, MS_SND_CARD_STREAM_VOICE);
 		lc->ringstream = ring_start(lc->factory, lc->sound_conf.remote_ring, 2000, ringCard);
@@ -363,16 +384,8 @@ void CallPrivate::onInfoReceived (const shared_ptr<CallSession> &session, const 
 	linphone_call_notify_info_message_received(L_GET_C_BACK_PTR(q), im);
 }
 
-void CallPrivate::onNoMediaTimeoutCheck (const shared_ptr<CallSession> &session, bool oneSecondElapsed) {
-	L_Q();
-	int disconnectTimeout = linphone_core_get_nortp_timeout(q->getCore()->getCCore());
-	bool disconnected = false;
-	AudioStream *as = reinterpret_cast<AudioStream *>(getMediaStream(LinphoneStreamTypeAudio));
-	if (((q->getState() == CallSession::State::StreamsRunning) || (q->getState() == CallSession::State::PausedByRemote))
-		&& oneSecondElapsed && as && (as->ms.state == MSStreamStarted) && (disconnectTimeout > 0))
-		disconnected = !audio_stream_alive(as, disconnectTimeout);
-	if (disconnected)
-		terminateBecauseOfLostMedia();
+void CallPrivate::onLossOfMediaDetected (const shared_ptr<CallSession> &session) {
+	terminateBecauseOfLostMedia();
 }
 
 void CallPrivate::onEncryptionChanged (const shared_ptr<CallSession> &session, bool activated, const string &authToken) {

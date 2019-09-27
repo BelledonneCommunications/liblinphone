@@ -50,3 +50,5 @@
 #cmakedefine HAVE_ADVANCED_IM
 #cmakedefine HAVE_DB_STORAGE
 #cmakedefine ENABLE_UPDATE_CHECK 1
+#cmakedefine HAVE_GETIFADDRS
+

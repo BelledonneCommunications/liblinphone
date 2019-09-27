@@ -508,6 +508,14 @@ void linphone_call_params_add_custom_content (LinphoneCallParams *params, Linpho
 	L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContent(*cppContent);
 }
 
+bool_t linphone_call_params_rtp_bundle_enabled(const LinphoneCallParams *params){
+	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(params)->rtpBundleEnabled();
+}
+
+void linphone_call_params_enable_rtp_bundle(LinphoneCallParams *params, bool_t value){
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->enableRtpBundle(!!value);
+}
+
 // =============================================================================
 // Reference and user data handling functions.
 // =============================================================================
@@ -536,7 +544,7 @@ void linphone_call_params_unref (LinphoneCallParams *cp) {
 LinphoneCallParams *linphone_call_params_new (LinphoneCore *core) {
 	LinphoneCallParams *params = L_INIT(CallParams);
 	L_SET_CPP_PTR_FROM_C_OBJECT(params, new LinphonePrivate::MediaSessionParams());
-	L_GET_CPP_PTR_FROM_C_OBJECT(params)->initDefault(L_GET_CPP_PTR_FROM_C_OBJECT(core));
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->initDefault(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphoneCallOutgoing);
 	return params;
 }
 

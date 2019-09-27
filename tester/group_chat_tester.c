@@ -5368,11 +5368,8 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
 	linphone_core_manager_start(pauline, TRUE);
 
-	//wait for first notify to be received by pauline
-	wait_for_list(coresList, NULL, 0, 1000);
-
 	// Marie2 gets the one-to-one chat room with Pauline
-	paulineCr = check_has_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
 	LinphoneAddress *marieAddress = linphone_address_new(linphone_core_get_identity(marie2->lc));
 	LinphoneParticipant *marieParticipant =  linphone_chat_room_find_participant(paulineCr, marieAddress);
 	BC_ASSERT_EQUAL(bctbx_list_size(linphone_participant_get_devices (marieParticipant)), 1, int, "%i");
@@ -5385,14 +5382,11 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	tmpCoresList = init_core_for_conference(tmpCoresManagerList);
 	bctbx_list_free(tmpCoresManagerList);
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
+	initialPaulineStats = pauline->stat;
 	linphone_core_manager_start(pauline, TRUE);
 
-
-	//wait for first notify to be received by pauline
-	wait_for_list(coresList, NULL, 0, 1000);
-
 	// Marie2 gets the one-to-one chat room with Pauline
-	paulineCr = check_has_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
 	marieParticipant =  linphone_chat_room_find_participant(paulineCr, marieAddress);
 	BC_ASSERT_EQUAL(bctbx_list_size(linphone_participant_get_devices (marieParticipant)), 1, int, "%i");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_events_size(paulineCr), initialPaulineEvent, int, "%i");
@@ -5487,7 +5481,12 @@ static void subscribe_test_after_set_chat_database_path(void) {
 	linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
 	configure_core_for_callbacks(pauline, cbs);
 	linphone_core_cbs_unref(cbs);
+	initialPaulineStats = pauline->stat;
 	linphone_core_manager_start(pauline, TRUE);
+	
+	/* Since pauline has unregistered (in linphone_core_manager_reinit(), the conference server will INVITE it again in the chatroom.
+	 * Wait for this event before doing next steps, otherwise the subject changed notification could be masked. */
+	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
 
 	LinphoneAddress *paulineAddress = linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(pauline->lc)));
 	paulineCr = linphone_core_find_chat_room(pauline->lc, confAddr, paulineAddress);

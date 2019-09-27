@@ -35,6 +35,10 @@ class MediaSessionParamsPrivate;
 class MediaSessionParams : public CallSessionParams {
 	friend class MediaSession;
 	friend class MediaSessionPrivate;
+	friend class MS2Stream;
+	friend class MS2AudioStream;
+	friend class MS2VideoStream;
+	friend class MS2RTTStream;
 
 public:
 	MediaSessionParams ();
@@ -47,7 +51,7 @@ public:
 
 	MediaSessionParams &operator= (const MediaSessionParams &other);
 
-	void initDefault (const std::shared_ptr<Core> &core) override;
+	void initDefault (const std::shared_ptr<Core> &core, LinphoneCallDir dir) override;
 
 	bool audioEnabled () const;
 	bool audioMulticastEnabled () const;
@@ -109,6 +113,9 @@ public:
 	void addCustomSdpMediaAttribute (LinphoneStreamType lst, const std::string &attributeName, const std::string &attributeValue);
 	void clearCustomSdpMediaAttributes (LinphoneStreamType lst);
 	const char * getCustomSdpMediaAttribute (LinphoneStreamType lst, const std::string &attributeName) const;
+	
+	void enableRtpBundle(bool value);
+	bool rtpBundleEnabled()const;
 
 private:
 	L_DECLARE_PRIVATE(MediaSessionParams);
