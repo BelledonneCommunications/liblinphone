@@ -588,8 +588,8 @@ void MediaSessionPrivate::setRemoteParams (MediaSessionParams *msp) {
 	remoteParams = msp;
 }
 
-MediaStream *MediaSessionPrivate::getMediaStream (LinphoneStreamType type) const {
-	return getMediaStream(int(type));
+MediaStream *MediaSessionPrivate::getMediaStream(LinphoneStreamType type) const {
+	return getMediaStreamAtIndex(getStreamIndex(type));
 }
 
 int MediaSessionPrivate::getRtcpPort (LinphoneStreamType type) const  {
@@ -615,7 +615,19 @@ LinphoneCallStats * MediaSessionPrivate::getStats (LinphoneStreamType type) cons
 }
 
 int MediaSessionPrivate::getStreamIndex (LinphoneStreamType type) const {
-	return getStreamIndex(getMediaStream(type));
+	switch (type) {
+		case LinphoneStreamTypeAudio:
+			return mainAudioStreamIndex;
+		case LinphoneStreamTypeVideo:
+			return mainVideoStreamIndex;
+		case LinphoneStreamTypeText:
+			return mainTextStreamIndex;
+		case LinphoneStreamTypeUnknown:
+		default:
+		break;
+	}
+	lError() << "No stream index for stream type " << type;
+	return -1;
 }
 
 int MediaSessionPrivate::getStreamIndex (MediaStream *ms) const {
@@ -893,106 +905,30 @@ void MediaSessionPrivate::setState (CallSession::State newState, const string &m
 
 // -----------------------------------------------------------------------------
 
-void MediaSessionPrivate::computeStreamsIndexes (const SalMediaDescription *md) {
-	bool audioFound = false;
-	bool videoFound = false;
-	bool textFound = false;
-	for (int i = 0; i < md->nb_streams; i++) {
-		if (md->streams[i].type == SalAudio) {
-			if (audioFound)
-				lInfo() << "audio stream index found: " << i << ", but main audio stream already set to " << mainAudioStreamIndex;
-			else {
-				mainAudioStreamIndex = i;
-				audioFound = true;
-				lInfo() << "audio stream index found: " << i << ", updating main audio stream index";
-			}
-			/* Check that the default value of a another stream doesn't match the new one */
-			if (i == mainVideoStreamIndex) {
-				for (int j = 0; j < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; j++) {
-					if (sal_stream_description_active(&md->streams[j]))
-						continue;
-					if ((j != mainVideoStreamIndex) && (j != mainTextStreamIndex)) {
-						lInfo() << i << " was used for video stream ; now using " << j;
-						mainVideoStreamIndex = j;
-						break;
-					}
-				}
-			}
-			if (i == mainTextStreamIndex) {
-				for (int j = 0; j < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; j++) {
-					if (sal_stream_description_active(&md->streams[j]))
-						continue;
-					if ((j != mainVideoStreamIndex) && (j != mainTextStreamIndex)) {
-						lInfo() << i << " was used for text stream ; now using " << j;
-						mainTextStreamIndex = j;
-						break;
-					}
-				}
-			}
-		} else if (md->streams[i].type == SalVideo) {
-			if (videoFound)
-				lInfo() << "video stream index found: " << i << ", but main video stream already set to " << mainVideoStreamIndex;
-			else {
-				mainVideoStreamIndex = i;
-				videoFound = true;
-				lInfo() << "video stream index found: " << i << ", updating main video stream index";
-			}
-			/* Check that the default value of a another stream doesn't match the new one */
-			if (i == mainAudioStreamIndex) {
-				for (int j = 0; j < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; j++) {
-					if (sal_stream_description_active(&md->streams[j]))
-						continue;
-					if ((j != mainAudioStreamIndex) && (j != mainTextStreamIndex)) {
-						lInfo() << i << " was used for audio stream ; now using " << j;
-						mainAudioStreamIndex = j;
-						break;
-					}
-				}
-			}
-			if (i == mainTextStreamIndex) {
-				for (int j = 0; j < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; j++) {
-					if (sal_stream_description_active(&md->streams[j]))
-						continue;
-					if ((j != mainAudioStreamIndex) && (j != mainTextStreamIndex)) {
-						lInfo() << i << " was used for text stream ; now using " << j;
-						mainTextStreamIndex = j;
-						break;
-					}
-				}
-			}
-		} else if (md->streams[i].type == SalText) {
-			if (textFound)
-				lInfo() << "text stream index found: " << i << ", but main text stream already set to " << mainTextStreamIndex;
-			else {
-				mainTextStreamIndex = i;
-				textFound = true;
-				lInfo() << "text stream index found: " << i << ", updating main text stream index";
-			}
-			/* Check that the default value of a another stream doesn't match the new one */
-			if (i == mainAudioStreamIndex) {
-				for (int j = 0; j < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; j++) {
-					if (sal_stream_description_active(&md->streams[j]))
-						continue;
-					if ((j != mainVideoStreamIndex) && (j != mainAudioStreamIndex)) {
-						lInfo() << i << " was used for audio stream ; now using " << j;
-						mainAudioStreamIndex = j;
-						break;
-					}
-				}
-			}
-			if (i == mainVideoStreamIndex) {
-				for (int j = 0; j < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; j++) {
-					if (sal_stream_description_active(&md->streams[j]))
-						continue;
-					if ((j != mainVideoStreamIndex) && (j != mainAudioStreamIndex)) {
-						lInfo() << i << " was used for video stream ; now using " << j;
-						mainVideoStreamIndex = j;
-						break;
-					}
-				}
-			}
-		}
+
+int MediaSessionPrivate::getFirstActiveStreamWithType(const SalMediaDescription *md, SalStreamType type){
+	int i;
+	for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; ++i) {
+		if (!sal_stream_description_active(&md->streams[i])) continue;
+		if (md->streams[i].type == type) return i;
 	}
+	return -1;
+}
+
+void MediaSessionPrivate::computeStreamsIndexes (const SalMediaDescription *md) {
+	int freeIndex = md->nb_streams;
+	
+	mainAudioStreamIndex = getFirstActiveStreamWithType(md, SalAudio);
+	if (mainAudioStreamIndex == -1) mainAudioStreamIndex = freeIndex++;
+	
+	mainVideoStreamIndex = getFirstActiveStreamWithType(md, SalVideo);
+	if (mainVideoStreamIndex == -1) mainVideoStreamIndex = freeIndex++;
+	
+	mainTextStreamIndex = getFirstActiveStreamWithType(md, SalText);
+	if (mainTextStreamIndex == -1) mainTextStreamIndex = freeIndex++;
+	
+	lInfo() << "Stream indexes: mainAudioStreamIndex=" << mainAudioStreamIndex <<
+		", mainVideoStreamIndex=" << mainVideoStreamIndex << ", mainTextStreamIndex=" << mainTextStreamIndex;
 }
 
 /*
@@ -1177,7 +1113,7 @@ unsigned int MediaSessionPrivate::getTextStartCount () const {
 	return textStartCount;
 }
 
-MediaStream *MediaSessionPrivate::getMediaStream (int streamIndex) const {
+MediaStream *MediaSessionPrivate::getMediaStreamAtIndex (int streamIndex) const {
 	if (streamIndex == mainAudioStreamIndex)
 		return audioStream ? &audioStream->ms : nullptr;
 	if (streamIndex == mainVideoStreamIndex)
@@ -2599,7 +2535,7 @@ void MediaSessionPrivate::handleIceEvents (OrtpEvent *ev) {
 void MediaSessionPrivate::handleStreamEvents (int streamIndex) {
 	L_Q();
 
-	MediaStream *ms = getMediaStream(streamIndex);
+	MediaStream *ms = getMediaStreamAtIndex(streamIndex);
 	if (ms) {
 		/* Ensure there is no dangling ICE check list */
 		if (!iceAgent->hasSession())
@@ -2650,7 +2586,7 @@ void MediaSessionPrivate::handleStreamEvents (int streamIndex) {
 
 		/* And yes the MediaStream must be taken at each iteration, because it may have changed due to the handling of events
 		 * in this loop*/
-		ms = getMediaStream(streamIndex);
+		ms = getMediaStreamAtIndex(streamIndex);
 		if (ms)
 			linphone_call_stats_fill(stats, ms, ev);
 		notifyStatsUpdated(streamIndex);
