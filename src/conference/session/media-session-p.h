@@ -137,8 +137,9 @@ private:
 	std::shared_ptr<Participant> getMe () const;
 	void setState (CallSession::State newState, const std::string &message) override;
 
-	void computeStreamsIndexes (const SalMediaDescription *md);
-	int getFirstActiveStreamWithType(const SalMediaDescription *md, SalStreamType type);
+	void assignStreamsIndexesIncoming(const SalMediaDescription *md);
+	void assignStreamsIndexesOutgoing();
+	int getFirstStreamWithType(const SalMediaDescription *md, SalStreamType type);
 	void fixCallParams (SalMediaDescription *rmd);
 	void initializeParamsAccordingToIncomingCallParams () override;
 	void setCompatibleIncomingCallParams (SalMediaDescription *md);
@@ -301,14 +302,14 @@ private:
 	LinphoneCallStats *audioStats = nullptr;
 	RtpProfile *audioProfile = nullptr;
 	RtpProfile *rtpIoAudioProfile = nullptr;
-	int mainAudioStreamIndex = LINPHONE_CALL_STATS_AUDIO;
+	int mainAudioStreamIndex = -1;
 
 	VideoStream *videoStream = nullptr;
 	OrtpEvQueue *videoStreamEvQueue = nullptr;
 	LinphoneCallStats *videoStats = nullptr;
 	RtpProfile *rtpIoVideoProfile = nullptr;
 	RtpProfile *videoProfile = nullptr;
-	int mainVideoStreamIndex = LINPHONE_CALL_STATS_VIDEO;
+	int mainVideoStreamIndex = -1;
 	void *videoWindowId = nullptr;
 	bool cameraEnabled = true;
 
@@ -316,7 +317,7 @@ private:
 	OrtpEvQueue *textStreamEvQueue = nullptr;
 	LinphoneCallStats *textStats = nullptr;
 	RtpProfile *textProfile = nullptr;
-	int mainTextStreamIndex = LINPHONE_CALL_STATS_TEXT;
+	int mainTextStreamIndex = -1;
 
 	LinphoneNatPolicy *natPolicy = nullptr;
 	std::unique_ptr<StunClient> stunClient;
