@@ -38,23 +38,23 @@ LINPHONE_BEGIN_NAMESPACE
 ChatMessageKiller::ChatMessageKiller (double duration, MainDbEventKey dbKey, const ConferenceId &conferenceId): duration(duration), dbKey(dbKey), conferenceId(conferenceId) {
 	timer = nullptr;
 	bgTask.setName("ephemeral message timeout");
+	start = false;
+	chatMessage = nullptr;
 }
 
 ChatMessageKiller::ChatMessageKiller (MainDbEventKey dbKey, const ConferenceId &conferenceId) : ChatMessageKiller(86400, dbKey, conferenceId) {
+}
+
+ChatMessageKiller::~ChatMessageKiller () {
+	uninitTimer();
+	chatMessage = nullptr;
 }
 // -----------------------------------------------------------------------------
 int ChatMessageKiller::timerExpired (void *data, unsigned int revents) {
 	ChatMessageKiller *d = static_cast<ChatMessageKiller *>(data);
 	
 	// stop timer
-	if (d->timer) {
-		auto core = d->dbKey.getPrivate()->core.lock()->getCCore();
-		if (core && core->sal)
-			core->sal->cancelTimer(d->timer);
-		belle_sip_object_unref(d->timer);
-		d->timer = nullptr;
-	}
-	d->bgTask.stop();
+	d->uninitTimer();
 	
 	// delete message in database for ephemral messag
 	shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(d->dbKey);
@@ -103,6 +103,25 @@ void ChatMessageKiller::setDuration(double time) {
 
 void ChatMessageKiller::setChatMessage (const shared_ptr<ChatMessage> &message) {
 	chatMessage = message;
+}
+
+void ChatMessageKiller::setStart() {
+	start = TRUE;
+}
+
+bool_t ChatMessageKiller::getStart() {
+	return start;
+}
+
+void ChatMessageKiller::uninitTimer() {
+	if (timer) {
+		auto core = dbKey.getPrivate()->core.lock()->getCCore();
+		if (core && core->sal)
+			core->sal->cancelTimer(timer);
+		belle_sip_object_unref(timer);
+		timer = nullptr;
+	}
+	bgTask.stop();
 }
 
 LINPHONE_END_NAMESPACE

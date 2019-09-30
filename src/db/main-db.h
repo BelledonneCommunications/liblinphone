@@ -105,7 +105,7 @@ public:
 
 	void markChatMessagesAsRead (const ConferenceId &conferenceId) const;
 	std::list<std::shared_ptr<ChatMessage>> getUnreadChatMessages (const ConferenceId &conferenceId) const;
-	void setChatMessagesEphemeralStartTime (const ConferenceId &conferenceId, time_t &time) const;
+	void setChatMessagesEphemeralStartTime (const long long &eventId, time_t &time) const;
 
 	std::list<ParticipantState> getChatMessageParticipantsByImdnState (
 		const std::shared_ptr<EventLog> &eventLog,
@@ -123,7 +123,7 @@ public:
 		time_t stateChangeTime
 	);
 	
-	void updateEphemeralMessageKillers (std::unordered_map<MainDbEventKey, std::shared_ptr<ChatMessageKiller>> &messageKillers);
+	std::unordered_map<MainDbEventKey, std::shared_ptr<ChatMessageKiller>> getEphemeralMessageKillers () const;
 
 	std::shared_ptr<ChatMessage> getLastChatMessage (const ConferenceId &conferenceId) const;
 

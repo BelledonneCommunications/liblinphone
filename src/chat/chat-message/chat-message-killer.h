@@ -39,12 +39,16 @@ class ChatMessageKiller {
 public:
 	explicit ChatMessageKiller (MainDbEventKey dbKey, const ConferenceId &conferenceId);
 	explicit ChatMessageKiller (double duration, MainDbEventKey dbKey, const ConferenceId &conferenceId);
+	~ChatMessageKiller ();
 	
 	static int timerExpired (void *data, unsigned int revents);
 	
 	void startTimer ();
 	void setDuration (double time);
 	void setChatMessage(const std::shared_ptr<ChatMessage> &message);
+	void uninitTimer ();
+	void setStart ();
+	bool_t getStart ();
 
 private:
 	belle_sip_source_t *timer;
@@ -53,6 +57,7 @@ private:
 	MainDbEventKey dbKey;
 	ConferenceId conferenceId;
 	std::shared_ptr<ChatMessage> chatMessage;
+	bool_t start;
 };
 
 LINPHONE_END_NAMESPACE

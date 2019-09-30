@@ -348,9 +348,13 @@ void CorePrivate::loadChatRooms () {
 	sendDeliveryNotifications();
 }
 
-void CorePrivate::initMessageKillers () {
-	if (!mainDb->isInitialized()) return;
-	mainDb->updateEphemeralMessageKillers(messageKillers);
+void CorePrivate::startMessageKillers () {
+	for (auto it=messageKillers.begin(); it!=messageKillers.end(); ++it) {
+		shared_ptr<ChatMessageKiller> killer = it->second;
+		if (killer->getStart()) {
+			killer->startTimer();
+		}
+	}
 }
 
 void CorePrivate::sendDeliveryNotifications () {

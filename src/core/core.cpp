@@ -96,7 +96,9 @@ void CorePrivate::init () {
 			}
 
 			loadChatRooms();
-			initMessageKillers();
+			// load messageKillers
+			if (mainDb->isInitialized())
+			messageKillers = mainDb->getEphemeralMessageKillers();
 		} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
 	}
 
@@ -119,6 +121,7 @@ void CorePrivate::uninit () {
 		ms_usleep(10000);
 	}
 
+	messageKillers.clear();
 	chatRoomsById.clear();
 	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();
@@ -226,6 +229,12 @@ shared_ptr<ChatMessageKiller> CorePrivate::getMessageKiller(shared_ptr<ChatMessa
 		messageKillers[key] = killer;
 		return killer;
 	} else {
+		shared_ptr<ChatMessageKiller> killer = it->second;
+		LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(L_GET_C_BACK_PTR(message));
+		if (cbs && linphone_chat_message_cbs_get_message_killer_started(cbs)) {
+			killer->setChatMessage(message);
+			messageKillers[key] = killer;
+		}
 		return it->second;
 	}
 }

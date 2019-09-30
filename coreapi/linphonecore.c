@@ -2564,6 +2564,8 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 		} else {
 			linphone_configuring_terminated(lc, LinphoneConfiguringSkipped, NULL);
 		}
+		
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->startMessageKillers();
 
 		return 0;
 	} catch (const CorePrivate::DatabaseConnectionFailure &e) {

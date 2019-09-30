@@ -2408,20 +2408,16 @@ void MainDb::markChatMessagesAsRead (const ConferenceId &conferenceId) const {
 #endif
 }
 
-void MainDb::setChatMessagesEphemeralStartTime (const ConferenceId &conferenceId, time_t &time) const {
+void MainDb::setChatMessagesEphemeralStartTime (const long long &eventId, time_t &time) const {
 #ifdef HAVE_DB_STORAGE
 	static const string query = "UPDATE chat_message_ephemeral_event"
 	"  SET start_time = :startTime"
-	"  WHERE event_id IN ("
-	"    SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId"
-	")";
+	"  WHERE event_id = :eventId";
 	
 	L_DB_TRANSACTION {
 		L_D();
 		const tm &startTime = Utils::getTimeTAsTm(time);
-		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
-		*d->dbSession.getBackendSession() << query, soci::use(dbChatRoomId), soci::use(startTime);
-		
+		*d->dbSession.getBackendSession() << query, soci::use(startTime),soci::use(eventId);
 		tr.commit();
 	};
 #endif
@@ -2468,17 +2464,17 @@ list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ConferenceId 
 #endif
 }
 
-void MainDb::updateEphemeralMessageKillers (std::unordered_map<MainDbEventKey, std::shared_ptr<ChatMessageKiller>> &messageKillers) {
+std::unordered_map<MainDbEventKey, std::shared_ptr<ChatMessageKiller>> MainDb::getEphemeralMessageKillers () const {
 #ifdef HAVE_DB_STORAGE
-	L_DB_TRANSACTION {
+	return L_DB_TRANSACTION {
 		L_D();
-		messageKillers.clear();
+		std::unordered_map<MainDbEventKey, std::shared_ptr<ChatMessageKiller>> messageKillers;
 
 		soci::rowset<soci::row> ephemeralMessages = (d->dbSession.getBackendSession()->prepare << "SELECT event_id, ephemeral_time, start_time FROM chat_message_ephemeral_event");
 
 		for (const auto &row : ephemeralMessages) {
 			const long long &eventId = d->dbSession.resolveId(row, 0);
-			const double &ephemeralTime = row.get<long>(1);
+			const double &ephemeralTime = row.get<double>(1);
 			const time_t &startTime = d->dbSession.getTime(row, 2);
 
 			soci::row rowf;
@@ -2494,10 +2490,14 @@ void MainDb::updateEphemeralMessageKillers (std::unordered_map<MainDbEventKey, s
 				// startTimer for delete ephemeral messages. If expired, set duration time 0.05s
 				double duration = difftime(ms_time(0), startTime) > ephemeralTime ? 0.05 : difftime(ms_time(0), startTime);
 				killer->setDuration(duration);
-				killer->startTimer();
+				killer->setStart();
+				messageKillers[key] = killer;
 			}
 		}
+		return messageKillers;
 	};
+#else
+	return NULL;
 #endif
 }
 

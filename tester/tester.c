@@ -1055,7 +1055,6 @@ void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMess
 		linphone_chat_message_cbs_set_message_killer_started(msgCbs, liblinphone_tester_chat_message_msg_killer_started);
 		linphone_chat_message_cbs_set_message_killer_finished(msgCbs, liblinphone_tester_chat_message_msg_killer_finished);
 		linphone_chat_message_configure_message_killer(msg);
-		ms_message("[TEST] incoming message");
 	}
 	
 	char* from=linphone_address_as_string(linphone_chat_message_get_from_address(msg));

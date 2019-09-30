@@ -75,7 +75,7 @@ public:
 	void setPlaybackGainDb (AudioStream *stream, float gain);
 
 	void loadChatRooms ();
-	void initMessageKillers ();
+	void startMessageKillers ();
 	void startKillerWithMessage(MainDbEventKey key, double duration);
 	void sendDeliveryNotifications ();
 	void insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);

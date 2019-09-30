@@ -212,7 +212,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	if (isEphemeral && (state == ChatMessage::State::Displayed)) {
 		// set ephemeral start time
 		ephemeralStartTime = ::ms_time(NULL);
-		q->getChatRoom()->getCore()->getPrivate()->mainDb->setChatMessagesEphemeralStartTime(q->getChatRoom()->getConferenceId(), ephemeralStartTime);
+		q->getChatRoom()->getCore()->getPrivate()->mainDb->setChatMessagesEphemeralStartTime(dbKey.getStorageId(), ephemeralStartTime);
 
 		// start chat message killer for this message
 		shared_ptr<ChatMessageKiller> killer = q->getChatRoom()->getCore()->getPrivate()->getMessageKiller(q->getSharedFromThis());

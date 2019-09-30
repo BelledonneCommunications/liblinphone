@@ -182,6 +182,27 @@ void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, Lin
 	}
 }
 
+void core_global_state_changed (LinphoneCore *lc, LinphoneGlobalState gstate, const char *message) {
+	if (gstate == LinphoneGlobalConfiguring) {
+		const bctbx_list_t *chatRooms = linphone_core_get_chat_rooms(lc);
+		for (const bctbx_list_t *f = chatRooms ; f ; f = bctbx_list_next(f)) {
+			LinphoneChatRoom *room = (LinphoneChatRoom*)(f->data);
+			bctbx_list_t *history = linphone_chat_room_get_history(room, 0);
+			for (bctbx_list_t *item = history; item; item = bctbx_list_next(item)) {
+				LinphoneChatMessage *msg = (LinphoneChatMessage *)bctbx_list_get_data(item);
+				if (!!linphone_chat_message_is_ephemeral(msg)) {
+					LinphoneChatMessageCbs *msgCbs = linphone_chat_message_get_callbacks(msg);
+					linphone_chat_message_cbs_set_message_killer_started(msgCbs, liblinphone_tester_chat_message_msg_killer_started);
+					linphone_chat_message_cbs_set_message_killer_finished(msgCbs, liblinphone_tester_chat_message_msg_killer_finished);
+					linphone_chat_message_add_callbacks(msg, msgCbs);
+					linphone_chat_message_configure_message_killer(msg);
+				}
+			}
+			bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
+		}
+	}
+}
+
 void configure_core_for_conference (LinphoneCore *core, const char* username, const LinphoneAddress *factoryAddr, bool_t server) {
 	const char *identity = linphone_core_get_identity(core);
 	const char *new_username;
@@ -310,13 +331,15 @@ void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, 
 }
 
 // Configure list of core manager for conference and add the listener
-bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList) {
+bctbx_list_t * init_core_for_conference_ephemeral(bctbx_list_t *coreManagerList, bool_t ephemeralTest) {
 	LinphoneAddress *factoryAddr = linphone_address_new(sFactoryUri);
 	bctbx_list_for_each2(coreManagerList, (void (*)(void *, void *))_configure_core_for_conference, (void *) factoryAddr);
 	linphone_address_unref(factoryAddr);
 
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
+	if (ephemeralTest)
+		linphone_core_cbs_set_global_state_changed(cbs, core_global_state_changed);
 	bctbx_list_for_each2(coreManagerList, (void (*)(void *, void *))configure_core_for_callbacks, (void *) cbs);
 	linphone_core_cbs_unref(cbs);
 
@@ -325,6 +348,10 @@ bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList) {
 	for (item = coreManagerList; item; item = bctbx_list_next(item))
 		coresList = bctbx_list_append(coresList, ((LinphoneCoreManager *)(bctbx_list_get_data(item)))->lc);
 	return coresList;
+}
+
+bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList) {
+	return init_core_for_conference_ephemeral(coreManagerList, FALSE);
 }
 
  void start_core_for_conference(bctbx_list_t *coreManagerList) {
