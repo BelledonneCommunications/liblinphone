@@ -168,7 +168,6 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 		cfg->idkey = ms_strdup(idkey);
 	} else {
 		cfg->idkey = generate_proxy_config_id();
-		ms_warning("generated proxyconfig idkey = [%s]", cfg->idkey);
 	}
 
 	linphone_proxy_config_set_conference_factory_uri(cfg, conference_factory_uri ? ms_strdup(conference_factory_uri) : NULL);
