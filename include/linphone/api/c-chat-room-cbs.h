@@ -272,6 +272,34 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsConferenceLeftCb linphone_chat_room_cbs_get_c
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_conference_left (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceLeftCb cb);
 
 /**
+ * Get the ephemeral message read callback.
+ * @param[in] cbs LinphoneChatRoomCbs object.
+ * @return The current ephemeral message read callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsEphemeralMessageReadCb linphone_chat_room_cbs_get_ephemeral_message_read (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the ephemeral message read callback.
+ * @param[in] cbs LinphoneChatRoomCbs object.
+ * @param[in] cb The ephemeral message read callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_ephemeral_message_read (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageReadCb cb);
+
+/**
+ * Get the ephemeral message deleted callback.
+ * @param[in] cbs LinphoneChatRoomCbs object.
+ * @return The current ephemeral message deleted callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsEphemeralMessageDeletedCb linphone_chat_room_cbs_get_ephemeral_message_deleted (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the ephemeral message deleted callback.
+ * @param[in] cbs LinphoneChatRoomCbs object.
+ * @param[in] cb The ephemeral message deleted callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_ephemeral_message_deleted (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageDeletedCb cb);
+
+/**
  * Get the conference address generation callback.
  * @param[in] cbs #LinphoneChatRoomCbs object
  * @return The current conference address generation callback

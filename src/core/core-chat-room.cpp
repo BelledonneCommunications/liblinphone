@@ -40,6 +40,8 @@
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
 
+#include "chat/chat-message/chat-message-p.h"
+
 // =============================================================================
 
 using namespace std;
@@ -346,6 +348,39 @@ void CorePrivate::loadChatRooms () {
 		insertChatRoom(chatRoom);
 	}
 	sendDeliveryNotifications();
+}
+
+void CorePrivate::handleEphemeralMessages (time_t currentTime) {
+	if (!ephemeralMessages.empty()) {
+		shared_ptr<ChatMessage> msg = ephemeralMessages.front();
+		time_t expiredTime = msg->getEphemeralExpiredTime();
+		if (expiredTime > 0 && currentTime > expiredTime) {
+			shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(msg->getPrivate()->dbKey);
+			shared_ptr<AbstractChatRoom> chatRoom = msg->getChatRoom();
+			if (chatRoom && event) {
+				// notify ephemeral message deleted
+				_linphone_chat_room_notify_ephemeral_message_deleted(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
+
+				LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(L_GET_C_BACK_PTR(msg));
+				if (cbs && linphone_chat_message_cbs_get_ephemeral_message_deleted(cbs))
+					linphone_chat_message_cbs_get_ephemeral_message_deleted(cbs)(L_GET_C_BACK_PTR(msg));
+				_linphone_chat_message_notify_ephemeral_message_deleted(L_GET_C_BACK_PTR(msg));
+
+				// delete expired ephemeral message
+				LinphonePrivate::EventLog::deleteFromDatabase(event);
+
+				ephemeralMessages.pop_front();
+				handleEphemeralMessages(currentTime);
+			}
+		}
+	} else {
+		initEphemeralMessages();
+	}
+}
+
+void CorePrivate::initEphemeralMessages () {
+	if (mainDb && mainDb->isInitialized())
+		ephemeralMessages = mainDb->getEphemeralMessages();
 }
 
 void CorePrivate::sendDeliveryNotifications () {

@@ -74,6 +74,8 @@ public:
 	void setPlaybackGainDb (AudioStream *stream, float gain);
 
 	void loadChatRooms ();
+	void handleEphemeralMessages (time_t currentTime);
+	void initEphemeralMessages ();
 	void sendDeliveryNotifications ();
 	void insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
 	void insertChatRoomWithDb (const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
@@ -141,6 +143,8 @@ private:
 	// This is to keep a ref on a clientGroupChatRoom while it is being created
 	// Otherwise the chatRoom will be freed() before it is inserted
 	std::unordered_map<const AbstractChatRoom *, std::shared_ptr<const AbstractChatRoom>> noCreatedClientGroupChatRooms;
+
+	std::list<std::shared_ptr<ChatMessage>> ephemeralMessages;
 
 	L_DECLARE_PUBLIC(Core);
 };

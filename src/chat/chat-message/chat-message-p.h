@@ -83,6 +83,10 @@ public:
 	
 	void setForwardInfo (const std::string &fInfo);
 
+	void enableEphemeralWithTime (double time);
+
+	void setEphemeralExpiredTime (time_t expiredTime);
+
 	void setAuthenticatedFromAddress (const IdentityAddress &authenticatedFromAddress) {
 		this->authenticatedFromAddress = authenticatedFromAddress;
 	}
@@ -254,6 +258,10 @@ private:
 	ChatMessage::State state = ChatMessage::State::Idle;
 	ChatMessage::Direction direction = ChatMessage::Direction::Incoming;
 	std::string forwardInfo;
+
+	bool isEphemeral = false;
+	double ephemeralTime = 86400; // 24h
+	time_t ephemeralExpiredTime = 0;
 
 	std::list<Content *> contents;
 

@@ -45,6 +45,8 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb participantRegistrationSubscriptionRequestedCb;
 	LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequestedCb participantRegistrationUnsubscriptionRequestedCb;
 	LinphoneChatRoomCbsShouldChatMessageBeStoredCb shouldMessageBeStoredCb;
+	LinphoneChatRoomCbsEphemeralMessageReadCb ephemeralMessageReadCb;
+	LinphoneChatRoomCbsEphemeralMessageDeletedCb ephemeralMessageDeletedCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatRoomCbs);
@@ -199,6 +201,22 @@ LinphoneChatRoomCbsConferenceLeftCb linphone_chat_room_cbs_get_conference_left (
 
 void linphone_chat_room_cbs_set_conference_left (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceLeftCb cb) {
 	cbs->conferenceLeftCb = cb;
+}
+
+LinphoneChatRoomCbsEphemeralMessageReadCb linphone_chat_room_cbs_get_ephemeral_message_read (const LinphoneChatRoomCbs *cbs) {
+	return cbs->ephemeralMessageReadCb;
+}
+
+void linphone_chat_room_cbs_set_ephemeral_message_read (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageReadCb cb) {
+	cbs->ephemeralMessageReadCb = cb;
+}
+
+LinphoneChatRoomCbsEphemeralMessageDeletedCb linphone_chat_room_cbs_get_ephemeral_message_deleted (const LinphoneChatRoomCbs *cbs) {
+	return cbs->ephemeralMessageDeletedCb;
+}
+
+void linphone_chat_room_cbs_set_ephemeral_message_deleted (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageDeletedCb cb) {
+	cbs->ephemeralMessageDeletedCb = cb;
 }
 
 LinphoneChatRoomCbsConferenceAddressGenerationCb linphone_chat_room_cbs_get_conference_address_generation (const LinphoneChatRoomCbs *cbs) {

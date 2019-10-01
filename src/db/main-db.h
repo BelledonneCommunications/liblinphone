@@ -102,6 +102,7 @@ public:
 
 	void markChatMessagesAsRead (const ConferenceId &conferenceId) const;
 	std::list<std::shared_ptr<ChatMessage>> getUnreadChatMessages (const ConferenceId &conferenceId) const;
+	void updateEphemeralMessageInfos (const long long &eventId, const time_t &eTime) const;
 
 	std::list<ParticipantState> getChatMessageParticipantsByImdnState (
 		const std::shared_ptr<EventLog> &eventLog,
@@ -118,6 +119,8 @@ public:
 		ChatMessage::State state,
 		time_t stateChangeTime
 	);
+	
+	std::list<std::shared_ptr<ChatMessage>> getEphemeralMessages () const;
 
 	bool isChatRoomEmpty (const ConferenceId &conferenceId) const;
 	std::shared_ptr<ChatMessage> getLastChatMessage (const ConferenceId &conferenceId) const;

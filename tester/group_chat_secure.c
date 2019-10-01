@@ -2856,6 +2856,186 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message(v
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+
+static void set_ephemeral_cbs (LinphoneChatRoom *room) {
+	bctbx_list_t *history = linphone_chat_room_get_history(room, 0);
+	for (bctbx_list_t *item = history; item; item = bctbx_list_next(item)) {
+		LinphoneChatMessage *msg = (LinphoneChatMessage *)bctbx_list_get_data(item);
+		if (linphone_chat_message_is_ephemeral(msg)) {
+			LinphoneChatMessageCbs *msgCbs = linphone_chat_message_get_callbacks(msg);
+			linphone_chat_message_cbs_set_ephemeral_message_read(msgCbs, liblinphone_tester_chat_message_ephemeral_read);
+			linphone_chat_message_cbs_set_ephemeral_message_deleted(msgCbs, liblinphone_tester_chat_message_ephemeral_deleted);
+			linphone_chat_message_add_callbacks(msg, msgCbs);
+		}
+		
+		bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
+	}
+}
+
+static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t expired) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	int dummy = 0;
+	int size;
+	
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+	
+	// Enable IMDN
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
+	
+	// Wait for lime users to be created on X3DH server
+	wait_for_list(coresList, &dummy, 1, x3dhServerDelay);
+	
+	// Check encryption status for both participants
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	
+	// Marie creates a new group chat room
+	const char *initialSubject = "Friends";
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, encrypted);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+	
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+
+	LinphoneChatMessage *message[10];
+	if (remained) {
+		linphone_chat_room_enable_ephemeral(marieCr, TRUE);
+		linphone_chat_room_set_ephemeral_time(marieCr, 60);
+		
+		// Marie sends messages
+		for (int i=0; i<10; i++) {
+			message[i] = _send_message_ephemeral(marieCr, "Hello", TRUE);
+		}
+	}
+
+	// Marie disable ephemeral in the group chat room
+	linphone_chat_room_enable_ephemeral(marieCr, FALSE);
+	LinphoneChatMessage *messageNormal = _send_message(marieCr, "See you later");
+	
+	LinphoneChatMessage *messagef[10];
+	linphone_chat_room_enable_ephemeral(marieCr, TRUE);
+	linphone_chat_room_set_ephemeral_time(marieCr, 1);
+	// Marie sends messages
+	for (int i=0; i<10; i++) {
+		messagef[i] = _send_message_ephemeral(marieCr, "This is Marie", TRUE);
+	}
+	
+	size = remained ? 20 : 10;
+
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + size+1, 3000));
+	
+	set_ephemeral_cbs(paulineCr);
+	
+	// Check that the message has been delivered to Pauline
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDeliveredToUser, initialMarieStats.number_of_LinphoneMessageDeliveredToUser + size+1, 3000));
+	
+	// Pauline  marks the message as read, check that the state is now displayed on Marie's side
+	linphone_chat_room_mark_as_read(paulineCr);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDisplayed, initialMarieStats.number_of_LinphoneMessageDisplayed + size+1, 3000));
+	
+	if (encrypted) {
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralRead, initialMarieStats.number_of_LinphoneChatRoomEphemeralRead + size, 3000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomEphemeralRead, initialPaulineStats.number_of_LinphoneChatRoomEphemeralRead + size, 3000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageEphemeralRead, initialMarieStats.number_of_LinphoneMessageEphemeralRead + size, 3000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageEphemeralRead, initialPaulineStats.number_of_LinphoneMessageEphemeralRead + size, 3000));
+		
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralDeleted, initialMarieStats.number_of_LinphoneChatRoomEphemeralDeleted + 10, 3000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomEphemeralDeleted, initialPaulineStats.number_of_LinphoneChatRoomEphemeralDeleted + 10, 3000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageEphemeralDeleted, initialMarieStats.number_of_LinphoneMessageEphemeralDeleted + 10, 3000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageEphemeralDeleted, initialPaulineStats.number_of_LinphoneMessageEphemeralDeleted + 10, 3000));
+	}
+	wait_for_list(coresList, NULL, 1, 10000);
+	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), size-10, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), size-10, int, "%d");
+	if (remained) {
+		LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(paulineCr);
+		if (BC_ASSERT_PTR_NOT_NULL(msg)) {
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(msg), "See you later");
+			linphone_chat_message_unref(msg);
+		}
+	}
+	
+	if (remained) {
+		// To simulate dialog removal
+		LinphoneAddress *paulineAddr = linphone_address_clone(linphone_chat_room_get_peer_address(paulineCr));
+		linphone_core_set_network_reachable(pauline->lc, FALSE);
+		coresList = bctbx_list_remove(coresList, pauline->lc);
+		linphone_core_manager_reinit(pauline);
+		bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, pauline);
+		bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
+		bctbx_list_free(tmpCoresManagerList);
+		coresList = bctbx_list_concat(coresList, tmpCoresList);
+		if (expired)
+			wait_for_list(coresList, NULL, 0, 60000);
+
+		linphone_core_manager_start(pauline, TRUE);
+		paulineCr = linphone_core_get_chat_room(pauline->lc, paulineAddr);
+		linphone_address_unref(paulineAddr);
+		
+		set_ephemeral_cbs(paulineCr);
+		
+		wait_for_list(coresList, NULL, 1, 60000);
+		
+		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int, "%d");
+		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 1, int, "%d");
+		
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralDeleted, initialMarieStats.number_of_LinphoneChatRoomEphemeralDeleted + 10, 3000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomEphemeralDeleted, initialPaulineStats.number_of_LinphoneChatRoomEphemeralDeleted + 10, 3000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageEphemeralDeleted, initialMarieStats.number_of_LinphoneMessageEphemeralDeleted + 10, 3000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageEphemeralDeleted, initialPaulineStats.number_of_LinphoneMessageEphemeralDeleted + 10, 3000));
+	}
+	
+	// Check chat room security level
+	LinphoneChatRoomSecurityLevel level = encrypted ? LinphoneChatRoomSecurityLevelEncrypted : LinphoneChatRoomSecurityLevelClearText;
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), level, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), level, int, "%d");
+	
+	if (remained) {
+		for (int i=0; i<10; i++) {
+			linphone_chat_message_unref(message[i]);
+		}
+	}
+	for (int i=0; i<10; i++) {
+		linphone_chat_message_unref(messagef[i]);
+	}
+	linphone_chat_message_unref(messageNormal);
+	
+	// Clean db from chat room
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+	
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void encrypted_chat_room_ephemeral_message_test (void) {
+	ephemeral_message_test(TRUE, FALSE, FALSE);
+}
+
+static void unencrypted_chat_room_ephemeral_message_test (void) {
+	ephemeral_message_test(FALSE, FALSE, FALSE);
+}
+
+static void chat_room_remaining_ephemeral_message_test (void) {
+	ephemeral_message_test(TRUE, TRUE, FALSE);
+}
+
+static void chat_room_expired_ephemeral_message_test (void) {
+	ephemeral_message_test(TRUE, TRUE, TRUE);
+}
+
 test_t secure_group_chat_tests[] = {
 	TEST_ONE_TAG("LIME X3DH create lime user", group_chat_lime_x3dh_create_lime_user, "LimeX3DH"),
 	TEST_TWO_TAGS("LIME X3DH change server url", group_chat_lime_x3dh_change_server_url, "LimeX3DH", "LeaksMemory"),
@@ -2887,7 +3067,11 @@ test_t secure_group_chat_tests[] = {
 	TEST_TWO_TAGS("LIME X3DH messages while network unreachable", group_chat_lime_x3dh_message_while_network_unreachable, "LimeX3DH", "LeaksMemory"),
 	TEST_TWO_TAGS("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH", "LeaksMemory"),
 	TEST_ONE_TAG("Imdn", imdn_for_group_chat_room, "LimeX3DH"),
-	TEST_NO_TAG("Lime Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message)
+	TEST_NO_TAG("Lime Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message),
+	TEST_NO_TAG("Unencrypted chat room ephemeral messages", unencrypted_chat_room_ephemeral_message_test),
+	TEST_NO_TAG("Encrypted chat room ephemeral messages", encrypted_chat_room_ephemeral_message_test),
+	TEST_ONE_TAG("Chat room remaining ephemeral messages", chat_room_remaining_ephemeral_message_test,"LeaksMemory"), /*due to core restart*/
+	TEST_ONE_TAG("Chat room expired ephemeral messages", chat_room_expired_ephemeral_message_test,"LeaksMemory") /*due to core restart*/
 };
 
 test_suite_t secure_group_chat_test_suite = {

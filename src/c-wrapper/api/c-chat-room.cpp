@@ -209,6 +209,14 @@ void linphone_chat_room_mark_as_read (LinphoneChatRoom *cr) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->markAsRead();
 }
 
+void linphone_chat_room_enable_ephemeral (LinphoneChatRoom *cr, bool_t ephem) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->enableEphemeral(ephem);
+}
+
+void linphone_chat_room_set_ephemeral_time (LinphoneChatRoom *cr, double time) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setEphemeralTime(time);
+}
+
 int linphone_chat_room_get_unread_messages_count (LinphoneChatRoom *cr) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getUnreadChatMessageCount();
 }
@@ -515,6 +523,14 @@ void _linphone_chat_room_notify_conference_joined(LinphoneChatRoom *cr, const Li
 
 void _linphone_chat_room_notify_conference_left(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
 	NOTIFY_IF_EXIST(ConferenceLeft, conference_left, cr, eventLog)
+}
+
+void _linphone_chat_room_notify_ephemeral_message_read(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
+	NOTIFY_IF_EXIST(EphemeralMessageRead, ephemeral_message_read, cr, eventLog)
+}
+
+void _linphone_chat_room_notify_ephemeral_message_deleted(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
+	NOTIFY_IF_EXIST(EphemeralMessageDeleted, ephemeral_message_deleted, cr, eventLog)
 }
 
 void _linphone_chat_room_notify_undecryptable_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg) {

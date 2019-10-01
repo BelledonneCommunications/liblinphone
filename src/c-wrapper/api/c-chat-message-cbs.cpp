@@ -31,6 +31,8 @@ struct _LinphoneChatMessageCbs {
 	LinphoneChatMessageCbsFileTransferSendCb file_transfer_send;
 	LinphoneChatMessageCbsFileTransferProgressIndicationCb file_transfer_progress_indication;
 	LinphoneChatMessageCbsParticipantImdnStateChangedCb participant_imdn_state_changed;
+	LinphoneChatMessageCbsEphemeralMessageReadCb ephemeral_message_read;
+	LinphoneChatMessageCbsEphemeralMessageDeletedCb ephemeral_message_deleted;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatMessageCbs);
@@ -130,4 +132,30 @@ void linphone_chat_message_cbs_set_participant_imdn_state_changed (
 	LinphoneChatMessageCbsParticipantImdnStateChangedCb cb
 ) {
 	cbs->participant_imdn_state_changed = cb;
+}
+
+LinphoneChatMessageCbsEphemeralMessageReadCb linphone_chat_message_cbs_get_ephemeral_message_read (
+	const LinphoneChatMessageCbs *cbs
+) {
+	return cbs->ephemeral_message_read;
+}
+
+void linphone_chat_message_cbs_set_ephemeral_message_read (
+	LinphoneChatMessageCbs *cbs,
+	LinphoneChatMessageCbsEphemeralMessageReadCb cb
+) {
+	cbs->ephemeral_message_read = cb;
+}
+
+LinphoneChatMessageCbsEphemeralMessageDeletedCb linphone_chat_message_cbs_get_ephemeral_message_deleted (
+	const LinphoneChatMessageCbs *cbs
+) {
+	return cbs->ephemeral_message_deleted;
+}
+
+void linphone_chat_message_cbs_set_ephemeral_message_deleted (
+	LinphoneChatMessageCbs *cbs,
+	LinphoneChatMessageCbsEphemeralMessageDeletedCb cb
+) {
+	cbs->ephemeral_message_deleted = cb;
 }

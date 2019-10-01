@@ -120,6 +120,9 @@ private:
 	bool isComposing = false;
 	bool isEmpty = true;
 
+	bool isEphemeral = false;
+	double ephemeralTime = 86400;  //24 hours = 86400s
+
 	L_DECLARE_PUBLIC(ChatRoom);
 };
 
