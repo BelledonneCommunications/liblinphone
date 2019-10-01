@@ -170,6 +170,18 @@ typedef LinphoneBuffer * (*LinphoneChatMessageCbsFileTransferSendCb)(LinphoneCha
 typedef void (*LinphoneChatMessageCbsFileTransferProgressIndicationCb)(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total);
 
 /**
+ * Call back used to notify ephemeral message is read
+ * @param msg #LinphoneChatMessage object
+ */
+typedef void (*LinphoneChatMessageCbsEphemeralMessageReadCb)(LinphoneChatMessage* msg);
+		
+/**
+ * Call back used to notify ephemeral message is deleted
+ * @param msg #LinphoneChatMessage object
+ */
+typedef void (*LinphoneChatMessageCbsEphemeralMessageDeletedCb)(LinphoneChatMessage* msg);
+
+/**
  * Is composing notification callback prototype.
  * @param[in] cr #LinphoneChatRoom involved in the conversation
  * @param[in] remoteAddr The address that has sent the is-composing notification
@@ -274,6 +286,20 @@ typedef void (*LinphoneChatRoomCbsConferenceJoinedCb) (LinphoneChatRoom *cr, con
  * @param[in] event_log #LinphoneEventLog The event to be notified
  */
 typedef void (*LinphoneChatRoomCbsConferenceLeftCb) (LinphoneChatRoom *cr, const LinphoneEventLog *eventLog);
+
+/**
+ * Callback used to notify a chat room that a ephemeral message is read.
+ * @param[in] cr #LinphoneChatRoom object
+ * @param[in] event_log #LinphoneEventLog The event to be notified
+ */
+typedef void (*LinphoneChatRoomCbsEphemeralMessageReadCb) (LinphoneChatRoom *cr, const LinphoneEventLog *eventLog);
+
+/**
+ * Callback used to notify a chat room that a ephemeral message is deleted.
+ * @param[in] cr #LinphoneChatRoom object
+ * @param[in] event_log #LinphoneEventLog The event to be notified
+ */
+typedef void (*LinphoneChatRoomCbsEphemeralMessageDeletedCb) (LinphoneChatRoom *cr, const LinphoneEventLog *eventLog);
 
 /**
  * Callback used when a group chat room is created server-side to generate the address of the chat room.

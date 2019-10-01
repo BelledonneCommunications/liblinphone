@@ -2569,6 +2569,8 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 			linphone_configuring_terminated(lc, LinphoneConfiguringSkipped, NULL);
 		}
 
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->initEphemeralMessages();
+
 		return 0;
 	} catch (const CorePrivate::DatabaseConnectionFailure &e) {
 		bctbx_error("%s", e.what());
@@ -3605,6 +3607,8 @@ void linphone_core_iterate(LinphoneCore *lc){
 	if (liblinphone_serialize_logs == TRUE) {
 		ortp_logv_flush();
 	}
+
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->handleEphemeralMessages(current_real_time);
 }
 
 LinphoneAddress * linphone_core_interpret_url(LinphoneCore *lc, const char *url){

@@ -134,6 +134,34 @@ LINPHONE_PUBLIC LinphoneChatMessageCbsParticipantImdnStateChangedCb linphone_cha
 LINPHONE_PUBLIC void linphone_chat_message_cbs_set_participant_imdn_state_changed (LinphoneChatMessageCbs *cbs, LinphoneChatMessageCbsParticipantImdnStateChangedCb cb);
 
 /**
+ * Get the ephemeral message read callback.
+ * @param[in] cbs #LinphoneChatMessageCbs object.
+ * @return The current ephemeral message read callback.
+ */
+LINPHONE_PUBLIC LinphoneChatMessageCbsEphemeralMessageReadCb linphone_chat_message_cbs_get_ephemeral_message_read (const LinphoneChatMessageCbs *cbs);
+
+/**
+ * Set the ephemeral message read callback.
+ * @param[in] cbs LinphoneChatMessageCbs object.
+ * @param[in] cb The ephemeral message read callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_cbs_set_ephemeral_message_read (LinphoneChatMessageCbs *cbs, LinphoneChatMessageCbsEphemeralMessageReadCb cb);
+		
+/**
+ * Get the ephemeral message deleted callback.
+ * @param[in] cbs #LinphoneChatMessageCbs object.
+ * @return The current ephemeral message deleted callback.
+ */
+LINPHONE_PUBLIC LinphoneChatMessageCbsEphemeralMessageDeletedCb linphone_chat_message_cbs_get_ephemeral_message_deleted (const LinphoneChatMessageCbs *cbs);
+		
+/**
+ * Set the ephemeral message deleted callback.
+ * @param[in] cbs LinphoneChatMessageCbs object.
+ * @param[in] cb The ephemeral message deleted callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_cbs_set_ephemeral_message_deleted (LinphoneChatMessageCbs *cbs, LinphoneChatMessageCbsEphemeralMessageDeletedCb cb);
+
+/**
  * @}
  */
 

@@ -116,6 +116,7 @@ void CorePrivate::uninit () {
 		ms_usleep(10000);
 	}
 
+	ephemeralMessages.clear();
 	chatRoomsById.clear();
 	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();

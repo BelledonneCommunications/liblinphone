@@ -52,6 +52,14 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 		|| message->getPrivate()->getNegativeDeliveryNotificationRequired()
 		|| message->getPrivate()->getDisplayNotificationRequired()
 	) {
+		const string targetNamespace = "ephemeral";
+		if (message->isEphemeral()) {
+			double time = message->getEphemeralTime();
+			const string &buf = Utils::toString(time);
+			cpimMessage.addMessageHeader(Cpim::NsHeader("urn:xmpp:ephemeral:0", targetNamespace));
+			cpimMessage.addMessageHeader(Cpim::GenericHeader(targetNamespace + ".time", buf));
+		}
+		
 		const string imdnNamespace = "imdn";
 		cpimMessage.addMessageHeader(Cpim::NsHeader("urn:ietf:params:imdn", imdnNamespace));
 
@@ -162,7 +170,9 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 	message->getPrivate()->setDisplayNotificationRequired(false);
 
 	string imdnNamespace = "";
+	string targetNamespace = "";
 	auto messageHeaders = cpimMessage->getMessageHeaders();
+	int namespaceNum = 0;
 	if (messageHeaders) {
 		for (const auto &header : *messageHeaders.get()) {
 			if (header->getName() != "NS")
@@ -170,6 +180,12 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 			auto nsHeader = static_pointer_cast<const Cpim::NsHeader>(header);
 			if (nsHeader->getUri() == "urn:ietf:params:imdn") {
 				imdnNamespace = nsHeader->getPrefixName();
+				namespaceNum ++;
+			} else if (nsHeader->getUri() == "urn:xmpp:ephemeral:0") {
+				targetNamespace = nsHeader->getPrefixName();
+				namespaceNum ++;
+			}
+			if (namespaceNum > 1) {
 				break;
 			}
 		}
@@ -207,6 +223,13 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 			message->getPrivate()->setForwardInfo(forwardInfoHeader->getValue());
 		}
 	}
+	
+	if (!targetNamespace.empty()) {
+		auto timeHeader = cpimMessage->getMessageHeader("time", targetNamespace);
+		double time = Utils::stod(timeHeader->getValue());
+		message->getPrivate()->enableEphemeralWithTime(time);
+	}
+	
 	if (messageIdHeader)
 		message->getPrivate()->setImdnMessageId(messageIdHeader->getValue());
 
