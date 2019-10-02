@@ -3843,8 +3843,13 @@ void linphone_configure_op_with_proxy(LinphoneCore *lc, SalOp *op, const Linphon
 	}
 	op->enableCnxIpTo0000IfSendOnly(!!lp_config_get_default_int(lc->config,"sip","cnx_ip_to_0000_if_sendonly_enabled",0)); /*also set in linphone_call_new_incoming*/
 }
+
 void linphone_configure_op(LinphoneCore *lc, SalOp *op, const LinphoneAddress *dest, SalCustomHeader *headers, bool_t with_contact) {
-	linphone_configure_op_with_proxy(lc, op, dest, headers,with_contact,linphone_core_lookup_known_proxy(lc,dest));
+	linphone_configure_op_with_proxy(lc, op, dest, headers, with_contact, linphone_core_lookup_known_proxy(lc, dest));
+}
+
+void linphone_configure_op_2(LinphoneCore *lc, SalOp *op, const LinphoneAddress *local, const LinphoneAddress *dest, SalCustomHeader *headers, bool_t with_contact) {
+	linphone_configure_op_with_proxy(lc, op, dest, headers, with_contact, linphone_core_lookup_proxy_by_identity(lc, local));
 }
 
 LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const LinphoneAddress *addr, const LinphoneCallParams *params){

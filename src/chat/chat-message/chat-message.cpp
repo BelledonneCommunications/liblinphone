@@ -808,13 +808,15 @@ void ChatMessagePrivate::send () {
 
 	if (!op) {
 		LinphoneAddress *peer = linphone_address_new(toAddress.asString().c_str());
+		LinphoneAddress *local = linphone_address_new(fromAddress.asString().c_str());
 		/* Sending out of call */
 		salOp = op = new SalMessageOp(core->getCCore()->sal);
-		linphone_configure_op(
-			core->getCCore(), op, peer, getSalCustomHeaders(),
+		linphone_configure_op_2(
+			core->getCCore(), op, local, peer, getSalCustomHeaders(),
 			!!lp_config_get_int(core->getCCore()->config, "sip", "chat_msg_with_contact", 0)
 		);
 		op->setUserPointer(q);     /* If out of call, directly store msg */
+		linphone_address_unref(local);
 		linphone_address_unref(peer);
 	}
 	op->setFrom(fromAddress.asString().c_str());
