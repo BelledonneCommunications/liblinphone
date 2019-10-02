@@ -155,14 +155,26 @@ static void build_message () {
 
 	// Set message headers.
 	Cpim::FromHeader fromHeader("im:piglet@100akerwood.com", "MR SANDERS");
-	BC_ASSERT_STRING_EQUAL(fromHeader.getName().c_str(), "From");
-	BC_ASSERT_STRING_EQUAL(fromHeader.getUri().c_str(), "im:piglet@100akerwood.com");
-	BC_ASSERT_STRING_EQUAL(fromHeader.getFormalName().c_str(), "MR SANDERS");
+	
+	/*
+	 * BC_ASSERT_STRING_EQUAL caches the const char * internally.
+	 * However, fromHeader.getName() returns a temporary object, and thus the value return c_str() is also temporary.
+	 * We workaround by copying on stack the C++ string, so that the value returned by c_str() remains valid.
+	 */
+	string name = fromHeader.getName();
+	string uri = fromHeader.getUri();
+	string formalName = fromHeader.getFormalName();
+	BC_ASSERT_STRING_EQUAL(name.c_str(), "From");
+	BC_ASSERT_STRING_EQUAL(uri.c_str(), "im:piglet@100akerwood.com");
+	BC_ASSERT_STRING_EQUAL(formalName.c_str(), "MR SANDERS");
 
 	Cpim::ToHeader toHeader("im:eeyore@100akerwood.com", "Depressed Donkey");
-	BC_ASSERT_STRING_EQUAL(toHeader.getName().c_str(), "To");
-	BC_ASSERT_STRING_EQUAL(toHeader.getUri().c_str(), "im:eeyore@100akerwood.com");
-	BC_ASSERT_STRING_EQUAL(toHeader.getFormalName().c_str(), "Depressed Donkey");
+	name = toHeader.getName();
+	uri = toHeader.getUri();
+	formalName = toHeader.getFormalName();
+	BC_ASSERT_STRING_EQUAL(name.c_str(), "To");
+	BC_ASSERT_STRING_EQUAL(uri.c_str(), "im:eeyore@100akerwood.com");
+	BC_ASSERT_STRING_EQUAL(formalName.c_str(), "Depressed Donkey");
 
 	// 976686000 is 2000-12-13T13:40:00-08:00
 	Cpim::DateTimeHeader dateTimeHeader(976686000);
