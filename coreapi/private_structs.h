@@ -337,7 +337,7 @@ struct video_config{
 	bool_t display;
 	bool_t selfview; /*during calls*/
 	bool_t reuse_preview_source;
-	bool_t nack_context_enabled;
+	bool_t retransmission_on_nack_enabled;
 };
 
 struct text_config{

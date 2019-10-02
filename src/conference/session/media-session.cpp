@@ -1764,7 +1764,6 @@ void MediaSessionPrivate::setupRtcpFb (SalMediaDescription *md) {
 		if (!sal_stream_description_active(&md->streams[i]))
 			continue;
 		md->streams[i].rtcp_fb.generic_nack_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_generic_nack_enabled", 0);
-		md->streams[i].rtcp_fb.immediate_nack_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_immediate_nack_enabled", 0);
 		md->streams[i].rtcp_fb.tmmbr_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_tmmbr_enabled", 1);
 		md->streams[i].implicit_rtcp_fb = getParams()->getPrivate()->implicitRtcpFbEnabled();
 		for (const bctbx_list_t *it = md->streams[i].payloads; it != nullptr; it = bctbx_list_next(it)) {
@@ -2422,10 +2421,6 @@ void MediaSessionPrivate::configureRtpSessionForRtcpFb (const SalStreamDescripti
 		rtp_session_enable_avpf_feature(session, ORTP_AVPF_FEATURE_GENERIC_NACK, true);
 	else
 		rtp_session_enable_avpf_feature(session, ORTP_AVPF_FEATURE_GENERIC_NACK, false);
-	if (stream->rtcp_fb.immediate_nack_enabled)
-		rtp_session_enable_avpf_feature(session, ORTP_AVPF_FEATURE_IMMEDIATE_NACK, true);
-	else
-		rtp_session_enable_avpf_feature(session, ORTP_AVPF_FEATURE_IMMEDIATE_NACK, false);
 	if (stream->rtcp_fb.tmmbr_enabled)
 		rtp_session_enable_avpf_feature(session, ORTP_AVPF_FEATURE_TMMBR, true);
 	else
@@ -3525,8 +3520,8 @@ void MediaSessionPrivate::startVideoStream (CallSession::State targetState) {
 					}
 				}
 
-				if (linphone_core_nack_context_enabled(q->getCore()->getCCore())) {
-					video_stream_enable_nack_context(videoStream);
+				if (linphone_core_retransmission_on_nack_enabled(q->getCore()->getCCore())) {
+					video_stream_enable_retransmission_on_nack(videoStream, TRUE);
 				}
 			}
 		}
