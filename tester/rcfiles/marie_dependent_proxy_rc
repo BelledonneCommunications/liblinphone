@@ -14,8 +14,8 @@ passwd=secret
 realm=sip.example.org
 
 [proxy_0]
-reg_proxy=<sip:sip.example.org;transport=tls>
-reg_identity="Super Marie" <sip:marie@sip.example.org>
+reg_proxy=<sip:sipopen.example.org;transport=tls>
+reg_identity="Super Marie" <sip:marie@sipopen.example.org>
 reg_expires=3600
 reg_sendregister=1
 publish=0
@@ -23,8 +23,9 @@ dial_escape_plus=0
 idkey=master
 
 [proxy_1]
-reg_proxy=<sip:sip2.linphone.org:5069;transport=tls>
-reg_identity="Super Marie 2" <sip:marie2@sip2.linphone.org>
+reg_proxy=<sip:external.example.org:5068;transport=tcp>
+reg_route=<sip:external.example.org:5068;transport=tcp>
+reg_identity="Super Marie 2" <sip:marie2@external.example.org>
 reg_expires=3600
 reg_sendregister=1
 publish=0

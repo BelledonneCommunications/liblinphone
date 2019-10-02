@@ -546,6 +546,8 @@ static void call_forking_with_push_notification_single(void){
 		linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,5000));
 	}
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
@@ -659,6 +661,8 @@ static void call_forking_with_push_notification_multiple(void){
 
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallEnd,1,5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallReleased,1,5000));
 	}
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
@@ -695,6 +699,10 @@ static void call_forking_not_responded(void){
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallEnd,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallEnd,1,5000));
+	
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallReleased,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallReleased,1,5000));
 
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
@@ -814,6 +822,9 @@ static void call_with_sips(void){
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline1->stat.number_of_LinphoneCallEnd,1,3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,3000));
 
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline1->stat.number_of_LinphoneCallReleased,1,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,3000));
+		
 		linphone_core_manager_destroy(marie);
 		linphone_core_manager_destroy(pauline1);
 		linphone_core_manager_destroy(pauline2);
@@ -1884,27 +1895,28 @@ end:
 //This test requires 2 flexisip
 void sequential_forking_with_fallback_route(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneCoreManager* pauline2 = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager* pauline2 = linphone_core_manager_create("pauline_tcp_rc");
 	LinphoneCoreManager* marie = linphone_core_manager_create("marie_rc");
+	const char *external_server_uri = "sip:external.example.org:5068;transport=tcp";
 
 	bctbx_list_t *lcs = bctbx_list_append(NULL, pauline->lc);
 
 	/*we set pauline2 and marie to another test server that is configured with a fallback route*/
 	linphone_proxy_config_set_server_addr(
 		linphone_core_get_default_proxy_config(pauline2->lc),
-		"sip:sip2.linphone.org:5069;transport=tls");
+		external_server_uri);
 
 	linphone_proxy_config_set_route(
 		linphone_core_get_default_proxy_config(pauline2->lc),
-		"sip:sip2.linphone.org:5069;transport=tls");
+		external_server_uri);
 
 	linphone_proxy_config_set_server_addr(
 		linphone_core_get_default_proxy_config(marie->lc),
-		"sip:sip2.linphone.org:5068;transport=tcp");
+		external_server_uri);
 
 	linphone_proxy_config_set_route(
 		linphone_core_get_default_proxy_config(marie->lc),
-		"sip:sip2.linphone.org:5068;transport=tcp");
+		external_server_uri);
 
 	linphone_core_manager_start(pauline2, TRUE);
 	linphone_core_manager_start(marie, TRUE);

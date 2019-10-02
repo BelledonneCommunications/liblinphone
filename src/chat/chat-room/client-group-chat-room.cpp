@@ -189,8 +189,14 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 	if (newState == CallSession::State::Connected) {
 		if (q->getState() == ChatRoom::State::CreationPending) {
 			onChatRoomCreated(*session->getRemoteContactAddress());
-		} else if (q->getState() == ChatRoom::State::TerminationPending)
-			qConference->getPrivate()->focus->getPrivate()->getSession()->terminate();
+		} else if (q->getState() == ChatRoom::State::TerminationPending){
+			/* This is the case where we have re-created the session in order to quit the chatroom.
+			 * In this case, defer the sending of the bye so that it is sent after the ACK.
+			 * Indeed, the ACK is sent immediately after being notified of the Connected state.*/
+			q->getCore()->doLater([qConference](){
+				qConference->getPrivate()->focus->getPrivate()->getSession()->terminate();
+			});
+		}
 	} else if (newState == CallSession::State::End) {
 		setState(ChatRoom::State::TerminationPending);
 	} else if (newState == CallSession::State::Released) {

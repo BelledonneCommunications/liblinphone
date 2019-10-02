@@ -787,18 +787,22 @@ LinphoneAddress * CallSessionPrivate::getFixedContact () const {
 		char *addr = sal_address_as_string(pingOp->getContactAddress());
 		result = linphone_address_new(addr);
 		ms_free(addr);
-	} else if (destProxy && destProxy->op && linphone_proxy_config_get_contact(destProxy)) {
-		/* If using a proxy, use the contact address as guessed with the REGISTERs */
-		lInfo() << "Contact has been fixed using proxy";
-		result = linphone_address_clone(linphone_proxy_config_get_contact(destProxy));
-	} else {
-		result = linphone_core_get_primary_contact_parsed(q->getCore()->getCCore());
-		if (result) {
-			/* Otherwise use supplied localip */
-			linphone_address_set_domain(result, nullptr /* localip */);
-			linphone_address_set_port(result, -1 /* linphone_core_get_sip_port(core) */);
-			lInfo() << "Contact has not been fixed, stack will do";
+		return result;
+	} else if (destProxy){
+		const LinphoneAddress *addr = linphone_proxy_config_get_contact(destProxy);
+		if (addr && (destProxy->op || destProxy->dependency != nullptr)) {
+			/* If using a proxy, use the contact address as guessed with the REGISTERs */
+			lInfo() << "Contact has been fixed using proxy";
+			result = linphone_address_clone(addr);
+			return result;
 		}
+	}
+	result = linphone_core_get_primary_contact_parsed(q->getCore()->getCCore());
+	if (result) {
+		/* Otherwise use supplied localip */
+		linphone_address_set_domain(result, nullptr /* localip */);
+		linphone_address_set_port(result, -1 /* linphone_core_get_sip_port(core) */);
+		lInfo() << "Contact has not been fixed, stack will do";
 	}
 	return result;
 }
