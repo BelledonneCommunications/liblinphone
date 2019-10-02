@@ -4766,6 +4766,8 @@ LINPHONE_PUBLIC int linphone_core_get_video_dscp(const LinphoneCore *lc);
 
 /**
  * Get the name of the mediastreamer2 filter used for rendering video.
+ * @param[in] lc #LinphoneCore object
+ * @return The currently selected video display filter
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC const char *linphone_core_get_video_display_filter(LinphoneCore *lc);
@@ -4776,6 +4778,25 @@ LINPHONE_PUBLIC const char *linphone_core_get_video_display_filter(LinphoneCore 
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_video_display_filter(LinphoneCore *lc, const char *filtername);
+
+/**
+ * Get the name of the default mediastreamer2 filter used for rendering video on the current platform.
+ * This is for advanced users of the library, mainly to expose mediastreamer video filter name and status.
+ * @param[in] lc #LinphoneCore object
+ * @return The default video display filter
+ * @ingroup media_parameters
+ **/
+LINPHONE_PUBLIC const char *linphone_core_get_default_video_display_filter(LinphoneCore *lc);
+
+/**
+ * Checks if the given media filter is loaded and usable.
+ * This is for advanced users of the library, mainly to expose mediastreamer video filter status.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] filtername the filter name
+ * @return true	if the filter is loaded and usable, false otherwise
+ * @ingroup media_parameters
+ **/
+LINPHONE_PUBLIC bool_t linphone_core_is_media_filter_supported(LinphoneCore *lc, const char *filtername);
 
 /**
  * Get the name of the mediastreamer2 filter used for echo cancelling.
