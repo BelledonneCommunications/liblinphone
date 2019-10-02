@@ -108,6 +108,7 @@ set(RC_FILES
 	rcfiles/marie_quality_reporting_rc
 	rcfiles/marie_rc
 	rcfiles/marie_dual_proxy_rc
+	rcfiles/marie_dual_proxy_2_rc
 	rcfiles/marie_dependent_proxy_rc
 	rcfiles/marie2_rc
 	rcfiles/marie_rc_rtcp_xr
@@ -268,7 +269,7 @@ set(GROUP_CHAT_BENCHMARK_HEADERS
 
 # TODO: Remove me later!
 list(REMOVE_ITEM STRICT_OPTIONS_CPP "-Wconversion" "-Werror=conversion" "-Wcast-align" "-Werror=cast-align")
-if (ANDROID AND CMAKE_C_COMPILER_ID STREQUAL "GNU") #restrict to Android as it seems to break reguler linux
+if (ANDROID AND CMAKE_C_COMPILER_ID STREQUAL "GNU") #restrict to Android as it seems to break regular linux
 	list (APPEND STRICT_OPTIONS_C "-std=c99")
 endif()
 
