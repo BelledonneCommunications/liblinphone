@@ -111,16 +111,17 @@ static void configure_nat_policy(LinphoneCore *lc, bool_t turn_enabled) {
 	linphone_auth_info_unref(auth_info);
 }
 
-static void check_turn_context_statistics(MSTurnContext *turn_context, bool_t forced_relay) {
-	BC_ASSERT_TRUE(turn_context->stats.nb_successful_allocate > 1);
+static void check_turn_context_statistics(MSTurnContext *turn_context1, MSTurnContext *turn_context2, bool_t forced_relay) {
+	BC_ASSERT_TRUE(turn_context1->stats.nb_successful_allocate > 1);
+	BC_ASSERT_TRUE(turn_context2->stats.nb_successful_allocate > 1);
 	if (forced_relay == TRUE) {
-		BC_ASSERT_TRUE(turn_context->stats.nb_send_indication > 0);
-		BC_ASSERT_TRUE(turn_context->stats.nb_data_indication > 0);
-		BC_ASSERT_TRUE(turn_context->stats.nb_received_channel_msg > 0);
-		BC_ASSERT_TRUE(turn_context->stats.nb_sent_channel_msg > 0);
-		BC_ASSERT_TRUE(turn_context->stats.nb_successful_refresh > 0);
-		BC_ASSERT_TRUE(turn_context->stats.nb_successful_create_permission > 1);
-		BC_ASSERT_TRUE(turn_context->stats.nb_successful_channel_bind > 1);
+		BC_ASSERT_TRUE(turn_context1->stats.nb_send_indication > 0 || (turn_context2 && turn_context2->stats.nb_send_indication > 0));
+		BC_ASSERT_TRUE(turn_context1->stats.nb_data_indication > 0 || (turn_context2 && turn_context2->stats.nb_data_indication > 0));
+		BC_ASSERT_TRUE(turn_context1->stats.nb_received_channel_msg > 0 || (turn_context2 && turn_context2->stats.nb_received_channel_msg > 0));
+		BC_ASSERT_TRUE(turn_context1->stats.nb_sent_channel_msg > 0 || (turn_context2 && turn_context2->stats.nb_sent_channel_msg > 0));
+		BC_ASSERT_TRUE(turn_context1->stats.nb_successful_refresh > 0 || (turn_context2 && turn_context2->stats.nb_successful_refresh > 0));
+		BC_ASSERT_TRUE(turn_context1->stats.nb_successful_create_permission > 1 || (turn_context2 && turn_context2->stats.nb_successful_create_permission > 1));
+		BC_ASSERT_TRUE(turn_context1->stats.nb_successful_channel_bind > 1 || (turn_context2 && turn_context2->stats.nb_successful_channel_bind > 1));
 	}
 }
 
@@ -131,6 +132,7 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 	LinphoneIceState expected_ice_state = LinphoneIceStateHostConnection;
 	LinphoneMediaDirection expected_video_dir = LinphoneMediaDirectionInactive;
 	bctbx_list_t *lcs = NULL;
+	IceCheckList *cl1 = NULL, *cl2 = NULL;
 
 	marie = linphone_core_manager_create("marie_rc");
 	lcs = bctbx_list_append(lcs, marie->lc);
@@ -187,13 +189,30 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 		IceSession *ice_session = linphone_call_get_ice_session(lcall);
 		BC_ASSERT_PTR_NOT_NULL(ice_session);
 		if (ice_session != NULL) {
-			IceCheckList *cl = ice_session_check_list(ice_session, 0);
-			BC_ASSERT_PTR_NOT_NULL(cl);
-			if (cl != NULL) {
-				check_turn_context_statistics(cl->rtp_turn_context, forced_relay);
-				if (!rtcp_mux_enabled) check_turn_context_statistics(cl->rtcp_turn_context, forced_relay);
-			}
+			cl1 = ice_session_check_list(ice_session, 0);
+			BC_ASSERT_PTR_NOT_NULL(cl1);
+			
 		}
+	}
+	lcall = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(lcall);
+	if (lcall != NULL) {
+		IceSession *ice_session = linphone_call_get_ice_session(lcall);
+		BC_ASSERT_PTR_NOT_NULL(ice_session);
+		if (ice_session != NULL) {
+			cl2 = ice_session_check_list(ice_session, 0);
+			BC_ASSERT_PTR_NOT_NULL(cl2);
+			
+		}
+	}
+	/*
+	 * We perform turn context checks to both ends at the same time.
+	 * Indeed, we cannot predict which relay candidates will be used, since both sides are proposing them.
+	 * We have to check that turn channel is used by either marie or pauline.
+	 */
+	if (cl1 && cl2) {
+		check_turn_context_statistics(cl1->rtp_turn_context, cl2->rtp_turn_context, forced_relay);
+		if (!rtcp_mux_enabled) check_turn_context_statistics(cl1->rtp_turn_context, cl2->rtp_turn_context, forced_relay);
 	}
 
 	end_call(marie, pauline);

@@ -6,26 +6,17 @@ default_proxy=0
 ping_with_options=0
 composing_idle_timeout=1
 
-[auth_info_0]
-username=pauline
-userid=pauline
-passwd=secret
-realm=sip2.linphone.org
+
 
 [proxy_0]
-realm=sip2.linphone.org
-reg_proxy=<sip:sip2.linphone.org:5069;transport=tls>
-reg_route=<sip:sip2.linphone.org:5069;transport=tls>
-reg_identity=sip:pauline@sip2.linphone.org
+reg_proxy=<sip:external.example.org:5068;transport=tcp>
+reg_route=<sip:external.example.org:5068;transport=tcp>
+reg_identity=sip:pauline@external.example.org
 reg_expires=3600
 reg_sendregister=1
 publish=0
 dial_escape_plus=0
 
-#[friend_0]
-#url="Mariette" <sip:marie@sip.example.org>
-#pol=accept
-#subscribe=0
 
 [rtp]
 audio_rtp_port=18070-28000

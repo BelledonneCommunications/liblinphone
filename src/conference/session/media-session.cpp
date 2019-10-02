@@ -1229,7 +1229,7 @@ int MediaSessionPrivate::selectRandomPort (int streamIndex, pair<int, int> portR
 	
 	for (int nbTries = 0; nbTries < 100; nbTries++) {
 		bool alreadyUsed = false;
-		unsigned int randomInRangeSize = (ortp_random() % rangeSize) & (unsigned int)~0x1; /* Select an even number */
+		unsigned int randomInRangeSize = (bctbx_random() % rangeSize) & (unsigned int)~0x1; /* Select an even number */
 		int triedPort = ((int)randomInRangeSize) + portRange.first;
 		/*If portRange.first is even, the triedPort will be even too. The one who configures a port range that starts with an odd number will
 		 * get odd RTP port numbers.*/
@@ -1540,8 +1540,8 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 		strncpy(md->name, subject.c_str(), sizeof(md->name));
 		md->name[sizeof(md->name) - 1] = '\0';
 	}
-	md->session_id = (oldMd ? oldMd->session_id : (rand() & 0xfff));
-	md->session_ver = (oldMd ? (oldMd->session_ver + 1) : (rand() & 0xfff));
+	md->session_id = (oldMd ? oldMd->session_id : (bctbx_random() & 0xfff));
+	md->session_ver = (oldMd ? (oldMd->session_ver + 1) : (bctbx_random() & 0xfff));
 	md->nb_streams = (biggestDesc ? biggestDesc->nb_streams : 1);
 
 	/* Re-check local ip address each time we make a new offer, because it may change in case of network reconnection */
