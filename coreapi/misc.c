@@ -465,6 +465,14 @@ const char *linphone_core_get_video_display_filter(LinphoneCore *lc){
 	return lp_config_get_string(lc->config, "video","displaytype", NULL);
 }
 
+const char *linphone_core_get_default_video_display_filter(LinphoneCore *lc) {
+	return ms_factory_get_default_video_renderer(lc->factory);
+}
+
+bool_t linphone_core_is_media_filter_supported(LinphoneCore *lc, const char *filtername) {
+	return ms_factory_lookup_filter_by_name(lc->factory, filtername) != NULL;
+}
+
 void linphone_core_set_echo_canceller_filter_name(LinphoneCore *lc, const char *filtername) {
 	lp_config_set_string(lc->config, "sound", "ec_filter", filtername);
 	if (filtername != NULL) {
