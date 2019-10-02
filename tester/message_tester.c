@@ -382,6 +382,89 @@ static void text_message_with_send_error(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+void text_message_from_non_default_proxy_config(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new2("marie_dual_proxy_2_rc", FALSE);
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
+	
+	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
+	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 2, int, "%d");
+	LinphoneProxyConfig *proxyConfig = NULL;
+	const bctbx_list_t *prxCfgs = proxyConfigs;
+	for (; prxCfgs != NULL; prxCfgs = prxCfgs->next) {
+		LinphoneProxyConfig *prxCfg = (LinphoneProxyConfig *)prxCfgs->data;
+		if (linphone_core_get_default_proxy_config(marie->lc) != prxCfg) {
+			proxyConfig = prxCfg;
+			break;
+		}
+	}
+	BC_ASSERT_PTR_NOT_NULL(proxyConfig);
+	BC_ASSERT_PTR_NOT_EQUAL(proxyConfig, linphone_core_get_default_proxy_config(marie->lc));
+	BC_ASSERT_TRUE(linphone_proxy_config_is_registered(proxyConfig));
+	
+	const LinphoneAddress *localAddr = linphone_proxy_config_get_identity_address(proxyConfig);
+	const LinphoneAddress *remoteAddr = linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc));
+	LinphoneChatRoom *room = linphone_core_get_chat_room_2(marie->lc, remoteAddr, localAddr);
+	
+	LinphoneChatMessage* msg = linphone_chat_room_create_message(room, "Bli bli");
+	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
+	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+	linphone_chat_message_send(msg);
+	linphone_chat_message_unref(msg);
+	
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
+	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+void text_message_reply_from_non_default_proxy_config(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new2("marie_dual_proxy_2_rc", FALSE);
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
+	
+	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
+	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 2, int, "%d");
+	LinphoneProxyConfig *proxyConfig = NULL;
+	const bctbx_list_t *prxCfgs = proxyConfigs;
+	for (; prxCfgs != NULL; prxCfgs = prxCfgs->next) {
+		LinphoneProxyConfig *prxCfg = (LinphoneProxyConfig *)prxCfgs->data;
+		if (linphone_core_get_default_proxy_config(marie->lc) != prxCfg) {
+			proxyConfig = prxCfg;
+			break;
+		}
+	}
+	BC_ASSERT_PTR_NOT_NULL(proxyConfig);
+	BC_ASSERT_PTR_NOT_EQUAL(proxyConfig, linphone_core_get_default_proxy_config(marie->lc));
+	BC_ASSERT_TRUE(linphone_proxy_config_is_registered(proxyConfig));
+	
+	const LinphoneAddress *marieLocalAddr = linphone_proxy_config_get_identity_address(proxyConfig);
+	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marieLocalAddr);
+	
+	LinphoneChatMessage* msg = linphone_chat_room_create_message(room, "Bli bli");
+	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
+	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+	linphone_chat_message_send(msg);
+	linphone_chat_message_unref(msg);
+	
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneMessageReceived,1));
+	BC_ASSERT_PTR_NOT_NULL(marie->stat.last_received_chat_message);
+
+	LinphoneChatRoom *remoteRoom = linphone_chat_message_get_chat_room(marie->stat.last_received_chat_message);
+	msg = linphone_chat_room_create_message(remoteRoom, "Blu blu");
+	cbs = linphone_chat_message_get_callbacks(msg);
+	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+	linphone_chat_message_send(msg);
+	linphone_chat_message_unref(msg);
+	
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
+	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
 							bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download, bool_t download_from_history, 
 							int auto_download) {
@@ -2610,6 +2693,8 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Text message compatibility mode", text_message_compatibility_mode),
 	TEST_NO_TAG("Text message with ack", text_message_with_ack),
 	TEST_NO_TAG("Text message with send error", text_message_with_send_error),
+	TEST_NO_TAG("Text message from non default proxy config", text_message_from_non_default_proxy_config),
+	TEST_NO_TAG("Text message reply from non default proxy config", text_message_reply_from_non_default_proxy_config),
 	TEST_NO_TAG("Transfer message", transfer_message),
 	TEST_NO_TAG("Transfer message 2", transfer_message_2),
 	TEST_NO_TAG("Transfer message 3", transfer_message_3),
