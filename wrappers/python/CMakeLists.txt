@@ -34,14 +34,18 @@ add_custom_command(OUTPUT pylinphone.pyx setup.py
 add_custom_command(OUTPUT pylinphone.so
 	COMMAND ${PYTHON_EXECUTABLE} setup.py build_ext --inplace
 	DEPENDS pylinphone.pyx
-	setup.py)
+	setup.py
+)
+
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/linphone" DESTINATION .)
+file(GLOB LINPHONE_LIBRARIES
+  "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/*"
+)
+file(COPY ${LINPHONE_LIBRARIES} DESTINATION "./linphone/")
 
 add_custom_command(OUTPUT pylinphone*.whl
 	COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_wheel --dist-dir .
-	DEPENDS pylinphone.so)
+	DEPENDS pylinphone.so
+)
 
 add_custom_target(pylinphone ALL DEPENDS pylinphone.pyx setup.py pylinphone.so pylinphone*.whl)
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pylinphone.so
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/
-)
