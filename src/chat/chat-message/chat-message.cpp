@@ -212,6 +212,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		// set ephemeral start time and expired time
 		ephemeralExpiredTime = ::ms_time(NULL) + (long)ephemeralTime;
 		q->getChatRoom()->getCore()->getPrivate()->mainDb->updateEphemeralMessageInfos(dbKey.getPrivate()->storageId, ephemeralExpiredTime);
+		q->getChatRoom()->getCore()->getPrivate()->initEphemeralMessages();
 
 		// notify start !
 		shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(dbKey);

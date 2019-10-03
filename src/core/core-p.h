@@ -27,6 +27,7 @@
 #include "db/main-db.h"
 #include "object/object-p.h"
 #include "sal/call-op.h"
+#include "utils/background-task.h"
 
 // =============================================================================
 
@@ -124,6 +125,9 @@ public:
 	std::unique_ptr<RemoteConferenceListEventHandler> remoteListEventHandler;
 	std::unique_ptr<LocalConferenceListEventHandler> localListEventHandler;
 #endif
+	static int timerExpired (void *data, unsigned int revents);
+	void startTimer (time_t expiredTime);
+	void stopTimer ();
 
 private:
 	bool isInBackground = false;
@@ -145,6 +149,8 @@ private:
 	std::unordered_map<const AbstractChatRoom *, std::shared_ptr<const AbstractChatRoom>> noCreatedClientGroupChatRooms;
 
 	std::list<std::shared_ptr<ChatMessage>> ephemeralMessages;
+	belle_sip_source_t *timer = nullptr;
+	BackgroundTask bgTask {"ephemeral message handler"};
 
 	L_DECLARE_PUBLIC(Core);
 };

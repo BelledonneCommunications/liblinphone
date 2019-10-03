@@ -2495,21 +2495,20 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 		" LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"
 		" LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id"
 		" LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id"
-		" WHERE conference_event_view.id IN (SELECT event_id FROM chat_message_ephemeral_event WHERE expired_time > 0) ORDER BY expired_time ASC";
+		" WHERE expired_time > 0 ORDER BY expired_time";
 
 	return L_DB_TRANSACTION {
 		L_D();
 		list<shared_ptr<ChatMessage>> chatMessages;
 		soci::rowset<soci::row> rows = (
 		d->dbSession.getBackendSession()->prepare << query);
-		size_t size = 10;
 		for (const auto &row : rows) {
 			const long long &dbChatRoomId = d->dbSession.resolveId(row, (int)row.size()-1);
 			ConferenceId conferenceId = d->getConferenceIdFromCache(dbChatRoomId);
 			if (!conferenceId.isValid()) {
 				conferenceId = d->selectConferenceId(dbChatRoomId);
 			}
-																	
+
 			if (conferenceId.isValid()) {
 				shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 				if (chatRoom) {
@@ -2517,16 +2516,16 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 					if (event) {
 						L_ASSERT(event->getType() == EventLog::Type::ConferenceChatMessage);
 						chatMessages.push_back(static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage());
-							if (chatMessages.size() > size)
-								return chatMessages;
-						}
+						if (chatMessages.size() > 10)
+							return chatMessages;
 					}
 				}
-				}
-				return chatMessages;
-		};
+			}
+		}
+		return chatMessages;
+	};
 #else
-		return list<shared_ptr<ChatMessage>>();
+	return list<shared_ptr<ChatMessage>>();
 #endif
 }
 
@@ -2652,7 +2651,7 @@ bool MainDb::isChatRoomEmpty (const ConferenceId &conferenceId) const {
 
 shared_ptr<ChatMessage> MainDb::getLastChatMessage (const ConferenceId &conferenceId) const {
 #ifdef HAVE_DB_STORAGE
-	static const string query = "SELECT conference_event_view.id AS event_id, type, conference_event_view.creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, conference_event_view.subject, delivery_notification_required, display_notification_required, peer_sip_address.value, local_sip_address.value, marked_as_read, forward_info"
+	static const string query = "SELECT conference_event_view.id AS event_id, type, conference_event_view.creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, conference_event_view.subject, delivery_notification_required, display_notification_required, peer_sip_address.value, local_sip_address.value, marked_as_read, forward_info, ephemeral_time, expired_time"
 			" FROM conference_event_view"
 			" JOIN chat_room ON chat_room.id = chat_room_id"
 			" JOIN sip_address AS peer_sip_address ON peer_sip_address.id = peer_sip_address_id"

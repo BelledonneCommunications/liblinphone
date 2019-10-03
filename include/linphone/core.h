@@ -1044,6 +1044,13 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_core_new_with_config(
 LINPHONE_PUBLIC LinphoneStatus linphone_core_start(LinphoneCore *lc);
 
 /**
+ * init ephemeral messages list from database. Used after #linphone_core_start.
+ * @ingroup initializing
+ * @param[in] core The #LinphoneCore object to be started
+ */
+LINPHONE_PUBLIC void linphone_core_init_ephemeral_messages (LinphoneCore *lc);
+
+/**
  * Stop a #LinphoneCore object after it has been instantiated and started.
  * If stopped, it can be started again using linphone_core_start().
  * Must be called only if #LinphoneGlobalState is either On. State will changed to Shutdown and then Off.

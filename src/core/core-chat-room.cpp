@@ -354,7 +354,7 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 	if (!ephemeralMessages.empty()) {
 		shared_ptr<ChatMessage> msg = ephemeralMessages.front();
 		time_t expiredTime = msg->getEphemeralExpiredTime();
-		if (expiredTime > 0 && currentTime > expiredTime) {
+		if (currentTime > expiredTime) {
 			shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(msg->getPrivate()->dbKey);
 			shared_ptr<AbstractChatRoom> chatRoom = msg->getChatRoom();
 			if (chatRoom && event) {
@@ -372,6 +372,8 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 				ephemeralMessages.pop_front();
 				handleEphemeralMessages(currentTime);
 			}
+		} else {
+			startTimer(expiredTime);
 		}
 	} else {
 		initEphemeralMessages();
@@ -379,8 +381,14 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 }
 
 void CorePrivate::initEphemeralMessages () {
-	if (mainDb && mainDb->isInitialized())
+	if (mainDb && mainDb->isInitialized()) {
+		ephemeralMessages.clear();
 		ephemeralMessages = mainDb->getEphemeralMessages();
+		if (!ephemeralMessages.empty()) {
+			shared_ptr<ChatMessage> msg = ephemeralMessages.front();
+			startTimer(msg->getEphemeralExpiredTime());
+		}
+	}
 }
 
 void CorePrivate::sendDeliveryNotifications () {
