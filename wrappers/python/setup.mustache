@@ -1,4 +1,4 @@
-import setuptools
+from setuptools import setup, Distribution
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
@@ -7,9 +7,17 @@ linphone_extension = Extension(
     name="pylinphone",
     sources=["pylinphone.pyx"],
     libraries=["linphone"],
+    language="c",
     library_dirs=["{{{lib_dir}}}"],
     include_dirs=["{{{include_dir}}}"]
 )
+
+class BinaryDistribution(Distribution):
+    def has_ext_modules(self):
+        return True
+
+    def is_pure(self):
+        return False
 
 setup(
     ext_modules = cythonize([linphone_extension]),
@@ -21,5 +29,8 @@ setup(
     long_description="A python wrapper for linphone library automatically generated using pyrex",
     long_description_content_type="plain/text",
     url="https://linphone.org",
-    license="GPLv2"
+    license="GPLv2",
+    packages=['linphone'],
+    package_data={'linphone': ['*.so']},
+    distclass=BinaryDistribution
 )
