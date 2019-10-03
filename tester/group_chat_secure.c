@@ -2483,8 +2483,10 @@ end:
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie1, marieCr1, coresList);
+	wait_for_list(coresList, &dummy, 1, 1000); /* When marie 1 leaves, marie 2 will be left by the server too. This wait is to avoid a race between the two BYEs.*/
 	linphone_core_manager_delete_chat_room(marie2, marieCr2, coresList);
 	linphone_core_manager_delete_chat_room(pauline1, paulineCr1, coresList);
+	wait_for_list(coresList, &dummy, 1, 1000); /* When marie 1 leaves, marie 2 will be left by the server too. This wait is to avoid a race between the two BYEs.*/
 	linphone_core_manager_delete_chat_room(pauline2, paulineCr2, coresList);
 	if (paulineCr3)
 		linphone_core_manager_delete_chat_room(pauline3, paulineCr3, coresList);
