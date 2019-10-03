@@ -113,7 +113,7 @@ static void configure_nat_policy(LinphoneCore *lc, bool_t turn_enabled) {
 
 static void check_turn_context_statistics(MSTurnContext *turn_context1, MSTurnContext *turn_context2, bool_t forced_relay) {
 	BC_ASSERT_TRUE(turn_context1->stats.nb_successful_allocate > 1);
-	BC_ASSERT_TRUE(turn_context2->stats.nb_successful_allocate > 1);
+	if (turn_context2) BC_ASSERT_TRUE(turn_context2->stats.nb_successful_allocate > 1);
 	if (forced_relay == TRUE) {
 		BC_ASSERT_TRUE(turn_context1->stats.nb_send_indication > 0 || (turn_context2 && turn_context2->stats.nb_send_indication > 0));
 		BC_ASSERT_TRUE(turn_context1->stats.nb_data_indication > 0 || (turn_context2 && turn_context2->stats.nb_data_indication > 0));
