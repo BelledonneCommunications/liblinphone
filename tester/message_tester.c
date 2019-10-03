@@ -110,6 +110,7 @@ LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneCh
 
 void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, const char* text, const char* content_type, bool_t forward_message) {
 	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	BC_ASSERT_TRUE(linphone_chat_room_is_empty(room));
 	
 	LinphoneChatMessage* msg = linphone_chat_room_create_message(room, text);
 	linphone_chat_message_set_content_type(msg, content_type);
@@ -2617,9 +2618,17 @@ void unread_message_count(void) {
 	BC_ASSERT_PTR_NOT_NULL(marie->stat.last_received_chat_message);
 	if (marie->stat.last_received_chat_message != NULL) {
 		LinphoneChatRoom *marie_room = linphone_chat_message_get_chat_room(marie->stat.last_received_chat_message);
-		BC_ASSERT_EQUAL(1, linphone_chat_room_get_unread_messages_count(marie_room), int, "%d");
+		BC_ASSERT_FALSE(linphone_chat_room_is_empty(marie_room));
+		BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(marie_room), 1, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(marie->lc), 1, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_active_locals(marie->lc), 1, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_local(marie->lc, linphone_chat_room_get_local_address(marie_room)), 1, int, "%d");
 		linphone_chat_room_mark_as_read(marie_room);
-		BC_ASSERT_EQUAL(0, linphone_chat_room_get_unread_messages_count(marie_room), int, "%d");
+		BC_ASSERT_FALSE(linphone_chat_room_is_empty(marie_room));
+		BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(marie_room), 0, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(marie->lc), 0, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_active_locals(marie->lc), 0, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_local(marie->lc, linphone_chat_room_get_local_address(marie_room)), 0, int, "%d");
 	}
 
 	linphone_core_manager_destroy(marie);
@@ -2628,12 +2637,20 @@ void unread_message_count(void) {
 
 static void message_received_callback(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage* msg) {
 	BC_ASSERT_PTR_NOT_NULL(room);
+	BC_ASSERT_FALSE(linphone_chat_room_is_empty(room));
 	BC_ASSERT_EQUAL(1, linphone_chat_room_get_unread_messages_count(room), int, "%d");
+	BC_ASSERT_EQUAL(1, linphone_core_get_unread_chat_message_count(lc), int, "%d");
+	BC_ASSERT_EQUAL(1, linphone_core_get_unread_chat_message_count_from_active_locals(lc), int, "%d");
+	BC_ASSERT_EQUAL(1, linphone_core_get_unread_chat_message_count_from_local(lc, linphone_chat_room_get_local_address(room)), int, "%d");
 	BC_ASSERT_PTR_NOT_NULL(msg);
 	if (room != NULL) {
 		linphone_chat_room_mark_as_read(room);
 	}
+	BC_ASSERT_FALSE(linphone_chat_room_is_empty(room));
 	BC_ASSERT_EQUAL(0, linphone_chat_room_get_unread_messages_count(room), int, "%d");
+	BC_ASSERT_EQUAL(0, linphone_core_get_unread_chat_message_count(lc), int, "%d");
+	BC_ASSERT_EQUAL(0, linphone_core_get_unread_chat_message_count_from_active_locals(lc), int, "%d");
+	BC_ASSERT_EQUAL(0, linphone_core_get_unread_chat_message_count_from_local(lc, linphone_chat_room_get_local_address(room)), int, "%d");
 }
 
 void unread_message_count_callback(void) {

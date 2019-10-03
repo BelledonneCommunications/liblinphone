@@ -2316,9 +2316,11 @@ int MainDb::getUnreadChatMessageCount (const ConferenceId &conferenceId) const {
 #ifdef HAVE_DB_STORAGE
 	L_D();
 
-	const int *count = d->unreadChatMessageCountCache[conferenceId];
-	if (count)
-		return *count;
+	if (conferenceId.isValid()) {
+		const int *count = d->unreadChatMessageCountCache[conferenceId];
+		if (count)
+			return *count;
+	}
 
 	string query = "SELECT COUNT(*) FROM conference_chat_message_event WHERE";
 	if (conferenceId.isValid())

@@ -406,15 +406,23 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 	const char *initialSubject = "Friends";
 	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+	BC_ASSERT_TRUE(linphone_chat_room_is_empty(marieCr));
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+	BC_ASSERT_TRUE(linphone_chat_room_is_empty(paulineCr));
 
 	if (with_composing) {
 		// Marie starts composing a message
 		linphone_chat_room_compose(marieCr);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, initialPaulineStats.number_of_LinphoneIsComposingActiveReceived + 1, 10000));
 	}
+	BC_ASSERT_TRUE(linphone_chat_room_is_empty(marieCr));
+	BC_ASSERT_TRUE(linphone_chat_room_is_empty(paulineCr));
+	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(paulineCr), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(pauline->lc), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_active_locals(pauline->lc), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_local(pauline->lc, linphone_chat_room_get_local_address(paulineCr)), 0, int, "%d");
 
 	// Marie sends the message
 	const char *marieMessage = "Hey ! What's up ?";
@@ -424,6 +432,13 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
+
+	BC_ASSERT_FALSE(linphone_chat_room_is_empty(marieCr));
+	BC_ASSERT_FALSE(linphone_chat_room_is_empty(paulineCr));
+	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(paulineCr), 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(pauline->lc), 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_active_locals(pauline->lc), 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_local(pauline->lc, linphone_chat_room_get_local_address(paulineCr)), 1, int, "%d");
 
 	// Check that the message was correctly decrypted
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
