@@ -522,22 +522,16 @@ int Core::getUnreadChatMessageCount (const IdentityAddress &localAddress) const 
 int Core::getUnreadChatMessageCountFromActiveLocals () const {
 	L_D();
 
-	set<IdentityAddress> localAddresses;
-	{
-		LinphoneAddress *address = linphone_core_get_primary_contact_parsed(getCCore());
-		localAddresses.insert(*L_GET_CPP_PTR_FROM_C_OBJECT(address));
-		linphone_address_unref(address);
-	}
-
-	for (const bctbx_list_t *it = linphone_core_get_proxy_config_list(getCCore()); it; it = bctbx_list_next(it))
-		localAddresses.insert(*L_GET_CPP_PTR_FROM_C_OBJECT(static_cast<LinphoneProxyConfig *>(it->data)->identity_address));
-
 	int count = 0;
-	for (auto roomIt = d->chatRoomsById.begin(); roomIt != d->chatRoomsById.end(); roomIt++) {
-		const auto &chatRoom = roomIt->second;
-		auto it = localAddresses.find(chatRoom->getLocalAddress());
-		if (it != localAddresses.end())
-			count += chatRoom->getUnreadChatMessageCount();
+	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
+		const auto &chatRoom = it->second;
+		for (auto it = linphone_core_get_proxy_config_list(getCCore()); it != NULL; it = it->next) {
+			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)it->data;
+			const LinphoneAddress *identityAddr = linphone_proxy_config_get_identity_address(cfg);
+			if (L_GET_CPP_PTR_FROM_C_OBJECT(identityAddr)->weakEqual(chatRoom->getLocalAddress())) {
+				count += chatRoom->getUnreadChatMessageCount();
+			}
+		}
 	}
 	return count;
 }
