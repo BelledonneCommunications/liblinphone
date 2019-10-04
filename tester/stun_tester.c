@@ -103,7 +103,15 @@ static void configure_nat_policy(LinphoneCore *lc, bool_t turn_enabled) {
 		linphone_nat_policy_set_stun_server_username(nat_policy, username);
 	} else {
 		linphone_nat_policy_enable_stun(nat_policy, TRUE);
-		linphone_nat_policy_set_stun_server(nat_policy, "stun.example.org");
+		/* We intentionnaly do not use stun.example.org. When both liblinphone_tester and flexisip are in the same local network
+		 * it will break the test "Relayed ICE+TURN to ICE+STUN call", because:
+		 * - the TURN client will use the public sip1.linphone.org TURN server
+		 * - the STUN client will use the local stun server and hence will discover a local address.
+		 * When the TURN client will create PERMISSIONS, they will be created for the local address which are not routable
+		 * from the TURN server standpoint.
+		 * TODO: the good solution would be to setup the coturn server in the flexisip-tester environment.
+		 */
+		linphone_nat_policy_set_stun_server(nat_policy, "sip1.linphone.org:3479");
 	}
 	linphone_core_set_nat_policy(lc, nat_policy);
 	linphone_core_add_auth_info(lc, auth_info);
