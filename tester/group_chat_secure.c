@@ -2953,7 +2953,7 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageEphemeralDeleted, initialPaulineStats.number_of_LinphoneMessageEphemeralDeleted + 10, 3000));
 	}
 	wait_for_list(coresList, NULL, 1, 10000);
-	size = remained ? size-9 : size+1;
+	size = encrypted? size-9 : size+1;
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), size, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), size, int, "%d");
 	if (remained) {
