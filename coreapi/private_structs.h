@@ -723,6 +723,11 @@ struct _LinphoneVideoDefinition {
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneVideoDefinition);
 
+struct _LinphoneUpdateCheck {
+	LinphoneCore *lc;
+	char* current_version;
+	belle_http_request_listener_t *http_listener;
+};
 
 namespace LinphonePrivate {
 	class Core;
@@ -826,8 +831,6 @@ namespace LinphonePrivate {
 	LinphoneImEncryptionEngine *im_encryption_engine; \
 	struct _LinphoneAccountCreatorService *default_ac_service; \
 	MSBandwidthController *bw_controller; \
-	belle_http_request_listener_t *update_check_http_listener; \
-	char *update_check_current_version; \
 	bctbx_list_t *chat_rooms; \
 	bctbx_list_t *callsCache; \
 	bool_t dns_set_by_app; \
