@@ -204,8 +204,18 @@ void ServerGroupChatRoomPrivate::confirmCreation () {
 void ServerGroupChatRoomPrivate::requestDeletion(){
 	L_Q();
 	
+	/*
+	 * Our ServerGroupChatRoom is registered as listener to the numerous CallSession it manages, 
+	 * and is subscribing for registration events.
+	 * It is time to remove this listener and unsubscribe, because we are going to disapear and we don't want
+	 * to be notified anymore of anything.
+	 */
 	for (auto participant : q->getParticipants()){
 		unSubscribeRegistrationForParticipant(participant->getAddress());
+		for (auto devices : participant->getPrivate()->getDevices()){
+			auto session = devices->getSession();
+			if (session) session->setListener(nullptr);
+		}
 	}
 	if (!registrationSubscriptions.empty()){
 		lError() << q << " still " << registrationSubscriptions.size() << " registration subscriptions pending while deletion is requested.";
@@ -214,9 +224,13 @@ void ServerGroupChatRoomPrivate::requestDeletion(){
 	/*
 	 * The LinphoneChatRoom (C object) is also built when the ServerGroupChatRoom is created, which is unnecessary here, but
 	 * this is consistent with other kind of chatrooms. Consequence is that we have to free it in order to remove the last reference
-	 * to the C++ object. */
-	LinphoneChatRoom * cChatRoom = L_GET_C_BACK_PTR(q);
-	if (cChatRoom) linphone_chat_room_unref(cChatRoom);
+	 * to the C++ object.
+	 * The destruction is defered to next main loop iteration, in order to make the self-destruction outside of the call stack that leaded to it.
+	 */
+	q->getCore()->doLater([q](){
+		LinphoneChatRoom * cChatRoom = L_GET_C_BACK_PTR(q);
+		if (cChatRoom) linphone_chat_room_unref(cChatRoom);
+	});
 }
 
 /*

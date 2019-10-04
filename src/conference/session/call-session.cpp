@@ -938,6 +938,12 @@ CallSession::~CallSession () {
 
 // -----------------------------------------------------------------------------
 
+void CallSession::setListener(CallSessionListener *listener){
+	L_D();
+	d->listener = listener;
+}
+
+
 void CallSession::acceptDefault(){
 	accept();
 }
