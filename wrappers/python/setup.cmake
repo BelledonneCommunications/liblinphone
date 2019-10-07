@@ -8,8 +8,8 @@ linphone_extension = Extension(
     sources=["pylinphone.pyx"],
     libraries=["linphone"],
     language="c",
-    library_dirs=["{{{lib_dir}}}"],
-    include_dirs=["{{{include_dir}}}"]
+    library_dirs=["@PROJECT_BINARY_DIR@/src"],
+    include_dirs=["@PROJECT_SOURCE_DIR@/include", "@BELLESIP_INCLUDE_DIRS@", "@BCTOOLBOX_INCLUDE_DIRS@"]
 )
 
 class BinaryDistribution(Distribution):
@@ -22,7 +22,7 @@ class BinaryDistribution(Distribution):
 setup(
     ext_modules = cythonize([linphone_extension]),
     name="pylinphone",
-    version="{{version}}",
+    version="@LINPHONESDK_VERSION@",
     author="Belledonne Communications",
     author_email="info@belledonne-communications.com",
     description="A python wrapper for linphone library",
