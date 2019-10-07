@@ -20,21 +20,21 @@
 #
 ############################################################################
 
-add_custom_command(OUTPUT pylinphone.pyx setup.py
-	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/genwrapper.py" "${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml" "-i" "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}" "-l" "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
+configure_file("setup.cmake" "setup.py" @ONLY)
+
+add_custom_command(OUTPUT pylinphone.pyx
+	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/genwrapper.py" "${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml"
 	DEPENDS ${PROJECT_SOURCE_DIR}/tools/genapixml.py
 	${PROJECT_SOURCE_DIR}/tools/metadoc.py
 	${PROJECT_SOURCE_DIR}/tools/abstractapi.py
 	genwrapper.py
 	pylinphone.mustache
-	setup.mustache
 	linphone-doc
 )
 
 add_custom_command(OUTPUT pylinphone.so
 	COMMAND ${PYTHON_EXECUTABLE} setup.py build_ext --inplace
 	DEPENDS pylinphone.pyx
-	setup.py
 )
 
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/linphone" DESTINATION .)
@@ -48,4 +48,5 @@ add_custom_command(OUTPUT pylinphone*.whl
 	DEPENDS pylinphone.so
 )
 
-add_custom_target(pylinphone ALL DEPENDS pylinphone.pyx setup.py pylinphone.so pylinphone*.whl)
+add_custom_target(pylinphone ALL DEPENDS pylinphone.pyx pylinphone.so pylinphone*.whl)
+add_dependencies(pylinphone linphone)
