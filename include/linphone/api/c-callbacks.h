@@ -170,10 +170,10 @@ typedef LinphoneBuffer * (*LinphoneChatMessageCbsFileTransferSendCb)(LinphoneCha
 typedef void (*LinphoneChatMessageCbsFileTransferProgressIndicationCb)(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total);
 
 /**
- * Call back used to notify ephemeral message is read
+ * Call back used to notify ephemeral message timer started
  * @param msg #LinphoneChatMessage object
  */
-typedef void (*LinphoneChatMessageCbsEphemeralMessageReadCb)(LinphoneChatMessage* msg);
+typedef void (*LinphoneChatMessageCbsEphemeralMessageTimerStartedCb)(LinphoneChatMessage* msg);
 		
 /**
  * Call back used to notify ephemeral message is deleted
@@ -288,11 +288,11 @@ typedef void (*LinphoneChatRoomCbsConferenceJoinedCb) (LinphoneChatRoom *cr, con
 typedef void (*LinphoneChatRoomCbsConferenceLeftCb) (LinphoneChatRoom *cr, const LinphoneEventLog *eventLog);
 
 /**
- * Callback used to notify a chat room that a ephemeral message is read.
+ * Callback used to notify a chat room that a ephemeral message timer started.
  * @param[in] cr #LinphoneChatRoom object
  * @param[in] event_log #LinphoneEventLog The event to be notified
  */
-typedef void (*LinphoneChatRoomCbsEphemeralMessageReadCb) (LinphoneChatRoom *cr, const LinphoneEventLog *eventLog);
+typedef void (*LinphoneChatRoomCbsEphemeralMessageTimerStartedCb) (LinphoneChatRoom *cr, const LinphoneEventLog *eventLog);
 
 /**
  * Callback used to notify a chat room that a ephemeral message is deleted.

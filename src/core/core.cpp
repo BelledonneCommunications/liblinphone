@@ -225,12 +225,14 @@ int CorePrivate::timerExpired (void *data, unsigned int revents) {
 }
 
 void CorePrivate::startTimer (time_t expiredTime) {
+	double time = difftime(expiredTime, ::ms_time(NULL));
+	unsigned int timeoutValueMs = time>0 ? (unsigned int)time*1000 : 10;
 	if (!timer) {
-		double time = difftime(expiredTime, ::ms_time(NULL));
-		timer = getPublic()->getCCore()->sal->createTimer(timerExpired, this, time>0 ? (unsigned int)time*1000:10, "ephemeral message handler");
+		
+		timer = getPublic()->getCCore()->sal->createTimer(timerExpired, this, timeoutValueMs, "ephemeral message handler");
 	}
 	else {
-		belle_sip_source_set_timeout(timer, 1000);
+		belle_sip_source_set_timeout(timer, timeoutValueMs);
 	}
 	bgTask.start(getPublic()->getSharedFromThis(), 1);
 }

@@ -91,7 +91,7 @@ public:
 	const std::string &getForwardInfo () const;
 
 	bool isEphemeral () const;
-	double getEphemeralTime () const;
+	double getEphemeralLifetime () const;
 	time_t getEphemeralExpiredTime () const;
 
 	// TODO: Return a cpp reference.

@@ -175,7 +175,7 @@ void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, Lin
 		linphone_chat_room_cbs_set_participant_device_removed(cbs, chat_room_participant_device_removed);
 		linphone_chat_room_cbs_set_undecryptable_message_received(cbs, undecryptable_message_received);
 		linphone_chat_room_cbs_set_conference_joined(cbs, chat_room_conference_joined);
-		linphone_chat_room_cbs_set_ephemeral_message_read(cbs, chat_room_message_ephemeral_started);
+		linphone_chat_room_cbs_set_ephemeral_message_timer_started(cbs, chat_room_message_ephemeral_started);
 		linphone_chat_room_cbs_set_ephemeral_message_deleted(cbs, chat_room_message_ephemeral_deleted);
 		linphone_chat_room_add_callbacks(cr, cbs);
 		linphone_chat_room_cbs_unref(cbs);
@@ -221,7 +221,7 @@ LinphoneChatMessage *_send_message_ephemeral(LinphoneChatRoom *chatRoom, const c
 	LinphoneChatMessageCbs *msgCbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(msgCbs, liblinphone_tester_chat_message_msg_state_changed);
 	if (isEphemeral) {
-		linphone_chat_message_cbs_set_ephemeral_message_read(msgCbs, liblinphone_tester_chat_message_ephemeral_read);
+		linphone_chat_message_cbs_set_ephemeral_message_timer_started(msgCbs, liblinphone_tester_chat_message_ephemeral_timer_started);
 		linphone_chat_message_cbs_set_ephemeral_message_deleted(msgCbs, liblinphone_tester_chat_message_ephemeral_deleted);
 	}
 	linphone_chat_message_send(msg);

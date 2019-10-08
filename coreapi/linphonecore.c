@@ -2519,7 +2519,6 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	if (automatically_start) {
 		linphone_core_start(lc);
-		linphone_core_init_ephemeral_messages(lc);
 	}
 }
 
@@ -2569,16 +2568,13 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 		} else {
 			linphone_configuring_terminated(lc, LinphoneConfiguringSkipped, NULL);
 		}
-
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->initEphemeralMessages();
+		lInfo() << "[test] init messages" ;
 		return 0;
 	} catch (const CorePrivate::DatabaseConnectionFailure &e) {
 		bctbx_error("%s", e.what());
 		return -2;
 	}
-}
-
-void linphone_core_init_ephemeral_messages (LinphoneCore *lc) {
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->initEphemeralMessages();
 }
 
 LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start) {

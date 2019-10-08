@@ -272,18 +272,18 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsConferenceLeftCb linphone_chat_room_cbs_get_c
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_conference_left (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceLeftCb cb);
 
 /**
- * Get the ephemeral message read callback.
+ * Get the ephemeral message timer started callback.
  * @param[in] cbs LinphoneChatRoomCbs object.
- * @return The current ephemeral message read callback.
+ * @return The current ephemeral message timer started callback.
  */
-LINPHONE_PUBLIC LinphoneChatRoomCbsEphemeralMessageReadCb linphone_chat_room_cbs_get_ephemeral_message_read (const LinphoneChatRoomCbs *cbs);
+LINPHONE_PUBLIC LinphoneChatRoomCbsEphemeralMessageTimerStartedCb linphone_chat_room_cbs_get_ephemeral_message_timer_started (const LinphoneChatRoomCbs *cbs);
 
 /**
- * Set the ephemeral message read callback.
+ * Set the ephemeral message timer started callback.
  * @param[in] cbs LinphoneChatRoomCbs object.
- * @param[in] cb The ephemeral message read callback to be used.
+ * @param[in] cb The ephemeral message timer started callback to be used.
  */
-LINPHONE_PUBLIC void linphone_chat_room_cbs_set_ephemeral_message_read (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageReadCb cb);
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_ephemeral_message_timer_started (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageTimerStartedCb cb);
 
 /**
  * Get the ephemeral message deleted callback.
