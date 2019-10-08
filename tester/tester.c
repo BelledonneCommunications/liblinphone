@@ -1515,7 +1515,7 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 	ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
 }
 
-void liblinphone_tester_chat_message_ephemeral_read (LinphoneChatMessage *msg) {
+void liblinphone_tester_chat_message_ephemeral_timer_started (LinphoneChatMessage *msg) {
 	LinphoneCore *lc = linphone_chat_message_get_core(msg);
 	stats *counters = get_stats(lc);
 	counters->number_of_LinphoneMessageEphemeralRead++;

@@ -210,7 +210,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	// 6. update in database for ephemeral message if necessary.
 	if (isEphemeral && (state == ChatMessage::State::Displayed)) {
 		// set ephemeral start time and expired time
-		ephemeralExpiredTime = ::ms_time(NULL) + (long)ephemeralTime;
+		ephemeralExpiredTime = ::ms_time(NULL) + (long)ephemeralLifetime;
 		q->getChatRoom()->getCore()->getPrivate()->mainDb->updateEphemeralMessageInfos(dbKey.getPrivate()->storageId, ephemeralExpiredTime);
 		q->getChatRoom()->getCore()->getPrivate()->initEphemeralMessages();
 
@@ -218,10 +218,10 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(dbKey);
 		shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
 		if (chatRoom && event) {
-			_linphone_chat_room_notify_ephemeral_message_read(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
-			if (cbs && linphone_chat_message_cbs_get_ephemeral_message_read(cbs))
-				linphone_chat_message_cbs_get_ephemeral_message_read(cbs)(msg);
-			_linphone_chat_message_notify_ephemeral_message_read(msg);
+			_linphone_chat_room_notify_ephemeral_message_timer_started(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
+			if (cbs && linphone_chat_message_cbs_get_ephemeral_message_timer_started(cbs))
+				linphone_chat_message_cbs_get_ephemeral_message_timer_started(cbs)(msg);
+			_linphone_chat_message_notify_ephemeral_message_timer_started(msg);
 		}
 	}
 
@@ -1120,8 +1120,8 @@ void ChatMessagePrivate::setForwardInfo (const string &fInfo) {
 }
 
 void ChatMessagePrivate::enableEphemeralWithTime (double time) {
-	isEphemeral = TRUE;
-	ephemeralTime = time;
+	isEphemeral = true;
+	ephemeralLifetime = time;
 }
 
 void ChatMessagePrivate::loadContentsFromDatabase () const {
@@ -1184,9 +1184,9 @@ bool ChatMessage::isEphemeral () const {
 	return d->isEphemeral;
 }
 
-double ChatMessage::getEphemeralTime () const {
+double ChatMessage::getEphemeralLifetime () const {
 	L_D();
-	return d->ephemeralTime;
+	return d->ephemeralLifetime;
 }
 
 time_t ChatMessage::getEphemeralExpiredTime () const {

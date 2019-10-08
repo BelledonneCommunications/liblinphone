@@ -373,7 +373,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_message_is_ephemeral(LinphoneChatMessage *m
  * @param[in] msg #LinphoneChatMessage object.
  * @return the lifetime of an ephemeral message, by default 86400s.
  */
-LINPHONE_PUBLIC double linphone_chat_message_get_ephemeral_time (LinphoneChatMessage *msg);
+LINPHONE_PUBLIC double linphone_chat_message_get_ephemeral_lifetime (LinphoneChatMessage *msg);
 
 /**
  * Returns the time at which an ephemeral message is expired and will be deleted.

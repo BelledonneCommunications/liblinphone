@@ -140,7 +140,7 @@ shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage (ChatMessage::Directi
 	L_Q();
 	shared_ptr<ChatMessage> message = shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
 	if (isEphemeral) {
-		message->getPrivate()->enableEphemeralWithTime(ephemeralTime);
+		message->getPrivate()->enableEphemeralWithTime(ephemeralLifetime);
 	}
 	return message;
 }
@@ -608,13 +608,13 @@ const std::shared_ptr<ChatRoomParams> &ChatRoom::getCurrentParams() const {
 
 void ChatRoom::enableEphemeral (bool ephem) {
 	L_D();
-	// supported only in encrypted chat room
-	d->isEphemeral = (ephem && d->capabilities & ChatRoom::Capabilities::Encrypted) ? TRUE : FALSE;
+	// supported only in group chat room
+	d->isEphemeral = (ephem && d->capabilities & ChatRoom::Capabilities::Conference) ? TRUE : FALSE;
 }
 
-void ChatRoom::setEphemeralTime (double time) {
+void ChatRoom::setEphemeralLifetime (double time) {
 	L_D();
-	d->ephemeralTime = time;
+	d->ephemeralLifetime = time;
 }
 
 LINPHONE_END_NAMESPACE

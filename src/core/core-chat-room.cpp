@@ -358,18 +358,20 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 			shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(msg->getPrivate()->dbKey);
 			shared_ptr<AbstractChatRoom> chatRoom = msg->getChatRoom();
 			if (chatRoom && event) {
-				// notify ephemeral message deleted
+				// notify ephemeral message deleted to chat room.
 				_linphone_chat_room_notify_ephemeral_message_deleted(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
-
-				LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(L_GET_C_BACK_PTR(msg));
-				if (cbs && linphone_chat_message_cbs_get_ephemeral_message_deleted(cbs))
-					linphone_chat_message_cbs_get_ephemeral_message_deleted(cbs)(L_GET_C_BACK_PTR(msg));
-				_linphone_chat_message_notify_ephemeral_message_deleted(L_GET_C_BACK_PTR(msg));
+				//notify ephemeral message deleted to message if exists.
+				LinphoneChatMessage *message = linphone_event_log_get_chat_message(L_GET_C_BACK_PTR(event));
+				if (message) {
+					LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(message);
+					if (cbs && linphone_chat_message_cbs_get_ephemeral_message_deleted(cbs))
+						linphone_chat_message_cbs_get_ephemeral_message_deleted(cbs)(message);
+					_linphone_chat_message_notify_ephemeral_message_deleted(message);
+				}
 
 				// delete expired ephemeral message
-				LinphonePrivate::EventLog::deleteFromDatabase(event);
-
 				ephemeralMessages.pop_front();
+				LinphonePrivate::EventLog::deleteFromDatabase(event);
 				handleEphemeralMessages(currentTime);
 			}
 		} else {

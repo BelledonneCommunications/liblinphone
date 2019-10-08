@@ -54,7 +54,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 	) {
 		const string targetNamespace = "ephemeral";
 		if (message->isEphemeral()) {
-			double time = message->getEphemeralTime();
+			double time = message->getEphemeralLifetime();
 			const string &buf = Utils::toString(time);
 			cpimMessage.addMessageHeader(Cpim::NsHeader("urn:xmpp:ephemeral:0", targetNamespace));
 			cpimMessage.addMessageHeader(Cpim::GenericHeader(targetNamespace + ".time", buf));

@@ -915,13 +915,13 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 		soci::use(markedAsRead), soci::use(forwardInfo);
 	
 	if (isEphemeral) {
-		const double &ephemeralTime = chatMessage->getEphemeralTime();
+		const double &ephemeralLifetime = chatMessage->getEphemeralLifetime();
 		const tm &expiredTime = Utils::getTimeTAsTm(chatMessage->getEphemeralExpiredTime());
 		*dbSession.getBackendSession() << "INSERT INTO chat_message_ephemeral_event ("
-			"  event_id, ephemeral_time,  expired_time"
+			"  event_id, ephemeral_lifetime,  expired_time"
 			") VALUES ("
 		"  :eventId, :time, :expiredTime"
-		")", soci::use(eventId), soci::use(ephemeralTime),  soci::use(expiredTime);
+		")", soci::use(eventId), soci::use(ephemeralLifetime),  soci::use(expiredTime);
 	}
 
 	for (const Content *content : chatMessage->getContents())
@@ -1427,7 +1427,7 @@ void MainDbPrivate::updateSchema () {
 	if (version < makeVersion(1, 0, 12)) {
 		*session << "DROP VIEW IF EXISTS conference_event_view";
 		*session << "CREATE VIEW conference_event_view AS"
-		"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_time, expired_time"
+		"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time"
 		"  FROM event"
 		"  LEFT JOIN conference_event ON conference_event.event_id = event.id"
 		"  LEFT JOIN conference_chat_message_event ON conference_chat_message_event.event_id = event.id"
@@ -2057,7 +2057,7 @@ void MainDb::init () {
 	*session <<
 		"CREATE TABLE IF NOT EXISTS chat_message_ephemeral_event ("
 		"  event_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
-		"  ephemeral_time DOUBLE NOT NULL,"
+		"  ephemeral_lifetime DOUBLE NOT NULL,"
 		"  expired_time" + timestampType() + " NOT NULL,"
 	
 		"  FOREIGN KEY (event_id)"
@@ -2487,7 +2487,7 @@ list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ConferenceId 
 
 list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 #ifdef HAVE_DB_STORAGE
-	static const string query = "SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_time, expired_time, chat_room_id"
+	static const string query = "SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, chat_room_id"
 		" FROM conference_event_view"
 		" LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
 		" LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"
@@ -2649,7 +2649,7 @@ bool MainDb::isChatRoomEmpty (const ConferenceId &conferenceId) const {
 
 shared_ptr<ChatMessage> MainDb::getLastChatMessage (const ConferenceId &conferenceId) const {
 #ifdef HAVE_DB_STORAGE
-	static const string query = "SELECT conference_event_view.id AS event_id, type, conference_event_view.creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, conference_event_view.subject, delivery_notification_required, display_notification_required, peer_sip_address.value, local_sip_address.value, marked_as_read, forward_info, ephemeral_time, expired_time"
+	static const string query = "SELECT conference_event_view.id AS event_id, type, conference_event_view.creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, conference_event_view.subject, delivery_notification_required, display_notification_required, peer_sip_address.value, local_sip_address.value, marked_as_read, forward_info, ephemeral_lifetime, expired_time"
 			" FROM conference_event_view"
 			" JOIN chat_room ON chat_room.id = chat_room_id"
 			" JOIN sip_address AS peer_sip_address ON peer_sip_address.id = peer_sip_address_id"
@@ -2729,7 +2729,7 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessages (
 
 list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered () const {
 #ifdef HAVE_DB_STORAGE
-	static const string query = "SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_time, expired_time, chat_room_id"
+	static const string query = "SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, chat_room_id"
 			" FROM conference_event_view"
 			" LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
 			" LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"

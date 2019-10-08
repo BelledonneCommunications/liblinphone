@@ -168,8 +168,8 @@ void _linphone_chat_message_notify_file_transfer_progress_indication(LinphoneCha
 	NOTIFY_IF_EXIST(FileTransferProgressIndication, file_transfer_progress_indication, msg, content, offset, total)
 }
 
-void _linphone_chat_message_notify_ephemeral_message_read(LinphoneChatMessage* msg) {
-	NOTIFY_IF_EXIST(EphemeralMessageRead, ephemeral_message_read, msg)
+void _linphone_chat_message_notify_ephemeral_message_timer_started(LinphoneChatMessage* msg) {
+	NOTIFY_IF_EXIST(EphemeralMessageTimerStarted, ephemeral_message_timer_started, msg)
 }
 
 void _linphone_chat_message_notify_ephemeral_message_deleted(LinphoneChatMessage* msg) {
@@ -262,8 +262,8 @@ bool_t linphone_chat_message_is_ephemeral (LinphoneChatMessage *msg) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isEphemeral();
 }
 
-double linphone_chat_message_get_ephemeral_time (LinphoneChatMessage *msg) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getEphemeralTime();
+double linphone_chat_message_get_ephemeral_lifetime (LinphoneChatMessage *msg) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getEphemeralLifetime();
 }
 
 time_t linphone_chat_message_get_ephemeral_expired_time (LinphoneChatMessage *msg) {

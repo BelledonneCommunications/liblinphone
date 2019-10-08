@@ -260,7 +260,7 @@ private:
 	std::string forwardInfo;
 
 	bool isEphemeral = false;
-	double ephemeralTime = 86400; // 24h
+	double ephemeralLifetime = 86400; // 24h
 	time_t ephemeralExpiredTime = 0;
 
 	std::list<Content *> contents;

@@ -31,7 +31,7 @@ struct _LinphoneChatMessageCbs {
 	LinphoneChatMessageCbsFileTransferSendCb file_transfer_send;
 	LinphoneChatMessageCbsFileTransferProgressIndicationCb file_transfer_progress_indication;
 	LinphoneChatMessageCbsParticipantImdnStateChangedCb participant_imdn_state_changed;
-	LinphoneChatMessageCbsEphemeralMessageReadCb ephemeral_message_read;
+	LinphoneChatMessageCbsEphemeralMessageTimerStartedCb ephemeral_message_timer_started;
 	LinphoneChatMessageCbsEphemeralMessageDeletedCb ephemeral_message_deleted;
 };
 
@@ -134,17 +134,17 @@ void linphone_chat_message_cbs_set_participant_imdn_state_changed (
 	cbs->participant_imdn_state_changed = cb;
 }
 
-LinphoneChatMessageCbsEphemeralMessageReadCb linphone_chat_message_cbs_get_ephemeral_message_read (
+LinphoneChatMessageCbsEphemeralMessageTimerStartedCb linphone_chat_message_cbs_get_ephemeral_message_timer_started (
 	const LinphoneChatMessageCbs *cbs
 ) {
-	return cbs->ephemeral_message_read;
+	return cbs->ephemeral_message_timer_started;
 }
 
-void linphone_chat_message_cbs_set_ephemeral_message_read (
+void linphone_chat_message_cbs_set_ephemeral_message_timer_started (
 	LinphoneChatMessageCbs *cbs,
-	LinphoneChatMessageCbsEphemeralMessageReadCb cb
+	LinphoneChatMessageCbsEphemeralMessageTimerStartedCb cb
 ) {
-	cbs->ephemeral_message_read = cb;
+	cbs->ephemeral_message_timer_started = cb;
 }
 
 LinphoneChatMessageCbsEphemeralMessageDeletedCb linphone_chat_message_cbs_get_ephemeral_message_deleted (
