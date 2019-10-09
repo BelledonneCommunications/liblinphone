@@ -612,7 +612,12 @@ const std::shared_ptr<ChatRoomParams> &ChatRoom::getCurrentParams() const {
 void ChatRoom::enableEphemeral (bool ephem) {
 	L_D();
 	// supported only in group chat room
-	d->isEphemeral = (ephem && d->capabilities & ChatRoom::Capabilities::Conference) ? TRUE : FALSE;
+	if (d->capabilities & ChatRoom::Capabilities::Conference) {
+		d->isEphemeral = ephem;
+	} else {
+		d->isEphemeral = false;
+		lWarning() << "ephemeral message is only supported in group chat room!";
+	}
 }
 
 void ChatRoom::setEphemeralLifetime (double time) {
