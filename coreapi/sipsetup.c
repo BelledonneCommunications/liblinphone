@@ -37,8 +37,7 @@ void sip_setup_register(SipSetup *ss){
 
 void sip_setup_register_all(MSFactory *factory){
 	SipSetup **p=all_sip_setups;
-	ms_factory_load_plugins(factory, LINPHONE_PLUGINS_DIR);
-	//ms_load_plugins(LINPHONE_PLUGINS_DIR);
+	ms_factory_init_plugins(factory);
 	while(*p!=NULL){
 		sip_setup_register(*p);
 		p++;
