@@ -616,7 +616,7 @@ void ChatRoom::enableEphemeral (bool ephem) {
 		d->isEphemeral = ephem;
 	} else {
 		d->isEphemeral = false;
-		lWarning() << "ephemeral message is only supported in group chat room!";
+		lWarning() << "Ephemeral message is only supported in conference based chat room!";
 	}
 }
 
