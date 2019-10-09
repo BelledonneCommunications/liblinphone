@@ -90,6 +90,10 @@ public class AndroidPlatformHelper {
 	private IntentFilter mInteractivityIntentFilter;
 	private String[] mDnsServers;
 
+	private static int mTempCountWifi = 0;
+	private static int mTempCountMCast = 0;
+	private static int mTempCountCPU = 0;
+
 	private native void setNativePreviewWindowId(long nativePtr, Object view);
 	private native void setNativeVideoWindowId(long nativePtr, Object view);
 	private native void setNetworkReachable(long nativePtr, boolean reachable);
@@ -151,12 +155,24 @@ public class AndroidPlatformHelper {
 
 	public synchronized void onLinphoneCoreStop() {
 		Log.i("[Platform Helper] onLinphoneCoreStop, network monitoring is " + mMonitoringEnabled);
-		
+
 		// The following will prevent a crash if a video view hasn't been set to null before the Core stops
 		// The view listener will be called and the call to the native method will result in a crash in the Core accessor in the native PlatformHelper
 		setVideoPreviewView(null);
 		setVideoRenderingView(null);
-		
+
+		//cleaning manually the wakelocks in case of unreleased ones (linphone_core_destroy for instance)
+
+		while(mWakeLock.isHeld()){
+			mWakeLock.release();
+		}
+		while(mWifiLock.isHeld()){
+			mWifiLock.release();
+		}
+		while(mMcastLock.isHeld()){
+			mMcastLock.release();
+		}
+
 		mNativePtr = 0;
 		mMainHandler.removeCallbacksAndMessages(null);
 		stopNetworkMonitoring();
@@ -227,40 +243,59 @@ public class AndroidPlatformHelper {
 		Log.i("[Platform Helper] Download directory is " + downloadPath + "/");
 		return downloadPath + "/";
 	}
-	
+
 	public String getNativeLibraryDir(){
 		ApplicationInfo info = mContext.getApplicationInfo();
 		return info.nativeLibraryDir;
 	}
 
-	public void acquireWifiLock() {
-		Log.i("[Platform Helper] acquireWifiLock()");
-		mWifiLock.acquire();
+	public synchronized void acquireWifiLock() {
+		mTempCountWifi++;
+		Log.i("[Platform Helper] acquireWifiLock(). count = " + mTempCountWifi);
+		if(!mWifiLock.isHeld()){
+			mWifiLock.acquire();
+		}
 	}
 
-	public void releaseWifiLock() {
-		Log.i("[Platform Helper] releaseWifiLock()");
-		mWifiLock.release();
+	public synchronized void releaseWifiLock() {
+		mTempCountWifi--;
+		Log.i("[Platform Helper] releaseWifiLock(). count = " + mTempCountWifi);
+		if(mWifiLock.isHeld()){
+			mWifiLock.release();
+		}
 	}
 
-	public void acquireMcastLock() {
-		Log.i("[Platform Helper] acquireMcastLock()");
-		mMcastLock.acquire();
+	public synchronized void acquireMcastLock() {
+		mTempCountMCast++;
+		Log.i("[Platform Helper] acquireMcastLock(). count = " + mTempCountMCast);
+		if(!mMcastLock.isHeld()){
+			mMcastLock.acquire();
+		}
 	}
 
-	public void releaseMcastLock() {
-		Log.i("[Platform Helper] releaseMcastLock()");
-		mMcastLock.release();
+	public synchronized void releaseMcastLock() {
+		mTempCountMCast--;
+		Log.i("[Platform Helper] releaseMcastLock(). count = " + mTempCountMCast);
+		if(mMcastLock.isHeld()){
+			mMcastLock.release();
+		}
 	}
 
-	public void acquireCpuLock() {
-		Log.i("[Platform Helper] acquireCpuLock()");
-		mWakeLock.acquire();
+	public synchronized void acquireCpuLock() {
+		mTempCountCPU++;
+		Log.i("[Platform Helper] acquireCpuLock(). count = " + mTempCountCPU);
+		if(!mWakeLock.isHeld()){
+			mWakeLock.acquire();
+		}
 	}
 
-	public void releaseCpuLock() {
-		Log.i("[Platform Helper] releaseCpuLock()");
-		mWakeLock.release();
+	public synchronized void releaseCpuLock() {
+		mTempCountCPU--;
+		Log.i("[Platform Helper] releaseCpuLock(). count = " + mTempCountCPU);
+		if(mWakeLock.isHeld()){
+			mWakeLock.release();
+		}
+
 	}
 
 	private int getResourceIdentifierFromName(String name) {
@@ -279,7 +314,7 @@ public class AndroidPlatformHelper {
 		Log.i("[Platform Helper] Starting copy from assets to application files directory");
 		copyAssetsFromPackage(mContext, "org.linphone.core", ".");
 		Log.i("[Platform Helper] Copy from assets done");
-		
+
 		if (getResourceIdentifierFromName("cpim_grammar") != 0) {
 			copyLegacyAssets();
 		}
@@ -389,7 +424,7 @@ public class AndroidPlatformHelper {
 			setNativePreviewWindowId(mNativePtr, surface);
 			return;
 		}
-		
+
 		if (!(view instanceof TextureView)) {
 			throw new RuntimeException("[Platform Helper] Preview window id is not an instance of TextureView. " +
 				"Please update your UI layer so that the preview video view is a TextureView (or an instance of it)" +
@@ -407,13 +442,13 @@ public class AndroidPlatformHelper {
 
 			@Override
 			public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-				
+
 			}
 
 			@Override
 			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
 				Log.i("[Platform Helper] Preview surface texture destroyed");
-				
+
 				if (mNativePtr != 0 && mPreviewTextureView != null) {
 					if (surface.equals(mPreviewTextureView.getSurfaceTexture())) {
 						Log.i("[Platform Helper] Current preview surface texture is no longer available");
@@ -453,7 +488,7 @@ public class AndroidPlatformHelper {
 			setNativeVideoWindowId(mNativePtr, surface);
 			return;
 		}
-		
+
 		if (!(view instanceof TextureView)) {
 			throw new RuntimeException("[Platform Helper] Rendering window id is not an instance of TextureView." +
 				"Please update your UI layer so that the video rendering view is a TextureView (or an instance of it)" +
@@ -498,7 +533,7 @@ public class AndroidPlatformHelper {
 
 			}
 		});
-		
+
 		if (mVideoTextureView.isAvailable()) {
 			Log.i("[Platform Helper] Rendering window surface is available");
 			rotateVideoPreview();
@@ -559,7 +594,7 @@ public class AndroidPlatformHelper {
 			Log.w("[Platform Helper] Native pointer has been reset, stopping there");
 			return;
 		}
-	
+
 		if (mDozeModeEnabled && DeviceUtils.isAppBatteryOptimizationEnabled(mContext)) {
 			Log.i("[Platform Helper] Device in idle mode: shutting down network");
 			setNetworkReachable(mNativePtr, false);
@@ -604,7 +639,7 @@ public class AndroidPlatformHelper {
 			if (networkInfo.getState() == NetworkInfo.State.DISCONNECTED && networkInfo.getDetailedState() == NetworkInfo.DetailedState.BLOCKED) {
 				Log.w("[Platform Helper] Active network is in bad state...");
 			}
-			
+
 			// Update DNS servers lists
 			Network network = mNetworkManager.getActiveNetwork();
 			mNetworkManager.updateDnsServers();
@@ -650,7 +685,7 @@ public class AndroidPlatformHelper {
 
 	private synchronized void startNetworkMonitoring() {
 		if (!mMonitoringEnabled) return;
-		
+
 		mNetworkManager = createNetworkManager();
 		Log.i("[Platform Helper] Registering network callbacks");
 		mNetworkManager.registerNetworkCallbacks(mContext);
@@ -672,7 +707,7 @@ public class AndroidPlatformHelper {
 		updateNetworkReachability();
 	}
 
-	private synchronized void stopNetworkMonitoring() {		
+	private synchronized void stopNetworkMonitoring() {
 		if (mInteractivityReceiver != null) {
 			Log.i("[Platform Helper] Unregistering interactivity receiver");
 			mContext.unregisterReceiver(mInteractivityReceiver);
@@ -694,5 +729,3 @@ public class AndroidPlatformHelper {
 		mMonitoringEnabled = false;
 	}
 };
-
-
