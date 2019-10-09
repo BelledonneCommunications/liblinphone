@@ -77,6 +77,7 @@ public:
 	void loadChatRooms ();
 	void handleEphemeralMessages (time_t currentTime);
 	void initEphemeralMessages ();
+	void updateEphemeralMessages (const std::shared_ptr<ChatMessage> &message);
 	void sendDeliveryNotifications ();
 	void insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
 	void insertChatRoomWithDb (const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);

@@ -393,6 +393,29 @@ void CorePrivate::initEphemeralMessages () {
 	}
 }
 
+void CorePrivate::updateEphemeralMessages (const shared_ptr<ChatMessage> &message) {
+	if (ephemeralMessages.empty()) {
+		ephemeralMessages.push_back(message);
+		startTimer(message->getEphemeralExpiredTime());
+	} else {
+		for (std::list<shared_ptr<ChatMessage>>::iterator it=ephemeralMessages.begin(); it!=ephemeralMessages.end(); ++it) {
+			shared_ptr<ChatMessage> msg = *it;
+			if (msg->getEphemeralExpiredTime() > message->getEphemeralExpiredTime()) {
+				if (it == ephemeralMessages.begin()) {
+					ephemeralMessages.push_front(message);
+					startTimer(message->getEphemeralExpiredTime());
+				} else {
+					it = --it;
+					ephemeralMessages.insert(it, message);
+				}
+				if (ephemeralMessages.size() > 10)
+					ephemeralMessages.pop_back();
+				return;
+			}
+		}
+	}
+}
+
 void CorePrivate::sendDeliveryNotifications () {
 	L_Q();
 	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(q->getCCore());
