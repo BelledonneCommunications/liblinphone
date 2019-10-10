@@ -1402,7 +1402,7 @@ void MainDbPrivate::updateSchema () {
 	}
 
 	if (version < makeVersion(1, 0, 11)) {
-		*session << "ALTER TABLE chat_room ADD COLUMN last_message_id INTEGER NOT NULL DEFAULT 0";
+		*session << "ALTER TABLE chat_room ADD COLUMN last_message_id " + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL DEFAULT 0";
 		*session << "UPDATE chat_room SET last_message_id = IFNULL((SELECT id FROM conference_event_simple_view WHERE chat_room_id = chat_room.id AND type = 5 ORDER BY id DESC LIMIT 1), 0)";
 	}
 #endif
