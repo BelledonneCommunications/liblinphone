@@ -251,7 +251,7 @@ public class AndroidPlatformHelper {
 
 	public synchronized void acquireWifiLock() {
 		mTempCountWifi++;
-		Log.i("[Platform Helper] acquireWifiLock(). count = " + mTempCountWifi);
+		Log.d("[Platform Helper] acquireWifiLock(). count = " + mTempCountWifi);
 		if(!mWifiLock.isHeld()){
 			mWifiLock.acquire();
 		}
@@ -259,7 +259,7 @@ public class AndroidPlatformHelper {
 
 	public synchronized void releaseWifiLock() {
 		mTempCountWifi--;
-		Log.i("[Platform Helper] releaseWifiLock(). count = " + mTempCountWifi);
+		Log.d("[Platform Helper] releaseWifiLock(). count = " + mTempCountWifi);
 		if(mWifiLock.isHeld()){
 			mWifiLock.release();
 		}
@@ -267,7 +267,7 @@ public class AndroidPlatformHelper {
 
 	public synchronized void acquireMcastLock() {
 		mTempCountMCast++;
-		Log.i("[Platform Helper] acquireMcastLock(). count = " + mTempCountMCast);
+		Log.d("[Platform Helper] acquireMcastLock(). count = " + mTempCountMCast);
 		if(!mMcastLock.isHeld()){
 			mMcastLock.acquire();
 		}
@@ -275,7 +275,7 @@ public class AndroidPlatformHelper {
 
 	public synchronized void releaseMcastLock() {
 		mTempCountMCast--;
-		Log.i("[Platform Helper] releaseMcastLock(). count = " + mTempCountMCast);
+		Log.d("[Platform Helper] releaseMcastLock(). count = " + mTempCountMCast);
 		if(mMcastLock.isHeld()){
 			mMcastLock.release();
 		}
@@ -283,7 +283,7 @@ public class AndroidPlatformHelper {
 
 	public synchronized void acquireCpuLock() {
 		mTempCountCPU++;
-		Log.i("[Platform Helper] acquireCpuLock(). count = " + mTempCountCPU);
+		Log.d("[Platform Helper] acquireCpuLock(). count = " + mTempCountCPU);
 		if(!mWakeLock.isHeld()){
 			mWakeLock.acquire();
 		}
@@ -291,7 +291,7 @@ public class AndroidPlatformHelper {
 
 	public synchronized void releaseCpuLock() {
 		mTempCountCPU--;
-		Log.i("[Platform Helper] releaseCpuLock(). count = " + mTempCountCPU);
+		Log.d("[Platform Helper] releaseCpuLock(). count = " + mTempCountCPU);
 		if(mWakeLock.isHeld()){
 			mWakeLock.release();
 		}
