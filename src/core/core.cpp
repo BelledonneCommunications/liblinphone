@@ -178,7 +178,7 @@ void CorePrivate::notifyEnteringForeground () {
 	LinphoneProxyConfig *lpc = linphone_core_get_default_proxy_config(lc);
 	if (lpc && linphone_proxy_config_get_state(lpc) == LinphoneRegistrationFailed) {
 		// This is to ensure an app bring to foreground that isn't registered correctly will try to fix that and not show a red registration dot to the user
-		linphone_core_refresh_registers(lc);
+		linphone_proxy_config_refresh_register(lpc);
 	}
 
 	auto listenersCopy = listeners; // Allow removal of a listener in its own call
@@ -251,15 +251,6 @@ void Core::enterBackground () {
 void Core::enterForeground () {
 	L_D();
 	d->notifyEnteringForeground();
-
-	LinphoneProxyConfig *proxy_config = linphone_core_get_default_proxy_config(getCCore());
-	if (proxy_config) {
-		LinphoneRegistrationState state = linphone_proxy_config_get_state(proxy_config);
-		if (state == LinphoneRegistrationState::LinphoneRegistrationFailed) {
-			lWarning() << "Default proxy config state is failed when entering foreground, refreshing registers";
-			linphone_core_refresh_registers(getCCore());
-		}
-	}
 }
 
 bool Core::isInBackground () {
@@ -474,6 +465,11 @@ void Core::pushNotificationReceived () const {
 	bctbx_list_t *it = (bctbx_list_t *)proxies;
 
 	lInfo() << "Push notification received";
+
+	// We can assume network should be reachable when a push notification is received.
+	// If the app was put in DOZE mode, internal network reachability will have been disabled and thus may prevent registration 
+	linphone_core_set_network_reachable_internal(lc, TRUE);
+
 	/*
 	 * The following is a bit hacky. But sometimes 3 lines of code are better than
 	 * a heavy refactoring.
