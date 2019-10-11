@@ -26,6 +26,7 @@
 #include "conference/params/call-session-params.h"
 #include "core/core-listener.h"
 #include "sal/call-op.h"
+#include "linphone/misc.h"
 
 // =============================================================================
 
@@ -112,6 +113,11 @@ private:
 	L_DECLARE_PRIVATE(CallSession);
 	L_DISABLE_COPY(CallSession);
 };
+
+inline std::ostream & operator << (std::ostream & str, CallSession::State state){
+	str << linphone_call_state_to_string(static_cast<LinphoneCallState>(state));
+	return str;
+}
 
 LINPHONE_END_NAMESPACE
 

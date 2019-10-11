@@ -2545,9 +2545,13 @@ void MediaSessionPrivate::handleIceEvents (OrtpEvent *ev) {
 		if (iceAgent->hasCompletedCheckList()) {
 			/* The ICE session has succeeded, so perform a call update */
 			if (iceAgent->isControlling() && q->getCurrentParams()->getPrivate()->getUpdateCallWhenIceCompleted()) {
-				MediaSessionParams newParams(*getParams());
-				newParams.getPrivate()->setInternalCallUpdate(true);
-				q->update(&newParams);
+				if (state == CallSession::State::StreamsRunning){
+					MediaSessionParams newParams(*getParams());
+					newParams.getPrivate()->setInternalCallUpdate(true);
+					q->update(&newParams);
+				}else{
+					lWarning() << "Cannot send reINVITE for ICE during state " << state;
+				}
 			}else if (!iceAgent->isControlling() && incomingIceReinvitePending){
 				q->acceptUpdate(nullptr);
 				incomingIceReinvitePending = false;

@@ -85,18 +85,18 @@ static void call_with_ice_ipv6_to_ipv6(void) {
 	} else ms_warning("Test skipped, need both ipv6 and v4 available");
 }
 
-static void early_media_call_with_ice(void) {
+static void _early_media_call_with_ice(bool_t callee_has_ice) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_early_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *marie_call, *pauline_call;
+	LinphoneCallStats *stats1, *stats2;
 	bctbx_list_t *lcs = NULL;
 
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 
-	/*in this test, pauline has ICE activated, marie not, but marie proposes early media.
-	 * We want to check that ICE processing is not disturbing early media*/
 	linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
+	if (callee_has_ice) linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
 
 	pauline_call = linphone_core_invite_address(pauline->lc, marie->identity);
 
@@ -104,12 +104,23 @@ static void early_media_call_with_ice(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingEarlyMedia,1,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingEarlyMedia,1,1000));
 	BC_ASSERT_TRUE(linphone_call_get_all_muted(pauline_call));
-
-	wait_for_until(pauline->lc,marie->lc,NULL,0,1000);
-
+	
 	marie_call = linphone_core_get_current_call(marie->lc);
-
-	if (!marie_call) goto end;
+	
+	if (!BC_ASSERT_PTR_NOT_NULL(marie_call)) goto end;
+	check_media_direction(marie, marie_call, lcs, LinphoneMediaDirectionSendRecv,LinphoneMediaDirectionInvalid);
+	
+	wait_for_until(pauline->lc,marie->lc,NULL,0,3000);
+	if (callee_has_ice){
+		stats1 = linphone_call_get_audio_stats(marie_call);
+		stats2 = linphone_call_get_audio_stats(pauline_call);
+	
+		BC_ASSERT_TRUE(linphone_call_stats_get_ice_state(stats1) == LinphoneIceStateHostConnection);
+		BC_ASSERT_TRUE(linphone_call_stats_get_ice_state(stats2) == LinphoneIceStateHostConnection);
+		
+		linphone_call_stats_unref(stats1);
+		linphone_call_stats_unref(stats2);
+	}
 
 	linphone_call_accept(marie_call);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallConnected,1,3000));
@@ -125,6 +136,19 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void early_media_call_with_ice(void){
+	/*in this test, pauline has ICE activated, marie not, but marie proposes early media.
+	 * We want to check that ICE processing is not disturbing early media, 
+	 * ICE shall not deactivate itself automatically.*/
+	_early_media_call_with_ice(FALSE);
+}
+
+
+static void early_media_call_with_ice_2(void){
+	/*in this test, both pauline and marie do ICE, and marie requests early media.
+	 Ice shall complete during the early media phase. No reINVITE can be sent.*/
+	_early_media_call_with_ice(TRUE);
+}
 
 static void audio_call_with_ice_no_matching_audio_codecs(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
@@ -399,6 +423,7 @@ static test_t call_with_ice_tests[] = {
 	TEST_ONE_TAG("Call with ICE IPv6 to IPv4", call_with_ice_ipv6_to_ipv4, "ICE"),
 	TEST_ONE_TAG("Call with ICE IPv6 to IPv6", call_with_ice_ipv6_to_ipv6, "ICE"),
 	TEST_ONE_TAG("Early-media call with ICE", early_media_call_with_ice, "ICE"),
+	TEST_ONE_TAG("Early-media call with ICE 2", early_media_call_with_ice_2, "ICE"),
 	TEST_ONE_TAG("Audio call with ICE no matching audio codecs", audio_call_with_ice_no_matching_audio_codecs, "ICE"),
 	TEST_ONE_TAG("SRTP ice call", srtp_ice_call, "ICE"),
 	TEST_ONE_TAG("ZRTP ice call", zrtp_ice_call, "ICE"),
