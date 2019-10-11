@@ -5104,13 +5104,25 @@ void linphone_core_migrate_logs_from_rc_to_db(LinphoneCore *lc) {
 void linphone_core_resize_video_preview(LinphoneCore *lc, int width, int height) {
 	bool_t auto_camera_preview_resize = !!lp_config_get_int(lc->config, "video", "auto_resize_preview_to_keep_ratio", 0);
 	if (!auto_camera_preview_resize) return;
-	bctbx_message("Resizing video preview to: %ix%i", width, height);
 #ifdef VIDEO_ENABLED
+	bctbx_message("Resizing camera video preview to: %ix%i", width, height);
 	getPlatformHelpers(lc)->resizeVideoPreview(width, height);
 #endif
 }
 
 #ifdef VIDEO_ENABLED
+static void video_stream_callback (void *userdata, const MSFilter *f, const unsigned int id, const void *arg) {
+	switch (id) {
+		case MS_CAMERA_PREVIEW_SIZE_CHANGED: {
+			LinphoneCore *lc = (LinphoneCore *)userdata;
+			MSVideoSize size = *(MSVideoSize *)arg;
+			bctbx_message("Camera video preview size changed: %ix%i", size.width, size.height);
+			linphone_core_resize_video_preview(lc, size.width, size.height);
+			break;
+		}
+	}
+}
+
 static void video_filter_callback(void *userdata, struct _MSFilter *f, unsigned int id, void *arg) {
 	switch(id) {
 		case  MS_JPEG_WRITER_SNAPSHOT_TAKEN: {
@@ -5125,13 +5137,6 @@ static void video_filter_callback(void *userdata, struct _MSFilter *f, unsigned 
 				linphone_core_notify_qrcode_found(lc, result);
 				ms_free(result);
 			}
-			break;
-		}
-		case MS_CAMERA_PREVIEW_SIZE_CHANGED: {
-			MSVideoSize size = *(MSVideoSize *)arg;
-			bctbx_message("Camera preview size changed: %ix%i", size.width, size.height);
-			LinphoneCore *lc = (LinphoneCore *)userdata;
-			linphone_core_resize_video_preview(lc, size.width, size.height);
 			break;
 		}
 	}
@@ -5204,9 +5209,7 @@ static void toggle_video_preview(LinphoneCore *lc, bool_t val){
 			if (video_preview_qrcode_enabled(lc->previewstream)) {
 				ms_filter_add_notify_callback(lc->previewstream->qrcode, video_filter_callback, lc, TRUE);
 			}
-			MSVideoSize size = video_preview_get_current_size(lc->previewstream);
-			linphone_core_resize_video_preview(lc, size.width, size.height);
-			ms_filter_add_notify_callback(lc->previewstream->source, video_filter_callback, lc, TRUE);
+			video_stream_set_event_callback(lc->previewstream, video_stream_callback, lc);
 		}
 	} else {
 		if (lc->previewstream != NULL) {
