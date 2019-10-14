@@ -9,10 +9,17 @@ Group changes to describe their impact on the project, as follows:
     Removed for deprecated features removed in this release.
     Fixed for any bug fixes.
     Security to invite users to upgrade in case of vulnerabilities.
+    
+# Preamble
 
-## [Incomming]
-- Implementation of bodyless subscription
-- Parsing of Display name in presence NOTIFY
+This changelog file was started on October 2019. Previous changes were more or less tracked in the *NEWS* file.
+
+## [4.3.0] - 2019-10-14
 
 ### Added
-- Avoid some SIP DNS lookups by keeping SRV target names
+- New cmake options to make "small" builds of liblinphone, by excluding adavanced IM and DB storage.
+
+### Changed
+- Optimisations in chatrooms loading from Sqlite DB, improving startup time.
+- License changed to GNU GPLv3.
+
