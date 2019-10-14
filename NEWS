@@ -1,0 +1,396 @@
+-- DEPRECATED ON 2019-10-14 -- use CHANGELOG.md to track changes.
+
+linphone-3.12.0 -- July 21st, 2017
+	* C++ and C# wrappers.
+        * Account Creator plugin API.
+        * Xamarin support.
+
+linphone-3.11.1 -- March 2nd, 2017
+	* Bugfix in Autotools scripts
+
+linphone-3.11.0 -- February 24th, 2017
+	* Security vulnerability fix concering TLS. The common name of certificats
+	  delivered by SIP proxies were not compared with their hostname.
+	* Improvement of H.264 hardware encoder/decoder on MacOSX.
+	* Fix a bug in P2P presence system. Unchecking `Allow this contact to see my presence` checkbox
+	  in contact editing view had no any effect. Then it was not possible to hide presence informations to
+	  a contact once it had been allowed to see it.
+	* Performance improvments of the presence list feature.
+	* IM Encription Engine: abstraction for messaging encription protocols.
+
+linphone-3.10.2 -- August 30th, 2016
+	* Fixing linphone python version compilation - fixing vcards
+
+linphone-3.10.0 -- August 8th, 2016
+	* Adding lime_experimental_feature : set to 1 in .linphonerc [GtkUi] to 
+	show the Lime menu in the graphical user interface. Caution : Experimental.
+	* Video conference support through a conference server (SDK only)
+	* Disable dummy STUN packets sending when ICE is activated.
+	* Signal AVPF support as AVP : Enable rtcp feedback on RTP/AVP by default
+	* Adding linphone daemon
+	* gtk - Show links to files received in chat by file transfer
+	* gtk - Debug window now stores “scroll to end” preference
+	* gtk - Added button to take screenshot of video call
+ 	* Fix - gtk : Fixed issue busy presence not displayed in red 
+	* Fix 0002832: Date/time of calls not shown in call history on Windows.
+	* Fix 0002690: Bad SDP when no audio codec has been enabled
+	* Fix 0000750: DTMF RFC2833 event always goes up in the same LinphoneCoreListener 
+
+linphone-3.9.1 -- November 16th, 2015
+	* Fix crash when recording video calls with the VP8 codec
+	* Fix H.264 codec support in Mac OS X package
+	* Fix translation of account assistant
+	* Bug fixes
+
+linphone-3.9.0 -- November 2nd, 2015
+	* Video recording of calls in MKV format
+	* Clickable URLs in chat view
+	* Add buttons to change the record and playback volumes during a call
+	* Add button to start chatting without having to create a contact first
+	* Some icon changes
+	* Call logs now stored in database
+	* Bug fixes
+
+linphone-3.8.5 -- June 30th, 2015
+	* Fix bug about status icon on MacOSX. Attention request worked only once
+	* Fix crash at the end of the audio assistant
+	* Fix crash when configuring a remote provisioning
+	* Fix regression in the codec view. Codec which are not usable because
+	  bandwidth limits are to low were not greyed anymore
+	* Fix language selection on Windows and MacOSX
+	* Add translation for 'Arabic' and 'Turkish' items in the language selection
+	  list
+
+linphone-3.8.4 -- June 9th, 2015
+	* Add a built-in XMLRPC client. Linphone does not depend on libsoup anymore
+
+linphone-3.8.3 -- June 4th, 2015
+	* Fix status icons on all platforms (Windows, MacOS, non-KDE Linux desktop environment)
+
+linphone-3.8.2 -- May 7th, 2015
+	Application level improvements:
+	* add support of the StatusNotifierItem standard to display a status icon on KDE5
+	* auto-answering can be set through the preferences panel
+	* bug fixes
+
+	Liblinphone level improvements:
+	* fix audio bug with opus codec
+	* fix ICE corner case not properly handled and resulting bad final ice status
+	* update SO version to 7 (it should have been done in 3.8.0)
+	* bug fixes
+
+linphone-3.8.1 -- March 31th, 2015
+	Application level improvements:
+	* Auto-answer ability
+	* Improvement of UI appearance on Mac OSX
+	* Bug fixes
+
+linphone-3.8.0 -- March 11th, 2015
+	Application level improvements:
+	* The video window has now controls in order to switch fullscreen mode and terminate call.
+	* The out of call video preview feature (to test camera) is moved into the settings and is no longer linked to the in-call video preview feature.
+	* Add an assistant to help users to set audio/video parameters
+	* Some ergonomics improvments (checkbox to set random port for UDP and TCP, ...)
+	* Lots of updated translations. Arabic translation has been added
+	* Experimental feature: play an MKV file by drag-and-dropping it on the video call window
+
+	Liblinphone level improvements:
+	* Support for RTP/AVPF (RFC4585) for video streams, allowing fast transmission error recovery with VP8 codec only.
+	* API enhancements, most objects can be ref-counted.
+	* Add some getter funtctions to the call information API
+	* Add a function in the API to accept early-media calls
+	* Add a function to set the SIP transport timeout
+	* Add a function to change adaptive rate algorithm at runtime
+	* Add support of file transfer
+	* Call video recording feature, in mkv format (H264 streams only for the moment)
+	* Call playing feature: play an MKV file and send the audio/video stream through a call
+	* Local player API. Play WAV and MKV file and display video on a specified window display
+	* A wrapper for Python has been made
+	* Support of Wake Locks on Android
+	* Support of multicast IP addresses
+	* Support of incoming UPDATEs within dialog (RFC3311)
+	* Support of SRTP by using packages from GNU/Linux distributions
+
+linphone-3.7.0 -- February 20th, 2014
+	Application level improvements:
+	* It is now possible to configure multiple proxy accounts with different transports (UDP, TCP, TLS)
+	* can work with IPv6 and IPv4 simultaneously
+	* User can choose video rendering method on Linux
+	* Video HD formats support added, leveraging on multiple cores for encoding if available
+	* Keyboard can be used for DTMF input
+	* Faster and higly responsive UI thanks to fully asynchronous operation of the liblinphone.
+	* Addon of opus codec
+	* Possibility to specify a remote provisioning http URI for configuration
+	* LDAP search integration for Linux and MacOSX
+	* is-composing notification in chat area
+
+	Liblinphone level improvements thanks to new "belle-sip" SIP stack:
+	* multiple SIP transports simultaneously now allowed
+	* IP dual stack: can use IPv6 and IPv4 simultaneously
+	* fully asynchronous behavior: no more lengthly DNS or connections
+	* +sip.instance parameter (RFC5626)
+	* alias parameter (RFC5923)
+	* better management of network disconnections
+	* SIP/TLS handled through lightweighted polarssl library (instead of openssl)
+	* SIP transaction state machines improved (RFC6026)
+	* Privacy API (RFC3323, RFC3325)
+	* Full support of rich presence in (RFC4480)
+	* Better handling of sips scheme in URIs.
+	* Messaging: support of is-composing (RFC3994)
+	* Call transfer fixes in error cases
+	* Add API for managing SIP SUBSCRIBES/NOTIFY/PUBLISH (linphonecore/event.h)
+	* bugfixes
+
+	Requires: mediastreamer2 = 2.10.0, ortp = 0.23.0, belle-sip = 1.3.0
+
+linphone-3.6.1 -- June 17, 2013
+	* fix memory leak with some video cameras on windows.
+
+	Requires: mediastreamer2 = 2.9.1 and ortp = 0.22.0
+
+linphone-3.6.0 -- May 27, 2013
+	UI:
+	* new friend list and chat messaging UI
+	* enhanced call history
+	* call and conference audio recording
+	* persistent chat history
+	* DSCP settings for SIP and RTP
+	* display of call statistics (when clicking on the quality indicator bar)
+	core:
+	* ICE for efficient RTP exchange
+	* fix bug in zRTP support (upgrade required)
+	* call recording
+	* uPnP
+	* call statistics
+	* adaptive bitrate control improvements
+	* faster call quality indicator feedback
+	* DSCP settings for SIP and RTP
+	* detailed call statistics feedback API
+
+	Requires: mediastreamer2 = 2.9.0 and ortp = 0.22.0
+
+
+linphone-3.5.2 -- February 22, 2012
+	* updated oRTP to 0.20.0
+	* updated mediastreamer2 to 2.8.2
+	* added ZRTP media encryption
+	* added SILK audio codec
+
+linphone-3.5.1 -- February 17, 2012
+	* gtk - implement friend search by typing into the friendlist, and friend sorting
+
+linphone-3.5.0 -- December 22, 2011
+	* added VP-8 video codec
+	* added G722 audio codec
+	* added SIP/TCP and SIP/TLS
+	* added SRTP media encryption
+	* Audio conferencing
+	* UI: call history tab, menu simplified
+	* UI: cosmetics for incall views
+	* UI: integration with libnotify
+	* UI: show registered SIP accounts
+	* Fixes for MacOS X, and uses GtkQuartz engine
+
+linphone-3.4.3 -- March 28, 2011
+	* Fully ported to mac os x with gtk-osx (menu integration, bundle generation with "make bundle", sound I/O improved) but still audio only
+	* Fix stupid warning "no response" that sometimes arrived at end of calls
+	* limit the size of the log window (to prevent memory drain)
+	* limit the size of the SDP message by removing unnecessary information (for well known codecs, for H264).
+	  This is to prevent SIP messages from being discarded by routers on the internet when they exceeds in size the internet MTU.
+	* other sip bugfixes
+	Requires mediastreamer-2.7.3
+
+linphone-3.4.2 -- March 3rd, 2011
+	* fix problems with webcams on windows
+	Requires mediastreamer-2.7.2
+
+linphone-3.4.1 -- February 17th, 2011
+	* bugfixes
+	* gtk executable is renamed "linphone" (was linphone-3 before)
+	Requires mediastreamer-2.7.1
+
+linphone-3.4.0 -- February 7th, 2011
+	* implement multiple calls feature:
+		- call hold (with possibility to play a music file)
+		- call resume
+		- acceptance of 2nd call while putting the others on hold
+		- creation of another outgoing call while already in call
+		- blind call transfer
+		- attended call transfer
+			**CAUTION**: LinphoneCoreVTable has changed: pay attention to this when upgrading an old application to a newer liblinphone.
+	* improve bandwidth management (one b=AS line is used for audio+video)
+	* improvements in the echo limiter performance
+	* implement a echo calibration feature (see linphone_core_start_echo_calibration()).
+	* stun support bugfixes
+	* possibility to use two video windows, one for local preview, one for remote video (linphonec only)
+	* optimize by not re-creating streams when SDP is unchanged during a reinvite
+	* support for sending early media
+	* doxygen doc and javadoc improvements
+	* based on mediastreamer-2.7.0, please refer to mediastreamer NEWS for changes.
+
+linphone-3.3.2 -- July 1st, 2010
+	* fix crash when setting firewall address in gtk interface
+	* fix crash while closing video window on windows
+	* fix un-sent BYE message in some rare cases.
+	Requires:
+		mediastreamer2-2.6.0
+		ortp-0.16.3
+
+linphone-3.3.1 -- June 3, 2010
+	* fix bugs when carrying non ascii displaynames in SIP messages
+	* fix crash when codecs are incompatible
+	* fix bug with streams not restarted in case of reinvites
+	Requires:
+		mediastreamer2-2.5.0
+		ortp-0.16.3
+
+linphone-3.3.0 -- May 19, 2010
+	* liblinphone is ported to iphoneOS and Google Android
+	* Internal refactoring of liblinphone (code factorisation, encapsulation
+		of signaling)
+	* enhancements made to presence support (SIP/SIMPLE)
+	* new icons
+	* new tabbed ui
+	* be nat friendly using OPTIONS request and using received,rport from
+		responses.
+	* use stun guessed ports even if symmetric is detected (works with freeboxes)
+	* improve bitrate usage of speex codec
+	* allow speex to run with vbr (variable bit rate) mode
+	* add speex/32000 (ultra wide band speex codec)
+	* answer empty SIP INFO requests
+	* reverse order of call logs
+	* optimize video display
+	* manual or automatic network connectivity management (so that REGISTERs
+		are only sent when network is up or refreshed when it comes back)
+
+linphone-3.2.1 -- October 5, 2009
+	* improve graphics and behaviour of mute button
+	* updated translations
+	* windows installer installs reg keys to indicate windows to start linphone clicking of sip uris
+	* workaround a bug Gtk-macos X with modal popup windows, preventing to answer calls
+
+linphone-3.2.0 -- September 17, 2009
+	* new in-call layout
+	* new idle view with two buttons
+	* ability to dial the number from dialpad
+	* improve local IP address detection when having multiple networks (ex: VPNs)
+	* use proxy's received and rport params from via in Contact header when possible
+	* port to mac os X leopard (using gtk/x11), audio only for now
+	* DevC++ support now deprecated, use msys/mingw (see README.mingw for details)
+	* add an option to ask linphone to place a call, whenever an instance is already running or not:
+		should be useful for starting calls from a web browser recognizing the 'sip:' uri scheme.
+	* french and italian translation updated
+	* don't show ffmpeg codecs when encoder are disabled in ffmpeg library.
+	* bugfixes in:
+		- video4linux2 support
+		- alsa support
+		- socket leak in mtu discovery
+
+
+linphone-3.1.2 -- May 5, 2009
+	* make it work with lastest ffmpeg swscale
+	* improve theora packer
+	* update theora default settings to match performance of 1.0 release.
+	* fix a random crash during video resizing on linux with SDL.
+
+linphone-3.1.1 -- April 14, 2009
+	* fix crash when opening property box, in some rare case
+	* windows version uses the new libmsdscap plugin (video capture using directshow)
+	* improved translations
+
+linphone-3.1.0 -- March 16, 2009
+	* linphone can now send large video pictures: up to SVGA, configurable via the user interface
+	* automatic rescaling of the video windows to the video size of incoming stream
+	* improved webcam support on windows
+	* plenty of user interface cosmetic improvements
+	* set a user friendly gtk theme by default on windows
+	* linphonec can compile and work without libreadline
+	* enable translations on windows
+	* enable lookups of SRV records
+	* new 'linphonecsh' program to send commands to a linphonec running as daemon using unix sockets or tcp.
+	* bugfixing as usual
+
+linphone-3.0.0  -- October 13, 2008
+	* new graphical interface based on Glade/Gtk
+	* systray icon
+	* STUN working for RTP
+	* fully ported to windows
+	* accurate bandwidth management (to let video occupy all remaning bandwidth)
+	* new H264 plugin based on x264 (msx264)
+	* automatic call hangup upon media transmission faillure
+
+linphone-2.1.1 -- February 13, 2008
+	* fix interroperability bug with Asterisk about a BYE not sent by linphone.
+	* fix alsa support weakness (capture underruns not recovered)
+
+linphone-2.1.0 -- January 25, 2008
+	* 4CIF support
+	* enable resizing of video output
+	* hu translation added
+
+linphone-2.0.1 -- November 30, 2007
+	* fix interop issue with asterisk
+	* answer OPTIONS and other SIP messages
+	* allow usage of ALSA user pcm devices with the sound->alsadev config item.
+
+linphone-2.0.0 -- November 15, 2007
+	* port to libeXosip2-3.0.x with libosip2-3.0.x
+	* implements early media
+	* implements incoming re-INVITE
+	* presence support improvements
+	* ipv6 working on windows
+	* implements SDP over 200ok/ACK
+	* add experimental snow codec support
+	* answers to VFU request in SIP-INFO by sending an I-frame.
+	* ffmpeg rate control enabled, improved mpeg4 quality for low bandwidths
+	* separate video grabbing and display in linphonec
+
+linphone-1.7.1 -- April 16, 2007
+	* cz translation
+	* compilation bugfixes (when video support is disabled)
+	* fix IM icons path bug
+
+linphone-1.7.0 -- April 11, 2007
+	* new splash screen when no webcam is detected
+	* new friend commands for linphonec
+	* gnome interface becomes gtk-only
+	* fix issue with codec bitrate settings when no bandwidth limits are given
+	* open rtp sockets before sending SDP offer or answer (so that we don't miss the
+	  first I-frame)
+
+linphone-1.6.0 -- January 23, 2007
+	* Video4Linux V2 support with mjpeg cameras
+	* use MPEG4 config string provided in the SDP (if any)
+	* fix bug when choosing an invalid ring sound file
+	* fix bug when using quickcam driver with CIF size
+	* reduce audio bandwidth usage for <128kbit/s connections with video
+
+linphone-1.5.1 -- November 14, 2006
+	* fix translations
+
+linphone-1.5.0 -- October 11, 2006
+	* compliant theora support (using Luca Barbato's draft)
+	* mpeg4 support (compliant with RFC3016)
+	* controls to display and modify video codec list (gnome interface)
+	* banwidth usage improvements
+	* splash screen when no webcam is detected
+
+linphone-1.4.1 -- September 18, 2006
+	* fixes crash when attempting to make two simultaneous calls
+	* fixes crash when having no soundcard
+	* require theora>=1.0.0-alpha7
+	* do not allow resizing of the gnome interface
+	* do not change mixer settings at startup
+
+linphone-1.4.0 -- September 11, 2006
+	* no more glib dependency at all
+	* new mediastreamer2 framework for audio/video streaming
+	* stable video support with H.263-1998
+	* echo cancelation
+	* experimental theora support
+	* jack support unported to mediastreamer2, sorry : volunteer needed
+	* video resolution and framerate set according to bandwidth constraints.
+	* linphonec new "soundcard" command to list and choose sound devices.
+	* new download and upload bandwidth parameters used to find suitable video/audio codec choice and parameters.
+	* new 'play' and 'record' functions to linphonec to play and record wav files
+	* arts sound backend
