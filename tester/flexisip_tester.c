@@ -1319,7 +1319,10 @@ static void redis_publish_subscribe(void) {
 	LinphoneAddress *marie_identity = linphone_address_ref(marie->identity);
 
 	linphone_core_set_network_reachable(marie->lc, FALSE);
-	linphone_core_manager_destroy(marie);
+	/*to avoid unregister*/
+	linphone_core_manager_stop(marie);
+	linphone_core_manager_uninit(marie);
+	ms_free(marie);
 
 	linphone_core_invite_address(pauline->lc, marie_identity);
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneCallOutgoingProgress, 1, 3000));
