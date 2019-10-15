@@ -383,6 +383,13 @@ void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 
 		cam = ms_web_cam_manager_get_cam(ms_factory_get_web_cam_manager(linphone_core_get_ms_factory(mgr->lc)), "Mire: Mire (synthetic moving picture)");
 
+		//Usefull especially for encoders not supporting qcif
+		#ifdef __ANDROID__
+			MSVideoSize vsize = MS_VIDEO_SIZE_CIF;
+			linphone_core_set_preferred_video_size(mgr->lc, vsize);
+		#endif
+
+
 		if (cam == NULL) {
 			MSWebCamDesc *desc = ms_mire_webcam_desc_get();
 			if (desc){
@@ -1956,7 +1963,7 @@ int liblinphone_tester_copy_file(const char *from, const char *to)
     FILE *in, *out;
     char buf[256];
     size_t n;
-    
+
     /* Open "from" file for reading */
     in=fopen(from, "rb");
     if ( in == NULL )
@@ -1964,7 +1971,7 @@ int liblinphone_tester_copy_file(const char *from, const char *to)
         ms_error("Can't open %s for reading: %s\n",from,strerror(errno));
         return 1;
     }
-    
+
     /* Open "to" file for writing (will truncate existing files) */
     out=fopen(to, "wb");
     if ( out == NULL )
@@ -1973,7 +1980,7 @@ int liblinphone_tester_copy_file(const char *from, const char *to)
         fclose(in);
         return 2;
     }
-    
+
     /* Copy data from "in" to "out" */
     while ( (n=fread(buf, sizeof(char), sizeof(buf), in)) > 0 )
     {
@@ -1985,11 +1992,9 @@ int liblinphone_tester_copy_file(const char *from, const char *to)
             return 3;
         }
     }
-    
+
     fclose(in);
     fclose(out);
-    
+
     return 0;
 }
-
-
