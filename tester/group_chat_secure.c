@@ -477,7 +477,7 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 	if (sal_error) {
 		sal_set_send_error(linphone_core_get_sal(marie->lc), -1);
 		msg = _send_message(marieCr, "Bli bli bli");
-		const char *message_id = linphone_chat_message_get_message_id(msg);
+		char *message_id = ms_strdup(linphone_chat_message_get_message_id(msg));
 		BC_ASSERT_STRING_NOT_EQUAL(message_id, "");
 
 		wait_for_list(coresList, NULL, 0, 1000);
@@ -487,6 +487,7 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 		const char *message_id_2 = linphone_chat_message_get_message_id(msg);
 		BC_ASSERT_STRING_NOT_EQUAL(message_id_2, "");
 		BC_ASSERT_STRING_EQUAL(message_id, message_id_2);
+		ms_free(message_id);
 
 		wait_for_list(coresList, NULL, 0, 1000);
 		

@@ -266,7 +266,11 @@ static void load_a_lot_of_chatrooms(void) {
 	MainDbProvider provider("db/chatrooms.db");
 	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
 	long ms = (long) chrono::duration_cast<chrono::milliseconds>(end - start).count();
+#if __APPLE__
+	BC_ASSERT_LOWER(ms, 2000, long, "%li");
+#else
 	BC_ASSERT_LOWER(ms, 1000, long, "%li");
+#endif
 }
 
 test_t main_db_tests[] = {

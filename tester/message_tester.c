@@ -349,7 +349,7 @@ static void text_message_with_send_error(void) {
 	sal_set_send_error(linphone_core_get_sal(marie->lc), -1);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);
-	const char *message_id = linphone_chat_message_get_message_id(msg);
+	char *message_id = ms_strdup(linphone_chat_message_get_message_id(msg));
 	BC_ASSERT_STRING_NOT_EQUAL(message_id, "");
 
 	/* check transient msg list: the msg should be in it, and should be the only one */
@@ -371,7 +371,10 @@ static void text_message_with_send_error(void) {
 	BC_ASSERT_STRING_NOT_EQUAL(message_id_2, "");
 
 	BC_ASSERT_STRING_NOT_EQUAL(message_id, message_id_2);
-	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageDelivered,1));
+	ms_free(message_id);
+	
+	// if imdn received before 200 ok, chat message will change directly state to DeliveredToUser from Inprogress.
+	//BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageDelivered,1));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageDeliveredToUser,1));	
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageReceived, 1, int, "%d");
 
