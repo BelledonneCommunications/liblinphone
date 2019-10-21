@@ -484,6 +484,7 @@ void Core::pushNotificationReceived () const {
 	 * Finally if any of the connection is already pending a retry, the following code will request an immediate
 	 * attempt to connect and register.
 	 */
+	bool sendKeepAlive = false;
 	while (it) {
 		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *) bctbx_list_get_data(it);
 		LinphoneRegistrationState state = linphone_proxy_config_get_state(proxy);
@@ -493,9 +494,16 @@ void Core::pushNotificationReceived () const {
 				linphone_proxy_config_refresh_register(proxy);
 			}
 		} else if (state == LinphoneRegistrationOk) {
-			// TODO: send a keep-alive to ensure the socket isn't broken
+			// Send a keep-alive to ensure the socket isn't broken
+			sendKeepAlive = true;
 		}
 		it = bctbx_list_next(it);
+	}
+	if (sendKeepAlive) {
+		lInfo() << "Sending keep-alive to ensure sockets aren't broken";
+		getCCore()->sal->sendKeepAlive();
+		linphone_core_iterate(lc);
+		linphone_core_iterate(lc);
 	}
 }
 

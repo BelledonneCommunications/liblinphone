@@ -195,6 +195,7 @@ public:
 	void setKeepAlivePeriod (unsigned int value);
 	unsigned int getKeepAlivePeriod () const { return mKeepAlive; }
 	void useTcpTlsKeepAlive (bool value) { mUseTcpTlsKeepAlive = value; }
+	void sendKeepAlive ();
 
 	void setDscp (int dscp) { belle_sip_stack_set_default_dscp(mStack, dscp); }
 

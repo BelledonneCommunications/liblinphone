@@ -636,6 +636,13 @@ void Sal::setKeepAlivePeriod (unsigned int value) {
 	}
 }
 
+void Sal::sendKeepAlive () {
+	for (auto it = belle_sip_provider_get_listening_points(mProvider); it; it = bctbx_list_next(it)) {
+		auto listeningPoint = static_cast<belle_sip_listening_point_t *>(bctbx_list_get_data(it));
+		belle_sip_listening_point_send_keep_alive(listeningPoint);
+	}
+}
+
 int Sal::setTunnel (void *tunnelclient) {
 #ifdef TUNNEL_ENABLED
 	mTunnelClient = tunnelclient;
