@@ -96,8 +96,13 @@ public class NetworkManagerAbove23 implements NetworkManagerInterface {
 							Log.e("[Platform Helper] [Network Manager 23] onCapabilitiesChanged called with null networkCapabilities, skipping...");
 							return;
 						}
-						Log.i("[Platform Helper] [Network Manager 23] onCapabilitiesChanged " + networkCapabilities.toString());
-						mHelper.updateNetworkReachability();
+						if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+							// This callback can be called very often when on WIFI (for example on signal strenght change), so don't log it each time and no need to update network reachability
+							Log.d("[Platform Helper] [Network Manager 23] onCapabilitiesChanged " + networkCapabilities.toString());
+						} else {
+							Log.i("[Platform Helper] [Network Manager 23] onCapabilitiesChanged " + networkCapabilities.toString());
+							mHelper.updateNetworkReachability();
+						}
 					}
 				});
 			}
