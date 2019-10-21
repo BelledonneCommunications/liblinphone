@@ -163,6 +163,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/session/call-session-p.h
 	conference/session/call-session.h
 	conference/session/media-session.h
+	conference/session/streams.h
 	conference/session/port-config.h
 	containers/lru-cache.h
 	content/content-disposition.h
@@ -328,6 +329,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/remote-conference.cpp
 	conference/session/call-session.cpp
 	conference/session/media-session.cpp
+	conference/session/streams.cpp
 	content/content-disposition.cpp
 	content/content-manager.cpp
 	content/content-type.cpp
