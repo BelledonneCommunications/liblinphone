@@ -36,6 +36,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+
 class MediaSessionPrivate : public CallSessionPrivate {
 public:
 	static int resumeAfterFailedTransfer (void *userData, unsigned int);
