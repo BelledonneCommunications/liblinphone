@@ -585,8 +585,12 @@ public class AndroidPlatformHelper {
 	}
 
 	public synchronized void updateDnsServers(ArrayList<String> dnsServers) {
-		mDnsServers = new String[dnsServers.size()];
-		dnsServers.toArray(mDnsServers);
+		// Do not replace previous list of DNS by an empty one, keep them to be able to try a resolution while in DOZE mode
+		if (dnsServers != null && !dnsServers.isEmpty()) {
+			mDnsServers = new String[dnsServers.size()];
+			dnsServers.toArray(mDnsServers);
+			Log.i("[Platform Helper] DNS servers list updated");
+		}
 	}
 
 	public synchronized void updateNetworkReachability() {
