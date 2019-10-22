@@ -139,7 +139,7 @@ private:
 	void setState (CallSession::State newState, const std::string &message) override;
 
 	void assignStreamsIndexesIncoming(const SalMediaDescription *md);
-	void assignStreamsIndexesOutgoing();
+	void assignStreamsIndexes();
 	int getFirstStreamWithType(const SalMediaDescription *md, SalStreamType type);
 	void fixCallParams (SalMediaDescription *rmd);
 	void initializeParamsAccordingToIncomingCallParams () override;

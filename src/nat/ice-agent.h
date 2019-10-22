@@ -73,7 +73,7 @@ public:
 	bool checkIceReinviteNeedsDeferedResponse (SalMediaDescription *md);
 
 private:
-	void addLocalIceCandidates (int family, const char *addr, IceCheckList *audioCl, IceCheckList *videoCl, IceCheckList *textCl);
+	void addLocalIceCandidates (int family, const char *addr, IceCheckList *cl, LinphoneStreamType stype);
 	bool checkForIceRestartAndSetRemoteCredentials (const SalMediaDescription *md, bool isOffer);
 	void clearUnusedIceCandidates (const SalMediaDescription *localDesc, const SalMediaDescription *remoteDesc);
 	void createIceCheckListsAndParseIceAttributes (const SalMediaDescription *md, bool iceRestarted);

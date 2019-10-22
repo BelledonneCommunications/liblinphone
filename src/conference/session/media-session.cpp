@@ -415,7 +415,6 @@ void MediaSessionPrivate::updating (bool isUpdate) {
 			params->initDefault(q->getCore());
 		}
 		makeLocalMediaDescription();
-		op->setLocalMediaDescription(localDesc);
 	}
 	if (rmd) {
 		SalErrorInfo sei;
@@ -657,9 +656,10 @@ MSWebCam * MediaSessionPrivate::getVideoDevice () const {
 // -----------------------------------------------------------------------------
 
 void MediaSessionPrivate::initializeStreams () {
-	initializeAudioStream();
-	initializeVideoStream();
-	initializeTextStream();
+	assignStreamsIndexes();
+	if (mainAudioStreamIndex != -1) initializeAudioStream();
+	if (mainVideoStreamIndex != -1) initializeVideoStream();
+	if (mainTextStreamIndex != -1) initializeTextStream();
 }
 
 void MediaSessionPrivate::stopStream (SalStreamDescription *streamDesc) {
@@ -914,9 +914,15 @@ int MediaSessionPrivate::getFirstStreamWithType(const SalMediaDescription *md, S
 	return -1;
 }
 
-void MediaSessionPrivate::assignStreamsIndexesOutgoing(){
+void MediaSessionPrivate::assignStreamsIndexes(){
 	int freeIndex = 0;
 	if (biggestDesc) freeIndex = biggestDesc->nb_streams;
+	
+	/*Initialize stream indexes from potential incoming offer.*/
+	SalMediaDescription *rmd = op ? op->getRemoteMediaDescription() : nullptr;
+	if (rmd) assignStreamsIndexesIncoming(rmd);
+	
+	/*Assign indexes for our streams, if no incoming offer was received, or if new streams are requested.*/
 	if (getParams()->audioEnabled() && mainAudioStreamIndex == -1){
 		mainAudioStreamIndex = freeIndex++;
 	}
@@ -952,7 +958,6 @@ void MediaSessionPrivate::assignStreamsIndexesIncoming(const SalMediaDescription
 void MediaSessionPrivate::fixCallParams (SalMediaDescription *rmd) {
 	L_Q();
 	if (rmd) {
-		assignStreamsIndexesIncoming(rmd);
 		updateBiggestDesc(rmd);
 		/* Why disabling implicit_rtcp_fb ? It is a local policy choice actually. It doesn't disturb to propose it again and again
 		 * even if the other end apparently doesn't support it.
@@ -1469,7 +1474,8 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 	SalMediaDescription *md = sal_media_description_new();
 	SalMediaDescription *oldMd = localDesc;
 	
-	assignStreamsIndexesOutgoing();
+	//Initialize streams, because from now on we will need the allocated RTP port numbers to create the offer.
+	initializeStreams();
 
 	/* Multicast is only set in case of outgoing call */
 	if (direction == LinphoneCallOutgoing) {
@@ -1668,6 +1674,7 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 		}
 	}
 	forceStreamsDirAccordingToState(md);
+	if (op) op->setLocalMediaDescription(localDesc);
 }
 
 void MediaSessionPrivate::setupDtlsKeys (SalMediaDescription *md) {
@@ -1829,6 +1836,7 @@ void MediaSessionPrivate::transferAlreadyAssignedPayloadTypes (SalMediaDescripti
 void MediaSessionPrivate::updateLocalMediaDescriptionFromIce () {
 	iceAgent->updateLocalMediaDescriptionFromIce(localDesc);
 	iceAgent->updateIceStateInCallStats();
+	if (op) op->setLocalMediaDescription(localDesc);
 }
 
 // -----------------------------------------------------------------------------
@@ -2520,6 +2528,7 @@ void MediaSessionPrivate::handleIceEvents (OrtpEvent *ev) {
 		if (!evd->info.ice_processing_successful)
 			lWarning() << "No STUN answer from [" << linphone_nat_policy_get_stun_server(q->getPrivate()->getNatPolicy()) << "], continuing without STUN";
 		iceAgent->gatheringFinished();
+		updateLocalMediaDescriptionFromIce();
 		switch (state) {
 			case CallSession::State::Updating:
 				startUpdate();
@@ -2534,8 +2543,6 @@ void MediaSessionPrivate::handleIceEvents (OrtpEvent *ev) {
 				break;
 			case CallSession::State::Idle:
 				stopStreamsForIceGathering();
-				updateLocalMediaDescriptionFromIce();
-				op->setLocalMediaDescription(localDesc);
 				deferIncomingNotification = false;
 				startIncomingNotification();
 				break;
@@ -4146,7 +4153,6 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	broken = false;
 	setState(CallSession::State::Pausing, "Pausing call");
 	makeLocalMediaDescription();
-	op->setLocalMediaDescription(localDesc);
 	op->update(subject.c_str(), false);
 	if (listener)
 		listener->onResetCurrentSession(q->getSharedFromThis());
@@ -4172,9 +4178,9 @@ LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextSt
 		/* Defer the sending of the answer until there are no losing pairs left */
 		return 0;
 	}
-	makeLocalMediaDescription();
+	
 	updateRemoteSessionIdAndVer();
-	op->setLocalMediaDescription(localDesc);
+	makeLocalMediaDescription();
 	op->accept();
 	SalMediaDescription *md = op->getFinalMediaDescription();
 	iceAgent->stopIceForInactiveStreams(md);
@@ -4189,9 +4195,7 @@ LinphoneStatus MediaSessionPrivate::startUpdate (const string &subject) {
 	fillMulticastMediaAddresses();
 	if (!getParams()->getPrivate()->getNoUserConsent())
 		makeLocalMediaDescription();
-	if (!q->getCore()->getCCore()->sip_conf.sdp_200_ack)
-		op->setLocalMediaDescription(localDesc);
-	else
+	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack)
 		op->setLocalMediaDescription(nullptr);
 	LinphoneStatus result = CallSessionPrivate::startUpdate(subject);
 	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack) {
@@ -4309,7 +4313,6 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 		setParams(new MediaSessionParams(*msp));
 		iceAgent->prepare(localDesc, true, false /*we don't allow gathering now, it must have been done before*/);
 		makeLocalMediaDescription();
-		op->setLocalMediaDescription(localDesc);
 	}
 
 	updateRemoteSessionIdAndVer();
@@ -4370,7 +4373,6 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 	/* Update multicast params according to call params */
 	fillMulticastMediaAddresses();
 	iceAgent->checkSession(IR_Controlled, true);
-	initializeStreams(); /* So that video stream is initialized if necessary */
 	if (iceAgent->prepare(localDesc, true))
 		return 0; /* Deferred until completion of ICE gathering */
 	startAcceptUpdate(nextState, stateInfo);
@@ -4621,7 +4623,6 @@ LinphoneStatus MediaSession::acceptEarlyMedia (const MediaSessionParams *msp) {
 	if (msp) {
 		d->setParams(new MediaSessionParams(*msp));
 		d->makeLocalMediaDescription();
-		d->op->setLocalMediaDescription(d->localDesc);
 		d->op->setSentCustomHeaders(d->getParams()->getPrivate()->getCustomHeaders());
 	}
 	d->op->notifyRinging(true);
@@ -4665,9 +4666,9 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 	if (direction == LinphoneCallOutgoing) {
 		d->selectOutgoingIpVersion();
 		d->getLocalIp(to);
-		d->initializeStreams(); // Reserve the sockets immediately
 		d->getCurrentParams()->getPrivate()->setUpdateCallWhenIceCompleted(d->getParams()->getPrivate()->getUpdateCallWhenIceCompleted());
 		d->fillMulticastMediaAddresses();
+		d->makeLocalMediaDescription();
 		if (d->natPolicy && linphone_nat_policy_ice_enabled(d->natPolicy))
 			d->iceAgent->checkSession(IR_Controlling, false);
 		d->runStunTestsIfNeeded();
@@ -4682,6 +4683,7 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 		d->setParams(new MediaSessionParams());
 		d->params->initDefault(getCore());
 		d->initializeParamsAccordingToIncomingCallParams();
+		d->makeLocalMediaDescription();
 		SalMediaDescription *md = d->op->getRemoteMediaDescription();
 		if (d->natPolicy && linphone_nat_policy_ice_enabled(d->natPolicy)) {
 			if (md) {
@@ -4693,7 +4695,6 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 				lWarning() << "ICE not supported for incoming INVITE without SDP";
 			}
 		}
-		d->initializeStreams(); // Reserve the sockets immediately
 		if (d->natPolicy)
 			d->runStunTestsIfNeeded();
 		d->discoverMtu(cleanedFrom);
@@ -4717,23 +4718,35 @@ LinphoneStatus MediaSession::deferUpdate () {
 void MediaSession::initiateIncoming () {
 	L_D();
 	CallSession::initiateIncoming();
-	d->initializeStreams();
 	if (d->natPolicy) {
-		if (linphone_nat_policy_ice_enabled(d->natPolicy))
+		if (linphone_nat_policy_ice_enabled(d->natPolicy)){
 			d->deferIncomingNotification = d->iceAgent->prepare(d->localDesc, true);
+			/* 
+			 * If ICE gathering is done, we can update the local media description immediately.
+			 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
+			 */
+			if (!d->deferIncomingNotification) d->updateLocalMediaDescriptionFromIce();
+		}
 	}
 }
 
 bool MediaSession::initiateOutgoing () {
 	L_D();
 	bool defer = CallSession::initiateOutgoing();
-	d->initializeStreams();
 	if (linphone_nat_policy_ice_enabled(d->natPolicy)) {
 		if (getCore()->getCCore()->sip_conf.sdp_200_ack)
 			lWarning() << "ICE is not supported when sending INVITE without SDP";
 		else {
 			/* Defer the start of the call after the ICE gathering process */
-			defer |= d->iceAgent->prepare(d->localDesc, false);
+			bool ice_needs_defer = d->iceAgent->prepare(d->localDesc, false);
+			if (!ice_needs_defer) {
+				/* 
+				 * If ICE gathering is done, we can update the local media description immediately.
+				 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
+				 */
+				d->updateLocalMediaDescriptionFromIce();
+			}
+			defer |= ice_needs_defer;
 		}
 	}
 	return defer;
@@ -4775,9 +4788,7 @@ LinphoneStatus MediaSession::resume () {
 		audio_stream_play(d->audioStream, nullptr);
 	d->makeLocalMediaDescription();
 	sal_media_description_set_dir(d->localDesc, SalStreamSendRecv);
-	if (!getCore()->getCCore()->sip_conf.sdp_200_ack)
-		d->op->setLocalMediaDescription(d->localDesc);
-	else
+	if (getCore()->getCCore()->sip_conf.sdp_200_ack)
 		d->op->setLocalMediaDescription(nullptr);
 	string subject = "Call resuming";
 	if (d->getParams()->getPrivate()->getInConference() && !getCurrentParams()->getPrivate()->getInConference())
@@ -4838,8 +4849,7 @@ void MediaSession::sendVfuRequest () {
 
 void MediaSession::startIncomingNotification (bool notifyRinging) {
 	L_D();
-	d->makeLocalMediaDescription();
-	d->op->setLocalMediaDescription(d->localDesc);
+	
 	SalMediaDescription *md = d->op->getFinalMediaDescription();
 	if (md) {
 		if (sal_media_description_empty(md) || linphone_core_incompatible_security(getCore()->getCCore(), md)) {
@@ -4858,7 +4868,6 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 int MediaSession::startInvite (const Address *destination, const string &subject, const Content *content) {
 	L_D();
 	linphone_core_stop_dtmf_stream(getCore()->getCCore());
-	d->makeLocalMediaDescription();
 	if (!getCore()->getCCore()->ringstream && getCore()->getCCore()->sound_conf.play_sndcard && getCore()->getCCore()->sound_conf.capt_sndcard) {
 		/* Give a chance to set card prefered sampling frequency */
 		if (d->localDesc->streams[0].max_rate > 0)
@@ -4866,8 +4875,11 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 		if (!getCore()->getCCore()->use_files)
 			audio_stream_prepare_sound(d->audioStream, getCore()->getCCore()->sound_conf.play_sndcard, getCore()->getCCore()->sound_conf.capt_sndcard);
 	}
-	if (!getCore()->getCCore()->sip_conf.sdp_200_ack) {
-		/* We are offering, set local media description before sending the call */
+	if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
+		/* We don't want to make the offer, reset local media description before sending the call */
+		d->op->setLocalMediaDescription(nullptr);
+	}else{
+		/* Otherwise set the local media description to the op, because previously makeLocalMediaDescription() could not do it because there was no op yet.*/
 		d->op->setLocalMediaDescription(d->localDesc);
 	}
 
@@ -5269,9 +5281,12 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 				d->getRemoteParams()->setSessionName(md->name);
 
 			d->getRemoteParams()->getPrivate()->setCustomSdpAttributes(md->custom_sdp_attributes);
-			d->getRemoteParams()->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeAudio, md->streams[d->mainAudioStreamIndex].custom_sdp_attributes);
-			d->getRemoteParams()->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeVideo, md->streams[d->mainVideoStreamIndex].custom_sdp_attributes);
-			d->getRemoteParams()->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeText, md->streams[d->mainTextStreamIndex].custom_sdp_attributes);
+			if (d->mainAudioStreamIndex != -1)
+				d->getRemoteParams()->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeAudio, md->streams[d->mainAudioStreamIndex].custom_sdp_attributes);
+			if (d->mainVideoStreamIndex != -1)
+				d->getRemoteParams()->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeVideo, md->streams[d->mainVideoStreamIndex].custom_sdp_attributes);
+			if (d->mainTextStreamIndex != -1)
+				d->getRemoteParams()->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeText, md->streams[d->mainTextStreamIndex].custom_sdp_attributes);
 		}
 		const SalCustomHeader *ch = d->op->getRecvCustomHeaders();
 		if (ch) {
