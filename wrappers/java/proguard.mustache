@@ -20,6 +20,9 @@
 -keep class {{package}}.{{className}}Stub {*;}
 {{/listeners}}
 
+# BuildConfig generated class for AAR
+-keep class org.linphone.core.BuildConfig { *; }
+
 # Wrapper classes
 -keep class org.linphone.core.CoreException {*;}
 -keep class org.linphone.core.Utils {*;}
