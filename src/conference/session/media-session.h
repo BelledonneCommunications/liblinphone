@@ -37,6 +37,8 @@ class LINPHONE_PUBLIC MediaSession : public CallSession {
 	friend class Call;
 	friend class CallPrivate;
 	friend class IceAgent;
+	friend class Stream;
+	friend class StreamsGroup;
 
 public:
 	MediaSession (const std::shared_ptr<Core> &core, std::shared_ptr<Participant> me, const CallSessionParams *params, CallSessionListener *listener);

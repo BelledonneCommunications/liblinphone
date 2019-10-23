@@ -24,6 +24,7 @@
 #include <functional>
 
 #include "call-session-p.h"
+#include "streams.h"
 
 #include "media-session.h"
 #include "port-config.h"
@@ -121,6 +122,9 @@ public:
 
 	// Call listener
 	void snapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg);
+	StreamsGroup & getStreamsGroup(){
+		return *streamsGroup.get();
+	}
 
 private:
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo (const std::string &name);
@@ -291,12 +295,15 @@ private:
 	int sendDtmf ();
 
 	void stunAuthRequestedCb (const char *realm, const char *nonce, const char **username, const char **password, const char **ha1);
+	
 
 private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;
 
 	std::weak_ptr<Participant> me;
+	
+	std::unique_ptr<StreamsGroup> streamsGroup;
 
 	AudioStream *audioStream = nullptr;
 	OrtpEvQueue *audioStreamEvQueue = nullptr;

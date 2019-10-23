@@ -71,6 +71,7 @@ const int MediaSessionPrivate::ecStateMaxLen = 1048576; /* 1Mo */
 
 // =============================================================================
 
+
 void MediaSessionPrivate::stunAuthRequestedCb (void *userData, const char *realm, const char *nonce, const char **username, const char **password, const char **ha1) {
 	MediaSessionPrivate *msp = reinterpret_cast<MediaSessionPrivate *>(userData);
 	msp->stunAuthRequestedCb(realm, nonce, username, password, ha1);
@@ -4565,6 +4566,7 @@ MediaSession::MediaSession (const shared_ptr<Core> &core, shared_ptr<Participant
 	d->setPortConfig(d->mainTextStreamIndex, make_pair(minPort, maxPort));
 
 	memset(d->sessions, 0, sizeof(d->sessions));
+	d->streamsGroup = makeUnique<StreamsGroup>(*this);
 	d->iceAgent = makeUnique<IceAgent>(*this);
 
 	lInfo() << "New MediaSession [" << this << "] initialized (LinphoneCore version: " << linphone_core_get_version() << ")";

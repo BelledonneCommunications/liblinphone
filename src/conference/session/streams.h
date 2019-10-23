@@ -32,7 +32,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 
 
-class StreamsManager;
+class StreamsGroup;
+class MediaSession;
 
 /**
  * Base class for any kind of stream that may be setup with SDP.
@@ -46,12 +47,26 @@ public:
 	virtual LinphoneCallStats *getStats(){
 		return nullptr;
 	}
+	size_t getIndex()const { return mIndex; }
+	SalStreamType getType()const{ return mStreamType;}
 	virtual ~Stream() = default;
+	LinphoneCore *getCCore()const;
+	MediaSession &getMediaSession()const;
+	bool isPortUsed(int port) const;
 protected:
-	Stream(StreamsManager &ms);
-private:
-	StreamsManager & mStreamManager;
+	Stream(StreamsGroup &ms, SalStreamType type, size_t index);
 	PortConfig mPortConfig;
+private:
+	void setPortConfig(std::pair<int, int> portRange);
+	int selectFixedPort(std::pair<int, int> portRange);
+	int selectRandomPort(std::pair<int, int> portRange);
+	void setPortConfig();
+	void setRandomPortConfig();
+	void fillMulticastMediaAddresses();
+	StreamsGroup & mStreamsGroup;
+	SalStreamType mStreamType;
+	size_t mIndex;
+	
 };
 
 /**
@@ -65,35 +80,48 @@ public:
 	virtual void startDtls() override;
 	virtual ~MS2Stream();
 protected:
-	MS2Stream(StreamsManager &sm);
-	RtpProfile *mRtpProfile;
+	MS2Stream(StreamsGroup &sm, SalStreamType type, size_t index);
+	void setPortConfigFromRtpSession();
+	RtpProfile *mRtpProfile = nullptr;
 	MSMediaStreamSessions mSessions;
-	OrtpEvQueue *mOrtpEvQueue;
-	LinphoneCallStats *mStats;
+	OrtpEvQueue *mOrtpEvQueue = nullptr;
+	LinphoneCallStats *mStats = nullptr;
 };
 
 class MS2AudioStream : public MS2Stream{
 public:
-	MS2AudioStream(StreamsManager &sm);
+	MS2AudioStream(StreamsGroup &sg, size_t index);
+	virtual ~MS2AudioStream();
+private:
+	AudioStream *stream;
 };
 
 class MS2VideoStream : public MS2Stream{
 public:
-	MS2VideoStream(StreamsManager &sm);
+	MS2VideoStream(StreamsGroup &sg, size_t index);
 private:
+	VideoStream *stream;
 };
 
 class MS2RealTimeTextStream : public MS2Stream{
 public:
-	MS2RealTimeTextStream(StreamsManager &sm);
+	MS2RealTimeTextStream(StreamsGroup &sm, size_t index);
 private:
+	TextStream *stream;
 };
 
-class StreamsManager{
+class StreamsGroup{
 public:
-	Stream * addStream(SalStreamType type);
+	StreamsGroup(MediaSession &session);
+	Stream * createStream(SalStreamType type, size_t index);
 	Stream * getStream(size_t index);
+	std::list<Stream*> getStreams();
+	MediaSession &getMediaSession()const{
+		return mMediaSession;
+	}
+	bool isPortUsed(int port)const;
 private:
+	MediaSession &mMediaSession;
 	std::vector<std::unique_ptr<Stream>> mStreams;
 };
 

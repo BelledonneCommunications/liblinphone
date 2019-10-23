@@ -40,6 +40,7 @@ class LINPHONE_PUBLIC Call : public Object, public CoreAccessor {
 	friend class ChatMessagePrivate;
 	friend class CorePrivate;
 	friend class MediaSessionPrivate;
+	friend class Stream;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(Call);
