@@ -3207,6 +3207,8 @@ static void group_chat_room_unique_one_to_one_chat_room_with_forward_message_rec
 			LinphoneChatMessage *recv_msg = (LinphoneChatMessage *)(history->data);
 			
 			LinphoneChatMessage *msg = linphone_chat_room_create_forward_message(paulineCr, recv_msg);
+			const LinphoneAddress *forwarded_from_address = linphone_chat_message_get_from_address(recv_msg);
+			char *forwarded_from = linphone_address_as_string_uri_only(forwarded_from_address);
 			
 			bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
 			
@@ -3214,23 +3216,23 @@ static void group_chat_room_unique_one_to_one_chat_room_with_forward_message_rec
 			linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 			linphone_chat_message_send(msg);
 			
+			BC_ASSERT_TRUE(linphone_chat_message_is_forward(msg));
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_forward_info(msg), forwarded_from);
+			
 			BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDelivered,1));
 			BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived,1));
 			BC_ASSERT_PTR_NOT_NULL(marie->stat.last_received_chat_message);
+			
 			if (marie->stat.last_received_chat_message != NULL) {
 				BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 2, int," %i");
-				
-				if (linphone_chat_room_get_history_size(marieCr) > 1) {
-					LinphoneChatMessage *recv_msg = linphone_chat_room_get_last_message_in_history(marieCr);
-					BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recv_msg), textMessage);
-					BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(recv_msg),textMessage);
-					BC_ASSERT_TRUE(linphone_chat_message_is_forward(recv_msg));
-					linphone_chat_message_unref(recv_msg);
-				}
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), textMessage);
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(marie->stat.last_received_chat_message),textMessage);
+				BC_ASSERT_TRUE(linphone_chat_message_is_forward(marie->stat.last_received_chat_message));
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_forward_info(marie->stat.last_received_chat_message), forwarded_from);
 			}
-			
+
 			linphone_chat_message_unref(msg);
-			
+			ms_free(forwarded_from);
 		}
 	}
 
