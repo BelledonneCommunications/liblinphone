@@ -357,7 +357,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_message_is_forward (LinphoneChatMessage *ms
 /**
  * Gets the forward info if available as a string
  * @param[in] msg #LinphoneChatMessage object.
- * @return the #LinphoneContent buffer if available, null otherwise
+ * @return the original sender of the message if it has been forwarded, null otherwise
  */
 LINPHONE_PUBLIC const char *linphone_chat_message_get_forward_info (const LinphoneChatMessage *msg);
 
