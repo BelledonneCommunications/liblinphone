@@ -145,6 +145,8 @@ LinphoneEvent *linphone_proxy_config_create_publish(LinphoneProxyConfig *cfg, co
  * */
 const LinphoneAddress* linphone_proxy_config_get_service_route(const LinphoneProxyConfig* cfg);
 const LinphoneAddress *_linphone_proxy_config_get_contact_without_params (const LinphoneProxyConfig *cfg);
+/* Returns as a LinphoneAddress the Contact header sent in a register, fixed thanks to nat helper.*/
+LINPHONE_PUBLIC LinphoneAddress * linphone_proxy_config_get_transport_contact(LinphoneProxyConfig *cfg);
 
 void linphone_friend_list_invalidate_subscriptions(LinphoneFriendList *list);
 void linphone_friend_list_notify_presence_received(LinphoneFriendList *list, LinphoneEvent *lev, const LinphoneContent *body);

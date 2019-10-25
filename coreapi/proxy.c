@@ -1711,6 +1711,22 @@ const LinphoneAddress *linphone_proxy_config_get_contact (const LinphoneProxyCon
 	return cfg->contact_address;
 }
 
+LinphoneAddress * linphone_proxy_config_get_transport_contact(LinphoneProxyConfig *cfg){
+	LinphoneAddress *addr;
+	int port = 0;
+	const char *public_ip;
+
+	if (!cfg->contact_address || !cfg->op) return NULL;
+	public_ip = cfg->op->getPublicAddress(&port);
+	if (!public_ip) return NULL;
+	
+	addr = linphone_address_clone(cfg->contact_address);
+	linphone_address_set_domain(addr, public_ip);
+	if (port > 0) linphone_address_set_port(addr, port);
+	return addr;
+}
+
+
 const LinphoneAddress *_linphone_proxy_config_get_contact_without_params (const LinphoneProxyConfig *cfg) {
 	if (cfg->contact_address_without_params) {
 		linphone_address_unref(cfg->contact_address_without_params);

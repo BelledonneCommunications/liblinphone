@@ -1535,7 +1535,7 @@ static void register_without_regid(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-void test_removing_old_tport(void) {
+static void test_removing_old_tport(void) {
 	LinphoneCoreManager* marie1 = linphone_core_manager_new("marie_rc");
 	bctbx_list_t *lcs = bctbx_list_append(NULL, marie1->lc);
 
@@ -1555,6 +1555,65 @@ void test_removing_old_tport(void) {
 	linphone_core_manager_destroy(marie2);
 	bctbx_list_free(lcs);
 }
+
+static void test_protection_against_transport_address_reassignation(void){
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = NULL, *laure = NULL;
+	char local_ip[LINPHONE_IPADDR_SIZE] = { 0 };
+	int client_port = (bctbx_random() % 64000) + 1024;
+	LinphoneCall *marie_call;
+	
+	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(marie->lc);
+	LinphoneAddress *public_addr = linphone_proxy_config_get_transport_contact(cfg);
+	
+	if (!BC_ASSERT_PTR_NOT_NULL(public_addr)) goto end;
+	
+	linphone_core_get_local_ip(marie->lc, liblinphone_tester_ipv6_available() ? AF_INET6 : AF_INET, NULL, local_ip); 
+	
+	if (strcmp(linphone_address_get_domain(public_addr), local_ip) != 0){
+		ms_warning("Apparently we're running behind a firewall. Exceptionnaly, this test must run with a direct connection to the SIP server.");
+		ms_warning("Test skipped.");
+		goto end;
+	}
+	ms_message("Forced client bind port is %i", client_port);
+	pauline = linphone_core_manager_create("pauline_tcp_rc");
+	
+	/*
+	 * Force pauline to register using a specific client port
+	 */
+	sal_set_client_bind_port(linphone_core_get_sal(pauline->lc), client_port);
+	linphone_core_manager_start(pauline, TRUE);
+	/*
+	 * Abruptly disconnect pauline, and let laure power on using this same port.
+	 */
+	linphone_core_set_network_reachable(pauline->lc, FALSE);
+	laure = linphone_core_manager_create("laure_tcp_rc");
+	sal_set_client_bind_port(linphone_core_get_sal(laure->lc), client_port);
+	linphone_core_manager_start(laure, TRUE);
+	/*
+	 * Make a call from Marie to Pauline. Flexisip shall not send the INVITE to laure.
+	 */
+	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	linphone_call_ref(marie_call);
+	BC_ASSERT_FALSE(wait_for_until(laure->lc,marie->lc,&laure->stat.number_of_LinphoneCallIncomingReceived,1,10000));
+	linphone_call_terminate(marie_call);
+	BC_ASSERT_TRUE(wait_for_until(laure->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1,3000));
+	linphone_call_unref(marie_call);
+	
+	/*
+	 * Now shutdown pauline properly.
+	 */
+	linphone_core_set_network_reachable(pauline->lc, TRUE);
+	wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneRegistrationOk,2,3000);
+	
+end:
+	if (public_addr) linphone_address_unref(public_addr);
+	linphone_core_manager_destroy(marie);
+	if (pauline) linphone_core_manager_destroy(pauline);
+	if (laure) linphone_core_manager_destroy(laure);
+}
+
+
 #if 0
 /* SM: I comment this test out. It doesn't unregister participants properly, which confuses subsequent tests.
  * The storage of REFER request by flexisip in late forking is no longer required in group chat "release" version.
@@ -2131,6 +2190,7 @@ test_t flexisip_tests[] = {
 	TEST_NO_TAG("TLS authentication - client rejected due to unmatched certificate subject", tls_client_rejected_due_to_unmatched_subject),
 	TEST_NO_TAG("Transcoder", transcoder_tester),
 	TEST_NO_TAG("Removing old tport on flexisip for the same client", test_removing_old_tport),
+	TEST_NO_TAG("Protection against transport address re-assignation", test_protection_against_transport_address_reassignation),
 	/*TEST_NO_TAG("Resend of REFER with other devices", resend_refer_other_devices),*/
 	TEST_NO_TAG("Sequential forking", sequential_forking),
 	TEST_NO_TAG("Sequential forking with timeout for highest priority", sequential_forking_with_timeout_for_highest_priority),
