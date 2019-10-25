@@ -248,6 +248,8 @@ LINPHONE_PUBLIC void sal_set_user_pointer(Sal *sal, void *user_pointer);
 LINPHONE_PUBLIC void *sal_get_user_pointer(Sal *sal);
 LINPHONE_PUBLIC void sal_set_call_refer_callback(Sal *sal, void (*OnReferCb)(SalOp *op, const SalAddress *referto));
 
+LINPHONE_PUBLIC LinphoneAddress * linphone_proxy_config_get_transport_contact(LinphoneProxyConfig *cfg);
+
 #endif
 
 #ifdef __cplusplus
