@@ -72,6 +72,14 @@ const int MediaSessionPrivate::ecStateMaxLen = 1048576; /* 1Mo */
 // =============================================================================
 
 
+void MediaSessionPrivate::setDtlsFingerprint(const std::string &fingerPrint){
+	dtlsCertificateFingerprint = fingerPrint;
+}
+
+const std::string & MediaSessionPrivate::getDtlsFingerprint()const{
+	return dtlsCertificateFingerprint;
+}
+
 void MediaSessionPrivate::stunAuthRequestedCb (void *userData, const char *realm, const char *nonce, const char **username, const char **password, const char **ha1) {
 	MediaSessionPrivate *msp = reinterpret_cast<MediaSessionPrivate *>(userData);
 	msp->stunAuthRequestedCb(realm, nonce, username, password, ha1);

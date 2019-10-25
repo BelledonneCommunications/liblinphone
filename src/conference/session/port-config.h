@@ -23,12 +23,14 @@
 #include <string>
 
 #include "linphone/utils/general.h"
+#include "c-wrapper/internal/c-sal.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
 struct PortConfig {
+	SalMulticastRole multicastRole = SalMulticastInactive;
 	std::string multicastIp;
 	std::string multicastBindIp;
 	int rtpPort = -1;

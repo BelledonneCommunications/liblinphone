@@ -330,6 +330,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/session/call-session.cpp
 	conference/session/media-session.cpp
 	conference/session/streams.cpp
+	conference/session/audiostream.cpp
 	content/content-disposition.cpp
 	content/content-manager.cpp
 	content/content-type.cpp

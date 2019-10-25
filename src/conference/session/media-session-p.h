@@ -125,6 +125,9 @@ public:
 	StreamsGroup & getStreamsGroup(){
 		return *streamsGroup.get();
 	}
+	std::shared_ptr<Participant> getMe () const;
+	void setDtlsFingerprint(const std::string &fingerPrint);
+	const std::string & getDtlsFingerprint()const;
 
 private:
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo (const std::string &name);
@@ -139,7 +142,6 @@ private:
 	static int sendDtmf (void *data, unsigned int revents);
 	static float aggregateQualityRatings (float audioRating, float videoRating);
 
-	std::shared_ptr<Participant> getMe () const;
 	void setState (CallSession::State newState, const std::string &message) override;
 
 	void assignStreamsIndexesIncoming(const SalMediaDescription *md);
@@ -189,6 +191,7 @@ private:
 	void joinMulticastGroup (int streamIndex, MediaStream *ms);
 
 	void configureRtpSession(RtpSession *session, LinphoneStreamType type);
+	
 	void setDtlsFingerprint (MSMediaStreamSessions *sessions, const SalStreamDescription *sd, const SalStreamDescription *remote);
 	void setDtlsFingerprintOnAllStreams ();
 	void setDtlsFingerprintOnAudioStream ();
