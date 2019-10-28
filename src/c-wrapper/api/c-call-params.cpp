@@ -493,6 +493,14 @@ void linphone_call_params_set_no_user_consent (LinphoneCallParams *params, bool_
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setNoUserConsent(!!value);
 }
 
+LinphoneContent* linphone_call_params_get_custom_content (const LinphoneCallParams *params) {
+	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(params)->getCustomContent());
+}
+
+void linphone_call_params_set_custom_content (LinphoneCallParams *params, LinphoneContent *content) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->setCustomContent(L_GET_CPP_PTR_FROM_C_OBJECT(content));
+}
+
 // =============================================================================
 // Reference and user data handling functions.
 // =============================================================================
