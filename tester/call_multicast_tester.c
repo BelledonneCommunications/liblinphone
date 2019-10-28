@@ -248,7 +248,7 @@ static void early_media_with_multicast_audio(void) {
 	early_media_with_multicast_base(FALSE);
 }
 static void unicast_incoming_with_multicast_audio_on(void) {
-	simple_call_base(TRUE, FALSE);
+	simple_call_base(TRUE, FALSE, FALSE);
 }
 #ifdef VIDEO_ENABLED
 static void early_media_with_multicast_video(void) {
