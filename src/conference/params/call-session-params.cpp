@@ -42,6 +42,7 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 		customHeaders = sal_custom_header_clone(src->customHeaders);
 	customContactParameters = src->customContactParameters;
 	referer = src->referer;
+	customContent = src->customContent->clone();
 }
 
 // -----------------------------------------------------------------------------
@@ -155,6 +156,18 @@ std::string CallSessionParams::getCustomContactParameter (const std::string &par
 	if (it == d->customContactParameters.end())
 		return "";
 	return it->second;
+}
+
+// -----------------------------------------------------------------------------
+
+void CallSessionParams::setCustomContent(Content* content) {
+	L_D();
+	d->customContent = content;
+}
+
+Content* CallSessionParams::getCustomContent() const {
+	L_D();
+	return d->customContent;
 }
 
 LINPHONE_END_NAMESPACE

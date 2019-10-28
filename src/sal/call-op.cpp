@@ -20,6 +20,7 @@
 #include "bellesip_sal/sal_impl.h"
 #include "offeranswer.h"
 #include "sal/call-op.h"
+#include "content/content-manager.h"
 
 #include <bctoolbox/defs.h>
 #include <belle-sip/provider.h>
@@ -102,6 +103,11 @@ int SalCallOp::setLocalBody (Content &&body) {
 	return 0;
 }
 
+int SalCallOp::setAdditionalLocalBody (const Content &content) {
+	mAdditionalLocalBody = move(content);
+	return 0;
+}
+
 belle_sip_header_allow_t *SalCallOp::createAllow (bool enableUpdate) {
 	ostringstream oss;
 	oss << "INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, NOTIFY, MESSAGE, SUBSCRIBE, INFO";
@@ -166,7 +172,18 @@ void SalCallOp::fillInvite (belle_sip_request_t *invite) {
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(invite), belle_sip_header_create("Supported", "timer"));
 	}
 	mSdpOffering = (mLocalBody.getContentType() == ContentType::Sdp);
-	setCustomBody(BELLE_SIP_MESSAGE(invite), mLocalBody);
+
+	if (!mAdditionalLocalBody.isEmpty()) {
+		if (mLocalBody.isEmpty()) {
+			setCustomBody(BELLE_SIP_MESSAGE(invite), mAdditionalLocalBody);
+		} else {
+			list<Content> contents { mLocalBody, mAdditionalLocalBody };
+			Content multipartContent = ContentManager::contentListToMultipart(contents);
+			setCustomBody(BELLE_SIP_MESSAGE(invite), multipartContent);
+		}
+	} else {
+		setCustomBody(BELLE_SIP_MESSAGE(invite), mLocalBody);
+	}
 }
 
 void SalCallOp::setReleased () {
