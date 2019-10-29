@@ -4988,6 +4988,10 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 
 		if (captureCard != d->currentCaptureCard || playCard != d->currentPlayCard) {
 			d->forceStreamsReconstruction = true;
+			//Ideally this should use the same logic as video (See video_stream_change_camera)
+			//I.E. reconstruct only ms2 graphs without destroying the streams.
+			//For now, we just stop and restart audio stream with new playback/capture card
+			d->updateStreams(d->resultDesc, d->state);
 		}
 
 	#ifdef VIDEO_ENABLED
