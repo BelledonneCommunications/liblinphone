@@ -114,6 +114,12 @@ class SwiftTranslator(object):
             methodDict['impl']['args'] = ''
             methodDict['impl']['c_args'] = ''
 
+            # For now, there is only one function that allows the null argument.
+            if methodDict['impl']['name'] == "createCallParams":
+                methodDict['impl']['args'] = "call:Call?"
+                methodDict['impl']['c_args'] = "call?.cPtr"
+                return methodDict
+
             for arg in method.args:
                 argType = arg.type.translate(self.langTranslator)
                 argName = arg.name.translate(self.nameTranslator)
