@@ -2130,6 +2130,7 @@ static void server_update_account_password_arg_new_password_missing(void) {
 	linphone_account_creator_unref(creator);
 	linphone_core_manager_destroy(marie);
 }
+
 /****************** End Update Account ************************/
 
 test_t account_creator_tests[] = {
