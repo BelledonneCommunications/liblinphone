@@ -193,13 +193,12 @@ static void process_io_error_from_post_xml_rpc_request(void *data, const belle_s
 
 static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_sip_auth_event_t *event) {
 	LinphoneXmlRpcRequest *request = (LinphoneXmlRpcRequest *)data;
-	LinphoneAccountCreator *creator = (LinphoneAccountCreator *)linphone_xml_rpc_request_get_user_data(request);
 
 	const char *realm = belle_sip_auth_event_get_realm(event);
 	const char *username = belle_sip_auth_event_get_username(event);
 	const char *domain = belle_sip_auth_event_get_domain(event);
 
-	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(creator->core, realm, username, domain);
+	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(request->core, realm, username, domain);
 
 	if (auth_info) {
 		const char *auth_username = linphone_auth_info_get_username(auth_info);
@@ -439,7 +438,9 @@ void linphone_xml_rpc_session_set_user_data(LinphoneXmlRpcSession *session, void
 }
 
 LinphoneXmlRpcRequest * linphone_xml_rpc_session_create_request(LinphoneXmlRpcSession *session, LinphoneXmlRpcArgType return_type, const char *method) {
-	return linphone_xml_rpc_request_new(return_type, method);
+	LinphoneXmlRpcRequest *request = linphone_xml_rpc_request_new(return_type, method);
+	request->core = session->core;
+	return request;
 }
 
 void linphone_xml_rpc_session_send_request(LinphoneXmlRpcSession *session, LinphoneXmlRpcRequest *request) {

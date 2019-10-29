@@ -546,6 +546,7 @@ struct _LinphoneXmlRpcRequest {
 	char *method;
 	LinphoneXmlRpcStatus status;
 	struct _LinphoneXmlRpcArg response;
+	LinphoneCore *core;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneXmlRpcRequest);
