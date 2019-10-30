@@ -3675,15 +3675,17 @@ static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const Lin
 		proxy_routes_iterator = bctbx_list_next(proxy_routes_iterator);
 	}
 	if (srv_route){
-		ret=bctbx_list_append(ret,sal_address_clone(L_GET_PRIVATE_FROM_C_OBJECT(srv_route)->getInternalAddress()));
+		ret = bctbx_list_append(ret, sal_address_clone(L_GET_PRIVATE_FROM_C_OBJECT(srv_route)->getInternalAddress()));
 	}
-	if (ret==NULL){
+	if (ret == NULL) {
 		/*if the proxy address matches the domain part of the destination, then use the same transport
 		 * as the one used for registration. This is done by forcing a route to this proxy.*/
-		SalAddress *proxy_addr=sal_address_new(linphone_proxy_config_get_addr(proxy));
-		if (strcmp(sal_address_get_domain(proxy_addr),linphone_address_get_domain(dest))==0){
-			ret=bctbx_list_append(ret,proxy_addr);
-		}else sal_address_unref(proxy_addr);
+		SalAddress *proxy_addr = sal_address_new(linphone_proxy_config_get_addr(proxy));
+		const char *proxy_addr_domain = sal_address_get_domain(proxy_addr);
+		const char *linphone_addr_domain = linphone_address_get_domain(dest);
+		if (proxy_addr_domain && linphone_addr_domain && strcmp(proxy_addr_domain, linphone_addr_domain) == 0) {
+			ret = bctbx_list_append(ret,proxy_addr);
+		} else sal_address_unref(proxy_addr);
 	}
 	return ret;
 }

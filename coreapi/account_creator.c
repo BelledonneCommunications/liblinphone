@@ -329,9 +329,7 @@ static void _linphone_account_creator_destroy(LinphoneAccountCreator *creator) {
 	linphone_account_creator_cbs_unref(creator->cbs);
 	bctbx_list_free_with_data(creator->callbacks, (bctbx_list_free_func)linphone_account_creator_cbs_unref);
 	creator->callbacks = nullptr;
-	if (creator->proxy_cfg) {
-		linphone_proxy_config_unref(creator->proxy_cfg);
-	}
+
 	linphone_account_creator_reset(creator);
 }
 
@@ -390,6 +388,11 @@ void linphone_account_creator_reset(LinphoneAccountCreator *creator) {
 	resetField(&creator->activation_code);
 	resetField(&creator->domain);
 	resetField(&creator->route);
+
+	if (creator->proxy_cfg) {
+		linphone_proxy_config_unref(creator->proxy_cfg);
+		creator->proxy_cfg = nullptr;
+	}
 }
 
 LinphoneAccountCreator * linphone_core_create_account_creator(LinphoneCore *core, const char *xmlrpc_url) {
