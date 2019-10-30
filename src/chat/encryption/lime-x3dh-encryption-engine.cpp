@@ -550,12 +550,15 @@ AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel (cons
 	lime::PeerDeviceStatus status = limeManager->get_peerDeviceStatus(deviceId);
 	switch (status) {
 		case lime::PeerDeviceStatus::unknown:
+			if (limeManager->is_localUser(deviceId)) {
+				return AbstractChatRoom::SecurityLevel::Safe;
+			}
+			return AbstractChatRoom::SecurityLevel::Encrypted;
 		case lime::PeerDeviceStatus::untrusted:
 			return AbstractChatRoom::SecurityLevel::Encrypted;
 		case lime::PeerDeviceStatus::trusted:
 			return AbstractChatRoom::SecurityLevel::Safe;
 		case lime::PeerDeviceStatus::unsafe:
-			return AbstractChatRoom::SecurityLevel::Unsafe;
 		default:
 			return AbstractChatRoom::SecurityLevel::Unsafe;
 	}
