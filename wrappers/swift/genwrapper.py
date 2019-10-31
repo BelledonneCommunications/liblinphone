@@ -123,7 +123,7 @@ class SwiftTranslator(object):
                     methodDict['impl']['args'] += ', '
                     methodDict['impl']['c_args'] += ', '
                 if isinstance(arg.type, AbsApi.ClassType):
-                    methodDict['impl']['c_args'] += argName + ".cPtr"
+                    methodDict['impl']['c_args'] += argName + "?.cPtr" if arg.optional else argName + ".cPtr"
                 elif isinstance(arg.type, AbsApi.EnumType):
                     argType = arg.type.translate(self.langTranslator, namespace=namespace)
                     if methodDict['impl']['type'] == "Int":
@@ -151,7 +151,7 @@ class SwiftTranslator(object):
                 elif argType == "UnsafeMutableRawPointer":
                     argType = "UnsafeMutableRawPointer?"
 
-                methodDict['impl']['args'] += argName + ":" + argType
+                methodDict['impl']['args'] += argName + ":" + argType + "?" if arg.optional else argName + ":" + argType
 
         return methodDict
 

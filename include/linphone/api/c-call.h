@@ -455,6 +455,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_accept (LinphoneCall *call);
  * The application can later accept the call using this method.
  * @param[in] call A #LinphoneCall object
  * @param[in] params The specific parameters for this call, for example whether video is accepted or not. Use NULL to use default parameters
+ * @maybenil
  * @return 0 on success, -1 on failure
 **/
 LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_with_params (LinphoneCall *call, const LinphoneCallParams *params);
@@ -475,6 +476,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_early_media (LinphoneCall *c
  * The call can then later be fully accepted using linphone_call_accept() or linphone_call_accept_with_params().
  * @param[in] call A #LinphoneCall object
  * @param[in] params The call parameters to use (can be NULL)
+ * @maybenil
  * @return 0 if successful, -1 otherwise
 **/
 LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_early_media_with_params (LinphoneCall *call, const LinphoneCallParams *params);
@@ -489,6 +491,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_early_media_with_params (Lin
  *
  * @param[in] call A #LinphoneCall object
  * @param[in] params The new call parameters to use (may be NULL)
+ * @maybenil
  * @return 0 if successful, -1 otherwise.
 **/
 LINPHONE_PUBLIC LinphoneStatus linphone_call_update (LinphoneCall *call, const LinphoneCallParams *params);
@@ -529,6 +532,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_defer_update (LinphoneCall *call);
  * (see linphone_call_params_enable_video()).
  * @param[in] call A #LinphoneCall object
  * @param[in] params A #LinphoneCallParams object describing the call parameters to accept
+ * @maybenil
  * @return 0 if successful, -1 otherwise (actually when this function call is performed outside ot #LinphoneCallUpdatedByRemote state)
 **/
 LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_update (LinphoneCall *call, const LinphoneCallParams *params);

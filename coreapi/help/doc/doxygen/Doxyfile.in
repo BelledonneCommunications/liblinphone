@@ -231,6 +231,7 @@ TAB_SIZE               = 8
 ALIASES                = bctbx_list{1}="A list of \ref \1 objects. \xmlonly <bctbxlist>\1</bctbxlist> \endxmlonly"
 ALIASES               += onTheFlyList="The objects inside the list are freshly allocated with a reference counter equal to one, so they need to be freed on list destruction with bctbx_list_free_with_data() for instance. \xmlonly <onTheFlyList/> \endxmlonly"
 ALIASES               += donotwrap="\xmlonly <donotwrap /> \endxmlonly"
+ALIASES               += maybenil="\xmlonly <maybenil /> \endxmlonly"
 
 # This tag can be used to specify a number of word-keyword mappings (TCL only).
 # A mapping has the form "name=value". For example adding "class=itcl::class"

@@ -92,6 +92,7 @@ class CArgument(CObject):
 		self.description = None
 		self.containedType = None
 		self.onTheFlyList = False
+		self.maybenil = False
 		keywords = [ 'const', 'struct', 'enum', 'signed', 'unsigned', 'short', 'long', '*' ]
 		fullySplittedType = []
 		splittedType = t.strip().split(' ')
@@ -591,6 +592,7 @@ class Project:
 								n = paramdesc.find('.//bctbxlist')
 								if n is not None:
 									arg.containedType = n.text
+							arg.maybenil = True if paramdesc.find('.//maybenil') is not None else False
 							arg.description = self.__cleanDescription(paramdesc.find('./parameterdescription'))
 				missingDocWarning = ''
 				for arg in argslist.arguments:

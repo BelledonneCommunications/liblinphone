@@ -44,6 +44,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_event_send_subscribe(LinphoneEvent *ev, 
  * Update (refresh) an outgoing subscription, changing the body.
  * @param lev a #LinphoneEvent
  * @param body an optional body to include in the subscription update, may be NULL.
+ * @maybenil
 **/
 LINPHONE_PUBLIC LinphoneStatus linphone_event_update_subscribe(LinphoneEvent *lev, const LinphoneContent *body);
 
