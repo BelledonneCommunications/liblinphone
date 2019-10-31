@@ -853,7 +853,7 @@ class CParser(object):
 		for arg in event.arguments:
 			argName = metaname.ArgName()
 			argName.from_snake_case(arg.name)
-			argument = Argument(argName, self.parse_type(arg))
+			argument = Argument(argName, self.parse_type(arg), arg.maybenil)
 			method.add_arguments(argument)
 		method.briefDescription = event.briefDoc
 		method.detailedDescription = event.detailedDoc
@@ -881,7 +881,7 @@ class CParser(object):
 					aType = self.parse_type(arg)
 					argName = metaname.ArgName()
 					argName.from_snake_case(arg.name)
-					absArg = Argument(argName, aType)
+					absArg = Argument(argName, aType, arg.maybenil)
 					method.add_arguments(absArg)
 			
 			self.methodsIndex[cfunction.name] = method

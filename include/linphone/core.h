@@ -1481,6 +1481,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_accept_call_upd
  * The parameters are initialized according to the current #LinphoneCore configuration and the current state of the LinphoneCall.
  * @param[in] lc #LinphoneCore object
  * @param[in] call #LinphoneCall for which the parameters are to be build, or NULL in the case where the parameters are to be used for a new outgoing call.
+ * @maybenil
  * @return A new #LinphoneCallParams object
  * @ingroup call_control
  */
@@ -5573,6 +5574,7 @@ LINPHONE_PUBLIC LinphoneContent * linphone_core_create_content(LinphoneCore *lc)
  * @param event the event name
  * @param expires the whished duration of the subscription
  * @param body an optional body, may be NULL.
+ * @maybenil
  * @return a #LinphoneEvent holding the context of the created subcription.
 **/
 LINPHONE_PUBLIC LinphoneEvent *linphone_core_subscribe(LinphoneCore *lc, const LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body);
