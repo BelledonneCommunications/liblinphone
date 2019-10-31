@@ -64,6 +64,9 @@ public:
 	bool isMultipart() const;
 
 	static bool isFile (const ContentType &contentType);
+	std::string getMediaType() const;
+
+	LINPHONE_PUBLIC friend std::ostream &operator<< (std::ostream &os, const ContentType &header);
 
 	static const ContentType ConferenceInfo;
 	static const ContentType Cpim;

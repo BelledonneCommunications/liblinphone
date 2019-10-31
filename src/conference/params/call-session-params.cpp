@@ -42,7 +42,8 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 		customHeaders = sal_custom_header_clone(src->customHeaders);
 	customContactParameters = src->customContactParameters;
 	referer = src->referer;
-	customContent = src->customContent->clone();
+	if (src->customContent)
+		customContent = src->customContent->clone();
 }
 
 // -----------------------------------------------------------------------------
