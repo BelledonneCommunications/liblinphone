@@ -250,7 +250,7 @@ static int fake_im_encryption_engine_process_incoming_message_cb (
 	LinphoneChatMessage *msg
 ) {
 	// Encryption is the first receiving step, so this message should be CPIM.
-	const string expected = ContentType::Cpim.asString();
+	const string expected = ContentType::Cpim.asStringWithoutName();
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(msg), expected.c_str());
 	return -1;
 }
@@ -261,7 +261,7 @@ static int fake_im_encryption_engine_process_outgoing_message_cb (
 	LinphoneChatMessage *msg
 ) {
 	// Encryption is the last sending step, so this message should be CPIM.
-	const string expected = ContentType::Cpim.asString();
+	const string expected = ContentType::Cpim.asStringWithoutName();
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(msg), expected.c_str());
 	return -1;
 }
@@ -303,7 +303,7 @@ static void cpim_chat_message_modifier_base (bool useMultipart) {
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
 	if (pauline->stat.last_received_chat_message != NULL) {
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), "Hello CPIM");
-		const string expected = ContentType::PlainText.asString();
+		const string expected = ContentType::PlainText.asStringWithoutName();
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(pauline->stat.last_received_chat_message), expected.c_str());
 	}
 
