@@ -48,10 +48,10 @@ public:
 	bool operator!= (const Header &other) const;
 
 	void setName (const std::string &name);
-	std::string getName () const;
+	const std::string& getName () const;
 
 	void setValue (const std::string &value);
-	std::string getValue () const;
+	const std::string& getValue () const;
 	std::string getValueWithParams () const;
 
 	void cleanParameters ();
