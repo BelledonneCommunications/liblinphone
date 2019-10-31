@@ -177,7 +177,7 @@ void SalCallOp::fillInvite (belle_sip_request_t *invite) {
 		if (mLocalBody.isEmpty()) {
 			setCustomBody(BELLE_SIP_MESSAGE(invite), mAdditionalLocalBody);
 		} else {
-			list<Content> contents { mLocalBody, mAdditionalLocalBody };
+			list<Content*> contents { &mLocalBody, &mAdditionalLocalBody };
 			Content multipartContent = ContentManager::contentListToMultipart(contents);
 			setCustomBody(BELLE_SIP_MESSAGE(invite), multipartContent);
 		}

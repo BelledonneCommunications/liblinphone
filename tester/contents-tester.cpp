@@ -479,6 +479,7 @@ void list_to_multipart () {
 	list<Content *> contents = {&content1, &content2, &content3, &content4};
 
 	Content multipartContent = ContentManager::contentListToMultipart(contents);
+
 	string originalStr(generated_multipart);
 	originalStr.erase(std::remove(originalStr.begin(), originalStr.end(), ' '), originalStr.end());
 	originalStr.erase(std::remove(originalStr.begin(), originalStr.end(), '\t'), originalStr.end());
@@ -509,7 +510,8 @@ static void content_type_parsing(void) {
 	BC_ASSERT_STRING_EQUAL("", contentType.getParameter("boundary").getValue().c_str());
 	BC_ASSERT_EQUAL(2, contentType.getParameters().size(), int, "%d");
 	lInfo() << "Content-Type is " << contentType;
-	BC_ASSERT_TRUE(type == contentType.asString());
+	BC_ASSERT_STRING_EQUAL(contentType.getName().c_str(), "Content-Type");
+	BC_ASSERT_TRUE(type == contentType.getValueWithParams());
 
 	type = "multipart/mixed;boundary=-----------------------------14737809831466499882746641450";
 	contentType = ContentType(type);
@@ -519,7 +521,8 @@ static void content_type_parsing(void) {
 	BC_ASSERT_STRING_EQUAL("", contentType.getParameter("access-type").getValue().c_str());
 	BC_ASSERT_EQUAL(1, contentType.getParameters().size(), int, "%d");
 	lInfo() << "Content-Type is " << contentType;
-	BC_ASSERT_TRUE(type == contentType.asString());
+	BC_ASSERT_STRING_EQUAL(contentType.getName().c_str(), "Content-Type");
+	BC_ASSERT_TRUE(type == contentType.getValueWithParams());
 
 	type = "plain/text";
 	contentType = ContentType(type);
@@ -528,7 +531,8 @@ static void content_type_parsing(void) {
 	BC_ASSERT_STRING_EQUAL("", contentType.getParameter("boundary").getValue().c_str());
 	BC_ASSERT_EQUAL(0, contentType.getParameters().size(), int, "%d");
 	lInfo() << "Content-Type is " << contentType;
-	BC_ASSERT_TRUE(type == contentType.asString());
+	BC_ASSERT_STRING_EQUAL(contentType.getName().c_str(), "Content-Type");
+	BC_ASSERT_TRUE(type == contentType.getValueWithParams());
 }
 
 static void content_header_parsing(void) {
@@ -540,6 +544,7 @@ static void content_header_parsing(void) {
 	BC_ASSERT_TRUE(header.getParameter("param3").getValue() == "value3");
 	BC_ASSERT_EQUAL(3, header.getParameters().size(), int, "%d");
 	BC_ASSERT_STRING_EQUAL("", header.getParameter("encoding").getValue().c_str());
+	BC_ASSERT_STRING_EQUAL(header.getName().c_str(), "Content-Id");
 	BC_ASSERT_TRUE(header.getValueWithParams() == value);
 
 	value = "b64";
@@ -547,6 +552,7 @@ static void content_header_parsing(void) {
 	BC_ASSERT_TRUE(header.getValue() == value);
 	BC_ASSERT_EQUAL(0, header.getParameters().size(), int, "%d");
 	BC_ASSERT_STRING_EQUAL("", header.getParameter("access-type").getValue().c_str());
+	BC_ASSERT_STRING_EQUAL(header.getName().c_str(), "Content-Encoding");
 	BC_ASSERT_TRUE(header.getValueWithParams() == value);
 }
 

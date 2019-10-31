@@ -88,36 +88,4 @@ Content ContentManager::contentListToMultipart (const list<Content *> &contents,
 	return content;
 }
 
-Content ContentManager::contentListToMultipart (const list<Content> &contents, const string &boundary, bool encrypted) {
-	belle_sip_multipart_body_handler_t *mpbh = belle_sip_multipart_body_handler_new(
-		nullptr, nullptr, nullptr, boundary.c_str()
-	);
-	mpbh = (belle_sip_multipart_body_handler_t *)belle_sip_object_ref(mpbh);
-
-	ContentDisposition disposition;
-	for (Content content : contents) {
-		// Is this content-disposition stuff generic or only valid for notification content-disposition?
-		if (content.getContentDisposition().isValid())
-			disposition = content.getContentDisposition();
-
-		LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
-		SalBodyHandler *sbh = sal_body_handler_from_content(cContent, false);
-		belle_sip_multipart_body_handler_add_part(mpbh, BELLE_SIP_BODY_HANDLER(sbh));
-	}
-
-	SalBodyHandler *sbh = (SalBodyHandler *)mpbh;
-	sal_body_handler_set_type(sbh, ContentType::Multipart.getType().c_str());
-	sal_body_handler_set_subtype(sbh, encrypted ? ContentType::Encrypted.getSubType().c_str() : ContentType::Multipart.getSubType().c_str());
-	sal_body_handler_set_content_type_parameter(sbh, "boundary", boundary.c_str());
-
-	LinphoneContent *cContent = linphone_content_from_sal_body_handler(sbh);
-	belle_sip_object_unref(mpbh);
-
-	Content content = *L_GET_CPP_PTR_FROM_C_OBJECT(cContent);
-	if (disposition.isValid())
-		content.setContentDisposition(disposition);
-	linphone_content_unref(cContent);
-	return content;
-}
-
 LINPHONE_END_NAMESPACE

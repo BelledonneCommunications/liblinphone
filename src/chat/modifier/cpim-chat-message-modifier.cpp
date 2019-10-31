@@ -109,7 +109,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 		);
 	}
 	cpimMessage.addContentHeader(
-		Cpim::GenericHeader("Content-Type", content->getContentType().asString())
+		Cpim::GenericHeader("Content-Type", content->getContentType().asStringWithoutName())
 	);
 	cpimMessage.addContentHeader(
 		Cpim::GenericHeader("Content-Length", Utils::toString(contentBody.size()))
