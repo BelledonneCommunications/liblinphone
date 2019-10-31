@@ -64,6 +64,7 @@ public:
 	bool isMultipart() const;
 
 	static bool isFile (const ContentType &contentType);
+	std::string getMediaType() const;
 
 	static const ContentType ConferenceInfo;
 	static const ContentType Cpim;

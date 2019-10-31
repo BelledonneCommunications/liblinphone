@@ -282,7 +282,7 @@ void MainDbPrivate::insertContent (long long chatMessageId, const Content &conte
 #ifdef HAVE_DB_STORAGE
 	soci::session *session = dbSession.getBackendSession();
 
-	const long long &contentTypeId = insertContentType(content.getContentType().asString());
+	const long long &contentTypeId = insertContentType(content.getContentType().getMediaType());
 	const string &body = content.getBodyAsString();
 	*session << "INSERT INTO chat_message_content (event_id, content_type_id, body) VALUES"
 		" (:chatMessageId, :contentTypeId, :body)", soci::use(chatMessageId), soci::use(contentTypeId),

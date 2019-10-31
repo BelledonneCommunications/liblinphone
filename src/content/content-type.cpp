@@ -60,6 +60,7 @@ const ContentType ContentType::SipFrag("message/sipfrag");
 ContentType::ContentType (const string &contentType) : Header(*new ContentTypePrivate) {
 	L_D();
 
+	setName("Content-Type");
 	size_t pos = contentType.find('/');
 	size_t posParam = contentType.find(";");
 	size_t end = contentType.length();
@@ -92,6 +93,7 @@ ContentType::ContentType (const string &contentType) : Header(*new ContentTypePr
 ContentType::ContentType (const string &type, const string &subType) : Header(*new ContentTypePrivate) {
 	L_D();
 
+	setName("Content-Type");
 	if (setType(type) && !setSubType(subType))
 		d->type.clear();
 }
@@ -103,6 +105,7 @@ ContentType::ContentType (
 ) : Header(*new ContentTypePrivate) {
 	L_D();
 
+	setName("Content-Type");
 	if (setType(type) && !setSubType(subType))
 		d->type.clear();
 	addParameter(parameter);
@@ -115,6 +118,7 @@ ContentType::ContentType (
 ) : Header(*new ContentTypePrivate) {
 	L_D();
 
+	setName("Content-Type");
 	if (setType(type) && !setSubType(subType))
 		d->type.clear();
 	addParameters(parameters);
@@ -124,6 +128,7 @@ ContentType::ContentType (const ContentType &other) : ContentType(other.getType(
 
 ContentType &ContentType::operator= (const ContentType &other) {
 	if (this != &other) {
+		setName("Content-Type");
 		setType(other.getType());
 		setSubType(other.getSubType());
 		cleanParameters();
@@ -217,6 +222,15 @@ bool ContentType::isFile (const ContentType &contentType) {
 		contentType != Sdp &&
 		contentType != Cpim &&
 		contentType != ConferenceInfo;
+}
+
+string ContentType::getMediaType () const {
+	stringstream asString;
+	asString << getValue();
+	for (const auto &param : getParameters())
+		asString << param.asString();
+
+	return asString.str();
 }
 
 LINPHONE_END_NAMESPACE
