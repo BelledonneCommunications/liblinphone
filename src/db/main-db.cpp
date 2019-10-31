@@ -282,7 +282,7 @@ void MainDbPrivate::insertContent (long long chatMessageId, const Content &conte
 #ifdef HAVE_DB_STORAGE
 	soci::session *session = dbSession.getBackendSession();
 
-	const long long &contentTypeId = insertContentType(content.getContentType().asString());
+	const long long &contentTypeId = insertContentType(content.getContentType().getMediaType());
 	const string &body = content.getBodyAsString();
 	*session << "INSERT INTO chat_message_content (event_id, content_type_id, body) VALUES"
 		" (:chatMessageId, :contentTypeId, :body)", soci::use(chatMessageId), soci::use(contentTypeId),
@@ -1534,7 +1534,7 @@ static string extractLegacyFileContentType (const string &xml) {
 		for (xmlElement = xmlElement->xmlChildrenNode; xmlElement; xmlElement = xmlElement->next)
 			if (!xmlStrcmp(xmlElement->name, XmlCharPtr("content-type"))) {
 				XmlCharObject xmlContentType(xmlNodeListGetString(xmlMessageBody.get(), xmlElement->xmlChildrenNode, 1));
-				return ContentType(reinterpret_cast<const char *>(xmlContentType.get())).asString();
+				return ContentType(reinterpret_cast<const char *>(xmlContentType.get())).getMediaType();
 			}
 	}
 

@@ -394,7 +394,7 @@ void *linphone_chat_message_get_message_state_changed_cb_user_data (LinphoneChat
 // =============================================================================
 
 const char *linphone_chat_message_get_content_type (const LinphoneChatMessage *msg) {
-	msg->cache.contentType = L_GET_PRIVATE_FROM_C_OBJECT(msg)->getContentType().asString();
+	msg->cache.contentType = L_GET_PRIVATE_FROM_C_OBJECT(msg)->getContentType().getMediaType();
 	return L_STRING_TO_C(msg->cache.contentType);
 }
 
