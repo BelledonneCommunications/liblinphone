@@ -27,6 +27,8 @@
 #include "call/call.h"
 #include "call/call-p.h"
 #include "conference/participant.h"
+#include "utils/payload-type-handler.h"
+#include "conference/params/media-session-params-p.h"
 
 #include "linphone/core.h"
 
@@ -34,6 +36,15 @@
 using namespace::std;
 
 LINPHONE_BEGIN_NAMESPACE
+
+
+
+void OfferAnswerContext::scopeStreamToIndex(size_t index){
+	streamIndex = index;
+	localStreamDescription = localMediaDescription ? &localMediaDescription->streams[index] : nullptr;
+	remoteStreamDescription = remoteMediaDescription ? &remoteMediaDescription->streams[index] : nullptr;
+	resultStreamDescription = resultMediaDescription ? &resultMediaDescription->streams[index] : nullptr;
+}
 
 /*
  * StreamGroup implementation
@@ -47,9 +58,9 @@ IceAgent & StreamsGroup::getIceAgent()const{
 	return *mIceAgent;
 }
 
-Stream * StreamsGroup::createStream(const StreamParams &params){
+Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 	Stream *ret = nullptr;
-	SalStreamType type = params.mLocalStreamDescription->type;
+	SalStreamType type = params.localStreamDescription->type;
 	switch(type){
 		case SalAudio:
 			ret = new MS2AudioStream(*this, params);
@@ -68,9 +79,30 @@ Stream * StreamsGroup::createStream(const StreamParams &params){
 		return nullptr;
 	}
 	
-	if ((decltype(mStreams)::size_type)params.mIndex >= mStreams.size()) mStreams.resize(params.mIndex + 1);
-	mStreams[params.mIndex].reset(ret);
+	if ((decltype(mStreams)::size_type)params.streamIndex >= mStreams.size()) mStreams.resize(params.streamIndex + 1);
+	mStreams[params.streamIndex].reset(ret);
 	return ret;
+}
+
+void StreamsGroup::createStreams(const OfferAnswerContext &params){
+}
+
+void StreamsGroup::prepare(){
+}
+
+void StreamsGroup::render(const OfferAnswerContext &params, CallSession::State targetState){
+	OfferAnswerContext context = params;
+	for(auto stream : mStreams){
+		context.scopeStreamToIndex(stream->getIndex());
+		stream->render(context, targetState);
+	}
+}
+
+void StreamsGroup::stop(){
+	for(auto stream : mStreams){
+		if (stream && stream->getState() != Stopped)
+			stream->stop();
+	}
 }
 
 Stream * StreamsGroup::getStream(size_t index){
@@ -103,7 +135,7 @@ bool StreamsGroup::isPortUsed(int port)const{
  */
 
 
-Stream::Stream(StreamsGroup &sg, const StreamParams &params) : mStreamsGroup(sg), mStreamType(params.mLocalStreamDescription->type), mIndex(params.mIndex){
+Stream::Stream(StreamsGroup &sg, const OfferAnswerContext &params) : mStreamsGroup(sg), mStreamType(params.localStreamDescription->type), mIndex(params.streamIndex){
 	setPortConfig();
 	fillMulticastMediaAddresses();
 }
@@ -118,6 +150,18 @@ MediaSession &Stream::getMediaSession()const{
 
 MediaSessionPrivate &Stream::getMediaSessionPrivate()const{
 	return *getMediaSession().getPrivate();
+}
+
+void Stream::prepare(){
+	mState = Preparing;
+}
+
+void Stream::render(const OfferAnswerContext & ctx, CallSession::State targetState){
+	mState = Running;
+}
+
+void Stream::stop(){
+	mState = Stopped;
 }
 
 void Stream::setRandomPortConfig () {
@@ -228,7 +272,7 @@ IceAgent & Stream::getIceAgent()const{
  * MS2Stream implementation
  */
 
-MS2Stream::MS2Stream(StreamsGroup &sg, const StreamParams &params) : Stream(sg, params){
+MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params) : Stream(sg, params){
 	memset(&mSessions, 0, sizeof(mSessions));
 	initMulticast(params);
 	
@@ -258,14 +302,14 @@ string MS2Stream::getBindIp(){
 	return bindIp;
 }
 
-void MS2Stream::initMulticast(const StreamParams &params) {
-	if (params.mLocalIsOfferer) {
-		mPortConfig.multicastRole = params.mLocalStreamDescription->multicast_role;
+void MS2Stream::initMulticast(const OfferAnswerContext &params) {
+	if (params.localIsOfferer) {
+		mPortConfig.multicastRole = params.localStreamDescription->multicast_role;
 	}else{
-		mPortConfig.multicastRole = params.mRemoteStreamDescription->multicast_role;
+		mPortConfig.multicastRole = params.remoteStreamDescription->multicast_role;
 	}
 	if (mPortConfig.multicastRole == SalMulticastReceiver){
-		mPortConfig.rtpPort = params.mRemoteStreamDescription->rtp_port;
+		mPortConfig.rtpPort = params.remoteStreamDescription->rtp_port;
 		mPortConfig.rtpPort = 0; /*RTCP deactivated in multicast*/
 	}
 	lInfo() << this << "multicast role is ["
@@ -274,17 +318,9 @@ void MS2Stream::initMulticast(const StreamParams &params) {
 
 
 
-void MS2Stream::start(SalStreamDescription *streamDesc, CallSession::State targetState){
-}
-void MS2Stream::stop(){
-}
-void MS2Stream::update(SalStreamDescription *oldSd, SalStreamDescription *newSd){
-}
-void MS2Stream::startDtls(){
+void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targetState){
 }
 
-MS2Stream::~MS2Stream(){
-}
 
 OrtpJitterBufferAlgorithm MS2Stream::jitterBufferNameToAlgo (const string &name) {
 	if (name == "basic") return OrtpJitterBufferBasic;
@@ -416,7 +452,7 @@ void MS2Stream::initializeSessions(MediaStream *stream){
 	
 }
 
-void MS2Stream::initialize(){
+void MS2Stream::prepare(){
 	if (getCCore()->rtptf) {
 		RtpTransport *meta_rtp;
 		RtpTransport *meta_rtcp;
@@ -453,13 +489,128 @@ void MS2Stream::initialize(){
 	getIceAgent().prepareIceForStream(getMediaStream(), false);
 }
 
+RtpProfile * MS2Stream::makeProfile(const SalMediaDescription *md, const SalStreamDescription *desc, int *usedPt) {
+	*usedPt = -1;
+	int bandwidth = 0;
+	if (desc->type == SalAudio)
+		bandwidth = getIdealAudioBandwidth(md, desc);
+	else if (desc->type == SalVideo)
+		bandwidth = getVideoBandwidth(md, desc);
+
+	bool first = true;
+	RtpProfile *profile = rtp_profile_new("Call profile");
+	for (const bctbx_list_t *elem = desc->payloads; elem != nullptr; elem = bctbx_list_next(elem)) {
+		OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(elem));
+		/* Make a copy of the payload type, so that we left the ones from the SalStreamDescription unchanged.
+		 * If the SalStreamDescription is freed, this will have no impact on the running streams. */
+		pt = payload_type_clone(pt);
+		int upPtime = 0;
+		if ((pt->flags & PAYLOAD_TYPE_FLAG_CAN_SEND) && first) {
+			/* First codec in list is the selected one */
+			if (desc->type == SalAudio) {
+				updateAllocatedAudioBandwidth(pt, bandwidth);
+				bandwidth = audioBandwidth;
+				upPtime = getMediaSessionPrivate().getParams()->getPrivate()->getUpPtime();
+				if (!upPtime)
+					upPtime = linphone_core_get_upload_ptime(getCCore());
+			}
+			first = false;
+		}
+		if (*usedPt == -1) {
+			/* Don't select telephone-event as a payload type */
+			if (strcasecmp(pt->mime_type, "telephone-event") != 0)
+				*usedPt = payload_type_get_number(pt);
+		}
+		if (pt->flags & PAYLOAD_TYPE_BITRATE_OVERRIDE) {
+			lInfo() << "Payload type [" << pt->mime_type << "/" << pt->clock_rate << "] has explicit bitrate [" << (pt->normal_bitrate / 1000) << "] kbit/s";
+			pt->normal_bitrate = PayloadTypeHandler::getMinBandwidth(pt->normal_bitrate, bandwidth * 1000);
+		} else
+			pt->normal_bitrate = bandwidth * 1000;
+		if (desc->maxptime > 0) {// follow the same schema for maxptime as for ptime. (I.E add it to fmtp)
+			ostringstream os;
+			os << "maxptime=" << desc->maxptime;
+			payload_type_append_send_fmtp(pt, os.str().c_str());
+		}
+		if (desc->ptime > 0)
+			upPtime = desc->ptime;
+		if (upPtime > 0) {
+			ostringstream os;
+			os << "ptime=" << upPtime;
+			payload_type_append_send_fmtp(pt, os.str().c_str());
+		}
+		int number = payload_type_get_number(pt);
+		if (rtp_profile_get_payload(profile, number))
+			lWarning() << "A payload type with number " << number << " already exists in profile!";
+		else
+			rtp_profile_set_payload(profile, number, pt);
+	}
+	return profile;
+}
+
+
+void MS2Stream::updateStats(){
+	if (mSessions.rtp_session) {
+		const rtp_stats_t *rtpStats = rtp_session_get_stats(mSessions.rtp_session);
+		if (rtpStats)
+			_linphone_call_stats_set_rtp_stats(mStats, rtpStats);
+	}
+	float quality = media_stream_get_average_quality_rating(getMediaStream());
+	LinphoneCallLog *log = getMediaSession().getLog();
+	if (quality >= 0) {
+		if (log->quality == -1.0)
+			log->quality = quality;
+		else
+			log->quality *= quality / 5.0f;
+	}
+}
+
+void MS2Stream::stop(){
+	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
+	
+	if (listener){
+		int statsType = -1;
+		switch(getType()){
+			case SalAudio: statsType = LINPHONE_CALL_STATS_AUDIO; break;
+			case SalVideo: statsType = LINPHONE_CALL_STATS_VIDEO; break;
+			case SalText: statsType = LINPHONE_CALL_STATS_TEXT; break;
+			default:
+				break;
+			
+		}
+		
+		if (statsType != -1) listener->onUpdateMediaInfoForReporting(getMediaSession().getSharedFromThis(), LINPHONE_CALL_STATS_AUDIO);
+		
+		/*
+		 * FIXME : very very ugly way to manage the conference. Worse, it can remove from a conference a stream that has never been part 
+		 * of any conference.
+		 * Solution: let the Conference object manage the StreamsGroups that are part of a conference.
+		 */
+		if (getType() == SalAudio) listener->onCallSessionConferenceStreamStopping(getMediaSession().getSharedFromThis());
+	}
+	ms_bandwidth_controller_remove_stream(getCCore()->bw_controller, getMediaStream());
+	
+	updateStats();
+	handleStreamEvents();
+	
+}
+
+
+MS2Stream::~MS2Stream(){
+	linphone_call_stats_unref(mStats);
+	mStats = nullptr;
+	rtp_session_unregister_event_queue(mSessions.rtp_session, mOrtpEvQueue);
+	ortp_ev_queue_flush(mOrtpEvQueue);
+	ortp_ev_queue_destroy(mOrtpEvQueue);
+	mOrtpEvQueue = nullptr;
+}
+
 
 
 /*
  * MS2VideoStream implemenation
  */
 
-MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const StreamParams &params) : MS2Stream(sg, params){
+MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
 }
 
 MediaStream *MS2VideoStream::getMediaStream()const{
@@ -470,7 +621,7 @@ MediaStream *MS2VideoStream::getMediaStream()const{
  * MS2RealTimeTextStream implemenation.
  */
 
-MS2RealTimeTextStream::MS2RealTimeTextStream(StreamsGroup &sg, const StreamParams &params) : MS2Stream(sg, params){
+MS2RealTimeTextStream::MS2RealTimeTextStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
 }
 
 MediaStream *MS2RealTimeTextStream::getMediaStream()const{

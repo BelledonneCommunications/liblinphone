@@ -286,7 +286,6 @@ else()
 		"-Wcast-align"
 		"-Wconversion"
 		"-Werror=return-type"
-		"-Wfloat-equal"
 		"-Winit-self"
 		"-Wno-error=deprecated-declarations"
 		"-Wpointer-arith"

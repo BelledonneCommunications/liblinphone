@@ -37,11 +37,23 @@ class MediaSession;
 class MediaSessionPrivate;
 class IceAgent;
 
-struct StreamParams{
-	int mIndex;
-	SalStreamDescription *mLocalStreamDescription = nullptr;
-	SalStreamDescription *mRemoteStreamDescription = nullptr;
-	bool mLocalIsOfferer = false;
+
+/**
+ * Represents all offer/answer context.
+ * When passed to a Stream object scopeStreamToIndex() must be called to specify the considered stream index, which
+ * initialize the localStreamDescription, remoteStreamDescription, and resultStreamDescription.
+ */
+class OfferAnswerContext{
+public:
+	bool localIsOfferer = false;
+	SalMediaDescription *localMediaDescription = nullptr;
+	const SalMediaDescription *remoteMediaDescription = nullptr;
+	const SalMediaDescription *resultMediaDescription = nullptr;
+	SalStreamDescription *localStreamDescription = nullptr;
+	const SalStreamDescription *remoteStreamDescription = nullptr;
+	const SalStreamDescription *resultStreamDescription = nullptr;
+	size_t streamIndex;
+	void scopeStreamToIndex(size_t index);
 };
 
 /**
@@ -49,11 +61,24 @@ struct StreamParams{
  */
 class Stream{
 public:
-	virtual void initialize() = 0;
-	virtual void start(SalStreamDescription *streamDesc, CallSession::State targetState) = 0;
-	virtual void startDtls() = 0;
-	virtual void update(SalStreamDescription *oldSd, SalStreamDescription *newSd) = 0;
-	virtual void stop() = 0;
+	enum State{
+		Stopped,
+		Preparing,
+		Running
+	};
+	/**
+	 * Ask the stream to prepare to run. This may include configuration steps, ICE gathering etc.
+	 */
+	virtual void prepare();
+	/**
+	 * Ask the stream to render according to the supplied offer-answer context and target state.
+	 * render() may be called multiple times according to changes made in the offer answer.
+	 */
+	virtual void render(const OfferAnswerContext & ctx, CallSession::State targetState);
+	/**
+	 * Ask the stream to stop. A call to prepare() is necessary before doing a future render() operation, if any.
+	 */
+	virtual void stop();
 	virtual LinphoneCallStats *getStats(){
 		return nullptr;
 	}
@@ -65,8 +90,9 @@ public:
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	bool isPortUsed(int port) const;
 	IceAgent & getIceAgent()const;
+	State getState()const{ return mState;}
 protected:
-	Stream(StreamsGroup &ms, const StreamParams &params);
+	Stream(StreamsGroup &ms, const OfferAnswerContext &params);
 	PortConfig mPortConfig;
 private:
 	void setPortConfig(std::pair<int, int> portRange);
@@ -76,8 +102,9 @@ private:
 	void setRandomPortConfig();
 	void fillMulticastMediaAddresses();
 	StreamsGroup & mStreamsGroup;
-	SalStreamType mStreamType;
-	size_t mIndex;
+	const SalStreamType mStreamType;
+	const size_t mIndex;
+	State mState = Stopped;
 	
 };
 
@@ -86,35 +113,38 @@ private:
  */
 class MS2Stream : public Stream{
 public:
-	virtual void initialize() override;
-	virtual void start(SalStreamDescription *streamDesc, CallSession::State targetState) override;
-	virtual void startDtls() override;
-	virtual void update(SalStreamDescription *oldSd, SalStreamDescription *newSd) override;
+	virtual void prepare() override;
+	virtual void render(const OfferAnswerContext & ctx, CallSession::State targetState) override;
 	virtual void stop() override;
 	
 	virtual ~MS2Stream();
 protected:
 	virtual MediaStream *getMediaStream()const = 0;
-	MS2Stream(StreamsGroup &sm, const StreamParams &params);
-	void setPortConfigFromRtpSession();
+	MS2Stream(StreamsGroup &sm, const OfferAnswerContext &params);
 	std::string getBindIp();
 	int getBindPort();
-	void initMulticast(const StreamParams &params);
 	void initializeSessions(MediaStream *stream);
-	void configureRtpSession(RtpSession *session);
-	void applyJitterBufferParams (RtpSession *session);
-	void setupDtlsParams(MediaStream *ms);
-	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo(const std::string &name);
+	RtpProfile * makeProfile(const SalMediaDescription *md, const SalStreamDescription *desc, int *usedPt);
+	
 	RtpProfile *mRtpProfile = nullptr;
 	MSMediaStreamSessions mSessions;
 	OrtpEvQueue *mOrtpEvQueue = nullptr;
 	LinphoneCallStats *mStats = nullptr;
+private:
+	void updateStats();
+	void initMulticast(const OfferAnswerContext &params);
+	void configureRtpSession(RtpSession *session);
+	void applyJitterBufferParams (RtpSession *session);
+	void setupDtlsParams(MediaStream *ms);
+	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo(const std::string &name);
 };
 
 class MS2AudioStream : public MS2Stream{
 public:
-	MS2AudioStream(StreamsGroup &sg, const StreamParams &params);
-	virtual void initialize() override;
+	MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params);
+	virtual void prepare() override;
+	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
+	virtual void stop() override;
 	virtual ~MS2AudioStream();
 private:
 	virtual MediaStream *getMediaStream()const override;
@@ -126,7 +156,7 @@ private:
 
 class MS2VideoStream : public MS2Stream{
 public:
-	MS2VideoStream(StreamsGroup &sg, const StreamParams &params);
+	MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param);
 private:
 	virtual MediaStream *getMediaStream()const override;
 	VideoStream *mStream = nullptr;
@@ -134,16 +164,38 @@ private:
 
 class MS2RealTimeTextStream : public MS2Stream{
 public:
-	MS2RealTimeTextStream(StreamsGroup &sm, const StreamParams &params);
+	MS2RealTimeTextStream(StreamsGroup &sm, const OfferAnswerContext &param);
 private:
 	virtual MediaStream *getMediaStream()const override;
 	TextStream *mStream = nullptr;
 };
 
+
+
+/**
+ * The StreamsGroup takes in charge the initialization and rendering of a group of streams defined
+ * according to a local media description, and a media description resulted from the offer/answer model.
+ * When the offer is received from remote, the local description must be compatible with the remote offer.
+ * The StreamsGroup is not in charge of offer/answer model logic: just the creation, rendering, and destruction of the
+ * streams.
+ */
 class StreamsGroup{
 public:
 	StreamsGroup(MediaSession &session);
-	Stream * createStream(const StreamParams &params);
+	/**
+	 * Create the streams according to the specified local and remote description.
+	 * The port and transport addresses are filled into the local description in return.
+	 * The local media description must not be null, the remote media description must not be null only
+	 * when the offer was received from remote side.
+	 */
+	void createStreams(const OfferAnswerContext &params);
+	void prepare();
+	/**
+	 * Render the streams according to the supplied offer answer parameters and target session state.
+	 * Local, remote and result must all be non-null.
+	 */
+	void render(const OfferAnswerContext &params, CallSession::State targetState);
+	void stop();
 	Stream * getStream(size_t index);
 	std::list<Stream*> getStreams();
 	MediaSession &getMediaSession()const{
@@ -152,6 +204,7 @@ public:
 	bool isPortUsed(int port)const;
 	IceAgent &getIceAgent()const;
 private:
+	Stream * createStream(const OfferAnswerContext &param);
 	MediaSession &mMediaSession;
 	std::unique_ptr<IceAgent> mIceAgent;
 	std::vector<std::unique_ptr<Stream>> mStreams;

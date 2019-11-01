@@ -35,6 +35,7 @@ class MediaSessionParamsPrivate;
 class MediaSessionParams : public CallSessionParams {
 	friend class MediaSession;
 	friend class MediaSessionPrivate;
+	friend class MS2Stream;
 
 public:
 	MediaSessionParams ();
