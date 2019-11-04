@@ -451,6 +451,9 @@ void linphone_xml_rpc_session_send_request(LinphoneXmlRpcSession *session, Linph
 	const char *data;
 	linphone_xml_rpc_request_ref(request);
 
+	if (request->core == NULL)
+		request->core = session->core;
+
 	uri = belle_generic_uri_parse(session->url);
 	if (!uri) {
 		ms_error("Could not send request, URL %s is invalid", session->url);
