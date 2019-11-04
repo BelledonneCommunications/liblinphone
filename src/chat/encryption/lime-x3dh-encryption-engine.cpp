@@ -841,7 +841,7 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 		
 		if (!limeManager->is_user(localDeviceId)) {
 			// create user if not exist
-			lime::limeCallback callback = setLimeCallback("creating user" + localDeviceId);
+			lime::limeCallback callback = setLimeCallback("creating user " + localDeviceId);
 			limeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
 		} else {
 			
