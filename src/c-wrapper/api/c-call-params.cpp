@@ -140,6 +140,10 @@ LinphoneStatus linphone_call_params_enable_realtime_text (LinphoneCallParams *pa
 	return 0;
 }
 
+void linphone_call_params_set_realtime_text_keepalive_interval(LinphoneCallParams *params, unsigned int interval){
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->setRealtimeTextKeepaliveInterval(interval);
+}
+
 void linphone_call_params_enable_video (LinphoneCallParams *params, bool_t enabled) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(params)->enableVideo(!!enabled);
 }
@@ -292,6 +296,10 @@ bool_t linphone_call_params_audio_enabled (const LinphoneCallParams *params) {
 
 bool_t linphone_call_params_realtime_text_enabled (const LinphoneCallParams *params) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->realtimeTextEnabled();
+}
+
+unsigned int linphone_call_params_get_realtime_text_keepalive_interval (const LinphoneCallParams *params) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->realtimeTextKeepaliveInterval();
 }
 
 bool_t linphone_call_params_video_enabled (const LinphoneCallParams *params) {

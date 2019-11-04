@@ -88,6 +88,7 @@ public:
 	LinphoneVideoDefinition *sentVideoDefinition = nullptr;
 
 	bool realtimeTextEnabled = false;
+	unsigned int realtimeTextKeepaliveInterval = 25000;
 	PayloadType *usedRealtimeTextCodec = nullptr;
 
 	bool avpfEnabled = false;

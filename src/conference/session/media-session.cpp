@@ -3352,6 +3352,8 @@ void MediaSessionPrivate::startTextStream () {
 		else {
 			getCurrentParams()->getPrivate()->setUsedRealtimeTextCodec(rtp_profile_get_payload(textProfile, usedPt));
 			getCurrentParams()->enableRealtimeText(true);
+			unsigned int interval = getParams()->realtimeTextKeepaliveInterval();
+			getCurrentParams()->setRealtimeTextKeepaliveInterval(interval);
 			if (sal_stream_description_has_srtp(tstream)) {
 				int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(tstream->crypto_local_tag));
 				if (cryptoIdx >= 0) {
@@ -3367,6 +3369,7 @@ void MediaSessionPrivate::startTextStream () {
 				rtp_session_set_multicast_ttl(textStream->ms.sessions.rtp_session, tstream->ttl);
 			text_stream_start(textStream, textProfile, rtpAddr, tstream->rtp_port, rtcpAddr,
 				(linphone_core_rtcp_enabled(q->getCore()->getCCore()) && !isMulticast) ? (tstream->rtcp_port ? tstream->rtcp_port : tstream->rtp_port + 1) : 0, usedPt);
+			ms_filter_call_method(textStream->rttsource, MS_RTT_4103_SOURCE_SET_KEEP_ALIVE_INTERVAL, &interval);
 			ms_filter_add_notify_callback(textStream->rttsink, realTimeTextCharacterReceived, this, false);
 			ms_media_stream_sessions_set_encryption_mandatory(&textStream->ms.sessions, isEncryptionMandatory());
 		}

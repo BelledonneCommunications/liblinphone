@@ -1886,6 +1886,8 @@ static void real_time_text(
 		linphone_core_set_media_encryption_mandatory(pauline->lc, TRUE);
 	}
 
+	linphone_core_realtime_text_set_keepalive_interval(pauline->lc, 500);
+
 	marie_params = linphone_core_create_call_params(marie->lc, NULL);
 	linphone_call_params_enable_realtime_text(marie_params,TRUE);
 	if (!audio_stream_enabled) {
@@ -1899,6 +1901,8 @@ static void real_time_text(
 	marie_call = linphone_core_get_current_call(marie->lc);
 	if (pauline_call) {
 		BC_ASSERT_TRUE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(pauline_call)));
+		BC_ASSERT_EQUAL(linphone_call_params_get_realtime_text_keepalive_interval(linphone_call_get_current_params(pauline_call)), 500, unsigned int, "%u");
+
 		if (audio_stream_enabled) {
 			BC_ASSERT_TRUE(linphone_call_params_audio_enabled(linphone_call_get_current_params(pauline_call)));
 		}
