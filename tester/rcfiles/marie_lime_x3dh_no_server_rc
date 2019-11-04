@@ -20,6 +20,9 @@ userid=marie
 passwd=secret
 realm=sip.example.org
 
+[assistant]
+algorithm=SHA-256
+
 [proxy_0]
 reg_proxy=sip.example.org;transport=tcp
 reg_route=sip.example.org;transport=tcp;lr

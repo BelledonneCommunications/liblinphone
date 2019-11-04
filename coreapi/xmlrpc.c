@@ -203,10 +203,7 @@ static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_s
 	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(request->core, realm, username, domain);
 
 	if (auth_info) {
-		const char *auth_username = linphone_auth_info_get_username(auth_info);
-		const char *auth_password = linphone_auth_info_get_password(auth_info);
-		belle_sip_auth_event_set_username(event, auth_username);
-		belle_sip_auth_event_set_passwd(event, auth_password);
+		linphone_auth_info_fill_belle_sip_event(auth_info, event);
 	} else {
 		ms_error("Authentication error during XML-RPC request sending");
 		if (!linphone_xml_rpc_request_aborted(request)){
