@@ -270,3 +270,16 @@ void linphone_core_clear_all_auth_info(LinphoneCore *lc){
 	bctbx_list_free(lc->auth_info);
 	lc->auth_info=NULL;
 }
+
+void linphone_auth_info_fill_belle_sip_event(const LinphoneAuthInfo *auth_info, belle_sip_auth_event *event) {
+    if (auth_info) {
+		const char *auth_username = linphone_auth_info_get_username(auth_info);
+		const char *auth_password = linphone_auth_info_get_password(auth_info);
+		const char *auth_ha1 = linphone_auth_info_get_ha1(auth_info);
+		const char *auth_algo = linphone_auth_info_get_algorithm(auth_info);
+		belle_sip_auth_event_set_username(event, auth_username);
+		belle_sip_auth_event_set_passwd(event, auth_password);
+		belle_sip_auth_event_set_ha1(event, auth_ha1);
+		belle_sip_auth_event_set_algorithm(event, auth_algo);
+	}
+}

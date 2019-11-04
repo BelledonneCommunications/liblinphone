@@ -76,15 +76,7 @@ void LimeManager::processAuthRequested (void *data, belle_sip_auth_event_t *even
 	const char *domain = belle_sip_auth_event_get_domain(event);
 
 	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(core->getCCore(), realm, username, domain);
-
-	if (auth_info) {
-		const char *auth_username = linphone_auth_info_get_username(auth_info);
-		const char *auth_password = linphone_auth_info_get_password(auth_info);
-		const char *auth_ha1 = linphone_auth_info_get_ha1(auth_info);
-		belle_sip_auth_event_set_username(event, auth_username);
-		belle_sip_auth_event_set_passwd(event, auth_password);
-		belle_sip_auth_event_set_ha1(event, auth_ha1);
-	}
+	linphone_auth_info_fill_belle_sip_event(auth_info, event);
 }
 
 LimeManager::LimeManager (
@@ -841,7 +833,7 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 		
 		if (!limeManager->is_user(localDeviceId)) {
 			// create user if not exist
-			lime::limeCallback callback = setLimeCallback("creating user" + localDeviceId);
+			lime::limeCallback callback = setLimeCallback("creating user " + localDeviceId);
 			limeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
 		} else {
 			
