@@ -205,6 +205,8 @@ static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_s
 		const char *auth_password = linphone_auth_info_get_password(auth_info);
 		belle_sip_auth_event_set_username(event, auth_username);
 		belle_sip_auth_event_set_passwd(event, auth_password);
+		belle_sip_auth_event_set_ha1(event, linphone_auth_info_get_ha1(auth_info));
+		belle_sip_auth_event_set_algorithm(event, linphone_auth_info_get_algorithm(auth_info));
 	} else {
 		ms_error("Authentication error during XML-RPC request sending");
 		if (!linphone_xml_rpc_request_aborted(request)){
@@ -451,7 +453,10 @@ void linphone_xml_rpc_session_send_request(LinphoneXmlRpcSession *session, Linph
 	belle_sip_memory_body_handler_t *bh;
 	const char *data;
 	linphone_xml_rpc_request_ref(request);
-
+	
+	if (request->core == NULL)
+		request->core = session->core;
+	
 	uri = belle_generic_uri_parse(session->url);
 	if (!uri) {
 		ms_error("Could not send request, URL %s is invalid", session->url);
