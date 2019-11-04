@@ -50,6 +50,7 @@ void MediaSessionParamsPrivate::clone (const MediaSessionParamsPrivate *src) {
 	sentFps = src->sentFps;
 	sentVideoDefinition = src->sentVideoDefinition ? linphone_video_definition_ref(src->sentVideoDefinition) : nullptr;
 	realtimeTextEnabled = src->realtimeTextEnabled;
+	realtimeTextKeepalvieInterval = src->realtimeTextKeepalvieInterval;
 	usedRealtimeTextCodec = src->usedRealtimeTextCodec;
 	avpfEnabled = src->avpfEnabled;
 	avpfRrInterval = src->avpfRrInterval;
@@ -235,6 +236,7 @@ void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core) {
 			"This is a possible mis-use of the API. In this case, video is disabled in default LinphoneCallParams";
 	}
 	d->realtimeTextEnabled = !!linphone_core_realtime_text_enabled(cCore);
+	d->realtimeTextKeepalvieInterval = linphone_core_realtime_text_get_keepalive_interval(cCore);
 	d->encryption = linphone_core_get_media_encryption(cCore);
 	d->avpfEnabled = (linphone_core_get_avpf_mode(cCore) == LinphoneAVPFEnabled);
 	d->_implicitRtcpFbEnabled = !!lp_config_get_int(linphone_core_get_config(cCore), "rtp", "rtcp_fb_implicit_rtcp_fb", true);
@@ -373,6 +375,11 @@ void MediaSessionParams::enableRealtimeText (bool value) {
 	d->realtimeTextEnabled = value;
 }
 
+void MediaSessionParams::setRealtimeTextKeepaliveInterval (unsigned int interval) {
+	L_D();
+	d->realtimeTextKeepalvieInterval = interval;
+}
+
 const OrtpPayloadType * MediaSessionParams::getUsedRealtimeTextCodec () const {
 	L_D();
 	return d->usedRealtimeTextCodec;
@@ -386,6 +393,11 @@ LinphonePayloadType * MediaSessionParams::getUsedRealtimeTextPayloadType () cons
 bool MediaSessionParams::realtimeTextEnabled () const {
 	L_D();
 	return d->realtimeTextEnabled;
+}
+
+unsigned int MediaSessionParams::realtimeTextKeepaliveInterval() const {
+	L_D();
+	return d->realtimeTextKeepalvieInterval;
 }
 
 // -----------------------------------------------------------------------------

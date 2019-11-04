@@ -74,9 +74,11 @@ public:
 	bool videoMulticastEnabled () const;
 
 	void enableRealtimeText (bool value);
+	void setRealtimeTextKeepaliveInterval (unsigned int interval);
 	const OrtpPayloadType * getUsedRealtimeTextCodec () const;
 	LinphonePayloadType * getUsedRealtimeTextPayloadType () const;
 	bool realtimeTextEnabled () const;
+	unsigned int realtimeTextKeepaliveInterval () const;
 
 	bool avpfEnabled () const;
 	void enableAvpf (bool value);

@@ -436,6 +436,22 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_params_enable_realtime_text(Linphon
 LINPHONE_PUBLIC bool_t linphone_call_params_realtime_text_enabled(const LinphoneCallParams *params);
 
 /**
+ * Use to set keep alive interval for real time text following rfc4103.
+ * @param params #LinphoneCallParams
+ * @param interval The keep alive interval for real time text, 25000 by default.
+ * @ingroup media_parameters
+ **/
+LINPHONE_PUBLIC void linphone_call_params_set_realtime_text_keepalive_interval(LinphoneCallParams *params, unsigned int interval);
+
+/**
+ * Use to get keep alive interval of real time text following rfc4103.
+ * @param params #LinphoneCallParams
+ * @returns returns keep alive interval of real time text.
+ * @ingroup media_parameters
+ **/
+LINPHONE_PUBLIC unsigned int linphone_call_params_get_realtime_text_keepalive_interval(const LinphoneCallParams *params);
+
+/**
  * Add a custom attribute related to all the streams in the SDP exchanged within SIP messages during a call.
  * @param[in] params The #LinphoneCallParams to add a custom SDP attribute to.
  * @param[in] attribute_name The name of the attribute to add.
