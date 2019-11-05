@@ -301,8 +301,6 @@ bool CallSessionPrivate::failure () {
 			else
 				setState(CallSession::State::End, ei->full_string ? ei->full_string : "");
 		}
-		if ((ei->reason != SalReasonNone) && listener)
-			listener->onPlayErrorTone(q->getSharedFromThis(), linphone_reason_from_sal(ei->reason));
 	}
 	if (referer) {
 		// Notify referer of the failure
@@ -344,12 +342,8 @@ void CallSessionPrivate::referred (const Address &referToAddr) {
 }
 
 void CallSessionPrivate::remoteRinging () {
-	L_Q();
 	/* Set privacy */
 	currentParams->setPrivacy((LinphonePrivacyMask)op->getPrivacy());
-	if (listener)
-		listener->onStartRinging(q->getSharedFromThis());
-	lInfo() << "Remote ringing...";
 	setState(CallSession::State::OutgoingRinging, "Remote ringing");
 }
 
@@ -416,8 +410,6 @@ void CallSessionPrivate::terminated () {
 	}
 	if (referPending && listener)
 		listener->onCallSessionStartReferred(q->getSharedFromThis());
-	if (listener)
-		listener->onStopRingingIfInCall(q->getSharedFromThis());
 	setState(CallSession::State::End, "Call ended");
 }
 
@@ -636,6 +628,8 @@ void CallSessionPrivate::setReleased () {
 	}
 	referer = nullptr;
 	transferTarget = nullptr;
+
+	q->getCore()->getPrivate()->getToneManager()->removeSession(q->getSharedFromThis());
 
 	if (listener)
 		listener->onCallSessionSetReleased(q->getSharedFromThis());
