@@ -813,11 +813,12 @@ static LinphoneXmlRpcRequest * _create_account_with_phone_custom(LinphoneAccount
 	if (!creator->phone_number) {
 		return NULL;
 	}
-	ms_debug("Account creator: create_account_with_phone (phone number=%s, username=%s, domain=%s, language=%s)",
+	ms_debug("Account creator: create_account_with_phone (phone number=%s, username=%s, domain=%s, language=%s, algo=%s)",
 		creator->phone_number,
 		(creator->username) ? creator->username : creator->phone_number,
 		_get_domain(creator),
-		creator->language);
+		creator->language,
+		creator->algorithm);
 
 	request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "create_phone_account");
 	linphone_xml_rpc_request_add_string_arg(request, creator->phone_number);
@@ -836,10 +837,11 @@ static LinphoneXmlRpcRequest * _create_account_with_email_custom(LinphoneAccount
 	if (!creator->username || !creator->email || !creator->password) {
 		return NULL;
 	}
-	ms_debug("Account creator: create_account_with_email (username=%s, email=%s, domain=%s)",
+	ms_debug("Account creator: create_account_with_email (username=%s, email=%s, domain=%s, algo=%s)",
 		creator->username,
 		creator->email,
-		_get_domain(creator));
+		_get_domain(creator),
+		creator->algorithm);
 
 	request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "create_email_account");
 	linphone_xml_rpc_request_add_string_arg(request, creator->username);
@@ -904,15 +906,17 @@ LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone(Li
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
-	ms_debug("Account creator: delete_account (username=%s, password=%s, domain=%s)",
+	ms_debug("Account creator: delete_account (username=%s, password=%s, domain=%s, algo=%s)",
 		creator->username,
 		creator->password,
-		linphone_proxy_config_get_domain(creator->proxy_cfg));
+		linphone_proxy_config_get_domain(creator->proxy_cfg),
+		creator->algorithm);
 
 	LinphoneXmlRpcRequest *request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "delete_account");
 	linphone_xml_rpc_request_add_string_arg(request, creator->username ? creator->username : creator->phone_number);
 	linphone_xml_rpc_request_add_string_arg(request, creator->password);
 	linphone_xml_rpc_request_add_string_arg(request, linphone_proxy_config_get_domain(creator->proxy_cfg));
+	linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 	linphone_xml_rpc_request_set_user_data(request, creator);
 	linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request), _delete_linphone_account_response_cb);
 	linphone_xml_rpc_session_send_request(creator->xmlrpc_session, request);
@@ -935,6 +939,8 @@ static void _activate_account_cb_custom(LinphoneXmlRpcRequest *request) {
 			status = LinphoneAccountCreatorStatusWrongActivationCode;
 		} else if (strcmp(resp, "ERROR_ALGO_NOT_SUPPORTED") == 0) {
 			status = LinphoneAccountCreatorStatusAlgoNotSupported;
+		} else if (strcmp(resp, "ERROR_ACCOUNT_DOESNT_EXIST") == 0) {
+			status = LinphoneAccountCreatorStatusAccountNotExist;
 		} else if (strstr(resp, "ERROR_") == resp) {
 			status = LinphoneAccountCreatorStatusAccountNotActivated;
 		} else {
@@ -959,11 +965,12 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_account_linphone(
 	}
 
 	if (creator->xmlrpc_session) {
-		ms_debug("Account creator: activate_account_phone (phone number=%s, username=%s, activation code=%s, domain=%s)",
+		ms_debug("Account creator: activate_account_phone (phone number=%s, username=%s, activation code=%s, domain=%s, algo=%s)",
 			creator->phone_number,
 			creator->username ? creator->username : creator->phone_number,
 			creator->activation_code,
-			_get_domain(creator));
+			_get_domain(creator),
+			creator->algorithm);
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "activate_phone_account");
 		linphone_xml_rpc_request_add_string_arg(request, creator->phone_number);
@@ -991,10 +998,11 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_lin
 	}
 
 	if (creator->xmlrpc_session) {
-		ms_debug("Account creator: activate_account_email (username=%s, activation code=%s, domain=%s)",
+		ms_debug("Account creator: activate_account_email (username=%s, activation code=%s, domain=%s, algo=%s)",
 			creator->username,
 			creator->activation_code,
-			_get_domain(creator));
+			_get_domain(creator),
+			creator->algorithm);
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "activate_email_account");
 		linphone_xml_rpc_request_add_string_arg(request, creator->username);
@@ -1043,10 +1051,11 @@ LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key_linph
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
-	ms_debug("Account creator: confirmation_key (username=%s, password=%s, domain=%s)",
+	ms_debug("Account creator: confirmation_key (username=%s, password=%s, domain=%s, algo=%s)",
 		creator->username,
 		creator->password,
-		linphone_proxy_config_get_domain(creator->proxy_cfg));
+		linphone_proxy_config_get_domain(creator->proxy_cfg),
+		creator->algorithm);
 
 	LinphoneXmlRpcRequest *request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "get_confirmation_key");
 	linphone_xml_rpc_request_add_string_arg(request, creator->username);
@@ -1087,9 +1096,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated_linph
 	}
 
 	if (creator->xmlrpc_session) {
-		ms_debug("Account creator: is_account_activated (username=%s, domain=%s)",
+		ms_debug("Account creator: is_account_activated (username=%s, domain=%s, algo=%s)",
 			creator->username ? creator->username : creator->phone_number,
-			_get_domain(creator));
+			_get_domain(creator),
+			creator->algorithm);
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "is_account_activated");
 		linphone_xml_rpc_request_add_string_arg(request, creator->username ? creator->username : creator->phone_number);
@@ -1272,11 +1282,12 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_number_link
 	}
 
 	if (creator->xmlrpc_session) {
-		ms_debug("Account creator: activate_phone_number_link (phone number=%s, username=%s, activation code=%s, domain=%s)",
+		ms_debug("Account creator: activate_phone_number_link (phone number=%s, username=%s, activation code=%s, domain=%s, algo=%s)",
 			creator->phone_number,
 			creator->username,
 			creator->activation_code,
-			_get_domain(creator));
+			_get_domain(creator),
+			creator->algorithm);
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "activate_phone_number_link");
 		linphone_xml_rpc_request_add_string_arg(request, creator->phone_number);
@@ -1392,9 +1403,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone(L
 		char *ha1 = bctbx_strdup(creator->ha1 ? creator->ha1 : ha1_for_passwd(username, _get_domain(creator), creator->password, creator->algorithm));
 		char *new_ha1 = bctbx_strdup(ha1_for_passwd(username, _get_domain(creator), new_pwd, creator->algorithm));
 
-		ms_debug("Account creator: update_password (username=%s, domain=%s)",
+		ms_debug("Account creator: update_password (username=%s, domain=%s, algo=%s)",
 			creator->username,
-			_get_domain(creator));
+			_get_domain(creator),
+			creator->algorithm);
 
 		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "update_hash");
 		linphone_xml_rpc_request_add_string_arg(request, username);
