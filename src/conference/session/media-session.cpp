@@ -264,8 +264,11 @@ bool MediaSessionPrivate::failure () {
 			"Automatic CallSession resuming after failed transfer");
 	}
 
-	if (listener)
-		listener->onStopRingingIfNeeded(q->getSharedFromThis());
+	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
+
+	if (ei->reason != SalReasonNone)
+		q->getCore()->getPrivate()->getToneManager()->startErrorTone(q->getSharedFromThis(), linphone_reason_from_sal(ei->reason));
+
 	stopStreams();
 	return false;
 }
@@ -310,25 +313,21 @@ void MediaSessionPrivate::remoteRinging () {
 		}
 
 		setState(CallSession::State::OutgoingEarlyMedia, "Early media");
-		if (listener)
-			listener->onStopRinging(q->getSharedFromThis());
+		q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
 		lInfo() << "Doing early media...";
 		iceAgent->updateFromRemoteMediaDescription(localDesc, rmd, !op->isOfferer());
 		updateStreams(md, state);
 		if ((q->getCurrentParams()->getAudioDirection() == LinphoneMediaDirectionInactive) && audioStream) {
-			if (listener)
-				listener->onStartRinging(q->getSharedFromThis());
+			q->getCore()->getPrivate()->getToneManager()->startRingbackTone(q->getSharedFromThis());
 		}
 	} else {
-		linphone_core_stop_dtmf_stream(q->getCore()->getCCore());
 		if (state == CallSession::State::OutgoingEarlyMedia) {
 			/* Already doing early media */
 			return;
 		}
-		if (listener)
-			listener->onStartRinging(q->getSharedFromThis());
-		lInfo() << "Remote ringing...";
+
 		setState(CallSession::State::OutgoingRinging, "Remote ringing");
+		q->getCore()->getPrivate()->getToneManager()->startRingbackTone(q->getSharedFromThis());
 	}
 }
 
@@ -372,8 +371,10 @@ void MediaSessionPrivate::telephoneEventReceived (int event) {
 }
 
 void MediaSessionPrivate::terminated () {
+	L_Q();
 	stopStreams();
 	CallSessionPrivate::terminated();
+	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
 }
 
 /* This callback is called when an incoming re-INVITE/ SIP UPDATE modifies the session */
@@ -781,11 +782,6 @@ void MediaSessionPrivate::restartStream (SalStreamDescription *streamDesc, int s
 	}
 
 	startStream(streamDesc, streamIndex, targetState);
-
-	if (streamDesc->type == SalAudio && audioStream) {
-		if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1))
-			linphone_core_play_named_tone(q->getCore()->getCCore(), LinphoneToneCallOnHold);
-	}
 
 	updateStreamFrozenPayloads(streamDesc, &localDesc->streams[streamIndex]);
 }
@@ -3659,8 +3655,10 @@ void MediaSessionPrivate::updateFrozenPayloads (SalMediaDescription *result) {
 void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession::State targetState) {
 	L_Q();
 
-	if (!((state == CallSession::State::IncomingEarlyMedia) && linphone_core_get_ring_during_incoming_early_media(q->getCore()->getCCore())))
-		linphone_core_stop_ringing(q->getCore()->getCCore());
+	if (state == CallSession::State::Connected || state == CallSession::State::Resuming ||
+		(state == CallSession::State::IncomingEarlyMedia && !linphone_core_get_ring_during_incoming_early_media(q->getCore()->getCCore()))) {
+		q->getCore()->getPrivate()->getToneManager()->goToCall(q->getSharedFromThis());
+	}
 
 	if (!newMd) {
 		lError() << "updateStreams() called with null media description";
@@ -3719,7 +3717,7 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 
 						if (newMd->streams[i].type == SalAudio && audioStream) {
 							if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1))
-								linphone_core_play_named_tone(q->getCore()->getCCore(), LinphoneToneCallOnHold);
+								q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallOnHold);
 						}
 
 						updateStreamFrozenPayloads(&newMd->streams[i], &localDesc->streams[i]);
@@ -3820,8 +3818,9 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 
 	startStreams(targetState);
 
-	if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1))
-		linphone_core_play_named_tone(q->getCore()->getCCore(), LinphoneToneCallOnHold);
+	if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1)) {
+		q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallOnHold);
+	}
 
 	updateFrozenPayloads(newMd);
 
@@ -4143,8 +4142,7 @@ void MediaSessionPrivate::reportBandwidthForStream (MediaStream *ms, LinphoneStr
 
 void MediaSessionPrivate::abort (const string &errorMsg) {
 	L_Q();
-	if (listener)
-		listener->onStopRinging(q->getSharedFromThis());
+	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
 	stopStreams();
 	CallSessionPrivate::abort(errorMsg);
 }
@@ -4250,9 +4248,7 @@ LinphoneStatus MediaSessionPrivate::startUpdate (const string &subject) {
 
 void MediaSessionPrivate::terminate () {
 	L_Q();
-	if (listener)
-		listener->onStopRingingIfNeeded(q->getSharedFromThis());
-
+	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
 	stopStreams();
 	CallSessionPrivate::terminate();
 }

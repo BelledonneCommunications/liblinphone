@@ -42,6 +42,16 @@ typedef enum _LinphoneProxyConfigAddressComparisonResult{
 	LinphoneProxyConfigAddressWeakEqual
 } LinphoneProxyConfigAddressComparisonResult;
 
+typedef struct _LinphoneCoreToneManagerStats {
+	int number_of_startRingbackTone;
+	int number_of_startRingtone;
+	int number_of_startErrorTone;
+	int number_of_startNamedTone;
+	int number_of_stopRingbackTone;
+	int number_of_stopRingtone;
+	int number_of_stopTone;
+} LinphoneCoreToneManagerStats;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -53,7 +63,6 @@ LINPHONE_PUBLIC int linphone_core_get_local_ip_for(int type, const char *dest, c
 LINPHONE_PUBLIC void linphone_core_enable_forced_ice_relay(LinphoneCore *lc, bool_t enable);
 LINPHONE_PUBLIC void linphone_core_set_zrtp_not_available_simulation(LinphoneCore *lc, bool_t enabled);
 LINPHONE_PUBLIC belle_http_provider_t *linphone_core_get_http_provider(const LinphoneCore *lc);
-LINPHONE_PUBLIC const char *linphone_core_get_tone_file(const LinphoneCore *lc, LinphoneToneID id);
 LINPHONE_PUBLIC IceSession * linphone_call_get_ice_session(const LinphoneCall *call);
 LINPHONE_PUBLIC const struct addrinfo *linphone_core_get_stun_server_addrinfo(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_enable_send_call_stats_periodical_updates(LinphoneCore *lc, bool_t enabled);
@@ -128,6 +137,10 @@ LINPHONE_PUBLIC int linphone_friend_list_get_revision(const LinphoneFriendList *
 LINPHONE_PUBLIC int linphone_remote_provisioning_load_file( LinphoneCore* lc, const char* file_path);
 
 LINPHONE_PUBLIC char *linphone_core_get_device_identity(LinphoneCore *lc);
+
+LINPHONE_PUBLIC LinphoneCoreToneManagerStats *linphone_core_get_tone_manager_stats(LinphoneCore *lc);
+LINPHONE_PUBLIC void linphone_core_reset_tone_manager_stats(LinphoneCore *lc);
+LINPHONE_PUBLIC const char *linphone_core_get_tone_file(LinphoneCore *lc, LinphoneToneID id);
 
 /**
  * Send an XML-RPC request to delete a Linphone account.

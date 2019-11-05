@@ -228,6 +228,7 @@ static void incoming_call_accepted_when_outgoing_call_in_state(LinphoneCallState
 									,pauline->lc
 									,state==LinphoneCallOutgoingEarlyMedia?&marie->stat.number_of_LinphoneCallOutgoingEarlyMedia:&marie->stat.number_of_LinphoneCallOutgoingRinging
 									,1));
+       BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingbackTone, 1));
 	} else if (state==LinphoneCallOutgoingProgress) {
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address(marie->lc,pauline->identity));
 	} else {
@@ -237,6 +238,11 @@ static void incoming_call_accepted_when_outgoing_call_in_state(LinphoneCallState
 
 	BC_ASSERT_TRUE(call_with_caller_params(laure,marie,laure_params));
 
+	if (state==LinphoneCallOutgoingRinging) {
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingtone, 0, int, "%d");
+	} else if (state==LinphoneCallOutgoingProgress || state==LinphoneCallOutgoingEarlyMedia) {
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingtone, 1, int, "%d");
+	}
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
 
@@ -1162,6 +1168,7 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 							,&pauline->stat.number_of_LinphoneCallIncomingReceived
 							,1));
 	pauline_called_by_laure=linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 1, int, "%d");
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address_with_params(marie->lc,pauline->identity,marie_params));
 	linphone_call_params_unref(marie_params);
@@ -1171,9 +1178,15 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 							,&pauline->stat.number_of_LinphoneCallIncomingReceived
 							,2));
 	pauline_called_by_marie=linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 1, int, "%d");
+
 	linphone_call_decline(pauline_called_by_laure, LinphoneReasonDeclined);
 	BC_ASSERT_TRUE(wait_for(laure->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallEnd,1));
 	BC_ASSERT_TRUE(wait_for(laure->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
+
+	// check that rigntone player restart
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone, 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 2, int, "%d");
 
 	BC_ASSERT_TRUE(linphone_ringtoneplayer_is_started(linphone_core_get_ringtoneplayer(pauline->lc)));
 	linphone_call_terminate(pauline_called_by_marie);
@@ -1181,6 +1194,7 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallReleased,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallEnd,2));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallReleased,2));
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone, 2, int, "%d");
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);

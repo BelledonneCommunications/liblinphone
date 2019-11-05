@@ -21,6 +21,7 @@
 #include "linphone/lpconfig.h"
 #include "linphone/wrapper_utils.h"
 #include "mediastreamer2/mediastream.h"
+#include "core/core-p.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -574,44 +575,12 @@ void linphone_tone_description_destroy(LinphoneToneDescription *obj){
 	ms_free(obj);
 }
 
-static LinphoneToneDescription *linphone_core_lookup_tone(const LinphoneCore *lc, LinphoneReason reason, LinphoneToneID id){
-	const bctbx_list_t *elem;
-	for (elem=lc->tones;elem!=NULL;elem=elem->next){
-		LinphoneToneDescription *tone=(LinphoneToneDescription*)elem->data;
-		if (reason == LinphoneReasonNone){
-			if (tone->toneid == id && tone->reason == LinphoneReasonNone) return tone;
-		}else{
-			if (tone->reason==reason) return tone;
-		}
-	}
-	return NULL;
-}
-
-LinphoneToneDescription *linphone_core_get_call_error_tone(const LinphoneCore *lc, LinphoneReason reason){
-	return linphone_core_lookup_tone(lc, reason, LinphoneToneUndefined);
-}
-
-const char *linphone_core_get_tone_file(const LinphoneCore *lc, LinphoneToneID id){
-	LinphoneToneDescription *tone = linphone_core_lookup_tone(lc, LinphoneReasonNone, id);
-	return tone ? tone->audiofile : NULL;
-}
-
-void _linphone_core_set_tone(LinphoneCore *lc, LinphoneReason reason, LinphoneToneID id, const char *audiofile){
-	LinphoneToneDescription *tone = linphone_core_lookup_tone(lc,reason, id);
-	if (tone){
-		lc->tones=bctbx_list_remove(lc->tones,tone);
-		linphone_tone_description_destroy(tone);
-	}
-	tone=linphone_tone_description_new(reason,id,audiofile);
-	lc->tones=bctbx_list_append(lc->tones,tone);
-}
-
 void linphone_core_set_call_error_tone(LinphoneCore *lc, LinphoneReason reason, const char *audiofile){
-	_linphone_core_set_tone(lc,reason,LinphoneToneUndefined, audiofile);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(reason, LinphoneToneUndefined, audiofile);
 }
 
 void linphone_core_set_tone(LinphoneCore *lc, LinphoneToneID id, const char *audiofile){
-	_linphone_core_set_tone(lc, LinphoneReasonNone, id, audiofile);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonNone, id, audiofile);
 }
 
 const MSCryptoSuite * linphone_core_get_srtp_crypto_suites(LinphoneCore *lc){

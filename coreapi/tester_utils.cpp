@@ -199,4 +199,15 @@ char * linphone_core_get_device_identity(LinphoneCore *lc) {
 	return identity;
 }
 
+LinphoneCoreToneManagerStats *linphone_core_get_tone_manager_stats(LinphoneCore *lc) {
+	return L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->getStats();
+}
 
+void linphone_core_reset_tone_manager_stats(LinphoneCore *lc) {
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->resetStats();
+}
+
+const char *linphone_core_get_tone_file(LinphoneCore *lc, LinphoneToneID id){
+	LinphoneToneDescription *tone = L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->getToneFromId(id);
+	return tone ? tone->audiofile : NULL;
+}
