@@ -1211,7 +1211,7 @@ static void server_activate_non_existent_account(void) {
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
 	linphone_account_creator_service_set_user_data(
 		linphone_account_creator_get_service(creator),
-		(void*)LinphoneAccountCreatorStatusAccountNotActivated);
+		(void*)LinphoneAccountCreatorStatusAccountNotExist);
 	linphone_account_creator_cbs_set_activate_account(cbs, account_creator_cb);
 	linphone_account_creator_service_set_activate_account_cb(
 		linphone_account_creator_get_service(creator),
