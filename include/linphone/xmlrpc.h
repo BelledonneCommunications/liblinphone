@@ -141,6 +141,13 @@ LINPHONE_PUBLIC int linphone_xml_rpc_request_get_int_response(const LinphoneXmlR
 LINPHONE_PUBLIC const char * linphone_xml_rpc_request_get_string_response(const LinphoneXmlRpcRequest *request);
 
 /**
+ * Get the raw response to an XML-RPC request sent with linphone_xml_rpc_session_send_request() and returning http body as string.
+ * @param[in] request LinphoneXmlRpcRequest object.
+ * @return The string response to the XML-RPC request.
+ **/
+LINPHONE_PUBLIC const char * linphone_xml_rpc_request_get_raw_response(const LinphoneXmlRpcRequest *request);
+	
+/**
  * Create a new #LinphoneXmlRpcSession object.
  * @param[in] core The #LinphoneCore object used to send the XML-RPC requests.
  * @param[in] url The URL of the XML-RPC server to send the XML-RPC requests to.

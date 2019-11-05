@@ -270,7 +270,9 @@ static void process_response_from_post_xml_rpc_request(void *data, const belle_h
 	if (!linphone_xml_rpc_request_aborted(request) && event->response) {
 		int code = belle_http_response_get_status_code(event->response);
 		if (code == 200) { /* Valid response from the server. */
-			parse_valid_xml_rpc_response(request, belle_sip_message_get_body((belle_sip_message_t *)event->response));
+			const char * body = belle_sip_message_get_body((belle_sip_message_t *)event->response);
+			if (body) request->raw_response = bctbx_strdup(body);
+			parse_valid_xml_rpc_response(request, body);
 		} else {
 			ms_error("process_response_from_post_xml_rpc_request(): error code = %i", code);
 			notify_xml_rpc_error(request);
@@ -313,6 +315,9 @@ static void _linphone_xml_rpc_request_destroy(LinphoneXmlRpcRequest *request) {
 	linphone_xml_rpc_request_cbs_unref(request->callbacks);
 	bctbx_list_free_with_data(request->callbacks_list, (bctbx_list_free_func)linphone_xml_rpc_request_cbs_unref);
 	request->callbacks_list = nullptr;
+	if (request->raw_response)
+		bctbx_free(request->raw_response);
+	
 }
 
 static void _linphone_xml_rpc_session_destroy(LinphoneXmlRpcSession *session) {
@@ -411,6 +416,9 @@ const char * linphone_xml_rpc_request_get_string_response(const LinphoneXmlRpcRe
 	return request->response.data.s;
 }
 
+const char * linphone_xml_rpc_request_get_raw_response(const LinphoneXmlRpcRequest *request) {
+	return request->raw_response;
+}
 
 LinphoneXmlRpcSession * linphone_xml_rpc_session_new(LinphoneCore *core, const char *url) {
 	LinphoneXmlRpcSession *session = belle_sip_object_new(LinphoneXmlRpcSession);
