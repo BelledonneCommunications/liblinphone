@@ -758,7 +758,6 @@ namespace LinphonePrivate {
 	MSList *friends_lists; \
 	MSList *auth_info; \
 	struct _RingStream *ringstream; \
-	time_t dmfs_playing_start_time; \
 	LCCallbackObj preview_finished_cb; \
 	MSList *queued_calls; \
 	MSList *call_logs; \
@@ -801,7 +800,6 @@ namespace LinphonePrivate {
 	bool_t network_reachable_to_be_notified; \
 	bool_t use_preview_window; \
 	bool_t network_last_status; \
-	bool_t ringstream_autorelease; \
 	bool_t vtables_running; \
 	bool_t send_call_stats_periodical_updates; \
 	bool_t forced_ice_relay; \

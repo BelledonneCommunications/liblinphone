@@ -116,6 +116,8 @@ void CorePrivate::uninit () {
 		ms_usleep(10000);
 	}
 
+	if (toneManager) toneManager->deleteTimer();
+
 	chatRoomsById.clear();
 	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();
@@ -214,6 +216,13 @@ bool CorePrivate::basicToFlexisipChatroomMigrationEnabled()const{
 	return linphone_config_get_bool(linphone_core_get_config(q->getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE);
 }
 
+std::shared_ptr<ToneManager> CorePrivate::getToneManager() {
+	L_Q();
+	if (!toneManager) {
+		toneManager = make_shared<ToneManager>(q->getSharedFromThis());
+	}
+	return toneManager;
+}
 
 // =============================================================================
 
@@ -557,6 +566,15 @@ Address Core::interpretUrl (const std::string &url) const {
 
 void Core::doLater(const std::function<void ()> &something){
 	getPrivate()->doLater(something);
+}
+
+belle_sip_source_t *Core::createTimer(const std::function<bool ()> &something, unsigned int milliseconds){
+	return belle_sip_main_loop_create_cpp_timeout_2(getPrivate()->getMainLoop(), something, milliseconds, "");
+}
+/* Stop and destroy a timer created by createTimer()*/
+void Core::destroyTimer(belle_sip_source_t *timer){
+	belle_sip_main_loop_remove_source(getPrivate()->getMainLoop(), timer);
+	belle_sip_object_unref(timer);
 }
 
 

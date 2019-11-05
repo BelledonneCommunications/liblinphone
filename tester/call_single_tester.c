@@ -907,6 +907,10 @@ static void cancel_other_device_after_decline(void) {
 	BC_ASSERT_TRUE(wait_for(caller_mgr->lc, callee_mgr->lc, &caller_mgr->stat.number_of_LinphoneCallOutgoingInit,1));
 	BC_ASSERT_TRUE(wait_for(caller_mgr->lc, callee_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallIncomingReceived, 1));
 	BC_ASSERT_TRUE(wait_for(caller_mgr->lc, callee_mgr->lc, &caller_mgr->stat.number_of_LinphoneCallOutgoingProgress, 1));
+
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(callee_mgr->lc)->number_of_startRingtone, 1, int, "%d");
+	BC_ASSERT_TRUE(wait_for(caller_mgr->lc, callee_mgr->lc, &linphone_core_get_tone_manager_stats(caller_mgr->lc)->number_of_startRingbackTone, 1));
+
 	call_callee = linphone_core_get_current_call(callee_mgr->lc);
 	if (BC_ASSERT_PTR_NOT_NULL(call_callee)) {
 		linphone_call_ref(call_callee);
@@ -915,13 +919,20 @@ static void cancel_other_device_after_decline(void) {
 		call_callee_2 = linphone_core_get_current_call(callee_mgr_2->lc);
 		linphone_call_ref(call_callee_2);
 		BC_ASSERT_PTR_NOT_NULL(call_callee_2);
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(callee_mgr_2->lc)->number_of_startRingtone, 1, int, "%d");
 
 		BC_ASSERT_EQUAL(linphone_call_decline(call_callee, LinphoneReasonDeclined), 0 , int, "%d");
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc, &caller_mgr->stat.number_of_LinphoneCallEnd,1));
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(caller_mgr->lc)->number_of_stopRingbackTone, 1, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(caller_mgr->lc)->number_of_startErrorTone, 1, int, "%d");
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc, &caller_mgr->stat.number_of_LinphoneCallReleased, 1));
+
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallEnd,1));
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(callee_mgr->lc)->number_of_stopRingtone, 1, int, "%d");
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc, &callee_mgr->stat.number_of_LinphoneCallReleased, 1));
+
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr_2->lc, &callee_mgr_2->stat.number_of_LinphoneCallEnd,1));
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(callee_mgr_2->lc)->number_of_stopRingtone, 1, int, "%d");
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr_2->lc, &callee_mgr_2->stat.number_of_LinphoneCallReleased,1));
 
 		rei = linphone_call_get_error_info(call_callee_2);
@@ -933,6 +944,9 @@ static void cancel_other_device_after_decline(void) {
 			BC_ASSERT_STRING_EQUAL(linphone_error_info_get_protocol(rei), "SIP");
 		}
 		BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(call_callee_2)), LinphoneCallDeclinedElsewhere, int, "%d");
+
+		// There is currently no tone for LinphoneReasonDeclined, so there is no call to stopTone
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(caller_mgr->lc)->number_of_stopTone, 0, int, "%d");
 	}
 	if (out_call) linphone_call_unref(out_call);
 	if (call_callee) linphone_call_unref(call_callee);
@@ -1145,10 +1159,7 @@ static void early_declined_call(void) {
 	/*wait until flexisip transfers the busy...*/
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallError,1,33000));
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallError,1, int, "%d");
-	/* FIXME http://git.linphone.org/mantis/view.php?id=757
-
 	BC_ASSERT_EQUAL(linphone_call_get_reason(out_call),LinphoneReasonBusy, int, "%d");
-	 */
 	if (bctbx_list_size(linphone_core_get_call_logs(pauline->lc))>0) {
 		BC_ASSERT_PTR_NOT_NULL(out_call_log=(LinphoneCallLog*)(linphone_core_get_call_logs(pauline->lc)->data));
 		BC_ASSERT_EQUAL(linphone_call_log_get_status(out_call_log),LinphoneCallAborted, int, "%d");
@@ -1303,10 +1314,15 @@ static void call_declined_base(bool_t use_timeout) {
 	BC_ASSERT_PTR_NOT_NULL(in_call=linphone_core_get_current_call(marie->lc));
 	if (in_call) {
 		linphone_call_ref(in_call);
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingtone, 1, int, "%d");
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingbackTone,1));
 		if (!use_timeout)
 			linphone_call_terminate(in_call);
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1));
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_stopRingtone, 1, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingbackTone, 1, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startErrorTone, 1, int, "%d");
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallEnd,1, int, "%d");
 		BC_ASSERT_EQUAL(use_timeout ? pauline->stat.number_of_LinphoneCallError : pauline->stat.number_of_LinphoneCallEnd,1, int, "%d");
 		BC_ASSERT_EQUAL(linphone_call_get_reason(in_call),LinphoneReasonDeclined, int, "%d");
@@ -1316,6 +1332,13 @@ static void call_declined_base(bool_t use_timeout) {
 		linphone_call_unref(in_call);
 	}
 	linphone_call_unref(out_call);
+
+	// Make sure the error tone ends by calling linphone_core_stop
+	linphone_core_stop(pauline->lc);
+	// In case of LinphoneReasonDeclined no tone is played, so there is no tone to stop
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopTone, use_timeout? 1 : 0, int, "%d");
+	linphone_core_start(pauline->lc);
+
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -1910,6 +1933,7 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses) {
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallPausedByRemote,1));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPaused,1));
 
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startNamedTone, 1, int, "%d");
 	/*stay in pause a little while in order to generate traffic*/
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
 
@@ -1917,6 +1941,7 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses) {
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2));
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopTone, 1, int, "%d");
 	/*same here: wait a while for a bit of a traffic, we need to receive a RTCP packet*/
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 5000);
 
@@ -2357,6 +2382,9 @@ static void call_with_file_player(void) {
 	for (attempts=0; attempts<3; attempts++){
 		reset_counters(&marie->stat);
 		reset_counters(&pauline->stat);
+		linphone_core_reset_tone_manager_stats(marie->lc);
+		linphone_core_reset_tone_manager_stats(pauline->lc);
+
 		/*make sure the record file doesn't already exists, otherwise this test will append new samples to it*/
 		unlink(recordpath);
 		/*caller uses files instead of soundcard in order to avoid mixing soundcard input with file played using call's player*/
@@ -2672,6 +2700,8 @@ static void early_media_call_with_ringing_base(bool_t network_change){
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived,1,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingRinging,1,1000));
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingbackTone, 1, int, "%d");
 
 	if (linphone_core_inc_invite_pending(pauline->lc)) {
 		/* send a 183 to initiate the early media */
@@ -2680,6 +2710,10 @@ static void early_media_call_with_ringing_base(bool_t network_change){
 		BC_ASSERT_TRUE( wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia,1,2000) );
 		BC_ASSERT_TRUE( wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia,1,2000) );
 		BC_ASSERT_TRUE(linphone_call_get_all_muted(marie_call));
+
+		bool_t ringWithEarlyMedia = linphone_core_get_ring_during_incoming_early_media(pauline->lc);
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone, ringWithEarlyMedia ? 0 : 1, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_stopRingbackTone, 1, int, "%d");
 
 		liblinphone_tester_check_rtcp(marie, pauline);
 
@@ -2696,6 +2730,7 @@ static void early_media_call_with_ringing_base(bool_t network_change){
 				BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallConnected, 1,1000));
 				connected_time=ms_get_cur_time_ms();
 				BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 1,1000));
+				BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone, 1, int, "%d");
 
 				BC_ASSERT_PTR_EQUAL(marie_call, linphone_core_get_current_call(marie->lc));
 				BC_ASSERT_FALSE(linphone_call_get_all_muted(marie_call));
@@ -2744,6 +2779,8 @@ static void early_media_call_with_update_base(bool_t media_change){
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingRinging,1,5000));
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingbackTone, 1, int, "%d");
 
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	if (!pauline_call) goto end;
@@ -2752,6 +2789,10 @@ static void early_media_call_with_update_base(bool_t media_change){
 	BC_ASSERT_TRUE( wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia,1,1000) );
 	BC_ASSERT_TRUE( wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia,1,5000) );
 	BC_ASSERT_TRUE(linphone_call_get_all_muted(marie_call));
+
+	bool_t ringWithEarlyMedia = linphone_core_get_ring_during_incoming_early_media(pauline->lc);
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone, ringWithEarlyMedia ? 0 : 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_stopRingbackTone, 1, int, "%d");
 
 	pauline_params = linphone_call_params_copy(linphone_call_get_current_params(pauline_call));
 
@@ -4068,6 +4109,8 @@ static void call_with_rtp_io_mode(void) {
 		unlink(recordpath);
 		reset_counters(&marie->stat);
 		reset_counters(&pauline->stat);
+		linphone_core_reset_tone_manager_stats(marie->lc);
+		linphone_core_reset_tone_manager_stats(pauline->lc);
 
 		/* The caller uses files instead of soundcard in order to avoid mixing soundcard input with file played using call's player. */
 		linphone_core_use_files(marie->lc, TRUE);
@@ -4638,11 +4681,15 @@ static void call_logs_sqlite_storage(void) {
 
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
+	linphone_core_reset_tone_manager_stats(marie->lc);
+	linphone_core_reset_tone_manager_stats(pauline->lc);
 	BC_ASSERT_TRUE(call(marie, pauline));
 	end_call(marie, pauline);
 
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
+	linphone_core_reset_tone_manager_stats(marie->lc);
+	linphone_core_reset_tone_manager_stats(pauline->lc);
 	BC_ASSERT_TRUE(call(marie, pauline));
 	end_call(marie, pauline);
 	BC_ASSERT_TRUE(linphone_core_get_call_history_size(marie->lc) == 2);
