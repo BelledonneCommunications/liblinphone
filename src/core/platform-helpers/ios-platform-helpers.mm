@@ -25,6 +25,7 @@
 #include <Foundation/Foundation.h>
 #include <SystemConfiguration/SystemConfiguration.h>
 #include <SystemConfiguration/CaptiveNetwork.h>
+#include <CoreLocation/CoreLocation.h>
 #include  <notify_keys.h>
 
 #include <belr/grammarbuilder.h>
@@ -133,7 +134,6 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 	else
 		ms_message("IosPlatformHelpers did not find vcard grammar resource directory...");
 #endif
-
 	ms_message("IosPlatformHelpers is fully initialised");
 }
 
@@ -404,7 +404,7 @@ void IosPlatformHelpers::networkChangeCallback() {
 		mCurrentFlags = flags;
 	}
 	string newSSID = getWifiSSID();
-	if (newSSID.compare(mCurrentSSID) != 0) {
+	if (newSSID.empty() || newSSID.compare(mCurrentSSID) != 0) {
 		setWifiSSID(newSSID);
 		changed = true;
 		//We possibly changed network, force reset of transports
@@ -536,27 +536,34 @@ string IosPlatformHelpers::getWifiSSID(void) {
 #if TARGET_IPHONE_SIMULATOR
 	return "Sim_err_SSID_NotSupported";
 #else
-	CFIndex	i;
 	string ssid;
-	CFArrayRef ifaceNames = CNCopySupportedInterfaces();
-	if (ifaceNames) {
-		for (i = 0; i < CFArrayGetCount(ifaceNames); ++i) {
-			CFStringRef iface = (CFStringRef) CFArrayGetValueAtIndex(ifaceNames, i);
-			CFDictionaryRef ifaceInfo = CNCopyCurrentNetworkInfo(iface);
-			if (ifaceInfo && CFDictionaryGetCount(ifaceInfo) > 0) {
-				CFStringRef ifaceSSID = (CFStringRef) CFDictionaryGetValue(ifaceInfo, kCNNetworkInfoKeySSID);
-				if (ifaceSSID != NULL) {
-					ssid = toUTF8String(ifaceSSID);
-					if (!ssid.empty()) {
-						CFRelease(ifaceInfo);
-						break;
+	//We need to check for authorization to get wifi information.
+	//User permission is asked in the main app
+	CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
+	if (status == kCLAuthorizationStatusAuthorizedAlways
+	    || status == kCLAuthorizationStatusAuthorizedWhenInUse) {
+		CFArrayRef ifaceNames = CNCopySupportedInterfaces();
+		if (ifaceNames) {
+			CFIndex	i;
+			for (i = 0; i < CFArrayGetCount(ifaceNames); ++i) {
+				CFStringRef iface = (CFStringRef) CFArrayGetValueAtIndex(ifaceNames, i);
+				CFDictionaryRef ifaceInfo = CNCopyCurrentNetworkInfo(iface);
+
+				if (ifaceInfo != NULL && CFDictionaryGetCount(ifaceInfo) > 0) {
+					CFStringRef ifaceSSID = (CFStringRef) CFDictionaryGetValue(ifaceInfo, kCNNetworkInfoKeySSID);
+					if (ifaceSSID != NULL) {
+						ssid = toUTF8String(ifaceSSID);
+						if (!ssid.empty()) {
+							CFRelease(ifaceInfo);
+							break;
+						}
 					}
+					CFRelease(ifaceInfo);
 				}
-				CFRelease(ifaceInfo);
 			}
 		}
+		CFRelease(ifaceNames);
 	}
-	CFRelease(ifaceNames);
 	return ssid;
 #endif
 }
