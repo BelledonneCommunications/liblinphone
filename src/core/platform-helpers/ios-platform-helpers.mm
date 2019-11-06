@@ -537,11 +537,18 @@ string IosPlatformHelpers::getWifiSSID(void) {
 	return "Sim_err_SSID_NotSupported";
 #else
 	string ssid;
-	//We need to check for authorization to get wifi information.
-	//User permission is asked in the main app
-	CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
-	if (status == kCLAuthorizationStatusAuthorizedAlways
-	    || status == kCLAuthorizationStatusAuthorizedWhenInUse) {
+	bool shallGetWifiInfo = true;
+
+	if (@available(iOS 13.0, *)) {
+		//Starting from IOS13 we need to check for authorization to get wifi information.
+		//User permission is asked in the main app
+		CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
+		if (status != kCLAuthorizationStatusAuthorizedAlways &&
+		    status != kCLAuthorizationStatusAuthorizedWhenInUse) {
+			shallGetWifiInfo = false;
+		}
+	}
+	if (shallGetWifiInfo)( {
 		CFArrayRef ifaceNames = CNCopySupportedInterfaces();
 		if (ifaceNames) {
 			CFIndex	i;
