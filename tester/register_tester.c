@@ -345,6 +345,42 @@ static void simple_authenticated_register_for_algorithm(void){
 	linphone_core_manager_destroy(lcm);
 }
 
+static void simple_authenticated_register_with_SHA256_from_clear_text_password(void){
+	/*
+	 * In this test, the user has only a SHA256 hashed password on the server.
+	 * We want to check that it can register by providing the corresponding clear text password, without the knowledge of which
+	 * algorithm is used for his account.
+	 */
+	stats* counters;
+	LinphoneCoreManager* lcm = create_lcm();
+	LinphoneAuthInfo *info=linphone_auth_info_new_for_algorithm(pure_sha256_user,NULL,test_password,NULL,NULL,auth_domain,NULL);
+	LinphoneConfig *lcfg;
+	const LinphoneAuthInfo *new_info;
+	char route[256];
+	const char *ha1;
+	const char *cfg_ha1;
+	
+	sprintf(route,"sip:%s",test_route);
+	linphone_core_add_auth_info(lcm->lc,info); /*add authentication info to LinphoneCore*/
+	linphone_auth_info_unref(info);
+	counters = &lcm->stat;
+	register_with_refresh_base_for_algo(lcm->lc, FALSE, auth_domain, route, pure_sha256_user);
+	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,0, int, "%d");
+	
+	/* Assert that the ha1 was correctly computed, and stored in configuration. */
+	new_info = linphone_core_find_auth_info(lcm->lc, NULL, pure_sha256_user, NULL);
+	BC_ASSERT_PTR_NULL(linphone_auth_info_get_password(new_info));
+	ha1 = linphone_auth_info_get_ha1(new_info);
+	BC_ASSERT_PTR_NOT_NULL(ha1);
+	lcfg = linphone_core_get_config(lcm->lc);
+	cfg_ha1 = linphone_config_get_string(lcfg, "auth_info_0", "ha1", "");
+	BC_ASSERT_STRING_EQUAL(cfg_ha1, ha1);
+	BC_ASSERT_STRING_EQUAL(linphone_auth_info_get_realm(new_info), auth_domain);
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(lcfg, "auth_info_0", "algorithm", ""), "SHA-256");
+	BC_ASSERT_PTR_NULL(linphone_config_get_string(lcfg, "auth_info_0", "passwd", NULL));
+	linphone_core_manager_destroy(lcm);
+}
+
 static void ha1_authenticated_register(void){
 	stats* counters;
 	LinphoneCoreManager* lcm = create_lcm();
@@ -1457,6 +1493,7 @@ test_t register_tests[] = {
 	TEST_NO_TAG("TLS with non tls server",tls_with_non_tls_server),
 	TEST_NO_TAG("Simple authenticated register", simple_authenticated_register),
 	TEST_NO_TAG("Simple authenticated register SHA-256", simple_authenticated_register_for_algorithm),
+	TEST_NO_TAG("Simple authenticated register SHA-256 from cleartext password", simple_authenticated_register_with_SHA256_from_clear_text_password),
 	TEST_NO_TAG("Ha1 authenticated register", ha1_authenticated_register),
 	TEST_NO_TAG("Ha1 authenticated register SHA-256", ha1_authenticated_register_for_algorithm),
 	TEST_NO_TAG("Digest auth without initial credentials", authenticated_register_with_no_initial_credentials),

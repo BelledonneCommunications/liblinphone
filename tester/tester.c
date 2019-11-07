@@ -52,6 +52,7 @@ const char* test_domain="sipopen.example.org";
 const char* auth_domain="sip.example.org";
 const char* test_username="liblinphone_tester";
 const char* test_sha_username="liblinphone_sha_tester";
+const char* pure_sha256_user="pure_sha256_user";
 const char* test_password="secret";
 const char* test_route="sip2.linphone.org";
 const char *userhostsfile = "tester_hosts";

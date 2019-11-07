@@ -78,7 +78,25 @@ static bool_t realm_match(const char *realm1, const char *realm2){
 	return FALSE;
 }
 
-static const LinphoneAuthInfo *find_auth_info(LinphoneCore *lc, const char *username, const char *realm, const char *domain, bool_t ignore_realm){
+/* Check if the LinphoneAuthInfo candidate is compatible with the requested algorithm. */
+static bool_t check_algorithm_compatibility(const LinphoneAuthInfo *ai, const char *algorithm){
+	const char *ai_algorithm = linphone_auth_info_get_algorithm(ai);
+	
+	if (algorithm == NULL) return TRUE;
+	if (linphone_auth_info_get_password(ai) != NULL){
+		/* We have the clear text password, so if the user didn't requested a specific algorithm, we can satisfy all algorithms.*/
+		if (ai_algorithm == NULL) return TRUE;
+	}else{
+		/* If we don't have the clear text password but the ha1, and if algorithm is empty in LinphoneAuthInfo
+		 * for backward compatibility, we assume it is MD5. */
+		if (ai_algorithm == NULL && strcasecmp(algorithm, "MD5") == 0) return TRUE;
+	}
+	/* In all other cases, algorithm must match. */
+	if (ai_algorithm && strcasecmp(algorithm, ai_algorithm) == 0) return TRUE; /* algorithm do match */
+	return FALSE;
+}
+
+static const LinphoneAuthInfo *find_auth_info(LinphoneCore *lc, const char *username, const char *realm, const char *domain, const char *algorithm, bool_t ignore_realm){
 	bctbx_list_t *elem;
 	const LinphoneAuthInfo *ret=NULL;
 
@@ -87,6 +105,10 @@ static const LinphoneAuthInfo *find_auth_info(LinphoneCore *lc, const char *user
 
 		if (username && linphone_auth_info_get_username(pinfo) && strcmp(username, linphone_auth_info_get_username(pinfo))==0) 
 		{
+			
+			if (!check_algorithm_compatibility(pinfo, algorithm)) {
+				continue;
+			}
 			if (realm && domain){
 				if (linphone_auth_info_get_realm(pinfo) && realm_match(realm, linphone_auth_info_get_realm(pinfo))
 					&& linphone_auth_info_get_domain(pinfo) && strcmp(domain, linphone_auth_info_get_domain(pinfo))==0) {
@@ -123,19 +145,19 @@ const LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc) {
 	return NULL;
 }
 
-const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc, const char *realm, const char *username, const char *domain, bool_t ignore_realm){
+const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc, const char *realm, const char *username, const char *domain, const char *algorithm, bool_t ignore_realm){
 	const LinphoneAuthInfo *ai=NULL;
 	if (realm){
-		ai=find_auth_info(lc,username,realm,NULL, FALSE);
+		ai=find_auth_info(lc,username,realm,NULL, algorithm, FALSE);
 		if (ai==NULL && domain){
-			ai=find_auth_info(lc,username,realm,domain, FALSE);
+			ai=find_auth_info(lc,username,realm,domain, algorithm, FALSE);
 		}
 	}
 	if (ai == NULL && domain != NULL) {
-		ai=find_auth_info(lc,username,NULL,domain, ignore_realm);
+		ai=find_auth_info(lc,username,NULL,domain, algorithm, ignore_realm);
 	}
 	if (ai==NULL){
-		ai=find_auth_info(lc,username,NULL,NULL, ignore_realm);
+		ai=find_auth_info(lc,username,NULL,NULL, algorithm, ignore_realm);
 	}
 	
 	if (ai) ms_message("linphone_core_find_auth_info(): returning auth info username=%s, realm=%s", linphone_auth_info_get_username(ai) ? linphone_auth_info_get_username(ai) : "", linphone_auth_info_get_realm(ai) ? linphone_auth_info_get_realm(ai) : "");
@@ -143,7 +165,7 @@ const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc, const ch
 }
 
 const LinphoneAuthInfo *linphone_core_find_auth_info(LinphoneCore *lc, const char *realm, const char *username, const char *domain){
-	return _linphone_core_find_auth_info(lc, realm, username, domain, TRUE);
+	return _linphone_core_find_auth_info(lc, realm, username, domain, NULL, TRUE);
 }
 
 /*the auth info is expected to be in the core's list*/
@@ -200,7 +222,7 @@ void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info)
 	for (const auto &op : pendingAuths) {
 		LinphoneAuthInfo *ai;
 		const SalAuthInfo *req_sai=op->getAuthRequested();
-		ai=(LinphoneAuthInfo*)_linphone_core_find_auth_info(lc, req_sai->realm, req_sai->username, req_sai->domain, FALSE);
+		ai=(LinphoneAuthInfo*)_linphone_core_find_auth_info(lc, req_sai->realm, req_sai->username, req_sai->domain, req_sai->algorithm, FALSE);
 		if (ai){
 			SalAuthInfo sai;
 			bctbx_list_t* proxy;
