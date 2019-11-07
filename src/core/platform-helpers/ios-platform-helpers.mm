@@ -403,13 +403,16 @@ void IosPlatformHelpers::networkChangeCallback() {
 		}
 		mCurrentFlags = flags;
 	}
-	string newSSID = getWifiSSID();
-	if (newSSID.empty() || newSSID.compare(mCurrentSSID) != 0) {
-		setWifiSSID(newSSID);
-		changed = true;
-		//We possibly changed network, force reset of transports
-		force = true;
-		ms_message("New Wifi SSID detected: %s", mCurrentSSID.empty()?"[none]":mCurrentSSID.c_str());
+	if (!(flags & kSCNetworkReachabilityFlagsIsWWAN)) {
+		//Only check for wifi changes if current connection type is Wifi
+		string newSSID = getWifiSSID();
+		if (newSSID.empty() || newSSID.compare(mCurrentSSID) != 0) {
+			setWifiSSID(newSSID);
+			changed = true;
+			//We possibly changed network, force reset of transports
+			force = true;
+			ms_message("New Wifi SSID detected: %s", mCurrentSSID.empty()?"[none]":mCurrentSSID.c_str());
+		}
 	}
 	getHttpProxySettings();
 	if (mHttpProxyEnabled) {
@@ -546,9 +549,10 @@ string IosPlatformHelpers::getWifiSSID(void) {
 		if (status != kCLAuthorizationStatusAuthorizedAlways &&
 		    status != kCLAuthorizationStatusAuthorizedWhenInUse) {
 			shallGetWifiInfo = false;
+			ms_warning("User has not given authorization to access Wifi information (Authorization: [%d])", (int) status);
 		}
 	}
-	if (shallGetWifiInfo)( {
+	if (shallGetWifiInfo) {
 		CFArrayRef ifaceNames = CNCopySupportedInterfaces();
 		if (ifaceNames) {
 			CFIndex	i;
