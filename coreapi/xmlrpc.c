@@ -126,6 +126,9 @@ static void format_request(LinphoneXmlRpcRequest *request) {
 		switch (arg->type) {
 			case LinphoneXmlRpcArgNone:
 				break;
+			case LinphoneXmlRpcArgHashmap:
+				ms_error("Hashmap not yet supported as argument");
+				break;
 			case LinphoneXmlRpcArgInt:
 				memset(si, 0, sizeof(si));
 				snprintf(si, sizeof(si), "%i", arg->data.i);
@@ -241,6 +244,40 @@ static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const c
 					request->status = LinphoneXmlRpcStatusOk;
 				}
 				break;
+			case LinphoneXmlRpcArgHashmap:
+			{
+				response_str = linphone_get_xml_text_content(xml_ctx, "/methodResponse/params/param/value/string");
+				if (response_str != NULL) {
+					request->response.data.s = belle_sip_strdup(response_str);
+				} else {
+					xmlXPathObjectPtr responses = linphone_get_xml_xpath_object_for_node_list(xml_ctx, "/methodResponse/params/param/value/struct/member");
+					if (responses != NULL && responses->nodesetval != NULL) {
+						request->response.data.m = bctbx_mmap_cchar_new();
+						request->status = LinphoneXmlRpcStatusOk;
+
+						xmlNodeSetPtr responses_nodes = responses->nodesetval;
+						if (responses_nodes->nodeNr >= 1) {
+							int i;
+							for (i = 0; i < responses_nodes->nodeNr; i++) {
+								xmlNodePtr response_node = responses_nodes->nodeTab[i];
+								xml_ctx->xpath_ctx->node = response_node;
+								{
+									char *name = linphone_get_xml_text_content(xml_ctx, "name");
+									char *value =  linphone_get_xml_text_content(xml_ctx, "value/string");
+
+									const bctbx_pair_cchar_t *pair = bctbx_pair_cchar_new(bctbx_strdup(name), (void *)bctbx_strdup(value));
+									bctbx_map_cchar_insert(request->response.data.m, (const bctbx_pair_t *)pair);
+
+									linphone_free_xml_text_content(name);
+									linphone_free_xml_text_content(value);
+								}
+							}
+						}
+						xmlXPathFreeObject(responses);
+					}
+				}
+				break;
+			}
 			default:
 				break;
 		}
@@ -308,6 +345,12 @@ static void _linphone_xml_rpc_request_destroy(LinphoneXmlRpcRequest *request) {
 	belle_sip_list_free_with_data(request->arg_list, (void (*)(void*))free_arg);
 	if ((request->response.type == LinphoneXmlRpcArgString) && (request->response.data.s != NULL)) {
 		belle_sip_free(request->response.data.s);
+	} else if (request->response.type == LinphoneXmlRpcArgHashmap) {
+		if (request->status == LinphoneXmlRpcStatusOk && request->response.data.m != NULL) {
+			bctbx_mmap_cchar_delete_with_data(request->response.data.m, bctbx_free);
+		} else if (request->status == LinphoneXmlRpcStatusFailed && request->response.data.s != NULL) {
+			belle_sip_free(request->response.data.s);
+		}
 	}
 	if (request->content) belle_sip_free(request->content);
 	belle_sip_free(request->method);
@@ -412,6 +455,9 @@ const char * linphone_xml_rpc_request_get_string_response(const LinphoneXmlRpcRe
 	return request->response.data.s;
 }
 
+const bctbx_map_t* linphone_xml_rpc_request_get_hashmap_response(const LinphoneXmlRpcRequest *request) {
+	return request->response.data.m;
+}
 
 LinphoneXmlRpcSession * linphone_xml_rpc_session_new(LinphoneCore *core, const char *url) {
 	LinphoneXmlRpcSession *session = belle_sip_object_new(LinphoneXmlRpcSession);

@@ -244,6 +244,13 @@ LINPHONE_PUBLIC const char * linphone_account_creator_get_activation_code(const 
 LINPHONE_PUBLIC LinphoneAccountCreatorLanguageStatus linphone_account_creator_set_language(LinphoneAccountCreator *creator, const char *lang);
 
 /**
+ * Get the language use in email of SMS.
+ * @param[in] creator #LinphoneAccountCreator object
+ * @return The language of the #LinphoneAccountCreator
+**/
+LINPHONE_PUBLIC const char * linphone_account_creator_get_language(const LinphoneAccountCreator *creator);
+
+/**
 * Set the supported algorithm.
 * @param[in] creator LinphoneAccountCreator object
 * @param[in] algorithm The algorithm to use
@@ -252,11 +259,11 @@ LINPHONE_PUBLIC LinphoneAccountCreatorLanguageStatus linphone_account_creator_se
 LINPHONE_PUBLIC LinphoneAccountCreatorAlgoStatus linphone_account_creator_set_algorithm(LinphoneAccountCreator *creator, const char *algorithm);
 
 /**
- * Get the language use in email of SMS.
+ * Get the algorithm configured in the account creator.
  * @param[in] creator #LinphoneAccountCreator object
- * @return The language of the #LinphoneAccountCreator
+ * @return The algorithm of the #LinphoneAccountCreator
 **/
-LINPHONE_PUBLIC const char * linphone_account_creator_get_language(const LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC const char * linphone_account_creator_get_algorithm(const LinphoneAccountCreator *creator);
 
 /**
  * Set the display name.
@@ -555,6 +562,20 @@ LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_g
  * @param[in] cb The update account request to be used.
 **/
 LINPHONE_PUBLIC void linphone_account_creator_cbs_set_update_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
+
+/**
+ * Get the login linphone account request.
+ * @param[in] cbs #LinphoneAccountCreatorCbs object.
+ * @return The current login linphone account request.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_login_linphone_account(const LinphoneAccountCreatorCbs *cbs);
+
+/**
+ * Assign a user pointer to a #LinphoneAccountCreatorCbs object.
+ * @param[in] cbs #LinphoneAccountCreatorCbs object.
+ * @param[in] cb The login linphone account request to be used.
+**/
+LINPHONE_PUBLIC void linphone_account_creator_cbs_set_login_linphone_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
 
 /************************** End Account Creator Cbs **************************/
 
