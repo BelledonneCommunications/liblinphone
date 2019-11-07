@@ -514,6 +514,7 @@ struct _LinphoneXmlRpcArg {
 	union {
 		int i;
 		char *s;
+		bctbx_map_t *m;
 	} data;
 };
 

@@ -22,6 +22,7 @@
 
 
 #include "linphone/types.h"
+#include <bctoolbox/map.h>
 
 
 #ifdef __cplusplus
@@ -147,6 +148,14 @@ LINPHONE_PUBLIC const char * linphone_xml_rpc_request_get_string_response(const 
  **/
 LINPHONE_PUBLIC const char * linphone_xml_rpc_request_get_raw_response(const LinphoneXmlRpcRequest *request);
 	
+/**
+* Get the response to an XML-RPC request sent with linphone_xml_rpc_session_send_request() and returning a hashmap response.
+* @param[in] request LinphoneXmlRpcRequest object.
+* @return The hashmap response to the XML-RPC request.
+* @donotwrap
+**/
+const bctbx_map_t* linphone_xml_rpc_request_get_hashmap_response(const LinphoneXmlRpcRequest *request);
+
 /**
  * Create a new #LinphoneXmlRpcSession object.
  * @param[in] core The #LinphoneCore object used to send the XML-RPC requests.
