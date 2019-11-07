@@ -363,7 +363,7 @@ static void auth_failure(SalOp *op, SalAuthInfo* info) {
 	LinphoneAuthInfo *ai = NULL;
 
 	if (info != NULL) {
-		ai = (LinphoneAuthInfo*)_linphone_core_find_auth_info(lc, info->realm, info->username, info->domain, TRUE);
+		ai = (LinphoneAuthInfo*)_linphone_core_find_auth_info(lc, info->realm, info->username, info->domain, info->algorithm, TRUE);
 		if (ai){
 			LinphoneAuthMethod method = info->mode == SalAuthModeHttpDigest ? LinphoneAuthHttpDigest : LinphoneAuthTls;
 			LinphoneAuthInfo *auth_info = linphone_core_create_auth_info(lc, info->username, NULL, NULL, NULL, info->realm, info->domain);
@@ -545,23 +545,10 @@ static bool_t fill_auth_info(LinphoneCore *lc, SalAuthInfo* sai) {
 	if (sai->mode == SalAuthModeTls) {
 		ai = (LinphoneAuthInfo*)_linphone_core_find_tls_auth_info(lc);
 	} else {
-		ai = (LinphoneAuthInfo*)_linphone_core_find_auth_info(lc,sai->realm,sai->username,sai->domain, FALSE);
+		ai = (LinphoneAuthInfo*)_linphone_core_find_auth_info(lc,sai->realm,sai->username,sai->domain, sai->algorithm, FALSE);
 	}
 	if (ai) {
 		if (sai->mode == SalAuthModeHttpDigest) {
-			/*
-			 * Compare algorithm of server(sai) with algorithm of client(ai), if they are not correspondant,
-			 * exit. The default algorithm is MD5 if it's NULL.
-			 */
-			if (sai->algorithm && linphone_auth_info_get_algorithm(ai)) {
-				if (strcasecmp(linphone_auth_info_get_algorithm(ai), sai->algorithm))
-				return TRUE;
-			} else if (
-				(linphone_auth_info_get_algorithm(ai) && strcasecmp(linphone_auth_info_get_algorithm(ai), "MD5")) ||
-				(sai->algorithm && strcasecmp(sai->algorithm, "MD5"))
-			)
-				return TRUE;
-
 			sai->userid = ms_strdup(linphone_auth_info_get_userid(ai) ? linphone_auth_info_get_userid(ai) : linphone_auth_info_get_username(ai));
 			sai->password = linphone_auth_info_get_passwd(ai)?ms_strdup(linphone_auth_info_get_passwd(ai)) : NULL;
 			sai->ha1 = linphone_auth_info_get_ha1(ai) ? ms_strdup(linphone_auth_info_get_ha1(ai)) : NULL;
@@ -577,9 +564,10 @@ static bool_t fill_auth_info(LinphoneCore *lc, SalAuthInfo* sai) {
 			}
 		}
 
-		if (sai->realm && !linphone_auth_info_get_realm(ai)){
+		if (sai->realm && (!linphone_auth_info_get_realm(ai) || !linphone_auth_info_get_algorithm(ai))) {
 			/*if realm was not known, then set it so that ha1 may eventually be calculated and clear text password dropped*/
 			linphone_auth_info_set_realm(ai, sai->realm);
+			linphone_auth_info_set_algorithm(ai, sai->algorithm);
 			linphone_core_write_auth_info(lc, ai);
 		}
 		return TRUE;
