@@ -184,7 +184,7 @@ const list<shared_ptr<DialPlan>> DialPlan::DialPlans = {
 	DialPlan::create("Nepal", "NP", "977", 8, "00"),
 	DialPlan::create("Netherlands", "NL", "31", 9, "00"),
 	DialPlan::create("New Caledonia", "NC", "687", 6, "00"),
-	DialPlan::create("New Zealand", "NZ", "64", 8, "00"),
+	DialPlan::create("New Zealand", "NZ", "64", 9, "00"),
 	DialPlan::create("Nicaragua", "NI", "505", 8, "00"),
 	DialPlan::create("Niger", "NE", "227", 8, "00"),
 	DialPlan::create("Nigeria", "NG", "234", 10, "009"),
