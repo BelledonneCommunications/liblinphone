@@ -70,6 +70,8 @@ struct _LinphoneAccountCreatorCbs {
 
 	LinphoneAccountCreatorCbsStatusCb recover_account_response_cb; /**< Response of recover_account request */
 	LinphoneAccountCreatorCbsStatusCb update_account_response_cb; /**< Response of update_account request */
+
+	LinphoneAccountCreatorCbsStatusCb login_linphone_account_response_cb; /** < Response of login_linphone_account request */
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneAccountCreatorCbs);
@@ -202,6 +204,13 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account
  * @return LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone(LinphoneAccountCreator *creator);
+
+/**
+ * Send an XML-RPC request to get the password & algorithm of an account using the confirmation key
+ * @param[in] creator LinphoneAccountCreator object
+ * @return LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account(LinphoneAccountCreator *creator);
 
 #ifdef __cplusplus
 }
