@@ -1729,7 +1729,7 @@ const LinphoneAddress *_linphone_proxy_config_get_contact_without_params (const 
 const struct _LinphoneAuthInfo* linphone_proxy_config_find_auth_info(const LinphoneProxyConfig *cfg) {
 	const char* username = cfg->identity_address ? linphone_address_get_username(cfg->identity_address) : NULL;
 	const char* domain =  cfg->identity_address ? linphone_address_get_domain(cfg->identity_address) : NULL;
-	return _linphone_core_find_auth_info(cfg->lc, cfg->realm, username, domain, TRUE);
+	return linphone_core_find_auth_info(cfg->lc, cfg->realm, username, domain);
 }
 
 const char * linphone_proxy_config_get_ref_key(const LinphoneProxyConfig *cfg) {

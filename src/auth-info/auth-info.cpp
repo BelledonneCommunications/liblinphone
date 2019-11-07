@@ -27,76 +27,73 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 AuthInfo::AuthInfo(const string &username, const string &userid, const string &passwd, const string &ha1, const string &realm, const string &domain){
-    AuthInfo::init(username, userid, passwd, ha1, realm, domain, "");
+	AuthInfo::init(username, userid, passwd, ha1, realm, domain, "");
 }
 
 AuthInfo::AuthInfo(const string &username, const string &userid, const string &passwd, const string &ha1, const string &realm, const string &domain, const string &algorithm){
-    AuthInfo::init(username, userid, passwd, ha1, realm, domain, algorithm);
-
-    if(algorithm.empty()){
-        mAlgorithm = "MD5";
-    }
-    else{
-        mAlgorithm = algorithm;
-    }
+	AuthInfo::init(username, userid, passwd, ha1, realm, domain, algorithm);
 }
 
 void AuthInfo::init(const string &username, const string &userid, const string &passwd, const string &ha1, const string &realm, const string &domain, const string &algorithm){
-    mUsername = username;
-    mUserid = userid;
-    mPasswd = passwd;
-    mHa1 = ha1;
-    mRealm = realm;
-    mDomain = domain;
-    mAlgorithm = algorithm;
+	mUsername = username;
+	mUserid = userid;
+	mPasswd = passwd;
+	mHa1 = ha1;
+	mRealm = realm;
+	mDomain = domain;
+	mAlgorithm = algorithm;
+	if (!ha1.empty() && algorithm.empty()) {
+		/* When ha1 is specified, algorithm must be specified too. For backward compatibility when this is not the case, we assume it is md5.*/
+		mAlgorithm = "MD5";
+	}
 }
 
 AuthInfo::AuthInfo(LpConfig *config, string key){
-    const char *username, *userid, *passwd, *ha1, *realm, *domain, *tls_cert_path, *tls_key_path, *algo;
+	const char *username, *userid, *passwd, *ha1, *realm, *domain, *tls_cert_path, *tls_key_path, *algo;
 
-    username = lp_config_get_string(config, key.c_str(), "username", "");
+	username = lp_config_get_string(config, key.c_str(), "username", "");
 	userid = lp_config_get_string(config, key.c_str(), "userid", "");
 	passwd = lp_config_get_string(config, key.c_str(), "passwd", "");
 	ha1 = lp_config_get_string(config, key.c_str(), "ha1", "");
 	realm = lp_config_get_string(config, key.c_str(), "realm", "");
 	domain = lp_config_get_string(config, key.c_str(), "domain", "");
 	tls_cert_path = lp_config_get_string(config, key.c_str(), "client_cert_chain", "");
-    tls_key_path = lp_config_get_string(config, key.c_str(), "client_cert_key", "");
-    algo = lp_config_get_string(config, key.c_str(), "algorithm", "MD5");
+	tls_key_path = lp_config_get_string(config, key.c_str(), "client_cert_key", "");
+	algo = lp_config_get_string(config, key.c_str(), "algorithm", "MD5");
 
-    setTlsCertPath(tls_cert_path);
-    setTlsKeyPath(tls_key_path);
-    
-    init(username, userid, passwd, ha1, realm, domain, algo);
+	setTlsCertPath(tls_cert_path);
+	setTlsKeyPath(tls_key_path);
+
+	init(username, userid, passwd, ha1, realm, domain, algo);
 }
 
 AuthInfo* AuthInfo::clone() const {
-    AuthInfo *ai = new AuthInfo(getUsername(), getUserid(), getPassword(), getHa1(), getRealm(), getDomain(), getAlgorithm());
-    ai->setTlsCert(getTlsCert());
-    ai->setTlsCertPath(getTlsCertPath());
-    ai->setTlsKey(getTlsKey());
-    ai->setTlsKeyPath(getTlsKeyPath());
-    return ai;
+	AuthInfo *ai = new AuthInfo(getUsername(), getUserid(), getPassword(), getHa1(), getRealm(), getDomain(), getAlgorithm());
+	ai->setTlsCert(getTlsCert());
+	ai->setTlsCertPath(getTlsCertPath());
+	ai->setTlsKey(getTlsKey());
+	ai->setTlsKeyPath(getTlsKeyPath());
+	return ai;
 }
 
 const string& AuthInfo::getUsername() const{
-    return mUsername;
+	return mUsername;
 }
 
 const string& AuthInfo::getAlgorithm() const{
-    return mAlgorithm;
+	return mAlgorithm;
 }
 
 const string& AuthInfo::getPassword() const{
-    return mPasswd;
+	return mPasswd;
 }
 
 const string& AuthInfo::getUserid() const{
-    return mUserid;
+	return mUserid;
 }
 
 const string& AuthInfo::getRealm() const{
-    return mRealm;
+	return mRealm;
 }
 
 const string& AuthInfo::getDomain() const{
@@ -132,16 +129,10 @@ void AuthInfo::setUsername(const string &username){
 }
 
 void AuthInfo::setAlgorithm(const string &algorithm){
-
-    if(!algorithm.empty()){
-        mAlgorithm = algorithm;
-    }
-    if(algorithm.compare("MD5") == 0 && algorithm.compare("SHA-256") == 0){
-        lError() << "Given algorithm is not correct. Set algorithm failed";
-    }
-    else{
-        mAlgorithm = "MD5";
-    }        
+	if (!algorithm.empty() && algorithm != "MD5" && algorithm != "SHA-256"){
+		lError() << "Given algorithm is not correct. Set algorithm failed";
+	}
+	mAlgorithm = algorithm;
 }
 
 void AuthInfo::setUserid(const string &userid){
@@ -177,46 +168,42 @@ void AuthInfo::setTlsKeyPath(const string &tlsKeyPath){
 }
 
 void AuthInfo::writeConfig(LpConfig *config, int pos){
-    char key[50];
-    char *myHa1; 
+	char key[50];
+	char *myHa1; 
 	bool_t store_ha1_passwd = !!lp_config_get_int(config, "sip", "store_ha1_passwd", 1);
-   
+
 	sprintf(key, "auth_info_%i", pos);
 	lp_config_clean_section(config, key);
 
-    if (lp_config_get_int(config, "sip", "store_auth_info", 1) == 0) {
+	if (lp_config_get_int(config, "sip", "store_auth_info", 1) == 0) {
 		return;
 	}
-    if (getHa1().empty() && !getRealm().empty() && !getPassword().empty() && (!getUsername().empty() || !getUserid().empty()) && store_ha1_passwd) {
+	if (getHa1().empty() && !getRealm().empty() && !getPassword().empty() && (!getUsername().empty() || !getUserid().empty()) && store_ha1_passwd) {
 		/* Default algorithm is MD5 if it's NULL */
 
-        if(getAlgorithm().empty() || getAlgorithm().compare("MD5") == 0){
-            myHa1 = reinterpret_cast<char *>(ms_malloc(33));
-            sal_auth_compute_ha1(getUserid().empty() ? getUsername().c_str() : getUserid().c_str(), getRealm().c_str(), getPassword().c_str(), myHa1);
-            mHa1 = myHa1;
-            ms_free(myHa1);
-        }
-            /* If algorithm is SHA-256, calcul ha1 by sha256*/
-        else if(getAlgorithm().compare("SHA-256") == 0){
-            myHa1 = reinterpret_cast<char *>(ms_malloc(65));
-            sal_auth_compute_ha1_for_algorithm(getUserid().empty() ? getUsername().c_str() : getUserid().c_str(), getRealm().c_str(), getPassword().c_str(), myHa1, 65, getAlgorithm().c_str());
-            mHa1 = myHa1;
-            ms_free(myHa1);
-        }
-    }
+		if(getAlgorithm().empty() || getAlgorithm().compare("MD5") == 0){
+			myHa1 = reinterpret_cast<char *>(ms_malloc(33));
+			sal_auth_compute_ha1(getUserid().empty() ? getUsername().c_str() : getUserid().c_str(), getRealm().c_str(), getPassword().c_str(), myHa1);
+			mHa1 = myHa1;
+			ms_free(myHa1);
+		}
+			/* If algorithm is SHA-256, calcul ha1 by sha256*/
+		else if(getAlgorithm().compare("SHA-256") == 0){
+			myHa1 = reinterpret_cast<char *>(ms_malloc(65));
+			sal_auth_compute_ha1_for_algorithm(getUserid().empty() ? getUsername().c_str() : getUserid().c_str(), getRealm().c_str(), getPassword().c_str(), myHa1, 65, getAlgorithm().c_str());
+			mHa1 = myHa1;
+			ms_free(myHa1);
+		}
+	}
 	lp_config_set_string(config, key, "username", getUsername().c_str());
 	lp_config_set_string(config, key, "userid", getUserid().c_str());
-    lp_config_set_string(config, key, "ha1", getHa1().c_str());
+	lp_config_set_string(config, key, "ha1", getHa1().c_str());
 
 	if (store_ha1_passwd && !getHa1().empty()) {
-	    /*if we have our ha1 and store_ha1_passwd set to TRUE, then drop the clear text password for security*/
-	    setPassword(""); 
-    } 
-    else {
-        /*we store clear text password only if store_ha1_passwd is FALSE AND we have an ha1 to store. Otherwise, passwd would simply be removed, which might bring major auth issue*/
-        lp_config_set_string(config, key, "passwd", getPassword().c_str());
-    }
-	
+		/*if we have our ha1 and store_ha1_passwd set to TRUE, then drop the clear text password for security*/
+		setPassword(""); 
+	} 
+	lp_config_set_string(config, key, "passwd", getPassword().c_str());
 	lp_config_set_string(config, key, "realm", getRealm().c_str());
 	lp_config_set_string(config, key, "domain", getDomain().c_str());
 	lp_config_set_string(config, key, "client_cert_chain", getTlsCertPath().c_str());
@@ -225,13 +212,13 @@ void AuthInfo::writeConfig(LpConfig *config, int pos){
 }
 
 std::string AuthInfo::toString() const{
-    std::ostringstream ss;
+	std::ostringstream ss;
 
-    ss << "Username[" << mUsername << "];";
+	ss << "Username[" << mUsername << "];";
 	ss << "Userid[" << mUserid << "];";
-    ss << "Realm[" << mRealm << "];";
-    ss << "Domain[" << mDomain << "];";
-    ss << "Algorithm[" << mAlgorithm << "];";
+	ss << "Realm[" << mRealm << "];";
+	ss << "Domain[" << mDomain << "];";
+	ss << "Algorithm[" << mAlgorithm << "];";
 
 	return ss.str();
 }
