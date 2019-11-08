@@ -196,7 +196,7 @@ void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcar
 		linphone_content_set_subtype(content, "somexml");
 		linphone_content_set_buffer(content, (const uint8_t *)info_content, strlen(info_content));
 
-		linphone_call_params_set_custom_content(params, content);
+		linphone_call_params_add_custom_content(params, content);
 
 		BC_ASSERT_TRUE(call_with_caller_params(marie, pauline, params));
 		linphone_call_params_unref(params);
@@ -217,6 +217,25 @@ void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcar
 			if (dname){
 				BC_ASSERT_STRING_EQUAL(dname, "Super Marie");
 			}
+		}
+
+		const LinphoneCallParams *params = linphone_call_get_remote_params(pauline_call);
+		bctbx_list_t *parts = linphone_call_params_get_custom_contents(params);
+		if (use_multipart_invite_body) {
+			BC_ASSERT_PTR_NOT_NULL(parts);
+			if (parts) {
+				BC_ASSERT_EQUAL(bctbx_list_size(parts), 1, int, "%i");
+				LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(parts);
+				BC_ASSERT_PTR_NOT_NULL(content);
+				if (content) {
+					BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "application");
+					BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "somexml");
+					BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), info_content);
+				}			
+				bctbx_list_free_with_data(parts, (void (*)(void *)) linphone_content_unref);
+			}
+		} else {
+			BC_ASSERT_PTR_NULL(parts);
 		}
 	}
 

@@ -63,7 +63,7 @@ private:
 	SalCustomHeader *customHeaders = nullptr;
 	std::unordered_map<std::string, std::string> customContactParameters;
 	std::shared_ptr<CallSession> referer; /* In case call creation is consecutive to an incoming transfer, this points to the original call */
-	Content* customContent = nullptr;
+	std::list<Content> customContents;
 
 	L_DECLARE_PUBLIC(CallSessionParams);
 };
