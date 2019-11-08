@@ -1822,14 +1822,20 @@ static void group_chat_lime_x3dh_chatroom_security_alert (void) {
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
 
 	// Laure sends a messages to trigger a LIME X3DH security alerts because maxNumberOfDevicePerParticipant has been exceeded
+	const char *laureMessage = "I'm going to the cinema";
 	if (lp_config_get_int(linphone_core_get_config(laure->lc), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
-		const char *laureMessage = "I'm going to the cinema";
 		_send_message(laureCr, laureMessage);
 		wait_for_list(coresList, &dummy, 1, 500);
 		BC_ASSERT_FALSE((marie->stat.number_of_LinphoneMessageReceived == initialPauline1Stats.number_of_LinphoneMessageReceived + 3));
 		BC_ASSERT_FALSE((pauline1->stat.number_of_LinphoneMessageReceived == initialPauline1Stats.number_of_LinphoneMessageReceived + 3));
 		BC_ASSERT_FALSE((pauline2->stat.number_of_LinphoneMessageReceived == initialPauline2Stats.number_of_LinphoneMessageReceived + 1));
+	
+		lp_config_set_int(linphone_core_get_config(laure->lc), "lime", "allow_message_in_unsafe_chatroom", 1);
 	}
+	// to allow message to be sent
+	lp_config_set_int(linphone_core_get_config(laure->lc), "lime", "max_nb_device_per_participant", 2);
+	_send_message(laureCr, laureMessage);
+	wait_for_list(coresList, &dummy, 1, 500);
 
 end:
 
