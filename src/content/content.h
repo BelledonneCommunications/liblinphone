@@ -77,7 +77,7 @@ public:
 	size_t getSize () const;
 
 	bool isValid () const;
-
+	bool isMultipart () const;
 	bool isEmpty () const;
 
 	virtual bool isFile () const;
