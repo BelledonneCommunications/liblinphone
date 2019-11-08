@@ -34,7 +34,8 @@ public:
 	int setLocalMediaDescription (SalMediaDescription *desc);
 	int setLocalBody (const Content &body);
 	int setLocalBody (Content &&body);
-	int addAdditionalLocalBody (const Content &content);
+	void addAdditionalLocalBody (const Content &content);
+	std::list<Content> getAdditionalRemoteBodies () const;
 
 	SalMediaDescription *getRemoteMediaDescription () { return mRemoteMedia; }
 	const Content &getRemoteBody () const { return mRemoteBody; }
@@ -123,6 +124,7 @@ private:
 	Content mLocalBody;
 	Content mRemoteBody;
 	std::list<Content> mAdditionalLocalBodies;
+	std::list<Content> mAdditionalRemoteBodies;
 };
 
 LINPHONE_END_NAMESPACE

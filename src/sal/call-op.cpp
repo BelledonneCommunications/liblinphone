@@ -103,9 +103,12 @@ int SalCallOp::setLocalBody (Content &&body) {
 	return 0;
 }
 
-int SalCallOp::addAdditionalLocalBody (const Content &content) {
+void SalCallOp::addAdditionalLocalBody (const Content &content) {
 	mAdditionalLocalBodies.push_back(move(content));
-	return 0;
+}
+
+list<Content> SalCallOp::getAdditionalRemoteBodies () const {
+	return mAdditionalRemoteBodies;
 }
 
 belle_sip_header_allow_t *SalCallOp::createAllow (bool enableUpdate) {
@@ -349,21 +352,34 @@ void SalCallOp::handleBodyFromResponse (belle_sip_response_t *response) {
 		sal_media_description_unref(mRemoteMedia);
 		mRemoteMedia = nullptr;
 	}
-	if (body.getContentType() == ContentType::Sdp) {
+
+	Content sdpBody = body;
+	if (body.isMultipart()) {
+		list<Content> contents = ContentManager::multipartToContentList(body);
+		for (auto& content : contents) {
+			if (content.getContentType() == ContentType::Sdp) {
+				sdpBody = content;
+			} else {
+				mAdditionalRemoteBodies.push_back(move(content));
+			}
+		}
+	}
+	
+	if (sdpBody.getContentType() == ContentType::Sdp) {
 		belle_sdp_session_description_t *sdp = nullptr;
 		SalReason reason;
-		if (parseSdpBody(body, &sdp, &reason) == 0) {
+		if (parseSdpBody(sdpBody, &sdp, &reason) == 0) {
 			if (sdp) {
 				mRemoteMedia = sal_media_description_new();
 				sdp_to_media_description(sdp, mRemoteMedia);
-				mRemoteBody = move(body);
+				mRemoteBody = move(sdpBody);
 			} // If no SDP in response, what can we do?
 		}
 		// Process sdp in any case to reset result media description
 		if (mLocalMedia)
 			sdpProcess();
 	} else {
-		mRemoteBody = move(body);
+		mRemoteBody = move(sdpBody);
 	}
 }
 
@@ -601,9 +617,21 @@ SalReason SalCallOp::processBodyForInvite (belle_sip_request_t *invite) {
 	if (!body.isValid())
 		return SalReasonUnsupportedContent;
 
-	if ((body.getContentType() == ContentType::Sdp) || (body.getContentType().isEmpty() && body.isEmpty())) {
+	Content sdpBody = body;
+	if (body.isMultipart()) {
+		list<Content> contents = ContentManager::multipartToContentList(body);
+		for (auto& content : contents) {
+			if (content.getContentType() == ContentType::Sdp) {
+				sdpBody = content;
+			} else {
+				mAdditionalRemoteBodies.push_back(move(content));
+			}
+		}
+	}
+
+	if ((sdpBody.getContentType() == ContentType::Sdp) || (sdpBody.getContentType().isEmpty() && sdpBody.isEmpty())) {
 		belle_sdp_session_description_t *sdp;
-		if (parseSdpBody(body, &sdp, &reason) == 0) {
+		if (parseSdpBody(sdpBody, &sdp, &reason) == 0) {
 			if (sdp) {
 				mSdpOffering = false;
 				if (mRemoteMedia)
@@ -626,7 +654,7 @@ SalReason SalCallOp::processBodyForInvite (belle_sip_request_t *invite) {
 			sal_error_info_reset(&sei);
 		}
 	}
-	mRemoteBody = move(body);
+	mRemoteBody = move(sdpBody);
 	return reason;
 }
 
@@ -635,9 +663,22 @@ SalReason SalCallOp::processBodyForAck (belle_sip_request_t *ack) {
 	Content body = extractBody(BELLE_SIP_MESSAGE(ack));
 	if (!body.isValid())
 		return SalReasonUnsupportedContent;
-	if (body.getContentType() == ContentType::Sdp) {
+
+	Content sdpBody = body;
+	if (body.isMultipart()) {
+		list<Content> contents = ContentManager::multipartToContentList(body);
+		for (auto& content : contents) {
+			if (content.getContentType() == ContentType::Sdp) {
+				sdpBody = content;
+			} else {
+				mAdditionalRemoteBodies.push_back(move(content));
+			}
+		}
+	}
+
+	if (sdpBody.getContentType() == ContentType::Sdp) {
 		belle_sdp_session_description_t *sdp;
-		if (parseSdpBody(body, &sdp, &reason) == 0) {
+		if (parseSdpBody(sdpBody, &sdp, &reason) == 0) {
 			if (sdp) {
 				if (mRemoteMedia)
 					sal_media_description_unref(mRemoteMedia);
@@ -650,7 +691,7 @@ SalReason SalCallOp::processBodyForAck (belle_sip_request_t *ack) {
 			}
 		}
 	}
-	mRemoteBody = move(body);
+	mRemoteBody = move(sdpBody);
 	return reason;
 }
 
