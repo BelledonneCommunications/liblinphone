@@ -1149,7 +1149,7 @@ int CallSession::startInvite (const Address *destination, const string &subject,
 	// If a custom Content has been set in the call params, create a multipart body for the INVITE
 	Content* customContent = d->params->getCustomContent();
 	if (customContent && !customContent->isEmpty()) {
-		d->op->setAdditionalLocalBody(*customContent);
+		d->op->addAdditionalLocalBody(*customContent);
 	}
 
 	int result = d->op->call(from, destinationStr, subject);
