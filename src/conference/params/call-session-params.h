@@ -66,8 +66,8 @@ public:
 	void clearCustomContactParameters ();
 	std::string getCustomContactParameter (const std::string &paramName) const;
 
-	void setCustomContent (Content* content);
-	Content* getCustomContent () const;
+	void addCustomContent (const Content& content);
+	const std::list<Content>& getCustomContents () const;
 
 protected:
 	explicit CallSessionParams (CallSessionParamsPrivate &p);

@@ -35,7 +35,7 @@ public:
 	int setLocalBody (const Content &body);
 	int setLocalBody (Content &&body);
 	void addAdditionalLocalBody (const Content &content);
-	std::list<Content> getAdditionalRemoteBodies () const;
+	const std::list<Content>& getAdditionalRemoteBodies () const;
 
 	SalMediaDescription *getRemoteMediaDescription () { return mRemoteMedia; }
 	const Content &getRemoteBody () const { return mRemoteBody; }

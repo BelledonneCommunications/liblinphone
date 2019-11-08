@@ -1147,9 +1147,8 @@ int CallSession::startInvite (const Address *destination, const string &subject,
 		d->op->setLocalBody(*content);
 
 	// If a custom Content has been set in the call params, create a multipart body for the INVITE
-	Content* customContent = d->params->getCustomContent();
-	if (customContent && !customContent->isEmpty()) {
-		d->op->addAdditionalLocalBody(*customContent);
+	for (auto& content : d->params->getCustomContents()) {
+		d->op->addAdditionalLocalBody(content);
 	}
 
 	int result = d->op->call(from, destinationStr, subject);
@@ -1335,6 +1334,11 @@ const CallSessionParams * CallSession::getRemoteParams () {
 				d->remoteParams = new CallSessionParams();
 			d->remoteParams->getPrivate()->setCustomHeaders(ch);
 		}
+
+		const list<Content> additionnalContents = d->op->getAdditionalRemoteBodies();
+		for (auto& content : additionnalContents)
+			d->remoteParams->addCustomContent(content);
+		
 		return d->remoteParams;
 	}
 	return nullptr;
