@@ -181,6 +181,11 @@ bool Content::isEmpty () const {
 	return getSize() == 0;
 }
 
+bool Content::isMultipart () const {
+	L_D();
+	return d->contentType.isValid() && d->contentType == ContentType::Multipart;
+}
+
 bool Content::isValid () const {
 	L_D();
 	return d->contentType.isValid() || (d->contentType.isEmpty() && d->body.empty());
