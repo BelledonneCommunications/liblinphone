@@ -107,7 +107,7 @@ void SalCallOp::addAdditionalLocalBody (const Content &content) {
 	mAdditionalLocalBodies.push_back(move(content));
 }
 
-list<Content> SalCallOp::getAdditionalRemoteBodies () const {
+const list<Content>& SalCallOp::getAdditionalRemoteBodies () const {
 	return mAdditionalRemoteBodies;
 }
 

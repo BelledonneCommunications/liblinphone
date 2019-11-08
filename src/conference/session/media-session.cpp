@@ -5327,6 +5327,11 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 				d->setRemoteParams(new MediaSessionParams());
 			d->getRemoteParams()->getPrivate()->setCustomHeaders(ch);
 		}
+
+		const list<Content> additionnalContents = d->op->getAdditionalRemoteBodies();
+		for (auto& content : additionnalContents)
+			d->remoteParams->addCustomContent(content);
+			
 		return d->getRemoteParams();
 	}
 	return nullptr;
