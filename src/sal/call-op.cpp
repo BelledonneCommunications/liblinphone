@@ -103,8 +103,8 @@ int SalCallOp::setLocalBody (Content &&body) {
 	return 0;
 }
 
-int SalCallOp::setAdditionalLocalBody (const Content &content) {
-	mAdditionalLocalBody = move(content);
+int SalCallOp::addAdditionalLocalBody (const Content &content) {
+	mAdditionalLocalBodies.push_back(move(content));
 	return 0;
 }
 
@@ -173,14 +173,16 @@ void SalCallOp::fillInvite (belle_sip_request_t *invite) {
 	}
 	mSdpOffering = (mLocalBody.getContentType() == ContentType::Sdp);
 
-	if (!mAdditionalLocalBody.isEmpty()) {
-		if (mLocalBody.isEmpty()) {
-			setCustomBody(BELLE_SIP_MESSAGE(invite), mAdditionalLocalBody);
-		} else {
-			list<Content*> contents { &mLocalBody, &mAdditionalLocalBody };
-			Content multipartContent = ContentManager::contentListToMultipart(contents);
-			setCustomBody(BELLE_SIP_MESSAGE(invite), multipartContent);
+	if (!mAdditionalLocalBodies.empty()) {
+		list<Content *> contents;
+		if (!mLocalBody.isEmpty()) {
+			contents.push_back(&mLocalBody);
 		}
+		for (auto& body : mAdditionalLocalBodies) {
+			contents.push_back(&body);
+		}
+		Content multipartContent = ContentManager::contentListToMultipart(contents);
+		setCustomBody(BELLE_SIP_MESSAGE(invite), multipartContent);
 	} else {
 		setCustomBody(BELLE_SIP_MESSAGE(invite), mLocalBody);
 	}
