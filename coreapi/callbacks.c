@@ -368,11 +368,15 @@ static void auth_failure(SalOp *op, SalAuthInfo* info) {
 			LinphoneAuthMethod method = info->mode == SalAuthModeHttpDigest ? LinphoneAuthHttpDigest : LinphoneAuthTls;
 			LinphoneAuthInfo *auth_info = linphone_core_create_auth_info(lc, info->username, NULL, NULL, NULL, info->realm, info->domain);
 			ms_message("%s/%s/%s/%s authentication fails.", info->realm, info->username, info->domain, info->mode == SalAuthModeHttpDigest ? "HttpDigest" : "Tls");
-			/*ask again for password if auth info was already supplied but apparently not working*/
-			linphone_core_notify_authentication_requested(lc, auth_info, method);
+			if (method == LinphoneAuthHttpDigest){
+				/*ask again for password if auth info was already supplied but apparently not working*/
+				L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack().pushAuthRequested(AuthInfo::toCpp(ai)->getSharedFromThis());
+			}else{
+				linphone_core_notify_authentication_requested(lc, auth_info, method);
+				// Deprecated
+				linphone_core_notify_auth_info_requested(lc, info->realm, info->username, info->domain);
+			}
 			linphone_auth_info_unref(auth_info);
-			// Deprecated
-			linphone_core_notify_auth_info_requested(lc, info->realm, info->username, info->domain);
 		}
 	}
 }
@@ -402,8 +406,11 @@ static void register_failure(SalOp *op){
 	if ((ei->reason == SalReasonServiceUnavailable || ei->reason == SalReasonIOError)
 			&& linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk) {
 		linphone_proxy_config_set_state(cfg,LinphoneRegistrationProgress,"Service unavailable, retrying");
+	} else if (ei->protocol_code == 401 || ei->protocol_code == 407){
+		/* Do nothing. There will be an auth_requested() callback. If the callback doesn't provide an AuthInfo, then
+		 * the proxy config will transition to the failed state.*/
 	} else {
-		linphone_proxy_config_set_state(cfg,LinphoneRegistrationFailed,details);
+		linphone_proxy_config_set_state(cfg,LinphoneRegistrationFailed, details);
 	}
 	if (cfg->presence_publish_event){
 		/*prevent publish to be sent now until registration gets successful*/
@@ -553,15 +560,13 @@ static bool_t fill_auth_info(LinphoneCore *lc, SalAuthInfo* sai) {
 			sai->password = linphone_auth_info_get_passwd(ai)?ms_strdup(linphone_auth_info_get_passwd(ai)) : NULL;
 			sai->ha1 = linphone_auth_info_get_ha1(ai) ? ms_strdup(linphone_auth_info_get_ha1(ai)) : NULL;
 			
-#if 0
+
 			AuthStack & as = L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack();
-			if (!as.empty()){
-				/* We have to construct the auth info as it was originally requested in auth_requested() below,
-				 * so that the matching is made correctly.
-				 */
-				as.authFound(AuthInfo::create(sai->username, "", "", "", sai->realm, sai->domain));
-			}
-#endif
+			/* We have to construct the auth info as it was originally requested in auth_requested() below,
+			 * so that the matching is made correctly.
+			 */
+			as.authFound(AuthInfo::create(sai->username, "", "", "", sai->realm, sai->domain));
+
 		} else if (sai->mode == SalAuthModeTls) {
 			if (linphone_auth_info_get_tls_cert(ai) && linphone_auth_info_get_tls_key(ai)) {
 				sal_certificates_chain_parse(sai, linphone_auth_info_get_tls_cert(ai), SAL_CERTIFICATE_RAW_FORMAT_PEM);
@@ -595,13 +600,11 @@ static bool_t auth_requested(Sal* sal, SalAuthInfo* sai) {
 	} else {
 		LinphoneAuthMethod method = sai->mode == SalAuthModeHttpDigest ? LinphoneAuthHttpDigest : LinphoneAuthTls;
 		LinphoneAuthInfo *ai = linphone_core_create_auth_info(lc, sai->username, NULL, NULL, NULL, sai->realm, sai->domain);
-#if 0
+		
 		if (method == LinphoneAuthHttpDigest){
 			/* Request app for new authentication information, but later. */
 			L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack().pushAuthRequested(AuthInfo::toCpp(ai)->getSharedFromThis());
-		}else
-#endif
-		{
+		}else{
 			linphone_core_notify_authentication_requested(lc, ai, method);
 			// Deprecated callback
 			linphone_core_notify_auth_info_requested(lc, sai->realm, sai->username, sai->domain);

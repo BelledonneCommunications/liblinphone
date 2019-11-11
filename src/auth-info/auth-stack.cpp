@@ -47,27 +47,38 @@ void AuthStack::pushAuthRequested(const std::shared_ptr<AuthInfo> &ai){
 }
 
 void AuthStack::authFound(const std::shared_ptr<AuthInfo> &ai){
-	if (mAuthBeingRequested) return;
 	lInfo() << "AuthStack::authFound() for " << ai->toString();
-	for(auto it = mAuthQueue.begin(); it != mAuthQueue.end(); ){
-		const shared_ptr<AuthInfo> &authInfo = (*it);
-		if (authInfo->getRealm() == ai->getRealm() &&
-			authInfo->getUsername() == ai->getUsername() &&
-			authInfo->getDomain() == ai->getDomain()){
-			lInfo() << "Authentication request removed.";
-			it = mAuthQueue.erase(it);
-		}else ++it;
-	}
-	if (mAuthQueue.empty()){
-		lInfo() << "No need to request authentication information from application.";
-		if (mTimer){
-			mCore.getSal()->cancelTimer(mTimer);
-			belle_sip_object_unref(mTimer);
-			mTimer = nullptr;
+	mAuthFound.push_back(ai);
+}
+
+void AuthStack::notifyAuthFailures(){
+	auto pendingAuths = mCore.getSal()->getPendingAuths();
+	for (const auto &op : pendingAuths) {
+		const bctbx_list_t *elem;
+		/*proxy case*/
+		for (elem = linphone_core_get_proxy_config_list(mCore.getCCore()); elem != NULL; elem = elem->next) {
+			LinphoneProxyConfig *pcfg = (LinphoneProxyConfig*)elem->data;
+			if (pcfg == op->getUserPointer()) {
+				const SalErrorInfo *ei=op->getErrorInfo();
+				const char *details=ei->full_string;
+				linphone_proxy_config_set_state(pcfg, LinphoneRegistrationFailed, details);
+				break;
+			}
 		}
 	}
 }
 
+bool AuthStack::wasFound(const std::shared_ptr<AuthInfo>& authInfo){
+	for (auto &ai : mAuthFound){
+		if (authInfo->getRealm() == ai->getRealm() &&
+			authInfo->getUsername() == ai->getUsername() &&
+			authInfo->getDomain() == ai->getDomain()){
+			lInfo() << "Authentication request not needed.";
+			return true;
+		}
+	}
+	return false;
+}
 
 void AuthStack::processAuthRequested(){
 	/* The auth_info_requested() callback may cause the application to directly call linphone_core_add_auth_info(), which
@@ -75,14 +86,22 @@ void AuthStack::processAuthRequested(){
 	 * The mAuthBeingRequested flag is to inhinit this behavior.
 	 */
 	mAuthBeingRequested = true;
+	
 	for(const auto &authInfo : mAuthQueue){
-		linphone_core_notify_authentication_requested(mCore.getCCore(), authInfo->toC(), LinphoneAuthHttpDigest);
-		// Deprecated callback:
-		linphone_core_notify_auth_info_requested(mCore.getCCore(), authInfo->getRealm().c_str(), authInfo->getUsername().c_str(), authInfo->getDomain().c_str());
+		if (!wasFound(authInfo)){
+			linphone_core_notify_authentication_requested(mCore.getCCore(), authInfo->toC(), LinphoneAuthHttpDigest);
+			// Deprecated callback:
+			linphone_core_notify_auth_info_requested(mCore.getCCore(), authInfo->getRealm().c_str(), authInfo->getUsername().c_str(), authInfo->getDomain().c_str());
+		}
 	}
+	notifyAuthFailures();
 	mAuthQueue.clear();
-	belle_sip_object_unref(mTimer);
-	mTimer = nullptr;
+	mAuthFound.clear();
+	if (mTimer){
+		mCore.getSal()->cancelTimer(mTimer);
+		belle_sip_object_unref(mTimer);
+		mTimer = nullptr;
+	}
 	mAuthBeingRequested = false;
 }
 

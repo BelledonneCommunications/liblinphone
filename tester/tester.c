@@ -113,7 +113,7 @@ LinphoneAddress * create_linphone_address_for_algo(const char * domain, const ch
 
 static void auth_info_requested(LinphoneCore *lc, const char *realm, const char *username, const char *domain) {
 	stats* counters;
-	ms_message("Auth info requested  for user id [%s] at realm [%s]\n", username, realm);
+	ms_message("Auth info requested (deprecated callback) for user id [%s] at realm [%s]\n", username, realm);
 	counters = get_stats(lc);
 	counters->number_of_auth_info_requested++;
 }

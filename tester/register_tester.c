@@ -341,6 +341,7 @@ static void simple_authenticated_register_for_algorithm(void){
 	linphone_auth_info_unref(info);
 	counters = &lcm->stat;
 	register_with_refresh_for_algo(lcm,FALSE,auth_domain,route,test_sha_username);
+	/* Because Flexisip asks a MD5 and SHA256 challenge, and the AuthInfo is only for SHA256, we will get one auth_info_requested per REGISTER message.*/
 	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,0, int, "%d");
 	linphone_core_manager_destroy(lcm);
 }

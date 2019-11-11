@@ -755,6 +755,7 @@ void Sal::addPendingAuth (SalOp *op) {
 	if (it == mPendingAuths.cend()) {
 		mPendingAuths.push_back(op);
 		op->mHasAuthPending = true;
+		lInfo() << "Op " << op << " added as pending authentication";
 	}
 }
 
@@ -762,6 +763,7 @@ void Sal::removePendingAuth (SalOp *op) {
 	if (op->mHasAuthPending) {
 		op->mHasAuthPending = false;
 		mPendingAuths.remove(op);
+		lInfo() << "Op " << op << " removed as pending authentication";
 	}
 }
 

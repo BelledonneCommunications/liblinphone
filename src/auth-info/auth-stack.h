@@ -50,10 +50,13 @@ public:
 	}
 	~AuthStack();
 private:
+	void notifyAuthFailures();
 	void processAuthRequested();
+	bool wasFound(const std::shared_ptr<AuthInfo>& ai);
 	CorePrivate &mCore;
 	belle_sip_source_t *mTimer = nullptr;
 	std::list<std::shared_ptr<AuthInfo>> mAuthQueue;
+	std::list<std::shared_ptr<AuthInfo>> mAuthFound;
 	bool mAuthBeingRequested = false;
 	static int onTimeout(void *data, unsigned int events);
 };
