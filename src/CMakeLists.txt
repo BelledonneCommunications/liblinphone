@@ -99,6 +99,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	address/identity-address.h
 	address/identity-address-parser.h
 	auth-info/auth-info.h
+	auth-info/auth-stack.h
 	c-wrapper/c-wrapper.h
 	c-wrapper/internal/c-sal.h
 	c-wrapper/internal/c-tools.h
@@ -293,6 +294,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
 	auth-info/auth-info.cpp
+	auth-info/auth-stack.cpp
 	call/call.cpp
 	call/local-conference-call.cpp
 	call/remote-conference-call.cpp

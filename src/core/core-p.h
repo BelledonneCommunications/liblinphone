@@ -27,6 +27,7 @@
 #include "db/main-db.h"
 #include "object/object-p.h"
 #include "sal/call-op.h"
+#include "auth-info/auth-stack.h"
 
 // =============================================================================
 
@@ -44,7 +45,7 @@ public:
 		DatabaseConnectionFailure(const char *what) : std::runtime_error(what) {}
 		DatabaseConnectionFailure(const std::string &what) : std::runtime_error(what) {}
 	};
-
+	CorePrivate();
 	void init ();
 	void registerListener (CoreListener *listener);
 	void unregisterListener (CoreListener *listener);
@@ -122,6 +123,11 @@ public:
 	std::unique_ptr<RemoteConferenceListEventHandler> remoteListEventHandler;
 	std::unique_ptr<LocalConferenceListEventHandler> localListEventHandler;
 #endif
+	AuthStack &getAuthStack(){
+		return authStack;
+	}
+	Sal * getSal();
+	LinphoneCore *getCCore();
 
 private:
 	bool isInBackground = false;
@@ -141,6 +147,7 @@ private:
 	// This is to keep a ref on a clientGroupChatRoom while it is being created
 	// Otherwise the chatRoom will be freed() before it is inserted
 	std::unordered_map<const AbstractChatRoom *, std::shared_ptr<const AbstractChatRoom>> noCreatedClientGroupChatRooms;
+	AuthStack authStack;
 
 	L_DECLARE_PUBLIC(Core);
 };

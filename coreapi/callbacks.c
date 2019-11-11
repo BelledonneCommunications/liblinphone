@@ -552,6 +552,16 @@ static bool_t fill_auth_info(LinphoneCore *lc, SalAuthInfo* sai) {
 			sai->userid = ms_strdup(linphone_auth_info_get_userid(ai) ? linphone_auth_info_get_userid(ai) : linphone_auth_info_get_username(ai));
 			sai->password = linphone_auth_info_get_passwd(ai)?ms_strdup(linphone_auth_info_get_passwd(ai)) : NULL;
 			sai->ha1 = linphone_auth_info_get_ha1(ai) ? ms_strdup(linphone_auth_info_get_ha1(ai)) : NULL;
+			
+#if 0
+			AuthStack & as = L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack();
+			if (!as.empty()){
+				/* We have to construct the auth info as it was originally requested in auth_requested() below,
+				 * so that the matching is made correctly.
+				 */
+				as.authFound(AuthInfo::create(sai->username, "", "", "", sai->realm, sai->domain));
+			}
+#endif
 		} else if (sai->mode == SalAuthModeTls) {
 			if (linphone_auth_info_get_tls_cert(ai) && linphone_auth_info_get_tls_key(ai)) {
 				sal_certificates_chain_parse(sai, linphone_auth_info_get_tls_cert(ai), SAL_CERTIFICATE_RAW_FORMAT_PEM);
@@ -585,10 +595,19 @@ static bool_t auth_requested(Sal* sal, SalAuthInfo* sai) {
 	} else {
 		LinphoneAuthMethod method = sai->mode == SalAuthModeHttpDigest ? LinphoneAuthHttpDigest : LinphoneAuthTls;
 		LinphoneAuthInfo *ai = linphone_core_create_auth_info(lc, sai->username, NULL, NULL, NULL, sai->realm, sai->domain);
-		linphone_core_notify_authentication_requested(lc, ai, method);
+#if 0
+		if (method == LinphoneAuthHttpDigest){
+			/* Request app for new authentication information, but later. */
+			L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack().pushAuthRequested(AuthInfo::toCpp(ai)->getSharedFromThis());
+		}else
+#endif
+		{
+			linphone_core_notify_authentication_requested(lc, ai, method);
+			// Deprecated callback
+			linphone_core_notify_auth_info_requested(lc, sai->realm, sai->username, sai->domain);
+		}
 		linphone_auth_info_unref(ai);
-		// Deprecated
-		linphone_core_notify_auth_info_requested(lc, sai->realm, sai->username, sai->domain);
+		
 		if (fill_auth_info(lc, sai)) {
 			return TRUE;
 		}

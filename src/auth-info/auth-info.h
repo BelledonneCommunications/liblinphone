@@ -60,6 +60,8 @@ class AuthInfo : public bellesip::HybridObject<LinphoneAuthInfo, AuthInfo> {
     const std::string& getTlsKey() const;
     const std::string& getTlsCertPath() const;
     const std::string& getTlsKeyPath() const;
+    
+    std::string toString() const override;
 
     private:
     std::string mUsername;
@@ -74,7 +76,7 @@ class AuthInfo : public bellesip::HybridObject<LinphoneAuthInfo, AuthInfo> {
     std::string mTlsCertPath;
     std::string mTlsKeyPath;
     
-    std::string toString() const override;
+    
 
 };
 
