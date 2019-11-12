@@ -49,6 +49,9 @@ void AuthStack::pushAuthRequested(const std::shared_ptr<AuthInfo> &ai){
 void AuthStack::authFound(const std::shared_ptr<AuthInfo> &ai){
 	lInfo() << "AuthStack::authFound() for " << ai->toString();
 	mAuthFound.push_back(ai);
+	if (!mTimer){
+		mTimer = mCore.getSal()->createTimer(&onTimeout, this, 0, "authentication requests");
+	}
 }
 
 void AuthStack::notifyAuthFailures(){

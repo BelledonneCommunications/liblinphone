@@ -554,7 +554,7 @@ static void authenticated_register_with_wrong_late_credentials(void){
 	counters = get_stats(lcm->lc);
 	register_with_refresh_base_3(lcm->lc,FALSE,auth_domain,route,TRUE,transport,LinphoneRegistrationFailed);
 	linphone_transports_unref(transport);
-	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,2, int, "%d");
+	BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &counters->number_of_auth_info_requested, 2));
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationFailed,2, int, "%d");
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationProgress,2, int, "%d");
 	test_password=saved_test_passwd;
