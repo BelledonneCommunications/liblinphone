@@ -94,7 +94,7 @@ void Header::setName (const string &name) {
 	d->name = name;
 }
 
-string Header::getName () const {
+const string& Header::getName () const {
 	L_D();
 	return d->name;
 }
@@ -104,7 +104,7 @@ void Header::setValue (const string &value) {
 	d->value = value;
 }
 
-string Header::getValue () const {
+const string& Header::getValue () const {
 	L_D();
 	return d->value;
 }

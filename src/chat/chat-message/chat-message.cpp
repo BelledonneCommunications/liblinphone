@@ -682,11 +682,12 @@ LinphoneReason ChatMessagePrivate::receive () {
 		for (Content *c : contents) {
 			ContentType ct(c->getContentType());
 			ct.cleanParameters();
-			if (linphone_core_is_content_type_supported(core->getCCore(), ct.asString().c_str())) {
+			string contenttype = ct.getType() + "/" + ct.getSubType();
+			if (linphone_core_is_content_type_supported(core->getCCore(), contenttype.c_str())) {
 				foundSupportContentType = true;
 				break;
 			} else
-			lError() << "Unsupported content-type: " << c->getContentType();
+			lError() << "Unsupported content-type: " << contenttype;
 		}
 
 		if (!foundSupportContentType) {

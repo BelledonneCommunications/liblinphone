@@ -493,6 +493,21 @@ void linphone_call_params_set_no_user_consent (LinphoneCallParams *params, bool_
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setNoUserConsent(!!value);
 }
 
+bctbx_list_t* linphone_call_params_get_custom_contents (const LinphoneCallParams *params) {
+	const list<LinphonePrivate::Content>& contents = L_GET_CPP_PTR_FROM_C_OBJECT(params)->getCustomContents();
+	bctbx_list_t* c_contents = nullptr;
+	for (auto& content : contents) {
+		LinphoneContent *c_content = L_GET_C_BACK_PTR(&content);
+		c_contents = bctbx_list_append(c_contents, linphone_content_ref(c_content));
+	}
+	return c_contents;
+}
+
+void linphone_call_params_add_custom_content (LinphoneCallParams *params, LinphoneContent *content) {
+	LinphonePrivate::Content *cppContent = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContent(*cppContent);
+}
+
 // =============================================================================
 // Reference and user data handling functions.
 // =============================================================================

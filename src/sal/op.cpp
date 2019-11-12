@@ -22,6 +22,7 @@
 #include "c-wrapper/internal/c-tools.h"
 #include "bellesip_sal/sal_impl.h"
 #include "sal/op.h"
+#include "content/header/header-param.h"
 
 using namespace std;
 
@@ -958,7 +959,7 @@ int SalOp::setCustomBody(belle_sip_message_t *msg, const Content &body) {
 	}
 
 	if (contentType.isValid()) {
-		belle_sip_header_content_type_t *content_type = belle_sip_header_content_type_create(contentType.getType().c_str(), contentType.getSubType().c_str());
+		belle_sip_header_content_type_t *content_type = belle_sip_header_content_type_parse(contentType.asString().c_str());
 		belle_sip_message_add_header(msg, BELLE_SIP_HEADER(content_type));
 	}
 	if (contentDisposition.isValid()) {

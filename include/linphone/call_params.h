@@ -504,6 +504,21 @@ LINPHONE_PUBLIC void linphone_call_params_clear_custom_sdp_attributes(LinphoneCa
 **/
 LINPHONE_PUBLIC void linphone_call_params_clear_custom_sdp_media_attributes(LinphoneCallParams *params, LinphoneStreamType type);
 
+/**
+ * Gets a list of #LinphoneContent set if exists
+ * @param[in] params The #LinphoneCallParams to get the custom Content from.
+ * @return \bctbx_list{LinphoneContent} A list of #LinphoneContent set if exists, NULL otherwise.
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC bctbx_list_t* linphone_call_params_get_custom_contents (const LinphoneCallParams *params);
+
+/**
+ * Adds a #LinphoneContent to be added to the INVITE SDP. 
+ * @param[in] params The #LinphoneCallParams in which to set the custom #LinphoneContent.
+ * @param[in] content The #LinphoneContent to be added.
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void linphone_call_params_add_custom_content (LinphoneCallParams *params, LinphoneContent *content);
 
 /*******************************************************************************
  * DEPRECATED                                                                  *

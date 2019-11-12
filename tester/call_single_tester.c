@@ -154,7 +154,9 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 	linphone_call_unref(c2);
 }
 
-void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcard) {
+static const char *info_content = "<somexml>blabla</somexml>";
+
+void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcard, bool_t use_multipart_invite_body) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
 	const LinphoneAddress *from;
@@ -177,33 +179,68 @@ void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcar
 		marie_tmp_id = linphone_address_as_string(marie_addr);
 
 		linphone_proxy_config_edit(marie_cfg);
-		linphone_proxy_config_set_identity(marie_cfg,marie_tmp_id);
+		linphone_proxy_config_set_identity(marie_cfg, marie_tmp_id);
 		linphone_proxy_config_done(marie_cfg);
 
 		ms_free(marie_tmp_id);
 		linphone_address_unref(marie_addr);
 	}
 
-	linphone_core_enable_audio_multicast(pauline->lc,enable_multicast_recv_side);
+	linphone_core_enable_audio_multicast(pauline->lc, enable_multicast_recv_side);
 
-	BC_ASSERT_TRUE(call(marie,pauline));
-	pauline_call=linphone_core_get_current_call(pauline->lc);
+	if (use_multipart_invite_body) {
+		LinphoneCallParams *params = linphone_core_create_call_params(marie->lc, NULL);
+		
+		LinphoneContent *content = linphone_core_create_content(marie->lc);
+		linphone_content_set_type(content, "application");
+		linphone_content_set_subtype(content, "somexml");
+		linphone_content_set_buffer(content, (const uint8_t *)info_content, strlen(info_content));
+
+		linphone_call_params_add_custom_content(params, content);
+
+		BC_ASSERT_TRUE(call_with_caller_params(marie, pauline, params));
+		linphone_call_params_unref(params);
+		linphone_content_unref(content);
+	} else {
+		BC_ASSERT_TRUE(call(marie, pauline));
+	}
+
+	pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	/*check that display name is correctly propagated in From */
-	if (pauline_call){
-		from=linphone_call_get_remote_address(linphone_core_get_current_call(pauline->lc));
+	if (pauline_call) {
+		from = linphone_call_get_remote_address(linphone_core_get_current_call(pauline->lc));
 		BC_ASSERT_PTR_NOT_NULL(from);
-		if (from){
-			const char *dname=linphone_address_get_display_name(from);
+		if (from) {
+			const char *dname = linphone_address_get_display_name(from);
 			BC_ASSERT_PTR_NOT_NULL(dname);
 			if (dname){
 				BC_ASSERT_STRING_EQUAL(dname, "Super Marie");
 			}
 		}
+
+		const LinphoneCallParams *params = linphone_call_get_remote_params(pauline_call);
+		bctbx_list_t *parts = linphone_call_params_get_custom_contents(params);
+		if (use_multipart_invite_body) {
+			BC_ASSERT_PTR_NOT_NULL(parts);
+			if (parts) {
+				BC_ASSERT_EQUAL(bctbx_list_size(parts), 1, int, "%i");
+				LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(parts);
+				BC_ASSERT_PTR_NOT_NULL(content);
+				if (content) {
+					BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "application");
+					BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "somexml");
+					BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), info_content);
+				}			
+				bctbx_list_free_with_data(parts, (void (*)(void *)) linphone_content_unref);
+			}
+		} else {
+			BC_ASSERT_PTR_NULL(parts);
+		}
 	}
 
-	liblinphone_tester_check_rtcp(marie,pauline);
-	end_call(marie,pauline);
+	liblinphone_tester_check_rtcp(marie, pauline);
+	end_call(marie, pauline);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 	
@@ -213,11 +250,15 @@ void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcar
 }
 
 static void simple_call(void) {
-	simple_call_base(FALSE, FALSE);
+	simple_call_base(FALSE, FALSE, FALSE);
 }
 
 static void simple_call_without_soundcard(void) {
-	simple_call_base(FALSE, TRUE);
+	simple_call_base(FALSE, TRUE, FALSE);
+}
+
+static void simple_call_with_multipart_invite_body(void) {
+	simple_call_base(FALSE, FALSE, TRUE);
 }
 
 /*This test is added to reproduce a crash when a call is failed synchronously*/
@@ -5001,6 +5042,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Simple call with no SIP transport", simple_call_with_no_sip_transport),
 	TEST_NO_TAG("Simple call with UDP", simple_call_with_udp),
 	TEST_NO_TAG("Simple call without soundcard", simple_call_without_soundcard),
+	TEST_NO_TAG("Simple call with multipart INVITE body", simple_call_with_multipart_invite_body),
 	TEST_ONE_TAG("Call terminated automatically by linphone_core_destroy", automatic_call_termination, "LeaksMemory"),
 	TEST_NO_TAG("Call with http proxy", call_with_http_proxy),
 	TEST_NO_TAG("Call with timed-out bye", call_with_timed_out_bye),

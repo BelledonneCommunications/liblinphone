@@ -23,6 +23,7 @@
 #include "object/clonable-object.h"
 
 #include "linphone/types.h"
+#include "content/content.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "sal/sal.h"
 
@@ -64,6 +65,9 @@ public:
 	void addCustomContactParameter (const std::string &paramName, const std::string &paramValue = "");
 	void clearCustomContactParameters ();
 	std::string getCustomContactParameter (const std::string &paramName) const;
+
+	void addCustomContent (const Content& content);
+	const std::list<Content>& getCustomContents () const;
 
 protected:
 	explicit CallSessionParams (CallSessionParamsPrivate &p);
