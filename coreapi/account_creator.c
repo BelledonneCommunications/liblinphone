@@ -174,7 +174,7 @@ LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const Linphon
 								creator->password ? NULL : creator->ha1,  // ha1
 								!creator->password && creator->ha1 ? linphone_address_get_domain(identity) : NULL,  // realm - assumed to be domain
 								linphone_address_get_domain(identity), // domain
-								creator->algorithm
+								creator->password ? NULL : creator->algorithm //if clear text password is given, allow its usage with all algorithms.
 	);
 	linphone_core_add_auth_info(creator->core, info);
 	linphone_address_unref(identity);
