@@ -126,6 +126,13 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_recover_ac
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_update_account(LinphoneAccountCreator *creator);
 
 /**
+ * Send a request to get the password & algorithm of an account using the confirmation key
+ * @param[in] creator #LinphoneAccountCreator object
+ * @return #LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account(LinphoneAccountCreator *creator);
+
+/**
  * Acquire a reference to the LinphoneAccountCreator.
  * @param[in] creator #LinphoneAccountCreator object.
  * @return The same #LinphoneAccountCreator object.

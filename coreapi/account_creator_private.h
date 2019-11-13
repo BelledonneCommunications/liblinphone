@@ -47,6 +47,7 @@ struct _LinphoneAccountCreatorService {
 
 	LinphoneAccountCreatorRequestFunc recover_account_request_cb; /**< Request to recover account */
 	LinphoneAccountCreatorRequestFunc update_account_request_cb; /**< Request to update account */
+	LinphoneAccountCreatorRequestFunc login_linphone_account_request_cb; /**< Request to get password & algorithm from confirmation key */
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneAccountCreatorService);
@@ -210,7 +211,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_update_pas
  * @param[in] creator LinphoneAccountCreator object
  * @return LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
 **/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account_linphone(LinphoneAccountCreator *creator);
 
 #ifdef __cplusplus
 }

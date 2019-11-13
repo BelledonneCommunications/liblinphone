@@ -730,6 +730,11 @@ LinphoneAccountCreatorStatus linphone_account_creator_recover_account(LinphoneAc
 LinphoneAccountCreatorStatus linphone_account_creator_update_account(LinphoneAccountCreator *creator) {
 	return creator->service->update_account_request_cb(creator);
 }
+
+LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account(LinphoneAccountCreator *creator) {
+	return creator->service->login_linphone_account_request_cb(creator);
+}
+
 /************************** End Account Creator data **************************/
 
 /************************** Start Account Creator Linphone **************************/
@@ -975,7 +980,7 @@ static void _login_account_confirmation_key_cb_custom(LinphoneXmlRpcRequest *req
 	NOTIFY_IF_EXIST(Status, login_linphone_account, creator, status, content)
 }
 
-LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account(LinphoneAccountCreator *creator) {
+LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account_linphone(LinphoneAccountCreator *creator) {
 	LinphoneXmlRpcRequest *request = NULL;
 	if ((!creator->username && !creator->phone_number) || !creator->activation_code) {
 		if (creator->cbs->login_linphone_account_response_cb != NULL) {
