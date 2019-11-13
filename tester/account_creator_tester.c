@@ -41,6 +41,7 @@ static void init_linphone_account_creator_service(LinphoneCore *lc) {
 	linphone_account_creator_service_set_is_account_linked_cb(service, linphone_account_creator_is_account_linked_linphone);
 	linphone_account_creator_service_set_recover_account_cb(service, linphone_account_creator_recover_phone_account_linphone);
 	linphone_account_creator_service_set_update_account_cb(service, linphone_account_creator_update_password_linphone);
+	linphone_account_creator_service_set_login_linphone_account_cb(service, linphone_account_creator_login_linphone_account_linphone);
 	linphone_core_set_account_creator_service(lc, service);
 }
 

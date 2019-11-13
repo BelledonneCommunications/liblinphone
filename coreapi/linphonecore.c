@@ -2385,6 +2385,7 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	service->is_account_linked_request_cb = linphone_account_creator_is_account_linked_linphone;
 	service->recover_account_request_cb = linphone_account_creator_recover_phone_account_linphone;
 	service->update_account_request_cb = linphone_account_creator_update_password_linphone;
+	service->login_linphone_account_request_cb = linphone_account_creator_login_linphone_account_linphone;
 	linphone_core_set_account_creator_service(lc, service);
 }
 
