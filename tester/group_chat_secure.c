@@ -2013,15 +2013,42 @@ static void group_chat_lime_x3dh_chatroom_security_alert (void) {
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
 
+	const char *laureMessage = "I'm going to the cinema";
 	// Laure sends a messages to trigger a LIME X3DH security alerts because maxNumberOfDevicePerParticipant has been exceeded
 	if (lp_config_get_int(linphone_core_get_config(laure->lc), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
-		const char *laureMessage = "I'm going to the cinema";
 		_send_message(laureCr, laureMessage);
 		wait_for_list(coresList, &dummy, 1, 500);
-		BC_ASSERT_FALSE((marie->stat.number_of_LinphoneMessageReceived == initialPauline1Stats.number_of_LinphoneMessageReceived + 3));
+		BC_ASSERT_FALSE((marie->stat.number_of_LinphoneMessageReceived == initialMarieStats.number_of_LinphoneMessageReceived + 1));
 		BC_ASSERT_FALSE((pauline1->stat.number_of_LinphoneMessageReceived == initialPauline1Stats.number_of_LinphoneMessageReceived + 3));
 		BC_ASSERT_FALSE((pauline2->stat.number_of_LinphoneMessageReceived == initialPauline2Stats.number_of_LinphoneMessageReceived + 1));
 	}
+	// to allow message to be sent
+	lp_config_set_int(linphone_core_get_config(laure->lc), "lime", "max_nb_device_per_participant", 2);
+	_send_message(laureCr, laureMessage);
+
+	// Check that the message was correctly received and decrypted by Marie
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 10000));
+	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
+		goto end;
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), laureMessage);
+	marieLastMsg = NULL;
+
+	// Check that the message was correctly received and decrypted by Pauline1
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_LinphoneMessageReceived, initialPauline1Stats.number_of_LinphoneMessageReceived + 3, 10000));
+	pauline1LastMsg = pauline1->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline1LastMsg))
+		goto end;
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline1LastMsg), laureMessage);
+	pauline1LastMsg = NULL;
+
+	// Check that the message was correctly received and decrypted by Pauline2
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline2->stat.number_of_LinphoneMessageReceived, initialPauline2Stats.number_of_LinphoneMessageReceived + 1, 10000));
+	LinphoneChatMessage *pauline2LastMsg = pauline2->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline2LastMsg))
+		goto end;
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline2LastMsg), laureMessage);
+	pauline2LastMsg = NULL;
 
 end:
 
