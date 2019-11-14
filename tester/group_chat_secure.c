@@ -2021,6 +2021,8 @@ static void group_chat_lime_x3dh_chatroom_security_alert (void) {
 		BC_ASSERT_FALSE((marie->stat.number_of_LinphoneMessageReceived == initialMarieStats.number_of_LinphoneMessageReceived + 1));
 		BC_ASSERT_FALSE((pauline1->stat.number_of_LinphoneMessageReceived == initialPauline1Stats.number_of_LinphoneMessageReceived + 3));
 		BC_ASSERT_FALSE((pauline2->stat.number_of_LinphoneMessageReceived == initialPauline2Stats.number_of_LinphoneMessageReceived + 1));
+
+		lp_config_set_int(linphone_core_get_config(laure->lc), "lime", "allow_message_in_unsafe_chatroom", 1);
 	}
 	// to allow message to be sent
 	lp_config_set_int(linphone_core_get_config(laure->lc), "lime", "max_nb_device_per_participant", 2);
