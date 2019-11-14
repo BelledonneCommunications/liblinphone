@@ -26,6 +26,7 @@
 #include "call/call.h"
 #include "call/call-p.h"
 #include "conference/participant.h"
+#include "conference/params/media-session-params-p.h"
 
 #include "linphone/core.h"
 
@@ -37,8 +38,7 @@ LINPHONE_BEGIN_NAMESPACE
  * MS2AudioStream implementation.
  */
 
-MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const StreamParams &params) : MS2Stream(sg, params){
-	
+MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
 	mStream = audio_stream_new2(getCCore()->factory, getBindIp().c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
 	initializeSessions((MediaStream*)mStream);
 
@@ -65,7 +65,7 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const StreamParams &params) : M
 		zrtpParams.selfUri = selfUri;
 		/* Get key lifespan from config file, default is 0:forever valid */
 		zrtpParams.limeKeyTimeSpan = bctbx_time_string_to_sec(lp_config_get_string(linphone_core_get_config(getCCore()), "sip", "lime_key_validity", "0"));
-		setZrtpCryptoTypesParameters(&zrtpParams, params.mRemoteStreamDescription ? params.mRemoteStreamDescription->haveZrtpHash : false);
+		setZrtpCryptoTypesParameters(&zrtpParams, params.remoteStreamDescription ? params.remoteStreamDescription->haveZrtpHash : false);
 		audio_stream_enable_zrtp(mStream, &zrtpParams);
 		if (peerUri)
 			ms_free(peerUri);
@@ -121,11 +121,11 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool hav
 	params->sasTypesCount = linphone_core_get_zrtp_sas_suites(getCCore(), params->sasTypes);
 	params->keyAgreementsCount = linphone_core_get_zrtp_key_agreement_suites(getCCore(), params->keyAgreements);
 	
-	params->autoStart =  (getMediaSessionPrivate().getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) && (haveRemoteZrtpHash == false) ;
+	params->autoStart =  (getMediaSessionPrivate().params()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) && (haveRemoteZrtpHash == false) ;
 }
 
 
-void MS2AudioStream::initialize(){
+void MS2AudioStream::prepare(){
 	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
 	if (playcard) {
 		// Set the stream type immediately, as on iOS AudioUnit is instanciated very early because it is 
@@ -167,191 +167,181 @@ void MS2AudioStream::initialize(){
 	audio_stream_enable_noise_gate(mStream, enabled);
 	audio_stream_set_features(mStream, linphone_core_get_audio_features(getCCore()));
 	
-	MS2Stream::initialize();
+	MS2Stream::prepare();
 }
 
 MediaStream *MS2AudioStream::getMediaStream()const{
 	return &mStream->ms;
 }
 
-void MS2AudioStream::start(SalStreamDescription *stream, CallSession::State targetState){
-	if (stream->dir != SalStreamInactive && stream->rtp_port != 0) {
-		int usedPt = -1;
-		onHoldFile = "";
-		audioProfile = makeProfile(resultDesc, stream, &usedPt);
-		if (usedPt == -1)
-			lWarning() << "No audio stream accepted?";
-		else {
-			const char *rtpAddr = (stream->rtp_addr[0] != '\0') ? stream->rtp_addr : resultDesc->addr;
-			bool isMulticast = !!ms_is_multicast(rtpAddr);
-			bool ok = true;
-			getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
-			getCurrentParams()->enableAudio(true);
-			MSSndCard *playcard = q->getCore()->getCCore()->sound_conf.lsd_card ? q->getCore()->getCCore()->sound_conf.lsd_card : q->getCore()->getCCore()->sound_conf.play_sndcard;
-			if (!playcard)
-				lWarning() << "No card defined for playback!";
-			MSSndCard *captcard = q->getCore()->getCCore()->sound_conf.capt_sndcard;
-			if (!captcard)
-				lWarning() << "No card defined for capture!";
-			string playfile = L_C_TO_STRING(q->getCore()->getCCore()->play_file);
-			string recfile = L_C_TO_STRING(q->getCore()->getCCore()->rec_file);
-			/* Don't use file or soundcard capture when placed in recv-only mode */
-			if ((stream->rtp_port == 0) || (stream->dir == SalStreamRecvOnly) || ((stream->multicast_role == SalMulticastReceiver) && isMulticast)) {
-				captcard = nullptr;
-				playfile = "";
-			}
-			if (targetState == CallSession::State::Paused) {
-				// In paused state, we never use soundcard
-				playcard = captcard = nullptr;
-				recfile = "";
-				// And we will eventually play "playfile" if set by the user
-			}
-			if (listener && listener->isPlayingRingbackTone(q->getSharedFromThis())) {
-				captcard = nullptr;
-				playfile = ""; /* It is setup later */
-				if (lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sound", "send_ringback_without_playback", 0) == 1) {
-					playcard = nullptr;
-					recfile = "";
-				}
-			}
-			// If playfile are supplied don't use soundcards
-			bool useRtpIo = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sound", "rtp_io", false);
-			bool useRtpIoEnableLocalOutput = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sound", "rtp_io_enable_local_output", false);
-			if (q->getCore()->getCCore()->use_files || (useRtpIo && !useRtpIoEnableLocalOutput)) {
-				captcard = playcard = nullptr;
-			}
-			if (getParams()->getPrivate()->getInConference()) {
-				// First create the graph without soundcard resources
-				captcard = playcard = nullptr;
-			}
-			if (listener && !listener->areSoundResourcesAvailable(q->getSharedFromThis())) {
-				lInfo() << "Sound resources are used by another CallSession, not using soundcard";
-				captcard = playcard = nullptr;
-			}
+void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State targetState){
+	const SalStreamDescription *stream = params.resultStreamDescription;
+	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
+	
+	if (stream->dir == SalStreamInactive || stream->rtp_port == 0){
+		stop();
+		return;
+	}
+	
+	int usedPt = -1;
+	string onHoldFile = "";
+	RtpProfile *audioProfile = makeProfile(params.resultMediaDescription, stream, &usedPt);
+	if (usedPt == -1){
+		lError() << "No payload types configured for this stream !";
+		stop();
+		return;
+	}
+	const char *rtpAddr = (stream->rtp_addr[0] != '\0') ? stream->rtp_addr : params.resultMediaDescription->addr;
+	bool isMulticast = !!ms_is_multicast(rtpAddr);
+	bool ok = true;
+	if (isMain()){
+		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
+		getMediaSessionPrivate().getCurrentParams()->enableAudio(true);
+	}
+	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+	if (!playcard)
+		lWarning() << "No card defined for playback!";
+	MSSndCard *captcard = getCCore()->sound_conf.capt_sndcard;
+	if (!captcard)
+		lWarning() << "No card defined for capture!";
+	string playfile = L_C_TO_STRING(getCCore()->play_file);
+	string recfile = L_C_TO_STRING(getCCore()->rec_file);
+	/* Don't use file or soundcard capture when placed in recv-only mode */
+	if ((stream->rtp_port == 0) || (stream->dir == SalStreamRecvOnly) || ((stream->multicast_role == SalMulticastReceiver) && isMulticast)) {
+		captcard = nullptr;
+		playfile = "";
+	}
+	if (targetState == CallSession::State::Paused) {
+		// In paused state, we never use soundcard
+		playcard = captcard = nullptr;
+		recfile = "";
+		// And we will eventually play "playfile" if set by the user
+	}
+	if (listener && listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis())) {
+		captcard = nullptr;
+		playfile = ""; /* It is setup later */
+		if (lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "send_ringback_without_playback", 0) == 1) {
+			playcard = nullptr;
+			recfile = "";
+		}
+	}
+	// If playfile are supplied don't use soundcards
+	bool useRtpIo = !!lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "rtp_io", false);
+	bool useRtpIoEnableLocalOutput = !!lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "rtp_io_enable_local_output", false);
+	if (getCCore()->use_files || (useRtpIo && !useRtpIoEnableLocalOutput)) {
+		captcard = playcard = nullptr;
+	}
+	if (getMediaSessionPrivate().getParams()->getPrivate()->getInConference()) {
+		// First create the graph without soundcard resources
+		captcard = playcard = nullptr;
+	}
+	if (listener && !listener->areSoundResourcesAvailable(getMediaSession().getSharedFromThis())) {
+		lInfo() << "Sound resources are used by another CallSession, not using soundcard";
+		captcard = playcard = nullptr;
+	}
 
+	if (playcard) {
+		ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
+	}
+	
+	bool useEc = captcard && linphone_core_echo_cancellation_enabled(getCCore());
+	audio_stream_enable_echo_canceller(mStream, useEc);
+	if (playcard && (stream->max_rate > 0))
+		ms_snd_card_set_preferred_sample_rate(playcard, stream->max_rate);
+	if (captcard && (stream->max_rate > 0))
+		ms_snd_card_set_preferred_sample_rate(captcard, stream->max_rate);
+	
+	if (!getMediaSessionPrivate().getParams()->getPrivate()->getInConference() && !getMediaSessionPrivate().getParams()->getRecordFilePath().empty()) {
+		audio_stream_mixed_record_open(mStream, getMediaSessionPrivate().getParams()->getRecordFilePath().c_str());
+		getMediaSessionPrivate().getCurrentParams()->setRecordFilePath(getMediaSessionPrivate().Params()->getRecordFilePath());
+	}
+
+	MS2Stream::render(params, targetState);
+	/* Now start the stream */
+	MSMediaStreamIO io = MS_MEDIA_STREAM_IO_INITIALIZER;
+	if (useRtpIo) {
+		if (useRtpIoEnableLocalOutput) {
+			io.input.type = MSResourceRtp;
+			io.input.session = createAudioRtpIoSession();
 			if (playcard) {
-				ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
-			}
-			media_stream_set_max_network_bitrate(&audioStream->ms, linphone_core_get_upload_bandwidth(q->getCore()->getCCore()) * 1000);
-			bool useEc = captcard && linphone_core_echo_cancellation_enabled(q->getCore()->getCCore());
-			audio_stream_enable_echo_canceller(audioStream, useEc);
-			if (playcard && (stream->max_rate > 0))
-				ms_snd_card_set_preferred_sample_rate(playcard, stream->max_rate);
-			if (captcard && (stream->max_rate > 0))
-				ms_snd_card_set_preferred_sample_rate(captcard, stream->max_rate);
-			rtp_session_enable_rtcp_mux(audioStream->ms.sessions.rtp_session, stream->rtcp_mux);
-			if (!getParams()->getPrivate()->getInConference() && !getParams()->getRecordFilePath().empty()) {
-				audio_stream_mixed_record_open(audioStream, getParams()->getRecordFilePath().c_str());
-				getCurrentParams()->setRecordFilePath(getParams()->getRecordFilePath());
-			}
-			// Valid local tags are > 0
-			if (sal_stream_description_has_srtp(stream)) {
-				const SalStreamDescription *localStreamDesc = sal_media_description_find_stream(localDesc, stream->proto, SalAudio);
-				int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(stream->crypto_local_tag));
-				if (cryptoIdx >= 0) {
-					ms_media_stream_sessions_set_srtp_recv_key_b64(&audioStream->ms.sessions, stream->crypto[0].algo, stream->crypto[0].master_key);
-					ms_media_stream_sessions_set_srtp_send_key_b64(&audioStream->ms.sessions, stream->crypto[0].algo, localStreamDesc->crypto[cryptoIdx].master_key);
-				} else
-					lWarning() << "Failed to find local crypto algo with tag: " << stream->crypto_local_tag;
-			}
-			configureRtpSessionForRtcpFb(stream);
-			configureRtpSessionForRtcpXr(SalAudio);
-			bool videoWillBeUsed = false;
-#if defined(VIDEO_ENABLED)
-			const SalStreamDescription *vstream = sal_media_description_find_best_stream(resultDesc, SalVideo);
-			if (vstream && (vstream->dir != SalStreamInactive) && vstream->payloads) {
-				/* When video is used, do not make adaptive rate control on audio, it is stupid */
-				videoWillBeUsed = true;
-			}
-#endif
-			configureAdaptiveRateControl(&audioStream->ms, getCurrentParams()->getUsedAudioCodec(), videoWillBeUsed);
-			if (isMulticast)
-				rtp_session_set_multicast_ttl(audioStream->ms.sessions.rtp_session, stream->ttl);
-			MSMediaStreamIO io = MS_MEDIA_STREAM_IO_INITIALIZER;
-			if (useRtpIo) {
-				if (useRtpIoEnableLocalOutput) {
-					io.input.type = MSResourceRtp;
-					io.input.session = createAudioRtpIoSession();
-					if (playcard) {
-						io.output.type = MSResourceSoundcard;
-						io.output.soundcard = playcard;
-					} else {
-						io.output.type = MSResourceFile;
-						io.output.file = recfile.empty() ? nullptr : recfile.c_str();
-					}
-				} else {
-					io.input.type = io.output.type = MSResourceRtp;
-					io.input.session = io.output.session = createAudioRtpIoSession();
-				}
-				if (!io.input.session)
-					ok = false;
+				io.output.type = MSResourceSoundcard;
+				io.output.soundcard = playcard;
 			} else {
-				if (playcard) {
-					io.output.type = MSResourceSoundcard;
-					io.output.soundcard = playcard;
-				} else {
-					io.output.type = MSResourceFile;
-					io.output.file = recfile.empty() ? nullptr : recfile.c_str();
-				}
-				if (captcard) {
-					io.input.type = MSResourceSoundcard;
-					io.input.soundcard = captcard;
-				} else {
-					io.input.type = MSResourceFile;
-					onHoldFile = playfile;
-					io.input.file = nullptr; /* We prefer to use the remote_play api, that allows to play multimedia files */
-				}
+				io.output.type = MSResourceFile;
+				io.output.file = recfile.empty() ? nullptr : recfile.c_str();
 			}
-			if (ok) {
-				currentCaptureCard = ms_media_resource_get_soundcard(&io.input);
-				currentPlayCard = ms_media_resource_get_soundcard(&io.output);
+		} else {
+			io.input.type = io.output.type = MSResourceRtp;
+			io.input.session = io.output.session = createAudioRtpIoSession();
+		}
+		if (!io.input.session)
+			ok = false;
+	} else {
+		if (playcard) {
+			io.output.type = MSResourceSoundcard;
+			io.output.soundcard = playcard;
+		} else {
+			io.output.type = MSResourceFile;
+			io.output.file = recfile.empty() ? nullptr : recfile.c_str();
+		}
+		if (captcard) {
+			io.input.type = MSResourceSoundcard;
+			io.input.soundcard = captcard;
+		} else {
+			io.input.type = MSResourceFile;
+			onHoldFile = playfile;
+			io.input.file = nullptr; /* We prefer to use the remote_play api, that allows to play multimedia files */
+		}
+	}
+	if (ok) {
+		currentCaptureCard = ms_media_resource_get_soundcard(&io.input);
+		currentPlayCard = ms_media_resource_get_soundcard(&io.output);
 
-				int err = audio_stream_start_from_io(audioStream, audioProfile, rtpAddr, stream->rtp_port,
-					(stream->rtcp_addr[0] != '\0') ? stream->rtcp_addr : resultDesc->addr,
-					(linphone_core_rtcp_enabled(q->getCore()->getCCore()) && !isMulticast) ? (stream->rtcp_port ? stream->rtcp_port : stream->rtp_port + 1) : 0,
-					usedPt, &io);
-				if (err == 0)
-					postConfigureAudioStreams((audioMuted || microphoneMuted) && (listener && !listener->isPlayingRingbackTone(q->getSharedFromThis())));
-			}
-			ms_media_stream_sessions_set_encryption_mandatory(&audioStream->ms.sessions, isEncryptionMandatory());
-			if ((targetState == CallSession::State::Paused) && !captcard && !playfile.empty()) {
-				int pauseTime = 500;
-				ms_filter_call_method(audioStream->soundread, MS_FILE_PLAYER_LOOP, &pauseTime);
-			}
-			if (listener && listener->isPlayingRingbackTone(q->getSharedFromThis()))
-				setupRingbackPlayer();
-			if (getParams()->getPrivate()->getInConference() && listener) {
-				// Transform the graph to connect it to the conference filter
-				bool mute = (stream->dir == SalStreamRecvOnly);
-				listener->onCallSessionConferenceStreamStarting(q->getSharedFromThis(), mute);
-			}
-			getCurrentParams()->getPrivate()->setInConference(getParams()->getPrivate()->getInConference());
-			getCurrentParams()->enableLowBandwidth(getParams()->lowBandwidthEnabled());
-			// Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute
-			SalMediaDescription *remote = op->getRemoteMediaDescription();
-			const SalStreamDescription *remoteStream = sal_media_description_find_best_stream(remote, SalAudio);
-			if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), LinphoneMediaEncryptionZRTP)) {
-				// Perform mutual authentication if instant messaging encryption is enabled
-				auto encryptionEngine = q->getCore()->getEncryptionEngine();
-				//Is call direction really relevant ? might be linked to offerer/answerer rather than call direction ?
-				LinphoneCallDir direction = this->getPublic()->CallSession::getDirection();
-				if (encryptionEngine && audioStream->ms.sessions.zrtp_context) {
-					encryptionEngine->mutualAuthentication(
-														   audioStream->ms.sessions.zrtp_context,
-														   op->getLocalMediaDescription(),
-														   op->getRemoteMediaDescription(),
-														   direction
-														   );
-				}
-				
-				//Start zrtp if remote has offered it or if local is configured for zrtp and is the offerrer. If not, defered when ACK is received
-				if ((getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP && op->isOfferer()) || (remoteStream->haveZrtpHash == 1)) {
-					startZrtpPrimaryChannel(remoteStream);
-				}
-			}
+		int err = audio_stream_start_from_io(mStream, audioProfile, rtpAddr, stream->rtp_port,
+			(stream->rtcp_addr[0] != '\0') ? stream->rtcp_addr : params.resultStreamDescription->addr,
+			(linphone_core_rtcp_enabled(getCCore()) && !isMulticast) ? (stream->rtcp_port ? stream->rtcp_port : stream->rtp_port + 1) : 0,
+			usedPt, &io);
+		if (err == 0)
+			postConfigureAudioStreams((audioMuted || microphoneMuted) && (listener && !listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis())));
+	}
+	
+	if ((targetState == CallSession::State::Paused) && !captcard && !playfile.empty()) {
+		int pauseTime = 500;
+		ms_filter_call_method(mStream->soundread, MS_FILE_PLAYER_LOOP, &pauseTime);
+	}
+	if (listener && listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis()))
+		setupRingbackPlayer();
+	if (getMediaSessionPrivate().getParams()->getPrivate()->getInConference() && listener) {
+		// Transform the graph to connect it to the conference filter
+		bool mute = (stream->dir == SalStreamRecvOnly);
+		listener->onCallSessionConferenceStreamStarting(getMediaSession().getSharedFromThis(), mute);
+	}
+	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setInConference(getMediaSessionPrivate().getParams()->getPrivate()->getInConference());
+	getMediaSessionPrivate().getCurrentParams()->enableLowBandwidth(getMediaSessionPrivate().getParams()->lowBandwidthEnabled());
+	
+	// Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute
+	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)) {
+		// Perform mutual authentication if instant messaging encryption is enabled
+		auto encryptionEngine = getEncryptionEngine();
+		//Is call direction really relevant ? might be linked to offerer/answerer rather than call direction ?
+		LinphoneCallDir direction = getMediaSession().getDirection();
+		if (encryptionEngine && audioStream->ms.sessions.zrtp_context) {
+			encryptionEngine->mutualAuthentication(
+													audioStream->ms.sessions.zrtp_context,
+													op->getLocalMediaDescription(),
+													op->getRemoteMediaDescription(),
+													direction
+													);
+		}
+		
+		//Start zrtp if remote has offered it or if local is configured for zrtp and is the offerrer. If not, defered when ACK is received
+		if ((getMediaSessionPrivate().getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP && params.localIsOfferer)
+			|| (params.remoteStreamDescription->haveZrtpHash == 1)) {
+			startZrtpPrimaryChannel(params.remoteStreamDescription);
 		}
 	}
 	
+	return;
 }
 
 void MS2AudioStream::stop(){
@@ -360,20 +350,39 @@ void MS2AudioStream::stop(){
 	MS2Stream::stop();
 	if (mStream->ec) {
 		char *stateStr = nullptr;
-		ms_filter_call_method(audioStream->ec, MS_ECHO_CANCELLER_GET_STATE_STRING, &stateStr);
+		ms_filter_call_method(mStream->ec, MS_ECHO_CANCELLER_GET_STATE_STRING, &stateStr);
 		if (stateStr) {
 			lInfo() << "Writing echo canceler state, " << (int)strlen(stateStr) << " bytes";
-			lp_config_write_relative_file(getCCore()), ecStateStore, stateStr);
+			lp_config_write_relative_file(linphone_core_get_config(getCCore()), ecStateStore, stateStr);
 		}
 	}
 	
 	audio_stream_stop(mStream);
 	mStream = nullptr;
-	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
+	getMediaSessionPrivate().getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
 	
 	
 	currentCaptureCard = nullptr;
 	currentPlayCard = nullptr;
+}
+
+void MS2AudioStream::handleEvent(const OrtpEvent *ev){
+	OrtpEventType evt = ortp_event_get_type(ev);
+	OrtpEventData *evd = ortp_event_get_data(ev);
+	switch (evt){
+		case ORTP_EVENT_ZRTP_ENCRYPTION_CHANGED:
+			if (isMain()) zrtpStarted(this);
+		break;
+		case ORTP_EVENT_ZRTP_SAS_READY:
+			authTokenReady(evd->info.zrtp_info.sas, !!evd->info.zrtp_info.verified);
+		break;
+		case ORTP_EVENT_DTLS_ENCRYPTION_CHANGED:
+			if (isMain()) encryptionChanged(!!evd->info.dtls_stream_encrypted);
+		break;
+		case ORTP_EVENT_TELEPHONE_EVENT:
+			telephoneEventReceived(evd->info.telephone_event);
+		break;
+	}
 }
 
 MS2AudioStream::~MS2AudioStream(){

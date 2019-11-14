@@ -39,6 +39,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 
 class MediaSessionPrivate : public CallSessionPrivate {
+	friend class StreamsGroup;
 public:
 	static int resumeAfterFailedTransfer (void *userData, unsigned int);
 	static bool_t startPendingRefer (void *userData);
@@ -128,7 +129,8 @@ public:
 	std::shared_ptr<Participant> getMe () const;
 	void setDtlsFingerprint(const std::string &fingerPrint);
 	const std::string & getDtlsFingerprint()const;
-
+	bool isEncryptionMandatory () const;
+	void handleIceEvents (OrtpEvent *ev);
 private:
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo (const std::string &name);
 
@@ -225,7 +227,6 @@ private:
 	RtpSession *createAudioRtpIoSession ();
 	RtpSession *createVideoRtpIoSession ();
 	void freeResources ();
-	void handleIceEvents (OrtpEvent *ev);
 	void handleStreamEvents (int streamIndex);
 	void initializeAudioStream ();
 	void initializeTextStream ();
@@ -260,7 +261,6 @@ private:
 	void audioStreamEncryptionChanged (bool encrypted);
 	uint16_t getAvpfRrInterval () const;
 	unsigned int getNbActiveStreams () const;
-	bool isEncryptionMandatory () const;
 	int mediaParametersChanged (SalMediaDescription *oldMd, SalMediaDescription *newMd);
 	void addSecurityEventInChatrooms (const IdentityAddress &faultyDevice, ConferenceSecurityEvent::SecurityEventType securityEventType);
 	void propagateEncryptionChanged ();

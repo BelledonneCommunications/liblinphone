@@ -92,15 +92,15 @@ void StreamsGroup::prepare(){
 
 void StreamsGroup::render(const OfferAnswerContext &params, CallSession::State targetState){
 	OfferAnswerContext context = params;
-	for(auto stream : mStreams){
+	for(auto &stream : mStreams){
 		context.scopeStreamToIndex(stream->getIndex());
 		stream->render(context, targetState);
 	}
 }
 
 void StreamsGroup::stop(){
-	for(auto stream : mStreams){
-		if (stream && stream->getState() != Stopped)
+	for(auto &stream : mStreams){
+		if (stream && stream->getState() != Stream::Stopped)
 			stream->stop();
 	}
 }
@@ -129,6 +129,58 @@ bool StreamsGroup::isPortUsed(int port)const{
 	return false;
 }
 
+LinphoneCore *StreamsGroup::getCCore()const{
+	return mMediaSession.getCore()->getCCore();
+}
+
+MediaSessionPrivate &StreamsGroup::getMediaSessionPrivate()const{
+	return *getMediaSession().getPrivate();
+}
+
+int StreamsGroup::updateAllocatedAudioBandwidth (const PayloadType *pt, int maxbw) {
+	mAudioBandwidth = PayloadTypeHandler::getAudioPayloadTypeBandwidth(pt, maxbw);
+	lInfo() << "Audio bandwidth for StreamsGroup [" << this << "] is " << mAudioBandwidth;
+	return mAudioBandwidth;
+}
+
+int StreamsGroup::getVideoBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc) {
+	int remoteBandwidth = 0;
+	if (desc->bandwidth > 0)
+		remoteBandwidth = desc->bandwidth;
+	else if (md->bandwidth > 0) {
+		/* Case where b=AS is given globally, not per stream */
+		remoteBandwidth = PayloadTypeHandler::getRemainingBandwidthForVideo(md->bandwidth, mAudioBandwidth);
+	}
+	return PayloadTypeHandler::getMinBandwidth(
+		PayloadTypeHandler::getRemainingBandwidthForVideo(linphone_core_get_upload_bandwidth(getCCore()), mAudioBandwidth), remoteBandwidth);
+}
+
+
+void StreamsGroup::zrtpStarted(Stream *mainZrtpStream){
+	for (auto &stream : mStreams){
+		if (stream && stream.get() != mainZrtpStream) stream->zrtpStarted(mainZrtpStream);
+	}
+	propagateEncryptionChanged();
+}
+
+bool StreamsGroup::allStreamsEncrypted () const {
+	int activeStreamsCount = 0;
+	for (auto &stream : mStreams){
+		if (stream->getState() == Stream::Running){
+			++activeStreamsCount;
+			if (!stream->isEncrypted()){
+				return false;
+			}
+		}
+	}
+	return activeStreamsCount > 0;
+}
+
+
+void StreamsGroup::propagateEncryptionChanged () {
+	getMediaSessionPrivate().propagateEncryptionChanged();
+}
+
 
 /*
  * Stream implementation.
@@ -141,7 +193,11 @@ Stream::Stream(StreamsGroup &sg, const OfferAnswerContext &params) : mStreamsGro
 }
 
 LinphoneCore *Stream::getCCore()const{
-	return mStreamsGroup.getMediaSession().getCore()->getCCore();
+	return getCore().getCCore();
+}
+
+Core &Stream::getCore()const{
+	return *mStreamsGroup.getMediaSession().getCore();
 }
 
 MediaSession &Stream::getMediaSession()const{
@@ -316,9 +372,96 @@ void MS2Stream::initMulticast(const OfferAnswerContext &params) {
 		<< sal_multicast_role_to_string(mPortConfig.multicastRole) << "]";
 }
 
+void MS2Stream::configureRtpSessionForRtcpFb (const OfferAnswerContext &params) {
+	if (getType() != SalAudio && getType() != SalVideo) return; //No AVPF for other than audio/video
+	
+	rtp_session_enable_avpf_feature(mSessions.rtp_session, ORTP_AVPF_FEATURE_GENERIC_NACK, !!params.resultStreamDescription->rtcp_fb.generic_nack_enabled);
+	rtp_session_enable_avpf_feature(mSessions.rtp_session, ORTP_AVPF_FEATURE_TMMBR, !!params.resultStreamDescription->rtcp_fb.tmmbr_enabled);
+}
+
+void MS2Stream::configureRtpSessionForRtcpXr(const OfferAnswerContext &params) {
+	OrtpRtcpXrConfiguration currentConfig;
+	const OrtpRtcpXrConfiguration *remoteConfig = &params.remoteStreamDescription->rtcp_xr;
+	if (params.localStreamDescription->dir == SalStreamInactive)
+		return;
+	else if (params.localStreamDescription->dir == SalStreamRecvOnly) {
+		/* Use local config for unilateral parameters and remote config for collaborative parameters */
+		memcpy(&currentConfig, &params.localStreamDescription->rtcp_xr, sizeof(currentConfig));
+		currentConfig.rcvr_rtt_mode = remoteConfig->rcvr_rtt_mode;
+		currentConfig.rcvr_rtt_max_size = remoteConfig->rcvr_rtt_max_size;
+	} else
+		memcpy(&currentConfig, remoteConfig, sizeof(currentConfig));
+	
+	rtp_session_configure_rtcp_xr(mSessions.rtp_session, &currentConfig);
+}
+
+void MS2Stream::configureAdaptiveRateControl (const OfferAnswerContext &params) {
+	bool videoWillBeUsed = false;
+	MediaStream *ms = getMediaStream();
+
+	const SalStreamDescription *vstream = sal_media_description_find_best_stream(const_cast<SalMediaDescription*>(params.resultMediaDescription), SalVideo);
+	if (vstream && (vstream->dir != SalStreamInactive) && vstream->payloads) {
+		/* When video is used, do not make adaptive rate control on audio, it is stupid */
+		videoWillBeUsed = true;
+	}
+	bool enabled = !!linphone_core_adaptive_rate_control_enabled(getCCore());
+	if (!enabled) {
+		media_stream_enable_adaptive_bitrate_control(ms, false);
+		return;
+	}
+	bool isAdvanced = true;
+	string algo = linphone_core_get_adaptive_rate_algorithm(getCCore());
+	if (algo == "basic")
+		isAdvanced = false;
+	else if (algo == "advanced")
+		isAdvanced = true;
+	
+	if (isAdvanced && !params.resultStreamDescription->rtcp_fb.tmmbr_enabled) {
+		lWarning() << "Advanced adaptive rate control requested but avpf-tmmbr is not activated in this stream. Reverting to basic rate control instead";
+		isAdvanced = false;
+	}
+	if (isAdvanced) {
+		lInfo() << "Setting up advanced rate control";
+		ms_bandwidth_controller_add_stream(getCCore()->bw_controller, ms);
+		media_stream_enable_adaptive_bitrate_control(ms, false);
+	} else {
+		media_stream_set_adaptive_bitrate_algorithm(ms, MSQosAnalyzerAlgorithmSimple);
+		if (getType() == SalAudio && videoWillBeUsed) {
+			/* If this is an audio stream but video is going to be used, there is no need to perform
+			 * basic rate control on the audio stream, just the video stream. */
+			enabled = false;
+		}
+		media_stream_enable_adaptive_bitrate_control(ms, enabled);
+	}
+}
 
 
 void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targetState){
+	const SalStreamDescription *stream = params.resultStreamDescription;
+	const char *rtpAddr = (stream->rtp_addr[0] != '\0') ? stream->rtp_addr : params.resultMediaDescription->addr;
+	bool isMulticast = !!ms_is_multicast(rtpAddr);
+	
+	
+	media_stream_set_max_network_bitrate(getMediaStream(), linphone_core_get_upload_bandwidth(getCCore()) * 1000);
+	if (isMulticast)
+		rtp_session_set_multicast_ttl(mSessions.rtp_session, stream->ttl);
+	rtp_session_enable_rtcp_mux(mSessions.rtp_session, stream->rtcp_mux);
+		// Valid local tags are > 0
+	if (sal_stream_description_has_srtp(stream)) {
+		int cryptoIdx = Sal::findCryptoIndexFromTag(params.localStreamDescription->crypto, static_cast<unsigned char>(stream->crypto_local_tag));
+		if (cryptoIdx >= 0) {
+			ms_media_stream_sessions_set_srtp_recv_key_b64(&mSessions, stream->crypto[0].algo, stream->crypto[0].master_key);
+			ms_media_stream_sessions_set_srtp_send_key_b64(&mSessions, stream->crypto[0].algo, 
+								       params.localStreamDescription->crypto[cryptoIdx].master_key);
+		} else
+			lWarning() << "Failed to find local crypto algo with tag: " << stream->crypto_local_tag;
+	}
+	ms_media_stream_sessions_set_encryption_mandatory(&mSessions, isEncryptionMandatory());
+	configureRtpSessionForRtcpFb(params);
+	configureRtpSessionForRtcpXr(params);
+	configureAdaptiveRateControl(params);
+	
+	Stream::render(params, targetState);
 }
 
 
@@ -487,15 +630,58 @@ void MS2Stream::prepare(){
 			meta_rtp_transport_set_endpoint(meta_rtcp, rtcpFunc(rtcpFuncData, mPortConfig.rtcpPort));
 	}
 	getIceAgent().prepareIceForStream(getMediaStream(), false);
+	mTimer = getCore().createTimer([this](){
+			handleEvents();
+			return true;
+		}, sEventPollIntervalMs);
+	Stream::prepare();
+}
+
+int MS2Stream::getIdealAudioBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc) {
+	int remoteBandwidth = 0;
+	if (desc->bandwidth > 0)
+		remoteBandwidth = desc->bandwidth;
+	else if (md->bandwidth > 0) {
+		/* Case where b=AS is given globally, not per stream */
+		remoteBandwidth = md->bandwidth;
+	}
+	int uploadBandwidth = 0;
+	bool forced = false;
+	if (getMediaSessionPrivate().getParams()->getPrivate()->getUpBandwidth() > 0) {
+		forced = true;
+		uploadBandwidth = getMediaSessionPrivate().getParams()->getPrivate()->getUpBandwidth();
+	} else
+		uploadBandwidth = linphone_core_get_upload_bandwidth(getCCore());
+	uploadBandwidth = PayloadTypeHandler::getMinBandwidth(uploadBandwidth, remoteBandwidth);
+	if (!linphone_core_media_description_contains_video_stream(md) || forced)
+		return uploadBandwidth;
+	
+	/*
+	 * This a default heuristic to choose a target upload bandwidth for an audio stream, the
+	 * remaining can then be allocated for video.
+	 */
+	if (PayloadTypeHandler::bandwidthIsGreater(uploadBandwidth, 512))
+		uploadBandwidth = 100;
+	else if (PayloadTypeHandler::bandwidthIsGreater(uploadBandwidth, 256))
+		uploadBandwidth = 64;
+	else if (PayloadTypeHandler::bandwidthIsGreater(uploadBandwidth, 128))
+		uploadBandwidth = 40;
+	else if (PayloadTypeHandler::bandwidthIsGreater(uploadBandwidth, 0))
+		uploadBandwidth = 24;
+	return uploadBandwidth;
 }
 
 RtpProfile * MS2Stream::makeProfile(const SalMediaDescription *md, const SalStreamDescription *desc, int *usedPt) {
+	if (mRtpProfile){
+		rtp_profile_destroy(mRtpProfile);
+		mRtpProfile = nullptr;
+	}
 	*usedPt = -1;
 	int bandwidth = 0;
 	if (desc->type == SalAudio)
 		bandwidth = getIdealAudioBandwidth(md, desc);
 	else if (desc->type == SalVideo)
-		bandwidth = getVideoBandwidth(md, desc);
+		bandwidth = getGroup().getVideoBandwidth(md, desc);
 
 	bool first = true;
 	RtpProfile *profile = rtp_profile_new("Call profile");
@@ -508,8 +694,7 @@ RtpProfile * MS2Stream::makeProfile(const SalMediaDescription *md, const SalStre
 		if ((pt->flags & PAYLOAD_TYPE_FLAG_CAN_SEND) && first) {
 			/* First codec in list is the selected one */
 			if (desc->type == SalAudio) {
-				updateAllocatedAudioBandwidth(pt, bandwidth);
-				bandwidth = audioBandwidth;
+				bandwidth = getGroup().updateAllocatedAudioBandwidth(pt, bandwidth);
 				upPtime = getMediaSessionPrivate().getParams()->getPrivate()->getUpPtime();
 				if (!upPtime)
 					upPtime = linphone_core_get_upload_ptime(getCCore());
@@ -544,6 +729,7 @@ RtpProfile * MS2Stream::makeProfile(const SalMediaDescription *md, const SalStre
 		else
 			rtp_profile_set_payload(profile, number, pt);
 	}
+	mRtpProfile = profile;
 	return profile;
 }
 
@@ -589,9 +775,116 @@ void MS2Stream::stop(){
 	}
 	ms_bandwidth_controller_remove_stream(getCCore()->bw_controller, getMediaStream());
 	
-	updateStats();
-	handleStreamEvents();
+	if (mRtpProfile){
+		rtp_profile_destroy(mRtpProfile);
+		mRtpProfile = nullptr;
+	}
 	
+	updateStats();
+	handleEvents();
+	if (mTimer){
+		getCore().destroyTimer(mTimer);
+		mTimer = nullptr;
+	}
+	Stream::stop();
+}
+
+void MS2Stream::notifyStatsUpdated () {
+	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
+	if (_linphone_call_stats_get_updated(mStats)) {
+		switch (_linphone_call_stats_get_updated(mStats)) {
+			case LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE:
+			case LINPHONE_CALL_STATS_SENT_RTCP_UPDATE:
+				if (listener) {
+					listener->onRtcpUpdateForReporting(getMediaSession().getSharedFromThis(), getType());
+				}
+				break;
+			default:
+				break;
+		}
+		if (listener)
+			listener->onStatsUpdated(getMediaSession().getSharedFromThis(), mStats);
+		_linphone_call_stats_set_updated(mStats, 0);
+	}
+}
+
+void MS2Stream::handleEvents () {
+
+	MediaStream *ms = getMediaStream();
+	if (ms) {
+		/* Ensure there is no dangling ICE check list */
+		if (!getIceAgent().hasSession())
+			media_stream_set_ice_check_list(ms, nullptr);
+		switch(ms->type){
+			case MSAudio:
+				audio_stream_iterate((AudioStream *)ms);
+				break;
+			case MSVideo:
+#ifdef VIDEO_ENABLED
+				video_stream_iterate((VideoStream *)ms);
+#endif
+				break;
+			case MSText:
+				text_stream_iterate((TextStream *)ms);
+				break;
+			default:
+				lError() << "handleStreamEvents(): unsupported stream type";
+				return;
+		}
+	}
+	OrtpEvent *ev;
+	/* Yes the event queue has to be checked at each iteration, because ice events may perform operations re-creating the streams */
+	while (mOrtpEvQueue && (ev = ortp_ev_queue_get(mOrtpEvQueue))) {
+		OrtpEventType evt = ortp_event_get_type(ev);
+		OrtpEventData *evd = ortp_event_get_data(ev);
+
+		/*This MUST be done before any call to "linphone_call_stats_fill" since it has ownership over evd->packet*/
+		if (evt == ORTP_EVENT_RTCP_PACKET_RECEIVED) {
+			do {
+				if (evd->packet && rtcp_is_RTPFB(evd->packet)) {
+					if (rtcp_RTPFB_get_type(evd->packet) == RTCP_RTPFB_TMMBR) {
+						CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
+						listener->onTmmbrReceived(getMediaSession().getSharedFromThis(), (int)getIndex(), (int)rtcp_RTPFB_tmmbr_get_max_bitrate(evd->packet));
+					}
+				}
+			} while (rtcp_next_packet(evd->packet));
+			rtcp_rewind(evd->packet);
+		}
+
+		/* The MediaStream must be taken at each iteration, because it may have changed due to the handling of events
+		 * in this loop*/
+		ms = getMediaStream();
+		if (ms)
+			linphone_call_stats_fill(mStats, ms, ev);
+		notifyStatsUpdated();
+		switch(evt){
+			case ORTP_EVENT_ZRTP_ENCRYPTION_CHANGED:
+				if (getType() != SalAudio || !isMain()){
+					getGroup().propagateEncryptionChanged();
+				}
+			break;
+			case ORTP_EVENT_DTLS_ENCRYPTION_CHANGED:
+				if (getType() != SalAudio || !isMain()){
+					getGroup().propagateEncryptionChanged();
+				}
+			break;
+			case ORTP_EVENT_ICE_SESSION_PROCESSING_FINISHED:
+			case ORTP_EVENT_ICE_GATHERING_FINISHED:
+			case ORTP_EVENT_ICE_LOSING_PAIRS_COMPLETED:
+			case ORTP_EVENT_ICE_RESTART_NEEDED:
+				/* ICE events are notified directly to the MediaSession, has it has to take actions on the signaling plane. */
+				getMediaSessionPrivate().handleIceEvents(ev);
+			break;
+		}
+	
+		/* Let subclass handle the event.*/
+		handleEvent(ev);
+		ortp_event_destroy(ev);
+	}
+}
+
+bool MS2Stream::isEncrypted() const{
+	return media_stream_secured(getMediaStream());
 }
 
 
@@ -606,16 +899,7 @@ MS2Stream::~MS2Stream(){
 
 
 
-/*
- * MS2VideoStream implemenation
- */
 
-MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
-}
-
-MediaStream *MS2VideoStream::getMediaStream()const{
-	return &mStream->ms;
-}
 
 /*
  * MS2RealTimeTextStream implemenation.

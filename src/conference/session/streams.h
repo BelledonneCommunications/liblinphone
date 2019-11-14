@@ -35,6 +35,7 @@ LINPHONE_BEGIN_NAMESPACE
 class StreamsGroup;
 class MediaSession;
 class MediaSessionPrivate;
+class MediaSessionParams;
 class IceAgent;
 
 
@@ -60,6 +61,7 @@ public:
  * Base class for any kind of stream that may be setup with SDP.
  */
 class Stream{
+	friend class StreamsGroup;
 public:
 	enum State{
 		Stopped,
@@ -82,17 +84,26 @@ public:
 	virtual LinphoneCallStats *getStats(){
 		return nullptr;
 	}
+	virtual bool isEncrypted() const = 0;
 	size_t getIndex()const { return mIndex; }
 	SalStreamType getType()const{ return mStreamType;}
-	virtual ~Stream() = default;
 	LinphoneCore *getCCore()const;
+	Core &getCore()const;
 	MediaSession &getMediaSession()const;
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	bool isPortUsed(int port) const;
 	IceAgent & getIceAgent()const;
 	State getState()const{ return mState;}
+	StreamsGroup &getGroup()const{ return mStreamsGroup;}
+	// Returns whether this stream is the "main" one of its own type, in constrat to secondary streams.
+	bool isMain()const{ return mIsMain;}
+	virtual ~Stream() = default;
 protected:
 	Stream(StreamsGroup &ms, const OfferAnswerContext &params);
+	/**
+	 * Notifies that zrtp primary stream is now secured.
+	 */
+	virtual void zrtpStarted(Stream *mainZrtpStream){};
 	PortConfig mPortConfig;
 private:
 	void setPortConfig(std::pair<int, int> portRange);
@@ -105,7 +116,16 @@ private:
 	const SalStreamType mStreamType;
 	const size_t mIndex;
 	State mState = Stopped;
-	
+	bool mIsMain = false;
+};
+
+class AudioControlInterface{
+};
+
+class VideoControlInterface{
+public:
+	virtual void sendVfu() = 0;
+	virtual ~VideoControlInterface() = default;
 };
 
 /**
@@ -116,27 +136,36 @@ public:
 	virtual void prepare() override;
 	virtual void render(const OfferAnswerContext & ctx, CallSession::State targetState) override;
 	virtual void stop() override;
-	
+	virtual bool isEncrypted() const override;
+	MSZrtpContext *getZrtpContext()const;
 	virtual ~MS2Stream();
 protected:
 	virtual MediaStream *getMediaStream()const = 0;
+	virtual void handleEvent(const OrtpEvent *ev) = 0;
 	MS2Stream(StreamsGroup &sm, const OfferAnswerContext &params);
 	std::string getBindIp();
 	int getBindPort();
 	void initializeSessions(MediaStream *stream);
 	RtpProfile * makeProfile(const SalMediaDescription *md, const SalStreamDescription *desc, int *usedPt);
-	
+	int getIdealAudioBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc);
 	RtpProfile *mRtpProfile = nullptr;
 	MSMediaStreamSessions mSessions;
 	OrtpEvQueue *mOrtpEvQueue = nullptr;
 	LinphoneCallStats *mStats = nullptr;
+	belle_sip_source_t *mTimer = nullptr;
 private:
+	void notifyStatsUpdated();
+	void handleEvents();
 	void updateStats();
 	void initMulticast(const OfferAnswerContext &params);
 	void configureRtpSession(RtpSession *session);
 	void applyJitterBufferParams (RtpSession *session);
 	void setupDtlsParams(MediaStream *ms);
+	void configureRtpSessionForRtcpFb (const OfferAnswerContext &params);
+	void configureRtpSessionForRtcpXr(const OfferAnswerContext &params);
+	void configureAdaptiveRateControl(const OfferAnswerContext &params);
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo(const std::string &name);
+	static constexpr const int sEventPollIntervalMs = 20;
 };
 
 class MS2AudioStream : public MS2Stream{
@@ -147,6 +176,7 @@ public:
 	virtual void stop() override;
 	virtual ~MS2AudioStream();
 private:
+	virtual void handleEvent(const OrtpEvent *ev) override;
 	virtual MediaStream *getMediaStream()const override;
 	void setZrtpCryptoTypesParameters(MSZrtpParams *params, bool haveZrtpHash);
 	AudioStream *mStream = nullptr;
@@ -154,11 +184,14 @@ private:
 	static constexpr const char * ecStateStore = ".linphone.ecstate";
 };
 
-class MS2VideoStream : public MS2Stream{
+class MS2VideoStream : public MS2Stream, public VideoControlInterface{
 public:
 	MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param);
+	virtual void sendVfu() override;
 private:
 	virtual MediaStream *getMediaStream()const override;
+	virtual void handleEvent(const OrtpEvent *ev) override;
+	virtual void zrtpStarted(Stream *mainZrtpStream) override;
 	VideoStream *mStream = nullptr;
 };
 
@@ -167,6 +200,7 @@ public:
 	MS2RealTimeTextStream(StreamsGroup &sm, const OfferAnswerContext &param);
 private:
 	virtual MediaStream *getMediaStream()const override;
+	virtual void handleEvent(const OrtpEvent *ev) override;
 	TextStream *mStream = nullptr;
 };
 
@@ -180,6 +214,8 @@ private:
  * streams.
  */
 class StreamsGroup{
+	friend class Stream;
+	friend class MS2Stream;
 public:
 	StreamsGroup(MediaSession &session);
 	/**
@@ -203,11 +239,22 @@ public:
 	}
 	bool isPortUsed(int port)const;
 	IceAgent &getIceAgent()const;
+	bool allStreamsEncrypted () const;
+protected:
+	LinphoneCore *getCCore()const;
+	int updateAllocatedAudioBandwidth (const PayloadType *pt, int maxbw);
+	int getVideoBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc);
+	void zrtpStarted(Stream *mainZrtpStream);
+	void propagateEncryptionChanged();
 private:
+	MediaSessionPrivate &getMediaSessionPrivate()const;
 	Stream * createStream(const OfferAnswerContext &param);
 	MediaSession &mMediaSession;
 	std::unique_ptr<IceAgent> mIceAgent;
 	std::vector<std::unique_ptr<Stream>> mStreams;
+	// Upload bandwidth used by audio.
+	int mAudioBandwidth = 0;
+
 };
 
 LINPHONE_END_NAMESPACE

@@ -3971,7 +3971,8 @@ int MediaSessionPrivate::mediaParametersChanged (SalMediaDescription *oldMd, Sal
 
 void MediaSessionPrivate::propagateEncryptionChanged () {
 	L_Q();
-	if (!allStreamsEncrypted()) {
+	
+	if (!getStreamsGroup().allStreamsEncrypted()) {
 		lInfo() << "Some streams are not encrypted";
 		getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
 		if (listener)
@@ -3985,7 +3986,15 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 			if (encryptionEngine && authTokenVerified) {
 				const SalAddress *remoteAddress = getOp()->getRemoteContactAddress();
 				peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
-				encryptionEngine->authenticationVerified(audioStream->ms.sessions.zrtp_context, op->getRemoteMediaDescription(), peerDeviceId);
+				Stream *stream = mainAudioStreamIndex != -1 ? getStreamsGroup().getStream(mainAudioStreamIndex) : nullptr;
+				if (stream){
+					MS2Stream *ms2s = dynamic_cast<MS2Stream*>(stream);
+					if (ms2s){
+						encryptionEngine->authenticationVerified(ms2s->getZrtpContext(), op->getRemoteMediaDescription(), peerDeviceId);
+					}else{
+						lError() << "Could not dynamic_cast to MS2Stream in propagateEncryptionChanged().";
+					}
+				}
 				ms_free(peerDeviceId);
 			}
 		} else {
@@ -3998,12 +4007,13 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 				: (q->getCurrentParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS) ? "DTLS" : "Unknown mechanism");
 		if (listener)
 			listener->onEncryptionChanged(q->getSharedFromThis(), true, authToken);
-#ifdef VIDEO_ENABLED
-		if (isEncryptionMandatory() && videoStream && media_stream_started(&videoStream->ms)) {
+
+		Stream *videoStream = mainVideoStreamIndex != -1 ? getStreamsGroup().getStream(mainVideoStreamIndex) : nullptr;
+		if (isEncryptionMandatory() && videoStream && videoStream->getState() == Stream::Running) {
 			/* Nothing could have been sent yet so generating key frame */
-			video_stream_send_vfu(videoStream);
+			VideoControlInterface *vc = dynamic_cast<VideoControlInterface*> (videoStream);
+			if (vc) vc->sendVfu();
 		}
-#endif
 	}
 }
 

@@ -331,6 +331,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/session/media-session.cpp
 	conference/session/streams.cpp
 	conference/session/audiostream.cpp
+	conference/session/videostream.cpp
 	content/content-disposition.cpp
 	content/content-manager.cpp
 	content/content-type.cpp

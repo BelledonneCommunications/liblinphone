@@ -31,6 +31,8 @@
 
 L_DECL_C_STRUCT(LinphoneCore);
 
+typedef struct belle_sip_source belle_sip_source_t;
+
 LINPHONE_BEGIN_NAMESPACE
 
 class AbstractChatRoom;
@@ -186,6 +188,14 @@ public:
 	// Execute specified lambda later in main loop. This method can be used from any thread to execute something later on main thread.
 	void doLater(const std::function<void ()> &something);
 
+	/*
+	 * Run supplied std::function as a timer. It should return true if repeated, false otherwise.
+	 * The returned belle_sip_source_t must be unrefed (with belle_sip_object_unref() ).
+	 * It may be unrefed before expiration, if this timer never needs to be cancelled.
+	 */
+	belle_sip_source_t *createTimer(const std::function<bool ()> &something, int milliseconds);
+	/* Stop (ie cancel) and destroy a timer created by createTimer()*/
+	void destroyTimer(belle_sip_source_t *timer);
 private:
 	Core ();
 
