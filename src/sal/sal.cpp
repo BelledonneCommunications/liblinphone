@@ -962,6 +962,10 @@ LINPHONE_PUBLIC void sal_set_dns_user_hosts_file (Sal *sal, const char *hostsFil
 	sal->setDnsUserHostsFile(hostsFile);
 }
 
+LINPHONE_PUBLIC const char* sal_get_dns_user_hosts_file (const Sal *sal) {
+	return sal->getDnsUserHostsFile().c_str();
+}
+
 LINPHONE_PUBLIC void *sal_get_stack_impl (Sal *sal) {
 	return sal->getStackImpl();
 }

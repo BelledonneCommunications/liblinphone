@@ -221,6 +221,7 @@ LINPHONE_PUBLIC int sal_enable_pending_trans_checking(Sal *sal, bool_t value);
 LINPHONE_PUBLIC	void sal_enable_unconditional_answer(Sal *sal, bool_t value);
 LINPHONE_PUBLIC	void sal_set_dns_timeout(Sal* sal,int timeout);
 LINPHONE_PUBLIC void sal_set_dns_user_hosts_file(Sal *sal, const char *hosts_file);
+LINPHONE_PUBLIC const char* sal_get_dns_user_hosts_file (const Sal *sal);
 LINPHONE_PUBLIC void *sal_get_stack_impl(Sal *sal);
 LINPHONE_PUBLIC	void sal_set_refresher_retry_after(Sal *sal,int value);
 LINPHONE_PUBLIC	int sal_get_refresher_retry_after(const Sal *sal);

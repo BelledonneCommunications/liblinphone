@@ -5488,6 +5488,71 @@ static void one_to_one_chat_room_send_forward_message (void) {
 	group_chat_room_unique_one_to_one_chat_room_with_forward_message_recreated_from_message_base(TRUE,TRUE);
 }
 
+static void core_stop_start_with_chat_room_ref (void) {
+	LinphoneCoreManager *marie1 = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline1 = linphone_core_manager_create("pauline_rc");
+	LinphoneChatRoom *marie1Cr = NULL, *pauline1Cr = NULL, *newPauline1Cr = NULL;
+	const LinphoneAddress *confAddr = NULL;
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie1);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline1);
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline1->lc)));
+	stats initialMarie1Stats = marie1->stat;
+	stats initialPauline1Stats = pauline1->stat;
+	
+	// Marie creates a new group chat room
+	const char *initialSubject = "Colleagues";
+	marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE);
+	if (!BC_ASSERT_PTR_NOT_NULL(marie1Cr)) goto end;
+	participantsAddresses = NULL;
+	confAddr = linphone_chat_room_get_conference_address(marie1Cr);
+	if (!BC_ASSERT_PTR_NOT_NULL(confAddr)) goto end;
+	
+	// Check that the chat room is correctly created on Pauline1
+	pauline1Cr = check_creation_chat_room_client_side(coresList, pauline1, &initialPauline1Stats, confAddr, initialSubject, 1, FALSE);
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline1Cr)) goto end;
+	
+	//Pauline leaving but keeping a ref like a Java GC can do, this is the key part of this test.
+	linphone_chat_room_ref(pauline1Cr);
+
+	linphone_core_stop(pauline1->lc);
+	
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_LinphoneGlobalShutdown, initialPauline1Stats.number_of_LinphoneGlobalShutdown + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_LinphoneGlobalOff, initialPauline1Stats.number_of_LinphoneGlobalOff + 1, 3000));
+
+	linphone_core_start(pauline1->lc);
+	//now GC is cleaning old chatroom
+	if (pauline1Cr) linphone_chat_room_unref(pauline1Cr);
+
+	coresList = bctbx_list_remove(coresList, pauline1->lc);
+	linphone_core_manager_reinit(pauline1);
+	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, pauline1);
+	bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
+	bctbx_list_free(tmpCoresManagerList);
+	coresList = bctbx_list_concat(coresList, tmpCoresList);
+	linphone_core_manager_start(pauline1, TRUE);
+
+	
+	// Check that the chat room has correctly created on Laure's side and that the participants are added
+	newPauline1Cr = check_has_chat_room_client_side(coresList, pauline1, &initialPauline1Stats, confAddr, initialSubject, 1, FALSE);
+	wait_for_list(coresList, NULL, 0, 1000);
+	
+end:
+	// Clean db from chat room
+	if (marie1Cr) linphone_core_manager_delete_chat_room(marie1, marie1Cr, coresList);
+	if (newPauline1Cr) linphone_core_manager_delete_chat_room(pauline1, newPauline1Cr, coresList);
+	
+	
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	bctbx_list_free_with_data(participantsAddresses,(bctbx_list_free_func)linphone_address_unref);
+	linphone_core_manager_destroy(marie1);
+	linphone_core_manager_destroy(pauline1);
+}
+
 test_t group_chat_tests[] = {
 	TEST_NO_TAG("Chat room params", group_chat_room_params),
 	TEST_NO_TAG("Chat room with forced local identity", group_chat_room_creation_with_given_identity),
@@ -5551,7 +5616,8 @@ test_t group_chat_tests[] = {
 	TEST_ONE_TAG("Participant removed then added", participant_removed_then_added, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Check  if participant device are removed", group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_notified, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Subscribe successfull after set chat database path", subscribe_test_after_set_chat_database_path, "LeaksMemory" /*due to core restart*/),
-	TEST_ONE_TAG("Send forward message", one_to_one_chat_room_send_forward_message, "LeaksMemory" /*due to core restart*/)
+	TEST_ONE_TAG("Send forward message", one_to_one_chat_room_send_forward_message, "LeaksMemory" /*due to core restart*/),
+	TEST_ONE_TAG("Linphone core stop/start and chatroom ref", core_stop_start_with_chat_room_ref, "LeaksMemory" /*due to core restart*/)
 };
 
 test_suite_t group_chat_test_suite = {

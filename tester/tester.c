@@ -462,6 +462,7 @@ void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, c
 	linphone_core_cbs_set_network_reachable(mgr->cbs, network_reachable);
 	linphone_core_cbs_set_dtmf_received(mgr->cbs, dtmf_received);
 	linphone_core_cbs_set_call_stats_updated(mgr->cbs, call_stats_updated);
+	linphone_core_cbs_set_global_state_changed(mgr->cbs, global_state_changed);
 
 	mgr->phone_alias = phone_alias ? ms_strdup(phone_alias) : NULL;
 
@@ -1620,6 +1621,29 @@ void file_transfer_received(LinphoneChatMessage *msg, const LinphoneContent* con
 	bc_free(receive_file);
 }
 
+void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message) {
+	stats *counters = get_stats(lc);
+	switch (gstate) {
+		case LinphoneGlobalOn:
+			counters->number_of_LinphoneGlobalOn++;
+			break;
+		case LinphoneGlobalReady:
+			counters->number_of_LinphoneGlobalReady++;
+			break;
+		case LinphoneGlobalOff:
+			counters->number_of_LinphoneGlobalOff++;
+			break;
+		case LinphoneGlobalStartup:
+			counters->number_of_LinphoneGlobalStartup++;
+			break;
+		case LinphoneGlobalShutdown:
+			counters->number_of_LinphoneGlobalShutdown++;
+			break;
+		case LinphoneGlobalConfiguring:
+			counters->number_of_LinphoneGlobalConfiguring++;
+			break;
+	}
+}
 void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManager* mgr ){
 	if( params->sdp_removal ){
 		sal_default_set_sdp_handling(linphone_core_get_sal(mgr->lc), SalOpSDPSimulateRemove);

@@ -681,6 +681,7 @@ static void info_received(SalOp *op, SalBodyHandler *body_handler) {
 
 static void subscribe_response(SalOp *op, SalSubscribeStatus status, int will_retry){
 	LinphoneEvent *lev=(LinphoneEvent*)op->getUserPointer();
+	LinphoneCore *lc=(LinphoneCore *)op->getSal()->getUserPointer();
 
 	if (lev==NULL) return;
 
@@ -689,7 +690,7 @@ static void subscribe_response(SalOp *op, SalSubscribeStatus status, int will_re
 	}else if (status==SalSubscribePending){
 		linphone_event_set_state(lev,LinphoneSubscriptionPending);
 	}else{
-		if (will_retry){
+		if (will_retry && linphone_core_get_global_state(lc) != LinphoneGlobalShutdown ){
 			linphone_event_set_state(lev,LinphoneSubscriptionOutgoingProgress);
 		}
 		else linphone_event_set_state(lev,LinphoneSubscriptionError);
