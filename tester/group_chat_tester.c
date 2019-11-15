@@ -5527,6 +5527,15 @@ static void core_stop_start_with_chat_room_ref (void) {
 	//now GC is cleaning old chatroom
 	if (pauline1Cr) linphone_chat_room_unref(pauline1Cr);
 
+	//test very early client group chatroom creation, should fail
+	linphone_proxy_config_set_conference_factory_uri(linphone_core_get_default_proxy_config(pauline1->lc), sFactoryUri);
+	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(pauline1->lc);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
+	LinphoneChatRoom *chatRoom = linphone_core_create_chat_room_2(pauline1->lc, params, initialSubject,participantsAddresses);
+	linphone_chat_room_params_unref(params);
+	
+	BC_ASSERT_PTR_NULL(chatRoom);
+
 	coresList = bctbx_list_remove(coresList, pauline1->lc);
 	linphone_core_manager_reinit(pauline1);
 	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, pauline1);

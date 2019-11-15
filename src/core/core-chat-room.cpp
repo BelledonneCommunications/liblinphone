@@ -71,7 +71,7 @@ static IdentityAddress getDefaultLocalAddress(const shared_ptr<Core> &core, cons
 	IdentityAddress localAddress;
 	if (proxy) {
 		char *identity = linphone_address_as_string(
-			withGruu ? linphone_proxy_config_get_contact(proxy) : linphone_proxy_config_get_identity_address(proxy));
+			(withGruu && linphone_proxy_config_get_contact(proxy))? linphone_proxy_config_get_contact(proxy) : linphone_proxy_config_get_identity_address(proxy));
 		localAddress = IdentityAddress(identity);
 		bctbx_free(identity);
 	} else
@@ -116,7 +116,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 		return nullptr;
 	}
 	if (!conferenceId.getLocalAddress().hasGruu()){
-		lError() << "createClientGroupChatRoom(): local address must have a gruu.";
+		lError() << "createClientGroupChatRoom(): local address [" << conferenceId.getLocalAddress() << "] must have a gruu.";
 		return nullptr;
 	}
 	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(q->getSharedFromThis(),
@@ -263,6 +263,12 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 						     ChatRoomParams::toCapabilities(params),
 						     params,
 						     false);
+		
+		if (!chatRoom) {
+			lWarning() << "Cannot create createClientGroupChatRoom with subject [" << subject <<"]";
+			return nullptr;
+		}
+			
 		chatRoom->addParticipants(participants, nullptr, false);
 #else
 		lWarning() << "Advanced IM such as group chat is disabled!";
