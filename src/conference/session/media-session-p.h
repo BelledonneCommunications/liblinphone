@@ -131,6 +131,7 @@ public:
 	const std::string & getDtlsFingerprint()const;
 	bool isEncryptionMandatory () const;
 	void handleIceEvents (OrtpEvent *ev);
+	void performMutualAuthentication();
 private:
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo (const std::string &name);
 

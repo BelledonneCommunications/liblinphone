@@ -88,6 +88,11 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params){
 }
 
 void StreamsGroup::prepare(){
+	for (auto &stream : mStreams){
+		if (stream->getState() == Stream::Stopped){
+			stream->prepare();
+		}
+	}
 }
 
 void StreamsGroup::render(const OfferAnswerContext &params, CallSession::State targetState){
@@ -179,6 +184,21 @@ bool StreamsGroup::allStreamsEncrypted () const {
 
 void StreamsGroup::propagateEncryptionChanged () {
 	getMediaSessionPrivate().propagateEncryptionChanged();
+}
+
+void StreamsGroup::authTokenReady(const string &authToken, bool verified) {
+	mAuthToken = authToken;
+	mAuthTokenVerified = verified;
+	lInfo() << "Authentication token is " << mAuthToken << "(" << (mAuthTokenVerified ? "verified" : "unverified") << ")";
+}
+
+Stream * StreamsGroup::lookupMainStream(SalStreamType type){
+	for (auto &stream : mStreams){
+		if (stream->isMain() && stream->getType() == type){
+			return stream.get();
+		}
+	}
+	return nullptr;
 }
 
 
@@ -456,7 +476,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 		} else
 			lWarning() << "Failed to find local crypto algo with tag: " << stream->crypto_local_tag;
 	}
-	ms_media_stream_sessions_set_encryption_mandatory(&mSessions, isEncryptionMandatory());
+	ms_media_stream_sessions_set_encryption_mandatory(&mSessions, getMediaSessionPrivate().isEncryptionMandatory());
 	configureRtpSessionForRtcpFb(params);
 	configureRtpSessionForRtcpXr(params);
 	configureAdaptiveRateControl(params);
@@ -633,7 +653,7 @@ void MS2Stream::prepare(){
 	mTimer = getCore().createTimer([this](){
 			handleEvents();
 			return true;
-		}, sEventPollIntervalMs);
+		}, sEventPollIntervalMs, "Stream event processing timer");
 	Stream::prepare();
 }
 
@@ -780,6 +800,11 @@ void MS2Stream::stop(){
 		mRtpProfile = nullptr;
 	}
 	
+	if (mRtpIoProfile){
+		rtp_profile_destroy(mRtpIoProfile);
+		mRtpIoProfile = nullptr;
+	}
+	
 	updateStats();
 	handleEvents();
 	if (mTimer){
@@ -887,6 +912,38 @@ bool MS2Stream::isEncrypted() const{
 	return media_stream_secured(getMediaStream());
 }
 
+RtpSession* MS2Stream::createRtpIoSession() {
+	LinphoneConfig *config = linphone_core_get_config(getCCore());
+	const char *config_section = getType() == SalAudio ? "sound" : "video";
+	const char *rtpmap = lp_config_get_string(config, config_section, "rtp_map", getType() == SalAudio ? "pcmu/8000/1" : "vp8/90000");
+	OrtpPayloadType *pt = rtp_profile_get_payload_from_rtpmap(mRtpProfile, rtpmap);
+	if (!pt)
+		return nullptr;
+	string profileName = string("RTP IO ") + string(config_section) + string(" profile");
+	mRtpIoProfile = rtp_profile_new(profileName.c_str());
+	int ptnum = lp_config_get_int(config, config_section, "rtp_ptnum", 0);
+	rtp_profile_set_payload(mRtpIoProfile, ptnum, payload_type_clone(pt));
+	const char *localIp = lp_config_get_string(config, config_section, "rtp_local_addr", "127.0.0.1");
+	int localPort = lp_config_get_int(config, config_section, "rtp_local_port", 17076);
+	RtpSession *rtpSession = ms_create_duplex_rtp_session(localIp, localPort, -1, ms_factory_get_mtu(getCCore()->factory));
+	rtp_session_set_profile(rtpSession, mRtpIoProfile);
+	const char *remoteIp = lp_config_get_string(config, config_section, "rtp_remote_addr", "127.0.0.1");
+	int remotePort = lp_config_get_int(config, config_section, "rtp_remote_port", 17078);
+	rtp_session_set_remote_addr_and_port(rtpSession, remoteIp, remotePort, -1);
+	rtp_session_enable_rtcp(rtpSession, false);
+	rtp_session_set_payload_type(rtpSession, ptnum);
+	int jittcomp = lp_config_get_int(config, config_section, "rtp_jittcomp", 0); /* 0 means no jitter buffer */
+	rtp_session_set_jitter_compensation(rtpSession, jittcomp);
+	rtp_session_enable_jitter_buffer(rtpSession, (jittcomp > 0));
+	bool symmetric = !!lp_config_get_int(config, config_section, "rtp_symmetric", 0);
+	rtp_session_set_symmetric_rtp(rtpSession, symmetric);
+	return rtpSession;
+}
+
+MSZrtpContext *MS2Stream::getZrtpContext()const{
+	return mSessions.zrtp_context;
+}
+
 
 MS2Stream::~MS2Stream(){
 	linphone_call_stats_unref(mStats);
@@ -912,6 +969,8 @@ MediaStream *MS2RealTimeTextStream::getMediaStream()const{
 	return &mStream->ms;
 }
 
+void MS2RealTimeTextStream::handleEvent(const OrtpEvent *ev){
+}
 
 LINPHONE_END_NAMESPACE
 

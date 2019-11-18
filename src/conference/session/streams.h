@@ -46,7 +46,6 @@ class IceAgent;
  */
 class OfferAnswerContext{
 public:
-	bool localIsOfferer = false;
 	SalMediaDescription *localMediaDescription = nullptr;
 	const SalMediaDescription *remoteMediaDescription = nullptr;
 	const SalMediaDescription *resultMediaDescription = nullptr;
@@ -54,6 +53,8 @@ public:
 	const SalStreamDescription *remoteStreamDescription = nullptr;
 	const SalStreamDescription *resultStreamDescription = nullptr;
 	size_t streamIndex;
+	bool localIsOfferer = false;
+	
 	void scopeStreamToIndex(size_t index);
 };
 
@@ -120,27 +121,37 @@ private:
 };
 
 class AudioControlInterface{
+public:
+	virtual void enableMic(bool value) = 0;
+	virtual void enableSpeaker(bool value) = 0;
+	virtual void startRecording() = 0;
+	virtual void stopRecording() = 0;
+	virtual ~AudioControlInterface() = default;
 };
 
 class VideoControlInterface{
 public:
 	virtual void sendVfu() = 0;
+	virtual void enableCamera(bool value) = 0;
+	virtual void setNativeWindowId(void *w) = 0;
+	virtual void * getNativeWindowId() const = 0;
 	virtual ~VideoControlInterface() = default;
 };
 
 /**
  * Derived class for streams commonly handly through mediastreamer2 library.
  */
-class MS2Stream : public Stream{
+class MS2Stream : public Stream {
 public:
 	virtual void prepare() override;
 	virtual void render(const OfferAnswerContext & ctx, CallSession::State targetState) override;
 	virtual void stop() override;
 	virtual bool isEncrypted() const override;
 	MSZrtpContext *getZrtpContext()const;
+	virtual MediaStream *getMediaStream()const = 0;
+	
 	virtual ~MS2Stream();
 protected:
-	virtual MediaStream *getMediaStream()const = 0;
 	virtual void handleEvent(const OrtpEvent *ev) = 0;
 	MS2Stream(StreamsGroup &sm, const OfferAnswerContext &params);
 	std::string getBindIp();
@@ -148,7 +159,9 @@ protected:
 	void initializeSessions(MediaStream *stream);
 	RtpProfile * makeProfile(const SalMediaDescription *md, const SalStreamDescription *desc, int *usedPt);
 	int getIdealAudioBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc);
+	RtpSession* createRtpIoSession();
 	RtpProfile *mRtpProfile = nullptr;
+	RtpProfile *mRtpIoProfile = nullptr;
 	MSMediaStreamSessions mSessions;
 	OrtpEvQueue *mOrtpEvQueue = nullptr;
 	LinphoneCallStats *mStats = nullptr;
@@ -168,18 +181,43 @@ private:
 	static constexpr const int sEventPollIntervalMs = 20;
 };
 
-class MS2AudioStream : public MS2Stream{
+class MS2AudioStream : public MS2Stream, public AudioControlInterface{
+	friend class MS2VideoStream;
 public:
 	MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params);
 	virtual void prepare() override;
 	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
 	virtual void stop() override;
+	
+	/* AudioControlInterface */
+	virtual void enableMic(bool value) override;
+	virtual void enableSpeaker(bool value) override;
+	virtual void startRecording() override;
+	virtual void stopRecording() override;
+	
 	virtual ~MS2AudioStream();
+	
+protected:
+	virtual MediaStream *getMediaStream()const override;	
+
 private:
 	virtual void handleEvent(const OrtpEvent *ev) override;
-	virtual MediaStream *getMediaStream()const override;
+	
+	void setPlaybackGainDb (float gain);
 	void setZrtpCryptoTypesParameters(MSZrtpParams *params, bool haveZrtpHash);
+	void startZrtpPrimaryChannel(const OfferAnswerContext &params);
+	void parameterizeEqualizer();
+	void forceSpeakerMuted(bool muted);
+	void postConfigureAudioStream(bool muted);
+	void setupRingbackPlayer();
+	void telephoneEventReceived (int event);
 	AudioStream *mStream = nullptr;
+	MSSndCard *mCurrentCaptureCard = nullptr;
+	MSSndCard *mCurrentPlaybackCard = nullptr;
+	bool mMuted = false; /* to handle special cases where we want the audio to be muted - not related with linphone_core_enable_mic().*/
+	bool mMicMuted = false;
+	bool mSpeakerMuted = false;
+	bool mRecordActive = false;
 	static constexpr const int ecStateMaxLen = 1048576; /* 1Mo */
 	static constexpr const char * ecStateStore = ".linphone.ecstate";
 };
@@ -187,12 +225,28 @@ private:
 class MS2VideoStream : public MS2Stream, public VideoControlInterface{
 public:
 	MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param);
+	virtual void prepare() override;
+	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
+	virtual void stop() override;
+	
+	/* VideoControlInterface methods */
 	virtual void sendVfu() override;
-private:
+	virtual void enableCamera(bool value) override;
+	virtual void setNativeWindowId(void *w) override;
+	virtual void * getNativeWindowId() const override;
+protected:
 	virtual MediaStream *getMediaStream()const override;
+private:
+	MSWebCam * getVideoDevice(CallSession::State targetState)const;
 	virtual void handleEvent(const OrtpEvent *ev) override;
 	virtual void zrtpStarted(Stream *mainZrtpStream) override;
+	void videoStreamEventCb(const MSFilter *f, const unsigned int eventId, const void *args);
+	static void sVideoStreamEventCb (void *userData, const MSFilter *f, const unsigned int eventId, const void *args);
 	VideoStream *mStream = nullptr;
+	void *mNativeWindowId = nullptr;
+	bool mVideoMuted = false;
+	bool mCameraEnabled = true;
+	
 };
 
 class MS2RealTimeTextStream : public MS2Stream{
@@ -216,6 +270,7 @@ private:
 class StreamsGroup{
 	friend class Stream;
 	friend class MS2Stream;
+	friend class MS2AudioStream;
 public:
 	StreamsGroup(MediaSession &session);
 	/**
@@ -233,6 +288,7 @@ public:
 	void render(const OfferAnswerContext &params, CallSession::State targetState);
 	void stop();
 	Stream * getStream(size_t index);
+	Stream * lookupMainStream(SalStreamType type);
 	std::list<Stream*> getStreams();
 	MediaSession &getMediaSession()const{
 		return mMediaSession;
@@ -246,6 +302,7 @@ protected:
 	int getVideoBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc);
 	void zrtpStarted(Stream *mainZrtpStream);
 	void propagateEncryptionChanged();
+	void authTokenReady(const std::string &token, bool verified);
 private:
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	Stream * createStream(const OfferAnswerContext &param);
@@ -254,6 +311,9 @@ private:
 	std::vector<std::unique_ptr<Stream>> mStreams;
 	// Upload bandwidth used by audio.
 	int mAudioBandwidth = 0;
+	// Zrtp auth token
+	std::string mAuthToken;
+	bool mAuthTokenVerified = false;
 
 };
 

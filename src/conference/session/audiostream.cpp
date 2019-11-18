@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "streams.h"
 #include "media-session.h"
@@ -28,7 +28,12 @@
 #include "conference/participant.h"
 #include "conference/params/media-session-params-p.h"
 
+#include "mediastreamer2/msfileplayer.h"
+#include "mediastreamer2/msvolume.h"
+
 #include "linphone/core.h"
+
+#include <cmath>
 
 using namespace::std;
 
@@ -121,7 +126,7 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool hav
 	params->sasTypesCount = linphone_core_get_zrtp_sas_suites(getCCore(), params->sasTypes);
 	params->keyAgreementsCount = linphone_core_get_zrtp_key_agreement_suites(getCCore(), params->keyAgreements);
 	
-	params->autoStart =  (getMediaSessionPrivate().params()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) && (haveRemoteZrtpHash == false) ;
+	params->autoStart =  (getMediaSessionPrivate().getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) && (haveRemoteZrtpHash == false) ;
 }
 
 
@@ -253,7 +258,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	
 	if (!getMediaSessionPrivate().getParams()->getPrivate()->getInConference() && !getMediaSessionPrivate().getParams()->getRecordFilePath().empty()) {
 		audio_stream_mixed_record_open(mStream, getMediaSessionPrivate().getParams()->getRecordFilePath().c_str());
-		getMediaSessionPrivate().getCurrentParams()->setRecordFilePath(getMediaSessionPrivate().Params()->getRecordFilePath());
+		getMediaSessionPrivate().getCurrentParams()->setRecordFilePath(getMediaSessionPrivate().getParams()->getRecordFilePath());
 	}
 
 	MS2Stream::render(params, targetState);
@@ -262,7 +267,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (useRtpIo) {
 		if (useRtpIoEnableLocalOutput) {
 			io.input.type = MSResourceRtp;
-			io.input.session = createAudioRtpIoSession();
+			io.input.session = createRtpIoSession();
 			if (playcard) {
 				io.output.type = MSResourceSoundcard;
 				io.output.soundcard = playcard;
@@ -272,7 +277,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			}
 		} else {
 			io.input.type = io.output.type = MSResourceRtp;
-			io.input.session = io.output.session = createAudioRtpIoSession();
+			io.input.session = io.output.session = createRtpIoSession();
 		}
 		if (!io.input.session)
 			ok = false;
@@ -294,15 +299,15 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		}
 	}
 	if (ok) {
-		currentCaptureCard = ms_media_resource_get_soundcard(&io.input);
-		currentPlayCard = ms_media_resource_get_soundcard(&io.output);
+		mCurrentCaptureCard = ms_media_resource_get_soundcard(&io.input);
+		mCurrentPlaybackCard = ms_media_resource_get_soundcard(&io.output);
 
 		int err = audio_stream_start_from_io(mStream, audioProfile, rtpAddr, stream->rtp_port,
-			(stream->rtcp_addr[0] != '\0') ? stream->rtcp_addr : params.resultStreamDescription->addr,
+			(stream->rtcp_addr[0] != '\0') ? stream->rtcp_addr : params.resultMediaDescription->addr,
 			(linphone_core_rtcp_enabled(getCCore()) && !isMulticast) ? (stream->rtcp_port ? stream->rtcp_port : stream->rtp_port + 1) : 0,
 			usedPt, &io);
 		if (err == 0)
-			postConfigureAudioStreams((audioMuted || microphoneMuted) && (listener && !listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis())));
+			postConfigureAudioStream((mMuted || mMicMuted) && (listener && !listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis())));
 	}
 	
 	if ((targetState == CallSession::State::Paused) && !captcard && !playfile.empty()) {
@@ -320,24 +325,12 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	getMediaSessionPrivate().getCurrentParams()->enableLowBandwidth(getMediaSessionPrivate().getParams()->lowBandwidthEnabled());
 	
 	// Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute
-	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)) {
-		// Perform mutual authentication if instant messaging encryption is enabled
-		auto encryptionEngine = getEncryptionEngine();
-		//Is call direction really relevant ? might be linked to offerer/answerer rather than call direction ?
-		LinphoneCallDir direction = getMediaSession().getDirection();
-		if (encryptionEngine && audioStream->ms.sessions.zrtp_context) {
-			encryptionEngine->mutualAuthentication(
-													audioStream->ms.sessions.zrtp_context,
-													op->getLocalMediaDescription(),
-													op->getRemoteMediaDescription(),
-													direction
-													);
-		}
-		
+	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP) && isMain()) {
+		getMediaSessionPrivate().performMutualAuthentication();
 		//Start zrtp if remote has offered it or if local is configured for zrtp and is the offerrer. If not, defered when ACK is received
 		if ((getMediaSessionPrivate().getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP && params.localIsOfferer)
 			|| (params.remoteStreamDescription->haveZrtpHash == 1)) {
-			startZrtpPrimaryChannel(params.remoteStreamDescription);
+			startZrtpPrimaryChannel(params);
 		}
 	}
 	
@@ -359,31 +352,201 @@ void MS2AudioStream::stop(){
 	
 	audio_stream_stop(mStream);
 	mStream = nullptr;
-	getMediaSessionPrivate().getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
+	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
 	
 	
-	currentCaptureCard = nullptr;
-	currentPlayCard = nullptr;
+	mCurrentCaptureCard = nullptr;
+	mCurrentPlaybackCard = nullptr;
+}
+
+void MS2AudioStream::startZrtpPrimaryChannel(const OfferAnswerContext &params) {
+	const SalStreamDescription *remote = params.remoteStreamDescription;
+	audio_stream_start_zrtp(mStream);
+	if (remote->haveZrtpHash == 1) {
+		int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remote->zrtphash, strlen((const char *)(remote->zrtphash)));
+		if (retval != 0)
+			lError() << "ZRTP hash mismatch 0x" << hex << retval;
+	}
+}
+
+void MS2AudioStream::forceSpeakerMuted (bool muted) {
+	if (muted)
+		audio_stream_set_spk_gain(mStream, 0);
+	else
+		audio_stream_set_spk_gain_db(mStream, getCCore()->sound_conf.soft_play_lev);
+}
+
+void MS2AudioStream::setPlaybackGainDb (float gain) {
+	if (mStream->volrecv)
+		ms_filter_call_method(mStream->volrecv, MS_VOLUME_SET_DB_GAIN, &gain);
+	else
+		lWarning() << "Could not apply playback gain: gain control wasn't activated";
+}
+
+void MS2AudioStream::parameterizeEqualizer() {
+	LinphoneConfig *config = linphone_core_get_config(getCCore());
+	const char *eqActive = lp_config_get_string(config, "sound", "eq_active", nullptr);
+	if (eqActive)
+		lWarning() << "'eq_active' linphonerc parameter has no effect anymore. Please use 'mic_eq_active' or 'spk_eq_active' instead";
+	const char *eqGains = lp_config_get_string(config, "sound", "eq_gains", nullptr);
+	if(eqGains)
+		lWarning() << "'eq_gains' linphonerc parameter has no effect anymore. Please use 'mic_eq_gains' or 'spk_eq_gains' instead";
+	if (mStream->mic_equalizer) {
+		MSFilter *f = mStream->mic_equalizer;
+		bool enabled = !!lp_config_get_int(config, "sound", "mic_eq_active", 0);
+		ms_filter_call_method(f, MS_EQUALIZER_SET_ACTIVE, &enabled);
+		const char *gains = lp_config_get_string(config, "sound", "mic_eq_gains", nullptr);
+		if (enabled && gains) {
+			bctbx_list_t *gainsList = ms_parse_equalizer_string(gains);
+			for (bctbx_list_t *it = gainsList; it; it = bctbx_list_next(it)) {
+				MSEqualizerGain *g = reinterpret_cast<MSEqualizerGain *>(bctbx_list_get_data(it));
+				lInfo() << "Read microphone equalizer gains: " << g->frequency << "(~" << g->width << ") --> " << g->gain;
+				ms_filter_call_method(f, MS_EQUALIZER_SET_GAIN, g);
+			}
+			if (gainsList)
+				bctbx_list_free_with_data(gainsList, ms_free);
+		}
+	}
+	if (mStream->spk_equalizer) {
+		MSFilter *f = mStream->spk_equalizer;
+		bool enabled = !!lp_config_get_int(config, "sound", "spk_eq_active", 0);
+		ms_filter_call_method(f, MS_EQUALIZER_SET_ACTIVE, &enabled);
+		const char *gains = lp_config_get_string(config, "sound", "spk_eq_gains", nullptr);
+		if (enabled && gains) {
+			bctbx_list_t *gainsList = ms_parse_equalizer_string(gains);
+			for (bctbx_list_t *it = gainsList; it; it = bctbx_list_next(it)) {
+				MSEqualizerGain *g = reinterpret_cast<MSEqualizerGain *>(bctbx_list_get_data(it));
+				lInfo() << "Read speaker equalizer gains: " << g->frequency << "(~" << g->width << ") --> " << g->gain;
+				ms_filter_call_method(f, MS_EQUALIZER_SET_GAIN, g);
+			}
+			if (gainsList)
+				bctbx_list_free_with_data(gainsList, ms_free);
+		}
+	}
+}
+
+
+
+void MS2AudioStream::postConfigureAudioStream(bool muted) {
+	float micGain = getCCore()->sound_conf.soft_mic_lev;
+	if (muted)
+		audio_stream_set_mic_gain(mStream, 0);
+	else
+		audio_stream_set_mic_gain_db(mStream, micGain);
+	float recvGain = getCCore()->sound_conf.soft_play_lev;
+	if (static_cast<int>(recvGain))
+		setPlaybackGainDb(recvGain);
+	LinphoneConfig *config = linphone_core_get_config(getCCore());
+	float ngThres = lp_config_get_float(config, "sound", "ng_thres", 0.05f);
+	float ngFloorGain = lp_config_get_float(config, "sound", "ng_floorgain", 0);
+	if (mStream->volsend) {
+		int dcRemoval = lp_config_get_int(config, "sound", "dc_removal", 0);
+		ms_filter_call_method(mStream->volsend, MS_VOLUME_REMOVE_DC, &dcRemoval);
+		float speed = lp_config_get_float(config, "sound", "el_speed", -1);
+		float thres = lp_config_get_float(config, "sound", "el_thres", -1);
+		float force = lp_config_get_float(config, "sound", "el_force", -1);
+		int sustain = lp_config_get_int(config, "sound", "el_sustain", -1);
+		float transmitThres = lp_config_get_float(config, "sound", "el_transmit_thres", -1);
+		if (static_cast<int>(speed) == -1)
+			speed = 0.03f;
+		if (static_cast<int>(force) == -1)
+			force = 25;
+		MSFilter *f = mStream->volsend;
+		ms_filter_call_method(f, MS_VOLUME_SET_EA_SPEED, &speed);
+		ms_filter_call_method(f, MS_VOLUME_SET_EA_FORCE, &force);
+		if (static_cast<int>(thres) != -1)
+			ms_filter_call_method(f, MS_VOLUME_SET_EA_THRESHOLD, &thres);
+		if (static_cast<int>(sustain) != -1)
+			ms_filter_call_method(f, MS_VOLUME_SET_EA_SUSTAIN, &sustain);
+		if (static_cast<int>(transmitThres) != -1)
+			ms_filter_call_method(f, MS_VOLUME_SET_EA_TRANSMIT_THRESHOLD, &transmitThres);
+		ms_filter_call_method(f, MS_VOLUME_SET_NOISE_GATE_THRESHOLD, &ngThres);
+		ms_filter_call_method(f, MS_VOLUME_SET_NOISE_GATE_FLOORGAIN, &ngFloorGain);
+	}
+	if (mStream->volrecv) {
+		/* Parameters for a limited noise-gate effect, using echo limiter threshold */
+		float floorGain = (float)(1 / pow(10, micGain / 10));
+		int spkAgc = lp_config_get_int(config, "sound", "speaker_agc_enabled", 0);
+		MSFilter *f = mStream->volrecv;
+		ms_filter_call_method(f, MS_VOLUME_ENABLE_AGC, &spkAgc);
+		ms_filter_call_method(f, MS_VOLUME_SET_NOISE_GATE_THRESHOLD, &ngThres);
+		ms_filter_call_method(f, MS_VOLUME_SET_NOISE_GATE_FLOORGAIN, &floorGain);
+	}
+	parameterizeEqualizer();
+	forceSpeakerMuted(mSpeakerMuted);
+	if (linphone_core_dtmf_received_has_listener(getCCore()))
+		audio_stream_play_received_dtmfs(mStream, false);
+	if (mRecordActive)
+		startRecording();
+}
+
+void MS2AudioStream::setupRingbackPlayer () {
+	int pauseTime = 3000;
+	audio_stream_play(mStream, getCCore()->sound_conf.ringback_tone);
+	ms_filter_call_method(mStream->soundread, MS_FILE_PLAYER_LOOP, &pauseTime);
+}
+
+void MS2AudioStream::telephoneEventReceived (int event) {
+	static char dtmfTab[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '#', 'A', 'B', 'C', 'D' };
+	if ((event < 0) || (event > 15)) {
+		lWarning() << "Bad dtmf value " << event;
+		return;
+	}
+	getMediaSessionPrivate().dtmfReceived(dtmfTab[event]);
 }
 
 void MS2AudioStream::handleEvent(const OrtpEvent *ev){
 	OrtpEventType evt = ortp_event_get_type(ev);
-	OrtpEventData *evd = ortp_event_get_data(ev);
+	OrtpEventData *evd = ortp_event_get_data(const_cast<OrtpEvent*>(ev));
 	switch (evt){
 		case ORTP_EVENT_ZRTP_ENCRYPTION_CHANGED:
 			if (isMain()) zrtpStarted(this);
 		break;
 		case ORTP_EVENT_ZRTP_SAS_READY:
-			authTokenReady(evd->info.zrtp_info.sas, !!evd->info.zrtp_info.verified);
+			getGroup().authTokenReady(evd->info.zrtp_info.sas, !!evd->info.zrtp_info.verified);
 		break;
 		case ORTP_EVENT_DTLS_ENCRYPTION_CHANGED:
-			if (isMain()) encryptionChanged(!!evd->info.dtls_stream_encrypted);
+			if (isMain()) getGroup().propagateEncryptionChanged();
 		break;
 		case ORTP_EVENT_TELEPHONE_EVENT:
 			telephoneEventReceived(evd->info.telephone_event);
 		break;
 	}
 }
+
+void MS2AudioStream::enableMic(bool value){
+	mMicMuted = !value;
+
+	if (mMicMuted)
+		audio_stream_set_mic_gain(mStream, 0);
+	else
+		audio_stream_set_mic_gain_db(mStream, getCCore()->sound_conf.soft_mic_lev);
+}
+
+void MS2AudioStream::enableSpeaker(bool value){
+	mSpeakerMuted = !value;
+	forceSpeakerMuted(mSpeakerMuted);
+}
+
+void MS2AudioStream::startRecording(){
+	if (getMediaSessionPrivate().getParams()->getRecordFilePath().empty()) {
+		lError() << "MS2AudioStream::startRecording(): no output file specified. Use MediaSessionParams::setRecordFilePath()";
+		return;
+	}
+	if (getMediaSessionPrivate().getParams()->getPrivate()->getInConference()){
+		lWarning() << "MS2AudioStream::startRecording(): not supported in conference.";
+		return;
+	}
+	if (media_stream_get_state(&mStream->ms) == MSStreamStarted) audio_stream_mixed_record_start(mStream);
+	mRecordActive = true;
+}
+
+void MS2AudioStream::stopRecording(){
+	if (mRecordActive)
+		audio_stream_mixed_record_stop(mStream);
+	mRecordActive = false;
+}
+
 
 MS2AudioStream::~MS2AudioStream(){
 }

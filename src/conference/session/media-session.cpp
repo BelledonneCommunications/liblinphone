@@ -2098,6 +2098,24 @@ void MediaSessionPrivate::startDtlsOnTextStream () {
 		startDtls(&textStream->ms.sessions, sal_media_description_find_best_stream(result, SalText), sal_media_description_find_best_stream(remote, SalText));
 }
 
+void MediaSessionPrivate::performMutualAuthentication(){
+	L_Q();
+	
+	// Perform mutual authentication if instant messaging encryption is enabled
+	auto encryptionEngine = q->getCore()->getEncryptionEngine();
+	// Is call direction really relevant ? might be linked to offerer/answerer rather than call direction ?
+	Stream *stream = mainAudioStreamIndex != -1 ? getStreamsGroup().getStream(mainAudioStreamIndex) : nullptr;
+	MS2AudioStream *ms2a = dynamic_cast<MS2AudioStream*>(stream);
+	if (encryptionEngine && ms2a && ms2a->getZrtpContext()) {
+		encryptionEngine->mutualAuthentication(
+							ms2a->getZrtpContext(),
+							op->getLocalMediaDescription(),
+							op->getRemoteMediaDescription(),
+							q->getDirection()
+							);
+	}
+}
+
 
 //might be the same interface as startDtls if audio_stream_start_zrtp is replaced by audio_streamsessions_start_zrtp
 void MediaSessionPrivate::startZrtpPrimaryChannel(const SalStreamDescription *remote) {
