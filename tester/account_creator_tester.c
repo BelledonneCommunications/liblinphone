@@ -304,6 +304,12 @@ static void local_country_code_invalid(void) {
 		LinphoneAccountCreatorPhoneNumberStatus,
 		"%i");
 
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_set_phone_number(creator, "0123", "+")&LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode,
+		LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode,
+		LinphoneAccountCreatorPhoneNumberStatus,
+		"%i");
+
 	linphone_account_creator_unref(creator);
 	linphone_core_manager_destroy(marie);
 }
