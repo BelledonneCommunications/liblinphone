@@ -800,6 +800,12 @@ static int log_collection_upload_on_send_body(belle_sip_user_body_handler_t *bh,
 #else
 		FILE *log_file = fopen(log_filename, "r");
 #endif
+		if (!log_file) {
+			ms_error("Couldn't open log file [%s], errno [%s], aborting log upload", log_filename, strerror(errno));
+			*size=0;
+			return BELLE_SIP_STOP;
+		}
+
 		if (fseek(log_file, (long)offset, SEEK_SET)) {
 			ms_error("Cannot seek file [%s] at position [%lu] errno [%s]",log_filename,(unsigned long)offset,strerror(errno));
 
