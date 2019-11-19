@@ -234,6 +234,8 @@ public:
 	virtual void enableCamera(bool value) override;
 	virtual void setNativeWindowId(void *w) override;
 	virtual void * getNativeWindowId() const override;
+	
+	virtual ~MS2VideoStream();
 protected:
 	virtual MediaStream *getMediaStream()const override;
 private:
@@ -249,10 +251,19 @@ private:
 	
 };
 
-class MS2RealTimeTextStream : public MS2Stream{
+/*
+ * Real time text stream.
+ */
+class MS2RTTStream : public MS2Stream{
 public:
-	MS2RealTimeTextStream(StreamsGroup &sm, const OfferAnswerContext &param);
+	MS2RTTStream(StreamsGroup &sm, const OfferAnswerContext &param);
+	virtual void prepare() override;
+	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
+	virtual void stop() override;
+	virtual ~MS2RTTStream();
 private:
+	void realTimeTextCharacterReceived(MSFilter *f, unsigned int id, void *arg);
+	static void sRealTimeTextCharacterReceived(void *userData, MSFilter *f, unsigned int id, void *arg);
 	virtual MediaStream *getMediaStream()const override;
 	virtual void handleEvent(const OrtpEvent *ev) override;
 	TextStream *mStream = nullptr;

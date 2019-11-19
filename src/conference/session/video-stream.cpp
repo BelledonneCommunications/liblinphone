@@ -155,6 +155,8 @@ void MS2VideoStream::prepare(){
 			lError() << "Error while enabling zrtp on video stream: the audio stream isn't known. This is unsupported.";
 		}
 	}
+	MS2Stream::prepare();
+	video_stream_prepare_video(mStream);
 }
 
 void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State targetState){
@@ -300,7 +302,9 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 void MS2VideoStream::stop(){
 	MS2Stream::stop();
 	video_stream_stop(mStream);
-	mStream = nullptr;
+	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 
+	 * sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
+	mStream = video_stream_new_with_sessions(getCCore()->factory, &mSessions);
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
 }
 
@@ -328,7 +332,9 @@ void MS2VideoStream::zrtpStarted(Stream *mainZrtpStream){
 #endif
 }
 
-
+MS2VideoStream::~MS2VideoStream(){
+	video_stream_stop(mStream);
+}
 
 LINPHONE_END_NAMESPACE
 

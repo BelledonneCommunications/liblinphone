@@ -69,7 +69,7 @@ Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 			ret = new MS2VideoStream(*this, params);
 		break;
 		case SalText:
-			ret = new MS2RealTimeTextStream(*this, params);
+			ret = new MS2RTTStream(*this, params);
 		break;
 		case SalOther:
 		break;
@@ -955,22 +955,6 @@ MS2Stream::~MS2Stream(){
 }
 
 
-
-
-
-/*
- * MS2RealTimeTextStream implemenation.
- */
-
-MS2RealTimeTextStream::MS2RealTimeTextStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
-}
-
-MediaStream *MS2RealTimeTextStream::getMediaStream()const{
-	return &mStream->ms;
-}
-
-void MS2RealTimeTextStream::handleEvent(const OrtpEvent *ev){
-}
 
 LINPHONE_END_NAMESPACE
 

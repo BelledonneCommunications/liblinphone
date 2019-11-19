@@ -172,6 +172,7 @@ void MS2AudioStream::prepare(){
 	audio_stream_enable_noise_gate(mStream, enabled);
 	audio_stream_set_features(mStream, linphone_core_get_audio_features(getCCore()));
 	
+	audio_stream_prepare_sound(mStream, getCCore()->sound_conf.play_sndcard, getCCore()->sound_conf.capt_sndcard);
 	MS2Stream::prepare();
 }
 
@@ -351,7 +352,9 @@ void MS2AudioStream::stop(){
 	}
 	
 	audio_stream_stop(mStream);
-	mStream = nullptr;
+	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 
+	 * sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
+	mStream = audio_stream_new_with_sessions(getCCore()->factory, &mSessions);
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
 	
 	
@@ -549,6 +552,8 @@ void MS2AudioStream::stopRecording(){
 
 
 MS2AudioStream::~MS2AudioStream(){
+	if (mStream)
+		audio_stream_stop(mStream);
 }
 
 
