@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/defs.h"
 #include "sal/register-op.h"
 #include "bellesip_sal/sal_impl.h"
 
@@ -128,8 +129,16 @@ void SalRegisterOp::registerRefresherListener (belle_sip_refresher_t *refresher,
 		if ((op->mState != State::Terminated) && op->mAuthInfo) {
 			// Add pending auth
 			op->mRoot->addPendingAuth(op);
-			if ((statusCode == 401) || (statusCode == 403) || (statusCode == 407))
-				op->mRoot->mCallbacks.auth_failure(op, op->mAuthInfo);
+			switch (statusCode){
+				case 401:
+					BCTBX_NO_BREAK;
+				case 407:
+					op->mRoot->addPendingAuth(op);
+					BCTBX_NO_BREAK;
+				case 403:
+					op->mRoot->mCallbacks.auth_failure(op, op->mAuthInfo);
+					break;
+			}
 		}
 		op->unref();
 	}
