@@ -32,7 +32,21 @@
 
 using namespace LinphonePrivate;
 
-extern const char *__policy_enum_to_str(LinphoneSubscribePolicy pol);
+const char *__policy_enum_to_str(LinphoneSubscribePolicy pol){
+	switch(pol){
+		case LinphoneSPAccept:
+			return "accept";
+			break;
+		case LinphoneSPDeny:
+			return "deny";
+			break;
+		case LinphoneSPWait:
+			return "wait";
+			break;
+	}
+	ms_warning("Invalid policy enum value.");
+	return "wait";
+}
 
 struct _LinphonePresenceNote {
 	belle_sip_object_t base;

@@ -214,6 +214,7 @@ LinphoneFriend * linphone_friend_new(void){
 	obj->subscribe = TRUE;
 	obj->vcard = NULL;
 	obj->storage_id = 0;
+	obj->rc_index = -1;
 	return obj;
 }
 
@@ -1072,11 +1073,6 @@ LinphoneSubscribePolicy __policy_str_to_enum(const char* pol){
 	return LinphoneSPWait;
 }
 
-LinphoneProxyConfig *__index_to_proxy(LinphoneCore *lc, int index){
-	if (index>=0) return (LinphoneProxyConfig*)bctbx_list_nth_data(lc->sip_conf.proxies,index);
-	else return NULL;
-}
-
 LinphoneFriend * linphone_friend_new_from_config_file(LinphoneCore *lc, int index){
 	const char *tmp;
 	char item[50];
@@ -1107,25 +1103,36 @@ LinphoneFriend * linphone_friend_new_from_config_file(LinphoneCore *lc, int inde
 	linphone_friend_send_subscribe(lf,!!a);
 	a = lp_config_get_int(config, item, "presence_received", 0);
 	lf->presence_received = (bool_t)a;
+	lf->rc_index = index;
 
 	linphone_friend_set_ref_key(lf,lp_config_get_string(config,item,"refkey",NULL));
 	return lf;
 }
 
-const char *__policy_enum_to_str(LinphoneSubscribePolicy pol){
-	switch(pol){
-		case LinphoneSPAccept:
-			return "accept";
-			break;
-		case LinphoneSPDeny:
-			return "deny";
-			break;
-		case LinphoneSPWait:
-			return "wait";
-			break;
+int linphone_friend_get_rc_index(const LinphoneFriend *lf) {
+	return lf->rc_index;
+}
+
+void linphone_friend_remove(LinphoneFriend *lf) {
+	if (!lf) return;
+
+	if (lf->friend_list) {
+		linphone_friend_list_remove_friend(lf->friend_list, lf);
 	}
-	ms_warning("Invalid policy enum value.");
-	return "wait";
+
+	if (lf->rc_index >= 0) {
+		LinphoneCore *lc = lf->lc;
+		if (lc) {
+			LinphoneConfig *config = linphone_core_get_config(lc);
+			if (config) {
+				char section[50];
+				sprintf(section, "friend_%i", lf->rc_index);
+				linphone_config_clean_section(config, section);
+				linphone_config_sync(config);
+				lf->rc_index = -1;
+			}
+		}
+	}
 }
 
 LinphoneCore *linphone_friend_get_core(const LinphoneFriend *fr){

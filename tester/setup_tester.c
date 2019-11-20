@@ -23,6 +23,7 @@
 #include "linphone/friend.h"
 #include "linphone/friendlist.h"
 #include "linphone/lpconfig.h"
+#include "linphone/friend.h"
 #include "linphone/api/c-magic-search.h"
 #include "tester_utils.h"
 
@@ -1537,6 +1538,56 @@ static void echo_canceller_check(void){
 	linphone_core_manager_destroy(manager);
 }
 
+extern LinphoneFriend * linphone_friend_new_from_config_file(LinphoneCore *lc, int index);
+extern int linphone_friend_get_rc_index(const LinphoneFriend *lf);
+
+static void delete_friend_from_rc(void) {
+	LinphoneCoreManager* manager = linphone_core_manager_new2("friends_rc", FALSE);
+	LinphoneCore *core = manager->lc;
+	LinphoneConfig *config = linphone_core_get_config(core);
+	LinphoneFriendList *friend_list = linphone_core_get_default_friend_list(core);
+	const bctbx_list_t *friends = linphone_friend_list_get_friends(friend_list);
+	LinphoneFriend *francois = NULL;
+
+	BC_ASSERT_PTR_NOT_NULL(friends);
+	if (friends) {
+		BC_ASSERT_EQUAL(bctbx_list_size(friends), 3, int, "%i");
+		bctbx_list_t *it = NULL;
+		int index = 2;
+		for (it = (bctbx_list_t *)friends; it != NULL; it = bctbx_list_next(it)) {
+			LinphoneFriend *friend = (LinphoneFriend *) bctbx_list_get_data(it);
+			BC_ASSERT_EQUAL(linphone_friend_get_rc_index(friend), index, int, "%i");
+			if (index == 1) {
+				francois = linphone_friend_ref(friend);
+			}
+			index -= 1;
+		}
+	}
+
+	LinphoneFriend *friend = linphone_friend_new_with_address("sip:pauline@sip.linphone.org");
+	BC_ASSERT_EQUAL(linphone_friend_get_rc_index(friend), -1, int, "%i");
+	linphone_friend_list_add_friend(friend_list, friend);
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(friend_list)), 4, int, "%i");
+	BC_ASSERT_EQUAL(linphone_friend_get_rc_index(friend), -1, int, "%i");
+	linphone_friend_list_remove_friend(friend_list, friend);
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(friend_list)), 3, int, "%i");
+	BC_ASSERT_EQUAL(linphone_friend_get_rc_index(friend), -1, int, "%i");
+	linphone_friend_unref(friend);
+
+	BC_ASSERT_PTR_NOT_NULL(francois);
+	if (francois) {
+		linphone_friend_remove(francois);
+		BC_ASSERT_PTR_NULL(linphone_friend_get_friend_list(francois));
+		const char *section = "friend_1";
+		BC_ASSERT_EQUAL(linphone_config_has_section(config, section), 0, int, "%i");
+		BC_ASSERT_PTR_NULL(linphone_friend_new_from_config_file(core, 1));
+		BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(friend_list)), 2, int, "%i");
+		linphone_friend_unref(francois);
+	}
+
+	linphone_core_manager_destroy(manager);
+}
+
 static void dial_plan(void) {
 	bctbx_list_t *dial_plans = linphone_dial_plan_get_all_list();
 	bctbx_list_t *it;
@@ -1598,6 +1649,7 @@ test_t setup_tests[] = {
 	TEST_ONE_TAG("Search friend in large friends database", search_friend_large_database, "MagicSearch"),
 	TEST_ONE_TAG("Search friend result has capabilities", search_friend_get_capabilities, "MagicSearch"),
 	TEST_ONE_TAG("Search friend result chat room remote", search_friend_chat_room_remote, "MagicSearch"),
+	TEST_NO_TAG("Delete friend in linphone rc", delete_friend_from_rc),
 	TEST_NO_TAG("Dialplan", dial_plan)
 };
 

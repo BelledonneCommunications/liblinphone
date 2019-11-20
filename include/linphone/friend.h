@@ -380,6 +380,12 @@ LINPHONE_PUBLIC bool_t linphone_friend_has_capability_with_version_or_more(const
 LINPHONE_PUBLIC float linphone_friend_get_capability_version(const LinphoneFriend *lf, const LinphoneFriendCapability capability);
 
 /**
+ * Removes a friend from it's friend list and from the rc if exists
+ * @param[in] lf #LinphoneFriend object to delete
+ */
+LINPHONE_PUBLIC void linphone_friend_remove(LinphoneFriend *lf);
+
+/**
  * @}
  */
 

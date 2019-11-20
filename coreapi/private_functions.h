@@ -263,7 +263,6 @@ LINPHONE_PUBLIC bool_t _linphone_call_stats_rtcp_received_via_mux (const Linphon
 bool_t linphone_core_media_description_contains_video_stream(const SalMediaDescription *md);
 
 void linphone_core_send_initial_subscribes(LinphoneCore *lc);
-LinphoneFriend * linphone_friend_new_from_config_file(struct _LinphoneCore *lc, int index);
 
 void linphone_proxy_config_update(LinphoneProxyConfig *cfg);
 LinphoneProxyConfig * linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri);
@@ -455,6 +454,8 @@ void linphone_nat_policy_save_to_config(const LinphoneNatPolicy *policy);
 
 void linphone_core_create_im_notif_policy(LinphoneCore *lc);
 
+LINPHONE_PUBLIC LinphoneFriend * linphone_friend_new_from_config_file(LinphoneCore *lc, int index);
+LINPHONE_PUBLIC int linphone_friend_get_rc_index(const LinphoneFriend *lf);
 
 /*****************************************************************************
  * REMOTE PROVISIONING FUNCTIONS                                             *
