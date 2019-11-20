@@ -3734,6 +3734,10 @@ LinphoneProxyConfig * linphone_core_lookup_known_proxy(LinphoneCore *lc, const L
 	LinphoneProxyConfig *found_noreg_cfg=NULL;
 	LinphoneProxyConfig *default_cfg=lc->default_proxy;
 
+	if (!uri) {
+		ms_error("Cannot look for proxy for NULL uri, returning default");
+		return default_cfg;
+	}
 	if (linphone_address_get_domain(uri) == NULL) {
 		ms_message("Cannot look for proxy for uri [%p] that has no domain set, returning default", uri);
 		return default_cfg;

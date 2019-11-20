@@ -62,11 +62,14 @@ static IdentityAddress getDefaultLocalAddress(const shared_ptr<Core> &core, cons
 
 	if (peerAddress) {
 		LinphoneAddress *cPeerAddress = linphone_address_new(peerAddress->asString().c_str());
-		proxy = linphone_core_lookup_known_proxy(cCore, cPeerAddress);
-		linphone_address_unref(cPeerAddress);
-	} else {
+		if (cPeerAddress) {
+			proxy = linphone_core_lookup_known_proxy(cCore, cPeerAddress);
+			linphone_address_unref(cPeerAddress);
+		}
+	} 
+	
+	if (!proxy)
 		proxy =	linphone_core_get_default_proxy_config(cCore);
-	}
 
 	IdentityAddress localAddress;
 	if (proxy) {
