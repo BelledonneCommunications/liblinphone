@@ -291,12 +291,12 @@ void linphone_chat_room_add_participant (LinphoneChatRoom *cr, const LinphoneAdd
 	);
 }
 
-void linphone_chat_room_add_participants (LinphoneChatRoom *cr, const bctbx_list_t *addresses) {
+bool_t linphone_chat_room_add_participants (LinphoneChatRoom *cr, const bctbx_list_t *addresses) {
 	list<LinphonePrivate::Address> lAddr = L_GET_RESOLVED_CPP_LIST_FROM_C_LIST(addresses, Address);
 	list<LinphonePrivate::IdentityAddress> lIdentAddr;
 	for (const auto &addr : lAddr)
 		lIdentAddr.push_back(LinphonePrivate::IdentityAddress(addr));
-	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipants(lIdentAddr, nullptr, false);
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipants(lIdentAddr, nullptr, false);
 }
 
 bool_t linphone_chat_room_can_handle_participants (const LinphoneChatRoom *cr) {

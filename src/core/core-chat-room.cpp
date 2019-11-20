@@ -272,7 +272,10 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 			return nullptr;
 		}
 			
-		chatRoom->addParticipants(participants, nullptr, false);
+		if (!chatRoom->addParticipants(participants, nullptr, false)) {
+			lWarning() << "Couldn't add participants to newly created chat room, aborting";
+			return nullptr;
+		}
 #else
 		lWarning() << "Advanced IM such as group chat is disabled!";
 		return nullptr;
