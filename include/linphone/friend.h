@@ -27,6 +27,9 @@
 extern "C" {
 #endif
 
+LINPHONE_PUBLIC LinphoneFriend * linphone_friend_new_from_config_file(LinphoneCore *lc, int index);
+LINPHONE_PUBLIC int linphone_friend_get_rc_index(const LinphoneFriend *lf);
+
 /**
  * @addtogroup buddy_list
  * @{
@@ -378,6 +381,12 @@ LINPHONE_PUBLIC bool_t linphone_friend_has_capability_with_version_or_more(const
  * @return the version of a friend's capbility.
  */
 LINPHONE_PUBLIC float linphone_friend_get_capability_version(const LinphoneFriend *lf, const LinphoneFriendCapability capability);
+
+/**
+ * Removes a friend from it's friend list and from the rc if exists
+ * @param[in] lf #LinphoneFriend object to delete
+ */
+LINPHONE_PUBLIC void linphone_friend_remove(LinphoneFriend *lf);
 
 /**
  * @}
