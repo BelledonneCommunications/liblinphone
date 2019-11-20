@@ -300,6 +300,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		}
 	}
 	if (ok) {
+		audio_stream_link_video(mStream, getPeerVideoStream());
 		mCurrentCaptureCard = ms_media_resource_get_soundcard(&io.input);
 		mCurrentPlaybackCard = ms_media_resource_get_soundcard(&io.output);
 
@@ -309,6 +310,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			usedPt, &io);
 		if (err == 0)
 			postConfigureAudioStream((mMuted || mMicMuted) && (listener && !listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis())));
+		mStartCount++;
 	}
 	
 	if ((targetState == CallSession::State::Paused) && !captcard && !playfile.empty()) {
@@ -339,7 +341,6 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 }
 
 void MS2AudioStream::stop(){
-	if (!mStream) return;
 	
 	MS2Stream::stop();
 	if (mStream->ec) {
@@ -350,6 +351,7 @@ void MS2AudioStream::stop(){
 			lp_config_write_relative_file(linphone_core_get_config(getCCore()), ecStateStore, stateStr);
 		}
 	}
+	audio_stream_link_video(mStream, getPeerVideoStream());
 	
 	audio_stream_stop(mStream);
 	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 
@@ -379,23 +381,20 @@ void MS2AudioStream::forceSpeakerMuted (bool muted) {
 		audio_stream_set_spk_gain_db(mStream, getCCore()->sound_conf.soft_play_lev);
 }
 
-void MS2AudioStream::setPlaybackGainDb (float gain) {
-	if (mStream->volrecv)
-		ms_filter_call_method(mStream->volrecv, MS_VOLUME_SET_DB_GAIN, &gain);
-	else
-		lWarning() << "Could not apply playback gain: gain control wasn't activated";
+void MS2AudioStream::setRoute(LinphoneAudioRoute route){
+	audio_stream_set_audio_route(mStream, (MSAudioRoute)route);
 }
 
-void MS2AudioStream::parameterizeEqualizer() {
-	LinphoneConfig *config = linphone_core_get_config(getCCore());
+void MS2AudioStream::parameterizeEqualizer(AudioStream *as, LinphoneCore *lc) {
+	LinphoneConfig *config = linphone_core_get_config(lc);
 	const char *eqActive = lp_config_get_string(config, "sound", "eq_active", nullptr);
 	if (eqActive)
 		lWarning() << "'eq_active' linphonerc parameter has no effect anymore. Please use 'mic_eq_active' or 'spk_eq_active' instead";
 	const char *eqGains = lp_config_get_string(config, "sound", "eq_gains", nullptr);
 	if(eqGains)
 		lWarning() << "'eq_gains' linphonerc parameter has no effect anymore. Please use 'mic_eq_gains' or 'spk_eq_gains' instead";
-	if (mStream->mic_equalizer) {
-		MSFilter *f = mStream->mic_equalizer;
+	if (as->mic_equalizer) {
+		MSFilter *f = as->mic_equalizer;
 		bool enabled = !!lp_config_get_int(config, "sound", "mic_eq_active", 0);
 		ms_filter_call_method(f, MS_EQUALIZER_SET_ACTIVE, &enabled);
 		const char *gains = lp_config_get_string(config, "sound", "mic_eq_gains", nullptr);
@@ -410,8 +409,8 @@ void MS2AudioStream::parameterizeEqualizer() {
 				bctbx_list_free_with_data(gainsList, ms_free);
 		}
 	}
-	if (mStream->spk_equalizer) {
-		MSFilter *f = mStream->spk_equalizer;
+	if (as->spk_equalizer) {
+		MSFilter *f = as->spk_equalizer;
 		bool enabled = !!lp_config_get_int(config, "sound", "spk_eq_active", 0);
 		ms_filter_call_method(f, MS_EQUALIZER_SET_ACTIVE, &enabled);
 		const char *gains = lp_config_get_string(config, "sound", "spk_eq_gains", nullptr);
@@ -428,23 +427,25 @@ void MS2AudioStream::parameterizeEqualizer() {
 	}
 }
 
-
-
-void MS2AudioStream::postConfigureAudioStream(bool muted) {
-	float micGain = getCCore()->sound_conf.soft_mic_lev;
+void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted){
+	float micGain = lc->sound_conf.soft_mic_lev;
 	if (muted)
-		audio_stream_set_mic_gain(mStream, 0);
+		audio_stream_set_mic_gain(as, 0);
 	else
-		audio_stream_set_mic_gain_db(mStream, micGain);
-	float recvGain = getCCore()->sound_conf.soft_play_lev;
-	if (static_cast<int>(recvGain))
-		setPlaybackGainDb(recvGain);
-	LinphoneConfig *config = linphone_core_get_config(getCCore());
+		audio_stream_set_mic_gain_db(as, micGain);
+	float recvGain = lc->sound_conf.soft_play_lev;
+	if (static_cast<int>(recvGain)){
+		if (as->volrecv)
+			ms_filter_call_method(as->volrecv, MS_VOLUME_SET_DB_GAIN, &gain);
+		else
+			lWarning() << "Could not apply playback gain: gain control wasn't activated";
+	}
+	LinphoneConfig *config = linphone_core_get_config(lc);
 	float ngThres = lp_config_get_float(config, "sound", "ng_thres", 0.05f);
 	float ngFloorGain = lp_config_get_float(config, "sound", "ng_floorgain", 0);
-	if (mStream->volsend) {
+	if (as->volsend) {
 		int dcRemoval = lp_config_get_int(config, "sound", "dc_removal", 0);
-		ms_filter_call_method(mStream->volsend, MS_VOLUME_REMOVE_DC, &dcRemoval);
+		ms_filter_call_method(as->volsend, MS_VOLUME_REMOVE_DC, &dcRemoval);
 		float speed = lp_config_get_float(config, "sound", "el_speed", -1);
 		float thres = lp_config_get_float(config, "sound", "el_thres", -1);
 		float force = lp_config_get_float(config, "sound", "el_force", -1);
@@ -454,7 +455,7 @@ void MS2AudioStream::postConfigureAudioStream(bool muted) {
 			speed = 0.03f;
 		if (static_cast<int>(force) == -1)
 			force = 25;
-		MSFilter *f = mStream->volsend;
+		MSFilter *f = as->volsend;
 		ms_filter_call_method(f, MS_VOLUME_SET_EA_SPEED, &speed);
 		ms_filter_call_method(f, MS_VOLUME_SET_EA_FORCE, &force);
 		if (static_cast<int>(thres) != -1)
@@ -466,16 +467,20 @@ void MS2AudioStream::postConfigureAudioStream(bool muted) {
 		ms_filter_call_method(f, MS_VOLUME_SET_NOISE_GATE_THRESHOLD, &ngThres);
 		ms_filter_call_method(f, MS_VOLUME_SET_NOISE_GATE_FLOORGAIN, &ngFloorGain);
 	}
-	if (mStream->volrecv) {
+	if (as->volrecv) {
 		/* Parameters for a limited noise-gate effect, using echo limiter threshold */
 		float floorGain = (float)(1 / pow(10, micGain / 10));
 		int spkAgc = lp_config_get_int(config, "sound", "speaker_agc_enabled", 0);
-		MSFilter *f = mStream->volrecv;
+		MSFilter *f = as->volrecv;
 		ms_filter_call_method(f, MS_VOLUME_ENABLE_AGC, &spkAgc);
 		ms_filter_call_method(f, MS_VOLUME_SET_NOISE_GATE_THRESHOLD, &ngThres);
 		ms_filter_call_method(f, MS_VOLUME_SET_NOISE_GATE_FLOORGAIN, &floorGain);
 	}
-	parameterizeEqualizer();
+	parameterizeEqualizer(as, core);
+}
+
+void MS2AudioStream::postConfigureAudioStream(bool muted) {
+	
 	forceSpeakerMuted(mSpeakerMuted);
 	if (linphone_core_dtmf_received_has_listener(getCCore()))
 		audio_stream_play_received_dtmfs(mStream, false);
@@ -548,6 +553,45 @@ void MS2AudioStream::stopRecording(){
 	if (mRecordActive)
 		audio_stream_mixed_record_stop(mStream);
 	mRecordActive = false;
+}
+
+float MS2AudioStream::getPlayVolume(){
+	if (mStream->volrecv) {
+		float vol = 0;
+		ms_filter_call_method(mStream->volrecv, MS_VOLUME_GET, &vol);
+		return vol;
+	}
+	return LINPHONE_VOLUME_DB_LOWEST;
+}
+
+float MS2AudioStream::getRecordVolume(){
+	if (mStream->volsend && !mMicrophoneMuted) {
+		float vol = 0;
+		ms_filter_call_method(mStream->volsend, MS_VOLUME_GET, &vol);
+		return vol;
+	}
+	return LINPHONE_VOLUME_DB_LOWEST;
+}
+
+float MS2AudioStream::getMicGain(){
+	return audio_stream_get_sound_card_input_gain(mStream);
+}
+
+void MS2AudioStream::setMicGain(float gain){
+	audio_stream_set_sound_card_input_gain(mStream, value);
+}
+
+float MS2AudioStream::getSpeakerGain(){
+	return audio_stream_get_sound_card_output_gain(mStream);
+}
+
+void MS2AudioStream::setSpeakerGain(float gain){
+	audio_stream_set_sound_card_output_gain(mStream, value);
+}
+
+VideoStream *MS2AudioStream::getPeerVideoStream(){
+	MS2VideoStream *vs = getGroup().lookupMainStreamInterface<MS2VideoStream>(SalVideo);
+	return vs ? (VideoStream*)vs->getMediaStream() : nullptr;
 }
 
 

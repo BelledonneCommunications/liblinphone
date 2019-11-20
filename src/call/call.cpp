@@ -64,7 +64,27 @@ unsigned int CallPrivate::getTextStartCount () const {
 }
 
 MediaStream *CallPrivate::getMediaStream (LinphoneStreamType type) const {
-	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getMediaStream(type);
+	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
+	StreamsGroup & sg = ms->getStreamsGroup();
+	MS2Stream *s = nullptr;
+	switch(type){
+		case LinphoneStreamTypeAudio:
+			s = sg.lookupMainStreamInterface<MS2Stream>(SalAudio);
+		break;
+		case LinphoneStreamTypeVideo:
+			s = sg.lookupMainStreamInterface<MS2Stream>(SalVideo);
+		break;
+		case LinphoneStreamTypeText:
+			s = sg.lookupMainStreamInterface<MS2Stream>(SalText);
+		break;
+		default:
+		break;
+	}
+	if (!s){
+		lError() << "CallPrivate::getMediaStream() : no stream with type " << type;
+		return nullptr;
+	}
+	return s->getMediaStream();
 }
 
 SalCallOp * CallPrivate::getOp () const {

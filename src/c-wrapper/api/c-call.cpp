@@ -29,6 +29,7 @@
 #include "call/remote-conference-call.h"
 #include "chat/chat-room/real-time-text-chat-room.h"
 #include "conference/params/media-session-params-p.h"
+#include "conference/session/streams.h"
 #include "core/core-p.h"
 
 // =============================================================================
@@ -77,7 +78,7 @@ void linphone_call_init_media_streams (LinphoneCall *call) {
 
 /*This function is not static because used internally in linphone-daemon project*/
 void _post_configure_audio_stream (AudioStream *st, LinphoneCore *lc, bool_t muted) {
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->postConfigureAudioStream(st, !!muted);
+	LinphonePrivate::MS2AudioStream::postConfigureAudioStream(st, lc, !!muted);
 }
 
 void linphone_call_stop_media_streams (LinphoneCall *call) {

@@ -73,6 +73,11 @@ public:
 	 * Ask the stream to prepare to run. This may include configuration steps, ICE gathering etc.
 	 */
 	virtual void prepare();
+	
+	/**
+	 * Request the stream to finish the prepare step (such as ICE gathering).
+	 */
+	virtual void finishPrepare();
 	/**
 	 * Ask the stream to render according to the supplied offer-answer context and target state.
 	 * render() may be called multiple times according to changes made in the offer answer.
@@ -86,6 +91,10 @@ public:
 		return nullptr;
 	}
 	virtual bool isEncrypted() const = 0;
+	virtual void tryEarlyMediaForking(SalStreamDescription *remoteMd) = 0;
+	virtual void finishEarlyMediaForking() = 0;
+	virtual float getAverageQuality() = 0;
+	virtual void startDtls(const OfferAnswerContext &params) = 0;
 	size_t getIndex()const { return mIndex; }
 	SalStreamType getType()const{ return mStreamType;}
 	LinphoneCore *getCCore()const;
@@ -98,6 +107,8 @@ public:
 	StreamsGroup &getGroup()const{ return mStreamsGroup;}
 	// Returns whether this stream is the "main" one of its own type, in constrat to secondary streams.
 	bool isMain()const{ return mIsMain;}
+	int getStartCount()const{ return mStartCount; }
+	const PortConfig &getPortConfig()const{ return mPortConfig; }
 	virtual ~Stream() = default;
 protected:
 	Stream(StreamsGroup &ms, const OfferAnswerContext &params);
@@ -106,6 +117,7 @@ protected:
 	 */
 	virtual void zrtpStarted(Stream *mainZrtpStream){};
 	PortConfig mPortConfig;
+	int mStartCount = 0; /* The number of time of the underlying stream has been started (or restarted). To be maintained by implementations. */
 private:
 	void setPortConfig(std::pair<int, int> portRange);
 	int selectFixedPort(std::pair<int, int> portRange);
@@ -124,8 +136,17 @@ class AudioControlInterface{
 public:
 	virtual void enableMic(bool value) = 0;
 	virtual void enableSpeaker(bool value) = 0;
+	virtual bool micEnabled()const = 0;
+	virtual bool speakerEnabled()const = 0;
 	virtual void startRecording() = 0;
 	virtual void stopRecording() = 0;
+	virtual float getPlayVolume() = 0; /* Measured playback volume */
+	virtual float getRecordVolume() = 0; /* Measured record volume */
+	virtual float getMicGain() = 0;
+	virtual void setMicGain(float value) = 0;
+	virtual float getSpeakerGain() = 0;
+	virtual void setSpeakerGain(float value) = 0;
+	virtual void setRoute(LinphoneAudioRoute route) = 0;
 	virtual ~AudioControlInterface() = default;
 };
 
@@ -149,7 +170,11 @@ public:
 	virtual bool isEncrypted() const override;
 	MSZrtpContext *getZrtpContext()const;
 	virtual MediaStream *getMediaStream()const = 0;
-	
+	virtual void tryEarlyMediaForking(SalStreamDescription *remoteMd) override;
+	virtual void finishEarlyMediaForking() override;
+	virtual float getAverageQuality() override;
+	virtual LinphoneCallStats *getStats() override;
+	virtual void startDtls(const OfferAnswerContext &params) override;
 	virtual ~MS2Stream();
 protected:
 	virtual void handleEvent(const OrtpEvent *ev) = 0;
@@ -166,6 +191,7 @@ protected:
 	OrtpEvQueue *mOrtpEvQueue = nullptr;
 	LinphoneCallStats *mStats = nullptr;
 	belle_sip_source_t *mTimer = nullptr;
+	bool mUseAuxDestinations = false;
 private:
 	void notifyStatsUpdated();
 	void handleEvents();
@@ -192,21 +218,32 @@ public:
 	/* AudioControlInterface */
 	virtual void enableMic(bool value) override;
 	virtual void enableSpeaker(bool value) override;
+	virtual bool micEnabled()const override;
+	virtual bool speakerEnabled()const override;
 	virtual void startRecording() override;
 	virtual void stopRecording() override;
-	
+	virtual float getPlayVolume() override;
+	virtual float getRecordVolume() override;
+	virtual float getMicGain() override;
+	virtual void setMicGain(float value) override;
+	virtual float getSpeakerGain() override;
+	virtual void setSpeakerGain(float value) override;
+	virtual void setRoute(LinphoneAudioRoute route) override;
 	virtual ~MS2AudioStream();
+	
+	/* Yeah quite ugly: this function is used externally to configure raw mediastreamer2 AudioStreams.*/
+	static void postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted);
 	
 protected:
 	virtual MediaStream *getMediaStream()const override;	
-
+	VideoStream *getPeerVideoStream();
 private:
 	virtual void handleEvent(const OrtpEvent *ev) override;
 	
 	void setPlaybackGainDb (float gain);
 	void setZrtpCryptoTypesParameters(MSZrtpParams *params, bool haveZrtpHash);
 	void startZrtpPrimaryChannel(const OfferAnswerContext &params);
-	void parameterizeEqualizer();
+	static void parameterizeEqualizer(AudioStream *as, LinphoneCore *lc);
 	void forceSpeakerMuted(bool muted);
 	void postConfigureAudioStream(bool muted);
 	void setupRingbackPlayer();
@@ -234,9 +271,13 @@ public:
 	virtual void enableCamera(bool value) override;
 	virtual void setNativeWindowId(void *w) override;
 	virtual void * getNativeWindowId() const override;
+	virtual void tryEarlyMediaForking(SalStreamDescription *remoteMd) override;
+	
+	void oglRender();
 	
 	virtual ~MS2VideoStream();
 protected:
+	AudioStream *getPeerAudioStream();
 	virtual MediaStream *getMediaStream()const override;
 private:
 	MSWebCam * getVideoDevice(CallSession::State targetState)const;
@@ -291,7 +332,14 @@ public:
 	 * when the offer was received from remote side.
 	 */
 	void createStreams(const OfferAnswerContext &params);
+	/*
+	 * Request the streams to prepare (configuration steps, ice gathering.
+	 */
 	void prepare();
+	/**
+	 * Request the stream to finish the prepare step (such as ICE gathering).
+	 */
+	void finishPrepare();
 	/**
 	 * Render the streams according to the supplied offer answer parameters and target session state.
 	 * Local, remote and result must all be non-null.
@@ -300,6 +348,18 @@ public:
 	void stop();
 	Stream * getStream(size_t index);
 	Stream * lookupMainStream(SalStreamType type);
+	template <typename _interface>
+	_interface * lookupMainStreamInterface(SalStreamType type){
+		Stream *s = lookupMainStream(type);
+		if (s){
+			_interface *iface = dynamic_cast<_interface*>(s);
+			if (iface == nullptr){
+				lError() << "lookupMainStreamInterface(): stream " << s << " cannot be casted to " << typeid(_interface).name();
+			}
+			return iface;
+		}
+		return nullptr;
+	}
 	std::list<Stream*> getStreams();
 	MediaSession &getMediaSession()const{
 		return mMediaSession;
@@ -307,6 +367,24 @@ public:
 	bool isPortUsed(int port)const;
 	IceAgent &getIceAgent()const;
 	bool allStreamsEncrypted () const;
+	// Returns true if at least one stream was started.
+	bool isStarted()const;
+	void startDtls(const OfferAnswerContext &params);
+	void tryEarlyMediaForking(const SalMediaDescription * resultDesc, const SalMediaDescription *md);
+	void finishEarlyMediaForking();
+	/*
+	 * Iterates over streams, trying to cast them to the _requestedInterface type. If they do cast,
+	 * invoke the lambda expression on them.
+	 */
+	template <typename _requestedInterface, typename _lambda>
+	void forEach(const _lambda &l){
+		for (auto & stream : mStreams){
+			_requestedInterface * iface = dynamic_cast<_requestedInterface*>(stream);
+			if (iface) l(iface);
+		}
+	}
+	void clearStreams();
+	float getAverageQuality();
 protected:
 	LinphoneCore *getCCore()const;
 	int updateAllocatedAudioBandwidth (const PayloadType *pt, int maxbw);
@@ -314,6 +392,7 @@ protected:
 	void zrtpStarted(Stream *mainZrtpStream);
 	void propagateEncryptionChanged();
 	void authTokenReady(const std::string &token, bool verified);
+	
 private:
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	Stream * createStream(const OfferAnswerContext &param);

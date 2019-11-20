@@ -202,6 +202,71 @@ Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 }
 
 
+void StreamsGroup::tryEarlyMediaForking(const SalMediaDescription * resultDesc, const SalMediaDescription *md) {
+	for (int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
+		if (!sal_stream_description_active(&resultDesc->streams[i]))
+			continue;
+		SalStreamDescription *refStream = &resultDesc->streams[i];
+		SalStreamDescription *newStream = &md->streams[i];
+		if ((refStream->type == newStream->type) && refStream->payloads && newStream->payloads) {
+			OrtpPayloadType *refpt = static_cast<OrtpPayloadType *>(refStream->payloads->data);
+			OrtpPayloadType *newpt = static_cast<OrtpPayloadType *>(newStream->payloads->data);
+			if ((strcmp(refpt->mime_type, newpt->mime_type) == 0) && (refpt->clock_rate == newpt->clock_rate)
+				&& (payload_type_get_number(refpt) == payload_type_get_number(newpt))) {
+				
+				MS2Stream *s = dynamic_cast<MS2Stream*>(getStream(i));
+				if (s){
+					s->tryEarlyMediaForking(newStream);
+				}
+			}
+		}
+	}
+}
+
+void StreamsGroup::finishEarlyMediaForking(){
+	for (auto &stream : mStreams){
+		if (stream) stream->finishEarlyMediaForking();
+	}
+}
+
+bool StreamsGroup::isStarted()const{
+	for( auto & stream : mStreams){
+		if (stream->getState() == Stream::Running) return true;
+	}
+	return false;
+}
+
+void StreamsGroup::clearStreams(){
+	stop();
+	mIceAgent->deleteSession();
+	mStreams.clear();
+}
+
+float StreamsGroup::getAverageQuality(){
+	float globalRating = -1.0f;
+	int countedStreams = 0;
+	for (auto &stream : mStreams){
+		float streamRating = stream->getAverageQuality();
+		if (streamRating != -1.0f){
+			if (globalRating == -1.0f){
+				globalRating = streamRating;
+			}else{
+				globalRating += streamRating;
+			}
+			countedStreams++;
+		}
+	}
+	return globalRating / (float)countedStreams;
+}
+
+void StreamsGroup::startDtls(const OfferAnswerContext &params){
+	OfferAnswerContext context = params;
+	for( auto & stream : mStreams){
+		context.scopeStreamToIndex(stream->getIndex());
+		stream->startDtls(context);
+	}
+}
+
 /*
  * Stream implementation.
  */
@@ -351,7 +416,11 @@ IceAgent & Stream::getIceAgent()const{
 MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params) : Stream(sg, params){
 	memset(&mSessions, 0, sizeof(mSessions));
 	initMulticast(params);
-	
+	mStats = _linphone_call_stats_new();
+	_linphone_call_stats_set_type(mStats, (LinphoneStreamType)getType());
+	_linphone_call_stats_set_received_rtcp(mStats, nullptr);
+	_linphone_call_stats_set_sent_rtcp(mStats, nullptr);
+	_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateNotActivated);
 }
 
 string MS2Stream::getBindIp(){
@@ -382,12 +451,14 @@ void MS2Stream::initMulticast(const OfferAnswerContext &params) {
 	if (params.localIsOfferer) {
 		mPortConfig.multicastRole = params.localStreamDescription->multicast_role;
 	}else{
-		mPortConfig.multicastRole = params.remoteStreamDescription->multicast_role;
+		mPortConfig.multicastRole = SalMulticastReceiver;
 	}
 	if (mPortConfig.multicastRole == SalMulticastReceiver){
+		mPortConfig.multicastIp = params.remoteStreamDescription->rtp_addr;
 		mPortConfig.rtpPort = params.remoteStreamDescription->rtp_port;
 		mPortConfig.rtpPort = 0; /*RTCP deactivated in multicast*/
 	}
+	
 	lInfo() << this << "multicast role is ["
 		<< sal_multicast_role_to_string(mPortConfig.multicastRole) << "]";
 }
@@ -455,6 +526,26 @@ void MS2Stream::configureAdaptiveRateControl (const OfferAnswerContext &params) 
 	}
 }
 
+void MS2Stream::tryEarlyMediaForking(SalStreamDescription *remoteMd){
+	RtpSession *session = mSessions.rtp_session;
+	const char *rtpAddr = (newStream->rtp_addr[0] != '\0') ? newStream->rtp_addr : md->addr;
+	const char *rtcpAddr = (newStream->rtcp_addr[0] != '\0') ? newStream->rtcp_addr : md->addr;
+	if (ms_is_multicast(rtpAddr))
+		lInfo() << "Multicast addr [" << rtpAddr << "/" << newStream->rtp_port << "] does not need auxiliary rtp's destination for CallSession [" << q << "]";
+	else{
+		rtp_session_set_symmetric_rtp(session, false); // Disable symmetric RTP when auxiliary destinations are added.
+		rtp_session_add_aux_remote_addr_full(session, rtpAddr, newStream->rtp_port, rtcpAddr, newStream->rtcp_port);
+		mUseAuxDestinations = true;
+	}
+}
+
+void MS2Stream::finishEarlyMediaForking(){
+	if (mUseAuxDestinations){
+		rtp_session_set_symmetric_rtp(mSessions.rtp_session, linphone_core_symmetric_rtp_enabled(getCCore()));
+		rtp_session_clear_aux_remote_addr(mSessions.rtp_session);
+		mUseAuxDestinations = false;
+	}
+}
 
 void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targetState){
 	const SalStreamDescription *stream = params.resultStreamDescription;
@@ -462,6 +553,9 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 	bool isMulticast = !!ms_is_multicast(rtpAddr);
 	
 	
+	if (getMediaSessionPrivate().getParams()->earlyMediaSendingEnabled() && (targetState == CallSession::State::OutgoingEarlyMedia)) {
+		rtp_session_set_symmetric_rtp(mSessions.rtp_session, false);
+	}
 	media_stream_set_max_network_bitrate(getMediaStream(), linphone_core_get_upload_bandwidth(getCCore()) * 1000);
 	if (isMulticast)
 		rtp_session_set_multicast_ttl(mSessions.rtp_session, stream->ttl);
@@ -480,6 +574,13 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 	configureRtpSessionForRtcpFb(params);
 	configureRtpSessionForRtcpXr(params);
 	configureAdaptiveRateControl(params);
+	
+	if (stream->dtls_role == SalDtlsRoleInvalid){
+		lWarning() << "Unable to start DTLS engine, Dtls role in resulting media description is invalid";
+	}else { /* If DTLS is available at both end points */
+		/* Give the peer certificate fingerprint to dtls context */
+		ms_dtls_srtp_set_peer_fingerprint(mSessions.dtls_context, params.remoteStreamDescription->dtls_fingerprint);
+	}
 	
 	Stream::render(params, targetState);
 }
@@ -573,6 +674,24 @@ void MS2Stream::setupDtlsParams (MediaStream *ms) {
 		} else {
 			lError() << "Unable to retrieve or generate DTLS certificate and key - DTLS disabled";
 			/* TODO : check if encryption forced, if yes, stop call */
+		}
+	}
+}
+
+void MS2Stream::startDtls(const OfferAnswerContext &params){
+	if (sal_stream_description_has_dtls(params.resultStreamDescription)) {
+		if (sd->dtls_role == SalDtlsRoleInvalid)
+			lWarning() << "Unable to start DTLS engine on stream session [" << sessions << "], Dtls role in resulting media description is invalid";
+		else { 
+			/* Workaround for buggy openssl versions that send DTLS packets bigger than the MTU. We need to increase the recv buf size of the RtpSession.*/
+			int recv_buf_size = lp_config_get_int(linphone_core_get_config(getCCore()),"rtp", "dtls_recv_buf_size", 5000);
+			rtp_session_set_recv_buf_size(mSessions.rtp_session, recv_buf_size);
+			
+			/* If DTLS is available at both end points */
+			/* Give the peer certificate fingerprint to dtls context */
+			ms_dtls_srtp_set_peer_fingerprint(mSessions.dtls_context, params.remoteStreamDescription->dtls_fingerprint);
+			ms_dtls_srtp_set_role(mSessions.dtls_context, (sd->dtls_role == SalDtlsRoleIsClient) ? MSDtlsSrtpRoleIsClient : MSDtlsSrtpRoleIsServer); /* Set the role to client */
+			ms_dtls_srtp_start(mSessions.dtls_context); /* Then start the engine, it will send the DTLS client Hello */
 		}
 	}
 }
@@ -770,6 +889,11 @@ void MS2Stream::updateStats(){
 	}
 }
 
+LinphoneCallStats *MS2Stream::getStats(){
+	linphone_call_stats_update(mStats, getMediaStream());
+	return mStats;
+}
+
 void MS2Stream::stop(){
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	
@@ -942,6 +1066,10 @@ RtpSession* MS2Stream::createRtpIoSession() {
 
 MSZrtpContext *MS2Stream::getZrtpContext()const{
 	return mSessions.zrtp_context;
+}
+
+float MS2Stream::getAverageQuality(){
+	return media_stream_get_average_quality_rating(getMediaStream());
 }
 
 

@@ -55,6 +55,7 @@ public:
 	unsigned int getAudioStartCount () const;
 	unsigned int getVideoStartCount () const;
 	unsigned int getTextStartCount () const;
+	// don't make new code relying on this method.
 	MediaStream *getMediaStream (LinphoneStreamType type) const;
 	SalCallOp *getOp () const;
 

@@ -91,6 +91,7 @@ public:
 	RtpTransport * getMetaRtpTransport (int streamIndex) const;
 	float getMicrophoneVolumeGain () const;
 	void * getNativeVideoWindowId () const;
+	void * getNativePreviewVideoWindowId () const;
 	const CallSessionParams *getParams () const override;
 	float getPlayVolume () const;
 	float getRecordVolume () const;

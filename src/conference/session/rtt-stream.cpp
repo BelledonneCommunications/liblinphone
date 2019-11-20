@@ -87,6 +87,7 @@ void MS2RTTStream::render(const OfferAnswerContext &params, CallSession::State t
 	text_stream_start(mStream, textProfile, rtpAddr, tstream->rtp_port, rtcpAddr,
 		(linphone_core_rtcp_enabled(getCCore()) && !isMulticast) ? (tstream->rtcp_port ? tstream->rtcp_port : tstream->rtp_port + 1) : 0, usedPt);
 	ms_filter_add_notify_callback(mStream->rttsink, sRealTimeTextCharacterReceived, this, false);
+	mStartCount++;
 }
 
 void MS2RTTStream::stop(){

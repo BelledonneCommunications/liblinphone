@@ -264,11 +264,14 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			io.output.type = MSResourceDefault;
 		}
 		if (ok) {
+			AudioStream *as = getPeerAudioStream();
+			if (as) audio_stream_link_video(as, mStream);
 			video_stream_start_from_io(mStream, videoProfile, rtpAddr, vstream->rtp_port, rtcpAddr,
 				(linphone_core_rtcp_enabled(getCCore()) && !isMulticast)  ? (vstream->rtcp_port ? vstream->rtcp_port : vstream->rtp_port + 1) : 0,
 				usedPt, &io);
 		}
 	}
+	mStartCount++;
 
 	if (listener)
 		listener->onResetFirstVideoFrameDecoded(getMediaSession().getSharedFromThis());
@@ -301,6 +304,8 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 
 void MS2VideoStream::stop(){
 	MS2Stream::stop();
+	AudioStream *as = getPeerAudioStream();
+	if (as) audio_stream_link_video(as, nullptr);
 	video_stream_stop(mStream);
 	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 
 	 * sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
@@ -320,7 +325,6 @@ void MS2VideoStream::handleEvent(const OrtpEvent *ev){
 }
 
 void MS2VideoStream::zrtpStarted(Stream *mainZrtpStream){
-#ifdef VIDEO_ENABLED
 	if (getState() == Running){
 		lInfo() << "Trying to start ZRTP encryption on video stream";
 		video_stream_start_zrtp(mStream);
@@ -329,8 +333,23 @@ void MS2VideoStream::zrtpStarted(Stream *mainZrtpStream){
 			video_stream_send_vfu(mStream);
 		}
 	}
-#endif
 }
+
+void MS2VideoStream::tryEarlyMediaForking(SalStreamDescription *remoteMd){
+	MS2Stream::tryEarlyMediaForking(remoteMd);
+	sendVfu();
+}
+
+void MS2VideoStream::oglRender(){
+	if (mStream->output && (ms_filter_get_id(mStream->output) == MS_OGL_ID))
+		ms_filter_call_method(mStream->output, MS_OGL_RENDER, nullptr);
+}
+
+AudioStream *MS2VideoStream::getPeerAudioStream(){
+	MS2AudioStream *as = getGroup().lookupMainStreamInterface<MS2AudioStream>(SalAudio);
+	return vs ? (AudioStream*)as->getMediaStream() : nullptr;
+}
+
 
 MS2VideoStream::~MS2VideoStream(){
 	video_stream_stop(mStream);
