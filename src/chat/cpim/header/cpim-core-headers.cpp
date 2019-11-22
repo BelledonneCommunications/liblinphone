@@ -65,9 +65,9 @@ string Cpim::ContactHeader::getFormalName () const {
 
 void Cpim::ContactHeader::setFormalName (const string &formalName) {
 	L_D();
-	if (formalName.front() == '\"' && formalName.back() == '\"')
+	if (!formalName.empty() && formalName.front() == '\"' && formalName.back() == '\"')
 		d->formalName = formalName.substr(1, formalName.size() - 2);
-	else if (formalName.back() == ' ')
+	else if (!formalName.empty() && formalName.back() == ' ')
 		d->formalName = formalName.substr(0, formalName.size() - 1);
 	else
 		d->formalName = formalName;
