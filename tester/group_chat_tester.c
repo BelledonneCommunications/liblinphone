@@ -637,6 +637,7 @@ static void group_chat_room_creation_server (void) {
 	wait_for_list(coresList, &dummy, 1, 1000);
 
 	// Chloe begins composing a message
+	BC_ASSERT_PTR_NOT_NULL(chloeCr);
 	linphone_chat_room_compose(chloeCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived, initialMarieStats.number_of_LinphoneIsComposingActiveReceived + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, initialPaulineStats.number_of_LinphoneIsComposingActiveReceived + 1, 3000));
