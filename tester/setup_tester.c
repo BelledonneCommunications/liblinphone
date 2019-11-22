@@ -93,6 +93,21 @@ static void core_init_test(void) {
 	}
 }
 
+static void core_init_test_2(void) {
+	LinphoneCore* lc;
+	char* rc_path = bc_tester_res("rcfiles/chloe_rc");
+	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL, rc_path, NULL, system_context);
+
+	/* until we have good certificates on our test server... */
+	linphone_core_verify_server_certificates(lc,FALSE);
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_default_proxy_config(lc));
+		linphone_core_unref(lc);
+	}
+	ms_free(rc_path);
+}
+
 static void core_init_stop_test(void) {
 	LinphoneCore* lc;
 	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL,liblinphone_tester_get_empty_rc(), NULL, system_context);
@@ -142,6 +157,13 @@ static void linphone_address_test(void) {
 
 	linphone_address_unref(create_linphone_address(NULL));
 	BC_ASSERT_PTR_NULL(linphone_address_new("sip:@sip.linphone.org"));
+
+	linphone_address_unref(create_linphone_address(NULL));
+	BC_ASSERT_PTR_NULL(linphone_address_new("sip:paul ine@sip.linphone.org"));
+
+	address = linphone_address_new("sip:paul%20ine@90.110.127.31");
+	if (!BC_ASSERT_PTR_NOT_NULL(address)) return;
+	linphone_address_unref(address);
 
 	address = linphone_address_new("sip:90.110.127.31");
 	if (!BC_ASSERT_PTR_NOT_NULL(address)) return;
@@ -221,6 +243,22 @@ static void linphone_interpret_url_test(void) {
 	address = linphone_core_interpret_url(lc,tmp);
 	BC_ASSERT_STRING_EQUAL(linphone_address_get_scheme(address), "sip");
 	BC_ASSERT_STRING_EQUAL(linphone_address_get_username(address), "#24");
+	BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(address), "sip.linphone.org");
+	linphone_address_unref(address);
+	ms_free(tmp);
+
+	address = linphone_core_interpret_url(lc,"paul ine");
+	BC_ASSERT_PTR_NOT_NULL(address);
+	BC_ASSERT_STRING_EQUAL(linphone_address_get_scheme(address), "sip");
+	BC_ASSERT_STRING_EQUAL(linphone_address_get_username(address), "paul ine");
+	BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(address), "sip.linphone.org");
+	tmp = linphone_address_as_string(address);
+	BC_ASSERT_TRUE(strcmp (tmp,"sip:paul%20ine@sip.linphone.org") == 0);
+	linphone_address_unref(address);
+
+	address = linphone_core_interpret_url(lc,tmp);
+	BC_ASSERT_STRING_EQUAL(linphone_address_get_scheme(address), "sip");
+	BC_ASSERT_STRING_EQUAL(linphone_address_get_username(address), "paul ine");
 	BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(address), "sip.linphone.org");
 	linphone_address_unref(address);
 	ms_free(tmp);
@@ -1615,6 +1653,7 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Linphone proxy config address equal (internal api)", linphone_proxy_config_address_equal_test),
 	TEST_NO_TAG("Linphone proxy config server address change (internal api)", linphone_proxy_config_is_server_config_changed_test),
 	TEST_NO_TAG("Linphone core init/uninit", core_init_test),
+	TEST_NO_TAG("Linphone core init/uninit from existing rc", core_init_test_2),
 	TEST_NO_TAG("Linphone core init/stop/uninit", core_init_stop_test),
 	TEST_NO_TAG("Linphone core init/stop/start/uninit", core_init_stop_start_test),
 	TEST_NO_TAG("Linphone random transport port",core_sip_transport_test),

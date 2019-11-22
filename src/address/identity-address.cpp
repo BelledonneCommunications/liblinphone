@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <belle-sip/utils.h>
 #include "linphone/utils/utils.h"
 
 #include "address.h"
@@ -50,7 +51,7 @@ IdentityAddress::IdentityAddress (const string &address) : ClonableObject(*new I
 	shared_ptr<IdentityAddress> parsedAddress = IdentityAddressParser::getInstance()->parseAddress(address);
 	if (parsedAddress != nullptr) {
 		d->scheme = parsedAddress->getScheme();
-		d->username = parsedAddress->getUsername();
+		d->username = belle_sip_to_unescaped_string(parsedAddress->getUsername().c_str());
 		d->domain = parsedAddress->getDomain();
 		d->gruu = parsedAddress->getGruu();
 	} else {
@@ -180,7 +181,7 @@ string IdentityAddress::asString () const {
 	ostringstream res;
 	res << d->scheme << ":";
 	if (!d->username.empty()){
-		res << d->username << "@";
+		res << belle_sip_uri_to_escaped_username(d->username.c_str()) << "@";
 	}
 	
 	if (d->domain.find(":") != string::npos) {

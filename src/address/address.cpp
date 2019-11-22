@@ -104,9 +104,7 @@ Address::Address (const IdentityAddress &identityAddress) : ClonableObject(*new 
 	if (domain.empty())
 		return;
 
-	string uri = identityAddress.getScheme() + ":" + username + "@" + (
-		domain.find(':') != string::npos ? "[" + domain + "]" : domain
-	);
+	string uri = identityAddress.asString();
 
 	if (identityAddress.hasGruu())
 		uri += ";gr=" + identityAddress.getGruu();

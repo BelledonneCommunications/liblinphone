@@ -402,7 +402,7 @@ belle_sdp_session_description_t * media_description_to_sdp ( const SalMediaDescr
 	} else inet6=0;
 	belle_sdp_session_description_set_version ( session_desc,belle_sdp_version_create ( 0 ) );
 
-	origin = belle_sdp_origin_create ( desc->username
+	origin = belle_sdp_origin_create ( belle_sip_uri_to_escaped_username(desc->username)
 									  ,desc->session_id
 									  ,desc->session_ver
 									  ,"IN"

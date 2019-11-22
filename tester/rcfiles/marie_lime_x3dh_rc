@@ -13,8 +13,8 @@ store_ha1_passwd=0 #used for sipp
 zrtp_cache_migration_done=1
 
 [auth_info_0]
-username=marie
-userid=marie
+username=marie laroueverte
+userid=marie laroueverte
 passwd=secret
 realm=sip.example.org
 
@@ -24,7 +24,7 @@ algorithm=SHA-256
 [proxy_0]
 reg_proxy=sip.example.org;transport=tcp
 reg_route=sip.example.org;transport=tcp;lr
-reg_identity="Super Marie" <sip:marie@sip.example.org>
+reg_identity="Super Marie" <sip:marie%20laroueverte@sip.example.org>
 reg_expires=3600
 reg_sendregister=1
 publish=0
