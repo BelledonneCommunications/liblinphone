@@ -536,6 +536,10 @@ void MS2AudioStream::enableSpeaker(bool value){
 	forceSpeakerMuted(mSpeakerMuted);
 }
 
+ void MS2AudioStream::sendDtmf(int dtmf){
+	 audio_stream_send_dtmf(mStream, dtmf);
+ }
+
 void MS2AudioStream::startRecording(){
 	if (getMediaSessionPrivate().getParams()->getRecordFilePath().empty()) {
 		lError() << "MS2AudioStream::startRecording(): no output file specified. Use MediaSessionParams::setRecordFilePath()";

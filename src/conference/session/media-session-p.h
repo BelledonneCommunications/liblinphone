@@ -271,18 +271,10 @@ private:
 
 	std::string dtlsCertificateFingerprint;
 
-	bool forceStreamsReconstruction = false;
-
-	unsigned int audioStartCount = 0;
-	unsigned int videoStartCount = 0;
-	unsigned int textStartCount = 0;
-
 	// Upload bandwidth setting at the time the call is started. Used to detect if it changes during a call.
 	int upBandwidth = 0;
 
-	// Upload bandwidth used by audio.
-	int audioBandwidth = 0;
-
+	bool forceStreamsReconstruction = false;
 	bool automaticallyPaused = false;
 	bool pausedByApp = false;
 	bool incomingIceReinvitePending = false;

@@ -54,6 +54,10 @@ StreamsGroup::StreamsGroup(MediaSession &session) : mMediaSession(session){
 	mIceAgent.reset(new IceAgent(session));
 }
 
+StreamsGroup::~StreamsGroup(){
+	stop();
+}
+
 IceAgent & StreamsGroup::getIceAgent()const{
 	return *mIceAgent;
 }
@@ -80,6 +84,9 @@ Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 	}
 	
 	if ((decltype(mStreams)::size_type)params.streamIndex >= mStreams.size()) mStreams.resize(params.streamIndex + 1);
+	if (mStreams[params.streamIndex] != nullptr){
+		lInfo() << "Stream at index " << params.streamIndex << " is being replaced.";
+	}
 	mStreams[params.streamIndex].reset(ret);
 	return ret;
 }
@@ -101,9 +108,16 @@ void StreamsGroup::render(const OfferAnswerContext &params, CallSession::State t
 		context.scopeStreamToIndex(stream->getIndex());
 		stream->render(context, targetState);
 	}
+	if (!mBandwidthReportTimer){
+		mBandwidthReportTimer = getCore().createTimer(1000, [this](){ computeAndReportBandwidth(); return true; }, "StreamsGroup timer");
+	}
 }
 
 void StreamsGroup::stop(){
+	if (!mBandwidthReportTimer){
+		getCore().destroyTimer(mBandwidthReportTimer);
+		mBandwidthReportTimer = nullptr;
+	}
 	for(auto &stream : mStreams){
 		if (stream && stream->getState() != Stream::Stopped)
 			stream->stop();
@@ -192,6 +206,26 @@ void StreamsGroup::authTokenReady(const string &authToken, bool verified) {
 	lInfo() << "Authentication token is " << mAuthToken << "(" << (mAuthTokenVerified ? "verified" : "unverified") << ")";
 }
 
+void StreamsGroup::setAuthTokenVerified(bool value){
+	MS2Stream *s = lookupMainStream<MS2Stream>(SalAudio);
+	if (!s || s->getState() != Stream::Running){
+		lError() << "StreamsGroup::setAuthTokenVerified(): No audio stream or not started";
+		return -1;
+	}
+	MSZrtpContext *zrtp_context = s->getZrtpContext();
+	if (!zrtp_context) {
+		lError() << "StreamsGroup::setAuthenticationTokenVerified(): No zrtp context";
+		return;
+	}
+	// SAS verified
+	if (value) {
+		ms_zrtp_sas_verified(zrtp_context);
+	} else { // SAS rejected
+		ms_zrtp_sas_reset_verified(zrtp_context);
+	}
+	mAuthTokenVerified = value;
+}
+
 Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 	for (auto &stream : mStreams){
 		if (stream->isMain() && stream->getType() == type){
@@ -242,11 +276,29 @@ void StreamsGroup::clearStreams(){
 	mStreams.clear();
 }
 
-float StreamsGroup::getAverageQuality(){
+size_t StreamsGroup::getActiveStreamsCount() const{
+	size_t ret = 0;
+	for( auto & stream : mStreams){
+		if (stream->getState() == Stream::Running) ++ret;
+	}
+	return ret;
+}
+
+bool StreamsGroup::isMuted() const{
+	for (auto & stream : mStreams){
+		if (stream->getState() == State::Running){
+			if (stream->isMuted() == false) return false;
+		}
+	}
+	return true;
+}
+
+template< typename _functor>
+float StreamsGroup::computeOverallQuality(_functor func){
 	float globalRating = -1.0f;
 	int countedStreams = 0;
 	for (auto &stream : mStreams){
-		float streamRating = stream->getAverageQuality();
+		float streamRating = func(stream);
 		if (streamRating != -1.0f){
 			if (globalRating == -1.0f){
 				globalRating = streamRating;
@@ -259,11 +311,59 @@ float StreamsGroup::getAverageQuality(){
 	return globalRating / (float)countedStreams;
 }
 
+float StreamsGroup::getAverageQuality(){
+	return computeOverallQuality(mem_fun(&Stream::getAverageQuality));
+}
+
+float StreamsGroup::getCurrentQuality(){
+	return computeOverallQuality(mem_fun(&Stream::getCurrentQuality));
+}
+
 void StreamsGroup::startDtls(const OfferAnswerContext &params){
 	OfferAnswerContext context = params;
 	for( auto & stream : mStreams){
 		context.scopeStreamToIndex(stream->getIndex());
 		stream->startDtls(context);
+	}
+}
+
+int StreamsGroup::getAvpfRrInterval()const{
+	int interval = 0;
+	for( auto & stream : mStreams){
+		MS2Stream *ms2a = dynamic_cast<MS2Stream*>(stream);
+		if (ms2a && ms2a->getAvpfRrInterval() > interval) 
+			interval = ms2a->getAvpfRrInterval();
+	}
+	return interval;
+}
+
+void StreamsGroup::refreshSockets(){
+	forEach<Stream>(mem_fun(&Stream::refreshSockets));
+}
+
+void StreamsGroup::computeAndReportBandwidth(){
+	forEach<Stream>(mem_fun(&Stream::updateBandwidthReports));
+	
+	if (!bctbx_log_level_enabled(BCTBX_LOG_LEVEL, BCTBX_LOG_MESSAGE)) return;
+	
+	ostringstream ostr;
+	bool introDone = false;
+	
+	for (auto &stream : mStreams){
+		if (!stream) continue;
+		if (!stream->getState() == Stream::Running) continue;
+		LinphoneCallStats *stats = stream->getStats();
+		if (!introDone){
+			ostr << "Bandwidth usage for CallSession [" << &getMediaSession() << "]:\n" << fixed << setprecision(2);
+			introDone = true;
+		}
+		ostr << "\tStream #" << stream->getIndex() << " cpu%: " << stream->getCpuUsage() <<  << sal_stream_type_to_string(stream->getType()) << " RTP : [d="
+			<< linphone_call_stats_get_download_bandwidth(stats) << ",u=" << linphone_call_stats_get_upload_bandwidth(stats) << "] "
+			<< "RTCP: [d=" << linphone_call_stats_get_rtcp_download_bandwidth(stats) << ",u=" << linphone_call_stats_get_rtcp_upload_bandwidth(stats) << "] ";
+		float est_bw = linphone_call_stats_get_estimated_download_bandwidth(stats);
+		if (est_bw) ostr << "Est max d=" << est_bw;
+		ostr << " (kbits/sec)" << endl;
+		lInfo() << ostr.str();
 	}
 }
 
@@ -447,6 +547,15 @@ string MS2Stream::getBindIp(){
 	return bindIp;
 }
 
+void MS2Stream::refreshSockets(){
+	rtp_session_refresh_sockets(mSessions.rtp_session);
+}
+
+int MS2Stream::getAvpfRrInterval()const{
+	MediaStream *ms = getMediaStream();
+	return media_stream_get_state(ms) == MSStreamStarted ? media_stream_get_avpf_rr_interval(ms) : 0;
+}
+
 void MS2Stream::initMulticast(const OfferAnswerContext &params) {
 	if (params.localIsOfferer) {
 		mPortConfig.multicastRole = params.localStreamDescription->multicast_role;
@@ -552,8 +661,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 	const char *rtpAddr = (stream->rtp_addr[0] != '\0') ? stream->rtp_addr : params.resultMediaDescription->addr;
 	bool isMulticast = !!ms_is_multicast(rtpAddr);
 	
-	
-	if (getMediaSessionPrivate().getParams()->earlyMediaSendingEnabled() && (targetState == CallSession::State::OutgoingEarlyMedia)) {
+	if (iceAgent->hasSession() || (getMediaSessionPrivate().getParams()->earlyMediaSendingEnabled() && (targetState == CallSession::State::OutgoingEarlyMedia))) {
 		rtp_session_set_symmetric_rtp(mSessions.rtp_session, false);
 	}
 	media_stream_set_max_network_bitrate(getMediaStream(), linphone_core_get_upload_bandwidth(getCCore()) * 1000);
@@ -580,6 +688,20 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 	}else { /* If DTLS is available at both end points */
 		/* Give the peer certificate fingerprint to dtls context */
 		ms_dtls_srtp_set_peer_fingerprint(mSessions.dtls_context, params.remoteStreamDescription->dtls_fingerprint);
+	}
+	
+	switch(targetState){
+		case CallSession::State::IncomingEarlyMedia:
+			BCTBX_NO_BREAK;
+		case CallSession::State::OutgoingEarlyMedia:
+			/* don't accept to send real-live media in early media stage by default.*/
+			if (!getParams()->earlyMediaSendingEnabled()) mMuted = true;
+		break;
+		case CallSession::StreamsRunning:
+			mMuted = true;
+		break;
+		default:
+		break;
 	}
 	
 	Stream::render(params, targetState);
@@ -1036,6 +1158,10 @@ bool MS2Stream::isEncrypted() const{
 	return media_stream_secured(getMediaStream());
 }
 
+bool MS2Stream::isMuted()const{
+	return mMuted;
+}
+
 RtpSession* MS2Stream::createRtpIoSession() {
 	LinphoneConfig *config = linphone_core_get_config(getCCore());
 	const char *config_section = getType() == SalAudio ? "sound" : "video";
@@ -1064,6 +1190,13 @@ RtpSession* MS2Stream::createRtpIoSession() {
 	return rtpSession;
 }
 
+std::pair<RtpTransport*, RtpTransport*> getMetaRtpTransports(){
+	RtpTransport *metaRtp = nullptr;
+	RtpTransport *metaRtcp = nullptr;
+	rtp_session_get_transports(mSessions.rtp_session, &metaRtp, &metaRtcp);
+	return make_pair(metaRtp, metaRtcp);
+}
+
 MSZrtpContext *MS2Stream::getZrtpContext()const{
 	return mSessions.zrtp_context;
 }
@@ -1072,6 +1205,35 @@ float MS2Stream::getAverageQuality(){
 	return media_stream_get_average_quality_rating(getMediaStream());
 }
 
+float MS2Stream::getCurrentQuality(){
+	return media_stream_get_quality_rating(getMediaStream());
+}
+
+void MS2Stream::updateBandwidthReports(){
+	MediaStream * ms = getMediaStream();
+	bool active = ms ? (media_stream_get_state(ms) == MSStreamStarted) : false;
+	_linphone_call_stats_set_download_bandwidth(mStats, active ? (float)(media_stream_get_down_bw(ms) * 1e-3) : 0.f);
+	_linphone_call_stats_set_upload_bandwidth(mStats, active ? (float)(media_stream_get_up_bw(ms) * 1e-3) : 0.f);
+	_linphone_call_stats_set_rtcp_download_bandwidth(mStats, active ? (float)(media_stream_get_rtcp_down_bw(ms) * 1e-3) : 0.f);
+	_linphone_call_stats_set_rtcp_upload_bandwidth(mStats, active ? (float)(media_stream_get_rtcp_up_bw(ms) * 1e-3) : 0.f);
+	_linphone_call_stats_set_ip_family_of_remote(mStats,
+		active ? (ortp_stream_is_ipv6(mSessions.rtp_session->rtp.gs) ? LinphoneAddressFamilyInet6 : LinphoneAddressFamilyInet) : LinphoneAddressFamilyUnspec);
+
+	if (getCCore()->send_call_stats_periodical_updates) {
+		if (active)
+			linphone_call_stats_update(stats, ms);
+		_linphone_call_stats_set_updated(stats, _linphone_call_stats_get_updated(stats) | LINPHONE_CALL_STATS_PERIODICAL_UPDATE);
+		if (listener)
+			listener->onStatsUpdated(q->getSharedFromThis(), stats);
+		_linphone_call_stats_set_updated(stats, 0);
+	}
+}
+
+float MS2Stream::getCpuUsage()const{
+	MediaStream *ms = getMediaStream();
+	if (ms->sessions.ticker == nullptr) return 0.0f;
+	return ms_ticker_get_average_load(ms->sessions.ticker);
+}
 
 MS2Stream::~MS2Stream(){
 	linphone_call_stats_unref(mStats);

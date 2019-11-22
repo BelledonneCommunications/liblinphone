@@ -107,6 +107,43 @@ void MS2VideoStream::sendVfu(){
 	video_stream_send_vfu(mStream);
 }
 
+void MS2VideoStream::sendVfuRequest(){
+	video_stream_send_fir(mStream);
+}
+
+void MS2VideoStream::zoomVideo (float zoomFactor, float cx, float cy){
+	if (mStream->output) {
+		if (zoomFactor < 1)
+			zoomFactor = 1;
+		float halfsize = 0.5f * 1.0f / zoomFactor;
+		if ((cx - halfsize) < 0)
+			cx = 0 + halfsize;
+		if ((cx + halfsize) > 1)
+			cx = 1 - halfsize;
+		if ((cy - halfsize) < 0)
+			cy = 0 + halfsize;
+		if ((cy + halfsize) > 1)
+			cy = 1 - halfsize;
+		float zoom[3] = { zoomFactor, cx, cy };
+		ms_filter_call_method(mStream->output, MS_VIDEO_DISPLAY_ZOOM, &zoom);
+	} else
+		lWarning() << "Could not apply zoom: video output wasn't activated";
+}
+
+void MS2VideoStream::parametersChanged(){
+	if (getState() != Stream::Running) return;
+	const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(getCCore());
+	MSVideoSize vsize;
+	vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
+	vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
+	video_stream_set_sent_video_size(mStream, vsize);
+	video_stream_set_fps(mStream, linphone_core_get_preferred_framerate(getCCore()));
+	if (mCameraEnabled && (mStream->cam != getCCore()->video_conf.device))
+		video_stream_change_camera(mStream, getCCore()->video_conf.device);
+	else
+		video_stream_update_video_params(mStream);
+}
+
 void MS2VideoStream::setNativeWindowId(void *w){
 	mNativeWindowId = w;
 	video_stream_set_native_window_id(mStream, w);
@@ -133,7 +170,7 @@ void MS2VideoStream::enableCamera(bool value){
 
 MSWebCam * MS2VideoStream::getVideoDevice(CallSession::State targetState) const {
 	bool paused = (targetState == CallSession::State::Pausing) || (targetState == CallSession::State::Paused);
-	if (paused || mVideoMuted || !mCameraEnabled)
+	if (paused || mMuted || !mCameraEnabled)
 #ifdef VIDEO_ENABLED
 		return ms_web_cam_manager_get_cam(ms_factory_get_web_cam_manager(getCCore()->factory),
 			"StaticImage: Static picture");
@@ -184,6 +221,14 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	if (usedPt == -1){
 		lError() << "No payload types accepted for video stream !";
 		stop();
+		return;
+	}
+	
+	if (mMuted && targetState == CallSession::StreamsRunning){
+		lInfo() << "Early media finished, unmuting video input...";
+		/* We were in early media, now we want to enable real media */
+		mMuted = false;
+		enableCamera(mCameraEnabled);
 	}
 
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedVideoCodec(rtp_profile_get_payload(videoProfile, usedPt));
@@ -350,6 +395,64 @@ AudioStream *MS2VideoStream::getPeerAudioStream(){
 	return vs ? (AudioStream*)as->getMediaStream() : nullptr;
 }
 
+void MS2VideoStream::requestNotifyNextVideoFrameDecoded () {
+	if (mStream->ms.decoder)
+		ms_filter_call_method_noarg(mStream->ms.decoder, MS_VIDEO_DECODER_RESET_FIRST_IMAGE_NOTIFICATION);
+}
+
+
+void MS2VideoStream::snapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg) {
+	if (id == MS_JPEG_WRITER_SNAPSHOT_TAKEN) {
+		CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
+		const char *filepath = (const char *) arg;
+		listener->onSnapshotTaken(getMediaSession().getSharedFromThis(), filepath);
+	}
+}
+
+static void snapshot_taken(void *userdata, struct _MSFilter *f, unsigned int id, void *arg) {
+	MS2VideoStream *d = (MS2VideoStream *)userdata;
+	d->snapshotTakenCb(userdata, f, id, arg);
+}
+
+int MS2VideoStream::takePreviewSnapshot (const string& file) {
+	if (mStream && mStream->local_jpegwriter) {
+		ms_filter_clear_notify_callback(mStream->jpegwriter);
+		const char *filepath = file.empty() ? nullptr : file.c_str();
+		ms_filter_add_notify_callback(mStream->local_jpegwriter, snapshot_taken, d, TRUE);
+		return ms_filter_call_method(mStream->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void *)filepath);
+	}
+	lWarning() << "Cannot take local snapshot: no currently running video stream on this call";
+	return -1;
+}
+
+int MS2VideoStream::takeVideoSnapshot (const string& file) {
+	if (mStream && mStream->jpegwriter) {
+		ms_filter_clear_notify_callback(mStream->jpegwriter);
+		const char *filepath = file.empty() ? nullptr : file.c_str();
+		ms_filter_add_notify_callback(mStream->jpegwriter, snapshot_taken, d, TRUE);
+		return ms_filter_call_method(mStream->jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void *)filepath);
+	}
+	lWarning() << "Cannot take snapshot: no currently running video stream on this call";
+	return -1;
+}
+
+bool MS2VideoStream::cameraEnabled() const{
+	return mCameraEnabled;
+}
+
+void MS2VideoStream::getRecvStats(VideoStats *s) const{
+	s->fps = video_stream_get_received_framerate(mStream);
+	MSVideoSize vsize = video_stream_get_received_video_size(videoStream);
+	s->width = vsize.width;
+	s->height = vsize.height;
+}
+
+void MS2VideoStream::getSendStats(VideoStats *s) const{
+	s->fps = video_stream_get_sent_framerate(mStream);
+	MSVideoSize vsize = video_stream_get_sent_video_size(videoStream);
+	s->width = vsize.width;
+	s->height = vsize.height;
+}
 
 MS2VideoStream::~MS2VideoStream(){
 	video_stream_stop(mStream);

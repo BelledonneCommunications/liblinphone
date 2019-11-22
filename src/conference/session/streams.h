@@ -93,8 +93,13 @@ public:
 	virtual bool isEncrypted() const = 0;
 	virtual void tryEarlyMediaForking(SalStreamDescription *remoteMd) = 0;
 	virtual void finishEarlyMediaForking() = 0;
+	virtual float getCurrentQuality() = 0;
 	virtual float getAverageQuality() = 0;
 	virtual void startDtls(const OfferAnswerContext &params) = 0;
+	virtual bool isMuted()const = 0;
+	virtual void refreshSockets() = 0;
+	virtual void updateBandwidthReports() = 0;
+	virtual float getCpuUsage()const = 0;
 	size_t getIndex()const { return mIndex; }
 	SalStreamType getType()const{ return mStreamType;}
 	LinphoneCore *getCCore()const;
@@ -140,6 +145,7 @@ public:
 	virtual bool speakerEnabled()const = 0;
 	virtual void startRecording() = 0;
 	virtual void stopRecording() = 0;
+	virtual bool isRecording() = 0;
 	virtual float getPlayVolume() = 0; /* Measured playback volume */
 	virtual float getRecordVolume() = 0; /* Measured record volume */
 	virtual float getMicGain() = 0;
@@ -147,15 +153,29 @@ public:
 	virtual float getSpeakerGain() = 0;
 	virtual void setSpeakerGain(float value) = 0;
 	virtual void setRoute(LinphoneAudioRoute route) = 0;
+	virtual void sendDtmf(int dtmf) = 0;
 	virtual ~AudioControlInterface() = default;
 };
 
 class VideoControlInterface{
 public:
+	struct VideoStats{
+		float fps;
+		int width, height;
+	};
 	virtual void sendVfu() = 0;
+	virtual void sendVfuRequest() = 0;
 	virtual void enableCamera(bool value) = 0;
+	virtual bool cameraEnabled() const = 0;
 	virtual void setNativeWindowId(void *w) = 0;
 	virtual void * getNativeWindowId() const = 0;
+	virtual void parametersChanged() = 0;
+	virtual void requestNotifyNextVideoFrameDecoded () = 0;
+	virtual int takePreviewSnapshot (const std::string& file) = 0;
+	virtual int takeVideoSnapshot (const std::string& file) = 0;
+	virtual void zoomVideo (float zoomFactor, float cx, float cy) = 0;
+	virtual void getRecvStats(VideoStats *s) const = 0;
+	virtual void getSendStats(VideoStats *s) const = 0;
 	virtual ~VideoControlInterface() = default;
 };
 
@@ -169,12 +189,18 @@ public:
 	virtual void stop() override;
 	virtual bool isEncrypted() const override;
 	MSZrtpContext *getZrtpContext()const;
+	std::pair<RtpTransport*, RtpTransport*> getMetaRtpTransports();
 	virtual MediaStream *getMediaStream()const = 0;
 	virtual void tryEarlyMediaForking(SalStreamDescription *remoteMd) override;
 	virtual void finishEarlyMediaForking() override;
+	virtual float getCurrentQuality() override;
 	virtual float getAverageQuality() override;
 	virtual LinphoneCallStats *getStats() override;
 	virtual void startDtls(const OfferAnswerContext &params) override;
+	virtual bool isMuted()const override;
+	virtual void refreshSockets() override;
+	virtual void updateBandwidthReports() override;
+	virtual float getCpuUsage()const override;
 	virtual ~MS2Stream();
 protected:
 	virtual void handleEvent(const OrtpEvent *ev) = 0;
@@ -192,6 +218,7 @@ protected:
 	LinphoneCallStats *mStats = nullptr;
 	belle_sip_source_t *mTimer = nullptr;
 	bool mUseAuxDestinations = false;
+	bool mMuted = false; /* to handle special cases where we want the audio to be muted - not related with linphone_core_enable_mic().*/
 private:
 	void notifyStatsUpdated();
 	void handleEvents();
@@ -222,6 +249,9 @@ public:
 	virtual bool speakerEnabled()const override;
 	virtual void startRecording() override;
 	virtual void stopRecording() override;
+	virtual bool isRecording() override{
+		return mRecordActive;
+	}
 	virtual float getPlayVolume() override;
 	virtual float getRecordVolume() override;
 	virtual float getMicGain() override;
@@ -229,6 +259,7 @@ public:
 	virtual float getSpeakerGain() override;
 	virtual void setSpeakerGain(float value) override;
 	virtual void setRoute(LinphoneAudioRoute route) override;
+	virtual void sendDtmf(int dtmf) override;
 	virtual ~MS2AudioStream();
 	
 	/* Yeah quite ugly: this function is used externally to configure raw mediastreamer2 AudioStreams.*/
@@ -251,7 +282,6 @@ private:
 	AudioStream *mStream = nullptr;
 	MSSndCard *mCurrentCaptureCard = nullptr;
 	MSSndCard *mCurrentPlaybackCard = nullptr;
-	bool mMuted = false; /* to handle special cases where we want the audio to be muted - not related with linphone_core_enable_mic().*/
 	bool mMicMuted = false;
 	bool mSpeakerMuted = false;
 	bool mRecordActive = false;
@@ -268,10 +298,19 @@ public:
 	
 	/* VideoControlInterface methods */
 	virtual void sendVfu() override;
+	virtual void sendVfuRequest() override;
 	virtual void enableCamera(bool value) override;
+	virtual bool cameraEnabled() const override;
 	virtual void setNativeWindowId(void *w) override;
 	virtual void * getNativeWindowId() const override;
 	virtual void tryEarlyMediaForking(SalStreamDescription *remoteMd) override;
+	virtual void parametersChanged() override;
+	virtual void requestNotifyNextVideoFrameDecoded () override;
+	virtual int takePreviewSnapshot (const std::string& file) override;
+	virtual int takeVideoSnapshot (const std::string& file) override;
+	virtual void zoomVideo (float zoomFactor, float cx, float cy) override;
+	virtual void getRecvStats(VideoStats *s) const override;
+	virtual void getSendStats(VideoStats *s) const override;
 	
 	void oglRender();
 	
@@ -283,11 +322,11 @@ private:
 	MSWebCam * getVideoDevice(CallSession::State targetState)const;
 	virtual void handleEvent(const OrtpEvent *ev) override;
 	virtual void zrtpStarted(Stream *mainZrtpStream) override;
+	void snapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg);
 	void videoStreamEventCb(const MSFilter *f, const unsigned int eventId, const void *args);
 	static void sVideoStreamEventCb (void *userData, const MSFilter *f, const unsigned int eventId, const void *args);
 	VideoStream *mStream = nullptr;
 	void *mNativeWindowId = nullptr;
-	bool mVideoMuted = false;
 	bool mCameraEnabled = true;
 	
 };
@@ -369,6 +408,9 @@ public:
 	bool allStreamsEncrypted () const;
 	// Returns true if at least one stream was started.
 	bool isStarted()const;
+	// Returns true if all streams are muted (from local source standpoint).
+	bool isMuted() const;
+	int getAvpfRrInterval()const;
 	void startDtls(const OfferAnswerContext &params);
 	void tryEarlyMediaForking(const SalMediaDescription * resultDesc, const SalMediaDescription *md);
 	void finishEarlyMediaForking();
@@ -379,12 +421,20 @@ public:
 	template <typename _requestedInterface, typename _lambda>
 	void forEach(const _lambda &l){
 		for (auto & stream : mStreams){
-			_requestedInterface * iface = dynamic_cast<_requestedInterface*>(stream);
+			_requestedInterface * iface = dynamic_cast<_requestedInterface*>(stream.get());
 			if (iface) l(iface);
 		}
 	}
 	void clearStreams();
+	float getCurrentQuality();
 	float getAverageQuality();
+	const std::string &getAuthToken()const{ return mAuthToken; };
+	void setAuthTokenVerified(bool value);
+	size_t getActiveStreamsCount() const;
+	size_t size()const{ return mStreams.size(); }
+	void refreshSockets();
+	const std::string & getAuthenticationToken()const{ return mAuthToken; }
+	bool getAuthenticationTokenVerified() const{ return mAuthTokenVerified; }
 protected:
 	LinphoneCore *getCCore()const;
 	int updateAllocatedAudioBandwidth (const PayloadType *pt, int maxbw);
@@ -394,15 +444,19 @@ protected:
 	void authTokenReady(const std::string &token, bool verified);
 	
 private:
+	template< typename _functor>
+	float computeOverallQuality(_functor func);
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	Stream * createStream(const OfferAnswerContext &param);
 	MediaSession &mMediaSession;
 	std::unique_ptr<IceAgent> mIceAgent;
 	std::vector<std::unique_ptr<Stream>> mStreams;
+	void computeAndReportBandwidth();
 	// Upload bandwidth used by audio.
 	int mAudioBandwidth = 0;
 	// Zrtp auth token
 	std::string mAuthToken;
+	belle_sip_source_t *mBandwidthReportTimer = nullptr;
 	bool mAuthTokenVerified = false;
 
 };
