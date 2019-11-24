@@ -275,11 +275,10 @@ typedef struct SalStreamDescription{
 	bool_t ice_mismatch;
 	bool_t set_nortpproxy; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 	bool_t rtcp_mux;
-	bool_t pad[1];
+	uint8_t haveZrtpHash; /**< flag for zrtp hash presence */
+	uint8_t zrtphash[128];
 	char dtls_fingerprint[256];
 	SalDtlsRole dtls_role;
-	uint8_t zrtphash[128];
-	uint8_t haveZrtpHash; /**< flag for zrtp hash presence */
 	int ttl; /*for multicast -1 to disable*/
 	SalMulticastRole multicast_role;
 } SalStreamDescription;

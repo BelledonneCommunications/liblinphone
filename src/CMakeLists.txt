@@ -328,11 +328,13 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/participant.cpp
 	conference/remote-conference.cpp
 	conference/session/call-session.cpp
-	conference/session/media-session.cpp
-	conference/session/streams.cpp
+	conference/session/stream.cpp
+	conference/session/streams-group.cpp
+	conference/session/ms2-stream.cpp
 	conference/session/audio-stream.cpp
 	conference/session/video-stream.cpp
 	conference/session/rtt-stream.cpp
+	conference/session/media-session.cpp
 	content/content-disposition.cpp
 	content/content-manager.cpp
 	content/content-type.cpp

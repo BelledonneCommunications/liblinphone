@@ -30,6 +30,9 @@
 #include "conference/participant.h"
 #include "conference/params/media-session-params-p.h"
 
+#include "mediastreamer2/msjpegwriter.h"
+#include "mediastreamer2/msogl.h"
+
 #include "linphone/core.h"
 
 using namespace::std;
@@ -157,6 +160,15 @@ void * MS2VideoStream::getNativeWindowId() const{
 	return video_stream_get_native_window_id(mStream);
 }
 
+void MS2VideoStream::setNativePreviewWindowId(void *w){
+	mNativePreviewWindowId = w;
+	video_stream_set_native_preview_window_id(mStream, w);
+}
+
+void * MS2VideoStream::getNativePreviewWindowId() const{
+	return mNativePreviewWindowId;
+}
+
 void MS2VideoStream::enableCamera(bool value){
 	mCameraEnabled = value;
 	MSWebCam *videoDevice = getVideoDevice(getMediaSession().getState());
@@ -196,6 +208,11 @@ void MS2VideoStream::prepare(){
 	video_stream_prepare_video(mStream);
 }
 
+void MS2VideoStream::finishPrepare(){
+	MS2Stream::finishPrepare();
+	video_stream_unprepare_video(mStream);
+}
+
 void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State targetState){
 	bool reusedPreview = false;
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
@@ -224,7 +241,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		return;
 	}
 	
-	if (mMuted && targetState == CallSession::StreamsRunning){
+	if (mMuted && targetState == CallSession::State::StreamsRunning){
 		lInfo() << "Early media finished, unmuting video input...";
 		/* We were in early media, now we want to enable real media */
 		mMuted = false;
@@ -380,8 +397,8 @@ void MS2VideoStream::zrtpStarted(Stream *mainZrtpStream){
 	}
 }
 
-void MS2VideoStream::tryEarlyMediaForking(SalStreamDescription *remoteMd){
-	MS2Stream::tryEarlyMediaForking(remoteMd);
+void MS2VideoStream::tryEarlyMediaForking(const OfferAnswerContext &ctx){
+	MS2Stream::tryEarlyMediaForking(ctx);
 	sendVfu();
 }
 
@@ -392,7 +409,7 @@ void MS2VideoStream::oglRender(){
 
 AudioStream *MS2VideoStream::getPeerAudioStream(){
 	MS2AudioStream *as = getGroup().lookupMainStreamInterface<MS2AudioStream>(SalAudio);
-	return vs ? (AudioStream*)as->getMediaStream() : nullptr;
+	return as ? (AudioStream*)as->getMediaStream() : nullptr;
 }
 
 void MS2VideoStream::requestNotifyNextVideoFrameDecoded () {
@@ -409,7 +426,7 @@ void MS2VideoStream::snapshotTakenCb(void *userdata, struct _MSFilter *f, unsign
 	}
 }
 
-static void snapshot_taken(void *userdata, struct _MSFilter *f, unsigned int id, void *arg) {
+void MS2VideoStream::sSnapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg) {
 	MS2VideoStream *d = (MS2VideoStream *)userdata;
 	d->snapshotTakenCb(userdata, f, id, arg);
 }
@@ -418,7 +435,7 @@ int MS2VideoStream::takePreviewSnapshot (const string& file) {
 	if (mStream && mStream->local_jpegwriter) {
 		ms_filter_clear_notify_callback(mStream->jpegwriter);
 		const char *filepath = file.empty() ? nullptr : file.c_str();
-		ms_filter_add_notify_callback(mStream->local_jpegwriter, snapshot_taken, d, TRUE);
+		ms_filter_add_notify_callback(mStream->local_jpegwriter, sSnapshotTakenCb, this, TRUE);
 		return ms_filter_call_method(mStream->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void *)filepath);
 	}
 	lWarning() << "Cannot take local snapshot: no currently running video stream on this call";
@@ -429,7 +446,7 @@ int MS2VideoStream::takeVideoSnapshot (const string& file) {
 	if (mStream && mStream->jpegwriter) {
 		ms_filter_clear_notify_callback(mStream->jpegwriter);
 		const char *filepath = file.empty() ? nullptr : file.c_str();
-		ms_filter_add_notify_callback(mStream->jpegwriter, snapshot_taken, d, TRUE);
+		ms_filter_add_notify_callback(mStream->jpegwriter, sSnapshotTakenCb, this, TRUE);
 		return ms_filter_call_method(mStream->jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void *)filepath);
 	}
 	lWarning() << "Cannot take snapshot: no currently running video stream on this call";
@@ -442,14 +459,14 @@ bool MS2VideoStream::cameraEnabled() const{
 
 void MS2VideoStream::getRecvStats(VideoStats *s) const{
 	s->fps = video_stream_get_received_framerate(mStream);
-	MSVideoSize vsize = video_stream_get_received_video_size(videoStream);
+	MSVideoSize vsize = video_stream_get_received_video_size(mStream);
 	s->width = vsize.width;
 	s->height = vsize.height;
 }
 
 void MS2VideoStream::getSendStats(VideoStats *s) const{
 	s->fps = video_stream_get_sent_framerate(mStream);
-	MSVideoSize vsize = video_stream_get_sent_video_size(videoStream);
+	MSVideoSize vsize = video_stream_get_sent_video_size(mStream);
 	s->width = vsize.width;
 	s->height = vsize.height;
 }

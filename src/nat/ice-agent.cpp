@@ -33,6 +33,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+#if 0
+
 bool IceAgent::candidatesGathered () const {
 	if (!iceSession)
 		return false;
@@ -761,5 +763,7 @@ bool IceAgent::checkIceReinviteNeedsDeferedResponse(SalMediaDescription *md) {
 	}
 	return false;
 }
+
+#endif
 
 LINPHONE_END_NAMESPACE

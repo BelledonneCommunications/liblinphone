@@ -48,7 +48,9 @@ LinphoneProxyConfig *CallPrivate::getDestProxy () const {
 }
 
 IceSession *CallPrivate::getIceSession () const {
-	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getIceSession();
+	//FIXME
+	//return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getIceSession();
+	return nullptr;
 }
 
 unsigned int CallPrivate::getAudioStartCount () const {
@@ -175,7 +177,7 @@ void CallPrivate::createPlayer () const {
 // -----------------------------------------------------------------------------
 
 void CallPrivate::initializeMediaStreams () {
-	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->initializeStreams();
+	
 }
 
 void CallPrivate::stopMediaStreams () {

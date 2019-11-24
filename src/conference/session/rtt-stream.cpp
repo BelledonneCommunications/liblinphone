@@ -62,6 +62,11 @@ void MS2RTTStream::prepare(){
 	text_stream_prepare_text(mStream);
 }
 
+void MS2RTTStream::finishPrepare(){
+	MS2Stream::finishPrepare();
+	text_stream_unprepare_text(mStream);
+}
+
 void MS2RTTStream::render(const OfferAnswerContext &params, CallSession::State targetState){
 	const SalStreamDescription *tstream = params.resultStreamDescription;
 	

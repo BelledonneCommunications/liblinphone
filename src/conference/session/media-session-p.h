@@ -84,7 +84,7 @@ public:
 	void setParams (MediaSessionParams *msp);
 	void setRemoteParams (MediaSessionParams *msp);
 
-	IceSession *getIceSession () const { return streamsGroup->getIceAgent().getIceSession(); }
+	//IceSession *getIceSession () const { return streamsGroup->getIceAgent().getIceSession(); }
 	IceAgent &getIceAgent() const { return streamsGroup->getIceAgent(); }
 	SalMediaDescription *getLocalDesc () const { return localDesc; }
 
@@ -97,10 +97,7 @@ public:
 	
 	SalCallOp * getOp () const { return op; }
 
-	void initializeStreams ();
 	void stopStreams ();
-	void stopStream (SalStreamDescription *streamDesc);
-	void restartStream (SalStreamDescription *streamDesc, int streamIndex, int sdChanged, CallSession::State targetState);
 
 	// Methods used by testers
 	void addLocalDescChangedFlag (int flag) { localDescChanged |= flag; }
@@ -126,6 +123,7 @@ public:
 	MSWebCam *getVideoDevice()const;
 	void handleIceEvents (OrtpEvent *ev);
 	void performMutualAuthentication();
+	const std::string &getMediaLocalIp()const{ return mediaLocalIp; }
 private:
 #ifdef TEST_EXT_RENDERER
 	static void extRendererCb (void *userData, const MSPicture *local, const MSPicture *remote);
@@ -146,7 +144,6 @@ private:
 
 	void discoverMtu (const Address &remoteAddr);
 	void getLocalIp (const Address &remoteAddr);
-	std::string getPublicIpForStream (int streamIndex);
 	void runStunTestsIfNeeded ();
 	void selectIncomingIpVersion ();
 	void selectOutgoingIpVersion ();
@@ -165,17 +162,10 @@ private:
 	void updateLocalMediaDescriptionFromIce ();
 
 	
-	//To give a chance for auxilary secret to be used, primary channel (I.E audio) should be started either on 200ok if ZRTP is signaled by a zrtp-hash or when ACK is received in case calling side does not have zrtp-hash.
-	void startZrtpPrimaryChannel (const SalStreamDescription *remote);
+	
 	void startDtlsOnAllStreams ();
-	void updateStreamCryptoParameters (SalStreamDescription *oldStream, SalStreamDescription *newStream);
-	void updateStreamsCryptoParameters (SalMediaDescription *oldMd, SalMediaDescription *newMd);
-	bool updateCryptoParameters (const SalStreamDescription *localStreamDesc, SalStreamDescription *oldStream, SalStreamDescription *newStream, MediaStream *ms);
 
 	void freeResources ();
-	void initializeAudioStream ();
-	void initializeTextStream ();
-	void initializeVideoStream ();
 	void prepareEarlyMediaForking ();
 	void startAudioStream (CallSession::State targetState);
 	void startStreams (CallSession::State targetState);
@@ -192,14 +182,10 @@ private:
 	void updateStreams (SalMediaDescription *newMd, CallSession::State targetState);
 	void updateTextStream (SalMediaDescription *newMd, CallSession::State targetState);
 	void updateVideoStream (SalMediaDescription *newMd, CallSession::State targetState);
-	void updateStreamDestination (SalMediaDescription *newMd, SalStreamDescription *newDesc);
-	void updateStreamsDestinations (SalMediaDescription *oldMd, SalMediaDescription *newMd);
 
 	bool allStreamsAvpfEnabled () const;
 	bool allStreamsEncrypted () const;
 	bool atLeastOneStreamStarted () const;
-	void audioStreamAuthTokenReady (const std::string &authToken, bool verified);
-	void audioStreamEncryptionChanged (bool encrypted);
 	uint16_t getAvpfRrInterval () const;
 	unsigned int getNbActiveStreams () const;
 	int mediaParametersChanged (SalMediaDescription *oldMd, SalMediaDescription *newMd);
@@ -207,12 +193,9 @@ private:
 	void propagateEncryptionChanged ();
 
 	void executeBackgroundTasks (bool oneSecondElapsed);
-	void reportBandwidth ();
-	void reportBandwidthForStream (MediaStream *ms, LinphoneStreamType type);
 
 	void abort (const std::string &errorMsg) override;
 	void handleIncomingReceivedStateInIncomingNotification () override;
-	bool isReadyForInvite () const override;
 	LinphoneStatus pause ();
 	int restartInvite () override;
 	void setTerminated () override;

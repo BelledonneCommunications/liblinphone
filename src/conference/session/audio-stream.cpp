@@ -172,8 +172,23 @@ void MS2AudioStream::prepare(){
 	audio_stream_enable_noise_gate(mStream, enabled);
 	audio_stream_set_features(mStream, linphone_core_get_audio_features(getCCore()));
 	
-	audio_stream_prepare_sound(mStream, getCCore()->sound_conf.play_sndcard, getCCore()->sound_conf.capt_sndcard);
+	if (!getCCore()->use_files){
+		audio_stream_prepare_sound(mStream, getCCore()->sound_conf.play_sndcard, getCCore()->sound_conf.capt_sndcard);
+	}
 	MS2Stream::prepare();
+}
+
+void MS2AudioStream::sessionConfirmed(const OfferAnswerContext &ctx){
+	if (mStartZrtpLater){
+		lInfo() << "Starting zrtp late";
+		startZrtpPrimaryChannel(ctx);
+		mStartZrtpLater = false;
+	}
+}
+
+void MS2AudioStream::finishPrepare(){
+	MS2Stream::finishPrepare();
+	audio_stream_unprepare_sound(mStream);
 }
 
 MediaStream *MS2AudioStream::getMediaStream()const{
@@ -217,6 +232,11 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		captcard = nullptr;
 		playfile = "";
 	}
+	if (mMuted && (targetState == CallSession::State::StreamsRunning)) {
+		lInfo() << "Early media finished, unmuting audio input...";
+		enableMic(micEnabled());
+	}
+
 	if (targetState == CallSession::State::Paused) {
 		// In paused state, we never use soundcard
 		playcard = captcard = nullptr;
@@ -330,12 +350,27 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	// Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute
 	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP) && isMain()) {
 		getMediaSessionPrivate().performMutualAuthentication();
+		LinphoneMediaEncryption requestedMediaEncryption = getMediaSessionPrivate().getParams()->getMediaEncryption();
 		//Start zrtp if remote has offered it or if local is configured for zrtp and is the offerrer. If not, defered when ACK is received
-		if ((getMediaSessionPrivate().getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP && params.localIsOfferer)
+		if ((requestedMediaEncryption == LinphoneMediaEncryptionZRTP && params.localIsOfferer)
 			|| (params.remoteStreamDescription->haveZrtpHash == 1)) {
 			startZrtpPrimaryChannel(params);
+		}else if (requestedMediaEncryption == LinphoneMediaEncryptionZRTP && !params.localIsOfferer){
+			mStartZrtpLater = true;
 		}
 	}
+	
+	getGroup().addPostRenderHook([this, onHoldFile] {
+		/* The on-hold file is to be played once both audio and video are ready */
+		if (!onHoldFile.empty() && !getMediaSessionPrivate().getParams()->getPrivate()->getInConference()) {
+			MSFilter *player = audio_stream_open_remote_play(mStream, onHoldFile.c_str());
+			if (player) {
+				int pauseTime = 500;
+				ms_filter_call_method(player, MS_PLAYER_SET_LOOP, &pauseTime);
+				ms_filter_call_method_noarg(player, MS_PLAYER_START);
+			}
+		}
+	});
 	
 	return;
 }
@@ -364,6 +399,7 @@ void MS2AudioStream::stop(){
 	mCurrentPlaybackCard = nullptr;
 }
 
+//To give a chance for auxilary secret to be used, primary channel (I.E audio) should be started either on 200ok if ZRTP is signaled by a zrtp-hash or when ACK is received in case calling side does not have zrtp-hash.
 void MS2AudioStream::startZrtpPrimaryChannel(const OfferAnswerContext &params) {
 	const SalStreamDescription *remote = params.remoteStreamDescription;
 	audio_stream_start_zrtp(mStream);
@@ -436,7 +472,7 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 	float recvGain = lc->sound_conf.soft_play_lev;
 	if (static_cast<int>(recvGain)){
 		if (as->volrecv)
-			ms_filter_call_method(as->volrecv, MS_VOLUME_SET_DB_GAIN, &gain);
+			ms_filter_call_method(as->volrecv, MS_VOLUME_SET_DB_GAIN, &recvGain);
 		else
 			lWarning() << "Could not apply playback gain: gain control wasn't activated";
 	}
@@ -476,7 +512,7 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 		ms_filter_call_method(f, MS_VOLUME_SET_NOISE_GATE_THRESHOLD, &ngThres);
 		ms_filter_call_method(f, MS_VOLUME_SET_NOISE_GATE_FLOORGAIN, &floorGain);
 	}
-	parameterizeEqualizer(as, core);
+	parameterizeEqualizer(as, lc);
 }
 
 void MS2AudioStream::postConfigureAudioStream(bool muted) {
@@ -531,14 +567,22 @@ void MS2AudioStream::enableMic(bool value){
 		audio_stream_set_mic_gain_db(mStream, getCCore()->sound_conf.soft_mic_lev);
 }
 
+bool MS2AudioStream::micEnabled()const{
+	return !mMicMuted;
+}
+
 void MS2AudioStream::enableSpeaker(bool value){
 	mSpeakerMuted = !value;
 	forceSpeakerMuted(mSpeakerMuted);
 }
 
- void MS2AudioStream::sendDtmf(int dtmf){
-	 audio_stream_send_dtmf(mStream, dtmf);
- }
+bool MS2AudioStream::speakerEnabled()const{
+	return !mSpeakerMuted;
+}
+
+void MS2AudioStream::sendDtmf(int dtmf){
+	audio_stream_send_dtmf(mStream, (char)dtmf);
+}
 
 void MS2AudioStream::startRecording(){
 	if (getMediaSessionPrivate().getParams()->getRecordFilePath().empty()) {
@@ -569,7 +613,7 @@ float MS2AudioStream::getPlayVolume(){
 }
 
 float MS2AudioStream::getRecordVolume(){
-	if (mStream->volsend && !mMicrophoneMuted) {
+	if (mStream->volsend && !mMicMuted) {
 		float vol = 0;
 		ms_filter_call_method(mStream->volsend, MS_VOLUME_GET, &vol);
 		return vol;
@@ -582,7 +626,7 @@ float MS2AudioStream::getMicGain(){
 }
 
 void MS2AudioStream::setMicGain(float gain){
-	audio_stream_set_sound_card_input_gain(mStream, value);
+	audio_stream_set_sound_card_input_gain(mStream, gain);
 }
 
 float MS2AudioStream::getSpeakerGain(){
@@ -590,7 +634,7 @@ float MS2AudioStream::getSpeakerGain(){
 }
 
 void MS2AudioStream::setSpeakerGain(float gain){
-	audio_stream_set_sound_card_output_gain(mStream, value);
+	audio_stream_set_sound_card_output_gain(mStream, gain);
 }
 
 VideoStream *MS2AudioStream::getPeerVideoStream(){
@@ -598,6 +642,22 @@ VideoStream *MS2AudioStream::getPeerVideoStream(){
 	return vs ? (VideoStream*)vs->getMediaStream() : nullptr;
 }
 
+void MS2AudioStream::enableEchoCancellation(bool value){
+	if (mStream->ec) {
+		bool bypassMode = !value;
+		ms_filter_call_method(mStream->ec, MS_ECHO_CANCELLER_SET_BYPASS_MODE, &bypassMode);
+	}
+	
+}
+
+bool MS2AudioStream::echoCancellationEnabled()const{
+	if (!mStream->ec)
+		return !!linphone_core_echo_cancellation_enabled(getCCore());
+
+	bool_t val;
+	ms_filter_call_method(mStream->ec, MS_ECHO_CANCELLER_GET_BYPASS_MODE, &val);
+	return !val;
+}
 
 MS2AudioStream::~MS2AudioStream(){
 	if (mStream)

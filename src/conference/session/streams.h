@@ -46,16 +46,29 @@ class IceAgent;
  */
 class OfferAnswerContext{
 public:
+	OfferAnswerContext() = default;
 	SalMediaDescription *localMediaDescription = nullptr;
 	const SalMediaDescription *remoteMediaDescription = nullptr;
 	const SalMediaDescription *resultMediaDescription = nullptr;
-	SalStreamDescription *localStreamDescription = nullptr;
-	const SalStreamDescription *remoteStreamDescription = nullptr;
-	const SalStreamDescription *resultStreamDescription = nullptr;
-	size_t streamIndex;
 	bool localIsOfferer = false;
 	
-	void scopeStreamToIndex(size_t index);
+	mutable int localStreamDescriptionChanges = 0;
+	mutable int resultStreamDescriptionChanges = 0;
+	mutable SalStreamDescription *localStreamDescription = nullptr;
+	mutable const SalStreamDescription *remoteStreamDescription = nullptr;
+	mutable const SalStreamDescription *resultStreamDescription = nullptr;
+	mutable size_t streamIndex = 0;
+	
+	void scopeStreamToIndex(size_t index)const;
+	void scopeStreamToIndexWithDiff(size_t index, const OfferAnswerContext &previousCtx)const;
+	/* Copy descriptions from 'ctx', taking ownership of descriptions, which '=' operator will not do. */
+	void dupFrom(const OfferAnswerContext &ctx);
+	void clear();
+	~OfferAnswerContext();	
+private:
+	OfferAnswerContext(const OfferAnswerContext &other) = default;
+	OfferAnswerContext & operator=(const OfferAnswerContext &other) = default;
+	bool mOwnsMediaDescriptions = false;
 };
 
 /**
@@ -69,6 +82,8 @@ public:
 		Preparing,
 		Running
 	};
+	
+	virtual void fillLocalMediaDescription(OfferAnswerContext & ctx);
 	/**
 	 * Ask the stream to prepare to run. This may include configuration steps, ICE gathering etc.
 	 */
@@ -84,6 +99,11 @@ public:
 	 */
 	virtual void render(const OfferAnswerContext & ctx, CallSession::State targetState);
 	/**
+	 * Notifies that session is confirmed (called by signaling).
+	 */
+	virtual void sessionConfirmed(const OfferAnswerContext &ctx);
+	
+	/**
 	 * Ask the stream to stop. A call to prepare() is necessary before doing a future render() operation, if any.
 	 */
 	virtual void stop();
@@ -91,7 +111,7 @@ public:
 		return nullptr;
 	}
 	virtual bool isEncrypted() const = 0;
-	virtual void tryEarlyMediaForking(SalStreamDescription *remoteMd) = 0;
+	virtual void tryEarlyMediaForking(const OfferAnswerContext &ctx) = 0;
 	virtual void finishEarlyMediaForking() = 0;
 	virtual float getCurrentQuality() = 0;
 	virtual float getAverageQuality() = 0;
@@ -121,6 +141,7 @@ protected:
 	 * Notifies that zrtp primary stream is now secured.
 	 */
 	virtual void zrtpStarted(Stream *mainZrtpStream){};
+	const std::string & getPublicIp() const;
 	PortConfig mPortConfig;
 	int mStartCount = 0; /* The number of time of the underlying stream has been started (or restarted). To be maintained by implementations. */
 private:
@@ -154,6 +175,8 @@ public:
 	virtual void setSpeakerGain(float value) = 0;
 	virtual void setRoute(LinphoneAudioRoute route) = 0;
 	virtual void sendDtmf(int dtmf) = 0;
+	virtual void enableEchoCancellation(bool value) = 0;
+	virtual bool echoCancellationEnabled()const = 0;
 	virtual ~AudioControlInterface() = default;
 };
 
@@ -169,6 +192,8 @@ public:
 	virtual bool cameraEnabled() const = 0;
 	virtual void setNativeWindowId(void *w) = 0;
 	virtual void * getNativeWindowId() const = 0;
+	virtual void setNativePreviewWindowId(void *w) = 0;
+	virtual void * getNativePreviewWindowId() const = 0;
 	virtual void parametersChanged() = 0;
 	virtual void requestNotifyNextVideoFrameDecoded () = 0;
 	virtual int takePreviewSnapshot (const std::string& file) = 0;
@@ -179,19 +204,33 @@ public:
 	virtual ~VideoControlInterface() = default;
 };
 
+/*
+ * TODO: not used for the moment.
+ */
+class RtpInterface{
+public:
+	virtual bool avpfEnabled() const = 0;
+	virtual int getAvpfRrInterval() const = 0;
+	virtual ~RtpInterface() = default;
+};
+
 /**
  * Derived class for streams commonly handly through mediastreamer2 library.
  */
 class MS2Stream : public Stream {
 public:
+	virtual void fillLocalMediaDescription(OfferAnswerContext & ctx) override;
 	virtual void prepare() override;
+	virtual void finishPrepare() override;
 	virtual void render(const OfferAnswerContext & ctx, CallSession::State targetState) override;
 	virtual void stop() override;
 	virtual bool isEncrypted() const override;
 	MSZrtpContext *getZrtpContext()const;
 	std::pair<RtpTransport*, RtpTransport*> getMetaRtpTransports();
+	bool avpfEnabled() const;
+	int getAvpfRrInterval() const;
 	virtual MediaStream *getMediaStream()const = 0;
-	virtual void tryEarlyMediaForking(SalStreamDescription *remoteMd) override;
+	virtual void tryEarlyMediaForking(const OfferAnswerContext &ctx) override;
 	virtual void finishEarlyMediaForking() override;
 	virtual float getCurrentQuality() override;
 	virtual float getAverageQuality() override;
@@ -211,6 +250,8 @@ protected:
 	RtpProfile * makeProfile(const SalMediaDescription *md, const SalStreamDescription *desc, int *usedPt);
 	int getIdealAudioBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc);
 	RtpSession* createRtpIoSession();
+	void updateCryptoParameters(const OfferAnswerContext &params);
+	void updateDestinations(const OfferAnswerContext &params);
 	RtpProfile *mRtpProfile = nullptr;
 	RtpProfile *mRtpIoProfile = nullptr;
 	MSMediaStreamSessions mSessions;
@@ -239,7 +280,9 @@ class MS2AudioStream : public MS2Stream, public AudioControlInterface{
 public:
 	MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params);
 	virtual void prepare() override;
+	virtual void finishPrepare() override;
 	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
+	virtual void sessionConfirmed(const OfferAnswerContext &ctx) override;
 	virtual void stop() override;
 	
 	/* AudioControlInterface */
@@ -260,13 +303,18 @@ public:
 	virtual void setSpeakerGain(float value) override;
 	virtual void setRoute(LinphoneAudioRoute route) override;
 	virtual void sendDtmf(int dtmf) override;
+	virtual void enableEchoCancellation(bool value) override;
+	virtual bool echoCancellationEnabled()const override;
+	
+	virtual MediaStream *getMediaStream()const override;
 	virtual ~MS2AudioStream();
 	
 	/* Yeah quite ugly: this function is used externally to configure raw mediastreamer2 AudioStreams.*/
 	static void postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted);
+	MSSndCard *getCurrentPlaybackCard()const{ return mCurrentPlaybackCard; }
+	MSSndCard *getCurrentCaptureCard()const{ return mCurrentCaptureCard; }
 	
 protected:
-	virtual MediaStream *getMediaStream()const override;	
 	VideoStream *getPeerVideoStream();
 private:
 	virtual void handleEvent(const OrtpEvent *ev) override;
@@ -285,6 +333,7 @@ private:
 	bool mMicMuted = false;
 	bool mSpeakerMuted = false;
 	bool mRecordActive = false;
+	bool mStartZrtpLater = false;
 	static constexpr const int ecStateMaxLen = 1048576; /* 1Mo */
 	static constexpr const char * ecStateStore = ".linphone.ecstate";
 };
@@ -293,6 +342,7 @@ class MS2VideoStream : public MS2Stream, public VideoControlInterface{
 public:
 	MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param);
 	virtual void prepare() override;
+	virtual void finishPrepare() override;
 	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
 	virtual void stop() override;
 	
@@ -303,7 +353,9 @@ public:
 	virtual bool cameraEnabled() const override;
 	virtual void setNativeWindowId(void *w) override;
 	virtual void * getNativeWindowId() const override;
-	virtual void tryEarlyMediaForking(SalStreamDescription *remoteMd) override;
+	virtual void setNativePreviewWindowId(void *w) override;
+	virtual void * getNativePreviewWindowId() const override;
+	virtual void tryEarlyMediaForking(const OfferAnswerContext &ctx) override;
 	virtual void parametersChanged() override;
 	virtual void requestNotifyNextVideoFrameDecoded () override;
 	virtual int takePreviewSnapshot (const std::string& file) override;
@@ -312,21 +364,25 @@ public:
 	virtual void getRecvStats(VideoStats *s) const override;
 	virtual void getSendStats(VideoStats *s) const override;
 	
+	virtual MediaStream *getMediaStream()const override;
+	
 	void oglRender();
+	MSWebCam * getVideoDevice(CallSession::State targetState)const;
 	
 	virtual ~MS2VideoStream();
 protected:
 	AudioStream *getPeerAudioStream();
-	virtual MediaStream *getMediaStream()const override;
+	
 private:
-	MSWebCam * getVideoDevice(CallSession::State targetState)const;
 	virtual void handleEvent(const OrtpEvent *ev) override;
 	virtual void zrtpStarted(Stream *mainZrtpStream) override;
+	static void sSnapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg);
 	void snapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg);
 	void videoStreamEventCb(const MSFilter *f, const unsigned int eventId, const void *args);
 	static void sVideoStreamEventCb (void *userData, const MSFilter *f, const unsigned int eventId, const void *args);
 	VideoStream *mStream = nullptr;
 	void *mNativeWindowId = nullptr;
+	void *mNativePreviewWindowId = nullptr;
 	bool mCameraEnabled = true;
 	
 };
@@ -338,6 +394,7 @@ class MS2RTTStream : public MS2Stream{
 public:
 	MS2RTTStream(StreamsGroup &sm, const OfferAnswerContext &param);
 	virtual void prepare() override;
+	virtual void finishPrepare() override;
 	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
 	virtual void stop() override;
 	virtual ~MS2RTTStream();
@@ -364,6 +421,7 @@ class StreamsGroup{
 	friend class MS2AudioStream;
 public:
 	StreamsGroup(MediaSession &session);
+	~StreamsGroup();
 	/**
 	 * Create the streams according to the specified local and remote description.
 	 * The port and transport addresses are filled into the local description in return.
@@ -371,10 +429,18 @@ public:
 	 * when the offer was received from remote side.
 	 */
 	void createStreams(const OfferAnswerContext &params);
+	
+	/**
+	 * Once the streams are created, update the local media description to fill mainly
+	 * transport addresses, which are usually provided by the media layer.
+	 */
+	void fillLocalMediaDescription(OfferAnswerContext & ctx);
 	/*
 	 * Request the streams to prepare (configuration steps, ice gathering.
+	 * Returns false if ready, true if prepare() requires more time, in which case 
+	 * ICE events will be submitted to the MediaSession to inform when ready to proceed.
 	 */
-	void prepare();
+	bool prepare(const OfferAnswerContext & ctx);
 	/**
 	 * Request the stream to finish the prepare step (such as ICE gathering).
 	 */
@@ -384,6 +450,14 @@ public:
 	 * Local, remote and result must all be non-null.
 	 */
 	void render(const OfferAnswerContext &params, CallSession::State targetState);
+	/**
+	 * Used by signaling to notify that the session is confirmed (typically, when an ACK is received.
+	 */
+	void sessionConfirmed();
+	
+	/**
+	 * Stop streams.
+	 */
 	void stop();
 	Stream * getStream(size_t index);
 	Stream * lookupMainStream(SalStreamType type);
@@ -410,9 +484,11 @@ public:
 	bool isStarted()const;
 	// Returns true if all streams are muted (from local source standpoint).
 	bool isMuted() const;
+	// Returns true if all streams have avpf enabled.
+	bool avpfEnabled() const;
 	int getAvpfRrInterval()const;
 	void startDtls(const OfferAnswerContext &params);
-	void tryEarlyMediaForking(const SalMediaDescription * resultDesc, const SalMediaDescription *md);
+	void tryEarlyMediaForking(const OfferAnswerContext &ctx);
 	void finishEarlyMediaForking();
 	/*
 	 * Iterates over streams, trying to cast them to the _requestedInterface type. If they do cast,
@@ -437,12 +513,13 @@ public:
 	bool getAuthenticationTokenVerified() const{ return mAuthTokenVerified; }
 protected:
 	LinphoneCore *getCCore()const;
+	Core & getCore()const;
 	int updateAllocatedAudioBandwidth (const PayloadType *pt, int maxbw);
 	int getVideoBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc);
 	void zrtpStarted(Stream *mainZrtpStream);
 	void propagateEncryptionChanged();
 	void authTokenReady(const std::string &token, bool verified);
-	
+	void addPostRenderHook(const std::function<void()> &l);
 private:
 	template< typename _functor>
 	float computeOverallQuality(_functor func);
@@ -457,6 +534,8 @@ private:
 	// Zrtp auth token
 	std::string mAuthToken;
 	belle_sip_source_t *mBandwidthReportTimer = nullptr;
+	std::list<std::function<void()>> mPostRenderHooks;
+	OfferAnswerContext mCurrentOfferAnswerState;
 	bool mAuthTokenVerified = false;
 
 };

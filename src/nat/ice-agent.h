@@ -37,6 +37,8 @@ class MediaSession;
 
 LINPHONE_BEGIN_NAMESPACE
 
+#if 0
+
 class IceAgent {
 public:
 	explicit IceAgent (MediaSession &mediaSession) : mediaSession(mediaSession) {}
@@ -86,6 +88,17 @@ private:
 private:
 	MediaSession &mediaSession;
 	IceSession *iceSession = nullptr;
+};
+
+#endif
+
+class IceAgent{
+public:
+	IceAgent(){};
+	void startConnectivityChecks(){}
+	bool hasCompleted(){ return true; }
+	void deleteSession(){}
+	bool hasSession()const{ return false; }
 };
 
 LINPHONE_END_NAMESPACE

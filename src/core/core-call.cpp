@@ -23,6 +23,7 @@
 #include "core-p.h"
 #include "call/call-p.h"
 #include "conference/session/call-session-p.h"
+#include "conference/session/media-session.h"
 #include "logger/logger.h"
 
 // TODO: Remove me later.
@@ -116,9 +117,9 @@ void CorePrivate::setVideoWindowId (bool preview, void *id) {
 		shared_ptr<MediaSession> ms = dynamic_pointer_cast<MediaSession>(call->getPrivate()->getActiveSession());
 		if (ms){
 			if (preview){
-				ms->setPreviewVideoWindowId(id);
+				ms->setNativePreviewWindowId(id);
 			}else{
-				ms->setVideoWindowId(id);
+				ms->setNativeVideoWindowId(id);
 			}
 		}
 	}
