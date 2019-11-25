@@ -474,6 +474,48 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void video_srtp_call_without_audio(void) {
+	/*
+	 * The purpose of this test is to ensure SRTP is still present in the SDP event if the audio stream is disabled
+	 */
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCallParams *pauline_params;
+	const LinphoneCallParams *params;
+	LinphoneVideoPolicy vpol;
+	vpol.automatically_accept = TRUE;
+	vpol.automatically_initiate = TRUE;
+
+	if (!linphone_core_media_encryption_supported(marie->lc,LinphoneMediaEncryptionSRTP)) goto end;
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionSRTP);
+
+	linphone_core_set_video_policy(marie->lc, &vpol);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+
+	linphone_core_set_video_policy(pauline->lc, &vpol);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	pauline_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_audio(pauline_params, FALSE);
+	linphone_call_params_enable_video(pauline_params, TRUE);
+	linphone_core_invite_address_with_params(pauline->lc, marie->identity, pauline_params);
+	linphone_call_params_unref(pauline_params);
+
+	if (!BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallIncomingReceived,1))) goto end;
+	/*assert that SRTP is being used*/
+	params = linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc));
+	BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionSRTP, int, "%d");
+	params = linphone_call_get_current_params(linphone_core_get_current_call(marie->lc));
+	BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionSRTP, int, "%d");
+
+	linphone_core_terminate_all_calls(pauline->lc);
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t call_secure_tests[] = {
 	TEST_NO_TAG("SRTP call", srtp_call),
 	TEST_NO_TAG("SRTP call with different crypto suite", srtp_call_with_different_crypto_suite),
@@ -496,6 +538,7 @@ test_t call_secure_tests[] = {
 	TEST_NO_TAG("SRTP mandatory called by non SRTP", srtp_mandatory_called_by_non_srtp),
 	TEST_NO_TAG("SRTP DTLS mandatory called by non SRTP DTLS", srtp_dtls_mandatory_called_by_non_srtp_dtls),
 	TEST_NO_TAG("ZRTP mandatory called by SRTP", zrtp_mandatory_called_by_srtp),
+	TEST_NO_TAG("Video SRTP call without audio", video_srtp_call_without_audio),
 };
 
 test_suite_t call_secure_test_suite = {"Secure Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
