@@ -1004,12 +1004,14 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, char *keyOut, 
 	return true;
 }
 
-void MediaSessionPrivate::makeLocalMediaDescription () {
+void MediaSessionPrivate::makeLocalMediaDescription() {
 	L_Q();
 	int maxIndex = 0;
 	bool rtcpMux = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
 	SalMediaDescription *md = sal_media_description_new();
 	SalMediaDescription *oldMd = localDesc;
+	
+	assignStreamsIndexes();
 	
 	/* Multicast is only set in case of outgoing call */
 	if (direction == LinphoneCallOutgoing) {
@@ -1159,7 +1161,6 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 	}
 	setupEncryptionKeys(md);
 	setupDtlsKeys(md);
-	setupZrtpHash(md);
 	setupImEncryptionEngineParameters(md);
 	setupRtcpFb(md);
 	setupRtcpXr(md);
@@ -1170,8 +1171,12 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 	OfferAnswerContext ctx;
 	ctx.localMediaDescription = localDesc;
 	ctx.remoteMediaDescription = op ? op->getRemoteMediaDescription() : nullptr;
+	ctx.localIsOfferer = ctx.remoteMediaDescription == nullptr;
 	/* Now instanciate the streams according to the media description. */
 	getStreamsGroup().createStreams(ctx);
+	if (mainAudioStreamIndex != -1) getStreamsGroup().setStreamMain(mainAudioStreamIndex);
+	if (mainVideoStreamIndex != -1) getStreamsGroup().setStreamMain(mainVideoStreamIndex);
+	if (mainTextStreamIndex != -1) getStreamsGroup().setStreamMain(mainTextStreamIndex);
 	/* Get the transport addresses filled in to the media description. */
 	getStreamsGroup().fillLocalMediaDescription(ctx);
 	updateLocalMediaDescriptionFromIce();
@@ -1193,9 +1198,7 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 }
 
 void MediaSessionPrivate::setupDtlsKeys (SalMediaDescription *md) {
-	for (int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
-		if (!sal_stream_description_active(&md->streams[i]))
-			continue;
+	for (int i = 0; i < md->nb_streams; i++) {
 		/* If media encryption is set to DTLS check presence of fingerprint in the call which shall have been set at stream init
 		 * but it may have failed when retrieving certificate resulting in no fingerprint present and then DTLS not usable */
 		if (sal_stream_description_has_dtls(&md->streams[i])) {
@@ -1239,9 +1242,7 @@ int MediaSessionPrivate::setupEncryptionKey (SalSrtpCryptoAlgo *crypto, MSCrypto
 
 void MediaSessionPrivate::setupRtcpFb (SalMediaDescription *md) {
 	L_Q();
-	for (int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
-		if (!sal_stream_description_active(&md->streams[i]))
-			continue;
+	for (int i = 0; i < md->nb_streams; i++) {
 		md->streams[i].rtcp_fb.generic_nack_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_generic_nack_enabled", 0);
 		md->streams[i].rtcp_fb.tmmbr_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_tmmbr_enabled", 1);
 		md->streams[i].implicit_rtcp_fb = getParams()->getPrivate()->implicitRtcpFbEnabled();
@@ -1279,31 +1280,11 @@ void MediaSessionPrivate::setupRtcpXr (SalMediaDescription *md) {
 			md->rtcp_xr.stat_summary_flags = OrtpRtcpXrStatSummaryLoss | OrtpRtcpXrStatSummaryDup | OrtpRtcpXrStatSummaryJitt | OrtpRtcpXrStatSummaryTTL;
 		md->rtcp_xr.voip_metrics_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_voip_metrics_enabled", 1);
 	}
-	for (int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
-		if (!sal_stream_description_active(&md->streams[i]))
-			continue;
+	for (int i = 0; i < md->nb_streams; i++) {
 		memcpy(&md->streams[i].rtcp_xr, &md->rtcp_xr, sizeof(md->streams[i].rtcp_xr));
 	}
 }
 
-void MediaSessionPrivate::setupZrtpHash (SalMediaDescription *md) {
-	L_Q();
-	if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), LinphoneMediaEncryptionZRTP)) {
-		/* Set the hello hash for all streams */
-		for (int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
-			if (!sal_stream_description_active(&md->streams[i]))
-				continue;
-			MS2Stream *s = dynamic_cast<MS2Stream*>(getStreamsGroup().getStream(i));
-			MSZrtpContext *zrtp_context = s ? s->getZrtpContext() : nullptr;
-			if (zrtp_context) {
-				ms_zrtp_getHelloHash(zrtp_context, md->streams[i].zrtphash, 128);
-				/* Turn on the flag to use it if ZRTP is set */
-				md->streams[i].haveZrtpHash = (getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP);
-			} else
-				md->streams[i].haveZrtpHash = 0;
-		}
-	}
-}
 
 void MediaSessionPrivate::setupImEncryptionEngineParameters (SalMediaDescription *md) {
 	L_Q();
@@ -1324,9 +1305,7 @@ void MediaSessionPrivate::setupEncryptionKeys (SalMediaDescription *md) {
 	L_Q();
 	SalMediaDescription *oldMd = localDesc;
 	bool keepSrtpKeys = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
-	for (int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
-		if (!sal_stream_description_active(&md->streams[i]))
-			continue;
+	for (int i = 0; i < md->nb_streams; i++) {
 		if (sal_stream_description_has_srtp(&md->streams[i])) {
 			if (keepSrtpKeys && oldMd && sal_stream_description_active(&oldMd->streams[i]) && sal_stream_description_has_srtp(&oldMd->streams[i])) {
 				lInfo() << "Keeping same crypto keys";
@@ -1637,10 +1616,10 @@ MSWebCam *MediaSessionPrivate::getVideoDevice()const{
 
 // -----------------------------------------------------------------------------
 
-void MediaSessionPrivate::executeBackgroundTasks (bool oneSecondElapsed) {
+void MediaSessionPrivate::lossOfMediaDetected() {
 	L_Q();
 	if (listener)
-		listener->onNoMediaTimeoutCheck(q->getSharedFromThis(), oneSecondElapsed);
+		listener->onLossOfMediaDetected(q->getSharedFromThis());
 }
 
 // -----------------------------------------------------------------------------
@@ -1717,8 +1696,7 @@ LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextSt
 
 LinphoneStatus MediaSessionPrivate::startUpdate (const string &subject) {
 	L_Q();
-	if (!getParams()->getPrivate()->getNoUserConsent())
-		makeLocalMediaDescription();
+	
 	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack)
 		op->setLocalMediaDescription(nullptr);
 	LinphoneStatus result = CallSessionPrivate::startUpdate(subject);
@@ -2107,11 +2085,8 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 		d->natPolicy = linphone_core_get_nat_policy(getCore()->getCCore());
 	linphone_nat_policy_ref(d->natPolicy);
 
-	d->assignStreamsIndexes();
-	
 	if (direction == LinphoneCallOutgoing) {
 		d->selectOutgoingIpVersion();
-		d->getLocalIp(to);
 		d->getCurrentParams()->getPrivate()->setUpdateCallWhenIceCompleted(d->getParams()->getPrivate()->getUpdateCallWhenIceCompleted());
 		d->makeLocalMediaDescription();
 		/* FIXME
@@ -2126,7 +2101,6 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 		 * remote offer, if any. If the remote offer contains IPv4 addresses, we should propose IPv4 as well. */
 		Address cleanedFrom = from;
 		cleanedFrom.clean();
-		d->getLocalIp(cleanedFrom);
 		d->setParams(new MediaSessionParams());
 		d->params->initDefault(getCore());
 		d->initializeParamsAccordingToIncomingCallParams();
@@ -2208,8 +2182,6 @@ bool MediaSession::initiateOutgoing () {
 }
 
 void MediaSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
-	L_D();
-	d->executeBackgroundTasks(oneSecondElapsed);
 	CallSession::iterate(currentRealTime, oneSecondElapsed);
 }
 
@@ -2392,6 +2364,8 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 		d->broken = false;
 		d->setState(nextState, "Updating call");
 		d->setParams(new MediaSessionParams(*msp));
+		if (!d->getParams()->getPrivate()->getNoUserConsent())
+			d->makeLocalMediaDescription();
 		OfferAnswerContext ctx;
 		ctx.localMediaDescription = d->localDesc;
 		if (d->getStreamsGroup().prepare(ctx)) {
@@ -2652,11 +2626,11 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 	L_D();
 	if (d->op){
 		SalMediaDescription *md = d->op->getRemoteMediaDescription();
-		MediaSessionParams * params = new MediaSessionParams();
-		d->setRemoteParams(params);
+		MediaSessionParams * params = nullptr;
 		if (md) {
-			
 			SalStreamDescription *sd;
+			params = new MediaSessionParams();
+			
 			if (d->mainAudioStreamIndex != -1 && d->mainAudioStreamIndex < md->nb_streams){
 				sd = &md->streams[d->mainAudioStreamIndex];
 				params->enableAudio(sd->dir != SalStreamInactive && sd->rtp_port != 0);
@@ -2686,8 +2660,10 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 		}
 		const SalCustomHeader *ch = d->op->getRecvCustomHeaders();
 		if (ch) {
+			if (!params) params = new MediaSessionParams();
 			params->getPrivate()->setCustomHeaders(ch);
 		}
+		d->setRemoteParams(params);
 		return params;
 	}
 	return nullptr;

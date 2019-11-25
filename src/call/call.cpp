@@ -394,16 +394,8 @@ void CallPrivate::onInfoReceived (const shared_ptr<CallSession> &session, const 
 	linphone_call_notify_info_message_received(L_GET_C_BACK_PTR(q), im);
 }
 
-void CallPrivate::onNoMediaTimeoutCheck (const shared_ptr<CallSession> &session, bool oneSecondElapsed) {
-	L_Q();
-	int disconnectTimeout = linphone_core_get_nortp_timeout(q->getCore()->getCCore());
-	bool disconnected = false;
-	AudioStream *as = reinterpret_cast<AudioStream *>(getMediaStream(LinphoneStreamTypeAudio));
-	if (((q->getState() == CallSession::State::StreamsRunning) || (q->getState() == CallSession::State::PausedByRemote))
-		&& oneSecondElapsed && as && (as->ms.state == MSStreamStarted) && (disconnectTimeout > 0))
-		disconnected = !audio_stream_alive(as, disconnectTimeout);
-	if (disconnected)
-		terminateBecauseOfLostMedia();
+void CallPrivate::onLossOfMediaDetected (const shared_ptr<CallSession> &session) {
+	terminateBecauseOfLostMedia();
 }
 
 void CallPrivate::onEncryptionChanged (const shared_ptr<CallSession> &session, bool activated, const string &authToken) {

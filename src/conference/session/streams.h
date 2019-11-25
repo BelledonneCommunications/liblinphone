@@ -145,6 +145,7 @@ protected:
 	PortConfig mPortConfig;
 	int mStartCount = 0; /* The number of time of the underlying stream has been started (or restarted). To be maintained by implementations. */
 private:
+	void setMain();
 	void setPortConfig(std::pair<int, int> portRange);
 	int selectFixedPort(std::pair<int, int> portRange);
 	int selectRandomPort(std::pair<int, int> portRange);
@@ -244,6 +245,8 @@ public:
 protected:
 	virtual void handleEvent(const OrtpEvent *ev) = 0;
 	MS2Stream(StreamsGroup &sm, const OfferAnswerContext &params);
+	void startEventHandling();
+	void stopEventHandling();
 	std::string getBindIp();
 	int getBindPort();
 	void initializeSessions(MediaStream *stream);
@@ -252,6 +255,7 @@ protected:
 	RtpSession* createRtpIoSession();
 	void updateCryptoParameters(const OfferAnswerContext &params);
 	void updateDestinations(const OfferAnswerContext &params);
+	bool handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState);
 	RtpProfile *mRtpProfile = nullptr;
 	RtpProfile *mRtpIoProfile = nullptr;
 	MSMediaStreamSessions mSessions;
@@ -318,7 +322,7 @@ protected:
 	VideoStream *getPeerVideoStream();
 private:
 	virtual void handleEvent(const OrtpEvent *ev) override;
-	
+	void setupMediaLossCheck();
 	void setPlaybackGainDb (float gain);
 	void setZrtpCryptoTypesParameters(MSZrtpParams *params, bool haveZrtpHash);
 	void startZrtpPrimaryChannel(const OfferAnswerContext &params);
@@ -327,9 +331,11 @@ private:
 	void postConfigureAudioStream(bool muted);
 	void setupRingbackPlayer();
 	void telephoneEventReceived (int event);
+	void configureAudioStream();
 	AudioStream *mStream = nullptr;
 	MSSndCard *mCurrentCaptureCard = nullptr;
 	MSSndCard *mCurrentPlaybackCard = nullptr;
+	belle_sip_source_t *mMediaLostCheckTimer = nullptr;
 	bool mMicMuted = false;
 	bool mSpeakerMuted = false;
 	bool mRecordActive = false;
@@ -429,6 +435,13 @@ public:
 	 * when the offer was received from remote side.
 	 */
 	void createStreams(const OfferAnswerContext &params);
+	
+	/**
+	 * Set the "main" attribute to a stream index.
+	 * There can be only one main stream per type (audio, video, text...).
+	 * This attribute is useful to know whether certains tasks must be done on these streams.
+	 */
+	void setStreamMain(size_t index);
 	
 	/**
 	 * Once the streams are created, update the local media description to fill mainly

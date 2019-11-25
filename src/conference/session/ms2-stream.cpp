@@ -82,6 +82,17 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	localDesc->rtp_port = mPortConfig.rtpPort;
 	localDesc->rtcp_port = mPortConfig.rtcpPort;
 	localDesc->rtp_ssrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
+	
+	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)) {
+		/* set the hello hash */
+		if (mSessions.zrtp_context) {
+			ms_zrtp_getHelloHash(mSessions.zrtp_context, localDesc->zrtphash, 128);
+			/* Turn on the flag to use it if ZRTP is set */
+			localDesc->haveZrtpHash = (getMediaSessionPrivate().getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP);
+		} else
+			localDesc->haveZrtpHash = 0;
+	}
+	Stream::fillLocalMediaDescription(ctx);
 }
 
 void MS2Stream::refreshSockets(){
@@ -96,8 +107,11 @@ int MS2Stream::getAvpfRrInterval()const{
 void MS2Stream::initMulticast(const OfferAnswerContext &params) {
 	if (params.localIsOfferer) {
 		mPortConfig.multicastRole = params.localStreamDescription->multicast_role;
-	}else{
-		mPortConfig.multicastRole = SalMulticastReceiver;
+	}else if (params.remoteMediaDescription){
+		const char *rtpAddr = (params.remoteStreamDescription->rtp_addr[0] != '\0') ? params.remoteStreamDescription->rtp_addr :
+			params.remoteMediaDescription->addr;
+		if (ms_is_multicast(rtpAddr))
+			mPortConfig.multicastRole = SalMulticastReceiver;
 	}
 	if (mPortConfig.multicastRole == SalMulticastReceiver){
 		mPortConfig.multicastIp = params.remoteStreamDescription->rtp_addr;
@@ -105,7 +119,7 @@ void MS2Stream::initMulticast(const OfferAnswerContext &params) {
 		mPortConfig.rtpPort = 0; /*RTCP deactivated in multicast*/
 	}
 	
-	lInfo() << this << "multicast role is ["
+	lInfo() << this << " multicast role is ["
 		<< sal_multicast_role_to_string(mPortConfig.multicastRole) << "]";
 }
 
@@ -193,16 +207,43 @@ void MS2Stream::finishEarlyMediaForking(){
 	}
 }
 
-void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targetState){
+/*
+ * Handle some basic session changes.
+ * Return true everything was handled, false otherwise, in which case the caller will have to restart the stream.
+ */
+bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState){
+	const SalStreamDescription *stream = params.resultStreamDescription;
+	
+	if (getState() != Stream::Stopped && (stream->dir == SalStreamInactive || stream->rtp_port == 0)){
+		stop();
+		return false;
+	}
 	if (getState() == Stream::Running){
+		int changesToHandle = params.resultStreamDescriptionChanges;
 		if (params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED){
 			updateDestinations(params);
+			changesToHandle &= ~SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
 		}
 		if (params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED){
 			updateCryptoParameters(params);
+			changesToHandle &= ~SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
 		}
-		return;
+		// SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED monitors the number of streams, it is ignored here.
+		changesToHandle &= ~SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED;
+		
+		if (changesToHandle == 0){
+			// We've handled everything.
+			if (params.resultStreamDescriptionChanges){
+				lInfo() << "Stream updated, no need to restart.";
+			}
+			return true;
+		}
 	}
+	return false;
+}
+
+void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targetState){
+	
 	
 	const SalStreamDescription *stream = params.resultStreamDescription;
 	const char *rtpAddr = (stream->rtp_addr[0] != '\0') ? stream->rtp_addr : params.resultMediaDescription->addr;
@@ -231,9 +272,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 	configureRtpSessionForRtcpXr(params);
 	configureAdaptiveRateControl(params);
 	
-	if (stream->dtls_role == SalDtlsRoleInvalid){
-		lWarning() << "Unable to start DTLS engine, Dtls role in resulting media description is invalid";
-	}else { /* If DTLS is available at both end points */
+	if (stream->dtls_role != SalDtlsRoleInvalid){ /* If DTLS is available at both end points */
 		/* Give the peer certificate fingerprint to dtls context */
 		ms_dtls_srtp_set_peer_fingerprint(mSessions.dtls_context, params.remoteStreamDescription->dtls_fingerprint);
 	}
@@ -252,7 +291,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 		default:
 		break;
 	}
-	
+	startEventHandling();
 	Stream::render(params, targetState);
 }
 
@@ -426,6 +465,21 @@ void MS2Stream::updateDestinations(const OfferAnswerContext &params) {
 	rtp_session_set_remote_addr_full(mSessions.rtp_session, rtpAddr, params.resultStreamDescription->rtp_port, rtcpAddr, params.resultStreamDescription->rtcp_port);
 }
 
+void MS2Stream::startEventHandling(){
+	if (mTimer) return;
+	mTimer = getCore().createTimer([this](){
+			handleEvents();
+			return true;
+		}, sEventPollIntervalMs, "Stream event processing timer");
+}
+
+void MS2Stream::stopEventHandling(){
+	if (mTimer){
+		getCore().destroyTimer(mTimer);
+		mTimer = nullptr;
+	}
+}
+
 void MS2Stream::prepare(){
 	if (getCCore()->rtptf) {
 		RtpTransport *meta_rtp;
@@ -462,15 +516,13 @@ void MS2Stream::prepare(){
 	}
 	//FIXME
 	//getIceAgent().prepareIceForStream(getMediaStream(), false);
-	mTimer = getCore().createTimer([this](){
-			handleEvents();
-			return true;
-		}, sEventPollIntervalMs, "Stream event processing timer");
+	startEventHandling();
 	Stream::prepare();
 }
 
 void MS2Stream::finishPrepare(){
 	Stream::finishPrepare();
+	stopEventHandling();
 }
 
 int MS2Stream::getIdealAudioBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc) {
@@ -628,10 +680,7 @@ void MS2Stream::stop(){
 	
 	updateStats();
 	handleEvents();
-	if (mTimer){
-		getCore().destroyTimer(mTimer);
-		mTimer = nullptr;
-	}
+	stopEventHandling();
 	Stream::stop();
 }
 
@@ -655,7 +704,6 @@ void MS2Stream::notifyStatsUpdated () {
 }
 
 void MS2Stream::handleEvents () {
-
 	MediaStream *ms = getMediaStream();
 	if (ms) {
 		/* Ensure there is no dangling ICE check list */
@@ -679,8 +727,8 @@ void MS2Stream::handleEvents () {
 		}
 	}
 	OrtpEvent *ev;
-	/* Yes the event queue has to be checked at each iteration, because ice events may perform operations re-creating the streams */
-	while (mOrtpEvQueue && (ev = ortp_ev_queue_get(mOrtpEvQueue))) {
+	
+	while ((ev = ortp_ev_queue_get(mOrtpEvQueue)) != nullptr) {
 		OrtpEventType evt = ortp_event_get_type(ev);
 		OrtpEventData *evd = ortp_event_get_data(ev);
 
@@ -697,9 +745,6 @@ void MS2Stream::handleEvents () {
 			rtcp_rewind(evd->packet);
 		}
 
-		/* The MediaStream must be taken at each iteration, because it may have changed due to the handling of events
-		 * in this loop*/
-		ms = getMediaStream();
 		if (ms)
 			linphone_call_stats_fill(mStats, ms, ev);
 		notifyStatsUpdated();

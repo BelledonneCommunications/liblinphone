@@ -51,6 +51,7 @@ void OfferAnswerContext::dupFrom(const OfferAnswerContext &ctx){
 	localMediaDescription = ctx.localMediaDescription ? sal_media_description_ref(ctx.localMediaDescription) : nullptr;
 	remoteMediaDescription = ctx.remoteMediaDescription ? sal_media_description_ref(const_cast<SalMediaDescription*>(ctx.remoteMediaDescription)) : nullptr;
 	resultMediaDescription = ctx.resultMediaDescription ? sal_media_description_ref(const_cast<SalMediaDescription*>(ctx.resultMediaDescription)) : nullptr;
+	mOwnsMediaDescriptions = true;
 	// if the temporary oldCtx owns media descriptions, they will be unrefed by the destructor here.
 }
 
@@ -99,6 +100,10 @@ OfferAnswerContext::~OfferAnswerContext(){
 Stream::Stream(StreamsGroup &sg, const OfferAnswerContext &params) : mStreamsGroup(sg), mStreamType(params.localStreamDescription->type), mIndex(params.streamIndex){
 	setPortConfig();
 	fillMulticastMediaAddresses();
+}
+
+void Stream::setMain(){
+	mIsMain = true;
 }
 
 LinphoneCore *Stream::getCCore()const{

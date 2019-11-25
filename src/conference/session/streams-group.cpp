@@ -93,12 +93,11 @@ void StreamsGroup::fillLocalMediaDescription(OfferAnswerContext & params){
 }
 
 void StreamsGroup::createStreams(const OfferAnswerContext &params){
-	int index;
-	for(index = 0; index < params.localMediaDescription->nb_streams; ++index){
+	size_t index;
+	for(index = 0; index < (size_t)params.localMediaDescription->nb_streams; ++index){
 		params.scopeStreamToIndex(index);
 		Stream *s;
-		s = getStream(index);
-		if (s == nullptr){
+		if (index >= mStreams.size() || (s = mStreams[index].get()) == nullptr){
 			s = createStream(params);
 		}else{
 			if (s->getType() != params.localStreamDescription->type){
@@ -178,7 +177,7 @@ void StreamsGroup::sessionConfirmed(){
 }
 
 void StreamsGroup::stop(){
-	if (!mBandwidthReportTimer){
+	if (mBandwidthReportTimer){
 		getCore().destroyTimer(mBandwidthReportTimer);
 		mBandwidthReportTimer = nullptr;
 	}
@@ -190,7 +189,7 @@ void StreamsGroup::stop(){
 
 Stream * StreamsGroup::getStream(size_t index){
 	if (index >=  mStreams.size()){
-		lError() << "Bad stream index " << index;
+		lFatal() << "Bad stream index " << index;
 		return nullptr;
 	}
 	return mStreams[index].get();
@@ -437,7 +436,7 @@ void StreamsGroup::computeAndReportBandwidth(){
 			ostr << "Bandwidth usage for CallSession [" << &getMediaSession() << "]:\n" << fixed << setprecision(2);
 			introDone = true;
 		}
-		ostr << "\tStream #" << stream->getIndex() << " cpu%: " << stream->getCpuUsage() << sal_stream_type_to_string(stream->getType()) << " RTP : [d="
+		ostr << "\tStream #" << stream->getIndex() << " (" << sal_stream_type_to_string(stream->getType()) << ") | cpu: " << stream->getCpuUsage() << "% |" << " RTP : [d="
 			<< linphone_call_stats_get_download_bandwidth(stats) << ",u=" << linphone_call_stats_get_upload_bandwidth(stats) << "] "
 			<< "RTCP: [d=" << linphone_call_stats_get_rtcp_download_bandwidth(stats) << ",u=" << linphone_call_stats_get_rtcp_upload_bandwidth(stats) << "] ";
 		float est_bw = linphone_call_stats_get_estimated_download_bandwidth(stats);
@@ -451,6 +450,19 @@ void StreamsGroup::addPostRenderHook(const std::function<void()> &l){
 	mPostRenderHooks.push_back(l);
 }
 
+void StreamsGroup::setStreamMain(size_t index){
+	Stream *s = getStream(index);
+	if (s){
+		SalStreamType type = s->getType();
+		// Make sure there is not already a "main" stream; which would be a programmer fault.
+		Stream *other = lookupMainStream(type);
+		if (other != nullptr && other != s){
+			lError() << "StreamsGroup::setStreamMain(): error, the main attribute has already been set on another stream.";
+			return;
+		}
+		s->setMain();
+	}
+}
 
 
 LINPHONE_END_NAMESPACE

@@ -44,7 +44,8 @@ LINPHONE_BEGIN_NAMESPACE
  */
 
 MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
-	mStream = video_stream_new2(getCCore()->factory, getBindIp().c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+	string bindIp = getBindIp();
+	mStream = video_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
 	initializeSessions(&mStream->ms);
 	
 	video_stream_enable_display_filter_auto_rotate(mStream,
@@ -228,10 +229,16 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 	const SalStreamDescription *vstream = ctx.resultStreamDescription;
 	
-	if (vstream->dir == SalStreamInactive || vstream->rtp_port == 0){
-		stop();
-		return;
+	bool basicChangesHandled = handleBasicChanges(ctx, targetState);
+	
+	if (mMuted && targetState == CallSession::State::StreamsRunning){
+		lInfo() << "Early media finished, unmuting video input...";
+		/* We were in early media, now we want to enable real media */
+		mMuted = false;
+		enableCamera(mCameraEnabled);
 	}
+	
+	if (basicChangesHandled) return;
 
 	int usedPt = -1;
 	RtpProfile *videoProfile = makeProfile(ctx.resultMediaDescription, vstream, &usedPt);
@@ -241,12 +248,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		return;
 	}
 	
-	if (mMuted && targetState == CallSession::State::StreamsRunning){
-		lInfo() << "Early media finished, unmuting video input...";
-		/* We were in early media, now we want to enable real media */
-		mMuted = false;
-		enableCamera(mCameraEnabled);
-	}
+	
 
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedVideoCodec(rtp_profile_get_payload(videoProfile, usedPt));
 	getMediaSessionPrivate().getCurrentParams()->enableVideo(true);
@@ -367,7 +369,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 void MS2VideoStream::stop(){
 	MS2Stream::stop();
 	AudioStream *as = getPeerAudioStream();
-	if (as) audio_stream_link_video(as, nullptr);
+	if (as) audio_stream_unlink_video(as, mStream);
 	video_stream_stop(mStream);
 	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 
 	 * sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */

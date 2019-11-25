@@ -100,7 +100,7 @@ private:
 	void onIncomingCallSessionStarted (const std::shared_ptr<CallSession> &session) override;
 	void onIncomingCallSessionTimeoutCheck (const std::shared_ptr<CallSession> &session, int elapsed, bool oneSecondElapsed) override;
 	void onInfoReceived (const std::shared_ptr<CallSession> &session, const LinphoneInfoMessage *im) override;
-	void onNoMediaTimeoutCheck (const std::shared_ptr<CallSession> &session, bool oneSecondElapsed) override;
+	void onLossOfMediaDetected (const std::shared_ptr<CallSession> &session) override;
 	void onEncryptionChanged (const std::shared_ptr<CallSession> &session, bool activated, const std::string &authToken) override;
 	void onCallSessionStateChangedForReporting (const std::shared_ptr<CallSession> &session) override;
 	void onRtcpUpdateForReporting (const std::shared_ptr<CallSession> &session, SalStreamType type) override;

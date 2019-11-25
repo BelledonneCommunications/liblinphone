@@ -124,6 +124,7 @@ public:
 	void handleIceEvents (OrtpEvent *ev);
 	void performMutualAuthentication();
 	const std::string &getMediaLocalIp()const{ return mediaLocalIp; }
+	void lossOfMediaDetected();
 private:
 #ifdef TEST_EXT_RENDERER
 	static void extRendererCb (void *userData, const MSPicture *local, const MSPicture *remote);

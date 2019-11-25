@@ -44,7 +44,8 @@ LINPHONE_BEGIN_NAMESPACE
  */
 
 MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
-	mStream = audio_stream_new2(getCCore()->factory, getBindIp().c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+	string bindIp = getBindIp();
+	mStream = audio_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
 	initializeSessions((MediaStream*)mStream);
 
 	/* Initialize zrtp even if we didn't explicitely set it, just in case peer offers it */
@@ -129,8 +130,7 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool hav
 	params->autoStart =  (getMediaSessionPrivate().getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) && (haveRemoteZrtpHash == false) ;
 }
 
-
-void MS2AudioStream::prepare(){
+void MS2AudioStream::configureAudioStream(){
 	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
 	if (playcard) {
 		// Set the stream type immediately, as on iOS AudioUnit is instanciated very early because it is 
@@ -171,6 +171,15 @@ void MS2AudioStream::prepare(){
 	bool_t enabled = !!lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "noisegate", 0);
 	audio_stream_enable_noise_gate(mStream, enabled);
 	audio_stream_set_features(mStream, linphone_core_get_audio_features(getCCore()));
+}
+
+void MS2AudioStream::prepare(){
+	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+	if (playcard) {
+		// Set the stream type immediately, as on iOS AudioUnit is instanciated very early because it is 
+		// otherwise too slow to start.
+		ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
+	}
 	
 	if (!getCCore()->use_files){
 		audio_stream_prepare_sound(mStream, getCCore()->sound_conf.play_sndcard, getCCore()->sound_conf.capt_sndcard);
@@ -195,14 +204,30 @@ MediaStream *MS2AudioStream::getMediaStream()const{
 	return &mStream->ms;
 }
 
+void MS2AudioStream::setupMediaLossCheck(){
+	int disconnectTimeout = linphone_core_get_nortp_timeout(getCCore());
+	mMediaLostCheckTimer = getCore().createTimer( [this, disconnectTimeout]() -> bool{
+			if (!audio_stream_alive(mStream, disconnectTimeout)){
+				CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
+				listener->onLossOfMediaDetected(getMediaSession().getSharedFromThis());
+			}
+			return true;
+		}, 1000, "Audio stream alive check");
+}
+
 void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State targetState){
 	const SalStreamDescription *stream = params.resultStreamDescription;
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	
-	if (stream->dir == SalStreamInactive || stream->rtp_port == 0){
-		stop();
-		return;
+	bool basicChangesHandled = handleBasicChanges(params, targetState);
+
+	if (mMuted && (targetState == CallSession::State::StreamsRunning)) {
+		lInfo() << "Early media finished, unmuting audio input...";
+		enableMic(micEnabled());
+		mMuted = false;
 	}
+	
+	if (basicChangesHandled) return;
 	
 	int usedPt = -1;
 	string onHoldFile = "";
@@ -231,10 +256,6 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if ((stream->rtp_port == 0) || (stream->dir == SalStreamRecvOnly) || ((stream->multicast_role == SalMulticastReceiver) && isMulticast)) {
 		captcard = nullptr;
 		playfile = "";
-	}
-	if (mMuted && (targetState == CallSession::State::StreamsRunning)) {
-		lInfo() << "Early media finished, unmuting audio input...";
-		enableMic(micEnabled());
 	}
 
 	if (targetState == CallSession::State::Paused) {
@@ -269,7 +290,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (playcard) {
 		ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
 	}
-	
+	configureAudioStream();
 	bool useEc = captcard && linphone_core_echo_cancellation_enabled(getCCore());
 	audio_stream_enable_echo_canceller(mStream, useEc);
 	if (playcard && (stream->max_rate > 0))
@@ -320,7 +341,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		}
 	}
 	if (ok) {
-		audio_stream_link_video(mStream, getPeerVideoStream());
+		VideoStream *vs = getPeerVideoStream();
+		if (vs) audio_stream_link_video(mStream, vs);
 		mCurrentCaptureCard = ms_media_resource_get_soundcard(&io.input);
 		mCurrentPlaybackCard = ms_media_resource_get_soundcard(&io.output);
 
@@ -372,11 +394,18 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		}
 	});
 	
+	if (targetState == CallSession::State::StreamsRunning){
+		setupMediaLossCheck();
+	}
+	
 	return;
 }
 
 void MS2AudioStream::stop(){
-	
+	if (mMediaLostCheckTimer) {
+		getCore().destroyTimer(mMediaLostCheckTimer);
+		mMediaLostCheckTimer = nullptr;
+	}
 	MS2Stream::stop();
 	if (mStream->ec) {
 		char *stateStr = nullptr;
@@ -386,7 +415,8 @@ void MS2AudioStream::stop(){
 			lp_config_write_relative_file(linphone_core_get_config(getCCore()), ecStateStore, stateStr);
 		}
 	}
-	audio_stream_link_video(mStream, getPeerVideoStream());
+	VideoStream *vs = getPeerVideoStream();
+	if (vs) audio_stream_unlink_video(mStream, vs);
 	
 	audio_stream_stop(mStream);
 	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 

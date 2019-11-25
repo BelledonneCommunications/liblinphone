@@ -30,6 +30,7 @@
 
 #include "linphone/core.h"
 
+using namespace ::std;
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -38,7 +39,8 @@ LINPHONE_BEGIN_NAMESPACE
  */
 
 MS2RTTStream::MS2RTTStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
-	mStream = text_stream_new2(getCCore()->factory, getBindIp().c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+	string bindIp = getBindIp();
+	mStream = text_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
 	initializeSessions(&mStream->ms);
 }
 
