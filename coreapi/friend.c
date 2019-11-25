@@ -205,6 +205,8 @@ void __linphone_friend_do_subscribe(LinphoneFriend *fr){
 		linphone_configure_op(lc,fr->outsub,addr,NULL,TRUE);
 		fr->outsub->subscribe(lp_config_get_int(lc->config,"sip","subscribe_expires",600));
 		fr->subscribe_active=TRUE;
+	} else {
+		ms_error("Can't send a SUBSCRIBE for friend [%p] without an address!", fr);
 	}
 }
 
@@ -805,7 +807,7 @@ void linphone_friend_update_subscribes(LinphoneFriend *fr, bool_t only_when_regi
 		}
 	}
 	if (can_subscribe && fr->subscribe && fr->subscribe_active==FALSE){
-		ms_message("Sending a new SUBSCRIBE");
+		ms_message("Sending a new SUBSCRIBE for friend [%p]", fr);
 		__linphone_friend_do_subscribe(fr);
 	}else if (can_subscribe && fr->subscribe_active && !fr->subscribe){
 		linphone_friend_unsubscribe(fr);
@@ -1199,6 +1201,7 @@ bool_t linphone_friend_create_vcard(LinphoneFriend *fr, const char *name) {
 	linphone_vcard_set_full_name(vcard, name);
 	linphone_friend_set_vcard(fr, vcard);
 	linphone_vcard_unref(vcard);
+	ms_message("VCard created for friend [%p]", fr);
 	return TRUE;
 }
 
