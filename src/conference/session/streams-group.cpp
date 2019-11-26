@@ -123,7 +123,7 @@ bool StreamsGroup::prepare(const OfferAnswerContext &params){
 void StreamsGroup::render(const OfferAnswerContext &params, CallSession::State targetState){
 	for(auto &stream : mStreams){
 		Stream *streamPtr = stream.get();
-		lInfo() << "StreamsGroup " << this << " rendering stream #" << stream->getIndex();
+		lInfo() << "StreamsGroup " << this << " rendering stream " << *stream;
 		params.scopeStreamToIndexWithDiff(stream->getIndex(), mCurrentOfferAnswerState);
 		
 		if (params.localStreamDescriptionChanges) {

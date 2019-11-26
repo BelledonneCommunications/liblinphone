@@ -2753,7 +2753,7 @@ static void early_media_call_with_update_base(bool_t media_change){
 	BC_ASSERT_TRUE( wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia,1,5000) );
 	BC_ASSERT_TRUE(linphone_call_get_all_muted(marie_call));
 
-	pauline_params = linphone_call_params_copy(linphone_call_get_current_params(pauline_call));
+	pauline_params = linphone_core_create_call_params(pauline->lc, pauline_call);
 
 	if (media_change) {
 		disable_all_audio_codecs_except_one(marie->lc,"pcma",-1);

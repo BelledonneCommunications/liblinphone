@@ -953,7 +953,7 @@ void MediaSessionPrivate::selectOutgoingIpVersion () {
 
 void MediaSessionPrivate::forceStreamsDirAccordingToState (SalMediaDescription *md) {
 	L_Q();
-	for (int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
+	for (int i = 0; i < md->nb_streams; i++) {
 		SalStreamDescription *sd = &md->streams[i];
 		switch (state) {
 			case CallSession::State::Pausing:
@@ -1073,7 +1073,7 @@ void MediaSessionPrivate::makeLocalMediaDescription() {
 	if (mainAudioStreamIndex != -1){
 		l = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1,
 		oldMd ? oldMd->streams[mainAudioStreamIndex].already_assigned_payloads : nullptr);
-	
+		lInfo() << "getParams()->audioEnabled(): " << getParams()->audioEnabled();
 		if (l && getParams()->audioEnabled()) {
 			strncpy(md->streams[mainAudioStreamIndex].name, "Audio", sizeof(md->streams[mainAudioStreamIndex].name) - 1);
 			md->streams[mainAudioStreamIndex].proto = getParams()->getMediaProto();
@@ -1149,16 +1149,6 @@ void MediaSessionPrivate::makeLocalMediaDescription() {
 
 	md->nb_streams = MAX(md->nb_streams, maxIndex + 1);
 
-	/* Deactivate unused streams */
-	for (int i = md->nb_streams; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
-		if (md->streams[i].rtp_port == 0) {
-			md->streams[i].dir = SalStreamInactive;
-			if (biggestDesc && (i < biggestDesc->nb_streams)) {
-				md->streams[i].proto = biggestDesc->streams[i].proto;
-				md->streams[i].type = biggestDesc->streams[i].type;
-			}
-		}
-	}
 	setupEncryptionKeys(md);
 	setupDtlsKeys(md);
 	setupImEncryptionEngineParameters(md);
@@ -1179,6 +1169,18 @@ void MediaSessionPrivate::makeLocalMediaDescription() {
 	if (mainTextStreamIndex != -1) getStreamsGroup().setStreamMain(mainTextStreamIndex);
 	/* Get the transport addresses filled in to the media description. */
 	getStreamsGroup().fillLocalMediaDescription(ctx);
+	
+	/* Deactivate unused streams */
+	for (int i = md->nb_streams; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
+		if (md->streams[i].rtp_port == 0) {
+			md->streams[i].dir = SalStreamInactive;
+			if (biggestDesc && (i < biggestDesc->nb_streams)) {
+				md->streams[i].proto = biggestDesc->streams[i].proto;
+				md->streams[i].type = biggestDesc->streams[i].type;
+			}
+		}
+	}
+	
 	updateLocalMediaDescriptionFromIce();
 	if (oldMd) {
 		transferAlreadyAssignedPayloadTypes(oldMd, md);
@@ -1685,7 +1687,6 @@ void MediaSessionPrivate::setTerminated () {
 }
 
 LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextState, const string &stateInfo) {
-	updateRemoteSessionIdAndVer();
 	op->accept();
 	SalMediaDescription *md = op->getFinalMediaDescription();
 	if (md && !sal_media_description_empty(md))
@@ -1871,6 +1872,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 		lWarning() << "Video isn't supported in conference";
 		getParams()->enableVideo(false);
 	}
+	updateRemoteSessionIdAndVer();
 	makeLocalMediaDescription();
 	OfferAnswerContext oac;
 	oac.localMediaDescription = localDesc;
@@ -2213,6 +2215,7 @@ LinphoneStatus MediaSession::resume () {
 	 * prevents the participants to hear it while the 200OK comes back. */
 	Stream *as = d->getStreamsGroup().lookupMainStream(SalAudio);
 	if (as) as->stop();
+	d->setState(CallSession::State::Resuming,"Resuming");
 	d->makeLocalMediaDescription();
 	sal_media_description_set_dir(d->localDesc, SalStreamSendRecv);
 	if (getCore()->getCCore()->sip_conf.sdp_200_ack)
@@ -2222,7 +2225,7 @@ LinphoneStatus MediaSession::resume () {
 		subject = "Conference";
 	if (d->op->update(subject.c_str(), false) != 0)
 		return -1;
-	d->setState(CallSession::State::Resuming,"Resuming");
+	
 	if (!d->getParams()->getPrivate()->getInConference() && d->listener)
 		d->listener->onSetCurrentSession(getSharedFromThis());
 	if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
@@ -2633,19 +2636,19 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 			
 			if (d->mainAudioStreamIndex != -1 && d->mainAudioStreamIndex < md->nb_streams){
 				sd = &md->streams[d->mainAudioStreamIndex];
-				params->enableAudio(sd->dir != SalStreamInactive && sd->rtp_port != 0);
+				params->enableAudio(sal_stream_description_active(sd));
 				params->setMediaEncryption(sal_stream_description_has_srtp(sd) ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeAudio, md->streams[d->mainAudioStreamIndex].custom_sdp_attributes);
 			}
 			if (d->mainVideoStreamIndex != -1 && d->mainVideoStreamIndex < md->nb_streams){
 				sd = &md->streams[d->mainVideoStreamIndex];
-				params->enableVideo(sd->dir != SalStreamInactive && sd->rtp_port != 0);
+				params->enableVideo(sal_stream_description_active(sd));
 				params->setMediaEncryption(sal_stream_description_has_srtp(sd) ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeVideo, md->streams[d->mainVideoStreamIndex].custom_sdp_attributes);
 			}
 			if (d->mainTextStreamIndex != -1 && d->mainTextStreamIndex < md->nb_streams){
 				sd = &md->streams[d->mainTextStreamIndex];
-				params->enableRealtimeText(sd->dir != SalStreamInactive && sd->rtp_port != 0);
+				params->enableRealtimeText(sal_stream_description_active(sd));
 				params->setMediaEncryption(sal_stream_description_has_srtp(sd) ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeText, md->streams[d->mainTextStreamIndex].custom_sdp_attributes);
 			}
@@ -2744,9 +2747,11 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 
 void MediaSession::setParams (const MediaSessionParams *msp) {
 	L_D();
-	if ((d->state == CallSession::State::OutgoingInit) || (d->state == CallSession::State::IncomingReceived))
+	if ((d->state == CallSession::State::OutgoingInit) || (d->state == CallSession::State::IncomingReceived)){
 		d->setParams(msp ? new MediaSessionParams(*msp) : nullptr);
-	else
+		// Update the local media description.
+		d->makeLocalMediaDescription();
+	}else
 		lError() << "MediaSession::setParams(): Invalid state %s", Utils::toString(d->state);
 }
 

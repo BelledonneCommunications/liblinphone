@@ -214,9 +214,10 @@ void MS2Stream::finishEarlyMediaForking(){
 bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState){
 	const SalStreamDescription *stream = params.resultStreamDescription;
 	
-	if (getState() != Stream::Stopped && (stream->dir == SalStreamInactive || stream->rtp_port == 0)){
-		stop();
-		return false;
+	if (stream->dir == SalStreamInactive || stream->rtp_port == 0){
+		/* In this case all we have to do is to ensure that the stream is stopped. */
+		if (getState() != Stopped) stop();
+		return true;
 	}
 	if (getState() == Stream::Running){
 		int changesToHandle = params.resultStreamDescriptionChanges;
@@ -239,6 +240,8 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession
 			return true;
 		}
 	}
+	/* Otherwise these changes shall be handled by a full restart of the stream. */
+	stop();
 	return false;
 }
 
@@ -667,9 +670,12 @@ void MS2Stream::stop(){
 		if (getType() == SalAudio) listener->onCallSessionConferenceStreamStopping(getMediaSession().getSharedFromThis());
 	}
 	ms_bandwidth_controller_remove_stream(getCCore()->bw_controller, getMediaStream());
-	
+	updateStats();
+	handleEvents();
+	stopEventHandling();
 	if (mRtpProfile){
 		rtp_profile_destroy(mRtpProfile);
+		rtp_session_set_profile(mSessions.rtp_session, &av_profile);
 		mRtpProfile = nullptr;
 	}
 	
@@ -677,10 +683,6 @@ void MS2Stream::stop(){
 		rtp_profile_destroy(mRtpIoProfile);
 		mRtpIoProfile = nullptr;
 	}
-	
-	updateStats();
-	handleEvents();
-	stopEventHandling();
 	Stream::stop();
 }
 

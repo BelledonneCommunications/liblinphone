@@ -243,6 +243,11 @@ typedef enum {
 	SalOpSDPSimulateRemove /** Will simulate no SDP in the op */
 } SalOpSDPHandling;
 
+
+typedef struct SalStreamBundle{
+	bctbx_list_t *mids; /* List of mids corresponding to streams associated in the bundle. The first one is the "tagged" one. */
+} SalStreamBundle;
+
 typedef struct SalStreamDescription{
 	char name[16]; /*unique name of stream, in order to ease offer/answer model algorithm*/
 	SalMediaProto proto;
@@ -264,6 +269,7 @@ typedef struct SalStreamDescription{
 	SalSrtpCryptoAlgo crypto[SAL_CRYPTO_ALGO_MAX];
 	unsigned int crypto_local_tag;
 	int max_rate;
+	bool_t pad[3]; /* Use me */
 	bool_t implicit_rtcp_fb;
 	OrtpRtcpFbConfiguration rtcp_fb;
 	OrtpRtcpXrConfiguration rtcp_xr;
@@ -272,6 +278,7 @@ typedef struct SalStreamDescription{
 	SalIceRemoteCandidate ice_remote_candidates[SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES];
 	char ice_ufrag[SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN];
 	char ice_pwd[SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN];
+	char mid[32]; /* Media line identifier for RTP bundle mode */
 	bool_t ice_mismatch;
 	bool_t set_nortpproxy; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 	bool_t rtcp_mux;
@@ -312,6 +319,7 @@ typedef struct SalMediaDescription{
 	OrtpRtcpXrConfiguration rtcp_xr;
 	char ice_ufrag[SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN];
 	char ice_pwd[SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN];
+	bctbx_list_t *bundles; /* list of SalStreamBundle */
 	bool_t ice_lite;
 	bool_t set_nortpproxy;
 	bool_t pad[2];
@@ -360,6 +368,12 @@ bool_t sal_media_description_has_dtls(const SalMediaDescription *md);
 bool_t sal_media_description_has_zrtp(const SalMediaDescription *md);
 bool_t sal_media_description_has_ipv6(const SalMediaDescription *md);
 int sal_media_description_get_nb_active_streams(const SalMediaDescription *md);
+
+SalStreamBundle * sal_media_description_add_new_bundle(SalMediaDescription *md);
+/* Add stream to the bundle. The SalStreamDescription must be part of the SalMediaDescription in which the SalStreamBundle is added. */
+void sal_stream_bundle_add_stream(SalStreamBundle *bundle, SalStreamDescription *stream, const char *mid);
+void sal_stream_bundle_destroy(SalStreamBundle *bundle);
+
 
 #ifdef __cplusplus
 }

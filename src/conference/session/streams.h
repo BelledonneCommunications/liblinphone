@@ -135,6 +135,18 @@ public:
 	int getStartCount()const{ return mStartCount; }
 	const PortConfig &getPortConfig()const{ return mPortConfig; }
 	virtual ~Stream() = default;
+	static std::string stateToString(State st){
+		switch(st){
+			case Stopped:
+				return "Stopped";
+			case Running:
+				return "Running";
+			case Preparing:
+				return "Preparing";
+		}
+		return "undefined";
+	}
+	
 protected:
 	Stream(StreamsGroup &ms, const OfferAnswerContext &params);
 	/**
@@ -158,6 +170,17 @@ private:
 	State mState = Stopped;
 	bool mIsMain = false;
 };
+
+inline std::ostream &operator<<(std::ostream & ostr, SalStreamType type){
+	ostr << sal_stream_type_to_string(type);
+	return ostr;
+}
+
+inline std::ostream & operator<<(std::ostream & ostr, Stream& stream){
+	ostr << "#" << stream.getIndex() << " [" << stream.getType() << "]  currently in state [" << Stream::stateToString(stream.getState()) << "]";
+	return ostr;
+}
+
 
 class AudioControlInterface{
 public:

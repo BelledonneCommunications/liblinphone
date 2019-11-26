@@ -66,6 +66,21 @@ SalTransport sal_transport_parse(const char* param) {
 	return SalTransportUDP;
 }
 
+
+SalStreamBundle *sal_stream_bundle_new(void){
+	return ms_new0(SalStreamBundle, 1);
+}
+
+void sal_stream_bundle_add_stream(SalStreamBundle *bundle, SalStreamDescription *stream, const char *mid){
+	strncpy(stream->mid, mid ? mid : "", sizeof(stream->mid));
+	stream->mid[sizeof(stream->mid) -1] = '\0';
+	bundle->mids = bctbx_list_append(bundle->mids, ms_strdup(mid));
+}
+
+void sal_stream_bundle_destroy(SalStreamBundle *bundle){
+	bctbx_list_free_with_data(bundle->mids, (void (*)(void*)) ms_free);
+}
+
 SalMediaDescription *sal_media_description_new(){
 	SalMediaDescription *md=ms_new0(SalMediaDescription,1);
 	int i;
@@ -79,6 +94,12 @@ SalMediaDescription *sal_media_description_new(){
 	return md;
 }
 
+SalStreamBundle * sal_media_description_add_new_bundle(SalMediaDescription *md){
+	SalStreamBundle *bundle = sal_stream_bundle_new();
+	md->bundles = bctbx_list_append(md->bundles, bundle);
+	return bundle;
+}
+
 static void sal_media_description_destroy(SalMediaDescription *md){
 	int i;
 	for(i=0;i<SAL_MEDIA_DESCRIPTION_MAX_STREAMS;i++){
@@ -88,6 +109,7 @@ static void sal_media_description_destroy(SalMediaDescription *md){
 		md->streams[i].already_assigned_payloads=NULL;
 		sal_custom_sdp_attribute_free(md->streams[i].custom_sdp_attributes);
 	}
+	bctbx_list_free_with_data(md->bundles, (void (*)(void*)) sal_stream_bundle_destroy);
 	sal_custom_sdp_attribute_free(md->custom_sdp_attributes);
 	ms_free(md);
 }
