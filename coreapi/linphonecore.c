@@ -1394,7 +1394,7 @@ static void sip_config_read(LinphoneCore *lc) {
 	int ipv6_default = TRUE;
 
 	if (lp_config_get_int(lc->config,"sip","use_session_timers",0)==1){
-		lc->sal->useSessionTimers(200);
+		lc->sal->useSessionTimers(lp_config_get_int(lc->config,"sip","session_expires_value",600));
 	}
 
 	lc->sal->useNoInitialRoute(!!lp_config_get_int(lc->config,"sip","use_no_initial_route",0));
