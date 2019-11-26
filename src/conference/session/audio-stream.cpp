@@ -224,10 +224,12 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (mMuted && (targetState == CallSession::State::StreamsRunning)) {
 		lInfo() << "Early media finished, unmuting audio input...";
 		enableMic(micEnabled());
-		mMuted = false;
 	}
 	
-	if (basicChangesHandled) return;
+	if (basicChangesHandled) {
+		MS2Stream::render(params, targetState);
+		return;
+	}
 	
 	int usedPt = -1;
 	string onHoldFile = "";
@@ -687,6 +689,14 @@ bool MS2AudioStream::echoCancellationEnabled()const{
 	bool_t val;
 	ms_filter_call_method(mStream->ec, MS_ECHO_CANCELLER_GET_BYPASS_MODE, &val);
 	return !val;
+}
+
+void MS2AudioStream::finish(){
+	if (mStream){
+		audio_stream_stop(mStream);
+		mStream = nullptr;
+	}
+	MS2Stream::finish();
 }
 
 MS2AudioStream::~MS2AudioStream(){

@@ -47,16 +47,6 @@ MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param
 	string bindIp = getBindIp();
 	mStream = video_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
 	initializeSessions(&mStream->ms);
-	
-	video_stream_enable_display_filter_auto_rotate(mStream,
-		!!lp_config_get_int(linphone_core_get_config(getCCore()), "video", "display_filter_auto_rotate", 0)
-	);
-
-	const char *displayFilter = linphone_core_get_video_display_filter(getCCore());
-	if (displayFilter)
-		video_stream_set_display_filter_name(mStream, displayFilter);
-	video_stream_set_event_callback(mStream, sVideoStreamEventCb, this);
-	
 }
 
 void MS2VideoStream::sVideoStreamEventCb (void *userData, const MSFilter *f, const unsigned int eventId, const void *args) {
@@ -234,11 +224,13 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	if (mMuted && targetState == CallSession::State::StreamsRunning){
 		lInfo() << "Early media finished, unmuting video input...";
 		/* We were in early media, now we want to enable real media */
-		mMuted = false;
 		enableCamera(mCameraEnabled);
 	}
 	
-	if (basicChangesHandled) return;
+	if (basicChangesHandled) {
+		MS2Stream::render(ctx, targetState);
+		return;
+	}
 
 	int usedPt = -1;
 	RtpProfile *videoProfile = makeProfile(ctx.resultMediaDescription, vstream, &usedPt);
@@ -249,6 +241,14 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 	
 	
+	video_stream_enable_display_filter_auto_rotate(mStream,
+		!!lp_config_get_int(linphone_core_get_config(getCCore()), "video", "display_filter_auto_rotate", 0)
+	);
+
+	const char *displayFilter = linphone_core_get_video_display_filter(getCCore());
+	if (displayFilter)
+		video_stream_set_display_filter_name(mStream, displayFilter);
+	video_stream_set_event_callback(mStream, sVideoStreamEventCb, this);
 
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedVideoCodec(rtp_profile_get_payload(videoProfile, usedPt));
 	getMediaSessionPrivate().getCurrentParams()->enableVideo(true);
@@ -473,8 +473,16 @@ void MS2VideoStream::getSendStats(VideoStats *s) const{
 	s->height = vsize.height;
 }
 
+void MS2VideoStream::finish(){
+	if (mStream) {
+		video_stream_stop(mStream);
+		mStream = nullptr;
+	}
+	MS2Stream::finish();
+}
+
 MS2VideoStream::~MS2VideoStream(){
-	video_stream_stop(mStream);
+	if (mStream) video_stream_stop(mStream);
 }
 
 LINPHONE_END_NAMESPACE

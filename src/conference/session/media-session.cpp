@@ -1073,7 +1073,6 @@ void MediaSessionPrivate::makeLocalMediaDescription() {
 	if (mainAudioStreamIndex != -1){
 		l = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1,
 		oldMd ? oldMd->streams[mainAudioStreamIndex].already_assigned_payloads : nullptr);
-		lInfo() << "getParams()->audioEnabled(): " << getParams()->audioEnabled();
 		if (l && getParams()->audioEnabled()) {
 			strncpy(md->streams[mainAudioStreamIndex].name, "Audio", sizeof(md->streams[mainAudioStreamIndex].name) - 1);
 			md->streams[mainAudioStreamIndex].proto = getParams()->getMediaProto();
@@ -1377,7 +1376,7 @@ void MediaSessionPrivate::startDtlsOnAllStreams () {
  * if it was never notified to the application.
  */
 void MediaSessionPrivate::freeResources () {
-	getStreamsGroup().clearStreams();
+	getStreamsGroup().finish();
 }
 
 void MediaSessionPrivate::handleIceEvents (OrtpEvent *ev) {

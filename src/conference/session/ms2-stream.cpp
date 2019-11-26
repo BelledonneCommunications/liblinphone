@@ -79,8 +79,12 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	SalStreamDescription *localDesc = ctx.localStreamDescription;
 	strncpy(localDesc->rtp_addr, getPublicIp().c_str(), sizeof(localDesc->rtp_addr));
 	strncpy(localDesc->rtcp_addr, getPublicIp().c_str(), sizeof(localDesc->rtcp_addr));
-	localDesc->rtp_port = mPortConfig.rtpPort;
-	localDesc->rtcp_port = mPortConfig.rtcpPort;
+	
+	if (localDesc->payloads != nullptr){
+		/* Don't fill ports if no codecs are defined. The stream is not valid and should be disabled.*/
+		localDesc->rtp_port = mPortConfig.rtpPort;
+		localDesc->rtcp_port = mPortConfig.rtcpPort;
+	}
 	localDesc->rtp_ssrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
 	
 	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)) {
@@ -288,7 +292,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 			if (!getMediaSessionPrivate().getParams()->earlyMediaSendingEnabled()) mMuted = true;
 		break;
 		case CallSession::State::StreamsRunning:
-			mMuted = true;
+			mMuted = false;
 			finishEarlyMediaForking();
 		break;
 		default:
@@ -860,6 +864,10 @@ float MS2Stream::getCpuUsage()const{
 	MediaStream *ms = getMediaStream();
 	if (ms->sessions.ticker == nullptr) return 0.0f;
 	return ms_ticker_get_average_load(ms->sessions.ticker);
+}
+
+void MS2Stream::finish(){
+	Stream::finish();
 }
 
 MS2Stream::~MS2Stream(){

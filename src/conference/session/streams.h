@@ -107,6 +107,13 @@ public:
 	 * Ask the stream to stop. A call to prepare() is necessary before doing a future render() operation, if any.
 	 */
 	virtual void stop();
+	
+	/**
+	 * Notifies the stream that it will no longer be used (called in render() ).
+	 * This gives the opportunity to free any useless resource immediately.
+	 * Statistics (LinphoneCallStats ) must remain until destruction.
+	 */
+	virtual void finish();
 	virtual LinphoneCallStats *getStats(){
 		return nullptr;
 	}
@@ -248,6 +255,7 @@ public:
 	virtual void finishPrepare() override;
 	virtual void render(const OfferAnswerContext & ctx, CallSession::State targetState) override;
 	virtual void stop() override;
+	virtual void finish() override;
 	virtual bool isEncrypted() const override;
 	MSZrtpContext *getZrtpContext()const;
 	std::pair<RtpTransport*, RtpTransport*> getMetaRtpTransports();
@@ -311,6 +319,7 @@ public:
 	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
 	virtual void sessionConfirmed(const OfferAnswerContext &ctx) override;
 	virtual void stop() override;
+	virtual void finish() override;
 	
 	/* AudioControlInterface */
 	virtual void enableMic(bool value) override;
@@ -374,6 +383,7 @@ public:
 	virtual void finishPrepare() override;
 	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
 	virtual void stop() override;
+	virtual void finish() override;
 	
 	/* VideoControlInterface methods */
 	virtual void sendVfu() override;
@@ -495,6 +505,12 @@ public:
 	 * Stop streams.
 	 */
 	void stop();
+	/**
+	 * Notifies the stream that it will no longer be used (called in render() ).
+	 * This gives the opportunity to free any useless resource immediately.
+	 * Statistics (LinphoneCallStats ) must remain until destruction.
+	 */
+	void finish();
 	Stream * getStream(size_t index);
 	Stream * lookupMainStream(SalStreamType type);
 	template <typename _interface>
@@ -573,6 +589,7 @@ private:
 	std::list<std::function<void()>> mPostRenderHooks;
 	OfferAnswerContext mCurrentOfferAnswerState;
 	bool mAuthTokenVerified = false;
+	bool mFinished = false;
 
 };
 

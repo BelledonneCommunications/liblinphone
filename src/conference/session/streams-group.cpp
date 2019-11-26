@@ -112,6 +112,10 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params){
 }
 
 bool StreamsGroup::prepare(const OfferAnswerContext &params){
+	if (mFinished){
+		lError() << "StreamsGroup finished, cannot be used anymore.";
+		return false;
+	}
 	for (auto &stream : mStreams){
 		if (stream->getState() == Stream::Stopped){
 			stream->prepare();
@@ -121,6 +125,10 @@ bool StreamsGroup::prepare(const OfferAnswerContext &params){
 }
 
 void StreamsGroup::render(const OfferAnswerContext &params, CallSession::State targetState){
+	if (mFinished){
+		lError() << "StreamsGroup finished, cannot be used anymore.";
+		return;
+	}
 	for(auto &stream : mStreams){
 		Stream *streamPtr = stream.get();
 		lInfo() << "StreamsGroup " << this << " rendering stream " << *stream;
@@ -177,6 +185,10 @@ void StreamsGroup::sessionConfirmed(){
 }
 
 void StreamsGroup::stop(){
+	if (mFinished){
+		lError() << "StreamsGroup finished, cannot be used anymore.";
+		return;
+	}
 	if (mBandwidthReportTimer){
 		getCore().destroyTimer(mBandwidthReportTimer);
 		mBandwidthReportTimer = nullptr;
@@ -462,6 +474,12 @@ void StreamsGroup::setStreamMain(size_t index){
 		}
 		s->setMain();
 	}
+}
+
+void StreamsGroup::finish(){
+	stop(); //For the paranoid: normally it should be done already.
+	forEach<Stream>(mem_fun(&Stream::finish));
+	mFinished = true;
 }
 
 

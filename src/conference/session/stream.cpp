@@ -257,4 +257,7 @@ const string & Stream::getPublicIp() const{
 	return getMediaSessionPrivate().getMediaLocalIp();
 }
 
+void Stream::finish(){
+}
+
 LINPHONE_END_NAMESPACE
