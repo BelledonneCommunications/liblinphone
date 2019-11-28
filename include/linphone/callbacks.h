@@ -421,6 +421,13 @@ typedef void (*LinphoneCoreCbsVersionUpdateCheckResultReceivedCb) (LinphoneCore 
 typedef void (*LinphoneCoreCbsChatRoomStateChangedCb) (LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatRoomState state);
 
 /**
+ * Callback prototype telling that a #LinphoneChatRoom subject has changed.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] cr The #LinphoneChatRoom object for which the subject has changed
+ */
+typedef void (*LinphoneCoreCbsChatRoomSubjectChangedCb) (LinphoneCore *lc, LinphoneChatRoom *cr);
+
+/**
  * Callback prototype telling the result of decoded qrcode
  * @param[in] lc LinphoneCore object
  * @param[in] result The result of the decoded qrcode
