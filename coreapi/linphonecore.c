@@ -483,6 +483,14 @@ void linphone_core_cbs_set_chat_room_state_changed (LinphoneCoreCbs *cbs, Linpho
 	cbs->vtable->chat_room_state_changed = cb;
 }
 
+LinphoneCoreCbsChatRoomSubjectChangedCb linphone_core_cbs_get_chat_room_subject_changed (LinphoneCoreCbs *cbs) {
+	return cbs->vtable->chat_room_subject_changed;
+}
+
+void linphone_core_cbs_set_chat_room_subject_changed (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomSubjectChangedCb cb) {
+	cbs->vtable->chat_room_subject_changed = cb;
+}
+
 LinphoneCoreCbsQrcodeFoundCb linphone_core_cbs_get_qrcode_found(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->qrcode_found;
 }

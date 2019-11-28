@@ -231,6 +231,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsEcCalibrationAudioUninitCb ec_calibration_audio_uninit;
 	LinphoneCoreCbsMessageReceivedCb message_sent;
 	LinphoneCoreCbsChatRoomReadCb chat_room_read;
+	LinphoneCoreCbsChatRoomSubjectChangedCb chat_room_subject_changed;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -762,6 +763,20 @@ LINPHONE_PUBLIC LinphoneCoreCbsChatRoomStateChangedCb linphone_core_cbs_get_chat
  * @param[in] cb The callback to use
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_state_changed (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomStateChangedCb cb);
+
+/**
+ * Get the chat room subject changed callback.
+ * @param[in] cbs #LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsChatRoomSubjectChangedCb linphone_core_cbs_get_chat_room_subject_changed (LinphoneCoreCbs *cbs);
+
+/**
+ * Set the chat room subject changed callback.
+ * @param[in] cbs #LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_subject_changed (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomSubjectChangedCb cb);
 
 /**
  * Get the qrcode found callback.

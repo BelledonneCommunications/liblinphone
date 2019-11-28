@@ -169,6 +169,11 @@ void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, Lin
 	}
 }
 
+void core_chat_room_subject_changed (LinphoneCore *core, LinphoneChatRoom *cr) {
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_core_chat_room_subject_changed++;
+}
+
 void configure_core_for_conference (LinphoneCore *core, const char* username, const LinphoneAddress *factoryAddr, bool_t server) {
 	const char *identity = linphone_core_get_identity(core);
 	const char *new_username;
@@ -295,6 +300,7 @@ bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList) {
 
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
+	linphone_core_cbs_set_chat_room_subject_changed(cbs, core_chat_room_subject_changed);
 	bctbx_list_for_each2(coreManagerList, (void (*)(void *, void *))configure_core_for_callbacks, (void *) cbs);
 	linphone_core_cbs_unref(cbs);
 
@@ -1370,6 +1376,9 @@ static void group_chat_room_change_subject (void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_subject_changed, initialMarieStats.number_of_subject_changed + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_subject_changed, initialPaulineStats.number_of_subject_changed + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_subject_changed, initialLaureStats.number_of_subject_changed + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_core_chat_room_subject_changed, initialMarieStats.number_of_core_chat_room_subject_changed + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_core_chat_room_subject_changed, initialPaulineStats.number_of_core_chat_room_subject_changed + 1, 3000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_core_chat_room_subject_changed, initialLaureStats.number_of_core_chat_room_subject_changed + 1, 3000));
 	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(marieCr), newSubject);
 	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(paulineCr), newSubject);
 	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(laureCr), newSubject);
