@@ -43,3 +43,9 @@ echocancellation=0 #to not overload cpu in case of VG
 [net]
 dns_srv_enabled=0 #no srv needed in general
 stun_server=stun.example.org
+
+[storage]
+#this will explicitely request to not use database. We need this for a few tests where multiple cores are instanciated, so that they don't 
+#try to connect to the same default sqlite3 database.
+uri=null
+
