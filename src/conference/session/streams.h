@@ -61,8 +61,10 @@ public:
 	
 	void scopeStreamToIndex(size_t index)const;
 	void scopeStreamToIndexWithDiff(size_t index, const OfferAnswerContext &previousCtx)const;
-	/* Copy descriptions from 'ctx', taking ownership of descriptions, which '=' operator will not do. */
+	/* Copy descriptions from 'ctx', taking ownership of descriptions. */
 	void dupFrom(const OfferAnswerContext &ctx);
+	/* Copy descriptions from 'ctx', NOT taking ownership of descriptions. */
+	void copyFrom(const OfferAnswerContext &ctx);
 	void clear();
 	~OfferAnswerContext();	
 private:

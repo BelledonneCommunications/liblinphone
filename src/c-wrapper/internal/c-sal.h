@@ -269,8 +269,9 @@ typedef struct SalStreamDescription{
 	SalSrtpCryptoAlgo crypto[SAL_CRYPTO_ALGO_MAX];
 	unsigned int crypto_local_tag;
 	int max_rate;
-	bool_t pad[3]; /* Use me */
+	bool_t bundle_only;
 	bool_t implicit_rtcp_fb;
+	bool_t pad[2]; /* Use me */
 	OrtpRtcpFbConfiguration rtcp_fb;
 	OrtpRtcpXrConfiguration rtcp_xr;
 	SalCustomSdpAttribute *custom_sdp_attributes;
@@ -279,6 +280,7 @@ typedef struct SalStreamDescription{
 	char ice_ufrag[SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN];
 	char ice_pwd[SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN];
 	char mid[32]; /* Media line identifier for RTP bundle mode */
+	int mid_rtp_ext_header_id; /* Identifier for the MID field in the RTP extension header */
 	bool_t ice_mismatch;
 	bool_t set_nortpproxy; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 	bool_t rtcp_mux;
@@ -322,7 +324,8 @@ typedef struct SalMediaDescription{
 	bctbx_list_t *bundles; /* list of SalStreamBundle */
 	bool_t ice_lite;
 	bool_t set_nortpproxy;
-	bool_t pad[2];
+	bool_t accept_bundles; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
+	bool_t pad[1];
 } SalMediaDescription;
 
 typedef struct SalMessage{
@@ -355,7 +358,11 @@ SalStreamDescription * sal_media_description_find_secure_stream_of_type(SalMedia
 SalStreamDescription * sal_media_description_find_best_stream(SalMediaDescription *md, SalStreamType type);
 void sal_media_description_set_dir(SalMediaDescription *md, SalStreamDir stream_dir);
 int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStreamDescription *sd2);
+
+/* Careful: unlike what its name says, this function returns FALSE if the stream is disabled, ie port is zero.
+ * A session description marked with a=inactive but with valid RTP port will be considered as active by this function.*/
 bool_t sal_stream_description_active(const SalStreamDescription *sd);
+void sal_stream_description_disable(SalStreamDescription *sd);
 bool_t sal_stream_description_has_avpf(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_implicit_avpf(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_srtp(const SalStreamDescription *sd);
@@ -373,6 +380,7 @@ SalStreamBundle * sal_media_description_add_new_bundle(SalMediaDescription *md);
 /* Add stream to the bundle. The SalStreamDescription must be part of the SalMediaDescription in which the SalStreamBundle is added. */
 void sal_stream_bundle_add_stream(SalStreamBundle *bundle, SalStreamDescription *stream, const char *mid);
 void sal_stream_bundle_destroy(SalStreamBundle *bundle);
+SalStreamBundle *sal_stream_bundle_clone(const SalStreamBundle *bundle);
 
 
 #ifdef __cplusplus

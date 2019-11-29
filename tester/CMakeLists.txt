@@ -223,6 +223,7 @@ set(SOURCE_FILES_C
 	tunnel_tester.c
 	vcard_tester.c
 	video_tester.c
+	call_with_rtp_bundle.c
 )
 
 set(SOURCE_FILES_CXX

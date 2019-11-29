@@ -49,7 +49,7 @@ StreamsGroup::StreamsGroup(MediaSession &session) : mMediaSession(session){
 }
 
 StreamsGroup::~StreamsGroup(){
-	stop();
+	finish();
 }
 
 IceAgent & StreamsGroup::getIceAgent()const{
@@ -124,11 +124,20 @@ bool StreamsGroup::prepare(const OfferAnswerContext &params){
 	return false;
 }
 
-void StreamsGroup::render(const OfferAnswerContext &params, CallSession::State targetState){
+void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::State targetState){
 	if (mFinished){
 		lError() << "StreamsGroup finished, cannot be used anymore.";
 		return;
 	}
+	OfferAnswerContext params;
+	params.copyFrom(constParams);
+	
+	if (params.remoteMediaDescription == nullptr){
+		/* This can happen when we receive a 200Ok without SDP, after early media. In this case we use the previously
+		 * provided remote media description.*/
+		params.remoteMediaDescription = mCurrentOfferAnswerState.remoteMediaDescription;
+	}
+	
 	for(auto &stream : mStreams){
 		Stream *streamPtr = stream.get();
 		lInfo() << "StreamsGroup " << this << " rendering stream " << *stream;
@@ -187,6 +196,7 @@ void StreamsGroup::sessionConfirmed(){
 void StreamsGroup::stop(){
 	if (mFinished){
 		lError() << "StreamsGroup finished, cannot be used anymore.";
+		abort();
 		return;
 	}
 	if (mBandwidthReportTimer){
@@ -477,6 +487,7 @@ void StreamsGroup::setStreamMain(size_t index){
 }
 
 void StreamsGroup::finish(){
+	if (mFinished) return;
 	stop(); //For the paranoid: normally it should be done already.
 	forEach<Stream>(mem_fun(&Stream::finish));
 	mFinished = true;

@@ -261,7 +261,6 @@ bool MediaSessionPrivate::failure () {
 
 	if (listener)
 		listener->onStopRingingIfNeeded(q->getSharedFromThis());
-	stopStreams();
 	return false;
 }
 
@@ -1004,6 +1003,19 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, char *keyOut, 
 	return true;
 }
 
+void MediaSessionPrivate::addStreamToBundle(SalMediaDescription *md, SalStreamDescription *sd, const char *mid){
+	SalStreamBundle *bundle;
+	if (md->bundles == nullptr){
+		bundle = sal_media_description_add_new_bundle(md);
+	}else{
+		bundle = (SalStreamBundle*) md->bundles->data;
+	}
+	sal_stream_bundle_add_stream(bundle, sd, mid);
+	sd->mid_rtp_ext_header_id = rtpExtHeaderMidNumber;
+	/* rtcp-mux must be enabled when bundle mode is proposed.*/
+	sd->rtcp_mux = TRUE;
+}
+
 void MediaSessionPrivate::makeLocalMediaDescription() {
 	L_Q();
 	int maxIndex = 0;
@@ -1035,6 +1047,9 @@ void MediaSessionPrivate::makeLocalMediaDescription() {
 	md->session_id = (oldMd ? oldMd->session_id : (bctbx_random() & 0xfff));
 	md->session_ver = (oldMd ? (oldMd->session_ver + 1) : (bctbx_random() & 0xfff));
 	md->nb_streams = (biggestDesc ? biggestDesc->nb_streams : 1);
+	
+	md->accept_bundles = getParams()->rtpBundleEnabled() || 
+		linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "accept_bundle", TRUE);
 
 	/* Re-check local ip address each time we make a new offer, because it may change in case of network reconnection */
 	{
@@ -1066,6 +1081,7 @@ void MediaSessionPrivate::makeLocalMediaDescription() {
 	SalCustomSdpAttribute *customSdpAttributes = getParams()->getPrivate()->getCustomSdpAttributes();
 	if (customSdpAttributes)
 		md->custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
+	
 
 	PayloadTypeHandler pth(q->getCore());
 
@@ -1087,6 +1103,7 @@ void MediaSessionPrivate::makeLocalMediaDescription() {
 			md->streams[mainAudioStreamIndex].max_rate = pth.getMaxCodecSampleRate(l);
 			md->streams[mainAudioStreamIndex].payloads = l;
 			strncpy(md->streams[mainAudioStreamIndex].rtcp_cname, getMe()->getAddress().asString().c_str(), sizeof(md->streams[mainAudioStreamIndex].rtcp_cname));
+			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[mainAudioStreamIndex], "as");
 			if (mainAudioStreamIndex > maxIndex)
 				maxIndex = mainAudioStreamIndex;
 		} else {
@@ -1111,6 +1128,7 @@ void MediaSessionPrivate::makeLocalMediaDescription() {
 		if (l && getParams()->videoEnabled()){
 			md->streams[mainVideoStreamIndex].payloads = l;
 			strncpy(md->streams[mainVideoStreamIndex].rtcp_cname, getMe()->getAddress().asString().c_str(), sizeof(md->streams[mainVideoStreamIndex].rtcp_cname));
+			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[mainVideoStreamIndex], "vs");
 			if (mainVideoStreamIndex > maxIndex)
 				maxIndex = mainVideoStreamIndex;
 		} else {
@@ -1135,6 +1153,7 @@ void MediaSessionPrivate::makeLocalMediaDescription() {
 				oldMd ? oldMd->streams[mainTextStreamIndex].already_assigned_payloads : nullptr);
 			md->streams[mainTextStreamIndex].payloads = l;
 			strncpy(md->streams[mainTextStreamIndex].rtcp_cname, getMe()->getAddress().asString().c_str(), sizeof(md->streams[mainTextStreamIndex].rtcp_cname));
+			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[mainTextStreamIndex], "ts");
 			if (mainTextStreamIndex > maxIndex)
 				maxIndex = mainTextStreamIndex;
 		} else {

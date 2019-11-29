@@ -5095,6 +5095,27 @@ LINPHONE_PUBLIC void linphone_core_enable_video_multicast(LinphoneCore *core, bo
 LINPHONE_PUBLIC bool_t linphone_core_video_multicast_enabled(const LinphoneCore *core);
 
 /**
+ * Returns whether RTP bundle mode (also known as Media Multiplexing) is enabled.
+ * See https://tools.ietf.org/html/draft-ietf-mmusic-sdp-bundle-negotiation-54 for more information.
+ * @param[in] lc the #LinphoneCore
+ * @return a boolean indicating the enablement of rtp bundle mode.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_rtp_bundle_enabled(const LinphoneCore *lc);
+
+/**
+ * Enables or disables RTP bundle mode (Media Multiplexing).
+ * See https://tools.ietf.org/html/draft-ietf-mmusic-sdp-bundle-negotiation-54 for more information about the feature.
+ * When enabled, liblinphone will try to negociate the use of a single port for all streams when doing an outgoing call.
+ * It automatically enables rtcp-mux.
+ * This feature can also be enabled per-call using #LinphoneCallParams.
+ * @param[in] lc the #LinphoneCore
+ * @param[in] value a boolean to indicate whether the feature is to be enabled.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_rtp_bundle(LinphoneCore *lc, bool_t value);
+
+/**
  * @brief Set the network simulator parameters.
  *
  * Liblinphone has the capabability of simulating the effects of a network (latency, lost packets, jitter, max bandwidth).

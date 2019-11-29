@@ -81,6 +81,12 @@ void sal_stream_bundle_destroy(SalStreamBundle *bundle){
 	bctbx_list_free_with_data(bundle->mids, (void (*)(void*)) ms_free);
 }
 
+SalStreamBundle *sal_stream_bundle_clone(const SalStreamBundle *bundle){
+	SalStreamBundle *ret = sal_stream_bundle_new();
+	ret->mids = bctbx_list_copy_with_data(bundle->mids, (bctbx_list_copy_func)bctbx_strdup);
+	return ret;
+}
+
 SalMediaDescription *sal_media_description_new(){
 	SalMediaDescription *md=ms_new0(SalMediaDescription,1);
 	int i;
@@ -236,7 +242,15 @@ bool_t sal_media_description_has_dir(const SalMediaDescription *md, SalStreamDir
 }
 
 bool_t sal_stream_description_active(const SalStreamDescription *sd) {
-	return (sd->rtp_port > 0);
+	/* When the bundle-only attribute is present, a 0 rtp port doesn't mean that the stream is disabled.*/
+	return sd->rtp_port > 0 || sd->bundle_only;
+}
+
+void sal_stream_description_disable(SalStreamDescription *sd){
+	sd->rtp_port = 0;
+	/* Remove potential bundle parameters. A disabled stream is moved out of the bundle. */
+	sd->mid[0] = '\0';
+	sd->bundle_only = FALSE;
 }
 
 /*these are switch case, so that when a new proto is added we can't forget to modify this function*/

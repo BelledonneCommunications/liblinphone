@@ -51,7 +51,17 @@ void OfferAnswerContext::dupFrom(const OfferAnswerContext &ctx){
 	localMediaDescription = ctx.localMediaDescription ? sal_media_description_ref(ctx.localMediaDescription) : nullptr;
 	remoteMediaDescription = ctx.remoteMediaDescription ? sal_media_description_ref(const_cast<SalMediaDescription*>(ctx.remoteMediaDescription)) : nullptr;
 	resultMediaDescription = ctx.resultMediaDescription ? sal_media_description_ref(const_cast<SalMediaDescription*>(ctx.resultMediaDescription)) : nullptr;
+	localIsOfferer = ctx.localIsOfferer;
 	mOwnsMediaDescriptions = true;
+	// if the temporary oldCtx owns media descriptions, they will be unrefed by the destructor here.
+}
+
+void OfferAnswerContext::copyFrom(const OfferAnswerContext &ctx){
+	OfferAnswerContext oldCtx = *this; // Transfers *this to a temporary object.
+	localMediaDescription = ctx.localMediaDescription;
+	remoteMediaDescription = ctx.remoteMediaDescription;
+	resultMediaDescription = ctx.resultMediaDescription;
+	localIsOfferer = ctx.localIsOfferer;
 	// if the temporary oldCtx owns media descriptions, they will be unrefed by the destructor here.
 }
 

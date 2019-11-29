@@ -161,9 +161,6 @@ private:
 	void setupImEncryptionEngineParameters (SalMediaDescription *md);
 	void transferAlreadyAssignedPayloadTypes (SalMediaDescription *oldMd, SalMediaDescription *md);
 	void updateLocalMediaDescriptionFromIce ();
-
-	
-	
 	void startDtlsOnAllStreams ();
 
 	void freeResources ();
@@ -211,6 +208,7 @@ private:
 	void refreshSockets ();
 	void reinviteToRecoverFromConnectionLoss () override;
 	void repairByInviteWithReplaces () override;
+	void addStreamToBundle(SalMediaDescription *md, SalStreamDescription *sd, const char *mid);
 
 #ifdef VIDEO_ENABLED
 	void videoStreamEventCb (const MSFilter *f, const unsigned int eventId, const void *args);
@@ -224,6 +222,7 @@ private:
 private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;
+	static constexpr const int rtpExtHeaderMidNumber = 1;
 
 	std::weak_ptr<Participant> me;
 	

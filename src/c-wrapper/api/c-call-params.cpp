@@ -485,6 +485,14 @@ void linphone_call_params_set_no_user_consent (LinphoneCallParams *params, bool_
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setNoUserConsent(!!value);
 }
 
+bool_t linphone_call_params_rtp_bundle_enabled(const LinphoneCallParams *params){
+	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(params)->rtpBundleEnabled();
+}
+
+void linphone_call_params_enable_rtp_bundle(LinphoneCallParams *params, bool_t value){
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->enableRtpBundle(!!value);
+}
+
 // =============================================================================
 // Reference and user data handling functions.
 // =============================================================================

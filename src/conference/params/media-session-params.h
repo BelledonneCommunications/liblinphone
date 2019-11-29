@@ -111,6 +111,9 @@ public:
 	void addCustomSdpMediaAttribute (LinphoneStreamType lst, const std::string &attributeName, const std::string &attributeValue);
 	void clearCustomSdpMediaAttributes (LinphoneStreamType lst);
 	const char * getCustomSdpMediaAttribute (LinphoneStreamType lst, const std::string &attributeName) const;
+	
+	void enableRtpBundle(bool value);
+	bool rtpBundleEnabled()const;
 
 private:
 	L_DECLARE_PRIVATE(MediaSessionParams);

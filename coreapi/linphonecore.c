@@ -7282,6 +7282,14 @@ bool_t linphone_core_video_multicast_enabled(const LinphoneCore *lc) {
 	return lc->rtp_conf.video_multicast_enabled;
 }
 
+bool_t linphone_core_rtp_bundle_enabled(const LinphoneCore *lc){
+	return linphone_config_get_bool(lc->config, "rtp", "bundle", FALSE);
+}
+
+void linphone_core_enable_rtp_bundle(LinphoneCore *lc, bool_t value){
+	linphone_config_set_bool(lc->config, "rtp", "bundle", value);
+}
+
 void linphone_core_set_video_preset(LinphoneCore *lc, const char *preset) {
 	lp_config_set_string(lc->config, "video", "preset", preset);
 }

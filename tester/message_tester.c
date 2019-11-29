@@ -787,14 +787,15 @@ static void file_transfer_2_messages_simultaneously(void) {
 				LinphoneChatMessage *recvMsg2 = marie->stat.last_received_chat_message;
 				BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)), 1, unsigned int, "%u");
 				if (bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)) != 1) {
-					char * buf = ms_strdup_printf("Found %d rooms instead of 1: ", bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)));
+					char * buf = ms_strdup_printf("Found %d rooms instead of 1: ", (int)bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)));
 					const bctbx_list_t *it = linphone_core_get_chat_rooms(marie->lc);
 					while (it) {
 						const LinphoneAddress * peer = linphone_chat_room_get_peer_address(it->data);
-						buf = ms_strcat_printf("%s, ", linphone_address_get_username(peer));
+						buf = ms_strcat_printf(buf, "%s, ", linphone_address_get_username(peer));
 						it = it->next;
 					}
 					ms_error("%s", buf);
+					ms_free(buf);
 				}
 
 				cbs = linphone_chat_message_get_callbacks(recvMsg);

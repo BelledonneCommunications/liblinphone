@@ -480,7 +480,7 @@ static void qos_analyzer_on_action_suggested(void *user_data, int datac, const c
 		}
 	}
 
-	appendbuf=ms_strdup_printf("%s%d;", report->qos_analyzer.timestamp?report->qos_analyzer.timestamp:"", ms_time(0));
+	appendbuf=ms_strdup_printf("%s%llu;", report->qos_analyzer.timestamp?report->qos_analyzer.timestamp:"", (unsigned long long)ms_time(0));
 	STR_REASSIGN(report->qos_analyzer.timestamp,appendbuf);
 
 	STR_REASSIGN(report->qos_analyzer.input_leg, ms_strdup_printf("%s aenc_ptime aenc_br a_dbw a_ubw venc_br v_dbw v_ubw tenc_br t_dbw t_ubw", datav[0]));

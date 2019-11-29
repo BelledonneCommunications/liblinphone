@@ -70,6 +70,7 @@ void MediaSessionParamsPrivate::clone (const MediaSessionParamsPrivate *src) {
 		if (src->customSdpMediaAttributes[i])
 			customSdpMediaAttributes[i] = sal_custom_sdp_attribute_clone(src->customSdpMediaAttributes[i]);
 	}
+	rtpBundle = src->rtpBundle;
 }
 
 void MediaSessionParamsPrivate::clean () {
@@ -246,6 +247,7 @@ void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core) {
 	d->videoMulticastEnabled = !!linphone_core_video_multicast_enabled(cCore);
 	d->updateCallWhenIceCompleted = !!lp_config_get_int(linphone_core_get_config(cCore), "sip", "update_call_when_ice_completed", true);
 	d->mandatoryMediaEncryptionEnabled = !!linphone_core_is_media_encryption_mandatory(cCore);
+	d->rtpBundle = linphone_core_rtp_bundle_enabled(cCore);
 }
 
 // -----------------------------------------------------------------------------
@@ -515,6 +517,16 @@ void MediaSessionParams::clearCustomSdpMediaAttributes (LinphoneStreamType lst) 
 const char * MediaSessionParams::getCustomSdpMediaAttribute (LinphoneStreamType lst, const string &attributeName) const {
 	L_D();
 	return sal_custom_sdp_attribute_find(d->customSdpMediaAttributes[lst], attributeName.c_str());
+}
+
+void MediaSessionParams::enableRtpBundle(bool value){
+	L_D();
+	d->rtpBundle = value;
+}
+
+bool MediaSessionParams::rtpBundleEnabled()const{
+	L_D();
+	return d->rtpBundle;
 }
 
 LINPHONE_END_NAMESPACE
