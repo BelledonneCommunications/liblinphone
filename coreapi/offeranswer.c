@@ -416,9 +416,12 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 			strncpy(result->mid, remote_answer->mid, sizeof(result->mid) - 1);
 			result->mid_rtp_ext_header_id = remote_answer->mid_rtp_ext_header_id;
 			result->bundle_only = remote_answer->bundle_only;
+			result->rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
 		}else{
 			ms_error("The remote has set a mid in an answer while we didn't offered it.");
 		}
+	}else{
+		result->rtcp_mux = remote_answer->rtcp_mux && local_offer->rtcp_mux;
 	}
 
 	if (result->payloads && !only_telephone_event(result->payloads)){
@@ -455,7 +458,6 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		result->dtls_fingerprint[0] = '\0';
 		result->dtls_role = SalDtlsRoleInvalid;
 	}
-	result->rtcp_mux = remote_answer->rtcp_mux && local_offer->rtcp_mux;
 	result->implicit_rtcp_fb = local_offer->implicit_rtcp_fb && remote_answer->implicit_rtcp_fb;
 }
 
@@ -504,9 +506,12 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		strncpy(result->mid, remote_offer->mid, sizeof(result->mid) - 1);
 		result->mid_rtp_ext_header_id = remote_offer->mid_rtp_ext_header_id;
 		result->bundle_only = remote_offer->bundle_only;
+		result->rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
 		if (remote_offer->rtp_port == 0){
 			result->rtp_port = 0; /* A non-master accepted stream in bundle mode shall have a zero port number.*/
 		}
+	}else {
+		result->rtcp_mux = remote_offer->rtcp_mux && local_cap->rtcp_mux;
 	}
 
 	if (sal_stream_description_has_srtp(result) == TRUE) {
@@ -548,10 +553,7 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		result->dtls_fingerprint[0] = '\0';
 		result->dtls_role = SalDtlsRoleInvalid;
 	}
-	result->rtcp_mux = remote_offer->rtcp_mux && local_cap->rtcp_mux;
 	result->implicit_rtcp_fb = local_cap->implicit_rtcp_fb && remote_offer->implicit_rtcp_fb;
-	
-	
 }
 
 

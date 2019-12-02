@@ -51,6 +51,55 @@ MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params) : Strea
 	_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateNotActivated);
 }
 
+void MS2Stream::removeFromBundle(){
+	if (mRtpBundle){
+		//rtp_bundle_remove_session(mRtpBundle, mSessions.rtp_session);
+		if (mOwnsBundle){
+			RtpBundle *bundle = mRtpBundle;
+			getGroup().addPostRenderHook( [bundle](){
+				rtp_bundle_delete(bundle);
+			});
+			mOwnsBundle = false;
+			getMediaSessionPrivate().getCurrentParams()->enableRtpBundle(false);
+		}
+		mRtpBundle = nullptr;
+	}
+}
+
+void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
+	int index = sal_media_description_get_index_of_transport_owner(params.resultMediaDescription, params.resultStreamDescription);
+	if (index == -1) {
+		removeFromBundle();
+		return ; /*No bundle to handle */
+	}
+		
+	MS2Stream *masterStream = dynamic_cast<MS2Stream*>(getGroup().getStream(index));
+	if (!masterStream){
+		lError() << "Could not locate the stream owning the bundle's transport.";
+		removeFromBundle();
+		return;
+	}
+	RtpBundle * bundle = masterStream->createOrGetRtpBundle(params.resultStreamDescription);
+	if (bundle && masterStream != this){
+		lInfo() << "Stream " << *this << " added to rtp bundle " << bundle;
+		rtp_bundle_add_session(bundle, params.resultStreamDescription->mid, mSessions.rtp_session);
+		mRtpBundle = bundle;
+		mOwnsBundle = false;
+		getMediaSessionPrivate().getCurrentParams()->enableRtpBundle(true);
+	}
+}
+
+RtpBundle *MS2Stream::createOrGetRtpBundle(const SalStreamDescription *sd){
+	if (!mRtpBundle){
+		mRtpBundle = rtp_bundle_new();
+		lInfo() << "Stream " << *this << " is the owner of rtp bundle " << mRtpBundle;
+		rtp_bundle_add_session(mRtpBundle, sd->mid, mSessions.rtp_session);
+		mOwnsBundle = true;
+		getMediaSessionPrivate().getCurrentParams()->enableRtpBundle(true);
+	}
+	return mRtpBundle;
+}
+
 string MS2Stream::getBindIp(){
 	string bindIp = lp_config_get_string(linphone_core_get_config(getCCore()), "rtp", "bind_address", "");
 	
@@ -101,11 +150,6 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 
 void MS2Stream::refreshSockets(){
 	rtp_session_refresh_sockets(mSessions.rtp_session);
-}
-
-int MS2Stream::getAvpfRrInterval()const{
-	MediaStream *ms = getMediaStream();
-	return media_stream_get_state(ms) == MSStreamStarted ? media_stream_get_avpf_rr_interval(ms) : 0;
 }
 
 void MS2Stream::initMulticast(const OfferAnswerContext &params) {
@@ -250,8 +294,6 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession
 }
 
 void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targetState){
-	
-	
 	const SalStreamDescription *stream = params.resultStreamDescription;
 	const char *rtpAddr = (stream->rtp_addr[0] != '\0') ? stream->rtp_addr : params.resultMediaDescription->addr;
 	bool isMulticast = !!ms_is_multicast(rtpAddr);
@@ -299,6 +341,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 		break;
 	}
 	startEventHandling();
+	initRtpBundle(params);
 	Stream::render(params, targetState);
 }
 
@@ -827,10 +870,6 @@ MSZrtpContext *MS2Stream::getZrtpContext()const{
 	return mSessions.zrtp_context;
 }
 
-bool MS2Stream::avpfEnabled() const{
-	return media_stream_avpf_enabled(getMediaStream());
-}
-
 float MS2Stream::getAverageQuality(){
 	return media_stream_get_average_quality_rating(getMediaStream());
 }
@@ -868,6 +907,19 @@ float MS2Stream::getCpuUsage()const{
 
 void MS2Stream::finish(){
 	Stream::finish();
+}
+
+bool MS2Stream::avpfEnabled() const{
+	return media_stream_avpf_enabled(getMediaStream());
+}
+
+bool MS2Stream::bundleEnabled() const{
+	return mRtpBundle != nullptr;
+}
+
+int MS2Stream::getAvpfRrInterval()const{
+	MediaStream *ms = getMediaStream();
+	return media_stream_get_state(ms) == MSStreamStarted ? media_stream_get_avpf_rr_interval(ms) : 0;
 }
 
 MS2Stream::~MS2Stream(){

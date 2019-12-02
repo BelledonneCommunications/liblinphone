@@ -418,9 +418,9 @@ void StreamsGroup::startDtls(const OfferAnswerContext &params){
 int StreamsGroup::getAvpfRrInterval()const{
 	int interval = 0;
 	for( auto & stream : mStreams){
-		MS2Stream *ms2a = dynamic_cast<MS2Stream*>(stream.get());
-		if (ms2a && ms2a->getAvpfRrInterval() > interval) 
-			interval = ms2a->getAvpfRrInterval();
+		RtpInterface *i = dynamic_cast<MS2Stream*>(stream.get());
+		if (i && i->getAvpfRrInterval() > interval) 
+			interval = i->getAvpfRrInterval();
 	}
 	return interval;
 }
@@ -428,10 +428,10 @@ int StreamsGroup::getAvpfRrInterval()const{
 bool StreamsGroup::avpfEnabled() const{
 	bool ret = false;
 	for( auto & stream : mStreams){
-		MS2Stream *ms2a = dynamic_cast<MS2Stream*>(stream.get());
-		if (ms2a && ms2a->getState() == Stream::Running){
+		RtpInterface *i = dynamic_cast<MS2Stream*>(stream.get());
+		if (i && stream->getState() == Stream::Running){
 			ret = true;
-			if (!ms2a->avpfEnabled()) 
+			if (!i->avpfEnabled()) 
 				return false;
 		}
 	}

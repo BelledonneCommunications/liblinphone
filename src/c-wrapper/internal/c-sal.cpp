@@ -106,6 +106,59 @@ SalStreamBundle * sal_media_description_add_new_bundle(SalMediaDescription *md){
 	return bundle;
 }
 
+int sal_stream_bundle_has_mid(const SalStreamBundle *bundle, const char *mid){
+	const bctbx_list_t *elem;
+	for (elem = bundle->mids; elem != NULL; elem = elem->next){
+		const char *m = (const char *) elem->data;
+		if (strcmp(m, mid) == 0) return TRUE;
+	}
+	return FALSE;
+}
+
+
+int sal_media_description_lookup_mid(const SalMediaDescription *md, const char *mid){
+	int index;
+	for (index = 0 ; index < md->nb_streams; ++index){
+		const SalStreamDescription * sd = &md->streams[index];
+		if (strcmp(sd->mid, mid) == 0){
+			return index;
+		}
+	}
+	return -1;
+}
+
+const SalStreamBundle *sal_media_description_get_bundle_from_mid(const SalMediaDescription *md, const char *mid){
+	const bctbx_list_t *elem;
+	for (elem = md->bundles; elem != NULL; elem = elem->next){
+		SalStreamBundle *bundle = (SalStreamBundle *)elem->data;
+		if (sal_stream_bundle_has_mid(bundle, mid)) return bundle;
+	}
+	return NULL;
+}
+
+const char *sal_stream_bundle_get_mid_of_transport_owner(const SalStreamBundle *bundle){
+	return (const char*)bundle->mids->data; /* the first one is the transport owner*/
+}
+
+int sal_media_description_get_index_of_transport_owner(const SalMediaDescription *md, const SalStreamDescription *sd){
+	const SalStreamBundle *bundle;
+	const char *master_mid;
+	int index;
+	if (sd->mid[0] == '\0') return -1; /* not part of any bundle */
+	/* lookup the mid in the bundle descriptions */
+	bundle = sal_media_description_get_bundle_from_mid(md, sd->mid);
+	if (!bundle) {
+		ms_warning("Orphan stream with mid '%s'", sd->mid);
+		return -1;
+	}
+	master_mid = sal_stream_bundle_get_mid_of_transport_owner(bundle);
+	index = sal_media_description_lookup_mid(md, master_mid);
+	if (index == -1){
+		ms_error("Stream with mid '%s' has no transport owner (mid '%s') !", sd->mid, master_mid);
+	}
+	return index;
+}
+
 static void sal_media_description_destroy(SalMediaDescription *md){
 	int i;
 	for(i=0;i<SAL_MEDIA_DESCRIPTION_MAX_STREAMS;i++){

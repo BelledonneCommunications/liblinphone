@@ -2678,6 +2678,7 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 			if (md->name[0] != '\0')
 				params->setSessionName(md->name);
 			params->getPrivate()->setCustomSdpAttributes(md->custom_sdp_attributes);
+			params->enableRtpBundle(md->bundles != nullptr);
 		}
 		const SalCustomHeader *ch = d->op->getRecvCustomHeaders();
 		if (ch) {

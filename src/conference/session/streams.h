@@ -30,14 +30,11 @@
 LINPHONE_BEGIN_NAMESPACE
 
 
-
-
 class StreamsGroup;
 class MediaSession;
 class MediaSessionPrivate;
 class MediaSessionParams;
 class IceAgent;
-
 
 /**
  * Represents all offer/answer context.
@@ -186,7 +183,7 @@ inline std::ostream &operator<<(std::ostream & ostr, SalStreamType type){
 }
 
 inline std::ostream & operator<<(std::ostream & ostr, Stream& stream){
-	ostr << "#" << stream.getIndex() << " [" << stream.getType() << "]  currently in state [" << Stream::stateToString(stream.getState()) << "]";
+	ostr << "#" << stream.getIndex() << " [" << stream.getType() << "] currently in state [" << Stream::stateToString(stream.getState()) << "]";
 	return ostr;
 }
 
@@ -238,11 +235,12 @@ public:
 };
 
 /*
- * TODO: not used for the moment.
+ * Interface to query RTP-related information.
  */
 class RtpInterface{
 public:
 	virtual bool avpfEnabled() const = 0;
+	virtual bool bundleEnabled() const = 0;
 	virtual int getAvpfRrInterval() const = 0;
 	virtual ~RtpInterface() = default;
 };
@@ -250,7 +248,7 @@ public:
 /**
  * Derived class for streams commonly handly through mediastreamer2 library.
  */
-class MS2Stream : public Stream {
+class MS2Stream : public Stream, public RtpInterface {
 public:
 	virtual void fillLocalMediaDescription(OfferAnswerContext & ctx) override;
 	virtual void prepare() override;
@@ -261,8 +259,6 @@ public:
 	virtual bool isEncrypted() const override;
 	MSZrtpContext *getZrtpContext()const;
 	std::pair<RtpTransport*, RtpTransport*> getMetaRtpTransports();
-	bool avpfEnabled() const;
-	int getAvpfRrInterval() const;
 	virtual MediaStream *getMediaStream()const = 0;
 	virtual void tryEarlyMediaForking(const OfferAnswerContext &ctx) override;
 	virtual void finishEarlyMediaForking() override;
@@ -274,6 +270,12 @@ public:
 	virtual void refreshSockets() override;
 	virtual void updateBandwidthReports() override;
 	virtual float getCpuUsage()const override;
+	
+	/* RtpInterface */
+	virtual bool avpfEnabled() const override;
+	virtual bool bundleEnabled() const override;
+	virtual int getAvpfRrInterval() const override;
+	
 	virtual ~MS2Stream();
 protected:
 	virtual void handleEvent(const OrtpEvent *ev) = 0;
@@ -298,6 +300,9 @@ protected:
 	bool mUseAuxDestinations = false;
 	bool mMuted = false; /* to handle special cases where we want the audio to be muted - not related with linphone_core_enable_mic().*/
 private:
+	void initRtpBundle(const OfferAnswerContext &params);
+	RtpBundle *createOrGetRtpBundle(const SalStreamDescription *sd);
+	void removeFromBundle();
 	void notifyStatsUpdated();
 	void handleEvents();
 	void updateStats();
@@ -308,6 +313,8 @@ private:
 	void configureRtpSessionForRtcpFb (const OfferAnswerContext &params);
 	void configureRtpSessionForRtcpXr(const OfferAnswerContext &params);
 	void configureAdaptiveRateControl(const OfferAnswerContext &params);
+	RtpBundle *mRtpBundle = nullptr;
+	bool mOwnsBundle = false;
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo(const std::string &name);
 	static constexpr const int sEventPollIntervalMs = 20;
 };

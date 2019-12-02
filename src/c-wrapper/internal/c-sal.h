@@ -381,6 +381,11 @@ SalStreamBundle * sal_media_description_add_new_bundle(SalMediaDescription *md);
 void sal_stream_bundle_add_stream(SalStreamBundle *bundle, SalStreamDescription *stream, const char *mid);
 void sal_stream_bundle_destroy(SalStreamBundle *bundle);
 SalStreamBundle *sal_stream_bundle_clone(const SalStreamBundle *bundle);
+int sal_stream_bundle_has_mid(const SalStreamBundle *bundle, const char *mid);
+const char *sal_stream_bundle_get_mid_of_transport_owner(const SalStreamBundle *bundle);
+
+int sal_media_description_lookup_mid(const SalMediaDescription *md, const char *mid);
+int sal_media_description_get_index_of_transport_owner(const SalMediaDescription *md, const SalStreamDescription *sd);
 
 
 #ifdef __cplusplus

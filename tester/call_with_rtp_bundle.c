@@ -66,9 +66,48 @@ static void simple_audio_call(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void simple_audio_video_call(void) {
+	LinphoneCoreManager* marie;
+	LinphoneCoreManager* pauline;
+	LinphoneCall *pauline_call, *marie_call;
+	LinphoneVideoPolicy vpol;
+	
+	marie = linphone_core_manager_new( "marie_rc");
+	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	linphone_core_enable_rtp_bundle(marie->lc, TRUE);
+	
+	vpol.automatically_accept = TRUE;
+	vpol.automatically_initiate = TRUE;
+
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	
+	linphone_core_set_video_policy(marie->lc, &vpol);
+	linphone_core_set_video_policy(pauline->lc, &vpol);
+	
+	BC_ASSERT_TRUE(call(marie,pauline));
+	pauline_call=linphone_core_get_current_call(pauline->lc);
+	marie_call = linphone_core_get_current_call(marie->lc);
+	
+	if (BC_ASSERT_PTR_NOT_NULL(pauline_call))
+		check_rtp_bundle(pauline_call, TRUE);
+		
+	if (BC_ASSERT_PTR_NOT_NULL(marie_call))
+		check_rtp_bundle(marie_call, TRUE);
+
+	liblinphone_tester_check_rtcp(marie,pauline);
+	end_call(marie,pauline);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 
 static test_t call_with_rtp_bundle_tests[] = {
 	TEST_NO_TAG("Simple audio call", simple_audio_call),
+	TEST_NO_TAG("Simple audio-video call", simple_audio_video_call)
 };
 
 test_suite_t call_with_rtp_bundle_test_suite = {"Call with RTP bundle", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
