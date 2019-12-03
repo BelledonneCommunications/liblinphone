@@ -1471,6 +1471,12 @@ void SalCallOp::processNotify (const belle_sip_request_event_t *event, belle_sip
 		&& body
 	) {
 		auto sipfrag = BELLE_SIP_RESPONSE(belle_sip_message_parse(body));
+		if (!sipfrag) {
+			lWarning() << "Cannot parse sipfrag  [" << body << "trying compatibility mode by adding CRLF";
+			string compatibilityBody(body);
+			compatibilityBody.append("\r\n");
+			sipfrag = BELLE_SIP_RESPONSE(belle_sip_message_parse(compatibilityBody.c_str()));
+		}
 		if (sipfrag) {
 			int code = belle_sip_response_get_status_code(sipfrag);
 			SalReferStatus status = SalReferFailed;
@@ -1484,6 +1490,10 @@ void SalCallOp::processNotify (const belle_sip_request_event_t *event, belle_sip
 			auto response = createResponseFromRequest(request, 200);
 			belle_sip_server_transaction_send_response(serverTransaction, response);
 			mRoot->mCallbacks.notify_refer(this, status);
+		} else {
+			lError() << "Notify with malformed sipfrag, rejecting";
+			auto response = createResponseFromRequest(request, 400);
+			belle_sip_server_transaction_send_response(serverTransaction, response);
 		}
 	} else {
 		lError() << "Notify without sipfrag or not for 'refer' event package, rejecting";
