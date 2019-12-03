@@ -6005,6 +6005,20 @@ LINPHONE_PUBLIC void linphone_core_set_max_size_for_auto_download_incoming_files
 LINPHONE_PUBLIC int linphone_core_get_max_size_for_auto_download_incoming_files(LinphoneCore *lc);
 
 /**
+ * Returns whether or not to forward message by anonymous
+ * @param[in] lc The #LinphoneCore
+ * @return whether or not the feature
+**/
+LINPHONE_PUBLIC bool_t linphone_core_get_forward_message_by_anonymous(LinphoneCore *lc);
+
+/**
+ * Sets whether or not to forward message by anonymous
+ * @param[in] lc The #LinphoneCore
+ * @param[in] enable whether or not to enable the feature
+**/
+void linphone_core_set_forward_message_by_anonymous(LinphoneCore *lc, bool_t anonymous);
+
+/**
  * @}
  */
 

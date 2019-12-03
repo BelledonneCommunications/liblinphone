@@ -562,7 +562,14 @@ shared_ptr<ChatMessage> ChatRoom::createForwardMessage (const shared_ptr<ChatMes
 	}
 
 	// set forward info
-	std::string fInfo = msg->getForwardInfo().empty()? msg->getFromAddress().asString():msg->getForwardInfo();
+	std::string fInfo;
+	bool anonymous = linphone_core_get_forward_message_by_anonymous(getCore()->getCCore());
+	if (anonymous) {
+		fInfo = "Anonymous";
+	} else {
+		fInfo = msg->getForwardInfo().empty()? msg->getFromAddress().asString():msg->getForwardInfo();
+	}
+
 	chatMessage->getPrivate()->setForwardInfo(fInfo);
 	
 	return chatMessage;

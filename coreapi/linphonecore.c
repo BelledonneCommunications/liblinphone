@@ -1473,6 +1473,9 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	tmp=lp_config_get_int(lc->config,"app","auto_download_incoming_files_max_size",-1);
 	linphone_core_set_max_size_for_auto_download_incoming_files(lc, tmp);
+	
+	tmp=lp_config_get_int(lc->config,"app","forward_message_by_anonymous",0);
+	linphone_core_set_forward_message_by_anonymous(lc, !!tmp);
 
 	/*In case of remote provisionning, function sip_config_read is initialy called in core_init, then in state ConfiguringSuccessfull*/
 	/*Accordingly, to avoid proxy_config to be added twice, it is mandatory to reset proxy config list from LinphoneCore*/
@@ -4146,6 +4149,15 @@ int linphone_core_get_max_size_for_auto_download_incoming_files(LinphoneCore *lc
 void linphone_core_set_max_size_for_auto_download_incoming_files(LinphoneCore *lc, int size) {
 	lc->auto_download_incoming_files_max_size = size;
 	lp_config_set_int(lc->config, "app", "auto_download_incoming_files_max_size", size);
+}
+
+bool_t linphone_core_get_forward_message_by_anonymous(LinphoneCore *lc) {
+	return lc->forward_message_by_anonymous;
+}
+
+void linphone_core_set_forward_message_by_anonymous(LinphoneCore *lc, bool_t anonymous) {
+	lc->forward_message_by_anonymous = anonymous;
+	lp_config_set_int(lc->config, "app", "forward_message_by_anonymous", anonymous);
 }
 
 void linphone_core_set_presence_info(LinphoneCore *lc, int minutes_away, const char *contact, LinphoneOnlineStatus os) {

@@ -59,3 +59,6 @@ enabled=1
 [misc]
 hide_chat_rooms_from_removed_proxies=0
 hide_empty_chat_rooms=0
+
+[app]
+forward_message_by_anonymous=1
