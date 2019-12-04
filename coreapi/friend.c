@@ -1201,7 +1201,7 @@ bool_t linphone_friend_create_vcard(LinphoneFriend *fr, const char *name) {
 	linphone_vcard_set_full_name(vcard, name);
 	linphone_friend_set_vcard(fr, vcard);
 	linphone_vcard_unref(vcard);
-	ms_message("VCard created for friend [%p]", fr);
+	ms_debug("VCard created for friend [%p]", fr);
 	return TRUE;
 }
 
