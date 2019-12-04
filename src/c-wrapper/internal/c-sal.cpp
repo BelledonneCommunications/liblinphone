@@ -79,6 +79,7 @@ void sal_stream_bundle_add_stream(SalStreamBundle *bundle, SalStreamDescription 
 
 void sal_stream_bundle_destroy(SalStreamBundle *bundle){
 	bctbx_list_free_with_data(bundle->mids, (void (*)(void*)) ms_free);
+	ms_free(bundle);
 }
 
 SalStreamBundle *sal_stream_bundle_clone(const SalStreamBundle *bundle){

@@ -420,6 +420,7 @@ static void bundles_to_sdp(const bctbx_list_t *bundles, belle_sdp_session_descri
 			
 		}
 		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("group", attr_value));
+		bctbx_free(attr_value);
 	}
 }
 

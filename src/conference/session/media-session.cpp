@@ -547,7 +547,7 @@ LinphoneCallStats * MediaSessionPrivate::getStats(LinphoneStreamType type) const
 
 void MediaSessionPrivate::stopStreams () {
 	L_Q();
-	getStreamsGroup().stop();
+	if (getStreamsGroup().isStarted()) getStreamsGroup().stop();
 	q->getCore()->soundcardHintCheck();
 }
 

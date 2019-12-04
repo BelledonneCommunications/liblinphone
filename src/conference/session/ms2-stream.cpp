@@ -94,6 +94,7 @@ RtpBundle *MS2Stream::createOrGetRtpBundle(const SalStreamDescription *sd){
 		mRtpBundle = rtp_bundle_new();
 		lInfo() << "Stream " << *this << " is the owner of rtp bundle " << mRtpBundle;
 		rtp_bundle_add_session(mRtpBundle, sd->mid, mSessions.rtp_session);
+		rtp_bundle_set_mid_extension_id(mRtpBundle, sd->mid_rtp_ext_header_id);
 		mOwnsBundle = true;
 		getMediaSessionPrivate().getCurrentParams()->enableRtpBundle(true);
 	}
@@ -195,9 +196,11 @@ void MS2Stream::configureRtpSessionForRtcpXr(const OfferAnswerContext &params) {
 }
 
 void MS2Stream::configureAdaptiveRateControl (const OfferAnswerContext &params) {
+	if (getState() == Stream::Running){
+		return; // If stream is already running, these things are not expected to change.
+	}
 	bool videoWillBeUsed = false;
 	MediaStream *ms = getMediaStream();
-
 	const SalStreamDescription *vstream = sal_media_description_find_best_stream(const_cast<SalMediaDescription*>(params.resultMediaDescription), SalVideo);
 	if (vstream && (vstream->dir != SalStreamInactive) && vstream->payloads) {
 		/* When video is used, do not make adaptive rate control on audio, it is stupid */
@@ -925,9 +928,13 @@ int MS2Stream::getAvpfRrInterval()const{
 MS2Stream::~MS2Stream(){
 	linphone_call_stats_unref(mStats);
 	mStats = nullptr;
+	if (mRtpBundle && mOwnsBundle){
+		rtp_bundle_delete(mRtpBundle);
+	}
 	rtp_session_unregister_event_queue(mSessions.rtp_session, mOrtpEvQueue);
 	ortp_ev_queue_flush(mOrtpEvQueue);
 	ortp_ev_queue_destroy(mOrtpEvQueue);
+	ms_media_stream_sessions_uninit(&mSessions);
 	mOrtpEvQueue = nullptr;
 }
 

@@ -191,6 +191,8 @@ void MS2VideoStream::prepare(){
 		if (audioStream){
 			MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(audioStream);
 			video_stream_enable_zrtp(mStream, (AudioStream*)msa->getMediaStream());
+			// Since the zrtp session is now initialized, make sure it is retained for future use.
+			media_stream_reclaim_sessions((MediaStream*)mStream, &mSessions);
 		}else{
 			lError() << "Error while enabling zrtp on video stream: the audio stream isn't known. This is unsupported.";
 		}
