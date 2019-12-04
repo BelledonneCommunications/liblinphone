@@ -442,7 +442,8 @@ void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event
 					if (method == "INVITE") {
 						if ((code >= 200) && (code < 300)) {
 							op->handleBodyFromResponse(response);
-							auto ack = belle_sip_dialog_create_ack(op->mDialog, belle_sip_dialog_get_local_seq_number(op->mDialog));
+							belle_sip_header_cseq_t* invite_cseq=belle_sip_message_get_header_by_type(request,belle_sip_header_cseq_t);
+							auto ack = belle_sip_dialog_create_ack(op->mDialog, belle_sip_header_cseq_get_seq_number(invite_cseq));
 							if (!ack) {
 								lError() << "This call has been already terminated";
 								return;
