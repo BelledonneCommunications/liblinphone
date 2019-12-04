@@ -410,15 +410,13 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 	if (original_ai)
 		linphone_core_remove_auth_info(lc,original_ai);
 
-	const char *algorithm = linphone_config_get_string(linphone_core_get_config(lc), "assistant", "algorithm", NULL);
-	ai = linphone_auth_info_new_for_algorithm(
+	ai = linphone_auth_info_new(
 		linphone_address_get_username(account->modified_identity),
 		NULL,
 		account->password,
 		NULL,
 		linphone_address_get_domain(account->modified_identity),
-		linphone_address_get_domain(account->modified_identity), // realm = domain
-		algorithm
+		linphone_address_get_domain(account->modified_identity) // realm = domain
 	);
 	linphone_core_add_auth_info(lc, ai);
 	linphone_auth_info_unref(ai);
