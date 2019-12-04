@@ -182,9 +182,15 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 	shared_ptr<AbstractChatRoom> cr = chatMessage->getChatRoom();
 	for (const auto &content : chatMessage->getPrivate()->getContents()) {
 		istringstream data(content->getBodyAsString());
-		unique_ptr<Xsd::Imdn::Imdn> imdn(Xsd::Imdn::parseImdn(data, Xsd::XmlSchema::Flags::dont_validate));
+		unique_ptr<Xsd::Imdn::Imdn> imdn;
+		try {
+			imdn = Xsd::Imdn::parseImdn(data, Xsd::XmlSchema::Flags::dont_validate);
+		} catch (const exception &e) {
+			lError() << "IMDN parsing exception!";
+		}
 		if (!imdn)
 			continue;
+		
 		shared_ptr<ChatMessage> cm = cr->findChatMessage(imdn->getMessageId());
 		if (!cm) {
 			lWarning() << "Received IMDN for unknown message " << imdn->getMessageId();
@@ -219,10 +225,17 @@ bool Imdn::isError (const shared_ptr<ChatMessage> &chatMessage) {
 	for (const auto &content : chatMessage->getPrivate()->getContents()) {
 		if (content->getContentType() != ContentType::Imdn)
 			continue;
+		
 		istringstream data(content->getBodyAsString());
-		unique_ptr<Xsd::Imdn::Imdn> imdn(Xsd::Imdn::parseImdn(data, Xsd::XmlSchema::Flags::dont_validate));
+		unique_ptr<Xsd::Imdn::Imdn> imdn;
+		try {
+			imdn = Xsd::Imdn::parseImdn(data, Xsd::XmlSchema::Flags::dont_validate);
+		} catch (const exception &e) {
+			lError() << "IMDN parsing exception!";
+		}
 		if (!imdn)
 			continue;
+		
 		auto &deliveryNotification = imdn->getDeliveryNotification();
 		if (deliveryNotification.present()) {
 			auto &status = deliveryNotification.get().getStatus();
