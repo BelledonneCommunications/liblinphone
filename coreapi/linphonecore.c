@@ -1019,6 +1019,16 @@ void linphone_core_upload_log_collection(LinphoneCore *core) {
 		belle_http_request_t *req;
 		char *name;
 
+		uri = belle_generic_uri_parse(linphone_core_get_log_collection_upload_server_url(core));
+		if (uri == NULL || !belle_generic_uri_get_host(uri)) {
+			ms_error("Invalid log upload server URL: %s", linphone_core_get_log_collection_upload_server_url(core));
+			linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateNotDelivered, "Invalid log upload server URL");
+			if (uri) {
+				belle_sip_object_unref(uri);
+			}
+			return;
+		}
+
 		core->log_collection_upload_information = linphone_core_create_content(core);
 #ifdef HAVE_ZLIB
 		linphone_content_set_type(core->log_collection_upload_information, "application");
@@ -1036,10 +1046,13 @@ void linphone_core_upload_log_collection(LinphoneCore *core) {
 			core->log_collection_upload_information = NULL;
 			ms_error("prepare_log_collection_file_to_upload(): error.");
 			linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateNotDelivered, "Error while preparing log collection upload");
+
+			if (uri) {
+				belle_sip_object_unref(uri);
+			}
 			return;
 		}
 		linphone_content_set_size(core->log_collection_upload_information, get_size_of_file_to_upload(name));
-		uri = belle_generic_uri_parse(linphone_core_get_log_collection_upload_server_url(core));
 		req = belle_http_request_create("POST", uri, NULL, NULL, NULL);
 		cbs.process_response = process_response_from_post_file_log_collection;
 		cbs.process_io_error = process_io_error_upload_log_collection;
