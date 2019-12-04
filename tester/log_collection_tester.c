@@ -295,6 +295,22 @@ static void logCollectionUploadStateChangedCb(LinphoneCore *lc, LinphoneCoreLogC
 			break;
 	}
 }
+
+static void upload_wrong_url(void) {
+	LinphoneCoreManager* marie = setup(LinphoneLogCollectionEnabled);
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_log_collection_upload_state_changed(cbs, logCollectionUploadStateChangedCb);
+	linphone_core_add_callbacks(marie->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
+	linphone_core_set_log_collection_upload_server_url(marie->lc,"text");
+	linphone_core_upload_log_collection(marie->lc);
+	BC_ASSERT_TRUE(wait_for_until(marie->lc,marie->lc,&marie->stat.number_of_LinphoneCoreLogCollectionUploadStateNotDelivered, 1, 10000));
+	
+	collect_cleanup(marie);
+}
+
 static void upload_collected_traces(void)  {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager* marie = setup(LinphoneLogCollectionEnabled);
@@ -328,6 +344,7 @@ test_t log_collection_tests[] = {
 	TEST_NO_TAG("Collect files filled when enabled", collect_files_filled),
 	TEST_NO_TAG("Logs collected into small file", collect_files_small_size),
 	TEST_NO_TAG("Logs collected when decreasing max size", collect_files_changing_size),
+	TEST_NO_TAG("Log upload to wrong URL", upload_wrong_url),
 	TEST_NO_TAG("Upload collected traces", upload_collected_traces)
 };
 
