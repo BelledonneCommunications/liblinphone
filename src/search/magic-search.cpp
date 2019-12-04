@@ -298,7 +298,7 @@ list<SearchResult> *MagicSearch::beginNewSearch (const string &filter, const str
 		// Check in order: Friend's display name, address username, address domain, phone number
 		if (name1 == name2) {
 			if (lsr.getAddress() && rsr.getAddress()) {
-				int usernameComp = strcmp(linphone_address_get_username(lsr.getAddress()), linphone_address_get_username(rsr.getAddress()));
+				int usernameComp = strcmp(linphone_address_get_username(lsr.getAddress())?:"", linphone_address_get_username(rsr.getAddress())?:"");
 				if (usernameComp == 0) {
 					int domainComp = strcmp(linphone_address_get_domain(lsr.getAddress()), linphone_address_get_domain(rsr.getAddress()));
 					if (domainComp == 0) {
