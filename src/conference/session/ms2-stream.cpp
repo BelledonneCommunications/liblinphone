@@ -73,7 +73,7 @@ void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
 		return ; /*No bundle to handle */
 	}
 		
-	MS2Stream *masterStream = dynamic_cast<MS2Stream*>(getGroup().getStream(index));
+	MS2Stream *masterStream = dynamic_cast<MS2Stream*>(getGroup().getStream((size_t)index));
 	if (!masterStream){
 		lError() << "Could not locate the stream owning the bundle's transport.";
 		removeFromBundle();

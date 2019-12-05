@@ -1182,9 +1182,9 @@ void MediaSessionPrivate::makeLocalMediaDescription() {
 	ctx.localIsOfferer = ctx.remoteMediaDescription == nullptr;
 	/* Now instanciate the streams according to the media description. */
 	getStreamsGroup().createStreams(ctx);
-	if (mainAudioStreamIndex != -1) getStreamsGroup().setStreamMain(mainAudioStreamIndex);
-	if (mainVideoStreamIndex != -1) getStreamsGroup().setStreamMain(mainVideoStreamIndex);
-	if (mainTextStreamIndex != -1) getStreamsGroup().setStreamMain(mainTextStreamIndex);
+	if (mainAudioStreamIndex != -1) getStreamsGroup().setStreamMain((size_t)mainAudioStreamIndex);
+	if (mainVideoStreamIndex != -1) getStreamsGroup().setStreamMain((size_t)mainVideoStreamIndex);
+	if (mainTextStreamIndex != -1) getStreamsGroup().setStreamMain((size_t)mainTextStreamIndex);
 	/* Get the transport addresses filled in to the media description. */
 	getStreamsGroup().fillLocalMediaDescription(ctx);
 	
@@ -1746,13 +1746,13 @@ void MediaSessionPrivate::updateCurrentParams () const {
 		LinphoneVideoDefinition *vdef;
 		
 		i->getRecvStats(&st);
-		vdef = linphone_video_definition_new(st.width, st.height, nullptr);
+		vdef = linphone_video_definition_new((unsigned)st.width, (unsigned)st.height, nullptr);
 		getCurrentParams()->getPrivate()->setReceivedVideoDefinition(vdef);
 		linphone_video_definition_unref(vdef);
 		getCurrentParams()->getPrivate()->setReceivedFps(st.fps);
 		
 		i->getSendStats(&st);
-		vdef = linphone_video_definition_new(st.width, st.height, nullptr);
+		vdef = linphone_video_definition_new((unsigned)st.width, (unsigned)st.height, nullptr);
 		getCurrentParams()->getPrivate()->setSentVideoDefinition(vdef);
 		linphone_video_definition_unref(vdef);
 		getCurrentParams()->getPrivate()->setSentFps(st.fps);

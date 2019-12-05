@@ -521,6 +521,9 @@ public:
 	 */
 	void finish();
 	Stream * getStream(size_t index);
+	Stream * getStream(int index){
+		return getStream((size_t) index);
+	}
 	Stream * lookupMainStream(SalStreamType type);
 	template <typename _interface>
 	_interface * lookupMainStreamInterface(SalStreamType type){

@@ -462,7 +462,7 @@ void StreamsGroup::computeAndReportBandwidth(){
 			<< linphone_call_stats_get_download_bandwidth(stats) << ",u=" << linphone_call_stats_get_upload_bandwidth(stats) << "] "
 			<< "RTCP: [d=" << linphone_call_stats_get_rtcp_download_bandwidth(stats) << ",u=" << linphone_call_stats_get_rtcp_upload_bandwidth(stats) << "] ";
 		float est_bw = linphone_call_stats_get_estimated_download_bandwidth(stats);
-		if (est_bw) ostr << "Est max d=" << est_bw;
+		if (est_bw > 0.0) ostr << "Est max d=" << est_bw;
 		ostr << " (kbits/sec)" << endl;
 		lInfo() << ostr.str();
 	}
