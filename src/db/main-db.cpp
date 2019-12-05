@@ -171,7 +171,7 @@ namespace {
 		constexpr char ConferenceCallFilter[] = "3,4";
 		constexpr char ConferenceChatMessageFilter[] = "5";
 		constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12,13,14";
-		constexpr char ConferenceInfoFilter[] = "1,2,6,7,8,9,10,11,12";
+		constexpr char ConferenceInfoFilter[] = "1,2,6,7,8,9,10,11,12,14";
 		constexpr char ConferenceChatMessageSecurityFilter[] = "5,13";
 	#else
 		constexpr auto ConferenceCallFilter = SqlEventFilterBuilder<
@@ -1197,7 +1197,7 @@ long long MainDbPrivate::insertConferenceEphemeralLifetimeEvent (const shared_pt
 	double lifetime = static_pointer_cast<ConferenceEphemeralLifetimeEvent>(eventLog)->getEphemeralLifetime();
 	
 	soci::session *session = dbSession.getBackendSession();
-	*session << "INSERT INTO conference_ephemera_event (event_id, lifetime)"
+	*session << "INSERT INTO conference_ephemeral_lifetime_event (event_id, lifetime)"
 	" VALUES (:eventId, :lifetime)", soci::use(eventId), soci::use(lifetime);
 	
 	return eventId;
@@ -2100,7 +2100,7 @@ void MainDb::init () {
 		") " + charset;
 	
 	*session <<
-		"CREATE TABLE IF NOT EXISTS conference_ephemera_event ("
+		"CREATE TABLE IF NOT EXISTS conference_ephemeral_lifetime_event ("
 		"  event_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 	
 		"  lifetime DOUBLE NOT NULL,"
