@@ -25,6 +25,6 @@
 #include "conference/conference-participant-device-event.h"
 #include "conference/conference-security-event.h"
 #include "conference/conference-subject-event.h"
-#include "conference/conference-ephemera-event.h"
+#include "conference/conference-ephemeral-lifetime-event.h"
 
 #endif // ifndef _L_EVENTS_H_

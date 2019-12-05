@@ -370,6 +370,6 @@ LINPHONE_PUBLIC double linphone_event_log_get_ephemeral_lifetime (const Linphone
 	if (!isConferenceEphemeralType(linphone_event_log_get_type(event_log)))
 		return -1;
 	
-	return static_pointer_cast<const LinphonePrivate::ConferenceEphemeraEvent>(
+	return static_pointer_cast<const LinphonePrivate::ConferenceEphemeralLifetimeEvent>(
 			L_GET_CPP_PTR_FROM_C_OBJECT(event_log))->getEphemeralLifetime();
 }

@@ -170,7 +170,7 @@ LINPHONE_PUBLIC LinphoneAddress *linphone_event_log_get_security_event_faulty_de
 LINPHONE_PUBLIC const char *linphone_event_log_get_subject (const LinphoneEventLog *event_log);
 
 // -----------------------------------------------------------------------------
-// ConferenceEphemeraEvent.
+// ConferenceEphemeralLifetimeEvent.
 // -----------------------------------------------------------------------------
 
 /**

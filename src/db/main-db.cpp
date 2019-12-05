@@ -684,7 +684,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 			break;
 
 		case EventLog::Type::ConferenceEphemeralLifetimeChanged:
-			eventLog = selectConferenceEphemeraEvent(conferenceId, row);
+			eventLog = selectConferenceEphemeralLifetimeEvent(conferenceId, row);
 	}
 
 	if (eventLog)
@@ -810,11 +810,11 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceSecurityEvent (
 	);
 }
 
-shared_ptr<EventLog> MainDbPrivate::selectConferenceEphemeraEvent (
+shared_ptr<EventLog> MainDbPrivate::selectConferenceEphemeralLifetimeEvent (
 	const ConferenceId &conferenceId,
 	const soci::row &row
 ) const {
-	return make_shared<ConferenceEphemeraEvent>(
+	return make_shared<ConferenceEphemeralLifetimeEvent>(
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
 		row.get<double>(20)
@@ -1187,14 +1187,14 @@ long long MainDbPrivate::insertConferenceSubjectEvent (const shared_ptr<EventLog
 #endif
 }
 
-long long MainDbPrivate::insertConferenceEphemeraEvent (const shared_ptr<EventLog> &eventLog) {
+long long MainDbPrivate::insertConferenceEphemeralLifetimeEvent (const shared_ptr<EventLog> &eventLog) {
 #ifdef HAVE_DB_STORAGE
 	long long chatRoomId;
 	const long long &eventId = insertConferenceEvent(eventLog, &chatRoomId);
 	if (eventId < 0)
 		return -1;
 	
-	double lifetime = static_pointer_cast<ConferenceEphemeraEvent>(eventLog)->getEphemeralLifetime();
+	double lifetime = static_pointer_cast<ConferenceEphemeralLifetimeEvent>(eventLog)->getEphemeralLifetime();
 	
 	soci::session *session = dbSession.getBackendSession();
 	*session << "INSERT INTO conference_ephemera_event (event_id, lifetime)"
@@ -2170,7 +2170,7 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 				break;
 				
 			case EventLog::Type::ConferenceEphemeralLifetimeChanged:
-				eventId = d->insertConferenceEphemeraEvent(eventLog);
+				eventId = d->insertConferenceEphemeralLifetimeEvent(eventLog);
 				break;
 		}
 

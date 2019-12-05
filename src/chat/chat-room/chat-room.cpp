@@ -625,7 +625,7 @@ void ChatRoom::setEphemeralLifetime (double lifetime) {
 	if (fabs(lifetime - d->ephemeralLifetime) < 0.1)
 		return;
 	d->ephemeralLifetime = lifetime;
-	shared_ptr<ConferenceEphemeraEvent> event = make_shared<ConferenceEphemeraEvent>(time(nullptr),d->conferenceId,lifetime);
+	shared_ptr<ConferenceEphemeralLifetimeEvent> event = make_shared<ConferenceEphemeralLifetimeEvent>(time(nullptr),d->conferenceId,lifetime);
 	getCore()->getPrivate()->mainDb->addEvent(event);
 	_linphone_chat_room_notify_ephemeral_lifetime_changed(d->getCChatRoom(), L_GET_C_BACK_PTR(event));
 }

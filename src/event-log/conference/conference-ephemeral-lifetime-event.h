@@ -17,8 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_CONFERENCE_EPHEMERA_EVENT_H_
-#define _L_CONFERENCE_EPHEMERA_EVENT_H_
+#ifndef _L_CONFERENCE_EPHEMERAL_LIFETIME_EVENT_H_
+#define _L_CONFERENCE_EPHEMERAL_LIFETIME_EVENT_H_
 
 #include "conference-event-p.h"
 
@@ -26,11 +26,11 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ConferenceEphemeraEventPrivate;
+class ConferenceEphemeralLifetimeEventPrivate;
 
-class LINPHONE_PUBLIC ConferenceEphemeraEvent : public ConferenceEvent {
+class LINPHONE_PUBLIC ConferenceEphemeralLifetimeEvent : public ConferenceEvent {
 public:
-	ConferenceEphemeraEvent (
+	ConferenceEphemeralLifetimeEvent (
 							time_t creationTime,
 							const ConferenceId &conferenceId,
 							double ephemeralLifetime
@@ -39,10 +39,10 @@ public:
 	double getEphemeralLifetime() const;
 	
 private:
-	L_DECLARE_PRIVATE(ConferenceEphemeraEvent);
-	L_DISABLE_COPY(ConferenceEphemeraEvent);
+	L_DECLARE_PRIVATE(ConferenceEphemeralLifetimeEvent);
+	L_DISABLE_COPY(ConferenceEphemeralLifetimeEvent);
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_CONFERENCE_EPHEMERA_EVENT_H_
+#endif // ifndef _L_CONFERENCE_EPHEMERAL_LIFETIME_EVENT_H_
