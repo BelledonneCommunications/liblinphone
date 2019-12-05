@@ -53,7 +53,7 @@ MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params) : Strea
 
 void MS2Stream::removeFromBundle(){
 	if (mRtpBundle){
-		//rtp_bundle_remove_session(mRtpBundle, mSessions.rtp_session);
+		rtp_bundle_remove_session(mRtpBundle, mSessions.rtp_session);
 		if (mOwnsBundle){
 			RtpBundle *bundle = mRtpBundle;
 			getGroup().addPostRenderHook( [bundle](){
