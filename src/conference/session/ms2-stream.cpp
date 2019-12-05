@@ -127,8 +127,8 @@ string MS2Stream::getBindIp(){
 
 void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	SalStreamDescription *localDesc = ctx.localStreamDescription;
-	strncpy(localDesc->rtp_addr, getPublicIp().c_str(), sizeof(localDesc->rtp_addr));
-	strncpy(localDesc->rtcp_addr, getPublicIp().c_str(), sizeof(localDesc->rtcp_addr));
+	strncpy(localDesc->rtp_addr, getPublicIp().c_str(), sizeof(localDesc->rtp_addr) - 1);
+	strncpy(localDesc->rtcp_addr, getPublicIp().c_str(), sizeof(localDesc->rtcp_addr) -1);
 	
 	if (localDesc->payloads != nullptr){
 		/* Don't fill ports if no codecs are defined. The stream is not valid and should be disabled.*/
