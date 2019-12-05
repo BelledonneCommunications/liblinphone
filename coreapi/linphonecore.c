@@ -1473,6 +1473,9 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	tmp=lp_config_get_int(lc->config,"app","auto_download_incoming_files_max_size",-1);
 	linphone_core_set_max_size_for_auto_download_incoming_files(lc, tmp);
+	
+	tmp=lp_config_get_int(lc->config,"app","sender_name_hidden_in_forward_message",0);
+	linphone_core_enable_sender_name_hidden_in_forward_message(lc, !!tmp);
 
 	/*In case of remote provisionning, function sip_config_read is initialy called in core_init, then in state ConfiguringSuccessfull*/
 	/*Accordingly, to avoid proxy_config to be added twice, it is mandatory to reset proxy config list from LinphoneCore*/
@@ -4146,6 +4149,15 @@ int linphone_core_get_max_size_for_auto_download_incoming_files(LinphoneCore *lc
 void linphone_core_set_max_size_for_auto_download_incoming_files(LinphoneCore *lc, int size) {
 	lc->auto_download_incoming_files_max_size = size;
 	lp_config_set_int(lc->config, "app", "auto_download_incoming_files_max_size", size);
+}
+
+bool_t linphone_core_is_sender_name_hidden_in_forward_message(LinphoneCore *lc) {
+	return lc->sender_name_hidden_in_forward_message;
+}
+
+void linphone_core_enable_sender_name_hidden_in_forward_message(LinphoneCore *lc, bool_t enable) {
+	lc->sender_name_hidden_in_forward_message = enable;
+	lp_config_set_int(lc->config, "app", "sender_name_hidden_in_forward_message", enable);
 }
 
 void linphone_core_set_presence_info(LinphoneCore *lc, int minutes_away, const char *contact, LinphoneOnlineStatus os) {
