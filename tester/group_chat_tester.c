@@ -3256,6 +3256,14 @@ static void group_chat_room_unique_one_to_one_chat_room_with_forward_message_rec
 		if (linphone_chat_room_get_history_size(marieCr) > 1) {
 			LinphoneChatMessage *recv_msg = linphone_chat_room_get_last_message_in_history(marieCr);
 			BC_ASSERT_TRUE(linphone_chat_message_is_forward(recv_msg));
+
+			// for marie, forward message by anonymous
+			LinphoneChatMessage *msgFromMarie = linphone_chat_room_create_forward_message(marieCr, recv_msg);
+			linphone_chat_message_send(msgFromMarie);
+			BC_ASSERT_TRUE(linphone_chat_message_is_forward(msgFromMarie));
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_forward_info(msgFromMarie), "Anonymous");
+			linphone_chat_message_unref(msgFromMarie);
+
 			linphone_chat_message_unref(recv_msg);
 		}
 	} else {
