@@ -80,7 +80,7 @@ public:
 
 	void markAsRead () override;
 	void enableEphemeral (bool ephem) override;
-	void setEphemeralLifetime (double time) override;
+	void setEphemeralLifetime (double lifetime) override;
 
 	const IdentityAddress &getConferenceAddress () const override;
 

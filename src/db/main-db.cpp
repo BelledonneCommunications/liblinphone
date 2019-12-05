@@ -170,7 +170,7 @@ namespace {
 		// TODO: Find a workaround to deal with StaticString concatenation!!!
 		constexpr char ConferenceCallFilter[] = "3,4";
 		constexpr char ConferenceChatMessageFilter[] = "5";
-		constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12,13";
+		constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12,13,14";
 		constexpr char ConferenceInfoFilter[] = "1,2,6,7,8,9,10,11,12";
 		constexpr char ConferenceChatMessageSecurityFilter[] = "5,13";
 	#else
@@ -189,7 +189,8 @@ namespace {
 			EventLog::Type::ConferenceParticipantSetAdmin,
 			EventLog::Type::ConferenceParticipantUnsetAdmin,
 			EventLog::Type::ConferenceSubjectChanged,
-			EventLog::Type::ConferenceSecurityEvent
+			EventLog::Type::ConferenceSecurityEvent,
+			EventLog::Type::ConferenceEphemeralLifetimeChanged
 		>::get();
 
 		constexpr auto ConferenceInfoFilter = ConferenceInfoNoDeviceFilter + "," + SqlEventFilterBuilder<
@@ -681,6 +682,9 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 		case EventLog::Type::ConferenceSecurityEvent:
 			eventLog = selectConferenceSecurityEvent(conferenceId, type, row);
 			break;
+
+		case EventLog::Type::ConferenceEphemeralLifetimeChanged:
+			eventLog = selectConferenceEphemeraEvent(conferenceId, row);
 	}
 
 	if (eventLog)
@@ -803,6 +807,17 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceSecurityEvent (
 		conferenceId,
 		static_cast<ConferenceSecurityEvent::SecurityEventType>(row.get<int>(16)),
 		IdentityAddress(row.get<string>(17))
+	);
+}
+
+shared_ptr<EventLog> MainDbPrivate::selectConferenceEphemeraEvent (
+	const ConferenceId &conferenceId,
+	const soci::row &row
+) const {
+	return make_shared<ConferenceEphemeraEvent>(
+		getConferenceEventCreationTimeFromRow(row),
+		conferenceId,
+		row.get<double>(20)
 	);
 }
 
@@ -1166,6 +1181,25 @@ long long MainDbPrivate::insertConferenceSubjectEvent (const shared_ptr<EventLog
 	*session << "UPDATE chat_room SET subject = :subject"
 		" WHERE id = :chatRoomId", soci::use(subject), soci::use(chatRoomId);
 
+	return eventId;
+#else
+	return -1;
+#endif
+}
+
+long long MainDbPrivate::insertConferenceEphemeraEvent (const shared_ptr<EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
+	long long chatRoomId;
+	const long long &eventId = insertConferenceEvent(eventLog, &chatRoomId);
+	if (eventId < 0)
+		return -1;
+	
+	double lifetime = static_pointer_cast<ConferenceEphemeraEvent>(eventLog)->getEphemeralLifetime();
+	
+	soci::session *session = dbSession.getBackendSession();
+	*session << "INSERT INTO conference_ephemera_event (event_id, lifetime)"
+	" VALUES (:eventId, :lifetime)", soci::use(eventId), soci::use(lifetime);
+	
 	return eventId;
 #else
 	return -1;
@@ -2064,6 +2098,17 @@ void MainDb::init () {
 		"    REFERENCES conference_event(event_id)"
 		"    ON DELETE CASCADE"
 		") " + charset;
+	
+	*session <<
+		"CREATE TABLE IF NOT EXISTS conference_ephemera_event ("
+		"  event_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
+	
+		"  lifetime DOUBLE NOT NULL,"
+	
+		"  FOREIGN KEY (event_id)"
+		"    REFERENCES conference_event(event_id)"
+		"    ON DELETE CASCADE"
+		") " + charset;
 
 	d->updateSchema();
 
@@ -2123,6 +2168,10 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceSubjectChanged:
 				eventId = d->insertConferenceSubjectEvent(eventLog);
 				break;
+				
+			case EventLog::Type::ConferenceEphemeralLifetimeChanged:
+				eventId = d->insertConferenceEphemeraEvent(eventLog);
+				break;
 		}
 
 		if (eventId >= 0) {
@@ -2172,6 +2221,7 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
 			case EventLog::Type::ConferenceSecurityEvent:
 			case EventLog::Type::ConferenceSubjectChanged:
+			case EventLog::Type::ConferenceEphemeralLifetimeChanged:
 				return false;
 		}
 

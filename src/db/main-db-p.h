@@ -141,6 +141,11 @@ private:
 		EventLog::Type type,
 		const soci::row &row
 	) const;
+	
+	std::shared_ptr<EventLog> selectConferenceEphemeraEvent (
+		const ConferenceId &conferenceId,
+		const soci::row &row
+	) const;
 
 	std::shared_ptr<EventLog> selectConferenceSubjectEvent (
 		const ConferenceId &conferenceId,
@@ -159,6 +164,7 @@ private:
 	long long insertConferenceParticipantDeviceEvent (const std::shared_ptr<EventLog> &eventLog);
 	long long insertConferenceSubjectEvent (const std::shared_ptr<EventLog> &eventLog);
 	long long insertConferenceSecurityEvent (const std::shared_ptr<EventLog> &eventLog);
+	long long insertConferenceEphemeraEvent (const std::shared_ptr<EventLog> &eventLog);
 
 	void setChatMessageParticipantState (
 		const std::shared_ptr<EventLog> &eventLog,
