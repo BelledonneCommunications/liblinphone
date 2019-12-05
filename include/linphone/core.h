@@ -6012,11 +6012,11 @@ LINPHONE_PUBLIC int linphone_core_get_max_size_for_auto_download_incoming_files(
 LINPHONE_PUBLIC bool_t linphone_core_is_sender_name_hidden_in_forward_message(LinphoneCore *lc);
 
 /**
- * Sets whether or not to hide sender name in forward message
+ * Enable whether or not to hide sender name in forward message
  * @param[in] lc The #LinphoneCore
  * @param[in] enable whether or not to enable the feature
 **/
-void linphone_core_enable_sender_name_hidden_in_forward_message(LinphoneCore *lc, bool_t enable);
+LINPHONE_PUBLIC void linphone_core_enable_sender_name_hidden_in_forward_message(LinphoneCore *lc, bool_t enable);
 
 /**
  * @}
