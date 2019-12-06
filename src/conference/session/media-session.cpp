@@ -442,10 +442,12 @@ void MediaSessionPrivate::updating (bool isUpdate) {
 
 
 void MediaSessionPrivate::oglRender () {
+#ifdef VIDEO_ENABLED
 	if (mainVideoStreamIndex != -1){
 		MS2VideoStream * vs = dynamic_cast<MS2VideoStream*>(getStreamsGroup().getStream(mainVideoStreamIndex));
 		if (vs) vs->oglRender();
 	}
+#endif
 }
 
 void MediaSessionPrivate::sendVfu () {
@@ -1625,8 +1627,10 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 }
 
 MSWebCam *MediaSessionPrivate::getVideoDevice()const{
+#ifdef VIDEO_ENABLED
 	MS2VideoStream *vs = getStreamsGroup().lookupMainStreamInterface<MS2VideoStream>(SalVideo);
 	if (vs) return vs->getVideoDevice(state);
+#endif
 	return nullptr;
 }
 

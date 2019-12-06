@@ -64,7 +64,9 @@ Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 			ret = new MS2AudioStream(*this, params);
 		break;
 		case SalVideo:
+#ifdef VIDEO_ENABLED
 			ret = new MS2VideoStream(*this, params);
+#endif
 		break;
 		case SalText:
 			ret = new MS2RTTStream(*this, params);

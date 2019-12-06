@@ -670,8 +670,12 @@ void MS2AudioStream::setSpeakerGain(float gain){
 }
 
 VideoStream *MS2AudioStream::getPeerVideoStream(){
+#ifdef VIDEO_ENABLED
 	MS2VideoStream *vs = getGroup().lookupMainStreamInterface<MS2VideoStream>(SalVideo);
 	return vs ? (VideoStream*)vs->getMediaStream() : nullptr;
+#else
+	return nullptr;
+#endif
 }
 
 void MS2AudioStream::enableEchoCancellation(bool value){

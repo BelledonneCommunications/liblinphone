@@ -18,6 +18,8 @@
  */
 
 
+#ifdef VIDEO_ENABLED
+
 #include "bctoolbox/defs.h"
 
 #include "streams.h"
@@ -174,12 +176,8 @@ void MS2VideoStream::enableCamera(bool value){
 MSWebCam * MS2VideoStream::getVideoDevice(CallSession::State targetState) const {
 	bool paused = (targetState == CallSession::State::Pausing) || (targetState == CallSession::State::Paused);
 	if (paused || mMuted || !mCameraEnabled)
-#ifdef VIDEO_ENABLED
 		return ms_web_cam_manager_get_cam(ms_factory_get_web_cam_manager(getCCore()->factory),
 			"StaticImage: Static picture");
-#else
-		return nullptr;
-#endif
 	else
 		return getCCore()->video_conf.device;
 }
@@ -488,4 +486,7 @@ MS2VideoStream::~MS2VideoStream(){
 }
 
 LINPHONE_END_NAMESPACE
+
+#endif
+
 
