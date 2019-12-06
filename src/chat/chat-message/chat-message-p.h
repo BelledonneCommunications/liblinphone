@@ -83,7 +83,7 @@ public:
 	
 	void setForwardInfo (const std::string &fInfo);
 
-	void enableEphemeralWithTime (double time);
+	void enableEphemeralWithTime (long time);
 
 	void setEphemeralExpiredTime (time_t expiredTime);
 
@@ -260,7 +260,7 @@ private:
 	std::string forwardInfo;
 
 	bool isEphemeral = false;
-	double ephemeralLifetime = 86400; // 24h
+	long ephemeralLifetime = 86400; // 24h
 	time_t ephemeralExpiredTime = 0;
 
 	std::list<Content *> contents;

@@ -620,10 +620,13 @@ void ChatRoom::enableEphemeral (bool ephem) {
 	}
 }
 
-void ChatRoom::setEphemeralLifetime (double lifetime) {
+void ChatRoom::setEphemeralLifetime (long lifetime) {
 	L_D();
-	if (fabs(lifetime - d->ephemeralLifetime) < 0.1)
+	lInfo() << "Trying to set new ephemeral lifetime " << lifetime << ", used to be " << d->ephemeralLifetime << ".";
+	if (lifetime == d->ephemeralLifetime) {
+		lWarning() << "Ephemeral lifetime will not be changed!";
 		return;
+	}
 	d->ephemeralLifetime = lifetime;
 	shared_ptr<ConferenceEphemeralLifetimeEvent> event = make_shared<ConferenceEphemeralLifetimeEvent>(time(nullptr),d->conferenceId,lifetime);
 	getCore()->getPrivate()->mainDb->addEvent(event);

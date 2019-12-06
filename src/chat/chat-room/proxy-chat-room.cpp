@@ -228,7 +228,7 @@ void ProxyChatRoom::enableEphemeral (bool ephem) {
 	d->chatRoom->enableEphemeral(ephem);
 }
 
-void ProxyChatRoom::setEphemeralLifetime (double lifetime) {
+void ProxyChatRoom::setEphemeralLifetime (long lifetime) {
 	L_D();
 	d->chatRoom->setEphemeralLifetime(lifetime);
 }

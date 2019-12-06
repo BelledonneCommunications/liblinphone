@@ -262,7 +262,7 @@ bool_t linphone_chat_message_is_ephemeral (LinphoneChatMessage *msg) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isEphemeral();
 }
 
-double linphone_chat_message_get_ephemeral_lifetime (LinphoneChatMessage *msg) {
+long linphone_chat_message_get_ephemeral_lifetime (LinphoneChatMessage *msg) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getEphemeralLifetime();
 }
 

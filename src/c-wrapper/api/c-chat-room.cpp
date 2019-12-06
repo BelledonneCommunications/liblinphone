@@ -213,7 +213,7 @@ void linphone_chat_room_enable_ephemeral (LinphoneChatRoom *cr, bool_t ephem) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->enableEphemeral(ephem);
 }
 
-void linphone_chat_room_set_ephemeral_lifetime (LinphoneChatRoom *cr, double time) {
+void linphone_chat_room_set_ephemeral_lifetime (LinphoneChatRoom *cr, long time) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setEphemeralLifetime(time);
 }
 

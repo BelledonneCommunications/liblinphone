@@ -29,7 +29,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceEphemeralLifetimeEventPrivate : public ConferenceEventPrivate {
 public:
-	double ephemeralLifetime;
+	long ephemeralLifetime;
 };
 
 // -----------------------------------------------------------------------------
@@ -37,7 +37,7 @@ public:
 ConferenceEphemeralLifetimeEvent::ConferenceEphemeralLifetimeEvent (
 time_t creationTime,
 const ConferenceId &conferenceId,
-double ephemeralLifetime
+long ephemeralLifetime
 ) : ConferenceEvent(
 	*new ConferenceEphemeralLifetimeEventPrivate,
 	Type::ConferenceEphemeralLifetimeChanged,
@@ -48,7 +48,7 @@ double ephemeralLifetime
 	d->ephemeralLifetime = ephemeralLifetime;
 }
 
-double ConferenceEphemeralLifetimeEvent::getEphemeralLifetime () const {
+long ConferenceEphemeralLifetimeEvent::getEphemeralLifetime () const {
 	L_D();
 	return d->ephemeralLifetime;
 }

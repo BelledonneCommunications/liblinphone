@@ -366,7 +366,7 @@ LINPHONE_PUBLIC const char *linphone_event_log_get_subject (const LinphoneEventL
 // ConferenceEphemeralEvent.
 // -----------------------------------------------------------------------------
 
-LINPHONE_PUBLIC double linphone_event_log_get_ephemeral_lifetime (const LinphoneEventLog *event_log) {
+LINPHONE_PUBLIC long linphone_event_log_get_ephemeral_lifetime (const LinphoneEventLog *event_log) {
 	if (!isConferenceEphemeralType(linphone_event_log_get_type(event_log)))
 		return -1;
 	

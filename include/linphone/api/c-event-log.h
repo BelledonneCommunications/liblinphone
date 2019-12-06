@@ -178,7 +178,7 @@ LINPHONE_PUBLIC const char *linphone_event_log_get_subject (const LinphoneEventL
  * @param[in] event_log A #LinphoneEventLog object.
  * @return The ephemeral lifetime.
  */
-LINPHONE_PUBLIC double linphone_event_log_get_ephemeral_lifetime (const LinphoneEventLog *event_log);
+LINPHONE_PUBLIC long linphone_event_log_get_ephemeral_lifetime (const LinphoneEventLog *event_log);
 
 /**
  * @}

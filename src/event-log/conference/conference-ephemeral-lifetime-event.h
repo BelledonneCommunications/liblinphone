@@ -33,10 +33,10 @@ public:
 	ConferenceEphemeralLifetimeEvent (
 							time_t creationTime,
 							const ConferenceId &conferenceId,
-							double ephemeralLifetime
+							long ephemeralLifetime
 							);
 	
-	double getEphemeralLifetime() const;
+	long getEphemeralLifetime() const;
 	
 private:
 	L_DECLARE_PRIVATE(ConferenceEphemeralLifetimeEvent);

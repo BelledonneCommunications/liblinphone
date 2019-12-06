@@ -755,7 +755,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 		dChatMessage->setForwardInfo(row.get<string>(19));
 		
 		if (row.get_indicator(20) != soci::i_null) {
-			dChatMessage->enableEphemeralWithTime(row.get<double>(20));
+			dChatMessage->enableEphemeralWithTime((long)row.get<double>(20));
 			dChatMessage->setEphemeralExpiredTime(dbSession.getTime(row, 21));
 		}
 		
@@ -930,12 +930,12 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 		soci::use(markedAsRead), soci::use(forwardInfo);
 	
 	if (isEphemeral) {
-		const double &ephemeralLifetime = chatMessage->getEphemeralLifetime();
+		long ephemeralLifetime = chatMessage->getEphemeralLifetime();
 		const tm &expiredTime = Utils::getTimeTAsTm(chatMessage->getEphemeralExpiredTime());
 		*dbSession.getBackendSession() << "INSERT INTO chat_message_ephemeral_event ("
 			"  event_id, ephemeral_lifetime,  expired_time"
 			") VALUES ("
-		"  :eventId, :time, :expiredTime"
+		"  :eventId, :ephemeralLifetime, :expiredTime"
 		")", soci::use(eventId), soci::use(ephemeralLifetime),  soci::use(expiredTime);
 	}
 
@@ -1194,7 +1194,7 @@ long long MainDbPrivate::insertConferenceEphemeralLifetimeEvent (const shared_pt
 	if (eventId < 0)
 		return -1;
 	
-	double lifetime = static_pointer_cast<ConferenceEphemeralLifetimeEvent>(eventLog)->getEphemeralLifetime();
+	long lifetime = static_pointer_cast<ConferenceEphemeralLifetimeEvent>(eventLog)->getEphemeralLifetime();
 	
 	soci::session *session = dbSession.getBackendSession();
 	*session << "INSERT INTO conference_ephemeral_lifetime_event (event_id, lifetime)"

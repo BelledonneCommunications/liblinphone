@@ -121,7 +121,7 @@ private:
 	bool isEmpty = true;
 
 	bool isEphemeral = false;
-	double ephemeralLifetime = 86400;  //24 hours = 86400s
+	long ephemeralLifetime = 86400;  //24 hours = 86400s
 
 	L_DECLARE_PUBLIC(ChatRoom);
 };

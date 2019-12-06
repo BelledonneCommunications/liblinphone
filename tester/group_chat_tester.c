@@ -140,7 +140,7 @@ static void chat_room_security_event (LinphoneChatRoom *cr, const LinphoneEventL
 static void chat_room_ephemera_event (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
-	double lifetime = linphone_event_log_get_ephemeral_lifetime(event_log);
+	long lifetime = linphone_event_log_get_ephemeral_lifetime(event_log);
 	if (lifetime > 0) {
 		manager->stat.number_of_LinphoneChatRoomEphemeralLifetimeChanged++;
 	}
