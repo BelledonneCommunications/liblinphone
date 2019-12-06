@@ -165,6 +165,8 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/session/media-session.h
 	conference/session/streams.h
 	conference/session/port-config.h
+	conference/session/ms2-streams.h
+	conference/session/media-description-renderer.h
 	containers/lru-cache.h
 	content/content-disposition.h
 	content/content-manager.h
@@ -328,6 +330,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/participant.cpp
 	conference/remote-conference.cpp
 	conference/session/call-session.cpp
+	conference/session/media-description-renderer.cpp
 	conference/session/stream.cpp
 	conference/session/streams-group.cpp
 	conference/session/ms2-stream.cpp

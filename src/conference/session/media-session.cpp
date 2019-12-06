@@ -17,8 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iomanip>
-#include <math.h>
+//#include <iomanip>
+//#include <math.h>
 
 #include "address/address-p.h"
 #include "call/call-p.h"
@@ -195,7 +195,7 @@ void MediaSessionPrivate::ackReceived (LinphoneHeaders *headers) {
 		}
 		accepted();
 	}
-	getStreamsGroup().sessionConfirmed();
+	getStreamsGroup().sessionConfirmed(getStreamsGroup().getCurrentOfferAnswerContext());
 }
 
 void MediaSessionPrivate::dtmfReceived (char dtmf) {
@@ -1896,10 +1896,8 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 	}
 	updateRemoteSessionIdAndVer();
 	makeLocalMediaDescription();
-	OfferAnswerContext oac;
-	oac.localMediaDescription = localDesc;
-	oac.remoteMediaDescription = desc;
-	if (getStreamsGroup().prepare(oac))
+
+	if (getStreamsGroup().prepare())
 		return 0; /* Deferred until completion of ICE gathering */
 	startAcceptUpdate(nextState, stateInfo);
 	return 0;
@@ -2166,11 +2164,8 @@ void MediaSession::initiateIncoming () {
 	CallSession::initiateIncoming();
 	if (d->natPolicy) {
 		if (linphone_nat_policy_ice_enabled(d->natPolicy)){
-			OfferAnswerContext ctx;
-			ctx.localMediaDescription = d->localDesc;
-			ctx.remoteMediaDescription = d->op->getRemoteMediaDescription();
-			ctx.localIsOfferer = ctx.remoteMediaDescription ? false : true;
-			d->deferIncomingNotification = d->getStreamsGroup().prepare(ctx);
+			
+			d->deferIncomingNotification = d->getStreamsGroup().prepare();
 			/* 
 			 * If ICE gathering is done, we can update the local media description immediately.
 			 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
@@ -2188,10 +2183,7 @@ bool MediaSession::initiateOutgoing () {
 			lWarning() << "ICE is not supported when sending INVITE without SDP";
 		else {
 			/* Defer the start of the call after the ICE gathering process */
-			OfferAnswerContext oac;
-			oac.localMediaDescription = d->localDesc;
-			oac.localIsOfferer = true;
-			bool ice_needs_defer = d->getStreamsGroup().prepare(oac);
+			bool ice_needs_defer = d->getStreamsGroup().prepare();
 			if (!ice_needs_defer) {
 				/* 
 				 * If ICE gathering is done, we can update the local media description immediately.
@@ -2321,9 +2313,7 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 		/* Give a chance to set card prefered sampling frequency */
 		if (d->localDesc->streams[0].max_rate > 0)
 			ms_snd_card_set_preferred_sample_rate(getCore()->getCCore()->sound_conf.play_sndcard, d->localDesc->streams[0].max_rate);
-		OfferAnswerContext oac;
-		oac.localMediaDescription = d->localDesc;
-		d->getStreamsGroup().prepare(oac);
+		d->getStreamsGroup().prepare();
 	}
 	if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
 		/* We don't want to make the offer, reset local media description before sending the call */
@@ -2391,9 +2381,8 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 		d->setParams(new MediaSessionParams(*msp));
 		if (!d->getParams()->getPrivate()->getNoUserConsent())
 			d->makeLocalMediaDescription();
-		OfferAnswerContext ctx;
-		ctx.localMediaDescription = d->localDesc;
-		if (d->getStreamsGroup().prepare(ctx)) {
+		
+		if (d->getStreamsGroup().prepare()) {
 			lInfo() << "Defer CallSession update to gather ICE candidates";
 			return 0;
 		}

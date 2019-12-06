@@ -113,7 +113,7 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params){
 	}
 }
 
-bool StreamsGroup::prepare(const OfferAnswerContext &params){
+bool StreamsGroup::prepare(){
 	if (mFinished){
 		lError() << "StreamsGroup finished, cannot be used anymore.";
 		return false;
@@ -124,6 +124,14 @@ bool StreamsGroup::prepare(const OfferAnswerContext &params){
 		}
 	}
 	return false;
+}
+
+void StreamsGroup::finishPrepare(){
+	for (auto &stream : mStreams){
+		if (stream->getState() == Stream::Preparing){
+			stream->finishPrepare();
+		}
+	}
 }
 
 void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::State targetState){
@@ -188,7 +196,7 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 	mCurrentOfferAnswerState.dupFrom(params);
 }
 
-void StreamsGroup::sessionConfirmed(){
+void StreamsGroup::sessionConfirmed(const OfferAnswerContext &params){
 	for (auto &stream  : mStreams){
 		mCurrentOfferAnswerState.scopeStreamToIndex(stream->getIndex());
 		stream->sessionConfirmed(mCurrentOfferAnswerState);

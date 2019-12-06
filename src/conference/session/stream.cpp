@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bctoolbox/defs.h>
+#include "bctoolbox/defs.h"
 
 #include "streams.h"
 #include "media-session.h"
@@ -36,70 +36,6 @@
 using namespace::std;
 
 LINPHONE_BEGIN_NAMESPACE
-
-
-
-void OfferAnswerContext::scopeStreamToIndex(size_t index) const{
-	streamIndex = index;
-	localStreamDescription = localMediaDescription ? &localMediaDescription->streams[index] : nullptr;
-	remoteStreamDescription = remoteMediaDescription ? &remoteMediaDescription->streams[index] : nullptr;
-	resultStreamDescription = resultMediaDescription ? &resultMediaDescription->streams[index] : nullptr;
-}
-
-void OfferAnswerContext::dupFrom(const OfferAnswerContext &ctx){
-	OfferAnswerContext oldCtx = *this; // Transfers *this to a temporary object.
-	localMediaDescription = ctx.localMediaDescription ? sal_media_description_ref(ctx.localMediaDescription) : nullptr;
-	remoteMediaDescription = ctx.remoteMediaDescription ? sal_media_description_ref(const_cast<SalMediaDescription*>(ctx.remoteMediaDescription)) : nullptr;
-	resultMediaDescription = ctx.resultMediaDescription ? sal_media_description_ref(const_cast<SalMediaDescription*>(ctx.resultMediaDescription)) : nullptr;
-	localIsOfferer = ctx.localIsOfferer;
-	mOwnsMediaDescriptions = true;
-	// if the temporary oldCtx owns media descriptions, they will be unrefed by the destructor here.
-}
-
-void OfferAnswerContext::copyFrom(const OfferAnswerContext &ctx){
-	OfferAnswerContext oldCtx = *this; // Transfers *this to a temporary object.
-	localMediaDescription = ctx.localMediaDescription;
-	remoteMediaDescription = ctx.remoteMediaDescription;
-	resultMediaDescription = ctx.resultMediaDescription;
-	localIsOfferer = ctx.localIsOfferer;
-	// if the temporary oldCtx owns media descriptions, they will be unrefed by the destructor here.
-}
-
-void OfferAnswerContext::scopeStreamToIndexWithDiff(size_t index, const OfferAnswerContext &previousCtx) const{
-	scopeStreamToIndex(index);
-	previousCtx.scopeStreamToIndex(index);
-	
-	if (previousCtx.localMediaDescription){
-		localStreamDescriptionChanges = sal_media_description_global_equals(previousCtx.localMediaDescription, localMediaDescription)
-		| sal_stream_description_equals(previousCtx.localStreamDescription, localStreamDescription);
-	}else localStreamDescriptionChanges = 0;
-	if (previousCtx.resultMediaDescription){
-		resultStreamDescriptionChanges = sal_media_description_global_equals(previousCtx.resultMediaDescription, resultMediaDescription)
-		| sal_stream_description_equals(previousCtx.resultStreamDescription, resultStreamDescription);
-	}else resultStreamDescriptionChanges = 0;
-}
-
-void OfferAnswerContext::clear(){
-	if (mOwnsMediaDescriptions){
-		if (localMediaDescription) sal_media_description_unref(localMediaDescription);
-		if (remoteMediaDescription) sal_media_description_unref(const_cast<SalMediaDescription*>(remoteMediaDescription));
-		if (resultMediaDescription) sal_media_description_unref(const_cast<SalMediaDescription*>(resultMediaDescription));
-	}
-	localMediaDescription = nullptr;
-	remoteMediaDescription = nullptr;
-	resultMediaDescription = nullptr;
-	localStreamDescription = nullptr;
-	remoteStreamDescription = nullptr;
-	resultStreamDescription = nullptr;
-	localStreamDescriptionChanges = 0;
-	resultStreamDescriptionChanges = 0;
-	mOwnsMediaDescriptions = false;
-}
-
-OfferAnswerContext::~OfferAnswerContext(){
-	clear();
-}
-
 
 
 /*
@@ -135,8 +71,9 @@ MediaSessionPrivate &Stream::getMediaSessionPrivate()const{
 void Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 }
 
-void Stream::prepare(){
+bool Stream::prepare(){
 	mState = Preparing;
+	return false;
 }
 
 void Stream::finishPrepare(){

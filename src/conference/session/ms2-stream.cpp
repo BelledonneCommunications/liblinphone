@@ -19,7 +19,7 @@
 
 #include <bctoolbox/defs.h>
 
-#include "streams.h"
+#include "ms2-streams.h"
 #include "media-session.h"
 #include "media-session-p.h"
 #include "core/core.h"
@@ -533,7 +533,7 @@ void MS2Stream::stopEventHandling(){
 	}
 }
 
-void MS2Stream::prepare(){
+bool MS2Stream::prepare(){
 	if (getCCore()->rtptf) {
 		RtpTransport *meta_rtp;
 		RtpTransport *meta_rtcp;
@@ -571,6 +571,7 @@ void MS2Stream::prepare(){
 	//getIceAgent().prepareIceForStream(getMediaStream(), false);
 	startEventHandling();
 	Stream::prepare();
+	return false;
 }
 
 void MS2Stream::finishPrepare(){

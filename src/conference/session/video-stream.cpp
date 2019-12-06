@@ -22,7 +22,7 @@
 
 #include "bctoolbox/defs.h"
 
-#include "streams.h"
+#include "ms2-streams.h"
 #include "media-session.h"
 #include "media-session-p.h"
 #include "core/core.h"
@@ -183,7 +183,7 @@ MSWebCam * MS2VideoStream::getVideoDevice(CallSession::State targetState) const 
 }
 
 
-void MS2VideoStream::prepare(){
+bool MS2VideoStream::prepare(){
 	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)){
 		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
 		if (audioStream){
@@ -197,6 +197,7 @@ void MS2VideoStream::prepare(){
 	}
 	MS2Stream::prepare();
 	video_stream_prepare_video(mStream);
+	return false;
 }
 
 void MS2VideoStream::finishPrepare(){

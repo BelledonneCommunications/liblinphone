@@ -24,7 +24,7 @@
 #include <functional>
 
 #include "call-session-p.h"
-#include "streams.h"
+#include "ms2-streams.h"
 
 #include "media-session.h"
 #include "port-config.h"

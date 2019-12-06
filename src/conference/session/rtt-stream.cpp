@@ -18,7 +18,7 @@
  */
 #include "bctoolbox/defs.h"
 
-#include "streams.h"
+#include "ms2-streams.h"
 #include "media-session.h"
 #include "media-session-p.h"
 #include "core/core.h"
@@ -59,9 +59,10 @@ void MS2RTTStream::sRealTimeTextCharacterReceived (void *userData, MSFilter *f, 
 	zis->realTimeTextCharacterReceived(f, id, arg);
 }
 
-void MS2RTTStream::prepare(){
+bool MS2RTTStream::prepare(){
 	MS2Stream::prepare();
 	text_stream_prepare_text(mStream);
+	return false;
 }
 
 void MS2RTTStream::finishPrepare(){

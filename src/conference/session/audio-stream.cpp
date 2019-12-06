@@ -18,7 +18,7 @@
  */
 #include "bctoolbox/defs.h"
 
-#include "streams.h"
+#include "ms2-streams.h"
 #include "media-session.h"
 #include "media-session-p.h"
 #include "core/core.h"
@@ -173,7 +173,7 @@ void MS2AudioStream::configureAudioStream(){
 	audio_stream_set_features(mStream, linphone_core_get_audio_features(getCCore()));
 }
 
-void MS2AudioStream::prepare(){
+bool MS2AudioStream::prepare(){
 	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
 	if (playcard) {
 		// Set the stream type immediately, as on iOS AudioUnit is instanciated very early because it is 
@@ -185,6 +185,7 @@ void MS2AudioStream::prepare(){
 		audio_stream_prepare_sound(mStream, getCCore()->sound_conf.play_sndcard, getCCore()->sound_conf.capt_sndcard);
 	}
 	MS2Stream::prepare();
+	return false;
 }
 
 void MS2AudioStream::sessionConfirmed(const OfferAnswerContext &ctx){
