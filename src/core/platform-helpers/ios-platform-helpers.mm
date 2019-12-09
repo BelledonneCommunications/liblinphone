@@ -25,6 +25,7 @@
 #include <Foundation/Foundation.h>
 #include <SystemConfiguration/SystemConfiguration.h>
 #include <SystemConfiguration/CaptiveNetwork.h>
+#include <CoreLocation/CoreLocation.h>
 #include  <notify_keys.h>
 
 #include <belr/grammarbuilder.h>
@@ -133,7 +134,6 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 	else
 		ms_message("IosPlatformHelpers did not find vcard grammar resource directory...");
 #endif
-
 	ms_message("IosPlatformHelpers is fully initialised");
 }
 
@@ -403,13 +403,16 @@ void IosPlatformHelpers::networkChangeCallback() {
 		}
 		mCurrentFlags = flags;
 	}
-	string newSSID = getWifiSSID();
-	if (newSSID.compare(mCurrentSSID) != 0) {
-		setWifiSSID(newSSID);
-		changed = true;
-		//We possibly changed network, force reset of transports
-		force = true;
-		ms_message("New Wifi SSID detected: %s", mCurrentSSID.empty()?"[none]":mCurrentSSID.c_str());
+	if (!(flags & kSCNetworkReachabilityFlagsIsWWAN)) {
+		//Only check for wifi changes if current connection type is Wifi
+		string newSSID = getWifiSSID();
+		if (newSSID.empty() || newSSID.compare(mCurrentSSID) != 0) {
+			setWifiSSID(newSSID);
+			changed = true;
+			//We possibly changed network, force reset of transports
+			force = true;
+			ms_message("New Wifi SSID detected: %s", mCurrentSSID.empty()?"[none]":mCurrentSSID.c_str());
+		}
 	}
 	getHttpProxySettings();
 	if (mHttpProxyEnabled) {
@@ -536,27 +539,42 @@ string IosPlatformHelpers::getWifiSSID(void) {
 #if TARGET_IPHONE_SIMULATOR
 	return "Sim_err_SSID_NotSupported";
 #else
-	CFIndex	i;
 	string ssid;
-	CFArrayRef ifaceNames = CNCopySupportedInterfaces();
-	if (ifaceNames) {
-		for (i = 0; i < CFArrayGetCount(ifaceNames); ++i) {
-			CFStringRef iface = (CFStringRef) CFArrayGetValueAtIndex(ifaceNames, i);
-			CFDictionaryRef ifaceInfo = CNCopyCurrentNetworkInfo(iface);
-			if (ifaceInfo && CFDictionaryGetCount(ifaceInfo) > 0) {
-				CFStringRef ifaceSSID = (CFStringRef) CFDictionaryGetValue(ifaceInfo, kCNNetworkInfoKeySSID);
-				if (ifaceSSID != NULL) {
-					ssid = toUTF8String(ifaceSSID);
-					if (!ssid.empty()) {
-						CFRelease(ifaceInfo);
-						break;
-					}
-				}
-				CFRelease(ifaceInfo);
-			}
+	bool shallGetWifiInfo = true;
+
+	if (@available(iOS 13.0, *)) {
+		//Starting from IOS13 we need to check for authorization to get wifi information.
+		//User permission is asked in the main app
+		CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
+		if (status != kCLAuthorizationStatusAuthorizedAlways &&
+		    status != kCLAuthorizationStatusAuthorizedWhenInUse) {
+			shallGetWifiInfo = false;
+			ms_warning("User has not given authorization to access Wifi information (Authorization: [%d])", (int) status);
 		}
 	}
-	CFRelease(ifaceNames);
+	if (shallGetWifiInfo) {
+		CFArrayRef ifaceNames = CNCopySupportedInterfaces();
+		if (ifaceNames) {
+			CFIndex	i;
+			for (i = 0; i < CFArrayGetCount(ifaceNames); ++i) {
+				CFStringRef iface = (CFStringRef) CFArrayGetValueAtIndex(ifaceNames, i);
+				CFDictionaryRef ifaceInfo = CNCopyCurrentNetworkInfo(iface);
+
+				if (ifaceInfo != NULL && CFDictionaryGetCount(ifaceInfo) > 0) {
+					CFStringRef ifaceSSID = (CFStringRef) CFDictionaryGetValue(ifaceInfo, kCNNetworkInfoKeySSID);
+					if (ifaceSSID != NULL) {
+						ssid = toUTF8String(ifaceSSID);
+						if (!ssid.empty()) {
+							CFRelease(ifaceInfo);
+							break;
+						}
+					}
+					CFRelease(ifaceInfo);
+				}
+			}
+		}
+		CFRelease(ifaceNames);
+	}
 	return ssid;
 #endif
 }

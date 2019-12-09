@@ -62,16 +62,19 @@ static IdentityAddress getDefaultLocalAddress(const shared_ptr<Core> &core, cons
 
 	if (peerAddress) {
 		LinphoneAddress *cPeerAddress = linphone_address_new(peerAddress->asString().c_str());
-		proxy = linphone_core_lookup_known_proxy(cCore, cPeerAddress);
-		linphone_address_unref(cPeerAddress);
-	} else {
+		if (cPeerAddress) {
+			proxy = linphone_core_lookup_known_proxy(cCore, cPeerAddress);
+			linphone_address_unref(cPeerAddress);
+		}
+	} 
+	
+	if (!proxy)
 		proxy =	linphone_core_get_default_proxy_config(cCore);
-	}
 
 	IdentityAddress localAddress;
 	if (proxy) {
 		char *identity = linphone_address_as_string(
-			withGruu ? linphone_proxy_config_get_contact(proxy) : linphone_proxy_config_get_identity_address(proxy));
+			(withGruu && linphone_proxy_config_get_contact(proxy))? linphone_proxy_config_get_contact(proxy) : linphone_proxy_config_get_identity_address(proxy));
 		localAddress = IdentityAddress(identity);
 		bctbx_free(identity);
 	} else
@@ -116,7 +119,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 		return nullptr;
 	}
 	if (!conferenceId.getLocalAddress().hasGruu()){
-		lError() << "createClientGroupChatRoom(): local address must have a gruu.";
+		lError() << "createClientGroupChatRoom(): local address [" << conferenceId.getLocalAddress() << "] must have a gruu.";
 		return nullptr;
 	}
 	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(q->getSharedFromThis(),
@@ -263,7 +266,16 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 						     ChatRoomParams::toCapabilities(params),
 						     params,
 						     false);
-		chatRoom->addParticipants(participants, nullptr, false);
+		
+		if (!chatRoom) {
+			lWarning() << "Cannot create createClientGroupChatRoom with subject [" << subject <<"]";
+			return nullptr;
+		}
+			
+		if (!chatRoom->addParticipants(participants, nullptr, false)) {
+			lWarning() << "Couldn't add participants to newly created chat room, aborting";
+			return nullptr;
+		}
 #else
 		lWarning() << "Advanced IM such as group chat is disabled!";
 		return nullptr;

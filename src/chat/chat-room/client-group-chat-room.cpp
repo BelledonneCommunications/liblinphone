@@ -854,6 +854,7 @@ void ClientGroupChatRoom::onSubjectChanged (const shared_ptr<ConferenceSubjectEv
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_subject_changed(cr, L_GET_C_BACK_PTR(event));
+	linphone_core_notify_chat_room_subject_changed(linphone_chat_room_get_core(cr), cr);
 }
 
 void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {

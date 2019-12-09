@@ -475,9 +475,7 @@ static void process_auth_requested_from_carddav_request(void *data, belle_sip_au
 	const char *domain = belle_generic_uri_get_host(uri);
 
 	if (cdc->auth_info) {
-		belle_sip_auth_event_set_username(event, linphone_auth_info_get_username(cdc->auth_info));
-		belle_sip_auth_event_set_passwd(event, linphone_auth_info_get_passwd(cdc->auth_info));
-		belle_sip_auth_event_set_ha1(event, linphone_auth_info_get_ha1(cdc->auth_info));
+		linphone_auth_info_fill_belle_sip_event(cdc->auth_info, event);
 	} else {
 		LinphoneCore *lc = cdc->friend_list->lc;
 		const bctbx_list_t *auth_infos = linphone_core_get_auth_info_list(lc);
@@ -487,9 +485,7 @@ static void process_auth_requested_from_carddav_request(void *data, belle_sip_au
 			LinphoneAuthInfo *auth_info = (LinphoneAuthInfo *)auth_infos->data;
 			if (linphone_auth_info_get_domain(auth_info) && strcmp(domain, linphone_auth_info_get_domain(auth_info)) == 0) {
 				if (!linphone_auth_info_get_realm(auth_info) || strcmp(realm, linphone_auth_info_get_realm(auth_info)) == 0) {
-					belle_sip_auth_event_set_username(event, linphone_auth_info_get_username(auth_info));
-					belle_sip_auth_event_set_passwd(event, linphone_auth_info_get_passwd(auth_info));
-					belle_sip_auth_event_set_ha1(event, linphone_auth_info_get_ha1(auth_info));
+					linphone_auth_info_fill_belle_sip_event(auth_info, event);
 					cdc->auth_info = linphone_auth_info_clone(auth_info);
 					break;
 				}

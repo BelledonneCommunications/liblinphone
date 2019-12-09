@@ -1614,7 +1614,7 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 	if (sdpMediaAttributes)
 		md->streams[mainAudioStreamIndex].custom_sdp_attributes = sal_custom_sdp_attribute_clone(sdpMediaAttributes);
 
-	md->streams[mainVideoStreamIndex].proto = md->streams[mainAudioStreamIndex].proto;
+	md->streams[mainVideoStreamIndex].proto = getParams()->getMediaProto();
 	md->streams[mainVideoStreamIndex].dir = getParams()->getPrivate()->getSalVideoDirection();
 	md->streams[mainVideoStreamIndex].type = SalVideo;
 	md->streams[mainVideoStreamIndex].rtcp_mux = rtcpMux;
@@ -1645,7 +1645,7 @@ void MediaSessionPrivate::makeLocalMediaDescription () {
 	if (sdpMediaAttributes)
 		md->streams[mainVideoStreamIndex].custom_sdp_attributes = sal_custom_sdp_attribute_clone(sdpMediaAttributes);
 
-	md->streams[mainTextStreamIndex].proto = md->streams[mainAudioStreamIndex].proto;
+	md->streams[mainTextStreamIndex].proto = getParams()->getMediaProto();
 	md->streams[mainTextStreamIndex].dir = SalStreamSendRecv;
 	md->streams[mainTextStreamIndex].type = SalText;
 	md->streams[mainTextStreamIndex].rtcp_mux = rtcpMux;
@@ -4991,6 +4991,10 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 
 		if (captureCard != d->currentCaptureCard || playCard != d->currentPlayCard) {
 			d->forceStreamsReconstruction = true;
+			//Ideally this should use the same logic as video (See video_stream_change_camera)
+			//I.E. reconstruct only ms2 graphs without destroying the streams.
+			//For now, we just stop and restart audio stream with new playback/capture card
+			d->updateStreams(d->resultDesc, d->state);
 		}
 
 	#ifdef VIDEO_ENABLED

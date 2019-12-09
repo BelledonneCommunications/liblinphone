@@ -363,16 +363,20 @@ static void auth_failure(SalOp *op, SalAuthInfo* info) {
 	LinphoneAuthInfo *ai = NULL;
 
 	if (info != NULL) {
-		ai = (LinphoneAuthInfo*)_linphone_core_find_auth_info(lc, info->realm, info->username, info->domain, TRUE);
+		ai = (LinphoneAuthInfo*)_linphone_core_find_auth_info(lc, info->realm, info->username, info->domain, info->algorithm, TRUE);
 		if (ai){
 			LinphoneAuthMethod method = info->mode == SalAuthModeHttpDigest ? LinphoneAuthHttpDigest : LinphoneAuthTls;
 			LinphoneAuthInfo *auth_info = linphone_core_create_auth_info(lc, info->username, NULL, NULL, NULL, info->realm, info->domain);
 			ms_message("%s/%s/%s/%s authentication fails.", info->realm, info->username, info->domain, info->mode == SalAuthModeHttpDigest ? "HttpDigest" : "Tls");
-			/*ask again for password if auth info was already supplied but apparently not working*/
-			linphone_core_notify_authentication_requested(lc, auth_info, method);
+			if (method == LinphoneAuthHttpDigest){
+				/*ask again for password if auth info was already supplied but apparently not working*/
+				L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack().pushAuthRequested(AuthInfo::toCpp(ai)->getSharedFromThis());
+			}else{
+				linphone_core_notify_authentication_requested(lc, auth_info, method);
+				// Deprecated
+				linphone_core_notify_auth_info_requested(lc, info->realm, info->username, info->domain);
+			}
 			linphone_auth_info_unref(auth_info);
-			// Deprecated
-			linphone_core_notify_auth_info_requested(lc, info->realm, info->username, info->domain);
 		}
 	}
 }
@@ -402,8 +406,11 @@ static void register_failure(SalOp *op){
 	if ((ei->reason == SalReasonServiceUnavailable || ei->reason == SalReasonIOError)
 			&& linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk) {
 		linphone_proxy_config_set_state(cfg,LinphoneRegistrationProgress,"Service unavailable, retrying");
+	} else if (ei->protocol_code == 401 || ei->protocol_code == 407){
+		/* Do nothing. There will be an auth_requested() callback. If the callback doesn't provide an AuthInfo, then
+		 * the proxy config will transition to the failed state.*/
 	} else {
-		linphone_proxy_config_set_state(cfg,LinphoneRegistrationFailed,details);
+		linphone_proxy_config_set_state(cfg,LinphoneRegistrationFailed, details);
 	}
 	if (cfg->presence_publish_event){
 		/*prevent publish to be sent now until registration gets successful*/
@@ -545,26 +552,21 @@ static bool_t fill_auth_info(LinphoneCore *lc, SalAuthInfo* sai) {
 	if (sai->mode == SalAuthModeTls) {
 		ai = (LinphoneAuthInfo*)_linphone_core_find_tls_auth_info(lc);
 	} else {
-		ai = (LinphoneAuthInfo*)_linphone_core_find_auth_info(lc,sai->realm,sai->username,sai->domain, FALSE);
+		ai = (LinphoneAuthInfo*)_linphone_core_find_auth_info(lc,sai->realm,sai->username,sai->domain, sai->algorithm, FALSE);
 	}
 	if (ai) {
 		if (sai->mode == SalAuthModeHttpDigest) {
-			/*
-			 * Compare algorithm of server(sai) with algorithm of client(ai), if they are not correspondant,
-			 * exit. The default algorithm is MD5 if it's NULL.
-			 */
-			if (sai->algorithm && linphone_auth_info_get_algorithm(ai)) {
-				if (strcasecmp(linphone_auth_info_get_algorithm(ai), sai->algorithm))
-				return TRUE;
-			} else if (
-				(linphone_auth_info_get_algorithm(ai) && strcasecmp(linphone_auth_info_get_algorithm(ai), "MD5")) ||
-				(sai->algorithm && strcasecmp(sai->algorithm, "MD5"))
-			)
-				return TRUE;
-
 			sai->userid = ms_strdup(linphone_auth_info_get_userid(ai) ? linphone_auth_info_get_userid(ai) : linphone_auth_info_get_username(ai));
 			sai->password = linphone_auth_info_get_passwd(ai)?ms_strdup(linphone_auth_info_get_passwd(ai)) : NULL;
 			sai->ha1 = linphone_auth_info_get_ha1(ai) ? ms_strdup(linphone_auth_info_get_ha1(ai)) : NULL;
+			
+
+			AuthStack & as = L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack();
+			/* We have to construct the auth info as it was originally requested in auth_requested() below,
+			 * so that the matching is made correctly.
+			 */
+			as.authFound(AuthInfo::create(sai->username, "", "", "", sai->realm, sai->domain));
+
 		} else if (sai->mode == SalAuthModeTls) {
 			if (linphone_auth_info_get_tls_cert(ai) && linphone_auth_info_get_tls_key(ai)) {
 				sal_certificates_chain_parse(sai, linphone_auth_info_get_tls_cert(ai), SAL_CERTIFICATE_RAW_FORMAT_PEM);
@@ -577,9 +579,10 @@ static bool_t fill_auth_info(LinphoneCore *lc, SalAuthInfo* sai) {
 			}
 		}
 
-		if (sai->realm && !linphone_auth_info_get_realm(ai)){
+		if (sai->realm && (!linphone_auth_info_get_realm(ai) || !linphone_auth_info_get_algorithm(ai))) {
 			/*if realm was not known, then set it so that ha1 may eventually be calculated and clear text password dropped*/
 			linphone_auth_info_set_realm(ai, sai->realm);
+			linphone_auth_info_set_algorithm(ai, sai->algorithm);
 			linphone_core_write_auth_info(lc, ai);
 		}
 		return TRUE;
@@ -597,10 +600,17 @@ static bool_t auth_requested(Sal* sal, SalAuthInfo* sai) {
 	} else {
 		LinphoneAuthMethod method = sai->mode == SalAuthModeHttpDigest ? LinphoneAuthHttpDigest : LinphoneAuthTls;
 		LinphoneAuthInfo *ai = linphone_core_create_auth_info(lc, sai->username, NULL, NULL, NULL, sai->realm, sai->domain);
-		linphone_core_notify_authentication_requested(lc, ai, method);
+		
+		if (method == LinphoneAuthHttpDigest){
+			/* Request app for new authentication information, but later. */
+			L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack().pushAuthRequested(AuthInfo::toCpp(ai)->getSharedFromThis());
+		}else{
+			linphone_core_notify_authentication_requested(lc, ai, method);
+			// Deprecated callback
+			linphone_core_notify_auth_info_requested(lc, sai->realm, sai->username, sai->domain);
+		}
 		linphone_auth_info_unref(ai);
-		// Deprecated
-		linphone_core_notify_auth_info_requested(lc, sai->realm, sai->username, sai->domain);
+		
 		if (fill_auth_info(lc, sai)) {
 			return TRUE;
 		}
@@ -671,6 +681,7 @@ static void info_received(SalOp *op, SalBodyHandler *body_handler) {
 
 static void subscribe_response(SalOp *op, SalSubscribeStatus status, int will_retry){
 	LinphoneEvent *lev=(LinphoneEvent*)op->getUserPointer();
+	LinphoneCore *lc=(LinphoneCore *)op->getSal()->getUserPointer();
 
 	if (lev==NULL) return;
 
@@ -679,7 +690,7 @@ static void subscribe_response(SalOp *op, SalSubscribeStatus status, int will_re
 	}else if (status==SalSubscribePending){
 		linphone_event_set_state(lev,LinphoneSubscriptionPending);
 	}else{
-		if (will_retry){
+		if (will_retry && linphone_core_get_global_state(lc) != LinphoneGlobalShutdown ){
 			linphone_event_set_state(lev,LinphoneSubscriptionOutgoingProgress);
 		}
 		else linphone_event_set_state(lev,LinphoneSubscriptionError);

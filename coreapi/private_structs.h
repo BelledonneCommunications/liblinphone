@@ -179,6 +179,7 @@ struct _LinphoneFriend{
 	LinphoneFriendList *friend_list;
 	LinphoneSubscriptionState out_sub_state;
 	int capabilities;
+	int rc_index;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriend);
@@ -515,6 +516,7 @@ struct _LinphoneXmlRpcArg {
 	union {
 		int i;
 		char *s;
+		bctbx_map_t *m;
 	} data;
 };
 
@@ -538,6 +540,7 @@ struct _LinphoneXmlRpcRequest {
 	LinphoneXmlRpcStatus status;
 	struct _LinphoneXmlRpcArg response;
 	LinphoneCore *core;
+	char *raw_response;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneXmlRpcRequest);

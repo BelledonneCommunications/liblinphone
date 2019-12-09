@@ -52,6 +52,7 @@ const char* test_domain="sipopen.example.org";
 const char* auth_domain="sip.example.org";
 const char* test_username="liblinphone_tester";
 const char* test_sha_username="liblinphone_sha_tester";
+const char* pure_sha256_user="pure_sha256_user";
 const char* test_password="secret";
 const char* test_route="sip2.linphone.org";
 const char *userhostsfile = "tester_hosts";
@@ -112,7 +113,7 @@ LinphoneAddress * create_linphone_address_for_algo(const char * domain, const ch
 
 static void auth_info_requested(LinphoneCore *lc, const char *realm, const char *username, const char *domain) {
 	stats* counters;
-	ms_message("Auth info requested  for user id [%s] at realm [%s]\n", username, realm);
+	ms_message("Auth info requested (deprecated callback) for user id [%s] at realm [%s]\n", username, realm);
 	counters = get_stats(lc);
 	counters->number_of_auth_info_requested++;
 }
@@ -461,6 +462,7 @@ void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, c
 	linphone_core_cbs_set_network_reachable(mgr->cbs, network_reachable);
 	linphone_core_cbs_set_dtmf_received(mgr->cbs, dtmf_received);
 	linphone_core_cbs_set_call_stats_updated(mgr->cbs, call_stats_updated);
+	linphone_core_cbs_set_global_state_changed(mgr->cbs, global_state_changed);
 
 	mgr->phone_alias = phone_alias ? ms_strdup(phone_alias) : NULL;
 
@@ -577,6 +579,7 @@ void linphone_core_manager_reinit(LinphoneCoreManager *mgr) {
 	if (mgr->lc) {
 		if (lp_config_get_string(linphone_core_get_config(mgr->lc), "misc", "uuid", NULL))
 			uuid = bctbx_strdup(lp_config_get_string(linphone_core_get_config(mgr->lc), "misc", "uuid", NULL));
+		linphone_core_set_network_reachable(mgr->lc, FALSE); // to avoid unregister
 		linphone_core_unref(mgr->lc);
 	}
 	linphone_core_manager_configure(mgr);
@@ -1619,6 +1622,29 @@ void file_transfer_received(LinphoneChatMessage *msg, const LinphoneContent* con
 	bc_free(receive_file);
 }
 
+void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message) {
+	stats *counters = get_stats(lc);
+	switch (gstate) {
+		case LinphoneGlobalOn:
+			counters->number_of_LinphoneGlobalOn++;
+			break;
+		case LinphoneGlobalReady:
+			counters->number_of_LinphoneGlobalReady++;
+			break;
+		case LinphoneGlobalOff:
+			counters->number_of_LinphoneGlobalOff++;
+			break;
+		case LinphoneGlobalStartup:
+			counters->number_of_LinphoneGlobalStartup++;
+			break;
+		case LinphoneGlobalShutdown:
+			counters->number_of_LinphoneGlobalShutdown++;
+			break;
+		case LinphoneGlobalConfiguring:
+			counters->number_of_LinphoneGlobalConfiguring++;
+			break;
+	}
+}
 void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManager* mgr ){
 	if( params->sdp_removal ){
 		sal_default_set_sdp_handling(linphone_core_get_sal(mgr->lc), SalOpSDPSimulateRemove);

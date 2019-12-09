@@ -41,6 +41,7 @@ static void init_linphone_account_creator_service(LinphoneCore *lc) {
 	linphone_account_creator_service_set_is_account_linked_cb(service, linphone_account_creator_is_account_linked_linphone);
 	linphone_account_creator_service_set_recover_account_cb(service, linphone_account_creator_recover_phone_account_linphone);
 	linphone_account_creator_service_set_update_account_cb(service, linphone_account_creator_update_password_linphone);
+	linphone_account_creator_service_set_login_linphone_account_cb(service, linphone_account_creator_login_linphone_account_linphone);
 	linphone_core_set_account_creator_service(lc, service);
 }
 
@@ -73,7 +74,7 @@ static void local_username_too_long(void) {
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
-		linphone_account_creator_set_username(creator, "usernametoolongforyou"),
+		linphone_account_creator_set_username(creator, "usernametoolongforyoutoobadmorelucknexttime"),
 		LinphoneAccountCreatorUsernameStatusTooLong,
 		LinphoneAccountCreatorUsernameStatus,
 		"%i");
@@ -299,6 +300,12 @@ static void local_country_code_invalid(void) {
 
 	BC_ASSERT_EQUAL(
 		linphone_account_creator_set_phone_number(creator, "0123", "")&LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode,
+		LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode,
+		LinphoneAccountCreatorPhoneNumberStatus,
+		"%i");
+
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_set_phone_number(creator, "0123", "+")&LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode,
 		LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode,
 		LinphoneAccountCreatorPhoneNumberStatus,
 		"%i");
@@ -1211,7 +1218,7 @@ static void server_activate_non_existent_account(void) {
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
 	linphone_account_creator_service_set_user_data(
 		linphone_account_creator_get_service(creator),
-		(void*)LinphoneAccountCreatorStatusAccountNotActivated);
+		(void*)LinphoneAccountCreatorStatusAccountNotExist);
 	linphone_account_creator_cbs_set_activate_account(cbs, account_creator_cb);
 	linphone_account_creator_service_set_activate_account_cb(
 		linphone_account_creator_get_service(creator),
@@ -2131,6 +2138,229 @@ static void server_update_account_password_arg_new_password_missing(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void login_linphone_account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char* resp) {
+	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
+	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)linphone_account_creator_service_get_user_data(
+		linphone_account_creator_get_service(creator));
+	BC_ASSERT_EQUAL(
+		status,
+		expected_status,
+		LinphoneAccountCreatorStatus,
+		"%i");
+
+	if (expected_status == LinphoneAccountCreatorStatusRequestOk) {
+		const char * expected_password = (const char *)belle_sip_object_data_get((belle_sip_object_t *)creator, "expected_ha1");
+		const char * expected_algorithm = (const char *)belle_sip_object_data_get((belle_sip_object_t *)creator, "expected_algorithm");
+		const char * response_password = linphone_account_creator_get_ha1(creator);
+		const char * response_algorithm = linphone_account_creator_get_algorithm(creator);
+		BC_ASSERT_STRING_EQUAL(response_password, expected_password);
+		BC_ASSERT_STRING_EQUAL(response_algorithm, expected_algorithm);
+	}
+	account_creator_set_cb_done(cbs);
+}
+
+static void server_recover_phone_account_doesnt_exists(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
+	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
+
+	linphone_account_creator_set_username(creator, "user_inexistant");
+	linphone_account_creator_set_activation_code(creator, "1666");
+	linphone_account_creator_set_algorithm(creator, "SHA-256");
+
+	linphone_account_creator_cbs_set_user_data(cbs, stats);
+	linphone_account_creator_cbs_set_login_linphone_account(cbs, login_linphone_account_creator_cb);
+	linphone_account_creator_service_set_user_data(
+		linphone_account_creator_get_service(creator),
+		(void*)LinphoneAccountCreatorStatusAccountNotExist);
+
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_login_linphone_account(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+
+	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
+	ms_free(stats);
+	linphone_account_creator_unref(creator);
+	linphone_core_manager_destroy(marie);
+}
+
+static void server_recover_phone_account_exists(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
+	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
+
+	linphone_account_creator_set_username(creator, "user_md5_only");
+	linphone_account_creator_set_domain(creator, "sip.example.org");
+	linphone_account_creator_set_activation_code(creator, "1666");
+	linphone_account_creator_set_algorithm(creator, "MD5");
+	belle_sip_object_data_set((belle_sip_object_t *)creator, "expected_ha1", ms_strdup("secret_md5"), ms_free);
+	belle_sip_object_data_set((belle_sip_object_t *)creator, "expected_algorithm", ms_strdup("MD5"), ms_free);
+
+	linphone_account_creator_cbs_set_user_data(cbs, stats);
+	linphone_account_creator_cbs_set_login_linphone_account(cbs, login_linphone_account_creator_cb);
+	linphone_account_creator_service_set_user_data(
+		linphone_account_creator_get_service(creator),
+		(void*)LinphoneAccountCreatorStatusRequestOk);
+
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_login_linphone_account(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+
+	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
+	ms_free(stats);
+	linphone_account_creator_unref(creator);
+
+	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	cbs = linphone_account_creator_get_callbacks(creator);
+	stats = new_linphone_account_creator_stats();
+
+	linphone_account_creator_set_username(creator, "user_sha256_only");
+	linphone_account_creator_set_domain(creator, "sip.example.org");
+	linphone_account_creator_set_activation_code(creator, "1666");
+	linphone_account_creator_set_algorithm(creator, "SHA-256");
+	belle_sip_object_data_set((belle_sip_object_t *)creator, "expected_ha1", ms_strdup("secret_sha256"), ms_free);
+	belle_sip_object_data_set((belle_sip_object_t *)creator, "expected_algorithm", ms_strdup("SHA-256"), ms_free);
+
+	linphone_account_creator_cbs_set_user_data(cbs, stats);
+	linphone_account_creator_cbs_set_login_linphone_account(cbs, login_linphone_account_creator_cb);
+	linphone_account_creator_service_set_user_data(
+		linphone_account_creator_get_service(creator),
+		(void*)LinphoneAccountCreatorStatusRequestOk);
+
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_login_linphone_account(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+
+	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
+	ms_free(stats);
+	linphone_account_creator_unref(creator);
+
+	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	cbs = linphone_account_creator_get_callbacks(creator);
+	stats = new_linphone_account_creator_stats();
+
+	linphone_account_creator_set_username(creator, "user_sha256_only");
+	linphone_account_creator_set_domain(creator, "sip.example.org");
+	linphone_account_creator_set_activation_code(creator, "1666");
+	linphone_account_creator_set_algorithm(creator, "MD5");
+	belle_sip_object_data_set((belle_sip_object_t *)creator, "expected_ha1", ms_strdup("secret_sha256"), ms_free);
+	belle_sip_object_data_set((belle_sip_object_t *)creator, "expected_algorithm", ms_strdup("SHA-256"), ms_free);
+
+	linphone_account_creator_cbs_set_user_data(cbs, stats);
+	linphone_account_creator_cbs_set_login_linphone_account(cbs, login_linphone_account_creator_cb);
+	linphone_account_creator_service_set_user_data(
+		linphone_account_creator_get_service(creator),
+		(void*)LinphoneAccountCreatorStatusRequestOk);
+
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_login_linphone_account(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+
+	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
+	ms_free(stats);
+	linphone_account_creator_unref(creator);
+
+	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	cbs = linphone_account_creator_get_callbacks(creator);
+	stats = new_linphone_account_creator_stats();
+
+	linphone_account_creator_set_username(creator, "user_md5_only");
+	linphone_account_creator_set_domain(creator, "sip.example.org");
+	linphone_account_creator_set_activation_code(creator, "1666");
+	linphone_account_creator_set_algorithm(creator, "SHA-256");
+	belle_sip_object_data_set((belle_sip_object_t *)creator, "expected_ha1", ms_strdup("secret_md5"), ms_free);
+	belle_sip_object_data_set((belle_sip_object_t *)creator, "expected_algorithm", ms_strdup("MD5"), ms_free);
+
+	linphone_account_creator_cbs_set_user_data(cbs, stats);
+	linphone_account_creator_cbs_set_login_linphone_account(cbs, login_linphone_account_creator_cb);
+	linphone_account_creator_service_set_user_data(
+		linphone_account_creator_get_service(creator),
+		(void*)LinphoneAccountCreatorStatusRequestOk);
+
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_login_linphone_account(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+
+	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
+	ms_free(stats);
+	linphone_account_creator_unref(creator);
+
+	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	cbs = linphone_account_creator_get_callbacks(creator);
+	stats = new_linphone_account_creator_stats();
+
+	linphone_account_creator_set_username(creator, "user_both_md5_sha256");
+	linphone_account_creator_set_domain(creator, "sip.example.org");
+	linphone_account_creator_set_activation_code(creator, "1666");
+	linphone_account_creator_set_algorithm(creator, "MD5");
+	belle_sip_object_data_set((belle_sip_object_t *)creator, "expected_ha1", ms_strdup("secret_md5"), ms_free);
+	belle_sip_object_data_set((belle_sip_object_t *)creator, "expected_algorithm", ms_strdup("MD5"), ms_free);
+
+	linphone_account_creator_cbs_set_user_data(cbs, stats);
+	linphone_account_creator_cbs_set_login_linphone_account(cbs, login_linphone_account_creator_cb);
+	linphone_account_creator_service_set_user_data(
+		linphone_account_creator_get_service(creator),
+		(void*)LinphoneAccountCreatorStatusRequestOk);
+
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_login_linphone_account(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+
+	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
+	ms_free(stats);
+	linphone_account_creator_unref(creator);
+
+	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	cbs = linphone_account_creator_get_callbacks(creator);
+	stats = new_linphone_account_creator_stats();
+
+	linphone_account_creator_set_username(creator, "user_both_md5_sha256");
+	linphone_account_creator_set_domain(creator, "sip.example.org");
+	linphone_account_creator_set_activation_code(creator, "1666");
+	linphone_account_creator_set_algorithm(creator, "SHA-256");
+	belle_sip_object_data_set((belle_sip_object_t *)creator, "expected_ha1", ms_strdup("secret_sha256"), ms_free);
+	belle_sip_object_data_set((belle_sip_object_t *)creator, "expected_algorithm", ms_strdup("SHA-256"), ms_free);
+
+	linphone_account_creator_cbs_set_user_data(cbs, stats);
+	linphone_account_creator_cbs_set_login_linphone_account(cbs, login_linphone_account_creator_cb);
+	linphone_account_creator_service_set_user_data(
+		linphone_account_creator_get_service(creator),
+		(void*)LinphoneAccountCreatorStatusRequestOk);
+
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_login_linphone_account(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+
+	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
+	ms_free(stats);
+	linphone_account_creator_unref(creator);
+
+	linphone_core_manager_destroy(marie);
+}
+
 /****************** End Update Account ************************/
 
 test_t account_creator_tests[] = {
@@ -2398,6 +2628,14 @@ test_t account_creator_tests[] = {
 	TEST_ONE_TAG(
 		"Server - Recover account with phone number used",
 		server_recover_account_with_phone_number_used,
+		"Server"),
+	TEST_ONE_TAG(
+		"Server - Recover account password and algorithm from confirmation key when doesnt exists",
+		server_recover_phone_account_doesnt_exists,
+		"Server"),
+	TEST_ONE_TAG(
+		"Server - Recover account password and algorithm from confirmation key",
+		server_recover_phone_account_exists,
 		"Server"),
 };
 

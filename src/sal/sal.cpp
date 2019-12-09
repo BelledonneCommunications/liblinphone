@@ -755,6 +755,7 @@ void Sal::addPendingAuth (SalOp *op) {
 	if (it == mPendingAuths.cend()) {
 		mPendingAuths.push_back(op);
 		op->mHasAuthPending = true;
+		lInfo() << "Op " << op << " added as pending authentication";
 	}
 }
 
@@ -762,6 +763,7 @@ void Sal::removePendingAuth (SalOp *op) {
 	if (op->mHasAuthPending) {
 		op->mHasAuthPending = false;
 		mPendingAuths.remove(op);
+		lInfo() << "Op " << op << " removed as pending authentication";
 	}
 }
 
@@ -958,6 +960,10 @@ LINPHONE_PUBLIC void sal_set_dns_timeout (Sal* sal, int timeout) {
 
 LINPHONE_PUBLIC void sal_set_dns_user_hosts_file (Sal *sal, const char *hostsFile) {
 	sal->setDnsUserHostsFile(hostsFile);
+}
+
+LINPHONE_PUBLIC const char* sal_get_dns_user_hosts_file (const Sal *sal) {
+	return sal->getDnsUserHostsFile().c_str();
 }
 
 LINPHONE_PUBLIC void *sal_get_stack_impl (Sal *sal) {

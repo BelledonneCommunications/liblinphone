@@ -287,6 +287,8 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 
 	char *email = bctbx_strdup_printf("%s@%s", username, domain);
 
+	const char *algorithm = linphone_config_get_string(linphone_core_get_config(linphone_proxy_config_get_core(cfg)), "assistant", "algorithm", NULL);
+
 	AccountCreatorState state = {0};
 
 	// create account
@@ -296,6 +298,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	linphone_account_creator_set_domain(creator, domain);
 	linphone_account_creator_set_email(creator, email);
 	linphone_account_creator_set_user_data(creator, &state);
+	linphone_account_creator_set_algorithm(creator, algorithm);
 
 	if (account->phone_alias) {
 		LinphoneAccountCreatorPhoneNumberStatusMask err = 0;
@@ -319,7 +322,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	if (wait_for_until(lc, NULL, &state.account_created, TRUE, 15000) == FALSE)
 		ms_fatal("Could not create account %s on db", linphone_proxy_config_get_identity(cfg));
 
-	LinphoneAuthInfo *ai = linphone_auth_info_new(username, NULL, password, NULL, domain, domain);
+	LinphoneAuthInfo *ai = linphone_auth_info_new_for_algorithm(username, NULL, password, NULL, domain, domain, algorithm);
 	linphone_core_add_auth_info(lc, ai);
 	linphone_auth_info_unref(ai);
 

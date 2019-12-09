@@ -32,7 +32,7 @@ if(ENABLE_ADVANCED_IM)
 endif()
 #interface_libs is used in export cmake config file
 if(APPLE)
-	list(APPEND INTERFACE_LIBS "-framework CFNetwork -framework Foundation -framework AVFoundation -framework SystemConfiguration")
+	list(APPEND INTERFACE_LIBS "-framework CFNetwork -framework Foundation -framework AVFoundation -framework SystemConfiguration -framework CoreLocation")
 endif()
 set(INTERFACE_LIBS ${LINK_LIBS} xml2 xsd)
 
@@ -99,6 +99,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	address/identity-address.h
 	address/identity-address-parser.h
 	auth-info/auth-info.h
+	auth-info/auth-stack.h
 	c-wrapper/c-wrapper.h
 	c-wrapper/internal/c-sal.h
 	c-wrapper/internal/c-tools.h
@@ -293,6 +294,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
 	auth-info/auth-info.cpp
+	auth-info/auth-stack.cpp
 	call/call.cpp
 	call/local-conference-call.cpp
 	call/remote-conference-call.cpp
@@ -478,7 +480,7 @@ if(ENABLE_STATIC)
 	target_link_libraries(linphone-static PRIVATE ${LINK_LIBS})
 
 	if(APPLE)
-		target_link_libraries(linphone-static PUBLIC "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration -framework CFNetwork")
+		target_link_libraries(linphone-static PUBLIC "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration -framework CFNetwork -framework CoreLocation")
 	endif()
 	install(TARGETS linphone-static EXPORT ${EXPORT_TARGETS_NAME}Targets
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -536,7 +538,7 @@ if(ENABLE_SHARED)
 	target_link_libraries(linphone PRIVATE ${LINK_LIBS})
 
 	if(APPLE)
-		target_link_libraries(linphone PUBLIC "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration -framework CFNetwork")
+		target_link_libraries(linphone PUBLIC "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration -framework CFNetwork -framework CoreLocation")
 	endif()
 	if(WIN32)
 		# Export Xerces and Soci symbols.

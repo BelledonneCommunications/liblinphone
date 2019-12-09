@@ -8,15 +8,15 @@ composing_idle_timeout=1
 store_ha1_passwd=0 #used for sipp
 
 [auth_info_0]
-username=marie
-userid=marie
+username=marie laroueverte
+userid=marie laroueverte
 passwd=secret
 realm=sip.example.org
 
 [proxy_0]
 reg_proxy=<sip:sip.example.org;transport=tcp>
 reg_route=<sip:sip.example.org;transport=tcp>
-reg_identity="Super Marie" <sip:marie@sip.example.org>
+reg_identity="Super Marie" <sip:marie%20laroueverte@sip.example.org>
 reg_expires=3600
 reg_sendregister=1
 publish=0

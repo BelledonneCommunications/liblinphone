@@ -483,6 +483,14 @@ void linphone_core_cbs_set_chat_room_state_changed (LinphoneCoreCbs *cbs, Linpho
 	cbs->vtable->chat_room_state_changed = cb;
 }
 
+LinphoneCoreCbsChatRoomSubjectChangedCb linphone_core_cbs_get_chat_room_subject_changed (LinphoneCoreCbs *cbs) {
+	return cbs->vtable->chat_room_subject_changed;
+}
+
+void linphone_core_cbs_set_chat_room_subject_changed (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomSubjectChangedCb cb) {
+	cbs->vtable->chat_room_subject_changed = cb;
+}
+
 LinphoneCoreCbsQrcodeFoundCb linphone_core_cbs_get_qrcode_found(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->qrcode_found;
 }
@@ -800,6 +808,12 @@ static int log_collection_upload_on_send_body(belle_sip_user_body_handler_t *bh,
 #else
 		FILE *log_file = fopen(log_filename, "r");
 #endif
+		if (!log_file) {
+			ms_error("Couldn't open log file [%s], errno [%s], aborting log upload", log_filename, strerror(errno));
+			*size=0;
+			return BELLE_SIP_STOP;
+		}
+
 		if (fseek(log_file, (long)offset, SEEK_SET)) {
 			ms_error("Cannot seek file [%s] at position [%lu] errno [%s]",log_filename,(unsigned long)offset,strerror(errno));
 
@@ -1005,6 +1019,16 @@ void linphone_core_upload_log_collection(LinphoneCore *core) {
 		belle_http_request_t *req;
 		char *name;
 
+		uri = belle_generic_uri_parse(linphone_core_get_log_collection_upload_server_url(core));
+		if (uri == NULL || !belle_generic_uri_get_host(uri)) {
+			ms_error("Invalid log upload server URL: %s", linphone_core_get_log_collection_upload_server_url(core));
+			linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateNotDelivered, "Invalid log upload server URL");
+			if (uri) {
+				belle_sip_object_unref(uri);
+			}
+			return;
+		}
+
 		core->log_collection_upload_information = linphone_core_create_content(core);
 #ifdef HAVE_ZLIB
 		linphone_content_set_type(core->log_collection_upload_information, "application");
@@ -1022,10 +1046,13 @@ void linphone_core_upload_log_collection(LinphoneCore *core) {
 			core->log_collection_upload_information = NULL;
 			ms_error("prepare_log_collection_file_to_upload(): error.");
 			linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateNotDelivered, "Error while preparing log collection upload");
+
+			if (uri) {
+				belle_sip_object_unref(uri);
+			}
 			return;
 		}
 		linphone_content_set_size(core->log_collection_upload_information, get_size_of_file_to_upload(name));
-		uri = belle_generic_uri_parse(linphone_core_get_log_collection_upload_server_url(core));
 		req = belle_http_request_create("POST", uri, NULL, NULL, NULL);
 		cbs.process_response = process_response_from_post_file_log_collection;
 		cbs.process_io_error = process_io_error_upload_log_collection;
@@ -2388,6 +2415,7 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	service->is_account_linked_request_cb = linphone_account_creator_is_account_linked_linphone;
 	service->recover_account_request_cb = linphone_account_creator_recover_phone_account_linphone;
 	service->update_account_request_cb = linphone_account_creator_update_password_linphone;
+	service->login_linphone_account_request_cb = linphone_account_creator_login_linphone_account_linphone;
 	linphone_core_set_account_creator_service(lc, service);
 }
 
@@ -3678,15 +3706,17 @@ static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const Lin
 		proxy_routes_iterator = bctbx_list_next(proxy_routes_iterator);
 	}
 	if (srv_route){
-		ret=bctbx_list_append(ret,sal_address_clone(L_GET_PRIVATE_FROM_C_OBJECT(srv_route)->getInternalAddress()));
+		ret = bctbx_list_append(ret, sal_address_clone(L_GET_PRIVATE_FROM_C_OBJECT(srv_route)->getInternalAddress()));
 	}
-	if (ret==NULL){
+	if (ret == NULL) {
 		/*if the proxy address matches the domain part of the destination, then use the same transport
 		 * as the one used for registration. This is done by forcing a route to this proxy.*/
-		SalAddress *proxy_addr=sal_address_new(linphone_proxy_config_get_addr(proxy));
-		if (strcmp(sal_address_get_domain(proxy_addr),linphone_address_get_domain(dest))==0){
-			ret=bctbx_list_append(ret,proxy_addr);
-		}else sal_address_unref(proxy_addr);
+		SalAddress *proxy_addr = sal_address_new(linphone_proxy_config_get_addr(proxy));
+		const char *proxy_addr_domain = sal_address_get_domain(proxy_addr);
+		const char *linphone_addr_domain = linphone_address_get_domain(dest);
+		if (proxy_addr_domain && linphone_addr_domain && strcmp(proxy_addr_domain, linphone_addr_domain) == 0) {
+			ret = bctbx_list_append(ret,proxy_addr);
+		} else sal_address_unref(proxy_addr);
 	}
 	return ret;
 }
@@ -3728,6 +3758,10 @@ LinphoneProxyConfig * linphone_core_lookup_known_proxy(LinphoneCore *lc, const L
 	LinphoneProxyConfig *found_noreg_cfg=NULL;
 	LinphoneProxyConfig *default_cfg=lc->default_proxy;
 
+	if (!uri) {
+		ms_error("Cannot look for proxy for NULL uri, returning default");
+		return default_cfg;
+	}
 	if (linphone_address_get_domain(uri) == NULL) {
 		ms_message("Cannot look for proxy for uri [%p] that has no domain set, returning default", uri);
 		return default_cfg;

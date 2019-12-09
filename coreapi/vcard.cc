@@ -265,7 +265,9 @@ void linphone_vcard_add_sip_address(LinphoneVcard *vCard, const char *sip_addres
 
 	shared_ptr<belcard::BelCardImpp> impp = belcard::BelCardGeneric::create<belcard::BelCardImpp>();
 	impp->setValue(sip_address);
-	vCard->belCard->addImpp(impp);
+	if (!vCard->belCard->addImpp(impp)) {
+		ms_error("Couldn't add IMPP value %s to vCard [%p]", sip_address, vCard);
+	}
 }
 
 void linphone_vcard_remove_sip_address(LinphoneVcard *vCard, const char *sip_address) {
@@ -289,7 +291,9 @@ void linphone_vcard_edit_main_sip_address(LinphoneVcard *vCard, const char *sip_
 	} else {
 		shared_ptr<belcard::BelCardImpp> impp = belcard::BelCardGeneric::create<belcard::BelCardImpp>();
 		impp->setValue(sip_address);
-		vCard->belCard->addImpp(impp);
+		if (!vCard->belCard->addImpp(impp)) {
+			ms_error("Couldn't add IMPP value %s to vCard [%p]", sip_address, vCard);
+		}
 	}
 }
 

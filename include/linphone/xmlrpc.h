@@ -22,6 +22,7 @@
 
 
 #include "linphone/types.h"
+#include <bctoolbox/map.h>
 
 
 #ifdef __cplusplus
@@ -139,6 +140,21 @@ LINPHONE_PUBLIC int linphone_xml_rpc_request_get_int_response(const LinphoneXmlR
 * @return The string response to the XML-RPC request.
 **/
 LINPHONE_PUBLIC const char * linphone_xml_rpc_request_get_string_response(const LinphoneXmlRpcRequest *request);
+
+/**
+ * Get the raw response to an XML-RPC request sent with linphone_xml_rpc_session_send_request() and returning http body as string.
+ * @param[in] request LinphoneXmlRpcRequest object.
+ * @return The string response to the XML-RPC request.
+ **/
+LINPHONE_PUBLIC const char * linphone_xml_rpc_request_get_raw_response(const LinphoneXmlRpcRequest *request);
+	
+/**
+* Get the response to an XML-RPC request sent with linphone_xml_rpc_session_send_request() and returning a struct response.
+* @param[in] request LinphoneXmlRpcRequest object.
+* @return The struct response to the XML-RPC request.
+* @donotwrap
+**/
+const bctbx_map_t* linphone_xml_rpc_request_get_string_struct_response(const LinphoneXmlRpcRequest *request);
 
 /**
  * Create a new #LinphoneXmlRpcSession object.

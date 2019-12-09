@@ -194,6 +194,14 @@ belle_sip_main_loop_t *CorePrivate::getMainLoop(){
 	return belle_sip_stack_get_main_loop(static_cast<belle_sip_stack_t*>(q->getCCore()->sal->getStackImpl()));
 }
 
+Sal * CorePrivate::getSal(){
+	return getPublic()->getCCore()->sal;
+}
+
+LinphoneCore *CorePrivate::getCCore(){
+	return getPublic()->getCCore();
+}
+
 void CorePrivate::doLater(const std::function<void ()> &something){
 	belle_sip_main_loop_cpp_do_later(getMainLoop(), something);
 }
@@ -212,6 +220,9 @@ void CorePrivate::enableFriendListsSubscription(bool enable) {
 bool CorePrivate::basicToFlexisipChatroomMigrationEnabled()const{
 	L_Q();
 	return linphone_config_get_bool(linphone_core_get_config(q->getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE);
+}
+
+CorePrivate::CorePrivate() : authStack(*this){
 }
 
 

@@ -104,13 +104,7 @@ Address::Address (const IdentityAddress &identityAddress) : ClonableObject(*new 
 	if (domain.empty())
 		return;
 
-	string uri = identityAddress.getScheme() + ":" + username + "@" + (
-		domain.find(':') != string::npos ? "[" + domain + "]" : domain
-	);
-
-	if (identityAddress.hasGruu())
-		uri += ";gr=" + identityAddress.getGruu();
-
+	string uri = identityAddress.asString();
 	d->internalAddress = getSalAddressFromCache(uri);
 }
 

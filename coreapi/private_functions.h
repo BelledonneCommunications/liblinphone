@@ -126,7 +126,8 @@ LINPHONE_PUBLIC void linphone_call_params_set_no_user_consent(LinphoneCallParams
 void _linphone_core_uninit(LinphoneCore *lc);
 void linphone_core_write_auth_info(LinphoneCore *lc, LinphoneAuthInfo *ai);
 const LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc);
-const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc, const char *realm, const char *username, const char *domain, bool_t ignore_realm);
+const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc, const char *realm, const char *username, const char *domain, const char *algorithm, bool_t ignore_realm);
+void linphone_auth_info_fill_belle_sip_event(const LinphoneAuthInfo *auth_info, belle_sip_auth_event *event);
 
 void linphone_core_update_proxy_register(LinphoneCore *lc);
 const char *linphone_core_get_nat_address_resolved(LinphoneCore *lc);
@@ -264,7 +265,6 @@ LINPHONE_PUBLIC bool_t _linphone_call_stats_rtcp_received_via_mux (const Linphon
 bool_t linphone_core_media_description_contains_video_stream(const SalMediaDescription *md);
 
 void linphone_core_send_initial_subscribes(LinphoneCore *lc);
-LinphoneFriend * linphone_friend_new_from_config_file(struct _LinphoneCore *lc, int index);
 
 void linphone_proxy_config_update(LinphoneProxyConfig *cfg);
 LinphoneProxyConfig * linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri);
@@ -456,6 +456,8 @@ void linphone_nat_policy_save_to_config(const LinphoneNatPolicy *policy);
 
 void linphone_core_create_im_notif_policy(LinphoneCore *lc);
 
+LINPHONE_PUBLIC LinphoneFriend * linphone_friend_new_from_config_file(LinphoneCore *lc, int index);
+LINPHONE_PUBLIC int linphone_friend_get_rc_index(const LinphoneFriend *lf);
 
 /*****************************************************************************
  * REMOTE PROVISIONING FUNCTIONS                                             *
@@ -562,6 +564,7 @@ void linphone_core_notify_friend_list_removed(LinphoneCore *lc, LinphoneFriendLi
 void linphone_core_notify_call_created(LinphoneCore *lc, LinphoneCall *call);
 void linphone_core_notify_version_update_check_result_received(LinphoneCore *lc, LinphoneVersionUpdateCheckResult result, const char *version, const char *url);
 void linphone_core_notify_chat_room_state_changed (LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatRoomState state);
+void linphone_core_notify_chat_room_subject_changed (LinphoneCore *lc, LinphoneChatRoom *cr);
 void linphone_core_notify_qrcode_found(LinphoneCore *lc, const char *result);
 void linphone_core_notify_ec_calibration_result(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay_ms);
 void linphone_core_notify_ec_calibration_audio_init(LinphoneCore *lc);

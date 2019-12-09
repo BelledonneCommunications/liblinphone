@@ -362,8 +362,9 @@ LINPHONE_PUBLIC void linphone_chat_room_add_participant (LinphoneChatRoom *cr, c
  * Use linphone_chat_room_can_handle_participants() to know if this chat room handles participants.
  * @param[in] cr A #LinphoneChatRoom object
  * @param[in] addresses \bctbx_list{LinphoneAddress}
+ * @return True if everything is OK, False otherwise
  */
-LINPHONE_PUBLIC void linphone_chat_room_add_participants (LinphoneChatRoom *cr, const bctbx_list_t *addresses);
+LINPHONE_PUBLIC bool_t linphone_chat_room_add_participants (LinphoneChatRoom *cr, const bctbx_list_t *addresses);
 
 /**
  * Tells whether a chat room is able to handle participants.

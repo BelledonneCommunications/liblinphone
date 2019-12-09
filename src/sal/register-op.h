@@ -34,8 +34,10 @@ public:
 	}
 	int unregister() { return refreshRegister(0); }
 
-	void authenticate (const SalAuthInfo *info) override { 
-        refreshRegister(-1); }
+	void authenticate (const SalAuthInfo *info) override {
+		mRoot->removePendingAuth(this);
+		refreshRegister(-1);
+	}
 
 private:
 	void fillCallbacks () override {};

@@ -184,6 +184,7 @@ typedef enum _LinphoneAccountCreatorStatus {
 	LinphoneAccountCreatorStatusWrongActivationCode, /**< Error key doesn't match */
 	LinphoneAccountCreatorStatusPhoneNumberOverused, /**< Error too many SMS sent */
 	LinphoneAccountCreatorStatusAlgoNotSupported, /** < Error algo isn't MD5 or SHA-256 */
+	LinphoneAccountCreatorStatusUnexpectedError, /** < Generic error */
 } LinphoneAccountCreatorStatus;
 
 /**
@@ -1163,7 +1164,8 @@ typedef enum _LinphoneWaitingState {
 typedef enum _LinphoneXmlRpcArgType {
 	LinphoneXmlRpcArgNone,
 	LinphoneXmlRpcArgInt,
-	LinphoneXmlRpcArgString
+	LinphoneXmlRpcArgString,
+	LinphoneXmlRpcArgStringStruct
 } LinphoneXmlRpcArgType;
 
 /**

@@ -138,6 +138,7 @@ extern const char* test_domain;
 extern const char* auth_domain;
 extern const char* test_username;
 extern const char* test_sha_username;
+extern const char* pure_sha256_user;
 extern const char* test_password;
 extern const char* test_route;
 extern const char* userhostsfile;
@@ -311,6 +312,7 @@ typedef struct _stats {
 	int number_of_participant_admin_statuses_changed;
 	int number_of_participants_removed;
 	int number_of_subject_changed;
+	int number_of_core_chat_room_subject_changed;
 	int number_of_participant_devices_added;
 	int number_of_participant_devices_removed;
 
@@ -320,6 +322,14 @@ typedef struct _stats {
 	int number_of_ManInTheMiddleDetected;
 
 	int number_of_snapshot_taken;
+	
+	int number_of_LinphoneGlobalOn;
+	int number_of_LinphoneGlobalReady;
+	int number_of_LinphoneGlobalOff;
+	int number_of_LinphoneGlobalShutdown;
+	int number_of_LinphoneGlobalStartup;
+	int number_of_LinphoneGlobalConfiguring;
+	
 }stats;
 
 
@@ -401,7 +411,8 @@ void linphone_configuration_status(LinphoneCore *lc, LinphoneConfiguringState st
 void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token);
 void dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf);
 void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *stats);
-
+void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
+	
 LinphoneAddress * create_linphone_address(const char * domain);
 LinphoneAddress * create_linphone_address_for_algo(const char * domain, const char * username);
 bool_t wait_for(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value);
