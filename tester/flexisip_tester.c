@@ -1076,6 +1076,13 @@ static void dos_module_trigger(void) {
 	BC_ASSERT_LOWER_STRICT(marie->stat.number_of_LinphoneMessageReceived, message_sent_index - message_rate, int, "%d");
 	
 	wait_for_until(marie->lc, pauline->lc, &dummy, 1, 65000); // Wait several seconds to ensure we are not banned anymore
+
+	/*
+	   We need to wait that all messages are received here to have the TCP session ready to send data. Indeed, as the
+	   destination was unreachable for a time, all not-sent messages have been queued locally waiting for retransmission.
+	   No data can be send until all retransmissions succeeds.
+	*/
+	BC_ASSERT(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageReceived, message_sent_index));
 	
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
