@@ -1082,7 +1082,7 @@ static void dos_module_trigger(void) {
 	   destination was unreachable for a time, all not-sent messages have been queued locally waiting for retransmission.
 	   No data can be send until all retransmissions succeeds.
 	*/
-	BC_ASSERT(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageReceived, message_sent_index));
+	wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageReceived, message_sent_index, 60000);
 	
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
