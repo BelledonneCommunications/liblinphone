@@ -20,6 +20,8 @@
 #
 ############################################################################
 
+cmake_minimum_required(VERSION 3.11) # we need CMake 3.11 for defining 'package_source' target as custom target
+
 if(NOT CPACK_PACKAGE_NAME)
 	set(CPACK_PACKAGE_NAME "liblinphone")
 endif()
