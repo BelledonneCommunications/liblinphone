@@ -20,7 +20,7 @@
 #
 ############################################################################
 
-cmake_minimum_required(VERSION 3.11) # we need CMake 3.11 for defining 'package_source' target as custom target
+cmake_minimum_required(VERSION 3.1)
 project(linphone VERSION 4.3.0 LANGUAGES C CXX)
 
 
@@ -66,6 +66,7 @@ option(ENABLE_UPDATE_CHECK "Enable update check." NO)
 option(ENABLE_VCARD "Turn on compilation of vcard4 support." YES)
 option(ENABLE_VIDEO "Build with video support." YES)
 option(ENABLE_ASSETS "Package sound assets." YES)
+option(ENABLE_PACKAGE_SOURCE "Create 'package_source' target for source archive making (CMake >= 3.11)" OFF)
 
 cmake_dependent_option(ENABLE_NOTIFY "Enable libnotify support." YES "ENABLE_GTK_UI;NOT APPLE" NO)
 cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
@@ -417,4 +418,7 @@ install(FILES
 	DESTINATION ${CONFIG_PACKAGE_LOCATION}
 )
 
-add_subdirectory(build)
+if (ENABLE_PACKAGE_SOURCE)
+	add_subdirectory(build)
+endif()
+
