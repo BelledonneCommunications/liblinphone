@@ -514,10 +514,12 @@ public class AndroidPlatformHelper {
 			public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
 				Log.i("[Platform Helper] Rendering surface texture destroyed");
 
-				if (mNativePtr != 0 && surface.equals(mVideoTextureView.getSurfaceTexture())) {
-					Log.i("[Platform Helper] Current rendering surface texture is no longer available");
-					mVideoTextureView = null;
-					setNativeVideoWindowId(mNativePtr, null);
+				if (mNativePtr != 0 && mVideoTextureView != null) {
+					if (surface.equals(mVideoTextureView.getSurfaceTexture()) {
+						Log.i("[Platform Helper] Current rendering surface texture is no longer available");
+						mVideoTextureView = null;
+						setNativeVideoWindowId(mNativePtr, null);
+					}
 				}
 
 				if (!DeviceUtils.isSurfaceTextureReleased(surface)) {
