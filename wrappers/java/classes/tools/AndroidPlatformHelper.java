@@ -515,7 +515,7 @@ public class AndroidPlatformHelper {
 				Log.i("[Platform Helper] Rendering surface texture destroyed");
 
 				if (mNativePtr != 0 && mVideoTextureView != null) {
-					if (surface.equals(mVideoTextureView.getSurfaceTexture()) {
+					if (surface.equals(mVideoTextureView.getSurfaceTexture())) {
 						Log.i("[Platform Helper] Current rendering surface texture is no longer available");
 						mVideoTextureView = null;
 						setNativeVideoWindowId(mNativePtr, null);
