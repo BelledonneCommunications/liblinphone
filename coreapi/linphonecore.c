@@ -1420,9 +1420,7 @@ static void sip_config_read(LinphoneCore *lc) {
 	int i,tmp;
 	int ipv6_default = TRUE;
 
-	if (lp_config_get_int(lc->config,"sip","use_session_timers",0)==1){
-		lc->sal->useSessionTimers(200);
-	}
+	lc->sal->useSessionTimers(lp_config_get_int(lc->config,"sip","session_expires_value",0));
 
 	lc->sal->useNoInitialRoute(!!lp_config_get_int(lc->config,"sip","use_no_initial_route",0));
 	lc->sal->useRport(!!lp_config_get_int(lc->config,"sip","use_rport",1));
@@ -7252,6 +7250,15 @@ void linphone_core_enable_sdp_200_ack(LinphoneCore *lc, bool_t enable) {
 
 bool_t linphone_core_sdp_200_ack_enabled(const LinphoneCore *lc) {
 	return lc->sip_conf.sdp_200_ack!=0;
+}
+
+void linphone_core_set_session_expires_value(const LinphoneCore *lc, int expires) {
+	lc->sal->useSessionTimers(expires);
+	lp_config_set_int(lc->config,"sip","session_expires_value",expires);
+}
+
+int linphone_core_get_session_expires_value(const LinphoneCore *lc) {
+	return lp_config_get_int(lc->config,"sip","session_expires_value",0);
 }
 
 void linphone_core_set_file_transfer_server(LinphoneCore *core, const char * server_url) {
