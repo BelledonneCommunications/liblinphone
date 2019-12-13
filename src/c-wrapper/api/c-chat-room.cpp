@@ -213,7 +213,7 @@ void linphone_chat_room_enable_ephemeral (LinphoneChatRoom *cr, bool_t ephem) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->enableEphemeral(ephem);
 }
 
-void linphone_chat_room_set_ephemeral_lifetime (LinphoneChatRoom *cr, double time) {
+void linphone_chat_room_set_ephemeral_lifetime (LinphoneChatRoom *cr, long time) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setEphemeralLifetime(time);
 }
 
@@ -531,6 +531,10 @@ void _linphone_chat_room_notify_ephemeral_message_timer_started(LinphoneChatRoom
 
 void _linphone_chat_room_notify_ephemeral_message_deleted(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
 	NOTIFY_IF_EXIST(EphemeralMessageDeleted, ephemeral_message_deleted, cr, eventLog)
+}
+
+void _linphone_chat_room_notify_ephemeral_lifetime_changed(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
+	NOTIFY_IF_EXIST(EphemeralLifetimeChanged, ephemeral_lifetime_changed, cr, eventLog)
 }
 
 void _linphone_chat_room_notify_undecryptable_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg) {

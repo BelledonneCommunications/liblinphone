@@ -620,9 +620,17 @@ void ChatRoom::enableEphemeral (bool ephem) {
 	}
 }
 
-void ChatRoom::setEphemeralLifetime (double time) {
+void ChatRoom::setEphemeralLifetime (long lifetime) {
 	L_D();
-	d->ephemeralLifetime = time;
+	lInfo() << "Trying to set new ephemeral lifetime " << lifetime << ", used to be " << d->ephemeralLifetime << ".";
+	if (lifetime == d->ephemeralLifetime) {
+		lWarning() << "Ephemeral lifetime will not be changed!";
+		return;
+	}
+	d->ephemeralLifetime = lifetime;
+	shared_ptr<ConferenceEphemeralLifetimeEvent> event = make_shared<ConferenceEphemeralLifetimeEvent>(time(nullptr),d->conferenceId,lifetime);
+	getCore()->getPrivate()->mainDb->addEvent(event);
+	_linphone_chat_room_notify_ephemeral_lifetime_changed(d->getCChatRoom(), L_GET_C_BACK_PTR(event));
 }
 
 LINPHONE_END_NAMESPACE

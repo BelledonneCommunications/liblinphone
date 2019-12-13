@@ -2925,6 +2925,8 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 		linphone_chat_room_enable_ephemeral(marieCr, TRUE);
 		linphone_chat_room_set_ephemeral_lifetime(marieCr, 60);
 		
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralLifetimeChanged, initialMarieStats.number_of_LinphoneChatRoomEphemeralLifetimeChanged+1, 3000));
+		
 		// Marie sends messages
 		for (int i=0; i<10; i++) {
 			message[i] = _send_message_ephemeral(marieCr, "Hello", TRUE);
@@ -2938,6 +2940,9 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 	LinphoneChatMessage *messagef[10];
 	linphone_chat_room_enable_ephemeral(marieCr, TRUE);
 	linphone_chat_room_set_ephemeral_lifetime(marieCr, 1);
+	
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralLifetimeChanged, initialMarieStats.number_of_LinphoneChatRoomEphemeralLifetimeChanged+1, 3000));
+	
 	// Marie sends messages
 	for (int i=0; i<10; i++) {
 		messagef[i] = _send_message_ephemeral(marieCr, "This is Marie", TRUE);
@@ -3002,6 +3007,10 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 		
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 1, int, "%d");
+		
+		// ConferenceCreated, ConferenceTerminated and ConferenceEphemera events
+		BC_ASSERT_EQUAL(linphone_chat_room_get_history_events_size(marieCr), 4, int, "%d");
+		BC_ASSERT_EQUAL(linphone_chat_room_get_history_events_size(paulineCr), 2, int, "%d");
 		
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralDeleted, initialMarieStats.number_of_LinphoneChatRoomEphemeralDeleted + 10, 3000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomEphemeralDeleted, initialPaulineStats.number_of_LinphoneChatRoomEphemeralDeleted + 10, 3000));

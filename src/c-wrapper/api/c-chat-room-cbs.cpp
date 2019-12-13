@@ -47,6 +47,7 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsShouldChatMessageBeStoredCb shouldMessageBeStoredCb;
 	LinphoneChatRoomCbsEphemeralMessageTimerStartedCb EphemeralMessageTimerStartedCb;
 	LinphoneChatRoomCbsEphemeralMessageDeletedCb ephemeralMessageDeletedCb;
+	LinphoneChatRoomCbsEphemeralLifetimeChangedCb ephemeralLifetimeChangedCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatRoomCbs);
@@ -217,6 +218,14 @@ LinphoneChatRoomCbsEphemeralMessageDeletedCb linphone_chat_room_cbs_get_ephemera
 
 void linphone_chat_room_cbs_set_ephemeral_message_deleted (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageDeletedCb cb) {
 	cbs->ephemeralMessageDeletedCb = cb;
+}
+
+LinphoneChatRoomCbsEphemeralLifetimeChangedCb linphone_chat_room_cbs_get_ephemeral_lifetime_changed (const LinphoneChatRoomCbs *cbs) {
+	return cbs->ephemeralLifetimeChangedCb;
+}
+
+void linphone_chat_room_cbs_set_ephemeral_lifetime_changed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralLifetimeChangedCb cb) {
+	cbs->ephemeralLifetimeChangedCb = cb;
 }
 
 LinphoneChatRoomCbsConferenceAddressGenerationCb linphone_chat_room_cbs_get_conference_address_generation (const LinphoneChatRoomCbs *cbs) {

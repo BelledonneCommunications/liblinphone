@@ -137,6 +137,15 @@ static void chat_room_security_event (LinphoneChatRoom *cr, const LinphoneEventL
 	}
 }
 
+static void chat_room_ephemera_event (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	LinphoneCore *core = linphone_chat_room_get_core(cr);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	long lifetime = linphone_event_log_get_ephemeral_lifetime(event_log);
+	if (lifetime > 0) {
+		manager->stat.number_of_LinphoneChatRoomEphemeralLifetimeChanged++;
+	}
+}
+
 static void chat_room_subject_changed (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
@@ -177,6 +186,8 @@ void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, Lin
 		linphone_chat_room_cbs_set_conference_joined(cbs, chat_room_conference_joined);
 		linphone_chat_room_cbs_set_ephemeral_message_timer_started(cbs, chat_room_message_ephemeral_started);
 		linphone_chat_room_cbs_set_ephemeral_message_deleted(cbs, chat_room_message_ephemeral_deleted);
+		linphone_chat_room_cbs_set_ephemeral_lifetime_changed(cbs, chat_room_ephemera_event);
+		
 		linphone_chat_room_add_callbacks(cr, cbs);
 		linphone_chat_room_cbs_unref(cbs);
 	}

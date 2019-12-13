@@ -1121,7 +1121,7 @@ void ChatMessagePrivate::setForwardInfo (const string &fInfo) {
 	forwardInfo = fInfo;
 }
 
-void ChatMessagePrivate::enableEphemeralWithTime (double time) {
+void ChatMessagePrivate::enableEphemeralWithTime (long time) {
 	isEphemeral = true;
 	ephemeralLifetime = time;
 }
@@ -1186,7 +1186,7 @@ bool ChatMessage::isEphemeral () const {
 	return d->isEphemeral;
 }
 
-double ChatMessage::getEphemeralLifetime () const {
+long ChatMessage::getEphemeralLifetime () const {
 	L_D();
 	return d->ephemeralLifetime;
 }

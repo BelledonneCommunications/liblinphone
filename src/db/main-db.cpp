@@ -170,8 +170,8 @@ namespace {
 		// TODO: Find a workaround to deal with StaticString concatenation!!!
 		constexpr char ConferenceCallFilter[] = "3,4";
 		constexpr char ConferenceChatMessageFilter[] = "5";
-		constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12,13";
-		constexpr char ConferenceInfoFilter[] = "1,2,6,7,8,9,10,11,12";
+		constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12,13,14";
+		constexpr char ConferenceInfoFilter[] = "1,2,6,7,8,9,10,11,12,14";
 		constexpr char ConferenceChatMessageSecurityFilter[] = "5,13";
 	#else
 		constexpr auto ConferenceCallFilter = SqlEventFilterBuilder<
@@ -189,7 +189,8 @@ namespace {
 			EventLog::Type::ConferenceParticipantSetAdmin,
 			EventLog::Type::ConferenceParticipantUnsetAdmin,
 			EventLog::Type::ConferenceSubjectChanged,
-			EventLog::Type::ConferenceSecurityEvent
+			EventLog::Type::ConferenceSecurityEvent,
+			EventLog::Type::ConferenceEphemeralLifetimeChanged
 		>::get();
 
 		constexpr auto ConferenceInfoFilter = ConferenceInfoNoDeviceFilter + "," + SqlEventFilterBuilder<
@@ -681,6 +682,9 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 		case EventLog::Type::ConferenceSecurityEvent:
 			eventLog = selectConferenceSecurityEvent(conferenceId, type, row);
 			break;
+
+		case EventLog::Type::ConferenceEphemeralLifetimeChanged:
+			eventLog = selectConferenceEphemeralLifetimeEvent(conferenceId, row);
 	}
 
 	if (eventLog)
@@ -751,7 +755,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 		dChatMessage->setForwardInfo(row.get<string>(19));
 		
 		if (row.get_indicator(20) != soci::i_null) {
-			dChatMessage->enableEphemeralWithTime(row.get<double>(20));
+			dChatMessage->enableEphemeralWithTime((long)row.get<double>(20));
 			dChatMessage->setEphemeralExpiredTime(dbSession.getTime(row, 21));
 		}
 		
@@ -803,6 +807,17 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceSecurityEvent (
 		conferenceId,
 		static_cast<ConferenceSecurityEvent::SecurityEventType>(row.get<int>(16)),
 		IdentityAddress(row.get<string>(17))
+	);
+}
+
+shared_ptr<EventLog> MainDbPrivate::selectConferenceEphemeralLifetimeEvent (
+	const ConferenceId &conferenceId,
+	const soci::row &row
+) const {
+	return make_shared<ConferenceEphemeralLifetimeEvent>(
+		getConferenceEventCreationTimeFromRow(row),
+		conferenceId,
+		row.get<double>(20)
 	);
 }
 
@@ -915,12 +930,12 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 		soci::use(markedAsRead), soci::use(forwardInfo);
 	
 	if (isEphemeral) {
-		const double &ephemeralLifetime = chatMessage->getEphemeralLifetime();
+		long ephemeralLifetime = chatMessage->getEphemeralLifetime();
 		const tm &expiredTime = Utils::getTimeTAsTm(chatMessage->getEphemeralExpiredTime());
 		*dbSession.getBackendSession() << "INSERT INTO chat_message_ephemeral_event ("
 			"  event_id, ephemeral_lifetime,  expired_time"
 			") VALUES ("
-		"  :eventId, :time, :expiredTime"
+		"  :eventId, :ephemeralLifetime, :expiredTime"
 		")", soci::use(eventId), soci::use(ephemeralLifetime),  soci::use(expiredTime);
 	}
 
@@ -1166,6 +1181,25 @@ long long MainDbPrivate::insertConferenceSubjectEvent (const shared_ptr<EventLog
 	*session << "UPDATE chat_room SET subject = :subject"
 		" WHERE id = :chatRoomId", soci::use(subject), soci::use(chatRoomId);
 
+	return eventId;
+#else
+	return -1;
+#endif
+}
+
+long long MainDbPrivate::insertConferenceEphemeralLifetimeEvent (const shared_ptr<EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
+	long long chatRoomId;
+	const long long &eventId = insertConferenceEvent(eventLog, &chatRoomId);
+	if (eventId < 0)
+		return -1;
+	
+	long lifetime = static_pointer_cast<ConferenceEphemeralLifetimeEvent>(eventLog)->getEphemeralLifetime();
+	
+	soci::session *session = dbSession.getBackendSession();
+	*session << "INSERT INTO conference_ephemeral_lifetime_event (event_id, lifetime)"
+	" VALUES (:eventId, :lifetime)", soci::use(eventId), soci::use(lifetime);
+	
 	return eventId;
 #else
 	return -1;
@@ -2064,6 +2098,17 @@ void MainDb::init () {
 		"    REFERENCES conference_event(event_id)"
 		"    ON DELETE CASCADE"
 		") " + charset;
+	
+	*session <<
+		"CREATE TABLE IF NOT EXISTS conference_ephemeral_lifetime_event ("
+		"  event_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
+	
+		"  lifetime DOUBLE NOT NULL,"
+	
+		"  FOREIGN KEY (event_id)"
+		"    REFERENCES conference_event(event_id)"
+		"    ON DELETE CASCADE"
+		") " + charset;
 
 	d->updateSchema();
 
@@ -2123,6 +2168,10 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceSubjectChanged:
 				eventId = d->insertConferenceSubjectEvent(eventLog);
 				break;
+				
+			case EventLog::Type::ConferenceEphemeralLifetimeChanged:
+				eventId = d->insertConferenceEphemeralLifetimeEvent(eventLog);
+				break;
 		}
 
 		if (eventId >= 0) {
@@ -2172,6 +2221,7 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
 			case EventLog::Type::ConferenceSecurityEvent:
 			case EventLog::Type::ConferenceSubjectChanged:
+			case EventLog::Type::ConferenceEphemeralLifetimeChanged:
 				return false;
 		}
 

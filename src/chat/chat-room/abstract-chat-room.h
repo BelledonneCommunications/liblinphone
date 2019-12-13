@@ -105,7 +105,7 @@ public:
 
 	virtual void markAsRead () = 0;
 	virtual void enableEphemeral (bool ephem) = 0;
-	virtual void setEphemeralLifetime (double time) = 0;
+	virtual void setEphemeralLifetime (long lifetime) = 0;
 
 	virtual const std::shared_ptr<ChatRoomParams> &getCurrentParams() const = 0;
 
