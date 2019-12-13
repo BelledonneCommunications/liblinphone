@@ -135,7 +135,7 @@ find_package(XML2 REQUIRED)
 
 if (ENABLE_DB_STORAGE)
 	#APPLE platform does not use dlopen for soci backend
-	if (APPLE)
+	if (APPLE OR ANDROID)
 		find_package(Soci REQUIRED COMPONENTS sqlite3)
 	else()
 		find_package(Soci REQUIRED)
