@@ -24,6 +24,8 @@
 #include <bctoolbox/defs.h>
 #include <belle-sip/provider.h>
 
+#include "linphone/utils/utils.h"
+
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
@@ -162,7 +164,8 @@ int SalCallOp::setSdpFromDesc (belle_sip_message_t *msg, const SalMediaDescripti
 void SalCallOp::fillInvite (belle_sip_request_t *invite) {
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(invite), BELLE_SIP_HEADER(createAllow(mRoot->mEnableSipUpdate)));
 	if (mRoot->mSessionExpires != 0) {
-		belle_sip_message_add_header(BELLE_SIP_MESSAGE(invite), belle_sip_header_create("Session-expires", "600;refresher=uas"));
+		string sessionExpires = Utils::toString(mRoot->mSessionExpires) + ";refresher=uas";
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(invite), belle_sip_header_create("Session-expires", sessionExpires.c_str()));
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(invite), belle_sip_header_create("Supported", "timer"));
 	}
 	mSdpOffering = (mLocalBody.getContentType() == ContentType::Sdp);
@@ -980,8 +983,9 @@ int SalCallOp::accept () {
 	}
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(createAllow(mRoot->mEnableSipUpdate)));
 	if (mRoot->mSessionExpires != 0) {
+		string sessionExpires = Utils::toString(mRoot->mSessionExpires) + ";refresher=uac";
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), belle_sip_header_create("Supported", "timer"));
-		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), belle_sip_header_create( "Session-expires", "600;refresher=uac"));
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), belle_sip_header_create( "Session-expires", sessionExpires.c_str()));
 	}
 
 	auto contactHeader = createContact();

@@ -4229,6 +4229,21 @@ LINPHONE_PUBLIC int linphone_core_get_mtu(const LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_set_mtu(LinphoneCore *lc, int mtu);
 
 /**
+ * Sets the session expires value, 0 by default, which means session expires disabled.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] expire The session expires value
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_set_session_expires_value(const LinphoneCore *lc, int expires);
+
+/**
+ * Returns the  session expires value, 0 by default, which means session expires disabled.
+ * @param[in] lc #LinphoneCore object
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC int linphone_core_get_session_expires_value(const LinphoneCore *lc);
+
+/**
  * This method is called by the application to notify the linphone core library when network is reachable.
  * Calling this method with true trigger linphone to initiate a registration process for all proxies.
  * Calling this method disables the automatic network detection mode. It means you must call this method after each network state changes.
