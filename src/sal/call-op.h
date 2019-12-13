@@ -85,7 +85,7 @@ private:
 	void fillInvite (belle_sip_request_t *invite);
 	void cancellingInvite (const SalErrorInfo *info);
 	int referTo (belle_sip_header_refer_to_t *referToHeader, belle_sip_header_referred_by_t *referredByHeader);
-	int sendNotifyForRefer (int code, const std::string &reason);
+	int sendNotifyForRefer (int code, const std::string &reason,const std::string & subscription_state = BELLE_SIP_SUBSCRIPTION_STATE_ACTIVE, const std::string & subscription_reason = "");
 	void notifyLastResponse (SalCallOp *newCallOp);
 	void processRefer (const belle_sip_request_event_t *event, belle_sip_server_transaction_t *serverTransaction);
 	void processNotify (const belle_sip_request_event_t *event, belle_sip_server_transaction_t *serverTransaction);

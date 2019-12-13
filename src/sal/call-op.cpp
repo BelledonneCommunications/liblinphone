@@ -1371,14 +1371,17 @@ void SalCallOp::sendVfuRequest () {
 	}
 }
 
-int SalCallOp::sendNotifyForRefer (int code, const string &reason) {
+int SalCallOp::sendNotifyForRefer (int code, const string &reason, const std::string & subscription_state, const std::string &subscription_state_reason) {
 	auto notifyRequest = belle_sip_dialog_create_queued_request(mDialog, "NOTIFY");
 	char *sipfrag = belle_sip_strdup_printf("SIP/2.0 %i %s\r\n", code, reason.c_str());
 	size_t contentLength = strlen(sipfrag);
-
+	belle_sip_header_subscription_state_t *subsription_state_header = belle_sip_header_subscription_state_create(subscription_state.c_str(), -1);
+	if (!subscription_state_reason.empty()) {
+		belle_sip_header_subscription_state_set_reason(subsription_state_header, subscription_state_reason.c_str());
+	}
 	belle_sip_message_add_header(
 		BELLE_SIP_MESSAGE(notifyRequest),
-		BELLE_SIP_HEADER(belle_sip_header_subscription_state_create(BELLE_SIP_SUBSCRIPTION_STATE_ACTIVE, -1))
+		BELLE_SIP_HEADER(subsription_state_header)
 	);
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(notifyRequest), belle_sip_header_create("Event", "refer"));
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(notifyRequest), BELLE_SIP_HEADER(belle_sip_header_content_type_create("message", "sipfrag")));
@@ -1408,7 +1411,7 @@ int SalCallOp::notifyReferState (SalCallOp *newCallOp) {
 			sendNotifyForRefer(100, "Trying");
 			break;
 		case BELLE_SIP_DIALOG_CONFIRMED:
-			sendNotifyForRefer(200, "Ok");
+			sendNotifyForRefer(200, "Ok", "terminated", "reason=noresource");
 			break;
 		case BELLE_SIP_DIALOG_TERMINATED:
 		case BELLE_SIP_DIALOG_NULL:
