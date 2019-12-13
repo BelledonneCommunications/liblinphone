@@ -23,11 +23,7 @@
 #
 ### Global Configuration Section
 #
-if(ANDROID)
-SET(_SOCI_ALL_PLUGINS    sqlite3)
-else()
 SET(_SOCI_ALL_PLUGINS    mysql sqlite3)
-endif()
 
 SET(_SOCI_REQUIRED_VARS  SOCI_INCLUDE_DIRS SOCI_LIBRARIES)
 SET(_SOCI_VERSION "_4_0")
@@ -67,10 +63,6 @@ IF(SOCI_INCLUDE_DIRS AND SOCI_LIBRARIES)
         IF(SOCI_${plugin}_PLUGIN)
             MESSAGE(STATUS "    * Plugin ${plugin} found ${SOCI_${plugin}_PLUGIN}.")
             SET(SOCI_${plugin}_FOUND True)
-
-            if(IOS OR ANDROID)
-                list(APPEND SOCI_LIBRARIES ${SOCI_${plugin}_PLUGIN})
-            endif()
         ELSE()
             MESSAGE(STATUS "    * Plugin ${plugin} not found.")
             SET(SOCI_${plugin}_FOUND False)
