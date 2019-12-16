@@ -287,7 +287,6 @@ void linphone_core_start_waiting(LinphoneCore *lc, const char *purpose);
 void linphone_core_update_progress(LinphoneCore *lc, const char *purpose, float progresses);
 void linphone_core_stop_waiting(LinphoneCore *lc);
 
-void linphone_core_notify_incoming_call(LinphoneCore *lc, LinphoneCall *call);
 bool_t linphone_core_incompatible_security(LinphoneCore *lc, SalMediaDescription *md);
 extern LinphonePrivate::Sal::Callbacks linphone_sal_callbacks;
 LINPHONE_PUBLIC bool_t linphone_core_rtcp_enabled(const LinphoneCore *lc);
@@ -345,10 +344,6 @@ const LinphoneParticipantImdnState *_linphone_participant_imdn_state_from_cpp_ob
 
 LinphoneToneDescription * linphone_tone_description_new(LinphoneReason reason, LinphoneToneID id, const char *audiofile);
 void linphone_tone_description_destroy(LinphoneToneDescription *obj);
-LinphoneToneDescription *linphone_core_get_call_error_tone(const LinphoneCore *lc, LinphoneReason reason);
-void linphone_core_play_call_error_tone(LinphoneCore *lc, LinphoneReason reason);
-void _linphone_core_set_tone(LinphoneCore *lc, LinphoneReason reason, LinphoneToneID id, const char *audiofile);
-LINPHONE_PUBLIC const char *linphone_core_get_tone_file(const LinphoneCore *lc, LinphoneToneID id);
 
 void linphone_task_list_init(LinphoneTaskList *t);
 void linphone_task_list_add(LinphoneTaskList *t, LinphoneCoreIterateHook hook, void *hook_data);
@@ -419,7 +414,6 @@ void linphone_chat_message_set_message_state_changed_cb_user_data(LinphoneChatMe
 void * linphone_chat_message_get_message_state_changed_cb_user_data(LinphoneChatMessage* msg);
 LinphoneChatRoom *_linphone_core_create_chat_room_from_call(LinphoneCall *call);
 
-void linphone_core_play_named_tone(LinphoneCore *lc, LinphoneToneID id);
 bool_t linphone_core_tone_indications_enabled(LinphoneCore*lc);
 const char *linphone_core_create_uuid(LinphoneCore *lc);
 void linphone_configure_op(LinphoneCore *lc, LinphonePrivate::SalOp *op, const LinphoneAddress *dest, SalCustomHeader *headers, bool_t with_contact);

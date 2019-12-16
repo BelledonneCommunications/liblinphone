@@ -190,7 +190,7 @@ void CallPrivate::terminateBecauseOfLostMedia () {
 	lInfo() << "Call [" << q << "]: Media connectivity with " << q->getRemoteAddress().asString()
 		<< " is lost, call is going to be terminated";
 	static_pointer_cast<MediaSession>(getActiveSession())->terminateBecauseOfLostMedia();
-	linphone_core_play_named_tone(q->getCore()->getCCore(), LinphoneToneCallLost);
+	q->getCore()->getPrivate()->getToneManager()->startNamedTone(getActiveSession(), LinphoneToneCallLost);
 }
 
 // -----------------------------------------------------------------------------
@@ -222,16 +222,6 @@ bool CallPrivate::onCallSessionAccepted (const shared_ptr<CallSession> &session)
 	if (q->getCore()->getCurrentCall() != q->getSharedFromThis())
 		linphone_core_preempt_sound_resources(lc);
 
-	// Stop ringing
-	if (linphone_ringtoneplayer_is_started(lc->ringtoneplayer)) {
-		lInfo() << "Stop ringing";
-		linphone_core_stop_ringing(lc);
-		wasRinging = true;
-	}
-	if (ringingBeep) {
-		linphone_core_stop_dtmf(lc);
-		ringingBeep = false;
-	}
 	return wasRinging;
 }
 
@@ -276,10 +266,6 @@ void CallPrivate::onCallSessionSetTerminated (const shared_ptr<CallSession> &ses
 		lError() << "Could not remove the call from the list!!!";
 	if (core->conf_ctx)
 		linphone_conference_on_call_terminating(core->conf_ctx, L_GET_C_BACK_PTR(q));
-	if (ringingBeep) {
-		linphone_core_stop_dtmf(core);
-		ringingBeep = false;
-	}
 #if 0
 	if (lcall->chat_room)
 		linphone_chat_room_set_call(lcall->chat_room, nullptr);
@@ -294,6 +280,8 @@ void CallPrivate::onCallSessionStartReferred (const shared_ptr<CallSession> &ses
 
 void CallPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
 	L_Q();
+	q->getCore()->getPrivate()->getToneManager()->update(session);
+
 	switch(state){
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::IncomingReceived:
@@ -352,7 +340,10 @@ void CallPrivate::onIncomingCallSessionNotified (const shared_ptr<CallSession> &
 
 void CallPrivate::onIncomingCallSessionStarted (const shared_ptr<CallSession> &session) {
 	L_Q();
-	linphone_core_notify_incoming_call(q->getCore()->getCCore(), L_GET_C_BACK_PTR(q));
+	if (linphone_core_get_calls_nb(q->getCore()->getCCore())==1) {
+		L_GET_PRIVATE_FROM_C_OBJECT(q->getCore()->getCCore())->setCurrentCall(q->getSharedFromThis());
+	}
+	q->getCore()->getPrivate()->getToneManager()->startRingtone(session);
 }
 
 void CallPrivate::onIncomingCallSessionTimeoutCheck (const shared_ptr<CallSession> &session, int elapsed, bool oneSecondElapsed) {
@@ -442,55 +433,12 @@ void CallPrivate::requestNotifyNextVideoFrameDecoded(){
 	static_pointer_cast<MediaSession>(getActiveSession())->requestNotifyNextVideoFrameDecoded();
 }
 
-void CallPrivate::onPlayErrorTone (const shared_ptr<CallSession> &session, LinphoneReason reason) {
-	L_Q();
-	linphone_core_play_call_error_tone(q->getCore()->getCCore(), reason);
-}
-
 void CallPrivate::onRingbackToneRequested (const shared_ptr<CallSession> &session, bool requested) {
 	L_Q();
 	if (requested && linphone_core_get_remote_ringback_tone(q->getCore()->getCCore()))
 		playingRingbackTone = true;
 	else if (!requested)
 		playingRingbackTone = false;
-}
-
-void CallPrivate::onStartRinging (const shared_ptr<CallSession> &session) {
-	L_Q();
-	LinphoneCore *lc = q->getCore()->getCCore();
-	if (lc->ringstream)
-		return; // Already ringing!
-	startRemoteRing();
-}
-
-void CallPrivate::onStopRinging (const shared_ptr<CallSession> &session) {
-	L_Q();
-	linphone_core_stop_ringing(q->getCore()->getCCore());
-}
-
-void CallPrivate::onStopRingingIfInCall (const shared_ptr<CallSession> &session) {
-	L_Q();
-	LinphoneCore *lc = q->getCore()->getCCore();
-	// We stop the ring only if we have this current call or if we are in call
-	if ((q->getCore()->getCallCount() == 1) || linphone_core_in_call(lc)) {
-		linphone_core_stop_ringing(lc);
-	}
-}
-
-void CallPrivate::onStopRingingIfNeeded (const shared_ptr<CallSession> &session) {
-	L_Q();
-	LinphoneCore *lc = q->getCore()->getCCore();
-	bool stopRinging = true;
-	bool ringDuringEarlyMedia = !!linphone_core_get_ring_during_incoming_early_media(lc);
-	for (const auto &call : q->getCore()->getCalls()) {
-		if ((call->getState() == CallSession::State::IncomingReceived)
-			|| (ringDuringEarlyMedia && call->getState() == CallSession::State::IncomingEarlyMedia)) {
-			stopRinging = false;
-			break;
-		}
-	}
-	if (stopRinging)
-		linphone_core_stop_ringing(lc);
 }
 
 bool CallPrivate::areSoundResourcesAvailable (const shared_ptr<CallSession> &session) {

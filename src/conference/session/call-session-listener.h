@@ -70,12 +70,7 @@ public:
 	virtual void onFirstVideoFrameDecoded (const std::shared_ptr<CallSession> &session) {}
 	virtual void onResetFirstVideoFrameDecoded (const std::shared_ptr<CallSession> &session) {}
 
-	virtual void onPlayErrorTone (const std::shared_ptr<CallSession> &session, LinphoneReason reason) {}
 	virtual void onRingbackToneRequested (const std::shared_ptr<CallSession> &session, bool requested) {}
-	virtual void onStartRinging (const std::shared_ptr<CallSession> &session) {}
-	virtual void onStopRinging (const std::shared_ptr<CallSession> &session) {}
-	virtual void onStopRingingIfInCall (const std::shared_ptr<CallSession> &session) {}
-	virtual void onStopRingingIfNeeded (const std::shared_ptr<CallSession> &session) {}
 
 	virtual bool areSoundResourcesAvailable (const std::shared_ptr<CallSession> &session) { return true; }
 	virtual bool isPlayingRingbackTone (const std::shared_ptr<CallSession> &session) { return false; }

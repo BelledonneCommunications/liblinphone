@@ -58,9 +58,6 @@ public:
 	MediaStream *getMediaStream (LinphoneStreamType type) const;
 	SalCallOp *getOp () const;
 
-	bool getRingingBeep () const { return ringingBeep; }
-	void setRingingBeep (bool value) { ringingBeep = value; }
-
 	bool getSpeakerMuted () const;
 	void setSpeakerMuted (bool muted);
 
@@ -109,12 +106,7 @@ private:
 	void onSetCurrentSession (const std::shared_ptr<CallSession> &session) override;
 	void onFirstVideoFrameDecoded (const std::shared_ptr<CallSession> &session) override;
 	void onResetFirstVideoFrameDecoded (const std::shared_ptr<CallSession> &session) override;
-	void onPlayErrorTone (const std::shared_ptr<CallSession> &session, LinphoneReason reason) override;
 	void onRingbackToneRequested (const std::shared_ptr<CallSession> &session, bool requested) override;
-	void onStartRinging (const std::shared_ptr<CallSession> &session) override;
-	void onStopRinging (const std::shared_ptr<CallSession> &session) override;
-	void onStopRingingIfInCall (const std::shared_ptr<CallSession> &session) override;
-	void onStopRingingIfNeeded (const std::shared_ptr<CallSession> &session) override;
 	bool areSoundResourcesAvailable (const std::shared_ptr<CallSession> &session) override;
 	bool isPlayingRingbackTone (const std::shared_ptr<CallSession> &session) override;
 	void onRealTimeTextCharacterReceived (const std::shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *character) override;
@@ -125,7 +117,6 @@ private:
 
 	CallCallbackObj nextVideoFrameDecoded;
 
-	bool ringingBeep = false;
 	bool playingRingbackTone = false;
 
 	BackgroundTask bgTask;
