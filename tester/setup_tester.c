@@ -1444,12 +1444,16 @@ static void search_friend_get_capabilities(void) {
 	LinphoneFriend *no_one_fr;
 	LinphoneFriend *group_chat_fr;
 	LinphoneFriend *lime_fr;
+	LinphoneFriend *ephemeral_fr;
 	LinphonePresenceService *group_chat_service;
 	LinphonePresenceService *lime_service;
+	LinphonePresenceService *ephemeral_service;
 	LinphonePresenceModel *group_chat_model = linphone_presence_model_new();
 	LinphonePresenceModel *lime_model = linphone_presence_model_new();
+	LinphonePresenceModel *ephemeral_model = linphone_presence_model_new();
 	bctbx_list_t *group_chat_descriptions = NULL;
 	bctbx_list_t *lime_descriptions = NULL;
+	bctbx_list_t *ephemeral_descriptions = NULL;
 
 	char *addr = "sip:noone@sip.linphone.org";
 	no_one_fr = linphone_core_create_friend_with_address(manager->lc, addr);
@@ -1474,6 +1478,17 @@ static void search_friend_get_capabilities(void) {
 	linphone_friend_set_presence_model_for_uri_or_tel(lime_fr, addr, lime_model);
 	linphone_friend_list_add_friend(lfl, lime_fr);
 
+	addr = "sip:ephemeral@sip.linphone.org";
+	ephemeral_fr = linphone_core_create_friend_with_address(manager->lc, addr);
+	ephemeral_service = linphone_presence_service_new(NULL, LinphonePresenceBasicStatusOpen, NULL);
+	ephemeral_descriptions = bctbx_list_append(ephemeral_descriptions, "groupchat");
+	ephemeral_descriptions = bctbx_list_append(ephemeral_descriptions, "lime");
+	ephemeral_descriptions = bctbx_list_append(ephemeral_descriptions, "ephemeral");
+	linphone_presence_service_set_service_descriptions(ephemeral_service, ephemeral_descriptions);
+	linphone_presence_model_add_service(ephemeral_model, ephemeral_service);
+	linphone_friend_set_presence_model_for_uri_or_tel(ephemeral_fr, addr, ephemeral_model);
+	linphone_friend_list_add_friend(lfl, ephemeral_fr);
+
 	magicSearch = linphone_magic_search_new(manager->lc);
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 	copy = resultList;
@@ -1481,39 +1496,51 @@ static void search_friend_get_capabilities(void) {
 		bool_t noOneFound = FALSE;
 		bool_t groupChatFound = FALSE;
 		bool_t limeFound = FALSE;
+		bool_t ephemeralFound = FALSE;
 		while (resultList) {
 			LinphoneSearchResult *result = (LinphoneSearchResult *)resultList->data;
 			if (linphone_search_result_get_friend(result) == no_one_fr) {
 				noOneFound = TRUE;
 				BC_ASSERT_FALSE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityGroupChat);
 				BC_ASSERT_FALSE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityLimeX3dh);
+				BC_ASSERT_FALSE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityEphemeralMessages);
 			} else if (linphone_search_result_get_friend(result) == group_chat_fr) {
 				groupChatFound = TRUE;
 				BC_ASSERT_TRUE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityGroupChat);
 				BC_ASSERT_FALSE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityLimeX3dh);
+				BC_ASSERT_FALSE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityEphemeralMessages);
 			} else if (linphone_search_result_get_friend(result) == lime_fr) {
 				limeFound = TRUE;
 				BC_ASSERT_TRUE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityGroupChat);
 				BC_ASSERT_TRUE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityLimeX3dh);
+				BC_ASSERT_FALSE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityEphemeralMessages);
+			} else if (linphone_search_result_get_friend(result) == ephemeral_fr) {
+				ephemeralFound = TRUE;
+				BC_ASSERT_TRUE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityGroupChat);
+				BC_ASSERT_TRUE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityLimeX3dh);
+				BC_ASSERT_TRUE(linphone_search_result_get_capabilities(result) & LinphoneFriendCapabilityEphemeralMessages);
 			}
-
 			resultList = bctbx_list_next(resultList);
 		}
 		BC_ASSERT_TRUE(noOneFound);
 		BC_ASSERT_TRUE(groupChatFound);
 		BC_ASSERT_TRUE(limeFound);
+		BC_ASSERT_TRUE(ephemeralFound);
 		bctbx_list_free_with_data(copy, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
 
 	linphone_presence_service_unref(group_chat_service);
 	linphone_presence_service_unref(lime_service);
+	linphone_presence_service_unref(ephemeral_service);
 
 	linphone_presence_model_unref(group_chat_model);
 	linphone_presence_model_unref(lime_model);
+	linphone_presence_model_unref(ephemeral_model);
 
 	linphone_friend_unref(no_one_fr);
 	linphone_friend_unref(group_chat_fr);
 	linphone_friend_unref(lime_fr);
+	linphone_friend_unref(ephemeral_fr);
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);

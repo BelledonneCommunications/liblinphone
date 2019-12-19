@@ -73,6 +73,9 @@ static bool isConferenceType (LinphoneEventLogType type) {
 		case LinphoneEventLogTypeConferenceParticipantSetAdmin:
 		case LinphoneEventLogTypeConferenceParticipantUnsetAdmin:
 		case LinphoneEventLogTypeConferenceSubjectChanged:
+		case LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged:
+		case LinphoneEventLogTypeConferenceEphemeralMessageEnabled:
+		case LinphoneEventLogTypeConferenceEphemeralMessageDisabled:
 			return true;
 
 		default:
@@ -169,6 +172,20 @@ static bool isConferenceSubjectType (LinphoneEventLogType type) {
 
 static bool isConferenceSecurityType (LinphoneEventLogType type) {
 	return (type == LinphoneEventLogTypeConferenceSecurityEvent);
+}
+
+static bool isConferenceEphemeralMessageType (LinphoneEventLogType type) {
+	switch (type) {
+		case LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged:
+		case LinphoneEventLogTypeConferenceEphemeralMessageEnabled:
+		case LinphoneEventLogTypeConferenceEphemeralMessageDisabled:
+			return true;
+
+		default:
+			break;
+	}
+
+	return false;
 }
 
 // -----------------------------------------------------------------------------
@@ -347,4 +364,16 @@ LINPHONE_PUBLIC const char *linphone_event_log_get_subject (const LinphoneEventL
 			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
 		)->getSubject()
 	);
+}
+
+// -----------------------------------------------------------------------------
+// ConferenceEphemeralMessageEvent.
+// -----------------------------------------------------------------------------
+
+LINPHONE_PUBLIC long linphone_event_log_get_ephemeral_message_lifetime (const LinphoneEventLog *event_log) {
+	if (!isConferenceEphemeralMessageType(linphone_event_log_get_type(event_log)))
+		return -1;
+
+	return static_pointer_cast<const LinphonePrivate::ConferenceEphemeralMessageEvent>(
+		L_GET_CPP_PTR_FROM_C_OBJECT(event_log))->getEphemeralMessageLifetime();
 }

@@ -217,6 +217,26 @@ void linphone_chat_room_mark_as_read (LinphoneChatRoom *cr) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->markAsRead();
 }
 
+void linphone_chat_room_enable_ephemeral (LinphoneChatRoom *cr, bool_t ephem) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->enableEphemeral(!!ephem, true);
+}
+
+bool_t linphone_chat_room_ephemeral_enabled (const LinphoneChatRoom *cr) {
+	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->ephemeralEnabled();
+}
+
+void linphone_chat_room_set_ephemeral_lifetime (LinphoneChatRoom *cr, long time) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setEphemeralLifetime(time, true);
+}
+
+long linphone_chat_room_get_ephemeral_lifetime (const LinphoneChatRoom *cr) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getEphemeralLifetime();
+}
+
+bool_t linphone_chat_room_ephemeral_supported_by_all_participants (const LinphoneChatRoom *cr) {
+	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->ephemeralSupportedByAllParticipants();
+}
+
 int linphone_chat_room_get_unread_messages_count (LinphoneChatRoom *cr) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getUnreadChatMessageCount();
 }
@@ -523,6 +543,18 @@ void _linphone_chat_room_notify_conference_joined(LinphoneChatRoom *cr, const Li
 
 void _linphone_chat_room_notify_conference_left(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
 	NOTIFY_IF_EXIST(ConferenceLeft, conference_left, cr, eventLog)
+}
+
+void _linphone_chat_room_notify_ephemeral_event(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
+	NOTIFY_IF_EXIST(EphemeralEvent, ephemeral_event, cr, eventLog)
+}
+
+void _linphone_chat_room_notify_ephemeral_message_timer_started(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
+	NOTIFY_IF_EXIST(EphemeralMessageTimerStarted, ephemeral_message_timer_started, cr, eventLog)
+}
+
+void _linphone_chat_room_notify_ephemeral_message_deleted(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
+	NOTIFY_IF_EXIST(EphemeralMessageDeleted, ephemeral_message_deleted, cr, eventLog)
 }
 
 void _linphone_chat_room_notify_undecryptable_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg) {

@@ -61,6 +61,7 @@ public:
 
 	std::list<std::shared_ptr<EventLog>> getHistory (int nLast) const override;
 	std::list<std::shared_ptr<EventLog>> getHistoryRange (int begin, int end) const override;
+	int getHistorySize () const override;
 
 	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
 	bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
@@ -81,6 +82,12 @@ public:
 
 	void join () override;
 	void leave () override;
+	
+	void enableEphemeral (bool ephem, bool updateDb) override;
+	bool ephemeralEnabled () const override;
+	void setEphemeralLifetime (long lifetime, bool updateDb) override;
+	long getEphemeralLifetime () const override;
+	bool ephemeralSupportedByAllParticipants () const override;
 
 private:
 	ClientGroupChatRoom (

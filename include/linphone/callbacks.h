@@ -428,6 +428,13 @@ typedef void (*LinphoneCoreCbsChatRoomStateChangedCb) (LinphoneCore *lc, Linphon
 typedef void (*LinphoneCoreCbsChatRoomSubjectChangedCb) (LinphoneCore *lc, LinphoneChatRoom *cr);
 
 /**
+ * Callback prototype telling that a #LinphoneChatRoom ephemeral message has expired.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] cr The #LinphoneChatRoom object for which a message has expired.
+ */
+typedef void (*LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb) (LinphoneCore *lc, LinphoneChatRoom *cr);
+
+/**
  * Callback prototype telling the result of decoded qrcode
  * @param[in] lc LinphoneCore object
  * @param[in] result The result of the decoded qrcode

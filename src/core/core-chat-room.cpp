@@ -40,6 +40,8 @@
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
 
+#include "chat/chat-message/chat-message-p.h"
+
 // =============================================================================
 
 using namespace std;
@@ -358,6 +360,84 @@ void CorePrivate::loadChatRooms () {
 		insertChatRoom(chatRoom);
 	}
 	sendDeliveryNotifications();
+}
+
+void CorePrivate::handleEphemeralMessages (time_t currentTime) {
+	if (!ephemeralMessages.empty()) {
+		shared_ptr<ChatMessage> msg = ephemeralMessages.front();
+		time_t expireTime = msg->getEphemeralExpireTime();
+		if (currentTime > expireTime) {
+			shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(msg->getPrivate()->dbKey);
+			shared_ptr<AbstractChatRoom> chatRoom = msg->getChatRoom();
+			if (chatRoom && event) {
+				LinphonePrivate::EventLog::deleteFromDatabase(event);
+				lInfo() << "[Ephemeral] message deleted";
+
+				// notify ephemeral message deleted to chat room & core.
+				LinphoneChatRoom *cr = L_GET_C_BACK_PTR(chatRoom);
+				_linphone_chat_room_notify_ephemeral_message_deleted(cr, L_GET_C_BACK_PTR(event));
+				linphone_core_notify_chat_room_ephemeral_message_deleted(linphone_chat_room_get_core(cr), cr);
+
+				//notify ephemeral message deleted to message if exists.
+				LinphoneChatMessage *message = linphone_event_log_get_chat_message(L_GET_C_BACK_PTR(event));
+				if (message) {
+					LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(message);
+					if (cbs && linphone_chat_message_cbs_get_ephemeral_message_deleted(cbs)) {
+						linphone_chat_message_cbs_get_ephemeral_message_deleted(cbs)(message);
+					}
+					_linphone_chat_message_notify_ephemeral_message_deleted(message);
+				}
+			}
+
+			// Delete message from this list even when chatroom is gone.
+			lInfo() << "[Ephemeral] message deleted from list";
+			ephemeralMessages.pop_front();
+			handleEphemeralMessages(currentTime);
+		} else {
+			startEphemeralMessageTimer(expireTime);
+		}
+	} else {
+		initEphemeralMessages();
+	}
+}
+
+void CorePrivate::initEphemeralMessages () {
+	if (mainDb && mainDb->isInitialized()) {
+		ephemeralMessages.clear();
+		ephemeralMessages = mainDb->getEphemeralMessages();
+		if (!ephemeralMessages.empty()) {
+			lInfo() << "[Ephemeral] list initiated";
+			shared_ptr<ChatMessage> msg = ephemeralMessages.front();
+			startEphemeralMessageTimer(msg->getEphemeralExpireTime());
+		}
+	}
+}
+
+void CorePrivate::updateEphemeralMessages (const shared_ptr<ChatMessage> &message) {
+	if (ephemeralMessages.empty()) {
+		// Can not determine this message will expire most quickly, so init this list.
+		initEphemeralMessages();
+	} else {
+		shared_ptr<ChatMessage> lastmsg = ephemeralMessages.back();
+		if (lastmsg->getEphemeralLifetime() < message->getEphemeralLifetime()) {
+			// The last message of this list will expire more quickly than this message, can not determine this message will expire most quickly in the remaining messages.
+			return;
+		}
+		for (std::list<shared_ptr<ChatMessage>>::iterator it=ephemeralMessages.begin(); it!=ephemeralMessages.end(); ++it) {
+			shared_ptr<ChatMessage> msg = *it;
+			if (msg->getEphemeralExpireTime() > message->getEphemeralExpireTime()) {
+				// This message will expire more quickly than the last message of this list, add it.
+				if (it == ephemeralMessages.begin()) {
+					ephemeralMessages.push_front(message);
+					startEphemeralMessageTimer(message->getEphemeralExpireTime());
+				} else {
+					it = --it;
+					ephemeralMessages.insert(it, message);
+				}
+				return;
+			}
+		}
+	}
 }
 
 void CorePrivate::sendDeliveryNotifications () {

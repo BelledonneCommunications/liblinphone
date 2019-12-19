@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2019 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of linphone-iphone
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,30 +17,33 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_MAIN_DB_CHAT_MESSAGE_KEY_H_
-#define _L_MAIN_DB_CHAT_MESSAGE_KEY_H_
+#ifndef _L_CONFERENCE_EPHEMERAL_MESSAGE_EVENT_H_
+#define _L_CONFERENCE_EPHEMERAL_MESSAGE_EVENT_H_
 
-#include "main-db-key.h"
+#include "conference-event-p.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class MainDbChatMessageKey : public MainDbKey {
-	friend class ChatMessagePrivate;
+class ConferenceEphemeralMessageEventPrivate;
+
+class LINPHONE_PUBLIC ConferenceEphemeralMessageEvent : public ConferenceEvent {
 public:
-	MainDbChatMessageKey ();
-	MainDbChatMessageKey (const std::shared_ptr<Core> &core, long long storageId);
-	~MainDbChatMessageKey ();
-
-	MainDbChatMessageKey* clone () const override {
-		return new MainDbChatMessageKey(*this);
-	}
-
+	ConferenceEphemeralMessageEvent (
+							Type type,
+							time_t creationTime,
+							const ConferenceId &conferenceId,
+							long ephemeralLifetime
+							);
+	
+	long getEphemeralMessageLifetime() const;
+	
 private:
-	L_DECLARE_PRIVATE(MainDbKey);
+	L_DECLARE_PRIVATE(ConferenceEphemeralMessageEvent);
+	L_DISABLE_COPY(ConferenceEphemeralMessageEvent);
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_MAIN_DB_CHAT_MESSAGE_KEY_H_
+#endif // ifndef _L_CONFERENCE_EPHEMERAL_MESSAGE_EVENT_H_
