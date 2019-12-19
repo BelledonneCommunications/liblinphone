@@ -64,7 +64,8 @@
 	F(EventLog, ConferenceParticipantDeviceEvent) \
 	F(EventLog, ConferenceParticipantEvent) \
 	F(EventLog, ConferenceSecurityEvent) \
-	F(EventLog, ConferenceSubjectEvent)
+	F(EventLog, ConferenceSubjectEvent) \
+	F(EventLog, ConferenceEphemeralMessageEvent)
 
 // =============================================================================
 // Register belle-sip ID.

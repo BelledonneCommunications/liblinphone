@@ -232,6 +232,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsMessageReceivedCb message_sent;
 	LinphoneCoreCbsChatRoomReadCb chat_room_read;
 	LinphoneCoreCbsChatRoomSubjectChangedCb chat_room_subject_changed;
+	LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb chat_room_ephemeral_message_deleted;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -777,6 +778,20 @@ LINPHONE_PUBLIC LinphoneCoreCbsChatRoomSubjectChangedCb linphone_core_cbs_get_ch
  * @param[in] cb The callback to use
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_subject_changed (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomSubjectChangedCb cb);
+
+/**
+ * Get the chat room ephemeral message deleted callback.
+ * @param[in] cbs #LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb linphone_core_cbs_get_chat_room_ephemeral_message_deleted (LinphoneCoreCbs *cbs);
+
+/**
+ * Set the chat room ephemeral message deleted callback.
+ * @param[in] cbs #LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_ephemeral_message_deleted (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb cb);
 
 /**
  * Get the qrcode found callback.

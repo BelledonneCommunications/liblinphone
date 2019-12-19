@@ -1559,6 +1559,18 @@ void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *r
 	counters->number_of_LinphoneMessageSent++;
 }
 
+void liblinphone_tester_chat_message_ephemeral_timer_started (LinphoneChatMessage *msg) {
+	LinphoneCore *lc = linphone_chat_message_get_core(msg);
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneMessageEphemeralTimerStarted++;
+}
+
+void liblinphone_tester_chat_message_ephemeral_deleted (LinphoneChatMessage *msg) {
+	LinphoneCore *lc = linphone_chat_message_get_core(msg);
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneMessageEphemeralDeleted++;
+}
+
 /*
  * function called when the file transfer is initiated. file content should be feed into object LinphoneContent
  * */

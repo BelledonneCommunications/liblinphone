@@ -79,6 +79,11 @@ public:
 	) const override;
 
 	void markAsRead () override;
+	void enableEphemeral (bool ephem, bool updateDb) override;
+	bool ephemeralEnabled () const override;
+	void setEphemeralLifetime (long lifetime, bool updateDb) override;
+	long getEphemeralLifetime () const override;
+	bool ephemeralSupportedByAllParticipants () const override;
 
 	const IdentityAddress &getConferenceAddress () const override;
 

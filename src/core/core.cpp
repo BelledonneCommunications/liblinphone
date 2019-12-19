@@ -165,6 +165,8 @@ void CorePrivate::uninit () {
 
 	if (toneManager) toneManager->deleteTimer();
 
+	stopEphemeralMessageTimer();
+	ephemeralMessages.clear();
 	chatRoomsById.clear();
 	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();
@@ -274,12 +276,41 @@ bool CorePrivate::basicToFlexisipChatroomMigrationEnabled()const{
 CorePrivate::CorePrivate() : authStack(*this){
 }
 
+<<<<<<< HEAD
 std::shared_ptr<ToneManager> CorePrivate::getToneManager() {
 	L_Q();
 	if (!toneManager) {
 		toneManager = make_shared<ToneManager>(q->getSharedFromThis());
 	}
 	return toneManager;
+=======
+int CorePrivate::ephemeralMessageTimerExpired (void *data, unsigned int revents) {
+	CorePrivate *d = static_cast<CorePrivate *>(data);
+	d->stopEphemeralMessageTimer();
+
+	d->handleEphemeralMessages(ms_time(NULL));
+	return BELLE_SIP_STOP;
+}
+
+void CorePrivate::startEphemeralMessageTimer (time_t expireTime) {
+	double time = difftime(expireTime, ::ms_time(NULL));
+	unsigned int timeoutValueMs = time>0 ? (unsigned int)time*1000 : 10;
+	if (!timer) {
+		timer = getPublic()->getCCore()->sal->createTimer(ephemeralMessageTimerExpired, this, timeoutValueMs, "ephemeral message handler");
+	} else {
+		belle_sip_source_set_timeout(timer, timeoutValueMs);
+	}
+}
+
+void CorePrivate::stopEphemeralMessageTimer () {
+	if (timer) {
+		auto core = getPublic()->getCCore();
+		if (core && core->sal)
+			core->sal->cancelTimer(timer);
+		belle_sip_object_unref(timer);
+		timer = nullptr;
+	}
+>>>>>>> d87c713eb... add feature ephmeral message
 }
 
 // =============================================================================
