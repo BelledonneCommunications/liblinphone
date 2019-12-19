@@ -45,6 +45,9 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb participantRegistrationSubscriptionRequestedCb;
 	LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequestedCb participantRegistrationUnsubscriptionRequestedCb;
 	LinphoneChatRoomCbsShouldChatMessageBeStoredCb shouldMessageBeStoredCb;
+	LinphoneChatRoomCbsEphemeralMessageTimerStartedCb EphemeralMessageTimerStartedCb;
+	LinphoneChatRoomCbsEphemeralMessageDeletedCb ephemeralMessageDeletedCb;
+	LinphoneChatRoomCbsEphemeralLifetimeChangedCb ephemeralLifetimeChangedCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatRoomCbs);
@@ -199,6 +202,30 @@ LinphoneChatRoomCbsConferenceLeftCb linphone_chat_room_cbs_get_conference_left (
 
 void linphone_chat_room_cbs_set_conference_left (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceLeftCb cb) {
 	cbs->conferenceLeftCb = cb;
+}
+
+LinphoneChatRoomCbsEphemeralMessageTimerStartedCb linphone_chat_room_cbs_get_ephemeral_message_timer_started (const LinphoneChatRoomCbs *cbs) {
+	return cbs->EphemeralMessageTimerStartedCb;
+}
+
+void linphone_chat_room_cbs_set_ephemeral_message_timer_started (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageTimerStartedCb cb) {
+	cbs->EphemeralMessageTimerStartedCb = cb;
+}
+
+LinphoneChatRoomCbsEphemeralMessageDeletedCb linphone_chat_room_cbs_get_ephemeral_message_deleted (const LinphoneChatRoomCbs *cbs) {
+	return cbs->ephemeralMessageDeletedCb;
+}
+
+void linphone_chat_room_cbs_set_ephemeral_message_deleted (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageDeletedCb cb) {
+	cbs->ephemeralMessageDeletedCb = cb;
+}
+
+LinphoneChatRoomCbsEphemeralLifetimeChangedCb linphone_chat_room_cbs_get_ephemeral_lifetime_changed (const LinphoneChatRoomCbs *cbs) {
+	return cbs->ephemeralLifetimeChangedCb;
+}
+
+void linphone_chat_room_cbs_set_ephemeral_lifetime_changed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralLifetimeChangedCb cb) {
+	cbs->ephemeralLifetimeChangedCb = cb;
 }
 
 LinphoneChatRoomCbsConferenceAddressGenerationCb linphone_chat_room_cbs_get_conference_address_generation (const LinphoneChatRoomCbs *cbs) {
