@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2019 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of linphone-iphone
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,30 +17,41 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_MAIN_DB_CHAT_MESSAGE_KEY_H_
-#define _L_MAIN_DB_CHAT_MESSAGE_KEY_H_
-
-#include "main-db-key.h"
+#include "conference-ephemeral-lifetime-event.h"
 
 // =============================================================================
 
+using namespace std;
+
 LINPHONE_BEGIN_NAMESPACE
 
-class MainDbChatMessageKey : public MainDbKey {
-	friend class ChatMessagePrivate;
+// -----------------------------------------------------------------------------
+
+class ConferenceEphemeralLifetimeEventPrivate : public ConferenceEventPrivate {
 public:
-	MainDbChatMessageKey ();
-	MainDbChatMessageKey (const std::shared_ptr<Core> &core, long long storageId);
-	~MainDbChatMessageKey ();
-
-	MainDbChatMessageKey* clone () const override {
-		return new MainDbChatMessageKey(*this);
-	}
-
-private:
-	L_DECLARE_PRIVATE(MainDbKey);
+	long ephemeralLifetime;
 };
+
+// -----------------------------------------------------------------------------
+
+ConferenceEphemeralLifetimeEvent::ConferenceEphemeralLifetimeEvent (
+time_t creationTime,
+const ConferenceId &conferenceId,
+long ephemeralLifetime
+) : ConferenceEvent(
+	*new ConferenceEphemeralLifetimeEventPrivate,
+	Type::ConferenceEphemeralLifetimeChanged,
+	creationTime,
+	conferenceId
+) {
+	L_D();
+	d->ephemeralLifetime = ephemeralLifetime;
+}
+
+long ConferenceEphemeralLifetimeEvent::getEphemeralLifetime () const {
+	L_D();
+	return d->ephemeralLifetime;
+}
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_MAIN_DB_CHAT_MESSAGE_KEY_H_

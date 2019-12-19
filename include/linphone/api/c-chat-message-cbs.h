@@ -134,6 +134,34 @@ LINPHONE_PUBLIC LinphoneChatMessageCbsParticipantImdnStateChangedCb linphone_cha
 LINPHONE_PUBLIC void linphone_chat_message_cbs_set_participant_imdn_state_changed (LinphoneChatMessageCbs *cbs, LinphoneChatMessageCbsParticipantImdnStateChangedCb cb);
 
 /**
+ * Get the current "ephemeral message timer started" callback. This callback is called when the message deletion timer starts (the message has been viewed).
+ * @param[in] cbs #LinphoneChatMessageCbs object.
+ * @return The current ephemeral message timer started callback.
+ */
+LINPHONE_PUBLIC LinphoneChatMessageCbsEphemeralMessageTimerStartedCb linphone_chat_message_cbs_get_ephemeral_message_timer_started (const LinphoneChatMessageCbs *cbs);
+
+/**
+ * Set the ephemeral message timer started callback. This callback will be used when new message deleation timer starts (the message has been viewed).
+ * @param[in] cbs LinphoneChatMessageCbs object.
+ * @param[in] cb The ephemeral message timer started callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_cbs_set_ephemeral_message_timer_started (LinphoneChatMessageCbs *cbs, LinphoneChatMessageCbsEphemeralMessageTimerStartedCb cb);
+
+/**
+ * Get the ephemeral message deleted callback. This callback is used when a message deletion timer runs out (message is deleted).
+ * @param[in] cbs #LinphoneChatMessageCbs object.
+ * @return The current ephemeral message deleted callback.
+ */
+LINPHONE_PUBLIC LinphoneChatMessageCbsEphemeralMessageDeletedCb linphone_chat_message_cbs_get_ephemeral_message_deleted (const LinphoneChatMessageCbs *cbs);
+
+/**
+ * Set the ephemeral message deleted callback. This callback is used when new message deletion timer runs out (message is deleted).
+ * @param[in] cbs LinphoneChatMessageCbs object.
+ * @param[in] cb The ephemeral message deleted callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_cbs_set_ephemeral_message_deleted (LinphoneChatMessageCbs *cbs, LinphoneChatMessageCbsEphemeralMessageDeletedCb cb);
+
+/**
  * @}
  */
 

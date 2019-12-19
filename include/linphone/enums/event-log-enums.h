@@ -37,5 +37,6 @@
 	F(ConferenceParticipantDeviceRemoved /**< Conference participant device (removed) event */) \
 	F(ConferenceSubjectChanged /**< Conference subject event */) \
 	F(ConferenceSecurityEvent /**< Conference encryption security event*/) \
+	F(ConferenceEphemeralLifetimeChanged /**< Conference ephemeral lifetime (the lifetime of an ephemeral message) event */) \
 
 #endif // ifndef _L_EVENT_LOG_ENUMS_H_
