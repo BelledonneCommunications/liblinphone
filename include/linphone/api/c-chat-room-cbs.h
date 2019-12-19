@@ -272,6 +272,48 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsConferenceLeftCb linphone_chat_room_cbs_get_c
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_conference_left (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceLeftCb cb);
 
 /**
+ * Get the ephemeral event callback.
+ * @param[in] cbs #LinphoneChatRoomCbs object.
+ * @return The ephemeral event callback to be used.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsEphemeralEventCb linphone_chat_room_cbs_get_ephemeral_event (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the ephemeral event callback.
+ * @param[in] cbs #LinphoneChatRoomCbs object.
+ * @param[in] cb The ephemeral event callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_ephemeral_event (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralEventCb cb);
+
+/**
+ * Get the current "ephemeral message timer started" callback. This callback is called when a message deletion timer starts (the message has been viewed).
+ * @param[in] cbs LinphoneChatRoomCbs object.
+ * @return The current ephemeral message "timer started" callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsEphemeralMessageTimerStartedCb linphone_chat_room_cbs_get_ephemeral_message_timer_started (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the ephemeral message timer started callback. This callback will be used when new message deletion timer starts (the message has been viewed).
+ * @param[in] cbs LinphoneChatRoomCbs object.
+ * @param[in] cb The ephemeral message timer started callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_ephemeral_message_timer_started (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageTimerStartedCb cb);
+
+/**
+ * Get the ephemeral message deleted callback. This callback is used when a message deletion timer runs out (message is deleted).
+ * @param[in] cbs LinphoneChatRoomCbs object.
+ * @return The current ephemeral message deleted callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsEphemeralMessageDeletedCb linphone_chat_room_cbs_get_ephemeral_message_deleted (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the ephemeral message deleted callback. This callback is used when new message deletion timer runs out (message is deleted).
+ * @param[in] cbs LinphoneChatRoomCbs object.
+ * @param[in] cb The ephemeral message deleted callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_ephemeral_message_deleted (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageDeletedCb cb);
+
+/**
  * Get the conference address generation callback.
  * @param[in] cbs #LinphoneChatRoomCbs object
  * @return The current conference address generation callback

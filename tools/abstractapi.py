@@ -1188,6 +1188,10 @@ class JavaLangTranslator(CLikeLangTranslator):
 				if jni:
 					return 'jbyteArray'
 				return 'byte[]'
+			elif type_.size is not None and type_.size == 'long':
+				if jni:
+					return 'jlong'
+				return 'long'
 			if jni:
 				return 'jint'
 			return 'int'
@@ -1203,7 +1207,7 @@ class JavaLangTranslator(CLikeLangTranslator):
 			if jni:
 				return 'jint'
 			return 'int'
-		elif type_.name == 'time':
+		elif type_.name == 'time' or type_.name == 'long':
 			if jni:
 				return 'jlong'
 			return 'long'
@@ -1299,6 +1303,9 @@ class SwiftLangTranslator(CLikeLangTranslator):
 		elif _type.name == 'integer':
 			if _type.size is None:
 				res = 'Int'
+			elif _type.size == 'long':
+				res = 'Int'
+				_type.name = 'long'
 			else:
 				res = 'Int{0}'.format(_type.size)
 			if _type.isUnsigned:
@@ -1314,11 +1321,13 @@ class SwiftLangTranslator(CLikeLangTranslator):
 			else:
 				return 'CChar'
 		elif _type.name == 'time':
-			return 'Int'
+			return 'time_t'
 		elif _type.name == 'size':
 			return 'Int'
 		elif _type.name == 'floatant':
-			if _type.size is not None and _type.isref:
+			if _type.size is not None and _type.size == 'double':
+				return 'Double'
+			elif _type.size is not None and _type.isref:
 				return 'UnsafeMutablePointer<Float>'
 			else:
 				return 'Float'

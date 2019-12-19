@@ -45,6 +45,9 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb participantRegistrationSubscriptionRequestedCb;
 	LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequestedCb participantRegistrationUnsubscriptionRequestedCb;
 	LinphoneChatRoomCbsShouldChatMessageBeStoredCb shouldMessageBeStoredCb;
+	LinphoneChatRoomCbsEphemeralEventCb ephemeralEventCb;
+	LinphoneChatRoomCbsEphemeralMessageTimerStartedCb EphemeralMessageTimerStartedCb;
+	LinphoneChatRoomCbsEphemeralMessageDeletedCb ephemeralMessageDeletedCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatRoomCbs);
@@ -199,6 +202,30 @@ LinphoneChatRoomCbsConferenceLeftCb linphone_chat_room_cbs_get_conference_left (
 
 void linphone_chat_room_cbs_set_conference_left (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceLeftCb cb) {
 	cbs->conferenceLeftCb = cb;
+}
+
+LinphoneChatRoomCbsEphemeralEventCb linphone_chat_room_cbs_get_ephemeral_event (const LinphoneChatRoomCbs *cbs) {
+	return cbs->ephemeralEventCb;
+}
+
+void linphone_chat_room_cbs_set_ephemeral_event (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralEventCb cb) {
+	cbs->ephemeralEventCb = cb;
+}
+
+LinphoneChatRoomCbsEphemeralMessageTimerStartedCb linphone_chat_room_cbs_get_ephemeral_message_timer_started (const LinphoneChatRoomCbs *cbs) {
+	return cbs->EphemeralMessageTimerStartedCb;
+}
+
+void linphone_chat_room_cbs_set_ephemeral_message_timer_started (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageTimerStartedCb cb) {
+	cbs->EphemeralMessageTimerStartedCb = cb;
+}
+
+LinphoneChatRoomCbsEphemeralMessageDeletedCb linphone_chat_room_cbs_get_ephemeral_message_deleted (const LinphoneChatRoomCbs *cbs) {
+	return cbs->ephemeralMessageDeletedCb;
+}
+
+void linphone_chat_room_cbs_set_ephemeral_message_deleted (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageDeletedCb cb) {
+	cbs->ephemeralMessageDeletedCb = cb;
 }
 
 LinphoneChatRoomCbsConferenceAddressGenerationCb linphone_chat_room_cbs_get_conference_address_generation (const LinphoneChatRoomCbs *cbs) {

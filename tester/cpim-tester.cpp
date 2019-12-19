@@ -325,6 +325,24 @@ static void cpim_chat_message_modifier_with_multipart_body () {
 	cpim_chat_message_modifier_base(TRUE);
 }
 
+static void ephemeral_message() {
+	const string str = "From: <sip:marie_zt3gv@sip.example.org;gr=urn:uuid:0d2119d7-b587-0072-81cd-3d640d0cd95f>\r\n"
+						"To: <sip:chatroom-ik10al00qYlYL~TZ@conf.example.org;gr=213a09f0-9e6a-00bf-8301-04340fb24c53>\r\n"
+						"NS: linphone <tag:linphone.org,2020:params:groupchat>\r\n"
+						"linphone.Ephemeral-Time: 1\r\n"
+						"NS: imdn <urn:ietf:params:imdn>\r\n"
+						"imdn.Message-ID: 6rsIsWAkKvib\r\n"
+						"imdn.Disposition-Notification: positive-delivery, negative-delivery, display\r\n"
+						"\r\n"
+						"Content-Type: text/plain\r\n"
+						"Content-Length: 13\r\n"
+						"\r\n"
+						"This is Marie";
+
+	shared_ptr<const Cpim::Message> message = Cpim::Message::createFromString(str);
+	if (!BC_ASSERT_PTR_NOT_NULL(message)) return;
+}
+
 test_t cpim_tests[] = {
 	TEST_NO_TAG("Parse minimal CPIM message", parse_minimal_message),
 	TEST_NO_TAG("Set generic header name", set_generic_header_name),
@@ -333,7 +351,8 @@ test_t cpim_tests[] = {
 	TEST_NO_TAG("Parse Message with generic header parameters", parse_message_with_generic_header_parameters),
 	TEST_NO_TAG("Build Message", build_message),
 	TEST_NO_TAG("CPIM chat message modifier", cpim_chat_message_modifier),
-	TEST_NO_TAG("CPIM chat message modifier with multipart body", cpim_chat_message_modifier_with_multipart_body)
+	TEST_NO_TAG("CPIM chat message modifier with multipart body", cpim_chat_message_modifier_with_multipart_body),
+	TEST_ONE_TAG("CPIM ephemeral message", ephemeral_message, "Ephemeral")
 };
 
 static int suite_begin(void) {

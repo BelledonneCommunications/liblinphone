@@ -492,6 +492,14 @@ void linphone_core_cbs_set_chat_room_subject_changed (LinphoneCoreCbs *cbs, Linp
 	cbs->vtable->chat_room_subject_changed = cb;
 }
 
+LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb linphone_core_cbs_get_chat_room_ephemeral_message_deleted (LinphoneCoreCbs *cbs) {
+	return cbs->vtable->chat_room_ephemeral_message_deleted;
+}
+
+void linphone_core_cbs_set_chat_room_ephemeral_message_deleted (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb cb) {
+	cbs->vtable->chat_room_ephemeral_message_deleted = cb;
+}
+
 LinphoneCoreCbsQrcodeFoundCb linphone_core_cbs_get_qrcode_found(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->qrcode_found;
 }
@@ -2549,6 +2557,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	linphone_presence_model_set_basic_status(lc->presence_model, LinphonePresenceBasicStatusOpen);
 
 	_linphone_core_read_config(lc);
+	linphone_core_add_linphone_spec(lc, "ephemeral");
 	linphone_core_set_state(lc, LinphoneGlobalReady, "Ready");
 
 	if (automatically_start) {
@@ -2607,7 +2616,7 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 		} else {
 			linphone_configuring_terminated(lc, LinphoneConfiguringSkipped, NULL);
 		}
-
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->initEphemeralMessages();
 		return 0;
 	} catch (const CorePrivate::DatabaseConnectionFailure &e) {
 		bctbx_error("%s", e.what());

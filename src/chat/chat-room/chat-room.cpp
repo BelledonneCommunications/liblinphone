@@ -146,7 +146,12 @@ void ChatRoomPrivate::setIsEmpty (const bool empty) {
 
 shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage (ChatMessage::Direction direction) {
 	L_Q();
-	return shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
+	shared_ptr<ChatMessage> message = shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
+	if (q->ephemeralEnabled() && direction == ChatMessage::Direction::Outgoing) {
+		lInfo() << "Create an outgoing ephemeral message " << message << " with lifetime " << q->getEphemeralLifetime() << " in chat room [" << conferenceId << "]";
+		message->getPrivate()->enableEphemeralWithTime(q->getEphemeralLifetime());
+	}
+	return message;
 }
 
 shared_ptr<ImdnMessage> ChatRoomPrivate::createImdnMessage (
@@ -615,6 +620,26 @@ const std::shared_ptr<ChatRoomParams> &ChatRoom::getCurrentParams() const {
 	L_D();
 
 	return d->params;
+}
+
+void ChatRoom::enableEphemeral (bool ephem, bool updateDb) {
+	lError() << "Ephemeral message is only supported in conference based chat room!";
+}
+
+bool ChatRoom::ephemeralEnabled() const {
+	return false;
+}
+
+void ChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
+	lError() << "Ephemeral message is only supported in conference based chat room!";
+}
+
+long ChatRoom::getEphemeralLifetime () const {
+	return 0;
+}
+
+bool ChatRoom::ephemeralSupportedByAllParticipants () const  {
+	return false;
 }
 
 LINPHONE_END_NAMESPACE
