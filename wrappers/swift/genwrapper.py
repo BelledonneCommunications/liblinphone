@@ -429,7 +429,7 @@ class SwiftTranslator(object):
         methodDict['is_bool'] = methodDict['return'] == "Bool"
         methodDict['is_void'] = methodDict['return'] == "UnsafeMutableRawPointer"
         methodDict['is_int'] = methodDict['return'] == "Int" or methodDict['return'] == "UInt"
-        methodDict['int_method'] = "" if prop.args[0].type.name == "size" else ("CInt" if methodDict['return'] == "Int" else "CUnsignedInt")
+        methodDict['int_method'] = "" if prop.args[0].type.name in ["size", "long"] else ("CInt" if methodDict['return'] == "Int" else "CUnsignedInt")
         methodDict['is_class'] = type(prop.args[0].type) is AbsApi.ClassType
         methodDict['is_enum'] = type(prop.args[0].type) is AbsApi.EnumType
         methodDict['enum_type'] = "CUnsignedInt" if methodDict['is_enum'] and prop.args[0].type.desc.isUnsigned else "CInt"

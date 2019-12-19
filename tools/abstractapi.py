@@ -1299,6 +1299,9 @@ class SwiftLangTranslator(CLikeLangTranslator):
 		elif _type.name == 'integer':
 			if _type.size is None:
 				res = 'Int'
+			elif _type.size == 'long':
+				res = 'Int'
+				_type.name = 'long'
 			else:
 				res = 'Int{0}'.format(_type.size)
 			if _type.isUnsigned:
@@ -1314,7 +1317,7 @@ class SwiftLangTranslator(CLikeLangTranslator):
 			else:
 				return 'CChar'
 		elif _type.name == 'time':
-			return 'Int'
+			return 'time_t'
 		elif _type.name == 'size':
 			return 'Int'
 		elif _type.name == 'floatant':
