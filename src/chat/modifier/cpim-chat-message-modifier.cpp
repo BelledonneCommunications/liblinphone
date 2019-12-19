@@ -35,7 +35,19 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+// Following https://tools.ietf.org/html/rfc4151
+const string linphoneNamespaceTag = "tag:linphone.org,2020:params:groupchat";
+const string linphoneNamespace = "linphone";
+const string linphoneEphemeralHeader = "Ephemeral-Time";
+
+const string imdnNamespaceUrn = "urn:ietf:params:imdn";
+const string imdnNamespace = "imdn";
+const string imdnMessageIdHeader = "Message-ID";
+const string imdnForwardInfoHeader = "Forward-Info";
+const string imdnDispositionNotificationHeader = "Disposition-Notification";
+
 ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<ChatMessage> &message, int &errorCode) {
+
 	Cpim::Message cpimMessage;
 
 	cpimMessage.addMessageHeader(
@@ -52,27 +64,33 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 		|| message->getPrivate()->getNegativeDeliveryNotificationRequired()
 		|| message->getPrivate()->getDisplayNotificationRequired()
 	) {
-		const string imdnNamespace = "imdn";
-		cpimMessage.addMessageHeader(Cpim::NsHeader("urn:ietf:params:imdn", imdnNamespace));
+		if (message->isEphemeral()) {
+			long time = message->getEphemeralLifetime();
+			const string &buf = Utils::toString(time);
+			cpimMessage.addMessageHeader(Cpim::NsHeader(linphoneNamespaceTag, linphoneNamespace));
+			cpimMessage.addMessageHeader(Cpim::GenericHeader(linphoneNamespace + "." + linphoneEphemeralHeader, buf));
+		}
+
+		cpimMessage.addMessageHeader(Cpim::NsHeader(imdnNamespaceUrn, imdnNamespace));
 
 		const string &previousToken = message->getImdnMessageId();
 		if (previousToken.empty()) {
 			char token[13];
 			belle_sip_random_token(token, sizeof(token));
 			cpimMessage.addMessageHeader(
-				Cpim::GenericHeader("Message-ID", token) // TODO: Replace by imdnNamespace + ".Message-ID");
+				Cpim::GenericHeader(imdnNamespace + "." + imdnMessageIdHeader, token)
 			);
 			message->getPrivate()->setImdnMessageId(token);
 		} else {
 			cpimMessage.addMessageHeader(
-				Cpim::GenericHeader("Message-ID", previousToken) // TODO: Replace by imdnNamespace + ".Message-ID");
+				Cpim::GenericHeader(imdnNamespace + "." + imdnMessageIdHeader, previousToken)
 			);
 		}
 		
 		const string &forwardInfo = message->getForwardInfo();
 		if (!forwardInfo.empty()) {
 			cpimMessage.addMessageHeader(
-				Cpim::GenericHeader(imdnNamespace + ".Forward-Info",forwardInfo)
+				Cpim::GenericHeader(imdnNamespace + "." + imdnForwardInfoHeader, forwardInfo)
 			);
 		}
 
@@ -85,7 +103,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 			dispositionNotificationValues.emplace_back("display");
 		cpimMessage.addMessageHeader(
 			Cpim::GenericHeader(
-				imdnNamespace + ".Disposition-Notification",
+				imdnNamespace + "." + imdnDispositionNotificationHeader,
 				Utils::join(dispositionNotificationValues, ", ")
 			)
 		);
@@ -161,16 +179,18 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 	message->getPrivate()->setNegativeDeliveryNotificationRequired(false);
 	message->getPrivate()->setDisplayNotificationRequired(false);
 
-	string imdnNamespace = "";
+	string imdnNsName = "";
+	string linphoneNsName = "";
 	auto messageHeaders = cpimMessage->getMessageHeaders();
 	if (messageHeaders) {
 		for (const auto &header : *messageHeaders.get()) {
 			if (header->getName() != "NS")
 				continue;
 			auto nsHeader = static_pointer_cast<const Cpim::NsHeader>(header);
-			if (nsHeader->getUri() == "urn:ietf:params:imdn") {
-				imdnNamespace = nsHeader->getPrefixName();
-				break;
+			if (nsHeader->getUri() == imdnNamespaceUrn) {
+				imdnNsName = nsHeader->getPrefixName();
+			} else if (nsHeader->getUri() == linphoneNamespaceTag) {
+				linphoneNsName = nsHeader->getPrefixName();
 			}
 		}
 	}
@@ -183,11 +203,11 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 	if (dateTimeHeader)
 		message->getPrivate()->setTime(dateTimeHeader->getTime());
 
-	auto messageIdHeader = cpimMessage->getMessageHeader("Message-ID"); // TODO: For compatibility, to remove
-	if (!imdnNamespace.empty()) {
+	auto messageIdHeader = cpimMessage->getMessageHeader(imdnMessageIdHeader); // TODO: For compatibility when imdn namespace wasn't set, to remove
+	if (!imdnNsName.empty()) {
 		if (!messageIdHeader)
-			messageIdHeader = cpimMessage->getMessageHeader("Message-ID", imdnNamespace);
-		auto dispositionNotificationHeader = cpimMessage->getMessageHeader("Disposition-Notification", imdnNamespace);
+			messageIdHeader = cpimMessage->getMessageHeader(imdnMessageIdHeader, imdnNsName);
+		auto dispositionNotificationHeader = cpimMessage->getMessageHeader(imdnDispositionNotificationHeader, imdnNsName);
 		if (dispositionNotificationHeader) {
 			vector<string> values = Utils::split(dispositionNotificationHeader->getValue(), ", ");
 			for (const auto &value : values) {
@@ -202,11 +222,18 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 					lError() << "Unknown Disposition-Notification value [" << trimmedValue << "]";
 			}
 		}
-		auto forwardInfoHeader = cpimMessage->getMessageHeader("Forward-Info",imdnNamespace);
+		auto forwardInfoHeader = cpimMessage->getMessageHeader(imdnForwardInfoHeader, imdnNsName);
 		if (forwardInfoHeader) {
 			message->getPrivate()->setForwardInfo(forwardInfoHeader->getValue());
 		}
 	}
+
+	if (!linphoneNsName.empty()) {
+		auto timeHeader = cpimMessage->getMessageHeader(linphoneEphemeralHeader, linphoneNsName);
+		long time = (long)Utils::stod(timeHeader->getValue());
+		message->getPrivate()->enableEphemeralWithTime(time);
+	}
+
 	if (messageIdHeader)
 		message->getPrivate()->setImdnMessageId(messageIdHeader->getValue());
 

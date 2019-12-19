@@ -57,6 +57,7 @@ class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor {
 	friend class RealTimeTextChatRoomPrivate;
 	friend class ServerGroupChatRoomPrivate;
 	friend class LimeX3dhEncryptionEngine;
+	friend class CorePrivate;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ChatMessage);
@@ -88,6 +89,10 @@ public:
 	const IdentityAddress &getFromAddress () const;
 	const IdentityAddress &getToAddress () const;
 	const std::string &getForwardInfo () const;
+
+	bool isEphemeral () const;
+	long getEphemeralLifetime () const;
+	time_t getEphemeralExpireTime () const;
 
 	// TODO: Return a cpp reference.
 	const LinphoneErrorInfo *getErrorInfo () const;

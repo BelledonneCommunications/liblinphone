@@ -46,6 +46,7 @@
 
 #include "ortp/b64.h"
 
+#include "db/main-db-key-p.h"
 // =============================================================================
 
 using namespace std;
@@ -206,7 +207,26 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
 	}
 
-	// 6. Update in database if necessary.
+	// 6. update in database for ephemeral message if necessary.
+	if (isEphemeral && (state == ChatMessage::State::Displayed)) {
+		// set ephemeral message expired time
+		ephemeralExpireTime = ::ms_time(NULL) + (long)ephemeralLifetime;
+		q->getChatRoom()->getCore()->getPrivate()->mainDb->updateEphemeralMessageInfos(dbKey.getPrivate()->storageId, ephemeralExpireTime);
+
+		q->getChatRoom()->getCore()->getPrivate()->updateEphemeralMessages(q->getSharedFromThis());
+
+		// notify start !
+		shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(dbKey);
+		shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
+		if (chatRoom && event) {
+			_linphone_chat_room_notify_ephemeral_message_timer_started(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
+			if (cbs && linphone_chat_message_cbs_get_ephemeral_message_timer_started(cbs))
+				linphone_chat_message_cbs_get_ephemeral_message_timer_started(cbs)(msg);
+			_linphone_chat_message_notify_ephemeral_message_timer_started(msg);
+		}
+	}
+
+	// 7. Update in database if necessary.
 	if (state != ChatMessage::State::InProgress && state != ChatMessage::State::FileTransferError && state != ChatMessage::State::FileTransferInProgress) {
 		updateInDb();
 	}
@@ -315,6 +335,10 @@ const string &ChatMessagePrivate::getFileTransferFilepath () const {
 
 void ChatMessagePrivate::setFileTransferFilepath (const string &path) {
 	fileTransferFilePath = path;
+}
+
+void ChatMessagePrivate::setEphemeralExpireTime(time_t expireTime) {
+	ephemeralExpireTime = expireTime;
 }
 
 const string &ChatMessagePrivate::getAppdata () const {
@@ -1098,6 +1122,11 @@ void ChatMessagePrivate::setForwardInfo (const string &fInfo) {
 	forwardInfo = fInfo;
 }
 
+void ChatMessagePrivate::enableEphemeralWithTime (long time) {
+	isEphemeral = true;
+	ephemeralLifetime = time;
+}
+
 void ChatMessagePrivate::loadContentsFromDatabase () const {
 	L_Q();
 
@@ -1151,6 +1180,21 @@ const std::string &ChatMessage::getForwardInfo () const {
 bool ChatMessage::getToBeStored () const {
 	L_D();
 	return d->toBeStored;
+}
+
+bool ChatMessage::isEphemeral () const {
+	L_D();
+	return d->isEphemeral;
+}
+
+long ChatMessage::getEphemeralLifetime () const {
+	L_D();
+	return d->ephemeralLifetime;
+}
+
+time_t ChatMessage::getEphemeralExpireTime () const {
+	L_D();
+	return d->ephemeralExpireTime;
 }
 
 void ChatMessage::setToBeStored (bool value) {
