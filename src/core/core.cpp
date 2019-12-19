@@ -116,6 +116,8 @@ void CorePrivate::uninit () {
 		ms_usleep(10000);
 	}
 
+	stopTimer();
+	ephemeralMessages.clear();
 	chatRoomsById.clear();
 	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();
@@ -214,6 +216,36 @@ bool CorePrivate::basicToFlexisipChatroomMigrationEnabled()const{
 	return linphone_config_get_bool(linphone_core_get_config(q->getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE);
 }
 
+int CorePrivate::timerExpired (void *data, unsigned int revents) {
+	CorePrivate *d = static_cast<CorePrivate *>(data);
+	d->stopTimer();
+
+	d->handleEphemeralMessages(ms_time(NULL));
+	return BELLE_SIP_STOP;
+}
+
+void CorePrivate::startTimer (time_t expiredTime) {
+	double time = difftime(expiredTime, ::ms_time(NULL));
+	unsigned int timeoutValueMs = time>0 ? (unsigned int)time*1000 : 10;
+	if (!timer) {
+		timer = getPublic()->getCCore()->sal->createTimer(timerExpired, this, timeoutValueMs, "ephemeral message handler");
+	}
+	else {
+		belle_sip_source_set_timeout(timer, timeoutValueMs);
+	}
+	bgTask.start(getPublic()->getSharedFromThis(), 1);
+}
+
+void CorePrivate::stopTimer () {
+	if (timer) {
+		auto core = getPublic()->getCCore();
+		if (core && core->sal)
+			core->sal->cancelTimer(timer);
+		belle_sip_object_unref(timer);
+		timer = nullptr;
+	}
+	bgTask.stop();
+}
 
 // =============================================================================
 

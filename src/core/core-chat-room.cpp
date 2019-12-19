@@ -40,6 +40,8 @@
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
 
+#include "chat/chat-message/chat-message-p.h"
+
 // =============================================================================
 
 using namespace std;
@@ -346,6 +348,72 @@ void CorePrivate::loadChatRooms () {
 		insertChatRoom(chatRoom);
 	}
 	sendDeliveryNotifications();
+}
+
+void CorePrivate::handleEphemeralMessages (time_t currentTime) {
+	if (!ephemeralMessages.empty()) {
+		shared_ptr<ChatMessage> msg = ephemeralMessages.front();
+		time_t expiredTime = msg->getEphemeralExpiredTime();
+		if (currentTime > expiredTime) {
+			shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(msg->getPrivate()->dbKey);
+			shared_ptr<AbstractChatRoom> chatRoom = msg->getChatRoom();
+			if (chatRoom && event) {
+				// notify ephemeral message deleted to chat room.
+				_linphone_chat_room_notify_ephemeral_message_deleted(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
+				//notify ephemeral message deleted to message if exists.
+				LinphoneChatMessage *message = linphone_event_log_get_chat_message(L_GET_C_BACK_PTR(event));
+				if (message) {
+					LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(message);
+					if (cbs && linphone_chat_message_cbs_get_ephemeral_message_deleted(cbs))
+						linphone_chat_message_cbs_get_ephemeral_message_deleted(cbs)(message);
+					_linphone_chat_message_notify_ephemeral_message_deleted(message);
+				}
+
+				// delete expired ephemeral message
+				ephemeralMessages.pop_front();
+				LinphonePrivate::EventLog::deleteFromDatabase(event);
+				handleEphemeralMessages(currentTime);
+			}
+		} else {
+			startTimer(expiredTime);
+		}
+	} else {
+		initEphemeralMessages();
+	}
+}
+
+void CorePrivate::initEphemeralMessages () {
+	if (mainDb && mainDb->isInitialized()) {
+		ephemeralMessages.clear();
+		ephemeralMessages = mainDb->getEphemeralMessages();
+		if (!ephemeralMessages.empty()) {
+			shared_ptr<ChatMessage> msg = ephemeralMessages.front();
+			startTimer(msg->getEphemeralExpiredTime());
+		}
+	}
+}
+
+void CorePrivate::updateEphemeralMessages (const shared_ptr<ChatMessage> &message) {
+	if (ephemeralMessages.empty()) {
+		ephemeralMessages.push_back(message);
+		startTimer(message->getEphemeralExpiredTime());
+	} else {
+		for (std::list<shared_ptr<ChatMessage>>::iterator it=ephemeralMessages.begin(); it!=ephemeralMessages.end(); ++it) {
+			shared_ptr<ChatMessage> msg = *it;
+			if (msg->getEphemeralExpiredTime() > message->getEphemeralExpiredTime()) {
+				if (it == ephemeralMessages.begin()) {
+					ephemeralMessages.push_front(message);
+					startTimer(message->getEphemeralExpiredTime());
+				} else {
+					it = --it;
+					ephemeralMessages.insert(it, message);
+				}
+				if (ephemeralMessages.size() > 10)
+					ephemeralMessages.pop_back();
+				return;
+			}
+		}
+	}
 }
 
 void CorePrivate::sendDeliveryNotifications () {

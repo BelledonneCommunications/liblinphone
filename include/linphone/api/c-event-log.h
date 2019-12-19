@@ -169,6 +169,18 @@ LINPHONE_PUBLIC LinphoneAddress *linphone_event_log_get_security_event_faulty_de
  */
 LINPHONE_PUBLIC const char *linphone_event_log_get_subject (const LinphoneEventLog *event_log);
 
+// -----------------------------------------------------------------------------
+// ConferenceEphemeralLifetimeEvent.
+// -----------------------------------------------------------------------------
+
+/**
+ * Returns the ephemeral lifetime of a conference ephemeral lifetime event.
+ * Ephemeral lifetime means the time before an ephemeral message which has been viewed gets deleted.
+ * @param[in] event_log A #LinphoneEventLog object.
+ * @return The ephemeral lifetime.
+ */
+LINPHONE_PUBLIC long linphone_event_log_get_ephemeral_lifetime (const LinphoneEventLog *event_log);
+
 /**
  * @}
  */

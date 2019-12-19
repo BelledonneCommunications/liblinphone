@@ -223,6 +223,26 @@ void ProxyChatRoom::markAsRead () {
 	d->chatRoom->markAsRead();
 }
 
+void ProxyChatRoom::enableEphemeral (bool ephem, bool updateDb) {
+	L_D();
+	d->chatRoom->enableEphemeral(ephem, updateDb);
+}
+
+bool ProxyChatRoom::ephemeralEnabled () {
+	L_D();
+	return d->chatRoom->ephemeralEnabled();
+}
+
+void ProxyChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
+	L_D();
+	d->chatRoom->setEphemeralLifetime(lifetime, updateDb);
+}
+
+long ProxyChatRoom::getEphemeralLifetime () {
+	L_D();
+	return d->chatRoom->getEphemeralLifetime();
+}
+
 // -----------------------------------------------------------------------------
 
 const IdentityAddress &ProxyChatRoom::getConferenceAddress () const {

@@ -141,7 +141,11 @@ void ChatRoomPrivate::setIsEmpty (const bool empty) {
 
 shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage (ChatMessage::Direction direction) {
 	L_Q();
-	return shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
+	shared_ptr<ChatMessage> message = shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
+	if (isEphemeral) {
+		message->getPrivate()->enableEphemeralWithTime(ephemeralLifetime);
+	}
+	return message;
 }
 
 shared_ptr<ImdnMessage> ChatRoomPrivate::createImdnMessage (
@@ -603,6 +607,46 @@ const std::shared_ptr<ChatRoomParams> &ChatRoom::getCurrentParams() const {
 	L_D();
 
 	return d->params;
+}
+
+void ChatRoom::enableEphemeral (bool ephem, bool updateDb) {
+	L_D();
+	// supported only in group chat room
+	if (d->capabilities & ChatRoom::Capabilities::Conference) {
+		d->isEphemeral = ephem;
+		if (updateDb)
+			getCore()->getPrivate()->mainDb->updateChatRoomEphemeralEnabled(d->conferenceId, ephem);
+	} else {
+		d->isEphemeral = false;
+		lWarning() << "Ephemeral message is only supported in conference based chat room!";
+	}
+}
+
+bool ChatRoom::ephemeralEnabled() {
+	L_D();
+	return d->isEphemeral;
+}
+
+void ChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
+	L_D();
+	lInfo() << "Trying to set new ephemeral lifetime " << lifetime << ", used to be " << d->ephemeralLifetime << ".";
+	if (lifetime == d->ephemeralLifetime) {
+		lWarning() << "Ephemeral lifetime will not be changed!";
+		return;
+	}
+	d->ephemeralLifetime = lifetime;
+
+	if (updateDb) {
+		shared_ptr<ConferenceEphemeralLifetimeEvent> event = make_shared<ConferenceEphemeralLifetimeEvent>(time(nullptr),d->conferenceId,lifetime);
+		getCore()->getPrivate()->mainDb->addEvent(event);
+		_linphone_chat_room_notify_ephemeral_lifetime_changed(d->getCChatRoom(), L_GET_C_BACK_PTR(event));
+		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralLifetime(d->conferenceId, lifetime);
+	}
+}
+
+long ChatRoom::getEphemeralLifetime () {
+	L_D();
+	return d->ephemeralLifetime;
 }
 
 LINPHONE_END_NAMESPACE
