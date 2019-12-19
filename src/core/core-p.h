@@ -28,6 +28,7 @@
 #include "object/object-p.h"
 #include "sal/call-op.h"
 #include "auth-info/auth-stack.h"
+#include "utils/background-task.h"
 
 // =============================================================================
 
@@ -75,6 +76,9 @@ public:
 	void setPlaybackGainDb (AudioStream *stream, float gain);
 
 	void loadChatRooms ();
+	void handleEphemeralMessages (time_t currentTime);
+	void initEphemeralMessages ();
+	void updateEphemeralMessages (const std::shared_ptr<ChatMessage> &message);
 	void sendDeliveryNotifications ();
 	void insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
 	void insertChatRoomWithDb (const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
@@ -129,9 +133,13 @@ public:
 	Sal * getSal();
 	LinphoneCore *getCCore();
 
+	void startEphemeralMessageTimer (time_t expireTime);
+	void stopEphemeralMessageTimer ();
+
 private:
 	bool isInBackground = false;
 	bool isFriendListSubscriptionEnabled = false;
+	static int ephemeralMessageTimerExpired (void *data, unsigned int revents);
 
 	std::list<CoreListener *> listeners;
 
@@ -148,6 +156,9 @@ private:
 	// Otherwise the chatRoom will be freed() before it is inserted
 	std::unordered_map<const AbstractChatRoom *, std::shared_ptr<const AbstractChatRoom>> noCreatedClientGroupChatRooms;
 	AuthStack authStack;
+
+	std::list<std::shared_ptr<ChatMessage>> ephemeralMessages;
+	belle_sip_source_t *timer = nullptr;
 
 	L_DECLARE_PUBLIC(Core);
 };

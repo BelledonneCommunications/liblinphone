@@ -838,7 +838,8 @@ LinphoneStatus linphone_presence_service_set_service_descriptions(LinphonePresen
 namespace {
 	const std::unordered_map<int, std::string> CapabilityToString {
 		{ LinphoneFriendCapabilityGroupChat, "groupchat" },
-		{ LinphoneFriendCapabilityLimeX3dh, "lime" }
+		{ LinphoneFriendCapabilityLimeX3dh, "lime" },
+		{ LinphoneFriendCapabilityEphemeralMessages, "ephemeral" }
 	};
 }
 static std::string capability_to_string (const LinphoneFriendCapability capability) {
@@ -1228,7 +1229,8 @@ void * linphone_presence_model_get_user_data(const LinphonePresenceModel *model)
 namespace {
 	const std::unordered_map<std::string, LinphoneFriendCapability> StringToCapability {
 		{ "groupchat", LinphoneFriendCapabilityGroupChat },
-		{ "lime", LinphoneFriendCapabilityLimeX3dh }
+		{ "lime", LinphoneFriendCapabilityLimeX3dh },
+		{ "ephemeral", LinphoneFriendCapabilityEphemeralMessages }
 	};
 }
 static LinphoneFriendCapability get_capability_from_string (const std::string &capabilityName) {
