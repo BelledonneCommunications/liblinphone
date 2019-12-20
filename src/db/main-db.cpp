@@ -819,7 +819,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceEphemeralLifetimeEvent (
 	return make_shared<ConferenceEphemeralLifetimeEvent>(
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		row.get<double>(20)
+		(long)row.get<double>(20)
 	);
 }
 
