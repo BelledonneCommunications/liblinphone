@@ -87,6 +87,10 @@ void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
 		mOwnsBundle = false;
 		getMediaSessionPrivate().getCurrentParams()->enableRtpBundle(true);
 	}
+
+	// It is necessary to call this function after adding the session to the bundle so the SDES contains the MID item
+	string userAgent = linphone_core_get_user_agent(getCCore());
+	rtp_session_set_source_description(mSessions.rtp_session, getMediaSessionPrivate().getMe()->getAddress().asString().c_str(), NULL, NULL, NULL, NULL, userAgent.c_str(), NULL);
 }
 
 RtpBundle *MS2Stream::createOrGetRtpBundle(const SalStreamDescription *sd){
