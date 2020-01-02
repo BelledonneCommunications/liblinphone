@@ -97,6 +97,7 @@ FILE *sip_start(const char *senario, const char* dest_username, const char *pass
 	char *command;
 	FILE *file;
 	char local_ip[64];
+	int local_port = (bctbx_random()|1024)&0xFFFF ;
 	if (linphone_address_get_port(dest_addres)>0)
 		dest = ms_strdup_printf("%s:%i",linphone_address_get_domain(dest_addres),linphone_address_get_port(dest_addres));
 	else
@@ -104,11 +105,12 @@ FILE *sip_start(const char *senario, const char* dest_username, const char *pass
 	
 	linphone_core_get_local_ip_for(AF_INET, linphone_address_get_domain(dest_addres), local_ip);
 	//until errors logs are handled correctly and stop breaks output, they will be DISABLED
-	command = ms_strdup_printf(SIPP_COMMAND" -sf %s -s %s %s -i %s -trace_err -trace_msg -rtp_echo -m 1 -d 1000 -ap %s 2>/dev/null",senario
-								,dest_username
-								,dest
-							    ,local_ip
-								,(passwd?passwd:"none"));
+	command = ms_strdup_printf(SIPP_COMMAND" -sf %s -s %s %s -i %s  -p %i -trace_err -trace_msg -rtp_echo -m 1 -d 1000 -ap %s 2>/dev/null",senario
+								, dest_username
+								, dest
+							    , local_ip
+							   	, local_port
+								, (passwd?passwd:"none"));
 
 	ms_message("Starting sipp command [%s]",command);
 	file = popen(command, "r");
@@ -118,12 +120,13 @@ FILE *sip_start(const char *senario, const char* dest_username, const char *pass
 }
 
 
-static FILE *sip_start_recv(const char *senario) {
+static FILE *sip_start_recv(const char *senario,int *local_port) {
 	char *command;
 	FILE *file;
 
+	*local_port = (bctbx_random()|1024)&0xFFFF ;
 	//until errors logs are handled correctly and stop breaks output, they will be DISABLED
-	command = ms_strdup_printf(SIPP_COMMAND" -sf %s -trace_err -trace_msg -rtp_echo -m 1 -d 1000 2>/dev/null",senario);
+	command = ms_strdup_printf(SIPP_COMMAND" -sf %s -i 127.0.0.1 -p %i -trace_err -trace_msg -rtp_echo -m 1 -d 1000 2>/dev/null",senario,*local_port);
 
 	ms_message("Starting sipp command [%s]",command);
 	file = popen(command, "r");
@@ -131,24 +134,33 @@ static FILE *sip_start_recv(const char *senario) {
 	return file;
 }
 
-static void sip_update_within_icoming_reinvite_with_no_sdp(void) {
-	LinphoneCoreManager *mgr;
+static LinphoneCoreManager * mgr_init(void) {
 	char *identity_char;
-	char *scen;
-	FILE * sipp_out;
-
 	/*currently we use direct connection because sipp do not properly set ACK request uri*/
-	mgr= linphone_core_manager_new2( "empty_rc", FALSE);
+	LinphoneCoreManager *mgr= linphone_core_manager_create( "empty_rc");
+	LinphoneSipTransports tr;
+	memset(&tr,0,sizeof(tr));
+	tr.udp_port = LC_SIP_TRANSPORT_RANDOM;
+	linphone_core_set_sip_transports (mgr->lc, &tr);
 	mgr->identity= linphone_core_get_primary_contact_parsed(mgr->lc);
 	linphone_address_set_username(mgr->identity,"marie");
 	identity_char=linphone_address_as_string(mgr->identity);
 	linphone_core_set_primary_contact(mgr->lc,identity_char);
+	linphone_core_manager_start(mgr, FALSE);
 	linphone_core_iterate(mgr->lc);
+	return mgr;
+}
+
+static void sip_update_within_icoming_reinvite_with_no_sdp(void) {
+	char *scen;
+	FILE * sipp_out;
+	LinphoneCoreManager *mgr = mgr_init();
+	
 	scen = bc_tester_res("sipp/sip_update_within_icoming_reinvite_with_no_sdp.xml");
 	sipp_out = sip_start(scen, linphone_address_get_username(mgr->identity),NULL, mgr->identity);
 
 	if (sipp_out) {
-		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallIncomingReceived, 1));
+		BC_ASSERT_TRUE(wait_for_until(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallIncomingReceived, 1,100000));
 		if (linphone_core_get_current_call(mgr->lc)) {
 			linphone_call_accept(linphone_core_get_current_call(mgr->lc));
 			BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallStreamsRunning, 2));
@@ -160,20 +172,10 @@ static void sip_update_within_icoming_reinvite_with_no_sdp(void) {
 }
 
 static void call_with_audio_mline_before_video_in_sdp(void) {
-	LinphoneCoreManager *mgr;
-	char *identity_char;
 	char *scen;
 	FILE * sipp_out;
 	LinphoneCall *call = NULL;
-
-	/*currently we use direct connection because sipp do not properly set ACK request uri*/
-	mgr= linphone_core_manager_new2( "empty_rc", FALSE);
-	mgr->identity = linphone_core_get_primary_contact_parsed(mgr->lc);
-	linphone_address_set_username(mgr->identity,"marie");
-	identity_char = linphone_address_as_string(mgr->identity);
-	linphone_core_set_primary_contact(mgr->lc,identity_char);
-
-	linphone_core_iterate(mgr->lc);
+	LinphoneCoreManager *mgr = mgr_init();
 
 	scen = bc_tester_res("sipp/call_with_audio_mline_before_video_in_sdp.xml");
 	
@@ -201,20 +203,10 @@ static void call_with_audio_mline_before_video_in_sdp(void) {
 }
 
 static void call_with_video_mline_before_audio_in_sdp(void) {
-	LinphoneCoreManager *mgr;
-	char *identity_char;
 	char *scen;
 	FILE * sipp_out;
 	LinphoneCall *call = NULL;
-
-	/*currently we use direct connection because sipp do not properly set ACK request uri*/
-	mgr= linphone_core_manager_new2( "empty_rc", FALSE);
-	mgr->identity = linphone_core_get_primary_contact_parsed(mgr->lc);
-	linphone_address_set_username(mgr->identity,"marie");
-	identity_char = linphone_address_as_string(mgr->identity);
-	linphone_core_set_primary_contact(mgr->lc,identity_char);
-
-	linphone_core_iterate(mgr->lc);
+	LinphoneCoreManager *mgr = mgr_init();
 
 	scen = bc_tester_res("sipp/call_with_video_mline_before_audio_in_sdp.xml");
 
@@ -242,20 +234,10 @@ static void call_with_video_mline_before_audio_in_sdp(void) {
 }
 
 static void call_with_multiple_audio_mline_in_sdp(void) {
-	LinphoneCoreManager *mgr;
-	char *identity_char;
 	char *scen;
 	FILE * sipp_out;
 	LinphoneCall *call = NULL;
-
-	/*currently we use direct connection because sipp do not properly set ACK request uri*/
-	mgr= linphone_core_manager_new2( "empty_rc", FALSE);
-	mgr->identity = linphone_core_get_primary_contact_parsed(mgr->lc);
-	linphone_address_set_username(mgr->identity,"marie");
-	identity_char = linphone_address_as_string(mgr->identity);
-	linphone_core_set_primary_contact(mgr->lc,identity_char);
-
-	linphone_core_iterate(mgr->lc);
+	LinphoneCoreManager *mgr = mgr_init();
 
 	scen = bc_tester_res("sipp/call_with_multiple_audio_mline_in_sdp.xml");
 
@@ -283,20 +265,10 @@ static void call_with_multiple_audio_mline_in_sdp(void) {
 }
 
 static void call_with_multiple_video_mline_in_sdp(void) {
-	LinphoneCoreManager *mgr;
-	char *identity_char;
 	char *scen;
 	FILE * sipp_out;
 	LinphoneCall *call = NULL;
-
-	/*currently we use direct connection because sipp do not properly set ACK request uri*/
-	mgr= linphone_core_manager_new2( "empty_rc", FALSE);
-	mgr->identity = linphone_core_get_primary_contact_parsed(mgr->lc);
-	linphone_address_set_username(mgr->identity,"marie");
-	identity_char = linphone_address_as_string(mgr->identity);
-	linphone_core_set_primary_contact(mgr->lc,identity_char);
-
-	linphone_core_iterate(mgr->lc);
+	LinphoneCoreManager *mgr = mgr_init();
 
 	scen = bc_tester_res("sipp/call_with_multiple_video_mline_in_sdp.xml");
 
@@ -325,27 +297,20 @@ static void call_with_multiple_video_mline_in_sdp(void) {
 
 
 static void call_invite_200ok_without_contact_header(void) {
-	LinphoneCoreManager *mgr;
-	char *identity_char;
 	char *scen;
 	FILE * sipp_out;
 	LinphoneCall *call = NULL;
-
-	/*currently we use direct connection because sipp do not properly set ACK request uri*/
-	mgr= linphone_core_manager_new2("empty_rc", FALSE);
-	mgr->identity = linphone_core_get_primary_contact_parsed(mgr->lc);
-	linphone_address_set_username(mgr->identity,"marie");
-	identity_char = linphone_address_as_string(mgr->identity);
-	linphone_core_set_primary_contact(mgr->lc,identity_char);
-
-	linphone_core_iterate(mgr->lc);
+	LinphoneCoreManager *mgr = mgr_init();
 
 	scen = bc_tester_res("sipp/call_invite_200ok_without_contact_header.xml");
-
-	sipp_out = sip_start_recv(scen);
+	int local_port;
+	sipp_out = sip_start_recv(scen, &local_port);
 
 	if (sipp_out) {
-		call = linphone_core_invite(mgr->lc, "sipp@127.0.0.1");
+		LinphoneAddress *dest = linphone_address_new("sip:sipp@127.0.0.1");
+		linphone_address_set_port(dest, local_port);
+		call = linphone_core_invite_address(mgr->lc, dest);
+		linphone_address_unref(dest);
 		BC_ASSERT_PTR_NOT_NULL(call);
 		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallOutgoingInit, 1));
 		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1));
@@ -362,6 +327,35 @@ static void call_invite_200ok_without_contact_header(void) {
 	linphone_core_manager_destroy(mgr);
 }
 
+static void call_invite_180rel_prack_with_180_retransmition(void) {
+	char *scen;
+	FILE * sipp_out;
+	LinphoneCall *call = NULL;
+	LinphoneCoreManager *mgr = mgr_init();
+	
+	scen = bc_tester_res("sipp/call_prack_retransmited_180.xml");
+	int local_port;
+	sipp_out = sip_start_recv(scen, &local_port);
+	
+	if (sipp_out) {
+		LinphoneAddress *dest = linphone_address_new("sip:sipp@127.0.0.1");
+		linphone_address_set_port(dest, local_port);
+		call = linphone_core_invite_address(mgr->lc, dest);
+		linphone_address_unref(dest);
+		BC_ASSERT_PTR_NOT_NULL(call);
+		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallOutgoingInit, 1));
+		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1));
+		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallOutgoingRinging, 1));
+		/*assert that the call  get connected */
+		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallConnected, 1));
+		linphone_call_terminate(call);
+		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallEnd, 1));
+		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallReleased, 1));
+		pclose(sipp_out);
+	}
+	linphone_core_manager_destroy(mgr);
+}
+
 
 static test_t tests[] = {
 	TEST_NO_TAG("SIP UPDATE within incoming reinvite without sdp", sip_update_within_icoming_reinvite_with_no_sdp),
@@ -369,7 +363,8 @@ static test_t tests[] = {
 	TEST_NO_TAG("Call with video mline before audio in sdp", call_with_video_mline_before_audio_in_sdp),
 	TEST_NO_TAG("Call with multiple audio mline in sdp", call_with_multiple_audio_mline_in_sdp),
 	TEST_NO_TAG("Call with multiple video mline in sdp", call_with_multiple_video_mline_in_sdp),
-	TEST_NO_TAG("Call invite 200ok without contact header", call_invite_200ok_without_contact_header)
+	TEST_NO_TAG("Call invite 200ok without contact header", call_invite_200ok_without_contact_header),
+	TEST_NO_TAG("Call invite 180rel PRACK with 180 retransmition", call_invite_180rel_prack_with_180_retransmition)
 };
 #endif
 
