@@ -210,7 +210,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	event-log/events.h
 	hacks/hacks.h
 	logger/logger.h
-	nat/ice-agent.h
+	nat/ice-service.h
 	nat/stun-client.h
 	object/app-data-container.h
 	object/base-object-p.h
@@ -370,7 +370,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	event-log/event-log.cpp
 	hacks/hacks.cpp
 	logger/logger.cpp
-	nat/ice-agent.cpp
+	nat/ice-service.cpp
 	nat/stun-client.cpp
 	object/app-data-container.cpp
 	object/base-object.cpp

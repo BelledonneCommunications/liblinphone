@@ -84,8 +84,7 @@ public:
 	void setParams (MediaSessionParams *msp);
 	void setRemoteParams (MediaSessionParams *msp);
 
-	//IceSession *getIceSession () const { return streamsGroup->getIceAgent().getIceSession(); }
-	IceAgent &getIceAgent() const { return streamsGroup->getIceAgent(); }
+	IceService &getIceService() const { return streamsGroup->getIceService(); }
 	SalMediaDescription *getLocalDesc () const { return localDesc; }
 
 	unsigned int getAudioStartCount () const;

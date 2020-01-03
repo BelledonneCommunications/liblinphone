@@ -29,6 +29,7 @@
 #include "conference/participant.h"
 #include "utils/payload-type-handler.h"
 #include "conference/params/media-session-params-p.h"
+#include "nat/ice-service.h"
 
 #include "linphone/core.h"
 
@@ -103,6 +104,12 @@ RtpBundle *MS2Stream::createOrGetRtpBundle(const SalStreamDescription *sd){
 		getMediaSessionPrivate().getCurrentParams()->enableRtpBundle(true);
 	}
 	return mRtpBundle;
+}
+
+void MS2Stream::setIceCheckList(IceCheckList *cl){
+	rtp_session_set_pktinfo(mSessions.rtp_session, cl != nullptr);
+	rtp_session_set_symmetric_rtp(mSessions.rtp_session, (cl == nullptr) ? linphone_core_symmetric_rtp_enabled(getCCore()) : false);
+	media_stream_set_ice_check_list(getMediaStream(), cl);
 }
 
 string MS2Stream::getBindIp(){
@@ -305,7 +312,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 	const char *rtpAddr = (stream->rtp_addr[0] != '\0') ? stream->rtp_addr : params.resultMediaDescription->addr;
 	bool isMulticast = !!ms_is_multicast(rtpAddr);
 	
-	if (getIceAgent().hasSession() || (getMediaSessionPrivate().getParams()->earlyMediaSendingEnabled() 
+	if (getIceService().isActive() || (getMediaSessionPrivate().getParams()->earlyMediaSendingEnabled() 
 		&& (targetState == CallSession::State::OutgoingEarlyMedia))) {
 		rtp_session_set_symmetric_rtp(mSessions.rtp_session, false);
 	}
@@ -571,8 +578,6 @@ bool MS2Stream::prepare(){
 		if (!meta_rtp_transport_get_endpoint(meta_rtcp))
 			meta_rtp_transport_set_endpoint(meta_rtcp, rtcpFunc(rtcpFuncData, mPortConfig.rtcpPort));
 	}
-	//FIXME
-	//getIceAgent().prepareIceForStream(getMediaStream(), false);
 	startEventHandling();
 	Stream::prepare();
 	return false;
@@ -763,9 +768,6 @@ void MS2Stream::notifyStatsUpdated () {
 void MS2Stream::handleEvents () {
 	MediaStream *ms = getMediaStream();
 	if (ms) {
-		/* Ensure there is no dangling ICE check list */
-		if (!getIceAgent().hasSession())
-			media_stream_set_ice_check_list(ms, nullptr);
 		switch(ms->type){
 			case MSAudio:
 				audio_stream_iterate((AudioStream *)ms);

@@ -49,6 +49,7 @@ public:
 	virtual void refreshSockets() override;
 	virtual void updateBandwidthReports() override;
 	virtual float getCpuUsage()const override;
+	virtual void setIceCheckList(IceCheckList *cl) override;
 	
 	/* RtpInterface */
 	virtual bool avpfEnabled() const override;

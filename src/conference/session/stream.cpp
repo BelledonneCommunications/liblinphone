@@ -94,6 +94,9 @@ void Stream::stop(){
 	mState = Stopped;
 }
 
+void Stream::setIceCheckList(IceCheckList *cl){
+}
+
 void Stream::setRandomPortConfig () {
 	mPortConfig.rtpPort = -1;
 	mPortConfig.rtcpPort = -1;
@@ -193,8 +196,8 @@ bool Stream::isPortUsed(int port)const{
 	return port == mPortConfig.rtpPort || port == mPortConfig.rtcpPort;
 }
 
-IceAgent & Stream::getIceAgent()const{
-	return mStreamsGroup.getIceAgent();
+IceService & Stream::getIceService()const{
+	return mStreamsGroup.getIceService();
 }
 
 const string & Stream::getPublicIp() const{

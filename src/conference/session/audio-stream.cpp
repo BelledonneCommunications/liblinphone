@@ -27,6 +27,7 @@
 #include "call/call-p.h"
 #include "conference/participant.h"
 #include "conference/params/media-session-params-p.h"
+#include "nat/ice-service.h"
 
 #include "mediastreamer2/msfileplayer.h"
 #include "mediastreamer2/msvolume.h"
@@ -183,6 +184,8 @@ bool MS2AudioStream::prepare(){
 	
 	if (!getCCore()->use_files){
 		audio_stream_prepare_sound(mStream, getCCore()->sound_conf.play_sndcard, getCCore()->sound_conf.capt_sndcard);
+	}else if (getIceService().isActive()){
+		audio_stream_prepare_sound(mStream, nullptr, nullptr);
 	}
 	MS2Stream::prepare();
 	return false;

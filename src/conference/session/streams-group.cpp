@@ -29,7 +29,7 @@
 #include "conference/participant.h"
 #include "utils/payload-type-handler.h"
 #include "conference/params/media-session-params-p.h"
-
+#include "nat/ice-service.h"
 #include "linphone/core.h"
 
 #include <iomanip>
@@ -45,15 +45,15 @@ LINPHONE_BEGIN_NAMESPACE
  */
 
 StreamsGroup::StreamsGroup(MediaSession &session) : mMediaSession(session){
-	mIceAgent.reset(new IceAgent());
+	mIceService.reset(new IceService(*this));
 }
 
 StreamsGroup::~StreamsGroup(){
 	finish();
 }
 
-IceAgent & StreamsGroup::getIceAgent()const{
-	return *mIceAgent;
+IceService & StreamsGroup::getIceService()const{
+	return *mIceService;
 }
 
 Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
@@ -92,6 +92,7 @@ void StreamsGroup::fillLocalMediaDescription(OfferAnswerContext & params){
 		params.scopeStreamToIndex(stream->getIndex());
 		stream->fillLocalMediaDescription(params);
 	}
+	mIceService->fillLocalMediaDescription(params);
 }
 
 void StreamsGroup::createStreams(const OfferAnswerContext &params){
@@ -111,6 +112,7 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params){
 			}
 		}
 	}
+	mIceService->createStreams(params);
 }
 
 bool StreamsGroup::prepare(){
@@ -123,7 +125,7 @@ bool StreamsGroup::prepare(){
 			stream->prepare();
 		}
 	}
-	return false;
+	return mIceService->prepare();
 }
 
 void StreamsGroup::finishPrepare(){
@@ -132,6 +134,7 @@ void StreamsGroup::finishPrepare(){
 			stream->finishPrepare();
 		}
 	}
+	mIceService->finishPrepare();
 }
 
 void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::State targetState){
@@ -186,9 +189,9 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 	}
 	mPostRenderHooks.clear();
 	
-	if (!getIceAgent().hasCompleted()) {
-		getIceAgent().startConnectivityChecks();
-	} else {
+	mIceService->render(params, targetState);
+	
+	if (getIceService().hasCompleted()){
 		/* Should not start dtls until ice is completed */
 		startDtls(params);
 	}
@@ -217,6 +220,7 @@ void StreamsGroup::stop(){
 		if (stream && stream->getState() != Stream::Stopped)
 			stream->stop();
 	}
+	mIceService->stop();
 }
 
 Stream * StreamsGroup::getStream(size_t index){
@@ -225,14 +229,6 @@ Stream * StreamsGroup::getStream(size_t index){
 		return nullptr;
 	}
 	return mStreams[index].get();
-}
-
-std::list<Stream*> StreamsGroup::getStreams(){
-	list<Stream*> ret;
-	for (auto &s : mStreams){
-		if (s) ret.push_back(s.get());
-	}
-	return ret;
 }
 
 bool StreamsGroup::isPortUsed(int port)const{
@@ -370,7 +366,7 @@ bool StreamsGroup::isStarted()const{
 
 void StreamsGroup::clearStreams(){
 	stop();
-	mIceAgent->deleteSession();
+	mIceService.reset(new IceService(*this));
 	mStreams.clear();
 	mCurrentOfferAnswerState.clear();
 }
@@ -500,6 +496,7 @@ void StreamsGroup::finish(){
 	if (mFinished) return;
 	stop(); //For the paranoid: normally it should be done already.
 	forEach<Stream>(mem_fun(&Stream::finish));
+	mIceService->finish();
 	mFinished = true;
 }
 

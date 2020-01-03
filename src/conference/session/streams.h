@@ -34,7 +34,7 @@ class StreamsGroup;
 class MediaSession;
 class MediaSessionPrivate;
 class MediaSessionParams;
-class IceAgent;
+class IceService;
 
 /**
  * Base class for any kind of stream that may be setup with SDP.
@@ -82,6 +82,7 @@ public:
 	virtual LinphoneCallStats *getStats(){
 		return nullptr;
 	}
+	virtual void setIceCheckList(IceCheckList *cl);
 	virtual bool isEncrypted() const = 0;
 	virtual void tryEarlyMediaForking(const OfferAnswerContext &ctx) = 0;
 	virtual void finishEarlyMediaForking() = 0;
@@ -99,7 +100,7 @@ public:
 	MediaSession &getMediaSession()const;
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	bool isPortUsed(int port) const;
-	IceAgent & getIceAgent()const;
+	IceService & getIceService()const;
 	State getState()const{ return mState;}
 	StreamsGroup &getGroup()const{ return mStreamsGroup;}
 	// Returns whether this stream is the "main" one of its own type, in constrat to secondary streams.
@@ -294,12 +295,14 @@ public:
 		}
 		return nullptr;
 	}
-	std::list<Stream*> getStreams();
+	const std::vector<std::unique_ptr<Stream>> & getStreams(){
+		return mStreams;
+	}
 	MediaSession &getMediaSession()const{
 		return mMediaSession;
 	}
 	bool isPortUsed(int port)const;
-	IceAgent &getIceAgent()const;
+	IceService &getIceService()const;
 	bool allStreamsEncrypted () const;
 	// Returns true if at least one stream was started.
 	bool isStarted()const;
@@ -333,9 +336,11 @@ public:
 	const std::string & getAuthenticationToken()const{ return mAuthToken; }
 	bool getAuthenticationTokenVerified() const{ return mAuthTokenVerified; }
 	const OfferAnswerContext & getCurrentOfferAnswerContext()const{ return mCurrentOfferAnswerState; };
-protected:
+	MediaSessionPrivate &getMediaSessionPrivate()const;
 	LinphoneCore *getCCore()const;
 	Core & getCore()const;
+protected:
+	
 	int updateAllocatedAudioBandwidth (const PayloadType *pt, int maxbw);
 	int getVideoBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc);
 	void zrtpStarted(Stream *mainZrtpStream);
@@ -345,10 +350,9 @@ protected:
 private:
 	template< typename _functor>
 	float computeOverallQuality(_functor func);
-	MediaSessionPrivate &getMediaSessionPrivate()const;
 	Stream * createStream(const OfferAnswerContext &param);
 	MediaSession &mMediaSession;
-	std::unique_ptr<IceAgent> mIceAgent;
+	std::unique_ptr<IceService> mIceService;
 	std::vector<std::unique_ptr<Stream>> mStreams;
 	void computeAndReportBandwidth();
 	// Upload bandwidth used by audio.
