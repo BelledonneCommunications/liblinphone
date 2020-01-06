@@ -93,6 +93,8 @@ private:
 	void configureRtpSessionForRtcpFb (const OfferAnswerContext &params);
 	void configureRtpSessionForRtcpXr(const OfferAnswerContext &params);
 	void configureAdaptiveRateControl(const OfferAnswerContext &params);
+	void updateIceInStats();
+	IceCheckList *mIceCheckList = nullptr;
 	RtpBundle *mRtpBundle = nullptr;
 	bool mOwnsBundle = false;
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo(const std::string &name);

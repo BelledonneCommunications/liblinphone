@@ -237,8 +237,6 @@ LINPHONE_PUBLIC void linphone_core_enable_short_turn_refresh(LinphoneCore *lc, b
 LINPHONE_PUBLIC void linphone_call_stats_fill(LinphoneCallStats *stats, MediaStream *ms, OrtpEvent *ev);
 void linphone_call_stats_update(LinphoneCallStats *stats, MediaStream *stream);
 LinphoneCallStats *_linphone_call_stats_new(void);
-void _linphone_call_stats_uninit(LinphoneCallStats *stats);
-void _linphone_call_stats_clone(LinphoneCallStats *dst, const LinphoneCallStats *src);
 void _linphone_call_stats_set_ice_state (LinphoneCallStats *stats, LinphoneIceState state);
 void _linphone_call_stats_set_type (LinphoneCallStats *stats, LinphoneStreamType type);
 void _linphone_call_stats_set_received_rtcp (LinphoneCallStats *stats, mblk_t *m);

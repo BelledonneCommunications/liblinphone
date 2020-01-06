@@ -107,9 +107,13 @@ RtpBundle *MS2Stream::createOrGetRtpBundle(const SalStreamDescription *sd){
 }
 
 void MS2Stream::setIceCheckList(IceCheckList *cl){
-	rtp_session_set_pktinfo(mSessions.rtp_session, cl != nullptr);
-	rtp_session_set_symmetric_rtp(mSessions.rtp_session, (cl == nullptr) ? linphone_core_symmetric_rtp_enabled(getCCore()) : false);
-	media_stream_set_ice_check_list(getMediaStream(), cl);
+	mIceCheckList = cl;
+	MediaStream *stream = getMediaStream();
+	if (stream){
+		rtp_session_set_pktinfo(mSessions.rtp_session, cl != nullptr);
+		rtp_session_set_symmetric_rtp(mSessions.rtp_session, (cl == nullptr) ? linphone_core_symmetric_rtp_enabled(getCCore()) : false);
+		media_stream_set_ice_check_list(stream, cl);
+	}
 }
 
 string MS2Stream::getBindIp(){
@@ -301,6 +305,9 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession
 			}
 			return true;
 		}
+	}else if (getState() == Stream::Stopped){
+		/* Already stopped, nothing to do.*/
+		return false;
 	}
 	/* Otherwise these changes shall be handled by a full restart of the stream. */
 	stop();
@@ -312,6 +319,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 	const char *rtpAddr = (stream->rtp_addr[0] != '\0') ? stream->rtp_addr : params.resultMediaDescription->addr;
 	bool isMulticast = !!ms_is_multicast(rtpAddr);
 	
+	setIceCheckList(mIceCheckList);
 	if (getIceService().isActive() || (getMediaSessionPrivate().getParams()->earlyMediaSendingEnabled() 
 		&& (targetState == CallSession::State::OutgoingEarlyMedia))) {
 		rtp_session_set_symmetric_rtp(mSessions.rtp_session, false);
@@ -578,6 +586,7 @@ bool MS2Stream::prepare(){
 		if (!meta_rtp_transport_get_endpoint(meta_rtcp))
 			meta_rtp_transport_set_endpoint(meta_rtcp, rtcpFunc(rtcpFuncData, mPortConfig.rtcpPort));
 	}
+	setIceCheckList(mIceCheckList);
 	startEventHandling();
 	Stream::prepare();
 	return false;
@@ -765,6 +774,40 @@ void MS2Stream::notifyStatsUpdated () {
 	}
 }
 
+void MS2Stream::updateIceInStats(){
+	if (!mIceCheckList){
+		_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateNotActivated);
+		return;
+	}
+	if (ice_check_list_state(mIceCheckList) == ICL_Failed) {
+		_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateFailed);
+		return;
+	}
+	if (ice_check_list_state(mIceCheckList) == ICL_Running) {
+		_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateInProgress);
+		return;
+	}
+	/* Otherwise we are in ICL_Completed state. */
+
+	switch (ice_check_list_selected_valid_candidate_type(mIceCheckList)) {
+		case ICT_HostCandidate:
+			_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateHostConnection);
+			break;
+		case ICT_ServerReflexiveCandidate:
+		case ICT_PeerReflexiveCandidate:
+			_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateReflexiveConnection);
+			break;
+		case ICT_RelayedCandidate:
+			_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateRelayConnection);
+			break;
+		case ICT_CandidateInvalid:
+		case ICT_CandidateTypeMax:
+			// Shall not happen.
+			L_ASSERT(false);
+			break;
+	}
+}
+
 void MS2Stream::handleEvents () {
 	MediaStream *ms = getMediaStream();
 	if (ms) {
@@ -806,7 +849,6 @@ void MS2Stream::handleEvents () {
 
 		if (ms)
 			linphone_call_stats_fill(mStats, ms, ev);
-		notifyStatsUpdated();
 		switch(evt){
 			case ORTP_EVENT_ZRTP_ENCRYPTION_CHANGED:
 				if (getType() != SalAudio || !isMain()){
@@ -822,10 +864,12 @@ void MS2Stream::handleEvents () {
 			case ORTP_EVENT_ICE_GATHERING_FINISHED:
 			case ORTP_EVENT_ICE_LOSING_PAIRS_COMPLETED:
 			case ORTP_EVENT_ICE_RESTART_NEEDED:
-				/* ICE events are notified directly to the MediaSession, has it has to take actions on the signaling plane. */
-				getMediaSessionPrivate().handleIceEvents(ev);
+				/* ICE events are notified directly to the IceService. */
+				updateIceInStats();
+				getIceService().handleIceEvent(ev);
 			break;
 		}
+		notifyStatsUpdated();
 	
 		/* Let subclass handle the event.*/
 		handleEvent(ev);

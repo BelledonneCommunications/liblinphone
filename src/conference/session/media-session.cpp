@@ -1400,65 +1400,62 @@ void MediaSessionPrivate::freeResources () {
 	getStreamsGroup().finish();
 }
 
-void MediaSessionPrivate::handleIceEvents (OrtpEvent *ev) {
-	/* FIXME */
-#if 0
+/* 
+ * IceServiceListener implementation
+ */
+void MediaSessionPrivate::onGatheringFinished(IceService &service){
 	L_Q();
-	OrtpEventType evt = ortp_event_get_type(ev);
-	OrtpEventData *evd = ortp_event_get_data(ev);
-	if (evt == ORTP_EVENT_ICE_SESSION_PROCESSING_FINISHED) {
-		if (getIceAgent().hasCompletedCheckList()) {
-			/* The ICE session has succeeded, so perform a call update */
-			if (getIceAgent().isControlling() && q->getCurrentParams()->getPrivate()->getUpdateCallWhenIceCompleted()) {
-				if (state == CallSession::State::StreamsRunning){
-					MediaSessionParams newParams(*getParams());
-					newParams.getPrivate()->setInternalCallUpdate(true);
-					q->update(&newParams);
-				}else{
-					lWarning() << "Cannot send reINVITE for ICE during state " << state;
-				}
-			}else if (!getIceAgent().isControlling() && incomingIceReinvitePending){
-				q->acceptUpdate(nullptr);
-				incomingIceReinvitePending = false;
-			}
-			startDtlsOnAllStreams();
-		}
-		getIceAgent().updateIceStateInCallStats();
-	} else if (evt == ORTP_EVENT_ICE_GATHERING_FINISHED) {
-		if (!evd->info.ice_processing_successful)
-			lWarning() << "No STUN answer from [" << linphone_nat_policy_get_stun_server(q->getPrivate()->getNatPolicy()) << "], continuing without STUN";
-		getIceAgent().gatheringFinished();
-		updateLocalMediaDescriptionFromIce();
-		switch (state) {
-			case CallSession::State::Updating:
-				startUpdate();
-				break;
-			case CallSession::State::UpdatedByRemote:
-				startAcceptUpdate(prevState, Utils::toString(prevState));
-				break;
-			case CallSession::State::OutgoingInit:
-				stopStreamsForIceGathering();
-				if (isReadyForInvite())
-					q->startInvite(nullptr, "");
-				break;
-			case CallSession::State::Idle:
-				stopStreamsForIceGathering();
-				deferIncomingNotification = false;
-				startIncomingNotification();
-				break;
-			default:
-				break;
-		}
-	} else if (evt == ORTP_EVENT_ICE_LOSING_PAIRS_COMPLETED) {
-		if (state == CallSession::State::UpdatedByRemote) {
+	updateLocalMediaDescriptionFromIce();
+	switch (state) {
+		case CallSession::State::Updating:
+			startUpdate();
+			break;
+		case CallSession::State::UpdatedByRemote:
 			startAcceptUpdate(prevState, Utils::toString(prevState));
-			getIceAgent().updateIceStateInCallStats();
-		}
-	} else if (evt == ORTP_EVENT_ICE_RESTART_NEEDED) {
-		getIceAgent().restartSession(IR_Controlling);
-		q->update(getCurrentParams());
+			break;
+		case CallSession::State::OutgoingInit:
+			q->startInvite(nullptr, "");
+			break;
+		case CallSession::State::Idle:
+			deferIncomingNotification = false;
+			startIncomingNotification();
+			break;
+		default:
+			break;
 	}
-#endif
+}
+
+void MediaSessionPrivate::onIceCompleted(IceService &service){
+	L_Q();
+	/* The ICE session has succeeded, so perform a call update */
+	if (!getStreamsGroup().getIceService().hasCompletedCheckList()) return;
+	if (getStreamsGroup().getIceService().isControlling() && q->getCurrentParams()->getPrivate()->getUpdateCallWhenIceCompleted()) {
+		if (state == CallSession::State::StreamsRunning){
+			MediaSessionParams newParams(*getParams());
+			newParams.getPrivate()->setInternalCallUpdate(true);
+			q->update(&newParams);
+		}else{
+			lWarning() << "Cannot send reINVITE for ICE during state " << state;
+		}
+	}else if (!getStreamsGroup().getIceService().isControlling() && incomingIceReinvitePending){
+		q->acceptUpdate(nullptr);
+		incomingIceReinvitePending = false;
+	}
+	startDtlsOnAllStreams();
+}
+
+void MediaSessionPrivate::onLosingPairsCompleted(IceService &service){
+	if (state == CallSession::State::UpdatedByRemote) {
+		lInfo() << "Finished adding losing pairs, ICE re-INVITE can be answered.";
+		startAcceptUpdate(prevState, Utils::toString(prevState));
+	}
+}
+
+void MediaSessionPrivate::onIceRestartNeeded(IceService & service){
+	L_Q();
+	getStreamsGroup().getIceService().restartSession(IR_Controlling);
+	MediaSessionParams newParams(*getParams());
+	q->update(&newParams);
 }
 
 void MediaSessionPrivate::tryEarlyMediaForking (SalMediaDescription *md) {
@@ -2017,6 +2014,7 @@ MediaSession::MediaSession (const shared_ptr<Core> &core, shared_ptr<Participant
 		d->setParams(new MediaSessionParams());
 	d->setCurrentParams(new MediaSessionParams());
 	d->streamsGroup = makeUnique<StreamsGroup>(*this);
+	d->streamsGroup->getIceService().setListener(d);
 
 	lInfo() << "New MediaSession [" << this << "] initialized (LinphoneCore version: " << linphone_core_get_version() << ")";
 }
@@ -2127,18 +2125,6 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 		d->params->initDefault(getCore());
 		d->initializeParamsAccordingToIncomingCallParams();
 		d->makeLocalMediaDescription();
-		SalMediaDescription *md = d->op->getRemoteMediaDescription();
-		if (d->natPolicy && linphone_nat_policy_ice_enabled(d->natPolicy)) {
-			if (md) {
-				/* FIXME Create the ice session now if ICE is required 
-				d->getIceAgent().checkSession(IR_Controlled, false);
-				*/
-			} else {
-				linphone_nat_policy_unref(d->natPolicy);
-				d->natPolicy = nullptr;
-				lWarning() << "ICE not supported for incoming INVITE without SDP";
-			}
-		}
 		if (d->natPolicy)
 			d->runStunTestsIfNeeded();
 		d->discoverMtu(cleanedFrom);
@@ -2692,8 +2678,7 @@ LinphoneCallStats * MediaSession::getStats (LinphoneStreamType type) const {
 	LinphoneCallStats *statsCopy = nullptr;
 	Stream *s = d->getStream(type);
 	if (s && (stats = s->getStats())) {
-		statsCopy = _linphone_call_stats_new();
-		_linphone_call_stats_clone(statsCopy, stats);
+		statsCopy = (LinphoneCallStats*) belle_sip_object_clone((belle_sip_object_t*)stats);
 	}
 	return statsCopy;
 }

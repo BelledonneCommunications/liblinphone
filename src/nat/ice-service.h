@@ -38,7 +38,15 @@ public:
 	
 	bool isActive() const;
 	
+	/* Returns true if ICE has completed succesfully. */
 	bool hasCompleted() const;
+	
+	/* Returns true if ICE has finished with the check lists processing, even if it has failed for some of the check list.*/
+	bool hasCompletedCheckList()const;
+	
+	bool isControlling () const;
+	
+	void restartSession(IceRole role);
 	
 	void createStreams(const OfferAnswerContext &params);
 	/**
@@ -95,7 +103,6 @@ private:
 	void createIceCheckListsAndParseIceAttributes (const SalMediaDescription *md, bool iceRestarted);
 	void updateFromRemoteMediaDescription (const SalMediaDescription *localDesc, const SalMediaDescription *remoteDesc, bool isOffer);
 	void gatheringFinished();
-	bool hasCompletedCheckList()const;
 	void deleteSession();
 	void checkSession (IceRole role);
 	int gatherIceCandidates ();

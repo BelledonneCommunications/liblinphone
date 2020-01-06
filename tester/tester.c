@@ -1460,9 +1460,11 @@ void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCall
 			counters->number_of_rtcp_received_via_mux++;
 		}
 		rtcp_received(counters, _linphone_call_stats_get_received_rtcp(lstats));
+		BC_ASSERT_TRUE(_linphone_call_stats_has_received_rtcp(lstats));
 	}
 	if (updated & LINPHONE_CALL_STATS_SENT_RTCP_UPDATE ) {
 		counters->number_of_rtcp_sent++;
+		BC_ASSERT_TRUE(_linphone_call_stats_has_sent_rtcp(lstats));
 	}
 	if (updated & LINPHONE_CALL_STATS_PERIODICAL_UPDATE ) {
 		const int tab_size = sizeof counters->audio_download_bandwidth / sizeof(int);

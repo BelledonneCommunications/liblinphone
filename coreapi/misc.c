@@ -44,10 +44,6 @@
 #undef snprintf
 #include <mediastreamer2/stun.h>
 
-#ifdef HAVE_GETIFADDRS
-#include <net/if.h>
-#include <ifaddrs.h>
-#endif
 #include <math.h>
 #if _MSC_VER
 #define snprintf _snprintf

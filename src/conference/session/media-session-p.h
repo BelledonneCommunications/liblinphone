@@ -28,7 +28,7 @@
 
 #include "media-session.h"
 #include "port-config.h"
-#include "nat/ice-agent.h"
+#include "nat/ice-service.h"
 #include "nat/stun-client.h"
 
 #include "linphone/call_stats.h"
@@ -38,7 +38,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 
-class MediaSessionPrivate : public CallSessionPrivate {
+class MediaSessionPrivate : public CallSessionPrivate, private IceServiceListener {
 	friend class StreamsGroup;
 public:
 	static int resumeAfterFailedTransfer (void *userData, unsigned int);
@@ -120,11 +120,16 @@ public:
 	const std::string & getDtlsFingerprint()const;
 	bool isEncryptionMandatory () const;
 	MSWebCam *getVideoDevice()const;
-	void handleIceEvents (OrtpEvent *ev);
 	void performMutualAuthentication();
 	const std::string &getMediaLocalIp()const{ return mediaLocalIp; }
 	void lossOfMediaDetected();
 private:
+	/* IceServiceListener methods:*/
+	virtual void onGatheringFinished(IceService &service) override;
+	virtual void onIceCompleted(IceService &service) override;
+	virtual void onLosingPairsCompleted(IceService &service) override;
+	virtual void onIceRestartNeeded(IceService & service) override;
+	
 #ifdef TEST_EXT_RENDERER
 	static void extRendererCb (void *userData, const MSPicture *local, const MSPicture *remote);
 #endif // ifdef TEST_EXT_RENDERER

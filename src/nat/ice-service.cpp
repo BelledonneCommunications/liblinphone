@@ -26,6 +26,7 @@
 #ifdef HAVE_GETIFADDRS
 #include <sys/types.h>
 #include <ifaddrs.h>
+#include <net/if.h>
 #endif
 
 using namespace::std;
@@ -105,15 +106,6 @@ void IceService::fillLocalMediaDescription(OfferAnswerContext & ctx){
 
 void IceService::createStreams(const OfferAnswerContext &params){
 	checkSession(params.localIsOfferer ? IR_Controlling : IR_Controlled);
-	if (!mIceSession) return;
-	if (!params.localIsOfferer){
-		// This may delete the ice session.
-		updateFromRemoteMediaDescription(params.localMediaDescription, params.remoteMediaDescription, false);
-	}
-}
-
-bool IceService::prepare(){
-	if (!mIceSession) return false;
 	
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
@@ -126,6 +118,21 @@ bool IceService::prepare(){
 		}
 		stream->setIceCheckList(cl);
 	}
+	
+	if (!mIceSession) return;
+	if (!params.localIsOfferer){
+		if (params.remoteMediaDescription){
+			// This may delete the ice session.
+			updateFromRemoteMediaDescription(params.localMediaDescription, params.remoteMediaDescription, true);
+		}else{
+			lWarning() << "ICE not supported for incoming INVITE without SDP";
+		}
+	}
+}
+
+bool IceService::prepare(){
+	if (!mIceSession) return false;
+	
 	// Start ICE gathering if needed.
 	if (!ice_session_candidates_gathered(mIceSession)) {
 		int err = gatherIceCandidates();
@@ -148,16 +155,19 @@ LinphoneCore *IceService::getCCore()const{
 #ifdef HAVE_GETIFADDRS
 list<string> IceService::fetchWithGetIfAddrs(bool ipv6Allowed)const{
 	list<string> ret;
-	struct ifaddrs **ifap = nullptr;
+	struct ifaddrs *ifap = nullptr;
+	
+	lInfo() << "Fetching current local IP addresses using getifaddrs().";
 	
 	if (getifaddrs(&ifap) == 0){
 		struct ifaddrs *ifaddr;
-		for (ifaddr = *ifap; ifaddr != nullptr; ifaddr = ifaddr->ifa_next){
-			if (ifaddr->ifa_flags & ){
+		for (ifaddr = ifap; ifaddr != nullptr; ifaddr = ifaddr->ifa_next){
+			if (ifaddr->ifa_flags & IFF_LOOPBACK) continue;
+			if (ifaddr->ifa_flags & IFF_UP){
 				struct sockaddr *saddr = ifaddr->ifa_addr;
 				char addr[INET6_ADDRSTRLEN] = { 0 };
 				if (!saddr){
-					lError << "NULL sockaddr returned by getifaddrs().";
+					lError() << "NULL sockaddr returned by getifaddrs().";
 					continue;
 				}
 				switch (saddr->sa_family){
@@ -186,6 +196,7 @@ list<string> IceService::fetchWithGetIfAddrs(bool ipv6Allowed)const{
 	}else{
 		lError() << "getifaddrs(): " << strerror(errno);
 	}
+	return ret;
 }
 #endif
 
@@ -205,6 +216,7 @@ list<string> IceService::fetchLocalAddresses()const{
 	 * to get the local ip address that has the route to public internet.
 	 */
 	if (ret.empty()){
+		lInfo() << "Fetching local ip addresses using the connect() method.";
 		char localAddr[LINPHONE_IPADDR_SIZE];
 		if (ipv6Allowed){
 			if (linphone_core_get_local_ip_for(AF_INET6, nullptr, localAddr) == 0) {
@@ -637,6 +649,9 @@ void IceService::finishPrepare(){
 }
 
 void IceService::render(const OfferAnswerContext & ctx, CallSession::State targetState){
+	if (!ctx.localIsOfferer){
+		updateFromRemoteMediaDescription(ctx.localMediaDescription, ctx.remoteMediaDescription, false);
+	}
 	if (mIceSession && ice_session_state(mIceSession) != IS_Completed)
 		ice_session_start_connectivity_checks(mIceSession);
 }
@@ -664,6 +679,12 @@ void IceService::deleteSession () {
 
 void IceService::setListener(IceServiceListener *listener){
 	mListener = listener;
+}
+
+void IceService::restartSession (IceRole role) {
+	if (!mIceSession)
+		return;
+	ice_session_restart(mIceSession, role);
 }
 
 bool IceService::hasCompletedCheckList () const {
@@ -701,6 +722,12 @@ void IceService::handleIceEvent(const OrtpEvent *ev){
 			if (mListener) mListener->onIceRestartNeeded(*this);
 		break;
 	}
+}
+
+bool IceService::isControlling () const {
+	if (!mIceSession)
+		return false;
+	return ice_session_role(mIceSession) == IR_Controlling;
 }
 
 
