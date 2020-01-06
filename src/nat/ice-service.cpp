@@ -101,11 +101,14 @@ void IceService::checkSession (IceRole role) {
 }
 
 void IceService::fillLocalMediaDescription(OfferAnswerContext & ctx){
+	if (!mIceSession) return;
 	updateLocalMediaDescriptionFromIce(ctx.localMediaDescription);
 }
 
 void IceService::createStreams(const OfferAnswerContext &params){
 	checkSession(params.localIsOfferer ? IR_Controlling : IR_Controlled);
+	
+	if (!mIceSession) return;
 	
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
@@ -119,7 +122,6 @@ void IceService::createStreams(const OfferAnswerContext &params){
 		stream->setIceCheckList(cl);
 	}
 	
-	if (!mIceSession) return;
 	if (!params.localIsOfferer){
 		if (params.remoteMediaDescription){
 			// This may delete the ice session.
@@ -645,10 +647,12 @@ const struct addrinfo *IceService::getIcePreferredStunServerAddrinfo (const stru
 }
 
 void IceService::finishPrepare(){
+	if (!mIceSession) return;
 	gatheringFinished();
 }
 
 void IceService::render(const OfferAnswerContext & ctx, CallSession::State targetState){
+	if (!mIceSession) return;
 	if (!ctx.localIsOfferer){
 		updateFromRemoteMediaDescription(ctx.localMediaDescription, ctx.remoteMediaDescription, false);
 	}
