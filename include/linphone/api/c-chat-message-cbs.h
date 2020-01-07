@@ -141,7 +141,7 @@ LINPHONE_PUBLIC void linphone_chat_message_cbs_set_participant_imdn_state_change
 LINPHONE_PUBLIC LinphoneChatMessageCbsEphemeralMessageTimerStartedCb linphone_chat_message_cbs_get_ephemeral_message_timer_started (const LinphoneChatMessageCbs *cbs);
 
 /**
- * Set the ephemeral message timer started callback. This callback will be used when new message deleation timer starts (the message has been viewed).
+ * Set the ephemeral message timer started callback. This callback will be used when new message deletion timer starts (the message has been viewed).
  * @param[in] cbs LinphoneChatMessageCbs object.
  * @param[in] cb The ephemeral message timer started callback to be used.
  */

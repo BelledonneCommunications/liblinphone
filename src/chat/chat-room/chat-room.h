@@ -85,9 +85,9 @@ public:
 
 	void markAsRead () override;
 	void enableEphemeral (bool ephem, bool updateDb) override;
-	bool ephemeralEnabled () override;
+	bool ephemeralEnabled () const override;
 	void setEphemeralLifetime (long lifetime, bool updateDb) override;
-	long getEphemeralLifetime () override;
+	long getEphemeralLifetime () const override;
 
 	const std::shared_ptr<ChatRoomParams> &getCurrentParams() const override;
 
