@@ -371,6 +371,9 @@ int SalOp::processRedirect () {
 	belle_sip_parameters_remove_parameter(BELLE_SIP_PARAMETERS(redirectUri), "transport");
 	belle_sip_header_to_t *toHeader = belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(request), belle_sip_header_to_t);
 	belle_sip_header_address_set_uri(BELLE_SIP_HEADER_ADDRESS(toHeader), redirectUri);
+	/* remove previously used authorization headers. */
+	belle_sip_message_remove_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_AUTHORIZATION);
+	belle_sip_message_remove_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_PROXY_AUTHORIZATION);
 	sendRequest(request);
 	return 0;
 }
