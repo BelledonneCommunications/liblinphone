@@ -279,7 +279,7 @@ LINPHONE_PUBLIC void linphone_chat_room_cbs_set_conference_left (LinphoneChatRoo
 LINPHONE_PUBLIC LinphoneChatRoomCbsEphemeralMessageTimerStartedCb linphone_chat_room_cbs_get_ephemeral_message_timer_started (const LinphoneChatRoomCbs *cbs);
 
 /**
- * Set the ephemeral message timer started callback. This callback will be used when new message deleation timer starts (the message has been viewed).
+ * Set the ephemeral message timer started callback. This callback will be used when new message deletion timer starts (the message has been viewed).
  * @param[in] cbs LinphoneChatRoomCbs object.
  * @param[in] cb The ephemeral message timer started callback to be used.
  */

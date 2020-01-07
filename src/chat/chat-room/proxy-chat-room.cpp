@@ -228,7 +228,7 @@ void ProxyChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 	d->chatRoom->enableEphemeral(ephem, updateDb);
 }
 
-bool ProxyChatRoom::ephemeralEnabled () {
+bool ProxyChatRoom::ephemeralEnabled () const {
 	L_D();
 	return d->chatRoom->ephemeralEnabled();
 }
@@ -238,7 +238,7 @@ void ProxyChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 	d->chatRoom->setEphemeralLifetime(lifetime, updateDb);
 }
 
-long ProxyChatRoom::getEphemeralLifetime () {
+long ProxyChatRoom::getEphemeralLifetime () const {
 	L_D();
 	return d->chatRoom->getEphemeralLifetime();
 }

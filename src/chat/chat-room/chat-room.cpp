@@ -143,6 +143,9 @@ shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage (ChatMessage::Directi
 	L_Q();
 	shared_ptr<ChatMessage> message = shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
 	if (isEphemeral) {
+		if (direction == ChatMessage::Direction::Outgoing) {
+			lInfo() << "Create an outgoing ephemeral message " << message << " in chat room [" << conferenceId << "]";
+		}
 		message->getPrivate()->enableEphemeralWithTime(ephemeralLifetime);
 	}
 	return message;
@@ -614,15 +617,17 @@ void ChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 	// supported only in group chat room
 	if (d->capabilities & ChatRoom::Capabilities::Conference) {
 		d->isEphemeral = ephem;
+		const string active = ephem ? "enabled" : "disabled";
+		lInfo() << "Ephemeral message is " << active << " in chat room [" << d->conferenceId << "]";
 		if (updateDb)
 			getCore()->getPrivate()->mainDb->updateChatRoomEphemeralEnabled(d->conferenceId, ephem);
 	} else {
 		d->isEphemeral = false;
-		lWarning() << "Ephemeral message is only supported in conference based chat room!";
+		lError() << "Ephemeral message is only supported in conference based chat room!";
 	}
 }
 
-bool ChatRoom::ephemeralEnabled() {
+bool ChatRoom::ephemeralEnabled() const {
 	L_D();
 	return d->isEphemeral;
 }
@@ -644,7 +649,7 @@ void ChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 	}
 }
 
-long ChatRoom::getEphemeralLifetime () {
+long ChatRoom::getEphemeralLifetime () const {
 	L_D();
 	return d->ephemeralLifetime;
 }
