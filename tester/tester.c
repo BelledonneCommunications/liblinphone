@@ -463,6 +463,7 @@ void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, c
 	linphone_core_cbs_set_dtmf_received(mgr->cbs, dtmf_received);
 	linphone_core_cbs_set_call_stats_updated(mgr->cbs, call_stats_updated);
 	linphone_core_cbs_set_global_state_changed(mgr->cbs, global_state_changed);
+	linphone_core_cbs_set_message_sent(mgr->cbs, liblinphone_tester_chat_room_msg_sent);
 
 	mgr->phone_alias = phone_alias ? ms_strdup(phone_alias) : NULL;
 
@@ -1524,6 +1525,11 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 			return;
 	}
 	ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
+}
+
+void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneMessageSent++;
 }
 
 /*

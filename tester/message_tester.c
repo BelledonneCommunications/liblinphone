@@ -345,9 +345,11 @@ static void text_message_with_send_error(void) {
 	LinphoneChatMessage* msg = linphone_chat_room_create_message(chat_room,"Bli bli bli \n blu");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageSent, 0, int, "%d");
+
 	/*simulate a network error*/
 	sal_set_send_error(linphone_core_get_sal(marie->lc), -1);
-	linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
+	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);
 	char *message_id = ms_strdup(linphone_chat_message_get_message_id(msg));
 	BC_ASSERT_STRING_NOT_EQUAL(message_id, "");
@@ -363,10 +365,13 @@ static void text_message_with_send_error(void) {
 	/* the msg should have been discarded from transient list after an error */
 	BC_ASSERT_EQUAL(_linphone_chat_room_get_transient_message_count(chat_room), 0, int, "%d");
 
+	// Even if error the message should be notified in sent callback
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageSent, 1, int, "%d");
+
 	sal_set_send_error(linphone_core_get_sal(marie->lc), 0);
 
 	// resend the message
-	linphone_chat_message_send(msg);
+	linphone_chat_message_resend(msg);
 	const char *message_id_2 = linphone_chat_message_get_message_id(msg);
 	BC_ASSERT_STRING_NOT_EQUAL(message_id_2, "");
 
@@ -377,6 +382,9 @@ static void text_message_with_send_error(void) {
 	//BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageDelivered,1));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageDeliveredToUser,1));	
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageReceived, 1, int, "%d");
+
+	// In case of resend the send callback should not be called again
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageSent, 1, int, "%d");
 
 	/*give a chance to register again to allow linphone_core_manager_destroy to properly unregister*/
 	linphone_core_refresh_registers(marie->lc);

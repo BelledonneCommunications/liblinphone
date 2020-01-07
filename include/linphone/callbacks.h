@@ -195,7 +195,9 @@ typedef void (*LinphoneCoreTextMessageReceivedCb)(LinphoneCore *lc, LinphoneChat
 typedef void (*LinphoneCoreCbsMessageReceivedCb)(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
 
 /**
- * Chat message callback prototype
+ * Called after the #send method of the #LinphoneChatMessage was called.
+ * The message will be in state InProgress.
+ * In case of resend this callback won't be called.
  * @param lc #LinphoneCore object
  * @param room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room.
  * @param #LinphoneChatMessage outgoing message
