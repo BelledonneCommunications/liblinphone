@@ -160,7 +160,7 @@ LINPHONE_PUBLIC void linphone_chat_room_mark_as_read(LinphoneChatRoom *cr);
  * Enable or disable the ephemeral message feature in the chat room. Works only for conference based chat room.
  * An ephemeral message will automatically disappear from the recipient's screen after the message has been viewed.
  * @param[in] cr #LinphoneChatRoom object
- * @param[in] ephem TRUE if the ephmeral message feature is enabled, FALSE otherwise.
+ * @param[in] ephem TRUE if the ephemeral message feature is enabled, FALSE otherwise.
  */
 LINPHONE_PUBLIC void linphone_chat_room_enable_ephemeral (LinphoneChatRoom *cr, bool_t ephem);
 
@@ -169,11 +169,11 @@ LINPHONE_PUBLIC void linphone_chat_room_enable_ephemeral (LinphoneChatRoom *cr, 
  * @param[in] cr The #LinphoneChatRoom object corresponding to the conversation
  * @return true if ephemeral is enabled, false otherwise.
  */
-LINPHONE_PUBLIC bool_t linphone_chat_room_ephemeral_enabled (LinphoneChatRoom *cr);
+LINPHONE_PUBLIC bool_t linphone_chat_room_ephemeral_enabled (const LinphoneChatRoom *cr);
 
 /**
  * Set lifetime (in seconds) for all new ephemral messages in the chat room.
- * After the message is readen, it will be deleted after "time" seconds.
+ * After the message is read, it will be deleted after "time" seconds.
  * @param[in] cr #LinphoneChatRoom object
  * @param[in] time The ephemral lifetime, default 24h, 86400s
  */
@@ -181,11 +181,11 @@ LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_lifetime (LinphoneChatRoom
 
 /**
  * Get lifetime (in seconds) for all new ephemeral messages in the chat room.
- * After the message is readen, it will be deleted after "time" seconds.
+ * After the message is read, it will be deleted after "time" seconds.
  * @param[in] cr #LinphoneChatRoom object
  * @return the ephemeral lifetime (in secoonds)
  */
-LINPHONE_PUBLIC long linphone_chat_room_get_ephemeral_lifetime (LinphoneChatRoom *cr);
+LINPHONE_PUBLIC long linphone_chat_room_get_ephemeral_lifetime (const LinphoneChatRoom *cr);
 
 /**
  * Delete a message from the chat room history.
