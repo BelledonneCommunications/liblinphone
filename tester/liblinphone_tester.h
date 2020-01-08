@@ -217,7 +217,6 @@ typedef struct _stats {
 	int number_of_LinphoneChatRoomStateDeleted;
 	int number_of_LinphoneChatRoomEphemeralTimerStarted;
 	int number_of_LinphoneChatRoomEphemeralDeleted;
-	int number_of_LinphoneChatRoomEphemeralLifetimeChanged;
 
 	int number_of_IframeDecoded;
 
