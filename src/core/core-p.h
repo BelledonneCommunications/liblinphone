@@ -133,13 +133,13 @@ public:
 	Sal * getSal();
 	LinphoneCore *getCCore();
 
-	static int timerExpired (void *data, unsigned int revents);
-	void startTimer (time_t expiredTime);
-	void stopTimer ();
+	void startEphemeralMessageTimer (time_t expiredTime);
+	void stopEphemeralMessageTimer ();
 
 private:
 	bool isInBackground = false;
 	bool isFriendListSubscriptionEnabled = false;
+	static int ephemeralMessageTimerExpired (void *data, unsigned int revents);
 
 	std::list<CoreListener *> listeners;
 
