@@ -2907,7 +2907,7 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message(v
 
 static void set_ephemeral_cbs (bctbx_list_t *history) {
 	for (bctbx_list_t *item = history; item; item = bctbx_list_next(item)) {
-		LinphoneChatMessage *msg = (LinphoneChatMessage *)bctbx_list_get_data(item);
+		const LinphoneChatMessage *msg = (LinphoneChatMessage *)bctbx_list_get_data(item);
 		if (linphone_chat_message_is_ephemeral(msg)) {
 			LinphoneChatMessageCbs *msgCbs = linphone_chat_message_get_callbacks(msg);
 			linphone_chat_message_cbs_set_ephemeral_message_timer_started(msgCbs, liblinphone_tester_chat_message_ephemeral_timer_started);
@@ -2958,8 +2958,6 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 		linphone_chat_room_enable_ephemeral(marieCr, TRUE);
 		linphone_chat_room_set_ephemeral_lifetime(marieCr, 60);
 
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralLifetimeChanged, initialMarieStats.number_of_LinphoneChatRoomEphemeralLifetimeChanged+1, 3000));
-
 		// Marie sends messages
 		for (int i=0; i<10; i++) {
 			message[i] = _send_message_ephemeral(marieCr, "Hello", TRUE);
@@ -2975,8 +2973,6 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 	linphone_chat_room_set_ephemeral_lifetime(marieCr, 1);
 
 	BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
-
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralLifetimeChanged, initialMarieStats.number_of_LinphoneChatRoomEphemeralLifetimeChanged+1, 3000));
 
 	// Marie sends messages
 	for (int i=0; i<10; i++) {
@@ -3043,10 +3039,6 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 1, int, "%d");
-
-		// ConferenceCreated, ConferenceTerminated and ConferenceEphemera events
-		BC_ASSERT_EQUAL(linphone_chat_room_get_history_events_size(marieCr), 4, int, "%d");
-		BC_ASSERT_EQUAL(linphone_chat_room_get_history_events_size(paulineCr), 2, int, "%d");
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomEphemeralDeleted, initialMarieStats.number_of_LinphoneChatRoomEphemeralDeleted + 10, 3000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomEphemeralDeleted, initialPaulineStats.number_of_LinphoneChatRoomEphemeralDeleted + 10, 3000));
@@ -3273,6 +3265,24 @@ static void chat_room_ephemeral_settings (void) {
 
 	BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
 	BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(marieCr), 1, long, "%ld");
+	
+	unsigned int nbMarieConferenceEphemeralMessageLifetimeChanged = 0;
+	unsigned int nbMarieConferenceEphemeralMessageEnabled = 0;
+	unsigned int nbMarieConferenceEphemeralMessageDisabled = 0;
+	bctbx_list_t *marieHistory = linphone_chat_room_get_history_events(marieCr, 0);
+	for (bctbx_list_t *item = marieHistory; item; item = bctbx_list_next(item)) {
+		LinphoneEventLog *event = (LinphoneEventLog *)bctbx_list_get_data(item);
+		if (linphone_event_log_get_type(event) == LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged)
+			nbMarieConferenceEphemeralMessageLifetimeChanged++;
+		else if (linphone_event_log_get_type(event) == LinphoneEventLogTypeConferenceEphemeralMessageEnabled)
+			nbMarieConferenceEphemeralMessageEnabled++;
+		else if (linphone_event_log_get_type(event) == LinphoneEventLogTypeConferenceEphemeralMessageDisabled)
+			nbMarieConferenceEphemeralMessageDisabled++;
+	}
+	bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_event_log_unref);
+	BC_ASSERT_EQUAL(nbMarieConferenceEphemeralMessageLifetimeChanged, 1, unsigned int, "%u");
+	BC_ASSERT_EQUAL(nbMarieConferenceEphemeralMessageEnabled, 1, unsigned int, "%u");
+	BC_ASSERT_EQUAL(nbMarieConferenceEphemeralMessageDisabled, 0, unsigned int, "%u");
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);

@@ -304,14 +304,6 @@ typedef void (*LinphoneChatRoomCbsEphemeralMessageTimerStartedCb) (LinphoneChatR
 typedef void (*LinphoneChatRoomCbsEphemeralMessageDeletedCb) (LinphoneChatRoom *cr, const LinphoneEventLog *eventLog);
 
 /**
- * Callback used to notify a chat room that the settings "lifetime" has changed.
- * This setting is used to define lifetime (time before deletion once viewed) of new ephemeral messages.
- * @param[in] cr #LinphoneChatRoom object
- * @param[in] event_log #LinphoneEventLog The event to be notified
- */
-typedef void (*LinphoneChatRoomCbsEphemeralLifetimeChangedCb) (LinphoneChatRoom *cr, const LinphoneEventLog *eventLog);
-
-/**
  * Callback used when a group chat room is created server-side to generate the address of the chat room.
  * The function linphone_chat_room_set_conference_address() needs to be called by this callback.
  * @param[in] cr #LinphoneChatRoom object

@@ -541,10 +541,6 @@ void _linphone_chat_room_notify_ephemeral_message_deleted(LinphoneChatRoom *cr, 
 	NOTIFY_IF_EXIST(EphemeralMessageDeleted, ephemeral_message_deleted, cr, eventLog)
 }
 
-void _linphone_chat_room_notify_ephemeral_lifetime_changed(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
-	NOTIFY_IF_EXIST(EphemeralLifetimeChanged, ephemeral_lifetime_changed, cr, eventLog)
-}
-
 void _linphone_chat_room_notify_undecryptable_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
 	NOTIFY_IF_EXIST(UndecryptableMessageReceived, undecryptable_message_received, cr, msg)
 }
