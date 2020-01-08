@@ -258,15 +258,15 @@ const char *linphone_chat_message_get_forward_info (const LinphoneChatMessage *m
 	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getForwardInfo());
 }
 
-bool_t linphone_chat_message_is_ephemeral (LinphoneChatMessage *msg) {
+bool_t linphone_chat_message_is_ephemeral (const LinphoneChatMessage *msg) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isEphemeral();
 }
 
-long linphone_chat_message_get_ephemeral_lifetime (LinphoneChatMessage *msg) {
+long linphone_chat_message_get_ephemeral_lifetime (const LinphoneChatMessage *msg) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getEphemeralLifetime();
 }
 
-time_t linphone_chat_message_get_ephemeral_expired_time (LinphoneChatMessage *msg) {
+time_t linphone_chat_message_get_ephemeral_expired_time (const LinphoneChatMessage *msg) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getEphemeralExpiredTime();
 }
 

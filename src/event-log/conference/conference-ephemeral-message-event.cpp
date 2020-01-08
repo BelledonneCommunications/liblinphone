@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "conference-ephemeral-lifetime-event.h"
+#include "conference-ephemeral-message-event.h"
 
 // =============================================================================
 
@@ -27,28 +27,34 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-class ConferenceEphemeralLifetimeEventPrivate : public ConferenceEventPrivate {
+class ConferenceEphemeralMessageEventPrivate : public ConferenceEventPrivate {
 public:
 	long ephemeralLifetime;
 };
 
 // -----------------------------------------------------------------------------
 
-ConferenceEphemeralLifetimeEvent::ConferenceEphemeralLifetimeEvent (
+ConferenceEphemeralMessageEvent::ConferenceEphemeralMessageEvent (
+Type type,
 time_t creationTime,
 const ConferenceId &conferenceId,
 long ephemeralLifetime
 ) : ConferenceEvent(
-	*new ConferenceEphemeralLifetimeEventPrivate,
-	Type::ConferenceEphemeralLifetimeChanged,
+	*new ConferenceEphemeralMessageEventPrivate,
+	type,
 	creationTime,
 	conferenceId
 ) {
 	L_D();
+	L_ASSERT(
+			 type == Type::ConferenceEphemeralMessageLifetimeChanged ||
+			 type == Type::ConferenceEphemeralMessageEnabled ||
+			 type == Type::ConferenceEphemeralMessageDisabled
+			 );
 	d->ephemeralLifetime = ephemeralLifetime;
 }
 
-long ConferenceEphemeralLifetimeEvent::getEphemeralLifetime () const {
+long ConferenceEphemeralMessageEvent::getEphemeralMessageLifetime () const {
 	L_D();
 	return d->ephemeralLifetime;
 }

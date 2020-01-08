@@ -300,22 +300,6 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsEphemeralMessageDeletedCb linphone_chat_room_
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_ephemeral_message_deleted (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralMessageDeletedCb cb);
 
 /**
- * Get the ephemeral lifetime changed callback.
- * This callback is called when the setting "lifetime" (time before message deletion once viewed) is changed for the chat room.
- * @param[in] cbs LinphoneChatRoomCbs object.
- * @return The current ephemeral lifetime changed callback.
- */
-LINPHONE_PUBLIC LinphoneChatRoomCbsEphemeralLifetimeChangedCb linphone_chat_room_cbs_get_ephemeral_lifetime_changed (const LinphoneChatRoomCbs *cbs);
-
-/**
- * Set the "ephemeral lifetime changed" callback.
- * This callback will be called when the setting "lifetime" (time before message deletion once viewed) is changed for the chat room.
- * @param[in] cbs LinphoneChatRoomCbs object.
- * @param[in] cb The ephemeral lifetime changed callback to be used.
- */
-LINPHONE_PUBLIC void linphone_chat_room_cbs_set_ephemeral_lifetime_changed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralLifetimeChangedCb cb);
-
-/**
  * Get the conference address generation callback.
  * @param[in] cbs #LinphoneChatRoomCbs object
  * @return The current conference address generation callback

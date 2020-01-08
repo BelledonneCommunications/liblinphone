@@ -619,8 +619,15 @@ void ChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 		d->isEphemeral = ephem;
 		const string active = ephem ? "enabled" : "disabled";
 		lInfo() << "Ephemeral message is " << active << " in chat room [" << d->conferenceId << "]";
-		if (updateDb)
+		if (updateDb) {
 			getCore()->getPrivate()->mainDb->updateChatRoomEphemeralEnabled(d->conferenceId, ephem);
+			shared_ptr<ConferenceEphemeralMessageEvent> event;
+			if (ephem)
+				event = make_shared<ConferenceEphemeralMessageEvent>( EventLog::Type::ConferenceEphemeralMessageEnabled, time(nullptr),d->conferenceId,d->ephemeralLifetime);
+			else
+				event = make_shared<ConferenceEphemeralMessageEvent>( EventLog::Type::ConferenceEphemeralMessageDisabled, time(nullptr),d->conferenceId,d->ephemeralLifetime);
+			getCore()->getPrivate()->mainDb->addEvent(event);
+		}
 	} else {
 		d->isEphemeral = false;
 		lError() << "Ephemeral message is only supported in conference based chat room!";
@@ -642,9 +649,8 @@ void ChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 	d->ephemeralLifetime = lifetime;
 
 	if (updateDb) {
-		shared_ptr<ConferenceEphemeralLifetimeEvent> event = make_shared<ConferenceEphemeralLifetimeEvent>(time(nullptr),d->conferenceId,lifetime);
+		shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageLifetimeChanged, time(nullptr),d->conferenceId,lifetime);
 		getCore()->getPrivate()->mainDb->addEvent(event);
-		_linphone_chat_room_notify_ephemeral_lifetime_changed(d->getCChatRoom(), L_GET_C_BACK_PTR(event));
 		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralLifetime(d->conferenceId, lifetime);
 	}
 }
