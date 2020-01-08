@@ -387,7 +387,7 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 				handleEphemeralMessages(currentTime);
 			}
 		} else {
-			startTimer(expiredTime);
+			startEphemeralMessageTimer(expiredTime);
 		}
 	} else {
 		initEphemeralMessages();
@@ -400,7 +400,7 @@ void CorePrivate::initEphemeralMessages () {
 		ephemeralMessages = mainDb->getEphemeralMessages();
 		if (!ephemeralMessages.empty()) {
 			shared_ptr<ChatMessage> msg = ephemeralMessages.front();
-			startTimer(msg->getEphemeralExpiredTime());
+			startEphemeralMessageTimer(msg->getEphemeralExpiredTime());
 		}
 	}
 }
@@ -408,19 +408,19 @@ void CorePrivate::initEphemeralMessages () {
 void CorePrivate::updateEphemeralMessages (const shared_ptr<ChatMessage> &message) {
 	if (ephemeralMessages.empty()) {
 		ephemeralMessages.push_back(message);
-		startTimer(message->getEphemeralExpiredTime());
+		startEphemeralMessageTimer(message->getEphemeralExpiredTime());
 	} else {
 		for (std::list<shared_ptr<ChatMessage>>::iterator it=ephemeralMessages.begin(); it!=ephemeralMessages.end(); ++it) {
 			shared_ptr<ChatMessage> msg = *it;
 			if (msg->getEphemeralExpiredTime() > message->getEphemeralExpiredTime()) {
 				if (it == ephemeralMessages.begin()) {
 					ephemeralMessages.push_front(message);
-					startTimer(message->getEphemeralExpiredTime());
+					startEphemeralMessageTimer(message->getEphemeralExpiredTime());
 				} else {
 					it = --it;
 					ephemeralMessages.insert(it, message);
 				}
-				if (ephemeralMessages.size() > 10)
+				if (ephemeralMessages.size() > EPHEMERAL_MESSAGE_TASKS_MAX_NB)
 					ephemeralMessages.pop_back();
 				return;
 			}

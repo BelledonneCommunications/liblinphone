@@ -2613,7 +2613,7 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 					if (event) {
 						L_ASSERT(event->getType() == EventLog::Type::ConferenceChatMessage);
 						chatMessages.push_back(static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage());
-						if (chatMessages.size() > 10)
+						if (chatMessages.size() >= EPHEMERAL_MESSAGE_TASKS_MAX_NB)
 							return chatMessages;
 					}
 				}
