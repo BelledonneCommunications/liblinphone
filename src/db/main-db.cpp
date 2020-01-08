@@ -170,7 +170,7 @@ namespace {
 		// TODO: Find a workaround to deal with StaticString concatenation!!!
 		constexpr char ConferenceCallFilter[] = "3,4";
 		constexpr char ConferenceChatMessageFilter[] = "5";
-	constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12,13,14,15,16";
+		constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12,13,14,15,16";
 		constexpr char ConferenceInfoFilter[] = "1,2,6,7,8,9,10,11,12,14,15,16";
 		constexpr char ConferenceChatMessageSecurityFilter[] = "5,13";
 	#else
