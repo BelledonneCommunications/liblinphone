@@ -190,7 +190,6 @@ private:
 	bool atLeastOneStreamStarted () const;
 	uint16_t getAvpfRrInterval () const;
 	unsigned int getNbActiveStreams () const;
-	int mediaParametersChanged (SalMediaDescription *oldMd, SalMediaDescription *newMd);
 	void addSecurityEventInChatrooms (const IdentityAddress &faultyDevice, ConferenceSecurityEvent::SecurityEventType securityEventType);
 	void propagateEncryptionChanged ();
 

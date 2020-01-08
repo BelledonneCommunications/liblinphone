@@ -161,6 +161,15 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		} else
 			localDesc->haveZrtpHash = 0;
 	}
+	if (sal_stream_description_has_dtls(localDesc)) {
+		/* Get the self fingerprint from call (it's computed at stream init) */
+		strncpy(localDesc->dtls_fingerprint, mDtlsFingerPrint.c_str(), sizeof(localDesc->dtls_fingerprint));
+		/* If we are offering, SDP will have actpass setup attribute when role is unset, if we are responding the result mediadescription will be set to SalDtlsRoleIsClient */
+		localDesc->dtls_role = SalDtlsRoleUnset;
+	} else {
+		localDesc->dtls_fingerprint[0] = '\0';
+		localDesc->dtls_role = SalDtlsRoleInvalid;
+	}
 	Stream::fillLocalMediaDescription(ctx);
 }
 
@@ -318,6 +327,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 	const SalStreamDescription *stream = params.resultStreamDescription;
 	const char *rtpAddr = (stream->rtp_addr[0] != '\0') ? stream->rtp_addr : params.resultMediaDescription->addr;
 	bool isMulticast = !!ms_is_multicast(rtpAddr);
+	MediaStream *ms = getMediaStream();
 	
 	setIceCheckList(mIceCheckList);
 	if (getIceService().isActive() || (getMediaSessionPrivate().getParams()->earlyMediaSendingEnabled() 
@@ -332,20 +342,20 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 	if (sal_stream_description_has_srtp(stream)) {
 		int cryptoIdx = Sal::findCryptoIndexFromTag(params.localStreamDescription->crypto, static_cast<unsigned char>(stream->crypto_local_tag));
 		if (cryptoIdx >= 0) {
-			ms_media_stream_sessions_set_srtp_recv_key_b64(&mSessions, stream->crypto[0].algo, stream->crypto[0].master_key);
-			ms_media_stream_sessions_set_srtp_send_key_b64(&mSessions, stream->crypto[0].algo, 
+			ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, stream->crypto[0].algo, stream->crypto[0].master_key);
+			ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, stream->crypto[0].algo, 
 								       params.localStreamDescription->crypto[cryptoIdx].master_key);
 		} else
 			lWarning() << "Failed to find local crypto algo with tag: " << stream->crypto_local_tag;
 	}
-	ms_media_stream_sessions_set_encryption_mandatory(&mSessions, getMediaSessionPrivate().isEncryptionMandatory());
+	ms_media_stream_sessions_set_encryption_mandatory(&ms->sessions, getMediaSessionPrivate().isEncryptionMandatory());
 	configureRtpSessionForRtcpFb(params);
 	configureRtpSessionForRtcpXr(params);
 	configureAdaptiveRateControl(params);
 	
 	if (stream->dtls_role != SalDtlsRoleInvalid){ /* If DTLS is available at both end points */
 		/* Give the peer certificate fingerprint to dtls context */
-		ms_dtls_srtp_set_peer_fingerprint(mSessions.dtls_context, params.remoteStreamDescription->dtls_fingerprint);
+		ms_dtls_srtp_set_peer_fingerprint(ms->sessions.dtls_context, params.remoteStreamDescription->dtls_fingerprint);
 	}
 	
 	switch(targetState){
@@ -444,6 +454,7 @@ void MS2Stream::setupDtlsParams (MediaStream *ms) {
 			if (getMediaSessionPrivate().getDtlsFingerprint().empty()){
 				getMediaSessionPrivate().setDtlsFingerprint(fingerprint);
 			}
+			mDtlsFingerPrint = fingerprint;
 			ms_free(fingerprint);
 		}
 		if (key && certificate) {
@@ -461,7 +472,7 @@ void MS2Stream::setupDtlsParams (MediaStream *ms) {
 }
 
 void MS2Stream::startDtls(const OfferAnswerContext &params){
-	if (sal_stream_description_has_dtls(params.resultStreamDescription)) {
+	if (sal_stream_description_has_dtls(params.resultStreamDescription) && !mDtlsStarted) {
 		if (params.resultStreamDescription->dtls_role == SalDtlsRoleInvalid){
 			lWarning() << "Unable to start DTLS engine on stream session [" << &mSessions << "], Dtls role in resulting media description is invalid";
 		}else { 
@@ -474,6 +485,7 @@ void MS2Stream::startDtls(const OfferAnswerContext &params){
 			ms_dtls_srtp_set_peer_fingerprint(mSessions.dtls_context, params.remoteStreamDescription->dtls_fingerprint);
 			ms_dtls_srtp_set_role(mSessions.dtls_context, (params.resultStreamDescription->dtls_role == SalDtlsRoleIsClient) ? MSDtlsSrtpRoleIsClient : MSDtlsSrtpRoleIsServer); /* Set the role to client */
 			ms_dtls_srtp_start(mSessions.dtls_context); /* Then start the engine, it will send the DTLS client Hello */
+			mDtlsStarted = true;
 		}
 	}
 }
@@ -519,14 +531,18 @@ void MS2Stream::initializeSessions(MediaStream *stream){
 void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 	const SalStreamDescription *localStreamDesc = params.localStreamDescription;
 	const SalStreamDescription *newStream = params.resultStreamDescription;
-	int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(newStream->crypto_local_tag));
-	if (cryptoIdx >= 0) {
-		if (params.localStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED){
-			ms_media_stream_sessions_set_srtp_send_key_b64(&mSessions, newStream->crypto[0].algo, localStreamDesc->crypto[cryptoIdx].master_key);
-		}
-		ms_media_stream_sessions_set_srtp_recv_key_b64(&mSessions, newStream->crypto[0].algo, newStream->crypto[0].master_key);
-	} else
-		lWarning() << "Failed to find local crypto algo with tag: " << newStream->crypto_local_tag;
+	MediaStream * ms = getMediaStream();
+	
+	if (newStream->proto == SalProtoRtpSavpf || newStream->proto == SalProtoRtpSavp){
+		int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(newStream->crypto_local_tag));
+		if (cryptoIdx >= 0) {
+			if (params.localStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED){
+				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, newStream->crypto[0].algo, localStreamDesc->crypto[cryptoIdx].master_key);
+			}
+			ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, newStream->crypto[0].algo, newStream->crypto[0].master_key);
+		} else
+			lWarning() << "Failed to find local crypto algo with tag: " << newStream->crypto_local_tag;
+	}
 	startDtls(params);
 }
 
@@ -711,7 +727,8 @@ void MS2Stream::updateStats(){
 }
 
 LinphoneCallStats *MS2Stream::getStats(){
-	linphone_call_stats_update(mStats, getMediaStream());
+	MediaStream *ms = getMediaStream();
+	if (ms) linphone_call_stats_update(mStats, ms);
 	return mStats;
 }
 
@@ -742,6 +759,7 @@ void MS2Stream::stop(){
 	updateStats();
 	handleEvents();
 	stopEventHandling();
+	media_stream_reclaim_sessions(getMediaStream(), &mSessions);
 	if (mRtpProfile){
 		rtp_profile_destroy(mRtpProfile);
 		rtp_session_set_profile(mSessions.rtp_session, &av_profile);

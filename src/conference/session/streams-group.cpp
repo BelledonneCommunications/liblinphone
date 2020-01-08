@@ -283,6 +283,7 @@ bool StreamsGroup::allStreamsEncrypted () const {
 		if (stream->getState() == Stream::Running){
 			++activeStreamsCount;
 			if (!stream->isEncrypted()){
+				lWarning() << "Stream " << *stream << " is not encrypted.";
 				return false;
 			}
 		}

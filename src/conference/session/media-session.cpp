@@ -714,7 +714,6 @@ void MediaSessionPrivate::fixCallParams (SalMediaDescription *rmd) {
 void MediaSessionPrivate::initializeParamsAccordingToIncomingCallParams () {
 	L_Q();
 	CallSessionPrivate::initializeParamsAccordingToIncomingCallParams();
-	getCurrentParams()->getPrivate()->setUpdateCallWhenIceCompleted(getParams()->getPrivate()->getUpdateCallWhenIceCompleted());
 	getParams()->enableVideo(linphone_core_video_enabled(q->getCore()->getCCore()) && q->getCore()->getCCore()->video_policy.automatically_accept);
 	SalMediaDescription *md = op->getRemoteMediaDescription();
 	if (md) {
@@ -1170,7 +1169,6 @@ void MediaSessionPrivate::makeLocalMediaDescription() {
 	md->nb_streams = MAX(md->nb_streams, maxIndex + 1);
 
 	setupEncryptionKeys(md);
-	setupDtlsKeys(md);
 	setupImEncryptionEngineParameters(md);
 	setupRtcpFb(md);
 	setupRtcpXr(md);
@@ -1217,22 +1215,6 @@ void MediaSessionPrivate::makeLocalMediaDescription() {
 	}
 	forceStreamsDirAccordingToState(md);
 	if (op) op->setLocalMediaDescription(localDesc);
-}
-
-void MediaSessionPrivate::setupDtlsKeys (SalMediaDescription *md) {
-	for (int i = 0; i < md->nb_streams; i++) {
-		/* If media encryption is set to DTLS check presence of fingerprint in the call which shall have been set at stream init
-		 * but it may have failed when retrieving certificate resulting in no fingerprint present and then DTLS not usable */
-		if (sal_stream_description_has_dtls(&md->streams[i])) {
-			/* Get the self fingerprint from call (it's computed at stream init) */
-			strncpy(md->streams[i].dtls_fingerprint, dtlsCertificateFingerprint.c_str(), sizeof(md->streams[i].dtls_fingerprint));
-			/* If we are offering, SDP will have actpass setup attribute when role is unset, if we are responding the result mediadescription will be set to SalDtlsRoleIsClient */
-			md->streams[i].dtls_role = SalDtlsRoleUnset;
-		} else {
-			md->streams[i].dtls_fingerprint[0] = '\0';
-			md->streams[i].dtls_role = SalDtlsRoleInvalid;
-		}
-	}
 }
 
 int MediaSessionPrivate::setupEncryptionKey (SalSrtpCryptoAlgo *crypto, MSCryptoSuite suite, unsigned int tag) {
@@ -1429,7 +1411,7 @@ void MediaSessionPrivate::onIceCompleted(IceService &service){
 	L_Q();
 	/* The ICE session has succeeded, so perform a call update */
 	if (!getStreamsGroup().getIceService().hasCompletedCheckList()) return;
-	if (getStreamsGroup().getIceService().isControlling() && q->getCurrentParams()->getPrivate()->getUpdateCallWhenIceCompleted()) {
+	if (getStreamsGroup().getIceService().isControlling() && getParams()->getPrivate()->getUpdateCallWhenIceCompleted()) {
 		if (state == CallSession::State::StreamsRunning){
 			MediaSessionParams newParams(*getParams());
 			newParams.getPrivate()->setInternalCallUpdate(true);
@@ -1496,7 +1478,7 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 		lError() << "updateStreams() called with null media description";
 		return;
 	}
-
+	
 	updateBiggestDesc(localDesc);
 	sal_media_description_ref(newMd);
 	SalMediaDescription *oldMd = resultDesc;
@@ -1547,30 +1529,6 @@ bool MediaSessionPrivate::isEncryptionMandatory () const {
 		return true;
 	}
 	return getParams()->mandatoryMediaEncryptionEnabled();
-}
-
-int MediaSessionPrivate::mediaParametersChanged (SalMediaDescription *oldMd, SalMediaDescription *newMd) {
-	L_Q();
-	if (forceStreamsReconstruction) {
-		forceStreamsReconstruction = false;
-		return SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION;
-	}
-	if (getParams()->getPrivate()->getInConference() != getCurrentParams()->getPrivate()->getInConference())
-		return SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION;
-	if (upBandwidth != linphone_core_get_upload_bandwidth(q->getCore()->getCCore()))
-		return SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION;
-	if (localDescChanged) {
-		char *differences = sal_media_description_print_differences(localDescChanged);
-		lInfo() << "Local description has changed: " << differences;
-		ms_free(differences);
-	}
-	int otherDescChanged = sal_media_description_global_equals(oldMd, newMd);
-	if (otherDescChanged) {
-		char *differences = sal_media_description_print_differences(otherDescChanged);
-		lInfo() << "Other description has changed: " << differences;
-		ms_free(differences);
-	}
-	return localDescChanged | otherDescChanged;
 }
 
 void MediaSessionPrivate::propagateEncryptionChanged () {
@@ -1815,21 +1773,25 @@ void MediaSessionPrivate::updateCurrentParams () const {
 	else
 		getCurrentParams()->setAvpfRrInterval(0);
 	if (md) {
-		SalStreamDescription *sd = sal_media_description_find_best_stream(md, SalAudio);
-		getCurrentParams()->setAudioDirection(sd ? MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir) : LinphoneMediaDirectionInactive);
-		if (getCurrentParams()->getAudioDirection() != LinphoneMediaDirectionInactive) {
-			const char *rtpAddr = (sd->rtp_addr[0] != '\0') ? sd->rtp_addr : md->addr;
-			getCurrentParams()->enableAudioMulticast(!!ms_is_multicast(rtpAddr));
-		} else
-			getCurrentParams()->enableAudioMulticast(false);
-		sd = sal_media_description_find_best_stream(md, SalVideo);
-		getCurrentParams()->getPrivate()->enableImplicitRtcpFb(sd && sal_stream_description_has_implicit_avpf(sd));
-		getCurrentParams()->setVideoDirection(sd ? MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir) : LinphoneMediaDirectionInactive);
-		if (getCurrentParams()->getVideoDirection() != LinphoneMediaDirectionInactive) {
-			const char *rtpAddr = (sd->rtp_addr[0] != '\0') ? sd->rtp_addr : md->addr;
-			getCurrentParams()->enableVideoMulticast(!!ms_is_multicast(rtpAddr));
-		} else
-			getCurrentParams()->enableVideoMulticast(false);
+		if (mainAudioStreamIndex != -1){
+			SalStreamDescription *sd = &md->streams[mainAudioStreamIndex];
+			getCurrentParams()->setAudioDirection(sd ? MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir) : LinphoneMediaDirectionInactive);
+			if (getCurrentParams()->getAudioDirection() != LinphoneMediaDirectionInactive) {
+				const char *rtpAddr = (sd->rtp_addr[0] != '\0') ? sd->rtp_addr : md->addr;
+				getCurrentParams()->enableAudioMulticast(!!ms_is_multicast(rtpAddr));
+			} else
+				getCurrentParams()->enableAudioMulticast(false);
+		}
+		if (mainVideoStreamIndex != -1){
+			SalStreamDescription *sd = &md->streams[mainVideoStreamIndex];
+			getCurrentParams()->getPrivate()->enableImplicitRtcpFb(sd && sal_stream_description_has_implicit_avpf(sd));
+			getCurrentParams()->setVideoDirection(sd ? MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir) : LinphoneMediaDirectionInactive);
+			if (getCurrentParams()->getVideoDirection() != LinphoneMediaDirectionInactive) {
+				const char *rtpAddr = (sd->rtp_addr[0] != '\0') ? sd->rtp_addr : md->addr;
+				getCurrentParams()->enableVideoMulticast(!!ms_is_multicast(rtpAddr));
+			} else
+				getCurrentParams()->enableVideoMulticast(false);
+		}
 	}
 }
 
@@ -2107,7 +2069,6 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 
 	if (direction == LinphoneCallOutgoing) {
 		d->selectOutgoingIpVersion();
-		d->getCurrentParams()->getPrivate()->setUpdateCallWhenIceCompleted(d->getParams()->getPrivate()->getUpdateCallWhenIceCompleted());
 		d->makeLocalMediaDescription();
 		/* FIXME
 		if (d->natPolicy && linphone_nat_policy_ice_enabled(d->natPolicy))

@@ -71,6 +71,7 @@ protected:
 	void updateCryptoParameters(const OfferAnswerContext &params);
 	void updateDestinations(const OfferAnswerContext &params);
 	bool handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState);
+	std::string mDtlsFingerPrint;
 	RtpProfile *mRtpProfile = nullptr;
 	RtpProfile *mRtpIoProfile = nullptr;
 	MSMediaStreamSessions mSessions;
@@ -79,6 +80,7 @@ protected:
 	belle_sip_source_t *mTimer = nullptr;
 	bool mUseAuxDestinations = false;
 	bool mMuted = false; /* to handle special cases where we want the audio to be muted - not related with linphone_core_enable_mic().*/
+	bool mDtlsStarted = false;
 private:
 	void initRtpBundle(const OfferAnswerContext &params);
 	RtpBundle *createOrGetRtpBundle(const SalStreamDescription *sd);

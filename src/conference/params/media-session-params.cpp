@@ -197,6 +197,13 @@ void MediaSessionParamsPrivate::setCustomSdpMediaAttributes (LinphoneStreamType 
 		customSdpMediaAttributes[lst] = sal_custom_sdp_attribute_clone(csa);
 }
 
+bool MediaSessionParamsPrivate::getUpdateCallWhenIceCompleted() const{
+	if (encryption == LinphoneMediaEncryptionDTLS){
+		return updateCallWhenIceCompletedWithDTLS;
+	}
+	return updateCallWhenIceCompleted;
+}
+
 // =============================================================================
 
 MediaSessionParams::MediaSessionParams () : CallSessionParams(*new MediaSessionParamsPrivate) {
@@ -246,6 +253,14 @@ void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core) {
 	d->audioMulticastEnabled = !!linphone_core_audio_multicast_enabled(cCore);
 	d->videoMulticastEnabled = !!linphone_core_video_multicast_enabled(cCore);
 	d->updateCallWhenIceCompleted = !!lp_config_get_int(linphone_core_get_config(cCore), "sip", "update_call_when_ice_completed", true);
+	/*
+	 * At the time of WebRTC/JSSIP interoperability tests, it was found that the ICE re-INVITE was breaking communication.
+	 * The update_call_when_ice_completed_with_dtls property is hence set to false.
+	 * If this is no longer the case it should be changed to true.
+	 * Otherwise an application may decide to set to true as ICE reINVITE is mandatory per ICE RFC and unless from this WebRTC interoperability standpoint
+	 * there is no problem in having the ICE re-INVITE to be done when SRTP-DTLS is used.
+	 */
+	d->updateCallWhenIceCompletedWithDTLS = linphone_config_get_bool(linphone_core_get_config(cCore), "sip", "update_call_when_ice_completed_with_dtls", false);
 	d->mandatoryMediaEncryptionEnabled = !!linphone_core_is_media_encryption_mandatory(cCore);
 	d->rtpBundle = linphone_core_rtp_bundle_enabled(cCore);
 }
