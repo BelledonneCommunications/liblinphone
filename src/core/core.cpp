@@ -244,7 +244,6 @@ void CorePrivate::startEphemeralMessageTimer (time_t expiredTime) {
 	else {
 		belle_sip_source_set_timeout(timer, timeoutValueMs);
 	}
-	bgTask.start(getPublic()->getSharedFromThis(), 1);
 }
 
 void CorePrivate::stopEphemeralMessageTimer () {
@@ -255,7 +254,6 @@ void CorePrivate::stopEphemeralMessageTimer () {
 		belle_sip_object_unref(timer);
 		timer = nullptr;
 	}
-	bgTask.stop();
 }
 
 // =============================================================================

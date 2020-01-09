@@ -382,10 +382,12 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 				}
 
 				// delete expired ephemeral message
-				ephemeralMessages.pop_front();
 				LinphonePrivate::EventLog::deleteFromDatabase(event);
-				handleEphemeralMessages(currentTime);
 			}
+
+			// Delete message from this list even when chatroom is gone.
+			ephemeralMessages.pop_front();
+			handleEphemeralMessages(currentTime);
 		} else {
 			startEphemeralMessageTimer(expiredTime);
 		}
@@ -407,12 +409,18 @@ void CorePrivate::initEphemeralMessages () {
 
 void CorePrivate::updateEphemeralMessages (const shared_ptr<ChatMessage> &message) {
 	if (ephemeralMessages.empty()) {
-		ephemeralMessages.push_back(message);
-		startEphemeralMessageTimer(message->getEphemeralExpiredTime());
+		// Can not determine this message will expire most quickly, so init this list.
+		initEphemeralMessages();
 	} else {
+		shared_ptr<ChatMessage> lastmsg = ephemeralMessages.back();
+		if (lastmsg->getEphemeralLifetime() < message->getEphemeralLifetime()) {
+			// The last message of this list will expire more quickly than this message, can not determine this message will expire most quickly in the remaining messages.
+			return;
+		}
 		for (std::list<shared_ptr<ChatMessage>>::iterator it=ephemeralMessages.begin(); it!=ephemeralMessages.end(); ++it) {
 			shared_ptr<ChatMessage> msg = *it;
 			if (msg->getEphemeralExpiredTime() > message->getEphemeralExpiredTime()) {
+				// This message will expire more quickly than the last message of this list, add it.
 				if (it == ephemeralMessages.begin()) {
 					ephemeralMessages.push_front(message);
 					startEphemeralMessageTimer(message->getEphemeralExpiredTime());
@@ -420,8 +428,6 @@ void CorePrivate::updateEphemeralMessages (const shared_ptr<ChatMessage> &messag
 					it = --it;
 					ephemeralMessages.insert(it, message);
 				}
-				if (ephemeralMessages.size() > EPHEMERAL_MESSAGE_TASKS_MAX_NB)
-					ephemeralMessages.pop_back();
 				return;
 			}
 		}
