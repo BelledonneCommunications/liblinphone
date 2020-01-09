@@ -142,10 +142,8 @@ void ChatRoomPrivate::setIsEmpty (const bool empty) {
 shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage (ChatMessage::Direction direction) {
 	L_Q();
 	shared_ptr<ChatMessage> message = shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
-	if (isEphemeral) {
-		if (direction == ChatMessage::Direction::Outgoing) {
-			lInfo() << "Create an outgoing ephemeral message " << message << " in chat room [" << conferenceId << "]";
-		}
+	if (isEphemeral && direction == ChatMessage::Direction::Outgoing) {
+		lInfo() << "Create an outgoing ephemeral message " << message << " in chat room [" << conferenceId << "]";
 		message->getPrivate()->enableEphemeralWithTime(ephemeralLifetime);
 	}
 	return message;
@@ -641,14 +639,15 @@ bool ChatRoom::ephemeralEnabled() const {
 
 void ChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 	L_D();
-	lInfo() << "Trying to set new ephemeral lifetime " << lifetime << ", used to be " << d->ephemeralLifetime << ".";
 	if (lifetime == d->ephemeralLifetime) {
-		lWarning() << "Ephemeral lifetime will not be changed!";
+		if (updateDb)
+			lWarning() << "Ephemeral lifetime will not be changed! Trying to set the same ephemaral lifetime as before : " << lifetime;
 		return;
 	}
 	d->ephemeralLifetime = lifetime;
 
 	if (updateDb) {
+		lInfo() << "Set new ephemeral lifetime " << lifetime << ", used to be " << d->ephemeralLifetime << ".";
 		shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageLifetimeChanged, time(nullptr),d->conferenceId,lifetime);
 		getCore()->getPrivate()->mainDb->addEvent(event);
 		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralLifetime(d->conferenceId, lifetime);
