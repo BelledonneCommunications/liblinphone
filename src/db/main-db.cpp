@@ -2586,19 +2586,25 @@ list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ConferenceId 
 
 list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 #ifdef HAVE_DB_STORAGE
-	static const string query = "SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, chat_room_id"
-		" FROM conference_event_view"
+	static const string query =
+		"SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, chat_room_id FROM conference_event_view"
 		" LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
 		" LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"
 		" LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id"
 		" LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id"
-		" WHERE expired_time > 0 ORDER BY expired_time";
+		" WHERE event_id in ("
+		" SELECT event_id"
+		" FROM chat_message_ephemeral_event"
+		" WHERE expired_time > 0"
+		" ORDER BY expired_time ASC"
+		" LIMIT :maxMessages)"
+		" ORDER BY expired_time ASC";
 
 	return L_DB_TRANSACTION {
 		L_D();
 		list<shared_ptr<ChatMessage>> chatMessages;
 		soci::rowset<soci::row> rows = (
-		d->dbSession.getBackendSession()->prepare << query);
+		d->dbSession.getBackendSession()->prepare << query, soci::use(EPHEMERAL_MESSAGE_TASKS_MAX_NB));
 		for (const auto &row : rows) {
 			const long long &dbChatRoomId = d->dbSession.resolveId(row, (int)row.size()-1);
 			ConferenceId conferenceId = d->getConferenceIdFromCache(dbChatRoomId);
@@ -2613,8 +2619,6 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 					if (event) {
 						L_ASSERT(event->getType() == EventLog::Type::ConferenceChatMessage);
 						chatMessages.push_back(static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage());
-						if (chatMessages.size() >= EPHEMERAL_MESSAGE_TASKS_MAX_NB)
-							return chatMessages;
 					}
 				}
 			}
