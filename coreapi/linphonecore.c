@@ -1489,7 +1489,8 @@ static void sip_config_read(LinphoneCore *lc) {
 	tmp=lp_config_get_int(lc->config,"sip", "lime", LinphoneLimeDisabled);
 	LinphoneLimeState limeState = static_cast<LinphoneLimeState>(tmp);
 	if (limeState != LinphoneLimeDisabled && linphone_core_lime_x3dh_enabled(lc)) {
-		bctbx_fatal("You can't have both LIME and LIME X3DH enabled at the same time !\nConflicting settings are [sip] lime and [lime] lime_server_url");
+		bctbx_warning("You can't have both LIME and LIME X3DH enabled at the same time ! LIME will be disabled.\nConflicting settings are [sip] lime(!=LinphoneLimeDisabled) and [lime] lime_server_url.");
+		limeState = LinphoneLimeDisabled;
 	}
 	linphone_core_enable_lime(lc, limeState);
 
