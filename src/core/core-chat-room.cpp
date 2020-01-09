@@ -482,7 +482,7 @@ shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 			!basicOnly &&
 		        (capabilities & ChatRoom::Capabilities::Conference) &&
 			!chatRoom->getParticipants().empty() &&
-			localAddress == curLocalAddress &&
+			localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu() &&
 			participantAddress.getAddressWithoutGruu() == chatRoom->getParticipants().front()->getAddress()
 		)
 			return chatRoom;
