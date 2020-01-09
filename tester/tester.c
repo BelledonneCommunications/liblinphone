@@ -575,6 +575,22 @@ void linphone_core_manager_stop(LinphoneCoreManager *mgr){
 	}
 }
 
+void linphone_core_manager_uninit_after_stop_async(LinphoneCoreManager *mgr) {
+	if (mgr->lc) {
+		const char *record_file = linphone_core_get_record_file(mgr->lc);
+		if (!liblinphone_tester_keep_record_files && record_file && ortp_file_exist(record_file)==0) {
+			if ((bc_get_number_of_failures() - mgr->number_of_bcunit_error_at_creation)>0) {
+				ms_error("Test has failed, keeping recorded file [%s]", record_file);
+			}
+			else {
+				unlink(record_file);
+			}
+		}
+		linphone_core_unref(mgr->lc);
+		mgr->lc = NULL;
+	}
+}
+
 void linphone_core_manager_reinit(LinphoneCoreManager *mgr) {
 	char *uuid = NULL;
 	if (mgr->lc) {
@@ -642,6 +658,17 @@ void linphone_core_manager_destroy(LinphoneCoreManager* mgr) {
 		wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_LinphoneRegistrationOk, previousNbRegistrationOk + 1, 2000);
 	}
 	linphone_core_manager_stop(mgr);
+	linphone_core_manager_uninit(mgr);
+	ms_free(mgr);
+}
+
+void linphone_core_manager_destroy_after_stop_async(LinphoneCoreManager* mgr) {
+	if (mgr->lc && !linphone_core_is_network_reachable(mgr->lc)) {
+		int previousNbRegistrationOk = mgr->stat.number_of_LinphoneRegistrationOk;
+		linphone_core_set_network_reachable(mgr->lc, TRUE);
+		wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_LinphoneRegistrationOk, previousNbRegistrationOk + 1, 2000);
+	}
+	linphone_core_manager_uninit_after_stop_async(mgr);
 	linphone_core_manager_uninit(mgr);
 	ms_free(mgr);
 }

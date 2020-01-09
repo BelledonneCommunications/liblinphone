@@ -1068,6 +1068,17 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_start(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_stop (LinphoneCore *core);
 
 /**
+ * Stop asynchronously a #LinphoneCore object after it has been instantiated and started.
+ * State change to Shutdown then linphone_core_iterate() must be called to allow the Core to end asynchronous tasks (terminate call, etc.).
+ * When all tasks are finished, State will change to Off.
+ * Must be called only if #LinphoneGlobalState is On.
+ * When #LinphoneGlobalState is Off #LinphoneCore can be started again using linphone_core_start().
+ * @ingroup initializing
+ * @param[in] core The #LinphoneCore object to be stopped
+ */
+LINPHONE_PUBLIC void linphone_core_stop_async (LinphoneCore *core);
+
+/**
  * Increment the reference counter of a #LinphoneCore object.
  * @param lc The #LinphoneCore which the ref counter is to be incremented.
  * @return A pointer on the #LinphoneCore passed as parameter.

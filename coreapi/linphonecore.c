@@ -147,6 +147,7 @@ static void set_media_network_reachable(LinphoneCore* lc,bool_t isReachable);
 static void linphone_core_run_hooks(LinphoneCore *lc);
 static void linphone_core_zrtp_cache_close(LinphoneCore *lc);
 void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName);
+static void _linphone_core_stop_async(LinphoneCore *lc);
 
 #include "enum.h"
 #include "contact_providers_priv.h"
@@ -3625,6 +3626,12 @@ void linphone_core_iterate(LinphoneCore *lc){
 	if (liblinphone_serialize_logs == TRUE) {
 		ortp_logv_flush();
 	}
+
+	if (lc->state == LinphoneGlobalShutdown && lc->async_stop) {
+		if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->asyncStopDone()) {
+			_linphone_core_stop_async(lc);
+		}
+	}
 }
 
 LinphoneAddress * linphone_core_interpret_url(LinphoneCore *lc, const char *url){
@@ -6329,12 +6336,119 @@ LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(LinphoneCore *lc, c
 	return linphone_xml_rpc_session_new(lc, url);
 }
 
+static void _linphone_core_shutdown_async(LinphoneCore *lc) {
+	linphone_task_list_free(&lc->hooks);
+	lc->video_conf.show_local = FALSE;
+	lc->async_stop = TRUE;
+
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->shutdown();
+
+#ifdef VIDEO_ENABLED
+	if (lc->previewstream!=NULL){
+		video_preview_stop(lc->previewstream);
+		lc->previewstream=NULL;
+	}
+#endif
+
+	lc->msevq=NULL;
+
+	linphone_core_stop_ringing(lc);
+
+	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
+}
+
+static void _linphone_core_stop_async(LinphoneCore *lc) {
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->stop();
+
+	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
+
+	getPlatformHelpers(lc)->onLinphoneCoreStop();
+
+	/* save all config */
+	friends_config_uninit(lc);
+	sip_config_uninit(lc);
+	net_config_uninit(lc);
+	rtp_config_uninit(lc);
+	sound_config_uninit(lc);
+	video_config_uninit(lc);
+	codecs_config_uninit(lc);
+
+	sip_setup_unregister_all();
+
+	if (lp_config_needs_commit(lc->config)) lp_config_sync(lc->config);
+
+	bctbx_list_for_each(lc->call_logs,(void (*)(void*))linphone_call_log_unref);
+	lc->call_logs=bctbx_list_free(lc->call_logs);
+
+	if(lc->zrtp_secrets_cache != NULL) {
+		ms_free(lc->zrtp_secrets_cache);
+		lc->zrtp_secrets_cache = NULL;
+	}
+
+	if(lc->user_certificates_path != NULL) {
+		ms_free(lc->user_certificates_path);
+		lc->user_certificates_path = NULL;
+	}
+	if(lc->play_file!=NULL){
+		ms_free(lc->play_file);
+		lc->play_file = NULL;
+	}
+	if(lc->rec_file!=NULL){
+		ms_free(lc->rec_file);
+		lc->rec_file = NULL;
+	}
+	if (lc->logs_db_file) {
+		ms_free(lc->logs_db_file);
+		lc->logs_db_file = NULL;
+	}
+	if (lc->friends_db_file) {
+		ms_free(lc->friends_db_file);
+		lc->friends_db_file = NULL;
+	}
+	if (lc->tls_key){
+		ms_free(lc->tls_key);
+		lc->tls_key = NULL;
+	}
+	if (lc->tls_cert){
+		ms_free(lc->tls_cert);
+		lc->tls_cert = NULL;
+	}
+	if (lc->ringtoneplayer) {
+		linphone_ringtoneplayer_destroy(lc->ringtoneplayer);
+		lc->ringtoneplayer = NULL;
+	}
+	if (lc->im_encryption_engine) {
+		linphone_im_encryption_engine_unref(lc->im_encryption_engine);
+		lc->im_encryption_engine = NULL;
+	}
+	if (lc->default_ac_service) {
+		linphone_account_creator_service_unref(lc->default_ac_service);
+		lc->default_ac_service = NULL;
+	}
+
+	linphone_core_free_payload_types(lc);
+	if (lc->supported_formats) ms_free((void *)lc->supported_formats);
+	lc->supported_formats = NULL;
+	linphone_core_call_log_storage_close(lc);
+	linphone_core_friends_storage_close(lc);
+	linphone_core_zrtp_cache_close(lc);
+	ms_bandwidth_controller_destroy(lc->bw_controller);
+	lc->bw_controller = NULL;
+	ms_factory_destroy(lc->factory);
+	lc->factory = NULL;
+
+	if (lc->platform_helper) delete getPlatformHelpers(lc);
+	lc->platform_helper = NULL;
+	linphone_core_set_state(lc, LinphoneGlobalOff, "Off");
+}
+
 static void _linphone_core_stop(LinphoneCore *lc) {
 	bctbx_list_t *elem = NULL;
 	int i=0;
 	bool_t wait_until_unsubscribe = FALSE;
 	linphone_task_list_free(&lc->hooks);
 	lc->video_conf.show_local = FALSE;
+	lc->async_stop = FALSE;
 
 	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
 
@@ -6446,6 +6560,10 @@ static void _linphone_core_stop(LinphoneCore *lc) {
 
 void linphone_core_stop(LinphoneCore *lc) {
 	_linphone_core_stop(lc);
+}
+
+void linphone_core_stop_async(LinphoneCore *lc) {
+	_linphone_core_shutdown_async(lc);
 }
 
 void _linphone_core_uninit(LinphoneCore *lc)

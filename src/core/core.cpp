@@ -108,6 +108,53 @@ void CorePrivate::unregisterListener (CoreListener *listener) {
 	listeners.remove(listener);
 }
 
+bool CorePrivate::asyncStopDone() {
+	L_Q();
+
+	if (!calls.empty()) {
+		calls.front()->terminate();
+		return false;
+	}
+
+	bctbx_list_t *elem = NULL;
+	for (elem = q->getCCore()->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
+		LinphoneFriendList *list = (LinphoneFriendList *) elem->data;
+		linphone_friend_list_enable_subscriptions(list,FALSE);
+		if (list->event) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void CorePrivate::shutdown() {
+	if(!calls.empty()) {
+		calls.front()->terminate();
+	}
+}
+
+void CorePrivate::stop() {
+	L_Q();
+
+	chatRoomsById.clear();
+	noCreatedClientGroupChatRooms.clear();
+	listeners.clear();
+	if (q->limeX3dhEnabled()) {
+		q->enableLimeX3dh(false);
+	}
+
+#ifdef HAVE_ADVANCED_IM
+	remoteListEventHandler = nullptr;
+	localListEventHandler = nullptr;
+#endif
+
+	AddressPrivate::clearSipAddressesCache();
+	if (mainDb != nullptr) {
+		mainDb->disconnect();
+	}
+}
+
 void CorePrivate::uninit () {
 	L_Q();
 	while (!calls.empty()) {
