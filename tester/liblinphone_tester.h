@@ -374,11 +374,13 @@ LinphoneCoreManager* linphone_core_manager_new3(const char* rc_file, bool_t chec
 LinphoneCoreManager* linphone_core_manager_new2(const char* rc_file, bool_t check_for_proxies);
 LinphoneCoreManager* linphone_core_manager_new(const char* rc_file);
 void linphone_core_manager_stop(LinphoneCoreManager *mgr);
+void linphone_core_manager_uninit_after_stop_async(LinphoneCoreManager *mgr);
 void linphone_core_manager_reinit(LinphoneCoreManager *mgr);
 void linphone_core_manager_restart(LinphoneCoreManager *mgr, bool_t check_for_proxies);
 void linphone_core_manager_uninit(LinphoneCoreManager *mgr);
 void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr);
 void linphone_core_manager_destroy(LinphoneCoreManager* mgr);
+void linphone_core_manager_destroy_after_stop_async(LinphoneCoreManager* mgr);
 void linphone_core_manager_delete_chat_room (LinphoneCoreManager *mgr, LinphoneChatRoom *cr, bctbx_list_t *coresList);
 bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList);
 void start_core_for_conference(bctbx_list_t *coreManagerList);
