@@ -103,6 +103,8 @@ public:
 	std::shared_ptr<Call> getCurrentCall () const;
 	LinphoneStatus pauseAllCalls ();
 	void soundcardHintCheck ();
+	void soundcardAudioSessionActivated (bool active);
+	void soundcardCallkitEnabled (bool enabled);
 	LinphoneStatus terminateAllCalls ();
 
 	// ---------------------------------------------------------------------------
