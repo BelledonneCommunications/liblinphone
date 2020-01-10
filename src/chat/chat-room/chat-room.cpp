@@ -142,10 +142,8 @@ void ChatRoomPrivate::setIsEmpty (const bool empty) {
 shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage (ChatMessage::Direction direction) {
 	L_Q();
 	shared_ptr<ChatMessage> message = shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
-	if (isEphemeral) {
-		if (direction == ChatMessage::Direction::Outgoing) {
-			lInfo() << "Create an outgoing ephemeral message " << message << " in chat room [" << conferenceId << "]";
-		}
+	if (isEphemeral && direction == ChatMessage::Direction::Outgoing) {
+		lInfo() << "Create an outgoing ephemeral message " << message << " in chat room [" << conferenceId << "]";
 		message->getPrivate()->enableEphemeralWithTime(ephemeralLifetime);
 	}
 	return message;
