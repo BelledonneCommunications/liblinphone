@@ -2592,7 +2592,7 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 		" LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"
 		" LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id"
 		" LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id"
-		" where event_id in ("
+		" WHERE event_id in ("
 		" SELECT event_id"
 		" FROM chat_message_ephemeral_event"
 		" WHERE expired_time > 0"
