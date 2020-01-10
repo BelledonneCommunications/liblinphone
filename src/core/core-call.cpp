@@ -311,6 +311,20 @@ void Core::soundcardHintCheck () {
 	}
 }
 
+void Core::soundcardAudioSessionActivated (bool actived) {
+	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	if (card) {
+		ms_snd_card_audio_session_actived(card, actived);
+	}
+}
+
+void Core::soundcardCallkitEnabled (bool enabled) {
+	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	if (card) {
+		ms_snd_card_callkit_enabled(card, enabled);
+	}
+}
+
 LinphoneStatus Core::terminateAllCalls () {
 	L_D();
 	while (!d->calls.empty()) {
