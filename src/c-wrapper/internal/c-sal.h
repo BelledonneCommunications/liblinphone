@@ -243,6 +243,7 @@ typedef enum {
 	SalOpSDPSimulateRemove /** Will simulate no SDP in the op */
 } SalOpSDPHandling;
 
+#define SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED 65536
 
 typedef struct SalStreamBundle{
 	bctbx_list_t *mids; /* List of mids corresponding to streams associated in the bundle. The first one is the "tagged" one. */

@@ -203,6 +203,8 @@ LINPHONE_PUBLIC void linphone_account_creator_cbs_set_confirmation_key(LinphoneA
 LINPHONE_PUBLIC void linphone_core_delete_local_encryption_db(const LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_reachable);
 
+LINPHONE_PUBLIC bctbx_list_t *linphone_fetch_local_addresses(void);
+
 #ifndef __cplusplus
 LINPHONE_PUBLIC Sal *linphone_core_get_sal(const LinphoneCore *lc);
 LINPHONE_PUBLIC SalOp *linphone_proxy_config_get_sal_op(const LinphoneProxyConfig *cfg);

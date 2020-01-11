@@ -72,9 +72,10 @@ void MS2RTTStream::finishPrepare(){
 
 void MS2RTTStream::render(const OfferAnswerContext &params, CallSession::State targetState){
 	const SalStreamDescription *tstream = params.resultStreamDescription;
+	bool basicChangesHandled = handleBasicChanges(params, targetState);
 	
-	if (tstream->dir == SalStreamInactive || tstream->rtp_port == 0){
-		stop();
+	if (basicChangesHandled) {
+		if (getState() == Running) MS2Stream::render(params, targetState);
 		return;
 	}
 	

@@ -114,6 +114,9 @@ void MS2Stream::setIceCheckList(IceCheckList *cl){
 		rtp_session_set_symmetric_rtp(mSessions.rtp_session, (cl == nullptr) ? linphone_core_symmetric_rtp_enabled(getCCore()) : false);
 		media_stream_set_ice_check_list(stream, cl);
 	}
+	if (!cl){
+		updateIceInStats(LinphoneIceStateNotActivated);
+	}
 }
 
 string MS2Stream::getBindIp(){
@@ -145,7 +148,7 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	strncpy(localDesc->rtp_addr, getPublicIp().c_str(), sizeof(localDesc->rtp_addr) - 1);
 	strncpy(localDesc->rtcp_addr, getPublicIp().c_str(), sizeof(localDesc->rtcp_addr) -1);
 	
-	if (localDesc->payloads != nullptr){
+	if (localDesc->rtp_port == SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED && localDesc->payloads != nullptr){
 		/* Don't fill ports if no codecs are defined. The stream is not valid and should be disabled.*/
 		localDesc->rtp_port = mPortConfig.rtpPort;
 		localDesc->rtcp_port = mPortConfig.rtcpPort;
@@ -792,31 +795,36 @@ void MS2Stream::notifyStatsUpdated () {
 	}
 }
 
+void MS2Stream::updateIceInStats(LinphoneIceState state){
+	lInfo() << "ICE state is " << linphone_ice_state_to_string(state) << " for stream " << *this;
+	_linphone_call_stats_set_ice_state(mStats, state);
+}
+
 void MS2Stream::updateIceInStats(){
 	if (!mIceCheckList){
-		_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateNotActivated);
+		updateIceInStats(LinphoneIceStateNotActivated);
 		return;
 	}
 	if (ice_check_list_state(mIceCheckList) == ICL_Failed) {
-		_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateFailed);
+		updateIceInStats(LinphoneIceStateFailed);
 		return;
 	}
 	if (ice_check_list_state(mIceCheckList) == ICL_Running) {
-		_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateInProgress);
+		updateIceInStats(LinphoneIceStateInProgress);
 		return;
 	}
 	/* Otherwise we are in ICL_Completed state. */
 
 	switch (ice_check_list_selected_valid_candidate_type(mIceCheckList)) {
 		case ICT_HostCandidate:
-			_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateHostConnection);
+			updateIceInStats(LinphoneIceStateHostConnection);
 			break;
 		case ICT_ServerReflexiveCandidate:
 		case ICT_PeerReflexiveCandidate:
-			_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateReflexiveConnection);
+			updateIceInStats(LinphoneIceStateReflexiveConnection);
 			break;
 		case ICT_RelayedCandidate:
-			_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateRelayConnection);
+			updateIceInStats(LinphoneIceStateRelayConnection);
 			break;
 		case ICT_CandidateInvalid:
 		case ICT_CandidateTypeMax:

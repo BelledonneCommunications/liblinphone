@@ -96,6 +96,7 @@ private:
 	void configureRtpSessionForRtcpXr(const OfferAnswerContext &params);
 	void configureAdaptiveRateControl(const OfferAnswerContext &params);
 	void updateIceInStats();
+	void updateIceInStats(LinphoneIceState state);
 	IceCheckList *mIceCheckList = nullptr;
 	RtpBundle *mRtpBundle = nullptr;
 	bool mOwnsBundle = false;

@@ -46,7 +46,11 @@ public:
 	
 	bool isControlling () const;
 	
+	/* The ICE restart procedure as in RFC */
 	void restartSession(IceRole role);
+	
+	/* Called after a network connectivity change, to restart ICE from the beginning.*/
+	void resetSession();
 	
 	void createStreams(const OfferAnswerContext &params);
 	/**
@@ -107,8 +111,6 @@ private:
 	void checkSession (IceRole role);
 	int gatherIceCandidates ();
 	void gatherLocalCandidates();
-	std::list<std::string> fetchLocalAddresses()const;
-	std::list<std::string> fetchWithGetIfAddrs(bool ipv6Allowed)const;
 	StreamsGroup & mStreamsGroup;
 	IceSession * mIceSession = nullptr;
 	IceServiceListener *mListener = nullptr;

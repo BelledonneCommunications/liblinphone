@@ -229,7 +229,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 	
 	if (basicChangesHandled) {
-		MS2Stream::render(ctx, targetState);
+		if (getState() == Running) MS2Stream::render(ctx, targetState);
 		return;
 	}
 

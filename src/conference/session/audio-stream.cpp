@@ -231,7 +231,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	}
 	
 	if (basicChangesHandled) {
-		MS2Stream::render(params, targetState);
+		if (getState() == Running) MS2Stream::render(params, targetState);
 		return;
 	}
 	

@@ -22,12 +22,8 @@
 #include "ice-service.h"
 #include "conference/session/streams.h"
 #include "conference/session/media-session-p.h"
+#include "utils/if-addrs.h"
 
-#ifdef HAVE_GETIFADDRS
-#include <sys/types.h>
-#include <ifaddrs.h>
-#include <net/if.h>
-#endif
 
 using namespace::std;
 
@@ -113,11 +109,16 @@ void IceService::createStreams(const OfferAnswerContext &params){
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
 		size_t index = stream->getIndex();
+		params.scopeStreamToIndex(index);
+		bool streamActive = sal_stream_description_active(params.localStreamDescription);
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)index);
-		if (!cl) {
+		if (!cl && streamActive) {
 			cl = ice_check_list_new();
 			ice_session_add_check_list(mIceSession, cl, static_cast<unsigned int>(index));
-			lInfo() << "Created new ICE check list for stream #" << index;
+			lInfo() << "Created new ICE check list " << cl << " for stream #" << index;
+		} else if (cl && !streamActive){
+			ice_session_remove_check_list_from_idx(mIceSession, static_cast<unsigned int>(index));
+			cl = nullptr;
 		}
 		stream->setIceCheckList(cl);
 	}
@@ -126,8 +127,6 @@ void IceService::createStreams(const OfferAnswerContext &params){
 		if (params.remoteMediaDescription){
 			// This may delete the ice session.
 			updateFromRemoteMediaDescription(params.localMediaDescription, params.remoteMediaDescription, true);
-		}else{
-			lWarning() << "ICE not supported for incoming INVITE without SDP";
 		}
 	}
 }
@@ -154,90 +153,9 @@ LinphoneCore *IceService::getCCore()const{
 	return mStreamsGroup.getCCore();
 }
 
-#ifdef HAVE_GETIFADDRS
-list<string> IceService::fetchWithGetIfAddrs(bool ipv6Allowed)const{
-	list<string> ret;
-	struct ifaddrs *ifap = nullptr;
-	
-	lInfo() << "Fetching current local IP addresses using getifaddrs().";
-	
-	if (getifaddrs(&ifap) == 0){
-		struct ifaddrs *ifaddr;
-		for (ifaddr = ifap; ifaddr != nullptr; ifaddr = ifaddr->ifa_next){
-			if (ifaddr->ifa_flags & IFF_LOOPBACK) continue;
-			if (ifaddr->ifa_flags & IFF_UP){
-				struct sockaddr *saddr = ifaddr->ifa_addr;
-				char addr[INET6_ADDRSTRLEN] = { 0 };
-				if (!saddr){
-					lError() << "NULL sockaddr returned by getifaddrs().";
-					continue;
-				}
-				switch (saddr->sa_family){
-					case AF_INET:
-						if (inet_ntop(AF_INET, &((struct sockaddr_in*)saddr)->sin_addr, addr, sizeof(addr)) != nullptr){
-							ret.push_back(addr);
-						}else{
-							lError() << "inet_ntop() failed with AF_INET: " << strerror(errno);
-						}
-					break;
-					case AF_INET6:
-						if (!ipv6Allowed) continue;
-						if (inet_ntop(AF_INET6, &((struct sockaddr_in6*)saddr)->sin6_addr, addr, sizeof(addr)) != nullptr){
-							ret.push_back(addr);
-						}else{
-							lError() << "inet_ntop() failed with AF_INET6: " << strerror(errno);
-						}
-					break;
-					default:
-						// ignored.
-					break;
-				}
-			}
-		}
-		freeifaddrs(ifap);
-	}else{
-		lError() << "getifaddrs(): " << strerror(errno);
-	}
-	return ret;
-}
-#endif
-
-list<string> IceService::fetchLocalAddresses()const{
-	list<string> ret;
-	bool ipv6Allowed = linphone_core_ipv6_enabled(getCCore());
-	
-#ifdef HAVE_GETIFADDRS
-	ret = fetchWithGetIfAddrs(ipv6Allowed);
-#endif
-	/*
-	 * FIXME: implement here code for WIN32 that fetches all addresses of all interfaces.
-	 */
-	
-	/*
-	 * Finally if none of the above methods worked, fallback with linphone_core_get_local_ip() that uses the socket/connect/getsockname method
-	 * to get the local ip address that has the route to public internet.
-	 */
-	if (ret.empty()){
-		lInfo() << "Fetching local ip addresses using the connect() method.";
-		char localAddr[LINPHONE_IPADDR_SIZE];
-		if (ipv6Allowed){
-			if (linphone_core_get_local_ip_for(AF_INET6, nullptr, localAddr) == 0) {
-				ret.push_back(localAddr);
-			}else{
-				lError() << "IceService::fetchLocalAddresses(): Fail to get default IPv6";
-			}
-		}
-		if (linphone_core_get_local_ip_for(AF_INET, nullptr, localAddr) == 0){
-			ret.push_back(localAddr);
-		}else{
-			lError() << "IceService::fetchLocalAddresses(): Fail to get default IPv4";
-		}
-	}
-	return ret;
-}
-
 void IceService::gatherLocalCandidates(){
-	list<string> localAddrs = fetchLocalAddresses();
+	list<string> localAddrs = IfAddrs::fetchLocalAddresses();
+	bool ipv6Allowed = linphone_core_ipv6_enabled(getCCore());
 	
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
@@ -247,6 +165,7 @@ void IceService::gatherLocalCandidates(){
 			if ((ice_check_list_state(cl) != ICL_Completed) && !ice_check_list_candidates_gathered(cl)) {
 				for (const string & addr : localAddrs){
 					int family = addr.find(':') != string::npos ? AF_INET6 : AF_INET;
+					if (family == AF_INET6 && !ipv6Allowed) continue;
 					ice_add_local_candidate(cl, "host", family, addr.c_str(), stream->getPortConfig().rtpPort, 1, nullptr);
 					ice_add_local_candidate(cl, "host", family, addr.c_str(), stream->getPortConfig().rtcpPort, 2, nullptr);
 				}
@@ -689,6 +608,12 @@ void IceService::restartSession (IceRole role) {
 	if (!mIceSession)
 		return;
 	ice_session_restart(mIceSession, role);
+}
+
+void IceService::resetSession() {
+	if (!mIceSession)
+		return;
+	ice_session_reset(mIceSession, IR_Controlling);
 }
 
 bool IceService::hasCompletedCheckList () const {

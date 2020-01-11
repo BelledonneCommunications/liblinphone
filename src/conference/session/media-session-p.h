@@ -155,7 +155,7 @@ private:
 
 	void forceStreamsDirAccordingToState (SalMediaDescription *md);
 	bool generateB64CryptoKey (size_t keyLength, char *keyOut, size_t keyOutSize);
-	void makeLocalMediaDescription ();
+	void makeLocalMediaDescription (bool localIsOfferer);
 	int setupEncryptionKey (SalSrtpCryptoAlgo *crypto, MSCryptoSuite suite, unsigned int tag);
 	void setupDtlsKeys (SalMediaDescription *md);
 	void setupEncryptionKeys (SalMediaDescription *md);

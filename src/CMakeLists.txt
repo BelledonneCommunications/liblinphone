@@ -231,6 +231,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	utils/background-task.h
 	utils/general-internal.h
 	utils/payload-type-handler.h
+	utils/if-addrs.h
 	variant/variant.h
 )
 
@@ -392,6 +393,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	utils/general.cpp
 	utils/payload-type-handler.cpp
 	utils/utils.cpp
+	utils/if-addrs.cpp
 	variant/variant.cpp
 )
 

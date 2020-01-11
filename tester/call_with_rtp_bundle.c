@@ -70,23 +70,26 @@ static void simple_audio_video_call(void) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
 	LinphoneCall *pauline_call, *marie_call;
-	LinphoneVideoPolicy vpol;
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
 	
 	marie = linphone_core_manager_new( "marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
 	linphone_core_enable_rtp_bundle(marie->lc, TRUE);
 	
-	vpol.automatically_accept = TRUE;
-	vpol.automatically_initiate = TRUE;
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
 
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 	
-	linphone_core_set_video_policy(marie->lc, &vpol);
-	linphone_core_set_video_policy(pauline->lc, &vpol);
+	
+	
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
 	
 	BC_ASSERT_TRUE(call(marie,pauline));
 	pauline_call=linphone_core_get_current_call(pauline->lc);

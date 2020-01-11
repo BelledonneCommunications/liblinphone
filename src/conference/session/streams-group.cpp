@@ -283,7 +283,6 @@ bool StreamsGroup::allStreamsEncrypted () const {
 		if (stream->getState() == Stream::Running){
 			++activeStreamsCount;
 			if (!stream->isEncrypted()){
-				lWarning() << "Stream " << *stream << " is not encrypted.";
 				return false;
 			}
 		}
@@ -437,9 +436,10 @@ bool StreamsGroup::avpfEnabled() const{
 	for( auto & stream : mStreams){
 		RtpInterface *i = dynamic_cast<MS2Stream*>(stream.get());
 		if (i && stream->getState() == Stream::Running){
-			ret = true;
-			if (!i->avpfEnabled()) 
+			if (!i->avpfEnabled()){
 				return false;
+			}
+			ret = true;
 		}
 	}
 	return ret;
