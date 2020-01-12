@@ -78,6 +78,7 @@ Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 		lError() << "Could not create Stream of type " << sal_stream_type_to_string(type);
 		return nullptr;
 	}
+	lInfo() << "Created stream " << *ret;
 	
 	if ((decltype(mStreams)::size_type)params.streamIndex >= mStreams.size()) mStreams.resize(params.streamIndex + 1);
 	if (mStreams[params.streamIndex] != nullptr){
@@ -495,6 +496,7 @@ void StreamsGroup::setStreamMain(size_t index){
 
 void StreamsGroup::finish(){
 	if (mFinished) return;
+	lInfo() << "StreamsGroup::finish() called.";
 	stop(); //For the paranoid: normally it should be done already.
 	forEach<Stream>(mem_fun(&Stream::finish));
 	mIceService->finish();

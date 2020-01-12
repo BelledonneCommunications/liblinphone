@@ -49,7 +49,7 @@ public:
 
 	CallSessionParams &operator= (const CallSessionParams &other);
 
-	virtual void initDefault (const std::shared_ptr<Core> &core);
+	virtual void initDefault (const std::shared_ptr<Core> &core, LinphoneCallDir dir);
 
 	const std::string& getSessionName () const;
 	void setSessionName (const std::string &sessionName);

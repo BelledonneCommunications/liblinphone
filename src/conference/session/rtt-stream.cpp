@@ -107,8 +107,15 @@ void MS2RTTStream::stop(){
 	mStream = text_stream_new_with_sessions(getCCore()->factory, &mSessions);
 }
 
+void MS2RTTStream::finish(){
+	if (mStream){
+		text_stream_stop(mStream);
+		mStream = nullptr;
+	}
+}
+
 MS2RTTStream::~MS2RTTStream(){
-	text_stream_stop(mStream);
+	finish();
 }
 
 MediaStream *MS2RTTStream::getMediaStream()const{

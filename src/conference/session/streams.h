@@ -82,7 +82,14 @@ public:
 	virtual LinphoneCallStats *getStats(){
 		return nullptr;
 	}
+	/**
+	 * Called by the IceService to setup the check list to run with the stream.
+	 */
 	virtual void setIceCheckList(IceCheckList *cl);
+	/**
+	 * Called by the IceService to notify the stream of a state change in the ICE check list or the ICE session.
+	 */
+	virtual void iceStateChanged();
 	virtual bool isEncrypted() const = 0;
 	virtual void tryEarlyMediaForking(const OfferAnswerContext &ctx) = 0;
 	virtual void finishEarlyMediaForking() = 0;

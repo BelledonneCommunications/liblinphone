@@ -151,7 +151,7 @@ shared_ptr<Call> CallPrivate::startReferredCall (const MediaSessionParams *param
 	if (params)
 		msp = *params;
 	else {
-		msp.initDefault(q->getCore());
+		msp.initDefault(q->getCore(), LinphoneCallOutgoing);
 		msp.enableAudio(q->getCurrentParams()->audioEnabled());
 		msp.enableVideo(q->getCurrentParams()->videoEnabled());
 	}
@@ -194,13 +194,12 @@ void CallPrivate::startRemoteRing () {
 		return;
 
 	MSSndCard *ringCard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.play_sndcard;
-	int maxRate = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getLocalDesc()->streams[0].max_rate;
-	if (maxRate > 0)
-		ms_snd_card_set_preferred_sample_rate(ringCard, maxRate);
-	// We release sound before playing ringback tone
-	AudioStream *as = reinterpret_cast<AudioStream *>(getMediaStream(LinphoneStreamTypeAudio));
-	if (as)
-		audio_stream_unprepare_sound(as);
+	SalMediaDescription *md = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getLocalDesc();
+	if (md){
+		int maxRate = md->streams[0].max_rate;
+		if (maxRate > 0)
+			ms_snd_card_set_preferred_sample_rate(ringCard, maxRate);
+	}
 	if (lc->sound_conf.remote_ring) {
 		ms_snd_card_set_stream_type(ringCard, MS_SND_CARD_STREAM_VOICE);
 		lc->ringstream = ring_start(lc->factory, lc->sound_conf.remote_ring, 2000, ringCard);

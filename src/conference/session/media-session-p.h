@@ -252,6 +252,7 @@ private:
 	SalMediaDescription *biggestDesc = nullptr;
 	SalMediaDescription *resultDesc = nullptr;
 	bool expectMediaInAck = false;
+	int freeStreamIndex = 0;
 	unsigned int remoteSessionId = 0;
 	unsigned int remoteSessionVer = 0;
 

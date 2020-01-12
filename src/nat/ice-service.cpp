@@ -121,6 +121,7 @@ void IceService::createStreams(const OfferAnswerContext &params){
 			cl = nullptr;
 		}
 		stream->setIceCheckList(cl);
+		stream->iceStateChanged();
 	}
 	
 	if (!params.localIsOfferer){
@@ -377,7 +378,10 @@ void IceService::updateFromRemoteMediaDescription(const SalMediaDescription *loc
 		if (!cl) continue;
 		if (!sal_stream_description_active(stream)) {
 			ice_session_remove_check_list_from_idx(mIceSession, static_cast<unsigned int>(i));
-			mStreamsGroup.getStream(i)->setIceCheckList(nullptr);
+			auto stream = mStreamsGroup.getStream(i);
+			stream->setIceCheckList(nullptr);
+			stream->iceStateChanged();
+			
 		}
 	}
 	clearUnusedIceCandidates(localDesc, remoteDesc);
@@ -572,9 +576,8 @@ void IceService::finishPrepare(){
 
 void IceService::render(const OfferAnswerContext & ctx, CallSession::State targetState){
 	if (!mIceSession) return;
-	if (!ctx.localIsOfferer){
-		updateFromRemoteMediaDescription(ctx.localMediaDescription, ctx.remoteMediaDescription, false);
-	}
+	
+	updateFromRemoteMediaDescription(ctx.localMediaDescription, ctx.remoteMediaDescription, !ctx.localIsOfferer);
 	if (mIceSession && ice_session_state(mIceSession) != IS_Completed)
 		ice_session_start_connectivity_checks(mIceSession);
 }
@@ -650,6 +653,13 @@ void IceService::handleIceEvent(const OrtpEvent *ev){
 		case ORTP_EVENT_ICE_RESTART_NEEDED:
 			if (mListener) mListener->onIceRestartNeeded(*this);
 		break;
+		default:
+			lError() << "IceService::handleIceEvent() is passed with a non-ICE event.";
+		break;
+	}
+	/* Notify all the streams of the ICE state change, so that they can update their stats and so on. */
+	for(auto & stream : mStreamsGroup.getStreams()){
+		stream->iceStateChanged();
 	}
 }
 

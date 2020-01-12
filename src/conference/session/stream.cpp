@@ -97,6 +97,9 @@ void Stream::stop(){
 void Stream::setIceCheckList(IceCheckList *cl){
 }
 
+void Stream::iceStateChanged(){
+}
+
 void Stream::setRandomPortConfig () {
 	mPortConfig.rtpPort = -1;
 	mPortConfig.rtcpPort = -1;

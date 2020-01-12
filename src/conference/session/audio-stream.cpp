@@ -580,7 +580,7 @@ void MS2AudioStream::handleEvent(const OrtpEvent *ev){
 	OrtpEventData *evd = ortp_event_get_data(const_cast<OrtpEvent*>(ev));
 	switch (evt){
 		case ORTP_EVENT_ZRTP_ENCRYPTION_CHANGED:
-			if (isMain()) zrtpStarted(this);
+			if (isMain()) getGroup().zrtpStarted(this);
 		break;
 		case ORTP_EVENT_ZRTP_SAS_READY:
 			getGroup().authTokenReady(evd->info.zrtp_info.sas, !!evd->info.zrtp_info.verified);

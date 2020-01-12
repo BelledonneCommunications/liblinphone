@@ -50,6 +50,7 @@ public:
 	virtual void updateBandwidthReports() override;
 	virtual float getCpuUsage()const override;
 	virtual void setIceCheckList(IceCheckList *cl) override;
+	virtual void iceStateChanged() override;
 	
 	/* RtpInterface */
 	virtual bool avpfEnabled() const override;
@@ -95,8 +96,8 @@ private:
 	void configureRtpSessionForRtcpFb (const OfferAnswerContext &params);
 	void configureRtpSessionForRtcpXr(const OfferAnswerContext &params);
 	void configureAdaptiveRateControl(const OfferAnswerContext &params);
-	void updateIceInStats();
 	void updateIceInStats(LinphoneIceState state);
+	void updateIceInStats();
 	IceCheckList *mIceCheckList = nullptr;
 	RtpBundle *mRtpBundle = nullptr;
 	bool mOwnsBundle = false;
@@ -213,6 +214,7 @@ private:
 	void snapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg);
 	void videoStreamEventCb(const MSFilter *f, const unsigned int eventId, const void *args);
 	static void sVideoStreamEventCb (void *userData, const MSFilter *f, const unsigned int eventId, const void *args);
+	void activateZrtp();
 	VideoStream *mStream = nullptr;
 	void *mNativeWindowId = nullptr;
 	void *mNativePreviewWindowId = nullptr;
@@ -230,6 +232,7 @@ public:
 	virtual void finishPrepare() override;
 	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
 	virtual void stop() override;
+	virtual void finish() override;
 	virtual ~MS2RTTStream();
 private:
 	void realTimeTextCharacterReceived(MSFilter *f, unsigned int id, void *arg);

@@ -182,8 +182,7 @@ MSWebCam * MS2VideoStream::getVideoDevice(CallSession::State targetState) const 
 		return getCCore()->video_conf.device;
 }
 
-
-bool MS2VideoStream::prepare(){
+void MS2VideoStream::activateZrtp(){
 	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)){
 		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
 		if (audioStream){
@@ -191,10 +190,16 @@ bool MS2VideoStream::prepare(){
 			video_stream_enable_zrtp(mStream, (AudioStream*)msa->getMediaStream());
 			// Since the zrtp session is now initialized, make sure it is retained for future use.
 			media_stream_reclaim_sessions((MediaStream*)mStream, &mSessions);
+			video_stream_start_zrtp(mStream);
 		}else{
 			lError() << "Error while enabling zrtp on video stream: the audio stream isn't known. This is unsupported.";
 		}
 	}
+}
+
+
+bool MS2VideoStream::prepare(){
+	
 	MS2Stream::prepare();
 	video_stream_prepare_video(mStream);
 	return false;
@@ -346,7 +351,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
 		/* Audio stream is already encrypted and video stream is active */
 		if (audioStream && audioStream->isEncrypted()) {
-			video_stream_start_zrtp(mStream);
+			activateZrtp();
 			if (remoteStream->haveZrtpHash == 1) {
 				int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remoteStream->zrtphash, strlen((const char *)(remoteStream->zrtphash)));
 				if (retval != 0)
@@ -392,7 +397,7 @@ void MS2VideoStream::handleEvent(const OrtpEvent *ev){
 void MS2VideoStream::zrtpStarted(Stream *mainZrtpStream){
 	if (getState() == Running){
 		lInfo() << "Trying to start ZRTP encryption on video stream";
-		video_stream_start_zrtp(mStream);
+		activateZrtp();
 		if (getMediaSessionPrivate().isEncryptionMandatory()) {
 			/* Nothing could have been sent yet so generating key frame */
 			video_stream_send_vfu(mStream);

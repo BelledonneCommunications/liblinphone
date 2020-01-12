@@ -232,15 +232,20 @@ MediaSessionParams &MediaSessionParams::operator= (const MediaSessionParams &oth
 
 // -----------------------------------------------------------------------------
 
-void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core) {
+void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core, LinphoneCallDir dir) {
 	L_D();
-	CallSessionParams::initDefault(core);
+	CallSessionParams::initDefault(core, dir);
 	LinphoneCore *cCore = core->getCCore();
 	d->audioEnabled = true;
-	d->videoEnabled = linphone_core_video_enabled(cCore) && cCore->video_policy.automatically_initiate;
-	if (!linphone_core_video_enabled(cCore) && cCore->video_policy.automatically_initiate) {
+	if (dir == LinphoneCallOutgoing){
+		d->videoEnabled = cCore->video_policy.automatically_initiate;
+	}else{
+		d->videoEnabled = cCore->video_policy.automatically_accept;
+	}
+	if (!linphone_core_video_enabled(cCore) && d->videoEnabled) {
 		lError() << "LinphoneCore has video disabled for both capture and display, but video policy is to start the call with video. "
 			"This is a possible mis-use of the API. In this case, video is disabled in default LinphoneCallParams";
+		d->videoEnabled = false;
 	}
 	d->realtimeTextEnabled = !!linphone_core_realtime_text_enabled(cCore);
 	d->encryption = linphone_core_get_media_encryption(cCore);

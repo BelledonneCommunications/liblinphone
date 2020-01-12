@@ -449,13 +449,13 @@ void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event
 							}
 							// Ref the ack request so that it is not destroyed when the call_ack_being_sent callbacks is called
 							belle_sip_object_ref(ack);
+							belle_sip_message_add_header(BELLE_SIP_MESSAGE(ack), BELLE_SIP_HEADER(op->mRoot->mUserAgentHeader));
+							op->mRoot->mCallbacks.call_accepted(op); // INVITE
 							if (op->mSdpAnswer) {
 								setSdp(BELLE_SIP_MESSAGE(ack), op->mSdpAnswer);
 								belle_sip_object_unref(op->mSdpAnswer);
 								op->mSdpAnswer = nullptr;
 							}
-							belle_sip_message_add_header(BELLE_SIP_MESSAGE(ack), BELLE_SIP_HEADER(op->mRoot->mUserAgentHeader));
-							op->mRoot->mCallbacks.call_accepted(op); // INVITE
 							op->mRoot->mCallbacks.call_ack_being_sent(op, reinterpret_cast<SalCustomHeader *>(ack));
 							belle_sip_dialog_send_ack(op->mDialog, ack);
 							belle_sip_object_unref(ack);

@@ -795,6 +795,10 @@ void MS2Stream::notifyStatsUpdated () {
 	}
 }
 
+void MS2Stream::iceStateChanged(){
+	updateIceInStats();
+}
+
 void MS2Stream::updateIceInStats(LinphoneIceState state){
 	lInfo() << "ICE state is " << linphone_ice_state_to_string(state) << " for stream " << *this;
 	_linphone_call_stats_set_ice_state(mStats, state);
@@ -891,7 +895,6 @@ void MS2Stream::handleEvents () {
 			case ORTP_EVENT_ICE_LOSING_PAIRS_COMPLETED:
 			case ORTP_EVENT_ICE_RESTART_NEEDED:
 				/* ICE events are notified directly to the IceService. */
-				updateIceInStats();
 				getIceService().handleIceEvent(ev);
 			break;
 		}
@@ -986,6 +989,17 @@ float MS2Stream::getCpuUsage()const{
 }
 
 void MS2Stream::finish(){
+	if (mRtpBundle && mOwnsBundle){
+		rtp_bundle_delete(mRtpBundle);
+		mRtpBundle = nullptr;
+	}
+	if (mOrtpEvQueue){
+		rtp_session_unregister_event_queue(mSessions.rtp_session, mOrtpEvQueue);
+		ortp_ev_queue_flush(mOrtpEvQueue);
+		ortp_ev_queue_destroy(mOrtpEvQueue);
+		mOrtpEvQueue = nullptr;
+	}
+	ms_media_stream_sessions_uninit(&mSessions);
 	Stream::finish();
 }
 
@@ -1003,16 +1017,10 @@ int MS2Stream::getAvpfRrInterval()const{
 }
 
 MS2Stream::~MS2Stream(){
+	finish();
 	linphone_call_stats_unref(mStats);
 	mStats = nullptr;
-	if (mRtpBundle && mOwnsBundle){
-		rtp_bundle_delete(mRtpBundle);
-	}
-	rtp_session_unregister_event_queue(mSessions.rtp_session, mOrtpEvQueue);
-	ortp_ev_queue_flush(mOrtpEvQueue);
-	ortp_ev_queue_destroy(mOrtpEvQueue);
-	ms_media_stream_sessions_uninit(&mSessions);
-	mOrtpEvQueue = nullptr;
+	
 }
 
 
