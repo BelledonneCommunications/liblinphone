@@ -227,14 +227,17 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	
 	bool basicChangesHandled = handleBasicChanges(ctx, targetState);
 	
-	if (mMuted && targetState == CallSession::State::StreamsRunning){
-		lInfo() << "Early media finished, unmuting video input...";
-		/* We were in early media, now we want to enable real media */
-		enableCamera(mCameraEnabled);
-	}
-	
 	if (basicChangesHandled) {
-		if (getState() == Running) MS2Stream::render(ctx, targetState);
+		bool muted = mMuted;
+		if (getState() == Running) {
+			MS2Stream::render(ctx, targetState); // MS2Stream::render() may decide to unmute.
+			if (muted && !mMuted) {
+				lInfo() << "Early media finished, unmuting video input...";
+				/* We were in early media, now we want to enable real media */
+				mMuted = false;
+				enableCamera(mCameraEnabled);
+			}
+		}
 		return;
 	}
 
@@ -255,9 +258,9 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	if (displayFilter)
 		video_stream_set_display_filter_name(mStream, displayFilter);
 	video_stream_set_event_callback(mStream, sVideoStreamEventCb, this);
-
-	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedVideoCodec(rtp_profile_get_payload(videoProfile, usedPt));
-	getMediaSessionPrivate().getCurrentParams()->enableVideo(true);
+	if (isMain()){
+		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedVideoCodec(rtp_profile_get_payload(videoProfile, usedPt));
+	}
 
 	if (getCCore()->video_conf.preview_vsize.width != 0)
 		video_stream_set_preview_size(mStream, getCCore()->video_conf.preview_vsize);
@@ -303,8 +306,8 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		stop();
 		return;
 	}
-	MSWebCam *cam = getVideoDevice(targetState);
 	MS2Stream::render(ctx, targetState);
+	MSWebCam *cam = getVideoDevice(targetState);
 	
 	getMediaSession().getLog()->video_enabled = true;
 	video_stream_set_direction(mStream, dir);
@@ -380,7 +383,7 @@ void MS2VideoStream::stop(){
 	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 
 	 * sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
 	mStream = video_stream_new_with_sessions(getCCore()->factory, &mSessions);
-	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
+	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedVideoCodec(nullptr);
 }
 
 void MS2VideoStream::handleEvent(const OrtpEvent *ev){
@@ -466,17 +469,27 @@ bool MS2VideoStream::cameraEnabled() const{
 }
 
 void MS2VideoStream::getRecvStats(VideoStats *s) const{
-	s->fps = video_stream_get_received_framerate(mStream);
-	MSVideoSize vsize = video_stream_get_received_video_size(mStream);
-	s->width = vsize.width;
-	s->height = vsize.height;
+	if (mStream){
+		s->fps = video_stream_get_received_framerate(mStream);
+		MSVideoSize vsize = video_stream_get_received_video_size(mStream);
+		s->width = vsize.width;
+		s->height = vsize.height;
+	}else{
+		s->fps = 0.0;
+		s->width = s->height = 0;
+	}
 }
 
 void MS2VideoStream::getSendStats(VideoStats *s) const{
-	s->fps = video_stream_get_sent_framerate(mStream);
-	MSVideoSize vsize = video_stream_get_sent_video_size(mStream);
-	s->width = vsize.width;
-	s->height = vsize.height;
+	if (mStream){
+		s->fps = video_stream_get_sent_framerate(mStream);
+		MSVideoSize vsize = video_stream_get_sent_video_size(mStream);
+		s->width = vsize.width;
+		s->height = vsize.height;
+	}else{
+		s->fps = 0.0;
+		s->width = s->height = 0;
+	}
 }
 
 void MS2VideoStream::finish(){

@@ -47,9 +47,9 @@ LinphoneProxyConfig *CallPrivate::getDestProxy () const {
 	return getActiveSession()->getPrivate()->getDestProxy();
 }
 
+/* This a test-only method.*/
 IceSession *CallPrivate::getIceSession () const {
-	//FIXME
-	//return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getIceSession();
+	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getIceSession();
 	return nullptr;
 }
 

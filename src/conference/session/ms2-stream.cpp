@@ -173,6 +173,8 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		localDesc->dtls_fingerprint[0] = '\0';
 		localDesc->dtls_role = SalDtlsRoleInvalid;
 	}
+	/* In case we were offered multicast, we become multicast receiver. The local media description must reflect this. */
+	localDesc->multicast_role = mPortConfig.multicastRole;
 	Stream::fillLocalMediaDescription(ctx);
 }
 
@@ -192,7 +194,7 @@ void MS2Stream::initMulticast(const OfferAnswerContext &params) {
 	if (mPortConfig.multicastRole == SalMulticastReceiver){
 		mPortConfig.multicastIp = params.remoteStreamDescription->rtp_addr;
 		mPortConfig.rtpPort = params.remoteStreamDescription->rtp_port;
-		mPortConfig.rtpPort = 0; /*RTCP deactivated in multicast*/
+		mPortConfig.rtcpPort = 0; /*RTCP deactivated in multicast*/
 	}
 	
 	lInfo() << this << " multicast role is ["
@@ -366,7 +368,12 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 			BCTBX_NO_BREAK;
 		case CallSession::State::OutgoingEarlyMedia:
 			/* don't accept to send real-live media in early media stage by default.*/
-			if (!getMediaSessionPrivate().getParams()->earlyMediaSendingEnabled()) mMuted = true;
+			if (!getMediaSessionPrivate().getParams()->earlyMediaSendingEnabled()) {
+				lInfo() << "Early media sending not allowed, will send silence and dummy video instead.";
+				mMuted = true;
+			}else{
+				lInfo() << "Early media sending allowed, will send real live sound and video.";
+			}
 		break;
 		case CallSession::State::StreamsRunning:
 			mMuted = false;
@@ -749,7 +756,7 @@ void MS2Stream::stop(){
 			
 		}
 		
-		if (statsType != -1) listener->onUpdateMediaInfoForReporting(getMediaSession().getSharedFromThis(), LINPHONE_CALL_STATS_AUDIO);
+		if (statsType != -1) listener->onUpdateMediaInfoForReporting(getMediaSession().getSharedFromThis(), statsType);
 		
 		/*
 		 * FIXME : very very ugly way to manage the conference. Worse, it can remove from a conference a stream that has never been part 

@@ -110,7 +110,6 @@ public:
 	void setNativePreviewWindowId (void *id);
 	void setParams (const MediaSessionParams *msp);
 	void setSpeakerVolumeGain (float value);
-
 private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);

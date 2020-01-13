@@ -95,6 +95,13 @@ public:
 	 * Ideally the IceService should place its own listener to these ortp events, but well oRTP is C and has to be simple.
 	 */
 	void handleIceEvent(const OrtpEvent *ev);
+	
+	/**
+	 * used by non-regression tests only.
+	 */
+	IceSession *getSession()const{
+		return mIceSession;
+	}
 private:
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	LinphoneCore *getCCore()const;

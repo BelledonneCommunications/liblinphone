@@ -224,14 +224,16 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	
 	bool basicChangesHandled = handleBasicChanges(params, targetState);
-
-	if (mMuted && (targetState == CallSession::State::StreamsRunning)) {
-		lInfo() << "Early media finished, unmuting audio input...";
-		enableMic(micEnabled());
-	}
 	
 	if (basicChangesHandled) {
-		if (getState() == Running) MS2Stream::render(params, targetState);
+		if (getState() == Running) {
+			bool muted = mMuted;
+			MS2Stream::render(params, targetState); // MS2Stream::render() may decide to unmute.
+			if (muted && !mMuted) {
+				lInfo() << "Early media finished, unmuting audio input...";
+				enableMic(micEnabled());
+			}
+		}
 		return;
 	}
 	
@@ -248,7 +250,6 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	bool ok = true;
 	if (isMain()){
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
-		getMediaSessionPrivate().getCurrentParams()->enableAudio(true);
 	}
 	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
 	if (!playcard)
@@ -552,7 +553,7 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 }
 
 void MS2AudioStream::postConfigureAudioStream(bool muted) {
-	
+	postConfigureAudioStream(mStream, getCCore(), muted);
 	forceSpeakerMuted(mSpeakerMuted);
 	if (linphone_core_dtmf_received_has_listener(getCCore()))
 		audio_stream_play_received_dtmfs(mStream, false);

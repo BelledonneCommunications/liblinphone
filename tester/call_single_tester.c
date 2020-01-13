@@ -3200,7 +3200,11 @@ void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, bctbx_l
 			}
 			switch (video_dir) {
 			case LinphoneMediaDirectionInactive:
-				BC_ASSERT_LOWER((int)linphone_call_stats_get_upload_bandwidth(stats), 5, int, "%i");
+				if (stats){
+					BC_ASSERT_LOWER((int)linphone_call_stats_get_upload_bandwidth(stats), 5, int, "%i");
+				}else{
+					/* it is expected that there is no stats for an inactive stream.*/
+				}
 				break;
 			case LinphoneMediaDirectionSendOnly:
 				expected_recv_iframe = 0;
@@ -3215,7 +3219,7 @@ void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, bctbx_l
 			default:
 				break;
 			}
-			linphone_call_stats_unref(stats);
+			if (stats) linphone_call_stats_unref(stats);
 			BC_ASSERT_TRUE(wait_for_list(lcs, &mgr->stat.number_of_IframeDecoded,current_recv_iframe + expected_recv_iframe,10000));
 		}
 #endif

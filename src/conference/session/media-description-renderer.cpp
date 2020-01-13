@@ -56,7 +56,7 @@ void OfferAnswerContext::scopeStreamToIndexWithDiff(size_t index, const OfferAns
 		localStreamDescriptionChanges = sal_media_description_global_equals(previousCtx.localMediaDescription, localMediaDescription)
 		| sal_stream_description_equals(previousCtx.localStreamDescription, localStreamDescription);
 	}else localStreamDescriptionChanges = 0;
-	if (previousCtx.resultMediaDescription){
+	if (previousCtx.resultMediaDescription && resultMediaDescription){
 		resultStreamDescriptionChanges = sal_media_description_global_equals(previousCtx.resultMediaDescription, resultMediaDescription)
 		| sal_stream_description_equals(previousCtx.resultStreamDescription, resultStreamDescription);
 	}else resultStreamDescriptionChanges = 0;

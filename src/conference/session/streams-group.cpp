@@ -99,8 +99,14 @@ void StreamsGroup::fillLocalMediaDescription(OfferAnswerContext & params){
 void StreamsGroup::createStreams(const OfferAnswerContext &params){
 	size_t index;
 	for(index = 0; index < (size_t)params.localMediaDescription->nb_streams; ++index){
-		params.scopeStreamToIndex(index);
 		Stream *s;
+		params.scopeStreamToIndexWithDiff(index, mCurrentOfferAnswerState);
+		
+		if (params.localStreamDescriptionChanges) {
+			char *differences = sal_media_description_print_differences(params.localStreamDescriptionChanges);
+			lInfo() << "Local stream description has changed: " << differences;
+			ms_free(differences);
+		}
 		if (index >= mStreams.size() || (s = mStreams[index].get()) == nullptr){
 			s = createStream(params);
 		}else{
@@ -108,8 +114,13 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params){
 				lError() << "Inconsistency detected while creating streams. Type has changed from " <<
 					sal_stream_type_to_string(s->getType()) << " to " << 
 					sal_stream_type_to_string(params.localStreamDescription->type) << "!";
-			}else{
-				/* TODO check multicast/unicast changes here ? */
+			}else if (params.localStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED ){
+				/*
+				* Special case: due to implementation constraint, it is necessary to instanciate a new Stream when changing 
+				* the cast (uni or multi).
+				*/
+				s->stop();
+				s = createStream(params);
 			}
 		}
 	}
@@ -166,16 +177,6 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 			char *differences = sal_media_description_print_differences(params.resultStreamDescriptionChanges);
 			lInfo() << "Result stream description has changed: " << differences;
 			ms_free(differences);
-		}
-		
-		if ((params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED)
-			|| params.localStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED){
-			/*
-			 * Special case: due to implementation constraint, it is necessary to instanciate a new Stream when changing 
-			 * the cast (uni or multi).
-			 */
-			streamPtr->stop();
-			streamPtr = createStream(params);
 		}
 		if (streamPtr->getState() == Stream::Preparing)
 			streamPtr->finishPrepare();

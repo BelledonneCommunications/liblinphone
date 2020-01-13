@@ -64,11 +64,6 @@ public:
 	void oglRender ();
 	void sendVfu ();
 
-	void clearIceCheckList (IceCheckList *cl);
-	void deactivateIce ();
-	void prepareStreamsForIceGathering (bool hasVideo);
-	void stopStreamsForIceGathering ();
-
 	int getAf () const { return af; }
 
 	bool getSpeakerMuted () const;
@@ -123,6 +118,8 @@ public:
 	void performMutualAuthentication();
 	const std::string &getMediaLocalIp()const{ return mediaLocalIp; }
 	void lossOfMediaDetected();
+	/* test function */
+	IceSession *getIceSession()const;
 private:
 	/* IceServiceListener methods:*/
 	virtual void onGatheringFinished(IceService &service) override;
@@ -169,21 +166,10 @@ private:
 
 	void freeResources ();
 	void prepareEarlyMediaForking ();
-	void startAudioStream (CallSession::State targetState);
-	void startStreams (CallSession::State targetState);
-	void startStream (SalStreamDescription *streamDesc, int streamIndex, CallSession::State targetState);
-	void startTextStream ();
-	void startVideoStream (CallSession::State targetState);
-	void stopAudioStream ();
-	void stopTextStream ();
-	void stopVideoStream ();
 	void tryEarlyMediaForking (SalMediaDescription *md);
 	void updateStreamFrozenPayloads (SalStreamDescription *resultDesc, SalStreamDescription *localStreamDesc);
 	void updateFrozenPayloads (SalMediaDescription *result);
-	void updateAudioStream (SalMediaDescription *newMd, CallSession::State targetState);
 	void updateStreams (SalMediaDescription *newMd, CallSession::State targetState);
-	void updateTextStream (SalMediaDescription *newMd, CallSession::State targetState);
-	void updateVideoStream (SalMediaDescription *newMd, CallSession::State targetState);
 
 	bool allStreamsAvpfEnabled () const;
 	bool allStreamsEncrypted () const;
@@ -200,6 +186,7 @@ private:
 	LinphoneStatus pause ();
 	int restartInvite () override;
 	void setTerminated () override;
+	void startAccept();
 	LinphoneStatus startAcceptUpdate (CallSession::State nextState, const std::string &stateInfo) override;
 	LinphoneStatus startUpdate (const std::string &subject = "") override;
 	void terminate () override;
@@ -265,6 +252,7 @@ private:
 	bool automaticallyPaused = false;
 	bool pausedByApp = false;
 	bool incomingIceReinvitePending = false;
+	bool callAcceptanceDefered = false;
 
 	L_DECLARE_PUBLIC(MediaSession);
 };

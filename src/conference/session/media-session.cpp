@@ -472,31 +472,6 @@ void MediaSessionPrivate::sendVfu () {
 	getStreamsGroup().forEach<VideoControlInterface>([](VideoControlInterface *i){ i->sendVfu(); });
 }
 
-// -----------------------------------------------------------------------------
-
-#if 0
-void MediaSessionPrivate::clearIceCheckList (IceCheckList *cl) {
-	if (audioStream && audioStream->ms.ice_check_list == cl)
-		audioStream->ms.ice_check_list = nullptr;
-	if (videoStream && videoStream->ms.ice_check_list == cl)
-		videoStream->ms.ice_check_list = nullptr;
-	if (textStream && textStream->ms.ice_check_list == cl)
-		textStream->ms.ice_check_list = nullptr;
-}
-
-void MediaSessionPrivate::deactivateIce () {
-	if (audioStream)
-		audioStream->ms.ice_check_list = nullptr;
-	if (videoStream)
-		videoStream->ms.ice_check_list = nullptr;
-	if (textStream)
-		textStream->ms.ice_check_list = nullptr;
-	_linphone_call_stats_set_ice_state(audioStats, LinphoneIceStateNotActivated);
-	_linphone_call_stats_set_ice_state(videoStats, LinphoneIceStateNotActivated);
-	_linphone_call_stats_set_ice_state(textStats, LinphoneIceStateNotActivated);
-	stopStreamsForIceGathering();
-}
-#endif
 
 // -----------------------------------------------------------------------------
 
@@ -559,6 +534,7 @@ Stream *MediaSessionPrivate::getStream(LinphoneStreamType type)const{
 LinphoneCallStats * MediaSessionPrivate::getStats(LinphoneStreamType type) const {
 	Stream *s = getStream(type);
 	if (s) return s->getStats();
+	lError() << "There is no stats for main stream of type " << linphone_stream_type_to_string(type) << " because this stream doesn't exist.";
 	return nullptr;
 }
 
@@ -698,17 +674,17 @@ void MediaSessionPrivate::assignStreamsIndexesIncoming(const SalMediaDescription
  */
 void MediaSessionPrivate::fixCallParams (SalMediaDescription *rmd) {
 	L_Q();
-	if (rmd) {
-		updateBiggestDesc(rmd);
-		/* Why disabling implicit_rtcp_fb ? It is a local policy choice actually. It doesn't disturb to propose it again and again
-		 * even if the other end apparently doesn't support it.
-		 * The following line of code is causing trouble, while for example making an audio call, then adding video.
-		 * Due to the 200Ok response of the audio-only offer where no rtcp-fb attribute is present, implicit_rtcp_fb is set to
-		 * false, which is then preventing it to be eventually used when video is later added to the call.
-		 * I did the choice of commenting it out.
-		 */
-		/*params.getPrivate()->enableImplicitRtcpFb(params.getPrivate()->implicitRtcpFbEnabled() & sal_media_description_has_implicit_avpf(rmd));*/
-	}
+	if (!rmd) return;
+	
+	updateBiggestDesc(rmd);
+	/* Why disabling implicit_rtcp_fb ? It is a local policy choice actually. It doesn't disturb to propose it again and again
+		* even if the other end apparently doesn't support it.
+		* The following line of code is causing trouble, while for example making an audio call, then adding video.
+		* Due to the 200Ok response of the audio-only offer where no rtcp-fb attribute is present, implicit_rtcp_fb is set to
+		* false, which is then preventing it to be eventually used when video is later added to the call.
+		* I did the choice of commenting it out.
+		*/
+	/*params.getPrivate()->enableImplicitRtcpFb(params.getPrivate()->implicitRtcpFbEnabled() & sal_media_description_has_implicit_avpf(rmd));*/
 	const MediaSessionParams *rcp = q->getRemoteParams();
 	if (rcp) {
 		if (getParams()->audioEnabled() && !rcp->audioEnabled()) {
@@ -1128,6 +1104,17 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			md->streams[mainAudioStreamIndex].payloads = l;
 			strncpy(md->streams[mainAudioStreamIndex].rtcp_cname, getMe()->getAddress().asString().c_str(), sizeof(md->streams[mainAudioStreamIndex].rtcp_cname));
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[mainAudioStreamIndex], "as");
+			
+			if (oldMd && oldMd->streams[mainAudioStreamIndex].multicast_role == SalMulticastReceiver){
+				if (!getParams()->audioMulticastEnabled() && localIsOfferer){
+					lInfo() << "Reseting multicast role to none.";
+					md->streams[mainAudioStreamIndex].multicast_role = SalMulticastInactive;
+				}else{
+					lInfo() << "Keeping multicast role to receiver, as before.";
+					md->streams[mainAudioStreamIndex].multicast_role = SalMulticastReceiver;
+				}
+			}
+			
 		} else {
 			lInfo() << "Don't put audio stream on local offer for CallSession [" << q << "]";
 			md->streams[mainAudioStreamIndex].dir = SalStreamInactive;
@@ -1410,6 +1397,10 @@ void MediaSessionPrivate::onGatheringFinished(IceService &service){
 	L_Q();
 	updateLocalMediaDescriptionFromIce();
 	switch (state) {
+		case CallSession::State::IncomingReceived:
+		case CallSession::State::IncomingEarlyMedia:
+			if (callAcceptanceDefered) startAccept();
+			break;
 		case CallSession::State::Updating:
 			startUpdate();
 			break;
@@ -1826,15 +1817,9 @@ void MediaSessionPrivate::updateCurrentParams () const {
 
 // -----------------------------------------------------------------------------
 
-void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging) {
+
+void MediaSessionPrivate::startAccept(){
 	L_Q();
-	if (msp) {
-		setParams(new MediaSessionParams(*msp));
-	}
-	if (msp || localDesc == nullptr) makeLocalMediaDescription(op->getRemoteMediaDescription() ? false : true);
-
-	updateRemoteSessionIdAndVer();
-
 	/* Give a chance a set card prefered sampling frequency */
 	if (localDesc->streams[0].max_rate > 0) {
 		lInfo() << "Configuring prefered card sampling rate to [" << localDesc->streams[0].max_rate << "]";
@@ -1852,6 +1837,22 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 		setState(CallSession::State::StreamsRunning, "Connected (streams running)");
 	} else
 		expectMediaInAck = true;
+	if (callAcceptanceDefered) callAcceptanceDefered = false;
+}
+
+void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging) {
+	if (msp) {
+		setParams(new MediaSessionParams(*msp));
+	}
+	if (msp || localDesc == nullptr) makeLocalMediaDescription(op->getRemoteMediaDescription() ? false : true);
+
+	updateRemoteSessionIdAndVer();
+
+	if (getStreamsGroup().prepare()){
+		callAcceptanceDefered = true;
+		return; /* Deferred until completion of ICE gathering */
+	}
+	startAccept();
 }
 
 LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, CallSession::State nextState, const string &stateInfo) {
@@ -1990,6 +1991,10 @@ void MediaSessionPrivate::stunAuthRequestedCb (const char *realm, const char *no
 	else
 		*password = linphone_auth_info_get_passwd(authInfo);
 	*username = user;
+}
+
+IceSession *MediaSessionPrivate::getIceSession()const{
+	return getIceService().getSession();
 }
 
 // =============================================================================

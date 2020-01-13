@@ -285,8 +285,8 @@ bool MediaSessionParams::audioMulticastEnabled () const {
 void MediaSessionParams::enableAudio (bool value) {
 	L_D();
 	d->audioEnabled = value;
-	if (d->audioEnabled && (getAudioDirection() == LinphoneMediaDirectionInactive))
-		setAudioDirection(LinphoneMediaDirectionSendRecv);
+	//if (d->audioEnabled && (getAudioDirection() == LinphoneMediaDirectionInactive))
+	//	setAudioDirection(LinphoneMediaDirectionSendRecv);
 }
 
 void MediaSessionParams::enableAudioMulticast (bool value) {
@@ -329,8 +329,8 @@ void MediaSessionParams::setAudioDirection (LinphoneMediaDirection direction) {
 void MediaSessionParams::enableVideo (bool value) {
 	L_D();
 	d->videoEnabled = value;
-	if (d->videoEnabled && (getVideoDirection() == LinphoneMediaDirectionInactive))
-		setVideoDirection(LinphoneMediaDirectionSendRecv);
+	//if (d->videoEnabled && (getVideoDirection() == LinphoneMediaDirectionInactive))
+	//	setVideoDirection(LinphoneMediaDirectionSendRecv);
 }
 
 void MediaSessionParams::enableVideoMulticast (bool value) {
