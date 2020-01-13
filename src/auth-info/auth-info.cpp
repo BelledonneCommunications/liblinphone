@@ -59,7 +59,7 @@ AuthInfo::AuthInfo(LpConfig *config, string key){
 	domain = lp_config_get_string(config, key.c_str(), "domain", "");
 	tls_cert_path = lp_config_get_string(config, key.c_str(), "client_cert_chain", "");
 	tls_key_path = lp_config_get_string(config, key.c_str(), "client_cert_key", "");
-	algo = lp_config_get_string(config, key.c_str(), "algorithm", "MD5");
+	algo = lp_config_get_string(config, key.c_str(), "algorithm", "");
 
 	setTlsCertPath(tls_cert_path);
 	setTlsKeyPath(tls_key_path);
