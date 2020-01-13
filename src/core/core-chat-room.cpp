@@ -401,6 +401,7 @@ void CorePrivate::initEphemeralMessages () {
 		ephemeralMessages.clear();
 		ephemeralMessages = mainDb->getEphemeralMessages();
 		if (!ephemeralMessages.empty()) {
+			ms_message("[Ephemeral messages]: list initiated.");
 			shared_ptr<ChatMessage> msg = ephemeralMessages.front();
 			startEphemeralMessageTimer(msg->getEphemeralExpiredTime());
 		}

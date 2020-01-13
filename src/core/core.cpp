@@ -239,9 +239,11 @@ void CorePrivate::startEphemeralMessageTimer (time_t expiredTime) {
 	double time = difftime(expiredTime, ::ms_time(NULL));
 	unsigned int timeoutValueMs = time>0 ? (unsigned int)time*1000 : 10;
 	if (!timer) {
+		ms_message("[ephemeral message] timeout value %ud", timeoutValueMs);
 		timer = getPublic()->getCCore()->sal->createTimer(ephemeralMessageTimerExpired, this, timeoutValueMs, "ephemeral message handler");
 	}
 	else {
+		ms_error("[ephemeral message] there is no timer.");
 		belle_sip_source_set_timeout(timer, timeoutValueMs);
 	}
 }
