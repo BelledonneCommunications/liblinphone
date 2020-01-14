@@ -166,7 +166,7 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	}
 	if (sal_stream_description_has_dtls(localDesc)) {
 		/* Get the self fingerprint from call (it's computed at stream init) */
-		strncpy(localDesc->dtls_fingerprint, mDtlsFingerPrint.c_str(), sizeof(localDesc->dtls_fingerprint));
+		strncpy(localDesc->dtls_fingerprint, mDtlsFingerPrint.c_str(), sizeof(localDesc->dtls_fingerprint) - 1);
 		/* If we are offering, SDP will have actpass setup attribute when role is unset, if we are responding the result mediadescription will be set to SalDtlsRoleIsClient */
 		localDesc->dtls_role = SalDtlsRoleUnset;
 	} else {

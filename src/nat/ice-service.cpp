@@ -434,8 +434,8 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 			result = !!ice_check_list_default_local_candidate(ice_session_check_list(mIceSession, i), &rtpCandidate, &rtcpCandidate);
 		}
 		if (result) {
-			strncpy(stream->rtp_addr, rtpCandidate->taddr.ip, sizeof(stream->rtp_addr) -1);
-			strncpy(stream->rtcp_addr, rtcpCandidate->taddr.ip, sizeof(stream->rtcp_addr) -1);
+			strncpy(stream->rtp_addr, rtpCandidate->taddr.ip, sizeof(stream->rtp_addr));
+			strncpy(stream->rtcp_addr, rtcpCandidate->taddr.ip, sizeof(stream->rtcp_addr));
 			stream->rtp_port = rtpCandidate->taddr.port;
 			stream->rtcp_port = rtcpCandidate->taddr.port;
 		} else {
@@ -475,14 +475,14 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 					!((iceCandidate->taddr.port == defaultPort) && (strlen(iceCandidate->taddr.ip) == strlen(defaultAddr)) && (strcmp(iceCandidate->taddr.ip, defaultAddr) == 0))
 				)
 					continue;
-				strncpy(salCandidate->foundation, iceCandidate->foundation, sizeof(salCandidate->foundation) - 1);
+				strncpy(salCandidate->foundation, iceCandidate->foundation, sizeof(salCandidate->foundation));
 				salCandidate->componentID = iceCandidate->componentID;
 				salCandidate->priority = iceCandidate->priority;
 				strncpy(salCandidate->type, ice_candidate_type(iceCandidate), sizeof(salCandidate->type) - 1);
-				strncpy(salCandidate->addr, iceCandidate->taddr.ip, sizeof(salCandidate->addr) - 1);
+				strncpy(salCandidate->addr, iceCandidate->taddr.ip, sizeof(salCandidate->addr));
 				salCandidate->port = iceCandidate->taddr.port;
 				if (iceCandidate->base && (iceCandidate->base != iceCandidate)) {
-					strncpy(salCandidate->raddr, iceCandidate->base->taddr.ip, sizeof(salCandidate->raddr) - 1);
+					strncpy(salCandidate->raddr, iceCandidate->base->taddr.ip, sizeof(salCandidate->raddr));
 					salCandidate->rport = iceCandidate->base->taddr.port;
 				}
 				nbCandidates++;
@@ -491,9 +491,9 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 		if ((ice_check_list_state(cl) == ICL_Completed) && (ice_session_role(mIceSession) == IR_Controlling)) {
 			memset(stream->ice_remote_candidates, 0, sizeof(stream->ice_remote_candidates) -1);
 			if (ice_check_list_selected_valid_remote_candidate(cl, &rtpCandidate, &rtcpCandidate)) {
-				strncpy(stream->ice_remote_candidates[0].addr, rtpCandidate->taddr.ip, sizeof(stream->ice_remote_candidates[0].addr) -1);
+				strncpy(stream->ice_remote_candidates[0].addr, rtpCandidate->taddr.ip, sizeof(stream->ice_remote_candidates[0].addr));
 				stream->ice_remote_candidates[0].port = rtpCandidate->taddr.port;
-				strncpy(stream->ice_remote_candidates[1].addr, rtcpCandidate->taddr.ip, sizeof(stream->ice_remote_candidates[1].addr) -1);
+				strncpy(stream->ice_remote_candidates[1].addr, rtcpCandidate->taddr.ip, sizeof(stream->ice_remote_candidates[1].addr));
 				stream->ice_remote_candidates[1].port = rtcpCandidate->taddr.port;
 			} else
 				lError() << "ice: Selected valid remote candidates should be present if the check list is in the Completed state";
