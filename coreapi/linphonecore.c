@@ -2599,7 +2599,6 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 		} else {
 			linphone_configuring_terminated(lc, LinphoneConfiguringSkipped, NULL);
 		}
-		ms_message("[Ephemeral messages]: core started.");
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->initEphemeralMessages();
 		return 0;
 	} catch (const CorePrivate::DatabaseConnectionFailure &e) {
