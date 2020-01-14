@@ -78,7 +78,7 @@ Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 		lError() << "Could not create Stream of type " << sal_stream_type_to_string(type);
 		return nullptr;
 	}
-	lInfo() << "Created stream " << *ret;
+	lInfo() << "Created " << *ret;
 	
 	if ((decltype(mStreams)::size_type)params.streamIndex >= mStreams.size()) mStreams.resize(params.streamIndex + 1);
 	if (mStreams[params.streamIndex] != nullptr){
@@ -165,7 +165,7 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 	
 	for(auto &stream : mStreams){
 		Stream *streamPtr = stream.get();
-		lInfo() << "StreamsGroup " << this << " rendering stream " << *stream;
+		lInfo() << "StreamsGroup " << this << " rendering " << *stream;
 		params.scopeStreamToIndexWithDiff(stream->getIndex(), mCurrentOfferAnswerState);
 		
 		if (params.localStreamDescriptionChanges) {

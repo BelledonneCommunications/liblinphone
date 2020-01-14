@@ -169,8 +169,11 @@ static bool_t media_report_enabled(LinphoneCall * call, int stats_type){
 	if (!quality_reporting_enabled(call))
 		return FALSE;
 
-	if (stats_type == LINPHONE_CALL_STATS_VIDEO && !linphone_call_params_video_enabled(linphone_call_get_current_params(call)))
-		return FALSE;
+	if (stats_type == LINPHONE_CALL_STATS_VIDEO){
+		if (!(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getLog()->reporting.was_video_running
+			|| linphone_call_params_video_enabled(linphone_call_get_current_params(call))) )
+			return FALSE;
+	}
 
 	if (stats_type == LINPHONE_CALL_STATS_TEXT && !linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(call)))
 		return FALSE;
@@ -741,10 +744,10 @@ void linphone_reporting_call_state_updated(LinphoneCall *call){
 				}
 			}
 			linphone_reporting_update_ip(call);
-			if (!media_report_enabled(call, LINPHONE_CALL_STATS_VIDEO) && log->reporting.was_video_running){
+			if (media_report_enabled(call, LINPHONE_CALL_STATS_VIDEO) && log->reporting.was_video_running){
 				send_report(call, log->reporting.reports[LINPHONE_CALL_STATS_VIDEO], "VQSessionReport");
 			}
-			log->reporting.was_video_running=media_report_enabled(call, LINPHONE_CALL_STATS_VIDEO);
+			log->reporting.was_video_running = linphone_call_params_video_enabled(linphone_call_get_current_params(call));
 			break;
 		}
 		case LinphoneCallEnd:{

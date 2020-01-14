@@ -183,21 +183,15 @@ void MS2Stream::refreshSockets(){
 }
 
 void MS2Stream::initMulticast(const OfferAnswerContext &params) {
-	if (params.localIsOfferer) {
-		mPortConfig.multicastRole = params.localStreamDescription->multicast_role;
-	}else if (params.remoteMediaDescription){
-		const char *rtpAddr = (params.remoteStreamDescription->rtp_addr[0] != '\0') ? params.remoteStreamDescription->rtp_addr :
-			params.remoteMediaDescription->addr;
-		if (ms_is_multicast(rtpAddr))
-			mPortConfig.multicastRole = SalMulticastReceiver;
-	}
+	mPortConfig.multicastRole = params.localStreamDescription->multicast_role;
+	
 	if (mPortConfig.multicastRole == SalMulticastReceiver){
 		mPortConfig.multicastIp = params.remoteStreamDescription->rtp_addr;
 		mPortConfig.rtpPort = params.remoteStreamDescription->rtp_port;
 		mPortConfig.rtcpPort = 0; /*RTCP deactivated in multicast*/
 	}
 	
-	lInfo() << this << " multicast role is ["
+	lInfo() << *this << ": multicast role is ["
 		<< sal_multicast_role_to_string(mPortConfig.multicastRole) << "]";
 }
 

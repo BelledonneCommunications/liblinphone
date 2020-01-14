@@ -137,7 +137,7 @@ private:
 	void assignStreamsIndexesIncoming(const SalMediaDescription *md);
 	void assignStreamsIndexes();
 	int getFirstStreamWithType(const SalMediaDescription *md, SalStreamType type);
-	void fixCallParams (SalMediaDescription *rmd);
+	void fixCallParams (SalMediaDescription *rmd, bool fromOffer);
 	void initializeParamsAccordingToIncomingCallParams () override;
 	void setCompatibleIncomingCallParams (SalMediaDescription *md);
 	void updateBiggestDesc (SalMediaDescription *md);

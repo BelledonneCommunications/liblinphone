@@ -157,7 +157,7 @@ inline std::ostream &operator<<(std::ostream & ostr, SalStreamType type){
 }
 
 inline std::ostream & operator<<(std::ostream & ostr, Stream& stream){
-	ostr << "#" << stream.getIndex() << " [" << stream.getType() << "] currently in state [" << Stream::stateToString(stream.getState()) << "]";
+	ostr << "stream#" << stream.getIndex() << " [" << stream.getType() << "] in state [" << Stream::stateToString(stream.getState()) << "]";
 	return ostr;
 }
 
