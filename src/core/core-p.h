@@ -133,7 +133,7 @@ public:
 	Sal * getSal();
 	LinphoneCore *getCCore();
 
-	void startEphemeralMessageTimer (time_t expiredTime);
+	void startEphemeralMessageTimer (time_t expireTime);
 	void stopEphemeralMessageTimer ();
 
 private:

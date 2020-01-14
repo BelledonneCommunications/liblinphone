@@ -1188,6 +1188,10 @@ class JavaLangTranslator(CLikeLangTranslator):
 				if jni:
 					return 'jbyteArray'
 				return 'byte[]'
+			elif type_.size is not None and type_.size == 'long':
+				if jni:
+					return 'jlong'
+				return 'long'
 			if jni:
 				return 'jint'
 			return 'int'
@@ -1203,7 +1207,7 @@ class JavaLangTranslator(CLikeLangTranslator):
 			if jni:
 				return 'jint'
 			return 'int'
-		elif type_.name == 'time':
+		elif type_.name == 'time' or type_.name == 'long':
 			if jni:
 				return 'jlong'
 			return 'long'

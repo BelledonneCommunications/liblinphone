@@ -266,8 +266,8 @@ long linphone_chat_message_get_ephemeral_lifetime (const LinphoneChatMessage *ms
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getEphemeralLifetime();
 }
 
-time_t linphone_chat_message_get_ephemeral_expired_time (const LinphoneChatMessage *msg) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getEphemeralExpiredTime();
+time_t linphone_chat_message_get_ephemeral_expire_time (const LinphoneChatMessage *msg) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getEphemeralExpireTime();
 }
 
 void linphone_chat_message_add_custom_header(
