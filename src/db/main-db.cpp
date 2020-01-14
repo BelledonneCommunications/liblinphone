@@ -762,7 +762,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 		
 		if (row.get_indicator(20) != soci::i_null) {
 			dChatMessage->enableEphemeralWithTime((long)row.get<double>(20));
-			dChatMessage->setEphemeralExpiredTime(dbSession.getTime(row, 21));
+			dChatMessage->setEphemeralExpireTime(dbSession.getTime(row, 21));
 		}
 
 		cache(chatMessage, eventId);
@@ -939,12 +939,12 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 
 	if (isEphemeral) {
 		long ephemeralLifetime = chatMessage->getEphemeralLifetime();
-		const tm &expiredTime = Utils::getTimeTAsTm(chatMessage->getEphemeralExpiredTime());
+		const tm &expireTime = Utils::getTimeTAsTm(chatMessage->getEphemeralExpireTime());
 		*dbSession.getBackendSession() << "INSERT INTO chat_message_ephemeral_event ("
 			"  event_id, ephemeral_lifetime,  expired_time"
 			") VALUES ("
-		"  :eventId, :ephemeralLifetime, :expiredTime"
-		")", soci::use(eventId), soci::use(ephemeralLifetime),  soci::use(expiredTime);
+		"  :eventId, :ephemeralLifetime, :expireTime"
+		")", soci::use(eventId), soci::use(ephemeralLifetime),  soci::use(expireTime);
 	}
 
 	for (const Content *content : chatMessage->getContents())
@@ -2532,13 +2532,13 @@ void MainDb::updateChatRoomEphemeralLifetime (const ConferenceId &conferenceId, 
 void MainDb::updateEphemeralMessageInfos (const long long &eventId, const time_t &eTime) const {
 #ifdef HAVE_DB_STORAGE
 	static const string query = "UPDATE chat_message_ephemeral_event"
-	"  SET expired_time = :expiredTime"
+	"  SET expired_time = :expireTime"
 	"  WHERE event_id = :eventId";
 
 	L_DB_TRANSACTION {
 		L_D();
-		const tm &expiredTime = Utils::getTimeTAsTm(eTime);
-		*d->dbSession.getBackendSession() << query, soci::use(expiredTime), soci::use(eventId);
+		const tm &expireTime = Utils::getTimeTAsTm(eTime);
+		*d->dbSession.getBackendSession() << query, soci::use(expireTime), soci::use(eventId);
 		tr.commit();
 	};
 #endif

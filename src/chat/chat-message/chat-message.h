@@ -92,7 +92,7 @@ public:
 
 	bool isEphemeral () const;
 	long getEphemeralLifetime () const;
-	time_t getEphemeralExpiredTime () const;
+	time_t getEphemeralExpireTime () const;
 
 	// TODO: Return a cpp reference.
 	const LinphoneErrorInfo *getErrorInfo () const;

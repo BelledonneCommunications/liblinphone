@@ -235,8 +235,8 @@ int CorePrivate::ephemeralMessageTimerExpired (void *data, unsigned int revents)
 	return BELLE_SIP_STOP;
 }
 
-void CorePrivate::startEphemeralMessageTimer (time_t expiredTime) {
-	double time = difftime(expiredTime, ::ms_time(NULL));
+void CorePrivate::startEphemeralMessageTimer (time_t expireTime) {
+	double time = difftime(expireTime, ::ms_time(NULL));
 	unsigned int timeoutValueMs = time>0 ? (unsigned int)time*1000 : 10;
 	if (!timer) {
 		timer = getPublic()->getCCore()->sal->createTimer(ephemeralMessageTimerExpired, this, timeoutValueMs, "ephemeral message handler");

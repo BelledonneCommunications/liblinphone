@@ -210,8 +210,8 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	// 6. update in database for ephemeral message if necessary.
 	if (isEphemeral && (state == ChatMessage::State::Displayed)) {
 		// set ephemeral message expired time
-		ephemeralExpiredTime = ::ms_time(NULL) + (long)ephemeralLifetime;
-		q->getChatRoom()->getCore()->getPrivate()->mainDb->updateEphemeralMessageInfos(dbKey.getPrivate()->storageId, ephemeralExpiredTime);
+		ephemeralExpireTime = ::ms_time(NULL) + (long)ephemeralLifetime;
+		q->getChatRoom()->getCore()->getPrivate()->mainDb->updateEphemeralMessageInfos(dbKey.getPrivate()->storageId, ephemeralExpireTime);
 
 		q->getChatRoom()->getCore()->getPrivate()->updateEphemeralMessages(q->getSharedFromThis());
 
@@ -337,8 +337,8 @@ void ChatMessagePrivate::setFileTransferFilepath (const string &path) {
 	fileTransferFilePath = path;
 }
 
-void ChatMessagePrivate::setEphemeralExpiredTime(time_t expiredTime) {
-	ephemeralExpiredTime = expiredTime;
+void ChatMessagePrivate::setEphemeralExpireTime(time_t expireTime) {
+	ephemeralExpireTime = expireTime;
 }
 
 const string &ChatMessagePrivate::getAppdata () const {
@@ -1191,9 +1191,9 @@ long ChatMessage::getEphemeralLifetime () const {
 	return d->ephemeralLifetime;
 }
 
-time_t ChatMessage::getEphemeralExpiredTime () const {
+time_t ChatMessage::getEphemeralExpireTime () const {
 	L_D();
-	return d->ephemeralExpiredTime;
+	return d->ephemeralExpireTime;
 }
 
 void ChatMessage::setToBeStored (bool value) {
