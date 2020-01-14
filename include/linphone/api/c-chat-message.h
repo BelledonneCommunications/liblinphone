@@ -382,7 +382,7 @@ LINPHONE_PUBLIC long linphone_chat_message_get_ephemeral_lifetime (const Linphon
  * @param[in] msg #LinphoneChatMessage object.
  * @return the time at which an ephemeral message expires. 0 means the message has not been read.
  */
-LINPHONE_PUBLIC time_t linphone_chat_message_get_ephemeral_expired_time (const LinphoneChatMessage *msg);
+LINPHONE_PUBLIC time_t linphone_chat_message_get_ephemeral_expire_time (const LinphoneChatMessage *msg);
 
 /**
  * Fulfill a chat message char by char. Message linked to a Real Time Text Call send char in realtime following RFC 4103/T.140

@@ -117,7 +117,9 @@ class JNILangTranslator(AbsApi.Translator):
         elif type_.name == 'size':
             return 'I'
         elif type_.name == 'time':
-            return 'I'
+            return 'J'
+        elif type_.name == 'long':
+            return 'J'
         elif type_.name == 'status':
             return 'I'
         elif type_.name == 'string_array':

@@ -85,7 +85,7 @@ public:
 
 	void enableEphemeralWithTime (long time);
 
-	void setEphemeralExpiredTime (time_t expiredTime);
+	void setEphemeralExpireTime (time_t expireTime);
 
 	void setAuthenticatedFromAddress (const IdentityAddress &authenticatedFromAddress) {
 		this->authenticatedFromAddress = authenticatedFromAddress;
@@ -261,7 +261,7 @@ private:
 
 	bool isEphemeral = false;
 	long ephemeralLifetime = 86400; // 24h
-	time_t ephemeralExpiredTime = 0;
+	time_t ephemeralExpireTime = 0;
 
 	std::list<Content *> contents;
 

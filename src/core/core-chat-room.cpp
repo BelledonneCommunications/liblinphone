@@ -365,8 +365,8 @@ void CorePrivate::loadChatRooms () {
 void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 	if (!ephemeralMessages.empty()) {
 		shared_ptr<ChatMessage> msg = ephemeralMessages.front();
-		time_t expiredTime = msg->getEphemeralExpiredTime();
-		if (currentTime > expiredTime) {
+		time_t expireTime = msg->getEphemeralExpireTime();
+		if (currentTime > expireTime) {
 			shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(msg->getPrivate()->dbKey);
 			shared_ptr<AbstractChatRoom> chatRoom = msg->getChatRoom();
 			if (chatRoom && event) {
@@ -387,7 +387,7 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 				handleEphemeralMessages(currentTime);
 			}
 		} else {
-			startEphemeralMessageTimer(expiredTime);
+			startEphemeralMessageTimer(expireTime);
 		}
 	} else {
 		initEphemeralMessages();
@@ -400,7 +400,7 @@ void CorePrivate::initEphemeralMessages () {
 		ephemeralMessages = mainDb->getEphemeralMessages();
 		if (!ephemeralMessages.empty()) {
 			shared_ptr<ChatMessage> msg = ephemeralMessages.front();
-			startEphemeralMessageTimer(msg->getEphemeralExpiredTime());
+			startEphemeralMessageTimer(msg->getEphemeralExpireTime());
 		}
 	}
 }
@@ -408,14 +408,14 @@ void CorePrivate::initEphemeralMessages () {
 void CorePrivate::updateEphemeralMessages (const shared_ptr<ChatMessage> &message) {
 	if (ephemeralMessages.empty()) {
 		ephemeralMessages.push_back(message);
-		startEphemeralMessageTimer(message->getEphemeralExpiredTime());
+		startEphemeralMessageTimer(message->getEphemeralExpireTime());
 	} else {
 		for (std::list<shared_ptr<ChatMessage>>::iterator it=ephemeralMessages.begin(); it!=ephemeralMessages.end(); ++it) {
 			shared_ptr<ChatMessage> msg = *it;
-			if (msg->getEphemeralExpiredTime() > message->getEphemeralExpiredTime()) {
+			if (msg->getEphemeralExpireTime() > message->getEphemeralExpireTime()) {
 				if (it == ephemeralMessages.begin()) {
 					ephemeralMessages.push_front(message);
-					startEphemeralMessageTimer(message->getEphemeralExpiredTime());
+					startEphemeralMessageTimer(message->getEphemeralExpireTime());
 				} else {
 					it = --it;
 					ephemeralMessages.insert(it, message);
