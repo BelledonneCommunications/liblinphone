@@ -239,13 +239,10 @@ void CorePrivate::startEphemeralMessageTimer (time_t expiredTime) {
 	double time = difftime(expiredTime, ::ms_time(NULL));
 	unsigned int timeoutValueMs = time>0 ? (unsigned int)time*1000 : 10;
 	if (!timer) {
-		lInfo() << "[ephemeral message] create a timer.";
 		timer = getPublic()->getCCore()->sal->createTimer(ephemeralMessageTimerExpired, this, timeoutValueMs, "ephemeral message handler");
 	} else {
-		lInfo() << "[ephemeral message] there is already a timer.";
 		belle_sip_source_set_timeout(timer, timeoutValueMs);
 	}
-	bgTask.start(getPublic()->getSharedFromThis(), 1);
 }
 
 void CorePrivate::stopEphemeralMessageTimer () {
@@ -256,7 +253,6 @@ void CorePrivate::stopEphemeralMessageTimer () {
 		belle_sip_object_unref(timer);
 		timer = nullptr;
 	}
-	bgTask.stop();
 }
 
 // =============================================================================

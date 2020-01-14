@@ -378,7 +378,6 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 					LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(message);
 					if (cbs && linphone_chat_message_cbs_get_ephemeral_message_deleted(cbs)) {
 						linphone_chat_message_cbs_get_ephemeral_message_deleted(cbs)(message);
-						lInfo() << "[ephemeral message] there is callback of message.";
 					}
 					_linphone_chat_message_notify_ephemeral_message_deleted(message);
 				}
