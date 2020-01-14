@@ -383,15 +383,13 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 					_linphone_chat_message_notify_ephemeral_message_deleted(message);
 				}
 
-				// delete expired ephemeral message
-				ephemeralMessages.pop_front();
 				LinphonePrivate::EventLog::deleteFromDatabase(event);
 				lInfo() << "[ephemeral message] message deleted.";
-			} else {
-				// Delete message from this list even when chatroom is gone.
-				ephemeralMessages.pop_front();
 			}
 
+			// Delete message from this list even when chatroom is gone.
+			lInfo() << "[ephemeral message] message deleted from list.";
+			ephemeralMessages.pop_front();
 			handleEphemeralMessages(currentTime);
 		} else {
 			startEphemeralMessageTimer(expiredTime);

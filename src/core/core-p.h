@@ -159,6 +159,7 @@ private:
 
 	std::list<std::shared_ptr<ChatMessage>> ephemeralMessages;
 	belle_sip_source_t *timer = nullptr;
+	BackgroundTask bgTask {"ephemeral message handler"};
 
 	L_DECLARE_PUBLIC(Core);
 };
