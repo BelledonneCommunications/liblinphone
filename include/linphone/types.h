@@ -470,7 +470,8 @@ typedef struct _LinphoneFriend LinphoneFriend;
 typedef enum _LinphoneFriendCapability {
 	LinphoneFriendCapabilityNone = 0,
 	LinphoneFriendCapabilityGroupChat = 1 << 0,
-	LinphoneFriendCapabilityLimeX3dh = 1 << 1
+	LinphoneFriendCapabilityLimeX3dh = 1 << 1,
+	LinphoneFriendCapabilityEphemeralMessages = 1 << 2
 } LinphoneFriendCapability;
 
 /**
