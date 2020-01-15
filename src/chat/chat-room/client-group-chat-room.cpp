@@ -475,6 +475,16 @@ list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistoryRange (int begin, int 
 	);
 }
 
+int ClientGroupChatRoom::getHistorySize () const {
+	L_D();
+	return getCore()->getPrivate()->mainDb->getHistorySize(
+		getConferenceId(),
+		(d->capabilities & Capabilities::OneToOne) ?
+			MainDb::Filter::ConferenceChatMessageSecurityFilter :
+			MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter})
+	);
+}
+
 bool ClientGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
 	list<IdentityAddress> addressesList({addr});
 
