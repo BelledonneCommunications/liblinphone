@@ -82,6 +82,11 @@ public:
 
 	void join () override;
 	void leave () override;
+	
+	void enableEphemeral (bool ephem, bool updateDb) override;
+	bool ephemeralEnabled () const override;
+	void setEphemeralLifetime (long lifetime, bool updateDb) override;
+	long getEphemeralLifetime () const override;
 
 private:
 	ClientGroupChatRoom (
