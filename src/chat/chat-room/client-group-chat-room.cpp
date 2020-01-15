@@ -939,4 +939,53 @@ void ClientGroupChatRoom::onParticipantsCleared () {
 	
 }
 
+void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
+	L_D();
+	d->isEphemeral = ephem;
+	const string active = ephem ? "enabled" : "disabled";
+	lInfo() << "Ephemeral message is " << active << " in chat room [" << d->conferenceId << "]";
+	if (updateDb) {
+		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralEnabled(d->conferenceId, ephem);
+		shared_ptr<ConferenceEphemeralMessageEvent> event;
+		if (ephem)
+			event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageEnabled, time(nullptr), d->conferenceId, d->ephemeralLifetime);
+		else
+			event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageDisabled, time(nullptr), d->conferenceId, d->ephemeralLifetime);
+		d->addEvent(event);
+
+		LinphoneChatRoom *cr = d->getCChatRoom();
+		_linphone_chat_room_notify_ephemeral_event(cr, L_GET_C_BACK_PTR(event));
+	}
+}
+
+bool ClientGroupChatRoom::ephemeralEnabled() const {
+	L_D();
+	return d->isEphemeral;
+}
+
+void ClientGroupChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
+	L_D();
+	if (lifetime == d->ephemeralLifetime) {
+		if (updateDb)
+			lWarning() << "Ephemeral lifetime will not be changed! Trying to set the same ephemaral lifetime as before : " << lifetime;
+		return;
+	}
+	d->ephemeralLifetime = lifetime;
+
+	if (updateDb) {
+		lInfo() << "Set new ephemeral lifetime " << lifetime << ", used to be " << d->ephemeralLifetime << ".";
+		shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageLifetimeChanged, time(nullptr), d->conferenceId, lifetime);
+		d->addEvent(event);
+		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralLifetime(d->conferenceId, lifetime);
+
+		LinphoneChatRoom *cr = d->getCChatRoom();
+		_linphone_chat_room_notify_ephemeral_event(cr, L_GET_C_BACK_PTR(event));
+	}
+}
+
+long ClientGroupChatRoom::getEphemeralLifetime () const {
+	L_D();
+	return d->ephemeralLifetime;
+}
+
 LINPHONE_END_NAMESPACE
