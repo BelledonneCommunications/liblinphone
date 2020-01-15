@@ -533,6 +533,10 @@ void _linphone_chat_room_notify_conference_left(LinphoneChatRoom *cr, const Linp
 	NOTIFY_IF_EXIST(ConferenceLeft, conference_left, cr, eventLog)
 }
 
+void _linphone_chat_room_notify_ephemeral_event(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
+	NOTIFY_IF_EXIST(EphemeralEvent, ephemeral_event, cr, eventLog)
+}
+
 void _linphone_chat_room_notify_ephemeral_message_timer_started(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
 	NOTIFY_IF_EXIST(EphemeralMessageTimerStarted, ephemeral_message_timer_started, cr, eventLog)
 }

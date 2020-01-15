@@ -45,6 +45,7 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb participantRegistrationSubscriptionRequestedCb;
 	LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequestedCb participantRegistrationUnsubscriptionRequestedCb;
 	LinphoneChatRoomCbsShouldChatMessageBeStoredCb shouldMessageBeStoredCb;
+	LinphoneChatRoomCbsEphemeralEventCb ephemeralEventCb;
 	LinphoneChatRoomCbsEphemeralMessageTimerStartedCb EphemeralMessageTimerStartedCb;
 	LinphoneChatRoomCbsEphemeralMessageDeletedCb ephemeralMessageDeletedCb;
 };
@@ -201,6 +202,14 @@ LinphoneChatRoomCbsConferenceLeftCb linphone_chat_room_cbs_get_conference_left (
 
 void linphone_chat_room_cbs_set_conference_left (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceLeftCb cb) {
 	cbs->conferenceLeftCb = cb;
+}
+
+LinphoneChatRoomCbsEphemeralEventCb linphone_chat_room_cbs_get_ephemeral_event (const LinphoneChatRoomCbs *cbs) {
+	return cbs->ephemeralEventCb;
+}
+
+void linphone_chat_room_cbs_set_ephemeral_event (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEphemeralEventCb cb) {
+	cbs->ephemeralEventCb = cb;
 }
 
 LinphoneChatRoomCbsEphemeralMessageTimerStartedCb linphone_chat_room_cbs_get_ephemeral_message_timer_started (const LinphoneChatRoomCbs *cbs) {

@@ -289,6 +289,13 @@ typedef void (*LinphoneChatRoomCbsConferenceJoinedCb) (LinphoneChatRoom *cr, con
 typedef void (*LinphoneChatRoomCbsConferenceLeftCb) (LinphoneChatRoom *cr, const LinphoneEventLog *eventLog);
 
 /**
+ * Callback used to notify a chat room that an ephemeral related event has been generated.
+ * @param[in] cr #LinphoneChatRoom object
+ * @param[in] event_log #LinphoneEventLog The event to be notified
+ */
+typedef void (*LinphoneChatRoomCbsEphemeralEventCb) (LinphoneChatRoom *cr, const LinphoneEventLog *eventLog);
+
+/**
  * Callback used to notify a chat room that the lifespan of an ephemeral message before disappearing has started to decrease.
  * This callback is called when the ephemeral message is read by the receiver.
  * @param[in] cr #LinphoneChatRoom object

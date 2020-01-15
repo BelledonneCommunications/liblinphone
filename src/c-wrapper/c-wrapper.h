@@ -65,6 +65,7 @@
 	F(EventLog, ConferenceParticipantEvent) \
 	F(EventLog, ConferenceSecurityEvent) \
 	F(EventLog, ConferenceSubjectEvent) \
+	F(EventLog, ConferenceEphemeralMessageEvent) \
 	F(EventLog, ConferenceEphemeralLifetimeEvent)
 
 // =============================================================================
