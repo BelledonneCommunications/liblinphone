@@ -65,8 +65,7 @@
 	F(EventLog, ConferenceParticipantEvent) \
 	F(EventLog, ConferenceSecurityEvent) \
 	F(EventLog, ConferenceSubjectEvent) \
-	F(EventLog, ConferenceEphemeralMessageEvent) \
-	F(EventLog, ConferenceEphemeralLifetimeEvent)
+	F(EventLog, ConferenceEphemeralMessageEvent)
 
 // =============================================================================
 // Register belle-sip ID.
