@@ -261,7 +261,7 @@ private:
 
 	bool isEphemeral = false;
 	long ephemeralLifetime = 86400; // 24h
-	time_t ephemeralExpireTime = 0x7fffffff; // Max number of time_t
+	time_t ephemeralExpireTime = 0;
 
 	std::list<Content *> contents;
 
