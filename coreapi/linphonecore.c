@@ -2552,6 +2552,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	linphone_presence_model_set_basic_status(lc->presence_model, LinphonePresenceBasicStatusOpen);
 
 	_linphone_core_read_config(lc);
+	linphone_core_add_linphone_spec(lc, "ephemeral");
 	linphone_core_set_state(lc, LinphoneGlobalReady, "Ready");
 
 	if (automatically_start) {
