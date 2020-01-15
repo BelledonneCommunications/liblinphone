@@ -188,6 +188,15 @@ LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_lifetime (LinphoneChatRoom
 LINPHONE_PUBLIC long linphone_chat_room_get_ephemeral_lifetime (const LinphoneChatRoom *cr);
 
 /**
+ * Uses linphone spec to check if all participants support ephemeral messages.
+ * It doesn't prevent to send ephemeral messages in the room but those who don't support it
+ * won't delete messages after lifetime has expired.
+ * @param[in] cr #LinphoneChatRoom object
+ * @return true if all participants in the chat room support ephemeral messages, false otherwise
+ */
+LINPHONE_PUBLIC bool_t linphone_chat_room_ephemeral_supported_by_all_participants (const LinphoneChatRoom *cr);
+
+/**
  * Delete a message from the chat room history.
  * @param[in] cr The #LinphoneChatRoom object corresponding to the conversation.
  * @param[in] msg The #LinphoneChatMessage object to remove.
