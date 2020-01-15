@@ -171,8 +171,8 @@ namespace {
 		constexpr char ConferenceCallFilter[] = "3,4";
 		constexpr char ConferenceChatMessageFilter[] = "5";
 		constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12,13,14,15,16";
-		constexpr char ConferenceInfoFilter[] = "1,2,6,7,8,9,10,11,12,14,15,16";
-		constexpr char ConferenceChatMessageSecurityFilter[] = "5,13";
+		constexpr char ConferenceInfoFilter[] = "1,2,6,7,8,9,10,11,12,13,14,15,16";
+		constexpr char ConferenceChatMessageSecurityFilter[] = "5,13,14,15,16";
 	#else
 		constexpr auto ConferenceCallFilter = SqlEventFilterBuilder<
 			EventLog::Type::ConferenceCallStart,
@@ -201,7 +201,10 @@ namespace {
 		>::get();
 
 		constexpr auto ConferenceChatMessageSecurityFilter = ConferenceChatMessageFilter + "," + SqlEventFilterBuilder<
-			EventLog::Type::ConferenceSecurityEvent
+			EventLog::Type::ConferenceSecurityEvent,
+			EventLog::Type::ConferenceEphemeralMessageLifetimeChanged,
+			EventLog::Type::ConferenceEphemeralMessageEnabled,
+			EventLog::Type::ConferenceEphemeralMessageDisabled
 		>::get();
 	#endif // ifdef _WIN32
 
@@ -2910,7 +2913,7 @@ list<shared_ptr<EventLog>> MainDb::getHistoryRange (
 	}
 
 	string query = Statements::get(Statements::SelectConferenceEvents) + buildSqlEventFilter({
-		ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter, ConferenceInfoNoDeviceFilter
+		ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter, ConferenceInfoNoDeviceFilter, ConferenceChatMessageSecurityFilter
 	}, mask, "AND");
 	query += " ORDER BY event_id DESC";
 
@@ -2957,7 +2960,7 @@ int MainDb::getHistorySize (const ConferenceId &conferenceId, FilterMask mask) c
 	const string query = "SELECT COUNT(*) FROM event, conference_event"
 		"  WHERE chat_room_id = :chatRoomId"
 		"  AND event_id = event.id" + buildSqlEventFilter({
-			ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter, ConferenceInfoNoDeviceFilter
+			ConferenceCallFilter, ConferenceChatMessageFilter, ConferenceInfoFilter, ConferenceInfoNoDeviceFilter, ConferenceChatMessageSecurityFilter
 		}, mask, "AND");
 
 	return L_DB_TRANSACTION {
