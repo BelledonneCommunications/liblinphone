@@ -370,8 +370,12 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 			shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(msg->getPrivate()->dbKey);
 			shared_ptr<AbstractChatRoom> chatRoom = msg->getChatRoom();
 			if (chatRoom && event) {
+				LinphonePrivate::EventLog::deleteFromDatabase(event);
+				lInfo() << "[Ephemeral] message deleted";
+
 				// notify ephemeral message deleted to chat room.
 				_linphone_chat_room_notify_ephemeral_message_deleted(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
+
 				//notify ephemeral message deleted to message if exists.
 				LinphoneChatMessage *message = linphone_event_log_get_chat_message(L_GET_C_BACK_PTR(event));
 				if (message) {
@@ -381,13 +385,10 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 					}
 					_linphone_chat_message_notify_ephemeral_message_deleted(message);
 				}
-
-				LinphonePrivate::EventLog::deleteFromDatabase(event);
-				lInfo() << "[ephemeral message] message deleted.";
 			}
 
 			// Delete message from this list even when chatroom is gone.
-			lInfo() << "[ephemeral message] message deleted from list.";
+			lInfo() << "[Ephemeral] message deleted from list";
 			ephemeralMessages.pop_front();
 			handleEphemeralMessages(currentTime);
 		} else {
@@ -403,7 +404,7 @@ void CorePrivate::initEphemeralMessages () {
 		ephemeralMessages.clear();
 		ephemeralMessages = mainDb->getEphemeralMessages();
 		if (!ephemeralMessages.empty()) {
-			lInfo() << "[ephemeral message] list initiated.";
+			lInfo() << "[Ephemeral] list initiated";
 			shared_ptr<ChatMessage> msg = ephemeralMessages.front();
 			startEphemeralMessageTimer(msg->getEphemeralExpireTime());
 		}
