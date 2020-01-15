@@ -1637,6 +1637,15 @@ static void notify_friend_capabilities(void) {
 	LinphoneCoreManager *chloe2 = linphone_core_manager_create("chloe_rc");
 	LinphoneCoreManager *chloe3 = linphone_core_manager_create("chloe_rc");
 
+	// Now this spec is enforced when Core is created, remove it for tests purposes
+	linphone_core_remove_linphone_spec(marie->lc, "ephemeral");
+	linphone_core_remove_linphone_spec(pauline->lc, "ephemeral");
+	linphone_core_remove_linphone_spec(pauline2->lc, "ephemeral");
+	linphone_core_remove_linphone_spec(laure->lc, "ephemeral");
+	linphone_core_remove_linphone_spec(chloe->lc, "ephemeral");
+	linphone_core_remove_linphone_spec(chloe2->lc, "ephemeral");
+	linphone_core_remove_linphone_spec(chloe3->lc, "ephemeral");
+
 	linphone_core_add_linphone_spec(pauline->lc, "groupchat/1.1");
 	linphone_core_add_linphone_spec(pauline2->lc, "lime");
 	linphone_core_add_linphone_spec(laure->lc, "groupchat/2.0");
