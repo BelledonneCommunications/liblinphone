@@ -225,6 +225,10 @@ long linphone_chat_room_get_ephemeral_lifetime (const LinphoneChatRoom *cr) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getEphemeralLifetime();
 }
 
+bool_t linphone_chat_room_ephemeral_supported_by_all_participants (const LinphoneChatRoom *cr) {
+	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->ephemeralSupportedByAllParticipants();
+}
+
 int linphone_chat_room_get_unread_messages_count (LinphoneChatRoom *cr) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getUnreadChatMessageCount();
 }

@@ -988,4 +988,9 @@ long ClientGroupChatRoom::getEphemeralLifetime () const {
 	return d->ephemeralLifetime;
 }
 
+bool ClientGroupChatRoom::ephemeralSupportedByAllParticipants () const {
+	// TODO
+	return false;
+}
+
 LINPHONE_END_NAMESPACE

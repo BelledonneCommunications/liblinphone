@@ -243,6 +243,11 @@ long ProxyChatRoom::getEphemeralLifetime () const {
 	return d->chatRoom->getEphemeralLifetime();
 }
 
+bool ProxyChatRoom::ephemeralSupportedByAllParticipants () const {
+	L_D();
+	return d->chatRoom->ephemeralSupportedByAllParticipants();
+}
+
 // -----------------------------------------------------------------------------
 
 const IdentityAddress &ProxyChatRoom::getConferenceAddress () const {

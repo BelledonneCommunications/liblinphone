@@ -626,4 +626,8 @@ long ChatRoom::getEphemeralLifetime () const {
 	return 0;
 }
 
+bool ChatRoom::ephemeralSupportedByAllParticipants () const  {
+	return false;
+}
+
 LINPHONE_END_NAMESPACE
