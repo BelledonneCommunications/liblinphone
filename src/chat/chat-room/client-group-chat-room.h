@@ -87,6 +87,7 @@ public:
 	bool ephemeralEnabled () const override;
 	void setEphemeralLifetime (long lifetime, bool updateDb) override;
 	long getEphemeralLifetime () const override;
+	bool ephemeralSupportedByAllParticipants () const override;
 
 private:
 	ClientGroupChatRoom (

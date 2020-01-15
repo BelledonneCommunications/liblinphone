@@ -3319,6 +3319,7 @@ static void chat_room_ephemeral_settings (void) {
 
 	BC_ASSERT_FALSE(linphone_chat_room_ephemeral_enabled(marieCr));
 	BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(marieCr), 86400, long, "%ld");
+	BC_ASSERT_TRUE(linphone_chat_room_ephemeral_supported_by_all_participants(marieCr));
 
 	linphone_chat_room_enable_ephemeral(marieCr, TRUE);
 	linphone_chat_room_set_ephemeral_lifetime(marieCr, 1);
