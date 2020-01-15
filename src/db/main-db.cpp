@@ -2598,7 +2598,6 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 		" WHERE event_id in ("
 		" SELECT event_id"
 		" FROM chat_message_ephemeral_event"
-		" WHERE expired_time > 0"
 		" ORDER BY expired_time ASC"
 		" LIMIT :maxMessages)"
 		" ORDER BY expired_time ASC";
