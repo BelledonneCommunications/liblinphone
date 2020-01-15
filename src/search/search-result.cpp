@@ -37,7 +37,7 @@ private:
 	const LinphoneFriend *mFriend;
 	const LinphoneAddress *mAddress;
 	std::string mPhoneNumber;
-	int mCapabilities = LinphoneFriendCapabilityGroupChat | LinphoneFriendCapabilityLimeX3dh;
+	int mCapabilities = LinphoneFriendCapabilityGroupChat | LinphoneFriendCapabilityLimeX3dh | LinphoneFriendCapabilityEphemeralMessages;
 	unsigned int mWeight;
 
 	L_DECLARE_PUBLIC(SearchResult);
