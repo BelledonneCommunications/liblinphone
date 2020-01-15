@@ -2598,6 +2598,7 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 		" WHERE event_id in ("
 		" SELECT event_id"
 		" FROM chat_message_ephemeral_event"
+		" WHERE expire_time > :nullTime"
 		" ORDER BY expired_time ASC"
 		" LIMIT :maxMessages)"
 		" ORDER BY expired_time ASC";
@@ -2606,7 +2607,7 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 		L_D();
 		list<shared_ptr<ChatMessage>> chatMessages;
 		soci::rowset<soci::row> rows = (
-		d->dbSession.getBackendSession()->prepare << query, soci::use(EPHEMERAL_MESSAGE_TASKS_MAX_NB));
+		d->dbSession.getBackendSession()->prepare << query, soci::use(Utils::getTimeTAsTm(0)), soci::use(EPHEMERAL_MESSAGE_TASKS_MAX_NB));
 		for (const auto &row : rows) {
 			const long long &dbChatRoomId = d->dbSession.resolveId(row, (int)row.size()-1);
 			ConferenceId conferenceId = d->getConferenceIdFromCache(dbChatRoomId);
