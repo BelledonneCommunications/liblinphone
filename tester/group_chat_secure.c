@@ -3405,13 +3405,13 @@ test_t secure_group_chat_tests[] = {
 	TEST_TWO_TAGS("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH", "LeaksMemory"),
 	TEST_ONE_TAG("Imdn", imdn_for_group_chat_room, "LimeX3DH"),
 	TEST_NO_TAG("Lime Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message),
-	TEST_NO_TAG("Unencrypted chat room ephemeral messages", unencrypted_chat_room_ephemeral_message_test),
-	TEST_NO_TAG("Encrypted chat room ephemeral messages", encrypted_chat_room_ephemeral_message_test),
-	TEST_ONE_TAG("Chat room remaining ephemeral messages", chat_room_remaining_ephemeral_message_test,"LeaksMemory"), /*due to core restart*/
-	TEST_ONE_TAG("Chat room expired ephemeral messages", chat_room_expired_ephemeral_message_test,"LeaksMemory"), /*due to core restart*/
-	TEST_NO_TAG("Mixed ephemeral messages", mixed_ephemeral_message_test),
-	TEST_ONE_TAG("Chat room ephemeral settings", chat_room_ephemeral_settings,"LeaksMemory") /*due to core restart*/,
-	TEST_NO_TAG("Send non ephemeral message", send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room)
+	TEST_ONE_TAG("Unencrypted chat room ephemeral messages", unencrypted_chat_room_ephemeral_message_test, "Ephemeral"),
+	TEST_ONE_TAG("Encrypted chat room ephemeral messages", encrypted_chat_room_ephemeral_message_test, "Ephemeral"),
+	TEST_TWO_TAGS("Chat room remaining ephemeral messages", chat_room_remaining_ephemeral_message_test, "Ephemeral", "LeaksMemory"), /*due to core restart*/
+	TEST_TWO_TAGS("Chat room expired ephemeral messages", chat_room_expired_ephemeral_message_test, "Ephemeral", "LeaksMemory"), /*due to core restart*/
+	TEST_ONE_TAG("Mixed ephemeral messages", mixed_ephemeral_message_test, "Ephemeral"),
+	TEST_TWO_TAGS("Chat room ephemeral settings", chat_room_ephemeral_settings, "Ephemeral", "LeaksMemory") /*due to core restart*/,
+	TEST_ONE_TAG("Send non ephemeral message", send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room, "Ephemeral")
 };
 
 test_suite_t secure_group_chat_test_suite = {
