@@ -107,8 +107,42 @@
       [last_CSeq:]
       RAck: 1 20 INVITE
       Content-Length: 0
+	  
     ]]>
   </send>
+
+  <send>
+	  <![CDATA[
+      SIP/2.0 180 Ringing
+      [$lvia]
+      [last_From:]
+      [last_To:]
+      [last_Call-ID:]
+      CSeq: 20 INVITE
+      Contact: sip:sipp@[local_ip]:[local_port]
+      RSeq: 2
+      Require: 100rel
+      Content-Length: 0
+
+	  ]]>
+  </send>
+  
+  <recv request="PRACK" crlf="true">
+  </recv>
+  <send>
+	  <![CDATA[
+		  
+		  SIP/2.0 200 OK
+		  [last_Via:]
+		  [last_From:]
+		  [last_To:];tag=[call_number]
+		  [last_Call-ID:]
+		  [last_CSeq:]
+		  RAck: 2 20 INVITE
+		  Content-Length: 0
+	  ]]>
+  </send>
+
 
   <send retrans="500">
     <![CDATA[
