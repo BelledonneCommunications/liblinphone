@@ -74,8 +74,9 @@ void LimeManager::processAuthRequested (void *data, belle_sip_auth_event_t *even
 	const char *realm = belle_sip_auth_event_get_realm(event);
 	const char *username = belle_sip_auth_event_get_username(event);
 	const char *domain = belle_sip_auth_event_get_domain(event);
+	const char *algorithm = belle_sip_auth_event_get_algorithm(event);
 
-	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(core->getCCore(), realm, username, domain);
+	const LinphoneAuthInfo *auth_info = _linphone_core_find_auth_info(core->getCCore(), realm, username, domain, algorithm, TRUE);
 	linphone_auth_info_fill_belle_sip_event(auth_info, event);
 }
 
