@@ -5007,6 +5007,45 @@ end:
 	linphone_core_manager_destroy(marie);
 }
 
+static void simple_call_with_dummy_audio(void) {
+	LinphoneCoreManager* marie;
+	LinphoneCoreManager* pauline;
+	LinphoneCall *pauline_call;
+	LinphoneCall *marie_call;
+
+	marie = linphone_core_manager_new("marie_rc");
+	pauline = linphone_core_manager_new("pauline_tcp_rc");
+
+	MSFactory *marie_factory = linphone_core_get_ms_factory(marie->lc);
+	MSSndCardManager *marie_sndcard_manager = ms_factory_get_snd_card_manager(marie_factory);
+	ms_snd_card_manager_add_dummy_audio_card(marie_sndcard_manager);
+
+	BC_ASSERT_TRUE(call(marie,pauline));
+	pauline_call=linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	wait_for_until(pauline->lc, marie->lc, NULL, 0, 2000);
+
+	// set DUMMY_AUDIO_SOUND_CARD
+	marie_call = linphone_core_get_current_call(marie->lc);
+	linphone_core_set_capture_device(marie->lc, DUMMY_AUDIO_SOUNDCARD);
+	linphone_core_set_playback_device(marie->lc, DUMMY_AUDIO_SOUNDCARD);
+	BC_ASSERT_STRING_EQUAL(linphone_core_get_capture_device(marie->lc), DUMMY_AUDIO_SOUNDCARD);
+	BC_ASSERT_STRING_EQUAL(linphone_core_get_playback_device(marie->lc), DUMMY_AUDIO_SOUNDCARD);
+	if (BC_ASSERT_PTR_NOT_NULL(marie_call))
+		linphone_call_update(marie_call, NULL);
+	wait_for_until(pauline->lc, marie->lc, NULL, 0, 2000);
+
+	AudioStream *stream = (AudioStream *)linphone_call_get_stream(marie_call, LinphoneStreamTypeAudio);
+	BC_ASSERT_STRING_EQUAL(stream->soundread->desc->name, "MSVoidSource");
+	BC_ASSERT_STRING_EQUAL(stream->soundwrite->desc->name, "MSVoidSink");
+
+	wait_for_until(pauline->lc, marie->lc, NULL, 0, 2000);
+
+	end_call(marie,pauline);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 test_t call_tests[] = {
 	TEST_NO_TAG("Early declined call", early_declined_call),
 	TEST_NO_TAG("Call declined", call_declined),
@@ -5109,6 +5148,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call declined, other ringing device receive CANCEL with reason", cancel_other_device_after_decline),
 	TEST_NO_TAG("Simple call with GRUU", simple_call_with_gruu),
 	TEST_NO_TAG("Simple call with GRUU only one device ring", simple_call_with_gruu_only_one_device_ring),
+	TEST_NO_TAG("Simple call with dummy audio", simple_call_with_dummy_audio),
 };
 
 test_suite_t call_test_suite = {"Single Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

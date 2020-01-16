@@ -1255,6 +1255,11 @@ static void sound_config_read(LinphoneCore *lc) {
 	devid=lp_config_get_string(lc->config,"sound","media_dev_id",NULL);
 	linphone_core_set_media_device(lc,devid);
 
+	tmp=lp_config_get_int(lc->config, "sound", "enable_dummy_audio", 0);
+	if (!!tmp) {
+		ms_snd_card_manager_add_dummy_audio_card(ms_factory_get_snd_card_manager(lc->factory));
+	}
+
 /*
 	tmp=lp_config_get_int(lc->config,"sound","play_lev",80);
 	linphone_core_set_play_level(lc,tmp);
