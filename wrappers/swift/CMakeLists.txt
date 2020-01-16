@@ -31,9 +31,6 @@
 # https://forums.swift.org/t/announcing-swift-support-in-cmake/24792
 # https://github.com/compnerd/swift-cmake-demo
 
-cmake_minimum_required(VERSION 3.15)
-set(CMAKE_Swift_LANGUAGE_VERSION 4.0)
-enable_language(Swift)
 
 
 add_custom_command(OUTPUT LinphoneWrapper.swift
@@ -48,47 +45,59 @@ add_custom_command(OUTPUT LinphoneWrapper.swift
 	linphone-doc
 )
 
-add_library(linphonesw SHARED
-	${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.swift
-)
+add_custom_target(linphonesw ALL DEPENDS LinphoneWrapper.swift)
 
-target_link_libraries(linphonesw
-	PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} ${BELLESIP_LIBRARIES} linphone
-)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.swift"
+		DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonesw/")
 
-if(CMAKE_GENERATOR STREQUAL Xcode)
-	set_target_properties(linphonesw PROPERTIES
-				FRAMEWORK TRUE
-				LINKER_LANGUAGE SWIFT
-				MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphonesw
-				MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
-				)
 
-	install(TARGETS linphonesw EXPORT ${EXPORT_TARGETS_NAME}Targets
-		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-		FRAMEWORK DESTINATION Frameworks
-		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+if (ENABLE_SWIFT_WRAPPER_COMPILATION)
+	cmake_minimum_required(VERSION 3.15)
+	set(CMAKE_Swift_LANGUAGE_VERSION 4.0)
+	enable_language(Swift)
+
+	add_library(linphonesw SHARED
+		${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.swift
+	)
+
+	target_link_libraries(linphonesw
+		PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} ${BELLESIP_LIBRARIES} linphone
+	)
+
+	if(CMAKE_GENERATOR STREQUAL Xcode)
+		set_target_properties(linphonesw PROPERTIES
+					FRAMEWORK TRUE
+					LINKER_LANGUAGE SWIFT
+					MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphonesw
+					MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
+					)
+
+		install(TARGETS linphonesw EXPORT ${EXPORT_TARGETS_NAME}Targets
+			RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+			LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+			ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+			FRAMEWORK DESTINATION Frameworks
+			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+			)
+	else()
+		add_custom_command(OUTPUT linphonesw.framework
+			COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/make-framework.sh" "linphonesw"
+			"-b" "${CMAKE_CURRENT_BINARY_DIR}"
+			"-v" "${PROJECT_VERSION}"
+			-o "${CMAKE_CURRENT_BINARY_DIR}"
+			DEPENDS linphonesw
 		)
-else()
-	add_custom_command(OUTPUT linphonesw.framework
-		COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/make-framework.sh" "linphonesw"
-		"-b" "${CMAKE_CURRENT_BINARY_DIR}"
-		"-v" "${PROJECT_VERSION}"
-		-o "${CMAKE_CURRENT_BINARY_DIR}"
-		DEPENDS linphonesw
-	)
 
-	add_custom_target(linphonesw-framework ALL
-		COMMAND echo "linphonesw.framework generated manually."
-		DEPENDS linphonesw.framework
-	)
+		add_custom_target(linphonesw-framework ALL
+			COMMAND echo "linphonesw.framework generated manually."
+			DEPENDS linphonesw.framework
+		)
 
-	#Add -target and -sdk options to switfc command line otherwise you'll get obscure errors.
-	target_compile_options(linphonesw PRIVATE -emit-objc-header -target ${CMAKE_OSX_ARCHITECTURES}-apple-ios10 -sdk ${CMAKE_OSX_SYSROOT})
+		#Add -target and -sdk options to switfc command line otherwise you'll get obscure errors.
+		target_compile_options(linphonesw PRIVATE -emit-objc-header -target ${CMAKE_OSX_ARCHITECTURES}-apple-ios10 -sdk ${CMAKE_OSX_SYSROOT})
 
-	install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/linphonesw.framework DESTINATION Frameworks
-        USE_SOURCE_PERMISSIONS
-	)
+		install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/linphonesw.framework DESTINATION Frameworks
+			USE_SOURCE_PERMISSIONS
+		)
+	endif()
 endif()
