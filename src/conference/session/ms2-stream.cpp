@@ -64,6 +64,7 @@ void MS2Stream::removeFromBundle(){
 			getMediaSessionPrivate().getCurrentParams()->enableRtpBundle(false);
 		}
 		mRtpBundle = nullptr;
+		mBundleOwner = nullptr;
 	}
 }
 
@@ -74,15 +75,15 @@ void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
 		return ; /*No bundle to handle */
 	}
 		
-	MS2Stream *masterStream = dynamic_cast<MS2Stream*>(getGroup().getStream((size_t)index));
-	if (!masterStream){
+	mBundleOwner = dynamic_cast<MS2Stream*>(getGroup().getStream((size_t)index));
+	if (!mBundleOwner){
 		lError() << "Could not locate the stream owning the bundle's transport.";
 		removeFromBundle();
 		return;
 	}
-	RtpBundle * bundle = masterStream->createOrGetRtpBundle(params.resultStreamDescription);
-	if (bundle && masterStream != this){
-		lInfo() << "Stream " << *this << " added to rtp bundle " << bundle;
+	RtpBundle * bundle = mBundleOwner->createOrGetRtpBundle(params.resultStreamDescription);
+	if (bundle && mBundleOwner != this){
+		lInfo() << "Stream " << *this << " added to rtp bundle " << bundle << " with mid '" << params.resultStreamDescription->mid << "'";
 		rtp_bundle_add_session(bundle, params.resultStreamDescription->mid, mSessions.rtp_session);
 		mRtpBundle = bundle;
 		mOwnsBundle = false;
@@ -97,7 +98,7 @@ void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
 RtpBundle *MS2Stream::createOrGetRtpBundle(const SalStreamDescription *sd){
 	if (!mRtpBundle){
 		mRtpBundle = rtp_bundle_new();
-		lInfo() << "Stream " << *this << " is the owner of rtp bundle " << mRtpBundle;
+		lInfo() << "Stream " << *this << " with mid '" << sd->mid << "'is the owner of rtp bundle " << mRtpBundle;
 		rtp_bundle_add_session(mRtpBundle, sd->mid, mSessions.rtp_session);
 		rtp_bundle_set_mid_extension_id(mRtpBundle, sd->mid_rtp_ext_header_id);
 		mOwnsBundle = true;
@@ -115,7 +116,7 @@ void MS2Stream::setIceCheckList(IceCheckList *cl){
 		media_stream_set_ice_check_list(stream, cl);
 	}
 	if (!cl){
-		updateIceInStats(LinphoneIceStateNotActivated);
+		updateIceInStats();
 	}
 }
 
@@ -153,6 +154,12 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		localDesc->rtp_port = mPortConfig.rtpPort;
 		localDesc->rtcp_port = mPortConfig.rtcpPort;
 	}
+	if (!isTransportOwner()){
+		/* A secondary stream part of a bundle must set port to zero and add the bundle-only attribute. */
+		localDesc->rtp_port = 0;
+		localDesc->bundle_only = TRUE;
+	}
+	
 	localDesc->rtp_ssrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
 	
 	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)) {
@@ -288,7 +295,7 @@ void MS2Stream::finishEarlyMediaForking(){
 bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState){
 	const SalStreamDescription *stream = params.resultStreamDescription;
 	
-	if (stream->dir == SalStreamInactive || stream->rtp_port == 0){
+	if (!sal_stream_description_active(stream)){
 		/* In this case all we have to do is to ensure that the stream is stopped. */
 		if (getState() != Stopped) stop();
 		return true;
@@ -801,11 +808,17 @@ void MS2Stream::iceStateChanged(){
 }
 
 void MS2Stream::updateIceInStats(LinphoneIceState state){
-	lInfo() << "ICE state is " << linphone_ice_state_to_string(state) << " for stream " << *this;
+	lInfo() << "ICE state is " << linphone_ice_state_to_string(state) << " for " << *this;
 	_linphone_call_stats_set_ice_state(mStats, state);
 }
 
 void MS2Stream::updateIceInStats(){
+	/* Special case for rtp bundle: we report the ice state of the transport owner. */
+	if (mRtpBundle && !mOwnsBundle && mBundleOwner && mBundleOwner->mStats){
+		updateIceInStats(linphone_call_stats_get_ice_state(mBundleOwner->mStats));
+		return;
+	}
+	
 	if (!mIceCheckList){
 		updateIceInStats(LinphoneIceStateNotActivated);
 		return;
@@ -1010,6 +1023,11 @@ bool MS2Stream::avpfEnabled() const{
 
 bool MS2Stream::bundleEnabled() const{
 	return mRtpBundle != nullptr;
+}
+
+bool MS2Stream::isTransportOwner() const{
+	bool ret = mRtpBundle == nullptr || mOwnsBundle;
+	return ret;
 }
 
 int MS2Stream::getAvpfRrInterval()const{

@@ -464,7 +464,7 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 
 static void initiate_incoming(MSFactory *factory, const SalStreamDescription *local_cap,
 						const SalStreamDescription *remote_offer,
-						SalStreamDescription *result, bool_t one_matching_codec, bool_t accept_bundles){
+						SalStreamDescription *result, bool_t one_matching_codec, const char *bundle_owner_mid){
 	result->payloads=match_payloads(factory, local_cap->payloads,remote_offer->payloads, FALSE, one_matching_codec);
 	result->proto=remote_offer->proto;
 	result->type=local_cap->type;
@@ -502,14 +502,17 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 	}
 	
 	/* Handle RTP bundle negociation */
-	if (remote_offer->mid[0] != '\0' && accept_bundles){
+	if (remote_offer->mid[0] != '\0' && bundle_owner_mid){
 		strncpy(result->mid, remote_offer->mid, sizeof(result->mid) - 1);
 		result->mid_rtp_ext_header_id = remote_offer->mid_rtp_ext_header_id;
-		result->bundle_only = remote_offer->bundle_only;
-		result->rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
-		if (remote_offer->rtp_port == 0){
-			result->rtp_port = 0; /* A non-master accepted stream in bundle mode shall have a zero port number.*/
+		
+		if (strcmp(bundle_owner_mid, remote_offer->mid) != 0){
+			/* The stream is a secondary one part of a bundle.
+			 * In this case it must set the bundle-only attribute, and set port to zero.*/
+			result->bundle_only = TRUE;
+			result->rtp_port = 0;
 		}
+		result->rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
 	}else {
 		result->rtcp_mux = remote_offer->rtcp_mux && local_cap->rtcp_mux;
 	}
@@ -625,7 +628,14 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 		rs = &remote_offer->streams[i];
 		ls = &local_capabilities->streams[i];
 		if (ls && rs->type == ls->type && rs->proto == ls->proto){
-			initiate_incoming(factory, ls,rs,&result->streams[i],one_matching_codec, local_capabilities->accept_bundles);
+			const char *bundle_owner_mid = NULL;
+			if (local_capabilities->accept_bundles){
+				int owner_index = sal_media_description_get_index_of_transport_owner(remote_offer, rs);
+				if (owner_index != -1){
+					bundle_owner_mid = remote_offer->streams[owner_index].mid;
+				}
+			}
+			initiate_incoming(factory, ls,rs,&result->streams[i],one_matching_codec, bundle_owner_mid);
 			// Handle global RTCP FB attributes
 			result->streams[i].rtcp_fb.generic_nack_enabled = rs->rtcp_fb.generic_nack_enabled;
 			result->streams[i].rtcp_fb.tmmbr_enabled = rs->rtcp_fb.tmmbr_enabled;

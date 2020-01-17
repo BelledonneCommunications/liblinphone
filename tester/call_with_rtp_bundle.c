@@ -66,7 +66,12 @@ static void simple_audio_call(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-static void simple_audio_video_call(void) {
+typedef struct params{
+	bool_t with_ice;
+	bool_t with_srtp_dtls;
+} params_t;
+
+static void audio_video_call(const params_t *params) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
 	LinphoneCall *pauline_call, *marie_call;
@@ -85,32 +90,71 @@ static void simple_audio_video_call(void) {
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 	
+	linphone_core_set_preferred_video_size_by_name(marie->lc, "QVGA");
+	linphone_core_set_preferred_video_size_by_name(pauline->lc, "QVGA");
+
+	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(pauline->lc, "Mire: Mire (synthetic moving picture)");
 	
+	if (params->with_ice){
+		/*enable ICE on both ends*/
+		LinphoneNatPolicy *pol;
+		pol = linphone_core_get_nat_policy(marie->lc);
+		linphone_nat_policy_enable_ice(pol, TRUE);
+		linphone_nat_policy_enable_stun(pol, TRUE);
+		linphone_core_set_nat_policy(marie->lc, pol);
+		pol = linphone_core_get_nat_policy(pauline->lc);
+		linphone_nat_policy_enable_ice(pol, TRUE);
+		linphone_nat_policy_enable_stun(pol, TRUE);
+		linphone_core_set_nat_policy(pauline->lc, pol);
+	}
 	
 	linphone_core_set_video_activation_policy(marie->lc, vpol);
 	linphone_core_set_video_activation_policy(pauline->lc, vpol);
 	linphone_video_activation_policy_unref(vpol);
 	
-	BC_ASSERT_TRUE(call(marie,pauline));
+	if (!BC_ASSERT_TRUE(call(marie,pauline))) goto end;
 	pauline_call=linphone_core_get_current_call(pauline->lc);
 	marie_call = linphone_core_get_current_call(marie->lc);
 	
-	if (BC_ASSERT_PTR_NOT_NULL(pauline_call))
-		check_rtp_bundle(pauline_call, TRUE);
-		
-	if (BC_ASSERT_PTR_NOT_NULL(marie_call))
-		check_rtp_bundle(marie_call, TRUE);
-
+	check_rtp_bundle(pauline_call, TRUE);
+	check_rtp_bundle(marie_call, TRUE);
+	
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marie_call)));
+	
+	if (params->with_ice){
+		BC_ASSERT_TRUE(check_ice(marie, pauline, LinphoneIceStateHostConnection));
+	}
+	
 	liblinphone_tester_check_rtcp(marie,pauline);
+	liblinphone_tester_set_next_video_frame_decoded_cb(pauline_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_IframeDecoded,1));
+	liblinphone_tester_set_next_video_frame_decoded_cb(marie_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_IframeDecoded,1));
+	
 	end_call(marie,pauline);
+	
+end:
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
 
+static void simple_audio_video_call(void) {
+	params_t params = {0};
+	audio_video_call(&params);
+}
+
+static void audio_video_call_with_ice(void) {
+	params_t params = {0};
+	params.with_ice = TRUE;
+	audio_video_call(&params);
+}
 
 static test_t call_with_rtp_bundle_tests[] = {
 	TEST_NO_TAG("Simple audio call", simple_audio_call),
-	TEST_NO_TAG("Simple audio-video call", simple_audio_video_call)
+	TEST_NO_TAG("Simple audio-video call", simple_audio_video_call),
+	TEST_NO_TAG("Audio-video call with ICE", audio_video_call_with_ice)
 };
 
 test_suite_t call_with_rtp_bundle_test_suite = {"Call with RTP bundle", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

@@ -156,7 +156,7 @@ inline std::ostream &operator<<(std::ostream & ostr, SalStreamType type){
 	return ostr;
 }
 
-inline std::ostream & operator<<(std::ostream & ostr, Stream& stream){
+inline std::ostream & operator<<(std::ostream & ostr, const Stream& stream){
 	ostr << "stream#" << stream.getIndex() << " [" << stream.getType() << "] in state [" << Stream::stateToString(stream.getState()) << "]";
 	return ostr;
 }
@@ -216,6 +216,12 @@ public:
 	virtual bool avpfEnabled() const = 0;
 	virtual bool bundleEnabled() const = 0;
 	virtual int getAvpfRrInterval() const = 0;
+	/*
+	 * Returns true if the stream has its own transport interface.
+	 * This is always true unless rtp bundle mode is on, in which case a stream that is using the transport from another
+	 * stream will return false.
+	 */
+	virtual bool isTransportOwner() const = 0;
 	virtual ~RtpInterface() = default;
 };
 

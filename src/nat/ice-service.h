@@ -109,7 +109,7 @@ private:
 	const struct addrinfo *getIcePreferredStunServerAddrinfo (const struct addrinfo *ai);
 	void updateLocalMediaDescriptionFromIce(SalMediaDescription *desc);
 	void getIceDefaultAddrAndPort(uint16_t componentID, const SalMediaDescription *md, const SalStreamDescription *stream, const char **addr, int *port);
-	void clearUnusedIceCandidates (const SalMediaDescription *localDesc, const SalMediaDescription *remoteDesc);
+	void clearUnusedIceCandidates (const SalMediaDescription *localDesc, const SalMediaDescription *remoteDesc, bool localIsOfferer);
 	bool checkForIceRestartAndSetRemoteCredentials (const SalMediaDescription *md, bool isOffer);
 	void createIceCheckListsAndParseIceAttributes (const SalMediaDescription *md, bool iceRestarted);
 	void updateFromRemoteMediaDescription (const SalMediaDescription *localDesc, const SalMediaDescription *remoteDesc, bool isOffer);
@@ -121,6 +121,7 @@ private:
 	StreamsGroup & mStreamsGroup;
 	IceSession * mIceSession = nullptr;
 	IceServiceListener *mListener = nullptr;
+	bool mGatheringFinished = false;
 	
 };
 

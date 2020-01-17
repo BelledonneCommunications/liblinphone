@@ -56,6 +56,7 @@ public:
 	virtual bool avpfEnabled() const override;
 	virtual bool bundleEnabled() const override;
 	virtual int getAvpfRrInterval() const override;
+	virtual bool isTransportOwner() const override;
 	
 	virtual ~MS2Stream();
 protected:
@@ -78,7 +79,6 @@ protected:
 	MSMediaStreamSessions mSessions;
 	OrtpEvQueue *mOrtpEvQueue = nullptr;
 	LinphoneCallStats *mStats = nullptr;
-	belle_sip_source_t *mTimer = nullptr;
 	bool mUseAuxDestinations = false;
 	bool mMuted = false; /* to handle special cases where we want the audio to be muted - not related with linphone_core_enable_mic().*/
 	bool mDtlsStarted = false;
@@ -98,8 +98,10 @@ private:
 	void configureAdaptiveRateControl(const OfferAnswerContext &params);
 	void updateIceInStats(LinphoneIceState state);
 	void updateIceInStats();
+	belle_sip_source_t *mTimer = nullptr;
 	IceCheckList *mIceCheckList = nullptr;
 	RtpBundle *mRtpBundle = nullptr;
+	MS2Stream *mBundleOwner = nullptr;
 	bool mOwnsBundle = false;
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo(const std::string &name);
 	static constexpr const int sEventPollIntervalMs = 20;
