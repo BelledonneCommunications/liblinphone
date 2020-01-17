@@ -491,6 +491,14 @@ void linphone_core_cbs_set_chat_room_subject_changed (LinphoneCoreCbs *cbs, Linp
 	cbs->vtable->chat_room_subject_changed = cb;
 }
 
+LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb linphone_core_cbs_get_chat_room_ephemeral_message_deleted (LinphoneCoreCbs *cbs) {
+	return cbs->vtable->chat_room_ephemeral_message_deleted;
+}
+
+void linphone_core_cbs_set_chat_room_ephemeral_message_deleted (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb cb) {
+	cbs->vtable->chat_room_ephemeral_message_deleted = cb;
+}
+
 LinphoneCoreCbsQrcodeFoundCb linphone_core_cbs_get_qrcode_found(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->qrcode_found;
 }

@@ -373,8 +373,10 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 				LinphonePrivate::EventLog::deleteFromDatabase(event);
 				lInfo() << "[Ephemeral] message deleted";
 
-				// notify ephemeral message deleted to chat room.
-				_linphone_chat_room_notify_ephemeral_message_deleted(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
+				// notify ephemeral message deleted to chat room & core.
+				LinphoneChatRoom *cr = L_GET_C_BACK_PTR(chatRoom);
+				_linphone_chat_room_notify_ephemeral_message_deleted(cr, L_GET_C_BACK_PTR(event));
+				linphone_core_notify_chat_room_subject_changed(linphone_chat_room_get_core(cr), cr);
 
 				//notify ephemeral message deleted to message if exists.
 				LinphoneChatMessage *message = linphone_event_log_get_chat_message(L_GET_C_BACK_PTR(event));
