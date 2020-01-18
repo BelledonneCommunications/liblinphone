@@ -79,8 +79,9 @@ void MS2RTTStream::render(const OfferAnswerContext &params, CallSession::State t
 		return;
 	}
 	
-	const char *rtpAddr = tstream->rtp_addr[0] != '\0' ? tstream->rtp_addr : params.resultMediaDescription->addr;
-	const char *rtcpAddr = tstream->rtcp_addr[0] != '\0' ? tstream->rtcp_addr : params.resultMediaDescription->addr;
+	MS2Stream::render(params, targetState);
+	RtpAddressInfo dest;
+	getRtpDestination(params, &dest);
 	int usedPt = -1;
 	RtpProfile * textProfile = makeProfile(params.resultMediaDescription, tstream, &usedPt);
 	if (usedPt == -1){
@@ -90,11 +91,8 @@ void MS2RTTStream::render(const OfferAnswerContext &params, CallSession::State t
 	}
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedRealtimeTextCodec(rtp_profile_get_payload(textProfile, usedPt));
 	getMediaSessionPrivate().getCurrentParams()->enableRealtimeText(true);
-	bool isMulticast = !!ms_is_multicast(rtpAddr);
 	
-	MS2Stream::render(params, targetState);
-	text_stream_start(mStream, textProfile, rtpAddr, tstream->rtp_port, rtcpAddr,
-		(linphone_core_rtcp_enabled(getCCore()) && !isMulticast) ? (tstream->rtcp_port ? tstream->rtcp_port : tstream->rtp_port + 1) : 0, usedPt);
+	text_stream_start(mStream, textProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt);
 	ms_filter_add_notify_callback(mStream->rttsink, sRealTimeTextCharacterReceived, this, false);
 	mStartCount++;
 }

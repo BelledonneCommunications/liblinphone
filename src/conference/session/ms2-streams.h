@@ -73,6 +73,12 @@ protected:
 	void updateCryptoParameters(const OfferAnswerContext &params);
 	void updateDestinations(const OfferAnswerContext &params);
 	bool handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState);
+	struct RtpAddressInfo{
+		std::string rtpAddr;
+		std::string rtcpAddr;
+		int rtpPort, rtcpPort;
+	};
+	void getRtpDestination(const OfferAnswerContext &params, RtpAddressInfo *info);
 	std::string mDtlsFingerPrint;
 	RtpProfile *mRtpProfile = nullptr;
 	RtpProfile *mRtpIoProfile = nullptr;

@@ -280,16 +280,14 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	if (getCCore()->preview_window_id)
 		video_stream_set_native_preview_window_id(mStream, getCCore()->preview_window_id);
 	video_stream_use_preview_video_window(mStream, getCCore()->use_preview_window);
-	const char *rtpAddr = (vstream->rtp_addr[0] != '\0') ? vstream->rtp_addr : ctx.resultMediaDescription->addr;
-	const char *rtcpAddr = (vstream->rtcp_addr[0] != '\0') ? vstream->rtcp_addr : ctx.resultMediaDescription->addr;
-	bool isMulticast = !!ms_is_multicast(rtpAddr);
+	
+	MS2Stream::render(ctx, targetState);
+	
+	RtpAddressInfo dest;
+	getRtpDestination(ctx, &dest);
 	MediaStreamDir dir = MediaStreamSendRecv;
-	if (isMulticast) {
-		if (vstream->multicast_role == SalMulticastReceiver)
-			dir = MediaStreamRecvOnly;
-		else
-			dir = MediaStreamSendOnly;
-	} else if ((vstream->dir == SalStreamSendOnly) && getCCore()->video_conf.capture)
+		
+	if ((vstream->dir == SalStreamSendOnly) && getCCore()->video_conf.capture)
 		dir = MediaStreamSendOnly;
 	else if ((vstream->dir == SalStreamRecvOnly) && getCCore()->video_conf.display)
 		dir = MediaStreamRecvOnly;
@@ -300,13 +298,18 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			dir = MediaStreamRecvOnly;
 		else
 			dir = MediaStreamSendOnly;
-	} else {
+	}else {
 		lWarning() << "Video stream is inactive";
 		/* Either inactive or incompatible with local capabilities */
 		stop();
 		return;
 	}
-	MS2Stream::render(ctx, targetState);
+	if (vstream->multicast_role == SalMulticastReceiver){
+			dir = MediaStreamRecvOnly;
+	}else if (vstream->multicast_role == SalMulticastSender){
+		dir = MediaStreamSendOnly;
+	}
+	
 	MSWebCam *cam = getVideoDevice(targetState);
 	
 	getMediaSession().getLog()->video_enabled = true;
@@ -317,8 +320,8 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	video_stream_use_video_preset(mStream, lp_config_get_string(linphone_core_get_config(getCCore()), "video", "preset", nullptr));
 	if (getCCore()->video_conf.reuse_preview_source && source) {
 		lInfo() << "video_stream_start_with_source kept: " << source;
-		video_stream_start_with_source(mStream, videoProfile, rtpAddr, vstream->rtp_port, rtcpAddr,
-			linphone_core_rtcp_enabled(getCCore()) ? (vstream->rtcp_port ? vstream->rtcp_port : vstream->rtp_port + 1) : 0,
+		video_stream_start_with_source(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(),
+			dest.rtcpPort,
 			usedPt, -1, cam, source);
 		reusedPreview = true;
 	} else {
@@ -339,8 +342,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		if (ok) {
 			AudioStream *as = getPeerAudioStream();
 			if (as) audio_stream_link_video(as, mStream);
-			video_stream_start_from_io(mStream, videoProfile, rtpAddr, vstream->rtp_port, rtcpAddr,
-				(linphone_core_rtcp_enabled(getCCore()) && !isMulticast)  ? (vstream->rtcp_port ? vstream->rtcp_port : vstream->rtp_port + 1) : 0,
+			video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort,
 				usedPt, &io);
 		}
 	}

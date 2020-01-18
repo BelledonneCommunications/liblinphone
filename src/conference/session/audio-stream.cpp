@@ -245,8 +245,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		stop();
 		return;
 	}
-	const char *rtpAddr = (stream->rtp_addr[0] != '\0') ? stream->rtp_addr : params.resultMediaDescription->addr;
-	bool isMulticast = !!ms_is_multicast(rtpAddr);
+
 	bool ok = true;
 	if (isMain()){
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
@@ -260,7 +259,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	string playfile = L_C_TO_STRING(getCCore()->play_file);
 	string recfile = L_C_TO_STRING(getCCore()->rec_file);
 	/* Don't use file or soundcard capture when placed in recv-only mode */
-	if ((stream->rtp_port == 0) || (stream->dir == SalStreamRecvOnly) || ((stream->multicast_role == SalMulticastReceiver) && isMulticast)) {
+	if ((stream->rtp_port == 0) || (stream->dir == SalStreamRecvOnly) || (stream->multicast_role == SalMulticastReceiver)) {
 		captcard = nullptr;
 		playfile = "";
 	}
@@ -311,6 +310,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	}
 
 	MS2Stream::render(params, targetState);
+	RtpAddressInfo dest;
+	getRtpDestination(params, &dest);
 	/* Now start the stream */
 	MSMediaStreamIO io = MS_MEDIA_STREAM_IO_INITIALIZER;
 	if (useRtpIo) {
@@ -353,10 +354,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		mCurrentCaptureCard = ms_media_resource_get_soundcard(&io.input);
 		mCurrentPlaybackCard = ms_media_resource_get_soundcard(&io.output);
 
-		int err = audio_stream_start_from_io(mStream, audioProfile, rtpAddr, stream->rtp_port,
-			(stream->rtcp_addr[0] != '\0') ? stream->rtcp_addr : params.resultMediaDescription->addr,
-			(linphone_core_rtcp_enabled(getCCore()) && !isMulticast) ? (stream->rtcp_port ? stream->rtcp_port : stream->rtp_port + 1) : 0,
-			usedPt, &io);
+		int err = audio_stream_start_from_io(mStream, audioProfile, dest.rtpAddr.c_str(), dest.rtpPort,
+			dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 		if (err == 0)
 			postConfigureAudioStream((mMuted || mMicMuted) && (listener && !listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis())));
 		mStartCount++;

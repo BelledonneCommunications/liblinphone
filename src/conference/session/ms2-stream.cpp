@@ -71,6 +71,7 @@ void MS2Stream::removeFromBundle(){
 void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
 	int index = sal_media_description_get_index_of_transport_owner(params.resultMediaDescription, params.resultStreamDescription);
 	if (index == -1) {
+		lInfo() << *this << " is not part of any bundle";
 		removeFromBundle();
 		return ; /*No bundle to handle */
 	}
@@ -82,7 +83,7 @@ void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
 		return;
 	}
 	RtpBundle * bundle = mBundleOwner->createOrGetRtpBundle(params.resultStreamDescription);
-	if (bundle && mBundleOwner != this){
+	if (bundle && mBundleOwner != this && mRtpBundle == nullptr){
 		lInfo() << "Stream " << *this << " added to rtp bundle " << bundle << " with mid '" << params.resultStreamDescription->mid << "'";
 		rtp_bundle_add_session(bundle, params.resultStreamDescription->mid, mSessions.rtp_session);
 		mRtpBundle = bundle;
@@ -288,6 +289,28 @@ void MS2Stream::finishEarlyMediaForking(){
 	}
 }
 
+/* 
+ * This function is used by derived implementations that need to extract the destination of RTP/RTCP streams
+ * from the result media description.
+ * Indeed, when RTP bundle mode is ON, this information is to be taken in the transport owner stream.
+ */
+void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressInfo *info){
+	const SalStreamDescription *stream = params.resultStreamDescription;
+	if (mRtpBundle && !mOwnsBundle){
+		if (!mBundleOwner){
+			lError() << "Bundle owner shall be set !";
+		}else{
+			stream = &params.resultMediaDescription->streams[mBundleOwner->getIndex()];
+		}
+	}
+	
+	info->rtpAddr = stream->rtp_addr[0] != '\0' ? stream->rtp_addr : params.resultMediaDescription->addr;
+	bool isMulticast = !!ms_is_multicast(info->rtpAddr.c_str());
+	info->rtpPort = stream->rtp_port;
+	info->rtcpAddr = stream->rtcp_addr[0] != '\0' ? stream->rtcp_addr : info->rtpAddr;
+	info->rtcpPort = (linphone_core_rtcp_enabled(getCCore()) && !isMulticast) ? (stream->rtcp_port ? stream->rtcp_port : stream->rtp_port + 1) : 0;
+}
+
 /*
  * Handle some basic session changes.
  * Return true everything was handled, false otherwise, in which case the caller will have to restart the stream.
@@ -335,7 +358,6 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 	bool isMulticast = !!ms_is_multicast(rtpAddr);
 	MediaStream *ms = getMediaStream();
 	
-	setIceCheckList(mIceCheckList);
 	if (getIceService().isActive() || (getMediaSessionPrivate().getParams()->earlyMediaSendingEnabled() 
 		&& (targetState == CallSession::State::OutgoingEarlyMedia))) {
 		rtp_session_set_symmetric_rtp(mSessions.rtp_session, false);
@@ -385,6 +407,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 	}
 	startEventHandling();
 	initRtpBundle(params);
+	setIceCheckList(mIceCheckList); // do it after enabling bundles
 	Stream::render(params, targetState);
 }
 
@@ -558,6 +581,11 @@ void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 }
 
 void MS2Stream::updateDestinations(const OfferAnswerContext &params) {
+	if (params.resultStreamDescription->rtp_port == 0 && params.resultStreamDescription->bundle_only){
+		/* we can ignore */
+		return;
+	}
+	
 	const char *rtpAddr = (params.resultStreamDescription->rtp_addr[0] != '\0') ? params.resultStreamDescription->rtp_addr : params.resultMediaDescription->addr;
 	const char *rtcpAddr = (params.resultStreamDescription->rtcp_addr[0] != '\0') ? params.resultStreamDescription->rtcp_addr : params.resultMediaDescription->addr;
 	lInfo() << "Change audio stream destination: RTP=" << rtpAddr << ":" << params.resultStreamDescription->rtp_port << " RTCP=" << rtcpAddr << ":" << params.resultStreamDescription->rtcp_port;
