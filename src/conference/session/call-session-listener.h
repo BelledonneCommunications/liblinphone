@@ -69,6 +69,8 @@ public:
 
 	virtual void onFirstVideoFrameDecoded (const std::shared_ptr<CallSession> &session) {}
 	virtual void onResetFirstVideoFrameDecoded (const std::shared_ptr<CallSession> &session) {}
+	virtual void onCameraNotWorking (const std::shared_ptr<CallSession> &session, const char *camera_name) {}
+
 
 	virtual void onRingbackToneRequested (const std::shared_ptr<CallSession> &session, bool requested) {}
 

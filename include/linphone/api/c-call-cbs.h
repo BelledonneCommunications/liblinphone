@@ -187,7 +187,7 @@ LINPHONE_PUBLIC LinphoneCallCbsSnapshotTakenCb linphone_call_cbs_get_snapshot_ta
  */
 LINPHONE_PUBLIC void linphone_call_cbs_set_snapshot_taken(LinphoneCallCbs *cbs, LinphoneCallCbsSnapshotTakenCb cb);
 
- /**
+/**
  * Get the next video frame decoded callback.
  * @param[in] cbs LinphoneCallCbs object.
  * @return The current next video frame decoded callback.
@@ -200,6 +200,20 @@ LINPHONE_PUBLIC LinphoneCallCbsNextVideoFrameDecodedCb linphone_call_cbs_get_nex
  * @param[in] cb The next video frame decoded callback to be used.
  */
 LINPHONE_PUBLIC void linphone_call_cbs_set_next_video_frame_decoded(LinphoneCallCbs *cbs, LinphoneCallCbsNextVideoFrameDecodedCb cb);
+
+ /**
+ * Get the camera not working callback.
+ * @param[in] cbs LinphoneCallCbs object.
+ * @return The camera not working callback.
+ */
+LINPHONE_PUBLIC LinphoneCallCbsCameraNotWorkingCb linphone_call_cbs_get_camera_not_working(LinphoneCallCbs *cbs);
+
+/**
+ * Set the camera not working callback.
+ * @param[in] cbs LinphoneCallCbs object.
+ * @param[in] cb The camera not working callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_call_cbs_set_camera_not_working(LinphoneCallCbs *cbs, LinphoneCallCbsCameraNotWorkingCb cb);
 
 /**
  * @}
