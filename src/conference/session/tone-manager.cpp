@@ -610,6 +610,7 @@ MSFilter *ToneManager::getAudioResource(AudioResourceType rtype, MSSndCard *card
 		if (ringcard == NULL) return NULL;
 		if (!create) return NULL;
 
+		ms_snd_card_set_stream_type(ringcard, MS_SND_CARD_STREAM_DTMF);
 		ringstream = lc->ringstream = ring_start(lc->factory, NULL, 0, ringcard);
 		ms_filter_call_method(lc->ringstream->gendtmf, MS_DTMF_GEN_SET_DEFAULT_AMPLITUDE, &amp);
 	} else {
