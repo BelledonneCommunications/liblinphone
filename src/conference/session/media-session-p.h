@@ -126,6 +126,7 @@ private:
 
 #ifdef VIDEO_ENABLED
 	static void videoStreamEventCb (void *userData, const MSFilter *f, const unsigned int eventId, const void *args);
+	static void cameraNotWorkingCb (void *userData, const MSWebCam *oldWebcam);
 #endif // ifdef VIDEO_ENABLED
 #ifdef TEST_EXT_RENDERER
 	static void extRendererCb (void *userData, const MSPicture *local, const MSPicture *remote);
@@ -283,6 +284,7 @@ private:
 
 #ifdef VIDEO_ENABLED
 	void videoStreamEventCb (const MSFilter *f, const unsigned int eventId, const void *args);
+	void cameraNotWorkingCb (const char *cameraName);
 #endif // ifdef VIDEO_ENABLED
 	void realTimeTextCharacterReceived (MSFilter *f, unsigned int id, void *arg);
 	int sendDtmf ();

@@ -102,11 +102,19 @@ typedef void (*LinphoneCallCbsTmmbrReceivedCb)(LinphoneCall *call, int stream_in
  */
 typedef void (*LinphoneCallCbsSnapshotTakenCb)(LinphoneCall *call, const char *filepath);
 
- /**
+/**
  * Callback to notify a next video frame has been decoded
  * @param call LinphoneCall for which the next video frame has been decoded
  */
 typedef void (*LinphoneCallCbsNextVideoFrameDecodedCb)(LinphoneCall *call);
+
+/**
+ * Callback to notify that the camera is not working
+ * and has been changed to "No Webcam"
+ * @param call LinphoneCall for which the next video frame has been decoded
+ * @param camera_name the name of the non-working camera
+ */
+typedef void (*LinphoneCallCbsCameraNotWorkingCb)(LinphoneCall *call, const char *camera_name);
 
 /**
  * @}

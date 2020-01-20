@@ -106,6 +106,7 @@ private:
 	void onSetCurrentSession (const std::shared_ptr<CallSession> &session) override;
 	void onFirstVideoFrameDecoded (const std::shared_ptr<CallSession> &session) override;
 	void onResetFirstVideoFrameDecoded (const std::shared_ptr<CallSession> &session) override;
+	void onCameraNotWorking (const std::shared_ptr<CallSession> &session, const char *camera_name) override;
 	void onRingbackToneRequested (const std::shared_ptr<CallSession> &session, bool requested) override;
 	bool areSoundResourcesAvailable (const std::shared_ptr<CallSession> &session) override;
 	bool isPlayingRingbackTone (const std::shared_ptr<CallSession> &session) override;

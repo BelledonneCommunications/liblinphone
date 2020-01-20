@@ -814,6 +814,11 @@ void MediaSessionPrivate::videoStreamEventCb (void *userData, const MSFilter *f,
 	MediaSessionPrivate *msp = reinterpret_cast<MediaSessionPrivate *>(userData);
 	msp->videoStreamEventCb(f, eventId, args);
 }
+
+void MediaSessionPrivate::cameraNotWorkingCb (void *userData, const MSWebCam *oldWebcam) {
+	MediaSessionPrivate *msp = reinterpret_cast<MediaSessionPrivate *>(userData);
+	msp->cameraNotWorkingCb(oldWebcam->name);
+}
 #endif
 
 #ifdef TEST_EXT_RENDERER
@@ -2904,6 +2909,8 @@ void MediaSessionPrivate::initializeVideoStream () {
 		video_stream_set_display_filter_name(videoStream, displayFilter);
 	video_stream_set_event_callback(videoStream, videoStreamEventCb, this);
 
+	video_stream_set_camera_not_working_callback(videoStream, cameraNotWorkingCb, this);
+
 	if (q->getCore()->getCCore()->rtptf) {
 		RtpTransport *meta_rtp;
 		RtpTransport *meta_rtcp;
@@ -4482,6 +4489,13 @@ void MediaSessionPrivate::videoStreamEventCb (const MSFilter *f, const unsigned 
 		default:
 			lWarning() << "Unhandled event " << eventId;
 			break;
+	}
+}
+
+void MediaSessionPrivate::cameraNotWorkingCb (const char *cameraName) {
+	L_Q();
+	if (listener) {
+		listener->onCameraNotWorking(q->getSharedFromThis(), cameraName);
 	}
 }
 #endif

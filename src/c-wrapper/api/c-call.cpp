@@ -184,6 +184,10 @@ void linphone_call_notify_next_video_frame_decoded(LinphoneCall *call) {
 	NOTIFY_IF_EXIST(NextVideoFrameDecoded, next_video_frame_decoded, call)
 }
 
+void linphone_call_notify_camera_not_working(LinphoneCall *call, const char *camera_name) {
+	NOTIFY_IF_EXIST(CameraNotWorking, camera_not_working, call, camera_name);
+}
+
 // =============================================================================
 // Public functions.
 // =============================================================================
