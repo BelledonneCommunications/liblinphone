@@ -2022,6 +2022,73 @@ static void call_with_early_media_and_no_sdp_in_200_with_video(void){
 	early_media_without_sdp_in_200_base(TRUE, FALSE);
 }
 
+static void camera_not_working(LinphoneCall *call, const char *camera_name) {
+	LinphoneCore *lc = linphone_call_get_core(call);
+	stats *callstats = get_stats(lc);
+	BC_ASSERT_STRING_EQUAL(camera_name, "Mire (synthetic moving picture)");
+	callstats->number_of_LinphoneCallCameraNotWorking++;
+}
+
+static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
+	LinphoneCoreManager* caller = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* callee = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	LinphoneCallTestParams caller_test_params = {0}, callee_test_params = {0};
+	LinphoneCall* callee_call;
+	LinphoneCall* caller_call;
+	float fps = 0;
+
+	linphone_core_set_preferred_video_size_by_name(caller->lc, "QVGA");
+	linphone_core_set_preferred_video_size_by_name(callee->lc, "QVGA");
+
+	linphone_core_set_video_device(caller->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(callee->lc, "Mire: Mire (synthetic moving picture)");
+
+	linphone_core_enable_video_display(callee->lc, TRUE);
+	linphone_core_enable_video_capture(callee->lc, TRUE);
+
+	linphone_core_enable_video_display(caller->lc, TRUE);
+	linphone_core_enable_video_capture(caller->lc, TRUE);
+
+	linphone_core_set_media_encryption(callee->lc, LinphoneMediaEncryptionNone);
+	linphone_core_set_media_encryption(caller->lc, LinphoneMediaEncryptionNone);
+
+	caller_test_params.base=linphone_core_create_call_params(caller->lc, NULL);
+	linphone_call_params_enable_video(caller_test_params.base,TRUE);
+
+	callee_test_params.base=linphone_core_create_call_params(callee->lc, NULL);
+	linphone_call_params_enable_video(callee_test_params.base,TRUE);
+
+	BC_ASSERT_TRUE(call_with_params2(caller,callee,&caller_test_params,&callee_test_params,FALSE));
+	callee_call=linphone_core_get_current_call(callee->lc);
+	caller_call=linphone_core_get_current_call(caller->lc);
+
+	linphone_call_params_unref(caller_test_params.base);
+	if (callee_test_params.base) linphone_call_params_unref(callee_test_params.base);
+
+	if (callee_call && caller_call) {
+		LinphoneCallCbs *caller_cbs;
+		VideoStream *caller_stream;
+
+		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(callee_call)));
+		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(caller_call)));
+
+		caller_cbs = linphone_factory_create_call_cbs(linphone_factory_get());
+		linphone_call_cbs_set_camera_not_working(caller_cbs, camera_not_working);
+		linphone_call_add_callbacks(caller_call, caller_cbs);
+		linphone_call_cbs_unref(caller_cbs);
+
+		caller_stream = (VideoStream*) linphone_call_get_stream(caller_call, LinphoneStreamTypeVideo);
+		ms_filter_call_method(caller_stream->source, MS_FILTER_SET_FPS, &fps);
+
+		BC_ASSERT_TRUE(wait_for_until(caller->lc, callee->lc, &caller->stat.number_of_LinphoneCallCameraNotWorking, 1, 10000));
+		BC_ASSERT_STRING_EQUAL(ms_web_cam_get_name(video_stream_get_camera(caller_stream)), "Static picture");
+	}
+	end_call(caller, callee);
+
+	linphone_core_manager_destroy(caller);
+	linphone_core_manager_destroy(callee);
+}
 
 static test_t call_video_tests[] = {
 	TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
@@ -2090,6 +2157,7 @@ static test_t call_video_tests[] = {
 	TEST_NO_TAG("Outgoing REINVITE with invalid SDP in ACK", outgoing_reinvite_with_invalid_ack_sdp),
 	TEST_NO_TAG("Video call with no audio and no video codec", video_call_with_no_audio_and_no_video_codec),
 	TEST_NO_TAG("Call with early media and no SDP in 200 Ok with video", call_with_early_media_and_no_sdp_in_200_with_video),
+	TEST_NO_TAG("Video call with fallback to Static Picture when no fps", video_call_with_fallback_to_static_picture_when_no_fps),
 };
 
 test_suite_t call_video_test_suite = {"Video Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

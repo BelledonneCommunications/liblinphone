@@ -446,6 +446,11 @@ void CallPrivate::requestNotifyNextVideoFrameDecoded(){
 	static_pointer_cast<MediaSession>(getActiveSession())->requestNotifyNextVideoFrameDecoded();
 }
 
+void CallPrivate::onCameraNotWorking (const std::shared_ptr<CallSession> &session, const char *camera_name) {
+	L_Q();
+	linphone_call_notify_camera_not_working(L_GET_C_BACK_PTR(q), camera_name);
+}
+
 void CallPrivate::onRingbackToneRequested (const shared_ptr<CallSession> &session, bool requested) {
 	L_Q();
 	if (requested && linphone_core_get_remote_ringback_tone(q->getCore()->getCCore()))

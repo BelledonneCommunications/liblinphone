@@ -573,7 +573,6 @@ void MediaSessionPrivate::onNetworkReachable (bool sipNetworkReachable, bool med
 
 // -----------------------------------------------------------------------------
 
-
 #ifdef TEST_EXT_RENDERER
 void MediaSessionPrivate::extRendererCb (void *userData, const MSPicture *local, const MSPicture *remote) {
 	lInfo() << "extRendererCb, local buffer=" << local ? local->planes[0] : nullptr

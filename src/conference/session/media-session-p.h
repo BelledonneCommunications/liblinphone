@@ -126,7 +126,7 @@ private:
 	virtual void onIceCompleted(IceService &service) override;
 	virtual void onLosingPairsCompleted(IceService &service) override;
 	virtual void onIceRestartNeeded(IceService & service) override;
-	
+
 #ifdef TEST_EXT_RENDERER
 	static void extRendererCb (void *userData, const MSPicture *local, const MSPicture *remote);
 #endif // ifdef TEST_EXT_RENDERER
@@ -200,9 +200,6 @@ private:
 	void repairByInviteWithReplaces () override;
 	void addStreamToBundle(SalMediaDescription *md, SalStreamDescription *sd, const char *mid);
 
-#ifdef VIDEO_ENABLED
-	void videoStreamEventCb (const MSFilter *f, const unsigned int eventId, const void *args);
-#endif // ifdef VIDEO_ENABLED
 	void realTimeTextCharacterReceived (MSFilter *f, unsigned int id, void *arg);
 	int sendDtmf ();
 

@@ -102,11 +102,24 @@ typedef void (*LinphoneCallCbsTmmbrReceivedCb)(LinphoneCall *call, int stream_in
  */
 typedef void (*LinphoneCallCbsSnapshotTakenCb)(LinphoneCall *call, const char *filepath);
 
- /**
+/**
  * Callback to notify a next video frame has been decoded
  * @param call LinphoneCall for which the next video frame has been decoded
  */
 typedef void (*LinphoneCallCbsNextVideoFrameDecodedCb)(LinphoneCall *call);
+
+/**
+ * Callback to notify that the camera is not working and has been changed to "No Webcam".
+ *
+ * A camera is detected as mis-functionning as soon as it outputs no frames at all during
+ * a period of 5 seconds.
+ * This check is only performed on desktop platforms, in the purpose of notifying camera
+ * failures, for example if when a usb cable gets disconnected.
+ *
+ * @param call LinphoneCall for which the next video frame has been decoded
+ * @param camera_name the name of the non-working camera
+ */
+typedef void (*LinphoneCallCbsCameraNotWorkingCb)(LinphoneCall *call, const char *camera_name);
 
 /**
  * @}

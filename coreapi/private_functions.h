@@ -51,6 +51,7 @@ void linphone_call_notify_ack_processing(LinphoneCall *call, LinphoneHeaders *ms
 void linphone_call_notify_tmmbr_received(LinphoneCall *call, int stream_index, int tmmbr);
 void linphone_call_notify_snapshot_taken(LinphoneCall *call, const char *file_path);
 void linphone_call_notify_next_video_frame_decoded(LinphoneCall *call);
+void linphone_call_notify_camera_not_working(LinphoneCall *call, const char *camera_name);
 
 LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, const LinphoneCallParams *params, LinphoneProxyConfig *cfg);
 LinphoneCall * linphone_call_new_incoming(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op);
