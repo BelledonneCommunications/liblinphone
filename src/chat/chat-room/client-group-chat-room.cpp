@@ -974,12 +974,15 @@ void ClientGroupChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 
 	if (updateDb) {
 		lInfo() << "Set new ephemeral lifetime " << lifetime << ", used to be " << d->ephemeralLifetime << ".";
-		shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageLifetimeChanged, time(nullptr), d->conferenceId, lifetime);
-		d->addEvent(event);
 		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralLifetime(d->conferenceId, lifetime);
 
-		LinphoneChatRoom *cr = d->getCChatRoom();
-		_linphone_chat_room_notify_ephemeral_event(cr, L_GET_C_BACK_PTR(event));
+		if (d->isEphemeral) { // Do not create event if ephemeral feature is disabled
+			shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageLifetimeChanged, time(nullptr), d->conferenceId, lifetime);
+			d->addEvent(event);
+			
+			LinphoneChatRoom *cr = d->getCChatRoom();
+			_linphone_chat_room_notify_ephemeral_event(cr, L_GET_C_BACK_PTR(event));
+		}
 	}
 }
 
