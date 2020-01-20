@@ -147,7 +147,7 @@ static void set_media_network_reachable(LinphoneCore* lc,bool_t isReachable);
 static void linphone_core_run_hooks(LinphoneCore *lc);
 static void linphone_core_zrtp_cache_close(LinphoneCore *lc);
 void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName);
-static void _linphone_core_stop_async(LinphoneCore *lc);
+static void _linphone_core_stop_async_end(LinphoneCore *lc);
 
 #include "enum.h"
 #include "contact_providers_priv.h"
@@ -3629,7 +3629,7 @@ void linphone_core_iterate(LinphoneCore *lc){
 
 	if (lc->state == LinphoneGlobalShutdown && lc->async_stop) {
 		if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->asyncStopDone()) {
-			_linphone_core_stop_async(lc);
+			_linphone_core_stop_async_end(lc);
 		}
 	}
 }
@@ -6336,7 +6336,12 @@ LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(LinphoneCore *lc, c
 	return linphone_xml_rpc_session_new(lc, url);
 }
 
-static void _linphone_core_shutdown_async(LinphoneCore *lc) {
+
+/**
+ * First part of the async Core stop:
+ * Called by linphone_core_stop_async() to begin the async stop process and change the state to "Shutdown"
+ */
+static void _linphone_core_stop_async_start(LinphoneCore *lc) {
 	linphone_task_list_free(&lc->hooks);
 	lc->video_conf.show_local = FALSE;
 	lc->async_stop = TRUE;
@@ -6357,7 +6362,12 @@ static void _linphone_core_shutdown_async(LinphoneCore *lc) {
 	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
 }
 
-static void _linphone_core_stop_async(LinphoneCore *lc) {
+/**
+ * Second part of the async Core stop:
+ * After we made sure all asynchronous tasks are finished, this function is called to clean the objects
+ * and change the state to "Off"
+ */
+static void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->stop();
 
 	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
@@ -6563,7 +6573,7 @@ void linphone_core_stop(LinphoneCore *lc) {
 }
 
 void linphone_core_stop_async(LinphoneCore *lc) {
-	_linphone_core_shutdown_async(lc);
+	_linphone_core_stop_async_start(lc);
 }
 
 void _linphone_core_uninit(LinphoneCore *lc)

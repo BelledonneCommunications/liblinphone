@@ -1069,7 +1069,7 @@ LINPHONE_PUBLIC void linphone_core_stop (LinphoneCore *core);
 
 /**
  * Stop asynchronously a #LinphoneCore object after it has been instantiated and started.
- * State change to Shutdown then linphone_core_iterate() must be called to allow the Core to end asynchronous tasks (terminate call, etc.).
+ * State changes to Shutdown then linphone_core_iterate() must be called to allow the Core to end asynchronous tasks (terminate call, etc.).
  * When all tasks are finished, State will change to Off.
  * Must be called only if #LinphoneGlobalState is On.
  * When #LinphoneGlobalState is Off #LinphoneCore can be started again using linphone_core_start().
