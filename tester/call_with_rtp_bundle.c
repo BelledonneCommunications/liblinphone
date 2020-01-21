@@ -40,7 +40,25 @@ static void check_rtp_bundle(LinphoneCall *call, bool_t should_be_active){
 	}
 }
 
-static void simple_audio_call(void) {
+static bool_t setup_dtls_srtp(LinphoneCoreManager *marie, LinphoneCoreManager *pauline){
+	if (!linphone_core_media_encryption_supported(marie->lc,LinphoneMediaEncryptionDTLS)){
+		BC_FAIL("SRTP-DTLS not supported.");
+		return FALSE;
+	}
+	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionDTLS);
+	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionDTLS);
+	char *path = bc_tester_file("certificates-marie");
+	linphone_core_set_user_certificates_path(marie->lc, path);
+	bc_free(path);
+	path = bc_tester_file("certificates-pauline");
+	linphone_core_set_user_certificates_path(pauline->lc, path);
+	bc_free(path);
+	belle_sip_mkdir(linphone_core_get_user_certificates_path(marie->lc));
+	belle_sip_mkdir(linphone_core_get_user_certificates_path(pauline->lc));
+	return TRUE;
+}
+
+static void _simple_audio_call(bool_t with_dtls_srtp) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
 	LinphoneCall *pauline_call, *marie_call;
@@ -49,6 +67,10 @@ static void simple_audio_call(void) {
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
 	linphone_core_enable_rtp_bundle(marie->lc, TRUE);
+	
+	if (with_dtls_srtp){
+		setup_dtls_srtp(marie, pauline);
+	}
 	
 	BC_ASSERT_TRUE(call(marie,pauline));
 	pauline_call=linphone_core_get_current_call(pauline->lc);
@@ -66,9 +88,17 @@ static void simple_audio_call(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void simple_audio_call(void){
+	_simple_audio_call(FALSE);
+}
+
+static void simple_audio_call_with_srtp_dtls(void){
+	_simple_audio_call(TRUE);
+}
+
 typedef struct params{
 	bool_t with_ice;
-	bool_t with_srtp_dtls;
+	bool_t with_dtls_srtp;
 } params_t;
 
 static void audio_video_call(const params_t *params) {
@@ -107,6 +137,10 @@ static void audio_video_call(const params_t *params) {
 		linphone_nat_policy_enable_ice(pol, TRUE);
 		linphone_nat_policy_enable_stun(pol, TRUE);
 		linphone_core_set_nat_policy(pauline->lc, pol);
+	}
+	
+	if (params->with_dtls_srtp){
+		setup_dtls_srtp(marie, pauline);
 	}
 	
 	linphone_core_set_video_activation_policy(marie->lc, vpol);
@@ -151,10 +185,19 @@ static void audio_video_call_with_ice(void) {
 	audio_video_call(&params);
 }
 
+static void audio_video_call_with_ice_and_dtls_srtp(void) {
+	params_t params = {0};
+	params.with_ice = TRUE;
+	params.with_dtls_srtp = TRUE;
+	audio_video_call(&params);
+}
+
 static test_t call_with_rtp_bundle_tests[] = {
 	TEST_NO_TAG("Simple audio call", simple_audio_call),
+	TEST_NO_TAG("Simple audio call with DTLS-SRTP", simple_audio_call_with_srtp_dtls),
 	TEST_NO_TAG("Simple audio-video call", simple_audio_video_call),
-	TEST_NO_TAG("Audio-video call with ICE", audio_video_call_with_ice)
+	TEST_NO_TAG("Audio-video call with ICE", audio_video_call_with_ice),
+	TEST_NO_TAG("Audio-video call with ICE and DTLS-SRTP", audio_video_call_with_ice_and_dtls_srtp)
 };
 
 test_suite_t call_with_rtp_bundle_test_suite = {"Call with RTP bundle", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
