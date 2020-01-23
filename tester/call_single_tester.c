@@ -194,7 +194,7 @@ void simple_call_base_2(bool_t enable_multicast_recv_side, bool_t disable_soundc
 
 	if (use_multipart_invite_body) {
 		LinphoneCallParams *params = linphone_core_create_call_params(marie->lc, NULL);
-		
+
 		LinphoneContent *content = linphone_core_create_content(marie->lc);
 		linphone_content_set_type(content, "application");
 		linphone_content_set_subtype(content, "somexml");
@@ -222,7 +222,7 @@ void simple_call_base_2(bool_t enable_multicast_recv_side, bool_t disable_soundc
 				BC_ASSERT_STRING_EQUAL(dname, "Super Marie");
 			}
 		}
-		
+
 		if (use_session_expires) {
 			const LinphoneCallParams *marie_remote_params=linphone_call_get_remote_params(pauline_call);
 			const char *value=linphone_call_params_get_custom_header(marie_remote_params,"Session-Expires");
@@ -244,7 +244,7 @@ void simple_call_base_2(bool_t enable_multicast_recv_side, bool_t disable_soundc
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "application");
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "somexml");
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), info_content);
-				}			
+				}
 				bctbx_list_free_with_data(parts, (void (*)(void *)) linphone_content_unref);
 			}
 		} else {
@@ -256,7 +256,7 @@ void simple_call_base_2(bool_t enable_multicast_recv_side, bool_t disable_soundc
 	end_call(marie, pauline);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
-	
+
 	if (disable_soundcard) {
 		ms_snd_card_manager_bypass_soundcard_detection(FALSE);
 	}
@@ -441,6 +441,63 @@ static void direct_call_over_ipv6(void){
 		linphone_core_manager_destroy(pauline);
 		linphone_address_unref(pauline_dest);
 	}else ms_warning("Test skipped, no ipv6 available");
+}
+
+//Testing the well known port config from linphonerc in call
+static void direct_call_well_known_port(int iptype){
+	LinphoneCoreManager* marie = NULL;
+	LinphoneCoreManager* pauline = NULL;
+
+	//To check after :
+
+	//if (liblinphone_tester_ipv6_available()){
+	//}else ms_warning("Test skipped, no ipv6 available");
+	LinphoneSipTransports pauline_transports;
+	LinphoneAddress* pauline_dest = NULL;
+	
+	marie = linphone_core_manager_new( "marie_well_known_port_rc");
+	pauline = linphone_core_manager_new("pauline_well_known_port_rc");
+
+	if(iptype == 6){ //if ipv6 wanted
+		if (liblinphone_tester_ipv6_available()){
+			pauline_dest = linphone_address_new("sip:[::1];transport=tcp");
+			linphone_core_enable_ipv6(marie->lc,TRUE);
+			linphone_core_enable_ipv6(pauline->lc,TRUE);
+		} else {
+			ms_warning("Test skipped, no ipv6 available");
+		}
+
+	} else { //assumes ipv4
+		pauline_dest = linphone_address_new("sip:127.0.0.1;transport=tcp");
+	}
+
+	linphone_core_set_default_proxy_config(marie->lc,NULL);
+	linphone_core_set_default_proxy_config(pauline->lc, NULL);
+
+	linphone_core_get_sip_transports_used(pauline->lc,&pauline_transports);
+	linphone_address_set_port(pauline_dest,pauline_transports.tcp_port);
+	linphone_core_invite_address(marie->lc,pauline_dest);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallOutgoingRinging,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallIncomingReceived,1));
+	linphone_call_accept(linphone_core_get_current_call(pauline->lc));
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,1));
+
+	liblinphone_tester_check_rtcp(marie,pauline);
+	end_call(marie,pauline);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_address_unref(pauline_dest);
+
+}
+
+static void direct_call_well_known_port_ipv4(void){
+	direct_call_well_known_port(4);
+}
+
+static void direct_call_well_known_port_ipv6(void){
+	direct_call_well_known_port(6);
 }
 
 static void call_outbound_with_multiple_proxy(void) {
@@ -647,7 +704,7 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 static void call_with_maxptime(void) {
-	
+
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	bool_t call_ok;
@@ -656,37 +713,37 @@ static void call_with_maxptime(void) {
 	linphone_core_enable_ipv6(pauline->lc,FALSE);
 	linphone_core_manager_start(marie, TRUE);
 	linphone_core_manager_start(pauline, TRUE);
-	
+
 	/*Force marie to play from file: if soundcard is used and it is silient, then vbr mode will drop down the bitrate
 	 Note that a play file is already set by linphone_core_manager_new() (but not used)*/
 	linphone_core_set_use_files(marie->lc, TRUE);
-	
+
 	disable_all_audio_codecs_except_one(marie->lc, "PCMA", 8000);
 	disable_all_audio_codecs_except_one(pauline->lc, "PCMA", 8000);
 	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
 	linphone_call_params_add_custom_sdp_media_attribute(marie_params,LinphoneStreamTypeAudio, "maxptime","40");
 	LinphoneCallParams *pauline_params = linphone_core_create_call_params(marie->lc, NULL);
 	linphone_call_params_add_custom_sdp_media_attribute(pauline_params,LinphoneStreamTypeAudio, "maxptime","40");
-	
+
 	linphone_core_set_upload_ptime(pauline->lc, 100);
 	linphone_core_set_upload_ptime(marie->lc, 100);
-	
+
 	BC_ASSERT_TRUE((call_ok=call_with_params(pauline,marie,pauline_params,marie_params)));
 	linphone_call_params_unref(marie_params);
 	linphone_call_params_unref(pauline_params);
-	
+
 	if (!call_ok) goto end;
 	liblinphone_tester_check_rtcp(marie,pauline);
 	/*wait a bit that bitstreams are stabilized*/
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 2000);
-	
+
 	//network-birate = ((codec-birate*ptime/8) + RTP header + UDP header + IP header)*8/ptime;
-	
+
 	BC_ASSERT_LOWER(linphone_core_manager_get_mean_audio_up_bw(pauline), 80, int, "%i");
 	BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_up_bw(pauline), 70, int, "%i"); //without maxptime=40, it should be 67
 	BC_ASSERT_LOWER(linphone_core_manager_get_mean_audio_up_bw(marie), 80, int, "%i");
 	BC_ASSERT_GREATER(linphone_core_manager_get_mean_audio_up_bw(marie), 70, int, "%i"); //without maxptime=40, it should be 67
-	
+
 	end_call(pauline, marie);
 
 end:
@@ -1077,7 +1134,7 @@ static void call_with_dns_time_out(void) {
 	linphone_core_iterate(marie->lc);
 	sal_set_dns_timeout(linphone_core_get_sal(marie->lc),0);
 	linphone_core_invite(marie->lc,"\"t\x8et\x8e\" <sip:toto@toto.com>"); /*just to use non ascii values*/
-	
+
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallOutgoingInit,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallOutgoingProgress,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneCallError,1));
@@ -1091,7 +1148,7 @@ static void early_cancelled_call(void) {
 	LinphoneSipTransports pauline_transports;
 	LinphoneAddress* pauline_dest = linphone_address_new("sip:127.0.0.1;transport=tcp");
 	LinphoneCall* out_call;
-	
+
 	marie = linphone_core_manager_new( "marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -1100,7 +1157,7 @@ static void early_cancelled_call(void) {
 
 	linphone_core_get_sip_transports_used(pauline->lc,&pauline_transports);
 	linphone_address_set_port(pauline_dest,pauline_transports.tcp_port);
-		
+
 	out_call = linphone_core_invite_address(marie->lc,pauline_dest);
 	linphone_address_unref(pauline_dest);
 
@@ -1108,7 +1165,7 @@ static void early_cancelled_call(void) {
 	const char *callID = linphone_call_log_get_call_id(linphone_call_get_call_log(out_call));
 	BC_ASSERT_PTR_NOT_NULL(callID);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallOutgoingProgress,1));
-	/* 
+	/*
 	 * Wait for pauline to receive the call. Since the call is almost immediately notified, pauline hasn't received
 	 * yet the provisionnal response.
 	 * In the following loop, marie is not scheduled after the call is received by pauline.
@@ -1122,11 +1179,11 @@ static void early_cancelled_call(void) {
 		ms_usleep(20000);
 		i++;
 	}
-	
+
 	BC_ASSERT_TRUE(pauline->stat.number_of_LinphoneCallIncomingReceived == 1);
 	/* This asserts that the 180 is not received: */
 	BC_ASSERT_TRUE(linphone_call_get_state(out_call) == LinphoneCallOutgoingProgress);
-	/* 
+	/*
 	 * Immediately terminate the call. Since no response is received, no CANCEL can be sent.
 	 * It will ring at Pauline's side.
 	 * We want to verify that the CANCEL is automatically sent when the provisionnal response from Marie is received.
@@ -1134,7 +1191,7 @@ static void early_cancelled_call(void) {
 	linphone_call_terminate(out_call);
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1));
-	
+
 	/* now the CANCEL should have been sent and the the call at marie's side should terminate*/
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1));
 
@@ -1160,9 +1217,9 @@ static void call_called_without_any_response(void) {
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,NULL,NULL,0,2000));
 	/* Cancel the call. */
 	linphone_call_terminate(out_call);
-	
+
 	BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneCallEnd,1));
-	
+
 	/* Now schedule marie. */
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallIncomingReceived,1));
 	/* The call should end shortly because the proxy will cancel it*/
@@ -1306,52 +1363,52 @@ static void call_declined_with_error(void) {
 static void call_declined_with_retry_after(void) {
 	LinphoneCoreManager* callee_mgr = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* caller_mgr = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	
+
 	LinphoneCall* in_call = NULL;
 	LinphoneCall* out_call = linphone_core_invite_address(caller_mgr->lc,callee_mgr->identity);
 	LinphoneFactory* factory = linphone_factory_get();
 	const LinphoneErrorInfo* rcvd_ei;
 	const LinphoneErrorInfo* sub_rcvd_ei;
-	
+
 	LinphoneErrorInfo *ei = linphone_factory_create_error_info(factory);
 	LinphoneErrorInfo *reason_ei = linphone_factory_create_error_info(factory);
-	
+
 	linphone_error_info_set(ei, "SIP", LinphoneReasonDeclined,  603, "Decline", NULL); //ordre des arguments à vérifier
 	linphone_error_info_set(reason_ei, "hardware", LinphoneReasonDeclined,  66, "J'ai plus de batterie", NULL);
-	
+
 	BC_ASSERT_TRUE(linphone_error_code_is_retry_after(linphone_error_info_get_protocol_code(ei)));
 	linphone_error_info_set_retry_after(ei, 120);
-	
+
 	linphone_error_info_set_sub_error_info(ei, reason_ei);
-	
+
 	BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallIncomingReceived,1));
 	BC_ASSERT_PTR_NOT_NULL(in_call=linphone_core_get_current_call(callee_mgr->lc));
-	
+
 	linphone_call_ref(out_call);
 	BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallOutgoingRinging,1));
 	BC_ASSERT_PTR_NOT_NULL(in_call=linphone_core_get_current_call(callee_mgr->lc));
 	if (in_call) {
 		linphone_call_ref(in_call);
 		linphone_call_decline_with_error_info(in_call, ei);
-		
+
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallEnd,1));
 		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallEnd,1));
-		
+
 		rcvd_ei = linphone_call_get_error_info(out_call);
 		sub_rcvd_ei = linphone_error_info_get_sub_error_info(rcvd_ei);
-		
+
 		BC_ASSERT_STRING_EQUAL(linphone_error_info_get_phrase(rcvd_ei), "Decline");
 		BC_ASSERT_STRING_EQUAL(linphone_error_info_get_protocol(rcvd_ei), "SIP");
 		BC_ASSERT_STRING_EQUAL(linphone_error_info_get_phrase(sub_rcvd_ei), "J'ai plus de batterie");
 		BC_ASSERT_STRING_EQUAL(linphone_error_info_get_protocol(sub_rcvd_ei), "hardware");
 		BC_ASSERT_GREATER(linphone_error_info_get_retry_after(rcvd_ei), 0, int, "%d");
-		
+
 		BC_ASSERT_EQUAL(linphone_call_get_reason(in_call),LinphoneReasonDeclined, int, "%d");
 		BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(in_call)),LinphoneCallDeclined, int, "%d");
 		BC_ASSERT_EQUAL(linphone_call_get_reason(out_call),LinphoneReasonDeclined, int, "%d");
 		BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(out_call)),LinphoneCallDeclined, int, "%d");
-		
-		
+
+
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallReleased,1));
 		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallReleased,1));
 		linphone_call_unref(in_call);
@@ -1359,7 +1416,7 @@ static void call_declined_with_retry_after(void) {
 	linphone_call_unref(out_call);
 	linphone_error_info_unref(reason_ei);
 	linphone_error_info_unref(ei);
-	
+
 	linphone_core_manager_destroy(callee_mgr);
 	linphone_core_manager_destroy(caller_mgr);
 }
@@ -3256,7 +3313,7 @@ static void call_rejected_because_wrong_credentials_with_params(const char* user
 	}
 
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphoneCallError,1));
-	
+
 	if (enable_auth_req_cb) {
 		BC_ASSERT_EQUAL(marie->stat.number_of_auth_info_requested, 2, int, "%d");
 	}
@@ -4783,9 +4840,9 @@ static void call_with_http_proxy(void) {
 	linphone_core_manager_start(marie, TRUE);
 	LinphoneAddress *http_proxy_example_org_ip;
 	LinphoneAddress *http_proxy_fqdn = linphone_address_new("sip:http-proxy.example.org:8888");
-	
+
 	http_proxy_example_org_ip = linphone_core_manager_resolve(marie, http_proxy_fqdn);
-	
+
 	linphone_core_set_http_proxy_host(pauline->lc,"http-proxy.example.org");
 	linphone_core_manager_start(pauline, TRUE);
 
@@ -4796,11 +4853,11 @@ static void call_with_http_proxy(void) {
 	contact_addr = linphone_address_new(linphone_call_get_remote_contact(marie_call));
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	contact_addr2 = linphone_address_new(linphone_call_get_remote_contact(pauline_call));
-	
+
 	/* Since we may not see the http proxy address in the "fixed" contact address because the http proxy can be
 	 * behind a NAT (typically with docker), we are simply going to check that the contact addresses exposed by marie and pauline are different.
 	 * If they are equal, this clearly means that the INVITE didn't went through the http proxy*/
-	
+
 	BC_ASSERT_STRING_NOT_EQUAL(linphone_address_get_domain(contact_addr), linphone_address_get_domain(contact_addr2));
 	linphone_address_unref(contact_addr);
 	linphone_address_unref(contact_addr2);
@@ -5136,6 +5193,8 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call with http proxy", call_with_http_proxy),
 	TEST_NO_TAG("Call with timed-out bye", call_with_timed_out_bye),
 	TEST_NO_TAG("Direct call over IPv6", direct_call_over_ipv6),
+	TEST_NO_TAG("Direct call well known port", direct_call_well_known_port_ipv4),
+	TEST_NO_TAG("Direct call well known port ipv6", direct_call_well_known_port_ipv6),
 	TEST_NO_TAG("Call IPv6 to IPv4 without relay", v6_to_v4_call_without_relay),
 	TEST_NO_TAG("IPv6 call over NAT64", v6_call_over_nat_64),
 	TEST_NO_TAG("Outbound call with multiple proxy possible", call_outbound_with_multiple_proxy),

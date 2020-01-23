@@ -125,6 +125,7 @@ set(RC_FILES
 	rcfiles/marie_sips_rc
 	rcfiles/marie_transient_remote_rc
 	rcfiles/marie_v4proxy_rc
+	rcfiles/marie_well_known_port_rc
 	rcfiles/marie_zrtp_aes256_rc
 	rcfiles/marie_zrtp_b256_rc
 	rcfiles/marie_zrtp_srtpsuite_aes256_rc
@@ -145,6 +146,7 @@ set(RC_FILES
 	rcfiles/pauline_tls_client_rc
 	rcfiles/pauline_tunnel_verify_server_certificate_rc
 	rcfiles/pauline_v4proxy_rc
+	rcfiles/pauline_well_known_port_rc
 	rcfiles/pauline_wild_rc
 	rcfiles/pauline_zrtp_aes256_rc
 	rcfiles/pauline_zrtp_b256_rc
