@@ -375,6 +375,8 @@ LinphoneCoreManager* linphone_core_manager_new(const char* rc_file);
 void linphone_core_manager_stop(LinphoneCoreManager *mgr);
 void linphone_core_manager_reinit(LinphoneCoreManager *mgr);
 void linphone_core_manager_restart(LinphoneCoreManager *mgr, bool_t check_for_proxies);
+/* This function is used to restore the fake DNS which is lost after a linphone_core_stop() */
+void linphone_core_manager_setup_dns(LinphoneCoreManager *mgr);
 void linphone_core_manager_uninit(LinphoneCoreManager *mgr);
 void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr);
 void linphone_core_manager_destroy(LinphoneCoreManager* mgr);

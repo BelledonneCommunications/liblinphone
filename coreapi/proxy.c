@@ -177,7 +177,6 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 		}
 	}
 	cfg->depends_on = depends_on ? ms_strdup(depends_on) : NULL;
-	cfg->reg_dependent_disabled = cfg->depends_on && !cfg->reg_sendregister;
 	if (idkey) {
 		cfg->idkey = ms_strdup(idkey);
 	} else {
@@ -266,6 +265,10 @@ void _linphone_proxy_config_release_ops(LinphoneProxyConfig *cfg){
 		linphone_event_terminate(cfg->presence_publish_event);
 		linphone_event_unref(cfg->presence_publish_event);
 		cfg->presence_publish_event=NULL;
+	}
+	if (cfg->dependency){
+		linphone_proxy_config_unref(cfg->dependency);
+		cfg->dependency = NULL;
 	}
 }
 
@@ -444,36 +447,49 @@ LinphoneStatus linphone_proxy_config_set_routes(LinphoneProxyConfig *cfg, const 
 	return 0;
 }
 
+static void _linphone_core_resolve_proxy_config_dependencies(LinphoneCore *lc){
+	LinphoneProxyConfig *cfg;
+	const bctbx_list_t *elem;
+	for(elem = lc->sip_conf.proxies; elem != NULL; elem = elem->next){
+		cfg = (LinphoneProxyConfig*)elem->data;
+		
+		if (cfg->dependency != NULL && cfg->depends_on != NULL) {
+			LinphoneProxyConfig *master_cfg = linphone_core_get_proxy_config_by_idkey(lc, cfg->depends_on);
+			if (master_cfg != NULL && master_cfg != cfg->dependency) {
+				ms_error("LinphoneProxyConfig has a dependency but idkeys do not match: [%s] != [%s], breaking dependency now.", cfg->depends_on, cfg->dependency->idkey);
+				linphone_proxy_config_unref(cfg->dependency);
+				cfg->dependency = NULL;
+				return;
+			}else if (master_cfg == NULL){
+				ms_warning("LinphoneProxyConfig [%p] depends on proxy config [%p], which is not currently in the list.", cfg, cfg->dependency);
+			}
+		}
+		if (cfg->depends_on != NULL && cfg->dependency == NULL) {
+			LinphoneProxyConfig *dependency = linphone_core_get_proxy_config_by_idkey(lc, cfg->depends_on);
+
+			if (dependency == NULL) {
+				ms_warning("LinphoneProxyConfig marked as dependent but no proxy configuration found for idkey [%s]", cfg->depends_on);
+				return;
+			} else {
+				ms_message("LinphoneProxyConfig [%p] now depends on master LinphoneProxyConfig [%p]", cfg, dependency);
+				cfg->dependency = linphone_proxy_config_ref(dependency);
+			}
+		}
+	}
+}
+
 bool_t linphone_proxy_config_check(LinphoneCore *lc, LinphoneProxyConfig *cfg){
 	if (cfg->reg_proxy==NULL)
 		return FALSE;
 	if (cfg->identity_address==NULL)
 		return FALSE;
-	if (cfg->dependency != NULL && cfg->depends_on != NULL) {
-		if (linphone_core_get_proxy_config_by_idkey(lc, cfg->depends_on) != cfg->dependency) {
-			ms_warning("LinphoneProxyConfig as a dependency but idkeys do not match: [%s] != [%s]", cfg->depends_on, cfg->dependency->idkey);
-			return FALSE;
-		}
-	}
-	if (cfg->depends_on != NULL && cfg->dependency == NULL) {
-		LinphoneProxyConfig *dependency = linphone_core_get_proxy_config_by_idkey(lc, cfg->depends_on);
-
-		if (dependency == NULL) {
-			ms_warning("LinphoneProxyConfig marked as dependent but no proxy configuration found for idkey [%s]", cfg->depends_on);
-			return FALSE;
-		} else {
-			cfg->dependency = linphone_proxy_config_ref(dependency);
-		}
-	}
+	_linphone_core_resolve_proxy_config_dependencies(lc);
 	return TRUE;
 }
 
 void linphone_proxy_config_enableregister(LinphoneProxyConfig *cfg, bool_t val){
 	if (val != cfg->reg_sendregister) cfg->register_changed = TRUE;
 	cfg->reg_sendregister = val;
-	if (cfg->dependency && !val) {
-		cfg->reg_dependent_disabled = TRUE;
-	}
 }
 
 void linphone_proxy_config_set_expires(LinphoneProxyConfig *cfg, int val){
@@ -1174,15 +1190,8 @@ void linphone_core_remove_dependent_proxy_config(LinphoneCore *lc, LinphoneProxy
 		if (tmp != cfg && tmp->dependency == cfg) {
 		 	ms_message("Updating dependent proxy config [%p] caused by removal of 'master' proxy config idkey[%s]", tmp, cfg->idkey);
 			linphone_proxy_config_set_dependency(tmp, NULL);
-			linphone_proxy_config_edit(tmp);
-			//Only re-enable register if proxy wasn't explicitely disabled
-			linphone_proxy_config_enable_register(tmp, tmp->reg_dependent_disabled != TRUE);
-			tmp->reg_dependent_disabled = FALSE;
-			linphone_proxy_config_done(tmp);
-			//Force	update on dependent if master wasn't registered
-			if (cfg->state != LinphoneRegistrationOk) {
-				linphone_proxy_config_update(tmp);
-			}
+			cfg->commit = TRUE;
+			linphone_proxy_config_update(tmp);
 		}
 	}
 }
@@ -1421,8 +1430,6 @@ LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(LinphoneCore* lc
 
 	CONFIGURE_STRING_VALUE(cfg, config, key, conference_factory_uri, "conference_factory_uri");
 
-	cfg->reg_dependent_disabled = cfg->depends_on && !cfg->reg_sendregister;
-
 	return cfg;
 }
 
@@ -1467,7 +1474,7 @@ static bool_t can_register(LinphoneProxyConfig *cfg){
 		return FALSE;
 	}
 	if (cfg->dependency) {
-		return linphone_proxy_config_get_state(cfg->dependency) == LinphoneRegistrationOk && !cfg->reg_dependent_disabled;
+		return linphone_proxy_config_get_state(cfg->dependency) == LinphoneRegistrationOk;
 	}
 	return TRUE;
 }
@@ -1519,8 +1526,13 @@ void _linphone_update_dependent_proxy_config(LinphoneProxyConfig *cfg, LinphoneR
 
 	for (;it;it = it->next) {
 		LinphoneProxyConfig *tmp = reinterpret_cast<LinphoneProxyConfig *>(it->data);
+		ms_message("_linphone_update_dependent_proxy_config(): %p is registered, checking for [%p] ->dependency=%p", cfg, tmp, tmp->dependency);
+		
 		if (tmp != cfg && tmp->dependency == cfg) {
-			if (tmp->reg_dependent_disabled) continue;
+			if (!tmp->reg_sendregister) {
+				ms_message("Dependant proxy config [%p] has registration disabled, so it will not register.", tmp);
+				continue;
+			}
 			linphone_proxy_config_edit(tmp);
 			if (state == LinphoneRegistrationOk) {
 				// Force dependent proxy config to re-register
