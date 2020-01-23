@@ -126,13 +126,7 @@ void reset_counters( stats* counters) {
 	memset(counters,0,sizeof(stats));
 }
 
-void configure_lc(LinphoneCore *lc, const char *path, void *user_data) {
-	linphone_core_enable_ipv6(lc, liblinphonetester_ipv6);
-	linphone_core_set_sip_transport_timeout(lc, liblinphonetester_transport_timeout);
-	linphone_core_set_user_data(lc, user_data);
-
-	sal_enable_test_features(linphone_core_get_sal(lc), TRUE);
-
+static void setup_dns(LinphoneCore *lc, const char *path){
 	if (strcmp(userhostsfile, "none") != 0) {
 		char *dnsuserhostspath = strchr(userhostsfile, '/') ? ms_strdup(userhostsfile) : ms_strdup_printf("%s/%s", path, userhostsfile);
 		sal_set_dns_user_hosts_file(linphone_core_get_sal(lc), dnsuserhostspath);
@@ -140,6 +134,16 @@ void configure_lc(LinphoneCore *lc, const char *path, void *user_data) {
 	} else {
 		bctbx_message("no dns-hosts file used");
 	}
+}
+
+void configure_lc(LinphoneCore *lc, const char *path, void *user_data) {
+	linphone_core_enable_ipv6(lc, liblinphonetester_ipv6);
+	linphone_core_set_sip_transport_timeout(lc, liblinphonetester_transport_timeout);
+	linphone_core_set_user_data(lc, user_data);
+
+	sal_enable_test_features(linphone_core_get_sal(lc), TRUE);
+
+	setup_dns(lc, path);
 }
 
 LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, LinphoneConfig *config, void *user_data) {
@@ -340,6 +344,9 @@ static void avoid_pulseaudio_hack(LinphoneCoreManager *mgr){
 }
 #endif
 
+void linphone_core_manager_setup_dns(LinphoneCoreManager *mgr){
+	setup_dns(mgr->lc, bc_tester_get_resource_dir_prefix());
+}
 
 void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	LinphoneImNotifPolicy *im_notif_policy;

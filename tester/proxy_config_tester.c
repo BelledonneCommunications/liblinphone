@@ -373,36 +373,6 @@ static void proxy_config_dependent_register_state_changed(void) {
 }
 
 
-//Dependent proxy config pointing to inexistant other proxy configuration.
-static void invalid_dependent_proxy_config(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_dependent_proxy_rc");
-	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
-	LinphoneProxyConfig *master = (LinphoneProxyConfig *) proxyConfigs->data;
-	LinphoneProxyConfig *dependent = (LinphoneProxyConfig *) proxyConfigs->next->data;
-
-	linphone_core_remove_proxy_config(marie->lc, dependent);
-	linphone_core_remove_proxy_config(marie->lc, master);
-
-	proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
-
-	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 0, int, "%d");
-
-	linphone_core_add_proxy_config(marie->lc, master);
-
-	linphone_proxy_config_set_dependency(dependent, master);
-
-	linphone_proxy_config_set_idkey(master, "invalid");
-
-	//Adding a dependent proxy config linking to inexistent	dependency should fail
-	BC_ASSERT_EQUAL(linphone_core_add_proxy_config(marie->lc, dependent), -1, int, "%d");
-
-	proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
-
-	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 1, int, "%d");
-
-	linphone_core_manager_destroy(marie);
-}
-
 //A dependent proxy config should behave as a normal one after removal of dependency
 static void dependent_proxy_dependency_removal(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_dependent_proxy_rc");
@@ -426,6 +396,135 @@ static void dependent_proxy_dependency_removal(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void dependent_proxy_dependency_with_core_reloaded(void){
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_external_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_dependent_proxy_rc");
+	LinphoneProxyConfig *marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
+	LinphoneProxyConfig *marie_dependent_cfg = (LinphoneProxyConfig *) linphone_core_get_proxy_config_list(marie->lc)->next->data;
+	LinphoneAddress *marie_master_address, *marie_secondary_address;
+	
+	BC_ASSERT_PTR_NOT_NULL(marie_cfg);
+	BC_ASSERT_PTR_NOT_NULL(marie_dependent_cfg);
+	
+	BC_ASSERT_TRUE(wait_for(pauline->lc, NULL, &pauline->stat.number_of_LinphoneRegistrationOk, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 2));
+	BC_ASSERT_PTR_EQUAL(marie_cfg, linphone_proxy_config_get_dependency(marie_dependent_cfg));
+	
+	marie_master_address = linphone_address_clone(linphone_proxy_config_get_identity_address(marie_cfg));
+	marie_secondary_address = linphone_address_clone(linphone_proxy_config_get_identity_address(marie_dependent_cfg));
+	
+	/* Clear all proxy config, wait for unregistration*/
+	linphone_core_clear_proxy_config(marie->lc);
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationCleared, 2));
+
+	/* Now re-enter the proxy config in reverse order: the dependant first, the master second. */
+	
+	marie_dependent_cfg = linphone_core_create_proxy_config(marie->lc);
+	linphone_proxy_config_set_identity_address(marie_dependent_cfg, marie_secondary_address);
+	linphone_proxy_config_set_server_addr(marie_dependent_cfg, "sip:external.example.org:5068;transport=tcp");
+	linphone_proxy_config_set_route(marie_dependent_cfg, "sip:external.example.org:5068;transport=tcp");
+	linphone_proxy_config_enable_register(marie_dependent_cfg, TRUE);
+	
+	marie_cfg = linphone_core_create_proxy_config(marie->lc);
+	linphone_proxy_config_set_identity_address(marie_cfg, marie_master_address);
+	linphone_proxy_config_set_server_addr(marie_cfg, "sip:sipopen.example.org;transport=tls");
+	linphone_proxy_config_enable_register(marie_cfg, TRUE);
+
+	/* Now add them to the core: */
+	linphone_core_add_proxy_config(marie->lc, marie_dependent_cfg);
+	linphone_core_add_proxy_config(marie->lc, marie_cfg);
+	linphone_core_set_default_proxy_config(marie->lc, marie_cfg);
+	
+	/* Setup their dependency: */
+	linphone_proxy_config_set_dependency(marie_dependent_cfg, marie_cfg);
+	
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 4));
+	BC_ASSERT_PTR_EQUAL(marie_cfg, linphone_proxy_config_get_dependency(marie_dependent_cfg));
+	
+	/* Then everything should work as if order was the same as before. */
+
+	const LinphoneAddress *marie_cfg_contact = linphone_proxy_config_get_contact(marie_cfg);
+	const LinphoneAddress *marie_dependent_cfg_contact = linphone_proxy_config_get_contact(marie_dependent_cfg);
+
+	BC_ASSERT_TRUE(linphone_proxy_config_address_equal(marie_cfg_contact, marie_dependent_cfg_contact) == LinphoneProxyConfigAddressEqual);
+
+	//Cut link for dependent proxy config, then call its identity address and check that we receive the call
+	//(which would be received through the 'master' proxy config server)
+	linphone_core_set_network_reachable(marie->lc, FALSE);
+	linphone_proxy_config_edit(marie_dependent_cfg);
+	linphone_proxy_config_enable_register(marie_dependent_cfg, FALSE);
+	linphone_proxy_config_done(marie_dependent_cfg);
+ 	linphone_core_set_network_reachable(marie->lc, TRUE);
+
+	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneRegistrationOk, 5); //One more time for 'master' proxy config
+
+	LinphoneAddress *marie_dependent_addr = linphone_address_new(linphone_proxy_config_get_identity(marie_dependent_cfg));
+
+	linphone_core_invite_address(pauline->lc, marie_dependent_addr);
+
+	if (BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived, 1, 10000))) {
+		linphone_call_accept(linphone_core_get_current_call(marie->lc));
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+		end_call(pauline, marie);
+	}
+	linphone_address_unref(marie_dependent_addr);
+	
+	/* re-enable marie's registration on dependent proxy config*/
+	linphone_proxy_config_edit(marie_dependent_cfg);
+	linphone_proxy_config_enable_register(marie_dependent_cfg, TRUE);
+	linphone_proxy_config_done(marie_dependent_cfg);
+	
+	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneRegistrationOk, 6);
+	
+	/* Now marie's core stops and restarts. */
+	linphone_core_stop(marie->lc);
+	linphone_core_start(marie->lc);
+	linphone_core_manager_setup_dns(marie);
+	
+	/* Check that configuration could be reloaded correctly */
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc)), 2, int, "%i");
+	
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 8));
+	
+	/* And make new call attempt */
+	
+	marie_cfg = (LinphoneProxyConfig *) linphone_core_get_proxy_config_list(marie->lc)->next->data;
+	marie_dependent_cfg = (LinphoneProxyConfig *) linphone_core_get_proxy_config_list(marie->lc)->data;
+	BC_ASSERT_PTR_EQUAL(marie_cfg, linphone_proxy_config_get_dependency(marie_dependent_cfg));
+
+	marie_cfg_contact = linphone_proxy_config_get_contact(marie_cfg);
+	marie_dependent_cfg_contact = linphone_proxy_config_get_contact(marie_dependent_cfg);
+
+	BC_ASSERT_TRUE(linphone_proxy_config_address_equal(marie_cfg_contact, marie_dependent_cfg_contact) == LinphoneProxyConfigAddressEqual);
+
+	//Cut link for dependent proxy config, then call its identity address and check that we receive the call
+	//(which would be received through the 'master' proxy config server)
+	linphone_core_set_network_reachable(marie->lc, FALSE);
+	linphone_proxy_config_edit(marie_dependent_cfg);
+	linphone_proxy_config_enable_register(marie_dependent_cfg, FALSE);
+	linphone_proxy_config_done(marie_dependent_cfg);
+ 	linphone_core_set_network_reachable(marie->lc, TRUE);
+
+	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneRegistrationOk, 9); //One more time for 'master' proxy config
+
+	marie_dependent_addr = linphone_address_new(linphone_proxy_config_get_identity(marie_dependent_cfg));
+
+	linphone_core_invite_address(pauline->lc, marie_dependent_addr);
+
+	if (BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived, 2, 10000))) {
+		linphone_call_accept(linphone_core_get_current_call(marie->lc));
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+		end_call(pauline, marie);
+	}
+
+	linphone_address_unref(marie_dependent_addr);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+
+}
+
 test_t proxy_config_tests[] = {
 	TEST_NO_TAG("Phone normalization without proxy", phone_normalization_without_proxy),
 	TEST_NO_TAG("Phone normalization with proxy", phone_normalization_with_proxy),
@@ -434,10 +533,10 @@ test_t proxy_config_tests[] = {
 	TEST_NO_TAG("Load new default value for proxy config", load_dynamic_proxy_config),
 	TEST_NO_TAG("Single route", single_route),
 	TEST_NO_TAG("Proxy dependency", dependent_proxy_config),
-	TEST_NO_TAG("Invalid dependent proxy", invalid_dependent_proxy_config),
 	TEST_NO_TAG("Dependent proxy dependency register", proxy_config_dependent_register),
 	TEST_NO_TAG("Dependent proxy state changed", proxy_config_dependent_register_state_changed),
-	TEST_NO_TAG("Dependent proxy dependency removal", dependent_proxy_dependency_removal)
+	TEST_NO_TAG("Dependent proxy dependency removal", dependent_proxy_dependency_removal),
+	TEST_ONE_TAG("Dependent proxy dependency with core reloaded", dependent_proxy_dependency_with_core_reloaded, "LeaksMemory")
 };
 
 test_suite_t proxy_config_test_suite = {"Proxy config", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
