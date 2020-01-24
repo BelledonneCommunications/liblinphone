@@ -2591,7 +2591,12 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 			belle_http_provider_set_tls_crypto_config(lc->http_provider, lc->http_crypto_config);
 		}
 
-		getPlatformHelpers(lc)->onLinphoneCoreStart(!!lc->auto_net_state_mon);
+		bool autoNetworkStateMonitoringEnabled = !!lc->auto_net_state_mon;
+		if (!autoNetworkStateMonitoringEnabled) {
+			bctbx_warning("Automatic network state monitoring is disabled by configuration (auto_net_state_mon=0). This is not recommended.");
+			bctbx_warning("In this mode, apps must use linphone_core_set_network_reachable() and linphone_core_set_dns_servers() to notify the LinphoneCore of network availability and provide the DNS server list.");
+		}
+		getPlatformHelpers(lc)->onLinphoneCoreStart(autoNetworkStateMonitoringEnabled);
 
 		linphone_core_set_state(lc, LinphoneGlobalConfiguring, "Configuring");
 
