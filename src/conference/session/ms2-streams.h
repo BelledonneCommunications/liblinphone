@@ -79,6 +79,7 @@ protected:
 		int rtpPort, rtcpPort;
 	};
 	void getRtpDestination(const OfferAnswerContext &params, RtpAddressInfo *info);
+	void dtlsEncryptionChanged();
 	std::string mDtlsFingerPrint;
 	RtpProfile *mRtpProfile = nullptr;
 	RtpProfile *mRtpIoProfile = nullptr;

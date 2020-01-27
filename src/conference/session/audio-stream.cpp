@@ -585,9 +585,6 @@ void MS2AudioStream::handleEvent(const OrtpEvent *ev){
 		case ORTP_EVENT_ZRTP_SAS_READY:
 			getGroup().authTokenReady(evd->info.zrtp_info.sas, !!evd->info.zrtp_info.verified);
 		break;
-		case ORTP_EVENT_DTLS_ENCRYPTION_CHANGED:
-			if (isMain()) getGroup().propagateEncryptionChanged();
-		break;
 		case ORTP_EVENT_TELEPHONE_EVENT:
 			telephoneEventReceived(evd->info.telephone_event);
 		break;

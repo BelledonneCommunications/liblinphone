@@ -167,6 +167,12 @@ static void audio_video_call(const params_t *params) {
 	liblinphone_tester_set_next_video_frame_decoded_cb(marie_call);
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_IframeDecoded,1));
 	
+	if (params->with_dtls_srtp){
+		BC_ASSERT_TRUE(linphone_call_params_get_media_encryption(linphone_call_get_current_params(pauline_call)) == LinphoneMediaEncryptionDTLS);
+		BC_ASSERT_TRUE(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marie_call)) == LinphoneMediaEncryptionDTLS);
+	}
+	
+	
 	end_call(marie,pauline);
 	
 end:

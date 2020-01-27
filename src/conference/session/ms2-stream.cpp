@@ -506,21 +506,26 @@ void MS2Stream::setupDtlsParams (MediaStream *ms) {
 }
 
 void MS2Stream::startDtls(const OfferAnswerContext &params){
-	if (sal_stream_description_has_dtls(params.resultStreamDescription) && !mDtlsStarted) {
-		if (params.resultStreamDescription->dtls_role == SalDtlsRoleInvalid){
-			lWarning() << "Unable to start DTLS engine on stream session [" << &mSessions << "], Dtls role in resulting media description is invalid";
-		}else { 
-			/* Workaround for buggy openssl versions that send DTLS packets bigger than the MTU. We need to increase the recv buf size of the RtpSession.*/
-			int recv_buf_size = lp_config_get_int(linphone_core_get_config(getCCore()),"rtp", "dtls_recv_buf_size", 5000);
-			rtp_session_set_recv_buf_size(mSessions.rtp_session, recv_buf_size);
-			
-			/* If DTLS is available at both end points */
-			/* Give the peer certificate fingerprint to dtls context */
-			ms_dtls_srtp_set_peer_fingerprint(mSessions.dtls_context, params.remoteStreamDescription->dtls_fingerprint);
-			ms_dtls_srtp_set_role(mSessions.dtls_context, (params.resultStreamDescription->dtls_role == SalDtlsRoleIsClient) ? MSDtlsSrtpRoleIsClient : MSDtlsSrtpRoleIsServer); /* Set the role to client */
-			ms_dtls_srtp_start(mSessions.dtls_context); /* Then start the engine, it will send the DTLS client Hello */
-			mDtlsStarted = true;
+	if (mDtlsStarted) return;
+	if (!sal_stream_description_has_dtls(params.resultStreamDescription)) return;
+	
+	if (params.resultStreamDescription->dtls_role == SalDtlsRoleInvalid){
+		lWarning() << "Unable to start DTLS engine on stream session [" << &mSessions << "], Dtls role in resulting media description is invalid";
+	}else {
+		if (!isTransportOwner()){
+			/* RTP bundle mode: there must be only one DTLS association per transport. */
+			return;
 		}
+		/* Workaround for buggy openssl versions that send DTLS packets bigger than the MTU. We need to increase the recv buf size of the RtpSession.*/
+		int recv_buf_size = lp_config_get_int(linphone_core_get_config(getCCore()),"rtp", "dtls_recv_buf_size", 5000);
+		rtp_session_set_recv_buf_size(mSessions.rtp_session, recv_buf_size);
+		
+		/* If DTLS is available at both end points */
+		/* Give the peer certificate fingerprint to dtls context */
+		ms_dtls_srtp_set_peer_fingerprint(mSessions.dtls_context, params.remoteStreamDescription->dtls_fingerprint);
+		ms_dtls_srtp_set_role(mSessions.dtls_context, (params.resultStreamDescription->dtls_role == SalDtlsRoleIsClient) ? MSDtlsSrtpRoleIsClient : MSDtlsSrtpRoleIsServer); /* Set the role to client */
+		ms_dtls_srtp_start(mSessions.dtls_context); /* Then start the engine, it will send the DTLS client Hello */
+		mDtlsStarted = true;
 	}
 }
 
@@ -880,6 +885,10 @@ void MS2Stream::updateIceInStats(){
 	}
 }
 
+void MS2Stream::dtlsEncryptionChanged(){
+	getGroup().propagateEncryptionChanged();
+}
+
 void MS2Stream::handleEvents () {
 	MediaStream *ms = getMediaStream();
 	if (ms) {
@@ -928,9 +937,7 @@ void MS2Stream::handleEvents () {
 				}
 			break;
 			case ORTP_EVENT_DTLS_ENCRYPTION_CHANGED:
-				if (getType() != SalAudio || !isMain()){
-					getGroup().propagateEncryptionChanged();
-				}
+				dtlsEncryptionChanged();
 			break;
 			case ORTP_EVENT_ICE_SESSION_PROCESSING_FINISHED:
 			case ORTP_EVENT_ICE_GATHERING_FINISHED:
@@ -949,6 +956,14 @@ void MS2Stream::handleEvents () {
 }
 
 bool MS2Stream::isEncrypted() const{
+	if (!isTransportOwner()){
+		if (mBundleOwner){
+			return mBundleOwner->isEncrypted(); /* We must refer to the stream that owns the Rtp bundle.*/
+		}else{
+			lError() << "MS2Stream::isEncrypted(): no bundle owner !";
+		}
+		return false;
+	}
 	return media_stream_secured(getMediaStream());
 }
 
