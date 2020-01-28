@@ -143,7 +143,9 @@ public:
 	void addSupportedTag (const std::string &tag);
 	void removeSupportedTag (const std::string &tag);
 
-	void setWellKnownPort (int value);
+	static void setWellKnownPort (int value);
+	static void setTLSWellKnownPort (int value);
+
 
 	void setUserAgent (const std::string &value);
 	const std::string &getUserAgent () const;

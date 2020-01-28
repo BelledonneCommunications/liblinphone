@@ -444,18 +444,14 @@ static void direct_call_over_ipv6(void){
 }
 
 //Testing the well known port config from linphonerc in call
-static void direct_call_well_known_port(int iptype){
+static void _direct_call_well_known_port(int iptype){
 	LinphoneCoreManager* marie = NULL;
 	LinphoneCoreManager* pauline = NULL;
 
-	//To check after :
-
-	//if (liblinphone_tester_ipv6_available()){
-	//}else ms_warning("Test skipped, no ipv6 available");
 	LinphoneSipTransports pauline_transports;
 	LinphoneAddress* pauline_dest = NULL;
-	
-	marie = linphone_core_manager_new( "marie_well_known_port_rc");
+
+	marie = linphone_core_manager_new("marie_well_known_port_rc");
 	pauline = linphone_core_manager_new("pauline_well_known_port_rc");
 
 	if(iptype == 6){ //if ipv6 wanted
@@ -493,11 +489,11 @@ static void direct_call_well_known_port(int iptype){
 }
 
 static void direct_call_well_known_port_ipv4(void){
-	direct_call_well_known_port(4);
+	_direct_call_well_known_port(4);
 }
 
 static void direct_call_well_known_port_ipv6(void){
-	direct_call_well_known_port(6);
+	_direct_call_well_known_port(6);
 }
 
 static void call_outbound_with_multiple_proxy(void) {
