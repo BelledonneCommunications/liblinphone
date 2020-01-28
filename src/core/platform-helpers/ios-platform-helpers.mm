@@ -396,7 +396,10 @@ void IosPlatformHelpers::networkChangeCallback() {
 		reachable = isReachable(flags);
 		if (flags != mCurrentFlags || reachable != isNetworkReachable()) {
 			changed = true;
-			if (mCurrentFlags == 0) {
+			if (mCurrentFlags == 0
+				||
+				/*check if moving from Wifi to cellular*/
+				(mCurrentFlags & kSCNetworkReachabilityFlagsIsWWAN) != (flags & kSCNetworkReachabilityFlagsIsWWAN)) {
 				//Force reinit after network down
 				force = true;
 			}
