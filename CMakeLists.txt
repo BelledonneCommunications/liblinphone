@@ -285,7 +285,6 @@ if(MSVC)
 else()
 	list(APPEND STRICT_OPTIONS_CPP
 		"-Wall"
-		"-Wcast-align"
 		"-Wconversion"
 		"-Werror=return-type"
 		"-Winit-self"

@@ -5444,7 +5444,12 @@ static void subscribe_test_after_set_chat_database_path(void) {
 	linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
 	configure_core_for_callbacks(pauline, cbs);
 	linphone_core_cbs_unref(cbs);
+	initialPaulineStats = pauline->stat;
 	linphone_core_manager_start(pauline, TRUE);
+	
+	/* Since pauline has unregistered (in linphone_core_manager_reinit(), the conference server will INVITE it again in the chatroom.
+	 * Wait for this event before doing next steps, otherwise the subject changed notification could be masked. */
+	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
 
 	LinphoneAddress *paulineAddress = linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(pauline->lc)));
 	paulineCr = linphone_core_find_chat_room(pauline->lc, confAddr, paulineAddress);

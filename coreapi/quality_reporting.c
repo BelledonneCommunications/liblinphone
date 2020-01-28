@@ -416,7 +416,7 @@ static const SalStreamDescription * get_media_stream_for_desc(const SalMediaDesc
 	int count;
 	if (smd != NULL) {
 		for (count = 0; count < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; ++count) {
-			if (sal_stream_description_active(&smd->streams[count]) && smd->streams[count].type == sal_stream_type) {
+			if (sal_stream_description_enabled(&smd->streams[count]) && smd->streams[count].type == sal_stream_type) {
 				return &smd->streams[count];
 			}
 		}

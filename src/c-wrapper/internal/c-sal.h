@@ -360,9 +360,10 @@ SalStreamDescription * sal_media_description_find_best_stream(SalMediaDescriptio
 void sal_media_description_set_dir(SalMediaDescription *md, SalStreamDir stream_dir);
 int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStreamDescription *sd2);
 
-/* Careful: unlike what its name says, this function returns FALSE if the stream is disabled, ie port is zero.
- * A session description marked with a=inactive but with valid RTP port will be considered as active by this function.*/
-bool_t sal_stream_description_active(const SalStreamDescription *sd);
+
+/* Enabled means that the stream exists and is accepted as part of the session: the port value is non-zero or the stream has bundle-only attribute.
+ *However, it may be marked with a=inactive, which is unrelated to the return value of this function.*/
+bool_t sal_stream_description_enabled(const SalStreamDescription *sd);
 void sal_stream_description_disable(SalStreamDescription *sd);
 bool_t sal_stream_description_has_avpf(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_implicit_avpf(const SalStreamDescription *sd);

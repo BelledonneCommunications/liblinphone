@@ -336,7 +336,7 @@ static SalStreamDir compute_dir_incoming(SalStreamDir local, SalStreamDir offere
 static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *local_offer,
 						const SalStreamDescription *remote_answer,
 						SalStreamDescription *result){
-	if (sal_stream_description_active(remote_answer))
+	if (sal_stream_description_enabled(remote_answer))
 		result->payloads=match_payloads(factory, local_offer->payloads,remote_answer->payloads,TRUE,FALSE);
 	else {
 		ms_message("Local stream description [%p] rejected by peer",local_offer);
@@ -470,7 +470,7 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 	result->type=local_cap->type;
 	result->dir=compute_dir_incoming(local_cap->dir,remote_offer->dir);
 	
-	if (!result->payloads || only_telephone_event(result->payloads) || !sal_stream_description_active(remote_offer)){
+	if (!result->payloads || only_telephone_event(result->payloads) || !sal_stream_description_enabled(remote_offer)){
 		result->rtp_port=0;
 		return;
 	}

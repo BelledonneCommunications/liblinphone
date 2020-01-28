@@ -336,7 +336,7 @@ Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 	for (auto & s : mStreams) {
 		params.scopeStreamToIndex(s->getIndex());
-		if (!sal_stream_description_active(params.resultStreamDescription))
+		if (!sal_stream_description_enabled(params.resultStreamDescription) || params.resultStreamDescription->dir == SalStreamInactive)
 			continue;
 		
 		const SalStreamDescription *refStream = params.resultStreamDescription;
