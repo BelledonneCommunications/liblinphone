@@ -601,7 +601,15 @@ void Sal::removeSupportedTag (const string &tag) {
 }
 
 void Sal::setWellKnownPort (int value) {
+	ms_debug("Sal::setWellKnownPort : Actual Well Known Port before resetting it = %d", belle_sip_get_well_known_port());
+	ms_debug("Sal::setWellKnownPort : New Well Known Port value = %d", value);
 	belle_sip_set_well_known_port(value);
+}
+
+void Sal::setTLSWellKnownPort (int value) {
+	ms_debug("Sal::setTLSWellKnownPort : Actual TLS Well Known Port before resetting it = %d", belle_sip_get_well_known_port_tls());
+	ms_debug("Sal::setWellKnownPort : New TLS Well Known Port value = %d", value);
+	belle_sip_set_well_known_port_tls(value);
 }
 
 void Sal::resetTransports () {
