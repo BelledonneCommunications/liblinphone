@@ -451,27 +451,33 @@ static void _direct_call_well_known_port(int iptype){
 	LinphoneSipTransports pauline_transports;
 	LinphoneAddress* pauline_dest = NULL;
 
-	marie = linphone_core_manager_new("marie_well_known_port_rc");
-	pauline = linphone_core_manager_new("pauline_well_known_port_rc");
+
+ 	//we use new2 because we do not need to check proxy registration
+	//because if we do it, the client will try to register with the well_known port, and the test server doesn't handle it.
+	marie = linphone_core_manager_new2("marie_well_known_port_rc", FALSE);
+	pauline = linphone_core_manager_new2("pauline_well_known_port_rc", FALSE);
 
 	if(iptype == 6){ //if ipv6 wanted
 		if (liblinphone_tester_ipv6_available()){
 			pauline_dest = linphone_address_new("sip:[::1];transport=tcp");
-			linphone_core_enable_ipv6(marie->lc,TRUE);
-			linphone_core_enable_ipv6(pauline->lc,TRUE);
 		} else {
 			ms_warning("Test skipped, no ipv6 available");
 		}
 
 	} else { //assumes ipv4
 		pauline_dest = linphone_address_new("sip:127.0.0.1;transport=tcp");
+		linphone_core_enable_ipv6(marie->lc,FALSE);
+		linphone_core_enable_ipv6(pauline->lc,FALSE);
 	}
 
 	linphone_core_set_default_proxy_config(marie->lc,NULL);
 	linphone_core_set_default_proxy_config(pauline->lc, NULL);
 
+	//pauline_transports ne servirait à rien puisque je le set dans le rcfile
 	linphone_core_get_sip_transports_used(pauline->lc,&pauline_transports);
 	linphone_address_set_port(pauline_dest,pauline_transports.tcp_port);
+
+
 	linphone_core_invite_address(marie->lc,pauline_dest);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallOutgoingRinging,1));
