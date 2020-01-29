@@ -141,12 +141,33 @@ set(LINPHONE_HEADER_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}" PARENT_SCOPE)
 
 # ------------------------------------------------------------------------------
 if (APPLE AND ENABLE_SHARED)
-	#cmake 3.10 seems not able to handle subdirectories for PUBLIC_HEADER. May be reworked in the future.
+	#cmake 3.10 seems not able to handle subdirectories for PUBLIC_HEADER. May be reworked in the future.	
 	set(DEST_ROOT_DIRECTORY "${CMAKE_INSTALL_PREFIX}/Frameworks/linphone.framework/Headers")
-else()
-	set(DEST_ROOT_DIRECTORY "${CMAKE_INSTALL_INCLUDEDIR}/linphone")
-endif()
+        
+    install(FILES ${ROOT_HEADER_FILES}
+        DESTINATION "${DEST_ROOT_DIRECTORY}"
+        PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+    )
 
+    install(FILES ${C_API_HEADER_FILES}
+        DESTINATION "${DEST_ROOT_DIRECTORY}/api"
+        PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+    )
+    install(FILES ${ENUMS_HEADER_FILES}
+        DESTINATION "${DEST_ROOT_DIRECTORY}/enums"
+        PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+    )
+
+    install(FILES ${UTILS_HEADER_FILES}
+        DESTINATION "${DEST_ROOT_DIRECTORY}/utils"
+        PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+    )
+else()
+#   Use this when we want to split OS X Frameworks and unix-style package components
+#	set(DEST_ROOT_DIRECTORY "${CMAKE_INSTALL_INCLUDEDIR}/linphone")
+endif()
+# In all case, we want to get an unix-style package components as the OS X Frameworks is not fully support
+set(DEST_ROOT_DIRECTORY "${CMAKE_INSTALL_INCLUDEDIR}/linphone")
 install(FILES ${ROOT_HEADER_FILES}
 	DESTINATION "${DEST_ROOT_DIRECTORY}"
 	PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
