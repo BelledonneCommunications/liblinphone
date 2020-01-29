@@ -19,7 +19,7 @@ reg_proxy=<sip:sip.example.org;transport=tcp>
 reg_route=<sip:sip.example.org;transport=tcp>
 reg_identity="Super Marie" <sip:marie%20laroueverte@sip.example.org>
 reg_expires=3600
-reg_sendregister=1
+reg_sendregister=0
 publish=0
 dial_escape_plus=0
 
