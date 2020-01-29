@@ -464,7 +464,7 @@ void StreamsGroup::computeAndReportBandwidth(){
 		if (stream->getState() != Stream::Running) continue;
 		LinphoneCallStats *stats = stream->getStats();
 		if (!introDone){
-			ostr << "Bandwidth usage for CallSession [" << &getMediaSession() << "]:\n" << fixed << setprecision(2);
+			ostr << "Bandwidth usage for CallSession [" << &getMediaSession() << "]:" << endl << fixed << setprecision(2);
 			introDone = true;
 		}
 		ostr << "\tStream #" << stream->getIndex() << " (" << sal_stream_type_to_string(stream->getType()) << ") | cpu: " << stream->getCpuUsage() << "% |" << " RTP : [d="
@@ -473,8 +473,8 @@ void StreamsGroup::computeAndReportBandwidth(){
 		float est_bw = linphone_call_stats_get_estimated_download_bandwidth(stats);
 		if (est_bw > 0.0) ostr << "Est max d=" << est_bw;
 		ostr << " (kbits/sec)" << endl;
-		lInfo() << ostr.str();
 	}
+	lInfo() << ostr.str();
 }
 
 void StreamsGroup::addPostRenderHook(const std::function<void()> &l){
@@ -499,8 +499,8 @@ void StreamsGroup::finish(){
 	if (mFinished) return;
 	lInfo() << "StreamsGroup::finish() called.";
 	stop(); //For the paranoid: normally it should be done already.
+	mIceService->finish(); // finish ICE first, as it has actions on the streams.
 	forEach<Stream>(mem_fun(&Stream::finish));
-	mIceService->finish();
 	mFinished = true;
 }
 

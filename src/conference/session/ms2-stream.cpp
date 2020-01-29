@@ -1011,10 +1011,20 @@ MSZrtpContext *MS2Stream::getZrtpContext()const{
 }
 
 float MS2Stream::getAverageQuality(){
-	return media_stream_get_average_quality_rating(getMediaStream());
+	MediaStream *ms = getMediaStream();
+	if (!ms) {
+		lError() << "MS2Stream::getAverageQuality(): no stream.";
+		return 0.0;
+	}
+	return media_stream_get_average_quality_rating(ms);
 }
 
 float MS2Stream::getCurrentQuality(){
+	MediaStream *ms = getMediaStream();
+	if (!ms) {
+		lError() << "MS2Stream::getCurrentQuality(): no stream.";
+		return 0.0;
+	}
 	return media_stream_get_quality_rating(getMediaStream());
 }
 

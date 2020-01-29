@@ -331,8 +331,6 @@ void MediaSessionPrivate::remoteRinging () {
 		if (listener)
 			listener->onStopRinging(q->getSharedFromThis());
 		lInfo() << "Doing early media...";
-		/* FIXME */
-		//getIceAgent().updateFromRemoteMediaDescription(localDesc, rmd, !op->isOfferer());
 		updateStreams(md, state);
 		if ((q->getCurrentParams()->getAudioDirection() == LinphoneMediaDirectionInactive)) {
 			if (listener)
@@ -619,8 +617,7 @@ void MediaSessionPrivate::setState (CallSession::State newState, const string &m
 			// Handle specifically the case of an incoming ICE-concluded reINVITE
 			lInfo() << "Checking for ICE reINVITE";
 			rmd = op->getRemoteMediaDescription();
-			//FIXME 
-			if (rmd && false /*getIceAgent().checkIceReinviteNeedsDeferedResponse(rmd) */) {
+			if (rmd && getIceService().reinviteNeedsDeferedResponse(rmd)) {
 				deferUpdate = true;
 				deferUpdateInternal = true;
 				incomingIceReinvitePending = true;
@@ -1452,17 +1449,17 @@ void MediaSessionPrivate::onIceCompleted(IceService &service){
 		}else{
 			lWarning() << "Cannot send reINVITE for ICE during state " << state;
 		}
-	}else if (!getStreamsGroup().getIceService().isControlling() && incomingIceReinvitePending){
-		q->acceptUpdate(nullptr);
-		incomingIceReinvitePending = false;
 	}
 	startDtlsOnAllStreams();
 }
 
 void MediaSessionPrivate::onLosingPairsCompleted(IceService &service){
 	if (state == CallSession::State::UpdatedByRemote) {
-		lInfo() << "Finished adding losing pairs, ICE re-INVITE can be answered.";
-		startAcceptUpdate(prevState, Utils::toString(prevState));
+		if (incomingIceReinvitePending){
+			lInfo() << "Finished adding losing pairs, ICE re-INVITE can be answered.";
+			startAcceptUpdate(prevState, Utils::toString(prevState));
+			incomingIceReinvitePending = false;
+		}
 	}
 }
 
@@ -2724,8 +2721,13 @@ LinphoneCallStats * MediaSession::getVideoStats () const {
 }
 
 bool MediaSession::mediaInProgress () const {
-	//L_D();
-	/* FIXME */
+	L_D();
+	for(auto &stream : d->getStreamsGroup().getStreams()){
+		LinphoneCallStats *stats = stream->getStats();
+		if (stats && linphone_call_stats_get_ice_state(stats) == LinphoneIceStateInProgress){
+			return true;
+		}
+	}
 	return false;
 }
 

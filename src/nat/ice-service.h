@@ -52,6 +52,9 @@ public:
 	/* Called after a network connectivity change, to restart ICE from the beginning.*/
 	void resetSession();
 	
+	/* Returns true if the incoming offer requires a defered response, due to check-list(s) not yet completed.*/
+	bool reinviteNeedsDeferedResponse(SalMediaDescription *remoteMd);
+	
 	void createStreams(const OfferAnswerContext &params);
 	/**
 	 * Called by the StreamsGroup when the local media description must be filled with ICE parameters.
