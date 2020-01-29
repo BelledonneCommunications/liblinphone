@@ -1,8 +1,9 @@
 [sip]
+sip_tcp_port=9999
 default_proxy=0
 ping_with_options=0
 composing_idle_timeout=1
-sip_well_known_port=9999
+#sip_well_known_port=9999
 
 [auth_info_0]
 username=pauline
@@ -16,7 +17,7 @@ reg_proxy=<sip:sip.example.org;transport=tls>
 reg_route=<sip:sip.example.org;transport=tls>
 reg_identity=sip:pauline@sip.example.org
 reg_expires=3600
-reg_sendregister=1
+reg_sendregister=0
 publish=0
 dial_escape_plus=0
 
