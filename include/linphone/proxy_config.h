@@ -684,16 +684,16 @@ LINPHONE_PUBLIC bool_t linphone_proxy_config_is_push_notification_allowed(const 
 LINPHONE_PUBLIC int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *cfg);
 
 /**
- * Indicatex if proxy config should unregister when #LinphoneCore stops
+ * Indicates if proxy config should unregister when #LinphoneCore stops
  * @param[in] cfg #LinphoneProxyConfig object
- * @param[in] True if proxy config should unregistered when #LinphoneCore stop, false otherwise
+ * @param[in] True if proxy config should unregister when #LinphoneCore stops, false otherwise
  */
 LINPHONE_PUBLIC void linphone_proxy_config_set_unregister_at_stop(LinphoneProxyConfig *cfg, bool_t unregister);
 
 /**
  * Indicates if proxy config unregisters when #LinphoneCore stops
  * @param[in] cfg #LinphoneProxyConfig object
- * @return True if proxy config will unregister when #LinphoneCore stop, false otherwise
+ * @return True if proxy config will unregister when #LinphoneCore stops, false otherwise
  */
 LINPHONE_PUBLIC bool_t linphone_proxy_config_get_unregister_at_stop(const LinphoneProxyConfig *cfg);
 
