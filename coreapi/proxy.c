@@ -166,6 +166,7 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 	cfg->publish_expires= lc ? lp_config_get_default_int(lc->config, "proxy", "publish_expires", -1) : -1;
 	cfg->publish = lc ? !!lp_config_get_default_int(lc->config, "proxy", "publish", FALSE) : FALSE;
 	cfg->push_notification_allowed = lc ? !!lp_config_get_default_int(lc->config, "proxy", "push_notification_allowed", TRUE) : TRUE;
+	cfg->unregister_at_stop = lc ? !!lp_config_get_default_int(lc->config, "proxy", "unregister_at_stop", TRUE) : TRUE;
 	cfg->refkey = refkey ? ms_strdup(refkey) : NULL;
 	if (nat_policy_ref) {
 		LinphoneNatPolicy *policy = linphone_config_create_nat_policy_from_section(lc->config,nat_policy_ref);
@@ -573,7 +574,8 @@ static LinphoneAddress *guess_contact_for_register (LinphoneProxyConfig *cfg) {
 
 void _linphone_proxy_config_unregister(LinphoneProxyConfig *obj) {
 	if (obj->op && (obj->state == LinphoneRegistrationOk ||
-					(obj->state == LinphoneRegistrationProgress && obj->expires != 0))) {
+					(obj->state == LinphoneRegistrationProgress && obj->expires != 0)) &&
+					linphone_proxy_config_get_unregister_at_stop(obj)) {
 		obj->op->unregister();
 	}
 }
@@ -1327,6 +1329,7 @@ void linphone_proxy_config_write_to_config_file(LpConfig *config, LinphoneProxyC
 	lp_config_set_string(config,key,"dial_prefix", cfg->dial_prefix);
 	lp_config_set_int(config, key, "privacy", (int)cfg->privacy);
 	lp_config_set_int(config, key, "push_notification_allowed", (int)cfg->push_notification_allowed);
+	lp_config_set_int(config, key, "unregister_at_stop", (int)cfg->unregister_at_stop);
 	if (cfg->refkey) lp_config_set_string(config, key, "refkey", cfg->refkey);
 	if (cfg->depends_on) lp_config_set_string(config, key, "depends_on", cfg->depends_on);
 	if (cfg->idkey) lp_config_set_string(config, key, "idkey", cfg->idkey);
@@ -1390,6 +1393,7 @@ LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(LinphoneCore* lc
 	CONFIGURE_BOOL_VALUE(cfg, config, key, register, "reg_sendregister")
 	CONFIGURE_BOOL_VALUE(cfg, config, key, publish, "publish")
 	linphone_proxy_config_set_push_notification_allowed(cfg, !!lp_config_get_int(config, key, "push_notification_allowed", linphone_proxy_config_is_push_notification_allowed(cfg)));
+	linphone_proxy_config_set_unregister_at_stop(cfg, !!lp_config_get_int(config, key, "unregister_at_stop", linphone_proxy_config_get_unregister_at_stop(cfg)));
 	linphone_proxy_config_set_avpf_mode(cfg, static_cast<LinphoneAVPFMode>(lp_config_get_int(config, key, "avpf", linphone_proxy_config_get_avpf_mode(cfg))));
 	CONFIGURE_INT_VALUE(cfg, config, key, avpf_rr_interval, "avpf_rr_interval", uint8_t)
 	CONFIGURE_INT_VALUE(cfg, config,key, dial_escape_plus, "dial_escape_plus", bool_t)
@@ -1832,6 +1836,14 @@ bool_t linphone_proxy_config_is_push_notification_allowed(const LinphoneProxyCon
 
 void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t is_allowed) {
 	cfg->push_notification_allowed = is_allowed;
+}
+
+bool_t linphone_proxy_config_get_unregister_at_stop(const LinphoneProxyConfig *cfg) {
+	return cfg->unregister_at_stop;
+}
+
+void linphone_proxy_config_set_unregister_at_stop(LinphoneProxyConfig *cfg, bool_t unregister) {
+	cfg->unregister_at_stop = unregister;
 }
 
 int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *cfg) {

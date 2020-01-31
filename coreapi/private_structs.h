@@ -142,6 +142,7 @@ struct _LinphoneProxyConfig
 	char *conference_factory_uri;
 
 	bool_t push_notification_allowed;
+	bool_t unregister_at_stop;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneProxyConfig);
