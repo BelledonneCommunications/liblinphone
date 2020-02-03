@@ -103,7 +103,17 @@ static void _local_player_close(LinphonePlayer *obj) {
 
 static void _local_player_eof_callback(void *user_data) {
 	LinphonePlayer *obj = (LinphonePlayer *)user_data;
+	
 	LinphonePlayerCbs *cbs = linphone_player_get_callbacks(obj);
 	LinphonePlayerCbsEofReachedCb cb = linphone_player_cbs_get_eof_reached(cbs);
 	if (cb) cb(obj);
+
+	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_player_get_callbacks_list(obj));
+	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) {
+		linphone_player_set_current_callbacks(obj, reinterpret_cast<LinphonePlayerCbs *>(bctbx_list_get_data(it)));
+		LinphonePlayerCbsEofReachedCb cb = linphone_player_cbs_get_eof_reached(linphone_player_get_callbacks(obj));
+		if (cb) cb(obj);
+	}
+	linphone_player_set_current_callbacks(obj, NULL);
+	bctbx_list_free(callbacksCopy);
 }
