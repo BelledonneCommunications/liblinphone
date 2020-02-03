@@ -2572,34 +2572,34 @@ void MediaSession::setSpeakerVolumeGain (float value) {
 
 void * MediaSession::getNativeVideoWindowId () const {
 	L_D();
-	auto interface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
-	if (interface){
-		interface->getNativeWindowId();
+	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+	if (iface) {
+		iface->getNativeWindowId();
 	}
 	return nullptr;
 }
 
 void MediaSession::setNativeVideoWindowId (void *id) {
 	L_D();
-	auto interface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
-	if (interface){
-		interface->setNativeWindowId(id);
+	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+	if (iface) {
+		iface->setNativeWindowId(id);
 	}
 }
 
 void MediaSession::setNativePreviewWindowId(void *id){
 	L_D();
-	auto interface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
-	if (interface){
-		interface->setNativePreviewWindowId(id);
+	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+	if (iface) {
+		iface->setNativePreviewWindowId(id);
 	}
 }
 
 void * MediaSession::getNativePreviewVideoWindowId () const{
 	L_D();
-	auto interface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
-	if (interface){
-		interface->getNativePreviewWindowId();
+	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+	if (iface) {
+		iface->getNativePreviewWindowId();
 	}
 	return nullptr;
 }
