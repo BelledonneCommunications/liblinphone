@@ -210,10 +210,9 @@ void ToneManager::linphoneCoreStopRinging() {
 	doStopRingtone(nullptr);
 }
 
-
 void ToneManager::linphoneCoreStopDtmfStream() {
 	lInfo() << "[ToneManager] " << __func__;
-	doStopRingtone(nullptr);
+	doStopTone();
 }
 
 // ---------------------------------------------------
