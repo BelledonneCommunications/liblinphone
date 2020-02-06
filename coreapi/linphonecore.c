@@ -6374,6 +6374,7 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
 	lc->msevq=NULL;
 
 	linphone_core_stop_ringing(lc);
+	linphone_core_stop_dtmf_stream(lc);
 
 	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
 }
@@ -6511,6 +6512,7 @@ static void _linphone_core_stop(LinphoneCore *lc) {
 	net_config_uninit(lc);
 	rtp_config_uninit(lc);
 	linphone_core_stop_ringing(lc);
+	linphone_core_stop_dtmf_stream(lc);
 	sound_config_uninit(lc);
 	video_config_uninit(lc);
 	codecs_config_uninit(lc);
