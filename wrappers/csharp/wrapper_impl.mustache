@@ -134,10 +134,6 @@ namespace Linphone
 		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr bctbx_list_append(IntPtr elem, IntPtr data);
 
-#if __IOS__
-		[MonoPInvokeCallback(typeof(OnLinphoneObjectDataDestroyed))]
-#endif
-
 		~LinphoneObject()
 		{
 			//Console.WriteLine("Destroying " + this.ToString());
@@ -253,33 +249,6 @@ namespace Linphone
 			return bctbx_list;
 		}
 	}
-
-#if ANDROID
-	/// <summary>
-	/// Methods that are only found in Android version of Linphone libraries and related to JNI
-	/// </summary>
-	public class LinphoneAndroid
-	{
-		public static IntPtr AndroidContext { get; set; } 
-
-		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern void ms_set_jvm_from_env(IntPtr jnienv);
-
-		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern void setMediastreamerAndroidContext(IntPtr jnienv, IntPtr context);
-
-		/// <summary>
-		/// Sets the JVM and JNI pointers in Linphone, required to be able to make JAVA upcalls.
-		/// Calling this method is mandatory and must be done as soon as possible !
-		/// </summary>
-		public static void setAndroidContext(IntPtr jnienv, IntPtr context)
-		{
-			AndroidContext = context;
-			ms_set_jvm_from_env(jnienv);
-			setMediastreamerAndroidContext(jnienv, AndroidContext);
-		}
-	}
-#endif
 
 	public class MediastreamerFactory
 	{
