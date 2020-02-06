@@ -195,7 +195,7 @@ public:
 	 * The returned belle_sip_source_t must be unrefed (with belle_sip_object_unref() ).
 	 * It may be unrefed before expiration, if this timer never needs to be cancelled.
 	 */
-	belle_sip_source_t *createTimer(const std::function<bool ()> &something, int millisecond, const std::string &name);
+	belle_sip_source_t *createTimer(const std::function<bool ()> &something, unsigned int millisecond, const std::string &name);
 	/* Stop (ie cancel) and destroy a timer created by createTimer()*/
 
 	void destroyTimer(belle_sip_source_t *timer);
