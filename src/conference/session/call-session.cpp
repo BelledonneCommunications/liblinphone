@@ -455,8 +455,10 @@ void CallSessionPrivate::updated (bool isUpdate) {
 		case CallSession::State::Error:
 		case CallSession::State::Released:
 		case CallSession::State::EarlyUpdatedByRemote:
+		case CallSession::State::EarlyUpdatingByRemote:
 		case CallSession::State::EarlyUpdating:
 			lWarning() << "Receiving reINVITE or UPDATE while in state [" << Utils::toString(state) << "], should not happen";
+		case CallSession::State::EndOfEnum:
 		break;
 	}
 }
@@ -1332,7 +1334,7 @@ const CallSessionParams * CallSession::getRemoteParams () {
 		const list<Content> additionnalContents = d->op->getAdditionalRemoteBodies();
 		for (auto& content : additionnalContents)
 			d->remoteParams->addCustomContent(content);
-		
+
 		return d->remoteParams;
 	}
 	return nullptr;

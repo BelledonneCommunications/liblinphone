@@ -22,19 +22,33 @@
 
 // =============================================================================
 
-#define L_ENUM_VALUES_CHAT_MESSAGE_STATE(F) \
-	F(Idle /**< Initial state */) \
-	F(InProgress /**< Delivery in progress */) \
-	F(Delivered /**< Message successfully delivered and acknowledged by the server */) \
-	F(NotDelivered /**< Message was not delivered */) \
-	F(FileTransferError /**< Message was received and acknowledged but cannot get file from server */) \
-	F(FileTransferDone /**< File transfer has been completed successfully */) \
-	F(DeliveredToUser /**< Message successfully delivered an acknowledged by the remote user */) \
-	F(Displayed /**< Message successfully displayed to the remote user */) \
-	F(FileTransferInProgress /** <File transfer is in progress. If message is incoming it's a download, otherwise it's an upload. */)
+/**
+ * #LinphoneChatMessageState is used to notify if messages have been successfully delivered or not.
+ * @ingroup chatroom
+ */
+typedef enum _LinphoneChatMessageState{
+	LinphoneChatMessageStateIdle, /**< Initial state */
+	LinphoneChatMessageStateInProgress, /**< Delivery in progress */
+	LinphoneChatMessageStateDelivered, /**< Message successfully delivered and acknowledged by the server */
+	LinphoneChatMessageStateNotDelivered, /**< Message was not delivered */
+	LinphoneChatMessageStateFileTransferError, /**< Message was received and acknowledged but cannot get file from server */
+	LinphoneChatMessageStateFileTransferDone, /**< File transfer has been completed successfully */
+	LinphoneChatMessageStateDeliveredToUser, /**< Message successfully delivered an acknowledged by the remote user */
+	LinphoneChatMessageStateDisplayed, /**< Message successfully displayed to the remote user */
+	LinphoneChatMessageStateFileTransferInProgress, /** <File transfer is in progress. If message is incoming it's a download, otherwise it's an upload. */
+	LinphoneChatMessageStateEndOfEnum /** Guard preventing enums mismatch between c and c++ */
+} LinphoneChatMessageState;
 
-#define L_ENUM_VALUES_CHAT_MESSAGE_DIRECTION(F) \
-	F(Incoming /**< Incoming message */) \
-	F(Outgoing /**< Outgoing message */)
+
+/**
+ * #LinphoneChatMessageDirection is used to indicate if a message is outgoing or incoming.
+ * @ingroup chatroom
+ */
+typedef enum _LinphoneChatMessageDirection{
+	LinphoneChatMessageDirectionIncoming, /**< Incoming message */
+	LinphoneChatMessageDirectionOutgoing, /**< Outgoing message */
+	LinphoneChatMessageDirectionEndOfEnum /** Guard preventing enums mismatch between c and c++ */
+} LinphoneChatMessageDirection;
+
 
 #endif // ifndef _L_CHAT_MESSAGE_ENUMS_H_

@@ -62,6 +62,7 @@ static void on_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageSt
 		case LinphoneChatMessageStateFileTransferError:
 		case LinphoneChatMessageStateIdle:
 		case LinphoneChatMessageStateFileTransferInProgress:
+		case LinphoneChatMessageStateEndOfEnum:
 		break;
 	}
 }
@@ -88,7 +89,7 @@ int main(int argc, char *argv[]){
 	LinphoneChatMessageCbs *cbs;
 	char * text = NULL;
 	char *tmp;
-	
+
 	signal(SIGINT,stop);
 
 	for(i = 1; i < argc; ++i) {
@@ -154,19 +155,19 @@ int main(int argc, char *argv[]){
 
 	vtable.auth_info_requested = auth_info_requested;
 	lc=linphone_core_new(&vtable,NULL, NULL, NULL);
-	
+
 	if (passwd){
 		LinphoneAuthInfo *ai = linphone_core_create_auth_info(lc, linphone_address_get_username(from), NULL, passwd, NULL, NULL, NULL);
 		linphone_core_add_auth_info(lc, ai);
 		linphone_auth_info_destroy(ai);
 	}
-	
+
 	if (!route){
 		route = linphone_address_clone(from);
 		linphone_address_set_username(route, NULL);
 		linphone_address_set_display_name(route, NULL);
 	}
-	
+
 	cfg = linphone_core_create_proxy_config(lc);
 	linphone_proxy_config_set_identity_address(cfg, from);
 	tmp = linphone_address_as_string(route);
@@ -175,7 +176,7 @@ int main(int argc, char *argv[]){
 	linphone_proxy_config_enable_register(cfg, FALSE);
 	linphone_core_add_proxy_config(lc, cfg);
 	linphone_proxy_config_unref(cfg);
-	
+
 	room = linphone_core_get_chat_room(lc, to);
 	msg = linphone_chat_room_create_message(room, text);
 	cbs = linphone_chat_message_get_callbacks(msg);
@@ -192,4 +193,3 @@ int main(int argc, char *argv[]){
 	linphone_core_destroy(lc);
 	return 0;
 }
-
