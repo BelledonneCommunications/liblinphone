@@ -589,7 +589,8 @@ static LinphoneAddress *guess_contact_for_register (LinphoneProxyConfig *cfg) {
 
 void _linphone_proxy_config_unregister(LinphoneProxyConfig *obj) {
 	if (obj->op && (obj->state == LinphoneRegistrationOk ||
-					(obj->state == LinphoneRegistrationProgress && obj->expires != 0))) {
+					(obj->state == LinphoneRegistrationProgress && obj->expires != 0)) &&
+					!linphone_proxy_config_is_push_notification_allowed(obj)) {
 		obj->op->unregister();
 	}
 }
