@@ -224,33 +224,6 @@ typedef struct _LinphoneSearchResult LinphoneSearchResult;
 // compilation terminated.
 // -----------------------------------------------------------------------------
 
-// -----------------------------------------------------------------------------
-// Call.
-// -----------------------------------------------------------------------------
-
-/**
- * #LinphoneCallState enum represents the different states a call can reach into.
- * The application is notified of a state change through the LinphoneCoreVTable::call_state_changed callback.
- * @ingroup call_control
- */
-L_DECLARE_C_ENUM(CallState, L_ENUM_VALUES_CALL_SESSION_STATE);
-
-// -----------------------------------------------------------------------------
-// ChatRoom.
-// -----------------------------------------------------------------------------
-
-/**
- * #LinphoneChatMessageDirection is used to indicate if a message is outgoing or incoming.
- * @ingroup chatroom
- */
-L_DECLARE_C_ENUM(ChatMessageDirection, L_ENUM_VALUES_CHAT_MESSAGE_DIRECTION);
-
-/**
- * #LinphoneChatMessageState is used to notify if messages have been successfully delivered or not.
- * @ingroup chatroom
- */
-L_DECLARE_C_ENUM(ChatMessageState, L_ENUM_VALUES_CHAT_MESSAGE_STATE);
-
 /**
  * #LinphoneChatRoomCapabilities is used to indicate the capabilities of a chat room.
  * @ingroup chatroom
