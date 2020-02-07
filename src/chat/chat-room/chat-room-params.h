@@ -31,8 +31,28 @@ class ChatRoom;
 class ChatRoomParams : public bellesip::HybridObject<LinphoneChatRoomParams, ChatRoomParams> {
 public:
 
-	L_DECLARE_ENUM(ChatRoomBackend, L_ENUM_VALUES_CHAT_ROOM_BACKEND);
-	L_DECLARE_ENUM(ChatRoomEncryptionBackend, L_ENUM_VALUES_CHAT_ROOM_ENCRYPTION_BACKEND);
+	enum class Backend{
+		None = LinphoneChatRoomBackendBasic,
+		Basic = LinphoneChatRoomBackendFlexisipChat,
+		EndOfEnum = LinphoneChatRoomBackendEndOfEnum
+	};
+	typedef enum Backend ChatRoomBackend;
+
+	enum class EncryptionBackend{
+		None = LinphoneChatRoomEncryptionBackendNone,
+		Lime = LinphoneChatRoomEncryptionBackendLime,
+		EndOfEnum = LinphoneChatRoomEncryptionBackendEndOfEnum
+	};
+
+	typedef enum EncryptionBackend ChatRoomEncryptionBackend;
+
+	//casting to int to get rid of the enum compare warning.
+	//Here we are comparing two enums serving the same purpose
+	static_assert((int)Backend::EndOfEnum == (int)LinphoneChatRoomBackendEndOfEnum, "LinphoneChatRoomBackend and ChatRoomParams::Backend are not synchronized, fix this !");
+
+	//casting to int to get rid of the enum compare warning.
+	//Here we are comparing two enums serving the same purpose
+	static_assert((int)EncryptionBackend::EndOfEnum == (int)LinphoneChatRoomEncryptionBackendEndOfEnum, "LinphoneChatRoomEncryptionBackend and ChatRoomParams::EncryptionBackend are not synchronized, fix this !");
 
 	static AbstractChatRoom::CapabilitiesMask toCapabilities(const std::shared_ptr<ChatRoomParams> &params);
 	static std::shared_ptr<ChatRoomParams> fromCapabilities(AbstractChatRoom::CapabilitiesMask capabilities);
