@@ -21,29 +21,37 @@
 #define _L_CALL_ENUMS_H_
 
 // =============================================================================
-
-#define L_ENUM_VALUES_CALL_SESSION_STATE(F) \
-	F(Idle /**< Initial state */) \
-	F(IncomingReceived /**< Incoming call received */) \
-	F(OutgoingInit /**< Outgoing call initialized */) \
-	F(OutgoingProgress /**< Outgoing call in progress */) \
-	F(OutgoingRinging /**< Outgoing call ringing */) \
-	F(OutgoingEarlyMedia /**< Outgoing call early media */) \
-	F(Connected /**< Connected */) \
-	F(StreamsRunning /**< Streams running */) \
-	F(Pausing /**< Pausing */) \
-	F(Paused /**< Paused */) \
-	F(Resuming /**< Resuming */) \
-	F(Referred /**< Referred */) \
-	F(Error /**< Error */) \
-	F(End /**< Call end */) \
-	F(PausedByRemote /**< Paused by remote */) \
-	F(UpdatedByRemote /**< The call&apos;s parameters are updated for example when video is asked by remote */) \
-	F(IncomingEarlyMedia /**< We are proposing early media to an incoming call */) \
-	F(Updating /**< We have initiated a call update */) \
-	F(Released /**< The call object is now released */) \
-	F(EarlyUpdatedByRemote /**< The call is updated by remote while not yet answered (SIP UPDATE in early dialog received) */) \
-	F(EarlyUpdating /**< We are updating the call while not yet answered (SIP UPDATE in early dialog sent) */)
+/**
+ * #LinphoneCallState enum represents the different states a call can reach into.
+ * The application is notified of a state change through the LinphoneCoreVTable::call_state_changed callback.
+ * @ingroup call_control
+ */
+typedef enum _LinphoneCallState{
+	LinphoneCallStateIdle, /**< Initial state */
+	LinphoneCallStateIncomingReceived, /**< Incoming call received */
+	LinphoneCallStateOutgoingInit, /**< Outgoing call initialized */
+	LinphoneCallStateOutgoingProgress, /**< Outgoing call in progress */
+	LinphoneCallStateOutgoingRinging, /**< Outgoing call ringing */
+	LinphoneCallStateOutgoingEarlyMedia, /**< Outgoing call early media */
+	LinphoneCallStateConnected, /**< Connected */
+	LinphoneCallStateStreamsRunning, /**< Streams running */
+	LinphoneCallStatePausing, /**< Pausing */
+	LinphoneCallStatePaused, /**< Paused */
+	LinphoneCallStateResuming, /**< Resuming */
+	LinphoneCallStateReferred, /**< Referred */
+	LinphoneCallStateError, /**< Error */
+	// LINPHONE CALL END OU LINPHONE CALL STATE END ?????
+	LinphoneCallStateEnd, /**< Call end */
+	LinphoneCallStatePausedByRemote, /**< Paused by remote */
+	LinphoneCallStateUpdatedByRemote, /**< The call&apos;s parameters are updated for example when video is asked by remote */
+	LinphoneCallStateIncomingEarlyMedia, /**< We are proposing early media to an incoming call */
+	LinphoneCallStateUpdating, /**< We have initiated a call update */
+	LinphoneCallStateEarlyUpdating, /**< We are updating the call while not yet answered (SIP UPDATE in early dialog sent) */
+	LinphoneCallStateReleased, /**< The call object is now released */
+	LinphoneCallStateEarlyUpdatedByRemote, /**< The call is updated by remote while not yet answered (SIP UPDATE in early dialog received) */
+	LinphoneCallStateEarlyUpdatingByRemote,
+	LinphoneCallStateEndOfEnum /* This MUST be the last member */
+} LinphoneCallState;
 
 // =============================================================================
 // DEPRECATED
@@ -67,8 +75,10 @@
 #define LinphoneCallUpdatedByRemote LinphoneCallStateUpdatedByRemote
 #define LinphoneCallIncomingEarlyMedia LinphoneCallStateIncomingEarlyMedia
 #define LinphoneCallUpdating LinphoneCallStateUpdating
+#define LinphoneCallEarlyUpdating LinphoneCallStateEarlyUpdating
 #define LinphoneCallReleased LinphoneCallStateReleased
 #define LinphoneCallEarlyUpdatedByRemote LinphoneCallStateEarlyUpdatedByRemote
-#define LinphoneCallEarlyUpdating LinphoneCallStateEarlyUpdating
+#define LinphoneCallEarlyUpdatingByRemote LinphoneCallStateEarlyUpdatingByRemote
+#define LinphoneCallEndOfEnum LinphoneCallStateEndOfEnum
 
 #endif // ifndef _L_CALL_ENUMS_H_
