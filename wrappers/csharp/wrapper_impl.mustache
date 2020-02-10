@@ -46,8 +46,8 @@ namespace Linphone
 		public const string BELLE_SIP_LIB_NAME = LIB_NAME;
 		public const string BCTOOLBOX_LIB_NAME = LIB_NAME;
 #endif
-
-#if ANDROID
+/// https://docs.microsoft.com/fr-fr/xamarin/cross-platform/app-fundamentals/building-cross-platform-applications/platform-divergence-abstraction-divergent-implementation#android
+#if __ANDROID__
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern void setAndroidLogHandler();
 #endif
@@ -61,7 +61,7 @@ namespace Linphone
 		/// </summary>
 		public static void setNativeLogHandler()
 		{
-#if ANDROID
+#if __ANDROID__
 			setAndroidLogHandler();
 #elif __IOS__
 			linphone_iphone_enable_logs();
@@ -416,6 +416,18 @@ namespace Linphone
 	[StructLayout(LayoutKind.Sequential)]
 	public class {{className}} : LinphoneObject
 	{
+		{{#isLinphoneFactory}}
+#if  __ANDROID__
+        static Factory()
+        {
+            Java.Lang.JavaSystem.LoadLibrary("c++_shared");
+            Java.Lang.JavaSystem.LoadLibrary("bctoolbox");
+            Java.Lang.JavaSystem.LoadLibrary("ortp");
+            Java.Lang.JavaSystem.LoadLibrary("mediastreamer");
+            Java.Lang.JavaSystem.LoadLibrary("linphone");
+        }
+#endif
+		{{/isLinphoneFactory}}
 		{{#isLinphoneCall}}
 		/// Get the native window handle of the video window, casted as an unsigned long.
 		public string NativeVideoWindowIdString
