@@ -143,6 +143,10 @@ public:
 	void addSupportedTag (const std::string &tag);
 	void removeSupportedTag (const std::string &tag);
 
+	static void setWellKnownPort (int value);
+	static void setTLSWellKnownPort (int value);
+
+
 	void setUserAgent (const std::string &value);
 	const std::string &getUserAgent () const;
 	void appendStackStringToUserAgent ();
@@ -241,7 +245,7 @@ public:
 	const std::string &getDnsUserHostsFile () const;
 
 	belle_sip_resolver_context_t *resolveA (const std::string &name, int port, int family, belle_sip_resolver_callback_t cb, void *data);
-	belle_sip_resolver_context_t *resolve (const std::string &service, const std::string &transport, const std::string &name, int port, int family, belle_sip_resolver_callback_t cb, void *data); 
+	belle_sip_resolver_context_t *resolve (const std::string &service, const std::string &transport, const std::string &name, int port, int family, belle_sip_resolver_callback_t cb, void *data);
 
 
 	// ---------------------------------------------------------------------------
@@ -340,4 +344,3 @@ int toSipCode (SalReason reason);
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_SAL_H_
-

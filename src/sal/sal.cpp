@@ -600,6 +600,14 @@ void Sal::removeSupportedTag (const string &tag) {
 	}
 }
 
+void Sal::setWellKnownPort (int value) {
+	belle_sip_stack_set_well_known_port(value);
+}
+
+void Sal::setTLSWellKnownPort (int value) {
+	belle_sip_stack_set_well_known_port_tls(value);
+}
+
 void Sal::resetTransports () {
 	lInfo() << "Reseting transports";
 	belle_sip_provider_clean_channels(mProvider);

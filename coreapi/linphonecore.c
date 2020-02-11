@@ -96,6 +96,8 @@
 #include "call/call-p.h"
 #include "conference/params/media-session-params-p.h"
 
+#include "sal/sal.h"
+
 #ifdef HAVE_ZLIB
 #define COMPRESSED_LOG_COLLECTION_EXTENSION "gz"
 #ifdef _WIN32
@@ -1454,10 +1456,16 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	memset(&tr,0,sizeof(tr));
 
-	tr.udp_port=lp_config_get_int(lc->config,"sip","sip_port",5060);
+	tr.udp_port= lp_config_get_int(lc->config,"sip","sip_port",5060);
 	tr.tcp_port=lp_config_get_int(lc->config,"sip","sip_tcp_port",5060);
+
 	/*we are not listening inbound connection for tls, port has no meaning*/
-	tr.tls_port=lp_config_get_int(lc->config,"sip","sip_tls_port",LC_SIP_TRANSPORT_RANDOM);
+	tr.tls_port=lp_config_get_int(lc->config,"sip","sip_tls_port", LC_SIP_TRANSPORT_RANDOM);
+
+	Sal::setWellKnownPort(lp_config_get_int(lc->config,"sip","sip_well_known_port", 0));
+
+	Sal::setTLSWellKnownPort(lp_config_get_int(lc->config,"sip","sip_tls_well_known_port", 0));
+
 
 	certificates_config_read(lc);
 	/*setting the dscp must be done before starting the transports, otherwise it is not taken into effect*/
@@ -1515,7 +1523,7 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	tmp=lp_config_get_int(lc->config,"app","auto_download_incoming_files_max_size",-1);
 	linphone_core_set_max_size_for_auto_download_incoming_files(lc, tmp);
-	
+
 	tmp=lp_config_get_int(lc->config,"app","sender_name_hidden_in_forward_message",0);
 	linphone_core_enable_sender_name_hidden_in_forward_message(lc, !!tmp);
 
@@ -6564,7 +6572,7 @@ void _linphone_core_uninit(LinphoneCore *lc)
 	if (lc->state != LinphoneGlobalOff) {
 		_linphone_core_stop(lc);
 	}
-	
+
 	lp_config_unref(lc->config);
 	lc->config = NULL;
 #ifdef __ANDROID__
@@ -6574,7 +6582,7 @@ void _linphone_core_uninit(LinphoneCore *lc)
 	}
 #endif
 	lc->system_context = NULL;
-	
+
 	linphone_core_deactivate_log_serialization_if_needed();
 	bctbx_list_free_with_data(lc->vtable_refs,(void (*)(void *))v_table_reference_destroy);
 	bctbx_uninit_logger();
@@ -6904,7 +6912,7 @@ void linphone_core_set_zrtp_secrets_file(LinphoneCore *lc, const char* file){
 		linphone_core_zrtp_cache_close(lc);
 		lc->zrtp_secrets_cache = NULL;
 	}
-	
+
 	if (file) {
 		lc->zrtp_secrets_cache = ms_strdup(file);
 		linphone_core_zrtp_cache_db_init(lc, file);
