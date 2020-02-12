@@ -100,6 +100,8 @@ namespace Linphone
 
 		internal GCHandle handle;
 
+		internal List<IntPtr> string_ptr_list;
+
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		private delegate void OnLinphoneObjectDataDestroyed(IntPtr data);
 
@@ -120,16 +122,13 @@ namespace Linphone
 		static extern void belle_sip_object_unref(IntPtr ptr);
 
 		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern void belle_sip_object_data_remove(IntPtr ptr, string data);
+		static extern void belle_sip_object_data_remove(IntPtr ptr, string name);
 
 		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr bctbx_list_next(IntPtr ptr);
 
 		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr bctbx_list_get_data(IntPtr ptr);
-
-		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern IntPtr bctbx_list_append(IntPtr elem, string data);
 
 		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr bctbx_list_append(IntPtr elem, IntPtr data);
@@ -229,14 +228,25 @@ namespace Linphone
 			}
 		}
 
-		internal static IntPtr StringArrayToBctbxList(IEnumerable<string> stringlist)
+		internal protected IntPtr StringArrayToBctbxList(IEnumerable<string> stringlist)
 		{
 			IntPtr bctbx_list = IntPtr.Zero;
+			string_ptr_list = new List<IntPtr>();
 			foreach (string s in stringlist)
 			{
-				bctbx_list = bctbx_list_append(bctbx_list, s);
+				IntPtr string_ptr = Marshal.StringToHGlobalAnsi(s);
+				bctbx_list = bctbx_list_append(bctbx_list, string_ptr);
+				string_ptr_list.Add(string_ptr);
 			}
 			return bctbx_list;
+		}
+
+		internal protected void CleanStringArrayPtrs()
+		{
+			foreach (IntPtr string_ptr in string_ptr_list)
+			{
+				Marshal.FreeHGlobal(string_ptr);
+			}
 		}
 
 		internal static IntPtr ObjectArrayToBctbxList<T>(IEnumerable<T> objlist) where T : LinphoneObject, new()
@@ -438,7 +448,9 @@ namespace Linphone
 			}
 			set
 			{
-				linphone_call_set_native_video_window_id(nativePtr, Marshal.StringToHGlobalUni(value));
+				IntPtr string_ptr = Marshal.StringToHGlobalUni(value);
+				linphone_call_set_native_video_window_id(nativePtr, string_ptr);
+				Marshal.FreeHGlobal(string_ptr);
 			}
 		}
 		{{/isLinphoneCall}}
@@ -450,9 +462,9 @@ namespace Linphone
 			get
 			{
 				IntPtr ptr = linphone_core_get_ms_factory(nativePtr);
-		                MediastreamerFactory factory = new MediastreamerFactory();
+				MediastreamerFactory factory = new MediastreamerFactory();
 				factory.nativePtr = ptr;
-		                return factory;
+				return factory;
 			}
 		}
 
@@ -465,7 +477,9 @@ namespace Linphone
 			}
 			set
 			{
-				linphone_core_set_native_video_window_id(nativePtr, Marshal.StringToHGlobalUni(value));
+				IntPtr string_ptr = Marshal.StringToHGlobalUni(value);
+				linphone_core_set_native_video_window_id(nativePtr, string_ptr);
+				Marshal.FreeHGlobal(string_ptr);
 			}
 		}
 
@@ -478,7 +492,9 @@ namespace Linphone
 			}
 			set
 			{
-				linphone_core_set_native_preview_window_id(nativePtr, Marshal.StringToHGlobalUni(value));
+				IntPtr string_ptr = Marshal.StringToHGlobalUni(value);
+				linphone_core_set_native_preview_window_id(nativePtr, string_ptr);
+				Marshal.FreeHGlobal(string_ptr);
 			}
 		}
 		{{/isLinphoneCore}}
@@ -588,6 +604,7 @@ namespace Linphone
 				{{/is_generic}}
 				{{#is_string_list}}
 				{{#exception}}int exception_result = {{/exception}}{{setter_c_name}}({{setter_nativePtr}}StringArrayToBctbxList(value));
+				CleanStringArrayPtrs();
 				{{#exception}}if (exception_result != 0) throw new LinphoneException("{{property_name}} setter returned value " + exception_result);{{/exception}}
 				{{/is_string_list}}
 				{{#is_class_list}}
@@ -609,29 +626,31 @@ namespace Linphone
 		{
 			{{#is_string}}
 			IntPtr stringPtr = {{c_name}}({{nativePtr}}{{{c_args}}});
-			return Marshal.PtrToStringAnsi(stringPtr);
+			string returnVal = Marshal.PtrToStringAnsi(stringPtr);
 			{{/is_string}}
 			{{#is_bool}}
-			{{return}}{{c_name}}({{nativePtr}}{{{c_args}}}) == (char)0 ? false : true;
+			{{#hasReturn}}bool returnVal = {{/hasReturn}}{{c_name}}({{nativePtr}}{{{c_args}}}) == (char)0 ? false : true;
 			{{/is_bool}}
 			{{#is_class}}
 			IntPtr ptr = {{c_name}}({{nativePtr}}{{{c_args}}});
-			return fromNativePtr<{{type}}>(ptr, {{takeRef}});
+			{{type}} returnVal = fromNativePtr<{{type}}>(ptr, {{takeRef}});
 			{{/is_class}}
 			{{#is_enum}}
-			{{#exception}}int exception_result = {{/exception}}{{return}}{{c_name}}({{nativePtr}}{{{c_args}}});
+			{{#exception}}int exception_result = {{/exception}}{{#hasReturn}}{{{type}}} returnVal = {{/hasReturn}}{{c_name}}({{nativePtr}}{{{c_args}}});
 			{{#exception}}if (exception_result != 0) throw new LinphoneException("{{name}} returned value " + exception_result);{{/exception}}
 			{{/is_enum}}
 			{{#is_generic}}
-			{{#exception}}int exception_result = {{/exception}}{{return}}{{c_name}}({{nativePtr}}{{{c_args}}});
+			{{#exception}}int exception_result = {{/exception}}{{#hasReturn}}{{{type}}} returnVal = {{/hasReturn}}{{c_name}}({{nativePtr}}{{{c_args}}});
 			{{#exception}}if (exception_result != 0) throw new LinphoneException("{{name}} returned value" + exception_result);{{/exception}}
 			{{/is_generic}}
 			{{#is_string_list}}
-			return MarshalStringArray({{c_name}}({{nativePtr}}{{{c_args}}}));
+			IEnumerable<string> returnVal = MarshalStringArray({{c_name}}({{nativePtr}}{{{c_args}}}));
 			{{/is_string_list}}
 			{{#is_class_list}}
-			return MarshalBctbxList<{{{list_type}}}>({{c_name}}({{nativePtr}}{{{c_args}}}));
+			IEnumerable<{{{list_type}}}> returnVal = MarshalBctbxList<{{{list_type}}}>({{c_name}}({{nativePtr}}{{{c_args}}}));
 			{{/is_class_list}}
+			{{#clean_string_list_ptrs}}CleanStringArrayPtrs();{{/clean_string_list_ptrs}}
+			{{#hasReturn}}return returnVal;{{/hasReturn}}
 		}
 		{{/impl}}
 		{{/has_impl}}

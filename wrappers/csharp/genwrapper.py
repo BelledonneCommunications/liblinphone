@@ -100,7 +100,7 @@ class CsharpTranslator(object):
 			methodDict['impl']['type'] = method.returnType.translate(self.langTranslator, dllImport=False)
 			methodDict['impl']['name'] = method.name.translate(self.nameTranslator)
 			methodDict['impl']['override'] = 'override ' if method.name.translate(self.nameTranslator) == 'ToString' else ''
-			methodDict['impl']['return'] = '' if methodDict['impl']['type'] == "void" else 'return '
+			methodDict['impl']['hasReturn'] = False if methodDict['impl']['type'] == "void" else True
 			methodDict['impl']['c_name'] = method.name.to_c()
 			methodDict['impl']['nativePtr'] = '' if static else ('nativePtr, ' if len(method.args) > 0 else 'nativePtr')
 
@@ -120,6 +120,7 @@ class CsharpTranslator(object):
 
 			methodDict['impl']['args'] = ''
 			methodDict['impl']['c_args'] = ''
+			methodDict['impl']['clean_string_list_ptrs'] = False
 			for arg in method.args:
 				if arg is not method.args[0]:
 					methodDict['impl']['args'] += ', '
@@ -136,6 +137,7 @@ class CsharpTranslator(object):
 					listtype = self.get_class_array_type(arg.type.translate(self.langTranslator, dllImport=False))
 					if listtype == 'string':
 						methodDict['impl']['c_args'] += "StringArrayToBctbxList(" + arg.name.translate(self.nameTranslator) + ")"
+						methodDict['impl']['clean_string_list_ptrs'] = True
 					else:
 						methodDict['impl']['c_args'] += "ObjectArrayToBctbxList<" + listtype + ">(" + arg.name.translate(self.nameTranslator) + ")"
 				else:
