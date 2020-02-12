@@ -1462,9 +1462,9 @@ static void sip_config_read(LinphoneCore *lc) {
 	/*we are not listening inbound connection for tls, port has no meaning*/
 	tr.tls_port=lp_config_get_int(lc->config,"sip","sip_tls_port", LC_SIP_TRANSPORT_RANDOM);
 
-	Sal::setWellKnownPort(lp_config_get_int(lc->config,"sip","sip_well_known_port", 0));
+	Sal::setWellKnownPort(lp_config_get_int(lc->config,"sip","sip_well_known_port", 5060));
 
-	Sal::setTLSWellKnownPort(lp_config_get_int(lc->config,"sip","sip_tls_well_known_port", 0));
+	Sal::setTLSWellKnownPort(lp_config_get_int(lc->config,"sip","sip_tls_well_known_port", 5061));
 
 
 	certificates_config_read(lc);
