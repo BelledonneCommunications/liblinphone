@@ -123,6 +123,8 @@ AbstractChatRoom::SecurityLevel Participant::getSecurityLevel () const {
 				break;
 			case AbstractChatRoom::SecurityLevel::Safe:
 				break; // if all devices are Safe the whole participant is Safe
+			case AbstractChatRoom::SecurityLevel::EndOfEnum:
+				break;
 		}
 	}
 	if (isSafe)

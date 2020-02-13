@@ -77,14 +77,6 @@ LINPHONE_BEGIN_NAMESPACE
 		return ""; \
 	}
 
-template<typename T>
-inline char getEnumValueAsString (const T &) { return 0; }
-
-template<typename T>
-struct IsDefinedEnum {
-	enum { value = sizeof(getEnumValueAsString(std::declval<T>())) == sizeof(const char *) };
-};
-
 //Explicit conversion from enum type to underlying type
 template<typename T>
 constexpr auto to_integral(T e) -> typename std::underlying_type<T>::type

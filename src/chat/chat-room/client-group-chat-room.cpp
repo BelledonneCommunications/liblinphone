@@ -400,6 +400,9 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
 				break;
 			case AbstractChatRoom::SecurityLevel::Safe:
 				break; // if all participants are Safe the whole chatroom is Safe
+			case AbstractChatRoom::SecurityLevel::EndOfEnum:
+				lError() << "Chatroom securityLevel = WRONG (EndOfEnum). A chatroom should never be in this state";
+				break;
 		}
 	}
 
@@ -417,6 +420,9 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
 					break;
 				case AbstractChatRoom::SecurityLevel::Safe:
 					break; // if all devices are Safe the whole participant is Safe
+				case AbstractChatRoom::SecurityLevel::EndOfEnum:
+					lError() << "Chatroom securityLevel = WRONG (EndOfEnum). A chatroom should never be in this state";
+					break;
 			}
 		}
 	}
@@ -688,7 +694,7 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 	//remove event handler from list event handler if used
 	if (d->listHandlerUsed && getCore()->getPrivate()->remoteListEventHandler)
 		getCore()->getPrivate()->remoteListEventHandler->removeHandler(dConference->eventHandler.get());
-	
+
 	d->setState(ChatRoom::State::Terminated);
 
 	auto event = make_shared<ConferenceEvent>(
@@ -712,7 +718,7 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 
 	if (getState() != ChatRoom::State::Created) {
 		lWarning() << "First notify received in ClientGroupChatRoom that is not in the Created state ["
-			<< Utils::toString(getState()) << "], ignoring it!";
+			<< getState() << "], ignoring it!";
 		return;
 	}
 
@@ -724,7 +730,7 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 
 		if (chatRoom) {
 			auto capabilities = chatRoom->getCapabilities();
-			
+
 			if (getCore()->getPrivate()->basicToFlexisipChatroomMigrationEnabled() && (capabilities & ChatRoom::Capabilities::Basic) && (capabilities & ChatRoom::Capabilities::Migratable)) {
 				performMigration = true;
 			}
@@ -936,7 +942,7 @@ void ClientGroupChatRoom::onParticipantsCleared () {
 			getCore()->getPrivate()->mainDb->deleteChatRoomParticipantDevice(getSharedFromThis(), device);
 	}
 	dConference->participants.clear();
-	
+
 }
 
 void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
@@ -979,7 +985,7 @@ void ClientGroupChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 		if (d->isEphemeral) { // Do not create event if ephemeral feature is disabled
 			shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageLifetimeChanged, time(nullptr), d->conferenceId, lifetime);
 			d->addEvent(event);
-			
+
 			LinphoneChatRoom *cr = d->getCChatRoom();
 			_linphone_chat_room_notify_ephemeral_event(cr, L_GET_C_BACK_PTR(event));
 		}

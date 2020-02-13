@@ -43,7 +43,7 @@ typedef enum _LinphoneChatRoomState{
  * @ingroup chatroom
  */
 typedef enum _LinphoneChatRoomCapabilities{
-	LinphoneChatRoomCapabilitiesNone = 1, /**< No capabilities. */
+	LinphoneChatRoomCapabilitiesNone = 0, /**< No capabilities. */
 	LinphoneChatRoomCapabilitiesBasic = 1 << 0 , /**< No server. It&apos;s a direct communication */
 	LinphoneChatRoomCapabilitiesRealTimeText = 1 << 1, /**< Supports RTT */
 	LinphoneChatRoomCapabilitiesConference = 1 << 2, /**< Use server (supports group chat) */
@@ -70,8 +70,8 @@ typedef enum _LinphoneChatRoomBackend{
  * @ingroup chatroom
  */
 typedef enum _LinphoneChatRoomEncryptionBackend{
-	LinphoneChatRoomEncryptionBackendNone = 1 << 0, /**< No encryption. */
-	LinphoneChatRoomEncryptionBackendLime = 1 << 1, /**< Lime x3dh encryption. */
+	LinphoneChatRoomEncryptionBackendNone = 0, /**< No encryption. */
+	LinphoneChatRoomEncryptionBackendLime = 1 << 0, /**< Lime x3dh encryption. */
 	LinphoneChatRoomEncryptionBackendEndOfEnum, /** Guard preventing enums mismatch between c and c++ */
 } LinphoneChatRoomEncryptionBackend;
 
