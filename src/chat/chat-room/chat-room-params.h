@@ -32,16 +32,16 @@ class ChatRoomParams : public bellesip::HybridObject<LinphoneChatRoomParams, Cha
 public:
 
 	enum class Backend{
-		None = LinphoneChatRoomBackendBasic,
-		Basic = LinphoneChatRoomBackendFlexisipChat,
-		EndOfEnum = LinphoneChatRoomBackendEndOfEnum
+		Basic = LinphoneChatRoomBackendBasic,
+		FlexisipChat = LinphoneChatRoomBackendFlexisipChat,
+		EndOfEnum
 	};
 	typedef enum Backend ChatRoomBackend;
 
 	enum class EncryptionBackend{
 		None = LinphoneChatRoomEncryptionBackendNone,
 		Lime = LinphoneChatRoomEncryptionBackendLime,
-		EndOfEnum = LinphoneChatRoomEncryptionBackendEndOfEnum
+		EndOfEnum
 	};
 
 	typedef enum EncryptionBackend ChatRoomEncryptionBackend;

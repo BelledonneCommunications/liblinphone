@@ -47,6 +47,11 @@ class LINPHONE_PUBLIC AbstractChatRoom : public Object, public CoreAccessor, pub
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(AbstractChatRoom);
 
+
+	/*enum class is used to create namespaces for Enums
+	  doing this prevents the compiler to confuse members from different Enums with same name.
+		i.e. "None" for the "State" Enum and "None" from the Capabilities Enum */
+
 	enum class State{
 		None = LinphoneChatRoomStateNone,
 		Instantiated = LinphoneChatRoomStateInstantiated,
@@ -57,7 +62,7 @@ public:
 		Terminated = LinphoneChatRoomStateTerminated,
 		TerminationFailed = LinphoneChatRoomStateTerminationFailed,
 		Deleted = LinphoneChatRoomStateDeleted,
-		EndOfEnum = LinphoneChatRoomStateEndOfEnum
+		EndOfEnum
 	};
 
 	enum class Capabilities{
@@ -69,28 +74,28 @@ public:
 		Migratable = LinphoneChatRoomCapabilitiesMigratable,
 		OneToOne = LinphoneChatRoomCapabilitiesOneToOne,
 		Encrypted = LinphoneChatRoomCapabilitiesEncrypted,
-		EndOfEnum = LinphoneChatRoomCapabilitiesEndOfEnum
+		EndOfEnum
 	};
 
 	enum class SecurityLevel{
-		Unsafe = LinphoneEncryptionEngineSecurityLevelUnsafe,
-		ClearText = LinphoneEncryptionEngineSecurityLevelClearText,
-		Encrypted = LinphoneEncryptionEngineSecurityLevelEncrypted,
-		Safe = LinphoneEncryptionEngineSecurityLevelSafe,
-		EndOfEnum = LinphoneEncryptionEngineSecurityLevelEndOfEnum
+		Unsafe = LinphoneChatRoomSecurityLevelUnsafe,
+		ClearText = LinphoneChatRoomSecurityLevelClearText,
+		Encrypted = LinphoneChatRoomSecurityLevelEncrypted,
+		Safe = LinphoneChatRoomSecurityLevelSafe,
+		EndOfEnum
 	};
 
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
-	static_assert((int)State::EndOfEnum == (int)LinphoneChatRoomStateEndOfEnum, "LinphoneChatRoomState and AbstractChatRoom::State are not synchronized, fix this !");
+	static_assert((int)AbstractChatRoom::State::EndOfEnum == (int)LinphoneChatRoomStateEndOfEnum, "LinphoneChatRoomState and AbstractChatRoom::State are not synchronized, fix this !");
 
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
-	static_assert((int)Capabilities::EndOfEnum == (int)LinphoneChatRoomCapabilitiesEndOfEnum, "LinphoneChatRoomCapabilities and AbstractChatRoom::Capabilities are not synchronized, fix this !");
+	static_assert((int)AbstractChatRoom::Capabilities::EndOfEnum == (int)LinphoneChatRoomCapabilitiesEndOfEnum, "LinphoneChatRoomCapabilities and AbstractChatRoom::Capabilities are not synchronized, fix this !");
 
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
-	static_assert((int)SecurityLevel::EndOfEnum == (int)LinphoneEncryptionEngineSecurityLevelEndOfEnum, "LinphoneEncryptionEngineSecurityLevel and AbstractChatRoom::SecurityLevel are not synchronized, fix this !");
+	static_assert((int)AbstractChatRoom::SecurityLevel::EndOfEnum == (int)LinphoneChatRoomSecurityLevelEndOfEnum, "LinphoneEncryptionEngineSecurityLevel and AbstractChatRoom::SecurityLevel are not synchronized, fix this !");
 
 	typedef EnumMask<Capabilities> CapabilitiesMask;
 
@@ -160,6 +165,12 @@ private:
 	L_DECLARE_PRIVATE(AbstractChatRoom);
 	L_DISABLE_COPY(AbstractChatRoom);
 };
+
+std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::State e);
+
+std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::Capabilities e);
+
+std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::SecurityLevel e);
 
 LINPHONE_END_NAMESPACE
 

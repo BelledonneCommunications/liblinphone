@@ -32,4 +32,46 @@ AbstractChatRoom::AbstractChatRoom (
 	const shared_ptr<Core> &core
 ) : Object(p), CoreAccessor(core) {}
 
+std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::State e) {
+	switch(e) {
+		case AbstractChatRoom::State::None: lhs << "None"; break;
+		case AbstractChatRoom::State::Instantiated: lhs << "Instantiated"; break;
+		case AbstractChatRoom::State::CreationPending: lhs << "CreationPending"; break;
+		case AbstractChatRoom::State::Created: lhs << "Created"; break;
+		case AbstractChatRoom::State::CreationFailed: lhs << "CreationFailed"; break;
+		case AbstractChatRoom::State::TerminationPending: lhs << "TerminationPending"; break;
+		case AbstractChatRoom::State::Terminated: lhs << "Terminated"; break;
+		case AbstractChatRoom::State::TerminationFailed: lhs << "TerminationFailed"; break;
+		case AbstractChatRoom::State::Deleted: lhs << "Deleted"; break;
+		case AbstractChatRoom::State::EndOfEnum: lhs << "EndOfEnum"; break;
+	}
+	return lhs;
+}
+
+std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::Capabilities e) {
+	switch(e) {
+		case AbstractChatRoom::Capabilities::None: lhs << "None"; break;
+		case AbstractChatRoom::Capabilities::Basic: lhs << "Basic"; break;
+		case AbstractChatRoom::Capabilities::RealTimeText: lhs << "RealTimeText"; break;
+		case AbstractChatRoom::Capabilities::Conference: lhs << "Conference"; break;
+		case AbstractChatRoom::Capabilities::Proxy: lhs << "Proxy"; break;
+		case AbstractChatRoom::Capabilities::Migratable: lhs << "Migratable"; break;
+		case AbstractChatRoom::Capabilities::OneToOne: lhs << "OneToOne"; break;
+		case AbstractChatRoom::Capabilities::Encrypted: lhs << "Encrypted"; break;
+		case AbstractChatRoom::Capabilities::EndOfEnum: lhs << "EndOfEnum"; break;
+	}
+	return lhs;
+}
+
+std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::SecurityLevel e) {
+	switch(e) {
+		case AbstractChatRoom::SecurityLevel::Unsafe: lhs << "Unsafe"; break;
+		case AbstractChatRoom::SecurityLevel::ClearText: lhs << "ClearText"; break;
+		case AbstractChatRoom::SecurityLevel::Encrypted: lhs << "Encrypted"; break;
+		case AbstractChatRoom::SecurityLevel::Safe: lhs << "Safe"; break;
+		case AbstractChatRoom::SecurityLevel::EndOfEnum: lhs << "EndOfEnum"; break;
+	}
+	return lhs;
+}
+
 LINPHONE_END_NAMESPACE
