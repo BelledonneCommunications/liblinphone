@@ -589,7 +589,7 @@ void MediaSessionPrivate::setRemoteParams (MediaSessionParams *msp) {
 }
 
 MediaStream *MediaSessionPrivate::getMediaStream (LinphoneStreamType type) const {
-	return getMediaStream(int(type));
+	return getMediaStream(getStreamIndex(type));
 }
 
 int MediaSessionPrivate::getRtcpPort (LinphoneStreamType type) const  {
@@ -615,7 +615,14 @@ LinphoneCallStats * MediaSessionPrivate::getStats (LinphoneStreamType type) cons
 }
 
 int MediaSessionPrivate::getStreamIndex (LinphoneStreamType type) const {
-	return getStreamIndex(getMediaStream(type));
+	switch (type) {
+		case LinphoneStreamTypeAudio: return mainAudioStreamIndex;
+		case LinphoneStreamTypeVideo: return mainVideoStreamIndex;
+		case LinphoneStreamTypeText: return mainTextStreamIndex;
+		case LinphoneStreamTypeUnknown: break;
+	}
+	lError() << __func__ << "(LinphoneStreamType): invalid stream type [" << type << "]";
+	return -1;
 }
 
 int MediaSessionPrivate::getStreamIndex (MediaStream *ms) const {
