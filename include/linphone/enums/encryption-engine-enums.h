@@ -21,18 +21,17 @@
 #define _L_ENCRYPTION_ENGINE_ENUMS_H_
 
 // =============================================================================
-
 /**
  * TODO move to encryption engine object when available
  * #LinphoneChatRoomSecurityLevel is used to indicate the encryption security level of a chat room.
  * @ingroup chatroom
  */
-typedef enum _LinphoneEncryptionEngineSecurityLevel{
-	LinphoneEncryptionEngineSecurityLevelUnsafe, /**< Security failure */
-	LinphoneEncryptionEngineSecurityLevelClearText, /**< No encryption */
-	LinphoneEncryptionEngineSecurityLevelEncrypted, /**< Encrypted */
-	LinphoneEncryptionEngineSecurityLevelSafe, /**< Encrypted and verified */
-	LinphoneEncryptionEngineSecurityLevelEndOfEnum, /** Guard preventing enums mismatch between c and c++ */
+typedef enum _LinphoneChatRoomSecurityLevel{
+	LinphoneChatRoomSecurityLevelUnsafe, /**< Security failure */
+	LinphoneChatRoomSecurityLevelClearText, /**< No encryption */
+	LinphoneChatRoomSecurityLevelEncrypted, /**< Encrypted */
+	LinphoneChatRoomSecurityLevelSafe, /**< Encrypted and verified */
+	LinphoneChatRoomSecurityLevelEndOfEnum /** Guard preventing enums mismatch between c and c++ */
 } LinphoneChatRoomSecurityLevel;
 
 #endif // ifndef _L_ENCRYPTION_ENGINE_ENUMS_H_
