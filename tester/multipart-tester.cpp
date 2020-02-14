@@ -181,7 +181,7 @@ static void chat_message_multipart_modifier_base(bool first_file_transfer, bool 
 		marieMessage->addContent(content);
 	}
 
-	linphone_core_set_file_transfer_server(marie->lc,"https://www.linphone.org:444/lft.php");
+	linphone_core_set_file_transfer_server(marie->lc, file_transfer_url);
 	marieMessage->send();
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
