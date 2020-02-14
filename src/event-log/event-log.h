@@ -38,7 +38,29 @@ class LINPHONE_PUBLIC EventLog : public BaseObject {
 	friend class MainDbPrivate;
 
 public:
-	L_DECLARE_ENUM(Type, L_ENUM_VALUES_EVENT_LOG_TYPE);
+	enum class Type{
+		None = LinphoneEventLogTypeNone,
+		ConferenceCreated = LinphoneEventLogTypeConferenceCreated,
+		ConferenceTerminated = LinphoneEventLogTypeConferenceTerminated,
+		ConferenceCallStart = LinphoneEventLogTypeConferenceCallStart,
+		ConferenceCallEnd = LinphoneEventLogTypeConferenceCallEnd,
+		ConferenceChatMessage = LinphoneEventLogTypeConferenceChatMessage,
+		ConferenceParticipantAdded = LinphoneEventLogTypeConferenceParticipantAdded,
+		ConferenceParticipantRemoved = LinphoneEventLogTypeConferenceParticipantRemoved,
+		ConferenceParticipantSetAdmin = LinphoneEventLogTypeConferenceParticipantSetAdmin,
+		ConferenceParticipantUnsetAdmin = LinphoneEventLogTypeConferenceParticipantUnsetAdmin,
+		ConferenceParticipantDeviceAdded = LinphoneEventLogTypeConferenceParticipantDeviceAdded,
+		ConferenceParticipantDeviceRemoved = LinphoneEventLogTypeConferenceParticipantDeviceRemoved,
+		ConferenceSubjectChanged = LinphoneEventLogTypeConferenceSubjectChanged,
+		ConferenceSecurityEvent = LinphoneEventLogTypeConferenceSecurityEvent,
+		ConferenceEphemeralMessageLifetimeChanged = LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged,
+		ConferenceEphemeralMessageEnabled = LinphoneEventLogTypeConferenceEphemeralMessageEnabled,
+		ConferenceEphemeralMessageDisabled = LinphoneEventLogTypeConferenceEphemeralMessageDisabled
+	};
+
+	//casting to int to get rid of the enum compare warning.
+	//Here we are comparing two enums serving the same purpose
+	static_assert((int)EventLog::Type::ConferenceEphemeralMessageDisabled == (int)LinphoneEventLogTypeConferenceEphemeralMessageDisabled, "LinphoneEventLogType and EventLog::Type are not synchronized, fix this !");
 
 	EventLog ();
 
@@ -54,6 +76,8 @@ private:
 	L_DECLARE_PRIVATE(EventLog);
 	L_DISABLE_COPY(EventLog);
 };
+
+std::ostream& operator<<(std::ostream& lhs, EventLog::Type e);
 
 LINPHONE_END_NAMESPACE
 

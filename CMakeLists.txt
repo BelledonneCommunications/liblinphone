@@ -422,4 +422,3 @@ install(FILES
 if (ENABLE_PACKAGE_SOURCE)
 	add_subdirectory(build)
 endif()
-

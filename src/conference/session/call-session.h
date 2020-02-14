@@ -52,7 +52,7 @@ class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(CallSession);
 
-	enum State{
+	enum class State{
 		Idle = LinphoneCallStateIdle,
 		IncomingReceived = LinphoneCallStateIncomingReceived,
 		OutgoingInit = LinphoneCallStateOutgoingInit,
@@ -71,15 +71,13 @@ public:
 		UpdatedByRemote = LinphoneCallStateUpdatedByRemote,
 		IncomingEarlyMedia = LinphoneCallStateIncomingEarlyMedia,
 		Updating = LinphoneCallStateUpdating,
-		EarlyUpdating = LinphoneCallStateEarlyUpdating,
 		Released = LinphoneCallStateReleased,
 		EarlyUpdatedByRemote = LinphoneCallStateEarlyUpdatedByRemote,
-		EarlyUpdatingByRemote = LinphoneCallStateEarlyUpdatingByRemote,
-		EndOfEnum = LinphoneCallStateEndOfEnum
+		EarlyUpdating
 	};
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
-	static_assert((int)EndOfEnum == (int)LinphoneCallStateEndOfEnum, "LinphoneCallState and CallSession::State are not synchronized, fix this !");
+	static_assert((int)CallSession::State::EarlyUpdating == (int)LinphoneCallStateEarlyUpdating, "LinphoneCallState and CallSession::State are not synchronized, fix this !");
 
 	CallSession (const std::shared_ptr<Core> &core, const CallSessionParams *params, CallSessionListener *listener);
 	void setListener(CallSessionListener *listener);

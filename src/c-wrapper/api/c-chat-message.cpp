@@ -487,8 +487,6 @@ const char *linphone_chat_message_state_to_string (const LinphoneChatMessageStat
 		return "LinphoneChatMessageStateDisplayed";
 	case LinphoneChatMessageStateFileTransferInProgress:
 		return "LinphoneChatMessageStateFileTransferInProgress";
-	case LinphoneChatMessageStateEndOfEnum:
-		return "LinphoneChatMessageStateEndOfEnum";
 	}
 	return NULL;
 }

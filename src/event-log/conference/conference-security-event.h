@@ -34,7 +34,20 @@ class ConferenceSecurityEventPrivate;
 class LINPHONE_PUBLIC ConferenceSecurityEvent : public ConferenceEvent {
 
 public:
-	L_DECLARE_ENUM(SecurityEventType, L_ENUM_VALUES_SECURITY_EVENT_TYPE);
+
+/*TODO rename it "Type" as the name is already clear enough with namespaces*/
+
+	enum class SecurityEventType{
+		None = LinphoneSecurityEventTypeNone,
+		SecurityLevelDowngraded = LinphoneSecurityEventTypeSecurityLevelDowngraded,
+		ParticipantMaxDeviceCountExceeded = LinphoneSecurityEventTypeParticipantMaxDeviceCountExceeded,
+		EncryptionIdentityKeyChanged = LinphoneSecurityEventTypeEncryptionIdentityKeyChanged,
+		ManInTheMiddleDetected = LinphoneSecurityEventTypeManInTheMiddleDetected
+	};
+
+	//casting to int to get rid of the enum compare warning.
+	//Here we are comparing two enums serving the same purpose
+	static_assert((int)ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected == (int)LinphoneSecurityEventTypeManInTheMiddleDetected, "LinphoneSecurityEventType and ConferenceSecurityEvent::SecurityEventType are not synchronized, fix this !");
 
 	ConferenceSecurityEvent (
 		time_t creationTime,
@@ -56,6 +69,8 @@ private:
 	L_DECLARE_PRIVATE(ConferenceSecurityEvent);
 	L_DISABLE_COPY(ConferenceSecurityEvent);
 };
+
+std::ostream& operator<<(std::ostream& lhs, ConferenceSecurityEvent::SecurityEventType e);
 
 LINPHONE_END_NAMESPACE
 

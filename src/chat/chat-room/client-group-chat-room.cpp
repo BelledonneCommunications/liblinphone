@@ -400,9 +400,6 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
 				break;
 			case AbstractChatRoom::SecurityLevel::Safe:
 				break; // if all participants are Safe the whole chatroom is Safe
-			case AbstractChatRoom::SecurityLevel::EndOfEnum:
-				lError() << "Chatroom securityLevel = WRONG (EndOfEnum). A chatroom should never be in this state";
-				break;
 		}
 	}
 
@@ -420,9 +417,6 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
 					break;
 				case AbstractChatRoom::SecurityLevel::Safe:
 					break; // if all devices are Safe the whole participant is Safe
-				case AbstractChatRoom::SecurityLevel::EndOfEnum:
-					lError() << "Chatroom securityLevel = WRONG (EndOfEnum). A chatroom should never be in this state";
-					break;
 			}
 		}
 	}
