@@ -56,6 +56,7 @@ const char* pure_sha256_user="pure_sha256_user";
 const char* test_password="secret";
 const char* test_route="sip2.linphone.org";
 const char *userhostsfile = "tester_hosts";
+const char *file_transfer_url="http://transfer.example.org:444/lft.php";
 bool_t liblinphonetester_ipv6 = TRUE;
 bool_t liblinphonetester_show_account_manager_logs = FALSE;
 bool_t liblinphonetester_no_account_creator = FALSE;

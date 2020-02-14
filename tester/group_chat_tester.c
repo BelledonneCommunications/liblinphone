@@ -3007,7 +3007,7 @@ static void group_chat_room_send_file_with_or_without_text (bool_t with_text) {
 	const char *text = "Hello Group !";
 
 	/* Globally configure an http file transfer server. */
-	linphone_core_set_file_transfer_server(marie->lc, "https://www.linphone.org:444/lft.php");
+	linphone_core_set_file_transfer_server(marie->lc, file_transfer_url);
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	coresManagerList = bctbx_list_append(coresManagerList, chloe);
