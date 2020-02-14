@@ -40,17 +40,14 @@ typedef enum _LinphoneCallState{
 	LinphoneCallStateResuming, /**< Resuming */
 	LinphoneCallStateReferred, /**< Referred */
 	LinphoneCallStateError, /**< Error */
-	// LINPHONE CALL END OU LINPHONE CALL STATE END ?????
 	LinphoneCallStateEnd, /**< Call end */
 	LinphoneCallStatePausedByRemote, /**< Paused by remote */
 	LinphoneCallStateUpdatedByRemote, /**< The call&apos;s parameters are updated for example when video is asked by remote */
 	LinphoneCallStateIncomingEarlyMedia, /**< We are proposing early media to an incoming call */
 	LinphoneCallStateUpdating, /**< We have initiated a call update */
-	LinphoneCallStateEarlyUpdating, /**< We are updating the call while not yet answered (SIP UPDATE in early dialog sent) */
 	LinphoneCallStateReleased, /**< The call object is now released */
 	LinphoneCallStateEarlyUpdatedByRemote, /**< The call is updated by remote while not yet answered (SIP UPDATE in early dialog received) */
-	LinphoneCallStateEarlyUpdatingByRemote,
-	LinphoneCallStateEndOfEnum /* This MUST be the last member */
+	LinphoneCallStateEarlyUpdating, /**< We are updating the call while not yet answered (SIP UPDATE in early dialog sent) */
 } LinphoneCallState;
 
 // =============================================================================
@@ -78,7 +75,5 @@ typedef enum _LinphoneCallState{
 #define LinphoneCallEarlyUpdating LinphoneCallStateEarlyUpdating
 #define LinphoneCallReleased LinphoneCallStateReleased
 #define LinphoneCallEarlyUpdatedByRemote LinphoneCallStateEarlyUpdatedByRemote
-#define LinphoneCallEarlyUpdatingByRemote LinphoneCallStateEarlyUpdatingByRemote
-#define LinphoneCallEndOfEnum LinphoneCallStateEndOfEnum
 
 #endif // ifndef _L_CALL_ENUMS_H_

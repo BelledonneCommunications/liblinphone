@@ -76,4 +76,20 @@ const IdentityAddress &ConferenceSecurityEvent::getFaultyDeviceAddress () const 
 	return d->faultyDevice;
 }
 
+std::ostream& operator<<(std::ostream& lhs, ConferenceSecurityEvent::SecurityEventType e) {
+	switch(e) {
+		case ConferenceSecurityEvent::SecurityEventType::None:
+			lhs << "None"; break;
+		case ConferenceSecurityEvent::SecurityEventType::SecurityLevelDowngraded:
+			lhs << "SecurityLevelDowngraded"; break;
+		case ConferenceSecurityEvent::SecurityEventType::ParticipantMaxDeviceCountExceeded:
+			lhs << "ParticipantMaxDeviceCountExceeded"; break;
+		case ConferenceSecurityEvent::SecurityEventType::EncryptionIdentityKeyChanged:
+			lhs << "EncryptionIdentityKeyChanged"; break;
+		case ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected:
+			lhs << "ManInTheMiddleDetected"; break;
+	}
+	return lhs;
+}
+
 LINPHONE_END_NAMESPACE

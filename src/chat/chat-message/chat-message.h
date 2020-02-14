@@ -62,7 +62,7 @@ class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor {
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ChatMessage);
 
-	enum State{
+	enum class State{
 		Idle = LinphoneChatMessageStateIdle,
 		InProgress = LinphoneChatMessageStateInProgress,
 		Delivered = LinphoneChatMessageStateDelivered,
@@ -71,23 +71,21 @@ public:
 		FileTransferDone = LinphoneChatMessageStateFileTransferDone,
 		DeliveredToUser = LinphoneChatMessageStateDeliveredToUser,
 		Displayed = LinphoneChatMessageStateDisplayed,
-		FileTransferInProgress = LinphoneChatMessageStateFileTransferInProgress,
-		EndOfEnum = LinphoneChatMessageStateEndOfEnum
+		FileTransferInProgress
 	};
 
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
-	static_assert((int)EndOfEnum == (int)LinphoneChatMessageStateEndOfEnum, "LinphoneChatMessageState and ChatMessage::State are not synchronized, fix this !");
+	static_assert((int)ChatMessage::State::FileTransferInProgress == (int)LinphoneChatMessageStateFileTransferInProgress, "LinphoneChatMessageState and ChatMessage::State are not synchronized, fix this !");
 
-	enum Direction{
+	enum class Direction{
 		Incoming = LinphoneChatMessageDirectionIncoming,
-		Outgoing = LinphoneChatMessageDirectionOutgoing,
-		EndOfEnum2 = LinphoneChatMessageDirectionEndOfEnum
+		Outgoing
 	};
 
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
-	static_assert((int)EndOfEnum2 == (int)LinphoneChatMessageDirectionEndOfEnum, "LinphoneChatMessageDirection and ChatMessage::Direction are not synchronized, fix this !");
+	static_assert((int)ChatMessage::Direction::Outgoing == (int)LinphoneChatMessageDirectionOutgoing, "LinphoneChatMessageDirection and ChatMessage::Direction are not synchronized, fix this !");
 
 	virtual ~ChatMessage ();
 
@@ -154,6 +152,8 @@ private:
 	L_DECLARE_PRIVATE(ChatMessage);
 	L_DISABLE_COPY(ChatMessage);
 };
+
+std::ostream& operator<<(std::ostream& lhs, ChatMessage::State e);
 
 LINPHONE_END_NAMESPACE
 

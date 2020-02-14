@@ -22,11 +22,18 @@
 
 // =============================================================================
 
-#define L_ENUM_VALUES_SECURITY_EVENT_TYPE(F) \
-	F(None /**< Event is not a security event */) \
-	F(SecurityLevelDowngraded /**< Chatroom security level downgraded event */) \
-	F(ParticipantMaxDeviceCountExceeded /**< Participant has exceeded the maximum number of device event */) \
-	F(EncryptionIdentityKeyChanged /**< Peer device instant messaging encryption identity key has changed event */) \
-	F(ManInTheMiddleDetected /**< Man in the middle detected event */) \
+/**
+ * #LinphoneSecurityEventType is used to indicate the type of security event.
+ * @ingroup events
+ */
+
+typedef enum _SecurityEventType{
+	LinphoneSecurityEventTypeNone, /**< Event is not a security event */
+	LinphoneSecurityEventTypeSecurityLevelDowngraded, /**< Chatroom security level downgraded event */
+	LinphoneSecurityEventTypeParticipantMaxDeviceCountExceeded, /**< Participant has exceeded the maximum number of device event */
+	LinphoneSecurityEventTypeEncryptionIdentityKeyChanged, /**< Peer device instant messaging encryption identity key has changed event */
+	LinphoneSecurityEventTypeManInTheMiddleDetected, /**< Man in the middle detected event */
+} LinphoneSecurityEventType;
+
 
 #endif // ifndef _L_SECURITY_EVENT_ENUMS_H_

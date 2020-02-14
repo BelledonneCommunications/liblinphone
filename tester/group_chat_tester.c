@@ -113,7 +113,6 @@ static void chat_room_state_changed (LinphoneChatRoom *cr, LinphoneChatRoomState
 		case LinphoneChatRoomStateDeleted:
 			manager->stat.number_of_LinphoneChatRoomStateDeleted++;
 			break;
-		case LinphoneChatRoomStateEndOfEnum:
 			ms_error("Invalid ChatRoom state for Chatroom [%s] EndOfEnum is used ONLY as a guard", linphone_address_as_string(addr));
 			break;
 	}

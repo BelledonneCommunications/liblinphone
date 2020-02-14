@@ -30,8 +30,7 @@ typedef enum _LinphoneChatRoomSecurityLevel{
 	LinphoneChatRoomSecurityLevelUnsafe, /**< Security failure */
 	LinphoneChatRoomSecurityLevelClearText, /**< No encryption */
 	LinphoneChatRoomSecurityLevelEncrypted, /**< Encrypted */
-	LinphoneChatRoomSecurityLevelSafe, /**< Encrypted and verified */
-	LinphoneChatRoomSecurityLevelEndOfEnum /** Guard preventing enums mismatch between c and c++ */
+	LinphoneChatRoomSecurityLevelSafe /**< Encrypted and verified */
 } LinphoneChatRoomSecurityLevel;
 
 #endif // ifndef _L_ENCRYPTION_ENGINE_ENUMS_H_

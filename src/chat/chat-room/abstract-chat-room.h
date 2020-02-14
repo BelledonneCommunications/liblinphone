@@ -61,8 +61,7 @@ public:
 		TerminationPending = LinphoneChatRoomStateTerminationPending,
 		Terminated = LinphoneChatRoomStateTerminated,
 		TerminationFailed = LinphoneChatRoomStateTerminationFailed,
-		Deleted = LinphoneChatRoomStateDeleted,
-		EndOfEnum
+		Deleted
 	};
 
 	enum class Capabilities{
@@ -73,29 +72,28 @@ public:
 		Proxy = LinphoneChatRoomCapabilitiesProxy,
 		Migratable = LinphoneChatRoomCapabilitiesMigratable,
 		OneToOne = LinphoneChatRoomCapabilitiesOneToOne,
-		Encrypted = LinphoneChatRoomCapabilitiesEncrypted,
-		EndOfEnum
+		Encrypted = 1 << 6 //Entered like this to check enum order in static_assert below
 	};
 
 	enum class SecurityLevel{
 		Unsafe = LinphoneChatRoomSecurityLevelUnsafe,
 		ClearText = LinphoneChatRoomSecurityLevelClearText,
 		Encrypted = LinphoneChatRoomSecurityLevelEncrypted,
-		Safe = LinphoneChatRoomSecurityLevelSafe,
-		EndOfEnum
+		Safe
 	};
 
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
-	static_assert((int)AbstractChatRoom::State::EndOfEnum == (int)LinphoneChatRoomStateEndOfEnum, "LinphoneChatRoomState and AbstractChatRoom::State are not synchronized, fix this !");
+	static_assert((int)AbstractChatRoom::State::Deleted == (int)LinphoneChatRoomStateDeleted, "LinphoneChatRoomState and AbstractChatRoom::State are not synchronized, fix this !");
 
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
-	static_assert((int)AbstractChatRoom::Capabilities::EndOfEnum == (int)LinphoneChatRoomCapabilitiesEndOfEnum, "LinphoneChatRoomCapabilities and AbstractChatRoom::Capabilities are not synchronized, fix this !");
+	// char as in byte
+	static_assert((char)AbstractChatRoom::Capabilities::Encrypted == (char)LinphoneChatRoomCapabilitiesEncrypted, "LinphoneChatRoomCapabilities and AbstractChatRoom::Capabilities are not synchronized, fix this !");
 
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
-	static_assert((int)AbstractChatRoom::SecurityLevel::EndOfEnum == (int)LinphoneChatRoomSecurityLevelEndOfEnum, "LinphoneEncryptionEngineSecurityLevel and AbstractChatRoom::SecurityLevel are not synchronized, fix this !");
+	static_assert((int)AbstractChatRoom::SecurityLevel::Safe == (int)LinphoneChatRoomSecurityLevelSafe, "LinphoneEncryptionEngineSecurityLevel and AbstractChatRoom::SecurityLevel are not synchronized, fix this !");
 
 	typedef EnumMask<Capabilities> CapabilitiesMask;
 

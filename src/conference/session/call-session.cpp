@@ -455,10 +455,8 @@ void CallSessionPrivate::updated (bool isUpdate) {
 		case CallSession::State::Error:
 		case CallSession::State::Released:
 		case CallSession::State::EarlyUpdatedByRemote:
-		case CallSession::State::EarlyUpdatingByRemote:
 		case CallSession::State::EarlyUpdating:
 			lWarning() << "Receiving reINVITE or UPDATE while in state [" << Utils::toString(state) << "], should not happen";
-		case CallSession::State::EndOfEnum:
 		break;
 	}
 }
