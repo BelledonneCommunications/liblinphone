@@ -504,7 +504,7 @@ bool MediaSessionPrivate::getMicrophoneMuted () const {
 
 void MediaSessionPrivate::setMicrophoneMuted (bool muted) {
 	AudioControlInterface *i = getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
-	if (i) i->enableMic(muted);
+	if (i) i->enableMic(!muted);
 }
 
 // -----------------------------------------------------------------------------
