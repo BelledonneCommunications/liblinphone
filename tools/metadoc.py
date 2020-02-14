@@ -549,10 +549,48 @@ class DoxygenTranslator(Translator):
 
 class JavaDocTranslator(DoxygenTranslator):
 	def __init__(self):
-		DoxygenTranslator.__init__(self, 'C')
+		DoxygenTranslator.__init__(self, 'Java')
 
 	def _tag_as_brief(self, lines):
 		pass
+
+	def translate_class_reference(self, ref, **kargs):
+		if isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum)):
+			className = Translator.translate_reference(self, ref)
+			if className[:9] == 'linphone.':
+				className = className[9:]
+			return '{@link ' + className + '}'
+		else:
+			raise ReferenceTranslationError(ref.cname)
+	
+	def _translate_section(self, section):
+		if section.kind == 'see':
+			return 'See also: {0}'.format(self._translate_paragraph(section.paragraph))
+		if section.kind == 'note':
+			return 'Note: {0}'.format(self._translate_paragraph(section.paragraph))
+		if section.kind == 'warning':
+			return 'Warning: {0}'.format(self._translate_paragraph(section.paragraph))
+			
+		return '@{0} {1}'.format(
+			section.kind,
+			self._translate_paragraph(section.paragraph)
+		)
+
+	def translate_function_reference(self, ref, **kargs):
+		if isinstance(ref.relatedObject, abstractapi.Method):
+			methodName = self.nameTranslator.translate_method_name(ref.relatedObject.name)
+			className = self.nameTranslator.translate_class_name(ref.relatedObject.parent.name)
+
+			if methodName[:3] == 'get' or methodName[:3] == 'set' or methodName[:6] == 'enable':
+				className = self.nameTranslator.translate_class_name(ref.relatedObject.parent.parent.name)
+
+			if className[:9] == 'linphone.':
+				className = className[9:]
+			if className == 'Linphone':
+				className = ''
+			return '{@link ' + className + '#' + methodName + '}'
+		else:
+			raise ReferenceTranslationError(ref.cname)
 
 class SwiftDocTranslator(JavaDocTranslator):
 	def __init__(self):

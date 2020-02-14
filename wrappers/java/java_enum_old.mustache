@@ -23,24 +23,36 @@ package {{packageName}};
 import {{import}}
 {{/imports}}
 
-{{#doc}}
 /**
-    {{#lines}}
-  * {{line}}
-    {{/lines}}
-  */
-{{/doc}}
+{{#briefDoc}}
+{{#lines}}
+* {{{line}}}
+{{/lines}}
+{{/briefDoc}}
+*
+{{#detailedDoc}}
+{{#lines}}
+* {{{line}}}
+{{/lines}}
+{{/detailedDoc}}
+*/
 static public class {{className}} {
     static private Vector<{{className}}> values = new Vector<{{className}}>();
 {{#values}}
 
-    {{#doc}}
     /**
-        {{#lines}}
-      * {{line}}
-        {{/lines}}
-      */
-    {{/doc}}
+    {{#briefDoc}}
+    {{#lines}}
+    * {{{line}}}
+    {{/lines}}
+    {{/briefDoc}}
+    *
+    {{#detailedDoc}}
+    {{#lines}}
+    * {{{line}}}
+    {{/lines}}
+    {{/detailedDoc}}
+    */
     static public {{className}} {{name}} = new {{className}}({{value}}, {{name}});
 {{/values}}
 

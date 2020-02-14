@@ -192,7 +192,8 @@ class JavaTranslator(object):
         methodDict['native_params_impl'] = 'nativePtr, listener'
 
         methodDict['deprecated'] = False
-        methodDict['doc'] = None
+        methodDict['briefDoc'] = None
+        methodDict['detailedDoc'] = None
 
         return methodDict
 
@@ -210,8 +211,8 @@ class JavaTranslator(object):
 
         namespace = _method.find_first_ancestor_by_type(AbsApi.Namespace)
 
-        methodDict['return'] = _method.returnType.translate(self.langTranslator, isReturn=True, namespace=namespace)
-        methodDict['return_native'] = _method.returnType.translate(self.langTranslator, native=True, isReturn=True, namespace=namespace)
+        methodDict['return'] = _method.returnType.translate(self.langTranslator, isReturn=True, namespace=namespace, exceptionEnabled=self.exceptions)
+        methodDict['return_native'] = _method.returnType.translate(self.langTranslator, native=True, isReturn=True, namespace=namespace, exceptionEnabled=self.exceptions)
         methodDict['return_keyword'] = '' if methodDict['return'] == 'void' else 'return '
         methodDict['hasReturn'] = not methodDict['return'] == 'void'
 
@@ -237,7 +238,8 @@ class JavaTranslator(object):
             ['nativePtr'] + [arg.name.translate(self.nameTranslator) + ('.toInt()' if type(arg.type) is AbsApi.EnumType else '') for arg in _method.args])
 
         methodDict['deprecated'] = _method.deprecated
-        methodDict['doc'] = _method.briefDescription.translate(self.docTranslator) if _method.briefDescription is not None else None
+        methodDict['briefDoc'] = _method.briefDescription.translate(self.docTranslator, tagAsBrief=True) if _method.briefDescription is not None else None
+        methodDict['detailedDoc'] = _method.detailedDescription.translate(self.docTranslator) if _method.detailedDescription is not None else None
 
         return methodDict
 
@@ -369,7 +371,8 @@ class JavaTranslator(object):
         classDict['isLinphoneCore'] = _class.name.to_camel_case() == "Core"
         hasCoreAccessor = _class.name.to_camel_case() in CORE_ACCESSOR_LIST
         classDict['hasCoreAccessor'] = hasCoreAccessor
-        classDict['doc'] = _class.briefDescription.translate(self.docTranslator) if _class.briefDescription is not None else None
+        classDict['briefDoc'] = _class.briefDescription.translate(self.docTranslator, tagAsBrief=True) if _class.briefDescription is not None else None
+        classDict['detailedDoc'] = _class.detailedDescription.translate(self.docTranslator) if _class.detailedDescription is not None else None
         classDict['refCountable'] = _class.refcountable
 
         for _property in _class.properties:
@@ -499,7 +502,8 @@ class JavaTranslator(object):
             'jniMethods': [],
         }
 
-        interfaceDict['doc'] = _class.briefDescription.translate(self.docTranslator)
+        interfaceDict['briefDoc'] = _class.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+        interfaceDict['detailedDoc'] = _class.detailedDescription.translate(self.docTranslator)
 
         for method in _class.instanceMethods:
             interfaceDict['methods'].append(self.translate_method(method))
@@ -513,7 +517,8 @@ class JavaTranslator(object):
         }
 
         enumDict['name'] = enum.name.to_camel_case()
-        enumDict['doc'] = enum.briefDescription.translate(self.docTranslator)
+        enumDict['briefDoc'] = enum.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+        enumDict['detailedDoc'] = enum.detailedDescription.translate(self.docTranslator)
         enumDict['values'] = []
         i = 0
         lastValue = None
@@ -523,7 +528,8 @@ class JavaTranslator(object):
         for enumerator in enum.enumerators:
             enumValDict = {}
             enumValDict['name'] = enumerator.name.to_camel_case()
-            enumValDict['doc'] = enumerator.briefDescription.translate(self.docTranslator)
+            enumValDict['briefDoc'] = enumerator.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+            enumValDict['detailedDoc'] = enumerator.detailedDescription.translate(self.docTranslator)
             if isinstance(enumerator.value, int):
                 lastValue = enumerator.value
                 enumValDict['value'] = str(enumerator.value)
@@ -552,7 +558,8 @@ class JavaEnum(object):
         self.cPrefix = _enum.name.to_snake_case(fullName=True)
         self.filename = self.className + ".java"
         self.values = self._class['values']
-        self.doc = self._class['doc']
+        self.briefDoc = self._class['briefDoc']
+        self.detailedDoc = self._class['detailedDoc']
         self.jniName = _enum.name.translate(JNINameTranslator.get())
 
 class JniInterface(object):
@@ -579,7 +586,8 @@ class JavaInterface(object):
         self.cPrefix = 'linphone_' + _interface.name.to_snake_case()
         self.imports = []
         self.methods = self._class['methods']
-        self.doc = self._class['doc']
+        self.briefDoc = self._class['briefDoc']
+        self.detailedDoc = self._class['detailedDoc']
         self.jniMethods = self._class['jniMethods']
 
 class JavaInterfaceStub(object):
@@ -608,7 +616,8 @@ class JavaClass(object):
         self.imports = []
         self.methods = self._class['methods']
         self.jniMethods = self._class['jniMethods']
-        self.doc = self._class['doc']
+        self.briefDoc = self._class['briefDoc']
+        self.detailedDoc = self._class['detailedDoc']
         self.enums = []
         for enum in _class.enums:
             self.enums.append(JavaEnum(package, enum, translator))

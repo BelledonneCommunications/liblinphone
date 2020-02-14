@@ -23,22 +23,34 @@ package {{packageName}};
 import {{import}}
 {{/imports}}
 
-{{#doc}}
 /**
-    {{#lines}}
-  * {{line}}
-    {{/lines}}
-  */
-{{/doc}}
+{{#briefDoc}}
+{{#lines}}
+* {{{line}}}
+{{/lines}}
+{{/briefDoc}}
+{{#detailedDoc}}
+*
+{{#lines}}
+* {{{line}}}
+{{/lines}}
+{{/detailedDoc}}
+*/
 public enum {{{className}}} {
 {{#values}}
-    {{#doc}}
     /**
-        {{#lines}}
-      * {{line}}
-        {{/lines}}
-      */
-    {{/doc}}
+    {{#briefDoc}}
+    {{#lines}}
+    * {{{line}}}
+    {{/lines}}
+    {{/briefDoc}}
+    {{#detailedDoc}}
+    *
+    {{#lines}}
+    * {{{line}}}
+    {{/lines}}
+    {{/detailedDoc}}
+    */
     {{name}}({{{value}}}){{commarorsemicolon}}
 
 {{/values}}

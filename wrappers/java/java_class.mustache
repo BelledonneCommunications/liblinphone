@@ -36,24 +36,36 @@ import org.linphone.mediastream.Version;
 import org.linphone.core.tools.OpenH264DownloadHelper;
 {{/isLinphoneFactory}}
 
-{{#doc}}
 /**
-    {{#lines}}
-  * {{line}}
-    {{/lines}}
-  */
-{{/doc}}
+{{#briefDoc}}
+{{#lines}}
+* {{{line}}}
+{{/lines}}
+{{/briefDoc}}
+{{#detailedDoc}}
+*
+{{#lines}}
+* {{{line}}}
+{{/lines}}
+{{/detailedDoc}}
+*/
 public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphoneFactory}}interface{{/isNotLinphoneFactory}} {{className}} {
 {{#enums}}
     public enum {{{className}}} {
     {{#values}}
-        {{#doc}}
         /**
-            {{#lines}}
-        * {{line}}
-            {{/lines}}
+        {{#briefDoc}}
+        {{#lines}}
+        * {{{line}}}
+        {{/lines}}
+        {{/briefDoc}}
+        {{#detailedDoc}}
+        *
+        {{#lines}}
+        * {{{line}}}
+        {{/lines}}
+        {{/detailedDoc}}
         */
-        {{/doc}}
         {{name}}({{value}}){{commarorsemicolon}}
 
     {{/values}}
@@ -112,24 +124,32 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
     public org.linphone.mediastream.Factory getMediastreamerFactory();
 {{/isLinphoneCore}}
 {{#methods}}
-    {{#doc}}
     /**
+    {{#briefDoc}}
     {{#lines}}
-      * {{line}}
+    * {{{line}}}
     {{/lines}}
-      */
-    {{/doc}}
+    {{/briefDoc}}
+    {{#detailedDoc}}
+    *
+    {{#lines}}
+    * {{{line}}}
+    {{/lines}}
+    {{/detailedDoc}}
+    */
     {{#deprecated}}@Deprecated
-    {{/deprecated}}{{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public {{return}} {{name}}({{params}});
+    {{/deprecated}}{{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public {{return}} {{name}}({{params}}){{#exception}} throws CoreException{{/exception}};
 
 {{/methods}}
     /**
       * Sets the object to store in this object user's data
+      * @param data the object to store
       */
     {{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public void setUserData(Object data);
 
     /**
       * Gets the object stored in this object user's data
+      * @return the object store if any, null otherwise
       */
     {{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public Object getUserData();
 }

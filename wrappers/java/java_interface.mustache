@@ -23,22 +23,34 @@ package {{packageName}};
 import {{import}}
 {{/imports}}
 
-{{#doc}}
 /**
-    {{#lines}}
-  * {{line}}
-    {{/lines}}
-  */
-{{/doc}}
+{{#briefDoc}}
+{{#lines}}
+* {{{line}}}
+{{/lines}}
+{{/briefDoc}}
+{{#detailedDoc}}
+*
+{{#lines}}
+* {{{line}}}
+{{/lines}}
+{{/detailedDoc}}
+*/
 public interface {{className}} {
 {{#methods}}
-    {{#doc}}
     /**
+    {{#briefDoc}}
     {{#lines}}
-      * {{line}}
+    * {{{line}}}
     {{/lines}}
-      */
-    {{/doc}}
+    {{/briefDoc}}
+    {{#detailedDoc}}
+    *
+    {{#lines}}
+    * {{{line}}}
+    {{/lines}}
+    {{/detailedDoc}}
+    */
     {{#deprecated}}@Deprecated
     {{/deprecated}}public {{return}} {{name}}({{params}}){{#exception}} throws CoreException{{/exception}};
 

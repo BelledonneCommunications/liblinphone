@@ -1178,7 +1178,7 @@ class JavaLangTranslator(CLikeLangTranslator):
 		self.falseConstantToken = 'false'
 		self.trueConstantToken = 'true'
 
-	def translate_base_type(self, type_, native=False, jni=False, isReturn=False, namespace=None):
+	def translate_base_type(self, type_, native=False, jni=False, isReturn=False, namespace=None, exceptionEnabled=False):
 		if type_.name == 'string':
 			if jni:
 				return 'jstring'
@@ -1216,7 +1216,9 @@ class JavaLangTranslator(CLikeLangTranslator):
 				return 'jint'
 			if native:
 				return 'int'
-			return 'void'
+			if exceptionEnabled:
+				return 'void'
+			return 'int'
 		elif type_.name == 'string_array':
 			if jni:
 				return 'jobjectArray'
@@ -1226,14 +1228,14 @@ class JavaLangTranslator(CLikeLangTranslator):
 				return 'jchar'
 			return 'char'
 		elif type_.name == 'void':
-			if isReturn:
+			if isReturn and not type_.isref:
 				return 'void'
 			if jni:
 				return 'jobject'
 			return 'Object'
 		return type_.name
 
-	def translate_enum_type(self, _type, native=False, jni=False, isReturn=False, namespace=None):
+	def translate_enum_type(self, _type, native=False, jni=False, isReturn=False, namespace=None, exceptionEnabled=False):
 		if native:
 			return 'int'
 		elif jni:
@@ -1241,12 +1243,12 @@ class JavaLangTranslator(CLikeLangTranslator):
 		else:
 			return _type.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
 
-	def translate_class_type(self, _type, native=False, jni=False, isReturn=False, namespace=None):
+	def translate_class_type(self, _type, native=False, jni=False, isReturn=False, namespace=None, exceptionEnabled=False):
 		if jni:
 			return 'jobject'
 		return _type.desc.name.translate(self.nameTranslator, **Translator._namespace_to_name_translator_params(namespace))
 
-	def translate_list_type(self, _type, native=False, jni=False, isReturn=False, namespace=None):
+	def translate_list_type(self, _type, native=False, jni=False, isReturn=False, namespace=None, exceptionEnabled=False):
 		if jni:
 			if type(_type.containedTypeDesc) is ClassType:
 				return 'jobjectArray'
