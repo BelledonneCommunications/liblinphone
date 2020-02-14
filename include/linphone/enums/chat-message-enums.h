@@ -36,7 +36,6 @@ typedef enum _LinphoneChatMessageState{
 	LinphoneChatMessageStateDeliveredToUser, /**< Message successfully delivered an acknowledged by the remote user */
 	LinphoneChatMessageStateDisplayed, /**< Message successfully displayed to the remote user */
 	LinphoneChatMessageStateFileTransferInProgress, /** <File transfer is in progress. If message is incoming it's a download, otherwise it's an upload. */
-	LinphoneChatMessageStateEndOfEnum /** Guard preventing enums mismatch between c and c++ */
 } LinphoneChatMessageState;
 
 
@@ -47,7 +46,6 @@ typedef enum _LinphoneChatMessageState{
 typedef enum _LinphoneChatMessageDirection{
 	LinphoneChatMessageDirectionIncoming, /**< Incoming message */
 	LinphoneChatMessageDirectionOutgoing, /**< Outgoing message */
-	LinphoneChatMessageDirectionEndOfEnum /** Guard preventing enums mismatch between c and c++ */
 } LinphoneChatMessageDirection;
 
 

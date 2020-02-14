@@ -33,26 +33,24 @@ public:
 
 	enum class Backend{
 		Basic = LinphoneChatRoomBackendBasic,
-		FlexisipChat = LinphoneChatRoomBackendFlexisipChat,
-		EndOfEnum
+		FlexisipChat
 	};
 	typedef enum Backend ChatRoomBackend;
 
 	enum class EncryptionBackend{
 		None = LinphoneChatRoomEncryptionBackendNone,
-		Lime = LinphoneChatRoomEncryptionBackendLime,
-		EndOfEnum
+		Lime
 	};
 
 	typedef enum EncryptionBackend ChatRoomEncryptionBackend;
 
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
-	static_assert((int)Backend::EndOfEnum == (int)LinphoneChatRoomBackendEndOfEnum, "LinphoneChatRoomBackend and ChatRoomParams::Backend are not synchronized, fix this !");
+	static_assert((int)Backend::FlexisipChat == (int)LinphoneChatRoomBackendFlexisipChat, "LinphoneChatRoomBackend and ChatRoomParams::Backend are not synchronized, fix this !");
 
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
-	static_assert((int)EncryptionBackend::EndOfEnum == (int)LinphoneChatRoomEncryptionBackendEndOfEnum, "LinphoneChatRoomEncryptionBackend and ChatRoomParams::EncryptionBackend are not synchronized, fix this !");
+	static_assert((int)EncryptionBackend::Lime == (int)LinphoneChatRoomEncryptionBackendLime, "LinphoneChatRoomEncryptionBackend and ChatRoomParams::EncryptionBackend are not synchronized, fix this !");
 
 	static AbstractChatRoom::CapabilitiesMask toCapabilities(const std::shared_ptr<ChatRoomParams> &params);
 	static std::shared_ptr<ChatRoomParams> fromCapabilities(AbstractChatRoom::CapabilitiesMask capabilities);

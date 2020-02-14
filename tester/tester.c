@@ -1559,8 +1559,6 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 		case LinphoneChatMessageStateFileTransferInProgress:
 			counters->number_of_LinphoneMessageFileTransferInProgress++;
 			return;
-		case LinphoneChatMessageStateEndOfEnum:
-			break;
 	}
 	ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
 }
