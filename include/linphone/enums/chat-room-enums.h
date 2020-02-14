@@ -34,8 +34,7 @@ typedef enum _LinphoneChatRoomState{
 	LinphoneChatRoomStateTerminationPending, /**< Wait for chat room termination */
 	LinphoneChatRoomStateTerminated, /**< Chat room exists on server but not in local */
 	LinphoneChatRoomStateTerminationFailed, /**< The chat room termination failed */
-	LinphoneChatRoomStateDeleted, /**< Chat room was deleted on the server */
-	LinphoneChatRoomStateEndOfEnum /** Guard preventing enums mismatch between c and c++ */
+	LinphoneChatRoomStateDeleted /**< Chat room was deleted on the server */
 } LinphoneChatRoomState;
 
 /**
@@ -50,8 +49,7 @@ typedef enum _LinphoneChatRoomCapabilities{
 	LinphoneChatRoomCapabilitiesProxy = 1 << 3, /**< Special proxy chat room flag */
 	LinphoneChatRoomCapabilitiesMigratable = 1 << 4, /**< Chat room migratable from Basic to Conference */
 	LinphoneChatRoomCapabilitiesOneToOne = 1 << 5, /**< A communication between two participants (can be Basic or Conference) */
-	LinphoneChatRoomCapabilitiesEncrypted = 1 << 6, /**< Chat room is encrypted */
-	LinphoneChatRoomCapabilitiesEndOfEnum, /** Guard preventing enums mismatch between c and c++ */
+	LinphoneChatRoomCapabilitiesEncrypted = 1 << 6 /**< Chat room is encrypted */
 } LinphoneChatRoomCapabilities;
 
 
@@ -61,8 +59,7 @@ typedef enum _LinphoneChatRoomCapabilities{
  */
 typedef enum _LinphoneChatRoomBackend{
 	LinphoneChatRoomBackendBasic = 1 << 0, /**< Basic (client-to-client) chat room. */
-	LinphoneChatRoomBackendFlexisipChat = 1 << 1, /**< Server-based chat room. */
-	LinphoneChatRoomBackendEndOfEnum, /** Guard preventing enums mismatch between c and c++ */
+	LinphoneChatRoomBackendFlexisipChat = 1 << 1 /**< Server-based chat room. */
 } LinphoneChatRoomBackend;
 
 /**
@@ -71,8 +68,7 @@ typedef enum _LinphoneChatRoomBackend{
  */
 typedef enum _LinphoneChatRoomEncryptionBackend{
 	LinphoneChatRoomEncryptionBackendNone = 0, /**< No encryption. */
-	LinphoneChatRoomEncryptionBackendLime = 1 << 0, /**< Lime x3dh encryption. */
-	LinphoneChatRoomEncryptionBackendEndOfEnum, /** Guard preventing enums mismatch between c and c++ */
+	LinphoneChatRoomEncryptionBackendLime = 1 << 0 /**< Lime x3dh encryption. */
 } LinphoneChatRoomEncryptionBackend;
 
 

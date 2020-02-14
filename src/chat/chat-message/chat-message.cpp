@@ -192,7 +192,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	}
 
 	// 4. Specific case, upon reception do not attempt to store in db before asking the user if he wants to do so or not
-	if (state == ChatMessage::State::Delivered && oldState == ChatMessage::State::Idle 
+	if (state == ChatMessage::State::Delivered && oldState == ChatMessage::State::Idle
 		&& direction == ChatMessage::Direction::Incoming && !dbKey.isValid()) {
 		// If we're here it's because message is because we're in the middle of the receive() method and
 		// we won't have a valid dbKey until the chat room callback asking if message should be store will be called
@@ -670,7 +670,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 							return LinphoneReasonNone;
 						} else {
 							lError() << "Downloading path is empty, aborting auto download !";
-						}						
+						}
 					}
 				}
 			}
@@ -699,8 +699,8 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	setState(ChatMessage::State::Delivered);
 
-	if (errorCode <= 0 && !isAutoFileTransferDownloadHappened()) { 
-		// if auto download happened and message contains only file transfer, 
+	if (errorCode <= 0 && !isAutoFileTransferDownloadHappened()) {
+		// if auto download happened and message contains only file transfer,
 		// the following will state that the content type of the file is unsupported
 		bool foundSupportContentType = false;
 		for (Content *c : contents) {
@@ -945,7 +945,7 @@ void ChatMessagePrivate::send () {
 	if (imdnId.empty()) {
 		setImdnMessageId(op->getCallId());   /* must be known at that time */
 	}
-	
+
 	if (toBeStored) {
 		// Composing messages and IMDN aren't stored in DB so do not try, it will log an error message Invalid db key for nothing.
 		updateInDb();
@@ -1136,7 +1136,7 @@ void ChatMessagePrivate::loadContentsFromDatabase () const {
 		q->getChatRoom()->getCore()->getPrivate()->mainDb->loadChatMessageContents(
 			const_pointer_cast<ChatMessage>(q->getSharedFromThis())
 		);
-		
+
 		isReadOnly = true;
 	}
 }
@@ -1371,6 +1371,21 @@ int ChatMessage::putCharacter (uint32_t character) {
 		character
 	);
 	return 0;
+}
+
+std::ostream& operator<<(std::ostream& lhs, ChatMessage::State e) {
+	switch(e) {
+		case ChatMessage::State::Idle: lhs << "Idle"; break;
+		case ChatMessage::State::InProgress: lhs << "InProgress"; break;
+		case ChatMessage::State::Delivered: lhs << "Delivered"; break;
+		case ChatMessage::State::NotDelivered: lhs << "NotDelivered"; break;
+		case ChatMessage::State::FileTransferError: lhs << "FileTransferError"; break;
+		case ChatMessage::State::FileTransferDone: lhs << "FileTransferDone"; break;
+		case ChatMessage::State::DeliveredToUser: lhs << "DeliveredToUser"; break;
+		case ChatMessage::State::Displayed: lhs << "Displayed"; break;
+		case ChatMessage::State::FileTransferInProgress: lhs << "FileTransferInProgress"; break;
+	}
+	return lhs;
 }
 
 LINPHONE_END_NAMESPACE

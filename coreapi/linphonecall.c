@@ -69,10 +69,6 @@ const char *linphone_call_state_to_string(LinphoneCallState cs){
 			return "LinphoneCallReleased";
 		case LinphoneCallEarlyUpdatedByRemote:
 			return "LinphoneCallEarlyUpdatedByRemote";
-		case LinphoneCallEarlyUpdatingByRemote:
-			return "LinphoneCallEarlyUpdatingByRemote";
-		case LinphoneCallEndOfEnum:
-			return "LinphoneCallEndOfEnum";
 	}
 	return "undefined state";
 }

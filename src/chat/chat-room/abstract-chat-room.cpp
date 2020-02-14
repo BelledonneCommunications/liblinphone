@@ -43,7 +43,6 @@ std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::State e) {
 		case AbstractChatRoom::State::Terminated: lhs << "Terminated"; break;
 		case AbstractChatRoom::State::TerminationFailed: lhs << "TerminationFailed"; break;
 		case AbstractChatRoom::State::Deleted: lhs << "Deleted"; break;
-		case AbstractChatRoom::State::EndOfEnum: lhs << "EndOfEnum"; break;
 	}
 	return lhs;
 }
@@ -58,7 +57,6 @@ std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::Capabilities e) {
 		case AbstractChatRoom::Capabilities::Migratable: lhs << "Migratable"; break;
 		case AbstractChatRoom::Capabilities::OneToOne: lhs << "OneToOne"; break;
 		case AbstractChatRoom::Capabilities::Encrypted: lhs << "Encrypted"; break;
-		case AbstractChatRoom::Capabilities::EndOfEnum: lhs << "EndOfEnum"; break;
 	}
 	return lhs;
 }
@@ -69,7 +67,6 @@ std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::SecurityLevel e) {
 		case AbstractChatRoom::SecurityLevel::ClearText: lhs << "ClearText"; break;
 		case AbstractChatRoom::SecurityLevel::Encrypted: lhs << "Encrypted"; break;
 		case AbstractChatRoom::SecurityLevel::Safe: lhs << "Safe"; break;
-		case AbstractChatRoom::SecurityLevel::EndOfEnum: lhs << "EndOfEnum"; break;
 	}
 	return lhs;
 }

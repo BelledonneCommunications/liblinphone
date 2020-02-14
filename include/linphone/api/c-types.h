@@ -224,22 +224,6 @@ typedef struct _LinphoneSearchResult LinphoneSearchResult;
 // compilation terminated.
 // -----------------------------------------------------------------------------
 
-// -----------------------------------------------------------------------------
-// EventLog.
-// -----------------------------------------------------------------------------
-
-/**
- * #LinphoneEventLogType is used to indicate the type of an event. Useful for cast.
- * @ingroup events
- */
-L_DECLARE_C_ENUM(EventLogType, L_ENUM_VALUES_EVENT_LOG_TYPE);
-
-/**
- * #LinphoneSecurityEventType is used to indicate the type of security event.
- * @ingroup events
- */
-L_DECLARE_C_ENUM(SecurityEventType, L_ENUM_VALUES_SECURITY_EVENT_TYPE);
-
 #ifdef __cplusplus
 	}
 #endif // ifdef __cplusplus

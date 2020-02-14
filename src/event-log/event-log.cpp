@@ -48,4 +48,44 @@ void EventLog::deleteFromDatabase (const shared_ptr<const EventLog> &eventLog) {
 	MainDb::deleteEvent(eventLog);
 }
 
+std::ostream& operator<<(std::ostream& lhs, EventLog::Type e) {
+	switch(e) {
+		case EventLog::Type::None:
+			lhs << "None"; break;
+		case EventLog::Type::ConferenceCreated:
+			lhs << "ConferenceCreated"; break;
+		case EventLog::Type::ConferenceTerminated:
+			lhs << "ConferenceTerminated"; break;
+		case EventLog::Type::ConferenceCallStart:
+			lhs << "ConferenceCallStart"; break;
+		case EventLog::Type::ConferenceCallEnd:
+		 lhs << "ConferenceCallEnd"; break;
+		case EventLog::Type::ConferenceChatMessage:
+		 lhs << "ConferenceChatMessage"; break;
+		case EventLog::Type::ConferenceParticipantAdded:
+		 lhs << "ConferenceParticipantAdded"; break;
+		case EventLog::Type::ConferenceParticipantRemoved:
+		 lhs << "ConferenceParticipantRemoved"; break;
+		case EventLog::Type::ConferenceParticipantSetAdmin:
+		 lhs << "ConferenceParticipantSetAdmin"; break;
+		case EventLog::Type::ConferenceParticipantUnsetAdmin:
+		 lhs << "ConferenceParticipantUnsetAdmin"; break;
+		case EventLog::Type::ConferenceParticipantDeviceAdded:
+		 lhs << "ConferenceParticipantDeviceAdded"; break;
+		case EventLog::Type::ConferenceParticipantDeviceRemoved:
+		 lhs << "ConferenceParticipantDeviceRemoved"; break;
+		case EventLog::Type::ConferenceSubjectChanged:
+		 lhs << "ConferenceSubjectChanged"; break;
+		case EventLog::Type::ConferenceSecurityEvent:
+		 lhs << "ConferenceSecurityEvent"; break;
+		case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
+		 lhs << "ConferenceEphemeralMessageLifetimeChanged"; break;
+		case EventLog::Type::ConferenceEphemeralMessageEnabled:
+		 lhs << "ConferenceEphemeralMessageEnabled"; break;
+		case EventLog::Type::ConferenceEphemeralMessageDisabled:
+		 lhs << "ConferenceEphemeralMessageDisabled"; break;
+	}
+	return lhs;
+}
+
 LINPHONE_END_NAMESPACE
