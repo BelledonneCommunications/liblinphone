@@ -798,7 +798,7 @@ void FileTransferChatMessageModifier::onRecvBody (belle_sip_user_body_handler_t 
 			linphone_buffer_unref(lb);
 		}
 	} else {
-		lWarning() << "File transfer decrypt failed with code -" << hex <<(int)(-retval)<<dec;
+		lWarning() << "File transfer decrypt failed with code -" << hex <<(int)(-retval);
 		message->getPrivate()->setState(ChatMessage::State::FileTransferError);
 	}
 }
@@ -821,7 +821,7 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 		retval = imee->downloadingFile(message, 0, nullptr, 0, nullptr);
 	}
 
-	if (retval <= 0) {
+	if (retval == 0 || retval == -1) {
 		if (currentFileContentToTransfer->getFilePath().empty()) {
 			LinphoneChatMessage *msg = L_GET_C_BACK_PTR(message);
 			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
