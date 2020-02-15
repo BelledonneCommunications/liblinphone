@@ -931,7 +931,7 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile (const b
 		);
 		if (!currentFileContentToTransfer->getFilePath().empty()) {
 			belle_sip_user_body_handler_t *bh = (belle_sip_user_body_handler_t *)body_handler;
-			body_handler = (belle_sip_body_handler_t *)belle_sip_file_body_handler_new(currentFileContentToTransfer->getFilePath().c_str(), _chat_message_file_transfer_on_progress, this);
+			body_handler = (belle_sip_body_handler_t *)belle_sip_buffering_file_body_handler_new(currentFileContentToTransfer->getFilePath().c_str(), 16, _chat_message_file_transfer_on_progress, this);
 			if (belle_sip_body_handler_get_size((belle_sip_body_handler_t *)body_handler) == 0) {
 				// If the size of the body has not been initialized from the file stat, use the one from the
 				// file_transfer_information.
