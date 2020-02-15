@@ -300,6 +300,32 @@ void linphone_content_set_key (LinphoneContent *content, const char *key, const 
 	}
 }
 
+const char *linphone_content_get_authTag (const LinphoneContent *content) {
+	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	if (c->isFileTransfer()) {
+		const LinphonePrivate::FileTransferContent *ftc = static_cast<const LinphonePrivate::FileTransferContent *>(c);
+		return ftc->getFileAuthTag().data();
+	}
+	return nullptr;
+}
+
+size_t linphone_content_get_authTag_size (const LinphoneContent *content) {
+	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	if (c->isFileTransfer()) {
+		const LinphonePrivate::FileTransferContent *ftc = static_cast<const LinphonePrivate::FileTransferContent *>(c);
+		return ftc->getFileAuthTagSize();
+	}
+	return 0;
+}
+
+void linphone_content_set_authTag (LinphoneContent *content, const char *tag, const size_t tagLength) {
+	LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	if (c->isFileTransfer()) {
+		LinphonePrivate::FileTransferContent *ftc = static_cast<LinphonePrivate::FileTransferContent *>(c);
+		ftc->setFileAuthTag(tag, tagLength);
+	}
+}
+
 const char *linphone_content_get_file_path (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	if (c->isFile())

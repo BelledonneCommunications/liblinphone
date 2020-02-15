@@ -65,6 +65,10 @@ public:
 	const std::vector<char> &getFileKey () const;
 	size_t getFileKeySize() const;
 
+	void setFileAuthTag (const char *authTag, size_t size);
+	const std::vector<char> &getFileAuthTag () const;
+	size_t getFileAuthTagSize() const;
+
 	bool isFile () const override;
 	bool isFileTransfer () const override;
 

@@ -32,6 +32,8 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+#define ERROR_FILE_TRANFER_AUTHENTICATION_FAILED -0x1001
+
 class AbstractChatRoom;
 class ChatMessage;
 
