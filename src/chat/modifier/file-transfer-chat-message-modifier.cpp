@@ -327,15 +327,35 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 									size_t b64Size;
 									bctbx_base64_encode(nullptr, &b64Size, contentKey, contentKeySize);
 									unsigned char *keyb64 = (unsigned char *)ms_malloc0(b64Size + 1);
-									int xmlStringLength;
 
 									bctbx_base64_encode(keyb64, &b64Size, contentKey, contentKeySize);
 									keyb64[b64Size] = '\0'; // libxml need a null terminated string
 
 									// add the node containing the key to the file-info node
 									xmlNewTextChild(cur, nullptr, (const xmlChar *)"file-key", (const xmlChar *)keyb64);
+
+									//cleaning
 									xmlFree(typeAttribute);
 									ms_free(keyb64);
+
+									// Do we have an authentication tag? If yes insert it
+									size_t contentAuthTagSize = fileTransferContent->getFileAuthTagSize();
+									if (contentAuthTagSize>0) {
+										const unsigned char *contentAuthTag = reinterpret_cast<const unsigned char *>(fileTransferContent->getFileAuthTag().data());
+										// Convert it to b64
+										b64Size=0;
+										bctbx_base64_encode(nullptr, &b64Size, contentAuthTag, contentAuthTagSize);
+										unsigned char *authTagb64 = (unsigned char *)ms_malloc0(b64Size + 1);
+
+										bctbx_base64_encode(authTagb64, &b64Size, contentAuthTag, contentAuthTagSize);
+										authTagb64[b64Size] = '\0'; // libxml need a null terminated string
+
+										// add the node containing the key to the file-info node
+										xmlNewTextChild(cur, nullptr, (const xmlChar *)"file-authTag", (const xmlChar *)authTagb64);
+
+										// cleaning
+										ms_free(authTagb64);
+									}
 
 									// look for the file-name node and update its content
 									while (fileInfoNodeChildren != nullptr) {
@@ -350,6 +370,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 
 									// dump the xml into msg->message
 									char *buffer;
+									int xmlStringLength;
 									xmlDocDumpFormatMemoryEnc(xmlMessageBody, (xmlChar **)&buffer, &xmlStringLength, "UTF-8", 0);
 									fileTransferContent->setBody(buffer);
 									break;
@@ -584,6 +605,24 @@ static void fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml (FileTran
 							xmlFree(keyb64);
 							free(keyBuffer);
 						}
+						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-authTag")) {
+							// There is authentication tag in the msg: file has been encrypted.
+							// Convert the tag from base 64.
+							xmlChar *authTagb64 = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
+							size_t authTagb64Length = strlen(reinterpret_cast<char *>(authTagb64));
+
+							size_t authTagLength;
+							bctbx_base64_decode(nullptr, &authTagLength, authTagb64, authTagb64Length);
+
+							uint8_t *authTagBuffer = static_cast<uint8_t *>(malloc(authTagLength + 1));
+
+							// Decode the authTag into local authTag buffer.
+							bctbx_base64_decode(authTagBuffer, &authTagLength, authTagb64, authTagb64Length);
+							authTagBuffer[authTagLength] = '\0';
+							fileTransferContent->setFileAuthTag(reinterpret_cast<char *>(authTagBuffer), authTagLength);
+							xmlFree(authTagb64);
+							free(authTagBuffer);
+						}
 
 						cur = cur->next;
 					}
@@ -742,7 +781,7 @@ void FileTransferChatMessageModifier::onRecvBody (belle_sip_user_body_handler_t 
 		ms_free(decrypted_buffer);
 	}
 
-	if (retval <= 0) {
+	if (retval == 0 || retval == -1) {
 		if (currentFileContentToTransfer->getFilePath().empty()) {
 			LinphoneChatMessage *msg = L_GET_C_BACK_PTR(message);
 			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
@@ -759,7 +798,7 @@ void FileTransferChatMessageModifier::onRecvBody (belle_sip_user_body_handler_t 
 			linphone_buffer_unref(lb);
 		}
 	} else {
-		lWarning() << "File transfer decrypt failed with code " << (int)retval;
+		lWarning() << "File transfer decrypt failed with code -" << hex <<(int)(-retval)<<dec;
 		message->getPrivate()->setState(ChatMessage::State::FileTransferError);
 	}
 }
@@ -787,7 +826,7 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 			LinphoneChatMessage *msg = L_GET_C_BACK_PTR(message);
 			LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 			LinphoneContent *content = L_GET_C_BACK_PTR((Content *)currentFileContentToTransfer);
-				LinphoneBuffer *lb = linphone_buffer_new();
+			LinphoneBuffer *lb = linphone_buffer_new();
 			// Deprecated: use list of callbacks now
 			if (linphone_chat_message_cbs_get_file_transfer_recv(cbs)) {
 				linphone_chat_message_cbs_get_file_transfer_recv(cbs)(msg, content, lb);
@@ -798,28 +837,31 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 			_linphone_chat_message_notify_file_transfer_recv(msg, content, lb);
 			linphone_buffer_unref(lb);
 		}
-	}
 
-	if (retval <= 0 && message->getState() != ChatMessage::State::FileTransferError) {
-		// Remove the FileTransferContent from the message and store the FileContent
-		FileContent *fileContent = currentFileContentToTransfer;
-		message->getPrivate()->addContent(fileContent);
-		for (Content *content : message->getContents()) {
-			if (content->isFileTransfer()) {
-				FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
-				if (fileTransferContent->getFileContent() == fileContent) {
-					message->getPrivate()->removeContent(content);
-					delete fileTransferContent;
-					break;
+		if (message->getState() != ChatMessage::State::FileTransferError) {
+			// Remove the FileTransferContent from the message and store the FileContent
+			FileContent *fileContent = currentFileContentToTransfer;
+			message->getPrivate()->addContent(fileContent);
+			for (Content *content : message->getContents()) {
+				if (content->isFileTransfer()) {
+					FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
+					if (fileTransferContent->getFileContent() == fileContent) {
+						message->getPrivate()->removeContent(content);
+						delete fileTransferContent;
+						break;
+					}
 				}
 			}
+			if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
+				releaseHttpRequest();
+				message->getPrivate()->receive();
+			} else {
+				message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
+			}
 		}
-		if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
-			releaseHttpRequest();
-			message->getPrivate()->receive();
-		} else {
-			message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
-		}
+	} else {
+		lWarning() << "File transfer decrypt failed with code " << (int)retval;
+		message->getPrivate()->setState(ChatMessage::State::FileTransferError);
 	}
 }
 
