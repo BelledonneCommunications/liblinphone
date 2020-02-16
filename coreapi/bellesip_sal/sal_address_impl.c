@@ -101,8 +101,8 @@ SalTransport sal_address_get_transport(const SalAddress* addr){
 	const char *transport=sal_address_get_transport_name(addr);
 	if (transport)
 		return sal_transport_parse(transport);
-	else
-		return SalTransportUDP;
+        else// Set transport to TLS by default
+                return SalTransportTLS;
 };
 
 const char* sal_address_get_transport_name(const SalAddress* addr){
