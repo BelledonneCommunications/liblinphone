@@ -442,6 +442,8 @@ class Translator:
 				namespace = description.relatedObject.find_first_ancestor_by_type(abstractapi.Namespace, abstractapi.Class)
 			if namespace is abstractapi.GlobalNs:
 				commonName = None
+			elif namespace.name == ref.relatedObject.name:
+				commonName = namespace.name.prev
 			elif namespace.name.is_prefix_of(ref.relatedObject.name):
 				commonName = namespace.name
 			else:
@@ -555,13 +557,9 @@ class JavaDocTranslator(DoxygenTranslator):
 		pass
 
 	def translate_class_reference(self, ref, **kargs):
-		if isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum)):
-			className = Translator.translate_reference(self, ref)
-			if className[:9] == 'linphone.':
-				className = className[9:]
-			return '{@link ' + className + '}'
-		else:
+		if not isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum)):
 			raise ReferenceTranslationError(ref.cname)
+		return '{@link ' + Translator.translate_reference(self, ref) + '}'
 	
 	def _translate_section(self, section):
 		if section.kind == 'see':
@@ -577,20 +575,13 @@ class JavaDocTranslator(DoxygenTranslator):
 		)
 
 	def translate_function_reference(self, ref, **kargs):
-		if isinstance(ref.relatedObject, abstractapi.Method):
-			methodName = self.nameTranslator.translate_method_name(ref.relatedObject.name)
-			className = self.nameTranslator.translate_class_name(ref.relatedObject.parent.name)
-
-			if methodName[:3] == 'get' or methodName[:3] == 'set' or methodName[:6] == 'enable':
-				className = self.nameTranslator.translate_class_name(ref.relatedObject.parent.parent.name)
-
-			if className[:9] == 'linphone.':
-				className = className[9:]
-			if className == 'Linphone':
-				className = ''
-			return '{@link ' + className + '#' + methodName + '}'
-		else:
+		if not isinstance(ref.relatedObject, abstractapi.Method):
 			raise ReferenceTranslationError(ref.cname)
+
+		className = ref.relatedObject.name.prev.translate(self.nameTranslator)
+		methodName = ref.relatedObject.name.translate(self.nameTranslator)
+		return '{@link ' + className + '#' + methodName + '}'
+
 
 class SwiftDocTranslator(JavaDocTranslator):
 	def __init__(self):
