@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package {{packageName}};
 
+import org.jetbrains.annotations.Nullable;
 {{#imports}}
 import {{import}}
 {{/imports}}
@@ -138,7 +139,8 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
     {{/detailedDoc}}
     */
     {{#deprecated}}@Deprecated
-    {{/deprecated}}{{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public {{return}} {{name}}({{params}}){{#exception}} throws CoreException{{/exception}};
+    {{/deprecated}}{{#return_maybenil}}@Nullable
+    {{/return_maybenil}}{{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public {{return}} {{name}}({{params}}){{#exception}} throws CoreException{{/exception}};
 
 {{/methods}}
     /**
@@ -212,7 +214,7 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
 
 {{#methods}}
     private native {{return_native}} {{name_native}}({{native_params}});
-    @Override
+    @Override{{#return_maybenil}} @Nullable{{/return_maybenil}}
     synchronized public {{return}} {{name}}({{params}}) {{#exception}}throws CoreException{{/exception}} {
         {{#hasCoreAccessor}}{{#isNotGetCore}}synchronized(core) { {{/isNotGetCore}}{{/hasCoreAccessor}}
         {{#exception}}int exceptionResult = {{/exception}}{{return_keyword}}{{#enumCast}}{{return}}.fromInt({{/enumCast}}{{#classCast}}({{return}}){{/classCast}}{{name_native}}({{native_params_impl}}){{#enumCast}}){{/enumCast}};{{#exception}}

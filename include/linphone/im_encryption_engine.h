@@ -208,7 +208,7 @@ LINPHONE_PUBLIC void linphone_im_encryption_engine_cbs_set_generate_file_transfe
 /** Set a chat message text to be sent by #linphone_chat_room_send_message
  * @param[in] msg #LinphoneChatMessage
  * @param[in] text Const char *
- * @returns 0 if succeed.
+ * @return 0 if succeed.
  * @donotwrap
 */
 LINPHONE_PUBLIC int linphone_chat_message_set_text(LinphoneChatMessage *msg, const char* text);

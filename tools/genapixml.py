@@ -564,6 +564,7 @@ class Project:
 		returnarg = CArgument(t, enums = self.enums, structs = self.__structs)
 		returndesc = node.find("./detaileddescription/para/simplesect[@kind='return']")
 		if returndesc is not None:
+			returnarg.maybenil = True if returndesc.find('.//maybenil') is not None else False
 			if returnarg.ctype == 'MSList' or returnarg.ctype == 'bctbx_list_t':
 				n = returndesc.find('.//bctbxlist')
 				if n is not None:

@@ -177,6 +177,7 @@ class JavaTranslator(object):
     def generate_listener(self, name, _class):
         methodDict = {}
         methodDict['return'] = 'void'
+        methodDict['return_maybenil'] = False
         methodDict['return_native'] = 'void'
         methodDict['return_keyword'] = ''
         methodDict['convertInputClassArrayToLongArray'] = False
@@ -212,6 +213,7 @@ class JavaTranslator(object):
         namespace = _method.find_first_ancestor_by_type(AbsApi.Namespace)
 
         methodDict['return'] = _method.returnType.translate(self.langTranslator, isReturn=True, namespace=namespace, exceptionEnabled=self.exceptions)
+        methodDict['return_maybenil'] = _method.maybenil
         methodDict['return_native'] = _method.returnType.translate(self.langTranslator, native=True, isReturn=True, namespace=namespace, exceptionEnabled=self.exceptions)
         methodDict['return_keyword'] = '' if methodDict['return'] == 'void' else 'return '
         methodDict['hasReturn'] = not methodDict['return'] == 'void'
@@ -231,7 +233,7 @@ class JavaTranslator(object):
         methodDict['enumCast'] = type(_method.returnType) is AbsApi.EnumType
         methodDict['classCast'] = type(_method.returnType) is AbsApi.ClassType
 
-        methodDict['params'] = ', '.join([arg.translate(self.langTranslator, namespace=namespace) for arg in _method.args])
+        methodDict['params'] = ', '.join(['{0}{1}'.format('@Nullable ' if arg.maybenil else '', arg.translate(self.langTranslator, namespace=namespace)) for arg in _method.args])
         methodDict['native_params'] = ', '.join(['long nativePtr'] + [arg.translate(self.langTranslator, native=True, namespace=namespace) for arg in _method.args])
         methodDict['static_native_params'] = ', '.join([arg.translate(self.langTranslator, native=True, namespace=namespace) for arg in _method.args])
         methodDict['native_params_impl'] = ', '.join(
