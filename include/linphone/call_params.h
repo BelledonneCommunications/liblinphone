@@ -430,7 +430,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_params_enable_realtime_text(Linphon
 /**
  * Use to get real time text following rfc4103.
  * @param params #LinphoneCallParams
- * @returns returns true if call rtt is activated.
+ * @return returns true if call rtt is activated.
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC bool_t linphone_call_params_realtime_text_enabled(const LinphoneCallParams *params);
@@ -446,7 +446,7 @@ LINPHONE_PUBLIC void linphone_call_params_set_realtime_text_keepalive_interval(L
 /**
  * Use to get keep alive interval of real time text following rfc4103.
  * @param params #LinphoneCallParams
- * @returns returns keep alive interval of real time text.
+ * @return returns keep alive interval of real time text.
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC unsigned int linphone_call_params_get_realtime_text_keepalive_interval(const LinphoneCallParams *params);

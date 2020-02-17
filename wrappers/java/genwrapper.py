@@ -212,6 +212,7 @@ class JavaTranslator(object):
         namespace = _method.find_first_ancestor_by_type(AbsApi.Namespace)
 
         methodDict['return'] = _method.returnType.translate(self.langTranslator, isReturn=True, namespace=namespace, exceptionEnabled=self.exceptions)
+        methodDict['return_maybenil'] = _method.maybenil # TODO: use
         methodDict['return_native'] = _method.returnType.translate(self.langTranslator, native=True, isReturn=True, namespace=namespace, exceptionEnabled=self.exceptions)
         methodDict['return_keyword'] = '' if methodDict['return'] == 'void' else 'return '
         methodDict['hasReturn'] = not methodDict['return'] == 'void'
@@ -231,6 +232,7 @@ class JavaTranslator(object):
         methodDict['enumCast'] = type(_method.returnType) is AbsApi.EnumType
         methodDict['classCast'] = type(_method.returnType) is AbsApi.ClassType
 
+        #TODO: use methodDict['params'] = ', '.join(['{0}{1}'.format('@Nullable ' if arg.maybenil else '', arg.translate(self.langTranslator, namespace=namespace)) for arg in _method.args])
         methodDict['params'] = ', '.join([arg.translate(self.langTranslator, namespace=namespace) for arg in _method.args])
         methodDict['native_params'] = ', '.join(['long nativePtr'] + [arg.translate(self.langTranslator, native=True, namespace=namespace) for arg in _method.args])
         methodDict['static_native_params'] = ', '.join([arg.translate(self.langTranslator, native=True, namespace=namespace) for arg in _method.args])

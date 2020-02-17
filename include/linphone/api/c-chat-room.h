@@ -326,7 +326,7 @@ LINPHONE_PUBLIC LinphoneCore* linphone_chat_room_get_core(const LinphoneChatRoom
  * When realtime text is enabled #linphone_call_params_realtime_text_enabled, #LinphoneCoreIsComposingReceivedCb is call everytime a char is received from peer.
  * At the end of remote typing a regular #LinphoneChatMessage is received with committed data from #LinphoneCoreMessageReceivedCb.
  * @param[in] cr #LinphoneChatRoom object
- * @returns  RFC 4103/T.140 char
+ * @return  RFC 4103/T.140 char
  */
 LINPHONE_PUBLIC uint32_t linphone_chat_room_get_char(const LinphoneChatRoom *cr);
 
@@ -341,7 +341,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_lime_available(LinphoneChatRoom *cr);
  * get Curent Call associated to this chatroom if any
  * To commit a message, use #linphone_chat_room_send_message
  * @param[in] room #LinphoneChatRomm
- * @returns #LinphoneCall or NULL.
+ * @return #LinphoneCall or NULL.
  */
 LINPHONE_PUBLIC LinphoneCall *linphone_chat_room_get_call(const LinphoneChatRoom *room);
 

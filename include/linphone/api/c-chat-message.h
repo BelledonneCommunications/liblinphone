@@ -389,7 +389,7 @@ LINPHONE_PUBLIC time_t linphone_chat_message_get_ephemeral_expire_time (const Li
  * To commit a message, use #linphone_chat_room_send_message
  * @param[in] msg #LinphoneChatMessage object.
  * @param[in] character T.140 char
- * @returns 0 if succeed.
+ * @return 0 if succeed.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_chat_message_put_char (LinphoneChatMessage *msg, uint32_t character);
 

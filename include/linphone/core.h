@@ -1533,6 +1533,7 @@ LINPHONE_PUBLIC LinphoneCallParams *linphone_core_create_call_params(LinphoneCor
  * @param[in] lc #LinphoneCore object
  * @param[in] remote_address The remote address of the call that we want to get
  * @return The call if it has been found, NULL otherwise
+ * @maybenil
  * @ingroup call_control
  */
 LINPHONE_PUBLIC LinphoneCall *linphone_core_get_call_by_remote_address(const LinphoneCore *lc, const char *remote_address);
@@ -4504,7 +4505,7 @@ LINPHONE_PUBLIC void linphone_core_set_user_certificates_path(LinphoneCore *lc, 
 /**
  * Get the path to the directory storing the user's certificates.
  * @param[in] lc #LinphoneCore object.
- * @returns The path to the directory storing the user's certificates.
+ * @return The path to the directory storing the user's certificates.
  * @ingroup initializing
  */
 LINPHONE_PUBLIC const char *linphone_core_get_user_certificates_path(LinphoneCore *lc);
@@ -4763,7 +4764,7 @@ LINPHONE_PUBLIC bool_t linphone_core_tunnel_available(void);
  * get tunnel instance if available
  * @ingroup tunnel
  * @param lc core object
- * @returns #LinphoneTunnel or NULL if not available
+ * @return #LinphoneTunnel or NULL if not available
  */
 LINPHONE_PUBLIC LinphoneTunnel *linphone_core_get_tunnel(const LinphoneCore *lc);
 

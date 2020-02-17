@@ -92,21 +92,21 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_stop_echo_tester(LinphoneCore *lc);
 
 /**
  * Check whether the device is flagged has crappy opengl
- * @returns TRUE if crappy opengl flag is set, FALSE otherwise
+ * @return TRUE if crappy opengl flag is set, FALSE otherwise
  * @ingroup misc
 **/
 LINPHONE_PUBLIC bool_t linphone_core_has_crappy_opengl(LinphoneCore *lc);
 
 /**
  * Check whether the device has a hardware echo canceller
- * @returns TRUE if it does, FALSE otherwise
+ * @return TRUE if it does, FALSE otherwise
  * @ingroup misc
 **/
 LINPHONE_PUBLIC bool_t linphone_core_has_builtin_echo_canceller(LinphoneCore *lc);
 
 /**
  * Check whether the device is echo canceller calibration is required
- * @returns TRUE if it is required, FALSE otherwise
+ * @return TRUE if it is required, FALSE otherwise
  * @ingroup misc
 **/
 LINPHONE_PUBLIC bool_t linphone_core_is_echo_canceller_calibration_required(LinphoneCore *lc);

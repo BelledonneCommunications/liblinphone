@@ -338,12 +338,13 @@ class Enum(DocumentableObject):
 		return False
 
 class Argument(DocumentableObject):
-	def __init__(self, name, argType, optional=False, default=None):
+	def __init__(self, name, argType, optional=False, default=None, maybenil=False):
 		DocumentableObject.__init__(self, name)
 		self._type = argType
 		argType.parent = self
 		self.optional = optional
 		self.default = default
+		self.maybenil = maybenil
 	
 	@property
 	def type(self):
@@ -363,12 +364,13 @@ class Method(DocumentableObject):
 		Instance = 0,
 		Class = 1
 	
-	def __init__(self, name, type=Type.Instance):
+	def __init__(self, name, type=Type.Instance, maybenil=False):
 		DocumentableObject.__init__(self, name)
 		self.type = type
 		self.isconst = False
 		self.args = []
 		self._returnType = None
+		self.maybenil = maybenil
 	
 	def add_arguments(self, arg):
 		self.args.append(arg)
@@ -853,7 +855,7 @@ class CParser(object):
 		for arg in event.arguments:
 			argName = metaname.ArgName()
 			argName.from_snake_case(arg.name)
-			argument = Argument(argName, self.parse_type(arg), arg.maybenil)
+			argument = Argument(argName, self.parse_type(arg), maybenil=arg.maybenil)
 			method.add_arguments(argument)
 		method.briefDescription = event.briefDoc
 		method.detailedDescription = event.detailedDoc
@@ -881,7 +883,7 @@ class CParser(object):
 					aType = self.parse_type(arg)
 					argName = metaname.ArgName()
 					argName.from_snake_case(arg.name)
-					absArg = Argument(argName, aType, arg.maybenil)
+					absArg = Argument(argName, aType, maybenil=arg.maybenil)
 					method.add_arguments(absArg)
 			
 			self.methodsIndex[cfunction.name] = method
