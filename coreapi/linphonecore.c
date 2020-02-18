@@ -1527,6 +1527,9 @@ static void sip_config_read(LinphoneCore *lc) {
 	tmp=lp_config_get_int(lc->config,"app","sender_name_hidden_in_forward_message",0);
 	linphone_core_enable_sender_name_hidden_in_forward_message(lc, !!tmp);
 
+	tmp=lp_config_get_int(lc->config, "app", "use_callkit", 0);
+	linphone_core_callkit_enabled(lc, !!tmp);
+
 	/*In case of remote provisionning, function sip_config_read is initialy called in core_init, then in state ConfiguringSuccessfull*/
 	/*Accordingly, to avoid proxy_config to be added twice, it is mandatory to reset proxy config list from LinphoneCore*/
 	/*We assume, lc->config contains an accurate list of proxy_config, so no need to keep it from LinphoneCore */
@@ -6724,6 +6727,14 @@ int linphone_core_get_calls_nb(const LinphoneCore *lc) {
 
 void linphone_core_soundcard_hint_check(LinphoneCore* lc) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardHintCheck();
+}
+
+void linphone_core_audio_session_activated (LinphoneCore* lc, bool_t actived) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardAudioSessionActivated(actived);
+}
+
+void linphone_core_callkit_enabled (LinphoneCore* lc, bool_t enabled) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardCallkitEnabled(enabled);
 }
 
 void linphone_core_set_remote_ringback_tone(LinphoneCore *lc, const char *file){
