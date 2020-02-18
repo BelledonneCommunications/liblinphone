@@ -67,7 +67,13 @@ int linphone_ringtoneplayer_ios_start_with_cb(LinphoneRingtonePlayer* rp, const 
 		ms_warning("%s: a player is already instantiated, stopping it first.", __FUNCTION__);
 		linphone_ringtoneplayer_ios_stop(rp);
 	}
-	rp->player = [[AVAudioPlayer alloc] initWithContentsOfURL:url error:nil];
+	NSError * error = NULL;
+	rp->player = [[AVAudioPlayer alloc] initWithContentsOfURL:url error:&error];
+	if(rp->player == NULL && error != NULL) {
+		ms_error("Failed in creating AVAudioPlayer: %s", error.localizedDescription.UTF8String);
+		return 1;
+	}
+
 	[rp->player prepareToPlay];
 	rp->player.numberOfLoops = (loop_pause_ms >= 0) ? -1 : 0;
 	rp->player.delegate = rp->playerDelegate;
