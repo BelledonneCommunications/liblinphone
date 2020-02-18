@@ -611,7 +611,7 @@ static void sdp_parse_media_ice_parameters(belle_sdp_media_description_t *media_
 				}
 				ptr += offset;
 				if (ptr < endptr) {
-					if (ptr[offset] == ' ') ptr += 1;
+					if (*ptr == ' ') ptr += 1;
 				} else break;
 			}
 		} else if ((keywordcmp("ice-ufrag", att_name) == 0) && (value != NULL)) {
