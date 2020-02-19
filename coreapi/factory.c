@@ -305,6 +305,10 @@ LinphoneVideoDefinition * linphone_factory_find_supported_video_definition(const
 		}
 	}
 	linphone_video_definition_unref(searched_vdef);
+	
+	if (!found) {
+		ms_warning("Couldn't find supported video definition for %ux%u", width, height);
+	}
 	return found;
 }
 

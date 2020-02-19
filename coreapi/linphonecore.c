@@ -1922,7 +1922,7 @@ static void video_config_read(LinphoneCore *lc){
 	if (str && str[0]==0) str=NULL;
 	linphone_core_set_video_device(lc,str);
 
-	linphone_core_set_preferred_video_size_by_name(lc,
+	linphone_core_set_preferred_video_definition_by_name(lc,
 		lp_config_get_string(lc->config,"video","size","vga"));
 
 	linphone_core_set_preview_video_size_by_name(lc,
@@ -5797,8 +5797,12 @@ void linphone_core_set_preferred_video_definition(LinphoneCore *lc, LinphoneVide
 }
 
 void linphone_core_set_preferred_video_size(LinphoneCore *lc, MSVideoSize vsize) {
-	linphone_core_set_preferred_video_definition(lc,
-		linphone_factory_find_supported_video_definition(linphone_factory_get(), (unsigned int)vsize.width, (unsigned int)vsize.height));
+	LinphoneVideoDefinition *vdef = linphone_factory_find_supported_video_definition(linphone_factory_get(), (unsigned int)vsize.width, (unsigned int)vsize.height);
+	if (!vdef) {
+		ms_error("Couldn't find video definition for size %ux%u", vsize.width, vsize.height);
+		return;
+	}
+	linphone_core_set_preferred_video_definition(lc, vdef);
 }
 
 void linphone_core_set_preview_video_definition(LinphoneCore *lc, LinphoneVideoDefinition *vdef) {
