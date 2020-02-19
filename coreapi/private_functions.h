@@ -618,6 +618,7 @@ void _linphone_core_set_log_handler(OrtpLogFunc logfunc);
 void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id);
 void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id);
 void linphone_core_resize_video_preview(LinphoneCore *lc, int width, int height);
+void linphone_core_set_preferred_video_definition_by_name(LinphoneCore *lc, const char *name);
 
 LinphoneAccountCreatorCbs * linphone_account_creator_cbs_new(void);
 void linphone_account_creator_set_current_callbacks(LinphoneAccountCreator *creator, LinphoneAccountCreatorCbs *cbs);

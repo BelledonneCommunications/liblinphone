@@ -1922,7 +1922,7 @@ static void video_config_read(LinphoneCore *lc){
 	if (str && str[0]==0) str=NULL;
 	linphone_core_set_video_device(lc,str);
 
-	linphone_core_set_preferred_video_size_by_name(lc,
+	linphone_core_set_preferred_video_definition_by_name(lc,
 		lp_config_get_string(lc->config,"video","size","vga"));
 
 	linphone_core_set_preview_video_size_by_name(lc,
@@ -5780,6 +5780,11 @@ static bool_t video_definition_supported(const LinphoneVideoDefinition *vdef) {
 }
 
 void linphone_core_set_preferred_video_definition(LinphoneCore *lc, LinphoneVideoDefinition *vdef) {
+	if (!vdef) {
+		ms_error("Video definition is NULL, abort");
+		return;
+	}
+
 	if (video_definition_supported(vdef)) {
 		LinphoneVideoDefinition *oldvdef = lc->video_conf.vdef;
 		lc->video_conf.vdef = linphone_video_definition_ref(vdef);
