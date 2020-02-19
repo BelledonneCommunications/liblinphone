@@ -108,7 +108,11 @@ void MS2VideoStream::cameraNotWorkingCb (const char *cameraName) {
 }
 
 MediaStream *MS2VideoStream::getMediaStream()const{
-	return &mStream->ms;
+	if(mStream)
+		return &mStream->ms;
+	else
+		return nullptr;
+
 }
 
 void MS2VideoStream::sendVfu(){
@@ -120,7 +124,7 @@ void MS2VideoStream::sendVfuRequest(){
 }
 
 void MS2VideoStream::zoomVideo (float zoomFactor, float cx, float cy){
-	if (mStream->output) {
+	if (mStream && mStream->output) {
 		if (zoomFactor < 1)
 			zoomFactor = 1;
 		float halfsize = 0.5f * 1.0f / zoomFactor;
@@ -429,7 +433,7 @@ void MS2VideoStream::tryEarlyMediaForking(const OfferAnswerContext &ctx){
 }
 
 void MS2VideoStream::oglRender(){
-	if (mStream->output && (ms_filter_get_id(mStream->output) == MS_OGL_ID))
+	if (mStream && mStream->output && (ms_filter_get_id(mStream->output) == MS_OGL_ID))
 		ms_filter_call_method(mStream->output, MS_OGL_RENDER, nullptr);
 }
 
@@ -439,7 +443,7 @@ AudioStream *MS2VideoStream::getPeerAudioStream(){
 }
 
 void MS2VideoStream::requestNotifyNextVideoFrameDecoded () {
-	if (mStream->ms.decoder)
+	if (mStream && mStream->ms.decoder)
 		ms_filter_call_method_noarg(mStream->ms.decoder, MS_VIDEO_DECODER_RESET_FIRST_IMAGE_NOTIFICATION);
 }
 
