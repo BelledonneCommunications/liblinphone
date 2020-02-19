@@ -112,7 +112,6 @@ MediaStream *MS2VideoStream::getMediaStream()const{
 		return &mStream->ms;
 	else
 		return nullptr;
-
 }
 
 void MS2VideoStream::sendVfu(){
