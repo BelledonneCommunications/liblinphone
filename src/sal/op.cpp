@@ -374,6 +374,7 @@ int SalOp::processRedirect () {
 	/* remove previously used authorization headers. */
 	belle_sip_message_remove_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_AUTHORIZATION);
 	belle_sip_message_remove_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_PROXY_AUTHORIZATION);
+    mRouteAddresses.clear();
 	sendRequest(request);
 	return 0;
 }
