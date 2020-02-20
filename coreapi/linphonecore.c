@@ -1922,11 +1922,13 @@ static void video_config_read(LinphoneCore *lc){
 	if (str && str[0]==0) str=NULL;
 	linphone_core_set_video_device(lc,str);
 
-	linphone_core_set_preferred_video_definition_by_name(lc,
-		lp_config_get_string(lc->config,"video","size","vga"));
+	str=lp_config_get_string(lc->config,"video","size","vga");
+	if (str && str[0]==0) str=NULL;
+	if (str) linphone_core_set_preferred_video_definition_by_name(lc,str);
 
-	linphone_core_set_preview_video_size_by_name(lc,
-		lp_config_get_string(lc->config,"video","preview_size",NULL));
+	str=lp_config_get_string(lc->config,"video","preview_size",NULL);
+	if (str && str[0]==0) str=NULL;
+	if (str) linphone_core_set_preview_video_size_by_name(lc,str);
 
 	linphone_core_set_preferred_framerate(lc,lp_config_get_float(lc->config,"video","framerate",0));
 
