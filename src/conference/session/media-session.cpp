@@ -552,9 +552,7 @@ LinphoneCallStats * MediaSessionPrivate::getStats(LinphoneStreamType type) const
 
 
 void MediaSessionPrivate::stopStreams () {
-	L_Q();
 	if (getStreamsGroup().isStarted()) getStreamsGroup().stop();
-	q->getCore()->soundcardHintCheck();
 }
 
 // -----------------------------------------------------------------------------
@@ -1692,8 +1690,10 @@ int MediaSessionPrivate::restartInvite () {
 }
 
 void MediaSessionPrivate::setTerminated () {
+	L_Q();
 	freeResources();
 	CallSessionPrivate::setTerminated();
+	q->getCore()->soundcardHintCheck();
 }
 
 LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextState, const string &stateInfo) {
