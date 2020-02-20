@@ -182,9 +182,7 @@ bool MS2AudioStream::prepare(){
 		ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
 	}
 	
-	if (!getCCore()->use_files){
-		audio_stream_prepare_sound(mStream, getCCore()->sound_conf.play_sndcard, getCCore()->sound_conf.capt_sndcard);
-	}else if (getIceService().isActive()){
+	if (getIceService().isActive()){
 		audio_stream_prepare_sound(mStream, nullptr, nullptr);
 	}
 	MS2Stream::prepare();
