@@ -318,10 +318,12 @@ LinphoneVideoDefinition * linphone_factory_find_supported_video_definition_by_na
 
 	for (item = supported; item != NULL; item = bctbx_list_next(item)) {
 		LinphoneVideoDefinition *svdef = (LinphoneVideoDefinition *)bctbx_list_get_data(item);
-		if (strcmp(linphone_video_definition_get_name(svdef), name) == 0) {
+		if (name && strcmp(linphone_video_definition_get_name(svdef), name) == 0) {
 			return svdef;
 		}
 	}
+
+	ms_error("Couldn't find a supported video definition for name [%s]", name);
 	return NULL;
 }
 
