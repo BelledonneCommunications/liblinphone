@@ -322,6 +322,8 @@ LinphoneVideoDefinition * linphone_factory_find_supported_video_definition_by_na
 			return svdef;
 		}
 	}
+
+	ms_error("Couldn't find a supported video definition for name [%s]", name);
 	return NULL;
 }
 
