@@ -158,7 +158,11 @@ void PayloadTypeHandler::assignPayloadTypeNumbers (const bctbx_list_t *codecs) {
 }
 
 bctbx_list_t *PayloadTypeHandler::createSpecialPayloadTypes (const bctbx_list_t *codecs) {
-	bctbx_list_t *result = createTelephoneEventPayloadTypes(codecs);
+	bctbx_list_t *result = nullptr;
+	
+	if (linphone_core_get_use_rfc2833_for_dtmf(getCore()->getCCore())){
+		result = createTelephoneEventPayloadTypes(codecs);
+	}
 	if (linphone_core_generic_comfort_noise_enabled(getCore()->getCCore())) {
 		OrtpPayloadType *cn = payload_type_clone(&payload_type_cn);
 		payload_type_set_number(cn, 13);
