@@ -45,7 +45,16 @@ add_custom_command(OUTPUT LinphoneWrapper.swift
 	linphone-doc
 )
 
-if (ENABLE_SWIFT_WRAPPER_COMPILATION)
+# When ENABLE_SWIFT_WRAPPER=YES and ENABLE_SWIFT_WRAPPER_COMPILATION=NO, we use the swift file directly, which is recommended.
+# Because there is a compatibility problem with Swift Version when installing the framework in the application.
+# However, we need the framework to generate documentation by jazzy but not zip it into linphone-sdk (See cmake/IOS/Lipo.cmake).
+if (NOT ENABLE_SWIFT_WRAPPER_COMPILATION)
+	add_custom_target(linphoneswsource ALL DEPENDS LinphoneWrapper.swift)
+	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.swift"
+		DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonesw/")
+endif()
+
+if (ENABLE_JAZZY_DOC OR ENABLE_SWIFT_WRAPPER_COMPILATION)
 	cmake_minimum_required(VERSION 3.15)
 	set(CMAKE_Swift_LANGUAGE_VERSION 4.0)
 	enable_language(Swift)
@@ -94,12 +103,5 @@ if (ENABLE_SWIFT_WRAPPER_COMPILATION)
 			USE_SOURCE_PERMISSIONS
 		)
 	endif()
-
-else()
-
-	add_custom_target(linphonesw ALL DEPENDS LinphoneWrapper.swift)
-
-	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.swift"
-			DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonesw/")
 
 endif()
