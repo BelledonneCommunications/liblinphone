@@ -52,7 +52,32 @@ class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(CallSession);
 
-	L_DECLARE_ENUM(State, L_ENUM_VALUES_CALL_SESSION_STATE);
+	enum class State{
+		Idle = LinphoneCallStateIdle,
+		IncomingReceived = LinphoneCallStateIncomingReceived,
+		OutgoingInit = LinphoneCallStateOutgoingInit,
+		OutgoingProgress = LinphoneCallStateOutgoingProgress,
+		OutgoingRinging = LinphoneCallStateOutgoingRinging,
+		OutgoingEarlyMedia = LinphoneCallStateOutgoingEarlyMedia,
+		Connected = LinphoneCallStateConnected,
+		StreamsRunning = LinphoneCallStateStreamsRunning,
+		Pausing = LinphoneCallStatePausing,
+		Paused = LinphoneCallStatePaused,
+		Resuming = LinphoneCallStateResuming,
+		Referred = LinphoneCallStateReferred,
+		Error = LinphoneCallStateError,
+		End = LinphoneCallStateEnd,
+		PausedByRemote = LinphoneCallStatePausedByRemote,
+		UpdatedByRemote = LinphoneCallStateUpdatedByRemote,
+		IncomingEarlyMedia = LinphoneCallStateIncomingEarlyMedia,
+		Updating = LinphoneCallStateUpdating,
+		Released = LinphoneCallStateReleased,
+		EarlyUpdatedByRemote = LinphoneCallStateEarlyUpdatedByRemote,
+		EarlyUpdating
+	};
+	//casting to int to get rid of the enum compare warning.
+	//Here we are comparing two enums serving the same purpose
+	static_assert((int)CallSession::State::EarlyUpdating == (int)LinphoneCallStateEarlyUpdating, "LinphoneCallState and CallSession::State are not synchronized, fix this !");
 
 	CallSession (const std::shared_ptr<Core> &core, const CallSessionParams *params, CallSessionListener *listener);
 	void setListener(CallSessionListener *listener);

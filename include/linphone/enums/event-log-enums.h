@@ -22,23 +22,33 @@
 
 // =============================================================================
 
-#define L_ENUM_VALUES_EVENT_LOG_TYPE(F) \
-	F(None /**< No defined event */) \
-	F(ConferenceCreated /**< Conference (created) event */) \
-	F(ConferenceTerminated /**< Conference (terminated) event */) \
-	F(ConferenceCallStart /**< Conference call (start) event */) \
-	F(ConferenceCallEnd /**< Conference call (end) event */) \
-	F(ConferenceChatMessage /**< Conference chat message event */) \
-	F(ConferenceParticipantAdded /**< Conference participant (added) event */) \
-	F(ConferenceParticipantRemoved /**< Conference participant (removed) event */) \
-	F(ConferenceParticipantSetAdmin /**< Conference participant (set admin) event */) \
-	F(ConferenceParticipantUnsetAdmin /**< Conference participant (unset admin) event */) \
-	F(ConferenceParticipantDeviceAdded /**< Conference participant device (added) event */) \
-	F(ConferenceParticipantDeviceRemoved /**< Conference participant device (removed) event */) \
-	F(ConferenceSubjectChanged /**< Conference subject event */) \
-	F(ConferenceSecurityEvent /**< Conference encryption security event*/) \
-	F(ConferenceEphemeralMessageLifetimeChanged /**< Conference ephemeral message (ephemeral message lifetime changed) event */) \
-	F(ConferenceEphemeralMessageEnabled /**< Conference ephemeral message (ephemeral message enabled) event */) \
-	F(ConferenceEphemeralMessageDisabled /**< Conference ephemeral message (ephemeral message disabled) event */) \
+// -----------------------------------------------------------------------------
+// EventLog.
+// -----------------------------------------------------------------------------
+
+/**
+ * #LinphoneEventLogType is used to indicate the type of an event. Useful for cast.
+ * @ingroup events
+ */
+typedef enum _EventLogType{
+	LinphoneEventLogTypeNone, /**< No defined event */
+	LinphoneEventLogTypeConferenceCreated, /**< Conference (created) event */
+	LinphoneEventLogTypeConferenceTerminated, /**< Conference (terminated) event */
+	LinphoneEventLogTypeConferenceCallStart, /**< Conference call (start) event */
+	LinphoneEventLogTypeConferenceCallEnd, /**< Conference call (end) event */
+	LinphoneEventLogTypeConferenceChatMessage, /**< Conference chat message event */
+	LinphoneEventLogTypeConferenceParticipantAdded, /**< Conference participant (added) event */
+	LinphoneEventLogTypeConferenceParticipantRemoved, /**< Conference participant (removed) event */
+	LinphoneEventLogTypeConferenceParticipantSetAdmin, /**< Conference participant (set admin) event */
+	LinphoneEventLogTypeConferenceParticipantUnsetAdmin, /**< Conference participant (unset admin) event */
+	LinphoneEventLogTypeConferenceParticipantDeviceAdded, /**< Conference participant device (added) event */
+	LinphoneEventLogTypeConferenceParticipantDeviceRemoved, /**< Conference participant device (removed) event */
+	LinphoneEventLogTypeConferenceSubjectChanged, /**< Conference subject event */
+
+	LinphoneEventLogTypeConferenceSecurityEvent, /**< Conference encryption security event*/
+	LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged, /**< Conference ephemeral message (ephemeral message lifetime changed) event */
+	LinphoneEventLogTypeConferenceEphemeralMessageEnabled, /**< Conference ephemeral message (ephemeral message enabled) event */
+	LinphoneEventLogTypeConferenceEphemeralMessageDisabled, /**< Conference ephemeral message (ephemeral message disabled) event */
+} LinphoneEventLogType;
 
 #endif // ifndef _L_EVENT_LOG_ENUMS_H_

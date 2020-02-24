@@ -62,8 +62,30 @@ class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor {
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ChatMessage);
 
-	L_DECLARE_ENUM(State, L_ENUM_VALUES_CHAT_MESSAGE_STATE);
-	L_DECLARE_ENUM(Direction, L_ENUM_VALUES_CHAT_MESSAGE_DIRECTION);
+	enum class State{
+		Idle = LinphoneChatMessageStateIdle,
+		InProgress = LinphoneChatMessageStateInProgress,
+		Delivered = LinphoneChatMessageStateDelivered,
+		NotDelivered = LinphoneChatMessageStateNotDelivered,
+		FileTransferError = LinphoneChatMessageStateFileTransferError,
+		FileTransferDone = LinphoneChatMessageStateFileTransferDone,
+		DeliveredToUser = LinphoneChatMessageStateDeliveredToUser,
+		Displayed = LinphoneChatMessageStateDisplayed,
+		FileTransferInProgress
+	};
+
+	//casting to int to get rid of the enum compare warning.
+	//Here we are comparing two enums serving the same purpose
+	static_assert((int)ChatMessage::State::FileTransferInProgress == (int)LinphoneChatMessageStateFileTransferInProgress, "LinphoneChatMessageState and ChatMessage::State are not synchronized, fix this !");
+
+	enum class Direction{
+		Incoming = LinphoneChatMessageDirectionIncoming,
+		Outgoing
+	};
+
+	//casting to int to get rid of the enum compare warning.
+	//Here we are comparing two enums serving the same purpose
+	static_assert((int)ChatMessage::Direction::Outgoing == (int)LinphoneChatMessageDirectionOutgoing, "LinphoneChatMessageDirection and ChatMessage::Direction are not synchronized, fix this !");
 
 	virtual ~ChatMessage ();
 
@@ -102,7 +124,7 @@ public:
 
 	bool getToBeStored () const;
 	virtual void setToBeStored (bool value);
-	
+
 
 	std::list<ParticipantImdnState> getParticipantsByImdnState (State state) const;
 
@@ -130,6 +152,8 @@ private:
 	L_DECLARE_PRIVATE(ChatMessage);
 	L_DISABLE_COPY(ChatMessage);
 };
+
+std::ostream& operator<<(std::ostream& lhs, ChatMessage::State e);
 
 LINPHONE_END_NAMESPACE
 

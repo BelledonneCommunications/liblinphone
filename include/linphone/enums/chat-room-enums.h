@@ -21,35 +21,55 @@
 #define _L_CHAT_ROOM_ENUMS_H_
 
 // =============================================================================
+/**
+ * #LinphoneChatRoomState is used to indicate the current state of a chat room.
+ * @ingroup chatroom
+ */
+typedef enum _LinphoneChatRoomState{
+	LinphoneChatRoomStateNone, /**< Initial state */
+	LinphoneChatRoomStateInstantiated, /**< Chat room is now instantiated on local */
+	LinphoneChatRoomStateCreationPending, /**< One creation request was sent to the server */
+	LinphoneChatRoomStateCreated, /**< Chat room was created on the server */
+	LinphoneChatRoomStateCreationFailed, /**< Chat room creation failed */
+	LinphoneChatRoomStateTerminationPending, /**< Wait for chat room termination */
+	LinphoneChatRoomStateTerminated, /**< Chat room exists on server but not in local */
+	LinphoneChatRoomStateTerminationFailed, /**< The chat room termination failed */
+	LinphoneChatRoomStateDeleted /**< Chat room was deleted on the server */
+} LinphoneChatRoomState;
 
-#define L_ENUM_VALUES_CHAT_ROOM_STATE(F) \
-	F(None /**< Initial state */) \
-	F(Instantiated /**< Chat room is now instantiated on local */) \
-	F(CreationPending /**< One creation request was sent to the server */) \
-	F(Created /**< Chat room was created on the server */) \
-	F(CreationFailed /**< Chat room creation failed */) \
-	F(TerminationPending /**< Wait for chat room termination */) \
-	F(Terminated /**< Chat room exists on server but not in local */) \
-	F(TerminationFailed /**< The chat room termination failed */) \
-	F(Deleted /**< Chat room was deleted on the server */)
+/**
+ * #LinphoneChatRoomCapabilities is used to indicate the capabilities of a chat room.
+ * @ingroup chatroom
+ */
+typedef enum _LinphoneChatRoomCapabilities{
+	LinphoneChatRoomCapabilitiesNone = 0, /**< No capabilities. */
+	LinphoneChatRoomCapabilitiesBasic = 1 << 0 , /**< No server. It&apos;s a direct communication */
+	LinphoneChatRoomCapabilitiesRealTimeText = 1 << 1, /**< Supports RTT */
+	LinphoneChatRoomCapabilitiesConference = 1 << 2, /**< Use server (supports group chat) */
+	LinphoneChatRoomCapabilitiesProxy = 1 << 3, /**< Special proxy chat room flag */
+	LinphoneChatRoomCapabilitiesMigratable = 1 << 4, /**< Chat room migratable from Basic to Conference */
+	LinphoneChatRoomCapabilitiesOneToOne = 1 << 5, /**< A communication between two participants (can be Basic or Conference) */
+	LinphoneChatRoomCapabilitiesEncrypted = 1 << 6 /**< Chat room is encrypted */
+} LinphoneChatRoomCapabilities;
 
-//To be deprecated
-#define L_ENUM_VALUES_CHAT_ROOM_CAPABILITIES(F) \
-	F(None /**< No capabilities. */, 0) \
-	F(Basic /**< No server. It&apos;s a direct communication */, 1 << 0) \
-	F(RealTimeText /**< Supports RTT */, 1 << 1) \
-	F(Conference /**< Use server (supports group chat) */, 1 << 2) \
-	F(Proxy /**< Special proxy chat room flag */, 1 << 3) \
-	F(Migratable /**< Chat room migratable from Basic to Conference */, 1 << 4) \
-	F(OneToOne /**< A communication between two participants (can be Basic or Conference) */, 1 << 5) \
-	F(Encrypted /**< Chat room is encrypted */, 1 << 6)
 
-#define L_ENUM_VALUES_CHAT_ROOM_BACKEND(F) \
-	F(Basic /**< Basic (client-to-client) chat room. */, 1 << 0) \
-	F(FlexisipChat /**< Server-based chat room. */, 1 << 1)
+/**
+ * #LinphoneChatRoomBackend is used to indicate the backend implementation of a chat room.
+ * @ingroup chatroom
+ */
+typedef enum _LinphoneChatRoomBackend{
+	LinphoneChatRoomBackendBasic = 1 << 0, /**< Basic (client-to-client) chat room. */
+	LinphoneChatRoomBackendFlexisipChat = 1 << 1 /**< Server-based chat room. */
+} LinphoneChatRoomBackend;
 
-#define L_ENUM_VALUES_CHAT_ROOM_ENCRYPTION_BACKEND(F) \
-	F(None /**< No encryption. */, 0) \
-	F(Lime /**< Lime x3dh encryption. */, 1 << 0)
+/**
+ * #LinphoneChatRoomEncryptionBackend is used to indicate the encryption engine used by a chat room.
+ * @ingroup chatroom
+ */
+typedef enum _LinphoneChatRoomEncryptionBackend{
+	LinphoneChatRoomEncryptionBackendNone = 0, /**< No encryption. */
+	LinphoneChatRoomEncryptionBackendLime = 1 << 0 /**< Lime x3dh encryption. */
+} LinphoneChatRoomEncryptionBackend;
+
 
 #endif // ifndef _L_CHAT_ROOM_ENUMS_H_

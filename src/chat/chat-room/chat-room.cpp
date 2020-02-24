@@ -99,7 +99,7 @@ void ChatRoomPrivate::addEvent (const shared_ptr<EventLog> &eventLog) {
 	L_Q();
 
 	q->getCore()->getPrivate()->mainDb->addEvent(eventLog);
-	
+
 	EventLog::Type type = eventLog->getType();
 	if (type == EventLog::Type::ConferenceParticipantDeviceAdded
 		|| type == EventLog::Type::ConferenceParticipantDeviceRemoved) {
@@ -275,7 +275,7 @@ void ChatRoomPrivate::notifyStateChanged () {
 	if (q->getCore()->getCCore()->state == LinphoneGlobalStartup) {
 		lDebug() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(state);
 	} else {
-		lInfo() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(state);
+		lInfo() << "Chat room [" << q->getConferenceId() << "] state changed to: " << state;
 	}
 	linphone_core_notify_chat_room_state_changed(q->getCore()->getCCore(), cr, (LinphoneChatRoomState)state);
 	_linphone_chat_room_notify_state_changed(cr, (LinphoneChatRoomState)state);
@@ -581,7 +581,7 @@ shared_ptr<ChatMessage> ChatRoom::createForwardMessage (const shared_ptr<ChatMes
 	}
 
 	chatMessage->getPrivate()->setForwardInfo(fInfo);
-	
+
 	return chatMessage;
 }
 // -----------------------------------------------------------------------------
