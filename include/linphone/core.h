@@ -4256,6 +4256,14 @@ LINPHONE_PUBLIC int linphone_core_get_mtu(const LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_set_mtu(LinphoneCore *lc, int mtu);
 
 /**
+ * Enable or disable the UPDATE method support
+ * @param[in] lc #LinphoneCore object
+ * @param[in] value Enable or disable it
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_set_enable_sip_update(const LinphoneCore *lc, int value);
+
+/**
  * Sets the session expires value, 0 by default, which means session expires disabled.
  * @param[in] lc #LinphoneCore object
  * @param[in] expire The session expires value
@@ -4269,6 +4277,22 @@ LINPHONE_PUBLIC void linphone_core_set_session_expires_value(const LinphoneCore 
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC int linphone_core_get_session_expires_value(const LinphoneCore *lc);
+
+/**
+ * Sets the session expires refresher value, 0 auto, 1 = uas, 2 = uac
+ * @param[in] lc #LinphoneCore object
+ * @param[in] expire The refresher configuration value
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_set_session_expires_refresher_value(const LinphoneCore *lc, int refresher);
+
+/**
+ * Sets the session expires minSE value, forced to a minimum of 90 by default
+ * @param[in] lc #LinphoneCore object
+ * @param[in] expire The minSE value
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_set_session_expires_min_value(const LinphoneCore *lc, int min);
 
 /**
  * This method is called by the application to notify the linphone core library when network is reachable.
@@ -4740,7 +4764,7 @@ LINPHONE_PUBLIC LinphoneMediaEncryption linphone_core_get_media_encryption(Linph
 LINPHONE_PUBLIC bool_t linphone_core_is_media_encryption_mandatory(LinphoneCore *lc);
 
 /**
- * Define whether the configured media encryption is mandatory, if it is and the negotation cannot result 
+ * Define whether the configured media encryption is mandatory, if it is and the negotation cannot result
  * in the desired media encryption then the call will fail. If not an INVITE will be resent with encryption
  * disabled.
  * @param[in] lc #LinphoneCore object.
