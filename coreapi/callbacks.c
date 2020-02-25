@@ -91,7 +91,7 @@ static void call_received(SalCallOp *h) {
 			} else{
 				ms_warning("Unsupported P-Asserted-Identity header for op [%p] ", h);
 			}
-				
+
 		} else{
 			ms_warning("No P-Asserted-Identity header found so cannot use it for op [%p] instead of from", h);
 		}
@@ -284,6 +284,18 @@ static void call_accepted(SalOp *op) {
 	}
 	auto sessionRef = session->getSharedFromThis();
 	L_GET_PRIVATE(sessionRef)->accepted();
+}
+
+static void call_refreshed(SalOp *op) {
+	LinphonePrivate::CallSession *session = reinterpret_cast<LinphonePrivate::CallSession *>(op->getUserPointer());
+	if (!session) {
+		ms_warning("call_updating: CallSession no longer exists");
+		return;
+	}
+	auto sessionRef = session->getSharedFromThis();
+
+	L_GET_PRIVATE(sessionRef)->setState(CallSession::State::UpdatedByRemote, "Session refresh");
+	L_GET_PRIVATE(sessionRef)->setState(CallSession::State::StreamsRunning, "Session refresh");
 }
 
 /* this callback is called when an incoming re-INVITE/ SIP UPDATE modifies the session*/
@@ -559,7 +571,7 @@ static bool_t fill_auth_info(LinphoneCore *lc, SalAuthInfo* sai) {
 			sai->userid = ms_strdup(linphone_auth_info_get_userid(ai) ? linphone_auth_info_get_userid(ai) : linphone_auth_info_get_username(ai));
 			sai->password = linphone_auth_info_get_passwd(ai)?ms_strdup(linphone_auth_info_get_passwd(ai)) : NULL;
 			sai->ha1 = linphone_auth_info_get_ha1(ai) ? ms_strdup(linphone_auth_info_get_ha1(ai)) : NULL;
-			
+
 
 			AuthStack & as = L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack();
 			/* We have to construct the auth info as it was originally requested in auth_requested() below,
@@ -600,7 +612,7 @@ static bool_t auth_requested(Sal* sal, SalAuthInfo* sai) {
 	} else {
 		LinphoneAuthMethod method = sai->mode == SalAuthModeHttpDigest ? LinphoneAuthHttpDigest : LinphoneAuthTls;
 		LinphoneAuthInfo *ai = linphone_core_create_auth_info(lc, sai->username, NULL, NULL, NULL, sai->realm, sai->domain);
-		
+
 		if (method == LinphoneAuthHttpDigest){
 			/* Request app for new authentication information, but later. */
 			L_GET_PRIVATE_FROM_C_OBJECT(lc)->getAuthStack().pushAuthRequested(AuthInfo::toCpp(ai)->getSharedFromThis());
@@ -610,7 +622,7 @@ static bool_t auth_requested(Sal* sal, SalAuthInfo* sai) {
 			linphone_core_notify_auth_info_requested(lc, sai->realm, sai->username, sai->domain);
 		}
 		linphone_auth_info_unref(ai);
-		
+
 		if (fill_auth_info(lc, sai)) {
 			return TRUE;
 		}
@@ -895,6 +907,7 @@ Sal::Callbacks linphone_sal_callbacks={
 	call_ack_received,
 	call_ack_being_sent,
 	call_updating,
+	call_refreshed,
 	call_terminated,
 	call_failure,
 	call_released,

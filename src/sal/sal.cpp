@@ -800,6 +800,10 @@ belle_sip_resolver_context_t *Sal::resolve (const string &service, const string 
 	return belle_sip_stack_resolve(mStack, L_STRING_TO_C(service), L_STRING_TO_C(transport), L_STRING_TO_C(name), port, family, cb, data);
 }
 
+belle_sip_source_t *Sal::createTimer (const std::function<bool ()> &something, unsigned int milliseconds, const string &name) {
+	return belle_sip_main_loop_create_cpp_timeout_2(belle_sip_stack_get_main_loop(mStack), something, (unsigned)milliseconds, name.c_str());
+}
+
 belle_sip_source_t *Sal::createTimer (belle_sip_source_func_t func, void *data, unsigned int timeoutValueMs, const string &timerName) {
 	belle_sip_main_loop_t *ml = belle_sip_stack_get_main_loop(mStack);
 	return belle_sip_main_loop_create_timeout(ml, func, data, timeoutValueMs, L_STRING_TO_C(timerName));
