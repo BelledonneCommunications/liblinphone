@@ -67,6 +67,7 @@ extern test_suite_t group_chat_test_suite;
 extern test_suite_t secure_group_chat_test_suite;
 extern test_suite_t log_collection_test_suite;
 extern test_suite_t message_test_suite;
+extern test_suite_t session_timers_test_suite;
 extern test_suite_t multi_call_test_suite;
 extern test_suite_t multicast_call_test_suite;
 extern test_suite_t multipart_test_suite;
@@ -330,14 +331,14 @@ typedef struct _stats {
 	int number_of_ManInTheMiddleDetected;
 
 	int number_of_snapshot_taken;
-	
+
 	int number_of_LinphoneGlobalOn;
 	int number_of_LinphoneGlobalReady;
 	int number_of_LinphoneGlobalOff;
 	int number_of_LinphoneGlobalShutdown;
 	int number_of_LinphoneGlobalStartup;
 	int number_of_LinphoneGlobalConfiguring;
-	
+
 }stats;
 
 
@@ -425,7 +426,7 @@ void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool
 void dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf);
 void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *stats);
 void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
-	
+
 LinphoneAddress * create_linphone_address(const char * domain);
 LinphoneAddress * create_linphone_address_for_algo(const char * domain, const char * username);
 bool_t wait_for(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value);
@@ -532,10 +533,10 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 
 /*Convenience function providing the path to the "empty_rc" config file*/
 const char *liblinphone_tester_get_empty_rc(void);
-    
+
 int liblinphone_tester_copy_file(const char *from, const char *to);
 char * generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *dialPlan);
-	
+
 #ifdef __cplusplus
 };
 #endif
