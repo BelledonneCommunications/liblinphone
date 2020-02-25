@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "linphone/utils/general.h"
+#include "linphone/types.h"
 
 #include "c-wrapper/internal/c-sal.h"
 #include "logger/logger.h"
@@ -45,6 +46,8 @@ public:
 	using OnCallAckReceivedCb = void (*) (SalOp *op, SalCustomHeader *ack);
 	using OnCallAckBeingSentCb = void (*) (SalOp *op, SalCustomHeader *ack);
 	using OnCallUpdatingCb = void (*) (SalOp *op, bool_t isUpdate); // Called when a reINVITE/UPDATE is received
+	using OnCallRefreshedCb = void (*) (SalOp *op);
+	using OnCallRefreshingCb = void (*) (SalOp *op);
 	using OnCallTerminatedCb = void (*) (SalOp *op, const char *from);
 	using OnCallFailureCb = void (*) (SalOp *op);
 	using OnCallReleasedCb = void (*) (SalOp *op);
@@ -84,6 +87,8 @@ public:
 		OnCallAckReceivedCb call_ack_received;
 		OnCallAckBeingSentCb call_ack_being_sent;
 		OnCallUpdatingCb call_updating;
+		OnCallRefreshedCb call_refreshed;
+		OnCallRefreshingCb call_refreshing;
 		OnCallTerminatedCb call_terminated;
 		OnCallFailureCb call_failure;
 		OnCallReleasedCb call_released;
@@ -172,7 +177,10 @@ public:
 	int getRefresherRetryAfter () const { return mRefresherRetryAfter; }
 
 	void enableSipUpdateMethod (bool value) { mEnableSipUpdate = value; }
-	void useSessionTimers (int expires) { mSessionExpires = expires; }
+	void setSessionTimers (int expires) { mSessionExpires = expires; }
+	int getSessionTimersExpire () { return mSessionExpires; }
+	void setSessionTimersRefresher (LinphoneSessionExpiresRefresher refresher) { mSessionExpiresRefresher = static_cast<belle_sip_header_session_expires_refresher_t>(refresher); }
+	void setSessionTimersMin (int min) { mSessionExpiresMin = min; }
 	void useDates (bool value) { mUseDates = value; }
 	void useOneMatchingCodecPolicy (bool value) { mOneMatchingCodec = value; }
 	void useRport (bool value);
@@ -251,6 +259,7 @@ public:
 	// ---------------------------------------------------------------------------
 	// Timers
 	// ---------------------------------------------------------------------------
+	belle_sip_source_t *createTimer (const std::function<bool ()> &something, unsigned int milliseconds, const std::string &name);
 	belle_sip_source_t *createTimer (belle_sip_source_func_t func, void *data, unsigned int timeoutValueMs, const std::string &timerName);
 	void cancelTimer (belle_sip_source_t *timer);
 
@@ -297,7 +306,11 @@ private:
 	belle_sip_listener_t *mListener = nullptr;
 	void *mTunnelClient = nullptr;
 	void *mUserPointer = nullptr; // User pointer
-	int mSessionExpires = 0;
+
+	int mSessionExpires = 0; // disabled = 0, or not lower than mSessionExpiresMin, https://tools.ietf.org/html/rfc4028#page-16
+	int mSessionExpiresMin = 5; // disabled = 0, min 90, max 86400
+	belle_sip_header_session_expires_refresher_t mSessionExpiresRefresher = BELLE_SIP_HEADER_SESSION_EXPIRES_UNSPECIFIED; // 0 = auto, 1 = uas, 2 = uac
+
 	unsigned int mKeepAlive = 0;
 	std::string mRootCa;
 	std::string mRootCaData;
