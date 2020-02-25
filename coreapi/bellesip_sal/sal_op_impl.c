@@ -43,8 +43,7 @@ SalReason _sal_reason_from_sip_code(int code) {
 	case 415:
 		return SalReasonUnsupportedContent;
 	case 422:
-		ms_error ("422 not implemented yet");;
-		break;
+		return SalReasonSessionIntervalTooSmall;
 	case 480:
 		return SalReasonTemporarilyUnavailable;
 	case 481:
