@@ -105,20 +105,20 @@ static void _early_media_call_with_ice(bool_t callee_has_ice) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingEarlyMedia,1,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingEarlyMedia,1,1000));
 	BC_ASSERT_TRUE(linphone_call_get_all_muted(pauline_call));
-	
+
 	marie_call = linphone_core_get_current_call(marie->lc);
-	
+
 	if (!BC_ASSERT_PTR_NOT_NULL(marie_call)) goto end;
 	check_media_direction(marie, marie_call, lcs, LinphoneMediaDirectionSendRecv,LinphoneMediaDirectionInvalid);
-	
+
 	wait_for_until(pauline->lc,marie->lc,NULL,0,3000);
 	if (callee_has_ice){
 		stats1 = linphone_call_get_audio_stats(marie_call);
 		stats2 = linphone_call_get_audio_stats(pauline_call);
-	
+
 		BC_ASSERT_TRUE(linphone_call_stats_get_ice_state(stats1) == LinphoneIceStateHostConnection);
 		BC_ASSERT_TRUE(linphone_call_stats_get_ice_state(stats2) == LinphoneIceStateHostConnection);
-		
+
 		linphone_call_stats_unref(stats1);
 		linphone_call_stats_unref(stats2);
 	}
@@ -139,7 +139,7 @@ end:
 
 static void early_media_call_with_ice(void){
 	/*in this test, pauline has ICE activated, marie not, but marie proposes early media.
-	 * We want to check that ICE processing is not disturbing early media, 
+	 * We want to check that ICE processing is not disturbing early media,
 	 * ICE shall not deactivate itself automatically.*/
 	_early_media_call_with_ice(FALSE);
 }
@@ -457,4 +457,3 @@ static test_t call_with_ice_tests[] = {
 
 test_suite_t call_with_ice_test_suite = {"Call with ICE", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
 								sizeof(call_with_ice_tests) / sizeof(call_with_ice_tests[0]), call_with_ice_tests};
-								
