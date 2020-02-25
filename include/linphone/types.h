@@ -934,6 +934,7 @@ typedef enum _LinphoneReason{
 	LinphoneReasonAddressIncomplete, /**< Address incomplete */
 	LinphoneReasonNotImplemented, /**< Not implemented */
 	LinphoneReasonBadGateway, /**< Bad gateway */
+	LinphoneReasonSessionIntervalTooSmall, /**< The received request contains a Session-Expires header field with a duration below the minimum timer */
 	LinphoneReasonServerTimeout, /**< Server timeout */
 	LinphoneReasonUnknown /**< Unknown reason */
 } LinphoneReason;
