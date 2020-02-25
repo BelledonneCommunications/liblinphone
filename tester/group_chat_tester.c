@@ -261,7 +261,7 @@ void _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *rec
 		linphone_chat_message_download_content(msg, fileTransferContent);
 		BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 
-		if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneFileTransferDownloadSuccessful,receiverStats->number_of_LinphoneFileTransferDownloadSuccessful + 1, 20000))) {
+		if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneMessageFileTransferDone,receiverStats->number_of_LinphoneMessageFileTransferDone + 1, 20000))) {
 			compare_files(sendFilepath, receive_filepath);
 		}
 	}
@@ -286,7 +286,7 @@ void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, 
 		linphone_chat_message_download_content(msg, fileTransferContent);
 		BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 
-		if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneFileTransferDownloadSuccessful,receiverStats->number_of_LinphoneFileTransferDownloadSuccessful + 1, 20000))) {
+		if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneMessageFileTransferDone,receiverStats->number_of_LinphoneMessageFileTransferDone + 1, 20000))) {
 			compare_files(sendFilepath, receive_filepath);
 		}
 	}
