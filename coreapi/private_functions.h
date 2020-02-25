@@ -465,6 +465,16 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 int linphone_remote_provisioning_download_and_apply(LinphoneCore *lc, const char *remote_provisioning_uri);
 LINPHONE_PUBLIC int linphone_remote_provisioning_load_file( LinphoneCore* lc, const char* file_path);
 
+/*****************************************************************************
+ * SESSION TIMERS FUNCTIONS                                                  *
+ ****************************************************************************/
+/**
+ * Enable or disable the UPDATE method support
+ * @param[in] lc #LinphoneCore object
+ * @param[in] value Enable or disable it
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_set_enable_sip_update(const LinphoneCore *lc, int value);
 
 /*****************************************************************************
  * Player interface                                                          *
