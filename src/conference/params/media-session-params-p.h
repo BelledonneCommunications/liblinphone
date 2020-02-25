@@ -106,7 +106,7 @@ public:
 
 	LinphoneMediaEncryption encryption = LinphoneMediaEncryptionNone;
 	bool mandatoryMediaEncryptionEnabled = false;
-	
+
 	bool rtpBundle = false;
 
 private:

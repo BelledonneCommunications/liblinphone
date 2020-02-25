@@ -156,7 +156,7 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 
 static const char *info_content = "<somexml>blabla</somexml>";
 
-void simple_call_base_2(bool_t enable_multicast_recv_side, bool_t disable_soundcard, bool_t use_multipart_invite_body, bool_t use_session_expires) {
+void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcard, bool_t use_multipart_invite_body) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
 	const LinphoneAddress *from;
@@ -168,10 +168,6 @@ void simple_call_base_2(bool_t enable_multicast_recv_side, bool_t disable_soundc
 	}
 
 	marie = linphone_core_manager_new("marie_rc");
-	if (use_session_expires) {
-		linphone_core_set_session_expires_value(marie->lc, 300);
-	}
-
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
 	/* with the account manager, we might lose the identity */
@@ -223,15 +219,6 @@ void simple_call_base_2(bool_t enable_multicast_recv_side, bool_t disable_soundc
 			}
 		}
 
-		if (use_session_expires) {
-			const LinphoneCallParams *marie_remote_params=linphone_call_get_remote_params(pauline_call);
-			const char *value=linphone_call_params_get_custom_header(marie_remote_params,"Session-Expires");
-			BC_ASSERT_PTR_NOT_NULL(value);
-			if (value) {
-				BC_ASSERT_TRUE(strcmp(value, "300;refresher=uas")==0);
-			}
-		}
-
 		const LinphoneCallParams *params = linphone_call_get_remote_params(pauline_call);
 		bctbx_list_t *parts = linphone_call_params_get_custom_contents(params);
 		if (use_multipart_invite_body) {
@@ -262,11 +249,6 @@ void simple_call_base_2(bool_t enable_multicast_recv_side, bool_t disable_soundc
 	}
 }
 
-
-void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcard, bool_t use_multipart_invite_body) {
-	simple_call_base_2(enable_multicast_recv_side, disable_soundcard, use_multipart_invite_body, FALSE);
-}
-
 static void simple_call(void) {
 	simple_call_base(FALSE, FALSE, FALSE);
 }
@@ -277,10 +259,6 @@ static void simple_call_without_soundcard(void) {
 
 static void simple_call_with_multipart_invite_body(void) {
 	simple_call_base(FALSE, FALSE, TRUE);
-}
-
-static void simple_call_with_session_expires(void) {
-	simple_call_base_2(FALSE, FALSE, FALSE, TRUE);
 }
 
 /*This test is added to reproduce a crash when a call is failed synchronously*/
@@ -5190,7 +5168,6 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Cancelled ringing call", cancelled_ringing_call),
 	TEST_NO_TAG("Call busy when calling self", call_busy_when_calling_self),
 	TEST_NO_TAG("Simple call", simple_call),
-	TEST_NO_TAG("Simple call with session expires", simple_call_with_session_expires),
 	TEST_NO_TAG("Simple call with no SIP transport", simple_call_with_no_sip_transport),
 	TEST_NO_TAG("Simple call with UDP", simple_call_with_udp),
 	TEST_NO_TAG("Simple call without soundcard", simple_call_without_soundcard),
