@@ -169,6 +169,7 @@ public:
 
 	void enableSipUpdateMethod (bool value) { mEnableSipUpdate = value; }
 	void useSessionTimers (int expires) { mSessionExpires = expires; }
+	void setSessionTimersRefresher (int refresher) { mSessionExpiresRefresher = static_cast<belle_sip_header_session_expires_refresher_t>(refresher); }
 	void useDates (bool value) { mUseDates = value; }
 	void useOneMatchingCodecPolicy (bool value) { mOneMatchingCodec = value; }
 	void useRport (bool value);
@@ -241,7 +242,7 @@ public:
 	const std::string &getDnsUserHostsFile () const;
 
 	belle_sip_resolver_context_t *resolveA (const std::string &name, int port, int family, belle_sip_resolver_callback_t cb, void *data);
-	belle_sip_resolver_context_t *resolve (const std::string &service, const std::string &transport, const std::string &name, int port, int family, belle_sip_resolver_callback_t cb, void *data); 
+	belle_sip_resolver_context_t *resolve (const std::string &service, const std::string &transport, const std::string &name, int port, int family, belle_sip_resolver_callback_t cb, void *data);
 
 
 	// ---------------------------------------------------------------------------
@@ -293,7 +294,11 @@ private:
 	belle_sip_listener_t *mListener = nullptr;
 	void *mTunnelClient = nullptr;
 	void *mUserPointer = nullptr; // User pointer
-	int mSessionExpires = 0;
+
+	int mSessionExpires = 0; // disabled = 0, or not lower than mSessionExpiresMin, https://tools.ietf.org/html/rfc4028#page-16
+	int mSessionExpiresMin = 90; // disabled = 0, min 90, max 86400
+	belle_sip_header_session_expires_refresher_t mSessionExpiresRefresher = BELLE_SIP_HEADER_SESSION_EXPIRES_UNSPECIFIED; // 0 = auto, 1 = uas, 2 = uac
+
 	unsigned int mKeepAlive = 0;
 	std::string mRootCa;
 	std::string mRootCaData;
@@ -340,4 +345,3 @@ int toSipCode (SalReason reason);
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_SAL_H_
-
