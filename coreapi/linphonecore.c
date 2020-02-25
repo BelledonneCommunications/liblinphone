@@ -1515,7 +1515,7 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	tmp=lp_config_get_int(lc->config,"app","auto_download_incoming_files_max_size",-1);
 	linphone_core_set_max_size_for_auto_download_incoming_files(lc, tmp);
-	
+
 	tmp=lp_config_get_int(lc->config,"app","sender_name_hidden_in_forward_message",0);
 	linphone_core_enable_sender_name_hidden_in_forward_message(lc, !!tmp);
 
@@ -5591,7 +5591,7 @@ void * linphone_core_get_native_video_window_id(const LinphoneCore *lc){
 #ifdef VIDEO_ENABLED
 		/*case where it was not set but we want to get the one automatically created by mediastreamer2 (desktop versions only)*/
 		LinphoneCall *call=linphone_core_get_current_call (lc);
-		
+
 		if (call) {
 			auto ms = dynamic_pointer_cast<LinphonePrivate::MediaSession>(L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession());
 			if (ms) return ms->getNativeVideoWindowId();
@@ -5623,7 +5623,7 @@ void * linphone_core_get_native_preview_window_id(const LinphoneCore *lc){
 		/*case where we want the id automatically created by mediastreamer2 (desktop versions only)*/
 #ifdef VIDEO_ENABLED
 		LinphoneCall *call=linphone_core_get_current_call(lc);
-		
+
 		if (call) {
 			auto ms = dynamic_pointer_cast<LinphonePrivate::MediaSession>(L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession());
 			if (ms) return ms->getNativePreviewVideoWindowId();
@@ -5675,7 +5675,7 @@ int linphone_core_get_device_rotation(LinphoneCore *lc ) {
 
 void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 	if (rotation == lc->device_rotation) return;
-	
+
 	ms_message("%s : rotation=%d\n", __FUNCTION__, rotation);
 	lc->device_rotation = rotation;
 #ifdef VIDEO_ENABLED
@@ -6092,7 +6092,7 @@ void sip_config_uninit(LinphoneCore *lc)
 		for(elem=config->proxies;elem!=NULL;elem=bctbx_list_next(elem)){
 			LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)(elem->data);
 			_linphone_proxy_config_unpublish(cfg);	/* to unpublish without changing the stored flag enable_publish */
-			
+
 			/* Do not unregister when push notifications are allowed, otherwise this clears tokens from the SIP server.*/
 			if (!linphone_proxy_config_is_push_notification_allowed(cfg)){
 				_linphone_proxy_config_unregister(cfg);	/* to unregister without changing the stored flag enable_register */
@@ -6562,7 +6562,7 @@ void _linphone_core_uninit(LinphoneCore *lc)
 	if (lc->state != LinphoneGlobalOff) {
 		_linphone_core_stop(lc);
 	}
-	
+
 	lp_config_unref(lc->config);
 	lc->config = NULL;
 #ifdef __ANDROID__
@@ -6572,7 +6572,7 @@ void _linphone_core_uninit(LinphoneCore *lc)
 	}
 #endif
 	lc->system_context = NULL;
-	
+
 	linphone_core_deactivate_log_serialization_if_needed();
 	bctbx_list_free_with_data(lc->vtable_refs,(void (*)(void *))v_table_reference_destroy);
 	bctbx_uninit_logger();
@@ -6902,7 +6902,7 @@ void linphone_core_set_zrtp_secrets_file(LinphoneCore *lc, const char* file){
 		linphone_core_zrtp_cache_close(lc);
 		lc->zrtp_secrets_cache = NULL;
 	}
-	
+
 	if (file) {
 		lc->zrtp_secrets_cache = ms_strdup(file);
 		linphone_core_zrtp_cache_db_init(lc, file);
@@ -7181,6 +7181,14 @@ bool_t linphone_core_sdp_200_ack_enabled(const LinphoneCore *lc) {
 void linphone_core_set_session_expires_value(const LinphoneCore *lc, int expires) {
 	lc->sal->useSessionTimers(expires);
 	lp_config_set_int(lc->config,"sip","session_expires_value",expires);
+}
+
+void linphone_core_set_session_expires_refresher_value(const LinphoneCore *lc, int refresher) {
+	lc->sal->setSessionTimersRefresher(refresher);
+}
+
+void linphone_core_set_session_expires_min_value(const LinphoneCore *lc, int min_se) {
+	lc->sal->setSessionTimersMin(min_se);
 }
 
 int linphone_core_get_session_expires_value(const LinphoneCore *lc) {
