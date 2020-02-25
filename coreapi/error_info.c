@@ -103,6 +103,8 @@ const char *linphone_reason_to_string(LinphoneReason err){
 			return "Not implemented";
 		case LinphoneReasonBadGateway:
 			return "Bad gateway";
+		case LinphoneReasonSessionIntervalTooSmall:
+			return "Session Interval Too Small";
 		case LinphoneReasonServerTimeout:
 			return "Server timeout";
 		case LinphoneReasonUnknown:
