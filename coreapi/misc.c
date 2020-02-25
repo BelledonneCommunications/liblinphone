@@ -362,6 +362,8 @@ SalReason linphone_reason_to_sal(LinphoneReason reason){
 			return SalReasonNotImplemented;
 		case LinphoneReasonBadGateway:
 			return SalReasonBadGateway;
+		case LinphoneReasonSessionIntervalTooSmall:
+			return SalReasonSessionIntervalTooSmall;
 		case LinphoneReasonServerTimeout:
 			return SalReasonServerTimeout;
 		case LinphoneReasonNotAnswered:
@@ -441,6 +443,9 @@ LinphoneReason linphone_reason_from_sal(SalReason r){
 		break;
 		case SalReasonBadGateway:
 			ret=LinphoneReasonBadGateway;
+		break;
+		case SalReasonSessionIntervalTooSmall:
+			ret=LinphoneReasonSessionIntervalTooSmall;
 		break;
 		case SalReasonServerTimeout:
 			ret=LinphoneReasonServerTimeout;

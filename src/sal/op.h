@@ -126,7 +126,7 @@ public:
 	//Release means let the op finish its life but we don't want to use it anymore, and don't want to be called in callbacks for this op
 	void release ();
 
-	virtual void authenticate (const SalAuthInfo *info) { 
+	virtual void authenticate (const SalAuthInfo *info) {
         processAuthentication(); }
 	void cancelAuthentication () { lFatal() << "SalOp::cancelAuthentication not implemented yet"; }
 	SalAuthInfo *getAuthRequested () { return mAuthInfo; }
@@ -135,6 +135,8 @@ public:
 	int sendInfo (const SalBodyHandler *bodyHandler);
 
 	int replyMessage (SalReason reason);
+
+	belle_sip_source_t *mSessionTimersTimer = nullptr;
 
 protected:
 	enum class State {
