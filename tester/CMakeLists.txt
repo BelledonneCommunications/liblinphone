@@ -189,6 +189,7 @@ set(IOS_RESOURCES_FILES
 )
 
 set(SOURCE_FILES_C
+	tester.c
 	accountmanager.c
 	account_creator_tester.c
 	audio_bypass_tester.c
@@ -196,16 +197,16 @@ set(SOURCE_FILES_C
 	call_multi_tester.c
 	call_single_tester.c
 	call_video_tester.c
-	video_quality_tester.c
-	call_recovery.c
-	call_ice.c
+	call_recovery_tester.c
+	call_ice_tester.c
 	call_secure_tester.c
 	complex_sip_case_tester.c
+	call_with_rtp_bundle_tester.c
 	dtmf_tester.c
 	eventapi_tester.c
 	flexisip_tester.c
 	group_chat_tester.c
-	group_chat_secure.c
+	group_chat_secure_tester.c
 	liblinphone_tester.c
 	log_collection_tester.c
 	message_tester.c
@@ -217,13 +218,13 @@ set(SOURCE_FILES_C
 	quality_reporting_tester.c
 	register_tester.c
 	remote_provisioning_tester.c
+	session_timers_tester.c
 	setup_tester.c
 	stun_tester.c
-	tester.c
 	tunnel_tester.c
 	vcard_tester.c
 	video_tester.c
-	call_with_rtp_bundle.c
+	video_quality_tester.c
 )
 
 set(SOURCE_FILES_CXX
