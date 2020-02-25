@@ -418,6 +418,7 @@ typedef enum SalReason{
 	SalReasonNotImplemented,
 	SalReasonBadGateway,
 	SalReasonServerTimeout,
+	SalReasonSessionIntervalTooSmall,
 	SalReasonIOError,
 	SalReasonInternalError
 }SalReason;
