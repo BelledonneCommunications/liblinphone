@@ -46,8 +46,13 @@ public:
 	int accept ();
 	int decline (SalReason reason, const std::string &redirectionUri = "");
 	int declineWithErrorInfo (const SalErrorInfo *info, const SalAddress *redirectionAddr = nullptr);
+
+	void haltSessionTimersTimer ();
+	void restartSessionTimersTimer (belle_sip_response_t *response, int delta);
 	int update (const std::string &subject, bool noUserConsent);
+	int update (const std::string &subject, bool noUserConsent, bool withSDP, int delta);
 	int cancelInvite (const SalErrorInfo *info = nullptr);
+
 	int refer (const std::string &referToUri);
 	int referWithReplaces (SalCallOp *otherCallOp);
 	int setReferrer (SalCallOp *referredCall);
@@ -80,11 +85,15 @@ private:
 	int parseSdpBody (const Content &body, belle_sdp_session_description_t **sessionDesc, SalReason *error);
 	void sdpProcess ();
 	void handleBodyFromResponse (belle_sip_response_t *response);
+	void handleSessionTimersFromResponse(belle_sip_response_t *response);
 	SalReason processBodyForInvite (belle_sip_request_t *invite);
 	SalReason processBodyForAck (belle_sip_request_t *ack);
 	void handleOfferAnswerResponse (belle_sip_response_t *response);
 
 	void fillInvite (belle_sip_request_t *invite);
+	void fillSessionExpiresHeaders(belle_sip_request_t *invite);
+	void fillSessionExpiresHeaders(belle_sip_request_t *invite, belle_sip_header_session_expires_refresher_t refresher);
+	void fillSessionExpiresHeaders(belle_sip_request_t *invite, belle_sip_header_session_expires_refresher_t refresher, int delta);
 	void cancellingInvite (const SalErrorInfo *info);
 	int referTo (belle_sip_header_refer_to_t *referToHeader, belle_sip_header_referred_by_t *referredByHeader);
 	int sendNotifyForRefer (int code, const std::string &reason,const std::string & subscription_state = BELLE_SIP_SUBSCRIPTION_STATE_ACTIVE, const std::string & subscription_reason = "");
@@ -117,6 +126,7 @@ private:
 
 	// Private constants
 	static const size_t SIP_MESSAGE_BODY_LIMIT = 16 * 1024; // 16kB
+	static const int MIN_SE = 1800; // Min-Session-Expires, in seconds
 
 	// Attributes
 	SalMediaDescription *mLocalMedia = nullptr;
