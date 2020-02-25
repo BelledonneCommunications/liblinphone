@@ -227,7 +227,7 @@ JNIEXPORT jint JNICALL Java_org_linphone_tester_Tester_run(JNIEnv *env, jobject 
 	current_env = env;
 	current_obj = obj;
 	bc_set_trace_handler(bcunit_android_trace_handler);
-	ret = main(argc, argv);	
+	ret = main(argc, argv);
 	current_env = NULL;
 	bc_set_trace_handler(NULL);
 	for (i=0; i<argc; i++) {
@@ -333,6 +333,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);
+	bc_tester_add_suite(&session_timers_test_suite);
 	bc_tester_add_suite(&presence_test_suite);
 	bc_tester_add_suite(&presence_server_test_suite);
 	bc_tester_add_suite(&account_creator_test_suite);
