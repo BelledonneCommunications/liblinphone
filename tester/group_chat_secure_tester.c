@@ -481,7 +481,7 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 		BC_ASSERT_STRING_NOT_EQUAL(message_id, "");
 
 		wait_for_list(coresList, NULL, 0, 1000);
-		
+
 		sal_set_send_error(linphone_core_get_sal(marie->lc), 0);
 		linphone_chat_message_send(msg);
 		const char *message_id_2 = linphone_chat_message_get_message_id(msg);
@@ -490,7 +490,7 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 		ms_free(message_id);
 
 		wait_for_list(coresList, NULL, 0, 1000);
-		
+
 		linphone_core_refresh_registers(marie->lc);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneRegistrationOk, initialMarieStats.number_of_LinphoneRegistrationOk + 1, 10000));
 
@@ -788,7 +788,7 @@ static void group_chat_lime_x3dh_verify_sas_before_message (void) {
 
 	// ZRTP verification call Marie rejects the SAS
 	initialMarieStats = marie->stat;
-	
+
 	call_ok = FALSE;
 	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, FALSE, TRUE)));
 	if (!call_ok) goto end;
@@ -796,7 +796,7 @@ static void group_chat_lime_x3dh_verify_sas_before_message (void) {
 	// Check LIME status degraded to encrypted and ZRTP status
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_SecurityLevelDowngraded, initialMarieStats.number_of_SecurityLevelDowngraded + 1, 10000));
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
-	
+
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusInvalid, int , "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
@@ -837,7 +837,7 @@ static void group_chat_lime_x3dh_reject_sas_before_message (void) {
 
 	lp_config_set_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 1);
 	lp_config_set_int(linphone_core_get_config(marie->lc), "lime", "unsafe_if_sas_refused", 1);
-	
+
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
@@ -1079,7 +1079,7 @@ static void group_chat_lime_x3dh_message_before_reject_sas (void) {
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	int dummy = 0;
-	
+
 	lp_config_set_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 1);
 	lp_config_set_int(linphone_core_get_config(marie->lc), "lime", "unsafe_if_sas_refused", 1);
 
@@ -1201,7 +1201,7 @@ static void group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device
 	LinphoneChatRoom *marieCr = NULL;
 	LinphoneChatRoom *paulineCr = NULL;
 	int dummy = 0;
-	
+
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
@@ -1209,14 +1209,14 @@ static void group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device
 	stats initialPaulineStats = pauline->stat;
 	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
-	
+
 	// Wait for lime users to be created on X3DH server
 	wait_for_list(coresList, &dummy, 1, x3dhServerDelay);
-	
+
 	// Check encryption status for both participants
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
-	
+
 	// Enable ZRTP cache
 	const char *filepath;
 	const char *filepath2;
@@ -1224,30 +1224,30 @@ static void group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device
 	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
 	filepath = bc_tester_file("tmpZIDCacheMarie.sqlite");
 	filepath2 = bc_tester_file("tmpZIDCachePauline.sqlite");
-	//explicitly disable ZRTP on calling side to start ZRTP in automatic mode 
+	//explicitly disable ZRTP on calling side to start ZRTP in automatic mode
 	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
 	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionZRTP);
 	linphone_core_set_zrtp_secrets_file(marie->lc, filepath);
 	linphone_core_set_zrtp_secrets_file(pauline->lc, filepath2);
-	
+
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
 	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
-	
+
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
 	if (!BC_ASSERT_PTR_NOT_NULL(confAddr)) goto end;
-	
+
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineCr)) goto end;
-	
+
 	// Check LIME X3DH and ZRTP status
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
-	
+
 	// Marie sends a message
 	const char *marieMessage = "I have a sensitive piece of information for you";
 	_send_message(marieCr, marieMessage);
@@ -1255,11 +1255,11 @@ static void group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
-	
+
 	// Check that the message was correctly decrypted by Pauline
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
-	
+
 	// Pauline sends a response
 	const char *paulineMessage = "Are you sure this conversation is secure ?";
 	_send_message(paulineCr, paulineMessage);
@@ -1267,41 +1267,41 @@ static void group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device
 	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
 		goto end;
-	
+
 	// Check that the response was correctly decrypted
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), paulineMessage);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineAddr, linphone_chat_message_get_from_address(marieLastMsg)));
-	
+
 	// Check LIME X3DH and ZRTP status
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusUnknown, int , "%d");
-	
+
 	// ZRTP verification call between Marie and Pauline
 	bool_t call_ok = FALSE;
 	BC_ASSERT_TRUE((call_ok = simple_zrtp_call_with_sas_validation(marie, pauline, TRUE, TRUE)));
 	if (!call_ok) goto end;
-	
+
 	// Check LIME X3DH and ZRTP status
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, linphone_address_as_string_uri_only(paulineAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, linphone_address_as_string_uri_only(marieAddr)), LinphoneZrtpPeerStatusValid, int , "%d");
-	
+
 	linphone_address_unref(marieAddr);
 	linphone_address_unref(paulineAddr);
-	
+
 end:
 	// Clean local ZRTP databases
 	remove(bc_tester_file("tmpZIDCacheMarie.sqlite"));
 	remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
-	
-	
+
+
 	// Clean db from chat room
 	if (marieCr) linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	if (paulineCr) linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
-	
+
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
@@ -1881,12 +1881,12 @@ static void group_chat_lime_x3dh_chatroom_security_alert (void) {
 	coresManagerList = bctbx_list_append(coresManagerList, pauline1);
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
 	int dummy = 0;
-	
+
 	// Change the value of max_nb_device_per_participant to disallow multidevice
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "lime", "max_nb_device_per_participant", 1);
 	linphone_config_set_int(linphone_core_get_config(pauline1->lc), "lime", "max_nb_device_per_participant", 1);
 	linphone_config_set_int(linphone_core_get_config(laure->lc), "lime", "max_nb_device_per_participant", 1);
-	
+
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline1->lc)));
@@ -2414,7 +2414,7 @@ static void group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participa
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
 	int dummy = 0;
 	LinphoneChatRoom *paulineCr3 = NULL;
-	
+
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline1->lc)));
@@ -2505,13 +2505,13 @@ static void group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participa
 	coresList = bctbx_list_append(coresList, pauline3->lc);
 	stats initialPauline3Stats = pauline3->stat;
 	_start_core(pauline3);
-	
+
 	// Wait for lime users to be created on x3dh server
 	wait_for_list(coresList, &dummy, 1, x3dhServerDelay);
 
 	// Check that the chat room is correctly created on Laure's side and that the participants are added
 	paulineCr3 = check_creation_chat_room_client_side(coresList, pauline3, &initialPauline3Stats, confAddr, initialSubject, 2, 0);
-	
+
 	// Check chatroom security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr3), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	// Marie sends a message
@@ -2521,7 +2521,7 @@ static void group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participa
 	LinphoneChatMessage *pauline3LastMsg = pauline3->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(pauline3LastMsg))
 		goto end;
-	
+
 	// Check that the messages were correctly decrypted at least for pauline3
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline3LastMsg), marie1Message2);
 
@@ -2731,28 +2731,28 @@ static void imdn_for_group_chat_room (void) {
 	stats initialPaulineStats = pauline->stat;
 	stats initialChloeStats = chloe->stat;
 	time_t initialTime = ms_time(NULL);
-	
+
 	// Enable IMDN
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(chloe->lc));
-	
-	
+
+
 	// Wait for lime user creation
 	wait_for_list(coresList, NULL, 1, 2*x3dhServerDelay);
 
-	
+
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
 	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
-	
+
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
-	
+
 	// Check that the chat room is correctly created on Chloe's side and that the participants are added
 	LinphoneChatRoom *chloeCr = check_creation_chat_room_client_side(coresList, chloe, &initialChloeStats, confAddr, initialSubject, 2, FALSE);
-	
+
 	// Chloe begins composing a message
 	const char *chloeTextMessage = "Hello";
 	LinphoneChatMessage *chloeMessage = _send_message(chloeCr, chloeTextMessage);
@@ -2765,7 +2765,7 @@ static void imdn_for_group_chat_room (void) {
 	LinphoneAddress *chloeAddr = linphone_address_new(linphone_core_get_identity(chloe->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(chloeAddr, linphone_chat_message_get_from_address(marieLastMsg)));
 	linphone_address_unref(chloeAddr);
-	
+
 	// Check that the message has been delivered to Marie and Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDeliveredToUser, initialChloeStats.number_of_LinphoneMessageDeliveredToUser + 1, 3000));
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDisplayed));
@@ -2782,7 +2782,7 @@ static void imdn_for_group_chat_room (void) {
 	}
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDelivered));
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateNotDelivered));
-	
+
 	// Marie marks the message as read, check that the state is not yet displayed on Chloe's side
 	linphone_chat_room_mark_as_read(marieCr);
 	BC_ASSERT_FALSE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDisplayed, initialChloeStats.number_of_LinphoneMessageDisplayed + 1, 3000));
@@ -2798,7 +2798,7 @@ static void imdn_for_group_chat_room (void) {
 	}
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDelivered));
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateNotDelivered));
-	
+
 	// Pauline also marks the message as read, check that the state is now displayed on Chloe's side
 	linphone_chat_room_mark_as_read(paulineCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDisplayed, initialChloeStats.number_of_LinphoneMessageDisplayed + 1, 3000));
@@ -2810,15 +2810,15 @@ static void imdn_for_group_chat_room (void) {
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDeliveredToUser));
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDelivered));
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateNotDelivered));
-	
+
 	linphone_chat_message_unref(chloeMessage);
-	
+
 end:
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(chloe, chloeCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
-	
+
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
@@ -2838,22 +2838,22 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message(v
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
-	
-	
+
+
 	// Wait for lime user creation
 	wait_for_list(coresList, NULL, 1, 2*x3dhServerDelay);
-	
+
 	// Marie creates a new group chat room
 	const char *initialSubject = "Pauline";
 	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
-	
+
 	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
-	
+
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineCr) & LinphoneChatRoomCapabilitiesOneToOne);
-	
+
 	// Marie sends a message
 	const char *textMessage = "Hello";
 	LinphoneChatMessage *message = _send_message(marieCr, textMessage);
@@ -2861,16 +2861,16 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message(v
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), textMessage);
 	linphone_chat_message_unref(message);
-	
+
 	// Marie deletes the chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	wait_for_list(coresList, 0, 1, 2000);
 	BC_ASSERT_EQUAL(pauline->stat.number_of_participants_removed, initialPaulineStats.number_of_participants_removed, int, "%d");
-	
+
 	// Pauline sends a new message
 	initialMarieStats = marie->stat;
 	initialPaulineStats = pauline->stat;
-	
+
 	//kill flexisip just before this line (not LinphoneChatRoomStateDeleted will not work a the end
 	linphone_core_refresh_registers(marie->lc);
 	linphone_core_refresh_registers(pauline->lc);
@@ -2882,7 +2882,7 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message(v
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 3000));
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), textMessage);
 	linphone_chat_message_unref(message);
-	
+
 	// Check that the chat room has been correctly recreated on Marie's side
 	marieCr = check_creation_chat_room_client_side(coresList, marie, &initialMarieStats, confAddr, initialSubject, 1, FALSE);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineCr) & LinphoneChatRoomCapabilitiesOneToOne);
@@ -2891,13 +2891,13 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message(v
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
-	
+
 	wait_for_list(coresList, 0, 1, 2000);
 	BC_ASSERT_EQUAL(linphone_core_get_call_history_size(marie->lc), 0, int,"%i");
 	BC_ASSERT_EQUAL(linphone_core_get_call_history_size(pauline->lc), 0, int,"%i");
 	BC_ASSERT_PTR_NULL(linphone_core_get_call_logs(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_call_logs(pauline->lc));
-	
+
 	linphone_address_unref(confAddr);
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
@@ -3345,7 +3345,7 @@ static void chat_room_ephemeral_settings (void) {
 
 	BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
 	BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(marieCr), 1, long, "%ld");
-	
+
 	unsigned int nbMarieConferenceEphemeralMessageLifetimeChanged = 0;
 	unsigned int nbMarieConferenceEphemeralMessageEnabled = 0;
 	unsigned int nbMarieConferenceEphemeralMessageDisabled = 0;

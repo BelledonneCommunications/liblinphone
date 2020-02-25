@@ -1,0 +1,4 @@
+[sip]
+session_expires_value=8
+session_expires_min_value=5
+session_expires_refresher_value=2
