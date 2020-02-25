@@ -193,7 +193,7 @@ static void get_chat_rooms() {
 	const MainDb &mainDb = provider.getMainDb();
 	list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
 	BC_ASSERT_EQUAL(chatRooms.size(), 86, int, "%d");
-	
+
 	list<shared_ptr<AbstractChatRoom>> emptyChatRooms;
 	shared_ptr<AbstractChatRoom> emptyMessageRoom = nullptr;
 	shared_ptr<AbstractChatRoom> oneMessageRoom = nullptr;
@@ -218,7 +218,7 @@ static void get_chat_rooms() {
 		}
 	}
 	BC_ASSERT_EQUAL(emptyChatRooms.size(), 4, int, "%d");
-	
+
 	// Check an empty chat room last_message_id is updated after adding a message into it
 	BC_ASSERT_PTR_NOT_NULL(emptyMessageRoom);
 	if (emptyMessageRoom != nullptr) {
