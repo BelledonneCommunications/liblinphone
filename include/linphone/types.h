@@ -580,6 +580,16 @@ typedef enum _LinphoneLimeState {
 } LinphoneLimeState;
 
 /**
+ * Session Timers refresher
+ * @ingroup initializing
+ */
+typedef enum _LinphoneSessionExpiresRefresher {
+  LinphoneSessionExpiresRefresherUnspecified,
+  LinphoneSessionExpiresRefresherUAS,
+  LinphoneSessionExpiresRefresherUAC
+} LinphoneSessionExpiresRefresher;
+
+/**
  * @ingroup initializing
  */
 typedef enum _LinphoneLogCollectionState {
@@ -934,6 +944,7 @@ typedef enum _LinphoneReason{
 	LinphoneReasonAddressIncomplete, /**< Address incomplete */
 	LinphoneReasonNotImplemented, /**< Not implemented */
 	LinphoneReasonBadGateway, /**< Bad gateway */
+	LinphoneReasonSessionIntervalTooSmall, /**< The received request contains a Session-Expires header field with a duration below the minimum timer */
 	LinphoneReasonServerTimeout, /**< Server timeout */
 	LinphoneReasonUnknown /**< Unknown reason */
 } LinphoneReason;
