@@ -527,7 +527,9 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 
 	}
 
-	if (remote_offer->haveZrtpHash == 1) {
+	// add our zrtp hash if remote gave one but also when our side has set ZRTP as active to help peer starting earlier if it has ZRTP capabilities
+	// haveZrtpHash is set in local_cap when ZRTP is active on our side.
+	if ((remote_offer->haveZrtpHash == 1) || (local_cap->haveZrtpHash == 1)) {
 		if (local_cap->zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
 			strncpy((char *)(result->zrtphash), (char *)(local_cap->zrtphash), sizeof(result->zrtphash));
 			result->haveZrtpHash =  1;
