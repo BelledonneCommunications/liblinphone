@@ -578,7 +578,7 @@ if __name__ == '__main__':
 
 
     parser.classBl += 'LinphoneCoreVTable'
-    parser.methodBl.remove('getCurrentCallbacks')
+    parser.methodBl = ['ref', 'unref', 'new', 'destroy']
     parser.enum_relocations = {
         'LinphoneAccountCreatorActivationCodeStatus' : 'LinphoneAccountCreator',
         'LinphoneAccountCreatorDomainStatus'         : 'LinphoneAccountCreator',
