@@ -905,6 +905,20 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 		}
 	}
 
+	/* Do we have Lime Ik attribute */
+	if ((attribute=belle_sdp_media_description_get_attribute(media_desc,"Ik"))!=NULL) {
+		if (belle_sdp_attribute_get_value(attribute)!=NULL) {
+			stream->haveLimeIk = 1;
+		}
+	}
+	/* get ready to parse also lime-Ik */
+	if ((attribute=belle_sdp_media_description_get_attribute(media_desc,"lime-Ik"))!=NULL) {
+		if (belle_sdp_attribute_get_value(attribute)!=NULL) {
+			stream->haveLimeIk = 1;
+		}
+	}
+
+
 	/* Get ICE candidate attributes if any */
 	sdp_parse_media_ice_parameters(media_desc, stream);
 
