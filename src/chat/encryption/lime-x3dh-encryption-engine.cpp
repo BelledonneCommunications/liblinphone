@@ -622,6 +622,8 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters () {
 	// Encode to base64 and append to the parameter list
 	list<pair<string,string>> paramList;
 	string IkB64 = encodeBase64(Ik);
+	// "Ik" is deprecated, use "lime-Ik" instead. "lime-Ik" parsing is supported since 01/03/2020.
+	// Switch here to lime-Ik to start publishing lime-Ik instead of Ik
 	paramList.push_back(make_pair("Ik", IkB64));
 	return paramList;
 }
@@ -633,17 +635,35 @@ void LimeX3dhEncryptionEngine::mutualAuthentication (
 	LinphoneCallDir direction
 ) {
 	// Get local and remote identity keys from sdp attributes
-	const char *charLocalIk = sal_custom_sdp_attribute_find(localMediaDescription->custom_sdp_attributes, "Ik");
-	const char *charRemoteIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik");
+	std::string LocalIkB64;
+	const char *charLocalLimeIk = sal_custom_sdp_attribute_find(localMediaDescription->custom_sdp_attributes, "lime-Ik");
+	// "Ik" is deprecated, use "lime-Ik" instead. "lime-Ik" parsing is supported since 01/03/2020.
+	if (!charLocalLimeIk) {
+		const char *charLocalIk = sal_custom_sdp_attribute_find(localMediaDescription->custom_sdp_attributes, "Ik");
+		if (charLocalIk) {
+			LocalIkB64 = charLocalIk;
+		}
+	} else {
+		LocalIkB64 = charLocalLimeIk;
+	}
+
+	std::string RemoteIkB64;
+	const char *charRemoteLimeIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "lime-Ik");
+	// "Ik" is deprecated, use "lime-Ik" instead. "lime-Ik" parsing is supported since 01/03/2020.
+	if (!charRemoteLimeIk) {
+		const char *charRemoteIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik");
+		if (charRemoteIk) {
+			RemoteIkB64 = charRemoteIk;
+		}
+	} else {
+		RemoteIkB64 = charRemoteLimeIk;
+	}
 
 	// This sdp might be from a non lime aware device
-	if (!charLocalIk || !charRemoteIk) {
+	if (LocalIkB64.size()==0 || RemoteIkB64.size()==0) {
 		lInfo() << "[LIME] Missing identity keys for mutual authentication, do not set auxiliary secret from identity keys";
 		return;
 	}
-
-	const string LocalIkB64(charLocalIk);
-	const string RemoteIkB64(charRemoteIk);
 
 	// Convert to vectors and decode base64
 	vector<uint8_t> localIk = decodeBase64(LocalIkB64);
@@ -683,9 +703,15 @@ void LimeX3dhEncryptionEngine::authenticationVerified (
 ) {
 	// Get peer's Ik
 	string remoteIkB64;
-	const char *sdpRemoteIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik");
-	if (sdpRemoteIk)
-		remoteIkB64 = sdpRemoteIk;
+	const char *sdpRemoteLimeIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "lime-Ik");
+	if (sdpRemoteLimeIk) {
+		remoteIkB64 = sdpRemoteLimeIk;
+	} else { /* legacy: check deprecated Ik attribute */
+		const char *sdpRemoteIk = sal_custom_sdp_attribute_find(remoteMediaDescription->custom_sdp_attributes, "Ik");
+		if (sdpRemoteIk) {
+			remoteIkB64 = sdpRemoteIk;
+		}
+	}
 
 	vector<uint8_t> remoteIk = decodeBase64(remoteIkB64);
 	const IdentityAddress peerDeviceAddr = IdentityAddress(peerDeviceId);
