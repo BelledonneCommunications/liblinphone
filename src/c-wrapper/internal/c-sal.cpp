@@ -97,6 +97,7 @@ SalMediaDescription *sal_media_description_new(){
 		md->streams[i].rtp_port = 0;
 		md->streams[i].rtcp_port = 0;
 		md->streams[i].haveZrtpHash = 0;
+		md->streams[i].haveLimeIk = 0;
 	}
 	return md;
 }
@@ -363,6 +364,11 @@ bool_t sal_stream_description_has_dtls(const SalStreamDescription *sd) {
 
 bool_t sal_stream_description_has_zrtp(const SalStreamDescription *sd) {
 	if (sd->haveZrtpHash==1) return TRUE;
+	return FALSE;
+}
+
+bool_t sal_stream_description_has_limeIk(const SalStreamDescription *sd) {
+	if (sd->haveLimeIk==1) return TRUE;
 	return FALSE;
 }
 
