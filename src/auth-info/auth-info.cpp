@@ -121,7 +121,7 @@ const string& AuthInfo::getTlsKeyPath() const{
 }
 
 void AuthInfo::setPassword(const string &passwd){
-    if( mPasswd != passwd && getHa1() != ""){
+    if( !passwd.empty() && mPasswd != passwd && getHa1() != ""){
         setHa1("");
     }
     mPasswd = passwd;
