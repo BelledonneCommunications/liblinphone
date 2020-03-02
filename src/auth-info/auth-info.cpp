@@ -121,14 +121,16 @@ const string& AuthInfo::getTlsKeyPath() const{
 }
 
 void AuthInfo::setPassword(const string &passwd){
-    if( mPasswd != passwd && getHa1() != "")
+    if( mPasswd != passwd && getHa1() != ""){
         setHa1("");
+    }
     mPasswd = passwd;
 }
 
 void AuthInfo::setUsername(const string &username){
-    if( mUsername != username && getHa1() != "")
+    if( mUsername != username && getHa1() != ""){
         setHa1("");
+    }
     mUsername = username;
 }
 
@@ -136,20 +138,23 @@ void AuthInfo::setAlgorithm(const string &algorithm){
 	if (!algorithm.empty() && algorithm != "MD5" && algorithm != "SHA-256"){
 		lError() << "Given algorithm is not correct. Set algorithm failed";
 	}
-    if( mAlgorithm != algorithm && getHa1() != "")
+    if( mAlgorithm != algorithm && getHa1() != ""){
         setHa1("");
+    }
 	mAlgorithm = algorithm;
 }
 
 void AuthInfo::setUserid(const string &userid){
-    if( mUserid != userid && getHa1() != "")
+    if( mUserid != userid && getHa1() != ""){
         setHa1("");
+    }
     mUserid = userid;
 }
 
 void AuthInfo::setRealm(const string &realm){
-    if( mRealm != realm && getHa1() != "")
+    if( mRealm != realm && getHa1() != ""){
         setHa1("");
+    }
     mRealm = realm;
 }
 
