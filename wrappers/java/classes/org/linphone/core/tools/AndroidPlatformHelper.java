@@ -19,16 +19,6 @@
 
 package org.linphone.core.tools;
 
-import org.linphone.core.tools.DozeReceiver;
-import org.linphone.core.tools.NetworkManager;
-import org.linphone.core.tools.NetworkManagerAbove21;
-import org.linphone.core.tools.NetworkManagerAbove24;
-import org.linphone.core.tools.NetworkManagerAbove26;
-import org.linphone.core.tools.Log;
-import org.linphone.mediastream.MediastreamerAndroidContext;
-import org.linphone.mediastream.Version;
-import org.linphone.mediastream.video.capture.CaptureTextureView;
-
 import android.content.res.Resources;
 import android.graphics.SurfaceTexture;
 import android.net.wifi.WifiManager;
@@ -61,6 +51,19 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import org.linphone.core.tools.compatibility.DeviceUtils;
+import org.linphone.core.tools.receiver.DozeReceiver;
+import org.linphone.core.tools.receiver.InteractivityReceiver;
+import org.linphone.core.tools.network.NetworkManager;
+import org.linphone.core.tools.network.NetworkManagerInterface;
+import org.linphone.core.tools.network.NetworkManagerAbove21;
+import org.linphone.core.tools.network.NetworkManagerAbove23;
+import org.linphone.core.tools.network.NetworkManagerAbove24;
+import org.linphone.core.tools.network.NetworkManagerAbove26;
+import org.linphone.mediastream.MediastreamerAndroidContext;
+import org.linphone.mediastream.Version;
+import org.linphone.mediastream.video.capture.CaptureTextureView;
 
 /**
  * This class is instanciated directly by the linphone library in order to access specific features only accessible in java.

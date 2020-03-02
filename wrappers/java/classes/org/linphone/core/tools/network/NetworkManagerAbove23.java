@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2020 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -17,18 +17,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.linphone.core.tools;
+package org.linphone.core.tools.network;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.NetworkCapabilities;
-import android.net.ProxyInfo;
 import android.net.NetworkRequest;
 import android.net.RouteInfo;
 import android.os.Build;
@@ -37,18 +34,19 @@ import java.util.List;
 import java.util.ArrayList;
 
 import org.linphone.core.tools.AndroidPlatformHelper;
+import org.linphone.core.tools.Log;
 
 /**
  * Intercept network state changes and update linphone core.
  */
-public class NetworkManagerAbove24 implements NetworkManagerInterface {
+public class NetworkManagerAbove23 implements NetworkManagerInterface {
 	private AndroidPlatformHelper mHelper;
 	private ConnectivityManager mConnectivityManager;
 	private ConnectivityManager.NetworkCallback mNetworkCallback;
 	private Network mNetworkAvailable;
     private boolean mWifiOnly;
 
-	public NetworkManagerAbove24(final AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly) {
+	public NetworkManagerAbove23(final AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly) {
 		mHelper = helper;
 		mConnectivityManager = cm;
 		mWifiOnly = wifiOnly;
@@ -61,16 +59,16 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 					public void run() {
 						NetworkInfo info = mConnectivityManager.getNetworkInfo(network);
 						if (info == null) {
-							Log.e("[Platform Helper] [Network Manager 24] A network should be available but getNetworkInfo failed.");
+							Log.e("[Platform Helper] [Network Manager 23] A network should be available but getNetworkInfo failed.");
 							return;
 						}
 
-						Log.i("[Platform Helper] [Network Manager 24] A network is available: " + info.getTypeName() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
+						Log.i("[Platform Helper] [Network Manager 23] A network is available: " + info.getTypeName() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
 						if (!mWifiOnly || info.getType() == ConnectivityManager.TYPE_WIFI) {
 							mNetworkAvailable = network;
 							mHelper.updateNetworkReachability();
 						} else {
-							Log.i("[Platform Helper] [Network Manager 24] Network isn't wifi and wifi only mode is enabled");
+							Log.i("[Platform Helper] [Network Manager 23] Network isn't wifi and wifi only mode is enabled");
 						}
 					}
 				});
@@ -81,7 +79,7 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 				mHelper.getHandler().post(new Runnable() {
 					@Override
 					public void run() {
-						Log.i("[Platform Helper] [Network Manager 24] A network has been lost");
+						Log.i("[Platform Helper] [Network Manager 23] A network has been lost");
 						if (mNetworkAvailable != null && mNetworkAvailable.equals(network)) {
 							mNetworkAvailable = null;
 						}
@@ -92,23 +90,22 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 
 			@Override
 			public void onCapabilitiesChanged(final Network network, final NetworkCapabilities networkCapabilities) {
-					mHelper.getHandler().post(new Runnable() {
-						@Override
-						public void run() {
-							if (networkCapabilities == null) {
-								Log.e("[Platform Helper] [Network Manager 24] onCapabilitiesChanged called with null networkCapabilities, skipping...");
-								return;
-							}
-
-							if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-								// This callback can be called very often when on WIFI (for example on signal strenght change), so don't log it each time and no need to update network reachability
-								Log.d("[Platform Helper] [Network Manager 24] onCapabilitiesChanged " + networkCapabilities.toString());
-							} else {
-								Log.i("[Platform Helper] [Network Manager 24] onCapabilitiesChanged " + networkCapabilities.toString());
-								mHelper.updateNetworkReachability();
-							}
+				mHelper.getHandler().post(new Runnable() {
+					@Override
+					public void run() {
+						if (networkCapabilities == null) {
+							Log.e("[Platform Helper] [Network Manager 23] onCapabilitiesChanged called with null networkCapabilities, skipping...");
+							return;
 						}
-					});
+						if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+							// This callback can be called very often when on WIFI (for example on signal strenght change), so don't log it each time and no need to update network reachability
+							Log.d("[Platform Helper] [Network Manager 23] onCapabilitiesChanged " + networkCapabilities.toString());
+						} else {
+							Log.i("[Platform Helper] [Network Manager 23] onCapabilitiesChanged " + networkCapabilities.toString());
+							mHelper.updateNetworkReachability();
+						}
+					}
+				});
 			}
 
 			@Override
@@ -117,10 +114,10 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 					@Override
 					public void run() {
 						if (linkProperties == null) {
-							Log.e("[Platform Helper] [Network Manager 24] onLinkPropertiesChanged called with null linkProperties, skipping...");
+							Log.e("[Platform Helper] [Network Manager 23] onLinkPropertiesChanged called with null linkProperties, skipping...");
 							return;
 						}
-						Log.i("[Platform Helper] [Network Manager 24] onLinkPropertiesChanged " + linkProperties.toString());
+						Log.i("[Platform Helper] [Network Manager 23] onLinkPropertiesChanged " + linkProperties.toString());
 						updateDnsServers();
 					}
 				});
@@ -131,7 +128,7 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 				mHelper.getHandler().post(new Runnable() {
 					@Override
 					public void run() {
-						Log.i("[Platform Helper] [Network Manager 24] onLosing");
+						Log.i("[Platform Helper] [Network Manager 23] onLosing");
 					}
 				});
 			}
@@ -141,7 +138,7 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 				mHelper.getHandler().post(new Runnable() {
 					@Override
 					public void run() {
-						Log.i("[Platform Helper] [Network Manager 24] onUnavailable");
+						Log.i("[Platform Helper] [Network Manager 23] onUnavailable");
 					}
 				});
 			}
@@ -153,18 +150,17 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 		if (mWifiOnly && mNetworkAvailable != null) {
 			NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(mNetworkAvailable);
 			if (networkInfo != null && networkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
-				Log.i("[Platform Helper] [Network Manager 24] Wifi only mode enabled and current network isn't wifi");
+				Log.i("[Platform Helper] [Network Manager 23] Wifi only mode enabled and current network isn't wifi");
 				mNetworkAvailable = null;
 			}
 		}
 	}
 
 	public void registerNetworkCallbacks(Context context) {
-		int permissionGranted = context.getPackageManager().checkPermission(Manifest.permission.ACCESS_NETWORK_STATE, context.getPackageName());
-		Log.i("[Platform Helper] [Network Manager 24] ACCESS_NETWORK_STATE permission is " + (permissionGranted == PackageManager.PERMISSION_GRANTED ? "granted" : "denied"));
-		if (permissionGranted == PackageManager.PERMISSION_GRANTED) {
-			mConnectivityManager.registerDefaultNetworkCallback(mNetworkCallback);
-		}
+		mConnectivityManager.registerNetworkCallback(
+			new NetworkRequest.Builder().build(),
+			mNetworkCallback
+		);
 	}
 
 	public void unregisterNetworkCallbacks(Context context) {
@@ -172,7 +168,7 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 	}
 
     public NetworkInfo getActiveNetworkInfo() {
-		if (mNetworkAvailable != null) {
+        if (mNetworkAvailable != null) {
 			return mConnectivityManager.getNetworkInfo(mNetworkAvailable);
 		}
 
@@ -180,51 +176,34 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 		if (network != null) {
 			return mConnectivityManager.getNetworkInfo(network);
 		}
-		
-		Log.i("[Platform Helper] [Network Manager 24] getActiveNetwork() returned null, using getActiveNetworkInfo() instead");
+
+		Log.i("[Platform Helper] [Network Manager 23] getActiveNetwork() returned null, using getActiveNetworkInfo() instead");
         return mConnectivityManager.getActiveNetworkInfo();
     }
 
     public Network getActiveNetwork() {
-		if (mNetworkAvailable != null) {
+        if (mNetworkAvailable != null) {
 			return mNetworkAvailable;
 		}
 
         return mConnectivityManager.getActiveNetwork();
     }
 
-	public boolean isCurrentlyConnected(Context context) {
-		int restrictBackgroundStatus = mConnectivityManager.getRestrictBackgroundStatus();
-		if (restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED) {
-			// Device is restricting metered network activity while application is running on background.
-			// In this state, application should not try to use the network while running on background, because it would be denied.
-			Log.w("[Platform Helper] [Network Manager 24] Device is restricting metered network activity while application is running on background");
-			if (mHelper.isInBackground()) {
-				Log.w("[Platform Helper] [Network Manager 24] Device is in background, returning false");
-				return false;
-			}
-		}
+    public boolean isCurrentlyConnected(Context context) {
 		return mNetworkAvailable != null;
-	}
+    }
 
-	public boolean hasHttpProxy(Context context) {
-		ProxyInfo proxy = mConnectivityManager.getDefaultProxy();
-		if (proxy != null && proxy.getHost() != null) {
-			Log.i("[Platform Helper] [Network Manager 24] The active network is using a http proxy: " + proxy.toString());
-			return true;
-		}
-		return false;
-	}
+    public boolean hasHttpProxy(Context context) {
+        return false;
+    }
 
-	public String getProxyHost(Context context) {
-		ProxyInfo proxy = mConnectivityManager.getDefaultProxy();
-		return proxy.getHost();
-	}
+    public String getProxyHost(Context context) {
+        return null;
+    }
 
-	public int getProxyPort(Context context) {
-		ProxyInfo proxy = mConnectivityManager.getDefaultProxy();
-		return proxy.getPort();
-	}
+    public int getProxyPort(Context context) {
+        return 0;
+    }
 
 	private boolean hasLinkPropertiesDefaultRoute(LinkProperties linkProperties) {
 		if (linkProperties != null) {
@@ -255,14 +234,14 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 							if (!dnsServers.contains(dnsHost) && !activeNetworkDnsServers.contains(dnsHost)) {
 								String networkType = networkInfo.getTypeName();
 								if (network.equals(activeNetwork)) {
-									Log.i("[Platform Helper] [Network Manager 24] Found DNS host " + dnsHost + " from active network " + networkType);
+									Log.i("[Platform Helper] [Network Manager 23] Found DNS host " + dnsHost + " from active network " + networkType);
 									activeNetworkDnsServers.add(dnsHost);
 								} else {
 									if (prioritary) {
-										Log.i("[Platform Helper] [Network Manager 24] Found DNS host " + dnsHost + " from network " + networkType + " with default route");
+										Log.i("[Platform Helper] [Network Manager 23] Found DNS host " + dnsHost + " from network " + networkType + " with default route");
 										dnsServers.add(0, dnsHost);
 									} else {
-										Log.i("[Platform Helper] [Network Manager 24] Found DNS host " + dnsHost + " from network " + networkType);
+										Log.i("[Platform Helper] [Network Manager 23] Found DNS host " + dnsHost + " from network " + networkType);
 										dnsServers.add(dnsHost);
 									}
 								}
