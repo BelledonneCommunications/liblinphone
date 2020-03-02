@@ -42,6 +42,7 @@ class AuthInfo : public bellesip::HybridObject<LinphoneAuthInfo, AuthInfo> {
     void setRealm(const std::string &realm);
     void setDomain(const std::string &domain);
     void setHa1(const std::string &ha1);
+    void setNeedToRenewHa1(const bool_t &needToRenewHa1);
     void setTlsCert(const std::string &tlsCert);
     void setTlsKey(const std::string &tlsKey);
     void setTlsCertPath(const std::string &tlsCertPath);
@@ -56,6 +57,7 @@ class AuthInfo : public bellesip::HybridObject<LinphoneAuthInfo, AuthInfo> {
     const std::string& getRealm() const;
     const std::string& getDomain() const;
     const std::string& getHa1() const;
+    const bool_t& getNeedToRenewHa1() const;
     const std::string& getTlsCert() const;
     const std::string& getTlsKey() const;
     const std::string& getTlsCertPath() const;
@@ -75,9 +77,8 @@ class AuthInfo : public bellesip::HybridObject<LinphoneAuthInfo, AuthInfo> {
     std::string mTlsKey;
     std::string mTlsCertPath;
     std::string mTlsKeyPath;
+    bool_t mNeedToRenewHa1;
     
-    
-
 };
 
 LINPHONE_END_NAMESPACE
