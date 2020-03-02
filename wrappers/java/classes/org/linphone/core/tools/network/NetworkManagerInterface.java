@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2020 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -17,18 +17,31 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.linphone.core.tools;
+package org.linphone.core.tools.network;
 
 import android.content.Context;
-import android.os.PowerManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkInfo;
 
-import org.linphone.core.tools.Log;
+public interface NetworkManagerInterface {
+    void registerNetworkCallbacks(Context context);
 
-public class DeviceUtils23 {
-    public static boolean isAppBatteryOptimizationEnabled(Context context) {
-        PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        boolean ignoringBatteryOptimizations = powerManager.isIgnoringBatteryOptimizations(context.getPackageName());
-        Log.i("[Platform Helper] Is app in device battery optimization whitelist: " + ignoringBatteryOptimizations);
-        return !ignoringBatteryOptimizations;
-    }
+	void unregisterNetworkCallbacks(Context context);
+
+    boolean isCurrentlyConnected(Context context);
+
+    NetworkInfo getActiveNetworkInfo();
+
+    Network getActiveNetwork();
+
+    boolean hasHttpProxy(Context context);
+
+    String getProxyHost(Context context);
+
+    int getProxyPort(Context context);
+
+    void setWifiOnly(boolean isWifiOnlyEnabled);
+
+    void updateDnsServers();
 }

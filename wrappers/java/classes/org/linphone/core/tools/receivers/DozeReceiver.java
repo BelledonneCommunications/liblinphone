@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2020 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.linphone.core.tools;
+package org.linphone.core.tools.receiver;
 
 import android.content.Context;
 import android.content.Intent;
@@ -25,6 +25,7 @@ import android.os.Build;
 import android.os.PowerManager;
 
 import org.linphone.core.tools.AndroidPlatformHelper;
+import org.linphone.core.tools.Log;
 
 /*
  * Purpose of this receiver is to disable keep alives when device is on idle
