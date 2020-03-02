@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2020 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -17,10 +17,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.linphone.core.tools;
+package org.linphone.core.tools.compatibility;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
+
 import org.linphone.mediastream.Version;
 
 public class DeviceUtils {
