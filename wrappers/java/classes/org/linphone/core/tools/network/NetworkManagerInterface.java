@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2020 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -16,21 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.linphone.core.tools;
 
-public interface OpenH264DownloadHelperListener {
-	/**
-	 * Called at the beginning of download with current &lt; max Called
-	 * at each iteration of download Called at the ending of download
-	 * with current &gt; max
-	 * @param current: Size of file already downloaded
-	 * @param max: Size of file we want to download
-	 */
-	void OnProgress(int current, int max);
-	
-	/**
-	 * Called when we failed to download codec
-	 * @param error: Error message
-	 */
-	void OnError(String error);
+package org.linphone.core.tools.network;
+
+import android.content.Context;
+import android.net.Network;
+import android.net.NetworkInfo;
+
+public interface NetworkManagerInterface {
+    void registerNetworkCallbacks(Context context);
+
+    void unregisterNetworkCallbacks(Context context);
+
+    boolean isCurrentlyConnected(Context context);
+
+    NetworkInfo getActiveNetworkInfo();
+
+    Network getActiveNetwork();
+
+    boolean hasHttpProxy(Context context);
+
+    String getProxyHost(Context context);
+
+    int getProxyPort(Context context);
+
+    void setWifiOnly(boolean isWifiOnlyEnabled);
+
+    void updateDnsServers();
 }

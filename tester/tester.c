@@ -491,6 +491,8 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, 
 	linphone_core_cbs_set_call_stats_updated(mgr->cbs, call_stats_updated);
 	linphone_core_cbs_set_global_state_changed(mgr->cbs, global_state_changed);
 	linphone_core_cbs_set_message_sent(mgr->cbs, liblinphone_tester_chat_room_msg_sent);
+	linphone_core_cbs_set_first_call_started(mgr->cbs, first_call_started);
+	linphone_core_cbs_set_last_call_ended(mgr->cbs, last_call_ended);
 
 	mgr->phone_alias = phone_alias ? ms_strdup(phone_alias) : NULL;
 
@@ -1752,6 +1754,17 @@ void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const ch
 			break;
 	}
 }
+
+void first_call_started(LinphoneCore *lc) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneCoreFirstCallStarted++;
+}
+
+void last_call_ended(LinphoneCore *lc) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneCoreLastCallEnded++;
+}
+
 void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManager* mgr ){
 	if( params->sdp_removal ){
 		sal_default_set_sdp_handling(linphone_core_get_sal(mgr->lc), SalOpSDPSimulateRemove);
@@ -1817,7 +1830,6 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		BC_ASSERT_TRUE(linphone_core_is_incoming_invite_pending(callee_mgr->lc));
 	BC_ASSERT_EQUAL(caller_mgr->stat.number_of_LinphoneCallOutgoingProgress,initial_caller.number_of_LinphoneCallOutgoingProgress+1, int, "%d");
 
-
 	while (caller_mgr->stat.number_of_LinphoneCallOutgoingRinging!=(initial_caller.number_of_LinphoneCallOutgoingRinging + 1)
 			&& caller_mgr->stat.number_of_LinphoneCallOutgoingEarlyMedia!=(initial_caller.number_of_LinphoneCallOutgoingEarlyMedia +1)
 			&& retry++ < 100) {
@@ -1829,7 +1841,6 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 
 	BC_ASSERT_TRUE((caller_mgr->stat.number_of_LinphoneCallOutgoingRinging==initial_caller.number_of_LinphoneCallOutgoingRinging+1)
 							||(caller_mgr->stat.number_of_LinphoneCallOutgoingEarlyMedia==initial_caller.number_of_LinphoneCallOutgoingEarlyMedia+1));
-
 
 	if (linphone_core_get_calls_nb(callee_mgr->lc) == 1)
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call_remote_address(callee_mgr->lc)); /*only relevant if one call, otherwise, not always set*/

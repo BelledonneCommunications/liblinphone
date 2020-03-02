@@ -342,6 +342,8 @@ typedef struct _stats {
 	int number_of_LinphoneGlobalStartup;
 	int number_of_LinphoneGlobalConfiguring;
 
+	int number_of_LinphoneCoreFirstCallStarted;
+	int number_of_LinphoneCoreLastCallEnded;	
 }stats;
 
 
@@ -435,7 +437,9 @@ void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool
 void dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf);
 void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *stats);
 void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
-
+void first_call_started(LinphoneCore *lc);
+void last_call_ended(LinphoneCore *lc);
+	
 LinphoneAddress * create_linphone_address(const char * domain);
 LinphoneAddress * create_linphone_address_for_algo(const char * domain, const char * username);
 bool_t wait_for(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value);
