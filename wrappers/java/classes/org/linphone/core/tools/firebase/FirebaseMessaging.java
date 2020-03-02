@@ -23,6 +23,7 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import org.linphone.core.Core;
 import org.linphone.core.tools.Log;
+import org.linphone.core.tools.service.CoreManager;
 
 public class FirebaseMessaging extends FirebaseMessagingService {
     public FirebaseMessaging() {}
@@ -36,6 +37,19 @@ public class FirebaseMessaging extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         android.util.Log.i("FirebaseMessaging", "[Push Notification] Received");
-        // TODO
+        
+        if (!CoreManager.isReady()) {
+            android.util.Log.i("FirebaseMessaging", "[Push Notification] Starting context");
+            new CoreManager(getApplicationContext());
+            CoreManager.instance().start(true);
+        } else {
+            Log.i("[Push Notification] Notifying Core");
+            if (CoreManager.instance() != null) {
+                Core core = CoreManager.getCore();
+                if (core != null) {
+                    core.ensureRegistered();
+                }
+            }
+        }
     }
 }
