@@ -847,6 +847,10 @@ namespace LinphonePrivate {
 	sqlite3 *friends_db; \
 	bool_t debug_storage; \
 	void *system_context; \
-	bool_t is_unreffing;
+	bool_t is_unreffing; \
+	bool_t push_notification_enabled; \
+	char * push_notification_param; \
+	char * push_notification_prid; \
+	bool_t auto_iterate_enabled;
 
 #endif /* _PRIVATE_STRUCTS_H_ */

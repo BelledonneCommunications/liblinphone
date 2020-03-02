@@ -99,6 +99,16 @@ void linphone_core_notify_call_state_changed(LinphoneCore *lc, LinphoneCall *cal
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_first_call_started(LinphoneCore *lc) {
+	NOTIFY_IF_EXIST(first_call_started, lc);
+	cleanup_dead_vtable_refs(lc);
+}
+
+void linphone_core_notify_last_call_ended(LinphoneCore *lc) {
+	NOTIFY_IF_EXIST(last_call_ended, lc);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token) {
 	NOTIFY_IF_EXIST(call_encryption_changed, lc,call,on,authentication_token);
 	cleanup_dead_vtable_refs(lc);

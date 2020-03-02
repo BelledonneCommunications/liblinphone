@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2020 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -17,13 +17,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.linphone.core.tools;
+package org.linphone.core.tools.compatibility;
 
-import android.content.Context;
 import android.graphics.SurfaceTexture;
-import android.os.PowerManager;
-
-import org.linphone.core.tools.Log;
 
 public class DeviceUtils26 {
     public static boolean isSurfaceTextureReleased(SurfaceTexture surfaceTexture) {
