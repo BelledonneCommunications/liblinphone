@@ -159,7 +159,7 @@ void AuthInfo::setUserid(const string &userid){
 
 void AuthInfo::setRealm(const string &realm){
     if( !realm.empty() && mRealm != realm && !mHa1.empty()){
-        mNeedToRenewHa1 = true;
+        setNeedToRenewHa1(true);
     }
     mRealm = realm;
 }
