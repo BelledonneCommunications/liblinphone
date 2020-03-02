@@ -34,7 +34,7 @@ import java.util.List;
 
 import org.linphone.mediastream.Log;
 import org.linphone.mediastream.Version;
-import org.linphone.core.tools.OpenH264DownloadHelper;
+import org.linphone.core.tools.h264.OpenH264DownloadHelper;
 {{/isLinphoneFactory}}
 
 /**
@@ -154,6 +154,12 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
       * @return the object store if any, null otherwise
       */
     {{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public Object getUserData();
+
+    /**
+      * Gets the native pointer used by this class to make native method calls.
+      * @return the nativer pointer, as long
+      */
+    {{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public long getNativePointer();
 }
 
 class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#isNotLinphoneFactory}}implements{{/isNotLinphoneFactory}} {{className}} {
@@ -165,6 +171,10 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
     protected {{classImplName}}(long ptr) {
         nativePtr = ptr;{{#hasCoreAccessor}}
         core = getCore();{{/hasCoreAccessor}}
+    }
+
+    public long getNativePointer() {
+        return nativePtr;
     }
 
 {{#isLinphoneFactory}}

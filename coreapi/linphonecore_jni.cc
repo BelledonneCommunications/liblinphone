@@ -1719,6 +1719,14 @@ extern "C" void Java_org_linphone_core_LinphoneCoreImpl_delete(JNIEnv* env, jobj
 	}
 }
 
+extern "C" jobject getCore(JNIEnv *env, LinphoneCore *cptr, bool_t takeref) {
+	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_core_get_user_data(cptr);
+	if (ljb) {
+		return ljb->getCore();
+	}
+	return NULL;
+}
+
 extern "C" void Java_org_linphone_core_LinphoneCoreImpl_addListener(JNIEnv* env, jobject thiz, jlong lc, jobject jlistener) {
 	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *) linphone_core_get_user_data((LinphoneCore *)lc);
 	LinphoneCoreVTable *vTable = linphone_core_v_table_new();
