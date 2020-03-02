@@ -22,18 +22,18 @@ package org.linphone.core;
 @SuppressWarnings("serial")
 public class CoreException extends Exception {
 
-	public CoreException() {
-	}
+    public CoreException() {
+    }
 
-	public CoreException(String detailMessage) {
-		super(detailMessage);
-	}
+    public CoreException(String detailMessage) {
+        super(detailMessage);
+    }
 
-	public CoreException(Throwable e) {
-		super(e);
-	}
+    public CoreException(Throwable e) {
+        super(e);
+    }
 
-	public CoreException(String detailMessage, Throwable e) {
-		super(detailMessage,e);
-	}
+    public CoreException(String detailMessage, Throwable e) {
+        super(detailMessage, e);
+    }
 }

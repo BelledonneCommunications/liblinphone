@@ -444,6 +444,18 @@ typedef void (*LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb) (LinphoneCore *l
 typedef void (*LinphoneCoreCbsQrcodeFoundCb)(LinphoneCore *lc, const char *result);
 
 /**
+ * Callback prototype telling a call has started (incoming or outgoing) while there was no other call.
+ * @param[in] lc LinphoneCore object
+ */
+typedef void (*LinphoneCoreCbsFirstCallStartedCb)(LinphoneCore *lc);
+
+/**
+ * Callback prototype telling the last call has ended (#LinphoneCore.get_calls_nb() returns 0)
+ * @param[in] lc LinphoneCore object
+ */
+typedef void (*LinphoneCoreCbsLastCallEndedCb)(LinphoneCore *lc);
+
+/**
  * @}
 **/
 
