@@ -28,7 +28,6 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
-import com.google.firebase.FirebaseApp;
 import org.linphone.core.R;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
@@ -40,8 +39,6 @@ public class FirebasePushHelper implements PushNotificationUtils.PushHelperInter
     @Override
     public void init(Context context) {
         try {
-            FirebaseApp.initializeApp(context);
-
             FirebaseInstanceId.getInstance()
                     .getInstanceId()
                     .addOnCompleteListener(

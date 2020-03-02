@@ -43,10 +43,8 @@ import org.linphone.core.tools.PushNotificationUtils;
 import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.mediastream.Version;
 
-public abstract class CoreService extends Service {
+public class CoreService extends Service {
     private static CoreService sInstance;
-
-    private boolean mIsCoreManagerOwned;
 
     public static boolean isReady() {
         return sInstance != null;
@@ -63,10 +61,8 @@ public abstract class CoreService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        mIsCoreManagerOwned = false;
         if (!CoreManager.isReady()) {
-            new CoreManager(getApplicationContext());
-            mIsCoreManagerOwned = true;
+            new CoreManager(getApplicationContext()).startFromService();
         }
 
         Log.i("[Core Service] Created");
@@ -75,24 +71,8 @@ public abstract class CoreService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        sInstance = this; // sInstance is ready once Core has been created
-        
-        boolean isPush = false;
-        if (intent != null && intent.getBooleanExtra("PushNotification", false)) {
-            Log.i("[Core Service] [Push Notification] Service started because of a push");
-            isPush = true;
-        }
-
-        if (sInstance != null) {
-            Log.w("[Core Service] Attempt to start the Service but it is already running !");
-            return START_STICKY;
-        }
         sInstance = this;
-
-        if (mIsCoreManagerOwned) {
-            CoreManager.instance().start(isPush);
-        }
-
+        
         Log.i("[Core Service] Started");
         return START_STICKY;
     }
