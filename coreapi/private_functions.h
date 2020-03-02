@@ -516,6 +516,8 @@ LinphonePayloadType *linphone_payload_type_new(LinphoneCore *lc, OrtpPayloadType
 bool_t _linphone_core_check_payload_type_usability(const LinphoneCore *lc, const OrtpPayloadType *pt);
 OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *pt);
 
+LINPHONE_PUBLIC void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid);
+char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core);
 
 const MSCryptoSuite * linphone_core_get_srtp_crypto_suites(LinphoneCore *lc);
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_key_agreement_suites(LinphoneCore *lc, MSZrtpKeyAgreement keyAgreements[MS_MAX_ZRTP_CRYPTO_TYPES]);
@@ -550,6 +552,8 @@ void linphone_core_notify_file_transfer_send(LinphoneCore *lc, LinphoneChatMessa
 void linphone_core_notify_file_transfer_progress_indication(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t total);
 void linphone_core_notify_is_composing_received(LinphoneCore *lc, LinphoneChatRoom *room);
 void linphone_core_notify_dtmf_received(LinphoneCore* lc, LinphoneCall *call, int dtmf);
+void linphone_core_notify_first_call_started(LinphoneCore *lc);
+void linphone_core_notify_last_call_ended(LinphoneCore *lc);
 /*
  * return true if at least a registered vtable has a cb for dtmf received*/
 bool_t linphone_core_dtmf_received_has_listener(const LinphoneCore* lc);
