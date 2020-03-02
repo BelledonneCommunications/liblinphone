@@ -135,13 +135,13 @@ void AuthInfo::setUsername(const string &username){
 }
 
 void AuthInfo::setAlgorithm(const string &algorithm){
-	if (!algorithm.empty() && algorithm != "MD5" && algorithm != "SHA-256"){
-		lError() << "Given algorithm is not correct. Set algorithm failed";
-	}
+    if (!algorithm.empty() && algorithm != "MD5" && algorithm != "SHA-256"){
+        lError() << "Given algorithm is not correct. Set algorithm failed";
+    }
     if( mAlgorithm != algorithm && getHa1() != ""){
         setHa1("");
     }
-	mAlgorithm = algorithm;
+    mAlgorithm = algorithm;
 }
 
 void AuthInfo::setUserid(const string &userid){
