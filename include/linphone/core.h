@@ -233,6 +233,8 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsChatRoomReadCb chat_room_read;
 	LinphoneCoreCbsChatRoomSubjectChangedCb chat_room_subject_changed;
 	LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb chat_room_ephemeral_message_deleted;
+	LinphoneCoreCbsFirstCallStartedCb first_call_started;
+	LinphoneCoreCbsLastCallEndedCb last_call_ended;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -806,6 +808,34 @@ LINPHONE_PUBLIC LinphoneCoreCbsQrcodeFoundCb linphone_core_cbs_get_qrcode_found(
  * @param[in] cb The callback to use
  **/
 LINPHONE_PUBLIC void linphone_core_cbs_set_qrcode_found(LinphoneCoreCbs *cbs, LinphoneCoreCbsQrcodeFoundCb cb);
+
+/**
+ * Gets the first call started callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsFirstCallStartedCb linphone_core_cbs_get_first_call_started(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the first call started callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ **/
+LINPHONE_PUBLIC void linphone_core_cbs_set_first_call_started(LinphoneCoreCbs *cbs, LinphoneCoreCbsFirstCallStartedCb cb);
+
+/**
+ * Gets the last call ended callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsLastCallEndedCb linphone_core_cbs_get_last_call_ended(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the last call ended callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ **/
+LINPHONE_PUBLIC void linphone_core_cbs_set_last_call_ended(LinphoneCoreCbs *cbs, LinphoneCoreCbsLastCallEndedCb cb);
 
 /**
  * @brief Sets a callback to call each time the echo-canceler calibration is completed.
@@ -6207,13 +6237,49 @@ LINPHONE_PUBLIC LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(Lin
 LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *lc, const char * xml_uri);
 
 /**
- * Call this method when you receive a push notification.
+ * Call this method when you receive a push notification (if you handle push notifications manually).
  * It will ensure the proxy configs are correctly registered to the proxy server,
  * so the call or the message will be correctly delivered.
  * @param[in] lc The #LinphoneCore
  * @ingroup misc
 **/
 LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *lc);
+
+/**
+ * Enable or disable push notifications on Android & iOS.
+ * If enabled, it will try to get the push token add configure each proxy config with push_notification_allowed
+ * set to true with push parameters.
+ * @param[in] core The #LinphoneCore
+ * @param[in] enable TRUE to enable push notifications, FALSE to disable
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable);
+
+/**
+ * Gets whether push notifications are enabled or not (Android & iOS only).
+ * @param[in] core The #LinphoneCore
+ * @return TRUE if push notifications are enabled, FALSE otherwise
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core);
+
+/**
+ * Enable or disable the automatic schedule of #linphone_core_iterate() method on Android & iOS.
+ * If enabled, #linphone_core_iterate() will be called on the main thread every 20ms automatically.
+ * If disabled, it is the application that must do this job.
+ * @param[in] core The #LinphoneCore
+ * @param[in] enable TRUE to enable auto iterate, FALSE to disable
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable);
+
+/**
+ * Gets whether auto iterate is enabled or not (Android & iOS only).
+ * @param[in] core The #LinphoneCore
+ * @return TRUE if #linphone_core_iterate() is scheduled automatically, FALSE otherwise
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core);
 
 
 #ifdef __cplusplus
