@@ -20,6 +20,10 @@ package org.linphone.core.tools.h264;
 
 import android.content.Context;
 
+import org.apache.commons.compress.compressors.bzip2.*;
+import org.linphone.core.tools.Log;
+import org.linphone.core.tools.h264.OpenH264DownloadHelperListener;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -29,10 +33,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-
-import org.apache.commons.compress.compressors.bzip2.*;
-import org.linphone.core.tools.h264.OpenH264DownloadHelperListener;
-import org.linphone.core.tools.Log;
 
 /**
  * @author Erwan Croze
@@ -48,7 +48,7 @@ public class OpenH264DownloadHelper {
     private String nameFileDownload;
     private String licenseMessage;
 
-	/**
+    /**
      * Default values
      * nameLib = "libopenh264.so"
      * urlDownload = "http://ciscobinary.openh264.org/libopenh264-1.8.0-android19.so.bz2"
@@ -63,18 +63,18 @@ public class OpenH264DownloadHelper {
         if (context.getFilesDir() != null) {
             fileDirection = context.getFilesDir().toString();
         }
-        
-        File file = new File(context.getApplicationInfo().nativeLibraryDir+"/libmsopenh264.so");
+
+        File file = new File(context.getApplicationInfo().nativeLibraryDir + "/libmsopenh264.so");
         if (!file.exists()) {
-			Log.i("LinphoneCoreFactoryImpl"," libmsopenh264 not found, we disable the download of Openh264");
-			isDownloadEnabled = false;
-		}
+            Log.i("LinphoneCoreFactoryImpl", " libmsopenh264 not found, we disable the download of Openh264");
+            isDownloadEnabled = false;
+        }
         if (isCodecFound()) {
-            Log.i("OpenH264DownloadHelper"," Loading OpenH264 downloaded plugin:" + getFullPathLib());
-			System.load(getFullPathLib());
+            Log.i("OpenH264DownloadHelper", " Loading OpenH264 downloaded plugin:" + getFullPathLib());
+            System.load(getFullPathLib());
         } else {
-			Log.i("OpenH264DownloadHelper"," Cannot load OpenH264 downloaded plugin");
-		}
+            Log.i("OpenH264DownloadHelper", " Cannot load OpenH264 downloaded plugin");
+        }
         isDownloadEnabled = true;
     }
 
@@ -86,24 +86,25 @@ public class OpenH264DownloadHelper {
         isDownloadEnabled = enabled;
     }
 
-	/**
+    /**
      * Set OpenH264DownloadHelperListener
+     *
      * @param h264Listener
      */
     public void setOpenH264HelperListener(OpenH264DownloadHelperListener h264Listener) {
         openH264DownloadHelperListener = h264Listener;
     }
 
-	/**
+    /**
      * @return OpenH264DownloadHelperListener
      */
     public OpenH264DownloadHelperListener getOpenH264DownloadHelperListener() {
         return openH264DownloadHelperListener;
     }
 
-	/**
+    /**
      * @param index of object in UserData list
-     * constraints (index superior or egal to 0 and index inferior to userData.size())
+     *              constraints (index superior or egal to 0 and index inferior to userData.size())
      * @return object if constraints are met
      */
     public Object getUserData(int index) {
@@ -111,8 +112,9 @@ public class OpenH264DownloadHelper {
         return userData.get(index);
     }
 
-	/**
+    /**
      * Adding of object into UserData list
+     *
      * @param object
      * @return index of object in UserData list
      */
@@ -121,109 +123,110 @@ public class OpenH264DownloadHelper {
         return this.userData.indexOf(object);
     }
 
-	/**
+    /**
      * @param index
-     * @param object
-     * constraints (index superior or egal to 0 and index inferior to userData.size())
+     * @param object constraints (index superior or egal to 0 and index inferior to userData.size())
      */
     public void setUserData(int index, Object object) {
         if (index < 0 || index > userData.size()) return;
-        this.userData.add(index,object);
+        this.userData.add(index, object);
     }
 
-	/**
+    /**
      * @return size of UserData list
      */
     public int getUserDataSize() {
         return this.userData.size();
     }
 
-	/**
+    /**
      * @return OpenH264 license message
      */
     public String getLicenseMessage() {
         return licenseMessage;
     }
 
-	/**
+    /**
      * Set filename to storage for OpenH264 codec
+     *
      * @param name
      */
     public void setNameLib(String name) {
         nameLib = name;
     }
 
-	/**
+    /**
      * @return filename of OpenH264 codec
      */
     public String getNameLib() {
         return nameLib;
     }
 
-	/**
+    /**
      * @return path of the lib
      */
     public String getFullPathLib() {
         return this.fileDirection + "/" + this.getNameLib();
     }
 
-	/**
+    /**
      * Set name download file
+     *
      * @param name : must be the same name relative to the url
      */
     public void setNameFileDownload(String name) {
         nameFileDownload = name;
     }
 
-	/**
+    /**
      * Set new url
+     *
      * @param url : must be a Cisco Url to OpenH264 and .bzip2 file
      */
     public void setUrlDownload(String url) {
         urlDownload = url;
     }
 
-	/**
+    /**
      * Indicates whether the lib exists
      * Requirements : fileDirection and nameLib init
+     *
      * @return file exists ?
      */
     public boolean isCodecFound() {
-        return new File(fileDirection+"/" + nameLib).exists();
+        return new File(fileDirection + "/" + nameLib).exists();
     }
 
-	/**
+    /**
      * Try to download and load codec
      * Requirements :
-     *  fileDirection
-     *  nameFileDownload
-     *  urlDownload
-     *  nameLib
-     *  codecDownListener
+     * fileDirection
+     * nameFileDownload
+     * urlDownload
+     * nameLib
+     * codecDownListener
      */
     public void downloadCodec() {
-        Thread thread = new Thread(new Runnable()
-        {
+        Thread thread = new Thread(new Runnable() {
             @Override
-            public void run()
-            {
+            public void run() {
                 try {
-                    String path = fileDirection+"/" + nameLib;
+                    String path = fileDirection + "/" + nameLib;
                     URL url = new URL(urlDownload);
-                    HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                     urlConnection.connect();
-                    Log.i("OpenH264Downloader"," ");
+                    Log.i("OpenH264Downloader", " ");
                     InputStream inputStream = urlConnection.getInputStream();
-                    FileOutputStream fileOutputStream = new FileOutputStream(fileDirection+"/"+nameFileDownload);
+                    FileOutputStream fileOutputStream = new FileOutputStream(fileDirection + "/" + nameFileDownload);
                     int totalSize = urlConnection.getContentLength();
-                    openH264DownloadHelperListener.OnProgress(0,totalSize);
+                    openH264DownloadHelperListener.OnProgress(0, totalSize);
 
-                    Log.i("OpenH264Downloader"," Download file:" + nameFileDownload);
+                    Log.i("OpenH264Downloader", " Download file:" + nameFileDownload);
 
                     byte[] buffer = new byte[4096];
                     int bufferLength;
                     int total = 0;
-                    while((bufferLength = inputStream.read(buffer))>0 ){
+                    while ((bufferLength = inputStream.read(buffer)) > 0) {
                         total += bufferLength;
                         fileOutputStream.write(buffer, 0, bufferLength);
                         openH264DownloadHelperListener.OnProgress(total, totalSize);
@@ -232,25 +235,25 @@ public class OpenH264DownloadHelper {
                     fileOutputStream.close();
                     inputStream.close();
 
-                    Log.i("OpenH264Downloader"," Uncompress file:" + nameFileDownload);
+                    Log.i("OpenH264Downloader", " Uncompress file:" + nameFileDownload);
 
-                    FileInputStream in = new FileInputStream(fileDirection+"/"+nameFileDownload);
+                    FileInputStream in = new FileInputStream(fileDirection + "/" + nameFileDownload);
                     FileOutputStream out = new FileOutputStream(path);
                     BZip2CompressorInputStream bzIn = new BZip2CompressorInputStream(in);
 
-                    while ((bufferLength = bzIn.read(buffer))>0) {
+                    while ((bufferLength = bzIn.read(buffer)) > 0) {
                         out.write(buffer, 0, bufferLength);
                     }
                     in.close();
                     out.close();
                     bzIn.close();
 
-                    Log.i("OpenH264Downloader"," Remove file:" + nameFileDownload);
-                    new File(fileDirection+"/"+nameFileDownload).delete();
+                    Log.i("OpenH264Downloader", " Remove file:" + nameFileDownload);
+                    new File(fileDirection + "/" + nameFileDownload).delete();
 
-                    Log.i("OpenH264Downloader"," Loading plugin:" + path);
+                    Log.i("OpenH264Downloader", " Loading plugin:" + path);
                     System.load(path);
-                    openH264DownloadHelperListener.OnProgress(2,1);
+                    openH264DownloadHelperListener.OnProgress(2, 1);
                 } catch (FileNotFoundException e) {
                     openH264DownloadHelperListener.OnError(e.getLocalizedMessage());
                 } catch (IOException e) {

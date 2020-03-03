@@ -19,11 +19,7 @@
 
 package org.linphone.core.tools.compatibility;
 
-import android.content.Context;
 import android.graphics.SurfaceTexture;
-import android.os.PowerManager;
-
-import org.linphone.core.tools.Log;
 
 public class DeviceUtils26 {
     public static boolean isSurfaceTextureReleased(SurfaceTexture surfaceTexture) {

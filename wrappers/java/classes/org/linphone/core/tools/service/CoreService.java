@@ -19,29 +19,11 @@
 
 package org.linphone.core.tools.service;
 
-import android.app.Activity;
-import android.app.Application;
 import android.app.Service;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 
-import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import org.linphone.core.Core;
-import org.linphone.core.CoreListenerStub;
-import org.linphone.core.Factory;
-import org.linphone.core.LogCollectionState;
 import org.linphone.core.tools.Log;
-import org.linphone.core.tools.PushNotificationUtils;
-import org.linphone.core.tools.compatibility.DeviceUtils;
-import org.linphone.mediastream.Version;
 
 public class CoreService extends Service {
     private static CoreService sInstance;
@@ -72,7 +54,7 @@ public class CoreService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
         sInstance = this;
-        
+
         Log.i("[Core Service] Started");
         return START_STICKY;
     }

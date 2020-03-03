@@ -25,7 +25,8 @@ import android.os.Looper;
 public final class AndroidDispatcher {
     private static final Handler sHandler = new Handler(Looper.getMainLooper());
 
-    private AndroidDispatcher() {}
+    private AndroidDispatcher() {
+    }
 
     public static void dispatchOnUIThread(Runnable r) {
         sHandler.post(r);
