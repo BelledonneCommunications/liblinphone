@@ -122,6 +122,17 @@ LINPHONE_PUBLIC void linphone_core_start_dtmf_stream(LinphoneCore* lc);
  */
 LINPHONE_PUBLIC void linphone_core_stop_dtmf_stream(LinphoneCore* lc);
 
+/**
+ * @ingroup IOS
+ * Special function to indicate if the audio session is activated. Must be called when ProviderDelegate of the callkit notifies that the audio session is activated or deactivated.
+ */
+LINPHONE_PUBLIC void linphone_core_audio_session_activated(LinphoneCore* lc, bool_t actived);
+
+/**
+ * @ingroup IOS
+ * Special function to indicate if the callkit is enabled, False by default.
+ */
+LINPHONE_PUBLIC void linphone_core_callkit_enabled (LinphoneCore* lc, bool_t enabled);
 
 typedef bool_t (*LinphoneCoreIterateHook)(void *data);
 

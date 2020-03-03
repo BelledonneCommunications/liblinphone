@@ -195,7 +195,7 @@ class SwiftTranslator(object):
                 if normalType == "Bool":
                     listenerDict['delegate']['params'] += argName + ": " + argName + " != 0"
                 elif type(arg.type) is AbsApi.ClassType:
-                    listenerDict['delegate']['params'] += argName + ": " + normalType + ".getSobject(cObject: " + argName + "!)"
+                    listenerDict['delegate']['params'] += argName + ": " + normalType + ".getSwiftObject(cObject: " + argName + "!)"
                 elif type(arg.type) is AbsApi.EnumType:
                     ends = "" if arg.type.desc.isFlag else "!"
                     listenerDict['delegate']['params'] += argName + ": " + referenceType + "(rawValue: Int(" + argName + ".rawValue))" + ends
@@ -578,7 +578,7 @@ if __name__ == '__main__':
 
 
     parser.classBl += 'LinphoneCoreVTable'
-    parser.methodBl.remove('getCurrentCallbacks')
+    parser.methodBl = ['ref', 'unref', 'new', 'destroy']
     parser.enum_relocations = {
         'LinphoneAccountCreatorActivationCodeStatus' : 'LinphoneAccountCreator',
         'LinphoneAccountCreatorDomainStatus'         : 'LinphoneAccountCreator',

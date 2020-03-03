@@ -140,14 +140,14 @@ open class {{interfaceName}} : LinphoneObjectDelegate
 
 		{{c_name_setter}}(cPtr, { ({{{params_private}}}) -> {{return}} in
 			if ({{first_param}} != nil) {
-				let sObject = {{interfaceClassName}}.getSobject(cObject: {{first_param}}!)
+				let sObject = {{interfaceClassName}}.getSwiftObject(cObject: {{first_param}}!)
 				let delegate = sObject.currentCallbacks
 				{{#classLists}}
 				var {{argName}}sList = [{{classType}}]()
 				var {{argName}}cList = {{argName}}
 				while ({{argName}}cList != nil) {
 					let data = unsafeBitCast({{argName}}cList!.pointee.data, to: OpaquePointer.self)
-					{{argName}}sList.append({{classType}}.getSobject(cObject: data))
+					{{argName}}sList.append({{classType}}.getSwiftObject(cObject: data))
 					{{argName}}cList = UnsafePointer<bctbx_list_t>({{argName}}cList!.pointee.next)
 				}
 				{{/classLists}}
@@ -199,7 +199,7 @@ open class {{interfaceName}} : LinphoneObjectDelegate
 {{/detailedDoc}}
 public class {{className}} : LinphoneObject
 {
-	static func getSobject(cObject:OpaquePointer) -> {{className}} {
+	static public func getSwiftObject(cObject:OpaquePointer) -> {{className}} {
 		let result = belle_sip_object_data_get(UnsafeMutablePointer(cObject), "swiftRef")
 		if (result != nil) {
 			return Unmanaged<{{className}}>.fromOpaque(result!).takeUnretainedValue()
@@ -209,6 +209,10 @@ public class {{className}} : LinphoneObject
 		belle_sip_object_data_set(UnsafeMutablePointer(cObject), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(sObject).toOpaque()), nil)
 
 		return sObject
+	}
+
+	public var getCobject: OpaquePointer? {
+		return cPtr
 	}
 
 	{{#isLinphoneCore}}
@@ -322,7 +326,7 @@ public class {{className}} : LinphoneObject
 			if (cPointer == nil) {
 				return nil
 			}
-			return {{{return}}}.getSobject(cObject:cPointer!){{/Instance}}{{#Instance}}return {{{return}}}.getSobject(cObject:{{getter_c_name}}({{cPtr}})){{/Instance}}
+			return {{{return}}}.getSwiftObject(cObject:cPointer!){{/Instance}}{{#Instance}}return {{{return}}}.getSwiftObject(cObject:{{getter_c_name}}({{cPtr}})){{/Instance}}
 			{{/is_class}}
 			{{#is_enum}}
 			return {{{return}}}(rawValue: Int({{getter_c_name}}({{cPtr}}).rawValue)){{^isFlag}}!{{/isFlag}}
@@ -347,7 +351,7 @@ public class {{className}} : LinphoneObject
 			var cList = {{getter_c_name}}({{cPtr}})
 			while (cList != nil) {
 				let data = unsafeBitCast(cList?.pointee.data, to: OpaquePointer.self)
-				swiftList.append({{{list_type}}}.getSobject(cObject: data))
+				swiftList.append({{{list_type}}}.getSwiftObject(cObject: data))
 				cList = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(cList?.pointee.next)
 			}
 			return swiftList
@@ -493,7 +497,7 @@ public class {{className}} : LinphoneObject
 		{{#return}}if (cPointer == nil) {
 			{{#create_method}}throw LinphoneError.exception(result: "create null {{type}} value"){{/create_method}}{{^create_method}}return nil{{/create_method}}
 		}{{/return}}
-		{{return}}{{{type}}}.getSobject(cObject: cPointer!)
+		{{return}}{{{type}}}.getSwiftObject(cObject: cPointer!)
 		{{/is_class}}
 		{{#is_enum}}
 		{{#exception}}let exception_result = {{/exception}}{{#return}}{{return}}{{{type}}}(rawValue: Int({{/return}}{{c_name}}({{cPtr}}{{{c_args}}}){{#return}}.rawValue))!{{/return}}
@@ -533,7 +537,7 @@ public class {{className}} : LinphoneObject
 		var cList = {{c_name}}({{cPtr}}{{{c_args}}})
 		while (cList != nil) {
 			let data = unsafeBitCast(cList?.pointee.data, to: OpaquePointer.self)
-			swiftList.append({{{list_type}}}.getSobject(cObject: data))
+			swiftList.append({{{list_type}}}.getSwiftObject(cObject: data))
 			cList = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(cList?.pointee.next)
 		}
 		return swiftList
