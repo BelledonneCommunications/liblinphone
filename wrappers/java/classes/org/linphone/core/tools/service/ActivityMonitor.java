@@ -22,8 +22,10 @@ package org.linphone.core.tools.service;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
-import java.util.ArrayList;
+
 import org.linphone.core.tools.Log;
+
+import java.util.ArrayList;
 
 /**
  * Believe me or not, but knowing the application visibility state on Android is a nightmare. After
@@ -118,7 +120,8 @@ public class ActivityMonitor implements Application.ActivityLifecycleCallbacks {
     }
 
     @Override
-    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {}
+    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+    }
 
     class InactivityChecker implements Runnable {
         private boolean isCanceled;

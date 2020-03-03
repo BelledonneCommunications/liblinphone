@@ -20,8 +20,10 @@
 package org.linphone.core.tools;
 
 import android.content.Context;
-import java.lang.reflect.Constructor;
+
 import org.linphone.core.tools.Log;
+
+import java.lang.reflect.Constructor;
 
 public class PushNotificationUtils {
     private static PushHelperInterface mHelper;

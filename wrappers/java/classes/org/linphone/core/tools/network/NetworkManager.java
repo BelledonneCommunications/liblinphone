@@ -26,17 +26,18 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
-import java.util.ArrayList;
 
 import org.linphone.core.tools.AndroidPlatformHelper;
 import org.linphone.core.tools.Log;
+
+import java.util.ArrayList;
 
 /**
  * Intercept network state changes and update linphone core.
  */
 public class NetworkManager extends BroadcastReceiver implements NetworkManagerInterface {
     private AndroidPlatformHelper mHelper;
-	private IntentFilter mNetworkIntentFilter;
+    private IntentFilter mNetworkIntentFilter;
     private ConnectivityManager mConnectivityManager;
     private boolean mWifiOnly;
 
@@ -55,17 +56,17 @@ public class NetworkManager extends BroadcastReceiver implements NetworkManagerI
     }
 
     public void setWifiOnly(boolean isWifiOnlyEnabled) {
-		mWifiOnly = isWifiOnlyEnabled;
-	}
+        mWifiOnly = isWifiOnlyEnabled;
+    }
 
-	public void registerNetworkCallbacks(Context context) {
-		mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+    public void registerNetworkCallbacks(Context context) {
+        mNetworkIntentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         context.registerReceiver(this, mNetworkIntentFilter);
-	}
+    }
 
-	public void unregisterNetworkCallbacks(Context context) {
+    public void unregisterNetworkCallbacks(Context context) {
         context.unregisterReceiver(this);
-	}
+    }
 
     public NetworkInfo getActiveNetworkInfo() {
         return mConnectivityManager.getActiveNetworkInfo();
@@ -77,17 +78,17 @@ public class NetworkManager extends BroadcastReceiver implements NetworkManagerI
 
     public boolean isCurrentlyConnected(Context context) {
         NetworkInfo[] networkInfos = mConnectivityManager.getAllNetworkInfo();
-		boolean connected = false;
+        boolean connected = false;
         for (NetworkInfo networkInfo : networkInfos) {
             Log.i("[Platform Helper] [Network Manager] Found network type: " + networkInfo.getTypeName() + ", isConnectedOrConnecting() = " + networkInfo.isConnectedOrConnecting());
-			if (networkInfo.isConnectedOrConnecting()) {
-				Log.i("[Platform Helper] [Network Manager] Network state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
-				if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && mWifiOnly) {
-					Log.i("[Platform Helper] [Network Manager] Wifi only mode enabled, skipping");
-				} else {
-					return true;
-				}
-			}
+            if (networkInfo.isConnectedOrConnecting()) {
+                Log.i("[Platform Helper] [Network Manager] Network state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
+                if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && mWifiOnly) {
+                    Log.i("[Platform Helper] [Network Manager] Wifi only mode enabled, skipping");
+                } else {
+                    return true;
+                }
+            }
         }
         return connected;
     }
@@ -104,8 +105,8 @@ public class NetworkManager extends BroadcastReceiver implements NetworkManagerI
         return 0;
     }
 
-	public void updateDnsServers() {
-		ArrayList<String> dnsServers = new ArrayList<>();
-		mHelper.updateDnsServers(dnsServers);
-	}
+    public void updateDnsServers() {
+        ArrayList<String> dnsServers = new ArrayList<>();
+        mHelper.updateDnsServers(dnsServers);
+    }
 }

@@ -19,32 +19,23 @@
 
 package org.linphone.core.tools.service;
 
-import android.app.Activity;
 import android.app.Application;
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
-import android.os.Bundle;
-import android.os.IBinder;
 
 import com.google.firebase.FirebaseApp;
 
-import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import org.linphone.core.Call;
 import org.linphone.core.Core;
 import org.linphone.core.CoreListenerStub;
 import org.linphone.core.Factory;
 import org.linphone.core.LogCollectionState;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
-import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.mediastream.Version;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class CoreManager {
     private static CoreManager sInstance;
@@ -88,11 +79,12 @@ public class CoreManager {
 
         sInstance = this;
         Log.i("[Core Manager] Ready");
-        
+
         mActivityCallbacks = new ActivityMonitor();
         ((Application) mContext).registerActivityLifecycleCallbacks(mActivityCallbacks);
 
-        mListener = new CoreListenerStub() {};
+        mListener = new CoreListenerStub() {
+        };
 
         FirebaseApp.initializeApp(mContext);
         PushNotificationUtils.init(mContext);
@@ -128,21 +120,21 @@ public class CoreManager {
         mCore.start();
 
         mIterateRunnable =
-            new Runnable() {
-                @Override
-                public void run() {
-                    if (mCore != null) {
-                        mCore.iterate();
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mCore != null) {
+                            mCore.iterate();
+                        }
                     }
-                }
-            };
+                };
         TimerTask lTask =
-            new TimerTask() {
-                @Override
-                public void run() {
-                    AndroidDispatcher.dispatchOnUIThread(mIterateRunnable);
-                }
-            };
+                new TimerTask() {
+                    @Override
+                    public void run() {
+                        AndroidDispatcher.dispatchOnUIThread(mIterateRunnable);
+                    }
+                };
 
         /*use schedule instead of scheduleAtFixedRate to avoid iterate from being call in burst after cpu wake up*/
         mTimer = new Timer("Linphone scheduler");
@@ -187,7 +179,7 @@ public class CoreManager {
         Log.i("MODEL=" + Build.MODEL);
         Log.i("MANUFACTURER=" + Build.MANUFACTURER);
         Log.i("ANDROID SDK=" + Build.VERSION.SDK_INT);
-        
+
         StringBuilder sb = new StringBuilder();
         sb.append("ABIs=");
         for (String abi : Version.getCpuAbis()) {

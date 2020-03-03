@@ -20,14 +20,13 @@
 package org.linphone.core.tools.network;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 
 public interface NetworkManagerInterface {
     void registerNetworkCallbacks(Context context);
 
-	void unregisterNetworkCallbacks(Context context);
+    void unregisterNetworkCallbacks(Context context);
 
     boolean isCurrentlyConnected(Context context);
 

@@ -20,157 +20,156 @@
 package org.linphone.core.tools.network;
 
 import android.content.Context;
-import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.LinkProperties;
 import android.net.Network;
-import android.net.NetworkInfo;
 import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.RouteInfo;
-import android.os.Build;
-import java.net.InetAddress;
-import java.util.List;
-import java.util.ArrayList;
 
 import org.linphone.core.tools.AndroidPlatformHelper;
 import org.linphone.core.tools.Log;
+
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Intercept network state changes and update linphone core.
  */
 public class NetworkManagerAbove21 implements NetworkManagerInterface {
-	private AndroidPlatformHelper mHelper;
-	private ConnectivityManager mConnectivityManager;
-	private ConnectivityManager.NetworkCallback mNetworkCallback;
-	private Network mNetworkAvailable;
+    private AndroidPlatformHelper mHelper;
+    private ConnectivityManager mConnectivityManager;
+    private ConnectivityManager.NetworkCallback mNetworkCallback;
+    private Network mNetworkAvailable;
     private boolean mWifiOnly;
 
-	public NetworkManagerAbove21(final AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly) {
-		mHelper = helper;
-		mConnectivityManager = cm;
-		mWifiOnly = wifiOnly;
-		mNetworkAvailable = null;
-		mNetworkCallback = new ConnectivityManager.NetworkCallback() {
-			@Override
-			public void onAvailable(final Network network) {
-				mHelper.getHandler().post(new Runnable() {
-					@Override
-					public void run() {
-						NetworkInfo info = mConnectivityManager.getNetworkInfo(network);
-						if (info == null) {
-							Log.e("[Platform Helper] [Network Manager 21] A network should be available but getNetworkInfo failed.");
-							return;
-						}
+    public NetworkManagerAbove21(final AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly) {
+        mHelper = helper;
+        mConnectivityManager = cm;
+        mWifiOnly = wifiOnly;
+        mNetworkAvailable = null;
+        mNetworkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(final Network network) {
+                mHelper.getHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        NetworkInfo info = mConnectivityManager.getNetworkInfo(network);
+                        if (info == null) {
+                            Log.e("[Platform Helper] [Network Manager 21] A network should be available but getNetworkInfo failed.");
+                            return;
+                        }
 
-						Log.i("[Platform Helper] [Network Manager 21] A network is available: " + info.getTypeName() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
-						if (!mWifiOnly || info.getType() == ConnectivityManager.TYPE_WIFI) {
-							mNetworkAvailable = network;
-							mHelper.updateNetworkReachability();
-						} else {
-							Log.i("[Platform Helper] [Network Manager 21] Network isn't wifi and wifi only mode is enabled");
-						}
-					}
-				});
-			}
+                        Log.i("[Platform Helper] [Network Manager 21] A network is available: " + info.getTypeName() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
+                        if (!mWifiOnly || info.getType() == ConnectivityManager.TYPE_WIFI) {
+                            mNetworkAvailable = network;
+                            mHelper.updateNetworkReachability();
+                        } else {
+                            Log.i("[Platform Helper] [Network Manager 21] Network isn't wifi and wifi only mode is enabled");
+                        }
+                    }
+                });
+            }
 
-			@Override
-			public void onLost(final Network network) {
-				mHelper.getHandler().post(new Runnable() {
-					@Override
-					public void run() {
-						Log.i("[Platform Helper] [Network Manager 21] A network has been lost");
-						if (mNetworkAvailable != null && mNetworkAvailable.equals(network)) {
-							mNetworkAvailable = null;
-						}
-						mHelper.updateNetworkReachability();
-					}
-				});
-			}
+            @Override
+            public void onLost(final Network network) {
+                mHelper.getHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i("[Platform Helper] [Network Manager 21] A network has been lost");
+                        if (mNetworkAvailable != null && mNetworkAvailable.equals(network)) {
+                            mNetworkAvailable = null;
+                        }
+                        mHelper.updateNetworkReachability();
+                    }
+                });
+            }
 
-			@Override
-			public void onCapabilitiesChanged(final Network network, final NetworkCapabilities networkCapabilities) {
-				mHelper.getHandler().post(new Runnable() {
-					@Override
-					public void run() {
-						if (networkCapabilities == null) {
-							Log.e("[Platform Helper] [Network Manager 21] onCapabilitiesChanged called with null networkCapabilities, skipping...");
-							return;
-						}
-						if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-							// This callback can be called very often when on WIFI (for example on signal strenght change), so don't log it each time and no need to update network reachability
-							Log.d("[Platform Helper] [Network Manager 21] onCapabilitiesChanged " + networkCapabilities.toString());
-						} else {
-							Log.i("[Platform Helper] [Network Manager 21] onCapabilitiesChanged " + networkCapabilities.toString());
-							mHelper.updateNetworkReachability();
-						}
-					}
-				});
-			}
+            @Override
+            public void onCapabilitiesChanged(final Network network, final NetworkCapabilities networkCapabilities) {
+                mHelper.getHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (networkCapabilities == null) {
+                            Log.e("[Platform Helper] [Network Manager 21] onCapabilitiesChanged called with null networkCapabilities, skipping...");
+                            return;
+                        }
+                        if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                            // This callback can be called very often when on WIFI (for example on signal strenght change), so don't log it each time and no need to update network reachability
+                            Log.d("[Platform Helper] [Network Manager 21] onCapabilitiesChanged " + networkCapabilities.toString());
+                        } else {
+                            Log.i("[Platform Helper] [Network Manager 21] onCapabilitiesChanged " + networkCapabilities.toString());
+                            mHelper.updateNetworkReachability();
+                        }
+                    }
+                });
+            }
 
-			@Override
-			public void onLinkPropertiesChanged(final Network network, final LinkProperties linkProperties) {
-				mHelper.getHandler().post(new Runnable() {
-					@Override
-					public void run() {
-						if (linkProperties == null) {
-							Log.e("[Platform Helper] [Network Manager 21] onLinkPropertiesChanged called with null linkProperties, skipping...");
-							return;
-						}
-						Log.i("[Platform Helper] [Network Manager 21] onLinkPropertiesChanged " + linkProperties.toString());
-						updateDnsServers();
-					}
-				});
-			}
+            @Override
+            public void onLinkPropertiesChanged(final Network network, final LinkProperties linkProperties) {
+                mHelper.getHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (linkProperties == null) {
+                            Log.e("[Platform Helper] [Network Manager 21] onLinkPropertiesChanged called with null linkProperties, skipping...");
+                            return;
+                        }
+                        Log.i("[Platform Helper] [Network Manager 21] onLinkPropertiesChanged " + linkProperties.toString());
+                        updateDnsServers();
+                    }
+                });
+            }
 
-			@Override
-			public void onLosing(final Network network, final int maxMsToLive) {
-				mHelper.getHandler().post(new Runnable() {
-					@Override
-					public void run() {
-						Log.i("[Platform Helper] [Network Manager 21] onLosing");
-					}
-				});
-			}
+            @Override
+            public void onLosing(final Network network, final int maxMsToLive) {
+                mHelper.getHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i("[Platform Helper] [Network Manager 21] onLosing");
+                    }
+                });
+            }
 
-			@Override
-			public void onUnavailable() {
-				mHelper.getHandler().post(new Runnable() {
-					@Override
-					public void run() {
-						Log.i("[Platform Helper] [Network Manager 21] onUnavailable");
-					}
-				});
-			}
-		};
-	}
+            @Override
+            public void onUnavailable() {
+                mHelper.getHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i("[Platform Helper] [Network Manager 21] onUnavailable");
+                    }
+                });
+            }
+        };
+    }
 
     public void setWifiOnly(boolean isWifiOnlyEnabled) {
-		mWifiOnly = isWifiOnlyEnabled;
-		if (mWifiOnly && mNetworkAvailable != null) {
-			NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(mNetworkAvailable);
-			if (networkInfo != null && networkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
-				Log.i("[Platform Helper] [Network Manager 21] Wifi only mode enabled and current network isn't wifi");
-				mNetworkAvailable = null;
-			}
-		}
-	}
+        mWifiOnly = isWifiOnlyEnabled;
+        if (mWifiOnly && mNetworkAvailable != null) {
+            NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(mNetworkAvailable);
+            if (networkInfo != null && networkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
+                Log.i("[Platform Helper] [Network Manager 21] Wifi only mode enabled and current network isn't wifi");
+                mNetworkAvailable = null;
+            }
+        }
+    }
 
-	public void registerNetworkCallbacks(Context context) {
-		mConnectivityManager.registerNetworkCallback(
-			new NetworkRequest.Builder().build(),
-			mNetworkCallback
-		);
-	}
+    public void registerNetworkCallbacks(Context context) {
+        mConnectivityManager.registerNetworkCallback(
+                new NetworkRequest.Builder().build(),
+                mNetworkCallback
+        );
+    }
 
-	public void unregisterNetworkCallbacks(Context context) {
-		mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
-	}
+    public void unregisterNetworkCallbacks(Context context) {
+        mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+    }
 
     public NetworkInfo getActiveNetworkInfo() {
         if (mNetworkAvailable != null) {
-			return mConnectivityManager.getNetworkInfo(mNetworkAvailable);
-		}
+            return mConnectivityManager.getNetworkInfo(mNetworkAvailable);
+        }
 
         return mConnectivityManager.getActiveNetworkInfo();
     }
@@ -180,7 +179,7 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
     }
 
     public boolean isCurrentlyConnected(Context context) {
-		return mNetworkAvailable != null;
+        return mNetworkAvailable != null;
     }
 
     public boolean hasHttpProxy(Context context) {
@@ -195,54 +194,54 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
         return 0;
     }
 
-	private boolean hasLinkPropertiesDefaultRoute(LinkProperties linkProperties) {
-		if (linkProperties != null) {
-			for (RouteInfo route : linkProperties.getRoutes()) {
-				if (route.isDefaultRoute()) {
-					return true;
-				}
-			}
-		}
+    private boolean hasLinkPropertiesDefaultRoute(LinkProperties linkProperties) {
+        if (linkProperties != null) {
+            for (RouteInfo route : linkProperties.getRoutes()) {
+                if (route.isDefaultRoute()) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
-	public void updateDnsServers() {
-		ArrayList<String> dnsServers = new ArrayList<>();
-		ArrayList<String> activeNetworkDnsServers = new ArrayList<>();
+    public void updateDnsServers() {
+        ArrayList<String> dnsServers = new ArrayList<>();
+        ArrayList<String> activeNetworkDnsServers = new ArrayList<>();
 
-		if (mConnectivityManager != null) {
-			NetworkInfo activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
-			for (Network network : mConnectivityManager.getAllNetworks()) {
- 				NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(network);
-				if (networkInfo != null && networkInfo.isConnected()) {
-					LinkProperties linkProperties = mConnectivityManager.getLinkProperties(network);
-					if (linkProperties != null) {
-						List<InetAddress> dnsServersList = linkProperties.getDnsServers();
-						boolean prioritary = hasLinkPropertiesDefaultRoute(linkProperties);
-						for (InetAddress dnsServer : dnsServersList) {
-							String dnsHost = dnsServer.getHostAddress();
-							if (!dnsServers.contains(dnsHost) && !activeNetworkDnsServers.contains(dnsHost)) {
-								String networkType = networkInfo.getTypeName();
-								if (networkInfo.equals(activeNetworkInfo)) {
-									Log.i("[Platform Helper] [Network Manager 21] Found DNS host " + dnsHost + " from active network " + networkType);
-									activeNetworkDnsServers.add(dnsHost);
-								} else {
-									if (prioritary) {
-										Log.i("[Platform Helper] [Network Manager 21] Found DNS host " + dnsHost + " from network " + networkType + " with default route");
-										dnsServers.add(0, dnsHost);
-									} else {
-										Log.i("[Platform Helper] [Network Manager 21] Found DNS host " + dnsHost + " from network " + networkType);
-										dnsServers.add(dnsHost);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+        if (mConnectivityManager != null) {
+            NetworkInfo activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
+            for (Network network : mConnectivityManager.getAllNetworks()) {
+                NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(network);
+                if (networkInfo != null && networkInfo.isConnected()) {
+                    LinkProperties linkProperties = mConnectivityManager.getLinkProperties(network);
+                    if (linkProperties != null) {
+                        List<InetAddress> dnsServersList = linkProperties.getDnsServers();
+                        boolean prioritary = hasLinkPropertiesDefaultRoute(linkProperties);
+                        for (InetAddress dnsServer : dnsServersList) {
+                            String dnsHost = dnsServer.getHostAddress();
+                            if (!dnsServers.contains(dnsHost) && !activeNetworkDnsServers.contains(dnsHost)) {
+                                String networkType = networkInfo.getTypeName();
+                                if (networkInfo.equals(activeNetworkInfo)) {
+                                    Log.i("[Platform Helper] [Network Manager 21] Found DNS host " + dnsHost + " from active network " + networkType);
+                                    activeNetworkDnsServers.add(dnsHost);
+                                } else {
+                                    if (prioritary) {
+                                        Log.i("[Platform Helper] [Network Manager 21] Found DNS host " + dnsHost + " from network " + networkType + " with default route");
+                                        dnsServers.add(0, dnsHost);
+                                    } else {
+                                        Log.i("[Platform Helper] [Network Manager 21] Found DNS host " + dnsHost + " from network " + networkType);
+                                        dnsServers.add(dnsHost);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-		activeNetworkDnsServers.addAll(dnsServers);
-		mHelper.updateDnsServers(activeNetworkDnsServers);
-	}
+        activeNetworkDnsServers.addAll(dnsServers);
+        mHelper.updateDnsServers(activeNetworkDnsServers);
+    }
 }

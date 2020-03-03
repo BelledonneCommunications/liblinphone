@@ -21,12 +21,14 @@ package org.linphone.core.tools.firebase;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
 import org.linphone.core.Core;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.service.CoreManager;
 
 public class FirebaseMessaging extends FirebaseMessagingService {
-    public FirebaseMessaging() {}
+    public FirebaseMessaging() {
+    }
 
     @Override
     public void onNewToken(final String token) {
@@ -37,7 +39,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         android.util.Log.i("FirebaseMessaging", "[Push Notification] Received");
-        
+
         if (!CoreManager.isReady()) {
             android.util.Log.i("FirebaseMessaging", "[Push Notification] Starting Core Manager");
             new CoreManager(getApplicationContext());

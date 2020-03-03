@@ -20,21 +20,24 @@
 package org.linphone.core.tools.firebase;
 
 import android.content.Context;
+
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
-import org.linphone.core.R;
+
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
 
 @Keep
 public class FirebasePushHelper implements PushNotificationUtils.PushHelperInterface {
-    public FirebasePushHelper() {}
+    public FirebasePushHelper() {
+    }
 
     @Override
     public void init(Context context) {

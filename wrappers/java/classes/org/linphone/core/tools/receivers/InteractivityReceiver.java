@@ -48,7 +48,7 @@ import org.linphone.core.tools.Log;
  * Purpose of this receiver is to disable keep alives when screen is off
  * */
 public class InteractivityReceiver extends BroadcastReceiver {
-	private AndroidPlatformHelper mHelper;
+    private AndroidPlatformHelper mHelper;
 
     public InteractivityReceiver(final AndroidPlatformHelper helper) {
         mHelper = helper;

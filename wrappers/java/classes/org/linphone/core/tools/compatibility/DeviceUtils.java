@@ -21,6 +21,7 @@ package org.linphone.core.tools.compatibility;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
+
 import org.linphone.mediastream.Version;
 
 public class DeviceUtils {
