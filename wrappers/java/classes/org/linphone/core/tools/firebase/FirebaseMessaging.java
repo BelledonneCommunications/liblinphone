@@ -33,7 +33,9 @@ public class FirebaseMessaging extends FirebaseMessagingService {
     @Override
     public void onNewToken(final String token) {
         android.util.Log.i("FirebaseIdService", "[Push Notification] Refreshed token: " + token);
-        // TODO
+        if (CoreManager.isReady()) {
+            CoreManager.instance().setPushToken(token);
+        }
     }
 
     @Override
