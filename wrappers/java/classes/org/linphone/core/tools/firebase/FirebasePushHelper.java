@@ -33,6 +33,7 @@ import com.google.firebase.iid.InstanceIdResult;
 
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
+import org.linphone.core.tools.service.CoreManager;
 
 @Keep
 public class FirebasePushHelper implements PushNotificationUtils.PushHelperInterface {
@@ -55,7 +56,9 @@ public class FirebasePushHelper implements PushNotificationUtils.PushHelperInter
                                         return;
                                     }
                                     String token = task.getResult().getToken();
-                                    Log.i("[Push Notification] firebase token is: " + token);
+                                    if (CoreManager.isReady()) {
+                                        CoreManager.instance().setPushToken(token);
+                                    }
                                 }
                             });
         } catch (Exception e) {
