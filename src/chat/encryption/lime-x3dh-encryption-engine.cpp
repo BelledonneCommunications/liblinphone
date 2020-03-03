@@ -499,6 +499,9 @@ int LimeX3dhEncryptionEngine::downloadingFile (
 			} else {
 				return ret;
 			}
+		} else {
+			lWarning()<<"download encrypted file : no authentication Tag";
+			return 0;
 		}
 	}
 
@@ -509,8 +512,6 @@ int LimeX3dhEncryptionEngine::downloadingFile (
 		(char *)decrypted_buffer,
 		(char *)buffer
 	);
-
-	return 0;
 }
 
 int LimeX3dhEncryptionEngine::uploadingFile (
