@@ -132,7 +132,7 @@ LINPHONE_PUBLIC void linphone_core_audio_session_activated(LinphoneCore* lc, boo
  * @ingroup IOS
  * Special function to indicate if the callkit is enabled, False by default.
  */
-void linphone_core_callkit_enabled (LinphoneCore* lc, bool_t enabled);
+LINPHONE_PUBLIC void linphone_core_callkit_enabled (LinphoneCore* lc, bool_t enabled);
 
 typedef bool_t (*LinphoneCoreIterateHook)(void *data);
 
