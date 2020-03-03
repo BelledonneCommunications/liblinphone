@@ -26,6 +26,7 @@ import android.os.Build;
 
 import com.google.firebase.FirebaseApp;
 
+import org.linphone.core.Call;
 import org.linphone.core.Core;
 import org.linphone.core.CoreListenerStub;
 import org.linphone.core.Factory;
@@ -85,6 +86,23 @@ public class CoreManager {
         ((Application) mContext).registerActivityLifecycleCallbacks(mActivityCallbacks);
 
         mListener = new CoreListenerStub() {
+            @Override
+            public void onCallStateChanged(Core core, Call call, Call.State state, String message) {
+                if (state == Call.State.IncomingReceived || state == Call.State.IncomingEarlyMedia || state == Call.State.OutgoingInit) {
+                    if (core.getCallsNb() == 1) {
+                        // There is only one call, service shouldn't be in foreground mode yet
+                        if (CoreService.isReady() && !CoreService.instance().isInForegroundMode()) {
+                            CoreService.instance().startForeground();
+                        }
+                    }
+                } else if (state == Call.State.End || state == Call.State.Released || state == Call.State.Error) {
+                    if (core.getCallsNb() == 0) {
+                        if (CoreService.isReady() && CoreService.instance().isInForegroundMode()) {
+                            CoreService.instance().stopForeground();
+                        }
+                    }
+                }
+            }
         };
 
         FirebaseApp.initializeApp(mContext);

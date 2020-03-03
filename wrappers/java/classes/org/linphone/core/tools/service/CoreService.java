@@ -19,6 +19,7 @@
 
 package org.linphone.core.tools.service;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -27,6 +28,10 @@ import org.linphone.core.tools.Log;
 
 public class CoreService extends Service {
     private static CoreService sInstance;
+
+    private int mForegroundNotificationId = -1;
+    private Notification mForegroundNotification = null;
+    private boolean mIsInForegroundMode = false;
 
     public static boolean isReady() {
         return sInstance != null;
@@ -38,7 +43,6 @@ public class CoreService extends Service {
         throw new RuntimeException("CoreService not instantiated yet");
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void onCreate() {
         super.onCreate();
@@ -80,5 +84,36 @@ public class CoreService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    /* Foreground notification related */
+
+    public void configureForegroundNotification(int id, Notification notification) {
+        mForegroundNotificationId = id;
+        mForegroundNotification = notification;
+    }
+
+    public void startForeground() {
+        if (mForegroundNotificationId == -1 || mForegroundNotification == null) {
+            Log.e("[Core Service] Foreground notification hasn't been configured yet, can't set Service in foreground mode");
+            return;
+        }
+
+        startForeground(mForegroundNotificationId, mForegroundNotification);
+        mIsInForegroundMode = true;
+    }
+
+    public void stopForeground() {
+        if (!mIsInForegroundMode) {
+            Log.w("[Core Service] Service isn't in foreground mode, nothing to do");
+            return;
+        }
+
+        stopForeground(true);
+        mIsInForegroundMode = false;
+    }
+
+    public boolean isInForegroundMode() {
+        return mIsInForegroundMode;
     }
 }
