@@ -19,8 +19,15 @@
  */
 package org.linphone.core.tools.firebase;
 
+import android.content.Intent;
+import android.content.ComponentName;
+import android.content.pm.ResolveInfo;
+import android.content.pm.PackageManager;
+
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
+import java.util.List;
 
 import org.linphone.core.Core;
 import org.linphone.core.tools.Log;
@@ -58,6 +65,21 @@ public class FirebaseMessaging extends FirebaseMessagingService {
     }
 
     private void notifyAppPushReceivedWithoutCoreAvailable() {
-        // TODO
+        Intent intent = new Intent();
+        intent.setAction("org.linphone.core.action.PUSH_RECEIVED");
+
+        PackageManager pm = getPackageManager();
+        List<ResolveInfo> matches = pm.queryBroadcastReceivers(intent, 0);
+
+        for (ResolveInfo resolveInfo : matches) {
+            String packageName = resolveInfo.activityInfo.applicationInfo.packageName;
+            if (packageName.equals(getPackageName())) {
+                Intent explicit = new Intent(intent);
+                ComponentName cn = new ComponentName(packageName, resolveInfo.activityInfo.name);
+                explicit.setComponent(cn);
+                sendBroadcast(explicit);
+                break;
+            }
+        }
     }
 }
