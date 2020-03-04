@@ -39,6 +39,7 @@ import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
 import org.linphone.mediastream.Version;
 
+import java.lang.IllegalStateException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -128,10 +129,18 @@ public class CoreManager {
 
         String serviceName = getServiceClassName();
         if (serviceName != null) {
-            Log.i("[Core Manager] Starting service");
             Intent intent = new Intent(Intent.ACTION_MAIN);
             intent.setClassName(mContext, serviceName);
-            mContext.startService(intent);
+
+            try {
+                mContext.startService(intent);
+                Log.i("[Core Manager] Starting service");
+            } catch (IllegalStateException ise) {
+                Log.w("[Core Manager] Failed to start service: ", ise);
+                // On Android > 8, if app in background, startService will trigger an IllegalStateException when called from background
+                // If not whitelisted temporary by the system like after a push, so assume background
+                mCore.enterBackground();
+            }
         }
     }
 
