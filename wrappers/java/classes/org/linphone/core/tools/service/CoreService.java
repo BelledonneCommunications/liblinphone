@@ -95,6 +95,7 @@ public abstract class CoreService extends Service {
             return;
         }
 
+        Log.i("[Core Service] Starting service as foreground");
         startForeground(foregroundNotificationId, foregroundNotification);
         mIsInForegroundMode = true;
     }
@@ -105,6 +106,7 @@ public abstract class CoreService extends Service {
             return;
         }
 
+        Log.i("[Core Service] Stopping service as foreground");
         stopForeground(true);
         mIsInForegroundMode = false;
     }
