@@ -106,7 +106,7 @@ public class AndroidPlatformHelper {
 
     public AndroidPlatformHelper(long nativePtr, Object ctx_obj, boolean wifiOnly) {
         mNativePtr = nativePtr;
-        mContext = (Context) ctx_obj;
+        mContext = ((Context) ctx_obj).getApplicationContext();
         mWifiOnly = wifiOnly;
         mDnsServers = null;
         mResources = mContext.getResources();
