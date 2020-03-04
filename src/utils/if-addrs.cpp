@@ -60,6 +60,10 @@ list<string> IfAddrs::fetchWithGetIfAddrs(){
 						}
 					break;
 					case AF_INET6:
+						if (IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6*)saddr)->sin6_addr)){
+							// Skip link local addresses for now, they are painful to manage with ICE.
+							continue;
+						}
 						if (inet_ntop(AF_INET6, &((struct sockaddr_in6*)saddr)->sin6_addr, addr, sizeof(addr)) != nullptr){
 							ret.push_back(addr);
 						}else{
