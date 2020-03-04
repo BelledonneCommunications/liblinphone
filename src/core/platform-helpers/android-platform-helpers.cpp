@@ -126,8 +126,10 @@ extern "C" jobject getCore(JNIEnv *env, LinphoneCore *cptr, bool_t takeref);
 void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) {
 	JNIEnv *env = ms_get_jni_env();
 	jclass klass = env->FindClass("org/linphone/core/tools/service/CoreManager");
-	if (!klass)
-		lFatal() << "Could not find java CoreManager class.";
+	if (!klass) {
+		lError() << "Could not find java CoreManager class.";
+		return;
+	}
 
 	jmethodID ctor = env->GetMethodID(klass, "<init>", "(Ljava/lang/Object;Lorg/linphone/core/Core;)V");
 	LinphoneCore *lc = L_GET_C_BACK_PTR(core);
@@ -149,8 +151,8 @@ void AndroidPlatformHelpers::destroyCoreManager () {
 		JNIEnv *env = ms_get_jni_env();
 		env->DeleteGlobalRef(mJavaCoreManager);
 		mJavaCoreManager = nullptr;
+		lInfo() << "AndroidCoreManager has been destroyed.";
 	}
-	lInfo() << "AndroidCoreManager has been destroyed.";
 }
 
 // -----------------------------------------------------------------------------
