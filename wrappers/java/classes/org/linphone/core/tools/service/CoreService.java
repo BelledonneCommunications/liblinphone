@@ -88,20 +88,12 @@ public abstract class CoreService extends Service {
 
     /* Foreground notification related */
 
-    public abstract Notification getForegroundServiceNotification();
-    public abstract int getForegroundServiceNotificationId();
+    public abstract void showForegroundServiceNotification();
+    public abstract void hideForegroundServiceNotification();
 
     public void startForeground() {
-        int foregroundNotificationId = getForegroundServiceNotificationId();
-        Notification foregroundNotification = getForegroundServiceNotification();
-
-        if (foregroundNotificationId == -1 || foregroundNotification == null) {
-            Log.e("[Core Service] Foreground notification hasn't been configured yet, can't set Service in foreground mode");
-            return;
-        }
-
         Log.i("[Core Service] Starting service as foreground");
-        startForeground(foregroundNotificationId, foregroundNotification);
+        showForegroundServiceNotification();
         mIsInForegroundMode = true;
     }
 
@@ -112,7 +104,7 @@ public abstract class CoreService extends Service {
         }
 
         Log.i("[Core Service] Stopping service as foreground");
-        stopForeground(true);
+        hideForegroundServiceNotification();
         mIsInForegroundMode = false;
     }
 
