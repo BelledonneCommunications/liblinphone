@@ -26,11 +26,9 @@ import android.os.IBinder;
 
 import org.linphone.core.tools.Log;
 
-public class CoreService extends Service {
+public abstract class CoreService extends Service {
     private static CoreService sInstance;
 
-    private int mForegroundNotificationId = -1;
-    private Notification mForegroundNotification = null;
     private boolean mIsInForegroundMode = false;
 
     public static boolean isReady() {
@@ -46,10 +44,6 @@ public class CoreService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        if (!CoreManager.isReady()) {
-            new CoreManager(getApplicationContext()).startFromService();
-        }
 
         Log.i("[Core Service] Created");
     }
@@ -74,8 +68,6 @@ public class CoreService extends Service {
     @Override
     public synchronized void onDestroy() {
         Log.i("[Core Service] Stopping");
-
-        CoreManager.instance().destroy();
         sInstance = null;
 
         super.onDestroy();
@@ -88,18 +80,19 @@ public class CoreService extends Service {
 
     /* Foreground notification related */
 
-    public void configureForegroundNotification(int id, Notification notification) {
-        mForegroundNotificationId = id;
-        mForegroundNotification = notification;
-    }
+    public abstract Notification getForegroundServiceNotification();
+    public abstract int getForegroundServiceNotificationId();
 
     public void startForeground() {
-        if (mForegroundNotificationId == -1 || mForegroundNotification == null) {
+        int foregroundNotificationId = getForegroundServiceNotificationId();
+        Notification foregroundNotification = getForegroundServiceNotification();
+
+        if (foregroundNotificationId == -1 || foregroundNotification == null) {
             Log.e("[Core Service] Foreground notification hasn't been configured yet, can't set Service in foreground mode");
             return;
         }
 
-        startForeground(mForegroundNotificationId, mForegroundNotification);
+        startForeground(foregroundNotificationId, foregroundNotification);
         mIsInForegroundMode = true;
     }
 

@@ -71,9 +71,12 @@ public:
 private:
 	int callVoidMethod (jmethodID id);
 	static jmethodID getMethodId (JNIEnv *env, jclass klass, const char *method, const char *signature);
-	string getNativeLibraryDir();
+	string getNativeLibraryDir ();
+	void createCoreManager (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
+	void destroyCoreManager ();
 
 	jobject mJavaHelper = nullptr;
+	jobject mJavaCoreManager = nullptr;
 	jmethodID mWifiLockAcquireId = nullptr;
 	jmethodID mWifiLockReleaseId = nullptr;
 	jmethodID mMcastLockAcquireId = nullptr;
@@ -91,6 +94,8 @@ private:
 	jmethodID mResizeVideoPreview = nullptr;
 	jmethodID mOnLinphoneCoreStartId = nullptr;
 	jmethodID mOnLinphoneCoreStopId = nullptr;
+	jmethodID mCoreManagerOnLinphoneCoreStartId = nullptr;
+	jmethodID mCoreManagerOnLinphoneCoreStopId = nullptr;
 	jmethodID mOnWifiOnlyEnabledId = nullptr;
 	jobject mPreviewVideoWindow = nullptr;
 	jobject mVideoWindow = nullptr;
@@ -114,7 +119,45 @@ jmethodID AndroidPlatformHelpers::getMethodId (JNIEnv *env, jclass klass, const 
 	return id;
 }
 
+// -----------------------------------------------------------------------------
+
+extern "C" jobject getCore(JNIEnv *env, LinphoneCore *cptr, bool_t takeref);
+
+void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) {
+	JNIEnv *env = ms_get_jni_env();
+	jclass klass = env->FindClass("org/linphone/core/tools/service/CoreManager");
+	if (!klass)
+		lFatal() << "Could not find java CoreManager class.";
+
+	jmethodID ctor = env->GetMethodID(klass, "<init>", "(Ljava/lang/Object;Lorg/linphone/core/Core;)V");
+	LinphoneCore *lc = L_GET_C_BACK_PTR(core);
+	jobject javaCore = ::LinphonePrivate::getCore(env, lc, TRUE);
+	mJavaCoreManager = env->NewObject(klass, ctor, (jobject)systemContext, (jobject)javaCore);
+	if (!mJavaCoreManager) {
+		lError() << "Could not instanciate CoreManager object.";
+		return;
+	}
+	mJavaCoreManager = (jobject)env->NewGlobalRef(mJavaCoreManager);
+
+	mCoreManagerOnLinphoneCoreStartId = getMethodId(env, klass, "onLinphoneCoreStart", "()V");
+	mCoreManagerOnLinphoneCoreStopId = getMethodId(env, klass, "onLinphoneCoreStop", "()V");
+	lInfo() << "CoreManager is fully initialised.";
+}
+
+void AndroidPlatformHelpers::destroyCoreManager () {
+	if (mJavaCoreManager) {
+		JNIEnv *env = ms_get_jni_env();
+		env->DeleteGlobalRef(mJavaCoreManager);
+		mJavaCoreManager = nullptr;
+	}
+	lInfo() << "AndroidCoreManager has been destroyed.";
+}
+
+// -----------------------------------------------------------------------------
+
 AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
+	createCoreManager(core, systemContext);
+
 	JNIEnv *env = ms_get_jni_env();
 	jclass klass = env->FindClass("org/linphone/core/tools/AndroidPlatformHelper");
 	if (!klass)
@@ -160,6 +203,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 }
 
 AndroidPlatformHelpers::~AndroidPlatformHelpers () {
+	destroyCoreManager();
 	if (mJavaHelper) {
 		JNIEnv *env = ms_get_jni_env();
 		belle_sip_wake_lock_uninit(env);
@@ -351,15 +395,25 @@ void AndroidPlatformHelpers::setNetworkReachable(bool reachable) {
 
 void AndroidPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	JNIEnv *env = ms_get_jni_env();
-	if (env && mJavaHelper) {
-		env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStartId, (jboolean)monitoringEnabled);
+	if (env) {
+		if (mJavaCoreManager) {
+			env->CallVoidMethod(mJavaCoreManager, mCoreManagerOnLinphoneCoreStartId);
+		}
+		if (mJavaHelper) {
+			env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStartId, (jboolean)monitoringEnabled);
+		}
 	}
 }
 
 void AndroidPlatformHelpers::onLinphoneCoreStop() {
 	JNIEnv *env = ms_get_jni_env();
-	if (env && mJavaHelper) {
-		env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStopId);
+	if (env) {
+		if (mJavaCoreManager) {
+			env->CallVoidMethod(mJavaCoreManager, mCoreManagerOnLinphoneCoreStopId);
+		}
+		if (mJavaHelper) {
+			env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStopId);
+		}
 	}
 }
 

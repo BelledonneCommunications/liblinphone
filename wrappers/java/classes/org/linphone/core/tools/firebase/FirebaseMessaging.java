@@ -43,17 +43,21 @@ public class FirebaseMessaging extends FirebaseMessagingService {
         android.util.Log.i("FirebaseMessaging", "[Push Notification] Received");
 
         if (!CoreManager.isReady()) {
-            android.util.Log.i("FirebaseMessaging", "[Push Notification] Starting Core Manager");
-            new CoreManager(getApplicationContext());
-            CoreManager.instance().startFromPush();
+            notifyAppPushReceivedWithoutCoreAvailable();
         } else {
             Log.i("[Push Notification] Notifying Core");
             if (CoreManager.instance() != null) {
-                Core core = CoreManager.getCore();
+                Core core = CoreManager.instance().getCore();
                 if (core != null) {
                     core.ensureRegistered();
+                } else {
+                    notifyAppPushReceivedWithoutCoreAvailable();
                 }
             }
         }
+    }
+
+    private void notifyAppPushReceivedWithoutCoreAvailable() {
+        // TODO
     }
 }
