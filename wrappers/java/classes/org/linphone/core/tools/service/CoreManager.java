@@ -194,14 +194,19 @@ public class CoreManager {
             ServiceInfo[] services = packageInfo.services;
             for (ServiceInfo service : services) {
                 String serviceName = service.name;
-                if (!serviceName.equals("org.linphone.core.tools.firebase.FirebaseMessaging")) {
+                // Do not attempt to start any firebase related service...
+                if (!serviceName.equals("org.linphone.core.tools.firebase.FirebaseMessaging") && !serviceName.startsWith("com.google.firebase")) {
                     className = serviceName;
                     Log.i("[Core Manager] Found Service class [", className, "]");
                     break;
                 }
             }
         } catch (Exception e) {
-            Log.e("[Core Manager] Couldn't find Service class");
+            Log.e("[Core Manager] Couldn't find Service class: ", e);
+        }
+
+        if (className == null) {
+            Log.w("[Core Manager] Failed to find a valid Service, continuing without it...");
         }
         return className;
     }
