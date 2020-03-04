@@ -22,6 +22,9 @@ package org.linphone.core.tools.service;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.os.Build;
 
 import com.google.firebase.FirebaseApp;
@@ -52,11 +55,6 @@ public class CoreManager {
         throw new RuntimeException("CoreManager not instantiated yet");
     }
 
-    public static Core getCore() {
-        if (!isReady()) return null;
-        return sInstance.mCore;
-    }
-
     protected Context mContext;
     protected Core mCore;
     protected CoreListenerStub mListener;
@@ -65,20 +63,9 @@ public class CoreManager {
     private Runnable mIterateRunnable;
     private Application.ActivityLifecycleCallbacks mActivityCallbacks;
 
-    public CoreManager(Context context) {
-        mContext = context.getApplicationContext();
-
-        boolean isDebugEnabled = Factory.instance().createConfig(null /*TODO*/).getBool("app", "debug", true);
-        if (isDebugEnabled) {
-            Factory.instance().enableLogCollection(LogCollectionState.Enabled);
-            Factory.instance().setDebugMode(isDebugEnabled, "Linphone");
-            Factory.instance().setLogCollectionPath(mContext.getFilesDir().getAbsolutePath());
-        }
-
-        // Dump some debugging information to the logs
-        dumpDeviceInformation();
-        dumpLinphoneInformation();
-
+    public CoreManager(Object context, Core core) {
+        mContext = ((Context) context).getApplicationContext();
+        mCore = core;
         sInstance = this;
         Log.i("[Core Manager] Ready");
 
@@ -104,40 +91,20 @@ public class CoreManager {
                 }
             }
         };
+        mCore.addListener(mListener);
 
         FirebaseApp.initializeApp(mContext);
         PushNotificationUtils.init(mContext);
         if (!PushNotificationUtils.isAvailable(mContext)) {
-            Log.w("[Core Manager] Push notifications won't work !");
+            Log.w("[Core Manager] Push notifications aren't available");
         }
     }
 
-    public void start() {
-        Log.i("[Core Manager] Starting");
-        start(false, true);
+    public Core getCore() {
+        return mCore;
     }
 
-    public void startFromPush() {
-        Log.i("[Core Manager] Starting from push notification");
-        start(true, true);
-    }
-
-    public void startFromService() {
-        Log.i("[Core Manager] Starting from Service");
-        start(false, false);
-    }
-
-    private void start(boolean isPush, boolean startService) {
-        mCore = Factory.instance().createCore(null /*TODO*/, null /*TODO*/, mContext);
-        mCore.addListener(mListener);
-
-        if (isPush) {
-            Log.w("[Core Manager] We are here because of a received push notification, enter background mode before starting the Core");
-            mCore.enterBackground();
-        }
-
-        mCore.start();
-
+    public void onLinphoneCoreStart() {
         mIterateRunnable =
                 new Runnable() {
                     @Override
@@ -159,20 +126,21 @@ public class CoreManager {
         mTimer = new Timer("Linphone scheduler");
         mTimer.schedule(lTask, 0, 20);
 
-        if (startService) {
+        String serviceName = getServiceClassName();
+        if (serviceName != null) {
             Log.i("[Core Manager] Starting service");
-            mContext.startService(new Intent(mContext, CoreService.class));
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.setClassName(mContext, serviceName);
+            mContext.startService(intent);
         }
     }
 
-    public void destroy() {
+    public void onLinphoneCoreStop() {
         Log.i("[Core Manager] Destroying");
         if (mCore != null) {
             mCore.removeListener(mListener);
             mCore = null; // To allow the gc calls below to free the Core
         }
-
-        // Wait for every other object to be destroyed to make CoreService.instance() invalid
         sInstance = null;
     }
 
@@ -209,27 +177,23 @@ public class CoreManager {
         }
     }
 
-    /* Log device related information */
-
-    private void dumpDeviceInformation() {
-        Log.i("==== Device information dump ====");
-        Log.i("NAME=" + Build.DEVICE);
-        Log.i("MODEL=" + Build.MODEL);
-        Log.i("MANUFACTURER=" + Build.MANUFACTURER);
-        Log.i("ANDROID SDK=" + Build.VERSION.SDK_INT);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("ABIs=");
-        for (String abi : Version.getCpuAbis()) {
-            sb.append(abi).append(", ");
+    private String getServiceClassName() {
+        // Inspect services in package to get the class name of the Service that extends LinphoneService, assume first one
+        String className = null;
+        try {
+            PackageInfo packageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), PackageManager.GET_SERVICES);
+            ServiceInfo[] services = packageInfo.services;
+            for (ServiceInfo service : services) {
+                String serviceName = service.name;
+                if (!serviceName.equals("org.linphone.core.tools.firebase.FirebaseMessaging")) {
+                    className = serviceName;
+                    Log.i("[Core Manager] Found Service class [", className, "]");
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            Log.e("[Core Manager] Couldn't find Service class");
         }
-        Log.i(sb.substring(0, sb.length() - 2));
-    }
-
-    private void dumpLinphoneInformation() {
-        Log.i("==== Linphone SDK information dump ====");
-        Log.i("BUILD TYPE=" + org.linphone.core.BuildConfig.BUILD_TYPE);
-        Log.i("VERSION=" + mContext.getString(org.linphone.core.R.string.linphone_sdk_version));
-        Log.i("BRANCH=" + mContext.getString(org.linphone.core.R.string.linphone_sdk_branch));
+        return className;
     }
 }
