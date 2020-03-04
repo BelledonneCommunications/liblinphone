@@ -24,6 +24,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 
+import org.linphone.core.Factory;
 import org.linphone.core.tools.Log;
 
 public abstract class CoreService extends Service {
@@ -44,6 +45,10 @@ public abstract class CoreService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // No-op, just to ensure libraries have been loaded and thus prevent crash in log below 
+        // if service has been started directly by Android (that can happen...)
+        Factory.instance(); 
 
         Log.i("[Core Service] Created");
     }
