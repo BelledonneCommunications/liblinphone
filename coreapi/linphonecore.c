@@ -2445,19 +2445,9 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	linphone_core_set_account_creator_service(lc, service);
 }
 
-char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core) {
-	if (!core->push_notification_enabled) return NULL;
-
-	// TODO
-	return NULL;
-}
-
-void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable) {
-	lp_config_set_int(core->config, "net", "push_notification", enable);
-	core->push_notification_enabled = enable;
-
+static void update_proxy_config_push_params(LinphoneCore *core) {
 	char *computedPushParams = NULL;
-	if (enable) {
+	if (core->push_notification_enabled) {
 		computedPushParams = linphone_core_get_push_notification_contact_uri_parameters(core);
 	}
 	
@@ -2469,7 +2459,7 @@ void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enab
 
 		if (pushAllowed) {
 			// Do not alter contact uri params for proxy config without push notification allowed
-			if (enable) {
+			if (core->push_notification_enabled) {
 				if (computedPushParams && (!contactUriParams || strcmp(contactUriParams, computedPushParams) != 0)) {
 					linphone_proxy_config_edit(proxy);
 					linphone_proxy_config_set_contact_uri_parameters(proxy, computedPushParams);
@@ -2490,6 +2480,52 @@ void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enab
 	if (computedPushParams) {
 		ms_free(computedPushParams);
 	}
+}
+
+void linphone_core_update_push_notification_information(LinphoneCore *core, const char *app_id, const char *push_token) {
+	if (core->push_notification_app_id) {
+		ms_free(core->push_notification_app_id);
+		core->push_notification_app_id = NULL;
+	}
+	if (core->push_notification_token) {
+		ms_free(core->push_notification_token);
+		core->push_notification_token = NULL;
+	}
+
+	if (app_id && push_token) {
+		core->push_notification_app_id = ms_strdup(app_id);
+		core->push_notification_token = ms_strdup(push_token);
+		ms_message("Push notification information updated: app id [%s], token [%s]", app_id, push_token);
+	}
+
+	update_proxy_config_push_params(core);
+}
+
+char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core) {
+	if (!core->push_notification_enabled) return NULL;
+	if (!core->push_notification_app_id || !core->push_notification_token) return NULL;
+
+	const char *pushType = NULL;
+#ifdef __ANDROID__
+	pushType = "firebase";
+#elif TARGET_OS_IPHONE
+	pushType = "TODO"; // TODO
+#endif
+	if (pushType == NULL) return NULL;
+
+	char contactUriParams[512];
+	memset(contactUriParams, 0, sizeof(contactUriParams));
+	snprintf(contactUriParams, sizeof(contactUriParams), 
+		"app-id=%s;pn-type=%s;pn-tok=%s;pn-timeout=0;pn-silent=1", 
+		core->push_notification_app_id, pushType, core->push_notification_token);
+	return ms_strdup(contactUriParams);
+}
+
+void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable) {
+	lp_config_set_int(core->config, "net", "push_notification", enable);
+	core->push_notification_enabled = enable;
+
+	update_proxy_config_push_params(core);
 }
 
 bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core) {

@@ -848,6 +848,8 @@ namespace LinphonePrivate {
 	bool_t debug_storage; \
 	void *system_context; \
 	bool_t is_unreffing; \
-	bool_t push_notification_enabled;
+	bool_t push_notification_enabled; \
+	char * push_notification_app_id; \
+	char * push_notification_token;
 
 #endif /* _PRIVATE_STRUCTS_H_ */

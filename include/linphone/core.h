@@ -6172,6 +6172,16 @@ LINPHONE_PUBLIC void linphone_core_set_push_notification_enabled(LinphoneCore *c
  */
 LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core);
 
+/**
+ * Sets the app id & token needed for the Core to compute push notification contact uri parameters.
+ * You shouldn't have to call this method.
+ * @param[in] core The #LinphoneCore
+ * @param[in] app_id The id of your app
+ * @param[in] push_token The push token
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_update_push_notification_information(LinphoneCore *core, const char *app_id, const char *push_token);
+
 
 #ifdef __cplusplus
 }
