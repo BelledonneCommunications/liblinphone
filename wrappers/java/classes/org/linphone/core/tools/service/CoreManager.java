@@ -179,19 +179,7 @@ public class CoreManager {
         int resId = mContext.getResources().getIdentifier("gcm_defaultSenderId", "string", mContext.getPackageName());
         String appId = mContext.getString(resId);
         Log.i("[Core Manager] Push notification app id is [", appId, "] and token is [", token, "]");
-        
-        String contactUriParams = "app-id=" + appId + ";pn-type=firebase;pn-timeout=0;pn-tok=" + token + ";pn-silent=1";
-        for (ProxyConfig proxyConfig : mCore.getProxyConfigList()) {
-            if (proxyConfig.isPushNotificationAllowed()) {
-                String currentUriParams = proxyConfig.getContactUriParameters();
-                if (currentUriParams == null || !currentUriParams.equals(contactUriParams)) {
-                    proxyConfig.edit();
-                    proxyConfig.setContactUriParameters(contactUriParams);
-                    proxyConfig.done();
-                    Log.i("[Core Manager] Updated contact URI parameters for proxy config [", proxyConfig, "]: ", contactUriParams);
-                }
-            }
-        }
+        mCore.updatePushNotificationInformation(appId, token);
     }
 
     private String getServiceClassName() {
