@@ -62,3 +62,6 @@ hide_empty_chat_rooms=0
 
 [app]
 sender_name_hidden_in_forward_message=1
+
+[tester]
+test_env=1

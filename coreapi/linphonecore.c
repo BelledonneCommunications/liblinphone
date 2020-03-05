@@ -2459,8 +2459,8 @@ static void update_proxy_config_push_params(LinphoneCore *core) {
 
 		if (pushAllowed) {
 			// Do not alter contact uri params for proxy config without push notification allowed
-			if (core->push_notification_enabled) {
-				if (computedPushParams && (!contactUriParams || strcmp(contactUriParams, computedPushParams) != 0)) {
+			if (computedPushParams && core->push_notification_enabled) {
+				if (!contactUriParams || strcmp(contactUriParams, computedPushParams) != 0) {
 					linphone_proxy_config_edit(proxy);
 					linphone_proxy_config_set_contact_uri_parameters(proxy, computedPushParams);
 					linphone_proxy_config_done(proxy);
@@ -2471,7 +2471,7 @@ static void update_proxy_config_push_params(LinphoneCore *core) {
 					linphone_proxy_config_edit(proxy);
 					linphone_proxy_config_set_contact_uri_parameters(proxy, NULL);
 					linphone_proxy_config_done(proxy);
-					ms_message("Push notification information remove from proxy config [%p]", proxy);
+					ms_message("Push notification information removed from proxy config [%p]", proxy);
 				}
 			}
 		}
@@ -2505,15 +2505,21 @@ char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *
 	if (!core->push_notification_enabled) return NULL;
 	if (!core->push_notification_param || !core->push_notification_prid) return NULL;
 	
-	bool_t use_legacy_params = !!lp_config_get_int(core->config, "net", "use_legacy_push_notification_params", TRUE);
+	bool_t use_legacy_params = !!lp_config_get_int(core->config, "net", "use_legacy_push_notification_params", FALSE);
 	const char *format = "pn-provider=%s;pn-params=%s;pn-prid=%s;pn-timeout=0;pn-silent=1";
 	if (use_legacy_params) {
 		format = "pn-type=%s;app-id=%s;pn-tok=%s;pn-timeout=0;pn-silent=1";
 	}
 
 	const char *provider = NULL;
+	// Can this be improved ?
+	bool_t tester_env = !!lp_config_get_int(core->config, "tester", "test_env", FALSE);
+	if (tester_env) provider = "liblinphone_tester";
+	// End of improvement zone
+
 	const char *params = core->push_notification_param;
 	const char *prid = core->push_notification_prid;
+
 #ifdef __ANDROID__
 	if (use_legacy_params)
 		provider = "firebase";
