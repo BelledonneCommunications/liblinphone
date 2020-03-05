@@ -522,7 +522,6 @@ static void dependent_proxy_dependency_with_core_reloaded(void){
 	linphone_address_unref(marie_dependent_addr);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-
 }
 
 test_t proxy_config_tests[] = {
