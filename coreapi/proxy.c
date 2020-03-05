@@ -1860,7 +1860,7 @@ void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *cf
 		linphone_proxy_config_edit(cfg);
 		linphone_proxy_config_set_contact_uri_parameters(cfg, NULL);
 		linphone_proxy_config_done(cfg);
-		ms_message("Push notification information remove from proxy config [%p]", cfg);
+		ms_message("Push notification information removed from proxy config [%p]", cfg);
 	}
 }
 
