@@ -284,10 +284,12 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	if (lp_config_get_int(linphone_core_get_config(getCCore()), "video", "nowebcam_uses_normal_fps", 0))
 		mStream->staticimage_webcam_fps_optimization = false;
 	const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(getCCore());
-	MSVideoSize vsize;
-	vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
-	vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
-	video_stream_set_sent_video_size(mStream, vsize);
+	if (vdef) {
+		MSVideoSize vsize;
+		vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
+		vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
+		video_stream_set_sent_video_size(mStream, vsize);
+	}
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
 	if (mNativeWindowId)
 		video_stream_set_native_window_id(mStream, mNativeWindowId);
