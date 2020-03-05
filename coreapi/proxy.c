@@ -1846,6 +1846,22 @@ bool_t linphone_proxy_config_is_push_notification_allowed(const LinphoneProxyCon
 
 void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t is_allowed) {
 	cfg->push_notification_allowed = is_allowed;
+
+	if (is_allowed) {
+		char *computedPushParams = linphone_core_get_push_notification_contact_uri_parameters(cfg->lc);
+		if (computedPushParams) {
+			linphone_proxy_config_edit(cfg);
+			linphone_proxy_config_set_contact_uri_parameters(cfg, computedPushParams);
+			linphone_proxy_config_done(cfg);
+			ms_message("Push notification information [%s] added to proxy config [%p]", computedPushParams, cfg);
+			ms_free(computedPushParams);
+		}
+	} else {
+		linphone_proxy_config_edit(cfg);
+		linphone_proxy_config_set_contact_uri_parameters(cfg, NULL);
+		linphone_proxy_config_done(cfg);
+		ms_message("Push notification information remove from proxy config [%p]", cfg);
+	}
 }
 
 int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *cfg) {

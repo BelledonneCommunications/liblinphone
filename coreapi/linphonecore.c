@@ -2445,9 +2445,51 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	linphone_core_set_account_creator_service(lc, service);
 }
 
+char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core) {
+	if (!core->push_notification_enabled) return NULL;
+
+	// TODO
+	return NULL;
+}
+
 void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable) {
 	lp_config_set_int(core->config, "net", "push_notification", enable);
 	core->push_notification_enabled = enable;
+
+	char *computedPushParams = NULL;
+	if (enable) {
+		computedPushParams = linphone_core_get_push_notification_contact_uri_parameters(core);
+	}
+	
+	bctbx_list_t* proxies = (bctbx_list_t*)linphone_core_get_proxy_config_list(core);
+	for (; proxies != NULL; proxies = proxies->next) {
+		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *)proxies->data;
+		bool_t pushAllowed = linphone_proxy_config_is_push_notification_allowed(proxy);
+		const char *contactUriParams = linphone_proxy_config_get_contact_uri_parameters(proxy);
+
+		if (pushAllowed) {
+			// Do not alter contact uri params for proxy config without push notification allowed
+			if (enable) {
+				if (computedPushParams && (!contactUriParams || strcmp(contactUriParams, computedPushParams) != 0)) {
+					linphone_proxy_config_edit(proxy);
+					linphone_proxy_config_set_contact_uri_parameters(proxy, computedPushParams);
+					linphone_proxy_config_done(proxy);
+					ms_message("Push notification information [%s] added to proxy config [%p]", computedPushParams, proxy);
+				}
+			} else {
+				if (contactUriParams) {
+					linphone_proxy_config_edit(proxy);
+					linphone_proxy_config_set_contact_uri_parameters(proxy, NULL);
+					linphone_proxy_config_done(proxy);
+					ms_message("Push notification information remove from proxy config [%p]", proxy);
+				}
+			}
+		}
+	}
+
+	if (computedPushParams) {
+		ms_free(computedPushParams);
+	}
 }
 
 bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core) {
