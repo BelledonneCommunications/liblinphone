@@ -94,10 +94,13 @@ public class CoreManager {
         };
         mCore.addListener(mListener);
 
-        FirebaseApp.initializeApp(mContext);
-        PushNotificationUtils.init(mContext);
-        if (!PushNotificationUtils.isAvailable(mContext)) {
-            Log.w("[Core Manager] Push notifications aren't available");
+        if (mCore.isPushNotificationEnabled()) {
+            Log.i("[Core Manager] Push notifications are enabled, starting Firebase");
+            FirebaseApp.initializeApp(mContext);
+            PushNotificationUtils.init(mContext);
+            if (!PushNotificationUtils.isAvailable(mContext)) {
+                Log.w("[Core Manager] Push notifications aren't available");
+            }
         }
     }
 
@@ -150,6 +153,11 @@ public class CoreManager {
             mCore.removeListener(mListener);
             mCore = null; // To allow the gc calls below to free the Core
         }
+
+        mTimer.cancel();
+        mTimer.purge();
+        mTimer = null;
+
         sInstance = null;
     }
 
@@ -170,7 +178,7 @@ public class CoreManager {
     public void setPushToken(String token) {
         int resId = mContext.getResources().getIdentifier("gcm_defaultSenderId", "string", mContext.getPackageName());
         String appId = mContext.getString(resId);
-        Log.i("[Core Manager] [Push Notification] App id is [", appId, "], with push token [", token, "]");
+        Log.i("[Core Manager] Push notification app id is [", appId, "] and token is [", token, "]");
         
         String contactUriParams = "app-id=" + appId + ";pn-type=firebase;pn-timeout=0;pn-tok=" + token + ";pn-silent=1";
         for (ProxyConfig proxyConfig : mCore.getProxyConfigList()) {
