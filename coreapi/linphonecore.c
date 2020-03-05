@@ -2482,20 +2482,20 @@ static void update_proxy_config_push_params(LinphoneCore *core) {
 	}
 }
 
-void linphone_core_update_push_notification_information(LinphoneCore *core, const char *app_id, const char *push_token) {
-	if (core->push_notification_app_id) {
-		ms_free(core->push_notification_app_id);
-		core->push_notification_app_id = NULL;
+void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid) {
+	if (core->push_notification_param) {
+		ms_free(core->push_notification_param);
+		core->push_notification_param = NULL;
 	}
-	if (core->push_notification_token) {
-		ms_free(core->push_notification_token);
-		core->push_notification_token = NULL;
+	if (core->push_notification_prid) {
+		ms_free(core->push_notification_prid);
+		core->push_notification_prid = NULL;
 	}
 
-	if (app_id && push_token) {
-		core->push_notification_app_id = ms_strdup(app_id);
-		core->push_notification_token = ms_strdup(push_token);
-		ms_message("Push notification information updated: app id [%s], token [%s]", app_id, push_token);
+	if (param && prid) {
+		core->push_notification_param = ms_strdup(param);
+		core->push_notification_prid = ms_strdup(prid);
+		ms_message("Push notification information updated: param [%s], prid [%s]", param, prid);
 	}
 
 	update_proxy_config_push_params(core);
@@ -2503,21 +2503,30 @@ void linphone_core_update_push_notification_information(LinphoneCore *core, cons
 
 char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core) {
 	if (!core->push_notification_enabled) return NULL;
-	if (!core->push_notification_app_id || !core->push_notification_token) return NULL;
+	if (!core->push_notification_param || !core->push_notification_prid) return NULL;
+	
+	bool_t use_legacy_params = !!lp_config_get_int(core->config, "net", "use_legacy_push_notification_params", TRUE);
+	const char *format = "pn-provider=%s;pn-params=%s;pn-prid=%s;pn-timeout=0;pn-silent=1";
+	if (use_legacy_params) {
+		format = "pn-type=%s;app-id=%s;pn-tok=%s;pn-timeout=0;pn-silent=1";
+	}
 
-	const char *pushType = NULL;
+	const char *provider = NULL;
+	const char *params = core->push_notification_param;
+	const char *prid = core->push_notification_prid;
 #ifdef __ANDROID__
-	pushType = "firebase";
+	if (use_legacy_params)
+		provider = "firebase";
+	else
+		provider = "fcm";
 #elif TARGET_OS_IPHONE
-	pushType = "TODO"; // TODO
+	provider = "apple";
 #endif
-	if (pushType == NULL) return NULL;
+	if (provider == NULL) return NULL;
 
 	char contactUriParams[512];
 	memset(contactUriParams, 0, sizeof(contactUriParams));
-	snprintf(contactUriParams, sizeof(contactUriParams), 
-		"app-id=%s;pn-type=%s;pn-tok=%s;pn-timeout=0;pn-silent=1", 
-		core->push_notification_app_id, pushType, core->push_notification_token);
+	snprintf(contactUriParams, sizeof(contactUriParams), format, provider, params, prid);
 	return ms_strdup(contactUriParams);
 }
 

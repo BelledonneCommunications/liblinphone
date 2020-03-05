@@ -849,7 +849,7 @@ namespace LinphonePrivate {
 	void *system_context; \
 	bool_t is_unreffing; \
 	bool_t push_notification_enabled; \
-	char * push_notification_app_id; \
-	char * push_notification_token;
+	char * push_notification_param; \
+	char * push_notification_prid;
 
 #endif /* _PRIVATE_STRUCTS_H_ */

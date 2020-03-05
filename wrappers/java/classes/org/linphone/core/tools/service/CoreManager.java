@@ -127,7 +127,7 @@ public class CoreManager {
                 };
 
         /*use schedule instead of scheduleAtFixedRate to avoid iterate from being call in burst after cpu wake up*/
-        mTimer = new Timer("Linphone scheduler");
+        mTimer = new Timer("Linphone Core iterate scheduler");
         mTimer.schedule(lTask, 0, 20);
 
         String serviceName = getServiceClassName();
