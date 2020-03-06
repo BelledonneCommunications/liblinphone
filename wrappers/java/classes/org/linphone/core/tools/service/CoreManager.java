@@ -70,6 +70,10 @@ public class CoreManager {
         mContext = ((Context) context).getApplicationContext();
         mCore = core;
         sInstance = this;
+
+        // Dump some debugging information to the logs
+        dumpDeviceInformation();
+        dumpLinphoneInformation();
         Log.i("[Core Manager] Ready");
 
         mActivityCallbacks = new ActivityMonitor();
@@ -207,5 +211,33 @@ public class CoreManager {
             Log.w("[Core Manager] Failed to find a valid Service, continuing without it...");
         }
         return className;
+    }
+
+    private void dumpDeviceInformation() {
+        Log.i("==== Phone information dump ====");
+        Log.i("DEVICE=" + Build.DEVICE);
+        Log.i("MODEL=" + Build.MODEL);
+        Log.i("MANUFACTURER=" + Build.MANUFACTURER);
+        Log.i("ANDROID SDK=" + Build.VERSION.SDK_INT);
+        StringBuilder sb = new StringBuilder();
+        sb.append("ABIs=");
+        for (String abi : Version.getCpuAbis()) {
+            sb.append(abi).append(", ");
+        }
+        Log.i(sb.substring(0, sb.length() - 2));
+    }
+
+    private void dumpLinphoneInformation() {
+        Log.i("==== Linphone SDK information dump ====");
+        Log.i("VERSION=", mContext.getString(org.linphone.core.R.string.linphone_sdk_version));
+        Log.i("BRANCH=", mContext.getString(org.linphone.core.R.string.linphone_sdk_branch));
+        StringBuilder sb = new StringBuilder();
+        sb.append("PLUGINS=");
+        for (String plugin : org.linphone.core.BuildConfig.PLUGINS_ARRAY) {
+            sb.append(plugin).append(", ");
+        }
+        Log.i(sb.substring(0, sb.length() - 2));
+        Log.i("PACKAGE=", org.linphone.core.BuildConfig.APPLICATION_ID);
+        Log.i("BUILD TYPE=", org.linphone.core.BuildConfig.BUILD_TYPE);
     }
 }
