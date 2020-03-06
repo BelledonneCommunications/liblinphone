@@ -529,4 +529,13 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 	linphone_core_enable_keep_alive(androidPlatformHelper->getCore()->getCCore(), enable ? TRUE : FALSE);
 }
 
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_updatePushNotificationInformation(JNIEnv *env, jobject thiz, jlong ptr, jstring param, jstring prid) {
+	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
+	const char *paramC = GetStringUTFChars(env, param);
+	const char *pridC = GetStringUTFChars(env, prid);
+	linphone_core_update_push_notification_information(core, paramC, pridC);
+	ReleaseStringUTFChars(env, prid, pridC);
+	ReleaseStringUTFChars(env, param, paramC);
+}
+
 LINPHONE_END_NAMESPACE
