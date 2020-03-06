@@ -22,16 +22,11 @@ package org.linphone.core.tools.service;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.ServiceInfo;
 import android.os.Build;
 
 import com.google.firebase.FirebaseApp;
 
-import org.linphone.core.Call;
 import org.linphone.core.Core;
-import org.linphone.core.CoreListenerStub;
 import org.linphone.core.Factory;
 import org.linphone.core.LogCollectionState;
 import org.linphone.core.ProxyConfig;
@@ -58,7 +53,6 @@ public class CoreManager {
 
     protected Context mContext;
     protected Core mCore;
-    protected CoreListenerStub mListener;
 
     private Timer mTimer;
     private Runnable mIterateRunnable;
@@ -78,27 +72,6 @@ public class CoreManager {
 
         mActivityCallbacks = new ActivityMonitor();
         ((Application) mContext).registerActivityLifecycleCallbacks(mActivityCallbacks);
-
-        mListener = new CoreListenerStub() {
-            @Override
-            public void onCallStateChanged(Core core, Call call, Call.State state, String message) {
-                if (state == Call.State.IncomingReceived || state == Call.State.IncomingEarlyMedia || state == Call.State.OutgoingInit) {
-                    if (core.getCallsNb() == 1) {
-                        // There is only one call, service shouldn't be in foreground mode yet
-                        if (CoreService.isReady() && !CoreService.instance().isInForegroundMode()) {
-                            CoreService.instance().startForeground();
-                        }
-                    }
-                } else if (state == Call.State.End || state == Call.State.Released || state == Call.State.Error) {
-                    if (core.getCallsNb() == 0) {
-                        if (CoreService.isReady() && CoreService.instance().isInForegroundMode()) {
-                            CoreService.instance().stopForeground();
-                        }
-                    }
-                }
-            }
-        };
-        mCore.addListener(mListener);
 
         if (mCore.isPushNotificationEnabled()) {
             Log.i("[Core Manager] Push notifications are enabled, starting Firebase");
@@ -136,34 +109,25 @@ public class CoreManager {
         mTimer = new Timer("Linphone Core iterate scheduler");
         mTimer.schedule(lTask, 0, 20);
 
-        String serviceName = getServiceClassName();
-        if (serviceName != null) {
-            Intent intent = new Intent(Intent.ACTION_MAIN);
-            intent.setClassName(mContext, serviceName);
-
-            try {
-                mContext.startService(intent);
-                Log.i("[Core Manager] Starting service");
-            } catch (IllegalStateException ise) {
-                Log.w("[Core Manager] Failed to start service: ", ise);
-                // On Android > 8, if app in background, startService will trigger an IllegalStateException when called from background
-                // If not whitelisted temporary by the system like after a push, so assume background
-                mCore.enterBackground();
-            }
+        try {
+            mContext.startService(new Intent().setClass(mContext, CoreService.class));
+            Log.i("[Core Manager] Starting service");
+        } catch (IllegalStateException ise) {
+            Log.w("[Core Manager] Failed to start service: ", ise);
+            // On Android > 8, if app in background, startService will trigger an IllegalStateException when called from background
+            // If not whitelisted temporary by the system like after a push, so assume background
+            mCore.enterBackground();
         }
     }
 
     public void onLinphoneCoreStop() {
         Log.i("[Core Manager] Destroying");
-        if (mCore != null) {
-            mCore.removeListener(mListener);
-            mCore = null; // To allow the gc calls below to free the Core
-        }
 
         mTimer.cancel();
         mTimer.purge();
         mTimer = null;
 
+        mCore = null; // To allow the garbage colletor to free the Core
         sInstance = null;
     }
 
@@ -186,31 +150,6 @@ public class CoreManager {
         String appId = mContext.getString(resId);
         Log.i("[Core Manager] Push notification app id is [", appId, "] and token is [", token, "]");
         updatePushNotificationInformation(mCore.getNativePointer(), appId, token);
-    }
-
-    private String getServiceClassName() {
-        // Inspect services in package to get the class name of the Service that extends LinphoneService, assume first one
-        String className = null;
-        try {
-            PackageInfo packageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), PackageManager.GET_SERVICES);
-            ServiceInfo[] services = packageInfo.services;
-            for (ServiceInfo service : services) {
-                String serviceName = service.name;
-                // Do not attempt to start any firebase related service...
-                if (!serviceName.equals("org.linphone.core.tools.firebase.FirebaseMessaging") && !serviceName.startsWith("com.google.firebase")) {
-                    className = serviceName;
-                    Log.i("[Core Manager] Found Service class [", className, "]");
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            Log.e("[Core Manager] Couldn't find Service class: ", e);
-        }
-
-        if (className == null) {
-            Log.w("[Core Manager] Failed to find a valid Service, continuing without it...");
-        }
-        return className;
     }
 
     private void dumpDeviceInformation() {

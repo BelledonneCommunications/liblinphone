@@ -20,27 +20,30 @@
 package org.linphone.core.tools.service;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.IBinder;
 
+import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+
+import org.linphone.core.Call;
+import org.linphone.core.Core;
+import org.linphone.core.CoreListenerStub;
 import org.linphone.core.Factory;
 import org.linphone.core.tools.Log;
+import org.linphone.mediastream.Version;
 
-public abstract class CoreService extends Service {
-    private static CoreService sInstance;
-
-    private boolean mIsInForegroundMode = false;
-
-    public static boolean isReady() {
-        return sInstance != null;
-    }
-
-    public static CoreService instance() {
-        if (isReady()) return sInstance;
-
-        throw new RuntimeException("CoreService not instantiated yet");
-    }
+public class CoreService extends Service {
+    protected static final int SERVICE_NOTIF_ID = 1;
+    protected CoreListenerStub mListener;
+    protected boolean mIsInForegroundMode = false;
+    protected Notification mServiceNotification = null;
 
     @Override
     public void onCreate() {
@@ -48,7 +51,40 @@ public abstract class CoreService extends Service {
 
         // No-op, just to ensure libraries have been loaded and thus prevent crash in log below 
         // if service has been started directly by Android (that can happen...)
-        Factory.instance(); 
+        Factory.instance();
+
+        if (Version.sdkAboveOrEqual(Version.API26_O_80)) {
+            Log.i("[Core Service] Android >= 8.0 detected, creating notification channel");
+            createServiceNotificationChannel();
+        }
+
+        mListener = new CoreListenerStub() {
+            @Override
+            public void onCallStateChanged(Core core, Call call, Call.State state, String message) {
+                if (state == Call.State.IncomingReceived || state == Call.State.IncomingEarlyMedia || state == Call.State.OutgoingInit) {
+                    if (core.getCallsNb() == 1) {
+                        // There is only one call, service shouldn't be in foreground mode yet
+                        if (!mIsInForegroundMode) {
+                            startForeground();
+                        }
+                    }
+                } else if (state == Call.State.End || state == Call.State.Released || state == Call.State.Error) {
+                    if (core.getCallsNb() == 0) {
+                        if (mIsInForegroundMode) {
+                            stopForeground();
+                        }
+                    }
+                }
+            }
+        };
+
+        if (CoreManager.isReady()) {
+            Core core = CoreManager.instance().getCore();
+            if (core != null) {
+                Log.i("[Core Service] Core Manager found, adding our listener");
+                core.addListener(mListener);
+            }
+        }
 
         Log.i("[Core Service] Created");
     }
@@ -56,7 +92,6 @@ public abstract class CoreService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        sInstance = this;
 
         Log.i("[Core Service] Started");
         return START_STICKY;
@@ -73,10 +108,14 @@ public abstract class CoreService extends Service {
     @Override
     public synchronized void onDestroy() {
         Log.i("[Core Service] Stopping");
+
         if (CoreManager.isReady()) {
-            CoreManager.instance().getCore().stop();
+            Core core = CoreManager.instance().getCore();
+            if (core != null) {
+                core.removeListener(mListener);
+                core.stop();
+            }
         }
-        sInstance = null;
 
         super.onDestroy();
     }
@@ -88,16 +127,48 @@ public abstract class CoreService extends Service {
 
     /* Foreground notification related */
 
-    public abstract void showForegroundServiceNotification();
-    public abstract void hideForegroundServiceNotification();
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void createServiceNotificationChannel() {
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        String id = "org_linphone_core_service_notification_channel";
+        CharSequence name = "Linphone Core Service";
+        String description = "Used to keep the call(s) alive";
 
-    public void startForeground() {
+        NotificationChannel channel = new NotificationChannel(id, name, NotificationManager.IMPORTANCE_LOW);
+        channel.setDescription(description);
+        channel.enableVibration(false);
+        channel.enableLights(false);
+        channel.setShowBadge(false);
+        notificationManager.createNotificationChannel(channel);
+
+        mServiceNotification = new NotificationCompat.Builder(this, id)
+            .setContentTitle(name)
+            .setContentText(description)
+            .setSmallIcon(getApplicationInfo().icon)
+            .setAutoCancel(false)
+            .setCategory(Notification.CATEGORY_SERVICE)
+            .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+            .setWhen(System.currentTimeMillis())
+            .setShowWhen(true)
+            .setOngoing(true)
+            .build();
+    }
+
+    public void showForegroundServiceNotification() {
+        startForeground(SERVICE_NOTIF_ID, mServiceNotification);
+    }
+
+    public void hideForegroundServiceNotification() {
+        stopForeground(true);
+    }
+
+    void startForeground() {
         Log.i("[Core Service] Starting service as foreground");
         showForegroundServiceNotification();
         mIsInForegroundMode = true;
     }
 
-    public void stopForeground() {
+    void stopForeground() {
         if (!mIsInForegroundMode) {
             Log.w("[Core Service] Service isn't in foreground mode, nothing to do");
             return;
@@ -106,9 +177,5 @@ public abstract class CoreService extends Service {
         Log.i("[Core Service] Stopping service as foreground");
         hideForegroundServiceNotification();
         mIsInForegroundMode = false;
-    }
-
-    public boolean isInForegroundMode() {
-        return mIsInForegroundMode;
     }
 }
