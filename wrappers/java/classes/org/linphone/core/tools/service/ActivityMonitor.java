@@ -132,8 +132,8 @@ public class ActivityMonitor implements Application.ActivityLifecycleCallbacks {
 
         @Override
         public void run() {
-            if (CoreService.isReady()) {
-                synchronized (CoreService.instance()) {
+            if (CoreManager.isReady()) {
+                synchronized (CoreManager.instance()) {
                     if (!isCanceled) {
                         if (ActivityMonitor.this.mRunningActivities == 0 && mActive) {
                             mActive = false;
