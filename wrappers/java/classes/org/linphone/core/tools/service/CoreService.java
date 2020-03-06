@@ -41,6 +41,12 @@ import org.linphone.mediastream.Version;
 
 public class CoreService extends Service {
     protected static final int SERVICE_NOTIF_ID = 1;
+    protected static final String SERVICE_NOTIFICATION_CHANNEL_ID = "org_linphone_core_service_notification_channel";
+    protected static final String SERVICE_NOTIFICATION_CHANNEL_NAME = "Linphone Core Service";
+    protected static final String SERVICE_NOTIFICATION_CHANNEL_DESC = "Used to keep the call(s) alive";
+    protected static final String SERVICE_NOTIFICATION_TITLE = "Linphone Core Service";
+    protected static final String SERVICE_NOTIFICATION_CONTENT = "Used to keep the call(s) alive";
+
     protected CoreListenerStub mListener;
     protected boolean mIsInForegroundMode = false;
     protected Notification mServiceNotification = null;
@@ -129,22 +135,21 @@ public class CoreService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void createServiceNotificationChannel() {
         Log.i("[Core Service] Android >= 8.0 detected, creating notification channel");
-        
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-        String id = "org_linphone_core_service_notification_channel";
-        CharSequence name = "Linphone Core Service";
-        String description = "Used to keep the call(s) alive";
 
-        NotificationChannel channel = new NotificationChannel(id, name, NotificationManager.IMPORTANCE_LOW);
-        channel.setDescription(description);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+
+        NotificationChannel channel = new NotificationChannel(SERVICE_NOTIFICATION_CHANNEL_ID, SERVICE_NOTIFICATION_CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW);
+        channel.setDescription(SERVICE_NOTIFICATION_CHANNEL_DESC);
         channel.enableVibration(false);
         channel.enableLights(false);
         channel.setShowBadge(false);
         notificationManager.createNotificationChannel(channel);
+    }
 
-        mServiceNotification = new NotificationCompat.Builder(this, id)
-            .setContentTitle(name)
-            .setContentText(description)
+    public void createServiceNotification() {
+        mServiceNotification = new NotificationCompat.Builder(this, SERVICE_NOTIFICATION_CHANNEL_ID)
+            .setContentTitle(SERVICE_NOTIFICATION_TITLE)
+            .setContentText(SERVICE_NOTIFICATION_CONTENT)
             .setSmallIcon(getApplicationInfo().icon)
             .setAutoCancel(false)
             .setCategory(Notification.CATEGORY_SERVICE)
@@ -156,6 +161,9 @@ public class CoreService extends Service {
     }
 
     public void showForegroundServiceNotification() {
+        if (mServiceNotification == null) {
+            createServiceNotification();
+        }
         startForeground(SERVICE_NOTIF_ID, mServiceNotification);
     }
 
