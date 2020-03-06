@@ -22,6 +22,9 @@ package org.linphone.core.tools.service;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.os.Build;
 
 import com.google.firebase.FirebaseApp;
@@ -110,8 +113,10 @@ public class CoreManager {
         mTimer.schedule(lTask, 0, 20);
 
         try {
-            mContext.startService(new Intent().setClass(mContext, CoreService.class));
-            Log.i("[Core Manager] Starting service");
+            Class serviceClass = getServiceClass();
+            if (serviceClass == null) serviceClass = CoreService.class;
+            mContext.startService(new Intent().setClass(mContext, serviceClass));
+            Log.i("[Core Manager] Starting service ", serviceClass.getName());
         } catch (IllegalStateException ise) {
             Log.w("[Core Manager] Failed to start service: ", ise);
             // On Android > 8, if app in background, startService will trigger an IllegalStateException when called from background
@@ -150,6 +155,27 @@ public class CoreManager {
         String appId = mContext.getString(resId);
         Log.i("[Core Manager] Push notification app id is [", appId, "] and token is [", token, "]");
         updatePushNotificationInformation(mCore.getNativePointer(), appId, token);
+    }
+
+    private Class getServiceClass() {
+        // Inspect services in package to get the class name of the Service that extends LinphoneService, assume first one
+        try {
+            PackageInfo packageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), PackageManager.GET_SERVICES);
+            ServiceInfo[] services = packageInfo.services;
+            for (ServiceInfo service : services) {
+                String serviceName = service.name;
+                Class serviceClass = Class.forName(serviceName);
+                if (CoreService.class.isAssignableFrom(serviceClass)) {
+                    Log.i("[Core Manager] Found a service that herits from org.linphone.core.tools.service.CoreService: ", serviceName);
+                    return serviceClass;
+                }
+            }
+        } catch (Exception e) {
+            Log.e("[Core Manager] Couldn't find Service class: ", e);
+        }
+
+        Log.w("[Core Manager] Failed to find a valid Service, continuing without it...");
+        return null;
     }
 
     private void dumpDeviceInformation() {
