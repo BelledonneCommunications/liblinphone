@@ -54,7 +54,6 @@ public class CoreService extends Service {
         Factory.instance();
 
         if (Version.sdkAboveOrEqual(Version.API26_O_80)) {
-            Log.i("[Core Service] Android >= 8.0 detected, creating notification channel");
             createServiceNotificationChannel();
         }
 
@@ -129,6 +128,8 @@ public class CoreService extends Service {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void createServiceNotificationChannel() {
+        Log.i("[Core Service] Android >= 8.0 detected, creating notification channel");
+        
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         String id = "org_linphone_core_service_notification_channel";
         CharSequence name = "Linphone Core Service";
