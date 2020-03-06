@@ -64,6 +64,8 @@ public class CoreManager {
     private Runnable mIterateRunnable;
     private Application.ActivityLifecycleCallbacks mActivityCallbacks;
 
+    private native void updatePushNotificationInformation(long ptr, String appId, String token);
+
     public CoreManager(Object context, Core core) {
         mContext = ((Context) context).getApplicationContext();
         mCore = core;
@@ -179,7 +181,7 @@ public class CoreManager {
         int resId = mContext.getResources().getIdentifier("gcm_defaultSenderId", "string", mContext.getPackageName());
         String appId = mContext.getString(resId);
         Log.i("[Core Manager] Push notification app id is [", appId, "] and token is [", token, "]");
-        mCore.updatePushNotificationInformation(appId, token);
+        updatePushNotificationInformation(mCore.getNativePointer(), appId, token);
     }
 
     private String getServiceClassName() {
