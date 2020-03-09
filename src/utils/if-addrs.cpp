@@ -26,6 +26,11 @@
 #include <ifaddrs.h>
 #include <net/if.h>
 #endif
+#if defined(_WIN32) || defined(_WIN32_WCE)
+#include <winsock2.h>
+#include <iptypes.h>
+#include <iphlpapi.h>
+#endif
 
 #include "if-addrs.h"
 
@@ -82,6 +87,43 @@ list<string> IfAddrs::fetchWithGetIfAddrs(){
 	}
 	return ret;
 }
+#else
+#if defined(_WIN32) || defined(_WIN32_WCE)
+list<string> IfAddrs::fetchWithGetAdaptersAddresses() {
+	list<string> ret;
+	ULONG flags = GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_FRIENDLY_NAME;
+	DWORD dwSize = 0;
+	DWORD dwRetVal = 0;
+	LPVOID lpMsgBuf = NULL;
+	ULONG outBufLen = INET6_ADDRSTRLEN * 64;
+	PIP_ADAPTER_ADDRESSES pAddresses = (IP_ADAPTER_ADDRESSES *)bctbx_malloc(outBufLen);
+	ULONG Iterations = 0;
+	PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
+	PIP_ADAPTER_UNICAST_ADDRESS pUnicast = NULL;
+
+	dwRetVal = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, pAddresses, &outBufLen);
+	if (dwRetVal == NO_ERROR) {
+		pCurrAddresses = pAddresses;
+		while (pCurrAddresses) {
+			pUnicast = pCurrAddresses->FirstUnicastAddress;
+			for (int i = 0; pUnicast != NULL; i++, pUnicast = pUnicast->Next) {
+				if (pUnicast->Address.lpSockaddr->sa_family == AF_INET){
+					char szAddr[INET_ADDRSTRLEN] = {};
+					WSAAddressToStringA(pUnicast->Address.lpSockaddr, sizeof pUnicast->Address.lpSockaddr, NULL, szAddr, &dwSize);
+					ret.push_back(szAddr);
+				} else if (pUnicast->Address.lpSockaddr->sa_family == AF_INET6) {
+					char szAddr[INET6_ADDRSTRLEN] = {};
+					WSAAddressToStringA(pUnicast->Address.lpSockaddr, sizeof pUnicast->Address.lpSockaddr, NULL, szAddr, &dwSize);
+					ret.push_back(szAddr);
+				}
+			}
+			pCurrAddresses = pCurrAddresses->Next;
+		}
+	}
+	bctbx_free(pAddresses);
+	return ret;
+}
+#endif
 #endif
 
 list<string> IfAddrs::fetchLocalAddresses(){
@@ -89,6 +131,10 @@ list<string> IfAddrs::fetchLocalAddresses(){
 	
 #ifdef HAVE_GETIFADDRS
 	ret = fetchWithGetIfAddrs();
+#else
+#if defined(_WIN32) || defined(_WIN32_WCE)
+	ret = fetchWithGetAdaptersAddresses();
+#endif
 #endif
 	/*
 	 * FIXME: implement here code for WIN32 that fetches all addresses of all interfaces.
