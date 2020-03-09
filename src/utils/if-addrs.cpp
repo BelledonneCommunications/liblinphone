@@ -89,34 +89,59 @@ list<string> IfAddrs::fetchWithGetIfAddrs(){
 }
 #else
 #if defined(_WIN32) || defined(_WIN32_WCE)
+
+void getAddress(SOCKET_ADDRESS * pAddr, std::list<std::string> * pList){
+	char szAddr[INET6_ADDRSTRLEN];
+	DWORD dwSize = INET6_ADDRSTRLEN;
+
+	if (pAddr->lpSockaddr->sa_family == AF_INET) {
+		dwSize = INET_ADDRSTRLEN;
+		memset(szAddr, 0, INET_ADDRSTRLEN);
+		if (WSAAddressToStringA(pAddr->lpSockaddr, pAddr->iSockaddrLength, nullptr, szAddr, &dwSize) == SOCKET_ERROR)
+			lInfo() << "ICE on fetchLocalAddresses cannot read IPV4 : " << WSAGetLastError();
+		pList->push_back(szAddr);
+		if (pList->back() == "127.0.0.1")// Remove locahost from the list
+			pList->pop_back();
+	}else if (pAddr->lpSockaddr->sa_family == AF_INET6 && !IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)pAddr->lpSockaddr)->sin6_addr)
+		&& !IN6_IS_ADDR_LOOPBACK(&((struct sockaddr_in6 *)pAddr->lpSockaddr)->sin6_addr)
+		) {
+		memset(szAddr, 0, INET6_ADDRSTRLEN);
+		if (WSAAddressToStringA(pAddr->lpSockaddr, pAddr->iSockaddrLength, nullptr, szAddr, &dwSize) == SOCKET_ERROR)
+			lInfo() << "ICE on fetchLocalAddresses cannot read IPV6 : " << WSAGetLastError();
+		pList->push_back(szAddr);
+	}
+}
 list<string> IfAddrs::fetchWithGetAdaptersAddresses() {
 	list<string> ret;
-	ULONG flags = GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_FRIENDLY_NAME;
+	ULONG flags = GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_FRIENDLY_NAME | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_ANYCAST; // Remove anycast and multicast from the search
 	DWORD dwSize = 0;
 	DWORD dwRetVal = 0;
-	LPVOID lpMsgBuf = NULL;
+	LPVOID lpMsgBuf = nullptr;
 	ULONG outBufLen = INET6_ADDRSTRLEN * 64;
 	PIP_ADAPTER_ADDRESSES pAddresses = (IP_ADAPTER_ADDRESSES *)bctbx_malloc(outBufLen);
 	ULONG Iterations = 0;
-	PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
-	PIP_ADAPTER_UNICAST_ADDRESS pUnicast = NULL;
+	PIP_ADAPTER_ADDRESSES pCurrAddresses = nullptr;
+	PIP_ADAPTER_UNICAST_ADDRESS pUnicast = nullptr; 
+	//PIP_ADAPTER_ANYCAST_ADDRESS pAnycast = nullptr;	// Commented just in case we need it
+	//PIP_ADAPTER_MULTICAST_ADDRESS pMulticast = nullptr;
 
-	dwRetVal = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, pAddresses, &outBufLen);
+	dwRetVal = GetAdaptersAddresses(AF_UNSPEC, flags, nullptr, pAddresses, &outBufLen);
+	if(dwRetVal == ERROR_BUFFER_OVERFLOW){// There is not enough space in address buffer. We need to get bigger and the size is given by outBufLen
+		bctbx_free(pAddresses);
+		pAddresses = (IP_ADAPTER_ADDRESSES *)bctbx_malloc(outBufLen);
+		dwRetVal = GetAdaptersAddresses(AF_UNSPEC, flags, nullptr, pAddresses, &outBufLen);
+	}
 	if (dwRetVal == NO_ERROR) {
 		pCurrAddresses = pAddresses;
 		while (pCurrAddresses) {
-			pUnicast = pCurrAddresses->FirstUnicastAddress;
-			for (int i = 0; pUnicast != NULL; i++, pUnicast = pUnicast->Next) {
-				if (pUnicast->Address.lpSockaddr->sa_family == AF_INET){
-					char szAddr[INET_ADDRSTRLEN] = {};
-					WSAAddressToStringA(pUnicast->Address.lpSockaddr, sizeof pUnicast->Address.lpSockaddr, NULL, szAddr, &dwSize);
-					ret.push_back(szAddr);
-				} else if (pUnicast->Address.lpSockaddr->sa_family == AF_INET6) {
-					char szAddr[INET6_ADDRSTRLEN] = {};
-					WSAAddressToStringA(pUnicast->Address.lpSockaddr, sizeof pUnicast->Address.lpSockaddr, NULL, szAddr, &dwSize);
-					ret.push_back(szAddr);
-				}
-			}
+			for (pUnicast = pCurrAddresses->FirstUnicastAddress; pUnicast != nullptr; pUnicast = pUnicast->Next)
+				getAddress(&pUnicast->Address, &ret);
+//			pAnycast = pCurrAddresses->FirstAnycastAddress;
+//			for (int i = 0; pAnycast != nullptr; i++, pAnycast = pAnycast->Next)
+//				getAddress(&pAnycast->Address, &ret);
+//			pMulticast = pCurrAddresses->FirstMulticastAddress;
+//			for (int i = 0; pMulticast != nullptr; i++, pMulticast = pMulticast->Next)
+//				getAddress(&pMulticast->Address, &ret);
 			pCurrAddresses = pCurrAddresses->Next;
 		}
 	}
@@ -137,12 +162,8 @@ list<string> IfAddrs::fetchLocalAddresses(){
 #endif
 #endif
 	/*
-	 * FIXME: implement here code for WIN32 that fetches all addresses of all interfaces.
-	 */
-	
-	/*
-	 * Finally if none of the above methods worked, fallback with linphone_core_get_local_ip() that uses the socket/connect/getsockname method
-	 * to get the local ip address that has the route to public internet.
+	 * Finally if none of the above methods worked, fallback with linphone_core_get_local_ip() that uses the
+	 * socket/connect/getsockname method to get the local ip address that has the route to public internet.
 	 */
 	if (ret.empty()){
 		lInfo() << "Fetching local ip addresses using the connect() method.";
