@@ -2563,6 +2563,15 @@ bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core) {
 	return core->push_notification_enabled;
 }
 
+void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable) {
+	lp_config_set_int(core->config, "misc", "auto_iterate", enable);
+	core->auto_iterate_enabled = enable;
+}
+
+bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core) {
+	return core->auto_iterate_enabled;
+}
+
 static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig *config, void * userdata, void *system_context, bool_t automatically_start) {
 	LinphoneFactory *lfactory = linphone_factory_get();
 	LinphoneCoreCbs *internal_cbs = _linphone_core_cbs_new();
@@ -2589,10 +2598,13 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->sal->setCallbacks(&linphone_sal_callbacks);
 
 	bool_t push_notification_default = FALSE;
+	bool_t auto_iterate_default = FALSE;
 #if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
 	push_notification_default = TRUE;
+	auto_iterate_default = TRUE;
 #endif
 	lc->push_notification_enabled = !!lp_config_get_int(lc->config, "net", "push_notification", push_notification_default);
+	lc->auto_iterate_enabled = !!lp_config_get_int(lc->config, "misc", "auto_iterate", auto_iterate_default);
 
 #ifdef __ANDROID__
 	if (system_context) {

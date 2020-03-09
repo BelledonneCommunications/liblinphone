@@ -6202,6 +6202,24 @@ LINPHONE_PUBLIC void linphone_core_set_push_notification_enabled(LinphoneCore *c
  */
 LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core);
 
+/**
+ * Enable or disable the automatic schedule of #linphone_core_iterate() method on Android & iOS.
+ * If enabled, #linphone_core_iterate() will be called on the main thread every 20ms automatically.
+ * If disabled, it is the application that must do this job.
+ * @param[in] core The #LinphoneCore
+ * @param[in] enable TRUE to enable auto iterate, FALSE to disable
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable);
+
+/**
+ * Gets whether auto iterate is enabled or not (Android & iOS only).
+ * @param[in] core The #LinphoneCore
+ * @return TRUE if #linphone_core_iterate() is scheduled automatically, FALSE otherwise
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core);
+
 
 #ifdef __cplusplus
 }

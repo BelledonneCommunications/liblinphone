@@ -96,26 +96,31 @@ public class CoreManager {
     }
 
     public void onLinphoneCoreStart() {
-        mIterateRunnable =
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mCore != null) {
-                            mCore.iterate();
+        if (mCore.isAutoIterateEnabled()) {
+            mIterateRunnable =
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            if (mCore != null) {
+                                mCore.iterate();
+                            }
                         }
-                    }
-                };
-        TimerTask lTask =
-                new TimerTask() {
-                    @Override
-                    public void run() {
-                        AndroidDispatcher.dispatchOnUIThread(mIterateRunnable);
-                    }
-                };
+                    };
+            TimerTask lTask =
+                    new TimerTask() {
+                        @Override
+                        public void run() {
+                            AndroidDispatcher.dispatchOnUIThread(mIterateRunnable);
+                        }
+                    };
 
-        /*use schedule instead of scheduleAtFixedRate to avoid iterate from being call in burst after cpu wake up*/
-        mTimer = new Timer("Linphone Core iterate scheduler");
-        mTimer.schedule(lTask, 0, 20);
+            /*use schedule instead of scheduleAtFixedRate to avoid iterate from being call in burst after cpu wake up*/
+            mTimer = new Timer("Linphone Core iterate scheduler");
+            mTimer.schedule(lTask, 0, 20);
+            Log.i("[Core Manager] Call to core.iterate() scheduled every 20ms");
+        } else {
+            Log.w("[Core Manager] Auto core.iterate() isn't enabled, ensure you do it in your application!");
+        }
 
         try {
             Class serviceClass = getServiceClass();

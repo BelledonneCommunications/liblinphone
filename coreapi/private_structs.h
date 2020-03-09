@@ -850,6 +850,7 @@ namespace LinphonePrivate {
 	bool_t is_unreffing; \
 	bool_t push_notification_enabled; \
 	char * push_notification_param; \
-	char * push_notification_prid;
+	char * push_notification_prid; \
+	bool_t auto_iterate_enabled;
 
 #endif /* _PRIVATE_STRUCTS_H_ */
