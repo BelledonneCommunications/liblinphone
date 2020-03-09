@@ -30,6 +30,7 @@ public:
 	static std::list<std::string> fetchLocalAddresses();
 private:
 	static std::list<std::string> fetchWithGetIfAddrs();
+	static std::list<std::string> fetchWithGetAdaptersAddresses();
 };
 
 LINPHONE_END_NAMESPACE
