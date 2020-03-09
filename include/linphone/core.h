@@ -233,6 +233,8 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsChatRoomReadCb chat_room_read;
 	LinphoneCoreCbsChatRoomSubjectChangedCb chat_room_subject_changed;
 	LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb chat_room_ephemeral_message_deleted;
+	LinphoneCoreCbsFirstCallStartedCb first_call_started;
+	LinphoneCoreCbsLastCallEndedCb last_call_ended;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -806,6 +808,34 @@ LINPHONE_PUBLIC LinphoneCoreCbsQrcodeFoundCb linphone_core_cbs_get_qrcode_found(
  * @param[in] cb The callback to use
  **/
 LINPHONE_PUBLIC void linphone_core_cbs_set_qrcode_found(LinphoneCoreCbs *cbs, LinphoneCoreCbsQrcodeFoundCb cb);
+
+/**
+ * Gets the first call started callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsFirstCallStartedCb linphone_core_cbs_get_first_call_started(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the first call started callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ **/
+LINPHONE_PUBLIC void linphone_core_cbs_set_first_call_started(LinphoneCoreCbs *cbs, LinphoneCoreCbsFirstCallStartedCb cb);
+
+/**
+ * Gets the last call ended callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsLastCallEndedCb linphone_core_cbs_get_last_call_ended(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the last call ended callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ **/
+LINPHONE_PUBLIC void linphone_core_cbs_set_last_call_ended(LinphoneCoreCbs *cbs, LinphoneCoreCbsLastCallEndedCb cb);
 
 /**
  * @brief Sets a callback to call each time the echo-canceler calibration is completed.

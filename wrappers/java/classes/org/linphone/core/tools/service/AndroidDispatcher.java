@@ -22,6 +22,9 @@ package org.linphone.core.tools.service;
 import android.os.Handler;
 import android.os.Looper;
 
+/**
+ * Utility class to be able to run code on the app main thread.
+ */
 public final class AndroidDispatcher {
     private static final Handler sHandler = new Handler(Looper.getMainLooper());
 

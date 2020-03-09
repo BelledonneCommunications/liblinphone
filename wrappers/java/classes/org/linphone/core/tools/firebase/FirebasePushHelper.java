@@ -36,6 +36,9 @@ import org.linphone.core.tools.PushNotificationUtils;
 import org.linphone.core.tools.service.CoreManager;
 
 @Keep
+/**
+ * This class attempts to initialize firebase if it is available.
+ */
 public class FirebasePushHelper implements PushNotificationUtils.PushHelperInterface {
     public FirebasePushHelper() {
     }

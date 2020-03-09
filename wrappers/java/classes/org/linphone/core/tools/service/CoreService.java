@@ -39,6 +39,11 @@ import org.linphone.core.Factory;
 import org.linphone.core.tools.Log;
 import org.linphone.mediastream.Version;
 
+/**
+ * This service is used to monitor activities lifecycle and detect when app is in background/foreground.
+ * It is also used as a foreground service while at least one call is running to prevent the app from getting killed.
+ * Finally when task is removed, it will stop itself and the Core.
+ */
 public class CoreService extends Service {
     protected static final int SERVICE_NOTIF_ID = 1;
     protected static final String SERVICE_NOTIFICATION_CHANNEL_ID = "org_linphone_core_service_notification_channel";
@@ -47,9 +52,10 @@ public class CoreService extends Service {
     protected static final String SERVICE_NOTIFICATION_TITLE = "Linphone Core Service";
     protected static final String SERVICE_NOTIFICATION_CONTENT = "Used to keep the call(s) alive";
 
-    protected CoreListenerStub mListener;
     protected boolean mIsInForegroundMode = false;
     protected Notification mServiceNotification = null;
+
+    private CoreListenerStub mListener;
 
     @Override
     public void onCreate() {
@@ -65,20 +71,17 @@ public class CoreService extends Service {
 
         mListener = new CoreListenerStub() {
             @Override
-            public void onCallStateChanged(Core core, Call call, Call.State state, String message) {
-                if (state == Call.State.IncomingReceived || state == Call.State.IncomingEarlyMedia || state == Call.State.OutgoingInit) {
-                    if (core.getCallsNb() == 1) {
-                        // There is only one call, service shouldn't be in foreground mode yet
-                        if (!mIsInForegroundMode) {
-                            startForeground();
-                        }
-                    }
-                } else if (state == Call.State.End || state == Call.State.Released || state == Call.State.Error) {
-                    if (core.getCallsNb() == 0) {
-                        if (mIsInForegroundMode) {
-                            stopForeground();
-                        }
-                    }
+            public void onFirstCallStarted(Core core) {
+                // There is only one call, service shouldn't be in foreground mode yet
+                if (!mIsInForegroundMode) {
+                    startForeground();
+                }
+            }
+
+            @Override
+            public void onLastCallEnded(Core core) {
+                if (mIsInForegroundMode) {
+                    stopForeground();
                 }
             }
         };
@@ -133,6 +136,10 @@ public class CoreService extends Service {
     /* Foreground notification related */
 
     @RequiresApi(api = Build.VERSION_CODES.O)
+    /**
+     * This method should create a notification channel for the foreground service notification.
+     * On Android < 8 it is not called.
+     */
     public void createServiceNotificationChannel() {
         Log.i("[Core Service] Android >= 8.0 detected, creating notification channel");
 
@@ -146,6 +153,10 @@ public class CoreService extends Service {
         notificationManager.createNotificationChannel(channel);
     }
 
+    /**
+     * This method should create a notification for the foreground service notification.
+     * Remember on Android > 8 to use the notification channel created in createServiceNotificationChannel().
+     */
     public void createServiceNotification() {
         mServiceNotification = new NotificationCompat.Builder(this, SERVICE_NOTIFICATION_CHANNEL_ID)
             .setContentTitle(SERVICE_NOTIFICATION_TITLE)
@@ -160,6 +171,9 @@ public class CoreService extends Service {
             .build();
     }
 
+    /*
+     * This method is called when the service should be started as foreground.
+     */
     public void showForegroundServiceNotification() {
         if (mServiceNotification == null) {
             createServiceNotification();
@@ -167,6 +181,9 @@ public class CoreService extends Service {
         startForeground(SERVICE_NOTIF_ID, mServiceNotification);
     }
 
+    /*
+     * This method is called when the service should be stopped as foreground.
+     */
     public void hideForegroundServiceNotification() {
         stopForeground(true);
     }

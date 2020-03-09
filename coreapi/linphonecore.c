@@ -512,6 +512,22 @@ void linphone_core_cbs_set_qrcode_found(LinphoneCoreCbs *cbs, LinphoneCoreCbsQrc
 	cbs->vtable->qrcode_found = cb;
 }
 
+LinphoneCoreCbsFirstCallStartedCb linphone_core_cbs_get_first_call_started(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->first_call_started;
+}
+
+void linphone_core_cbs_set_first_call_started(LinphoneCoreCbs *cbs, LinphoneCoreCbsFirstCallStartedCb cb) {
+	cbs->vtable->first_call_started = cb;
+}
+
+LinphoneCoreCbsLastCallEndedCb linphone_core_cbs_get_last_call_ended(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->last_call_ended;
+}
+
+void linphone_core_cbs_set_last_call_ended(LinphoneCoreCbs *cbs, LinphoneCoreCbsLastCallEndedCb cb) {
+	cbs->vtable->last_call_ended = cb;
+}
+
 void linphone_core_cbs_set_ec_calibration_result(LinphoneCoreCbs *cbs, LinphoneCoreCbsEcCalibrationResultCb cb) {
 	cbs->vtable->ec_calibration_result = cb;
 }

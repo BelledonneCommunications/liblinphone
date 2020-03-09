@@ -25,6 +25,9 @@ import org.linphone.core.tools.Log;
 
 import java.lang.reflect.Constructor;
 
+/**
+ * This class wraps the FirebasePushHelper class.
+ */
 public class PushNotificationUtils {
     private static PushHelperInterface mHelper;
 

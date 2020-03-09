@@ -524,6 +524,8 @@ static void dependent_proxy_dependency_with_core_reloaded(void){
 	linphone_core_manager_destroy(pauline);
 }
 
+extern void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid);
+
 static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, bool_t multi_config, bool_t both_push) {
 	const char *rc = "marie_rc";
 	if (multi_config) 
