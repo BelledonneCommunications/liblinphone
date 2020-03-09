@@ -29,7 +29,7 @@ import org.linphone.core.tools.Log;
 
 /*
  * Purpose of this receiver is to disable keep alives when device is on idle
- * */
+ */
 public class DozeReceiver extends android.content.BroadcastReceiver {
     private AndroidPlatformHelper mHelper;
 

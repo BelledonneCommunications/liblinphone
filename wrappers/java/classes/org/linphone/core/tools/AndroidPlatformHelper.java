@@ -61,7 +61,6 @@ import java.util.ArrayList;
 /**
  * This class is instanciated directly by the linphone library in order to access specific features only accessible in java.
  **/
-
 public class AndroidPlatformHelper {
     private long mNativePtr;
     private Context mContext;

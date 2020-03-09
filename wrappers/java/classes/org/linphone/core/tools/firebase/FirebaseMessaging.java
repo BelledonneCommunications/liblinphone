@@ -33,6 +33,10 @@ import org.linphone.core.Core;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.service.CoreManager;
 
+
+/**
+ * Firebase cloud messaging service implementation used to received push notification.
+ */
 public class FirebaseMessaging extends FirebaseMessagingService {
     public FirebaseMessaging() {
     }

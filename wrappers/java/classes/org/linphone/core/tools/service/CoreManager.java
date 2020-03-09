@@ -41,6 +41,11 @@ import java.lang.IllegalStateException;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * This class is instanciated by the Core and handles the foreground/background API calls,
+ * the push notification configuration of the Core when a token is received,
+ * the scheduling of the iterate() function and the start of the CoreService service.
+ */
 public class CoreManager {
     private static CoreManager sInstance;
 

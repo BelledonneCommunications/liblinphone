@@ -192,6 +192,11 @@ void simple_call_base_2(bool_t enable_multicast_recv_side, bool_t disable_soundc
 
 	linphone_core_enable_audio_multicast(pauline->lc, enable_multicast_recv_side);
 
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
 	if (use_multipart_invite_body) {
 		LinphoneCallParams *params = linphone_core_create_call_params(marie->lc, NULL);
 
@@ -208,6 +213,11 @@ void simple_call_base_2(bool_t enable_multicast_recv_side, bool_t disable_soundc
 	} else {
 		BC_ASSERT_TRUE(call(marie, pauline));
 	}
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
@@ -254,6 +264,10 @@ void simple_call_base_2(bool_t enable_multicast_recv_side, bool_t disable_soundc
 
 	liblinphone_tester_check_rtcp(marie, pauline);
 	end_call(marie, pauline);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 
