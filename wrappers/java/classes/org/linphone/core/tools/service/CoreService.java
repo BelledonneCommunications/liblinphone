@@ -23,7 +23,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
@@ -32,7 +31,6 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
-import org.linphone.core.Call;
 import org.linphone.core.Core;
 import org.linphone.core.CoreListenerStub;
 import org.linphone.core.Factory;
@@ -159,16 +157,16 @@ public class CoreService extends Service {
      */
     public void createServiceNotification() {
         mServiceNotification = new NotificationCompat.Builder(this, SERVICE_NOTIFICATION_CHANNEL_ID)
-            .setContentTitle(SERVICE_NOTIFICATION_TITLE)
-            .setContentText(SERVICE_NOTIFICATION_CONTENT)
-            .setSmallIcon(getApplicationInfo().icon)
-            .setAutoCancel(false)
-            .setCategory(Notification.CATEGORY_SERVICE)
-            .setVisibility(NotificationCompat.VISIBILITY_SECRET)
-            .setWhen(System.currentTimeMillis())
-            .setShowWhen(true)
-            .setOngoing(true)
-            .build();
+                .setContentTitle(SERVICE_NOTIFICATION_TITLE)
+                .setContentText(SERVICE_NOTIFICATION_CONTENT)
+                .setSmallIcon(getApplicationInfo().icon)
+                .setAutoCancel(false)
+                .setCategory(Notification.CATEGORY_SERVICE)
+                .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+                .setWhen(System.currentTimeMillis())
+                .setShowWhen(true)
+                .setOngoing(true)
+                .build();
     }
 
     /*
