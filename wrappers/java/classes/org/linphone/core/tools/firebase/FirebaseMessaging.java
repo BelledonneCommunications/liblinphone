@@ -19,19 +19,19 @@
  */
 package org.linphone.core.tools.firebase;
 
-import android.content.Intent;
 import android.content.ComponentName;
-import android.content.pm.ResolveInfo;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
-import java.util.List;
-
 import org.linphone.core.Core;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.service.CoreManager;
+
+import java.util.List;
 
 
 /**

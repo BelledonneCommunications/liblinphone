@@ -30,14 +30,10 @@ import android.os.Build;
 import com.google.firebase.FirebaseApp;
 
 import org.linphone.core.Core;
-import org.linphone.core.Factory;
-import org.linphone.core.LogCollectionState;
-import org.linphone.core.ProxyConfig;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
 import org.linphone.mediastream.Version;
 
-import java.lang.IllegalStateException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -88,6 +84,8 @@ public class CoreManager {
             if (!PushNotificationUtils.isAvailable(mContext)) {
                 Log.w("[Core Manager] Push notifications aren't available");
             }
+        } else {
+            Log.w("[Core Manager] Push notifications aren't enabled");
         }
     }
 
@@ -138,9 +136,11 @@ public class CoreManager {
     public void onLinphoneCoreStop() {
         Log.i("[Core Manager] Destroying");
 
-        mTimer.cancel();
-        mTimer.purge();
-        mTimer = null;
+        if (mTimer != null) {
+            mTimer.cancel();
+            mTimer.purge();
+            mTimer = null;
+        }
 
         mCore = null; // To allow the garbage colletor to free the Core
         sInstance = null;
