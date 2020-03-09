@@ -319,6 +319,23 @@ void CallPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &sess
 			break;
 	}
 	linphone_call_notify_state_changed(L_GET_C_BACK_PTR(q), static_cast<LinphoneCallState>(state), message.c_str());
+
+	LinphoneCore *lc = q->getCore()->getCCore();
+	switch(state){
+		case CallSession::State::OutgoingInit:
+		case CallSession::State::IncomingReceived:
+			if (linphone_core_get_calls_nb(lc) == 1) {
+				linphone_core_notify_first_call_started(lc);
+			}
+			break;
+		case CallSession::State::Released:
+			if (linphone_core_get_calls_nb(lc) == 0) {
+				linphone_core_notify_last_call_ended(lc);
+			}
+			break;
+		default:
+			break;
+	}
 }
 
 void CallPrivate::onCallSessionTransferStateChanged (const shared_ptr<CallSession> &session, CallSession::State state) {
