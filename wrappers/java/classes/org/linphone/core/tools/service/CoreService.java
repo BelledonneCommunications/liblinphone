@@ -70,6 +70,7 @@ public class CoreService extends Service {
         mListener = new CoreListenerStub() {
             @Override
             public void onFirstCallStarted(Core core) {
+                Log.i("[Core Service] First call started");
                 // There is only one call, service shouldn't be in foreground mode yet
                 if (!mIsInForegroundMode) {
                     startForeground();
@@ -78,6 +79,7 @@ public class CoreService extends Service {
 
             @Override
             public void onLastCallEnded(Core core) {
+                Log.i("[Core Service] Last call ended");
                 if (mIsInForegroundMode) {
                     stopForeground();
                 }
