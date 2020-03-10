@@ -29,9 +29,12 @@ import android.os.Build;
 
 import com.google.firebase.FirebaseApp;
 
+import org.linphone.core.Call;
 import org.linphone.core.Core;
+import org.linphone.core.CoreListenerStub;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
+import org.linphone.core.tools.audio.AudioFocusHelper;
 import org.linphone.mediastream.Version;
 
 import java.util.Timer;
@@ -62,6 +65,9 @@ public class CoreManager {
     private Runnable mIterateRunnable;
     private Application.ActivityLifecycleCallbacks mActivityCallbacks;
 
+    private CoreListenerStub mListener;
+    private AudioFocusHelper mAudioFocusHelper;
+
     private native void updatePushNotificationInformation(long ptr, String appId, String token);
 
     public CoreManager(Object context, Core core) {
@@ -72,7 +78,6 @@ public class CoreManager {
         // Dump some debugging information to the logs
         dumpDeviceInformation();
         dumpLinphoneInformation();
-        Log.i("[Core Manager] Ready");
 
         mActivityCallbacks = new ActivityMonitor();
         ((Application) mContext).registerActivityLifecycleCallbacks(mActivityCallbacks);
@@ -87,6 +92,31 @@ public class CoreManager {
         } else {
             Log.w("[Core Manager] Push notifications aren't enabled");
         }
+        
+        mAudioFocusHelper = new AudioFocusHelper(mContext);
+
+        mListener = new CoreListenerStub() {
+            @Override
+            public void onLastCallEnded(Core core) {
+                Log.i("[Core Manager] Last call ended");
+                mAudioFocusHelper.releaseRingingAudioFocus();
+                mAudioFocusHelper.releaseCallAudioFocus();
+            }
+
+            @Override
+            public void onCallStateChanged(Core core, Call call, Call.State state, String message) {
+                if (state == Call.State.IncomingReceived && core.getCallsNb() == 1) {
+                    Log.i("[Core Manager] Incoming call received, no other call, acquire ringing audio focus");
+                    mAudioFocusHelper.requestRingingAudioFocus();
+                } else if (state == Call.State.OutgoingInit || state == Call.State.StreamsRunning) {
+                    Log.i("[Core Manager] Call active, ensure audio focus granted");
+                    mAudioFocusHelper.requestCallAudioFocus();
+                }
+            }
+        };
+        mCore.addListener(mListener);
+
+        Log.i("[Core Manager] Ready");
     }
 
     public Core getCore() {
@@ -144,6 +174,16 @@ public class CoreManager {
 
         mCore = null; // To allow the garbage colletor to free the Core
         sInstance = null;
+    }
+
+    public void onAudioFocusLost() {
+        Log.i("[Core Manager] App has lost audio focus, pause current call if any");
+        if (mCore != null) {
+            Call call = mCore.getCurrentCall();
+            if (call != null) {
+                call.pause();
+            }
+        }
     }
 
     public void onBackgroundMode() {
