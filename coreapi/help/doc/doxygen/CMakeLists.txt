@@ -23,12 +23,6 @@
 if(ENABLE_DOC OR ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAPPER OR ENABLE_SWIFT_WRAPPER)
 	find_package(Doxygen REQUIRED)
 	if(DOXYGEN_FOUND)
-		if (DOXYGEN_VERSION VERSION_EQUAL "1.8.17" OR DOXYGEN_VERSION VERSION_GREATER "1.8.17")
-			message(FATAL_ERROR
-				"Your version of Doxygen (${DOXYGEN_VERSION}) is known to malfunction with some of our "
-				"macro definitions, which causes errors while wrapprers generation. Please install an "
-				"older version of Doxygen (< 1.8.17) or disable documentation and wrapper generation.")
-		endif()
 		set(top_srcdir "${PROJECT_SOURCE_DIR}")
 		set(DOXYGEN_INPUT "")
 		foreach (HEADER_FILE ${LINPHONE_HEADER_FILES})
