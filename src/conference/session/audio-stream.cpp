@@ -71,7 +71,7 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 		zrtpParams.selfUri = selfUri;
 		/* Get key lifespan from config file, default is 0:forever valid */
 		zrtpParams.limeKeyTimeSpan = bctbx_time_string_to_sec(lp_config_get_string(linphone_core_get_config(getCCore()), "sip", "lime_key_validity", "0"));
-		setZrtpCryptoTypesParameters(&zrtpParams, params.remoteStreamDescription ? params.remoteStreamDescription->haveZrtpHash : false);
+		setZrtpCryptoTypesParameters(&zrtpParams, params.localIsOfferer);
 		audio_stream_enable_zrtp(mStream, &zrtpParams);
 		if (peerUri)
 			ms_free(peerUri);
@@ -81,7 +81,7 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 	initializeSessions((MediaStream*)mStream);
 }
 
-void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool haveRemoteZrtpHash) {
+void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool localIsOfferer) {
 	const MSCryptoSuite *srtpSuites = linphone_core_get_srtp_crypto_suites(getCCore());
 	if (srtpSuites) {
 		for(int i = 0; (srtpSuites[i] != MS_CRYPTO_SUITE_INVALID) && (i < SAL_CRYPTO_ALGO_MAX) && (i < MS_MAX_ZRTP_CRYPTO_TYPES); i++) {
@@ -128,7 +128,10 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool hav
 	params->sasTypesCount = linphone_core_get_zrtp_sas_suites(getCCore(), params->sasTypes);
 	params->keyAgreementsCount = linphone_core_get_zrtp_key_agreement_suites(getCCore(), params->keyAgreements);
 	
-	params->autoStart =  (getMediaSessionPrivate().getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) && (haveRemoteZrtpHash == false) ;
+	/* ZRTP Autostart: avoid starting a ZRTP session before we got peer's lime Ik */
+	/* We MUST start if ZRTP is not active otherwise we break RFC compatibility */
+	/* When we are not offerer, we received the lime-Ik in SDP so we can start upon ZRTP Hello reception */
+	params->autoStart =  (getMediaSessionPrivate().getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) || (!localIsOfferer);
 }
 
 void MS2AudioStream::configureAudioStream(){
@@ -377,12 +380,15 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP) && isMain()) {
 		getMediaSessionPrivate().performMutualAuthentication();
 		LinphoneMediaEncryption requestedMediaEncryption = getMediaSessionPrivate().getParams()->getMediaEncryption();
-		//Start zrtp if remote has offered it or if local is configured for zrtp and is the offerrer. If not, defered when ACK is received
-		if ((requestedMediaEncryption == LinphoneMediaEncryptionZRTP && params.localIsOfferer)
-			|| (params.remoteStreamDescription->haveZrtpHash == 1)) {
-			startZrtpPrimaryChannel(params);
-		}else if (requestedMediaEncryption == LinphoneMediaEncryptionZRTP && !params.localIsOfferer){
-			mStartZrtpLater = true;
+		// Start ZRTP: If requested (by local config or peer giving zrtp-hash in SDP, we shall start the ZRTP engine
+		if ((requestedMediaEncryption == LinphoneMediaEncryptionZRTP) || (params.remoteStreamDescription->haveZrtpHash == 1)) {
+			// However, when we are receiver, if peer offers a lime-Ik attribute, we shall delay the start (and ZRTP Hello Packet sending)
+			// until the ACK has been received to ensure the caller got our 200 Ok (with lime-Ik in it) before starting its ZRTP engine
+			if (!params.localIsOfferer && sal_stream_description_has_limeIk(params.remoteStreamDescription)) {
+				mStartZrtpLater = true;
+			} else {
+				startZrtpPrimaryChannel(params);
+			}
 		}
 	}
 	
