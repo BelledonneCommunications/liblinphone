@@ -34,7 +34,7 @@ import org.linphone.core.Core;
 import org.linphone.core.CoreListenerStub;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
-import org.linphone.core.tools.audio.AudioFocusHelper;
+import org.linphone.core.tools.audio.AudioHelper;
 import org.linphone.mediastream.Version;
 
 import java.util.Timer;
@@ -66,7 +66,7 @@ public class CoreManager {
     private Application.ActivityLifecycleCallbacks mActivityCallbacks;
 
     private CoreListenerStub mListener;
-    private AudioFocusHelper mAudioFocusHelper;
+    private AudioHelper mAudioHelper;
 
     private native void updatePushNotificationInformation(long ptr, String appId, String token);
 
@@ -93,24 +93,36 @@ public class CoreManager {
             Log.w("[Core Manager] Push notifications aren't enabled");
         }
         
-        mAudioFocusHelper = new AudioFocusHelper(mContext);
+        mAudioHelper = new AudioHelper(mContext);
 
         mListener = new CoreListenerStub() {
             @Override
             public void onLastCallEnded(Core core) {
                 Log.i("[Core Manager] Last call ended");
-                mAudioFocusHelper.releaseRingingAudioFocus();
-                mAudioFocusHelper.releaseCallAudioFocus();
+                if (core.isNativeRingingEnabled()) {
+                    mAudioHelper.stopRinging();
+                } else {
+                    mAudioHelper.releaseRingingAudioFocus();
+                }
+                mAudioHelper.releaseCallAudioFocus();
             }
 
             @Override
             public void onCallStateChanged(Core core, Call call, Call.State state, String message) {
                 if (state == Call.State.IncomingReceived && core.getCallsNb() == 1) {
-                    Log.i("[Core Manager] Incoming call received, no other call, acquire ringing audio focus");
-                    mAudioFocusHelper.requestRingingAudioFocus();
+                    if (core.isNativeRingingEnabled()) {
+                        Log.i("[Core Manager] Incoming call received, no other call, start ringing");
+                        mAudioHelper.startRinging(mContext, core.getRing());
+                    } else {
+                        Log.i("[Core Manager] Incoming call received, no other call, acquire ringing audio focus");
+                        mAudioHelper.requestRingingAudioFocus();
+                    }
+                } else if (state == Call.State.Connected && call.getDir() == Call.Dir.Incoming && core.isNativeRingingEnabled()) {
+                    Log.i("[Core Manager] Stop incoming call ringing");
+                    mAudioHelper.stopRinging();
                 } else if (state == Call.State.OutgoingInit || state == Call.State.StreamsRunning) {
                     Log.i("[Core Manager] Call active, ensure audio focus granted");
-                    mAudioFocusHelper.requestCallAudioFocus();
+                    mAudioHelper.requestCallAudioFocus();
                 }
             }
         };
