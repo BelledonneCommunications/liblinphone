@@ -368,7 +368,7 @@ class JavaTranslator(object):
             'methods': [],
             'jniMethods': [],
         }
-
+        classDict['toStringFound'] = False
         classDict['isLinphoneFactory'] = _class.name.to_camel_case() == "Factory"
         classDict['isLinphoneCore'] = _class.name.to_camel_case() == "Core"
         hasCoreAccessor = _class.name.to_camel_case() in CORE_ACCESSOR_LIST
@@ -390,6 +390,8 @@ class JavaTranslator(object):
                 jniMethodDict = self.translate_jni_method(_class, method)
                 classDict['methods'].append(methodDict)
                 classDict['jniMethods'].append(jniMethodDict)
+                if (methodDict['name'] == "toString"):
+                    classDict['toStringFound'] = True
             except AbsApi.Error as e:
                 logging.error('Could not translate {0}: {1}'.format(method.name.to_snake_case(fullName=True), e.args[0]))
 
@@ -620,6 +622,7 @@ class JavaClass(object):
         self.jniMethods = self._class['jniMethods']
         self.briefDoc = self._class['briefDoc']
         self.detailedDoc = self._class['detailedDoc']
+        self.toStringNotFound = not self._class['toStringFound']
         self.enums = []
         for enum in _class.enums:
             self.enums.append(JavaEnum(package, enum, translator))
