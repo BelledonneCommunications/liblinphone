@@ -3255,9 +3255,11 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_media_device(LinphoneCore *lc, 
 LINPHONE_PUBLIC void linphone_core_stop_ringing(LinphoneCore *lc);
 
 /**
- * Sets the path to a wav file used for ringing. The file must be a wav 16bit linear. Local ring is disabled if null.
+ * Sets the path to a wav file used for ringing. The file must be a wav 16bit linear.
+ * If null, ringing is disable unless #linphone_core_get_use_native_ringing is enabled, in which case we use the device ringtone.
  * @param[in] lc #LinphoneCore object
- * @param[in] path The path to a wav file to be used for ringing
+ * @param[in] path The path to a wav file to be used for ringing, null to disable or use device ringing depending on #linphone_core_get_use_native_ringing.
+ * @maybenil
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_ring(LinphoneCore *lc, const char *path);
@@ -3269,6 +3271,22 @@ LINPHONE_PUBLIC void linphone_core_set_ring(LinphoneCore *lc, const char *path);
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC const char *linphone_core_get_ring(const LinphoneCore *lc);
+
+/**
+ * Sets whether to use the native ringing (Android only).
+ * @param[in] core #LinphoneCore object
+ * @param[in] enable True to enable native ringing, false otherwise
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_set_native_ringing_enabled(LinphoneCore *core, bool_t enable);
+
+/**
+ * Returns whether the native ringing is enabled or not.
+ * @param[in] core #LinphoneCore object
+ * @return True if we use the native ringing, false otherwise
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_native_ringing_enabled(const LinphoneCore *core);
 
 /**
  * Specify whether the tls server certificate must be verified when connecting to a SIP/TLS server.
