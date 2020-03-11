@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package {{packageName}};
 
+import java.io.Serializable;
 import org.jetbrains.annotations.Nullable;
 {{#imports}}
 import {{import}}
@@ -50,7 +51,7 @@ import org.linphone.core.tools.h264.OpenH264DownloadHelper;
 {{/lines}}
 {{/detailedDoc}}
 */
-public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphoneFactory}}interface{{/isNotLinphoneFactory}} {{className}} {
+public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphoneFactory}}interface{{/isNotLinphoneFactory}} {{className}}{{#isNotLinphoneFactory}} extends Serializable{{/isNotLinphoneFactory}} {
 {{#enums}}
     public enum {{{className}}} {
     {{#values}}
@@ -160,12 +161,14 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
       * @return the nativer pointer, as long
       */
     {{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public long getNativePointer();
+
+    {{#toStringNotFound}}{{#isNotLinphoneFactory}}public String toString();{{/isNotLinphoneFactory}}{{/toStringNotFound}}
 }
 
 class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#isNotLinphoneFactory}}implements{{/isNotLinphoneFactory}} {{className}} {
 
     protected long nativePtr = 0;
-    protected Object userData = null;{{#hasCoreAccessor}}
+    protected transient Object userData = null;{{#hasCoreAccessor}}
     protected Core core = null;{{/hasCoreAccessor}}
 
     protected {{classImplName}}(long ptr) {
@@ -285,4 +288,9 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
     public Object getUserData() {
         return userData;
     }
+
+    {{#toStringNotFound}}{{#isNotLinphoneFactory}}@Override
+    public String toString() {
+        return "Java object [" + super.toString() + "], native pointer [" + String.format("0x%08x", nativePtr) + "]";
+    }{{/isNotLinphoneFactory}}{{/toStringNotFound}}
 }
