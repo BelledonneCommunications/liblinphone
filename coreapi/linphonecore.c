@@ -4815,6 +4815,18 @@ const char *linphone_core_get_ring(const LinphoneCore *lc){
 	return lc->sound_conf.local_ring;
 }
 
+void linphone_core_set_native_ringing_enabled(LinphoneCore *core, bool_t enable) {
+	lp_config_set_int(core->config, "sound", "use_native_ringing", enable);
+}
+
+bool_t linphone_core_is_native_ringing_enabled(const LinphoneCore *core) {
+	bool_t default_value = FALSE;
+#ifdef __ANDROID__
+	default_value = TRUE;
+#endif
+	return !!lp_config_get_int(core->config, "sound", "use_native_ringing", default_value);
+}
+
 void linphone_core_set_root_ca(LinphoneCore *lc, const char *path) {
 	lc->sal->setRootCa(L_C_TO_STRING(path));
 	if (lc->http_crypto_config) {
