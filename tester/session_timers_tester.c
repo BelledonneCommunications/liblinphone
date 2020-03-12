@@ -212,6 +212,10 @@ static void linphone_session_timer_invite_interval_ok_refresher_invite(void)
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 300);
 
 	linphone_call_terminate(out_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
@@ -249,6 +253,10 @@ static void linphone_session_timer_invite_interval_ok_refresher_disabled_auto(vo
 	BC_ASSERT_PTR_NULL(value_session_expires);
 
 	linphone_call_terminate(out_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
@@ -328,6 +336,10 @@ static void linphone_session_timer_invite_interval_ok_refresher_uac_disabled(voi
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 300);
 
 	linphone_call_terminate(out_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
@@ -413,6 +425,10 @@ static void linphone_session_timer_invite_interval_ok_refresher_none_uas(void)
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 300);
 
 	linphone_call_terminate(out_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
@@ -479,6 +495,10 @@ static void linphone_session_timer_invite_interval_ok_refresher_uac_uac(void)
 	BC_ASSERT_PTR_NULL(linphone_call_params_get_custom_header(marie_update_params, "Min-SE"));
 
 	linphone_call_terminate(out_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
@@ -551,6 +571,10 @@ static void linphone_session_timer_invite_interval_ok_refresher_uas_uas(void)
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 300);
 
 	linphone_call_terminate(out_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
@@ -621,6 +645,10 @@ static void linphone_session_timer_invite_interval_ok_refresher_none_uac(void)
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 300);
 
 	linphone_call_terminate(out_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
