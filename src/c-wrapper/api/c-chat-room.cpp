@@ -81,6 +81,14 @@ static list<LinphonePrivate::IdentityAddress> _get_identity_address_list_from_ad
 }
 */
 
+void linphone_chat_room_allow_multipart(LinphoneChatRoom *room) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(room)->allowMultipart(true);
+}
+
+void linphone_chat_room_allow_cpim(LinphoneChatRoom *room) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(room)->allowCpim(true);
+}
+
 // =============================================================================
 // Public functions.
 // =============================================================================

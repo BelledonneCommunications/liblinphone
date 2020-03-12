@@ -333,9 +333,9 @@ void _linphone_chat_room_clear_callbacks (LinphoneChatRoom *cr);
 
 void _linphone_chat_message_notify_msg_state_changed(LinphoneChatMessage* msg, LinphoneChatMessageState state);
 void _linphone_chat_message_notify_participant_imdn_state_changed(LinphoneChatMessage* msg, const LinphoneParticipantImdnState *state);
-void _linphone_chat_message_notify_file_transfer_recv(LinphoneChatMessage *msg, const LinphoneContent* content, const LinphoneBuffer *buffer);
-void _linphone_chat_message_notify_file_transfer_send(LinphoneChatMessage *msg,  const LinphoneContent* content, size_t offset, size_t size);
-void _linphone_chat_message_notify_file_transfer_progress_indication(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total);
+void _linphone_chat_message_notify_file_transfer_recv(LinphoneChatMessage *msg, LinphoneContent* content, const LinphoneBuffer *buffer);
+void _linphone_chat_message_notify_file_transfer_send(LinphoneChatMessage *msg,  LinphoneContent* content, size_t offset, size_t size);
+void _linphone_chat_message_notify_file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total);
 void _linphone_chat_message_clear_callbacks (LinphoneChatMessage *msg);
 
 
@@ -535,9 +535,9 @@ void linphone_core_notify_message_received(LinphoneCore *lc, LinphoneChatRoom *r
 void linphone_core_notify_message_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
 void linphone_core_notify_message_received_unable_decrypt(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
 void linphone_core_notify_chat_room_read(LinphoneCore *lc, LinphoneChatRoom *room);
-void linphone_core_notify_file_transfer_recv(LinphoneCore *lc, LinphoneChatMessage *message, const LinphoneContent* content, const char* buff, size_t size);
-void linphone_core_notify_file_transfer_send(LinphoneCore *lc, LinphoneChatMessage *message,  const LinphoneContent* content, char* buff, size_t* size);
-void linphone_core_notify_file_transfer_progress_indication(LinphoneCore *lc, LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t total);
+void linphone_core_notify_file_transfer_recv(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, const char* buff, size_t size);
+void linphone_core_notify_file_transfer_send(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, char* buff, size_t* size);
+void linphone_core_notify_file_transfer_progress_indication(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t total);
 void linphone_core_notify_is_composing_received(LinphoneCore *lc, LinphoneChatRoom *room);
 void linphone_core_notify_dtmf_received(LinphoneCore* lc, LinphoneCall *call, int dtmf);
 /*

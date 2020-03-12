@@ -156,15 +156,15 @@ void _linphone_chat_message_notify_participant_imdn_state_changed(LinphoneChatMe
 	NOTIFY_IF_EXIST(ParticipantImdnStateChanged, participant_imdn_state_changed, msg, state)
 }
 
-void _linphone_chat_message_notify_file_transfer_recv(LinphoneChatMessage *msg, const LinphoneContent* content, const LinphoneBuffer *buffer) {
+void _linphone_chat_message_notify_file_transfer_recv(LinphoneChatMessage *msg, LinphoneContent* content, const LinphoneBuffer *buffer) {
 	NOTIFY_IF_EXIST(FileTransferRecv, file_transfer_recv, msg, content, buffer)
 }
 
-void _linphone_chat_message_notify_file_transfer_send(LinphoneChatMessage *msg,  const LinphoneContent* content, size_t offset, size_t size) {
+void _linphone_chat_message_notify_file_transfer_send(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t size) {
 	NOTIFY_IF_EXIST(FileTransferSend, file_transfer_send, msg, content, offset, size)
 }
 
-void _linphone_chat_message_notify_file_transfer_progress_indication(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total) {
+void _linphone_chat_message_notify_file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total) {
 	NOTIFY_IF_EXIST(FileTransferProgressIndication, file_transfer_progress_indication, msg, content, offset, total)
 }
 
@@ -315,7 +315,9 @@ void linphone_chat_message_add_file_content (LinphoneChatMessage *msg, LinphoneC
 	if (linphone_content_get_size(c_content) > 0) {
 		fileContent->setBody(linphone_content_get_string_buffer(c_content));
 	}
+	fileContent->setUserData(linphone_content_get_user_data(c_content));
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(fileContent);
+	lInfo() << "File content [" << fileContent << "] added into message [" << msg << "]";
 }
 
 void linphone_chat_message_add_text_content (LinphoneChatMessage *msg, const char *text) {

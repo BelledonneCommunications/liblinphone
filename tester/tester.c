@@ -1537,12 +1537,12 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 /*
  * function called when the file transfer is initiated. file content should be feed into object LinphoneContent
  * */
-LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t size){
+LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t size){
 	LinphoneBuffer *lb;
 	size_t file_size;
 	size_t size_to_send;
 	uint8_t *buf;
-	FILE *file_to_send = linphone_chat_message_get_user_data(msg);
+	FILE *file_to_send = linphone_content_get_user_data(content);
 
 	// If a file path is set, we should NOT call the on_send callback !
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
@@ -1560,7 +1560,7 @@ LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *msg, const Linph
 	if (fread(buf, sizeof(uint8_t), size_to_send, file_to_send) != size_to_send){
 		// reaching end of file, close it
 		fclose(file_to_send);
-		linphone_chat_message_set_user_data(msg, NULL);
+		linphone_content_set_user_data(content, NULL);
 	}
 	lb = linphone_buffer_new_from_data(buf, size_to_send);
 	ms_free(buf);
@@ -1570,7 +1570,7 @@ LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *msg, const Linph
 /**
  * function invoked to report file transfer progress.
  * */
-void file_transfer_progress_indication(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total) {
+void file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total) {
 	const LinphoneAddress *from_address = linphone_chat_message_get_from_address(msg);
 	const LinphoneAddress *to_address = linphone_chat_message_get_to_address(msg);
 	int progress = (int)((offset * 100)/total);
@@ -1598,7 +1598,7 @@ void file_transfer_progress_indication(LinphoneChatMessage *msg, const LinphoneC
 /**
  * function invoked when a file transfer is received.
  * */
-void file_transfer_received(LinphoneChatMessage *msg, const LinphoneContent* content, const LinphoneBuffer *buffer){
+void file_transfer_received(LinphoneChatMessage *msg, LinphoneContent* content, const LinphoneBuffer *buffer){
 	FILE* file=NULL;
 	char *receive_file = NULL;
 
@@ -1607,18 +1607,18 @@ void file_transfer_received(LinphoneChatMessage *msg, const LinphoneContent* con
 	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 
 	receive_file = bc_tester_file("receive_file.dump");
-	if (!linphone_chat_message_get_user_data(msg)) {
+	if (!linphone_content_get_user_data(content)) {
 		/*first chunk, creating file*/
 		file = fopen(receive_file,"wb");
-		linphone_chat_message_set_user_data(msg,(void*)file); /*store fd for next chunks*/
+		linphone_content_set_user_data(content,(void*)file); /*store fd for next chunks*/
 	}
 
-	file = (FILE*)linphone_chat_message_get_user_data(msg);
+	file = (FILE*)linphone_content_get_user_data(content);
 	BC_ASSERT_PTR_NOT_NULL(file);
 	if (linphone_buffer_is_empty(buffer)) { /* tranfer complete */
 		struct stat st;
 
-		linphone_chat_message_set_user_data(msg, NULL);
+		linphone_content_set_user_data(content, NULL);
 		fclose(file);
 		BC_ASSERT_TRUE(stat(receive_file, &st)==0);
 		BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), (int)st.st_size, int, "%i");
