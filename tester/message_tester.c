@@ -481,7 +481,7 @@ void text_message_reply_from_non_default_proxy_config(void) {
 
 void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
 							bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download, bool_t download_from_history, 
-							int auto_download, bool_t send_two_files) {
+							int auto_download, bool_t two_files) {
 	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		ms_warning("Test skipped, database storage is not available");
 		return;
@@ -505,7 +505,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 	/* create a chatroom on pauline's side */
 	chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
 
-	if (send_two_files) {
+	if (two_files) {
 		linphone_chat_room_allow_multipart(chat_room);
 		linphone_chat_room_allow_cpim(chat_room);
 	}
@@ -524,7 +524,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 	file_transfer_size = linphone_content_get_file_size(content);
 	BC_ASSERT_NOT_EQUAL(0, file_transfer_size, int, "%d");
 
-	if (send_two_files) {
+	if (two_files) {
 		FILE *file_to_send = NULL;
 		LinphoneContent* content;
 		size_t file_size;
@@ -589,7 +589,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 		}
 	} else {
 		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000));
-		if (send_two_files) {
+		if (two_files) {
 			BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageFileTransferDone, 2, 1000));
 		}
 
@@ -612,7 +612,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 					recv_msg = marie->stat.last_received_chat_message;
 				}
 
-				if (send_two_files) {
+				if (two_files) {
 					const bctbx_list_t *contents = linphone_chat_message_get_contents(recv_msg);
 					BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, int, "%d");
 				}
@@ -643,7 +643,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 						compare_files(send_filepath, receive_filepath);
 					}
 
-					if (send_two_files) {
+					if (two_files) {
 						linphone_chat_message_download_file(recv_msg);
 						BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageFileTransferInProgress, 2, int, "%d");
 
@@ -670,7 +670,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 			}
 		}
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 1, int, "%d");
-		if (send_two_files)
+		if (two_files)
 			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 2, int, "%d");
 		else
 			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
@@ -687,7 +687,7 @@ end:
 
 void transfer_message_base(
 	bool_t upload_error, bool_t download_error, bool_t use_file_body_handler_in_upload,
-	bool_t use_file_body_handler_in_download, bool_t download_from_history, bool_t enable_imdn, int auto_download, bool_t send_two_files
+	bool_t use_file_body_handler_in_download, bool_t download_from_history, bool_t enable_imdn, int auto_download, bool_t two_files
 ) {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
@@ -701,7 +701,7 @@ void transfer_message_base(
 		}
 		linphone_core_set_max_size_for_auto_download_incoming_files(marie->lc, auto_download);
 
-		transfer_message_base2(marie,pauline,upload_error,download_error, use_file_body_handler_in_upload, use_file_body_handler_in_download, download_from_history, auto_download, send_two_files);
+		transfer_message_base2(marie,pauline,upload_error,download_error, use_file_body_handler_in_upload, use_file_body_handler_in_download, download_from_history, auto_download, two_files);
 		// Give some time for IMDN's 200 OK to be received so it doesn't leak
 		wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
 		linphone_core_manager_destroy(pauline);
@@ -1549,11 +1549,12 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
-void lime_transfer_message_base(bool_t encrypt_file,bool_t download_file_from_stored_msg, bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download) {
+void lime_transfer_message_base(bool_t encrypt_file,bool_t download_file_from_stored_msg, bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download, bool_t two_files) {
 	LinphoneCoreManager *marie, *pauline;
 	LinphoneChatMessage *msg;
 	LinphoneChatMessageCbs *cbs;
 	char *send_filepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+	char *send_filepath2 = bc_tester_res("sounds/ahbahouaismaisbon.wav");
 	char *receive_filepath = bc_tester_file("receive_file.dump");
 	MSList * msg_list = NULL;
 
@@ -1577,18 +1578,55 @@ void lime_transfer_message_base(bool_t encrypt_file,bool_t download_file_from_st
 	/* Globally configure an http file transfer server. */
 	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
 
+	LinphoneChatRoom *chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	if (two_files) {
+		linphone_chat_room_allow_multipart(chat_room);
+		linphone_chat_room_allow_cpim(chat_room);
+	}
+
 	/* create a file transfer msg */
 	if (use_file_body_handler_in_upload) {
-		msg = create_file_transfer_message_from_sintel_trailer(linphone_core_get_chat_room(pauline->lc, marie->identity));
+		msg = create_file_transfer_message_from_sintel_trailer(chat_room);
 	} else {
-		msg = create_message_from_sintel_trailer(linphone_core_get_chat_room(pauline->lc, marie->identity));
+		msg = create_message_from_sintel_trailer(chat_room);
+	}
+
+	if (two_files) {
+		FILE *file_to_send = NULL;
+		LinphoneContent* content;
+		size_t file_size;
+		file_to_send = fopen(send_filepath2, "rb");
+		fseek(file_to_send, 0, SEEK_END);
+		file_size = ftell(file_to_send);
+		fseek(file_to_send, 0, SEEK_SET);
+
+		content = linphone_core_create_content(linphone_chat_room_get_core(chat_room));
+		belle_sip_object_set_name(BELLE_SIP_OBJECT(content), "ahbahouaismaisbon content");
+		linphone_content_set_type(content,"audio");
+		linphone_content_set_subtype(content,"wav");
+		linphone_content_set_size(content,file_size); /*total size to be transfered*/
+		linphone_content_set_name(content,"ahbahouaismaisbon.wav");
+		linphone_content_set_user_data(content,file_to_send);
+
+		linphone_chat_message_add_file_content(msg, content);
+		BC_ASSERT_PTR_NOT_NULL(linphone_content_get_user_data(content));
+		const bctbx_list_t *contents = linphone_chat_message_get_contents(msg);
+		BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, int, "%d");
+
+		linphone_content_unref(content);
 	}
 
 	linphone_chat_message_send(msg);
+
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000));
-	if (marie->stat.last_received_chat_message ) {
+	if (two_files) {
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageFileTransferDone, 2, 1000));
+	}
+
+	if (marie->stat.last_received_chat_message) {
 		LinphoneChatMessage *recv_msg;
 		LinphoneContent* content;
+
 		if (download_file_from_stored_msg) {
 			LinphoneChatRoom *marie_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
 			msg_list = linphone_chat_room_get_history(marie_room,1);
@@ -1598,12 +1636,19 @@ void lime_transfer_message_base(bool_t encrypt_file,bool_t download_file_from_st
 		} else {
 			recv_msg = marie->stat.last_received_chat_message;
 		}
+
+		if (two_files) {
+			const bctbx_list_t *contents = linphone_chat_message_get_contents(recv_msg);
+			BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, int, "%d");
+		}
+
 		cbs = linphone_chat_message_get_callbacks(recv_msg);
 		linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 		linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
 		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
 		content = linphone_chat_message_get_file_transfer_information(recv_msg);
 		if (!content) goto end;
+
 		if (encrypt_file)
 			BC_ASSERT_PTR_NOT_NULL(linphone_content_get_key(content));
 		else
@@ -1617,12 +1662,34 @@ void lime_transfer_message_base(bool_t encrypt_file,bool_t download_file_from_st
 		if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,1,55000))) {
 			compare_files(send_filepath, receive_filepath);
 		}
+
+		if (two_files) {
+			LinphoneContent *content2 = linphone_chat_message_get_file_transfer_information(recv_msg);
+			BC_ASSERT_PTR_NOT_NULL(content2);
+			BC_ASSERT_PTR_NOT_EQUAL(content2, content);
+			if (!content2) goto end;
+			
+			if (encrypt_file)
+				BC_ASSERT_PTR_NOT_NULL(linphone_content_get_key(content2));
+			else
+				BC_ASSERT_PTR_NULL(linphone_content_get_key(content2));
+
+			linphone_chat_message_download_file(recv_msg);
+			BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageFileTransferInProgress, 2, int, "%d");
+
+			if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,1,55000))) {
+				compare_files(send_filepath2, receive_filepath);
+			}
+		}
 		bctbx_list_free_with_data(msg_list, (bctbx_list_free_func)linphone_chat_message_unref);
 	}
 
 	//BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress,2, int, "%d"); // file transfer
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered,1, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,1, int, "%d");
+	if (two_files)
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 2, int, "%d");
+	else
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 1, int, "%d");
 	linphone_chat_message_unref(msg);
 
 end:
@@ -1630,37 +1697,42 @@ end:
 	remove("tmpZIDCachePauline.sqlite");
 	remove(receive_filepath);
 	bc_free(send_filepath);
+	bc_free(send_filepath2);
 	bc_free(receive_filepath);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 static  void lime_transfer_message(void) {
-	lime_transfer_message_base(TRUE, FALSE, FALSE, FALSE);
+	lime_transfer_message_base(TRUE, FALSE, FALSE, FALSE, FALSE);
 }
 
 static  void lime_transfer_message_2(void) {
-	lime_transfer_message_base(TRUE, FALSE, TRUE, FALSE);
+	lime_transfer_message_base(TRUE, FALSE, TRUE, FALSE, FALSE);
 }
 
 static  void lime_transfer_message_3(void) {
-	lime_transfer_message_base(TRUE, FALSE, FALSE, TRUE);
+	lime_transfer_message_base(TRUE, FALSE, FALSE, TRUE, FALSE);
 }
 
 static  void lime_transfer_message_4(void) {
-	lime_transfer_message_base(TRUE, FALSE, TRUE, TRUE);
+	lime_transfer_message_base(TRUE, FALSE, TRUE, TRUE, FALSE);
+}
+
+static  void lime_transfer_message_2_files(void) {
+	lime_transfer_message_base(TRUE, FALSE, FALSE, FALSE, TRUE);
 }
 
 static  void lime_transfer_message_from_history(void) {
-	lime_transfer_message_base(TRUE, TRUE, FALSE, FALSE);
+	lime_transfer_message_base(TRUE, TRUE, FALSE, FALSE, FALSE);
 }
 
 static  void lime_transfer_message_without_encryption(void) {
-	lime_transfer_message_base(FALSE, FALSE, FALSE, FALSE);
+	lime_transfer_message_base(FALSE, FALSE, FALSE, FALSE, FALSE);
 }
 
 static  void lime_transfer_message_without_encryption_2(void) {
-	lime_transfer_message_base(FALSE, FALSE, TRUE, FALSE);
+	lime_transfer_message_base(FALSE, FALSE, TRUE, FALSE, FALSE);
 }
 
 #if 0
@@ -2834,6 +2906,7 @@ test_t message_tests[] = {
 	TEST_ONE_TAG("Lime transfer message 2", lime_transfer_message_2, "LIME"),
 	TEST_ONE_TAG("Lime transfer message 3", lime_transfer_message_3, "LIME"),
 	TEST_ONE_TAG("Lime transfer message 4", lime_transfer_message_4, "LIME"),
+	TEST_ONE_TAG("Lime transfer message using 2 files", lime_transfer_message_2_files, "LIME"),
 	TEST_ONE_TAG("Lime transfer message from history", lime_transfer_message_from_history, "LIME"),
 	TEST_ONE_TAG("Lime transfer message without encryption", lime_transfer_message_without_encryption, "LIME"),
 	TEST_ONE_TAG("Lime transfer message without encryption 2", lime_transfer_message_without_encryption_2, "LIME"),

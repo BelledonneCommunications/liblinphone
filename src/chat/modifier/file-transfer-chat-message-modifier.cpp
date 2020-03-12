@@ -64,7 +64,7 @@ ChatMessageModifier::Result FileTransferChatMessageModifier::encode (const share
 	// For each FileContent, upload it and create a FileTransferContent
 	for (Content *content : message->getContents()) {
 		if (content->isFile()) {
-				lInfo() << "Found file content, set it for file upload";
+				lInfo() << "Found file content [" << content << "], set it for file upload";
 				FileContent *fileContent = (FileContent *)content;
 				currentFileContentToTransfer = fileContent;
 				break;
@@ -846,6 +846,7 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 				if (content->isFileTransfer()) {
 					FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
 					if (fileTransferContent->getFileContent() == fileContent) {
+						lInfo() << "Found downloaded file transfer content [" << content << "], removing it to keep only the file content [" << fileContent << "]";
 						message->getPrivate()->removeContent(content);
 						delete fileTransferContent;
 						break;
@@ -1027,6 +1028,8 @@ bool FileTransferChatMessageModifier::downloadFile (
 	if (currentFileContentToTransfer->getFilePath().empty() && !message->getPrivate()->getFileTransferFilepath().empty()) {
 		currentFileContentToTransfer->setFilePath(message->getPrivate()->getFileTransferFilepath());
 	}
+
+	lInfo() << "Downloading file transfer content [" << fileTransferContent << "], removing it to keep only the file content [" << fileContent << "]";
 
 	belle_http_request_listener_callbacks_t cbs = { 0 };
 	cbs.process_response_headers = _chat_process_response_headers_from_get_file;

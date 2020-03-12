@@ -337,6 +337,7 @@ void linphone_chat_message_add_file_content (LinphoneChatMessage *msg, LinphoneC
 	}
 	fileContent->setUserData(linphone_content_get_user_data(c_content));
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(fileContent);
+	lInfo() << "File content [" << fileContent << "] added into message [" << msg << "]";
 }
 
 void linphone_chat_message_add_text_content (LinphoneChatMessage *msg, const char *text) {
