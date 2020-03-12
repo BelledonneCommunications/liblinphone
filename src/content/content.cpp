@@ -240,4 +240,12 @@ list<Header>::const_iterator Content::findHeader (const string &headerName) cons
 	});
 }
 
+void Content::setUserData(const Variant &userData) {
+	setProperty("LinphonePrivate::Content::userData", userData);
+}
+
+Variant Content::getUserData() const {
+	return getProperty("LinphonePrivate::Content::userData");
+}
+
 LINPHONE_END_NAMESPACE

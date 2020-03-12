@@ -90,6 +90,9 @@ public:
 	void removeHeader (const std::string &headerName);
 	std::list<Header>::const_iterator findHeader (const std::string &headerName) const;
 
+	void setUserData(const Variant &userData);
+	Variant getUserData() const;
+
 protected:
 	explicit Content (ContentPrivate &p);
 

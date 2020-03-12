@@ -857,11 +857,13 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 				message->getPrivate()->receive();
 			} else {
 				message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
+				releaseHttpRequest();
 			}
 		}
 	} else {
 		lWarning() << "File transfer decrypt failed with code " << (int)retval;
 		message->getPrivate()->setState(ChatMessage::State::FileTransferError);
+		releaseHttpRequest();
 	}
 }
 

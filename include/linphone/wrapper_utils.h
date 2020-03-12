@@ -116,6 +116,18 @@ LINPHONE_PUBLIC void linphone_chat_message_resend_2(LinphoneChatMessage *msg);
 LINPHONE_PUBLIC void *linphone_vcard_get_belcard(LinphoneVcard *vcard);
 
 /**
+ * Allow multipart on a basic chat room
+ * @donotwrap
+ */
+LINPHONE_PUBLIC void linphone_chat_room_allow_multipart(LinphoneChatRoom *room);
+
+/**
+ * Allow cpim on a basic chat room
+ * @donotwrap
+ */
+LINPHONE_PUBLIC void linphone_chat_room_allow_cpim(LinphoneChatRoom *room);
+
+/**
  * @}
  */
 
