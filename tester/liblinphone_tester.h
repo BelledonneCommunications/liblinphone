@@ -403,8 +403,8 @@ void linphone_transfer_state_changed(LinphoneCore *lc, LinphoneCall *transfered,
 void notify_presence_received(LinphoneCore *lc, LinphoneFriend * lf);
 void notify_presence_received_for_uri_or_tel(LinphoneCore *lc, LinphoneFriend *lf, const char *uri_or_tel, const LinphonePresenceModel *presence);
 void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage* message);
-void file_transfer_received(LinphoneChatMessage *message, const LinphoneContent* content, const LinphoneBuffer *buffer);
-LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t size);
+void file_transfer_received(LinphoneChatMessage *message, LinphoneContent* content, const LinphoneBuffer *buffer);
+LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t size);
 LinphoneChatMessage *_send_message_ephemeral(LinphoneChatRoom *chatRoom, const char *message, bool_t ephemeral);
 LinphoneChatMessage *_send_message(LinphoneChatRoom *chatRoom, const char *message);
 void _send_file_plus_text(LinphoneChatRoom* cr, const char *sendFilepath, const char *text);
@@ -412,8 +412,8 @@ void _send_file(LinphoneChatRoom* cr, const char *sendFilepath);
 void _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *receiverStats, const char *receive_filepath, const char *sendFilepath);
 void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *receiverStats, const char *receive_filepath, const char *sendFilepath, const char *text);
 
-LinphoneBuffer * tester_memory_file_transfer_send(LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t size);
-void file_transfer_progress_indication(LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t total);
+LinphoneBuffer * tester_memory_file_transfer_send(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t size);
+void file_transfer_progress_indication(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t total);
 void is_composing_received(LinphoneCore *lc, LinphoneChatRoom *room);
 void info_message_received(LinphoneCore *lc, LinphoneCall *call, const LinphoneInfoMessage *msg);
 void new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char *url);

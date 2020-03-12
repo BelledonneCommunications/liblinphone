@@ -85,11 +85,11 @@ void linphone_content_unref (LinphoneContent *content) {
 }
 
 void *linphone_content_get_user_data (const LinphoneContent *content) {
-	return L_GET_USER_DATA_FROM_C_OBJECT(content);
+	return L_GET_CPP_PTR_FROM_C_OBJECT(content)->getUserData().getValue<void *>();
 }
 
 void linphone_content_set_user_data (LinphoneContent *content, void *user_data) {
-	return L_SET_USER_DATA_FROM_C_OBJECT(content, user_data);
+	return L_GET_CPP_PTR_FROM_C_OBJECT(content)->setUserData(user_data);
 }
 
 // =============================================================================

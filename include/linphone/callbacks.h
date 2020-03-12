@@ -232,7 +232,7 @@ typedef void (*LinphoneCoreCbsMessageReceivedUnableDecryptCb)(LinphoneCore *lc, 
  * @param buff pointer to the received data
  * @param size number of bytes to be read from buff. 0 means end of file.
  */
-typedef void (*LinphoneCoreFileTransferRecvCb)(LinphoneCore *lc, LinphoneChatMessage *message, const LinphoneContent* content, const char* buff, size_t size);
+typedef void (*LinphoneCoreFileTransferRecvCb)(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, const char* buff, size_t size);
 
 /**
  * File transfer send callback prototype. This function is called by the core upon an outgoing file transfer is started. This function is called until size is set to 0.
@@ -243,7 +243,7 @@ typedef void (*LinphoneCoreFileTransferRecvCb)(LinphoneCore *lc, LinphoneChatMes
  * @param size as input value, it represents the number of bytes expected by the framework. As output value, it means the number of bytes wrote by the application in the buffer. 0 means end of file.
  *
  */
-typedef void (*LinphoneCoreFileTransferSendCb)(LinphoneCore *lc, LinphoneChatMessage *message,  const LinphoneContent* content, char* buff, size_t* size);
+typedef void (*LinphoneCoreFileTransferSendCb)(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, char* buff, size_t* size);
 
 /**
  * File transfer progress indication callback prototype.
@@ -253,7 +253,7 @@ typedef void (*LinphoneCoreFileTransferSendCb)(LinphoneCore *lc, LinphoneChatMes
  * @param offset The number of bytes sent/received since the beginning of the transfer.
  * @param total The total number of bytes to be sent/received.
  */
-typedef void (*LinphoneCoreFileTransferProgressIndicationCb)(LinphoneCore *lc, LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t total);
+typedef void (*LinphoneCoreFileTransferProgressIndicationCb)(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t total);
 
 /**
  * Is composing notification callback prototype.
