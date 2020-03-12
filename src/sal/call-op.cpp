@@ -880,6 +880,7 @@ void SalCallOp::processRequestEventCb (void *userCtx, const belle_sip_request_ev
 						);
 
 						belle_sip_server_transaction_send_response(serverTransaction, response);
+						dropOp = true;
 						break;
 					}
 				}
