@@ -130,6 +130,43 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3 (
 );
 
 /**
+ * Instantiate a shared #LinphoneCore object.
+ *
+ * The shared #LinphoneCore allow you to create several #LinphoneCore with the same config.
+ * Two #LinphoneCore can't run at the same time.
+ *
+ * A shared #LinphoneCore can be a "Main Core" or an "Executor Core".
+ * A "Main Core" automatically stops a running "Executor Core" when calling linphone_core_start()
+ * An "Executor Core" can't start unless no other #LinphoneCore is started. It can be stopped by a "Main Core" and
+ * switch to #LinphoneGlobalState Off at any time.
+ *
+ * The #LinphoneCore object is not started automatically, you need to call linphone_core_start() to that effect.
+ * The returned #LinphoneCore will be in #LinphoneGlobalState Ready.
+ * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected languages.
+ * @param[in] factory The #LinphoneFactory singleton.
+ * @param[in] config_filename The name of the config file. If it does not exists it will be created.
+ * Its path is computed using the app_group_id. The config file is used to
+ * store all settings, proxies... so that all these settings become persistent over the life of the #LinphoneCore object.
+ * It is allowed to set a NULL config file. In that case #LinphoneCore will not store any settings.
+ * @param[in] factory_config_path A path to a read-only config file that can be used to store hard-coded preferences
+ * such as proxy settings or internal preferences. The settings in this factory file always override the ones in the
+ * normal config file. It is optional, use NULL if unneeded.
+ * @param[in] system_context A pointer to a system object required by the core to operate. Currently it is required to
+ * pass an android Context on android, pass NULL on other platforms.
+ * @param[in] app_group_id Name of iOS App Group that lead to the file system that is shared between an app and its app extensions.
+ * @param[in] main_core Indicate if we want to create a "Main Core" or an "Executor Core".
+ * @see linphone_factory_create_shared_core_with_config
+ */
+LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core (
+	const LinphoneFactory *factory,
+	const char *config_filename,
+	const char *factory_config_path,
+	void *system_context,
+	const char *app_group_id,
+	bool_t main_core
+);
+
+/**
  * Instantiates a #LinphoneCore object with a given LpConfig.
  *
  * @param factory The #LinphoneFactory singleton.
@@ -189,6 +226,36 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_3 (
 	const LinphoneFactory *factory,
 	LinphoneConfig *config,
 	void *system_context
+);
+
+/**
+ * Instantiate a shared #LinphoneCore object.
+ *
+ * The shared #LinphoneCore allow you to create several #LinphoneCore with the same config.
+ * Two #LinphoneCore can't run at the same time.
+ *
+ * A shared #LinphoneCore can be a "Main Core" or an "Executor Core".
+ * A "Main Core" automatically stops a running "Executor Core" when calling linphone_core_start()
+ * An "Executor Core" can't start unless no other #LinphoneCore is started. It can be stopped by a "Main Core" and
+ * switch to #LinphoneGlobalState Off at any time.
+ *
+ * The #LinphoneCore object is not started automatically, you need to call linphone_core_start() to that effect.
+ * The returned #LinphoneCore will be in #LinphoneGlobalState Ready.
+ * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected languages.
+ * @param[in] factory The #LinphoneFactory singleton.
+ * @param[in] config A #LinphoneConfig object holding the configuration for the #LinphoneCore to be instantiated.
+ * @param[in] system_context A pointer to a system object required by the core to operate. Currently it is required to
+ * pass an android Context on android, pass NULL on other platforms.
+ * @param[in] app_group_id Name of iOS App Group that lead to the file system that is shared between an app and its app extensions.
+ * @param[in] main_core Indicate if we want to create a "Main Core" or an "Executor Core".
+ * @see linphone_factory_create_shared_core
+ */
+LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core_with_config (
+	const LinphoneFactory *factory,
+	LinphoneConfig *config,
+	void *system_context,
+	const char *app_group_id,
+	bool_t main_core
 );
 
 /**
@@ -579,6 +646,33 @@ LINPHONE_PUBLIC bool_t linphone_factory_is_database_storage_available(LinphoneFa
  * @return TRUE if IDMN are available
  */
 LINPHONE_PUBLIC bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory);
+
+/**
+ * Get the config path
+ * @param[in] factory the #LinphoneFactory
+ * @param[in] context used to compute path. can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core.
+ * @return The config path
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context);
+
+/**
+ * Get the data path
+ * @param[in] factory the #LinphoneFactory
+ * @param[in] context used to compute path. can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core.
+ * @return The data path
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context);
+
+/**
+ * Get the download path
+ * @param[in] factory the #LinphoneFactory
+ * @param[in] context used to compute path. can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core.
+ * @return The download path
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context);
 
 /**
  * @}
