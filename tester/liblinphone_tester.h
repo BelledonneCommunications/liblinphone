@@ -396,8 +396,8 @@ void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMess
 void file_transfer_received(LinphoneChatMessage *message, LinphoneContent* content, const LinphoneBuffer *buffer);
 LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t size);
 LinphoneChatMessage *_send_message(LinphoneChatRoom *chatRoom, const char *message);
-void _send_file_plus_text(LinphoneChatRoom* cr, const char *sendFilepath, const char *sendFilepath2, const char *text);
-void _send_file(LinphoneChatRoom* cr, const char *sendFilepath, const char *sendFilepath2);
+void _send_file_plus_text(LinphoneChatRoom* cr, const char *sendFilepath, const char *sendFilepath2, const char *text, bool_t use_buffer);
+void _send_file(LinphoneChatRoom* cr, const char *sendFilepath, const char *sendFilepath2, bool_t use_buffer);
 void _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *receiverStats, const char *receive_filepath, const char *sendFilepath, const char *sendFilepath2);
 void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *receiverStats, const char *receive_filepath, const char *sendFilepath, const char *sendFilepath2, const char *text);
 

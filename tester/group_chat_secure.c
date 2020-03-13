@@ -602,7 +602,7 @@ end:
 }
 
 
-static void group_chat_lime_x3dh_send_encrypted_file_with_or_without_text (bool_t with_text, bool_t two_files) {
+static void group_chat_lime_x3dh_send_encrypted_file_with_or_without_text (bool_t with_text, bool_t two_files, bool_t use_buffer) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
 	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_lime_x3dh_rc");
@@ -657,9 +657,9 @@ static void group_chat_lime_x3dh_send_encrypted_file_with_or_without_text (bool_
 
 	// Send encrypted file
 	if (with_text) {
-		_send_file_plus_text(marieCr, sendFilepath, sendFilepath2, text);
+		_send_file_plus_text(marieCr, sendFilepath, sendFilepath2, text, use_buffer);
 	} else {
-		_send_file(marieCr, sendFilepath, sendFilepath2);
+		_send_file(marieCr, sendFilepath, sendFilepath2, use_buffer);
 	}
 
 	// Check that chat rooms have received the file
@@ -690,15 +690,19 @@ static void group_chat_lime_x3dh_send_encrypted_file_with_or_without_text (bool_
 }
 
 static void group_chat_lime_x3dh_send_encrypted_file (void) {
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, FALSE);
+}
+
+static void group_chat_lime_x3dh_send_encrypted_file_2 (void) {
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(FALSE, FALSE, TRUE);
 }
 
 static void group_chat_lime_x3dh_send_encrypted_file_plus_text (void) {
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, FALSE, FALSE);
 }
 
 static void group_chat_lime_x3dh_send_two_encrypted_files_plus_text (void) {
-	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE);
+	group_chat_lime_x3dh_send_encrypted_file_with_or_without_text(TRUE, TRUE, FALSE);
 }
 
 static void group_chat_lime_x3dh_verify_sas_before_message (void) {
@@ -2926,6 +2930,7 @@ test_t secure_group_chat_tests[] = {
 	TEST_ONE_TAG("LIME X3DH message with response and composing", group_chat_lime_x3dh_send_encrypted_message_with_response_and_composing, "LimeX3DH"),
 	TEST_TWO_TAGS("LIME X3DH message to devices with and without keys on server", group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys, "LimeX3DH", "LeaksMemory"),
 	TEST_ONE_TAG("LIME X3DH send encrypted file", group_chat_lime_x3dh_send_encrypted_file, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH send encrypted file using buffer", group_chat_lime_x3dh_send_encrypted_file_2, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH send encrypted file + text", group_chat_lime_x3dh_send_encrypted_file_plus_text, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH send 2 encrypted files + text", group_chat_lime_x3dh_send_two_encrypted_files_plus_text, "LimeX3DH"),
 	TEST_TWO_TAGS("LIME X3DH verify SAS before message", group_chat_lime_x3dh_verify_sas_before_message, "LimeX3DH", "LeaksMemory"),
