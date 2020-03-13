@@ -73,7 +73,8 @@ public:
 		size_t offset,
 		const uint8_t *buffer,
 		size_t size,
-		uint8_t *decryptedBuffer
+		uint8_t *decryptedBuffer,
+		FileTransferContent *fileTransferContent
 	) { return 0; }
 
 	virtual int uploadingFile (
@@ -81,7 +82,8 @@ public:
 		size_t offset,
 		const uint8_t *buffer,
 		size_t *size,
-		uint8_t *encryptedBuffer
+		uint8_t *encryptedBuffer,
+		FileTransferContent *fileTransferContent
 	) { return 0; }
 
 	virtual void mutualAuthentication (

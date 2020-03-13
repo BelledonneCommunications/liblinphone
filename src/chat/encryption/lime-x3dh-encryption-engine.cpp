@@ -467,15 +467,14 @@ int LimeX3dhEncryptionEngine::downloadingFile (
 	size_t offset,
 	const uint8_t *buffer,
 	size_t size,
-	uint8_t *decrypted_buffer
+	uint8_t *decrypted_buffer,
+	FileTransferContent *fileTransferContent
 ) {
-	const Content *content = message->getPrivate()->getFileTransferContent();
-	if (!content)
+	if (fileTransferContent == nullptr) 
 		return -1;
 
-	const FileTransferContent *fileTransferContent = static_cast<const FileTransferContent *>(content);
+	Content *content = static_cast<Content *>(fileTransferContent);
 	const char *fileKey = fileTransferContent->getFileKey().data();
-
 	if (!fileKey)
 		return -1;
 
@@ -513,31 +512,22 @@ int LimeX3dhEncryptionEngine::uploadingFile (
 	size_t offset,
 	const uint8_t *buffer,
 	size_t *size,
-	uint8_t *encrypted_buffer
+	uint8_t *encrypted_buffer,
+	FileTransferContent *fileTransferContent
 ) {
-	const Content *content = message->getPrivate()->getFileTransferContent();
-	if (!content)
+	if (fileTransferContent == nullptr) 
 		return -1;
 
-	const FileTransferContent *fileTransferContent = dynamic_cast<const FileTransferContent *>(content);
+	Content *content = static_cast<Content *>(fileTransferContent);
 	const char *fileKey = fileTransferContent->getFileKey().data();
-
 	if (!fileKey)
 		return -1;
 
 	/* This is the final call, get an auth tag and insert it in the fileTransferContent*/
 	if (!buffer || *size == 0) {
-
 		char authTag[FILE_TRANSFER_AUTH_TAG_SIZE]; // store the authentication tag generated at the end of encryption, size is fixed at 16 bytes
-		int ret=bctbx_aes_gcm_encryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, FILE_TRANSFER_AUTH_TAG_SIZE, NULL, authTag);
-
-		for (Content *content : message->getContents()) {
-			if (content->isFileTransfer()) {
-				FileTransferContent *tmpTransferContent = static_cast<FileTransferContent *>(content);
-				tmpTransferContent->setFileAuthTag(authTag, 16);
-				return ret;
-			}
-		}
+		int ret = bctbx_aes_gcm_encryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, FILE_TRANSFER_AUTH_TAG_SIZE, NULL, authTag);
+		fileTransferContent->setFileAuthTag(authTag, 16);
 		return ret;
 	}
 
