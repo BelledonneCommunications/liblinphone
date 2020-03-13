@@ -22,6 +22,7 @@
 #include "c-wrapper/c-wrapper.h"
 
 #include "address/address-p.h"
+#include "core/paths/paths.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -171,6 +172,25 @@ static LinphoneCore *_linphone_factory_create_core (
 	return lc;
 }
 
+static LinphoneCore *_linphone_factory_create_shared_core (
+	const LinphoneFactory *factory,
+	LinphoneCoreCbs *cbs,
+	const char *config_filename,
+	const char *factory_config_path,
+	void *user_data,
+	void *system_context,
+	bool_t automatically_start,
+	const char *app_group_id,
+	bool_t main_core
+) {
+	bctbx_init_logger(FALSE);
+	LpConfig *config = linphone_config_new_for_shared_core(app_group_id, config_filename, factory_config_path);
+	LinphoneCore *lc = _linphone_core_new_shared_with_config(cbs, config, user_data, system_context, automatically_start, app_group_id, main_core);
+	lp_config_unref(config);
+	bctbx_uninit_logger();
+	return lc;
+}
+
 LinphoneCore *linphone_factory_create_core (
 	const LinphoneFactory *factory,
 	LinphoneCoreCbs *cbs,
@@ -200,6 +220,17 @@ LinphoneCore *linphone_factory_create_core_3 (
 	return _linphone_factory_create_core(factory, NULL, config_path, factory_config_path, NULL, system_context, FALSE);
 }
 
+LinphoneCore *linphone_factory_create_shared_core (
+	const LinphoneFactory *factory,
+	const char *config_filename,
+	const char *factory_config_path,
+	void *system_context,
+	const char *app_group_id,
+	bool_t main_core
+) {
+	return _linphone_factory_create_shared_core(factory, NULL, factory_config_path, factory_config_path, NULL, system_context, FALSE, app_group_id, main_core);
+}
+
 LinphoneCore *linphone_factory_create_core_with_config (
 	const LinphoneFactory *factory,
 	LinphoneCoreCbs *cbs,
@@ -224,6 +255,16 @@ LinphoneCore *linphone_factory_create_core_with_config_3 (
 	void *system_context
 ) {
 	return _linphone_core_new_with_config(NULL, config, NULL, system_context, FALSE);
+}
+
+LinphoneCore *linphone_factory_create_shared_core_with_config (
+	const LinphoneFactory *factory,
+	LinphoneConfig *config,
+	void *system_context,
+	const char *app_group_id,
+	bool_t main_core
+) {
+	return _linphone_core_new_shared_with_config(NULL, config, NULL, system_context, FALSE, app_group_id, main_core);
 }
 
 LinphoneCoreCbs *linphone_factory_create_core_cbs(const LinphoneFactory *factory) {
@@ -517,4 +558,19 @@ bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory) {
 #else
 	return FALSE;
 #endif
+}
+
+const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context) {
+	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config, context);
+	return ms_strdup(path.c_str());
+}
+
+const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context) {
+	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Data, context);
+	return ms_strdup(path.c_str());
+}
+
+const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context) {
+	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Download, context);
+	return ms_strdup(path.c_str());
 }

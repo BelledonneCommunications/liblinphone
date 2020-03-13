@@ -151,6 +151,62 @@ LINPHONE_PUBLIC unsigned int linphone_logging_service_get_log_level_mask(const L
 LINPHONE_PUBLIC void linphone_logging_service_set_log_file(const LinphoneLoggingService *service, const char *dir, const char *filename, size_t max_size);
 
 /**
+ * @brief Set the domain where application logs are written (for example with #linphone_logging_service_message()).
+ * @param log_service The logging service singleton.
+ * @param domain The domain.
+ * @note The domain is mandatory to write logs. This needs to be set before setting the log level.
+ */
+LINPHONE_PUBLIC void linphone_logging_service_set_domain(LinphoneLoggingService *log_service, const char *domain);
+
+/**
+ * @brief Get the domain where application logs are written (for example with #linphone_logging_service_message()).
+ * @param log_service The logging service singleton.
+ */
+LINPHONE_PUBLIC const char *linphone_logging_service_get_domain(LinphoneLoggingService *log_service);
+
+/**
+ * @brief Write a LinphoneLogLevelDebug message to the logs.
+ * @param log_service The logging service singleton.
+ * @param msg The log message.
+ */
+LINPHONE_PUBLIC void linphone_logging_service_debug(LinphoneLoggingService *log_service, const char *msg);
+
+/**
+ * @brief Write a LinphoneLogLevelTrace message to the logs.
+ * @param log_service The logging service singleton.
+ * @param msg The log message.
+ */
+LINPHONE_PUBLIC void linphone_logging_service_trace(LinphoneLoggingService *log_service, const char *msg);
+
+/**
+ * @brief Write a LinphoneLogLevelMessage message to the logs.
+ * @param log_service The logging service singleton.
+ * @param msg The log message.
+ */
+LINPHONE_PUBLIC void linphone_logging_service_message(LinphoneLoggingService *log_service, const char *msg);
+
+/**
+ * @brief Write a LinphoneLogLevelWarning message to the logs.
+ * @param log_service The logging service singleton.
+ * @param msg The log message.
+ */
+LINPHONE_PUBLIC void linphone_logging_service_warning(LinphoneLoggingService *log_service, const char *msg);
+
+/**
+ * @brief Write a LinphoneLogLevelError message to the logs.
+ * @param log_service The logging service singleton.
+ * @param msg The log message.
+ */
+LINPHONE_PUBLIC void linphone_logging_service_error(LinphoneLoggingService *log_service, const char *msg);
+
+/**
+ * @brief Write a LinphoneLogLevelFatal message to the logs.
+ * @param log_service The logging service singleton.
+ * @param msg The log message.
+ */
+LINPHONE_PUBLIC void linphone_logging_service_fatal(LinphoneLoggingService *log_service, const char *msg);
+
+/**
  * @brief Increases the reference counter.
  */
 LINPHONE_PUBLIC LinphoneLoggingServiceCbs *linphone_logging_service_cbs_ref(LinphoneLoggingServiceCbs *cbs);

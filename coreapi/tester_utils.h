@@ -218,6 +218,8 @@ LINPHONE_PUBLIC void linphone_core_delete_local_encryption_db(const LinphoneCore
 LINPHONE_PUBLIC void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_reachable);
 
 LINPHONE_PUBLIC bctbx_list_t *linphone_fetch_local_addresses(void);
+LINPHONE_PUBLIC void linphone_core_reset_shared_core_state(LinphoneCore *lc);
+LINPHONE_PUBLIC void linphone_shared_core_helpers_on_msg_written_in_user_defaults(LinphoneCore *lc);
 
 #ifndef __cplusplus
 LINPHONE_PUBLIC Sal *linphone_core_get_sal(const LinphoneCore *lc);
