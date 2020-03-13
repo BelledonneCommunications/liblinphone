@@ -285,6 +285,7 @@ int _linphone_core_apply_transports(LinphoneCore *lc);
 void linphone_core_start_waiting(LinphoneCore *lc, const char *purpose);
 void linphone_core_update_progress(LinphoneCore *lc, const char *purpose, float progresses);
 void linphone_core_stop_waiting(LinphoneCore *lc);
+void linphone_shared_core_must_stop(LinphoneCore *lc);
 
 bool_t linphone_core_incompatible_security(LinphoneCore *lc, SalMediaDescription *md);
 extern LinphonePrivate::Sal::Callbacks linphone_sal_callbacks;
@@ -406,6 +407,7 @@ int linphone_core_get_edge_bw(LinphoneCore *lc);
 int linphone_core_get_edge_ptime(LinphoneCore *lc);
 
 LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start);
+LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start, const char *app_group, bool_t main_core);
 
 int linphone_upnp_init(LinphoneCore *lc);
 void linphone_upnp_destroy(LinphoneCore *lc);

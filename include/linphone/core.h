@@ -6192,6 +6192,23 @@ LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *lc, const 
 **/
 LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *lc);
 
+/**
+ * Get the chat message for the push notification
+ * @param[in] lc The #LinphoneCore
+ * @param[in] call_id The callId of the Message SIP transaction
+ * @return The #LinphoneChatMessage object.
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC LinphoneChatMessage * linphone_core_get_push_notification_message(LinphoneCore *lc, const char *call_id);
+
+/**
+ * Get the chat room we have been added into for the push notification
+ * @param[in] lc The #LinphoneCore
+ * @param[in] chat_room_addr The sip address of the chat room
+ * @return The #LinphoneChatRoom object.
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_get_push_notification_chat_room_invite(LinphoneCore *lc, const char *chat_room_addr);
 
 #ifdef __cplusplus
 }

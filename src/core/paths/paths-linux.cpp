@@ -38,17 +38,17 @@ static string getBaseDirectory () {
 	return base;
 }
 
-string SysPaths::getDataPath (PlatformHelpers *) {
+string SysPaths::getDataPath (void *) {
 	static string dataPath = getBaseDirectory() + "/.local/share/linphone/";
 	return dataPath;
 }
 
-string SysPaths::getConfigPath (PlatformHelpers *) {
+string SysPaths::getConfigPath (void *) {
 	static string configPath = getBaseDirectory() + "/.config/linphone/";
 	return configPath;
 }
 
-string SysPaths::getDownloadPath (PlatformHelpers *) {
+string SysPaths::getDownloadPath (void *) {
 	//TODO
 	static string downloadPath = getBaseDirectory() + "/.config/linphone/";
 	return downloadPath;
