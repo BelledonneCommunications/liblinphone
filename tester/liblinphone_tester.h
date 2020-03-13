@@ -90,6 +90,7 @@ extern test_suite_t call_recovery_test_suite;
 extern test_suite_t call_with_ice_test_suite;
 extern test_suite_t call_secure_test_suite;
 extern test_suite_t call_with_rtp_bundle_test_suite;
+extern test_suite_t shared_core_test_suite;
 
 #ifdef VCARD_ENABLED
 	extern test_suite_t vcard_test_suite;
@@ -354,6 +355,8 @@ typedef struct _LinphoneCoreManager {
 	char *rc_path;
 	char *database_path;
 	char *lime_database_path;
+	char *group_id;
+	bool_t main_core;
 } LinphoneCoreManager;
 
 typedef struct _LinphoneConferenceServer {
@@ -373,6 +376,9 @@ typedef struct _LinphoneCallTestParams {
 void liblinphone_tester_add_suites(void);
 
 void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias);
+void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias);
+void linphone_core_manager_init_shared(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias, LinphoneCoreManager *mgr_to_copy);
+LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr);
 void linphone_core_manager_configure (LinphoneCoreManager *mgr);
 void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_proxies);
 LinphoneCoreManager* linphone_core_manager_create2(const char* rc_file, const char* phone_alias);
@@ -381,6 +387,7 @@ LinphoneCoreManager* linphone_core_manager_new4(const char* rc_file, int check_f
 LinphoneCoreManager* linphone_core_manager_new3(const char* rc_file, bool_t check_for_proxies, const char* phone_alias);
 LinphoneCoreManager* linphone_core_manager_new2(const char* rc_file, bool_t check_for_proxies);
 LinphoneCoreManager* linphone_core_manager_new(const char* rc_file);
+LinphoneCoreManager* linphone_core_manager_create_shared(const char *rc_file, const char *group_id, bool_t main_core, LinphoneCoreManager *mgr_to_copy);
 void linphone_core_manager_stop(LinphoneCoreManager *mgr);
 void linphone_core_manager_uninit_after_stop_async(LinphoneCoreManager *mgr);
 void linphone_core_manager_reinit(LinphoneCoreManager *mgr);

@@ -62,6 +62,7 @@ public:
 	void notifyDisplay (const std::shared_ptr<ChatMessage> &message);
 
 	void onImdnMessageDelivered (const std::shared_ptr<ImdnMessage> &message);
+	bool hasUndeliveredImdnMessage();
 
 	// CoreListener
 	void onGlobalStateChanged (LinphoneGlobalState state) override;

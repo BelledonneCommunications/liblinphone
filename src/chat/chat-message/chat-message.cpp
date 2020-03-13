@@ -1118,6 +1118,14 @@ void ChatMessagePrivate::setImdnMessageId (const string &id) {
 	imdnId = id;
 }
 
+const string &ChatMessagePrivate::getCallId () const {
+	return callId;
+}
+
+void ChatMessagePrivate::setCallId (const string &id) {
+	callId = id;
+}
+
 void ChatMessagePrivate::setForwardInfo (const string &fInfo) {
 	forwardInfo = fInfo;
 }

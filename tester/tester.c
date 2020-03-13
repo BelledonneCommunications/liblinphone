@@ -164,12 +164,18 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, Linphone
 		lp_config_set_string(config, "sound", "remote_ring", ringbackpath);
 		lp_config_set_string(config, "sound", "local_ring" , ringpath);
 		lp_config_set_string(config, "sip",   "root_ca"    , rootcapath);
-		lc = linphone_factory_create_core_with_config_3(linphone_factory_get(), config, system_context);
+
+		LinphoneCoreManager *mgr = (LinphoneCoreManager *)user_data;
+		if (mgr && mgr->group_id) {
+			lc = linphone_factory_create_shared_core_with_config(linphone_factory_get(), config, system_context, mgr->group_id, mgr->main_core);
+		} else {
+			lc = linphone_factory_create_core_with_config_3(linphone_factory_get(), config, system_context);
+		}
 	} else {
-		lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, 	liblinphone_tester_get_empty_rc(), system_context);
+		lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
 		linphone_core_set_ring(lc, ringpath);
 		linphone_core_set_ringback(lc, ringbackpath);
-		linphone_core_set_root_ca(lc,rootcapath);
+		linphone_core_set_root_ca(lc, rootcapath);
 	}
 	if (cbs)
 		linphone_core_add_callbacks(lc, cbs);
@@ -349,9 +355,8 @@ void linphone_core_manager_setup_dns(LinphoneCoreManager *mgr){
 	setup_dns(mgr->lc, bc_tester_get_resource_dir_prefix());
 }
 
-void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
-	LinphoneImNotifPolicy *im_notif_policy;
-	char *hellopath = bc_tester_res("sounds/hello8000.wav");
+LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
+	LinphoneCore *lc;
 	char *filepath = mgr->rc_path ? bctbx_strdup_printf("%s/%s", bc_tester_get_resource_dir_prefix(), mgr->rc_path) : NULL;
 	if (filepath && bctbx_file_exist(filepath) != 0) {
 		ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", mgr->rc_path, bc_tester_get_resource_dir_prefix());
@@ -360,8 +365,20 @@ void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	linphone_config_set_string(config, "storage", "backend", "sqlite3");
 	linphone_config_set_string(config, "storage", "uri", mgr->database_path);
 	linphone_config_set_string(config, "lime", "x3dh_db_path", mgr->lime_database_path);
-	mgr->lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), config, mgr);
+	lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), config, mgr);
 	linphone_config_unref(config);
+	return lc;
+}
+
+void linphone_core_manager_configure(LinphoneCoreManager *mgr) {
+	LinphoneImNotifPolicy *im_notif_policy;
+	char *hellopath = bc_tester_res("sounds/hello8000.wav");
+	char *filepath = mgr->rc_path ? bctbx_strdup_printf("%s/%s", bc_tester_get_resource_dir_prefix(), mgr->rc_path) : NULL;
+	if (filepath && bctbx_file_exist(filepath) != 0) {
+		ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", mgr->rc_path, bc_tester_get_resource_dir_prefix());
+	}
+
+	mgr->lc = linphone_core_manager_configure_lc(mgr);
 
 	linphone_core_manager_check_accounts(mgr);
 	im_notif_policy = linphone_core_get_im_notif_policy(mgr->lc);
@@ -448,7 +465,7 @@ static void generate_random_database_path (LinphoneCoreManager *mgr) {
 #else
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias) {
+void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias) {
 	mgr->number_of_bcunit_error_at_creation =  bc_get_number_of_failures();
 	mgr->cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_registration_state_changed(mgr->cbs, registration_state_changed);
@@ -476,11 +493,27 @@ void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, c
 	mgr->phone_alias = phone_alias ? ms_strdup(phone_alias) : NULL;
 
 	reset_counters(&mgr->stat);
-	if (rc_file) mgr->rc_path = ms_strdup_printf("rcfiles/%s", rc_file);
-
 	manager_count++;
+}
 
+void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias) {
+	linphone_core_manager_init2(mgr, rc_file, phone_alias);
+	if (rc_file) mgr->rc_path = ms_strdup_printf("rcfiles/%s", rc_file);
 	generate_random_database_path(mgr);
+	linphone_core_manager_configure(mgr);
+}
+
+void linphone_core_manager_init_shared(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias, LinphoneCoreManager *mgr_to_copy) {
+	linphone_core_manager_init2(mgr, rc_file, phone_alias);
+
+	if (mgr_to_copy == NULL) {
+		if (rc_file) mgr->rc_path = ms_strdup_printf("rcfiles/%s", rc_file);
+		generate_random_database_path(mgr);
+	} else {
+		mgr->rc_path = ms_strdup(mgr_to_copy->rc_path);
+		mgr->database_path = ms_strdup(mgr_to_copy->database_path);
+		mgr->lime_database_path = ms_strdup(mgr_to_copy->lime_database_path);
+	}
 	linphone_core_manager_configure(mgr);
 }
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
@@ -491,7 +524,9 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 	LinphoneProxyConfig* proxy;
 	int proxy_count;
 
-	linphone_core_start(mgr->lc);
+	if (linphone_core_start(mgr->lc) == -1) {
+		ms_fatal("Core failed to start");
+	}
 
 	/*BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(lc)),proxy_count, int, "%d");*/
 	if (check_for_proxies){ /**/
@@ -561,12 +596,25 @@ LinphoneCoreManager* linphone_core_manager_new2(const char* rc_file, bool_t chec
 	return linphone_core_manager_new3(rc_file, check_for_proxies, NULL);
 }
 
-LinphoneCoreManager* linphone_core_manager_new( const char* rc_file) {
+LinphoneCoreManager *linphone_core_manager_new(const char *rc_file) {
 	return linphone_core_manager_new2(rc_file, TRUE);
 }
 
 
-void linphone_core_manager_stop(LinphoneCoreManager *mgr){
+/**
+ * Create a LinphoneCoreManager that holds a shared Core.
+ * mgr_to_copy is used to create a second LinphoneCoreManager with the same identity.
+ * If mgr_to_copy has a value, rc_file parameter is ignored.
+ */
+LinphoneCoreManager* linphone_core_manager_create_shared(const char *rc_file, const char *group_id, bool_t main_core, LinphoneCoreManager *mgr_to_copy) {
+	LinphoneCoreManager *manager = ms_new0(LinphoneCoreManager, 1);
+	manager->group_id = ms_strdup(group_id);
+	manager->main_core = main_core;
+	linphone_core_manager_init_shared(manager, rc_file, NULL, mgr_to_copy);
+	return manager;
+}
+
+void linphone_core_manager_stop(LinphoneCoreManager *mgr) {
 	if (mgr->lc) {
 		const char *record_file = linphone_core_get_record_file(mgr->lc);
 		if (!liblinphone_tester_keep_record_files && record_file && ortp_file_exist(record_file)==0) {
@@ -639,6 +687,8 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 		unlink(mgr->lime_database_path);
 		bc_free(mgr->lime_database_path);
 	}
+	if (mgr->group_id)
+		bctbx_free(mgr->group_id);
 
 	if (mgr->cbs)
 		linphone_core_cbs_unref(mgr->cbs);
@@ -660,7 +710,7 @@ void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr) {
 }
 
 void linphone_core_manager_destroy(LinphoneCoreManager* mgr) {
-	if (mgr->lc && !linphone_core_is_network_reachable(mgr->lc)) {
+	if (mgr->lc && linphone_core_get_global_state(mgr->lc) != LinphoneGlobalOff && !linphone_core_is_network_reachable(mgr->lc)) {
 		int previousNbRegistrationOk = mgr->stat.number_of_LinphoneRegistrationOk;
 		linphone_core_set_network_reachable(mgr->lc, TRUE);
 		wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_LinphoneRegistrationOk, previousNbRegistrationOk + 1, 2000);
