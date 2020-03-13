@@ -19,9 +19,9 @@
 
 #include <jni.h>
 
-#include "core/platform-helpers/platform-helpers.h"
-
+#include "logger/logger.h"
 #include "paths-android.h"
+#include "c-wrapper/c-wrapper.h"
 
 // =============================================================================
 
@@ -29,22 +29,54 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-string SysPaths::getDataPath (PlatformHelpers *platformHelpers) {
-	if (!platformHelpers)
-		return "";
-	return platformHelpers->getDataPath();
+static jmethodID getStaticMethodId (JNIEnv *env, jclass klass, const char *method, const char *signature) {
+	jmethodID id = env->GetStaticMethodID(klass, method, signature);
+	if (id == 0)
+		lFatal() << "Could not find static java method: `" << method << ", " << signature << "`.";
+	return id;
 }
 
-string SysPaths::getConfigPath (PlatformHelpers *platformHelpers) {
-	if (!platformHelpers)
-		return "";
-	return platformHelpers->getConfigPath();
+static const char *GetStringUTFChars (JNIEnv *env, jstring string) {
+	const char *cstring = string ? env->GetStringUTFChars(string, nullptr) : nullptr;
+	return cstring;
 }
 
-string SysPaths::getDownloadPath (PlatformHelpers *platformHelpers) {
-	if (!platformHelpers)
+static void ReleaseStringUTFChars (JNIEnv *env, jstring string, const char *cstring) {
+	if (string) env->ReleaseStringUTFChars(string, cstring);
+}
+
+static string getPath (void *context, const char *jMethodName) {
+	if (!context) {
+		lError() << "context is null.";
 		return "";
-	return platformHelpers->getDownloadPath();
+	}
+
+	JNIEnv *env = ms_get_jni_env();
+	jobject jContext = (jobject)context;
+
+	jclass klass = env->FindClass("org/linphone/core/tools/AndroidPlatformHelper");
+	if (!klass)
+		lFatal() << "Could not find java AndroidPlatformHelper class.";
+
+	jmethodID jMethodId = getStaticMethodId(env, klass, jMethodName, "(Landroid/content/Context;)Ljava/lang/String;");
+	jstring jPath = (jstring)env->CallStaticObjectMethod(klass, jMethodId, jContext);
+
+	const char *cPath = GetStringUTFChars(env, jPath);
+	string path = L_C_TO_STRING(cPath);
+	ReleaseStringUTFChars(env, jPath, cPath);
+	return path;
+}
+
+string SysPaths::getDataPath (void *context) {
+	return getPath(context, "getDataPath");
+}
+
+string SysPaths::getConfigPath (void *context) {
+	return getPath(context, "getConfigPath");
+}
+
+string SysPaths::getDownloadPath (void *context) {
+	return getPath(context, "getDownloadPath");
 }
 
 LINPHONE_END_NAMESPACE

@@ -201,28 +201,28 @@ public class AndroidPlatformHelper {
 		return mDnsServers;
 	}
 
-	public String getDataPath() {
-		return mContext.getFilesDir().getAbsolutePath() + "/";
+	public static String getDataPath(Context context) {
+		return context.getFilesDir().getAbsolutePath() + "/";
 	}
 
-	public String getConfigPath() {
-		return mContext.getFilesDir().getAbsolutePath() + "/";
+	public static String getConfigPath(Context context) {
+		return context.getFilesDir().getAbsolutePath() + "/";
 	}
 
 	public String getCachePath() {
 		return mContext.getCacheDir().getAbsolutePath() + "/";
 	}
 
-	public String getDownloadPath() {
+	public static String getDownloadPath(Context context) {
 		String path = null;
 		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
 			Log.i("[Platform Helper] External storage is mounted, using download directory");
-			path = mContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
+			path = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
 		}
 
 		if (path == null) {
 			Log.w("[Platform Helper] Couldn't get external storage path, using internal");
-			path = mContext.getFilesDir().getAbsolutePath();
+			path = context.getFilesDir().getAbsolutePath();
 		}
 
 		Log.i("[Platform Helper] Download directory is " + path + "/");

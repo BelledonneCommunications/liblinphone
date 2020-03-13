@@ -180,6 +180,9 @@ public:
 	const std::string &getExternalBodyUrl () const;
 	void setExternalBodyUrl (const std::string &url);
 
+	const std::string &getCallId () const;
+	void setCallId (const std::string &id);
+
 	bool hasTextContent () const;
 	const Content *getTextContent () const;
 
@@ -227,6 +230,7 @@ private:
 	bool markedAsRead = false;
 	Content internalContent;
 	bool isAutoDownloadAttachedFilesHappened = false;
+	std::string callId;
 
 	// TODO: to replace salCustomheaders
 	std::unordered_map<std::string, std::string> customHeaders;
