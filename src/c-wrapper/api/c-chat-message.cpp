@@ -326,14 +326,15 @@ LinphoneStatus linphone_chat_message_put_char (LinphoneChatMessage *msg, uint32_
 void linphone_chat_message_add_file_content (LinphoneChatMessage *msg, LinphoneContent *c_content) {
 	LinphonePrivate::FileContent *fileContent = new LinphonePrivate::FileContent();
 	LinphonePrivate::ContentType contentType;
+	size_t content_size = linphone_content_get_size(c_content);
 	contentType.setType(L_C_TO_STRING(linphone_content_get_type(c_content)));
 	contentType.setSubType(L_C_TO_STRING(linphone_content_get_subtype(c_content)));
 	fileContent->setContentType(contentType);
-	fileContent->setFileSize(linphone_content_get_size(c_content));
+	fileContent->setFileSize(content_size);
 	fileContent->setFileName(linphone_content_get_name(c_content));
 	fileContent->setFilePath(linphone_content_get_file_path(c_content));
-	if (linphone_content_get_size(c_content) > 0) {
-		fileContent->setBody(linphone_content_get_string_buffer(c_content));
+	if (content_size > 0) {
+		fileContent->setBody(linphone_content_get_buffer(c_content), content_size);
 	}
 	fileContent->setUserData(linphone_content_get_user_data(c_content));
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(fileContent);
