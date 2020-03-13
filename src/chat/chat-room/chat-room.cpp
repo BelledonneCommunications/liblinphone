@@ -315,6 +315,7 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 
 	msg->getPrivate()->setTime(message->time);
 	msg->getPrivate()->setImdnMessageId(op->getCallId());
+	msg->getPrivate()->setCallId(op->getCallId());
 
 	const SalCustomHeader *ch = op->getRecvCustomHeaders();
 	if (ch)

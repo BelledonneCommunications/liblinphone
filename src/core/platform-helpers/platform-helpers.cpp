@@ -89,6 +89,9 @@ string GenericPlatformHelpers::getSoundResource (const string &filename) const {
 	);
 }
 
+void *GenericPlatformHelpers::getPathContext () {
+	return nullptr;
+}
 
 void GenericPlatformHelpers::setVideoPreviewWindow (void *windowId) {}
 
@@ -187,5 +190,23 @@ int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revent
 string GenericPlatformHelpers::getDownloadPath () {
 	return "";
 }
+
+bool GenericPlatformHelpers::isCoreShared() {
+	return false;
+}
+
+bool GenericPlatformHelpers::canCoreStart() {
+	return true;
+}
+
+std::shared_ptr<ChatMessage> GenericPlatformHelpers::getPushNotificationMessage(const string &callId) {
+	return nullptr;
+}
+
+std::shared_ptr<ChatRoom> GenericPlatformHelpers::getPushNotificationChatRoomInvite(const string &chatRoomAddr) {
+	return nullptr;
+}
+
+void GenericPlatformHelpers::resetSharedCoreState() {}
 
 LINPHONE_END_NAMESPACE
