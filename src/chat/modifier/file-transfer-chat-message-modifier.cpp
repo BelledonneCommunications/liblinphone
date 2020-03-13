@@ -254,7 +254,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 				// actual filename stored in msg->file_transfer_information->name will be set in encrypted msg
 				first_part_header = "form-data; name=\"File\"; filename=\"filename.txt\"";
 
-				imee->generateFileTransferKey(message->getChatRoom(), message);
+				imee->generateFileTransferKey(message->getChatRoom(), message, fileTransferContent);
 			} else {
 				first_part_header = "form-data; name=\"File\"; filename=\"" + currentFileContentToTransfer->getFileName() + "\"";
 			}

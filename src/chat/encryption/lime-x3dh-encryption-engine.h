@@ -93,7 +93,8 @@ public:
 
 	void generateFileTransferKey (
 		const std::shared_ptr<AbstractChatRoom> &ChatRoom,
-		const std::shared_ptr<ChatMessage> &message
+		const std::shared_ptr<ChatMessage> &message,
+		FileTransferContent *fileTransferContent
 	) override;
 
 	int downloadingFile (
