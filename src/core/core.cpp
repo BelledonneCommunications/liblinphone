@@ -42,6 +42,7 @@
 #endif
 #include "core/core-listener.h"
 #include "core/core-p.h"
+#include "chat/chat-room/chat-room-p.h"
 #include "logger/logger.h"
 #include "paths/paths.h"
 #include "linphone/utils/utils.h"
@@ -125,6 +126,13 @@ bool CorePrivate::asyncStopDone() {
 		}
 	}
 
+	const list<shared_ptr<AbstractChatRoom>> chatRooms = q->getChatRooms();
+	for (const auto &chatRoom : chatRooms) {
+		if (static_pointer_cast<ChatRoom>(chatRoom)->getPrivate()->getImdnHandler()->hasUndeliveredImdnMessage()) {
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -157,7 +165,7 @@ void CorePrivate::stop() {
 
 void CorePrivate::uninit () {
 	L_Q();
-	while (!calls.empty()) {
+	for (int i=0; !calls.empty() && i<100; i++) {
 		calls.front()->terminate();
 		linphone_core_iterate(L_GET_C_BACK_PTR(q));
 		ms_usleep(10000);
@@ -167,6 +175,21 @@ void CorePrivate::uninit () {
 
 	stopEphemeralMessageTimer();
 	ephemeralMessages.clear();
+
+	const list<shared_ptr<AbstractChatRoom>> chatRooms = q->getChatRooms();
+	bool hasUndeliveredImdn = true;
+	for (int i=0; hasUndeliveredImdn && i<50; i++) {
+		hasUndeliveredImdn = false;
+		for (const auto &chatRoom : chatRooms) {
+			if (static_pointer_cast<ChatRoom>(chatRoom)->getPrivate()->getImdnHandler()->hasUndeliveredImdnMessage()) {
+				hasUndeliveredImdn = true;
+				break;
+			}
+		}
+		linphone_core_iterate(L_GET_C_BACK_PTR(q));
+		ms_usleep(10000);
+	}
+
 	chatRoomsById.clear();
 	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();
@@ -368,15 +391,15 @@ LinphoneCore *Core::getCCore () const {
 // -----------------------------------------------------------------------------
 
 string Core::getDataPath () const {
-	return Paths::getPath(Paths::Data, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper));
+	return Paths::getPath(Paths::Data, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper)->getPathContext());
 }
 
 string Core::getConfigPath () const {
-	return Paths::getPath(Paths::Config, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper));
+	return Paths::getPath(Paths::Config, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper)->getPathContext());
 }
 
 string Core::getDownloadPath() const {
-	return Paths::getPath(Paths::Download, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper));
+	return Paths::getPath(Paths::Download, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper)->getPathContext());
 }
 
 void Core::setEncryptionEngine (EncryptionEngine *imee) {
@@ -635,6 +658,22 @@ int Core::getUnreadChatMessageCountFromActiveLocals () const {
 		}
 	}
 	return count;
+}
+
+std::shared_ptr<ChatMessage> Core::getPushNotificationMessage (const std::string &callId) const {
+	std::shared_ptr<ChatMessage> msg = static_cast<PlatformHelpers *>(getCCore()->platform_helper)->getPushNotificationMessage(callId);
+	return msg;
+}
+
+std::shared_ptr<ChatRoom> Core::getPushNotificationChatRoomInvite (const std::string &chatRoomAddr) const {
+	std::shared_ptr<ChatRoom> chatRoom = static_cast<PlatformHelpers *>(getCCore()->platform_helper)->getPushNotificationChatRoomInvite(chatRoomAddr);
+	return chatRoom;
+}
+
+std::shared_ptr<ChatMessage> Core::findChatMessageFromCallId (const std::string &callId) const {
+	L_D();
+	std::list<std::shared_ptr<ChatMessage>> chatMessages = d->mainDb->findChatMessagesFromCallId(callId);
+	return chatMessages.empty() ? nullptr : chatMessages.front();
 }
 
 // -----------------------------------------------------------------------------

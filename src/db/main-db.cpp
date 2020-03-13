@@ -56,7 +56,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 12);
+	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 13);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -923,22 +923,23 @@ long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<Even
 	const int &displayNotificationRequired = chatMessage->getPrivate()->getDisplayNotificationRequired();
 	const int &markedAsRead = chatMessage->getPrivate()->isMarkedAsRead() ? 1 : 0;
 	const bool &isEphemeral = chatMessage->isEphemeral();
+	const string &callId = chatMessage->getPrivate()->getCallId();
 
 	*dbSession.getBackendSession() << "INSERT INTO conference_chat_message_event ("
 		"  event_id, from_sip_address_id, to_sip_address_id,"
 		"  time, state, direction, imdn_message_id, is_secured,"
 		"  delivery_notification_required, display_notification_required,"
-		"  marked_as_read, forward_info"
+		"  marked_as_read, forward_info, call_id"
 		") VALUES ("
 		"  :eventId, :localSipaddressId, :remoteSipaddressId,"
 		"  :time, :state, :direction, :imdnMessageId, :isSecured,"
 		"  :deliveryNotificationRequired, :displayNotificationRequired,"
-		"  :markedAsRead, :forwardInfo"
+		"  :markedAsRead, :forwardInfo, :callId"
 		")", soci::use(eventId), soci::use(fromSipAddressId), soci::use(toSipAddressId),
 		soci::use(messageTime), soci::use(state), soci::use(direction),
 		soci::use(imdnMessageId), soci::use(isSecured),
 		soci::use(deliveryNotificationRequired), soci::use(displayNotificationRequired),
-		soci::use(markedAsRead), soci::use(forwardInfo);
+		soci::use(markedAsRead), soci::use(forwardInfo), soci::use(callId);
 
 	if (isEphemeral) {
 		long ephemeralLifetime = chatMessage->getEphemeralLifetime();
@@ -1475,6 +1476,23 @@ void MainDbPrivate::updateSchema () {
 		*session << "DROP VIEW IF EXISTS conference_event_view";
 		*session << "CREATE VIEW conference_event_view AS"
 		"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, lifetime"
+		"  FROM event"
+		"  LEFT JOIN conference_event ON conference_event.event_id = event.id"
+		"  LEFT JOIN conference_chat_message_event ON conference_chat_message_event.event_id = event.id"
+		"  LEFT JOIN conference_notified_event ON conference_notified_event.event_id = event.id"
+		"  LEFT JOIN conference_participant_device_event ON conference_participant_device_event.event_id = event.id"
+		"  LEFT JOIN conference_participant_event ON conference_participant_event.event_id = event.id"
+		"  LEFT JOIN conference_subject_event ON conference_subject_event.event_id = event.id"
+		"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id"
+		"  LEFT JOIN chat_message_ephemeral_event ON chat_message_ephemeral_event.event_id = event.id"
+		"  LEFT JOIN conference_ephemeral_message_event ON conference_ephemeral_message_event.event_id = event.id";
+	}
+
+	if (version < makeVersion(1, 0, 13)) {
+		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN call_id VARCHAR(255) DEFAULT ''"; //TODO PAUL : 255 is to big. see rfc for size
+		*session << "DROP VIEW IF EXISTS conference_event_view";
+		*session << "CREATE VIEW conference_event_view AS"
+		"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, lifetime, call_id"
 		"  FROM event"
 		"  LEFT JOIN conference_event ON conference_event.event_id = event.id"
 		"  LEFT JOIN conference_chat_message_event ON conference_chat_message_event.event_id = event.id"
@@ -2834,6 +2852,51 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessages (
 
 		return chatMessages;
 	};
+#else
+	return list<shared_ptr<ChatMessage>>();
+#endif
+}
+
+list<shared_ptr<ChatMessage>> MainDb::findChatMessagesFromCallId (const std::string &callId) const {
+#ifdef HAVE_DB_STORAGE
+	static const string query = "SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, lifetime, chat_room_id"
+			" FROM conference_event_view"
+			" LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
+			" LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"
+			" LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id"
+			" LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id"
+			" WHERE call_id = :callId";
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		list<shared_ptr<ChatMessage>> chatMessages;
+		soci::rowset<soci::row> rows = (
+			d->dbSession.getBackendSession()->prepare << query, soci::use(callId)
+		);
+
+		for (const auto &row : rows) {
+			const long long &dbChatRoomId = d->dbSession.resolveId(row, (int)row.size()-1);
+			ConferenceId conferenceId = d->getConferenceIdFromCache(dbChatRoomId);
+			if (!conferenceId.isValid()) {
+				conferenceId = d->selectConferenceId(dbChatRoomId);
+			}
+
+			if (conferenceId.isValid()) {
+				shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
+				if (chatRoom) {
+					shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
+					if (event) {
+						L_ASSERT(event->getType() == EventLog::Type::ConferenceChatMessage);
+						chatMessages.push_back(static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage());
+					}
+				}
+			}
+		}
+
+		return chatMessages;
+	};
+
 #else
 	return list<shared_ptr<ChatMessage>>();
 #endif
