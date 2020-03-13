@@ -86,6 +86,25 @@ LINPHONE_PUBLIC LinphoneConfig * linphone_config_new_from_buffer(const char *buf
 LINPHONE_PUBLIC LinphoneConfig * linphone_config_new_with_factory(const char *config_filename, const char *factory_config_filename);
 
 /**
+ * Instantiates a #LinphoneConfig object from a user config file name, group id and a factory config file.
+ * The "group id" is the string that identify the "App group" capability of the iOS application.
+ * App group gives access to a shared file system where all the configuration files for shared core are stored.
+ * Both iOS application and iOS app extension that need shared core must activate the "App group" capability with the SAME
+ * "group id" in the project settings.
+ * The caller of this constructor owns a reference. linphone_config_unref() must be called when this object is no longer needed.
+ * @ingroup misc
+ * @param app_group_id used to compute the path of the config file in the file system shared by the shared Cores
+ * @param config_filename the filename of the user config file to read to fill the instantiated #LinphoneConfig
+ * @param factory_config_filename the filename of the factory config file to read to fill the instantiated #LinphoneConfig
+ * @see linphone_config_new
+ *
+ * The user config file is read first to fill the #LinphoneConfig and then the factory config file is read.
+ * Therefore the configuration parameters defined in the user config file will be overwritten by the parameters
+ * defined in the factory config file.
+ */
+LINPHONE_PUBLIC LinphoneConfig * linphone_config_new_for_shared_core(const char *app_group_id, const char* config_filename, const char *factory_path);
+
+/**
  * Reads a user config file and fill the #LinphoneConfig with the read config values.
  * @ingroup misc
  * @param lpconfig The #LinphoneConfig object to fill with the content of the file
@@ -212,6 +231,11 @@ LINPHONE_PUBLIC void linphone_config_set_float(LinphoneConfig *lpconfig,const ch
  * Writes the config file to disk.
 **/
 LINPHONE_PUBLIC LinphoneStatus linphone_config_sync(LinphoneConfig *lpconfig);
+
+/**
+ * Reload the config from the file.
+**/
+LINPHONE_PUBLIC void linphone_config_reload(LinphoneConfig *lpconfig);
 
 /**
  * Returns 1 if a given section is present in the configuration.

@@ -92,6 +92,10 @@
 #include "TargetConditionals.h"
 #endif
 
+#ifdef __ANDROID__
+#include "android/api-level.h"
+#endif
+
 #include "c-wrapper/c-wrapper.h"
 #include "call/call-p.h"
 #include "conference/params/media-session-params-p.h"
@@ -639,6 +643,17 @@ static void _close_log_collection_file(void) {
 	}
 }
 
+#if (!__ANDROID__ && !__APPLE__) || (__ANDROID__ && __ANDROID_API__ < 21)
+static const char* getprogname() {
+#if defined(__GLIBC__)
+  	return program_invocation_short_name;
+#else
+	//not known yet on windows
+	return"";
+#endif
+}
+#endif
+
 static void linphone_core_log_collection_handler(const char *domain, OrtpLogLevel level, const char *fmt, va_list args) {
 	const char *lname="undef";
 	char *msg;
@@ -686,8 +701,8 @@ static void linphone_core_log_collection_handler(const char *domain, OrtpLogLeve
 	}
 	if (liblinphone_log_collection_file) {
 		ortp_mutex_lock(&liblinphone_log_collection_mutex);
-		ret = fprintf(liblinphone_log_collection_file,"%i-%.2i-%.2i %.2i:%.2i:%.2i:%.3i [%s] %s %s\n",
-			1900 + lt->tm_year, lt->tm_mon + 1, lt->tm_mday, lt->tm_hour, lt->tm_min, lt->tm_sec, (int)(tp.tv_usec / 1000), domain, lname, msg);
+		ret = fprintf(liblinphone_log_collection_file,"%i-%.2i-%.2i %.2i:%.2i:%.2i:%.3i [%s/%s] %s %s\n",
+					  1900 + lt->tm_year, lt->tm_mon + 1, lt->tm_mday, lt->tm_hour, lt->tm_min, lt->tm_sec, (int)(tp.tv_usec / 1000), getprogname(), domain, lname, msg);
 		fflush(liblinphone_log_collection_file);
 		if (ret > 0) {
 			liblinphone_log_collection_file_size += (size_t)ret;
@@ -2606,6 +2621,11 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 			bctbx_uninit_logger();
 		}
 
+		if (!getPlatformHelpers(lc)->getSharedCoreHelpers()->canCoreStart()) {
+			bctbx_warning("Core [%p] can't start", lc);
+			return -1;
+		}
+
 		linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
 
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
@@ -2651,6 +2671,17 @@ LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpCon
 	LinphoneCore *core = L_INIT(Core);
 	Core::create(core);
 	linphone_core_init(core, cbs, config, userdata, system_context, automatically_start);
+	return core;
+}
+
+LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start, const char *app_group_id, bool_t main_core) {
+	bctbx_message("[SHARED] Creating %s Shared Core", main_core ? "Main" : "Executor");
+	linphone_config_set_string(config, "shared_core", "app_group_id", app_group_id);
+	LinphoneCore *core = _linphone_core_new_with_config(cbs, config, userdata, system_context, automatically_start);
+	core->is_main_core = main_core;
+	// allow ios app extension to mark msg as read without being registered
+	core->send_imdn_if_unregistered = !main_core;
+	getPlatformHelpers(core)->getSharedCoreHelpers()->registerMainCoreMsgCallback();
 	return core;
 }
 
@@ -3665,8 +3696,12 @@ void linphone_core_iterate(LinphoneCore *lc){
 		ortp_logv_flush();
 	}
 
-	if (lc->state == LinphoneGlobalShutdown && lc->async_stop) {
-		if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->asyncStopDone()) {
+
+	/* When doing asynchronous core stop, the core goes to LinphoneGlobalShutdown state
+	Then linphone_core_iterate() needs to be called until synchronous tasks are done
+	Then the stop is finished and the status is changed to LinphoneGlobalOff */
+	if (lc->state == LinphoneGlobalShutdown) {
+		if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->isShutdownDone()) {
 			_linphone_core_stop_async_end(lc);
 		}
 	}
@@ -6116,29 +6151,36 @@ void sip_config_uninit(LinphoneCore *lc)
 	lp_config_set_int(lc->config,"sip","register_only_when_upnp_is_ok",config->register_only_when_upnp_is_ok);
 
 	if (lc->sip_network_state.global_state) {
-		for(elem=config->proxies;elem!=NULL;elem=bctbx_list_next(elem)){
-			LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)(elem->data);
-			_linphone_proxy_config_unpublish(cfg);	/* to unpublish without changing the stored flag enable_publish */
+		bool_t need_to_unregister = FALSE;
+
+		for (elem = config->proxies; elem != NULL; elem = bctbx_list_next(elem)) {
+			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)(elem->data);
+			_linphone_proxy_config_unpublish(cfg); /* to unpublish without changing the stored flag enable_publish */
 
 			/* Do not unregister when push notifications are allowed, otherwise this clears tokens from the SIP server.*/
-			if (!linphone_proxy_config_is_push_notification_allowed(cfg)){
+			if (!linphone_proxy_config_is_push_notification_allowed(cfg)) {
 				_linphone_proxy_config_unregister(cfg);	/* to unregister without changing the stored flag enable_register */
+				need_to_unregister = TRUE;
 			}
 		}
 
-		ms_message("Unregistration started.");
+		if (need_to_unregister) {
+			ms_message("Unregistration started.");
 
-		for (i=0;i<20&&still_registered;i++){
-			still_registered=FALSE;
-			lc->sal->iterate();
-			for(elem=config->proxies;elem!=NULL;elem=bctbx_list_next(elem)){
-				LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)(elem->data);
-				LinphoneRegistrationState state = linphone_proxy_config_get_state(cfg);
-				still_registered = (state==LinphoneRegistrationOk||state==LinphoneRegistrationProgress);
+			for (i = 0; i < 20 && still_registered; i++) {
+				still_registered = FALSE;
+				lc->sal->iterate();
+				for (elem = config->proxies; elem != NULL; elem = bctbx_list_next(elem)) {
+					LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)(elem->data);
+					if (!linphone_proxy_config_is_push_notification_allowed(cfg)) {
+						LinphoneRegistrationState state = linphone_proxy_config_get_state(cfg);
+						still_registered = (state == LinphoneRegistrationOk || state == LinphoneRegistrationProgress);
+					}
+				}
+				ms_usleep(100000);
 			}
-			ms_usleep(100000);
+			if (i >= 20) ms_warning("Cannot complete unregistration, giving up");
 		}
-		if (i>=20) ms_warning("Cannot complete unregistration, giving up");
 	}
 
 	elem = config->proxies;
@@ -6349,9 +6391,13 @@ LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(LinphoneCore *lc, c
  * Called by linphone_core_stop_async() to begin the async stop process and change the state to "Shutdown"
  */
 static void _linphone_core_stop_async_start(LinphoneCore *lc) {
+	if (linphone_core_get_global_state(lc) == LinphoneGlobalOff) {
+		ms_message("Core [%p] is already stopped", lc);
+		return;
+	}
+
 	linphone_task_list_free(&lc->hooks);
 	lc->video_conf.show_local = FALSE;
-	lc->async_stop = TRUE;
 
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->shutdown();
 
@@ -6376,7 +6422,7 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
  * and change the state to "Off"
  */
 static void _linphone_core_stop_async_end(LinphoneCore *lc) {
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->stop();
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->uninit();
 
 	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
 
@@ -6455,126 +6501,44 @@ static void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	ms_factory_destroy(lc->factory);
 	lc->factory = NULL;
 
+#if TARGET_OS_IPHONE
+	bool_t is_shared_core = getPlatformHelpers(lc)->getSharedCoreHelpers()->isCoreShared();
+#endif
 	if (lc->platform_helper) delete getPlatformHelpers(lc);
 	lc->platform_helper = NULL;
+
+#if TARGET_OS_IPHONE
+	/* this will unlock the other Linphone Shared Core that are waiting to start (if any).
+	We need to unlock them at the very end of the stopping process otherwise two Cores will
+	process at the same time until this one is finally stopped */
+	if (is_shared_core) LinphonePrivate::uninitSharedCore(lc);
+#endif
+
 	linphone_core_set_state(lc, LinphoneGlobalOff, "Off");
 }
 
 static void _linphone_core_stop(LinphoneCore *lc) {
-	bctbx_list_t *elem = NULL;
-	int i=0;
-	bool_t wait_until_unsubscribe = FALSE;
-	linphone_task_list_free(&lc->hooks);
-	lc->video_conf.show_local = FALSE;
-	lc->async_stop = FALSE;
-
-	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
-
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->uninit();
-
-	for (elem = lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
-		LinphoneFriendList *list = (LinphoneFriendList *)elem->data;
-		linphone_friend_list_enable_subscriptions(list,FALSE);
-		if (list->event)
-			wait_until_unsubscribe =  TRUE;
+	if (linphone_core_get_global_state(lc) == LinphoneGlobalOff) {
+		ms_message("Core [%p] is already stopped", lc);
+		return;
 	}
-	/*give a chance to unsubscribe, might be optimized*/
-	for (i=0; wait_until_unsubscribe && i<50; i++) {
+
+	_linphone_core_stop_async_start(lc);
+
+	bool_t is_off = FALSE;
+	uint64_t start_time = ms_get_cur_time_ms();
+
+	while (!is_off && ms_get_cur_time_ms() - start_time < 1000) {
 		linphone_core_iterate(lc);
-		ms_usleep(10000);
+		ms_usleep(50000);
+		is_off = (linphone_core_get_global_state(lc) == LinphoneGlobalOff);
 	}
 
-	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
-
-	getPlatformHelpers(lc)->onLinphoneCoreStop();
-
-#ifdef VIDEO_ENABLED
-	if (lc->previewstream!=NULL){
-		video_preview_stop(lc->previewstream);
-		lc->previewstream=NULL;
+	/* linphone_core_iterate() can call _linphone_core_stop_async_end()
+	if all asynchronous tasks are done so we don't need to call it twice */
+	if (!is_off) {
+		_linphone_core_stop_async_end(lc);
 	}
-#endif
-
-	lc->msevq=NULL;
-
-	/* save all config */
-	friends_config_uninit(lc);
-	sip_config_uninit(lc);
-	net_config_uninit(lc);
-	rtp_config_uninit(lc);
-	linphone_core_stop_ringing(lc);
-	linphone_core_stop_dtmf_stream(lc);
-	sound_config_uninit(lc);
-	video_config_uninit(lc);
-	codecs_config_uninit(lc);
-
-	sip_setup_unregister_all();
-
-	if (lp_config_needs_commit(lc->config)) lp_config_sync(lc->config);
-
-	bctbx_list_for_each(lc->call_logs,(void (*)(void*))linphone_call_log_unref);
-	lc->call_logs=bctbx_list_free(lc->call_logs);
-
-	if(lc->zrtp_secrets_cache != NULL) {
-		ms_free(lc->zrtp_secrets_cache);
-		lc->zrtp_secrets_cache = NULL;
-	}
-
-	if(lc->user_certificates_path != NULL) {
-		ms_free(lc->user_certificates_path);
-		lc->user_certificates_path = NULL;
-	}
-	if(lc->play_file!=NULL){
-		ms_free(lc->play_file);
-		lc->play_file = NULL;
-	}
-	if(lc->rec_file!=NULL){
-		ms_free(lc->rec_file);
-		lc->rec_file = NULL;
-	}
-	if (lc->logs_db_file) {
-		ms_free(lc->logs_db_file);
-		lc->logs_db_file = NULL;
-	}
-	if (lc->friends_db_file) {
-		ms_free(lc->friends_db_file);
-		lc->friends_db_file = NULL;
-	}
-	if (lc->tls_key){
-		ms_free(lc->tls_key);
-		lc->tls_key = NULL;
-	}
-	if (lc->tls_cert){
-		ms_free(lc->tls_cert);
-		lc->tls_cert = NULL;
-	}
-	if (lc->ringtoneplayer) {
-		linphone_ringtoneplayer_destroy(lc->ringtoneplayer);
-		lc->ringtoneplayer = NULL;
-	}
-	if (lc->im_encryption_engine) {
-		linphone_im_encryption_engine_unref(lc->im_encryption_engine);
-		lc->im_encryption_engine = NULL;
-	}
-	if (lc->default_ac_service) {
-		linphone_account_creator_service_unref(lc->default_ac_service);
-		lc->default_ac_service = NULL;
-	}
-
-	linphone_core_free_payload_types(lc);
-	if (lc->supported_formats) ms_free((void *)lc->supported_formats);
-	lc->supported_formats = NULL;
-	linphone_core_call_log_storage_close(lc);
-	linphone_core_friends_storage_close(lc);
-	linphone_core_zrtp_cache_close(lc);
-	ms_bandwidth_controller_destroy(lc->bw_controller);
-	lc->bw_controller = NULL;
-	ms_factory_destroy(lc->factory);
-	lc->factory = NULL;
-
-	if (lc->platform_helper) delete getPlatformHelpers(lc);
-	lc->platform_helper = NULL;
-	linphone_core_set_state(lc, LinphoneGlobalOff, "Off");
 }
 
 void linphone_core_stop(LinphoneCore *lc) {

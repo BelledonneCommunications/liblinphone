@@ -24,8 +24,10 @@
 
 #include "private_structs.h"
 
+#include "push-notification-message/push-notification-message.h"
 #include "chat/encryption/encryption-engine.h"
 #include "chat/encryption/legacy-encryption-engine.h"
+#include "linphone/api/c-types.h"
 
 // =============================================================================
 
@@ -133,4 +135,29 @@ bool_t linphone_core_is_friend_list_subscription_enabled(LinphoneCore *lc) {
 
 void linphone_core_ensure_registered(LinphoneCore *lc) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pushNotificationReceived();
+}
+
+LinphonePushNotificationMessage * linphone_core_get_new_message_from_callid(LinphoneCore *lc, const char *call_id) {
+	std::shared_ptr<PushNotificationMessage> cppMsg = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationMessage(Utils::cStringToCppString(call_id));
+	if (!cppMsg) return NULL;
+
+	LinphonePushNotificationMessage *msg = (LinphonePushNotificationMessage *) cppMsg->toC();
+	if (msg) {
+		// We need to take a ref on the object because this function is called from outside linphone-sdk.
+		belle_sip_object_ref(msg);
+	}
+	return msg;
+}
+
+/* Uses the chat_room_addr instead of the call_id like linphone_core_get_new_message_from_callid to get the chatroom.
+Using the call_id to get the chat room require to add a new param to chat room objects where the conference address is already here */
+LinphoneChatRoom * linphone_core_get_new_chat_room_from_conf_addr(LinphoneCore *lc , const char *chat_room_addr) {
+	std::shared_ptr<ChatRoom> cppChatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationChatRoom(Utils::cStringToCppString(chat_room_addr));
+	LinphoneChatRoom *chatRoom = L_GET_C_BACK_PTR(cppChatRoom);
+
+	if (chatRoom) {
+		// We need to take a ref on the object because this function is called from outside linphone-sdk.
+		belle_sip_object_ref(chatRoom);
+	}
+	return chatRoom;
 }

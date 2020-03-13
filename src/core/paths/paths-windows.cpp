@@ -55,19 +55,19 @@ static string getPath (const GUID &id) {
 }
 
 
-string SysPaths::getDataPath (PlatformHelpers *) {
+string SysPaths::getDataPath (void *) {
 	static string dataPath = getPath(FOLDERID_LocalAppData);
 	return dataPath;
 }
 
-string SysPaths::getConfigPath (PlatformHelpers *platformHelpers) {
+string SysPaths::getConfigPath (void *) {
 	// Yes, same path.
-	return getDataPath(platformHelpers);
+	return getDataPath(NULL);
 }
 
-string SysPaths::getDownloadPath (PlatformHelpers *platformHelpers) {
+string SysPaths::getDownloadPath (void *) {
 	// TODO
-	return getDataPath(platformHelpers);
+	return getDataPath(NULL);
 }
 
 LINPHONE_END_NAMESPACE

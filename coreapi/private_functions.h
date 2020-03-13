@@ -406,6 +406,7 @@ int linphone_core_get_edge_bw(LinphoneCore *lc);
 int linphone_core_get_edge_ptime(LinphoneCore *lc);
 
 LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start);
+LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start, const char *app_group_id, bool_t main_core);
 
 int linphone_upnp_init(LinphoneCore *lc);
 void linphone_upnp_destroy(LinphoneCore *lc);
@@ -609,7 +610,7 @@ int linphone_core_get_default_proxy_config_index(LinphoneCore *lc);
 char *linphone_presence_model_to_xml(LinphonePresenceModel *model) ;
 
 void linphone_core_report_call_log(LinphoneCore *lc, LinphoneCallLog *call_log);
-void linphone_core_report_early_failed_call(LinphoneCore *lc, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei);
+void linphone_core_report_early_failed_call(LinphoneCore *lc, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei, const char *cid);
 
 LinphoneVideoDefinition * linphone_video_definition_new(unsigned int width, unsigned int height, const char *name);
 
