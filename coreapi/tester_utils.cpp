@@ -211,3 +211,7 @@ const char *linphone_core_get_tone_file(LinphoneCore *lc, LinphoneToneID id){
 	LinphoneToneDescription *tone = L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->getToneFromId(id);
 	return tone ? tone->audiofile : NULL;
 }
+
+void linphone_core_reset_shared_core_state(LinphoneCore *lc) {
+	static_cast<PlatformHelpers *>(lc->platform_helper)->resetSharedCoreState();
+}
