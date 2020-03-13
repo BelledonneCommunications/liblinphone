@@ -1237,4 +1237,10 @@ typedef int LinphoneStatus;
 **/
 typedef struct _LinphoneHeaders LinphoneHeaders;
 
+/**
+ * Object holding chat message data received by a push notification
+ * @ingroup misc
+**/
+typedef struct _LinphonePushNotificationMessage LinphonePushNotificationMessage;
+
 #endif /* LINPHONE_TYPES_H_ */

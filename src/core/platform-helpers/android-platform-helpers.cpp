@@ -22,6 +22,7 @@
 #include "platform-helpers.h"
 #include "logger/logger.h"
 #include "c-wrapper/c-wrapper.h"
+#include "core/paths/paths.h"
 
 // TODO: Remove me later.
 #include "private.h"
@@ -50,6 +51,7 @@ public:
 	string getImageResource (const string &filename) const override;
 	string getRingResource (const string &filename) const override;
 	string getSoundResource (const string &filename) const override;
+	void *getPathContext () override;
 
 	void setVideoPreviewWindow (void *windowId) override;
 	void setVideoWindow (void *windowId) override;
@@ -74,6 +76,7 @@ private:
 	string getNativeLibraryDir();
 
 	jobject mJavaHelper = nullptr;
+	jobject mSystemContext = nullptr;
 	jmethodID mWifiLockAcquireId = nullptr;
 	jmethodID mWifiLockReleaseId = nullptr;
 	jmethodID mMcastLockAcquireId = nullptr;
@@ -82,9 +85,6 @@ private:
 	jmethodID mCpuLockReleaseId = nullptr;
 	jmethodID mGetDnsServersId = nullptr;
 	jmethodID mGetPowerManagerId = nullptr;
-	jmethodID mGetDataPathId = nullptr;
-	jmethodID mGetConfigPathId = nullptr;
-	jmethodID mGetDownloadPathId = nullptr;
 	jmethodID mGetNativeLibraryDirId = nullptr;
 	jmethodID mSetNativeVideoWindowId = nullptr;
 	jmethodID mSetNativePreviewVideoWindowId = nullptr;
@@ -127,6 +127,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 		return;
 	}
 	mJavaHelper = (jobject)env->NewGlobalRef(mJavaHelper);
+	mSystemContext = (jobject)systemContext;
 
 	mWifiLockAcquireId = getMethodId(env, klass, "acquireWifiLock", "()V");
 	mWifiLockReleaseId = getMethodId(env, klass, "releaseWifiLock", "()V");
@@ -136,9 +137,6 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 	mCpuLockReleaseId = getMethodId(env, klass, "releaseCpuLock", "()V");
 	mGetDnsServersId = getMethodId(env, klass, "getDnsServers", "()[Ljava/lang/String;");
 	mGetPowerManagerId = getMethodId(env, klass, "getPowerManager", "()Ljava/lang/Object;");
-	mGetDataPathId = getMethodId(env, klass, "getDataPath", "()Ljava/lang/String;");
-	mGetConfigPathId = getMethodId(env, klass, "getConfigPath", "()Ljava/lang/String;");
-	mGetDownloadPathId = getMethodId(env, klass, "getDownloadPath", "()Ljava/lang/String;");
 	mGetNativeLibraryDirId = getMethodId(env, klass, "getNativeLibraryDir", "()Ljava/lang/String;");
 	mSetNativeVideoWindowId = getMethodId(env, klass, "setVideoRenderingView", "(Ljava/lang/Object;)V");
 	mSetNativePreviewVideoWindowId = getMethodId(env, klass, "setVideoPreviewView", "(Ljava/lang/Object;)V");
@@ -198,30 +196,15 @@ void AndroidPlatformHelpers::releaseCpuLock () {
 // -----------------------------------------------------------------------------
 
 string AndroidPlatformHelpers::getConfigPath () const {
-	JNIEnv *env = ms_get_jni_env();
-	jstring jconfig_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetConfigPathId);
-	const char *config_path = GetStringUTFChars(env, jconfig_path);
-	string configPath = L_C_TO_STRING(config_path);
-	ReleaseStringUTFChars(env, jconfig_path, config_path);
-	return configPath;
+	return Paths::getPath(Paths::Config, mSystemContext);
 }
 
 string AndroidPlatformHelpers::getDownloadPath () {
-	JNIEnv *env = ms_get_jni_env();
-	jstring jdownload_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetDownloadPathId);
-	const char *download_path = GetStringUTFChars(env, jdownload_path);
-	string downloadPath = L_C_TO_STRING(download_path);
-	ReleaseStringUTFChars(env, jdownload_path, download_path);
-	return downloadPath;
+	return Paths::getPath(Paths::Download, mSystemContext);
 }
 
 string AndroidPlatformHelpers::getDataPath () const {
-	JNIEnv *env = ms_get_jni_env();
-	jstring jdata_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetDataPathId);
-	const char *data_path = GetStringUTFChars(env, jdata_path);
-	string dataPath = L_C_TO_STRING(data_path);
-	ReleaseStringUTFChars(env, jdata_path, data_path);
-	return dataPath;
+	return Paths::getPath(Paths::Data, mSystemContext);
 }
 
 string AndroidPlatformHelpers::getDataResource (const string &filename) const {
@@ -250,6 +233,10 @@ string AndroidPlatformHelpers::getSoundResource (const string &filename) const {
 		linphone_factory_get_sound_resources_dir(linphone_factory_get()),
 		filename
 	);
+}
+
+void *AndroidPlatformHelpers::getPathContext () {
+	return mSystemContext;
 }
 
 // -----------------------------------------------------------------------------

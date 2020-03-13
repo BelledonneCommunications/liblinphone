@@ -933,9 +933,10 @@ void linphone_core_report_call_log(LinphoneCore *lc, LinphoneCallLog *call_log){
 	linphone_core_notify_call_log_updated(lc,call_log);
 }
 
-void linphone_core_report_early_failed_call(LinphoneCore *lc, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei){
+void linphone_core_report_early_failed_call(LinphoneCore *lc, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei, const char *cid){
 	LinphoneCallLog *l = linphone_call_log_new(dir, from, to);
 	l->error_info = ei;
+	l->call_id = cid? bctbx_strdup(cid) : NULL;
 	l->status = LinphoneCallEarlyAborted;
 	linphone_core_report_call_log(lc, l);
 	linphone_call_log_unref(l);

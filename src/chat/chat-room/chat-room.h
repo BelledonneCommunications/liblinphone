@@ -35,6 +35,7 @@ public:
 	friend class Imdn;
 	friend class ImdnMessagePrivate;
 	friend class ProxyChatRoomPrivate;
+	friend class CorePrivate;
 
 	L_OVERRIDE_SHARED_FROM_THIS(ChatRoom);
 
