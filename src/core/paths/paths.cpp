@@ -38,14 +38,14 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-string Paths::getPath (Paths::Type type, PlatformHelpers *platformHelpers) {
+string Paths::getPath (Paths::Type type, void *context) {
 	switch (type) {
 		case Data:
-			return SysPaths::getDataPath(platformHelpers);
+			return SysPaths::getDataPath(context);
 		case Config:
-			return SysPaths::getConfigPath(platformHelpers);
+			return SysPaths::getConfigPath(context);
 		case Download:
-			return SysPaths::getDownloadPath(platformHelpers);
+			return SysPaths::getDownloadPath(context);
 	}
 
 	L_ASSERT(false);

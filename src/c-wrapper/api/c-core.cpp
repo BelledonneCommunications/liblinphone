@@ -26,6 +26,7 @@
 
 #include "chat/encryption/encryption-engine.h"
 #include "chat/encryption/legacy-encryption-engine.h"
+#include "linphone/api/c-types.h"
 
 // =============================================================================
 
@@ -133,4 +134,26 @@ bool_t linphone_core_is_friend_list_subscription_enabled(LinphoneCore *lc) {
 
 void linphone_core_ensure_registered(LinphoneCore *lc) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pushNotificationReceived();
+}
+
+LinphoneChatMessage * linphone_core_get_push_notification_message(LinphoneCore *lc, const char *call_id) {
+	std::shared_ptr<ChatMessage> cppMsg = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationMessage(Utils::cStringToCppString(call_id));
+	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(cppMsg);
+
+	if (msg) {
+		// We need to take a ref on the object because this function is called from outside linphone-sdk.
+		belle_sip_object_ref(msg);
+	}
+	return msg;
+}
+
+LinphoneChatRoom * linphone_core_get_push_notification_chat_room_invite(LinphoneCore *lc , const char *chat_room_addr) {
+	std::shared_ptr<ChatRoom> cppChatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationChatRoomInvite(Utils::cStringToCppString(chat_room_addr));
+	LinphoneChatRoom *chatRoom = L_GET_C_BACK_PTR(cppChatRoom);
+
+	if (chatRoom) {
+		// We need to take a ref on the object because this function is called from outside linphone-sdk.
+		belle_sip_object_ref(chatRoom);
+	}
+	return chatRoom;
 }
