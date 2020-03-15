@@ -224,17 +224,19 @@ void ToneManager::createTimerToCleanTonePlayer(unsigned int delay) {
 	if (!mTimer) {
 		auto callback = [this] () -> bool {
 			lInfo() << "[ToneManager] callback";
-			auto source = getCore()->getCCore()->ringstream->source;
+			LinphoneCore *lc = getCore()->getCCore();
+			auto source = lc->ringstream ? lc->ringstream->source : nullptr;
 			MSPlayerState state;
 			if (source && ms_filter_call_method(source, MS_PLAYER_GET_STATE, &state) == 0) {
 				if (state != MSPlayerPlaying) {
 					deleteTimer();
 					return false;
+				}else{
+					return false;
 				}
 			}
 			return true;
 		};
-
 		mTimer = getCore()->createTimer(callback, delay, "Tone player cleanup");
 	}
 }
