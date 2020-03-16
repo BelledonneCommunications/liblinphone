@@ -216,10 +216,6 @@ LinphoneChatMessage *_send_message(LinphoneChatRoom *chatRoom, const char *messa
 	return msg;
 }
 
-LinphoneChatMessage *_send_message(LinphoneChatRoom *chatRoom, const char *message) {
-	return _send_message_ephemeral(chatRoom, message, FALSE);
-}
-
 static void fill_content_buffer(LinphoneContent *content, const char *sendFilePath) {
 	FILE *file_to_send = NULL;
 	size_t file_size;

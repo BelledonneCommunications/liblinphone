@@ -273,9 +273,27 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 				// Ensure the file size has been set to the correct value
 				currentFileTransferContent->setFileSize(belle_sip_file_body_handler_get_file_size((belle_sip_file_body_handler_t *)first_part_bh));
 			} else if (!currentFileContentToTransfer->isEmpty()) {
+				size_t buf_size = currentFileContentToTransfer->getSize();
+				uint8_t *buf = (uint8_t *)ms_malloc(buf_size);
+				memcpy(buf, currentFileContentToTransfer->getBody().data(), buf_size);
+
+				EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
+				if (imee) {
+					size_t max_size = buf_size;
+					uint8_t *encrypted_buffer = (uint8_t *)ms_malloc0(max_size);
+					int retval = imee->uploadingFile(message, 0, buf, &max_size, encrypted_buffer, currentFileTransferContent);
+					if (retval == 0) {
+						if (max_size > buf_size) {
+							lError() << "IM encryption engine process upload file callback returned a size bigger than the size of the buffer, so it will be truncated !";
+							max_size = buf_size;
+						}
+						memcpy(buf, encrypted_buffer, buf_size);
+					}
+					ms_free(encrypted_buffer);
+				}
+
 				first_part_bh = (belle_sip_body_handler_t *)belle_sip_memory_body_handler_new_from_buffer(
-						ms_strdup(currentFileContentToTransfer->getBodyAsString().c_str()),
-						currentFileContentToTransfer->getSize(), _chat_message_file_transfer_on_progress, this);
+						buf, buf_size, _chat_message_file_transfer_on_progress, this);
 			}
 
 			belle_sip_body_handler_add_header(first_part_bh,
