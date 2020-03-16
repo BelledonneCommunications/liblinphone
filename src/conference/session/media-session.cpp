@@ -2778,7 +2778,7 @@ void MediaSession::setParams (const MediaSessionParams *msp) {
 				!getCore()->getCCore()->sip_conf.sdp_200_ack : false);
 		break;
 		default:
-			lError() << "MediaSession::setParams(): Invalid state %s", Utils::toString(d->state);
+			lError() << "MediaSession::setParams(): Invalid state " << Utils::toString(d->state);
 		break;
 	}
 }
