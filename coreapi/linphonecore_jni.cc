@@ -1485,7 +1485,7 @@ public:
 		handle_possible_java_exception(env, lcData->listener);
 	}
 
-	static void fileTransferProgressIndication(LinphoneCore *lc, LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t total) {
+	static void fileTransferProgressIndication(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t total) {
 		JNIEnv *env = 0;
 		jobject jmsg;
 		size_t progress = (offset * 100) / total;
@@ -1514,7 +1514,7 @@ public:
 		handle_possible_java_exception(env, lcData->listener);
 	}
 
-	static void fileTransferSend(LinphoneCore *lc, LinphoneChatMessage *message, const LinphoneContent* content, char* buff, size_t* size) {
+	static void fileTransferSend(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, char* buff, size_t* size) {
 		JNIEnv *env = 0;
 		jobject jmsg;
 		size_t asking = *size;
@@ -1548,7 +1548,7 @@ public:
 		handle_possible_java_exception(env, lcData->listener);
 	}
 
-	static void fileTransferRecv(LinphoneCore *lc, LinphoneChatMessage *message, const LinphoneContent* content, const char* buff, size_t size) {
+	static void fileTransferRecv(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, const char* buff, size_t size) {
 		JNIEnv *env = 0;
 		jobject jmsg;
 		jint result = jvm->AttachCurrentThread(&env,NULL);
@@ -4820,7 +4820,7 @@ static void message_state_changed(LinphoneChatMessage* msg, LinphoneChatMessageS
 	env->DeleteLocalRef(listener);
 }
 
-static void file_transfer_progress_indication(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total) {
+static void file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total) {
 	JNIEnv *env = 0;
 	jint result = jvm->AttachCurrentThread(&env,NULL);
 	if (result != 0) {
@@ -4845,7 +4845,7 @@ static void file_transfer_progress_indication(LinphoneChatMessage *msg, const Li
 	env->DeleteLocalRef(listener);
 }
 
-static void file_transfer_recv(LinphoneChatMessage *msg, const LinphoneContent* content, const LinphoneBuffer *buffer) {
+static void file_transfer_recv(LinphoneChatMessage *msg, LinphoneContent* content, const LinphoneBuffer *buffer) {
 	JNIEnv *env = 0;
 	jint result = jvm->AttachCurrentThread(&env,NULL);
 	if (result != 0) {
@@ -4875,7 +4875,7 @@ static void file_transfer_recv(LinphoneChatMessage *msg, const LinphoneContent* 
 	env->DeleteLocalRef(listener);
 }
 
-static LinphoneBuffer* file_transfer_send(LinphoneChatMessage *msg,  const LinphoneContent* content, size_t offset, size_t size) {
+static LinphoneBuffer* file_transfer_send(LinphoneChatMessage *msg,  LinphoneContent* content, size_t offset, size_t size) {
 	JNIEnv *env = 0;
 	jint result = jvm->AttachCurrentThread(&env,NULL);
 	LinphoneBuffer *buffer = NULL;
