@@ -17,22 +17,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- */
-
 #include <algorithm>
 #include <list>
 #include <string>
@@ -410,6 +394,7 @@ RtpProfile *LocalConference::sMakeDummyProfile (int samplerate) {
 }
 
 void LocalConference::addLocalEndpoint () {
+	if (m_localEndpoint) return; // Local endpoint is already created and active in the conference.
 	/* Create a dummy audiostream in order to extract the local part of it */
 	/* network address and ports have no meaning and are not used here. */
 	AudioStream *st = audio_stream_new(m_core->factory, 65000, 65001, FALSE);
@@ -461,8 +446,7 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 				addParticipant(call);
 		}
 		/* If the local participant is not yet created, created it and it to the conference */
-		if (!m_localEndpoint)
-			addLocalEndpoint();
+		addLocalEndpoint();
 	}
 	return 0;
 }
@@ -613,8 +597,8 @@ int LocalConference::enter () {
 		return -1;
 	if (linphone_core_get_current_call(m_core))
 		_linphone_call_pause(linphone_core_get_current_call(m_core));
-	if (!m_localParticipantStream)
-		addLocalEndpoint();
+
+	addLocalEndpoint();
 	return 0;
 }
 
