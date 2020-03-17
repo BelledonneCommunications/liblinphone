@@ -96,8 +96,8 @@ public:
 
 	std::shared_ptr<ChatMessage> getPushNotificationMessage(const string &callId) override;
 	std::shared_ptr<ChatMessage> processPushNotificationMessage(const string &callId);
-	std::shared_ptr<ChatRoom> getPushNotificationChatRoomInvite(const string &chatRoomAddr) override;
-	std::shared_ptr<ChatRoom> processPushNotificationChatRoomInvite(const string &chatRoomAddr);
+	std::shared_ptr<ChatRoom> getPushNotificationChatRoom(const string &chatRoomAddr) override;
+	std::shared_ptr<ChatRoom> processPushNotificationChatRoom(const string &chatRoomAddr);
 
 	// shared core
 	bool isCoreShared() override;
@@ -681,7 +681,7 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::getPushNotificationMessage(cons
 	}
 }
 
-std::shared_ptr<ChatRoom> IosPlatformHelpers::getPushNotificationChatRoomInvite(const string &chatRoomAddr) {
+std::shared_ptr<ChatRoom> IosPlatformHelpers::getPushNotificationChatRoom(const string &chatRoomAddr) {
 	ms_message("[push] getPushNotificationInvite");
 	switch(getSharedCoreState()) {
 		case SharedCoreState::mainCoreStarted:
@@ -693,7 +693,7 @@ std::shared_ptr<ChatRoom> IosPlatformHelpers::getPushNotificationChatRoomInvite(
 		case SharedCoreState::noCoreStarted:
 			IosPlatformHelpers::executorCoreMutex.lock();
 			ms_message("[push] noCoreStarted");
-			std::shared_ptr<ChatRoom> chatRoom = processPushNotificationChatRoomInvite(chatRoomAddr);
+			std::shared_ptr<ChatRoom> chatRoom = processPushNotificationChatRoom(chatRoomAddr);
 			return chatRoom;
 	}
 }
@@ -789,7 +789,7 @@ static void on_push_notification_chat_room_invite_received(LinphoneCore *lc, Lin
 	}
 }
 
-std::shared_ptr<ChatRoom> IosPlatformHelpers::processPushNotificationChatRoomInvite(const string &crAddr) {
+std::shared_ptr<ChatRoom> IosPlatformHelpers::processPushNotificationChatRoom(const string &crAddr) {
 	ms_message("[push] processPushNotificationInvite. looking for chatroom %s", mChatRoomAddr.c_str());
 	mChatRoomAddr = crAddr;
 	mChatRoomInvite = nullptr;
@@ -899,7 +899,10 @@ void IosPlatformHelpers::reloadConfig() {
 
 bool IosPlatformHelpers::canExecutorCoreStart() {
 	ms_message("[SHARED] canExecutorCoreStart");
-	if (isSharedCoreStarted()) return false;
+	if (isSharedCoreStarted()) {
+		ms_message("[SHARED] executor core can't start, another one is started");
+		return false;
+	}
 
 	subscribeToMainCoreNotifs();
 	setSharedCoreState(SharedCoreState::executorCoreStarted);
@@ -947,7 +950,7 @@ bool IosPlatformHelpers::canMainCoreStart() {
 }
 
 void IosPlatformHelpers::stopSharedCores() {
-    ms_message("[SHARED] stopSharedCores");
+    ms_message("[SHARED] stopping shared cores");
 	CFNotificationCenterRef notification = CFNotificationCenterGetDarwinNotifyCenter();
     CFNotificationCenterPostNotification(notification, CFSTR(ACTIVE_SHARED_CORE), NULL, NULL, YES);
 
@@ -958,7 +961,7 @@ void IosPlatformHelpers::stopSharedCores() {
 	if (isSharedCoreStarted()) {
 		setSharedCoreState(SharedCoreState::noCoreStarted);
 	}
-    ms_message("[SHARED] stopped");
+    ms_message("[SHARED] shared cores stopped");
 }
 
 // -----------------------------------------------------------------------------
