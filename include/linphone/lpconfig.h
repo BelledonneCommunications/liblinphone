@@ -87,6 +87,10 @@ LINPHONE_PUBLIC LinphoneConfig * linphone_config_new_with_factory(const char *co
 
 /**
  * Instantiates a #LinphoneConfig object from a user config file name, group id and a factory config file.
+ * The "group id" is the string that identify the "App group" capability of the iOS application.
+ * App group gives access to a shared file system where all the configuration files for shared core are stored.
+ * Both iOS application and iOS app extension that need shared core must activate the "App group" capability with the SAME
+ * "group id" in the project settings.
  * The caller of this constructor owns a reference. linphone_config_unref() must be called when this object is no longer needed.
  * @ingroup misc
  * @param group_id used to compute path to the file system shared by the shared Cores

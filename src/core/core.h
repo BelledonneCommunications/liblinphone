@@ -190,7 +190,7 @@ public:
 	int getUnreadChatMessageCount (const IdentityAddress &localAddress) const;
 	int getUnreadChatMessageCountFromActiveLocals () const;
 	std::shared_ptr<ChatMessage> getPushNotificationMessage (const std::string &callId) const;
-	std::shared_ptr<ChatRoom> getPushNotificationChatRoomInvite (const std::string &chatRoomAddr) const;
+	std::shared_ptr<ChatRoom> getPushNotificationChatRoom (const std::string &chatRoomAddr) const;
 	std::shared_ptr<ChatMessage> findChatMessageFromCallId (const std::string &callId) const;
 
 	Address interpretUrl (const std::string &url) const;
