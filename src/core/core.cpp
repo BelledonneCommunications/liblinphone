@@ -109,18 +109,19 @@ void CorePrivate::unregisterListener (CoreListener *listener) {
 	listeners.remove(listener);
 }
 
-bool CorePrivate::asyncStopDone() {
+// Called by linphone_core_iterate() to check that aynchronous tasks are done.
+// It is used to give a chance to end asynchronous tasks during core stop
+// or to make sure that asynchronous tasks are finished during an aynchronous core stop.
+bool CorePrivate::isShutdownDone() {
 	L_Q();
 
 	if (!calls.empty()) {
-		calls.front()->terminate();
 		return false;
 	}
 
 	bctbx_list_t *elem = NULL;
 	for (elem = q->getCCore()->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
 		LinphoneFriendList *list = (LinphoneFriendList *) elem->data;
-		linphone_friend_list_enable_subscriptions(list,FALSE);
 		if (list->event) {
 			return false;
 		}
@@ -136,59 +137,31 @@ bool CorePrivate::asyncStopDone() {
 	return true;
 }
 
+// Called by _linphone_core_stop_async_start() to stop the asynchronous tasks.
+// Put here the calls to stop some task with asynchronous process and check in CorePrivate::isShutdownDone() if they have finished.
 void CorePrivate::shutdown() {
-	if(!calls.empty()) {
-		calls.front()->terminate();
-	}
-}
-
-void CorePrivate::stop() {
 	L_Q();
 
-	chatRoomsById.clear();
-	noCreatedClientGroupChatRooms.clear();
-	listeners.clear();
-	if (q->limeX3dhEnabled()) {
-		q->enableLimeX3dh(false);
+	for (auto call : calls) {
+		call->terminate();
 	}
 
-#ifdef HAVE_ADVANCED_IM
-	remoteListEventHandler = nullptr;
-	localListEventHandler = nullptr;
-#endif
-
-	AddressPrivate::clearSipAddressesCache();
-	if (mainDb != nullptr) {
-		mainDb->disconnect();
-	}
-}
-
-void CorePrivate::uninit () {
-	L_Q();
-	for (int i=0; !calls.empty() && i<100; i++) {
-		calls.front()->terminate();
-		linphone_core_iterate(L_GET_C_BACK_PTR(q));
-		ms_usleep(10000);
+	bctbx_list_t *elem = NULL;
+	for (elem = q->getCCore()->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
+		LinphoneFriendList *list = (LinphoneFriendList *) elem->data;
+		linphone_friend_list_enable_subscriptions(list,FALSE);
 	}
 
 	if (toneManager) toneManager->deleteTimer();
 
 	stopEphemeralMessageTimer();
 	ephemeralMessages.clear();
+}
 
-	const list<shared_ptr<AbstractChatRoom>> chatRooms = q->getChatRooms();
-	bool hasUndeliveredImdn = true;
-	for (int i=0; hasUndeliveredImdn && i<50; i++) {
-		hasUndeliveredImdn = false;
-		for (const auto &chatRoom : chatRooms) {
-			if (static_pointer_cast<ChatRoom>(chatRoom)->getPrivate()->getImdnHandler()->hasUndeliveredImdnMessage()) {
-				hasUndeliveredImdn = true;
-				break;
-			}
-		}
-		linphone_core_iterate(L_GET_C_BACK_PTR(q));
-		ms_usleep(10000);
-	}
+// Called by _linphone_core_stop_async_end() just before going to globalStateOff.
+// Put here the data that need to be freed before the stop.
+void CorePrivate::uninit() {
+	L_Q();
 
 	chatRoomsById.clear();
 	noCreatedClientGroupChatRooms.clear();
@@ -665,8 +638,8 @@ std::shared_ptr<ChatMessage> Core::getPushNotificationMessage (const std::string
 	return msg;
 }
 
-std::shared_ptr<ChatRoom> Core::getPushNotificationChatRoomInvite (const std::string &chatRoomAddr) const {
-	std::shared_ptr<ChatRoom> chatRoom = static_cast<PlatformHelpers *>(getCCore()->platform_helper)->getPushNotificationChatRoomInvite(chatRoomAddr);
+std::shared_ptr<ChatRoom> Core::getPushNotificationChatRoom (const std::string &chatRoomAddr) const {
+	std::shared_ptr<ChatRoom> chatRoom = static_cast<PlatformHelpers *>(getCCore()->platform_helper)->getPushNotificationChatRoom(chatRoomAddr);
 	return chatRoom;
 }
 

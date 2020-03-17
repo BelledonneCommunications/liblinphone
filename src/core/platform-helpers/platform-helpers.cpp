@@ -203,7 +203,7 @@ std::shared_ptr<ChatMessage> GenericPlatformHelpers::getPushNotificationMessage(
 	return nullptr;
 }
 
-std::shared_ptr<ChatRoom> GenericPlatformHelpers::getPushNotificationChatRoomInvite(const string &chatRoomAddr) {
+std::shared_ptr<ChatRoom> GenericPlatformHelpers::getPushNotificationChatRoom(const string &chatRoomAddr) {
 	return nullptr;
 }
 
