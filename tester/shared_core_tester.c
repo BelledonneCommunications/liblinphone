@@ -126,7 +126,7 @@ void shared_core_get_message_from_call_id(LinphoneCoreManager *sender_mgr, Linph
 
 	BC_ASSERT_PTR_NOT_NULL(call_id);
 	if (call_id != NULL) {
-		LinphoneChatMessage *received_msg = linphone_core_get_push_notification_message(receiver, call_id);
+		LinphoneChatMessage *received_msg = linphone_core_get_new_message_from_callid(receiver, call_id);
 		BC_ASSERT_PTR_NOT_NULL(received_msg);
 
 		if (received_msg != NULL) {
@@ -268,7 +268,7 @@ void shared_core_get_new_chat_room_from_addr(LinphoneCoreManager *sender, Linpho
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(senderCr);
 
 	LinphoneChatRoom *receiverCr =
-		linphone_core_get_push_notification_chat_room_invite(receiver->lc, linphone_address_get_username(confAddr));
+		linphone_core_get_new_chat_room_from_conf_addr(receiver->lc, linphone_address_get_username(confAddr));
 
 	BC_ASSERT_PTR_NOT_NULL(receiverCr);
 	if (receiverCr != NULL) {

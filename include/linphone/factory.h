@@ -653,7 +653,7 @@ LINPHONE_PUBLIC bool_t linphone_factory_is_imdn_available(LinphoneFactory *facto
  * @return The config path
  * @ingroup misc
 **/
-LINPHONE_PUBLIC const char *linphone_factory_get_config_path(LinphoneFactory *factory, void *context);
+LINPHONE_PUBLIC const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context);
 
 /**
  * Get the data path
@@ -662,7 +662,7 @@ LINPHONE_PUBLIC const char *linphone_factory_get_config_path(LinphoneFactory *fa
  * @return The data path
  * @ingroup misc
 **/
-LINPHONE_PUBLIC const char *linphone_factory_get_data_path(LinphoneFactory *factory, void *context);
+LINPHONE_PUBLIC const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context);
 
 /**
  * Get the download path
@@ -671,7 +671,7 @@ LINPHONE_PUBLIC const char *linphone_factory_get_data_path(LinphoneFactory *fact
  * @return The download path
  * @ingroup misc
 **/
-LINPHONE_PUBLIC const char *linphone_factory_get_download_path(LinphoneFactory *factory, void *context);
+LINPHONE_PUBLIC const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context);
 
 /**
  * @}
