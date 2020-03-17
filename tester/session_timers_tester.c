@@ -494,6 +494,9 @@ static void linphone_session_timer_invite_interval_ok_refresher_uac_uac(void)
 
 	BC_ASSERT_PTR_NULL(linphone_call_params_get_custom_header(marie_update_params, "Min-SE"));
 
+	// Wait for the 200 OK
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 300);
+
 	linphone_call_terminate(out_call);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
@@ -653,6 +656,41 @@ static void linphone_session_timer_invite_interval_ok_refresher_none_uac(void)
 	linphone_core_manager_destroy(marie);
 }
 
+static void linphone_session_timer_cancel_timer(void)
+{
+	LinphoneCoreManager* marie;
+	LinphoneCoreManager* pauline;
+	LinphoneCall *pauline_call;
+
+	marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_session_expires_value(marie->lc, 4);
+	pauline = linphone_core_manager_new("pauline_rc");
+	linphone_core_set_session_expires_value(pauline->lc, 4);
+
+	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	linphone_call_accept(pauline_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallConnected, 1));
+
+	// Wait for the 200 OK
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
+
+	linphone_call_terminate(out_call);
+
+	// Wait more to see if any more UPDATE are sent, if not the state is set to released
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 10000);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 test_t session_timers_tests[] = {
 	TEST_ONE_TAG("Session timer disabled", linphone_session_timer_disabled, "Session Timer"),
 	TEST_ONE_TAG("Session timer invite 422", linphone_session_timer_invite_interval_too_small, "Session Timer"),
@@ -665,6 +703,7 @@ test_t session_timers_tests[] = {
 	TEST_ONE_TAG("Session timer invite OK, c = uac, s = auto", linphone_session_timer_invite_interval_ok_refresher_uac_uac, "Session Timer"),
 	TEST_ONE_TAG("Session timer invite OK, c = uas, s = auto", linphone_session_timer_invite_interval_ok_refresher_uas_uas, "Session Timer"),
 	TEST_ONE_TAG("Session timer invite OK, c = none, s = uac", linphone_session_timer_invite_interval_ok_refresher_none_uac, "Session Timer"),
+	TEST_ONE_TAG("Session timer cancel OK", linphone_session_timer_cancel_timer, "Session Timer"),
 };
 
 test_suite_t session_timers_test_suite = {"Session Timers", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
