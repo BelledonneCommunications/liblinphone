@@ -50,8 +50,11 @@ IdentityAddress::IdentityAddress (const string &address) : ClonableObject(*new I
 	L_D();
 	shared_ptr<IdentityAddress> parsedAddress = IdentityAddressParser::getInstance()->parseAddress(address);
 	if (parsedAddress != nullptr) {
+		char *tmp;
 		d->scheme = parsedAddress->getScheme();
-		d->username = belle_sip_to_unescaped_string(parsedAddress->getUsername().c_str());
+		tmp = belle_sip_to_unescaped_string(parsedAddress->getUsername().c_str());
+		d->username = tmp;
+		ms_free(tmp);
 		d->domain = parsedAddress->getDomain();
 		d->gruu = parsedAddress->getGruu();
 	} else {
@@ -181,7 +184,9 @@ string IdentityAddress::asString () const {
 	ostringstream res;
 	res << d->scheme << ":";
 	if (!d->username.empty()){
-		res << belle_sip_uri_to_escaped_username(d->username.c_str()) << "@";
+		char *tmp = belle_sip_uri_to_escaped_username(d->username.c_str());
+		res << tmp << "@";
+		ms_free(tmp);
 	}
 	
 	if (d->domain.find(":") != string::npos) {
