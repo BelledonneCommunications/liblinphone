@@ -95,39 +95,6 @@ public class CoreManager {
         
         mAudioHelper = new AudioHelper(mContext);
 
-        mListener = new CoreListenerStub() {
-            @Override
-            public void onLastCallEnded(Core core) {
-                Log.i("[Core Manager] Last call ended");
-                if (core.isNativeRingingEnabled()) {
-                    mAudioHelper.stopRinging();
-                } else {
-                    mAudioHelper.releaseRingingAudioFocus();
-                }
-                mAudioHelper.releaseCallAudioFocus();
-            }
-
-            @Override
-            public void onCallStateChanged(Core core, Call call, Call.State state, String message) {
-                if (state == Call.State.IncomingReceived && core.getCallsNb() == 1) {
-                    if (core.isNativeRingingEnabled()) {
-                        Log.i("[Core Manager] Incoming call received, no other call, start ringing");
-                        mAudioHelper.startRinging(mContext, core.getRing());
-                    } else {
-                        Log.i("[Core Manager] Incoming call received, no other call, acquire ringing audio focus");
-                        mAudioHelper.requestRingingAudioFocus();
-                    }
-                } else if (state == Call.State.Connected && call.getDir() == Call.Dir.Incoming && core.isNativeRingingEnabled()) {
-                    Log.i("[Core Manager] Stop incoming call ringing");
-                    mAudioHelper.stopRinging();
-                } else if (state == Call.State.OutgoingInit || state == Call.State.StreamsRunning) {
-                    Log.i("[Core Manager] Call active, ensure audio focus granted");
-                    mAudioHelper.requestCallAudioFocus();
-                }
-            }
-        };
-        mCore.addListener(mListener);
-
         Log.i("[Core Manager] Ready");
     }
 
@@ -161,6 +128,39 @@ public class CoreManager {
         } else {
             Log.w("[Core Manager] Auto core.iterate() isn't enabled, ensure you do it in your application!");
         }
+
+        mListener = new CoreListenerStub() {
+            @Override
+            public void onLastCallEnded(Core core) {
+                Log.i("[Core Manager] Last call ended");
+                if (core.isNativeRingingEnabled()) {
+                    mAudioHelper.stopRinging();
+                } else {
+                    mAudioHelper.releaseRingingAudioFocus();
+                }
+                mAudioHelper.releaseCallAudioFocus();
+            }
+
+            @Override
+            public void onCallStateChanged(Core core, Call call, Call.State state, String message) {
+                if (state == Call.State.IncomingReceived && core.getCallsNb() == 1) {
+                    if (core.isNativeRingingEnabled()) {
+                        Log.i("[Core Manager] Incoming call received, no other call, start ringing");
+                        mAudioHelper.startRinging(mContext, core.getRing());
+                    } else {
+                        Log.i("[Core Manager] Incoming call received, no other call, acquire ringing audio focus");
+                        mAudioHelper.requestRingingAudioFocus();
+                    }
+                } else if (state == Call.State.Connected && call.getDir() == Call.Dir.Incoming && core.isNativeRingingEnabled()) {
+                    Log.i("[Core Manager] Stop incoming call ringing");
+                    mAudioHelper.stopRinging();
+                } else if (state == Call.State.OutgoingInit || state == Call.State.StreamsRunning) {
+                    Log.i("[Core Manager] Call active, ensure audio focus granted");
+                    mAudioHelper.requestCallAudioFocus();
+                }
+            }
+        };
+        mCore.addListener(mListener);
 
         try {
             Class serviceClass = getServiceClass();
