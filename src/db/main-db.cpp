@@ -1489,7 +1489,7 @@ void MainDbPrivate::updateSchema () {
 	}
 
 	if (version < makeVersion(1, 0, 13)) {
-		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN call_id VARCHAR(255) DEFAULT ''"; //TODO PAUL : 255 is to big. see rfc for size
+		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN call_id VARCHAR(255) DEFAULT ''";
 		*session << "DROP VIEW IF EXISTS conference_event_view";
 		*session << "CREATE VIEW conference_event_view AS"
 		"  SELECT id, type, creation_time, chat_room_id, from_sip_address_id, to_sip_address_id, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address_id, participant_sip_address_id, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, lifetime, call_id"

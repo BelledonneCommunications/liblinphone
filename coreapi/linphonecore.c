@@ -2597,6 +2597,7 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 		}
 
 		if (!getPlatformHelpers(lc)->canCoreStart()) {
+			bctbx_warning("Core [%p] can't start", lc);
 			return -1;
 		}
 
@@ -3672,12 +3673,19 @@ void linphone_core_iterate(LinphoneCore *lc){
 		ortp_logv_flush();
 	}
 
+
+	/* When doing asynchronous core stop, the core goes to LinphoneGlobalShutdown state
+	Then linphone_core_iterate() needs to be called until synchronous tasks are done
+	Then the stop is finished and the status is changed to LinphoneGlobalOff */
 	if (lc->state == LinphoneGlobalShutdown) {
-		if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->asyncStopDone()) {
+		if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->isShutdownDone()) {
 			_linphone_core_stop_async_end(lc);
 		}
 	}
 
+	/* This is needed for multi-threads testing with shared cores.
+	When a shared core stops another one; the core beeing stopped must
+	call linphone_core_stop() in its own thread to free all the memory */
 	if (lc->platform_helper && getPlatformHelpers(lc)->isCoreShared() && lc->shared_core_must_stop) {
 		linphone_core_stop(lc);
 	}
@@ -6391,7 +6399,7 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
  * and change the state to "Off"
  */
 static void _linphone_core_stop_async_end(LinphoneCore *lc) {
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->stop();
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->uninit();
 
 	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
 
@@ -6492,6 +6500,8 @@ static void _linphone_core_stop(LinphoneCore *lc) {
 		is_off = (linphone_core_get_global_state(lc) == LinphoneGlobalOff);
 	}
 
+	/* linphone_core_iterate() can call _linphone_core_stop_async_end()
+	if all asynchronous tasks are done so we don't need to call it twice */
 	if (!is_off) {
 		_linphone_core_stop_async_end(lc);
 	}
