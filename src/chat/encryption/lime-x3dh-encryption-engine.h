@@ -93,7 +93,8 @@ public:
 
 	void generateFileTransferKey (
 		const std::shared_ptr<AbstractChatRoom> &ChatRoom,
-		const std::shared_ptr<ChatMessage> &message
+		const std::shared_ptr<ChatMessage> &message,
+		FileTransferContent *fileTransferContent
 	) override;
 
 	int downloadingFile (
@@ -101,7 +102,8 @@ public:
 		size_t offset,
 		const uint8_t *buffer,
 		size_t size,
-		uint8_t *decrypted_buffer
+		uint8_t *decrypted_buffer,
+		FileTransferContent *fileTransferContent
 	) override;
 
 	int uploadingFile (
@@ -109,7 +111,8 @@ public:
 		size_t offset,
 		const uint8_t *buffer,
 		size_t *size,
-		uint8_t *encrypted_buffer
+		uint8_t *encrypted_buffer,
+		FileTransferContent *fileTransferContent
 	) override;
 
 	void mutualAuthentication (

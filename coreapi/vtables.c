@@ -188,17 +188,17 @@ void linphone_core_notify_message_received_unable_decrypt(LinphoneCore *lc, Linp
 #else
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-void linphone_core_notify_file_transfer_recv(LinphoneCore *lc, LinphoneChatMessage *message, const LinphoneContent* content, const char* buff, size_t size) {
+void linphone_core_notify_file_transfer_recv(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, const char* buff, size_t size) {
 	NOTIFY_IF_EXIST(file_transfer_recv, lc,message,content,buff,size);
 	cleanup_dead_vtable_refs(lc);
 }
 
-void linphone_core_notify_file_transfer_send(LinphoneCore *lc, LinphoneChatMessage *message,  const LinphoneContent* content, char* buff, size_t* size) {
+void linphone_core_notify_file_transfer_send(LinphoneCore *lc, LinphoneChatMessage *message,  LinphoneContent* content, char* buff, size_t* size) {
 	NOTIFY_IF_EXIST(file_transfer_send, lc,message,content,buff,size);
 	cleanup_dead_vtable_refs(lc);
 }
 
-void linphone_core_notify_file_transfer_progress_indication(LinphoneCore *lc, LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t total) {
+void linphone_core_notify_file_transfer_progress_indication(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t total) {
 	NOTIFY_IF_EXIST(file_transfer_progress_indication, lc,message,content,offset,total);
 	cleanup_dead_vtable_refs(lc);
 }

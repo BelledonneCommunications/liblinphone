@@ -4621,6 +4621,11 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 		capture_copy = ms_strdup(capture);
 	}
 	ms_snd_card_manager_reload(ms_factory_get_snd_card_manager(lc->factory));
+	int tmp=lp_config_get_int(lc->config, "sound", "enable_dummy_audio", 0);
+	if (!!tmp) {
+		ms_snd_card_manager_add_card(ms_factory_get_snd_card_manager(lc->factory), ms_dummy_audio_snd_card_new());
+	}
+
 	build_sound_devices_table(lc);
 	if (ringer_copy != NULL) {
 		linphone_core_set_ringer_device(lc, ringer_copy);

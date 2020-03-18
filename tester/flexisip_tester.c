@@ -989,7 +989,7 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 		fseek(file_to_send, 0, SEEK_SET);
 
 		/* Globally configure an http file transfer server. */
-		linphone_core_set_file_transfer_server(pauline->lc,"https://www.linphone.org:444/lft.php");
+		linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
 
 		/* create a chatroom on pauline's side */
 		chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
@@ -1000,8 +1000,8 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 		linphone_content_set_subtype(content,"jpeg");
 		linphone_content_set_size(content,file_size); /*total size to be transfered*/
 		linphone_content_set_name(content,"nowebcamCIF.jpg");
+		linphone_content_set_user_data(content,file_to_send);
 		message = linphone_chat_room_create_file_transfer_message(chat_room, content);
-		linphone_chat_message_set_user_data(message, file_to_send);
 		cbs = linphone_chat_message_get_callbacks(message);
 		{
 			int dummy=0;

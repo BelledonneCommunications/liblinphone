@@ -148,7 +148,7 @@ typedef void (*LinphoneChatMessageCbsParticipantImdnStateChangedCb)(LinphoneChat
  * @param content #LinphoneContent incoming content information
  * @param buffer #LinphoneBuffer holding the received data. Empty buffer means end of file.
  */
-typedef void (*LinphoneChatMessageCbsFileTransferRecvCb)(LinphoneChatMessage *msg, const LinphoneContent* content, const LinphoneBuffer *buffer);
+typedef void (*LinphoneChatMessageCbsFileTransferRecvCb)(LinphoneChatMessage *msg, LinphoneContent* content, const LinphoneBuffer *buffer);
 
 /**
  * File transfer send callback prototype. This function is called by the core when an outgoing file transfer is started. This function is called until size is set to 0.
@@ -158,7 +158,7 @@ typedef void (*LinphoneChatMessageCbsFileTransferRecvCb)(LinphoneChatMessage *ms
  * @param size the number of bytes expected by the framework
  * @return A #LinphoneBuffer object holding the data written by the application. An empty buffer means end of file.
  */
-typedef LinphoneBuffer * (*LinphoneChatMessageCbsFileTransferSendCb)(LinphoneChatMessage *msg,  const LinphoneContent* content, size_t offset, size_t size);
+typedef LinphoneBuffer * (*LinphoneChatMessageCbsFileTransferSendCb)(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t size);
 
 /**
  * File transfer progress indication callback prototype.
@@ -167,7 +167,7 @@ typedef LinphoneBuffer * (*LinphoneChatMessageCbsFileTransferSendCb)(LinphoneCha
  * @param offset The number of bytes sent/received since the beginning of the transfer.
  * @param total The total number of bytes to be sent/received.
  */
-typedef void (*LinphoneChatMessageCbsFileTransferProgressIndicationCb)(LinphoneChatMessage *msg, const LinphoneContent* content, size_t offset, size_t total);
+typedef void (*LinphoneChatMessageCbsFileTransferProgressIndicationCb)(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total);
 
 /**
  * Callback used to notify an ephemeral message that its lifespan before disappearing has started to decrease.

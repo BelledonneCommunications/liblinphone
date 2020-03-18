@@ -78,6 +78,7 @@ private:
 
 	std::weak_ptr<ChatMessage> chatMessage;
 	FileContent* currentFileContentToTransfer = nullptr;
+	FileTransferContent *currentFileTransferContent = nullptr;
 
 	belle_http_request_t *httpRequest = nullptr;
 	belle_http_request_listener_t *httpListener = nullptr;

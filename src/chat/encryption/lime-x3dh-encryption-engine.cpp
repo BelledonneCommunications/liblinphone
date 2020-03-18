@@ -447,22 +447,18 @@ bool LimeX3dhEncryptionEngine::isEncryptionEnabledForFileTransfer (const shared_
 	return (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted);
 }
 
+#define FILE_TRANSFER_AUTH_TAG_SIZE 16
+#define FILE_TRANSFER_KEY_SIZE 32
+
 void LimeX3dhEncryptionEngine::generateFileTransferKey (
 	const shared_ptr<AbstractChatRoom> &chatRoom,
-	const shared_ptr<ChatMessage> &message
+	const shared_ptr<ChatMessage> &message,
+	FileTransferContent *fileTransferContent
 ) {
-#define FILE_TRANSFER_KEY_SIZE 32
 	char keyBuffer [FILE_TRANSFER_KEY_SIZE];// temporary storage of generated key: 192 bits of key + 64 bits of initial vector
 	// generate a random 192 bits key + 64 bits of initial vector and store it into the file_transfer_information->key field of the msg
     sal_get_random_bytes((unsigned char *)keyBuffer, FILE_TRANSFER_KEY_SIZE);
-
-	for (Content *content : message->getContents()) {
-		if (content->isFileTransfer()) {
-			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
-			fileTransferContent->setFileKey(keyBuffer, FILE_TRANSFER_KEY_SIZE);
-			return;
-		}
-	}
+	fileTransferContent->setFileKey(keyBuffer, FILE_TRANSFER_KEY_SIZE);
 }
 
 int LimeX3dhEncryptionEngine::downloadingFile (
@@ -470,20 +466,37 @@ int LimeX3dhEncryptionEngine::downloadingFile (
 	size_t offset,
 	const uint8_t *buffer,
 	size_t size,
-	uint8_t *decrypted_buffer
+	uint8_t *decrypted_buffer,
+	FileTransferContent *fileTransferContent
 ) {
-	const Content *content = message->getPrivate()->getFileTransferContent();
-	if (!content)
+	if (fileTransferContent == nullptr) 
 		return -1;
 
-	const FileTransferContent *fileTransferContent = static_cast<const FileTransferContent *>(content);
+	Content *content = static_cast<Content *>(fileTransferContent);
 	const char *fileKey = fileTransferContent->getFileKey().data();
-
 	if (!fileKey)
 		return -1;
 
-	if (!buffer || size == 0)
-		return bctbx_aes_gcm_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, 0, NULL, NULL);
+	if (!buffer) {
+		// get the authentication tag
+		char authTag[FILE_TRANSFER_AUTH_TAG_SIZE]; // store the authentication tag generated at the end of decryption
+		int ret = bctbx_aes_gcm_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, FILE_TRANSFER_AUTH_TAG_SIZE, authTag, NULL);
+		if (ret<0) return ret;
+		// compare auth tag if we have one
+		const size_t fileAuthTagSize = fileTransferContent->getFileAuthTagSize();
+		if (fileAuthTagSize == FILE_TRANSFER_AUTH_TAG_SIZE) {
+			const char *fileAuthTag = fileTransferContent->getFileAuthTag().data();
+			if (memcmp(authTag, fileAuthTag, FILE_TRANSFER_AUTH_TAG_SIZE) != 0) {
+				lError()<<"download encrypted file : authentication failure";
+				return ERROR_FILE_TRANFER_AUTHENTICATION_FAILED;
+			} else {
+				return ret;
+			}
+		} else {
+			lWarning()<<"download encrypted file : no authentication Tag";
+			return 0;
+		}
+	}
 
 	return bctbx_aes_gcm_decryptFile(
 		linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)),
@@ -492,8 +505,6 @@ int LimeX3dhEncryptionEngine::downloadingFile (
 		(char *)decrypted_buffer,
 		(char *)buffer
 	);
-
-	return 0;
 }
 
 int LimeX3dhEncryptionEngine::uploadingFile (
@@ -501,20 +512,24 @@ int LimeX3dhEncryptionEngine::uploadingFile (
 	size_t offset,
 	const uint8_t *buffer,
 	size_t *size,
-	uint8_t *encrypted_buffer
+	uint8_t *encrypted_buffer,
+	FileTransferContent *fileTransferContent
 ) {
-	const Content *content = message->getPrivate()->getFileTransferContent();
-	if (!content)
+	if (fileTransferContent == nullptr) 
 		return -1;
 
-	const FileTransferContent *fileTransferContent = dynamic_cast<const FileTransferContent *>(content);
+	Content *content = static_cast<Content *>(fileTransferContent);
 	const char *fileKey = fileTransferContent->getFileKey().data();
-
 	if (!fileKey)
 		return -1;
 
-	if (!buffer || *size == 0)
-		return bctbx_aes_gcm_encryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, 0, NULL, NULL);
+	/* This is the final call, get an auth tag and insert it in the fileTransferContent*/
+	if (!buffer || *size == 0) {
+		char authTag[FILE_TRANSFER_AUTH_TAG_SIZE]; // store the authentication tag generated at the end of encryption, size is fixed at 16 bytes
+		int ret = bctbx_aes_gcm_encryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, FILE_TRANSFER_AUTH_TAG_SIZE, NULL, authTag);
+		fileTransferContent->setFileAuthTag(authTag, 16);
+		return ret;
+	}
 
 	size_t file_size = fileTransferContent->getFileSize();
 	if (file_size == 0) {

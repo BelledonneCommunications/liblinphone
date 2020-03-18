@@ -77,8 +77,6 @@ SalOp::~SalOp () {
 		sal_address_unref(mContactAddress);
 	if (mRemoteContactAddress)
 		sal_address_unref(mRemoteContactAddress);
-	if (mServiceRoute)
-		sal_address_unref(mServiceRoute);
 	for (auto &addr : mRouteAddresses)
 		sal_address_unref(addr);
 

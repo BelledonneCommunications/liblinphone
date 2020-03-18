@@ -422,7 +422,7 @@ LpConfig * linphone_config_new_from_buffer(const char *buffer){
 static int _linphone_config_init_from_files(LinphoneConfig *lpconfig, const char *config_filename, const char *factory_config_filename) {
 	lpconfig->g_bctbx_vfs = bctbx_vfs_get_default();
 
-	if (config_filename!=NULL){
+	if (config_filename != NULL && config_filename[0] != '\0'){
 		if(ortp_file_exist(config_filename) == 0) {
 			lpconfig->filename=lp_realpath(config_filename, NULL);
 			if(lpconfig->filename == NULL) {

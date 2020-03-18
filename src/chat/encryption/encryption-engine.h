@@ -32,6 +32,8 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+#define ERROR_FILE_TRANFER_AUTHENTICATION_FAILED -0x1001
+
 class AbstractChatRoom;
 class ChatMessage;
 
@@ -62,7 +64,8 @@ public:
 
 	virtual void generateFileTransferKey (
 		const std::shared_ptr<AbstractChatRoom> &ChatRoom,
-		const std::shared_ptr<ChatMessage> &message
+		const std::shared_ptr<ChatMessage> &message,
+		FileTransferContent *fileTransferContent
 	) {}
 
 	virtual int downloadingFile (
@@ -70,7 +73,8 @@ public:
 		size_t offset,
 		const uint8_t *buffer,
 		size_t size,
-		uint8_t *decryptedBuffer
+		uint8_t *decryptedBuffer,
+		FileTransferContent *fileTransferContent
 	) { return 0; }
 
 	virtual int uploadingFile (
@@ -78,7 +82,8 @@ public:
 		size_t offset,
 		const uint8_t *buffer,
 		size_t *size,
-		uint8_t *encryptedBuffer
+		uint8_t *encryptedBuffer,
+		FileTransferContent *fileTransferContent
 	) { return 0; }
 
 	virtual void mutualAuthentication (
