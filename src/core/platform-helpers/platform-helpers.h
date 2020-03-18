@@ -86,6 +86,7 @@ public:
 	virtual std::shared_ptr<ChatMessage> getPushNotificationMessage(const std::string &callId) = 0;
 	virtual	std::shared_ptr<ChatRoom> getPushNotificationChatRoom(const std::string &chatRoomAddr) = 0;
 	virtual void resetSharedCoreState() = 0;
+	virtual void unlockSharedCoreIfNeeded() = 0;
 
 protected:
 	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
@@ -141,6 +142,7 @@ public:
 	std::shared_ptr<ChatMessage> getPushNotificationMessage(const std::string &callId) override;
 	std::shared_ptr<ChatRoom> getPushNotificationChatRoom(const std::string &chatRoomAddr) override;
 	void resetSharedCoreState() override;
+	void unlockSharedCoreIfNeeded() override;
 
 protected:
 	std::string mCurrentSSID;
