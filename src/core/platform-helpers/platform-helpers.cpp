@@ -209,4 +209,6 @@ std::shared_ptr<ChatRoom> GenericPlatformHelpers::getPushNotificationChatRoom(co
 
 void GenericPlatformHelpers::resetSharedCoreState() {}
 
+void GenericPlatformHelpers::unlockSharedCoreIfNeeded() {}
+
 LINPHONE_END_NAMESPACE
