@@ -75,6 +75,9 @@ public class CoreManager {
         mCore = core;
         sInstance = this;
 
+        // DO NOT ADD A LISTENER ON THE CORE HERE!
+        // Wait for onLinphoneCoreStart()
+
         // Dump some debugging information to the logs
         dumpDeviceInformation();
         dumpLinphoneInformation();

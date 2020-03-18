@@ -116,15 +116,6 @@ public class CoreService extends Service {
     @Override
     public synchronized void onDestroy() {
         Log.i("[Core Service] Stopping");
-
-        if (CoreManager.isReady()) {
-            Core core = CoreManager.instance().getCore();
-            if (core != null) {
-                core.removeListener(mListener);
-                core.stop();
-            }
-        }
-
         super.onDestroy();
     }
 
