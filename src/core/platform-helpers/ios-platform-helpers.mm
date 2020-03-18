@@ -42,6 +42,7 @@
 #include "private.h"
 
 #define ACTIVE_SHARED_CORE "ACTIVE_SHARED_CORE"
+#define LAST_UPDATE_TIME_SHARED_CORE "LAST_UPDATE_TIME_SHARED_CORE"
 
 // =============================================================================
 
@@ -103,8 +104,8 @@ public:
 	bool isCoreShared() override;
 	bool canCoreStart() override;
 	void onCoreMustStop();
-	static string getSharedPath(const string &groupId, const string &fileName);
 	void resetSharedCoreState() override;
+	void unlockSharedCoreIfNeeded() override;
 
 	// push notif
 	void resetMsgCounter();
@@ -135,7 +136,8 @@ private:
 	SharedCoreState getSharedCoreState();
 	void setSharedCoreState(SharedCoreState sharedCoreState);
 	void reloadConfig();
-
+	void resetSharedCoreLastUpdateTime();
+	NSInteger getSharedCoreLastUpdateTime();
 
 	// shared core : executor
 	bool canExecutorCoreStart();
@@ -160,6 +162,7 @@ private:
 	std::shared_ptr<ChatRoom> mChatRoomInvite = nullptr;
 	std::string mChatRoomAddr;
 	uint64_t mTimer = 0;
+	CFRunLoopTimerRef mUnlockTimer;
 };
 
 static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
@@ -319,6 +322,9 @@ void IosPlatformHelpers::onLinphoneCoreStop() {
 		stopNetworkMonitoring();
 	}
 	if (isCoreShared()) {
+		CFRunLoopTimerInvalidate(mUnlockTimer);
+		ms_message("[SHARED] stop timer");
+
 		bool needUnlock = (getSharedCoreState() == SharedCoreState::executorCoreStarted);
 
 		bool needStateReset = (getCore()->getCCore()->is_main_core && getSharedCoreState() == SharedCoreState::mainCoreStarted) ||
@@ -819,20 +825,35 @@ std::shared_ptr<ChatRoom> IosPlatformHelpers::processPushNotificationChatRoom(co
 // shared core
 // -----------------------------------------------------------------------------
 
-string IosPlatformHelpers::getSharedPath(const string &groupId, const string &fileName) {
-	NSString *objcGroupdId = [NSString stringWithCString:groupId.c_str() encoding:[NSString defaultCStringEncoding]];
-	NSString *objcFileName = [NSString stringWithCString:fileName.c_str() encoding:[NSString defaultCStringEncoding]];
-
-	NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
-	NSURL *preferencePath = [basePath URLByAppendingPathComponent:@"Library/Preferences/linphone/"];
-	NSURL *fullPath = [preferencePath URLByAppendingPathComponent:objcFileName];
-
-	return string([[fullPath path] UTF8String]);
+static void unlock_shared_core_if_needed(CFRunLoopTimerRef timer, void *info) {
+	IosPlatformHelpers *platform_helper = (IosPlatformHelpers *) info;
+	platform_helper->unlockSharedCoreIfNeeded();
 }
 
 void IosPlatformHelpers::setupSharedCore(struct _LpConfig *config) {
 	ms_message("[SHARED] setupSharedCore");
 	mAppGroup = linphone_config_get_string(config, "shared_core", "app_group", "");
+	CFRunLoopTimerContext timerContext;
+
+	timerContext.version = 0;
+	timerContext.info = this;
+	timerContext.retain = NULL;
+	timerContext.release = NULL;
+	timerContext.copyDescription = NULL;
+
+	CFTimeInterval interval = 10.0f; // 10 sec
+	mUnlockTimer = CFRunLoopTimerCreate (NULL,
+		CFAbsoluteTimeGetCurrent() + interval,
+		interval,
+		0,
+		0,
+		unlock_shared_core_if_needed,
+		&timerContext
+	);
+
+	CFRunLoopAddTimer (CFRunLoopGetCurrent(), mUnlockTimer, kCFRunLoopCommonModes);
+	ms_message("[SHARED] launch timer");
+	unlockSharedCoreIfNeeded();
 }
 
 bool IosPlatformHelpers::isCoreShared() {
@@ -882,6 +903,30 @@ void IosPlatformHelpers::resetSharedCoreState() {
 	setSharedCoreState(SharedCoreState::noCoreStarted);
 }
 
+void IosPlatformHelpers::resetSharedCoreLastUpdateTime() {
+	ms_message("[SHARED] resetSharedCoreLastUpdateTime");
+    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroup.c_str())];
+    [defaults setInteger:(NSInteger)ms_get_cur_time_ms() forKey:@LAST_UPDATE_TIME_SHARED_CORE];
+	[defaults release];
+}
+
+NSInteger IosPlatformHelpers::getSharedCoreLastUpdateTime() {
+    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroup.c_str())];
+    NSInteger lastUpdateTime = [defaults integerForKey:@LAST_UPDATE_TIME_SHARED_CORE];
+	[defaults release];
+	return lastUpdateTime;
+}
+
+void IosPlatformHelpers::unlockSharedCoreIfNeeded() {
+	if ((NSInteger)ms_get_cur_time_ms() - getSharedCoreLastUpdateTime() > 30000) {
+		ms_message("[SHARED] unlockSharedCoreIfNeeded : no update during last 30 sec");
+		resetSharedCoreState();
+		IosPlatformHelpers::newMsgNbMutex.unlock();
+		IosPlatformHelpers::executorCoreMutex.unlock();
+	}
+	resetSharedCoreLastUpdateTime();
+}
+
 // we need to reload the config from file at each start tp get the changes made by the other cores
 void IosPlatformHelpers::reloadConfig() {
 	// if we just created the core, we don't need to reload the config
@@ -906,6 +951,7 @@ bool IosPlatformHelpers::canExecutorCoreStart() {
 
 	subscribeToMainCoreNotifs();
 	setSharedCoreState(SharedCoreState::executorCoreStarted);
+	resetSharedCoreLastUpdateTime();
 	reloadConfig();
 	return true;
 }
@@ -945,6 +991,7 @@ bool IosPlatformHelpers::canMainCoreStart() {
 		}
 	}
 	setSharedCoreState(SharedCoreState::mainCoreStarted);
+	resetSharedCoreLastUpdateTime();
 	reloadConfig();
 	return true;
 }
