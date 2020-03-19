@@ -759,6 +759,7 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(
 		linphone_core_iterate(getCore()->getCCore());
 		ms_usleep(50000);
 		if (newMsgNb <= 0) chatMessage = getCore()->findChatMessageFromCallId(callId);
+		if (i == 100) resetMsgCounter();
 	}
 
 	chatMessage = getCore()->findChatMessageFromCallId(callId);
