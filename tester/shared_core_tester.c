@@ -266,26 +266,28 @@ LinphoneChatRoom *shared_core_create_chat_room(LinphoneCoreManager *sender, Linp
 void shared_core_get_new_chat_room_from_addr(LinphoneCoreManager *sender, LinphoneCoreManager *receiver,
 											 LinphoneChatRoom *senderCr, const char *subject) {
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(senderCr);
+	BC_ASSERT_PTR_NOT_NULL(confAddr);
+	if (confAddr) {
+		LinphoneChatRoom *receiverCr =
+			linphone_core_get_new_chat_room_from_conf_addr(receiver->lc, linphone_address_get_username(confAddr));
 
-	LinphoneChatRoom *receiverCr =
-		linphone_core_get_new_chat_room_from_conf_addr(receiver->lc, linphone_address_get_username(confAddr));
+		BC_ASSERT_PTR_NOT_NULL(receiverCr);
+		if (receiverCr != NULL) {
+			ms_message("chat room [%p] chat room params [%p]", receiverCr,
+					linphone_chat_room_get_current_params(receiverCr));
+			linphone_chat_room_unref(receiverCr); // linphone_core_get_push_notification_chat_room_invite takes a ref on the
+												// chat room, required when called from outside sdk
+			LinphoneAddress *receiverAddr = linphone_address_new(linphone_core_get_identity(receiver->lc));
+			BC_ASSERT_TRUE(strcmp(linphone_chat_room_get_subject(receiverCr), subject) == 0);
+			BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_chat_room_get_local_address(receiverCr), receiverAddr));
+			linphone_address_unref(receiverAddr);
 
-	BC_ASSERT_PTR_NOT_NULL(receiverCr);
-	if (receiverCr != NULL) {
-		ms_message("chat room [%p] chat room params [%p]", receiverCr,
-				   linphone_chat_room_get_current_params(receiverCr));
-		linphone_chat_room_unref(receiverCr); // linphone_core_get_push_notification_chat_room_invite takes a ref on the
-											  // chat room, required when called from outside sdk
-		LinphoneAddress *receiverAddr = linphone_address_new(linphone_core_get_identity(receiver->lc));
-		BC_ASSERT_TRUE(strcmp(linphone_chat_room_get_subject(receiverCr), subject) == 0);
-		BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_chat_room_get_local_address(receiverCr), receiverAddr));
-		linphone_address_unref(receiverAddr);
-
-		stats mgrStats = receiver->stat;
-		linphone_core_delete_chat_room(receiver->lc, receiverCr);
-		BC_ASSERT_TRUE(wait_for_until(receiver->lc, sender->lc, &receiver->stat.number_of_LinphoneChatRoomStateDeleted,
-									  mgrStats.number_of_LinphoneChatRoomStateDeleted + 1, 10000));
-		linphone_chat_room_unref(receiverCr);
+			stats mgrStats = receiver->stat;
+			linphone_core_delete_chat_room(receiver->lc, receiverCr);
+			BC_ASSERT_TRUE(wait_for_until(receiver->lc, sender->lc, &receiver->stat.number_of_LinphoneChatRoomStateDeleted,
+										mgrStats.number_of_LinphoneChatRoomStateDeleted + 1, 10000));
+			linphone_chat_room_unref(receiverCr);
+		}
 	}
 }
 
