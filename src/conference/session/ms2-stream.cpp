@@ -362,28 +362,32 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 		&& (targetState == CallSession::State::OutgoingEarlyMedia))) {
 		rtp_session_set_symmetric_rtp(mSessions.rtp_session, false);
 	}
-	media_stream_set_max_network_bitrate(getMediaStream(), linphone_core_get_upload_bandwidth(getCCore()) * 1000);
-	if (isMulticast)
-		rtp_session_set_multicast_ttl(mSessions.rtp_session, stream->ttl);
-	rtp_session_enable_rtcp_mux(mSessions.rtp_session, stream->rtcp_mux);
-		// Valid local tags are > 0
-	if (sal_stream_description_has_srtp(stream)) {
-		int cryptoIdx = Sal::findCryptoIndexFromTag(params.localStreamDescription->crypto, static_cast<unsigned char>(stream->crypto_local_tag));
-		if (cryptoIdx >= 0) {
-			ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, stream->crypto[0].algo, stream->crypto[0].master_key);
-			ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, stream->crypto[0].algo, 
-								       params.localStreamDescription->crypto[cryptoIdx].master_key);
-		} else
-			lWarning() << "Failed to find local crypto algo with tag: " << stream->crypto_local_tag;
-	}
-	ms_media_stream_sessions_set_encryption_mandatory(&ms->sessions, getMediaSessionPrivate().isEncryptionMandatory());
-	configureRtpSessionForRtcpFb(params);
-	configureRtpSessionForRtcpXr(params);
-	configureAdaptiveRateControl(params);
 	
-	if (stream->dtls_role != SalDtlsRoleInvalid){ /* If DTLS is available at both end points */
-		/* Give the peer certificate fingerprint to dtls context */
-		ms_dtls_srtp_set_peer_fingerprint(ms->sessions.dtls_context, params.remoteStreamDescription->dtls_fingerprint);
+	if (getState() == Stream::Stopped){
+		/* These things below are not expected to change while the stream is running. */
+		media_stream_set_max_network_bitrate(getMediaStream(), linphone_core_get_upload_bandwidth(getCCore()) * 1000);
+		if (isMulticast)
+			rtp_session_set_multicast_ttl(mSessions.rtp_session, stream->ttl);
+		rtp_session_enable_rtcp_mux(mSessions.rtp_session, stream->rtcp_mux);
+			// Valid local tags are > 0
+		if (sal_stream_description_has_srtp(stream)) {
+			int cryptoIdx = Sal::findCryptoIndexFromTag(params.localStreamDescription->crypto, static_cast<unsigned char>(stream->crypto_local_tag));
+			if (cryptoIdx >= 0) {
+				ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, stream->crypto[0].algo, stream->crypto[0].master_key);
+				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, stream->crypto[0].algo, 
+									params.localStreamDescription->crypto[cryptoIdx].master_key);
+			} else
+				lWarning() << "Failed to find local crypto algo with tag: " << stream->crypto_local_tag;
+		}
+		ms_media_stream_sessions_set_encryption_mandatory(&ms->sessions, getMediaSessionPrivate().isEncryptionMandatory());
+		configureRtpSessionForRtcpFb(params);
+		configureRtpSessionForRtcpXr(params);
+		configureAdaptiveRateControl(params);
+		
+		if (stream->dtls_role != SalDtlsRoleInvalid){ /* If DTLS is available at both end points */
+			/* Give the peer certificate fingerprint to dtls context */
+			ms_dtls_srtp_set_peer_fingerprint(ms->sessions.dtls_context, params.remoteStreamDescription->dtls_fingerprint);
+		}
 	}
 	
 	switch(targetState){
