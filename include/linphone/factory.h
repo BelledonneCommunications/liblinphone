@@ -249,7 +249,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_3 (
  * @param[in] main_core Indicate if we want to create a "Main Core" or an "Executor Core".
  * @see linphone_factory_create_shared_core
  */
-LinphoneCore *linphone_factory_create_shared_core_with_config (
+LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core_with_config (
 	const LinphoneFactory *factory,
 	LinphoneConfig *config,
 	void *system_context,
