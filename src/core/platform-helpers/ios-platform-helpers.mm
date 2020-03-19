@@ -680,7 +680,7 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::getPushNotificationMessage(cons
 		case SharedCoreState::executorCoreStarted:
 			ms_message("[push] executorCoreStarted");
 		case SharedCoreState::noCoreStarted:
-			IosPlatformHelpers::executorCoreMutex.lock(); // TODO PAUL : it can stay in lock: only receiving a msg in fg unlock
+			IosPlatformHelpers::executorCoreMutex.lock();
 			ms_message("[push] noCoreStarted");
 			std::shared_ptr<ChatMessage> msg = processPushNotificationMessage(callId);
 			return msg;
@@ -834,27 +834,29 @@ static void unlock_shared_core_if_needed(CFRunLoopTimerRef timer, void *info) {
 void IosPlatformHelpers::setupSharedCore(struct _LpConfig *config) {
 	ms_message("[SHARED] setupSharedCore");
 	mAppGroup = linphone_config_get_string(config, "shared_core", "app_group", "");
-	CFRunLoopTimerContext timerContext;
+	if (isCoreShared()) {
+		CFRunLoopTimerContext timerContext;
 
-	timerContext.version = 0;
-	timerContext.info = this;
-	timerContext.retain = NULL;
-	timerContext.release = NULL;
-	timerContext.copyDescription = NULL;
+		timerContext.version = 0;
+		timerContext.info = this;
+		timerContext.retain = NULL;
+		timerContext.release = NULL;
+		timerContext.copyDescription = NULL;
 
-	CFTimeInterval interval = 10.0f; // 10 sec
-	mUnlockTimer = CFRunLoopTimerCreate (NULL,
-		CFAbsoluteTimeGetCurrent() + interval,
-		interval,
-		0,
-		0,
-		unlock_shared_core_if_needed,
-		&timerContext
-	);
+		CFTimeInterval interval = 10.0f; // 10 sec
+		mUnlockTimer = CFRunLoopTimerCreate (NULL,
+			CFAbsoluteTimeGetCurrent() + interval,
+			interval,
+			0,
+			0,
+			unlock_shared_core_if_needed,
+			&timerContext
+		);
 
-	CFRunLoopAddTimer (CFRunLoopGetCurrent(), mUnlockTimer, kCFRunLoopCommonModes);
-	ms_message("[SHARED] launch timer");
-	unlockSharedCoreIfNeeded();
+		CFRunLoopAddTimer (CFRunLoopGetCurrent(), mUnlockTimer, kCFRunLoopCommonModes);
+		ms_message("[SHARED] launch timer");
+		unlockSharedCoreIfNeeded();
+	}
 }
 
 bool IosPlatformHelpers::isCoreShared() {
