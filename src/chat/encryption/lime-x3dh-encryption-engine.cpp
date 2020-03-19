@@ -872,13 +872,12 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_update_time", -1);
 
 	try {
-		
 		if (!limeManager->is_user(localDeviceId)) {
 			// create user if not exist
 			lime::limeCallback callback = setLimeCallback("creating user " + localDeviceId);
 			limeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+			lastLimeUpdate = ms_time(NULL);
 		} else {
-			
 			limeManager->set_x3dhServerUrl(localDeviceId,x3dhServerUrl);
 			// update keys if necessary
 			int limeUpdateThreshold = lp_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
@@ -887,12 +886,10 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 				lastLimeUpdate = ms_time(NULL);
 			}
 		}
-		lastLimeUpdate = ms_time(NULL);
 		lp_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 	} catch (const exception &e) {
 		lError()<< "[LIME] user for id [" << localDeviceId<<"] cannot be created" << e.what();
 	}
-	
 }
 
 LINPHONE_END_NAMESPACE

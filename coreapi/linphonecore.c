@@ -2537,10 +2537,11 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->media_network_state.global_state = FALSE;
 	lc->media_network_state.user_state = TRUE;
 
-	/* Create the http provider in dual stack mode (ipv4 and ipv6.
+	/* Create the http provider in dual stack mode  if ipv6 enabled for sip (ipv4 and ipv6.
 	 * If this creates problem, we may need to implement parallel ipv6/ ipv4 http requests in belle-sip.
-	 */
-	lc->http_provider = belle_sip_stack_create_http_provider(reinterpret_cast<belle_sip_stack_t *>(lc->sal->getStackImpl()), "::0");
+	 * ipv6 config value is read later in fonction sip_config_read*/
+	int use_ipv6_for_sip = lp_config_get_int(lc->config,"sip","use_ipv6",TRUE);
+	lc->http_provider = belle_sip_stack_create_http_provider(reinterpret_cast<belle_sip_stack_t *>(lc->sal->getStackImpl()), (use_ipv6_for_sip?"::0":"0.0.0.0"));
 	lc->http_crypto_config = belle_tls_crypto_config_new();
 	belle_http_provider_set_tls_crypto_config(lc->http_provider,lc->http_crypto_config);
 
