@@ -1767,6 +1767,12 @@ void MainDb::init () {
 	auto primaryKeyStr = bind(&DbSession::primaryKeyStr, &d->dbSession, _1);
 	auto timestampType = bind(&DbSession::timestampType, &d->dbSession);
 	auto varcharPrimaryKeyStr = bind(&DbSession::varcharPrimaryKeyStr, &d->dbSession, _1);
+	
+	/* Enable secure delete - so that erased chat messages are really erased and not just marked as unused.
+	 * See https://sqlite.org/pragma.html#pragma_secure_delete 
+	 * This setting is global for the database.
+	 */
+	*session << string("PRAGMA secure_delete = ON");
 
 	*session <<
 		"CREATE TABLE IF NOT EXISTS sip_address ("
