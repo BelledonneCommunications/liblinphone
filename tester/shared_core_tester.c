@@ -29,7 +29,9 @@
 #include "linphone/wrapper_utils.h"
 #include "tester_utils.h"
 
+#if TARGET_OS_IPHONE
 #include <pthread.h>
+#endif
 
 #define TEST_GROUP_ID "test group id"
 
@@ -63,6 +65,7 @@ static void shared_main_core_prevent_executor_core_start(void) {
 }
 
 void *thread_shared_main_core_stops_executor_core(void *arguments) {
+#if TARGET_OS_IPHONE
 	LinphoneCoreManager *executor_mgr = (LinphoneCoreManager *)arguments;
 	LinphoneCoreManager *main_mgr = linphone_core_manager_create_shared("", TEST_GROUP_ID, TRUE, executor_mgr);
 
@@ -71,6 +74,7 @@ void *thread_shared_main_core_stops_executor_core(void *arguments) {
 	linphone_core_manager_destroy(main_mgr);
 
 	pthread_exit(NULL);
+#endif
 	return NULL;
 }
 
@@ -148,6 +152,7 @@ void shared_core_get_message_from_call_id(LinphoneCoreManager *sender_mgr, Linph
 }
 
 void *thread_shared_core_get_message_from_call_id(void *arguments) {
+#if TARGET_OS_IPHONE
 	struct get_msg_args *args = (struct get_msg_args *)arguments;
 	LinphoneCoreManager *receiver_mgr =
 		linphone_core_manager_create_shared("", TEST_GROUP_ID, FALSE, args->receiver_mgr);
@@ -157,6 +162,7 @@ void *thread_shared_core_get_message_from_call_id(void *arguments) {
 	linphone_core_manager_destroy(receiver_mgr);
 
 	pthread_exit(NULL);
+#endif
 	return NULL;
 }
 
@@ -292,6 +298,7 @@ void shared_core_get_new_chat_room_from_addr(LinphoneCoreManager *sender, Linpho
 }
 
 void *thread_shared_core_get_new_chat_room_from_addr(void *arguments) {
+#if TARGET_OS_IPHONE
 	struct get_msg_args *args = (struct get_msg_args *)arguments;
 	LinphoneCoreManager *receiver_mgr =
 		linphone_core_manager_create_shared("", TEST_GROUP_ID, FALSE, args->receiver_mgr);
@@ -303,6 +310,7 @@ void *thread_shared_core_get_new_chat_room_from_addr(void *arguments) {
 	linphone_core_manager_destroy(receiver_mgr);
 
 	pthread_exit(NULL);
+#endif
 	return NULL;
 }
 
