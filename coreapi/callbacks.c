@@ -681,7 +681,8 @@ static LinphoneChatMessageState chatStatusSal2Linphone(SalMessageDeliveryStatus 
 
 static void message_delivery_update(SalOp *op, SalMessageDeliveryStatus status) {
 	auto lc = reinterpret_cast<LinphoneCore *>(op->getSal()->getUserPointer());
-	if (linphone_core_get_global_state(lc) == LinphoneGlobalOff) {
+	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
+		static_cast<SalMessageOp *>(op)->reply(SalReasonDeclined);
 		return;
 	}
 
