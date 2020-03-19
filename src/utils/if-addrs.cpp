@@ -34,6 +34,8 @@
 
 #include "if-addrs.h"
 
+#include <set>
+
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
@@ -42,6 +44,7 @@ LINPHONE_BEGIN_NAMESPACE
 list<string> IfAddrs::fetchWithGetIfAddrs(){
 	list<string> ret;
 	struct ifaddrs *ifap = nullptr;
+	set<string> ipv6Interfaces;
 	
 	lInfo() << "Fetching current local IP addresses using getifaddrs().";
 	
@@ -70,7 +73,14 @@ list<string> IfAddrs::fetchWithGetIfAddrs(){
 							continue;
 						}
 						if (inet_ntop(AF_INET6, &((struct sockaddr_in6*)saddr)->sin6_addr, addr, sizeof(addr)) != nullptr){
-							ret.push_back(addr);
+							/* Limit to one ipv6 address per interface, to filter out temporaries.
+							 * I would have prefer to find a way with getifaddrs() to know
+							 * whether an ipv6 address is a temporary or not, but unfortunately this doesn't seem possible.
+							 */
+							if (ipv6Interfaces.find(ifaddr->ifa_name) == ipv6Interfaces.end()){
+								ret.push_back(addr);
+								ipv6Interfaces.insert(ifaddr->ifa_name);
+							}
 						}else{
 							lError() << "inet_ntop() failed with AF_INET6: " << strerror(errno);
 						}
