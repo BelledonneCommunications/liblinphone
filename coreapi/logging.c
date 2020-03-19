@@ -276,46 +276,37 @@ const char *linphone_logging_service_get_domain(LinphoneLoggingService *log_serv
 	return log_service->domain;
 }
 
-void linphone_logging_service_debug(LinphoneLoggingService *log_service, const char *msg) {
+void _linphone_logging_service_print(LinphoneLoggingService *log_service, const char *msg, _LinphoneLogLevel log_level, int dummy, ...) {
 	if (log_service->domain) {
 		va_list empty_va_list;
-		bctbx_logv(log_service->domain, _linphone_log_level_to_bctbx_log_level(LinphoneLogLevelDebug), msg, empty_va_list);
+		va_start(empty_va_list, dummy);
+		bctbx_logv(log_service->domain, _linphone_log_level_to_bctbx_log_level(log_level), msg, empty_va_list);
+		va_end(empty_va_list);
 	}
+}
+
+void linphone_logging_service_debug(LinphoneLoggingService *log_service, const char *msg) {
+	_linphone_logging_service_print(log_service, msg, LinphoneLogLevelDebug, 0);
 }
 
 void linphone_logging_service_trace(LinphoneLoggingService *log_service, const char *msg) {
-	if (log_service->domain) {
-		va_list empty_va_list;
-		bctbx_logv(log_service->domain, _linphone_log_level_to_bctbx_log_level(LinphoneLogLevelTrace), msg, empty_va_list);
-	}
+	_linphone_logging_service_print(log_service, msg, LinphoneLogLevelTrace, 0);
 }
 
 void linphone_logging_service_message(LinphoneLoggingService *log_service, const char *msg) {
-	if (log_service->domain) {
-		va_list empty_va_list;
-		bctbx_logv(log_service->domain, _linphone_log_level_to_bctbx_log_level(LinphoneLogLevelMessage), msg, empty_va_list);
-	}
+	_linphone_logging_service_print(log_service, msg, LinphoneLogLevelMessage, 0);
 }
 
 void linphone_logging_service_warning(LinphoneLoggingService *log_service, const char *msg) {
-	if (log_service->domain) {
-		va_list empty_va_list;
-		bctbx_logv(log_service->domain, _linphone_log_level_to_bctbx_log_level(LinphoneLogLevelWarning), msg, empty_va_list);
-	}
+	_linphone_logging_service_print(log_service, msg, LinphoneLogLevelWarning, 0);
 }
 
 void linphone_logging_service_error(LinphoneLoggingService *log_service, const char *msg) {
-	if (log_service->domain) {
-		va_list empty_va_list;
-		bctbx_logv(log_service->domain, _linphone_log_level_to_bctbx_log_level(LinphoneLogLevelError), msg, empty_va_list);
-	}
+	_linphone_logging_service_print(log_service, msg, LinphoneLogLevelError, 0);
 }
 
 void linphone_logging_service_fatal(LinphoneLoggingService *log_service, const char *msg) {
-	if (log_service->domain) {
-		va_list empty_va_list;
-		bctbx_logv(log_service->domain, _linphone_log_level_to_bctbx_log_level(LinphoneLogLevelFatal), msg, empty_va_list);
-	}
+	_linphone_logging_service_print(log_service, msg, LinphoneLogLevelFatal, 0);
 }
 
 BELLE_SIP_INSTANCIATE_VPTR(LinphoneLoggingService, belle_sip_object_t,
