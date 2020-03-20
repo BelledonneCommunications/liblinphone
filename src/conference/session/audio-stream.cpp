@@ -369,8 +369,6 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (listener && listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis()))
 		setupRingbackPlayer();
 	
-	lInfo() << "getInConference() = " << getMediaSessionPrivate().getParams()->getPrivate()->getInConference();
-	lInfo() << "listener = " << listener;
 	if (getMediaSessionPrivate().getParams()->getPrivate()->getInConference() && listener) {
 		// Transform the graph to connect it to the conference filter
 		bool mute = (stream->dir == SalStreamRecvOnly);

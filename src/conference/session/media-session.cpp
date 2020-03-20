@@ -1850,6 +1850,9 @@ void MediaSessionPrivate::startAccept(){
 	}
 
 	CallSessionPrivate::accept(nullptr);
+	if (!getParams()->getPrivate()->getInConference() && listener){
+		listener->onSetCurrentSession(q->getSharedFromThis());
+	}
 
 	SalMediaDescription *newMd = op->getFinalMediaDescription();
 	if (newMd) {

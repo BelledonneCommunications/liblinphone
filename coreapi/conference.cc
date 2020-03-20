@@ -475,8 +475,6 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 				linphone_call_stop_media_streams(call); /* Free the audio & video local resources */
 				linphone_call_init_media_streams(call);
 			}
-			if (call == linphone_core_get_current_call(m_core))
-				L_GET_PRIVATE_FROM_C_OBJECT(m_core)->setCurrentCall(nullptr);
 			/* This will trigger a reINVITE that will later redraw the streams */
 			/* FIXME: probably a bit too much to just redraw streams! */
 			linphone_call_update(call, params);
@@ -490,6 +488,8 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 			return -1;
 		break;
 	}
+	if (call == linphone_core_get_current_call(m_core))
+		L_GET_PRIVATE_FROM_C_OBJECT(m_core)->setCurrentCall(nullptr);
 	const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 				L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams()))->setInConference(true);
 	const_cast<LinphonePrivate::MediaSessionParams *>(
@@ -690,8 +690,9 @@ void LocalConference::onCallStreamStopping (LinphoneCall *call) {
 void LocalConference::onCallTerminating (LinphoneCall *call) {
 	int remote_count = remoteParticipantsCount();
 	ms_message("conference_check_uninit(): size=%i", getSize());
-	if ((remote_count == 1) && !m_terminating)
-		convertConferenceToCall();
+	if ((remote_count == 1) && !m_terminating){
+		if (m_currentParams->localParticipantEnabled()) convertConferenceToCall();
+	}
 
 	if (remote_count == 0) {
 		if (m_localParticipantStream){

@@ -367,7 +367,7 @@ void CallPrivate::onIncomingCallSessionNotified (const shared_ptr<CallSession> &
 
 void CallPrivate::onIncomingCallSessionStarted (const shared_ptr<CallSession> &session) {
 	L_Q();
-	if (linphone_core_get_calls_nb(q->getCore()->getCCore())==1) {
+	if (linphone_core_get_calls_nb(q->getCore()->getCCore()) == 1 && !q->isInConference()) {
 		L_GET_PRIVATE_FROM_C_OBJECT(q->getCore()->getCCore())->setCurrentCall(q->getSharedFromThis());
 	}
 	q->getCore()->getPrivate()->getToneManager()->startRingtone(session);
