@@ -34,6 +34,7 @@ import androidx.media.AudioFocusRequestCompat;
 
 import java.io.IOException;
 import java.io.FileInputStream;
+import java.lang.SecurityException;
 
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.service.CoreManager;
@@ -43,12 +44,39 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     private AudioFocusRequestCompat mRingingRequest;
     private AudioFocusRequestCompat mCallRequest;
     private MediaPlayer mPlayer;
+    private int mVolumeBeforeEchoTest;
 
     public AudioHelper(Context context) {
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         mRingingRequest = null;
         mCallRequest = null;
         Log.i("[Audio Helper] Helper created");
+    }
+
+    public void startAudioForEchoTestOrCalibration() {
+        requestCallAudioFocus();
+        // TODO: remove when audio routing will be handled by the Core
+        mAudioManager.setSpeakerphoneOn(true);
+
+        mVolumeBeforeEchoTest = mAudioManager.getStreamVolume(AudioManager.STREAM_VOICE_CALL);
+        int maxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
+        try {
+            mAudioManager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, maxVolume, 0);
+        } catch (SecurityException se) {
+            Log.e("[Audio Helper] Couldn't increase volume: ", se);
+        }
+    }
+
+    public void stopAudioForEchoTestOrCalibration() {
+        try {
+            mAudioManager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, mVolumeBeforeEchoTest, 0);
+        } catch (SecurityException se) {
+            Log.e("[Audio Helper] Couldn't restore volume: ", se);
+        }
+
+        // TODO: remove when audio routing will be handled by the Core
+        mAudioManager.setSpeakerphoneOn(false);
+        releaseCallAudioFocus();
     }
 
     public void startRinging(Context context, String ringtone) {
