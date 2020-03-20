@@ -144,6 +144,9 @@ void GenericPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
 
 void GenericPlatformHelpers::onLinphoneCoreStop () {}
 
+void GenericPlatformHelpers::startAudioForEchoTestOrCalibration () { }
+
+void GenericPlatformHelpers::stopAudioForEchoTestOrCalibration () { }
 
 int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revents) {
 	GenericPlatformHelpers *helper = static_cast<GenericPlatformHelpers *>(data);
