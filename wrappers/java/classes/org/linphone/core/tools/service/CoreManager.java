@@ -191,6 +191,14 @@ public class CoreManager {
         sInstance = null;
     }
 
+    public void startAudioForEchoTestOrCalibration() {
+        mAudioHelper.startAudioForEchoTestOrCalibration();
+    }
+
+    public void stopAudioForEchoTestOrCalibration() {
+        mAudioHelper.stopAudioForEchoTestOrCalibration();
+    }
+
     public void onAudioFocusLost() {
         Log.i("[Core Manager] App has lost audio focus, pause current call if any");
         if (mCore != null) {

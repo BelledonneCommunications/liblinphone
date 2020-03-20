@@ -81,6 +81,9 @@ public:
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
 	void onLinphoneCoreStop () override;
 
+	void startAudioForEchoTestOrCalibration () override;
+	void stopAudioForEchoTestOrCalibration () override;
+
 	//IosHelper specific
 	bool isReachable(SCNetworkReachabilityFlags flags);
 	void networkChangeCallback(void);
@@ -253,6 +256,13 @@ void IosPlatformHelpers::onLinphoneCoreStop() {
 	}
 }
 
+void IosPlatformHelpers::startAudioForEchoTestOrCalibration () {
+
+}
+
+void IosPlatformHelpers::stopAudioForEchoTestOrCalibration () {
+	
+}
 
 void IosPlatformHelpers::onWifiOnlyEnabled(bool enabled) {
 	mWifiOnly = enabled;
