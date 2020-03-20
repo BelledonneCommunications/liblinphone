@@ -64,6 +64,9 @@ public:
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
 	void onLinphoneCoreStop () override;
 
+	void startAudioForEchoTestOrCalibration () override;
+	void stopAudioForEchoTestOrCalibration () override;
+
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
 	string getDownloadPath() override;
@@ -96,6 +99,8 @@ private:
 	jmethodID mOnLinphoneCoreStopId = nullptr;
 	jmethodID mCoreManagerOnLinphoneCoreStartId = nullptr;
 	jmethodID mCoreManagerOnLinphoneCoreStopId = nullptr;
+	jmethodID mStartAudioForEchoTestOrCalibrationId = nullptr;
+	jmethodID mStopAudioForEchoTestOrCalibrationId = nullptr;
 	jmethodID mOnWifiOnlyEnabledId = nullptr;
 	jobject mPreviewVideoWindow = nullptr;
 	jobject mVideoWindow = nullptr;
@@ -143,6 +148,10 @@ void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate:
 
 	mCoreManagerOnLinphoneCoreStartId = getMethodId(env, klass, "onLinphoneCoreStart", "()V");
 	mCoreManagerOnLinphoneCoreStopId = getMethodId(env, klass, "onLinphoneCoreStop", "()V");
+	
+	mStartAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "startAudioForEchoTestOrCalibration", "()V");
+	mStopAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "stopAudioForEchoTestOrCalibration", "()V");
+
 	lInfo() << "CoreManager is fully initialised.";
 }
 
@@ -415,6 +424,24 @@ void AndroidPlatformHelpers::onLinphoneCoreStop() {
 		}
 		if (mJavaHelper) {
 			env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStopId);
+		}
+	}
+}
+
+void AndroidPlatformHelpers::startAudioForEchoTestOrCalibration () {
+	JNIEnv *env = ms_get_jni_env();
+	if (env) {
+		if (mJavaCoreManager) {
+			env->CallVoidMethod(mJavaCoreManager, mStartAudioForEchoTestOrCalibrationId);
+		}
+	}
+}
+
+void AndroidPlatformHelpers::stopAudioForEchoTestOrCalibration () {
+	JNIEnv *env = ms_get_jni_env();
+	if (env) {
+		if (mJavaCoreManager) {
+			env->CallVoidMethod(mJavaCoreManager, mStopAudioForEchoTestOrCalibrationId);
 		}
 	}
 }

@@ -326,6 +326,9 @@ int linphone_core_start_echo_calibration(LinphoneCore *lc, LinphoneEcCalibration
 
 static void _ec_calibration_result_cb(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay_ms, void *user_data) {
 	linphone_core_notify_ec_calibration_result(lc, status, delay_ms);
+	if (status != LinphoneEcCalibratorInProgress) {
+		getPlatformHelpers(lc)->stopAudioForEchoTestOrCalibration();
+	}
 }
 
 static void _ec_calibration_audio_init_cb(void *user_data) {
@@ -351,6 +354,7 @@ LinphoneStatus linphone_core_start_echo_canceller_calibration(LinphoneCore *lc) 
 		_ec_calibration_audio_init_cb,
 		_ec_calibration_audio_uninit_cb, lc);
 	lc->ecc->play_cool_tones = !!lp_config_get_int(lc->config, "sound", "ec_calibrator_cool_tones", 0);
+	getPlatformHelpers(lc)->startAudioForEchoTestOrCalibration();
 	ec_calibrator_start(lc->ecc);
 	return 0;
 }
