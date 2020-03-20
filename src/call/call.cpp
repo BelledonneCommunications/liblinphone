@@ -248,16 +248,19 @@ bool CallPrivate::onCallSessionAccepted (const shared_ptr<CallSession> &session)
 
 void CallPrivate::onCallSessionConferenceStreamStarting (const shared_ptr<CallSession> &session, bool mute) {
 	L_Q();
-	if (q->getCore()->getCCore()->conf_ctx) {
-		linphone_conference_on_call_stream_starting(q->getCore()->getCCore()->conf_ctx, L_GET_C_BACK_PTR(q), mute);
+	LinphoneCall *call = L_GET_C_BACK_PTR(q);
+	LinphoneConference *conf = linphone_call_get_conference(call);
+	if (conf) {
+		linphone_conference_on_call_stream_starting(conf, call, mute);
 	}
 }
 
 void CallPrivate::onCallSessionConferenceStreamStopping (const shared_ptr<CallSession> &session) {
 	L_Q();
-	LinphoneCore *lc = q->getCore()->getCCore();
-	if (lc->conf_ctx && _linphone_call_get_endpoint(L_GET_C_BACK_PTR(q)))
-		linphone_conference_on_call_stream_stopping(lc->conf_ctx, L_GET_C_BACK_PTR(q));
+	LinphoneCall *call = L_GET_C_BACK_PTR(q);
+	LinphoneConference *conf = linphone_call_get_conference(call);
+	if (conf && _linphone_call_get_endpoint(call))
+		linphone_conference_on_call_stream_stopping(conf, call);
 }
 
 void CallPrivate::onCallSessionEarlyFailed (const shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) {
@@ -279,14 +282,17 @@ void CallPrivate::onCallSessionSetReleased (const shared_ptr<CallSession> &sessi
 void CallPrivate::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
 	L_Q();
 	LinphoneCore *core = q->getCore()->getCCore();
+	LinphoneCall *call = L_GET_C_BACK_PTR(q);
+	LinphoneConference *conf = linphone_call_get_conference(call);
+	
 	if (q->getSharedFromThis() == q->getCore()->getCurrentCall()) {
 		lInfo() << "Resetting the current call";
 		q->getCore()->getPrivate()->setCurrentCall(nullptr);
 	}
 	if (q->getCore()->getPrivate()->removeCall(q->getSharedFromThis()) != 0)
 		lError() << "Could not remove the call from the list!!!";
-	if (core->conf_ctx)
-		linphone_conference_on_call_terminating(core->conf_ctx, L_GET_C_BACK_PTR(q));
+	if (conf)
+		linphone_conference_on_call_terminating(conf, call);
 #if 0
 	if (lcall->chat_room)
 		linphone_chat_room_set_call(lcall->chat_room, nullptr);
@@ -361,7 +367,7 @@ void CallPrivate::onIncomingCallSessionNotified (const shared_ptr<CallSession> &
 
 void CallPrivate::onIncomingCallSessionStarted (const shared_ptr<CallSession> &session) {
 	L_Q();
-	if (linphone_core_get_calls_nb(q->getCore()->getCCore())==1) {
+	if (linphone_core_get_calls_nb(q->getCore()->getCCore()) == 1 && !q->isInConference()) {
 		L_GET_PRIVATE_FROM_C_OBJECT(q->getCore()->getCCore())->setCurrentCall(q->getSharedFromThis());
 	}
 	q->getCore()->getPrivate()->getToneManager()->startRingtone(session);
