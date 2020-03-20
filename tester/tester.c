@@ -166,8 +166,8 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, Linphone
 		lp_config_set_string(config, "sip",   "root_ca"    , rootcapath);
 
 		LinphoneCoreManager *mgr = (LinphoneCoreManager *)user_data;
-		if (mgr && mgr->group_id) {
-			lc = linphone_factory_create_shared_core_with_config(linphone_factory_get(), config, system_context, mgr->group_id, mgr->main_core);
+		if (mgr && mgr->app_group_id) {
+			lc = linphone_factory_create_shared_core_with_config(linphone_factory_get(), config, system_context, mgr->app_group_id, mgr->main_core);
 		} else {
 			lc = linphone_factory_create_core_with_config_3(linphone_factory_get(), config, system_context);
 		}
@@ -606,9 +606,9 @@ LinphoneCoreManager *linphone_core_manager_new(const char *rc_file) {
  * mgr_to_copy is used to create a second LinphoneCoreManager with the same identity.
  * If mgr_to_copy has a value, rc_file parameter is ignored.
  */
-LinphoneCoreManager* linphone_core_manager_create_shared(const char *rc_file, const char *group_id, bool_t main_core, LinphoneCoreManager *mgr_to_copy) {
+LinphoneCoreManager* linphone_core_manager_create_shared(const char *rc_file, const char *app_group_id, bool_t main_core, LinphoneCoreManager *mgr_to_copy) {
 	LinphoneCoreManager *manager = ms_new0(LinphoneCoreManager, 1);
-	manager->group_id = ms_strdup(group_id);
+	manager->app_group_id = ms_strdup(app_group_id);
 	manager->main_core = main_core;
 	linphone_core_manager_init_shared(manager, rc_file, NULL, mgr_to_copy);
 	return manager;
@@ -687,8 +687,8 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 		unlink(mgr->lime_database_path);
 		bc_free(mgr->lime_database_path);
 	}
-	if (mgr->group_id)
-		bctbx_free(mgr->group_id);
+	if (mgr->app_group_id)
+		bctbx_free(mgr->app_group_id);
 
 	if (mgr->cbs)
 		linphone_core_cbs_unref(mgr->cbs);
