@@ -32,8 +32,8 @@ LINPHONE_BEGIN_NAMESPACE
 std::string SysPaths::getDataPath (void *context) {
 	NSString *fullPath;
 	if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
-		const char* groupId = static_cast<const char *>(context);
-		NSString *objcGroupdId = [NSString stringWithCString:groupId encoding:[NSString defaultCStringEncoding]];
+		const char* appGroupId = static_cast<const char *>(context);
+		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
 
 		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
 		fullPath = [[basePath path] stringByAppendingPathComponent:@"/Library/Application Support/linphone/"];
@@ -60,8 +60,8 @@ std::string SysPaths::getDataPath (void *context) {
 std::string SysPaths::getConfigPath (void *context) {
 	NSString *fullPath;
 	if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
-		const char* groupId = static_cast<const char *>(context);
-		NSString *objcGroupdId = [NSString stringWithCString:groupId encoding:[NSString defaultCStringEncoding]];
+		const char* appGroupId = static_cast<const char *>(context);
+		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
 
 		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
 		fullPath = [[basePath path] stringByAppendingPathComponent:@"Library/Preferences/linphone/"];
@@ -88,8 +88,8 @@ std::string SysPaths::getConfigPath (void *context) {
 std::string SysPaths::getDownloadPath (void *context) {
 	NSString *fullPath;
 	if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
-		const char* groupId = static_cast<const char *>(context);
-		NSString *objcGroupdId = [NSString stringWithCString:groupId encoding:[NSString defaultCStringEncoding]];
+		const char* appGroupId = static_cast<const char *>(context);
+		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
 
 		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
 		fullPath = [[basePath path] stringByAppendingPathComponent:@"Library/Caches/"];

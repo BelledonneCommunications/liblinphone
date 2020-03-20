@@ -153,7 +153,7 @@ private:
 	SCNetworkReachabilityFlags mCurrentFlags = 0;
 	bool mNetworkMonitoringEnabled = false;
 	static const string Framework;
-	std::string mAppGroup = "";
+	std::string mAppGroupId = "";
 
 	// push notif
 	static int newMsgNb;
@@ -307,7 +307,7 @@ string IosPlatformHelpers::getResourcePath (const string &framework, const strin
 }
 
 void *IosPlatformHelpers::getPathContext () {
-	return ms_strdup(mAppGroup.c_str());
+	return ms_strdup(mAppGroupId.c_str());
 }
 
 void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
@@ -833,7 +833,7 @@ static void unlock_shared_core_if_needed(CFRunLoopTimerRef timer, void *info) {
 
 void IosPlatformHelpers::setupSharedCore(struct _LpConfig *config) {
 	ms_message("[SHARED] setupSharedCore");
-	mAppGroup = linphone_config_get_string(config, "shared_core", "app_group", "");
+	mAppGroupId = linphone_config_get_string(config, "shared_core", "app_group_id", "");
 	if (isCoreShared()) {
 		CFRunLoopTimerContext timerContext;
 
@@ -860,7 +860,7 @@ void IosPlatformHelpers::setupSharedCore(struct _LpConfig *config) {
 }
 
 bool IosPlatformHelpers::isCoreShared() {
-	return !mAppGroup.empty();
+	return !mAppGroupId.empty();
 }
 
 bool IosPlatformHelpers::canCoreStart() {
@@ -875,7 +875,7 @@ bool IosPlatformHelpers::canCoreStart() {
 }
 
 bool IosPlatformHelpers::isSharedCoreStarted() {
-    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroup.c_str())];
+    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
     NSInteger state = [defaults integerForKey:@ACTIVE_SHARED_CORE];
 	ms_message("[SHARED] isSharedCoreStarted %d", (int) state);
 	[defaults release];
@@ -886,7 +886,7 @@ bool IosPlatformHelpers::isSharedCoreStarted() {
 }
 
 SharedCoreState IosPlatformHelpers::getSharedCoreState() {
-	NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroup.c_str())];
+	NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
     NSInteger state = [defaults integerForKey:@ACTIVE_SHARED_CORE];
 	[defaults release];
 	return (SharedCoreState) state;
@@ -897,7 +897,7 @@ SharedCoreState IosPlatformHelpers::getSharedCoreState() {
  */
 void IosPlatformHelpers::setSharedCoreState(SharedCoreState sharedCoreState) {
 	ms_message("[SHARED] setSharedCoreState sharedCoreState: %d", sharedCoreState);
-    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroup.c_str())];
+    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
     [defaults setInteger:sharedCoreState forKey:@ACTIVE_SHARED_CORE];
 	[defaults release];
 }
@@ -908,13 +908,13 @@ void IosPlatformHelpers::resetSharedCoreState() {
 
 void IosPlatformHelpers::resetSharedCoreLastUpdateTime() {
 	ms_message("[SHARED] resetSharedCoreLastUpdateTime");
-    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroup.c_str())];
+    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
     [defaults setInteger:(NSInteger)ms_get_cur_time_ms() forKey:@LAST_UPDATE_TIME_SHARED_CORE];
 	[defaults release];
 }
 
 NSInteger IosPlatformHelpers::getSharedCoreLastUpdateTime() {
-    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroup.c_str())];
+    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
     NSInteger lastUpdateTime = [defaults integerForKey:@LAST_UPDATE_TIME_SHARED_CORE];
 	[defaults release];
 	return lastUpdateTime;

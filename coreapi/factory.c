@@ -180,12 +180,12 @@ static LinphoneCore *_linphone_factory_create_shared_core (
 	void *user_data,
 	void *system_context,
 	bool_t automatically_start,
-	const char *app_group,
+	const char *app_group_id,
 	bool_t main_core
 ) {
 	bctbx_init_logger(FALSE);
-	LpConfig *config = linphone_config_new_for_shared_core(app_group, config_filename, factory_config_path);
-	LinphoneCore *lc = _linphone_core_new_shared_with_config(cbs, config, user_data, system_context, automatically_start, app_group, main_core);
+	LpConfig *config = linphone_config_new_for_shared_core(app_group_id, config_filename, factory_config_path);
+	LinphoneCore *lc = _linphone_core_new_shared_with_config(cbs, config, user_data, system_context, automatically_start, app_group_id, main_core);
 	lp_config_unref(config);
 	bctbx_uninit_logger();
 	return lc;
@@ -225,10 +225,10 @@ LinphoneCore *linphone_factory_create_shared_core (
 	const char *config_filename,
 	const char *factory_config_path,
 	void *system_context,
-	const char *app_group,
+	const char *app_group_id,
 	bool_t main_core
 ) {
-	return _linphone_factory_create_shared_core(factory, NULL, factory_config_path, factory_config_path, NULL, system_context, FALSE, app_group, main_core);
+	return _linphone_factory_create_shared_core(factory, NULL, factory_config_path, factory_config_path, NULL, system_context, FALSE, app_group_id, main_core);
 }
 
 LinphoneCore *linphone_factory_create_core_with_config (
@@ -261,10 +261,10 @@ LinphoneCore *linphone_factory_create_shared_core_with_config (
 	const LinphoneFactory *factory,
 	LinphoneConfig *config,
 	void *system_context,
-	const char *app_group,
+	const char *app_group_id,
 	bool_t main_core
 ) {
-	return _linphone_core_new_shared_with_config(NULL, config, NULL, system_context, FALSE, app_group, main_core);
+	return _linphone_core_new_shared_with_config(NULL, config, NULL, system_context, FALSE, app_group_id, main_core);
 }
 
 LinphoneCoreCbs *linphone_factory_create_core_cbs(const LinphoneFactory *factory) {

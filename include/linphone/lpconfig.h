@@ -93,7 +93,7 @@ LINPHONE_PUBLIC LinphoneConfig * linphone_config_new_with_factory(const char *co
  * "group id" in the project settings.
  * The caller of this constructor owns a reference. linphone_config_unref() must be called when this object is no longer needed.
  * @ingroup misc
- * @param group_id used to compute path to the file system shared by the shared Cores
+ * @param app_group_id used to compute path to the file system shared by the shared Cores
  * @param config_filename the filename of the user config file to read to fill the instantiated #LinphoneConfig
  * @param factory_config_filename the filename of the factory config file to read to fill the instantiated #LinphoneConfig
  * @see linphone_config_new
@@ -102,7 +102,7 @@ LINPHONE_PUBLIC LinphoneConfig * linphone_config_new_with_factory(const char *co
  * Therefore the configuration parameters defined in the user config file will be overwritten by the parameters
  * defined in the factory config file.
  */
-LINPHONE_PUBLIC LinphoneConfig * linphone_config_new_for_shared_core(const char *group_id, const char* config_filename, const char *factory_path);
+LINPHONE_PUBLIC LinphoneConfig * linphone_config_new_for_shared_core(const char *app_group_id, const char* config_filename, const char *factory_path);
 
 /**
  * Reads a user config file and fill the #LinphoneConfig with the read config values.
