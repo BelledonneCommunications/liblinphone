@@ -227,7 +227,7 @@ void StreamsGroup::stop(){
 
 Stream * StreamsGroup::getStream(size_t index){
 	if (index >=  mStreams.size()){
-		lFatal() << "Bad stream index " << index;
+		lError() << "No stream at index " << index;
 		return nullptr;
 	}
 	return mStreams[index].get();
