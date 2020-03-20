@@ -84,8 +84,8 @@ LinphoneStatus linphone_core_start_echo_tester(LinphoneCore *lc, unsigned int ra
         ms_error("Echo tester is still on going !");
         return -1;
     }
-    lc->ect = ec_tester_new(lc->factory, lc->sound_conf.capt_sndcard
-        ,lc->sound_conf.play_sndcard, rate);
+    getPlatformHelpers(lc)->startAudioForEchoTestOrCalibration();
+    lc->ect = ec_tester_new(lc->factory, lc->sound_conf.capt_sndcard, lc->sound_conf.play_sndcard, rate);
     ect_init_filters(lc->ect);
 
     return 1;
@@ -100,5 +100,6 @@ LinphoneStatus linphone_core_stop_echo_tester(LinphoneCore *lc) {
 
     ec_tester_destroy(lc->ect);
     lc->ect = NULL;
+    getPlatformHelpers(lc)->stopAudioForEchoTestOrCalibration();
     return 1;
 }
