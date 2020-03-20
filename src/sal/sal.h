@@ -188,6 +188,7 @@ public:
 	void enableTestFeatures (bool value) { mEnableTestFeatures = value; }
 	void useNoInitialRoute (bool value) { mNoInitialRoute = value; }
 	void enableUnconditionalAnswer (int value) { belle_sip_provider_enable_unconditional_answer(mProvider, value); }
+	void setUnconditionalAnswer (unsigned short value) { belle_sip_provider_set_unconditional_answer(mProvider, value); }
 	void enableReconnectToPrimaryAsap (bool value) { belle_sip_stack_enable_reconnect_to_primary_asap(mStack, value); }
 
 	const std::list<SalOp *> &getPendingAuths () const { return mPendingAuths; }

@@ -961,6 +961,9 @@ LINPHONE_PUBLIC void sal_enable_pending_trans_checking (Sal *sal, bool_t value) 
 LINPHONE_PUBLIC void sal_enable_unconditional_answer (Sal *sal, bool_t value) {
 	sal->enableUnconditionalAnswer(value);
 }
+LINPHONE_PUBLIC void sal_set_unconditional_answer (Sal *sal, unsigned short value) {
+	sal->setUnconditionalAnswer(value);
+}
 
 LINPHONE_PUBLIC void sal_set_client_bind_port(Sal *sal, int port){
 	sal->setClientBindPort(port);

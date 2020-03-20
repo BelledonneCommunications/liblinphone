@@ -236,6 +236,7 @@ LINPHONE_PUBLIC	void sal_set_recv_error(Sal *sal,int value);
 LINPHONE_PUBLIC void sal_set_client_bind_port(Sal *sal, int port);
 LINPHONE_PUBLIC int sal_enable_pending_trans_checking(Sal *sal, bool_t value);
 LINPHONE_PUBLIC	void sal_enable_unconditional_answer(Sal *sal, bool_t value);
+LINPHONE_PUBLIC	void sal_set_unconditional_answer(Sal *sal, unsigned short value);
 LINPHONE_PUBLIC	void sal_set_dns_timeout(Sal* sal,int timeout);
 LINPHONE_PUBLIC void sal_set_dns_user_hosts_file(Sal *sal, const char *hosts_file);
 LINPHONE_PUBLIC const char* sal_get_dns_user_hosts_file (const Sal *sal);

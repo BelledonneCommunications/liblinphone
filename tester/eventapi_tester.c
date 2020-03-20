@@ -227,53 +227,47 @@ static void subscribe_test_manually_refreshed(void){
  * TODO: fix it.
  */
 static void subscribe_loosing_dialog(void) {
-#ifdef WIN32
-	/*Unfortunately this test doesn't work on windows due to the way closed TCP ports behave.
-	 * Unlike linux and macOS, released TCP port don't send an ICMP error (or maybe at least for a period of time.
-	 * This prevents this test from working, see comments below*/
-	ms_warning("subscribe_loosing_dialog() skipped on windows.");
-#else
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline1 = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneContent* content;
 	LinphoneEvent *lev;
 	int expires= 4;
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 
-	lcs=bctbx_list_append(lcs,pauline->lc);
+	lcs=bctbx_list_append(lcs,pauline1->lc);
 
 	content = linphone_core_create_content(marie->lc);
 	linphone_content_set_type(content,"application");
 	linphone_content_set_subtype(content,"somexml");
 	linphone_content_set_buffer(content,(const uint8_t *)subscribe_content,strlen(subscribe_content));
 
-	lev=linphone_core_create_subscribe(marie->lc,pauline->identity,"dodo",expires);
+	lev=linphone_core_create_subscribe(marie->lc,pauline1->identity,"dodo",expires);
 	linphone_event_add_custom_header(lev,"My-Header","pouet");
 	linphone_event_add_custom_header(lev,"My-Header2","pimpon");
 	linphone_event_send_subscribe(lev,content);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionOutgoingProgress,1,1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionIncomingReceived,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline1->stat.number_of_LinphoneSubscriptionIncomingReceived,1,3000));
 
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionActive,1,5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionActive,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline1->stat.number_of_LinphoneSubscriptionActive,1,5000));
 
 	/*make sure marie receives first notification before terminating*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,1,5000));
 
-	/* now pauline looses internet connection and reboots */
-	linphone_core_set_network_reachable(pauline->lc, FALSE);
-	lcs = bctbx_list_remove(lcs, pauline->lc);
-	linphone_core_manager_destroy(pauline);
-	pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	/* now pauline looses internet connection and reboots, as ICMP error sent when flexisip tries to re-open the connection can be blocked by firewall, we directly send 503 from pauline1 */
+	sal_set_unconditional_answer(linphone_core_get_sal(pauline1->lc), 503);
+	sal_enable_unconditional_answer(linphone_core_get_sal(pauline1->lc), 1);
+	
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	/*let expire the incoming subscribe received by pauline */
 	BC_ASSERT_TRUE(wait_for_list(lcs,NULL,0,5000));
 	
 
 	/* Marie will retry the subscription.
-	 * She will first receive a 503 Service unavailable from flexisip thanks the ICMP error returned by the no longer existing Pauline.
+	 * She will first receive a 503 Service unavailable from flexisip thanks the "no longer existing" Pauline1.
 	 * Then she will forge a new SUBSCRIBE in order to restart a new dialog, and this one will reach the new Pauline.*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionOutgoingProgress,2,8000));
 	/*and get it accepted again*/
@@ -292,8 +286,9 @@ static void subscribe_loosing_dialog(void) {
 	linphone_content_unref(content);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+	sal_enable_unconditional_answer(linphone_core_get_sal(pauline1->lc), 0);
+	linphone_core_manager_destroy(pauline1);
 	bctbx_list_free(lcs);
-#endif
 }
 
 static void subscribe_with_io_error(void) {
