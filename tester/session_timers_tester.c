@@ -445,9 +445,11 @@ static void linphone_session_timer_invite_interval_ok_refresher_uac_uac(void)
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_value(marie->lc) == 8);
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_min_value(marie->lc) == 5);
 	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) == (int)LinphoneSessionExpiresRefresherUAC);
-
+	linphone_core_manager_start(marie, TRUE);
+	
 	pauline = linphone_core_manager_new("pauline_rc");
 	linphone_core_set_session_expires_value(pauline->lc, 6);
+	linphone_core_manager_start(pauline, TRUE);
 
 	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 
@@ -489,7 +491,7 @@ static void linphone_session_timer_invite_interval_ok_refresher_uac_uac(void)
 
 	const char *marie_update_value_cseq = linphone_call_params_get_custom_header(marie_update_params, "CSeq");
 	if (BC_ASSERT_PTR_NOT_NULL(marie_update_value_cseq)) {
-		BC_ASSERT_TRUE(strcmp(marie_update_value_cseq, "21 UPDATE") == 0);
+		BC_ASSERT_TRUE(strcmp(marie_update_value_cseq, "22 UPDATE") == 0);
 	}
 
 	BC_ASSERT_PTR_NULL(linphone_call_params_get_custom_header(marie_update_params, "Min-SE"));
