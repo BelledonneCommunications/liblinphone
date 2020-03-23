@@ -177,10 +177,14 @@ public:
 	int getRefresherRetryAfter () const { return mRefresherRetryAfter; }
 
 	void enableSipUpdateMethod (bool value) { mEnableSipUpdate = value; }
-	void setSessionTimers (int expires) { mSessionExpires = expires; }
-	int getSessionTimersExpire () { return mSessionExpires; }
+
+	// RFC 4028
+	void setSessionTimersEnabled (bool value) { mSessionExpiresEnabled = value; }
+	void setSessionTimersValue (int expires) { mSessionExpiresValue = expires; }
+	int getSessionTimersExpire () { return mSessionExpiresValue; }
 	void setSessionTimersRefresher (LinphoneSessionExpiresRefresher refresher) { mSessionExpiresRefresher = static_cast<belle_sip_header_session_expires_refresher_t>(refresher); }
 	void setSessionTimersMin (int min) { mSessionExpiresMin = min; }
+
 	void useDates (bool value) { mUseDates = value; }
 	void useOneMatchingCodecPolicy (bool value) { mOneMatchingCodec = value; }
 	void useRport (bool value);
@@ -308,8 +312,10 @@ private:
 	void *mTunnelClient = nullptr;
 	void *mUserPointer = nullptr; // User pointer
 
-	int mSessionExpires = 0; // disabled = 0, or not lower than mSessionExpiresMin, https://tools.ietf.org/html/rfc4028#page-16
-	int mSessionExpiresMin = 5; // disabled = 0, min 90, max 86400
+	// RFC 4028
+	bool mSessionExpiresEnabled = false;
+	int mSessionExpiresValue = 0; // disabled = 0, or not lower than mSessionExpiresMin, https://tools.ietf.org/html/rfc4028#page-16
+	int mSessionExpiresMin = 0; // disabled = 0, min 90, max 86400
 	belle_sip_header_session_expires_refresher_t mSessionExpiresRefresher = BELLE_SIP_HEADER_SESSION_EXPIRES_UNSPECIFIED; // 0 = auto, 1 = uas, 2 = uac
 
 	unsigned int mKeepAlive = 0;
