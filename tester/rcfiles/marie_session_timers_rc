@@ -8,6 +8,7 @@ publish=0
 dial_escape_plus=0
 
 [sip]
+session_expires_enabled=1
 session_expires_value=8
 session_expires_min_value=5
 session_expires_refresher_value=2
