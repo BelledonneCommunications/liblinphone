@@ -27,6 +27,7 @@
 #include <SystemConfiguration/CaptiveNetwork.h>
 #include <CoreLocation/CoreLocation.h>
 #include  <notify_keys.h>
+#import <UIKit/UIKit.h>
 
 #include <belr/grammarbuilder.h>
 
@@ -42,13 +43,23 @@
 // =============================================================================
 
 using namespace std;
+@interface CoreManager : NSObject {
+@private
+	NSTimer* mIterateTimer;
+	LinphoneCore* core;
+}
+- (void)onLinphoneCoreStart;
+- (void)onLinphoneCoreStop;
+- (void)setCore:(LinphoneCore *)lc;
+@end
+
 
 LINPHONE_BEGIN_NAMESPACE
-
+static CoreManager *theCoreManager = nil;
 class IosPlatformHelpers : public GenericPlatformHelpers {
 public:
 	IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
-	~IosPlatformHelpers () = default;
+	~IosPlatformHelpers ();
 
 	void acquireWifiLock () override {}
 	void releaseWifiLock () override {}
@@ -90,6 +101,7 @@ private:
 	string toUTF8String(CFStringRef str);
 	void kickOffConnectivity();
 	void getHttpProxySettings(void);
+	void createCoreManager();
 
 	void bgTaskTimeout ();
 	static void sBgTaskTimeout (void *data);
@@ -115,6 +127,8 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 	mCpuLockTaskId = 0;
 	mNetworkReachable = 0; // wait until monitor to give a status;
 
+	createCoreManager();
+
 	string cpimPath = getResourceDirPath(Framework, "cpim_grammar");
 	if (!cpimPath.empty())
 		belr::GrammarLoader::get().addPath(cpimPath);
@@ -135,6 +149,10 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 		ms_message("IosPlatformHelpers did not find vcard grammar resource directory...");
 #endif
 	ms_message("IosPlatformHelpers is fully initialised");
+}
+
+IosPlatformHelpers::~IosPlatformHelpers () {
+	theCoreManager = nil;
 }
 
 //Safely get an UTF-8 string from the given CFStringRef
@@ -245,11 +263,21 @@ void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	if (monitoringEnabled) {
 		startNetworkMonitoring();
 	}
+	if (theCoreManager != nil) {
+		[theCoreManager onLinphoneCoreStart];
+	} else {
+		ms_error("theCoreManager is not yet initialized!");
+	}
 }
 
 void IosPlatformHelpers::onLinphoneCoreStop() {
 	if (mNetworkMonitoringEnabled) {
 		stopNetworkMonitoring();
+	}
+	if (theCoreManager != nil) {
+		[theCoreManager onLinphoneCoreStop];
+	} else {
+		ms_error("theCoreManager is not yet initialized!");
 	}
 }
 
@@ -312,6 +340,11 @@ void IosPlatformHelpers::getHttpProxySettings(void) {
 		mHttpProxyPort = 0;
 		mHttpProxyHost.clear();
 	}
+}
+
+void IosPlatformHelpers::createCoreManager() {
+	theCoreManager = [[CoreManager alloc] init];
+	[theCoreManager setCore:getCore()->getCCore()];
 }
 
 static void showNetworkFlags(SCNetworkReachabilityFlags flags) {
@@ -590,4 +623,43 @@ PlatformHelpers *createIosPlatformHelpers(std::shared_ptr<LinphonePrivate::Core>
 
 LINPHONE_END_NAMESPACE
 
+
+@implementation CoreManager
+- (void)iterate {
+	if (core != nil) {
+		linphone_core_iterate(core);
+	}
+}
+
+- (void)setCore:(LinphoneCore *)lc {
+	core = lc;
+}
+
+- (void)onLinphoneCoreStart {
+	if (core == nil) {
+		ms_error("[Core Manager] The core is nil, can not start iterate timer!");
+		return;
+	}
+	if (linphone_core_is_auto_iterate_enabled(core)) {
+		if (mIterateTimer.valid) {
+			ms_message("[Core Manager] core.iterate() is already scheduled");
+			return;
+		}
+		mIterateTimer = [NSTimer timerWithTimeInterval:0.02 target:self selector:@selector(iterate) userInfo:nil repeats:YES];
+		// NSTimer runs only in the main thread correctly. Since there may not be a current thread loop.
+		[[NSRunLoop mainRunLoop] addTimer:mIterateTimer forMode:NSDefaultRunLoopMode];
+		ms_message("[Core Manager] Call to core.iterate() scheduled every 20ms");
+	} else {
+		ms_warning("[Core Manager] Auto core.iterate() isn't enabled, ensure you do it in your application!");
+	}
+}
+
+- (void)onLinphoneCoreStop {
+	if (linphone_core_is_auto_iterate_enabled(core)) {
+		[mIterateTimer invalidate];
+		ms_message("[Core Manager] Auto core.iterate() stopped");
+	}
+}
+
+@end
 #endif

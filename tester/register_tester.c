@@ -184,7 +184,9 @@ static void register_with_refresh_with_send_error(void) {
 	/*simultate a network error*/
 	sal_set_send_error(linphone_core_get_sal(lcm->lc), -1);
 	while (counters->number_of_LinphoneRegistrationProgress<2 && retry++ <200) {
+#if !TARGET_OS_IPHONE
 			linphone_core_iterate(lcm->lc);
+#endif
 			ms_usleep(10000);
 	}
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationFailed,0, int, "%d");
