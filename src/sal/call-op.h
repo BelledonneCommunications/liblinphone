@@ -94,6 +94,7 @@ private:
 	void fillSessionExpiresHeaders(belle_sip_request_t *invite);
 	void fillSessionExpiresHeaders(belle_sip_request_t *invite, belle_sip_header_session_expires_refresher_t refresher);
 	void fillSessionExpiresHeaders(belle_sip_request_t *invite, belle_sip_header_session_expires_refresher_t refresher, int delta);
+	void fillSessionExpiresMinSEHeader(belle_sip_request_t *invite);
 	void cancellingInvite (const SalErrorInfo *info);
 	int referTo (belle_sip_header_refer_to_t *referToHeader, belle_sip_header_referred_by_t *referredByHeader);
 	int sendNotifyForRefer (int code, const std::string &reason,const std::string & subscription_state = BELLE_SIP_SUBSCRIPTION_STATE_ACTIVE, const std::string & subscription_reason = "");

@@ -1434,7 +1434,8 @@ static void sip_config_read(LinphoneCore *lc) {
 	int ipv6_default = TRUE;
 
 	if (lp_config_get_int(lc->config, "sip", "session_expires_value", 0) > 0) {
-		lc->sal->setSessionTimers(linphone_core_get_session_expires_value(lc));
+		lc->sal->setSessionTimersEnabled(linphone_core_get_session_expires_enabled(lc));
+		lc->sal->setSessionTimersValue(linphone_core_get_session_expires_value(lc));
 		lc->sal->setSessionTimersMin(linphone_core_get_session_expires_min_value(lc));
 		lc->sal->setSessionTimersRefresher(linphone_core_get_session_expires_refresher_value(lc));
 	}
@@ -7210,12 +7211,21 @@ void linphone_core_set_enable_sip_update(const LinphoneCore *lc, int value) {
 /**
  * RFC 4028 : Session Timers
  */
+bool_t linphone_core_get_session_expires_enabled(const LinphoneCore *lc) {
+	return (bool_t)lp_config_get_int(lc->config, "sip", "session_expires_enabled", 0);
+}
+
+void linphone_core_set_session_expires_enabled(const LinphoneCore *lc, bool_t enabled) {
+	lc->sal->setSessionTimersEnabled(enabled);
+	lp_config_set_int(lc->config, "sip", "session_expires_enabled", (int)enabled);
+}
+
 int linphone_core_get_session_expires_value(const LinphoneCore *lc) {
 	return lp_config_get_int(lc->config, "sip", "session_expires_value", 0);
 }
 
 void linphone_core_set_session_expires_value(const LinphoneCore *lc, int expires) {
-	lc->sal->setSessionTimers(expires);
+	lc->sal->setSessionTimersValue(expires);
 	lp_config_set_int(lc->config, "sip", "session_expires_value", expires);
 }
 
@@ -7234,7 +7244,7 @@ void linphone_core_set_session_expires_refresher_value(const LinphoneCore *lc, L
 }
 
 int linphone_core_get_session_expires_min_value(const LinphoneCore *lc) {
-	return lp_config_get_int(lc->config, "sip", "session_expires_min_value", 90);
+	return lp_config_get_int(lc->config, "sip", "session_expires_min_value", 0);
 }
 
 void linphone_core_set_session_expires_min_value(const LinphoneCore *lc, int min_se) {

@@ -4264,7 +4264,22 @@ LINPHONE_PUBLIC void linphone_core_set_mtu(LinphoneCore *lc, int mtu);
 LINPHONE_PUBLIC void linphone_core_set_enable_sip_update(const LinphoneCore *lc, int value);
 
 /**
- * Sets the session expires value, 0 by default, which means session expires disabled.
+ * Enable the Session Timers support
+ * @param[in] lc #LinphoneCore object
+ * @param[in] enabled Enable or disable it
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_set_session_expires_enabled(const LinphoneCore *lc, bool_t enabled);
+
+/**
+ * Check if the Session Timers feature is enabled
+ * @param[in] lc #LinphoneCore object
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC bool_t linphone_core_get_session_expires_enabled(const LinphoneCore *lc);
+
+/**
+ * Sets the session expires value, 0 by default
  * @param[in] lc #LinphoneCore object
  * @param[in] expire The session expires value
  * @ingroup media_parameters
@@ -4272,7 +4287,7 @@ LINPHONE_PUBLIC void linphone_core_set_enable_sip_update(const LinphoneCore *lc,
 LINPHONE_PUBLIC void linphone_core_set_session_expires_value(const LinphoneCore *lc, int expires);
 
 /**
- * Returns the session expires value, 0 by default, which means session expires disabled.
+ * Returns the session expires value
  * @param[in] lc #LinphoneCore object
  * @ingroup media_parameters
 **/

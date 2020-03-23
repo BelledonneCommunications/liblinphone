@@ -198,20 +198,9 @@ void SalCallOp::fillSessionExpiresHeaders(belle_sip_request_t *invite, belle_sip
 	fillSessionExpiresHeaders(invite, refresher, 0);
 }
 
+// RFC4028
 void SalCallOp::fillSessionExpiresHeaders(belle_sip_request_t *invite, belle_sip_header_session_expires_refresher_t refresher, int delta) {
-	// RFC4028
-	if (mRoot->mSessionExpires > 0) {
-		if (refresher == BELLE_SIP_HEADER_SESSION_EXPIRES_UNSPECIFIED)
-			refresher = mRoot->mSessionExpiresRefresher;
-
-		if (delta == 0)
-			delta = mRoot->mSessionExpires;
-
-		belle_sip_message_add_header(
-			BELLE_SIP_MESSAGE(invite),
-			BELLE_SIP_HEADER(belle_sip_header_session_expires_create(delta, refresher))
-		);
-
+	if (mRoot->mSessionExpiresEnabled) {
 		belle_sip_header_supported_t* supported_header = belle_sip_message_get_header_by_type(
 			BELLE_SIP_MESSAGE(invite),
 			belle_sip_header_supported_t
@@ -221,6 +210,30 @@ void SalCallOp::fillSessionExpiresHeaders(belle_sip_request_t *invite, belle_sip
 			belle_sip_header_supported_add_supported(supported_header, "timer");
 			belle_sip_message_set_header(BELLE_SIP_MESSAGE(invite), BELLE_SIP_HEADER(supported_header));
 		}
+
+		if (mRoot->mSessionExpiresValue > 0 && mRoot->mSessionExpiresValue >= mRoot->mSessionExpiresMin) {
+			if (refresher == BELLE_SIP_HEADER_SESSION_EXPIRES_UNSPECIFIED)
+				refresher = mRoot->mSessionExpiresRefresher;
+
+			if (delta == 0)
+				delta = mRoot->mSessionExpiresValue;
+
+			belle_sip_message_add_header(
+				BELLE_SIP_MESSAGE(invite),
+				BELLE_SIP_HEADER(belle_sip_header_session_expires_create(delta, refresher))
+			);
+		}
+	}
+}
+
+// RFC4028
+void SalCallOp::fillSessionExpiresMinSEHeader(belle_sip_request_t *invite) {
+	if (mRoot->mSessionExpiresEnabled
+	 && mRoot->mSessionExpiresMin > 0) {
+		belle_sip_message_add_header(
+			BELLE_SIP_MESSAGE(invite),
+			belle_sip_header_create(BELLE_SIP_SESSION_EXPIRES_MSE, std::to_string(mRoot->mSessionExpiresMin).c_str())
+		);
 	}
 }
 
@@ -381,9 +394,9 @@ void SalCallOp::sdpProcess () {
 
 // RFC4028
 void SalCallOp::handleSessionTimersFromResponse (belle_sip_response_t *response) {
-	if (mRoot->mSessionExpires != 0) {
+	if (mRoot->mSessionExpiresEnabled) {
 		belle_sip_header_session_expires_refresher_t refresher = BELLE_SIP_HEADER_SESSION_EXPIRES_UNSPECIFIED;
-		int delta = mRoot->mSessionExpires;
+		int delta = mRoot->mSessionExpiresValue;
 
 		auto* session_expires_header = belle_sip_message_get_header_by_type(response, belle_sip_header_session_expires_t);
 		if (session_expires_header) {
@@ -845,23 +858,22 @@ void SalCallOp::processRequestEventCb (void *userCtx, const belle_sip_request_ev
 		case BELLE_SIP_DIALOG_NULL:
 			if (method == "INVITE") {
 				// RFC4028
-				belle_sip_header_supported_t *supported = belle_sip_message_get_header_by_type(
+				auto *supported = belle_sip_message_get_header_by_type(
 					BELLE_SIP_MESSAGE(request),
 					belle_sip_header_supported_t
 				);
 
-				if ((bool)belle_sip_header_supported_contains_tag(supported, "timer") == true) {
-					int inviteSE = atoi(
-						belle_sip_header_get_unparsed_value(
-							belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_SESSION_EXPIRES)
-						)
-					);
+				auto *session_expires = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_SESSION_EXPIRES);
 
-					if (inviteSE < op->mRoot->mSessionExpires) {
+				if ((bool)belle_sip_header_supported_contains_tag(supported, "timer") == true
+				 && session_expires) {
+					int inviteSE = atoi(belle_sip_header_get_unparsed_value(session_expires));
+
+					if (inviteSE < op->mRoot->mSessionExpiresValue) {
 						response = op->createResponseFromRequest(request, 422);
 						belle_sip_message_t *msg = BELLE_SIP_MESSAGE(response);
 
-						belle_sip_header_supported_t *supported_response = belle_sip_message_get_header_by_type(
+						auto *supported_response = belle_sip_message_get_header_by_type(
 							msg,
 							belle_sip_header_supported_t
 						);
@@ -875,7 +887,7 @@ void SalCallOp::processRequestEventCb (void *userCtx, const belle_sip_request_ev
 							msg,
 							belle_sip_header_create(
 								BELLE_SIP_SESSION_EXPIRES_MSE,
-								std::to_string(op->mRoot->mSessionExpires).c_str()
+								std::to_string(op->mRoot->mSessionExpiresValue).c_str()
 							)
 						);
 
@@ -953,7 +965,7 @@ void SalCallOp::processRequestEventCb (void *userCtx, const belle_sip_request_ev
 				if (isUpdate && !belle_sip_message_get_body(BELLE_SIP_MESSAGE(request))) {
 					response = op->createResponseFromRequest(request, 200);
 
-					if (op->mRoot->mSessionExpires > 0) {
+					if (op->mRoot->mSessionExpiresEnabled) {
 						// RFC4028, echo the incoming Session-Expires header
 						belle_sip_header_session_expires_t* session_expires_header =
 							belle_sip_message_get_header_by_type(request, belle_sip_header_session_expires_t);
@@ -1107,6 +1119,8 @@ int SalCallOp::call (const string &from, const string &to, const string &subject
 
 	fillInvite(invite);
 	fillSessionExpiresHeaders(invite);
+	fillSessionExpiresMinSEHeader(invite);
+
 	if (!subject.empty())
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(invite), belle_sip_header_create("Subject", subject.c_str()));
 
@@ -1176,18 +1190,24 @@ int SalCallOp::accept () {
 	belle_sip_message_add_header(message, BELLE_SIP_HEADER(createAllow(mRoot->mEnableSipUpdate)));
 
 	// RFC4028
-	if (mRoot->mSessionExpires != 0) {
+	if (mRoot->mSessionExpiresEnabled) {
 		auto *request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(transaction));
 		auto refresher = BELLE_SIP_HEADER_SESSION_EXPIRES_UNSPECIFIED;
-		int delta = mRoot->mSessionExpires;
+		int delta = mRoot->mSessionExpiresValue;
 		auto *supported = belle_sip_message_get_header_by_type(
 			BELLE_SIP_MESSAGE(request),
 			belle_sip_header_supported_t
 		);
 
 		if (supported && (bool)belle_sip_header_supported_contains_tag(supported, "timer") == true) {
-			auto *session_expires_header = belle_sip_message_get_header_by_type(request, belle_sip_header_session_expires_t);
+			// MinSE
+			auto *session_expires_min_se_header = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_SESSION_EXPIRES_MSE);
+			if (session_expires_min_se_header) {
+				delta = atoi(belle_sip_header_get_unparsed_value(session_expires_min_se_header));
+			}
 
+			// Session-Expires
+			auto *session_expires_header = belle_sip_message_get_header_by_type(request, belle_sip_header_session_expires_t);
 			if (session_expires_header) {
 				delta = belle_sip_header_session_expires_get_delta(session_expires_header);
 				refresher =	belle_sip_header_session_expires_get_refresher_value(session_expires_header);
