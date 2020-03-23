@@ -46,7 +46,7 @@ list<string> StringBctbxListWrapper::bctbxListToCppList(const ::bctbx_list_t *bc
 
 std::list<std::string> StringBctbxListWrapper::bctbxListToCppList(::bctbx_list_t *bctbxList) {
 	auto cppList = bctbxListToCppList(const_cast<const ::bctbx_list_t *>(bctbxList));
-	if (bctbxList) bctbx_free(bctbxList);
+	if (bctbxList) bctbx_list_free(bctbxList);
 	return cppList;
 }
 
