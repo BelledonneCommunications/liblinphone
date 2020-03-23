@@ -30,12 +30,12 @@ namespace linphone {
 
 	class AbstractBctbxListWrapper {
 	public:
-		AbstractBctbxListWrapper(): mCList(NULL) {}
-		virtual ~AbstractBctbxListWrapper() {}
+		AbstractBctbxListWrapper() = default;
+		virtual ~AbstractBctbxListWrapper() = default;
 		::bctbx_list_t *c_list() {return mCList;}
 
 	protected:
-		::bctbx_list_t *mCList;
+		::bctbx_list_t *mCList = nullptr;
 	};
 
 
@@ -79,12 +79,16 @@ namespace linphone {
 		}
 	};
 
-
+	// NOTE: for optimization reason, StringBctbxListWrapper doesn't copy
+	// the strings while building the bctbx_list_t, but just copy their
+	// addresses. Please ensure the life of the C++ string list as long as
+	// StringBctbxListWrapper is living.
 	class StringBctbxListWrapper: public AbstractBctbxListWrapper {
 	public:
 		StringBctbxListWrapper(const std::list<std::string> &cppList);
 		virtual ~StringBctbxListWrapper();
 		static std::list<std::string> bctbxListToCppList(const ::bctbx_list_t *bctbxList);
+		static std::list<std::string> bctbxListToCppList(::bctbx_list_t *bctbxList);
 	};
 
 

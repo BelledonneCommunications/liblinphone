@@ -17,31 +17,36 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tools.hh"
-#include "object.hh"
 #include <belle-sip/object.h>
+
+#include "object.hh"
+#include "tools.hh"
 
 using namespace linphone;
 using namespace std;
 
 
 StringBctbxListWrapper::StringBctbxListWrapper(const std::list<std::string> &cppList): AbstractBctbxListWrapper() {
-	for(auto it=cppList.cbegin(); it!=cppList.cend(); it++) {
-		char *buffer = (char *)malloc(it->length()+1);
-		strcpy(buffer, it->c_str());
-		mCList = bctbx_list_append(mCList, buffer);
+	for(const auto &str : cppList) {
+		mCList = bctbx_list_append(mCList, const_cast<char *>(str.c_str()));
 	}
 }
 
 StringBctbxListWrapper::~StringBctbxListWrapper() {
-	mCList = bctbx_list_free_with_data(mCList, free);
+	bctbx_list_free(mCList);
 }
 
 list<string> StringBctbxListWrapper::bctbxListToCppList(const ::bctbx_list_t *bctbxList) {
 	list<string> cppList;
-	for(const ::bctbx_list_t *it=bctbxList; it!=NULL; it=it->next) {
-		cppList.push_back(string((char *)it->data));
+	for(auto it=bctbxList; it; it=it->next) {
+		cppList.push_back(string(static_cast<char *>(it->data)));
 	}
+	return cppList;
+}
+
+std::list<std::string> StringBctbxListWrapper::bctbxListToCppList(::bctbx_list_t *bctbxList) {
+	auto cppList = bctbxListToCppList(const_cast<const ::bctbx_list_t *>(bctbxList));
+	if (bctbxList) bctbx_list_free(bctbxList);
 	return cppList;
 }
 
