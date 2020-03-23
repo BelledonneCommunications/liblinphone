@@ -100,27 +100,36 @@ list<string> IfAddrs::fetchWithGetIfAddrs(){
 #else
 #if defined(_WIN32) || defined(_WIN32_WCE)
 
-void getAddress(SOCKET_ADDRESS * pAddr, std::list<std::string> * pList){
+void getAddress(SOCKET_ADDRESS * pAddr, std::list<std::string> * pList, int *ipv6CountForInterface){
 	char szAddr[INET6_ADDRSTRLEN];
 	DWORD dwSize = INET6_ADDRSTRLEN;
 
 	if (pAddr->lpSockaddr->sa_family == AF_INET) {
 		dwSize = INET_ADDRSTRLEN;
 		memset(szAddr, 0, INET_ADDRSTRLEN);
-		if (WSAAddressToStringA(pAddr->lpSockaddr, pAddr->iSockaddrLength, nullptr, szAddr, &dwSize) == SOCKET_ERROR)
+		if (WSAAddressToStringA(pAddr->lpSockaddr, pAddr->iSockaddrLength, nullptr, szAddr, &dwSize) == SOCKET_ERROR){
 			lInfo() << "ICE on fetchLocalAddresses cannot read IPV4 : " << WSAGetLastError();
-		pList->push_back(szAddr);
-		if (pList->back() == "127.0.0.1")// Remove locahost from the list
-			pList->pop_back();
+			return;
+		}
+		if (string(szAddr) != string("127.0.0.1"){
+			pList->push_back(szAddr);
+		}
 	}else if (pAddr->lpSockaddr->sa_family == AF_INET6 && !IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)pAddr->lpSockaddr)->sin6_addr)
 		&& !IN6_IS_ADDR_LOOPBACK(&((struct sockaddr_in6 *)pAddr->lpSockaddr)->sin6_addr)
 		) {
 		memset(szAddr, 0, INET6_ADDRSTRLEN);
-		if (WSAAddressToStringA(pAddr->lpSockaddr, pAddr->iSockaddrLength, nullptr, szAddr, &dwSize) == SOCKET_ERROR)
+		if (WSAAddressToStringA(pAddr->lpSockaddr, pAddr->iSockaddrLength, nullptr, szAddr, &dwSize) == SOCKET_ERROR){
 			lInfo() << "ICE on fetchLocalAddresses cannot read IPV6 : " << WSAGetLastError();
-		pList->push_back(szAddr);
+			return;
+		}
+		if (*ipv6CountForInterface == 0){
+			/* We just keep the first IPv6 address for this interface, to filter out temporary and deprecated addresses. */
+			pList->push_back(szAddr);
+		}
+		*ipv6CountForInterface++;
 	}
 }
+
 list<string> IfAddrs::fetchWithGetAdaptersAddresses() {
 	list<string> ret;
 	ULONG flags = GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_FRIENDLY_NAME | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_ANYCAST; // Remove anycast and multicast from the search
@@ -144,8 +153,10 @@ list<string> IfAddrs::fetchWithGetAdaptersAddresses() {
 	if (dwRetVal == NO_ERROR) {
 		pCurrAddresses = pAddresses;
 		while (pCurrAddresses) {
-			for (pUnicast = pCurrAddresses->FirstUnicastAddress; pUnicast != nullptr; pUnicast = pUnicast->Next)
-				getAddress(&pUnicast->Address, &ret);
+			int ipv6CountForInterface = 0;
+			for (pUnicast = pCurrAddresses->FirstUnicastAddress; pUnicast != nullptr; pUnicast = pUnicast->Next){
+				getAddress(&pUnicast->Address, &ret, &ipv6CountForInterface);
+			}
 //			pAnycast = pCurrAddresses->FirstAnycastAddress;
 //			for (int i = 0; pAnycast != nullptr; i++, pAnycast = pAnycast->Next)
 //				getAddress(&pAnycast->Address, &ret);
