@@ -163,6 +163,7 @@ private:
 	std::string mChatRoomAddr;
 	uint64_t mTimer = 0;
 	CFRunLoopTimerRef mUnlockTimer;
+	uint64_t mMaxIterationTimeMs;
 };
 
 static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
@@ -754,13 +755,23 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(
 		return chatMessage;
 	}
 
-	for (int i = 0; i < 100 && (0 < newMsgNb || !chatMessage); i++) {
-		ms_message("[push] wait msg: %d, newMsgNb: %d", i, IosPlatformHelpers::newMsgNb);
+	/* init with 0 to look for the msg when newMsgNb <= 0 and then try to get the msg every seconds */
+	uint64_t secondsTimer = 0;
+	reinitTimer();
+
+	while (ms_get_cur_time_ms() - mTimer < mMaxIterationTimeMs && (0 < newMsgNb || !chatMessage)) {
+		ms_message("[push] wait for msg. msg counter = %d", IosPlatformHelpers::newMsgNb);
 		linphone_core_iterate(getCore()->getCCore());
 		ms_usleep(50000);
-		if (newMsgNb <= 0) chatMessage = getCore()->findChatMessageFromCallId(callId);
-		if (i == 100) resetMsgCounter();
+		if (newMsgNb <= 0 && ms_get_cur_time_ms() - secondsTimer >= 1000) {
+			chatMessage = getCore()->findChatMessageFromCallId(callId);
+			secondsTimer = ms_get_cur_time_ms();
+		}
 	}
+
+	/* In case we wait for 25 seconds, there is probably a problem. So we reset the msg
+	counter to prevent each push to wait 25 sec for messages that won't be received */
+	if (ms_get_cur_time_ms() - mTimer >= 25000) resetMsgCounter();
 
 	chatMessage = getCore()->findChatMessageFromCallId(callId);
 	ms_message("[push] message received? %s", chatMessage? "yes" : "no");
@@ -812,7 +823,10 @@ std::shared_ptr<ChatRoom> IosPlatformHelpers::processPushNotificationChatRoom(co
 	ms_message("[push] core started");
 
 	reinitTimer();
-	while (ms_get_cur_time_ms() - mTimer < 2000) {
+	uint64_t iterationTimer = ms_get_cur_time_ms();
+
+	/* if the chatroom is received, iterate for 2 sec otherwise iterate mMaxIterationTimeMs seconds*/
+	while ((ms_get_cur_time_ms() - iterationTimer < mMaxIterationTimeMs && !mChatRoomInvite) || (mChatRoomInvite && ms_get_cur_time_ms() - mTimer < 2000)) {
 		ms_message("[push] wait chatRoom");
 		linphone_core_iterate(getCore()->getCCore());
 		ms_usleep(50000);
@@ -834,7 +848,11 @@ static void unlock_shared_core_if_needed(CFRunLoopTimerRef timer, void *info) {
 void IosPlatformHelpers::setupSharedCore(struct _LpConfig *config) {
 	ms_message("[SHARED] setupSharedCore");
 	mAppGroupId = linphone_config_get_string(config, "shared_core", "app_group_id", "");
+
 	if (isCoreShared()) {
+		/* by default iterate for 25 sec max. After 30 sec the iOS app extension can be killed by the system */
+		mMaxIterationTimeMs = (uint64_t)linphone_config_get_int(config, "shared_core", "max_iteration_time_ms", 25000);
+
 		CFRunLoopTimerContext timerContext;
 
 		timerContext.version = 0;
@@ -853,6 +871,8 @@ void IosPlatformHelpers::setupSharedCore(struct _LpConfig *config) {
 			&timerContext
 		);
 
+		/* use an iOS timer instead of belle sip timer to unlock
+		potentially stuck processes that won't be able to call iterate() */
 		CFRunLoopAddTimer (CFRunLoopGetCurrent(), mUnlockTimer, kCFRunLoopCommonModes);
 		ms_message("[SHARED] launch timer");
 		unlockSharedCoreIfNeeded();
