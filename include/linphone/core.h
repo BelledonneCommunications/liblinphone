@@ -6210,6 +6210,7 @@ LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *lc);
 /**
  * Get the chat message with the call_id included in the push notification body
  * This will start the core given in parameter, iterate until the message is received and return it.
+ * By default, after 25 seconds the function returns because iOS kills the app extension after 30 seconds.
  * @param[in] lc The #LinphoneCore
  * @param[in] call_id The callId of the Message SIP transaction
  * @return The #LinphoneChatMessage object.
@@ -6220,6 +6221,7 @@ LINPHONE_PUBLIC LinphoneChatMessage * linphone_core_get_new_message_from_callid(
 /**
  * Get the chat room we have been added into using the chat_room_addr included in the push notification body
  * This will start the core given in parameter, iterate until the new chat room is received and return it.
+ * By default, after 25 seconds the function returns because iOS kills the app extension after 30 seconds.
  * @param[in] lc The #LinphoneCore
  * @param[in] chat_room_addr The sip address of the chat room
  * @return The #LinphoneChatRoom object.
