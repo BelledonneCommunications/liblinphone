@@ -147,6 +147,8 @@ LinphoneChatMessage * linphone_core_get_new_message_from_callid(LinphoneCore *lc
 	return msg;
 }
 
+/* Uses the chat_room_addr instead of the call_id like linphone_core_get_new_message_from_callid to get the chatroom.
+Using the call_id to get the chat room require to add a new param to chat room objects where the conference address is already here */
 LinphoneChatRoom * linphone_core_get_new_chat_room_from_conf_addr(LinphoneCore *lc , const char *chat_room_addr) {
 	std::shared_ptr<ChatRoom> cppChatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationChatRoom(Utils::cStringToCppString(chat_room_addr));
 	LinphoneChatRoom *chatRoom = L_GET_C_BACK_PTR(cppChatRoom);
