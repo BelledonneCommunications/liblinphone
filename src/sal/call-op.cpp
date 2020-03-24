@@ -1407,7 +1407,7 @@ int SalCallOp::update (const string &subject, bool noUserConsent, bool withSDP, 
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(update), belle_sip_header_create("Subject", subject.c_str()));
 		fillSessionExpiresHeaders(update, BELLE_SIP_HEADER_SESSION_EXPIRES_UAC, delta);
 		if (withSDP) fillInvite(update);
-		return sendRequest(update);
+		return sendRequestWithContact(update, true);
 	}
 	// Why did it fail?
 	if (belle_sip_dialog_request_pending(mDialog))
