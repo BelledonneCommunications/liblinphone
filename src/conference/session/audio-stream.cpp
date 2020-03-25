@@ -251,7 +251,12 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (isMain()){
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
 	}
-	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+	// try to get playcard from the stream if it was already set
+	MSSndCard *playcard = audio_stream_get_output_ms_snd_card(mStream);
+	// If stream doesn't have a playcard associated with it, then use the default values
+	if (!playcard)
+		playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+
 	if (!playcard)
 		lWarning() << "No card defined for playback!";
 	MSSndCard *captcard = getCCore()->sound_conf.capt_sndcard;
@@ -352,8 +357,13 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (ok) {
 		VideoStream *vs = getPeerVideoStream();
 		if (vs) audio_stream_link_video(mStream, vs);
+
+		if (mCurrentCaptureCard) ms_snd_card_unref(mCurrentCaptureCard);
+		if (mCurrentPlaybackCard) ms_snd_card_unref(mCurrentPlaybackCard);
 		mCurrentCaptureCard = ms_media_resource_get_soundcard(&io.input);
 		mCurrentPlaybackCard = ms_media_resource_get_soundcard(&io.output);
+		if (mCurrentCaptureCard) mCurrentCaptureCard = ms_snd_card_ref(mCurrentCaptureCard);
+		if (mCurrentPlaybackCard) mCurrentPlaybackCard = ms_snd_card_ref(mCurrentPlaybackCard);
 
 		int err = audio_stream_start_from_io(mStream, audioProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 			dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
@@ -436,6 +446,8 @@ void MS2AudioStream::stop(){
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
 	
 	
+	if (mCurrentCaptureCard) ms_snd_card_unref(mCurrentCaptureCard);
+	if (mCurrentPlaybackCard) ms_snd_card_unref(mCurrentPlaybackCard);
 	mCurrentCaptureCard = nullptr;
 	mCurrentPlaybackCard = nullptr;
 }
@@ -699,6 +711,24 @@ bool MS2AudioStream::echoCancellationEnabled()const{
 	bool_t val;
 	ms_filter_call_method(mStream->ec, MS_ECHO_CANCELLER_GET_BYPASS_MODE, &val);
 	return !val;
+}
+	
+void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
+	audio_stream_set_input_ms_snd_card(mStream, audioDevice->getSoundCard());
+}
+
+void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
+	audio_stream_set_output_ms_snd_card(mStream, audioDevice->getSoundCard());
+}
+
+AudioDevice* MS2AudioStream::getInputDevice() const {
+	MSSndCard *card = audio_stream_get_input_ms_snd_card(mStream);
+	return getCore().findAudioDeviceMatchingMsSoundCard(card);
+}
+
+AudioDevice* MS2AudioStream::getOutputDevice() const {
+	MSSndCard *card = audio_stream_get_output_ms_snd_card(mStream);
+	return getCore().findAudioDeviceMatchingMsSoundCard(card);
 }
 
 void MS2AudioStream::finish(){
