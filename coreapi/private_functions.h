@@ -52,6 +52,7 @@ void linphone_call_notify_tmmbr_received(LinphoneCall *call, int stream_index, i
 void linphone_call_notify_snapshot_taken(LinphoneCall *call, const char *file_path);
 void linphone_call_notify_next_video_frame_decoded(LinphoneCall *call);
 void linphone_call_notify_camera_not_working(LinphoneCall *call, const char *camera_name);
+void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudioDevice *audioDevice);
 
 LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, const LinphoneCallParams *params, LinphoneProxyConfig *cfg);
 LinphoneCall * linphone_call_new_incoming(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op);
@@ -555,6 +556,8 @@ void linphone_core_notify_is_composing_received(LinphoneCore *lc, LinphoneChatRo
 void linphone_core_notify_dtmf_received(LinphoneCore* lc, LinphoneCall *call, int dtmf);
 void linphone_core_notify_first_call_started(LinphoneCore *lc);
 void linphone_core_notify_last_call_ended(LinphoneCore *lc);
+void linphone_core_notify_audio_device_changed(LinphoneCore *lc, LinphoneAudioDevice *audioDevice);
+void linphone_core_notify_audio_devices_list_updated(LinphoneCore *lc);
 /*
  * return true if at least a registered vtable has a cb for dtmf received*/
 bool_t linphone_core_dtmf_received_has_listener(const LinphoneCore* lc);

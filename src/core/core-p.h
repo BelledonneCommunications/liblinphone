@@ -30,6 +30,7 @@
 #include "auth-info/auth-stack.h"
 #include "conference/session/tone-manager.h"
 #include "utils/background-task.h"
+#include "call/audio-device/audio-device.h"
 
 // =============================================================================
 
@@ -73,6 +74,9 @@ public:
 	int removeCall (const std::shared_ptr<Call> &call);
 	void setCurrentCall (const std::shared_ptr<Call> &call) { currentCall = call; }
 	void setVideoWindowId (bool preview, void *id);
+
+	bool setOutputAudioDevice(AudioDevice *audioDevice);
+	bool setInputAudioDevice(AudioDevice *audioDevice);
 
 	void loadChatRooms ();
 	void handleEphemeralMessages (time_t currentTime);
@@ -137,6 +141,8 @@ public:
 	void startEphemeralMessageTimer (time_t expireTime);
 	void stopEphemeralMessageTimer ();
 
+	void computeAudioDevicesList ();
+
 private:
 	bool isInBackground = false;
 	bool isFriendListSubscriptionEnabled = false;
@@ -163,6 +169,7 @@ private:
 	std::list<std::shared_ptr<ChatMessage>> ephemeralMessages;
 	belle_sip_source_t *timer = nullptr;
 
+	std::list<AudioDevice *> audioDevices;
 	L_DECLARE_PUBLIC(Core);
 };
 

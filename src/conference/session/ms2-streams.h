@@ -146,6 +146,10 @@ public:
 	virtual void sendDtmf(int dtmf) override;
 	virtual void enableEchoCancellation(bool value) override;
 	virtual bool echoCancellationEnabled()const override;
+	virtual void setInputDevice(AudioDevice *audioDevice) override;
+	virtual void setOutputDevice(AudioDevice *audioDevice) override;
+	virtual AudioDevice* getInputDevice() const override;
+	virtual AudioDevice* getOutputDevice() const override;
 	
 	virtual MediaStream *getMediaStream()const override;
 	virtual ~MS2AudioStream();

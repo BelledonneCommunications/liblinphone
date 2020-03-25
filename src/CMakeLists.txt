@@ -111,6 +111,8 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	c-wrapper/internal/c-tools.h
 	call/call-p.h
 	call/call.h
+	call/audio-device/audio-device.h
+	call/audio-device/audio-device.cpp
 	call/local-conference-call-p.h
 	call/local-conference-call.h
 	call/remote-conference-call-p.h
@@ -284,6 +286,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	address/identity-address.cpp
 	address/identity-address-parser.cpp
 	c-wrapper/api/c-address.cpp
+	c-wrapper/api/c-audio-device.cpp
 	c-wrapper/api/c-auth-info.cpp
 	c-wrapper/api/c-call-cbs.cpp
 	c-wrapper/api/c-call-params.cpp
