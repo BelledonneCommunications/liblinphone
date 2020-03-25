@@ -205,6 +205,7 @@ private:
 
 	void stunAuthRequestedCb (const char *realm, const char *nonce, const char **username, const char **password, const char **ha1);
 	Stream *getStream(LinphoneStreamType type)const;
+	int portFromStreamIndex(int index);
 
 private:
 	static const std::string ecStateStore;

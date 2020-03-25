@@ -64,12 +64,59 @@ static void play_file(const char *filename, bool_t supported_format, const char 
 	if(lc_manager) linphone_core_manager_destroy(lc_manager);
 }
 
+static void wav_player_test(void){
+	LinphoneCoreManager *lc_manager = linphone_core_manager_new("marie_rc");
+	LinphonePlayer *player;
+	LinphonePlayerCbs *cbs;
+	int res;
+	int eof = 0;
+	int current_position;
+	int duration;
+	char *filename = bc_tester_res("sounds/hello8000.wav");
+
+	player = linphone_core_create_local_player(lc_manager->lc, linphone_core_get_ringer_device(lc_manager->lc),
+						   linphone_core_get_default_video_display_filter(lc_manager->lc), 0);
+	BC_ASSERT_PTR_NOT_NULL(player);
+	if(player == NULL) goto fail;
+
+	cbs = linphone_player_get_callbacks(player);
+	linphone_player_cbs_set_eof_reached(cbs, eof_callback);
+	linphone_player_cbs_set_user_data(cbs, &eof);
+	res = linphone_player_open(player, filename);
+	BC_ASSERT_EQUAL(res, 0, int, "%d");
+
+	duration = linphone_player_get_duration(player);
+	BC_ASSERT_GREATER((int)duration, 20000, int, "%d");
+	BC_ASSERT_LOWER((int)duration, 24000, int, "%d");
+	
+	if(res == -1) goto fail;
+
+	res = linphone_player_start(player);
+	BC_ASSERT_EQUAL(res, 0, int, "%d");
+	if(res == -1) goto fail;
+	
+	wait_for_until(lc_manager->lc, NULL, NULL, 0, 2000);
+	
+	current_position = linphone_player_get_current_position(player);
+	BC_ASSERT_GREATER((int)current_position, 1000, int, "%d");
+	BC_ASSERT_LOWER((int)current_position, 3000, int, "%d");
+
+	BC_ASSERT_TRUE(wait_for_until(lc_manager->lc, NULL, &eof, 1, (int)(linphone_player_get_duration(player) * 1.05)));
+
+	linphone_player_close(player);
+
+	fail:
+	if(player) linphone_player_unref(player);
+	if(lc_manager) linphone_core_manager_destroy(lc_manager);
+	bc_free(filename);
+}
+
 static void sintel_trailer_opus_h264_test(void) {
 	char *filename = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
 	const char *audio_mime = "opus";
 	const char *video_mime = "H264";
 	play_file(filename, linphone_local_player_matroska_supported(), audio_mime, video_mime);
-	ms_free(filename);
+	bc_free(filename);
 }
 
 static void sintel_trailer_pcmu_h264_test(void) {
@@ -77,7 +124,7 @@ static void sintel_trailer_pcmu_h264_test(void) {
 	const char *audio_mime = "pcmu";
 	const char *video_mime = "H264";
 	play_file(filename, linphone_local_player_matroska_supported(), audio_mime, video_mime);
-	ms_free(filename);
+	bc_free(filename);
 }
 
 static void sintel_trailer_opus_vp8_test(void) {
@@ -85,10 +132,11 @@ static void sintel_trailer_opus_vp8_test(void) {
 	const char *audio_mime = "opus";
 	const char *video_mime = "VP8";
 	play_file(filename, linphone_local_player_matroska_supported(), audio_mime, video_mime);
-	ms_free(filename);
+	bc_free(filename);
 }
 
 test_t player_tests[] = {
+	TEST_NO_TAG("Wav file", wav_player_test),
 	TEST_NO_TAG("Sintel trailer opus/h264", sintel_trailer_opus_h264_test),
 	TEST_NO_TAG("Sintel trailer pcmu/h264", sintel_trailer_pcmu_h264_test),
 	TEST_NO_TAG("Sintel trailer opus/VP8", sintel_trailer_opus_vp8_test)

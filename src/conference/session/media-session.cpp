@@ -902,13 +902,24 @@ void MediaSessionPrivate::getLocalIp (const Address &remoteAddr) {
 	}
 }
 
+int MediaSessionPrivate::portFromStreamIndex(int index){
+	if (index != -1){
+		auto stream = getStreamsGroup().getStream(mainAudioStreamIndex);
+		if (stream) return stream->getPortConfig().rtpPort;
+	}
+	return 0;
+}
+
+/*
+ * This is the deprecated basic STUN-based IP/port discovery. It is unreliable, we prefer using ICE.
+ */
 void MediaSessionPrivate::runStunTestsIfNeeded () {
 	L_Q();
 	if (linphone_nat_policy_stun_enabled(natPolicy) && !(linphone_nat_policy_ice_enabled(natPolicy) || linphone_nat_policy_turn_enabled(natPolicy))) {
 		stunClient = makeUnique<StunClient>(q->getCore());
-		int audioPort = mainAudioStreamIndex ? getStreamsGroup().getStream(mainAudioStreamIndex)->getPortConfig().rtpPort : 0;
-		int videoPort = mainVideoStreamIndex ? getStreamsGroup().getStream(mainVideoStreamIndex)->getPortConfig().rtpPort : 0;
-		int textPort = mainTextStreamIndex ? getStreamsGroup().getStream(mainTextStreamIndex)->getPortConfig().rtpPort : 0;
+		int audioPort = portFromStreamIndex(mainAudioStreamIndex);
+		int videoPort = portFromStreamIndex(mainVideoStreamIndex);
+		int textPort = portFromStreamIndex(mainTextStreamIndex);
 		int ret = stunClient->run(audioPort, videoPort, textPort);
 		if (ret >= 0)
 			pingTime = ret;
