@@ -45,6 +45,7 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
     private ConnectivityManager mConnectivityManager;
     private ConnectivityManager.NetworkCallback mNetworkCallback;
     private Network mNetworkAvailable;
+    private Network mLastNetworkAvailable;
     private boolean mWifiOnly;
 
     public NetworkManagerAbove26(final AndroidPlatformHelper helper, ConnectivityManager cm, boolean wifiOnly) {
@@ -52,6 +53,7 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
         mConnectivityManager = cm;
         mWifiOnly = wifiOnly;
         mNetworkAvailable = null;
+        mLastNetworkAvailable = null;
         mNetworkCallback = new ConnectivityManager.NetworkCallback() {
             @Override
             public void onAvailable(Network network) {
@@ -62,11 +64,14 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
                 }
 
                 Log.i("[Platform Helper] [Network Manager 26] A network is available: " + info.getTypeName() + ", wifi only is " + (mWifiOnly ? "enabled" : "disabled"));
-                if (!mWifiOnly || info.getType() == ConnectivityManager.TYPE_WIFI) {
+                if (!mWifiOnly || info.getType() == ConnectivityManager.TYPE_WIFI || info.getType() == ConnectivityManager.TYPE_ETHERNET) {
                     mNetworkAvailable = network;
                     mHelper.updateNetworkReachability();
                 } else {
                     Log.i("[Platform Helper] [Network Manager 26] Network isn't wifi and wifi only mode is enabled");
+                    if (mWifiOnly) {
+                        mLastNetworkAvailable = network;
+                    }
                 }
             }
 
@@ -75,6 +80,9 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
                 Log.i("[Platform Helper] [Network Manager 26] A network has been lost");
                 if (mNetworkAvailable != null && mNetworkAvailable.equals(network)) {
                     mNetworkAvailable = null;
+                }
+                if (mLastNetworkAvailable != null && mLastNetworkAvailable.equals(network)) {
+                    mLastNetworkAvailable = null;
                 }
                 mHelper.updateNetworkReachability();
             }
@@ -120,10 +128,15 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
         mWifiOnly = isWifiOnlyEnabled;
         if (mWifiOnly && mNetworkAvailable != null) {
             NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(mNetworkAvailable);
-            if (networkInfo != null && networkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
-                Log.i("[Platform Helper] [Network Manager 26] Wifi only mode enabled and current network isn't wifi");
+            if (networkInfo != null && networkInfo.getType() != ConnectivityManager.TYPE_WIFI && networkInfo.getType() != ConnectivityManager.TYPE_ETHERNET) {
+                Log.i("[Platform Helper] [Network Manager 26] Wifi only mode enabled and current network isn't wifi or ethernet");
+                mLastNetworkAvailable = mNetworkAvailable;
                 mNetworkAvailable = null;
             }
+        } else if (!mWifiOnly && mNetworkAvailable == null) {
+            Log.i("[Platform Helper] [Network Manager 26] Wifi only mode disabled, restoring previous network");
+            mNetworkAvailable = mLastNetworkAvailable;
+            mLastNetworkAvailable = null;
         }
     }
 

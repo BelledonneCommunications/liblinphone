@@ -35,6 +35,7 @@ import org.linphone.core.CoreListenerStub;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
 import org.linphone.core.tools.audio.AudioHelper;
+import org.linphone.core.tools.audio.BluetoothHelper;
 import org.linphone.mediastream.Version;
 
 import java.util.Timer;
@@ -60,6 +61,7 @@ public class CoreManager {
 
     protected Context mContext;
     protected Core mCore;
+    private Class mServiceClass;
 
     private Timer mTimer;
     private Runnable mIterateRunnable;
@@ -67,6 +69,7 @@ public class CoreManager {
 
     private CoreListenerStub mListener;
     private AudioHelper mAudioHelper;
+    private BluetoothHelper mBluetoothHelper;
 
     private native void updatePushNotificationInformation(long ptr, String appId, String token);
 
@@ -97,6 +100,7 @@ public class CoreManager {
         }
         
         mAudioHelper = new AudioHelper(mContext);
+        mBluetoothHelper = new BluetoothHelper(mContext);
 
         Log.i("[Core Manager] Ready");
     }
@@ -166,10 +170,10 @@ public class CoreManager {
         mCore.addListener(mListener);
 
         try {
-            Class serviceClass = getServiceClass();
-            if (serviceClass == null) serviceClass = CoreService.class;
-            mContext.startService(new Intent().setClass(mContext, serviceClass));
-            Log.i("[Core Manager] Starting service ", serviceClass.getName());
+            mServiceClass = getServiceClass();
+            if (mServiceClass == null) mServiceClass = CoreService.class;
+            mContext.startService(new Intent().setClass(mContext, mServiceClass));
+            Log.i("[Core Manager] Starting service ", mServiceClass.getName());
         } catch (IllegalStateException ise) {
             Log.w("[Core Manager] Failed to start service: ", ise);
             // On Android > 8, if app in background, startService will trigger an IllegalStateException when called from background
@@ -180,6 +184,9 @@ public class CoreManager {
 
     public void onLinphoneCoreStop() {
         Log.i("[Core Manager] Destroying");
+
+        mContext.stopService(new Intent().setClass(mContext, mServiceClass));
+        Log.i("[Core Manager] Stopping service ", mServiceClass.getName());
 
         if (mTimer != null) {
             mTimer.cancel();
@@ -207,6 +214,11 @@ public class CoreManager {
                 call.pause();
             }
         }
+    }
+
+    public void onBluetoothHeadsetStateChanged() {
+        Log.i("[Core Manager] Bluetooth headset state changed, reload sound devices");
+        mCore.reloadSoundDevices();
     }
 
     public void onBackgroundMode() {
