@@ -122,6 +122,14 @@ typedef void (*LinphoneCallCbsNextVideoFrameDecodedCb)(LinphoneCall *call);
 typedef void (*LinphoneCallCbsCameraNotWorkingCb)(LinphoneCall *call, const char *camera_name);
 
 /**
+ * Callback to notify that the audio device has been changed.
+ *
+ * @param call LinphoneCall for which the audio device has changed
+ * @param audioDevice the new audio device used for this call
+ */
+typedef void (*LinphoneCallCbsAudioDeviceChangedCb)(LinphoneCall *call, LinphoneAudioDevice *audioDevice);
+
+/**
  * @}
 **/
 

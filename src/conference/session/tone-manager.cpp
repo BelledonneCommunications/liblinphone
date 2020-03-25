@@ -406,12 +406,25 @@ void ToneManager::doStartRingbackTone(const std::shared_ptr<CallSession> &sessio
 	if (!lc->sound_conf.play_sndcard)
 		return;
 
+
 	MSSndCard *ringCard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.play_sndcard;
+
+	std::shared_ptr<LinphonePrivate::Call> call = getCore()->getCurrentCall();
+	if (call) {
+		AudioDevice * audioDevice = call->getOutputAudioDevice();
+
+		// If the user changed the audio device before the ringback started, the new value will be stored in the call playback card
+		// It is NULL otherwise
+		if (audioDevice) {
+			ringCard = audioDevice->getSoundCard();
+		}
+	}
 
 	if (lc->sound_conf.remote_ring) {
 		ms_snd_card_set_stream_type(ringCard, MS_SND_CARD_STREAM_VOICE);
 		lc->ringstream = ring_start(lc->factory, lc->sound_conf.remote_ring, 2000, ringCard);
 	}
+
 }
 
 void ToneManager::doStartRingtone(const std::shared_ptr<CallSession> &session) {
@@ -467,6 +480,14 @@ void ToneManager::doStopRingbackTone() {
 	lInfo() << "[ToneManager] " << __func__;
 	LinphoneCore *lc = getCore()->getCCore();
 	if (lc->ringstream) {
+		MSSndCard *card = ring_stream_get_output_ms_snd_card(lc->ringstream);
+
+		if (card) {
+			AudioDevice * audioDevice = getCore()->findAudioDeviceMatchingMsSoundCard(card);
+			if (audioDevice) {
+				getCore()->getPrivate()->setOutputAudioDevice(audioDevice);
+			}
+		}
 		ring_stop(lc->ringstream);
 		lc->ringstream = NULL;
 	}
@@ -502,6 +523,18 @@ void ToneManager::doStopRingtone(const std::shared_ptr<CallSession> &session) {
 	} else {
 		LinphoneCore *lc = getCore()->getCCore();
 		if (linphone_ringtoneplayer_is_started(lc->ringtoneplayer)) {
+			RingStream * ringStream = linphone_ringtoneplayer_get_stream(lc->ringtoneplayer);
+			if (ringStream) {
+				MSSndCard *card = ring_stream_get_output_ms_snd_card(ringStream);
+
+				if (card) {
+					AudioDevice * audioDevice = getCore()->findAudioDeviceMatchingMsSoundCard(card);
+					if (audioDevice) {
+						getCore()->getPrivate()->setOutputAudioDevice(audioDevice);
+					}
+				}
+			}
+
 			linphone_ringtoneplayer_stop(lc->ringtoneplayer);
 		}
 	}
