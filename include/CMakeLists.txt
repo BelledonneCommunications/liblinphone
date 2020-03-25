@@ -74,6 +74,7 @@ set(ROOT_HEADER_FILES
 
 set(C_API_HEADER_FILES
 	c-address.h
+	c-audio-device.h
 	c-auth-info.h
 	c-api.h
 	c-call-cbs.h

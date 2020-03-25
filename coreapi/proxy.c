@@ -165,7 +165,12 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 	cfg->avpf_rr_interval = lc ? !!lp_config_get_default_int(lc->config, "proxy", "avpf_rr_interval", 5) : 5;
 	cfg->publish_expires= lc ? lp_config_get_default_int(lc->config, "proxy", "publish_expires", -1) : -1;
 	cfg->publish = lc ? !!lp_config_get_default_int(lc->config, "proxy", "publish", FALSE) : FALSE;
-	cfg->push_notification_allowed = lc ? !!lp_config_get_default_int(lc->config, "proxy", "push_notification_allowed", FALSE) : FALSE;
+
+	bool_t push_allowed_default = FALSE;
+#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
+	push_allowed_default = TRUE;
+#endif
+	cfg->push_notification_allowed = lc ? !!lp_config_get_default_int(lc->config, "proxy", "push_notification_allowed", push_allowed_default) : push_allowed_default;
 	cfg->refkey = refkey ? ms_strdup(refkey) : NULL;
 	if (nat_policy_ref) {
 		LinphoneNatPolicy *policy = linphone_config_create_nat_policy_from_section(lc->config,nat_policy_ref);
