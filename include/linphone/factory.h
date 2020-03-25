@@ -144,7 +144,8 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3 (
  * The returned #LinphoneCore will be in #LinphoneGlobalState Ready.
  * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected languages.
  * @param[in] factory The #LinphoneFactory singleton.
- * @param[in] config_path A path to a config file. If it does not exists it will be created. The config file is used to
+ * @param[in] config_filename The name of the config file. If it does not exists it will be created.
+ * Its path is computed using the app_group_id. The config file is used to
  * store all settings, proxies... so that all these settings become persistent over the life of the #LinphoneCore object.
  * It is allowed to set a NULL config file. In that case #LinphoneCore will not store any settings.
  * @param[in] factory_config_path A path to a read-only config file that can be used to store hard-coded preferences
@@ -158,7 +159,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3 (
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core (
 	const LinphoneFactory *factory,
-	const char *config_path,
+	const char *config_filename,
 	const char *factory_config_path,
 	void *system_context,
 	const char *app_group_id,
