@@ -552,6 +552,47 @@ bool Core::isFriendListSubscriptionEnabled () const {
 	return d->isFriendListSubscriptionEnabled;
 }
 
+// ---------------------------------------------------------------------------
+// Audio devices.
+// ---------------------------------------------------------------------------
+
+list<AudioDevice *> Core::getAudioDevices() const {
+	// TODO
+	return list<AudioDevice *>();
+}
+
+list<AudioDevice *> Core::getExtendedAudioDevices() const {
+	// TODO
+	return list<AudioDevice *>();
+}
+
+void Core::setInputAudioDevice(AudioDevice *audioDevice) {
+	// TODO
+}
+
+void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
+	// TODO
+}
+
+void Core::setAudioDevice(AudioDevice *audioDevice) {
+	if (audioDevice->getCapabilities() & AudioDevice::Capabilities::Record) {
+		setInputAudioDevice(audioDevice);
+	}
+	if (audioDevice->getCapabilities() & AudioDevice::Capabilities::Play) {
+		setOutputAudioDevice(audioDevice);
+	}
+}
+
+AudioDevice * Core::getInputAudioDevice() const {
+	// TODO
+	return nullptr;
+}
+
+AudioDevice * Core::getOutputAudioDevice() const {
+	// TODO
+	return nullptr;
+}
+
 // -----------------------------------------------------------------------------
 // Misc.
 // -----------------------------------------------------------------------------
