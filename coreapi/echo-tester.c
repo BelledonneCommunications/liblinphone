@@ -27,8 +27,8 @@
 EchoTester* ec_tester_new(MSFactory *factory, MSSndCard *capture_card, MSSndCard *playback_card, unsigned int rate) {
     EchoTester *ect = ms_new0(EchoTester,1);
     ect->factory = factory;
-    ect->capture_card = capture_card;
-    ect->playback_card = playback_card;
+    ect->capture_card = ms_snd_card_ref(capture_card);
+    ect->playback_card = ms_snd_card_ref(playback_card);
     ect->rate = rate;
 
     return ect;
@@ -76,6 +76,8 @@ static void ect_uninit_filters(EchoTester *ect) {
 }
 
 void ec_tester_destroy(EchoTester *ect) {
+	if (ect->capture_card) ms_snd_card_unref(ect->capture_card);
+	if (ect->playback_card) ms_snd_card_unref(ect->playback_card);
     ms_free(ect);
 }
 

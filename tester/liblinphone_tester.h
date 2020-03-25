@@ -343,7 +343,9 @@ typedef struct _stats {
 	int number_of_LinphoneGlobalConfiguring;
 
 	int number_of_LinphoneCoreFirstCallStarted;
-	int number_of_LinphoneCoreLastCallEnded;	
+	int number_of_LinphoneCoreLastCallEnded;
+	int number_of_LinphoneCoreAudioDeviceChanged;
+	int number_of_LinphoneCoreAudioDevicesListUpdated;
 }stats;
 
 
@@ -439,6 +441,8 @@ void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCall
 void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
 void first_call_started(LinphoneCore *lc);
 void last_call_ended(LinphoneCore *lc);
+void audio_device_changed(LinphoneCore *lc, LinphoneAudioDevice *device);
+void audio_devices_list_updated(LinphoneCore *lc);
 	
 LinphoneAddress * create_linphone_address(const char * domain);
 LinphoneAddress * create_linphone_address_for_algo(const char * domain, const char * username);
@@ -549,6 +553,12 @@ const char *liblinphone_tester_get_empty_rc(void);
 
 int liblinphone_tester_copy_file(const char *from, const char *to);
 char * generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *dialPlan);
+
+extern MSSndCardDesc dummy_test_snd_card_desc;
+#define DUMMY_TEST_SOUNDCARD "dummy test sound card"
+
+extern MSSndCardDesc dummy2_test_snd_card_desc;
+#define DUMMY2_TEST_SOUNDCARD "dummy2 test sound card"
 
 #ifdef __cplusplus
 };

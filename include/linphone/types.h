@@ -1243,4 +1243,10 @@ typedef struct _LinphoneHeaders LinphoneHeaders;
 **/
 typedef struct _LinphonePushNotificationMessage LinphonePushNotificationMessage;
 
+/**
+ * Object holding audio device information.
+ * @ingroup audio
+**/
+typedef struct _LinphoneAudioDevice LinphoneAudioDevice;
+
 #endif /* LINPHONE_TYPES_H_ */

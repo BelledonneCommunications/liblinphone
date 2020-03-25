@@ -22,6 +22,7 @@
 
 #include "call-session.h"
 #include "conference/params/media-session-params.h"
+#include "call/audio-device/audio-device.h"
 
 // =============================================================================
 
@@ -111,6 +112,11 @@ public:
 	void setNativePreviewWindowId (void *id);
 	void setParams (const MediaSessionParams *msp);
 	void setSpeakerVolumeGain (float value);
+
+	void setInputAudioDevice(AudioDevice *audioDevice);
+	void setOutputAudioDevice(AudioDevice *audioDevice);
+	AudioDevice* getInputAudioDevice() const;
+	AudioDevice* getOutputAudioDevice() const;
 private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);

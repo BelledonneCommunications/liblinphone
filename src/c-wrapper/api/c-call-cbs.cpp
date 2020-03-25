@@ -37,6 +37,7 @@ struct _LinphoneCallCbs {
 	LinphoneCallCbsSnapshotTakenCb snapshotTakenCb;
 	LinphoneCallCbsNextVideoFrameDecodedCb nextVideoFrameDecodedCb;
 	LinphoneCallCbsCameraNotWorkingCb cameraNotWorkingCb;
+	LinphoneCallCbsAudioDeviceChangedCb audioDeviceChangedCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneCallCbs);
@@ -159,4 +160,12 @@ LinphoneCallCbsCameraNotWorkingCb linphone_call_cbs_get_camera_not_working(Linph
 
 void linphone_call_cbs_set_camera_not_working(LinphoneCallCbs *cbs, LinphoneCallCbsCameraNotWorkingCb cb) {
 	cbs->cameraNotWorkingCb = cb;
+}
+
+LinphoneCallCbsAudioDeviceChangedCb linphone_call_cbs_get_audio_device_changed(LinphoneCallCbs *cbs) {
+	return cbs->audioDeviceChangedCb;
+}
+
+void linphone_call_cbs_set_audio_device_changed(LinphoneCallCbs *cbs, LinphoneCallCbsAudioDeviceChangedCb cb) {
+	cbs->audioDeviceChangedCb = cb;
 }

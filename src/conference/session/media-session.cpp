@@ -343,8 +343,9 @@ void MediaSessionPrivate::remoteRinging () {
 			return;
 		}
 
-		setState(CallSession::State::OutgoingRinging, "Remote ringing");
+		// Start ringback tone before moving to next state as we need to retrieve the output device of the state we are currently in
 		q->getCore()->getPrivate()->getToneManager()->startRingbackTone(q->getSharedFromThis());
+		setState(CallSession::State::OutgoingRinging, "Remote ringing");
 	}
 }
 
@@ -1948,6 +1949,7 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 
 	updateRemoteSessionIdAndVer();
 
+
 	if (getStreamsGroup().prepare()){
 		callAcceptanceDefered = true;
 		return; /* Deferred until completion of ICE gathering */
@@ -2863,6 +2865,30 @@ void MediaSession::setParams (const MediaSessionParams *msp) {
 	}
 }
 
+void MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) i->setInputDevice(audioDevice);
+}
 
+void MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) i->setOutputDevice(audioDevice);
+}
+
+AudioDevice* MediaSession::getInputAudioDevice() const {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) return i->getInputDevice();
+	return nullptr;
+}
+
+AudioDevice* MediaSession::getOutputAudioDevice() const {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) return i->getOutputDevice();
+	return nullptr;
+}
 
 LINPHONE_END_NAMESPACE

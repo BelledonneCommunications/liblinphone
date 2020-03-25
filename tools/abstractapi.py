@@ -531,7 +531,9 @@ class CParser(object):
 			'LinphoneFriendListSyncStatus'               : 'LinphoneFriendList',
 			'LinphonePlayerState'                        : 'LinphonePlayer',
 			'LinphonePresenceActivityType'               : 'LinphonePresenceActivity',
-			'LinphoneTunnelMode'                         : 'LinphoneTunnel'
+			'LinphoneTunnelMode'                         : 'LinphoneTunnel',
+			'LinphoneAudioDeviceType'                    : 'LinphoneAudioDevice',
+			'LinphoneAudioDeviceCapabilities'            : 'LinphoneAudioDevice'
 		}
 
 		self.cProject = cProject

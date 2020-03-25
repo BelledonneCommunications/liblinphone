@@ -493,6 +493,8 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, 
 	linphone_core_cbs_set_message_sent(mgr->cbs, liblinphone_tester_chat_room_msg_sent);
 	linphone_core_cbs_set_first_call_started(mgr->cbs, first_call_started);
 	linphone_core_cbs_set_last_call_ended(mgr->cbs, last_call_ended);
+	linphone_core_cbs_set_audio_device_changed(mgr->cbs, audio_device_changed);
+	linphone_core_cbs_set_audio_devices_list_updated(mgr->cbs, audio_devices_list_updated);
 
 	mgr->phone_alias = phone_alias ? ms_strdup(phone_alias) : NULL;
 
@@ -1765,6 +1767,16 @@ void last_call_ended(LinphoneCore *lc) {
 	counters->number_of_LinphoneCoreLastCallEnded++;
 }
 
+void audio_device_changed(LinphoneCore *lc, LinphoneAudioDevice *device) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneCoreAudioDeviceChanged++;
+}
+
+void audio_devices_list_updated(LinphoneCore *lc) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneCoreAudioDevicesListUpdated++;
+}
+
 void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManager* mgr ){
 	if( params->sdp_removal ){
 		sal_default_set_sdp_handling(linphone_core_get_sal(mgr->lc), SalOpSDPSimulateRemove);
@@ -2152,4 +2164,235 @@ int liblinphone_tester_copy_file(const char *from, const char *to)
     fclose(out);
 
     return 0;
+}
+
+
+static const int flowControlIntervalMs = 5000;
+static const int flowControlThresholdMs = 40;
+
+static int dummy_set_sample_rate(MSFilter *obj, void *data) {
+	return 0;
+}
+
+static int dummy_get_sample_rate(MSFilter *obj, void *data) {
+	int *n = (int*)data;
+	*n = 44100;
+	return 0;
+}
+
+static int dummy_set_nchannels(MSFilter *obj, void *data) {
+	return 0;
+}
+
+static int dummy_get_nchannels(MSFilter *obj, void *data) {
+	int *n = (int*)data;
+	*n = 1;
+	return 0;
+}
+
+static MSFilterMethod dummy_snd_card_methods[] = {
+	{MS_FILTER_SET_SAMPLE_RATE, dummy_set_sample_rate},
+	{MS_FILTER_GET_SAMPLE_RATE, dummy_get_sample_rate},
+	{MS_FILTER_SET_NCHANNELS, dummy_set_nchannels},
+	{MS_FILTER_GET_NCHANNELS, dummy_get_nchannels},
+	{0,NULL}
+};
+
+struct _DummyOutputContext {
+	MSFlowControlledBufferizer buffer;
+	int samplerate;
+	int nchannels;
+	ms_mutex_t mutex;
+};
+
+typedef struct _DummyOutputContext DummyOutputContext;
+
+static void dummy_snd_write_init(MSFilter *obj){
+	DummyOutputContext *octx = (DummyOutputContext *)ms_new0(DummyOutputContext, 1);
+	octx->samplerate = 44100;
+	ms_flow_controlled_bufferizer_init(&octx->buffer, obj, octx->samplerate, 1);
+	ms_mutex_init(&octx->mutex,NULL);
+	
+	octx->nchannels = 1;
+
+	obj->data = octx;
+}
+
+static void dummy_snd_write_uninit(MSFilter *obj){
+	DummyOutputContext *octx = (DummyOutputContext*)obj->data;
+	ms_flow_controlled_bufferizer_uninit(&octx->buffer);
+	ms_mutex_destroy(&octx->mutex);
+	free(octx);
+}
+
+static void dummy_snd_write_process(MSFilter *obj) {
+
+	DummyOutputContext *octx = (DummyOutputContext*) obj->data;
+
+	ms_mutex_lock(&octx->mutex);
+	// Retrieve data and put them in the filter bugffer ready to be played
+	ms_flow_controlled_bufferizer_put_from_queue(&octx->buffer, obj->inputs[0]);
+	ms_mutex_unlock(&octx->mutex);
+}
+
+MSFilterDesc dummy_filter_write_desc = {
+	MS_FILTER_PLUGIN_ID,
+	"DummyPlayer",
+	"dummy player",
+	MS_FILTER_OTHER,
+	NULL,
+	1,
+	0,
+	dummy_snd_write_init,
+	NULL,
+	dummy_snd_write_process,
+	NULL,
+	dummy_snd_write_uninit,
+	dummy_snd_card_methods
+};
+
+static MSFilter *dummy_snd_card_create_writer(MSSndCard *card) {
+	MSFilter *f = ms_factory_create_filter_from_desc(ms_snd_card_get_factory(card), &dummy_filter_write_desc);
+	DummyOutputContext *octx = (DummyOutputContext*)(f->data);
+	ms_flow_controlled_bufferizer_set_samplerate(&octx->buffer, octx->samplerate);
+	ms_flow_controlled_bufferizer_set_nchannels(&octx->buffer, octx->nchannels);
+	ms_flow_controlled_bufferizer_set_max_size_ms(&octx->buffer, flowControlThresholdMs);
+	ms_flow_controlled_bufferizer_set_flow_control_interval_ms(&octx->buffer, flowControlIntervalMs);
+	return f;
+}
+
+struct _DummyInputContext {
+	queue_t q;
+	MSFlowControlledBufferizer buffer;
+	int samplerate;
+	int nchannels;
+	ms_mutex_t mutex;
+};
+
+typedef struct _DummyInputContext DummyInputContext;
+
+static void dummy_snd_read_init(MSFilter *obj){
+	DummyInputContext *ictx = (DummyInputContext *)ms_new0(DummyInputContext, 1);
+	ictx->samplerate = 44100;
+	ms_flow_controlled_bufferizer_init(&ictx->buffer, obj, ictx->samplerate, 1);
+	ms_mutex_init(&ictx->mutex,NULL);
+	qinit(&ictx->q);
+	
+	ictx->nchannels = 1;
+
+	obj->data = ictx;
+}
+
+static void dummy_snd_read_uninit(MSFilter *obj){
+	DummyInputContext *ictx = (DummyInputContext*)obj->data;
+
+	flushq(&ictx->q,0);
+	ms_flow_controlled_bufferizer_uninit(&ictx->buffer);
+	ms_mutex_destroy(&ictx->mutex);
+
+	free(ictx);
+}
+
+static void dummy_snd_read_process(MSFilter *obj) {
+
+	DummyInputContext *ictx = (DummyInputContext*) obj->data;
+
+	mblk_t *m;
+
+	ms_mutex_lock(&ictx->mutex);
+	// Retrieve data and put them in the filter output queue
+	while ((m = getq(&ictx->q)) != NULL) {
+		ms_queue_put(obj->outputs[0], m);
+	}
+	ms_mutex_unlock(&ictx->mutex);
+}
+
+MSFilterDesc dummy_filter_read_desc = {
+	MS_FILTER_PLUGIN_ID,
+	"DummyRecorder",
+	"dummy recorder",
+	MS_FILTER_OTHER,
+	NULL,
+	0,
+	1,
+	dummy_snd_read_init,
+	NULL,
+	dummy_snd_read_process,
+	NULL,
+	dummy_snd_read_uninit,
+	dummy_snd_card_methods
+};
+
+static MSFilter *dummy_snd_card_create_reader(MSSndCard *card) {
+	MSFilter *f = ms_factory_create_filter_from_desc(ms_snd_card_get_factory(card), &dummy_filter_read_desc);
+
+	DummyInputContext *ictx = (DummyInputContext*)(f->data);
+	ms_flow_controlled_bufferizer_set_samplerate(&ictx->buffer, ictx->samplerate);
+	ms_flow_controlled_bufferizer_set_nchannels(&ictx->buffer, ictx->nchannels);
+	ms_flow_controlled_bufferizer_set_max_size_ms(&ictx->buffer, flowControlThresholdMs);
+	ms_flow_controlled_bufferizer_set_flow_control_interval_ms(&ictx->buffer, flowControlIntervalMs);
+
+	return f;
+}
+
+static void dummy_test_snd_card_detect(MSSndCardManager *m);
+
+MSSndCardDesc dummy_test_snd_card_desc = {
+	"dummyTest",
+	dummy_test_snd_card_detect,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	dummy_snd_card_create_reader,
+	dummy_snd_card_create_writer,
+	NULL
+};
+
+static MSSndCard* create_dummy_test_snd_card(void) {
+	MSSndCard* sndcard;
+	sndcard = ms_snd_card_new(&dummy_test_snd_card_desc);
+	sndcard->data = NULL;
+	sndcard->name = ms_strdup(DUMMY_TEST_SOUNDCARD);
+	sndcard->capabilities = MS_SND_CARD_CAP_PLAYBACK | MS_SND_CARD_CAP_CAPTURE;
+	sndcard->latency = 0;
+	sndcard->device_type = MS_SND_CARD_DEVICE_TYPE_BLUETOOTH;
+	return sndcard;
+}
+
+static void dummy_test_snd_card_detect(MSSndCardManager *m) {
+	ms_snd_card_manager_prepend_card(m, create_dummy_test_snd_card());
+}
+
+static void dummy2_test_snd_card_detect(MSSndCardManager *m);
+
+MSSndCardDesc dummy2_test_snd_card_desc = {
+	"dummyTest2",
+	dummy2_test_snd_card_detect,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	dummy_snd_card_create_reader,
+	dummy_snd_card_create_writer,
+	NULL
+};
+
+static MSSndCard* create_dummy2_test_snd_card(void) {
+	MSSndCard* sndcard;
+	sndcard = ms_snd_card_new(&dummy2_test_snd_card_desc);
+	sndcard->data = NULL;
+	sndcard->name = ms_strdup(DUMMY2_TEST_SOUNDCARD);
+	sndcard->capabilities = MS_SND_CARD_CAP_PLAYBACK | MS_SND_CARD_CAP_CAPTURE;
+	sndcard->latency = 0;
+	sndcard->device_type = MS_SND_CARD_DEVICE_TYPE_BLUETOOTH;
+	return sndcard;
+}
+
+static void dummy2_test_snd_card_detect(MSSndCardManager *m) {
+	ms_snd_card_manager_prepend_card(m, create_dummy2_test_snd_card());
 }

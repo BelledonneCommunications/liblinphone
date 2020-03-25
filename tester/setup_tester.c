@@ -1708,6 +1708,163 @@ static void dial_plan(void) {
 	}
 	bctbx_list_free_with_data(dial_plans, (bctbx_list_free_func)linphone_dial_plan_unref);
 }
+
+static void audio_devices(void) {
+	LinphoneCoreManager* manager = linphone_core_manager_new("marie_rc");
+	LinphoneCore *core = manager->lc;
+
+	bctbx_list_t *sound_devices = linphone_core_get_sound_devices_list(core);
+	int sound_devices_count = bctbx_list_size(sound_devices);
+	BC_ASSERT_GREATER_STRICT(sound_devices_count, 0, int, "%d");
+	bctbx_list_free(sound_devices);
+
+	// Check extended audio devices list matches legacy sound devices list
+	bctbx_list_t *audio_devices = linphone_core_get_extended_audio_devices(core);
+	int audio_devices_count = bctbx_list_size(audio_devices);
+	BC_ASSERT_EQUAL(audio_devices_count, sound_devices_count, int, "%d");
+	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
+
+	// Check legacy sound card selection matches new audio devices API
+	const char *capture_device = linphone_core_get_capture_device(core);
+	BC_ASSERT_PTR_NOT_NULL(capture_device);
+	if (capture_device) {
+		const LinphoneAudioDevice *input_device = linphone_core_get_default_input_audio_device(core);
+		BC_ASSERT_PTR_NOT_NULL(input_device);
+		if (input_device) {
+			BC_ASSERT_STRING_EQUAL(linphone_audio_device_get_id(input_device), capture_device);
+		}
+	}
+
+	// Check legacy sound card selection matches new audio devices API
+	const char *playback_device = linphone_core_get_playback_device(core);
+	BC_ASSERT_PTR_NOT_NULL(playback_device);
+	if (playback_device) {
+		const LinphoneAudioDevice *output_device = linphone_core_get_default_output_audio_device(core);
+		BC_ASSERT_PTR_NOT_NULL(output_device);
+		if (output_device) {
+			BC_ASSERT_STRING_EQUAL(linphone_audio_device_get_id(output_device), playback_device);
+		}
+	}
+
+	// We are not in call so there is no current input audio device
+	BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(core));
+	BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(core));
+	
+	// Check that devices list is empty as the current one type is UNKNOWN
+	audio_devices = linphone_core_get_audio_devices(core);
+	audio_devices_count = bctbx_list_size(audio_devices);
+	BC_ASSERT_EQUAL(audio_devices_count, 0, int, "%d");
+	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
+
+	// Let's add a new sound card and check it appears correctly in audio devices list
+	MSFactory *factory = linphone_core_get_ms_factory(core);
+	MSSndCardManager *sndcard_manager = ms_factory_get_snd_card_manager(factory);
+	ms_snd_card_manager_register_desc(sndcard_manager, &dummy_test_snd_card_desc);
+	linphone_core_reload_sound_devices(core);
+	BC_ASSERT_EQUAL(manager->stat.number_of_LinphoneCoreAudioDevicesListUpdated, 1, int, "%d");
+
+	audio_devices = linphone_core_get_extended_audio_devices(core);
+	audio_devices_count = bctbx_list_size(audio_devices);
+	BC_ASSERT_EQUAL(audio_devices_count, sound_devices_count + 1, int, "%d");
+	LinphoneAudioDevice *audio_device = (LinphoneAudioDevice *)bctbx_list_get_data(audio_devices);
+	BC_ASSERT_PTR_NOT_NULL(audio_device);
+	if (!audio_device) {
+		goto end;
+	}
+
+	// Check the Audio Device object has correct values
+	linphone_audio_device_ref(audio_device);
+	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
+	BC_ASSERT_EQUAL(linphone_audio_device_get_type(audio_device), LinphoneAudioDeviceTypeBluetooth, int, "%d");
+	BC_ASSERT_TRUE(linphone_audio_device_has_capability(audio_device, LinphoneAudioDeviceCapabilityPlay));
+	BC_ASSERT_TRUE(linphone_audio_device_has_capability(audio_device, LinphoneAudioDeviceCapabilityRecord));
+	BC_ASSERT_STRING_EQUAL(linphone_audio_device_get_device_name(audio_device), DUMMY_TEST_SOUNDCARD);
+	
+	// Check that device is in the audio devices list
+	audio_devices = linphone_core_get_audio_devices(core);
+	audio_devices_count = bctbx_list_size(audio_devices);
+	BC_ASSERT_EQUAL(audio_devices_count, 1, int, "%d");
+	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
+
+	// Check that we can change the default audio device
+	const LinphoneAudioDevice *input_device = linphone_core_get_default_input_audio_device(core);
+	BC_ASSERT_PTR_NOT_NULL(input_device);
+	if (input_device) {
+		BC_ASSERT_PTR_NOT_EQUAL(audio_device, input_device);
+	}
+	linphone_core_set_default_input_audio_device(core, audio_device);
+	input_device = linphone_core_get_default_input_audio_device(core);
+	BC_ASSERT_PTR_NOT_NULL(input_device);
+	if (input_device) {
+		BC_ASSERT_PTR_EQUAL(audio_device, input_device);
+	}
+
+	const LinphoneAudioDevice *output_device = linphone_core_get_default_output_audio_device(core);
+	BC_ASSERT_PTR_NOT_NULL(output_device);
+	if (output_device) {
+		BC_ASSERT_PTR_NOT_EQUAL(audio_device, output_device);
+	}
+	linphone_core_set_default_output_audio_device(core, audio_device);
+	output_device = linphone_core_get_default_output_audio_device(core);
+	BC_ASSERT_PTR_NOT_NULL(output_device);
+	if (output_device) {
+		BC_ASSERT_PTR_EQUAL(audio_device, output_device);
+	}
+
+	// We are not in call so this should do nothing
+	linphone_core_set_input_audio_device(core, audio_device);
+	BC_ASSERT_EQUAL(manager->stat.number_of_LinphoneCoreAudioDeviceChanged, 0, int, "%d");
+	linphone_core_set_output_audio_device(core, audio_device);
+	BC_ASSERT_EQUAL(manager->stat.number_of_LinphoneCoreAudioDeviceChanged, 0, int, "%d");
+
+	// Let's add another bluetooth sound card
+	ms_snd_card_manager_register_desc(sndcard_manager, &dummy2_test_snd_card_desc);
+	linphone_core_reload_sound_devices(core);
+	BC_ASSERT_EQUAL(manager->stat.number_of_LinphoneCoreAudioDevicesListUpdated, 2, int, "%d");
+
+	// Check that device is in the extended audio devices list
+	audio_devices = linphone_core_get_extended_audio_devices(core);
+	audio_devices_count = bctbx_list_size(audio_devices);
+	BC_ASSERT_EQUAL(audio_devices_count, sound_devices_count + 2, int, "%d");
+	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
+	
+	// Check that device is not in the simple audio devices list as we already have a bluetooth audio device
+	audio_devices = linphone_core_get_audio_devices(core);
+	audio_devices_count = bctbx_list_size(audio_devices);
+	BC_ASSERT_EQUAL(audio_devices_count, 1, int, "%d");
+	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
+
+	ms_snd_card_manager_unregister_desc(sndcard_manager, &dummy_test_snd_card_desc);
+	linphone_core_reload_sound_devices(core);
+	BC_ASSERT_EQUAL(manager->stat.number_of_LinphoneCoreAudioDevicesListUpdated, 3, int, "%d");
+
+	// Check that device is no longer in the extended audio devices list
+	audio_devices = linphone_core_get_extended_audio_devices(core);
+	audio_devices_count = bctbx_list_size(audio_devices);
+	BC_ASSERT_EQUAL(audio_devices_count, sound_devices_count + 1, int, "%d");
+	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
+
+	// Check that the device we removed is no longer the default
+	input_device = linphone_core_get_default_input_audio_device(core);
+	BC_ASSERT_PTR_NOT_NULL(input_device);
+	if (input_device) {
+		BC_ASSERT_STRING_NOT_EQUAL(linphone_audio_device_get_device_name(input_device), DUMMY_TEST_SOUNDCARD);
+		MSSndCard *sndcard = ms_snd_card_manager_get_default_capture_card(sndcard_manager);
+		BC_ASSERT_STRING_EQUAL(linphone_audio_device_get_device_name(input_device), ms_snd_card_get_name(sndcard));
+	}
+	output_device = linphone_core_get_default_output_audio_device(core);
+	BC_ASSERT_PTR_NOT_NULL(output_device);
+	if (output_device) {
+		BC_ASSERT_STRING_NOT_EQUAL(linphone_audio_device_get_device_name(output_device), DUMMY_TEST_SOUNDCARD);
+		MSSndCard *sndcard = ms_snd_card_manager_get_default_playback_card(sndcard_manager);
+		BC_ASSERT_STRING_EQUAL(linphone_audio_device_get_device_name(input_device), ms_snd_card_get_name(sndcard));
+	}
+
+	linphone_audio_device_unref(audio_device);
+end:
+	linphone_core_manager_destroy(manager);
+}
+
 test_t setup_tests[] = {
 	TEST_NO_TAG("Version check", linphone_version_test),
 	TEST_NO_TAG("Linphone Address", linphone_address_test),
@@ -1753,7 +1910,8 @@ test_t setup_tests[] = {
 	TEST_ONE_TAG("Search friend result has capabilities", search_friend_get_capabilities, "MagicSearch"),
 	TEST_ONE_TAG("Search friend result chat room remote", search_friend_chat_room_remote, "MagicSearch"),
 	TEST_NO_TAG("Delete friend in linphone rc", delete_friend_from_rc),
-	TEST_NO_TAG("Dialplan", dial_plan)
+	TEST_NO_TAG("Dialplan", dial_plan),
+	TEST_NO_TAG("Audio devices", audio_devices)
 };
 
 test_suite_t setup_test_suite = {"Setup", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

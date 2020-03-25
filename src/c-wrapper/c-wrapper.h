@@ -78,6 +78,7 @@ L_REGISTER_TYPES(L_REGISTER_ID)
 BELLE_SIP_TYPE_ID(LinphoneAccountCreator),
 BELLE_SIP_TYPE_ID(LinphoneAccountCreatorCbs),
 BELLE_SIP_TYPE_ID(LinphoneAccountCreatorService),
+BELLE_SIP_TYPE_ID(LinphoneAudioDevice),
 BELLE_SIP_TYPE_ID(LinphoneAuthInfo),
 BELLE_SIP_TYPE_ID(LinphoneBuffer),
 BELLE_SIP_TYPE_ID(LinphoneCallCbs),
