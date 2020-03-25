@@ -24,10 +24,26 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-AudioDevice::AudioDevice(const MSSndCard *soundCard, const string &deviceName, const string &driverName, const AudioDevice::Capabilities &capabilities, const AudioDevice::Type& deviceType)
-    :soundCard(soundCard), deviceName(deviceName), driverName(driverName), capabilities(capabilities), deviceType(deviceType)
+AudioDevice::AudioDevice(const MSSndCard *soundCard)
+    :soundCard(soundCard)
 {
+    const char * name = ms_snd_card_get_name(soundCard);
+    deviceName = name;
 
+    unsigned int cap = ms_snd_card_get_capabilities(soundCard);
+    if (cap & MS_SND_CARD_CAP_CAPTURE && cap & MS_SND_CARD_CAP_PLAYBACK) {
+        capabilities = static_cast<Capabilities>(static_cast<int>(Capabilities::Record) | static_cast<int>(Capabilities::Play));
+    } else if (cap & MS_SND_CARD_CAP_CAPTURE) {
+        capabilities = Capabilities::Record;
+    } else if (cap & MS_SND_CARD_CAP_PLAYBACK) {
+        capabilities = Capabilities::Play;
+    }
+
+    // TODO: how do we get type & driverName ?
+}
+
+const MSSndCard *AudioDevice::getSoundCard() const {
+    return soundCard;
 }
 
 const string& AudioDevice::getDeviceName() const {
@@ -48,7 +64,25 @@ const AudioDevice::Type& AudioDevice::getType() const {
 
 string AudioDevice::toString() const {
     std::ostringstream ss;
-    ss << driverName << ": driver [" << driverName << "]";
+    ss << driverName << ": driver [" << driverName << "], type [";
+    switch (deviceType) {
+        case AudioDevice::Type::Microphone:
+            ss << "Microphone";
+            break;
+        case AudioDevice::Type::Earpiece:
+            ss << "Earpiece";
+            break;
+        case AudioDevice::Type::Speaker:
+            ss << "Speaker";
+            break;
+        case AudioDevice::Type::Bluetooth:
+            ss << "Bluetooth";
+            break;
+        default:
+            ss << "Unknown";
+            break;
+    }
+    ss << "]";
     return ss.str();
 }
 

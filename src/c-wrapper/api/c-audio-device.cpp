@@ -23,6 +23,28 @@
 
 using namespace LinphonePrivate;
 
+const char *linphone_audio_device_get_device_name(const LinphoneAudioDevice *audioDevice) {
+    if (audioDevice) {
+        return L_STRING_TO_C(AudioDevice::toCpp(audioDevice)->getDeviceName());
+    }
+    return NULL;
+}
+
+const char *linphone_audio_device_get_driver_name(const LinphoneAudioDevice *audioDevice) {
+    if (audioDevice) {
+        return L_STRING_TO_C(AudioDevice::toCpp(audioDevice)->getDriverName());
+    }
+    return NULL;
+}
+
+LinphoneAudioDeviceCapabilities linphone_audio_device_get_capabilities(const LinphoneAudioDevice *audioDevice) {
+    return static_cast<LinphoneAudioDeviceCapabilities>(AudioDevice::toCpp(audioDevice)->getCapabilities());
+}
+
+LinphoneAudioDeviceType linphone_audio_device_get_type(const LinphoneAudioDevice *audioDevice) {
+    return static_cast<LinphoneAudioDeviceType>(AudioDevice::toCpp(audioDevice)->getType());
+}
+
 LinphoneAudioDevice *linphone_audio_device_ref(LinphoneAudioDevice *audioDevice) {
     if (audioDevice) {
         AudioDevice::toCpp(audioDevice)->ref();

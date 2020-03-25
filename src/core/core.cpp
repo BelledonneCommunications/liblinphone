@@ -69,6 +69,8 @@ void CorePrivate::init () {
 	localListEventHandler = makeUnique<LocalConferenceListEventHandler>(q->getSharedFromThis());
 #endif
 
+	computeAudioDevicesList();
+
 	if (linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		AbstractDb::Backend backend;
 		string uri = L_C_TO_STRING(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
@@ -550,6 +552,100 @@ void Core::enableFriendListSubscription (bool enable) {
 bool Core::isFriendListSubscriptionEnabled () const {
 	L_D();
 	return d->isFriendListSubscriptionEnabled;
+}
+
+// ---------------------------------------------------------------------------
+// Audio devices.
+// ---------------------------------------------------------------------------
+
+void CorePrivate::computeAudioDevicesList() {
+	for (auto &audioDevice : audioDevices) {
+		delete audioDevice;
+	}
+	audioDevices.clear();
+
+	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
+	const bctbx_list_t *list = ms_snd_card_manager_get_list(snd_card_manager);
+
+	for (const bctbx_list_t *it = list; it != nullptr; it = bctbx_list_next(it)) {
+		MSSndCard *card = static_cast<MSSndCard *>(bctbx_list_get_data(it));
+		AudioDevice *audioDevice = new AudioDevice(card);
+		audioDevices.push_back(audioDevice);
+	}
+}
+
+const list<AudioDevice *> Core::getAudioDevices() const {
+	std::list<AudioDevice *> audioDevices;
+	bool micFound = false, speakerFound = false, earpieceFound = false, bluetoothFound = false;
+
+	for (const auto &audioDevice : getExtendedAudioDevices()) {
+		switch (audioDevice->getType()) {
+			case AudioDevice::Type::Microphone:
+				if (!micFound) {
+					micFound = true;
+					audioDevices.push_back(audioDevice);
+				}
+				break;
+			case AudioDevice::Type::Earpiece:
+				if (!earpieceFound) {
+					earpieceFound = true;
+					audioDevices.push_back(audioDevice);
+				}
+				break;
+			case AudioDevice::Type::Speaker:
+				if (!speakerFound) {
+					speakerFound = true;
+					audioDevices.push_back(audioDevice);
+				}
+				break;
+			case AudioDevice::Type::Bluetooth:
+				if (!bluetoothFound) {
+					bluetoothFound = true;
+					audioDevices.push_back(audioDevice);
+				}
+				break;
+			default:
+				break;
+		}
+		if (micFound && speakerFound && earpieceFound && bluetoothFound) break;
+	}
+	return audioDevices;
+}
+
+const list<AudioDevice *> Core::getExtendedAudioDevices() const {
+	L_D();
+	return d->audioDevices; 
+}
+
+void Core::setInputAudioDevice(AudioDevice *audioDevice) {
+	for (const auto &call : getCalls()) {
+		call->setInputAudioDevice(audioDevice);
+	}
+	// TODO: store it as default
+}
+
+void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
+	for (const auto &call : getCalls()) {
+		call->setOutputAudioDevice(audioDevice);
+	}
+	// TODO: store it as default
+}
+
+void Core::setAudioDevice(AudioDevice *audioDevice) {
+	for (const auto &call : getCalls()) {
+		call->setAudioDevice(audioDevice);
+	}
+	// TODO: store it as default
+}
+
+AudioDevice* Core::getInputAudioDevice() const {
+	// TODO get the default
+	return nullptr;
+}
+
+AudioDevice* Core::getOutputAudioDevice() const {
+	// TODO get the default
+	return nullptr;
 }
 
 // -----------------------------------------------------------------------------

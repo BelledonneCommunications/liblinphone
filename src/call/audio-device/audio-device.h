@@ -28,20 +28,21 @@ LINPHONE_BEGIN_NAMESPACE
 
 class AudioDevice : public bellesip::HybridObject<LinphoneAudioDevice, AudioDevice> {
 public:
-	enum class Type {
+	enum Type {
 		Microphone = LinphoneAudioDeviceTypeMicrophone,
         Earpiece = LinphoneAudioDeviceTypeEarpiece,
         Speaker = LinphoneAudioDeviceTypeSpeaker,
         Bluetooth
 	};
 
-    enum class Capabilities {
+    enum Capabilities {
         Record = LinphoneAudioDeviceCapabilityRecord,
-        Play
+        Play = LinphoneAudioDeviceCapabilityPlay
     };
 
-    AudioDevice(const MSSndCard *soundCard, const std::string &deviceName, const std::string &driverName, const Capabilities &capabilities, const Type& deviceType);
+    AudioDevice(const MSSndCard *soundCard);
 
+    const MSSndCard *getSoundCard() const;
     const std::string& getDeviceName() const;
     const std::string& getDriverName() const;
     const Capabilities& getCapabilities() const;

@@ -30,6 +30,7 @@
 #include "auth-info/auth-stack.h"
 #include "conference/session/tone-manager.h"
 #include "utils/background-task.h"
+#include "call/audio-device/audio-device.h"
 
 // =============================================================================
 
@@ -137,6 +138,7 @@ public:
 
 	void startEphemeralMessageTimer (time_t expireTime);
 	void stopEphemeralMessageTimer ();
+	void computeAudioDevicesList ();
 
 private:
 	bool isInBackground = false;
@@ -164,6 +166,7 @@ private:
 	std::list<std::shared_ptr<ChatMessage>> ephemeralMessages;
 	belle_sip_source_t *timer = nullptr;
 
+	std::list<AudioDevice *> audioDevices;
 	L_DECLARE_PUBLIC(Core);
 };
 
