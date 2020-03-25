@@ -216,6 +216,20 @@ LINPHONE_PUBLIC LinphoneCallCbsCameraNotWorkingCb linphone_call_cbs_get_camera_n
 LINPHONE_PUBLIC void linphone_call_cbs_set_camera_not_working(LinphoneCallCbs *cbs, LinphoneCallCbsCameraNotWorkingCb cb);
 
 /**
+ * Get the audio device changed callback.
+ * @param[in] cbs LinphoneCallCbs object.
+ * @return The audio device changed callback.
+ */
+LINPHONE_PUBLIC LinphoneCallCbsAudioDeviceChangedCb linphone_call_cbs_get_audio_device_changed(LinphoneCallCbs *cbs);
+
+/**
+ * Set the audio device changed callback.
+ * @param[in] cbs LinphoneCallCbs object.
+ * @param[in] cb The audio device changedcallback to be used.
+ */
+LINPHONE_PUBLIC void linphone_call_cbs_set_audio_device_changed(LinphoneCallCbs *cbs, LinphoneCallCbsAudioDeviceChangedCb cb);
+
+/**
  * @}
  */
 

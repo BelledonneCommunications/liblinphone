@@ -838,6 +838,34 @@ LINPHONE_PUBLIC void linphone_call_set_params(LinphoneCall *call, const Linphone
 LINPHONE_PUBLIC const LinphoneCallParams *linphone_call_get_params(LinphoneCall *call);
 
 /**
+ * Sets the given #LinphoneAudioDevice as input for this call only.
+ * @param[in] call The #LinphoneCall
+ * @param[in] audio_device The #LinphoneAudioDevice
+ */
+LINPHONE_PUBLIC void linphone_call_set_input_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device);
+
+/**
+ * Sets the given #LinphoneAudioDevice as output for this call only.
+ * @param[in] call The #LinphoneCall
+ * @param[in] audio_device The #LinphoneAudioDevice
+ */
+LINPHONE_PUBLIC void linphone_call_set_output_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device);
+
+/**
+ * Gets the current input device for this call.
+ * @param[in] call The #LinphoneCall
+ * @returns the #LinphoneAudioDevice used by this call as input
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_get_input_audio_device(const LinphoneCall *call);
+
+/**
+ * Gets the current output device for this call.
+ * @param[in] call The #LinphoneCall
+ * @returns the #LinphoneAudioDevice used by this call as output
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_get_output_audio_device(const LinphoneCall *call);
+
+/**
  * @}
  */
 
