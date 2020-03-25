@@ -162,6 +162,11 @@ void CorePrivate::uninit () {
 		linphone_core_iterate(L_GET_C_BACK_PTR(q));
 		ms_usleep(10000);
 	}
+	
+	for (auto &audioDevice : audioDevices) {
+		audioDevice->unref();
+	}
+	audioDevices.clear();
 
 	if (toneManager) toneManager->deleteTimer();
 
@@ -312,6 +317,39 @@ void CorePrivate::stopEphemeralMessageTimer () {
 	}
 }
 
+bool CorePrivate::setInputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
+		return false;
+	}
+
+	bool applied = false;
+	if (static_cast<unsigned int>(calls.size()) > 0) {
+		for (const auto &call : calls) {
+			call->setInputAudioDevice(audioDevice);
+			applied = true;
+		}
+	}
+
+	return applied;
+}
+
+bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
+		return false;
+	}
+
+	bool applied = false;
+	if (static_cast<unsigned int>(calls.size()) > 0) {
+		for (const auto &call : calls) {
+			call->setOutputAudioDevice(audioDevice);
+			applied = true;
+		}
+	}
+
+	return applied;
+}
 // =============================================================================
 
 Core::Core () : Object(*new CorePrivate) {
@@ -550,6 +588,156 @@ void Core::enableFriendListSubscription (bool enable) {
 bool Core::isFriendListSubscriptionEnabled () const {
 	L_D();
 	return d->isFriendListSubscriptionEnabled;
+}
+
+// ---------------------------------------------------------------------------
+// Audio devices.
+// ---------------------------------------------------------------------------
+
+void CorePrivate::computeAudioDevicesList() {
+	for (auto &audioDevice : audioDevices) {
+		audioDevice->unref();
+	}
+	audioDevices.clear();
+
+	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
+	const bctbx_list_t *list = ms_snd_card_manager_get_list(snd_card_manager);
+
+	for (const bctbx_list_t *it = list; it != nullptr; it = bctbx_list_next(it)) {
+		MSSndCard *card = static_cast<MSSndCard *>(bctbx_list_get_data(it));
+		AudioDevice *audioDevice = new AudioDevice(card);
+		audioDevices.push_back(audioDevice);
+	}
+}
+
+AudioDevice* Core::findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard) const {
+	for (const auto &audioDevice : getExtendedAudioDevices()) {
+		if (audioDevice->getSoundCard() == soundCard) {
+			return audioDevice;
+		}
+	}
+	return nullptr;
+}
+
+const list<AudioDevice *> Core::getAudioDevices() const {
+	std::list<AudioDevice *> audioDevices;
+	bool micFound = false, speakerFound = false, earpieceFound = false, bluetoothMicFound = false, bluetoothSpeakerFound = false;
+
+	for (const auto &audioDevice : getExtendedAudioDevices()) {
+		switch (audioDevice->getType()) {
+			case AudioDevice::Type::Microphone:
+				if (!micFound) {
+					micFound = true;
+					audioDevices.push_back(audioDevice);
+				}
+				break;
+			case AudioDevice::Type::Earpiece:
+				if (!earpieceFound) {
+					earpieceFound = true;
+					audioDevices.push_back(audioDevice);
+				}
+				break;
+			case AudioDevice::Type::Speaker:
+				if (!speakerFound) {
+					speakerFound = true;
+					audioDevices.push_back(audioDevice);
+				}
+				break;
+			case AudioDevice::Type::Bluetooth:
+				if (!bluetoothMicFound && (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record))) {
+					audioDevices.push_back(audioDevice);
+				} else if (!bluetoothSpeakerFound && (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play))) {
+					audioDevices.push_back(audioDevice);
+				}
+
+				// Do not allow to be set to false
+				// Not setting flags inside if statement in order to handle the case of a bluetooth device that can record and play sound
+				if (!bluetoothMicFound) bluetoothMicFound = (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record));
+				if (!bluetoothSpeakerFound) bluetoothSpeakerFound = (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play));
+				break;
+			default:
+				break;
+		}
+		if (micFound && speakerFound && earpieceFound && bluetoothMicFound && bluetoothSpeakerFound) break;
+	}
+	return audioDevices;
+}
+
+const list<AudioDevice *> Core::getExtendedAudioDevices() const {
+	L_D();
+	return d->audioDevices; 
+}
+
+void Core::setInputAudioDevice(AudioDevice *audioDevice) {
+
+	L_D();
+	bool success = d->setInputAudioDevice(audioDevice);
+
+	if (success) {
+		linphone_core_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
+	}
+}
+
+void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
+
+	L_D();
+	bool success = d->setOutputAudioDevice(audioDevice);
+
+	if (success) {
+		linphone_core_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
+	}
+}
+
+AudioDevice* Core::getInputAudioDevice() const {
+	shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
+	if (call) {
+		return call->getInputAudioDevice();
+	}
+
+	for (const auto &call : getCalls()) {
+		return call->getInputAudioDevice();
+	}
+
+	return nullptr;
+}
+
+AudioDevice* Core::getOutputAudioDevice() const {
+	shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
+	if (call) {
+		return call->getOutputAudioDevice();
+	}
+
+	for (const auto &call : getCalls()) {
+		return call->getOutputAudioDevice();
+	}
+
+	return nullptr;
+}
+
+void Core::setDefaultInputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
+		return;
+	}
+	linphone_core_set_capture_device(getCCore(), audioDevice->getId().c_str());
+}
+
+void Core::setDefaultOutputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
+		return;
+	}
+	linphone_core_set_playback_device(getCCore(), audioDevice->getId().c_str());
+}
+
+AudioDevice* Core::getDefaultInputAudioDevice() const {
+	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	return findAudioDeviceMatchingMsSoundCard(card);
+}
+
+AudioDevice* Core::getDefaultOutputAudioDevice() const {
+	MSSndCard *card = getCCore()->sound_conf.play_sndcard;
+	return findAudioDeviceMatchingMsSoundCard(card);
 }
 
 // -----------------------------------------------------------------------------

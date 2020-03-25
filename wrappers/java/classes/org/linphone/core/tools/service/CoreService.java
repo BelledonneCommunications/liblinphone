@@ -108,8 +108,6 @@ public class CoreService extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         Log.i("[Core Service] Task removed");
-        stopSelf();
-
         super.onTaskRemoved(rootIntent);
     }
 
