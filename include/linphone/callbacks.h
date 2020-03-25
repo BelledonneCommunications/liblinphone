@@ -456,6 +456,21 @@ typedef void (*LinphoneCoreCbsFirstCallStartedCb)(LinphoneCore *lc);
 typedef void (*LinphoneCoreCbsLastCallEndedCb)(LinphoneCore *lc);
 
 /**
+ * Callback prototype telling that the audio device for at least one call has changed
+ * @param[in] lc LinphoneCore object
+ * @param[in] audioDevice the newly used LinphoneAudioDevice object
+ */
+typedef void (*LinphoneCoreCbsAudioDeviceChangedCb)(LinphoneCore *lc, LinphoneAudioDevice *audioDevice);
+
+/**
+ * Callback prototype telling the audio devices list has been updated.
+ * Either a new device is available or a previously available device isn't anymore.
+ * You can call linphone_core_get_audio_devices() to get the new list.
+ * @param[in] lc LinphoneCore object
+ */
+typedef void (*LinphoneCoreCbsAudioDevicesListUpdatedCb)(LinphoneCore *lc);
+
+/**
  * @}
 **/
 

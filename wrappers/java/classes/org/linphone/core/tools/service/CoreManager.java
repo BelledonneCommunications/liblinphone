@@ -35,6 +35,7 @@ import org.linphone.core.CoreListenerStub;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
 import org.linphone.core.tools.audio.AudioHelper;
+import org.linphone.core.tools.audio.BluetoothHelper;
 import org.linphone.mediastream.Version;
 
 import java.util.Timer;
@@ -67,6 +68,7 @@ public class CoreManager {
 
     private CoreListenerStub mListener;
     private AudioHelper mAudioHelper;
+    private BluetoothHelper mBluetoothHelper;
 
     private native void updatePushNotificationInformation(long ptr, String appId, String token);
 
@@ -97,6 +99,7 @@ public class CoreManager {
         }
         
         mAudioHelper = new AudioHelper(mContext);
+        mBluetoothHelper = new BluetoothHelper(mContext);
 
         Log.i("[Core Manager] Ready");
     }
@@ -207,6 +210,11 @@ public class CoreManager {
                 call.pause();
             }
         }
+    }
+
+    public void onBluetoothHeadsetStateChanged() {
+        Log.i("[Core Manager] Bluetooth headset state changed, reload sound devices");
+        mCore.reloadSoundDevices();
     }
 
     public void onBackgroundMode() {

@@ -944,4 +944,35 @@ void Call::setSpeakerVolumeGain (float value) {
 	static_pointer_cast<MediaSession>(d->getActiveSession())->setSpeakerVolumeGain(value);
 }
 
+void Call::setInputAudioDevice(AudioDevice *audioDevice) {
+	L_D();
+	static_pointer_cast<MediaSession>(d->getActiveSession())->setInputAudioDevice(audioDevice);
+	linphone_call_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
+}
+
+void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
+	L_D();
+	static_pointer_cast<MediaSession>(d->getActiveSession())->setOutputAudioDevice(audioDevice);
+	linphone_call_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
+}
+
+void Call::setAudioDevice(AudioDevice *audioDevice) {
+	if (audioDevice->getCapabilities() & AudioDevice::Capabilities::Record) {
+		setInputAudioDevice(audioDevice);
+	}
+	if (audioDevice->getCapabilities() & AudioDevice::Capabilities::Play) {
+		setOutputAudioDevice(audioDevice);
+	}
+}
+
+AudioDevice* Call::getInputAudioDevice() const {
+	L_D();
+	return static_pointer_cast<MediaSession>(d->getActiveSession())->getInputAudioDevice();
+}
+
+AudioDevice* Call::getOutputAudioDevice() const {
+	L_D();
+	return static_pointer_cast<MediaSession>(d->getActiveSession())->getOutputAudioDevice();
+}
+
 LINPHONE_END_NAMESPACE

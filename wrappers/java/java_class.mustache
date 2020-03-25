@@ -68,7 +68,7 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
         {{/lines}}
         {{/detailedDoc}}
         */
-        {{name}}({{value}}){{commarorsemicolon}}
+        {{name}}({{{value}}}){{commarorsemicolon}}
 
     {{/values}}
         protected final int mValue;
@@ -80,7 +80,7 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
         static public {{{className}}} fromInt(int value) throws RuntimeException {
             switch(value) {
             {{#values}}
-            case {{value}}: return {{name}};
+            case {{{value}}}: return {{name}};
             {{/values}}
             default:
                 throw new RuntimeException("Unhandled enum value " + value + " for {{{className}}}");

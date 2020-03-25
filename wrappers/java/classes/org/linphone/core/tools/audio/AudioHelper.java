@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.io.FileInputStream;
 import java.lang.SecurityException;
 
+import org.linphone.core.Core;
+import org.linphone.core.AudioDevice;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.service.CoreManager;
 
@@ -45,6 +47,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     private AudioFocusRequestCompat mCallRequest;
     private MediaPlayer mPlayer;
     private int mVolumeBeforeEchoTest;
+    private AudioDevice mPreviousDefaultOutputAudioDevice;
 
     public AudioHelper(Context context) {
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
@@ -55,8 +58,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
 
     public void startAudioForEchoTestOrCalibration() {
         requestCallAudioFocus();
-        // TODO: remove when audio routing will be handled by the Core
-        mAudioManager.setSpeakerphoneOn(true);
+        routeAudioToSpeaker();
 
         mVolumeBeforeEchoTest = mAudioManager.getStreamVolume(AudioManager.STREAM_VOICE_CALL);
         int maxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
@@ -74,8 +76,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             Log.e("[Audio Helper] Couldn't restore volume: ", se);
         }
 
-        // TODO: remove when audio routing will be handled by the Core
-        mAudioManager.setSpeakerphoneOn(false);
+        routeAudioToEarpiece();
         releaseCallAudioFocus();
     }
 
@@ -224,5 +225,33 @@ public class AudioHelper implements OnAudioFocusChangeListener {
                 if (CoreManager.isReady()) CoreManager.instance().onAudioFocusLost();
                 break;
         }
+    }
+
+    private void routeAudioToEarpiece() {
+        // Let's restore the default output device before the echo calibration or test
+        Core core = CoreManager.instance().getCore();
+        core.setDefaultOutputAudioDevice(mPreviousDefaultOutputAudioDevice);
+        Log.i("[Audio Helper] Restored previous default output audio device: " + mPreviousDefaultOutputAudioDevice);
+        mPreviousDefaultOutputAudioDevice = null;
+    }
+
+    private void routeAudioToSpeaker() {
+        // For echo canceller calibration & echo tester, we can't change the soundcard dynamically as the stream isn't created yet...
+        Core core = CoreManager.instance().getCore();
+        mPreviousDefaultOutputAudioDevice = core.getDefaultOutputAudioDevice();
+        if (mPreviousDefaultOutputAudioDevice.getType() == AudioDevice.Type.Speaker) {
+            Log.i("[Audio Helper] Current default output audio device is already the speaker: " + mPreviousDefaultOutputAudioDevice);
+            return;
+        }
+        Log.i("[Audio Helper] Saved current default output audio device: " + mPreviousDefaultOutputAudioDevice);
+        
+        for (AudioDevice audioDevice : core.getAudioDevices()) {
+            if (audioDevice.getType() == AudioDevice.Type.Speaker) {
+                Log.i("[Audio Helper] Found speaker device, replacing default output audio device with: " + audioDevice);
+                core.setDefaultOutputAudioDevice(audioDevice);
+                return;
+            }
+        }
+        Log.e("[Audio Helper] Couldn't find speaker audio device");
     }
 }

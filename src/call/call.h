@@ -23,6 +23,7 @@
 #include "conference/params/media-session-params.h"
 #include "conference/session/call-session.h"
 #include "core/core-accessor.h"
+#include "call/audio-device/audio-device.h"
 #include "object/object.h"
 
 // =============================================================================
@@ -128,6 +129,12 @@ public:
 	void requestNotifyNextVideoFrameDecoded();
 	void setParams (const MediaSessionParams *msp);
 	void setSpeakerVolumeGain (float value);
+
+	void setInputAudioDevice(AudioDevice *audioDevice);
+	void setOutputAudioDevice(AudioDevice *audioDevice);
+	void setAudioDevice(AudioDevice *audioDevice);
+	AudioDevice *getInputAudioDevice() const;
+	AudioDevice *getOutputAudioDevice() const;
 
 protected:
 	Call (CallPrivate &p, std::shared_ptr<Core> core);

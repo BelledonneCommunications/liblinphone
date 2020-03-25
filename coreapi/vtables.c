@@ -109,6 +109,16 @@ void linphone_core_notify_last_call_ended(LinphoneCore *lc) {
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_audio_device_changed(LinphoneCore *lc, LinphoneAudioDevice *audioDevice) {
+	NOTIFY_IF_EXIST(audio_device_changed, lc, audioDevice);
+	cleanup_dead_vtable_refs(lc);
+}
+
+void linphone_core_notify_audio_devices_list_updated(LinphoneCore *lc) {
+	NOTIFY_IF_EXIST(audio_devices_list_updated, lc);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token) {
 	NOTIFY_IF_EXIST(call_encryption_changed, lc,call,on,authentication_token);
 	cleanup_dead_vtable_refs(lc);

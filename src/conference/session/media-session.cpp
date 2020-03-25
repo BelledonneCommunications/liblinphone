@@ -2783,6 +2783,30 @@ void MediaSession::setParams (const MediaSessionParams *msp) {
 	}
 }
 
+void MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) i->setInputDevice(audioDevice);
+}
 
+void MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) i->setOutputDevice(audioDevice);
+}
+
+AudioDevice* MediaSession::getInputAudioDevice() const {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) return i->getInputDevice();
+	return nullptr;
+}
+
+AudioDevice* MediaSession::getOutputAudioDevice() const {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) return i->getOutputDevice();
+	return nullptr;
+}
 
 LINPHONE_END_NAMESPACE

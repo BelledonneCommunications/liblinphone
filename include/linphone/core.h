@@ -235,6 +235,8 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb chat_room_ephemeral_message_deleted;
 	LinphoneCoreCbsFirstCallStartedCb first_call_started;
 	LinphoneCoreCbsLastCallEndedCb last_call_ended;
+	LinphoneCoreCbsAudioDeviceChangedCb audio_device_changed;
+	LinphoneCoreCbsAudioDevicesListUpdatedCb audio_devices_list_updated;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -836,6 +838,34 @@ LINPHONE_PUBLIC LinphoneCoreCbsLastCallEndedCb linphone_core_cbs_get_last_call_e
  * @param[in] cb The callback to use
  **/
 LINPHONE_PUBLIC void linphone_core_cbs_set_last_call_ended(LinphoneCoreCbs *cbs, LinphoneCoreCbsLastCallEndedCb cb);
+
+/**
+ * Gets the audio device changed callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsAudioDeviceChangedCb linphone_core_cbs_get_audio_device_changed(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the audio device changed callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ **/
+LINPHONE_PUBLIC void linphone_core_cbs_set_audio_device_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsAudioDeviceChangedCb cb);
+
+/**
+ * Gets the audio devices list updated callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsAudioDevicesListUpdatedCb linphone_core_cbs_get_audio_devices_list_updated(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the audio devices list updated callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ **/
+LINPHONE_PUBLIC void linphone_core_cbs_set_audio_devices_list_updated(LinphoneCoreCbs *cbs, LinphoneCoreCbsAudioDevicesListUpdatedCb cb);
 
 /**
  * @brief Sets a callback to call each time the echo-canceler calibration is completed.
@@ -6275,6 +6305,97 @@ LINPHONE_PUBLIC void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, 
  * @ingroup misc
  */
 LINPHONE_PUBLIC bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core);
+
+/**
+ * Returns a list of audio devices, with only the first device for each type
+ * To have the list of all audio devices, use #linphone_core_get_extended_audio_devices
+ * @param[in] core The #LinphoneCore
+ * @returns \bctbx_list{LinphoneAudioDevice} A list with the first #LinphoneAudioDevice of each type
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_audio_devices(const LinphoneCore *core);
+
+/**
+ * Returns the list of all audio devices
+ * @param[in] core The #LinphoneCore
+ * @returns \bctbx_list{LinphoneAudioDevice} A list of all #LinphoneAudioDevice
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_extended_audio_devices(const LinphoneCore *core);
+
+/**
+ * Sets the given #LinphoneAudioDevice as input for all active calls.
+ * @param[in] core The #LinphoneCore
+ * @param[in] audio_device The #LinphoneAudioDevice
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC void linphone_core_set_input_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
+
+/**
+ * Sets the given #LinphoneAudioDevice as output for all active calls.
+ * @param[in] core The #LinphoneCore
+ * @param[in] audio_device The #LinphoneAudioDevice
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC void linphone_core_set_output_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
+
+/**
+ * Sets the given #LinphoneAudioDevice as input and/or output for all active calls.
+ * @param[in] core The #LinphoneCore
+ * @param[in] audio_device The #LinphoneAudioDevice
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC void linphone_core_set_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
+
+/**
+ * Gets the input audio device for the current call
+ * @param[in] core The #LinphoneCore
+ * @returns The input audio device for the current or first call, NULL if there is no call
+ * @maybenil
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_input_audio_device(const LinphoneCore *core);
+
+/**
+ * Gets the output audio device for the current call
+ * @param[in] core The #LinphoneCore
+ * @returns The output audio device for the current or first call, NULL if there is no call
+ * @maybenil
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_output_audio_device(const LinphoneCore *core);
+
+/**
+ * Sets the given #LinphoneAudioDevice as default input for next calls.
+ * @param[in] core The #LinphoneCore
+ * @param[in] audio_device The #LinphoneAudioDevice
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC void linphone_core_set_default_input_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
+
+/**
+ * Sets the given #LinphoneAudioDevice as default output for next calls.
+ * @param[in] core The #LinphoneCore
+ * @param[in] audio_device The #LinphoneAudioDevice
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC void linphone_core_set_default_output_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
+
+/**
+ * Gets the default input audio device
+ * @param[in] core The #LinphoneCore
+ * @returns The default input audio device
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio_device(const LinphoneCore *core);
+
+/**
+ * Gets the default output audio device 
+ * @param[in] core The #LinphoneCore
+ * @returns The default output audio device
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_output_audio_device(const LinphoneCore *core);
 
 
 #ifdef __cplusplus

@@ -31,6 +31,7 @@
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/ms2-streams.h"
 #include "core/core-p.h"
+#include "call/audio-device/audio-device.h"
 
 // =============================================================================
 
@@ -187,6 +188,10 @@ void linphone_call_notify_next_video_frame_decoded(LinphoneCall *call) {
 
 void linphone_call_notify_camera_not_working(LinphoneCall *call, const char *camera_name) {
 	NOTIFY_IF_EXIST(CameraNotWorking, camera_not_working, call, camera_name);
+}
+
+void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudioDevice *audioDevice) {
+	NOTIFY_IF_EXIST(AudioDeviceChanged, audio_device_changed, call, audioDevice);
 }
 
 // =============================================================================
@@ -699,4 +704,37 @@ LinphoneCall *linphone_call_new_incoming (LinphoneCore *lc, const LinphoneAddres
 	L_SET_CPP_PTR_FROM_C_OBJECT(lcall, call);
 	L_GET_PRIVATE_FROM_C_OBJECT(lcall)->initiateIncoming();
 	return lcall;
+}
+
+void linphone_call_set_input_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {
+	if (audio_device) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(call)->setInputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	}
+}
+
+void linphone_call_set_output_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {
+	if (audio_device) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(call)->setOutputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	}
+}
+
+void linphone_call_set_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {
+	if (audio_device) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(call)->setAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	}
+}
+
+const LinphoneAudioDevice* linphone_call_get_input_audio_device(const LinphoneCall *call) {
+	LinphonePrivate::AudioDevice *audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getInputAudioDevice();
+	if (audioDevice) {
+		return audioDevice->toC();
+	}
+	return NULL;
+}
+const LinphoneAudioDevice* linphone_call_get_output_audio_device(const LinphoneCall *call) {
+	LinphonePrivate::AudioDevice *audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getOutputAudioDevice();
+	if (audioDevice) {
+		return audioDevice->toC();
+	}
+	return NULL;
 }
