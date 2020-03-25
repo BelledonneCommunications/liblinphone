@@ -26,6 +26,7 @@
 #include "object/object.h"
 
 #include "linphone/types.h"
+#include "call/audio-device/audio-device.h"
 
 // =============================================================================
 
@@ -178,6 +179,19 @@ public:
 
 	void enableFriendListSubscription (bool enable);
 	bool isFriendListSubscriptionEnabled () const;
+
+	// ---------------------------------------------------------------------------
+	// Audio devices.
+	// ---------------------------------------------------------------------------
+
+	std::list<std::shared_ptr<AudioDevice>> getAudioDevices() const;
+	std::list<std::shared_ptr<AudioDevice>> getExtendedAudioDevices() const;
+
+	void setInputAudioDevice(std::shared_ptr<AudioDevice> audioDevice);
+	void setOutputAudioDevice(std::shared_ptr<AudioDevice> audioDevice);
+	void setAudioDevice(std::shared_ptr<AudioDevice> audioDevice);
+	std::shared_ptr<AudioDevice> getInputAudioDevice() const;
+	std::shared_ptr<AudioDevice> getOutputAudioDevice() const;
 
 	// ---------------------------------------------------------------------------
 	// Misc.

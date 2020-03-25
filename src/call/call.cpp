@@ -944,4 +944,31 @@ void Call::setSpeakerVolumeGain (float value) {
 	static_pointer_cast<MediaSession>(d->getActiveSession())->setSpeakerVolumeGain(value);
 }
 
+void Call::setInputAudioDevice(std::shared_ptr<AudioDevice> audioDevice) {
+	// TODO
+}
+
+void Call::setOutputAudioDevice(std::shared_ptr<AudioDevice> audioDevice) {
+	// TODO
+}
+
+void Call::setAudioDevice(std::shared_ptr<AudioDevice> audioDevice) {
+	if (audioDevice->getCapabilities() & AudioDevice::Capabilities::Record) {
+		setInputAudioDevice(audioDevice);
+	}
+	if (audioDevice->getCapabilities() & AudioDevice::Capabilities::Play) {
+		setOutputAudioDevice(audioDevice);
+	}
+}
+
+std::shared_ptr<AudioDevice> Call::getInputAudioDevice() const {
+	// TODO
+	return nullptr;
+}
+
+std::shared_ptr<AudioDevice> Call::getOutputAudioDevice() const {
+	// TODO
+	return nullptr;
+}
+
 LINPHONE_END_NAMESPACE
