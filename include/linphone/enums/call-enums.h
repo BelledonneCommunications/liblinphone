@@ -50,6 +50,26 @@ typedef enum _LinphoneCallState{
 	LinphoneCallStateEarlyUpdating, /**< We are updating the call while not yet answered (SIP UPDATE in early dialog sent) */
 } LinphoneCallState;
 
+/**
+ * #LinphoneAudioDeviceType enum represents the different types of an audio device.
+ * @ingroup audio
+ */
+typedef enum _LinphoneAudioDeviceType {
+	LinphoneAudioDeviceTypeMicrophone, /** Microphone */
+	LinphoneAudioDeviceTypeEarpiece, /** Earpiece */
+	LinphoneAudioDeviceTypeSpeaker, /** Speaker */
+	LinphoneAudioDeviceTypeBluetooth, /** Bluetooth */
+} LinphoneAudioDeviceType;
+
+/**
+ * #LinphoneAudioDeviceCapabilities enum represents whether a device can record audio, play audio or both
+ * @ingroup audio
+ */
+typedef enum _LinphoneAudioDeviceCapabilities {
+	LinphoneAudioDeviceCapabilityRecord = 1 << 0, /** Can record audio */
+	LinphoneAudioDeviceCapabilityPlay = 1 << 1, /** Can play audio */
+} LinphoneAudioDeviceCapabilities;
+
 // =============================================================================
 // DEPRECATED
 // =============================================================================
