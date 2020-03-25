@@ -525,7 +525,7 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 	int proxy_count;
 
 	if (linphone_core_start(mgr->lc) == -1) {
-		ms_fatal("Core [%p] failed to start", mgr->lc);
+		ms_error("Core [%p] failed to start", mgr->lc);
 	}
 
 	/*BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(lc)),proxy_count, int, "%d");*/

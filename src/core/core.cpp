@@ -142,7 +142,8 @@ bool CorePrivate::isShutdownDone() {
 void CorePrivate::shutdown() {
 	L_Q();
 
-	for (auto call : calls) {
+	auto currentCalls = calls;
+	for (auto call : currentCalls) {
 		call->terminate();
 	}
 

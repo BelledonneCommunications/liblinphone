@@ -36,7 +36,7 @@ std::string SysPaths::getDataPath (void *context) {
 		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
 
 		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
-		fullPath = [[basePath path] stringByAppendingPathComponent:@"/Library/Application Support/linphone/"];
+		fullPath = [[basePath path] stringByAppendingString:@"/Library/Application Support/linphone/"];
 	} else {
 		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
 		NSString *writablePath = [paths objectAtIndex:0];
@@ -64,7 +64,7 @@ std::string SysPaths::getConfigPath (void *context) {
 		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
 
 		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
-		fullPath = [[basePath path] stringByAppendingPathComponent:@"Library/Preferences/linphone/"];
+		fullPath = [[basePath path] stringByAppendingString:@"/Library/Preferences/linphone/"];
 	} else {
 		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
 		NSString *configPath = [paths objectAtIndex:0];
@@ -92,7 +92,7 @@ std::string SysPaths::getDownloadPath (void *context) {
 		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
 
 		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
-		fullPath = [[basePath path] stringByAppendingPathComponent:@"Library/Caches/"];
+		fullPath = [[basePath path] stringByAppendingString:@"/Library/Caches/"];
 	} else {
 		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
 		NSString *configPath = [paths objectAtIndex:0];
