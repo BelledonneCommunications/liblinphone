@@ -308,7 +308,7 @@ string IosPlatformHelpers::getResourcePath (const string &framework, const strin
 }
 
 void *IosPlatformHelpers::getPathContext () {
-	return ms_strdup(mAppGroupId.c_str());
+	return mAppGroupId.empty() ? NULL : ms_strdup(mAppGroupId.c_str());
 }
 
 void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
