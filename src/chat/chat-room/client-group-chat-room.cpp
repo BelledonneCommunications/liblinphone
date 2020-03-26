@@ -943,7 +943,7 @@ void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 	L_D();
 	d->isEphemeral = ephem;
 	const string active = ephem ? "enabled" : "disabled";
-	lInfo() << "Ephemeral message is " << active << " in chat room [" << d->conferenceId << "]";
+	lDebug() << "Ephemeral message is " << active << " in chat room [" << d->conferenceId << "]";
 	if (updateDb) {
 		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralEnabled(d->conferenceId, ephem);
 		shared_ptr<ConferenceEphemeralMessageEvent> event;
