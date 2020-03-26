@@ -611,6 +611,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 				} else {
 					recv_msg = marie->stat.last_received_chat_message;
 				}
+				BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_external_body_url(recv_msg));
 
 				if (two_files) {
 					const bctbx_list_t *contents = linphone_chat_message_get_contents(recv_msg);
@@ -1636,6 +1637,7 @@ void lime_transfer_message_base(bool_t encrypt_file,bool_t download_file_from_st
 		} else {
 			recv_msg = marie->stat.last_received_chat_message;
 		}
+		BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_external_body_url(recv_msg));
 
 		if (two_files) {
 			const bctbx_list_t *contents = linphone_chat_message_get_contents(recv_msg);

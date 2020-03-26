@@ -325,6 +325,7 @@ void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, 
 		linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
 		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
 
+		BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_external_body_url(msg));
 		LinphoneContent *fileTransferContent = linphone_chat_message_get_file_transfer_information(msg);
 		BC_ASSERT_TRUE(linphone_content_is_file_transfer(fileTransferContent));
 		linphone_content_set_file_path(fileTransferContent, receive_filepath);
