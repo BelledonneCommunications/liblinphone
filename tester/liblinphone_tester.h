@@ -145,6 +145,8 @@ extern const char* test_password;
 extern const char* test_route;
 extern const char* userhostsfile;
 extern const char* file_transfer_url;
+extern const char* lime_server_c25519_url;
+extern const char* lime_server_c448_url;
 extern bool_t liblinphone_tester_keep_uuid;
 extern bool_t liblinphone_tester_tls_support_disabled;
 extern const MSAudioDiffParams audio_cmp_params;

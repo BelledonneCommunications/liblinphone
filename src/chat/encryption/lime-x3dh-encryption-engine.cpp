@@ -119,10 +119,16 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 	const shared_ptr<Core> core
 ) : EncryptionEngine(core) {
 	engineType = EncryptionEngine::EngineType::LimeX3dh;
-	curve = lime::CurveId::c25519; // c448
+	auto cCore = core->getCCore();
+	// get the curve to use in the config file, default is c25519
+	const std::string curveConfig = linphone_config_get_string(cCore->config, "lime", "curve", "c25519");
+	if (curveConfig.compare("c448") == 0) {
+		curve = lime::CurveId::c448;
+	} else {
+		curve = lime::CurveId::c25519;
+	}
 	_dbAccess = dbAccess;
 	x3dhServerUrl = serverUrl;
-	auto cCore = core->getCCore();
 	limeManager = unique_ptr<LimeManager>(new LimeManager(dbAccess, prov, core));
 	lastLimeUpdate = linphone_config_get_int(cCore->config, "lime", "last_update_time", 0);
 	if (x3dhServerUrl.empty())
