@@ -197,7 +197,14 @@ void AuthInfo::setTlsKeyPath(const string &tlsKeyPath){
 void AuthInfo::writeConfig(LpConfig *config, int pos){
     char key[50];
     char *myHa1;
-    bool_t store_ha1_passwd = !!lp_config_get_int(config, "sip", "store_ha1_passwd", 1);
+    int tmp;
+
+#if TARGET_OS_IPHONE
+    tmp = 0;
+#else
+    tmp = 1;
+#endif
+    bool_t store_ha1_passwd = !!lp_config_get_int(config, "sip", "store_ha1_passwd", tmp);
 
     sprintf(key, "auth_info_%i", pos);
     lp_config_clean_section(config, key);

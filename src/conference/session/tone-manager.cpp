@@ -580,6 +580,7 @@ MSFilter *ToneManager::getAudioResource(AudioResourceType rtype, MSSndCard *card
 	LinphoneCall *call = linphone_core_get_current_call(lc);
 	AudioStream *stream = NULL;
 	RingStream *ringstream;
+	float tmp;
 	if (call) {
 		stream = reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
 	} else if (linphone_core_is_in_conference(lc)) {
@@ -595,7 +596,12 @@ MSFilter *ToneManager::getAudioResource(AudioResourceType rtype, MSSndCard *card
 		lc->ringstream = NULL;
 	}
 	if (lc->ringstream == NULL) {
-		float amp = lp_config_get_float(lc->config, "sound", "dtmf_player_amp", 0.1f);
+#if TARGET_OS_IPHONE
+	tmp = 0.007f;
+#else
+	tmp = 0.1f;
+#endif
+		float amp = lp_config_get_float(lc->config, "sound", "dtmf_player_amp", tmp);
 		MSSndCard *ringcard = lc->sound_conf.lsd_card
 			? lc->sound_conf.lsd_card
 			: card

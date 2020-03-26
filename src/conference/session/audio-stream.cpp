@@ -135,6 +135,7 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 }
 
 void MS2AudioStream::configureAudioStream(){
+	const char *tmpbuf;
 	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
 	if (playcard) {
 		// Set the stream type immediately, as on iOS AudioUnit is instanciated very early because it is 
@@ -152,7 +153,12 @@ void MS2AudioStream::configureAudioStream(){
 
 	// Equalizer location in the graph: 'mic' = in input graph, otherwise in output graph.
 	// Any other value than mic will default to output graph for compatibility.
-	string location = lp_config_get_string(linphone_core_get_config(getCCore()), "sound", "eq_location", "hp");
+#if TARGET_OS_IPHONE
+	tmpbuf = "mic";
+#else
+	tmpbuf = "hp";
+#endif
+	string location = lp_config_get_string(linphone_core_get_config(getCCore()), "sound", "eq_location", tmpbuf);
 	mStream->eq_loc = (location == "mic") ? MSEqualizerMic : MSEqualizerHP;
 	lInfo() << "Equalizer location: " << location;
 
@@ -462,6 +468,7 @@ void MS2AudioStream::setRoute(LinphoneAudioRoute route){
 }
 
 void MS2AudioStream::parameterizeEqualizer(AudioStream *as, LinphoneCore *lc) {
+	const char *tmpbuf;
 	LinphoneConfig *config = linphone_core_get_config(lc);
 	const char *eqActive = lp_config_get_string(config, "sound", "eq_active", nullptr);
 	if (eqActive)
@@ -473,7 +480,12 @@ void MS2AudioStream::parameterizeEqualizer(AudioStream *as, LinphoneCore *lc) {
 		MSFilter *f = as->mic_equalizer;
 		bool enabled = !!lp_config_get_int(config, "sound", "mic_eq_active", 0);
 		ms_filter_call_method(f, MS_EQUALIZER_SET_ACTIVE, &enabled);
-		const char *gains = lp_config_get_string(config, "sound", "mic_eq_gains", nullptr);
+#if TARGET_OS_IPHONE
+	  tmpbuf = "50:2:50 100:2:50";
+#else
+	  tmpbuf = nullptr;
+#endif
+		const char *gains = lp_config_get_string(config, "sound", "mic_eq_gains", tmpbuf);
 		if (enabled && gains) {
 			bctbx_list_t *gainsList = ms_parse_equalizer_string(gains);
 			for (bctbx_list_t *it = gainsList; it; it = bctbx_list_next(it)) {

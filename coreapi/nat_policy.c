@@ -287,8 +287,15 @@ LinphoneNatPolicy * linphone_core_create_nat_policy(LinphoneCore *lc) {
 }
 
 LinphoneNatPolicy * linphone_config_create_nat_policy_from_section(const LinphoneConfig *config, const char* section) {
+	const char *tmpbuf;
+
+#if TARGET_OS_IPHONE
+	tmpbuf = "stun.linphone.org";
+#else
+	tmpbuf = NULL;
+#endif
 	const char *config_ref = lp_config_get_string(config, section, "ref", NULL);
-	const char *server = lp_config_get_string(config, section, "stun_server", NULL);
+	const char *server = lp_config_get_string(config, section, "stun_server", tmpbuf);
 	const char *username = lp_config_get_string(config, section, "stun_server_username", NULL);
 	bctbx_list_t *l = lp_config_get_string_list(config, section, "protocols", NULL);
 	LinphoneNatPolicy *policy;

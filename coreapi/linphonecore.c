@@ -1272,14 +1272,24 @@ static void sound_config_read(LinphoneCore *lc) {
 	/* retrieve all sound devices */
 	build_sound_devices_table(lc);
 
-	devid=lp_config_get_string(lc->config,"sound","playback_dev_id",NULL);
+#if TARGET_OS_IPHONE
+	tmpbuf = "AU: Audio Unit Receiver";
+#else
+	tmpbuf = NULL;
+#endif
+	devid=lp_config_get_string(lc->config,"sound","playback_dev_id",tmpbuf);
 	linphone_core_set_playback_device(lc,devid);
 
-	devid=lp_config_get_string(lc->config,"sound","ringer_dev_id",NULL);
-	linphone_core_set_ringer_device(lc,devid);
-
-	devid=lp_config_get_string(lc->config,"sound","capture_dev_id",NULL);
+	devid=lp_config_get_string(lc->config,"sound","capture_dev_id",tmpbuf);
 	linphone_core_set_capture_device(lc,devid);
+
+#if TARGET_OS_IPHONE
+	tmpbuf = "AQ: Audio Queue Device";
+#else
+	tmpbuf = NULL;
+#endif
+	devid=lp_config_get_string(lc->config,"sound","ringer_dev_id",tmpbuf);
+	linphone_core_set_ringer_device(lc,devid);
 
 	devid=lp_config_get_string(lc->config,"sound","media_dev_id",NULL);
 	linphone_core_set_media_device(lc,devid);
@@ -1455,6 +1465,8 @@ static void sip_config_read(LinphoneCore *lc) {
 	LinphoneSipTransports tr;
 	int i,tmp;
 	int ipv6_default = TRUE;
+	const char *tmpbuf;
+	int tmpint;
 
 	if (lp_config_get_int(lc->config, "sip", "session_expires_value", 0) > 0) {
 		lc->sal->setSessionTimers(linphone_core_get_session_expires_value(lc));
@@ -1465,7 +1477,12 @@ static void sip_config_read(LinphoneCore *lc) {
 	lc->sal->useNoInitialRoute(!!lp_config_get_int(lc->config,"sip","use_no_initial_route",0));
 	lc->sal->useRport(!!lp_config_get_int(lc->config,"sip","use_rport",1));
 
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setSpecs(linphone_config_get_string(lc->config, "sip", "linphone_specs", ""));
+#if TARGET_OS_IPHONE
+	tmpbuf = "groupchat,lime";
+#else
+	tmpbuf = "";
+#endif
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setSpecs(linphone_config_get_string(lc->config, "sip", "linphone_specs", tmpbuf));
 
 	if (!lp_config_get_int(lc->config,"sip","ipv6_migration_done",FALSE) && lp_config_has_entry(lc->config,"sip","use_ipv6")) {
 		lp_config_clean_entry(lc->config,"sip","use_ipv6");
@@ -1599,7 +1616,12 @@ static void sip_config_read(LinphoneCore *lc) {
 	lc->sip_conf.ping_with_options= !!lp_config_get_int(lc->config,"sip","ping_with_options",0);
 	lc->sip_conf.auto_net_state_mon = !!lp_config_get_int(lc->config,"sip","auto_net_state_mon",1);
 	lc->sip_conf.keepalive_period = (unsigned int)lp_config_get_int(lc->config,"sip","keepalive_period",10000);
-	lc->sip_conf.tcp_tls_keepalive = !!lp_config_get_int(lc->config,"sip","tcp_tls_keepalive",0);
+#if TARGET_OS_IPHONE
+	tmpint = 30000;
+#else
+	tmpint = 0;
+#endif
+	lc->sip_conf.tcp_tls_keepalive = !!lp_config_get_int(lc->config,"sip","tcp_tls_keepalive",tmpint);
 	linphone_core_enable_keep_alive(lc, (lc->sip_conf.keepalive_period > 0));
 	lc->sal->useOneMatchingCodecPolicy(!!lp_config_get_int(lc->config,"sip","only_one_codec",0));
 	lc->sal->useDates(!!lp_config_get_int(lc->config,"sip","put_date",0));
@@ -6889,6 +6911,7 @@ void linphone_core_audio_session_activated (LinphoneCore* lc, bool_t actived) {
 }
 
 void linphone_core_callkit_enabled (LinphoneCore* lc, bool_t enabled) {
+	lp_config_set_int(lc->config, "app", "use_callkit", (int)enabled);
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardCallkitEnabled(enabled);
 }
 
