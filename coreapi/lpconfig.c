@@ -475,7 +475,7 @@ fail:
 
 LpConfig *linphone_config_new_with_factory(const char *config_filename, const char *factory_config_filename) {
 	LpConfig *lpconfig=belle_sip_object_new(LinphoneConfig);
-	if (factory_config_filename)
+	if (factory_config_filename && strcmp(factory_config_filename, "") != 0)
 		lpconfig->factory_filename = bctbx_strdup(factory_config_filename);
 	if (_linphone_config_init_from_files(lpconfig, config_filename, factory_config_filename) == 0) {
 		return lpconfig;
