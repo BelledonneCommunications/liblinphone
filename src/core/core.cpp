@@ -558,7 +558,7 @@ bool Core::isFriendListSubscriptionEnabled () const {
 
 void CorePrivate::computeAudioDevicesList() {
 	for (auto &audioDevice : audioDevices) {
-		delete audioDevice;
+		audioDevice->unref();
 	}
 	audioDevices.clear();
 
@@ -628,30 +628,43 @@ void Core::setInputAudioDevice(AudioDevice *audioDevice) {
 	for (const auto &call : getCalls()) {
 		call->setInputAudioDevice(audioDevice);
 	}
-	// TODO: store it as default
 }
 
 void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
 	for (const auto &call : getCalls()) {
 		call->setOutputAudioDevice(audioDevice);
 	}
-	// TODO: store it as default
 }
 
 void Core::setAudioDevice(AudioDevice *audioDevice) {
 	for (const auto &call : getCalls()) {
 		call->setAudioDevice(audioDevice);
 	}
-	// TODO: store it as default
 }
 
 AudioDevice* Core::getInputAudioDevice() const {
-	// TODO get the default
+	shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
+	if (call) {
+		return call->getInputAudioDevice();
+	}
+
+	for (const auto &call : getCalls()) {
+		return call->getInputAudioDevice();
+	}
+
 	return nullptr;
 }
 
 AudioDevice* Core::getOutputAudioDevice() const {
-	// TODO get the default
+	shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
+	if (call) {
+		return call->getOutputAudioDevice();
+	}
+
+	for (const auto &call : getCalls()) {
+		return call->getOutputAudioDevice();
+	}
+
 	return nullptr;
 }
 
