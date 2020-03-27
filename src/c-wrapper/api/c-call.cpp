@@ -703,20 +703,34 @@ LinphoneCall *linphone_call_new_incoming (LinphoneCore *lc, const LinphoneAddres
 }
 
 void linphone_call_set_input_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->setInputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	if (audio_device) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(call)->setInputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	}
 }
 
 void linphone_call_set_output_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->setOutputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	if (audio_device) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(call)->setOutputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	}
 }
 
 void linphone_call_set_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->setAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	if (audio_device) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(call)->setAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	}
 }
 
 const LinphoneAudioDevice* linphone_call_get_input_audio_device(const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getInputAudioDevice()->toC();
+	LinphonePrivate::AudioDevice *audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getInputAudioDevice();
+	if (audioDevice) {
+		return audioDevice->toC();
+	}
+	return NULL;
 }
 const LinphoneAudioDevice* linphone_call_get_output_audio_device(const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getOutputAudioDevice()->toC();
+	LinphonePrivate::AudioDevice *audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getOutputAudioDevice();
+	if (audioDevice) {
+		return audioDevice->toC();
+	}
+	return NULL;
 }
