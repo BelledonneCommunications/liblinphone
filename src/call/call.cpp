@@ -964,13 +964,13 @@ void Call::setAudioDevice(AudioDevice *audioDevice) {
 }
 
 AudioDevice * Call::getInputAudioDevice() const {
+	return getCore()->findAudioDeviceMatchingMsSoundCard(nullptr);
 	// TODO return audio_stream_get_input_ms_snd_card() as AudioDevice
-	return nullptr;
 }
 
 AudioDevice * Call::getOutputAudioDevice() const {
+	return getCore()->findAudioDeviceMatchingMsSoundCard(nullptr);
 	// TODO return audio_stream_get_output_ms_snd_card() as AudioDevice
-	return nullptr;
 }
 
 LINPHONE_END_NAMESPACE

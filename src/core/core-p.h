@@ -138,6 +138,7 @@ public:
 
 	void startEphemeralMessageTimer (time_t expireTime);
 	void stopEphemeralMessageTimer ();
+
 	void computeAudioDevicesList ();
 
 private:

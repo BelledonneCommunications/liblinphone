@@ -1221,6 +1221,8 @@ static void build_sound_devices_table(LinphoneCore *lc){
 	old=lc->sound_conf.cards;
 	lc->sound_conf.cards=devices;
 	if (old!=NULL) ms_free((void *)old);
+	
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->computeAudioDevicesList();
 }
 
 static string get_default_local_ring(LinphoneCore * lc) {

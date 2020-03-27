@@ -69,8 +69,6 @@ void CorePrivate::init () {
 	localListEventHandler = makeUnique<LocalConferenceListEventHandler>(q->getSharedFromThis());
 #endif
 
-	computeAudioDevicesList();
-
 	if (linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		AbstractDb::Backend backend;
 		string uri = L_C_TO_STRING(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
@@ -572,6 +570,15 @@ void CorePrivate::computeAudioDevicesList() {
 		AudioDevice *audioDevice = new AudioDevice(card);
 		audioDevices.push_back(audioDevice);
 	}
+}
+
+AudioDevice* Core::findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard) {
+	for (const auto &audioDevice : getExtendedAudioDevices()) {
+		if (audioDevice->getSoundCard() == soundCard) {
+			return audioDevice;
+		}
+	}
+	return nullptr;
 }
 
 const list<AudioDevice *> Core::getAudioDevices() const {
