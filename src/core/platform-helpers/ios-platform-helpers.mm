@@ -56,6 +56,19 @@ typedef enum {
 	executorCoreStarted
 } SharedCoreState;
 
+string sharedStateToString(int state) {
+   switch(state) {
+      case noCoreStarted:
+         return "noCoreStarted";
+      case mainCoreStarted:
+         return "mainCoreStarted";
+      case executorCoreStarted:
+         return "executorCoreStarted";
+		default:
+         return "Invalid state";
+   }
+}
+
 void on_core_must_stop(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
 
 class IosPlatformHelpers : public GenericPlatformHelpers {
@@ -897,7 +910,7 @@ bool IosPlatformHelpers::canCoreStart() {
 bool IosPlatformHelpers::isSharedCoreStarted() {
     NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
     NSInteger state = [defaults integerForKey:@ACTIVE_SHARED_CORE];
-	ms_message("[SHARED] isSharedCoreStarted %d", (int) state);
+	ms_message("[SHARED] get shared core state : %s", sharedStateToString((int)state).c_str());
 	[defaults release];
 	if (state == SharedCoreState::noCoreStarted) {
 		return false;
@@ -916,7 +929,7 @@ SharedCoreState IosPlatformHelpers::getSharedCoreState() {
  * Set to false in onLinphoneCoreStop() (called in linphone_core_stop)
  */
 void IosPlatformHelpers::setSharedCoreState(SharedCoreState sharedCoreState) {
-	ms_message("[SHARED] setSharedCoreState sharedCoreState: %d", sharedCoreState);
+	ms_message("[SHARED] setSharedCoreState state: %s", sharedStateToString(sharedCoreState).c_str());
     NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
     [defaults setInteger:sharedCoreState forKey:@ACTIVE_SHARED_CORE];
 	[defaults release];
@@ -927,7 +940,7 @@ void IosPlatformHelpers::resetSharedCoreState() {
 }
 
 void IosPlatformHelpers::resetSharedCoreLastUpdateTime() {
-	ms_message("[SHARED] resetSharedCoreLastUpdateTime");
+	ms_debug("[SHARED] resetSharedCoreLastUpdateTime");
     NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
     [defaults setInteger:(NSInteger)ms_get_cur_time_ms() forKey:@LAST_UPDATE_TIME_SHARED_CORE];
 	[defaults release];
