@@ -46,9 +46,9 @@ public:
         Play = LinphoneAudioDeviceCapabilityPlay
     };
 
-    AudioDevice(const MSSndCard *soundCard);
+    AudioDevice(MSSndCard *soundCard);
 
-    const MSSndCard *getSoundCard() const;
+    MSSndCard *getSoundCard() const;
     const std::string& getDeviceName() const;
     const std::string& getDriverName() const;
     const Capabilities& getCapabilities() const;
@@ -57,7 +57,7 @@ public:
     std::string toString() const override;
 
 private:
-    const MSSndCard *soundCard;
+    MSSndCard *soundCard;
     std::string deviceName;
     std::string driverName;
     Capabilities capabilities;

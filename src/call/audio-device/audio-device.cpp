@@ -24,7 +24,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-AudioDevice::AudioDevice(const MSSndCard *soundCard)
+AudioDevice::AudioDevice(MSSndCard *soundCard)
     :soundCard(soundCard)
 {
     const char * name = ms_snd_card_get_name(soundCard);
@@ -78,7 +78,7 @@ AudioDevice::AudioDevice(const MSSndCard *soundCard)
     }
 }
 
-const MSSndCard *AudioDevice::getSoundCard() const {
+MSSndCard *AudioDevice::getSoundCard() const {
     return soundCard;
 }
 

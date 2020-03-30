@@ -945,14 +945,14 @@ void Call::setSpeakerVolumeGain (float value) {
 }
 
 void Call::setInputAudioDevice(AudioDevice *audioDevice) {
-	// TODO:
-	// get audio stream from mediaSession
-	//audio_stream_set_input_ms_snd_card(audioDevice->getSoundCard());
+	L_D();
+	static_pointer_cast<MediaSession>(d->getActiveSession())->setInputAudioDevice(audioDevice);
 	linphone_call_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 }
 
 void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
-	// TODO: audio_stream_set_output_ms_snd_card(audioDevice->getSoundCard());
+	L_D();
+	static_pointer_cast<MediaSession>(d->getActiveSession())->setOutputAudioDevice(audioDevice);
 	linphone_call_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 }
 
@@ -965,14 +965,14 @@ void Call::setAudioDevice(AudioDevice *audioDevice) {
 	}
 }
 
-AudioDevice * Call::getInputAudioDevice() const {
-	return getCore()->findAudioDeviceMatchingMsSoundCard(nullptr);
-	// TODO return audio_stream_get_input_ms_snd_card() as AudioDevice
+AudioDevice* Call::getInputAudioDevice() const {
+	L_D();
+	return static_pointer_cast<MediaSession>(d->getActiveSession())->getInputAudioDevice();
 }
 
-AudioDevice * Call::getOutputAudioDevice() const {
-	return getCore()->findAudioDeviceMatchingMsSoundCard(nullptr);
-	// TODO return audio_stream_get_output_ms_snd_card() as AudioDevice
+AudioDevice* Call::getOutputAudioDevice() const {
+	L_D();
+	return static_pointer_cast<MediaSession>(d->getActiveSession())->getOutputAudioDevice();
 }
 
 LINPHONE_END_NAMESPACE

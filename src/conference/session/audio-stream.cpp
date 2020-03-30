@@ -699,6 +699,24 @@ bool MS2AudioStream::echoCancellationEnabled()const{
 	ms_filter_call_method(mStream->ec, MS_ECHO_CANCELLER_GET_BYPASS_MODE, &val);
 	return !val;
 }
+	
+void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
+	audio_stream_set_input_ms_snd_card(mStream, audioDevice->getSoundCard());
+}
+
+void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
+	audio_stream_set_output_ms_snd_card(mStream, audioDevice->getSoundCard());
+}
+
+AudioDevice* MS2AudioStream::getInputDevice() const {
+	MSSndCard *card = audio_stream_get_input_ms_snd_card(mStream);
+	return getCore().findAudioDeviceMatchingMsSoundCard(card);
+}
+
+AudioDevice* MS2AudioStream::getOutputDevice() const {
+	MSSndCard *card = audio_stream_get_output_ms_snd_card(mStream);
+	return getCore().findAudioDeviceMatchingMsSoundCard(card);
+}
 
 void MS2AudioStream::finish(){
 	if (mStream){
