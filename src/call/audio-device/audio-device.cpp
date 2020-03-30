@@ -114,6 +114,22 @@ string AudioDevice::toString() const {
         case AudioDevice::Type::Bluetooth:
             ss << "Bluetooth";
             break;
+        case AudioDevice::Type::Telephony:
+            ss << "Telephony";
+            break;
+        case AudioDevice::Type::AuxLine:
+            ss << "AuxLine";
+            break;
+        case AudioDevice::Type::GenericUsb:
+            ss << "Generic USB";
+            break;
+        case AudioDevice::Type::Headset:
+            ss << "Headset";
+            break;
+        case AudioDevice::Type::Headphones:
+            ss << "Headphones";
+            break;
+        case AudioDevice::Type::Unknown:
         default:
             ss << "Unknown";
             break;

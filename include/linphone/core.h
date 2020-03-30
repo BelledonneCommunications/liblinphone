@@ -6324,7 +6324,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_audio_devices(const LinphoneCore
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_extended_audio_devices(const LinphoneCore *core);
 
 /**
- * Sets the given #LinphoneAudioDevice as input for all active calls and will be used by default for next calls.
+ * Sets the given #LinphoneAudioDevice as input for all active calls.
  * @param[in] core The #LinphoneCore
  * @param[in] audio_device The #LinphoneAudioDevice
  * @ingroup audio
@@ -6332,7 +6332,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_extended_audio_devices(const Lin
 LINPHONE_PUBLIC void linphone_core_set_input_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
 
 /**
- * Sets the given #LinphoneAudioDevice as output for all active calls and will be used by default for next calls.
+ * Sets the given #LinphoneAudioDevice as output for all active calls.
  * @param[in] core The #LinphoneCore
  * @param[in] audio_device The #LinphoneAudioDevice
  * @ingroup audio
@@ -6340,7 +6340,7 @@ LINPHONE_PUBLIC void linphone_core_set_input_audio_device(LinphoneCore *core, Li
 LINPHONE_PUBLIC void linphone_core_set_output_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
 
 /**
- * Sets the given #LinphoneAudioDevice as input and/or output for all active calls and will be used by default for next calls.
+ * Sets the given #LinphoneAudioDevice as input and/or output for all active calls.
  * @param[in] core The #LinphoneCore
  * @param[in] audio_device The #LinphoneAudioDevice
  * @ingroup audio
@@ -6348,17 +6348,19 @@ LINPHONE_PUBLIC void linphone_core_set_output_audio_device(LinphoneCore *core, L
 LINPHONE_PUBLIC void linphone_core_set_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
 
 /**
- * Gets the current default input device
+ * Gets the input audio device for the current call
  * @param[in] core The #LinphoneCore
- * @returns The default input audio device
+ * @returns The input audio device for the current or first call, NULL if there is no call
+ * @maybenil
  * @ingroup audio
  */
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_input_audio_device(const LinphoneCore *core);
 
 /**
- * Gets the current default output device
+ * Gets the output audio device for the current call
  * @param[in] core The #LinphoneCore
- * @returns The default output audio device
+ * @returns The output audio device for the current or first call, NULL if there is no call
+ * @maybenil
  * @ingroup audio
  */
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_output_audio_device(const LinphoneCore *core);
