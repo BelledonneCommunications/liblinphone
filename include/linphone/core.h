@@ -235,6 +235,8 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb chat_room_ephemeral_message_deleted;
 	LinphoneCoreCbsFirstCallStartedCb first_call_started;
 	LinphoneCoreCbsLastCallEndedCb last_call_ended;
+	LinphoneCoreCbsAudioDeviceChangedCb audio_device_changed;
+	LinphoneCoreCbsAudioDevicesListUpdatedCb audio_devices_list_updated;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -836,6 +838,34 @@ LINPHONE_PUBLIC LinphoneCoreCbsLastCallEndedCb linphone_core_cbs_get_last_call_e
  * @param[in] cb The callback to use
  **/
 LINPHONE_PUBLIC void linphone_core_cbs_set_last_call_ended(LinphoneCoreCbs *cbs, LinphoneCoreCbsLastCallEndedCb cb);
+
+/**
+ * Gets the audio device changed callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsAudioDeviceChangedCb linphone_core_cbs_get_audio_device_changed(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the audio device changed callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ **/
+LINPHONE_PUBLIC void linphone_core_cbs_set_audio_device_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsAudioDeviceChangedCb cb);
+
+/**
+ * Gets the audio devices list updated callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsAudioDevicesListUpdatedCb linphone_core_cbs_get_audio_devices_list_updated(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the audio devices list updated callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ **/
+LINPHONE_PUBLIC void linphone_core_cbs_set_audio_devices_list_updated(LinphoneCoreCbs *cbs, LinphoneCoreCbsAudioDevicesListUpdatedCb cb);
 
 /**
  * @brief Sets a callback to call each time the echo-canceler calibration is completed.

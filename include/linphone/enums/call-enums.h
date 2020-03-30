@@ -55,10 +55,16 @@ typedef enum _LinphoneCallState{
  * @ingroup audio
  */
 typedef enum _LinphoneAudioDeviceType {
+	LinphoneAudioDeviceTypeUnknown, /** Unknown */
 	LinphoneAudioDeviceTypeMicrophone, /** Microphone */
 	LinphoneAudioDeviceTypeEarpiece, /** Earpiece */
 	LinphoneAudioDeviceTypeSpeaker, /** Speaker */
 	LinphoneAudioDeviceTypeBluetooth, /** Bluetooth */
+	LinphoneAudioDeviceTypeTelephony, /** Telephony */
+	LinphoneAudioDeviceTypeAuxLine, /** AuxLine */
+	LinphoneAudioDeviceTypeGenericUsb, /** GenericUsb */
+	LinphoneAudioDeviceTypeHeadset, /** Headset */
+	LinphoneAudioDeviceTypeHeadphones, /** Headphones */
 } LinphoneAudioDeviceType;
 
 /**

@@ -29,10 +29,16 @@ LINPHONE_BEGIN_NAMESPACE
 class AudioDevice : public bellesip::HybridObject<LinphoneAudioDevice, AudioDevice> {
 public:
 	enum Type {
+        Unknown = LinphoneAudioDeviceTypeUnknown,
 		Microphone = LinphoneAudioDeviceTypeMicrophone,
         Earpiece = LinphoneAudioDeviceTypeEarpiece,
         Speaker = LinphoneAudioDeviceTypeSpeaker,
-        Bluetooth
+        Bluetooth = LinphoneAudioDeviceTypeBluetooth,
+        Telephony = LinphoneAudioDeviceTypeTelephony,
+        AuxLine = LinphoneAudioDeviceTypeAuxLine,
+        GenericUsb = LinphoneAudioDeviceTypeGenericUsb,
+        Headset = LinphoneAudioDeviceTypeHeadset,
+        Headphones
 	};
 
     enum Capabilities {

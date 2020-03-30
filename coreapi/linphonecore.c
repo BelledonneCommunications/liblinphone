@@ -528,6 +528,22 @@ void linphone_core_cbs_set_last_call_ended(LinphoneCoreCbs *cbs, LinphoneCoreCbs
 	cbs->vtable->last_call_ended = cb;
 }
 
+LinphoneCoreCbsAudioDeviceChangedCb linphone_core_cbs_get_audio_device_changed(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->audio_device_changed;
+}
+
+void linphone_core_cbs_set_audio_device_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsAudioDeviceChangedCb cb) {
+	cbs->vtable->audio_device_changed = cb;
+}
+
+LinphoneCoreCbsAudioDevicesListUpdatedCb linphone_core_cbs_get_audio_devices_list_updated(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->audio_devices_list_updated;
+}
+
+void linphone_core_cbs_set_audio_devices_list_updated(LinphoneCoreCbs *cbs, LinphoneCoreCbsAudioDevicesListUpdatedCb cb) {
+	cbs->vtable->audio_devices_list_updated = cb;
+}
+
 void linphone_core_cbs_set_ec_calibration_result(LinphoneCoreCbs *cbs, LinphoneCoreCbsEcCalibrationResultCb cb) {
 	cbs->vtable->ec_calibration_result = cb;
 }
@@ -1223,6 +1239,7 @@ static void build_sound_devices_table(LinphoneCore *lc){
 	if (old!=NULL) ms_free((void *)old);
 	
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->computeAudioDevicesList();
+	linphone_core_notify_audio_devices_list_updated(lc);
 }
 
 static string get_default_local_ring(LinphoneCore * lc) {

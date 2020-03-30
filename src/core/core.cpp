@@ -628,18 +628,21 @@ void Core::setInputAudioDevice(AudioDevice *audioDevice) {
 	for (const auto &call : getCalls()) {
 		call->setInputAudioDevice(audioDevice);
 	}
+	linphone_core_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 }
 
 void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
 	for (const auto &call : getCalls()) {
 		call->setOutputAudioDevice(audioDevice);
 	}
+	linphone_core_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 }
 
 void Core::setAudioDevice(AudioDevice *audioDevice) {
 	for (const auto &call : getCalls()) {
 		call->setAudioDevice(audioDevice);
 	}
+	linphone_core_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 }
 
 AudioDevice* Core::getInputAudioDevice() const {

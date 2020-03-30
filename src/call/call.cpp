@@ -948,10 +948,12 @@ void Call::setInputAudioDevice(AudioDevice *audioDevice) {
 	// TODO:
 	// get audio stream from mediaSession
 	//audio_stream_set_input_ms_snd_card(audioDevice->getSoundCard());
+	linphone_call_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 }
 
 void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
 	// TODO: audio_stream_set_output_ms_snd_card(audioDevice->getSoundCard());
+	linphone_call_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 }
 
 void Call::setAudioDevice(AudioDevice *audioDevice) {

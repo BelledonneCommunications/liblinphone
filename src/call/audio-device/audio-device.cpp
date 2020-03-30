@@ -39,7 +39,43 @@ AudioDevice::AudioDevice(const MSSndCard *soundCard)
         capabilities = Capabilities::Play;
     }
 
-    // TODO: how do we get type & driverName ?
+    driverName = ms_snd_card_get_driver_type(soundCard);
+
+    MSSndCardDeviceType type = ms_snd_card_get_device_type(soundCard);
+    switch (type) {
+        case MS_SND_CARD_DEVICE_TYPE_MICROPHONE:
+            deviceType = AudioDevice::Type::Microphone;
+            break;
+        case MS_SND_CARD_DEVICE_TYPE_EARPIECE:
+            deviceType = AudioDevice::Type::Earpiece;
+            break;
+        case MS_SND_CARD_DEVICE_TYPE_SPEAKER:
+            deviceType = AudioDevice::Type::Speaker;
+            break;
+        case MS_SND_CARD_DEVICE_TYPE_BLUETOOTH:
+            deviceType = AudioDevice::Type::Bluetooth;
+            break;
+        case MS_SND_CARD_DEVICE_TYPE_TELEPHONY:
+            deviceType = AudioDevice::Type::Telephony;
+            break;
+        case MS_SND_CARD_DEVICE_TYPE_AUX_LINE:
+            deviceType = AudioDevice::Type::AuxLine;
+            break;
+        case MS_SND_CARD_DEVICE_TYPE_GENERIC_USB:
+            deviceType = AudioDevice::Type::GenericUsb;
+            break;
+        case MS_SND_CARD_DEVICE_TYPE_HEADSET:
+            deviceType = AudioDevice::Type::Headset;
+            break;
+        case MS_SND_CARD_DEVICE_TYPE_HEADPHONES:
+            deviceType = AudioDevice::Type::Headphones;
+            break;
+        default:
+        case MS_SND_CARD_DEVICE_TYPE_UNKNOWN:
+            deviceType = AudioDevice::Type::Unknown;
+            lWarning() << "Device [" << deviceName << "] type is unknown";
+            break;
+    }
 }
 
 const MSSndCard *AudioDevice::getSoundCard() const {
