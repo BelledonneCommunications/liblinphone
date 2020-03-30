@@ -763,7 +763,7 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::getChatMsgAndUpdateList(const s
 
 std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(const string &callId) {
 	std::shared_ptr<ChatMessage> chatMessage;
-	ms_message("[push] processPushNotificationMessage");
+	ms_message("[push] processPushNotificationMessage for callid [%s]", callId.c_str());
 
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
  	linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
