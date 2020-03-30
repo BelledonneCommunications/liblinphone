@@ -26,8 +26,9 @@
 #include <SystemConfiguration/SystemConfiguration.h>
 #include <SystemConfiguration/CaptiveNetwork.h>
 #include <CoreLocation/CoreLocation.h>
-#include  <notify_keys.h>
+#include <notify_keys.h>
 #include <mutex>
+#include <set>
 #include <belr/grammarbuilder.h>
 
 #include "linphone/utils/general.h"
@@ -121,9 +122,9 @@ public:
 	void unlockSharedCoreIfNeeded() override;
 
 	// push notif
-	void resetMsgCounter();
-	void incrementMsgCounter();
-	void decrementMsgCounter();
+	void clearCallIdList();
+	void addNewCallIdToList(string callId);
+	void removeCallIdFromList(string callId);
 	void setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom);
 	std::string getChatRoomAddr();
 	void reinitTimer();
@@ -160,6 +161,9 @@ private:
 	bool canMainCoreStart();
 	void stopSharedCores();
 
+	//push notif
+	std::shared_ptr<ChatMessage> getChatMsgAndUpdateList(const string &callId);
+
 	long int mCpuLockTaskId;
 	int mCpuLockCount;
 	SCNetworkReachabilityRef reachabilityRef = NULL;
@@ -168,9 +172,9 @@ private:
 	static const string Framework;
 	std::string mAppGroupId = "";
 
-	// push notif
-	static int newMsgNb;
-	static std::mutex newMsgNbMutex;
+	// push notif attributes
+	static set<string> callIdList;
+	static std::mutex callIdListMutex;
 	static std::mutex executorCoreMutex;
 	std::shared_ptr<ChatRoom> mChatRoomInvite = nullptr;
 	std::string mChatRoomAddr;
@@ -184,8 +188,8 @@ static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observe
 // =============================================================================
 
 const string IosPlatformHelpers::Framework = "org.linphone.linphone";
-int IosPlatformHelpers::newMsgNb = 0;
-std::mutex IosPlatformHelpers::newMsgNbMutex;
+set<string> IosPlatformHelpers::callIdList = set<string>();
+std::mutex IosPlatformHelpers::callIdListMutex;
 std::mutex IosPlatformHelpers::executorCoreMutex;
 
 IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
@@ -684,10 +688,10 @@ string IosPlatformHelpers::getWifiSSID(void) {
 
 std::shared_ptr<ChatMessage> IosPlatformHelpers::getPushNotificationMessage(const string &callId) {
 	ms_message("[push] getPushNotificationMessage");
-	incrementMsgCounter();
+	addNewCallIdToList(callId);
 	switch(getSharedCoreState()) {
 		case SharedCoreState::mainCoreStarted:
-			resetMsgCounter();
+			clearCallIdList();
 			IosPlatformHelpers::executorCoreMutex.unlock();
 			ms_message("[push] mainCoreStarted");
 			return nullptr;
@@ -718,33 +722,43 @@ std::shared_ptr<ChatRoom> IosPlatformHelpers::getPushNotificationChatRoom(const 
 	}
 }
 
-void IosPlatformHelpers::resetMsgCounter() {
-	IosPlatformHelpers::newMsgNbMutex.lock();
-	IosPlatformHelpers::newMsgNb = 0;
-	IosPlatformHelpers::newMsgNbMutex.unlock();
-	ms_message("[push] reset msg counter");
+void IosPlatformHelpers::clearCallIdList() {
+	IosPlatformHelpers::callIdListMutex.lock();
+	IosPlatformHelpers::callIdList.clear();
+	IosPlatformHelpers::callIdListMutex.unlock();
+	ms_debug("[push] clear callIdList");
 }
 
-void IosPlatformHelpers::incrementMsgCounter() {
-	IosPlatformHelpers::newMsgNbMutex.lock();
-	IosPlatformHelpers::newMsgNb++;
-	IosPlatformHelpers::newMsgNbMutex.unlock();
-	ms_message("[push] increment msg counter : %d", IosPlatformHelpers::newMsgNb);
+void IosPlatformHelpers::addNewCallIdToList(string callId) {
+	IosPlatformHelpers::callIdListMutex.lock();
+	IosPlatformHelpers::callIdList.insert(callId);
+	IosPlatformHelpers::callIdListMutex.unlock();
+	ms_debug("[push] add %s to callIdList if not already present", callId.c_str());
 }
 
-void IosPlatformHelpers::decrementMsgCounter() {
-	IosPlatformHelpers::newMsgNbMutex.lock();
-	IosPlatformHelpers::newMsgNb--;
-	IosPlatformHelpers::newMsgNbMutex.unlock();
-	ms_message("[push] decrement msg counter : %d", IosPlatformHelpers::newMsgNb);
+void IosPlatformHelpers::removeCallIdFromList(string callId) {
+	IosPlatformHelpers::callIdListMutex.lock();
+	if (IosPlatformHelpers::callIdList.erase(callId)) {
+		ms_message("[push] removed %s from callIdList", callId.c_str());
+	} else {
+		ms_message("[push] unable to remove %s from callIdList: not found", callId.c_str());
+	}
+	IosPlatformHelpers::callIdListMutex.unlock();
 }
 
 static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
 	const char *contentType = linphone_chat_message_get_content_type(message);
 	if (strcmp(contentType, "text/plain") == 0 || strcmp(contentType, "image/jpeg") == 0) {
 		ms_message("[push] msg [%p] received from chat room [%p]", message, room);
-		static_cast<LinphonePrivate::IosPlatformHelpers*>(lc->platform_helper)->decrementMsgCounter();
+		const char *callId = linphone_chat_message_get_call_id(message);
+		static_cast<LinphonePrivate::IosPlatformHelpers*>(lc->platform_helper)->removeCallIdFromList(callId);
 	}
+}
+
+std::shared_ptr<ChatMessage> IosPlatformHelpers::getChatMsgAndUpdateList(const string &callId) {
+	std::shared_ptr<ChatMessage> msg = getCore()->findChatMessageFromCallId(callId);
+	if (msg) removeCallIdFromList(callId);
+	return msg;
 }
 
 std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(const string &callId) {
@@ -761,7 +775,7 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(
 	}
 	ms_message("[push] core started");
 
-	chatMessage = getCore()->findChatMessageFromCallId(callId);
+	chatMessage = getChatMsgAndUpdateList(callId);
 	ms_message("[push] message already in db? %s", chatMessage? "yes" : "no");
 	if (chatMessage) {
 		linphone_core_cbs_unref(cbs);
@@ -772,21 +786,21 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(
 	uint64_t secondsTimer = 0;
 	reinitTimer();
 
-	while (ms_get_cur_time_ms() - mTimer < mMaxIterationTimeMs && (0 < newMsgNb || !chatMessage)) {
-		ms_message("[push] wait for msg. msg counter = %d", IosPlatformHelpers::newMsgNb);
+	while (ms_get_cur_time_ms() - mTimer < mMaxIterationTimeMs && (!IosPlatformHelpers::callIdList.empty() || !chatMessage)) {
+		ms_message("[push] wait for msg. callIdList size = %lu", IosPlatformHelpers::callIdList.size());
 		linphone_core_iterate(getCore()->getCCore());
 		ms_usleep(50000);
-		if (newMsgNb <= 0 && ms_get_cur_time_ms() - secondsTimer >= 1000) {
-			chatMessage = getCore()->findChatMessageFromCallId(callId);
+		if (IosPlatformHelpers::callIdList.empty() && ms_get_cur_time_ms() - secondsTimer >= 1000) {
+			chatMessage = getChatMsgAndUpdateList(callId);
 			secondsTimer = ms_get_cur_time_ms();
 		}
 	}
 
 	/* In case we wait for 25 seconds, there is probably a problem. So we reset the msg
 	counter to prevent each push to wait 25 sec for messages that won't be received */
-	if (ms_get_cur_time_ms() - mTimer >= 25000) resetMsgCounter();
+	if (ms_get_cur_time_ms() - mTimer >= 25000) clearCallIdList();
 
-	chatMessage = getCore()->findChatMessageFromCallId(callId);
+	chatMessage = getChatMsgAndUpdateList(callId);
 	ms_message("[push] message received? %s", chatMessage? "yes" : "no");
 
 	linphone_core_cbs_unref(cbs);
@@ -957,7 +971,7 @@ void IosPlatformHelpers::unlockSharedCoreIfNeeded() {
 	if ((NSInteger)ms_get_cur_time_ms() - getSharedCoreLastUpdateTime() > 30000) {
 		ms_message("[SHARED] unlockSharedCoreIfNeeded : no update during last 30 sec");
 		resetSharedCoreState();
-		IosPlatformHelpers::newMsgNbMutex.unlock();
+		IosPlatformHelpers::callIdListMutex.unlock();
 		IosPlatformHelpers::executorCoreMutex.unlock();
 	}
 	resetSharedCoreLastUpdateTime();
