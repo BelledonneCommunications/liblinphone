@@ -639,6 +639,17 @@ static void _close_log_collection_file(void) {
 	}
 }
 
+#if !ANDROID  && !__APPLE__
+static const char* getprogname() {
+#if defined(__GLIBC__)
+  return program_invocation_short_name
+#else
+	//not known yet on windows
+	return""
+#endif
+}
+#endif
+
 static void linphone_core_log_collection_handler(const char *domain, OrtpLogLevel level, const char *fmt, va_list args) {
 	const char *lname="undef";
 	char *msg;
@@ -686,8 +697,8 @@ static void linphone_core_log_collection_handler(const char *domain, OrtpLogLeve
 	}
 	if (liblinphone_log_collection_file) {
 		ortp_mutex_lock(&liblinphone_log_collection_mutex);
-		ret = fprintf(liblinphone_log_collection_file,"%i-%.2i-%.2i %.2i:%.2i:%.2i:%.3i [%s] %s %s\n",
-			1900 + lt->tm_year, lt->tm_mon + 1, lt->tm_mday, lt->tm_hour, lt->tm_min, lt->tm_sec, (int)(tp.tv_usec / 1000), domain, lname, msg);
+		ret = fprintf(liblinphone_log_collection_file,"%i-%.2i-%.2i %.2i:%.2i:%.2i:%.3i [%s/%s] %s %s\n",
+					  1900 + lt->tm_year, lt->tm_mon + 1, lt->tm_mday, lt->tm_hour, lt->tm_min, lt->tm_sec, (int)(tp.tv_usec / 1000), getprogname(), domain, lname, msg);
 		fflush(liblinphone_log_collection_file);
 		if (ret > 0) {
 			liblinphone_log_collection_file_size += (size_t)ret;
