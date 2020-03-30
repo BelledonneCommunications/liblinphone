@@ -498,3 +498,7 @@ void linphone_chat_message_start_file_download (
 	msg->message_state_changed_user_data = ud;
 	linphone_chat_message_download_file(msg);
 }
+
+const char *linphone_chat_message_get_call_id(const LinphoneChatMessage *msg) {
+	return L_STRING_TO_C(L_GET_PRIVATE_FROM_C_OBJECT(msg)->getCallId());
+}
