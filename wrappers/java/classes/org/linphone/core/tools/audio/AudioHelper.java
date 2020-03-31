@@ -47,6 +47,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     private AudioFocusRequestCompat mCallRequest;
     private MediaPlayer mPlayer;
     private int mVolumeBeforeEchoTest;
+    private AudioDevice mPreviousDefaultOutputAudioDevice;
 
     public AudioHelper(Context context) {
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
@@ -227,23 +228,27 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     }
 
     private void routeAudioToEarpiece() {
+        // Let's restore the default output device before the echo calibration or test
         Core core = CoreManager.instance().getCore();
-        for (AudioDevice audioDevice : core.getAudioDevices()) {
-            if (audioDevice.getType() == AudioDevice.Type.Earpiece) {
-                Log.i("[Audio Helper] Found earpiece audio device [" + audioDevice.getDeviceName() + "], routing audio to it");
-                core.setOutputAudioDevice(audioDevice);
-                return;
-            }
-        }
-        Log.e("[Audio Helper] Couldn't find earpiece audio device");
+        core.setDefaultOutputAudioDevice(mPreviousDefaultOutputAudioDevice);
+        Log.i("[Audio Helper] Restored previous default output audio device: " + mPreviousDefaultOutputAudioDevice);
+        mPreviousDefaultOutputAudioDevice = null;
     }
 
     private void routeAudioToSpeaker() {
+        // For echo canceller calibration & echo tester, we can't change the soundcard dynamically as the stream isn't created yet...
         Core core = CoreManager.instance().getCore();
+        mPreviousDefaultOutputAudioDevice = core.getDefaultOutputAudioDevice();
+        if (mPreviousDefaultOutputAudioDevice.getType() == AudioDevice.Type.Speaker) {
+            Log.i("[Audio Helper] Current default output audio device is already the speaker: " + mPreviousDefaultOutputAudioDevice);
+            return;
+        }
+        Log.i("[Audio Helper] Saved current default output audio device: " + mPreviousDefaultOutputAudioDevice);
+        
         for (AudioDevice audioDevice : core.getAudioDevices()) {
             if (audioDevice.getType() == AudioDevice.Type.Speaker) {
-                Log.i("[Audio Helper] Found speaker audio device [" + audioDevice.getDeviceName() + "], routing audio to it");
-                core.setOutputAudioDevice(audioDevice);
+                Log.i("[Audio Helper] Found speaker device, replacing default output audio device with: " + audioDevice);
+                core.setDefaultOutputAudioDevice(audioDevice);
                 return;
             }
         }
