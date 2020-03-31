@@ -636,6 +636,10 @@ int Core::getUnreadChatMessageCountFromActiveLocals () const {
 
 std::shared_ptr<ChatMessage> Core::getPushNotificationMessage (const std::string &callId) const {
 	std::shared_ptr<ChatMessage> msg = static_cast<PlatformHelpers *>(getCCore()->platform_helper)->getPushNotificationMessage(callId);
+	if (linphone_core_get_global_state(getCCore()) == LinphoneGlobalOn && getPlatformHelpers(getCCore())->isCoreStopRequired()) {
+		lInfo() << "[SHARED] Executor Shared Core is beeing stopped by Main Shared Core";
+		linphone_core_stop(getCCore());
+	}
 	return msg;
 }
 
