@@ -68,7 +68,7 @@ void *thread_shared_main_core_stops_executor_core(void *arguments) {
 #if TARGET_OS_IPHONE
 	LinphoneCoreManager *executor_mgr = (LinphoneCoreManager *)arguments;
 	LinphoneCoreManager *main_mgr = linphone_core_manager_create_shared("", TEST_GROUP_ID, TRUE, executor_mgr);
-
+	ms_sleep(5); // for synchro with main thread
 	linphone_core_manager_start(main_mgr, TRUE);
 	BC_ASSERT_TRUE(wait_for_until(main_mgr->lc, NULL, &main_mgr->stat.number_of_LinphoneGlobalOn, 1, 2000));
 	linphone_core_manager_destroy(main_mgr);
@@ -90,6 +90,10 @@ static void shared_main_core_stops_executor_core(void) {
 	if (pthread_create(&main_core_thread, NULL, &thread_shared_main_core_stops_executor_core, (void *)executor_mgr)) {
 		ms_fatal("Error creating main_core_thread thread");
 	}
+
+	// linphone_core_stop() will be called by this when main core try to start
+	linphone_core_get_new_message_from_callid(executor_mgr->lc, "dummy_call_id");
+
 	BC_ASSERT_TRUE(
 		wait_for_until(executor_mgr->lc, NULL, &executor_mgr->stat.number_of_LinphoneGlobalShutdown, 1, 2000));
 
