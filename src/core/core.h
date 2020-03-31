@@ -184,7 +184,7 @@ public:
 	// Audio devices.
 	// ---------------------------------------------------------------------------
 
-	AudioDevice *findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard);
+	AudioDevice *findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard) const;
 	const std::list<AudioDevice *> getAudioDevices() const;
 	const std::list<AudioDevice *> getExtendedAudioDevices() const;
 
@@ -193,6 +193,11 @@ public:
 	void setAudioDevice(AudioDevice *audioDevice);
 	AudioDevice *getInputAudioDevice() const;
 	AudioDevice *getOutputAudioDevice() const;
+
+	void setDefaultInputAudioDevice(AudioDevice *audioDevice);
+	void setDefaultOutputAudioDevice(AudioDevice *audioDevice);
+	AudioDevice* getDefaultInputAudioDevice() const;
+	AudioDevice* getDefaultOutputAudioDevice() const;
 
 	// ---------------------------------------------------------------------------
 	// Misc.

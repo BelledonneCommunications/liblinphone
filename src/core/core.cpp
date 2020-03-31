@@ -572,7 +572,7 @@ void CorePrivate::computeAudioDevicesList() {
 	}
 }
 
-AudioDevice* Core::findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard) {
+AudioDevice* Core::findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard) const {
 	for (const auto &audioDevice : getExtendedAudioDevices()) {
 		if (audioDevice->getSoundCard() == soundCard) {
 			return audioDevice;
@@ -669,6 +669,24 @@ AudioDevice* Core::getOutputAudioDevice() const {
 	}
 
 	return nullptr;
+}
+
+void Core::setDefaultInputAudioDevice(AudioDevice *audioDevice) {
+	linphone_core_set_capture_device(getCCore(), audioDevice->getId().c_str());
+}
+
+void Core::setDefaultOutputAudioDevice(AudioDevice *audioDevice) {
+	linphone_core_set_playback_device(getCCore(), audioDevice->getId().c_str());
+}
+
+AudioDevice* Core::getDefaultInputAudioDevice() const {
+	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	return findAudioDeviceMatchingMsSoundCard(card);
+}
+
+AudioDevice* Core::getDefaultOutputAudioDevice() const {
+	MSSndCard *card = getCCore()->sound_conf.play_sndcard;
+	return findAudioDeviceMatchingMsSoundCard(card);
 }
 
 // -----------------------------------------------------------------------------

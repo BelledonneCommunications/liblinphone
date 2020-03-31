@@ -6365,6 +6365,38 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_input_audio_device(
  */
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_output_audio_device(const LinphoneCore *core);
 
+/**
+ * Sets the given #LinphoneAudioDevice as default input for next calls.
+ * @param[in] core The #LinphoneCore
+ * @param[in] audio_device The #LinphoneAudioDevice
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC void linphone_core_set_default_input_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
+
+/**
+ * Sets the given #LinphoneAudioDevice as default output for next calls.
+ * @param[in] core The #LinphoneCore
+ * @param[in] audio_device The #LinphoneAudioDevice
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC void linphone_core_set_default_output_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
+
+/**
+ * Gets the default input audio device
+ * @param[in] core The #LinphoneCore
+ * @returns The default input audio device
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio_device(const LinphoneCore *core);
+
+/**
+ * Gets the default output audio device 
+ * @param[in] core The #LinphoneCore
+ * @returns The default output audio device
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_output_audio_device(const LinphoneCore *core);
+
 
 #ifdef __cplusplus
 }

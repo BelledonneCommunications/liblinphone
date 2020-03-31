@@ -53,6 +53,7 @@ public:
     const std::string& getDriverName() const;
     const Capabilities& getCapabilities() const;
     const Type& getType() const;
+    std::string getId() const;
 
     std::string toString() const override;
 

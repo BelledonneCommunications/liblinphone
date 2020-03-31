@@ -98,6 +98,10 @@ const AudioDevice::Type& AudioDevice::getType() const {
     return deviceType;
 }
 
+string AudioDevice::getId() const {
+    return ms_snd_card_get_string_id(soundCard);
+}
+
 string AudioDevice::toString() const {
     std::ostringstream ss;
     ss << driverName << ": driver [" << driverName << "], type [";

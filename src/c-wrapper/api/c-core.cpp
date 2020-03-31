@@ -177,3 +177,31 @@ const LinphoneAudioDevice* linphone_core_get_output_audio_device(const LinphoneC
 	}
 	return NULL;
 }
+
+void linphone_core_set_default_input_audio_device(LinphoneCore *lc, LinphoneAudioDevice *audio_device) {
+	if (audio_device) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setDefaultInputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	}
+}
+
+void linphone_core_set_default_output_audio_device(LinphoneCore *lc, LinphoneAudioDevice *audio_device) {
+	if (audio_device) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setDefaultOutputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	}
+}
+
+const LinphoneAudioDevice* linphone_core_get_default_input_audio_device(const LinphoneCore *lc) {
+	LinphonePrivate::AudioDevice *audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getDefaultInputAudioDevice();
+	if (audioDevice) {
+		return audioDevice->toC();
+	}
+	return NULL;
+}
+
+const LinphoneAudioDevice* linphone_core_get_default_output_audio_device(const LinphoneCore *lc) {
+	LinphonePrivate::AudioDevice *audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getDefaultOutputAudioDevice();
+	if (audioDevice) {
+		return audioDevice->toC();
+	}
+	return NULL;
+}
