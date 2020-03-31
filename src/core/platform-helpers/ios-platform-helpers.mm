@@ -54,7 +54,9 @@ LINPHONE_BEGIN_NAMESPACE
 typedef enum {
 	noCoreStarted,
 	mainCoreStarted,
-	executorCoreStarted
+	executorCoreStarted,
+	executorCoreStopping, // A Main Core needs to start. Executor Cores have to stop.
+	executorCoreStopped // A Main Core has stopped the Executor Cores. Only a Main Core can start here.
 } SharedCoreState;
 
 string sharedStateToString(int state) {
@@ -65,6 +67,10 @@ string sharedStateToString(int state) {
          return "mainCoreStarted";
       case executorCoreStarted:
          return "executorCoreStarted";
+	case executorCoreStopping:
+		 return "executorCoreStopping";
+	case executorCoreStopped:
+		 return "executorCoreStopped";
 		default:
          return "Invalid state";
    }
@@ -120,6 +126,7 @@ public:
 	void onCoreMustStop();
 	void resetSharedCoreState() override;
 	void unlockSharedCoreIfNeeded() override;
+	bool isCoreStopRequired() override;
 
 	// push notif
 	void clearCallIdList();
@@ -176,6 +183,7 @@ private:
 	static set<string> callIdList;
 	static std::mutex callIdListMutex;
 	static std::mutex executorCoreMutex;
+	static std::mutex userDefaultMutex;
 	std::shared_ptr<ChatRoom> mChatRoomInvite = nullptr;
 	std::string mChatRoomAddr;
 	uint64_t mTimer = 0;
@@ -191,6 +199,7 @@ const string IosPlatformHelpers::Framework = "org.linphone.linphone";
 set<string> IosPlatformHelpers::callIdList = set<string>();
 std::mutex IosPlatformHelpers::callIdListMutex;
 std::mutex IosPlatformHelpers::executorCoreMutex;
+std::mutex IosPlatformHelpers::userDefaultMutex;
 
 IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
 	mCpuLockCount = 0;
@@ -343,13 +352,17 @@ void IosPlatformHelpers::onLinphoneCoreStop() {
 		CFRunLoopTimerInvalidate(mUnlockTimer);
 		ms_message("[SHARED] stop timer");
 
-		bool needUnlock = (getSharedCoreState() == SharedCoreState::executorCoreStarted);
+		bool needUnlock = (getSharedCoreState() == SharedCoreState::executorCoreStarted || getSharedCoreState() == SharedCoreState::executorCoreStopping);
 
-		bool needStateReset = (getCore()->getCCore()->is_main_core && getSharedCoreState() == SharedCoreState::mainCoreStarted) ||
-							  (!getCore()->getCCore()->is_main_core && getSharedCoreState() == SharedCoreState::executorCoreStarted);
-		if (needStateReset) {
+		if ((getCore()->getCCore()->is_main_core && getSharedCoreState() == SharedCoreState::mainCoreStarted) ||
+			(!getCore()->getCCore()->is_main_core && getSharedCoreState() == SharedCoreState::executorCoreStarted)) {
 			setSharedCoreState(SharedCoreState::noCoreStarted);
 		}
+
+		if (!getCore()->getCCore()->is_main_core && getSharedCoreState() == SharedCoreState::executorCoreStopping) {
+			setSharedCoreState(SharedCoreState::executorCoreStopped);
+		}
+
 		if (needUnlock) {
 			ms_message("[push] unlock executorCoreMutex");
 			IosPlatformHelpers::executorCoreMutex.unlock();
@@ -688,18 +701,25 @@ string IosPlatformHelpers::getWifiSSID(void) {
 
 std::shared_ptr<ChatMessage> IosPlatformHelpers::getPushNotificationMessage(const string &callId) {
 	ms_message("[push] getPushNotificationMessage");
+	ms_message("[push] current shared core state : %s", sharedStateToString(getSharedCoreState()).c_str());
+
 	addNewCallIdToList(callId);
 	switch(getSharedCoreState()) {
 		case SharedCoreState::mainCoreStarted:
-			clearCallIdList();
 			IosPlatformHelpers::executorCoreMutex.unlock();
-			ms_message("[push] mainCoreStarted");
+		case SharedCoreState::executorCoreStopping:
+		case SharedCoreState::executorCoreStopped:
+			clearCallIdList();
 			return nullptr;
 		case SharedCoreState::executorCoreStarted:
-			ms_message("[push] executorCoreStarted");
 		case SharedCoreState::noCoreStarted:
 			IosPlatformHelpers::executorCoreMutex.lock();
-			ms_message("[push] noCoreStarted");
+			if (getSharedCoreState() == executorCoreStopped ||
+				getSharedCoreState() == mainCoreStarted ||
+				getSharedCoreState() == executorCoreStopping) {
+				/* this executor core can start because a main core is starting */
+				return nullptr;
+			}
 			std::shared_ptr<ChatMessage> msg = processPushNotificationMessage(callId);
 			return msg;
 	}
@@ -707,16 +727,23 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::getPushNotificationMessage(cons
 
 std::shared_ptr<ChatRoom> IosPlatformHelpers::getPushNotificationChatRoom(const string &chatRoomAddr) {
 	ms_message("[push] getPushNotificationInvite");
+	ms_message("[push] current shared core state : %s", sharedStateToString(getSharedCoreState()).c_str());
+
 	switch(getSharedCoreState()) {
 		case SharedCoreState::mainCoreStarted:
 			IosPlatformHelpers::executorCoreMutex.unlock();
-			ms_message("[push] mainCoreStarted");
+		case SharedCoreState::executorCoreStopping:
+		case SharedCoreState::executorCoreStopped:
 			return nullptr;
 		case SharedCoreState::executorCoreStarted:
-			ms_message("[push] executorCoreStarted");
 		case SharedCoreState::noCoreStarted:
 			IosPlatformHelpers::executorCoreMutex.lock();
-			ms_message("[push] noCoreStarted");
+			if (getSharedCoreState() == executorCoreStopped ||
+				getSharedCoreState() == mainCoreStarted ||
+				getSharedCoreState() == executorCoreStopping) {
+				/* this executor core can start because a main core is starting */
+				return nullptr;
+			}
 			std::shared_ptr<ChatRoom> chatRoom = processPushNotificationChatRoom(chatRoomAddr);
 			return chatRoom;
 	}
@@ -789,6 +816,13 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(
 	while (ms_get_cur_time_ms() - mTimer < mMaxIterationTimeMs && (!IosPlatformHelpers::callIdList.empty() || !chatMessage)) {
 		ms_message("[push] wait for msg. callIdList size = %lu", IosPlatformHelpers::callIdList.size());
 		linphone_core_iterate(getCore()->getCCore());
+
+		if (getSharedCoreState() == SharedCoreState::executorCoreStopping) {
+			ms_message("[push] executor core stopping ");
+			linphone_core_cbs_unref(cbs);
+			return nullptr;
+		}
+
 		ms_usleep(50000);
 		if (IosPlatformHelpers::callIdList.empty() && ms_get_cur_time_ms() - secondsTimer >= 1000) {
 			chatMessage = getChatMsgAndUpdateList(callId);
@@ -922,10 +956,11 @@ bool IosPlatformHelpers::canCoreStart() {
 }
 
 bool IosPlatformHelpers::isSharedCoreStarted() {
-    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
-    NSInteger state = [defaults integerForKey:@ACTIVE_SHARED_CORE];
+    SharedCoreState state = getSharedCoreState();
 	ms_message("[SHARED] get shared core state : %s", sharedStateToString((int)state).c_str());
-	[defaults release];
+	if (getCore()->getCCore()->is_main_core && state == SharedCoreState::executorCoreStopped) {
+		return false;
+	}
 	if (state == SharedCoreState::noCoreStarted) {
 		return false;
 	}
@@ -933,9 +968,11 @@ bool IosPlatformHelpers::isSharedCoreStarted() {
 }
 
 SharedCoreState IosPlatformHelpers::getSharedCoreState() {
+	userDefaultMutex.lock();
 	NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
     NSInteger state = [defaults integerForKey:@ACTIVE_SHARED_CORE];
 	[defaults release];
+	userDefaultMutex.unlock();
 	return (SharedCoreState) state;
 }
 
@@ -943,10 +980,12 @@ SharedCoreState IosPlatformHelpers::getSharedCoreState() {
  * Set to false in onLinphoneCoreStop() (called in linphone_core_stop)
  */
 void IosPlatformHelpers::setSharedCoreState(SharedCoreState sharedCoreState) {
+	userDefaultMutex.lock();
 	ms_message("[SHARED] setSharedCoreState state: %s", sharedStateToString(sharedCoreState).c_str());
     NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
     [defaults setInteger:sharedCoreState forKey:@ACTIVE_SHARED_CORE];
 	[defaults release];
+	userDefaultMutex.unlock();
 }
 
 void IosPlatformHelpers::resetSharedCoreState() {
@@ -954,16 +993,20 @@ void IosPlatformHelpers::resetSharedCoreState() {
 }
 
 void IosPlatformHelpers::resetSharedCoreLastUpdateTime() {
+	userDefaultMutex.lock();
 	ms_debug("[SHARED] resetSharedCoreLastUpdateTime");
     NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
     [defaults setInteger:(NSInteger)ms_get_cur_time_ms() forKey:@LAST_UPDATE_TIME_SHARED_CORE];
 	[defaults release];
+	userDefaultMutex.unlock();
 }
 
 NSInteger IosPlatformHelpers::getSharedCoreLastUpdateTime() {
+	userDefaultMutex.lock();
     NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
     NSInteger lastUpdateTime = [defaults integerForKey:@LAST_UPDATE_TIME_SHARED_CORE];
 	[defaults release];
+	userDefaultMutex.unlock();
 	return lastUpdateTime;
 }
 
@@ -973,8 +1016,13 @@ void IosPlatformHelpers::unlockSharedCoreIfNeeded() {
 		resetSharedCoreState();
 		IosPlatformHelpers::callIdListMutex.unlock();
 		IosPlatformHelpers::executorCoreMutex.unlock();
+		IosPlatformHelpers::userDefaultMutex.unlock();
 	}
 	resetSharedCoreLastUpdateTime();
+}
+
+bool IosPlatformHelpers::isCoreStopRequired() {
+	return getSharedCoreState() == executorCoreStopping;
 }
 
 // we need to reload the config from file at each start tp get the changes made by the other cores
@@ -1023,7 +1071,7 @@ void on_core_must_stop(CFNotificationCenterRef center, void *observer, CFStringR
 
 void IosPlatformHelpers::onCoreMustStop() {
 	ms_message("[SHARED] onCoreMustStop");
-	linphone_shared_core_must_stop(getCore()->getCCore());
+	setSharedCoreState(SharedCoreState::executorCoreStopping);
 }
 
 // -----------------------------------------------------------------------------
