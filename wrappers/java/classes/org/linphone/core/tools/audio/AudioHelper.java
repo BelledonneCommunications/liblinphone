@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.io.FileInputStream;
 import java.lang.SecurityException;
 
+import org.linphone.core.Core;
+import org.linphone.core.AudioDevice;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.service.CoreManager;
 
@@ -55,8 +57,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
 
     public void startAudioForEchoTestOrCalibration() {
         requestCallAudioFocus();
-        // TODO: remove when audio routing will be handled by the Core
-        mAudioManager.setSpeakerphoneOn(true);
+        routeAudioToSpeaker();
 
         mVolumeBeforeEchoTest = mAudioManager.getStreamVolume(AudioManager.STREAM_VOICE_CALL);
         int maxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
@@ -74,8 +75,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             Log.e("[Audio Helper] Couldn't restore volume: ", se);
         }
 
-        // TODO: remove when audio routing will be handled by the Core
-        mAudioManager.setSpeakerphoneOn(false);
+        routeAudioToEarpiece();
         releaseCallAudioFocus();
     }
 
@@ -224,5 +224,29 @@ public class AudioHelper implements OnAudioFocusChangeListener {
                 if (CoreManager.isReady()) CoreManager.instance().onAudioFocusLost();
                 break;
         }
+    }
+
+    private void routeAudioToEarpiece() {
+        Core core = CoreManager.instance().getCore();
+        for (AudioDevice audioDevice : core.getAudioDevices()) {
+            if (audioDevice.getType() == AudioDevice.Type.Earpiece) {
+                Log.i("[Audio Helper] Found earpiece audio device [" + audioDevice.getDeviceName() + "], routing audio to it");
+                core.setOutputAudioDevice(audioDevice);
+                return;
+            }
+        }
+        Log.e("[Audio Helper] Couldn't find earpiece audio device");
+    }
+
+    private void routeAudioToSpeaker() {
+        Core core = CoreManager.instance().getCore();
+        for (AudioDevice audioDevice : core.getAudioDevices()) {
+            if (audioDevice.getType() == AudioDevice.Type.Speaker) {
+                Log.i("[Audio Helper] Found speaker audio device [" + audioDevice.getDeviceName() + "], routing audio to it");
+                core.setOutputAudioDevice(audioDevice);
+                return;
+            }
+        }
+        Log.e("[Audio Helper] Couldn't find speaker audio device");
     }
 }
