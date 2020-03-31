@@ -1351,10 +1351,18 @@ void SalCallOp::haltSessionTimersTimer () {
 void SalCallOp::restartSessionTimersTimer (belle_sip_response_t *response, int delta) {
 	bool noUserConsent = false;
 
-	auto allow_header =	belle_sip_message_get_header_by_type(response, belle_sip_header_allow_t);
-	if (allow_header) {
-		string allows(belle_sip_header_allow_get_method(allow_header));
+	auto allowHeader = belle_sip_message_get_header_by_type(response, belle_sip_header_allow_t);
+	if (allowHeader) {
+		string allows(belle_sip_header_allow_get_method(allowHeader));
 		noUserConsent = (allows.find("UPDATE") && mRoot->mEnableSipUpdate);
+	}
+
+	belle_sip_header_cseq_t *cseq = (belle_sip_header_cseq_t*)belle_sip_message_get_header(
+		(belle_sip_message_t*)response, "cseq"
+	);
+
+	if (strcmp(belle_sip_header_cseq_get_method(cseq), "UPDATE") == 0) {
+		noUserConsent = true;
 	}
 
 	int retryIn = delta  * 1000 / 2;
@@ -1368,7 +1376,7 @@ void SalCallOp::restartSessionTimersTimer (belle_sip_response_t *response, int d
 		lInfo() << "Session Timers, retry";
 		// TODO explain
 		mRoot->mCallbacks.call_refreshing(this);
-		update("Retry", noUserConsent, !noUserConsent, delta);
+		update("Session Refresh", noUserConsent, !noUserConsent, delta);
 		return true;
 	}, (unsigned int)retryIn, "Session Timers UPDATE");
 

@@ -508,6 +508,22 @@ static void linphone_session_timer_invite_interval_ok_refresher_uac_uac(void)
 
 	BC_ASSERT_PTR_NULL(linphone_call_params_get_custom_header(marie_update_params, "Min-SE"));
 
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 2));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3));
+
+	// Marie re-UPDATE
+	const LinphoneCallParams *marie_update2_params = linphone_call_get_remote_params(pauline_call);
+
+	const char *marie_update2_value_session_expires = linphone_call_params_get_custom_header(marie_update2_params, "Session-Expires");
+	if (BC_ASSERT_PTR_NOT_NULL(marie_update2_value_session_expires)) {
+		BC_ASSERT_TRUE(strcmp(marie_update2_value_session_expires, "8;refresher=uac") == 0);
+	}
+
+	const char *marie_update2_value_cseq = linphone_call_params_get_custom_header(marie_update2_params, "CSeq");
+	if (BC_ASSERT_PTR_NOT_NULL(marie_update2_value_cseq)) {
+		BC_ASSERT_TRUE(strcmp(marie_update2_value_cseq, "23 UPDATE") == 0);
+	}
+
 	// Wait for the 200 OK
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 300);
 
