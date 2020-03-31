@@ -194,4 +194,8 @@ void GenericPlatformHelpers::resetSharedCoreState() {}
 
 void GenericPlatformHelpers::unlockSharedCoreIfNeeded() {}
 
+bool GenericPlatformHelpers::isCoreStopRequired() {
+	return false;
+}
+
 LINPHONE_END_NAMESPACE
