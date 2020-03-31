@@ -3700,13 +3700,6 @@ void linphone_core_iterate(LinphoneCore *lc){
 			_linphone_core_stop_async_end(lc);
 		}
 	}
-
-	/* This is needed for multi-threads testing with shared cores.
-	When a shared core stops another one; the core beeing stopped must
-	call linphone_core_stop() in its own thread to free all the memory */
-	if (lc->platform_helper && getPlatformHelpers(lc)->isCoreShared() && lc->shared_core_must_stop) {
-		linphone_core_stop(lc);
-	}
 }
 
 LinphoneAddress * linphone_core_interpret_url(LinphoneCore *lc, const char *url){
@@ -6523,10 +6516,6 @@ static void _linphone_core_stop(LinphoneCore *lc) {
 	if (!is_off) {
 		_linphone_core_stop_async_end(lc);
 	}
-}
-
-void linphone_shared_core_must_stop(LinphoneCore *lc) {
-	lc->shared_core_must_stop = TRUE;
 }
 
 void linphone_core_stop(LinphoneCore *lc) {

@@ -285,7 +285,6 @@ int _linphone_core_apply_transports(LinphoneCore *lc);
 void linphone_core_start_waiting(LinphoneCore *lc, const char *purpose);
 void linphone_core_update_progress(LinphoneCore *lc, const char *purpose, float progresses);
 void linphone_core_stop_waiting(LinphoneCore *lc);
-void linphone_shared_core_must_stop(LinphoneCore *lc);
 
 bool_t linphone_core_incompatible_security(LinphoneCore *lc, SalMediaDescription *md);
 extern LinphonePrivate::Sal::Callbacks linphone_sal_callbacks;
