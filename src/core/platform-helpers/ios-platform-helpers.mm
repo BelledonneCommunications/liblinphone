@@ -775,7 +775,7 @@ void IosPlatformHelpers::removeCallIdFromList(string callId) {
 
 static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
 	const char *contentType = linphone_chat_message_get_content_type(message);
-	if (strcmp(contentType, "text/plain") == 0 || strcmp(contentType, "image/jpeg") == 0) {
+	if (linphone_chat_message_is_text(message) || linphone_chat_message_is_file_transfer(message)) {
 		ms_message("[push] msg [%p] received from chat room [%p]", message, room);
 		const char *callId = linphone_chat_message_get_call_id(message);
 		static_cast<LinphonePrivate::IosPlatformHelpers*>(lc->platform_helper)->removeCallIdFromList(callId);
@@ -861,7 +861,7 @@ static void on_push_notification_chat_room_invite_received(LinphoneCore *lc, Lin
 		const char *cr_peer_addr = linphone_address_get_username(linphone_chat_room_get_peer_address(cr));
 		ms_message("[push] we are added to the chat room %s", cr_peer_addr);
 
-		if (strcmp(cr_peer_addr, platform_helper->getChatRoomAddr().c_str()) == 0) {
+		if (cr_peer_addr && strcmp(cr_peer_addr, platform_helper->getChatRoomAddr().c_str()) == 0) {
 			ms_message("[push] the chat room associated with the push is found");
 			platform_helper->setChatRoomInvite(std::static_pointer_cast<ChatRoom>(L_GET_CPP_PTR_FROM_C_OBJECT(cr)));
 		}
@@ -873,15 +873,15 @@ std::shared_ptr<ChatRoom> IosPlatformHelpers::processPushNotificationChatRoom(co
 	mChatRoomAddr = crAddr;
 	mChatRoomInvite = nullptr;
 
-	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_chat_room_state_changed(cbs, on_push_notification_chat_room_invite_received);
-	linphone_core_add_callbacks(getCore()->getCCore(), cbs);
 
 	if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalOn && linphone_core_start(getCore()->getCCore()) != 0) {
-		linphone_core_cbs_unref(cbs);
 		return nullptr;
 	}
 	ms_message("[push] core started");
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_chat_room_state_changed(cbs, on_push_notification_chat_room_invite_received);
+	linphone_core_add_callbacks(getCore()->getCCore(), cbs);
 
 	reinitTimer();
 	uint64_t iterationTimer = ms_get_cur_time_ms();
