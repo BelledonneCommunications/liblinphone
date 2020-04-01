@@ -639,12 +639,14 @@ int MediaSessionPrivate::getFirstStreamWithType(const SalMediaDescription *md, S
 	return -1;
 }
 
-void MediaSessionPrivate::assignStreamsIndexes(){
+void MediaSessionPrivate::assignStreamsIndexes(bool localIsOfferer){
 	if (biggestDesc && freeStreamIndex < biggestDesc->nb_streams) freeStreamIndex = biggestDesc->nb_streams;
 
 	/*Initialize stream indexes from potential incoming offer.*/
 	SalMediaDescription *rmd = op ? op->getRemoteMediaDescription() : nullptr;
 	if (rmd) assignStreamsIndexesIncoming(rmd);
+	
+	if (!localIsOfferer) return;
 
 	/*Assign indexes for our streams, if no incoming offer was received, or if new streams are requested.*/
 	if (getParams()->audioEnabled() && mainAudioStreamIndex == -1){
@@ -1062,7 +1064,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	SalMediaDescription *md = sal_media_description_new();
 	SalMediaDescription *oldMd = localDesc;
 
-	assignStreamsIndexes();
+	assignStreamsIndexes(localIsOfferer);
 
 	getParams()->getPrivate()->adaptToNetwork(q->getCore()->getCCore(), pingTime);
 
