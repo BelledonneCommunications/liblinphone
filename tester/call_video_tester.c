@@ -1065,10 +1065,13 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 		/*The ICE reINVITE must not propose again video if was refused by callee*/
 		BC_ASSERT_FALSE(linphone_call_params_video_enabled(marie_remote_params));
 	}
+	
 	BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateHostConnection));
 	BC_ASSERT_TRUE(check_nb_media_starts(AUDIO_START, pauline, marie, nb_audio_starts, nb_audio_starts));
 	BC_ASSERT_TRUE(check_nb_media_starts(VIDEO_START, pauline, marie, nb_video_starts, nb_video_starts));
 
+	BC_ASSERT_FALSE(linphone_call_media_in_progress(linphone_core_get_current_call(marie->lc)));
+	BC_ASSERT_FALSE(linphone_call_media_in_progress(linphone_core_get_current_call(pauline->lc)));
 
 	if (caller_policy.automatically_initiate && callee_policy.automatically_accept && (video_added_by_caller || video_added_by_callee)){
 		BC_FAIL("Tired developer detected. You have requested the test to add video while it is already established from the beginning of the call.");
@@ -1087,6 +1090,8 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 				/*the video addon should have triggered a media start, but the ICE reINVITE shall not*/
 				nb_video_starts++;
 				BC_ASSERT_TRUE(check_nb_media_starts(VIDEO_START, pauline, marie, nb_video_starts, nb_video_starts));
+				BC_ASSERT_FALSE(linphone_call_media_in_progress(linphone_core_get_current_call(marie->lc)));
+				BC_ASSERT_FALSE(linphone_call_media_in_progress(linphone_core_get_current_call(pauline->lc)));
 			}
 		}
 	}
@@ -1099,7 +1104,8 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 	if (video_removed_by_caller || video_removed_by_callee) {
 		BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateHostConnection));
 		BC_ASSERT_TRUE(check_nb_media_starts(VIDEO_START, pauline, marie, nb_video_starts, nb_video_starts));
-
+		BC_ASSERT_FALSE(linphone_call_media_in_progress(linphone_core_get_current_call(marie->lc)));
+		BC_ASSERT_FALSE(linphone_call_media_in_progress(linphone_core_get_current_call(pauline->lc)));
 	}
 
 	end_call(pauline, marie);
