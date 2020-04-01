@@ -461,6 +461,8 @@ static void _direct_call_well_known_port(int iptype){
 		linphone_core_enable_ipv6(marie->lc,FALSE);
 		linphone_core_enable_ipv6(pauline->lc,FALSE);
 	}
+	BC_ASSERT_PTR_NOT_NULL(pauline_dest);
+	if (pauline_dest == NULL) goto end;
 
 	linphone_core_set_default_proxy_config(marie->lc,NULL);
 	linphone_core_set_default_proxy_config(pauline->lc, NULL);
@@ -478,11 +480,12 @@ static void _direct_call_well_known_port(int iptype){
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,1));
 
+	linphone_address_unref(pauline_dest);
 	liblinphone_tester_check_rtcp(marie,pauline);
 	end_call(marie,pauline);
+end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-	linphone_address_unref(pauline_dest);
 
 }
 
