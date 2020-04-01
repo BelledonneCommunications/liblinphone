@@ -290,8 +290,8 @@ EcCalibrator * ec_calibrator_new(MSFactory *factory, MSSndCard *play_card, MSSnd
 	ecc->cb_data=cb_data;
 	ecc->audio_init_cb=audio_init_cb;
 	ecc->audio_uninit_cb=audio_uninit_cb;
-	ecc->capt_card=capt_card;
-	ecc->play_card=play_card;
+	ecc->capt_card = ms_snd_card_ref(capt_card);
+	ecc->play_card = ms_snd_card_ref(play_card);
 	ecc->factory=factory;
 	return ecc;
 }
@@ -306,6 +306,8 @@ LinphoneEcCalibratorStatus ec_calibrator_get_status(EcCalibrator *ecc){
 
 void ec_calibrator_destroy(EcCalibrator *ecc){
 	if (ecc->thread != 0) ms_thread_join(ecc->thread,NULL);
+	if (ecc->capt_card) ms_snd_card_unref(ecc->capt_card);
+	if (ecc->play_card) ms_snd_card_unref(ecc->play_card);
 	ms_free(ecc);
 }
 

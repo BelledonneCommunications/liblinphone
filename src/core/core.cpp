@@ -162,6 +162,11 @@ void CorePrivate::uninit () {
 		linphone_core_iterate(L_GET_C_BACK_PTR(q));
 		ms_usleep(10000);
 	}
+	
+	for (auto &audioDevice : audioDevices) {
+		audioDevice->unref();
+	}
+	audioDevices.clear();
 
 	if (toneManager) toneManager->deleteTimer();
 
