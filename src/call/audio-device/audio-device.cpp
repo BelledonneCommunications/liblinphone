@@ -25,7 +25,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 AudioDevice::AudioDevice(MSSndCard *soundCard)
-    :soundCard(soundCard)
+    :soundCard(ms_snd_card_ref(soundCard))
 {
     const char * name = ms_snd_card_get_name(soundCard);
     deviceName = name;
@@ -76,6 +76,10 @@ AudioDevice::AudioDevice(MSSndCard *soundCard)
             lWarning() << "Device [" << deviceName << "] type is unknown";
             break;
     }
+}
+
+AudioDevice::~AudioDevice() {
+    ms_snd_card_unref(soundCard);
 }
 
 MSSndCard *AudioDevice::getSoundCard() const {
