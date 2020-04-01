@@ -47,6 +47,7 @@ public:
     };
 
     AudioDevice(MSSndCard *soundCard);
+    ~AudioDevice();
 
     MSSndCard *getSoundCard() const;
     const std::string& getDeviceName() const;
