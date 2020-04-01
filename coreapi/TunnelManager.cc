@@ -268,6 +268,8 @@ TunnelManager::TunnelManager(LinphoneCore* lc) :
 	mTransportFactories.video_rtp_func_data=this;
 	mVTable = linphone_core_v_table_new();
 	mVTable->network_reachable = networkReachableCb;
+	mVTable->global_state_changed = globalStateChangedCb;
+	linphone_core_v_table_set_user_data(mVTable,this);
 	linphone_core_add_listener(mCore, mVTable);
 	linphone_core_get_local_ip_for(AF_INET, NULL, mLocalAddr);
 	mAutodetectionRunning = false;
@@ -276,7 +278,19 @@ TunnelManager::TunnelManager(LinphoneCore* lc) :
 	mStarted = false;
 	mTunnelizeSipPackets = true;
 }
-
+void TunnelManager::unlinkLinphoneCore() {
+	if (mCore) {
+		stopClient();
+		if (mCore->sal)
+			mCore->sal->setTunnel(NULL);
+		linphone_core_remove_listener(mCore, mVTable);
+		linphone_core_v_table_destroy(mVTable);
+		mCore = nullptr;
+		mVTable = nullptr;
+	} else {
+		ms_message("Core already cleaned up");
+	}
+}
 TunnelManager::~TunnelManager(){
 	if (mLongRunningTaskId > 0) {
 		sal_end_background_task(mLongRunningTaskId);
@@ -285,10 +299,8 @@ TunnelManager::~TunnelManager(){
 	for(UdpMirrorClientList::iterator udpMirror = mUdpMirrorClients.begin(); udpMirror != mUdpMirrorClients.end(); udpMirror++) {
 		udpMirror->stop();
 	}
-	stopClient();
-	mCore->sal->setTunnel(NULL);
-	linphone_core_remove_listener(mCore, mVTable);
-	linphone_core_v_table_destroy(mVTable);
+	
+	unlinkLinphoneCore();
 }
 
 void TunnelManager::doRegistration(){
@@ -496,6 +508,15 @@ void TunnelManager::networkReachableCb(LinphoneCore *lc, bool_t reachable) {
 		//turn off the tunnel connection
 		tunnel->untunnelizeLiblinphone();
 		tunnel->stopClient();
+	}
+}
+void TunnelManager::globalStateChangedCb(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message) {
+	if (gstate == LinphoneGlobalOff) {
+		ms_message("Core [%p] is Off, unlinking TunnelManager to core",lc);
+		//calling same core as for object destruction
+		TunnelManager *thiz = (TunnelManager *)linphone_core_v_table_get_user_data(linphone_core_get_current_vtable(lc));
+		if (thiz)
+			thiz->unlinkLinphoneCore();
 	}
 }
 
