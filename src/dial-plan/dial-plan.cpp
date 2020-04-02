@@ -49,7 +49,7 @@ const list<shared_ptr<DialPlan>> DialPlan::DialPlans = {
 	DialPlan::create("Armenia", "AM", "374", 8, "00"),
 	DialPlan::create("Aruba", "AW", "297", 7, "011"),
 	DialPlan::create("Australia", "AU", "61", 9, "0011"),
-	DialPlan::create("Austria", "AT", "43", 10, "00"),
+	DialPlan::create("Austria", "AT", "43", 13, "00"),
 	DialPlan::create("Azerbaijan", "AZ", "994", 9, "00"),
 	DialPlan::create("Bahamas", "BS", "1", 10, "011"),
 	DialPlan::create("Bahrain", "BH", "973", 8, "00"),
