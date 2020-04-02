@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://www.linphone.org/xsds/lpconfig.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.linphone.org/xsds/lpconfig.xsd lpconfig.xsd">
+  <section name="friend_0">
+    <entry name="url" overwrite="true">sip:sylvain@sip.linphone.org</entry>
+  </section>
+  <section name="friend_1">
+    <entry name="url" overwrite="true">sip:@sip.linphone.org</entry>
+  </section>
+  <section name="friend_2">
+    <entry name="url" overwrite="true">"" &lt;sip:marie@sip.linphone.org&gt;</entry>
+  </section>
+  <section name="friend_3">
+    <entry name="url" overwrite="true">"Marie" &lt;sip:@sip.linphone.org&gt;</entry>
+  </section>
+  <section name="friend_4">
+    <entry name="url" overwrite="true">"Głośniki" &lt;sip:glosniki@192.168.0.1&gt;</entry>
+  </section>
+  <section name="friend_5">
+    <entry name="url" overwrite="true">sip:sip.linphone.org</entry>
+  </section>
+  <section name="friend_6">
+    <entry name="url" overwrite="true">"" &lt;sip:@127.0.0.1&gt;</entry>
+  </section>
+</config>
