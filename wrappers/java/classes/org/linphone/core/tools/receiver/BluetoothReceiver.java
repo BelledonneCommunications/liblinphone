@@ -72,6 +72,8 @@ public class BluetoothReceiver extends BroadcastReceiver {
                 if (CoreManager.isReady()) CoreManager.instance().onBluetoothHeadsetStateChanged();
             } else if (state == BluetoothHeadset.STATE_CONNECTING) {
                 Log.i("[Bluetooth] Bluetooth headset connecting");
+            } else if (state == BluetoothHeadset.STATE_DISCONNECTING) {
+                Log.i("[Bluetooth] Bluetooth headset disconnecting");
             } else {
                 Log.w("[Bluetooth] Bluetooth headset unknown state changed: " + state);
             }

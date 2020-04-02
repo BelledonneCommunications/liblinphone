@@ -4675,7 +4675,7 @@ bool_t linphone_core_sound_device_can_playback(LinphoneCore *lc, const char *dev
 LinphoneStatus linphone_core_set_ringer_device(LinphoneCore *lc, const char * devid){
 	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
 	if (lc->sound_conf.ring_sndcard) ms_snd_card_unref(lc->sound_conf.ring_sndcard);
-	lc->sound_conf.ring_sndcard = ms_snd_card_ref(card);
+	if (card) lc->sound_conf.ring_sndcard = ms_snd_card_ref(card);
 	if (card && linphone_core_ready(lc))
 		lp_config_set_string(lc->config,"sound","ringer_dev_id",ms_snd_card_get_string_id(card));
 	return 0;
@@ -4684,7 +4684,7 @@ LinphoneStatus linphone_core_set_ringer_device(LinphoneCore *lc, const char * de
 LinphoneStatus linphone_core_set_playback_device(LinphoneCore *lc, const char * devid){
 	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
 	if (lc->sound_conf.play_sndcard) ms_snd_card_unref(lc->sound_conf.play_sndcard);
-	lc->sound_conf.play_sndcard = ms_snd_card_ref(card);
+	if (card) lc->sound_conf.play_sndcard = ms_snd_card_ref(card);
 	if (card &&  linphone_core_ready(lc))
 		lp_config_set_string(lc->config,"sound","playback_dev_id",ms_snd_card_get_string_id(card));
 	return 0;
@@ -4693,7 +4693,7 @@ LinphoneStatus linphone_core_set_playback_device(LinphoneCore *lc, const char * 
 LinphoneStatus linphone_core_set_capture_device(LinphoneCore *lc, const char * devid){
 	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_CAPTURE, lc->factory);
 	if (lc->sound_conf.capt_sndcard) ms_snd_card_unref(lc->sound_conf.capt_sndcard);
-	lc->sound_conf.capt_sndcard = ms_snd_card_ref(card);
+	if (card) lc->sound_conf.capt_sndcard = ms_snd_card_ref(card);
 	if (card &&  linphone_core_ready(lc))
 		lp_config_set_string(lc->config,"sound","capture_dev_id",ms_snd_card_get_string_id(card));
 	return 0;
@@ -4702,7 +4702,7 @@ LinphoneStatus linphone_core_set_capture_device(LinphoneCore *lc, const char * d
 LinphoneStatus linphone_core_set_media_device(LinphoneCore *lc, const char * devid){
 	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
 	if (lc->sound_conf.media_sndcard) ms_snd_card_unref(lc->sound_conf.media_sndcard);
-	lc->sound_conf.media_sndcard = ms_snd_card_ref(card);
+	if (card) lc->sound_conf.media_sndcard = ms_snd_card_ref(card);
 	if (card &&  linphone_core_ready(lc))
 		lp_config_set_string(lc->config,"sound","media_dev_id",ms_snd_card_get_string_id(card));
 	return 0;
