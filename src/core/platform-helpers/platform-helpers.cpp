@@ -29,7 +29,9 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-GenericPlatformHelpers::GenericPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : PlatformHelpers(core), mMonitorTimer(nullptr) {}
+GenericPlatformHelpers::GenericPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : PlatformHelpers(core), mMonitorTimer(nullptr) {
+	mSharedCoreHelpers = make_shared<GenericSharedCoreHelpers>(core);
+}
 
 GenericPlatformHelpers::~GenericPlatformHelpers () {
 	if (mMonitorTimer) {
@@ -174,28 +176,8 @@ string GenericPlatformHelpers::getDownloadPath () {
 	return "";
 }
 
-bool GenericPlatformHelpers::isCoreShared() {
-	return false;
-}
-
-bool GenericPlatformHelpers::canCoreStart() {
-	return true;
-}
-
-std::shared_ptr<ChatMessage> GenericPlatformHelpers::getPushNotificationMessage(const string &callId) {
-	return nullptr;
-}
-
-std::shared_ptr<ChatRoom> GenericPlatformHelpers::getPushNotificationChatRoom(const string &chatRoomAddr) {
-	return nullptr;
-}
-
-void GenericPlatformHelpers::resetSharedCoreState() {}
-
-void GenericPlatformHelpers::unlockSharedCoreIfNeeded() {}
-
-bool GenericPlatformHelpers::isCoreStopRequired() {
-	return false;
+std::shared_ptr<SharedCoreHelpers> GenericPlatformHelpers::getSharedCoreHelpers() {
+	return mSharedCoreHelpers;
 }
 
 LINPHONE_END_NAMESPACE
