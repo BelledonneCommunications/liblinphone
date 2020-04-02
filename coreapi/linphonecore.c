@@ -2607,7 +2607,7 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 			bctbx_uninit_logger();
 		}
 
-		if (!getPlatformHelpers(lc)->canCoreStart()) {
+		if (!getPlatformHelpers(lc)->getSharedCoreHelpers()->canCoreStart()) {
 			bctbx_warning("Core [%p] can't start", lc);
 			return -1;
 		}
