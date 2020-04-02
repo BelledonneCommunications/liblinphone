@@ -55,6 +55,9 @@ AudioDevice::AudioDevice(MSSndCard *soundCard)
         case MS_SND_CARD_DEVICE_TYPE_BLUETOOTH:
             deviceType = AudioDevice::Type::Bluetooth;
             break;
+        case MS_SND_CARD_DEVICE_TYPE_BLUETOOTH_A2DP:
+            deviceType = AudioDevice::Type::BluetoothA2DP;
+            break;
         case MS_SND_CARD_DEVICE_TYPE_TELEPHONY:
             deviceType = AudioDevice::Type::Telephony;
             break;
@@ -121,6 +124,9 @@ string AudioDevice::toString() const {
             break;
         case AudioDevice::Type::Bluetooth:
             ss << "Bluetooth";
+            break;
+        case AudioDevice::Type::BluetoothA2DP:
+            ss << "BluetoothA2DP";
             break;
         case AudioDevice::Type::Telephony:
             ss << "Telephony";

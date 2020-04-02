@@ -60,6 +60,7 @@ typedef enum _LinphoneAudioDeviceType {
 	LinphoneAudioDeviceTypeEarpiece, /** Earpiece */
 	LinphoneAudioDeviceTypeSpeaker, /** Speaker */
 	LinphoneAudioDeviceTypeBluetooth, /** Bluetooth */
+	LinphoneAudioDeviceTypeBluetoothA2DP, /** Bluetooth A2DP */
 	LinphoneAudioDeviceTypeTelephony, /** Telephony */
 	LinphoneAudioDeviceTypeAuxLine, /** AuxLine */
 	LinphoneAudioDeviceTypeGenericUsb, /** GenericUsb */

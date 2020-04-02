@@ -34,6 +34,7 @@ public:
         Earpiece = LinphoneAudioDeviceTypeEarpiece,
         Speaker = LinphoneAudioDeviceTypeSpeaker,
         Bluetooth = LinphoneAudioDeviceTypeBluetooth,
+        BluetoothA2DP = LinphoneAudioDeviceTypeBluetoothA2DP,
         Telephony = LinphoneAudioDeviceTypeTelephony,
         AuxLine = LinphoneAudioDeviceTypeAuxLine,
         GenericUsb = LinphoneAudioDeviceTypeGenericUsb,
