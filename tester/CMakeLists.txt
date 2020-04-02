@@ -95,6 +95,8 @@ set(RC_FILES
 	rcfiles/conference_focus_rc
 	rcfiles/empty_rc
 	rcfiles/friends_rc
+	rcfiles/invalid_friends_rc
+	rcfiles/invalid_friends_xml
 	rcfiles/laure_call_logs_rc
 	rcfiles/laure_lime_x3dh_rc
 	rcfiles/laure_rc_udp
