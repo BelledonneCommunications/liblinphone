@@ -318,6 +318,14 @@ static void linphone_lpconfig_from_file_zerolen_value(void){
 	lp_config_destroy(conf);
 }
 
+void linphone_lpconfig_invalid_friend(void) {
+	LinphoneCoreManager* mgr = linphone_core_manager_new2("invalid_friends_rc",FALSE);
+	LinphoneFriendList *friendList = linphone_core_get_default_friend_list(mgr->lc);
+	const bctbx_list_t *friends = linphone_friend_list_get_friends(friendList);
+	BC_ASSERT_EQUAL(bctbx_list_size(friends), 4, int, "%d");
+	linphone_core_manager_destroy(mgr);
+}
+
 static void linphone_lpconfig_from_xml_zerolen_value(void){
 	const char* zero_xml_file = "remote_zero_length_params_rc";
 	char* xml_path = ms_strdup_printf("%s/rcfiles/%s", bc_tester_get_resource_dir_prefix(), zero_xml_file);
@@ -1689,6 +1697,7 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("LPConfig zero_len value from buffer", linphone_lpconfig_from_buffer_zerolen_value),
 	TEST_NO_TAG("LPConfig zero_len value from file", linphone_lpconfig_from_file_zerolen_value),
 	TEST_NO_TAG("LPConfig zero_len value from XML", linphone_lpconfig_from_xml_zerolen_value),
+	TEST_NO_TAG("LPConfig invalid friend", linphone_lpconfig_invalid_friend),
 	TEST_NO_TAG("Chat room", chat_room_test),
 	TEST_NO_TAG("Devices reload", devices_reload_test),
 	TEST_NO_TAG("Codec usability", codec_usability_test),
