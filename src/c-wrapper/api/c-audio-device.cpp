@@ -23,6 +23,13 @@
 
 using namespace LinphonePrivate;
 
+const char *linphone_audio_device_get_id(const LinphoneAudioDevice *audioDevice) {
+    if (audioDevice) {
+        return L_STRING_TO_C(AudioDevice::toCpp(audioDevice)->getId());
+    }
+    return NULL;
+}
+
 const char *linphone_audio_device_get_device_name(const LinphoneAudioDevice *audioDevice) {
     if (audioDevice) {
         return L_STRING_TO_C(AudioDevice::toCpp(audioDevice)->getDeviceName());

@@ -27,7 +27,10 @@ LINPHONE_BEGIN_NAMESPACE
 AudioDevice::AudioDevice(MSSndCard *soundCard)
     :soundCard(ms_snd_card_ref(soundCard))
 {
-    const char * name = ms_snd_card_get_name(soundCard);
+    const char *id = ms_snd_card_get_string_id(soundCard);
+    deviceId = id;
+
+    const char *name = ms_snd_card_get_name(soundCard);
     deviceName = name;
 
     unsigned int cap = ms_snd_card_get_capabilities(soundCard);
@@ -89,6 +92,10 @@ MSSndCard *AudioDevice::getSoundCard() const {
     return soundCard;
 }
 
+const string& AudioDevice::getId() const {
+    return deviceId;
+}
+
 const string& AudioDevice::getDeviceName() const {
     return deviceName;
 }
@@ -103,10 +110,6 @@ const AudioDevice::Capabilities& AudioDevice::getCapabilities() const {
 
 const AudioDevice::Type& AudioDevice::getType() const {
     return deviceType;
-}
-
-string AudioDevice::getId() const {
-    return ms_snd_card_get_string_id(soundCard);
 }
 
 string AudioDevice::toString() const {

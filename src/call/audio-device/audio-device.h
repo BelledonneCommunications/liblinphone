@@ -51,11 +51,11 @@ public:
     ~AudioDevice();
 
     MSSndCard *getSoundCard() const;
+    const std::string& getId() const;
     const std::string& getDeviceName() const;
     const std::string& getDriverName() const;
     const Capabilities& getCapabilities() const;
     const Type& getType() const;
-    std::string getId() const;
 
     std::string toString() const override;
 
@@ -66,6 +66,7 @@ public:
 
 private:
     MSSndCard *soundCard;
+    std::string deviceId;
     std::string deviceName;
     std::string driverName;
     Capabilities capabilities;
