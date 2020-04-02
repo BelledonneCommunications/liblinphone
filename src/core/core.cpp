@@ -635,8 +635,8 @@ int Core::getUnreadChatMessageCountFromActiveLocals () const {
 }
 
 std::shared_ptr<ChatMessage> Core::getPushNotificationMessage (const std::string &callId) const {
-	std::shared_ptr<ChatMessage> msg = static_cast<PlatformHelpers *>(getCCore()->platform_helper)->getPushNotificationMessage(callId);
-	if (linphone_core_get_global_state(getCCore()) == LinphoneGlobalOn && getPlatformHelpers(getCCore())->isCoreStopRequired()) {
+	std::shared_ptr<ChatMessage> msg = getPlatformHelpers(getCCore())->getSharedCoreHelpers()->getPushNotificationMessage(callId);
+	if (linphone_core_get_global_state(getCCore()) == LinphoneGlobalOn && getPlatformHelpers(getCCore())->getSharedCoreHelpers()->isCoreStopRequired()) {
 		lInfo() << "[SHARED] Executor Shared Core is beeing stopped by Main Shared Core";
 		linphone_core_stop(getCCore());
 	}
@@ -644,7 +644,7 @@ std::shared_ptr<ChatMessage> Core::getPushNotificationMessage (const std::string
 }
 
 std::shared_ptr<ChatRoom> Core::getPushNotificationChatRoom (const std::string &chatRoomAddr) const {
-	std::shared_ptr<ChatRoom> chatRoom = static_cast<PlatformHelpers *>(getCCore()->platform_helper)->getPushNotificationChatRoom(chatRoomAddr);
+	std::shared_ptr<ChatRoom> chatRoom = getPlatformHelpers(getCCore())->getSharedCoreHelpers()->getPushNotificationChatRoom(chatRoomAddr);
 	return chatRoom;
 }
 

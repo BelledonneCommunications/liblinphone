@@ -213,5 +213,5 @@ const char *linphone_core_get_tone_file(LinphoneCore *lc, LinphoneToneID id){
 }
 
 void linphone_core_reset_shared_core_state(LinphoneCore *lc) {
-	static_cast<PlatformHelpers *>(lc->platform_helper)->resetSharedCoreState();
+	static_cast<PlatformHelpers *>(lc->platform_helper)->getSharedCoreHelpers()->resetSharedCoreState();
 }
