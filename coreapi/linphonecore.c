@@ -1952,11 +1952,17 @@ static void video_config_read(LinphoneCore *lc){
 static void read_friends_from_rc(LinphoneCore *lc)
 {
 	LinphoneFriend *lf = NULL;
-	int i;
-	for (i = 0; (lf = linphone_friend_new_from_config_file(lc, i)) != NULL; i++) {
-		linphone_core_add_friend(lc, lf);
-		linphone_friend_unref(lf);
-	}
+	LpConfig *config = lc->config;
+	char item[50];
+	int i = 0;
+	do {
+		sprintf(item, "friend_%i", i);
+		lf = linphone_friend_new_from_config_file(lc, i++);
+		if (lf) {
+			linphone_core_add_friend(lc, lf);
+			linphone_friend_unref(lf);
+		}
+	} while (lp_config_has_section(config, item));
 }
 
 static void ui_config_read(LinphoneCore *lc) {

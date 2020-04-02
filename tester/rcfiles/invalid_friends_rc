@@ -1,0 +1,39 @@
+[net]
+mtu=1300
+
+[sip]
+ping_with_options=0
+sip_random_port=1
+
+[friend_0]
+url=sip:sylvain@sip.linphone.org
+pol=wait
+subscribe=0
+
+[friend_1]
+url=sip:@sip.linphone.org
+pol=accept
+subscribe=1
+
+[friend_2]
+url="" <sip:marie@sip.linphone.org>
+pol=deny
+subscribe=0
+
+[friend_3]
+url="Marie" <sip:@sip.linphone.org>
+pol=deny
+subscribe=1
+
+[friend_4]
+url="Głośniki" <sip:glosniki@192.168.0.1>
+
+[friend_5]
+url=sip:sip.linphone.org
+pol=deny
+subscribe=0
+
+[friend_6]
+url="" <sip:@127.0.0.1>
+pol=deny
+subscribe=1
