@@ -52,6 +52,10 @@ LinphoneAudioDeviceType linphone_audio_device_get_type(const LinphoneAudioDevice
     return static_cast<LinphoneAudioDeviceType>(AudioDevice::toCpp(audioDevice)->getType());
 }
 
+bool_t linphone_audio_device_has_capability(const LinphoneAudioDevice *audioDevice, const LinphoneAudioDeviceCapabilities capability) {
+	return static_cast<bool_t>(linphone_audio_device_get_capabilities(audioDevice) & capability);
+}
+
 LinphoneAudioDevice *linphone_audio_device_ref(LinphoneAudioDevice *audioDevice) {
     if (audioDevice) {
         AudioDevice::toCpp(audioDevice)->ref();
