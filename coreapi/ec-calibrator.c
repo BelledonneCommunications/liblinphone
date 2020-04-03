@@ -109,6 +109,9 @@ static void ecc_deinit_filters(EcCalibrator *ecc){
 	ms_filter_destroy(ecc->sndwrite);
 
 	ms_ticker_destroy(ecc->ticker);
+
+	if (ecc->capt_card) ms_snd_card_unref(ecc->capt_card);
+	if (ecc->play_card) ms_snd_card_unref(ecc->play_card);
 }
 
 static void on_tone_sent(void *data, MSFilter *f, unsigned int event_id, void *arg){
@@ -273,10 +276,7 @@ static void ecc_play_tones(EcCalibrator *ecc){
 
 static void  * ecc_thread(void *p){
 	EcCalibrator *ecc=(EcCalibrator*)p;
-
-	ecc_init_filters(ecc);
 	ecc_play_tones(ecc);
-	ecc_deinit_filters(ecc);
 	ms_thread_exit(NULL);
 	return NULL;
 }
@@ -297,7 +297,8 @@ EcCalibrator * ec_calibrator_new(MSFactory *factory, MSSndCard *play_card, MSSnd
 }
 
 void ec_calibrator_start(EcCalibrator *ecc){
-	ms_thread_create(&ecc->thread,NULL,ecc_thread,ecc);
+	ecc_init_filters(ecc);
+	ms_thread_create(&ecc->thread, NULL, ecc_thread, ecc);
 }
 
 LinphoneEcCalibratorStatus ec_calibrator_get_status(EcCalibrator *ecc){
@@ -306,8 +307,7 @@ LinphoneEcCalibratorStatus ec_calibrator_get_status(EcCalibrator *ecc){
 
 void ec_calibrator_destroy(EcCalibrator *ecc){
 	if (ecc->thread != 0) ms_thread_join(ecc->thread,NULL);
-	if (ecc->capt_card) ms_snd_card_unref(ecc->capt_card);
-	if (ecc->play_card) ms_snd_card_unref(ecc->play_card);
+	ecc_deinit_filters(ecc);
 	ms_free(ecc);
 }
 
