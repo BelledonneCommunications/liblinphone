@@ -359,6 +359,7 @@ static void remove_friend_from_list_map_if_already_in_it(LinphoneFriend *lf, con
 }
 
 LinphoneStatus linphone_friend_set_address(LinphoneFriend *lf, const LinphoneAddress *addr) {
+	if (!addr) return -1;
 	LinphoneAddress *fr = linphone_address_clone(addr);
 	char *address;
 	const LinphoneAddress *mAddr = linphone_friend_get_address(lf);
