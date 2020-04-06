@@ -242,7 +242,7 @@ namespace belledonnecomm {
 		std::string mHttpPasswd;
 		std::string mHttpProxyHost;
 		int mHttpProxyPort;
-		LinphoneCoreVTable *mVTable;
+		LinphoneCoreCbs *mCoreCbs;
 		std::list<ServerAddr> mServerAddrs;
 		std::list<DualServerAddr> mDualServerAddrs;
 		UdpMirrorClientList mUdpMirrorClients;
