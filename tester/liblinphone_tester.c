@@ -34,6 +34,7 @@ static const char* liblinphone_helper =
 		"\t\t\t--no-ipv6 (turn off IPv6 in LinphoneCore, tests requiring IPv6 will be skipped)\n"
 		"\t\t\t--show-account-manager-logs (show temporary test account creation logs)\n"
 		"\t\t\t--no-account-creator (use file database flexisip for account creation)\n"
+		"\t\t\t--file-transfer-server-url <url> - override the default https://transfer.example.org:9444/http-file-transfer-server/hft.php\n"
 		;
 
 static int liblinphone_tester_start(int argc, char *argv[]) {
@@ -60,6 +61,9 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 		}else if (strcmp(argv[i],"--dns-hosts")==0){
 			CHECK_ARG("--dns-hosts", ++i, argc);
 			userhostsfile=argv[i];
+		}else if (strcmp(argv[i],"--file-transfer-server-url")==0){
+			CHECK_ARG("--file-transfer-server-url", ++i, argc);
+			file_transfer_url=argv[i];
 		} else if (strcmp(argv[i],"--keep-recorded-files")==0){
 			liblinphone_tester_keep_recorded_files(TRUE);
 		} else if (strcmp(argv[i],"--disable-leak-detector")==0){
