@@ -1199,7 +1199,7 @@ int SalCallOp::accept () {
 			belle_sip_header_supported_t
 		);
 
-		if (supported && (bool)belle_sip_header_supported_contains_tag(supported, "timer") == true) {
+		if (supported != nullptr && (bool)belle_sip_header_supported_contains_tag(supported, "timer") == true) {
 			// MinSE
 			auto *session_expires_min_se_header = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_SESSION_EXPIRES_MSE);
 			if (session_expires_min_se_header) {
