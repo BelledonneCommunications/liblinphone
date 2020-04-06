@@ -288,6 +288,8 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 							max_size = buf_size;
 						}
 						memcpy(buf, encrypted_buffer, buf_size);
+						// Call it once more to compute the authentication tag
+						imee->uploadingFile(message, 0, nullptr, 0, nullptr, currentFileTransferContent);
 					}
 					ms_free(encrypted_buffer);
 				}
