@@ -24,7 +24,7 @@
 #include "linphone/core.h"
 #include "linphone/core_utils.h"
 #include "private.h"
-
+#include "private_functions.h"
 #ifdef __ANDROID__
 #include <android/log.h>
 #endif
@@ -252,7 +252,7 @@ TunnelManager::TunnelManager(LinphoneCore* lc) :
 	mMode(LinphoneTunnelModeDisable),
 	mTunnelClient(NULL),
 	mHttpProxyPort(0),
-	mVTable(NULL),
+	mCoreCbs(NULL),
 	mLongRunningTaskId(0),
 	mSimulateUdpLoss(false),
 	mUseDualClient(false)
@@ -266,11 +266,10 @@ TunnelManager::TunnelManager(LinphoneCore* lc) :
 	mTransportFactories.video_rtcp_func_data=this;
 	mTransportFactories.video_rtp_func=sCreateRtpTransport;
 	mTransportFactories.video_rtp_func_data=this;
-	mVTable = linphone_core_v_table_new();
-	mVTable->network_reachable = networkReachableCb;
-	mVTable->global_state_changed = globalStateChangedCb;
-	linphone_core_v_table_set_user_data(mVTable,this);
-	linphone_core_add_listener(mCore, mVTable);
+	mCoreCbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_network_reachable(mCoreCbs, networkReachableCb);
+	linphone_core_cbs_set_global_state_changed(mCoreCbs, globalStateChangedCb);
+	_linphone_core_add_callbacks(mCore, mCoreCbs,true);
 	linphone_core_get_local_ip_for(AF_INET, NULL, mLocalAddr);
 	mAutodetectionRunning = false;
 	mState = Off;
@@ -283,10 +282,10 @@ void TunnelManager::unlinkLinphoneCore() {
 		stopClient();
 		if (mCore->sal)
 			mCore->sal->setTunnel(NULL);
-		linphone_core_remove_listener(mCore, mVTable);
-		linphone_core_v_table_destroy(mVTable);
+		linphone_core_remove_callbacks(mCore, mCoreCbs);
+		linphone_core_cbs_unref(mCoreCbs);
 		mCore = nullptr;
-		mVTable = nullptr;
+		mCoreCbs = nullptr;
 	} else {
 		ms_message("Core already cleaned up");
 	}
