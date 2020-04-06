@@ -712,7 +712,11 @@ void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
 }
 
 void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
-	audio_stream_set_output_ms_snd_card(mStream, audioDevice->getSoundCard());
+	if (getCCore()->ringstream) {
+		ring_stream_set_output_ms_snd_card(getCCore()->ringstream, audioDevice->getSoundCard());
+	} else {
+		audio_stream_set_output_ms_snd_card(mStream, audioDevice->getSoundCard());
+	}
 }
 
 AudioDevice* MS2AudioStream::getInputDevice() const {
@@ -721,7 +725,12 @@ AudioDevice* MS2AudioStream::getInputDevice() const {
 }
 
 AudioDevice* MS2AudioStream::getOutputDevice() const {
-	MSSndCard *card = audio_stream_get_output_ms_snd_card(mStream);
+	MSSndCard *card = nullptr;
+	if (getCCore()->ringstream) {
+		card = ring_stream_get_output_ms_snd_card(getCCore()->ringstream);
+	} else {
+		card = audio_stream_get_output_ms_snd_card(mStream);
+	}
 	return getCore().findAudioDeviceMatchingMsSoundCard(card);
 }
 
