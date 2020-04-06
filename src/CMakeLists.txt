@@ -491,7 +491,7 @@ if(ENABLE_STATIC)
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi-static>
 	)
-	set_target_properties(linphone-static PROPERTIES OUTPUT_NAME linphone)
+        set_target_properties(linphone-static PROPERTIES OUTPUT_NAME liblinphone)
 
 	target_include_directories(linphone-static PUBLIC
 		$<INSTALL_INTERFACE:include/>
@@ -528,6 +528,10 @@ if(ENABLE_SHARED)
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi>
 	)
+        set_target_properties(linphone PROPERTIES OUTPUT_NAME liblinphone)
+        if(MSVC)
+            set_target_properties(linphone PROPERTIES PDB_NAME liblinphone)
+        endif()
 	target_compile_definitions(linphone PRIVATE "-DLINPHONE_EXPORTS")
 	if(APPLE)
 		if(IOS)
@@ -583,11 +587,11 @@ if(ENABLE_SHARED)
 		endif()
 	endif()
 	if(MSVC)
-		if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-			install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/linphone.pdb
+                if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+                        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/liblinphone.pdb"
 				DESTINATION ${CMAKE_INSTALL_BINDIR}
 				PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-			)
+                        )
 		endif()
 	endif()
 	install(TARGETS linphone EXPORT ${EXPORT_TARGETS_NAME}Targets
