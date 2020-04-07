@@ -35,6 +35,8 @@ class MediaSession;
 class MediaSessionPrivate;
 class MediaSessionParams;
 class IceService;
+class StreamMixer;
+class MixerSession;
 
 /**
  * Base class for any kind of stream that may be setup with SDP.
@@ -51,16 +53,19 @@ public:
 	virtual void fillLocalMediaDescription(OfferAnswerContext & ctx) override;
 	/**
 	 * Ask the stream to prepare to run. This may include configuration steps, ICE gathering etc.
+	 * Derived classes must call their parent class implementation of this method.
 	 */
 	virtual bool prepare() override;
 	
 	/**
 	 * Request the stream to finish the prepare step (such as ICE gathering).
+	 * Derived classes must call their parent class implementation of this method.
 	 */
 	virtual void finishPrepare() override;
 	/**
 	 * Ask the stream to render according to the supplied offer-answer context and target state.
 	 * render() may be called multiple times according to changes made in the offer answer.
+	 * Derived classes must call their parent class implementation of this method.
 	 */
 	virtual void render(const OfferAnswerContext & ctx, CallSession::State targetState) override;
 	/**
@@ -70,6 +75,7 @@ public:
 	
 	/**
 	 * Ask the stream to stop. A call to prepare() is necessary before doing a future render() operation, if any.
+	 * Derived classes must call their parent class implementation of this method.
 	 */
 	virtual void stop() override;
 	
@@ -79,6 +85,24 @@ public:
 	 * Statistics (LinphoneCallStats ) must remain until destruction.
 	 */
 	virtual void finish() override;
+	/**
+	 * Called when the stream is requested to connect to a mixer.
+	 * If running, it shall take any action immediately to connect to it.
+	 * If not, it should connect when later requested to start (by render() ).
+	 * Derived classes must call their parent class implementation of this method.
+	 */
+	virtual void connectToMixer(StreamMixer *mixer);
+	/**
+	 * Called when the stream is requested to disconnect from a mixer.
+	 * If running, it shall do it immediately.
+	 * If not, there's probably nothing to do.
+	 * Derived classes must call their parent class implementation of this method.
+	 */
+	virtual void disconnectFromMixer();
+	/**
+	 * Returns the current mixer, if any. It will still return non-null within disconnectFromMixer().
+	 */
+	StreamMixer *getMixer() const;
 	virtual LinphoneCallStats *getStats(){
 		return nullptr;
 	}
@@ -148,6 +172,7 @@ private:
 	const SalStreamType mStreamType;
 	const size_t mIndex;
 	State mState = Stopped;
+	StreamMixer *mMixer = nullptr;
 	bool mIsMain = false;
 };
 
@@ -291,6 +316,8 @@ public:
 	 * Statistics (LinphoneCallStats ) must remain until destruction.
 	 */
 	virtual void finish() override;
+	void joinMixerSession(MixerSession *mixerSession);
+	void unjoinMixerSession();
 	Stream * getStream(size_t index);
 	Stream * getStream(int index){
 		return getStream((size_t) index);
@@ -349,6 +376,7 @@ public:
 	const std::string & getAuthenticationToken()const{ return mAuthToken; }
 	bool getAuthenticationTokenVerified() const{ return mAuthTokenVerified; }
 	const OfferAnswerContext & getCurrentOfferAnswerContext()const{ return mCurrentOfferAnswerState; };
+	CallSession::State getCurrentSessionState() const{ return mCurrentSessionState;};
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	LinphoneCore *getCCore()const;
 	Core & getCore()const;
@@ -365,9 +393,12 @@ private:
 	float computeOverallQuality(_functor func);
 	Stream * createStream(const OfferAnswerContext &param);
 	MediaSession &mMediaSession;
+	void computeAndReportBandwidth();
+	void attachMixers();
+	void detachMixers();
 	std::unique_ptr<IceService> mIceService;
 	std::vector<std::unique_ptr<Stream>> mStreams;
-	void computeAndReportBandwidth();
+	
 	// Upload bandwidth used by audio.
 	int mAudioBandwidth = 0;
 	// Zrtp auth token
@@ -375,6 +406,8 @@ private:
 	belle_sip_source_t *mBandwidthReportTimer = nullptr;
 	std::list<std::function<void()>> mPostRenderHooks;
 	OfferAnswerContext mCurrentOfferAnswerState;
+	CallSession::State mCurrentSessionState;
+	MixerSession *mMixerSession = nullptr;
 	bool mAuthTokenVerified = false;
 	bool mFinished = false;
 

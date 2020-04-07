@@ -175,6 +175,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/session/tone-manager.h
 	conference/session/ms2-streams.h
 	conference/session/media-description-renderer.h
+	conference/session/mixers.h
 	containers/lru-cache.h
 	content/content-disposition.h
 	content/content-manager.h
@@ -351,6 +352,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/session/video-stream.cpp
 	conference/session/rtt-stream.cpp
 	conference/session/media-session.cpp
+	conference/session/mixer-session.cpp
+	conference/session/audio-mixer.cpp
 	content/content-disposition.cpp
 	content/content-manager.cpp
 	content/content-type.cpp
