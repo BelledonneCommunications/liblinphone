@@ -734,7 +734,8 @@ AudioDevice* MS2AudioStream::getInputDevice() const {
 
 AudioDevice* MS2AudioStream::getOutputDevice() const {
 	MSSndCard *card = nullptr;
-	if (getCCore()->ringstream) {
+	// If audiostream playcard is null, then it is assumed that the phone just started to ring, hence collecting all info from the ring stream
+	if ((getCCore()->ringstream) || (!mStream->playcard)) {
 		card = ring_stream_get_output_ms_snd_card(getCCore()->ringstream);
 	} else {
 		card = audio_stream_get_output_ms_snd_card(mStream);
