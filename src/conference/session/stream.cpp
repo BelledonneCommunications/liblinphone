@@ -100,6 +100,18 @@ void Stream::setIceCheckList(IceCheckList *cl){
 void Stream::iceStateChanged(){
 }
 
+void Stream::connectToMixer(StreamMixer *mixer){
+	mMixer = mixer;
+}
+
+void Stream::disconnectFromMixer(){
+	mMixer = nullptr;
+}
+
+StreamMixer * Stream::getMixer()const{
+	return mMixer;
+}
+
 void Stream::setRandomPortConfig () {
 	mPortConfig.rtpPort = -1;
 	mPortConfig.rtcpPort = -1;

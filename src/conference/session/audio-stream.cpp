@@ -19,6 +19,7 @@
 #include "bctoolbox/defs.h"
 
 #include "ms2-streams.h"
+#include "mixers.h"
 #include "media-session.h"
 #include "media-session-p.h"
 #include "core/core.h"
@@ -237,7 +238,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		}
 		return;
 	}
-	
+	MS2AudioMixer *audioMixer = getAudioMixer();
 	int usedPt = -1;
 	string onHoldFile = "";
 	RtpProfile *audioProfile = makeProfile(params.resultMediaDescription, stream, &usedPt);
@@ -290,8 +291,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (getCCore()->use_files || (useRtpIo && !useRtpIoEnableLocalOutput)) {
 		captcard = playcard = nullptr;
 	}
-	if (getMediaSessionPrivate().getParams()->getPrivate()->getInConference()) {
-		// First create the graph without soundcard resources
+	if (audioMixer) {
+		// Create the graph without soundcard resources.
 		captcard = playcard = nullptr;
 	}
 	if (listener && !listener->areSoundResourcesAvailable(getMediaSession().getSharedFromThis())) {
@@ -310,7 +311,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (captcard && (stream->max_rate > 0))
 		ms_snd_card_set_preferred_sample_rate(captcard, stream->max_rate);
 	
-	if (!getMediaSessionPrivate().getParams()->getPrivate()->getInConference() && !getMediaSessionPrivate().getParams()->getRecordFilePath().empty()) {
+	if (!audioMixer && !getMediaSessionPrivate().getParams()->getRecordFilePath().empty()) {
 		audio_stream_mixed_record_open(mStream, getMediaSessionPrivate().getParams()->getRecordFilePath().c_str());
 		getMediaSessionPrivate().getCurrentParams()->setRecordFilePath(getMediaSessionPrivate().getParams()->getRecordFilePath());
 	}
@@ -379,12 +380,11 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (listener && listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis()))
 		setupRingbackPlayer();
 	
-	if (getMediaSessionPrivate().getParams()->getPrivate()->getInConference() && listener) {
-		// Transform the graph to connect it to the conference filter
-		bool mute = (stream->dir == SalStreamRecvOnly);
-		listener->onCallSessionConferenceStreamStarting(getMediaSession().getSharedFromThis(), mute);
+	if (audioMixer){
+		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE);
+		audioMixer->connectEndpoint(mConferenceEndpoint, (stream->dir == SalStreamRecvOnly));
 	}
-	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setInConference(getMediaSessionPrivate().getParams()->getPrivate()->getInConference());
+	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setInConference(audioMixer != nullptr);
 	getMediaSessionPrivate().getCurrentParams()->enableLowBandwidth(getMediaSessionPrivate().getParams()->lowBandwidthEnabled());
 	
 	// Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute
@@ -439,15 +439,21 @@ void MS2AudioStream::stop(){
 	VideoStream *vs = getPeerVideoStream();
 	if (vs) audio_stream_unlink_video(mStream, vs);
 	
+	if (mConferenceEndpoint){
+		// First disconnect from the mixer before stopping the stream.
+		getAudioMixer()->disconnectEndpoint(mConferenceEndpoint);
+		ms_audio_endpoint_destroy(mConferenceEndpoint);
+		mConferenceEndpoint = nullptr;
+	}
 	audio_stream_stop(mStream);
 	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 
 	 * sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
 	mStream = audio_stream_new_with_sessions(getCCore()->factory, &mSessions);
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
 	
-	
 	if (mCurrentCaptureCard) ms_snd_card_unref(mCurrentCaptureCard);
 	if (mCurrentPlaybackCard) ms_snd_card_unref(mCurrentPlaybackCard);
+	
 	mCurrentCaptureCard = nullptr;
 	mCurrentPlaybackCard = nullptr;
 }
@@ -737,6 +743,41 @@ void MS2AudioStream::finish(){
 		mStream = nullptr;
 	}
 	MS2Stream::finish();
+}
+
+void MS2AudioStream::connectToMixer(StreamMixer *mixer){
+	MS2Stream::connectToMixer(mixer);
+	if (getState() == Running){
+		stop();
+		render(getGroup().getCurrentOfferAnswerContext().scopeStreamToIndex(getIndex()),
+			getGroup().getCurrentSessionState());
+	}
+}
+
+void MS2AudioStream::disconnectFromMixer(){
+	bool wasRunning = false;
+	if (getState() == Running){
+		stop();
+		wasRunning = true;
+	}
+	MS2Stream::disconnectFromMixer();
+	if (wasRunning){
+		// Call render to take changes into account immediately.
+		render(getGroup().getCurrentOfferAnswerContext().scopeStreamToIndex(getIndex()),
+			getGroup().getCurrentSessionState());
+	}
+}
+
+MS2AudioMixer *MS2AudioStream::getAudioMixer(){
+	StreamMixer *mixer = getMixer();
+	if (mixer){
+		MS2AudioMixer * audioMixer = dynamic_cast<MS2AudioMixer*>(mixer);
+		if (!audioMixer){
+			lError() << *this << " does not have a mixer it is able to interface with.";
+		}
+		return audioMixer;
+	}
+	return nullptr;
 }
 
 MS2AudioStream::~MS2AudioStream(){

@@ -31,6 +31,7 @@
 #include "conference/params/media-session-params-p.h"
 #include "nat/ice-service.h"
 #include "linphone/core.h"
+#include "mixers.h"
 
 #include <iomanip>
 
@@ -199,6 +200,7 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 	}
 	/* Save the state of the offer-answer, so that we are later able to monitor differences in next render() calls. */
 	mCurrentOfferAnswerState.dupFrom(params);
+	mCurrentSessionState = targetState;
 }
 
 void StreamsGroup::sessionConfirmed(const OfferAnswerContext &params){
@@ -502,6 +504,36 @@ void StreamsGroup::finish(){
 	mIceService->finish(); // finish ICE first, as it has actions on the streams.
 	forEach<Stream>(mem_fun(&Stream::finish));
 	mFinished = true;
+}
+
+void StreamsGroup::attachMixers(){
+	if (!mMixerSession) return;
+	for (auto & stream : mStreams){
+		if (stream->getMixer() == nullptr){
+			StreamMixer *mixer = mMixerSession->getMixerByType(stream->getType());
+			if (mixer) stream->connectToMixer(mixer);
+		}
+	}
+}
+
+void StreamsGroup::detachMixers(){
+	for (auto & stream : mStreams){
+		if (stream->getMixer() != nullptr){
+			stream->disconnectFromMixer();
+		}
+	}
+}
+
+void StreamsGroup::joinMixerSession(MixerSession *mixerSession){
+	if (mMixerSession) lFatal() << "StreamsGroup::joinMixerSession() already joined !";
+	mMixerSession = mixerSession;
+	attachMixers();
+}
+
+void StreamsGroup::unjoinMixerSession(){
+	if (mMixerSession) lFatal() << "StreamsGroup::unjoinMixerSession() not joined !";
+	detachMixers();
+	mMixerSession = nullptr;
 }
 
 
