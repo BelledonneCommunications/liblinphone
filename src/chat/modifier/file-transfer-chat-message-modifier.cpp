@@ -919,13 +919,17 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile (const b
 		if (currentFileContentToTransfer)
 			body_size = currentFileContentToTransfer->getFileSize();
 
-		belle_sip_body_handler_t *body_handler = (belle_sip_body_handler_t *)belle_sip_user_body_handler_new(
-			body_size, _chat_message_file_transfer_on_progress,
-			nullptr, _chat_message_on_recv_body,
-			nullptr, _chat_message_on_recv_end, this
-		);
+		/* Reception buffering : The decryption engine must get data chunks which size is 0 mod 16
+		 * In order to achieve this, we bufferize the input at body handler level as the callbacks
+		 * cannot modify the size or the offset given by the body handler */
+		belle_sip_body_handler_t *body_handler = NULL;
 		if (!currentFileContentToTransfer->getFilePath().empty()) {
-			belle_sip_user_body_handler_t *bh = (belle_sip_user_body_handler_t *)body_handler;
+			/* the buffering is done by file body handler, use a regular user body handler*/
+			belle_sip_user_body_handler_t *bh = belle_sip_user_body_handler_new(
+				body_size, _chat_message_file_transfer_on_progress,
+				nullptr, _chat_message_on_recv_body,
+				nullptr, _chat_message_on_recv_end, this);
+
 			body_handler = (belle_sip_body_handler_t *)belle_sip_buffering_file_body_handler_new(currentFileContentToTransfer->getFilePath().c_str(), 16, _chat_message_file_transfer_on_progress, this);
 			if (belle_sip_body_handler_get_size((belle_sip_body_handler_t *)body_handler) == 0) {
 				// If the size of the body has not been initialized from the file stat, use the one from the
@@ -933,6 +937,11 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile (const b
 				belle_sip_body_handler_set_size((belle_sip_body_handler_t *)body_handler, body_size);
 			}
 			belle_sip_file_body_handler_set_user_body_handler((belle_sip_file_body_handler_t *)body_handler, bh);
+		} else { // We are not using a file body handler, so we shall bufferize at user body handler level
+			body_handler = (belle_sip_body_handler_t *)belle_sip_buffering_user_body_handler_new(
+				body_size, 16, _chat_message_file_transfer_on_progress,
+				nullptr, _chat_message_on_recv_body,
+				nullptr, _chat_message_on_recv_end, this);
 		}
 		belle_sip_message_set_body_handler((belle_sip_message_t *)event->response, body_handler);
 	}
