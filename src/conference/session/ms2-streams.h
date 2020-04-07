@@ -22,7 +22,11 @@
 
 #include "streams.h"
 
+struct _MSAudioEndpoint;
+
 LINPHONE_BEGIN_NAMESPACE
+
+class MS2AudioMixer;
 
 /**
  * Derived class for streams commonly handly through mediastreamer2 library.
@@ -125,6 +129,8 @@ public:
 	virtual void sessionConfirmed(const OfferAnswerContext &ctx) override;
 	virtual void stop() override;
 	virtual void finish() override;
+	virtual void connectToMixer(StreamMixer *mixer) override;
+	virtual void disconnectFromMixer() override;
 	
 	/* AudioControlInterface */
 	virtual void enableMic(bool value) override;
@@ -173,7 +179,9 @@ private:
 	void setupRingbackPlayer();
 	void telephoneEventReceived (int event);
 	void configureAudioStream();
+	MS2AudioMixer *getAudioMixer();
 	AudioStream *mStream = nullptr;
+	struct _MSAudioEndpoint *mConferenceEndpoint = nullptr;
 	MSSndCard *mCurrentCaptureCard = nullptr;
 	MSSndCard *mCurrentPlaybackCard = nullptr;
 	belle_sip_source_t *mMediaLostCheckTimer = nullptr;
