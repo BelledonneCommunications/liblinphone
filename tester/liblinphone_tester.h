@@ -340,7 +340,9 @@ typedef struct _stats {
 	int number_of_LinphoneGlobalConfiguring;
 
 	int number_of_LinphoneCoreFirstCallStarted;
-	int number_of_LinphoneCoreLastCallEnded;	
+	int number_of_LinphoneCoreLastCallEnded;
+	int number_of_LinphoneCoreAudioDeviceChanged;
+	int number_of_LinphoneCoreAudioDevicesListUpdated;
 }stats;
 
 
@@ -430,6 +432,8 @@ void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCall
 void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
 void first_call_started(LinphoneCore *lc);
 void last_call_ended(LinphoneCore *lc);
+void audio_device_changed(LinphoneCore *lc, LinphoneAudioDevice *device);
+void audio_devices_list_updated(LinphoneCore *lc);
 	
 LinphoneAddress * create_linphone_address(const char * domain);
 LinphoneAddress * create_linphone_address_for_algo(const char * domain, const char * username);

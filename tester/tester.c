@@ -474,6 +474,8 @@ void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, c
 	linphone_core_cbs_set_message_sent(mgr->cbs, liblinphone_tester_chat_room_msg_sent);
 	linphone_core_cbs_set_first_call_started(mgr->cbs, first_call_started);
 	linphone_core_cbs_set_last_call_ended(mgr->cbs, last_call_ended);
+	linphone_core_cbs_set_audio_device_changed(mgr->cbs, audio_device_changed);
+	linphone_core_cbs_set_audio_devices_list_updated(mgr->cbs, audio_devices_list_updated);
 
 	mgr->phone_alias = phone_alias ? ms_strdup(phone_alias) : NULL;
 
@@ -1711,6 +1713,16 @@ void first_call_started(LinphoneCore *lc) {
 void last_call_ended(LinphoneCore *lc) {
 	stats *counters = get_stats(lc);
 	counters->number_of_LinphoneCoreLastCallEnded++;
+}
+
+void audio_device_changed(LinphoneCore *lc, LinphoneAudioDevice *device) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneCoreAudioDeviceChanged++;
+}
+
+void audio_devices_list_updated(LinphoneCore *lc) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneCoreAudioDevicesListUpdated++;
 }
 
 void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManager* mgr ){
