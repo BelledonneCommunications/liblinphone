@@ -252,13 +252,6 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
 	}
 	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
-/*	if (getCCore()->sound_conf.lsd_card)
-		lInfo() << "DADA Executing " << __func__ << " lds card " << ms_snd_card_get_string_id(getCCore()->sound_conf.lsd_card);
-	if (getCCore()->sound_conf.play_sndcard)
-		lInfo() << "DADA Executing " << __func__ << " play card " << ms_snd_card_get_string_id(getCCore()->sound_conf.play_sndcard);
-	if (getCCore()->sound_conf.ring_sndcard)
-		lInfo() << "DADA Executing " << __func__ << " ring card " << ms_snd_card_get_string_id(getCCore()->sound_conf.ring_sndcard);
-*/
 
 	if (!playcard)
 		lWarning() << "No card defined for playback!";
@@ -744,8 +737,6 @@ AudioDevice* MS2AudioStream::getOutputDevice() const {
 	LinphoneCore *lc = getCCore();
 	const char * id = linphone_core_get_playback_device(lc);
 	MSSndCard * card = ms_snd_card_manager_get_card(ms_factory_get_snd_card_manager(lc->factory), id);
-
-//	lInfo() << "DADA Executing " << __func__ << " output card " << ms_snd_card_get_string_id(card);
 
 	return getCore().findAudioDeviceMatchingMsSoundCard(card);
 }

@@ -115,14 +115,12 @@ void ToneManager::startNamedTone(const std::shared_ptr<CallSession> &session, Li
 
 void ToneManager::goToCall(const std::shared_ptr<CallSession> &session) {
 	printDebugInfo(session);
-	lInfo() << "DADA [ToneManager] " << __func__;
 	lInfo() << "[ToneManager] " << __func__;
 	doStop(session, State::Call);
 }
 
 void ToneManager::stop(const std::shared_ptr<CallSession> &session) {
 	printDebugInfo(session);
-	lInfo() << "DADA [ToneManager] " << __func__;
 	lInfo() << "[ToneManager] " << __func__;
 	doStop(session, State::None);
 	LinphoneCore *lc = getCore()->getCCore();
@@ -163,7 +161,6 @@ void ToneManager::update(const std::shared_ptr<CallSession> &session) {
 // ---------------------------------------------------
 
 void ToneManager::linphoneCorePlayDtmf(char dtmf, int duration) {
-	lInfo() << "DADA [ToneManager] " << __func__;
 	lInfo() << "[ToneManager] " << __func__;
 	LinphoneCore *lc = getCore()->getCCore();
 
@@ -412,15 +409,6 @@ void ToneManager::doStartRingbackTone(const std::shared_ptr<CallSession> &sessio
 	if (!lc->sound_conf.play_sndcard)
 		return;
 
-/*
-	if (lc->sound_conf.lsd_card)
-		lInfo() << "DADA Executing " << __func__ << " lds card " << ms_snd_card_get_string_id(lc->sound_conf.lsd_card);
-	if (lc->sound_conf.play_sndcard)
-		lInfo() << "DADA Executing " << __func__ << " play card " << ms_snd_card_get_string_id(lc->sound_conf.play_sndcard);
-	if (lc->sound_conf.ring_sndcard)
-		lInfo() << "DADA Executing " << __func__ << " ring card " << ms_snd_card_get_string_id(lc->sound_conf.ring_sndcard);
-*/
-
 	MSSndCard *ringCard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.play_sndcard;
 
 	if (lc->sound_conf.remote_ring) {
@@ -449,31 +437,26 @@ void ToneManager::doStartRingtone(const std::shared_ptr<CallSession> &session) {
 // ---------------------------------------------------
 
 void ToneManager::doStop(const std::shared_ptr<CallSession> &session, ToneManager::State newState) {
-	lInfo() << "DADA [ToneManager] " << __func__;
 	LinphoneCore *lc = getCore()->getCCore();
 	switch (getState(session)) {
 		case ToneManager::Ringback:
-			lInfo() << "DADA [ToneManager] session is ringback";
 			setState(session, newState);
 			doStopRingbackTone();
 			mStats->number_of_stopRingbackTone++;
 			break;
 		case ToneManager::Ringtone:
 			setState(session, newState);
-			lInfo() << "DADA [ToneManager] session is ringtone";
 			doStopRingtone(session);
 			/* start again ringtone in update() in case another call is in Ringtone state */
 			mStats->number_of_stopRingtone++;
 			break;
 		case ToneManager::Tone:
-			lInfo() << "DADA [ToneManager] session is tone";
 			setState(session, newState);
 			doStopTone();
 			mStats->number_of_stopTone++;
 			break;
 		case ToneManager::Call:
 			setState(session, newState);
-			lInfo() << "DADA [ToneManager] session is call";
 			if (isAnotherSessionInState(session, ToneManager::Ringtone)) {
 				doStopTone();
 			}
@@ -482,7 +465,6 @@ void ToneManager::doStop(const std::shared_ptr<CallSession> &session, ToneManage
 			lInfo() << "[ToneManager] nothing to stop";
 			// In case use changed the output device by default by touching the icon on the screen
 			linphone_core_set_playback_device(lc, NULL);
-			lInfo() << "DADA [ToneManager] nothing to stop";
 			break;
 	}
 }
@@ -628,16 +610,6 @@ MSFilter *ToneManager::getAudioResource(AudioResourceType rtype, MSSndCard *card
 
 		if (ringcard == NULL) return NULL;
 		if (!create) return NULL;
-
-/*	if (lc->sound_conf.lsd_card)
-		lInfo() << "DADA Executing " << __func__ << " lds card " << ms_snd_card_get_string_id(lc->sound_conf.lsd_card);
-	if (lc->sound_conf.play_sndcard)
-		lInfo() << "DADA Executing " << __func__ << " play card " << ms_snd_card_get_string_id(lc->sound_conf.play_sndcard);
-	if (lc->sound_conf.ring_sndcard)
-		lInfo() << "DADA Executing " << __func__ << " ring card " << ms_snd_card_get_string_id(lc->sound_conf.ring_sndcard);
-	if (card)
-		lInfo() << "DADA Executing " << __func__ << " card " << ms_snd_card_get_string_id(card);
-*/
 
 		ms_snd_card_set_stream_type(ringcard, MS_SND_CARD_STREAM_DTMF);
 		ringstream = lc->ringstream = ring_start(lc->factory, NULL, 0, ringcard);
