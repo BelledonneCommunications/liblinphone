@@ -84,7 +84,9 @@ static void chat_room_state_changed (LinphoneChatRoom *cr, LinphoneChatRoomState
 	const LinphoneAddress *addr = linphone_chat_room_get_conference_address(cr);
 
 	if (addr) {
-		ms_message("ChatRoom [%s] state changed: %d", linphone_address_as_string(addr), newState);
+		char *addr_str = linphone_address_as_string(addr);
+		ms_message("ChatRoom [%s] state changed: %d", addr_str, newState);
+		bctbx_free(addr_str);
 	}
 	switch (newState) {
 		case LinphoneChatRoomStateNone:
