@@ -46,8 +46,8 @@ public:
 	mutable const SalStreamDescription *resultStreamDescription = nullptr;
 	mutable size_t streamIndex = 0;
 	
-	void scopeStreamToIndex(size_t index)const;
-	void scopeStreamToIndexWithDiff(size_t index, const OfferAnswerContext &previousCtx)const;
+	const OfferAnswerContext & scopeStreamToIndex(size_t index)const;
+	const OfferAnswerContext & scopeStreamToIndexWithDiff(size_t index, const OfferAnswerContext &previousCtx)const;
 	/* Copy descriptions from 'ctx', taking ownership of descriptions. */
 	void dupFrom(const OfferAnswerContext &ctx);
 	/* Copy descriptions from 'ctx', NOT taking ownership of descriptions. */

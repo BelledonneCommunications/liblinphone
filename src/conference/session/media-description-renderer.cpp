@@ -22,11 +22,12 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-void OfferAnswerContext::scopeStreamToIndex(size_t index) const{
+const OfferAnswerContext & OfferAnswerContext::scopeStreamToIndex(size_t index) const{
 	streamIndex = index;
 	localStreamDescription = localMediaDescription ? &localMediaDescription->streams[index] : nullptr;
 	remoteStreamDescription = remoteMediaDescription ? &remoteMediaDescription->streams[index] : nullptr;
 	resultStreamDescription = resultMediaDescription ? &resultMediaDescription->streams[index] : nullptr;
+	return *this;
 }
 
 void OfferAnswerContext::dupFrom(const OfferAnswerContext &ctx){
@@ -48,7 +49,7 @@ void OfferAnswerContext::copyFrom(const OfferAnswerContext &ctx){
 	// if the temporary oldCtx owns media descriptions, they will be unrefed by the destructor here.
 }
 
-void OfferAnswerContext::scopeStreamToIndexWithDiff(size_t index, const OfferAnswerContext &previousCtx) const{
+const OfferAnswerContext & OfferAnswerContext::scopeStreamToIndexWithDiff(size_t index, const OfferAnswerContext &previousCtx) const{
 	scopeStreamToIndex(index);
 	previousCtx.scopeStreamToIndex(index);
 	
@@ -60,6 +61,7 @@ void OfferAnswerContext::scopeStreamToIndexWithDiff(size_t index, const OfferAns
 		resultStreamDescriptionChanges = sal_media_description_global_equals(previousCtx.resultMediaDescription, resultMediaDescription)
 		| sal_stream_description_equals(previousCtx.resultStreamDescription, resultStreamDescription);
 	}else resultStreamDescriptionChanges = 0;
+	return *this;
 }
 
 void OfferAnswerContext::clear(){
