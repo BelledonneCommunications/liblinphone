@@ -545,6 +545,9 @@ const char *liblinphone_tester_get_empty_rc(void);
 int liblinphone_tester_copy_file(const char *from, const char *to);
 char * generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *dialPlan);
 
+extern MSSndCardDesc dummy_test_snd_card_desc;
+#define DUMMY_TEST_SOUNDCARD "dummy test sound card"
+
 #ifdef __cplusplus
 };
 #endif

@@ -275,6 +275,60 @@ static void simple_call_with_multipart_invite_body(void) {
 	simple_call_base(FALSE, FALSE, TRUE);
 }
 
+static void simple_call_with_audio_devices_reload(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(marie->lc));
+	BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(marie->lc));
+	BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(pauline->lc));
+	BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(pauline->lc));
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_output_audio_device(marie->lc));
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_input_audio_device(marie->lc));
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_output_audio_device(pauline->lc));
+	// Pauline is using a file player as input so no sound card
+	BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(pauline->lc));
+	
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_output_audio_device(marie_call));
+	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_input_audio_device(marie_call));
+	
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_output_audio_device(pauline_call));
+	// Pauline is using a file player as input so no sound card
+	BC_ASSERT_PTR_NULL(linphone_call_get_input_audio_device(pauline_call));
+
+	MSFactory *factory = linphone_core_get_ms_factory(marie->lc);
+	MSSndCardManager *sndcard_manager = ms_factory_get_snd_card_manager(factory);
+	ms_snd_card_manager_register_desc(sndcard_manager, &dummy_test_snd_card_desc);
+	linphone_core_reload_sound_devices(marie->lc);
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDevicesListUpdated, 1, int, "%d");
+
+	bctbx_list_t *audio_devices = linphone_core_get_audio_devices(marie->lc);
+	BC_ASSERT_EQUAL(bctbx_list_size(audio_devices), 1, int, "%d");
+	LinphoneAudioDevice *audio_device = (LinphoneAudioDevice *)bctbx_list_get_data(audio_devices);
+	BC_ASSERT_PTR_NOT_NULL(audio_device);
+	linphone_audio_device_ref(audio_device);
+	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
+
+	linphone_core_set_audio_device(marie->lc, audio_device);
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, 1, int, "%d");
+	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), audio_device);
+	BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(marie->lc), audio_device);
+
+	end_call(marie, pauline);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	linphone_audio_device_unref(audio_device);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 /*This test is added to reproduce a crash when a call is failed synchronously*/
 static void  simple_call_with_no_sip_transport(void){
 	LinphoneCoreManager* marie;
@@ -5189,6 +5243,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Simple call with UDP", simple_call_with_udp),
 	TEST_NO_TAG("Simple call without soundcard", simple_call_without_soundcard),
 	TEST_NO_TAG("Simple call with multipart INVITE body", simple_call_with_multipart_invite_body),
+	TEST_NO_TAG("Simple call with audio devices reload", simple_call_with_audio_devices_reload),
 	TEST_ONE_TAG("Call terminated automatically by linphone_core_destroy", automatic_call_termination, "LeaksMemory"),
 	TEST_NO_TAG("Call with http proxy", call_with_http_proxy),
 	TEST_NO_TAG("Call with timed-out bye", call_with_timed_out_bye),

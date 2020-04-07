@@ -1675,25 +1675,7 @@ static void dial_plan(void) {
 	bctbx_list_free_with_data(dial_plans, (bctbx_list_free_func)linphone_dial_plan_unref);
 }
 
-static void dummy_test_snd_card_detect(MSSndCardManager *m);
 static void dummy2_test_snd_card_detect(MSSndCardManager *m);
-
-MSSndCardDesc dummy_test_snd_card_desc = {
-	"dummyTest",
-	dummy_test_snd_card_detect,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
 
 MSSndCardDesc dummy2_test_snd_card_desc = {
 	"dummyTest2",
@@ -1712,19 +1694,7 @@ MSSndCardDesc dummy2_test_snd_card_desc = {
 	NULL
 };
 
-#define DUMMY_TEST_SOUNDCARD "dummy test sound card"
 #define DUMMY2_TEST_SOUNDCARD "dummy2 test sound card"
-
-static MSSndCard* create_dummy_test_snd_card(void) {
-	MSSndCard* sndcard;
-	sndcard = ms_snd_card_new(&dummy_test_snd_card_desc);
-	sndcard->data = NULL;
-	sndcard->name = ms_strdup(DUMMY_TEST_SOUNDCARD);
-	sndcard->capabilities = MS_SND_CARD_CAP_PLAYBACK | MS_SND_CARD_CAP_CAPTURE;
-	sndcard->latency = 0;
-	sndcard->device_type = MS_SND_CARD_DEVICE_TYPE_BLUETOOTH;
-	return sndcard;
-}
 
 static MSSndCard* create_dummy2_test_snd_card(void) {
 	MSSndCard* sndcard;
@@ -1735,10 +1705,6 @@ static MSSndCard* create_dummy2_test_snd_card(void) {
 	sndcard->latency = 0;
 	sndcard->device_type = MS_SND_CARD_DEVICE_TYPE_BLUETOOTH;
 	return sndcard;
-}
-
-static void dummy_test_snd_card_detect(MSSndCardManager *m) {
-	ms_snd_card_manager_prepend_card(m, create_dummy_test_snd_card());
 }
 
 static void dummy2_test_snd_card_detect(MSSndCardManager *m) {
