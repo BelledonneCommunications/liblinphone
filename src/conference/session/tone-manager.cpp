@@ -115,14 +115,19 @@ void ToneManager::startNamedTone(const std::shared_ptr<CallSession> &session, Li
 
 void ToneManager::goToCall(const std::shared_ptr<CallSession> &session) {
 	printDebugInfo(session);
+	lInfo() << "DADA [ToneManager] " << __func__;
 	lInfo() << "[ToneManager] " << __func__;
 	doStop(session, State::Call);
 }
 
 void ToneManager::stop(const std::shared_ptr<CallSession> &session) {
 	printDebugInfo(session);
+	lInfo() << "DADA [ToneManager] " << __func__;
 	lInfo() << "[ToneManager] " << __func__;
 	doStop(session, State::None);
+	LinphoneCore *lc = getCore()->getCCore();
+	// Reset playback device
+	linphone_core_set_playback_device(lc, NULL);
 }
 
 void ToneManager::removeSession(const std::shared_ptr<CallSession> &session) {
@@ -158,6 +163,7 @@ void ToneManager::update(const std::shared_ptr<CallSession> &session) {
 // ---------------------------------------------------
 
 void ToneManager::linphoneCorePlayDtmf(char dtmf, int duration) {
+	lInfo() << "DADA [ToneManager] " << __func__;
 	lInfo() << "[ToneManager] " << __func__;
 	LinphoneCore *lc = getCore()->getCCore();
 
@@ -450,7 +456,6 @@ void ToneManager::doStop(const std::shared_ptr<CallSession> &session, ToneManage
 			lInfo() << "DADA [ToneManager] session is ringback";
 			setState(session, newState);
 			doStopRingbackTone();
-			linphone_core_set_playback_device(lc, NULL);
 			mStats->number_of_stopRingbackTone++;
 			break;
 		case ToneManager::Ringtone:
