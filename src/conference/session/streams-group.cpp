@@ -531,7 +531,7 @@ void StreamsGroup::joinMixerSession(MixerSession *mixerSession){
 }
 
 void StreamsGroup::unjoinMixerSession(){
-	if (mMixerSession) lFatal() << "StreamsGroup::unjoinMixerSession() not joined !";
+	if (!mMixerSession) lFatal() << "StreamsGroup::unjoinMixerSession() not joined !";
 	detachMixers();
 	mMixerSession = nullptr;
 }

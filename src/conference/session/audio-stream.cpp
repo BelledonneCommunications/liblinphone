@@ -442,7 +442,7 @@ void MS2AudioStream::stop(){
 	if (mConferenceEndpoint){
 		// First disconnect from the mixer before stopping the stream.
 		getAudioMixer()->disconnectEndpoint(mConferenceEndpoint);
-		ms_audio_endpoint_destroy(mConferenceEndpoint);
+		ms_audio_endpoint_release_from_stream(mConferenceEndpoint);
 		mConferenceEndpoint = nullptr;
 	}
 	audio_stream_stop(mStream);
