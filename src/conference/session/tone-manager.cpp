@@ -124,8 +124,8 @@ void ToneManager::stop(const std::shared_ptr<CallSession> &session) {
 	lInfo() << "[ToneManager] " << __func__;
 	doStop(session, State::None);
 	LinphoneCore *lc = getCore()->getCCore();
-	// Reset playback device
-	linphone_core_set_playback_device(lc, NULL);
+	// Copy default device to playback in case the user changed it during a call or conference
+	linphone_core_copy_default_playback_to_playback(lc);
 }
 
 void ToneManager::removeSession(const std::shared_ptr<CallSession> &session) {
@@ -463,8 +463,8 @@ void ToneManager::doStop(const std::shared_ptr<CallSession> &session, ToneManage
 			break;
 		default:
 			lInfo() << "[ToneManager] nothing to stop";
-			// In case use changed the output device by default by touching the icon on the screen
-			linphone_core_set_playback_device(lc, NULL);
+			// Copy default device to playback in case the user changed it during a call or conference
+			linphone_core_copy_default_playback_to_playback(lc);
 			break;
 	}
 }

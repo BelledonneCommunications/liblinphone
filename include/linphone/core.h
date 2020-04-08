@@ -3201,6 +3201,22 @@ LINPHONE_PUBLIC float linphone_core_get_mic_gain_db(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_set_playback_gain_db(LinphoneCore *lc, float level);
 
 /**
+ * Gets the name of the default sound device for playback.
+ * @param[in] lc #LinphoneCore object
+ * @return The name of the default sound device for playback
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC const char * linphone_core_get_default_playback_device(LinphoneCore *lc);
+
+/**
+ * Gets the name of the default sound device for capture.
+ * @param[in] lc #LinphoneCore object
+ * @return The name of the default sound device for capture
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC const char * linphone_core_get_default_capture_device(LinphoneCore *lc);
+
+/**
  * Get playback gain in db before entering  sound card.
  * @param[in] lc #LinphoneCore object
  * @return The current playback gain
@@ -3239,6 +3255,40 @@ LINPHONE_PUBLIC const char * linphone_core_get_capture_device(LinphoneCore *lc);
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC const char * linphone_core_get_media_device(LinphoneCore *lc);
+
+/**
+ * Copies the default sound device used for playback to the actual sound card used for capture.
+ * @param[in] lc #LinphoneCore object
+ * @return 0
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC LinphoneStatus linphone_core_copy_default_capture_to_capture(LinphoneCore *lc);
+
+/**
+ * Copies the default sound device used for playback to the actual sound card used for playback.
+ * @param[in] lc #LinphoneCore object
+ * @return 0
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC LinphoneStatus linphone_core_copy_default_playback_to_playback(LinphoneCore *lc);
+
+/**
+ * Sets the default sound device used for playback.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] devid The device name as returned by linphone_core_get_sound_devices()
+ * @return 0
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC LinphoneStatus linphone_core_set_default_playback_device(LinphoneCore *lc, const char * devid);
+
+/**
+ * Sets the default sound device used for capture.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] devid The device name as returned by linphone_core_get_sound_devices()
+ * @return 0
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC LinphoneStatus linphone_core_set_default_capture_device(LinphoneCore *lc, const char * devid);
 
 /**
  * Sets the sound device used for ringing.

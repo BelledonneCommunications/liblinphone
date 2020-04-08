@@ -157,7 +157,7 @@ public:
 	static void postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted);
 	MSSndCard *getCurrentPlaybackCard()const{ return mCurrentPlaybackCard; }
 	MSSndCard *getCurrentCaptureCard()const{ return mCurrentCaptureCard; }
-	
+
 protected:
 	VideoStream *getPeerVideoStream();
 private:

@@ -683,20 +683,20 @@ AudioDevice* Core::getOutputAudioDevice() const {
 }
 
 void Core::setDefaultInputAudioDevice(AudioDevice *audioDevice) {
-	linphone_core_set_capture_device(getCCore(), audioDevice->getId().c_str());
+	linphone_core_set_default_capture_device(getCCore(), audioDevice->getId().c_str());
 }
 
 void Core::setDefaultOutputAudioDevice(AudioDevice *audioDevice) {
-	linphone_core_set_playback_device(getCCore(), audioDevice->getId().c_str());
+	linphone_core_set_default_playback_device(getCCore(), audioDevice->getId().c_str());
 }
 
 AudioDevice* Core::getDefaultInputAudioDevice() const {
-	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	MSSndCard *card = getCCore()->sound_conf.capt_sndcard_default;
 	return findAudioDeviceMatchingMsSoundCard(card);
 }
 
 AudioDevice* Core::getDefaultOutputAudioDevice() const {
-	MSSndCard *card = getCCore()->sound_conf.play_sndcard;
+	MSSndCard *card = getCCore()->sound_conf.play_sndcard_default;
 	return findAudioDeviceMatchingMsSoundCard(card);
 }
 
