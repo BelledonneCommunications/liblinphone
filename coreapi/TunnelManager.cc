@@ -269,6 +269,7 @@ TunnelManager::TunnelManager(LinphoneCore* lc) :
 	mCoreCbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_network_reachable(mCoreCbs, networkReachableCb);
 	linphone_core_cbs_set_global_state_changed(mCoreCbs, globalStateChangedCb);
+	linphone_core_cbs_set_user_data(mCoreCbs,this);
 	_linphone_core_add_callbacks(mCore, mCoreCbs,true);
 	linphone_core_get_local_ip_for(AF_INET, NULL, mLocalAddr);
 	mAutodetectionRunning = false;
@@ -513,7 +514,7 @@ void TunnelManager::globalStateChangedCb(LinphoneCore *lc, LinphoneGlobalState g
 	if (gstate == LinphoneGlobalOff) {
 		ms_message("Core [%p] is Off, unlinking TunnelManager to core",lc);
 		//calling same core as for object destruction
-		TunnelManager *thiz = (TunnelManager *)linphone_core_v_table_get_user_data(linphone_core_get_current_vtable(lc));
+		TunnelManager *thiz = (TunnelManager *)linphone_core_cbs_get_user_data(linphone_core_get_current_callbacks(lc));
 		if (thiz)
 			thiz->unlinkLinphoneCore();
 	}
