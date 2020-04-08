@@ -43,6 +43,7 @@ add_library(linphone++ SHARED
 	${CMAKE_CURRENT_BINARY_DIR}/src/linphone++.cc
 )
 set_target_properties(linphone++ PROPERTIES OUTPUT_NAME liblinphone++)
+set_target_properties(linphone++ PROPERTIES PREFIX "")
 if(MSVC)
     set_target_properties(linphone++ PROPERTIES PDB_NAME liblinphone++)
 endif()
