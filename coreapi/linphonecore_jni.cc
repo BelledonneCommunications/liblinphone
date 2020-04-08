@@ -8150,7 +8150,7 @@ extern "C" void Java_org_linphone_core_LinphoneConferenceParamsImpl_enableVideo(
 }
 
 extern "C" jboolean Java_org_linphone_core_LinphoneConferenceParamsImpl_isVideoRequested(JNIEnv *env, jobject thiz, jlong paramsPtr) {
-	return linphone_conference_params_video_requested((LinphoneConferenceParams *)paramsPtr);
+	return linphone_conference_params_video_enabled((LinphoneConferenceParams *)paramsPtr);
 }
 
 extern "C" jobjectArray Java_org_linphone_core_LinphoneConferenceImpl_getParticipants(JNIEnv *env, jobject thiz, jlong pconference) {
