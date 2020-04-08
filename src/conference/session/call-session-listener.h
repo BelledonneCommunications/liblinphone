@@ -39,8 +39,6 @@ public:
 	virtual void onBackgroundTaskToBeStarted (const std::shared_ptr<CallSession> &session) {}
 	virtual void onBackgroundTaskToBeStopped (const std::shared_ptr<CallSession> &session) {}
 	virtual bool onCallSessionAccepted (const std::shared_ptr<CallSession> &session) { return false; }
-	virtual void onCallSessionConferenceStreamStarting (const std::shared_ptr<CallSession> &session, bool mute) {}
-	virtual void onCallSessionConferenceStreamStopping (const std::shared_ptr<CallSession> &session) {}
 	virtual void onCallSessionEarlyFailed (const std::shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) {}
 	virtual void onCallSessionSetReleased (const std::shared_ptr<CallSession> &session) {}
 	virtual void onCallSessionSetTerminated (const std::shared_ptr<CallSession> &session) {}
@@ -71,8 +69,6 @@ public:
 	virtual void onResetFirstVideoFrameDecoded (const std::shared_ptr<CallSession> &session) {}
 	virtual void onCameraNotWorking (const std::shared_ptr<CallSession> &session, const char *camera_name) {}
 
-
-	virtual void onRingbackToneRequested (const std::shared_ptr<CallSession> &session, bool requested) {}
 
 	virtual bool areSoundResourcesAvailable (const std::shared_ptr<CallSession> &session) { return true; }
 	virtual bool isPlayingRingbackTone (const std::shared_ptr<CallSession> &session) { return false; }

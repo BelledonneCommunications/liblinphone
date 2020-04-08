@@ -34,16 +34,21 @@ class MixerSession{
 public:
 	MixerSession(Core &core);
 	~MixerSession();
-	void joinStreamsGroup(StreamsGroup *sg);
-	void unjoinStreamsGroup(StreamsGroup *sg);
+	void joinStreamsGroup(StreamsGroup &sg);
+	void unjoinStreamsGroup(StreamsGroup &sg);
 	StreamMixer *getMixerByType(SalStreamType type);
-	
+	void enableLocalParticipant(bool enabled);
 	Core & getCore() const;
 	LinphoneCore *getCCore()const;
 private:
 	Core & mCore;
 	std::map<SalStreamType, std::unique_ptr<StreamMixer>> mMixers;
 };
+
+inline std::ostream & operator<<(std::ostream &str, const MixerSession & session){
+	str << "MixerSession [" << (void*) &session << "]";
+	return str;
+}
 
 class StreamMixer{
 public:
@@ -56,6 +61,11 @@ public:
 protected:
 	MixerSession & mSession;
 };
+
+inline std::ostream & operator<<(std::ostream &str, const StreamMixer & mixer){
+	str << "StreamMixer [" << (void*) &mixer << "]";
+	return str;
+}
 
 class MS2AudioMixer : public StreamMixer, public AudioControlInterface{
 public:
@@ -84,6 +94,9 @@ public:
 	virtual void sendDtmf(int dtmf) override;
 	virtual void enableEchoCancellation(bool value) override;
 	virtual bool echoCancellationEnabled()const override;
+	
+	// Used for the tone manager.
+	AudioStream * getAudioStream();
 private:
 	void addLocalParticipant();
 	void removeLocalParticipant();

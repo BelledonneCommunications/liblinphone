@@ -210,5 +210,8 @@ bool MS2AudioMixer::echoCancellationEnabled()const{
 	return linphone_core_echo_cancellation_enabled(getSession().getCCore());
 }
 
+AudioStream * MS2AudioMixer::getAudioStream(){
+	return mLocalParticipantStream;
+}
 
 LINPHONE_END_NAMESPACE
