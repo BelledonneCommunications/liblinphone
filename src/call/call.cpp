@@ -65,6 +65,10 @@ unsigned int CallPrivate::getTextStartCount () const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getTextStartCount();
 }
 
+std::shared_ptr<MediaSession> CallPrivate::getMediaSession()const{
+	return static_pointer_cast<MediaSession>(getActiveSession());
+}
+
 MediaStream *CallPrivate::getMediaStream (LinphoneStreamType type) const {
 	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
 	StreamsGroup & sg = ms->getStreamsGroup();
@@ -176,16 +180,6 @@ void CallPrivate::createPlayer () const {
 
 // -----------------------------------------------------------------------------
 
-void CallPrivate::initializeMediaStreams () {
-	
-}
-
-void CallPrivate::stopMediaStreams () {
-	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->stopStreams();
-}
-
-// -----------------------------------------------------------------------------
-
 
 void CallPrivate::startRemoteRing () {
 	L_Q();
@@ -246,23 +240,6 @@ bool CallPrivate::onCallSessionAccepted (const shared_ptr<CallSession> &session)
 	return wasRinging;
 }
 
-void CallPrivate::onCallSessionConferenceStreamStarting (const shared_ptr<CallSession> &session, bool mute) {
-	L_Q();
-	LinphoneCall *call = L_GET_C_BACK_PTR(q);
-	LinphoneConference *conf = linphone_call_get_conference(call);
-	if (conf) {
-		linphone_conference_on_call_stream_starting(conf, call, mute);
-	}
-}
-
-void CallPrivate::onCallSessionConferenceStreamStopping (const shared_ptr<CallSession> &session) {
-	L_Q();
-	LinphoneCall *call = L_GET_C_BACK_PTR(q);
-	LinphoneConference *conf = linphone_call_get_conference(call);
-	if (conf && _linphone_call_get_endpoint(call))
-		linphone_conference_on_call_stream_stopping(conf, call);
-}
-
 void CallPrivate::onCallSessionEarlyFailed (const shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) {
 	L_Q();
 	LinphoneCallLog *log = session->getLog();
@@ -293,7 +270,7 @@ void CallPrivate::onCallSessionSetTerminated (const shared_ptr<CallSession> &ses
 	if (q->getCore()->getPrivate()->removeCall(q->getSharedFromThis()) != 0)
 		lError() << "Could not remove the call from the list!!!";
 	if (conf)
-		linphone_conference_on_call_terminating(conf, call);
+		MediaConference::Conference::toCpp(conf)->removeParticipant(call);
 #if 0
 	if (lcall->chat_room)
 		linphone_chat_room_set_call(lcall->chat_room, nullptr);
@@ -465,14 +442,6 @@ void CallPrivate::requestNotifyNextVideoFrameDecoded(){
 void CallPrivate::onCameraNotWorking (const std::shared_ptr<CallSession> &session, const char *camera_name) {
 	L_Q();
 	linphone_call_notify_camera_not_working(L_GET_C_BACK_PTR(q), camera_name);
-}
-
-void CallPrivate::onRingbackToneRequested (const shared_ptr<CallSession> &session, bool requested) {
-	L_Q();
-	if (requested && linphone_core_get_remote_ringback_tone(q->getCore()->getCCore()))
-		playingRingbackTone = true;
-	else if (!requested)
-		playingRingbackTone = false;
 }
 
 bool CallPrivate::areSoundResourcesAvailable (const shared_ptr<CallSession> &session) {

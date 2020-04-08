@@ -33,6 +33,7 @@ class Core;
 class IceAgent;
 class MediaSessionPrivate;
 class Participant;
+class StreamsGroup;
 
 class LINPHONE_PUBLIC MediaSession : public CallSession {
 	friend class Call;
@@ -117,6 +118,8 @@ public:
 	void setOutputAudioDevice(AudioDevice *audioDevice);
 	AudioDevice* getInputAudioDevice() const;
 	AudioDevice* getOutputAudioDevice() const;
+	
+	StreamsGroup & getStreamsGroup()const;
 private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);

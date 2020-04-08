@@ -797,12 +797,6 @@ void MS2Stream::stop(){
 		
 		if (statsType != -1) listener->onUpdateMediaInfoForReporting(getMediaSession().getSharedFromThis(), statsType);
 		
-		/*
-		 * FIXME : very very ugly way to manage the conference. Worse, it can remove from a conference a stream that has never been part 
-		 * of any conference.
-		 * Solution: let the Conference object manage the StreamsGroups that are part of a conference.
-		 */
-		if (getType() == SalAudio) listener->onCallSessionConferenceStreamStopping(getMediaSession().getSharedFromThis());
 	}
 	ms_bandwidth_controller_remove_stream(getCCore()->bw_controller, getMediaStream());
 	updateStats();
