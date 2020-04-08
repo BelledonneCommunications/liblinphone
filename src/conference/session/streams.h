@@ -413,6 +413,11 @@ private:
 
 };
 
+inline std::ostream & operator<<(std::ostream & ostr, const StreamsGroup& sg){
+	ostr << "StreamsGroup [" << (void*)&sg << "]";
+	return ostr;
+}
+
 LINPHONE_END_NAMESPACE
 
 #endif

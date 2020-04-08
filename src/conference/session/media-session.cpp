@@ -2799,6 +2799,10 @@ void MediaSession::setParams (const MediaSessionParams *msp) {
 	}
 }
 
+StreamsGroup & MediaSession::getStreamsGroup()const{
+	L_D();
+	return d->getStreamsGroup();
+}
 
 
 LINPHONE_END_NAMESPACE

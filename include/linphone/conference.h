@@ -165,7 +165,7 @@ LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference 
 /**
   * Set the conference id as string
   */
-LINPHONE_PUBLIC void linphone_conference_set_ID(const LinphoneConference *obj, const char *conferenceID);
+LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *obj, const char *conferenceID);
 
 /**
  * @}

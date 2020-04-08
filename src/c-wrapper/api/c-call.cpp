@@ -72,17 +72,10 @@ static void _linphone_call_destructor (LinphoneCall *call) {
 // TODO: To remove!
 // =============================================================================
 
-void linphone_call_init_media_streams (LinphoneCall *call) {
-	L_GET_PRIVATE_FROM_C_OBJECT(call)->initializeMediaStreams();
-}
 
 /*This function is not static because used internally in linphone-daemon project*/
 void _post_configure_audio_stream (AudioStream *st, LinphoneCore *lc, bool_t muted) {
 	LinphonePrivate::MS2AudioStream::postConfigureAudioStream(st, lc, !!muted);
-}
-
-void linphone_call_stop_media_streams (LinphoneCall *call) {
-	L_GET_PRIVATE_FROM_C_OBJECT(call)->stopMediaStreams();
 }
 
 /* Internal version that does not play tone indication*/
