@@ -712,19 +712,7 @@ void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
 }
 
 void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
-	// ringstream is non-null if the phone is ringing
-	if (getCCore()->ringstream) {
-		ring_stream_set_output_ms_snd_card(getCCore()->ringstream, audioDevice->getSoundCard());
-	} else {
-
-		if (mStream->playcard) {
-			audio_stream_set_output_ms_snd_card(mStream, audioDevice->getSoundCard());
-		} else {
-			// If audiostream playcard is null, then it is assumed that the phone just started to ring. This condition is required when it is required to change the soundcard before the ringsteeam is created.
-			ring_stream_set_default_output_ms_snd_card(audioDevice->getSoundCard());
-		}
-	}
-
+	audio_stream_set_output_ms_snd_card(mStream, audioDevice->getSoundCard());
 }
 
 AudioDevice* MS2AudioStream::getInputDevice() const {
@@ -733,13 +721,7 @@ AudioDevice* MS2AudioStream::getInputDevice() const {
 }
 
 AudioDevice* MS2AudioStream::getOutputDevice() const {
-	MSSndCard *card = nullptr;
-	// If audiostream playcard is null, then it is assumed that the phone just started to ring, hence collecting all info from the ring stream
-	if ((getCCore()->ringstream) || (!mStream->playcard)) {
-		card = ring_stream_get_output_ms_snd_card(getCCore()->ringstream);
-	} else {
-		card = audio_stream_get_output_ms_snd_card(mStream);
-	}
+	MSSndCard *card = audio_stream_get_output_ms_snd_card(mStream);
 	return getCore().findAudioDeviceMatchingMsSoundCard(card);
 }
 

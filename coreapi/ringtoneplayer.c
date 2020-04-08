@@ -106,6 +106,10 @@ bool_t linphone_ringtoneplayer_is_started(LinphoneRingtonePlayer* rp) {
 	return (rp->ringstream!=NULL);
 }
 
+RingStream* linphone_ringtoneplayer_get_stream(LinphoneRingtonePlayer* rp) {
+	return rp->ringstream;
+}
+
 LinphoneStatus linphone_ringtoneplayer_stop(LinphoneRingtonePlayer* rp) {
 	if (rp->ringstream) {
 		ring_stop(rp->ringstream);

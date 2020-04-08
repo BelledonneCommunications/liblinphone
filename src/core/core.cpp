@@ -639,10 +639,28 @@ void Core::setInputAudioDevice(AudioDevice *audioDevice) {
 }
 
 void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
+	bool applied = false;
+
+	RingStream *stream = getCCore()->ringstream;
+	if (stream) {
+		ring_stream_set_output_ms_snd_card(stream, audioDevice->getSoundCard());
+		applied = true;
+	}
+
+	stream = linphone_ringtoneplayer_get_stream(getCCore()->ringtoneplayer);
+	if (stream) {
+		ring_stream_set_output_ms_snd_card(stream, audioDevice->getSoundCard());
+		applied = true;
+	}
+
 	if (getCallCount() > 0) {
 		for (const auto &call : getCalls()) {
 			call->setOutputAudioDevice(audioDevice);
+			applied = true;
 		}
+	}
+	
+	if (applied) {
 		linphone_core_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 	}
 }
@@ -670,6 +688,21 @@ AudioDevice* Core::getInputAudioDevice() const {
 }
 
 AudioDevice* Core::getOutputAudioDevice() const {
+	RingStream *stream = getCCore()->ringstream;
+	if (stream) {
+		MSSndCard *card = ring_stream_get_output_ms_snd_card(stream);
+		if (card) {
+			return findAudioDeviceMatchingMsSoundCard(card);
+		}
+	}
+	stream = linphone_ringtoneplayer_get_stream(getCCore()->ringtoneplayer);
+	if (stream) {
+		MSSndCard *card = ring_stream_get_output_ms_snd_card(stream);
+		if (card) {
+			return findAudioDeviceMatchingMsSoundCard(card);
+		}
+	}
+
 	shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
 	if (call) {
 		return call->getOutputAudioDevice();
