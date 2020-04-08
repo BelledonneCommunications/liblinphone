@@ -19,6 +19,7 @@
 
 
 #include "mixers.h"
+#include "streams.h"
 #include "core/core.h"
 
 LINPHONE_BEGIN_NAMESPACE
@@ -32,12 +33,14 @@ MixerSession::MixerSession(Core &core) : mCore(core){
 MixerSession::~MixerSession(){
 }
 
-void MixerSession::joinStreamsGroup(StreamsGroup *sg){
-	sg->joinMixerSession(this);
+void MixerSession::joinStreamsGroup(StreamsGroup &sg){
+	lInfo() << sg << " is joining " << *this;
+	sg.joinMixerSession(this);
 }
 
-void MixerSession::unjoinStreamsGroup(StreamsGroup *sg){
-	sg->unjoinMixerSession();
+void MixerSession::unjoinStreamsGroup(StreamsGroup &sg){
+	lInfo() << sg << " is unjoining " << *this;
+	sg.unjoinMixerSession();
 }
 
 StreamMixer *MixerSession::getMixerByType(SalStreamType type){
@@ -52,6 +55,11 @@ LinphoneCore *MixerSession::getCCore()const{
 	return mCore.getCCore();
 }
 
+void MixerSession::enableLocalParticipant(bool enabled){
+	for( const auto & p : mMixers){
+		p.second->enableLocalParticipant(enabled);
+	}
+}
 
 StreamMixer::StreamMixer(MixerSession & session) : mSession(session){
 }

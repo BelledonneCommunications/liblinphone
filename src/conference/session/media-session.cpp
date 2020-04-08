@@ -2813,6 +2813,11 @@ void MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
 	if (i) i->setOutputDevice(audioDevice);
 }
 
+StreamsGroup & MediaSession::getStreamsGroup()const{
+	L_D();
+	return d->getStreamsGroup();
+}
+
 AudioDevice* MediaSession::getInputAudioDevice() const {
 	L_D();
 	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
