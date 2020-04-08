@@ -251,7 +251,12 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (isMain()){
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
 	}
-	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+	// try to get playcard from the stream if it was already set
+	MSSndCard *playcard = audio_stream_get_output_ms_snd_card(mStream);
+	// If stream doesn't have a playcard associated with it, then use the default values
+	if (!playcard)
+		playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+
 	if (!playcard)
 		lWarning() << "No card defined for playback!";
 	MSSndCard *captcard = getCCore()->sound_conf.capt_sndcard;
