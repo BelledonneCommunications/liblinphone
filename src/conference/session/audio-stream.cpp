@@ -69,55 +69,55 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 		zrtpParams.zidCacheDBMutex = zrtpCacheInfo.dbMutex;
 		zrtpParams.peerUri = peerUri;
 		zrtpParams.selfUri = selfUri;
-			/* Get key lifespan from config file, default is 0:forever valid */
-			zrtpParams.limeKeyTimeSpan = bctbx_time_string_to_sec(lp_config_get_string(linphone_core_get_config(getCCore()), "sip", "lime_key_validity", "0"));
-			setZrtpCryptoTypesParameters(&zrtpParams, params.localIsOfferer);
-			audio_stream_enable_zrtp(mStream, &zrtpParams);
-			if (peerUri)
-				ms_free(peerUri);
-			if (selfUri)
-				ms_free(selfUri);
-		}
-		initializeSessions((MediaStream*)mStream);
+		/* Get key lifespan from config file, default is 0:forever valid */
+		zrtpParams.limeKeyTimeSpan = bctbx_time_string_to_sec(lp_config_get_string(linphone_core_get_config(getCCore()), "sip", "lime_key_validity", "0"));
+		setZrtpCryptoTypesParameters(&zrtpParams, params.localIsOfferer);
+		audio_stream_enable_zrtp(mStream, &zrtpParams);
+		if (peerUri)
+			ms_free(peerUri);
+		if (selfUri)
+			ms_free(selfUri);
 	}
+	initializeSessions((MediaStream*)mStream);
+}
 
-	void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool localIsOfferer) {
-		const MSCryptoSuite *srtpSuites = linphone_core_get_srtp_crypto_suites(getCCore());
-		if (srtpSuites) {
-			for(int i = 0; (srtpSuites[i] != MS_CRYPTO_SUITE_INVALID) && (i < SAL_CRYPTO_ALGO_MAX) && (i < MS_MAX_ZRTP_CRYPTO_TYPES); i++) {
-				switch (srtpSuites[i]) {
-					case MS_AES_128_SHA1_32:
-						params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
-						params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS32;
-						break;
-					case MS_AES_128_NO_AUTH:
-						params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
-						break;
-					case MS_NO_CIPHER_SHA1_80:
-						params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
-						break;
-					case MS_AES_128_SHA1_80:
-						params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
-						params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
-						break;
-					case MS_AES_CM_256_SHA1_80:
-						lWarning() << "Deprecated crypto suite MS_AES_CM_256_SHA1_80, use MS_AES_256_SHA1_80 instead";
-						BCTBX_NO_BREAK;
-					case MS_AES_256_SHA1_80:
-						params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES3;
-						params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
-						break;
-					case MS_AES_256_SHA1_32:
-						params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES3;
-						params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS32;
-						break;
-					case MS_CRYPTO_SUITE_INVALID:
-						break;
-				}
+void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool localIsOfferer) {
+	const MSCryptoSuite *srtpSuites = linphone_core_get_srtp_crypto_suites(getCCore());
+	if (srtpSuites) {
+		for(int i = 0; (srtpSuites[i] != MS_CRYPTO_SUITE_INVALID) && (i < SAL_CRYPTO_ALGO_MAX) && (i < MS_MAX_ZRTP_CRYPTO_TYPES); i++) {
+			switch (srtpSuites[i]) {
+				case MS_AES_128_SHA1_32:
+					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
+					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS32;
+					break;
+				case MS_AES_128_NO_AUTH:
+					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
+					break;
+				case MS_NO_CIPHER_SHA1_80:
+					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
+					break;
+				case MS_AES_128_SHA1_80:
+					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
+					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
+					break;
+				case MS_AES_CM_256_SHA1_80:
+					lWarning() << "Deprecated crypto suite MS_AES_CM_256_SHA1_80, use MS_AES_256_SHA1_80 instead";
+					BCTBX_NO_BREAK;
+				case MS_AES_256_SHA1_80:
+					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES3;
+					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
+					break;
+				case MS_AES_256_SHA1_32:
+					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES3;
+					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS32;
+					break;
+				case MS_CRYPTO_SUITE_INVALID:
+					break;
 			}
 		}
+	}
 
-		/* linphone_core_get_srtp_crypto_suites is used to determine sensible defaults; here each can be overridden */
+	/* linphone_core_get_srtp_crypto_suites is used to determine sensible defaults; here each can be overridden */
 	MsZrtpCryptoTypesCount ciphersCount = linphone_core_get_zrtp_cipher_suites(getCCore(), params->ciphers); /* if not present in config file, params->ciphers is not modified */
 	if (ciphersCount != 0) /* Use zrtp_cipher_suites config only when present, keep config from srtp_crypto_suite otherwise */
 		params->ciphersCount = ciphersCount;
@@ -252,14 +252,6 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
 	}
 	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
-/*	if (getCCore()->sound_conf.lsd_card)
-		lInfo() << "DADA Executing " << __func__ << " lds card " << ms_snd_card_get_string_id(getCCore()->sound_conf.lsd_card);
-	if (getCCore()->sound_conf.play_sndcard)
-		lInfo() << "DADA Executing " << __func__ << " play card " << ms_snd_card_get_string_id(getCCore()->sound_conf.play_sndcard);
-	if (getCCore()->sound_conf.ring_sndcard)
-		lInfo() << "DADA Executing " << __func__ << " ring card " << ms_snd_card_get_string_id(getCCore()->sound_conf.ring_sndcard);
-*/
-
 	if (!playcard)
 		lWarning() << "No card defined for playback!";
 	MSSndCard *captcard = getCCore()->sound_conf.capt_sndcard;
@@ -720,19 +712,19 @@ void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
 }
 
 void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
-	LinphoneCore *lc = getCCore();
-	MSSndCard * card = audioDevice->getSoundCard();
-	ms_snd_card_ref(card);
-	linphone_core_set_playback_device(lc, card->id);
 	// ringstream is non-null if the phone is ringing
-	if (lc->ringstream) {
-		ring_stream_set_output_ms_snd_card(lc->ringstream, card);
+	if (getCCore()->ringstream) {
+		ring_stream_set_output_ms_snd_card(getCCore()->ringstream, audioDevice->getSoundCard());
 	} else {
-		audio_stream_set_output_ms_snd_card(mStream, card);
-		linphone_core_set_playback_device(lc, card->id);
+
+		if (mStream->playcard) {
+			audio_stream_set_output_ms_snd_card(mStream, audioDevice->getSoundCard());
+		} else {
+			// If audiostream playcard is null, then it is assumed that the phone just started to ring. This condition is required when it is required to change the soundcard before the ringsteeam is created.
+			ring_stream_set_default_output_ms_snd_card(audioDevice->getSoundCard());
+		}
 	}
 
-	ms_snd_card_unref(card);
 }
 
 AudioDevice* MS2AudioStream::getInputDevice() const {
@@ -741,12 +733,13 @@ AudioDevice* MS2AudioStream::getInputDevice() const {
 }
 
 AudioDevice* MS2AudioStream::getOutputDevice() const {
-	LinphoneCore *lc = getCCore();
-	const char * id = linphone_core_get_playback_device(lc);
-	MSSndCard * card = ms_snd_card_manager_get_card(ms_factory_get_snd_card_manager(lc->factory), id);
-
-//	lInfo() << "DADA Executing " << __func__ << " output card " << ms_snd_card_get_string_id(card);
-
+	MSSndCard *card = nullptr;
+	// If audiostream playcard is null, then it is assumed that the phone just started to ring, hence collecting all info from the ring stream
+	if ((getCCore()->ringstream) || (!mStream->playcard)) {
+		card = ring_stream_get_output_ms_snd_card(getCCore()->ringstream);
+	} else {
+		card = audio_stream_get_output_ms_snd_card(mStream);
+	}
 	return getCore().findAudioDeviceMatchingMsSoundCard(card);
 }
 
