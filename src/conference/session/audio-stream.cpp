@@ -722,6 +722,7 @@ void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
 		ring_stream_set_output_ms_snd_card(lc->ringstream, card);
 	} else {
 		audio_stream_set_output_ms_snd_card(mStream, card);
+		linphone_core_set_playback_device(lc, card->id);
 	}
 
 	ms_snd_card_unref(card);

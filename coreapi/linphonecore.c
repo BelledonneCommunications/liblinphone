@@ -1292,14 +1292,12 @@ static void sound_config_read(LinphoneCore *lc) {
 	build_sound_devices_table(lc);
 
 	devid=lp_config_get_string(lc->config,"sound","playback_dev_id",NULL);
-	linphone_core_set_default_playback_device(lc,devid);
 	linphone_core_set_playback_device(lc,devid);
 
 	devid=lp_config_get_string(lc->config,"sound","ringer_dev_id",NULL);
 	linphone_core_set_ringer_device(lc,devid);
 
 	devid=lp_config_get_string(lc->config,"sound","capture_dev_id",NULL);
-	linphone_core_set_default_capture_device(lc,devid);
 	linphone_core_set_capture_device(lc,devid);
 
 	devid=lp_config_get_string(lc->config,"sound","media_dev_id",NULL);
@@ -4674,18 +4672,6 @@ bool_t linphone_core_sound_device_can_playback(LinphoneCore *lc, const char *dev
 	return ms_snd_card_manager_get_playback_card(ms_factory_get_snd_card_manager(lc->factory),devid) != NULL;
 }
 
-LinphoneStatus linphone_core_copy_default_capture_to_capture(LinphoneCore *lc){
-	const char * id=linphone_core_get_default_capture_device(lc);
-	linphone_core_set_capture_device(lc,id);
-	return 0;
-}
-
-LinphoneStatus linphone_core_copy_default_playback_to_playback(LinphoneCore *lc){
-	const char * id=linphone_core_get_default_playback_device(lc);
-	linphone_core_set_playback_device(lc,id);
-	return 0;
-}
-
 LinphoneStatus linphone_core_set_ringer_device(LinphoneCore *lc, const char * devid){
 	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
 	if (lc->sound_conf.ring_sndcard) ms_snd_card_unref(lc->sound_conf.ring_sndcard);
@@ -4695,39 +4681,12 @@ LinphoneStatus linphone_core_set_ringer_device(LinphoneCore *lc, const char * de
 	return 0;
 }
 
-LinphoneStatus linphone_core_set_default_playback_device(LinphoneCore *lc, const char * devid){
-	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
-	if (lc->sound_conf.play_sndcard_default) ms_snd_card_unref(lc->sound_conf.play_sndcard_default);
-	if (card) lc->sound_conf.play_sndcard_default = ms_snd_card_ref(card);
-
-	// If there is no active call or no active conference, then change also playback card to be ready for the next time a call or conference starts
-	if ((!linphone_core_get_current_call(lc)) && (!linphone_core_get_conference(lc))) {
-		linphone_core_copy_default_playback_to_playback(lc);
-	}
-
-	return 0;
-}
-
-LinphoneStatus linphone_core_set_default_capture_device(LinphoneCore *lc, const char * devid){
-	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_CAPTURE, lc->factory);
-	if (lc->sound_conf.capt_sndcard_default) ms_snd_card_unref(lc->sound_conf.capt_sndcard_default);
-	if (card) lc->sound_conf.capt_sndcard_default = ms_snd_card_ref(card);
-
-	// If there is no active call or no active conference, then change also playback card to be ready for the next time a call or conference starts
-	if ((!linphone_core_get_current_call(lc)) && (!linphone_core_get_conference(lc))) {
-		linphone_core_copy_default_capture_to_capture(lc);
-	}
-
-	return 0;
-}
-
 LinphoneStatus linphone_core_set_playback_device(LinphoneCore *lc, const char * devid){
 	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
 	if (lc->sound_conf.play_sndcard) ms_snd_card_unref(lc->sound_conf.play_sndcard);
 	if (card) lc->sound_conf.play_sndcard = ms_snd_card_ref(card);
 	if (card &&  linphone_core_ready(lc))
 		lp_config_set_string(lc->config,"sound","playback_dev_id",ms_snd_card_get_string_id(card));
-
 	return 0;
 }
 
@@ -4752,14 +4711,6 @@ LinphoneStatus linphone_core_set_media_device(LinphoneCore *lc, const char * dev
 const char * linphone_core_get_ringer_device(LinphoneCore *lc) {
 	if (lc->sound_conf.ring_sndcard) return ms_snd_card_get_string_id(lc->sound_conf.ring_sndcard);
 	return NULL;
-}
-
-const char * linphone_core_get_default_playback_device(LinphoneCore *lc) {
-	return lc->sound_conf.play_sndcard_default ? ms_snd_card_get_string_id(lc->sound_conf.play_sndcard_default) : NULL;
-}
-
-const char * linphone_core_get_default_capture_device(LinphoneCore *lc) {
-	return lc->sound_conf.capt_sndcard_default ? ms_snd_card_get_string_id(lc->sound_conf.capt_sndcard_default) : NULL;
 }
 
 const char * linphone_core_get_playback_device(LinphoneCore *lc) {
@@ -4803,8 +4754,6 @@ bctbx_list_t * linphone_core_get_video_devices_list(const LinphoneCore *lc){
 }
 
 void linphone_core_set_default_sound_devices(LinphoneCore *lc){
-		linphone_core_set_default_playback_device(lc, NULL);
-		linphone_core_set_default_capture_device(lc, NULL);
 		linphone_core_set_ringer_device(lc, NULL);
 		linphone_core_set_playback_device(lc, NULL);
 		linphone_core_set_capture_device(lc, NULL);
@@ -4814,13 +4763,9 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 	const char *ringer;
 	const char *playback;
 	const char *capture;
-	const char *default_playback;
-	const char *default_capture;
 	char *ringer_copy = NULL;
 	char *playback_copy = NULL;
 	char *capture_copy = NULL;
-	char *default_playback_copy = NULL;
-	char *default_capture_copy = NULL;
 
 	ringer = linphone_core_get_ringer_device(lc);
 	if (ringer != NULL) {
@@ -4833,14 +4778,6 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 	capture = linphone_core_get_capture_device(lc);
 	if (capture != NULL) {
 		capture_copy = ms_strdup(capture);
-	}
-	default_playback = linphone_core_get_default_playback_device(lc);
-	if (default_playback != NULL) {
-		default_playback_copy = ms_strdup(default_playback);
-	}
-	default_capture = linphone_core_get_default_capture_device(lc);
-	if (default_capture != NULL) {
-		default_capture_copy = ms_strdup(default_capture);
 	}
 	ms_snd_card_manager_reload(ms_factory_get_snd_card_manager(lc->factory));
 	build_sound_devices_table(lc);
@@ -4855,14 +4792,6 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 	if (capture_copy != NULL) {
 		linphone_core_set_capture_device(lc, capture_copy);
 		ms_free(capture_copy);
-	}
-	if (default_playback_copy != NULL) {
-		linphone_core_set_default_playback_device(lc, default_playback_copy);
-		ms_free(default_playback_copy);
-	}
-	if (default_capture_copy != NULL) {
-		linphone_core_set_default_capture_device(lc, default_capture_copy);
-		ms_free(default_capture_copy);
 	}
 }
 
