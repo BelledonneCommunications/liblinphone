@@ -42,7 +42,11 @@ add_library(linphone++ SHARED
 	tools.cc
 	${CMAKE_CURRENT_BINARY_DIR}/src/linphone++.cc
 )
-set_target_properties(linphone++ PROPERTIES OUTPUT_NAME liblinphone++)
+if(APPLE)
+	set_target_properties(linphone++ PROPERTIES OUTPUT_NAME linphone++)
+else()
+	set_target_properties(linphone++ PROPERTIES OUTPUT_NAME liblinphone++)
+endif()
 set_target_properties(linphone++ PROPERTIES PREFIX "")
 if(MSVC)
     set_target_properties(linphone++ PROPERTIES PDB_NAME liblinphone++)

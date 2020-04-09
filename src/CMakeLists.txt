@@ -491,7 +491,11 @@ if(ENABLE_STATIC)
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi-static>
 	)
-	set_target_properties(linphone-static PROPERTIES OUTPUT_NAME liblinphone)
+	if (APPLE)
+		set_target_properties(linphone-static PROPERTIES OUTPUT_NAME linphone)
+	else()
+		set_target_properties(linphone-static PROPERTIES OUTPUT_NAME liblinphone)
+	endif()
 	set_target_properties(linphone-static PROPERTIES PREFIX "")
 
 	target_include_directories(linphone-static PUBLIC
@@ -529,7 +533,11 @@ if(ENABLE_SHARED)
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi>
 	)
-	set_target_properties(linphone PROPERTIES OUTPUT_NAME liblinphone)
+	if(APPLE)
+		set_target_properties(linphone PROPERTIES OUTPUT_NAME linphone)
+	else()
+		set_target_properties(linphone PROPERTIES OUTPUT_NAME liblinphone)
+	endif()
 	set_target_properties(linphone PROPERTIES PREFIX "")
 	if(MSVC)
 		set_target_properties(linphone PROPERTIES PDB_NAME liblinphone)
