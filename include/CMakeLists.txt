@@ -93,6 +93,7 @@ set(C_API_HEADER_FILES
 	c-participant-device.h
 	c-participant-device-identity.h
 	c-participant-imdn-state.h
+	c-push-notification-message.h
 	c-search-result.h
 	c-types.h
 )
