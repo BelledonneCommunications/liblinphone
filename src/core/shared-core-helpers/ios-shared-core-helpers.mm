@@ -29,6 +29,7 @@
 #include "linphone/utils/general.h"
 #include "linphone/utils/utils.h"
 #include "chat/chat-room/chat-room.h"
+#include "push-notification-message/push-notification-message.h"
 #include "c-wrapper/c-wrapper.h"
 
 #include "logger/logger.h"
@@ -39,6 +40,8 @@
 
 #define ACTIVE_SHARED_CORE "ACTIVE_SHARED_CORE"
 #define LAST_UPDATE_TIME_SHARED_CORE "LAST_UPDATE_TIME_SHARED_CORE"
+#define TEST_GROUP_ID "test group id"
+#define TEST_CALL_ID "dummy_call_id"
 
 // =============================================================================
 
@@ -82,10 +85,9 @@ public:
 	void onLinphoneCoreStop () override;
     void *getPathContext () override;
 
-	std::shared_ptr<ChatMessage> getPushNotificationMessage(const string &callId) override;
-	std::shared_ptr<ChatMessage> processPushNotificationMessage(const string &callId);
+	void registerMainCoreMsgCallback() override;
+	std::shared_ptr<PushNotificationMessage> getPushNotificationMessage(const string &callId) override;
 	std::shared_ptr<ChatRoom> getPushNotificationChatRoom(const string &chatRoomAddr) override;
-	std::shared_ptr<ChatRoom> processPushNotificationChatRoom(const string &chatRoomAddr);
 
 	// shared core
 	bool isCoreShared() override;
@@ -102,6 +104,9 @@ public:
 	void setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom);
 	std::string getChatRoomAddr();
 	void reinitTimer();
+
+	void putMsgInUserDefaults(LinphoneChatMessage *msg);
+	void onMsgWrittenInUserDefaults() override;
 
 private:
 	// shared core
@@ -123,6 +128,11 @@ private:
 
 	//push notif
 	std::shared_ptr<ChatMessage> getChatMsgAndUpdateList(const string &callId);
+	shared_ptr<PushNotificationMessage> getMsgFromUserDefaults(const string &callId);
+	shared_ptr<PushNotificationMessage> fetchUserDefaultsMsg(const string &callId);
+	std::shared_ptr<PushNotificationMessage> getMsgFromDatabase(const string &callId);
+	std::shared_ptr<ChatRoom> getChatRoomFromAddr(const string &chatRoomAddr);
+	shared_ptr<PushNotificationMessage> chatMsgToPushNotifMsg(std::shared_ptr<ChatMessage> msg);
 
 	std::string mAppGroupId = "";
 	static set<string> callIdList;
@@ -134,7 +144,7 @@ private:
 	uint64_t mTimer = 0;
 	CFRunLoopTimerRef mUnlockTimer;
 	uint64_t mMaxIterationTimeMs;
-
+	bool mMsgWrittenInUserDefaults = false;
 };
 
 set<string> IosSharedCoreHelpers::callIdList = set<string>();
@@ -181,6 +191,27 @@ IosSharedCoreHelpers::IosSharedCoreHelpers (std::shared_ptr<LinphonePrivate::Cor
 	}
 }
 
+static void on_main_core_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
+	if (linphone_chat_message_is_text(message) || linphone_chat_message_get_file_transfer_information(message) != NULL) {
+		ms_message("[push] msg [%p] received from chat room [%p]", message, room);
+
+		PlatformHelpers *platform_helper = static_cast<LinphonePrivate::PlatformHelpers*>(lc->platform_helper);
+		IosSharedCoreHelpers *shared_core_helper = static_cast<LinphonePrivate::IosSharedCoreHelpers*>(platform_helper->getSharedCoreHelpers().get());
+
+		shared_core_helper->putMsgInUserDefaults(message);
+	}
+}
+
+void IosSharedCoreHelpers::registerMainCoreMsgCallback() {
+	if (getCore()->getCCore()->is_main_core) {
+		ms_message("[push] register main core msg callback");
+		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+		linphone_core_cbs_set_message_received(cbs, on_main_core_message_received);
+		linphone_core_add_callbacks(getCore()->getCCore(), cbs);
+		linphone_core_cbs_unref(cbs);
+	}
+}
+
 void IosSharedCoreHelpers::onLinphoneCoreStop () {
 	if (isCoreShared()) {
 		CFRunLoopTimerInvalidate(mUnlockTimer);
@@ -212,13 +243,13 @@ void *IosSharedCoreHelpers::getPathContext() {
 // push notification
 // -----------------------------------------------------------------------------
 
-std::shared_ptr<ChatMessage> IosSharedCoreHelpers::getPushNotificationMessage(const string &callId) {
+std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getPushNotificationMessage(const string &callId) {
 	ms_message("[push] getPushNotificationMessage");
 	ms_message("[push] current shared core state : %s", sharedStateToString(getSharedCoreState()).c_str());
 
-	addNewCallIdToList(callId);
 	switch(getSharedCoreState()) {
 		case SharedCoreState::mainCoreStarted:
+			return getMsgFromUserDefaults(callId);
 			IosSharedCoreHelpers::executorCoreMutex.unlock();
 		case SharedCoreState::executorCoreStopping:
 		case SharedCoreState::executorCoreStopped:
@@ -226,6 +257,7 @@ std::shared_ptr<ChatMessage> IosSharedCoreHelpers::getPushNotificationMessage(co
 			return nullptr;
 		case SharedCoreState::executorCoreStarted:
 		case SharedCoreState::noCoreStarted:
+			addNewCallIdToList(callId);
 			IosSharedCoreHelpers::executorCoreMutex.lock();
 			if (getSharedCoreState() == executorCoreStopped ||
 				getSharedCoreState() == mainCoreStarted ||
@@ -233,8 +265,7 @@ std::shared_ptr<ChatMessage> IosSharedCoreHelpers::getPushNotificationMessage(co
 				/* this executor core can start because a main core is starting */
 				return nullptr;
 			}
-			std::shared_ptr<ChatMessage> msg = processPushNotificationMessage(callId);
-			return msg;
+			return getMsgFromDatabase(callId);
 	}
 }
 
@@ -257,7 +288,7 @@ std::shared_ptr<ChatRoom> IosSharedCoreHelpers::getPushNotificationChatRoom(cons
 				/* this executor core can start because a main core is starting */
 				return nullptr;
 			}
-			std::shared_ptr<ChatRoom> chatRoom = processPushNotificationChatRoom(chatRoomAddr);
+			std::shared_ptr<ChatRoom> chatRoom = getChatRoomFromAddr(chatRoomAddr);
 			return chatRoom;
 	}
 }
@@ -286,8 +317,159 @@ void IosSharedCoreHelpers::removeCallIdFromList(string callId) {
 	IosSharedCoreHelpers::callIdListMutex.unlock();
 }
 
+void IosSharedCoreHelpers::putMsgInUserDefaults(LinphoneChatMessage *msg) {
+   	ms_message("[push] putMsgInUserDefaults msg : [%p]", msg);
+	if (mAppGroupId != TEST_GROUP_ID) { // For testing purpose
+		NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
+		NSMutableDictionary *messages;
+
+		NSDictionary *msgDictionary = [defaults dictionaryForKey:@"messages"];
+		if (msgDictionary == nil) {
+			messages = [NSMutableDictionary alloc];
+		} else {
+			messages = [[NSMutableDictionary alloc] initWithDictionary:msgDictionary];
+		}
+
+		NSString *callId = [NSString stringWithUTF8String:linphone_chat_message_get_call_id(msg)];
+
+		NSNumber *isText = [NSNumber numberWithBool:linphone_chat_message_is_text(msg)];
+		const char *cTextContent = linphone_chat_message_get_text_content(msg);
+		NSString *textContent = [NSString stringWithUTF8String: cTextContent ? cTextContent : ""];
+		const char *cSubject = linphone_chat_room_get_subject(linphone_chat_message_get_chat_room(msg));
+		NSString *subject = [NSString stringWithUTF8String: cSubject ? cSubject : ""];
+
+		const LinphoneAddress *cFromAddr = linphone_chat_message_get_from_address(msg);
+		const LinphoneAddress *cLocalAddr = linphone_chat_message_get_local_address(msg);
+		const LinphoneAddress *cPeerAddr = linphone_chat_message_get_peer_address(msg); //todo paul : conf addr??
+		NSString *fromAddr = [NSString stringWithUTF8String:linphone_address_as_string(cFromAddr)];
+		NSString *localAddr = [NSString stringWithUTF8String:linphone_address_as_string(cLocalAddr)];
+		NSString *peerAddr = [NSString stringWithUTF8String:linphone_address_as_string(cPeerAddr)];
+
+
+		NSDictionary *newMsg = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:isText, textContent, subject, fromAddr, localAddr, peerAddr, nil]
+								forKeys:[NSArray arrayWithObjects:@"isText", @"textContent", @"subject", @"fromAddr", @"localAddr", @"peerAddr", nil]];
+
+		[messages setObject:newMsg forKey:callId];
+		[defaults setObject:messages forKey:@"messages"];
+		[defaults release];
+
+		// post notif
+		CFNotificationCenterRef notification = CFNotificationCenterGetDarwinNotifyCenter();
+		CFNotificationCenterPostNotification(notification, CFStringCreateWithCString(NULL, linphone_chat_message_get_call_id(msg), kCFStringEncodingUTF8), NULL, NULL, YES);
+   		ms_message("[push] Darwin notif id : [%s] sent", linphone_chat_message_get_call_id(msg));
+	} else {
+		// post notif
+		CFNotificationCenterRef notification = CFNotificationCenterGetDarwinNotifyCenter();
+		CFNotificationCenterPostNotification(notification, CFStringCreateWithCString(NULL, TEST_CALL_ID, kCFStringEncodingUTF8), NULL, NULL, YES);
+   		ms_message("[push] Darwin notif id : [%s] sent", TEST_CALL_ID);
+	}
+}
+
+void on_msg_written_in_user_defaults(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+	ms_message("[push] on_msg_written_in_user_defaults");
+	if (observer) {
+		IosSharedCoreHelpers *myself = (IosSharedCoreHelpers *) observer;
+		myself->onMsgWrittenInUserDefaults();
+	}
+}
+
+void IosSharedCoreHelpers::onMsgWrittenInUserDefaults() {
+   	ms_debug("[SHARED] onMsgWrittenInUserDefaults");
+	mMsgWrittenInUserDefaults = true;
+}
+
+shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::fetchUserDefaultsMsg(const string &callId) {
+	bool isText;
+	string textContent;
+	string subject;
+	string fromAddr;
+	string localAddr;
+	string peerAddr;
+
+	if (mAppGroupId != TEST_GROUP_ID) { // For testing purpose
+		NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
+		NSString *objcCallId = [NSString stringWithUTF8String:callId.c_str()];
+		NSMutableDictionary *messages = [[NSMutableDictionary alloc] initWithDictionary:[defaults dictionaryForKey:@"messages"]];
+		ms_message("[push] fetchUserDefaultsMsg %p", messages);
+
+		NSDictionary *msgData = NULL;
+		msgData = [messages objectForKey:objcCallId];
+
+		if (msgData == nil) {
+			ms_message("push] message data not found for callId : [%s]", callId.c_str());
+			return nullptr;
+		} else {
+			ms_message("push] found message data for callId : [%s]", callId.c_str());
+		}
+
+		isText = [msgData[@"isText"] boolValue];
+		textContent = [[NSString stringWithString:msgData[@"textContent"]] UTF8String];
+		subject = [[NSString stringWithString:msgData[@"subject"]] UTF8String];
+		fromAddr = [[NSString stringWithString:msgData[@"fromAddr"]] UTF8String];
+		localAddr = [[NSString stringWithString:msgData[@"localAddr"]] UTF8String];
+		peerAddr = [[NSString stringWithString:msgData[@"peerAddr"]] UTF8String];
+
+		[messages removeObjectForKey:objcCallId];
+		[defaults setObject:messages forKey:@"messages"];
+		[defaults release];
+	} else {
+		if (!mMsgWrittenInUserDefaults) return nullptr;
+		isText = true;
+		textContent = "textContent";
+		subject = "subject";
+		fromAddr = "sip:from.addr";
+		localAddr = "sip:local.addr";
+		peerAddr = "sip:peer.addr";
+	}
+
+	shared_ptr<PushNotificationMessage> msg = PushNotificationMessage::create(true, callId, isText, textContent, subject, fromAddr, localAddr, peerAddr);
+	ms_message("push] PushNotificationMessage created : %s", msg->toString().c_str());
+	return msg;
+}
+
+shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromUserDefaults(const string &callId) { //TODO PAUL : messages ephemeres
+	ms_message("[push] subscribe to main core notif: receive a notif when msg is written in user defaults");
+   	CFNotificationCenterRef notification = CFNotificationCenterGetDarwinNotifyCenter();
+
+	if (mAppGroupId != TEST_GROUP_ID) { // For testing purpose
+	   	CFNotificationCenterAddObserver(notification, (__bridge const void *)(this), on_msg_written_in_user_defaults, CFStringCreateWithCString(NULL, callId.c_str(), kCFStringEncodingUTF8), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+	} else {
+   		CFNotificationCenterAddObserver(notification, (__bridge const void *)(this), on_msg_written_in_user_defaults, CFStringCreateWithCString(NULL, TEST_CALL_ID, kCFStringEncodingUTF8), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+	}
+
+ 	shared_ptr<PushNotificationMessage> msg = fetchUserDefaultsMsg(callId);
+	if (msg) return msg;
+
+	reinitTimer();
+	while (ms_get_cur_time_ms() - mTimer < mMaxIterationTimeMs && !mMsgWrittenInUserDefaults) {
+		ms_message("[push] wait for msg to be written in user defaults");
+		ms_usleep(50000);
+	}
+
+	msg = fetchUserDefaultsMsg(callId);
+	return msg;
+}
+
+shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::chatMsgToPushNotifMsg(std::shared_ptr<ChatMessage> msg) {
+	if (!msg) return nullptr;
+
+	LinphoneChatMessage *cMsg = L_GET_C_BACK_PTR(msg);
+
+	string callId = linphone_chat_message_get_call_id(cMsg);
+	bool isText = linphone_chat_message_is_text(cMsg);
+	string textContent = isText ? linphone_chat_message_get_text_content(cMsg) : "";
+	const char *cSubject = linphone_chat_room_get_subject(linphone_chat_message_get_chat_room(cMsg));
+	string subject = cSubject ? cSubject : "";
+	string fromAddr = linphone_address_as_string(linphone_chat_message_get_from_address(cMsg));
+	string localAddr = linphone_address_as_string(linphone_chat_message_get_local_address(cMsg));
+	string peerAddr = linphone_address_as_string(linphone_chat_message_get_peer_address(cMsg));
+
+	shared_ptr<PushNotificationMessage> pushMsg = PushNotificationMessage::create(false, callId, isText, textContent, subject, fromAddr, localAddr, peerAddr);
+	return pushMsg;
+}
+
 static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
-	if (linphone_chat_message_is_text(message) || linphone_chat_message_is_file_transfer(message)) {
+	if (linphone_chat_message_is_text(message) || linphone_chat_message_get_file_transfer_information(message) != NULL) {
 		ms_message("[push] msg [%p] received from chat room [%p]", message, room);
 		const char *callId = linphone_chat_message_get_call_id(message);
 		static_cast<LinphonePrivate::IosSharedCoreHelpers*>(lc->platform_helper)->removeCallIdFromList(callId);
@@ -300,16 +482,16 @@ std::shared_ptr<ChatMessage> IosSharedCoreHelpers::getChatMsgAndUpdateList(const
 	return msg;
 }
 
-std::shared_ptr<ChatMessage> IosSharedCoreHelpers::processPushNotificationMessage(const string &callId) {
+std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromDatabase(const string &callId) {
 	std::shared_ptr<ChatMessage> chatMessage;
-	ms_message("[push] processPushNotificationMessage for callid [%s]", callId.c_str());
+	ms_message("[push] getMsgFromDatabase for callid [%s]", callId.c_str());
 
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
- 	linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
+	linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
 	linphone_core_add_callbacks(getCore()->getCCore(), cbs);
+	linphone_core_cbs_unref(cbs);
 
 	if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalOn && linphone_core_start(getCore()->getCCore()) != 0) {
-		linphone_core_cbs_unref(cbs);
 		return nullptr;
 	}
 	ms_message("[push] core started");
@@ -317,8 +499,7 @@ std::shared_ptr<ChatMessage> IosSharedCoreHelpers::processPushNotificationMessag
 	chatMessage = getChatMsgAndUpdateList(callId);
 	ms_message("[push] message already in db? %s", chatMessage? "yes" : "no");
 	if (chatMessage) {
-		linphone_core_cbs_unref(cbs);
-		return chatMessage;
+		return chatMsgToPushNotifMsg(chatMessage);
 	}
 
 	/* init with 0 to look for the msg when newMsgNb <= 0 and then try to get the msg every seconds */
@@ -331,7 +512,6 @@ std::shared_ptr<ChatMessage> IosSharedCoreHelpers::processPushNotificationMessag
 
 		if (getSharedCoreState() == SharedCoreState::executorCoreStopping) {
 			ms_message("[SHARED] executor core stopping");
-			linphone_core_cbs_unref(cbs);
 			return nullptr;
 		}
 
@@ -349,8 +529,7 @@ std::shared_ptr<ChatMessage> IosSharedCoreHelpers::processPushNotificationMessag
 	chatMessage = getChatMsgAndUpdateList(callId);
 	ms_message("[push] message received? %s", chatMessage? "yes" : "no");
 
-	linphone_core_cbs_unref(cbs);
-	return chatMessage;
+	return chatMsgToPushNotifMsg(chatMessage);
 }
 
 void IosSharedCoreHelpers::setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom) {
@@ -381,8 +560,8 @@ static void on_push_notification_chat_room_invite_received(LinphoneCore *lc, Lin
 	}
 }
 
-std::shared_ptr<ChatRoom> IosSharedCoreHelpers::processPushNotificationChatRoom(const string &crAddr) {
-	ms_message("[push] processPushNotificationInvite. looking for chatroom %s", mChatRoomAddr.c_str());
+std::shared_ptr<ChatRoom> IosSharedCoreHelpers::getChatRoomFromAddr(const string &crAddr) {
+	ms_message("[push] getChatRoomFromAddr. looking for chatroom %s", mChatRoomAddr.c_str());
 	mChatRoomAddr = crAddr;
 	mChatRoomInvite = nullptr;
 
@@ -394,7 +573,7 @@ std::shared_ptr<ChatRoom> IosSharedCoreHelpers::processPushNotificationChatRoom(
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_chat_room_state_changed(cbs, on_push_notification_chat_room_invite_received);
 	linphone_core_add_callbacks(getCore()->getCCore(), cbs);
-
+	linphone_core_cbs_unref(cbs);
 
 	reinitTimer();
 	uint64_t iterationTimer = ms_get_cur_time_ms();
@@ -406,14 +585,12 @@ std::shared_ptr<ChatRoom> IosSharedCoreHelpers::processPushNotificationChatRoom(
 
 		if (getSharedCoreState() == SharedCoreState::executorCoreStopping) {
 			ms_message("[SHARED] executor core stopping");
-			linphone_core_cbs_unref(cbs);
 			return nullptr;
 		}
 
 		ms_usleep(50000);
 	}
 
-	linphone_core_cbs_unref(cbs);
 	return mChatRoomInvite;
 }
 

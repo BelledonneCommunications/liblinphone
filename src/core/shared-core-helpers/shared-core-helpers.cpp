@@ -42,7 +42,9 @@ bool GenericSharedCoreHelpers::canCoreStart() {
 	return true;
 }
 
-std::shared_ptr<ChatMessage> GenericSharedCoreHelpers::getPushNotificationMessage(const string &callId) {
+void GenericSharedCoreHelpers::registerMainCoreMsgCallback() {}
+
+std::shared_ptr<PushNotificationMessage> GenericSharedCoreHelpers::getPushNotificationMessage(const string &callId) {
 	return nullptr;
 }
 
@@ -57,6 +59,8 @@ void GenericSharedCoreHelpers::unlockSharedCoreIfNeeded() {}
 bool GenericSharedCoreHelpers::isCoreStopRequired() {
 	return false;
 }
+
+void GenericSharedCoreHelpers::onMsgWrittenInUserDefaults() {}
 
 void *GenericSharedCoreHelpers::getPathContext() {
     return NULL;
