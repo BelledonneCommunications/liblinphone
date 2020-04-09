@@ -34,9 +34,9 @@ namespace Linphone
 	{
 		public const string VERSION = "{{version}}";
 #if __IOS__
-		public const string LIB_NAME = "linphone.framework/linphone";
+		public const string LIB_NAME = "liblinphone.framework/liblinphone";
 #else
-		public const string LIB_NAME = "linphone"; // With this, it automatically finds liblinphone.so
+		public const string LIB_NAME = "liblinphone"; // With this, it automatically finds liblinphone.so
 #endif
 
 #if WINDOWS_UWP
