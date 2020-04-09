@@ -130,25 +130,27 @@ const char *shared_core_send_msg_and_get_call_id(LinphoneCoreManager *sender, Li
 // receiver needs to be a shared core
 void shared_core_get_message_from_call_id(LinphoneCoreManager *sender_mgr, LinphoneCore *receiver, const char *text,
 										  const char *call_id) {
-	const char *content_type = "text/plain";
 
 	BC_ASSERT_PTR_NOT_NULL(call_id);
 	if (call_id != NULL) {
-		LinphoneChatMessage *received_msg = linphone_core_get_new_message_from_callid(receiver, call_id);
+		LinphonePushNotificationMessage *received_msg = linphone_core_get_new_message_from_callid(receiver, call_id);
 		BC_ASSERT_PTR_NOT_NULL(received_msg);
 
 		if (received_msg != NULL) {
-			LinphoneContent *content = (LinphoneContent *)(linphone_chat_message_get_contents(received_msg)->data);
-			char *content_type_header = ms_strdup_printf("Content-Type: %s", content_type);
-			belle_sip_header_content_type_t *belle_sip_content_type =
-				belle_sip_header_content_type_parse(content_type_header);
-			BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content),
-								   belle_sip_header_content_type_get_type(belle_sip_content_type));
-			BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content),
-								   belle_sip_header_content_type_get_subtype(belle_sip_content_type));
-			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(received_msg), text);
-			ms_free(content_type_header);
-			linphone_chat_message_unref(received_msg);
+			LinphoneProxyConfig *receiver_cfg = linphone_core_get_proxy_config_list(receiver)->data;
+			const LinphoneAddress *receiver_addr = linphone_proxy_config_get_identity_address(receiver_cfg);
+			const LinphoneAddress *local_addr = linphone_push_notification_message_get_local_addr(received_msg);
+			BC_ASSERT_STRING_EQUAL(linphone_address_get_username(receiver_addr), linphone_address_get_username(local_addr));
+			linphone_address_unref((LinphoneAddress *)local_addr);
+
+			LinphoneProxyConfig *sender_cfg = linphone_core_get_proxy_config_list(sender_mgr->lc)->data;
+			const LinphoneAddress *sender_addr = linphone_proxy_config_get_identity_address(sender_cfg);
+			const LinphoneAddress *from_addr = linphone_push_notification_message_get_from_addr(received_msg);
+			BC_ASSERT_STRING_EQUAL(linphone_address_get_username(sender_addr), linphone_address_get_username(from_addr));
+			linphone_address_unref((LinphoneAddress *)from_addr);
+
+			BC_ASSERT_STRING_EQUAL(linphone_push_notification_message_get_text_content(received_msg), text);
+			linphone_push_notification_message_unref(received_msg);
 
 			BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room(receiver, sender_mgr->identity));
 		}
@@ -159,7 +161,7 @@ void *thread_shared_core_get_message_from_call_id(void *arguments) {
 #if TARGET_OS_IPHONE
 	struct get_msg_args *args = (struct get_msg_args *)arguments;
 	LinphoneCoreManager *receiver_mgr =
-		linphone_core_manager_create_shared("", TEST_GROUP_ID, FALSE, args->receiver_mgr);
+	linphone_core_manager_create_shared("", TEST_GROUP_ID, FALSE, args->receiver_mgr);
 
 	shared_core_get_message_from_call_id(args->sender_mgr, receiver_mgr->lc, args->text, args->call_id);
 
@@ -170,22 +172,115 @@ void *thread_shared_core_get_message_from_call_id(void *arguments) {
 	return NULL;
 }
 
-static void shared_executor_core_get_message(void) {
+// receiver needs to be a shared core
+void shared_core_get_message_from_user_defaults(LinphoneCoreManager *sender_mgr, LinphoneCore *receiver, const char *call_id) {
+	BC_ASSERT_PTR_NOT_NULL(call_id);
+	if (call_id != NULL) {
+		LinphonePushNotificationMessage *received_msg = linphone_core_get_new_message_from_callid(receiver, call_id);
+		BC_ASSERT_PTR_NOT_NULL(received_msg);
+
+		if (received_msg != NULL) {
+			const LinphoneAddress *local_addr = linphone_push_notification_message_get_local_addr(received_msg);
+			BC_ASSERT_STRING_EQUAL(linphone_address_as_string(local_addr), "sip:local.addr");
+			linphone_address_unref((LinphoneAddress *)local_addr);
+
+			const LinphoneAddress *from_addr = linphone_push_notification_message_get_from_addr(received_msg);
+			BC_ASSERT_STRING_EQUAL(linphone_address_as_string(from_addr), "sip:from.addr");
+			linphone_address_unref((LinphoneAddress *)from_addr);
+
+			BC_ASSERT_STRING_EQUAL(linphone_push_notification_message_get_text_content(received_msg), "textContent");
+			linphone_push_notification_message_unref(received_msg);
+		}
+	}
+}
+
+void *thread_shared_core_get_message_from_user_defaults(void *arguments) {
 #if TARGET_OS_IPHONE
-	LinphoneCoreManager *sender_mgr;
-	LinphoneCoreManager *receiver_mgr;
+	struct get_msg_args *args = (struct get_msg_args *)arguments;
+	LinphoneCoreManager *receiver_mgr =
+	linphone_core_manager_create_shared("", TEST_GROUP_ID, FALSE, args->receiver_mgr);
+
+	shared_core_get_message_from_user_defaults(args->sender_mgr, receiver_mgr->lc, args->call_id);
+
+	linphone_core_manager_destroy(receiver_mgr);
+
+	pthread_exit(NULL);
+#endif
+	return NULL;
+}
+
+static void shared_executor_core_get_message_by_starting_a_core(void) {
+#if TARGET_OS_IPHONE
 	const char *text = "Bli bli bli \n blu";
-	sender_mgr = linphone_core_manager_new("marie_rc");
-	receiver_mgr = linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, FALSE, NULL);
+	LinphoneCoreManager *sender_mgr = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *receiver_mgr = linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, FALSE, NULL);
 	linphone_core_manager_start(receiver_mgr, TRUE);
 
 	const char *call_id = shared_core_send_msg_and_get_call_id(sender_mgr, receiver_mgr, text);
 	if (call_id) {
+		// This is an executor core. No other executor core is started so it can get the msg.
 		shared_core_get_message_from_call_id(sender_mgr, receiver_mgr->lc, text, call_id);
 		ms_free((void *)call_id);
 	}
 	linphone_core_manager_destroy(sender_mgr);
 	linphone_core_manager_destroy(receiver_mgr);
+#endif
+}
+
+static void shared_executor_core_get_message_with_user_defaults_mono_thread(void) {
+#if TARGET_OS_IPHONE
+	/* mono thread means that the msg in already in the user defaults when the executor core start */
+	const char *text = "Bli bli bli \n blu";
+	LinphoneCoreManager *sender_mgr = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *main_mgr = linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, TRUE, NULL);
+	linphone_core_manager_start(main_mgr, TRUE);
+
+	const char *call_id = shared_core_send_msg_and_get_call_id(sender_mgr, main_mgr, text);
+	BC_ASSERT_TRUE(wait_for_until(main_mgr->lc, sender_mgr->lc, &main_mgr->stat.number_of_LinphoneMessageReceived, 1, 30000));
+	if (call_id) {
+		LinphoneCoreManager *executor_mgr = linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, FALSE, NULL);
+		// Manually mark the msg as received as user defaults are not available in iphone simulators
+		linphone_shared_core_helpers_on_msg_written_in_user_defaults(executor_mgr->lc);
+		shared_core_get_message_from_user_defaults(sender_mgr, executor_mgr->lc, call_id);
+		ms_free((void *)call_id);
+		linphone_core_manager_destroy(executor_mgr);
+	}
+	linphone_core_manager_destroy(sender_mgr);
+	linphone_core_manager_destroy(main_mgr);
+#endif
+}
+
+static void shared_executor_core_get_message_with_user_defaults_multi_thread(void) {
+#if TARGET_OS_IPHONE
+	/* multi thread means that the executor core waits for the msg to be written by the main core into the user defaults */
+	const char *text = "Bli bli bli \n blu";
+	LinphoneCoreManager *sender_mgr = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *main_mgr = linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, TRUE, NULL);
+	linphone_core_manager_start(main_mgr, TRUE);
+
+	pthread_t executor;
+	struct get_msg_args *args = ms_malloc(sizeof(struct get_msg_args));
+	args->sender_mgr = sender_mgr;
+	args->receiver_mgr = main_mgr;
+	args->call_id = "call_id";
+	if (pthread_create(&executor, NULL, &thread_shared_core_get_message_from_user_defaults, (void *)args)) {
+		ms_fatal("Error creating executor thread");
+	}
+
+	// make sure that executor core is waiting for the msg before we send it
+	ms_sleep(1);
+
+	shared_core_send_msg_and_get_call_id(sender_mgr, main_mgr, text);
+	BC_ASSERT_TRUE(wait_for_until(main_mgr->lc, sender_mgr->lc, &main_mgr->stat.number_of_LinphoneMessageReceived, 1, 30000));
+
+	if (pthread_join(executor, NULL)) {
+		ms_fatal("Error joining thread executor");
+	}
+
+	ms_free(args);
+
+	linphone_core_manager_destroy(sender_mgr);
+	linphone_core_manager_destroy(main_mgr);
 #endif
 }
 
@@ -416,7 +511,9 @@ static void two_shared_executor_cores_get_message_and_chat_room(void) {
 test_t shared_core_tests[] = {
 	TEST_NO_TAG("Executor Shared Core can't start because Main Shared Core runs", shared_main_core_prevent_executor_core_start),
 	TEST_NO_TAG("Executor Shared Core stopped by Main Shared Core", shared_main_core_stops_executor_core),
-	TEST_NO_TAG("Executor Shared Core get message from callId", shared_executor_core_get_message),
+	TEST_NO_TAG("Executor Shared Core get message from callId by starting a core", shared_executor_core_get_message_by_starting_a_core),
+	TEST_NO_TAG("Executor Shared Core get message from callId with user defaults on one thread", shared_executor_core_get_message_with_user_defaults_mono_thread),
+	TEST_NO_TAG("Executor Shared Core get message from callId with user defaults on two threads", shared_executor_core_get_message_with_user_defaults_multi_thread),
 	TEST_NO_TAG("Two Executor Shared Cores get messages", two_shared_executor_cores_get_messages),
 	TEST_NO_TAG("Executor Shared Core get new chat room from invite", shared_executor_core_get_chat_room),
 	TEST_NO_TAG("Two Executor Shared Cores get one msg and one chat room", two_shared_executor_cores_get_message_and_chat_room)

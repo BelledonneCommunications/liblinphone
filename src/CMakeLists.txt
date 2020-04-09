@@ -234,6 +234,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	object/object.h
 	object/property-container.h
 	object/singleton.h
+	push-notification-message/push-notification-message.h
 	sal/sal.h
 	search/magic-search-p.h
 	search/magic-search.h
@@ -303,6 +304,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-participant-device-identity.cpp
 	c-wrapper/api/c-participant-imdn-state.cpp
 	c-wrapper/api/c-participant.cpp
+	c-wrapper/api/c-push-notification-message.cpp
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
@@ -393,6 +395,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	object/clonable-object.cpp
 	object/object.cpp
 	object/property-container.cpp
+	push-notification-message/push-notification-message.cpp
 	sal/call-op.cpp
 	sal/event-op.cpp
 	sal/message-op.cpp
