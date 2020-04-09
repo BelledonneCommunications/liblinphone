@@ -24,6 +24,7 @@
 
 #include "private_structs.h"
 
+#include "push-notification-message/push-notification-message.h"
 #include "chat/encryption/encryption-engine.h"
 #include "chat/encryption/legacy-encryption-engine.h"
 #include "linphone/api/c-types.h"
@@ -136,10 +137,11 @@ void linphone_core_ensure_registered(LinphoneCore *lc) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pushNotificationReceived();
 }
 
-LinphoneChatMessage * linphone_core_get_new_message_from_callid(LinphoneCore *lc, const char *call_id) {
-	std::shared_ptr<ChatMessage> cppMsg = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationMessage(Utils::cStringToCppString(call_id));
-	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(cppMsg);
+LinphonePushNotificationMessage * linphone_core_get_new_message_from_callid(LinphoneCore *lc, const char *call_id) {
+	std::shared_ptr<PushNotificationMessage> cppMsg = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationMessage(Utils::cStringToCppString(call_id));
+	if (!cppMsg) return NULL;
 
+	LinphonePushNotificationMessage *msg = (LinphonePushNotificationMessage *) cppMsg->toC();
 	if (msg) {
 		// We need to take a ref on the object because this function is called from outside linphone-sdk.
 		belle_sip_object_ref(msg);
