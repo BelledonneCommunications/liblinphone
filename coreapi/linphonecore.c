@@ -639,13 +639,13 @@ static void _close_log_collection_file(void) {
 	}
 }
 
-#if !ANDROID  && !__APPLE__
+#if !__APPLE__
 static const char* getprogname() {
 #if defined(__GLIBC__)
-  return program_invocation_short_name
+  return program_invocation_short_name;
 #else
 	//not known yet on windows
-	return""
+	return"";
 #endif
 }
 #endif
@@ -2667,6 +2667,7 @@ LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct
 	core->is_main_core = main_core;
 	// allow ios app extension to mark msg as read without being registered
 	core->send_imdn_if_unregistered = !main_core;
+	getPlatformHelpers(core)->getSharedCoreHelpers()->registerMainCoreMsgCallback();
 	return core;
 }
 
