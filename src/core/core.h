@@ -44,6 +44,7 @@ class IdentityAddress;
 class EncryptionEngine;
 class ChatMessage;
 class ChatRoom;
+class PushNotificationMessage;
 
 class LINPHONE_PUBLIC Core : public Object {
 	friend class BasicToClientGroupChatRoom;
@@ -189,7 +190,7 @@ public:
 	int getUnreadChatMessageCount () const;
 	int getUnreadChatMessageCount (const IdentityAddress &localAddress) const;
 	int getUnreadChatMessageCountFromActiveLocals () const;
-	std::shared_ptr<ChatMessage> getPushNotificationMessage (const std::string &callId) const;
+	std::shared_ptr<PushNotificationMessage> getPushNotificationMessage (const std::string &callId) const;
 	std::shared_ptr<ChatRoom> getPushNotificationChatRoom (const std::string &chatRoomAddr) const;
 	std::shared_ptr<ChatMessage> findChatMessageFromCallId (const std::string &callId) const;
 

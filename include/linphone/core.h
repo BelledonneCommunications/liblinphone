@@ -6224,7 +6224,7 @@ LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *lc);
  * @return The #LinphoneChatMessage object.
  * @ingroup misc
 **/
-LINPHONE_PUBLIC LinphoneChatMessage * linphone_core_get_new_message_from_callid(LinphoneCore *lc, const char *call_id);
+LINPHONE_PUBLIC LinphonePushNotificationMessage * linphone_core_get_new_message_from_callid(LinphoneCore *lc, const char *call_id);
 
 /**
  * Get the chat room we have been added into using the chat_room_addr included in the push notification body
