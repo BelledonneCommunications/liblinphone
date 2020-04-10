@@ -446,12 +446,16 @@ static void _simple_conference_from_scratch(bool_t with_video){
 	LinphoneConference *conf;
 	LinphoneConferenceParams *conf_params;
 	LinphoneCall *pauline_call, *laure_call;
+	char *play_file_pauline = bc_tester_res("sounds/ahbahouaismaisbon.wav");
 	bctbx_list_t *participants = NULL;
 	bctbx_list_t *lcs = NULL;
 
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, laure->lc);
+	
+	linphone_core_set_play_file(pauline->lc, play_file_pauline);
+	bc_free(play_file_pauline);
 
 	/*marie creates the conference*/
 	conf_params = linphone_core_create_conference_params(marie->lc);
@@ -467,7 +471,19 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
 		linphone_core_set_video_activation_policy(pauline->lc, pol);
 		linphone_core_set_video_activation_policy(marie->lc, pol);
+		linphone_core_set_video_activation_policy(laure->lc, pol);
 		linphone_video_activation_policy_unref(pol);
+		
+		linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+		linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+		linphone_core_set_video_device(laure->lc, liblinphone_tester_mire_id);
+		
+		linphone_core_enable_video_capture(pauline->lc, TRUE);
+		linphone_core_enable_video_display(pauline->lc, TRUE);
+		linphone_core_enable_video_capture(marie->lc, TRUE);
+		linphone_core_enable_video_display(marie->lc, TRUE);
+		linphone_core_enable_video_capture(laure->lc, TRUE);
+		linphone_core_enable_video_display(laure->lc, TRUE);
 	}
 
 	linphone_conference_invite_participants(conf, participants, NULL);
