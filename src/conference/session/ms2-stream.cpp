@@ -1089,6 +1089,29 @@ int MS2Stream::getAvpfRrInterval()const{
 	return media_stream_get_state(ms) == MSStreamStarted ? media_stream_get_avpf_rr_interval(ms) : 0;
 }
 
+void MS2Stream::connectToMixer(StreamMixer *mixer){
+	Stream::connectToMixer(mixer);
+	if (getState() == Running){
+		stop();
+		render(getGroup().getCurrentOfferAnswerContext().scopeStreamToIndex(getIndex()),
+			getGroup().getCurrentSessionState());
+	}
+}
+
+void MS2Stream::disconnectFromMixer(){
+	bool wasRunning = false;
+	if (getState() == Running){
+		stop();
+		wasRunning = true;
+	}
+	Stream::disconnectFromMixer();
+	if (wasRunning){
+		// Call render to take changes into account immediately.
+		render(getGroup().getCurrentOfferAnswerContext().scopeStreamToIndex(getIndex()),
+			getGroup().getCurrentSessionState());
+	}
+}
+
 MS2Stream::~MS2Stream(){
 	finish();
 	linphone_call_stats_unref(mStats);
