@@ -27,7 +27,9 @@ LINPHONE_BEGIN_NAMESPACE
 
 MixerSession::MixerSession(Core &core) : mCore(core){
 	mMixers[SalAudio].reset(new MS2AudioMixer(*this));
-	//mMixers[SalVideo].reset(new MS2VideoMixer(*this));
+#ifdef VIDEO_ENABLED
+	mMixers[SalVideo].reset(new MS2VideoMixer(*this));
+#endif
 }
 
 MixerSession::~MixerSession(){
