@@ -291,6 +291,9 @@ LinphoneNatPolicy * linphone_config_create_nat_policy_from_section(const Linphon
 	const char *server = lp_config_get_string(config, section, "stun_server", NULL);
 	const char *username = lp_config_get_string(config, section, "stun_server_username", NULL);
 	bctbx_list_t *l = lp_config_get_string_list(config, section, "protocols", NULL);
+	bool_t turn_enable_udp = linphone_config_get_bool(config, section, "turn_enable_udp", TRUE);
+	bool_t turn_enable_tcp = linphone_config_get_bool(config, section, "turn_enable_tcp", FALSE);
+	bool_t turn_enable_tls = linphone_config_get_bool(config, section, "turn_enable_tls", FALSE);
 	LinphoneNatPolicy *policy;
 	if (config_ref)
 		policy = _linphone_nat_policy_new_with_ref(NULL, config_ref);
@@ -312,6 +315,9 @@ LinphoneNatPolicy * linphone_config_create_nat_policy_from_section(const Linphon
 		if (upnp_enabled) linphone_nat_policy_enable_upnp(policy, TRUE);
 		bctbx_list_free_with_data(l, (bctbx_list_free_func)ms_free);
 	}
+	linphone_nat_policy_enable_udp_turn_transport(policy, turn_enable_udp);
+	linphone_nat_policy_enable_tcp_turn_transport(policy, turn_enable_tcp);
+	linphone_nat_policy_enable_tls_turn_transport(policy, turn_enable_tls);
 	return policy;
 }
 LinphoneNatPolicy * linphone_core_create_nat_policy_from_config(LinphoneCore *lc, const char *ref) {
@@ -334,6 +340,30 @@ LinphoneNatPolicy * linphone_core_create_nat_policy_from_config(LinphoneCore *lc
 		belle_sip_free(section);
 	}
 	return policy;
+}
+
+void linphone_nat_policy_enable_udp_turn_transport(LinphoneNatPolicy *policy, bool_t enable) {
+	policy->turn_udp_enabled = enable;
+}
+
+bool_t linphone_nat_policy_udp_turn_transport_enabled(LinphoneNatPolicy *policy) {
+	return policy->turn_udp_enabled;
+}
+
+void linphone_nat_policy_enable_tcp_turn_transport(LinphoneNatPolicy *policy, bool_t enable) {
+	policy->turn_tcp_enabled = enable;
+}
+
+bool_t linphone_nat_policy_tcp_turn_transport_enabled(LinphoneNatPolicy *policy) {
+	return policy->turn_tcp_enabled;
+}
+
+void linphone_nat_policy_enable_tls_turn_transport(LinphoneNatPolicy *policy, bool_t enable) {
+	policy->turn_tls_enabled = enable;
+}
+
+bool_t linphone_nat_policy_tls_turn_transport_enabled(LinphoneNatPolicy *policy) {
+	return policy->turn_tls_enabled;
 }
 
 LinphoneCore *linphone_nat_policy_get_core(const LinphoneNatPolicy *policy) {
