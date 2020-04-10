@@ -548,6 +548,9 @@ char * generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *dialPla
 extern MSSndCardDesc dummy_test_snd_card_desc;
 #define DUMMY_TEST_SOUNDCARD "dummy test sound card"
 
+extern MSSndCardDesc dummy2_test_snd_card_desc;
+#define DUMMY2_TEST_SOUNDCARD "dummy2 test sound card"
+
 #ifdef __cplusplus
 };
 #endif

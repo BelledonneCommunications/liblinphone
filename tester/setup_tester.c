@@ -1675,42 +1675,6 @@ static void dial_plan(void) {
 	bctbx_list_free_with_data(dial_plans, (bctbx_list_free_func)linphone_dial_plan_unref);
 }
 
-static void dummy2_test_snd_card_detect(MSSndCardManager *m);
-
-MSSndCardDesc dummy2_test_snd_card_desc = {
-	"dummyTest2",
-	dummy2_test_snd_card_detect,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
-
-#define DUMMY2_TEST_SOUNDCARD "dummy2 test sound card"
-
-static MSSndCard* create_dummy2_test_snd_card(void) {
-	MSSndCard* sndcard;
-	sndcard = ms_snd_card_new(&dummy2_test_snd_card_desc);
-	sndcard->data = NULL;
-	sndcard->name = ms_strdup(DUMMY2_TEST_SOUNDCARD);
-	sndcard->capabilities = MS_SND_CARD_CAP_PLAYBACK | MS_SND_CARD_CAP_CAPTURE;
-	sndcard->latency = 0;
-	sndcard->device_type = MS_SND_CARD_DEVICE_TYPE_BLUETOOTH;
-	return sndcard;
-}
-
-static void dummy2_test_snd_card_detect(MSSndCardManager *m) {
-	ms_snd_card_manager_add_card(m, create_dummy2_test_snd_card());
-}
-
 static void audio_devices(void) {
 	LinphoneCoreManager* manager = linphone_core_manager_new("marie_rc");
 	LinphoneCore *core = manager->lc;
