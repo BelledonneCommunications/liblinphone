@@ -21,6 +21,7 @@
 #define mixing_h
 
 #include "streams.h"
+#include "ms2-streams.h"
 
 #include "mediastreamer2/msconference.h"
 
@@ -110,12 +111,26 @@ private:
 	bool mLocalMicEnabled = true;
 };
 
-class MS2VideoStreamMixer : public StreamMixer{
+class MS2VideoMixer : public StreamMixer, public MS2VideoControl{
 public:
-	MS2VideoStreamMixer(MixerSession & session);
-	~MS2VideoStreamMixer();
+	MS2VideoMixer(MixerSession & session);
+	void connectEndpoint(MSVideoEndpoint *endpoint, bool muted);
+	void disconnectEndpoint(MSVideoEndpoint *endpoint);
+	virtual void enableLocalParticipant(bool enabled) override;
+	~MS2VideoMixer();
+protected:
+	virtual void onSnapshotTaken(const std::string &filepath) override;
+	virtual VideoStream *getVideoStream()const override;
+	virtual MSWebCam *getVideoDevice()const override;
 private:
+	void addLocalParticipant();
+	void removeLocalParticipant();
+	RtpProfile *sMakeDummyProfile();
 	MSVideoConference *mConference = nullptr;
+	VideoStream *mLocalParticipantStream = nullptr;
+	MSVideoEndpoint *mLocalEndpoint = nullptr;
+	RtpProfile *mLocalDummyProfile = nullptr;
+	static constexpr int sVP8PayloadTypeNumber = 95;
 };
 
 LINPHONE_END_NAMESPACE

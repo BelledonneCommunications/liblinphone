@@ -439,7 +439,7 @@ static void simple_conference(void) {
 }
 
 
-static void simple_conference_from_scratch(void){
+static void _simple_conference_from_scratch(bool_t with_video){
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
@@ -455,12 +455,20 @@ static void simple_conference_from_scratch(void){
 
 	/*marie creates the conference*/
 	conf_params = linphone_core_create_conference_params(marie->lc);
-	linphone_conference_params_enable_video(conf_params, FALSE);
+	linphone_conference_params_enable_video(conf_params, with_video);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
 	linphone_conference_params_unref(conf_params);
 
 	participants = bctbx_list_append(participants, pauline->identity);
 	participants = bctbx_list_append(participants, laure->identity);
+	
+	if (with_video){
+		LinphoneVideoActivationPolicy * pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+		linphone_core_set_video_activation_policy(pauline->lc, pol);
+		linphone_core_set_video_activation_policy(marie->lc, pol);
+		linphone_video_activation_policy_unref(pol);
+	}
 
 	linphone_conference_invite_participants(conf, participants, NULL);
 
@@ -490,6 +498,9 @@ static void simple_conference_from_scratch(void){
 		}
 		/*wait a bit for the conference audio processing to run, despite we do not test it for the moment*/
 		wait_for_list(lcs,NULL,0,5000);
+		
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)) == with_video);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_call)) == with_video);
 
 		linphone_core_terminate_conference(marie->lc);
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,2,5000));
@@ -509,8 +520,13 @@ static void simple_conference_from_scratch(void){
 	bctbx_list_free(lcs);
 }
 
+static void simple_conference_from_scratch(void){
+	_simple_conference_from_scratch(FALSE);
+}
 
-
+static void simple_conference_from_scratch_with_video(void){
+	_simple_conference_from_scratch(TRUE);
+}
 
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
@@ -1290,6 +1306,7 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing early media", incoming_call_accepted_when_outgoing_call_in_outgoing_ringing_early_media),
 	TEST_NO_TAG("Simple conference", simple_conference),
 	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
+	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
 	TEST_ONE_TAG("Simple conference with ICE", simple_conference_with_ice, "ICE"),
 	TEST_ONE_TAG("Simple ZRTP conference with ICE", simple_zrtp_conference_with_ice, "ICE"),
 	TEST_NO_TAG("Eject from 3 participants conference", eject_from_3_participants_local_conference),
