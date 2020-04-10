@@ -28,6 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 MS2VideoMixer::MS2VideoMixer(MixerSession & session) : StreamMixer(session), MS2VideoControl(session.getCore()){
 	MSVideoConferenceParams params = {0};
+	params.codec_mime_type = "VP8";
 	params.min_switch_interval = 3000;
 	mConference = ms_video_conference_new(mSession.getCCore()->factory, &params);
 }
