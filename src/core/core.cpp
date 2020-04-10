@@ -21,6 +21,10 @@
 #include "config.h"
 #endif
 
+#ifdef __APPLE__
+#include "TargetConditionals.h"
+#endif
+
 #include <algorithm>
 #include <iterator>
 
@@ -128,8 +132,10 @@ bool CorePrivate::isShutdownDone() {
 	}
 
 	const list<shared_ptr<AbstractChatRoom>> chatRooms = q->getChatRooms();
+	shared_ptr<ChatRoom> cr;
 	for (const auto &chatRoom : chatRooms) {
-		if (static_pointer_cast<ChatRoom>(chatRoom)->getPrivate()->getImdnHandler()->hasUndeliveredImdnMessage()) {
+		cr = dynamic_pointer_cast<ChatRoom>(chatRoom);
+		if (cr && cr->getPrivate()->getImdnHandler()->hasUndeliveredImdnMessage()) {
 			return false;
 		}
 	}
@@ -639,6 +645,14 @@ std::shared_ptr<PushNotificationMessage> Core::getPushNotificationMessage (const
 	if (linphone_core_get_global_state(getCCore()) == LinphoneGlobalOn && getPlatformHelpers(getCCore())->getSharedCoreHelpers()->isCoreStopRequired()) {
 		lInfo() << "[SHARED] Executor Shared Core is beeing stopped by Main Shared Core";
 		linphone_core_stop(getCCore());
+#if TARGET_OS_IPHONE
+		if (!msg && callId != "dummy_call_id") {
+			ms_message("[push] Executor Core for callId[%s] has been stopped but couldn't get msg from db in time. Looking for msg in UserDefaults", callId.c_str());
+			auto platformHelpers = LinphonePrivate::createIosPlatformHelpers(getCCore()->cppPtr, NULL);
+			msg = platformHelpers->getSharedCoreHelpers()->getPushNotificationMessage(callId);
+			delete platformHelpers;
+		}
+#endif
 	}
 	return msg;
 }
