@@ -177,6 +177,54 @@ LINPHONE_PUBLIC void linphone_nat_policy_resolve_stun_server(LinphoneNatPolicy *
 LINPHONE_PUBLIC const struct addrinfo * linphone_nat_policy_get_stun_server_addrinfo(LinphoneNatPolicy *policy);
 
 /**
+ * Enable UDP TURN transport.
+ * Used when TURN is enabled.
+ * @param[in] policy #LinphoneNatPolicy object
+ * @param[in] enable Boolean value telling whether to enable UDP TURN transport.
+ */
+LINPHONE_PUBLIC void linphone_nat_policy_enable_udp_turn_transport(LinphoneNatPolicy *policy, bool_t enable);
+
+/**
+ * Tells whether UDP TURN transport is enabled.
+ * Used when TURN is enabled.
+ * @param[in] policy #LinphoneNatPolicy object
+ * @return Boolean value telling whether UDP TURN transport is enabled.
+ */
+LINPHONE_PUBLIC bool_t linphone_nat_policy_udp_turn_transport_enabled(LinphoneNatPolicy *policy);
+
+/**
+ * Enable TCP TURN transport.
+ * Used when TURN is enabled.
+ * @param[in] policy #LinphoneNatPolicy object
+ * @param[in] enable Boolean value telling whether to enable TCP TURN transport.
+ */
+LINPHONE_PUBLIC void linphone_nat_policy_enable_tcp_turn_transport(LinphoneNatPolicy *policy, bool_t enable);
+
+/**
+ * Tells whether TCP TURN transport is enabled.
+ * Used when TURN is enabled.
+ * @param[in] policy #LinphoneNatPolicy object
+ * @return Boolean value telling whether TCP TURN transport is enabled.
+ */
+LINPHONE_PUBLIC bool_t linphone_nat_policy_tcp_turn_transport_enabled(LinphoneNatPolicy *policy);
+
+/**
+ * Enable TLS TURN transport.
+ * Used when TURN is enabled.
+ * @param[in] policy #LinphoneNatPolicy object
+ * @param[in] enable Boolean value telling whether to enable TLS TURN transport.
+ */
+LINPHONE_PUBLIC void linphone_nat_policy_enable_tls_turn_transport(LinphoneNatPolicy *policy, bool_t enable);
+
+/**
+ * Tells whether TLS TURN transport is enabled.
+ * Used when TURN is enabled.
+ * @param[in] policy #LinphoneNatPolicy object
+ * @return Boolean value telling whether TLS TURN transport is enabled.
+ */
+LINPHONE_PUBLIC bool_t linphone_nat_policy_tls_turn_transport_enabled(LinphoneNatPolicy *policy);
+
+/**
  * Returns the #LinphoneCore object managing this nat policy, if any.
  * @param[in] fr #LinphoneNatPolicy object
  */
