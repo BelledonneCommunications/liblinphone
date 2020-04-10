@@ -252,12 +252,11 @@ std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getPushNotificati
 
 	switch(getSharedCoreState()) {
 		case SharedCoreState::mainCoreStarted:
-			return getMsgFromUserDefaults(callId);
 			IosSharedCoreHelpers::executorCoreMutex.unlock();
 		case SharedCoreState::executorCoreStopping:
 		case SharedCoreState::executorCoreStopped:
 			clearCallIdList();
-			return nullptr;
+			return getMsgFromUserDefaults(callId);
 		case SharedCoreState::executorCoreStarted:
 		case SharedCoreState::noCoreStarted:
 			addNewCallIdToList(callId);
@@ -266,9 +265,17 @@ std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getPushNotificati
 				getSharedCoreState() == mainCoreStarted ||
 				getSharedCoreState() == executorCoreStopping) {
 				/* this executor core can start because a main core is starting */
-				return nullptr;
+				return getMsgFromUserDefaults(callId);
 			}
-			return getMsgFromDatabase(callId);
+			auto msg = getMsgFromDatabase(callId);
+			if (!msg && (getSharedCoreState() == executorCoreStopped ||
+				getSharedCoreState() == mainCoreStarted ||
+				getSharedCoreState() == executorCoreStopping)) {
+				ms_message("[push] Executor Core for callId[%s] is beeing stopped and couldn't get msg from db in time. Looking for msg in UserDefaults", callId.c_str());
+				/* this executor core can start because a main core is starting */
+				return getMsgFromUserDefaults(callId);
+			}
+			return msg;
 	}
 }
 
@@ -543,7 +550,9 @@ std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromDatabas
 
 		if (getSharedCoreState() == SharedCoreState::executorCoreStopping) {
 			ms_message("[SHARED] executor core stopping");
-			return nullptr;
+			chatMessage = getChatMsgAndUpdateList(callId);
+			ms_message("[push] last chance to get msg in db. message in db? %s", chatMessage? "yes" : "no");
+			return chatMsgToPushNotifMsg(chatMessage);
 		}
 
 		ms_usleep(50000);
