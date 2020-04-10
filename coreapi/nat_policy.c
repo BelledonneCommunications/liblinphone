@@ -46,6 +46,7 @@ static void linphone_nat_policy_destroy(LinphoneNatPolicy *policy) {
 		belle_sip_resolver_context_cancel(policy->stun_resolver_context);
 		belle_sip_object_unref(policy->stun_resolver_context);
 	}
+	if (policy->turn_transport) belle_sip_free(policy->turn_transport);
 }
 
 bool_t linphone_nat_policy_stun_server_activated(LinphoneNatPolicy *policy) {
@@ -291,6 +292,7 @@ LinphoneNatPolicy * linphone_config_create_nat_policy_from_section(const Linphon
 	const char *server = lp_config_get_string(config, section, "stun_server", NULL);
 	const char *username = lp_config_get_string(config, section, "stun_server_username", NULL);
 	bctbx_list_t *l = lp_config_get_string_list(config, section, "protocols", NULL);
+	const char *turn_transport = lp_config_get_string(config, section, "turn_transport", "udp");
 	LinphoneNatPolicy *policy;
 	if (config_ref)
 		policy = _linphone_nat_policy_new_with_ref(NULL, config_ref);
@@ -312,6 +314,7 @@ LinphoneNatPolicy * linphone_config_create_nat_policy_from_section(const Linphon
 		if (upnp_enabled) linphone_nat_policy_enable_upnp(policy, TRUE);
 		bctbx_list_free_with_data(l, (bctbx_list_free_func)ms_free);
 	}
+	if (turn_transport) linphone_nat_policy_set_turn_transport(policy, turn_transport);
 	return policy;
 }
 LinphoneNatPolicy * linphone_core_create_nat_policy_from_config(LinphoneCore *lc, const char *ref) {
@@ -334,6 +337,18 @@ LinphoneNatPolicy * linphone_core_create_nat_policy_from_config(LinphoneCore *lc
 	belle_sip_free(section);
 	}
 return policy;
+}
+
+const char * linphone_nat_policy_get_turn_transport(const LinphoneNatPolicy *policy) {
+	return policy->turn_transport;
+}
+
+void linphone_nat_policy_set_turn_transport(LinphoneNatPolicy *policy, const char *turn_transport) {
+	if (turn_transport != NULL &&
+		(strcmp(turn_transport, "udp") == 0 || strcmp(turn_transport, "tcp") == 0 || strcmp(turn_transport, "tls") == 0)) {
+		if (policy->turn_transport) belle_sip_free(policy->turn_transport);
+		policy->turn_transport = belle_sip_strdup(turn_transport);
+	}
 }
 
 LinphoneCore *linphone_nat_policy_get_core(const LinphoneNatPolicy *policy) {

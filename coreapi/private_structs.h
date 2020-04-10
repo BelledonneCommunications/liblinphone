@@ -486,6 +486,7 @@ struct _LinphoneNatPolicy {
 	bool_t turn_enabled;
 	bool_t ice_enabled;
 	bool_t upnp_enabled;
+	char *turn_transport;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneNatPolicy);
