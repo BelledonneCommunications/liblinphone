@@ -228,6 +228,7 @@ public:
 	virtual int takePreviewSnapshot (const std::string& file) = 0;
 	virtual int takeVideoSnapshot (const std::string& file) = 0;
 	virtual void zoomVideo (float zoomFactor, float cx, float cy) = 0;
+	virtual void setDeviceRotation(int rotation) = 0;
 	virtual void getRecvStats(VideoStats *s) const = 0;
 	virtual void getSendStats(VideoStats *s) const = 0;
 	virtual ~VideoControlInterface() = default;

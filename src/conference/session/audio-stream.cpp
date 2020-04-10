@@ -714,29 +714,6 @@ void MS2AudioStream::finish(){
 	MS2Stream::finish();
 }
 
-void MS2AudioStream::connectToMixer(StreamMixer *mixer){
-	MS2Stream::connectToMixer(mixer);
-	if (getState() == Running){
-		stop();
-		render(getGroup().getCurrentOfferAnswerContext().scopeStreamToIndex(getIndex()),
-			getGroup().getCurrentSessionState());
-	}
-}
-
-void MS2AudioStream::disconnectFromMixer(){
-	bool wasRunning = false;
-	if (getState() == Running){
-		stop();
-		wasRunning = true;
-	}
-	MS2Stream::disconnectFromMixer();
-	if (wasRunning){
-		// Call render to take changes into account immediately.
-		render(getGroup().getCurrentOfferAnswerContext().scopeStreamToIndex(getIndex()),
-			getGroup().getCurrentSessionState());
-	}
-}
-
 MS2AudioMixer *MS2AudioStream::getAudioMixer(){
 	StreamMixer *mixer = getMixer();
 	if (mixer){
