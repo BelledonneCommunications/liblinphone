@@ -328,7 +328,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 	if (videoMixer){
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, TRUE);
-		videoMixer->connectEndpoint(mConferenceEndpoint, (vstream->dir == SalStreamRecvOnly));
+		videoMixer->connectEndpoint(this, mConferenceEndpoint, (vstream->dir == SalStreamRecvOnly));
 	}
 }
 
@@ -339,7 +339,7 @@ void MS2VideoStream::stop(){
 	
 	if (mConferenceEndpoint){
 		// First disconnect from the mixer before stopping the stream.
-		getVideoMixer()->disconnectEndpoint(mConferenceEndpoint);
+		getVideoMixer()->disconnectEndpoint(this, mConferenceEndpoint);
 		ms_video_endpoint_release_from_stream(mConferenceEndpoint);
 		mConferenceEndpoint = nullptr;
 	}
