@@ -31,7 +31,16 @@ LINPHONE_BEGIN_NAMESPACE
 
 class StreamMixer;
 
-class MixerSession{
+class AudioMixerListener{
+public:
+	virtual ~AudioMixerListener() = default;
+	/*
+	 * Notifies the active talker. By convention sg = nullptr means that the local participant is the active talker.
+	 */
+	virtual void onActiveTalkerChanged(StreamsGroup *sg) = 0;
+};
+
+class MixerSession : protected AudioMixerListener{
 public:
 	MixerSession(Core &core);
 	~MixerSession();
@@ -41,6 +50,9 @@ public:
 	void enableLocalParticipant(bool enabled);
 	Core & getCore() const;
 	LinphoneCore *getCCore()const;
+	void setFocus(StreamsGroup *sg);
+protected:
+	virtual void onActiveTalkerChanged(StreamsGroup *sg) override;
 private:
 	Core & mCore;
 	std::map<SalStreamType, std::unique_ptr<StreamMixer>> mMixers;
@@ -72,8 +84,8 @@ class MS2AudioMixer : public StreamMixer, public AudioControlInterface{
 public:
 	MS2AudioMixer(MixerSession & session);
 	~MS2AudioMixer();
-	void connectEndpoint(MSAudioEndpoint *endpoint, bool muted);
-	void disconnectEndpoint(MSAudioEndpoint *endpoint);
+	void connectEndpoint(Stream *as, MSAudioEndpoint *endpoint, bool muted);
+	void disconnectEndpoint(Stream *as, MSAudioEndpoint *endpoint);
 	virtual void enableLocalParticipant(bool enabled) override;
 	void setRecordPath(const std::string &path);
 	
@@ -95,28 +107,35 @@ public:
 	virtual void sendDtmf(int dtmf) override;
 	virtual void enableEchoCancellation(bool value) override;
 	virtual bool echoCancellationEnabled()const override;
+	void addListener(AudioMixerListener *listener);
+	void removeListener(AudioMixerListener *listener);
 	
 	// Used for the tone manager.
 	AudioStream * getAudioStream();
 private:
+	void onActiveTalkerChanged(MSAudioEndpoint *ep);
+	static void sOnActiveTalkerChanged(MSAudioConference *audioconf, MSAudioEndpoint *ep);
 	void addLocalParticipant();
 	void removeLocalParticipant();
 	RtpProfile *sMakeDummyProfile(int samplerate);
+	std::list<AudioMixerListener*> mListeners;
 	MSAudioConference *mConference = nullptr;
 	AudioStream *mLocalParticipantStream = nullptr;
 	MSAudioEndpoint *mLocalEndpoint = nullptr;
 	MSAudioEndpoint *mRecordEndpoint = nullptr;
 	RtpProfile *mLocalDummyProfile = nullptr;
 	std::string mRecordPath;
+	belle_sip_source_t *mTimer = nullptr;
 	bool mLocalMicEnabled = true;
 };
 
 class MS2VideoMixer : public StreamMixer, public MS2VideoControl{
 public:
 	MS2VideoMixer(MixerSession & session);
-	void connectEndpoint(MSVideoEndpoint *endpoint, bool muted);
-	void disconnectEndpoint(MSVideoEndpoint *endpoint);
+	void connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool muted);
+	void disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint);
 	virtual void enableLocalParticipant(bool enabled) override;
+	void setFocus(StreamsGroup *sg);
 	~MS2VideoMixer();
 protected:
 	virtual void onSnapshotTaken(const std::string &filepath) override;
