@@ -30,10 +30,15 @@ LINPHONE_BEGIN_NAMESPACE
 MS2AudioMixer::MS2AudioMixer(MixerSession &session) : StreamMixer(session){
 	MSAudioConferenceParams ms_conf_params;
 	ms_conf_params.samplerate = lp_config_get_int(mSession.getCCore()->config, "sound", "conference_rate", 16000);
+	ms_conf_params.active_talker_callback = &MS2AudioMixer::sOnActiveTalkerChanged;
+	ms_conf_params.user_data = this;
 	mConference = ms_audio_conference_new(&ms_conf_params, mSession.getCCore()->factory);
 }
 
 MS2AudioMixer::~MS2AudioMixer(){
+	if (mTimer){
+		mSession.getCore().destroyTimer(mTimer);
+	}
 	if (mRecordEndpoint) {
 		stopRecording();
 	}
@@ -43,12 +48,42 @@ MS2AudioMixer::~MS2AudioMixer(){
 	ms_audio_conference_destroy(mConference);
 }
 
-void MS2AudioMixer::connectEndpoint(MSAudioEndpoint *endpoint, bool muted){
+void MS2AudioMixer::addListener(AudioMixerListener *listener){
+	if (mTimer == nullptr){
+		// Start the monitoring of the active talker since somebody wants this information.
+		mTimer = mSession.getCore().createTimer([this]() -> bool{
+				ms_audio_conference_process_events(mConference);
+				return true;
+			}, 50, "AudioConference events timer");
+	}
+	mListeners.push_back(listener);
+}
+
+void MS2AudioMixer::removeListener(AudioMixerListener *listener){
+	mListeners.remove(listener);
+}
+
+void MS2AudioMixer::sOnActiveTalkerChanged(MSAudioConference *audioconf, MSAudioEndpoint *ep){
+	const MSAudioConferenceParams *params = ms_audio_conference_get_params(audioconf);
+	MS2AudioMixer *zis = static_cast<MS2AudioMixer*>(params->user_data);
+	zis->onActiveTalkerChanged(ep);
+}
+
+void MS2AudioMixer::onActiveTalkerChanged(MSAudioEndpoint *ep){
+	StreamsGroup *sg = (StreamsGroup*)ms_audio_endpoint_get_user_data(ep);
+	for (auto & l : mListeners){
+		l->onActiveTalkerChanged(sg);
+	}
+}
+
+void MS2AudioMixer::connectEndpoint(Stream *as, MSAudioEndpoint *endpoint, bool muted){
+	ms_audio_endpoint_set_user_data(endpoint, &as->getGroup());
 	ms_audio_conference_add_member(mConference, endpoint);
 	ms_audio_conference_mute_member(mConference, endpoint, muted);
 }
 
-void MS2AudioMixer::disconnectEndpoint(MSAudioEndpoint *endpoint){
+void MS2AudioMixer::disconnectEndpoint(Stream *as, MSAudioEndpoint *endpoint){
+	ms_audio_endpoint_set_user_data(endpoint, nullptr);
 	ms_audio_conference_remove_member(mConference, endpoint);
 }
 

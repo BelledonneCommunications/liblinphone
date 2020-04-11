@@ -372,7 +372,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	
 	if (audioMixer){
 		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE);
-		audioMixer->connectEndpoint(mConferenceEndpoint, (stream->dir == SalStreamRecvOnly));
+		audioMixer->connectEndpoint(this, mConferenceEndpoint, (stream->dir == SalStreamRecvOnly));
 	}
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setInConference(audioMixer != nullptr);
 	getMediaSessionPrivate().getCurrentParams()->enableLowBandwidth(getMediaSessionPrivate().getParams()->lowBandwidthEnabled());
@@ -431,7 +431,7 @@ void MS2AudioStream::stop(){
 	
 	if (mConferenceEndpoint){
 		// First disconnect from the mixer before stopping the stream.
-		getAudioMixer()->disconnectEndpoint(mConferenceEndpoint);
+		getAudioMixer()->disconnectEndpoint(this,mConferenceEndpoint);
 		ms_audio_endpoint_release_from_stream(mConferenceEndpoint);
 		mConferenceEndpoint = nullptr;
 	}
