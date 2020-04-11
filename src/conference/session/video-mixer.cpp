@@ -33,12 +33,36 @@ MS2VideoMixer::MS2VideoMixer(MixerSession & session) : StreamMixer(session), MS2
 	mConference = ms_video_conference_new(mSession.getCCore()->factory, &params);
 }
 
-void MS2VideoMixer::connectEndpoint(MSVideoEndpoint *endpoint, bool muted){
+void MS2VideoMixer::connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool muted){
+	ms_video_endpoint_set_user_data(endpoint, &vs->getGroup());
 	ms_video_conference_add_member(mConference, endpoint);
 }
 
-void MS2VideoMixer::disconnectEndpoint(MSVideoEndpoint *endpoint){
+void MS2VideoMixer::disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint){
+	ms_video_endpoint_set_user_data(endpoint, nullptr);
 	ms_video_conference_remove_member(mConference, endpoint);
+}
+
+void MS2VideoMixer::setFocus(StreamsGroup *sg){
+	MSVideoEndpoint *ep = nullptr;
+	
+	if (sg == nullptr){
+		ep = mLocalEndpoint;
+	}else{
+		const bctbx_list_t *elem = ms_video_conference_get_members(mConference);
+		for (; elem != nullptr; elem = elem->next){
+			MSVideoEndpoint *ep_it = (MSVideoEndpoint *)elem->data;
+			if (ms_video_endpoint_get_user_data(ep_it) == sg){
+				ep = ep_it;
+				break;
+			}
+		}
+	}
+	if (ep){
+		ms_video_conference_set_focus(mConference, ep);
+	}else{
+		lError() << "MS2VideoMixer: cannot find endpoint requested for focus.";
+	}
 }
 
 RtpProfile *MS2VideoMixer::sMakeDummyProfile(){
