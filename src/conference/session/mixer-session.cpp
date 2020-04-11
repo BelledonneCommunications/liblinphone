@@ -26,7 +26,9 @@ LINPHONE_BEGIN_NAMESPACE
 
 
 MixerSession::MixerSession(Core &core) : mCore(core){
-	mMixers[SalAudio].reset(new MS2AudioMixer(*this));
+	auto audioMixer = new MS2AudioMixer(*this);
+	audioMixer->addListener(this);
+	mMixers[SalAudio].reset(audioMixer);
 #ifdef VIDEO_ENABLED
 	mMixers[SalVideo].reset(new MS2VideoMixer(*this));
 #endif
@@ -45,6 +47,13 @@ void MixerSession::unjoinStreamsGroup(StreamsGroup &sg){
 	sg.unjoinMixerSession();
 }
 
+void MixerSession::setFocus(StreamsGroup *sg){
+#ifdef VIDEO_ENABLED
+	MS2VideoMixer *mixer = dynamic_cast<MS2VideoMixer*>(mMixers[SalVideo].get());
+	if (mixer) mixer->setFocus(sg);
+#endif
+}
+
 StreamMixer *MixerSession::getMixerByType(SalStreamType type){
 	return mMixers[type].get();
 }
@@ -61,6 +70,10 @@ void MixerSession::enableLocalParticipant(bool enabled){
 	for( const auto & p : mMixers){
 		p.second->enableLocalParticipant(enabled);
 	}
+}
+
+void MixerSession::onActiveTalkerChanged(StreamsGroup *sg){
+	setFocus(sg);
 }
 
 StreamMixer::StreamMixer(MixerSession & session) : mSession(session){
