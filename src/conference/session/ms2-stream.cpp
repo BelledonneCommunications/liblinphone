@@ -255,7 +255,10 @@ void MS2Stream::configureAdaptiveRateControl (const OfferAnswerContext &params) 
 	}
 	if (isAdvanced) {
 		lInfo() << "Setting up advanced rate control";
-		ms_bandwidth_controller_add_stream(getCCore()->bw_controller, ms);
+		if (getMixer() == nullptr || getType() == SalAudio){
+			// Don't use bandwidth controller in video conf.
+			ms_bandwidth_controller_add_stream(getCCore()->bw_controller, ms);
+		}
 		media_stream_enable_adaptive_bitrate_control(ms, false);
 	} else {
 		media_stream_set_adaptive_bitrate_algorithm(ms, MSQosAnalyzerAlgorithmSimple);

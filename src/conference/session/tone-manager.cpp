@@ -23,6 +23,7 @@
 #include "call/call-p.h"
 #include "conference/session/media-session.h"
 #include "conference/session/media-session-p.h"
+#include "conference/params/call-session-params-p.h"
 #include "linphone/utils/general.h"
 #include "core/core-p.h"
 #include "conference_private.h"
@@ -75,6 +76,11 @@ void ToneManager::startRingbackTone(const std::shared_ptr<CallSession> &session)
 
 	setState(session, State::Ringback);
 	mStats->number_of_startRingbackTone++;
+	
+	if (session->getParams()->getPrivate()->getInConference()){
+		lInfo() << "Skip ring back tone, call is in conference.";
+		return;
+	}
 
 	if (!isAnotherSessionInState(session, State::Ringback)) {
 		doStopToneToPlaySomethingElse(session);
