@@ -103,6 +103,7 @@ void MS2VideoMixer::addLocalParticipant(){
 
 void MS2VideoMixer::removeLocalParticipant(){
 	if (mLocalEndpoint){
+		ms_message("Conference: removing video local endpoint");
 		ms_video_conference_remove_member(mConference, mLocalEndpoint);
 		ms_video_endpoint_release_from_stream(mLocalEndpoint);
 		mLocalEndpoint = nullptr;

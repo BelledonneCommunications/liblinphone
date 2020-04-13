@@ -1988,10 +1988,6 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 		lWarning() << "Requested video but video support is globally disabled. Refusing video";
 		getParams()->enableVideo(false);
 	}
-	if (q->getCurrentParams()->getPrivate()->getInConference()) {
-		lWarning() << "Video isn't supported in conference";
-		getParams()->enableVideo(false);
-	}
 	updateRemoteSessionIdAndVer();
 	makeLocalMediaDescription(op->getRemoteMediaDescription() ? false : true);
 

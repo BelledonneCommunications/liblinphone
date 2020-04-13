@@ -153,10 +153,8 @@ void MS2AudioMixer::setRecordPath(const std::string &path){
 
 void MS2AudioMixer::enableMic(bool value){
 	mLocalMicEnabled = value;
-	if (!mLocalMicEnabled)
-		audio_stream_set_mic_gain(mLocalParticipantStream, 0);
-	else
-		audio_stream_set_mic_gain_db(mLocalParticipantStream, getSession().getCCore()->sound_conf.soft_mic_lev);
+	if (mLocalEndpoint)
+		ms_audio_conference_mute_member(mConference, mLocalEndpoint, !value);
 }
 
 bool MS2AudioMixer::micEnabled()const{
