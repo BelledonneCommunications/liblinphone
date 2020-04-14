@@ -1782,8 +1782,6 @@ static void audio_devices(void) {
 	BC_ASSERT_EQUAL(manager->stat.number_of_LinphoneCoreAudioDeviceChanged, 0, int, "%d");
 	linphone_core_set_output_audio_device(core, audio_device);
 	BC_ASSERT_EQUAL(manager->stat.number_of_LinphoneCoreAudioDeviceChanged, 0, int, "%d");
-	linphone_core_set_audio_device(core, audio_device);
-	BC_ASSERT_EQUAL(manager->stat.number_of_LinphoneCoreAudioDeviceChanged, 0, int, "%d");
 
 	// Let's add another bluetooth sound card
 	ms_snd_card_manager_register_desc(sndcard_manager, &dummy2_test_snd_card_desc);

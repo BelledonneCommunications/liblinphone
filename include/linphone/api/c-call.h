@@ -852,13 +852,6 @@ LINPHONE_PUBLIC void linphone_call_set_input_audio_device(LinphoneCall *call, Li
 LINPHONE_PUBLIC void linphone_call_set_output_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device);
 
 /**
- * Sets the given #LinphoneAudioDevice as input and/or output for this call only.
- * @param[in] call The #LinphoneCall
- * @param[in] audio_device The #LinphoneAudioDevice
- */
-LINPHONE_PUBLIC void linphone_call_set_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device);
-
-/**
  * Gets the current input device for this call.
  * @param[in] call The #LinphoneCall
  * @returns the #LinphoneAudioDevice used by this call as input

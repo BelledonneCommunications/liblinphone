@@ -630,6 +630,11 @@ const list<AudioDevice *> Core::getExtendedAudioDevices() const {
 }
 
 void Core::setInputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
+		return;
+	}
+
 	if (getCallCount() > 0) {
 		for (const auto &call : getCalls()) {
 			call->setInputAudioDevice(audioDevice);
@@ -639,6 +644,11 @@ void Core::setInputAudioDevice(AudioDevice *audioDevice) {
 }
 
 void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
+		return;
+	}
+
 	bool applied = false;
 
 	RingStream *stream = getCCore()->ringstream;
@@ -661,15 +671,6 @@ void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
 	}
 	
 	if (applied) {
-		linphone_core_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
-	}
-}
-
-void Core::setAudioDevice(AudioDevice *audioDevice) {
-	if (getCallCount() > 0) {
-		for (const auto &call : getCalls()) {
-			call->setAudioDevice(audioDevice);
-		}
 		linphone_core_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 	}
 }

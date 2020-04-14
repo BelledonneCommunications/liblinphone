@@ -464,9 +464,11 @@ static void simple_call_with_audio_devices_reload(void) {
 	linphone_audio_device_ref(audio_device);
 	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
-	linphone_core_set_audio_device(marie->lc, audio_device);
+	linphone_core_set_output_audio_device(marie->lc, audio_device);
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, 1, int, "%d");
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), audio_device);
+	linphone_core_set_input_audio_device(marie->lc, audio_device);
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, 1, int, "%d");
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(marie->lc), audio_device);
 
 	end_call(marie, pauline);

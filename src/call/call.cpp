@@ -946,23 +946,26 @@ void Call::setSpeakerVolumeGain (float value) {
 
 void Call::setInputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
+
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
+		return;
+	}
+
 	static_pointer_cast<MediaSession>(d->getActiveSession())->setInputAudioDevice(audioDevice);
 	linphone_call_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 }
 
 void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
+	
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
+		return;
+	}
+
 	static_pointer_cast<MediaSession>(d->getActiveSession())->setOutputAudioDevice(audioDevice);
 	linphone_call_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
-}
-
-void Call::setAudioDevice(AudioDevice *audioDevice) {
-	if (audioDevice->getCapabilities() & AudioDevice::Capabilities::Record) {
-		setInputAudioDevice(audioDevice);
-	}
-	if (audioDevice->getCapabilities() & AudioDevice::Capabilities::Play) {
-		setOutputAudioDevice(audioDevice);
-	}
 }
 
 AudioDevice* Call::getInputAudioDevice() const {

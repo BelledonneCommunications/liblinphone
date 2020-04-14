@@ -718,12 +718,6 @@ void linphone_call_set_output_audio_device(LinphoneCall *call, LinphoneAudioDevi
 	}
 }
 
-void linphone_call_set_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {
-	if (audio_device) {
-		L_GET_CPP_PTR_FROM_C_OBJECT(call)->setAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
-	}
-}
-
 const LinphoneAudioDevice* linphone_call_get_input_audio_device(const LinphoneCall *call) {
 	LinphonePrivate::AudioDevice *audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getInputAudioDevice();
 	if (audioDevice) {
