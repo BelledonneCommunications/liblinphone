@@ -2290,8 +2290,8 @@ MSSndCardDesc dummy_test_snd_card_desc = {
 	NULL,
 	NULL,
 	NULL,
-	NULL,
-	NULL,
+	dummy_snd_card_create_reader,
+	dummy_snd_card_create_writer,
 	NULL
 };
 
