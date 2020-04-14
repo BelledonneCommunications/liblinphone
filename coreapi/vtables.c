@@ -389,7 +389,10 @@ bctbx_list_t *linphone_core_get_callbacks_list(const LinphoneCore *lc) {
 	bctbx_list_t *it;
 	for(it=lc->vtable_refs; it!=NULL; it=it->next){
 		VTableReference *ref=(VTableReference*)it->data;
-		result = bctbx_list_append(result, ref->cbs);
+		if (!ref->internal) {
+			// DO NOT RETURN INTERNAL LISTENERS HERE TO PREVENT ISSUES IN WRAPPERS
+			result = bctbx_list_append(result, ref->cbs);
+		}
 	}
 	return result;
 }
