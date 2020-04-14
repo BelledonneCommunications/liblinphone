@@ -275,9 +275,9 @@ static void simple_call_with_multipart_invite_body(void) {
 	simple_call_base(FALSE, FALSE, TRUE);
 }
 
-
 static LinphoneAudioDevice * change_device(bool_t enable, LinphoneCoreManager* mgr, LinphoneAudioDevice *current_dev, LinphoneAudioDevice *dev0, LinphoneAudioDevice *dev1) {
 	LinphoneAudioDevice *next_dev = current_dev;
+
 	if (enable) {
 		linphone_audio_device_unref(current_dev);
 		if (current_dev == dev0) {
@@ -291,7 +291,7 @@ static LinphoneAudioDevice * change_device(bool_t enable, LinphoneCoreManager* m
 
 		int noDevChanges = mgr->stat.number_of_LinphoneCoreAudioDeviceChanged;
 		// Change output audio device
-		linphone_core_set_audio_device(mgr->lc, next_dev);
+		linphone_core_set_output_audio_device(mgr->lc, next_dev);
 		BC_ASSERT_EQUAL(mgr->stat.number_of_LinphoneCoreAudioDeviceChanged, (noDevChanges + 1), int, "%d");
 		BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(mgr->lc), next_dev);
 	}
