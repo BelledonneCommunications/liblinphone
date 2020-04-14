@@ -549,11 +549,11 @@ if(ENABLE_SHARED)
 		else()
 			set(MIN_OS ${CMAKE_OSX_DEPLOYMENT_TARGET})
 		endif()
-		
-		set_source_files_properties(${LINPHONE_ROOT_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/linphone")
-		set_source_files_properties(${LINPHONE_C_API_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/linphone/api")
-		set_source_files_properties(${LINPHONE_ENUMS_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/linphone/enums")
-		set_source_files_properties(${LINPHONE_UTILS_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/linphone/utils")
+
+		set_source_files_properties(${LINPHONE_ROOT_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/")
+		set_source_files_properties(${LINPHONE_C_API_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/api")
+		set_source_files_properties(${LINPHONE_ENUMS_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/enums")
+		set_source_files_properties(${LINPHONE_UTILS_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/utils")
 
 		set_target_properties(linphone PROPERTIES
 			FRAMEWORK TRUE
