@@ -807,7 +807,8 @@ namespace LinphonePrivate {
 	bool_t forced_ice_relay; \
 	bool_t short_turn_refresh; \
 	MSRect qrcode_rect; \
-	char localip[LINPHONE_IPADDR_SIZE]; \
+	char localip4[LINPHONE_IPADDR_SIZE]; \
+	char localip6[LINPHONE_IPADDR_SIZE]; \
 	int device_rotation; \
 	int max_calls; \
 	LinphoneTunnel *tunnel; \
