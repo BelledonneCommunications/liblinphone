@@ -3437,7 +3437,8 @@ void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val){
 			_linphone_core_apply_transports(lc);
 		}
 		/*update the localip immediately for the network monitor to avoid to "discover" later that we switched to ipv6*/
-		linphone_core_get_local_ip(lc,AF_UNSPEC,NULL,lc->localip);
+		linphone_core_get_local_ip(lc,AF_INET,NULL,lc->localip4);
+		if (val) linphone_core_get_local_ip(lc,AF_INET6,NULL,lc->localip6);
 		if (linphone_core_ready(lc)){
 			lp_config_set_int(lc->config,"sip","use_ipv6",(int)val);
 		}

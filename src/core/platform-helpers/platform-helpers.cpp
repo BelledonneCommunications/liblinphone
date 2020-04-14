@@ -143,22 +143,39 @@ void GenericPlatformHelpers::onLinphoneCoreStop () {}
 int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revents) {
 	GenericPlatformHelpers *helper = static_cast<GenericPlatformHelpers *>(data);
 	LinphoneCore *core = helper->getCore()->getCCore();
+	bool ipv6Enabled = linphone_core_ipv6_enabled(core);
 
-	char newIp[LINPHONE_IPADDR_SIZE];
-	linphone_core_get_local_ip(core, AF_UNSPEC, nullptr, newIp);
+	char newIp4[LINPHONE_IPADDR_SIZE];
+	char newIp6[LINPHONE_IPADDR_SIZE];
+	linphone_core_get_local_ip(core, AF_INET, nullptr, newIp4);
+	if (ipv6Enabled)
+		linphone_core_get_local_ip(core, AF_INET6, nullptr, newIp6);
 
-	bool status = strcmp(newIp,"::1") != 0 && strcmp(newIp,"127.0.0.1") != 0;
-	if (status && core->network_last_status && strcmp(newIp, core->localip) != 0) {
-		lInfo() << "IP address change detected";
-		helper->setNetworkReachable(false);
-		core->network_last_status = FALSE;
+	bool status = strcmp(newIp6,"::1") != 0 || strcmp(newIp4,"127.0.0.1") != 0;
+	if (status && core->network_last_status){
+		bool ipChanged = false;
+		// Check for IP address changes:
+		if (strcmp(newIp4, core->localip4) != 0) {
+			lInfo() << "IPv4 address change detected";
+			ipChanged = true;
+		}
+		if (ipv6Enabled && strcmp(newIp6, core->localip6) != 0) {
+			lInfo() << "IPv6 address change detected";
+			ipChanged = true;
+		}
+		if (ipChanged){
+			helper->setNetworkReachable(false);
+			core->network_last_status = FALSE;
+		}
 	}
 
-	strncpy(core->localip, newIp, sizeof core->localip);
+	strncpy(core->localip4, newIp4, sizeof core->localip4);
+	if (ipv6Enabled) strncpy(core->localip6, newIp6, sizeof core->localip6);
 
 	if (bool_t(status) != core->network_last_status) {
 		if (status) {
-			lInfo() << "New local ip address is " << core->localip;
+			lInfo() << "Default local ipv4 address is " << core->localip4;
+			if (ipv6Enabled) lInfo() << "Default local ipv6 address is " << core->localip6;
 		}
 		helper->setNetworkReachable(status);
 		core->network_last_status = status;
