@@ -406,7 +406,17 @@ void ToneManager::doStartRingbackTone(const std::shared_ptr<CallSession> &sessio
 	if (!lc->sound_conf.play_sndcard)
 		return;
 
-	MSSndCard *ringCard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.play_sndcard;
+	MSSndCard *ringCard = nullptr;
+
+	AudioDevice * currentCallAudioDevice = getCore()->getCurrentCall()->getOutputAudioDevice();
+
+	// If the user changed the audio device before the ringback started, the new value will be stored in the call playback card
+	// It is NULL otherwise
+	if (currentCallAudioDevice) {
+		ringCard = currentCallAudioDevice->getSoundCard();
+	} else {
+		ringCard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.play_sndcard;
+	}
 
 	if (lc->sound_conf.remote_ring) {
 		ms_snd_card_set_stream_type(ringCard, MS_SND_CARD_STREAM_VOICE);
