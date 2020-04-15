@@ -132,7 +132,7 @@ private:
 	shared_ptr<PushNotificationMessage> fetchUserDefaultsMsg(const string &callId);
 	std::shared_ptr<PushNotificationMessage> getMsgFromDatabase(const string &callId);
 	std::shared_ptr<ChatRoom> getChatRoomFromAddr(const string &chatRoomAddr);
-	shared_ptr<PushNotificationMessage> chatMsgToPushNotifMsg(std::shared_ptr<ChatMessage> msg);
+	shared_ptr<PushNotificationMessage> chatMsgToPushNotifMsg(std::shared_ptr<ChatMessage> msg, const string &callId);
 	void cleanUserDefaultsMessages();
 
 	std::string mAppGroupId = "";
@@ -264,7 +264,8 @@ std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getPushNotificati
 			if (getSharedCoreState() == executorCoreStopped ||
 				getSharedCoreState() == mainCoreStarted ||
 				getSharedCoreState() == executorCoreStopping) {
-				/* this executor core can start because a main core is starting */
+				/* this executor core was waiting on the mutex.
+				when unlocked is can't start because a main core is starting */
 				return getMsgFromUserDefaults(callId);
 			}
 			return getMsgFromDatabase(callId);
@@ -287,7 +288,8 @@ std::shared_ptr<ChatRoom> IosSharedCoreHelpers::getPushNotificationChatRoom(cons
 			if (getSharedCoreState() == executorCoreStopped ||
 				getSharedCoreState() == mainCoreStarted ||
 				getSharedCoreState() == executorCoreStopping) {
-				/* this executor core can start because a main core is starting */
+				/* this executor core was waiting on the mutex.
+				when unlocked is can't start because a main core is starting */
 				return nullptr;
 			}
 			std::shared_ptr<ChatRoom> chatRoom = getChatRoomFromAddr(chatRoomAddr);
@@ -480,12 +482,11 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromUserDefaults
 	return msg;
 }
 
-shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::chatMsgToPushNotifMsg(std::shared_ptr<ChatMessage> msg) {
+shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::chatMsgToPushNotifMsg(std::shared_ptr<ChatMessage> msg, const string &callId) {
 	if (!msg) return nullptr;
 
 	LinphoneChatMessage *cMsg = L_GET_C_BACK_PTR(msg);
 
-	string callId = linphone_chat_message_get_call_id(cMsg);
 	bool isText = linphone_chat_message_is_text(cMsg);
 	string textContent = isText ? linphone_chat_message_get_text_content(cMsg) : "";
 	const char *cSubject = linphone_chat_room_get_subject(linphone_chat_message_get_chat_room(cMsg));
@@ -529,7 +530,7 @@ std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromDatabas
 	chatMessage = getChatMsgAndUpdateList(callId);
 	ms_message("[push] message already in db? %s", chatMessage? "yes" : "no");
 	if (chatMessage) {
-		return chatMsgToPushNotifMsg(chatMessage);
+		return chatMsgToPushNotifMsg(chatMessage, callId);
 	}
 
 	/* init with 0 to look for the msg when newMsgNb <= 0 and then try to get the msg every seconds */
@@ -544,7 +545,7 @@ std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromDatabas
 			ms_message("[SHARED] executor core stopping");
 			chatMessage = getChatMsgAndUpdateList(callId);
 			ms_message("[push] last chance to get msg in db. message in db? %s", chatMessage? "yes" : "no");
-			return chatMsgToPushNotifMsg(chatMessage);
+			return chatMsgToPushNotifMsg(chatMessage, callId);
 		}
 
 		ms_usleep(50000);
@@ -561,7 +562,7 @@ std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromDatabas
 	chatMessage = getChatMsgAndUpdateList(callId);
 	ms_message("[push] message received? %s", chatMessage? "yes" : "no");
 
-	return chatMsgToPushNotifMsg(chatMessage);
+	return chatMsgToPushNotifMsg(chatMessage, callId);
 }
 
 void IosSharedCoreHelpers::setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom) {
