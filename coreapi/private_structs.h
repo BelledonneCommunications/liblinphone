@@ -320,6 +320,8 @@ struct codecs_config
 	MSList *text_codecs;
 	int dyn_pt;
 	int telephone_event_pt;
+	int dont_check_audio_codec_support;
+	int dont_check_video_codec_support;
 };
 
 struct video_config{
