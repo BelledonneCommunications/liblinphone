@@ -55,6 +55,10 @@ bool_t linphone_ringtoneplayer_is_started(LinphoneRingtonePlayer* rp) {
 	return linphone_ringtoneplayer_ios_is_started(rp);
 }
 
+RingStream* linphone_ringtoneplayer_get_stream(LinphoneRingtonePlayer* rp) {
+	return NULL;
+}
+
 int linphone_ringtoneplayer_stop(LinphoneRingtonePlayer* rp) {
 	return linphone_ringtoneplayer_ios_stop(rp);
 }
