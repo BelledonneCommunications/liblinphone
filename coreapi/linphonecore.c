@@ -1757,18 +1757,20 @@ static PayloadType* find_payload_type_from_list(const char* type, int rate, int 
 }
 
 static bool_t linphone_core_codec_supported(LinphoneCore *lc, SalStreamType type, const char *mime){
-	if (type == SalVideo && lp_config_get_int(lc->config, "video", "rtp_io", FALSE)){
-		return TRUE; /*in rtp io mode, we don't transcode video, thus we can support a format for which we have no encoder nor decoder.*/
-	} else if (type == SalAudio && lp_config_get_int(lc->config, "sound", "rtp_io", FALSE)){
-		return TRUE; /*in rtp io mode, we don't transcode video, thus we can support a format for which we have no encoder nor decoder.*/
+	if (type == SalVideo && lc->codecs_conf.dont_check_video_codec_support){
+		return TRUE; 
+	} else if (type == SalAudio && lc->codecs_conf.dont_check_audio_codec_support){
+		return TRUE;
 	} else if (type == SalText) {
 		return TRUE;
 	}
-	if (lc->video_conf.capture && !lc->video_conf.display) {
-		return ms_factory_has_encoder(lc->factory, mime);
-	}
-	if (lc->video_conf.display && !lc->video_conf.capture) {
-		return ms_factory_has_decoder(lc->factory, mime);
+	if (type == SalVideo){
+		if (lc->video_conf.capture && !lc->video_conf.display) {
+			return ms_factory_has_encoder(lc->factory, mime);
+		}
+		if (lc->video_conf.display && !lc->video_conf.capture) {
+			return ms_factory_has_decoder(lc->factory, mime);
+		}
 	}
 	return ms_factory_codec_supported(lc->factory, mime);
 }
@@ -1913,6 +1915,12 @@ static void codecs_config_read(LinphoneCore *lc){
 	lc->codecs_conf.dyn_pt=96;
 	lc->codecs_conf.telephone_event_pt=lp_config_get_int(lc->config,"misc","telephone_event_pt",101);
 
+	/*in rtp io mode, we don't transcode audio, thus we can support a format for which we have no encoder nor decoder.*/
+	lc->codecs_conf.dont_check_audio_codec_support = lp_config_get_int(lc->config,"sound","rtp_io", FALSE);
+	/*in rtp io mode, we don't transcode video, thus we can support a format for which we have no encoder nor decoder.*/
+	lc->codecs_conf.dont_check_video_codec_support = lp_config_get_int(lc->config,"video","rtp_io", FALSE) || 
+						lp_config_get_int(lc->config, "video", "dont_check_codecs", FALSE);
+	
 	for (i=0;get_codec(lc,SalAudio,i,&pt);i++){
 		if (pt){
 			audio_codecs=codec_append_if_new(audio_codecs, pt);
