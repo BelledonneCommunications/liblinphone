@@ -27,6 +27,7 @@
 #include "paths-windows.h"
 
 // =============================================================================
+#include <ppltasks.h>
 
 using namespace std;
 
@@ -40,8 +41,19 @@ static bool dirExists(const std::string& dirName) {
 LINPHONE_BEGIN_NAMESPACE
 
 static string getPath (const GUID &id) {
+//#ifdef ENABLE_MICROSOFT_STORE_APP // use it when ENABLE_MICROSOFT_STORE_APP is propagated
+#ifndef ENABLE_MICROSOFT_STORE_APP
+    //if( id ==FOLDERID_LocalAppData)
+    string strPath;
+    char * env = getenv("LOCALAPPDATA");
+    if( env != NULL) {
+        strPath = env;
+        strPath = strPath.append("/linphone/");
+        if (!dirExists(strPath)) CreateDirectoryA(strPath.c_str(), nullptr);
+    }
+    return strPath;
+#else
 	string strPath;
-
 	LPWSTR path;
 	if (SHGetKnownFolderPath(id, KF_FLAG_DONT_VERIFY, 0, &path) == S_OK) {
 		strPath = _bstr_t(path);
@@ -52,6 +64,7 @@ static string getPath (const GUID &id) {
 	strPath = strPath.append("/linphone/");
 	if (!dirExists(strPath)) CreateDirectoryA(strPath.c_str(), nullptr);
 	return strPath;
+#endif //ENABLE_MICROSOFT_STORE_APP
 }
 
 
