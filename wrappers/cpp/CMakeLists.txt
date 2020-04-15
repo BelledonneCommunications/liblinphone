@@ -46,7 +46,11 @@ target_compile_definitions(linphone++ PRIVATE "-DLINPHONECXX_EXPORTS")
 target_link_libraries(linphone++
 	PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} ${BELLESIP_LIBRARIES} linphone
 )
-
+if( WIN32 AND MSVC)
+    message(STATUS "Force use WindowsApp for linphone++  : ${ENABLE_MICROSOFT_STORE_APP}")
+    set_target_properties(linphone++ PROPERTIES LINK_DIRECTORIES "\$(WindowsSDK_LibraryPath_x86);\$(NETFXKitsDir)Lib\\um\\x86;\$(VC_LibraryPath_VC_x86_store);\$(VC_ReferencesPath_ATL_x86);\$(VC_LibraryPath_VC_x86);\$(VC_LibraryPath_x86);C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\VS\\UnitTest\\lib;\$(LibraryPath)")
+    target_link_libraries(linphone++ PRIVATE "WindowsApp.lib")
+endif()
 set_target_properties(linphone++ PROPERTIES
 	FRAMEWORK TRUE
 	MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphone++
