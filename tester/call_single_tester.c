@@ -2341,7 +2341,8 @@ static void call_with_privacy(void) {
 	/* pub-gruu and privacy do not work well together. */
 	LinphoneCoreManager *marie = ms_new0(LinphoneCoreManager, 1);
 	linphone_core_manager_init(marie, "marie_rc", NULL);
-	linphone_core_remove_supported_tag(marie->lc,"gruu");
+	//linphone_core_remove_supported_tag(marie->lc,"gruu");
+	linphone_config_clean_entry(linphone_core_get_config(marie->lc),"sip", "supported");
 	linphone_core_manager_start(marie, TRUE);
 	LinphoneCoreManager *pauline = ms_new0(LinphoneCoreManager, 1);
 	linphone_core_manager_init(pauline, transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", NULL);
