@@ -7272,6 +7272,11 @@ const char * linphone_core_get_file_transfer_server(LinphoneCore *core) {
 	return lp_config_get_string(core->config, "misc", "file_transfer_server_url", NULL);
 }
 
+void linphone_core_set_supported_tag(LinphoneCore *lc, const char *tags){
+	lc->sal->setSupportedTags(tags);
+	lp_config_set_string(lc->config,"sip","supported",tags);
+}
+
 void linphone_core_add_supported_tag(LinphoneCore *lc, const char *tag){
 	lc->sal->addSupportedTag(tag);
 	lp_config_set_string(lc->config,"sip","supported",lc->sal->getSupportedTags().c_str());
@@ -7494,7 +7499,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	const char *conf_method_name;
 	LinphoneConference *conf = nullptr;
 	bool serverMode = params && !linphone_conference_params_local_participant_enabled(params);
-	
+
 	/* In server mode, it is allowed to create multiple conferences. */
 	if (lc->conf_ctx == NULL || serverMode) {
 		LinphoneConferenceParams *params2 = linphone_conference_params_clone(params);

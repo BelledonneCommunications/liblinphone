@@ -825,7 +825,9 @@ void Sal::cancelTimer(belle_sip_source_t *timer) {
 belle_sip_response_t *Sal::createResponseFromRequest (belle_sip_request_t *request, int code) {
 	auto response = belle_sip_response_create_from_request(request, code);
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(mUserAgentHeader));
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), mSupportedHeader);
+	if (mSupportedHeader) {
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), mSupportedHeader);
+	}
 	return response;
 }
 
