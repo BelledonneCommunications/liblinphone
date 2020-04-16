@@ -343,8 +343,9 @@ void MediaSessionPrivate::remoteRinging () {
 			return;
 		}
 
-		setState(CallSession::State::OutgoingRinging, "Remote ringing");
+		// Start ringback tone before moving to next state as we need to retrieve the output device of the state we are currently in
 		q->getCore()->getPrivate()->getToneManager()->startRingbackTone(q->getSharedFromThis());
+		setState(CallSession::State::OutgoingRinging, "Remote ringing");
 	}
 }
 
@@ -1869,6 +1870,7 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 	if (msp || localDesc == nullptr) makeLocalMediaDescription(op->getRemoteMediaDescription() ? false : true);
 
 	updateRemoteSessionIdAndVer();
+
 
 	if (getStreamsGroup().prepare()){
 		callAcceptanceDefered = true;
