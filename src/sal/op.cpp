@@ -59,7 +59,7 @@ SalOp::~SalOp () {
 		belle_sip_object_unref(mPendingClientTransaction);
 	if (mPendingServerTransaction)
 		belle_sip_object_unref(mPendingServerTransaction);
-	if (mPendingUpdateServerTransaction) 
+	if (mPendingUpdateServerTransaction)
 		belle_sip_object_unref(mPendingUpdateServerTransaction);
 	if (mEvent)
 		belle_sip_object_unref(mEvent);
@@ -593,7 +593,10 @@ belle_sip_request_t *SalOp::buildRequest (const string &method) {
 			belle_sip_header_privacy_add_privacy(privacyHeader, sal_privacy_to_string(SalPrivacyUser));
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(privacyHeader));
 	}
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), mRoot->mSupportedHeader);
+
+	if (mRoot->mSupportedHeader) {
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), mRoot->mSupportedHeader);
+	}
 	return request;
 }
 

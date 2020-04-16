@@ -865,8 +865,10 @@ void SalCallOp::processRequestEventCb (void *userCtx, const belle_sip_request_ev
 
 				auto *session_expires = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_SESSION_EXPIRES);
 
-				if ((bool)belle_sip_header_supported_contains_tag(supported, "timer") == true
-				 && session_expires != nullptr) {
+				if (supported
+				 	&& (bool)belle_sip_header_supported_contains_tag(supported, "timer") == true
+				 	&& session_expires
+				) {
 					int inviteSE = atoi(belle_sip_header_get_unparsed_value(session_expires));
 
 					if (inviteSE < op->mRoot->mSessionExpiresValue) {
@@ -878,7 +880,7 @@ void SalCallOp::processRequestEventCb (void *userCtx, const belle_sip_request_ev
 							belle_sip_header_supported_t
 						);
 
-						if (supported_response != nullptr && belle_sip_header_supported_contains_tag(supported_response, "timer") == false) {
+						if (supported_response && belle_sip_header_supported_contains_tag(supported_response, "timer") == false) {
 							belle_sip_header_supported_add_supported(supported_response, "timer");
 							belle_sip_message_set_header(msg, BELLE_SIP_HEADER(supported_response));
 						}
@@ -1199,7 +1201,7 @@ int SalCallOp::accept () {
 			belle_sip_header_supported_t
 		);
 
-		if (supported != nullptr && (bool)belle_sip_header_supported_contains_tag(supported, "timer") == true) {
+		if (supported && (bool)belle_sip_header_supported_contains_tag(supported, "timer") == true) {
 			// MinSE
 			auto *session_expires_min_se_header = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_SESSION_EXPIRES_MSE);
 			if (session_expires_min_se_header) {

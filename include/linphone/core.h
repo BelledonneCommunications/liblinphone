@@ -5048,6 +5048,14 @@ LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_supported_file_formats_list(Lin
 LINPHONE_PUBLIC bool_t linphone_core_file_format_supported(LinphoneCore *lc, const char *fmt);
 
 /**
+ * Set the supported tags
+ * @param[in] core #LinphoneCore object
+ * @param[in] tag The feature tags to set
+ * @ingroup initializing
+**/
+LINPHONE_PUBLIC void linphone_core_set_supported_tag(LinphoneCore *core, const char *tags);
+
+/**
  * This function controls signaling features supported by the core.
  * They are typically included in a SIP Supported header.
  * @param[in] core #LinphoneCore object
