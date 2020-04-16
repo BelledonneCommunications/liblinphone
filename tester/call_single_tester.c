@@ -2345,7 +2345,7 @@ static void call_with_privacy(void) {
 	linphone_core_manager_start(marie, TRUE);
 	LinphoneCoreManager *pauline = ms_new0(LinphoneCoreManager, 1);
 	linphone_core_manager_init(pauline, transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", NULL);
-	linphone_core_remove_supported_tag(pauline->lc,"gruu");
+	linphone_core_set_supported_tag(pauline->lc, "");
 	linphone_core_manager_start(pauline,TRUE);
 
 	params=linphone_core_create_call_params(pauline->lc, NULL);
