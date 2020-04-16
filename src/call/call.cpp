@@ -964,7 +964,26 @@ void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
 		return;
 	}
 
-	static_pointer_cast<MediaSession>(d->getActiveSession())->setOutputAudioDevice(audioDevice);
+	RingStream *ringStream = nullptr;
+	switch (getState()) {
+		case CallSession::State::OutgoingInit:
+		case CallSession::State::OutgoingProgress:
+		case CallSession::State::OutgoingRinging:
+			ringStream = getCore()->getCCore()->ringstream;
+			if (ringStream) {
+				ring_stream_set_output_ms_snd_card(ringStream, audioDevice->getSoundCard());
+			}
+			break;
+		case CallSession::State::IncomingReceived:
+			ringStream = linphone_ringtoneplayer_get_stream(getCore()->getCCore()->ringtoneplayer);
+			if (ringStream) {
+				ring_stream_set_output_ms_snd_card(ringStream, audioDevice->getSoundCard());
+			}
+			break;
+		default:
+			static_pointer_cast<MediaSession>(d->getActiveSession())->setOutputAudioDevice(audioDevice);
+			break;
+	}
 	linphone_call_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 }
 
@@ -975,7 +994,34 @@ AudioDevice* Call::getInputAudioDevice() const {
 
 AudioDevice* Call::getOutputAudioDevice() const {
 	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->getOutputAudioDevice();
+
+	RingStream *ringStream = nullptr;
+	switch (getState()) {
+		case CallSession::State::OutgoingInit:
+		case CallSession::State::OutgoingProgress:
+		case CallSession::State::OutgoingRinging:
+			ringStream = getCore()->getCCore()->ringstream;
+			if (ringStream) {
+				MSSndCard *card = ring_stream_get_output_ms_snd_card(ringStream);
+				if (card) {
+					return getCore()->findAudioDeviceMatchingMsSoundCard(card);
+				}
+			}
+			break;
+		case CallSession::State::IncomingReceived:
+			ringStream = linphone_ringtoneplayer_get_stream(getCore()->getCCore()->ringtoneplayer);
+			if (ringStream) {
+				MSSndCard *card = ring_stream_get_output_ms_snd_card(ringStream);
+				if (card) {
+					return getCore()->findAudioDeviceMatchingMsSoundCard(card);
+				}
+			}
+			break;
+		default:
+			return static_pointer_cast<MediaSession>(d->getActiveSession())->getOutputAudioDevice();
+	}
+
+	return nullptr;
 }
 
 LINPHONE_END_NAMESPACE

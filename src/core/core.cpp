@@ -656,19 +656,6 @@ void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
 	}
 
 	bool applied = false;
-
-	RingStream *stream = getCCore()->ringstream;
-	if (stream) {
-		ring_stream_set_output_ms_snd_card(stream, audioDevice->getSoundCard());
-		applied = true;
-	}
-
-	stream = linphone_ringtoneplayer_get_stream(getCCore()->ringtoneplayer);
-	if (stream) {
-		ring_stream_set_output_ms_snd_card(stream, audioDevice->getSoundCard());
-		applied = true;
-	}
-
 	if (getCallCount() > 0) {
 		for (const auto &call : getCalls()) {
 			call->setOutputAudioDevice(audioDevice);
@@ -695,21 +682,6 @@ AudioDevice* Core::getInputAudioDevice() const {
 }
 
 AudioDevice* Core::getOutputAudioDevice() const {
-	RingStream *stream = getCCore()->ringstream;
-	if (stream) {
-		MSSndCard *card = ring_stream_get_output_ms_snd_card(stream);
-		if (card) {
-			return findAudioDeviceMatchingMsSoundCard(card);
-		}
-	}
-	stream = linphone_ringtoneplayer_get_stream(getCCore()->ringtoneplayer);
-	if (stream) {
-		MSSndCard *card = ring_stream_get_output_ms_snd_card(stream);
-		if (card) {
-			return findAudioDeviceMatchingMsSoundCard(card);
-		}
-	}
-
 	shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
 	if (call) {
 		return call->getOutputAudioDevice();
@@ -723,10 +695,18 @@ AudioDevice* Core::getOutputAudioDevice() const {
 }
 
 void Core::setDefaultInputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
+		return;
+	}
 	linphone_core_set_capture_device(getCCore(), audioDevice->getId().c_str());
 }
 
 void Core::setDefaultOutputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
+		return;
+	}
 	linphone_core_set_playback_device(getCCore(), audioDevice->getId().c_str());
 }
 
