@@ -206,7 +206,7 @@ void SalCallOp::fillSessionExpiresHeaders(belle_sip_request_t *invite, belle_sip
 			belle_sip_header_supported_t
 		);
 
-		if (supported_header && belle_sip_header_supported_contains_tag(supported_header, "timer") == false) {
+		if (supported_header != nullptr && belle_sip_header_supported_contains_tag(supported_header, "timer") == false) {
 			belle_sip_header_supported_add_supported(supported_header, "timer");
 			belle_sip_message_set_header(BELLE_SIP_MESSAGE(invite), BELLE_SIP_HEADER(supported_header));
 		}
@@ -865,8 +865,9 @@ void SalCallOp::processRequestEventCb (void *userCtx, const belle_sip_request_ev
 
 				auto *session_expires = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_SESSION_EXPIRES);
 
-				if ((bool)belle_sip_header_supported_contains_tag(supported, "timer") == true
-				 && session_expires != nullptr) {
+				if (session_expires != nullptr
+				 && supported != nullptr
+				 && (bool)belle_sip_header_supported_contains_tag(supported, "timer") == true) {
 					int inviteSE = atoi(belle_sip_header_get_unparsed_value(session_expires));
 
 					if (inviteSE < op->mRoot->mSessionExpiresValue) {
@@ -1208,7 +1209,7 @@ int SalCallOp::accept () {
 
 			// Session-Expires
 			auto *session_expires_header = belle_sip_message_get_header_by_type(request, belle_sip_header_session_expires_t);
-			if (session_expires_header) {
+			if (session_expires_header != nullptr) {
 				delta = belle_sip_header_session_expires_get_delta(session_expires_header);
 				refresher =	belle_sip_header_session_expires_get_refresher_value(session_expires_header);
 			}
@@ -1239,7 +1240,7 @@ int SalCallOp::accept () {
 				belle_sip_header_supported_t
 			);
 
-			if (supported_response && (bool)belle_sip_header_supported_contains_tag(supported_response, "timer") == false) {
+			if (supported_response != nullptr && (bool)belle_sip_header_supported_contains_tag(supported_response, "timer") == false) {
 				belle_sip_header_supported_add_supported(supported_response, "timer");
 				belle_sip_message_set_header(message, BELLE_SIP_HEADER(supported_response));
 			}
@@ -1352,7 +1353,7 @@ void SalCallOp::restartSessionTimersTimer (belle_sip_response_t *response, int d
 	bool noUserConsent = false;
 
 	auto allowHeader = belle_sip_message_get_header_by_type(response, belle_sip_header_allow_t);
-	if (allowHeader) {
+	if (allowHeader != nullptr) {
 		string allows(belle_sip_header_allow_get_method(allowHeader));
 		noUserConsent = (allows.find("UPDATE") && mRoot->mEnableSipUpdate);
 	}
