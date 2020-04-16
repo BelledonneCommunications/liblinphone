@@ -610,7 +610,7 @@ int linphone_core_get_default_proxy_config_index(LinphoneCore *lc);
 char *linphone_presence_model_to_xml(LinphonePresenceModel *model) ;
 
 void linphone_core_report_call_log(LinphoneCore *lc, LinphoneCallLog *call_log);
-void linphone_core_report_early_failed_call(LinphoneCore *lc, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei);
+void linphone_core_report_early_failed_call(LinphoneCore *lc, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei, const char *cid);
 
 LinphoneVideoDefinition * linphone_video_definition_new(unsigned int width, unsigned int height, const char *name);
 
