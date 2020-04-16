@@ -170,6 +170,13 @@ void CorePrivate::shutdown() {
 void CorePrivate::uninit() {
 	L_Q();
 
+	const list<shared_ptr<AbstractChatRoom>> chatRooms = q->getChatRooms();
+	shared_ptr<ChatRoom> cr;
+	for (const auto &chatRoom : chatRooms) {
+		cr = dynamic_pointer_cast<ChatRoom>(chatRoom);
+		if (cr) cr->getPrivate()->getImdnHandler()->onLinphoneCoreStop();
+	}
+
 	chatRoomsById.clear();
 	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();

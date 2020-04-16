@@ -109,14 +109,12 @@ bool Imdn::hasUndeliveredImdnMessage() {
 
 // -----------------------------------------------------------------------------
 
-void Imdn::onGlobalStateChanged (LinphoneGlobalState state) {
-	if (state == LinphoneGlobalOff) {
-		auto ref = chatRoom->getSharedFromThis();
-		deliveredMessages.clear();
-		displayedMessages.clear();
-		nonDeliveredMessages.clear();
-		sentImdnMessages.clear();
-	}
+void Imdn::onLinphoneCoreStop() {
+	auto ref = chatRoom->getSharedFromThis();
+	deliveredMessages.clear();
+	displayedMessages.clear();
+	nonDeliveredMessages.clear();
+	sentImdnMessages.clear();
 }
 
 void Imdn::onRegistrationStateChanged(LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message){
