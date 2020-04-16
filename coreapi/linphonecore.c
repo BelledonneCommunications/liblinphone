@@ -715,7 +715,11 @@ void linphone_core_set_log_collection_path(const char *path) {
 		liblinphone_log_collection_path = NULL;
 	}
 	if (path != NULL) {
+		ortp_mutex_lock(&liblinphone_log_collection_mutex);		
+		_close_log_collection_file();
 		liblinphone_log_collection_path = ms_strdup(path);
+		_open_log_collection_file();
+		ortp_mutex_unlock(&liblinphone_log_collection_mutex);
 	}
 }
 
