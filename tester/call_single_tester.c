@@ -290,7 +290,18 @@ static LinphoneAudioDevice * unregister_device(bool_t enable, LinphoneCoreManage
 		ms_snd_card_manager_unregister_desc(sndcard_manager, card_desc);
 		linphone_core_reload_sound_devices(mgr->lc);
 
-		return NULL;
+		// Get next device at the head of the list
+		// Use linphone_core_get_extended_audio_devices instead of linphone_core_get_audio_devices because we added 2 BT devices, therefore we want the raw list
+		// In fact, linphone_core_get_audio_devices returns only 1 device per type
+		bctbx_list_t *audio_devices = linphone_core_get_extended_audio_devices(mgr->lc);
+		LinphoneAudioDevice *next_dev = (LinphoneAudioDevice *)bctbx_list_get_data(audio_devices);
+		BC_ASSERT_PTR_NOT_NULL(next_dev);
+		linphone_audio_device_ref(next_dev);
+
+		// Unref cards
+		bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
+
+		return next_dev;
 	}
 
 	return current_dev;
@@ -423,6 +434,7 @@ static LinphoneAudioDevice * change_device(bool_t enable, LinphoneCoreManager* m
 	LinphoneAudioDevice *next_dev = current_dev;
 
 	if (enable) {
+
 		linphone_audio_device_unref(current_dev);
 		if (current_dev == dev0) {
 			next_dev = dev1;
@@ -438,6 +450,7 @@ static LinphoneAudioDevice * change_device(bool_t enable, LinphoneCoreManager* m
 		linphone_core_set_output_audio_device(mgr->lc, next_dev);
 		BC_ASSERT_EQUAL(mgr->stat.number_of_LinphoneCoreAudioDeviceChanged, (noDevChanges + 1), int, "%d");
 		BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(mgr->lc), next_dev);
+
 	}
 	return next_dev;
 }
