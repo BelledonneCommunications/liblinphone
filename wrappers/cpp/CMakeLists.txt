@@ -47,9 +47,13 @@ target_link_libraries(linphone++
 	PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} ${BELLESIP_LIBRARIES} linphone
 )
 if( WIN32 AND MSVC)
-    message(STATUS "Force use WindowsApp for linphone++  : ${ENABLE_MICROSOFT_STORE_APP}")
-    set_target_properties(linphone++ PROPERTIES LINK_DIRECTORIES "\$(WindowsSDK_LibraryPath_x86);\$(NETFXKitsDir)Lib\\um\\x86;\$(VC_LibraryPath_VC_x86_store);\$(VC_ReferencesPath_ATL_x86);\$(VC_LibraryPath_VC_x86);\$(VC_LibraryPath_x86);C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\VS\\UnitTest\\lib;\$(LibraryPath)")
-    target_link_libraries(linphone++ PRIVATE "WindowsApp.lib")
+	if( ${ENABLE_MICROSOFT_STORE_APP} )
+		message(STATUS "Build linphone++ for Microsoft Store")
+		set_target_properties(linphone++ PROPERTIES LINK_DIRECTORIES "\$(WindowsSDK_LibraryPath_x86);\$(NETFXKitsDir)Lib\\um\\x86;\$(VC_LibraryPath_VC_x86_store);\$(VC_ReferencesPath_ATL_x86);\$(VC_LibraryPath_VC_x86);\$(VC_LibraryPath_x86);C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\VS\\UnitTest\\lib;\$(LibraryPath)")
+		target_link_libraries(linphone++ PRIVATE "WindowsApp.lib")
+	else()
+		message(STATUS "Build linphone++ for Desktop")
+	endif()
 endif()
 set_target_properties(linphone++ PROPERTIES
 	FRAMEWORK TRUE

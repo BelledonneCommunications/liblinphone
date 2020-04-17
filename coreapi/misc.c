@@ -112,8 +112,7 @@ bool_t linphone_core_is_payload_type_usable_for_bandwidth(const LinphoneCore *lc
 
 bool_t lp_spawn_command_line_sync(const char *command, char **result,int *command_ret){
 #if !defined(_WIN32_WCE) && !defined(LINPHONE_WINDOWS_UNIVERSAL)
-#ifdef  ENABLE_MICROSOFT_STORE_APP
-//#ifndef ENABLE_MICROSOFT_STORE_APP    // use it when ENABLE_MICROSOFT_STORE_APP is propagated
+#ifndef ENABLE_MICROSOFT_STORE_APP
 	FILE *f=popen(command,"r");
 	if (f!=NULL){
 		int err;
