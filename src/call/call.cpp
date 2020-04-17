@@ -1015,24 +1015,6 @@ AudioDevice* Call::getOutputAudioDevice() const {
 				}
 			}
 			break;
-		case CallSession::State::Connected:
-			//Ensure that only 1 ringstream (either the ringtome or the one used for ringback) is non-null
-			L_ASSERT((getCore()->getCCore()->ringstream == NULL) ^ (linphone_ringtoneplayer_get_stream(getCore()->getCCore()->ringtoneplayer) == NULL));
-			ringStream = getCore()->getCCore()->ringstream;
-			if (ringStream) {
-				MSSndCard *card = ring_stream_get_output_ms_snd_card(ringStream);
-				if (card) {
-					return getCore()->findAudioDeviceMatchingMsSoundCard(card);
-				}
-			}
-			ringStream = linphone_ringtoneplayer_get_stream(getCore()->getCCore()->ringtoneplayer);
-			if (ringStream) {
-				MSSndCard *card = ring_stream_get_output_ms_snd_card(ringStream);
-				if (card) {
-					return getCore()->findAudioDeviceMatchingMsSoundCard(card);
-				}
-			}
-			break;
 		default:
 			return static_pointer_cast<MediaSession>(d->getActiveSession())->getOutputAudioDevice();
 	}
