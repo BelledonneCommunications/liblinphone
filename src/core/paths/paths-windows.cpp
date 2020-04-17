@@ -25,6 +25,7 @@
 #pragma comment(lib, "kernel32.lib")
 
 #include "paths-windows.h"
+#include "config.h"
 
 // =============================================================================
 #include <ppltasks.h>
@@ -41,8 +42,8 @@ static bool dirExists(const std::string& dirName) {
 LINPHONE_BEGIN_NAMESPACE
 
 static string getPath (const GUID &id) {
-//#ifdef ENABLE_MICROSOFT_STORE_APP // use it when ENABLE_MICROSOFT_STORE_APP is propagated
-#ifndef ENABLE_MICROSOFT_STORE_APP
+#ifdef ENABLE_MICROSOFT_STORE_APP
+
     //if( id ==FOLDERID_LocalAppData)
     string strPath;
     char * env = getenv("LOCALAPPDATA");
