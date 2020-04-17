@@ -76,6 +76,9 @@ public:
 	void setCurrentCall (const std::shared_ptr<Call> &call) { currentCall = call; }
 	void setVideoWindowId (bool preview, void *id);
 
+	bool setOutputAudioDevice(AudioDevice *audioDevice);
+	bool setInputAudioDevice(AudioDevice *audioDevice);
+
 	void loadChatRooms ();
 	void handleEphemeralMessages (time_t currentTime);
 	void initEphemeralMessages ();

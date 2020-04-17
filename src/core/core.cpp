@@ -317,6 +317,39 @@ void CorePrivate::stopEphemeralMessageTimer () {
 	}
 }
 
+bool CorePrivate::setInputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
+		return false;
+	}
+
+	bool applied = false;
+	if (static_cast<unsigned int>(calls.size()) > 0) {
+		for (const auto &call : calls) {
+			call->setInputAudioDevice(audioDevice);
+			applied = true;
+		}
+	}
+
+	return applied;
+}
+
+bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
+		return false;
+	}
+
+	bool applied = false;
+	if (static_cast<unsigned int>(calls.size()) > 0) {
+		for (const auto &call : calls) {
+			call->setOutputAudioDevice(audioDevice);
+			applied = true;
+		}
+	}
+
+	return applied;
+}
 // =============================================================================
 
 Core::Core () : Object(*new CorePrivate) {
@@ -636,34 +669,21 @@ const list<AudioDevice *> Core::getExtendedAudioDevices() const {
 }
 
 void Core::setInputAudioDevice(AudioDevice *audioDevice) {
-	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
-		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
-		return;
-	}
 
-	if (getCallCount() > 0) {
-		for (const auto &call : getCalls()) {
-			call->setInputAudioDevice(audioDevice);
-		}
+	L_D();
+	bool success = d->setInputAudioDevice(audioDevice);
+
+	if (success) {
 		linphone_core_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 	}
 }
 
 void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
-	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
-		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
-		return;
-	}
 
-	bool applied = false;
-	if (getCallCount() > 0) {
-		for (const auto &call : getCalls()) {
-			call->setOutputAudioDevice(audioDevice);
-			applied = true;
-		}
-	}
-	
-	if (applied) {
+	L_D();
+	bool success = d->setOutputAudioDevice(audioDevice);
+
+	if (success) {
 		linphone_core_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 	}
 }

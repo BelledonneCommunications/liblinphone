@@ -1503,8 +1503,6 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 
 	if (state == CallSession::State::Connected || state == CallSession::State::Resuming ||
 		(state == CallSession::State::IncomingEarlyMedia && !linphone_core_get_ring_during_incoming_early_media(q->getCore()->getCCore()))) {
-		AudioDevice * audioDevice =  q->getCore()->getOutputAudioDevice();
-		getPublic()->setOutputAudioDevice(audioDevice);
 		q->getCore()->getPrivate()->getToneManager()->goToCall(q->getSharedFromThis());
 	}
 
