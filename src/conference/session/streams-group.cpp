@@ -86,6 +86,8 @@ Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 		lInfo() << "Stream at index " << params.streamIndex << " is being replaced.";
 	}
 	mStreams[params.streamIndex].reset(ret);
+	/* Attach a mixer to this new stream, if any. */
+	attachMixers();
 	return ret;
 }
 
