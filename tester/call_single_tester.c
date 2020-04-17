@@ -582,6 +582,7 @@ static void simple_call_with_audio_device_change_pingpong(void) {
 	simple_call_with_audio_device_change_base(TRUE, TRUE, TRUE);
 }
 
+/*
 static void simple_call_with_audio_device_change_during_call_pause_base(bool_t callee, bool_t caller) {
 	bctbx_list_t* lcs;
 	// Marie is the caller
@@ -711,7 +712,7 @@ static void simple_call_with_audio_device_change_during_call_pause_base(bool_t c
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPaused,1));
 
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startNamedTone, 1, int, "%d");
-	/*stay in pause a little while in order to generate traffic*/
+	//stay in pause a little while in order to generate traffic
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
 
 	linphone_call_resume(pauline_call);
@@ -754,6 +755,7 @@ static void simple_call_with_audio_device_change_during_call_pause_caller(void) 
 static void simple_call_with_audio_device_change_during_call_pause_caller_callee(void) {
 	simple_call_with_audio_device_change_during_call_pause_base(TRUE, TRUE);
 }
+*/
 
 static void simple_call_with_audio_devices_reload(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
@@ -798,7 +800,7 @@ static void simple_call_with_audio_devices_reload(void) {
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, 1, int, "%d");
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), audio_device);
 	linphone_core_set_input_audio_device(marie->lc, audio_device);
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, 1, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, 2, int, "%d");
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(marie->lc), audio_device);
 
 	end_call(marie, pauline);
@@ -5733,9 +5735,9 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Simple call with audio device change during ringback", simple_call_with_audio_device_change_during_ringback),
 	TEST_NO_TAG("Simple call with audio device change after ringback", simple_call_with_audio_device_change_after_ringback),
 	TEST_NO_TAG("Simple call with audio device change ping-pong", simple_call_with_audio_device_change_pingpong),
-	TEST_NO_TAG("Simple call with audio device change during call pause callee", simple_call_with_audio_device_change_during_call_pause_callee),
-	TEST_NO_TAG("Simple call with audio device change during call pause caller", simple_call_with_audio_device_change_during_call_pause_caller),
-	TEST_NO_TAG("Simple call with audio device change during call pause both parties", simple_call_with_audio_device_change_during_call_pause_caller_callee),
+//	TEST_NO_TAG("Simple call with audio device change during call pause callee", simple_call_with_audio_device_change_during_call_pause_callee),
+//	TEST_NO_TAG("Simple call with audio device change during call pause caller", simple_call_with_audio_device_change_during_call_pause_caller),
+//	TEST_NO_TAG("Simple call with audio device change during call pause both parties", simple_call_with_audio_device_change_during_call_pause_caller_callee),
 	TEST_ONE_TAG("Call terminated automatically by linphone_core_destroy", automatic_call_termination, "LeaksMemory"),
 	TEST_NO_TAG("Call with http proxy", call_with_http_proxy),
 	TEST_NO_TAG("Call with timed-out bye", call_with_timed_out_bye),
