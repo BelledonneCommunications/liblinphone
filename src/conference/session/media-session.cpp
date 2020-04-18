@@ -1889,6 +1889,8 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 	if (getStreamsGroup().prepare()){
 		callAcceptanceDefered = true;
 		return; /* Deferred until completion of ICE gathering */
+	}else{
+		updateLocalMediaDescriptionFromIce();
 	}
 	startAccept();
 }
@@ -1929,6 +1931,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 
 	if (getStreamsGroup().prepare())
 		return 0; /* Deferred until completion of ICE gathering */
+	updateLocalMediaDescriptionFromIce();
 	startAcceptUpdate(nextState, stateInfo);
 	return 0;
 }
