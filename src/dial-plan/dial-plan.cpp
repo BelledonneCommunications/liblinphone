@@ -87,6 +87,7 @@ const list<shared_ptr<DialPlan>> DialPlan::DialPlans = {
 	DialPlan::create("Cote d'Ivoire", "AD", "225", 8, "00"),
 	DialPlan::create("Croatia", "HR", "385", 9, "00"),
 	DialPlan::create("Cuba", "CU", "53", 8, "119"),
+	DialPlan::create("Curacao", "CUR", "599", 8, "011"),
 	DialPlan::create("Cyprus", "CY", "357", 8, "00"),
 	DialPlan::create("Czech Republic", "CZ", "420", 9, "00"),
 	DialPlan::create("Denmark", "DK", "45", 8, "00"),
