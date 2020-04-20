@@ -355,12 +355,10 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/session/streams-group.cpp
 	conference/session/ms2-stream.cpp
 	conference/session/audio-stream.cpp
-	conference/session/video-stream.cpp
 	conference/session/rtt-stream.cpp
 	conference/session/media-session.cpp
 	conference/session/mixer-session.cpp
 	conference/session/audio-mixer.cpp
-	conference/session/video-mixer.cpp
 	content/content-disposition.cpp
 	content/content-manager.cpp
 	content/content-type.cpp
@@ -421,6 +419,13 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	utils/if-addrs.cpp
 	variant/variant.cpp
 )
+
+if(ENABLE_VIDEO)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
+		conference/session/video-mixer.cpp
+		conference/session/video-stream.cpp
+	)
+endif()
 
 if(ENABLE_ADVANCED_IM)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES

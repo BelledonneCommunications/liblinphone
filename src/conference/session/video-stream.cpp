@@ -17,9 +17,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-#ifdef VIDEO_ENABLED
-
 #include "bctoolbox/defs.h"
 
 #include "ms2-streams.h"
@@ -583,6 +580,5 @@ void MS2VideoControl::zoomVideo (float zoomFactor, float cx, float cy){
 
 LINPHONE_END_NAMESPACE
 
-#endif
 
 
