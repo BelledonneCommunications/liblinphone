@@ -2123,6 +2123,8 @@ static int dummy_set_sample_rate(MSFilter *obj, void *data) {
 }
 
 static int dummy_get_sample_rate(MSFilter *obj, void *data) {
+	int *n = (int*)data;
+	*n = 44100;
 	return 0;
 }
 
@@ -2131,6 +2133,8 @@ static int dummy_set_nchannels(MSFilter *obj, void *data) {
 }
 
 static int dummy_get_nchannels(MSFilter *obj, void *data) {
+	int *n = (int*)data;
+	*n = 1;
 	return 0;
 }
 
