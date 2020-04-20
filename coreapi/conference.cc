@@ -357,6 +357,10 @@ AudioControlInterface *LocalConference::getAudioControlInterface()const{
 	return dynamic_cast<AudioControlInterface*>(mMixerSession->getMixerByType(SalAudio));
 }
 
+VideoControlInterface * LocalConference::getVideoControlInterface() const{
+	return dynamic_cast<VideoControlInterface*>(mMixerSession->getMixerByType(SalVideo));
+}
+
 AudioStream *LocalConference::getAudioStream(){
 	MS2AudioMixer *mixer = dynamic_cast<MS2AudioMixer*>(mMixerSession->getMixerByType(SalAudio));
 	return mixer ? mixer->getAudioStream() : nullptr;
@@ -647,6 +651,14 @@ AudioControlInterface * RemoteConference::getAudioControlInterface() const{
 	shared_ptr<MediaSession> ms = callPriv->getMediaSession();
 	return ms->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 }
+
+VideoControlInterface * RemoteConference::getVideoControlInterface() const{
+	if (!m_focusCall) return nullptr;
+	CallPrivate *callPriv = L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(m_focusCall));
+	shared_ptr<MediaSession> ms = callPriv->getMediaSession();
+	return ms->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+}
+
 
 AudioStream *RemoteConference::getAudioStream(){
 	if (!m_focusCall) return nullptr;
