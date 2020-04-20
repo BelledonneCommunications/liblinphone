@@ -504,6 +504,8 @@ void StreamsGroup::finish(){
 	lInfo() << "StreamsGroup::finish() called.";
 	stop(); //For the paranoid: normally it should be done already.
 	mIceService->finish(); // finish ICE first, as it has actions on the streams.
+	for (auto & ss : mSharedServices) ss.second->checkDestroy();
+	mSharedServices.clear();
 	forEach<Stream>(mem_fun(&Stream::finish));
 	mFinished = true;
 }
