@@ -27,10 +27,11 @@ LinphonePushNotificationMessage *linphone_push_notification_message_new(bool_t i
 																		const char *call_id, bool_t is_text,
 																		const char *text_content, const char *subject,
 																		const char *from_addr, const char *local_addr,
-																		const char *peer_addr) {
+																		const char *peer_addr, const char *from_display_name) {
 	return PushNotificationMessage::createCObject(
 		is_using_user_defaults, call_id ? call_id : "", is_text, text_content ? text_content : "",
-		subject ? subject : "", from_addr ? from_addr : "", local_addr ? local_addr : "", peer_addr ? peer_addr : "");
+		subject ? subject : "", from_addr ? from_addr : "", local_addr ? local_addr : "", peer_addr ? peer_addr : "",
+		from_display_name ? from_display_name : "");
 }
 
 LinphonePushNotificationMessage *linphone_push_notification_message_ref(LinphonePushNotificationMessage *msg) {
@@ -80,5 +81,9 @@ const LinphoneAddress *linphone_push_notification_message_get_local_addr(const L
 
 const LinphoneAddress *linphone_push_notification_message_get_peer_addr(const LinphonePushNotificationMessage *msg) {
 	return linphone_address_new(PushNotificationMessage::toCpp(msg)->getPeerAddr()->asString().c_str());
-	;
+}
+
+const char *linphone_push_notification_message_get_from_display_name(const LinphonePushNotificationMessage *msg) {
+	const char *displayName = PushNotificationMessage::toCpp(msg)->getFromDisplayName().c_str();
+	return strlen(displayName) != 0 ? displayName : NULL;
 }

@@ -26,15 +26,15 @@ LINPHONE_BEGIN_NAMESPACE
 PushNotificationMessage::PushNotificationMessage(bool isUsingUserDefaults, const std::string &callId, bool isText,
 												 const std::string &textContent, const std::string &subject,
 												 const std::string &fromAddr, const std::string &localAddr,
-												 const std::string &peerAddr) {
+												 const std::string &peerAddr, const std::string &fromDisplayName) {
 	PushNotificationMessage::init(isUsingUserDefaults, callId, isText, textContent, subject, fromAddr, localAddr,
-								  peerAddr);
+								  peerAddr, fromDisplayName);
 }
 
 void PushNotificationMessage::init(bool isUsingUserDefaults, const std::string &callId, bool isText,
 								   const std::string &textContent, const std::string &subject,
 								   const std::string &fromAddr, const std::string &localAddr,
-								   const std::string &peerAddr) {
+								   const std::string &peerAddr, const std::string &fromDisplayName) {
 	mIsUsingUserDefaults = isUsingUserDefaults;
 	mCallId = callId;
 	mIsText = isText;
@@ -43,6 +43,7 @@ void PushNotificationMessage::init(bool isUsingUserDefaults, const std::string &
 	mFromAddr = fromAddr;
 	mLocalAddr = localAddr;
 	mPeerAddr = peerAddr;
+	mFromDisplayName = fromDisplayName;
 }
 
 bool PushNotificationMessage::isUsingUserDefaults() const {
@@ -76,6 +77,10 @@ shared_ptr<Address> PushNotificationMessage::getPeerAddr() const {
 	return make_shared<Address>(mPeerAddr);
 }
 
+const std::string &PushNotificationMessage::getFromDisplayName() const {
+	return mFromDisplayName;
+}
+
 std::string PushNotificationMessage::toString() const {
 	std::ostringstream ss;
 
@@ -86,6 +91,7 @@ std::string PushNotificationMessage::toString() const {
 	ss << "fromAddr[" << mFromAddr << "] ";
 	ss << "localAddr[" << mLocalAddr << "] ";
 	ss << "peerAddr[" << mPeerAddr << "] ";
+	ss << "fromDisplayName[" << mFromDisplayName << "] ";
 
 	return ss.str();
 }

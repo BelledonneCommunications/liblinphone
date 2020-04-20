@@ -37,7 +37,7 @@ extern "C" {
 
 LINPHONE_PUBLIC LinphonePushNotificationMessage *linphone_push_notification_message_new(bool_t is_using_user_defaults, const char *call_id, bool_t is_text,
 									   const char *text_content, const char *subject, const char *from_addr,
-									   const char *local_addr, const char *peer_addr);
+									   const char *local_addr, const char *peer_addr, const char *from_display_name);
 
 /**
  * Take a reference on a #LinphonePushNotificationMessage.
@@ -104,6 +104,13 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_push_notification_message_get_lo
  * @return The peer_addr.
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_push_notification_message_get_peer_addr(const LinphonePushNotificationMessage *msg);
+
+/**
+ * Gets the from_display_name.
+ * @param[in] info The #LinphonePushNotificationMessage object
+ * @return The peer_addr.
+ */
+LINPHONE_PUBLIC const char *linphone_push_notification_message_get_from_display_name(const LinphonePushNotificationMessage *msg);
 
 /**
  * @}

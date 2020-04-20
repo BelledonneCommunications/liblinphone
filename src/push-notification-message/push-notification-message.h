@@ -29,11 +29,11 @@ class PushNotificationMessage : public bellesip::HybridObject<LinphonePushNotifi
   public:
 	PushNotificationMessage(bool isUsingUserDefaults, const std::string &callId, bool isText,
 							const std::string &textContent, const std::string &subject, const std::string &fromAddr,
-							const std::string &localAddr, const std::string &peerAddr);
+							const std::string &localAddr, const std::string &peerAddr, const std::string &fromDisplayName);
 
 	void init(bool isUsingUserDefaults, const std::string &callId, bool isText, const std::string &textContent,
 			  const std::string &subject, const std::string &fromAddr, const std::string &localAddr,
-			  const std::string &peerAddr);
+			  const std::string &peerAddr, const std::string &fromDisplayName);
 
 	bool isUsingUserDefaults() const;
 	const std::string &getCallId() const;
@@ -43,6 +43,7 @@ class PushNotificationMessage : public bellesip::HybridObject<LinphonePushNotifi
 	std::shared_ptr<Address> getFromAddr() const;
 	std::shared_ptr<Address> getLocalAddr() const;
 	std::shared_ptr<Address> getPeerAddr() const;
+	const std::string &getFromDisplayName() const;
 
 	std::string toString() const override;
 
@@ -55,6 +56,7 @@ class PushNotificationMessage : public bellesip::HybridObject<LinphonePushNotifi
 	std::string mFromAddr;
 	std::string mLocalAddr;
 	std::string mPeerAddr;
+	std::string mFromDisplayName;
 };
 
 LINPHONE_END_NAMESPACE

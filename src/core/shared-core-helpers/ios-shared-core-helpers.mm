@@ -134,6 +134,7 @@ private:
 	std::shared_ptr<ChatRoom> getChatRoomFromAddr(const string &chatRoomAddr);
 	shared_ptr<PushNotificationMessage> chatMsgToPushNotifMsg(std::shared_ptr<ChatMessage> msg, const string &callId);
 	void cleanUserDefaultsMessages();
+	string getDisplayNameFromSipAddress(const string &sipAddr);
 
 	std::string mAppGroupId = "";
 	static set<string> callIdList;
@@ -416,6 +417,7 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::fetchUserDefaultsMsg(c
 	string fromAddr;
 	string localAddr;
 	string peerAddr;
+	string fromDisplayName;
 
 	if (mAppGroupId != TEST_GROUP_ID) { // For testing purpose
 		NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
@@ -444,6 +446,8 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::fetchUserDefaultsMsg(c
 		lInfo() << "[push] push received: removed " << callId.c_str() << " from UserDefaults[messages]. nb of msg: " << [messages count];
 		[defaults setObject:messages forKey:@"messages"];
 		[defaults release];
+
+		fromDisplayName = getDisplayNameFromSipAddress(fromAddr);
 	} else {
 		if (!mMsgWrittenInUserDefaults) return nullptr;
 		isText = true;
@@ -452,9 +456,10 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::fetchUserDefaultsMsg(c
 		fromAddr = "sip:from.addr";
 		localAddr = "sip:local.addr";
 		peerAddr = "sip:peer.addr";
+		fromDisplayName = "";
 	}
 
-	shared_ptr<PushNotificationMessage> msg = PushNotificationMessage::create(true, callId, isText, textContent, subject, fromAddr, localAddr, peerAddr);
+	shared_ptr<PushNotificationMessage> msg = PushNotificationMessage::create(true, callId, isText, textContent, subject, fromAddr, localAddr, peerAddr, fromDisplayName);
 	lInfo() << "[push] PushNotificationMessage created: " << msg->toString();
 	return msg;
 }
@@ -482,6 +487,30 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromUserDefaults
 	return msg;
 }
 
+string IosSharedCoreHelpers::getDisplayNameFromSipAddress(const string &sipAddr) {
+	lInfo() << "[push] looking for display name for " << sipAddr;
+	if (sipAddr.empty()) return "";
+
+	NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
+	NSDictionary *addressBook = [defaults dictionaryForKey:@"addressBook"];
+	[defaults release];
+
+	if (addressBook == nil) {
+		lInfo() << "[push] address book not found in user defaults";
+		return "";
+	}
+
+	NSString *objcDisplayName = [addressBook objectForKey:[NSString stringWithUTF8String:sipAddr.c_str()]];
+	if (objcDisplayName == nil) {
+		lInfo() << "[push] address book not found in user defaults";
+		return "";
+	}
+
+	string displayName = objcDisplayName.UTF8String;
+	lInfo() << "[push] display name for " << sipAddr << ": " << displayName;
+	return displayName;
+}
+
 shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::chatMsgToPushNotifMsg(std::shared_ptr<ChatMessage> msg, const string &callId) {
 	if (!msg) return nullptr;
 
@@ -494,8 +523,9 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::chatMsgToPushNotifMsg(
 	string fromAddr = linphone_address_as_string(linphone_chat_message_get_from_address(cMsg));
 	string localAddr = linphone_address_as_string(linphone_chat_message_get_local_address(cMsg));
 	string peerAddr = linphone_address_as_string(linphone_chat_message_get_peer_address(cMsg));
+	string fromDisplayName = getDisplayNameFromSipAddress(fromAddr);
 
-	shared_ptr<PushNotificationMessage> pushMsg = PushNotificationMessage::create(false, callId, isText, textContent, subject, fromAddr, localAddr, peerAddr);
+	shared_ptr<PushNotificationMessage> pushMsg = PushNotificationMessage::create(false, callId, isText, textContent, subject, fromAddr, localAddr, peerAddr, fromDisplayName);
 	return pushMsg;
 }
 
@@ -528,7 +558,7 @@ std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromDatabas
 	lInfo() << "[push] core started";
 
 	chatMessage = getChatMsgAndUpdateList(callId);
-	lInfo() << "[push] message already in db? " << chatMessage? "yes" : "no";
+	lInfo() << "[push] message already in db? " << (chatMessage ? "yes" : "no");
 	if (chatMessage) {
 		return chatMsgToPushNotifMsg(chatMessage, callId);
 	}
@@ -544,7 +574,7 @@ std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromDatabas
 		if (getSharedCoreState() == SharedCoreState::executorCoreStopping) {
 			lInfo() << "[SHARED] executor core stopping";
 			chatMessage = getChatMsgAndUpdateList(callId);
-			lInfo() << "[push] last chance to get msg in db. message in db? " << chatMessage? "yes" : "no";
+			lInfo() << "[push] last chance to get msg in db. message in db? " << (chatMessage ? "yes" : "no");
 			return chatMsgToPushNotifMsg(chatMessage, callId);
 		}
 
@@ -560,7 +590,7 @@ std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromDatabas
 	if (ms_get_cur_time_ms() - mTimer >= 25000) clearCallIdList();
 
 	chatMessage = getChatMsgAndUpdateList(callId);
-	lInfo() << "[push] message received? " << chatMessage? "yes" : "no";
+	lInfo() << "[push] message received? " << (chatMessage ? "yes" : "no");
 
 	return chatMsgToPushNotifMsg(chatMessage, callId);
 }
@@ -749,7 +779,6 @@ bool IosSharedCoreHelpers::canExecutorCoreStart() {
 	reloadConfig();
 	return true;
 }
-
 
 void IosSharedCoreHelpers::subscribeToMainCoreNotifs() {
 	lInfo() << "[SHARED] " << __FUNCTION__;
