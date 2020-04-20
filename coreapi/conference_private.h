@@ -107,6 +107,7 @@ LINPHONE_PUBLIC bool_t linphone_conference_check_class(LinphoneConference *obj, 
 LINPHONE_BEGIN_NAMESPACE
 
 class AudioControlInterface;
+class VideoControlInterface;
 class MixerSession;
 
 namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*
@@ -198,6 +199,7 @@ public:
 	virtual bool isIn() const = 0;
 
 	virtual AudioControlInterface * getAudioControlInterface() const = 0;
+	virtual VideoControlInterface * getVideoControlInterface() const = 0;
 	virtual AudioStream *getAudioStream() = 0; /* Used by the tone manager, revisit.*/
 
 	virtual int getSize() const {return (int)m_participants.size() + (isIn()?1:0);}
@@ -251,6 +253,7 @@ public:
 	virtual int stopRecording() override;
 	
 	virtual AudioControlInterface * getAudioControlInterface() const override;
+	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
 
 private:
@@ -285,6 +288,7 @@ public:
 		return 0;
 	}
 	virtual AudioControlInterface * getAudioControlInterface() const override;
+	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
 	
 private:
