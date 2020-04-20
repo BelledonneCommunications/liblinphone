@@ -122,6 +122,15 @@ private:
 	static constexpr const int sEventPollIntervalMs = 20;
 };
 
+class BandwithControllerService : public SharedService{
+public:
+	MSBandwidthController *getBandWidthController();
+	virtual void initialize() override;
+	virtual void destroy() override;
+private:
+	struct _MSBandwidthController *mBandwidthController = nullptr;
+};
+
 class MS2AudioStream : public MS2Stream, public AudioControlInterface{
 	friend class MS2VideoStream;
 public:
