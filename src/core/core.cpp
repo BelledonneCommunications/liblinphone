@@ -402,7 +402,7 @@ void Core::enableLimeX3dh (bool enable) {
 			if (listener) {
 				d->unregisterListener(listener);
 			}
-			d->imee.release();
+			d->imee.reset();
 		}
 		removeSpec("lime");
 		return;
@@ -417,7 +417,7 @@ void Core::enableLimeX3dh (bool enable) {
 		if (listener) {
 			d->unregisterListener(listener);
 		}
-		d->imee.release();
+		d->imee.reset();
 	}
 
 	if (d->imee == nullptr) {
