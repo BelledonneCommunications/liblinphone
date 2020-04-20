@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 
 #include "port-config.h"
 #include "call-session.h"
@@ -256,7 +257,29 @@ public:
 	virtual ~RtpInterface() = default;
 };
 
-
+class SharedService{
+friend class StreamsGroup;
+public:
+	virtual ~SharedService() = default;
+	// initialize() is called when the service is requested for the first time.
+	virtual void initialize() = 0;
+	// destroy() is called when the service has been requested at least once, but is now longer needed.
+	virtual void destroy() = 0;
+private:
+	void checkInit(){
+		if (!mUsed){
+			initialize();
+			mUsed = true;
+		}
+	}
+	void checkDestroy(){
+		if (mUsed){
+			destroy();
+			mUsed = false;
+		}
+	}
+	bool mUsed = false;
+};
 
 /**
  * The StreamsGroup takes in charge the initialization and rendering of a group of streams defined
@@ -383,6 +406,38 @@ public:
 	bool getAuthenticationTokenVerified() const{ return mAuthTokenVerified; }
 	const OfferAnswerContext & getCurrentOfferAnswerContext()const{ return mCurrentOfferAnswerState; };
 	CallSession::State getCurrentSessionState() const{ return mCurrentSessionState;};
+	
+	/*
+	 * Install a service that is shared accross all streams of a StreamsGroup.
+	 * 
+	 */
+	template <typename _sharedServiceT>
+	void installSharedService(){
+		std::string serviceKey = typeid(_sharedServiceT).name();
+		if (mSharedServices.find(serviceKey) == mSharedServices.end()){
+			mSharedServices[serviceKey].reset(new _sharedServiceT());
+		}
+	}
+	/*
+	 * Obtain a shared service given its key.
+	 */
+	template <typename _sharedServiceT>
+	_sharedServiceT *getSharedService() const{
+		std::string serviceKey = typeid(_sharedServiceT).name();
+		auto it = mSharedServices.find(serviceKey);
+		if (it != mSharedServices.end()){
+			SharedService *service = (*it).second.get();
+			_sharedServiceT *casted = dynamic_cast<_sharedServiceT*>(service);
+			if (casted == nullptr){
+				// By construction, it should never happen.
+				lError() << "Wrong type for installed service " << serviceKey;
+			}else {
+				casted->checkInit();
+				return casted;
+			}
+		}
+		return nullptr;
+	}
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	LinphoneCore *getCCore()const;
 	Core & getCore()const;
@@ -414,6 +469,7 @@ private:
 	OfferAnswerContext mCurrentOfferAnswerState;
 	CallSession::State mCurrentSessionState;
 	MixerSession *mMixerSession = nullptr;
+	std::map<std::string, std::unique_ptr<SharedService>> mSharedServices;
 	bool mAuthTokenVerified = false;
 	bool mFinished = false;
 
