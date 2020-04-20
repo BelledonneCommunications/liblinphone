@@ -38,6 +38,22 @@ using namespace::std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+
+MSBandwidthController *BandwithControllerService::getBandWidthController(){
+	return mBandwidthController;
+}
+
+void BandwithControllerService::initialize(){
+	lInfo() << "StreamsGroup's shared bandwidth controller created.";
+	mBandwidthController = ms_bandwidth_controller_new();
+}
+
+void BandwithControllerService::destroy(){
+	ms_bandwidth_controller_destroy(mBandwidthController);
+	mBandwidthController = nullptr;
+}
+
+
 /*
  * MS2Stream implementation
  */
@@ -50,6 +66,15 @@ MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params) : Strea
 	_linphone_call_stats_set_received_rtcp(mStats, nullptr);
 	_linphone_call_stats_set_sent_rtcp(mStats, nullptr);
 	_linphone_call_stats_set_ice_state(mStats, LinphoneIceStateNotActivated);
+	/* Install the BandwithControllerService, that olds the ms2 MSBandwidthController, which is needed to manage
+	 * the audio and the video stream together, when in a conference only. 
+	 * For individual calls, the MSBandwidthController of the LinphoneCore is used.
+	 * The reasons are both:
+	 * - the MSBandwidthController doesn't manage conferences for the moment, only one audio and/or one video stream.
+	 * - when running server-side, the bandwidth is considered as unlimited locally. There is hence no way to consider that there could be 
+	 * interaction between streams from different connected participants.
+	 */
+	sg.installSharedService<BandwithControllerService>();
 }
 
 void MS2Stream::removeFromBundle(){
@@ -255,9 +280,12 @@ void MS2Stream::configureAdaptiveRateControl (const OfferAnswerContext &params) 
 	}
 	if (isAdvanced) {
 		lInfo() << "Setting up advanced rate control";
-		if (getMixer() == nullptr || getType() == SalAudio){
-			// Don't use bandwidth controller in video conf.
+		if (getMixer() == nullptr){
+			// Use the core's bandwidth controller.
 			ms_bandwidth_controller_add_stream(getCCore()->bw_controller, ms);
+		}else{
+			// Use the streamsgroup's shared bandwidth controller.
+			ms_bandwidth_controller_add_stream(getGroup().getSharedService<BandwithControllerService>()->getBandWidthController(), ms);
 		}
 		media_stream_enable_adaptive_bitrate_control(ms, false);
 	} else {
@@ -801,7 +829,11 @@ void MS2Stream::stop(){
 		if (statsType != -1) listener->onUpdateMediaInfoForReporting(getMediaSession().getSharedFromThis(), statsType);
 		
 	}
-	ms_bandwidth_controller_remove_stream(getCCore()->bw_controller, getMediaStream());
+	if (getMixer() == nullptr){
+		ms_bandwidth_controller_remove_stream(getCCore()->bw_controller, getMediaStream());
+	}else{
+		ms_bandwidth_controller_remove_stream(getGroup().getSharedService<BandwithControllerService>()->getBandWidthController(), getMediaStream());
+	}
 	updateStats();
 	handleEvents();
 	stopEventHandling();
