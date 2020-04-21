@@ -157,8 +157,11 @@ void LocalConference::addLocalEndpoint () {
 		mixer = mMixerSession->getMixerByType(SalVideo);
 		if (mixer){
 			mixer->enableLocalParticipant(true);
-			linphone_core_set_native_preview_window_id(m_core, m_core->preview_window_id);
-			linphone_core_set_native_video_window_id(m_core, m_core->video_window_id);
+			VideoControlInterface *vci = getVideoControlInterface();
+			if (vci){
+				vci->setNativePreviewWindowId(m_core->preview_window_id);
+				vci->setNativeWindowId(m_core->video_window_id);
+			}
 		}
 	}
 	mIsIn = true;
