@@ -406,15 +406,23 @@ public class AndroidPlatformHelper {
         }
 
         if (view instanceof Surface) {
+            Log.i("[Platform Helper] Preview window surface is a Surface");
             Surface surface = (Surface) view;
             setNativePreviewWindowId(mNativePtr, surface);
             return;
         }
 
+        if (view instanceof SurfaceTexture) {
+            Log.i("[Platform Helper] Preview window surface is a SurfaceTexture");
+            SurfaceTexture surface = (SurfaceTexture) view;
+            setNativeVideoWindowId(mNativePtr, surface);
+            return;
+        }
+
         if (!(view instanceof TextureView)) {
-            throw new RuntimeException("[Platform Helper] Preview window id is not an instance of TextureView. " +
-                    "Please update your UI layer so that the preview video view is a TextureView (or an instance of it)" +
-                    "or enable compatibility mode by setting displaytype=MSAndroidOpenGLDisplay in the [video] section your linphonerc factory configuration file" +
+            throw new RuntimeException("[Platform Helper] Preview window id is not an instance of TextureView, Surface or SurfaceTexture. " +
+                    "Please update your UI layer so that the preview video view is one of the above types (or an instance of it) " +
+                    "or enable compatibility mode by setting displaytype=MSAndroidOpenGLDisplay in the [video] section your linphonerc factory configuration file " +
                     "so you can keep using your existing application code for managing video views.");
         }
 
@@ -470,15 +478,23 @@ public class AndroidPlatformHelper {
         }
 
         if (view instanceof Surface) {
+            Log.i("[Platform Helper] Video window surface is a Surface");
             Surface surface = (Surface) view;
             setNativeVideoWindowId(mNativePtr, surface);
             return;
         }
 
+        if (view instanceof SurfaceTexture) {
+            Log.i("[Platform Helper] Video window surface is a SurfaceTexture");
+            SurfaceTexture surface = (SurfaceTexture) view;
+            setNativeVideoWindowId(mNativePtr, surface);
+            return;
+        }
+
         if (!(view instanceof TextureView)) {
-            throw new RuntimeException("[Platform Helper] Rendering window id is not an instance of TextureView." +
-                    "Please update your UI layer so that the video rendering view is a TextureView (or an instance of it)" +
-                    "or enable compatibility mode by setting displaytype=MSAndroidOpenGLDisplay in the [video] section your linphonerc factory configuration file" +
+            throw new RuntimeException("[Platform Helper] Rendering window id is not an instance of TextureView, Surface or SurfaceTexture. " +
+                    "Please update your UI layer so that the video rendering view is an object of any above types (or an instance of it) " +
+                    "or enable compatibility mode by setting displaytype=MSAndroidOpenGLDisplay in the [video] section your linphonerc factory configuration file " +
                     "so you can keep using your existing application code for managing video views.");
         }
 
