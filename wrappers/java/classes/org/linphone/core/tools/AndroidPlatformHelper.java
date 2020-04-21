@@ -504,7 +504,7 @@ public class AndroidPlatformHelper {
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
                 Log.i("[Platform Helper] Rendering window surface is available");
                 rotateVideoPreview();
-                setNativeVideoWindowId(mNativePtr, surface);
+                setNativeVideoWindowId(mNativePtr, mVideoTextureView);
             }
 
             @Override
@@ -541,7 +541,7 @@ public class AndroidPlatformHelper {
         if (mVideoTextureView.isAvailable()) {
             Log.i("[Platform Helper] Rendering window surface is available");
             rotateVideoPreview();
-            setNativeVideoWindowId(mNativePtr, mVideoTextureView.getSurfaceTexture());
+            setNativeVideoWindowId(mNativePtr, mVideoTextureView);
         }
     }
 
