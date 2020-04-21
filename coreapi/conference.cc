@@ -206,6 +206,7 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 		return -1;
 	}
 	bool starting = (getSize() == 0);
+	bool localEndpointCanBeAdded = false;
 	switch(state){
 		case LinphoneCallOutgoingInit:
 		case LinphoneCallOutgoingProgress:
@@ -226,7 +227,7 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 
 			linphone_call_update(call, params);
 			linphone_call_params_unref(params);
-			addLocalEndpoint();
+			localEndpointCanBeAdded = true;
 		}
 		break;
 		default:
@@ -241,6 +242,13 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 	mMixerSession->joinStreamsGroup(L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call))->getMediaSession()->getStreamsGroup());
 	Conference::addParticipant(call);
 	if (starting) setState(LinphoneConferenceRunning);
+	if (localEndpointCanBeAdded){
+		/*
+		 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
+		 * resources (mic and camera), which is done during the joinStreamsGroup() step.
+		 */
+		addLocalEndpoint();
+	}
 	return 0;
 }
 
