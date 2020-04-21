@@ -248,10 +248,14 @@ int LocalConference::removeParticipant (LinphoneCall *call) {
 		return -1;
 	}
 	Conference::removeParticipant(call);
+	bool conferenceGoesEmpty = remoteParticipantsCount() == 0 && isIn();
 	switch(linphone_call_get_state(call)){
 		case LinphoneCallStreamsRunning:
-			if (remoteParticipantsCount() == 1 && isIn()){
-				/* Stay in StreamsRunning so that we directly with this last participant */
+			if (conferenceGoesEmpty){
+				/* 
+				 * Special case: the last remote participant is in StreamsRunning state and we are still in the conference.
+				 * Then directly reconnect to it, as a normal call.
+				 */
 				lInfo() << "Call [" << call << "] with " << L_GET_CPP_PTR_FROM_C_OBJECT(call)->getRemoteAddress().asString() << 
 					" is our last call in our conference, we will reconnect directly to it.";
 				LinphoneCallParams *params = linphone_core_create_call_params(m_core, call);
@@ -260,6 +264,7 @@ int LocalConference::removeParticipant (LinphoneCall *call) {
 				ms_message("Updating call to notify of conference removal.");
 				err = linphone_call_update(call, params);
 				linphone_call_params_unref(params);
+				conferenceGoesEmpty = false; // already empty as we have just left.
 			}else{
 				/* Kick the call out of the conference by moving to the Paused state. */
 				err = _linphone_call_pause(call);
@@ -273,6 +278,9 @@ int LocalConference::removeParticipant (LinphoneCall *call) {
 			 */
 			lWarning() << "Unhandled case " << linphone_call_state_to_string(linphone_call_get_state(call)) << " for a call in conference.";
 		break;
+	}
+	if (conferenceGoesEmpty){
+		leave();
 	}
 	mMixerSession->unjoinStreamsGroup(L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call))->getMediaSession()->getStreamsGroup());
 	_linphone_call_set_conf_ref(call, nullptr);
