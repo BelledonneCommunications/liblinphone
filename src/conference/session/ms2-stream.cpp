@@ -1126,9 +1126,10 @@ int MS2Stream::getAvpfRrInterval()const{
 }
 
 void MS2Stream::connectToMixer(StreamMixer *mixer){
+	bool wasRunning = getState() == Running;
+	if (wasRunning) stop();
 	Stream::connectToMixer(mixer);
-	if (getState() == Running){
-		stop();
+	if (wasRunning){
 		render(getGroup().getCurrentOfferAnswerContext().scopeStreamToIndex(getIndex()),
 			getGroup().getCurrentSessionState());
 	}
