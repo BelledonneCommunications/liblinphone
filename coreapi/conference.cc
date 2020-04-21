@@ -155,7 +155,11 @@ void LocalConference::addLocalEndpoint () {
 	
 	if (m_currentParams->videoEnabled()){
 		mixer = mMixerSession->getMixerByType(SalVideo);
-		if (mixer) mixer->enableLocalParticipant(true);
+		if (mixer){
+			mixer->enableLocalParticipant(true);
+			linphone_core_set_native_preview_window_id(m_core, m_core->preview_window_id);
+			linphone_core_set_native_video_window_id(m_core, m_core->video_window_id);
+		}
 	}
 	mIsIn = true;
 }
@@ -715,6 +719,10 @@ void linphone_conference_unref (LinphoneConference *conf) {
 
 LinphoneConferenceState linphone_conference_get_state (const LinphoneConference *obj) {
 	return MediaConference::Conference::toCpp(obj)->getState();
+}
+
+const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *obj){
+	return MediaConference::Conference::toCpp(obj)->getCurrentParams().toC();
 }
 
 int linphone_conference_add_participant (LinphoneConference *obj, LinphoneCall *call) {
