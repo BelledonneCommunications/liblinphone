@@ -246,5 +246,23 @@ bool MS2AudioMixer::echoCancellationEnabled()const{
 AudioStream * MS2AudioMixer::getAudioStream(){
 	return mLocalParticipantStream;
 }
+	
+void MS2AudioMixer::setInputDevice(AudioDevice *audioDevice) {
+	audio_stream_set_input_ms_snd_card(mLocalParticipantStream, audioDevice->getSoundCard());
+}
+
+void MS2AudioMixer::setOutputDevice(AudioDevice *audioDevice) {
+	audio_stream_set_output_ms_snd_card(mLocalParticipantStream, audioDevice->getSoundCard());
+}
+
+AudioDevice* MS2AudioMixer::getInputDevice() const {
+	MSSndCard *card = audio_stream_get_input_ms_snd_card(mLocalParticipantStream);
+	return getSession().getCore().findAudioDeviceMatchingMsSoundCard(card);
+}
+
+AudioDevice* MS2AudioMixer::getOutputDevice() const {
+	MSSndCard *card = audio_stream_get_output_ms_snd_card(mLocalParticipantStream);
+	return getSession().getCore().findAudioDeviceMatchingMsSoundCard(card);
+}
 
 LINPHONE_END_NAMESPACE
