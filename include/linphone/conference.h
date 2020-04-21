@@ -157,6 +157,14 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_invite_participants(LinphoneC
  */
 LINPHONE_PUBLIC int linphone_conference_add_participant(LinphoneConference *obj, LinphoneCall *call);
 
+
+/**
+ * Get current parameters of the conference.
+ * @param obj the conference
+ * @return a #LinphoneConferenceParams .
+ */
+LINPHONE_PUBLIC const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *obj);
+
 /**
   * Get the conference id as string
   */
