@@ -307,6 +307,7 @@ void MediaSessionPrivate::pausedByRemote () {
 	if (lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
 		newParams.setVideoDirection(LinphoneMediaDirectionInactive);
 	acceptUpdate(&newParams, CallSession::State::PausedByRemote, "Call paused by remote");
+
 }
 
 void MediaSessionPrivate::remoteRinging () {
@@ -1753,8 +1754,10 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	setState(CallSession::State::Pausing, "Pausing call");
 	makeLocalMediaDescription(true);
 	op->update(subject.c_str(), false);
+
 	if (listener)
 		listener->onResetCurrentSession(q->getSharedFromThis());
+
 	stopStreams();
 	pausedByApp = false;
 	return 0;
@@ -1775,6 +1778,7 @@ void MediaSessionPrivate::setTerminated () {
 }
 
 LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextState, const string &stateInfo) {
+
 	op->accept();
 	SalMediaDescription *md = op->getFinalMediaDescription();
 	if (md && !sal_media_description_empty(md))
@@ -1977,9 +1981,10 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 		setState(nextState, stateInfo);
 		return 0;
 	}
-	if (csp)
+
+	if (csp) {
 		setParams(new MediaSessionParams(*static_cast<const MediaSessionParams *>(csp)));
-	else {
+	} else {
 		if (!op->isOfferer()) {
 			/* Reset call params for multicast because this param is only relevant when offering */
 			getParams()->enableAudioMulticast(false);
@@ -1997,6 +2002,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 		return 0; /* Deferred until completion of ICE gathering */
 	updateLocalMediaDescriptionFromIce();
 	startAcceptUpdate(nextState, stateInfo);
+
 	return 0;
 }
 
@@ -2873,6 +2879,7 @@ void MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {
 void MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
 	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	d->setCurrentAudioDevice(audioDevice);
 	if (i) i->setOutputDevice(audioDevice);
 }
 

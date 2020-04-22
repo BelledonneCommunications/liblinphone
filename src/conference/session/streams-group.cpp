@@ -218,6 +218,7 @@ void StreamsGroup::stop(){
 		abort();
 		return;
 	}
+
 	if (mBandwidthReportTimer){
 		getCore().destroyTimer(mBandwidthReportTimer);
 		mBandwidthReportTimer = nullptr;
