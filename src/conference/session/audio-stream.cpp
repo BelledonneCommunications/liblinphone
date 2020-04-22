@@ -135,7 +135,18 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 }
 
 void MS2AudioStream::configureAudioStream(){
-	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+	// try to get playcard from the stream if it was already set
+	AudioDevice * audioDevice = getMediaSessionPrivate().getCurrentAudioDevice();
+	MSSndCard * playcard = NULL;
+
+	if (audioDevice) {
+		playcard = audioDevice->getSoundCard();
+	}
+
+	// If stream doesn't have a playcard associated with it, then use the default values
+	if (!playcard)
+		playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+
 	if (playcard) {
 		// Set the stream type immediately, as on iOS AudioUnit is instanciated very early because it is 
 		// otherwise too slow to start.
@@ -251,8 +262,15 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (isMain()){
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
 	}
-	// try to get playcard from the stream if it was already set
-	MSSndCard *playcard = audio_stream_get_output_ms_snd_card(mStream);
+
+	AudioDevice * audioDevice = getMediaSessionPrivate().getCurrentAudioDevice();
+	MSSndCard * playcard = NULL;
+
+	// try to get currently used playcard if it was already set
+	if (audioDevice) {
+		playcard = audioDevice->getSoundCard();
+	}
+
 	// If stream doesn't have a playcard associated with it, then use the default values
 	if (!playcard)
 		playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
@@ -298,6 +316,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		lInfo() << "Sound resources are used by another CallSession, not using soundcard";
 		captcard = playcard = nullptr;
 	}
+
 
 	if (playcard) {
 		ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
@@ -438,14 +457,14 @@ void MS2AudioStream::stop(){
 	}
 	VideoStream *vs = getPeerVideoStream();
 	if (vs) audio_stream_unlink_video(mStream, vs);
-	
+
 	audio_stream_stop(mStream);
+
 	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 
 	 * sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
 	mStream = audio_stream_new_with_sessions(getCCore()->factory, &mSessions);
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
-	
-	
+
 	if (mCurrentCaptureCard) ms_snd_card_unref(mCurrentCaptureCard);
 	if (mCurrentPlaybackCard) ms_snd_card_unref(mCurrentPlaybackCard);
 	mCurrentCaptureCard = nullptr;
@@ -571,8 +590,9 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 void MS2AudioStream::postConfigureAudioStream(bool muted) {
 	postConfigureAudioStream(mStream, getCCore(), muted);
 	forceSpeakerMuted(mSpeakerMuted);
-	if (linphone_core_dtmf_received_has_listener(getCCore()))
+	if (linphone_core_dtmf_received_has_listener(getCCore())) {
 		audio_stream_play_received_dtmfs(mStream, false);
+	}
 	if (mRecordActive)
 		startRecording();
 }
