@@ -101,7 +101,7 @@ class ToneManager : public CoreAccessor {
         void doStartRingbackTone(const std::shared_ptr<CallSession> &session);
         void doStartRingtone(const std::shared_ptr<CallSession> &session);
         void doStartErrorTone(const std::shared_ptr<CallSession> &session, LinphoneReason reason);
-        void doStartNamedTone(LinphoneToneID toneId);
+        void doStartNamedTone(const std::shared_ptr<CallSession> &session, LinphoneToneID toneId);
 
         // stop
         void doStopRingbackTone();
@@ -113,7 +113,7 @@ class ToneManager : public CoreAccessor {
         // sound
         MSFilter *getAudioResource(AudioResourceType rtype, MSSndCard *card, bool create);
         LinphoneStatus playFile(const char *audiofile);
-        void playTone(MSDtmfGenCustomTone dtmf);
+        void playTone(const std::shared_ptr<CallSession> &session, MSDtmfGenCustomTone dtmf);
         MSDtmfGenCustomTone generateToneFromId(LinphoneToneID toneId);
 };
 
