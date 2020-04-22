@@ -662,7 +662,7 @@ belle_sip_source_t *Core::createTimer(const std::function<bool ()> &something, u
 
 /* Stop and destroy a timer created by createTimer()*/
 void Core::destroyTimer(belle_sip_source_t *timer){
-	belle_sip_main_loop_remove_source(getPrivate()->getMainLoop(), timer);
+	belle_sip_source_cancel(timer);
 	belle_sip_object_unref(timer);
 }
 
