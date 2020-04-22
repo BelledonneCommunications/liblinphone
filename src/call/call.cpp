@@ -934,7 +934,7 @@ void Call::setInputAudioDevice(AudioDevice *audioDevice) {
 
 void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
-	
+
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
 		return;
@@ -944,6 +944,8 @@ void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
 	switch (getState()) {
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::OutgoingRinging:
+		case CallSession::State::Pausing:
+		case CallSession::State::Paused:
 			ringStream = getCore()->getCCore()->ringstream;
 			if (ringStream) {
 				ring_stream_set_output_ms_snd_card(ringStream, audioDevice->getSoundCard());
@@ -974,6 +976,8 @@ AudioDevice* Call::getOutputAudioDevice() const {
 	switch (getState()) {
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::OutgoingRinging:
+		case CallSession::State::Pausing:
+		case CallSession::State::Paused:
 			ringStream = getCore()->getCCore()->ringstream;
 			if (ringStream) {
 				MSSndCard *card = ring_stream_get_output_ms_snd_card(ringStream);
