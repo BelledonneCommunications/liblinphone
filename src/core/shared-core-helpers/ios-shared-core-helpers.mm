@@ -215,7 +215,7 @@ void IosSharedCoreHelpers::registerMainCoreMsgCallback() {
 	}
 }
 
-void IosSharedCoreHelpers::onLinphoneCoreStop () {
+void IosSharedCoreHelpers::onLinphoneCoreStop() {
 	if (isCoreShared()) {
 		CFRunLoopTimerInvalidate(mUnlockTimer);
 		lInfo() << "[SHARED] stop timer";
@@ -365,8 +365,14 @@ void IosSharedCoreHelpers::putMsgInUserDefaults(LinphoneChatMessage *msg) {
 		NSNumber *isText = [NSNumber numberWithBool:linphone_chat_message_is_text(msg)];
 		const char *cTextContent = linphone_chat_message_get_text_content(msg);
 		NSString *textContent = [NSString stringWithUTF8String: cTextContent ? cTextContent : ""];
-		const char *cSubject = linphone_chat_room_get_subject(linphone_chat_message_get_chat_room(msg));
-		NSString *subject = [NSString stringWithUTF8String: cSubject ? cSubject : ""];
+		NSString *subject;
+		LinphoneChatRoomCapabilitiesMask capabilities = linphone_chat_room_get_capabilities(linphone_chat_message_get_chat_room(msg));
+		if (capabilities & LinphoneChatRoomCapabilitiesOneToOne) {
+			subject = @"";
+		} else {
+			const char *cSubject = linphone_chat_room_get_subject(linphone_chat_message_get_chat_room(msg));
+			subject = [NSString stringWithUTF8String: cSubject ? cSubject : ""];
+		}
 
 		const LinphoneAddress *cFromAddr = linphone_chat_message_get_from_address(msg);
 		const LinphoneAddress *cLocalAddr = linphone_chat_message_get_local_address(msg);
@@ -459,7 +465,7 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::fetchUserDefaultsMsg(c
 	return msg;
 }
 
-shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromUserDefaults(const string &callId) { //TODO PAUL : messages ephemeres
+shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromUserDefaults(const string &callId) {
 	lInfo() << "[push] subscribe to main core notif: receive a notif when msg is written in user defaults";
    	CFNotificationCenterRef notification = CFNotificationCenterGetDarwinNotifyCenter();
 
@@ -489,8 +495,14 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::chatMsgToPushNotifMsg(
 
 	bool isText = linphone_chat_message_is_text(cMsg);
 	string textContent = isText ? linphone_chat_message_get_text_content(cMsg) : "";
-	const char *cSubject = linphone_chat_room_get_subject(linphone_chat_message_get_chat_room(cMsg));
-	string subject = cSubject ? cSubject : "";
+	string subject;
+	LinphoneChatRoomCapabilitiesMask capabilities = linphone_chat_room_get_capabilities(linphone_chat_message_get_chat_room(cMsg));
+	if (capabilities & LinphoneChatRoomCapabilitiesOneToOne) {
+		subject = "";
+	} else {
+		const char *cSubject = linphone_chat_room_get_subject(linphone_chat_message_get_chat_room(cMsg));
+		subject = cSubject ? cSubject : "";
+	}
 	string fromAddr = linphone_address_as_string(linphone_chat_message_get_from_address(cMsg));
 	string localAddr = linphone_address_as_string(linphone_chat_message_get_local_address(cMsg));
 	string peerAddr = linphone_address_as_string(linphone_chat_message_get_peer_address(cMsg));
@@ -528,7 +540,7 @@ std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromDatabas
 	lInfo() << "[push] core started";
 
 	chatMessage = getChatMsgAndUpdateList(callId);
-	lInfo() << "[push] message already in db? " << chatMessage? "yes" : "no";
+	lInfo() << "[push] message already in db? " << (chatMessage ? "yes" : "no");
 	if (chatMessage) {
 		return chatMsgToPushNotifMsg(chatMessage, callId);
 	}
@@ -544,7 +556,7 @@ std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromDatabas
 		if (getSharedCoreState() == SharedCoreState::executorCoreStopping) {
 			lInfo() << "[SHARED] executor core stopping";
 			chatMessage = getChatMsgAndUpdateList(callId);
-			lInfo() << "[push] last chance to get msg in db. message in db? " << chatMessage? "yes" : "no";
+			lInfo() << "[push] last chance to get msg in db. message in db? " << (chatMessage ? "yes" : "no");
 			return chatMsgToPushNotifMsg(chatMessage, callId);
 		}
 
@@ -560,7 +572,7 @@ std::shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromDatabas
 	if (ms_get_cur_time_ms() - mTimer >= 25000) clearCallIdList();
 
 	chatMessage = getChatMsgAndUpdateList(callId);
-	lInfo() << "[push] message received? " << chatMessage? "yes" : "no";
+	lInfo() << "[push] message received? " << (chatMessage ? "yes" : "no");
 
 	return chatMsgToPushNotifMsg(chatMessage, callId);
 }
