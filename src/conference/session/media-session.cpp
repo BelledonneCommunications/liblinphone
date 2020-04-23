@@ -735,6 +735,19 @@ void MediaSessionPrivate::initializeParamsAccordingToIncomingCallParams () {
 	}
 }
 
+bool MediaSessionPrivate::hasAvpf(SalMediaDescription *md)const{
+	/* We consider that AVPF is enabled if at least one of these condition is satisfied:
+	 * - all the offered streams have AVPF
+	 * - the video stream has AVPF.
+	 * In practice, this means for a remote media description that AVPF is supported by the far end.
+	 */
+	bool hasAvpf = !!sal_media_description_has_avpf(md);
+	if (mainVideoStreamIndex != -1 && sal_stream_description_has_avpf(&md->streams[mainVideoStreamIndex])){
+		hasAvpf = true;
+	}
+	return hasAvpf;
+}
+
 /**
  * Fix call parameters on incoming call to eg. enable AVPF if the incoming call propose it and it is not enabled locally.
  */
@@ -742,7 +755,9 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (SalMediaDescription *
 	L_Q();
 	LinphoneCore *lc = q->getCore()->getCCore();
 	/* Handle AVPF, SRTP and DTLS */
-	getParams()->enableAvpf(!!sal_media_description_has_avpf(md));
+	
+	
+	getParams()->enableAvpf(hasAvpf(md));
 	if (destProxy)
 		getParams()->setAvpfRrInterval(static_cast<uint16_t>(linphone_proxy_config_get_avpf_rr_interval(destProxy) * 1000));
 	else
@@ -1058,6 +1073,27 @@ void MediaSessionPrivate::addStreamToBundle(SalMediaDescription *md, SalStreamDe
 	sd->rtcp_mux = TRUE;
 }
 
+SalMediaProto MediaSessionPrivate::getAudioProto(){
+	L_Q();
+	/*This property is mainly used for testing hybrid case where the SDP offer is made with AVPF only for video stream.*/
+	SalMediaProto ret = getParams()->getMediaProto();
+	
+	if (linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "no_avpf_for_audio", false)){
+		lInfo() << "Removing AVPF for audio mline.";
+		switch (ret){
+			case SalProtoRtpAvpf:
+				ret = SalProtoRtpAvp;
+			break;
+			case SalProtoRtpSavpf:
+				ret = SalProtoRtpSavp;
+			break;
+			default:
+			break;
+		}
+	}
+	return ret;
+}
+
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	L_Q();
 	bool rtcpMux = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
@@ -1117,7 +1153,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	bctbx_list_t *l = NULL;
 	if (mainAudioStreamIndex != -1){
 		l = nullptr;
-		md->streams[mainAudioStreamIndex].proto = getParams()->getMediaProto();
+		md->streams[mainAudioStreamIndex].proto = getAudioProto();
 		md->streams[mainAudioStreamIndex].dir = getParams()->getPrivate()->getSalAudioDirection();
 		md->streams[mainAudioStreamIndex].type = SalAudio;
 		if (getParams()->audioEnabled() && (l = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1,
@@ -1373,8 +1409,10 @@ void MediaSessionPrivate::transferAlreadyAssignedPayloadTypes (SalMediaDescripti
 
 void MediaSessionPrivate::updateLocalMediaDescriptionFromIce () {
 	OfferAnswerContext ctx;
+
 	ctx.localMediaDescription = localDesc;
 	ctx.remoteMediaDescription = op ? op->getRemoteMediaDescription() : nullptr;
+	ctx.localIsOfferer = ctx.remoteMediaDescription ? false : true;
 	getStreamsGroup().fillLocalMediaDescription(ctx);
 	if (op) op->setLocalMediaDescription(localDesc);
 }
@@ -1812,12 +1850,13 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			break;
 	}
 	SalMediaDescription *md = resultDesc;
-	getCurrentParams()->enableAvpf(allStreamsAvpfEnabled() && sal_media_description_has_avpf(md));
-	if (getCurrentParams()->avpfEnabled())
-		getCurrentParams()->setAvpfRrInterval(getAvpfRrInterval());
-	else
-		getCurrentParams()->setAvpfRrInterval(0);
+	
 	if (md) {
+		getCurrentParams()->enableAvpf(hasAvpf(md));
+		if (getCurrentParams()->avpfEnabled())
+			getCurrentParams()->setAvpfRrInterval(getAvpfRrInterval());
+		else
+			getCurrentParams()->setAvpfRrInterval(0);
 		if (mainAudioStreamIndex != -1){
 			SalStreamDescription *sd = &md->streams[mainAudioStreamIndex];
 			getCurrentParams()->setAudioDirection(sd ? MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir) : LinphoneMediaDirectionInactive);
