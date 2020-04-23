@@ -69,6 +69,10 @@ MediaSessionPrivate &Stream::getMediaSessionPrivate()const{
 }
 
 void Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
+	if (!ctx.localIsOfferer){
+		/* Ensure we answer with the same proto as the remote offer.*/
+		ctx.localStreamDescription->proto = ctx.remoteStreamDescription->proto;
+	}
 }
 
 bool Stream::prepare(){

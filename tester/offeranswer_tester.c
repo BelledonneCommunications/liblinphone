@@ -437,6 +437,64 @@ end:
 	linphone_core_manager_destroy(marie);
 }
 
+static void avp_avpf_video_call(void){
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneProxyConfig *lpc;
+	const LinphoneCallParams *params;
+	const char *expected_profile = "RTP/AVPF";
+
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "no_avpf_for_audio", TRUE);
+	
+	
+	lpc = linphone_core_get_default_proxy_config(marie->lc);
+	linphone_proxy_config_enable_avpf(lpc, TRUE);
+	linphone_proxy_config_set_avpf_rr_interval(lpc, 3);
+	
+	
+	lpc = linphone_core_get_default_proxy_config(pauline->lc);
+	linphone_proxy_config_enable_avpf(lpc, TRUE);
+	linphone_proxy_config_set_avpf_rr_interval(lpc, 3);
+
+	if (linphone_core_video_supported(marie->lc)) {
+		LinphoneVideoPolicy policy;
+		policy.automatically_accept = TRUE;
+		policy.automatically_initiate = TRUE;
+		linphone_core_enable_video_capture(marie->lc, TRUE);
+		linphone_core_enable_video_display(marie->lc, TRUE);
+		linphone_core_set_video_policy(marie->lc,&policy);
+		linphone_core_enable_video_capture(pauline->lc, TRUE);
+		linphone_core_enable_video_display(pauline->lc, TRUE);
+		linphone_core_set_video_policy(pauline->lc,&policy);
+	}
+
+	if (!BC_ASSERT_TRUE(call(marie, pauline))) goto end;
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000); /*wait 1 second for streams to start flowing*/
+	if (linphone_core_get_current_call(marie->lc)) {
+		params = linphone_call_get_current_params(linphone_core_get_current_call(marie->lc));
+		BC_ASSERT_STRING_EQUAL(linphone_call_params_get_rtp_profile(params), expected_profile);
+	}
+	if (linphone_core_get_current_call(pauline->lc)) {
+		params = linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc));
+		BC_ASSERT_STRING_EQUAL(linphone_call_params_get_rtp_profile(params), expected_profile);
+	}
+	BC_ASSERT_TRUE(linphone_call_params_audio_enabled(linphone_call_get_current_params(linphone_core_get_current_call(marie->lc))));
+	BC_ASSERT_TRUE(linphone_call_params_audio_enabled(linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc))));
+
+	linphone_core_terminate_all_calls(marie->lc);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallConnected, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallConnected, 1, int, "%d");
+end:
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 static void profile_call(bool_t avpf1, LinphoneMediaEncryption srtp1, bool_t avpf2, LinphoneMediaEncryption srtp2, const char *expected_profile, bool_t enable_video) {
 	profile_call_base(avpf1, srtp1, avpf2,srtp2,FALSE,expected_profile,enable_video);
 }
@@ -775,7 +833,8 @@ static test_t offeranswer_tests[] = {
 	TEST_NO_TAG("Incompatible AVPF features", incompatible_avpf_features),
 	TEST_NO_TAG("H264 packetization-mode set to 1 on sender", h264_call_with_fmtps),
 	TEST_NO_TAG("H264 on sender, but not on receiver", h264_call_receiver_with_no_h264_support),
-	TEST_NO_TAG("H264 packetization-mode not set", h264_call_without_packetization_mode)
+	TEST_NO_TAG("H264 packetization-mode not set", h264_call_without_packetization_mode),
+	TEST_NO_TAG("Mixed AVP+AVPF video call", avp_avpf_video_call)
 #endif
 };
 

@@ -206,7 +206,8 @@ private:
 	void stunAuthRequestedCb (const char *realm, const char *nonce, const char **username, const char **password, const char **ha1);
 	Stream *getStream(LinphoneStreamType type)const;
 	int portFromStreamIndex(int index);
-
+	SalMediaProto getAudioProto();
+	bool hasAvpf(SalMediaDescription *md)const;
 private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;
