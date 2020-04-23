@@ -502,6 +502,8 @@ void call_base_with_configfile_play_nothing(LinphoneMediaEncryption mode, bool_t
 void call_base(LinphoneMediaEncryption mode, bool_t enable_video,bool_t enable_relay,LinphoneFirewallPolicy policy,bool_t enable_tunnel);
 bool_t call_with_caller_params(LinphoneCoreManager* caller_mgr,LinphoneCoreManager* callee_mgr, const LinphoneCallParams *params);
 bool_t pause_call_1(LinphoneCoreManager* mgr_1,LinphoneCall* call_1,LinphoneCoreManager* mgr_2,LinphoneCall* call_2);
+LinphoneAudioDevice * change_device(bool_t enable, LinphoneCoreManager* mgr, LinphoneAudioDevice *current_dev, LinphoneAudioDevice *dev0, LinphoneAudioDevice *dev1);
+LinphoneAudioDevice* pause_call_changing_device(bool_t enable, bctbx_list_t *lcs, LinphoneCall *call, LinphoneCoreManager* mgr_pausing, LinphoneCoreManager* mgr_paused, LinphoneCoreManager* mgr_change_device, LinphoneAudioDevice *current_dev, LinphoneAudioDevice *dev0, LinphoneAudioDevice *dev1);
 void compare_files(const char *path1, const char *path2);
 void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, MSList* lcs,LinphoneMediaDirection audio_dir, LinphoneMediaDirection video_dir);
 void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie, bool_t caller_with_ice, bool_t callee_with_ice, bool_t random_ports, bool_t forced_relay);

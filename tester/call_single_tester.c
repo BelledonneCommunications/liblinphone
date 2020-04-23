@@ -310,6 +310,7 @@ static LinphoneAudioDevice * unregister_device(bool_t enable, LinphoneCoreManage
 }
 
 static void call_with_disconnecting_device_base(bool_t before_ringback, bool_t during_ringback, bool_t during_call) {
+
 	bctbx_list_t* lcs;
 	// Marie is the caller
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
@@ -442,7 +443,7 @@ static void call_with_disconnecting_device_after_ringback(void) {
 	call_with_disconnecting_device_base(FALSE, FALSE, TRUE);
 }
 
-static LinphoneAudioDevice * change_device(bool_t enable, LinphoneCoreManager* mgr, LinphoneAudioDevice *current_dev, LinphoneAudioDevice *dev0, LinphoneAudioDevice *dev1) {
+LinphoneAudioDevice * change_device(bool_t enable, LinphoneCoreManager* mgr, LinphoneAudioDevice *current_dev, LinphoneAudioDevice *dev0, LinphoneAudioDevice *dev1) {
 
 	// Unref current_dev
 	linphone_audio_device_unref(current_dev);
@@ -609,10 +610,7 @@ static void simple_call_with_audio_device_change_pingpong(void) {
 	simple_call_with_audio_device_change_base(TRUE, TRUE, TRUE);
 }
 
-static LinphoneAudioDevice* pause_call_changing_device(bool_t enable, LinphoneCoreManager* mgr_pausing, LinphoneCoreManager* mgr_paused, LinphoneCoreManager* mgr_change_device, LinphoneAudioDevice *current_dev, LinphoneAudioDevice *dev0, LinphoneAudioDevice *dev1) {
-
-	LinphoneCall * call = linphone_core_get_current_call(mgr_pausing->lc);
-	BC_ASSERT_PTR_NOT_NULL(call);
+LinphoneAudioDevice* pause_call_changing_device(bool_t enable, bctbx_list_t *lcs, LinphoneCall *call, LinphoneCoreManager* mgr_pausing, LinphoneCoreManager* mgr_paused, LinphoneCoreManager* mgr_change_device, LinphoneAudioDevice *current_dev, LinphoneAudioDevice *dev0, LinphoneAudioDevice *dev1) {
 
 	int noCallPaused = mgr_pausing->stat.number_of_LinphoneCallPaused;
 	int noCallPausing = mgr_pausing->stat.number_of_LinphoneCallPausing;
@@ -625,14 +623,14 @@ static LinphoneAudioDevice* pause_call_changing_device(bool_t enable, LinphoneCo
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(mgr_change_device->lc), current_dev);
 
 	linphone_call_pause(call);
-	BC_ASSERT_TRUE(wait_for(mgr_change_device->lc,mgr_paused->lc,&mgr_pausing->stat.number_of_LinphoneCallPausing,(noCallPausing+1)));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&mgr_pausing->stat.number_of_LinphoneCallPausing,(noCallPausing+1),5000));
 
-	BC_ASSERT_TRUE(wait_for(mgr_pausing->lc,mgr_paused->lc,&mgr_paused->stat.number_of_LinphoneCallPausedByRemote,(noCallPausedByRemote+1)));
-	BC_ASSERT_TRUE(wait_for(mgr_pausing->lc,mgr_paused->lc,&mgr_pausing->stat.number_of_LinphoneCallPaused,(noCallPaused+1)));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&mgr_paused->stat.number_of_LinphoneCallPausedByRemote,(noCallPausedByRemote+1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&mgr_pausing->stat.number_of_LinphoneCallPaused,(noCallPaused+1),5000));
 
 	LinphoneAudioDevice *next_dev = change_device(enable, mgr_change_device, current_dev, dev0, dev1);
 
-	// Check Marie's output device
+	// Check output device
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(mgr_change_device->lc), next_dev);
 
 	//stay in pause a little while in order to generate traffic
@@ -640,9 +638,9 @@ static LinphoneAudioDevice* pause_call_changing_device(bool_t enable, LinphoneCo
 
 	linphone_call_resume(call);
 
-	BC_ASSERT_TRUE(wait_for(mgr_pausing->lc,mgr_paused->lc,&mgr_pausing->stat.number_of_LinphoneCallStreamsRunning,(noStreamRunningPausing+1)));
-	BC_ASSERT_TRUE(wait_for(mgr_pausing->lc,mgr_paused->lc,&mgr_paused->stat.number_of_LinphoneCallStreamsRunning,(noStreamRunningPaused+1)));
-	BC_ASSERT_TRUE(wait_for(mgr_pausing->lc,mgr_paused->lc,&mgr_pausing->stat.number_of_LinphoneCallResuming,(noCallResuming+1)));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&mgr_pausing->stat.number_of_LinphoneCallStreamsRunning,(noStreamRunningPausing+1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&mgr_paused->stat.number_of_LinphoneCallStreamsRunning,(noStreamRunningPaused+1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&mgr_pausing->stat.number_of_LinphoneCallResuming,(noCallResuming+1),5000));
 
 	// Check Marie's output device
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(mgr_change_device->lc), next_dev);
@@ -793,28 +791,28 @@ static void simple_call_with_audio_device_change_during_call_pause_base(bool_t c
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
 
 	// Callee pauses call and changes device
-	pauline_current_dev = pause_call_changing_device(callee, pauline, marie, pauline, pauline_current_dev, pauline_dev0, pauline_dev1);
+	pauline_current_dev = pause_call_changing_device(callee, lcs, pauline_call, pauline, marie, pauline, pauline_current_dev, pauline_dev0, pauline_dev1);
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), marie_current_dev);
 
 	//stay in pause a little while in order to generate traffic
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
 
 	// Callee pauses call and caller changes device
-	marie_current_dev = pause_call_changing_device(callee, pauline, marie, marie, marie_current_dev, marie_dev0, marie_dev1);
+	marie_current_dev = pause_call_changing_device(callee, lcs, pauline_call, pauline, marie, marie, marie_current_dev, marie_dev0, marie_dev1);
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(pauline->lc), pauline_current_dev);
 
 	//stay in pause a little while in order to generate traffic
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
 
 	// Caller pauses call and callee changes device
-	pauline_current_dev = pause_call_changing_device(caller, marie, pauline, pauline, pauline_current_dev, pauline_dev0, pauline_dev1);
+	pauline_current_dev = pause_call_changing_device(caller, lcs, marie_call, marie, pauline, pauline, pauline_current_dev, pauline_dev0, pauline_dev1);
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), marie_current_dev);
 
 	//stay in pause a little while in order to generate traffic
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
 
 	// Caller pauses call and changes device
-	marie_current_dev = pause_call_changing_device(caller, marie, pauline, marie, marie_current_dev, marie_dev0, marie_dev1);
+	marie_current_dev = pause_call_changing_device(caller, lcs, marie_call, marie, pauline, marie, marie_current_dev, marie_dev0, marie_dev1);
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(pauline->lc), pauline_current_dev);
 
 	//stay in pause a little while in order to generate traffic
