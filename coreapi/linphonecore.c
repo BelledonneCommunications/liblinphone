@@ -5947,7 +5947,9 @@ void linphone_core_preview_ogl_render(const LinphoneCore *lc) {
 	VideoStream *stream = call ? reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo)) : lc->previewstream;
 
 	if (stream && stream->output2 && ms_filter_get_id(stream->output2) == MS_OGL_ID) {
-		int mirroring = TRUE;
+		MSWebCam * cam = stream->cam;
+		// Disable mirroring if static image
+		int mirroring = (cam) ? (strcmp(ms_web_cam_get_string_id(cam), "StaticImage: Static picture") != 0) : TRUE;
 		ms_filter_call_method(stream->output2, MS_VIDEO_DISPLAY_ENABLE_MIRRORING, &mirroring);
 		ms_filter_call_method(stream->output2, MS_OGL_RENDER, NULL);
 	}
