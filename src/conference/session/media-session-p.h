@@ -161,7 +161,7 @@ private:
 	void setupZrtpHash (SalMediaDescription *md);
 	void setupImEncryptionEngineParameters (SalMediaDescription *md);
 	void transferAlreadyAssignedPayloadTypes (SalMediaDescription *oldMd, SalMediaDescription *md);
-	void updateLocalMediaDescriptionFromIce ();
+	void updateLocalMediaDescriptionFromIce(bool localIsOfferer);
 	void startDtlsOnAllStreams ();
 
 	void freeResources ();
@@ -206,7 +206,8 @@ private:
 	void stunAuthRequestedCb (const char *realm, const char *nonce, const char **username, const char **password, const char **ha1);
 	Stream *getStream(LinphoneStreamType type)const;
 	int portFromStreamIndex(int index);
-
+	SalMediaProto getAudioProto();
+	bool hasAvpf(SalMediaDescription *md)const;
 private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;
@@ -236,6 +237,7 @@ private:
 	int localDescChanged = 0;
 	SalMediaDescription *biggestDesc = nullptr;
 	SalMediaDescription *resultDesc = nullptr;
+	bool localIsOfferer = false;
 	bool expectMediaInAck = false;
 	int freeStreamIndex = 0;
 	unsigned int remoteSessionId = 0;
