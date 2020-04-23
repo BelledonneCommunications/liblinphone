@@ -112,7 +112,7 @@ void MediaSessionPrivate::accepted () {
 						" the ICE gathering will only contain local candidates.";
 				}
 				getStreamsGroup().finishPrepare();
-				updateLocalMediaDescriptionFromIce();
+				updateLocalMediaDescriptionFromIce(localIsOfferer);
 			}
 		break;
 		default:
@@ -434,7 +434,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 			params->initDefault(q->getCore(), LinphoneCallOutgoing);
 		}
 
-		makeLocalMediaDescription(false);
+		makeLocalMediaDescription(rmd == nullptr);
 	}
 	if (rmd) {
 		SalErrorInfo sei;
@@ -735,6 +735,19 @@ void MediaSessionPrivate::initializeParamsAccordingToIncomingCallParams () {
 	}
 }
 
+bool MediaSessionPrivate::hasAvpf(SalMediaDescription *md)const{
+	/* We consider that AVPF is enabled if at least one of these condition is satisfied:
+	 * - all the offered streams have AVPF
+	 * - the video stream has AVPF.
+	 * In practice, this means for a remote media description that AVPF is supported by the far end.
+	 */
+	bool hasAvpf = !!sal_media_description_has_avpf(md);
+	if (mainVideoStreamIndex != -1 && sal_stream_description_has_avpf(&md->streams[mainVideoStreamIndex])){
+		hasAvpf = true;
+	}
+	return hasAvpf;
+}
+
 /**
  * Fix call parameters on incoming call to eg. enable AVPF if the incoming call propose it and it is not enabled locally.
  */
@@ -742,7 +755,9 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (SalMediaDescription *
 	L_Q();
 	LinphoneCore *lc = q->getCore()->getCCore();
 	/* Handle AVPF, SRTP and DTLS */
-	getParams()->enableAvpf(!!sal_media_description_has_avpf(md));
+	
+	
+	getParams()->enableAvpf(hasAvpf(md));
 	if (destProxy)
 		getParams()->setAvpfRrInterval(static_cast<uint16_t>(linphone_proxy_config_get_avpf_rr_interval(destProxy) * 1000));
 	else
@@ -1058,12 +1073,55 @@ void MediaSessionPrivate::addStreamToBundle(SalMediaDescription *md, SalStreamDe
 	sd->rtcp_mux = TRUE;
 }
 
+/* This function is to authorize the downgrade from avpf to non-avpf, when avpf is enabled locally but the remote
+ * offer doesn't offer it consistently for all streams.
+ */
+SalMediaProto MediaSessionPrivate::getAudioProto(SalStreamDescription *remote_stream){
+	SalMediaProto requested = getParams()->getMediaProto();
+	if (remote_stream && !sal_stream_description_has_avpf(remote_stream)) {
+		switch(requested){
+			case SalProtoRtpAvpf:
+				requested = SalProtoRtpAvp;
+			break;
+			case SalProtoRtpSavpf:
+				requested = SalProtoRtpSavp;
+			break;
+			default:
+			break;
+		}
+		
+	}else requested = getAudioProto();
+	return requested;
+}
+
+SalMediaProto MediaSessionPrivate::getAudioProto(){
+	L_Q();
+	/*This property is mainly used for testing hybrid case where the SDP offer is made with AVPF only for video stream.*/
+	SalMediaProto ret = getParams()->getMediaProto();
+	
+	if (linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "no_avpf_for_audio", false)){
+		lInfo() << "Removing AVPF for audio mline.";
+		switch (ret){
+			case SalProtoRtpAvpf:
+				ret = SalProtoRtpAvp;
+			break;
+			case SalProtoRtpSavpf:
+				ret = SalProtoRtpSavp;
+			break;
+			default:
+			break;
+		}
+	}
+	return ret;
+}
+
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	L_Q();
 	bool rtcpMux = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
 	SalMediaDescription *md = sal_media_description_new();
 	SalMediaDescription *oldMd = localDesc;
 
+	this->localIsOfferer = localIsOfferer;
 	assignStreamsIndexes(localIsOfferer);
 
 	getParams()->getPrivate()->adaptToNetwork(q->getCore()->getCCore(), pingTime);
@@ -1117,7 +1175,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	bctbx_list_t *l = NULL;
 	if (mainAudioStreamIndex != -1){
 		l = nullptr;
-		md->streams[mainAudioStreamIndex].proto = getParams()->getMediaProto();
+		md->streams[mainAudioStreamIndex].proto = getAudioProto(&md->streams[mainAudioStreamIndex]);
 		md->streams[mainAudioStreamIndex].dir = getParams()->getPrivate()->getSalAudioDirection();
 		md->streams[mainAudioStreamIndex].type = SalAudio;
 		if (getParams()->audioEnabled() && (l = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1,
@@ -1237,7 +1295,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		}
 	}
 
-	updateLocalMediaDescriptionFromIce();
+	updateLocalMediaDescriptionFromIce(localIsOfferer);
 	if (oldMd) {
 		transferAlreadyAssignedPayloadTypes(oldMd, md);
 		localDescChanged = sal_media_description_equals(md, oldMd);
@@ -1371,10 +1429,12 @@ void MediaSessionPrivate::transferAlreadyAssignedPayloadTypes (SalMediaDescripti
 	}
 }
 
-void MediaSessionPrivate::updateLocalMediaDescriptionFromIce () {
+void MediaSessionPrivate::updateLocalMediaDescriptionFromIce (bool localIsOfferer) {
 	OfferAnswerContext ctx;
+
 	ctx.localMediaDescription = localDesc;
 	ctx.remoteMediaDescription = op ? op->getRemoteMediaDescription() : nullptr;
+	ctx.localIsOfferer = localIsOfferer;
 	getStreamsGroup().fillLocalMediaDescription(ctx);
 	if (op) op->setLocalMediaDescription(localDesc);
 }
@@ -1425,7 +1485,7 @@ void MediaSessionPrivate::freeResources () {
  */
 void MediaSessionPrivate::onGatheringFinished(IceService &service){
 	L_Q();
-	updateLocalMediaDescriptionFromIce();
+	updateLocalMediaDescriptionFromIce(localIsOfferer);
 	switch (state) {
 		case CallSession::State::IncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
@@ -1771,9 +1831,9 @@ void MediaSessionPrivate::updateCurrentParams () const {
 	/* REVISITED
 	 * Previous code was buggy.
 	 * Relying on the mediastream's state (added by jehan: only) to know the current encryption is unreliable.
-	 * For (added by jehan: both DTLS and) ZRTP it is though necessary.
-	 * But for all others the current_params->media_encryption state should reflect (added by jehan: both) what is agreed by the offer/answer
-	 * mechanism  (added by jehan: and encryption status from media which is much stronger than only result of offer/answer )
+	 * For both DTLS and ZRTP it is though necessary.
+	 * But for all others the current_params->media_encryption state should reflect both what is agreed by the offer/answer
+	 * mechanism and encryption status from media which is much stronger than only result of offer/answer.
 	 * Typically there can be inactive streams for which the media layer has no idea of whether they are encrypted or not.
 	 */
 	string authToken = getStreamsGroup().getAuthenticationToken();
@@ -1812,12 +1872,13 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			break;
 	}
 	SalMediaDescription *md = resultDesc;
-	getCurrentParams()->enableAvpf(allStreamsAvpfEnabled() && sal_media_description_has_avpf(md));
-	if (getCurrentParams()->avpfEnabled())
-		getCurrentParams()->setAvpfRrInterval(getAvpfRrInterval());
-	else
-		getCurrentParams()->setAvpfRrInterval(0);
+	
 	if (md) {
+		getCurrentParams()->enableAvpf(hasAvpf(md));
+		if (getCurrentParams()->avpfEnabled())
+			getCurrentParams()->setAvpfRrInterval(getAvpfRrInterval());
+		else
+			getCurrentParams()->setAvpfRrInterval(0);
 		if (mainAudioStreamIndex != -1){
 			SalStreamDescription *sd = &md->streams[mainAudioStreamIndex];
 			getCurrentParams()->setAudioDirection(sd ? MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir) : LinphoneMediaDirectionInactive);
@@ -2194,7 +2255,7 @@ void MediaSession::initiateIncoming () {
 			 * If ICE gathering is done, we can update the local media description immediately.
 			 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
 			 */
-			if (!d->deferIncomingNotification) d->updateLocalMediaDescriptionFromIce();
+			if (!d->deferIncomingNotification) d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 		}
 	}
 }
@@ -2213,7 +2274,7 @@ bool MediaSession::initiateOutgoing () {
 				 * If ICE gathering is done, we can update the local media description immediately.
 				 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
 				 */
-				d->updateLocalMediaDescriptionFromIce();
+				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 			}
 			defer |= ice_needs_defer;
 		}
