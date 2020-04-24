@@ -6151,29 +6151,36 @@ void sip_config_uninit(LinphoneCore *lc)
 	lp_config_set_int(lc->config,"sip","register_only_when_upnp_is_ok",config->register_only_when_upnp_is_ok);
 
 	if (lc->sip_network_state.global_state) {
-		for(elem=config->proxies;elem!=NULL;elem=bctbx_list_next(elem)){
-			LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)(elem->data);
-			_linphone_proxy_config_unpublish(cfg);	/* to unpublish without changing the stored flag enable_publish */
+		bool_t need_to_unregister = FALSE;
+
+		for (elem = config->proxies; elem != NULL; elem = bctbx_list_next(elem)) {
+			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)(elem->data);
+			_linphone_proxy_config_unpublish(cfg); /* to unpublish without changing the stored flag enable_publish */
 
 			/* Do not unregister when push notifications are allowed, otherwise this clears tokens from the SIP server.*/
-			if (!linphone_proxy_config_is_push_notification_allowed(cfg)){
+			if (!linphone_proxy_config_is_push_notification_allowed(cfg)) {
 				_linphone_proxy_config_unregister(cfg);	/* to unregister without changing the stored flag enable_register */
+				need_to_unregister = TRUE;
 			}
 		}
 
-		ms_message("Unregistration started.");
+		if (need_to_unregister) {
+			ms_message("Unregistration started.");
 
-		for (i=0;i<20&&still_registered;i++){
-			still_registered=FALSE;
-			lc->sal->iterate();
-			for(elem=config->proxies;elem!=NULL;elem=bctbx_list_next(elem)){
-				LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)(elem->data);
-				LinphoneRegistrationState state = linphone_proxy_config_get_state(cfg);
-				still_registered = (state==LinphoneRegistrationOk||state==LinphoneRegistrationProgress);
+			for (i = 0; i < 20 && still_registered; i++) {
+				still_registered = FALSE;
+				lc->sal->iterate();
+				for (elem = config->proxies; elem != NULL; elem = bctbx_list_next(elem)) {
+					LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)(elem->data);
+					if (!linphone_proxy_config_is_push_notification_allowed(cfg)) {
+						LinphoneRegistrationState state = linphone_proxy_config_get_state(cfg);
+						still_registered = (state == LinphoneRegistrationOk || state == LinphoneRegistrationProgress);
+					}
+				}
+				ms_usleep(100000);
 			}
-			ms_usleep(100000);
+			if (i >= 20) ms_warning("Cannot complete unregistration, giving up");
 		}
-		if (i>=20) ms_warning("Cannot complete unregistration, giving up");
 	}
 
 	elem = config->proxies;
