@@ -434,7 +434,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 			params->initDefault(q->getCore(), LinphoneCallOutgoing);
 		}
 
-		makeLocalMediaDescription(false);
+		makeLocalMediaDescription(rmd == nullptr);
 	}
 	if (rmd) {
 		SalErrorInfo sei;
