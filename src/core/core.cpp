@@ -654,7 +654,7 @@ std::shared_ptr<PushNotificationMessage> Core::getPushNotificationMessage (const
 		linphone_core_stop(getCCore());
 #if TARGET_OS_IPHONE
 		if (!msg && callId != "dummy_call_id") {
-			ms_message("[push] Executor Core for callId[%s] has been stopped but couldn't get msg from db in time. Looking for msg in UserDefaults", callId.c_str());
+			ms_message("[push] Executor Core for callId[%s] has been stopped but couldn't get the msg in time. Trying to get the msg received by the Main Core that just started", callId.c_str());
 			auto platformHelpers = LinphonePrivate::createIosPlatformHelpers(getCCore()->cppPtr, NULL);
 			msg = platformHelpers->getSharedCoreHelpers()->getPushNotificationMessage(callId);
 			delete platformHelpers;

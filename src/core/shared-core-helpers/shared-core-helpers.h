@@ -73,5 +73,6 @@ public:
 };
 
 std::shared_ptr<SharedCoreHelpers> createIosSharedCoreHelpers (std::shared_ptr<LinphonePrivate::Core> core);
+void uninitSharedCore(LinphoneCore *lc);
 
 LINPHONE_END_NAMESPACE

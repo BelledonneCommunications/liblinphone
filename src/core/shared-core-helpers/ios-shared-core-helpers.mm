@@ -93,6 +93,8 @@ public:
 	bool isCoreShared() override;
 	bool canCoreStart() override;
 	void onCoreMustStop();
+	static void uninitSharedCore(LinphoneCore *lc);
+
 	void resetSharedCoreState() override;
 	void unlockSharedCoreIfNeeded() override;
 	bool isCoreStopRequired() override;
@@ -113,7 +115,9 @@ private:
 	void setupSharedCore(struct _LpConfig *config);
 	bool isSharedCoreStarted();
 	SharedCoreState getSharedCoreState();
+	static SharedCoreState getSharedCoreState(const string &appGroupId);
 	void setSharedCoreState(SharedCoreState sharedCoreState);
+	static void setSharedCoreState(SharedCoreState sharedCoreState, const string &appGroupId);
 	void reloadConfig();
 	void resetSharedCoreLastUpdateTime();
 	NSInteger getSharedCoreLastUpdateTime();
@@ -218,22 +222,27 @@ void IosSharedCoreHelpers::onLinphoneCoreStop() {
 	if (isCoreShared()) {
 		CFRunLoopTimerInvalidate(mUnlockTimer);
 		lInfo() << "[SHARED] stop timer";
+	}
+}
 
-		bool needUnlock = (getSharedCoreState() == SharedCoreState::executorCoreStarted || getSharedCoreState() == SharedCoreState::executorCoreStopping);
+void IosSharedCoreHelpers::uninitSharedCore(LinphoneCore *lc) {
+	struct _LpConfig *config = lc->config;
+	string appGroupId = linphone_config_get_string(config, "shared_core", "app_group_id", "");
 
-		if ((getCore()->getCCore()->is_main_core && getSharedCoreState() == SharedCoreState::mainCoreStarted) ||
-			(!getCore()->getCCore()->is_main_core && getSharedCoreState() == SharedCoreState::executorCoreStarted)) {
-			setSharedCoreState(SharedCoreState::noCoreStarted);
-		}
+	bool needUnlock = (getSharedCoreState(appGroupId) == SharedCoreState::executorCoreStarted || getSharedCoreState(appGroupId) == SharedCoreState::executorCoreStopping);
 
-		if (!getCore()->getCCore()->is_main_core && getSharedCoreState() == SharedCoreState::executorCoreStopping) {
-			setSharedCoreState(SharedCoreState::executorCoreStopped);
-		}
+	if ((lc->is_main_core && getSharedCoreState(appGroupId) == SharedCoreState::mainCoreStarted) ||
+		(!lc->is_main_core && getSharedCoreState(appGroupId) == SharedCoreState::executorCoreStarted)) {
+		setSharedCoreState(SharedCoreState::noCoreStarted, appGroupId);
+	}
 
-		if (needUnlock) {
-			lInfo() << "[push] unlock executorCoreMutex";
-			IosSharedCoreHelpers::executorCoreMutex.unlock();
-		}
+	if (!lc->is_main_core && getSharedCoreState(appGroupId) == SharedCoreState::executorCoreStopping) {
+		setSharedCoreState(SharedCoreState::executorCoreStopped, appGroupId);
+	}
+
+	if (needUnlock) {
+		lInfo() << "[push] unlock executorCoreMutex";
+		IosSharedCoreHelpers::executorCoreMutex.unlock();
 	}
 }
 
@@ -673,21 +682,26 @@ bool IosSharedCoreHelpers::isSharedCoreStarted() {
 }
 
 SharedCoreState IosSharedCoreHelpers::getSharedCoreState() {
+	return IosSharedCoreHelpers::getSharedCoreState(mAppGroupId);
+}
+
+SharedCoreState IosSharedCoreHelpers::getSharedCoreState(const string &appGroupId) {
 	userDefaultMutex.lock();
-	NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
+	NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(appGroupId.c_str())];
     NSInteger state = [defaults integerForKey:@ACTIVE_SHARED_CORE];
 	[defaults release];
 	userDefaultMutex.unlock();
 	return (SharedCoreState) state;
 }
 
-/**
- * Set to false in onLinphoneCoreStop() (called in linphone_core_stop)
- */
 void IosSharedCoreHelpers::setSharedCoreState(SharedCoreState sharedCoreState) {
+	IosSharedCoreHelpers::setSharedCoreState(sharedCoreState, mAppGroupId);
+}
+
+void IosSharedCoreHelpers::setSharedCoreState(SharedCoreState sharedCoreState, const string &appGroupId) {
 	userDefaultMutex.lock();
 	lInfo() << "[SHARED] setSharedCoreState state: " << sharedStateToString(sharedCoreState);
-    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
+    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(appGroupId.c_str())];
     [defaults setInteger:sharedCoreState forKey:@ACTIVE_SHARED_CORE];
 	[defaults release];
 	userDefaultMutex.unlock();
@@ -817,6 +831,10 @@ void IosSharedCoreHelpers::stopSharedCores() {
 
 shared_ptr<SharedCoreHelpers> createIosSharedCoreHelpers (shared_ptr<LinphonePrivate::Core> core) {
 	return dynamic_pointer_cast<SharedCoreHelpers>(make_shared<IosSharedCoreHelpers>(core));
+}
+
+void uninitSharedCore(LinphoneCore *lc) {
+	IosSharedCoreHelpers::uninitSharedCore(lc);
 }
 
 LINPHONE_END_NAMESPACE
