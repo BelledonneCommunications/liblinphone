@@ -22,6 +22,7 @@
 
 #include "content-p.h"
 #include "file-transfer-content.h"
+#include <algorithm>
 
 // =============================================================================
 
@@ -114,6 +115,8 @@ bool FileTransferContent::operator== (const FileTransferContent &other) const {
 void FileTransferContent::setFileName (const string &name) {
 	L_D();
 	d->fileName = name;
+// Invisible characters should not be part of a filename	
+	d->fileName.erase(std::remove_if(d->fileName.begin(), d->fileName.end(), [](const char& c){ return c<' '; }), d->fileName.end());
 }
 
 const string &FileTransferContent::getFileName () const {
