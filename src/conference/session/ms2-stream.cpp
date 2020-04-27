@@ -1092,7 +1092,7 @@ bool MS2Stream::isTransportOwner() const{
 
 int MS2Stream::getAvpfRrInterval()const{
 	MediaStream *ms = getMediaStream();
-	return media_stream_get_state(ms) == MSStreamStarted ? media_stream_get_avpf_rr_interval(ms) : 0;
+	return ms && media_stream_get_state(ms) == MSStreamStarted ? media_stream_get_avpf_rr_interval(ms) : 0;
 }
 
 MS2Stream::~MS2Stream(){

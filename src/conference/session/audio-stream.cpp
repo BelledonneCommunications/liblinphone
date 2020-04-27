@@ -703,6 +703,7 @@ bool MS2AudioStream::echoCancellationEnabled()const{
 
 void MS2AudioStream::finish(){
 	if (mStream){
+		stopRecording();	// ensure to stop recording if recording
 		audio_stream_stop(mStream);
 		mStream = nullptr;
 	}
@@ -711,7 +712,7 @@ void MS2AudioStream::finish(){
 
 MS2AudioStream::~MS2AudioStream(){
 	if (mStream)
-		audio_stream_stop(mStream);
+		finish();
 }
 
 
