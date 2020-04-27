@@ -22,6 +22,7 @@
 
 #include "content-p.h"
 #include "file-content.h"
+#include <algorithm>
 
 // =============================================================================
 
@@ -97,6 +98,8 @@ size_t FileContent::getFileSize () const {
 void FileContent::setFileName (const string &name) {
 	L_D();
 	d->fileName = name;
+// Invisible characters should not be part of a filename	
+	d->fileName.erase(std::remove_if(d->fileName.begin(), d->fileName.end(), [](const char& c){ return c<' '; }), d->fileName.end());
 }
 
 const string &FileContent::getFileName () const {
