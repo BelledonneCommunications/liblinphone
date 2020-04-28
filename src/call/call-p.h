@@ -72,6 +72,9 @@ public:
 	void initializeMediaStreams ();
 	void stopMediaStreams ();
 
+	void setInputAudioDevice(AudioDevice *audioDevice);
+	void setOutputAudioDevice(AudioDevice *audioDevice);
+
 private:
 	void requestNotifyNextVideoFrameDecoded ();
 	void startRemoteRing ();
