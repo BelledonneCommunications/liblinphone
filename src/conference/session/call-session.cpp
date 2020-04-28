@@ -62,8 +62,6 @@ void CallSessionPrivate::notifyReferState () {
 void CallSessionPrivate::setState (CallSession::State newState, const string &message) {
 	L_Q();
 
-//printf("DADA [CallSession] %s %p previous state %s current state %s  next state %s\n", __FUNCTION__,this, Utils::toString(prevState).c_str(), Utils::toString(state).c_str(), Utils::toString(newState).c_str());
-
 	// Keep a ref on the CallSession, otherwise it might get destroyed before the end of the method
 	shared_ptr<CallSession> ref = q->getSharedFromThis();
 	if (state != newState){
