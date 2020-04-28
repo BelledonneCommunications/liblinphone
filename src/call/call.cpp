@@ -871,13 +871,6 @@ void Call::onCameraNotWorking (const std::shared_ptr<CallSession> &session, cons
 	linphone_call_notify_camera_not_working(getSharedFromThis()->toC(), camera_name);
 }
 
-void Call::onRingbackToneRequested (const shared_ptr<CallSession> &session, bool requested) {
-	if (requested && linphone_core_get_remote_ringback_tone(getCore()->getCCore()))
-		mPlayingRingbackTone = true;
-	else if (!requested)
-		mPlayingRingbackTone = false;
-}
-
 bool Call::isPlayingRingbackTone (const shared_ptr<CallSession> &session) {
 	return mPlayingRingbackTone;
 }
