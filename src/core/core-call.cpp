@@ -21,7 +21,7 @@
 #include <math.h>
 
 #include "core-p.h"
-#include "call/call-p.h"
+#include "call/call.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/media-session.h"
 #include "conference/session/streams.h"
@@ -46,7 +46,7 @@ int CorePrivate::addCall (const shared_ptr<Call> &call) {
 	if (!hasCalls())
 		notifySoundcardUsage(true);
 	calls.push_back(call);
-	linphone_core_notify_call_created(q->getCCore(), L_GET_C_BACK_PTR(call));
+	linphone_core_notify_call_created(q->getCCore(), call->toC());
 	return 0;
 }
 
@@ -64,7 +64,7 @@ bool CorePrivate::inviteReplacesABrokenCall (SalCallOp *op) {
 	if (replacedOp)
 		replacedSession = reinterpret_cast<CallSession *>(replacedOp->getUserPointer());
 	for (const auto &call : calls) {
-		shared_ptr<CallSession> session = call->getPrivate()->getActiveSession();
+		shared_ptr<CallSession> session = call->getActiveSession();
 		if (session
 			&& ((session->getPrivate()->isBroken() && op->compareOp(session->getPrivate()->getOp()))
 				|| (replacedSession == session.get() && op->getFrom() == replacedOp->getFrom() && op->getTo() == replacedOp->getTo())
@@ -89,7 +89,7 @@ void CorePrivate::iterateCalls (time_t currentRealTime, bool oneSecondElapsed) c
 	// Make a copy of the list af calls because it may be altered during calls to the Call::iterate method
 	list<shared_ptr<Call>> savedCalls(calls);
 	for (const auto &call : savedCalls) {
-		call->getPrivate()->iterate(currentRealTime, oneSecondElapsed);
+		call->iterate(currentRealTime, oneSecondElapsed);
 	}
 }
 
@@ -127,7 +127,7 @@ void CorePrivate::setVideoWindowId (bool preview, void *id) {
 		}
 	}
 	for (const auto &call : calls) {
-		shared_ptr<MediaSession> ms = dynamic_pointer_cast<MediaSession>(call->getPrivate()->getActiveSession());
+		shared_ptr<MediaSession> ms = dynamic_pointer_cast<MediaSession>(call->getActiveSession());
 		if (ms){
 			if (preview){
 				ms->setNativePreviewWindowId(id);

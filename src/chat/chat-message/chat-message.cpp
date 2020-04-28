@@ -26,7 +26,7 @@
 
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
-#include "call/call-p.h"
+#include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/client-group-to-basic-chat-room.h"
@@ -807,7 +807,7 @@ void ChatMessagePrivate::send () {
 	if (lp_config_get_int(core->getCCore()->config, "sip", "chat_use_call_dialogs", 0) != 0) {
 		lcall = linphone_core_get_call_by_remote_address(core->getCCore(), toAddress.asString().c_str());
 		if (lcall) {
-			shared_ptr<Call> call = L_GET_CPP_PTR_FROM_C_OBJECT(lcall);
+			shared_ptr<Call> call = LinphonePrivate::Call::toCpp(lcall)->getSharedFromThis();
 			if ((call->getState() == CallSession::State::Connected)
 				|| (call->getState() == CallSession::State::StreamsRunning)
 				|| (call->getState() == CallSession::State::Paused)
@@ -815,7 +815,7 @@ void ChatMessagePrivate::send () {
 				|| (call->getState() == CallSession::State::PausedByRemote)
 			) {
 				lInfo() << "Send SIP msg through the existing call";
-				op = call->getPrivate()->getOp();
+				op = call->getOp();
 				string identity = linphone_core_find_best_identity(core->getCCore(), linphone_call_get_remote_address(lcall));
 				if (identity.empty()) {
 					LinphoneAddress *addr = linphone_address_new(toAddress.asString().c_str());
@@ -1347,7 +1347,7 @@ int ChatMessage::putCharacter (uint32_t character) {
 		return -1;
 
 	shared_ptr<Call> call = rttcr->getCall();
-	if (!call || !call->getPrivate()->getMediaStream(LinphoneStreamTypeText))
+	if (!call || !call->getMediaStream(LinphoneStreamTypeText))
 		return -1;
 
 	if (character == newLine || character == crlf || character == lf) {
@@ -1367,7 +1367,7 @@ int ChatMessage::putCharacter (uint32_t character) {
 	}
 
 	text_stream_putchar32(
-		reinterpret_cast<TextStream *>(call->getPrivate()->getMediaStream(LinphoneStreamTypeText)),
+		reinterpret_cast<TextStream *>(call->getMediaStream(LinphoneStreamTypeText)),
 		character
 	);
 	return 0;

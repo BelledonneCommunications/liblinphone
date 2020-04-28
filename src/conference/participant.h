@@ -38,14 +38,11 @@ class ParticipantPrivate;
 class Participant : public Object {
 	// TODO: Remove... It's ugly.
 	friend class Call;
-	friend class CallPrivate;
 	friend class ClientGroupChatRoom;
 	friend class ClientGroupChatRoomPrivate;
 	friend class Conference;
 	friend class LimeX3dhEncryptionEngine;
 	friend class LocalConference;
-	friend class LocalConferenceCall;
-	friend class LocalConferenceCallPrivate;
 	friend class LocalConferenceEventHandler;
 	friend class LocalConferenceEventHandlerPrivate;
 	friend class LocalConferenceListEventHandler;
@@ -54,8 +51,6 @@ class Participant : public Object {
 	friend class MediaSessionPrivate;
 	friend class ParticipantDevice;
 	friend class RemoteConference;
-	friend class RemoteConferenceCall;
-	friend class RemoteConferenceCallPrivate;
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
 

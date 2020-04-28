@@ -98,7 +98,7 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_to_address (const Linph
 /**
  * Returns the value of the header name
 **/
-LINPHONE_PUBLIC const char *linphone_call_get_to_header (const LinphoneCall *call, const char *name);
+LINPHONE_PUBLIC const char *linphone_call_get_to_header (LinphoneCall *call, const char *name);
 
 /**
  * Returns the remote address associated to this call as a string.
@@ -128,7 +128,7 @@ LINPHONE_PUBLIC LinphoneCallLog *linphone_call_get_call_log (const LinphoneCall 
  * @param[in] call #LinphoneCall object
  * @return The refer-to uri of the call (if it was transfered)
 **/
-LINPHONE_PUBLIC const char *linphone_call_get_refer_to (const LinphoneCall *call);
+LINPHONE_PUBLIC const char *linphone_call_get_refer_to (LinphoneCall *call);
 
 /**
  * Returns true if this calls has received a transfer that has not been
