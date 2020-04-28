@@ -71,6 +71,9 @@ public:
 	void createPlayer () const;
 	
 
+	void setInputAudioDevice(AudioDevice *audioDevice);
+	void setOutputAudioDevice(AudioDevice *audioDevice);
+
 private:
 	void requestNotifyNextVideoFrameDecoded ();
 	void startRemoteRing ();
