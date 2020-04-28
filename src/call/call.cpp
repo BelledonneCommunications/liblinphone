@@ -124,8 +124,11 @@ void CallPrivate::initiateIncoming () {
 }
 
 bool CallPrivate::initiateOutgoing () {
+	L_Q();
 	shared_ptr<CallSession> session = getActiveSession();
 	bool defer = session->initiateOutgoing();
+	setOutputAudioDevice(q->getCore()->getDefaultOutputAudioDevice());
+	setInputAudioDevice(q->getCore()->getDefaultInputAudioDevice());
 	session->getPrivate()->createOp();
 	return defer;
 }
@@ -206,6 +209,43 @@ void CallPrivate::terminateBecauseOfLostMedia () {
 		<< " is lost, call is going to be terminated";
 	static_pointer_cast<MediaSession>(getActiveSession())->terminateBecauseOfLostMedia();
 	q->getCore()->getPrivate()->getToneManager()->startNamedTone(getActiveSession(), LinphoneToneCallLost);
+}
+
+void CallPrivate::setInputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
+		return;
+	}
+
+}
+
+void CallPrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
+	L_Q();
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
+		return;
+	}
+
+	RingStream *ringStream = nullptr;
+	switch (q->getState()) {
+		case CallSession::State::OutgoingRinging:
+		case CallSession::State::Pausing:
+		case CallSession::State::Paused:
+			ringStream = q->getCore()->getCCore()->ringstream;
+			if (ringStream) {
+				ring_stream_set_output_ms_snd_card(ringStream, audioDevice->getSoundCard());
+			}
+			break;
+		case CallSession::State::IncomingReceived:
+			ringStream = linphone_ringtoneplayer_get_stream(q->getCore()->getCCore()->ringtoneplayer);
+			if (ringStream) {
+				ring_stream_set_output_ms_snd_card(ringStream, audioDevice->getSoundCard());
+			}
+			break;
+		default:
+			static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
+			break;
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -921,45 +961,16 @@ void Call::setSpeakerVolumeGain (float value) {
 
 void Call::setInputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
+	d->setInputAudioDevice(audioDevice);
 
-	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
-		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
-		return;
-	}
-
-	static_pointer_cast<MediaSession>(d->getActiveSession())->setInputAudioDevice(audioDevice);
 	linphone_call_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
+
 }
 
 void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
+	d->setOutputAudioDevice(audioDevice);
 
-	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
-		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
-		return;
-	}
-
-	RingStream *ringStream = nullptr;
-	switch (getState()) {
-		case CallSession::State::OutgoingInit:
-		case CallSession::State::OutgoingRinging:
-		case CallSession::State::Pausing:
-		case CallSession::State::Paused:
-			ringStream = getCore()->getCCore()->ringstream;
-			if (ringStream) {
-				ring_stream_set_output_ms_snd_card(ringStream, audioDevice->getSoundCard());
-			}
-			break;
-		case CallSession::State::IncomingReceived:
-			ringStream = linphone_ringtoneplayer_get_stream(getCore()->getCCore()->ringtoneplayer);
-			if (ringStream) {
-				ring_stream_set_output_ms_snd_card(ringStream, audioDevice->getSoundCard());
-			}
-			break;
-		default:
-			static_pointer_cast<MediaSession>(d->getActiveSession())->setOutputAudioDevice(audioDevice);
-			break;
-	}
 	linphone_call_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
 }
 
@@ -973,7 +984,6 @@ AudioDevice* Call::getOutputAudioDevice() const {
 
 	RingStream *ringStream = nullptr;
 	switch (getState()) {
-		case CallSession::State::OutgoingInit:
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::Pausing:
 		case CallSession::State::Paused:

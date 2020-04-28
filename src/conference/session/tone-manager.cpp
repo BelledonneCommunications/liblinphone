@@ -425,6 +425,13 @@ void ToneManager::doStartRingbackTone(const std::shared_ptr<CallSession> &sessio
 		}
 	}
 
+	if (ringCard) {
+		AudioDevice * ringDevice = getCore()->findAudioDeviceMatchingMsSoundCard(ringCard);
+		if (ringDevice) {
+			getCore()->getPrivate()->setOutputAudioDevice(ringDevice);
+		}
+	}
+
 	if (lc->sound_conf.remote_ring) {
 		ms_snd_card_set_stream_type(ringCard, MS_SND_CARD_STREAM_VOICE);
 		lc->ringstream = ring_start(lc->factory, lc->sound_conf.remote_ring, 2000, ringCard);
