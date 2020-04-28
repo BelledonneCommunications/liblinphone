@@ -751,7 +751,7 @@ static void createFileTransferInformationsFromVndGsmaRcsFtHttpXml (FileTransferC
 		}
 	}
 	xmlFreeDoc(xmlMessageBody);
-
+	fileContent->setFileName(fileTransferContent->getFileName()); // Copy file name from file transfer content to file content for file body handler
 	fileContent->setFilePath(fileTransferContent->getFilePath()); // Copy file path from file transfer content to file content for file body handler
 	// Link the FileContent to the FileTransferContent
 	fileTransferContent->setFileContent(fileContent);
