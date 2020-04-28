@@ -29,7 +29,7 @@
 #include "conference_private.h"
 
 #include "c-wrapper/c-wrapper.h"
-#include "call/call-p.h"
+#include "call/call.h"
 #include "conference/params/media-session-params-p.h"
 #include "core/core-p.h"
 
@@ -459,17 +459,17 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 
 	if (linphone_call_get_state(call) == LinphoneCallPaused) {
 		const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-			L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams()))->setInConference(true);
+			L_GET_PRIVATE(LinphonePrivate::Call::toCpp(call)->getParams()))->setInConference(true);
 		const_cast<LinphonePrivate::MediaSessionParams *>(
-			L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams())->enableVideo(false);
+			LinphonePrivate::Call::toCpp(call)->getParams())->enableVideo(false);
 		linphone_call_resume(call);
 	} else if (linphone_call_get_state(call) == LinphoneCallStreamsRunning) {
 		LinphoneCallParams *params = linphone_core_create_call_params(m_core, call);
 		linphone_call_params_set_in_conference(params, TRUE);
 		linphone_call_params_enable_video(params, FALSE);
 
-		if (L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeAudio)
-			|| L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeVideo)) {
+		if (LinphonePrivate::Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio)
+			|| LinphonePrivate::Call::toCpp(call)->getMediaStream(LinphoneStreamTypeVideo)) {
 			linphone_call_stop_media_streams(call); /* Free the audio & video local resources */
 			linphone_call_init_media_streams(call);
 		}
@@ -499,7 +499,7 @@ int LocalConference::removeFromConference (LinphoneCall *call, bool_t active) {
 		}
 	}
 	const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-		L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams()))->setInConference(false);
+		L_GET_PRIVATE(LinphonePrivate::Call::toCpp(call)->getParams()))->setInConference(false);
 
 	char *str = linphone_call_get_remote_address_as_string(call);
 	ms_message("%s will be removed from conference", str);
@@ -543,7 +543,7 @@ int LocalConference::convertConferenceToCall () {
 		shared_ptr<LinphonePrivate::Call> call(*it);
 		if (L_GET_PRIVATE(call->getParams())->getInConference()) {
 			bool_t active_after_removed = isIn();
-			return removeFromConference(L_GET_C_BACK_PTR(call), active_after_removed);
+			return removeFromConference(call->toC(), active_after_removed);
 		}
 	}
 	return 0;
@@ -653,12 +653,12 @@ int LocalConference::stopRecording () {
 
 void LocalConference::onCallStreamStarting (LinphoneCall *call, bool isPausedByRemote) {
 	const_cast<LinphonePrivate::MediaSessionParams *>(
-		L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams())->enableVideo(false);
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->enableCamera(false);
+		LinphonePrivate::Call::toCpp(call)->getParams())->enableVideo(false);
+	LinphonePrivate::Call::toCpp(call)->enableCamera(false);
 	ms_message("LocalConference::onCallStreamStarting(): joining AudioStream [%p] of call [%p] into conference",
-		L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeAudio), call);
+		LinphonePrivate::Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio), call);
 	MSAudioEndpoint *ep = ms_audio_endpoint_get_from_stream(
-		reinterpret_cast<AudioStream *>(L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeAudio)),
+		reinterpret_cast<AudioStream *>(LinphonePrivate::Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio)),
 		TRUE);
 	ms_audio_conference_add_member(m_conf, ep);
 	ms_audio_conference_mute_member(m_conf, ep, isPausedByRemote);
@@ -736,7 +736,7 @@ int RemoteConference::addParticipant (LinphoneCall *call) {
 			linphone_call_params_enable_video(params, m_currentParams.videoRequested());
 			m_focusCall = linphone_core_invite_address_with_params(m_core, addr, params);
 			m_localParticipantStream = reinterpret_cast<AudioStream *>(
-				L_GET_PRIVATE_FROM_C_OBJECT(m_focusCall)->getMediaStream(LinphoneStreamTypeAudio));
+				LinphonePrivate::Call::toCpp(m_focusCall)->getMediaStream(LinphoneStreamTypeAudio));
 			m_pendingCalls.push_back(call);
 			callLog = linphone_call_get_call_log(m_focusCall);
 			callLog->was_conference = TRUE;

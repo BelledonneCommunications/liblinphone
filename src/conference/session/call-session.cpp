@@ -24,7 +24,7 @@
 
 #include "address/address-p.h"
 #include "c-wrapper/c-wrapper.h"
-#include "call/call-p.h"
+#include "call/call.h"
 #include "conference/params/call-session-params-p.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/call-session.h"

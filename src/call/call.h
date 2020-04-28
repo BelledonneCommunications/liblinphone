@@ -23,29 +23,42 @@
 #include "conference/params/media-session-params.h"
 #include "conference/session/call-session.h"
 #include "core/core-accessor.h"
-#include "call/audio-device/audio-device.h"
 #include "object/object.h"
+
+#include <belle-sip/object++.hh>
+#include "linphone/api/c-types.h"
+
+#include "object/object-p.h"
+
+#include "conference/session/call-session-listener.h"
+#include "utils/background-task.h"
+
+// TODO: Remove me later.
+#include "private.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
 class Address;
-class CallPrivate;
 class CallSessionPrivate;
 class MediaSessionPrivate;
+class RealTimeTextChatRoom;
 
-class LINPHONE_PUBLIC Call : public Object, public CoreAccessor {
-	friend class CallSessionPrivate;
-	friend class ChatMessage;
-	friend class ChatMessagePrivate;
-	friend class CorePrivate;
-	friend class MediaSessionPrivate;
-	friend class Stream;
 
+class Call : public bellesip::HybridObject<LinphoneCall, Call>, public CoreAccessor, public CallSessionListener {
 public:
-	L_OVERRIDE_SHARED_FROM_THIS(Call);
-
+	Call (
+		std::shared_ptr<Core> core,
+		LinphoneCallDir direction,
+		const Address &from,
+		const Address &to,
+		LinphoneProxyConfig *cfg,
+		SalCallOp *op,
+		const MediaSessionParams *msp
+	);
+	~Call ();
+	
 	LinphoneStatus accept (const MediaSessionParams *msp = nullptr);
 	LinphoneStatus acceptEarlyMedia (const MediaSessionParams *msp = nullptr);
 	LinphoneStatus acceptUpdate (const MediaSessionParams *msp);
@@ -81,7 +94,7 @@ public:
 	void enableEchoLimiter (bool value);
 	bool getAllMuted () const;
 	LinphoneCallStats *getAudioStats () const;
-	std::string getAuthenticationToken () const;
+	std::string getAuthenticationToken () ;
 	bool getAuthenticationTokenVerified () const;
 	float getAverageQuality () const;
 	const MediaSessionParams *getCurrentParams () const;
@@ -102,11 +115,11 @@ public:
 	LinphoneReason getReason () const;
 	float getRecordVolume () const;
 	std::shared_ptr<Call> getReferer () const;
-	std::string getReferTo () const;
+	std::string getReferTo ();
 	const Address &getRemoteAddress () const;
-	std::string getRemoteContact () const;
+	std::string getRemoteContact ();
 	const MediaSessionParams *getRemoteParams () const;
-	std::string getRemoteUserAgent () const;
+	std::string getRemoteUserAgent ();
 	std::shared_ptr<Call> getReplacedCall () const;
 	float getSpeakerVolumeGain () const;
 	CallSession::State getState () const;
@@ -115,7 +128,7 @@ public:
 	MSFormatType getStreamType (int streamIndex) const;
 	LinphoneCallStats *getTextStats () const;
 	const Address &getToAddress () const;
-	std::string getToHeader (const std::string &name) const;
+	std::string getToHeader (const std::string &name);
 	CallSession::State getTransferState () const;
 	std::shared_ptr<Call> getTransferTarget () const;
 	LinphoneCallStats *getVideoStats () const;
@@ -126,21 +139,118 @@ public:
 	void setMicrophoneVolumeGain (float value);
 	void setNativeVideoWindowId (void *id);
 	void setNextVideoFrameDecodedCallback (LinphoneCallCbFunc cb, void *user_data);
-	void requestNotifyNextVideoFrameDecoded();
+	void requestNotifyNextVideoFrameDecoded ();
 	void setParams (const MediaSessionParams *msp);
 	void setSpeakerVolumeGain (float value);
-
+	
+	// -----------------------------------------------------------------------------
+	
 	void setInputAudioDevice(AudioDevice *audioDevice);
 	void setOutputAudioDevice(AudioDevice *audioDevice);
 	AudioDevice *getInputAudioDevice() const;
 	AudioDevice *getOutputAudioDevice() const;
+	
+	// -----------------------------------------------------------------------------
+	void createPlayer () const;
+	void initiateIncoming ();
+	bool initiateOutgoing ();
+	void iterate (time_t currentRealTime, bool oneSecondElapsed);
+	void startIncomingNotification ();
+	void pauseForTransfer ();
+	int startInvite (const Address *destination);
+	std::shared_ptr<Call> startReferredCall (const MediaSessionParams *params);
+	
+	// -----------------------------------------------------------------------------
+	std::shared_ptr<CallSession> getActiveSession () const;
+	std::shared_ptr<RealTimeTextChatRoom> getChatRoom ();
+	LinphoneProxyConfig *getDestProxy () const;
+	IceSession *getIceSession () const;
+	unsigned int getAudioStartCount () const;
+	unsigned int getVideoStartCount () const;
+	unsigned int getTextStartCount () const;
+	// don't make new code relying on this method.
+	MediaStream *getMediaStream (LinphoneStreamType type) const;
+	SalCallOp *getOp () const;
+	bool getSpeakerMuted () const;
+	void setSpeakerMuted (bool muted);
+	bool getMicrophoneMuted () const;
+	void setMicrophoneMuted (bool muted);
+	void initializeMediaStreams ();
+	void stopMediaStreams ();
+	
+	// -----------------------------------------------------------------------------
+	void startRemoteRing ();
+	void terminateBecauseOfLostMedia ();
+	
+	// -----------------------------------------------------------------------------
+	/* CallSessionListener */
+	void onAckBeingSent (const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers) override;
+	void onAckReceived (const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers) override;
+	void onBackgroundTaskToBeStarted (const std::shared_ptr<CallSession> &session) override;
+	void onBackgroundTaskToBeStopped (const std::shared_ptr<CallSession> &session) override;
+	bool onCallSessionAccepted (const std::shared_ptr<CallSession> &session) override;
+	void onCallSessionConferenceStreamStarting (const std::shared_ptr<CallSession> &session, bool mute) override;
+	void onCallSessionConferenceStreamStopping (const std::shared_ptr<CallSession> &session) override;
+	void onCallSessionEarlyFailed (const std::shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) override;
+	void onCallSessionSetReleased (const std::shared_ptr<CallSession> &session) override;
+	void onCallSessionSetTerminated (const std::shared_ptr<CallSession> &session) override;
+	void onCallSessionStartReferred (const std::shared_ptr<CallSession> &session) override;
+	void onCallSessionStateChanged (const std::shared_ptr<CallSession> &session, CallSession::State state, const std::string &message) override;
+	void onCallSessionTransferStateChanged (const std::shared_ptr<CallSession> &session, CallSession::State state) override;
+	void onCheckForAcceptation (const std::shared_ptr<CallSession> &session) override;
+	void onDtmfReceived (const std::shared_ptr<CallSession> &session, char dtmf) override;
+	void onIncomingCallSessionNotified (const std::shared_ptr<CallSession> &session) override;
+	void onIncomingCallSessionStarted (const std::shared_ptr<CallSession> &session) override;
+	void onIncomingCallSessionTimeoutCheck (const std::shared_ptr<CallSession> &session, int elapsed, bool oneSecondElapsed) override;
+	void onInfoReceived (const std::shared_ptr<CallSession> &session, const LinphoneInfoMessage *im) override;
+	void onLossOfMediaDetected (const std::shared_ptr<CallSession> &session) override;
+	void onEncryptionChanged (const std::shared_ptr<CallSession> &session, bool activated, const std::string &authToken) override;
+	void onCallSessionStateChangedForReporting (const std::shared_ptr<CallSession> &session) override;
+	void onRtcpUpdateForReporting (const std::shared_ptr<CallSession> &session, SalStreamType type) override;
+	void onStatsUpdated (const std::shared_ptr<CallSession> &session, const LinphoneCallStats *stats) override;
+	void onUpdateMediaInfoForReporting (const std::shared_ptr<CallSession> &session, int statsType) override;
+	void onResetCurrentSession (const std::shared_ptr<CallSession> &session) override;
+	void onSetCurrentSession (const std::shared_ptr<CallSession> &session) override;
+	void onFirstVideoFrameDecoded (const std::shared_ptr<CallSession> &session) override;
+	void onResetFirstVideoFrameDecoded (const std::shared_ptr<CallSession> &session) override;
+	void onCameraNotWorking (const std::shared_ptr<CallSession> &session, const char *camera_name) override;
+	void onRingbackToneRequested (const std::shared_ptr<CallSession> &session, bool requested) override;
+	bool areSoundResourcesAvailable (const std::shared_ptr<CallSession> &session) override;
+	bool isPlayingRingbackTone (const std::shared_ptr<CallSession> &session) override;
+	void onRealTimeTextCharacterReceived (const std::shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *character) override;
+	void onTmmbrReceived(const std::shared_ptr<CallSession> &session, int streamIndex, int tmmbr) override;
+	void onSnapshotTaken(const std::shared_ptr<CallSession> &session, const char *file_path) override;
 
-protected:
-	Call (CallPrivate &p, std::shared_ptr<Core> core);
+
+	LinphoneConference *getConference () const;
+	void setConference (LinphoneConference *ref);
+	MSAudioEndpoint *getEndpoint () const;
+	void setEndpoint (MSAudioEndpoint *endpoint);
+	bctbx_list_t *getCallbacksList () const;
+	LinphoneCallCbs *getCurrentCbs () const;
+	void setCurrentCbs (LinphoneCallCbs *cbs);
+	void addCallbacks (LinphoneCallCbs *cbs);
+	void removeCallbacks (LinphoneCallCbs *cbs);
+	
 
 private:
-	L_DECLARE_PRIVATE(Call);
-	L_DISABLE_COPY(Call);
+	std::shared_ptr<Participant> mActiveParticipant = nullptr;
+	mutable LinphonePlayer *mPlayer = nullptr;
+	CallCallbackObj mNextVideoFrameDecoded;
+	mutable std::shared_ptr<RealTimeTextChatRoom> mChatRoom = nullptr;
+	bool mPlayingRingbackTone = false;
+
+	BackgroundTask mBgTask;
+	
+	bctbx_list_t *mCallbacks;
+	LinphoneCallCbs *mCurrentCbs;
+	char *mAuthenticationTokenCache;
+	mutable char *mReferToCache;
+	char *mRemoteContactCache;
+	char *mRemoteUserAgentCache;
+	mutable char *mToHeaderCache;
+	LinphoneConference *mConfRef;
+	MSAudioEndpoint *mEndpoint;
 };
 
 LINPHONE_END_NAMESPACE

@@ -25,7 +25,6 @@
 #include "core/core.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
-#include "call/call-p.h"
 #include "conference/participant.h"
 #include "utils/payload-type-handler.h"
 #include "conference/params/media-session-params-p.h"
@@ -117,7 +116,7 @@ int Stream::selectRandomPort (pair<int, int> portRange) {
 		
 		for (const bctbx_list_t *elem = linphone_core_get_calls(getCCore()); elem != nullptr; elem = bctbx_list_next(elem)) {
 			LinphoneCall *lcall = reinterpret_cast<LinphoneCall *>(bctbx_list_get_data(elem));
-			shared_ptr<MediaSession> session = static_pointer_cast<MediaSession>(L_GET_CPP_PTR_FROM_C_OBJECT(lcall)->getPrivate()->getActiveSession());
+			shared_ptr<MediaSession> session = static_pointer_cast<MediaSession>(LinphonePrivate::Call::toCpp(lcall)->getActiveSession());
 			if (session->getPrivate()->getStreamsGroup().isPortUsed(triedPort)) {
 				alreadyUsed = true;
 				break;
@@ -138,7 +137,7 @@ int Stream::selectFixedPort (pair<int, int> portRange) {
 		bool alreadyUsed = false;
 		for (const bctbx_list_t *elem = linphone_core_get_calls(getCCore()); elem != nullptr; elem = bctbx_list_next(elem)) {
 			LinphoneCall *lcall = reinterpret_cast<LinphoneCall *>(bctbx_list_get_data(elem));
-			shared_ptr<MediaSession> session = static_pointer_cast<MediaSession>(L_GET_CPP_PTR_FROM_C_OBJECT(lcall)->getPrivate()->getActiveSession());
+			shared_ptr<MediaSession> session = static_pointer_cast<MediaSession>(LinphonePrivate::Call::toCpp(lcall)->getActiveSession());
 			if (session->getPrivate()->getStreamsGroup().isPortUsed(triedPort)) {
 				alreadyUsed = true;
 				break;

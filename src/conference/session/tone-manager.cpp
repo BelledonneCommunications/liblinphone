@@ -20,7 +20,7 @@
 #include "tone-manager.h"
 #include "linphone/utils/utils.h"
 #include "logger/logger.h"
-#include "call/call-p.h"
+#include "call/call.h"
 #include "conference/session/media-session.h"
 #include "conference/session/media-session-p.h"
 #include "linphone/utils/general.h"

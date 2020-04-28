@@ -33,7 +33,6 @@
 
 #define L_REGISTER_TYPES(F) \
 	F(Address, Address) \
-	F(Call, Call) \
 	F(ChatMessage, ChatMessage) \
 	F(AbstractChatRoom, ChatRoom) \
 	F(Core, Core) \
@@ -55,8 +54,6 @@
 	F(AbstractChatRoom, ClientGroupToBasicChatRoom) \
 	F(AbstractChatRoom, RealTimeTextChatRoom) \
 	F(AbstractChatRoom, ServerGroupChatRoom) \
-	F(Call, LocalConferenceCall) \
-	F(Call, RemoteConferenceCall) \
 	F(EventLog, ConferenceCallEvent) \
 	F(EventLog, ConferenceChatMessageEvent) \
 	F(EventLog, ConferenceEvent) \
@@ -81,6 +78,7 @@ BELLE_SIP_TYPE_ID(LinphoneAccountCreatorService),
 BELLE_SIP_TYPE_ID(LinphoneAudioDevice),
 BELLE_SIP_TYPE_ID(LinphoneAuthInfo),
 BELLE_SIP_TYPE_ID(LinphoneBuffer),
+BELLE_SIP_TYPE_ID(LinphoneCall),
 BELLE_SIP_TYPE_ID(LinphoneCallCbs),
 BELLE_SIP_TYPE_ID(LinphoneCallLog),
 BELLE_SIP_TYPE_ID(LinphoneCallStats),

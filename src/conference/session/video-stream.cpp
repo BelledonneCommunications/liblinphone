@@ -28,7 +28,6 @@
 #include "core/core.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
-#include "call/call-p.h"
 #include "conference/participant.h"
 #include "conference/params/media-session-params-p.h"
 
