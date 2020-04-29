@@ -1006,7 +1006,7 @@ static void file_transfer_special_filenames(void) {
 #ifdef _WIN32
 		const char * illegal_characters = "\\/:*\"<>|";
 #elif defined(__APPLE__)
-		const char * illegal_characters = ":";
+		const char * illegal_characters = ":/";
 #else
 		const char * illegal_characters = "/";
 #endif
