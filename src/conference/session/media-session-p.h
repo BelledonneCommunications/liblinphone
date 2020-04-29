@@ -123,7 +123,7 @@ public:
 			currentOutputAudioDevice->ref();
 		}
 	}
-	std::shared_ptr<Participant> getMe () const;
+	Participant* getMe () const;
 	void setDtlsFingerprint(const std::string &fingerPrint);
 	const std::string & getDtlsFingerprint()const;
 	bool isEncryptionMandatory () const;
@@ -231,7 +231,7 @@ private:
 	static const int ecStateMaxLen;
 	static constexpr const int rtpExtHeaderMidNumber = 1;
 
-	std::weak_ptr<Participant> me;
+	Participant* me = nullptr;
 	
 	std::unique_ptr<StreamsGroup> streamsGroup;
 	int mainAudioStreamIndex = -1;
