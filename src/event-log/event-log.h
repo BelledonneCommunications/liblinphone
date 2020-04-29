@@ -74,6 +74,7 @@ protected:
 	EventLog (EventLogPrivate &p, Type type, time_t creationTime);
 
 private:
+	void resetStorageId();
 	L_DECLARE_PRIVATE(EventLog);
 	L_DISABLE_COPY(EventLog);
 };
