@@ -185,11 +185,6 @@ typedef struct _LinphoneParticipantImdnState LinphoneParticipantImdnState;
 /**
  * @ingroup misc
  */
-typedef struct _LinphoneParticipantDevice LinphoneParticipantDevice;
-
-/**
- * @ingroup misc
- */
 typedef struct _LinphoneParticipantDeviceIdentity LinphoneParticipantDeviceIdentity;
 
 /**
