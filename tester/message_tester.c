@@ -1014,7 +1014,7 @@ static void file_transfer_special_filenames(void) {
 			filename_to_send[i-33]=(char)i;
 		for(int i = 0 ; illegal_characters[i] != '\0' ; ++i)
 			filename_to_send[(int)illegal_characters[i]-33] = ' ';// Remove illegal characters
-		strcpy(filename_to_send+128-33, ".mkv");
+		strcpy(filename_to_send+128-33, ".svg");
 		for(int i = 31 ; i < 128; ++i){// First loop test the fullname.
 			bool_t do_test = !( ('0'<=i && i<='9') || ('A'<=i && i<='Z') || ('a'<=i && i<='z') );// remove normal characters from test
 			if( do_test && i > 31){// Build new filename
@@ -1025,7 +1025,7 @@ static void file_transfer_special_filenames(void) {
 					do_test = FALSE;
 				else {
 					filename_to_send[0] = (char)i;
-					strcpy(filename_to_send+1, ".mkv");
+					strcpy(filename_to_send+1, ".svg");
 				}
 			}
 			if( do_test){
