@@ -109,7 +109,6 @@ endif()
 add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
 
 set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
-	address/address-p.h
 	address/address.h
 	address/identity-address.h
 	address/identity-address-parser.h
@@ -157,9 +156,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/notification/is-composing.h
 	conference/conference-id.h
 	conference/conference-listener.h
-	conference/conference-p.h
 	conference/conference.h
-	conference/local-conference-p.h
 	conference/local-conference.h
 	conference/params/call-session-params-p.h
 	conference/params/call-session-params.h
@@ -168,9 +165,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/participant-device.h
 	conference/participant-imdn-state-p.h
 	conference/participant-imdn-state.h
-	conference/participant-p.h
 	conference/participant.h
-	conference/remote-conference-p.h
 	conference/remote-conference.h
 	conference/session/call-session-listener.h
 	conference/session/call-session-p.h
@@ -263,10 +258,8 @@ if(ENABLE_ADVANCED_IM)
 		chat/chat-room/proxy-chat-room.h
 		chat/chat-room/server-group-chat-room-p.h
 		chat/chat-room/server-group-chat-room.h
-		conference/handlers/local-conference-event-handler-p.h
 		conference/handlers/local-conference-event-handler.h
 		conference/handlers/local-conference-list-event-handler.h
-		conference/handlers/remote-conference-event-handler-p.h
 		conference/handlers/remote-conference-event-handler.h
 		conference/handlers/remote-conference-list-event-handler.h
 		xml/conference-info.h

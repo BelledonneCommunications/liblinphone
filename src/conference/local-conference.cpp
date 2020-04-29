@@ -24,9 +24,9 @@
 #ifdef HAVE_ADVANCED_IM
 #include "handlers/local-conference-event-handler.h"
 #endif
-#include "local-conference-p.h"
+#include "local-conference.h"
 #include "logger/logger.h"
-#include "participant-p.h"
+#include "participant.h"
 
 // =============================================================================
 
@@ -35,42 +35,38 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 LocalConference::LocalConference (const shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener)
-	: Conference(*new LocalConferencePrivate, core, myAddress, listener) {
+	: Conference(core, myAddress, listener) {
 #ifdef HAVE_ADVANCED_IM
-	L_D();
-	d->eventHandler.reset(new LocalConferenceEventHandler(this));
+	eventHandler.reset(new LocalConferenceEventHandler(this));
 #endif
 }
 
 LocalConference::~LocalConference () {
 #ifdef HAVE_ADVANCED_IM
-	L_D();
-	d->eventHandler.reset();
+	eventHandler.reset();
 #endif
 }
 
 // -----------------------------------------------------------------------------
 
 bool LocalConference::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
-	L_D();
 	shared_ptr<Participant> participant = findParticipant(addr);
 	if (participant) {
 		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the LocalConference";
 		return false;
 	}
-	participant = make_shared<Participant>(this, addr);
-	participant->getPrivate()->createSession(*this, params, hasMedia, d->listener);
-	d->participants.push_back(participant);
-	if (!d->activeParticipant)
-		d->activeParticipant = participant;
+	participant = Participant::create(this,addr);
+	participant->createSession(*this, params, hasMedia, listener);
+	participants.push_back(participant);
+	if (!activeParticipant)
+		activeParticipant = participant;
 	return true;
 }
 
 bool LocalConference::removeParticipant (const shared_ptr<Participant> &participant) {
-	L_D();
-	for (const auto &p : d->participants) {
+	for (const auto &p : participants) {
 		if (participant->getAddress() == p->getAddress()) {
-			d->participants.remove(p);
+			participants.remove(p);
 			return true;
 		}
 	}
