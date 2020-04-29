@@ -27,7 +27,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class RemoteConferencePrivate;
+class RemoteConferenceEventHandler;
 
 class LINPHONE_PUBLIC RemoteConference : public Conference {
 	friend class ClientGroupChatRoomPrivate;
@@ -41,6 +41,10 @@ public:
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 
 protected:
+	std::shared_ptr<Participant> focus;
+	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
+
+
 	/* ConferenceListener */
 	void onConferenceCreated (const IdentityAddress &addr) override;
 	void onConferenceTerminated (const IdentityAddress &addr) override;
@@ -53,7 +57,6 @@ protected:
 	void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) override;
 
 private:
-	L_DECLARE_PRIVATE(RemoteConference);
 	L_DISABLE_COPY(RemoteConference);
 };
 
