@@ -549,7 +549,7 @@ void IosSharedCoreHelpers::removeCallIdFromList(string callId) {
 	if (IosSharedCoreHelpers::callIdList.erase(callId)) {
 		lInfo() << "[push] removed " << callId.c_str() << " from callIdList";
 	} else {
-		lInfo() << "[push] unable to remove " << callId.c_str() << "from callIdList: not found";
+		lInfo() << "[push] unable to remove " << callId.c_str() << " from callIdList: not found";
 	}
 	IosSharedCoreHelpers::callIdListMutex.unlock();
 }
