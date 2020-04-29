@@ -611,7 +611,7 @@ static void on_push_notification_chat_room_invite_received(LinphoneCore *lc, Lin
 	}
 }
 
-shared_ptr<ChatRoom> IosSharedCoreHelpers::getChatRoomFromAddr(const string &crAddr) { // TODO PAUL : put callback if msg is received by this core -> put msg in userdefaults
+shared_ptr<ChatRoom> IosSharedCoreHelpers::getChatRoomFromAddr(const string &crAddr) {
 	lInfo() << "[push] " << __FUNCTION__ << ". looking for chatroom " << mChatRoomAddr;
 	mChatRoomAddr = crAddr;
 	mChatRoomInvite = nullptr;
@@ -623,6 +623,7 @@ shared_ptr<ChatRoom> IosSharedCoreHelpers::getChatRoomFromAddr(const string &crA
 	lInfo() << "[push] core started";
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_chat_room_state_changed(cbs, on_push_notification_chat_room_invite_received);
+	linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
 	linphone_core_add_callbacks(getCore()->getCCore(), cbs);
 	linphone_core_cbs_unref(cbs);
 
