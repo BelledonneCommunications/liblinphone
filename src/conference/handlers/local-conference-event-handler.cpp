@@ -364,7 +364,7 @@ string LocalConferenceEventHandler::createNotify (ConferenceType confInfo, bool 
 	return notify.str();
 }
 
-string LocalConferenceEventHandler::createNotifySubjectChanged (const string &subject) {
+string LocalConferenceEventHandler::createNotifySubjectChanged (const string &subject, int notifyId) {
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
