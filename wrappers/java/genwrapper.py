@@ -761,7 +761,23 @@ class GenWrapper(object):
             'linphone_factory_clean',
             'linphone_call_zoom_video',
             'linphone_core_get_zrtp_cache_db',
-            'linphone_config_get_range'
+            'linphone_config_get_range',
+            'linphone_factory_create_shared_core',
+            'linphone_factory_create_shared_core_with_config',
+            'linphone_config_new_for_shared_core',
+            'linphone_push_notification_message_new',
+            'linphone_push_notification_message_ref',
+            'linphone_push_notification_message_unref',
+            'linphone_push_notification_message_is_using_user_defaults',
+            'linphone_push_notification_message_get_call_id',
+            'linphone_push_notification_message_is_text',
+            'linphone_push_notification_message_get_text_content',
+            'linphone_push_notification_message_get_subject',
+            'linphone_push_notification_message_get_from_addr',
+            'linphone_push_notification_message_get_local_addr',
+            'linphone_push_notification_message_get_peer_addr',
+            'linphone_core_get_new_message_from_callid',
+            'linphone_core_get_new_chat_room_from_conf_addr'
         ]
         self.parser.parse_all()
         self.translator = JavaTranslator(package, exceptions)

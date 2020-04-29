@@ -140,6 +140,9 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3 (
  * An "Executor Core" can't start unless no other #LinphoneCore is started. It can be stopped by a "Main Core" and
  * switch to #LinphoneGlobalState Off at any time.
  *
+ * Shared Executor Core are used in iOS UNNotificationServiceExtension to receive new messages from push notifications.
+ * When the application is in background, its Shared Main Core is stopped.
+ *
  * The #LinphoneCore object is not started automatically, you need to call linphone_core_start() to that effect.
  * The returned #LinphoneCore will be in #LinphoneGlobalState Ready.
  * Core ressources can be released using linphone_core_stop() which is strongly encouraged on garbage collected languages.
@@ -238,6 +241,9 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_3 (
  * A "Main Core" automatically stops a running "Executor Core" when calling linphone_core_start()
  * An "Executor Core" can't start unless no other #LinphoneCore is started. It can be stopped by a "Main Core" and
  * switch to #LinphoneGlobalState Off at any time.
+ *
+ * Shared Executor Core are used in iOS UNNotificationServiceExtension to receive new messages from push notifications.
+ * When the application is in background, its Shared Main Core is stopped.
  *
  * The #LinphoneCore object is not started automatically, you need to call linphone_core_start() to that effect.
  * The returned #LinphoneCore will be in #LinphoneGlobalState Ready.
