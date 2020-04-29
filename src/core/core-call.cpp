@@ -213,14 +213,14 @@ void Core::soundcardHintCheck () {
 	}
 }
 
-void Core::soundcardAudioSessionActivated (bool actived) {
+void Core::soundcardActivateAudioSession (bool actived) {
 	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
 	if (card) {
 		ms_snd_card_notify_audio_session_activated(card, actived);
 	}
 }
 
-void Core::soundcardCallkitEnabled (bool enabled) {
+void Core::soundcardEnableCallkit (bool enabled) {
 	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
 	if (card) {
 		ms_snd_card_app_notifies_activation(card, enabled);
