@@ -48,7 +48,6 @@ public:
 
 	const ConferenceId &getConferenceId() const;
 	unsigned int getLastNotify () const;
-	void invalidateSubscription ();
 
 protected:
 	void simpleNotifyReceived (const std::string &xmlBody);
