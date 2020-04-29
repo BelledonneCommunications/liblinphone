@@ -23,7 +23,7 @@
 #include "address/identity-address.h"
 #include "conference/conference-listener.h"
 #include "conference/handlers/local-conference-event-handler.h"
-#include "conference/handlers/remote-conference-event-handler-p.h"
+#include "conference/handlers/remote-conference-event-handler.h"
 #include "conference/local-conference-p.h"
 #include "conference/local-conference.h"
 #include "conference/participant-p.h"
