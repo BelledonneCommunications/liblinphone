@@ -20,11 +20,11 @@
 //#include <iomanip>
 //#include <math.h>
 
-#include "address/address-p.h"
+#include "address/address.h"
 #include "call/call-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
 #include "conference/params/media-session-params-p.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
 #include "core/core-p.h"
@@ -593,13 +593,12 @@ int MediaSessionPrivate::sendDtmf (void *data, unsigned int revents) {
 
 // -----------------------------------------------------------------------------
 
-shared_ptr<Participant> MediaSessionPrivate::getMe () const {
-	shared_ptr<Participant> participant = me.lock();
-	if (!participant) {
+Participant* MediaSessionPrivate::getMe () const {
+	if (!me) {
 		lWarning() << "Unable to get valid Participant instance";
 		throw std::bad_weak_ptr();
 	}
-	return participant;
+	return me;
 }
 
 void MediaSessionPrivate::setState (CallSession::State newState, const string &message) {
@@ -989,7 +988,7 @@ void MediaSessionPrivate::selectOutgoingIpVersion () {
 		if (destProxy && destProxy->op) {
 			// We can determine from the proxy connection whether IPv6 works - this is the most reliable
 			af = destProxy->op->getAddressFamily();
-		} else if (sal_address_is_ipv6(L_GET_PRIVATE_FROM_C_OBJECT(to)->getInternalAddress())) {
+		} else if (sal_address_is_ipv6(L_GET_CPP_PTR_FROM_C_OBJECT(to)->getInternalAddress())) {
 			af = AF_INET6;
 		}
 
@@ -2113,7 +2112,7 @@ IceSession *MediaSessionPrivate::getIceSession()const{
 
 // =============================================================================
 
-MediaSession::MediaSession (const shared_ptr<Core> &core, shared_ptr<Participant> me, const CallSessionParams *params, CallSessionListener *listener)
+MediaSession::MediaSession (const shared_ptr<Core> &core, Participant* me, const CallSessionParams *params, CallSessionListener *listener)
 	: CallSession(*new MediaSessionPrivate, core) {
 	L_D();
 	d->me = me;
