@@ -67,6 +67,7 @@ set(LINPHONE_SOURCE_FILES_C
 	im_encryption_engine.c
 	linphonecall.c
 	linphonecore.c
+	linphoneconference.c
 	linphone_tunnel_config.c
 	localplayer.c
 	logging.c
@@ -126,9 +127,6 @@ endif()
 
 if(BELCARD_FOUND)
 	list(APPEND LINPHONE_SOURCE_FILES_CXX vcard.cc)
-	if(NOT MSVC)
-		list(APPEND STRICT_OPTIONS_CXX "-std=c++11")
-	endif()
 else()
 	list(APPEND LINPHONE_SOURCE_FILES_C vcard_stubs.c)
 endif()

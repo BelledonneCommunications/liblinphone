@@ -410,6 +410,14 @@ typedef LinphoneCoreCbsFriendListRemovedCb LinphoneCoreFriendListRemovedCb;
 typedef void (*LinphoneCoreCbsVersionUpdateCheckResultReceivedCb) (LinphoneCore *core, LinphoneVersionUpdateCheckResult result, const char *version, const char *url);
 
 /**
+ * Callback prototype telling that a #LinphoneConference state has changed.
+ * @param[in] core #LinphoneCore object @notnil
+ * @param[in] conference The #LinphoneConference object for which the state has changed @notnil
+ * @param[in] state the current #LinphoneChatRoomState
+ */
+typedef void (*LinphoneCoreCbsConferenceStateChangedCb) (LinphoneCore * core, LinphoneConference *conference, LinphoneConferenceState state);
+
+/**
  * Callback prototype telling that a #LinphoneChatRoom state has changed.
  * @param core #LinphoneCore object @notnil
  * @param chat_room The #LinphoneChatRoom object for which the state has changed @notnil

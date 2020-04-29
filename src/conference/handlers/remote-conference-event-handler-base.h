@@ -17,32 +17,29 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_LOCAL_CONFERENCE_P_H_
-#define _L_LOCAL_CONFERENCE_P_H_
+#ifndef _L_REMOTE_CONFERENCE_EVENT_HANDLER_BASE_H_
+#define _L_REMOTE_CONFERENCE_EVENT_HANDLER_BASE_H_
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "conference-p.h"
-#include "local-conference.h"
+#include "conference/conference-id.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LocalConferenceEventHandler;
+class ConferenceId;
 
-class LocalConferencePrivate : public ConferencePrivate {
+class LINPHONE_PUBLIC RemoteConferenceEventHandlerBase {
+	friend class ClientGroupChatRoom;
+
 public:
-#ifdef HAVE_ADVANCED_IM
-	std::unique_ptr<LocalConferenceEventHandler> eventHandler;
-#endif
+	virtual ~RemoteConferenceEventHandlerBase() = default;
 
-private:
-	L_DECLARE_PUBLIC(LocalConference);
+	virtual void subscribe () = 0;
+	virtual void unsubscribe () = 0;
+	virtual void invalidateSubscription () = 0;
+
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_LOCAL_CONFERENCE_P_H_
+#endif // ifndef _L_REMOTE_CONFERENCE_EVENT_HANDLER_BASE_H_

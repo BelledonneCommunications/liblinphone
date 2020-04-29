@@ -24,7 +24,7 @@
 #include "chat/modifier/cpim-chat-message-modifier.h"
 #include "content/content-manager.h"
 #include "content/header/header-param.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "conference/participant-device.h"
 #include "core/core.h"
 #include "c-wrapper/c-wrapper.h"
@@ -159,8 +159,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
 
 	// Check if chatroom is encrypted or not
-	shared_ptr<ClientGroupChatRoom> cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
-	if (cgcr->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
+	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
 		lInfo() << "[LIME] this chatroom is encrypted, proceed to encrypt outgoing message";
 	} else {
 		lInfo() << "[LIME] this chatroom is not encrypted, no need to encrypt outgoing message";
@@ -183,7 +182,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	const list<shared_ptr<Participant>> participants = chatRoom->getParticipants();
 	for (const shared_ptr<Participant> &participant : participants) {
 		int nbDevice = 0;
-		const list<shared_ptr<ParticipantDevice>> devices = participant->getPrivate()->getDevices();
+		const list<shared_ptr<ParticipantDevice>> devices = participant->getDevices();
 		for (const shared_ptr<ParticipantDevice> &device : devices) {
 			recipients->emplace_back(device->getAddress().asString());
 			nbDevice++;
@@ -193,7 +192,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 
 	// Add potential other devices of the sender participant
 	int nbDevice = 0;
-	const list<shared_ptr<ParticipantDevice>> senderDevices = chatRoom->getMe()->getPrivate()->getDevices();
+	const list<shared_ptr<ParticipantDevice>> senderDevices = chatRoom->getMe()->getDevices();
 	for (const auto &senderDevice : senderDevices) {
 		if (senderDevice->getAddress() != chatRoom->getLocalAddress()) {
 			recipients->emplace_back(senderDevice->getAddress().asString());
@@ -842,7 +841,7 @@ shared_ptr<ConferenceSecurityEvent> LimeX3dhEncryptionEngine::onDeviceAdded (
 ) {
 	lime::PeerDeviceStatus newDeviceStatus = limeManager->get_peerDeviceStatus(newDeviceAddr.asString());
 	int maxNbDevicesPerParticipant = linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())), "lime", "max_nb_device_per_participant", INT_MAX);
-	int nbDevice = int(participant->getPrivate()->getDevices().size());
+	int nbDevice = int(participant->getDevices().size());
 	shared_ptr<ConferenceSecurityEvent> securityEvent = nullptr;
 
 	// Check if the new participant device is unexpected in which case a security alert is created

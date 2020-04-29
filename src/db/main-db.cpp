@@ -29,7 +29,7 @@
 #include "chat/chat-room/server-group-chat-room.h"
 #endif
 #include "conference/participant-device.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "core/core-p.h"
 #include "event-log/event-log-p.h"
 #include "event-log/events.h"
@@ -268,6 +268,13 @@ shared_ptr<AbstractChatRoom> MainDbPrivate::findChatRoom (const ConferenceId &co
 	return chatRoom;
 }
 
+shared_ptr<MediaConference::Conference> MainDbPrivate::findAudioVideoConference (const ConferenceId &conferenceId) const {
+	L_Q();
+	shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(conferenceId);
+	if (!conference)
+		lError() << "Unable to find chat room: " << conferenceId << ".";
+	return conference;
+}
 // -----------------------------------------------------------------------------
 // Low level API.
 // -----------------------------------------------------------------------------
@@ -409,7 +416,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 			insertSipAddress(me->getAddress().asString()),
 			me->isAdmin()
 		);
-		for (const auto &device : me->getPrivate()->getDevices())
+		for (const auto &device : me->getDevices())
 			insertChatRoomParticipantDevice(meId, insertSipAddress(device->getAddress().asString()), device->getName());
 	}
 
@@ -419,7 +426,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 			insertSipAddress(participant->getAddress().asString()),
 			participant->isAdmin()
 		);
-		for (const auto &device : participant->getPrivate()->getDevices())
+		for (const auto &device : participant->getDevices())
 			insertChatRoomParticipantDevice(participantId, insertSipAddress(device->getAddress().asString()), device->getName());
 	}
 
@@ -782,13 +789,18 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantEvent (
 	EventLog::Type type,
 	const soci::row &row
 ) const {
-	return make_shared<ConferenceParticipantEvent>(
+
+	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
+	IdentityAddress participantAddress(IdentityAddress(row.get<string>(12)));
+
+	std::shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		type,
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		getConferenceEventNotifyIdFromRow(row),
-		IdentityAddress(row.get<string>(12))
+		participantAddress
 	);
+	event->setNotifyId(getConferenceEventNotifyIdFromRow(row));
+	return event;
 }
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantDeviceEvent (
@@ -796,14 +808,19 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantDeviceEvent (
 	EventLog::Type type,
 	const soci::row &row
 ) const {
-	return make_shared<ConferenceParticipantDeviceEvent>(
+	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
+	IdentityAddress participantAddress(IdentityAddress(row.get<string>(12)));
+	IdentityAddress deviceAddress(IdentityAddress(row.get<string>(11)));
+
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		type,
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		getConferenceEventNotifyIdFromRow(row),
-		IdentityAddress(row.get<string>(12)),
-		IdentityAddress(row.get<string>(11))
+		participantAddress,
+		deviceAddress
 	);
+	event->setNotifyId(getConferenceEventNotifyIdFromRow(row));
+	return event;
 }
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceSecurityEvent (
@@ -837,12 +854,13 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceSubjectEvent (
 	EventLog::Type type,
 	const soci::row &row
 ) const {
-	return make_shared<ConferenceSubjectEvent>(
+	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		getConferenceEventNotifyIdFromRow(row),
 		row.get<string>(13)
 	);
+	event->setNotifyId(getConferenceEventNotifyIdFromRow(row));
+	return event;
 }
 #endif
 
@@ -3262,8 +3280,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 		soci::rowset<soci::row> rows = (session->prepare << query);
 		for (const auto &row : rows) {
 			ConferenceId conferenceId = ConferenceId(
-				IdentityAddress(row.get<string>(1)),
-				IdentityAddress(row.get<string>(2))
+				ConferenceAddress(row.get<string>(1)),
+				ConferenceAddress(row.get<string>(2))
 			);
 			
 			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
@@ -3302,9 +3320,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 				soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 				shared_ptr<Participant> me;
 				for (const auto &row : rows) {
-					shared_ptr<Participant> participant = make_shared<Participant>(nullptr, IdentityAddress(row.get<string>(1)));
-					ParticipantPrivate *dParticipant = participant->getPrivate();
-					dParticipant->setAdmin(!!row.get<int>(2));
+					shared_ptr<Participant> participant = Participant::create(nullptr, IdentityAddress(row.get<string>(1)));
+					participant->setAdmin(!!row.get<int>(2));
 
 					// Fetch devices.
 					{
@@ -3315,7 +3332,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 
 						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(participantId));
 						for (const auto &row : rows) {
-							shared_ptr<ParticipantDevice> device = dParticipant->addDevice(IdentityAddress(row.get<string>(0)), row.get<string>(2, ""));
+							shared_ptr<ParticipantDevice> device = participant->addDevice(IdentityAddress(row.get<string>(0)), row.get<string>(2, ""));
 							device->setState(ParticipantDevice::State(static_cast<unsigned int>(row.get<int>(1, 0))));
 						}
 					}
@@ -3346,12 +3363,11 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						hasBeenLeft
 					));
 					chatRoom = clientGroupChatRoom;
-					conference = clientGroupChatRoom.get();
-					AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
-					dChatRoom->setState(ChatRoom::State::Instantiated);
-					dChatRoom->setState(hasBeenLeft
-						? ChatRoom::State::Terminated
-						: ChatRoom::State::Created
+					conference = clientGroupChatRoom->getConference().get();
+					chatRoom->setState(ConferenceInterface::State::Instantiated);
+					chatRoom->setState(hasBeenLeft
+						? ConferenceInterface::State::Terminated
+						: ConferenceInterface::State::Created
 					);
 				} else {
 					auto serverGroupChatRoom = std::make_shared<ServerGroupChatRoom>(
@@ -3364,13 +3380,12 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						lastNotifyId
 					);
 					chatRoom = serverGroupChatRoom;
-					conference = serverGroupChatRoom.get();
-					AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
-					dChatRoom->setState(ChatRoom::State::Instantiated);
-					dChatRoom->setState(ChatRoom::State::Created);
+					conference = serverGroupChatRoom->getConference().get();
+					chatRoom->setState(ConferenceInterface::State::Instantiated);
+					chatRoom->setState(ConferenceInterface::State::Created);
 				}
 				for (auto participant : chatRoom->getParticipants())
-					participant->getPrivate()->setConference(conference);
+					participant->setConference(conference);
 #else
 				lWarning() << "Advanced IM such as group chat is disabled!";
 #endif
@@ -3464,7 +3479,7 @@ void MainDb::migrateBasicToClientGroupChatRoom (
 			d->insertSipAddress(me->getAddress().asString()),
 			true
 		);
-		for (const auto &device : me->getPrivate()->getDevices())
+		for (const auto &device : me->getDevices())
 			d->insertChatRoomParticipantDevice(meId, d->insertSipAddress(device->getAddress().asString()), device->getName());
 
 		for (const auto &participant : clientGroupChatRoom->getParticipants()) {
@@ -3473,7 +3488,7 @@ void MainDb::migrateBasicToClientGroupChatRoom (
 				d->insertSipAddress(participant->getAddress().asString()),
 				true
 			);
-			for (const auto &device : participant->getPrivate()->getDevices())
+			for (const auto &device : participant->getDevices())
 				d->insertChatRoomParticipantDevice(participantId, d->insertSipAddress(device->getAddress().asString()), device->getName());
 		}
 
@@ -3521,7 +3536,7 @@ IdentityAddress MainDb::findMissingOneToOneConferenceChatRoomParticipantAddress 
 #endif
 }
 
-IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
+ConferenceAddress MainDb::findOneToOneConferenceChatRoomAddress (
 	const IdentityAddress &participantA,
 	const IdentityAddress &participantB,
 	bool encrypted
@@ -3533,11 +3548,11 @@ IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 		const long long &participantASipAddressId = d->selectSipAddressId(participantA.asString());
 		const long long &participantBSipAddressId = d->selectSipAddressId(participantB.asString());
 		if (participantASipAddressId == -1 || participantBSipAddressId == -1)
-			return IdentityAddress();
+			return ConferenceAddress();
 
 		const long long &chatRoomId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId, encrypted);
 		if (chatRoomId == -1)
-			return IdentityAddress();
+			return ConferenceAddress();
 
 		string chatRoomAddress;
 		*d->dbSession.getBackendSession() << "SELECT sip_address.value"
@@ -3545,10 +3560,10 @@ IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 			" WHERE chat_room.id = :chatRoomId AND peer_sip_address_id = sip_address.id",
 			soci::use(chatRoomId), soci::into(chatRoomAddress);
 
-		return IdentityAddress(chatRoomAddress);
+		return ConferenceAddress(chatRoomAddress);
 	};
 #else
-	return IdentityAddress();
+	return ConferenceAddress();
 #endif
 }
 

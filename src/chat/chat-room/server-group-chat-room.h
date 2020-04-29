@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 class SalCallOp;
 class ServerGroupChatRoomPrivate;
 
-class ServerGroupChatRoom : public ChatRoom, public LocalConference {
+class ServerGroupChatRoom : public ChatRoom , public ConferenceListener {
 public:
 	// TODO: Make me private!
 	ServerGroupChatRoom (const std::shared_ptr<Core> &core, SalCallOp *op);
@@ -60,19 +60,15 @@ public:
 	CapabilitiesMask getCapabilities () const override;
 	bool hasBeenLeft () const override;
 
-	const IdentityAddress &getConferenceAddress () const override;
+	const ConferenceAddress getConferenceAddress () const override;
 
-	bool canHandleParticipants () const override;
+	bool addParticipant (const IdentityAddress &participantAddress) override;
+	bool addParticipant (std::shared_ptr<Call> call) override {return getConference()->addParticipant(call); };
 
-	bool addParticipant (const IdentityAddress &address, const CallSessionParams *params, bool hasMedia) override;
-	bool addParticipants (
-		const std::list<IdentityAddress> &addresses,
-		const CallSessionParams *params,
-		bool hasMedia
-	) override;
+	void join (const IdentityAddress &participantAddress) override { getConference()->join(participantAddress); };
+	bool update(const ConferenceParamsInterface &newParameters) override { return getConference()->update(newParameters); };
 
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
-	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
 
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &participantAddress) const override;
 
@@ -89,7 +85,12 @@ public:
 	void leave () override;
 
 	/* ConferenceListener */
-	void onFirstNotifyReceived (const IdentityAddress &addr) override;
+	virtual void onFirstNotifyReceived (const IdentityAddress &addr) override;
+
+	const ConferenceId &getConferenceId () const override { return getConference()->getConferenceId(); };
+
+	void setState (ConferenceInterface::State state) override;
+	void subscribeReceived (LinphoneEvent *event);
 
 private:
 	L_DECLARE_PRIVATE(ServerGroupChatRoom);

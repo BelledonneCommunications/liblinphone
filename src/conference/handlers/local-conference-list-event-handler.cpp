@@ -25,13 +25,14 @@
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-room/abstract-chat-room.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "conference/participant-device.h"
 #include "content/content.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core.h"
-#include "local-conference-event-handler-p.h"
+#include "conference/local-conference.h"
+#include "local-conference-event-handler.h"
 #include "local-conference-list-event-handler.h"
 #include "logger/logger.h"
 #include "xml/resource-lists.h"
@@ -43,6 +44,8 @@
 // =============================================================================
 
 using namespace std;
+
+class LocalConference;
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -68,8 +71,8 @@ void LocalConferenceListEventHandler::notifyResponseCb (const LinphoneEvent *ev)
 		return;
 
 	for (const auto &p : listHandler->handlers) {
-		linphone_event_cbs_set_user_data(cbs, p.second->getPrivate());
-		LocalConferenceEventHandlerPrivate::notifyResponseCb(ev);
+		linphone_event_cbs_set_user_data(cbs, p.second);
+		LocalConferenceEventHandler::notifyResponseCb(ev);
 	}
 	linphone_event_cbs_set_user_data(cbs, nullptr);
 	linphone_event_cbs_set_notify_response(cbs, nullptr);
@@ -140,7 +143,7 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 				lError() << "Received subscribe for unknown participant: " << participantAddr <<  " for chat room: " << conferenceId;
 				continue;
 			}
-			shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddr);
+			shared_ptr<ParticipantDevice> device = participant->findDevice(deviceAddr);
 			if (!device || (device->getState() != ParticipantDevice::State::Present && device->getState() != ParticipantDevice::State::Joining)) {
 				lError() << "Received subscribe for unknown device: " << deviceAddr << " for participant: "
 					<< participantAddr <<  " for chat room: " << conferenceId;
@@ -216,17 +219,17 @@ void LocalConferenceListEventHandler::addHandler (LocalConferenceEventHandler *h
 		return;
 	}
 
-	if(findHandler(handler->getConferenceId())) {
-		lError() << "Trying to insert an already present handler in the local conference handler list: " << handler->getConferenceId();
+	if(findHandler(handler->conf->getConferenceId())) {
+		lError() << "Trying to insert an already present handler in the local conference handler list: " << handler->conf->getConferenceId();
 		return;
 	}
 
-	handlers[handler->getConferenceId()] = handler;
+	handlers[handler->conf->getConferenceId()] = handler;
 }
 
 void LocalConferenceListEventHandler::removeHandler (LocalConferenceEventHandler *handler) {
 	if (handler){
-		auto it = handlers.find(handler->getConferenceId());
+		auto it = handlers.find(handler->conf->getConferenceId());
 		if (it != handlers.end()){
 			handlers.erase(it);
 			lInfo() << "Handler removed.";

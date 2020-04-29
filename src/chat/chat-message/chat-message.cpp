@@ -181,6 +181,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 
 	const shared_ptr<ChatMessage>& sharedMessage = q->getSharedFromThis();
 
+
 	// 2. Update state and notify changes.
 	lInfo() << "Chat message " << sharedMessage << ": moving from " << Utils::toString(state) <<
 		" to " << Utils::toString(newState);

@@ -20,36 +20,56 @@
 #ifndef _L_REMOTE_CONFERENCE_EVENT_HANDLER_H_
 #define _L_REMOTE_CONFERENCE_EVENT_HANDLER_H_
 
-#include "object/object.h"
+#include "linphone/types.h"
+
+#include "conference/conference-id.h"
+#include "core/core-listener.h"
+#include "remote-conference-event-handler-base.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceId;
-class RemoteConference;
-class RemoteConferenceEventHandlerPrivate;
+class Conference;
+class ConferenceListener;
+class RemoteConferenceEventHandlerBase;
 
-class LINPHONE_PUBLIC RemoteConferenceEventHandler : public Object {
+class LINPHONE_PUBLIC RemoteConferenceEventHandler : public RemoteConferenceEventHandlerBase, public CoreListener {
 	friend class ClientGroupChatRoom;
 
 public:
-	RemoteConferenceEventHandler (RemoteConference *remoteConference);
+	RemoteConferenceEventHandler (Conference *remoteConference, ConferenceListener * listener);
 	~RemoteConferenceEventHandler ();
 
 	void subscribe (const ConferenceId &conferenceId);
 	void notifyReceived (const std::string &xmlBody);
 	void multipartNotifyReceived (const std::string &xmlBody);
-	void unsubscribe ();
+	void unsubscribe () override;
 
-	void setConferenceId (ConferenceId conferenceId);
-	const ConferenceId &getConferenceId () const;
+	void invalidateSubscription () override;
 
+	const ConferenceId &getConferenceId() const;
 	unsigned int getLastNotify () const;
-	void setLastNotify (unsigned int lastNotify);
-	void resetLastNotify ();
+
+protected:
+	void simpleNotifyReceived (const std::string &xmlBody);
+	void subscribe () override;
+
+	// CoreListener
+	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
+	void onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) override;
+	void onEnteringBackground () override;
+	void onEnteringForeground () override;
+
+	Conference *conf = nullptr;
+	ConferenceListener *confListener = nullptr;
+	LinphoneEvent *lev = nullptr;
+
+	bool subscriptionWanted = false;
+
 private:
-	L_DECLARE_PRIVATE(RemoteConferenceEventHandler);
+	void unsubscribePrivate ();
 	L_DISABLE_COPY(RemoteConferenceEventHandler);
 };
 

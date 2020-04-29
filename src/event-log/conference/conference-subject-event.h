@@ -31,11 +31,11 @@ LINPHONE_BEGIN_NAMESPACE
 class ConferenceSubjectEventPrivate;
 
 class LINPHONE_PUBLIC ConferenceSubjectEvent : public ConferenceNotifiedEvent {
+	friend class Conference;
 public:
 	ConferenceSubjectEvent (
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		unsigned int notifyId,
 		const std::string &subject
 	);
 

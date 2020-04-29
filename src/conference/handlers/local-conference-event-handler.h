@@ -20,11 +20,18 @@
 #ifndef _L_LOCAL_CONFERENCE_EVENT_HANDLER_H_
 #define _L_LOCAL_CONFERENCE_EVENT_HANDLER_H_
 
+#include <string>
+
 #include "linphone/types.h"
 
 #include "address/address.h"
 #include "core/core-accessor.h"
-#include "object/object.h"
+
+#include "conference/conference-interface.h"
+#include "conference/conference-listener.h"
+#include "conference/conference-id.h"
+#include "xml/conference-info.h"
+#include <memory>
 
 // =============================================================================
 
@@ -34,32 +41,107 @@ class ConferenceId;
 class ConferenceParticipantDeviceEvent;
 class ConferenceParticipantEvent;
 class ConferenceSubjectEvent;
-class LocalConference;
-class LocalConferenceEventHandlerPrivate;
+class ConferenceAvailableMediaEvent;
+class Participant;
+class ParticipantDevice;
 
-class LocalConferenceEventHandler : public Object {
+class LINPHONE_PUBLIC LocalConferenceEventHandler : public ConferenceListenerInterface {
 friend class LocalConferenceListEventHandler;
+#ifdef LINPHONE_TESTER
+	friend class Tester;
+#endif
 public:
-	LocalConferenceEventHandler (LocalConference *localConference, unsigned int notify = 0);
+	LocalConferenceEventHandler (Conference *conference, ConferenceListener* listener = nullptr);
 
 	void subscribeReceived (LinphoneEvent *lev, bool oneToOne = false);
 	void subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state);
 
-	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (const Address &addr);
-	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (const Address &addr);
-	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (const Address &addr, bool isAdmin);
-	std::shared_ptr<ConferenceSubjectEvent> notifySubjectChanged ();
-	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (const Address &addr, const Address &gruu);
-	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (const Address &addr, const Address &gruu);
-
-	void setLastNotify (unsigned int lastNotify);
-	void setConferenceId (const ConferenceId &conferenceId);
-	const ConferenceId &getConferenceId () const;
-
 	std::string getNotifyForId (int notifyId, bool oneToOne = false);
 
+//protected:
+	void notifyFullState (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device);
+	void notifyAllExcept (const std::string &notify, const std::shared_ptr<Participant> &exceptParticipant);
+	void notifyAll (const std::string &notify);
+	std::string createNotifyFullState (bool oneToOne = false);
+	std::string createNotifyMultipart (int notifyId);
+	std::string createNotifyParticipantAdded (const std::shared_ptr<Participant> participant);
+	std::string createNotifyParticipantAdminStatusChanged (const std::shared_ptr<Participant> participant, bool isAdmin);
+	std::string createNotifyParticipantRemoved (const std::shared_ptr<Participant> participant);
+	std::string createNotifyParticipantDeviceAdded (const std::shared_ptr<ParticipantDevice> participantDevice);
+	std::string createNotifyParticipantDeviceRemoved (const std::shared_ptr<ParticipantDevice> participantDevice);
+	std::string createNotifySubjectChanged ();
+
+	static void notifyResponseCb (const LinphoneEvent *ev);
+
+	/*
+	 * This fonction is called each time a full state notification is receied from the focus.
+	 */
+	virtual void onFullStateReceived () override;
+	
+	/*
+	 * This fonction is called each time a new participant is added by the focus after full state notification.
+	 * @param[in] event informations related to the added participant.
+	 * @param[in] participant participant added to conference or chat room.
+	 */
+	virtual void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+
+	/*
+	 * This fonction is called each time a new participant is removed by the focus after full state notification.
+	 * @param[in] event informations related to the removed participant.
+	 * @param[in] participant participant removed from conference or chat room.
+	 */
+	virtual void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+
+	/*
+	 * This fonction is called each time a new admin is set by the focus after full state notification.
+	 * @param[in] event informations related to the new admin participant.
+	 * @param[in] participant participant whose admin status changed.
+	 */
+	virtual void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+
+	/*
+	 * This fonction is called each time a new subject is set by the focus after full state notification.
+	 * @param[in] event informations related to the new subject.
+	 */
+	virtual void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) override;
+
+	/*
+	 * This fonction is called each time list of available media is modified by the focus after full state notification.
+	 * @param[in] event informations related to the new subject.
+	 */
+	virtual void onAvailableMediaChanged (const std::shared_ptr<ConferenceAvailableMediaEvent> &event) override;
+	
+	/*
+	* This fonction is called each time a new participant device is added by the focus after full state notification.
+	* @param[in] event informations related to the added participant's device.
+	* @param[in] device participant device added to the conference or chat room.
+	*/
+	virtual void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+	/*
+	* This fonction is called each time a new participant device is removed by the focus after full state notification.
+	* @param[in] event informations related to the removed device's participant.
+	* @param[in] device participant device removed from the conference or chat room.
+	*/
+	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+
+	/*
+	 * This fonction is called each time the conference transitions to a new state
+	 * @param[in] state new state of the conference
+	 */
+	void onStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
+
+protected:
+
+	Conference *conf = nullptr;
+	ConferenceListener *confListener ;
+
 private:
-	L_DECLARE_PRIVATE(LocalConferenceEventHandler);
+
+	std::string createNotify (Xsd::ConferenceInfo::ConferenceType confInfo, bool isFullState = false);
+	std::string createNotifySubjectChanged (const std::string &subject);
+	void notifyParticipant (const std::string &notify, const std::shared_ptr<Participant> &participant);
+	void notifyParticipantDevice (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device, bool multipart = false);
+
 	L_DISABLE_COPY(LocalConferenceEventHandler);
 };
 

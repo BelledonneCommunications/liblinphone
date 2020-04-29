@@ -33,6 +33,8 @@
 #include "linphone/api/c-chat-message.h"
 #include "linphone/api/c-chat-room-cbs.h"
 #include "linphone/api/c-chat-room.h"
+#include "linphone/api/c-conference.h"
+#include "linphone/api/c-conference-cbs.h"
 #include "linphone/api/c-content.h"
 #include "linphone/api/c-dial-plan.h"
 #include "linphone/api/c-event-log.h"

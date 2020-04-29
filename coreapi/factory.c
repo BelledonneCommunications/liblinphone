@@ -21,7 +21,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 
-#include "address/address-p.h"
+#include "address/address.h"
 #include "core/paths/paths.h"
 #include "bctoolbox/vfs_encrypted.hh"
 #include "bctoolbox/crypto.h"
@@ -173,7 +173,7 @@ LinphoneFactory *linphone_factory_get(void) {
 }
 
 void linphone_factory_clean(void){
-	LinphonePrivate::AddressPrivate::clearSipAddressesCache();
+	LinphonePrivate::Address::clearSipAddressesCache();
 	if (_factory){
 		belle_sip_object_unref(_factory);
 		_factory = NULL;
@@ -323,6 +323,10 @@ LinphoneAuthInfo *linphone_factory_create_auth_info_2(const LinphoneFactory *fac
 
 LinphoneCallCbs * linphone_factory_create_call_cbs(const LinphoneFactory *factory) {
 	return _linphone_call_cbs_new();
+}
+
+LinphoneConferenceCbs * linphone_factory_create_conference_cbs(const LinphoneFactory *factory) {
+	return _linphone_conference_cbs_new();
 }
 
 LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(const LinphoneFactory *factory) {

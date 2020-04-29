@@ -172,6 +172,7 @@ set(RC_FILES
 	rcfiles/marie_bodyless_rc
 	rcfiles/groupchat_rc
 	rcfiles/groupchat_lime_x3dh_rc
+	rcfiles/arthur_rc 
 )
 
 set(IMAGE_FILES
@@ -209,6 +210,7 @@ set(SOURCE_FILES_C
 	account_creator_tester.c
 	audio_bypass_tester.c
 	audio_routes_tester.c
+	audio_video_conference_tester.c
 	call_multicast_tester.c
 	call_multi_tester.c
 	call_single_tester.c
@@ -243,6 +245,7 @@ set(SOURCE_FILES_C
 	video_tester.c
 	video_quality_tester.c
 	shared_core_tester.c
+	local_conference_tester.cpp
 )
 if(ENABLE_LIME_X3DH)
     list(APPEND SOURCE_FILES_C group_chat_secure_tester.c)

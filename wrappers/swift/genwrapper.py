@@ -592,6 +592,7 @@ if __name__ == '__main__':
         'LinphoneCallDir'                            : 'LinphoneCall',
         'LinphoneCallState'                          : 'LinphoneCall',
         'LinphoneCallStatus'                         : 'LinphoneCall',
+        'LinphoneConferenceState'                    : 'LinphoneConference',
         'LinphoneChatRoomState'                      : 'LinphoneChatRoom',
         'LinphoneChatMessageDirection'               : 'LinphoneChatMessage',
         'LinphoneChatMessageState'                   : 'LinphoneChatMessage',

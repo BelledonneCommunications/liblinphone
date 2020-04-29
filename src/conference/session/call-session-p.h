@@ -126,6 +126,7 @@ protected:
 	LinphoneCallLog *log = nullptr;
 	std::string referTo;
 	std::string emptyString = "";
+	Address emptyAddress = Address();
 
 	SalCallOp *op = nullptr;
 

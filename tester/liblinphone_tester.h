@@ -72,6 +72,7 @@ extern test_suite_t message_test_suite;
 extern test_suite_t session_timers_test_suite;
 extern test_suite_t multi_call_test_suite;
 extern test_suite_t multicast_call_test_suite;
+extern test_suite_t audio_video_conference_test_suite;
 extern test_suite_t multipart_test_suite;
 extern test_suite_t offeranswer_test_suite;
 extern test_suite_t player_test_suite;
@@ -95,6 +96,7 @@ extern test_suite_t call_with_rtp_bundle_test_suite;
 extern test_suite_t shared_core_test_suite;
 extern test_suite_t lime_server_auth_test_suite;
 extern test_suite_t vfs_encryption_test_suite;
+extern test_suite_t local_conference_test_suite;
 
 #ifdef VCARD_ENABLED
 	extern test_suite_t vcard_test_suite;
@@ -194,6 +196,15 @@ typedef struct _stats {
 	int number_of_LinphoneCallEarlyUpdatedByRemote;
 	int number_of_LinphoneCallEarlyUpdating;
 
+	int number_of_LinphoneConferenceStateInstantiated;
+	int number_of_LinphoneConferenceStateCreationPending;
+	int number_of_LinphoneConferenceStateCreated;
+	int number_of_LinphoneConferenceStateCreationFailed;
+	int number_of_LinphoneConferenceStateTerminationPending;
+	int number_of_LinphoneConferenceStateTerminated;
+	int number_of_LinphoneConferenceStateTerminationFailed;
+	int number_of_LinphoneConferenceStateDeleted;
+
 	int number_of_LinphoneTransferCallOutgoingInit;
 	int number_of_LinphoneTransferCallOutgoingProgress;
 	int number_of_LinphoneTransferCallOutgoingRinging;
@@ -222,14 +233,6 @@ typedef struct _stats {
 	int progress_of_LinphoneFileTransfer;
 
 	int number_of_LinphoneChatRoomConferenceJoined;
-	int number_of_LinphoneChatRoomStateInstantiated;
-	int number_of_LinphoneChatRoomStateCreationPending;
-	int number_of_LinphoneChatRoomStateCreated;
-	int number_of_LinphoneChatRoomStateCreationFailed;
-	int number_of_LinphoneChatRoomStateTerminationPending;
-	int number_of_LinphoneChatRoomStateTerminated;
-	int number_of_LinphoneChatRoomStateTerminationFailed;
-	int number_of_LinphoneChatRoomStateDeleted;
 	int number_of_LinphoneChatRoomEphemeralTimerStarted;
 	int number_of_LinphoneChatRoomEphemeralDeleted;
 	int number_of_X3dhUserCreationSuccess;
@@ -375,6 +378,7 @@ typedef struct _LinphoneCoreManager {
 	char *lime_database_path;
 	char *app_group_id;
 	bool_t main_core;
+	void * user_info;
 } LinphoneCoreManager;
 
 typedef struct _LinphoneConferenceServer {
@@ -422,6 +426,7 @@ void linphone_core_manager_destroy_after_stop_async(LinphoneCoreManager* mgr);
 void linphone_core_manager_delete_chat_room (LinphoneCoreManager *mgr, LinphoneChatRoom *cr, bctbx_list_t *coresList);
 bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList);
 void start_core_for_conference(bctbx_list_t *coreManagerList);
+bctbx_list_t * init_core_for_conference_with_factory_uri(bctbx_list_t *coreManagerList, const char* factoryUri);
 
 void reset_counters(stats* counters);
 
@@ -500,6 +505,7 @@ void liblinphone_tester_chat_message_ephemeral_timer_started(LinphoneChatMessage
 void liblinphone_tester_chat_message_ephemeral_deleted(LinphoneChatMessage *msg);
 void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state);
 void liblinphone_tester_x3dh_user_created(LinphoneCore *lc, const bool_t status, const char* userId, const char *info);
+void core_chat_room_subject_changed (LinphoneCore *core, LinphoneChatRoom *cr);
 
 void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreManager* callee);
 void liblinphone_tester_clock_start(MSTimeSpec *start);
@@ -556,8 +562,19 @@ void liblinphone_tester_uninit(void);
 int liblinphone_tester_set_log_file(const char *filename);
 bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, LinphoneIceState state);
 
-
+// Add internal callback for subscriptions and notifications
+LinphoneCoreManager *create_mgr_for_conference(const char * rc_file);
+void setup_mgr_for_conference(LinphoneCoreManager *mgr);
+void destroy_mgr_in_conference(LinphoneCoreManager *mgr);
+LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *participants, const LinphoneCallParams *params);
+LinphoneStatus accept_call_in_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr);
+LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants);
+LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreManager * focus_mgr, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants);
+LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr);
+LinphoneStatus terminate_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * focus_mgr);
+bctbx_list_t* terminate_participant_call(bctbx_list_t *participants, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr);
 LinphoneConferenceServer* linphone_conference_server_new(const char *rc_file, bool_t do_registration);
+void initiate_calls(bctbx_list_t* caller, LinphoneCoreManager* callee);
 void linphone_conference_server_destroy(LinphoneConferenceServer *conf_srv);
 
 LinphoneAddress * linphone_core_manager_resolve(LinphoneCoreManager *mgr, const LinphoneAddress *source);

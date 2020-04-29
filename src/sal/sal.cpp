@@ -75,7 +75,22 @@ void Sal::processRequestEventCb (void *userCtx, const belle_sip_request_event_t 
 		}
 		if (!op || (op->mState == SalOp::State::Terminated)) {
 			lWarning() << "Receiving request for null or terminated op [" << op << "], ignored";
-			return;
+			evh = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Expires");
+			string eventHeaderValue = "";
+			int expires = -1;
+			if (evh) {
+				eventHeaderValue = belle_sip_header_get_unparsed_value(evh);
+				expires =  std::stoi(eventHeaderValue);
+			}
+			if ((method == "BYE") || ((method == "SUBSCRIBE") && op && (op->mState == SalOp::State::Terminated) && (expires == 0)))   {
+				//does not make sens to not answer to a BYE request
+				// If method is SUBSCRIBE with Expires field set to 0 (i.e. an unsubscribe) and it is terminated, we send a 200OK because the dialog is freed elsewhere
+				auto response = belle_sip_response_create_from_request(request, 200);
+				belle_sip_provider_send_response(sal->mProvider, response);
+			} else {
+				// maybe answering "service unavailable"
+				return;
+			}
 		}
 	} else {
 		// Handle the case where we are receiving a request with to tag but it is not belonging to any dialog
@@ -315,6 +330,7 @@ void Sal::processResponseEventCb (void *userCtx, const belle_sip_response_event_
 				break;
 			case 302:
 			case 301:
+				op->mAuthRequests = 0;
 				if (op->processRedirect() == 0)
 					return;
 				break;

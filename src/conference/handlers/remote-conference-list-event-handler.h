@@ -29,6 +29,7 @@
 #include "conference/conference-id.h"
 #include "core/core-accessor.h"
 #include "core/core-listener.h"
+#include "remote-conference-event-handler-base.h"
 
 // =============================================================================
 
@@ -38,23 +39,26 @@ class Address;
 class Content;
 class RemoteConferenceEventHandler;
 
-class RemoteConferenceListEventHandler : public CoreAccessor , public CoreListener {
+class RemoteConferenceListEventHandler : public RemoteConferenceEventHandlerBase, public CoreAccessor, public CoreListener {
 public:
 	RemoteConferenceListEventHandler (const std::shared_ptr<Core> &core);
 	~RemoteConferenceListEventHandler ();
 
-	void subscribe ();
-	void unsubscribe ();
+	void subscribe () override;
+	void unsubscribe () override;
+	void invalidateSubscription () override;
 	void notifyReceived (const Content *notifyContent);
 	void addHandler (RemoteConferenceEventHandler *handler);
 	void removeHandler (RemoteConferenceEventHandler *handler);
 	void clearHandlers ();
 	RemoteConferenceEventHandler *findHandler (const ConferenceId &conferenceId) const;
 private:
+	bool isHandlerInSameDomainAsCore(const ConferenceId & conferenceId) const;
 	std::unordered_map<ConferenceId, RemoteConferenceEventHandler *> handlers;
 	LinphoneEvent *lev = nullptr;
 
 	std::map<std::string, IdentityAddress> parseRlmi (const std::string &xmlBody) const;
+
 
 	// CoreListener
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;

@@ -32,7 +32,12 @@ class MediaSession;
 class MediaSessionPrivate;
 class MediaSessionParamsPrivate;
 
+namespace MediaConference {
+	class LocalConference;
+}
+
 class MediaSessionParams : public CallSessionParams {
+	friend class Call;
 	friend class MediaSession;
 	friend class MediaSessionPrivate;
 	friend class MS2Stream;
@@ -40,6 +45,7 @@ class MediaSessionParams : public CallSessionParams {
 	friend class MS2VideoStream;
 	friend class MS2RTTStream;
 
+	friend class MediaConference::LocalConference;
 public:
 	MediaSessionParams ();
 	MediaSessionParams (const MediaSessionParams &other);

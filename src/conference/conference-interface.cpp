@@ -17,49 +17,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_ADDRESS_P_H_
-#define _L_ADDRESS_P_H_
-
-#include <unordered_map>
-
-#include "address.h"
-#include "object/clonable-object-p.h"
+#include "conference/conference-interface.h"
 
 // =============================================================================
 
-struct SalAddress;
+using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-class AddressPrivate : public ClonableObjectPrivate {
-public:
-	inline const SalAddress *getInternalAddress () const {
-		return internalAddress;
+std::ostream& operator<<(std::ostream& lhs, ConferenceInterface::State e) {
+	switch(e) {
+		case ConferenceInterface::State::None: lhs << "None"; break;
+		case ConferenceInterface::State::Instantiated: lhs << "Instantiated"; break;
+		case ConferenceInterface::State::CreationPending: lhs << "CreationPending"; break;
+		case ConferenceInterface::State::Created: lhs << "Created"; break;
+		case ConferenceInterface::State::CreationFailed: lhs << "CreationFailed"; break;
+		case ConferenceInterface::State::TerminationPending: lhs << "TerminationPending"; break;
+		case ConferenceInterface::State::Terminated: lhs << "Terminated"; break;
+		case ConferenceInterface::State::TerminationFailed: lhs << "TerminationFailed"; break;
+		case ConferenceInterface::State::Deleted: lhs << "Deleted"; break;
 	}
-	void setInternalAddress (const SalAddress *value);
-
-	static void clearSipAddressesCache ();
-
-private:
-	struct AddressCache {
-		std::string scheme;
-		std::string displayName;
-		std::string username;
-		std::string domain;
-		std::string methodParam;
-		std::string password;
-
-		std::unordered_map<std::string, std::string> headers;
-		std::unordered_map<std::string, std::string> params;
-		std::unordered_map<std::string, std::string> uriParams;
-	};
-
-	SalAddress *internalAddress = nullptr;
-	mutable AddressCache cache;
-
-	L_DECLARE_PUBLIC(Address);
-};
+	return lhs;
+}
 
 LINPHONE_END_NAMESPACE
-
-#endif // ifndef _L_ADDRESS_P_H_

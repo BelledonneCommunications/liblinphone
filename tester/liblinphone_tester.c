@@ -390,6 +390,7 @@ void liblinphone_tester_add_suites() {
 #endif
 	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
 	bc_tester_add_suite(&lime_server_auth_test_suite);
+	bc_tester_add_suite(&local_conference_test_suite);
 #endif
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
@@ -403,6 +404,7 @@ void liblinphone_tester_add_suites() {
 #endif // ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&audio_routes_test_suite);
+	bc_tester_add_suite(&audio_video_conference_test_suite);
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);
 	bc_tester_add_suite(&session_timers_test_suite);

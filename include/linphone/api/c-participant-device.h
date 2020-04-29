@@ -20,6 +20,8 @@
 #ifndef _L_C_PARTICIPANT_DEVICE_H_
 #define _L_C_PARTICIPANT_DEVICE_H_
 
+#include "time.h"
+
 #include "linphone/api/c-types.h"
 
 // =============================================================================
@@ -80,6 +82,20 @@ LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel linphone_participant_device_get_se
  * @return the name of the device or NULL. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_participant_device_get_name (const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Return whether the participant device is in a conference or not.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return a boolean to state whether the device is in a conference
+ */
+LINPHONE_PUBLIC bool_t linphone_participant_device_is_in_conference (const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Get the timestamp the device joined a conference.
+ * @param participant A #LinphoneParticipantDevice object @notnil
+ * @return time of joining a conference as returned by time(nullptr). For UNIX based systems it is the number of seconds since 00:00hours of the 1st of January 1970
+ */
+LINPHONE_PUBLIC time_t linphone_participant_device_get_time_of_joining(const LinphoneParticipantDevice *participant_device);
 
 /**
  * @}
