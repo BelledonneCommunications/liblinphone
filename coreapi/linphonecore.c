@@ -63,7 +63,6 @@
 #include "chat/chat-room/server-group-chat-room-p.h"
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/handlers/remote-conference-event-handler.h"
-#include "conference/handlers/remote-conference-event-handler-p.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
 #endif
 #include "content/content-manager.h"
@@ -2394,7 +2393,7 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc, Linphone
 static void _linphone_core_conference_subscription_state_changed (LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
 #ifdef HAVE_ADVANCED_IM
 	if (!linphone_core_conference_server_enabled(lc)) {
-		RemoteConferenceEventHandlerPrivate *thiz = static_cast<RemoteConferenceEventHandlerPrivate *>(linphone_event_get_user_data(lev));
+		RemoteConferenceEventHandler *thiz = static_cast<RemoteConferenceEventHandler *>(linphone_event_get_user_data(lev));
 		if (state == LinphoneSubscriptionError)
 			thiz->invalidateSubscription();
 
