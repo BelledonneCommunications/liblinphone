@@ -17,14 +17,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "conference-p.h"
+#include "conference.h"
 #include "conference/participant-device.h"
 #include "conference/session/call-session-p.h"
 #include "content/content.h"
 #include "content/content-disposition.h"
 #include "content/content-type.h"
 #include "logger/logger.h"
-#include "participant-p.h"
+#include "participant.h"
 
 #ifdef HAVE_ADVANCED_IM
 #include "xml/resource-lists.h"
@@ -37,26 +37,21 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 Conference::Conference (
-	ConferencePrivate &p,
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
 	CallSessionListener *listener
-) : CoreAccessor(core), mPrivate(&p) {
-	L_D();
-	d->mPublic = this;
-	d->me = make_shared<Participant>(this, myAddress);
-	d->listener = listener;
+) : CoreAccessor(core) {
+	this->me = Participant::create(this,myAddress);
+	this->listener = listener;
 }
 
 Conference::~Conference () {
-	delete mPrivate;
 }
 
 // -----------------------------------------------------------------------------
 
 shared_ptr<Participant> Conference::getActiveParticipant () const {
-	L_D();
-	return d->activeParticipant;
+	return activeParticipant;
 }
 
 // -----------------------------------------------------------------------------
@@ -82,13 +77,11 @@ bool Conference::canHandleParticipants () const {
 }
 
 const IdentityAddress &Conference::getConferenceAddress () const {
-	L_D();
-	return d->conferenceAddress;
+	return conferenceAddress;
 }
 
 shared_ptr<Participant> Conference::getMe () const {
-	L_D();
-	return d->me;
+	return me;
 }
 
 int Conference::getParticipantCount () const {
@@ -96,13 +89,11 @@ int Conference::getParticipantCount () const {
 }
 
 const list<shared_ptr<Participant>> &Conference::getParticipants () const {
-	L_D();
-	return d->participants;
+	return participants;
 }
 
 const string &Conference::getSubject () const {
-	L_D();
-	return d->subject;
+	return subject;
 }
 
 void Conference::join () {}
@@ -126,18 +117,16 @@ void Conference::setParticipantAdminStatus (const shared_ptr<Participant> &parti
 }
 
 void Conference::setSubject (const string &subject) {
-	L_D();
-	d->subject = subject;
+	this->subject = subject;
 }
 
 // -----------------------------------------------------------------------------
 
 shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr) const {
-	L_D();
 
 	IdentityAddress searchedAddr(addr);
 	searchedAddr.setGruu("");
-	for (const auto &participant : d->participants) {
+	for (const auto &participant : participants) {
 		if (participant->getAddress() == searchedAddr)
 			return participant;
 	}
@@ -146,10 +135,9 @@ shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr
 }
 
 shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const CallSession> &session) const {
-	L_D();
 
-	for (const auto &participant : d->participants) {
-		if (participant->getPrivate()->getSession() == session)
+	for (const auto &participant : participants) {
+		if (participant->getSession() == session)
 			return participant;
 	}
 
@@ -157,10 +145,9 @@ shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const Call
 }
 
 shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_ptr<const CallSession> &session) const {
-	L_D();
 
-	for (const auto &participant : d->participants) {
-		for (const auto &device : participant->getPrivate()->getDevices()) {
+	for (const auto &participant : participants) {
+		for (const auto &device : participant->getDevices()) {
 			if (device->getSession() == session)
 				return device;
 		}
@@ -172,10 +159,9 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_pt
 // -----------------------------------------------------------------------------
 
 bool Conference::isMe (const IdentityAddress &addr) const {
-	L_D();
 	IdentityAddress cleanedAddr(addr);
 	cleanedAddr.setGruu("");
-	IdentityAddress cleanedMeAddr(d->me->getAddress());
+	IdentityAddress cleanedMeAddr(me->getAddress());
 	cleanedMeAddr.setGruu("");
 	return cleanedMeAddr == cleanedAddr;
 }

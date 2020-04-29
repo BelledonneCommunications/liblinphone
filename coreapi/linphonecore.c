@@ -63,7 +63,6 @@
 #include "chat/chat-room/server-group-chat-room-p.h"
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/handlers/remote-conference-event-handler.h"
-#include "conference/handlers/remote-conference-event-handler-p.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
 #endif
 #include "content/content-manager.h"
@@ -73,7 +72,7 @@
 #include "conference/session/media-session-p.h"
 
 // For migration purpose.
-#include "address/address-p.h"
+#include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 
 
@@ -2472,7 +2471,7 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc, Linphone
 static void _linphone_core_conference_subscription_state_changed (LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
 #ifdef HAVE_ADVANCED_IM
 	if (!linphone_core_conference_server_enabled(lc)) {
-		RemoteConferenceEventHandlerPrivate *thiz = static_cast<RemoteConferenceEventHandlerPrivate *>(linphone_event_get_user_data(lev));
+		RemoteConferenceEventHandler *thiz = static_cast<RemoteConferenceEventHandler *>(linphone_event_get_user_data(lev));
 		if (state == LinphoneSubscriptionError)
 			thiz->invalidateSubscription();
 
@@ -3963,7 +3962,7 @@ static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const Lin
 		proxy_routes_iterator = bctbx_list_next(proxy_routes_iterator);
 	}
 	if (srv_route){
-		ret = bctbx_list_append(ret, sal_address_clone(L_GET_PRIVATE_FROM_C_OBJECT(srv_route)->getInternalAddress()));
+		ret = bctbx_list_append(ret, sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(srv_route)->getInternalAddress()));
 	}
 	if (ret == NULL) {
 		/*if the proxy address matches the domain part of the destination, then use the same transport
@@ -4120,7 +4119,7 @@ void linphone_configure_op_with_proxy(LinphoneCore *lc, SalOp *op, const Linphon
 		linphone_transfer_routes_to_op(routes,op);
 	}
 
-	op->setToAddress(L_GET_PRIVATE_FROM_C_OBJECT(dest)->getInternalAddress());
+	op->setToAddress(L_GET_CPP_PTR_FROM_C_OBJECT(dest)->getInternalAddress());
 	op->setFrom(identity);
 	op->setSentCustomHeaders(headers);
 	op->setRealm(L_C_TO_STRING(linphone_proxy_config_get_realm(proxy)));
@@ -4129,7 +4128,7 @@ void linphone_configure_op_with_proxy(LinphoneCore *lc, SalOp *op, const Linphon
 		const LinphoneAddress *contact = linphone_proxy_config_get_contact(proxy);
 		SalAddress *salAddress = nullptr;
 		if (contact)
-			salAddress = sal_address_clone(const_cast<SalAddress *>(L_GET_PRIVATE_FROM_C_OBJECT(contact)->getInternalAddress()));
+			salAddress = sal_address_clone(const_cast<SalAddress *>(L_GET_CPP_PTR_FROM_C_OBJECT(contact)->getInternalAddress()));
 		op->setContactAddress(salAddress);
 		if (salAddress)
 			sal_address_unref(salAddress);
