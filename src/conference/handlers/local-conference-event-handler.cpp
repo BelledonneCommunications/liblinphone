@@ -47,6 +47,14 @@ LINPHONE_BEGIN_NAMESPACE
 
 using namespace Xsd::ConferenceInfo;
 
+// =============================================================================
+
+LocalConferenceEventHandler::LocalConferenceEventHandler (LocalConference *localConference, unsigned int notify) :
+	Object(*new ObjectPrivate) {
+	conf = localConference;
+	lastNotify = notify;
+}
+
 // -----------------------------------------------------------------------------
 
 void LocalConferenceEventHandler::notifyFullState (const string &notify, const shared_ptr<ParticipantDevice> &device) {
@@ -403,14 +411,6 @@ void LocalConferenceEventHandler::notifyParticipantDevice (const string &notify,
 		content.setContentEncoding("deflate");
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
 	linphone_event_notify(ev, cContent);
-}
-
-// =============================================================================
-
-LocalConferenceEventHandler::LocalConferenceEventHandler (LocalConference *localConference, unsigned int notify) :
-	Object(*new ObjectPrivate) {
-	conf = localConference;
-	lastNotify = notify;
 }
 
 // -----------------------------------------------------------------------------
