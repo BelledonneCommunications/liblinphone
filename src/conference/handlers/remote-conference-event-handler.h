@@ -74,6 +74,7 @@ protected:
 
 
 private:
+	void unsubscribePrivate ();
 	L_DISABLE_COPY(RemoteConferenceEventHandler);
 };
 

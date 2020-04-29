@@ -257,9 +257,16 @@ void RemoteConferenceEventHandler::subscribe () {
 
 // -----------------------------------------------------------------------------
 
+void RemoteConferenceEventHandler::unsubscribePrivate () {
+	if (lev) {
+		linphone_event_terminate(lev);
+		lev = nullptr;
+	}
+}
+
 void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
 	if (!sipNetworkReachable)
-		unsubscribe();
+		unsubscribePrivate();
 }
 
 void RemoteConferenceEventHandler::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {
@@ -268,7 +275,7 @@ void RemoteConferenceEventHandler::onRegistrationStateChanged (LinphoneProxyConf
 }
 
 void RemoteConferenceEventHandler::onEnteringBackground () {
-	unsubscribe();
+	unsubscribePrivate();
 }
 
 void RemoteConferenceEventHandler::onEnteringForeground () {
@@ -288,10 +295,7 @@ void RemoteConferenceEventHandler::subscribe (const ConferenceId &newConferenceI
 }
 
 void RemoteConferenceEventHandler::unsubscribe () {
-	if (lev) {
-		linphone_event_terminate(lev);
-		lev = nullptr;
-	}
+	unsubscribePrivate();
 	subscriptionWanted = false;
 }
 
@@ -318,8 +322,8 @@ void RemoteConferenceEventHandler::multipartNotifyReceived (const string &xmlBod
 
 // -----------------------------------------------------------------------------
 
-void RemoteConferenceEventHandler::setConferenceId (ConferenceId conferenceId) {
-	conferenceId = conferenceId;
+void RemoteConferenceEventHandler::setConferenceId (ConferenceId newConferenceId) {
+	conferenceId = newConferenceId;
 }
 
 const ConferenceId &RemoteConferenceEventHandler::getConferenceId () const {
