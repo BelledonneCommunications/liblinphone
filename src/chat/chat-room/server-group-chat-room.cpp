@@ -755,11 +755,7 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 		 */
 		device = participant->addDevice(deviceInfo.getAddress(), deviceInfo.getName());
 
-<<<<<<< HEAD
 		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->notifyParticipantDeviceAdded(time(nullptr), false, participant->getAddress(), deviceInfo.getAddress());
-=======
-		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->eventHandler->notifyParticipantDeviceAdded(participant->getAddress(), deviceInfo.getAddress());
->>>>>>> Delete private classes of LocalConferenceEventHandler, RemoteConferenceEventHandler, Participant, ParticipantDevice, Conference, LocalConference, RemoteConference, RemoteConferenceEventHandler, LocalConferenceEventHandler
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
 
 		if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne && allDevLeft){
@@ -798,15 +794,10 @@ void ServerGroupChatRoomPrivate::sendMessage (const shared_ptr<Message> &message
 void ServerGroupChatRoomPrivate::finalizeCreation () {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
-<<<<<<< HEAD
 	ConferenceAddress confAddr(qConference->conferenceAddress);
-	conferenceId = ConferenceId(confAddr, confAddr);
+	const ConferenceId conferenceId = ConferenceId(confAddr, confAddr);
 	qConference->setConferenceId(conferenceId);
-=======
-	IdentityAddress confAddr(qConference->conferenceAddress);
-	conferenceId = ConferenceId(confAddr, confAddr);
-	qConference->eventHandler->setConferenceId(conferenceId);
->>>>>>> Delete private classes of LocalConferenceEventHandler, RemoteConferenceEventHandler, Participant, ParticipantDevice, Conference, LocalConference, RemoteConference, RemoteConferenceEventHandler, LocalConferenceEventHandler
+
 	q->getCore()->getPrivate()->localListEventHandler->addHandler(qConference->eventHandler.get());
 	lInfo() << q << " created";
 	// Let the SIP stack set the domain and the port
@@ -815,7 +806,6 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	Address addr(confAddr);
 	addr.setParam("isfocus");
 	shared_ptr<CallSession> session = me->getSession();
-<<<<<<< HEAD
 	if (session->getState() == CallSession::State::Idle) {
 		lInfo() << " Scheduling redirection to [" << addr <<"] for Call session ["<<session<<"]" ;
 		q->getCore()->doLater([session,addr] {
@@ -824,9 +814,6 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	} else {
 			session->redirect(addr);
 	}
-=======
-	session->redirect(addr);
->>>>>>> Delete private classes of LocalConferenceEventHandler, RemoteConferenceEventHandler, Participant, ParticipantDevice, Conference, LocalConference, RemoteConference, RemoteConferenceEventHandler, LocalConferenceEventHandler
 	joiningPendingAfterCreation = true;
 	chatRoomListener->onChatRoomInsertRequested(q->getSharedFromThis());
 	setState(ChatRoom::State::Created);
@@ -864,18 +851,11 @@ shared_ptr<CallSession> ServerGroupChatRoomPrivate::makeSession(const std::share
 		device->setSession(session);
 		session->initiateOutgoing();
 		session->getPrivate()->createOp();
-<<<<<<< HEAD
 		//FIXME jehan check conference server  potential impact
-=======
->>>>>>> Delete private classes of LocalConferenceEventHandler, RemoteConferenceEventHandler, Participant, ParticipantDevice, Conference, LocalConference, RemoteConference, RemoteConferenceEventHandler, LocalConferenceEventHandler
 		Address contactAddr(qConference->conferenceAddress);
 		contactAddr.setParam("isfocus");
 		contactAddr.setParam("text");
 		session->getPrivate()->getOp()->setContactAddress(contactAddr.getInternalAddress());
-<<<<<<< HEAD
-
-=======
->>>>>>> Delete private classes of LocalConferenceEventHandler, RemoteConferenceEventHandler, Participant, ParticipantDevice, Conference, LocalConference, RemoteConference, RemoteConferenceEventHandler, LocalConferenceEventHandler
 	}
 	return session;
 }
@@ -1005,11 +985,7 @@ void ServerGroupChatRoomPrivate::removeParticipantDevice (const shared_ptr<Parti
 		return;
 	}
 	// Notify to everyone the retirement of this device.
-<<<<<<< HEAD
 	auto deviceEvent = qConference->notifyParticipantDeviceRemoved(time(nullptr), false, participant->getAddress(), deviceAddress);
-=======
-	auto deviceEvent = qConference->eventHandler->notifyParticipantDeviceRemoved(participant->getAddress(), deviceAddress);
->>>>>>> Delete private classes of LocalConferenceEventHandler, RemoteConferenceEventHandler, Participant, ParticipantDevice, Conference, LocalConference, RemoteConference, RemoteConferenceEventHandler, LocalConferenceEventHandler
 	q->getCore()->getPrivate()->mainDb->addEvent(deviceEvent);
 	// First set it as left, so that it may eventually trigger the destruction of the chatroom if no device are present for any participant.
 	setParticipantDeviceState(participantDevice, ParticipantDevice::State::Left);
@@ -1183,23 +1159,14 @@ LocalConference(getCore(), peerAddress, nullptr) {
 	this->subject = subject;
 	this->participants = move(participants);
 	this->conferenceAddress = peerAddress;
-<<<<<<< HEAD
 	this->lastNotify = lastNotifyId;
 	this->conferenceId = d->conferenceId;
-=======
-	this->eventHandler->setLastNotify(lastNotifyId);
-	this->eventHandler->setConferenceId(d->conferenceId);
->>>>>>> Delete private classes of LocalConferenceEventHandler, RemoteConferenceEventHandler, Participant, ParticipantDevice, Conference, LocalConference, RemoteConference, RemoteConferenceEventHandler, LocalConferenceEventHandler
 	getCore()->getPrivate()->localListEventHandler->addHandler(eventHandler.get());
 }
 
 ServerGroupChatRoom::~ServerGroupChatRoom () {
 	lInfo() << this << " destroyed.";
-<<<<<<< HEAD
 	if (conferenceId.isValid()){
-=======
-	if (eventHandler->getConferenceId().isValid()){
->>>>>>> Delete private classes of LocalConferenceEventHandler, RemoteConferenceEventHandler, Participant, ParticipantDevice, Conference, LocalConference, RemoteConference, RemoteConferenceEventHandler, LocalConferenceEventHandler
 		try {
 			if (getCore()->getPrivate()->localListEventHandler)
 				getCore()->getPrivate()->localListEventHandler->removeHandler(eventHandler.get());
@@ -1340,11 +1307,7 @@ void ServerGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	if (isAdmin != participant->isAdmin()) {
 		participant->setAdmin(isAdmin);
 		if (!(d->capabilities & ServerGroupChatRoom::Capabilities::OneToOne)) {
-<<<<<<< HEAD
 			shared_ptr<ConferenceParticipantEvent> event = notifyParticipantSetAdmin(time(nullptr), false, participant->getAddress(), participant->isAdmin());
-=======
-			shared_ptr<ConferenceParticipantEvent> event = eventHandler->notifyParticipantSetAdmin(participant->getAddress(), participant->isAdmin());
->>>>>>> Delete private classes of LocalConferenceEventHandler, RemoteConferenceEventHandler, Participant, ParticipantDevice, Conference, LocalConference, RemoteConference, RemoteConferenceEventHandler, LocalConferenceEventHandler
 			getCore()->getPrivate()->mainDb->addEvent(event);
 		}
 	}
@@ -1353,11 +1316,7 @@ void ServerGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 void ServerGroupChatRoom::setSubject (const string &subject) {
 	if (subject != getSubject()) {
 		LocalConference::setSubject(subject);
-<<<<<<< HEAD
 		shared_ptr<ConferenceSubjectEvent> event = notifySubjectChanged(time(nullptr), false, getSubject());
-=======
-		shared_ptr<ConferenceSubjectEvent> event = eventHandler->notifySubjectChanged();
->>>>>>> Delete private classes of LocalConferenceEventHandler, RemoteConferenceEventHandler, Participant, ParticipantDevice, Conference, LocalConference, RemoteConference, RemoteConferenceEventHandler, LocalConferenceEventHandler
 		getCore()->getPrivate()->mainDb->addEvent(event);
 	}
 }
