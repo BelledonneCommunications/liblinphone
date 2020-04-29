@@ -38,7 +38,7 @@
 #include <memory>
 
 // For migration purpose.
-#include "address/address-p.h"
+#include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call-p.h"
 #include "conference/session/media-session-p.h"
@@ -378,7 +378,7 @@ static int send_report(LinphoneCall* call, reporting_session_report_t * report, 
 	 * (port, transport, maddr), then it is sent directly.
 	 * Otherwise it is routed as any LinphoneEvent publish, following proxy config policy.
 	 **/
-	salAddress = L_GET_PRIVATE_FROM_C_OBJECT(request_uri)->getInternalAddress();
+	salAddress = L_GET_CPP_PTR_FROM_C_OBJECT(request_uri)->getInternalAddress();
 	if (sal_address_has_uri_param(salAddress, "transport") ||
 		sal_address_has_uri_param(salAddress, "maddr") ||
 		linphone_address_get_port(request_uri) != 0) {

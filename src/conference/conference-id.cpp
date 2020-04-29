@@ -17,8 +17,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "object/clonable-object-p.h"
-
 #include "conference-id.h"
 
 // =============================================================================
@@ -27,31 +25,29 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ConferenceIdPrivate : public ClonableObjectPrivate {
-public:
-	IdentityAddress peerAddress;
-	IdentityAddress localAddress;
-};
-
-// -----------------------------------------------------------------------------
-
-ConferenceId::ConferenceId () : ClonableObject(*new ConferenceIdPrivate) {}
+ConferenceId::ConferenceId () {}
 
 ConferenceId::ConferenceId (
 	const IdentityAddress &peerAddress,
 	const IdentityAddress &localAddress
-) : ClonableObject(*new ConferenceIdPrivate) {
-	L_D();
-	d->peerAddress = peerAddress;
-	d->localAddress = localAddress;
+) {
+	this->peerAddress = peerAddress;
+	this->localAddress = localAddress;
 }
 
-L_USE_DEFAULT_CLONABLE_OBJECT_SHARED_IMPL(ConferenceId);
+ConferenceId::ConferenceId (const ConferenceId &other) :
+	peerAddress(other.peerAddress),
+	localAddress(other.localAddress)
+{ }
+
+ConferenceId &ConferenceId::operator= (const ConferenceId &other) {
+	this->peerAddress = other.peerAddress;
+	this->localAddress = other.localAddress;
+	return *this;
+}
 
 bool ConferenceId::operator== (const ConferenceId &other) const {
-	L_D();
-	const ConferenceIdPrivate *dConferenceId = other.getPrivate();
-	return d->peerAddress == dConferenceId->peerAddress && d->localAddress == dConferenceId->localAddress;
+	return peerAddress == other.peerAddress && localAddress == other.localAddress;
 }
 
 bool ConferenceId::operator!= (const ConferenceId &other) const {
@@ -59,25 +55,20 @@ bool ConferenceId::operator!= (const ConferenceId &other) const {
 }
 
 bool ConferenceId::operator< (const ConferenceId &other) const {
-	L_D();
-	const ConferenceIdPrivate *dConferenceId = other.getPrivate();
-	return d->peerAddress < dConferenceId->peerAddress
-		|| (d->peerAddress == dConferenceId->peerAddress && d->localAddress < dConferenceId->localAddress);
+	return peerAddress < other.peerAddress
+		|| (peerAddress == other.peerAddress && localAddress < other.localAddress);
 }
 
 const IdentityAddress &ConferenceId::getPeerAddress () const {
-	L_D();
-	return d->peerAddress;
+	return peerAddress;
 }
 
 const IdentityAddress &ConferenceId::getLocalAddress () const {
-	L_D();
-	return d->localAddress;
+	return localAddress;
 }
 
 bool ConferenceId::isValid () const {
-	L_D();
-	return d->peerAddress.isValid() && d->localAddress.isValid();
+	return peerAddress.isValid() && localAddress.isValid();
 }
 
 LINPHONE_END_NAMESPACE

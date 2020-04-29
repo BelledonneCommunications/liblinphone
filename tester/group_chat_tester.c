@@ -683,11 +683,13 @@ static void group_chat_room_creation_server (void) {
 	LinphoneParticipant *paulineParticipant = linphone_chat_room_find_participant(marieCr, paulineAddr);
 	linphone_address_unref(paulineAddr);
 	BC_ASSERT_PTR_NOT_NULL(paulineParticipant);
+	paulineParticipant = linphone_participant_ref(paulineParticipant);
 	linphone_chat_room_set_participant_admin_status(marieCr, paulineParticipant, TRUE);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participant_admin_statuses_changed, initialMarieStats.number_of_participant_admin_statuses_changed + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participant_admin_statuses_changed, initialPaulineStats.number_of_participant_admin_statuses_changed + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participant_admin_statuses_changed, initialLaureStats.number_of_participant_admin_statuses_changed + 1, 5000));
 	BC_ASSERT_TRUE(linphone_participant_is_admin(paulineParticipant));
+	linphone_participant_unref(paulineParticipant);
 
 	// Pauline adds Chloe to the chat room
 	participantsAddresses = NULL;
@@ -710,6 +712,7 @@ static void group_chat_room_creation_server (void) {
 	LinphoneParticipant *marieParticipant = linphone_chat_room_find_participant(paulineCr, marieAddr);
 	linphone_address_unref(marieAddr);
 	BC_ASSERT_PTR_NOT_NULL(marieParticipant);
+	marieParticipant = linphone_participant_ref(marieParticipant);
 	linphone_chat_room_set_participant_admin_status(paulineCr, marieParticipant, FALSE);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participant_admin_statuses_changed, initialPaulineStats.number_of_participant_admin_statuses_changed + 2, 5000));
 	BC_ASSERT_FALSE(linphone_participant_is_admin(marieParticipant));
@@ -748,12 +751,14 @@ static void group_chat_room_creation_server (void) {
 	LinphoneParticipant *laureParticipant = linphone_chat_room_find_participant(paulineCr, laureAddr);
 	linphone_address_unref(laureAddr);
 	BC_ASSERT_PTR_NOT_NULL(laureParticipant);
+	laureParticipant = linphone_participant_ref(laureParticipant);
 	linphone_chat_room_remove_participant(paulineCr, laureParticipant);
 	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(marieCr), newSubject);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomStateTerminated, initialLaureStats.number_of_LinphoneChatRoomStateTerminated + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_participants_removed, initialChloeStats.number_of_participants_removed + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participants_removed, initialMarieStats.number_of_participants_removed + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participants_removed, initialPaulineStats.number_of_participants_removed + 1, 5000));
+	linphone_participant_unref(laureParticipant);
 
 	// Pauline removes Marie and Chloe from the chat room
 	marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
@@ -764,6 +769,7 @@ static void group_chat_room_creation_server (void) {
 	LinphoneParticipant *chloeParticipant = linphone_chat_room_find_participant(paulineCr, chloeAddr);
 	linphone_address_unref(chloeAddr);
 	BC_ASSERT_PTR_NOT_NULL(chloeParticipant);
+	chloeParticipant = linphone_participant_ref(chloeParticipant);
 	bctbx_list_t *participantsToRemove = NULL;
 	initialPaulineStats = pauline->stat;
 	participantsToRemove = bctbx_list_append(participantsToRemove, marieParticipant);
