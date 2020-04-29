@@ -455,9 +455,26 @@ if __name__ == '__main__':
 	project.check()
 
 	parser = AbsApi.CParser(project)
-	parser.functionBl = \
-		['linphone_vcard_get_belcard',\
-		'linphone_core_get_current_vtable']
+	parser.functionBl = [
+		'linphone_vcard_get_belcard',
+		'linphone_core_get_current_vtable',
+		'linphone_factory_create_shared_core',
+		'linphone_factory_create_shared_core_with_config',
+		'linphone_config_new_for_shared_core',
+		'linphone_push_notification_message_new',
+		'linphone_push_notification_message_ref',
+		'linphone_push_notification_message_unref',
+		'linphone_push_notification_message_is_using_user_defaults',
+		'linphone_push_notification_message_get_call_id',
+		'linphone_push_notification_message_is_text',
+		'linphone_push_notification_message_get_text_content',
+		'linphone_push_notification_message_get_subject',
+		'linphone_push_notification_message_get_from_addr',
+		'linphone_push_notification_message_get_local_addr',
+		'linphone_push_notification_message_get_peer_addr',
+		'linphone_core_get_new_message_from_callid',
+		'linphone_core_get_new_chat_room_from_conf_addr'
+	]
 	parser.classBl += 'LinphoneCoreVTable'
 	parser.methodBl.remove('getCurrentCallbacks')
 	parser.enum_relocations = {} # No nested enums in C#, will cause ambiguousness between Call.State (the enum) and call.State (the property)
