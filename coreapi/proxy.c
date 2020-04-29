@@ -47,7 +47,7 @@
 #include "private.h"
 
 // For migration purpose.
-#include "address/address-p.h"
+#include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "linphone/api/c-dial-plan.h"
 
@@ -593,7 +593,7 @@ static void linphone_proxy_config_register(LinphoneProxyConfig *cfg){
 
 		LinphoneAddress *contactAddress = guess_contact_for_register(cfg);
 		if (contactAddress) {
-			cfg->op->setContactAddress(L_GET_PRIVATE_FROM_C_OBJECT(contactAddress)->getInternalAddress());
+			cfg->op->setContactAddress(L_GET_CPP_PTR_FROM_C_OBJECT(contactAddress)->getInternalAddress());
 			if (!cfg->contact_address) {
 				cfg->contact_address = linphone_address_clone(contactAddress);
 			}
@@ -605,7 +605,7 @@ static void linphone_proxy_config_register(LinphoneProxyConfig *cfg){
 			proxy_string,
 			cfg->reg_identity,
 			cfg->expires,
-			cfg->pending_contact ? L_GET_PRIVATE_FROM_C_OBJECT(cfg->pending_contact)->getInternalAddress() : NULL
+			cfg->pending_contact ? L_GET_CPP_PTR_FROM_C_OBJECT(cfg->pending_contact)->getInternalAddress() : NULL
 		)==0) {
 			if (cfg->pending_contact) {
 				linphone_address_unref(cfg->pending_contact);
@@ -1561,7 +1561,7 @@ void linphone_proxy_config_set_state(LinphoneProxyConfig *cfg, LinphoneRegistrat
 		if (state == LinphoneRegistrationOk) {
 			const SalAddress *salAddr = cfg->op->getContactAddress();
 			if (salAddr)
-				L_GET_PRIVATE_FROM_C_OBJECT(cfg->contact_address)->setInternalAddress(salAddr);
+				L_GET_CPP_PTR_FROM_C_OBJECT(cfg->contact_address)->setInternalAddress(salAddr);
 		}
 		if (linphone_core_should_subscribe_friends_only_when_registered(lc) && cfg->state!=state && state == LinphoneRegistrationOk) {
 			ms_message("Updating friends for identity [%s] on core [%p]",cfg->reg_identity,cfg->lc);
@@ -1625,7 +1625,7 @@ const LinphoneAddress* linphone_proxy_config_get_service_route(const LinphonePro
 	if (!salAddr)
 		return NULL;
 	if (cfg->service_route)
-		L_GET_PRIVATE_FROM_C_OBJECT(cfg->service_route)->setInternalAddress(const_cast<SalAddress *>(salAddr));
+		L_GET_CPP_PTR_FROM_C_OBJECT(cfg->service_route)->setInternalAddress(const_cast<SalAddress *>(salAddr));
 	else {
 		char *buf = sal_address_as_string(salAddr);
 		const_cast<LinphoneProxyConfig *>(cfg)->service_route = linphone_address_new(buf);
@@ -1642,7 +1642,7 @@ const char* linphone_proxy_config_get_transport(const LinphoneProxyConfig *cfg) 
 	bool_t destroy_route_addr = FALSE;
 
 	if (linphone_proxy_config_get_service_route(cfg)) {
-		route_addr = L_GET_PRIVATE_FROM_C_OBJECT(linphone_proxy_config_get_service_route(cfg))->getInternalAddress();
+		route_addr = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_proxy_config_get_service_route(cfg))->getInternalAddress();
 	} else if (linphone_proxy_config_get_route(cfg)) {
 		addr=linphone_proxy_config_get_route(cfg);
 	} else if(linphone_proxy_config_get_addr(cfg)) {
