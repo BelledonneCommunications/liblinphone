@@ -91,10 +91,11 @@ public:
 	float sentFps = 0.f;
 	LinphoneVideoDefinition *sentVideoDefinition = nullptr;
 
-	bool realtimeTextEnabled = false;
 	unsigned int realtimeTextKeepaliveInterval = 25000;
 	PayloadType *usedRealtimeTextCodec = nullptr;
+	int videoDownloadBandwidth = 0;
 
+	bool realtimeTextEnabled = false;
 	bool avpfEnabled = false;
 	uint16_t avpfRrInterval = 0; /* In milliseconds */
 
@@ -115,6 +116,7 @@ private:
 	int upBandwidth = 0;
 	int downPtime = 0;
 	int upPtime = 0;
+	
 	bool updateCallWhenIceCompleted = true;
 	bool updateCallWhenIceCompletedWithDTLS = false;
 	SalCustomSdpAttribute *customSdpAttributes = nullptr;

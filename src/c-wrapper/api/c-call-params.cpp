@@ -91,6 +91,11 @@ void linphone_call_params_set_custom_sdp_media_attributes (LinphoneCallParams *p
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setCustomSdpMediaAttributes(type, csa);
 }
 
+/* Test feature only. */
+void linphone_call_params_set_video_download_bandwidth(LinphoneCallParams *params, int bw){
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->videoDownloadBandwidth = bw;
+}
+
 // =============================================================================
 // Public functions.
 // =============================================================================
