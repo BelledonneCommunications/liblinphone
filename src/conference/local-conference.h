@@ -62,7 +62,6 @@ protected:
 private:
 
 	L_DISABLE_COPY(LocalConference);
-
 };
 
 LINPHONE_END_NAMESPACE
