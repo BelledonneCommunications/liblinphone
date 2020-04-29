@@ -1065,7 +1065,6 @@ void send_removed_notify() {
 	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString()) != confListener->participants.end());
 	// Admin check
 	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
-
 	BC_ASSERT_EQUAL(localConf->getLastNotify(), (lastNotifyCount + 1), int, "%d");
 
 	localConf = nullptr;
@@ -1270,7 +1269,6 @@ void send_device_added_notify() {
 	// Admin check
 	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
 	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
-
 	localConf = nullptr;
 	alice = nullptr;
 	linphone_core_manager_destroy(marie);
@@ -1333,7 +1331,6 @@ void send_device_removed_notify() {
 	BC_ASSERT_TRUE(confListener->participantDevices.find(aliceAddr.asString()) != confListener->participantDevices.end());
 	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
 	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr.asString())->second, 0, int, "%d");
-
 	localConf = nullptr;
 	alice = nullptr;
 	linphone_core_manager_destroy(marie);
