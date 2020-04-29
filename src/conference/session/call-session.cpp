@@ -22,7 +22,7 @@
 #include "linphone/api/c-content.h"
 #include "linphone/core.h"
 
-#include "address/address-p.h"
+#include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "conference/params/call-session-params-p.h"
@@ -732,7 +732,7 @@ void CallSessionPrivate::setContactOp () {
 		auto contactParams = q->getParams()->getPrivate()->getCustomContactParameters();
 		for (auto it = contactParams.begin(); it != contactParams.end(); it++)
 			linphone_address_set_param(contact, it->first.c_str(), it->second.empty() ? nullptr : it->second.c_str());
-		salAddress = const_cast<SalAddress *>(L_GET_PRIVATE_FROM_C_OBJECT(contact)->getInternalAddress());
+		salAddress = const_cast<SalAddress *>(L_GET_CPP_PTR_FROM_C_OBJECT(contact)->getInternalAddress());
 		op->setContactAddress(salAddress);
 		linphone_address_unref(contact);
 	}
@@ -1155,7 +1155,7 @@ LinphoneStatus CallSession::redirect (const Address &redirectAddr) {
 	SalErrorInfo sei;
 	memset(&sei, 0, sizeof(sei));
 	sal_error_info_set(&sei, SalReasonRedirect, "SIP", 0, nullptr, nullptr);
-	d->op->declineWithErrorInfo(&sei, redirectAddr.getPrivate()->getInternalAddress());
+	d->op->declineWithErrorInfo(&sei, redirectAddr.getInternalAddress());
 	linphone_error_info_set(d->ei, nullptr, LinphoneReasonMovedPermanently, 302, "Call redirected", nullptr);
 	d->nonOpError = true;
 	d->terminate();
