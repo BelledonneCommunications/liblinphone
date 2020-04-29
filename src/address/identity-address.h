@@ -22,24 +22,23 @@
 
 #include <ostream>
 
-#include "object/clonable-object.h"
+#include "linphone/utils/general.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
 class Address;
-class IdentityAddressPrivate;
 
-class LINPHONE_PUBLIC IdentityAddress : public ClonableObject {
+class LINPHONE_PUBLIC IdentityAddress {
 public:
 	explicit IdentityAddress (const std::string &address);
 	IdentityAddress (const Address &address);
 	IdentityAddress (const IdentityAddress &other);
 	IdentityAddress ();
-	~IdentityAddress () = default;
+	virtual ~IdentityAddress () = default;
 
-	IdentityAddress *clone () const override {
+	IdentityAddress *clone () const {
 		return new IdentityAddress(*this);
 	}
 
@@ -70,7 +69,10 @@ public:
 	virtual std::string asString () const;
 
 private:
-	L_DECLARE_PRIVATE(IdentityAddress);
+	std::string scheme;
+	std::string username;
+	std::string domain;
+	std::string gruu;
 };
 
 inline std::ostream &operator<< (std::ostream &os, const IdentityAddress &identityAddress) {
