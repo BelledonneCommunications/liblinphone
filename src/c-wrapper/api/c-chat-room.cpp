@@ -332,9 +332,9 @@ bool_t linphone_chat_room_can_handle_participants (const LinphoneChatRoom *cr) {
 }
 
 LinphoneParticipant *linphone_chat_room_find_participant (const LinphoneChatRoom *cr, const LinphoneAddress *addr) {
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findParticipant(
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findParticipant(
 		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))
-	));
+	)->toC();
 }
 
 LinphoneChatRoomCapabilitiesMask linphone_chat_room_get_capabilities (const LinphoneChatRoom *cr) {
@@ -358,7 +358,7 @@ const LinphoneAddress *linphone_chat_room_get_conference_address (const Linphone
 }
 
 LinphoneParticipant *linphone_chat_room_get_me (const LinphoneChatRoom *cr) {
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getMe());
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getMe()->toC();
 }
 
 int linphone_chat_room_get_nb_participants (const LinphoneChatRoom *cr) {
@@ -366,7 +366,7 @@ int linphone_chat_room_get_nb_participants (const LinphoneChatRoom *cr) {
 }
 
 bctbx_list_t *linphone_chat_room_get_participants (const LinphoneChatRoom *cr) {
-	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getParticipants());
+	return LinphonePrivate::Participant::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getParticipants());
 }
 
 const char * linphone_chat_room_get_subject (const LinphoneChatRoom *cr) {
@@ -382,15 +382,15 @@ void linphone_chat_room_leave (LinphoneChatRoom *cr) {
 }
 
 void linphone_chat_room_remove_participant (LinphoneChatRoom *cr, LinphoneParticipant *participant) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->removeParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(participant));
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->removeParticipant(LinphonePrivate::Participant::toCpp(participant)->getSharedFromThis());
 }
 
 void linphone_chat_room_remove_participants (LinphoneChatRoom *cr, const bctbx_list_t *participants) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->removeParticipants(L_GET_RESOLVED_CPP_LIST_FROM_C_LIST(participants, Participant));
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->removeParticipants(LinphonePrivate::Participant::getCppListFromCList(participants));
 }
 
 void linphone_chat_room_set_participant_admin_status (LinphoneChatRoom *cr, LinphoneParticipant *participant, bool_t isAdmin) {
-	shared_ptr<LinphonePrivate::Participant> p = L_GET_CPP_PTR_FROM_C_OBJECT(participant);
+	shared_ptr<LinphonePrivate::Participant> p = LinphonePrivate::Participant::toCpp(participant)->getSharedFromThis();
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setParticipantAdminStatus(p, !!isAdmin);
 }
 

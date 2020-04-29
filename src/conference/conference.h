@@ -33,7 +33,6 @@ LINPHONE_BEGIN_NAMESPACE
 class CallSession;
 class CallSessionListener;
 class CallSessionPrivate;
-class ConferencePrivate;
 class Content;
 class ParticipantDevice;
 
@@ -64,7 +63,7 @@ public:
 	void join () override;
 	void leave () override;
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
-	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
+	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participantsToDelete) override;
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	void setSubject (const std::string &subject) override;
 
@@ -73,7 +72,6 @@ public:
 
 protected:
 	explicit Conference (
-		ConferencePrivate &p,
 		const std::shared_ptr<Core> &core,
 		const IdentityAddress &myAddress,
 		CallSessionListener *listener
@@ -81,10 +79,16 @@ protected:
 
 	bool isMe (const IdentityAddress &addr) const;
 
-	ConferencePrivate *mPrivate = nullptr;
+	IdentityAddress conferenceAddress;
+	std::list<std::shared_ptr<Participant>> participants;
+	std::string subject;
+
+	std::shared_ptr<Participant> activeParticipant;
+	std::shared_ptr<Participant> me;
+
+	CallSessionListener *listener = nullptr;
 
 private:
-	L_DECLARE_PRIVATE(Conference);
 	L_DISABLE_COPY(Conference);
 };
 
