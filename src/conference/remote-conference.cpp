@@ -25,8 +25,8 @@
 #include "handlers/remote-conference-event-handler.h"
 #endif
 #include "logger/logger.h"
-#include "participant-p.h"
-#include "remote-conference-p.h"
+#include "participant.h"
+#include "remote-conference.h"
 
 // =============================================================================
 
@@ -38,40 +38,36 @@ RemoteConference::RemoteConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
 	CallSessionListener *listener
-) : Conference(*new RemoteConferencePrivate, core, myAddress, listener) {
+) : Conference(core, myAddress, listener) {
 #ifdef HAVE_ADVANCED_IM
-	L_D();
-	d->eventHandler.reset(new RemoteConferenceEventHandler(this));
+	eventHandler.reset(new RemoteConferenceEventHandler(this));
 #endif
 }
 
 RemoteConference::~RemoteConference () {
-	L_D();
-	d->eventHandler.reset();
+	eventHandler.reset();
 }
 
 // -----------------------------------------------------------------------------
 
 bool RemoteConference::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
-	L_D();
 	shared_ptr<Participant> participant = findParticipant(addr);
 	if (participant) {
 		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the RemoteConference";
 		return false;
 	}
-	participant = make_shared<Participant>(this, addr);
-	participant->getPrivate()->createSession(*this, params, hasMedia, d->listener);
-	d->participants.push_back(participant);
-	if (!d->activeParticipant)
-		d->activeParticipant = participant;
+	participant = Participant::create(this,addr);
+	participant->createSession(*this, params, hasMedia, listener);
+	participants.push_back(participant);
+	if (!activeParticipant)
+		activeParticipant = participant;
 	return true;
 }
 
 bool RemoteConference::removeParticipant (const shared_ptr<Participant> &participant) {
-	L_D();
-	for (const auto &p : d->participants) {
+	for (const auto &p : participants) {
 		if (participant->getAddress() == p->getAddress()) {
-			d->participants.remove(p);
+			participants.remove(p);
 			return true;
 		}
 	}
@@ -84,8 +80,7 @@ void RemoteConference::onConferenceCreated (const IdentityAddress &) {}
 
 void RemoteConference::onConferenceTerminated (const IdentityAddress &) {
 #ifdef HAVE_ADVANCED_IM
-	L_D();
-	d->eventHandler->unsubscribe();
+	eventHandler->unsubscribe();
 #endif
 }
 
