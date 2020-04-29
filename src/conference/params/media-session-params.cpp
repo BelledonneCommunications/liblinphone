@@ -70,6 +70,7 @@ void MediaSessionParamsPrivate::clone (const MediaSessionParamsPrivate *src) {
 		if (src->customSdpMediaAttributes[i])
 			customSdpMediaAttributes[i] = sal_custom_sdp_attribute_clone(src->customSdpMediaAttributes[i]);
 	}
+	videoDownloadBandwidth = src->videoDownloadBandwidth;
 }
 
 void MediaSessionParamsPrivate::clean () {

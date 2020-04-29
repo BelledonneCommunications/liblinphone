@@ -89,6 +89,7 @@ public:
 
 	bool realtimeTextEnabled = false;
 	PayloadType *usedRealtimeTextCodec = nullptr;
+	int videoDownloadBandwidth = 0;
 
 	bool avpfEnabled = false;
 	uint16_t avpfRrInterval = 0; /* In milliseconds */
@@ -108,6 +109,7 @@ private:
 	int upBandwidth = 0;
 	int downPtime = 0;
 	int upPtime = 0;
+	
 	bool updateCallWhenIceCompleted = true;
 	SalCustomSdpAttribute *customSdpAttributes = nullptr;
 	SalCustomSdpAttribute *customSdpMediaAttributes[LinphoneStreamTypeUnknown];

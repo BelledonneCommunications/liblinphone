@@ -24,6 +24,92 @@
 
 #ifdef VIDEO_ENABLED
 
+
+static void _video_call_with_explicit_bandwidth_limit(bool_t bandwidth_is_specific_for_video){
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	LinphoneVideoPolicy pol = {0};
+	LinphoneCallParams *params;
+	LinphoneCall *pauline_call, *marie_call;
+	const int bandwidth_limit = 128;
+
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	pol.automatically_accept = TRUE;
+	pol.automatically_initiate = TRUE;
+	linphone_core_set_video_policy(marie->lc, &pol);
+	linphone_core_set_video_policy(pauline->lc, &pol);
+	
+	disable_all_audio_codecs_except_one(marie->lc, "opus", 48000);
+	disable_all_audio_codecs_except_one(pauline->lc, "opus", 48000);
+	
+	if (!bandwidth_is_specific_for_video){
+		/* Pauline has an explicit download bandwidth. */
+		linphone_core_set_download_bandwidth(pauline->lc, bandwidth_limit);
+		
+		/* Set a much higher upload bandwidth for marie, so that we can check that the minimum of the two is taken 
+		 * for Pauline's encoder.*/
+		linphone_core_set_upload_bandwidth(marie->lc, 1024);
+	}
+
+	/*set the video preset to custom so the video quality controller won't update the video size*/
+	linphone_core_set_video_preset(marie->lc, "custom");
+	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga"); /*It would result in approxy 350kbit/s VP8 output without the bandwidth limit.*/
+
+	linphone_core_invite_address(marie->lc, pauline->identity);
+	
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallOutgoingProgress, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+	
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	marie_call = linphone_core_get_current_call(marie->lc);
+	
+	if (pauline_call && marie_call){
+		params = linphone_core_create_call_params(pauline->lc, pauline_call);
+		if (bandwidth_is_specific_for_video){
+			linphone_call_params_set_video_download_bandwidth(params, bandwidth_limit);
+		}
+		linphone_call_accept_with_params(pauline_call, params);
+		linphone_call_params_unref(params);
+		
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+		{
+			VideoStream *vstream = (VideoStream *)linphone_call_get_stream(marie_call, LinphoneStreamTypeVideo);
+			MSVideoConfiguration vconf;
+			
+			BC_ASSERT_PTR_NOT_NULL(vstream);
+
+			if (vstream){
+				/* check that the encoder has been set a bitrate lower than the bandwidth limit. */
+				ms_filter_call_method(vstream->ms.encoder, MS_VIDEO_ENCODER_GET_CONFIGURATION, &vconf);
+				if (bandwidth_is_specific_for_video){
+					BC_ASSERT_EQUAL(vconf.required_bitrate, bandwidth_limit * 1000, int, "%d");
+				}else{
+					BC_ASSERT_LOWER(vconf.required_bitrate, 100000, int, "%d");
+					BC_ASSERT_GREATER(vconf.required_bitrate, 80000, int, "%d");
+				}
+			}
+		}
+		end_call(marie, pauline);
+	}
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void video_call_with_explicit_bandwidth_limit(void){
+	_video_call_with_explicit_bandwidth_limit(FALSE);
+}
+
+static void video_call_with_explicit_bandwidth_limit_for_stream(void){
+	_video_call_with_explicit_bandwidth_limit(TRUE);
+}
+
 /*
  * This test simulates a network congestion in the video flow from marie to pauline.
  * The stream from pauline to marie is not under test.
@@ -77,6 +163,7 @@ static void video_call_with_thin_congestion(void){
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+
 
 static void on_tmmbr_received(LinphoneCall *call, int stream_index, int tmmbr) {
 	if (stream_index == _linphone_call_get_main_video_stream_index(call)) {
@@ -426,6 +513,8 @@ static test_t call_video_quality_tests[] = {
 	TEST_NO_TAG("Video call expected size for low bandwidth (H265)", video_call_expected_size_for_low_bandwith_h265),
 	TEST_NO_TAG("Video call expected size for regular bandwidth (H265)", video_call_expected_size_for_regular_bandwith_h265),
 	TEST_NO_TAG("Video call expected size for high bandwidth (H265)", video_call_expected_size_for_high_bandwith_h265),
+	TEST_NO_TAG("Video call with explicit bandwidth limit", video_call_with_explicit_bandwidth_limit),
+	TEST_NO_TAG("Video call with explicit bandwidth limit for the video stream", video_call_with_explicit_bandwidth_limit_for_stream)
 };
 
 test_suite_t call_video_quality_test_suite = {"Video Call quality", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
