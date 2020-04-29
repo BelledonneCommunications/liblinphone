@@ -51,6 +51,9 @@ static void _video_call_with_explicit_bandwidth_limit(bool_t bandwidth_is_specif
 	if (!bandwidth_is_specific_for_video){
 		/* Pauline has an explicit download bandwidth. */
 		linphone_core_set_download_bandwidth(pauline->lc, bandwidth_limit);
+		/* Set a much higher upload bandwidth for marie, so that we can check that the minimum of the two is taken 
+		 * for Pauline's encoder.*/
+		linphone_core_set_upload_bandwidth(marie->lc, 1024);
 	}
 
 	/*set the video preset to custom so the video quality controller won't update the video size*/

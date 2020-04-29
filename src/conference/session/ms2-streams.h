@@ -86,6 +86,7 @@ protected:
 	MSMediaStreamSessions mSessions;
 	OrtpEvQueue *mOrtpEvQueue = nullptr;
 	LinphoneCallStats *mStats = nullptr;
+	int mOutputBandwidth; // Target output bandwidth for the stream. 
 	bool mUseAuxDestinations = false;
 	bool mMuted = false; /* to handle special cases where we want the audio to be muted - not related with linphone_core_enable_mic().*/
 	bool mDtlsStarted = false;

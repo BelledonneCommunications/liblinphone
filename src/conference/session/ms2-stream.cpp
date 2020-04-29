@@ -365,7 +365,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 	
 	if (getState() == Stream::Stopped){
 		/* These things below are not expected to change while the stream is running. */
-		media_stream_set_max_network_bitrate(getMediaStream(), linphone_core_get_upload_bandwidth(getCCore()) * 1000);
+		media_stream_set_max_network_bitrate(getMediaStream(), mOutputBandwidth * 1000);
 		if (isMulticast)
 			rtp_session_set_multicast_ttl(mSessions.rtp_session, stream->ttl);
 		rtp_session_enable_rtcp_mux(mSessions.rtp_session, stream->rtcp_mux);
@@ -754,6 +754,7 @@ RtpProfile * MS2Stream::makeProfile(const SalMediaDescription *md, const SalStre
 			rtp_profile_set_payload(profile, number, pt);
 	}
 	mRtpProfile = profile;
+	mOutputBandwidth = bandwidth;
 	return profile;
 }
 
