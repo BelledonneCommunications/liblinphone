@@ -20,11 +20,17 @@
 #ifndef _L_LOCAL_CONFERENCE_EVENT_HANDLER_H_
 #define _L_LOCAL_CONFERENCE_EVENT_HANDLER_H_
 
+#include <string>
+
 #include "linphone/types.h"
 
 #include "address/address.h"
 #include "core/core-accessor.h"
 #include "object/object.h"
+
+#include "conference/conference-id.h"
+#include "object/object-p.h"
+#include "xml/conference-info.h"
 
 // =============================================================================
 
@@ -35,10 +41,14 @@ class ConferenceParticipantDeviceEvent;
 class ConferenceParticipantEvent;
 class ConferenceSubjectEvent;
 class LocalConference;
-class LocalConferenceEventHandlerPrivate;
+class Participant;
+class ParticipantDevice;
 
 class LocalConferenceEventHandler : public Object {
 friend class LocalConferenceListEventHandler;
+#ifdef LINPHONE_TESTER
+	friend class Tester;
+#endif
 public:
 	LocalConferenceEventHandler (LocalConference *localConference, unsigned int notify = 0);
 
@@ -52,14 +62,40 @@ public:
 	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (const Address &addr, const Address &gruu);
 	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (const Address &addr, const Address &gruu);
 
-	void setLastNotify (unsigned int lastNotify);
-	void setConferenceId (const ConferenceId &conferenceId);
+	void setLastNotify (unsigned int newLastNotify);
+	void setConferenceId (const ConferenceId &newConferenceId);
 	const ConferenceId &getConferenceId () const;
 
 	std::string getNotifyForId (int notifyId, bool oneToOne = false);
 
+//protected:
+	void notifyFullState (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device);
+	void notifyAllExcept (const std::string &notify, const std::shared_ptr<Participant> &exceptParticipant);
+	void notifyAll (const std::string &notify);
+	std::string createNotifyFullState (int notifyId = -1, bool oneToOne = false);
+	std::string createNotifyMultipart (int notifyId);
+	std::string createNotifyParticipantAdded (const Address &addr, int notifyId = -1);
+	std::string createNotifyParticipantAdminStatusChanged (const Address &addr, bool isAdmin, int notifyId = -1);
+	std::string createNotifyParticipantRemoved (const Address &addr, int notifyId = -1);
+	std::string createNotifyParticipantDeviceAdded (const Address &addr, const Address &gruu, int notifyId = -1);
+	std::string createNotifyParticipantDeviceRemoved (const Address &addr, const Address &gruu, int notifyId = -1);
+	std::string createNotifySubjectChanged (int notifyId = -1);
+
+	inline unsigned int getLastNotify () const { return lastNotify; };
+
+	static void notifyResponseCb (const LinphoneEvent *ev);
+
 private:
-	L_DECLARE_PRIVATE(LocalConferenceEventHandler);
+	ConferenceId conferenceId;
+
+	LocalConference *conf = nullptr;
+	unsigned int lastNotify = 1;
+
+	std::string createNotify (Xsd::ConferenceInfo::ConferenceType confInfo, int notifyId = -1, bool isFullState = false);
+	std::string createNotifySubjectChanged (const std::string &subject, int notifyId = -1);
+	void notifyParticipant (const std::string &notify, const std::shared_ptr<Participant> &participant);
+	void notifyParticipantDevice (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device, bool multipart = false);
+
 	L_DISABLE_COPY(LocalConferenceEventHandler);
 };
 
