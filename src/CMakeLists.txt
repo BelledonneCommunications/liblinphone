@@ -254,7 +254,6 @@ if(ENABLE_ADVANCED_IM)
 		chat/chat-room/proxy-chat-room.h
 		chat/chat-room/server-group-chat-room-p.h
 		chat/chat-room/server-group-chat-room.h
-		conference/handlers/local-conference-event-handler-p.h
 		conference/handlers/local-conference-event-handler.h
 		conference/handlers/local-conference-list-event-handler.h
 		conference/handlers/remote-conference-event-handler-p.h

@@ -32,7 +32,7 @@
 #include "core/core-p.h"
 #include "db/main-db.h"
 #include "event-log/events.h"
-#include "local-conference-event-handler-p.h"
+#include "local-conference-event-handler.h"
 #include "logger/logger.h"
 #include "object/object-p.h"
 
@@ -49,23 +49,23 @@ using namespace Xsd::ConferenceInfo;
 
 // -----------------------------------------------------------------------------
 
-void LocalConferenceEventHandlerPrivate::notifyFullState (const string &notify, const shared_ptr<ParticipantDevice> &device) {
+void LocalConferenceEventHandler::notifyFullState (const string &notify, const shared_ptr<ParticipantDevice> &device) {
 	notifyParticipantDevice(notify, device);
 }
 
-void LocalConferenceEventHandlerPrivate::notifyAllExcept (const string &notify, const shared_ptr<Participant> &exceptParticipant) {
+void LocalConferenceEventHandler::notifyAllExcept (const string &notify, const shared_ptr<Participant> &exceptParticipant) {
 	for (const auto &participant : conf->getParticipants()) {
 		if (participant != exceptParticipant)
 			notifyParticipant(notify, participant);
 	}
 }
 
-void LocalConferenceEventHandlerPrivate::notifyAll (const string &notify) {
+void LocalConferenceEventHandler::notifyAll (const string &notify) {
 	for (const auto &participant : conf->getParticipants())
 		notifyParticipant(notify, participant);
 }
 
-string LocalConferenceEventHandlerPrivate::createNotifyFullState (int notifyId, bool oneToOne) {
+string LocalConferenceEventHandler::createNotifyFullState (int notifyId, bool oneToOne) {
 	string entity = conf->getConferenceAddress().asString();
 	string subject = conf->getSubject();
 	ConferenceType confInfo = ConferenceType(entity);
@@ -107,7 +107,7 @@ string LocalConferenceEventHandlerPrivate::createNotifyFullState (int notifyId, 
 	return createNotify(confInfo, notifyId, true);
 }
 
-string LocalConferenceEventHandlerPrivate::createNotifyMultipart (int notifyId) {
+string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
 	list<shared_ptr<EventLog>> events = conf->getCore()->getPrivate()->mainDb->getConferenceNotifiedEvents(
 		ConferenceId(conf->getConferenceAddress(), conf->getConferenceAddress()),
 		static_cast<unsigned int>(notifyId)
@@ -201,7 +201,7 @@ string LocalConferenceEventHandlerPrivate::createNotifyMultipart (int notifyId) 
 	return multipart;
 }
 
-string LocalConferenceEventHandlerPrivate::createNotifyParticipantAdded (const Address &addr, int notifyId) {
+string LocalConferenceEventHandler::createNotifyParticipantAdded (const Address &addr, int notifyId) {
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
@@ -235,7 +235,7 @@ string LocalConferenceEventHandlerPrivate::createNotifyParticipantAdded (const A
 	return createNotify(confInfo, notifyId);
 }
 
-string LocalConferenceEventHandlerPrivate::createNotifyParticipantAdminStatusChanged (const Address &addr, bool isAdmin, int notifyId) {
+string LocalConferenceEventHandler::createNotifyParticipantAdminStatusChanged (const Address &addr, bool isAdmin, int notifyId) {
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
@@ -252,7 +252,7 @@ string LocalConferenceEventHandlerPrivate::createNotifyParticipantAdminStatusCha
 	return createNotify(confInfo, notifyId);
 }
 
-string LocalConferenceEventHandlerPrivate::createNotifyParticipantRemoved (const Address &addr, int notifyId) {
+string LocalConferenceEventHandler::createNotifyParticipantRemoved (const Address &addr, int notifyId) {
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
@@ -266,7 +266,7 @@ string LocalConferenceEventHandlerPrivate::createNotifyParticipantRemoved (const
 	return createNotify(confInfo, notifyId);
 }
 
-string LocalConferenceEventHandlerPrivate::createNotifyParticipantDeviceAdded (const Address &addr, const Address &gruu, int notifyId) {
+string LocalConferenceEventHandler::createNotifyParticipantDeviceAdded (const Address &addr, const Address &gruu, int notifyId) {
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
@@ -296,7 +296,7 @@ string LocalConferenceEventHandlerPrivate::createNotifyParticipantDeviceAdded (c
 	return createNotify(confInfo, notifyId);
 }
 
-string LocalConferenceEventHandlerPrivate::createNotifyParticipantDeviceRemoved (const Address &addr, const Address &gruu, int notifyId) {
+string LocalConferenceEventHandler::createNotifyParticipantDeviceRemoved (const Address &addr, const Address &gruu, int notifyId) {
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
@@ -317,15 +317,15 @@ string LocalConferenceEventHandlerPrivate::createNotifyParticipantDeviceRemoved 
 	return createNotify(confInfo, notifyId);
 }
 
-string LocalConferenceEventHandlerPrivate::createNotifySubjectChanged (int notifyId) {
+string LocalConferenceEventHandler::createNotifySubjectChanged (int notifyId) {
 	return createNotifySubjectChanged(conf->getSubject(), notifyId);
 }
 
 // -----------------------------------------------------------------------------
 
-void LocalConferenceEventHandlerPrivate::notifyResponseCb (const LinphoneEvent *ev) {
+void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 	LinphoneEventCbs *cbs = linphone_event_get_callbacks(ev);
-	LocalConferenceEventHandlerPrivate *handler = reinterpret_cast<LocalConferenceEventHandlerPrivate *>(
+	LocalConferenceEventHandler *handler = reinterpret_cast<LocalConferenceEventHandler *>(
 		linphone_event_cbs_get_user_data(cbs)
 	);
 	linphone_event_cbs_set_user_data(cbs, nullptr);
@@ -346,7 +346,7 @@ void LocalConferenceEventHandlerPrivate::notifyResponseCb (const LinphoneEvent *
 
 // -----------------------------------------------------------------------------
 
-string LocalConferenceEventHandlerPrivate::createNotify (ConferenceType confInfo, int notifyId, bool isFullState) {
+string LocalConferenceEventHandler::createNotify (ConferenceType confInfo, int notifyId, bool isFullState) {
 	confInfo.setVersion(notifyId == -1 ? ++lastNotify : static_cast<unsigned int>(notifyId));
 	confInfo.setState(isFullState ? StateType::full : StateType::partial);
 
@@ -365,7 +365,7 @@ string LocalConferenceEventHandlerPrivate::createNotify (ConferenceType confInfo
 	return notify.str();
 }
 
-string LocalConferenceEventHandlerPrivate::createNotifySubjectChanged (const string &subject, int notifyId) {
+string LocalConferenceEventHandler::createNotifySubjectChanged (const string &subject, int notifyId) {
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
@@ -375,12 +375,12 @@ string LocalConferenceEventHandlerPrivate::createNotifySubjectChanged (const str
 	return createNotify(confInfo, notifyId);
 }
 
-void LocalConferenceEventHandlerPrivate::notifyParticipant (const string &notify, const shared_ptr<Participant> &participant) {
+void LocalConferenceEventHandler::notifyParticipant (const string &notify, const shared_ptr<Participant> &participant) {
 	for (const auto &device : participant->getPrivate()->getDevices())
 		notifyParticipantDevice(notify, device);
 }
 
-void LocalConferenceEventHandlerPrivate::notifyParticipantDevice (const string &notify, const shared_ptr<ParticipantDevice> &device, bool multipart) {
+void LocalConferenceEventHandler::notifyParticipantDevice (const string &notify, const shared_ptr<ParticipantDevice> &device, bool multipart) {
 	if (!device->isSubscribedToConferenceEventPackage() || notify.empty())
 		return;
 
@@ -408,22 +408,20 @@ void LocalConferenceEventHandlerPrivate::notifyParticipantDevice (const string &
 // =============================================================================
 
 LocalConferenceEventHandler::LocalConferenceEventHandler (LocalConference *localConference, unsigned int notify) :
-	Object(*new LocalConferenceEventHandlerPrivate) {
-	L_D();
-	d->conf = localConference;
-	d->lastNotify = notify;
+	Object(*new ObjectPrivate) {
+	conf = localConference;
+	lastNotify = notify;
 }
 
 // -----------------------------------------------------------------------------
 
 void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev, bool oneToOne) {
-	L_D();
 	const LinphoneAddress *lAddr = linphone_event_get_from(lev);
 	char *addrStr = linphone_address_as_string(lAddr);
-	shared_ptr<Participant> participant = d->conf->findParticipant(Address(addrStr));
+	shared_ptr<Participant> participant = conf->findParticipant(Address(addrStr));
 	bctbx_free(addrStr);
 	if (!participant) {
-		lError() << "Received SUBSCRIBE corresponds to no participant of the conference [" << d->conf->getConferenceAddress() << "], no NOTIFY sent";
+		lError() << "Received SUBSCRIBE corresponds to no participant of the conference [" << conf->getConferenceAddress() << "], no NOTIFY sent";
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
 		return;
 	}
@@ -434,7 +432,7 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev, bool on
 	bctbx_free(contactAddrStr);
 	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(contactAddr);
 	if (!device || (device->getState() != ParticipantDevice::State::Present && device->getState() != ParticipantDevice::State::Joining)) {
-		lError() << "Received SUBSCRIBE for conference [" << d->conf->getConferenceAddress()
+		lError() << "Received SUBSCRIBE for conference [" << conf->getConferenceAddress()
 			<< "], device sending subscribe [" << contactAddr << "] is not known, no NOTIFY sent";
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
 		return;
@@ -442,29 +440,28 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev, bool on
 
 	linphone_event_accept_subscription(lev);
 	if (linphone_event_get_subscription_state(lev) == LinphoneSubscriptionActive) {
-		unsigned int lastNotify = static_cast<unsigned int>(Utils::stoi(linphone_event_get_custom_header(lev, "Last-Notify-Version")));
+		unsigned int evLastNotify = static_cast<unsigned int>(Utils::stoi(linphone_event_get_custom_header(lev, "Last-Notify-Version")));
 		device->setConferenceSubscribeEvent(lev);
-		if (lastNotify == 0 || (device->getState() == ParticipantDevice::State::Joining)) {
-			lInfo() << "Sending initial notify of conference [" << d->conf->getConferenceAddress() << "] to: " << device->getAddress();
-			d->notifyFullState(d->createNotifyFullState(static_cast<int>(d->lastNotify), oneToOne), device);
-		} else if (lastNotify < d->lastNotify) {
-			lInfo() << "Sending all missed notify [" << lastNotify << "-" << d->lastNotify <<
-				"] for conference [" << d->conf->getConferenceAddress() << "] to: " << participant->getAddress();
-			d->notifyParticipantDevice(d->createNotifyMultipart(static_cast<int>(lastNotify)), device, true);
-		} else if (lastNotify > d->lastNotify) {
-			lError() << "Last notify received by client [" << lastNotify << "] for conference [" <<
-				d->conf->getConferenceAddress() <<
-				"] should not be higher than last notify sent by server [" << d->lastNotify << "]";
+		if (evLastNotify == 0 || (device->getState() == ParticipantDevice::State::Joining)) {
+			lInfo() << "Sending initial notify of conference [" << conf->getConferenceAddress() << "] to: " << device->getAddress();
+			notifyFullState(createNotifyFullState(static_cast<int>(lastNotify), oneToOne), device);
+		} else if (evLastNotify < lastNotify) {
+			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify <<
+				"] for conference [" << conf->getConferenceAddress() << "] to: " << participant->getAddress();
+			notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device, true);
+		} else if (evLastNotify > lastNotify) {
+			lError() << "Last notify received by client [" << evLastNotify << "] for conference [" <<
+				conf->getConferenceAddress() <<
+				"] should not be higher than last notify sent by server [" << lastNotify << "]";
 		}
 	}
 }
 
 void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state) {
-	L_D();
 	if (state == LinphoneSubscriptionTerminated) {
 		const LinphoneAddress *lAddr = linphone_event_get_from(lev);
 		char *addrStr = linphone_address_as_string(lAddr);
-		shared_ptr<Participant> participant = d->conf->findParticipant(Address(addrStr));
+		shared_ptr<Participant> participant = conf->findParticipant(Address(addrStr));
 		bctbx_free(addrStr);
 		if (!participant)
 			return;
@@ -476,72 +473,67 @@ void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, 
 		if (!device)
 			return;
 		lInfo() << "End of subscription for device [" << device->getAddress()
-			<< "] of conference [" << d->conf->getConferenceAddress() << "]";
+			<< "] of conference [" << conf->getConferenceAddress() << "]";
 		device->setConferenceSubscribeEvent(nullptr);
 	}
 }
 
 shared_ptr<ConferenceParticipantEvent> LocalConferenceEventHandler::notifyParticipantAdded (const Address &addr) {
-	L_D();
-	shared_ptr<Participant> participant = d->conf->findParticipant(addr);
-	d->notifyAllExcept(d->createNotifyParticipantAdded(addr), participant);
+	shared_ptr<Participant> participant = conf->findParticipant(addr);
+	notifyAllExcept(createNotifyParticipantAdded(addr), participant);
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantAdded,
 		time(nullptr),
-		d->conferenceId,
-		d->lastNotify,
+		conferenceId,
+		lastNotify,
 		addr
 	);
 	return event;
 }
 
 shared_ptr<ConferenceParticipantEvent> LocalConferenceEventHandler::notifyParticipantRemoved (const Address &addr) {
-	L_D();
-	shared_ptr<Participant> participant = d->conf->findParticipant(addr);
-	d->notifyAllExcept(d->createNotifyParticipantRemoved(addr), participant);
+	shared_ptr<Participant> participant = conf->findParticipant(addr);
+	notifyAllExcept(createNotifyParticipantRemoved(addr), participant);
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantRemoved,
 		time(nullptr),
-		d->conferenceId,
-		d->lastNotify,
+		conferenceId,
+		lastNotify,
 		addr
 	);
 	return event;
 }
 
 shared_ptr<ConferenceParticipantEvent> LocalConferenceEventHandler::notifyParticipantSetAdmin (const Address &addr, bool isAdmin) {
-	L_D();
-	d->notifyAll(d->createNotifyParticipantAdminStatusChanged(addr, isAdmin));
+	notifyAll(createNotifyParticipantAdminStatusChanged(addr, isAdmin));
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
 		time(nullptr),
-		d->conferenceId,
-		d->lastNotify,
+		conferenceId,
+		lastNotify,
 		addr
 	);
 	return event;
 }
 
 shared_ptr<ConferenceSubjectEvent> LocalConferenceEventHandler::notifySubjectChanged () {
-	L_D();
-	d->notifyAll(d->createNotifySubjectChanged());
+	notifyAll(createNotifySubjectChanged());
 	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(
 		time(nullptr),
-		d->conferenceId,
-		d->lastNotify,
-		d->conf->getSubject()
+		conferenceId,
+		lastNotify,
+		conf->getSubject()
 	);
 	return event;
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConferenceEventHandler::notifyParticipantDeviceAdded (const Address &addr, const Address &gruu) {
-	L_D();
-	d->notifyAll(d->createNotifyParticipantDeviceAdded(addr, gruu));
+	notifyAll(createNotifyParticipantDeviceAdded(addr, gruu));
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceAdded,
 		time(nullptr),
-		d->conferenceId,
-		d->lastNotify,
+		conferenceId,
+		lastNotify,
 		addr,
 		gruu
 	);
@@ -549,40 +541,35 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConferenceEventHandler::notify
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConferenceEventHandler::notifyParticipantDeviceRemoved (const Address &addr, const Address &gruu) {
-	L_D();
-	d->notifyAll(d->createNotifyParticipantDeviceRemoved(addr, gruu));
+	notifyAll(createNotifyParticipantDeviceRemoved(addr, gruu));
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceRemoved,
 		time(nullptr),
-		d->conferenceId,
-		d->lastNotify,
+		conferenceId,
+		lastNotify,
 		addr,
 		gruu
 	);
 	return event;
 }
 
-void LocalConferenceEventHandler::setLastNotify (unsigned int lastNotify) {
-	L_D();
-	d->lastNotify = lastNotify;
+void LocalConferenceEventHandler::setLastNotify (unsigned int newLastNotify) {
+	lastNotify = newLastNotify;
 }
 
-void LocalConferenceEventHandler::setConferenceId (const ConferenceId &conferenceId) {
-	L_D();
-	d->conferenceId = conferenceId;
+void LocalConferenceEventHandler::setConferenceId (const ConferenceId &newConferenceId) {
+	conferenceId = newConferenceId;
 }
 
 const ConferenceId &LocalConferenceEventHandler::getConferenceId () const {
-	L_D();
-	return d->conferenceId;
+	return conferenceId;
 }
 
 string LocalConferenceEventHandler::getNotifyForId (int notifyId, bool oneToOne) {
-	L_D();
 	if (notifyId == 0)
-		return d->createNotifyFullState(static_cast<int>(d->lastNotify), oneToOne);
-	else if (notifyId < static_cast<int>(d->lastNotify))
-		return d->createNotifyMultipart(notifyId);
+		return createNotifyFullState(static_cast<int>(lastNotify), oneToOne);
+	else if (notifyId < static_cast<int>(lastNotify))
+		return createNotifyMultipart(notifyId);
 
 	return Utils::getEmptyConstRefObject<string>();
 }

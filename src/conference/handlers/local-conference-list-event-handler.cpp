@@ -31,7 +31,7 @@
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core.h"
-#include "local-conference-event-handler-p.h"
+#include "local-conference-event-handler.h"
 #include "local-conference-list-event-handler.h"
 #include "logger/logger.h"
 #include "xml/resource-lists.h"
@@ -68,8 +68,8 @@ void LocalConferenceListEventHandler::notifyResponseCb (const LinphoneEvent *ev)
 		return;
 
 	for (const auto &p : listHandler->handlers) {
-		linphone_event_cbs_set_user_data(cbs, p.second->getPrivate());
-		LocalConferenceEventHandlerPrivate::notifyResponseCb(ev);
+		linphone_event_cbs_set_user_data(cbs, p.second);
+		LocalConferenceEventHandler::notifyResponseCb(ev);
 	}
 	linphone_event_cbs_set_user_data(cbs, nullptr);
 	linphone_event_cbs_set_notify_response(cbs, nullptr);
