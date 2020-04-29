@@ -18,9 +18,8 @@
  */
 
 #include "chat/encryption/encryption-engine.h"
-#include "object/object-p.h"
 #include "participant-device.h"
-#include "participant-p.h"
+#include "participant.h"
 #include "core/core.h"
 
 #include "linphone/event.h"
@@ -33,17 +32,12 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Core;
 
-class ParticipantDevicePrivate : public ObjectPrivate {
-private:
-	L_DECLARE_PUBLIC(Participant);
-};
-
 // =============================================================================
 
-ParticipantDevice::ParticipantDevice () : Object(*new ParticipantDevicePrivate) {}
+ParticipantDevice::ParticipantDevice () {}
 
 ParticipantDevice::ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const string &name)
-	:  Object(*new ParticipantDevicePrivate), mParticipant(participant), mGruu(gruu), mName(name) {}
+	:  mParticipant(participant), mGruu(gruu), mName(name) {}
 
 ParticipantDevice::~ParticipantDevice () {
 	if (mConferenceSubscribeEvent)
@@ -55,7 +49,7 @@ bool ParticipantDevice::operator== (const ParticipantDevice &device) const {
 }
 
 shared_ptr<Core> ParticipantDevice::getCore () const {
-	return mParticipant ? mParticipant->getPrivate()->getCore() : nullptr;
+	return mParticipant ? mParticipant->getCore() : nullptr;
 }
 
 void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {

@@ -17,8 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "conference/remote-conference-p.h"
-#include "conference/participant-p.h"
+#include "conference/remote-conference.h"
+#include "conference/participant.h"
 #include "conference/session/media-session-p.h"
 #include "remote-conference-call-p.h"
 
@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 shared_ptr<CallSession> RemoteConferenceCallPrivate::getActiveSession () const {
 	L_Q();
-	return q->getActiveParticipant()->getPrivate()->getSession();
+	return q->getActiveParticipant()->getSession();
 }
 
 // =============================================================================
@@ -48,7 +48,7 @@ RemoteConferenceCall::RemoteConferenceCall (
 	RemoteConference(core, IdentityAddress((direction == LinphoneCallIncoming) ? to : from), getPrivate()) {
 	addParticipant((direction == LinphoneCallIncoming) ? from : to, msp, true);
 	shared_ptr<Participant> participant = getParticipants().front();
-	participant->getPrivate()->getSession()->configure(direction, cfg, op, from, to);
+	participant->getSession()->configure(direction, cfg, op, from, to);
 }
 
 RemoteConferenceCall::~RemoteConferenceCall () {
