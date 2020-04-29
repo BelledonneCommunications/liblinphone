@@ -20,6 +20,12 @@
 #ifndef LINPHONE_PUSH_NOTIFICATION_MESSAGE_H
 #define LINPHONE_PUSH_NOTIFICATION_MESSAGE_H
 
+#if __APPLE__
+#include "TargetConditionals.h"
+#endif
+
+#ifdef TARGET_OS_IPHONE
+
 #include "linphone/api/c-types.h"
 
 /**
@@ -112,5 +118,7 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_push_notification_message_get_pe
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* TARGET_OS_IPHONE */
 
 #endif /* LINPHONE_PUSH_NOTIFICATION_MESSAGE_H */

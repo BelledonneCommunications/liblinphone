@@ -220,6 +220,7 @@ LinphoneCore *linphone_factory_create_core_3 (
 	return _linphone_factory_create_core(factory, NULL, config_path, factory_config_path, NULL, system_context, FALSE);
 }
 
+#ifdef TARGET_OS_IPHONE
 LinphoneCore *linphone_factory_create_shared_core (
 	const LinphoneFactory *factory,
 	const char *config_filename,
@@ -230,6 +231,7 @@ LinphoneCore *linphone_factory_create_shared_core (
 ) {
 	return _linphone_factory_create_shared_core(factory, NULL, factory_config_path, factory_config_path, NULL, system_context, FALSE, app_group_id, main_core);
 }
+#endif
 
 LinphoneCore *linphone_factory_create_core_with_config (
 	const LinphoneFactory *factory,
@@ -257,6 +259,7 @@ LinphoneCore *linphone_factory_create_core_with_config_3 (
 	return _linphone_core_new_with_config(NULL, config, NULL, system_context, FALSE);
 }
 
+#ifdef TARGET_OS_IPHONE
 LinphoneCore *linphone_factory_create_shared_core_with_config (
 	const LinphoneFactory *factory,
 	LinphoneConfig *config,
@@ -266,6 +269,7 @@ LinphoneCore *linphone_factory_create_shared_core_with_config (
 ) {
 	return _linphone_core_new_shared_with_config(NULL, config, NULL, system_context, FALSE, app_group_id, main_core);
 }
+#endif
 
 LinphoneCoreCbs *linphone_factory_create_core_cbs(const LinphoneFactory *factory) {
 	return _linphone_core_cbs_new();

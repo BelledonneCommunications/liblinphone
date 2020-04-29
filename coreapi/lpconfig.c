@@ -485,12 +485,14 @@ LpConfig *linphone_config_new_with_factory(const char *config_filename, const ch
 	}
 }
 
+#ifdef TARGET_OS_IPHONE
 LpConfig *linphone_config_new_for_shared_core(const char *app_group_id, const char* config_filename, const char *factory_path) {
 	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config, static_cast<void *>(strdup(app_group_id)));
 	path = path + "/" + config_filename;
 	const char* full_path = ms_strdup(path.c_str());
 	return linphone_config_new_with_factory(full_path, factory_path);
 }
+#endif
 
 LinphoneStatus linphone_config_read_file(LpConfig *lpconfig, const char *filename){
 	char* path = lp_realpath(filename, NULL);

@@ -21,6 +21,8 @@
 #include "c-wrapper/c-wrapper.h"
 #include "push-notification-message/push-notification-message.h"
 
+#ifdef TARGET_OS_IPHONE
+
 using namespace LinphonePrivate;
 
 LinphonePushNotificationMessage *linphone_push_notification_message_new(bool_t is_using_user_defaults,
@@ -82,3 +84,5 @@ const LinphoneAddress *linphone_push_notification_message_get_peer_addr(const Li
 	return linphone_address_new(PushNotificationMessage::toCpp(msg)->getPeerAddr()->asString().c_str());
 	;
 }
+
+#endif /* TARGET_OS_IPHONE */

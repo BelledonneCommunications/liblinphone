@@ -38,6 +38,10 @@
 
 #include "linphone/types.h"
 
+#if __APPLE__
+#include "TargetConditionals.h"
+#endif
+
 /**
  * @addtogroup misc
  * @{
@@ -85,6 +89,7 @@ LINPHONE_PUBLIC LinphoneConfig * linphone_config_new_from_buffer(const char *buf
  */
 LINPHONE_PUBLIC LinphoneConfig * linphone_config_new_with_factory(const char *config_filename, const char *factory_config_filename);
 
+#ifdef TARGET_OS_IPHONE
 /**
  * Instantiates a #LinphoneConfig object from a user config file name, group id and a factory config file.
  * The "group id" is the string that identify the "App group" capability of the iOS application.
@@ -103,6 +108,7 @@ LINPHONE_PUBLIC LinphoneConfig * linphone_config_new_with_factory(const char *co
  * defined in the factory config file.
  */
 LINPHONE_PUBLIC LinphoneConfig * linphone_config_new_for_shared_core(const char *app_group_id, const char* config_filename, const char *factory_path);
+#endif
 
 /**
  * Reads a user config file and fill the #LinphoneConfig with the read config values.

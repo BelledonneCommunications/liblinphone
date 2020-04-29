@@ -68,6 +68,10 @@
 // For migration purpose.
 #include "linphone/api/c-api.h"
 
+#if __APPLE__
+#include "TargetConditionals.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -6215,6 +6219,7 @@ LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *lc, const 
 **/
 LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *lc);
 
+#ifdef TARGET_OS_IPHONE
 /**
  * Get the chat message with the call_id included in the push notification body
  * This will start the core given in parameter, iterate until the message is received and return it.
@@ -6236,6 +6241,7 @@ LINPHONE_PUBLIC LinphonePushNotificationMessage * linphone_core_get_new_message_
  * @ingroup misc
 **/
 LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_get_new_chat_room_from_conf_addr(LinphoneCore *lc, const char *chat_room_addr);
+#endif
 
 #ifdef __cplusplus
 }

@@ -137,6 +137,7 @@ void linphone_core_ensure_registered(LinphoneCore *lc) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pushNotificationReceived();
 }
 
+#ifdef TARGET_OS_IPHONE
 LinphonePushNotificationMessage * linphone_core_get_new_message_from_callid(LinphoneCore *lc, const char *call_id) {
 	std::shared_ptr<PushNotificationMessage> cppMsg = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationMessage(Utils::cStringToCppString(call_id));
 	if (!cppMsg) return NULL;
@@ -161,3 +162,4 @@ LinphoneChatRoom * linphone_core_get_new_chat_room_from_conf_addr(LinphoneCore *
 	}
 	return chatRoom;
 }
+#endif

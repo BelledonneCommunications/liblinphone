@@ -23,6 +23,10 @@
 #include "linphone/types.h"
 #include "logging.h"
 
+#if __APPLE__
+#include "TargetConditionals.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -129,6 +133,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3 (
 	void *system_context
 );
 
+#ifdef TARGET_OS_IPHONE
 /**
  * Instantiate a shared #LinphoneCore object.
  *
@@ -139,6 +144,9 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3 (
  * A "Main Core" automatically stops a running "Executor Core" when calling linphone_core_start()
  * An "Executor Core" can't start unless no other #LinphoneCore is started. It can be stopped by a "Main Core" and
  * switch to #LinphoneGlobalState Off at any time.
+ *
+ * Shared Executor Core are used in iOS UNNotificationServiceExtension to receive new messages from push notifications.
+ * When the application is in background, its Shared Main Core is stopped.
  *
  * The #LinphoneCore object is not started automatically, you need to call linphone_core_start() to that effect.
  * The returned #LinphoneCore will be in #LinphoneGlobalState Ready.
@@ -165,6 +173,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core (
 	const char *app_group_id,
 	bool_t main_core
 );
+#endif
 
 /**
  * Instantiates a #LinphoneCore object with a given LpConfig.
@@ -228,6 +237,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_3 (
 	void *system_context
 );
 
+#ifdef TARGET_OS_IPHONE
 /**
  * Instantiate a shared #LinphoneCore object.
  *
@@ -238,6 +248,9 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_3 (
  * A "Main Core" automatically stops a running "Executor Core" when calling linphone_core_start()
  * An "Executor Core" can't start unless no other #LinphoneCore is started. It can be stopped by a "Main Core" and
  * switch to #LinphoneGlobalState Off at any time.
+ *
+ * Shared Executor Core are used in iOS UNNotificationServiceExtension to receive new messages from push notifications.
+ * When the application is in background, its Shared Main Core is stopped.
  *
  * The #LinphoneCore object is not started automatically, you need to call linphone_core_start() to that effect.
  * The returned #LinphoneCore will be in #LinphoneGlobalState Ready.
@@ -257,6 +270,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core_with_config (
 	const char *app_group_id,
 	bool_t main_core
 );
+#endif
 
 /**
  * Instanciate a #LinphoneCoreCbs object.
