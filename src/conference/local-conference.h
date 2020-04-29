@@ -20,17 +20,20 @@
 #ifndef _L_LOCAL_CONFERENCE_H_
 #define _L_LOCAL_CONFERENCE_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "conference.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LocalConferencePrivate;
+class LocalConferenceEventHandler;
 
 class LINPHONE_PUBLIC LocalConference : public Conference {
 	friend class ServerGroupChatRoomPrivate;
-
 public:
 	LocalConference (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener);
 	virtual ~LocalConference ();
@@ -39,8 +42,12 @@ public:
 	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 
+//protected:
+#ifdef HAVE_ADVANCED_IM
+	std::unique_ptr<LocalConferenceEventHandler> eventHandler;
+#endif
+
 private:
-	L_DECLARE_PRIVATE(LocalConference);
 	L_DISABLE_COPY(LocalConference);
 };
 
