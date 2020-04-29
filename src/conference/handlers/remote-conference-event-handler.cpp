@@ -28,7 +28,7 @@
 #include "content/content.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
-#include "remote-conference-event-handler-p.h"
+#include "remote-conference-event-handler.h"
 #include "xml/conference-info.h"
 
 // TODO: Remove me later.
@@ -44,7 +44,26 @@ using namespace Xsd::ConferenceInfo;
 
 // -----------------------------------------------------------------------------
 
-void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xmlBody) {
+RemoteConferenceEventHandler::RemoteConferenceEventHandler (RemoteConference *remoteConference) {
+	conf = remoteConference;
+	conf->getCore()->getPrivate()->registerListener(this);
+}
+
+RemoteConferenceEventHandler::~RemoteConferenceEventHandler () {
+
+	try {
+		conf->getCore()->getPrivate()->unregisterListener(this);
+	} catch (const bad_weak_ptr &) {
+		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
+	}
+
+	unsubscribe();
+}
+
+
+// -----------------------------------------------------------------------------
+
+void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) {
 	istringstream data(xmlBody);
 	unique_ptr<ConferenceType> confInfo;
 	try {
@@ -206,7 +225,7 @@ void RemoteConferenceEventHandlerPrivate::simpleNotifyReceived (const string &xm
 
 // -----------------------------------------------------------------------------
 
-void RemoteConferenceEventHandlerPrivate::subscribe () {
+void RemoteConferenceEventHandler::subscribe () {
 	if (lev || !subscriptionWanted)
 		return; // Already subscribed or application did not request subscription
 
@@ -235,85 +254,60 @@ void RemoteConferenceEventHandlerPrivate::subscribe () {
 	linphone_event_send_subscribe(lev, nullptr);
 }
 
-void RemoteConferenceEventHandlerPrivate::unsubscribe () {
+// -----------------------------------------------------------------------------
+
+void RemoteConferenceEventHandler::unsubscribePrivate () {
 	if (lev) {
 		linphone_event_terminate(lev);
 		lev = nullptr;
 	}
 }
 
-// -----------------------------------------------------------------------------
-
-void RemoteConferenceEventHandlerPrivate::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
+void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
 	if (!sipNetworkReachable)
-		unsubscribe();
+		unsubscribePrivate();
 }
 
-void RemoteConferenceEventHandlerPrivate::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {
+void RemoteConferenceEventHandler::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {
 	if (state == LinphoneRegistrationOk)
 		subscribe();
 }
 
-void RemoteConferenceEventHandlerPrivate::onEnteringBackground () {
-	unsubscribe();
+void RemoteConferenceEventHandler::onEnteringBackground () {
+	unsubscribePrivate();
 }
 
-void RemoteConferenceEventHandlerPrivate::onEnteringForeground () {
+void RemoteConferenceEventHandler::onEnteringForeground () {
 	subscribe();
 }
 
-void RemoteConferenceEventHandlerPrivate::invalidateSubscription () {
+void RemoteConferenceEventHandler::invalidateSubscription () {
 	lev = nullptr;
 }
 
 // -----------------------------------------------------------------------------
 
-RemoteConferenceEventHandler::RemoteConferenceEventHandler (RemoteConference *remoteConference) :
-Object(*new RemoteConferenceEventHandlerPrivate) {
-	L_D();
-	d->conf = remoteConference;
-	d->conf->getCore()->getPrivate()->registerListener(d);
-}
-
-RemoteConferenceEventHandler::~RemoteConferenceEventHandler () {
-	L_D();
-
-	try {
-		d->conf->getCore()->getPrivate()->unregisterListener(d);
-	} catch (const bad_weak_ptr &) {
-		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
-	}
-
-	unsubscribe();
-}
-
-// -----------------------------------------------------------------------------
-
 void RemoteConferenceEventHandler::subscribe (const ConferenceId &conferenceId) {
-	L_D();
-	d->conferenceId = conferenceId;
-	d->subscriptionWanted = true;
-	d->subscribe();
+	this->conferenceId = conferenceId;
+	subscriptionWanted = true;
+	subscribe();
 }
 
 void RemoteConferenceEventHandler::unsubscribe () {
-	L_D();
-	d->unsubscribe();
-	d->subscriptionWanted = false;
+	unsubscribePrivate();
+	subscriptionWanted = false;
 }
 
 void RemoteConferenceEventHandler::notifyReceived (const string &xmlBody) {
-	L_D();
 
-	lInfo() << "NOTIFY received for conference: " << d->conferenceId;
+	lInfo() << "NOTIFY received for conference: " << conferenceId;
 
-	d->simpleNotifyReceived(xmlBody);
+	simpleNotifyReceived(xmlBody);
 }
 
 void RemoteConferenceEventHandler::multipartNotifyReceived (const string &xmlBody) {
-	L_D();
 
-	lInfo() << "multipart NOTIFY received for conference: " << d->conferenceId;
+	lInfo() << "multipart NOTIFY received for conference: " << conferenceId;
 
 	Content multipart;
 	multipart.setBodyFromUtf8(xmlBody);
@@ -322,29 +316,25 @@ void RemoteConferenceEventHandler::multipartNotifyReceived (const string &xmlBod
 	multipart.setContentType(contentType);
 
 	for (const auto &content : ContentManager::multipartToContentList(multipart))
-		d->simpleNotifyReceived(content.getBodyAsUtf8String());
+		simpleNotifyReceived(content.getBodyAsUtf8String());
 }
 
 // -----------------------------------------------------------------------------
 
 void RemoteConferenceEventHandler::setConferenceId (ConferenceId conferenceId) {
-	L_D();
-	d->conferenceId = conferenceId;
+	this->conferenceId = conferenceId;
 }
 
 const ConferenceId &RemoteConferenceEventHandler::getConferenceId () const {
-	L_D();
-	return d->conferenceId;
+	return conferenceId;
 }
 
 unsigned int RemoteConferenceEventHandler::getLastNotify () const {
-	L_D();
-	return d->lastNotify;
+	return lastNotify;
 };
 
 void RemoteConferenceEventHandler::setLastNotify (unsigned int lastNotify) {
-	L_D();
-	d->lastNotify = lastNotify;
+	lastNotify = lastNotify;
 }
 
 void RemoteConferenceEventHandler::resetLastNotify () {
