@@ -97,9 +97,9 @@ size_t FileContent::getFileSize () const {
 
 void FileContent::setFileName (const string &name) {
 	L_D();
-#ifdef WIN32	
+#ifdef _WIN32	
 	const std::string illegalCharacters = "\\/:*\"<>|";
-#elseif APPLE
+#elif defined(__APPLE__)
 	const std::string illegalCharacters = ":/";
 #else
 	const std::string illegalCharacters = "/";

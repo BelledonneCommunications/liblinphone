@@ -1003,9 +1003,9 @@ static void file_transfer_special_filenames(void) {
 		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 		char filename_to_send[255]={0};
 		int message_count = 0;
-#ifdef WIN32
+#ifdef _WIN32
 		const char * illegal_characters = "\\/:*\"<>|";
-#elseif APPLE
+#elif defined(__APPLE__)
 		const char * illegal_characters = ":";
 #else
 		const char * illegal_characters = "/";
