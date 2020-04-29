@@ -5947,8 +5947,6 @@ void linphone_core_preview_ogl_render(const LinphoneCore *lc) {
 	VideoStream *stream = call ? reinterpret_cast<VideoStream *>(linphone_call_get_stream(call, LinphoneStreamTypeVideo)) : lc->previewstream;
 
 	if (stream && stream->output2 && ms_filter_get_id(stream->output2) == MS_OGL_ID) {
-		int mirroring = TRUE;
-		ms_filter_call_method(stream->output2, MS_VIDEO_DISPLAY_ENABLE_MIRRORING, &mirroring);
 		ms_filter_call_method(stream->output2, MS_OGL_RENDER, NULL);
 	}
 
