@@ -22,10 +22,16 @@
 
 #include <list>
 
+#include <belle-sip/object++.hh>
+
 #include "address/identity-address.h"
 #include "chat/chat-room/abstract-chat-room.h"
 #include "conference/params/call-session-params.h"
-#include "object/object.h"
+
+#include "conference/participant-device.h"
+#include "conference/session/call-session.h"
+#include "conference/session/call-session-listener.h"
+#include "conference/params/call-session-params.h"
 
 // =============================================================================
 
@@ -33,9 +39,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ClientGroupChatRoom;
 class Conference;
-class ParticipantPrivate;
 
-class Participant : public Object {
+class Participant : public bellesip::HybridObject<LinphoneParticipant, Participant> {
 	// TODO: Remove... It's ugly.
 	friend class Call;
 	friend class ClientGroupChatRoom;
@@ -44,7 +49,6 @@ class Participant : public Object {
 	friend class LimeX3dhEncryptionEngine;
 	friend class LocalConference;
 	friend class LocalConferenceEventHandler;
-	friend class LocalConferenceEventHandlerPrivate;
 	friend class LocalConferenceListEventHandler;
 	friend class MainDb;
 	friend class MainDbPrivate;
@@ -55,18 +59,48 @@ class Participant : public Object {
 	friend class ServerGroupChatRoomPrivate;
 
 public:
-	L_OVERRIDE_SHARED_FROM_THIS(Participant);
-
 	explicit Participant (Conference *conference, const IdentityAddress &address);
 	Participant ();
 	void configure (Conference *conference, const IdentityAddress &address);
+	virtual ~Participant();
+	// non clonable object
+	Participant *clone() const override { return nullptr; }
+>>>>>>> Delete private classes of LocalConferenceEventHandler, RemoteConferenceEventHandler, Participant, ParticipantDevice, Conference, LocalConference, RemoteConference, RemoteConferenceEventHandler, LocalConferenceEventHandler
 
 	const IdentityAddress &getAddress () const;
 	AbstractChatRoom::SecurityLevel getSecurityLevel () const;
 	bool isAdmin () const;
 
+	const std::list<std::shared_ptr<ParticipantDevice>> &getDevices () const;
+	std::shared_ptr<ParticipantDevice> findDevice (const IdentityAddress &gruu) const;
+	std::shared_ptr<ParticipantDevice> findDevice (const std::shared_ptr<const CallSession> &session);
+
+	inline void setAdmin (bool isAdmin) { this->isThisAdmin = isAdmin; }
+
+protected:
+	std::shared_ptr<Core> getCore () const { return mConference ? mConference->getCore() : nullptr; }
+	Conference *getConference () const { return mConference; }
+	void setConference (Conference *conference) { mConference = conference; }
+
+	std::shared_ptr<CallSession> createSession (const Conference &conference, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener);
+	std::shared_ptr<CallSession> createSession (const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener);
+
+	inline std::shared_ptr<CallSession> getSession () const { return session; }
+	inline void removeSession () { session.reset(); }
+	inline void setAddress (const IdentityAddress &addr) { this->addr = addr; }
+
+	std::shared_ptr<ParticipantDevice> addDevice (const IdentityAddress &gruu, const std::string &name = "");
+	void clearDevices ();
+	void removeDevice (const IdentityAddress &gruu);
+
 private:
-	L_DECLARE_PRIVATE(Participant);
+
+	Conference *mConference = nullptr;
+	IdentityAddress addr;
+	bool isThisAdmin = false;
+	std::shared_ptr<CallSession> session;
+	std::list<std::shared_ptr<ParticipantDevice>> devices;
+
 	L_DISABLE_COPY(Participant);
 };
 

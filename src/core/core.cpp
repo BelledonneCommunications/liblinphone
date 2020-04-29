@@ -34,7 +34,7 @@
 #include <xercesc/util/PlatformUtils.hpp>
 #endif
 
-#include "address/address-p.h"
+#include "address/address.h"
 #include "call/call.h"
 #include "chat/encryption/encryption-engine.h"
 #ifdef HAVE_LIME_X3DH
@@ -198,7 +198,7 @@ void CorePrivate::uninit() {
 	localListEventHandler = nullptr;
 #endif
 
-	AddressPrivate::clearSipAddressesCache();
+	Address::clearSipAddressesCache();
 	if (mainDb != nullptr) {
 		mainDb->disconnect();
 	}
