@@ -299,5 +299,4 @@ const ConferenceId &RemoteConferenceEventHandler::getConferenceId() const {
 unsigned int RemoteConferenceEventHandler::getLastNotify() const {
 	return conf->getLastNotify();
 };
-
 LINPHONE_END_NAMESPACE
