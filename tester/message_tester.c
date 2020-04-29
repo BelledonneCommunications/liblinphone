@@ -78,7 +78,38 @@ LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_r
 	bc_free(send_filepath);
 	return msg;
 }
+LinphoneChatMessage* create_message_from_svg_image(LinphoneChatRoom *chat_room, char * filepath, char * filename) {
+	FILE *file_to_send = NULL;
+	LinphoneChatMessageCbs *cbs;
+	LinphoneContent* content;
+	LinphoneChatMessage* msg;
+	char *send_filepath = (filepath?filepath:bc_tester_res("images/linphone.svg"));
+	size_t file_size;
+	file_to_send = fopen(send_filepath, "rb");
+	fseek(file_to_send, 0, SEEK_END);
+	file_size = ftell(file_to_send);
+	fseek(file_to_send, 0, SEEK_SET);
 
+	content = linphone_core_create_content(linphone_chat_room_get_core(chat_room));
+	belle_sip_object_set_name(BELLE_SIP_OBJECT(content), "linphone logo");
+	linphone_content_set_type(content,"image");
+	linphone_content_set_subtype(content,"svg");
+	linphone_content_set_size(content,file_size); /*total size to be transfered*/
+	linphone_content_set_name(content,(filename?filename:"linphone.svg"));
+	linphone_content_set_user_data(content,file_to_send);
+
+	msg = linphone_chat_room_create_file_transfer_message(chat_room, content);
+	cbs = linphone_chat_message_get_callbacks(msg);
+	linphone_chat_message_cbs_set_file_transfer_send(cbs, tester_file_transfer_send);
+	linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
+	linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+	BC_ASSERT_PTR_NOT_NULL(linphone_content_get_user_data(content));
+
+	linphone_content_unref(content);
+	if( !filepath)
+		bc_free(send_filepath);
+	return msg;
+}
 LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneChatRoom *chat_room) {
 	FILE *file_to_send = NULL;
 	LinphoneChatMessageCbs *cbs;
@@ -960,7 +991,100 @@ static void file_transfer_using_external_body_url_2(void) {
 static void file_transfer_using_external_body_url_404(void) {
 	file_transfer_external_body_url(FALSE, TRUE);
 }
-
+static void file_transfer_special_filenames(void) {
+	if (transport_supported(LinphoneTransportTls)) {
+		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+		LinphoneChatRoom* pauline_room;
+		LinphoneChatMessage* msg;
+		LinphoneChatMessageCbs *cbs;
+		char *source_filepath = bc_tester_res("images/linphone.svg");
+		char *send_filepath;
+		char *receive_filepath = bc_tester_file("receive_file.dump");
+		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+		char filename_to_send[255]={0};
+		int message_count = 0;
+#ifdef WIN32
+		const char * illegal_characters = "\\/:*\"<>|";
+#elseif APPLE
+		const char * illegal_characters = ":";
+#else
+		const char * illegal_characters = "/";
+#endif
+		for(int i = 33 ; i < 128 ; ++i)// US-ASCII. Remove 32 as it is used by replacing illegal characters
+			filename_to_send[i-33]=(char)i;
+		for(int i = 0 ; illegal_characters[i] != '\0' ; ++i)
+			filename_to_send[(int)illegal_characters[i]-33] = ' ';// Remove illegal characters
+		strcpy(filename_to_send+128-33, ".mkv");
+		for(int i = 31 ; i < 128; ++i){// First loop test the fullname.
+			bool_t do_test = !( ('0'<=i && i<='9') || ('A'<=i && i<='Z') || ('a'<=i && i<='z') );// remove normal characters from test
+			if( do_test && i > 31){// Build new filename
+				int illegal_index = 0;
+				while(illegal_characters[illegal_index] != '\0' && illegal_characters[illegal_index] != i)
+					++illegal_index;
+				if(illegal_characters[illegal_index] != '\0')
+					do_test = FALSE;
+				else {
+					filename_to_send[0] = (char)i;
+					strcpy(filename_to_send+1, ".mkv");
+				}
+			}
+			if( do_test){
+				++message_count;
+				send_filepath = bc_tester_file(filename_to_send);
+				/* Remove any previously downloaded file and future source file */
+				remove(receive_filepath);
+				remove(send_filepath);
+				
+				/* Copy source file to special file */
+				liblinphone_tester_copy_file(source_filepath,send_filepath );
+		
+				/* Globally configure an http file transfer server. */
+				linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
+		
+				/* create a chatroom on pauline's side */
+				pauline_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+				msg = create_message_from_svg_image(pauline_room, send_filepath, filename_to_send);
+				LinphoneContent * content;
+				char message_filename[255] = {0};
+				linphone_chat_message_send(msg);
+				content = linphone_chat_message_get_file_transfer_information(msg);
+				strcpy(message_filename, linphone_content_get_name(content));
+				BC_ASSERT_TRUE(strcmp(filename_to_send, message_filename)==0);
+				if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile, message_count, 10000))) {
+					char receive_message_filename[255] = {0};
+					LinphoneChatMessage *recvMsg = linphone_chat_message_ref(marie->stat.last_received_chat_message);
+					LinphoneContent * recvContent;
+					recvContent = linphone_chat_message_get_file_transfer_information(msg);
+					strcpy(receive_message_filename, linphone_content_get_name(recvContent));
+					BC_ASSERT_TRUE(strcmp(filename_to_send, receive_message_filename)==0);
+					
+					cbs = linphone_chat_message_get_callbacks(recvMsg);
+					linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+					linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
+					linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+					linphone_chat_message_download_file(recvMsg);
+	
+					BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,message_count,10000));
+	
+					BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, message_count, int, "%d");
+					BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, message_count, int, "%d");
+					BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, message_count, int, "%d");
+					compare_files(send_filepath, receive_filepath);
+	
+					linphone_chat_message_unref(recvMsg);
+				}
+				linphone_chat_message_unref(msg);
+				remove(receive_filepath);
+				remove(send_filepath);
+				bc_free(send_filepath);	
+			}
+		}
+		bc_free(receive_filepath);
+		bc_free(source_filepath);
+		linphone_core_manager_destroy(pauline);
+		linphone_core_manager_destroy(marie);
+	}
+}
 static void text_message_denied(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
@@ -2883,6 +3007,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer using external body URL", file_transfer_using_external_body_url),
 	TEST_NO_TAG("Transfer using external body URL 2", file_transfer_using_external_body_url_2),
 	TEST_NO_TAG("Transfer using external body URL 404", file_transfer_using_external_body_url_404),
+	TEST_NO_TAG("Transfer message using special filenames", file_transfer_special_filenames),
 	TEST_NO_TAG("Text message denied", text_message_denied),
 #ifdef HAVE_ADVANCED_IM
 	TEST_NO_TAG("IsComposing notification", is_composing_notification),

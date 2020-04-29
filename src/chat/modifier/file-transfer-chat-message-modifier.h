@@ -83,6 +83,8 @@ private:
 	belle_http_request_t *httpRequest = nullptr;
 	belle_http_request_listener_t *httpListener = nullptr;
 	belle_http_provider_t *provider  = nullptr;
+	
+	static const char * filenameNoEscapingChars;
 
 	BackgroundTask bgTask;
 };

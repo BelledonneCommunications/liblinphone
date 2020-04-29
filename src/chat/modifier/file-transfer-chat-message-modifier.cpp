@@ -38,7 +38,7 @@
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
-
+const char * FileTransferChatMessageModifier::filenameNoEscapingChars = " !$'()*+,-.:;=@[]_";// Don't escape these characters as they can be used for filename header
 FileTransferChatMessageModifier::FileTransferChatMessageModifier (belle_http_provider_t *prov) : provider(prov) {
 	bgTask.setName("File transfer upload");
 }
@@ -262,7 +262,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 				char * filename;
 				bctbx_noescape_rules_t encodeSpecials = {0};
 				bctbx_noescape_rules_add_alfanums(encodeSpecials);
-				bctbx_noescape_rules_add_list(encodeSpecials, " !$'()*+,-.:;=@[]_");
+				bctbx_noescape_rules_add_list(encodeSpecials, filenameNoEscapingChars);
 				filename = bctbx_escape(currentFileContentToTransfer->getFileName().c_str(), encodeSpecials );
 				first_part_header = "form-data; name=\"File\"; filename=\"" +std::string(filename) + "\"";
 				bctbx_free(filename);
@@ -381,7 +381,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 											char * filename;
 											bctbx_noescape_rules_t encodeSpecials = {0};
 											bctbx_noescape_rules_add_alfanums(encodeSpecials);
-											bctbx_noescape_rules_add_list(encodeSpecials, " !$'()*+,-.:;=@[]_");
+											bctbx_noescape_rules_add_list(encodeSpecials, filenameNoEscapingChars);
 											filename = bctbx_escape(currentFileContentToTransfer->getFileName().c_str(), encodeSpecials );
 											xmlNodeSetContent(fileInfoNodeChildren, (const xmlChar *)(filename));
 											bctbx_free(filename);

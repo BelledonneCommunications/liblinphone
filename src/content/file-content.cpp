@@ -97,9 +97,16 @@ size_t FileContent::getFileSize () const {
 
 void FileContent::setFileName (const string &name) {
 	L_D();
+#ifdef WIN32	
+	const std::string illegalCharacters = "\\/:*\"<>|";
+#elseif APPLE
+	const std::string illegalCharacters = ":/";
+#else
+	const std::string illegalCharacters = "/";
+#endif
 	d->fileName = name;
-// Invisible characters should not be part of a filename	
-	d->fileName.erase(std::remove_if(d->fileName.begin(), d->fileName.end(), [](const char& c){ return c<' '; }), d->fileName.end());
+// Invisible and illegal characters should not be part of a filename	
+	d->fileName.erase(std::remove_if(d->fileName.begin(), d->fileName.end(), [illegalCharacters](const char& c){ return c<' ' || illegalCharacters.find(c) != std::string::npos; }), d->fileName.end());
 }
 
 const string &FileContent::getFileName () const {
