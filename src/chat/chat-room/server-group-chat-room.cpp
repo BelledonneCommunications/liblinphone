@@ -797,7 +797,6 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	ConferenceAddress confAddr(qConference->conferenceAddress);
 	const ConferenceId conferenceId = ConferenceId(confAddr, confAddr);
 	qConference->setConferenceId(conferenceId);
-
 	q->getCore()->getPrivate()->localListEventHandler->addHandler(qConference->eventHandler.get());
 	lInfo() << q << " created";
 	// Let the SIP stack set the domain and the port
