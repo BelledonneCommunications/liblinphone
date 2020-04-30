@@ -525,7 +525,7 @@ static void call_with_retransmissions_on_nack(void) {
 
 	params.enabled = TRUE;
 	params.loss_rate = 50;
-	params.consecutive_loss_probability = 0.2;
+	params.consecutive_loss_probability = 0.2f;
 	params.mode = OrtpNetworkSimulatorOutbound;
 	linphone_core_set_avpf_mode(marie->lc, LinphoneAVPFEnabled);
 	linphone_core_set_avpf_mode(pauline->lc, LinphoneAVPFEnabled);
