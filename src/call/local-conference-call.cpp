@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "conference/local-conference-p.h"
+#include "conference/local-conference.h"
 #include "conference/participant-p.h"
 #include "conference/session/media-session-p.h"
 #include "local-conference-call-p.h"

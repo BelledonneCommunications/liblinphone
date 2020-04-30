@@ -24,7 +24,6 @@
 #include "conference/conference-listener.h"
 #include "conference/handlers/local-conference-event-handler.h"
 #include "conference/handlers/remote-conference-event-handler.h"
-#include "conference/local-conference-p.h"
 #include "conference/local-conference.h"
 #include "conference/participant-p.h"
 #include "conference/remote-conference.h"
@@ -441,7 +440,7 @@ static const char *aliceUri = "sip:alice@example.com";
 static const char *frankUri = "sip:frank@example.com";
 static const char *confUri = "sips:conf233@example.com";
 
-L_ENABLE_ATTR_ACCESS(LocalConferencePrivate, unique_ptr<LocalConferenceEventHandler>, eventHandler);
+L_ENABLE_ATTR_ACCESS(LocalConference, unique_ptr<LocalConferenceEventHandler>, eventHandler);
 
 class ConferenceEventTester : public RemoteConference {
 public:
@@ -844,7 +843,7 @@ void send_first_notify() {
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	L_GET_PRIVATE(alice)->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
-		L_ATTR_GET(L_GET_PRIVATE(localConf), eventHandler)
+		L_ATTR_GET(localConf.get(), eventHandler)
 	);
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandler->createNotifyFullState();
@@ -896,7 +895,7 @@ void send_added_notify() {
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	L_GET_PRIVATE(alice)->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
-		L_ATTR_GET(L_GET_PRIVATE(localConf), eventHandler)
+		L_ATTR_GET(localConf.get(), eventHandler)
 	);
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandler->createNotifyFullState();
@@ -955,7 +954,7 @@ void send_removed_notify() {
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	L_GET_PRIVATE(alice)->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
-		L_ATTR_GET(L_GET_PRIVATE(localConf), eventHandler)
+		L_ATTR_GET(localConf.get(), eventHandler)
 	);
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandler->createNotifyFullState();
@@ -1011,7 +1010,7 @@ void send_admined_notify() {
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	L_GET_PRIVATE(alice)->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
-		L_ATTR_GET(L_GET_PRIVATE(localConf), eventHandler)
+		L_ATTR_GET(localConf.get(), eventHandler)
 	);
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandler->createNotifyFullState();
@@ -1066,7 +1065,7 @@ void send_unadmined_notify() {
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	L_GET_PRIVATE(alice)->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
-		L_ATTR_GET(L_GET_PRIVATE(localConf), eventHandler)
+		L_ATTR_GET(localConf.get(), eventHandler)
 	);
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandler->createNotifyFullState();
@@ -1122,7 +1121,7 @@ void send_subject_changed_notify () {
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	L_GET_PRIVATE(alice)->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
-		L_ATTR_GET(L_GET_PRIVATE(localConf), eventHandler)
+		L_ATTR_GET(localConf.get(), eventHandler)
 	);
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandler->createNotifyFullState();
@@ -1184,7 +1183,7 @@ void send_device_added_notify() {
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	L_GET_PRIVATE(alice)->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
-		L_ATTR_GET(L_GET_PRIVATE(localConf), eventHandler)
+		L_ATTR_GET(localConf.get(), eventHandler)
 	);
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandler->createNotifyFullState();
@@ -1244,7 +1243,7 @@ void send_device_removed_notify() {
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	L_GET_PRIVATE(alice)->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
-		L_ATTR_GET(L_GET_PRIVATE(localConf), eventHandler)
+		L_ATTR_GET(localConf.get(), eventHandler)
 	);
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandler->createNotifyFullState();
@@ -1317,7 +1316,7 @@ void one_to_one_keyword () {
 	CallSessionParams params;
 	localConf->addParticipant(bobAddr, &params, false);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
-		L_ATTR_GET(L_GET_PRIVATE(localConf), eventHandler)
+		L_ATTR_GET(localConf.get(), eventHandler)
 	);
 	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
 	string notify = localHandler->createNotifyFullState(-1, true);

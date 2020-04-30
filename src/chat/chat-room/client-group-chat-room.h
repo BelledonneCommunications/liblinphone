@@ -92,9 +92,9 @@ public:
 private:
 	ClientGroupChatRoom (
 		const std::shared_ptr<Core> &core,
-		const IdentityAddress &focus,
+		const IdentityAddress &identity,
 		const ConferenceId &conferenceId,
-		const std::string &subject,
+		const std::string &newSubject,
 		const Content &content,
 		CapabilitiesMask capabilities,
 		const std::shared_ptr<ChatRoomParams> &params
@@ -104,7 +104,7 @@ private:
 		const std::shared_ptr<Core> &core,
 		const std::string &factoryUri,
 		const IdentityAddress &me,
-		const std::string &subject,
+		const std::string &newSubject,
 		CapabilitiesMask capabilities,
 		const std::shared_ptr<ChatRoomParams> &params
 	);
@@ -116,8 +116,8 @@ private:
 		std::shared_ptr<Participant> &me,
 		AbstractChatRoom::CapabilitiesMask capabilities,
 		const std::shared_ptr<ChatRoomParams> &params,
-		const std::string &subject,
-		std::list<std::shared_ptr<Participant>> &&participants,
+		const std::string &newSubject,
+		std::list<std::shared_ptr<Participant>> &&newParticipants,
 		unsigned int lastNotifyId,
 		bool hasBeenLeft = false
 	);
