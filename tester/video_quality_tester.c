@@ -498,6 +498,164 @@ static void video_call_expected_size_for_high_bandwith_h265(void) {
 #endif
 }
 
+
+static void generic_nack_received(const OrtpEventData *evd, stats *st) {
+	if (rtcp_is_RTPFB(evd->packet)) {
+		switch (rtcp_RTPFB_get_type(evd->packet)) {
+			case RTCP_RTPFB_NACK:
+				st->number_of_rtcp_generic_nack++;
+				break;
+			default:
+				break;
+		}
+	}
+}
+
+/*
+ * This test simulates a video call with a high loss rate (50%). Without NACK and retransmission on NACK, it can't pass because
+ * no I-frames can have a chance to pass.
+ * So, if the test passes, it means that retransmissions on NACK could have their beneficial effect.
+ */
+static void call_with_retransmissions_on_nack(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCall *call_marie, *call_pauline;
+	OrtpNetworkSimulatorParams params = { 0 };
+	LinphoneVideoPolicy pol = {0};
+	bool_t call_ok;
+
+	params.enabled = TRUE;
+	params.loss_rate = 50;
+	params.consecutive_loss_probability = 0.2f;
+	params.mode = OrtpNetworkSimulatorOutbound;
+	linphone_core_set_avpf_mode(marie->lc, LinphoneAVPFEnabled);
+	linphone_core_set_avpf_mode(pauline->lc, LinphoneAVPFEnabled);
+
+	linphone_core_set_network_simulator_params(marie->lc, &params);
+	
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_fb_generic_nack_enabled", 1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_fb_generic_nack_enabled", 1);
+	linphone_core_enable_retransmission_on_nack(marie->lc, TRUE);
+	linphone_core_enable_retransmission_on_nack(pauline->lc, TRUE);
+
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	pol.automatically_accept = TRUE;
+	pol.automatically_initiate = TRUE;
+	linphone_core_set_video_policy(marie->lc, &pol);
+	linphone_core_set_video_policy(pauline->lc, &pol);
+
+	/* a VGA key frame is rather big, it has few chances to pass with such a high loss rate. */
+	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga"); 
+	
+	
+	BC_ASSERT_TRUE(call_ok = call(marie, pauline));
+	if (!call_ok) goto end;
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+	call_marie = linphone_core_get_current_call(marie->lc);
+	call_pauline = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(call_marie);
+	BC_ASSERT_PTR_NOT_NULL(call_pauline);
+	if (call_marie && call_pauline) {
+		VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call_marie, LinphoneStreamTypeVideo);
+		ortp_ev_dispatcher_connect(media_stream_get_event_dispatcher(&vstream->ms),
+			ORTP_EVENT_RTCP_PACKET_RECEIVED, RTCP_RTPFB, (OrtpEvDispatcherCb)generic_nack_received, &marie->stat);
+		
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_marie)));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_pauline)));
+
+		liblinphone_tester_set_next_video_frame_decoded_cb(call_marie);
+		liblinphone_tester_set_next_video_frame_decoded_cb(call_pauline);
+
+		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_IframeDecoded,1));
+		BC_ASSERT_TRUE( wait_for(marie->lc,pauline->lc,&marie->stat.number_of_IframeDecoded,1));
+	}
+
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_rtcp_generic_nack, 5, 8000));
+	end_call(pauline, marie);
+
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+
+static void call_with_retransmissions_on_nack_with_congestion(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCall *call_marie, *call_pauline;
+	OrtpNetworkSimulatorParams params = { 0 };
+	LinphoneVideoPolicy pol = {0};
+	bool_t call_ok;
+
+	params.enabled = TRUE;
+	params.loss_rate = 0;
+	params.max_bandwidth = 200000;
+	params.mode = OrtpNetworkSimulatorOutbound;
+	linphone_core_set_avpf_mode(marie->lc, LinphoneAVPFEnabled);
+	linphone_core_set_avpf_mode(pauline->lc, LinphoneAVPFEnabled);
+
+	linphone_core_set_network_simulator_params(marie->lc, &params);
+	
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_fb_generic_nack_enabled", 1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_fb_generic_nack_enabled", 1);
+	linphone_core_enable_retransmission_on_nack(marie->lc, TRUE);
+	linphone_core_enable_retransmission_on_nack(pauline->lc, TRUE);
+
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	pol.automatically_accept = TRUE;
+	pol.automatically_initiate = TRUE;
+	linphone_core_set_video_policy(marie->lc, &pol);
+	linphone_core_set_video_policy(pauline->lc, &pol);
+
+	/* a VGA key frame is rather big, it has few chances to pass with such a high loss rate. */
+	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga"); 
+	
+	
+	BC_ASSERT_TRUE(call_ok = call(marie, pauline));
+	if (!call_ok) goto end;
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+	call_marie = linphone_core_get_current_call(marie->lc);
+	call_pauline = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(call_marie);
+	BC_ASSERT_PTR_NOT_NULL(call_pauline);
+	if (call_marie && call_pauline) {
+		VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call_marie, LinphoneStreamTypeVideo);
+		ortp_ev_dispatcher_connect(media_stream_get_event_dispatcher(&vstream->ms),
+			ORTP_EVENT_RTCP_PACKET_RECEIVED, RTCP_RTPFB, (OrtpEvDispatcherCb)generic_nack_received, &marie->stat);
+		
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_marie)));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_pauline)));
+
+		liblinphone_tester_set_next_video_frame_decoded_cb(call_marie);
+		liblinphone_tester_set_next_video_frame_decoded_cb(call_pauline);
+
+		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_IframeDecoded,1));
+		BC_ASSERT_TRUE( wait_for(marie->lc,pauline->lc,&marie->stat.number_of_IframeDecoded,1));
+		wait_for_until(pauline->lc, marie->lc, NULL, 0, 14000);
+		ms_message("Number of generic NACK received by Marie: %i", marie->stat.number_of_rtcp_generic_nack);
+		BC_ASSERT_LOWER(marie->stat.number_of_rtcp_generic_nack, 50, int, "%d");
+	}
+	end_call(pauline, marie);
+
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static test_t call_video_quality_tests[] = {
 	TEST_NO_TAG("Video call with thin congestion", video_call_with_thin_congestion),
 	TEST_NO_TAG("Video call with high bandwidth available", video_call_with_high_bandwidth_available),
@@ -514,7 +672,9 @@ static test_t call_video_quality_tests[] = {
 	TEST_NO_TAG("Video call expected size for regular bandwidth (H265)", video_call_expected_size_for_regular_bandwith_h265),
 	TEST_NO_TAG("Video call expected size for high bandwidth (H265)", video_call_expected_size_for_high_bandwith_h265),
 	TEST_NO_TAG("Video call with explicit bandwidth limit", video_call_with_explicit_bandwidth_limit),
-	TEST_NO_TAG("Video call with explicit bandwidth limit for the video stream", video_call_with_explicit_bandwidth_limit_for_stream)
+	TEST_NO_TAG("Video call with explicit bandwidth limit for the video stream", video_call_with_explicit_bandwidth_limit_for_stream),
+	TEST_NO_TAG("Video call with retransmission on nack", call_with_retransmissions_on_nack),
+	TEST_NO_TAG("Video call with retransmission on nack with congestion", call_with_retransmissions_on_nack_with_congestion)
 };
 
 test_suite_t call_video_quality_test_suite = {"Video Call quality", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
