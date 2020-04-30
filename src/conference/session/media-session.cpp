@@ -1229,7 +1229,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 				md->streams[mainVideoStreamIndex].multicast_role = (direction == LinphoneCallOutgoing) ? SalMulticastSender : SalMulticastReceiver;
 			}
 			/* this is a feature for tests only: */
-			lInfo() << "XXXXXX: video download bandwidth is " << getParams()->getPrivate()->videoDownloadBandwidth; 
 			md->streams[mainVideoStreamIndex].bandwidth = getParams()->getPrivate()->videoDownloadBandwidth;
 		} else {
 			lInfo() << "Don't put video stream on local offer for CallSession [" << q << "]";
