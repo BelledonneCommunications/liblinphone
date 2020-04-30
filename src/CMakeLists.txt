@@ -151,9 +151,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/notification/is-composing.h
 	conference/conference-id.h
 	conference/conference-listener.h
-	conference/conference-p.h
 	conference/conference.h
-	conference/local-conference-p.h
 	conference/local-conference.h
 	conference/params/call-session-params-p.h
 	conference/params/call-session-params.h
@@ -164,7 +162,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/participant-imdn-state.h
 	conference/participant-p.h
 	conference/participant.h
-	conference/remote-conference-p.h
 	conference/remote-conference.h
 	conference/session/call-session-listener.h
 	conference/session/call-session-p.h
