@@ -1531,7 +1531,7 @@ static void sip_config_read(LinphoneCore *lc) {
 	linphone_core_enable_sender_name_hidden_in_forward_message(lc, !!tmp);
 
 	tmp=lp_config_get_int(lc->config, "app", "use_callkit", 0);
-	linphone_core_callkit_enabled(lc, !!tmp);
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardEnableCallkit(!!tmp);
 
 	/*In case of remote provisionning, function sip_config_read is initialy called in core_init, then in state ConfiguringSuccessfull*/
 	/*Accordingly, to avoid proxy_config to be added twice, it is mandatory to reset proxy config list from LinphoneCore*/
