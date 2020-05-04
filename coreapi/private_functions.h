@@ -68,9 +68,6 @@ LINPHONE_PUBLIC LinphoneProxyConfig *linphone_call_get_dest_proxy(const Linphone
 LINPHONE_PUBLIC MediaStream * linphone_call_get_stream(LinphoneCall *call, LinphoneStreamType type);
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
-LINPHONE_PUBLIC LinphoneCallLog * linphone_call_get_log(const LinphoneCall *call);
-
-// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC IceSession *linphone_call_get_ice_session(const LinphoneCall *call);
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
