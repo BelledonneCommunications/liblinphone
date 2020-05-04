@@ -226,6 +226,7 @@ void IosSharedCoreHelpers::onLinphoneCoreStop() {
 }
 
 void IosSharedCoreHelpers::uninitSharedCore(LinphoneCore *lc) {
+	lInfo() << "[SHARED] " << __FUNCTION__;
 	struct _LpConfig *config = lc->config;
 	string appGroupId = linphone_config_get_string(config, "shared_core", "app_group_id", "");
 
@@ -418,6 +419,8 @@ void on_msg_written_in_user_defaults(CFNotificationCenterRef center, void *obser
 // The message has been received by the main core and we will just fetch it into the user defaults
 shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromMainCore(const string &callId) {
 	lInfo() << "[push] subscribe to main core notif: receive a notif when msg is written in user defaults";
+	IosSharedCoreHelpers::executorCoreMutex.unlock();
+
    	CFNotificationCenterRef notification = CFNotificationCenterGetDarwinNotifyCenter();
 
 	if (mAppGroupId != TEST_GROUP_ID) { // For testing purpose
@@ -479,6 +482,9 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromExecutorCore
 	chatMessage = getChatMsgAndUpdateList(callId);
 	lInfo() << "[push] message found? " << (chatMessage ? "yes" : "no");
 	if (chatMessage) {
+		/* if we are here, the mutex is locked but won't be unlocked during
+		linphone_core_stop because this executor core doesn't need to be started */
+		IosSharedCoreHelpers::executorCoreMutex.unlock();
 		return chatMessage;
 	}
 
