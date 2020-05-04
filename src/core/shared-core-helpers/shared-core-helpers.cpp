@@ -42,7 +42,7 @@ bool GenericSharedCoreHelpers::canCoreStart() {
 	return true;
 }
 
-void GenericSharedCoreHelpers::registerMainCoreMsgCallback() {}
+void GenericSharedCoreHelpers::registerSharedCoreMsgCallback() {}
 
 std::shared_ptr<PushNotificationMessage> GenericSharedCoreHelpers::getPushNotificationMessage(const string &callId) {
 	return nullptr;
