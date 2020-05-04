@@ -21,7 +21,7 @@
 //#include <math.h>
 
 #include "address/address-p.h"
-#include "call/call-p.h"
+#include "call/call.h"
 #include "chat/chat-room/client-group-chat-room.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant-p.h"

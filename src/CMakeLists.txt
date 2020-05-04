@@ -109,14 +109,9 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	c-wrapper/c-wrapper.h
 	c-wrapper/internal/c-sal.h
 	c-wrapper/internal/c-tools.h
-	call/call-p.h
 	call/call.h
 	call/audio-device/audio-device.h
 	call/audio-device/audio-device.cpp
-	call/local-conference-call-p.h
-	call/local-conference-call.h
-	call/remote-conference-call-p.h
-	call/remote-conference-call.h
 	chat/chat-message/chat-message-p.h
 	chat/chat-message/chat-message.h
 	chat/chat-message/imdn-message-p.h
@@ -315,8 +310,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	auth-info/auth-info.cpp
 	auth-info/auth-stack.cpp
 	call/call.cpp
-	call/local-conference-call.cpp
-	call/remote-conference-call.cpp
 	chat/chat-message/chat-message.cpp
 	chat/chat-message/imdn-message.cpp
 	chat/chat-message/is-composing-message.cpp
