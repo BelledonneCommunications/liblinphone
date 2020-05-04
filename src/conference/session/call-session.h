@@ -32,20 +32,16 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class CallPrivate;
 class CallSessionPrivate;
 class Content;
 class Core;
 
 class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class Call;
-	friend class CallPrivate;
 	friend class ClientGroupChatRoom;
 	friend class ClientGroupChatRoomPrivate;
 	friend class Conference;
 	friend class CorePrivate;
-	friend class LocalConferenceCall;
-	friend class RemoteConferenceCall;
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
 

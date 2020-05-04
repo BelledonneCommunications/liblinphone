@@ -29,7 +29,7 @@
 #include "conference_private.h"
 
 #include "c-wrapper/c-wrapper.h"
-#include "call/call-p.h"
+#include "call/call.h"
 #include "conference/params/media-session-params-p.h"
 #include "core/core-p.h"
 #include "conference/session/mixers.h"
@@ -212,11 +212,11 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 		case LinphoneCallOutgoingProgress:
 		case LinphoneCallIncomingReceived:
 			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-				L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams()))->setInConference(true);
+				L_GET_PRIVATE(Call::toCpp(call)->getParams()))->setInConference(true);
 		break;
 		case LinphoneCallPaused:
 			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-				L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams()))->setInConference(true);
+				L_GET_PRIVATE(Call::toCpp(call)->getParams()))->setInConference(true);
 			linphone_call_resume(call);
 		break;
 		case LinphoneCallStreamsRunning:
@@ -239,7 +239,7 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 	if (call == linphone_core_get_current_call(m_core))
 		L_GET_PRIVATE_FROM_C_OBJECT(m_core)->setCurrentCall(nullptr);
 	_linphone_call_set_conf_ref(call, toC());
-	mMixerSession->joinStreamsGroup(L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call))->getMediaSession()->getStreamsGroup());
+	mMixerSession->joinStreamsGroup(Call::toCpp(call)->getMediaSession()->getStreamsGroup());
 	Conference::addParticipant(call);
 	if (starting) setState(LinphoneConferenceRunning);
 	if (localEndpointCanBeAdded){
@@ -271,7 +271,7 @@ int LocalConference::removeParticipant (LinphoneCall *call) {
 				 * Special case: the last remote participant is in StreamsRunning state and we are still in the conference.
 				 * Then directly reconnect to it, as a normal call.
 				 */
-				lInfo() << "Call [" << call << "] with " << L_GET_CPP_PTR_FROM_C_OBJECT(call)->getRemoteAddress().asString() << 
+				lInfo() << "Call [" << call << "] with " << Call::toCpp(call)->getRemoteAddress().asString() <<
 					" is our last call in our conference, we will reconnect directly to it.";
 				LinphoneCallParams *params = linphone_core_create_call_params(m_core, call);
 				linphone_call_params_set_in_conference(params, FALSE);
@@ -297,7 +297,7 @@ int LocalConference::removeParticipant (LinphoneCall *call) {
 	if (conferenceGoesEmpty){
 		leave();
 	}
-	mMixerSession->unjoinStreamsGroup(L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call))->getMediaSession()->getStreamsGroup());
+	mMixerSession->unjoinStreamsGroup(Call::toCpp(call)->getMediaSession()->getStreamsGroup());
 	_linphone_call_set_conf_ref(call, nullptr);
 	if (getSize() == 0) setState(LinphoneConferenceStopped);
 	return err;
@@ -319,7 +319,7 @@ int LocalConference::terminate () {
 	list<shared_ptr<LinphonePrivate::Call>> calls = L_GET_CPP_PTR_FROM_C_OBJECT(m_core)->getCalls();
 	for (auto it = calls.begin(); it != calls.end(); it++) {
 		shared_ptr<LinphonePrivate::Call> call(*it);
-		LinphoneCall *cCall = L_GET_C_BACK_PTR(call);
+		LinphoneCall *cCall = call->toC();
 		if (linphone_call_get_conference(cCall) == this->toC())
 			call->terminate();
 	}
@@ -581,7 +581,7 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 	list<LinphoneCall *>::iterator it;
 	switch (state) {
 		case LinphoneCallConnected:
-			m_focusContact = ms_strdup(linphone_call_get_remote_contact(m_focusCall));
+			m_focusContact = linphone_call_get_remote_contact(m_focusCall);
 			it = m_pendingCalls.begin();
 			while (it != m_pendingCalls.end()) {
 				LinphoneCall *pendingCall = *it;
@@ -670,23 +670,20 @@ void RemoteConference::transferStateChanged (LinphoneCore *lc, LinphoneCall *tra
 
 AudioControlInterface * RemoteConference::getAudioControlInterface() const{
 	if (!m_focusCall) return nullptr;
-	CallPrivate *callPriv = L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(m_focusCall));
-	shared_ptr<MediaSession> ms = callPriv->getMediaSession();
+	shared_ptr<MediaSession> ms = Call::toCpp(m_focusCall)->getMediaSession();
 	return ms->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 }
 
 VideoControlInterface * RemoteConference::getVideoControlInterface() const{
 	if (!m_focusCall) return nullptr;
-	CallPrivate *callPriv = L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(m_focusCall));
-	shared_ptr<MediaSession> ms = callPriv->getMediaSession();
+	shared_ptr<MediaSession> ms = Call::toCpp(m_focusCall)->getMediaSession();
 	return ms->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 }
 
 
 AudioStream *RemoteConference::getAudioStream(){
 	if (!m_focusCall) return nullptr;
-	CallPrivate *callPriv = L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(m_focusCall));
-	shared_ptr<MediaSession> ms = callPriv->getMediaSession();
+	shared_ptr<MediaSession> ms = Call::toCpp(m_focusCall)->getMediaSession();
 	MS2AudioStream *stream = ms->getStreamsGroup().lookupMainStreamInterface<MS2AudioStream>(SalAudio);
 	return stream ? (AudioStream*)stream->getMediaStream() : nullptr;
 }

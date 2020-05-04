@@ -47,7 +47,7 @@ class EncryptionEngine;
 class LINPHONE_PUBLIC Core : public Object {
 	friend class BasicToClientGroupChatRoom;
 	friend class BasicToClientGroupChatRoomPrivate;
-	friend class CallPrivate;
+	friend class Call;
 	friend class CallSession;
 	friend class ChatMessage;
 	friend class ChatMessagePrivate;

@@ -18,7 +18,7 @@
  */
 
 #include "c-wrapper/c-wrapper.h"
-#include "call/call-p.h"
+#include "call/call.h"
 #include "core/core.h"
 #include "conference/params/call-session-params-p.h"
 #include "conference/params/media-session-params-p.h"
@@ -451,14 +451,14 @@ LinphoneCall *linphone_call_params_get_referer (const LinphoneCallParams *params
 	if (!session)
 		return nullptr;
 	for (const auto &call : session->getCore()->getCalls()) {
-		if (L_GET_PRIVATE(call)->getActiveSession() == session)
-			return L_GET_C_BACK_PTR(call);
+		if (call->getActiveSession() == session)
+			return call->toC();
 	}
 	return nullptr;
 }
 
 void linphone_call_params_set_referer (LinphoneCallParams *params, LinphoneCall *referer) {
-	L_GET_PRIVATE_FROM_C_OBJECT(params)->setReferer(L_GET_PRIVATE_FROM_C_OBJECT(referer)->getActiveSession());
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->setReferer(LinphonePrivate::Call::toCpp(referer)->getActiveSession());
 }
 
 bool_t linphone_call_params_get_update_call_when_ice_completed (const LinphoneCallParams *params) {

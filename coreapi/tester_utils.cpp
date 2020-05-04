@@ -20,7 +20,7 @@
 #include "tester_utils.h"
 #include "private.h"
 
-#include "call/call-p.h"
+#include "call/call.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "core/core-p.h"
 #include "c-wrapper/c-wrapper.h"
@@ -108,60 +108,60 @@ int linphone_friend_list_get_revision(const LinphoneFriendList *lfl) {
 }
 
 unsigned int _linphone_call_get_nb_audio_starts (const LinphoneCall *call) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getAudioStartCount();
+	return Call::toCpp(call)->getAudioStartCount();
 }
 
 unsigned int _linphone_call_get_nb_video_starts (const LinphoneCall *call) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getVideoStartCount();
+	return Call::toCpp(call)->getVideoStartCount();
 }
 
 unsigned int _linphone_call_get_nb_text_starts (const LinphoneCall *call) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getTextStartCount();
+	return Call::toCpp(call)->getTextStartCount();
 }
 
 belle_sip_source_t *_linphone_call_get_dtmf_timer (const LinphoneCall *call) {
 	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession()))->getDtmfTimer();
+		Call::toCpp(call)->getActiveSession()))->getDtmfTimer();
 }
 
 bool_t _linphone_call_has_dtmf_sequence (const LinphoneCall *call) {
 	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession()))->getDtmfSequence().empty() ? FALSE : TRUE;
+		Call::toCpp(call)->getActiveSession()))->getDtmfSequence().empty() ? FALSE : TRUE;
 }
 
 SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call) {
 	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession()))->getLocalDesc();
+		Call::toCpp(call)->getActiveSession()))->getLocalDesc();
 }
 
 SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call) {
 	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession()))->getResultDesc();
+		Call::toCpp(call)->getActiveSession()))->getResultDesc();
 }
 
 MSWebCam *_linphone_call_get_video_device (const LinphoneCall *call) {
 	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession()))->getVideoDevice();
+		Call::toCpp(call)->getActiveSession()))->getVideoDevice();
 }
 
 void _linphone_call_add_local_desc_changed_flag (LinphoneCall *call, int flag) {
 	L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession()))->addLocalDescChangedFlag(flag);
+		Call::toCpp(call)->getActiveSession()))->addLocalDescChangedFlag(flag);
 }
 
 int _linphone_call_get_main_audio_stream_index (const LinphoneCall *call) {
 	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession()))->getMainAudioStreamIndex();
+		Call::toCpp(call)->getActiveSession()))->getMainAudioStreamIndex();
 }
 
 int _linphone_call_get_main_text_stream_index (const LinphoneCall *call) {
 	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession()))->getMainTextStreamIndex();
+		Call::toCpp(call)->getActiveSession()))->getMainTextStreamIndex();
 }
 
 int _linphone_call_get_main_video_stream_index (const LinphoneCall *call) {
 	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession()))->getMainVideoStreamIndex();
+		Call::toCpp(call)->getActiveSession()))->getMainVideoStreamIndex();
 }
 
 void _linphone_chat_room_enable_migration(LinphoneChatRoom *cr, bool_t enable) {

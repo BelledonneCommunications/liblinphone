@@ -40,7 +40,7 @@
 // For migration purpose.
 #include "address/address-p.h"
 #include "c-wrapper/c-wrapper.h"
-#include "call/call-p.h"
+#include "call/call.h"
 #include "conference/session/media-session-p.h"
 
 #define STR_REASSIGN(dest, src) {\
@@ -48,6 +48,8 @@
 		ms_free(dest); \
 	dest = src; \
 }
+
+using namespace LinphonePrivate;
 
 /*since printf family functions are LOCALE dependent, float separator may differ
 depending on the user's locale (LC_NUMERIC environment var).*/
@@ -161,8 +163,8 @@ static uint8_t are_metrics_filled(const reporting_content_metrics_t *rm) {
 }
 
 static bool_t quality_reporting_enabled(const LinphoneCall * call) {
-	return (L_GET_PRIVATE_FROM_C_OBJECT(call)->getDestProxy()
-		&& linphone_proxy_config_quality_reporting_enabled(L_GET_PRIVATE_FROM_C_OBJECT(call)->getDestProxy()));
+	return (Call::toCpp(call)->getDestProxy()
+		&& linphone_proxy_config_quality_reporting_enabled(Call::toCpp(call)->getDestProxy()));
 }
 
 static bool_t media_report_enabled(LinphoneCall * call, int stats_type){
@@ -170,7 +172,7 @@ static bool_t media_report_enabled(LinphoneCall * call, int stats_type){
 		return FALSE;
 
 	if (stats_type == LINPHONE_CALL_STATS_VIDEO){
-		if (!(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getLog()->reporting.was_video_running
+		if (!(Call::toCpp(call)->getLog()->reporting.was_video_running
 			|| linphone_call_params_video_enabled(linphone_call_get_current_params(call))) )
 			return FALSE;
 	}
@@ -178,7 +180,7 @@ static bool_t media_report_enabled(LinphoneCall * call, int stats_type){
 	if (stats_type == LINPHONE_CALL_STATS_TEXT && !linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(call)))
 		return FALSE;
 
-	return (L_GET_CPP_PTR_FROM_C_OBJECT(call)->getLog()->reporting.reports[stats_type] != NULL);
+	return (Call::toCpp(call)->getLog()->reporting.reports[stats_type] != NULL);
 }
 
 static void append_metrics_to_buffer(char ** buffer, size_t * size, size_t * offset, const reporting_content_metrics_t *rm) {
@@ -362,9 +364,9 @@ static int send_report(LinphoneCall* call, reporting_session_report_t * report, 
 	linphone_content_set_buffer(content, (uint8_t *)buffer, strlen(buffer));
 	ms_free(buffer);
 
-	if (linphone_call_get_log(call)->reporting.on_report_sent != NULL) {
-		SalStreamType type = report == linphone_call_get_log(call)->reporting.reports[0] ? SalAudio : report == linphone_call_get_log(call)->reporting.reports[1] ? SalVideo : SalText;
-		linphone_call_get_log(call)->reporting.on_report_sent(call, type, content);
+	if (linphone_call_get_call_log(call)->reporting.on_report_sent != NULL) {
+		SalStreamType type = report == linphone_call_get_call_log(call)->reporting.reports[0] ? SalAudio : report == linphone_call_get_call_log(call)->reporting.reports[1] ? SalVideo : SalText;
+		linphone_call_get_call_log(call)->reporting.on_report_sent(call, type, content);
 	}
 
 
@@ -427,8 +429,8 @@ static const SalStreamDescription * get_media_stream_for_desc(const SalMediaDesc
 static void update_ip(LinphoneCall * call, int stats_type) {
 	SalStreamType sal_stream_type = stats_type == LINPHONE_CALL_STATS_AUDIO ? SalAudio : stats_type == LINPHONE_CALL_STATS_VIDEO ? SalVideo : SalText;
 	const SalStreamDescription * local_desc = get_media_stream_for_desc(_linphone_call_get_local_desc(call), sal_stream_type);
-	const SalStreamDescription * remote_desc = get_media_stream_for_desc(L_GET_PRIVATE_FROM_C_OBJECT(call)->getOp()->getRemoteMediaDescription(), sal_stream_type);
-	LinphoneCallLog *log = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getLog();
+	const SalStreamDescription * remote_desc = get_media_stream_for_desc(Call::toCpp(call)->getOp()->getRemoteMediaDescription(), sal_stream_type);
+	LinphoneCallLog *log = Call::toCpp(call)->getLog();
 
 	if (local_desc != NULL) {
 		/*since this function might be called for video stream AFTER it has been uninitialized, local description might
@@ -447,7 +449,7 @@ static void update_ip(LinphoneCall * call, int stats_type) {
 		if (strlen(remote_desc->rtp_addr) > 0) {
 			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(remote_desc->rtp_addr));
 		} else {
-			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(L_GET_PRIVATE_FROM_C_OBJECT(call)->getOp()->getRemoteMediaDescription()->addr));
+			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(Call::toCpp(call)->getOp()->getRemoteMediaDescription()->addr));
 		}
 	}
 }
@@ -506,19 +508,19 @@ void linphone_reporting_update_media_info(LinphoneCall * call, int stats_type) {
 	const PayloadType * local_payload = NULL;
 	const PayloadType * remote_payload = NULL;
 	const LinphoneCallParams * current_params = linphone_call_get_current_params(call);
-	LinphoneCallLog *log = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getLog();
+	LinphoneCallLog *log = Call::toCpp(call)->getLog();
 	reporting_session_report_t * report = log->reporting.reports[stats_type];
 
 	// call->op might be already released if hanging up in state LinphoneCallOutgoingInit
-	if (!media_report_enabled(call, stats_type) || !L_GET_PRIVATE_FROM_C_OBJECT(call)->getOp())
+	if (!media_report_enabled(call, stats_type) || !Call::toCpp(call)->getOp())
 		return;
 
-	std::string dialogId = L_GET_PRIVATE_FROM_C_OBJECT(call)->getOp()->getDialogId();
+	std::string dialogId = Call::toCpp(call)->getOp()->getDialogId();
 
 	STR_REASSIGN(report->info.call_id, ms_strdup(log->call_id));
 
 	STR_REASSIGN(report->local_metrics.user_agent, ms_strdup(linphone_core_get_user_agent(linphone_call_get_core(call))));
-	STR_REASSIGN(report->remote_metrics.user_agent, ms_strdup(linphone_call_get_remote_user_agent(call)));
+	STR_REASSIGN(report->remote_metrics.user_agent, linphone_call_get_remote_user_agent(call));
 
 	// RFC states: "LocalGroupID provides the identification for the purposes
 	// of aggregation for the local endpoint.".
@@ -536,7 +538,7 @@ void linphone_reporting_update_media_info(LinphoneCall * call, int stats_type) {
 	);
 
 
-	if (L_GET_CPP_PTR_FROM_C_OBJECT(call)->getDirection() == LinphoneCallIncoming) {
+	if (Call::toCpp(call)->getDirection() == LinphoneCallIncoming) {
 		STR_REASSIGN(report->info.remote_addr.id, linphone_address_as_string(log->from));
 		STR_REASSIGN(report->info.local_addr.id, linphone_address_as_string(log->to));
 		STR_REASSIGN(report->info.orig_id, ms_strdup(report->info.remote_addr.id));
@@ -556,16 +558,16 @@ void linphone_reporting_update_media_info(LinphoneCall * call, int stats_type) {
 
 
 	/*yet we use the same payload config for local and remote, since this is the largest use case*/
-	if (stats_type == LINPHONE_CALL_STATS_AUDIO && L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeAudio)) {
-		stream = L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeAudio);
+	if (stats_type == LINPHONE_CALL_STATS_AUDIO && Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio)) {
+		stream = Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio);
 		local_payload = linphone_call_params_get_used_audio_codec(current_params);
 		remote_payload = local_payload;
-	} else if (stats_type == LINPHONE_CALL_STATS_VIDEO && L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeVideo)) {
-		stream = L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeVideo);
+	} else if (stats_type == LINPHONE_CALL_STATS_VIDEO && Call::toCpp(call)->getMediaStream(LinphoneStreamTypeVideo)) {
+		stream = Call::toCpp(call)->getMediaStream(LinphoneStreamTypeVideo);
 		local_payload = linphone_call_params_get_used_video_codec(current_params);
 		remote_payload = local_payload;
-	} else if (stats_type == LINPHONE_CALL_STATS_TEXT && L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeText)) {
-		stream = L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeText);
+	} else if (stats_type == LINPHONE_CALL_STATS_TEXT && Call::toCpp(call)->getMediaStream(LinphoneStreamTypeText)) {
+		stream = Call::toCpp(call)->getMediaStream(LinphoneStreamTypeText);
 		local_payload = linphone_call_params_get_used_text_codec(current_params);
 		remote_payload = local_payload;
 	}
@@ -607,24 +609,24 @@ static float reporting_rand(float t){
 }
 
 void linphone_reporting_on_rtcp_update(LinphoneCall *call, SalStreamType stats_type) {
-	reporting_session_report_t * report = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getLog()->reporting.reports[stats_type];
+	reporting_session_report_t * report = Call::toCpp(call)->getLog()->reporting.reports[stats_type];
 	reporting_content_metrics_t * metrics = NULL;
 	LinphoneCallStats *stats = NULL;
 	mblk_t *block = NULL;
 	int report_interval;
 
 	if (stats_type == 0) {
-		stats = L_GET_PRIVATE_FROM_C_OBJECT(call)->getStats(LinphoneStreamTypeAudio);
+		stats = Call::toCpp(call)->getPrivateStats(LinphoneStreamTypeAudio);
 	} else if (stats_type == 1) {
-		stats = L_GET_PRIVATE_FROM_C_OBJECT(call)->getStats(LinphoneStreamTypeVideo);
+		stats = Call::toCpp(call)->getPrivateStats(LinphoneStreamTypeVideo);
 	} else {
-		stats = L_GET_PRIVATE_FROM_C_OBJECT(call)->getStats(LinphoneStreamTypeText);
+		stats = Call::toCpp(call)->getPrivateStats(LinphoneStreamTypeText);
 	}
 
 	if (! media_report_enabled(call,stats_type))
 		return;
 
-	report_interval = linphone_proxy_config_get_quality_reporting_interval(L_GET_PRIVATE_FROM_C_OBJECT(call)->getDestProxy());
+	report_interval = linphone_proxy_config_get_quality_reporting_interval(Call::toCpp(call)->getDestProxy());
 
 	if (_linphone_call_stats_get_updated(stats) == LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE) {
 		metrics = &report->remote_metrics;
@@ -661,8 +663,8 @@ void linphone_reporting_on_rtcp_update(LinphoneCall *call, SalStreamType stats_t
 			metrics->delay.round_trip_delay += rtcp_XR_voip_metrics_get_round_trip_delay(block);
 		}else if (rtcp_is_SR(block)){
 			MediaStream *ms = (stats_type == 0)
-				? L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeAudio)
-				: L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeVideo);
+				? Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio)
+			: Call::toCpp(call)->getMediaStream(LinphoneStreamTypeVideo);
 			float rtt = rtp_session_get_round_trip_propagation(ms->sessions.rtp_session);
 
 			if (rtt > 1e-6){
@@ -688,7 +690,7 @@ static int publish_report(LinphoneCall *call, const char *event_type){
 		if (media_report_enabled(call, stream_index)) {
 			int sndret;
 			linphone_reporting_update_media_info(call, stream_index);
-			sndret=send_report(call, L_GET_CPP_PTR_FROM_C_OBJECT(call)->getLog()->reporting.reports[stream_index], event_type);
+			sndret=send_report(call, Call::toCpp(call)->getLog()->reporting.reports[stream_index], event_type);
 			if (sndret>0){
 				ret += 10+(i+1)*sndret;
 			}
@@ -723,7 +725,7 @@ static bool_t set_on_action_suggested_cb(MediaStream *stream,void (*on_action_su
 
 void linphone_reporting_call_state_updated(LinphoneCall *call){
 	LinphoneCallState state=linphone_call_get_state(call);
-	LinphoneCallLog *log = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getLog();
+	LinphoneCallLog *log = Call::toCpp(call)->getLog();
 	if (state == LinphoneCallReleased||!quality_reporting_enabled(call)){
 		return;
 	}
@@ -731,9 +733,9 @@ void linphone_reporting_call_state_updated(LinphoneCall *call){
 		case LinphoneCallStreamsRunning:{
 			int i = 0;
 			MediaStream *streams[3] = {
-				L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeAudio),
-				L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeVideo),
-				L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeText)
+				Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio),
+				Call::toCpp(call)->getMediaStream(LinphoneStreamTypeVideo),
+				Call::toCpp(call)->getMediaStream(LinphoneStreamTypeText)
 			};
 			for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
 				int stream_index = i == _linphone_call_get_main_audio_stream_index(call) ? LINPHONE_CALL_STATS_AUDIO : _linphone_call_get_main_video_stream_index(call) ? LINPHONE_CALL_STATS_VIDEO : LINPHONE_CALL_STATS_TEXT;
@@ -751,8 +753,8 @@ void linphone_reporting_call_state_updated(LinphoneCall *call){
 			break;
 		}
 		case LinphoneCallEnd:{
-			set_on_action_suggested_cb(L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeAudio), NULL, NULL);
-			set_on_action_suggested_cb(L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(LinphoneStreamTypeVideo), NULL, NULL);
+			set_on_action_suggested_cb(Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio), NULL, NULL);
+			set_on_action_suggested_cb(Call::toCpp(call)->getMediaStream(LinphoneStreamTypeVideo), NULL, NULL);
 			if (log->status==LinphoneCallSuccess || log->status==LinphoneCallAborted){
 				linphone_reporting_publish_session_report(call, TRUE);
 			}
@@ -826,5 +828,5 @@ void linphone_reporting_destroy(reporting_session_report_t * report) {
 
 
 void linphone_reporting_set_on_report_send(LinphoneCall *call, LinphoneQualityReportingReportSendCb cb){
-	linphone_call_get_log(call)->reporting.on_report_sent = cb;
+	linphone_call_get_call_log(call)->reporting.on_report_sent = cb;
 }
