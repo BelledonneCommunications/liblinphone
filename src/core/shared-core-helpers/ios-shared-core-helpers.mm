@@ -85,7 +85,7 @@ public:
 	void onLinphoneCoreStop () override;
     void *getPathContext () override;
 
-	void registerMainCoreMsgCallback() override;
+	void registerSharedCoreMsgCallback() override;
 	shared_ptr<PushNotificationMessage> getPushNotificationMessage(const string &callId) override;
 	shared_ptr<ChatRoom> getPushNotificationChatRoom(const string &chatRoomAddr) override;
 
@@ -197,7 +197,7 @@ IosSharedCoreHelpers::IosSharedCoreHelpers (shared_ptr<LinphonePrivate::Core> co
 	}
 }
 
-static void on_main_core_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
+static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
 	if (linphone_chat_message_is_text(message) || linphone_chat_message_get_file_transfer_information(message) != NULL) {
 		lInfo() << "[push] msg [" << message << "] received from chat room [" << room << "]";
 
@@ -205,14 +205,16 @@ static void on_main_core_message_received(LinphoneCore *lc, LinphoneChatRoom *ro
 		IosSharedCoreHelpers *shared_core_helper = static_cast<LinphonePrivate::IosSharedCoreHelpers*>(platform_helper->getSharedCoreHelpers().get());
 
 		shared_core_helper->putMsgInUserDefaults(message);
+		const char *callId = linphone_chat_message_get_call_id(message);
+		static_cast<LinphonePrivate::IosSharedCoreHelpers*>(lc->platform_helper)->removeCallIdFromList(callId);
 	}
 }
 
-void IosSharedCoreHelpers::registerMainCoreMsgCallback() {
-	if (getCore()->getCCore()->is_main_core) {
+void IosSharedCoreHelpers::registerSharedCoreMsgCallback() {
+	if (isCoreShared()) {
 		lInfo() << "[push] register main core msg callback";
 		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-		linphone_core_cbs_set_message_received(cbs, on_main_core_message_received);
+		linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
 		linphone_core_add_callbacks(getCore()->getCCore(), cbs);
 		linphone_core_cbs_unref(cbs);
 	}
@@ -460,17 +462,6 @@ void IosSharedCoreHelpers::notifyMessageReceived(const string &callId) {
 // push notification: get new message from by starting an executor core
 // -----------------------------------------------------------------------------
 
-static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
-	if (linphone_chat_message_is_text(message) || linphone_chat_message_get_file_transfer_information(message) != NULL) {
-		PlatformHelpers *platform_helper = static_cast<LinphonePrivate::PlatformHelpers*>(lc->platform_helper);
-		IosSharedCoreHelpers *shared_core_helper = static_cast<LinphonePrivate::IosSharedCoreHelpers*>(platform_helper->getSharedCoreHelpers().get());
-		shared_core_helper->putMsgInUserDefaults(message);
-		lInfo() << "[push] msg [" << message << "] received from chat room [" << room << "]";
-		const char *callId = linphone_chat_message_get_call_id(message);
-		static_cast<LinphonePrivate::IosSharedCoreHelpers*>(lc->platform_helper)->removeCallIdFromList(callId);
-	}
-}
-
 // We have to start a linphone core to get the message
 shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromExecutorCore(const string &callId) {
 	shared_ptr<PushNotificationMessage> chatMessage;
@@ -481,11 +472,6 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromExecutorCore
 	if (chatMessage) {
 		return chatMessage;
 	}
-
-	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
-	linphone_core_add_callbacks(getCore()->getCCore(), cbs);
-	linphone_core_cbs_unref(cbs);
 
 	if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalOn && linphone_core_start(getCore()->getCCore()) != 0) {
 		return nullptr;
@@ -623,7 +609,6 @@ shared_ptr<ChatRoom> IosSharedCoreHelpers::getChatRoomFromAddr(const string &crA
 	lInfo() << "[push] core started";
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_chat_room_state_changed(cbs, on_push_notification_chat_room_invite_received);
-	linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
 	linphone_core_add_callbacks(getCore()->getCCore(), cbs);
 	linphone_core_cbs_unref(cbs);
 

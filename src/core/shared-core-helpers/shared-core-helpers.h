@@ -38,7 +38,7 @@ public:
 
 	virtual	bool isCoreShared() = 0;
 	virtual bool canCoreStart() = 0;
-	virtual void registerMainCoreMsgCallback() = 0;
+	virtual void registerSharedCoreMsgCallback() = 0;
 	virtual std::shared_ptr<PushNotificationMessage> getPushNotificationMessage(const std::string &callId) = 0;
 	virtual	std::shared_ptr<ChatRoom> getPushNotificationChatRoom(const std::string &chatRoomAddr) = 0;
 	virtual void resetSharedCoreState() = 0;
@@ -61,7 +61,7 @@ public:
 
 	bool isCoreShared() override;
 	bool canCoreStart() override;
-	void registerMainCoreMsgCallback() override;
+	void registerSharedCoreMsgCallback() override;
 	std::shared_ptr<PushNotificationMessage> getPushNotificationMessage(const std::string &callId) override;
 	std::shared_ptr<ChatRoom> getPushNotificationChatRoom(const std::string &chatRoomAddr) override;
 	void resetSharedCoreState() override;
